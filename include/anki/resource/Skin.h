@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RESOURCE_SKIN_H
-#define ANKI_RESOURCE_SKIN_H
+#pragma once
 
 #include "anki/resource/ResourceManager.h"
 #include "anki/resource/Model.h"
@@ -13,7 +12,7 @@
 namespace anki {
 
 /// Skin resource
-/// 
+///
 /// XML file format:
 /// @code<skin>
 /// 	<model>path/to/model.mdl</model>
@@ -66,4 +65,3 @@ private:
 } // end namespace anki
 #endif
 
-#endif

@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RESOURCE_RESOURCE_MANAGER_H
-#define ANKI_RESOURCE_RESOURCE_MANAGER_H
+#pragma once
 
 #include "anki/resource/Common.h"
 #include "anki/util/List.h"
@@ -19,7 +18,7 @@ class GrManager;
 class PhysicsWorld;
 class ResourceManager;
 class AsyncLoader;
-class MaterialResourceData;
+class ResourceManagerModel;
 
 /// @addtogroup resource
 /// @{
@@ -89,22 +88,20 @@ private:
 	}
 };
 
-#define ANKI_RESOURCE(type_) public TypeResourceManager<type_>
-
 /// Resource manager. It holds a few global variables
 class ResourceManager:
-	ANKI_RESOURCE(Animation),
-	ANKI_RESOURCE(TextureResource),
-	ANKI_RESOURCE(ShaderResource),
-	ANKI_RESOURCE(Material),
-	ANKI_RESOURCE(Mesh),
-	ANKI_RESOURCE(BucketMesh),
-	ANKI_RESOURCE(Skeleton),
-	ANKI_RESOURCE(ParticleEmitterResource),
-	ANKI_RESOURCE(Model),
-	ANKI_RESOURCE(Script),
-	ANKI_RESOURCE(DummyRsrc),
-	ANKI_RESOURCE(CollisionResource)
+	TypeResourceManager<Animation>,
+	TypeResourceManager<TextureResource>,
+	TypeResourceManager<ShaderResource>,
+	TypeResourceManager<Material>,
+	TypeResourceManager<Mesh>,
+	TypeResourceManager<BucketMesh>,
+	TypeResourceManager<Skeleton>,
+	TypeResourceManager<ParticleEmitterResource>,
+	TypeResourceManager<Model>,
+	TypeResourceManager<Script>,
+	TypeResourceManager<DummyRsrc>,
+	TypeResourceManager<CollisionResource>
 {
 public:
 	class Initializer
@@ -204,12 +201,6 @@ public:
 	{
 		return *m_asyncLoader;
 	}
-
-	MaterialResourceData& getMaterialData()
-	{
-		ANKI_ASSERT(m_materialData);
-		return *m_materialData;
-	}
 	/// @}
 
 private:
@@ -224,12 +215,8 @@ private:
 	U32 m_textureAnisotropy;
 	String m_shadersPrependedSource;
 	AsyncLoader* m_asyncLoader = nullptr; ///< Async loading thread
-	MaterialResourceData* m_materialData = nullptr;
 };
-
-#undef ANKI_RESOURCE
 /// @}
 
 } // end namespace anki
 
-#endif

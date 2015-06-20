@@ -25,8 +25,6 @@ Error Sslr::init(const ConfigSet& config)
 
 	// Size
 	const F32 quality = config.getNumber("pps.sslr.renderingQuality");
-	m_blurringIterationsCount =
-		config.getNumber("pps.sslr.blurringIterationsCount");
 
 	m_width = quality * (F32)m_r->getWidth();
 	alignRoundUp(16, m_width);
@@ -44,36 +42,36 @@ Error Sslr::init(const ConfigSet& config)
 	ANKI_CHECK(m_reflectionFrag.loadToCache(&getResourceManager(),
 		"shaders/PpsSslr.frag.glsl", pps.toCString(), "r_"));
 
-	ANKI_CHECK(m_r->createDrawQuadPipeline(
-		m_reflectionFrag->getGrShader(), m_reflectionPpline));
+	ColorStateInfo colorState;
+	colorState.m_attachmentCount = 1;
+	colorState.m_attachments[0].m_format = Is::RT_PIXEL_FORMAT;
+
+	m_r->createDrawQuadPipeline(
+		m_reflectionFrag->getGrShader(), colorState, m_reflectionPpline);
 
 	// Blit
 	ANKI_CHECK(
 		m_blitFrag.load("shaders/Blit.frag.glsl", &getResourceManager()));
-	ANKI_CHECK(
-		m_r->createDrawQuadPipeline(m_blitFrag->getGrShader(), m_blitPpline));
 
-	// Init FBOs and RTs and blurring
-	if(m_blurringIterationsCount > 0)
-	{
-		ANKI_CHECK(initBlurring(*m_r, m_width, m_height, 9, 0.0));
-	}
-	else
-	{
-		Direction& dir = m_dirs[U(DirectionEnum::VERTICAL)];
+	colorState.m_attachmentCount = 1;
+	colorState.m_attachments[0].m_format = Is::RT_PIXEL_FORMAT;
+	colorState.m_attachments[0].m_srcBlendMethod = BlendMethod::ONE;
+	colorState.m_attachments[0].m_dstBlendMethod = BlendMethod::ONE;
 
-		m_r->createRenderTarget(m_width, m_height,
-			PixelFormat(ComponentFormat::R11G11B10, TransformFormat::FLOAT),
-			1, SamplingFilter::LINEAR, 1, dir.m_rt);
+	m_r->createDrawQuadPipeline(
+		m_blitFrag->getGrShader(), colorState, m_blitPpline);
 
-		// Create FB
-		FramebufferPtr::Initializer fbInit;
-		fbInit.m_colorAttachmentsCount = 1;
-		fbInit.m_colorAttachments[0].m_texture = dir.m_rt;
-		fbInit.m_colorAttachments[0].m_loadOperation =
-			AttachmentLoadOperation::LOAD;
-		dir.m_fb.create(&getGrManager(), fbInit);
-	}
+	// Init FBOs
+	m_r->createRenderTarget(m_width, m_height,
+		Is::RT_PIXEL_FORMAT, 1, SamplingFilter::LINEAR, 1, m_rt);
+
+	// Create FB
+	FramebufferPtr::Initializer fbInit;
+	fbInit.m_colorAttachmentsCount = 1;
+	fbInit.m_colorAttachments[0].m_texture = m_rt;
+	fbInit.m_colorAttachments[0].m_loadOperation =
+		AttachmentLoadOperation::LOAD;
+	m_fb.create(&getGrManager(), fbInit);
 
 	return ErrorCode::NONE;
 }
@@ -85,7 +83,7 @@ void Sslr::run(CommandBufferPtr& cmdBuff)
 
 	// Compute the reflection
 	//
-	m_dirs[(U)DirectionEnum::VERTICAL].m_fb.bind(cmdBuff);
+	m_fb.bind(cmdBuff);
 	cmdBuff.setViewport(0, 0, m_width, m_height);
 
 	m_reflectionPpline.bind(cmdBuff);
@@ -103,27 +101,15 @@ void Sslr::run(CommandBufferPtr& cmdBuff)
 
 	SamplerPtr::bindDefault(cmdBuff, 1); // Unbind the sampler
 
-	// Blurring
-	//
-	if(m_blurringIterationsCount > 0)
-	{
-		runBlurring(*m_r, cmdBuff);
-	}
-
 	// Write the reflection back to IS RT
 	//
 	m_r->getIs().m_fb.bind(cmdBuff);
 	cmdBuff.setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 
-	cmdBuff.enableBlend(true);
-	cmdBuff.setBlendFunctions(GL_ONE, GL_ONE);
-
-	m_dirs[(U)DirectionEnum::VERTICAL].m_rt.bind(cmdBuff, 0);
+	m_rt.bind(cmdBuff, 0);
 
 	m_blitPpline.bind(cmdBuff);
 	m_r->drawQuad(cmdBuff);
-
-	cmdBuff.enableBlend(false);
 }
 
 } // end namespace anki

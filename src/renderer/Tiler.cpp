@@ -53,7 +53,7 @@ static Vec4 unproject(const F32 depth, const Vec2& ndc, const Vec4& projParams)
 
 //==============================================================================
 Tiler::Tiler(Renderer* r)
-:	RenderingPass(r)
+	: RenderingPass(r)
 {}
 
 //==============================================================================

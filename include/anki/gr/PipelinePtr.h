@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GR_PIPELINE_HANDLE_H
-#define ANKI_GR_PIPELINE_HANDLE_H
+#pragma once
 
 #include "anki/gr/GrPtr.h"
 
@@ -33,6 +32,4 @@ public:
 /// @}
 
 } // end namespace anki
-
-#endif
 

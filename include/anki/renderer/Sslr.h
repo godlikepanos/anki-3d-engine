@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RENDERER_SSLR_H
-#define ANKI_RENDERER_SSLR_H
+#pragma once
 
 #include "anki/renderer/RenderingPass.h"
 #include "anki/Gr.h"
@@ -15,13 +14,13 @@ namespace anki {
 /// @{
 
 /// Screen space local reflections pass
-class Sslr: public BlurringRenderingPass
+class Sslr: public RenderingPass
 {
 public:
 	/// @privatesection
 	/// @{
 	Sslr(Renderer* r)
-	:	BlurringRenderingPass(r)
+		: RenderingPass(r)
 	{}
 
 	ANKI_USE_RESULT Error init(const ConfigSet& config);
@@ -36,14 +35,14 @@ private:
 	ShaderResourcePtr m_reflectionFrag;
 	PipelinePtr m_reflectionPpline;
 	SamplerPtr m_depthMapSampler;
+	TexturePtr m_rt;
+	FramebufferPtr m_fb;
 
 	// 2nd pass: blit
 	ShaderResourcePtr m_blitFrag;
 	PipelinePtr m_blitPpline;
 };
-
 /// @}
 
 } // end namespace anki
 
-#endif

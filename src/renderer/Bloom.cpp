@@ -13,6 +13,10 @@
 namespace anki {
 
 //==============================================================================
+const PixelFormat Bloom::RT_PIXEL_FORMAT(
+	ComponentFormat::R8G8B8, TransformFormat::UNORM);
+
+//==============================================================================
 Bloom::~Bloom()
 {}
 
@@ -20,8 +24,7 @@ Bloom::~Bloom()
 Error Bloom::initFb(FramebufferPtr& fb, TexturePtr& rt)
 {
 	// Set to bilinear because the blurring techniques take advantage of that
-	m_r->createRenderTarget(m_width, m_height,
-		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM),
+	m_r->createRenderTarget(m_width, m_height, RT_PIXEL_FORMAT,
 		1, SamplingFilter::LINEAR, 1, rt);
 
 	// Create FB
@@ -48,9 +51,9 @@ Error Bloom::initInternal(const ConfigSet& config)
 	const F32 renderingQuality =
 		config.getNumber("pps.bloom.renderingQuality");
 
-	m_width = renderingQuality * (F32)m_r->getWidth();
+	m_width = renderingQuality * F32(m_r->getWidth());
 	alignRoundDown(16, m_width);
-	m_height = renderingQuality * (F32)m_r->getHeight();
+	m_height = renderingQuality * F32(m_r->getHeight());
 	alignRoundDown(16, m_height);
 
 	m_threshold = config.getNumber("pps.bloom.threshold");
@@ -62,8 +65,12 @@ Error Bloom::initInternal(const ConfigSet& config)
 	ANKI_CHECK(initFb(m_hblurFb, m_hblurRt));
 	ANKI_CHECK(initFb(m_vblurFb, m_vblurRt));
 
-	// init shaders
+	// init shaders & pplines
 	GrManager& gl = getGrManager();
+
+	ColorStateInfo colorState;
+	colorState.m_attachmentCount = 1;
+	colorState.m_attachments[0].m_format = RT_PIXEL_FORMAT;
 
 	m_commonBuff.create(&gl, GL_UNIFORM_BUFFER, nullptr,
 		sizeof(Vec4), GL_DYNAMIC_STORAGE_BIT);
@@ -84,8 +91,8 @@ Error Bloom::initInternal(const ConfigSet& config)
 	ANKI_CHECK(m_toneFrag.loadToCache(&getResourceManager(),
 		"shaders/PpsBloom.frag.glsl", pps.toCString(), "r_"));
 
-	ANKI_CHECK(m_r->createDrawQuadPipeline(
-		m_toneFrag->getGrShader(), m_tonePpline));
+	m_r->createDrawQuadPipeline(
+		m_toneFrag->getGrShader(), colorState, m_tonePpline);
 
 	const char* SHADER_FILENAME =
 		"shaders/VariableSamplingBlurGeneric.frag.glsl";
@@ -102,8 +109,8 @@ Error Bloom::initInternal(const ConfigSet& config)
 	ANKI_CHECK(m_hblurFrag.loadToCache(&getResourceManager(),
 		SHADER_FILENAME, pps.toCString(), "r_"));
 
-	ANKI_CHECK(m_r->createDrawQuadPipeline(
-		m_hblurFrag->getGrShader(), m_hblurPpline));
+	m_r->createDrawQuadPipeline(
+		m_hblurFrag->getGrShader(), colorState, m_hblurPpline);
 
 	pps.destroy(getAllocator());
 	pps.sprintf(
@@ -117,8 +124,8 @@ Error Bloom::initInternal(const ConfigSet& config)
 	ANKI_CHECK(m_vblurFrag.loadToCache(&getResourceManager(),
 		SHADER_FILENAME, pps.toCString(), "r_"));
 
-	ANKI_CHECK(m_r->createDrawQuadPipeline(
-		m_vblurFrag->getGrShader(), m_vblurPpline));
+	m_r->createDrawQuadPipeline(
+		m_vblurFrag->getGrShader(), colorState, m_vblurPpline);
 
 	// Set timestamps
 	m_parameterUpdateTimestamp = getGlobalTimestamp();

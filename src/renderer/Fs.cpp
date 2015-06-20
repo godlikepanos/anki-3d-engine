@@ -39,11 +39,8 @@ Error Fs::run(CommandBufferPtr& cmdb)
 
 	m_fb.bind(cmdb);
 
-	cmdb.enableDepthTest(true);
-	cmdb.enableBlend(true);
-
 	RenderableDrawer& drawer = m_r->getSceneDrawer();
-	drawer.prepareDraw(RenderingStage::BLEND, Pass::COLOR, cmdb);
+	drawer.prepareDraw(RenderingStage::BLEND, Pass::MS_FS, cmdb);
 
 	SceneNode& cam = m_r->getActiveCamera();
 	FrustumComponent& camFr = cam.getComponent<FrustumComponent>();
@@ -58,9 +55,6 @@ Error Fs::run(CommandBufferPtr& cmdb)
 	if(!err)
 	{
 		drawer.finishDraw();
-
-		cmdb.enableDepthTest(false);
-		cmdb.enableBlend(false);
 	}
 
 	return err;

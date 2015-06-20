@@ -18,6 +18,8 @@ namespace anki {
 class Pps: public RenderingPass
 {
 public:
+	static const PixelFormat RT_PIXEL_FORMAT;
+
 	Pps(Renderer* r);
 	~Pps();
 

@@ -8,6 +8,8 @@
 #include "anki/resource/Model.h"
 #include "anki/util/StringList.h"
 #include "anki/misc/Xml.h"
+#include "anki/renderer/Ms.h"
+#include "anki/renderer/Is.h"
 #include <cstring>
 
 namespace anki {
@@ -214,6 +216,45 @@ Error ParticleEmitterResource::load(const ResourceFilename& filename)
 	// Calc some stuff
 	//
 	updateFlags();
+
+	// Create ppline
+	//
+	PipelineInitializer pinit;
+
+	pinit.m_vertex.m_bindingCount = 1;
+	pinit.m_vertex.m_bindings[0].m_stride = VERTEX_SIZE;
+	pinit.m_vertex.m_attributeCount = 3;
+	pinit.m_vertex.m_attributes[0].m_format =
+		PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
+	pinit.m_vertex.m_attributes[0].m_offset = 0;
+	pinit.m_vertex.m_attributes[0].m_binding = 0;
+	pinit.m_vertex.m_attributes[1].m_format =
+		PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT);
+	pinit.m_vertex.m_attributes[1].m_offset = sizeof(Vec3);
+	pinit.m_vertex.m_attributes[1].m_binding = 0;
+	pinit.m_vertex.m_attributes[2].m_format =
+		PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT);
+	pinit.m_vertex.m_attributes[2].m_offset = sizeof(Vec3) + sizeof(F32);
+	pinit.m_vertex.m_attributes[2].m_binding = 0;
+
+	pinit.m_depthStencil.m_depthWriteEnabled = false;
+	pinit.m_depthStencil.m_format = Ms::DEPTH_RT_PIXEL_FORMAT;
+
+	pinit.m_color.m_attachmentCount = 1;
+	pinit.m_color.m_attachments[0].m_format = Is::RT_PIXEL_FORMAT;
+	pinit.m_color.m_attachments[0].m_srcBlendMethod = BlendMethod::SRC_ALPHA;
+	pinit.m_color.m_attachments[0].m_dstBlendMethod =
+		BlendMethod::ONE_MINUS_SRC_ALPHA;
+
+	pinit.m_shaders[U(ShaderType::VERTEX)] = m_material->getShader(
+		RenderingKey(Pass::MS_FS, 0, false), ShaderType::VERTEX);
+
+	pinit.m_shaders[U(ShaderType::FRAGMENT)] = m_material->getShader(
+		RenderingKey(Pass::MS_FS, 0, false), ShaderType::FRAGMENT);
+
+	pinit.m_inputAssembler.m_topology = PrimitiveTopology::POINTS;
+
+	m_ppline.create(&getManager().getGrManager(), pinit);
 
 	return ErrorCode::NONE;
 }

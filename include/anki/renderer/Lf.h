@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RENDERER_LF_H
-#define ANKI_RENDERER_LF_H
+#pragma once
 
 #include "anki/renderer/RenderingPass.h"
 #include "anki/Gr.h"
@@ -16,14 +15,14 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-/// Lens flare rendering pass
+/// Lens flare rendering pass. Part of forward shading.
 class Lf: public RenderingPass
 {
 public:
 	/// @privatesection
 	/// @{
 	Lf(Renderer* r)
-	:	RenderingPass(r)
+		: RenderingPass(r)
 	{}
 
 	~Lf();
@@ -51,7 +50,7 @@ private:
 	U32 m_flareSize;
 	U8 m_maxSpritesPerFlare;
 	U8 m_maxFlares;
-	
+
 
 	ANKI_USE_RESULT Error initSprite(const ConfigSet& config);
 	ANKI_USE_RESULT Error initOcclusion(const ConfigSet& config);
@@ -62,4 +61,3 @@ private:
 
 } // end namespace anki
 
-#endif

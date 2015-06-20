@@ -13,7 +13,7 @@
 
 namespace anki {
 
-/// @addtogroup Scene
+/// @addtogroup scene
 /// @{
 
 /// The ID of a buildin material variable
@@ -72,7 +72,7 @@ public:
 	const T* begin() const
 	{
 		ANKI_ASSERT(Base::isTypeOf<RenderComponentVariableTemplate<T>>());
-		auto derived = 
+		auto derived =
 			static_cast<const RenderComponentVariableTemplate<T>*>(this);
 		return derived->begin();
 	}
@@ -81,7 +81,7 @@ public:
 	const T* end() const
 	{
 		ANKI_ASSERT(Base::isTypeOf<RenderComponentVariableTemplate<T>>());
-		auto derived = 
+		auto derived =
 			static_cast<const RenderComponentVariableTemplate<T>*>(this);
 		return derived->end();
 	}
@@ -90,7 +90,7 @@ public:
 	const T& operator[](U idx) const
 	{
 		ANKI_ASSERT(Base::isTypeOf<RenderComponentVariableTemplate<T>>());
-		auto derived = 
+		auto derived =
 			static_cast<const RenderComponentVariableTemplate<T>*>(this);
 		return (*derived)[idx];
 	}
@@ -129,7 +129,7 @@ private:
 	BuildinMaterialVariableId m_buildinId;
 };
 
-/// RenderComponent variable. This class should not be visible to other 
+/// RenderComponent variable. This class should not be visible to other
 /// interfaces except render component
 template<typename T>
 class RenderComponentVariableTemplate: public RenderComponentVariable
@@ -215,7 +215,7 @@ public:
 	RenderingKey m_key;
 	const U8* m_subMeshIndicesArray; ///< @note indices != drawing indices
 	U32 m_subMeshIndicesCount;
-	CommandBufferPtr m_jobs; ///< A job chain 
+	CommandBufferPtr m_cmdb; ///< A command buffer to append to.
 };
 
 /// RenderComponent interface. Implemented by renderable scene nodes
@@ -273,7 +273,7 @@ public:
 	Bool getCastsShadow()
 	{
 		const Material& mtl = getMaterial();
-		return mtl.getShadow() && !mtl.isBlendingEnabled();
+		return mtl.getShadowEnabled();
 	}
 
 	/// Iterate variables using a lambda

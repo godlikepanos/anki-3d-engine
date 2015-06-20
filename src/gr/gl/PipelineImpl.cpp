@@ -8,6 +8,7 @@
 #include "anki/gr/gl/GrManagerImpl.h"
 #include "anki/gr/gl/RenderingThread.h"
 #include "anki/util/Logger.h"
+#include "anki/util/Hash.h"
 
 namespace anki {
 
@@ -105,22 +106,7 @@ static GLenum convertBlendMethod(BlendMethod in)
 //==============================================================================
 Error PipelineImpl::create(const Initializer& init)
 {
-	static_cast<Initializer&>(*this) = init;
-
-	// Check if complete
-	m_complete = true;
-
-	if(m_templatePipeline.isCreated())
-	{
-		// If there is a template it should always be complete
-		SubStateBit mask =
-			m_definedState | m_templatePipeline.get().m_definedState;
-		ANKI_ASSERT(mask == SubStateBit::ALL);
-	}
-	else if(m_definedState != SubStateBit::ALL)
-	{
-		m_complete = false;
-	}
+	m_in = init;
 
 	ANKI_CHECK(createGlPipeline());
 	if(!m_compute)
@@ -154,7 +140,7 @@ Error PipelineImpl::createGlPipeline()
 	U count = 6;
 	while(count-- != 0)
 	{
-		const ShaderPtr& shader = m_shaders[count];
+		const ShaderPtr& shader = m_in.m_shaders[count];
 		if(shader.isCreated())
 		{
 			ANKI_ASSERT(count == enumToType(shader.get().getType()));
@@ -193,9 +179,9 @@ Error PipelineImpl::createGlPipeline()
 
 	glBindProgramPipeline(m_glName);
 
-	for(U i = 0; i < m_shaders.getSize(); i++)
+	for(U i = 0; i < m_in.m_shaders.getSize(); i++)
 	{
-		ShaderPtr& shader = m_shaders[i];
+		ShaderPtr& shader = m_in.m_shaders[i];
 
 		if(shader.isCreated())
 		{
@@ -236,75 +222,44 @@ Error PipelineImpl::createGlPipeline()
 //==============================================================================
 void PipelineImpl::bind()
 {
-#if 1
-	ANKI_ASSERT(isCreated());
 	glBindProgramPipeline(m_glName);
-#else
-	// TODO check compute
-	ANKI_ASSERT(m_complete && "Should be complete");
+
+	if(m_compute)
+	{
+		return;
+	}
 
 	// Get last pipeline
-	auto& state =
+	GlState& state =
 		getManager().getImplementation().getRenderingThread().getState();
 
-	const PipelineImpl* lastPpline = nullptr;
-	const PipelineImpl* lastPplineTempl = nullptr;
-	if(state.m_lastPipeline.isCreated())
-	{
-		lastPpline = &state.m_lastPipeline.get();
-
-		if(ANKI_UNLIKELY(lastPpline == this))
-		{
-			// Binding the same pipeline, early out
-			return;
-		}
-
-		if(lastPpline->m_templatePipeline.isCreated())
-		{
-			lastPplineTempl = &lastPpline->m_templatePipeline.get();
-		}
-	}
-
-	// Get crnt pipeline template
-	const PipelineImpl* pplineTempl = nullptr;
-	if(m_templatePipeline.isCreated())
-	{
-		pplineTempl = &m_templatePipeline.get();
-	}
-
-#define ANKI_PPLINE_BIND(enum_, method_) \
-	do { \
-		const PipelineImpl* ppline = getPipelineForState(SubStateBit::enum_, \
-			lastPpline, lastPplineTempl, pplineTempl); \
-		if(ppline) { \
-			ppline->method_(state); \
-		} \
-	} while(0) \
-
-	ANKI_PPLINE_BIND(VERTEX, setVertexState);
-	ANKI_PPLINE_BIND(INPUT_ASSEMBLER, setInputAssemblerState);
-	ANKI_PPLINE_BIND(TESSELLATION, setTessellationState);
-	ANKI_PPLINE_BIND(VIEWPORT, setViewportState);
-	ANKI_PPLINE_BIND(RASTERIZER, setRasterizerState);
-	ANKI_PPLINE_BIND(DEPTH_STENCIL, setDepthStencilState);
-	ANKI_PPLINE_BIND(COLOR, setColorState);
-
-#undef ANKI_PPLINE_BIND
-
-#endif
+	setVertexState(state);
+	setInputAssemblerState(state);
+	setTessellationState(state);
+	setViewportState(state);
+	setRasterizerState(state);
+	setDepthStencilState(state);
+	setColorState(state);
 }
 
 //==============================================================================
 void PipelineImpl::initVertexState()
 {
-	for(U i = 0; i < m_vertex.m_attributeCount; ++i)
+	for(U i = 0; i < m_in.m_vertex.m_attributeCount; ++i)
 	{
-		const VertexAttributeBinding& binding = m_vertex.m_attributes[i];
+		const VertexAttributeBinding& binding = m_in.m_vertex.m_attributes[i];
 		ANKI_ASSERT(binding.m_format.m_srgb == false);
-		Attribute& cache = m_attribs[i];
+		Attribute& cache = m_cache.m_attribs[i];
 
 		// Component count
 		if(binding.m_format == PixelFormat(
+			ComponentFormat::R32, TransformFormat::FLOAT))
+		{
+			cache.m_compCount = 1;
+			cache.m_type = GL_FLOAT;
+			cache.m_normalized = false;
+		}
+		else if(binding.m_format == PixelFormat(
 			ComponentFormat::R32G32, TransformFormat::FLOAT))
 		{
 			cache.m_compCount = 2;
@@ -319,6 +274,20 @@ void PipelineImpl::initVertexState()
 			cache.m_normalized = false;
 		}
 		else if(binding.m_format == PixelFormat(
+			ComponentFormat::R32G32B32A32, TransformFormat::FLOAT))
+		{
+			cache.m_compCount = 4;
+			cache.m_type = GL_FLOAT;
+			cache.m_normalized = false;
+		}
+		else if(binding.m_format == PixelFormat(
+			ComponentFormat::R16G16, TransformFormat::FLOAT))
+		{
+			cache.m_compCount = 2;
+			cache.m_type = GL_HALF_FLOAT;
+			cache.m_normalized = false;
+		}
+		else if(binding.m_format == PixelFormat(
 			ComponentFormat::R10G10B10A2, TransformFormat::SNORM))
 		{
 			cache.m_compCount = 4;
@@ -330,84 +299,95 @@ void PipelineImpl::initVertexState()
 			ANKI_ASSERT(0 && "TODO");
 		}
 	}
+
+	m_hashes.m_vertex = computeHash(&m_in.m_vertex, sizeof(m_in.m_vertex));
 }
 
 //==============================================================================
 void PipelineImpl::initInputAssemblerState()
 {
-	switch(m_inputAssembler.m_topology)
+	switch(m_in.m_inputAssembler.m_topology)
 	{
-	case POINTS:
-		m_topology = GL_POINTS;
+	case PrimitiveTopology::POINTS:
+		m_cache.m_topology = GL_POINTS;
 		break;
-	case LINES:
-		m_topology = GL_LINES;
+	case PrimitiveTopology::LINES:
+		m_cache.m_topology = GL_LINES;
 		break;
-	case LINE_STIP:
-		m_topology = GL_LINE_STRIP;
+	case PrimitiveTopology::LINE_STIP:
+		m_cache.m_topology = GL_LINE_STRIP;
 		break;
-	case TRIANGLES:
-		m_topology = GL_TRIANGLES;
+	case PrimitiveTopology::TRIANGLES:
+		m_cache.m_topology = GL_TRIANGLES;
 		break;
-	case TRIANGLE_STRIP:
-		m_topology = GL_TRIANGLE_STRIP;
+	case PrimitiveTopology::TRIANGLE_STRIP:
+		m_cache.m_topology = GL_TRIANGLE_STRIP;
 		break;
-	case PATCHES:
-		m_topology = GL_PATCHES;
+	case PrimitiveTopology::PATCHES:
+		m_cache.m_topology = GL_PATCHES;
 		break;
 	default:
 		ANKI_ASSERT(0);
 	}
+
+	m_hashes.m_inputAssembler =
+		computeHash(&m_in.m_inputAssembler, sizeof(m_in.m_inputAssembler));
 }
 
 //==============================================================================
 void PipelineImpl::initRasterizerState()
 {
-	switch(m_rasterizer.m_fillMode)
+	switch(m_in.m_rasterizer.m_fillMode)
 	{
 	case FillMode::POINTS:
-		m_fillMode = GL_POINT;
+		m_cache.m_fillMode = GL_POINT;
 		break;
 	case FillMode::WIREFRAME:
-		m_fillMode = GL_LINE;
+		m_cache.m_fillMode = GL_LINE;
 		break;
 	case FillMode::SOLID:
-		m_fillMode = GL_FILL;
+		m_cache.m_fillMode = GL_FILL;
 		break;
 	default:
 		ANKI_ASSERT(0);
 	}
 
-	switch(m_rasterizer.m_cullMode)
+	switch(m_in.m_rasterizer.m_cullMode)
 	{
 	case CullMode::FRONT:
-		m_cullMode = GL_FRONT;
+		m_cache.m_cullMode = GL_FRONT;
 		break;
 	case CullMode::BACK:
-		m_cullMode = GL_BACK;
+		m_cache.m_cullMode = GL_BACK;
 		break;
 	case CullMode::FRONT_AND_BACK:
-		m_cullMode = GL_FRONT_AND_BACK;
+		m_cache.m_cullMode = GL_FRONT_AND_BACK;
 		break;
 	default:
 		ANKI_ASSERT(0);
 	}
+
+	m_hashes.m_rasterizer =
+		computeHash(&m_in.m_rasterizer, sizeof(m_in.m_rasterizer));
 }
 
 //==============================================================================
 void PipelineImpl::initDepthStencilState()
 {
-	m_depthCompareFunction =
-		convertCompareOperation(m_depthStencil.m_depthCompareFunction);
+	m_cache.m_depthCompareFunction =
+		convertCompareOperation(m_in.m_depthStencil.m_depthCompareFunction);
+
+	m_hashes.m_depthStencil =
+		computeHash(&m_in.m_depthStencil, sizeof(m_in.m_depthStencil));
 }
 
 //==============================================================================
 void PipelineImpl::initColorState()
 {
-	for(U i = 0; i < m_color.m_colorAttachmentsCount; ++i)
+	for(U i = 0; i < m_in.m_color.m_attachmentCount; ++i)
 	{
-		Attachment& out = m_attachments[i];
-		const ColorAttachmentStateInfo& in = m_color.m_attachments[i];
+		Attachment& out = m_cache.m_attachments[i];
+		const ColorAttachmentStateInfo& in = m_in.m_color.m_attachments[i];
 
 		out.m_srcBlendMethod = convertBlendMethod(in.m_srcBlendMethod);
 		out.m_dstBlendMethod = convertBlendMethod(in.m_dstBlendMethod);
@@ -438,147 +418,125 @@ void PipelineImpl::initColorState()
 		out.m_channelWriteMask[2] = in.m_channelWriteMask | ColorBit::BLUE;
 		out.m_channelWriteMask[3] = in.m_channelWriteMask | ColorBit::ALPHA;
 	}
+
+	m_hashes.m_color = computeHash(&m_in.m_color, sizeof(m_in.m_color));
 }
 
 //==============================================================================
 void PipelineImpl::setVertexState(GlState& state) const
 {
-	for(U i = 0; i < m_vertex.m_attributeCount; ++i)
+	if(state.m_stateHashes.m_vertex == m_hashes.m_vertex)
 	{
-		const Attribute& attrib = m_attribs[i];
-		ANKI_ASSERT(attrib.m_type);
-		glVertexAttribFormat(i, attrib.m_compCount, attrib.m_type,
-			attrib.m_normalized, m_vertex.m_attributes[i].m_offset);
-
-		glVertexAttribBinding(i, m_vertex.m_attributes[i].m_binding);
+		return;
 	}
 
-	for(U i = 0; i < m_vertex.m_bindingCount; ++i)
+	for(U i = 0; i < m_in.m_vertex.m_attributeCount; ++i)
 	{
-		state.m_vertexBindingStrides[i] = m_vertex.m_bindings[i].m_stride;
+		const Attribute& attrib = m_cache.m_attribs[i];
+		ANKI_ASSERT(attrib.m_type);
+		glVertexAttribFormat(i, attrib.m_compCount, attrib.m_type,
+			attrib.m_normalized, m_in.m_vertex.m_attributes[i].m_offset);
+
+		glVertexAttribBinding(i, m_in.m_vertex.m_attributes[i].m_binding);
+	}
+
+	for(U i = 0; i < m_in.m_vertex.m_bindingCount; ++i)
+	{
+		state.m_vertexBindingStrides[i] = m_in.m_vertex.m_bindings[i].m_stride;
 	}
 }
 
 //==============================================================================
 void PipelineImpl::setInputAssemblerState(GlState& state) const
 {
-	if(m_inputAssembler.m_primitiveRestartEnabled
-		!= state.m_primitiveRestartEnabled)
+	if(state.m_stateHashes.m_inputAssembler == m_hashes.m_inputAssembler)
 	{
-		if(m_inputAssembler.m_primitiveRestartEnabled)
-		{
-			glEnable(GL_PRIMITIVE_RESTART);
-		}
-		else
-		{
-			glDisable(GL_PRIMITIVE_RESTART);
-		}
-
-		state.m_primitiveRestartEnabled =
-			m_inputAssembler.m_primitiveRestartEnabled;
+		return;
 	}
 
-	state.m_topology = m_topology;
+	if(m_in.m_inputAssembler.m_primitiveRestartEnabled)
+	{
+		glEnable(GL_PRIMITIVE_RESTART);
+	}
+	else
+	{
+		glDisable(GL_PRIMITIVE_RESTART);
+	}
 }
 
 //==============================================================================
 void PipelineImpl::setTessellationState(GlState& state) const
 {
-	if(m_tessellation.m_patchControlPointsCount
-		!= state.m_patchControlPointsCount)
+	if(state.m_stateHashes.m_tessellation == m_hashes.m_tessellation)
 	{
-		glPatchParameteri(GL_PATCH_VERTICES,
-			m_tessellation.m_patchControlPointsCount);
-
-		state.m_patchControlPointsCount =
-			m_tessellation.m_patchControlPointsCount;
+		return;
 	}
+
+	glPatchParameteri(GL_PATCH_VERTICES,
+		m_in.m_tessellation.m_patchControlPointsCount);
 }
 
 //==============================================================================
 void PipelineImpl::setRasterizerState(GlState& state) const
 {
-	if(m_fillMode != state.m_fillMode)
+	if(state.m_stateHashes.m_rasterizer == m_hashes.m_rasterizer)
 	{
-		glPolygonMode(GL_FRONT_AND_BACK, m_fillMode);
-		state.m_fillMode = m_fillMode;
+		return;
 	}
 
-	if(m_cullMode != state.m_cullMode)
-	{
-		glCullFace(m_cullMode);
-		state.m_cullMode = m_cullMode;
-	}
+	glPolygonMode(GL_FRONT_AND_BACK, m_cache.m_fillMode);
+	glCullFace(m_cache.m_cullMode);
 }
 
 //==============================================================================
 void PipelineImpl::setDepthStencilState(GlState& state) const
 {
-	if(m_depthCompareFunction != state.m_depthCompareFunction)
+	if(state.m_stateHashes.m_depthStencil == m_hashes.m_depthStencil)
 	{
-		if(m_depthCompareFunction == GL_ALWAYS)
-		{
-			glDisable(GL_DEPTH_TEST);
-		}
-		else
-		{
-			glEnable(GL_DEPTH_TEST);
-		}
-
-		glDepthFunc(m_depthCompareFunction);
-
-		state.m_depthCompareFunction = m_depthCompareFunction;
+		return;
 	}
+
+	if(m_cache.m_depthCompareFunction == GL_ALWAYS)
+	{
+		glDisable(GL_DEPTH_TEST);
+	}
+	else
+	{
+		glEnable(GL_DEPTH_TEST);
+	}
+
+	if(m_in.m_depthStencil.m_polygonOffsetFactor == 0.0
+		&& m_in.m_depthStencil.m_polygonOffsetUnits == 0.0)
+	{
+		glEnable(GL_POLYGON_OFFSET_FILL);
+		glPolygonOffset(m_in.m_depthStencil.m_polygonOffsetFactor,
+			m_in.m_depthStencil.m_polygonOffsetUnits);
+	}
+	else
+	{
+		glDisable(GL_POLYGON_OFFSET_FILL);
+	}
+
+	glDepthFunc(m_cache.m_depthCompareFunction);
 }
 
 //==============================================================================
-void PipelineImpl::setColorState(GlState&) const
+void PipelineImpl::setColorState(GlState& state) const
 {
-	for(U i = 0; i < m_color.m_colorAttachmentsCount; ++i)
+	if(state.m_stateHashes.m_color == m_hashes.m_color)
 	{
-		const Attachment& att = m_attachments[i];
+		return;
+	}
+
+	for(U i = 0; i < m_in.m_color.m_attachmentCount; ++i)
+	{
+		const Attachment& att = m_cache.m_attachments[i];
 
 		glBlendFunci(i, att.m_srcBlendMethod, att.m_dstBlendMethod);
 		glBlendEquationi(i, att.m_blendFunction);
 		glColorMaski(i, att.m_channelWriteMask[0], att.m_channelWriteMask[1],
 			att.m_channelWriteMask[2], att.m_channelWriteMask[3]);
 	}
-}
-
-//==============================================================================
-const PipelineImpl* PipelineImpl::getPipelineForState(
-	const SubStateBit bit,
-	const PipelineImpl* lastPpline,
-	const PipelineImpl* lastPplineTempl,
-	const PipelineImpl* pplineTempl) const
-{
-	const PipelineImpl* out = nullptr;
-
-	if(pplineTempl == nullptr || (m_definedState | bit) != SubStateBit::NONE)
-	{
-		// Current pipeline overrides the state
-		out = this;
-	}
-	else
-	{
-		// Need to get the state from the templates
-
-		if(lastPplineTempl == nullptr
-			|| lastPplineTempl != pplineTempl
-			|| (lastPpline->m_definedState | bit) != SubStateBit::NONE)
-		{
-			// Last template cannot be used
-
-			out = pplineTempl;
-		}
-		else
-		{
-			// Last template can be used but since it's already bound skipp
-			out = nullptr;
-		}
-	}
-
-	return out;
 }
 
 } // end namespace anki

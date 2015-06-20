@@ -14,43 +14,10 @@
 #include "anki/util/File.h"
 #include "anki/util/Filesystem.h"
 #include "anki/misc/Xml.h"
-#include <functional> // TODO
 #include <algorithm>
 #include <sstream>
 
 namespace anki {
-
-//==============================================================================
-// Misc                                                                        =
-//==============================================================================
-
-//==============================================================================
-/// Given a string that defines blending return the GLenum
-static GLenum blendToEnum(const CString& str)
-{
-// Dont make idiotic mistakes
-#define TXT_AND_ENUM(x) \
-	if(str == #x) \
-	{ \
-		return x; \
-	}
-
-	TXT_AND_ENUM(GL_ZERO)
-	TXT_AND_ENUM(GL_ONE)
-	TXT_AND_ENUM(GL_DST_COLOR)
-	TXT_AND_ENUM(GL_ONE_MINUS_DST_COLOR)
-	TXT_AND_ENUM(GL_SRC_ALPHA)
-	TXT_AND_ENUM(GL_ONE_MINUS_SRC_ALPHA)
-	TXT_AND_ENUM(GL_DST_ALPHA)
-	TXT_AND_ENUM(GL_ONE_MINUS_DST_ALPHA)
-	TXT_AND_ENUM(GL_SRC_ALPHA_SATURATE)
-	TXT_AND_ENUM(GL_SRC_COLOR)
-	TXT_AND_ENUM(GL_ONE_MINUS_SRC_COLOR);
-	ANKI_LOGE("Incorrect blend enum");
-	return 0;
-
-#undef TXT_AND_ENUM
-}
 
 //==============================================================================
 // MaterialVariable                                                            =
@@ -156,16 +123,12 @@ Error MaterialVariableTemplate<T>::_newInstance(
 //==============================================================================
 Material::Material(ResourceManager* manager)
 	: ResourceObject(manager)
-	, m_varDict(10, Dictionary<MaterialVariable*>::hasher(),
-		Dictionary<MaterialVariable*>::key_equal(), getAllocator())
 {}
 
 //==============================================================================
 Material::~Material()
 {
 	auto alloc = getAllocator();
-
-	m_progs.destroy(alloc);
 
 	for(auto it : m_vars)
 	{
@@ -178,172 +141,6 @@ Material::~Material()
 	}
 
 	m_vars.destroy(alloc);
-	m_pplines.destroy(alloc);
-}
-
-//==============================================================================
-U Material::countShaders(ShaderType type) const
-{
-	U count = 0;
-	U tessCount = m_tessellation ? 2 : 1;
-
-	switch(type)
-	{
-	case ShaderType::VERTEX:
-		count = m_passesCount * m_lodsCount * tessCount;
-		break;
-	case ShaderType::TESSELLATION_CONTROL:
-		if(m_tessellation)
-		{
-			count = m_passesCount;
-		}
-		break;
-	case ShaderType::TESSELLATION_EVALUATION:
-		if(m_tessellation)
-		{
-			count = m_passesCount;
-		}
-		break;
-	case ShaderType::GEOMETRY:
-		count = 0;
-		break;
-	case ShaderType::FRAGMENT:
-		count = m_passesCount * m_lodsCount;
-		break;
-	default:
-		ANKI_ASSERT(0);
-	}
-
-	return count;
-}
-
-//==============================================================================
-U Material::getShaderIndex(const RenderingKey key, ShaderType type) const
-{
-	ANKI_ASSERT((U)key.m_pass < m_passesCount);
-	ANKI_ASSERT(key.m_lod < m_lodsCount);
-
-	if(key.m_tessellation)
-	{
-		ANKI_ASSERT(m_tessellation);
-	}
-
-	U tessCount = m_tessellation ? 2 : 1;
-
-	U pass = enumToType(key.m_pass);
-	U lod = key.m_lod;
-	U tess = key.m_tessellation;
-
-	U offset = 0;
-	switch(type)
-	{
-	case ShaderType::FRAGMENT:
-		offset += countShaders(ShaderType::GEOMETRY);
-	case ShaderType::GEOMETRY:
-		offset += countShaders(ShaderType::TESSELLATION_EVALUATION);
-	case ShaderType::TESSELLATION_EVALUATION:
-		offset += countShaders(ShaderType::TESSELLATION_CONTROL);
-	case ShaderType::TESSELLATION_CONTROL:
-		offset += countShaders(ShaderType::VERTEX);
-	case ShaderType::VERTEX:
-		offset += 0;
-		break;
-	default:
-		ANKI_ASSERT(0);
-	}
-
-	U idx = MAX_U32;
-	switch(type)
-	{
-	case ShaderType::VERTEX:
-		// Like referencing an array of [pass][lod][tess]
-		idx = pass * m_lodsCount * tessCount + lod * tessCount + tess;
-		break;
-	case ShaderType::TESSELLATION_CONTROL:
-		// Like an array [pass]
-		idx = pass;
-		break;
-	case ShaderType::TESSELLATION_EVALUATION:
-		// Like an array [pass]
-		idx = pass;
-		break;
-	case ShaderType::GEOMETRY:
-		idx = 0;
-		break;
-	case ShaderType::FRAGMENT:
-		// Like an array [pass][lod]
-		idx = pass * m_lodsCount + lod;
-		break;
-	default:
-		ANKI_ASSERT(0);
-	}
-
-	return offset + idx;
-}
-
-//==============================================================================
-ShaderResourcePtr& Material::getProgram(
-	const RenderingKey key, ShaderType type)
-{
-	ShaderResourcePtr& out = m_progs[getShaderIndex(key, type)];
-
-	if(out.isLoaded())
-	{
-		ANKI_ASSERT(out->getType() == type);
-	}
-
-	return out;
-}
-
-//==============================================================================
-Error Material::getProgramPipeline(
-	const RenderingKey& key, PipelinePtr& out)
-{
-	ANKI_ASSERT(enumToType(key.m_pass) < m_passesCount);
-	ANKI_ASSERT(key.m_lod < m_lodsCount);
-
-	U tessCount = 1;
-	if(m_tessellation)
-	{
-		tessCount = 2;
-	}
-	else
-	{
-		ANKI_ASSERT(!key.m_tessellation);
-	}
-
-	U idx = enumToType(key.m_pass) * m_lodsCount * tessCount
-		+ key.m_lod * tessCount + key.m_tessellation;
-
-	PipelinePtr& ppline = m_pplines[idx];
-
-	// Lazily create it
-	if(ANKI_UNLIKELY(!ppline.isCreated()))
-	{
-		PipelinePtr::Initializer pplineInit;
-
-		pplineInit.m_shaders[U(ShaderType::VERTEX)] =
-			getProgram(key, ShaderType::VERTEX)->getGrShader();
-
-		if(key.m_tessellation)
-		{
-			pplineInit.m_shaders[U(ShaderType::TESSELLATION_CONTROL)] =
-				getProgram(
-				key, ShaderType::TESSELLATION_CONTROL)->getGrShader();
-			pplineInit.m_shaders[U(ShaderType::TESSELLATION_EVALUATION)] =
-				getProgram(
-				key, ShaderType::TESSELLATION_EVALUATION)->getGrShader();
-		}
-
-		pplineInit.m_shaders[U(ShaderType::FRAGMENT)] =
-			getProgram(key, ShaderType::FRAGMENT)->getGrShader();
-
-		ppline.create(&getManager().getGrManager(), pplineInit);
-	}
-
-	out = ppline;
-
-	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -373,11 +170,11 @@ Error Material::parseMaterialTag(const XmlElement& materialEl)
 	{
 		I64 tmp;
 		ANKI_CHECK(lodEl.getI64(tmp));
-		m_lodsCount = (tmp < 1) ? 1 : tmp;
+		m_lodCount = (tmp < 1) ? 1 : tmp;
 	}
 	else
 	{
-		m_lodsCount = 1;
+		m_lodCount = 1;
 	}
 
 	// shadow
@@ -392,62 +189,15 @@ Error Material::parseMaterialTag(const XmlElement& materialEl)
 		m_shadow = tmp;
 	}
 
-	// blendFunctions
+	// forwardShading
 	//
-	XmlElement blendFunctionsEl;
-	ANKI_CHECK(
-		materialEl.getChildElementOptional("blendFunctions", blendFunctionsEl));
-
-	if(blendFunctionsEl)
-	{
-		CString cstr;
-
-		// sFactor
-		ANKI_CHECK(blendFunctionsEl.getChildElement("sFactor", el));
-		ANKI_CHECK(el.getText(cstr));
-		m_blendingSfactor = blendToEnum(cstr);
-		if(m_blendingSfactor == 0)
-		{
-			return ErrorCode::USER_DATA;
-		}
-
-		// dFactor
-		ANKI_CHECK(blendFunctionsEl.getChildElement("dFactor", el));
-		ANKI_CHECK(el.getText(cstr));
-		m_blendingDfactor = blendToEnum(cstr);
-		if(m_blendingDfactor == 0)
-		{
-			return ErrorCode::USER_DATA;
-		}
-	}
-	else
-	{
-		m_passesCount = 2;
-	}
-
-	// depthTesting
-	//
-	XmlElement depthTestingEl;
-	ANKI_CHECK(
-		materialEl.getChildElementOptional("depthTesting", depthTestingEl));
-
-	if(depthTestingEl)
+	XmlElement fsEl;
+	ANKI_CHECK(materialEl.getChildElementOptional("forwardShading", fsEl));
+	if(fsEl)
 	{
 		I64 tmp;
-		ANKI_CHECK(depthTestingEl.getI64(tmp));
-		m_depthTesting = tmp;
-	}
-
-	// wireframe
-	//
-	XmlElement wireframeEl;
-	ANKI_CHECK(materialEl.getChildElementOptional("wireframe", wireframeEl));
-
-	if(wireframeEl)
-	{
-		I64 tmp;
-		ANKI_CHECK(wireframeEl.getI64(tmp));
-		m_wireframe = tmp;
+		ANKI_CHECK(fsEl.getI64(tmp));
+		m_forwardShading = tmp;
 	}
 
 	// shaderProgram
@@ -458,17 +208,7 @@ Error Material::parseMaterialTag(const XmlElement& materialEl)
 
 	m_tessellation = loader.hasTessellation();
 	U tessCount = m_tessellation ? 2 : 1;
-
-	// Alloc program vector
-	m_progs.create(getAllocator(),
-		countShaders(ShaderType::VERTEX)
-		+ countShaders(ShaderType::TESSELLATION_CONTROL)
-		+ countShaders(ShaderType::TESSELLATION_EVALUATION)
-		+ countShaders(ShaderType::GEOMETRY)
-		+ countShaders(ShaderType::FRAGMENT));
-
-	// Aloc progam descriptors
-	m_pplines.create(getAllocator(), m_passesCount * m_lodsCount * tessCount);
+	U passesCount = m_shadow ? 2 : 1;
 
 	m_hash = 0;
 	for(ShaderType shader = ShaderType::VERTEX;
@@ -490,14 +230,14 @@ Error Material::parseMaterialTag(const XmlElement& materialEl)
 			continue;
 		}
 
-		for(U level = 0; level < m_lodsCount; ++level)
+		for(U level = 0; level < m_lodCount; ++level)
 		{
 			if(level > 0 && isTessellationShader)
 			{
 				continue;
 			}
 
-			for(U pid = 0; pid < m_passesCount; ++pid)
+			for(U pid = 0; pid < passesCount; ++pid)
 			{
 				for(U tess = 0; tess < tessCount; ++tess)
 				{
@@ -523,8 +263,8 @@ Error Material::parseMaterialTag(const XmlElement& materialEl)
 
 					ANKI_CHECK(createProgramSourceToCache(src, filename));
 
-					RenderingKey key((Pass)pid, level, tess);
-					ShaderResourcePtr& progr = getProgram(key, shader);
+					ShaderResourcePtr& progr =
+						m_shaders[pid][level][tess][U(shader)];
 					ANKI_CHECK(progr.load(filename.toCString(), &getManager()));
 
 					// Update the hash
@@ -537,7 +277,6 @@ Error Material::parseMaterialTag(const XmlElement& materialEl)
 	ANKI_CHECK(populateVariables(loader));
 
 	// Get uniform block size
-	ANKI_ASSERT(m_progs.getSize() > 0);
 	m_shaderBlockSize = loader.getUniformBlockSize();
 
 	return ErrorCode::NONE;
@@ -670,6 +409,18 @@ Error Material::populateVariables(const MaterialProgramCreator& loader)
 	}
 
 	return ErrorCode::NONE;
+}
+
+//==============================================================================
+ShaderPtr Material::getShader(const RenderingKey& key, ShaderType type) const
+{
+	ANKI_ASSERT(!(key.m_tessellation && !m_tessellation));
+	ANKI_ASSERT(key.m_lod < m_lodCount);
+	ANKI_ASSERT(!(key.m_pass == Pass::SM && !m_shadow));
+
+	ShaderResourcePtr resource =
+		m_shaders[U(key.m_pass)][key.m_lod][key.m_tessellation][U(type)];
+	return resource->getGrShader();
 }
 
 } // end namespace anki

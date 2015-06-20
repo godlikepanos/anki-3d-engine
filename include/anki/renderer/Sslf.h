@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RENDERER_SSLF_H
-#define ANKI_RENDERER_SSLF_H
+#pragma once
 
 #include "anki/renderer/RenderingPass.h"
 
@@ -20,7 +19,7 @@ public:
 	/// @privatesection
 	/// @{
 	Sslf(Renderer* r)
-	:	RenderingPass(r)
+		: RenderingPass(r)
 	{}
 
 	ANKI_USE_RESULT Error init(const ConfigSet& config);
@@ -44,6 +43,4 @@ private:
 /// @}
 
 } // end namespace anki
-
-#endif
 

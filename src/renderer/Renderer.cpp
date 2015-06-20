@@ -98,12 +98,6 @@ Error Renderer::initInternal(const ConfigSet& config)
 	ANKI_CHECK(m_sceneDrawer.create(this));
 
 	// quad setup
-	static const F32 quadVertCoords[][2] = {{1.0, 1.0}, {-1.0, 1.0},
-		{1.0, -1.0}, {-1.0, -1.0}};
-
-	m_quadPositionsBuff.create(m_gr, GL_ARRAY_BUFFER,
-		&quadVertCoords[0][0], sizeof(quadVertCoords), 0);
-
 	ANKI_CHECK(m_drawQuadVert.load("shaders/Quad.vert.glsl", m_resources));
 
 	// Init the stages. Careful with the order!!!!!!!!!!
@@ -193,17 +187,14 @@ void Renderer::drawQuad(CommandBufferPtr& cmdBuff)
 void Renderer::drawQuadConditional(OcclusionQueryPtr& q,
 	CommandBufferPtr& cmdBuff)
 {
-	m_quadPositionsBuff.bindVertexBuffer(cmdBuff, 2, GL_FLOAT, false, 0, 0, 0);
-	cmdBuff.drawArraysConditional(q, GL_TRIANGLE_STRIP, 4, 1);
+	cmdBuff.drawArraysConditional(q, GL_TRIANGLES, 3, 1);
 }
 
 //==============================================================================
 void Renderer::drawQuadInstanced(
 	CommandBufferPtr& cmdBuff, U32 primitiveCount)
 {
-	m_quadPositionsBuff.bindVertexBuffer(cmdBuff, 2, GL_FLOAT, false, 0, 0, 0);
-
-	cmdBuff.drawArrays(GL_TRIANGLE_STRIP, 4, primitiveCount);
+	cmdBuff.drawArrays(GL_TRIANGLES, 3, primitiveCount);
 }
 
 //==============================================================================
@@ -229,7 +220,7 @@ Vec3 Renderer::unproject(const Vec3& windowCoords, const Mat4& modelViewMat,
 void Renderer::createRenderTarget(U32 w, U32 h, const PixelFormat& format,
 	U32 samples, SamplingFilter filter, U mipsCount, TexturePtr& rt)
 {
-	// Not very important but keep the resulution of render targets aligned to
+	// Not very important but keep the resolution of render targets aligned to
 	// 16
 	if(0)
 	{
@@ -266,15 +257,22 @@ void Renderer::createRenderTarget(U32 w, U32 h, const PixelFormat& format,
 }
 
 //==============================================================================
-Error Renderer::createDrawQuadPipeline(
-	ShaderPtr frag, PipelinePtr& ppline)
+void Renderer::createDrawQuadPipeline(
+	ShaderPtr frag, const ColorStateInfo& colorState,
+	PipelinePtr& ppline)
 {
 	PipelinePtr::Initializer init;
+
+	init.m_inputAssembler.m_topology = PrimitiveTopology::TRIANGLE_STRIP;
+
+	init.m_depthStencil.m_depthWriteEnabled = false;
+	init.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
+
+	init.m_color = colorState;
+
 	init.m_shaders[U(ShaderType::VERTEX)] = m_drawQuadVert->getGrShader();
 	init.m_shaders[U(ShaderType::FRAGMENT)] = frag;
 	ppline.create(m_gr, init);
-
-	return ErrorCode::NONE;
 }
 
 //==============================================================================

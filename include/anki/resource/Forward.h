@@ -3,11 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RESOURCE_FORWARD_H
-#define ANKI_RESOURCE_FORWARD_H
+#pragma once
 
 #include "anki/resource/Common.h"
 #include "anki/resource/ResourcePointer.h"
-
-#endif
 

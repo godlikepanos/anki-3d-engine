@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RESOURCE_RESOURCE_OBJECT_H
-#define ANKI_RESOURCE_RESOURCE_OBJECT_H
+#pragma once
 
 #include "anki/resource/Common.h"
 #include "anki/resource/ResourceFilesystem.h"
@@ -83,6 +82,4 @@ private:
 /// @}
 
 } // end namespace anki
-
-#endif
 

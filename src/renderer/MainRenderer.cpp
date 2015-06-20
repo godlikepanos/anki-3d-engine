@@ -8,6 +8,7 @@
 #include "anki/renderer/Is.h"
 #include "anki/renderer/Pps.h"
 #include "anki/renderer/Dbg.h"
+#include "anki/renderer/Ms.h"
 #include "anki/scene/SceneGraph.h"
 #include "anki/scene/Camera.h"
 #include "anki/util/Logger.h"
@@ -61,8 +62,6 @@ Error MainRenderer::create(
 	ANKI_CHECK(m_r->init(threadpool, resources, gr, m_alloc,
 		m_frameAlloc, config2, globalTimestamp));
 
-	initGl();
-
 	// Set the default preprocessor string
 	m_materialShaderSource.sprintf(
 		m_alloc,
@@ -74,8 +73,12 @@ Error MainRenderer::create(
 	ANKI_CHECK(m_blitFrag.load(
 		"shaders/Final.frag.glsl", &m_r->getResourceManager()));
 
-	ANKI_CHECK(m_r->createDrawQuadPipeline(
-		m_blitFrag->getGrShader(), m_blitPpline));
+	ColorStateInfo colorState;
+	colorState.m_attachmentCount = 1;
+	colorState.m_attachments[0].m_format =
+		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM);
+	m_r->createDrawQuadPipeline(
+		m_blitFrag->getGrShader(), colorState, m_blitPpline);
 
 	ANKI_LOGI("Main renderer initialized. Rendering size %dx%d",
 		m_width, m_height);
@@ -139,7 +142,7 @@ Error MainRenderer::render(SceneGraph& scene)
 			rt = &m_r->getIs()._getRt();
 		}
 
-		//rt = &getMs().getRt2();
+		//rt = &m_r->getMs().getRt2();
 		//rt = &getPps().getHdr()._getRt();
 
 		rt->bind(cmdb, 0);
@@ -159,18 +162,6 @@ Error MainRenderer::render(SceneGraph& scene)
 	ANKI_COUNTER_STOP_TIMER_INC(MAIN_RENDERER_TIME);
 
 	return ErrorCode::NONE;
-}
-
-//==============================================================================
-void MainRenderer::initGl()
-{
-	CommandBufferPtr cmdb;
-	cmdb.create(&m_r->getGrManager());
-
-	cmdb.enableCulling(true);
-	cmdb.setCullFace(GL_BACK);
-	cmdb.enablePointSize(true);
-	cmdb.flush();
 }
 
 //==============================================================================

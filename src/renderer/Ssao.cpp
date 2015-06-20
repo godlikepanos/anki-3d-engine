@@ -68,12 +68,15 @@ public:
 //==============================================================================
 
 //==============================================================================
+const PixelFormat Ssao::RT_PIXEL_FORMAT(
+	ComponentFormat::R8, TransformFormat::UNORM);
+
+//==============================================================================
 Error Ssao::createFb(FramebufferPtr& fb, TexturePtr& rt)
 {
 	// Set to bilinear because the blurring techniques take advantage of that
 	m_r->createRenderTarget(m_width, m_height,
-		PixelFormat(ComponentFormat::R8, TransformFormat::UNORM),
-		1, SamplingFilter::LINEAR, 1, rt);
+		RT_PIXEL_FORMAT, 1, SamplingFilter::LINEAR, 1, rt);
 
 	// Create FB
 	FramebufferPtr::Initializer fbInit;
@@ -164,6 +167,10 @@ Error Ssao::initInternal(const ConfigSet& config)
 	m_uniformsBuff.create(&getGrManager(), GL_SHADER_STORAGE_BUFFER,
 		nullptr, sizeof(ShaderCommonUniforms), GL_DYNAMIC_STORAGE_BIT);
 
+	ColorStateInfo colorState;
+	colorState.m_attachmentCount = 1;
+	colorState.m_attachments[0].m_format = RT_PIXEL_FORMAT;
+
 	StringAuto pps(getAllocator());
 
 	// main pass prog
@@ -178,8 +185,8 @@ Error Ssao::initInternal(const ConfigSet& config)
 	ANKI_CHECK(m_ssaoFrag.loadToCache(&getResourceManager(),
 		"shaders/PpsSsao.frag.glsl", pps.toCString(), "r_"));
 
-	ANKI_CHECK(m_r->createDrawQuadPipeline(
-		m_ssaoFrag->getGrShader(), m_ssaoPpline));
+	m_r->createDrawQuadPipeline(
+		m_ssaoFrag->getGrShader(), colorState, m_ssaoPpline);
 
 	// blurring progs
 	const char* SHADER_FILENAME =
@@ -196,8 +203,8 @@ Error Ssao::initInternal(const ConfigSet& config)
 	ANKI_CHECK(m_hblurFrag.loadToCache(&getResourceManager(),
 		SHADER_FILENAME, pps.toCString(), "r_"));
 
-	ANKI_CHECK(m_r->createDrawQuadPipeline(
-		m_hblurFrag->getGrShader(), m_hblurPpline));
+	m_r->createDrawQuadPipeline(
+		m_hblurFrag->getGrShader(), colorState, m_hblurPpline);
 
 	pps.destroy(getAllocator());
 	pps.sprintf(
@@ -210,8 +217,8 @@ Error Ssao::initInternal(const ConfigSet& config)
 	ANKI_CHECK(m_vblurFrag.loadToCache(&getResourceManager(),
 		SHADER_FILENAME, pps.toCString(), "r_"));
 
-	ANKI_CHECK(m_r->createDrawQuadPipeline(
-		m_vblurFrag->getGrShader(), m_vblurPpline));
+	m_r->createDrawQuadPipeline(
+		m_vblurFrag->getGrShader(), colorState, m_vblurPpline);
 
 	cmdb.flush();
 

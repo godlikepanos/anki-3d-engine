@@ -120,9 +120,13 @@ public:
 };
 
 //==============================================================================
+const PixelFormat Is::RT_PIXEL_FORMAT(
+	ComponentFormat::R11G11B10, TransformFormat::FLOAT);
+
+//==============================================================================
 Is::Is(Renderer* r)
-:	RenderingPass(r),
-	m_sm(r)
+	: RenderingPass(r)
+	, m_sm(r)
 {}
 
 //==============================================================================
@@ -210,18 +214,22 @@ Error Is::initInternal(const ConfigSet& config)
 		"shaders/IsLp.frag.glsl", pps.toCString(), "r_"));
 
 	PipelinePtr::Initializer init;
-		init.m_shaders[U(ShaderType::VERTEX)] = m_lightVert->getGrShader();
-		init.m_shaders[U(ShaderType::FRAGMENT)] = m_lightFrag->getGrShader();
+
+	init.m_inputAssembler.m_topology = PrimitiveTopology::TRIANGLE_STRIP;
+	init.m_depthStencil.m_depthWriteEnabled = false;
+	init.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
+	init.m_color.m_attachmentCount = 1;
+	init.m_color.m_attachments[0].m_format = RT_PIXEL_FORMAT;
+	init.m_shaders[U(ShaderType::VERTEX)] = m_lightVert->getGrShader();
+	init.m_shaders[U(ShaderType::FRAGMENT)] = m_lightFrag->getGrShader();
 	m_lightPpline.create(&getGrManager(), init);
 
 	//
 	// Create framebuffer
 	//
-
 	m_r->createRenderTarget(
 		m_r->getWidth(), m_r->getHeight(),
-		PixelFormat(ComponentFormat::R11G11B10, TransformFormat::FLOAT),
-		1, SamplingFilter::LINEAR, MIPMAPS_COUNT, m_rt);
+		RT_PIXEL_FORMAT, 1, SamplingFilter::LINEAR, MIPMAPS_COUNT, m_rt);
 
 	FramebufferPtr::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
@@ -229,15 +237,6 @@ Error Is::initInternal(const ConfigSet& config)
 	fbInit.m_colorAttachments[0].m_loadOperation =
 		AttachmentLoadOperation::DONT_CARE;
 	m_fb.create(&getGrManager(), fbInit);
-
-	//
-	// Init the quad
-	//
-	static const F32 quadVertCoords[][2] =
-		{{1.0, 1.0}, {0.0, 1.0}, {1.0, 0.0}, {0.0, 0.0}};
-
-	m_quadPositionsVertBuff.create(&getGrManager(), GL_ARRAY_BUFFER,
-		&quadVertCoords[0][0], sizeof(quadVertCoords), 0);
 
 	//
 	// Create UBOs
@@ -376,19 +375,22 @@ Error Is::lightPass(CommandBufferPtr& cmdBuff)
 	if(visiblePointLightsCount)
 	{
 		taskData.m_pointLights = SArray<shader::PointLight>(
-			lightsBase + pointLightsOffset, visiblePointLightsCount);
+			reinterpret_cast<shader::PointLight*>(
+			lightsBase + pointLightsOffset), visiblePointLightsCount);
 	}
 
 	if(visibleSpotLightsCount)
 	{
 		taskData.m_spotLights = SArray<shader::SpotLight>(
-			lightsBase + spotLightsOffset, visibleSpotLightsCount);
+			reinterpret_cast<shader::SpotLight*>(lightsBase + spotLightsOffset),
+			visibleSpotLightsCount);
 	}
 
 	if(visibleSpotTexLightsCount)
 	{
 		taskData.m_spotTexLights = SArray<shader::SpotLight>(
-			lightsBase + spotTexLightsOffset, visibleSpotTexLightsCount);
+			reinterpret_cast<shader::SpotLight*>(
+			lightsBase + spotTexLightsOffset), visibleSpotTexLightsCount);
 	}
 
 	taskData.m_lightsBegin = vi.getLightsBegin();
@@ -452,7 +454,7 @@ Error Is::lightPass(CommandBufferPtr& cmdBuff)
 		m_r->getMs().getRt1(),
 		m_r->getMs().getRt2(),
 		m_r->getMs().getDepthRt(),
-		m_sm.m_sm2DArrayTex}};
+		m_sm.getTextureArray()}};
 
 	cmdBuff.bindTextures(0, tarr.begin(), tarr.getSize());
 
@@ -461,9 +463,6 @@ Error Is::lightPass(CommandBufferPtr& cmdBuff)
 	//
 
 	m_lightPpline.bind(cmdBuff);
-
-	m_quadPositionsVertBuff.bindVertexBuffer(cmdBuff,
-		2, GL_FLOAT, false, 0, 0, 0);
 
 	cmdBuff.drawArrays(GL_TRIANGLE_STRIP, 4, m_r->getTilesCountXY());
 
@@ -526,7 +525,7 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 	U tilesCount = tilesCount2d.x() * tilesCount2d.y();
 
 	SArray<shader::Tile> stiles(
-		m_tilesBufferAddresses[m_currentFrame],
+		reinterpret_cast<shader::Tile*>(m_tilesBufferAddresses[m_currentFrame]),
 		tilesCount);
 
 	Threadpool::Task::choseStartEnd(
@@ -551,8 +550,8 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 		if(offset + count <= m_maxLightIds)
 		{
 			SArray<Lid> lightIds(
-				m_lightIdsBufferAddresses[m_currentFrame],
-				m_maxLightIds);
+				reinterpret_cast<Lid*>(
+				m_lightIdsBufferAddresses[m_currentFrame]), m_maxLightIds);
 
 			t.m_offset = offset;
 

@@ -182,7 +182,7 @@ public:
 	void construct(Y* p, Args&&... args)
 	{
 		// Placement new
-		::new((void *)p) Y(std::forward<Args>(args)...);
+		::new(static_cast<void*>(p)) Y(std::forward<Args>(args)...);
 	}
 
 	/// Call destructor

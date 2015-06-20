@@ -13,7 +13,7 @@
 
 namespace anki {
 
-// Forward 
+// Forward
 class SceneNode;
 
 /// @addtogroup renderer
@@ -22,13 +22,27 @@ class SceneNode;
 /// Shadowmapping pass
 class Sm: private RenderingPass
 {
-	friend class Is;
-
 public:
 	static const U32 MAX_SHADOW_CASTERS = 8;
+	static const PixelFormat DEPTH_RT_PIXEL_FORMAT;
 
-	/// @name Accessors
+	/// @privatesection
 	/// @{
+	Sm(Renderer* r)
+		: RenderingPass(r)
+	{}
+
+	~Sm()
+	{
+		m_sms.destroy(getAllocator());
+	}
+
+	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
+	ANKI_USE_RESULT Error run(
+		SceneNode* shadowCasters[],
+		U32 shadowCastersCount,
+		CommandBufferPtr& cmdBuff);
+
 	Bool getEnabled() const
 	{
 		return m_enabled;
@@ -37,6 +51,17 @@ public:
 	Bool getPoissonEnabled() const
 	{
 		return m_poissonEnabled;
+	}
+
+	/// Get max shadow casters
+	U32 getMaxLightsCount()
+	{
+		return m_sms.getSize();
+	}
+
+	TexturePtr& getTextureArray()
+	{
+		return m_sm2DArrayTex;
 	}
 	/// @}
 
@@ -55,7 +80,7 @@ private:
 	DArray<Shadowmap> m_sms;
 
 	/// If false then disable SM at all
-	Bool8 m_enabled; 
+	Bool8 m_enabled;
 
 	/// Enable Poisson for all the levels
 	Bool8 m_poissonEnabled;
@@ -65,27 +90,6 @@ private:
 
 	/// Shadowmap resolution
 	U32 m_resolution;
-
-	Sm(Renderer* r)
-	:	RenderingPass(r)
-	{}
-
-	~Sm()
-	{
-		m_sms.destroy(getAllocator());
-	}
-
-	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
-	ANKI_USE_RESULT Error run(
-		SceneNode* shadowCasters[], 
-		U32 shadowCastersCount, 
-		CommandBufferPtr& cmdBuff);
-
-	/// Get max shadow casters
-	U32 getMaxLightsCount()
-	{
-		return m_sms.getSize();
-	}
 
 	void prepareDraw(CommandBufferPtr& cmdBuff);
 	void finishDraw(CommandBufferPtr& cmdBuff);

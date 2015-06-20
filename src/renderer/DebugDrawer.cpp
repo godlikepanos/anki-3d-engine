@@ -6,12 +6,14 @@
 #include "anki/renderer/DebugDrawer.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/resource/ShaderResource.h"
-#include "anki/Collision.h"
-#include "anki/Scene.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/renderer/Renderer.h"
+#include "anki/renderer/Pps.h"
+#include "anki/renderer/Ms.h"
 #include "anki/util/Logger.h"
 #include "anki/physics/PhysicsWorld.h"
+#include "anki/Collision.h"
+#include "anki/Scene.h"
 
 namespace anki {
 
@@ -36,6 +38,22 @@ Error DebugDrawer::create(Renderer* r)
 	ANKI_CHECK(m_frag.load("shaders/Dbg.frag.glsl", &r->getResourceManager()));
 
 	PipelinePtr::Initializer init;
+	init.m_vertex.m_bindingCount = 1;
+	init.m_vertex.m_bindings[0].m_stride = 2 * sizeof(Vec4);
+	init.m_vertex.m_attributeCount = 2;
+	init.m_vertex.m_attributes[0].m_format =
+		PixelFormat(ComponentFormat::R32G32B32A32, TransformFormat::FLOAT);
+	init.m_vertex.m_attributes[0].m_offset = 0;
+	init.m_vertex.m_attributes[0].m_binding = 0;
+	init.m_vertex.m_attributes[1].m_format =
+		PixelFormat(ComponentFormat::R32G32B32A32, TransformFormat::FLOAT);
+	init.m_vertex.m_attributes[1].m_offset = sizeof(Vec4);
+	init.m_vertex.m_attributes[1].m_binding = 0;
+	init.m_inputAssembler.m_topology = PrimitiveTopology::LINES;
+	init.m_depthStencil.m_depthWriteEnabled = false;
+	init.m_depthStencil.m_format = Ms::DEPTH_RT_PIXEL_FORMAT;
+	init.m_color.m_attachmentCount = 1;
+	init.m_color.m_attachments[0].m_format = Pps::RT_PIXEL_FORMAT;
 	init.m_shaders[U(ShaderType::VERTEX)] = m_vert->getGrShader();
 	init.m_shaders[U(ShaderType::FRAGMENT)] = m_frag->getGrShader();
 
@@ -139,17 +157,13 @@ Error DebugDrawer::flushInternal(GLenum primitive)
 
 	U size = sizeof(Vertex) * clientVerts;
 
-	m_vertBuff.write(m_jobs, vertBuff, size, 0, 0, size);
+	m_vertBuff.write(m_cmdb, vertBuff, size, 0, 0, size);
 
-	m_ppline.bind(m_jobs);
+	m_ppline.bind(m_cmdb);
 
-	m_vertBuff.bindVertexBuffer(m_jobs,
-		4, GL_FLOAT, false, sizeof(Vertex), 0, 0); // Pos
+	m_cmdb.bindVertexBuffer(0, m_vertBuff, 0);
 
-	m_vertBuff.bindVertexBuffer(m_jobs,
-		4, GL_FLOAT, true, sizeof(Vertex), sizeof(Vec4), 1); // Color
-
-	m_jobs.drawArrays(primitive, clientVerts);
+	m_cmdb.drawArrays(primitive, clientVerts);
 
 	return err;
 }

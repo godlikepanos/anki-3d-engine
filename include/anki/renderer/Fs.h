@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RENDERER_BS_H
-#define ANKI_RENDERER_BS_H
+#pragma once
 
 #include "anki/renderer/RenderingPass.h"
 
@@ -18,7 +17,7 @@ class Fs: public RenderingPass
 {
 public:
 	Fs(Renderer* r)
-	:	RenderingPass(r) 
+		: RenderingPass(r)
 	{}
 
 	~Fs();
@@ -33,4 +32,3 @@ private:
 
 } // end namespace anki
 
-#endif

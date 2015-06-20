@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RENDERER_IS_H
-#define ANKI_RENDERER_IS_H
+#pragma once
 
 #include "anki/renderer/RenderingPass.h"
 #include "anki/resource/TextureResource.h"
@@ -42,6 +41,7 @@ class Is: public RenderingPass
 
 public:
 	static const U MIPMAPS_COUNT = 7;
+	static const PixelFormat RT_PIXEL_FORMAT;
 
 	/// @privatesection
 	/// @{
@@ -127,11 +127,6 @@ private:
 	/// Keep the prev light dir to avoid uniform block updates
 	Vec3 m_prevGroundLightDir = Vec3(0.0);
 
-	/// @name For drawing a quad into the active framebuffer
-	/// @{
-	BufferPtr m_quadPositionsVertBuff;
-	/// @}
-
 	/// @name Limits
 	/// @{
 	U16 m_maxPointLights;
@@ -176,4 +171,3 @@ private:
 
 } // end namespace anki
 
-#endif

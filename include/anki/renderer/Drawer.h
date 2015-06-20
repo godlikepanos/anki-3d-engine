@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RENDERER_DRAWER_H
-#define ANKI_RENDERER_DRAWER_H
+#pragma once
 
 #include "anki/util/StdTypes.h"
 #include "anki/util/Ptr.h"
@@ -73,4 +72,3 @@ private:
 
 } // end namespace anki
 
-#endif

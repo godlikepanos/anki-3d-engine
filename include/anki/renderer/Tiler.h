@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RENDERER_TILER_H
-#define ANKI_RENDERER_TILER_H
+#pragma once
 
 #include "anki/Collision.h"
 #include "anki/renderer/RenderingPass.h"
@@ -34,7 +33,7 @@ struct TilerTestResult
 	};
 
 	U32 m_count = 0;
-	Array<Pair, ANKI_RENDERER_MAX_TILES_X * ANKI_RENDERER_MAX_TILES_Y> 
+	Array<Pair, ANKI_RENDERER_MAX_TILES_X * ANKI_RENDERER_MAX_TILES_Y>
 		m_tileIds;
 
 	TilerTestResult() = default;
@@ -123,13 +122,13 @@ private:
 	ANKI_USE_RESULT Error initPbos();
 
 	void testRange(const CollisionShape& cs, Bool nearPlane,
-		U iFrom, U iTo, U jFrom, U jTo, TestResult* visible, 
+		U iFrom, U iTo, U jFrom, U jTo, TestResult* visible,
 		U& count) const;
 
 	void testFastSphere(const Sphere& s, const Aabb& aabb,
 		TestResult* visible, U& count) const;
 
-	void update(U32 threadId, PtrSize threadsCount, 
+	void update(U32 threadId, PtrSize threadsCount,
 		Camera& cam, Bool frustumChanged);
 
 	/// Calculate and set a top looking plane
@@ -142,4 +141,3 @@ private:
 
 } // end namespace anki
 
-#endif

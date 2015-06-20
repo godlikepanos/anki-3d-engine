@@ -213,6 +213,7 @@ Error ResourceFilesystem::init(const ConfigSet& config, const CString& cacheDir)
 	for(auto& path : paths)
 	{
 		ANKI_CHECK(addNewPath(path.toCString()));
+		ANKI_LOGI("Adding new data path \"%s\"", &path[0]);
 	}
 
 	addCachePath(cacheDir);

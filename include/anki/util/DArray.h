@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_UTIL_D_ARRAY_H
-#define ANKI_UTIL_D_ARRAY_H
+#pragma once
 
 #include "anki/util/Allocator.h"
 #include "anki/util/NonCopyable.h"
@@ -15,8 +14,8 @@ namespace anki {
 /// @addtogroup util_containers
 /// @{
 
-/// Dynamic array with manual destruction. It doesn't hold the allocator and 
-/// that makes it compact. At the same time that requires manual destruction. 
+/// Dynamic array with manual destruction. It doesn't hold the allocator and
+/// that makes it compact. At the same time that requires manual destruction.
 /// Used in permanent classes.
 template<typename T>
 class DArray: public NonCopyable
@@ -29,20 +28,20 @@ public:
 	using ConstReference = const Value&;
 
 	DArray()
-	:	m_data(nullptr),
-		m_size(0)
+		: m_data(nullptr)
+		, m_size(0)
 	{}
 
 	/// Move.
 	DArray(DArray&& b)
-	:	DArray()
+		: DArray()
 	{
 		move(b);
 	}
 
 	~DArray()
 	{
-		ANKI_ASSERT(m_data == nullptr && m_size == 0 
+		ANKI_ASSERT(m_data == nullptr && m_size == 0
 			&& "Requires manual destruction");
 	}
 
@@ -114,7 +113,7 @@ public:
 	}
 
 	/// Get first element.
-	Reference getFront() 
+	Reference getFront()
 	{
 		return m_data[0];
 	}
@@ -126,7 +125,7 @@ public:
 	}
 
 	/// Get last element.
-	Reference getBack() 
+	Reference getBack()
 	{
 		return m_data[m_size - 1];
 	}
@@ -239,7 +238,7 @@ protected:
 	}
 };
 
-/// Dynamic array with automatic destruction. It's the same as DArray but it 
+/// Dynamic array with automatic destruction. It's the same as DArray but it
 /// holds the allocator in order to perform automatic destruction. Use it for
 /// temp operations and on transient classes.
 template<typename T>
@@ -251,13 +250,13 @@ public:
 
 	template<typename TAllocator>
 	DArrayAuto(TAllocator alloc)
-	:	Base(),
-		m_alloc(alloc)
+		: Base()
+		, m_alloc(alloc)
 	{}
 
 	/// Move.
 	DArrayAuto(DArrayAuto&& b)
-	:	DArrayAuto()
+		: DArrayAuto()
 	{
 		move(b);
 	}
@@ -311,21 +310,21 @@ public:
 	using Value = T;
 
 	SArray()
-	:	Base()
+		: Base()
 	{}
 
-	SArray(void* mem, PtrSize size)
-	:	Base()
+	SArray(T* mem, PtrSize size)
+		: Base()
 	{
 		ANKI_ASSERT(mem);
 		ANKI_ASSERT(size);
-		Base::m_data = static_cast<Value*>(mem);
+		Base::m_data = mem;
 		Base::m_size = size;
 	}
 
 	/// Move.
 	SArray(SArray&& b)
-	:	SArray()
+		: SArray()
 	{
 		move(b);
 	}
@@ -358,4 +357,3 @@ private:
 
 } // end namespace anki
 
-#endif

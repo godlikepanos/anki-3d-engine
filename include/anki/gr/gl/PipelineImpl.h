@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GR_GL_PIPELINE_IMPL_H
-#define ANKI_GR_GL_PIPELINE_IMPL_H
+#pragma once
 
 #include "anki/gr/gl/GlObject.h"
 #include "anki/gr/PipelineCommon.h"
@@ -18,14 +17,14 @@ class GlState;
 /// @{
 
 /// Program pipeline
-class PipelineImpl: public GlObject, private PipelineInitializer
+class PipelineImpl: public GlObject
 {
 public:
 	using Base = GlObject;
 	using Initializer = PipelineInitializer;
 
 	PipelineImpl(GrManager* manager)
-	:	Base(manager)
+		: Base(manager)
 	{}
 
 	~PipelineImpl()
@@ -56,20 +55,36 @@ private:
 		Array<Bool8, 4> m_channelWriteMask;
 	};
 
-	Bool8 m_complete;
 	Bool8 m_compute = false; ///< Is compute
 
-	// Cached values
-	Array<Attribute, MAX_VERTEX_ATTRIBUTES> m_attribs;
-	GLenum m_topology = 0;
-	GLenum m_fillMode = 0;
-	GLenum m_cullMode = 0;
-	Bool8 m_depthWrite = false;
-	GLenum m_depthCompareFunction = 0;
-	Array<Attachment, MAX_COLOR_ATTACHMENTS> m_attachments;
+	/// Input values.
+	PipelineInitializer m_in;
 
-	/// Create pipeline object
-	void createPpline();
+	/// Cached values.
+	class
+	{
+	public:
+		Array<Attribute, MAX_VERTEX_ATTRIBUTES> m_attribs;
+		GLenum m_topology = 0;
+		GLenum m_fillMode = 0;
+		GLenum m_cullMode = 0;
+		Bool8 m_depthWrite = false;
+		GLenum m_depthCompareFunction = 0;
+		Array<Attachment, MAX_COLOR_ATTACHMENTS> m_attachments;
+	} m_cache;
+
+	/// State hashes.
+	class
+	{
+	public:
+		U64 m_vertex = 0;
+		U64 m_inputAssembler = 0;
+		U64 m_tessellation = 0;
+		U64 m_viewport = 0;
+		U64 m_rasterizer = 0;
+		U64 m_depthStencil = 0;
+		U64 m_color = 0;
+	} m_hashes;
 
 	/// Attach all the programs
 	ANKI_USE_RESULT Error createGlPipeline();
@@ -90,17 +105,8 @@ private:
 	void setRasterizerState(GlState& state) const;
 	void setDepthStencilState(GlState& state) const;
 	void setColorState(GlState& state) const;
-
-	const PipelineImpl* getPipelineForState(
-		const SubStateBit bit, 
-		const PipelineImpl* lastPpline,
-		const PipelineImpl* lastPplineTempl,
-		const PipelineImpl* pplineTempl) const; 
-
 };
 /// @}
 
 } // end namespace anki
-
-#endif
 

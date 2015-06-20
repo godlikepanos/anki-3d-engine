@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RESOURCE_MATERIAL_SHADER_PROGRAM_CREATOR_H
-#define ANKI_RESOURCE_MATERIAL_SHADER_PROGRAM_CREATOR_H
+#pragma once
 
 #include "anki/util/StringList.h"
 #include "anki/Gr.h"
@@ -15,7 +14,7 @@ namespace anki {
 // Forward
 class XmlElement;
 
-/// Material loader variable. It's the information on whatever is inside 
+/// Material loader variable. It's the information on whatever is inside
 /// \<input\>
 class MaterialProgramCreatorInputVariable: public NonCopyable
 {
@@ -37,7 +36,7 @@ public:
 	I16 m_binding = -1; ///< Texture unit
 	I32 m_offset = -1; ///< Offset inside the UBO
 	I32 m_arrayStride = -1;
-	/// Identifying the stride between columns of a column-major matrix or 
+	/// Identifying the stride between columns of a column-major matrix or
 	/// rows of a row-major matrix
 	I32 m_matrixStride = -1;
 
@@ -96,8 +95,8 @@ public:
 };
 
 /// Creator of shader programs. This class parses between
-/// @code <shaderProgams></shaderPrograms> @endcode located inside a 
-/// @code <material></material> @endcode and creates the source of a custom 
+/// @code <shaderProgams></shaderPrograms> @endcode located inside a
+/// @code <material></material> @endcode and creates the source of a custom
 /// program.
 ///
 /// @note Be carefull when you change the methods. Some change may create more
@@ -139,7 +138,7 @@ public:
 	}
 
 private:
-	TempResourceAllocator<char> m_alloc; 
+	TempResourceAllocator<char> m_alloc;
 	Array<StringList, 5> m_source; ///< Shader program final source
 	Array<String, 5> m_sourceBaked; ///< Final source baked
 	List<Input> m_inputs;
@@ -160,10 +159,9 @@ private:
 
 	/// Parse what is within the @code <operation></operation> @endcode
 	ANKI_USE_RESULT Error parseOperationTag(
-		const XmlElement& el, GLenum glshader, 
+		const XmlElement& el, GLenum glshader,
 		GLbitfield glshaderbit, String& out);
 };
 
 } // end namespace anki
 
-#endif

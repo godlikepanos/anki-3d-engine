@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_PtrSizeTIL_ARRAY_H
-#define ANKI_PtrSizeTIL_ARRAY_H
+#pragma once
 
 #include "anki/util/Assert.h"
 #include "anki/util/StdTypes.h"
@@ -65,7 +64,7 @@ public:
 		return &m_data[0] + N;
 	}
 
-	Reference getFront() 
+	Reference getFront()
 	{
 		return m_data[0];
 	}
@@ -75,7 +74,7 @@ public:
 		return m_data[0];
 	}
 
-	Reference getBack() 
+	Reference getBack()
 	{
 		return m_data[N - 1];
 	}
@@ -110,7 +109,7 @@ public:
 	}
 
 	/// Make it compatible with STL
-	Reference front() 
+	Reference front()
 	{
 		return getFront();
 	}
@@ -122,7 +121,7 @@ public:
 	}
 
 	/// Make it compatible with STL
-	Reference back() 
+	Reference back()
 	{
 		return getBack;
 	}
@@ -145,18 +144,21 @@ public:
 	}
 };
 
-/// 2D Array. @code Array2d<X, 10, 2> a; @endcode is equivelent to 
+/// 2D Array. @code Array2d<X, 10, 2> a; @endcode is equivelent to
 /// @code X a[10][2]; @endcode
 template<typename T, PtrSize I, PtrSize J>
 using Array2d = Array<Array<T, J>, I>;
 
-/// 3D Array. @code Array3d<X, 10, 2, 3> a; @endcode is equivelent to 
+/// 3D Array. @code Array3d<X, 10, 2, 3> a; @endcode is equivelent to
 /// @code X a[10][2][3]; @endcode
 template<typename T, PtrSize I, PtrSize J, PtrSize K>
 using Array3d = Array<Array<Array<T, K>, J>, I>;
 
+/// 4D Array. @code Array4d<X, 10, 2, 3, 4> a; @endcode is equivelent to
+/// @code X a[10][2][3][4]; @endcode
+template<typename T, PtrSize I, PtrSize J, PtrSize K, PtrSize L>
+using Array4d = Array<Array<Array<Array<T, L>, K>, J>, I>;
 /// @}
 
 } // end namespace anki
 
-#endif

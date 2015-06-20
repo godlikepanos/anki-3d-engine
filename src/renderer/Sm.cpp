@@ -15,6 +15,10 @@
 namespace anki {
 
 //==============================================================================
+const PixelFormat Sm::DEPTH_RT_PIXEL_FORMAT(
+	ComponentFormat::D16, TransformFormat::FLOAT);
+
+//==============================================================================
 Error Sm::init(const ConfigSet& config)
 {
 	m_enabled = config.getNumber("is.sm.enabled");
@@ -43,7 +47,7 @@ Error Sm::init(const ConfigSet& config)
 	sminit.m_width = m_resolution;
 	sminit.m_height = m_resolution;
 	sminit.m_depth = config.getNumber("is.sm.maxLights");
-	sminit.m_format = PixelFormat(ComponentFormat::D16, TransformFormat::FLOAT);
+	sminit.m_format = DEPTH_RT_PIXEL_FORMAT;
 	sminit.m_mipmapsCount = 1;
 	sminit.m_sampling.m_minMagFilter = m_bilinearEnabled
 		? SamplingFilter::LINEAR
@@ -82,29 +86,14 @@ Error Sm::init(const ConfigSet& config)
 //==============================================================================
 void Sm::prepareDraw(CommandBufferPtr& cmdBuff)
 {
-	// disable color & blend & enable depth test
-
-	cmdBuff.enableDepthTest(true);
-	cmdBuff.setDepthWriteMask(true);
-	cmdBuff.setColorWriteMask(false, false, false, false);
-
-	// for artifacts
-	cmdBuff.setPolygonOffset(7.0, 5.0); // keep both as low as possible!!!!
-	cmdBuff.enablePolygonOffset(true);
-
 	m_r->getSceneDrawer().prepareDraw(
-		RenderingStage::MATERIAL, Pass::DEPTH, cmdBuff);
+		RenderingStage::MATERIAL, Pass::SM, cmdBuff);
 }
 
 //==============================================================================
 void Sm::finishDraw(CommandBufferPtr& cmdBuff)
 {
 	m_r->getSceneDrawer().finishDraw();
-
-	cmdBuff.enableDepthTest(false);
-	cmdBuff.setDepthWriteMask(false);
-	cmdBuff.enablePolygonOffset(false);
-	cmdBuff.setColorWriteMask(true, true, true, true);
 }
 
 //==============================================================================

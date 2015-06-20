@@ -5,6 +5,8 @@
 
 #include "anki/renderer/Lf.h"
 #include "anki/renderer/Bloom.h"
+#include "anki/renderer/Is.h"
+#include "anki/renderer/Ms.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/scene/SceneGraph.h"
 #include "anki/scene/MoveComponent.h"
@@ -61,7 +63,7 @@ Error Lf::initSprite(const ConfigSet& config)
 		return ErrorCode::USER_DATA;
 	}
 
-	// Load program + ppline
+	// Load shaders
 	StringAuto pps(getAllocator());
 
 	pps.sprintf("#define MAX_SPRITES %u\n", m_maxSpritesPerFlare);
@@ -72,7 +74,16 @@ Error Lf::initSprite(const ConfigSet& config)
 	ANKI_CHECK(m_realFrag.loadToCache(&getResourceManager(),
 		"shaders/LfSpritePass.frag.glsl", pps.toCString(), "r_"));
 
+	// Create ppline.
+	// Writes to IS with blending
 	PipelinePtr::Initializer init;
+	init.m_inputAssembler.m_topology = PrimitiveTopology::TRIANGLE_STRIP;
+	init.m_depthStencil.m_depthWriteEnabled = false;
+	init.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
+	init.m_color.m_attachmentCount = 1;
+	init.m_color.m_attachments[0].m_format = Is::RT_PIXEL_FORMAT;
+	init.m_color.m_attachments[0].m_srcBlendMethod = BlendMethod::ONE;
+	init.m_color.m_attachments[0].m_dstBlendMethod = BlendMethod::ONE;
 	init.m_shaders[U(ShaderType::VERTEX)] = m_realVert->getGrShader();
 	init.m_shaders[U(ShaderType::FRAGMENT)] = m_realFrag->getGrShader();
 	m_realPpline.create(&getGrManager(), init);
@@ -118,10 +129,31 @@ Error Lf::initOcclusion(const ConfigSet& config)
 	ANKI_CHECK(m_occlusionFrag.load("shaders/LfOcclusion.frag.glsl",
 		&getResourceManager()));
 
+	// Create ppline
+	// - only position attribute
+	// - points
+	// - test depth no write
+	// - will run after MS
+	// - will not update color
 	PipelinePtr::Initializer init;
-		init.m_shaders[U(ShaderType::VERTEX)] = m_occlusionVert->getGrShader();
-		init.m_shaders[U(ShaderType::FRAGMENT)] =
-			m_occlusionFrag->getGrShader();
+	init.m_vertex.m_bindingCount = 1;
+	init.m_vertex.m_bindings[0].m_stride = sizeof(Vec3);
+	init.m_vertex.m_attributeCount = 1;
+	init.m_vertex.m_attributes[0].m_format =
+		PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
+	init.m_inputAssembler.m_topology = PrimitiveTopology::POINTS;
+	init.m_depthStencil.m_depthWriteEnabled = false;
+	init.m_depthStencil.m_format = Ms::DEPTH_RT_PIXEL_FORMAT;
+	ANKI_ASSERT(Ms::ATTACHMENT_COUNT == 3);
+	init.m_color.m_attachmentCount = Ms::ATTACHMENT_COUNT;
+	init.m_color.m_attachments[0].m_format = Ms::RT_PIXEL_FORMATS[0];
+	init.m_color.m_attachments[0].m_channelWriteMask = ColorBit::NONE;
+	init.m_color.m_attachments[1].m_format = Ms::RT_PIXEL_FORMATS[1];
+	init.m_color.m_attachments[1].m_channelWriteMask = ColorBit::NONE;
+	init.m_color.m_attachments[2].m_format = Ms::RT_PIXEL_FORMATS[2];
+	init.m_color.m_attachments[2].m_channelWriteMask = ColorBit::NONE;
+	init.m_shaders[U(ShaderType::VERTEX)] = m_occlusionVert->getGrShader();
+	init.m_shaders[U(ShaderType::FRAGMENT)] = m_occlusionFrag->getGrShader();
 	m_occlusionPpline.create(&getGrManager(), init);
 
 	return ErrorCode::NONE;
@@ -153,8 +185,6 @@ void Lf::runOcclusionTests(CommandBufferPtr& cmdb)
 		}
 
 		// Setup state
-		cmdb.setColorWriteMask(false, false, false, false);
-		cmdb.enableDepthTest(true);
 		m_occlusionPpline.bind(cmdb);
 
 		// Setup MVP UBO
@@ -196,10 +226,6 @@ void Lf::runOcclusionTests(CommandBufferPtr& cmdb)
 		}
 
 		ANKI_ASSERT(positions == initialPositions + totalCount);
-
-		// Restore state
-		cmdb.setColorWriteMask(true, true, true, true);
-		cmdb.enableDepthTest(false);
 	}
 }
 
@@ -221,8 +247,6 @@ void Lf::run(CommandBufferPtr& cmdb)
 
 		// Set common rendering state
 		m_realPpline.bind(cmdb);
-		cmdb.enableBlend(true);
-		cmdb.setBlendFunctions(GL_ONE, GL_ONE);
 
 		// Send the command to write the buffer now
 		BufferPtr& flareDataBuff = m_flareDataBuff[
@@ -280,7 +304,7 @@ void Lf::run(CommandBufferPtr& cmdb)
 
 			if(!queryInvalid)
 			{
-				m_r->drawQuadConditional(query, cmdb);
+				cmdb.drawArraysConditional(query, GL_TRIANGLE_STRIP, 4);
 			}
 			else
 			{
@@ -300,8 +324,6 @@ void Lf::run(CommandBufferPtr& cmdb)
 
 		ANKI_ASSERT(
 			reinterpret_cast<U8*>(sprites) <= spritesInitialPtr + bufferSize);
-
-		cmdb.enableBlend(false);
 	}
 }
 

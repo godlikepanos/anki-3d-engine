@@ -3,12 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RENDERER_MS_H
-#define ANKI_RENDERER_MS_H
+#pragma once
 
 #include "anki/renderer/RenderingPass.h"
 #include "anki/Gr.h"
-#include "anki/renderer/Ez.h"
 
 namespace anki {
 
@@ -19,11 +17,14 @@ namespace anki {
 class Ms: public RenderingPass
 {
 public:
+	static const U ATTACHMENT_COUNT = 3;
+	static const Array<PixelFormat, ATTACHMENT_COUNT> RT_PIXEL_FORMATS;
+	static const PixelFormat DEPTH_RT_PIXEL_FORMAT;
+
 	/// @privatesection
 	/// @{
 	Ms(Renderer* r)
-	:	RenderingPass(r),
-		m_ez(r)
+		: RenderingPass(r)
 	{}
 
 	~Ms();
@@ -80,8 +81,6 @@ private:
 		TexturePtr m_depthRt;
 	};
 
-	Ez m_ez; /// EarlyZ pass
-
 	/// One for multisampled and one for not. 0: multisampled, 1: not
 	Array<Plane, 2> m_planes;
 
@@ -95,4 +94,3 @@ private:
 
 } // end namespace anki
 
-#endif

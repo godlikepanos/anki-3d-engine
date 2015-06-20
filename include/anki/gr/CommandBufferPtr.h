@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GR_COMMAND_BUFFER_HANDLE_H
-#define ANKI_GR_COMMAND_BUFFER_HANDLE_H
+#pragma once
 
 #include "anki/gr/GrPtr.h"
 
@@ -49,72 +48,14 @@ public:
 	/// @name State manipulation
 	/// @{
 
+	/// Bind vertex buffer.
+	void bindVertexBuffer(U32 bindingPoint, BufferPtr buff, PtrSize offset);
+
+	/// Bind index buffer.
+	void bindIndexBuffer(BufferPtr buff, U32 indexSize);
+
 	/// Set the viewport
 	void setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy);
-
-	/// Set the color mask
-	void setColorWriteMask(Bool red, Bool green, Bool blue, Bool alpha);
-
-	/// Enable/disable depth test
-	void enableDepthTest(Bool enable);
-
-	/// Set depth compare function
-	void setDepthFunction(GLenum func);
-
-	/// Set depth write mask
-	void setDepthWriteMask(Bool write);
-
-	/// Enable or note stencil test
-	void enableStencilTest(Bool enable);
-
-	/// Set stencil function. Equivalent to glStencilFunc
-	void setStencilFunction(GLenum function, U32 reference, U32 mask);
-
-	/// Set the stencil mask. Equivalent to glStencilMask
-	void setStencilPlaneMask(U32 mask);
-
-	/// Set the operations of stencil fail, depth fail, depth pass. Equivalent
-	/// to glStencilOp
-	void setStencilOperations(GLenum stencFail, GLenum depthFail,
-		GLenum depthPass);
-
-	/// Enable or not blending. Equivalent to glEnable/glDisable(GL_BLEND)
-	void enableBlend(Bool enable);
-
-	/// Set blend equation. Equivalent to glBlendEquation
-	void setBlendEquation(GLenum equation);
-
-	/// Set the blend functions. Equivalent to glBlendFunc
-	void setBlendFunctions(GLenum sfactor, GLenum dfactor);
-
-	/// Set the blend color. Equivalent to glBlendColor
-	void setBlendColor(F32 r, F32 g, F32 b, F32 a);
-
-	/// Enable primitive restart
-	void enablePrimitiveRestart(Bool enable);
-
-	/// Set patch number of vertices
-	void setPatchVertexCount(U32 count);
-
-	/// Enable or not face culling. Equal to glEnable(GL_CULL_FASE)
-	void enableCulling(Bool enable);
-
-	/// Set the faces to cull. Works when culling is enabled. Equal to
-	/// glCullFace(x)
-	void setCullFace(GLenum mode);
-
-	/// Set the polygon offset. Equal to glPolygonOffset() plus
-	/// glEnable(GL_POLYGON_OFFSET_FILL)
-	void setPolygonOffset(F32 factor, F32 units);
-
-	/// Enable/disable polygon offset
-	void enablePolygonOffset(Bool enable);
-
-	/// Set polygon mode
-	void setPolygonMode(GLenum face, GLenum mode);
-
-	/// Enable/diable point size in vertex/geometry shaders.
-	void enablePointSize(Bool enable);
 
 	/// Bind many textures
 	/// @param first The unit where the first texture will be bound.
@@ -152,6 +93,4 @@ public:
 /// @}
 
 } // end namespace anki
-
-#endif
 

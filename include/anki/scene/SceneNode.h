@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SCENE_SCENE_NODE_H
-#define ANKI_SCENE_SCENE_NODE_H
+#pragma once
 
 #include "anki/scene/Common.h"
 #include "anki/util/Hierarchy.h"
@@ -211,4 +210,3 @@ private:
 
 } // end namespace anki
 
-#endif

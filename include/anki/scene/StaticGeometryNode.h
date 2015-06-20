@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SCENE_STATIC_GEOMETRY_NODE_H
-#define ANKI_SCENE_STATIC_GEOMETRY_NODE_H
+#pragma once
 
 #include "anki/scene/Common.h"
 #include "anki/scene/SceneNode.h"
@@ -27,10 +26,10 @@ public:
 	~StaticGeometryPatchNode();
 
 	ANKI_USE_RESULT Error create(
-		const CString& name, const ModelPatchBase* modelPatch);
+		const CString& name, const ModelPatch* modelPatch);
 
 private:
-	const ModelPatchBase* m_modelPatch;
+	const ModelPatch* m_modelPatch;
 
 	ANKI_USE_RESULT Error buildRendering(RenderingBuildData& data);
 };
@@ -53,4 +52,3 @@ private:
 
 } // end namespace anki
 
-#endif

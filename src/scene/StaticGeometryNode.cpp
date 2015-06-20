@@ -19,8 +19,8 @@ public:
 	StaticGeometryPatchNode* m_node;
 
 	StaticGeometryRenderComponent(StaticGeometryPatchNode* node)
-	:	RenderComponent(node),
-		m_node(node)
+		: RenderComponent(node)
+		, m_node(node)
 	{}
 
 	Error buildRendering(RenderingBuildData& data) override
@@ -40,12 +40,12 @@ public:
 
 //==============================================================================
 StaticGeometryPatchNode::StaticGeometryPatchNode(SceneGraph* scene)
-:	SceneNode(scene)
+	: SceneNode(scene)
 {}
 
 //==============================================================================
 Error StaticGeometryPatchNode::create(
-	const CString& name, const ModelPatchBase* modelPatch)
+	const CString& name, const ModelPatch* modelPatch)
 {
 	ANKI_ASSERT(modelPatch);
 
@@ -67,7 +67,7 @@ Error StaticGeometryPatchNode::create(
 	}
 
 	// Create render component
-	RenderComponent* rcomp = 
+	RenderComponent* rcomp =
 		getSceneAllocator().newInstance<StaticGeometryRenderComponent>(this);
 	addComponent(rcomp);
 
@@ -81,29 +81,31 @@ StaticGeometryPatchNode::~StaticGeometryPatchNode()
 //==============================================================================
 Error StaticGeometryPatchNode::buildRendering(RenderingBuildData& data)
 {
-	Error err = ErrorCode::NONE;
-
 	Array<U32, ANKI_GL_MAX_SUB_DRAWCALLS> indicesCountArray;
 	Array<PtrSize, ANKI_GL_MAX_SUB_DRAWCALLS> indicesOffsetArray;
 	U32 drawCount;
-	CommandBufferPtr vertJobs;
+	BufferPtr vertBuff, indexBuff;
 	PipelinePtr ppline;
 
-	err = m_modelPatch->getRenderingDataSub(
-		data.m_key, vertJobs, ppline, 
-		data.m_subMeshIndicesArray, data.m_subMeshIndicesCount, 
-		indicesCountArray, indicesOffsetArray, drawCount);
-	if(err)
-	{
-		return err;
-	}
+	m_modelPatch->getRenderingDataSub(
+		data.m_key,
+		SArray<U8>(const_cast<U8*>(data.m_subMeshIndicesArray),
+			data.m_subMeshIndicesCount),
+		vertBuff,
+		indexBuff,
+		ppline,
+		indicesCountArray,
+		indicesOffsetArray,
+		drawCount);
 
-	ppline.bind(data.m_jobs);
-	data.m_jobs.pushBackOtherCommandBuffer(vertJobs);
+	ppline.bind(data.m_cmdb);
 
 	if(drawCount == 1)
 	{
-		data.m_jobs.drawElements(
+		data.m_cmdb.bindVertexBuffer(0, vertBuff, 0);
+		data.m_cmdb.bindIndexBuffer(indexBuff, 0);
+
+		data.m_cmdb.drawElements(
 			data.m_key.m_tessellation ? GL_PATCHES : GL_TRIANGLES,
 			sizeof(U16),
 			indicesCountArray[0],
@@ -120,7 +122,7 @@ Error StaticGeometryPatchNode::buildRendering(RenderingBuildData& data)
 		ANKI_ASSERT(0 && "TODO");
 	}
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -129,46 +131,35 @@ Error StaticGeometryPatchNode::buildRendering(RenderingBuildData& data)
 
 //==============================================================================
 StaticGeometryNode::StaticGeometryNode(SceneGraph* scene)
-:	SceneNode(scene)
+	: SceneNode(scene)
+{}
+
+//==============================================================================
+StaticGeometryNode::~StaticGeometryNode()
 {}
 
 //==============================================================================
 Error StaticGeometryNode::create(const CString& name, const CString& filename)
 {
-	Error err = SceneNode::create(name);
+	ANKI_CHECK(SceneNode::create(name));
 
-	if(!err)
+	ANKI_CHECK(m_model.load(filename, &getResourceManager()));
+
+	U i = 0;
+	for(const ModelPatch* patch : m_model->getModelPatches())
 	{
-		err = m_model.load(filename, &getResourceManager());
+		StringAuto newname(getFrameAllocator());
+
+		newname.sprintf("%s_%u", &name[0], i);
+
+		StaticGeometryPatchNode* node;
+		ANKI_CHECK(getSceneGraph().newSceneNode<StaticGeometryPatchNode>(
+			newname.toCString(), node, patch));
+
+		++i;
 	}
 
-	if(!err)
-	{
-		U i = 0;
-		for(const ModelPatchBase* patch : m_model->getModelPatches())
-		{
-			StringAuto newname(getSceneAllocator());
-			
-			newname.sprintf("%s_%u", &name[0], i);
-
-			StaticGeometryPatchNode* node;
-			err = getSceneGraph().newSceneNode<StaticGeometryPatchNode>(
-				newname.toCString(), node, patch);
-
-			if(err)
-			{
-				break;
-			}
-
-			++i;
-		}
-	}
-
-	return err;
+	return ErrorCode::NONE;
 }
-
-//==============================================================================
-StaticGeometryNode::~StaticGeometryNode()
-{}
 
 } // end namespace anki

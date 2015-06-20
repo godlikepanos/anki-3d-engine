@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RESOURCE_ASYNC_LOADER_H
-#define ANKI_RESOURCE_ASYNC_LOADER_H
+#pragma once
 
 #include "anki/resource/Common.h"
 #include "anki/util/Thread.h"
@@ -93,6 +92,4 @@ Error AsyncLoader::newTask(TArgs&&... args)
 /// @}
 
 } // end namespace anki
-
-#endif
 

@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RENDERER_SSAO_H
-#define ANKI_RENDERER_SSAO_H
+#pragma once
 
 #include "anki/renderer/RenderingPass.h"
 #include "anki/resource/ShaderResource.h"
@@ -23,6 +22,8 @@ class Ssao: public RenderingPass
 public:
 	/// @privatesection
 	/// @{
+	static const PixelFormat RT_PIXEL_FORMAT;
+
 	Ssao(Renderer* r)
 		: RenderingPass(r)
 	{}
@@ -69,4 +70,3 @@ private:
 
 } // end namespace anki
 
-#endif

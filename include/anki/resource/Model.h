@@ -24,18 +24,17 @@ class PhysicsCollisionShape;
 
 /// Model patch interface class. Its very important class and it binds the
 /// material with the mesh
-class ModelPatchBase
+class ModelPatch
 {
 public:
-	ModelPatchBase(ResourceAllocator<U8> alloc)
-		: m_alloc(alloc)
+	ModelPatch(Model* model)
+		: m_model(model)
 	{}
 
-	virtual ~ModelPatchBase();
+	~ModelPatch();
 
 	const Material& getMaterial() const
 	{
-		ANKI_ASSERT(m_mtl);
 		return *m_mtl;
 	}
 
@@ -44,92 +43,55 @@ public:
 		return *m_meshes[key.m_lod];
 	}
 
-	U32 getMeshesCount() const
-	{
-		return m_meshes.getSize();
-	}
-
 	const Obb& getBoundingShape() const
 	{
-		RenderingKey key(Pass::COLOR, 0, false);
-		return getMesh(key).getBoundingShape();
+		return m_meshes[0]->getBoundingShape();
 	}
 
 	const Obb& getBoundingShapeSub(U32 subMeshId) const
 	{
-		RenderingKey key(Pass::COLOR, 0, false);
-		return getMesh(key).getBoundingShapeSub(subMeshId);
+		return m_meshes[0]->getBoundingShapeSub(subMeshId);
 	}
 
 	U32 getSubMeshesCount() const
 	{
-		RenderingKey key(Pass::COLOR, 0, false);
-		return getMesh(key).getSubMeshesCount();
+		return m_meshes[0]->getSubMeshesCount();
 	}
+
+	ANKI_USE_RESULT Error create(
+		SArray<CString> meshFNames,
+		const CString& mtlFName,
+		ResourceManager* resources);
 
 	/// Get information for multiDraw rendering.
 	/// Given an array of submeshes that are visible return the correct indices
-	/// offsets and counts
-	ANKI_USE_RESULT Error getRenderingDataSub(
+	/// offsets and counts.
+	void getRenderingDataSub(
 		const RenderingKey& key,
-		CommandBufferPtr& vertJobs,
+		SArray<U8> subMeshIndicesArray,
+		BufferPtr& vertBuff,
+		BufferPtr& indexBuff,
 		PipelinePtr& ppline,
-		const U8* subMeshIndicesArray,
-		U32 subMeshIndicesCount,
 		Array<U32, ANKI_GL_MAX_SUB_DRAWCALLS>& indicesCountArray,
 		Array<PtrSize, ANKI_GL_MAX_SUB_DRAWCALLS>& indicesOffsetArray,
 		U32& drawcallCount) const;
 
-protected:
-	ResourceAllocator<U8> m_alloc;
-	/// Array [lod][pass]
-	DArray<CommandBufferPtr> m_vertJobs;
-	Material* m_mtl = nullptr;
-	DArray<Mesh*> m_meshes; ///< One for each LOD
-
-	/// Create vertex descriptors using a material and a mesh
-	ANKI_USE_RESULT Error create(GrManager* gr);
-
 private:
-	/// Called by @a create multiple times to create and populate a single
-	/// vertex descriptor
-	static ANKI_USE_RESULT Error createVertexDesc(
-		const Mesh& mesh,
-		CommandBufferPtr& vertexJobs);
+	Model* m_model;
+
+	Array<MeshResourcePtr, MAX_LODS> m_meshes; ///< One for each LOD
+	U8 m_meshCount = 0;
+	MaterialResourcePtr m_mtl;
+
+	mutable Array3d<PipelinePtr, U(Pass::COUNT), MAX_LODS, 2> m_pplines;
 
 	/// Return the maximum number of LODs
-	U getLodsCount() const;
+	U getLodCount() const;
 
-	U getVertexDescIdx(const RenderingKey& key) const;
-};
+	PipelinePtr getPipeline(const RenderingKey& key) const;
 
-/// Its a chunk of a model. Its very important class and it binds the material
-/// with the mesh
-template<typename MeshResourcePtrType>
-class ModelPatch: public ModelPatchBase
-{
-public:
-	using Base = ModelPatchBase;
-
-	/// Accepts a number of mesh filenames, one for each LOD
-	ModelPatch(ResourceAllocator<U8> alloc)
-		: ModelPatchBase(alloc)
-	{}
-
-	~ModelPatch()
-	{
-		m_meshResources.destroy(ModelPatchBase::m_alloc);
-	}
-
-	ANKI_USE_RESULT Error create(
-		CString meshFNames[],
-		U32 meshesCount,
-		const CString& mtlFName,
-		ResourceManager* resources);
-
-private:
-	DArray<MeshResourcePtrType> m_meshResources; ///< Geometries
-	MaterialResourcePtr m_mtlResource; ///< Material
+	void computePipelineInitializer(
+		const RenderingKey& key, PipelineInitializer& pinit) const;
 };
 
 /// Model is an entity that acts as a container for other resources. Models are
@@ -172,7 +134,7 @@ public:
 
 	~Model();
 
-	const DArray<ModelPatchBase*>& getModelPatches() const
+	const DArray<ModelPatch*>& getModelPatches() const
 	{
 		return m_modelPatches;
 	}
@@ -185,7 +147,7 @@ public:
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename);
 
 private:
-	DArray<ModelPatchBase*> m_modelPatches;
+	DArray<ModelPatch*> m_modelPatches;
 	Obb m_visibilityShape;
 	SkeletonResourcePtr m_skeleton;
 	DArray<AnimationResourcePtr> m_animations;

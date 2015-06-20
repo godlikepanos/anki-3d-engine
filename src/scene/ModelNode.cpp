@@ -25,8 +25,8 @@ public:
 	ModelPatchNode* m_node;
 
 	ModelPatchRenderComponent(ModelPatchNode* node)
-	:	RenderComponent(node),
-		m_node(node)
+		: RenderComponent(node)
+		, m_node(node)
 	{}
 
 	ANKI_USE_RESULT Error buildRendering(RenderingBuildData& data) override
@@ -56,7 +56,7 @@ public:
 
 //==============================================================================
 ModelPatchNode::ModelPatchNode(SceneGraph* scene)
-:	SceneNode(scene)
+	: SceneNode(scene)
 {}
 
 //==============================================================================
@@ -67,7 +67,7 @@ ModelPatchNode::~ModelPatchNode()
 
 //==============================================================================
 Error ModelPatchNode::create(const CString& name,
-	const ModelPatchBase* modelPatch)
+	const ModelPatch* modelPatch)
 {
 	ANKI_ASSERT(modelPatch);
 	ANKI_CHECK(SceneNode::create(name));
@@ -104,34 +104,37 @@ Error ModelPatchNode::buildRendering(RenderingBuildData& data)
 	Array<PtrSize, ANKI_GL_MAX_SUB_DRAWCALLS> indicesOffsetArray;
 	U32 drawcallCount;
 
-	CommandBufferPtr vertJobs;
 	PipelinePtr ppline;
+	BufferPtr vertBuff, indexBuff;
 
-	Error err = m_modelPatch->getRenderingDataSub(
-		data.m_key, vertJobs, ppline,
-		nullptr, 0,
-		indicesCountArray, indicesOffsetArray, drawcallCount);
+	m_modelPatch->getRenderingDataSub(
+		data.m_key,
+		SArray<U8>(),
+		vertBuff,
+		indexBuff,
+		ppline,
+		indicesCountArray,
+		indicesOffsetArray,
+		drawcallCount);
 
-	if(!err)
-	{
-		// Cannot accept multi-draw
-		ANKI_ASSERT(drawcallCount == 1);
+	// Cannot accept multi-draw
+	ANKI_ASSERT(drawcallCount == 1);
 
-		// Set jobs
-		ppline.bind(data.m_jobs);
-		data.m_jobs.pushBackOtherCommandBuffer(vertJobs);
+	// Set jobs
+	ppline.bind(data.m_cmdb);
+	data.m_cmdb.bindVertexBuffer(0, vertBuff, 0);
+	data.m_cmdb.bindIndexBuffer(indexBuff, sizeof(U16));
 
-		// Drawcall
-		U32 offset = indicesOffsetArray[0] / sizeof(U16);
-		data.m_jobs.drawElements(
-			data.m_key.m_tessellation ? GL_PATCHES : GL_TRIANGLES,
-			sizeof(U16),
-			indicesCountArray[0],
-			instancesCount,
-			offset);
-	}
+	// Drawcall
+	U32 offset = indicesOffsetArray[0] / sizeof(U16);
+	data.m_cmdb.drawElements(
+		data.m_key.m_tessellation ? GL_PATCHES : GL_TRIANGLES,
+		sizeof(U16),
+		indicesCountArray[0],
+		instancesCount,
+		offset);
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -225,7 +228,7 @@ class ModelMoveFeedbackComponent: public SceneComponent
 {
 public:
 	ModelMoveFeedbackComponent(SceneNode* node)
-	:	SceneComponent(SceneComponent::Type::NONE, node)
+		: SceneComponent(SceneComponent::Type::NONE, node)
 	{}
 
 	ANKI_USE_RESULT Error update(
@@ -250,8 +253,8 @@ public:
 
 //==============================================================================
 ModelNode::ModelNode(SceneGraph* scene)
-: 	SceneNode(scene),
-	m_transformsTimestamp(0)
+	: SceneNode(scene)
+	, m_transformsTimestamp(0)
 {}
 
 //==============================================================================

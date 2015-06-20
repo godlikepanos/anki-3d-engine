@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SCENE_MODEL_NODE_H
-#define ANKI_SCENE_MODEL_NODE_H
+#pragma once
 
 #include "anki/scene/SceneNode.h"
 #include "anki/scene/RenderComponent.h"
@@ -34,15 +33,15 @@ public:
 	~ModelPatchNode();
 
 	ANKI_USE_RESULT Error create(
-		const CString& name, const ModelPatchBase* modelPatch);
+		const CString& name, const ModelPatch* modelPatch);
 
 private:
 	Obb m_obb; ///< In world space
-	const ModelPatchBase* m_modelPatch; ///< The resource
+	const ModelPatch* m_modelPatch; ///< The resource
 	DArray<ObbSpatialComponent*> m_spatials;
 
 	void updateInstanceSpatials(
-		const MoveComponent* instanceMoves[], 
+		const MoveComponent* instanceMoves[],
 		U32 instanceMovesCount);
 
 	ANKI_USE_RESULT Error buildRendering(RenderingBuildData& data);
@@ -84,4 +83,3 @@ private:
 
 } // end namespace anki
 
-#endif

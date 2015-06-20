@@ -219,8 +219,10 @@ public:
 
 	/// Create a pipeline object that has as a vertex shader the m_drawQuadVert
 	/// and the given fragment progam
-	ANKI_USE_RESULT Error createDrawQuadPipeline(
-		ShaderPtr frag, PipelinePtr& ppline);
+	void createDrawQuadPipeline(
+		ShaderPtr frag,
+		const ColorStateInfo& colorState,
+		PipelinePtr& ppline);
 
 	/// Init the renderer given an initialization class
 	/// @param initializer The initializer class
@@ -297,11 +299,7 @@ private:
 	UVec2 m_tilesCount;
 	U32 m_tilesCountXY;
 
-	/// @name For drawing a quad into the active framebuffer
-	/// @{
-	BufferPtr m_quadPositionsBuff; ///< The VBO for quad positions
 	ShaderResourcePtr m_drawQuadVert;
-	/// @}
 
 	/// @name Optimization vars
 	/// Used in other stages

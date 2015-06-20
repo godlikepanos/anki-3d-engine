@@ -12,25 +12,11 @@
 
 namespace anki {
 
+// Forward
 class MeshLoader;
 
 /// @addtogroup resource
 /// @{
-
-/// Vertex attributes. This should match the shaders
-enum class VertexAttribute: U8
-{
-	POSITION,
-	NORMAL,
-	TANGENT,
-	TEXTURE_COORD,
-	TEXTURE_COORD_1,
-	BONE_IDS,
-	BONE_WEIGHTS,
-	INDICES,
-	COUNT
-};
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VertexAttribute, inline)
 
 /// Mesh Resource. It contains the geometry packed in GPU buffers.
 class Mesh: public ResourceObject
@@ -48,7 +34,7 @@ public:
 		return m_texChannelsCount;
 	}
 
-	Bool hasWeights() const
+	Bool hasBoneWeights() const
 	{
 		return m_weights;
 	}
@@ -88,11 +74,15 @@ public:
 		return m_subMeshes.getSize();
 	}
 
-	/// Get info on how to attach a GL buffer to the state
-	void getBufferInfo(
-		const VertexAttribute attrib, BufferPtr& buffer,
-		U32& size, GLenum& type, U32& stride, U32& offset,
-		Bool& normalized) const;
+	BufferPtr getVertexBuffer() const
+	{
+		return m_vertBuff;
+	}
+
+	BufferPtr getIndexBuffer() const
+	{
+		return m_indicesBuff;
+	}
 
 	/// Helper function for correct loading
 	Bool isCompatible(const Mesh& other) const;
@@ -121,23 +111,6 @@ protected:
 
 	/// Create the VBOs using the mesh data
 	ANKI_USE_RESULT Error createBuffers(const MeshLoader& loader);
-};
-
-// TODO Remove that
-/// A mesh that behaves as a mesh and as a collection of separate meshes.
-class BucketMesh: public Mesh
-{
-public:
-	/// Default constructor.
-	BucketMesh(ResourceManager* manager)
-	:	Mesh(manager)
-	{}
-
-	~BucketMesh()
-	{}
-
-	/// Load from a .mmesh file
-	ANKI_USE_RESULT Error load(const CString& filename);
 };
 /// @}
 

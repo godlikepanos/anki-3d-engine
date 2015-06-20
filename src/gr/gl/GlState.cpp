@@ -138,9 +138,11 @@ void GlState::init()
 	glGetInteger64v(GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT, &alignment);
 	m_ssBuffOffsetAlignment = alignment;
 
+	// Set some GL state
+	glEnable(GL_PROGRAM_POINT_SIZE);
+
 	// Other
 	memset(&m_vertexBindingStrides[0], 0, sizeof(m_vertexBindingStrides));
-
 	initGlobalUbo();
 }
 

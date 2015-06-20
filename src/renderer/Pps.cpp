@@ -18,6 +18,10 @@
 namespace anki {
 
 //==============================================================================
+const PixelFormat Pps::RT_PIXEL_FORMAT(
+	ComponentFormat::R8G8B8, TransformFormat::UNORM);
+
+//==============================================================================
 Pps::Pps(Renderer* r)
 	: RenderingPass(r)
 {}
@@ -55,8 +59,7 @@ Error Pps::initInternal(const ConfigSet& config)
 	// FBO
 	m_r->createRenderTarget(
 		m_r->getWidth(), m_r->getHeight(),
-		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM),
-		1, SamplingFilter::LINEAR, 1, m_rt);
+		RT_PIXEL_FORMAT, 1, SamplingFilter::LINEAR, 1, m_rt);
 
 	FramebufferPtr::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
@@ -87,7 +90,10 @@ Error Pps::initInternal(const ConfigSet& config)
 	ANKI_CHECK(m_frag.loadToCache(&getResourceManager(),
 		"shaders/Pps.frag.glsl", pps.toCString(), "r_"));
 
-	ANKI_CHECK(m_r->createDrawQuadPipeline(m_frag->getGrShader(), m_ppline));
+	ColorStateInfo colorState;
+	colorState.m_attachmentCount = 1;
+	colorState.m_attachments[0].m_format = RT_PIXEL_FORMAT;
+	m_r->createDrawQuadPipeline(m_frag->getGrShader(), colorState, m_ppline);
 
 	// LUT
 	ANKI_CHECK(loadColorGradingTexture("engine_data/default_lut.ankitex"));

@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RENDERER_TM_H
-#define ANKI_RENDERER_TM_H
+#pragma once
 
 #include "anki/renderer/RenderingPass.h"
 
@@ -18,7 +17,7 @@ class Tm: public RenderingPass
 {
 public:
 	Tm(Renderer* r)
-	:	RenderingPass(r)
+		: RenderingPass(r)
 	{}
 
 	BufferPtr& getAverageLuminanceBuffer()
@@ -39,4 +38,3 @@ private:
 
 } // end namespace anki
 
-#endif

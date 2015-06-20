@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RENDERER_DEBUG_DRAWER_H
-#define ANKI_RENDERER_DEBUG_DRAWER_H
+#pragma once
 
 #include "anki/Math.h"
 #include "anki/Gr.h"
@@ -40,12 +39,12 @@ public:
 
 	void prepareDraw(CommandBufferPtr& jobs)
 	{
-		m_jobs = jobs;
+		m_cmdb = jobs;
 	}
 
 	void finishDraw()
 	{
-		m_jobs = CommandBufferPtr(); // Release job chain
+		m_cmdb = CommandBufferPtr(); // Release job chain
 	}
 
 	/// @name Render functions. Imitate the GL 1.1 immediate mode
@@ -87,7 +86,7 @@ private:
 	ShaderResourcePtr m_frag;
 	ShaderResourcePtr m_vert;
 	PipelinePtr m_ppline;
-	CommandBufferPtr m_jobs;
+	CommandBufferPtr m_cmdb;
 
 	static const U MAX_POINTS_PER_DRAW = 256;
 	Mat4 m_mMat;
@@ -114,7 +113,7 @@ class CollisionDebugDrawer: public CollisionShape::ConstVisitor
 public:
 	/// Constructor
 	CollisionDebugDrawer(DebugDrawer* dbg)
-	:	m_dbg(dbg)
+		: m_dbg(dbg)
 	{}
 
 	void visit(const LineSegment&);
@@ -142,7 +141,7 @@ class PhysicsDebugDrawer: public PhysicsDrawer
 {
 public:
 	PhysicsDebugDrawer(DebugDrawer* dbg)
-	:	m_dbg(dbg)
+		: m_dbg(dbg)
 	{}
 
 	void drawLines(
@@ -159,7 +158,7 @@ class SceneDebugDrawer
 {
 public:
 	SceneDebugDrawer(DebugDrawer* d)
-	:	m_dbg(d)
+		: m_dbg(d)
 	{}
 
 	~SceneDebugDrawer()
@@ -189,4 +188,3 @@ private:
 
 } // end namespace anki
 
-#endif

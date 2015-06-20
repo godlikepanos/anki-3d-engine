@@ -43,7 +43,7 @@ public:
 	/// @privatesection
 	/// @{
 	Dbg(Renderer* r)
-	:	RenderingPass(r)
+		: RenderingPass(r)
 	{}
 
 	~Dbg();

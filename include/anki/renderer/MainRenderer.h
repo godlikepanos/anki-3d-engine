@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RENDERER_MAIN_RENDERER_H
-#define ANKI_RENDERER_MAIN_RENDERER_H
+#pragma once
 
 #include "anki/renderer/Common.h"
 #include "anki/core/Timestamp.h"
@@ -70,11 +69,8 @@ private:
 
 	/// Optimize job chain
 	Array<CommandBufferInitHints, RENDERER_COMMAND_BUFFERS_COUNT> m_cbInitHints;
-
-	void initGl();
 };
 /// @}
 
 } // end namespace anki
 
-#endif

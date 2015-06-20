@@ -3,21 +3,22 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RESOURCE_RENDERING_KEY_H
-#define ANKI_RESOURCE_RENDERING_KEY_H
+#pragma once
 
 #include "anki/util/StdTypes.h"
 #include "anki/util/Assert.h"
 
 namespace anki {
 
-/// The AnKi passes
+/// The AnKi passes visible to materials.
 enum class Pass: U8
 {
-	COLOR, ///< For MS
-	DEPTH, ///< For shadows
+	MS_FS, ///< MS or FS
+	SM,
 	COUNT
 };
+
+const U MAX_LODS = 3;
 
 /// A key that consistst of the rendering pass and the level of detail
 class RenderingKey
@@ -28,17 +29,17 @@ public:
 	Bool8 m_tessellation;
 
 	explicit RenderingKey(Pass pass, U8 lod, Bool tessellation)
-	:	m_pass(pass), 
-		m_lod(lod), 
-		m_tessellation(tessellation)
+		: m_pass(pass)
+		, m_lod(lod)
+		, m_tessellation(tessellation)
 	{}
 
 	RenderingKey()
-	:	RenderingKey(Pass::COLOR, 0, false)
+		: RenderingKey(Pass::MS_FS, 0, false)
 	{}
 
 	RenderingKey(const RenderingKey& b)
-	:	RenderingKey(b.m_pass, b.m_lod, b.m_tessellation)
+		: RenderingKey(b.m_pass, b.m_lod, b.m_tessellation)
 	{}
 };
 
@@ -48,7 +49,7 @@ class RenderingKeyHasher
 public:
 	PtrSize operator()(const RenderingKey& key) const
 	{
-		return (U8)key.m_pass | (key.m_lod << 8) | (key.m_tessellation << 16);
+		return U8(key.m_pass) | (key.m_lod << 8) | (key.m_tessellation << 16);
 	}
 };
 
@@ -58,11 +59,10 @@ class RenderingKeyEqual
 public:
 	Bool operator()(const RenderingKey& a, const RenderingKey& b) const
 	{
-		return a.m_pass == b.m_pass && a.m_lod == b.m_lod 
+		return a.m_pass == b.m_pass && a.m_lod == b.m_lod
 			&& a.m_tessellation == b.m_tessellation;
 	}
 };
 
 } // end namespace anki
 
-#endif

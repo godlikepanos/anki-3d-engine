@@ -18,9 +18,6 @@ namespace anki {
 // Misc                                                                        =
 //==============================================================================
 
-const U COMPONENTS = 3 + 1 + 1; // 3 position, 1 size, 1 alpha
-const PtrSize VERT_SIZE = COMPONENTS * sizeof(F32);
-
 //==============================================================================
 static F32 getRandom(F32 initial, F32 deviation)
 {
@@ -206,8 +203,8 @@ public:
 	ParticleEmitter* m_node;
 
 	ParticleEmitterRenderComponent(ParticleEmitter* node)
-	:	RenderComponent(node),
-		m_node(node)
+		: RenderComponent(node)
+		, m_node(node)
 	{}
 
 	ANKI_USE_RESULT Error buildRendering(RenderingBuildData& data) override
@@ -240,7 +237,7 @@ class MoveFeedbackComponent: public SceneComponent
 {
 public:
 	MoveFeedbackComponent(ParticleEmitter* node)
-	:	SceneComponent(SceneComponent::Type::NONE, node)
+		: SceneComponent(SceneComponent::Type::NONE, node)
 	{}
 
 	ANKI_USE_RESULT Error update(
@@ -264,7 +261,7 @@ public:
 
 //==============================================================================
 ParticleEmitter::ParticleEmitter(SceneGraph* scene)
-:	SceneNode(scene)
+	: SceneNode(scene)
 {}
 
 //==============================================================================
@@ -336,7 +333,8 @@ Error ParticleEmitter::create(
 	}
 
 	// Create the vertex buffer and object
-	PtrSize buffSize = m_maxNumOfParticles * VERT_SIZE * 3;
+	PtrSize buffSize = m_maxNumOfParticles
+		* ParticleEmitterResource::VERTEX_SIZE * 3;
 	m_vertBuff.create(&getSceneGraph().getGrManager(),
 		GL_ARRAY_BUFFER, nullptr, buffSize,
 		GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
@@ -352,45 +350,24 @@ Error ParticleEmitter::buildRendering(RenderingBuildData& data)
 {
 	ANKI_ASSERT(data.m_subMeshIndicesCount <= m_transforms.getSize() + 1);
 
-	Error err = ErrorCode::NONE;
-
 	if(m_aliveParticlesCount == 0)
 	{
 		return ErrorCode::NONE;
 	}
 
-	RenderingKey key = data.m_key;
-	key.m_lod = 0;
+	PipelinePtr ppline = m_particleEmitterResource->getPipeline();
+	ppline.bind(data.m_cmdb);
 
-	PipelinePtr ppline;
-	err = m_particleEmitterResource->getMaterial().getProgramPipeline(
-		key, ppline);
+	PtrSize offset =
+		(getGlobalTimestamp() % 3) * (m_vertBuff.getSize() / 3);
 
-	if(!err)
-	{
-		ppline.bind(data.m_jobs);
+	data.m_cmdb.bindVertexBuffer(0, m_vertBuff, offset);
 
-		PtrSize offset =
-			(getGlobalTimestamp() % 3) * (m_vertBuff.getSize() / 3);
+	data.m_cmdb.drawArrays(GL_POINTS,
+		m_aliveParticlesCount,
+		data.m_subMeshIndicesCount);
 
-		// Position
-		m_vertBuff.bindVertexBuffer(data.m_jobs,
-			3, GL_FLOAT, false, VERT_SIZE, offset + 0, 0);
-
-		// Scale
-		m_vertBuff.bindVertexBuffer(data.m_jobs,
-			1, GL_FLOAT, false, VERT_SIZE, offset + sizeof(F32) * 3, 6);
-
-		// Alpha
-		m_vertBuff.bindVertexBuffer(data.m_jobs,
-			1, GL_FLOAT, false, VERT_SIZE, offset + sizeof(F32) * 4, 7);
-
-		data.m_jobs.drawArrays(GL_POINTS,
-			m_aliveParticlesCount,
-			data.m_subMeshIndicesCount);
-	}
-
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -486,8 +463,8 @@ Error ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 			// It's alive
 
 			// Do checks
-			ANKI_ASSERT(((PtrSize)verts + VERT_SIZE
-				- (PtrSize)m_vertBuffMapping) <= m_vertBuff.getSize());
+			ANKI_ASSERT((PtrSize(verts) + ParticleEmitterResource::VERTEX_SIZE
+				- PtrSize(m_vertBuffMapping)) <= m_vertBuff.getSize());
 
 			// This will calculate a new world transformation
 			p->simulate(*this, prevUpdateTime, crntTime);

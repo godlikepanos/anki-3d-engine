@@ -39,7 +39,7 @@ public:
 	F32 m_flod;
 
 	SetupRenderableVariableVisitor(RenderableDrawer* drawer)
-	:	m_drawer(drawer)
+		: m_drawer(drawer)
 	{}
 
 	HeapAllocator<U8> getAllocator() const
@@ -315,39 +315,12 @@ Error RenderableDrawer::render(SceneNode& frsn, VisibleNode& visibleNode)
 	build.m_key.m_pass = m_pass;
 	build.m_key.m_tessellation =
 		m_r->getTessellationEnabled()
-		&& mtl.getTessellation()
+		&& mtl.getTessellationEnabled()
 		&& build.m_key.m_lod == 0;
 
-	if(m_pass == Pass::DEPTH)
+	if(m_pass == Pass::SM)
 	{
 		build.m_key.m_tessellation = false;
-	}
-
-	// Blending
-	Bool blending = mtl.isBlendingEnabled();
-	if(!blending)
-	{
-		if(m_stage == RenderingStage::BLEND)
-		{
-			return ErrorCode::NONE;
-		}
-	}
-	else
-	{
-		if(m_stage != RenderingStage::BLEND)
-		{
-			return ErrorCode::NONE;
-		}
-
-		m_cmdBuff.setBlendFunctions(
-			mtl.getBlendingSfactor(), mtl.getBlendingDfactor());
-	}
-
-	// Wireframe
-	Bool wireframeOn = mtl.getWireframeEnabled();
-	if(wireframeOn)
-	{
-		m_cmdBuff.setPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	}
 
 	// Enqueue uniform state updates
@@ -356,18 +329,12 @@ Error RenderableDrawer::render(SceneNode& frsn, VisibleNode& visibleNode)
 	// Enqueue vertex, program and drawcall
 	build.m_subMeshIndicesArray = &visibleNode.m_spatialIndices[0];
 	build.m_subMeshIndicesCount = visibleNode.m_spatialsCount;
-	build.m_jobs = m_cmdBuff;
+	build.m_cmdb = m_cmdBuff;
 
 	Error err = renderable.buildRendering(build);
 	if(err)
 	{
 		return err;
-	}
-
-	// Wireframe back to what it was
-	if(wireframeOn)
-	{
-		m_cmdBuff.setPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 
 	return ErrorCode::NONE;
@@ -381,11 +348,6 @@ void RenderableDrawer::prepareDraw(RenderingStage stage, Pass pass,
 	m_stage = stage;
 	m_pass = pass;
 	m_cmdBuff = cmdBuff;
-
-	if(m_r->getTessellationEnabled())
-	{
-		m_cmdBuff.setPatchVertexCount(3);
-	}
 }
 
 //==============================================================================

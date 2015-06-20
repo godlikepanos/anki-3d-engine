@@ -8,6 +8,7 @@
 #include "anki/resource/ResourceObject.h"
 #include "anki/resource/ResourcePointer.h"
 #include "anki/Math.h"
+#include "anki/Gr.h"
 
 namespace anki {
 
@@ -96,6 +97,9 @@ class ParticleEmitterResource: public ResourceObject,
 	private ParticleEmitterProperties
 {
 public:
+	/// Size of a single vertex.
+	static const U VERTEX_SIZE = 5 * sizeof(F32);
+
 	ParticleEmitterResource(ResourceManager* manager)
 		: ResourceObject(manager)
 	{}
@@ -117,11 +121,18 @@ public:
 		return *m_material;
 	}
 
+	/// Get pipeline for rendering.
+	PipelinePtr getPipeline() const
+	{
+		return m_ppline;
+	}
+
 	/// Load it
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename);
 
 private:
 	MaterialResourcePtr m_material;
+	PipelinePtr m_ppline;
 
 	void loadInternal(const XmlElement& el);
 };

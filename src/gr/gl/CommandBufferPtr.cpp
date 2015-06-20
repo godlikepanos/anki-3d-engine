@@ -248,157 +248,6 @@ void CommandBufferPtr::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 }
 
 //==============================================================================
-void CommandBufferPtr::setColorWriteMask(
-	Bool red, Bool green, Bool blue, Bool alpha)
-{
-	ANKI_STATE_CMD_4(Bool8, glColorMask, red, green, blue, alpha);
-}
-
-//==============================================================================
-void CommandBufferPtr::enableDepthTest(Bool enable)
-{
-	ANKI_STATE_CMD_ENABLE(GL_DEPTH_TEST, enable);
-}
-
-//==============================================================================
-void CommandBufferPtr::setDepthFunction(GLenum func)
-{
-	ANKI_STATE_CMD_1(GLenum, glDepthFunc, func);
-}
-
-//==============================================================================
-void CommandBufferPtr::setDepthWriteMask(Bool write)
-{
-	ANKI_STATE_CMD_1(Bool8, glDepthMask, write);
-}
-
-//==============================================================================
-void CommandBufferPtr::enableStencilTest(Bool enable)
-{
-	ANKI_STATE_CMD_ENABLE(GL_STENCIL_TEST, enable);
-}
-
-//==============================================================================
-void CommandBufferPtr::setStencilFunction(
-	GLenum function, U32 reference, U32 mask)
-{
-	ANKI_STATE_CMD_3(U32, glStencilFunc, function, reference, mask);
-}
-
-//==============================================================================
-void CommandBufferPtr::setStencilPlaneMask(U32 mask)
-{
-	ANKI_STATE_CMD_1(U32, glStencilMask, mask);
-}
-
-//==============================================================================
-void CommandBufferPtr::setStencilOperations(GLenum stencFail, GLenum depthFail,
-	GLenum depthPass)
-{
-	ANKI_STATE_CMD_3(GLenum, glStencilOp, stencFail, depthFail, depthPass);
-}
-
-//==============================================================================
-void CommandBufferPtr::enableBlend(Bool enable)
-{
-	ANKI_STATE_CMD_ENABLE(GL_BLEND, enable);
-}
-
-//==============================================================================
-void CommandBufferPtr::setBlendEquation(GLenum equation)
-{
-	ANKI_STATE_CMD_1(GLenum, glBlendEquation, equation);
-}
-
-//==============================================================================
-void CommandBufferPtr::setBlendFunctions(GLenum sfactor, GLenum dfactor)
-{
-	class Command: public GlCommand
-	{
-	public:
-		GLenum m_sfactor;
-		GLenum m_dfactor;
-
-		Command(GLenum sfactor, GLenum dfactor)
-			: m_sfactor(sfactor), m_dfactor(dfactor)
-		{}
-
-		Error operator()(CommandBufferImpl* commands)
-		{
-			GlState& state = commands->getManager().getImplementation().
-				getRenderingThread().getState();
-
-			if(state.m_blendSfunc != m_sfactor
-				|| state.m_blendDfunc != m_dfactor)
-			{
-				glBlendFunc(m_sfactor, m_dfactor);
-
-				state.m_blendSfunc = m_sfactor;
-				state.m_blendDfunc = m_dfactor;
-			}
-
-			return ErrorCode::NONE;
-		}
-	};
-
-	get().pushBackNewCommand<Command>(sfactor, dfactor);
-}
-
-//==============================================================================
-void CommandBufferPtr::setBlendColor(F32 r, F32 g, F32 b, F32 a)
-{
-	ANKI_STATE_CMD_4(F32, glBlendColor, r, g, b, a);
-}
-
-//==============================================================================
-void CommandBufferPtr::enablePrimitiveRestart(Bool enable)
-{
-	ANKI_STATE_CMD_ENABLE(GL_PRIMITIVE_RESTART, enable);
-}
-
-//==============================================================================
-void CommandBufferPtr::setPatchVertexCount(U32 count)
-{
-	ANKI_STATE_CMD_2(GLint, glPatchParameteri, GL_PATCH_VERTICES, count);
-}
-
-//==============================================================================
-void CommandBufferPtr::enableCulling(Bool enable)
-{
-	ANKI_STATE_CMD_ENABLE(GL_CULL_FACE, enable);
-}
-
-//==============================================================================
-void CommandBufferPtr::setCullFace(GLenum mode)
-{
-	ANKI_STATE_CMD_1(GLenum, glCullFace, mode);
-}
-
-//==============================================================================
-void CommandBufferPtr::setPolygonOffset(F32 factor, F32 units)
-{
-	ANKI_STATE_CMD_2(F32, glPolygonOffset, factor, units);
-}
-
-//==============================================================================
-void CommandBufferPtr::enablePolygonOffset(Bool enable)
-{
-	ANKI_STATE_CMD_ENABLE(GL_POLYGON_OFFSET_FILL, enable);
-}
-
-//==============================================================================
-void CommandBufferPtr::setPolygonMode(GLenum face, GLenum mode)
-{
-	ANKI_STATE_CMD_2(GLenum, glPolygonMode, face, mode);
-}
-
-//==============================================================================
-void CommandBufferPtr::enablePointSize(Bool enable)
-{
-	ANKI_STATE_CMD_ENABLE(GL_PROGRAM_POINT_SIZE, enable);
-}
-
-//==============================================================================
 class BindTexturesCommand: public GlCommand
 {
 public:
@@ -736,6 +585,74 @@ void CommandBufferPtr::updateDynamicUniforms(void* data, U32 originalSize)
 	// Push bind command
 	get().pushBackNewCommand<UpdateUniformsCommand>(
 		state.m_globalUbos[uboIdx], subUboOffset, originalSize);
+}
+
+//==============================================================================
+class BindVertexCommand final: public GlCommand
+{
+public:
+	BufferPtr m_buff;
+	PtrSize m_offset;
+	U32 m_binding;
+
+	BindVertexCommand(U32 bindingPoint, BufferPtr buff, PtrSize offset)
+		: m_buff(buff)
+		, m_offset(offset)
+		, m_binding(bindingPoint)
+	{}
+
+	Error operator()(CommandBufferImpl* cmdb)
+	{
+		GlState& state = cmdb->getManager().getImplementation().
+			getRenderingThread().getState();
+		ANKI_ASSERT(state.m_vertexBindingStrides[m_binding] > 0);
+
+		glBindVertexBuffer(m_binding, m_buff.get().getGlName(),
+			m_offset, state.m_vertexBindingStrides[m_binding]);
+
+		return ErrorCode::NONE;
+	}
+};
+
+void CommandBufferPtr::bindVertexBuffer(
+	U32 bindingPoint, BufferPtr buff, PtrSize offset)
+{
+	get().pushBackNewCommand<BindVertexCommand>(bindingPoint, buff, offset);
+}
+
+//==============================================================================
+class BindIndexCommand final: public GlCommand
+{
+public:
+	BufferPtr m_buff;
+	U8 m_indexSize;
+
+	BindIndexCommand(BufferPtr buff, U32 indexSize)
+		: m_buff(buff)
+		, m_indexSize(indexSize)
+	{}
+
+	Error operator()(CommandBufferImpl* cmdb)
+	{
+		// Update the state...
+		ANKI_ASSERT(m_indexSize == 2 || m_indexSize == 4);
+		GLenum type = m_indexSize == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT;
+
+		GlState& state = cmdb->getManager().getImplementation().
+			getRenderingThread().getState();
+
+		state.m_indexSize = type;
+
+		// ...and bind
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_buff.get().getGlName());
+
+		return ErrorCode::NONE;
+	}
+};
+
+void CommandBufferPtr::bindIndexBuffer(BufferPtr buff, U32 indexSize)
+{
+	get().pushBackNewCommand<BindIndexCommand>(buff, indexSize);
 }
 
 } // end namespace anki

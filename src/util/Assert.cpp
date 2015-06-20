@@ -31,9 +31,6 @@ void akassert(const char* exprTxt, const char* file, int line,
 		file, line , func, exprTxt);
 #endif
 
-#if ANKI_CPU_ARCH == ANKI_CPU_ARCH_INTEL
-	asm("int $3");
-#endif
 	printBacktrace();
 	abort();
 }

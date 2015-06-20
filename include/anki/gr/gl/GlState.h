@@ -47,15 +47,25 @@ public:
 
 	Array<GLuint, 256> m_texUnits;
 
-	Array<GLsizei, MAX_VERTEX_ATTRIBUTES> m_vertexBindingStrides;
-	Bool m_primitiveRestartEnabled = false;
-	GLenum m_topology = 0;
-	U32 m_patchControlPointsCount = 0;
-	GLenum m_fillMode = GL_FILL;
-	GLenum m_cullMode = GL_BACK;
-	GLenum m_depthCompareFunction = GL_LESS;
+	GLenum m_indexSize = GL_NONE;
+	/// @}
 
-	PipelinePtr m_lastPipeline;
+	/// @name Pipeline state
+	/// @{
+	Array<GLsizei, MAX_VERTEX_ATTRIBUTES> m_vertexBindingStrides;
+	GLenum m_topology = 0;
+
+	class
+	{
+	public:
+		U64 m_vertex = 0;
+		U64 m_inputAssembler = 0;
+		U64 m_tessellation = 0;
+		U64 m_viewport = 0;
+		U64 m_rasterizer = 0;
+		U64 m_depthStencil = 0;
+		U64 m_color = 0;
+	} m_stateHashes;
 	/// @}
 
 	/// Global UBO ring buffer
@@ -67,7 +77,7 @@ public:
 	/// @}
 
 	GlState(GrManager* manager)
-	:	m_manager(manager)
+		: m_manager(manager)
 	{}
 
 	/// Call this from the rendering thread.

@@ -11,7 +11,6 @@
 #include "anki/resource/RenderingKey.h"
 #include "anki/Math.h"
 #include "anki/util/Visitor.h"
-#include "anki/util/Dictionary.h"
 #include "anki/util/NonCopyable.h"
 
 namespace anki {
@@ -187,83 +186,7 @@ private:
 	DArray<TData> m_data;
 };
 
-/// Contains a few properties that other classes may use. For an explanation of
-/// the variables refer to Material class documentation
-class MaterialProperties
-{
-public:
-	/// @name Accessors
-	/// @{
-	U getLevelsOfDetail() const
-	{
-		return m_lodsCount;
-	}
-
-	U getPassesCount() const
-	{
-		return m_passesCount;
-	}
-
-	Bool getShadow() const
-	{
-		return m_shadow;
-	}
-
-	GLenum getBlendingSfactor() const
-	{
-		return m_blendingSfactor;
-	}
-
-	GLenum getBlendingDfactor() const
-	{
-		return m_blendingDfactor;
-	}
-
-	Bool getDepthTestingEnabled() const
-	{
-		return m_depthTesting;
-	}
-
-	Bool getWireframeEnabled() const
-	{
-		return m_wireframe;
-	}
-
-	Bool getTessellation() const
-	{
-		return m_tessellation;
-	}
-	/// @}
-
-	/// Check if blending is enabled
-	Bool isBlendingEnabled() const
-	{
-		return m_blendingSfactor != GL_ONE || m_blendingDfactor != GL_ZERO;
-	}
-
-protected:
-	GLenum m_blendingSfactor = GL_ONE; ///< Default GL_ONE
-	GLenum m_blendingDfactor = GL_ZERO; ///< Default GL_ZERO
-
-	Bool8 m_depthTesting = true;
-	Bool8 m_wireframe = false;
-	Bool8 m_shadow = true;
-	Bool8 m_tessellation = false;
-
-	U8 m_passesCount = 1;
-	U8 m_lodsCount = 1;
-};
-
-/// Material resource
-///
-/// Every material keeps info of how to render a RenedrableNode. Using a node
-/// based logic it creates a couple of shader programs dynamically. One for
-/// color passes and one for depth. It also keeps two sets of material
-/// variables. The first is the build in and the second the user defined.
-/// During the renderer's shader setup the buildins will be set automatically,
-/// for the user variables the user needs to have its value in the material
-/// file. Some material variables may be present in both shader programs and
-/// some in only one of them
+/// Material resource.
 ///
 /// Material XML file format:
 /// @code
@@ -272,10 +195,7 @@ protected:
 ///
 /// 	[<shadow>0 | 1</shadow>]
 ///
-/// 	[<blendFunctions>
-/// 		<sFactor>GL_SOMETHING</sFactor>
-/// 		<dFactor>GL_SOMETHING</dFactor>
-/// 	</blendFunctions>]
+/// 	[<forwardShading>0 | 1</forwardShading>]
 ///
 /// 	[<depthTesting>0 | 1</depthTesting>]
 ///
@@ -326,7 +246,7 @@ protected:
 /// (2): The \<value\> can be left empty for build-in variables
 /// (3): The \<const\> will mark a variable as constant and it cannot be changed
 ///      at all. Default is 0
-class Material: public ResourceObject, public MaterialProperties
+class Material: public ResourceObject
 {
 	friend class MaterialVariable;
 
@@ -334,12 +254,6 @@ public:
 	Material(ResourceManager* manager);
 
 	~Material();
-
-	/// Access the base class just for copying in other classes
-	const MaterialProperties& getBaseClass() const
-	{
-		return *this;
-	}
 
 	// Variable accessors
 	const DArray<MaterialVariable*>& getVariables() const
@@ -352,9 +266,6 @@ public:
 		return m_shaderBlockSize;
 	}
 
-	ANKI_USE_RESULT Error getProgramPipeline(
-		const RenderingKey& key, PipelinePtr& out);
-
 	/// Load a material file
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename);
 
@@ -364,21 +275,43 @@ public:
 		return m_hash < b.m_hash;
 	}
 
+	U getLodCount() const
+	{
+		return m_lodCount;
+	}
+
+	Bool getShadowEnabled() const
+	{
+		return m_shadow;
+	}
+
+	Bool getTessellationEnabled() const
+	{
+		return m_tessellation;
+	}
+
+	Bool getForwardShading() const
+	{
+		return m_forwardShading;
+	}
+
+	ShaderPtr getShader(const RenderingKey& key, ShaderType type) const;
+
 private:
 	DArray<MaterialVariable*> m_vars;
-	Dictionary<MaterialVariable*> m_varDict;
 
-	DArray<ShaderResourcePtr> m_progs;
-	DArray<PipelinePtr> m_pplines;
+	/// [pass][lod][tess][shader]
+	Array4d<ShaderResourcePtr, U(Pass::COUNT), MAX_LODS, 2, 5> m_shaders;
 
 	U32 m_shaderBlockSize;
 
 	/// Used for sorting
 	U64 m_hash;
 
-	/// Get a program resource
-	ShaderResourcePtr& getProgram(
-		const RenderingKey key, ShaderType shaderId);
+	Bool8 m_shadow = true;
+	Bool8 m_tessellation = false;
+	Bool8 m_forwardShading = false;
+	U8 m_lodCount = 1;
 
 	/// Parse what is within the @code <material></material> @endcode
 	ANKI_USE_RESULT Error parseMaterialTag(const XmlElement& el);
@@ -390,9 +323,6 @@ private:
 	/// Read all shader programs and pupulate the @a vars and @a nameToVar
 	/// containers
 	ANKI_USE_RESULT Error populateVariables(const MaterialProgramCreator& mspc);
-
-	U countShaders(ShaderType type) const;
-	U getShaderIndex(const RenderingKey key, ShaderType type) const;
 };
 /// @}
 

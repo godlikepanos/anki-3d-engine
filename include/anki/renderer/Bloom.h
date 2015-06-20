@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RENDERER_BLOOM_H
-#define ANKI_RENDERER_BLOOM_H
+#pragma once
 
 #include "anki/renderer/RenderingPass.h"
 #include "anki/Gr.h"
@@ -22,9 +21,9 @@ class ShaderProgram;
 /// Bloom pass.
 class Bloom: public RenderingPass
 {
-	friend class Pps;
-
 public:
+	static const PixelFormat RT_PIXEL_FORMAT;
+
 	Bloom(Renderer* r)
 		: RenderingPass(r)
 	{}
@@ -97,4 +96,3 @@ private:
 
 } // end namespace anki
 
-#endif

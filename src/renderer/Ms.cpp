@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/renderer/Ms.h"
-#include "anki/renderer/Ez.h"
 #include "anki/renderer/Renderer.h"
 
 #include "anki/util/Logger.h"
@@ -13,6 +12,15 @@
 #include "anki/misc/ConfigSet.h"
 
 namespace anki {
+
+//==============================================================================
+const Array<PixelFormat, Ms::ATTACHMENT_COUNT> Ms::RT_PIXEL_FORMATS = {
+	PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM),
+	PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM),
+	PixelFormat(ComponentFormat::R10G10B10A2, TransformFormat::UNORM)};
+
+const PixelFormat Ms::DEPTH_RT_PIXEL_FORMAT(
+	ComponentFormat::D24, TransformFormat::FLOAT);
 
 //==============================================================================
 Ms::~Ms()
@@ -24,20 +32,17 @@ Error Ms::createRt(U32 index, U32 samples)
 	Plane& plane = m_planes[index];
 
 	m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(),
-		PixelFormat(ComponentFormat::D24, TransformFormat::FLOAT),
-		samples, SamplingFilter::NEAREST, 4, plane.m_depthRt);
+		DEPTH_RT_PIXEL_FORMAT, samples, SamplingFilter::NEAREST, 4,
+		plane.m_depthRt);
 
 	m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(),
-		PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM),
-		samples, SamplingFilter::NEAREST, 1, plane.m_rt0);
+		RT_PIXEL_FORMATS[0], samples, SamplingFilter::NEAREST, 1, plane.m_rt0);
 
 	m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(),
-		PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM),
-		samples, SamplingFilter::NEAREST, 1, plane.m_rt1);
+		RT_PIXEL_FORMATS[1], samples, SamplingFilter::NEAREST, 1, plane.m_rt1);
 
 	m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(),
-		PixelFormat(ComponentFormat::R10G10B10A2, TransformFormat::UNORM),
-		samples, SamplingFilter::NEAREST, 1, plane.m_rt2);
+		RT_PIXEL_FORMATS[2], samples, SamplingFilter::NEAREST, 1, plane.m_rt2);
 
 	AttachmentLoadOperation loadop = AttachmentLoadOperation::DONT_CARE;
 #if ANKI_DEBUG
@@ -45,7 +50,7 @@ Error Ms::createRt(U32 index, U32 samples)
 #endif
 
 	FramebufferPtr::Initializer fbInit;
-	fbInit.m_colorAttachmentsCount = 3;
+	fbInit.m_colorAttachmentsCount = ATTACHMENT_COUNT;
 	fbInit.m_colorAttachments[0].m_texture = plane.m_rt0;
 	fbInit.m_colorAttachments[0].m_loadOperation = loadop;
 	fbInit.m_colorAttachments[1].m_texture = plane.m_rt1;
@@ -83,7 +88,6 @@ Error Ms::initInternal(const ConfigSet& initializer)
 	}
 
 	ANKI_CHECK(createRt(1, 1));
-	ANKI_CHECK(m_ez.init(initializer));
 
 	return ErrorCode::NONE;
 }
@@ -100,26 +104,11 @@ Error Ms::run(CommandBufferPtr& cmdb)
 
 	cmdb.setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 
-	cmdb.enableDepthTest(true);
-	cmdb.setDepthWriteMask(true);
-
 	m_planes[planeId].m_fb.bind(cmdb);
 
-	/*if(m_ez.getEnabled())
-	{
-		cmdb.setDepthFunction(GL_LESS);
-		cmdb.setColorWriteMask(false, false, false, false);
-
-		err = m_ez.run(cmdb);
-		if(err) return err;
-
-		cmdb.setDepthFunction(GL_LEQUAL);
-		cmdb.setColorWriteMask(true, true, true, true);
-	}*/
-
 	// render all
-	m_r->getSceneDrawer().prepareDraw(RenderingStage::MATERIAL, Pass::COLOR,
-		cmdb);
+	m_r->getSceneDrawer().prepareDraw(
+		RenderingStage::MATERIAL, Pass::MS_FS, cmdb);
 
 	SceneNode& cam = m_r->getActiveCamera();
 
@@ -146,9 +135,6 @@ Error Ms::run(CommandBufferPtr& cmdb)
 #endif
 		ANKI_ASSERT(0 && "TODO");
 	}
-
-	cmdb.enableDepthTest(false);
-	cmdb.setDepthWriteMask(false);
 
 	return ErrorCode::NONE;
 }

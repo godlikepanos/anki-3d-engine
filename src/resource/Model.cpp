@@ -11,95 +11,45 @@
 #include "anki/resource/ShaderResource.h"
 #include "anki/misc/Xml.h"
 #include "anki/util/Logger.h"
+#include "anki/renderer/Ms.h"
+#include "anki/renderer/Is.h"
+#include "anki/renderer/Sm.h"
 
 namespace anki {
 
 //==============================================================================
-// ModelPatchBase                                                              =
+// ModelPatch                                                                  =
 //==============================================================================
 
 //==============================================================================
-ModelPatchBase::~ModelPatchBase()
-{
-	m_vertJobs.destroy(m_alloc);
-	m_meshes.destroy(m_alloc);
-}
+ModelPatch::~ModelPatch()
+{}
 
 //==============================================================================
-Error ModelPatchBase::createVertexDesc(
-	const Mesh& mesh,
-	CommandBufferPtr& vertexJobs)
-{
-	BufferPtr vbo;
-	U32 size;
-	GLenum type;
-	U32 stride;
-	U32 offset;
-	Bool normalized;
-
-	U count = 0;
-	for(VertexAttribute attrib = VertexAttribute::POSITION;
-		attrib < VertexAttribute::INDICES; ++attrib)
-	{
-		mesh.getBufferInfo(attrib, vbo, size, type,
-			stride, offset, normalized);
-
-		if(!vbo.isCreated())
-		{
-			continue;
-		}
-
-		vbo.bindVertexBuffer(vertexJobs, size, type, normalized, stride,
-			offset, static_cast<U>(attrib));
-
-		++count;
-	}
-
-	if(count < 1)
-	{
-		ANKI_LOGE("The mesh doesn't have any attributes");
-		return ErrorCode::USER_DATA;
-	}
-
-	// The indices VBO
-	mesh.getBufferInfo(VertexAttribute::INDICES, vbo, size, type,
-		stride, offset, normalized);
-
-	ANKI_ASSERT(vbo.isCreated());
-	vbo.bindIndexBuffer(vertexJobs);
-
-	return ErrorCode::NONE;
-}
-
-//==============================================================================
-Error ModelPatchBase::getRenderingDataSub(
+void ModelPatch::getRenderingDataSub(
 	const RenderingKey& key,
-	CommandBufferPtr& vertJobs,
+	SArray<U8> subMeshIndicesArray,
+	BufferPtr& vertBuff,
+	BufferPtr& indexBuff,
 	PipelinePtr& ppline,
-	const U8* subMeshIndexArray,
-	U32 subMeshIndexCount,
 	Array<U32, ANKI_GL_MAX_SUB_DRAWCALLS>& indicesCountArray,
 	Array<PtrSize, ANKI_GL_MAX_SUB_DRAWCALLS>& indicesOffsetArray,
 	U32& drawcallCount) const
 {
-	// Vertex descr
-	vertJobs = m_vertJobs[getVertexDescIdx(key)];
-
-	// Prog
-	RenderingKey mtlKey = key;
-	mtlKey.m_lod =
-		std::min(key.m_lod, (U8)(getMaterial().getLevelsOfDetail() - 1));
-
-	ANKI_CHECK(m_mtl->getProgramPipeline(mtlKey, ppline));
-
-	// Mesh and indices
+	// Get the buffers
 	RenderingKey meshKey = key;
-	meshKey.m_lod = std::min(key.m_lod, (U8)(getMeshesCount() - 1));
-
+	meshKey.m_lod = min<U>(key.m_lod, m_meshCount - 1);
 	const Mesh& mesh = getMesh(meshKey);
+	vertBuff = mesh.getVertexBuffer();
+	indexBuff = mesh.getIndexBuffer();
 
-	if(subMeshIndexCount == 0 || subMeshIndexArray == nullptr
-		|| mesh.getSubMeshesCount() == 0)
+	// Get ppline
+	RenderingKey mtlKey = key;
+	mtlKey.m_lod = min<U>(key.m_lod, m_mtl->getLodCount() - 1);
+
+	ppline = getPipeline(mtlKey);
+
+	if(subMeshIndicesArray.getSize() == 0 || mesh.getSubMeshesCount() == 0)
 	{
 		drawcallCount = 1;
 		indicesOffsetArray[0] = 0;
@@ -107,138 +57,173 @@ Error ModelPatchBase::getRenderingDataSub(
 	}
 	else
 	{
-		ANKI_ASSERT(subMeshIndexCount <= mesh.getSubMeshesCount());
-
-		drawcallCount = 0;
-		I prevIndex = -1;
-		for(U i = 0; i < subMeshIndexCount; i++)
-		{
-			I index = (subMeshIndexArray == nullptr)
-				? (I)i
-				: (I)subMeshIndexArray[i];
-
-			// Check if we can merge with the previous submesh
-			if(index > 0 && (index - 1) == prevIndex)
-			{
-				ANKI_ASSERT(drawcallCount > 0);
-
-				// increase the indices count, leave offset alone
-				U32 offset;
-				indicesCountArray[drawcallCount - 1] +=
-					mesh.getIndicesCountSub((U)index, offset);
-			}
-			else
-			{
-				U32 offset;
-				indicesCountArray[drawcallCount] =
-					mesh.getIndicesCountSub((U)index, offset);
-
-				indicesOffsetArray[drawcallCount] = (PtrSize)offset;
-
-				++drawcallCount;
-			}
-
-			prevIndex = index;
-		}
+		ANKI_ASSERT(0 && "TODO");
 	}
-
-	return ErrorCode::NONE;
 }
 
 //==============================================================================
-Error ModelPatchBase::create(GrManager* gl)
+U ModelPatch::getLodCount() const
 {
-	const Material& mtl = getMaterial();
-	U lodsCount = getLodsCount();
-
-	m_vertJobs.create(m_alloc, lodsCount * mtl.getPassesCount());
-
-	for(U lod = 0; lod < lodsCount; ++lod)
-	{
-		for(U pass = 0; pass < mtl.getPassesCount(); ++pass)
-		{
-			RenderingKey key((Pass)pass, lod, false);
-			const Mesh* mesh;
-
-			// Get mesh
-			ANKI_ASSERT(getMeshesCount() > 0);
-			RenderingKey meshKey = key;
-			meshKey.m_lod = std::min(key.m_lod, (U8)(getMeshesCount() - 1));
-			mesh = &getMesh(meshKey);
-
-			// Create vert descriptor
-			CommandBufferPtr vertJobs;
-			vertJobs.create(gl);
-			ANKI_CHECK(createVertexDesc(*mesh, vertJobs));
-
-			m_vertJobs[getVertexDescIdx(key)] = vertJobs;
-		}
-	}
-
-	return ErrorCode::NONE;
+	return max<U>(m_meshCount, getMaterial().getLodCount());
 }
 
 //==============================================================================
-U ModelPatchBase::getLodsCount() const
-{
-	U meshLods = getMeshesCount();
-	U mtlLods = getMaterial().getLevelsOfDetail();
-	return std::max(meshLods, mtlLods);
-}
-
-//==============================================================================
-U ModelPatchBase::getVertexDescIdx(const RenderingKey& key) const
-{
-	U passesCount = getMaterial().getPassesCount();
-	ANKI_ASSERT((U)key.m_pass < passesCount);
-
-	// Sanitize LOD
-	U lod = std::min((U)key.m_lod, getLodsCount() - 1);
-
-	U idx = lod * passesCount + (U)key.m_pass;
-	ANKI_ASSERT(idx < m_vertJobs.getSize());
-	return idx;
-}
-
-//==============================================================================
-// ModelPatch                                                                  =
-//==============================================================================
-
-//==============================================================================
-template<typename MeshResourcePtrType>
-Error ModelPatch<MeshResourcePtrType>::create(
-	CString meshFNames[],
-	U32 meshesCount,
+Error ModelPatch::create(
+	SArray<CString> meshFNames,
 	const CString& mtlFName,
-	ResourceManager* resources)
+	ResourceManager* manager)
 {
-	ANKI_ASSERT(meshesCount > 0);
-
-	m_meshes.create(m_alloc, meshesCount);
-	m_meshResources.create(m_alloc, meshesCount);
+	ANKI_ASSERT(meshFNames.getSize() > 0);
 
 	// Load meshes
-	for(U i = 0; i < meshesCount; i++)
+	m_meshCount = 0;
+	for(U i = 0; i < meshFNames.getSize(); i++)
 	{
-		ANKI_CHECK(m_meshResources[i].load(meshFNames[i], resources));
-		m_meshes[i] = &m_meshResources[i].get();
+		ANKI_CHECK(m_meshes[i].load(meshFNames[i], manager));
 
 		// Sanity check
-		if(i > 0 && !m_meshResources[i]->isCompatible(*m_meshResources[i - 1]))
+		if(i > 0 && !m_meshes[i]->isCompatible(*m_meshes[i - 1]))
 		{
 			ANKI_LOGE("Meshes not compatible");
 			return ErrorCode::USER_DATA;
 		}
+
+		++m_meshCount;
 	}
 
 	// Load material
-	ANKI_CHECK(m_mtlResource.load(mtlFName, resources));
-	m_mtl = &m_mtlResource.get();
-
-	// Create VAOs
-	ANKI_CHECK(Base::create(&resources->getGrManager()));
+	ANKI_CHECK(m_mtl.load(mtlFName, manager));
 
 	return ErrorCode::NONE;
+}
+
+//==============================================================================
+PipelinePtr ModelPatch::getPipeline(const RenderingKey& key) const
+{
+	// Preconditions
+	ANKI_ASSERT(key.m_lod < m_mtl->getLodCount());
+
+	if(key.m_tessellation && !m_mtl->getTessellationEnabled())
+	{
+		ANKI_ASSERT(0);
+	}
+
+	if(key.m_pass == Pass::SM && !m_mtl->getShadowEnabled())
+	{
+		ANKI_ASSERT(0);
+	}
+
+	PipelinePtr& ppline =
+		m_pplines[U(key.m_pass)][key.m_lod][key.m_tessellation];
+
+	// Lazily create it
+	if(ANKI_UNLIKELY(!ppline.isCreated()))
+	{
+		PipelinePtr::Initializer pplineInit;
+		computePipelineInitializer(key, pplineInit);
+
+		pplineInit.m_shaders[U(ShaderType::VERTEX)] =
+			m_mtl->getShader(key, ShaderType::VERTEX);
+
+		if(key.m_tessellation)
+		{
+			pplineInit.m_shaders[U(ShaderType::TESSELLATION_CONTROL)] =
+				m_mtl->getShader(key, ShaderType::TESSELLATION_CONTROL);
+
+			pplineInit.m_shaders[U(ShaderType::TESSELLATION_EVALUATION)] =
+				m_mtl->getShader(key, ShaderType::TESSELLATION_EVALUATION);
+		}
+
+		pplineInit.m_shaders[U(ShaderType::FRAGMENT)] =
+			m_mtl->getShader(key, ShaderType::FRAGMENT);
+
+		// Create
+		ppline.create(&m_model->getManager().getGrManager(), pplineInit);
+	}
+
+	return ppline;
+}
+
+//==============================================================================
+void ModelPatch::computePipelineInitializer(
+	const RenderingKey& key, PipelineInitializer& pinit) const
+{
+	//
+	// Vertex state
+	//
+	VertexStateInfo& vert = pinit.m_vertex;
+	if(m_meshes[0]->hasBoneWeights())
+	{
+		ANKI_ASSERT(0 && "TODO");
+	}
+	else
+	{
+		vert.m_bindingCount = 1;
+		vert.m_attributeCount = 4;
+		vert.m_bindings[0].m_stride =
+			sizeof(Vec3) + 2 * sizeof(U32) + sizeof(HVec2);
+
+		vert.m_attributes[0].m_format = PixelFormat(
+			ComponentFormat::R32G32B32, TransformFormat::FLOAT);
+		vert.m_attributes[0].m_offset = 0;
+
+		vert.m_attributes[1].m_format = PixelFormat(
+			ComponentFormat::R10G10B10A2, TransformFormat::SNORM);
+		vert.m_attributes[1].m_offset = sizeof(Vec3);
+
+		vert.m_attributes[2].m_format = PixelFormat(
+			ComponentFormat::R10G10B10A2, TransformFormat::SNORM);
+		vert.m_attributes[2].m_offset = sizeof(Vec3) + sizeof(U32);
+
+		vert.m_attributes[3].m_format = PixelFormat(
+			ComponentFormat::R16G16, TransformFormat::FLOAT);
+		vert.m_attributes[3].m_offset = sizeof(Vec3) + 2 * sizeof(U32);
+	}
+
+	//
+	// Depth/stencil state
+	//
+	DepthStencilStateInfo& ds = pinit.m_depthStencil;
+	if(key.m_pass == Pass::SM)
+	{
+		ds.m_format = Sm::DEPTH_RT_PIXEL_FORMAT;
+		ds.m_polygonOffsetFactor = 7.0;
+		ds.m_polygonOffsetUnits = 5.0;
+	}
+	else if(m_mtl->getForwardShading())
+	{
+		ds.m_format = Ms::DEPTH_RT_PIXEL_FORMAT;
+		ds.m_depthWriteEnabled = false;
+	}
+	else
+	{
+		ds.m_format = Ms::DEPTH_RT_PIXEL_FORMAT;
+	}
+
+	//
+	// Color state
+	//
+	ColorStateInfo& color = pinit.m_color;
+	if(key.m_pass == Pass::SM)
+	{
+		// Default
+	}
+	else if(m_mtl->getForwardShading())
+	{
+		color.m_attachmentCount = 1;
+		color.m_attachments[0].m_format = Is::RT_PIXEL_FORMAT;
+		color.m_attachments[0].m_srcBlendMethod = BlendMethod::SRC_ALPHA;
+		color.m_attachments[0].m_dstBlendMethod =
+			BlendMethod::ONE_MINUS_SRC_ALPHA;
+	}
+	else
+	{
+		color.m_attachmentCount = Ms::ATTACHMENT_COUNT;
+		ANKI_ASSERT(Ms::ATTACHMENT_COUNT == 3);
+		color.m_attachments[0].m_format = Ms::RT_PIXEL_FORMATS[0];
+		color.m_attachments[1].m_format = Ms::RT_PIXEL_FORMATS[1];
+		color.m_attachments[2].m_format = Ms::RT_PIXEL_FORMATS[2];
+	}
 }
 
 //==============================================================================
@@ -250,7 +235,7 @@ Model::~Model()
 {
 	auto alloc = getAllocator();
 
-	for(ModelPatchBase* patch : m_modelPatches)
+	for(ModelPatch* patch : m_modelPatches)
 	{
 		alloc.deleteInstance(patch);
 	}
@@ -307,94 +292,45 @@ Error Model::load(const ResourceFilename& filename)
 
 		Array<CString, 3> meshesFnames;
 		U meshesCount = 1;
-		ModelPatchBase* patch;
 
-		// Try mesh
+		// Get mesh
 		XmlElement meshEl;
-		ANKI_CHECK(modelPatchEl.getChildElementOptional("mesh", meshEl));
-		if(meshEl)
+		ANKI_CHECK(modelPatchEl.getChildElement("mesh", meshEl));
+
+		XmlElement meshEl1;
+		ANKI_CHECK(modelPatchEl.getChildElementOptional("mesh1", meshEl1));
+
+		XmlElement meshEl2;
+		ANKI_CHECK(modelPatchEl.getChildElementOptional("mesh2", meshEl2));
+
+		ANKI_CHECK(meshEl.getText(meshesFnames[0]));
+
+		if(meshEl1)
 		{
-			XmlElement meshEl1;
-			ANKI_CHECK(modelPatchEl.getChildElementOptional("mesh1", meshEl1));
-
-			XmlElement meshEl2;
-			ANKI_CHECK(modelPatchEl.getChildElementOptional("mesh2", meshEl2));
-
-			ANKI_CHECK(meshEl.getText(meshesFnames[0]));
-
-			if(meshEl1)
-			{
-				++meshesCount;
-				ANKI_CHECK(meshEl1.getText(meshesFnames[1]));
-			}
-
-			if(meshEl2)
-			{
-				++meshesCount;
-				ANKI_CHECK(meshEl2.getText(meshesFnames[2]));
-			}
-
-			CString cstr;
-			ANKI_CHECK(materialEl.getText(cstr));
-			ModelPatch<MeshResourcePtr>* mpatch = alloc.newInstance<
-				ModelPatch<MeshResourcePtr>>(alloc);
-
-			if(mpatch == nullptr)
-			{
-				return ErrorCode::OUT_OF_MEMORY;
-			}
-
-			ANKI_CHECK(mpatch->create(&meshesFnames[0], meshesCount, cstr,
-				&getManager()));
-
-			patch = mpatch;
-		}
-		else
-		{
-			XmlElement bmeshEl;
-			ANKI_CHECK(modelPatchEl.getChildElement("bucketMesh", bmeshEl));
-
-			XmlElement bmeshEl1;
-			ANKI_CHECK(
-				modelPatchEl.getChildElementOptional("bucketMesh1", bmeshEl1));
-
-			XmlElement bmeshEl2;
-			ANKI_CHECK(
-				modelPatchEl.getChildElementOptional("bucketMesh2", bmeshEl2));
-
-			ANKI_CHECK(bmeshEl.getText(meshesFnames[0]));
-
-			if(bmeshEl1)
-			{
-				++meshesCount;
-				ANKI_CHECK(bmeshEl1.getText(meshesFnames[1]));
-			}
-
-			if(bmeshEl2)
-			{
-				++meshesCount;
-				ANKI_CHECK(bmeshEl2.getText(meshesFnames[2]));
-			}
-
-			CString cstr;
-			ANKI_CHECK(materialEl.getText(cstr));
-
-			ModelPatch<BucketMeshResourcePtr>* mpatch =
-				alloc.newInstance<
-				ModelPatch<BucketMeshResourcePtr>>(alloc);
-
-			if(mpatch == nullptr)
-			{
-				return ErrorCode::OUT_OF_MEMORY;
-			}
-
-			ANKI_CHECK(mpatch->create(&meshesFnames[0], meshesCount, cstr,
-				&getManager()));
-
-			patch  = mpatch;
+			++meshesCount;
+			ANKI_CHECK(meshEl1.getText(meshesFnames[1]));
 		}
 
-		m_modelPatches[count++] = patch;
+		if(meshEl2)
+		{
+			++meshesCount;
+			ANKI_CHECK(meshEl2.getText(meshesFnames[2]));
+		}
+
+		CString cstr;
+		ANKI_CHECK(materialEl.getText(cstr));
+		ModelPatch* mpatch = alloc.newInstance<ModelPatch>(this);
+
+		if(mpatch == nullptr)
+		{
+			return ErrorCode::OUT_OF_MEMORY;
+		}
+
+		ANKI_CHECK(mpatch->create(
+			SArray<CString>(&meshesFnames[0], meshesCount), cstr,
+			&getManager()));
+
+		m_modelPatches[count++] = mpatch;
 
 		// Move to next
 		ANKI_CHECK(

@@ -74,7 +74,6 @@ Error Dbg::run(CommandBufferPtr& cmdb)
 	ANKI_ASSERT(m_enabled);
 
 	m_fb.bind(cmdb);
-	cmdb.enableDepthTest(m_depthTest);
 
 	SceneNode& cam = m_r->getActiveCamera();
 	FrustumComponent& camFr = cam.getComponent<FrustumComponent>();
@@ -182,15 +181,7 @@ Error Dbg::run(CommandBufferPtr& cmdb)
 	}
 #endif
 
-	err = m_drawer->flush();
-
-	if(!err)
-	{
-		m_drawer->finishDraw();
-		cmdb.enableDepthTest(false);
-	}
-
-	return err;
+	return m_drawer->flush();
 }
 
 } // end namespace anki

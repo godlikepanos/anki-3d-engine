@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RENDERER_RENDERING_PASS_H
-#define ANKI_RENDERER_RENDERING_PASS_H
+#pragma once
 
 #include "anki/renderer/Common.h"
 #include "anki/util/StdTypes.h"
@@ -58,41 +57,7 @@ protected:
 
 	ResourceManager& getResourceManager();
 };
-
-/// Blurring pass
-class BlurringRenderingPass: public RenderingPass
-{
-protected:
-	U32 m_blurringIterationsCount = 1; ///< The blurring iterations
-
-	BlurringRenderingPass(Renderer* r)
-		: RenderingPass(r)
-	{}
-
-	class Direction
-	{
-	public:
-		FramebufferPtr m_fb;
-		TexturePtr m_rt;
-		ShaderResourcePtr m_frag;
-		PipelinePtr m_ppline;
-	};
-
-	enum class DirectionEnum: U
-	{
-		VERTICAL,
-		HORIZONTAL
-	};
-
-	Array<Direction, 2> m_dirs;
-
-	ANKI_USE_RESULT Error initBlurring(Renderer& r, U width, U height, U samples,
-		F32 blurringDistance);
-
-	void runBlurring(Renderer& r, CommandBufferPtr& jobs);
-};
 /// @}
 
 } // end namespace anki
 
-#endif

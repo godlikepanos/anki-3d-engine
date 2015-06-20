@@ -32,6 +32,9 @@ Error Sslf::initInternal(const ConfigSet& config)
 		return ErrorCode::NONE;
 	}
 
+	const PixelFormat pixelFormat(
+		ComponentFormat::R8G8B8, TransformFormat::UNORM);
+
 	// Load program 1
 	StringAuto pps(getAllocator());
 
@@ -43,7 +46,11 @@ Error Sslf::initInternal(const ConfigSet& config)
 	ANKI_CHECK(m_frag.loadToCache(&getResourceManager(),
 		"shaders/PpsSslf.frag.glsl", pps.toCString(), "r_"));
 
-	ANKI_CHECK(m_r->createDrawQuadPipeline(m_frag->getGrShader(), m_ppline));
+	ColorStateInfo colorState;
+	colorState.m_attachmentCount = 1;
+	colorState.m_attachments[0].m_format = pixelFormat;
+
+	m_r->createDrawQuadPipeline(m_frag->getGrShader(), colorState, m_ppline);
 
 	// Textures
 	ANKI_CHECK(m_lensDirtTex.load(
@@ -52,8 +59,7 @@ Error Sslf::initInternal(const ConfigSet& config)
 	// Create the render target and FB
 	m_r->createRenderTarget(m_r->getPps().getBloom().getWidth(),
 		m_r->getPps().getBloom().getHeight(),
-		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM),
-		1, SamplingFilter::LINEAR, 1, m_rt);
+		pixelFormat, 1, SamplingFilter::LINEAR, 1, m_rt);
 
 	FramebufferPtr::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
