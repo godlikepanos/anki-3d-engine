@@ -59,7 +59,7 @@ Error init()
 	MainRenderer& renderer = app->getMainRenderer();
 	ResourceManager& resources = app->getResourceManager();
 
-	scene.setAmbientColor(Vec4(1.0) * 0.0001);
+	scene.setAmbientColor(Vec4(1.0) * 0.05);
 
 	if(getenv("PROFILE"))
 	{
@@ -507,7 +507,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("samples", 1);
 	config.set("tessellation", true);
 	//config.set("maxTextureSize", 256);
-	config.set("fullscreenDesktopResolution", false);
+	config.set("fullscreenDesktopResolution", true);
 	config.set("debugContext", false);
 	config.set("dataPaths", "assets");
 

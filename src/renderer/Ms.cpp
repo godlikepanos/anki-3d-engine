@@ -53,10 +53,13 @@ Error Ms::createRt(U32 index, U32 samples)
 	fbInit.m_colorAttachmentsCount = ATTACHMENT_COUNT;
 	fbInit.m_colorAttachments[0].m_texture = plane.m_rt0;
 	fbInit.m_colorAttachments[0].m_loadOperation = loadop;
+	fbInit.m_colorAttachments[0].m_clearValue.m_colorf = {{1.0, 0.0, 0.0, 0.0}};
 	fbInit.m_colorAttachments[1].m_texture = plane.m_rt1;
 	fbInit.m_colorAttachments[1].m_loadOperation = loadop;
+	fbInit.m_colorAttachments[1].m_clearValue.m_colorf = {{0.0, 1.0, 0.0, 0.0}};
 	fbInit.m_colorAttachments[2].m_texture = plane.m_rt2;
 	fbInit.m_colorAttachments[2].m_loadOperation = loadop;
+	fbInit.m_colorAttachments[2].m_clearValue.m_colorf = {{0.0, 0.0, 1.0, 0.0}};
 	fbInit.m_depthStencilAttachment.m_texture = plane.m_depthRt;
 	fbInit.m_depthStencilAttachment.m_loadOperation =
 		AttachmentLoadOperation::CLEAR;

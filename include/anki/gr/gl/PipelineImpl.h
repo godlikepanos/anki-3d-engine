@@ -56,6 +56,8 @@ private:
 	};
 
 	Bool8 m_compute = false; ///< Is compute
+	Bool8 m_tessellation = false;
+	Bool8 m_blendEnabled = false;
 
 	/// Input values.
 	PipelineInitializer m_in;
@@ -93,6 +95,7 @@ private:
 
 	void initVertexState();
 	void initInputAssemblerState();
+	void initTessellationState();
 	void initRasterizerState();
 	void initDepthStencilState();
 	void initColorState();

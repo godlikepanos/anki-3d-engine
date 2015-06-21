@@ -89,7 +89,7 @@ void Sslr::run(CommandBufferPtr& cmdBuff)
 	m_reflectionPpline.bind(cmdBuff);
 
 	Array<TexturePtr, 4> tarr = {{
-		m_r->getIs()._getRt(),
+		m_r->getIs().getRt(),
 		m_r->getMs().getDepthRt(),
 		m_r->getMs().getRt1(),
 		m_r->getMs().getRt2()}};

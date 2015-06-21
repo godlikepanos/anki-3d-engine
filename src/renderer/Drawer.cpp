@@ -331,11 +331,7 @@ Error RenderableDrawer::render(SceneNode& frsn, VisibleNode& visibleNode)
 	build.m_subMeshIndicesCount = visibleNode.m_spatialsCount;
 	build.m_cmdb = m_cmdBuff;
 
-	Error err = renderable.buildRendering(build);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(renderable.buildRendering(build));
 
 	return ErrorCode::NONE;
 }

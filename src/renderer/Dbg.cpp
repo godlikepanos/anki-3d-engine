@@ -51,7 +51,7 @@ Error Dbg::init(const ConfigSet& initializer)
 	}
 	else
 	{
-		fbInit.m_colorAttachments[0].m_texture = m_r->getIs()._getRt();
+		fbInit.m_colorAttachments[0].m_texture = m_r->getIs().getRt();
 	}
 	fbInit.m_colorAttachments[0].m_loadOperation =
 		AttachmentLoadOperation::LOAD;

@@ -53,7 +53,7 @@ public:
 
 	ANKI_USE_RESULT Error run(CommandBufferPtr& cmdBuff);
 
-	TexturePtr& _getRt()
+	TexturePtr& getRt()
 	{
 		return m_rt;
 	}

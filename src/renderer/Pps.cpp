@@ -164,7 +164,7 @@ void Pps::run(CommandBufferPtr& cmdb)
 
 	m_ppline.bind(cmdb);
 
-	m_r->getIs()._getRt().bind(cmdb, 0);
+	m_r->getIs().getRt().bind(cmdb, 0);
 
 	if(m_ssao->getEnabled())
 	{

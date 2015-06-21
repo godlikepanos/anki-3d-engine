@@ -45,7 +45,7 @@ void Tm::run(CommandBufferPtr& cmdb)
 {
 	m_luminancePpline.bind(cmdb);
 	m_luminanceBuff.bindShaderBuffer(cmdb, 0);
-	m_r->getIs()._getRt().bind(cmdb, 0);
+	m_r->getIs().getRt().bind(cmdb, 0);
 
 	cmdb.dispatchCompute(1, 1, 1);
 }

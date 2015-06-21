@@ -139,10 +139,10 @@ Error MainRenderer::render(SceneGraph& scene)
 		}
 		else
 		{
-			rt = &m_r->getIs()._getRt();
+			rt = &m_r->getIs().getRt();
 		}
 
-		//rt = &m_r->getMs().getRt2();
+		//rt = &m_r->getIs().getRt();
 		//rt = &getPps().getHdr()._getRt();
 
 		rt->bind(cmdb, 0);

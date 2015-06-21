@@ -113,6 +113,7 @@ Error PipelineImpl::create(const Initializer& init)
 	{
 		initVertexState();
 		initInputAssemblerState();
+		initTessellationState();
 		initRasterizerState();
 		initDepthStencilState();
 		initColorState();
@@ -188,6 +189,12 @@ Error PipelineImpl::createGlPipeline()
 			GLbitfield bit;
 			computeGlShaderType(static_cast<ShaderType>(i), &bit);
 			glUseProgramStages(m_glName, bit, shader.get().getGlName());
+
+			if(i == U(ShaderType::TESSELLATION_CONTROL)
+				|| i == U(ShaderType::TESSELLATION_EVALUATION))
+			{
+				m_tessellation = true;
+			}
 		}
 	}
 
@@ -335,6 +342,13 @@ void PipelineImpl::initInputAssemblerState()
 }
 
 //==============================================================================
+void PipelineImpl::initTessellationState()
+{
+	m_hashes.m_tessellation =
+		computeHash(&m_in.m_tessellation, sizeof(m_in.m_tessellation));
+}
+
+//==============================================================================
 void PipelineImpl::initRasterizerState()
 {
 	switch(m_in.m_rasterizer.m_fillMode)
@@ -413,10 +427,19 @@ void PipelineImpl::initColorState()
 			ANKI_ASSERT(0);
 		}
 
-		out.m_channelWriteMask[0] = in.m_channelWriteMask | ColorBit::RED;
-		out.m_channelWriteMask[1] = in.m_channelWriteMask | ColorBit::GREEN;
-		out.m_channelWriteMask[2] = in.m_channelWriteMask | ColorBit::BLUE;
-		out.m_channelWriteMask[3] = in.m_channelWriteMask | ColorBit::ALPHA;
+		out.m_channelWriteMask[0] =
+			(in.m_channelWriteMask | ColorBit::RED) != 0;
+		out.m_channelWriteMask[1] =
+			(in.m_channelWriteMask | ColorBit::GREEN) != 0;
+		out.m_channelWriteMask[2] =
+			(in.m_channelWriteMask | ColorBit::BLUE) != 0;
+		out.m_channelWriteMask[3] =
+			(in.m_channelWriteMask | ColorBit::ALPHA) != 0;
+
+		if(!(out.m_srcBlendMethod == GL_ONE && out.m_dstBlendMethod == GL_ZERO))
+		{
+			m_blendEnabled = true;
+		}
 	}
 
 	m_hashes.m_color = computeHash(&m_in.m_color, sizeof(m_in.m_color));
@@ -430,10 +453,15 @@ void PipelineImpl::setVertexState(GlState& state) const
 		return;
 	}
 
+	state.m_stateHashes.m_vertex = m_hashes.m_vertex;
+
 	for(U i = 0; i < m_in.m_vertex.m_attributeCount; ++i)
 	{
 		const Attribute& attrib = m_cache.m_attribs[i];
 		ANKI_ASSERT(attrib.m_type);
+
+		glEnableVertexAttribArray(i);
+
 		glVertexAttribFormat(i, attrib.m_compCount, attrib.m_type,
 			attrib.m_normalized, m_in.m_vertex.m_attributes[i].m_offset);
 
@@ -454,6 +482,8 @@ void PipelineImpl::setInputAssemblerState(GlState& state) const
 		return;
 	}
 
+	state.m_stateHashes.m_inputAssembler = m_hashes.m_inputAssembler;
+
 	if(m_in.m_inputAssembler.m_primitiveRestartEnabled)
 	{
 		glEnable(GL_PRIMITIVE_RESTART);
@@ -467,10 +497,13 @@ void PipelineImpl::setInputAssemblerState(GlState& state) const
 //==============================================================================
 void PipelineImpl::setTessellationState(GlState& state) const
 {
-	if(state.m_stateHashes.m_tessellation == m_hashes.m_tessellation)
+	if(!m_tessellation
+		|| state.m_stateHashes.m_tessellation == m_hashes.m_tessellation)
 	{
 		return;
 	}
+
+	state.m_stateHashes.m_tessellation = m_hashes.m_tessellation;
 
 	glPatchParameteri(GL_PATCH_VERTICES,
 		m_in.m_tessellation.m_patchControlPointsCount);
@@ -484,8 +517,11 @@ void PipelineImpl::setRasterizerState(GlState& state) const
 		return;
 	}
 
+	state.m_stateHashes.m_rasterizer = m_hashes.m_rasterizer;
+
 	glPolygonMode(GL_FRONT_AND_BACK, m_cache.m_fillMode);
 	glCullFace(m_cache.m_cullMode);
+	glEnable(GL_CULL_FACE);
 }
 
 //==============================================================================
@@ -495,6 +531,8 @@ void PipelineImpl::setDepthStencilState(GlState& state) const
 	{
 		return;
 	}
+
+	state.m_stateHashes.m_depthStencil = m_hashes.m_depthStencil;
 
 	if(m_cache.m_depthCompareFunction == GL_ALWAYS)
 	{
@@ -508,13 +546,13 @@ void PipelineImpl::setDepthStencilState(GlState& state) const
 	if(m_in.m_depthStencil.m_polygonOffsetFactor == 0.0
 		&& m_in.m_depthStencil.m_polygonOffsetUnits == 0.0)
 	{
-		glEnable(GL_POLYGON_OFFSET_FILL);
-		glPolygonOffset(m_in.m_depthStencil.m_polygonOffsetFactor,
-			m_in.m_depthStencil.m_polygonOffsetUnits);
+		glDisable(GL_POLYGON_OFFSET_FILL);
 	}
 	else
 	{
-		glDisable(GL_POLYGON_OFFSET_FILL);
+		glEnable(GL_POLYGON_OFFSET_FILL);
+		glPolygonOffset(m_in.m_depthStencil.m_polygonOffsetFactor,
+			m_in.m_depthStencil.m_polygonOffsetUnits);
 	}
 
 	glDepthFunc(m_cache.m_depthCompareFunction);
@@ -528,14 +566,35 @@ void PipelineImpl::setColorState(GlState& state) const
 		return;
 	}
 
-	for(U i = 0; i < m_in.m_color.m_attachmentCount; ++i)
-	{
-		const Attachment& att = m_cache.m_attachments[i];
+	state.m_stateHashes.m_color = m_hashes.m_color;
 
-		glBlendFunci(i, att.m_srcBlendMethod, att.m_dstBlendMethod);
-		glBlendEquationi(i, att.m_blendFunction);
-		glColorMaski(i, att.m_channelWriteMask[0], att.m_channelWriteMask[1],
-			att.m_channelWriteMask[2], att.m_channelWriteMask[3]);
+	if(m_blendEnabled)
+	{
+		glEnable(GL_BLEND);
+
+		for(U i = 0; i < m_in.m_color.m_attachmentCount; ++i)
+		{
+			const Attachment& att = m_cache.m_attachments[i];
+
+			glBlendFunci(i, att.m_srcBlendMethod, att.m_dstBlendMethod);
+			glBlendEquationi(i, att.m_blendFunction);
+			glColorMaski(i, att.m_channelWriteMask[0],
+				att.m_channelWriteMask[1], att.m_channelWriteMask[2],
+				att.m_channelWriteMask[3]);
+		}
+	}
+	else
+	{
+		glDisable(GL_BLEND);
+
+		for(U i = 0; i < m_in.m_color.m_attachmentCount; ++i)
+		{
+			const Attachment& att = m_cache.m_attachments[i];
+
+			glColorMaski(i, att.m_channelWriteMask[0],
+				att.m_channelWriteMask[1], att.m_channelWriteMask[2],
+				att.m_channelWriteMask[3]);
+		}
 	}
 }
 

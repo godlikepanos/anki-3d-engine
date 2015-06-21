@@ -166,7 +166,7 @@ void Bloom::run(CommandBufferPtr& cmdb)
 		m_commonUboUpdateTimestamp = getGlobalTimestamp();
 	}
 
-	m_r->getIs()._getRt().bind(cmdb, 0);
+	m_r->getIs().getRt().bind(cmdb, 0);
 	m_commonBuff.bindShaderBuffer(cmdb, 0);
 	m_r->getPps().getTm().getAverageLuminanceBuffer().bindShaderBuffer(cmdb, 0);
 

@@ -28,17 +28,17 @@ void main()
 	const vec2 SIZES =
 		vec2(1.0 / float(TILES_X_COUNT), 1.0 / float(TILES_Y_COUNT));
 
-	const vec2 POSITIONS[4] = vec2[](
-		vec2(-1.0, -1.0),
-		vec2(1.0, -1.0),
-		vec2(-1.0, 1.0),
-		vec2(1.0, 1.0));
+	const vec2 UVS[4] = vec2[](
+		vec2(0.0, 0.0) * SIZES,
+		vec2(1.0, 0.0) * SIZES,
+		vec2(0.0, 1.0) * SIZES,
+		vec2(1.0, 1.0) * SIZES);
 
-	out_texCoord = (POSITIONS[gl_VertexID] + ij) * SIZES;
-	vec2 vertPosNdc = out_texCoord * 2.0 - 1.0;
-	gl_Position = vec4(vertPosNdc, 0.0, 1.0);
+	out_texCoord = UVS[gl_VertexID] + ij * SIZES;
+	vec2 pos = out_texCoord * 2.0 - 1.0;
 
-	out_projectionParams = u_projectionParams.xy * vertPosNdc;
+	gl_Position = vec4(pos, 0.0, 1.0);
+	out_projectionParams = u_projectionParams.xy * pos;
 }
 
 

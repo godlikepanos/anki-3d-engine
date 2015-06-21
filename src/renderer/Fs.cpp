@@ -21,7 +21,7 @@ Error Fs::init(const ConfigSet&)
 {
 	FramebufferPtr::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
-	fbInit.m_colorAttachments[0].m_texture = m_r->getIs()._getRt();
+	fbInit.m_colorAttachments[0].m_texture = m_r->getIs().getRt();
 	fbInit.m_colorAttachments[0].m_loadOperation =
 		AttachmentLoadOperation::LOAD;
 	fbInit.m_depthStencilAttachment.m_texture = m_r->getMs().getDepthRt();
