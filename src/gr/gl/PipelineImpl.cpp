@@ -295,6 +295,13 @@ void PipelineImpl::initVertexState()
 			cache.m_normalized = false;
 		}
 		else if(binding.m_format == PixelFormat(
+			ComponentFormat::R16G16, TransformFormat::UNORM))
+		{
+			cache.m_compCount = 2;
+			cache.m_type = GL_UNSIGNED_SHORT;
+			cache.m_normalized = true;
+		}
+		else if(binding.m_format == PixelFormat(
 			ComponentFormat::R10G10B10A2, TransformFormat::SNORM))
 		{
 			cache.m_compCount = 4;

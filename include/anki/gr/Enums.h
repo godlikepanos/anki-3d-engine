@@ -102,6 +102,8 @@ enum class VertexStepRate: U8
 
 enum class ComponentFormat: U8
 {
+	NONE,
+
 	R8,
 	R8G8,
 	R8G8B8,
@@ -137,6 +139,7 @@ enum class ComponentFormat: U8
 
 enum class TransformFormat: U8
 {
+	NONE,
 	UNORM,
 	SNORM,
 	UINT,
@@ -199,8 +202,8 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderVariableDataType, inline)
 class PixelFormat
 {
 public:
-	ComponentFormat m_components = ComponentFormat::R8G8B8A8;
-	TransformFormat m_transform = TransformFormat::UNORM;
+	ComponentFormat m_components = ComponentFormat::NONE;
+	TransformFormat m_transform = TransformFormat::NONE;
 	Bool8 m_srgb = false;
 
 	PixelFormat() = default;

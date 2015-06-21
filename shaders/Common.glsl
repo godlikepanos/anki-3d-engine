@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-// This file contains common code for all shaders. It's optional but it's 
+// This file contains common code for all shaders. It's optional but it's
 // recomended to include it
 
 #ifndef ANKI_SHADERS_COMMON_GLSL
@@ -29,10 +29,9 @@ precision DEFAULT_FLOAT_PRECISION int;
 
 // Common locations
 #define POSITION_LOCATION 0
-#define NORMAL_LOCATION 1
-#define TANGENT_LOCATION 2
-#define TEXTURE_COORDINATE_LOCATION 3
-#define TEXTURE_COORDINATE_LOCATION_1 4
+#define TEXTURE_COORDINATE_LOCATION 1
+#define NORMAL_LOCATION 2
+#define TANGENT_LOCATION 3
 #define SCALE_LOCATION 6
 #define ALPHA_LOCATION 7
 

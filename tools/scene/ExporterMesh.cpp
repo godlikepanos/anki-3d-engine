@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include "Exporter.h"
+#include <cmath>
 
 //==============================================================================
 enum class ComponentFormat: uint32_t
@@ -80,9 +81,9 @@ struct SubMesh
 struct Vertex
 {
 	float m_position[3];
+	uint16_t m_uv[2];
 	uint32_t m_normal;
 	uint32_t m_tangent;
-	uint16_t m_uv[2];
 };
 
 //==============================================================================
@@ -233,7 +234,7 @@ void Exporter::exportMesh(
 	}
 
 	// Write header
-	static const char* magic = "ANKIMES2";
+	static const char* magic = "ANKIMES3";
 	memcpy(&header.m_magic, magic, 8);
 
 	header.m_positionsFormat.m_components = ComponentFormat::R32G32B32;
@@ -333,16 +334,16 @@ void Exporter::exportMesh(
 		vert.m_position[1] = pos[1];
 		vert.m_position[2] = pos[2];
 
+		// Tex coords
+		vert.m_uv[0] = toF16(uv[0]);
+		vert.m_uv[1] = toF16(uv[1]);
+
 		// Normal
 		vert.m_normal = toR10G10B10A2Sint(n[0], n[1], n[2], 0.0);
 
 		// Tangent
 		float w = ((n ^ t) * b < 0.0) ? 1.0 : -1.0;
 		vert.m_tangent = toR10G10B10A2Sint(t[0], t[1], t[2], w);
-
-		// Tex coords
-		vert.m_uv[0] = toF16(uv[0]);
-		vert.m_uv[1] = toF16(uv[1]);
 
 		// Write
 		file.write(reinterpret_cast<char*>(&vert), sizeof(vert));

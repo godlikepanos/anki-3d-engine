@@ -161,23 +161,30 @@ void ModelPatch::computePipelineInitializer(
 		vert.m_bindingCount = 1;
 		vert.m_attributeCount = 4;
 		vert.m_bindings[0].m_stride =
-			sizeof(Vec3) + 2 * sizeof(U32) + sizeof(HVec2);
+			sizeof(Vec3) + sizeof(HVec2) + 2 * sizeof(U32);
 
 		vert.m_attributes[0].m_format = PixelFormat(
 			ComponentFormat::R32G32B32, TransformFormat::FLOAT);
 		vert.m_attributes[0].m_offset = 0;
 
 		vert.m_attributes[1].m_format = PixelFormat(
-			ComponentFormat::R10G10B10A2, TransformFormat::SNORM);
+			ComponentFormat::R16G16, TransformFormat::FLOAT);
 		vert.m_attributes[1].m_offset = sizeof(Vec3);
 
-		vert.m_attributes[2].m_format = PixelFormat(
-			ComponentFormat::R10G10B10A2, TransformFormat::SNORM);
-		vert.m_attributes[2].m_offset = sizeof(Vec3) + sizeof(U32);
+		if(key.m_pass == Pass::MS_FS)
+		{
+			vert.m_attributes[2].m_format = PixelFormat(
+				ComponentFormat::R10G10B10A2, TransformFormat::SNORM);
+			vert.m_attributes[2].m_offset = sizeof(Vec3) + sizeof(U32);
 
-		vert.m_attributes[3].m_format = PixelFormat(
-			ComponentFormat::R16G16, TransformFormat::FLOAT);
-		vert.m_attributes[3].m_offset = sizeof(Vec3) + 2 * sizeof(U32);
+			vert.m_attributes[3].m_format = PixelFormat(
+				ComponentFormat::R10G10B10A2, TransformFormat::SNORM);
+			vert.m_attributes[3].m_offset = sizeof(Vec3) + sizeof(U32) * 2;
+		}
+		else
+		{
+			vert.m_attributeCount = 2;
+		}
 	}
 
 	//

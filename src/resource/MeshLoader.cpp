@@ -34,7 +34,7 @@ Error MeshLoader::load(const ResourceFilename& filename)
 	//
 	// Check header
 	//
-	if(memcmp(&m_header.m_magic[0], "ANKIMES2", 8) != 0)
+	if(memcmp(&m_header.m_magic[0], "ANKIMES3", 8) != 0)
 	{
 		ANKI_LOGE("Wrong magic word");
 		return ErrorCode::USER_DATA;
