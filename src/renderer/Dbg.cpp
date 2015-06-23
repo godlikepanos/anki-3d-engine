@@ -45,6 +45,8 @@ Error Dbg::init(const ConfigSet& initializer)
 	FramebufferPtr::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_depthStencilAttachment.m_texture = m_r->getMs().getDepthRt();
+	fbInit.m_depthStencilAttachment.m_loadOperation =
+		AttachmentLoadOperation::LOAD;
 	if(m_r->getPps().getEnabled())
 	{
 		fbInit.m_colorAttachments[0].m_texture = m_r->getPps().getRt();
