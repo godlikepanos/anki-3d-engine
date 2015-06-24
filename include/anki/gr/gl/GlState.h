@@ -66,6 +66,13 @@ public:
 		U64 m_depthStencil = 0;
 		U64 m_color = 0;
 	} m_stateHashes;
+
+	Array2d<Bool, MAX_COLOR_ATTACHMENTS, 4> m_colorWriteMasks  = {{
+		{{true, true, true, true}},
+		{{true, true, true, true}},
+		{{true, true, true, true}},
+		{{true, true, true, true}}}};
+	Bool m_depthWriteMask = true;
 	/// @}
 
 	/// Global UBO ring buffer

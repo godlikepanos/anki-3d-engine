@@ -756,20 +756,8 @@ void Is::binLight(
 //==============================================================================
 void Is::setState(CommandBufferPtr& cmdBuff)
 {
-	Bool isLastStage =
-		!m_r->getPps().getEnabled() && !m_r->getDbg().getEnabled();
-
-	FramebufferPtr fb = m_fb;
-	U32 width = m_r->getWidth();
-	U32 height = m_r->getHeight();
-
-	if(isLastStage)
-	{
-		m_r->getOutputFramebuffer(fb, width, height);
-	}
-
-	fb.bind(cmdBuff);
-	cmdBuff.setViewport(0, 0, width, height);
+	m_fb.bind(cmdBuff);
+	cmdBuff.setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 }
 
 //==============================================================================

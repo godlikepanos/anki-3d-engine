@@ -298,10 +298,17 @@ Error RenderableDrawer::render(SceneNode& frsn, VisibleNode& visibleNode)
 	RenderingBuildData build;
 
 	// Get components
-	FrustumComponent& fr = frsn.getComponent<FrustumComponent>();
 	RenderComponent& renderable =
 		visibleNode.m_node->getComponent<RenderComponent>();
 	const Material& mtl = renderable.getMaterial();
+
+	if((m_stage == RenderingStage::BLEND && !mtl.getForwardShading())
+		|| (m_stage == RenderingStage::MATERIAL && mtl.getForwardShading()))
+	{
+		return ErrorCode::NONE;
+	}
+
+	FrustumComponent& fr = frsn.getComponent<FrustumComponent>();
 
 	// Calculate the key
 	RenderingKey key;
@@ -334,23 +341,6 @@ Error RenderableDrawer::render(SceneNode& frsn, VisibleNode& visibleNode)
 	ANKI_CHECK(renderable.buildRendering(build));
 
 	return ErrorCode::NONE;
-}
-
-//==============================================================================
-void RenderableDrawer::prepareDraw(RenderingStage stage, Pass pass,
-	CommandBufferPtr& cmdBuff)
-{
-	// Set some numbers
-	m_stage = stage;
-	m_pass = pass;
-	m_cmdBuff = cmdBuff;
-}
-
-//==============================================================================
-void RenderableDrawer::finishDraw()
-{
-	// Release the job chain
-	m_cmdBuff = CommandBufferPtr();
 }
 
 }  // end namespace anki

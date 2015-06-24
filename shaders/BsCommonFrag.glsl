@@ -53,11 +53,11 @@ void particleAlpha(in sampler2D tex, in float alpha)
 //==============================================================================
 #if PASS == COLOR
 #	define particleSoftTextureAlpha_DEFINED
-void particleSoftTextureAlpha(in sampler2D depthMap, in sampler2D tex, 
+void particleSoftTextureAlpha(in sampler2D depthMap, in sampler2D tex,
 	in float alpha)
 {
 	const vec2 screenSize = vec2(
-		1.0 / float(ANKI_RENDERER_WIDTH), 
+		1.0 / float(ANKI_RENDERER_WIDTH),
 		1.0 / float(ANKI_RENDERER_HEIGHT));
 
 	float depth = texture(depthMap, gl_FragCoord.xy * screenSize).r;
@@ -66,7 +66,8 @@ void particleSoftTextureAlpha(in sampler2D depthMap, in sampler2D tex,
 	float softalpha = clamp(delta * 50.0, 0.0, 1.0);
 
 	vec4 color = texture(tex, gl_PointCoord);
-	color.a *= alpha * softalpha;
+	color.a *= alpha;
+	//color.a *= softalpha;
 
 	writeGBuffer(color);
 }
@@ -75,11 +76,11 @@ void particleSoftTextureAlpha(in sampler2D depthMap, in sampler2D tex,
 //==============================================================================
 #if PASS == COLOR
 #	define particleSoftColorAlpha_DEFINED
-void particleSoftColorAlpha(in sampler2D depthMap, in vec3 icolor, 
+void particleSoftColorAlpha(in sampler2D depthMap, in vec3 icolor,
 	in float alpha)
 {
 	const vec2 screenSize = vec2(
-		1.0 / float(ANKI_RENDERER_WIDTH), 
+		1.0 / float(ANKI_RENDERER_WIDTH),
 		1.0 / float(ANKI_RENDERER_HEIGHT));
 
 	float depth = texture(depthMap, gl_FragCoord.xy * screenSize).r;
@@ -103,7 +104,7 @@ void particleSoftColorAlpha(in sampler2D depthMap, in vec3 icolor,
 void fog(in sampler2D depthMap, in vec3 color, in float fogScale)
 {
 	const vec2 screenSize = vec2(
-		1.0 / float(ANKI_RENDERER_WIDTH), 
+		1.0 / float(ANKI_RENDERER_WIDTH),
 		1.0 / float(ANKI_RENDERER_HEIGHT));
 
 	vec2 texCoords = gl_FragCoord.xy * screenSize;

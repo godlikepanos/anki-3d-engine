@@ -40,14 +40,21 @@ public:
 	/// The one and only constructor
 	ANKI_USE_RESULT Error create(Renderer* r);
 
-	void prepareDraw(
-		RenderingStage stage, Pass pass, CommandBufferPtr& cmdBuff);
+	void prepareDraw(RenderingStage stage, Pass pass, CommandBufferPtr& cmdBuff)
+	{
+		m_stage = stage;
+		m_pass = pass;
+		m_cmdBuff = cmdBuff;
+	}
 
 	ANKI_USE_RESULT Error render(
 		SceneNode& frsn,
 		VisibleNode& visible);
 
-	void finishDraw();
+	void finishDraw()
+	{
+		m_cmdBuff = CommandBufferPtr();
+	}
 
 private:
 	Renderer* m_r;
@@ -56,7 +63,6 @@ private:
 	/// @name State
 	/// @{
 	CommandBufferPtr m_cmdBuff;
-
 	RenderingStage m_stage;
 	Pass m_pass;
 	/// @}

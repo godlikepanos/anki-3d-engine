@@ -541,6 +541,9 @@ void PipelineImpl::setDepthStencilState(GlState& state) const
 
 	state.m_stateHashes.m_depthStencil = m_hashes.m_depthStencil;
 
+	glDepthMask(m_in.m_depthStencil.m_depthWriteEnabled);
+	state.m_depthWriteMask = m_in.m_depthStencil.m_depthWriteEnabled;
+
 	if(m_cache.m_depthCompareFunction == GL_ALWAYS)
 	{
 		glDisable(GL_DEPTH_TEST);
@@ -588,6 +591,11 @@ void PipelineImpl::setColorState(GlState& state) const
 			glColorMaski(i, att.m_channelWriteMask[0],
 				att.m_channelWriteMask[1], att.m_channelWriteMask[2],
 				att.m_channelWriteMask[3]);
+
+			state.m_colorWriteMasks[i][0] = att.m_channelWriteMask[0];
+			state.m_colorWriteMasks[i][1] = att.m_channelWriteMask[1];
+			state.m_colorWriteMasks[i][2] = att.m_channelWriteMask[2];
+			state.m_colorWriteMasks[i][3] = att.m_channelWriteMask[3];
 		}
 	}
 	else
@@ -601,6 +609,11 @@ void PipelineImpl::setColorState(GlState& state) const
 			glColorMaski(i, att.m_channelWriteMask[0],
 				att.m_channelWriteMask[1], att.m_channelWriteMask[2],
 				att.m_channelWriteMask[3]);
+
+			state.m_colorWriteMasks[i][0] = att.m_channelWriteMask[0];
+			state.m_colorWriteMasks[i][1] = att.m_channelWriteMask[1];
+			state.m_colorWriteMasks[i][2] = att.m_channelWriteMask[2];
+			state.m_colorWriteMasks[i][3] = att.m_channelWriteMask[3];
 		}
 	}
 }

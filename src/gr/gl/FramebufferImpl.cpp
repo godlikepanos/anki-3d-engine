@@ -6,6 +6,9 @@
 #include "anki/gr/gl/FramebufferImpl.h"
 #include "anki/gr/FramebufferCommon.h"
 #include "anki/gr/gl/TextureImpl.h"
+#include "anki/gr/gl/GlState.h"
+#include "anki/gr/gl/GrManagerImpl.h"
+#include "anki/gr/gl/RenderingThread.h"
 #include "anki/util/Logger.h"
 
 namespace anki {
@@ -139,13 +142,35 @@ void FramebufferImpl::bind()
 		}
 
 		// Clear buffers
+		GlState& state =
+			getManager().getImplementation().getRenderingThread().getState();
 		for(U i = 0; i < m_colorAttachmentsCount; i++)
 		{
 			const Attachment& att = m_colorAttachments[i];
 
 			if(att.m_loadOperation == AttachmentLoadOperation::CLEAR)
 			{
+				// Enable write mask in case a pipeline changed it (else no
+				// clear will happen) and then restore state
+				Bool restore = false;
+				if(state.m_colorWriteMasks[i][0] != true
+					|| state.m_colorWriteMasks[i][1] != true
+					|| state.m_colorWriteMasks[i][2] != true
+					|| state.m_colorWriteMasks[i][3] != true)
+				{
+					glColorMaski(i, true, true, true, true);
+					restore = true;
+				}
+
 				glClearBufferfv(GL_COLOR, i, &att.m_clearValue.m_colorf[0]);
+
+				if(restore)
+				{
+					glColorMaski(i, state.m_colorWriteMasks[i][0],
+						state.m_colorWriteMasks[i][1],
+						state.m_colorWriteMasks[i][2],
+						state.m_colorWriteMasks[i][3]);
+				}
 			}
 		}
 
@@ -153,8 +178,20 @@ void FramebufferImpl::bind()
 			&& m_depthStencilAttachment.m_loadOperation
 				== AttachmentLoadOperation::CLEAR)
 		{
+			// Enable write mask in case a pipeline changed it (else no
+			// clear will happen) and then restore state
+			if(state.m_depthWriteMask == false)
+			{
+				glDepthMask(true);
+			}
+
 			glClearBufferfv(GL_DEPTH, 0,
 				&m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth);
+
+			if(state.m_depthWriteMask == false)
+			{
+				glDepthMask(false);
+			}
 		}
 	}
 }

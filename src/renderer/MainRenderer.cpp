@@ -102,7 +102,8 @@ Error MainRenderer::render(SceneGraph& scene)
 
 	// Find where the m_r should draw
 	Bool rDrawToDefault;
-	if(m_renderingQuality == 1.0 && !m_r->getDbg().getEnabled())
+	if(m_renderingQuality == 1.0 && !m_r->getDbg().getEnabled()
+		&& m_r->getPps().getEnabled())
 	{
 		rDrawToDefault = true;
 	}
@@ -142,7 +143,7 @@ Error MainRenderer::render(SceneGraph& scene)
 			rt = &m_r->getIs().getRt();
 		}
 
-		//rt = &m_r->getIs().getRt();
+		//rt = &m_r->getMs().getRt0();
 		//rt = &getPps().getHdr()._getRt();
 
 		rt->bind(cmdb, 0);
