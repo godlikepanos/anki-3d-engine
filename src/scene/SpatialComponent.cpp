@@ -11,13 +11,9 @@
 namespace anki {
 
 //==============================================================================
-SpatialComponent::SpatialComponent(
-	SceneNode* node,
-	const CollisionShape* shape,
-	Flag flags)
-:	SceneComponent(Type::SPATIAL, node),
-	Bitset<Flag>(flags),
-	m_shape(shape)
+SpatialComponent::SpatialComponent(SceneNode* node, const CollisionShape* shape)
+	: SceneComponent(Type::SPATIAL, node)
+	, m_shape(shape)
 {
 	ANKI_ASSERT(shape);
 	markForUpdate();
@@ -32,14 +28,14 @@ SpatialComponent::~SpatialComponent()
 //==============================================================================
 Error SpatialComponent::update(SceneNode&, F32, F32, Bool& updated)
 {
-	disableBits(Flag::VISIBLE_ANY);
+	m_bits.disableBits(Flag::VISIBLE_ANY);
 
-	updated = bitsEnabled(Flag::MARKED_FOR_UPDATE);
+	updated = m_bits.bitsEnabled(Flag::MARKED_FOR_UPDATE);
 	if(updated)
 	{
 		m_shape->computeAabb(m_aabb);
 		getSceneGraph().getSectorGroup().spatialUpdated(this);
-		disableBits(Flag::MARKED_FOR_UPDATE);
+		m_bits.disableBits(Flag::MARKED_FOR_UPDATE);
 	}
 
 	return ErrorCode::NONE;

@@ -21,34 +21,11 @@ class Sector;
 /// @addtogroup scene
 /// @{
 
-/// Spatial flags
-enum class SpatialComponentFlag: U8
-{
-	NONE = 0,
-	VISIBLE_CAMERA = 1 << 1,
-	VISIBLE_LIGHT = 1 << 2,
-
-	/// Visible or not. The visibility tester sets it
-	VISIBLE_ANY = VISIBLE_CAMERA | VISIBLE_LIGHT,
-
-	/// This is used for example in lights. If the light does not collide
-	/// with any surface then it shouldn't be visible and be processed
-	/// further. This flag is being used to check if we should test agains
-	/// near plane when using the tiler for visibility tests.
-	FULLY_TRANSPARENT = 1 << 3,
-
-	MARKED_FOR_UPDATE = 1 << 4
-};
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(SpatialComponentFlag, inline)
-
 /// Spatial component for scene nodes. It indicates scene nodes that need to
 /// be placed in the a sector and they participate in the visibility tests
-class SpatialComponent: public SceneComponent,
-	public Bitset<SpatialComponentFlag>
+class SpatialComponent: public SceneComponent
 {
 public:
-	using Flag = SpatialComponentFlag;
-
 	static Bool classof(const SceneComponent& c)
 	{
 		return c.getType() == Type::SPATIAL;
@@ -56,8 +33,7 @@ public:
 
 	SpatialComponent(
 		SceneNode* node,
-		const CollisionShape* shape,
-		Flag flags = Flag::NONE);
+		const CollisionShape* shape);
 
 	~SpatialComponent();
 
@@ -112,7 +88,19 @@ public:
 	/// shape got updated
 	void markForUpdate()
 	{
-		enableBits(Flag::MARKED_FOR_UPDATE);
+		m_bits.enableBits(Flag::MARKED_FOR_UPDATE);
+	}
+
+	/// Set if visible by a camera
+	void setVisibleByCamera(Bool visible)
+	{
+		m_bits.enableBits(Flag::VISIBLE_CAMERA, visible);
+	}
+
+	/// Check if visible by camera
+	Bool getVisibleByCamera() const
+	{
+		return m_bits.bitsEnabled(Flag::VISIBLE_CAMERA);
 	}
 
 	/// @name SceneComponent overrides
@@ -121,7 +109,19 @@ public:
 	/// @}
 
 private:
+	/// Spatial flags
+	enum class Flag: U8
+	{
+		NONE = 0,
+		VISIBLE_CAMERA = 1 << 1,
+		VISIBLE_LIGHT = 1 << 2,
+		VISIBLE_ANY = VISIBLE_CAMERA | VISIBLE_LIGHT,
+		MARKED_FOR_UPDATE = 1 << 3
+	};
+	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Flag, friend)
+
 	const CollisionShape* m_shape;
+	Bitset<Flag> m_bits;
 	Aabb m_aabb; ///< A faster shape
 	Vec4 m_origin = Vec4(MAX_F32, MAX_F32, MAX_F32, 0.0);
 	List<Sector*> m_sectorInfo;

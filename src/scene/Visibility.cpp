@@ -225,9 +225,7 @@ void VisibilityTestTask::test(FrustumComponent& testedFrc,
 				ANKI_ASSERT(spIdx < MAX_U8);
 				sps[count++] = SpatialTemp{&sp, static_cast<U8>(spIdx)};
 
-				/*sp.enableBits(testedNodeShadowCaster
-					? SpatialComponent::Flag::VISIBLE_LIGHT
-					: SpatialComponent::Flag::VISIBLE_CAMERA);*/
+				sp.setVisibleByCamera(true);
 			}
 
 			++spIdx;

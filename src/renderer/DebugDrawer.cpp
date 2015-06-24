@@ -57,7 +57,10 @@ Error DebugDrawer::create(Renderer* r)
 	init.m_shaders[U(ShaderType::VERTEX)] = m_vert->getGrShader();
 	init.m_shaders[U(ShaderType::FRAGMENT)] = m_frag->getGrShader();
 
-	m_ppline.create(&gl, init);
+	m_pplineLinesDepth.create(&gl, init);
+
+	init.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
+	m_pplineLinesNoDepth.create(&gl, init);
 
 	m_vertBuff.create(&gl, GL_ARRAY_BUFFER, nullptr,
 		sizeof(m_clientLineVerts), GL_DYNAMIC_STORAGE_BIT);
@@ -159,7 +162,14 @@ Error DebugDrawer::flushInternal(GLenum primitive)
 
 	m_vertBuff.write(m_cmdb, vertBuff, size, 0, 0, size);
 
-	m_ppline.bind(m_cmdb);
+	if(m_depthTestEnabled)
+	{
+		m_pplineLinesDepth.bind(m_cmdb);
+	}
+	else
+	{
+		m_pplineLinesNoDepth.bind(m_cmdb);
+	}
 
 	m_cmdb.bindVertexBuffer(0, m_vertBuff, 0);
 
@@ -534,7 +544,7 @@ void SceneDebugDrawer::draw(FrustumComponent& fr) const
 //==============================================================================
 void SceneDebugDrawer::draw(SpatialComponent& x) const
 {
-	if(!x.bitsEnabled(SpatialComponent::Flag::VISIBLE_CAMERA))
+	if(!x.getVisibleByCamera())
 	{
 		return;
 	}

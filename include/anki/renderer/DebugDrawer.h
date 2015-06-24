@@ -72,6 +72,16 @@ public:
 	void setViewProjectionMatrix(const Mat4& m);
 	/// @}
 
+	void setDepthTestEnabled(Bool enabled)
+	{
+		m_depthTestEnabled = enabled;
+	}
+
+	Bool getDepthTestEnabled() const
+	{
+		return m_depthTestEnabled;
+	}
+
 	/// This is the function that actualy draws
 	ANKI_USE_RESULT Error flush();
 
@@ -85,7 +95,8 @@ private:
 
 	ShaderResourcePtr m_frag;
 	ShaderResourcePtr m_vert;
-	PipelinePtr m_ppline;
+	PipelinePtr m_pplineLinesDepth;
+	PipelinePtr m_pplineLinesNoDepth;
 	CommandBufferPtr m_cmdb;
 
 	static const U MAX_POINTS_PER_DRAW = 256;
@@ -103,6 +114,8 @@ private:
 	Array<Vertex, MAX_POINTS_PER_DRAW> m_clientTriVerts;
 
 	DArray<Vec3> m_sphereVerts;
+
+	Bool8 m_depthTestEnabled = true;
 
 	ANKI_USE_RESULT Error flushInternal(GLenum primitive);
 };

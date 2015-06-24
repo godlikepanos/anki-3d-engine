@@ -52,20 +52,9 @@ public:
 
 	ANKI_USE_RESULT Error run(CommandBufferPtr& jobs);
 
-	Bool getDepthTestEnabled() const
-	{
-		return m_depthTest;
-	}
-
-	void setDepthTestEnabled(Bool enable)
-	{
-		m_depthTest = enable;
-	}
-
-	void switchDepthTestEnabled()
-	{
-		m_depthTest = !m_depthTest;
-	}
+	Bool getDepthTestEnabled() const;
+	void setDepthTestEnabled(Bool enable);
+	void switchDepthTestEnabled();
 	/// @}
 
 private:
@@ -73,7 +62,6 @@ private:
 	DebugDrawer* m_drawer = nullptr;
 	// Have it as ptr because the constructor calls opengl
 	SceneDebugDrawer* m_sceneDrawer = nullptr;
-	Bool m_depthTest = true;
 };
 /// @}
 

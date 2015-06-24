@@ -111,7 +111,7 @@ Error Dbg::run(CommandBufferPtr& cmdb)
 
 	(void)err;
 
-	if(1)
+	if(0)
 	{
 		PhysicsDebugDrawer phyd(m_drawer);
 
@@ -184,6 +184,25 @@ Error Dbg::run(CommandBufferPtr& cmdb)
 #endif
 
 	return m_drawer->flush();
+}
+
+//==============================================================================
+Bool Dbg::getDepthTestEnabled() const
+{
+	return m_drawer->getDepthTestEnabled();
+}
+
+//==============================================================================
+void Dbg::setDepthTestEnabled(Bool enable)
+{
+	m_drawer->setDepthTestEnabled(enable);
+}
+
+//==============================================================================
+void Dbg::switchDepthTestEnabled()
+{
+	Bool enabled = m_drawer->getDepthTestEnabled();
+	m_drawer->setDepthTestEnabled(!enabled);
 }
 
 } // end namespace anki
