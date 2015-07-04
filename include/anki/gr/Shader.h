@@ -3,10 +3,9 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GR_SHADER_COMMON_H
-#define ANKI_GR_SHADER_COMMON_H
+#pragma once
 
-#include "anki/gr/Common.h"
+#include "anki/gr/GrObject.h"
 #include "anki/Math.h"
 
 namespace anki {
@@ -58,9 +57,30 @@ void writeShaderBlockMemory(
 	U32 elementsCount,
 	void* buffBegin,
 	const void* buffEnd);
+
+/// GPU shader.
+class Shader: public GrObject
+{
+public:
+	/// Construct.
+	Shader(GrManager* manager);
+
+	/// Destroy.
+	~Shader();
+
+	/// Access the implementation.
+	ShaderImpl& getImplementation()
+	{
+		return *m_impl;
+	}
+
+	/// Create shader.
+	void create(ShaderType shaderType, const void* source, PtrSize sourceSize);
+
+private:
+	UniquePtr<ShaderImpl> m_impl;
+};
 /// @}
 
 } // end namespace anki
-
-#endif
 

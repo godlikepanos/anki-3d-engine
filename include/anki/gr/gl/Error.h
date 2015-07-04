@@ -3,10 +3,9 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GR_GL_ERROR_H
-#define ANKI_GR_GL_ERROR_H
+#pragma once
 
-#include "anki/gr/Common.h"
+#include "anki/gr/gl/Common.h"
 
 namespace anki {
 
@@ -17,7 +16,7 @@ namespace anki {
 
 #if ANKI_DEBUG
 
-/// The function exits if there is an OpenGL error. Use it with the 
+/// The function exits if there is an OpenGL error. Use it with the
 /// ANKI_CHECK_GL_ERROR macro
 void glConditionalCheckError(const char* file, int line, const char* func);
 
@@ -30,4 +29,3 @@ void glConditionalCheckError(const char* file, int line, const char* func);
 
 } // end namespace anki
 
-#endif

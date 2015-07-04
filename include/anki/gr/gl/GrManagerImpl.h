@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GR_GL_GR_MANAGER_IMPL_H
-#define ANKI_GR_GL_GR_MANAGER_IMPL_H
+#pragma once
 
 #include "anki/gr/Common.h"
 
@@ -21,7 +20,7 @@ class GrManagerImpl
 {
 public:
 	GrManagerImpl(GrManager* manager)
-	:	m_manager(manager)
+		: m_manager(manager)
 	{
 		ANKI_ASSERT(manager);
 	}
@@ -40,6 +39,8 @@ public:
 		return *m_thread;
 	}
 
+	GrAllocator<U8> getAllocator() const;
+
 private:
 	GrManager* m_manager;
 	RenderingThread* m_thread = nullptr;
@@ -47,6 +48,4 @@ private:
 /// @}
 
 } // end namespace anki
-
-#endif
 

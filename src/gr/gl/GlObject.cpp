@@ -7,13 +7,20 @@
 #include "anki/gr/GrManager.h"
 #include "anki/gr/gl/GrManagerImpl.h"
 #include "anki/gr/gl/RenderingThread.h"
-#include "anki/gr/CommandBufferPtr.h"
+#include "anki/gr/CommandBuffer.h"
 #include "anki/gr/gl/CommandBufferImpl.h"
 
 namespace anki {
 
 //==============================================================================
-Error GlObject::serializeOnGetter() const
+GlObject::GlObject(GrManager* manager)
+	: m_manager(manager)
+	, m_glName(0)
+	, m_state(I32(State::TO_BE_CREATED))
+{}
+
+//==============================================================================
+Error GlObject::serializeRenderingThread()
 {
 	Error err = ErrorCode::NONE;
 	State state = State(m_state.load());
@@ -21,8 +28,8 @@ Error GlObject::serializeOnGetter() const
 
 	if(state == State::TO_BE_CREATED)
 	{
-		RenderingThread& thread = const_cast<RenderingThread&>(
-			getManager().getImplementation().getRenderingThread());
+		RenderingThread& thread =
+			m_manager->getImplementation().getRenderingThread();
 		thread.syncClientServer();
 
 		state = State(m_state.load());
@@ -46,11 +53,11 @@ public:
 	GLuint m_glName;
 
 	DeleteGlObjectCommand(GlObject::GlDeleteFunction callback, GLuint name)
-	:	m_callback(callback),
-		m_glName(name)
+		: m_callback(callback)
+		, m_glName(name)
 	{}
 
-	Error operator()(CommandBufferImpl*)
+	Error operator()(GlState&)
 	{
 		m_callback(1, &m_glName);
 		return ErrorCode::NONE;
@@ -59,6 +66,11 @@ public:
 
 void GlObject::destroyDeferred(GlDeleteFunction deleteCallback)
 {
+	if(m_glName == 0)
+	{
+		return;
+	}
+
 	GrManager& manager = getManager();
 	RenderingThread& thread = manager.getImplementation().getRenderingThread();
 
@@ -66,10 +78,10 @@ void GlObject::destroyDeferred(GlDeleteFunction deleteCallback)
 	{
 		CommandBufferPtr commands;
 
-		commands.create(&manager);
-		commands.get().template pushBackNewCommand<DeleteGlObjectCommand>(
+		commands = manager.newInstance<CommandBuffer>();
+		commands->getImplementation().pushBackNewCommand<DeleteGlObjectCommand>(
 			deleteCallback, m_glName);
-		commands.flush();
+		commands->flush();
 	}
 	else
 	{
@@ -79,6 +91,10 @@ void GlObject::destroyDeferred(GlDeleteFunction deleteCallback)
 	m_glName = 0;
 }
 
+//==============================================================================
+GrAllocator<U8> GlObject::getAllocator() const
+{
+	return m_manager->getAllocator();
+}
+
 } // end namespace anki
-
-

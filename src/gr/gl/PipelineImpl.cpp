@@ -5,8 +5,10 @@
 
 #include "anki/gr/gl/PipelineImpl.h"
 #include "anki/gr/gl/ShaderImpl.h"
+#include "anki/gr/GrManager.h"
 #include "anki/gr/gl/GrManagerImpl.h"
 #include "anki/gr/gl/RenderingThread.h"
+#include "anki/gr/gl/CommandBufferImpl.h"
 #include "anki/util/Logger.h"
 #include "anki/util/Hash.h"
 
@@ -104,7 +106,7 @@ static GLenum convertBlendMethod(BlendMethod in)
 }
 
 //==============================================================================
-Error PipelineImpl::create(const Initializer& init)
+Error PipelineImpl::create(const PipelineInitializer& init)
 {
 	m_in = init;
 
@@ -123,15 +125,6 @@ Error PipelineImpl::create(const Initializer& init)
 }
 
 //==============================================================================
-void PipelineImpl::destroy()
-{
-	if(m_glName)
-	{
-		destroyDeferred(glDeleteProgramPipelines);
-	}
-}
-
-//==============================================================================
 Error PipelineImpl::createGlPipeline()
 {
 	Error err = ErrorCode::NONE;
@@ -144,7 +137,8 @@ Error PipelineImpl::createGlPipeline()
 		const ShaderPtr& shader = m_in.m_shaders[count];
 		if(shader.isCreated())
 		{
-			ANKI_ASSERT(count == enumToType(shader.get().getType()));
+			ANKI_ASSERT(
+				count == enumToType(shader->getImplementation().m_type));
 			mask |= 1 << count;
 		}
 	}
@@ -188,7 +182,8 @@ Error PipelineImpl::createGlPipeline()
 		{
 			GLbitfield bit;
 			computeGlShaderType(static_cast<ShaderType>(i), &bit);
-			glUseProgramStages(m_glName, bit, shader.get().getGlName());
+			glUseProgramStages(
+				m_glName, bit, shader->getImplementation().getGlName());
 
 			if(i == U(ShaderType::TESSELLATION_CONTROL)
 				|| i == U(ShaderType::TESSELLATION_EVALUATION))
@@ -227,7 +222,7 @@ Error PipelineImpl::createGlPipeline()
 }
 
 //==============================================================================
-void PipelineImpl::bind()
+void PipelineImpl::bind(GlState& state)
 {
 	glBindProgramPipeline(m_glName);
 
@@ -236,10 +231,7 @@ void PipelineImpl::bind()
 		return;
 	}
 
-	// Get last pipeline
-	GlState& state =
-		getManager().getImplementation().getRenderingThread().getState();
-
+	// Set state
 	setVertexState(state);
 	setInputAssemblerState(state);
 	setTessellationState(state);

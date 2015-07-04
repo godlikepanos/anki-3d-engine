@@ -5,6 +5,8 @@
 
 #include "anki/gr/gl/CommandBufferImpl.h"
 #include "anki/gr/GrManager.h"
+#include "anki/gr/gl/GrManagerImpl.h"
+#include "anki/gr/gl/RenderingThread.h"
 #include "anki/gr/gl/Error.h"
 #include "anki/util/Logger.h"
 #include "anki/core/Counters.h"
@@ -15,12 +17,12 @@ namespace anki {
 //==============================================================================
 void CommandBufferImpl::create(const InitHints& hints)
 {
-	auto& pool = getManager().getAllocator().getMemoryPool();
+	auto& pool = m_manager->getAllocator().getMemoryPool();
 
 	m_alloc = CommandBufferAllocator<GlCommand*>(
 		pool.getAllocationCallback(),
 		pool.getAllocationCallbackUserData(),
-		hints.m_chunkSize, 
+		hints.m_chunkSize,
 		1.0,
 		hints.m_chunkSize);
 }
@@ -44,7 +46,7 @@ void CommandBufferImpl::destroy()
 		command = next;
 	}
 
-	ANKI_ASSERT(m_alloc.getMemoryPool().getUsersCount() == 1 
+	ANKI_ASSERT(m_alloc.getMemoryPool().getUsersCount() == 1
 		&& "Someone is holding a reference to the command buffer's allocator");
 
 	m_alloc = CommandBufferAllocator<U8>();
@@ -58,14 +60,16 @@ Error CommandBufferImpl::executeAllCommands()
 #if ANKI_DEBUG
 	m_executed = true;
 #endif
-	
+
 	Error err = ErrorCode::NONE;
+	GlState& state =
+		m_manager->getImplementation().getRenderingThread().getState();
 
 	GlCommand* command = m_firstCommand;
 
 	while(command != nullptr && !err)
 	{
-		err = (*command)(this);
+		err = (*command)(state);
 		ANKI_CHECK_GL_ERROR();
 
 		command = command->m_nextCommand;
@@ -80,7 +84,7 @@ CommandBufferImpl::InitHints CommandBufferImpl::computeInitHints() const
 	InitHints out;
 	out.m_chunkSize = m_alloc.getMemoryPool().getAllocatedSize() + 16;
 
-	ANKI_COUNTER_INC(GL_QUEUES_SIZE, 
+	ANKI_COUNTER_INC(GL_QUEUES_SIZE,
 		U64(m_alloc.getMemoryPool().getAllocatedSize()));
 
 	return out;

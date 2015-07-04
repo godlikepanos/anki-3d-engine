@@ -3,11 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GR_GL_FRAMEBUFFER_IMPL_H
-#define ANKI_GR_GL_FRAMEBUFFER_IMPL_H
+#pragma once
 
 #include "anki/gr/gl/GlObject.h"
-#include "anki/gr/FramebufferCommon.h"
+#include "anki/gr/Framebuffer.h"
 
 namespace anki {
 
@@ -15,51 +14,43 @@ namespace anki {
 /// @{
 
 /// Framebuffer implementation.
-class FramebufferImpl: public GlObject, private FramebufferInitializer
+class FramebufferImpl: public GlObject
 {
 public:
-	using Base = GlObject;
-	using Initializer = FramebufferInitializer;
-
 	FramebufferImpl(GrManager* manager)
-	:	Base(manager)
+		: GlObject(manager)
 	{}
 
 	~FramebufferImpl()
 	{
-		destroy();
+		destroyDeferred(glDeleteFramebuffers);
 	}
 
 	/// Set all the attachments. It will overwrite the previous state. If the
 	/// initalizer list is empty the it will bind the default framebuffer
-	ANKI_USE_RESULT Error create(Initializer& init);
+	ANKI_USE_RESULT Error create(const FramebufferInitializer& init);
 
 	/// Bind it to the state. Call it in rendering thread
-	void bind();
-
-	/// Blit another framebuffer to this
-	void blit(const FramebufferImpl& fb, const Array<U32, 4>& sourceRect,
-		const Array<U32, 4>& destRect, GLbitfield attachmentMask, Bool linear);
+	void bind(const GlState& state);
 
 private:
+	FramebufferInitializer m_in;
+
 	Array<GLenum, MAX_COLOR_ATTACHMENTS> m_drawBuffers;
 	Array<GLenum, MAX_COLOR_ATTACHMENTS + 1> m_invalidateBuffers;
 	U8 m_invalidateBuffersCount = 0;
 	Bool8 m_bindDefault = false;
 
 	/// Attach a texture
-	static void attachTextureInternal(GLenum attachment, const TextureImpl& tex, 
+	static void attachTextureInternal(GLenum attachment, const TextureImpl& tex,
 		const U32 layer);
 
 	/// Create the FBO
 	ANKI_USE_RESULT Error createFbo(
 		const Array<U, MAX_COLOR_ATTACHMENTS + 1>& layers,
 		GLenum depthStencilBindingPoint);
-
-	void destroy();
 };
 /// @}
 
 } // end namespace anki
 
-#endif

@@ -3,10 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GR_GL_OBJECT_H
-#define ANKI_GR_GL_OBJECT_H
+#pragma once
 
-#include "anki/gr/GrObject.h"
 #include "anki/gr/gl/Common.h"
 
 namespace anki {
@@ -26,18 +24,14 @@ enum class GlObjectState: U32
 };
 
 /// A GL object
-class GlObject: public GrObject
+class GlObject
 {
 public:
 	using State = GlObjectState;
 	using GlDeleteFunction = void (*)(GLsizei, const GLuint*);
 
 	/// Default
-	GlObject(GrManager* manager)
-	:	GrObject(manager),
-		m_glName(0),
-		m_state(I32(State::NEW))
-	{}
+	GlObject(GrManager* manager);
 
 	~GlObject()
 	{
@@ -52,7 +46,7 @@ public:
 		return m_glName;
 	}
 
-	/// GL object is created
+	/// GL object is created.
 	Bool isCreated() const
 	{
 		return m_glName != 0;
@@ -64,17 +58,24 @@ public:
 	}
 
 	/// Check if the object has been created and if not serialize the thread.
-	ANKI_USE_RESULT Error serializeOnGetter() const;
+	ANKI_USE_RESULT Error serializeRenderingThread();
 
 	/// Should be called from GL objects for deferred deletion.
 	void destroyDeferred(GlDeleteFunction deleteCallback);
 
+	/// Get the allocator.
+	GrAllocator<U8> getAllocator() const;
+
+	GrManager& getManager()
+	{
+		return *m_manager;
+	}
+
 protected:
-	GLuint m_glName; ///< OpenGL name
+	GrManager* m_manager = nullptr;
+	GLuint m_glName = 0; ///< OpenGL name
 	mutable Atomic<I32> m_state;
 };
 /// @}
 
 } // end namespace anki
-
-#endif

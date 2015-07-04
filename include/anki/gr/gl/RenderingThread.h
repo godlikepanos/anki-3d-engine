@@ -3,10 +3,9 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GR_GL_RENDERING_THREAD_H
-#define ANKI_GR_GL_RENDERING_THREAD_H
+#pragma once
 
-#include "anki/gr/CommandBufferPtr.h"
+#include "anki/gr/CommandBuffer.h"
 #include "anki/gr/gl/GlState.h"
 #include "anki/util/Thread.h"
 
@@ -22,6 +21,7 @@ namespace anki {
 class RenderingThread
 {
 	friend class SyncCommand;
+	friend class SwapBuffersCommand;
 
 public:
 	RenderingThread(GrManager* device);
@@ -38,11 +38,6 @@ public:
 		return m_state;
 	}
 
-	GLuint getCopyFbo() const
-	{
-		return m_copyFbo;
-	}
-
 	/// Start the working thread
 	/// @note Don't free the context before calling #stop
 	ANKI_USE_RESULT Error start(
@@ -54,10 +49,10 @@ public:
 	void stop();
 
 	/// Push a command buffer to the queue for deferred execution
-	void flushCommandBuffer(CommandBufferPtr& commands);
+	void flushCommandBuffer(CommandBufferPtr commands);
 
 	/// Push a command buffer to the queue and wait for it
-	void finishCommandBuffer(CommandBufferPtr& commands);
+	void finishCommandBuffer(CommandBufferPtr commands);
 
 	/// Sync the client and server
 	void syncClientServer();
@@ -103,18 +98,15 @@ private:
 	CommandBufferPtr m_syncCommands;
 	Barrier m_syncBarrier{2};
 
-	GLuint m_copyFbo = MAX_U32; ///< FBO for copying from tex to buffer.
-
 	/// The function that the thread runs
 	static ANKI_USE_RESULT Error threadCallback(Thread::Info&);
 	void threadLoop();
 	void prepare();
 	void finish();
 
-	static Error swapBuffersInternal(void* self);
+	void swapBuffersInternal();
 };
 /// @}
 
 } // end namespace anki
 
-#endif

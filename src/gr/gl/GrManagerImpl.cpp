@@ -23,19 +23,25 @@ GrManagerImpl::~GrManagerImpl()
 }
 
 //==============================================================================
+GrAllocator<U8> GrManagerImpl::getAllocator() const
+{
+	return m_manager->getAllocator();
+}
+
+//==============================================================================
 Error GrManagerImpl::create(GrManagerInitializer& init)
 {
 	Error err = ErrorCode::NONE;
 
 	// Create thread
-	m_thread = 
+	m_thread =
 		m_manager->getAllocator().newInstance<RenderingThread>(m_manager);
 
 	// Start it
 	if(!err)
 	{
-		err = m_thread->start(init.m_makeCurrentCallback, 
-			init.m_makeCurrentCallbackData, init.m_ctx, 
+		err = m_thread->start(init.m_makeCurrentCallback,
+			init.m_makeCurrentCallbackData, init.m_ctx,
 			init.m_swapBuffersCallback, init.m_swapBuffersCallbackData,
 			init.m_registerDebugMessages);
 	}

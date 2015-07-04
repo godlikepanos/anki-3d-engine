@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GR_GL_OCCLUSION_QUERY_IMPL_H
-#define ANKI_GR_GL_OCCLUSION_QUERY_IMPL_H
+#pragma once
 
 #include "anki/gr/gl/GlObject.h"
 
@@ -17,24 +16,20 @@ namespace anki {
 class OcclusionQueryImpl: public GlObject
 {
 public:
-	using Base = GlObject;
-	using ResultBit = OcclusionQueryResultBit;
-	using Result = OcclusionQueryResult;
-
 	OcclusionQueryImpl(GrManager* manager)
-	:	Base(manager)
+		: GlObject(manager)
 	{}
 
 	~OcclusionQueryImpl()
 	{
-		destroy();
+		destroyDeferred(glDeleteQueries);
 	}
 
 	/// Create the query.
 	/// @param condRenderingBit If the query is used in conditional rendering
 	///        the result will be checked against this mask. If the result
 	///        contains any of the bits then the dracall will not be skipped.
-	void create(ResultBit condRenderingBit);
+	void create(OcclusionQueryResultBit condRenderingBit);
 
 	/// Begin query.
 	void begin();
@@ -43,7 +38,7 @@ public:
 	void end();
 
 	/// Get query result.
-	Result getResult() const;
+	OcclusionQueryResult getResult() const;
 
 	/// Return true if the drawcall should be skipped.
 	Bool skipDrawcall() const
@@ -54,12 +49,9 @@ public:
 	}
 
 private:
-	ResultBit m_condRenderingBit;
-	void destroy();
+	OcclusionQueryResultBit m_condRenderingBit;
 };
 /// @}
 
 } // end namespace anki
-
-#endif
 

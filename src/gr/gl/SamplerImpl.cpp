@@ -4,16 +4,16 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/gr/gl/SamplerImpl.h"
-#include "anki/gr/TextureSamplerCommon.h"
+#include "anki/gr/Texture.h"
 
 namespace anki {
 
 //==============================================================================
-Error SamplerImpl::create(const SamplerInitializer& sinit)
+void SamplerImpl::create(const SamplerInitializer& sinit)
 {
 	glGenSamplers(1, &m_glName);
 	ANKI_ASSERT(m_glName);
-	
+
 	if(sinit.m_repeat)
 	{
 		glSamplerParameteri(m_glName, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -28,7 +28,7 @@ Error SamplerImpl::create(const SamplerInitializer& sinit)
 	// Set filtering type
 	GLenum minFilter = GL_NONE;
 		GLenum magFilter = GL_NONE;
-	convertFilter(sinit.m_minMagFilter, sinit.m_mipmapFilter, minFilter, 
+	convertFilter(sinit.m_minMagFilter, sinit.m_mipmapFilter, minFilter,
 		magFilter);
 	glSamplerParameteri(m_glName, GL_TEXTURE_MIN_FILTER, minFilter);
 	glSamplerParameteri(m_glName, GL_TEXTURE_MAG_FILTER, magFilter);
@@ -36,12 +36,10 @@ Error SamplerImpl::create(const SamplerInitializer& sinit)
 #if ANKI_GL == ANKI_GL_DESKTOP
 	if(sinit.m_anisotropyLevel > 1)
 	{
-		glSamplerParameteri(m_glName, GL_TEXTURE_MAX_ANISOTROPY_EXT, 
+		glSamplerParameteri(m_glName, GL_TEXTURE_MAX_ANISOTROPY_EXT,
 			GLint(sinit.m_anisotropyLevel));
 	}
 #endif
-	
-	return ErrorCode::NONE;
 }
 
 } // end namespace anki

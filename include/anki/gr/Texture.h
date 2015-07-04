@@ -3,16 +3,16 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GR_TEXTURE_SAMPLER_COMMON_H
-#define ANKI_GR_TEXTURE_SAMPLER_COMMON_H
+#pragma once
 
-#include "anki/gr/Common.h"
+#include "anki/gr/GrObject.h"
 
 namespace anki {
 
 /// @addtogroup graphics
 /// @{
 
+/// Sampler initializer.
 class SamplerInitializer
 {
 public:
@@ -23,13 +23,6 @@ public:
 	F32 m_maxLod = 1000.0;
 	I8 m_anisotropyLevel = 0;
 	Bool8 m_repeat = true;
-};
-
-class SurfaceData
-{
-public:
-	const void* m_ptr = nullptr;
-	PtrSize m_size = 0;
 };
 
 /// Texture initializer.
@@ -45,17 +38,30 @@ public:
 	U8 m_samples = 1;
 
 	SamplerInitializer m_sampling;
+};
 
-	/// In some backends it may copy the m_data to a temp buffer for async 
-	/// operations.
-	Bool8 m_copyDataBeforeReturn = true;
+/// GPU texture
+class Texture: public GrObject
+{
+public:
+	/// Construct.
+	Texture(GrManager* manager);
 
-	/// [level][slice]
-	Array2d<SurfaceData, MAX_MIPMAPS, MAX_TEXTURE_LAYERS> m_data;
+	/// Destroy.
+	~Texture();
+
+	/// Access the implementation.
+	TextureImpl& getImplementation()
+	{
+		return *m_impl;
+	}
+
+	/// Create it.
+	void create(const TextureInitializer& init);
+
+private:
+	UniquePtr<TextureImpl> m_impl;
 };
 /// @}
 
 } // end namespace anki
-
-#endif
-

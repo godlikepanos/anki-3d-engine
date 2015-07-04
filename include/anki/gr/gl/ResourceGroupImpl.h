@@ -3,11 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GR_GL_RESOURCE_GROUP_IMPL_H
-#define ANKI_GR_GL_RESOURCE_GROUP_IMPL_H
+#pragma once
 
 #include "anki/gr/gl/GlObject.h"
-#include "anki/gr/ResourceGroupCommon.h"
+#include "anki/gr/ResourceGroup.h"
 
 namespace anki {
 
@@ -15,39 +14,41 @@ namespace anki {
 /// @{
 
 /// Resource group implementation.
-class ResourceGroupImpl: public GlObject, private ResourceGroupInitializer
+class ResourceGroupImpl: public GlObject
 {
 public:
-	using Base = GlObject;
-	using Initializer = ResourceGroupInitializer;
-
 	ResourceGroupImpl(GrManager* manager)
-	:	Base(manager)
+		: GlObject(manager)
 	{}
 
 	~ResourceGroupImpl()
 	{}
 
-	ANKI_USE_RESULT Error create(const Initializer& init);
+	void create(const ResourceGroupInitializer& init);
 
 	/// Set state.
-	void bind();
+	void bind(GlState& state);
 
 private:
-	Array<GLuint, MAX_TEXTURE_BINDINGS> m_textureNames;
-	Array<GLuint, MAX_TEXTURE_BINDINGS> m_samplerNames;
-	U8 m_textureNamesCount = 0;
-	Bool8 m_allSamplersZero = false;
+	ResourceGroupInitializer m_in; ///< That will hold the references
 
-	U8 m_ubosCount = 0;
-	U8 m_ssbosCount = 0;
+	class
+	{
+	public:
+		Array<GLuint, MAX_TEXTURE_BINDINGS> m_textureNames;
+		Array<GLuint, MAX_TEXTURE_BINDINGS> m_samplerNames;
+		U8 m_textureNamesCount = 0;
+		Bool8 m_allSamplersZero = false;
 
-	Array<GLuint, MAX_VERTEX_ATTRIBUTES> m_vertBuffNames;
-	Array<GLintptr, MAX_VERTEX_ATTRIBUTES> m_vertBuffOffsets;
-	U8 m_vertBindingsCount = 0;
+		U8 m_ubosCount = 0;
+		U8 m_ssbosCount = 0;
+
+		Array<GLuint, MAX_VERTEX_ATTRIBUTES> m_vertBuffNames;
+		Array<GLintptr, MAX_VERTEX_ATTRIBUTES> m_vertBuffOffsets;
+		U8 m_vertBindingsCount = 0;
+	} m_cache;
 };
 /// @}
 
 } // end namespace anki
 
-#endif

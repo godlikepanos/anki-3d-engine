@@ -6,12 +6,9 @@
 #pragma once
 
 #include "anki/gr/gl/GlObject.h"
-#include "anki/gr/PipelineCommon.h"
+#include "anki/gr/Pipeline.h"
 
 namespace anki {
-
-// Forward
-class GlState;
 
 /// @addtogroup opengl
 /// @{
@@ -20,22 +17,19 @@ class GlState;
 class PipelineImpl: public GlObject
 {
 public:
-	using Base = GlObject;
-	using Initializer = PipelineInitializer;
-
 	PipelineImpl(GrManager* manager)
-		: Base(manager)
+		: GlObject(manager)
 	{}
 
 	~PipelineImpl()
 	{
-		destroy();
+		destroyDeferred(glDeleteProgramPipelines);
 	}
 
-	ANKI_USE_RESULT Error create(const Initializer& init);
+	ANKI_USE_RESULT Error create(const PipelineInitializer& init);
 
 	/// Bind the pipeline to the state
-	void bind();
+	void bind(GlState& state);
 
 private:
 	class Attribute
@@ -90,8 +84,6 @@ private:
 
 	/// Attach all the programs
 	ANKI_USE_RESULT Error createGlPipeline();
-
-	void destroy();
 
 	void initVertexState();
 	void initInputAssemblerState();

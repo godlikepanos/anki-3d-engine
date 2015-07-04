@@ -3,20 +3,25 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GR_GL_COMMAND_BUFFER_IMPL_H
-#define ANKI_GR_GL_COMMAND_BUFFER_IMPL_H
+#pragma once
 
-#include "anki/gr/GrObject.h"
 #include "anki/gr/GrManager.h"
+#include "anki/gr/CommandBuffer.h"
 #include "anki/util/Assert.h"
 #include "anki/util/Allocator.h"
 
 namespace anki {
 
+// Forward
+class GlState;
+
 /// @addtogroup opengl
 /// @{
 
-/// The base of all GL commands
+template<typename T>
+using CommandBufferAllocator = ChainAllocator<T>;
+
+/// The base of all GL commands.
 class GlCommand
 {
 public:
@@ -26,18 +31,18 @@ public:
 	{}
 
 	/// Execute command
-	virtual ANKI_USE_RESULT Error operator()(CommandBufferImpl*) = 0;
+	virtual ANKI_USE_RESULT Error operator()(GlState& state) = 0;
 };
 
 /// A number of GL commands organized in a chain
-class CommandBufferImpl: public GrObject
+class CommandBufferImpl
 {
 public:
 	using InitHints = CommandBufferInitHints;
 
 	/// Default constructor
 	CommandBufferImpl(GrManager* manager)
-	:	GrObject(manager)
+		: m_manager(manager)
 	{}
 
 	~CommandBufferImpl()
@@ -56,10 +61,12 @@ public:
 		return m_alloc;
 	}
 
-	/// Compute initialization hints
+	GrAllocator<U8> getAllocator() const;
+
+	/// Compute initialization hints.
 	InitHints computeInitHints() const;
 
-	/// Create a new command and add it to the chain
+	/// Create a new command and add it to the chain.
 	template<typename TCommand, typename... TArgs>
 	void pushBackNewCommand(TArgs&&... args);
 
@@ -80,7 +87,13 @@ public:
 		m_immutable = true;
 	}
 
+	GrManager& getManager()
+	{
+		return *m_manager;
+	}
+
 private:
+	GrManager* m_manager = nullptr;
 	GlCommand* m_firstCommand = nullptr;
 	GlCommand* m_lastCommand = nullptr;
 	CommandBufferAllocator<U8> m_alloc;
@@ -95,9 +108,9 @@ private:
 
 //==============================================================================
 template<typename TCommand, typename... TArgs>
-void CommandBufferImpl::pushBackNewCommand(TArgs&&... args)
+inline void CommandBufferImpl::pushBackNewCommand(TArgs&&... args)
 {
-	ANKI_ASSERT(m_immutable == false);
+	ANKI_ASSERT(!m_immutable);
 	TCommand* newCommand = m_alloc.template newInstance<TCommand>(
 		std::forward<TArgs>(args)...);
 
@@ -115,29 +128,7 @@ void CommandBufferImpl::pushBackNewCommand(TArgs&&... args)
 		m_lastCommand = newCommand;
 	}
 }
-
-/// A common command that deletes an object.
-template<typename T>
-class DeleteObjectCommand: public GlCommand
-{
-public:
-	T* m_ptr;
-
-	DeleteObjectCommand(T* ptr)
-	:	m_ptr(ptr)
-	{
-		ANKI_ASSERT(m_ptr);
-	}
-
-	Error operator()(CommandBufferImpl* cmdb) override
-	{
-		cmdb->getManager().getAllocator().deleteInstance(m_ptr);
-		return ErrorCode::NONE;
-	}
-};
 /// @}
 
 } // end namespace anki
-
-#endif
 

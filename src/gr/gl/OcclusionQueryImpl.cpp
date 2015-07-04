@@ -8,7 +8,7 @@
 namespace anki {
 
 //==============================================================================
-void OcclusionQueryImpl::create(ResultBit condRenderingBit)
+void OcclusionQueryImpl::create(OcclusionQueryResultBit condRenderingBit)
 {
 	glGenQueries(1, &m_glName);
 	ANKI_ASSERT(m_glName != 0);
@@ -30,10 +30,10 @@ void OcclusionQueryImpl::end()
 }
 
 //==============================================================================
-OcclusionQueryImpl::Result OcclusionQueryImpl::getResult() const
+OcclusionQueryResult OcclusionQueryImpl::getResult() const
 {
 	ANKI_ASSERT(isCreated());
-	Result result = Result::NOT_AVAILABLE;
+	OcclusionQueryResult result = OcclusionQueryResult::NOT_AVAILABLE;
 	GLuint params;
 	glGetQueryObjectuiv(m_glName, GL_QUERY_RESULT_AVAILABLE, &params);
 
@@ -41,19 +41,12 @@ OcclusionQueryImpl::Result OcclusionQueryImpl::getResult() const
 	{
 		glGetQueryObjectuiv(m_glName, GL_QUERY_RESULT, &params);
 
-		result = (params == 1) ? Result::VISIBLE : Result::NOT_VISIBLE;
+		result = (params == 1)
+			? OcclusionQueryResult::VISIBLE
+			: OcclusionQueryResult::NOT_VISIBLE;
 	}
 
 	return result;
-}
-
-//==============================================================================
-void OcclusionQueryImpl::destroy()
-{
-	if(m_glName != 0)
-	{
-		destroyDeferred(glDeleteQueries);
-	}
 }
 
 } // end namespace anki

@@ -47,7 +47,7 @@ __stdcall
 #endif
 void oglMessagesCallback(GLenum source,
 	GLenum type, GLuint id, GLenum severity, GLsizei length,
-	const char* message, GLvoid* userParam)
+	const char* message, const GLvoid* userParam)
 {
 	using namespace anki;
 
@@ -97,16 +97,6 @@ void GlState::init()
 	else if(glstr.find("NVIDIA") != CString::NPOS)
 	{
 		m_gpu = GpuVendor::NVIDIA;
-	}
-
-	// Max tex units
-	{
-		GLint tmp;
-		glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &tmp);
-		m_texUnitsCount = (U32)tmp;
-		ANKI_ASSERT(m_texUnitsCount <= m_texUnits.size());
-
-		memset(&m_texUnits[0], 0, sizeof(m_texUnits));
 	}
 
 	// Enable debug messages

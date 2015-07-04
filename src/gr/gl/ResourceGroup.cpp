@@ -3,26 +3,29 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/gr/ResourceGroupPtr.h"
+#include "anki/gr/ResourceGroup.h"
 #include "anki/gr/gl/ResourceGroupImpl.h"
+#include "anki/gr/gl/CommandBufferImpl.h"
+#include "anki/gr/Texture.h"
+#include "anki/gr/Sampler.h"
+#include "anki/gr/Buffer.h"
 
 namespace anki {
 
 //==============================================================================
-ResourceGroupPtr::ResourceGroupPtr()
+ResourceGroup::ResourceGroup(GrManager* manager)
+	: GrObject(manager)
 {}
 
 //==============================================================================
-ResourceGroupPtr::~ResourceGroupPtr()
+ResourceGroup::~ResourceGroup()
 {}
 
 //==============================================================================
-Error ResourceGroupPtr::create(GrManager* manager, const Initializer& init)
+void ResourceGroup::create(const ResourceGroupInitializer& init)
 {
-	Base::create(*manager);
-	ANKI_CHECK(get().create(init));
-
-	return ErrorCode::NONE;
+	m_impl.reset(getAllocator().newInstance<ResourceGroupImpl>(&getManager()));
+	m_impl->create(init);
 }
 
 } // end namespace anki

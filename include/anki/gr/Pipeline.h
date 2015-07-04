@@ -5,9 +5,8 @@
 
 #pragma once
 
-#include "anki/gr/Common.h"
-#include "anki/gr/ShaderPtr.h"
-#include "anki/gr/PipelinePtr.h"
+#include "anki/gr/GrObject.h"
+#include "anki/gr/Shader.h"
 
 namespace anki {
 
@@ -120,6 +119,29 @@ public:
 	ColorStateInfo m_color;
 
 	Array<ShaderPtr, 6> m_shaders;
+};
+
+/// Graphics and compute pipeline. Contains the static state.
+class Pipeline: public GrObject
+{
+public:
+	/// Construct.
+	Pipeline(GrManager* manager);
+
+	/// Destroy.
+	~Pipeline();
+
+	/// Access the implementation.
+	PipelineImpl& getImplementation()
+	{
+		return *m_impl;
+	}
+
+	/// Create.
+	void create(const PipelineInitializer& init);
+
+private:
+	UniquePtr<PipelineImpl> m_impl;
 };
 /// @}
 

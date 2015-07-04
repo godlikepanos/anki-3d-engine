@@ -27,6 +27,12 @@ static void deleteProgram(GLsizei n, const GLuint* names)
 }
 
 //==============================================================================
+ShaderImpl::~ShaderImpl()
+{
+	destroyDeferred(deleteProgram);
+}
+
+//==============================================================================
 Error ShaderImpl::create(ShaderType type, const CString& source)
 {
 	ANKI_ASSERT(source);
@@ -97,7 +103,7 @@ Error ShaderImpl::create(ShaderType type, const CString& source)
 		}
 
 		StringAuto fname(alloc);
-		CString cacheDir = getManager().getCacheDirectory();
+		CString cacheDir = m_manager->getCacheDirectory();
 		fname.sprintf("%s/%05u.%s", &cacheDir[0],
 			static_cast<U32>(m_glName), ext);
 
@@ -158,15 +164,6 @@ void ShaderImpl::handleError(String& src)
 	lines.destroy(alloc);
 	prettySrc.destroy(alloc);
 	compilerLog.destroy(alloc);
-}
-
-//==============================================================================
-void ShaderImpl::destroy()
-{
-	if(m_glName != 0)
-	{
-		destroyDeferred(deleteProgram);
-	}
 }
 
 } // end namespace anki

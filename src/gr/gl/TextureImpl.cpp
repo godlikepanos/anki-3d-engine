@@ -4,11 +4,9 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/gr/gl/TextureImpl.h"
-#include "anki/gr/TextureSamplerCommon.h"
+#include "anki/gr/Texture.h"
 #include "anki/gr/gl/Error.h"
 #include "anki/util/Functions.h"
-#include "anki/util/DArray.h"
-#include <cstring>
 
 namespace anki {
 
@@ -193,7 +191,14 @@ static void convertTextureInformation(
 //==============================================================================
 
 //==============================================================================
-void TextureImpl::create(const Initializer& init)
+void TextureImpl::bind()
+{
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(m_target, m_glName);
+}
+
+//==============================================================================
+void TextureImpl::create(const TextureInitializer& init)
 {
 	GrAllocator<U8> alloc = getAllocator();
 	const SamplerInitializer& sinit = init.m_sampling;
@@ -222,7 +227,7 @@ void TextureImpl::create(const Initializer& init)
 		min<U>(init.m_mipmapsCount, computeMaxMipmapCount(m_width, m_height));
 
 	// Bind
-	bind(0);
+	bind();
 
 	// Create storage
 	switch(m_target)
@@ -258,148 +263,6 @@ void TextureImpl::create(const Initializer& init)
 	default:
 		ANKI_ASSERT(0);
 	}
-
-	// Load data
-	if(init.m_data[0][0].m_ptr != nullptr)
-	{
-		U w = m_width;
-		U h = m_height;
-		for(U level = 0; level < m_mipsCount; level++)
-		{
-			ANKI_ASSERT(init.m_data[level][0].m_ptr != nullptr);
-
-			switch(m_target)
-			{
-			case GL_TEXTURE_2D:
-				if(!m_compressed)
-				{
-					glTexSubImage2D(
-						m_target,
-						level,
-						0,
-						0,
-						w,
-						h,
-						m_format,
-						m_type,
-						init.m_data[level][0].m_ptr);
-				}
-				else
-				{
-					ANKI_ASSERT(init.m_data[level][0].m_ptr
-						&& init.m_data[level][0].m_size > 0);
-
-					glCompressedTexSubImage2D(
-						m_target,
-						level,
-						0,
-						0,
-						w,
-						h,
-						m_format,
-						init.m_data[level][0].m_size,
-						init.m_data[level][0].m_ptr);
-				}
-				break;
-			case GL_TEXTURE_CUBE_MAP:
-				for(U face = 0; face < 6; ++face)
-				{
-					if(!m_compressed)
-					{
-						glTexSubImage2D(
-							GL_TEXTURE_CUBE_MAP_POSITIVE_X + face,
-							level,
-							0,
-							0,
-							w,
-							h,
-							m_format,
-							m_type,
-							init.m_data[level][face].m_ptr);
-					}
-					else
-					{
-
-						glCompressedTexSubImage2D(
-							GL_TEXTURE_CUBE_MAP_POSITIVE_X + face,
-							level,
-							0,
-							0,
-							w,
-							h,
-							m_format,
-							init.m_data[level][face].m_size,
-							init.m_data[level][face].m_ptr);
-					}
-				}
-				break;
-			case GL_TEXTURE_2D_ARRAY:
-			case GL_TEXTURE_3D:
-				{
-					ANKI_ASSERT(m_depth > 0);
-
-					// Gather the data
-					DArrayAuto<U8> data(alloc);
-
-					// Check if there are data
-					if(init.m_data[level][0].m_ptr != nullptr)
-					{
-						PtrSize layerSize = init.m_data[level][0].m_size;
-						ANKI_ASSERT(layerSize > 0);
-						data.create(layerSize * m_depth);
-
-						for(U d = 0; d < m_depth; d++)
-						{
-							ANKI_ASSERT(
-								init.m_data[level][d].m_size == layerSize
-								&& init.m_data[level][d].m_ptr != nullptr);
-
-							memcpy(&data[0] + d * layerSize,
-								init.m_data[level][d].m_ptr,
-								layerSize);
-						}
-					}
-
-					if(!m_compressed)
-					{
-						glTexSubImage3D(
-							m_target,
-							level,
-							0,
-							0,
-							0,
-							w,
-							h,
-							m_depth,
-							m_format,
-							m_type,
-							&data[0]);
-					}
-					else
-					{
-						glCompressedTexSubImage3D(
-							m_target,
-							level,
-							0,
-							0,
-							0,
-							w,
-							h,
-							m_depth,
-							m_format,
-							data.getSize(),
-							&data[0]);
-					}
-				}
-				break;
-			default:
-				ANKI_ASSERT(0);
-			}
-
-			w /= 2;
-			h /= 2;
-		}
-	} // end if data
 
 	// Set parameters
 	if(init.m_samples == 1)
@@ -448,27 +311,124 @@ void TextureImpl::create(const Initializer& init)
 }
 
 //==============================================================================
-void TextureImpl::destroy()
+void TextureImpl::write(U32 mipmap, U32 slice, void* data, PtrSize dataSize)
 {
-	if(m_glName)
-	{
-		destroyDeferred(glDeleteTextures);
-	}
-}
+	ANKI_ASSERT(data);
+	ANKI_ASSERT(dataSize > 0);
+	ANKI_ASSERT(mipmap < m_mipsCount);
 
-//==============================================================================
-void TextureImpl::bind(U32 unit) const
-{
-	ANKI_ASSERT(isCreated());
-	glActiveTexture(GL_TEXTURE0 + unit);
-	glBindTexture(m_target, m_glName);
+	U w = m_width >> mipmap;
+	U h = m_height >> mipmap;
+
+	ANKI_ASSERT(w > 0);
+	ANKI_ASSERT(h > 0);
+
+	bind();
+
+	switch(m_target)
+	{
+	case GL_TEXTURE_2D:
+		if(!m_compressed)
+		{
+			glTexSubImage2D(
+				m_target,
+				mipmap,
+				0,
+				0,
+				w,
+				h,
+				m_format,
+				m_type,
+				data);
+		}
+		else
+		{
+			glCompressedTexSubImage2D(
+				m_target,
+				mipmap,
+				0,
+				0,
+				w,
+				h,
+				m_format,
+				dataSize,
+				data);
+		}
+		break;
+	case GL_TEXTURE_CUBE_MAP:
+		if(!m_compressed)
+		{
+			glTexSubImage2D(
+				GL_TEXTURE_CUBE_MAP_POSITIVE_X + slice,
+				mipmap,
+				0,
+				0,
+				w,
+				h,
+				m_format,
+				m_type,
+				data);
+		}
+		else
+		{
+			glCompressedTexSubImage2D(
+				GL_TEXTURE_CUBE_MAP_POSITIVE_X + slice,
+				mipmap,
+				0,
+				0,
+				w,
+				h,
+				m_format,
+				dataSize,
+				data);
+		}
+		break;
+	case GL_TEXTURE_2D_ARRAY:
+	case GL_TEXTURE_3D:
+		ANKI_ASSERT(m_depth > 0);
+		ANKI_ASSERT(slice < m_depth);
+
+		if(!m_compressed)
+		{
+			glTexSubImage3D(
+				m_target,
+				mipmap,
+				0,
+				0,
+				slice,
+				w,
+				h,
+				slice + 1,
+				m_format,
+				m_type,
+				data);
+		}
+		else
+		{
+			glCompressedTexSubImage3D(
+				m_target,
+				mipmap,
+				0,
+				0,
+				slice,
+				w,
+				h,
+				slice + 1,
+				m_format,
+				dataSize,
+				data);
+		}
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
 }
 
 //==============================================================================
 void TextureImpl::generateMipmaps()
 {
 	ANKI_ASSERT(!m_compressed);
-	bind(0);
+	bind();
 	glGenerateMipmap(m_target);
 }
 

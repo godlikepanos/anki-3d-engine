@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GR_GL_SAMPLER_IMPL_H
-#define ANKI_GR_GL_SAMPLER_IMPL_H
+#pragma once
 
 #include "anki/gr/gl/GlObject.h"
 
@@ -17,43 +16,20 @@ namespace anki {
 class SamplerImpl: public GlObject
 {
 public:
-	using Base = GlObject;
-
 	SamplerImpl(GrManager* manager)
-	:	Base(manager)
+		: GlObject(manager)
 	{}
 
 	~SamplerImpl()
 	{
-		destroy();
+		destroyDeferred(glDeleteSamplers);
 	}
 
-	ANKI_USE_RESULT Error create(const SamplerInitializer& sinit);
-
-	/// Bind the texture to a specified unit
-	void bind(U32 unit) const
-	{
-		ANKI_ASSERT(isCreated());
-		glBindSampler(unit, m_glName);
-	}
-
-	/// Unbind sampler from unit
-	static void unbind(U32 unit)
-	{
-		glBindSampler(unit, 0);
-	}
+	void create(const SamplerInitializer& sinit);
 
 private:
-	void destroy()
-	{
-		if(m_glName)
-		{
-			destroyDeferred(glDeleteSamplers);
-		}
-	}
+	void createInternal(const SamplerInitializer& sinit);
 };
 /// @}
 
 } // end namespace anki
-
-#endif

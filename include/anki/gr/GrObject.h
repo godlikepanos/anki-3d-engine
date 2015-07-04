@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GR_GR_OBJECT_H
-#define ANKI_GR_GR_OBJECT_H
+#pragma once
 
 #include "anki/gr/Common.h"
 #include "anki/util/Atomic.h"
@@ -20,8 +19,8 @@ class GrObject: public NonCopyable
 {
 public:
 	GrObject(GrManager* manager)
-	:	m_refcount(0),
-		m_manager(manager)
+		: m_refcount(0)
+		, m_manager(manager)
 	{}
 
 	virtual ~GrObject()
@@ -51,6 +50,4 @@ private:
 /// @}
 
 } // end namespace anki
-
-#endif
 

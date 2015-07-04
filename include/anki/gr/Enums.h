@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GR_ENUMS_H
-#define ANKI_GR_ENUMS_H
+#pragma once
 
 #include "anki/util/StdTypes.h"
 #include "anki/util/Enum.h"
@@ -258,21 +257,28 @@ enum class AttachmentStoreOperation: U8
 	DONT_CARE
 };
 
-/// Buffer access mode.
+/// Buffer usage modes.
 enum class BufferUsageBit: U8
 {
+	NONE = 0,
 	UNIFORM_BUFFER = 1 << 0,
 	STORAGE_BUFFER = 1 << 1,
 	INDEX_BUFFER = 1 << 2,
 	VERTEX_BUFFER = 1 << 3,
-	INDIRECT_BUFFER = 1 << 4,
-	CLIENT_READ = 1 << 5,
-	CLIENT_WRITE = 1 << 6
+	INDIRECT_BUFFER = 1 << 4
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferUsageBit, inline)
+
+/// Buffer access from client modes.
+enum class BufferAccessBit: U8
+{
+	NONE = 0,
+	CLIENT_MAP_READ = 1 << 0,
+	CLIENT_MAP_WRITE = 1 << 1,
+	CLIENT_WRITE = 1 << 2,
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferAccessBit, inline)
 /// @}
 
 } // end namespace anki
-
-#endif
 

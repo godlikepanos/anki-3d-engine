@@ -3,13 +3,12 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GR_RESOURCE_GROUP_COMMON_H
-#define ANKI_GR_RESOURCE_GROUP_COMMON_H
+#pragma once
 
-#include "anki/gr/Common.h"
-#include "anki/gr/TexturePtr.h"
-#include "anki/gr/SamplerPtr.h"
-#include "anki/gr/BufferPtr.h"
+#include "anki/gr/GrObject.h"
+#include "anki/gr/Texture.h"
+#include "anki/gr/Sampler.h"
+#include "anki/gr/Buffer.h"
 
 namespace anki {
 
@@ -42,10 +41,32 @@ public:
 	Array<BufferBinding, MAX_STORAGE_BUFFER_BINDINGS> m_storageBuffers;
 	Array<BufferBinding, MAX_VERTEX_ATTRIBUTES> m_vertexBuffers;
 	BufferBinding m_indexBuffer;
+	I8 m_indexSize = -1; ///< Index size in bytes. 2 or 4
+};
+
+/// Resource group.
+class ResourceGroup: public GrObject
+{
+public:
+	/// Construct.
+	ResourceGroup(GrManager* manager);
+
+	/// Destroy.
+	~ResourceGroup();
+
+	/// Access the implementation.
+	ResourceGroupImpl& getImplementation()
+	{
+		return *m_impl;
+	}
+
+	/// Create.
+	void create(const ResourceGroupInitializer& init);
+
+private:
+	UniquePtr<ResourceGroupImpl> m_impl;
 };
 /// @}
 
 } // end namespace anki
-
-#endif
 

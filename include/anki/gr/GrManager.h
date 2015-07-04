@@ -3,15 +3,14 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GR_GR_MANAGER_H
-#define ANKI_GR_GR_MANAGER_H
+#pragma once
 
 #include "anki/gr/Common.h"
 #include "anki/util/String.h"
 
 namespace anki {
 
-/// @addtogroup graphics_other
+/// @addtogroup graphics
 /// @{
 
 /// Manager initializer.
@@ -43,22 +42,17 @@ public:
 	/// Default constructor
 	GrManager() = default;
 
-	~GrManager()
-	{
-		destroy();
-	}
+	~GrManager();
 
 	/// Create.
 	ANKI_USE_RESULT Error create(Initializer& init);
 
-	/// Synchronize client and server
-	void syncClientServer();
-
 	/// Swap buffers
 	void swapBuffers();
 
-	/// Return the alignment of a buffer target
-	PtrSize getBufferOffsetAlignment(GLenum target) const;
+	/// Create a new graphics object.
+	template<typename T, typename... Args>
+	IntrusivePtr<T> newInstance(Args&&... args);
 
 	/// @privatesection
 	/// @{
@@ -84,14 +78,19 @@ public:
 	/// @}
 
 private:
-	GrManagerImpl* m_impl = nullptr;
+	UniquePtr<GrManagerImpl> m_impl;
 	String m_cacheDir;
 	GrAllocator<U8> m_alloc; ///< Keep it last to deleted last
-
-	void destroy();
 };
+
+template<typename T, typename... Args>
+IntrusivePtr<T> GrManager::newInstance(Args&&... args)
+{
+	T* ptr = m_alloc.newInstance<T>(this);
+	ptr->create(std::forward(args)...);
+	return IntrusivePtr<T>(ptr);
+}
 /// @}
 
 } // end namespace anki
 
-#endif

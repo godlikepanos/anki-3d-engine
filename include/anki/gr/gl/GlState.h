@@ -3,11 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GR_GL_STATE_H
-#define ANKI_GR_GL_STATE_H
+#pragma once
 
-#include "anki/gr/Common.h"
-#include "anki/gr/PipelinePtr.h"
+#include "anki/gr/gl/Common.h"
+#include "anki/util/DArray.h"
 
 namespace anki {
 
@@ -31,7 +30,6 @@ public:
 
 	I32 m_version = -1; ///< Minor major GL version. Something like 430
 	GpuVendor m_gpu = GpuVendor::UNKNOWN;
-	U32 m_texUnitsCount = 0;
 	Bool8 m_registerMessages = false;
 	U32 m_uniBuffOffsetAlignment = 0;
 	U32 m_ssBuffOffsetAlignment = 0;
@@ -44,16 +42,13 @@ public:
 	GLenum m_blendDfunc = GL_ZERO;
 
 	GLuint m_crntPpline = 0;
-
-	Array<GLuint, 256> m_texUnits;
-
-	GLenum m_indexSize = GL_NONE;
 	/// @}
 
 	/// @name Pipeline state
 	/// @{
 	Array<GLsizei, MAX_VERTEX_ATTRIBUTES> m_vertexBindingStrides;
 	GLenum m_topology = 0;
+	U8 m_indexSize = 4;
 
 	class
 	{
@@ -101,6 +96,4 @@ private:
 /// @}
 
 } // end namespace anki
-
-#endif
 

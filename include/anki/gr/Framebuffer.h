@@ -3,16 +3,18 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GR_FRAMEBUFFER_COMMON_H
-#define ANKI_GR_FRAMEBUFFER_COMMON_H
+#pragma once
 
-#include "anki/gr/Common.h"
-#include "anki/gr/TexturePtr.h"
+#include "anki/gr/GrObject.h"
+#include "anki/gr/Texture.h"
+#include <cstring>
 
 namespace anki {
 
 /// @addtogroup graphics
 /// @{
+
+/// Framebuffer attachment.
 class Attachment
 {
 public:
@@ -85,9 +87,30 @@ public:
 		return *this;
 	}
 };
+
+/// GPU framebuffer.
+class Framebuffer: public GrObject
+{
+public:
+	/// Construct.
+	Framebuffer(GrManager* manager);
+
+	/// Destroy.
+	~Framebuffer();
+
+	/// Access the implementation.
+	FramebufferImpl& getImplementation()
+	{
+		return *m_impl;
+	}
+
+	/// Create.
+	void create(const FramebufferInitializer& init);
+
+private:
+	UniquePtr<FramebufferImpl> m_impl;
+};
 /// @}
 
 } // end namespace anki
-
-#endif
 
