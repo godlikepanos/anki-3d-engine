@@ -42,10 +42,8 @@ Error ShaderResource::load(const ResourceFilename& filename,
 	source.append(pars.getShaderSource());
 
 	// Create
-	m_shader.create(
-		&getManager().getGrManager(),
-		pars.getShaderType(), &source[0],
-		source.getLength() + 1);
+	m_shader = getManager().getGrManager().newInstance<Shader>(
+		pars.getShaderType(), &source[0], source.getLength() + 1);
 
 	m_type = pars.getShaderType();
 
@@ -55,8 +53,7 @@ Error ShaderResource::load(const ResourceFilename& filename,
 //==============================================================================
 Error ShaderResource::createToCache(
 	const ResourceFilename& filename, const CString& preAppendedSrcCode,
-	const CString& filenamePrefix, ResourceManager& manager,
-	StringAuto& out)
+	const CString& filenamePrefix, ResourceManager& manager, StringAuto& out)
 {
 	auto alloc = manager.getTempAllocator();
 

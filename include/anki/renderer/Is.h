@@ -60,7 +60,8 @@ public:
 
 	void generateMipmaps(CommandBufferPtr& cmdb)
 	{
-		m_rt.generateMipmaps(cmdb);
+		ANKI_ASSERT(0 && "TODO");
+		//m_rt.generateMipmaps(cmdb);
 	}
 
 	void setAmbientColor(const Vec4& color)

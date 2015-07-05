@@ -120,6 +120,11 @@ public:
 			elements, elementsCount, buffBegin, buffEnd);
 	}
 
+	ShaderVariableDataType getShaderVariableType() const
+	{
+		return m_varType;
+	}
+
 protected:
 	ShaderVariableDataType m_varType = ShaderVariableDataType::NONE;
 	ShaderVariableBlockInfo m_varBlkInfo;

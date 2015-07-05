@@ -29,8 +29,9 @@ public:
 	Bool8 m_instanced = false;
 
 	String m_line;
-	GLbitfield m_shaderDefinedMask = 0; ///< Defined in
-	GLbitfield m_shaderReferencedMask = 0; ///< Referenced by
+	ShaderTypeBit m_shaderDefinedMask = ShaderTypeBit::NONE; ///< Defined in
+	/// Referenced by
+	ShaderTypeBit m_shaderReferencedMask = ShaderTypeBit::NONE;
 	Bool8 m_inBlock = true;
 
 	I16 m_binding = -1; ///< Texture unit
@@ -143,11 +144,11 @@ private:
 	Array<String, 5> m_sourceBaked; ///< Final source baked
 	List<Input> m_inputs;
 	StringList m_uniformBlock;
-	GLbitfield m_uniformBlockReferencedMask = 0;
+	ShaderTypeBit m_uniformBlockReferencedMask = ShaderTypeBit::NONE;
 	U32 m_blockSize = 0;
 	Bool8 m_instanced = false;
 	U32 m_texBinding = 0;
-	GLbitfield m_instanceIdMask = 0;
+	ShaderTypeBit m_instanceIdMask = ShaderTypeBit::NONE;
 	Bool8 m_tessellation = false;
 
 	/// Parse what is within the
@@ -159,8 +160,8 @@ private:
 
 	/// Parse what is within the @code <operation></operation> @endcode
 	ANKI_USE_RESULT Error parseOperationTag(
-		const XmlElement& el, GLenum glshader,
-		GLbitfield glshaderbit, String& out);
+		const XmlElement& el, ShaderType glshader,
+		ShaderTypeBit glshaderbit, String& out);
 };
 
 } // end namespace anki

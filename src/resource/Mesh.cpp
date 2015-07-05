@@ -28,8 +28,6 @@ Bool Mesh::isCompatible(const Mesh& other) const
 //==============================================================================
 Error Mesh::load(const ResourceFilename& filename)
 {
-	Error err = ErrorCode::NONE;
-
 	MeshLoader loader(&getManager());
 	ANKI_CHECK(loader.load(filename));
 
@@ -49,25 +47,34 @@ Error Mesh::load(const ResourceFilename& filename)
 	m_texChannelsCount = header.m_uvsChannelCount;
 	m_weights = loader.hasBoneInfo();
 
-	err = createBuffers(loader);
+	createBuffers(loader);
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
-Error Mesh::createBuffers(const MeshLoader& loader)
+void Mesh::createBuffers(const MeshLoader& loader)
 {
 	GrManager& gr = getManager().getGrManager();
 
+	CommandBufferPtr cmdb = gr.newInstance<CommandBuffer>();
+
 	// Create vertex buffer
-	m_vertBuff.create(&gr, GL_ARRAY_BUFFER, loader.getVertexData(),
-		loader.getVertexDataSize(), 0);
+	m_vertBuff = gr.newInstance<Buffer>(loader.getVertexDataSize(),
+		BufferUsageBit::VERTEX_BUFFER, BufferAccessBit::CLIENT_WRITE);
+
+	void* data = nullptr;
+	cmdb->writeBuffer(m_vertBuff, 0, loader.getVertexDataSize(), data);
+	memcpy(data, loader.getVertexData(), loader.getVertexDataSize());
 
 	// Create index buffer
-	m_indicesBuff.create(&gr, GL_ELEMENT_ARRAY_BUFFER,
-		loader.getIndexData(), loader.getIndexDataSize(), 0);
+	m_indicesBuff = gr.newInstance<Buffer>(loader.getIndexDataSize(),
+		BufferUsageBit::INDEX_BUFFER, BufferAccessBit::CLIENT_WRITE);
 
-	return ErrorCode::NONE;
+	cmdb->writeBuffer(m_indicesBuff, 0, loader.getIndexDataSize(), data);
+	memcpy(data, loader.getIndexData(), loader.getIndexDataSize());
+
+	cmdb->flush();
 }
 
 } // end namespace anki

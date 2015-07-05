@@ -254,7 +254,7 @@ Error ParticleEmitterResource::load(const ResourceFilename& filename)
 
 	pinit.m_inputAssembler.m_topology = PrimitiveTopology::POINTS;
 
-	m_ppline.create(&getManager().getGrManager(), pinit);
+	m_ppline = getManager().getGrManager().newInstance<Pipeline>(pinit);
 
 	return ErrorCode::NONE;
 }

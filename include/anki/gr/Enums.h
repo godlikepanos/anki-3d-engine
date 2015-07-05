@@ -175,6 +175,18 @@ enum class ShaderType: U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderType, inline)
 
+enum class ShaderTypeBit: U8
+{
+	NONE = 0,
+	VERTEX = 1 << 0,
+	TESSELLATION_CONTROL = 1 << 1,
+	TESSELLATION_EVALUATION = 1 << 2,
+	GEOMETRY = 1 << 3,
+	FRAGMENT = 1 << 4,
+	COMPUTE = 1 << 5
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderTypeBit, inline)
+
 enum class ShaderVariableDataType: U8
 {
 	NONE,

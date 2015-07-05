@@ -17,12 +17,10 @@ TextureResource::~TextureResource()
 Error TextureResource::load(const ResourceFilename& filename)
 {
 	GrManager& gr = getManager().getGrManager();
-	CommandBufferPtr cmdb;
-	cmdb.create(&gr); // Always first to avoid assertions (
-	                  // because of the check of the allocator)
+	// Always first to avoid assertions (because of the check of the allocator)
+	CommandBufferPtr cmdb = gr.newInstance<CommandBuffer>();
 
-	TexturePtr::Initializer init;
-	init.m_copyDataBeforeReturn = false;
+	TextureInitializer init;
 	U layers = 0;
 
 	// Load image
@@ -136,25 +134,27 @@ Error TextureResource::load(const ResourceFilename& filename)
 	init.m_sampling.m_anisotropyLevel =
 		getManager().getTextureAnisotropy();
 
-	// Now assign the data
+	// Create the texture
+	m_tex = gr.newInstance<Texture>(init);
+
+	// Upload the data
 	for(U layer = 0; layer < layers; layer++)
 	{
 		for(U level = 0; level < init.m_mipmapsCount; level++)
 		{
 			const auto& surf = img->getSurface(level, layer);
-			auto& grsurf = init.m_data[level][layer];
 
-			grsurf.m_size = surf.m_data.getSize();
-			grsurf.m_ptr = &surf.m_data[0];
+			void* data;
+			cmdb->textureUpload(
+				m_tex, level, layer, surf.m_data.getSize(), data);
+
+			memcpy(data, &surf.m_data[0], surf.m_data.getSize());
 		}
 	}
 
-	// Add the GL job to create the texture
-	m_tex.create(cmdb, init);
-
 	// Finaly enque the GL job chain
 	// TODO Make asynchronous
-	cmdb.finish();
+	cmdb->finish();
 
 	m_size = UVec3(init.m_width, init.m_height, init.m_depth);
 

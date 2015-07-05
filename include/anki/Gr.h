@@ -7,25 +7,21 @@
 /// This file contains the public OpenGL headers and all the GL classes that
 /// the rest of AnKi should use
 
-#ifndef ANKI_GR_H
-#define ANKI_GR_H
+#pragma once
 
 /// @defgroup graphics Graphics backend abstraction
 
 /// @defgroup opengl OpenGL backend
 /// @ingroup graphics
 
-#include "anki/gr/BufferPtr.h"
-#include "anki/gr/TexturePtr.h"
-#include "anki/gr/SamplerPtr.h"
-#include "anki/gr/ShaderPtr.h"
-
-#include "anki/gr/FramebufferPtr.h"
-#include "anki/gr/PipelineCommon.h"
-#include "anki/gr/PipelinePtr.h"
-
-#include "anki/gr/CommandBufferPtr.h"
-#include "anki/gr/OcclusionQueryPtr.h"
+#include "anki/gr/Buffer.h"
+#include "anki/gr/Texture.h"
+#include "anki/gr/Sampler.h"
+#include "anki/gr/Shader.h"
+#include "anki/gr/Framebuffer.h"
+#include "anki/gr/Pipeline.h"
+#include "anki/gr/CommandBuffer.h"
+#include "anki/gr/OcclusionQuery.h"
+#include "anki/gr/ResourceGroup.h"
 #include "anki/gr/GrManager.h"
 
-#endif

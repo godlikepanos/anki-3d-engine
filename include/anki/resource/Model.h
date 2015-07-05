@@ -69,8 +69,7 @@ public:
 	void getRenderingDataSub(
 		const RenderingKey& key,
 		SArray<U8> subMeshIndicesArray,
-		BufferPtr& vertBuff,
-		BufferPtr& indexBuff,
+		ResourceGroupPtr& resourceGroup,
 		PipelinePtr& ppline,
 		Array<U32, ANKI_GL_MAX_SUB_DRAWCALLS>& indicesCountArray,
 		Array<PtrSize, ANKI_GL_MAX_SUB_DRAWCALLS>& indicesOffsetArray,
@@ -84,6 +83,7 @@ private:
 	MaterialResourcePtr m_mtl;
 
 	mutable Array3d<PipelinePtr, U(Pass::COUNT), MAX_LODS, 2> m_pplines;
+	Array<ResourceGroupPtr, MAX_LODS> m_grResources;
 
 	/// Return the maximum number of LODs
 	U getLodCount() const;

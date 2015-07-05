@@ -87,7 +87,7 @@ public:
 	/// Helper function for correct loading
 	Bool isCompatible(const Mesh& other) const;
 
-	/// Load from a .mesh file
+	/// Load from a mesh file
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename);
 
 protected:
@@ -110,7 +110,7 @@ protected:
 	BufferPtr m_indicesBuff;
 
 	/// Create the VBOs using the mesh data
-	ANKI_USE_RESULT Error createBuffers(const MeshLoader& loader);
+	void createBuffers(const MeshLoader& loader);
 };
 /// @}
 

@@ -18,6 +18,36 @@
 namespace anki {
 
 //==============================================================================
+// Misc                                                                        =
+//==============================================================================
+
+/// Visit the textures to bind them
+class UpdateTexturesVisitor
+{
+public:
+	U m_count = 0;
+	ResourceGroupInitializer* m_init = nullptr;
+
+	template<typename TMaterialVariableTemplate>
+	Error visit(const TMaterialVariableTemplate& var)
+	{
+		// Do nothing
+		return ErrorCode::NONE;
+	}
+};
+
+// Specialize for texture
+template<>
+Error UpdateTexturesVisitor
+	::visit<MaterialVariableTemplate<TextureResourcePtr>>(
+	const MaterialVariableTemplate<TextureResourcePtr>& var)
+{
+	m_init->m_textures[m_count++].m_texture =
+		(*var.begin())->getGlTexture();
+	return ErrorCode::NONE;
+}
+
+//==============================================================================
 // ModelPatch                                                                  =
 //==============================================================================
 
@@ -29,19 +59,17 @@ ModelPatch::~ModelPatch()
 void ModelPatch::getRenderingDataSub(
 	const RenderingKey& key,
 	SArray<U8> subMeshIndicesArray,
-	BufferPtr& vertBuff,
-	BufferPtr& indexBuff,
+	ResourceGroupPtr& resourceGroup,
 	PipelinePtr& ppline,
 	Array<U32, ANKI_GL_MAX_SUB_DRAWCALLS>& indicesCountArray,
 	Array<PtrSize, ANKI_GL_MAX_SUB_DRAWCALLS>& indicesOffsetArray,
 	U32& drawcallCount) const
 {
-	// Get the buffers
+	// Get the resources
 	RenderingKey meshKey = key;
 	meshKey.m_lod = min<U>(key.m_lod, m_meshCount - 1);
 	const Mesh& mesh = getMesh(meshKey);
-	vertBuff = mesh.getVertexBuffer();
-	indexBuff = mesh.getIndexBuffer();
+	resourceGroup = m_grResources[meshKey.m_lod];
 
 	// Get ppline
 	RenderingKey mtlKey = key;
@@ -75,7 +103,22 @@ Error ModelPatch::create(
 {
 	ANKI_ASSERT(meshFNames.getSize() > 0);
 
-	// Load meshes
+	// Load material
+	ANKI_CHECK(m_mtl.load(mtlFName, manager));
+
+	// Iterate material variables for textures
+	ResourceGroupInitializer rcinit;
+
+	UpdateTexturesVisitor visitor;
+	visitor.m_init = &rcinit;
+
+	for(const auto& var : m_mtl->getVariables())
+	{
+		Error err = var->acceptVisitor(visitor);
+		(void)err;
+	}
+
+	// Load meshes and update resource group
 	m_meshCount = 0;
 	for(U i = 0; i < meshFNames.getSize(); i++)
 	{
@@ -88,11 +131,14 @@ Error ModelPatch::create(
 			return ErrorCode::USER_DATA;
 		}
 
+		rcinit.m_vertexBuffers[0].m_buffer = m_meshes[i]->getVertexBuffer();
+		rcinit.m_indexBuffer.m_buffer = m_meshes[i]->getIndexBuffer();
+
+		m_grResources[i] =
+			manager->getGrManager().newInstance<ResourceGroup>(rcinit);
+
 		++m_meshCount;
 	}
-
-	// Load material
-	ANKI_CHECK(m_mtl.load(mtlFName, manager));
 
 	return ErrorCode::NONE;
 }
@@ -119,7 +165,7 @@ PipelinePtr ModelPatch::getPipeline(const RenderingKey& key) const
 	// Lazily create it
 	if(ANKI_UNLIKELY(!ppline.isCreated()))
 	{
-		PipelinePtr::Initializer pplineInit;
+		PipelineInitializer pplineInit;
 		computePipelineInitializer(key, pplineInit);
 
 		pplineInit.m_shaders[U(ShaderType::VERTEX)] =
@@ -138,7 +184,8 @@ PipelinePtr ModelPatch::getPipeline(const RenderingKey& key) const
 			m_mtl->getShader(key, ShaderType::FRAGMENT);
 
 		// Create
-		ppline.create(&m_model->getManager().getGrManager(), pplineInit);
+		ppline = m_model->getManager().getGrManager()
+			.newInstance<Pipeline>(pplineInit);
 	}
 
 	return ppline;

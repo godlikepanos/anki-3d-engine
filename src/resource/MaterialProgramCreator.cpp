@@ -19,41 +19,41 @@ namespace anki {
 //==============================================================================
 /// Given a string return info about the shader
 static ANKI_USE_RESULT Error getShaderInfo(
-	const CString& str, 
-	GLenum& type, 
-	GLbitfield& bit,
+	const CString& str,
+	ShaderType& type,
+	ShaderTypeBit& bit,
 	U& idx)
 {
 	Error err = ErrorCode::NONE;
 
 	if(str == "vert")
 	{
-		type = GL_VERTEX_SHADER;
-		bit = GL_VERTEX_SHADER_BIT;
+		type = ShaderType::VERTEX;
+		bit = ShaderTypeBit::VERTEX;
 		idx = 0;
 	}
 	else if(str == "tesc")
 	{
-		type = GL_TESS_CONTROL_SHADER;
-		bit = GL_TESS_CONTROL_SHADER_BIT;
+		type = ShaderType::TESSELLATION_CONTROL;
+		bit = ShaderTypeBit::TESSELLATION_CONTROL;
 		idx = 1;
 	}
 	else if(str == "tese")
 	{
-		type = GL_TESS_EVALUATION_SHADER;
-		bit = GL_TESS_EVALUATION_SHADER_BIT;
+		type = ShaderType::TESSELLATION_EVALUATION;
+		bit = ShaderTypeBit::TESSELLATION_EVALUATION;
 		idx = 2;
 	}
 	else if(str == "geom")
 	{
-		type = GL_GEOMETRY_SHADER;
-		bit = GL_GEOMETRY_SHADER_BIT;
+		type = ShaderType::GEOMETRY;
+		bit = ShaderTypeBit::GEOMETRY;
 		idx = 3;
 	}
 	else if(str == "frag")
 	{
-		type = GL_FRAGMENT_SHADER;
-		bit = GL_FRAGMENT_SHADER_BIT;
+		type = ShaderType::FRAGMENT;
+		bit = ShaderTypeBit::FRAGMENT;
 		idx = 4;
 	}
 	else
@@ -180,7 +180,7 @@ Error MaterialProgramCreator::parseProgramsTag(const XmlElement& el)
 	{
 		if(in.m_shaderDefinedMask != in.m_shaderReferencedMask)
 		{
-			ANKI_LOGE("Variable not referenced or not defined %s", 
+			ANKI_LOGE("Variable not referenced or not defined %s",
 				&in.m_name[0]);
 			return ErrorCode::USER_DATA;
 		}
@@ -210,16 +210,16 @@ Error MaterialProgramCreator::parseProgramTag(
 	ANKI_CHECK(programEl.getChildElement("type", el));
 	CString type;
 	ANKI_CHECK(el.getText(type));
-	GLbitfield glshaderbit;
-	GLenum glshader;
+	ShaderTypeBit glshaderbit;
+	ShaderType glshader;
 	U shaderidx;
 	ANKI_CHECK(getShaderInfo(type, glshader, glshaderbit, shaderidx));
 
 	auto& lines = m_source[shaderidx];
 	lines.pushBackSprintf(m_alloc, "#pragma anki type %s", &type[0]);
 
-	if(glshader == GL_TESS_CONTROL_SHADER 
-		|| glshader == GL_TESS_EVALUATION_SHADER)
+	if(glshader == ShaderType::TESSELLATION_CONTROL
+		|| glshader == ShaderType::TESSELLATION_EVALUATION)
 	{
 		m_tessellation = true;
 	}
@@ -243,9 +243,9 @@ Error MaterialProgramCreator::parseProgramTag(
 
 	// Block
 	if(!m_uniformBlock.isEmpty()
-		&& (m_uniformBlockReferencedMask & glshaderbit))
+		&& (m_uniformBlockReferencedMask & glshaderbit) != ShaderTypeBit::NONE)
 	{
-		lines.pushBackSprintf(m_alloc, 
+		lines.pushBackSprintf(m_alloc,
 			"\nlayout(binding = 0, std140) uniform bDefaultBlock\n{");
 
 		for(auto& str : m_uniformBlock)
@@ -259,7 +259,8 @@ Error MaterialProgramCreator::parseProgramTag(
 	// Other variables
 	for(Input& in : m_inputs)
 	{
-		if(!in.m_inBlock && (in.m_shaderDefinedMask & glshaderbit))
+		if(!in.m_inBlock
+			&& (in.m_shaderDefinedMask & glshaderbit) != ShaderTypeBit::NONE)
 		{
 			lines.pushBackSprintf(m_alloc, &in.m_line[0]);
 		}
@@ -300,8 +301,8 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 	}
 
 	// Get shader type
-	GLbitfield glshaderbit;
-	GLenum glshader;
+	ShaderTypeBit glshaderbit;
+	ShaderType glshader;
 	U shaderidx;
 	ANKI_CHECK(programEl.getChildElement("type", el));
 	ANKI_CHECK(el.getText(cstr));
@@ -390,7 +391,7 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 			inpvar.m_instanced = false;
 		}
 
-		// If one input var is instanced notify the whole program that 
+		// If one input var is instanced notify the whole program that
 		// it's instanced
 		if(inpvar.m_instanced)
 		{
@@ -440,7 +441,7 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 
 			inpvar.m_line.sprintf(
 				m_alloc, "%s %s", &inpvar.m_typeStr[0], &inpvar.m_name[0]);
-			
+
 			if(inpvar.m_arraySize > 1)
 			{
 				String tmp;
@@ -452,7 +453,7 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 			inpvar.m_line.append(m_alloc, ";");
 
 			// Can put it block
-			if(inpvar.m_type >= ShaderVariableDataType::SAMPLERS_FIRST 
+			if(inpvar.m_type >= ShaderVariableDataType::SAMPLERS_FIRST
 				&& inpvar.m_type <= ShaderVariableDataType::SAMPLERS_LAST)
 			{
 				String tmp;
@@ -538,14 +539,14 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 					alignRoundUp(sizeof(Vec4), inpvar.m_offset);
 					inpvar.m_arrayStride = sizeof(Vec4) * 3;
 					m_blockSize += sizeof(Vec4) * 3 * inpvar.m_arraySize;
-					inpvar.m_matrixStride = sizeof(Vec4);				
+					inpvar.m_matrixStride = sizeof(Vec4);
 				}
 				else if(inpvar.m_type == ShaderVariableDataType::MAT4)
 				{
 					alignRoundUp(sizeof(Vec4), inpvar.m_offset);
 					inpvar.m_arrayStride = sizeof(Mat4);
 					m_blockSize += sizeof(Mat4) * inpvar.m_arraySize;
-					inpvar.m_matrixStride = sizeof(Vec4);				
+					inpvar.m_matrixStride = sizeof(Vec4);
 				}
 				else
 				{
@@ -576,7 +577,7 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 			inpvar.m_value.join(m_alloc, ", ", initList);
 
 			inpvar.m_line.sprintf(m_alloc, "const %s %s = %s(%s);",
-				&inpvar.m_typeStr[0], &inpvar.m_name[0], &inpvar.m_typeStr[0], 
+				&inpvar.m_typeStr[0], &inpvar.m_name[0], &inpvar.m_typeStr[0],
 				&initList[0]);
 			initList.destroy(m_alloc);
 		}
@@ -596,9 +597,9 @@ advance:
 
 //==============================================================================
 Error MaterialProgramCreator::parseOperationTag(
-	const XmlElement& operationTag, 
-	GLenum glshader, 
-	GLbitfield glshaderbit,
+	const XmlElement& operationTag,
+	ShaderType glshader,
+	ShaderTypeBit glshaderbit,
 	String& out)
 {
 	CString cstr;
@@ -613,21 +614,21 @@ Error MaterialProgramCreator::parseOperationTag(
 	I64 id;
 	ANKI_CHECK(operationTag.getChildElement("id", el));
 	ANKI_CHECK(el.getI64(id));
-	
+
 	// <returnType></returnType>
 	XmlElement retTypeEl;
 	ANKI_CHECK(operationTag.getChildElement("returnType", retTypeEl));
 	ANKI_CHECK(retTypeEl.getText(cstr));
 	Bool retTypeVoid = cstr == "void";
-	
+
 	// <function>functionName</function>
 	ANKI_CHECK(operationTag.getChildElement("function", el));
 	ANKI_CHECK(el.getText(funcName));
-	
+
 	// <arguments></arguments>
 	XmlElement argsEl;
 	ANKI_CHECK(operationTag.getChildElementOptional("arguments", argsEl));
-	
+
 	if(argsEl)
 	{
 		// Get all arguments
@@ -642,7 +643,7 @@ Error MaterialProgramCreator::parseOperationTag(
 			Input* input = nullptr;
 			for(Input& in : m_inputs)
 			{
-				// Check that the first part of the string is equal to the 
+				// Check that the first part of the string is equal to the
 				// variable and the following char is '['
 				if(in.m_name == arg)
 				{
@@ -653,7 +654,7 @@ Error MaterialProgramCreator::parseOperationTag(
 			}
 
 			// The argument should be an input variable or an outXX
-			if(!(input != nullptr 
+			if(!(input != nullptr
 				|| std::memcmp(&arg[0], OUT, 3) == 0))
 			{
 				ANKI_LOGE("Incorrect argument: %s", &arg[0]);
@@ -665,16 +666,16 @@ Error MaterialProgramCreator::parseOperationTag(
 			{
 				ANKI_CHECK(argEl.getText(cstr));
 
-				if(glshader == GL_VERTEX_SHADER)
+				if(glshader == ShaderType::VERTEX)
 				{
 					argsList.pushBackSprintf("%s [gl_InstanceID]", &cstr[0]);
 
 					m_instanceIdMask |= glshaderbit;
 				}
-				else if(glshader == GL_FRAGMENT_SHADER)
+				else if(glshader == ShaderType::FRAGMENT)
 				{
 					argsList.pushBackSprintf("%s [vInstanceId]", &cstr[0]);
-					
+
 					m_instanceIdMask |= glshaderbit;
 				}
 				else
@@ -719,7 +720,7 @@ Error MaterialProgramCreator::parseOperationTag(
 	{
 		lines.pushBackSprintf("\t");
 	}
-	
+
 	// write the "func(args...)" of "blah = func(args...)"
 	StringAuto argsStr(m_alloc);
 
@@ -729,7 +730,7 @@ Error MaterialProgramCreator::parseOperationTag(
 	}
 
 	lines.pushBackSprintf("%s(%s);\n#endif",
-		&funcName[0], 
+		&funcName[0],
 		(argsStr.isEmpty()) ? "" : &argsStr[0]);
 
 	// Bake final string
