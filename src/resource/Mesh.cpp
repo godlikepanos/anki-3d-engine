@@ -61,7 +61,7 @@ void Mesh::createBuffers(const MeshLoader& loader)
 
 	// Create vertex buffer
 	m_vertBuff = gr.newInstance<Buffer>(loader.getVertexDataSize(),
-		BufferUsageBit::VERTEX_BUFFER, BufferAccessBit::CLIENT_WRITE);
+		BufferUsageBit::VERTEX, BufferAccessBit::CLIENT_WRITE);
 
 	void* data = nullptr;
 	cmdb->writeBuffer(m_vertBuff, 0, loader.getVertexDataSize(), data);
@@ -69,7 +69,7 @@ void Mesh::createBuffers(const MeshLoader& loader)
 
 	// Create index buffer
 	m_indicesBuff = gr.newInstance<Buffer>(loader.getIndexDataSize(),
-		BufferUsageBit::INDEX_BUFFER, BufferAccessBit::CLIENT_WRITE);
+		BufferUsageBit::INDEX, BufferAccessBit::CLIENT_WRITE);
 
 	cmdb->writeBuffer(m_indicesBuff, 0, loader.getIndexDataSize(), data);
 	memcpy(data, loader.getIndexData(), loader.getIndexDataSize());

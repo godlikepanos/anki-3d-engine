@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SCENE_PARTICLE_EMITTER_H
-#define ANKI_SCENE_PARTICLE_EMITTER_H
+#pragma once
 
 #include "anki/scene/SceneNode.h"
 #include "anki/scene/MoveComponent.h"
@@ -78,7 +77,7 @@ public:
 		F32 prevUpdateTime, F32 crntTime);
 
 	/// Only relevant for non-bullet simulations
-	virtual void simulate(const ParticleEmitter& pe, 
+	virtual void simulate(const ParticleEmitter& pe,
 		F32 prevUpdateTime, F32 crntTime)
 	{
 		(void)pe;
@@ -105,7 +104,7 @@ public:
 	void revive(const ParticleEmitter& pe, const Transform& trf,
 		F32 prevUpdateTime, F32 crntTime) override;
 
-	void simulate(const ParticleEmitter& pe, F32 prevUpdateTime, 
+	void simulate(const ParticleEmitter& pe, F32 prevUpdateTime,
 		F32 crntTime) override;
 
 	const Vec4& getPosition() const
@@ -128,7 +127,7 @@ public:
 	Particle(
 		const char* name, SceneGraph* scene, // SceneNode
 		// RigidBody
-		PhysicsWorld* masterContainer, const RigidBody::Initializer& init); 
+		PhysicsWorld* masterContainer, const RigidBody::Initializer& init);
 
 	~Particle();
 
@@ -190,8 +189,12 @@ private:
 
 	U32 m_aliveParticlesCount = 0;
 
-	BufferPtr m_vertBuff; ///< Hold the vertex data
-	U8* m_vertBuffMapping = nullptr; 
+	/// @name Graphics
+	/// @{
+	U32 m_vertBuffSize = 0;
+	Array<BufferPtr, MAX_FRAMES_IN_FLIGHT> m_vertBuffs;
+	Array<ResourceGroupPtr, MAX_FRAMES_IN_FLIGHT> m_grGroups;
+	/// @}
 
 	SimulationType m_simulationType = SimulationType::UNDEFINED;
 
@@ -209,4 +212,3 @@ private:
 
 } // end namespace anki
 
-#endif

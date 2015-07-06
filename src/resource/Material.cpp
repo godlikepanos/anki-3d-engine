@@ -20,6 +20,36 @@
 namespace anki {
 
 //==============================================================================
+// Misc                                                                        =
+//==============================================================================
+
+/// Visit the textures to bind them
+class UpdateTexturesVisitor
+{
+public:
+	U m_count = 0;
+	ResourceGroupInitializer* m_init = nullptr;
+
+	template<typename TMaterialVariableTemplate>
+	Error visit(const TMaterialVariableTemplate& var)
+	{
+		// Do nothing
+		return ErrorCode::NONE;
+	}
+};
+
+// Specialize for texture
+template<>
+Error UpdateTexturesVisitor
+	::visit<MaterialVariableTemplate<TextureResourcePtr>>(
+	const MaterialVariableTemplate<TextureResourcePtr>& var)
+{
+	m_init->m_textures[m_count++].m_texture =
+		(*var.begin())->getGlTexture();
+	return ErrorCode::NONE;
+}
+
+//==============================================================================
 // MaterialVariable                                                            =
 //==============================================================================
 
@@ -421,6 +451,19 @@ ShaderPtr Material::getShader(const RenderingKey& key, ShaderType type) const
 	ShaderResourcePtr resource =
 		m_shaders[U(key.m_pass)][key.m_lod][key.m_tessellation][U(type)];
 	return resource->getGrShader();
+}
+
+//==============================================================================
+void Material::fillResourceGroupInitializer(ResourceGroupInitializer& rcinit)
+{
+	UpdateTexturesVisitor visitor;
+	visitor.m_init = &rcinit;
+
+	for(const auto& var : m_vars)
+	{
+		Error err = var->acceptVisitor(visitor);
+		(void)err;
+	}
 }
 
 } // end namespace anki

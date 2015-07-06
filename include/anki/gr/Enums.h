@@ -273,11 +273,11 @@ enum class AttachmentStoreOperation: U8
 enum class BufferUsageBit: U8
 {
 	NONE = 0,
-	UNIFORM_BUFFER = 1 << 0,
-	STORAGE_BUFFER = 1 << 1,
-	INDEX_BUFFER = 1 << 2,
-	VERTEX_BUFFER = 1 << 3,
-	INDIRECT_BUFFER = 1 << 4
+	UNIFORM = 1 << 0,
+	STORAGE = 1 << 1,
+	INDEX = 1 << 2,
+	VERTEX = 1 << 3,
+	INDIRECT = 1 << 4
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferUsageBit, inline)
 

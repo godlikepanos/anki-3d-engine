@@ -20,7 +20,8 @@ Error LensFlareComponent::create(const CString& textureFilename)
 	GrManager& gr = m_node->getSceneGraph().getGrManager();
 	for(auto it = m_queries.getBegin(); it != m_queries.getEnd(); ++it)
 	{
-		(*it).create(&gr, OcclusionQueryPtr::ResultBit::VISIBLE);
+		(*it) = gr.newInstance<OcclusionQuery>(
+			OcclusionQueryResultBit::VISIBLE);
 	}
 
 	return ErrorCode::NONE;

@@ -302,6 +302,8 @@ public:
 
 	ShaderPtr getShader(const RenderingKey& key, ShaderType type) const;
 
+	void fillResourceGroupInitializer(ResourceGroupInitializer& rcinit);
+
 private:
 	DArray<MaterialVariable*> m_vars;
 

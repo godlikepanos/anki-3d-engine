@@ -18,36 +18,6 @@
 namespace anki {
 
 //==============================================================================
-// Misc                                                                        =
-//==============================================================================
-
-/// Visit the textures to bind them
-class UpdateTexturesVisitor
-{
-public:
-	U m_count = 0;
-	ResourceGroupInitializer* m_init = nullptr;
-
-	template<typename TMaterialVariableTemplate>
-	Error visit(const TMaterialVariableTemplate& var)
-	{
-		// Do nothing
-		return ErrorCode::NONE;
-	}
-};
-
-// Specialize for texture
-template<>
-Error UpdateTexturesVisitor
-	::visit<MaterialVariableTemplate<TextureResourcePtr>>(
-	const MaterialVariableTemplate<TextureResourcePtr>& var)
-{
-	m_init->m_textures[m_count++].m_texture =
-		(*var.begin())->getGlTexture();
-	return ErrorCode::NONE;
-}
-
-//==============================================================================
 // ModelPatch                                                                  =
 //==============================================================================
 
@@ -108,15 +78,7 @@ Error ModelPatch::create(
 
 	// Iterate material variables for textures
 	ResourceGroupInitializer rcinit;
-
-	UpdateTexturesVisitor visitor;
-	visitor.m_init = &rcinit;
-
-	for(const auto& var : m_mtl->getVariables())
-	{
-		Error err = var->acceptVisitor(visitor);
-		(void)err;
-	}
+	m_mtl->fillResourceGroupInitializer(rcinit);
 
 	// Load meshes and update resource group
 	m_meshCount = 0;
@@ -133,6 +95,7 @@ Error ModelPatch::create(
 
 		rcinit.m_vertexBuffers[0].m_buffer = m_meshes[i]->getVertexBuffer();
 		rcinit.m_indexBuffer.m_buffer = m_meshes[i]->getIndexBuffer();
+		rcinit.m_indexSize = 2;
 
 		m_grResources[i] =
 			manager->getGrManager().newInstance<ResourceGroup>(rcinit);

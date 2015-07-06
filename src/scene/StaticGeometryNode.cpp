@@ -84,30 +84,26 @@ Error StaticGeometryPatchNode::buildRendering(RenderingBuildData& data)
 	Array<U32, ANKI_GL_MAX_SUB_DRAWCALLS> indicesCountArray;
 	Array<PtrSize, ANKI_GL_MAX_SUB_DRAWCALLS> indicesOffsetArray;
 	U32 drawCount;
-	BufferPtr vertBuff, indexBuff;
+	ResourceGroupPtr grResources;
 	PipelinePtr ppline;
 
 	m_modelPatch->getRenderingDataSub(
 		data.m_key,
 		SArray<U8>(const_cast<U8*>(data.m_subMeshIndicesArray),
 			data.m_subMeshIndicesCount),
-		vertBuff,
-		indexBuff,
+		grResources,
 		ppline,
 		indicesCountArray,
 		indicesOffsetArray,
 		drawCount);
 
-	ppline.bind(data.m_cmdb);
+	data.m_cmdb->bindPipeline(ppline);
 
 	if(drawCount == 1)
 	{
-		data.m_cmdb.bindVertexBuffer(0, vertBuff, 0);
-		data.m_cmdb.bindIndexBuffer(indexBuff, 0);
+		data.m_cmdb->bindResourceGroup(grResources);
 
-		data.m_cmdb.drawElements(
-			data.m_key.m_tessellation ? GL_PATCHES : GL_TRIANGLES,
-			sizeof(U16),
+		data.m_cmdb->drawElements(
 			indicesCountArray[0],
 			1,
 			indicesOffsetArray[0] / sizeof(U16));

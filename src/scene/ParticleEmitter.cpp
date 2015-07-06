@@ -333,14 +333,25 @@ Error ParticleEmitter::create(
 	}
 
 	// Create the vertex buffer and object
-	PtrSize buffSize = m_maxNumOfParticles
-		* ParticleEmitterResource::VERTEX_SIZE * 3;
-	m_vertBuff.create(&getSceneGraph().getGrManager(),
-		GL_ARRAY_BUFFER, nullptr, buffSize,
-		GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+	m_vertBuffSize =
+		m_maxNumOfParticles * ParticleEmitterResource::VERTEX_SIZE;
 
-	m_vertBuffMapping =
-		static_cast<U8*>(m_vertBuff.getPersistentMappingAddress());
+	GrManager& gr = getSceneGraph().getGrManager();
+
+	ResourceGroupInitializer rcinit;
+	m_particleEmitterResource->getMaterial().fillResourceGroupInitializer(
+		rcinit);
+
+	for(U i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
+	{
+		m_vertBuffs[i] = gr.newInstance<Buffer>(
+			m_vertBuffSize, BufferUsageBit::VERTEX,
+			BufferAccessBit::CLIENT_MAP_WRITE);
+
+		rcinit.m_vertexBuffers[0].m_buffer = m_vertBuffs[i];
+
+		m_grGroups[i] = gr.newInstance<ResourceGroup>(rcinit);
+	}
 
 	return ErrorCode::NONE;
 }
@@ -356,16 +367,13 @@ Error ParticleEmitter::buildRendering(RenderingBuildData& data)
 	}
 
 	PipelinePtr ppline = m_particleEmitterResource->getPipeline();
-	ppline.bind(data.m_cmdb);
+	data.m_cmdb->bindPipeline(ppline);
 
-	PtrSize offset =
-		(getGlobalTimestamp() % 3) * (m_vertBuff.getSize() / 3);
+	U frame = (getGlobalTimestamp() % 3);
 
-	data.m_cmdb.bindVertexBuffer(0, m_vertBuff, offset);
+	data.m_cmdb->bindResourceGroup(m_grGroups[frame]);
 
-	data.m_cmdb.drawArrays(GL_POINTS,
-		m_aliveParticlesCount,
-		data.m_subMeshIndicesCount);
+	data.m_cmdb->drawArrays(m_aliveParticlesCount, data.m_subMeshIndicesCount);
 
 	return ErrorCode::NONE;
 }
@@ -440,9 +448,10 @@ Error ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 	Vec4 aabbmax(MIN_F32, MIN_F32, MIN_F32, 0.0);
 	m_aliveParticlesCount = 0;
 
-	F32* verts = (F32*)(m_vertBuffMapping
-		+ (getGlobalTimestamp() % 3) * (m_vertBuff.getSize() / 3));
-	F32* verts_base = verts;
+	U frame = getGlobalTimestamp() % 3;
+	F32* verts = static_cast<F32*>(m_vertBuffs[frame]->map(
+		0, m_vertBuffSize, BufferAccessBit::CLIENT_MAP_WRITE));
+	const F32* verts_base = verts;
 	(void)verts_base;
 
 	for(ParticleBase* p : m_particles)
@@ -464,7 +473,7 @@ Error ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 
 			// Do checks
 			ANKI_ASSERT((PtrSize(verts) + ParticleEmitterResource::VERTEX_SIZE
-				- PtrSize(m_vertBuffMapping)) <= m_vertBuff.getSize());
+				- PtrSize(verts_base)) <= m_vertBuffSize);
 
 			// This will calculate a new world transformation
 			p->simulate(*this, prevUpdateTime, crntTime);

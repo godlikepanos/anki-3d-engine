@@ -105,13 +105,12 @@ Error ModelPatchNode::buildRendering(RenderingBuildData& data)
 	U32 drawcallCount;
 
 	PipelinePtr ppline;
-	BufferPtr vertBuff, indexBuff;
+	ResourceGroupPtr grResources;
 
 	m_modelPatch->getRenderingDataSub(
 		data.m_key,
 		SArray<U8>(),
-		vertBuff,
-		indexBuff,
+		grResources,
 		ppline,
 		indicesCountArray,
 		indicesOffsetArray,
@@ -121,15 +120,12 @@ Error ModelPatchNode::buildRendering(RenderingBuildData& data)
 	ANKI_ASSERT(drawcallCount == 1);
 
 	// Set jobs
-	ppline.bind(data.m_cmdb);
-	data.m_cmdb.bindVertexBuffer(0, vertBuff, 0);
-	data.m_cmdb.bindIndexBuffer(indexBuff, sizeof(U16));
+	data.m_cmdb->bindPipeline(ppline);
+	data.m_cmdb->bindResourceGroup(grResources);
 
 	// Drawcall
 	U32 offset = indicesOffsetArray[0] / sizeof(U16);
-	data.m_cmdb.drawElements(
-		data.m_key.m_tessellation ? GL_PATCHES : GL_TRIANGLES,
-		sizeof(U16),
+	data.m_cmdb->drawElements(
 		indicesCountArray[0],
 		instancesCount,
 		offset);

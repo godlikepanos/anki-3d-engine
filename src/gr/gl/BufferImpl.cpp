@@ -26,7 +26,7 @@ void BufferImpl::create(
 	// creation
 	GLenum target = GL_ARRAY_BUFFER;
 
-	if((usage & BufferUsageBit::UNIFORM_BUFFER) != BufferUsageBit::NONE)
+	if((usage & BufferUsageBit::UNIFORM) != BufferUsageBit::NONE)
 	{
 		GLint64 maxBufferSize;
 		glGetInteger64v(GL_MAX_UNIFORM_BLOCK_SIZE, &maxBufferSize);
@@ -45,7 +45,7 @@ void BufferImpl::create(
 		target = GL_UNIFORM_BUFFER;
 	}
 
-	if((usage & BufferUsageBit::STORAGE_BUFFER) != BufferUsageBit::NONE)
+	if((usage & BufferUsageBit::STORAGE) != BufferUsageBit::NONE)
 	{
 		GLint64 maxBufferSize;
 		glGetInteger64v(GL_MAX_SHADER_STORAGE_BLOCK_SIZE, &maxBufferSize);

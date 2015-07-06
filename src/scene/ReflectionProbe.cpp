@@ -105,27 +105,22 @@ Error ReflectionProbe::create(const CString& name, F32 radius)
 void ReflectionProbe::createGraphics()
 {
 	// Create textures
-	TexturePtr::Initializer init;
+	TextureInitializer init;
 	init.m_type = TextureType::CUBE;
 	init.m_width = init.m_height = m_fbSize;
 	init.m_format =
 		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM);
 	init.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
 
-	CommandBufferPtr cmdb;
-	cmdb.create(&getSceneGraph().getGrManager());
-
-	m_colorTex.create(cmdb, init);
+	m_colorTex = getSceneGraph().getGrManager().newInstance<Texture>(init);
 
 	init.m_format = PixelFormat(ComponentFormat::D16, TransformFormat::FLOAT);
-	m_depthTex.create(cmdb, init);
-
-	cmdb.flush();
+	m_depthTex = getSceneGraph().getGrManager().newInstance<Texture>(init);
 
 	// Create framebuffers
 	for(U i = 0; i < 6; ++i)
 	{
-		FramebufferPtr::Initializer fbInit;
+		FramebufferInitializer fbInit;
 		fbInit.m_colorAttachmentsCount = 1;
 		fbInit.m_colorAttachments[0].m_texture = m_colorTex;
 		fbInit.m_colorAttachments[0].m_layer = i;
@@ -136,7 +131,8 @@ void ReflectionProbe::createGraphics()
 		fbInit.m_depthStencilAttachment.m_loadOperation =
 			AttachmentLoadOperation::CLEAR;
 
-		m_fbs[i].create(&getSceneGraph().getGrManager(), fbInit);
+		m_fbs[i] =
+			getSceneGraph().getGrManager().newInstance<Framebuffer>(fbInit);
 	}
 }
 
