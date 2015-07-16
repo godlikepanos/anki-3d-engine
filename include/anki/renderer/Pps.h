@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RENDERER_PPS_H
-#define ANKI_RENDERER_PPS_H
+#pragma once
 
 #include "anki/renderer/RenderingPass.h"
 #include "anki/resource/TextureResource.h"
@@ -93,6 +92,7 @@ private:
 	ShaderResourcePtr m_frag;
 	PipelinePtr m_ppline;
 	TexturePtr m_rt;
+	ResourceGroupPtr m_rcGroup;
 
 	TextureResourcePtr m_lut; ///< Color grading lookup texture.
 
@@ -102,4 +102,3 @@ private:
 
 } // end namespace anki
 
-#endif

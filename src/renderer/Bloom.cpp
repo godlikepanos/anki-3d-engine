@@ -28,12 +28,12 @@ Error Bloom::initFb(FramebufferPtr& fb, TexturePtr& rt)
 		1, SamplingFilter::LINEAR, 1, rt);
 
 	// Create FB
-	FramebufferPtr::Initializer fbInit;
+	FramebufferInitializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = rt;
 	fbInit.m_colorAttachments[0].m_loadOperation =
 		AttachmentLoadOperation::DONT_CARE;
-	fb.create(&getGrManager(), fbInit);
+	fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 	return ErrorCode::NONE;
 }
@@ -72,14 +72,12 @@ Error Bloom::initInternal(const ConfigSet& config)
 	colorState.m_attachmentCount = 1;
 	colorState.m_attachments[0].m_format = RT_PIXEL_FORMAT;
 
-	m_commonBuff.create(&gl, GL_UNIFORM_BUFFER, nullptr,
-		sizeof(Vec4), GL_DYNAMIC_STORAGE_BIT);
+	m_commonBuff = gl.newInstance<Buffer>(
+		sizeof(Vec4), BufferUsageBit::UNIFORM, BufferAccessBit::CLIENT_WRITE);
 
-	CommandBufferPtr cmdb;
-	cmdb.create(&gl);
+	CommandBufferPtr cmdb = gl.newInstance<CommandBuffer>();
 	updateDefaultBlock(cmdb);
-
-	cmdb.flush();
+	cmdb->flush();
 
 	StringAuto pps(getAllocator());
 	pps.sprintf(
@@ -127,6 +125,23 @@ Error Bloom::initInternal(const ConfigSet& config)
 	m_r->createDrawQuadPipeline(
 		m_vblurFrag->getGrShader(), colorState, m_vblurPpline);
 
+	// Set descriptors
+	ResourceGroupInitializer descInit;
+	descInit.m_textures[0].m_texture = m_r->getIs().getRt();
+	descInit.m_uniformBuffers[0].m_buffer = m_commonBuff;
+	descInit.m_uniformBuffers[0].m_range = sizeof(Vec4);
+	descInit.m_storageBuffers[0].m_buffer =
+		m_r->getPps().getTm().getAverageLuminanceBuffer();
+	descInit.m_storageBuffers[0].m_range = sizeof(Vec4);
+
+	m_firstDescrGroup = gl.newInstance<ResourceGroup>(descInit);
+
+	descInit.m_textures[0].m_texture = m_vblurRt;
+	m_hDescrGroup = gl.newInstance<ResourceGroup>(descInit);
+
+	descInit.m_textures[0].m_texture = m_hblurRt;
+	m_vDescrGroup = gl.newInstance<ResourceGroup>(descInit);
+
 	// Set timestamps
 	m_parameterUpdateTimestamp = getGlobalTimestamp();
 	m_commonUboUpdateTimestamp = getGlobalTimestamp();
@@ -155,52 +170,43 @@ void Bloom::run(CommandBufferPtr& cmdb)
 	//vblurFai.setFiltering(Texture::TFrustumType::NEAREST_BASE);
 
 	// pass 0
-	m_vblurFb.bind(cmdb);
-	cmdb.setViewport(0, 0, m_width, m_height);
-	m_tonePpline.bind(cmdb);
+	cmdb->bindFramebuffer(m_vblurFb);
+	cmdb->setViewport(0, 0, m_width, m_height);
+	cmdb->bindPipeline(m_tonePpline);
 
 	if(m_parameterUpdateTimestamp > m_commonUboUpdateTimestamp)
 	{
 		updateDefaultBlock(cmdb);
-
 		m_commonUboUpdateTimestamp = getGlobalTimestamp();
 	}
 
-	m_r->getIs().getRt().bind(cmdb, 0);
-	m_commonBuff.bindShaderBuffer(cmdb, 0);
-	m_r->getPps().getTm().getAverageLuminanceBuffer().bindShaderBuffer(cmdb, 0);
+	cmdb->bindResourceGroup(m_firstDescrGroup);
 
 	m_r->drawQuad(cmdb);
 
 	// Blurring passes
-	for(U32 i = 0; i < m_blurringIterationsCount; i++)
+	for(U i = 0; i < m_blurringIterationsCount; i++)
 	{
-		if(i == 0)
-		{
-			Array<TexturePtr, 2> arr = {{m_hblurRt, m_vblurRt}};
-			cmdb.bindTextures(0, arr.begin(), arr.getSize());
-		}
-
 		// hpass
-		m_hblurFb.bind(cmdb);
-		m_hblurPpline.bind(cmdb);
+		cmdb->bindFramebuffer(m_hblurFb);
+		cmdb->bindResourceGroup(m_hDescrGroup);
+		cmdb->bindPipeline(m_hblurPpline);
 		m_r->drawQuad(cmdb);
 
 		// vpass
-		m_vblurFb.bind(cmdb);
-		m_vblurPpline.bind(cmdb);
+		cmdb->bindFramebuffer(m_vblurFb);
+		cmdb->bindResourceGroup(m_vDescrGroup);
+		cmdb->bindPipeline(m_vblurPpline);
 		m_r->drawQuad(cmdb);
 	}
-
-	// For the next stage it should be LINEAR though
-	//vblurFai.setFiltering(Texture::TFrustumType::LINEAR);
 }
 
 //==============================================================================
 void Bloom::updateDefaultBlock(CommandBufferPtr& cmdb)
 {
-	Vec4 uniform(m_threshold, m_scale, 0.0, 0.0);
-	m_commonBuff.write(cmdb, &uniform, sizeof(uniform), 0, 0, sizeof(uniform));
+	void* uniforms = nullptr;
+	cmdb->writeBuffer(m_commonBuff, 0, sizeof(Vec4), uniforms);
+	*static_cast<Vec4*>(uniforms) = Vec4(m_threshold, m_scale, 0.0, 0.0);
 }
 
 } // end namespace anki

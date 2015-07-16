@@ -14,15 +14,20 @@ Error LensFlareComponent::create(const CString& textureFilename)
 {
 	// Texture
 	ANKI_CHECK(m_tex.load(
-		textureFilename, &m_node->getSceneGraph()._getResourceManager()));
+		textureFilename, &getSceneGraph()._getResourceManager()));
 
 	// Queries
-	GrManager& gr = m_node->getSceneGraph().getGrManager();
+	GrManager& gr = getSceneGraph().getGrManager();
 	for(auto it = m_queries.getBegin(); it != m_queries.getEnd(); ++it)
 	{
 		(*it) = gr.newInstance<OcclusionQuery>(
 			OcclusionQueryResultBit::VISIBLE);
 	}
+
+	// Resource group
+	ResourceGroupInitializer rcInit;
+	rcInit.m_textures[0].m_texture = m_tex->getGlTexture();
+	m_rcGroup = gr.newInstance<ResourceGroup>(rcInit);
 
 	return ErrorCode::NONE;
 }

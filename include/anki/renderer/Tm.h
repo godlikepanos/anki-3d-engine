@@ -33,6 +33,7 @@ private:
 	ShaderResourcePtr m_luminanceShader;
 	PipelinePtr m_luminancePpline;
 	BufferPtr m_luminanceBuff;
+	ResourceGroupPtr m_rcGroup;
 };
 /// @}
 

@@ -27,15 +27,28 @@ Error Tm::create(const ConfigSet& initializer)
 		"shaders/PpsTmAverageLuminance.comp.glsl", pps.toCString(), "rppstm_"));
 
 	// Create ppline
-	PipelinePtr::Initializer pplineInit;
+	PipelineInitializer pplineInit;
 	pplineInit.m_shaders[U(ShaderType::COMPUTE)] =
 		m_luminanceShader->getGrShader();
-	m_luminancePpline.create(&getGrManager(), pplineInit);
+	m_luminancePpline = getGrManager().newInstance<Pipeline>(pplineInit);
 
 	// Create buffer
-	Vec4 data(0.5);
-	m_luminanceBuff.create(&getGrManager(), GL_SHADER_STORAGE_BUFFER,
-		&data[0], sizeof(Vec4), GL_DYNAMIC_STORAGE_BIT);
+	m_luminanceBuff = getGrManager().newInstance<Buffer>(
+		sizeof(Vec4), BufferUsageBit::STORAGE, BufferAccessBit::CLIENT_WRITE);
+
+	CommandBufferPtr cmdb = getGrManager().newInstance<CommandBuffer>();
+	void* data;
+	cmdb->writeBuffer(m_luminanceBuff, 0, sizeof(Vec4), data);
+	*static_cast<Vec4*>(data) = Vec4(0.5);
+	cmdb->flush();
+
+	// Create descriptors
+	ResourceGroupInitializer rcinit;
+	rcinit.m_storageBuffers[0].m_buffer = m_luminanceBuff;
+	rcinit.m_storageBuffers[0].m_range = sizeof(Vec4);
+	rcinit.m_textures[0].m_texture = m_r->getIs().getRt();
+
+	m_rcGroup = getGrManager().newInstance<ResourceGroup>(rcinit);
 
 	return ErrorCode::NONE;
 }
@@ -43,11 +56,10 @@ Error Tm::create(const ConfigSet& initializer)
 //==============================================================================
 void Tm::run(CommandBufferPtr& cmdb)
 {
-	m_luminancePpline.bind(cmdb);
-	m_luminanceBuff.bindShaderBuffer(cmdb, 0);
-	m_r->getIs().getRt().bind(cmdb, 0);
+	cmdb->bindPipeline(m_luminancePpline);
+	cmdb->bindResourceGroup(m_rcGroup);
 
-	cmdb.dispatchCompute(1, 1, 1);
+	cmdb->dispatchCompute(1, 1, 1);
 }
 
 } // end namespace anki

@@ -61,12 +61,19 @@ Error Sslf::initInternal(const ConfigSet& config)
 		m_r->getPps().getBloom().getHeight(),
 		pixelFormat, 1, SamplingFilter::LINEAR, 1, m_rt);
 
-	FramebufferPtr::Initializer fbInit;
+	FramebufferInitializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation =
 		AttachmentLoadOperation::DONT_CARE;
-	m_fb.create(&getGrManager(), fbInit);
+	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
+
+	// Create the resource group
+	ResourceGroupInitializer rcInit;
+	rcInit.m_textures[0].m_texture = m_r->getPps().getBloom().getRt();
+	rcInit.m_textures[1].m_texture = m_lensDirtTex->getGlTexture();
+
+	m_rcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);
 
 	return ErrorCode::NONE;
 }
@@ -77,16 +84,12 @@ void Sslf::run(CommandBufferPtr& cmdb)
 	ANKI_ASSERT(m_enabled);
 
 	// Draw to the SSLF FB
-	m_fb.bind(cmdb);
-	cmdb.setViewport(0, 0, m_r->getPps().getBloom().getWidth(),
+	cmdb->bindFramebuffer(m_fb);
+	cmdb->setViewport(0, 0, m_r->getPps().getBloom().getWidth(),
 		m_r->getPps().getBloom().getHeight());
 
-	m_ppline.bind(cmdb);
-
-	Array<TexturePtr, 2> tarr = {{
-		m_r->getPps().getBloom().getRt(),
-		m_lensDirtTex->getGlTexture()}};
-	cmdb.bindTextures(0, tarr.begin(), tarr.getSize());
+	cmdb->bindPipeline(m_ppline);
+	cmdb->bindResourceGroup(m_rcGroup);
 
 	m_r->drawQuad(cmdb);
 }

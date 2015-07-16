@@ -42,7 +42,7 @@ Error Dbg::init(const ConfigSet& initializer)
 	enableBits(Flag::ALL);
 
 	// Chose the correct color FAI
-	FramebufferPtr::Initializer fbInit;
+	FramebufferInitializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_depthStencilAttachment.m_texture = m_r->getMs().getDepthRt();
 	fbInit.m_depthStencilAttachment.m_loadOperation =
@@ -58,7 +58,7 @@ Error Dbg::init(const ConfigSet& initializer)
 	fbInit.m_colorAttachments[0].m_loadOperation =
 		AttachmentLoadOperation::LOAD;
 
-	m_fb.create(&getGrManager(), fbInit);
+	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 	m_drawer = getAllocator().newInstance<DebugDrawer>();
 	ANKI_CHECK(m_drawer->create(m_r));
@@ -75,7 +75,7 @@ Error Dbg::run(CommandBufferPtr& cmdb)
 
 	ANKI_ASSERT(m_enabled);
 
-	m_fb.bind(cmdb);
+	cmdb->bindFramebuffer(m_fb);
 
 	SceneNode& cam = m_r->getActiveCamera();
 	FrustumComponent& camFr = cam.getComponent<FrustumComponent>();

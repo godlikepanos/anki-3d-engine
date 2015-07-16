@@ -61,12 +61,12 @@ Error Pps::initInternal(const ConfigSet& config)
 		m_r->getWidth(), m_r->getHeight(),
 		RT_PIXEL_FORMAT, 1, SamplingFilter::LINEAR, 1, m_rt);
 
-	FramebufferPtr::Initializer fbInit;
+	FramebufferInitializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation =
 		AttachmentLoadOperation::DONT_CARE;
-	m_fb.create(&getGrManager(), fbInit);
+	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 	// SProg
 	StringAuto pps(getAllocator());
@@ -97,6 +97,29 @@ Error Pps::initInternal(const ConfigSet& config)
 
 	// LUT
 	ANKI_CHECK(loadColorGradingTexture("engine_data/default_lut.ankitex"));
+
+	// RC goup
+	ResourceGroupInitializer rcInit;
+	rcInit.m_textures[0].m_texture = m_r->getIs().getRt();
+
+	if(m_ssao->getEnabled())
+	{
+		rcInit.m_textures[1].m_texture = m_ssao->getRt();
+	}
+
+	if(m_bloom->getEnabled())
+	{
+		rcInit.m_textures[2].m_texture = m_bloom->getRt();
+	}
+
+	rcInit.m_textures[3].m_texture = m_lut->getGlTexture();
+
+	if(m_sslf->getEnabled())
+	{
+		rcInit.m_textures[4].m_texture = m_sslf->getRt();
+	}
+
+	rcInit.m_storageBuffers[0].m_buffer = m_tm->getAverageLuminanceBuffer();
 
 	return ErrorCode::NONE;
 }
@@ -159,31 +182,10 @@ void Pps::run(CommandBufferPtr& cmdb)
 		m_r->getOutputFramebuffer(fb, width, height);
 	}
 
-	fb.bind(cmdb);
-	cmdb.setViewport(0, 0, width, height);
-
-	m_ppline.bind(cmdb);
-
-	m_r->getIs().getRt().bind(cmdb, 0);
-
-	if(m_ssao->getEnabled())
-	{
-		m_ssao->getRt().bind(cmdb, 1);
-	}
-
-	if(m_bloom->getEnabled())
-	{
-		m_bloom->getRt().bind(cmdb, 2);
-	}
-
-	if(m_sslf->getEnabled())
-	{
-		m_sslf->getRt().bind(cmdb, 4);
-	}
-
-	m_lut->getGlTexture().bind(cmdb, 3);
-
-	m_tm->getAverageLuminanceBuffer().bindShaderBuffer(cmdb, 0);
+	cmdb->bindFramebuffer(fb);
+	cmdb->setViewport(0, 0, width, height);
+	cmdb->bindPipeline(m_ppline);
+	cmdb->bindResourceGroup(m_rcGroup);
 
 	m_r->drawQuad(cmdb);
 }

@@ -8,7 +8,7 @@
 #pragma anki type vert
 #pragma anki include "shaders/Common.glsl"
 
-layout(std140) uniform _block
+layout(binding = 0, std140) uniform _block
 {
 	mat4 u_mvp;
 };

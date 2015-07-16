@@ -49,8 +49,8 @@ Error MainRenderer::create(
 	// Init default FB
 	m_width = config.getNumber("width");
 	m_height = config.getNumber("height");
-	FramebufferPtr::Initializer fbInit;
-	m_defaultFb.create(gr, fbInit);
+	FramebufferInitializer fbInit;
+	m_defaultFb = gr->newInstance<Framebuffer>(fbInit);
 
 	// Init renderer
 	ConfigSet config2 = config;
@@ -83,6 +83,19 @@ Error MainRenderer::create(
 	ANKI_LOGI("Main renderer initialized. Rendering size %dx%d",
 		m_width, m_height);
 
+	// Init RC group
+	ResourceGroupInitializer rcinit;
+	if(m_r->getPps().getEnabled())
+	{
+		rcinit.m_textures[0].m_texture = m_r->getPps().getRt();
+	}
+	else
+	{
+		rcinit.m_textures[0].m_texture = m_r->getIs().getRt();
+	}
+
+	m_rcGroup = m_r->getGrManager().newInstance<ResourceGroup>(rcinit);
+
 	return ErrorCode::NONE;
 }
 
@@ -97,7 +110,7 @@ Error MainRenderer::render(SceneGraph& scene)
 
 	for(U i = 0; i < RENDERER_COMMAND_BUFFERS_COUNT; i++)
 	{
-		cmdbs[i].create(&gl, m_cbInitHints[i]);
+		cmdbs[i] = gl.newInstance<CommandBuffer>(m_cbInitHints[i]);
 	}
 
 	// Find where the m_r should draw
@@ -127,37 +140,22 @@ Error MainRenderer::render(SceneGraph& scene)
 
 	if(!rDrawToDefault)
 	{
-		m_defaultFb.bind(cmdb);
-		cmdb.setViewport(0, 0, m_width, m_height);
+		cmdb->bindFramebuffer(m_defaultFb);
+		cmdb->setViewport(0, 0, m_width, m_height);
 
-		m_blitPpline.bind(cmdb);
-
-		TexturePtr* rt;
-
-		if(m_r->getPps().getEnabled())
-		{
-			rt = &m_r->getPps().getRt();
-		}
-		else
-		{
-			rt = &m_r->getIs().getRt();
-		}
-
-		//rt = &m_r->getMs().getRt0();
-		//rt = &getPps().getHdr()._getRt();
-
-		rt->bind(cmdb, 0);
+		cmdb->bindPipeline(m_blitPpline);
+		cmdb->bindResourceGroup(m_rcGroup);
 
 		m_r->drawQuad(cmdb);
 	}
 
 	// Flush the last command buffer
-	cmdb.flush();
+	cmdb->flush();
 
 	// Set the hints
 	for(U i = 0; i < RENDERER_COMMAND_BUFFERS_COUNT; i++)
 	{
-		m_cbInitHints[i] = cmdbs[i].computeInitHints();
+		m_cbInitHints[i] = cmdbs[i]->computeInitHints();
 	}
 
 	ANKI_COUNTER_STOP_TIMER_INC(MAIN_RENDERER_TIME);

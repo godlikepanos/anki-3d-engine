@@ -133,21 +133,41 @@ public:
 		U32 instanceCount = 1, U32 first = 0, U32 baseInstance = 0);
 
 	void dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ);
+
+	void generateMipmaps(TexturePtr tex);
 	/// @}
 
 	/// @name Resource upload
 	/// @{
 
 	/// Used to upload data to a texture.
+	template<typename Type>
 	void textureUpload(TexturePtr tex, U32 mipmap, U32 slice, PtrSize dataSize,
-		void*& data);
+		Type*& data)
+	{
+		void* vdata = nullptr;
+		textureUploadInternal(tex, mipmap, slice, dataSize, vdata);
+		data = static_cast<Type*>(vdata);
+	}
 
 	/// Write data to a buffer.
+	template<typename Type>
 	void writeBuffer(BufferPtr buff, PtrSize offset, PtrSize range,
-		void*& data);
+		Type*& data)
+	{
+		void* vdata = nullptr;
+		writeBufferInternal(buff, offset, range, vdata);
+		data = static_cast<Type*>(vdata);
+	}
 
 	/// Update dynamic uniforms.
-	void updateDynamicUniforms(void* data, U32 size);
+	template<typename Type>
+	void updateDynamicUniforms(U32 size, Type*& data)
+	{
+		void* vdata = nullptr;
+		updateDynamicUniformsInternal(size, vdata);
+		data = static_cast<Type*>(vdata);
+	}
 	/// @}
 
 	/// @name Other
@@ -162,6 +182,14 @@ public:
 
 private:
 	UniquePtr<CommandBufferImpl> m_impl;
+
+	void textureUploadInternal(TexturePtr tex, U32 mipmap, U32 slice,
+		PtrSize dataSize, void*& data);
+
+	void writeBufferInternal(BufferPtr buff, PtrSize offset, PtrSize range,
+		void*& data);
+
+	void updateDynamicUniformsInternal(U32 size, void*& data);
 };
 /// @}
 

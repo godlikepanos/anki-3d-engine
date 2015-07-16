@@ -7,7 +7,6 @@
 #include "anki/renderer/Renderer.h"
 #include "anki/renderer/Ms.h"
 #include "anki/renderer/Pps.h"
-#include "anki/renderer/Dbg.h"
 #include "anki/renderer/Tiler.h"
 #include "anki/scene/Camera.h"
 #include "anki/scene/Light.h"
@@ -68,8 +67,9 @@ struct CommonUniforms
 using Lid = U32; ///< Light ID type
 static const U MAX_TYPED_LIGHTS_PER_TILE = 16;
 
-struct TileData
+class TileData
 {
+public:
 	Atomic<U32> m_pointCount;
 	Atomic<U32> m_spotCount;
 	Atomic<U32> m_spotTexCount;
@@ -80,12 +80,16 @@ struct TileData
 };
 
 /// Common data for all tasks.
-struct TaskCommonData
+class TaskCommonData
 {
+public:
 	// To fill the light buffers
 	SArray<shader::PointLight> m_pointLights;
 	SArray<shader::SpotLight> m_spotLights;
 	SArray<shader::SpotLight> m_spotTexLights;
+
+	SArray<Lid> m_lightIds;
+	SArray<shader::Tile> m_tiles;
 
 	Atomic<U32> m_pointLightsCount;
 	Atomic<U32> m_spotLightsCount;
@@ -213,7 +217,7 @@ Error Is::initInternal(const ConfigSet& config)
 	ANKI_CHECK(m_lightFrag.loadToCache(&getResourceManager(),
 		"shaders/IsLp.frag.glsl", pps.toCString(), "r_"));
 
-	PipelinePtr::Initializer init;
+	PipelineInitializer init;
 
 	init.m_inputAssembler.m_topology = PrimitiveTopology::TRIANGLE_STRIP;
 	init.m_depthStencil.m_depthWriteEnabled = false;
@@ -222,7 +226,7 @@ Error Is::initInternal(const ConfigSet& config)
 	init.m_color.m_attachments[0].m_format = RT_PIXEL_FORMAT;
 	init.m_shaders[U(ShaderType::VERTEX)] = m_lightVert->getGrShader();
 	init.m_shaders[U(ShaderType::FRAGMENT)] = m_lightFrag->getGrShader();
-	m_lightPpline.create(&getGrManager(), init);
+	m_lightPpline = getGrManager().newInstance<Pipeline>(init);
 
 	//
 	// Create framebuffer
@@ -231,51 +235,74 @@ Error Is::initInternal(const ConfigSet& config)
 		m_r->getWidth(), m_r->getHeight(),
 		RT_PIXEL_FORMAT, 1, SamplingFilter::LINEAR, MIPMAPS_COUNT, m_rt);
 
-	FramebufferPtr::Initializer fbInit;
+	FramebufferInitializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation =
 		AttachmentLoadOperation::DONT_CARE;
-	m_fb.create(&getGrManager(), fbInit);
+	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 	//
 	// Create UBOs
 	//
-	m_commonBuffer.create(&getGrManager(), GL_UNIFORM_BUFFER,
-		nullptr, sizeof(shader::CommonUniforms), GL_DYNAMIC_STORAGE_BIT);
+	m_commonBuffer = getGrManager().newInstance<Buffer>(
+		sizeof(shader::CommonUniforms), BufferUsageBit::UNIFORM,
+		BufferAccessBit::CLIENT_WRITE);
 
-	for(U i = 0; i < MAX_FRAMES; ++i)
+	m_pLightsBuffSize = m_maxPointLights * sizeof(shader::PointLight);
+	m_sLightsBuffSize = m_maxSpotLights * sizeof(shader::SpotLight);
+	m_stLightsBuffSize = m_maxSpotTexLights * sizeof(shader::SpotLight);
+
+	for(U i = 0; i < m_pLightsBuffs.getSize(); ++i)
 	{
-		// Lights
-		m_lightsBuffers[i].create(&getGrManager(),
-			GL_SHADER_STORAGE_BUFFER, nullptr, calcLightsBufferSize(),
-			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+		// Point lights
+		m_pLightsBuffs[i] = getGrManager().newInstance<Buffer>(
+			m_pLightsBuffSize, BufferUsageBit::STORAGE,
+			BufferAccessBit::CLIENT_MAP_WRITE);
+
+		// Spot lights
+		m_sLightsBuffs[i] = getGrManager().newInstance<Buffer>(
+			m_sLightsBuffSize, BufferUsageBit::STORAGE,
+			BufferAccessBit::CLIENT_MAP_WRITE);
+
+		// Spot tex lights
+		m_stLightsBuffs[i] = getGrManager().newInstance<Buffer>(
+			m_stLightsBuffSize, BufferUsageBit::STORAGE,
+			BufferAccessBit::CLIENT_MAP_WRITE);
 
 		// Tiles
-		m_tilesBuffers[i].create(&getGrManager(),
-			GL_SHADER_STORAGE_BUFFER, nullptr,
+		m_tilesBuffers[i] = getGrManager().newInstance<Buffer>(
 			m_r->getTilesCountXY() * sizeof(shader::Tile),
-			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+			BufferUsageBit::STORAGE, BufferAccessBit::CLIENT_MAP_WRITE);
 
 		// Index
-		m_lightIdsBuffers[i].create(&getGrManager(),
-			GL_SHADER_STORAGE_BUFFER,
-			nullptr, (m_maxPointLights * m_maxSpotLights * m_maxSpotTexLights)
+		m_lightIdsBuffers[i] = getGrManager().newInstance<Buffer>(
+			(m_maxPointLights * m_maxSpotLights * m_maxSpotTexLights)
 			* sizeof(U32),
-			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+			BufferUsageBit::STORAGE, BufferAccessBit::CLIENT_MAP_WRITE);
 	}
 
-	// Get addresses
-	for(U i = 0; i < MAX_FRAMES; ++i)
+	//
+	// Create resource groups
+	//
+	for(U i = 0; i < m_rcGroups.getSize(); ++i)
 	{
-		m_lightsBufferAddresses[i] =
-			m_lightsBuffers[i].getPersistentMappingAddress();
+		ResourceGroupInitializer init;
+		init.m_textures[0].m_texture = m_r->getMs().getRt0();
+		init.m_textures[1].m_texture = m_r->getMs().getRt1();
+		init.m_textures[2].m_texture = m_r->getMs().getRt2();
+		init.m_textures[3].m_texture = m_r->getMs().getDepthRt();
+		init.m_textures[4].m_texture = m_sm.getTextureArray();
 
-		m_tilesBufferAddresses[i] =
-			m_tilesBuffers[i].getPersistentMappingAddress();
+		init.m_uniformBuffers[0].m_buffer = m_commonBuffer;
 
-		m_lightIdsBufferAddresses[i] =
-			m_lightIdsBuffers[i].getPersistentMappingAddress();
+		init.m_storageBuffers[0].m_buffer = m_pLightsBuffs[i];
+		init.m_storageBuffers[1].m_buffer = m_sLightsBuffs[i];
+		init.m_storageBuffers[2].m_buffer = m_stLightsBuffs[i];
+		init.m_storageBuffers[3].m_buffer = m_tilesBuffers[i];
+		init.m_storageBuffers[4].m_buffer = m_lightIdsBuffers[i];
+
+		m_rcGroups[i] = getGrManager().newInstance<ResourceGroup>(init);
 	}
 
 	return ErrorCode::NONE;
@@ -284,13 +311,14 @@ Error Is::initInternal(const ConfigSet& config)
 //==============================================================================
 Error Is::lightPass(CommandBufferPtr& cmdBuff)
 {
-	Error err = ErrorCode::NONE;
 	Threadpool& threadPool = m_r->getThreadpool();
 	m_cam = &m_r->getActiveCamera();
 	FrustumComponent& fr = m_cam->getComponent<FrustumComponent>();
 	VisibilityTestResults& vi = fr.getVisibilityTestResults();
 
-	m_currentFrame = getGlobalTimestamp() % MAX_FRAMES;
+	m_currentFrame = getGlobalTimestamp() % MAX_FRAMES_IN_FLIGHT;
+
+	U tilesCount = m_r->getTilesCountXY();
 
 	//
 	// Quickly get the lights
@@ -347,59 +375,64 @@ Error Is::lightPass(CommandBufferPtr& cmdBuff)
 	//
 	// Write the lights and tiles UBOs
 	//
-	U32 blockAlignment =
-		getGrManager().getBufferOffsetAlignment(m_lightsBuffers[0].getTarget());
-
-	// Get the offsets and sizes of each uniform block
-	PtrSize pointLightsOffset = 0;
-	PtrSize pointLightsSize = getAlignedRoundUp(
-		blockAlignment, sizeof(shader::PointLight) * visiblePointLightsCount);
-
-	PtrSize spotLightsOffset = pointLightsSize;
-	PtrSize spotLightsSize = getAlignedRoundUp(
-		blockAlignment, sizeof(shader::SpotLight) * visibleSpotLightsCount);
-
-	PtrSize spotTexLightsOffset = spotLightsOffset + spotLightsSize;
-	PtrSize spotTexLightsSize = getAlignedRoundUp(blockAlignment,
-		sizeof(shader::SpotLight) * visibleSpotTexLightsCount);
-
-	ANKI_ASSERT(
-		spotTexLightsOffset + spotTexLightsSize <= calcLightsBufferSize());
-
-	// Fire the super cmdBuff
 	Array<WriteLightsTask, Threadpool::MAX_THREADS> tasks;
 	TaskCommonData taskData;
 	memset(&taskData, 0, sizeof(taskData));
 
-	U8* lightsBase = static_cast<U8*>(m_lightsBufferAddresses[m_currentFrame]);
 	if(visiblePointLightsCount)
 	{
+		void* data = m_pLightsBuffs[m_currentFrame]->map(
+			0, visiblePointLightsCount * sizeof(shader::PointLight),
+			BufferAccessBit::CLIENT_MAP_WRITE);
+
 		taskData.m_pointLights = SArray<shader::PointLight>(
-			reinterpret_cast<shader::PointLight*>(
-			lightsBase + pointLightsOffset), visiblePointLightsCount);
+			static_cast<shader::PointLight*>(data), visiblePointLightsCount);
 	}
 
 	if(visibleSpotLightsCount)
 	{
+		void* data = m_sLightsBuffs[m_currentFrame]->map(
+			0, visibleSpotLightsCount * sizeof(shader::SpotLight),
+			BufferAccessBit::CLIENT_MAP_WRITE);
+
 		taskData.m_spotLights = SArray<shader::SpotLight>(
-			reinterpret_cast<shader::SpotLight*>(lightsBase + spotLightsOffset),
-			visibleSpotLightsCount);
+			static_cast<shader::SpotLight*>(data), visibleSpotLightsCount);
 	}
 
 	if(visibleSpotTexLightsCount)
 	{
+		void* data = m_stLightsBuffs[m_currentFrame]->map(
+			0, visibleSpotTexLightsCount * sizeof(shader::SpotLight),
+			BufferAccessBit::CLIENT_MAP_WRITE);
+
 		taskData.m_spotTexLights = SArray<shader::SpotLight>(
-			reinterpret_cast<shader::SpotLight*>(
-			lightsBase + spotTexLightsOffset), visibleSpotTexLightsCount);
+			static_cast<shader::SpotLight*>(data), visibleSpotTexLightsCount);
 	}
 
 	taskData.m_lightsBegin = vi.getLightsBegin();
 	taskData.m_lightsEnd = vi.getLightsEnd();
 
-	Barrier barrier(threadPool.getThreadsCount());
+	Barrier barrier(threadPool.getThreadsCount()); // TODO opt
 	taskData.m_barrier = &barrier;
 
 	taskData.m_is = this;
+
+	// Map tiles
+	void* data = m_tilesBuffers[m_currentFrame]->map(
+		0,
+		tilesCount * sizeof(shader::Tile),
+		BufferAccessBit::CLIENT_MAP_WRITE);
+
+	taskData.m_tiles = SArray<shader::Tile>(
+		static_cast<shader::Tile*>(data), tilesCount);
+
+	// Map light IDs
+	data = m_lightIdsBuffers[m_currentFrame]->map(
+		0,
+		m_maxLightIds * sizeof(Lid),
+		BufferAccessBit::CLIENT_MAP_WRITE);
+
+	taskData.m_lightIds = SArray<Lid>(static_cast<Lid*>(data), m_maxLightIds);
 
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
@@ -415,58 +448,32 @@ Error Is::lightPass(CommandBufferPtr& cmdBuff)
 	ANKI_CHECK(threadPool.waitForAllThreadsToFinish());
 
 	//
-	// Setup uniforms
+	// Unmap
 	//
-
-	// shader prog
-	ANKI_CHECK(updateCommonBlock(cmdBuff));
-
-	m_commonBuffer.bindShaderBuffer(cmdBuff, COMMON_UNIFORMS_BLOCK_BINDING);
-
-	if(pointLightsSize > 0)
+	if(visiblePointLightsCount)
 	{
-		m_lightsBuffers[m_currentFrame].bindShaderBuffer(cmdBuff,
-			pointLightsOffset, pointLightsSize, POINT_LIGHTS_BLOCK_BINDING);
+		m_pLightsBuffs[m_currentFrame]->unmap();
 	}
 
-	if(spotLightsSize > 0)
+	if(visibleSpotLightsCount)
 	{
-		m_lightsBuffers[m_currentFrame].bindShaderBuffer(cmdBuff,
-			spotLightsOffset, spotLightsSize, SPOT_LIGHTS_BLOCK_BINDING);
+		m_sLightsBuffs[m_currentFrame]->unmap();
 	}
 
-	if(spotTexLightsSize > 0)
+	if(visibleSpotTexLightsCount)
 	{
-		m_lightsBuffers[m_currentFrame].bindShaderBuffer(cmdBuff,
-			spotTexLightsOffset, spotTexLightsSize,
-			SPOT_TEX_LIGHTS_BLOCK_BINDING);
+		m_stLightsBuffs[m_currentFrame]->unmap();
 	}
 
-	m_tilesBuffers[m_currentFrame].bindShaderBuffer(
-		cmdBuff, TILES_BLOCK_BINDING);
-
-	m_lightIdsBuffers[m_currentFrame].bindShaderBuffer(
-		cmdBuff, LIGHT_IDS_BLOCK_BINDING);
-
-	// The binding points should much the shader
-	Array<TexturePtr, 5> tarr = {{
-		m_r->getMs().getRt0(),
-		m_r->getMs().getRt1(),
-		m_r->getMs().getRt2(),
-		m_r->getMs().getDepthRt(),
-		m_sm.getTextureArray()}};
-
-	cmdBuff.bindTextures(0, tarr.begin(), tarr.getSize());
+	m_tilesBuffers[m_currentFrame]->unmap();
+	m_lightIdsBuffers[m_currentFrame]->unmap();
 
 	//
 	// Draw
 	//
+	cmdBuff->drawArrays(4, m_r->getTilesCountXY());
 
-	m_lightPpline.bind(cmdBuff);
-
-	cmdBuff.drawArrays(GL_TRIANGLE_STRIP, 4, m_r->getTilesCountXY());
-
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -524,10 +531,6 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 	const UVec2 tilesCount2d = m_r->getTilesCount();
 	U tilesCount = tilesCount2d.x() * tilesCount2d.y();
 
-	SArray<shader::Tile> stiles(
-		reinterpret_cast<shader::Tile*>(m_tilesBufferAddresses[m_currentFrame]),
-		tilesCount);
-
 	Threadpool::Task::choseStartEnd(
 		threadId, threadsCount, tilesCount, start, end);
 
@@ -545,20 +548,16 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 
 		const U offset = task.m_lightIdsCount.fetchAdd(count);
 
-		auto& t = stiles[i];
+		auto& t = task.m_tiles[i];
 
 		if(offset + count <= m_maxLightIds)
 		{
-			SArray<Lid> lightIds(
-				reinterpret_cast<Lid*>(
-				m_lightIdsBufferAddresses[m_currentFrame]), m_maxLightIds);
-
 			t.m_offset = offset;
 
 			if(countP > 0)
 			{
 				t.m_pointLightsCount = countP;
-				memcpy(&lightIds[offset], &tile.m_pointIds[0],
+				memcpy(&task.m_lightIds[offset], &tile.m_pointIds[0],
 					countP * sizeof(Lid));
 			}
 			else
@@ -569,7 +568,7 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 			if(countS > 0)
 			{
 				t.m_spotLightsCount = countS;
-				memcpy(&lightIds[offset + countP], &tile.m_spotIds[0],
+				memcpy(&task.m_lightIds[offset + countP], &tile.m_spotIds[0],
 					countS * sizeof(Lid));
 			}
 			else
@@ -580,7 +579,7 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 			if(countST > 0)
 			{
 				t.m_spotTexLightsCount = countST;
-				memcpy(&lightIds[offset + countP + countS],
+				memcpy(&task.m_lightIds[offset + countP + countS],
 					&tile.m_spotTexIds[0], countST * sizeof(Lid));
 			}
 			else
@@ -595,6 +594,8 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 			ANKI_LOGW("Light IDs buffer too small");
 		}
 	}
+
+	m_tilesBuffers[m_currentFrame]->unmap();
 }
 
 //==============================================================================
@@ -756,8 +757,10 @@ void Is::binLight(
 //==============================================================================
 void Is::setState(CommandBufferPtr& cmdBuff)
 {
-	m_fb.bind(cmdBuff);
-	cmdBuff.setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
+	cmdBuff->bindFramebuffer(m_fb);
+	cmdBuff->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
+	cmdBuff->bindPipeline(m_lightPpline);
+	cmdBuff->bindResourceGroup(m_rcGroups[m_currentFrame]);
 }
 
 //==============================================================================
@@ -768,47 +771,24 @@ Error Is::run(CommandBufferPtr& cmdBuff)
 }
 
 //==============================================================================
-Error Is::updateCommonBlock(CommandBufferPtr& cmdBuff)
+Error Is::updateCommonBlock(CommandBufferPtr& cmdb)
 {
-	shader::CommonUniforms blk;
+	shader::CommonUniforms* blk;
+	cmdb->writeBuffer(m_commonBuffer, 0, sizeof(shader::CommonUniforms), blk);
 
 	// Start writing
-	blk.m_projectionParams = m_r->getProjectionParameters();
-	blk.m_sceneAmbientColor = m_ambientColor;
+	blk->m_projectionParams = m_r->getProjectionParameters();
+	blk->m_sceneAmbientColor = m_ambientColor;
 
 	Vec3 groundLightDir;
 	if(m_groundLightEnabled)
 	{
 		const Mat4& viewMat =
 			m_cam->getComponent<FrustumComponent>().getViewMatrix();
-		blk.m_groundLightDir = Vec4(-viewMat.getColumn(1).xyz(), 1.0);
+		blk->m_groundLightDir = Vec4(-viewMat.getColumn(1).xyz(), 1.0);
 	}
 
-	m_commonBuffer.write(cmdBuff, &blk, sizeof(blk), 0, 0, sizeof(blk));
-
 	return ErrorCode::NONE;
-}
-
-//==============================================================================
-PtrSize Is::calcLightsBufferSize() const
-{
-	U32 buffAlignment =
-		getGrManager().getBufferOffsetAlignment(GL_SHADER_STORAGE_BUFFER);
-	PtrSize size;
-
-	size = getAlignedRoundUp(
-		buffAlignment,
-		m_maxPointLights * sizeof(shader::PointLight));
-
-	size += getAlignedRoundUp(
-		buffAlignment,
-		m_maxSpotLights * sizeof(shader::SpotLight));
-
-	size += getAlignedRoundUp(
-		buffAlignment,
-		m_maxSpotTexLights * sizeof(shader::SpotLight));
-
-	return size;
 }
 
 } // end namespace anki

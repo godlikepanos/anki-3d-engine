@@ -102,8 +102,8 @@ private:
 	SArray<Plane> m_farPlanesW;
 
 	/// PBO buffer that is used to read the data
-	Array<BufferPtr, 2> m_pbos;
-	Array<Vec2*, 2> m_pbosAddress;
+	Array<BufferPtr, MAX_FRAMES_IN_FLIGHT> m_pbos;
+	Array<ResourceGroupPtr, MAX_FRAMES_IN_FLIGHT> m_rcGroups;
 	DArray<Vec2> m_prevMinMaxDepth;
 
 	/// Main shader program

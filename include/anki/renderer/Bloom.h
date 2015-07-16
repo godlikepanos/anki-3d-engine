@@ -86,6 +86,10 @@ private:
 	Timestamp m_commonUboUpdateTimestamp = 0;
 	BufferPtr m_commonBuff;
 
+	ResourceGroupPtr m_firstDescrGroup;
+	ResourceGroupPtr m_hDescrGroup;
+	ResourceGroupPtr m_vDescrGroup;
+
 	ANKI_USE_RESULT Error initFb(FramebufferPtr& fb, TexturePtr& rt);
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 

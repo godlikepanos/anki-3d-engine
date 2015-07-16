@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-/// Defines: 
+/// Defines:
 /// - VPASS or HPASS
 /// - COL_RGBA or COL_RGB or COL_R
 /// - SAMPLES is a number of 3 or 5 or 7 or 9
@@ -31,12 +31,7 @@
 #endif
 
 // Input RT with different binding for less GL API calls
-#if defined(VPASS)
-layout(binding = 0) 
-#else
-layout(binding = 1) 
-#endif
-	uniform mediump sampler2D uTex; 
+layout(binding = 0) uniform mediump sampler2D uTex;
 
 layout(location = 0) in vec2 in_texCoord;
 

@@ -58,6 +58,7 @@ private:
 
 	ShaderResourcePtr m_blitFrag;
 	PipelinePtr m_blitPpline;
+	ResourceGroupPtr m_rcGroup;
 
 	FramebufferPtr m_defaultFb;
 	U32 m_width = 0; ///< Default FB size.

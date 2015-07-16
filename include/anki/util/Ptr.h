@@ -103,46 +103,46 @@ protected:
 	{}
 };
 
-/// A simple template class to wrap simple pointers
+/// A simple template class to wrap simple pointers.
 template<typename T>
-class Ptr: public PtrBase<T>
+class WeakPtr: public PtrBase<T>
 {
 public:
 	using Base = PtrBase<T>;
 
-	Ptr()
+	WeakPtr()
 	:	Base()
 	{}
 
-	Ptr(T* ptr)
+	WeakPtr(T* ptr)
 	:	Base(ptr)
 	{}
 
-	Ptr(const Ptr& other)
+	WeakPtr(const WeakPtr& other)
 	:	Base(other.m_ptr)
 	{}
 
-	Ptr(Ptr&& other)
+	WeakPtr(WeakPtr&& other)
 	:	Base(other.m_ptr)
 	{
 		other.m_ptr = nullptr;
 	}
 
 	/// Destroy.
-	~Ptr()
+	~WeakPtr()
 	{
 		Base::m_ptr = nullptr;
 	}
 
 	/// Copy.
-	Ptr& operator=(const Ptr& other)
+	WeakPtr& operator=(const WeakPtr& other)
 	{
 		Base::m_ptr = other.m_ptr;
 		return *this;
 	}
 
 	/// Move.
-	Ptr& operator=(Ptr&& other)
+	WeakPtr& operator=(WeakPtr&& other)
 	{
 		Base::m_ptr = other.m_ptr;
 		other.m_ptr = nullptr;
@@ -151,42 +151,42 @@ public:
 
 	/// @name Arithmetic operators
 	/// @{
-	Ptr& operator++()
+	WeakPtr& operator++()
 	{
 		ANKI_ASSERT(Base::m_ptr);
 		++Base::m_ptr;
 		return *this;
 	}
 
-	Ptr& operator--()
+	WeakPtr& operator--()
 	{
 		ANKI_ASSERT(Base::m_ptr);
 		--Base::m_ptr;
 		return *this;
 	}
 
-	Ptr operator+(const Ptr& other) const
+	WeakPtr operator+(const WeakPtr& other) const
 	{
 		ANKI_ASSERT(Base::m_ptr);
-		Ptr out(Base::m_ptr + other.m_ptr);
+		WeakPtr out(Base::m_ptr + other.m_ptr);
 		return out;
 	}
 
-	Ptr& operator+=(const Ptr& other)
+	WeakPtr& operator+=(const WeakPtr& other)
 	{
 		ANKI_ASSERT(Base::m_ptr);
 		Base::m_ptr += other.m_ptr;
 		return *this;
 	}
 
-	Ptr operator-(const Ptr& other) const
+	WeakPtr operator-(const WeakPtr& other) const
 	{
 		ANKI_ASSERT(Base::m_ptr);
-		Ptr out(Base::m_ptr - other.m_ptr);
+		WeakPtr out(Base::m_ptr - other.m_ptr);
 		return out;
 	}
 
-	Ptr& operator-=(const Ptr& other)
+	WeakPtr& operator-=(const WeakPtr& other)
 	{
 		ANKI_ASSERT(Base::m_ptr);
 		Base::m_ptr -= other.m_ptr;

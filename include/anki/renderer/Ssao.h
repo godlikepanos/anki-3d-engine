@@ -62,6 +62,10 @@ private:
 	BufferPtr m_uniformsBuff;
 	TexturePtr m_noiseTex;
 
+	ResourceGroupPtr m_rcFirst;
+	ResourceGroupPtr m_hblurRc;
+	ResourceGroupPtr m_vblurRc;
+
 	ANKI_USE_RESULT Error createFb(
 		FramebufferPtr& fb, TexturePtr& rt);
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);

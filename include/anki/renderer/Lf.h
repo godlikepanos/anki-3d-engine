@@ -36,21 +36,20 @@ public:
 
 private:
 	// Occlusion query
-	Array<BufferPtr, 3> m_positionsVertBuff;
-	BufferPtr m_mvpBuff;
+	Array<BufferPtr, MAX_FRAMES_IN_FLIGHT> m_positionsVertBuff;
+	U32 m_positionsVertBuffSize;
 	ShaderResourcePtr m_occlusionVert;
 	ShaderResourcePtr m_occlusionFrag;
 	PipelinePtr m_occlusionPpline;
+	Array<ResourceGroupPtr, MAX_FRAMES_IN_FLIGHT> m_occlusionRcGroups;
 
 	// Sprite billboards
 	ShaderResourcePtr m_realVert;
 	ShaderResourcePtr m_realFrag;
 	PipelinePtr m_realPpline;
-	Array<BufferPtr, 3> m_flareDataBuff;
-	U32 m_flareSize;
 	U8 m_maxSpritesPerFlare;
 	U8 m_maxFlares;
-
+	U16 m_maxSprites;
 
 	ANKI_USE_RESULT Error initSprite(const ConfigSet& config);
 	ANKI_USE_RESULT Error initOcclusion(const ConfigSet& config);

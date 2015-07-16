@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RENDERER_DBG_H
-#define ANKI_RENDERER_DBG_H
+#pragma once
 
 #include "anki/renderer/RenderingPass.h"
 #include "anki/Gr.h"
@@ -67,4 +66,3 @@ private:
 
 } // end namespace anki
 
-#endif

@@ -37,6 +37,8 @@ private:
 	SamplerPtr m_depthMapSampler;
 	TexturePtr m_rt;
 	FramebufferPtr m_fb;
+	ResourceGroupPtr m_rcGroup;
+	ResourceGroupPtr m_rcGroupBlit;
 
 	// 2nd pass: blit
 	ShaderResourcePtr m_blitFrag;

@@ -12,7 +12,6 @@
 #include "anki/scene/Forward.h"
 #include "anki/resource/ShaderResource.h"
 #include "anki/util/Array.h"
-#include <unordered_map>
 
 namespace anki {
 
@@ -49,7 +48,7 @@ public:
 
 	/// @name Render functions. Imitate the GL 1.1 immediate mode
 	/// @{
-	void begin(GLenum primitive); ///< Initiates the draw
+	void begin(PrimitiveTopology topology); ///< Initiates the draw
 
 	void end(); ///< Draws
 
@@ -98,6 +97,7 @@ private:
 	PipelinePtr m_pplineLinesDepth;
 	PipelinePtr m_pplineLinesNoDepth;
 	CommandBufferPtr m_cmdb;
+	ResourceGroupPtr m_rcGroup;
 
 	static const U MAX_POINTS_PER_DRAW = 256;
 	Mat4 m_mMat;
@@ -106,7 +106,7 @@ private:
 	U32 m_lineVertCount;
 	U32 m_triVertCount;
 	Vec3 m_crntCol;
-	GLenum m_primitive;
+	PrimitiveTopology m_primitive;
 
 	BufferPtr m_vertBuff;
 
@@ -117,7 +117,7 @@ private:
 
 	Bool8 m_depthTestEnabled = true;
 
-	ANKI_USE_RESULT Error flushInternal(GLenum primitive);
+	ANKI_USE_RESULT Error flushInternal(PrimitiveTopology topology);
 };
 
 /// Contains methods to render the collision shapes

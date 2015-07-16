@@ -40,7 +40,7 @@ public:
 	using Initializer = GrManagerInitializer;
 
 	/// Default constructor
-	GrManager() = default;
+	GrManager();
 
 	~GrManager();
 

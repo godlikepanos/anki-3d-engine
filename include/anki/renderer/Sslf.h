@@ -37,6 +37,7 @@ private:
 	ShaderResourcePtr m_frag;
 	PipelinePtr m_ppline;
 	TextureResourcePtr m_lensDirtTex;
+	ResourceGroupPtr m_rcGroup;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& config);
 };

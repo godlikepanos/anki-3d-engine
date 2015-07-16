@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RENDERER_RENDERER_H
-#define ANKI_RENDERER_RENDERER_H
+#pragma once
 
 #include "anki/renderer/Common.h"
 #include "anki/renderer/Drawer.h"
@@ -199,12 +198,21 @@ public:
 
 	/// Draws a quad. Actually it draws 2 triangles because OpenGL will no
 	/// longer support quads
-	void drawQuad(CommandBufferPtr& cmdBuff);
+	void drawQuad(CommandBufferPtr& cmdb)
+	{
+		drawQuadInstanced(cmdb, 1);
+	}
 
 	void drawQuadConditional(
-		OcclusionQueryPtr& q, CommandBufferPtr& cmdBuff);
+		OcclusionQueryPtr& q, CommandBufferPtr& cmdb)
+	{
+		cmdb->drawArraysConditional(q, 3, 1);
+	}
 
-	void drawQuadInstanced(CommandBufferPtr& cmdBuff, U32 primitiveCount);
+	void drawQuadInstanced(CommandBufferPtr& cmdb, U32 primitiveCount)
+	{
+		cmdb->drawArrays(3, primitiveCount);
+	}
 
 	/// Get the LOD given the distance of an object from the camera
 	F32 calculateLod(F32 distance) const
@@ -326,4 +334,3 @@ private:
 
 } // end namespace anki
 
-#endif

@@ -127,7 +127,7 @@ Error Renderer::initInternal(const ConfigSet& config)
 
 //==============================================================================
 Error Renderer::render(SceneNode& frustumableNode,
-	Array<CommandBufferPtr, RENDERER_COMMAND_BUFFERS_COUNT>& cmdBuff)
+	Array<CommandBufferPtr, RENDERER_COMMAND_BUFFERS_COUNT>& cmdb)
 {
 	m_frustumable = &frustumableNode;
 	m_frameAlloc.getMemoryPool().reset();
@@ -143,58 +143,38 @@ Error Renderer::render(SceneNode& frustumableNode,
 	}
 
 	ANKI_COUNTER_START_TIMER(RENDERER_MS_TIME);
-	ANKI_CHECK(m_ms->run(cmdBuff[0]));
+	ANKI_CHECK(m_ms->run(cmdb[0]));
 	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_MS_TIME);
 
-	m_lf->runOcclusionTests(cmdBuff[0]);
+	m_lf->runOcclusionTests(cmdb[0]);
 
-	m_ms->generateMipmaps(cmdBuff[0]);
+	m_ms->generateMipmaps(cmdb[0]);
 
-	m_tiler->runMinMax(cmdBuff[0]);
-	cmdBuff[0].flush();
+	m_tiler->runMinMax(cmdb[0]);
+	cmdb[0]->flush();
 
 	ANKI_COUNTER_START_TIMER(RENDERER_IS_TIME);
-	ANKI_CHECK(m_is->run(cmdBuff[1]));
+	ANKI_CHECK(m_is->run(cmdb[1]));
 	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_IS_TIME);
 
-	ANKI_CHECK(m_fs->run(cmdBuff[1]));
-	m_lf->run(cmdBuff[1]);
+	ANKI_CHECK(m_fs->run(cmdb[1]));
+	m_lf->run(cmdb[1]);
 
 	ANKI_COUNTER_START_TIMER(RENDERER_PPS_TIME);
 	if(m_pps->getEnabled())
 	{
-		m_pps->run(cmdBuff[1]);
+		m_pps->run(cmdb[1]);
 	}
 	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_PPS_TIME);
 
 	if(m_dbg->getEnabled())
 	{
-		ANKI_CHECK(m_dbg->run(cmdBuff[1]));
+		ANKI_CHECK(m_dbg->run(cmdb[1]));
 	}
 
 	++m_framesNum;
 
 	return ErrorCode::NONE;
-}
-
-//==============================================================================
-void Renderer::drawQuad(CommandBufferPtr& cmdBuff)
-{
-	drawQuadInstanced(cmdBuff, 1);
-}
-
-//==============================================================================
-void Renderer::drawQuadConditional(OcclusionQueryPtr& q,
-	CommandBufferPtr& cmdBuff)
-{
-	cmdBuff.drawArraysConditional(q, GL_TRIANGLES, 3, 1);
-}
-
-//==============================================================================
-void Renderer::drawQuadInstanced(
-	CommandBufferPtr& cmdBuff, U32 primitiveCount)
-{
-	cmdBuff.drawArrays(GL_TRIANGLES, 3, primitiveCount);
 }
 
 //==============================================================================
@@ -228,7 +208,7 @@ void Renderer::createRenderTarget(U32 w, U32 h, const PixelFormat& format,
 		ANKI_ASSERT(isAligned(16, h));
 	}
 
-	TexturePtr::Initializer init;
+	TextureInitializer init;
 
 	init.m_width = w;
 	init.m_height = h;
@@ -249,11 +229,7 @@ void Renderer::createRenderTarget(U32 w, U32 h, const PixelFormat& format,
 	init.m_sampling.m_repeat = false;
 	init.m_sampling.m_anisotropyLevel = 0;
 
-	CommandBufferPtr cmdBuff;
-	cmdBuff.create(m_gr);
-
-	rt.create(cmdBuff, init);
-	cmdBuff.finish();
+	rt = m_gr->newInstance<Texture>(init);
 }
 
 //==============================================================================
@@ -261,7 +237,7 @@ void Renderer::createDrawQuadPipeline(
 	ShaderPtr frag, const ColorStateInfo& colorState,
 	PipelinePtr& ppline)
 {
-	PipelinePtr::Initializer init;
+	PipelineInitializer init;
 
 	init.m_inputAssembler.m_topology = PrimitiveTopology::TRIANGLE_STRIP;
 
@@ -272,7 +248,7 @@ void Renderer::createDrawQuadPipeline(
 
 	init.m_shaders[U(ShaderType::VERTEX)] = m_drawQuadVert->getGrShader();
 	init.m_shaders[U(ShaderType::FRAGMENT)] = frag;
-	ppline.create(m_gr, init);
+	ppline = m_gr->newInstance<Pipeline>(init);
 }
 
 //==============================================================================

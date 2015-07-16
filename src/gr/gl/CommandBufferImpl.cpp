@@ -90,4 +90,10 @@ CommandBufferImpl::InitHints CommandBufferImpl::computeInitHints() const
 	return out;
 }
 
+//==============================================================================
+GrAllocator<U8> CommandBufferImpl::getAllocator() const
+{
+	return m_manager->getAllocator();
+}
+
 } // end namespace anki

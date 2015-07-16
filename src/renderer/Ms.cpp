@@ -49,7 +49,7 @@ Error Ms::createRt(U32 index, U32 samples)
 	loadop = AttachmentLoadOperation::CLEAR;
 #endif
 
-	FramebufferPtr::Initializer fbInit;
+	FramebufferInitializer fbInit;
 	fbInit.m_colorAttachmentsCount = ATTACHMENT_COUNT;
 	fbInit.m_colorAttachments[0].m_texture = plane.m_rt0;
 	fbInit.m_colorAttachments[0].m_loadOperation = loadop;
@@ -65,7 +65,7 @@ Error Ms::createRt(U32 index, U32 samples)
 		AttachmentLoadOperation::CLEAR;
 	fbInit.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0;
 
-	plane.m_fb.create(&getGrManager(), fbInit);
+	plane.m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 	return ErrorCode::NONE;
 }
@@ -105,9 +105,9 @@ Error Ms::run(CommandBufferPtr& cmdb)
 		planeId = 1;
 	}
 
-	cmdb.setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
+	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 
-	m_planes[planeId].m_fb.bind(cmdb);
+	cmdb->bindFramebuffer(m_planes[planeId].m_fb);
 
 	// render all
 	m_r->getSceneDrawer().prepareDraw(
@@ -146,7 +146,7 @@ Error Ms::run(CommandBufferPtr& cmdb)
 void Ms::generateMipmaps(CommandBufferPtr& cmdb)
 {
 	U planeId = (m_r->getSamples() == 1) ? 1 : 0;
-	m_planes[planeId].m_depthRt.generateMipmaps(cmdb);
+	cmdb->generateMipmaps(m_planes[planeId].m_depthRt);
 }
 
 } // end namespace anki

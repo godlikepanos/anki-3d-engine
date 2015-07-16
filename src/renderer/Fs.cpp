@@ -19,7 +19,7 @@ Fs::~Fs()
 //==============================================================================
 Error Fs::init(const ConfigSet&)
 {
-	FramebufferPtr::Initializer fbInit;
+	FramebufferInitializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_r->getIs().getRt();
 	fbInit.m_colorAttachments[0].m_loadOperation =
@@ -27,7 +27,7 @@ Error Fs::init(const ConfigSet&)
 	fbInit.m_depthStencilAttachment.m_texture = m_r->getMs().getDepthRt();
 	fbInit.m_depthStencilAttachment.m_loadOperation =
 		AttachmentLoadOperation::LOAD;
-	m_fb.create(&getGrManager(), fbInit);
+	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 	return ErrorCode::NONE;
 }
@@ -37,7 +37,7 @@ Error Fs::run(CommandBufferPtr& cmdb)
 {
 	Error err = ErrorCode::NONE;
 
-	m_fb.bind(cmdb);
+	cmdb->bindFramebuffer(m_fb);
 
 	RenderableDrawer& drawer = m_r->getSceneDrawer();
 	drawer.prepareDraw(RenderingStage::BLEND, Pass::MS_FS, cmdb);

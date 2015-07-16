@@ -98,9 +98,9 @@ Error Tiler::initInternal()
 		m_shader.loadToCache(&getResourceManager(),
 		"shaders/TilerMinMax.comp.glsl", pps.toCString(), "r_"));
 
-	PipelinePtr::Initializer pplineInit;
+	PipelineInitializer pplineInit;
 	pplineInit.m_shaders[U(ShaderType::COMPUTE)] = m_shader->getGrShader();
-	m_ppline.create(&getGrManager(), pplineInit);
+	m_ppline = getGrManager().newInstance<Pipeline>(pplineInit);
 
 	// Init planes. One plane for each direction, plus near/far plus the world
 	// space of those
@@ -153,16 +153,17 @@ Error Tiler::initPbos()
 
 	for(U i = 0; i < m_pbos.getSize(); ++i)
 	{
-		m_pbos[i].create(&getGrManager(), GL_SHADER_STORAGE_BUFFER,
-			nullptr, pboSize,
-			GL_MAP_READ_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-	}
+		// Create the buffer
+		m_pbos[i] = getGrManager().newInstance<Buffer>(pboSize,
+			BufferUsageBit::STORAGE, BufferAccessBit::CLIENT_MAP_READ);
 
-	// Get persistent address
-	for(U i = 0; i < m_pbos.getSize(); ++i)
-	{
-		m_pbosAddress[i] =
-			static_cast<Vec2*>(m_pbos[i].getPersistentMappingAddress());
+		// Create graphics resources
+		ResourceGroupInitializer rcinit;
+		rcinit.m_storageBuffers[0].m_buffer = m_pbos[i];
+		rcinit.m_storageBuffers[0].m_range = pboSize;
+		rcinit.m_textures[0].m_texture = m_r->getMs().getDepthRt();
+
+		m_rcGroups[i] = getGrManager().newInstance<ResourceGroup>(rcinit);
 	}
 
 	return ErrorCode::NONE;
@@ -175,12 +176,11 @@ void Tiler::runMinMax(CommandBufferPtr& cmd)
 	{
 		// Issue the min/max job
 		U pboIdx = getGlobalTimestamp() % m_pbos.getSize();
-		m_pbos[pboIdx].bindShaderBuffer(cmd, 0);
-		m_ppline.bind(cmd);
 
-		m_r->getMs().getDepthRt().bind(cmd, 0);
+		cmd->bindPipeline(m_ppline);
+		cmd->bindResourceGroup(m_rcGroups[pboIdx]);
 
-		cmd.dispatchCompute(
+		cmd->dispatchCompute(
 			m_r->getTilesCount().x(), m_r->getTilesCount().y(), 1);
 
 		m_r->drawQuad(cmd);
@@ -661,7 +661,9 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 		// Setup pixel buffer
 		U pboIdx =
 			(getGlobalTimestamp() - m_pbos.getSize() + 1) % m_pbos.getSize();
-		SArray<Vec2> pixels(m_pbosAddress[pboIdx], tilesCount);
+		void* mapped = m_pbos[pboIdx]->map(
+			0, tilesCount * sizeof(Vec2), BufferAccessBit::CLIENT_MAP_READ);
+		SArray<Vec2> pixels(static_cast<Vec2*>(mapped), tilesCount);
 
 		for(U k = start; k < end; ++k)
 		{
@@ -721,6 +723,8 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 			m_nearPlanesW[k] = nearPlane.getTransformed(trf);
 			m_farPlanesW[k] = farPlane.getTransformed(trf);
 		}
+
+		m_pbos[pboIdx]->unmap();
 	}
 }
 

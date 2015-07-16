@@ -61,6 +61,7 @@ public:
 		return m_alloc;
 	}
 
+	/// For the UniquePtr destructor.
 	GrAllocator<U8> getAllocator() const;
 
 	/// Compute initialization hints.

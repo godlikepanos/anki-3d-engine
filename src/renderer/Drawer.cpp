@@ -26,15 +26,15 @@ class SetupRenderableVariableVisitor
 {
 public:
 	// Used to get the visible spatials
-	Ptr<VisibleNode> m_visibleNode;
+	WeakPtr<VisibleNode> m_visibleNode;
 
-	Ptr<RenderComponent> m_renderable; ///< To get the transforms
-	Ptr<RenderComponentVariable> m_rvar;
-	Ptr<const FrustumComponent> m_fr;
-	Ptr<RenderableDrawer> m_drawer;
+	WeakPtr<RenderComponent> m_renderable; ///< To get the transforms
+	WeakPtr<RenderComponentVariable> m_rvar;
+	WeakPtr<const FrustumComponent> m_fr;
+	WeakPtr<RenderableDrawer> m_drawer;
 	U8 m_instanceCount;
 	CommandBufferPtr m_cmdBuff;
-	Array<U8, MATERIAL_BLOCK_MAX_SIZE> m_tempUniformBuffer;
+	SArray<U8> m_uniformBuffer;
 
 	F32 m_flod;
 
@@ -55,8 +55,8 @@ public:
 		mtlVar.writeShaderBlockMemory<T>(
 			value,
 			size,
-			&m_tempUniformBuffer[0],
-			&m_tempUniformBuffer[0] + MATERIAL_BLOCK_MAX_SIZE);
+			&m_uniformBuffer[0],
+			&m_uniformBuffer[0] + m_uniformBuffer.getSize());
 	}
 
 	template<typename TRenderableVariableTemplate>
@@ -204,19 +204,6 @@ public:
 				uniSet(glvar, &tess, 1);
 			}
 			break;
-		case BuildinMaterialVariableId::BLURRING:
-			{
-				F32 blurring = 0.0;
-				uniSet(glvar, &blurring, 1);
-			}
-			break;
-		case BuildinMaterialVariableId::MS_DEPTH_MAP:
-			{
-				auto unit = glvar.getTextureUnit();
-
-				m_drawer->m_r->getMs().getDepthRt().bind(m_cmdBuff, unit);
-			}
-			break;
 		default:
 			ANKI_ASSERT(0);
 			break;
@@ -233,10 +220,7 @@ void SetupRenderableVariableVisitor::uniSet<TextureResourcePtr>(
 	const TextureResourcePtr* values, U32 size)
 {
 	ANKI_ASSERT(size == 1);
-	TexturePtr tex = (*values)->getGlTexture();
-	auto unit = mtlvar.getTextureUnit();
-
-	tex.bind(m_cmdBuff, unit);
+	// Do nothing
 }
 
 //==============================================================================
@@ -265,16 +249,20 @@ void RenderableDrawer::setupUniforms(
 {
 	const Material& mtl = renderable.getMaterial();
 
+	// Get some memory for uniforms
 	ANKI_ASSERT(mtl.getDefaultBlockSize() < MATERIAL_BLOCK_MAX_SIZE);
+	U8* uniforms = nullptr;
+	m_cmdBuff->updateDynamicUniforms(mtl.getDefaultBlockSize(), uniforms);
 
 	// Call the visitor
-	//
 	m_variableVisitor->m_visibleNode = &visibleNode;
 	m_variableVisitor->m_renderable = &renderable;
 	m_variableVisitor->m_fr = &fr;
 	m_variableVisitor->m_instanceCount = visibleNode.m_spatialsCount;
 	m_variableVisitor->m_cmdBuff = m_cmdBuff;
 	m_variableVisitor->m_flod = flod;
+	m_variableVisitor->m_uniformBuffer =
+		SArray<U8>(uniforms, mtl.getDefaultBlockSize());
 
 	for(auto it = renderable.getVariablesBegin();
 		it != renderable.getVariablesEnd(); ++it)
@@ -285,11 +273,6 @@ void RenderableDrawer::setupUniforms(
 		Error err = rvar->acceptVisitor(*m_variableVisitor);
 		(void)err;
 	}
-
-	// Update the uniforms
-	//
-	m_cmdBuff.updateDynamicUniforms(
-		&m_variableVisitor->m_tempUniformBuffer[0], mtl.getDefaultBlockSize());
 }
 
 //==============================================================================

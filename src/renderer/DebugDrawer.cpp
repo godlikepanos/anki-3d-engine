@@ -32,12 +32,12 @@ DebugDrawer::~DebugDrawer()
 //==============================================================================
 Error DebugDrawer::create(Renderer* r)
 {
-	GrManager& gl = r->getGrManager();
+	GrManager& gr = r->getGrManager();
 
 	ANKI_CHECK(m_vert.load("shaders/Dbg.vert.glsl", &r->getResourceManager()));
 	ANKI_CHECK(m_frag.load("shaders/Dbg.frag.glsl", &r->getResourceManager()));
 
-	PipelinePtr::Initializer init;
+	PipelineInitializer init;
 	init.m_vertex.m_bindingCount = 1;
 	init.m_vertex.m_bindings[0].m_stride = 2 * sizeof(Vec4);
 	init.m_vertex.m_attributeCount = 2;
@@ -57,13 +57,17 @@ Error DebugDrawer::create(Renderer* r)
 	init.m_shaders[U(ShaderType::VERTEX)] = m_vert->getGrShader();
 	init.m_shaders[U(ShaderType::FRAGMENT)] = m_frag->getGrShader();
 
-	m_pplineLinesDepth.create(&gl, init);
+	m_pplineLinesDepth = gr.newInstance<Pipeline>(init);
 
 	init.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
-	m_pplineLinesNoDepth.create(&gl, init);
+	m_pplineLinesNoDepth = gr.newInstance<Pipeline>(init);
 
-	m_vertBuff.create(&gl, GL_ARRAY_BUFFER, nullptr,
-		sizeof(m_clientLineVerts), GL_DYNAMIC_STORAGE_BIT);
+	m_vertBuff = gr.newInstance<Buffer>(sizeof(m_clientLineVerts),
+		BufferUsageBit::VERTEX, BufferAccessBit::CLIENT_WRITE);
+
+	ResourceGroupInitializer rcinit;
+	rcinit.m_vertexBuffers[0].m_buffer = m_vertBuff;
+	m_rcGroup = gr.newInstance<ResourceGroup>(rcinit);
 
 	m_lineVertCount = 0;
 	m_triVertCount = 0;
@@ -90,16 +94,17 @@ void DebugDrawer::setViewProjectionMatrix(const Mat4& m)
 }
 
 //==============================================================================
-void DebugDrawer::begin(GLenum primitive)
+void DebugDrawer::begin(PrimitiveTopology topology)
 {
-	ANKI_ASSERT(primitive == GL_TRIANGLES || primitive == GL_LINES);
-	m_primitive = primitive;
+	ANKI_ASSERT(topology == PrimitiveTopology::LINES
+		|| topology == PrimitiveTopology::TRIANGLES);
+	m_primitive = topology;
 }
 
 //==============================================================================
 void DebugDrawer::end()
 {
-	if(m_primitive == GL_LINES)
+	if(m_primitive == PrimitiveTopology::LINES)
 	{
 		if(m_lineVertCount % 2 != 0)
 		{
@@ -121,23 +126,21 @@ void DebugDrawer::end()
 //==============================================================================
 Error DebugDrawer::flush()
 {
-	Error err = flushInternal(GL_LINES);
+	Error err = flushInternal(PrimitiveTopology::LINES);
 
 	if(!err)
 	{
-		err = flushInternal(GL_TRIANGLES);
+		err = flushInternal(PrimitiveTopology::TRIANGLES);
 	}
 
 	return err;
 }
 
 //==============================================================================
-Error DebugDrawer::flushInternal(GLenum primitive)
+Error DebugDrawer::flushInternal(PrimitiveTopology topology)
 {
-	Error err = ErrorCode::NONE;
-
-	if((primitive == GL_LINES && m_lineVertCount == 0)
-		|| (primitive == GL_TRIANGLES && m_triVertCount == 0))
+	if((m_primitive == PrimitiveTopology::LINES && m_lineVertCount == 0)
+		|| (m_primitive == PrimitiveTopology::TRIANGLES && m_triVertCount == 0))
 	{
 		// Early exit
 		return ErrorCode::NONE;
@@ -145,7 +148,7 @@ Error DebugDrawer::flushInternal(GLenum primitive)
 
 	U clientVerts;
 	void* vertBuff;
-	if(primitive == GL_LINES)
+	if(m_primitive == PrimitiveTopology::LINES)
 	{
 		clientVerts = m_lineVertCount;
 		vertBuff = &m_clientLineVerts[0];
@@ -160,22 +163,23 @@ Error DebugDrawer::flushInternal(GLenum primitive)
 
 	U size = sizeof(Vertex) * clientVerts;
 
-	m_vertBuff.write(m_cmdb, vertBuff, size, 0, 0, size);
+	void* data = nullptr;
+	m_cmdb->writeBuffer(m_vertBuff, 0, size, data);
+	memcpy(data, vertBuff, size);
 
 	if(m_depthTestEnabled)
 	{
-		m_pplineLinesDepth.bind(m_cmdb);
+		m_cmdb->bindPipeline(m_pplineLinesDepth);
 	}
 	else
 	{
-		m_pplineLinesNoDepth.bind(m_cmdb);
+		m_cmdb->bindPipeline(m_pplineLinesNoDepth);
 	}
 
-	m_cmdb.bindVertexBuffer(0, m_vertBuff, 0);
+	m_cmdb->bindResourceGroup(m_rcGroup);
+	m_cmdb->drawArrays(clientVerts);
 
-	m_cmdb.drawArrays(primitive, clientVerts);
-
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -183,7 +187,7 @@ void DebugDrawer::pushBackVertex(const Vec3& pos)
 {
 	U32* vertCount;
 	Vertex* vertBuff;
-	if(m_primitive == GL_LINES)
+	if(m_primitive == PrimitiveTopology::LINES)
 	{
 		vertCount = &m_lineVertCount;
 		vertBuff = &m_clientLineVerts[0];
@@ -211,7 +215,7 @@ void DebugDrawer::pushBackVertex(const Vec3& pos)
 void DebugDrawer::drawLine(const Vec3& from, const Vec3& to, const Vec4& color)
 {
 	setColor(color);
-	begin(GL_LINES);
+	begin(PrimitiveTopology::LINES);
 		pushBackVertex(from);
 		pushBackVertex(to);
 	end();
@@ -231,7 +235,7 @@ void DebugDrawer::drawGrid()
 
 	setColor(col0);
 
-	begin(GL_LINES);
+	begin(PrimitiveTopology::LINES);
 
 	for(U x = - NUM / 2 * SPACE; x < NUM / 2 * SPACE; x += SPACE)
 	{
@@ -272,7 +276,7 @@ void DebugDrawer::drawSphere(F32 radius, I complexity)
 	setModelMatrix(m_mMat * Mat4(Vec4(0.0, 0.0, 0.0, 1.0),
 		Mat3::getIdentity(), radius));
 
-	begin(GL_LINES);
+	begin(PrimitiveTopology::LINES);
 
 	// Pre-calculate the sphere points5
 	F32 fi = getPi<F32>() / complexity;
@@ -329,7 +333,7 @@ void DebugDrawer::drawCube(F32 size)
 		0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6,
 		6, 7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7}};
 
-	begin(GL_LINES);
+	begin(PrimitiveTopology::LINES);
 		for(U32 id : indeces)
 		{
 			pushBackVertex(points[id]);
@@ -382,7 +386,7 @@ void CollisionDebugDrawer::visit(const Plane& plane)
 void CollisionDebugDrawer::visit(const LineSegment& ls)
 {
 	m_dbg->setModelMatrix(Mat4::getIdentity());
-	m_dbg->begin(GL_LINES);
+	m_dbg->begin(PrimitiveTopology::LINES);
 	m_dbg->pushBackVertex(ls.getOrigin().xyz());
 	m_dbg->pushBackVertex((ls.getOrigin() + ls.getDirection()).xyz());
 	m_dbg->end();
@@ -437,7 +441,7 @@ void CollisionDebugDrawer::visit(const Frustum& f)
 			const U32 indeces[] = {0, 1, 0, 2, 0, 3, 0, 4, 1, 2, 2,
 				3, 3, 4, 4, 1};
 
-			m_dbg->begin(GL_LINES);
+			m_dbg->begin(PrimitiveTopology::LINES);
 			for(U32 i = 0; i < sizeof(indeces) / sizeof(U32); i++)
 			{
 				m_dbg->pushBackVertex(points[indeces[i]]);
@@ -464,7 +468,7 @@ void CollisionDebugDrawer::visit(const CompoundShape& cs)
 void CollisionDebugDrawer::visit(const ConvexHullShape& hull)
 {
 	m_dbg->setModelMatrix(Mat4(hull.getTransform()));
-	m_dbg->begin(GL_LINES);
+	m_dbg->begin(PrimitiveTopology::LINES);
 	const Vec4* points = hull.getPoints() + 1;
 	const Vec4* end = hull.getPoints() + hull.getPointsCount();
 	for(; points != end; ++points)
@@ -483,7 +487,7 @@ void PhysicsDebugDrawer::drawLines(
 	const U32 linesCount,
 	const Vec4& color)
 {
-	m_dbg->begin(GL_LINES);
+	m_dbg->begin(PrimitiveTopology::LINES);
 	m_dbg->setColor(color);
 	for(U i = 0; i < linesCount * 2; ++i)
 	{
@@ -562,7 +566,7 @@ void SceneDebugDrawer::draw(const PortalSectorComponent& c) const
 
 	m_dbg->setColor(Vec3(0.0, 0.0, 1.0));
 
-	m_dbg->begin(GL_LINES);
+	m_dbg->begin(PrimitiveTopology::LINES);
 	const auto& verts = psnode.getVertices();
 	ANKI_ASSERT((psnode.getVertexIndices().getSize() % 3) == 0);
 	for(U i = 0; i < psnode.getVertexIndices().getSize(); i += 3)

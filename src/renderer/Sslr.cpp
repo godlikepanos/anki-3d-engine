@@ -66,12 +66,29 @@ Error Sslr::init(const ConfigSet& config)
 		Is::RT_PIXEL_FORMAT, 1, SamplingFilter::LINEAR, 1, m_rt);
 
 	// Create FB
-	FramebufferPtr::Initializer fbInit;
+	FramebufferInitializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation =
 		AttachmentLoadOperation::LOAD;
-	m_fb.create(&getGrManager(), fbInit);
+	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
+
+	// Create resource group
+	ResourceGroupInitializer rcInit;
+	rcInit.m_textures[0].m_texture = m_r->getIs().getRt();
+	rcInit.m_textures[1].m_texture = m_r->getMs().getDepthRt();
+	rcInit.m_textures[2].m_texture = m_r->getMs().getRt1();
+	rcInit.m_textures[3].m_texture = m_r->getMs().getRt2();
+	rcInit.m_uniformBuffers[0].m_buffer =
+		m_r->getPps().getSsao().getUniformBuffer();
+
+	m_rcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);
+
+
+	ResourceGroupInitializer rcInitBlit;
+	rcInitBlit.m_textures[0].m_texture = m_rt;
+
+	m_rcGroupBlit = getGrManager().newInstance<ResourceGroup>(rcInitBlit);
 
 	return ErrorCode::NONE;
 }
@@ -83,32 +100,20 @@ void Sslr::run(CommandBufferPtr& cmdBuff)
 
 	// Compute the reflection
 	//
-	m_fb.bind(cmdBuff);
-	cmdBuff.setViewport(0, 0, m_width, m_height);
-
-	m_reflectionPpline.bind(cmdBuff);
-
-	Array<TexturePtr, 4> tarr = {{
-		m_r->getIs().getRt(),
-		m_r->getMs().getDepthRt(),
-		m_r->getMs().getRt1(),
-		m_r->getMs().getRt2()}};
-	cmdBuff.bindTextures(0	, tarr.begin(), tarr.getSize());
-
-	m_r->getPps().getSsao().getUniformBuffer().bindShaderBuffer(cmdBuff, 0);
+	cmdBuff->bindFramebuffer(m_fb);
+	cmdBuff->setViewport(0, 0, m_width, m_height);
+	cmdBuff->bindPipeline(m_reflectionPpline);
+	cmdBuff->bindResourceGroup(m_rcGroup);
 
 	m_r->drawQuad(cmdBuff);
 
-	SamplerPtr::bindDefault(cmdBuff, 1); // Unbind the sampler
-
 	// Write the reflection back to IS RT
 	//
-	m_r->getIs().m_fb.bind(cmdBuff);
-	cmdBuff.setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
+	cmdBuff->bindFramebuffer(m_r->getIs().getFramebuffer());
+	cmdBuff->bindPipeline(m_blitPpline);
+	cmdBuff->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
+	cmdBuff->bindResourceGroup(m_rcGroupBlit);
 
-	m_rt.bind(cmdBuff, 0);
-
-	m_blitPpline.bind(cmdBuff);
 	m_r->drawQuad(cmdBuff);
 }
 

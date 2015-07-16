@@ -324,9 +324,8 @@ public:
 	}
 };
 
-void CommandBuffer::updateDynamicUniforms(void* data, U32 originalSize)
+void CommandBuffer::updateDynamicUniformsInternal(U32 originalSize, void*& data)
 {
-	ANKI_ASSERT(data);
 	ANKI_ASSERT(originalSize > 0);
 	ANKI_ASSERT(originalSize <= 1024 * 4 && "Too high?");
 
@@ -359,8 +358,7 @@ void CommandBuffer::updateDynamicUniforms(void* data, U32 originalSize)
 
 	U8* addressToWrite = state.m_globalUboAddresses[uboIdx] + subUboOffset;
 
-	// Write
-	memcpy(addressToWrite, data, originalSize);
+	data = static_cast<void*>(addressToWrite);
 
 	// Push bind command
 	m_impl->pushBackNewCommand<UpdateUniformsCommand>(
@@ -437,7 +435,7 @@ public:
 	}
 };
 
-void CommandBuffer::textureUpload(TexturePtr tex, U32 mipmap, U32 slice,
+void CommandBuffer::textureUploadInternal(TexturePtr tex, U32 mipmap, U32 slice,
 	PtrSize dataSize, void*& data)
 {
 	ANKI_ASSERT(dataSize > 0);
@@ -473,8 +471,8 @@ public:
 	}
 };
 
-void CommandBuffer::writeBuffer(BufferPtr buff, PtrSize offset, PtrSize range,
-	void*& data)
+void CommandBuffer::writeBufferInternal(BufferPtr buff, PtrSize offset,
+	PtrSize range, void*& data)
 {
 	ANKI_ASSERT(range > 0);
 
@@ -483,6 +481,34 @@ void CommandBuffer::writeBuffer(BufferPtr buff, PtrSize offset, PtrSize range,
 
 	m_impl->pushBackNewCommand<BuffWriteCommand>(
 		buff, offset, range, data);
+}
+
+//==============================================================================
+class GenMipsCommand final: public GlCommand
+{
+public:
+	TexturePtr m_tex;
+
+	GenMipsCommand(const TexturePtr& tex)
+		: m_tex(tex)
+	{}
+
+	Error operator()(GlState&)
+	{
+		m_tex->getImplementation().generateMipmaps();
+		return ErrorCode::NONE;
+	}
+};
+
+void CommandBuffer::generateMipmaps(TexturePtr tex)
+{
+	m_impl->pushBackNewCommand<GenMipsCommand>(tex);
+}
+
+//==============================================================================
+CommandBufferInitHints CommandBuffer::computeInitHints() const
+{
+	return m_impl->computeInitHints();
 }
 
 } // end namespace anki

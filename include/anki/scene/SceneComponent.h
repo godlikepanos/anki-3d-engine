@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SCENE_SCENE_COMPONENT_H
-#define ANKI_SCENE_SCENE_COMPONENT_H
+#pragma once
 
 #include "anki/scene/Common.h"
 #include "anki/core/Timestamp.h"
@@ -40,8 +39,8 @@ public:
 
 	/// Construct the scene component.
 	SceneComponent(Type type, SceneNode* node)
-	:	m_node(node),
-		m_type(type)
+		: m_node(node)
+		, m_type(type)
 	{}
 
 	Type getType() const
@@ -116,4 +115,3 @@ private:
 
 } // end namespace anki
 
-#endif

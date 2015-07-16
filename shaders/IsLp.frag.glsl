@@ -42,27 +42,27 @@ struct SpotLight
 	mat4 texProjectionMat;
 };
 
-layout(std140, binding = 1) readonly buffer pointLightsBlock
+layout(std140, binding = 0) readonly buffer _s0
 {
 	PointLight u_pointLights[MAX_POINT_LIGHTS];
 };
 
-layout(std140, binding = 2) readonly buffer spotLightsBlock
+layout(std140, binding = 1) readonly buffer _s1
 {
 	SpotLight u_spotLights[MAX_SPOT_LIGHTS];
 };
 
-layout(std140, binding = 3) readonly buffer spotTexLightsBlock
+layout(std140, binding = 2) readonly buffer _s2
 {
 	SpotLight u_spotTexLights[MAX_SPOT_TEX_LIGHTS];
 };
 
-layout(std140, binding = 4) readonly buffer tilesBlock
+layout(std140, binding = 3) readonly buffer _s3
 {
 	Tile u_tiles[TILES_COUNT];
 };
 
-layout(std430, binding = 5) readonly buffer _5
+layout(std430, binding = 4) readonly buffer _s5
 {
 	uint u_lightIndices[MAX_LIGHT_INDICES];
 };

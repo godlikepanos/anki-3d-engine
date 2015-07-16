@@ -21,7 +21,7 @@ layout(location = 0) in vec2 in_texCoords;
 
 layout(location = 0) out float outColor;
 
-layout(std140, binding = 0) readonly buffer bCommon
+layout(std140, binding = 0) uniform _blk
 {
 	vec4 uProjectionParams;
 
@@ -45,7 +45,7 @@ vec3 readNormal(in vec2 uv)
 vec3 readRandom(in vec2 uv)
 {
 	const vec2 tmp = vec2(
-		float(WIDTH) / float(NOISE_MAP_SIZE), 
+		float(WIDTH) / float(NOISE_MAP_SIZE),
 		float(HEIGHT) / float(NOISE_MAP_SIZE));
 
 	vec3 noise = texture(uNoiseMap, tmp * uv).xyz;
@@ -68,8 +68,8 @@ vec3 readPosition(in vec2 uv)
 
 	vec3 fragPosVspace;
 	fragPosVspace.z = readZ(uv);
-	
-	fragPosVspace.xy = 
+
+	fragPosVspace.xy =
 		(2.0 * uv - 1.0) * uProjectionParams.xy * fragPosVspace.z;
 
 	return fragPosVspace;
@@ -81,14 +81,14 @@ void main(void)
 
 	vec3 normal = readNormal(in_texCoords);
 	vec3 rvec = readRandom(in_texCoords);
-	
+
 	vec3 tangent = normalize(rvec - normal * dot(rvec, normal));
 	vec3 bitangent = cross(normal, tangent);
 	mat3 tbn = mat3(tangent, bitangent, normal);
 
 	// Iterate kernel
 	float factor = 0.0;
-	for(uint i = 0U; i < KERNEL_SIZE; ++i) 
+	for(uint i = 0U; i < KERNEL_SIZE; ++i)
 	{
 		// get position
 		vec3 sample_ = tbn * KERNEL[i];
@@ -97,7 +97,7 @@ void main(void)
 		// project sample position:
 		vec4 offset = vec4(sample_, 1.0);
 		offset = uProjectionMatrix * offset;
-		offset.xy = offset.xy / (2.0 * offset.w) + 0.5; // persp div & 
+		offset.xy = offset.xy / (2.0 * offset.w) + 0.5; // persp div &
 		                                                // to NDC -> [0, 1]
 
 		// get sample depth:
@@ -107,7 +107,7 @@ void main(void)
 		const float ADVANCE = DARKNESS_MULTIPLIER / float(KERNEL_SIZE);
 
 #if 1
-		float rangeCheck = 
+		float rangeCheck =
 			abs(origin.z - sampleDepth) * (1.0 / (RADIUS * 10.0));
 		rangeCheck = 1.0 - rangeCheck;
 

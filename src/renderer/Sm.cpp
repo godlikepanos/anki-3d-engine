@@ -42,7 +42,7 @@ Error Sm::init(const ConfigSet& config)
 	}
 
 	// Create shadowmaps array
-	TexturePtr::Initializer sminit;
+	TextureInitializer sminit;
 	sminit.m_type = TextureType::_2D_ARRAY;
 	sminit.m_width = m_resolution;
 	sminit.m_height = m_resolution;
@@ -54,16 +54,12 @@ Error Sm::init(const ConfigSet& config)
 		: SamplingFilter::NEAREST;
 	sminit.m_sampling.m_compareOperation = CompareOperation::LESS_EQUAL;
 
-	CommandBufferPtr cmdBuff;
-	cmdBuff.create(&getGrManager());
-
-	m_sm2DArrayTex.create(cmdBuff, sminit);
-	cmdBuff.flush();
+	m_sm2DArrayTex = getGrManager().newInstance<Texture>(sminit);
 
 	// Init sms
 	m_sms.create(getAllocator(), config.getNumber("is.sm.maxLights"));
 
-	FramebufferPtr::Initializer fbInit;
+	FramebufferInitializer fbInit;
 	fbInit.m_depthStencilAttachment.m_texture = m_sm2DArrayTex;
 	fbInit.m_depthStencilAttachment.m_loadOperation =
 		AttachmentLoadOperation::CLEAR;
@@ -75,7 +71,7 @@ Error Sm::init(const ConfigSet& config)
 		sm.m_layerId = layer;
 
 		fbInit.m_depthStencilAttachment.m_layer = layer;
-		sm.m_fb.create(&getGrManager(), fbInit);
+		sm.m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 		++layer;
 	}
@@ -109,8 +105,7 @@ Error Sm::run(SceneNode* shadowCasters[], U32 shadowCastersCount,
 	for(U32 i = 0; i < shadowCastersCount; i++)
 	{
 		Shadowmap* sm;
-		err = doLight(*shadowCasters[i], cmdBuff, sm);
-		if(err) return err;
+		ANKI_CHECK(doLight(*shadowCasters[i], cmdBuff, sm));
 
 		ANKI_ASSERT(sm != nullptr);
 		(void)sm;
@@ -212,8 +207,8 @@ Error Sm::doLight(
 	//
 	// Render
 	//
-	sm->m_fb.bind(cmdBuff);
-	cmdBuff.setViewport(0, 0, m_resolution, m_resolution);
+	cmdBuff->bindFramebuffer(sm->m_fb);
+	cmdBuff->setViewport(0, 0, m_resolution, m_resolution);
 
 	it = vi.getRenderablesBegin();
 	for(; it != end; ++it)

@@ -79,12 +79,12 @@ Error Ssao::createFb(FramebufferPtr& fb, TexturePtr& rt)
 		RT_PIXEL_FORMAT, 1, SamplingFilter::LINEAR, 1, rt);
 
 	// Create FB
-	FramebufferPtr::Initializer fbInit;
+	FramebufferInitializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = rt;
 	fbInit.m_colorAttachments[0].m_loadOperation =
 		AttachmentLoadOperation::DONT_CARE;
-	fb.create(&getGrManager(), fbInit);
+	fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 	return ErrorCode::NONE;
 }
@@ -121,14 +121,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 	//
 	// noise texture
 	//
-	CommandBufferPtr cmdb;
-	cmdb.create(&getGrManager());
-
-	Array<Vec3, NOISE_TEX_SIZE * NOISE_TEX_SIZE> noise;
-
-	genNoise(&noise[0], &noise[0] + noise.getSize());
-
-	TexturePtr::Initializer tinit;
+	TextureInitializer tinit;
 
 	tinit.m_width = tinit.m_height = NOISE_TEX_SIZE;
 	tinit.m_type = TextureType::_2D;
@@ -137,10 +130,20 @@ Error Ssao::initInternal(const ConfigSet& config)
 	tinit.m_mipmapsCount = 1;
 	tinit.m_sampling.m_minMagFilter = SamplingFilter::NEAREST;
 	tinit.m_sampling.m_repeat = true;
-	tinit.m_data[0][0].m_ptr = static_cast<void*>(&noise[0]);
-	tinit.m_data[0][0].m_size = sizeof(noise);
 
-	m_noiseTex.create(cmdb, tinit);
+	m_noiseTex = getGrManager().newInstance<Texture>(tinit);
+
+	CommandBufferPtr cmdb = getGrManager().newInstance<CommandBuffer>();
+
+	PtrSize noiseSize = NOISE_TEX_SIZE * NOISE_TEX_SIZE * sizeof(Vec3);
+
+	void* data = nullptr;
+	cmdb->textureUpload(m_noiseTex, 0, 0, noiseSize, data);
+
+	genNoise(static_cast<Vec3*>(data),
+		static_cast<Vec3*>(data) + NOISE_TEX_SIZE * NOISE_TEX_SIZE);
+
+	cmdb->flush();
 
 	//
 	// Kernel
@@ -164,8 +167,9 @@ Error Ssao::initInternal(const ConfigSet& config)
 	//
 	// Shaders
 	//
-	m_uniformsBuff.create(&getGrManager(), GL_SHADER_STORAGE_BUFFER,
-		nullptr, sizeof(ShaderCommonUniforms), GL_DYNAMIC_STORAGE_BIT);
+	m_uniformsBuff = getGrManager().newInstance<Buffer>(
+		sizeof(ShaderCommonUniforms), BufferUsageBit::UNIFORM,
+		BufferAccessBit::CLIENT_WRITE);
 
 	ColorStateInfo colorState;
 	colorState.m_attachmentCount = 1;
@@ -220,7 +224,23 @@ Error Ssao::initInternal(const ConfigSet& config)
 	m_r->createDrawQuadPipeline(
 		m_vblurFrag->getGrShader(), colorState, m_vblurPpline);
 
-	cmdb.flush();
+	//
+	// Resource groups
+	//
+	ResourceGroupInitializer rcinit;
+	rcinit.m_textures[0].m_texture = m_r->getMs().getDepthRt();
+	rcinit.m_textures[1].m_texture = m_r->getMs().getRt2();
+	rcinit.m_textures[2].m_texture = m_noiseTex;
+	rcinit.m_uniformBuffers[0].m_buffer = m_uniformsBuff;
+	m_rcFirst = getGrManager().newInstance<ResourceGroup>(rcinit);
+
+	rcinit = ResourceGroupInitializer();
+	rcinit.m_textures[0].m_texture = m_vblurRt;
+	m_hblurRc = getGrManager().newInstance<ResourceGroup>(rcinit);
+
+	rcinit = ResourceGroupInitializer();
+	rcinit.m_textures[0].m_texture = m_hblurRt;
+	m_hblurRc = getGrManager().newInstance<ResourceGroup>(rcinit);
 
 	return ErrorCode::NONE;
 }
@@ -243,20 +263,12 @@ void Ssao::run(CommandBufferPtr& cmdb)
 {
 	ANKI_ASSERT(m_enabled);
 
-	cmdb.setViewport(0, 0, m_width, m_height);
-
 	// 1st pass
 	//
-	m_vblurFb.bind(cmdb);
-	m_ssaoPpline.bind(cmdb);
-
-	m_uniformsBuff.bindShaderBuffer(cmdb, 0);
-
-	Array<TexturePtr, 3> tarr = {{
-		m_r->getMs().getDepthRt(),
-		m_r->getMs().getRt2(),
-		m_noiseTex}};
-	cmdb.bindTextures(0, tarr.begin(), tarr.getSize());
+	cmdb->bindFramebuffer(m_vblurFb);
+	cmdb->setViewport(0, 0, m_width, m_height);
+	cmdb->bindPipeline(m_ssaoPpline);
+	cmdb->bindResourceGroup(m_rcFirst);
 
 	// Write common block
 	const FrustumComponent& camFr =
@@ -267,11 +279,14 @@ void Ssao::run(CommandBufferPtr& cmdb)
 		|| m_commonUboUpdateTimestamp < camFr.getTimestamp()
 		|| m_commonUboUpdateTimestamp == 1)
 	{
-		ShaderCommonUniforms blk;
-		blk.m_projectionParams = m_r->getProjectionParameters();
-		blk.m_projectionMatrix = camFr.getProjectionMatrix().getTransposed();
+		ShaderCommonUniforms* blk;
+		void* data;
+		cmdb->writeBuffer(m_uniformsBuff, 0, sizeof(*blk), data);
+		blk = static_cast<ShaderCommonUniforms*>(data);
 
-		m_uniformsBuff.write(cmdb, &blk, sizeof(blk), 0, 0, sizeof(blk));
+		blk->m_projectionParams = m_r->getProjectionParameters();
+		blk->m_projectionMatrix = camFr.getProjectionMatrix().getTransposed();
+
 		m_commonUboUpdateTimestamp = getGlobalTimestamp();
 	}
 
@@ -282,20 +297,16 @@ void Ssao::run(CommandBufferPtr& cmdb)
 	//
 	for(U i = 0; i < m_blurringIterationsCount; i++)
 	{
-		if(i == 0)
-		{
-			Array<TexturePtr, 2> tarr = {{m_hblurRt, m_vblurRt}};
-			cmdb.bindTextures(0, tarr.begin(), tarr.getSize());
-		}
-
 		// hpass
-		m_hblurFb.bind(cmdb);
-		m_hblurPpline.bind(cmdb);
+		cmdb->bindFramebuffer(m_hblurFb);
+		cmdb->bindPipeline(m_hblurPpline);
+		cmdb->bindResourceGroup(m_hblurRc);
 		m_r->drawQuad(cmdb);
 
 		// vpass
-		m_vblurFb.bind(cmdb);
-		m_vblurPpline.bind(cmdb);
+		cmdb->bindFramebuffer(m_vblurFb);
+		cmdb->bindPipeline(m_vblurPpline);
+		cmdb->bindResourceGroup(m_vblurRc);
 		m_r->drawQuad(cmdb);
 	}
 }

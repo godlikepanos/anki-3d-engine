@@ -35,8 +35,6 @@ class TaskCommonData;
 /// Illumination stage
 class Is: public RenderingPass
 {
-	friend class Renderer;
-	friend class Sslr;
 	friend class WriteLightsTask;
 
 public:
@@ -68,6 +66,11 @@ public:
 	{
 		m_ambientColor = color;
 	}
+
+	FramebufferPtr& getFramebuffer()
+	{
+		return m_fb;
+	}
 	/// @}
 
 private:
@@ -81,7 +84,6 @@ private:
 		LIGHT_IDS_BLOCK_BINDING = 5
 	};
 
-	static const U MAX_FRAMES = 3;
 	U32 m_currentFrame = 0; ///< Cache value.
 
 	/// The IS render target
@@ -99,18 +101,26 @@ private:
 	/// Track the updates of commonUbo
 	Timestamp m_commonBuffUpdateTimestamp = 0;
 
-	/// Contains all the lights
-	Array<BufferPtr, MAX_FRAMES> m_lightsBuffers;
-	Array<void*, MAX_FRAMES> m_lightsBufferAddresses;
+	/// Contains all the point lights
+	Array<BufferPtr, MAX_FRAMES_IN_FLIGHT> m_pLightsBuffs;
+	U32 m_pLightsBuffSize = 0;
+
+	/// Contains all the spot lights
+	Array<BufferPtr, MAX_FRAMES_IN_FLIGHT> m_sLightsBuffs;
+	U32 m_sLightsBuffSize = 0;
+
+	/// Contains all the textured spot lights
+	Array<BufferPtr, MAX_FRAMES_IN_FLIGHT> m_stLightsBuffs;
+	U32 m_stLightsBuffSize = 0;
 
 	/// Contains the number of lights per tile
-	Array<BufferPtr, MAX_FRAMES> m_tilesBuffers;
-	Array<void*, MAX_FRAMES> m_tilesBufferAddresses;
+	Array<BufferPtr, MAX_FRAMES_IN_FLIGHT> m_tilesBuffers;
 
 	/// Contains light indices.
-	Array<BufferPtr, MAX_FRAMES> m_lightIdsBuffers;
-	Array<void*, MAX_FRAMES> m_lightIdsBufferAddresses;
+	Array<BufferPtr, MAX_FRAMES_IN_FLIGHT> m_lightIdsBuffers;
 	/// @}
+
+	Array<ResourceGroupPtr, MAX_FRAMES_IN_FLIGHT> m_rcGroups;
 
 	// Light shaders
 	ShaderResourcePtr m_lightVert;
@@ -147,9 +157,6 @@ private:
 
 	/// Prepare GL for rendering
 	void setState(CommandBufferPtr& cmdBuff);
-
-	/// Calculate the size of the lights UBO
-	PtrSize calcLightsBufferSize() const;
 
 	/// Calculate the size of the tile
 	PtrSize calcTileSize() const;
