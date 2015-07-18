@@ -86,9 +86,9 @@ private:
 template<typename T, typename... Args>
 IntrusivePtr<T> GrManager::newInstance(Args&&... args)
 {
-	T* ptr = m_alloc.newInstance<T>(this);
+	IntrusivePtr<T> ptr(m_alloc.newInstance<T>(this));
 	ptr->create(args...);
-	return IntrusivePtr<T>(ptr);
+	return ptr;
 }
 /// @}
 

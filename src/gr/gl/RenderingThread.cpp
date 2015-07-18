@@ -97,7 +97,7 @@ void RenderingThread::flushCommandBuffer(CommandBufferPtr commands)
 
 	m_condVar.notifyOne(); // Wake the thread
 #else
-	Error err = commands.get().executeAllCommands();
+	Error err = commands->getImplementation().executeAllCommands();
 	if(err)
 	{
 		ANKI_LOGF("Error in command buffer execution");

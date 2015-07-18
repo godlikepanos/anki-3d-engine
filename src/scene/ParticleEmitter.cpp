@@ -511,6 +511,8 @@ Error ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 		}
 	}
 
+	m_vertBuffs[frame]->unmap();
+
 	if(m_aliveParticlesCount != 0)
 	{
 		Vec4 min = aabbmin - m_particle.m_size;

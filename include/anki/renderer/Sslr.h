@@ -41,6 +41,7 @@ private:
 	ResourceGroupPtr m_rcGroupBlit;
 
 	// 2nd pass: blit
+	FramebufferPtr m_isFb;
 	ShaderResourcePtr m_blitFrag;
 	PipelinePtr m_blitPpline;
 };

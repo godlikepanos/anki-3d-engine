@@ -58,18 +58,12 @@ public:
 
 	void generateMipmaps(CommandBufferPtr& cmdb)
 	{
-		ANKI_ASSERT(0 && "TODO");
-		//m_rt.generateMipmaps(cmdb);
+		cmdb->generateMipmaps(m_rt);
 	}
 
 	void setAmbientColor(const Vec4& color)
 	{
 		m_ambientColor = color;
-	}
-
-	FramebufferPtr& getFramebuffer()
-	{
-		return m_fb;
 	}
 	/// @}
 
@@ -94,9 +88,6 @@ private:
 
 	/// @name GPU buffers
 	/// @{
-
-	/// Contains common data for all shader programs
-	BufferPtr m_commonBuffer;
 
 	/// Track the updates of commonUbo
 	Timestamp m_commonBuffUpdateTimestamp = 0;
@@ -149,6 +140,8 @@ private:
 
 	Vec4 m_ambientColor = Vec4(0.0);
 
+	WeakPtr<Barrier> m_barrier;
+
 	/// Called by init
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 
@@ -161,7 +154,7 @@ private:
 	/// Calculate the size of the tile
 	PtrSize calcTileSize() const;
 
-	ANKI_USE_RESULT Error updateCommonBlock(CommandBufferPtr& cmdBuff);
+	void updateCommonBlock(CommandBufferPtr& cmdBuff);
 
 	// Binning
 	void binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& data);

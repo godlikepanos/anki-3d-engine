@@ -398,7 +398,7 @@ void TextureImpl::write(U32 mipmap, U32 slice, void* data, PtrSize dataSize)
 				slice,
 				w,
 				h,
-				slice + 1,
+				1,
 				m_format,
 				m_type,
 				data);
@@ -413,7 +413,7 @@ void TextureImpl::write(U32 mipmap, U32 slice, void* data, PtrSize dataSize)
 				slice,
 				w,
 				h,
-				slice + 1,
+				1,
 				m_format,
 				dataSize,
 				data);
@@ -422,6 +422,8 @@ void TextureImpl::write(U32 mipmap, U32 slice, void* data, PtrSize dataSize)
 	default:
 		ANKI_ASSERT(0);
 	}
+
+	ANKI_CHECK_GL_ERROR();
 }
 
 //==============================================================================

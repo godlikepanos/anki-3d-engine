@@ -27,7 +27,6 @@ namespace anki {
 class UpdateTexturesVisitor
 {
 public:
-	U m_count = 0;
 	ResourceGroupInitializer* m_init = nullptr;
 
 	template<typename TMaterialVariableTemplate>
@@ -44,7 +43,7 @@ Error UpdateTexturesVisitor
 	::visit<MaterialVariableTemplate<TextureResourcePtr>>(
 	const MaterialVariableTemplate<TextureResourcePtr>& var)
 {
-	m_init->m_textures[m_count++].m_texture =
+	m_init->m_textures[var.getTextureUnit()].m_texture =
 		(*var.begin())->getGlTexture();
 	return ErrorCode::NONE;
 }

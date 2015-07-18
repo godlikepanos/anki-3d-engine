@@ -106,7 +106,7 @@ public:
 	VisibilityTestResults::Container::ConstIterator m_lightsBegin = nullptr;
 	VisibilityTestResults::Container::ConstIterator m_lightsEnd = nullptr;
 
-	Barrier* m_barrier = nullptr;
+	WeakPtr<Barrier> m_barrier;
 	Is* m_is = nullptr;
 };
 
@@ -245,10 +245,6 @@ Error Is::initInternal(const ConfigSet& config)
 	//
 	// Create UBOs
 	//
-	m_commonBuffer = getGrManager().newInstance<Buffer>(
-		sizeof(shader::CommonUniforms), BufferUsageBit::UNIFORM,
-		BufferAccessBit::CLIENT_WRITE);
-
 	m_pLightsBuffSize = m_maxPointLights * sizeof(shader::PointLight);
 	m_sLightsBuffSize = m_maxSpotLights * sizeof(shader::SpotLight);
 	m_stLightsBuffSize = m_maxSpotTexLights * sizeof(shader::SpotLight);
@@ -294,8 +290,6 @@ Error Is::initInternal(const ConfigSet& config)
 		init.m_textures[3].m_texture = m_r->getMs().getDepthRt();
 		init.m_textures[4].m_texture = m_sm.getTextureArray();
 
-		init.m_uniformBuffers[0].m_buffer = m_commonBuffer;
-
 		init.m_storageBuffers[0].m_buffer = m_pLightsBuffs[i];
 		init.m_storageBuffers[1].m_buffer = m_sLightsBuffs[i];
 		init.m_storageBuffers[2].m_buffer = m_stLightsBuffs[i];
@@ -304,6 +298,13 @@ Error Is::initInternal(const ConfigSet& config)
 
 		m_rcGroups[i] = getGrManager().newInstance<ResourceGroup>(init);
 	}
+
+	//
+	// Misc
+	//
+	Threadpool& threadPool = m_r->getThreadpool();
+	m_barrier = getAllocator().newInstance<Barrier>(
+		threadPool.getThreadsCount());
 
 	return ErrorCode::NONE;
 }
@@ -412,8 +413,7 @@ Error Is::lightPass(CommandBufferPtr& cmdBuff)
 	taskData.m_lightsBegin = vi.getLightsBegin();
 	taskData.m_lightsEnd = vi.getLightsEnd();
 
-	Barrier barrier(threadPool.getThreadsCount()); // TODO opt
-	taskData.m_barrier = &barrier;
+	taskData.m_barrier = m_barrier;
 
 	taskData.m_is = this;
 
@@ -443,6 +443,9 @@ Error Is::lightPass(CommandBufferPtr& cmdBuff)
 
 	// In the meantime set the state
 	setState(cmdBuff);
+
+	// Update uniforms
+	updateCommonBlock(cmdBuff);
 
 	// Sync
 	ANKI_CHECK(threadPool.waitForAllThreadsToFinish());
@@ -594,8 +597,6 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 			ANKI_LOGW("Light IDs buffer too small");
 		}
 	}
-
-	m_tilesBuffers[m_currentFrame]->unmap();
 }
 
 //==============================================================================
@@ -771,10 +772,10 @@ Error Is::run(CommandBufferPtr& cmdBuff)
 }
 
 //==============================================================================
-Error Is::updateCommonBlock(CommandBufferPtr& cmdb)
+void Is::updateCommonBlock(CommandBufferPtr& cmdb)
 {
 	shader::CommonUniforms* blk;
-	cmdb->writeBuffer(m_commonBuffer, 0, sizeof(shader::CommonUniforms), blk);
+	cmdb->updateDynamicUniforms(sizeof(*blk), blk);
 
 	// Start writing
 	blk->m_projectionParams = m_r->getProjectionParameters();
@@ -787,8 +788,6 @@ Error Is::updateCommonBlock(CommandBufferPtr& cmdb)
 			m_cam->getComponent<FrustumComponent>().getViewMatrix();
 		blk->m_groundLightDir = Vec4(-viewMat.getColumn(1).xyz(), 1.0);
 	}
-
-	return ErrorCode::NONE;
 }
 
 } // end namespace anki

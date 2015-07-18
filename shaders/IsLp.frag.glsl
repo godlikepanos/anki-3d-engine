@@ -71,7 +71,6 @@ layout(binding = 0) uniform sampler2D u_msRt0;
 layout(binding = 1) uniform sampler2D u_msRt1;
 layout(binding = 2) uniform sampler2D u_msRt2;
 layout(binding = 3) uniform sampler2D u_msDepthRt;
-
 layout(binding = 4) uniform highp sampler2DArrayShadow u_shadowMapArr;
 
 layout(location = 0) in vec2 in_texCoord;

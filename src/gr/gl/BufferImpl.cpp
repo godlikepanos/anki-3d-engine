@@ -15,6 +15,7 @@ void BufferImpl::create(
 {
 	ANKI_ASSERT(!isCreated());
 	m_usage = usage;
+	m_access = access;
 
 	///
 	// Check size
@@ -24,7 +25,7 @@ void BufferImpl::create(
 
 	// This is a guess, not very important since DSA doesn't care about it on
 	// creation
-	GLenum target = GL_ARRAY_BUFFER;
+	m_target = GL_ARRAY_BUFFER;
 
 	if((usage & BufferUsageBit::UNIFORM) != BufferUsageBit::NONE)
 	{
@@ -42,7 +43,7 @@ void BufferImpl::create(
 				"than the implementation's min (%u)", size, maxBufferSize);
 		}
 
-		target = GL_UNIFORM_BUFFER;
+		m_target = GL_UNIFORM_BUFFER;
 	}
 
 	if((usage & BufferUsageBit::STORAGE) != BufferUsageBit::NONE)
@@ -61,7 +62,7 @@ void BufferImpl::create(
 				"than the implementation's min (%u)", size, maxBufferSize);
 		}
 
-		target = GL_SHADER_STORAGE_BUFFER;
+		m_target = GL_SHADER_STORAGE_BUFFER;
 	}
 
 	m_size = size;
@@ -98,8 +99,8 @@ void BufferImpl::create(
 	// Create
 	//
 	glGenBuffers(1, &m_glName);
-	glBindBuffer(target, m_glName);
-	glBufferStorage(target, size, nullptr, flags);
+	glBindBuffer(m_target, m_glName);
+	glBufferStorage(m_target, size, nullptr, flags);
 
 	//
 	// Map
@@ -110,7 +111,7 @@ void BufferImpl::create(
 			| GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
 
 		m_persistentMapping =
-			glMapBufferRange(target, 0, size, flags & MAP_BITS);
+			glMapBufferRange(m_target, 0, size, flags & MAP_BITS);
 		ANKI_ASSERT(m_persistentMapping != nullptr);
 	}
 }

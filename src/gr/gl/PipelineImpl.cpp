@@ -483,6 +483,8 @@ void PipelineImpl::setInputAssemblerState(GlState& state) const
 
 	state.m_stateHashes.m_inputAssembler = m_hashes.m_inputAssembler;
 
+	state.m_topology = m_cache.m_topology;
+
 	if(m_in.m_inputAssembler.m_primitiveRestartEnabled)
 	{
 		glEnable(GL_PRIMITIVE_RESTART);

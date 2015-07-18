@@ -118,7 +118,10 @@ void ResourceGroupImpl::bind(GlState& state)
 		if(binding.m_buffer.isCreated())
 		{
 			const BufferImpl& buff = binding.m_buffer->getImplementation();
-			buff.bind(GL_UNIFORM_BUFFER, i, binding.m_offset, binding.m_range);
+			PtrSize range = (binding.m_range != 0)
+				? binding.m_range
+				: (buff.m_size - binding.m_offset);
+			buff.bind(GL_UNIFORM_BUFFER, i, binding.m_offset, range);
 		}
 	}
 
@@ -129,9 +132,11 @@ void ResourceGroupImpl::bind(GlState& state)
 
 		if(binding.m_buffer.isCreated())
 		{
-			BufferImpl& buff = binding.m_buffer->getImplementation();
-			buff.bind(
-				GL_SHADER_STORAGE_BUFFER, i, binding.m_offset, binding.m_range);
+			const BufferImpl& buff = binding.m_buffer->getImplementation();
+			PtrSize range = (binding.m_range != 0)
+				? binding.m_range
+				: (buff.m_size - binding.m_offset);
+			buff.bind(GL_SHADER_STORAGE_BUFFER, i, binding.m_offset, range);
 		}
 	}
 

@@ -70,10 +70,10 @@ Error Sslr::init(const ConfigSet& config)
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation =
-		AttachmentLoadOperation::LOAD;
+		AttachmentLoadOperation::DONT_CARE;
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
-	// Create resource group
+	// Create resource groups
 	ResourceGroupInitializer rcInit;
 	rcInit.m_textures[0].m_texture = m_r->getIs().getRt();
 	rcInit.m_textures[1].m_texture = m_r->getMs().getDepthRt();
@@ -84,11 +84,17 @@ Error Sslr::init(const ConfigSet& config)
 
 	m_rcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);
 
-
 	ResourceGroupInitializer rcInitBlit;
 	rcInitBlit.m_textures[0].m_texture = m_rt;
 
 	m_rcGroupBlit = getGrManager().newInstance<ResourceGroup>(rcInitBlit);
+
+	// Create IS FB
+	fbInit.m_colorAttachmentsCount = 1;
+	fbInit.m_colorAttachments[0].m_texture = m_r->getIs().getRt();
+	fbInit.m_colorAttachments[0].m_loadOperation =
+		AttachmentLoadOperation::LOAD;
+	m_isFb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 	return ErrorCode::NONE;
 }
@@ -109,7 +115,7 @@ void Sslr::run(CommandBufferPtr& cmdBuff)
 
 	// Write the reflection back to IS RT
 	//
-	cmdBuff->bindFramebuffer(m_r->getIs().getFramebuffer());
+	cmdBuff->bindFramebuffer(m_isFb);
 	cmdBuff->bindPipeline(m_blitPpline);
 	cmdBuff->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 	cmdBuff->bindResourceGroup(m_rcGroupBlit);

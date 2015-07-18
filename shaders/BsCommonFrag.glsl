@@ -75,6 +75,18 @@ void particleSoftTextureAlpha(in sampler2D depthMap, in sampler2D tex,
 
 //==============================================================================
 #if PASS == COLOR
+#	define particleTextureAlpha_DEFINED
+void particleTextureAlpha(in sampler2D tex, in float alpha)
+{
+	vec4 color = texture(tex, gl_PointCoord);
+	color.a *= alpha;
+
+	writeGBuffer(color);
+}
+#endif
+
+//==============================================================================
+#if PASS == COLOR
 #	define particleSoftColorAlpha_DEFINED
 void particleSoftColorAlpha(in sampler2D depthMap, in vec3 icolor,
 	in float alpha)

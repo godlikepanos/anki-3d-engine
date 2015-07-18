@@ -12,6 +12,7 @@
 #include "anki/util/Logger.h"
 #include <cstdlib>
 #include <cstring>
+#include <cstdio>
 
 namespace anki {
 
@@ -46,14 +47,18 @@ static Signature computeSignature(void* ptr)
 //==============================================================================
 void* mallocAligned(PtrSize size, PtrSize alignmentBytes)
 {
-#if ANKI_POSIX 
+	ANKI_ASSERT(size > 0);
+	ANKI_ASSERT(alignmentBytes > 0);
+
+#if ANKI_POSIX
 #	if ANKI_OS != ANKI_OS_ANDROID
-	void* out;
+	void* out = nullptr;
 	U alignment = getAlignedRoundUp(alignmentBytes, sizeof(void*));
 	int err = posix_memalign(&out, alignment, size);
 
 	if(!err)
 	{
+		ANKI_ASSERT(out != nullptr);
 		// Make sure it's aligned
 		ANKI_ASSERT(isAligned(alignmentBytes, out));
 	}
@@ -202,7 +207,7 @@ void BaseMemoryPool::free(void* ptr)
 
 //==============================================================================
 HeapMemoryPool::HeapMemoryPool()
-:	BaseMemoryPool(Type::HEAP)
+	: BaseMemoryPool(Type::HEAP)
 {}
 
 //==============================================================================
@@ -286,7 +291,7 @@ void HeapMemoryPool::free(void* ptr)
 
 //==============================================================================
 StackMemoryPool::StackMemoryPool()
-:	BaseMemoryPool(Type::STACK)
+	: BaseMemoryPool(Type::STACK)
 {}
 
 //==============================================================================
@@ -332,7 +337,7 @@ void StackMemoryPool::create(
 		m_top.store(m_memory);
 
 		// Calc header size
-		m_headerSize = 
+		m_headerSize =
 			getAlignedRoundUp(m_alignmentBytes, sizeof(MemoryBlockHeader));
 	}
 	else
@@ -362,7 +367,7 @@ void* StackMemoryPool::allocate(PtrSize size, PtrSize alignment)
 #endif
 
 		// Write the block header
-		MemoryBlockHeader* header = 
+		MemoryBlockHeader* header =
 			reinterpret_cast<MemoryBlockHeader*>(out);
 		U32 size32 = size;
 		memcpy(&header->m_size[0], &size32, sizeof(U32));
@@ -390,7 +395,7 @@ void StackMemoryPool::free(void* ptr)
 {
 	ANKI_ASSERT(isCreated());
 
-	// ptr shouldn't be null or not aligned. If not aligned it was not 
+	// ptr shouldn't be null or not aligned. If not aligned it was not
 	// allocated by this class
 	ANKI_ASSERT(ptr != nullptr && isAligned(m_alignmentBytes, ptr));
 
@@ -474,7 +479,7 @@ void StackMemoryPool::resetUsingSnapshot(Snapshot s)
 
 //==============================================================================
 ChainMemoryPool::ChainMemoryPool()
-:	BaseMemoryPool(Type::CHAIN)
+	: BaseMemoryPool(Type::CHAIN)
 {}
 
 //==============================================================================
@@ -503,11 +508,11 @@ ChainMemoryPool::~ChainMemoryPool()
 
 //==============================================================================
 void ChainMemoryPool::create(
-	AllocAlignedCallback allocCb, 
+	AllocAlignedCallback allocCb,
 	void* allocCbUserData,
 	PtrSize initialChunkSize,
 	F32 nextChunkScale,
-	PtrSize nextChunkBias, 
+	PtrSize nextChunkBias,
 	PtrSize alignmentBytes)
 {
 	ANKI_ASSERT(!isCreated());
@@ -521,7 +526,7 @@ void ChainMemoryPool::create(
 	m_scale = nextChunkScale;
 	m_bias = nextChunkBias;
 	m_headerSize = max(m_alignmentBytes, sizeof(Chunk*));
-	
+
 	m_lock = reinterpret_cast<SpinLock*>(m_allocCb(
 		m_allocCbUserData, nullptr, sizeof(SpinLock), alignof(SpinLock)));
 	if(!m_lock)
@@ -554,7 +559,7 @@ void* ChainMemoryPool::allocate(PtrSize size, PtrSize alignment)
 	ch = m_tailChunk;
 
 	// Create new chunk if needed
-	if(ch == nullptr 
+	if(ch == nullptr
 		|| (mem = allocateFromChunk(ch, size, alignment)) == nullptr)
 	{
 		// Create new chunk
@@ -594,7 +599,7 @@ void ChainMemoryPool::free(void* ptr)
 	Chunk* chunk = *reinterpret_cast<Chunk**>(mem);
 
 	ANKI_ASSERT(chunk != nullptr);
-	ANKI_ASSERT((mem >= chunk->m_memory 
+	ANKI_ASSERT((mem >= chunk->m_memory
 		&& mem < (chunk->m_memory + chunk->m_memsize))
 		&& "Wrong chunk");
 
@@ -694,7 +699,7 @@ ChainMemoryPool::Chunk* ChainMemoryPool::createNewChunk(PtrSize size)
 
 		// Initialize it
 		chunk->m_memory = reinterpret_cast<U8*>(chunk) + chunkAllocSize;
-		
+
 		chunk->m_memsize = memAllocSize;
 		chunk->m_top = chunk->m_memory;
 
@@ -715,7 +720,7 @@ ChainMemoryPool::Chunk* ChainMemoryPool::createNewChunk(PtrSize size)
 	{
 		ANKI_OOM_ACTION();
 	}
-	
+
 	return chunk;
 }
 
@@ -775,7 +780,7 @@ void ChainMemoryPool::destroyChunk(Chunk* ch)
 	}
 
 #if ANKI_DEBUG
-	memset(ch, 0xCC, 
+	memset(ch, 0xCC,
 		getAlignedRoundUp(m_alignmentBytes, sizeof(Chunk)) + ch->m_memsize);
 #endif
 	m_allocCb(m_allocCbUserData, ch, 0, 0);

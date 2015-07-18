@@ -101,11 +101,11 @@ Error Renderer::initInternal(const ConfigSet& config)
 	ANKI_CHECK(m_drawQuadVert.load("shaders/Quad.vert.glsl", m_resources));
 
 	// Init the stages. Careful with the order!!!!!!!!!!
-	m_tiler.reset(m_alloc.newInstance<Tiler>(this));
-	ANKI_CHECK(m_tiler->init());
-
 	m_ms.reset(m_alloc.newInstance<Ms>(this));
 	ANKI_CHECK(m_ms->init(config));
+
+	m_tiler.reset(m_alloc.newInstance<Tiler>(this));
+	ANKI_CHECK(m_tiler->init());
 
 	m_is.reset(m_alloc.newInstance<Is>(this));
 	ANKI_CHECK(m_is->init(config));

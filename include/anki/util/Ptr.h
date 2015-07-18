@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_UTIL_PTR_H
-#define ANKI_UTIL_PTR_H
+#pragma once
 
 #include "anki/util/Assert.h"
 #include "anki/util/StdTypes.h"
@@ -95,11 +94,11 @@ protected:
 	T* m_ptr;
 
 	PtrBase()
-	:	m_ptr(nullptr)
+		: m_ptr(nullptr)
 	{}
 
 	PtrBase(T* ptr)
-	:	m_ptr(ptr)
+		: m_ptr(ptr)
 	{}
 };
 
@@ -111,19 +110,19 @@ public:
 	using Base = PtrBase<T>;
 
 	WeakPtr()
-	:	Base()
+		: Base()
 	{}
 
 	WeakPtr(T* ptr)
-	:	Base(ptr)
+		: Base(ptr)
 	{}
 
 	WeakPtr(const WeakPtr& other)
-	:	Base(other.m_ptr)
+		: Base(other.m_ptr)
 	{}
 
 	WeakPtr(WeakPtr&& other)
-	:	Base(other.m_ptr)
+		: Base(other.m_ptr)
 	{
 		other.m_ptr = nullptr;
 	}
@@ -215,11 +214,11 @@ public:
 	using Base = PtrBase<T>;
 
 	UniquePtr()
-	:	Base()
+		: Base()
 	{}
 
 	explicit UniquePtr(T* ptr)
-	:	Base(ptr)
+		: Base(ptr)
 	{}
 
 	/// Non-copyable.
@@ -284,18 +283,18 @@ public:
 	using Base = PtrBase<T>;
 
 	IntrusivePtr()
-	:	Base()
+		: Base()
 	{}
 
 	IntrusivePtr(T* ptr)
-	:	Base()
+		: Base()
 	{
 		reset(ptr);
 	}
 
 	/// Copy.
 	IntrusivePtr(const IntrusivePtr& other)
-	:	Base()
+		: Base()
 	{
 		reset(other.m_ptr);
 	}
@@ -303,7 +302,7 @@ public:
 	/// Copy, compatible pointer.
 	template<typename Y>
 	IntrusivePtr(const IntrusivePtr<Y, TDeleter>& other)
-	:	Base()
+		: Base()
 	{
 		reset(other.m_ptr);
 	}
@@ -360,5 +359,4 @@ private:
 
 } // end namespace anki
 
-#endif
 

@@ -157,6 +157,7 @@ public:
 
 void CommandBuffer::bindResourceGroup(ResourceGroupPtr rc)
 {
+	ANKI_ASSERT(rc.isCreated());
 	m_impl->pushBackNewCommand<BindResourcesCommand>(rc);
 }
 
@@ -418,19 +419,26 @@ public:
 	U32 m_slice;
 	PtrSize m_dataSize;
 	void* m_data;
+	CommandBufferAllocator<U8> m_alloc; ///< Alloc that was used for m_data.
 
 	TexUploadCommand(const TexturePtr& handle, U32 mipmap, U32 slice,
-		PtrSize dataSize, void* data)
+		PtrSize dataSize, void* data, const CommandBufferAllocator<U8>& alloc)
 		: m_handle(handle)
 		, m_mipmap(mipmap)
 		, m_slice(slice)
+		, m_dataSize(dataSize)
 		, m_data(data)
+		, m_alloc(alloc)
 	{}
 
 	Error operator()(GlState&)
 	{
 		m_handle->getImplementation().write(
 			m_mipmap, m_slice, m_data, m_dataSize);
+
+		// Cleanup to avoid warnings
+		m_alloc.deallocate(m_data, 1);
+
 		return ErrorCode::NONE;
 	}
 };
@@ -444,7 +452,7 @@ void CommandBuffer::textureUploadInternal(TexturePtr tex, U32 mipmap, U32 slice,
 	data = m_impl->getInternalAllocator().allocate(dataSize);
 
 	m_impl->pushBackNewCommand<TexUploadCommand>(
-		tex, mipmap, slice, dataSize, data);
+		tex, mipmap, slice, dataSize, data, m_impl->getInternalAllocator());
 }
 
 //==============================================================================
@@ -455,18 +463,24 @@ public:
 	PtrSize m_offset;
 	PtrSize m_range;
 	void* m_data;
+	CommandBufferAllocator<U8> m_alloc;
 
 	BuffWriteCommand(const BufferPtr& handle, PtrSize offset, PtrSize range,
-		void* data)
+		void* data, const CommandBufferAllocator<U8>& alloc)
 		: m_handle(handle)
 		, m_offset(offset)
 		, m_range(range)
 		, m_data(data)
+		, m_alloc(alloc)
 	{}
 
 	Error operator()(GlState&)
 	{
 		m_handle->getImplementation().write(m_data, m_offset, m_range);
+
+		// Cleanup to avoid warnings
+		m_alloc.deallocate(m_data, 1);
+
 		return ErrorCode::NONE;
 	}
 };
@@ -480,7 +494,7 @@ void CommandBuffer::writeBufferInternal(BufferPtr buff, PtrSize offset,
 	data = m_impl->getInternalAllocator().allocate(range);
 
 	m_impl->pushBackNewCommand<BuffWriteCommand>(
-		buff, offset, range, data);
+		buff, offset, range, data, m_impl->getInternalAllocator());
 }
 
 //==============================================================================

@@ -121,6 +121,8 @@ Error Pps::initInternal(const ConfigSet& config)
 
 	rcInit.m_storageBuffers[0].m_buffer = m_tm->getAverageLuminanceBuffer();
 
+	m_rcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);
+
 	return ErrorCode::NONE;
 }
 

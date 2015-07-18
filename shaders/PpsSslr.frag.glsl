@@ -16,7 +16,7 @@ layout(location = 0) in vec2 in_texCoords;
 
 layout(location = 0) out vec3 out_color;
 
-layout(std140, binding = 0) readonly buffer _blk
+layout(std140, binding = 0) uniform _u0
 {
 	vec4 u_projectionParams;
 

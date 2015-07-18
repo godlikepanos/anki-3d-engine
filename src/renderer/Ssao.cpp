@@ -137,11 +137,10 @@ Error Ssao::initInternal(const ConfigSet& config)
 
 	PtrSize noiseSize = NOISE_TEX_SIZE * NOISE_TEX_SIZE * sizeof(Vec3);
 
-	void* data = nullptr;
-	cmdb->textureUpload(m_noiseTex, 0, 0, noiseSize, data);
+	Vec3* noise = nullptr;
+	cmdb->textureUpload(m_noiseTex, 0, 0, noiseSize, noise);
 
-	genNoise(static_cast<Vec3*>(data),
-		static_cast<Vec3*>(data) + NOISE_TEX_SIZE * NOISE_TEX_SIZE);
+	genNoise(noise, noise + NOISE_TEX_SIZE * NOISE_TEX_SIZE);
 
 	cmdb->flush();
 
@@ -240,7 +239,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 
 	rcinit = ResourceGroupInitializer();
 	rcinit.m_textures[0].m_texture = m_hblurRt;
-	m_hblurRc = getGrManager().newInstance<ResourceGroup>(rcinit);
+	m_vblurRc = getGrManager().newInstance<ResourceGroup>(rcinit);
 
 	return ErrorCode::NONE;
 }
