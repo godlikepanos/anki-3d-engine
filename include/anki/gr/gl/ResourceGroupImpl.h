@@ -7,6 +7,7 @@
 
 #include "anki/gr/gl/GlObject.h"
 #include "anki/gr/ResourceGroup.h"
+#include "anki/util/DArray.h"
 
 namespace anki {
 
@@ -22,7 +23,9 @@ public:
 	{}
 
 	~ResourceGroupImpl()
-	{}
+	{
+		m_refs.destroy(getAllocator());
+	}
 
 	void create(const ResourceGroupInitializer& init);
 
@@ -30,23 +33,41 @@ public:
 	void bind(GlState& state);
 
 private:
-	ResourceGroupInitializer m_in; ///< That will hold the references
-
-	class
+	class InternalBufferBinding
 	{
 	public:
-		Array<GLuint, MAX_TEXTURE_BINDINGS> m_textureNames;
-		Array<GLuint, MAX_TEXTURE_BINDINGS> m_samplerNames;
-		U8 m_textureNamesCount = 0;
-		Bool8 m_allSamplersZero = false;
+		GLuint m_name = 0;
+		U32 m_offset = 0;
+		U32 m_range = 0;
+	};
 
-		U8 m_ubosCount = 0;
-		U8 m_ssbosCount = 0;
+	Array<GLuint, MAX_TEXTURE_BINDINGS> m_textureNames;
+	Array<GLuint, MAX_TEXTURE_BINDINGS> m_samplerNames;
+	U8 m_textureNamesCount = 0;
+	Bool8 m_allSamplersZero = false;
 
-		Array<GLuint, MAX_VERTEX_ATTRIBUTES> m_vertBuffNames;
-		Array<GLintptr, MAX_VERTEX_ATTRIBUTES> m_vertBuffOffsets;
-		U8 m_vertBindingsCount = 0;
-	} m_cache;
+	Array<InternalBufferBinding, MAX_UNIFORM_BUFFER_BINDINGS> m_ubos;
+	U8 m_ubosCount = 0;
+
+	Array<InternalBufferBinding, MAX_STORAGE_BUFFER_BINDINGS> m_ssbos;
+	U8 m_ssbosCount = 0;
+
+	Array<GLuint, MAX_VERTEX_ATTRIBUTES> m_vertBuffNames;
+	Array<GLintptr, MAX_VERTEX_ATTRIBUTES> m_vertBuffOffsets;
+	U8 m_vertBindingsCount = 0;
+
+	GLuint m_indexBuffName = 0;
+	U8 m_indexSize = 0;
+
+	/// Holds the references to the resources. Used to release the references
+	/// gracefully
+	DArray<IntrusivePtr<GrObject>> m_refs;
+
+	template<typename InBindings, typename OutBindings>
+	void initBuffers(const InBindings& in, OutBindings& out, U8& count,
+		U& resourcesCount);
+
+	void initResourceReferences(const ResourceGroupInitializer& init, U count);
 };
 /// @}
 

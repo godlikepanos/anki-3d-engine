@@ -321,8 +321,8 @@ public:
 	}
 
 	/// Copy, compatible.
-	template<typename Y>
-	IntrusivePtr& operator=(const IntrusivePtr<Y, TDeleter>& other)
+	template<typename Y, typename YDeleter>
+	IntrusivePtr& operator=(const IntrusivePtr<Y, YDeleter>& other)
 	{
 		reset(other.m_ptr);
 		return *this;
