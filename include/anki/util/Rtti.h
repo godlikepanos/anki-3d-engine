@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_UTIL_RTTI_H
-#define ANKI_UTIL_RTTI_H
+#pragma once
 
 #include "anki/util/Assert.h"
 
@@ -79,4 +78,3 @@ inline TTo dcast(TFrom* c)
 
 } // end namespace anki
 
-#endif

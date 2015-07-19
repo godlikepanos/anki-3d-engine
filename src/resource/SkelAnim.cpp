@@ -3,6 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#if 0
 #include "anki/resource/SkelAnim.h"
 
 namespace anki {
@@ -10,7 +11,6 @@ namespace anki {
 //==============================================================================
 void SkelAnim::load(const char* filename)
 {
-#if 0
 	scanner::Scanner scanner(filename);
 	const scanner::Token* token;
 
@@ -67,7 +67,7 @@ void SkelAnim::load(const char* filename)
 
 
 	framesNum = keyframes[keyframes.size() - 1] + 1;
-#endif
 }
 
 } // end namespace
+#endif

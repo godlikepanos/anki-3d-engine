@@ -30,7 +30,7 @@ public:
 
 	template<typename... TArgs>
 	ListNode(TArgs&&... args)
-	:	m_value(std::forward<TArgs>(args)...)
+		: m_value(std::forward<TArgs>(args)...)
 	{}
 };
 

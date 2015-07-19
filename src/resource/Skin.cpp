@@ -3,6 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#if 0
 #include "anki/resource/Skin.h"
 #include "anki/resource/Model.h"
 #include "anki/resource/Skeleton.h"
@@ -13,7 +14,7 @@
 #include "anki/resource/Material.h"
 #include "anki/misc/Xml.h"
 
-#if 0
+
 namespace anki {
 
 //==============================================================================
@@ -69,7 +70,7 @@ void Skin::load(const char* filename)
 			{
 				throw ANKI_EXCEPTION(
 					"Skeleton animation %s and skeleton %s "
-					"dont have equal bone count", 
+					"dont have equal bone count",
 					skelAnim.getResourceName().c_str(),
 					skeleton.getResourceName().c_str());
 			}

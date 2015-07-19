@@ -29,9 +29,9 @@ Error GrManager::create(Initializer& init)
 
 	m_cacheDir.create(m_alloc, init.m_cacheDirectory);
 	m_impl.reset(m_alloc.newInstance<GrManagerImpl>(this));
-	Error err = m_impl->create(init);
+	m_impl->create(init);
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

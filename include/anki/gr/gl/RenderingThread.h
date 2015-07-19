@@ -40,7 +40,7 @@ public:
 
 	/// Start the working thread
 	/// @note Don't free the context before calling #stop
-	ANKI_USE_RESULT Error start(
+	void start(
 		MakeCurrentCallback makeCurrentCb, void* makeCurrentCbData, void* ctx,
 		SwapBuffersCallback swapBuffersCallback, void* swapBuffersCbData,
 		Bool registerMessages);

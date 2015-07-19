@@ -8,7 +8,6 @@
 #include "anki/util/DArray.h"
 #include "anki/util/Array.h"
 #include "anki/util/NonCopyable.h"
-#include "anki/util/ScopeDestroyer.h"
 #include <cstring>
 #include <cmath> // For HUGE_VAL
 #include <climits> // For LLONG_MAX

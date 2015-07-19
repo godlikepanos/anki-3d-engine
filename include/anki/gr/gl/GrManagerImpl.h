@@ -27,7 +27,7 @@ public:
 
 	~GrManagerImpl();
 
-	ANKI_USE_RESULT Error create(GrManagerInitializer& init);
+	void create(GrManagerInitializer& init);
 
 	const RenderingThread& getRenderingThread() const
 	{

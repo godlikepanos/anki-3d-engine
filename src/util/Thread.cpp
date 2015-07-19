@@ -30,15 +30,15 @@ public:
 	Mutex m_mutex; ///< Protect the task
 	ConditionVariable m_condVar; ///< To wake up the thread
 	Threadpool::Task* m_task; ///< Its NULL if there is no pending task
-	Threadpool* m_threadpool; 
+	Threadpool* m_threadpool;
 	Bool8 m_quit = false;
 
 	/// Constructor
 	ThreadpoolThread(U32 id, Threadpool* threadpool)
-	:	m_id(id),
-		m_thread("anki_threadpool"),
-		m_task(nullptr), 
-		m_threadpool(threadpool)
+		: m_id(id)
+		, m_thread("anki_threadpool")
+		, m_task(nullptr)
+		, m_threadpool(threadpool)
 	{
 		ANKI_ASSERT(threadpool);
 		m_thread.start(this, threadCallback);
@@ -58,10 +58,10 @@ private:
 	/// Thread callaback
 	static Error threadCallback(Thread::Info& info)
 	{
-		ThreadpoolThread& self = 
+		ThreadpoolThread& self =
 			*reinterpret_cast<ThreadpoolThread*>(info.m_userData);
 		Barrier& barrier = self.m_threadpool->m_barrier;
-		Mutex& mtx = self.m_mutex; 
+		Mutex& mtx = self.m_mutex;
 		const PtrSize threadCount = self.m_threadpool->getThreadsCount();
 		Bool quit = false;
 
@@ -150,7 +150,7 @@ Threadpool::~Threadpool()
 		thread.m_quit = true;
 		thread.assignNewTask(&m_dummyTask); // Wake it
 	}
-	
+
 	Error err = waitForAllThreadsToFinish();
 	(void)err;
 

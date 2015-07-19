@@ -8,7 +8,6 @@
 #include "anki/core/App.h"
 #include "anki/resource/Mesh.h"
 #include "anki/resource/Material.h"
-#include "anki/resource/SkelAnim.h"
 #include "anki/script/ScriptManager.h"
 #include "anki/core/StdinListener.h"
 #include "anki/resource/Model.h"

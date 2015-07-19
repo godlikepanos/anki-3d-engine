@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_UTIL_HIERARCHY_H
-#define ANKI_UTIL_HIERARCHY_H
+#pragma once
 
 #include "anki/util/Assert.h"
 #include "anki/util/List.h"
@@ -27,7 +26,7 @@ public:
 	using Container = List<Value*>;
 
 	Hierarchy()
-	:	m_parent(nullptr)
+		: m_parent(nullptr)
 	{}
 
 	/// Delete children from the last entered to the first and update parent
@@ -107,4 +106,3 @@ private:
 
 #include "anki/util/Hierarchy.inl.h"
 
-#endif

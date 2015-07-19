@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_UTIL_SYSTEM_H
-#define ANKI_UTIL_SYSTEM_H
+#pragma once
 
 #include "anki/util/StdTypes.h"
 
@@ -23,4 +22,3 @@ extern void printBacktrace();
 
 } // end namespace anki
 
-#endif

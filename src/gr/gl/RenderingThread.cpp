@@ -118,7 +118,7 @@ void RenderingThread::finishCommandBuffer(CommandBufferPtr commands)
 }
 
 //==============================================================================
-Error RenderingThread::start(
+void RenderingThread::start(
 	MakeCurrentCallback makeCurrentCb, void* makeCurrentCbData, void* ctx,
 	SwapBuffersCallback swapBuffersCallback, void* swapBuffersCbData,
 	Bool registerMessages)
@@ -152,8 +152,6 @@ Error RenderingThread::start(
 
 	ANKI_LOGW("GL queue works in synchronous mode");
 #endif
-
-	return ErrorCode::NONE;
 }
 
 //==============================================================================

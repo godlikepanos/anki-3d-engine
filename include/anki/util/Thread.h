@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_UTIL_THREAD_H
-#define ANKI_UTIL_THREAD_H
+#pragma once
 
 #include "anki/util/StdTypes.h"
 #include "anki/util/Array.h"
@@ -136,7 +135,7 @@ private:
 class SpinLock: public NonCopyable
 {
 public:
-	/// Lock 
+	/// Lock
 	void lock()
 	{
 		while(m_lock.test_and_set(std::memory_order_acquire))
@@ -150,7 +149,7 @@ public:
 	}
 
 private:
-	std::atomic_flag m_lock = ATOMIC_FLAG_INIT;	
+	std::atomic_flag m_lock = ATOMIC_FLAG_INIT;
 };
 
 /// Lock guard. When constructed it locks a TMutex and unlocks it when it gets
@@ -160,7 +159,7 @@ class LockGuard
 {
 public:
 	LockGuard(TMutex& mtx)
-	:	m_mtx(&mtx)
+		: m_mtx(&mtx)
 	{
 		m_mtx->lock();
 	}
@@ -213,7 +212,7 @@ public:
 		virtual Error operator()(U32 taskId, PtrSize threadsCount) = 0;
 
 		/// Chose a starting and end index
-		static void choseStartEnd(U32 taskId, PtrSize threadsCount, 
+		static void choseStartEnd(U32 taskId, PtrSize threadsCount,
 			PtrSize elementsCount, PtrSize& start, PtrSize& end)
 		{
 			F32 tid = taskId;
@@ -223,7 +222,7 @@ public:
 		}
 	};
 
-	/// Constructor 
+	/// Constructor
 	Threadpool(U32 threadsCount);
 
 	~Threadpool();
@@ -275,6 +274,4 @@ private:
 /// @}
 
 } // end namespace anki
-
-#endif
 

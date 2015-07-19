@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_UTIL_HIGH_REZ_TIMER_H
-#define ANKI_UTIL_HIGH_REZ_TIMER_H
+#pragma once
 
 #include "anki/util/StdTypes.h"
 
@@ -45,4 +44,3 @@ private:
 
 } // end namespace anki
 
-#endif

@@ -3,9 +3,9 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SCENE_SKIN_NODE_H
-#define ANKI_SCENE_SKIN_NODE_H
+#pragma once
 
+#if 0
 #include "anki/scene/SceneNode.h"
 #include "anki/scene/RenderComponent.h"
 #include "anki/scene/MoveComponent.h"
@@ -17,7 +17,6 @@ namespace anki {
 
 class Skin;
 
-#if 0
 
 /// Skin specific mesh. It contains a number of VBOs for transform feedback
 class SkinMesh: public MeshBase
@@ -67,7 +66,7 @@ public:
 	/// @}
 
 private:
-	Vbo vbo; ///< Contains the transformed P,N,T 
+	Vbo vbo; ///< Contains the transformed P,N,T
 	const MeshBase* mesh; ///< The resource
 };
 
@@ -322,8 +321,6 @@ private:
 		SceneVector<Vec3>& heads, SceneVector<Vec3>& tails);
 };
 
-#endif
-
 } // end namespace
-
 #endif
+
