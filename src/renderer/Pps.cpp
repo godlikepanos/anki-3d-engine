@@ -112,7 +112,7 @@ Error Pps::initInternal(const ConfigSet& config)
 		rcInit.m_textures[2].m_texture = m_bloom->getRt();
 	}
 
-	rcInit.m_textures[3].m_texture = m_lut->getGlTexture();
+	rcInit.m_textures[3].m_texture = m_lut->getGrTexture();
 
 	if(m_sslf->getEnabled())
 	{

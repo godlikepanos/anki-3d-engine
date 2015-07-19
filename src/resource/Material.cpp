@@ -44,7 +44,7 @@ Error UpdateTexturesVisitor
 	const MaterialVariableTemplate<TextureResourcePtr>& var)
 {
 	m_init->m_textures[var.getTextureUnit()].m_texture =
-		(*var.begin())->getGlTexture();
+		(*var.begin())->getGrTexture();
 	return ErrorCode::NONE;
 }
 

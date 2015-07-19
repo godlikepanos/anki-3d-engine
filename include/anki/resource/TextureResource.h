@@ -30,14 +30,14 @@ public:
 	/// Load a texture
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename);
 
-	/// Get the GL texture
-	const TexturePtr& getGlTexture() const
+	/// Get the texture
+	const TexturePtr& getGrTexture() const
 	{
 		return m_tex;
 	}
 
-	/// Get the GL texture
-	TexturePtr& getGlTexture()
+	/// Get the texture
+	TexturePtr& getGrTexture()
 	{
 		return m_tex;
 	}

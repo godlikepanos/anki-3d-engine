@@ -71,7 +71,7 @@ Error Sslf::initInternal(const ConfigSet& config)
 	// Create the resource group
 	ResourceGroupInitializer rcInit;
 	rcInit.m_textures[0].m_texture = m_r->getPps().getBloom().getRt();
-	rcInit.m_textures[1].m_texture = m_lensDirtTex->getGlTexture();
+	rcInit.m_textures[1].m_texture = m_lensDirtTex->getGrTexture();
 
 	m_rcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);
 

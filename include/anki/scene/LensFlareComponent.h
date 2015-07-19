@@ -66,7 +66,7 @@ public:
 
 	TexturePtr getTexture() const
 	{
-		return m_tex->getGlTexture();
+		return m_tex->getGrTexture();
 	}
 
 	OcclusionQueryPtr& getOcclusionQueryToTest();

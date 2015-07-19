@@ -26,7 +26,7 @@ Error LensFlareComponent::create(const CString& textureFilename)
 
 	// Resource group
 	ResourceGroupInitializer rcInit;
-	rcInit.m_textures[0].m_texture = m_tex->getGlTexture();
+	rcInit.m_textures[0].m_texture = m_tex->getGrTexture();
 	m_rcGroup = gr.newInstance<ResourceGroup>(rcInit);
 
 	return ErrorCode::NONE;
