@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_PHYSICS_PHYSICS_OBJECT_H
-#define ANKI_PHYSICS_PHYSICS_OBJECT_H
+#pragma once
 
 #include "anki/physics/Common.h"
 
@@ -28,9 +27,9 @@ public:
 	};
 
 	PhysicsObject(Type type, PhysicsWorld* world)
-	:	m_world(world),
-		m_type(type),
-		m_refcount(0)
+		: m_world(world)
+		, m_type(type)
+		, m_refcount(0)
 	{
 		ANKI_ASSERT(m_world);
 	}
@@ -69,4 +68,3 @@ private:
 
 } // end namespace anki
 
-#endif

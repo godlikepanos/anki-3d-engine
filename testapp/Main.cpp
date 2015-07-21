@@ -545,6 +545,7 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
+		delete app;
 		ANKI_LOGI("Bye!!");
 	}
 

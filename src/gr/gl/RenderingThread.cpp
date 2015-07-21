@@ -50,6 +50,16 @@ public:
 	}
 };
 
+/// Empty command
+class EmptyCommand final: public GlCommand
+{
+public:
+	ANKI_USE_RESULT Error operator()(GlState&)
+	{
+		return ErrorCode::NONE;
+	}
+};
+
 //==============================================================================
 // RenderingThread                                                             =
 //==============================================================================
@@ -68,7 +78,9 @@ RenderingThread::RenderingThread(GrManager* manager)
 
 //==============================================================================
 RenderingThread::~RenderingThread()
-{}
+{
+	m_queue.destroy(m_manager->getAllocator());
+}
 
 //==============================================================================
 void RenderingThread::flushCommandBuffer(CommandBufferPtr commands)
@@ -82,9 +94,9 @@ void RenderingThread::flushCommandBuffer(CommandBufferPtr commands)
 		// Set commands
 		U64 diff = m_tail - m_head;
 
-		if(diff < m_queue.size())
+		if(diff < m_queue.getSize())
 		{
-			U64 idx = m_tail % m_queue.size();
+			U64 idx = m_tail % m_queue.getSize();
 
 			m_queue[idx] = commands;
 			++m_tail;
@@ -125,6 +137,7 @@ void RenderingThread::start(
 {
 	ANKI_ASSERT(m_tail == 0 && m_head == 0);
 	m_state.m_registerMessages = registerMessages;
+	m_queue.create(m_manager->getAllocator(), QUEUE_SIZE);
 
 	// Context
 	ANKI_ASSERT(ctx != nullptr && makeCurrentCb != nullptr);
@@ -147,6 +160,9 @@ void RenderingThread::start(
 	// Create sync command buffer
 	m_syncCommands = m_manager->newInstance<CommandBuffer>();
 	m_syncCommands->getImplementation().pushBackNewCommand<SyncCommand>(this);
+
+	m_emptyCmdb = m_manager->newInstance<CommandBuffer>();
+	m_emptyCmdb->getImplementation().pushBackNewCommand<EmptyCommand>();
 #else
 	prepare();
 
@@ -158,14 +174,10 @@ void RenderingThread::start(
 void RenderingThread::stop()
 {
 #if !ANKI_DISABLE_GL_RENDERING_THREAD
-	{
-		LockGuard<Mutex> lock(m_mtx);
-		m_renderingThreadSignal = 1;
+	syncClientServer();
+	m_renderingThreadSignal = 1;
+	flushCommandBuffer(m_emptyCmdb);
 
-		// Set some dummy values in order to unlock the cond var
-		m_tail = m_queue.size() + 1;
-		m_head = m_tail + 1;
-	}
 	Error err = m_thread.join();
 	(void)err;
 #else
@@ -202,7 +214,7 @@ void RenderingThread::prepare()
 void RenderingThread::finish()
 {
 	// Iterate the queue and release the refcounts
-	for(U i = 0; i < m_queue.size(); i++)
+	for(U i = 0; i < m_queue.getSize(); i++)
 	{
 		if(m_queue[i].isCreated())
 		{
@@ -255,7 +267,7 @@ void RenderingThread::threadLoop()
 				break;
 			}
 
-			U64 idx = m_head % m_queue.size();
+			U64 idx = m_head % m_queue.getSize();
 			// Pop a command
 			cmd = m_queue[idx];
 			m_queue[idx] = CommandBufferPtr(); // Insert empty cmd buffer

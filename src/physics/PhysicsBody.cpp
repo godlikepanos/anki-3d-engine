@@ -11,7 +11,7 @@ namespace anki {
 
 //==============================================================================
 PhysicsBody::PhysicsBody(PhysicsWorld* world)
-:	PhysicsObject(Type::BODY, world)
+	: PhysicsObject(Type::BODY, world)
 {}
 
 //==============================================================================

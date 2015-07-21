@@ -177,8 +177,7 @@ Error Light::loadLensFlare(const CString& filename)
 		return err;
 	}
 
-	addComponent(flareComp);
-	flareComp->setAutomaticCleanup(true);
+	addComponent(flareComp, true);
 
 	return ErrorCode::NONE;
 }

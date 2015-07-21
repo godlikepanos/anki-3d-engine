@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SCENE_PLAYER_NODE_H
-#define ANKI_SCENE_PLAYER_NODE_H
+#pragma once
 
 #include "anki/scene/SceneNode.h"
 #include "anki/Math.h"
@@ -33,6 +32,4 @@ private:
 /// @}
 
 } // end namespace anki
-
-#endif
 

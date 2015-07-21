@@ -69,7 +69,8 @@ public:
 private:
 	GrManager* m_manager = nullptr;
 
-	Array<CommandBufferPtr, 128> m_queue; ///< Command queue
+	static const U QUEUE_SIZE = 512;
+	DArray<CommandBufferPtr> m_queue; ///< Command queue
 	U64 m_tail; ///< Tail of queue
 	U64 m_head; ///< Head of queue. Points to the end
 	U8 m_renderingThreadSignal; ///< Signal to the thread
@@ -97,6 +98,9 @@ private:
 	/// the server
 	CommandBufferPtr m_syncCommands;
 	Barrier m_syncBarrier{2};
+
+	/// Command buffer with an empty command.
+	CommandBufferPtr m_emptyCmdb;
 
 	/// The function that the thread runs
 	static ANKI_USE_RESULT Error threadCallback(Thread::Info&);

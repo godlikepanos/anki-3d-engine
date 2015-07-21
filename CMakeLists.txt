@@ -56,10 +56,8 @@ else()
 	set(_ANKI_ENABLE_COUNTERS 0)
 endif()
 
-# Address space
 set(ANKI_CPU_ADDR_SPACE "0" CACHE STRING "The CPU architecture (0 or 32 or 64). If zero go native")
 
-# SIMD
 option(ANKI_ENABLE_SIMD "Enable or not SIMD optimizations" ON)
 
 if(ANKI_ENABLE_SIMD)
@@ -70,7 +68,6 @@ endif()
 
 # Take a wild guess on the windowing system
 if(LINUX)
-	#set(_WIN_BACKEND "GLXX11")
 	set(_WIN_BACKEND "SDL")
 elseif(WINDOWS)
 	set(_WIN_BACKEND "SDL")
@@ -98,6 +95,9 @@ option(ANKI_VALGRIND_HAPPY "Make valgrind happy" OFF)
 set(CXX_FLAGS "")
 set(COMPILER_FLAGS "")
 set(LINKER_FLAGS "")
+
+# When building AnKi define this special flag
+set(COMPILER_FLAGS "${COMPILER_FLAGS} -DANKI_BUILD ")
 
 # address space
 if(NOT ANKI_CPU_ADDR_SPACE STREQUAL "0")

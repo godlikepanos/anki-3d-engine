@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_PHYSICS_PHYSICS_WORLD_H
-#define ANKI_PHYSICS_PHYSICS_WORLD_H
+#pragma once
 
 #include "anki/physics/Common.h"
 #include "anki/util/List.h"
@@ -42,6 +41,7 @@ public:
 		return m_world;
 	}
 
+	/// Used for static collision.
 	NewtonCollision* getNewtonScene() const
 	{
 		return m_sceneCollision;
@@ -149,4 +149,3 @@ inline PhysicsPtr<T> PhysicsWorld::newInstance(TArgs&&... args)
 
 } // end namespace anki
 
-#endif

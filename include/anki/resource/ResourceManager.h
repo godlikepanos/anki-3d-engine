@@ -123,6 +123,8 @@ public:
 
 	ANKI_USE_RESULT Error create(Initializer& init);
 
+	/// @privatesection
+	/// @{
 	U32 getMaxTextureSize() const
 	{
 		return m_maxTextureSize;
@@ -133,8 +135,6 @@ public:
 		return m_textureAnisotropy;
 	}
 
-	/// @privatesection
-	/// @{
 	ResourceAllocator<U8>& getAllocator()
 	{
 		return m_alloc;
@@ -210,7 +210,6 @@ private:
 	ResourceAllocator<U8> m_alloc;
 	TempResourceAllocator<U8> m_tmpAlloc;
 	String m_cacheDir;
-	String m_dataDir;
 	U32 m_maxTextureSize;
 	U32 m_textureAnisotropy;
 	String m_shadersPrependedSource;

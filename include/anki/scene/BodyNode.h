@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SCENE_BODY_NODE_H
-#define ANKI_SCENE_BODY_NODE_H
+#pragma once
 
 #include "anki/scene/SceneNode.h"
 #include "anki/resource/CollisionResource.h"
@@ -19,7 +18,7 @@ class BodyNode: public SceneNode
 {
 public:
 	BodyNode(SceneGraph* scene)
-	:	SceneNode(scene)
+		: SceneNode(scene)
 	{}
 
 	~BodyNode();
@@ -35,4 +34,3 @@ private:
 
 } // end namespace anki
 
-#endif

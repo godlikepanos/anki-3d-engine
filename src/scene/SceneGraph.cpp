@@ -95,6 +95,15 @@ SceneGraph::SceneGraph()
 //==============================================================================
 SceneGraph::~SceneGraph()
 {
+	Error err = iterateSceneNodes([&](SceneNode& s) -> Error
+	{
+		s.setMarkedForDeletion();
+		return ErrorCode::NONE;
+	});
+	(void)err;
+
+	deleteNodesMarkedForDeletion();
+
 	if(m_sectors)
 	{
 		m_alloc.deleteInstance(m_sectors);
@@ -172,7 +181,7 @@ void SceneGraph::unregisterNode(SceneNode* node)
 {
 	// Remove from vector
 	auto it = m_nodes.begin();
-	for(; it != m_nodes.end(); it++)
+	for(; it != m_nodes.end(); ++it)
 	{
 		if((*it) == node)
 		{
@@ -230,13 +239,16 @@ void SceneGraph::deleteNodesMarkedForDeletion()
 		Bool found = false;
 		auto it = m_nodes.begin();
 		auto end = m_nodes.end();
-		for(; it != end; it++)
+		for(; it != end; ++it)
 		{
-			if((*it)->getMarkedForDeletion())
+			SceneNode* node = *it;
+
+			if(node->getMarkedForDeletion())
 			{
 				// Delete node
-				unregisterNode(*it);
-				m_alloc.deleteInstance(*it);
+				unregisterNode(node);
+				m_alloc.deleteInstance(node);
+				m_objectsMarkedForDeletionCount.fetchSub(1);
 				found = true;
 				break;
 			}

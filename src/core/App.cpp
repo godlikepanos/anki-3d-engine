@@ -105,6 +105,9 @@ void App::cleanup()
 		m_heapAlloc.deleteInstance(m_window);
 		m_window = nullptr;
 	}
+
+	m_settingsDir.destroy(m_heapAlloc);
+	m_cacheDir.destroy(m_heapAlloc);
 }
 
 //==============================================================================

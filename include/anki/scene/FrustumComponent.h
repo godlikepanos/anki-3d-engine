@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SCENE_FRUSTUM_COMPONENT_H
-#define ANKI_SCENE_FRUSTUM_COMPONENT_H
+#pragma once
 
 #include "anki/collision/Frustum.h"
 #include "anki/scene/SpatialComponent.h"
@@ -184,4 +183,3 @@ private:
 
 } // end namespace anki
 
-#endif

@@ -27,6 +27,7 @@ ResourceManager::ResourceManager()
 ResourceManager::~ResourceManager()
 {
 	m_cacheDir.destroy(m_alloc);
+	m_shadersPrependedSource.destroy(m_alloc);
 	m_alloc.deleteInstance(m_asyncLoader);
 }
 

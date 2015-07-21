@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SCENE_CAMERA_H
-#define ANKI_SCENE_CAMERA_H
+#pragma once
 
 #include "anki/scene/SceneNode.h"
 #include "anki/scene/SpatialComponent.h"
@@ -46,7 +45,7 @@ public:
 
 private:
 	Type m_type;
-	
+
 	/// Called when moved.
 	void onMoveComponentUpdate(MoveComponent& move);
 
@@ -93,4 +92,3 @@ private:
 
 } // end namespace anki
 
-#endif

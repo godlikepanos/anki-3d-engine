@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SCENE_BODY_COMPONENT_H
-#define ANKI_SCENE_BODY_COMPONENT_H
+#pragma once
 
 #include "anki/scene/Common.h"
 #include "anki/scene/SceneComponent.h"
@@ -19,14 +18,9 @@ namespace anki {
 class BodyComponent: public SceneComponent
 {
 public:
-	static Bool classof(const SceneComponent& c)
-	{
-		return c.getType() == Type::BODY;
-	}
-
 	BodyComponent(SceneNode* node, PhysicsBodyPtr body)
-	:	SceneComponent(Type::BODY, node), 
-		m_body(body)
+		: SceneComponent(Type::BODY, node)
+		, m_body(body)
 	{}
 
 	~BodyComponent();
@@ -46,14 +40,16 @@ public:
 		return m_body;
 	}
 
-	/// @name SceneComponent overrides
-	/// @{
 	ANKI_USE_RESULT Error update(SceneNode&, F32, F32, Bool& updated) override
 	{
 		m_trf = m_body->getTransform(updated);
 		return ErrorCode::NONE;
 	}
-	/// @}
+
+	static Bool classof(const SceneComponent& c)
+	{
+		return c.getType() == Type::BODY;
+	}
 
 private:
 	PhysicsBodyPtr m_body;
@@ -62,6 +58,4 @@ private:
 /// @}
 
 } // end namespace anki
-
-#endif
 

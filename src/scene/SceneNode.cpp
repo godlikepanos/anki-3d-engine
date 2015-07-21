@@ -10,15 +10,8 @@ namespace anki {
 
 //==============================================================================
 SceneNode::SceneNode(SceneGraph* scene)
-:	m_scene(scene)
+	: m_scene(scene)
 {}
-
-//==============================================================================
-Error SceneNode::create(const CString& name)
-{
-	m_name.create(getSceneAllocator(), name);
-	return ErrorCode::NONE;
-}
 
 //==============================================================================
 SceneNode::~SceneNode()
@@ -39,6 +32,13 @@ SceneNode::~SceneNode()
 	Base::destroy(alloc);
 	m_name.destroy(alloc);
 	m_components.destroy(alloc);
+}
+
+//==============================================================================
+Error SceneNode::create(const CString& name)
+{
+	m_name.create(getSceneAllocator(), name);
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

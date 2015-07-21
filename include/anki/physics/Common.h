@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_PHYSICS_COMMON_H
-#define ANKI_PHYSICS_COMMON_H
+#pragma once
 
 #include "anki/util/StdTypes.h"
 #include "anki/util/Enum.h"
@@ -77,6 +76,4 @@ ANKI_USE_RESULT inline Mat4 toNewton(const Mat4& m)
 /// @}
 
 } // end namespace anki
-
-#endif
 

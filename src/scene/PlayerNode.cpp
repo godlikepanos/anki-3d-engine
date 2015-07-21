@@ -22,22 +22,22 @@ class PlayerNodeFeedbackComponent final: public SceneComponent
 {
 public:
 	PlayerNodeFeedbackComponent(SceneNode* node)
-	:	SceneComponent(SceneComponent::Type::NONE, node)
+		: SceneComponent(SceneComponent::Type::NONE, node)
 	{}
 
 	Error update(SceneNode& node, F32, F32, Bool& updated) override
 	{
 		updated = false;
 
-		PlayerControllerComponent& playerc = 
+		PlayerControllerComponent& playerc =
 			node.getComponent<PlayerControllerComponent>();
 		const Input& in = node.getSceneGraph().getInput();
 		const F32 ang = toRad(7.0);
 
 		F32 y = in.getMousePosition().y();
 		F32 x = in.getMousePosition().x();
-		if(playerc.getTimestamp() == node.getGlobalTimestamp() 
-			|| y != 0.0 
+		if(playerc.getTimestamp() == node.getGlobalTimestamp()
+			|| y != 0.0
 			|| x != 0.0)
 		{
 			MoveComponent& move = node.getComponent<MoveComponent>();
@@ -81,13 +81,13 @@ public:
 	{
 		updated = false;
 
-		PlayerControllerComponent& playerc = 
+		PlayerControllerComponent& playerc =
 			node.getComponent<PlayerControllerComponent>();
 		MoveComponent& move = node.getComponent<MoveComponent>();
 		const Input& in = node.getSceneGraph().getInput();
 
 		const F32 speed = 3.5;
-		
+
 		Vec4 moveVec(0.0);
 		if(in.getKey(KeyCode::W))
 		{
@@ -114,9 +114,9 @@ public:
 		dir.normalize();
 
 		playerc.setVelocity(
-			moveVec.z() * speed, 
+			moveVec.z() * speed,
 			moveVec.x() * speed,
-			0.0, 
+			0.0,
 			dir);
 
 		return ErrorCode::NONE;
@@ -129,7 +129,7 @@ public:
 
 //==============================================================================
 PlayerNode::PlayerNode(SceneGraph* scene)
-:	SceneNode(scene)
+	: SceneNode(scene)
 {}
 
 //==============================================================================

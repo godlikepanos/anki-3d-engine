@@ -31,6 +31,8 @@ PhysicsWorld::PhysicsWorld()
 //==============================================================================
 PhysicsWorld::~PhysicsWorld()
 {
+	cleanupMarkedForDeletion();
+
 	if(m_sceneBody)
 	{
 		NewtonDestroyBody(m_sceneBody);
@@ -133,7 +135,6 @@ void PhysicsWorld::cleanupMarkedForDeletion()
 		// Remove from player controllers
 		if(obj->getType() == PhysicsObject::Type::PLAYER_CONTROLLER)
 		{
-
 			auto it2 = m_playerControllers.getBegin();
 			for(; it2 != m_playerControllers.getEnd(); ++it2)
 			{

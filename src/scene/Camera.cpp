@@ -16,7 +16,7 @@ class CameraMoveFeedbackComponent: public SceneComponent
 {
 public:
 	CameraMoveFeedbackComponent(Camera* node)
-	:	SceneComponent(SceneComponent::Type::NONE, node)
+		: SceneComponent(SceneComponent::Type::NONE, node)
 	{}
 
 	ANKI_USE_RESULT Error update(
@@ -44,7 +44,7 @@ class CameraFrustumFeedbackComponent: public SceneComponent
 {
 public:
 	CameraFrustumFeedbackComponent(Camera* node)
-	:	SceneComponent(SceneComponent::Type::NONE, node)
+		: SceneComponent(SceneComponent::Type::NONE, node)
 	{}
 
 	ANKI_USE_RESULT Error update(
@@ -68,13 +68,13 @@ public:
 //==============================================================================
 
 //==============================================================================
-Camera::Camera(SceneGraph* scene, Type type) 
-:	SceneNode(scene),
-	m_type(type)
+Camera::Camera(SceneGraph* scene, Type type)
+	: SceneNode(scene)
+	, m_type(type)
 {}
 
 //==============================================================================
-Error Camera::create(const CString& name, Frustum* frustum) 
+Error Camera::create(const CString& name, Frustum* frustum)
 {
 	ANKI_CHECK(SceneNode::create(name));
 
@@ -93,7 +93,7 @@ Error Camera::create(const CString& name, Frustum* frustum)
 	addComponent(comp, true);
 
 	// Feedback component #2
-	comp = 
+	comp =
 		getSceneAllocator().newInstance<CameraFrustumFeedbackComponent>(this);
 	addComponent(comp, true);
 
@@ -114,7 +114,7 @@ void Camera::lookAtPoint(const Vec3& point)
 	MoveComponent& move = getComponent<MoveComponent>();
 
 	Vec4 j = Vec4(0.0, 1.0, 0.0, 0.0);
-	Vec4 vdir = 
+	Vec4 vdir =
 		(point.xyz0() - move.getLocalTransform().getOrigin()).getNormalized();
 	Vec4 vup = j - vdir * j.dot(vdir);
 	Vec4 vside = vdir.cross(vup);
@@ -152,7 +152,7 @@ void Camera::onMoveComponentUpdate(MoveComponent& move)
 
 //==============================================================================
 PerspectiveCamera::PerspectiveCamera(SceneGraph* scene)
-:	Camera(scene, Type::PERSPECTIVE)
+	: Camera(scene, Type::PERSPECTIVE)
 {}
 
 //==============================================================================
@@ -172,7 +172,7 @@ void PerspectiveCamera::setAll(F32 fovX, F32 fovY, F32 near, F32 far)
 
 //==============================================================================
 OrthographicCamera::OrthographicCamera(SceneGraph* scene)
-:	Camera(scene, Type::ORTHOGRAPHIC)
+	: Camera(scene, Type::ORTHOGRAPHIC)
 {}
 
 //==============================================================================

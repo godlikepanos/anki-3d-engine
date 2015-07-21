@@ -135,7 +135,12 @@ Is::Is(Renderer* r)
 
 //==============================================================================
 Is::~Is()
-{}
+{
+	if(m_barrier)
+	{
+		getAllocator().deleteInstance(&m_barrier.get());
+	}
+}
 
 //==============================================================================
 Error Is::init(const ConfigSet& config)

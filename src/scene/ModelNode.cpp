@@ -62,6 +62,11 @@ ModelPatchNode::ModelPatchNode(SceneGraph* scene)
 //==============================================================================
 ModelPatchNode::~ModelPatchNode()
 {
+	for(SpatialComponent* sp : m_spatials)
+	{
+		getSceneAllocator().deleteInstance(sp);
+	}
+
 	m_spatials.destroy(getSceneAllocator());
 }
 

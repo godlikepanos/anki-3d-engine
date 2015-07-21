@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_UTIL_ALLOCATOR_H
-#define ANKI_UTIL_ALLOCATOR_H
+#pragma once
 
 #include "anki/util/Assert.h"
 #include "anki/util/Memory.h"
@@ -144,6 +143,7 @@ public:
 	///             be PtrSize
 	pointer allocate(size_type n, const void* hint = nullptr)
 	{
+		ANKI_ASSERT(m_pool);
 		(void)hint;
 
 		size_type size = n * sizeof(value_type);
@@ -166,6 +166,7 @@ public:
 	/// Deallocate memory
 	void deallocate(void* p, size_type n)
 	{
+		ANKI_ASSERT(m_pool);
 		(void)n;
 		m_pool->free(p);
 	}
@@ -410,4 +411,3 @@ using ChainAllocator = GenericPoolAllocator<T, ChainMemoryPool>;
 
 } // end namespace anki
 
-#endif

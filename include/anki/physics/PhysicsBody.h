@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_PHYSICS_PHYSICS_BODY_H
-#define ANKI_PHYSICS_PHYSICS_BODY_H
+#pragma once
 
 #include "anki/physics/PhysicsObject.h"
 
@@ -86,18 +85,17 @@ private:
 
 	/// Newton callback.
 	static void onTransformCallback(
-		const NewtonBody* const body, 
-		const dFloat* const matrix, 
+		const NewtonBody* const body,
+		const dFloat* const matrix,
 		int threadIndex);
 
 	/// Newton callback
 	static void applyGravityForce(
-		const NewtonBody* body, 
-		dFloat timestep, 
+		const NewtonBody* body,
+		dFloat timestep,
 		int threadIndex);
 };
 /// @}
 
 } // end namespace anki
 
-#endif

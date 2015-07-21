@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SCENE_PLAYER_CONTROLLER_COMPONENT_H
-#define ANKI_SCENE_PLAYER_CONTROLLER_COMPONENT_H
+#pragma once
 
 #include "anki/scene/SceneComponent.h"
 #include "anki/physics/PhysicsPlayerController.h"
@@ -18,16 +17,13 @@ namespace anki {
 class PlayerControllerComponent: public SceneComponent
 {
 public:
-	static Bool classof(const SceneComponent& c)
-	{
-		return c.getType() == Type::PLAYER_CONTROLLER;
-	}
-
-	PlayerControllerComponent(SceneNode* node, 
+	PlayerControllerComponent(SceneNode* node,
 		PhysicsPlayerControllerPtr player)
-	:	SceneComponent(Type::PLAYER_CONTROLLER, node),
-		m_player(player)
+		: SceneComponent(Type::PLAYER_CONTROLLER, node)
+		, m_player(player)
 	{}
+
+	~PlayerControllerComponent() = default;
 
 	const Transform& getTransform() const
 	{
@@ -39,20 +35,22 @@ public:
 		m_player->moveToPosition(trf.getOrigin());
 	}
 
-	void setVelocity(F32 forwardSpeed, F32 strafeSpeed, F32 jumpSpeed, 
+	void setVelocity(F32 forwardSpeed, F32 strafeSpeed, F32 jumpSpeed,
 		const Vec4& forwardDir)
 	{
 		m_player->setVelocity(forwardSpeed, strafeSpeed, jumpSpeed, forwardDir);
 	}
 
-	/// @name SceneComponent overrides
-	/// @{
 	ANKI_USE_RESULT Error update(SceneNode&, F32, F32, Bool& updated) override
 	{
 		m_trf = m_player->getTransform(updated);
 		return ErrorCode::NONE;
 	}
-	/// @}
+
+	static Bool classof(const SceneComponent& c)
+	{
+		return c.getType() == Type::PLAYER_CONTROLLER;
+	}
 
 private:
 	PhysicsPlayerControllerPtr m_player;
@@ -61,6 +59,4 @@ private:
 /// @}
 
 } // end namespace anki
-
-#endif
 

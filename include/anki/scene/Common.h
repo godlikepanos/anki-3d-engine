@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SCENE_COMMON_H
-#define ANKI_SCENE_COMMON_H
+#pragma once
 
 #include "anki/util/Allocator.h"
 #include "anki/util/String.h"
@@ -36,4 +35,3 @@ using SceneDictionary =
 
 } // end namespace anki
 
-#endif

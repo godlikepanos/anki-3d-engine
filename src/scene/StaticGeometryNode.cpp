@@ -44,6 +44,10 @@ StaticGeometryPatchNode::StaticGeometryPatchNode(SceneGraph* scene)
 {}
 
 //==============================================================================
+StaticGeometryPatchNode::~StaticGeometryPatchNode()
+{}
+
+//==============================================================================
 Error StaticGeometryPatchNode::create(
 	const CString& name, const ModelPatch* modelPatch)
 {
@@ -59,7 +63,7 @@ Error StaticGeometryPatchNode::create(
 			getSceneAllocator().newInstance<SpatialComponent>(
 			this, &m_modelPatch->getBoundingShapeSub(i));
 
-		addComponent(spatial);
+		addComponent(spatial, true);
 
 		spatial->setSpatialOrigin(
 			m_modelPatch->getBoundingShapeSub(i).getCenter());
@@ -69,14 +73,10 @@ Error StaticGeometryPatchNode::create(
 	// Create render component
 	RenderComponent* rcomp =
 		getSceneAllocator().newInstance<StaticGeometryRenderComponent>(this);
-	addComponent(rcomp);
+	addComponent(rcomp, true);
 
 	return ErrorCode::NONE;
 }
-
-//==============================================================================
-StaticGeometryPatchNode::~StaticGeometryPatchNode()
-{}
 
 //==============================================================================
 Error StaticGeometryPatchNode::buildRendering(RenderingBuildData& data)

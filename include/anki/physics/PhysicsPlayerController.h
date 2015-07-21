@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_PHYSICS_PLAYER_CONTROLLER_H
-#define ANKI_PHYSICS_PLAYER_CONTROLLER_H
+#pragma once
 
 #include "anki/physics/PhysicsObject.h"
 
@@ -14,8 +13,9 @@ namespace anki {
 /// @{
 
 /// Initializer for PhysicsPlayerController.
-struct PhysicsPlayerControllerInitializer
+class PhysicsPlayerControllerInitializer
 {
+public:
 	F32 m_mass = 83.0;
 	F32 m_innerRadius = 0.30;
 	F32 m_outerRadius = 0.50;
@@ -31,13 +31,15 @@ public:
 	using Initializer = PhysicsPlayerControllerInitializer;
 
 	PhysicsPlayerController(PhysicsWorld* world)
-	:	PhysicsObject(Type::PLAYER_CONTROLLER, world)
+		: PhysicsObject(Type::PLAYER_CONTROLLER, world)
 	{}
+
+	~PhysicsPlayerController();
 
 	ANKI_USE_RESULT Error create(const Initializer& init);
 
 	// Update the state machine
-	void setVelocity(F32 forwardSpeed, F32 strafeSpeed, F32 jumpSpeed, 
+	void setVelocity(F32 forwardSpeed, F32 strafeSpeed, F32 jumpSpeed,
 		const Vec4& forwardDir)
 	{
 		m_forwardSpeed = forwardSpeed;
@@ -65,8 +67,8 @@ public:
 
 	/// Called by Newton thread to update the controller.
 	static void postUpdateKernelCallback(
-		NewtonWorld* const world, 
-		void* const context, 
+		NewtonWorld* const world,
+		void* const context,
 		int threadIndex);
 	/// @}
 
@@ -83,10 +85,10 @@ private:
 	F32 m_sphereCastOrigin;
 	F32 m_restrainingDistance;
 	Bool8 m_isJumping;
+	NewtonBody* m_body;
 	NewtonCollision* m_castingShape;
 	NewtonCollision* m_supportShape;
 	NewtonCollision* m_upperBodyShape;
-	NewtonBody* m_body;
 
 	// State
 	F32 m_forwardSpeed = 0.0;
@@ -115,22 +117,22 @@ private:
 
 	Vec4 calculateDesiredOmega(const Vec4& headingAngle, F32 dt) const;
 
-	Vec4 calculateDesiredVelocity(F32 forwardSpeed, F32 strafeSpeed, 
+	Vec4 calculateDesiredVelocity(F32 forwardSpeed, F32 strafeSpeed,
 		F32 verticalSpeed, const Vec4& gravity, F32 dt) const;
 
 	void calculateVelocity(F32 dt);
 
-	F32 calculateContactKinematics(const Vec4& veloc, 
+	F32 calculateContactKinematics(const Vec4& veloc,
 		const NewtonWorldConvexCastReturnInfo* contactInfo) const;
 
-	void updateGroundPlane(Mat4& matrix, const Mat4& castMatrix, 
+	void updateGroundPlane(Mat4& matrix, const Mat4& castMatrix,
 		const Vec4& dst, int threadIndex);
 
 	void postUpdate(F32 dt, int threadIndex);
 
 	static void onTransformCallback(
-		const NewtonBody* const body, 
-		const dFloat* const matrix, 
+		const NewtonBody* const body,
+		const dFloat* const matrix,
 		int threadIndex);
 
 	void onTransform(Mat4 matrix);
@@ -138,6 +140,4 @@ private:
 /// @}
 
 } // end namespace anki
-
-#endif
 

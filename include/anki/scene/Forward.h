@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SCENE_FORWARD_H
-#define ANKI_SCENE_FORWARD_H
+#pragma once
 
 namespace anki {
 
@@ -30,4 +29,3 @@ class Sector;
 
 } // end namespace anki
 
-#endif

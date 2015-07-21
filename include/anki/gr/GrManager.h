@@ -78,9 +78,9 @@ public:
 	/// @}
 
 private:
+	GrAllocator<U8> m_alloc; ///< Keep it first to get deleted last
 	UniquePtr<GrManagerImpl> m_impl;
 	String m_cacheDir;
-	GrAllocator<U8> m_alloc; ///< Keep it last to deleted last
 };
 
 template<typename T, typename... Args>

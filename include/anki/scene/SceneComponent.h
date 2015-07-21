@@ -43,6 +43,9 @@ public:
 		, m_type(type)
 	{}
 
+	virtual ~SceneComponent()
+	{}
+
 	Type getType() const
 	{
 		return m_type;
