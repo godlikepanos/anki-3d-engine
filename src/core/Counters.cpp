@@ -130,7 +130,7 @@ void CountersManager::increaseCounter(Counter counter, U64 val)
 {
 	ANKI_ASSERT(cinfo[U(counter)].m_flags & CF_U64);
 
-	if(cinfo[(U)counter].m_flags & CF_PER_FRAME)
+	if(cinfo[U(counter)].m_flags & CF_PER_FRAME)
 	{
 		m_perframeValues[U(counter)].m_int += val;
 	}
@@ -255,7 +255,7 @@ void CountersManager::flush()
 				else
 				{
 					err = m_perrunFile.writeText("%" MAX_NAME "f",
-						&m_perrunValues[i].m_float);
+						m_perrunValues[i].m_float);
 				}
 			}
 			else

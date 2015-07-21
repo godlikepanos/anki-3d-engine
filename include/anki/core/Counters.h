@@ -3,6 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#pragma once
+
 #include "anki/util/StdTypes.h"
 #include "anki/util/Singleton.h"
 #include "anki/util/DArray.h"
