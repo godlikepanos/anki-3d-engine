@@ -28,7 +28,9 @@ class ResourceManager;
 class Renderer
 {
 public:
+#ifdef ANKI_BUILD
 	const U TILE_SIZE = 64;
+#endif
 
 	Renderer();
 
@@ -99,6 +101,39 @@ public:
 		return F32(m_width) / m_height;
 	}
 
+	/// Init the renderer.
+	ANKI_USE_RESULT Error init(
+		Threadpool* threadpool,
+		ResourceManager* resources,
+		GrManager* gr,
+		HeapAllocator<U8> alloc,
+		StackAllocator<U8> frameAlloc,
+		const ConfigSet& config,
+		const Timestamp* globalTimestamp);
+
+	/// Set the output of the renderer before calling #render.
+	void setOutputFramebuffer(FramebufferPtr outputFb, U32 width, U32 height)
+	{
+		m_outputFb = outputFb;
+		m_outputFbSize = UVec2(width, height);
+	}
+
+	/// This function does all the rendering stages and produces a final result.
+	ANKI_USE_RESULT Error render(
+		SceneNode& frustumableNode,
+		Array<CommandBufferPtr, RENDERER_COMMAND_BUFFERS_COUNT>& cmdBuff);
+
+#ifdef ANKI_BUILD
+	void getOutputFramebuffer(FramebufferPtr& outputFb, U32& width, U32& height)
+	{
+		if(m_outputFb.isCreated())
+		{
+			outputFb = m_outputFb;
+			width = m_outputFbSize.x();
+			height = m_outputFbSize.y();
+		}
+	}
+
 	U32 getFramesCount() const
 	{
 		return m_framesNum;
@@ -164,28 +199,6 @@ public:
 		return m_drawQuadVert->getGrShader();
 	}
 
-	/// Set the output of the renderer.
-	void setOutputFramebuffer(FramebufferPtr outputFb, U32 width, U32 height)
-	{
-		m_outputFb = outputFb;
-		m_outputFbSize = UVec2(width, height);
-	}
-
-	void getOutputFramebuffer(FramebufferPtr& outputFb, U32& width, U32& height)
-	{
-		if(m_outputFb.isCreated())
-		{
-			outputFb = m_outputFb;
-			width = m_outputFbSize.x();
-			height = m_outputFbSize.y();
-		}
-	}
-
-	/// This function does all the rendering stages and produces a final result.
-	ANKI_USE_RESULT Error render(
-		SceneNode& frustumableNode,
-		Array<CommandBufferPtr, RENDERER_COMMAND_BUFFERS_COUNT>& cmdBuff);
-
 	/// My version of gluUnproject
 	/// @param windowCoords Window screen coords
 	/// @param modelViewMat The modelview matrix
@@ -220,11 +233,6 @@ public:
 		return distance / m_lodDistance;
 	}
 
-	/// Create a framebuffer attachment texture
-	void createRenderTarget(U32 w, U32 h,
-		const PixelFormat& format, U32 samples, SamplingFilter filter,
-		U mipsCount, TexturePtr& rt);
-
 	/// Create a pipeline object that has as a vertex shader the m_drawQuadVert
 	/// and the given fragment progam
 	void createDrawQuadPipeline(
@@ -232,21 +240,13 @@ public:
 		const ColorStateInfo& colorState,
 		PipelinePtr& ppline);
 
-	/// Init the renderer given an initialization class
-	/// @param initializer The initializer class
-	ANKI_USE_RESULT Error init(
-		Threadpool* threadpool,
-		ResourceManager* resources,
-		GrManager* gl,
-		HeapAllocator<U8> alloc,
-		StackAllocator<U8> frameAlloc,
-		const ConfigSet& config,
-		const Timestamp* globalTimestamp);
+	/// Create a framebuffer attachment texture
+	void createRenderTarget(U32 w, U32 h,
+		const PixelFormat& format, U32 samples, SamplingFilter filter,
+		U mipsCount, TexturePtr& rt);
 
 	void prepareForVisibilityTests(Camera& cam);
 
-	/// @privatesection
-	/// @{
 	GrManager& getGrManager()
 	{
 		return *m_gr;
@@ -276,7 +276,7 @@ public:
 	{
 		return *m_globalTimestamp;
 	}
-	/// @}
+#endif
 
 private:
 	Threadpool* m_threadpool;

@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_UTIL_MEMORY_H
-#define ANKI_UTIL_MEMORY_H
+#pragma once
 
 #include "anki/util/StdTypes.h"
 #include "anki/util/NonCopyable.h"
@@ -28,15 +27,15 @@ void* mallocAligned(PtrSize size, PtrSize alignmentBytes);
 /// Free aligned memory
 void freeAligned(void* ptr);
 
-/// The function signature of a memory allocation/deallocation. 
+/// The function signature of a memory allocation/deallocation.
 /// See allocAligned function for the explanation of arguments
 using AllocAlignedCallback = void* (*)(void*, void*, PtrSize, PtrSize);
 
 /// An internal type.
 using AllocationSignature = U32;
 
-/// This is a function that allocates and deallocates heap memory. 
-/// If the @a ptr is nullptr then it allocates using the @a size and 
+/// This is a function that allocates and deallocates heap memory.
+/// If the @a ptr is nullptr then it allocates using the @a size and
 /// @a alignment. If the @a ptr is not nullptr it deallocates the memory and
 /// the @a size and @a alignment is ignored.
 ///
@@ -49,7 +48,7 @@ using AllocationSignature = U32;
 void* allocAligned(
 	void* userData, void* ptr, PtrSize size, PtrSize alignment);
 
-/// Generic memory pool. The base of HeapMemoryPool or StackMemoryPool or 
+/// Generic memory pool. The base of HeapMemoryPool or StackMemoryPool or
 /// ChainMemoryPool.
 class BaseMemoryPool: public NonCopyable
 {
@@ -64,7 +63,7 @@ public:
 	};
 
 	BaseMemoryPool(Type type)
-	:	m_type(type)
+		: m_type(type)
 	{}
 
 	virtual ~BaseMemoryPool();
@@ -131,7 +130,7 @@ private:
 	Atomic<U32> m_refcount = {0};
 };
 
-/// A dummy interface to match the StackMemoryPool and ChainMemoryPool 
+/// A dummy interface to match the StackMemoryPool and ChainMemoryPool
 /// interfaces in order to be used by the same allocator template
 class HeapMemoryPool: public BaseMemoryPool
 {
@@ -162,8 +161,8 @@ private:
 #endif
 };
 
-/// Thread safe memory pool. It's a preallocated memory pool that is used for 
-/// memory allocations on top of that preallocated memory. It is mainly used by 
+/// Thread safe memory pool. It's a preallocated memory pool that is used for
+/// memory allocations on top of that preallocated memory. It is mainly used by
 /// fast stack allocators
 class StackMemoryPool: public BaseMemoryPool
 {
@@ -187,9 +186,9 @@ public:
 	/// @param alignmentBytes The maximum supported alignment for returned
 	///        memory
 	void create(
-		AllocAlignedCallback allocCb, 
+		AllocAlignedCallback allocCb,
 		void* allocCbUserData,
-		PtrSize size, 
+		PtrSize size,
 		Bool ignoreDeallocationErrors = true,
 		PtrSize alignmentBytes = ANKI_SAFE_ALIGNMENT);
 
@@ -217,12 +216,12 @@ public:
 		return m_top.load() - m_memory;
 	}
 
-	/// Get a snapshot of the current state that can be used to reset the 
+	/// Get a snapshot of the current state that can be used to reset the
 	/// pool's state later on. Not recommended on multithreading scenarios
 	/// @return The current state of the pool
 	Snapshot getShapshot() const;
 
-	/// Reset the poll using a snapshot. Not recommended on multithreading 
+	/// Reset the poll using a snapshot. Not recommended on multithreading
 	/// scenarios
 	/// @param s The snapshot to be used
 	void resetUsingSnapshot(Snapshot s);
@@ -258,7 +257,7 @@ private:
 	Bool8 m_ignoreDeallocationErrors = false;
 };
 
-/// Chain memory pool. Almost similar to StackMemoryPool but more flexible and 
+/// Chain memory pool. Almost similar to StackMemoryPool but more flexible and
 /// at the same time a bit slower.
 class ChainMemoryPool: public BaseMemoryPool
 {
@@ -274,11 +273,11 @@ public:
 	/// @param allocCbUserData The user data to pass to the allocation function.
 	/// @param initialChunkSize The size of the first chunk.
 	/// @param nextChunkScale Value that controls the next chunk.
-	/// @param nextChunkBias Value that controls the next chunk. 
+	/// @param nextChunkBias Value that controls the next chunk.
 	/// @param alignmentBytes The maximum supported alignment for returned
 	///                       memory.
 	void create(
-		AllocAlignedCallback allocCb, 
+		AllocAlignedCallback allocCb,
 		void* allocCbUserData,
 		PtrSize initialChunkSize,
 		F32 nextChunkScale = 2.0,
@@ -370,4 +369,3 @@ private:
 
 } // end namespace anki
 
-#endif

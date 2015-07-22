@@ -20,8 +20,7 @@ namespace anki {
 class Ssao: public RenderingPass
 {
 public:
-	/// @privatesection
-	/// @{
+#ifdef ANKI_BUILD
 	static const PixelFormat RT_PIXEL_FORMAT;
 
 	Ssao(Renderer* r)
@@ -40,7 +39,7 @@ public:
 	{
 		return m_uniformsBuff;
 	}
-	/// @}
+#endif
 
 private:
 	U32 m_width, m_height; ///< Blur passes size

@@ -9,7 +9,7 @@
 
 namespace anki {
 
-/// @addtogroup opengl_private
+/// @addtogroup opengl
 /// @{
 
 // Enable the exception on debug. Calling glGetError calls serialization

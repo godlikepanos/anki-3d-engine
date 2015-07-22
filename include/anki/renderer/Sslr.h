@@ -17,15 +17,14 @@ namespace anki {
 class Sslr: public RenderingPass
 {
 public:
-	/// @privatesection
-	/// @{
+#ifdef ANKI_BUILD
 	Sslr(Renderer* r)
 		: RenderingPass(r)
 	{}
 
 	ANKI_USE_RESULT Error init(const ConfigSet& config);
 	void run(CommandBufferPtr& cmdBuff);
-	/// @}
+#endif
 
 private:
 	U32 m_width;

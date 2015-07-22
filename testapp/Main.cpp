@@ -2,6 +2,10 @@
 #include <iostream>
 #include <fstream>
 
+#ifdef ANKI_BUILD
+#	undef ANKI_BUILD
+#endif
+
 #include "anki/input/Input.h"
 #include "anki/Math.h"
 #include "anki/Renderer.h"

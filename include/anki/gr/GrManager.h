@@ -54,8 +54,7 @@ public:
 	template<typename T, typename... Args>
 	IntrusivePtr<T> newInstance(Args&&... args);
 
-	/// @privatesection
-	/// @{
+#ifdef ANKI_BUILD
 	GrAllocator<U8>& getAllocator()
 	{
 		return m_alloc;
@@ -75,7 +74,7 @@ public:
 	{
 		return m_cacheDir.toCString();
 	}
-	/// @}
+#endif
 
 private:
 	GrAllocator<U8> m_alloc; ///< Keep it first to get deleted last

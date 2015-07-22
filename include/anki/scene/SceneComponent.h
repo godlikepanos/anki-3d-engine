@@ -59,7 +59,10 @@ public:
 	Timestamp getGlobalTimestamp() const;
 
 	/// Do some updating
-	/// @param[out] updated true if an update happened
+	/// @param[in,out] node Scene node of this component.
+	/// @param prevTime Previous update time.
+	/// @param crntTime Current update time.
+	/// @param[out] updated true if an update happened.
 	virtual ANKI_USE_RESULT Error update(
 		SceneNode& node, F32 prevTime, F32 crntTime, Bool& updated)
 	{

@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SCRIPT_SCRIPT_MANAGER_H
-#define ANKI_SCRIPT_SCRIPT_MANAGER_H
+#pragma once
 
 #include "anki/script/LuaBinder.h"
 
@@ -20,14 +19,21 @@ class SceneGraph;
 class ScriptManager
 {
 public:
+#ifdef ANKI_BUILD
 	ScriptManager();
 	~ScriptManager();
 
 	/// Create the script manager.
 	ANKI_USE_RESULT Error create(
-		AllocAlignedCallback allocCb, 
+		AllocAlignedCallback allocCb,
 		void* allocCbData,
 		SceneGraph* scene);
+
+	SceneGraph& _getSceneGraph()
+	{
+		return *m_scene;
+	}
+#endif
 
 	/// Expose a variable to the scripting engine.
 	template<typename T>
@@ -42,15 +48,7 @@ public:
 		return m_lua.evalString(str);
 	}
 
-	/// @privatesection
-	/// @{
-	SceneGraph& _getSceneGraph()
-	{
-		return *m_scene;
-	}
-	/// @}
-
-public:
+private:
 	SceneGraph* m_scene = nullptr;
 	ChainAllocator<U8> m_alloc;
 	LuaBinder m_lua;
@@ -60,4 +58,3 @@ public:
 
 } // end namespace anki
 
-#endif

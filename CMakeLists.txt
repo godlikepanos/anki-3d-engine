@@ -191,20 +191,6 @@ message("++ Lib install dir: ${LIB_INSTALL_DIR}")
 add_subdirectory(thirdparty)
 
 #
-# Doxygen
-#
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/docs/doxyfile ${CMAKE_CURRENT_BINARY_DIR}/doxyfile @ONLY)
-
-find_package(Doxygen)
-
-if(DOXYGEN_FOUND)
-	message("++ Doxygen found")
-
-	add_custom_target(doc ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doxyfile WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-		COMMENT "Generating API documentation with Doxygen" VERBATIM)
-endif()
-
-#
 # Revision
 #
 find_package(Git)
@@ -219,6 +205,20 @@ if(GIT_FOUND)
 	set(ANKI_REVISION "\"${GIT_COMMIT}\"")
 else()
 	set(ANKI_REVISION "\"unknown\"")
+endif()
+
+#
+# Doxygen
+#
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/docs/doxyfile ${CMAKE_CURRENT_BINARY_DIR}/doxyfile @ONLY)
+
+find_package(Doxygen)
+
+if(DOXYGEN_FOUND)
+	message("++ Doxygen found")
+
+	add_custom_target(doc ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doxyfile WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+		COMMENT "Generating API documentation with Doxygen" VERBATIM)
 endif()
 
 #

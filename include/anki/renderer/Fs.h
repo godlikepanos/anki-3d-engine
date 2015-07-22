@@ -16,6 +16,7 @@ namespace anki {
 class Fs: public RenderingPass
 {
 public:
+#ifdef ANKI_BUILD
 	Fs(Renderer* r)
 		: RenderingPass(r)
 	{}
@@ -24,6 +25,7 @@ public:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 	ANKI_USE_RESULT Error run(CommandBufferPtr& cmdb);
+#endif
 
 private:
 	FramebufferPtr m_fb;

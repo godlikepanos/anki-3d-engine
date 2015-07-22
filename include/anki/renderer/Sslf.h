@@ -16,8 +16,7 @@ namespace anki {
 class Sslf: public RenderingPass
 {
 public:
-	/// @privatesection
-	/// @{
+#ifdef ANKI_BUILD
 	Sslf(Renderer* r)
 		: RenderingPass(r)
 	{}
@@ -29,7 +28,7 @@ public:
 	{
 		return m_rt;
 	}
-	/// @}
+#endif
 
 private:
 	TexturePtr m_rt;

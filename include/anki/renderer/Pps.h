@@ -17,13 +17,12 @@ namespace anki {
 class Pps: public RenderingPass
 {
 public:
+#ifdef ANKI_BUILD
 	static const PixelFormat RT_PIXEL_FORMAT;
 
 	Pps(Renderer* r);
 	~Pps();
 
-	/// @privatesection
-	/// @{
 	ANKI_USE_RESULT Error init(const ConfigSet& config);
 	void run(CommandBufferPtr& jobs);
 
@@ -36,7 +35,7 @@ public:
 	{
 		return m_rt;
 	}
-	/// @}
+#endif
 
 	const Bloom& getBloom() const
 	{

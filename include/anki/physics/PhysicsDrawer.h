@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_PHYSICS_PHYSICS_DRAWER_H
-#define ANKI_PHYSICS_PHYSICS_DRAWER_H
+#pragma once
 
 #include "anki/physics/Common.h"
 #include "anki/util/Bitset.h"
@@ -56,12 +55,10 @@ private:
 	void drawAabb(const NewtonBody* body);
 	void drawCollision(const NewtonBody* body);
 
-	static void drawGeometryCallback(void* userData, 
+	static void drawGeometryCallback(void* userData,
 		int vertexCount, const dFloat* const faceVertec, int id);
 };
 /// @}
 
 } // end namespace anki
-
-#endif
 

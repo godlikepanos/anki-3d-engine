@@ -26,6 +26,7 @@ class ConfigSet;
 class RenderingPass
 {
 public:
+#ifdef ANKI_BUILD
 	RenderingPass(Renderer* r)
 		: m_r(r)
 	{}
@@ -33,29 +34,33 @@ public:
 	~RenderingPass()
 	{}
 
-	Bool getEnabled() const
-	{
-		return m_enabled;
-	}
-	void setEnabled(Bool e)
-	{
-		m_enabled = e;
-	}
-
 	Timestamp getGlobalTimestamp() const;
 
 	HeapAllocator<U8> getAllocator() const;
 
 	StackAllocator<U8> getFrameAllocator() const;
+#endif
+
+	Bool getEnabled() const
+	{
+		return m_enabled;
+	}
+
+	void setEnabled(Bool e)
+	{
+		m_enabled = e;
+	}
 
 protected:
-	Renderer* m_r; ///< Know your father
 	Bool8 m_enabled = false;
+#ifdef ANKI_BUILD
+	Renderer* m_r; ///< Know your father
 
 	GrManager& getGrManager();
 	const GrManager& getGrManager() const;
 
 	ResourceManager& getResourceManager();
+#endif
 };
 /// @}
 

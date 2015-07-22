@@ -24,10 +24,9 @@ class Sm: private RenderingPass
 {
 public:
 	static const U32 MAX_SHADOW_CASTERS = 8;
+#ifdef ANKI_BUILD
 	static const PixelFormat DEPTH_RT_PIXEL_FORMAT;
 
-	/// @privatesection
-	/// @{
 	Sm(Renderer* r)
 		: RenderingPass(r)
 	{}
@@ -63,7 +62,7 @@ public:
 	{
 		return m_sm2DArrayTex;
 	}
-	/// @}
+#endif
 
 private:
 	TexturePtr m_sm2DArrayTex;

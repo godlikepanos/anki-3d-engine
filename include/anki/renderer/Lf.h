@@ -19,20 +19,20 @@ namespace anki {
 class Lf: public RenderingPass
 {
 public:
-	/// @privatesection
-	/// @{
+#ifdef ANKI_BUILD
 	Lf(Renderer* r)
 		: RenderingPass(r)
 	{}
 
 	~Lf();
 
+
 	ANKI_USE_RESULT Error init(const ConfigSet& config);
 
 	void runOcclusionTests(CommandBufferPtr& cmdb);
 
 	void run(CommandBufferPtr& cmdb);
-	/// @}
+#endif
 
 private:
 	// Occlusion query

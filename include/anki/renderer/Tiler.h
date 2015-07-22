@@ -19,8 +19,9 @@ class Frustumable;
 /// @{
 
 /// The result of the Tiler tests.
-struct TilerTestResult
+class TilerTestResult
 {
+public:
 	struct Pair
 	{
 #if ANKI_DEBUG
@@ -38,6 +39,7 @@ struct TilerTestResult
 
 	TilerTestResult() = default;
 
+#ifdef ANKI_BUILD
 	void pushBack(U x, U y)
 	{
 		ANKI_ASSERT(x < 0xFF && y < 0xFF);
@@ -47,14 +49,23 @@ struct TilerTestResult
 		p.m_y = y;
 		m_tileIds[m_count++] = p;
 	}
+#endif
 };
 
 /// Test paramters passed to Tiler::test
-struct TilerTestParameters
+class TilerTestParameters
 {
+public:
+	/// Collision shape to test.
 	const CollisionShape* m_collisionShape = nullptr;
+
+	/// The AABB of the m_collisionShape. Used for some calculations.
 	const Aabb* m_collisionShapeBox = nullptr;
+
+	/// Test against the near plane.
 	Bool m_nearPlane = false;
+
+	/// The test results.
 	TilerTestResult* m_output;
 };
 
@@ -67,6 +78,7 @@ public:
 	using TestResult = TilerTestResult;
 	using TestParameters = TilerTestParameters;
 
+#ifdef ANKI_BUILD
 	Tiler(Renderer* r);
 	~Tiler();
 
@@ -78,18 +90,17 @@ public:
 	/// Update the tiles before doing visibility tests
 	void updateTiles(Camera& cam);
 
-	/// Test against all tiles.
-	/// @param[in, out] params The collision parameters.
-	Bool test(TestParameters& params) const;
-
-	/// @privatesection
-	/// @{
 	BufferPtr& getTilesBuffer()
 	{
 		U i = (getGlobalTimestamp() - m_pbos.getSize() + 1) % m_pbos.getSize();
 		return m_pbos[i];
 	}
-	/// @}
+#endif
+
+	/// Test against all tiles.
+	/// @param[in, out] params The collision parameters.
+	/// @return If visible return true.
+	Bool test(TestParameters& params) const;
 
 private:
 	/// Tile planes

@@ -28,6 +28,7 @@ MainRenderer::MainRenderer()
 //==============================================================================
 MainRenderer::~MainRenderer()
 {
+	ANKI_LOGI("Destroying main renderer");
 	m_materialShaderSource.destroy(m_alloc);
 }
 
@@ -41,7 +42,7 @@ Error MainRenderer::create(
 	const ConfigSet& config,
 	const Timestamp* globalTimestamp)
 {
-	ANKI_LOGI("Initializing main renderer...");
+	ANKI_LOGI("Initializing main renderer");
 
 	m_alloc = HeapAllocator<U8>(allocCb, allocCbUserData);
 	m_frameAlloc = StackAllocator<U8>(allocCb, allocCbUserData, 1024 * 1024);

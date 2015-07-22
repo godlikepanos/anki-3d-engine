@@ -22,6 +22,7 @@ class ShaderProgram;
 class Bloom: public RenderingPass
 {
 public:
+#ifdef ANKI_BUILD
 	static const PixelFormat RT_PIXEL_FORMAT;
 
 	Bloom(Renderer* r)
@@ -33,17 +34,6 @@ public:
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 	void run(CommandBufferPtr& jobs);
 
-	U32 getBlurringIterationsCount() const
-	{
-		return m_blurringIterationsCount;
-	}
-	void setBlurringIterationsCount(const U32 x)
-	{
-		m_blurringIterationsCount = x;
-	}
-
-	/// @privatesection
-	/// @{
 	TexturePtr& getRt()
 	{
 		return m_vblurRt;
@@ -58,7 +48,17 @@ public:
 	{
 		return m_height;
 	}
-	/// @}
+#endif
+
+	U32 getBlurringIterationsCount() const
+	{
+		return m_blurringIterationsCount;
+	}
+
+	void setBlurringIterationsCount(const U32 x)
+	{
+		m_blurringIterationsCount = x;
+	}
 
 private:
 	U32 m_width, m_height;

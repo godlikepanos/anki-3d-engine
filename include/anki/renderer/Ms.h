@@ -17,12 +17,11 @@ namespace anki {
 class Ms: public RenderingPass
 {
 public:
+#ifdef ANKI_BUILD
 	static const U ATTACHMENT_COUNT = 3;
 	static const Array<PixelFormat, ATTACHMENT_COUNT> RT_PIXEL_FORMATS;
 	static const PixelFormat DEPTH_RT_PIXEL_FORMAT;
 
-	/// @privatesection
-	/// @{
 	Ms(Renderer* r)
 		: RenderingPass(r)
 	{}
@@ -59,7 +58,7 @@ public:
 	}
 
 	void generateMipmaps(CommandBufferPtr& cmdb);
-	/// @}
+#endif
 
 private:
 	/// A collection of data
