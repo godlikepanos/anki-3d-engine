@@ -11,3 +11,7 @@ else()
 endif()
 
 add_library(ankiinput ${ANKI_INPUT_SOURCES})
+
+if(${ANKI_WINDOW_BACKEND} STREQUAL "SDL")
+	target_link_libraries(ankiinput SDL2_LIB)
+endif()

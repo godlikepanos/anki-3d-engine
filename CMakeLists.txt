@@ -2,9 +2,9 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
 PROJECT(anki)
 
-#
-# Determin the system to build for. Do that first
-#
+################################################################################
+# Determin the system to build for. Do that first                              #
+################################################################################
 
 if(WIN32)
 	if(NOT WINDOWS)
@@ -33,9 +33,9 @@ else()
 	message(FATAL_ERROR "Unknown system")
 endif()
 
-#
-# Configuration
-#
+################################################################################
+# Configuration                                                                #
+################################################################################
 
 option(ANKI_OPTIMIZE "Optimize" ON)
 option(ANKI_DEBUG_SYMBOLS "Debug symbols" OFF)
@@ -88,9 +88,9 @@ set(ANKI_EXTRA_LIB_DIRS CACHE STRING "Some extra lib paths (Needed for some weir
 # Valgrind
 option(ANKI_VALGRIND_HAPPY "Make valgrind happy" OFF)
 
-#
-# Options that affect anki and thirdparty
-#
+################################################################################
+# Compiler & linker flags                                                      #
+################################################################################
 
 set(CXX_FLAGS "")
 set(COMPILER_FLAGS "")
@@ -176,23 +176,57 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX_FLAGS} ${COMPILER_FLAGS}")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMPILER_FLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINKER_FLAGS}")
 
-#
-# Install
-#
+################################################################################
+# Install                                                                      #
+################################################################################
 set(INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/include/" CACHE PATH "The subdirectory to the header prefix")
 set(LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lib" CACHE PATH "Library install path")
 
 message("++ Include install dir: ${INCLUDE_INSTALL_DIR}")
 message("++ Lib install dir: ${LIB_INSTALL_DIR}")
 
-#
-# First the thirdparty
-#
-add_subdirectory(thirdparty)
+################################################################################
+# Thirdparty                                                                   #
+################################################################################
+set(ANKI_EXTERN_SUB_DIRS tinyxml2 lua z newton)
 
-#
+if(LINUX OR MACOS OR WINDOWS)
+	set(ANKI_EXTERN_SUB_DIRS ${ANKI_EXTERN_SUB_DIRS} GLEW)
+endif()
+
+if(ANKI_BUILD_TOOLS)
+	set(ANKI_EXTERN_SUB_DIRS ${ANKI_EXTERN_SUB_DIRS} assimp)
+endif()
+
+if(${ANKI_WINDOW_BACKEND} STREQUAL "SDL")
+	include(ExternalProject)
+
+	ExternalProject_Add(
+		SDL2_PROJECT
+		DOWNLOAD_COMMAND ""
+		PREFIX "${CMAKE_CURRENT_BINARY_DIR}/sdl2_build"
+		SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/SDL2"
+		CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/sdl2_build -DSDL_SHARED=OFF -DSDL_STATIC=ON)
+
+	ExternalProject_Get_Property(SDL2_PROJECT install_dir)
+	set(SDL2_INSTALL_DIR ${install_dir})
+
+	add_library(SDL2_LIB STATIC IMPORTED)
+	set_property(TARGET SDL2_LIB PROPERTY IMPORTED_LOCATION ${SDL2_INSTALL_DIR}/lib/libSDL2.a)
+	add_dependencies(SDL2_LIB SDL2_PROJECT)
+else()
+	set(SDL2_INSTALL_DIR "")
+endif()
+
+foreach(TMP ${ANKI_EXTERN_SUB_DIRS})
+	add_subdirectory(thirdparty/${TMP})
+endforeach()
+
+################################################################################
+# AnKi                                                                         #
+################################################################################
+
 # Revision
-#
 find_package(Git)
 
 if(GIT_FOUND)
@@ -207,9 +241,7 @@ else()
 	set(ANKI_REVISION "\"unknown\"")
 endif()
 
-#
 # Doxygen
-#
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/docs/doxyfile ${CMAKE_CURRENT_BINARY_DIR}/doxyfile @ONLY)
 
 find_package(Doxygen)
@@ -221,9 +253,7 @@ if(DOXYGEN_FOUND)
 		COMMENT "Generating API documentation with Doxygen" VERBATIM)
 endif()
 
-#
 # Config.h
-#
 set(ANKI_VERSION_MAJOR 0)
 set(ANKI_VERSION_MINOR 1)
 message("++ AnKi version: ${ANKI_VERSION_MAJOR}.${ANKI_VERSION_MINOR}")
@@ -237,11 +267,9 @@ endif()
 CONFIGURE_FILE("include/anki/Config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h")
 INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h" DESTINATION "${INCLUDE_INSTALL_DIR}/anki")
 
-#
 # Include & lib directories
-#
 include_directories("thirdparty/tinyxml2/include" "thirdparty/lua" "thirdparty/z" "thirdparty/bullet"
-	"thirdparty/SDL2/include" "include" "thirdparty/newton/newton" "${CMAKE_CURRENT_BINARY_DIR}")
+	"${SDL2_INSTALL_DIR}/include/SDL2/" "include" "thirdparty/newton/newton" "${CMAKE_CURRENT_BINARY_DIR}")
 
 if(LINUX OR MACOS OR WINDOWS)
 	include_directories("thirdparty/GLEW/include")
@@ -253,18 +281,47 @@ if(ANDROID)
 	include_directories("${ANDROID_NDK}/sources/android/native_app_glue")
 endif()
 
-#
-# AnKi specific compiler flags
-#
-
 # AnKi compiler flags (Mainly warnings)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -Wall -W -Wextra -Wstrict-aliasing -Wwrite-strings -Wunused -Wunused-variable -Wno-unused-parameter -Wundef -std=c++11 ")
 
-#
-# Add anki related dirs
-#
-add_subdirectory(src)
+# Set platform specific
+if(LINUX)
+	set(_SYS GL ankiglew pthread dl)
+elseif(MACOS)
+	find_package(OpenGL REQUIRED)
+	set(_SYS ${OPENGL_LIBRARIES} ankiglew pthread)
+elseif(ANDROID)
+	set(_SYS GLESv3 EGL log android)
+	include_directories("${ANDROID_NDK}/sources/android/native_app_glue")
+	set(_SYS_SRC "${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c")
+elseif(WINDOWS)
+	set(_SYS ankiglew opengl32 version)
 
+	add_definitions(-DGLEW_STATIC -D_NEWTON_STATIC_LIB)
+else()
+	message(FATAL_ERROR "Unhandled case")
+endif()
+
+if(${ANKI_WINDOW_BACKEND} STREQUAL "SDL")
+	link_directories(${SDL2_INSTALL_DIR}/lib)
+endif()
+
+# Add anki sub libraries
+set(ANKI_SUB_DIRS core script renderer scene event input physics resource misc gr collision math util)
+set(ANKI_LIBS "")
+
+foreach(TMP ${ANKI_SUB_DIRS})
+	add_subdirectory(src/${TMP})
+	set(ANKI_LIBS ${ANKI_LIBS} anki${TMP})
+endforeach()
+
+add_library(anki src/Dummy.cpp "${_SYS_SRC}")
+add_dependencies(anki SDL2_LIB)
+target_link_libraries(anki ${ANKI_LIBS} ankitinyxml2 ankilua ankiz ankinewton ${ANKI_GPERFTOOLS_LIBS} ${_SYS} SDL2_LIB)
+
+################################################################################
+# AnKi extra                                                                   #
+################################################################################
 if(ANKI_BUILD_TESTS)
 	ENABLE_TESTING()
 	add_subdirectory(tests)
@@ -282,9 +339,9 @@ if(ANKI_BUILD_BENCH)
 	add_subdirectory(bench)
 endif()
 
-#
-# XXX
-#
+################################################################################
+# Android                                                                      #
+################################################################################
 if(${ANDROID})
 	# 1. generate Android.mk
 	FILE(WRITE ./jni/Android.mk "APP_ABI := ${ANDROID_NDK_ABI_NAME}\n")
