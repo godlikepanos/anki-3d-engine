@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_INPUT_INPUT_H
-#define ANKI_INPUT_INPUT_H
+#pragma once
 
 #include "anki/Math.h"
 #include "anki/util/Singleton.h"
@@ -74,8 +73,8 @@ public:
 	/// Populate the key and button with the new state
 	ANKI_USE_RESULT Error handleEvents();
 
-	/// Move the mouse cursor to a position inside the window. Useful for 
-	/// locking the cursor into a fixed location (eg in the center of the 
+	/// Move the mouse cursor to a position inside the window. Useful for
+	/// locking the cursor into a fixed location (eg in the center of the
 	/// screen)
 	void moveCursor(const Vec2& posNdc);
 
@@ -126,4 +125,3 @@ private:
 
 } // end namespace anki
 
-#endif

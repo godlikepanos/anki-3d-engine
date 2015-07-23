@@ -3,12 +3,11 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_INPUT_KEY_CODES_H
-#define ANKI_INPUT_KEY_CODES_H
+#pragma once
 
 namespace anki {
 
-/// Keyboard scancodes taken from SDL 
+/// Keyboard scancodes taken from SDL
 enum class KeyCode
 {
 	UNKNOWN = 0,
@@ -259,11 +258,17 @@ enum class KeyCode
 	KBDILLUMDOWN,
 	KBDILLUMUP,
 	EJECT,
-	SLEEP,	
+	SLEEP,
 
 	COUNT
 };
 
+enum class MouseButton
+{
+	LEFT,
+	MIDDLE,
+	RIGHT
+};
+
 } // end namespace anki
 
-#endif
