@@ -115,7 +115,7 @@ protected:
 	Array<Plane, (U)PlaneType::COUNT> m_planesW;
 
 	/// Keep the transformation.
-	Transform m_trf = Transform::getIdentity(); 
+	Transform m_trf = Transform::getIdentity();
 
 	/// It's true when the frustum changed
 	Bool8 m_frustumDirty = true;
@@ -213,7 +213,7 @@ public:
 	}
 
 	/// Implements Frustum::calculateProjectionMatrix
-	Mat4 calculateProjectionMatrix() const;
+	Mat4 calculateProjectionMatrix() const override;
 
 private:
 	/// @name Viewing variables
@@ -328,7 +328,7 @@ public:
 	OrthographicFrustum& operator=(const OrthographicFrustum& b);
 
 	/// Implements Frustum::calculateProjectionMatrix
-	Mat4 calculateProjectionMatrix() const;
+	Mat4 calculateProjectionMatrix() const override;
 
 	/// Calculate and get transformed
 	OrthographicFrustum getTransformed(const Transform& trf) const

@@ -10,6 +10,12 @@
 namespace anki {
 
 //==============================================================================
+ResourceObject::ResourceObject(ResourceManager* manager)
+	: m_manager(manager)
+	, m_refcount(0)
+{}
+
+//==============================================================================
 ResourceObject::~ResourceObject()
 {
 	m_uuid.destroy(getAllocator());

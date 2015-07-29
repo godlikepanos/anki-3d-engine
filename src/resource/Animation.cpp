@@ -9,6 +9,11 @@
 namespace anki {
 
 //==============================================================================
+Animation::Animation(ResourceManager* manager)
+	: ResourceObject(manager)
+{}
+
+//==============================================================================
 Animation::~Animation()
 {
 	for(AnimationChannel& ch : m_channels)

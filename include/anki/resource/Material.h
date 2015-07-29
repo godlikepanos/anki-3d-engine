@@ -6,7 +6,6 @@
 #pragma once
 
 #include "anki/resource/ResourceObject.h"
-#include "anki/resource/ResourcePointer.h"
 #include "anki/resource/ShaderResource.h"
 #include "anki/resource/RenderingKey.h"
 #include "anki/Math.h"

@@ -136,7 +136,7 @@ endif()
 # Add optimization flags
 if(ANKI_OPTIMIZE)
 	# -flto ?
-	set(COMPILER_FLAGS "${COMPILER_FLAGS} -ffast-math -O4 -flto ")
+	set(COMPILER_FLAGS "${COMPILER_FLAGS} -ffast-math -O3 -flto ")
 
 	# Add this because Android compiler complains
 	if(ANDROID)
@@ -307,7 +307,7 @@ if(${ANKI_WINDOW_BACKEND} STREQUAL "SDL")
 endif()
 
 # Add anki sub libraries
-set(ANKI_SUB_DIRS core script renderer scene event input physics resource misc gr collision math util)
+set(ANKI_SUB_DIRS core script renderer scene ui event input physics resource misc gr collision math util)
 set(ANKI_LIBS "")
 
 foreach(TMP ${ANKI_SUB_DIRS})

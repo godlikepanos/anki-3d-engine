@@ -185,8 +185,8 @@ Error Ssao::initInternal(const ConfigSet& config)
 		"#define KERNEL_ARRAY %s\n",
 		NOISE_TEX_SIZE, m_width, m_height, KERNEL_SIZE, &kernelStr[0]);
 
-	ANKI_CHECK(m_ssaoFrag.loadToCache(&getResourceManager(),
-		"shaders/PpsSsao.frag.glsl", pps.toCString(), "r_"));
+	ANKI_CHECK(getResourceManager().loadResourceToCache(
+		m_ssaoFrag, "shaders/PpsSsao.frag.glsl", pps.toCString(), "r_"));
 
 	m_r->createDrawQuadPipeline(
 		m_ssaoFrag->getGrShader(), colorState, m_ssaoPpline);
@@ -203,8 +203,8 @@ Error Ssao::initInternal(const ConfigSet& config)
 		"#define SAMPLES 11\n",
 		m_height);
 
-	ANKI_CHECK(m_hblurFrag.loadToCache(&getResourceManager(),
-		SHADER_FILENAME, pps.toCString(), "r_"));
+	ANKI_CHECK(getResourceManager().loadResourceToCache(
+		m_hblurFrag, SHADER_FILENAME, pps.toCString(), "r_"));
 
 	m_r->createDrawQuadPipeline(
 		m_hblurFrag->getGrShader(), colorState, m_hblurPpline);
@@ -217,8 +217,8 @@ Error Ssao::initInternal(const ConfigSet& config)
 		"#define SAMPLES 9\n",
 		m_width);
 
-	ANKI_CHECK(m_vblurFrag.loadToCache(&getResourceManager(),
-		SHADER_FILENAME, pps.toCString(), "r_"));
+	ANKI_CHECK(getResourceManager().loadResourceToCache(
+		m_vblurFrag, SHADER_FILENAME, pps.toCString(), "r_"));
 
 	m_r->createDrawQuadPipeline(
 		m_vblurFrag->getGrShader(), colorState, m_vblurPpline);

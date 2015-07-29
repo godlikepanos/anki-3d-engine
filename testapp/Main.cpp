@@ -264,7 +264,7 @@ Error init()
 	{
 		ScriptResourcePtr script;
 
-		err = script.load("maps/techdemo/scene.lua", &resources);
+		ANKI_CHECK(resources.loadResource("maps/techdemo/scene.lua", script));
 		if(err) return err;
 
 		err = app->getScriptManager().evalString(script->getSource());

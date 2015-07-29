@@ -6,7 +6,6 @@
 #pragma once
 
 #include "anki/resource/ResourceObject.h"
-#include "anki/resource/ResourcePointer.h"
 #include "anki/Math.h"
 #include "anki/Gr.h"
 
@@ -100,9 +99,7 @@ public:
 	/// Size of a single vertex.
 	static const U VERTEX_SIZE = 5 * sizeof(F32);
 
-	ParticleEmitterResource(ResourceManager* manager)
-		: ResourceObject(manager)
-	{}
+	ParticleEmitterResource(ResourceManager* manager);
 
 	~ParticleEmitterResource();
 

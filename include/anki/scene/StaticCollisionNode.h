@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SCENE_STATIC_COLLISION_H
-#define ANKI_SCENE_STATIC_COLLISION_H
+#pragma once
 
 #include "anki/scene/SceneNode.h"
 #include "anki/resource/Forward.h"
@@ -19,9 +18,7 @@ namespace anki {
 class StaticCollisionNode: public SceneNode
 {
 public:
-	StaticCollisionNode(SceneGraph* scene)
-	:	SceneNode(scene)
-	{}
+	StaticCollisionNode(SceneGraph* scene);
 
 	~StaticCollisionNode();
 
@@ -35,6 +32,4 @@ private:
 /// @}
 
 } // end namespace anki
-
-#endif
 

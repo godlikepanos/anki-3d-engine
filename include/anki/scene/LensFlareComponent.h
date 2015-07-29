@@ -18,9 +18,9 @@ namespace anki {
 class LensFlareComponent final: public SceneComponent
 {
 public:
-	LensFlareComponent(SceneNode* node)
-		: SceneComponent(Type::LENS_FLARE, node)
-	{}
+	LensFlareComponent(SceneNode* node);
+
+	~LensFlareComponent();
 
 	ANKI_USE_RESULT Error create(const CString& textureFilename);
 

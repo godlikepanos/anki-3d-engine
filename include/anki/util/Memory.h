@@ -340,9 +340,6 @@ private:
 	/// Size of the first chunk.
 	PtrSize m_initSize = 0;
 
-	/// Chunk max size.
-	PtrSize m_maxSize = 0;
-
 	/// Chunk scale.
 	F32 m_scale = 2.0;
 

@@ -17,9 +17,7 @@ namespace anki {
 class BodyNode: public SceneNode
 {
 public:
-	BodyNode(SceneGraph* scene)
-		: SceneNode(scene)
-	{}
+	BodyNode(SceneGraph* scene);
 
 	~BodyNode();
 

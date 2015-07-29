@@ -121,6 +121,9 @@ public:
 	/// @param origin Position used as reference for the offset
 	ANKI_USE_RESULT Error seek(PtrSize offset, SeekOrigin origin);
 
+	/// The the size of the file.
+	PtrSize getSize() const;
+
 private:
 	/// Internal filetype
 	enum class Type: U8
@@ -158,9 +161,6 @@ private:
 	ANKI_USE_RESULT Error  openAndroidFile(
 		const CString& filename, OpenFlag flags);
 #endif
-
-	/// The file should be open
-	PtrSize getSize();
 
 	void zero()
 	{

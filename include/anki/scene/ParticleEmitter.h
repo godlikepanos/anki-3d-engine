@@ -107,7 +107,7 @@ public:
 	void simulate(const ParticleEmitter& pe, F32 prevUpdateTime,
 		F32 crntTime) override;
 
-	const Vec4& getPosition() const
+	const Vec4& getPosition() const override
 	{
 		return m_position;
 	}

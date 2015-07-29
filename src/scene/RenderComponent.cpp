@@ -6,6 +6,7 @@
 #include "anki/scene/RenderComponent.h"
 #include "anki/scene/SceneNode.h"
 #include "anki/resource/TextureResource.h"
+#include "anki/resource/ResourceManager.h"
 #include "anki/util/Logger.h"
 
 namespace anki {
@@ -36,7 +37,7 @@ struct CreateNewRenderComponentVariableVisitor
 };
 
 /// The names of the buildins
-static Array<const char*, (U)BuildinMaterialVariableId::COUNT - 1> 
+static Array<const char*, (U)BuildinMaterialVariableId::COUNT - 1>
 	buildinNames = {{
 	"uMvp",
 	"uMv",
@@ -54,7 +55,7 @@ static Array<const char*, (U)BuildinMaterialVariableId::COUNT - 1>
 //==============================================================================
 RenderComponentVariable::RenderComponentVariable(
 	const MaterialVariable* mvar)
-:	m_mvar(mvar)
+	: m_mvar(mvar)
 {
 	ANKI_ASSERT(m_mvar);
 
@@ -72,7 +73,7 @@ RenderComponentVariable::RenderComponentVariable(
 	}
 
 	// Sanity checks
-	if(!m_mvar->hasValues() 
+	if(!m_mvar->hasValues()
 		&& m_buildinId == BuildinMaterialVariableId::NO_BUILDIN)
 	{
 		ANKI_LOGW("Material variable no buildin and not initialized: %s",
@@ -90,8 +91,8 @@ RenderComponentVariable::~RenderComponentVariable()
 
 //==============================================================================
 RenderComponent::RenderComponent(SceneNode* node)
-:	SceneComponent(Type::RENDER, node), 
-	m_alloc(node->getSceneAllocator())
+	: SceneComponent(Type::RENDER, node)
+	, m_alloc(node->getSceneAllocator())
 {}
 
 //==============================================================================

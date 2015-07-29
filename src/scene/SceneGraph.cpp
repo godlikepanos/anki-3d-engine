@@ -10,6 +10,7 @@
 #include "anki/scene/Sector.h"
 #include "anki/core/Counters.h"
 #include "anki/physics/PhysicsWorld.h"
+#include "anki/resource/ResourceManager.h"
 
 namespace anki {
 

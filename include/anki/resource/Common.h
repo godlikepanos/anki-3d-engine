@@ -8,6 +8,7 @@
 #include "anki/util/Allocator.h"
 #include "anki/util/DArray.h"
 #include "anki/util/String.h"
+#include "anki/util/Ptr.h"
 
 namespace anki {
 
@@ -21,10 +22,27 @@ class ResourcePointer;
 /// @addtogroup resource
 /// @{
 
+/// Deleter for ResourcePtr.
+template<typename T>
+class ResourcePtrDeleter
+{
+public:
+	void operator()(T* ptr)
+	{
+		ptr->getManager().unregisterResource(ptr);
+		auto alloc = ptr->getAllocator();
+		alloc.deleteInstance(ptr);
+	}
+};
+
+/// Smart pointer for resources.
+template<typename T>
+using ResourcePtr = IntrusivePtr<T, ResourcePtrDeleter<T>>;
+
 // NOTE: Add resources in 3 places
 #define ANKI_FORWARD(rsrc_, name_) \
 	class rsrc_; \
-	using name_ = ResourcePointer<rsrc_>;
+	using name_ = ResourcePtr<rsrc_>;
 
 ANKI_FORWARD(Animation, AnimationResourcePtr)
 ANKI_FORWARD(TextureResource, TextureResourcePtr)
@@ -38,6 +56,7 @@ ANKI_FORWARD(Model, ModelResourcePtr)
 ANKI_FORWARD(Script, ScriptResourcePtr)
 ANKI_FORWARD(DummyRsrc, DummyResourcePtr)
 ANKI_FORWARD(CollisionResource, CollisionResourcePtr)
+ANKI_FORWARD(GenericResource, GenericResourcePtr)
 
 #undef ANKI_FORWARD
 

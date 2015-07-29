@@ -5,38 +5,86 @@
 
 #pragma once
 
-#include "anki/ui/Common.h"
-#include "anki/util/Allocator.h"
+#include "anki/ui/UiInterface.h"
+#include "anki/input/KeyCode.h"
 
 namespace anki {
 
 /// @addtogroup ui
 /// @{
 
-/// UI canvas.
+/// UI canvas. It's a container of widgets.
 class Canvas
 {
 public:
-	Canvas(UiAllocator alloc, Painter* painter, ImageManager* imageMngr)
-		: m_alloc(alloc)
-		, m_painter(painter)
-		, m_img(imageMngr)
-	{}
+	Canvas(UiInterface* interface);
 
-	UiAllocator& getAllocator()
+	~Canvas();
+
+	/// Create a new widget.
+	template<typename TWidget>
+	TWidget* newWidget()
 	{
-		return m_alloc;
+		TWidget* out = getAllocator().newInstance<TWidget>(this);
+		return out;
 	}
 
-	const UiAllocator& getAllocator() const
+	/// @name Input injection methods.
+	/// @{
+	void injectMouseMove(const Vec2& pos);
+
+	void injectKeyDown(KeyCode key);
+
+	void injectKeyUp(KeyCode key);
+
+	void injectText(const CString& text);
+
+	void injectMouseButtonDown(MouseButton button);
+	/// @}
+
+	/// Update the widgets.
+	void update(F64 dt);
+
+	/// Paint the widgets (if needed). Call after update.
+	void paint();
+
+	void setSize(const Vec2& size);
+
+	const Vec2& getSize() const
 	{
-		return m_alloc;
+		return m_size;
 	}
+
+	Bool getDebugDrawEnabled() const
+	{
+		return m_debugDrawEnabled;
+	}
+
+	void setDebugDrawEnabled()
+	{
+		m_debugDrawEnabled = true;
+	}
+
+#ifdef ANKI_BUILD
+	UiAllocator getAllocator() const
+	{
+		return m_interface->getAllocator();
+	}
+
+	Atomic<I32>& getMarkedForDeletionCount()
+	{
+		return m_markedForDeletionCount;
+	}
+#endif
 
 private:
-	UiAllocator m_alloc;
-	WeakPtr<Painter> m_painter;
-	WeakPtr<ImageManager> m_img;
+	WeakPtr<UiInterface> m_interface;
+	Atomic<I32> m_markedForDeletionCount = {0};
+	WeakPtr<Widget> m_rootWidget;
+
+	Vec2 m_size; ///< Virtual size of canvas.
+	Bool8 m_debugDrawEnabled = false;
 };
 /// @}
 
+} // end namespace anki

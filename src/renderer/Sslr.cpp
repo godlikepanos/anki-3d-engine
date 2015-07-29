@@ -39,7 +39,7 @@ Error Sslr::init(const ConfigSet& config)
 		"#define HEIGHT %u\n",
 		m_width, m_height);
 
-	ANKI_CHECK(m_reflectionFrag.loadToCache(&getResourceManager(),
+	ANKI_CHECK(getResourceManager().loadResourceToCache(m_reflectionFrag,
 		"shaders/PpsSslr.frag.glsl", pps.toCString(), "r_"));
 
 	ColorStateInfo colorState;
@@ -50,8 +50,8 @@ Error Sslr::init(const ConfigSet& config)
 		m_reflectionFrag->getGrShader(), colorState, m_reflectionPpline);
 
 	// Blit
-	ANKI_CHECK(
-		m_blitFrag.load("shaders/Blit.frag.glsl", &getResourceManager()));
+	ANKI_CHECK(getResourceManager().loadResource(
+		"shaders/Blit.frag.glsl", m_blitFrag));
 
 	colorState.m_attachmentCount = 1;
 	colorState.m_attachments[0].m_format = Is::RT_PIXEL_FORMAT;

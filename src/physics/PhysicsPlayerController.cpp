@@ -13,8 +13,9 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-struct CustomControllerConvexRayFilter
+class CustomControllerConvexRayFilter
 {
+public:
 	const NewtonBody* m_me = nullptr;
 	Vec4 m_hitContact = Vec4(0.0);
 	Vec4 m_hitNormal = Vec4(0.0);

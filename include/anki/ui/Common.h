@@ -7,45 +7,24 @@
 
 #include "anki/Math.h"
 #include "anki/util/Allocator.h"
-#include "anki/util/Ptr.h"
 
 namespace anki {
 
 // Forward
-class Painter;
-class Image;
+class Widget;
+class Canvas;
 
 /// @addtogroup ui
 /// @{
-
-// Pointers
-using ImagePtr = IntrusivePtr<Image>;
 
 using UiAllocator = GenericMemoryPoolAllocator<U8>;
 
 /// Color.
 using Color = Vec4;
 
-/// Rectangle.
-class Rect
-{
-public:
-	Vec2 m_min = {0.0};
-	Vec2 m_max = {getEpsilon<F32>()};
-
-	Rect() = default;
-
-	Rect(Vec2 min, Vec2 max)
-		: m_min(min)
-		, m_max(max)
-	{
-		ANKI_ASSERT(m_min < m_max);
-	}
-
-	Rect(const Rect&) = default;
-
-	Rect& operator=(const Rect&) = default;
-};
+/// Used in widget classes.
+#define ANKI_WIDGET \
+	friend class Canvas;
 /// @}
 
 } // end namespace anki

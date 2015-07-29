@@ -6,7 +6,6 @@
 #pragma once
 
 #include "anki/resource/ResourceObject.h"
-#include "anki/resource/ResourcePointer.h"
 #include "anki/Gr.h"
 
 namespace anki {
@@ -18,12 +17,9 @@ namespace anki {
 class ShaderResource: public ResourceObject
 {
 public:
-	ShaderResource(ResourceManager* manager)
-		: ResourceObject(manager)
-	{}
+	ShaderResource(ResourceManager* manager);
 
-	~ShaderResource()
-	{}
+	~ShaderResource();
 
 	const ShaderPtr& getGrShader() const
 	{

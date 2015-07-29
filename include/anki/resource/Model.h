@@ -27,9 +27,7 @@ class PhysicsCollisionShape;
 class ModelPatch
 {
 public:
-	ModelPatch(Model* model)
-		: m_model(model)
-	{}
+	ModelPatch(Model* model);
 
 	~ModelPatch();
 
@@ -128,9 +126,7 @@ private:
 class Model: public ResourceObject
 {
 public:
-	Model(ResourceManager* manager)
-		: ResourceObject(manager)
-	{}
+	Model(ResourceManager* manager);
 
 	~Model();
 

@@ -18,6 +18,7 @@
 #include "anki/misc/ConfigSet.h"
 #include "anki/collision/ConvexHullShape.h"
 #include "anki/util/Rtti.h"
+#include "anki/Ui.h" /// XXX
 
 namespace anki {
 
@@ -124,67 +125,30 @@ Error Dbg::run(CommandBufferPtr& cmdb)
 		phyd.drawWorld(scene._getPhysicsWorld());
 	}
 
-#if 0
+#if 1
 	{
-		SceneNode& sn = scene.findSceneNode("plight0");
-		SpatialComponent& sp = sn.getComponent<SpatialComponent>();
-		const CollisionShape& cs = sp.getSpatialCollisionShape();
-		const Sphere& sphere = dcast<const Sphere&>(cs);
-		F32 r = sphere.getRadius();
+		static Bool firstTime = true;
+		static UiInterfaceImpl* interface;
+		static Canvas* canvas;
 
-		Mat4 v = cam.getComponent<FrustumComponent>().getViewMatrix();
-		Mat4 p = cam.getComponent<FrustumComponent>().getProjectionMatrix();
-		Mat4 vp =
-			cam.getComponent<FrustumComponent>().getViewProjectionMatrix();
+		if(firstTime)
+		{
+			firstTime = false;
 
-		Transform t = cam.getComponent<MoveComponent>().getWorldTransform();
-		Mat4 trf(t);
-		Mat3x4 rot = cam.getComponent<MoveComponent>().getWorldTransform().getRotation();
+			auto alloc = getAllocator();
+			interface = alloc.newInstance<UiInterfaceImpl>(alloc);
+			ANKI_CHECK(interface->init(&getGrManager(), &getResourceManager()));
 
-		CollisionDebugDrawer cd(m_drawer);
+			canvas = alloc.newInstance<Canvas>(interface);
+			canvas->setDebugDrawEnabled();
+		}
 
-		m_drawer->setModelMatrix(Mat4::getIdentity());
-
-		cs.accept(cd);
-
-		m_drawer->setViewProjectionMatrix(Mat4::getIdentity());
-		m_drawer->setModelMatrix(Mat4::getIdentity());
-
-		Vec4 a = vp * sphere.getCenter().xyz1();
-		F32 w = a.w();
-		a /= a.w();
-
-
-		Vec2 rr;
-		Vec4 n = t.getOrigin() - sphere.getCenter();
-		Vec4 right = rot.getColumn(1).xyz0().cross(n);
-		right.normalize();
-
-		Vec4 b = sphere.getCenter() + right * r;
-		b = vp * b.xyz1();
-		b /= b.w();
-		rr.x() = b.x() - a.x();
-
-		Vec4 top = n.cross(rot.getColumn(0).xyz0());
-		top.normalize();
-
-		b = sphere.getCenter() + top * r;
-		b = vp * b.xyz1();
-		b /= b.w();
-		rr.y() = b.y() - a.y();
-
-		m_drawer->begin(GL_LINES);
-		m_drawer->setColor(Vec4(1.0, 1.0, 1.0, 1.0));
-
-		m_drawer->pushBackVertex(a.xyz());
-		m_drawer->pushBackVertex(a.xyz() + Vec3(rr.x(), 0, 0));
-
-		m_drawer->pushBackVertex(a.xyz());
-		m_drawer->pushBackVertex(a.xyz() + Vec3(0, rr.y(), 0));
-
-		//m_drawer->pushBackVertex(Vec3(0.0, 0.0, 0.5));
-		//m_drawer->pushBackVertex(Vec3(1.0, 1.0, 0.5));
-		m_drawer->end();
+		cmdb->setViewport(10, 10, 1024, 1024);
+		canvas->update(0.1);
+		interface->beginRendering(cmdb);
+		canvas->paint();
+		interface->endRendering();
+		cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 	}
 #endif
 

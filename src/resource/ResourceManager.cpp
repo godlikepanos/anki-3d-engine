@@ -70,6 +70,7 @@ Error ResourceManager::create(Initializer& init)
 	ANKI_RESOURCE(Script)
 	ANKI_RESOURCE(DummyRsrc)
 	ANKI_RESOURCE(CollisionResource)
+	ANKI_RESOURCE(GenericResource)
 
 #undef ANKI_RESOURCE
 

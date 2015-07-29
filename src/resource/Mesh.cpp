@@ -12,6 +12,11 @@
 namespace anki {
 
 //==============================================================================
+Mesh::Mesh(ResourceManager* manager)
+	: ResourceObject(manager)
+{}
+
+//==============================================================================
 Mesh::~Mesh()
 {
 	m_subMeshes.destroy(getAllocator());

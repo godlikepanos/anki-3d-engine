@@ -5,5 +5,9 @@
 
 #pragma once
 
-#include "anki/resource/Common.h"
+/// @defgroup ui User interface
+
+#include "anki/ui/UiInterfaceImpl.h"
+#include "anki/ui/Canvas.h"
+#include "anki/ui/Widget.h"
 

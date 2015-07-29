@@ -22,6 +22,11 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
+ModelPatch::ModelPatch(Model* model)
+	: m_model(model)
+{}
+
+//==============================================================================
 ModelPatch::~ModelPatch()
 {}
 
@@ -74,7 +79,7 @@ Error ModelPatch::create(
 	ANKI_ASSERT(meshFNames.getSize() > 0);
 
 	// Load material
-	ANKI_CHECK(m_mtl.load(mtlFName, manager));
+	ANKI_CHECK(manager->loadResource(mtlFName, m_mtl));
 
 	// Iterate material variables for textures
 	ResourceGroupInitializer rcinit;
@@ -84,7 +89,7 @@ Error ModelPatch::create(
 	m_meshCount = 0;
 	for(U i = 0; i < meshFNames.getSize(); i++)
 	{
-		ANKI_CHECK(m_meshes[i].load(meshFNames[i], manager));
+		ANKI_CHECK(manager->loadResource(meshFNames[i], m_meshes[i]));
 
 		// Sanity check
 		if(i > 0 && !m_meshes[i]->isCompatible(*m_meshes[i - 1]))
@@ -246,6 +251,11 @@ void ModelPatch::computePipelineInitializer(
 //==============================================================================
 // Model                                                                       =
 //==============================================================================
+
+//==============================================================================
+Model::Model(ResourceManager* manager)
+	: ResourceObject(manager)
+{}
 
 //==============================================================================
 Model::~Model()

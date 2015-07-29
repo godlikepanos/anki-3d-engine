@@ -10,9 +10,8 @@ namespace anki {
 
 //==============================================================================
 MoveComponent::MoveComponent(SceneNode* node, Flag flags)
-:	SceneComponent(Type::MOVE, node),
-	Bitset<Flag>(flags),
-	m_node(node)
+	: SceneComponent(Type::MOVE, node)
+	, Bitset<Flag>(flags)
 {
 	markForUpdate();
 }
@@ -41,7 +40,7 @@ Bool MoveComponent::updateWorldTransform(SceneNode& node)
 
 		if(parent)
 		{
-			const MoveComponent* parentMove = 
+			const MoveComponent* parentMove =
 				parent->tryGetComponent<MoveComponent>();
 
 			if(parentMove == nullptr)
@@ -74,13 +73,13 @@ Bool MoveComponent::updateWorldTransform(SceneNode& node)
 		disableBits(Flag::MARKED_FOR_UPDATE);
 	}
 
-	// If this is dirty then make children dirty as well. Don't walk the 
+	// If this is dirty then make children dirty as well. Don't walk the
 	// whole tree because you will re-walk it later
 	if(dirty)
 	{
-		Error err = node.visitChildrenMaxDepth(1, 
+		Error err = node.visitChildrenMaxDepth(1,
 			[](SceneNode& childNode) -> Error
-		{ 
+		{
 			Error e = childNode.iterateComponentsOfType<MoveComponent>(
 				[](MoveComponent& mov) -> Error
 			{

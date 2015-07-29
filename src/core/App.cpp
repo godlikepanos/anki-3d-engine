@@ -14,6 +14,7 @@
 #include "anki/core/NativeWindow.h"
 #include "anki/input/Input.h"
 #include "anki/scene/SceneGraph.h"
+#include "anki/resource/ResourceManager.h"
 #include "anki/physics/PhysicsWorld.h"
 #include "anki/renderer/MainRenderer.h"
 #include "anki/script/ScriptManager.h"

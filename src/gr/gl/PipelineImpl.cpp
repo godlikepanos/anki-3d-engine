@@ -300,6 +300,13 @@ void PipelineImpl::initVertexState()
 			cache.m_type = GL_INT_2_10_10_10_REV;
 			cache.m_normalized = true;
 		}
+		else if(binding.m_format == PixelFormat(
+			ComponentFormat::R8G8B8A8, TransformFormat::UNORM))
+		{
+			cache.m_compCount = 4;
+			cache.m_type = GL_UNSIGNED_BYTE;
+			cache.m_normalized = true;
+		}
 		else
 		{
 			ANKI_ASSERT(0 && "TODO");
@@ -469,6 +476,7 @@ void PipelineImpl::setVertexState(GlState& state) const
 
 	for(U i = 0; i < m_in.m_vertex.m_bindingCount; ++i)
 	{
+		ANKI_ASSERT(m_in.m_vertex.m_bindings[i].m_stride > 0);
 		state.m_vertexBindingStrides[i] = m_in.m_vertex.m_bindings[i].m_stride;
 	}
 }

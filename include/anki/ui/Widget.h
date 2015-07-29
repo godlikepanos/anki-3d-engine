@@ -5,13 +5,16 @@
 
 #pragma once
 
-#include "anki/ui/Common.h"
+#include "anki/ui/UiObject.h"
+#include "anki/util/Hierarchy.h"
+#include "anki/util/Bitset.h"
 
 namespace anki {
 
 /// @addtogroup ui
 /// @{
 
+/// Widget state.
 enum class WidgetState: U8
 {
 	DEFAULT,
@@ -22,12 +25,95 @@ enum class WidgetState: U8
 };
 
 /// UI widget.
-class Widget
+class Widget: public UiObject, private Hierarchy<Widget>
 {
+	ANKI_WIDGET
+	friend Hierarchy<Widget>;
+
 public:
+	Widget(Canvas* canvas);
+
+	~Widget();
+
+	void markForDeletion();
+
+	Bool isMarkedForDeletion() const
+	{
+		return m_flags.bitsEnabled(MARKED_FOR_DELETION);
+	}
+
+	virtual void paint()
+	{}
+
+	/// Set position relatively to the parent.
+	void setRelativePosition(const Vec2& pos);
+
+	const Vec2& getRelativePosition() const
+	{
+		return m_posLocal;
+	}
+
+	const Vec2& getCanvasPosition() const
+	{
+		return m_posCanvas;
+	}
+
+	/// Set prefered size.
+	void setSize(const Vec2& size);
+
+	const Vec2& getSize() const
+	{
+		return m_size;
+	}
+
+	/// Set the limts of size. The widget cannot exceede those.
+	void setSizeLimits(const Vec2& min, const Vec2& max);
+
+	void addWidget(Widget* widget)
+	{
+		addChild(getAllocator(), widget);
+	}
+
+	void addWidgetGridLayout(Widget* widget, U colum, U row);
+
+	Widget* getParentWidget()
+	{
+		return getParent();
+	}
+
+	const Widget* getParentWidget() const
+	{
+		return getParent();
+	}
+
+#ifdef ANKI_BUILD
+	void markForRepaint()
+	{
+		m_flags.enableBits(NEEDS_REPAINT, true);
+	}
+
+	Bool isMarkedForRepaint() const
+	{
+		return m_flags.bitsEnabled(NEEDS_REPAINT);
+	}
+#endif
+
 private:
+	enum
+	{
+		MARKED_FOR_DELETION = 1 << 0,
+		NEEDS_REPAINT = 1 << 1
+	};
+
+	Vec2 m_minSize = Vec2(0.0);
+	Vec2 m_maxSize = Vec2(MAX_F32);
+	Vec2 m_size = Vec2(0.0);
+
+	Vec2 m_posLocal = Vec2(0.0); ///< Local space.
+	Vec2 m_posCanvas = Vec2(0.0); ///< World space.
+
+	Bitset<U8> m_flags;
 };
 /// @}
 
 } // end namespace anki
-

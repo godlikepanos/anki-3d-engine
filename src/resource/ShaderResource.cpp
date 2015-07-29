@@ -15,6 +15,15 @@
 namespace anki {
 
 //==============================================================================
+ShaderResource::ShaderResource(ResourceManager* manager)
+	: ResourceObject(manager)
+{}
+
+//==============================================================================
+ShaderResource::~ShaderResource()
+{}
+
+//==============================================================================
 Error ShaderResource::load(const ResourceFilename& filename)
 {
 	return load(filename, " ");

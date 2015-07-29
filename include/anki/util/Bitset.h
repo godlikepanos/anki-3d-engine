@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_BITSET_H
-#define ANKI_BITSET_H
+#pragma once
 
 #include "anki/util/StdTypes.h"
 
@@ -85,4 +84,3 @@ protected:
 
 } // end namespace anki
 
-#endif

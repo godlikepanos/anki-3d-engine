@@ -87,8 +87,8 @@ Error Pps::initInternal(const ConfigSet& config)
 		m_r->getWidth(),
 		m_r->getHeight());
 
-	ANKI_CHECK(m_frag.loadToCache(&getResourceManager(),
-		"shaders/Pps.frag.glsl", pps.toCString(), "r_"));
+	ANKI_CHECK(getResourceManager().loadResourceToCache(
+		m_frag, "shaders/Pps.frag.glsl", pps.toCString(), "r_"));
 
 	ColorStateInfo colorState;
 	colorState.m_attachmentCount = 1;
@@ -140,7 +140,7 @@ Error Pps::init(const ConfigSet& config)
 //==============================================================================
 Error Pps::loadColorGradingTexture(CString filename)
 {
-	ANKI_CHECK(m_lut.load(filename, &getResourceManager()));
+	ANKI_CHECK(getResourceManager().loadResource(filename, m_lut));
 	return ErrorCode::NONE;
 }
 

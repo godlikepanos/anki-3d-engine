@@ -23,9 +23,7 @@ class Mesh: public ResourceObject
 {
 public:
 	/// Default constructor
-	Mesh(ResourceManager* manager)
-		: ResourceObject(manager)
-	{}
+	Mesh(ResourceManager* manager);
 
 	~Mesh();
 

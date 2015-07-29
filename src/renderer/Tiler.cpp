@@ -94,9 +94,8 @@ Error Tiler::initInternal()
 		m_r->getTilesCount().x(),
 		m_r->getTilesCount().y());
 
-	ANKI_CHECK(
-		m_shader.loadToCache(&getResourceManager(),
-		"shaders/TilerMinMax.comp.glsl", pps.toCString(), "r_"));
+	ANKI_CHECK(getResourceManager().loadResourceToCache(
+		m_shader, "shaders/TilerMinMax.comp.glsl", pps.toCString(), "r_"));
 
 	PipelineInitializer pplineInit;
 	pplineInit.m_shaders[U(ShaderType::COMPUTE)] = m_shader->getGrShader();

@@ -34,8 +34,10 @@ Error DebugDrawer::create(Renderer* r)
 {
 	GrManager& gr = r->getGrManager();
 
-	ANKI_CHECK(m_vert.load("shaders/Dbg.vert.glsl", &r->getResourceManager()));
-	ANKI_CHECK(m_frag.load("shaders/Dbg.frag.glsl", &r->getResourceManager()));
+	ANKI_CHECK(
+		r->getResourceManager().loadResource("shaders/Dbg.vert.glsl", m_vert));
+	ANKI_CHECK(
+		r->getResourceManager().loadResource("shaders/Dbg.frag.glsl", m_frag));
 
 	PipelineInitializer init;
 	init.m_vertex.m_bindingCount = 1;

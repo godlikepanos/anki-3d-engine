@@ -6,6 +6,7 @@
 #pragma once
 
 #include "anki/ui/Common.h"
+#include "anki/util/Ptr.h"
 
 namespace anki {
 
@@ -18,20 +19,26 @@ class UiObject
 public:
 	UiObject(Canvas* canvas)
 		: m_canvas(canvas)
-	{}
+	{
+		ANKI_ASSERT(canvas);
+	}
 
 	virtual ~UiObject() = default;
 
-	Atomic<I32>& getRefcount()
-	{
-		return m_refcount;
-	}
-
 	UiAllocator getAllocator() const;
 
+	Canvas& getCanvas()
+	{
+		return *m_canvas;
+	}
+
+	const Canvas& getCanvas() const
+	{
+		return *m_canvas;
+	}
+
 private:
-	Atomic<I32> m_refcount = {0};
-	Canvas* m_canvas = nullptr;
+	WeakPtr<Canvas> m_canvas;
 };
 /// @}
 

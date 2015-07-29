@@ -53,6 +53,9 @@ public:
 	/// @param origin Position used as reference for the offset
 	virtual ANKI_USE_RESULT Error seek(PtrSize offset, SeekOrigin origin) = 0;
 
+	/// Get the size of the file.
+	virtual PtrSize getSize() const = 0;
+
 	Atomic<I32>& getRefcount()
 	{
 		return m_refcount;

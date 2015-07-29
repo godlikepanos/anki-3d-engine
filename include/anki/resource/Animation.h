@@ -6,7 +6,6 @@
 #pragma once
 
 #include "anki/resource/ResourceObject.h"
-#include "anki/resource/ResourcePointer.h"
 #include "anki/Math.h"
 #include "anki/util/String.h"
 
@@ -67,9 +66,7 @@ public:
 class Animation: public ResourceObject
 {
 public:
-	Animation(ResourceManager* manager)
-		: ResourceObject(manager)
-	{}
+	Animation(ResourceManager* manager);
 
 	~Animation();
 

@@ -111,6 +111,11 @@ void ParticleEmitterProperties::updateFlags()
 //==============================================================================
 
 //==============================================================================
+ParticleEmitterResource::ParticleEmitterResource(ResourceManager* manager)
+	: ResourceObject(manager)
+{}
+
+//==============================================================================
 ParticleEmitterResource::~ParticleEmitterResource()
 {}
 
@@ -169,7 +174,7 @@ Error ParticleEmitterResource::load(const ResourceFilename& filename)
 	CString cstr;
 	ANKI_CHECK(rel.getChildElement("material", el));
 	ANKI_CHECK(el.getText(cstr));
-	ANKI_CHECK(m_material.load(cstr, &getManager()));
+	ANKI_CHECK(getManager().loadResource(cstr, m_material));
 
 	// sanity checks
 	//

@@ -7,12 +7,13 @@
 #include "anki/resource/Animation.h"
 #include "anki/scene/SceneNode.h"
 #include "anki/scene/MoveComponent.h"
+#include "anki/resource/ResourceManager.h"
 
 namespace anki {
 
 //==============================================================================
-Error AnimationEvent::create(EventManager* manager, 
-	const AnimationResourcePtr& anim, 
+Error AnimationEvent::create(EventManager* manager,
+	const AnimationResourcePtr& anim,
 	SceneNode* movableSceneNode)
 {
 	ANKI_ASSERT(movableSceneNode);
@@ -24,7 +25,7 @@ Error AnimationEvent::create(EventManager* manager,
 		f = Flag::REANIMATE;
 	}
 
-	Error err = Event::create(manager, m_anim->getStartingTime(), 
+	Error err = Event::create(manager, m_anim->getStartingTime(),
 		m_anim->getDuration(), movableSceneNode, f);
 
 	return err;

@@ -43,8 +43,8 @@ Error Sslf::initInternal(const ConfigSet& config)
 		m_r->getPps().getBloom().getWidth(),
 		m_r->getPps().getBloom().getHeight());
 
-	ANKI_CHECK(m_frag.loadToCache(&getResourceManager(),
-		"shaders/PpsSslf.frag.glsl", pps.toCString(), "r_"));
+	ANKI_CHECK(getResourceManager().loadResourceToCache(
+		m_frag,	"shaders/PpsSslf.frag.glsl", pps.toCString(), "r_"));
 
 	ColorStateInfo colorState;
 	colorState.m_attachmentCount = 1;
@@ -53,8 +53,8 @@ Error Sslf::initInternal(const ConfigSet& config)
 	m_r->createDrawQuadPipeline(m_frag->getGrShader(), colorState, m_ppline);
 
 	// Textures
-	ANKI_CHECK(m_lensDirtTex.load(
-		"engine_data/lens_dirt.ankitex", &getResourceManager()));
+	ANKI_CHECK(getResourceManager().loadResource(
+		"engine_data/lens_dirt.ankitex", m_lensDirtTex));
 
 	// Create the render target and FB
 	m_r->createRenderTarget(m_r->getPps().getBloom().getWidth(),

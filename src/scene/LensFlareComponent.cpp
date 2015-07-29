@@ -6,15 +6,25 @@
 #include "anki/scene/LensFlareComponent.h"
 #include "anki/scene/SceneGraph.h"
 #include "anki/resource/TextureResource.h"
+#include "anki/resource/ResourceManager.h"
 
 namespace anki {
+
+//==============================================================================
+LensFlareComponent::LensFlareComponent(SceneNode* node)
+	: SceneComponent(Type::LENS_FLARE, node)
+{}
+
+//==============================================================================
+LensFlareComponent::~LensFlareComponent()
+{}
 
 //==============================================================================
 Error LensFlareComponent::create(const CString& textureFilename)
 {
 	// Texture
-	ANKI_CHECK(m_tex.load(
-		textureFilename, &getSceneGraph()._getResourceManager()));
+	ANKI_CHECK(getSceneGraph()._getResourceManager().loadResource(
+		textureFilename, m_tex));
 
 	// Queries
 	GrManager& gr = getSceneGraph().getGrManager();

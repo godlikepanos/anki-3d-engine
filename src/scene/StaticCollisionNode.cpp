@@ -6,10 +6,16 @@
 #include "anki/scene/StaticCollisionNode.h"
 #include "anki/scene/SceneGraph.h"
 #include "anki/resource/CollisionResource.h"
+#include "anki/resource/ResourceManager.h"
 #include "anki/physics/PhysicsBody.h"
 #include "anki/physics/PhysicsWorld.h"
 
 namespace anki {
+
+//==============================================================================
+StaticCollisionNode::StaticCollisionNode(SceneGraph* scene)
+	: SceneNode(scene)
+{}
 
 //==============================================================================
 StaticCollisionNode::~StaticCollisionNode()
@@ -20,7 +26,7 @@ Error StaticCollisionNode::create(const CString& name,
 	const CString& resourceFname, const Transform& transform)
 {
 	// Load resource
-	ANKI_CHECK(m_rsrc.load(resourceFname, &getResourceManager()));
+	ANKI_CHECK(getResourceManager().loadResource(resourceFname, m_rsrc));
 
 	// Create body
 	PhysicsBody::Initializer init;

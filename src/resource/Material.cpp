@@ -294,7 +294,7 @@ Error Material::parseMaterialTag(const XmlElement& materialEl)
 
 					ShaderResourcePtr& progr =
 						m_shaders[pid][level][tess][U(shader)];
-					ANKI_CHECK(progr.load(filename.toCString(), &getManager()));
+					ANKI_CHECK(getManager().loadResource(filename.toCString(), progr));
 
 					// Update the hash
 					m_hash ^= computeHash(&src[0], src.getLength());
@@ -375,8 +375,8 @@ Error Material::populateVariables(const MaterialProgramCreator& loader)
 
 				if(in.m_value.getSize() > 0)
 				{
-					ANKI_CHECK(tp.load(
-						in.m_value.getBegin()->toCString(), &getManager()));
+					ANKI_CHECK(getManager().loadResource(
+						in.m_value.getBegin()->toCString(), tp));
 				}
 
 				auto alloc = getAllocator();

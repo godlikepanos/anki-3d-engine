@@ -5,6 +5,7 @@
 
 #include "anki/scene/StaticGeometryNode.h"
 #include "anki/scene/SceneGraph.h"
+#include "anki/resource/ResourceManager.h"
 
 namespace anki {
 
@@ -139,7 +140,7 @@ Error StaticGeometryNode::create(const CString& name, const CString& filename)
 {
 	ANKI_CHECK(SceneNode::create(name));
 
-	ANKI_CHECK(m_model.load(filename, &getResourceManager()));
+	ANKI_CHECK(getResourceManager().loadResource(filename, m_model));
 
 	U i = 0;
 	for(const ModelPatch* patch : m_model->getModelPatches())

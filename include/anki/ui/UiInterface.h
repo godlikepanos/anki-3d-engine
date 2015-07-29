@@ -6,7 +6,6 @@
 #pragma once
 
 #include "anki/ui/UiObject.h"
-#include "anki/input/KeyCode.h"
 
 namespace anki {
 
@@ -16,15 +15,28 @@ namespace anki {
 /// UI image interface.
 class IImage: public UiObject
 {
-	// Empty.
+public:
+	IImage(Canvas* canvas)
+		: UiObject(canvas)
+	{}
 };
 
 /// Interfacing UI system with external systems.
 class UiInterface
 {
 public:
+	UiInterface(UiAllocator alloc)
+		: m_alloc(alloc)
+	{}
+
 	virtual ~UiInterface() = default;
 
+	UiAllocator getAllocator() const
+	{
+		return m_alloc;
+	}
+
+#if 0
 	/// @name Image related methods.
 	/// @{
 	virtual ANKI_USE_RESULT Error loadImage(
@@ -48,20 +60,13 @@ public:
 
 	virtual void drawText(const CString& text, const Rect& drawingRect,
 		const Color& color) = 0;
+#endif
 
 	virtual void drawLines(const SArray<Vec2>& lines, const Color& color) = 0;
 	/// @}
 
-	/// @name Input related methods
-	/// @{
-	virtual void injectMouseMove(const Vec2& pos) = 0;
-
-	virtual void injectKeyDown(KeyCode key) = 0;
-
-	virtual void injectKeyUp(KeyCode key) = 0;
-
-	virtual void injectMouseButtonDown(U button) = 0;
-	/// @}
+protected:
+	UiAllocator m_alloc;
 };
 /// @}
 

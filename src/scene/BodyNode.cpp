@@ -8,6 +8,7 @@
 #include "anki/scene/MoveComponent.h"
 #include "anki/scene/SceneGraph.h"
 #include "anki/physics/PhysicsWorld.h"
+#include "anki/resource/ResourceManager.h"
 
 namespace anki {
 
@@ -20,7 +21,7 @@ class BodyFeedbackComponent: public SceneComponent
 {
 public:
 	BodyFeedbackComponent(SceneNode* node)
-	:	SceneComponent(SceneComponent::Type::NONE, node)
+		: SceneComponent(SceneComponent::Type::NONE, node)
 	{}
 
 	ANKI_USE_RESULT Error update(
@@ -45,6 +46,11 @@ public:
 //==============================================================================
 
 //==============================================================================
+BodyNode::BodyNode(SceneGraph* scene)
+	: SceneNode(scene)
+{}
+
+//==============================================================================
 BodyNode::~BodyNode()
 {}
 
@@ -54,7 +60,7 @@ Error BodyNode::create(const CString& name, const CString& resourceFname)
 	SceneComponent* comp;
 
 	// Load resource
-	ANKI_CHECK(m_rsrc.load(resourceFname, &getResourceManager()));
+	ANKI_CHECK(getResourceManager().loadResource(resourceFname, m_rsrc));
 
 	// Create body
 	PhysicsBody::Initializer init;

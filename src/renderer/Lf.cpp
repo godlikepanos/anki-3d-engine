@@ -70,11 +70,11 @@ Error Lf::initSprite(const ConfigSet& config)
 
 	pps.sprintf("#define MAX_SPRITES %u\n", m_maxSprites);
 
-	ANKI_CHECK(m_realVert.loadToCache(&getResourceManager(),
-		"shaders/LfSpritePass.vert.glsl", pps.toCString(), "r_"));
+	ANKI_CHECK(getResourceManager().loadResourceToCache(
+		m_realVert,	"shaders/LfSpritePass.vert.glsl", pps.toCString(), "r_"));
 
-	ANKI_CHECK(m_realFrag.loadToCache(&getResourceManager(),
-		"shaders/LfSpritePass.frag.glsl", pps.toCString(), "r_"));
+	ANKI_CHECK(getResourceManager().loadResourceToCache(
+		m_realFrag,	"shaders/LfSpritePass.frag.glsl", pps.toCString(), "r_"));
 
 	// Create ppline.
 	// Writes to IS with blending
@@ -107,11 +107,11 @@ Error Lf::initOcclusion(const ConfigSet& config)
 	}
 
 	// Shaders
-	ANKI_CHECK(m_occlusionVert.load("shaders/LfOcclusion.vert.glsl",
-		&getResourceManager()));
+	ANKI_CHECK(getResourceManager().loadResource(
+		"shaders/LfOcclusion.vert.glsl", m_occlusionVert));
 
-	ANKI_CHECK(m_occlusionFrag.load("shaders/LfOcclusion.frag.glsl",
-		&getResourceManager()));
+	ANKI_CHECK(getResourceManager().loadResource(
+		"shaders/LfOcclusion.frag.glsl", m_occlusionFrag));
 
 	// Create ppline
 	// - only position attribute

@@ -86,8 +86,8 @@ Error Bloom::initInternal(const ConfigSet& config)
 		m_r->getWidth(),
 		m_r->getHeight());
 
-	ANKI_CHECK(m_toneFrag.loadToCache(&getResourceManager(),
-		"shaders/PpsBloom.frag.glsl", pps.toCString(), "r_"));
+	ANKI_CHECK(getResourceManager().loadResourceToCache(
+		m_toneFrag, "shaders/PpsBloom.frag.glsl", pps.toCString(), "r_"));
 
 	m_r->createDrawQuadPipeline(
 		m_toneFrag->getGrShader(), colorState, m_tonePpline);
@@ -104,7 +104,7 @@ Error Bloom::initInternal(const ConfigSet& config)
 		"#define SAMPLES 17\n",
 		m_height);
 
-	ANKI_CHECK(m_hblurFrag.loadToCache(&getResourceManager(),
+	ANKI_CHECK(getResourceManager().loadResourceToCache(m_hblurFrag,
 		SHADER_FILENAME, pps.toCString(), "r_"));
 
 	m_r->createDrawQuadPipeline(
@@ -119,7 +119,7 @@ Error Bloom::initInternal(const ConfigSet& config)
 		"#define SAMPLES 15\n",
 		m_width);
 
-	ANKI_CHECK(m_vblurFrag.loadToCache(&getResourceManager(),
+	ANKI_CHECK(getResourceManager().loadResourceToCache(m_vblurFrag,
 		SHADER_FILENAME, pps.toCString(), "r_"));
 
 	m_r->createDrawQuadPipeline(

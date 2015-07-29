@@ -141,7 +141,7 @@ Error File::openCFile(const CString& filename, OpenFlag flags)
 	}
 
 	// Open
-	m_file = reinterpret_cast<FILE*>(fopen(filename.get(), openMode));
+	m_file = fopen(filename.get(), openMode);
 	if(m_file == nullptr)
 	{
 		ANKI_LOGE("Failed to open file %s", &filename[0]);
@@ -151,6 +151,23 @@ Error File::openCFile(const CString& filename, OpenFlag flags)
 	{
 		m_flags = flags;
 		m_type = Type::C;
+	}
+
+	// Get file size
+	if(!err)
+	{
+		fseek(ANKI_CFILE, 0, SEEK_END);
+		I size = ftell(ANKI_CFILE);
+		if(size < 1)
+		{
+			ANKI_LOGE("ftell() failed");
+			err = ErrorCode::FUNCTION_FAILED;
+		}
+		else
+		{
+			m_size = size;
+			fseek(ANKI_CFILE, 0, SEEK_SET);
+		}
 	}
 
 	return err;
@@ -352,29 +369,13 @@ Error File::read(void* buff, PtrSize size)
 }
 
 //==============================================================================
-PtrSize File::getSize()
+PtrSize File::getSize() const
 {
 	ANKI_ASSERT(m_file);
 	ANKI_ASSERT(m_flags != OpenFlag::NONE);
 	PtrSize out = 0;
 
-	if(m_type == Type::C)
-	{
-		// Get file size
-		fseek(ANKI_CFILE, 0, SEEK_END);
-		I64 size = ftell(ANKI_CFILE);
-		if(size < 1)
-		{
-			ANKI_LOGE("ftell() failed");
-		}
-		else
-		{
-			out = size;
-		}
-
-		rewind(ANKI_CFILE);
-	}
-	else if(m_type == Type::ZIP)
+	if(m_type == Type::C || m_type == Type::ZIP)
 	{
 		ANKI_ASSERT(m_size != 0);
 		out = m_size;

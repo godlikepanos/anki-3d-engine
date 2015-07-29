@@ -191,6 +191,16 @@ public:
 		Base::m_ptr -= other.m_ptr;
 		return *this;
 	}
+
+	T& operator[](const PtrSize i)
+	{
+		return Base::m_ptr[i];
+	}
+
+	const T& operator[](const PtrSize i) const
+	{
+		return Base::m_ptr[i];
+	}
 	/// @}
 };
 

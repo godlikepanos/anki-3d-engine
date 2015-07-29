@@ -8,6 +8,7 @@
 #include "anki/scene/InstanceNode.h"
 #include "anki/scene/Misc.h"
 #include "anki/resource/Model.h"
+#include "anki/resource/ResourceManager.h"
 #include "anki/util/Functions.h"
 #include "anki/physics/PhysicsWorld.h"
 #include "anki/Gr.h"
@@ -288,7 +289,8 @@ Error ParticleEmitter::create(
 	SceneComponent* comp;
 
 	// Load resource
-	ANKI_CHECK(m_particleEmitterResource.load(filename, &getResourceManager()));
+	ANKI_CHECK(
+		getResourceManager().loadResource(filename, m_particleEmitterResource));
 
 	// Move component
 	comp = getSceneAllocator().newInstance<MoveComponent>(this);

@@ -216,10 +216,10 @@ Error Is::initInternal(const ConfigSet& config)
 		m_sm.getPoissonEnabled());
 
 	// point light
-	ANKI_CHECK(m_lightVert.loadToCache(&getResourceManager(),
+	ANKI_CHECK(getResourceManager().loadResourceToCache(m_lightVert,
 		"shaders/IsLp.vert.glsl", pps.toCString(), "r_"));
 
-	ANKI_CHECK(m_lightFrag.loadToCache(&getResourceManager(),
+	ANKI_CHECK(getResourceManager().loadResourceToCache(m_lightFrag,
 		"shaders/IsLp.frag.glsl", pps.toCString(), "r_"));
 
 	PipelineInitializer init;
@@ -707,10 +707,6 @@ I Is::writeSpotLight(const LightComponent& lightc,
 		lightc.getInnerAngleCos(),
 		1.0,
 		1.0);
-
-	// extend points
-	const PerspectiveFrustum& frustum =
-		static_cast<const PerspectiveFrustum&>(lightFrc->getFrustum());
 
 	return i;
 }

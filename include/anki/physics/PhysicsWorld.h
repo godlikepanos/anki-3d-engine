@@ -33,8 +33,12 @@ public:
 	/// End asynchronous update.
 	void waitUpdate();
 
-	/// @privatesection
-	/// @{
+	const Vec4& getGravity() const
+	{
+		return m_gravity;
+	}
+
+#ifdef ANKI_BUILD
 	NewtonWorld* _getNewtonWorld() const
 	{
 		ANKI_ASSERT(m_world);
@@ -47,11 +51,6 @@ public:
 		return m_sceneCollision;
 	}
 
-	const Vec4& getGravity() const
-	{
-		return m_gravity;
-	}
-
 	F32 getDeltaTime() const
 	{
 		return m_dt;
@@ -62,7 +61,7 @@ public:
 		LockGuard<Mutex> lock(m_mtx);
 		m_forDeletion.pushBack(m_alloc, obj);
 	}
-	/// @}
+#endif
 
 private:
 	HeapAllocator<U8> m_alloc;

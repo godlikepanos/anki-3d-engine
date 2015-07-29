@@ -14,10 +14,10 @@
 namespace anki {
 
 //==============================================================================
-const Array<PixelFormat, Ms::ATTACHMENT_COUNT> Ms::RT_PIXEL_FORMATS = {
+const Array<PixelFormat, Ms::ATTACHMENT_COUNT> Ms::RT_PIXEL_FORMATS = {{
 	PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM),
 	PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM),
-	PixelFormat(ComponentFormat::R10G10B10A2, TransformFormat::UNORM)};
+	PixelFormat(ComponentFormat::R10G10B10A2, TransformFormat::UNORM)}};
 
 const PixelFormat Ms::DEPTH_RT_PIXEL_FORMAT(
 	ComponentFormat::D24, TransformFormat::FLOAT);

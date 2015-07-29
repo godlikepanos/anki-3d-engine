@@ -23,7 +23,7 @@ Error Tm::create(const ConfigSet& initializer)
 		m_r->getWidth(),
 		m_r->getHeight());
 
-	ANKI_CHECK(m_luminanceShader.loadToCache(&getResourceManager(),
+	ANKI_CHECK(getResourceManager().loadResourceToCache(m_luminanceShader,
 		"shaders/PpsTmAverageLuminance.comp.glsl", pps.toCString(), "rppstm_"));
 
 	// Create ppline

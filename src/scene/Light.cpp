@@ -170,8 +170,8 @@ Error Light::loadLensFlare(const CString& filename)
 	LensFlareComponent* flareComp =
 		getSceneAllocator().newInstance<LensFlareComponent>(this);
 
-	Error err = ErrorCode::NONE;
-	if(err = flareComp->create(filename))
+	Error err = flareComp->create(filename);
+	if(err)
 	{
 		getSceneAllocator().deleteInstance(flareComp);
 		return err;

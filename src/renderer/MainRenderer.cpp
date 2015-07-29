@@ -12,7 +12,6 @@
 #include "anki/scene/SceneGraph.h"
 #include "anki/scene/Camera.h"
 #include "anki/util/Logger.h"
-#include "anki/renderer/Deformer.h"
 #include "anki/util/File.h"
 #include "anki/util/Filesystem.h"
 #include "anki/core/Counters.h"
@@ -71,8 +70,8 @@ Error MainRenderer::create(
 		m_r->getWidth(), m_r->getHeight());
 
 	// Init other
-	ANKI_CHECK(m_blitFrag.load(
-		"shaders/Final.frag.glsl", &m_r->getResourceManager()));
+	ANKI_CHECK(m_r->getResourceManager().loadResource(
+		"shaders/Final.frag.glsl", m_blitFrag));
 
 	ColorStateInfo colorState;
 	colorState.m_attachmentCount = 1;

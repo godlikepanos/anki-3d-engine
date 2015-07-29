@@ -24,30 +24,35 @@ public:
 		: ResourceFile(alloc)
 	{}
 
-	ANKI_USE_RESULT Error read(void* buff, PtrSize size)
+	ANKI_USE_RESULT Error read(void* buff, PtrSize size) override
 	{
 		return m_file.read(buff, size);
 	}
 
 	ANKI_USE_RESULT Error readAllText(
-		GenericMemoryPoolAllocator<U8> alloc, String& out)
+		GenericMemoryPoolAllocator<U8> alloc, String& out) override
 	{
 		return m_file.readAllText(alloc, out);
 	}
 
-	ANKI_USE_RESULT Error readU32(U32& u)
+	ANKI_USE_RESULT Error readU32(U32& u) override
 	{
 		return m_file.readU32(u);
 	}
 
-	ANKI_USE_RESULT Error readF32(F32& f)
+	ANKI_USE_RESULT Error readF32(F32& f) override
 	{
 		return m_file.readF32(f);
 	}
 
-	ANKI_USE_RESULT Error seek(PtrSize offset, SeekOrigin origin)
+	ANKI_USE_RESULT Error seek(PtrSize offset, SeekOrigin origin) override
 	{
 		return m_file.seek(offset, origin);
+	}
+
+	PtrSize getSize() const override
+	{
+		return m_file.getSize();
 	}
 };
 
@@ -121,7 +126,7 @@ public:
 		}
 	}
 
-	ANKI_USE_RESULT Error read(void* buff, PtrSize size)
+	ANKI_USE_RESULT Error read(void* buff, PtrSize size) override
 	{
 		I64 readSize = unzReadCurrentFile(m_archive, buff, size);
 
@@ -135,28 +140,28 @@ public:
 	}
 
 	ANKI_USE_RESULT Error readAllText(
-		GenericMemoryPoolAllocator<U8> alloc, String& out)
+		GenericMemoryPoolAllocator<U8> alloc, String& out) override
 	{
 		ANKI_ASSERT(m_size);
 		out.create(alloc, '?', m_size);
 		return read(&out[0], m_size);
 	}
 
-	ANKI_USE_RESULT Error readU32(U32& u)
+	ANKI_USE_RESULT Error readU32(U32& u) override
 	{
 		// Assume machine and file have same endianness
 		ANKI_CHECK(read(&u, sizeof(u)));
 		return ErrorCode::NONE;
 	}
 
-	ANKI_USE_RESULT Error readF32(F32& u)
+	ANKI_USE_RESULT Error readF32(F32& u) override
 	{
 		// Assume machine and file have same endianness
 		ANKI_CHECK(read(&u, sizeof(u)));
 		return ErrorCode::NONE;
 	}
 
-	ANKI_USE_RESULT Error seek(PtrSize offset, SeekOrigin origin)
+	ANKI_USE_RESULT Error seek(PtrSize offset, SeekOrigin origin) override
 	{
 		// Rewind if needed
 		if(origin == SeekOrigin::BEGINNING)
@@ -178,6 +183,12 @@ public:
 		}
 
 		return ErrorCode::NONE;
+	}
+
+	PtrSize getSize() const override
+	{
+		ANKI_ASSERT(m_size > 0);
+		return m_size;
 	}
 };
 

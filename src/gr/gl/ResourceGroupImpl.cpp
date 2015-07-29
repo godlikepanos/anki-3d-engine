@@ -123,6 +123,8 @@ void ResourceGroupImpl::create(const ResourceGroupInitializer& init)
 		++resourcesCount;
 	}
 
+	ANKI_ASSERT(resourcesCount > 0 && "Resource group empty");
+
 	// Hold references
 	initResourceReferences(init, resourcesCount);
 }

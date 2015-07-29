@@ -101,7 +101,8 @@ class ResourceManager:
 	TypeResourceManager<Model>,
 	TypeResourceManager<Script>,
 	TypeResourceManager<DummyRsrc>,
-	TypeResourceManager<CollisionResource>
+	TypeResourceManager<CollisionResource>,
+	TypeResourceManager<GenericResource>
 {
 public:
 	class Initializer
@@ -122,6 +123,16 @@ public:
 	~ResourceManager();
 
 	ANKI_USE_RESULT Error create(Initializer& init);
+
+	/// Load a resource.
+	template<typename T>
+	ANKI_USE_RESULT Error loadResource(
+		const CString& filename, ResourcePtr<T>& out);
+
+	/// Load a resource to cache.
+	template<typename T, typename... TArgs>
+	ANKI_USE_RESULT Error loadResourceToCache(
+		ResourcePtr<T>& out, TArgs&&... args);
 
 	/// @privatesection
 	/// @{
@@ -218,4 +229,6 @@ private:
 /// @}
 
 } // end namespace anki
+
+#include "anki/resource/ResourceManager.inl.h"
 

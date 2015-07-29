@@ -98,7 +98,8 @@ Error Renderer::initInternal(const ConfigSet& config)
 	ANKI_CHECK(m_sceneDrawer.create(this));
 
 	// quad setup
-	ANKI_CHECK(m_drawQuadVert.load("shaders/Quad.vert.glsl", m_resources));
+	ANKI_CHECK(
+		m_resources->loadResource("shaders/Quad.vert.glsl", m_drawQuadVert));
 
 	// Init the stages. Careful with the order!!!!!!!!!!
 	m_ms.reset(m_alloc.newInstance<Ms>(this));

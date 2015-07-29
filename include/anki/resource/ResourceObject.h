@@ -22,10 +22,7 @@ class XmlDocument;
 class ResourceObject
 {
 public:
-	ResourceObject(ResourceManager* manager)
-		: m_manager(manager)
-		, m_refcount(0)
-	{}
+	ResourceObject(ResourceManager* manager);
 
 	virtual ~ResourceObject();
 

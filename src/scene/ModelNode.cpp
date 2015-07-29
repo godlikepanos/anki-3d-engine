@@ -9,6 +9,7 @@
 #include "anki/scene/BodyComponent.h"
 #include "anki/scene/Misc.h"
 #include "anki/resource/Model.h"
+#include "anki/resource/ResourceManager.h"
 #include "anki/resource/Skeleton.h"
 #include "anki/physics/PhysicsWorld.h"
 
@@ -272,7 +273,7 @@ Error ModelNode::create(const CString& name, const CString& modelFname)
 
 	SceneComponent* comp;
 
-	ANKI_CHECK(m_model.load(modelFname, &getResourceManager()));
+	ANKI_CHECK(getResourceManager().loadResource(modelFname, m_model));
 
 	m_modelPatches.create(
 		getSceneAllocator(), m_model->getModelPatches().getSize(), nullptr);

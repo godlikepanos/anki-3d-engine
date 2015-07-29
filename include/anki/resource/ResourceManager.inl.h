@@ -3,37 +3,34 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/resource/ResourcePointer.h"
+#include "anki/resource/ResourceManager.h"
 
 namespace anki {
 
 //==============================================================================
 template<typename T>
-Error ResourcePointer<T>::load(
-	const CString& filename, ResourceManager* resources)
+Error ResourceManager::loadResource(
+	const CString& filename, ResourcePtr<T>& out)
 {
-	ANKI_ASSERT(!isCreated() && "Already loaded");
-	ANKI_ASSERT(resources != nullptr);
+	ANKI_ASSERT(!out.isCreated() && "Already loaded");
 
 	Error err = ErrorCode::NONE;
 
-	T* other = resources->findLoadedResource<T>(filename);
+	T* other = findLoadedResource<T>(filename);
 
 	if(other)
 	{
 		// Found
-		reset(other);
+		out.reset(other);
 	}
 	else
 	{
-		auto alloc = resources->getAllocator();
-
 		// Allocate ptr
-		T* ptr = alloc.newInstance<T>(resources);
+		T* ptr = m_alloc.newInstance<T>(this);
 		ANKI_ASSERT(ptr->getRefcount().load() == 0);
 
 		// Populate the ptr. Use a block ton cleanup temp_pool allocations
-		auto& pool = resources->getTempAllocator().getMemoryPool();
+		auto& pool = m_tmpAlloc.getMemoryPool();
 
 		{
 			U allocsCountBefore = pool.getAllocationsCount();
@@ -43,7 +40,7 @@ Error ResourcePointer<T>::load(
 			if(err)
 			{
 				ANKI_LOGE("Failed to load resource: %s", &filename[0]);
-				alloc.deleteInstance(ptr);
+				m_alloc.deleteInstance(ptr);
 				return err;
 			}
 
@@ -61,30 +58,28 @@ Error ResourcePointer<T>::load(
 		}
 
 		// Register resource
-		resources->registerResource(ptr);
-		reset(ptr);
+		registerResource(ptr);
+		out.reset(ptr);
 	}
 
 	return err;
 }
 
 //==============================================================================
-template<typename T>
-template<typename... TArgs>
-Error ResourcePointer<T>::loadToCache(
-	ResourceManager* resources, TArgs&&... args)
+template<typename T, typename... TArgs>
+Error ResourceManager::loadResourceToCache(
+	ResourcePtr<T>& out, TArgs&&... args)
 {
-	StringAuto fname(resources->getTempAllocator());
+	StringAuto fname(m_tmpAlloc);
 
-	Error err = T::createToCache(args..., *resources, fname);
+	Error err = T::createToCache(args..., *this, fname);
 
 	if(!err)
 	{
-		err = load(fname.toCString(), resources);
+		err = loadResource(fname.toCString(), out);
 	}
 
 	return err;
 }
 
 } // end namespace anki
-
