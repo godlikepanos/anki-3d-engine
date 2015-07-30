@@ -14,6 +14,7 @@
 #include "anki/resource/ShaderResource.h"
 #include "anki/resource/ParticleEmitterResource.h"
 #include "anki/resource/TextureResource.h"
+#include "anki/resource/GenericResource.h"
 #include "anki/util/Logger.h"
 #include "anki/misc/ConfigSet.h"
 

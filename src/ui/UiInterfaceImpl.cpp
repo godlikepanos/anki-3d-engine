@@ -5,6 +5,7 @@
 
 #include "anki/ui/UiInterfaceImpl.h"
 #include "anki/resource/ResourceManager.h"
+#include "anki/resource/GenericResource.h"
 
 namespace anki {
 
@@ -155,6 +156,30 @@ void UiInterfaceImpl::drawLines(
 
 		++m_vertCounts[stageId];
 	}
+}
+
+//==============================================================================
+Error UiInterfaceImpl::loadImage(
+	const CString& filename, IntrusivePtr<UiImage>& img)
+{
+	TextureResourcePtr texture;
+	ANKI_CHECK(m_rc->loadResource(filename, texture));
+	UiImageImpl* impl = getAllocator().newInstance<UiImageImpl>(this);
+	IntrusivePtr<UiImage> ptr(impl);
+
+	return ErrorCode::NONE;
+}
+
+//==============================================================================
+Error UiInterfaceImpl::readFile(const CString& filename, DArrayAuto<U8>& data)
+{
+	GenericResourcePtr rsrc;
+	ANKI_CHECK(m_rc->loadResource(filename, rsrc));
+
+	data.create(rsrc->getData().getSize());
+	memcpy(&data[0], &rsrc->getData()[0], data.getSize());
+
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

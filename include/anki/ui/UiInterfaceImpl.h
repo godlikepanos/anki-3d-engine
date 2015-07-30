@@ -8,6 +8,7 @@
 #include "anki/ui/UiInterface.h"
 #include "anki/Gr.h"
 #include "anki/resource/ShaderResource.h"
+#include "anki/resource/TextureResource.h"
 
 namespace anki {
 
@@ -18,8 +19,19 @@ struct Vertex;
 /// @addtogroup ui
 /// @{
 
+/// Implements UiImage.
+class UiImageImpl: public UiImage
+{
+public:
+	UiImageImpl(UiInterface* i)
+		: UiImage(i)
+	{}
+
+	TextureResourcePtr m_texture;
+};
+
 /// Implements UiInterface.
-class UiInterfaceImpl: public UiInterface
+class UiInterfaceImpl final: public UiInterface
 {
 public:
 	UiInterfaceImpl(UiAllocator alloc);
@@ -30,12 +42,20 @@ public:
 
 	void drawLines(const SArray<Vec2>& positions, const Color& color) override;
 
+	ANKI_USE_RESULT Error loadImage(
+		const CString& filename, IntrusivePtr<UiImage>& img) override;
+
+	ANKI_USE_RESULT Error readFile(const CString& filename,
+		DArrayAuto<U8>& data) override;
+
 	void beginRendering(CommandBufferPtr cmdb);
 
 	void endRendering();
 
 private:
 	const U MAX_VERTS = 128;
+	WeakPtr<GrManager> m_gr;
+	WeakPtr<ResourceManager> m_rc;
 
 	enum StageId
 	{

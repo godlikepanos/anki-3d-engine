@@ -12,15 +12,6 @@ namespace anki {
 /// @addtogroup ui
 /// @{
 
-/// UI image interface.
-class IImage: public UiObject
-{
-public:
-	IImage(Canvas* canvas)
-		: UiObject(canvas)
-	{}
-};
-
 /// Interfacing UI system with external systems.
 class UiInterface
 {
@@ -36,16 +27,17 @@ public:
 		return m_alloc;
 	}
 
-#if 0
 	/// @name Image related methods.
 	/// @{
 	virtual ANKI_USE_RESULT Error loadImage(
-		const CString& filename, ImagePtr& img) = 0;
+		const CString& filename, IntrusivePtr<UiImage>& img) = 0;
 
+#if 0
 	virtual ANKI_USE_RESULT Error createRgba8Image(
 		const void* data, PtrSize dataSize, const Vec2& size,
-		ImagePtr& img) = 0;
+		IntrusivePtr<UiImage>& img) = 0;
 	/// @}
+#endif
 
 	/// @name Misc methods.
 	/// @{
@@ -55,11 +47,9 @@ public:
 
 	/// @name Painting related methods.
 	/// @{
+#if 0
 	virtual void drawImage(ImagePtr image, const Rect& subImageRect,
 		const Rect& drawingRect) = 0;
-
-	virtual void drawText(const CString& text, const Rect& drawingRect,
-		const Color& color) = 0;
 #endif
 
 	virtual void drawLines(const SArray<Vec2>& lines, const Color& color) = 0;
@@ -68,6 +58,33 @@ public:
 protected:
 	UiAllocator m_alloc;
 };
+
+/// UI image interface.
+class UiImage
+{
+public:
+	UiImage(UiInterface* interface)
+		: m_alloc(interface->getAllocator())
+	{}
+
+	virtual ~UiImage() = default;
+
+	Atomic<I32>& getRefcount()
+	{
+		return m_refcount;
+	}
+
+	UiAllocator getAllocator() const
+	{
+		return m_alloc;
+	}
+
+private:
+	UiAllocator m_alloc;
+	Atomic<I32> m_refcount = {0};
+};
+
+using UiImagePtr = IntrusivePtr<UiImage>;
 /// @}
 
 } // end namespace anki

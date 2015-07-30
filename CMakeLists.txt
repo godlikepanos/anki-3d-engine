@@ -281,6 +281,9 @@ if(ANDROID)
 	include_directories("${ANDROID_NDK}/sources/android/native_app_glue")
 endif()
 
+find_package(Freetype REQUIRED)
+include_directories(${FREETYPE_INCLUDE_DIRS})
+
 # AnKi compiler flags (Mainly warnings)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -Wall -W -Wextra -Wstrict-aliasing -Wwrite-strings -Wunused -Wunused-variable -Wno-unused-parameter -Wundef -std=c++11 ")
 
@@ -317,7 +320,7 @@ endforeach()
 
 add_library(anki src/Dummy.cpp "${_SYS_SRC}")
 add_dependencies(anki SDL2_LIB)
-target_link_libraries(anki ${ANKI_LIBS} ankitinyxml2 ankilua ankiz ankinewton ${ANKI_GPERFTOOLS_LIBS} ${_SYS} SDL2_LIB)
+target_link_libraries(anki ${ANKI_LIBS} ankitinyxml2 ankilua ankiz ankinewton ${ANKI_GPERFTOOLS_LIBS} ${_SYS} SDL2_LIB ${FREETYPE_LIBRARIES})
 
 ################################################################################
 # AnKi extra                                                                   #

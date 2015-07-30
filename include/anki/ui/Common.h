@@ -13,6 +13,7 @@ namespace anki {
 // Forward
 class Widget;
 class Canvas;
+class UiImage;
 
 /// @addtogroup ui
 /// @{
