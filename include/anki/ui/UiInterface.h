@@ -48,7 +48,7 @@ public:
 	/// @name Painting related methods.
 	/// @{
 #if 0
-	virtual void drawImage(ImagePtr image, const Rect& subImageRect,
+	virtual void drawImage(ImagePtr image, const Rect& uvs,
 		const Rect& drawingRect) = 0;
 #endif
 
