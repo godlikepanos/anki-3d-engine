@@ -5,6 +5,7 @@
 
 #include "tests/framework/Framework.h"
 #include "anki/resource/DummyRsrc.h"
+#include "anki/resource/ResourceManager.h"
 #include "anki/core/Config.h"
 
 namespace anki {
@@ -14,7 +15,7 @@ ANKI_TEST(Resource, ResourceManager)
 {
 	// Create
 	Config config;
-	
+
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 
 	ResourceManager::Initializer rinit;
@@ -29,14 +30,14 @@ ANKI_TEST(Resource, ResourceManager)
 	// Very simple
 	{
 		DummyResourcePtr a;
-		ANKI_TEST_EXPECT_NO_ERR(a.load("blah", resources));
+		ANKI_TEST_EXPECT_NO_ERR(resources->loadResource("blah", a));
 	}
 
 	// Load a resource
 	{
 		DummyResourcePtr a;
 
-		ANKI_TEST_EXPECT_NO_ERR(a.load("blah", resources));
+		ANKI_TEST_EXPECT_NO_ERR(resources->loadResource("blah", a));
 
 		{
 			DummyResourcePtr b = a;
@@ -48,25 +49,25 @@ ANKI_TEST(Resource, ResourceManager)
 	// Load and load again
 	{
 		DummyResourcePtr a;
-		ANKI_TEST_EXPECT_NO_ERR(a.load("blah", resources));
-		auto refcount = a.getReferenceCount();
+		ANKI_TEST_EXPECT_NO_ERR(resources->loadResource("blah", a));
+		auto refcount = a->getRefcount().load();
 
 		DummyResourcePtr b;
-		ANKI_TEST_EXPECT_NO_ERR(b.load("blah", resources));
-		ANKI_TEST_EXPECT_EQ(b.getReferenceCount(), a.getReferenceCount());
-		ANKI_TEST_EXPECT_EQ(a.getReferenceCount(), refcount + 1);
+		ANKI_TEST_EXPECT_NO_ERR(resources->loadResource("blah", b));
+		ANKI_TEST_EXPECT_EQ(b->getRefcount().load(), a->getRefcount().load());
+		ANKI_TEST_EXPECT_EQ(a->getRefcount().load(), refcount + 1);
 
 		ANKI_TEST_EXPECT_EQ(&b.get(), &a.get());
 
 		// Again
 		DummyResourcePtr c;
-		ANKI_TEST_EXPECT_NO_ERR(c.load("blah", resources));
-		ANKI_TEST_EXPECT_EQ(a.getReferenceCount(), refcount + 2);
+		ANKI_TEST_EXPECT_NO_ERR(resources->loadResource("blah", c));
+		ANKI_TEST_EXPECT_EQ(a->getRefcount().load(), refcount + 2);
 
 		// Load something else
 		DummyResourcePtr d;
-		ANKI_TEST_EXPECT_NO_ERR(d.load("blih", resources));
-		ANKI_TEST_EXPECT_EQ(a.getReferenceCount(), refcount + 2);
+		ANKI_TEST_EXPECT_NO_ERR(resources->loadResource("blih", d));
+		ANKI_TEST_EXPECT_EQ(a->getRefcount().load(), refcount + 2);
 	}
 
 	// Error
@@ -74,13 +75,13 @@ ANKI_TEST(Resource, ResourceManager)
 		{
 			DummyResourcePtr a;
 			ANKI_TEST_EXPECT_EQ(
-				a.load("error", resources), ErrorCode::USER_DATA);
+				resources->loadResource("error", a), ErrorCode::USER_DATA);
 		}
 
 		{
 			DummyResourcePtr a;
 			ANKI_TEST_EXPECT_EQ(
-				a.load("error", resources), ErrorCode::USER_DATA);
+				resources->loadResource("error", a), ErrorCode::USER_DATA);
 		}
 	}
 

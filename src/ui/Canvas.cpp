@@ -14,7 +14,7 @@ Canvas::Canvas(UiInterface* interface)
 {
 	m_rootWidget = newWidget<Widget>();
 
-	setSize(Vec2(128.0));
+	setSize(UVec2(128u));
 }
 
 //==============================================================================
@@ -40,15 +40,15 @@ void Canvas::paint()
 		if(m_debugDrawEnabled)
 		{
 			U c = 0;
-			const Vec2& pos = w.getCanvasPosition();
-			const Vec2& size = w.getSize();
+			const UVec2& pos = w.getCanvasPosition();
+			const UVec2& size = w.getSize();
 
-			Vec2 lb = pos / m_size * 2.0 - 1.0;
-			Vec2 rb = (pos + Vec2(size.x(), 0.0)) / m_size * 2.0 - 1.0;
-			Vec2 rt = (pos + size.x()) / m_size * 2.0 - 1.0;
-			Vec2 lt = (pos + Vec2(0.0, size.y())) / m_size * 2.0 - 1.0;
+			UVec2 lb = pos;
+			UVec2 rb = pos + UVec2(size.x(), 0u);
+			UVec2 rt = pos + size;
+			UVec2 lt = pos + UVec2(0u, size.y());
 
-			Array<Vec2, 2 * 4> positions;
+			Array<UVec2, 2 * 4> positions;
 			positions[c++] = lb;
 			positions[c++] = rb;
 			positions[c++] = rb;
@@ -59,8 +59,8 @@ void Canvas::paint()
 			positions[c++] = lb;
 
 			m_interface->drawLines(
-				SArray<Vec2>(&positions[0], positions.getSize()),
-				Vec4(1.0, 0.0, 0.0, 1.0));
+				SArray<UVec2>(&positions[0], positions.getSize()),
+				Vec4(1.0, 0.0, 0.0, 1.0), m_size);
 		}
 
 		return ErrorCode::NONE;
@@ -71,10 +71,10 @@ void Canvas::paint()
 }
 
 //==============================================================================
-void Canvas::setSize(const Vec2& size)
+void Canvas::setSize(const UVec2& size)
 {
 	m_size = size;
-	m_rootWidget->setRelativePosition(Vec2(0.0));
+	m_rootWidget->setRelativePosition(UVec2(0u));
 	m_rootWidget->setSize(size);
 }
 

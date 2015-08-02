@@ -31,7 +31,7 @@ public:
 
 	/// @name Input injection methods.
 	/// @{
-	void injectMouseMove(const Vec2& pos);
+	void injectMouseMove(const UVec2& pos);
 
 	void injectKeyDown(KeyCode key);
 
@@ -48,9 +48,9 @@ public:
 	/// Paint the widgets (if needed). Call after update.
 	void paint();
 
-	void setSize(const Vec2& size);
+	void setSize(const UVec2& size);
 
-	const Vec2& getSize() const
+	const UVec2& getSize() const
 	{
 		return m_size;
 	}
@@ -82,7 +82,7 @@ private:
 	Atomic<I32> m_markedForDeletionCount = {0};
 	WeakPtr<Widget> m_rootWidget;
 
-	Vec2 m_size; ///< Virtual size of canvas.
+	UVec2 m_size; ///< Virtual size of canvas.
 	Bool8 m_debugDrawEnabled = false;
 };
 /// @}

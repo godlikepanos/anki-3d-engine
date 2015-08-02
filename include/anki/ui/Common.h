@@ -23,6 +23,14 @@ using UiAllocator = GenericMemoryPoolAllocator<U8>;
 /// Color.
 using Color = Vec4;
 
+/// Rectangle
+class Rect
+{
+public:
+	UVec2 m_min;
+	UVec2 m_max;
+};
+
 /// Used in widget classes.
 #define ANKI_WIDGET \
 	friend class Canvas;

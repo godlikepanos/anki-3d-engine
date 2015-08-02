@@ -41,14 +41,14 @@ void Widget::markForDeletion()
 }
 
 //==============================================================================
-void Widget::setRelativePosition(const Vec2& pos)
+void Widget::setRelativePosition(const UVec2& pos)
 {
 	m_posLocal = pos;
 	markForRepaint();
 }
 
 //==============================================================================
-void Widget::setSizeLimits(const Vec2& min, const Vec2& max)
+void Widget::setSizeLimits(const UVec2& min, const UVec2& max)
 {
 	m_minSize = min;
 	m_maxSize = max;
@@ -56,7 +56,7 @@ void Widget::setSizeLimits(const Vec2& min, const Vec2& max)
 }
 
 //==============================================================================
-void Widget::setSize(const Vec2& size)
+void Widget::setSize(const UVec2& size)
 {
 	m_size.x() = clamp(size.x(), m_minSize.x(), m_maxSize.x());
 	m_size.y() = clamp(size.y(), m_minSize.y(), m_maxSize.y());

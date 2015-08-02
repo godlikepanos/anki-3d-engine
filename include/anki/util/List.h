@@ -250,15 +250,13 @@ public:
 	/// Get end.
 	Iterator getEnd()
 	{
-		Iterator it(nullptr, this);
-		return it;
+		return Iterator(nullptr, this);
 	}
 
 	/// Get end.
 	ConstIterator getEnd() const
 	{
-		ConstIterator it(nullptr, this);
-		return it;
+		return ConstIterator(nullptr, this);
 	}
 
 	/// Get begin.

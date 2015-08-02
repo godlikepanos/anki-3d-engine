@@ -16,9 +16,7 @@ namespace anki {
 class GenericResource: public ResourceObject
 {
 public:
-	GenericResource(ResourceManager* manager)
-		: ResourceObject(manager)
-	{}
+	GenericResource(ResourceManager* manager);
 
 	~GenericResource();
 

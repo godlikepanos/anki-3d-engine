@@ -133,8 +133,8 @@ void UiInterfaceImpl::endRendering()
 }
 
 //==============================================================================
-void UiInterfaceImpl::drawLines(
-	const SArray<Vec2>& positions, const Color& color)
+void UiInterfaceImpl::drawLines(const SArray<UVec2>& positions,
+	const Color& color, const UVec2& canvasSize)
 {
 	StageId stageId = StageId::LINES;
 
@@ -144,10 +144,11 @@ void UiInterfaceImpl::drawLines(
 	m_cmdb->bindResourceGroup(m_stages[StageId::LINES].m_rcGroups[m_timestamp]);
 	m_cmdb->drawArrays(positions.getSize(), 1, m_vertCounts[stageId]);
 
-	for(const Vec2& pos : positions)
+	for(const UVec2& pos : positions)
 	{
 		Vertex v;
-		v.m_pos = pos;
+		v.m_pos = Vec2(pos.x(), pos.y()) / Vec2(canvasSize.x(), canvasSize.y())
+			* 2.0 - 1.0;
 		v.m_uv = Vec2(0.0);
 		Color c = color * 255.0;
 		v.m_color = {{U8(c[0]), U8(c[1]), U8(c[2]), U8(c[3])}};
@@ -159,13 +160,69 @@ void UiInterfaceImpl::drawLines(
 }
 
 //==============================================================================
+void UiInterfaceImpl::drawImage(UiImagePtr image, const Rect& uvs,
+	const Rect& drawingRect, const UVec2& canvasSize)
+{
+	StageId stageId = StageId::TEXTURED_TRIANGLES;
+
+	ANKI_ASSERT(m_vertCounts[stageId] + 4 <= MAX_VERTS);
+}
+
+//==============================================================================
 Error UiInterfaceImpl::loadImage(
 	const CString& filename, IntrusivePtr<UiImage>& img)
 {
 	TextureResourcePtr texture;
 	ANKI_CHECK(m_rc->loadResource(filename, texture));
 	UiImageImpl* impl = getAllocator().newInstance<UiImageImpl>(this);
-	IntrusivePtr<UiImage> ptr(impl);
+	impl->m_resource = texture;
+	impl->m_texture = texture->getGrTexture();
+
+	img.reset(impl);
+
+	return ErrorCode::NONE;
+}
+
+//==============================================================================
+Error UiInterfaceImpl::createR8Image(const SArray<U8>& data, const UVec2& size,
+	IntrusivePtr<UiImage>& img)
+{
+	ANKI_ASSERT(data.getSize() == size.x() * size.y());
+
+	// Calc mip count
+	U s = min(size.x(), size.y());
+	U mipCount = 0;
+	while(s > 0)
+	{
+		++mipCount;
+		s /= 2;
+	}
+
+	// Allocate the texture
+	TextureInitializer tinit;
+	tinit.m_width = size.x();
+	tinit.m_height = size.y();
+	tinit.m_format = PixelFormat(ComponentFormat::R8, TransformFormat::UNORM);
+	tinit.m_mipmapsCount = mipCount;
+	tinit.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
+	tinit.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
+
+	TexturePtr tex = m_gr->newInstance<Texture>(tinit);
+
+	// Load data
+	CommandBufferPtr cmdb = m_gr->newInstance<CommandBuffer>();
+	void* loadData = nullptr;
+	cmdb->textureUpload(tex, 0, 0, data.getSize(), loadData);
+	memcpy(loadData, &data[0], data.getSize());
+
+	// Gen mips
+	cmdb->generateMipmaps(tex);
+	cmdb->flush();
+
+	// Create the UiImage
+	UiImageImpl* impl = getAllocator().newInstance<UiImageImpl>(this);
+	impl->m_texture = tex;
+	img.reset(impl);
 
 	return ErrorCode::NONE;
 }

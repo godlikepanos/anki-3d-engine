@@ -27,7 +27,8 @@ public:
 		: UiImage(i)
 	{}
 
-	TextureResourcePtr m_texture;
+	TextureResourcePtr m_resource;
+	TexturePtr m_texture;
 };
 
 /// Implements UiInterface.
@@ -40,13 +41,20 @@ public:
 
 	ANKI_USE_RESULT Error init(GrManager* gr, ResourceManager* rc);
 
-	void drawLines(const SArray<Vec2>& positions, const Color& color) override;
-
 	ANKI_USE_RESULT Error loadImage(
 		const CString& filename, IntrusivePtr<UiImage>& img) override;
 
+	ANKI_USE_RESULT Error createR8Image(const SArray<U8>& data,
+		const UVec2& size, IntrusivePtr<UiImage>& img) override;
+
 	ANKI_USE_RESULT Error readFile(const CString& filename,
 		DArrayAuto<U8>& data) override;
+
+	void drawImage(UiImagePtr image, const Rect& uvs,
+		const Rect& drawingRect, const UVec2& canvasSize) override;
+
+	void drawLines(const SArray<UVec2>& positions, const Color& color,
+		const UVec2& canvasSize) override;
 
 	void beginRendering(CommandBufferPtr cmdb);
 

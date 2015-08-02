@@ -8,6 +8,11 @@
 namespace anki {
 
 //==============================================================================
+GenericResource::GenericResource(ResourceManager* manager)
+	: ResourceObject(manager)
+{}
+
+//==============================================================================
 GenericResource::~GenericResource()
 {
 	m_data.destroy(getAllocator());

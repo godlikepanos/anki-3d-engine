@@ -222,6 +222,7 @@ class UniquePtr: public PtrBase<T>
 {
 public:
 	using Base = PtrBase<T>;
+	using Deleter = TDeleter;
 
 	UniquePtr()
 		: Base()
@@ -291,6 +292,7 @@ class IntrusivePtr: public PtrBase<T>
 
 public:
 	using Base = PtrBase<T>;
+	using Deleter = TDeleter;
 
 	IntrusivePtr()
 		: Base()
@@ -368,5 +370,4 @@ private:
 /// @}
 
 } // end namespace anki
-
 

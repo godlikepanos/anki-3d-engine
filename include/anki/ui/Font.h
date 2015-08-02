@@ -15,15 +15,16 @@ namespace anki {
 class FontCharInfo
 {
 public:
-	Vec2 m_advance; ///< Char advance.
-	Vec2 m_size; ///< Bitmap size in pixels.
-	Vec2 m_offset; ///< Left and top bearing.
+	UVec2 m_advance; ///< Char advance.
+	Rect m_imageRect; ///< The rect inside the image atlas.
+	IVec2 m_offset; ///< Left and top bearing.
 };
 
 /// Font class.
 class Font
 {
 	friend class IntrusivePtr<Font>;
+	friend IntrusivePtr<Font>::Deleter;
 
 public:
 	Font(UiInterface* interface)
@@ -35,6 +36,7 @@ public:
 	/// Initialize the font.
 	ANKI_USE_RESULT Error init(const CString& filename, U32 fontHeight);
 
+#ifdef ANKI_BUILD
 	/// Get info for a character.
 	const FontCharInfo& getCharInfo(char c) const
 	{
@@ -45,8 +47,9 @@ public:
 	/// Get font image atlas.
 	const UiImagePtr& getImage() const
 	{
-		return m_tex;
+		return m_img;
 	}
+#endif
 
 private:
 	static const char FIRST_CHAR = ' ';
@@ -55,7 +58,7 @@ private:
 
 	WeakPtr<UiInterface> m_interface;
 	Atomic<I32> m_refcount = {0};
-	UiImagePtr m_tex;
+	UiImagePtr m_img;
 	Array<FontCharInfo, CHAR_COUNT> m_chars;
 
 	Atomic<I32>& getRefcount()

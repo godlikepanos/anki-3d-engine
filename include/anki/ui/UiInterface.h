@@ -9,8 +9,12 @@
 
 namespace anki {
 
+class UiImage;
+
 /// @addtogroup ui
 /// @{
+
+using UiImagePtr = IntrusivePtr<UiImage>;
 
 /// Interfacing UI system with external systems.
 class UiInterface
@@ -30,14 +34,12 @@ public:
 	/// @name Image related methods.
 	/// @{
 	virtual ANKI_USE_RESULT Error loadImage(
-		const CString& filename, IntrusivePtr<UiImage>& img) = 0;
+		const CString& filename, UiImagePtr& img) = 0;
 
-#if 0
-	virtual ANKI_USE_RESULT Error createRgba8Image(
-		const void* data, PtrSize dataSize, const Vec2& size,
-		IntrusivePtr<UiImage>& img) = 0;
+	/// Create a 8bit image. Used for fonts.
+	virtual ANKI_USE_RESULT Error createR8Image(const SArray<U8>& data,
+		const UVec2& size, UiImagePtr& img) = 0;
 	/// @}
-#endif
 
 	/// @name Misc methods.
 	/// @{
@@ -47,12 +49,11 @@ public:
 
 	/// @name Painting related methods.
 	/// @{
-#if 0
-	virtual void drawImage(ImagePtr image, const Rect& uvs,
-		const Rect& drawingRect) = 0;
-#endif
+	virtual void drawImage(UiImagePtr image, const Rect& uvs,
+		const Rect& drawingRect, const UVec2& canvasSize) = 0;
 
-	virtual void drawLines(const SArray<Vec2>& lines, const Color& color) = 0;
+	virtual void drawLines(const SArray<UVec2>& lines, const Color& color,
+		const UVec2& canvasSize) = 0;
 	/// @}
 
 protected:
@@ -62,12 +63,19 @@ protected:
 /// UI image interface.
 class UiImage
 {
+	friend class IntrusivePtr<UiImage>;
+	friend IntrusivePtr<UiImage>::Deleter;
+
 public:
 	UiImage(UiInterface* interface)
 		: m_alloc(interface->getAllocator())
 	{}
 
 	virtual ~UiImage() = default;
+
+private:
+	UiAllocator m_alloc;
+	Atomic<I32> m_refcount = {0};
 
 	Atomic<I32>& getRefcount()
 	{
@@ -78,13 +86,7 @@ public:
 	{
 		return m_alloc;
 	}
-
-private:
-	UiAllocator m_alloc;
-	Atomic<I32> m_refcount = {0};
 };
-
-using UiImagePtr = IntrusivePtr<UiImage>;
 /// @}
 
 } // end namespace anki

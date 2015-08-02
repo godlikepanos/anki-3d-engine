@@ -46,28 +46,28 @@ public:
 	{}
 
 	/// Set position relatively to the parent.
-	void setRelativePosition(const Vec2& pos);
+	void setRelativePosition(const UVec2& pos);
 
-	const Vec2& getRelativePosition() const
+	const UVec2& getRelativePosition() const
 	{
 		return m_posLocal;
 	}
 
-	const Vec2& getCanvasPosition() const
+	const UVec2& getCanvasPosition() const
 	{
 		return m_posCanvas;
 	}
 
 	/// Set prefered size.
-	void setSize(const Vec2& size);
+	void setSize(const UVec2& size);
 
-	const Vec2& getSize() const
+	const UVec2& getSize() const
 	{
 		return m_size;
 	}
 
 	/// Set the limts of size. The widget cannot exceede those.
-	void setSizeLimits(const Vec2& min, const Vec2& max);
+	void setSizeLimits(const UVec2& min, const UVec2& max);
 
 	void addWidget(Widget* widget)
 	{
@@ -105,12 +105,12 @@ private:
 		NEEDS_REPAINT = 1 << 1
 	};
 
-	Vec2 m_minSize = Vec2(0.0);
-	Vec2 m_maxSize = Vec2(MAX_F32);
-	Vec2 m_size = Vec2(0.0);
+	UVec2 m_minSize = UVec2(0u);
+	UVec2 m_maxSize = UVec2(MAX_U32);
+	UVec2 m_size = UVec2(0u);
 
-	Vec2 m_posLocal = Vec2(0.0); ///< Local space.
-	Vec2 m_posCanvas = Vec2(0.0); ///< World space.
+	UVec2 m_posLocal = UVec2(0u); ///< Local space.
+	UVec2 m_posCanvas = UVec2(0u); ///< World space.
 
 	Bitset<U8> m_flags;
 };
