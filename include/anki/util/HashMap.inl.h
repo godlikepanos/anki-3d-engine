@@ -6,9 +6,10 @@
 namespace anki {
 
 //==============================================================================
-template<typename T, typename THasher, typename TCompare, typename TNode>
+template<typename TKey, typename TValue, typename THasher, typename TCompare,
+	typename TNode>
 template<typename TAllocator>
-void HashMap<T, THasher, TCompare, TNode>::destroy(TAllocator alloc)
+void HashMap<TKey, TValue, THasher, TCompare, TNode>::destroy(TAllocator alloc)
 {
 	if(m_root)
 	{
@@ -18,10 +19,11 @@ void HashMap<T, THasher, TCompare, TNode>::destroy(TAllocator alloc)
 }
 
 //==============================================================================
-template<typename T, typename THasher, typename TCompare, typename TNode>
+template<typename TKey, typename TValue, typename THasher, typename TCompare,
+	typename TNode>
 template<typename TAllocator>
-void HashMap<T, THasher, TCompare, TNode>::destroyInternal(
-	TAllocator alloc, Node* node)
+void HashMap<TKey, TValue, THasher, TCompare, TNode>
+	::destroyInternal(TAllocator alloc, Node* node)
 {
 	ANKI_ASSERT(node);
 
@@ -39,8 +41,9 @@ void HashMap<T, THasher, TCompare, TNode>::destroyInternal(
 }
 
 //==============================================================================
-template<typename T, typename THasher, typename TCompare, typename TNode>
-void HashMap<T, THasher, TCompare, TNode>::pushBackNode(Node* node)
+template<typename TKey, typename TValue, typename THasher, typename TCompare,
+	typename TNode>
+void HashMap<TKey, TValue, THasher, TCompare, TNode>::pushBackNode(Node* node)
 {
 	if(ANKI_UNLIKELY(!m_root))
 	{
@@ -50,90 +53,82 @@ void HashMap<T, THasher, TCompare, TNode>::pushBackNode(Node* node)
 
 	const U64 hash = node->m_hash;
 	Node* it = m_root;
-	while(1)
+	Bool done = false;
+	do
 	{
 		const U64 nhash = it->m_hash;
 		if(hash > nhash)
 		{
 			// Go to right
-			if(it->m_right)
+			Node* right = it->m_right;
+			if(right)
 			{
-				it = it->m_right;
+				it = right;
 			}
 			else
 			{
-				it->m_right = node;
 				node->m_parent = it;
-				break;
+				it->m_right = node;
+				done = true;
 			}
 		}
 		else
 		{
 			ANKI_ASSERT(hash != nhash && "Not supported");
 			// Go to left
-			if(it->m_left)
+			Node* left = it->m_left;
+			if(left)
 			{
-				it = it->m_left;
+				it = left;
 			}
 			else
 			{
-				it->m_left = node;
 				node->m_parent = it;
-				break;
+				it->m_left = node;
+				done = true;
 			}
 		}
-	}
+	} while(!done);
 }
 
 //==============================================================================
-template<typename T, typename THasher, typename TCompare, typename TNode>
-typename HashMap<T, THasher, TCompare, TNode>::Iterator
-	HashMap<T, THasher, TCompare, TNode>::find(const Value& a)
+template<typename TKey, typename TValue, typename THasher, typename TCompare,
+	typename TNode>
+typename HashMap<TKey, TValue, THasher, TCompare, TNode>::Iterator
+	HashMap<TKey, TValue, THasher, TCompare, TNode>
+	::find(const Key& key)
 {
-	if(ANKI_UNLIKELY(!m_root))
+	const U64 hash = THasher()(key);
+
+	Node* node = m_root;
+	while(node)
 	{
-		Iterator(nullptr);
+		const U64 bhash = node->m_hash;
+
+		if(hash < bhash)
+		{
+			node = node->m_left;
+		}
+		else if(hash > bhash)
+		{
+			node = node->m_right;
+		}
+		else
+		{
+			// Found
+			break;
+		}
 	}
 
-	U64 hash = THasher()(a);
-	return Iterator(findInternal(m_root, a, hash));
+	return Iterator(node);
 }
 
 //==============================================================================
-template<typename T, typename THasher, typename TCompare, typename TNode>
-TNode* HashMap<T, THasher, TCompare, TNode>::findInternal(Node* node,
-	const Value& a, U64 aHash)
-{
-	ANKI_ASSERT(node);
-	if(node->m_hash == aHash)
-	{
-		// Found
-		ANKI_ASSERT(TCompare()(node->m_value, a)
-			&& "Doesn't accept collisions");
-		return node;
-	}
-
-	if(aHash < node->m_hash)
-	{
-		node = node->m_left;
-	}
-	else
-	{
-		node = node->m_right;
-	}
-
-	if(node)
-	{
-		return findInternal(node, a, aHash);
-	}
-
-	return node;
-}
-
-//==============================================================================
-template<typename T, typename THasher, typename TCompare, typename TNode>
+template<typename TKey, typename TValue, typename THasher, typename TCompare,
+	typename TNode>
 template<typename TAllocator>
-void HashMap<T, THasher, TCompare, TNode>::erase(TAllocator alloc, Iterator it)
+void HashMap<TKey, TValue, THasher, TCompare, TNode>::erase(TAllocator alloc,
+	Iterator it)
 {
 	Node* del = it.m_node;
 	ANKI_ASSERT(del);

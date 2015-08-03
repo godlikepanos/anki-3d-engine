@@ -6,6 +6,7 @@
 #include "tests/framework/Framework.h"
 #include "tests/util/Foo.h"
 #include "anki/util/HashMap.h"
+#include "anki/util/DArray.h"
 #include "anki/util/HighRezTimer.h"
 #include <unordered_map>
 
@@ -32,23 +33,24 @@ public:
 ANKI_TEST(Util, HashMap)
 {
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
-	int arr[] = {20, 15, 5, 1, 10, 0, 18, 6, 7, 11, 13, 3};
-	U arrSize = sizeof(arr) / sizeof(arr[0]);
+	int vals[] = {20, 15, 5, 1, 10, 0, 18, 6, 7, 11, 13, 3};
+	U valsSize = sizeof(vals) / sizeof(vals[0]);
 
 	// Simple
 	{
-		HashMap<int, Hasher, Compare> map;
-		map.pushBack(alloc, 20);
+		HashMap<int, int, Hasher, Compare> map;
+		map.pushBack(alloc, 20, 1);
+		map.pushBack(alloc, 21, 1);
 		map.destroy(alloc);
 	}
 
 	// Add more and iterate
 	{
-		HashMap<int, Hasher, Compare> map;
+		HashMap<int, int, Hasher, Compare> map;
 
-		for(U i = 0; i < arrSize; ++i)
+		for(U i = 0; i < valsSize; ++i)
 		{
-			map.pushBack(alloc, arr[i]);
+			map.pushBack(alloc, vals[i], vals[i] * 10);
 		}
 
 		U count = 0;
@@ -57,29 +59,124 @@ ANKI_TEST(Util, HashMap)
 		{
 			++count;
 		}
-		ANKI_TEST_EXPECT_EQ(count, arrSize);
+		ANKI_TEST_EXPECT_EQ(count, valsSize);
 
 		map.destroy(alloc);
 	}
 
 	// Erase
 	{
-		HashMap<int, Hasher, Compare> map;
+		HashMap<int, int, Hasher, Compare> map;
 
-		for(U i = 0; i < arrSize; ++i)
+		for(U i = 0; i < valsSize; ++i)
 		{
-			map.pushBack(alloc, arr[i]);
+			map.pushBack(alloc, vals[i], vals[i] * 10);
 		}
 
-		for(U i = arrSize - 1; i != 0; --i)
+		for(U i = valsSize - 1; i != 0; --i)
 		{
-			HashMap<int, Hasher, Compare>::Iterator it = map.find(arr[i]);
+			HashMap<int, int, Hasher, Compare>::Iterator it = map.find(vals[i]);
 			ANKI_TEST_EXPECT_NEQ(it, map.getEnd());
 
 			map.erase(alloc, it);
-			map.pushBack(alloc, arr[i]);
+			map.pushBack(alloc, vals[i], vals[i] * 10);
 		}
 
 		map.destroy(alloc);
+	}
+
+	// Find
+	{
+		HashMap<int, int, Hasher, Compare> map;
+
+		for(U i = 0; i < valsSize; ++i)
+		{
+			map.pushBack(alloc, vals[i], vals[i] * 10);
+		}
+
+		for(U i = valsSize - 1; i != 0; --i)
+		{
+			HashMap<int, int, Hasher, Compare>::Iterator it = map.find(vals[i]);
+			ANKI_TEST_EXPECT_NEQ(it, map.getEnd());
+			ANKI_TEST_EXPECT_EQ(*it, vals[i] * 10);
+		}
+
+		map.destroy(alloc);
+	}
+
+	// Bench it
+	{
+		HashMap<int, int, Hasher, Compare> akMap;
+		std::unordered_map<int, int, std::hash<int>, std::equal_to<int>,
+			HeapAllocator<std::pair<int, int>>> stdMap(10, std::hash<int>(),
+			std::equal_to<int>(), alloc);
+
+		std::unordered_map<int, int> tmpMap;
+
+		HighRezTimer timer;
+		I64 count = 0;
+
+		// Create a huge set
+		const U COUNT = 1024 * 100;
+		DArrayAuto<int> vals(alloc);
+		vals.create(COUNT);
+
+		for(U i = 0; i < COUNT; ++i)
+		{
+			// Put unique keys
+			int v;
+			do
+			{
+				v = rand();
+			} while(tmpMap.find(v) != tmpMap.end());
+			tmpMap[v] = 1;
+
+			vals[i] = v;
+		}
+
+		// Put the vals AnKi
+		timer.start();
+		for(U i = 0; i < COUNT; ++i)
+		{
+			akMap.pushBack(alloc, vals[i], vals[i]);
+		}
+		timer.stop();
+		HighRezTimer::Scalar akTime = timer.getElapsedTime();
+
+		// Put the vals STL
+		timer.start();
+		for(U i = 0; i < COUNT; ++i)
+		{
+			stdMap[vals[i]] = vals[i];
+		}
+		timer.stop();
+		HighRezTimer::Scalar stlTime = timer.getElapsedTime();
+
+		printf("Inserting bench: STL %f AnKi %f | %f%%\n", stlTime, akTime,
+			stlTime / akTime * 100.0);
+
+		// Find values AnKi
+		timer.start();
+		for(U i = 0; i < COUNT; ++i)
+		{
+			auto it = akMap.find(vals[i]);
+			count += *it;
+		}
+		timer.stop();
+		akTime = timer.getElapsedTime();
+
+		// Find values STL
+		timer.start();
+		for(U i = 0; i < COUNT; ++i)
+		{
+			count += stdMap[vals[i]];
+		}
+		timer.stop();
+		stlTime = timer.getElapsedTime();
+
+		printf("Find bench: STL %f AnKi %f | %f%%\n", stlTime, akTime,
+			stlTime / akTime * 100.0);
+
+		akMap.destroy(alloc);
 	}
 }

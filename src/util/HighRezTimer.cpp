@@ -11,8 +11,6 @@ namespace anki {
 //==============================================================================
 void HighRezTimer::start()
 {
-	ANKI_ASSERT(m_startTime == 0);
-	ANKI_ASSERT(m_stopTime == 0);
 	m_startTime = getCurrentTime();
 	m_stopTime = 0.0;
 }

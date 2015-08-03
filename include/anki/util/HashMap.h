@@ -15,18 +15,16 @@ namespace anki {
 /// @{
 
 /// HashMap node. It's not a traditional bucket because it doesn't contain more
-/// than one node.
-template<typename T>
+/// than one values.
+template<typename TKey, typename TValue>
 class HashMapNode
 {
 public:
-	using Value = T;
-
-	Value m_value;
 	U64 m_hash;
-	HashMapNode* m_parent = nullptr;
 	HashMapNode* m_left = nullptr;
 	HashMapNode* m_right = nullptr;
+	TValue m_value;
+	HashMapNode* m_parent = nullptr;
 
 	template<typename... TArgs>
 	HashMapNode(TArgs&&... args)
@@ -153,12 +151,13 @@ public:
 /// @{
 
 /// Hash map template.
-template<typename T, typename THasher, typename TCompare,
-	typename TNode = HashMapNode<T>>
+template<typename TKey, typename TValue, typename THasher, typename TCompare,
+	typename TNode = HashMapNode<TKey, TValue>>
 class HashMap: public NonCopyable
 {
 public:
-	using Value = T;
+	using Key = TKey;
+	using Value = TValue;
 	using Node = TNode;
 	using Reference = Value&;
 	using ConstReference = const Value&;
@@ -254,10 +253,10 @@ public:
 
 	/// Copy an element in the map.
 	template<typename TAllocator>
-	void pushBack(TAllocator alloc, ConstReference x)
+	void pushBack(TAllocator alloc, const Key& key, ConstReference x)
 	{
 		Node* node = alloc.template newInstance<Node>(x);
-		node->m_hash = THasher()(node->m_value);
+		node->m_hash = THasher()(key);
 		pushBackNode(node);
 	}
 
@@ -266,17 +265,16 @@ public:
 	void pushBack(Pointer x)
 	{
 		ANKI_ASSERT(x);
-		//static_assert(typeid(x) == );
-		pushBackNode(x);
+		// TODO
 	}
 
 	/// Construct an element inside the map.
 	template<typename TAllocator, typename... TArgs>
-	void emplaceBack(TAllocator alloc, TArgs&&... args)
+	void emplaceBack(TAllocator alloc, const Key& key, TArgs&&... args)
 	{
 		Node* node = alloc.template newInstance<Node>(
 			std::forward<TArgs>(args)...);
-		node->m_hash = THasher()(node->m_value);
+		node->m_hash = THasher()(key);
 		pushBackNode(node);
 	}
 
@@ -285,7 +283,7 @@ public:
 	void erase(TAllocator alloc, Iterator it);
 
 	/// Find item.
-	Iterator find(const Value& a);
+	Iterator find(const Key& key);
 
 private:
 	Node* m_root = nullptr;
@@ -298,8 +296,6 @@ private:
 	}
 
 	void pushBackNode(Node* node);
-
-	Node* findInternal(Node* node, const Value& a, U64 aHash);
 
 	template<typename TAllocator>
 	void destroyInternal(TAllocator alloc, Node* node);
