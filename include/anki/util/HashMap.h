@@ -6,50 +6,64 @@
 #pragma once
 
 #include "anki/util/Allocator.h"
-#include "anki/util/NonCopyable.h"
-#include "anki/util/Ptr.h"
 #include "anki/util/Functions.h"
+#include "anki/util/NonCopyable.h"
 
 namespace anki {
 
-/// @addtogroup util_private
+/// @addtogroup util_containers
 /// @{
 
-#define ANKI_ENABLE_HASH_MAP(Class_) \
-	template<typename TKey, typename TValue, typename THasher, \
-		typename TCompare, typename TNode> \
-	friend class HashMap; \
-	U64 m_hash = 0; \
-	Class_* m_left = nullptr; \
-	Class_* m_right = nullptr; \
-	Class_* m_parent = nullptr;
+namespace detail {
 
 /// HashMap node. It's not a traditional bucket because it doesn't contain more
 /// than one values.
-template<typename TKey, typename TValue>
+/// @internal
+template<typename TValue>
 class HashMapNode
 {
 public:
 	U64 m_hash;
-	HashMapNode* m_left = nullptr;
-	HashMapNode* m_right = nullptr;
+	HashMapNode* m_left;
+	HashMapNode* m_right;
 	TValue m_value;
-	HashMapNode* m_parent = nullptr;
+	HashMapNode* m_parent; ///< Used for iterating.
 
 	template<typename... TArgs>
 	HashMapNode(TArgs&&... args)
-		: m_value(args...)
+		: m_hash(0)
+		, m_left(nullptr)
+		, m_right(nullptr)
+		, m_value(args...)
+		, m_parent(nullptr)
 	{}
+
+	TValue& getValue()
+	{
+		return m_value;
+	}
+
+	const TValue& getValue() const
+	{
+		return m_value;
+	}
 };
 
 /// HashMap forward-only iterator.
+/// @internal
 template<typename TNodePointer, typename TValuePointer,
 	typename TValueReference>
 class HashMapIterator
 {
-public:
-	TNodePointer m_node;
+	template<typename TKey, typename TValue, typename THasher,
+		typename TCompare>
+	friend class HashMap;
 
+	template<typename TKey, typename TValue, typename THasher,
+		typename TCompare>
+	friend class HashMapAllocFree;
+
+public:
 	/// Default constructor.
 	HashMapIterator()
 		: m_node(nullptr)
@@ -75,13 +89,13 @@ public:
 	TValueReference operator*() const
 	{
 		ANKI_ASSERT(m_node);
-		return m_node->m_value;
+		return m_node->getValue();
 	}
 
 	TValuePointer operator->() const
 	{
 		ANKI_ASSERT(m_node);
-		return &m_node->m_value;
+		return &m_node->getValue();
 	}
 
 	HashMapIterator& operator++()
@@ -104,7 +118,8 @@ public:
 			node = node->m_parent;
 			while(node)
 			{
-				if(node->m_right && node->m_right != prevNode)
+				if(node->m_right
+					&& node->m_right != prevNode)
 				{
 					node = node->m_right;
 					break;
@@ -154,62 +169,36 @@ public:
 	{
 		return !(*this == b);
 	}
+
+private:
+	TNodePointer m_node;
 };
-/// @}
 
-/// @addtogroup util_containers
-/// @{
-
-/// Hash map template.
+/// Hash map base.
+/// @tparam TKey The key of the map.
+/// @tparam TValue The value of the map.
+/// @internal
 template<typename TKey, typename TValue, typename THasher, typename TCompare,
-	typename TNode = HashMapNode<TKey, TValue>>
-class HashMap: public NonCopyable
+	typename TNode>
+class HashMapBase: public NonCopyable
 {
 public:
 	using Key = TKey;
 	using Value = TValue;
-	using Node = TNode;
 	using Reference = Value&;
 	using ConstReference = const Value&;
 	using Pointer = Value*;
 	using ConstPointer = const Value*;
-	using Iterator = HashMapIterator<Node*, Pointer, Reference>;
+	using Iterator = HashMapIterator<TNode*, Pointer, Reference>;
 	using ConstIterator =
-		HashMapIterator<const Node*, ConstPointer, ConstReference>;
-	enum
-	{
-		T_NODE_SAME_AS_T_VALUE = TypesAreTheSame<Value, Node>::m_value
-	};
+		HashMapIterator<const TNode*, ConstPointer, ConstReference>;
 
 	/// Default constructor.
-	HashMap()
+	HashMapBase()
 		: m_root(nullptr)
 	{}
 
-	/// Move.
-	HashMap(HashMap&& b)
-		: HashMap()
-	{
-		move(b);
-	}
-
-	/// You need to manually destroy the map.
-	/// @see HashMap::destroy
-	~HashMap()
-	{
-		ANKI_ASSERT(m_root == nullptr && "Requires manual destruction");
-	}
-
-	/// Move.
-	HashMap& operator=(HashMap&& b)
-	{
-		move(b);
-		return *this;
-	}
-
-	/// Destroy the list.
-	template<typename TAllocator>
-	void destroy(TAllocator alloc);
+	~HashMapBase() = default;
 
 	/// Get begin.
 	Iterator getBegin()
@@ -265,59 +254,197 @@ public:
 		return m_root == nullptr;
 	}
 
-	/// Copy an element in the map.
-	template<typename TAllocator>
-	void pushBack(TAllocator alloc, const Key& key, ConstReference x)
-	{
-		Node* node = alloc.template newInstance<Node>(x);
-		node->m_hash = THasher()(key);
-		pushBackNode(node);
-	}
-
-	/// Copy an element in the map.
-	template<typename TAllocator>
-	void pushBack(Pointer x)
-	{
-		static_assert(T_NODE_SAME_AS_T_VALUE == true, "Cannot use that");
-		ANKI_ASSERT(x);
-		ANKI_ASSERT(x->m_hash != 0);
-		pushBackNode(x);
-	}
-
-	/// Construct an element inside the map.
-	template<typename TAllocator, typename... TArgs>
-	void emplaceBack(TAllocator alloc, const Key& key, TArgs&&... args)
-	{
-		Node* node = alloc.template newInstance<Node>(
-			std::forward<TArgs>(args)...);
-		node->m_hash = THasher()(key);
-		pushBackNode(node);
-	}
-
-	/// Erase element.
-	template<typename TAllocator>
-	void erase(TAllocator alloc, Iterator it);
-
 	/// Find item.
 	Iterator find(const Key& key);
 
-private:
-	Node* m_root = nullptr;
+protected:
+	/// @privatesection
+	TNode* m_root = nullptr;
 
-	void move(HashMap& b)
+	void move(HashMapBase& b)
 	{
-		ANKI_ASSERT(isEmpty() && "Cannot move before destroying");
 		m_root = b.m_root;
 		b.m_root = nullptr;
 	}
 
-	void pushBackNode(Node* node);
+	/// Add a node in the tree.
+	void insertNode(TNode* node);
 
+	/// Remove a node from the tree.
+	void removeNode(TNode* node);
+};
+
+} // end namespace detail
+
+/// Hash map template.
+template<typename TKey, typename TValue, typename THasher, typename TCompare>
+class HashMap: public detail::HashMapBase<TKey, TValue, THasher, TCompare,
+	detail::HashMapNode<TValue>>
+{
+private:
+	using Base = detail::HashMapBase<TKey, TValue, THasher, TCompare,
+		detail::HashMapNode<TValue>>;
+	using Node = detail::HashMapNode<TValue>;
+
+public:
+	/// Default constructor.
+	HashMap()
+		: Base()
+	{}
+
+	/// Move.
+	HashMap(HashMap&& b)
+		: Base()
+	{
+		Base::move(b);
+	}
+
+	/// You need to manually destroy the map.
+	/// @see HashMap::destroy
+	~HashMap()
+	{
+		ANKI_ASSERT(Base::m_root == nullptr && "Requires manual destruction");
+	}
+
+	/// Move.
+	HashMap& operator=(HashMap&& b)
+	{
+		Base::move(b);
+		return *this;
+	}
+
+	/// Destroy the list.
+	template<typename TAllocator>
+	void destroy(TAllocator alloc);
+
+	/// Copy an element in the map.
+	template<typename TAllocator>
+	void pushBack(TAllocator alloc, const TKey& key, const TValue& x)
+	{
+		Node* node = alloc.template newInstance<Node>(x);
+		node->m_hash = THasher()(key);
+		Base::insertNode(node);
+	}
+
+	/// Construct an element inside the map.
+	template<typename TAllocator, typename... TArgs>
+	void emplaceBack(TAllocator alloc, const TKey& key, TArgs&&... args)
+	{
+		Node* node = alloc.template newInstance<Node>(
+			std::forward<TArgs>(args)...);
+		node->m_hash = THasher()(key);
+		Base::insertNode(node);
+	}
+
+	/// Erase element.
+	template<typename TAllocator>
+	void erase(TAllocator alloc, typename Base::Iterator it)
+	{
+		Node* del = it.m_node;
+		Base::removeNode(del);
+		alloc.deleteInstance(del);
+	}
+
+private:
 	template<typename TAllocator>
 	void destroyInternal(TAllocator alloc, Node* node);
+};
+
+/// The classes that will use the HashMapAllocFree need to inherit from this
+/// one.
+template<typename TClass>
+class HashMapAllocFreeEnabled
+{
+	template<typename TKey, typename TValue, typename THasher,
+		typename TCompare, typename TNode>
+	friend class detail::HashMapBase;
+
+	template<typename TNodePointer, typename TValuePointer,
+		typename TValueReference>
+	friend class detail::HashMapIterator;
+
+	template<typename TKey, typename TValue, typename THasher,
+		typename TCompare>
+	friend class HashMapAllocFree;
+
+	friend TClass;
+
+private:
+	U64 m_hash;
+	TClass* m_left;
+	TClass* m_right;
+	TClass* m_parent; ///< Used for iterating.
+
+	HashMapAllocFreeEnabled()
+		: m_hash(0)
+		, m_left(nullptr)
+		, m_right(nullptr)
+		, m_parent(nullptr)
+	{}
+
+	TClass& getValue()
+	{
+		return *static_cast<TClass*>(this);
+	}
+
+	const TClass& getValue() const
+	{
+		return *static_cast<const TClass*>(this);
+	}
+};
+
+/// Hash map that doesn't do any allocations. To work the TValue nodes will
+/// have to inherit from HashMapAllocFree.
+template<typename TKey, typename TValue, typename THasher, typename TCompare>
+class HashMapAllocFree: public detail::HashMapBase<TKey, TValue, THasher,
+	TCompare, TValue>
+{
+private:
+	using Base = detail::HashMapBase<TKey, TValue, THasher, TCompare, TValue>;
+	using Node = TValue;
+
+public:
+	/// Default constructor.
+	HashMapAllocFree()
+		: Base()
+	{}
+
+	/// Move.
+	HashMapAllocFree(HashMapAllocFree&& b)
+		: Base()
+	{
+		Base::move(b);
+	}
+
+	~HashMapAllocFree() = default;
+
+	/// Move.
+	HashMapAllocFree& operator=(HashMapAllocFree&& b)
+	{
+		Base::move(b);
+		return *this;
+	}
+
+	/// Add an element to the map.
+	void pushBack(const TKey& key, TValue* x)
+	{
+		ANKI_ASSERT(x);
+		HashMapAllocFreeEnabled<TValue>* e =
+			static_cast<HashMapAllocFreeEnabled<TValue>*>(x);
+		e->m_hash = THasher()(key);
+		Base::insertNode(x);
+	}
+
+	/// Erase element.
+	void erase(typename Base::Iterator it)
+	{
+		Node* del = it.m_node;
+		Base::removeNode(del);
+	}
 };
 /// @}
 
 } // end namespace anki
 
 #include "anki/util/HashMap.inl.h"
+

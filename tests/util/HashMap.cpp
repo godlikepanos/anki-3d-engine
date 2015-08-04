@@ -181,21 +181,38 @@ ANKI_TEST(Util, HashMap)
 	}
 }
 
-class Hashable
+class Hashable: public HashMapAllocFreeEnabled<Hashable>
 {
-	ANKI_ENABLE_HASH_MAP(Hashable)
 public:
-	Hashable(U64 hash, int x)
-		: m_hash(hash)
-		, m_x(x)
+	Hashable(int x)
+		: m_x(x)
 	{}
 
 	int m_x;
 };
 
-ANKI_TEST(Util, HashMap_enableHashMap)
+ANKI_TEST(Util, HashMapAllocFree)
 {
-	Hashable a(1, 1);
-	Hashable b(2, 2);
-	Hashable c(10, 10);
+	Hashable a(1);
+	Hashable b(2);
+	Hashable c(10);
+
+	HashMapAllocFree<int, Hashable, Hasher, Compare> map;
+
+	// Add vals
+	map.pushBack(1, &a);
+	map.pushBack(2, &b);
+	map.pushBack(10, &c);
+
+	// Find
+	ANKI_TEST_EXPECT_EQ(map.find(1)->m_x, 1);
+	ANKI_TEST_EXPECT_EQ(map.find(10)->m_x, 10);
+
+	// Erase
+	map.erase(map.find(10));
+	ANKI_TEST_EXPECT_EQ(map.find(10), map.getEnd());
+
+	// Put bach
+	map.pushBack(10, &c);
+	ANKI_TEST_EXPECT_NEQ(map.find(10), map.getEnd());
 }

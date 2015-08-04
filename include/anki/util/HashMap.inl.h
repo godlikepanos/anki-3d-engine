@@ -4,46 +4,17 @@
 // http://www.anki3d.org/LICENSE
 
 namespace anki {
+namespace detail {
+
+//==============================================================================
+// HashMapBase                                                                 =
+//==============================================================================
 
 //==============================================================================
 template<typename TKey, typename TValue, typename THasher, typename TCompare,
 	typename TNode>
-template<typename TAllocator>
-void HashMap<TKey, TValue, THasher, TCompare, TNode>::destroy(TAllocator alloc)
-{
-	if(m_root)
-	{
-		destroyInternal(alloc, m_root);
-		m_root = nullptr;
-	}
-}
-
-//==============================================================================
-template<typename TKey, typename TValue, typename THasher, typename TCompare,
-	typename TNode>
-template<typename TAllocator>
-void HashMap<TKey, TValue, THasher, TCompare, TNode>
-	::destroyInternal(TAllocator alloc, Node* node)
-{
-	ANKI_ASSERT(node);
-
-	if(node->m_right)
-	{
-		destroyInternal(alloc, node->m_right);
-	}
-
-	if(node->m_left)
-	{
-		destroyInternal(alloc, node->m_left);
-	}
-
-	alloc.deleteInstance(node);
-}
-
-//==============================================================================
-template<typename TKey, typename TValue, typename THasher, typename TCompare,
-	typename TNode>
-void HashMap<TKey, TValue, THasher, TCompare, TNode>::pushBackNode(Node* node)
+void HashMapBase<TKey, TValue, THasher, TCompare, TNode>::insertNode(
+	TNode* node)
 {
 	if(ANKI_UNLIKELY(!m_root))
 	{
@@ -52,7 +23,7 @@ void HashMap<TKey, TValue, THasher, TCompare, TNode>::pushBackNode(Node* node)
 	}
 
 	const U64 hash = node->m_hash;
-	Node* it = m_root;
+	TNode* it = m_root;
 	Bool done = false;
 	do
 	{
@@ -60,7 +31,7 @@ void HashMap<TKey, TValue, THasher, TCompare, TNode>::pushBackNode(Node* node)
 		if(hash > nhash)
 		{
 			// Go to right
-			Node* right = it->m_right;
+			TNode* right = it->m_right;
 			if(right)
 			{
 				it = right;
@@ -76,7 +47,7 @@ void HashMap<TKey, TValue, THasher, TCompare, TNode>::pushBackNode(Node* node)
 		{
 			ANKI_ASSERT(hash != nhash && "Not supported");
 			// Go to left
-			Node* left = it->m_left;
+			TNode* left = it->m_left;
 			if(left)
 			{
 				it = left;
@@ -94,13 +65,13 @@ void HashMap<TKey, TValue, THasher, TCompare, TNode>::pushBackNode(Node* node)
 //==============================================================================
 template<typename TKey, typename TValue, typename THasher, typename TCompare,
 	typename TNode>
-typename HashMap<TKey, TValue, THasher, TCompare, TNode>::Iterator
-	HashMap<TKey, TValue, THasher, TCompare, TNode>
+typename HashMapBase<TKey, TValue, THasher, TCompare, TNode>::Iterator
+	HashMapBase<TKey, TValue, THasher, TCompare, TNode>
 	::find(const Key& key)
 {
 	const U64 hash = THasher()(key);
 
-	Node* node = m_root;
+	TNode* node = m_root;
 	while(node)
 	{
 		const U64 bhash = node->m_hash;
@@ -126,17 +97,12 @@ typename HashMap<TKey, TValue, THasher, TCompare, TNode>::Iterator
 //==============================================================================
 template<typename TKey, typename TValue, typename THasher, typename TCompare,
 	typename TNode>
-template<typename TAllocator>
-void HashMap<TKey, TValue, THasher, TCompare, TNode>::erase(TAllocator alloc,
-	Iterator it)
+void HashMapBase<TKey, TValue, THasher, TCompare, TNode>::removeNode(TNode* del)
 {
-	Node* del = it.m_node;
 	ANKI_ASSERT(del);
-	Node* parent = del->m_parent;
-	Node* left = del->m_left;
-	Node* right = del->m_right;
-
-	alloc.deleteInstance(del);
+	TNode* parent = del->m_parent;
+	TNode* left = del->m_left;
+	TNode* right = del->m_right;
 
 	if(parent)
 	{
@@ -157,14 +123,14 @@ void HashMap<TKey, TValue, THasher, TCompare, TNode>::erase(TAllocator alloc,
 		{
 			ANKI_ASSERT(left->m_parent == del);
 			left->m_parent = nullptr;
-			pushBackNode(left);
+			insertNode(left);
 		}
 
 		if(right)
 		{
 			ANKI_ASSERT(right->m_parent == del);
 			right->m_parent = nullptr;
-			pushBackNode(right);
+			insertNode(right);
 		}
 	}
 	else
@@ -181,7 +147,7 @@ void HashMap<TKey, TValue, THasher, TCompare, TNode>::erase(TAllocator alloc,
 			if(right)
 			{
 				right->m_parent = nullptr;
-				pushBackNode(right);
+				insertNode(right);
 			}
 		}
 		else
@@ -194,6 +160,45 @@ void HashMap<TKey, TValue, THasher, TCompare, TNode>::erase(TAllocator alloc,
 			m_root = right;
 		}
 	}
+}
+
+} // end namespace detail
+
+//==============================================================================
+// HashMap                                                                     =
+//==============================================================================
+
+//==============================================================================
+template<typename TKey, typename TValue, typename THasher, typename TCompare>
+template<typename TAllocator>
+void HashMap<TKey, TValue, THasher, TCompare>::destroy(TAllocator alloc)
+{
+	if(Base::m_root)
+	{
+		destroyInternal(alloc, Base::m_root);
+		Base::m_root = nullptr;
+	}
+}
+
+//==============================================================================
+template<typename TKey, typename TValue, typename THasher, typename TCompare>
+template<typename TAllocator>
+void HashMap<TKey, TValue, THasher, TCompare>
+	::destroyInternal(TAllocator alloc, Node* node)
+{
+	ANKI_ASSERT(node);
+
+	if(node->m_right)
+	{
+		destroyInternal(alloc, node->m_right);
+	}
+
+	if(node->m_left)
+	{
+		destroyInternal(alloc, node->m_left);
+	}
+
+	alloc.deleteInstance(node);
 }
 
 } // end namespace anki
