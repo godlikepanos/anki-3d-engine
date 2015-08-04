@@ -162,21 +162,24 @@ inline U32 countBits(U32 number)
 #endif
 }
 
-/// Call an object constructor.
-template<typename T, typename... TArgs>
-void construct(T* p, TArgs&&... args)
+/// Check if types are the same.
+template<class T, class Y>
+struct TypesAreTheSame
 {
-	// Placement new
-	::new(reinterpret_cast<void*>(p)) T(std::forward<TArgs>(args)...);
-}
+    enum
+	{
+		m_value = 0
+	};
+};
 
-/// Call destructor.
-template<typename T>
-void destruct(T* p)
+template<class T>
+struct TypesAreTheSame<T, T>
 {
-	p->~T();
-}
-
+    enum
+	{
+		m_value = 1
+	};
+};
 /// @}
 
 } // end namespace anki

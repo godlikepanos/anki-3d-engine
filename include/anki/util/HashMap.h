@@ -8,11 +8,21 @@
 #include "anki/util/Allocator.h"
 #include "anki/util/NonCopyable.h"
 #include "anki/util/Ptr.h"
+#include "anki/util/Functions.h"
 
 namespace anki {
 
 /// @addtogroup util_private
 /// @{
+
+#define ANKI_ENABLE_HASH_MAP(Class_) \
+	template<typename TKey, typename TValue, typename THasher, \
+		typename TCompare, typename TNode> \
+	friend class HashMap; \
+	U64 m_hash = 0; \
+	Class_* m_left = nullptr; \
+	Class_* m_right = nullptr; \
+	Class_* m_parent = nullptr;
 
 /// HashMap node. It's not a traditional bucket because it doesn't contain more
 /// than one values.
@@ -166,6 +176,10 @@ public:
 	using Iterator = HashMapIterator<Node*, Pointer, Reference>;
 	using ConstIterator =
 		HashMapIterator<const Node*, ConstPointer, ConstReference>;
+	enum
+	{
+		T_NODE_SAME_AS_T_VALUE = TypesAreTheSame<Value, Node>::m_value
+	};
 
 	/// Default constructor.
 	HashMap()
@@ -264,8 +278,10 @@ public:
 	template<typename TAllocator>
 	void pushBack(Pointer x)
 	{
+		static_assert(T_NODE_SAME_AS_T_VALUE == true, "Cannot use that");
 		ANKI_ASSERT(x);
-		// TODO
+		ANKI_ASSERT(x->m_hash != 0);
+		pushBackNode(x);
 	}
 
 	/// Construct an element inside the map.

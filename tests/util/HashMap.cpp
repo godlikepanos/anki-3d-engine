@@ -180,3 +180,22 @@ ANKI_TEST(Util, HashMap)
 		akMap.destroy(alloc);
 	}
 }
+
+class Hashable
+{
+	ANKI_ENABLE_HASH_MAP(Hashable)
+public:
+	Hashable(U64 hash, int x)
+		: m_hash(hash)
+		, m_x(x)
+	{}
+
+	int m_x;
+};
+
+ANKI_TEST(Util, HashMap_enableHashMap)
+{
+	Hashable a(1, 1);
+	Hashable b(2, 2);
+	Hashable c(10, 10);
+}

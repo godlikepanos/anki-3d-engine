@@ -113,7 +113,7 @@ Threadpool::DummyTask Threadpool::m_dummyTask;
 //==============================================================================
 Threadpool::Threadpool(U32 threadsCount)
 #if !ANKI_DISABLE_THREADPOOL_THREADING
-:	m_barrier(threadsCount + 1)
+	: m_barrier(threadsCount + 1)
 #endif
 {
 	m_threadsCount = threadsCount;
@@ -132,7 +132,8 @@ Threadpool::Threadpool(U32 threadsCount)
 
 	while(threadsCount-- != 0)
 	{
-		construct(&m_threads[threadsCount], threadsCount, this);
+		::new(&m_threads[threadsCount]) detail::ThreadpoolThread(
+			threadsCount, this);
 	}
 #endif
 }

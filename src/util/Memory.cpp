@@ -533,7 +533,7 @@ void ChainMemoryPool::create(
 	{
 		ANKI_CREATION_OOM_ACTION();
 	}
-	construct(m_lock);
+	::new(m_lock) SpinLock();
 
 	// Initial size should be > 0
 	ANKI_ASSERT(m_initSize > 0 && "Wrong arg");
