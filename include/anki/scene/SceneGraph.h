@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SCENE_SCENE_GRAPH_H
-#define ANKI_SCENE_SCENE_GRAPH_H
+#pragma once
 
 #include "anki/scene/Common.h"
 #include "anki/scene/SceneNode.h"
@@ -127,9 +126,9 @@ public:
 	template<typename Func>
 	ANKI_USE_RESULT Error iterateSceneNodes(Func func)
 	{
-		for(SceneNode* psn : m_nodes)
+		for(SceneNode& psn : m_nodes)
 		{
-			Error err = func(*psn);
+			Error err = func(psn);
 			if(err)
 			{
 				return err;
@@ -204,7 +203,7 @@ private:
 	SceneAllocator<U8> m_alloc;
 	SceneFrameAllocator<U8> m_frameAlloc;
 
-	List<SceneNode*> m_nodes;
+	ListAllocFree<SceneNode> m_nodes;
 	U32 m_nodesCount = 0;
 	//SceneDictionary<SceneNode*> m_dict;
 
@@ -276,7 +275,7 @@ Error SceneGraph::iterateSceneNodes(PtrSize begin, PtrSize end, Func func)
 	while(count-- != 0)
 	{
 		ANKI_ASSERT(it != m_nodes.getEnd());
-		Error err = func(*(*it));
+		Error err = func(*it);
 		if(err)
 		{
 			return err;
@@ -291,4 +290,3 @@ Error SceneGraph::iterateSceneNodes(PtrSize begin, PtrSize end, Func func)
 
 } // end namespace anki
 
-#endif

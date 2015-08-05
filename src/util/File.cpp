@@ -154,10 +154,10 @@ Error File::openCFile(const CString& filename, OpenFlag flags)
 	}
 
 	// Get file size
-	if(!err)
+	if(((flags & OpenFlag::READ) != OpenFlag::NONE) && !err)
 	{
 		fseek(ANKI_CFILE, 0, SEEK_END);
-		I size = ftell(ANKI_CFILE);
+		I64 size = ftell(ANKI_CFILE);
 		if(size < 1)
 		{
 			ANKI_LOGE("ftell() failed");
@@ -166,7 +166,7 @@ Error File::openCFile(const CString& filename, OpenFlag flags)
 		else
 		{
 			m_size = size;
-			fseek(ANKI_CFILE, 0, SEEK_SET);
+			rewind(ANKI_CFILE);
 		}
 	}
 

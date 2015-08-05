@@ -352,7 +352,7 @@ public:
 	/// @see List::destroy
 	~List()
 	{
-		ANKI_ASSERT(!Base::isCreated() && "Requires manual destruction");
+		ANKI_ASSERT(Base::isEmpty() && "Requires manual destruction");
 	}
 
 	/// Move.
@@ -450,7 +450,7 @@ public:
 private:
 	void move(List& b)
 	{
-		ANKI_ASSERT(!Base::isCreated() && "Requires manual destruction");
+		ANKI_ASSERT(Base::isEmpty() && "Requires manual destruction");
 		Base::move(b);
 	}
 };
@@ -551,10 +551,10 @@ template<typename TClass>
 class ListAllocFreeEnabled
 {
 	template<typename, typename, typename, typename>
-	friend class ListIterator;
+	friend class detail::ListIterator;
 
 	template<typename, typename>
-	friend class ListBase;
+	friend class detail::ListBase;
 
 	template<typename>
 	friend class List;
@@ -562,13 +562,15 @@ class ListAllocFreeEnabled
 	template<typename>
 	friend class ListAllocFree;
 
+	friend TClass;
+
 private:
-	TClass* m_left;
-	TClass* m_right;
+	TClass* m_prev;
+	TClass* m_next;
 
 	ListAllocFreeEnabled()
-		: m_left(nullptr)
-		, m_right(nullptr)
+		: m_prev(nullptr)
+		, m_next(nullptr)
 	{}
 
 	TClass& getValue()
@@ -649,6 +651,12 @@ public:
 	void erase(typename Base::Iterator pos)
 	{
 		Base::removeNode(pos.m_node);
+	}
+
+	/// Erase an element.
+	void erase(T* x)
+	{
+		Base::removeNode(x);
 	}
 };
 /// @}

@@ -158,7 +158,7 @@ Error SceneGraph::registerNode(SceneNode* node)
 {
 	ANKI_ASSERT(node);
 
-	// Add to dict if it has name
+	// Add to dict if it has a name
 	if(node->getName())
 	{
 		if(tryFindSceneNode(node->getName()))
@@ -171,7 +171,7 @@ Error SceneGraph::registerNode(SceneNode* node)
 	}
 
 	// Add to vector
-	m_nodes.pushBack(m_alloc, node);
+	m_nodes.pushBack(node);
 	++m_nodesCount;
 
 	return ErrorCode::NONE;
@@ -180,19 +180,8 @@ Error SceneGraph::registerNode(SceneNode* node)
 //==============================================================================
 void SceneGraph::unregisterNode(SceneNode* node)
 {
-	// Remove from vector
-	auto it = m_nodes.begin();
-	for(; it != m_nodes.end(); ++it)
-	{
-		if((*it) == node)
-		{
-			break;
-		}
-	}
-
-	ANKI_ASSERT(it != m_nodes.end());
-	m_nodes.erase(m_alloc, it);
-
+	// Remove from the graph
+	m_nodes.erase(node);
 	--m_nodesCount;
 
 	// Remove from dict
@@ -221,13 +210,13 @@ SceneNode* SceneGraph::tryFindSceneNode(const CString& name)
 	auto it = m_nodes.getBegin();
 	for(; it != m_nodes.getEnd(); ++it)
 	{
-		if((*it)->getName() == name)
+		if((*it).getName() == name)
 		{
 			break;
 		}
 	}
 
-	return (it == m_nodes.getEnd()) ? nullptr : (*it);
+	return (it == m_nodes.getEnd()) ? nullptr : &(*it);
 }
 
 //==============================================================================
@@ -242,13 +231,13 @@ void SceneGraph::deleteNodesMarkedForDeletion()
 		auto end = m_nodes.end();
 		for(; it != end; ++it)
 		{
-			SceneNode* node = *it;
+			SceneNode& node = *it;
 
-			if(node->getMarkedForDeletion())
+			if(node.getMarkedForDeletion())
 			{
 				// Delete node
-				unregisterNode(node);
-				m_alloc.deleteInstance(node);
+				unregisterNode(&node);
+				m_alloc.deleteInstance(&node);
 				m_objectsMarkedForDeletionCount.fetchSub(1);
 				found = true;
 				break;

@@ -137,7 +137,7 @@ private:
 	void* m_file = nullptr; ///< A native file type
 	Type m_type = Type::NONE;
 	OpenFlag m_flags = OpenFlag::NONE; ///< All the flags. Set on open
-	U16 m_size = 0;
+	U32 m_size = 0;
 
 	/// Get the current machine's endianness
 	static OpenFlag getMachineEndianness();

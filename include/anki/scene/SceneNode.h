@@ -9,6 +9,7 @@
 #include "anki/util/Hierarchy.h"
 #include "anki/util/Rtti.h"
 #include "anki/util/Bitset.h"
+#include "anki/util/List.h"
 #include "anki/util/Enum.h"
 #include "anki/scene/SceneComponent.h"
 
@@ -21,7 +22,8 @@ class ResourceManager;
 /// @{
 
 /// Interface class backbone of scene
-class SceneNode: public Hierarchy<SceneNode>
+class SceneNode: public Hierarchy<SceneNode>,
+	public ListAllocFreeEnabled<SceneNode>
 {
 public:
 	using Base = Hierarchy<SceneNode>;

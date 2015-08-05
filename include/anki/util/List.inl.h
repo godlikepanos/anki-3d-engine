@@ -251,6 +251,10 @@ template<typename T, typename TNode>
 void ListBase<T, TNode>::removeNode(TNode* node)
 {
 	ANKI_ASSERT(node);
+	if(node != m_head)
+	{
+		ANKI_ASSERT(!(node->m_prev == nullptr && node->m_next == nullptr));
+	}
 
 	if(node == m_tail)
 	{
