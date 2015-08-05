@@ -4,15 +4,16 @@
 // http://www.anki3d.org/LICENSE
 
 namespace anki {
+namespace detail {
 
 //==============================================================================
 // ListIterator                                                                =
 //==============================================================================
 
 //==============================================================================
-template<typename TNodePointer, typename TValuePointer, 
+template<typename TNodePointer, typename TValuePointer,
 	typename TValueReference, typename TList>
-ListIterator<TNodePointer, TValuePointer, TValueReference, TList>& 
+ListIterator<TNodePointer, TValuePointer, TValueReference, TList>&
 	ListIterator<TNodePointer, TValuePointer, TValueReference, TList>::
 	operator--()
 {
@@ -31,12 +32,12 @@ ListIterator<TNodePointer, TValuePointer, TValueReference, TList>&
 }
 
 //==============================================================================
-// List                                                                        =
+// ListBase                                                                    =
 //==============================================================================
 
 //==============================================================================
-template<typename T>
-Bool List<T>::operator==(const List& b) const
+template<typename T, typename TNode>
+Bool ListBase<T, TNode>::operator==(const ListBase& b) const
 {
 	Bool same = true;
 	ConstIterator ita = getBegin();
@@ -58,8 +59,8 @@ Bool List<T>::operator==(const List& b) const
 }
 
 //==============================================================================
-template<typename T>
-void List<T>::pushBackNode(Node* node)
+template<typename T, typename TNode>
+void ListBase<T, TNode>::pushBackNode(TNode* node)
 {
 	ANKI_ASSERT(node);
 
@@ -78,121 +79,101 @@ void List<T>::pushBackNode(Node* node)
 }
 
 //==============================================================================
-template<typename T>
-template<typename TAllocator, typename... TArgs>
-void List<T>::emplaceFront(TAllocator alloc, TArgs&&... args)
+template<typename T, typename TNode>
+void ListBase<T, TNode>::pushFrontNode(TNode* node)
 {
-	Node* el = alloc.template newInstance<Node>(std::forward<TArgs>(args)...);
+	ANKI_ASSERT(node);
+
 	if(m_head != nullptr)
 	{
 		ANKI_ASSERT(m_tail != nullptr);
-		m_head->m_prev = el;
-		el->m_next = m_head;
-		m_head = el;
+		m_head->m_prev = node;
+		node->m_next = m_head;
+		m_head = node;
 	}
 	else
 	{
 		ANKI_ASSERT(m_tail == nullptr);
-		m_tail = m_head = el;
+		m_tail = m_head = node;
 	}
 }
 
 //==============================================================================
-template<typename T>
-template<typename TAllocator, typename... TArgs>
-void List<T>::emplace(TAllocator alloc, Iterator pos, TArgs&&... args)
+template<typename T, typename TNode>
+void ListBase<T, TNode>::insertNode(TNode* pos, TNode* node)
 {
-	ANKI_ASSERT(pos.m_list == this);
+	ANKI_ASSERT(node);
 
-	Node* el = alloc.template newInstance<Node>(std::forward<TArgs>(args)...);
-	Node* node = pos.m_node;
-
-	if(node == nullptr)
+	if(pos == nullptr)
 	{
 		// Place after the last
 
 		if(m_tail != nullptr)
 		{
 			ANKI_ASSERT(m_head != nullptr);
-			m_tail->m_next = el;
-			el->m_prev = m_tail;
-			m_tail = el;
+			m_tail->m_next = node;
+			node->m_prev = m_tail;
+			m_tail = node;
 		}
 		else
 		{
 			ANKI_ASSERT(m_head == nullptr);
-			m_tail = m_head = el;
+			m_tail = m_head = node;
 		}
 	}
 	else
 	{
-		el->m_prev = node->m_prev;
-		el->m_next = node;
-		node->m_prev = el;
+		node->m_prev = pos->m_prev;
+		node->m_next = pos;
+		pos->m_prev = node;
 
-		if(node == m_head)
+		if(pos == m_head)
 		{
 			ANKI_ASSERT(m_tail != nullptr);
-			m_head = el;
+			m_head = node;
 		}
 	}
 }
 
 //==============================================================================
-template<typename T>
-template<typename TAllocator>
-void List<T>::destroy(TAllocator alloc)
-{
-	Node* el = m_head;
-	while(el)
-	{
-		Node* next = el->m_next;
-		alloc.deleteInstance(el);
-		el = next;
-	}
-
-	m_head = m_tail = nullptr;
-}
-
-//==============================================================================
-template<typename T>
+template<typename T, typename TNode>
 template<typename TFunc>
-Error List<T>::iterateForward(TFunc func)
+Error ListBase<T, TNode>::iterateForward(TFunc func)
 {
 	Error err = ErrorCode::NONE;
-	Node* el = m_head;
-	while(el && !err)
+	TNode* node = m_head;
+	while(node && !err)
 	{
-		err = func(el->m_value);
-		el = el->m_next;
+		err = func(node->getValue());
+		node = node->m_next;
 	}
 
 	return err;
 }
 
 //==============================================================================
-template<typename T>
+template<typename T, typename TNode>
 template<typename TFunc>
-Error List<T>::iterateBackward(TFunc func)
+Error ListBase<T, TNode>::iterateBackward(TFunc func)
 {
 	Error err = ErrorCode::NONE;
-	Node* el = m_tail;
-	while(el && !err)
+	TNode* node = m_tail;
+	while(node && !err)
 	{
-		err = func(el->m_value);
-		el = el->m_prev;
+		err = func(node->getValue());
+		node = node->m_prev;
 	}
 
 	return err;
 }
 
 //==============================================================================
-template<typename T>
+template<typename T, typename TNode>
 template<typename TCompFunc>
-void List<T>::sort(TCompFunc compFunc)
+void ListBase<T, TNode>::sort(TCompFunc compFunc)
 {
-	Node* sortPtr;
-	Node* newTail = m_tail;
+	TNode* sortPtr;
+	TNode* newTail = m_tail;
 
 	while(newTail != m_head)
 	{
@@ -203,10 +184,10 @@ void List<T>::sort(TCompFunc compFunc)
 		do
 		{
 			ANKI_ASSERT(sortPtr != nullptr);
-			Node* sortPtrNext = sortPtr->m_next;
+			TNode* sortPtrNext = sortPtr->m_next;
 			ANKI_ASSERT(sortPtrNext != nullptr);
 
-			if(compFunc(sortPtrNext->m_value, sortPtr->m_value))
+			if(compFunc(sortPtrNext->getValue(), sortPtr->getValue()))
 			{
 				sortPtr = swap(sortPtr, sortPtrNext);
 				swapped = true;
@@ -234,8 +215,8 @@ void List<T>::sort(TCompFunc compFunc)
 }
 
 //==============================================================================
-template<typename T>
-typename List<T>::Node* List<T>::swap(Node* one, Node* two)
+template<typename T, typename TNode>
+TNode* ListBase<T, TNode>::swap(TNode* one, TNode* two)
 {
 	if(one->m_prev == nullptr)
 	{
@@ -266,15 +247,11 @@ typename List<T>::Node* List<T>::swap(Node* one, Node* two)
 }
 
 //==============================================================================
-template<typename T>
-template<typename TAllocator>
-void List<T>::erase(TAllocator alloc, Iterator pos)
+template<typename T, typename TNode>
+void ListBase<T, TNode>::removeNode(TNode* node)
 {
-	ANKI_ASSERT(pos.m_node);
-	ANKI_ASSERT(pos.m_list == this);
+	ANKI_ASSERT(node);
 
-	Node* node = pos.m_node;
-	
 	if(node == m_tail)
 	{
 		m_tail = node->m_prev;
@@ -297,30 +274,12 @@ void List<T>::erase(TAllocator alloc, Iterator pos)
 		node->m_next->m_prev = node->m_prev;
 	}
 
-	alloc.deleteInstance(node);
+	node->m_next = node->m_prev = nullptr;
 }
 
 //==============================================================================
-template<typename T>
-template<typename TAllocator>
-void List<T>::popBack(TAllocator alloc)
-{
-	ANKI_ASSERT(m_tail);
-	erase(alloc, Iterator(m_tail, this));
-}
-
-//==============================================================================
-template<typename T>
-template<typename TAllocator>
-void List<T>::popFront(TAllocator alloc)
-{
-	ANKI_ASSERT(m_tail);
-	erase(alloc, Iterator(m_head, this));
-}
-
-//==============================================================================
-template<typename T>
-typename List<T>::Iterator List<T>::find(const Value& a)
+template<typename T, typename TNode>
+typename ListBase<T, TNode>::Iterator ListBase<T, TNode>::find(const Value& a)
 {
 	Iterator it = getBegin();
 	Iterator endit = getEnd();
@@ -338,8 +297,8 @@ typename List<T>::Iterator List<T>::find(const Value& a)
 }
 
 //==============================================================================
-template<typename T>
-PtrSize List<T>::getSize() const
+template<typename T, typename TNode>
+PtrSize ListBase<T, TNode>::getSize() const
 {
 	PtrSize size = 0;
 	ConstIterator it = getBegin();
@@ -350,6 +309,44 @@ PtrSize List<T>::getSize() const
 	}
 
 	return size;
+}
+
+//==============================================================================
+template<typename T, typename TNode>
+void ListBase<T, TNode>::popBack()
+{
+	ANKI_ASSERT(m_tail);
+	removeNode(m_tail);
+}
+
+//==============================================================================
+template<typename T, typename TNode>
+void ListBase<T, TNode>::popFront()
+{
+	ANKI_ASSERT(m_head);
+	removeNode(m_head);
+}
+
+} // end namespace detail
+
+//==============================================================================
+// List                                                                        =
+//==============================================================================
+
+//==============================================================================
+template<typename T>
+template<typename TAllocator>
+void List<T>::destroy(TAllocator alloc)
+{
+	Node* el = Base::m_head;
+	while(el)
+	{
+		Node* next = el->m_next;
+		alloc.deleteInstance(el);
+		el = next;
+	}
+
+	Base::m_head = Base::m_tail = nullptr;
 }
 
 } // end namespace anki

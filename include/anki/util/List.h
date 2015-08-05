@@ -14,16 +14,17 @@ namespace anki {
 template<typename T>
 class List;
 
-/// @addtogroup util_private
+/// @addtogroup util_containers
 /// @{
 
+namespace detail {
+
 /// List node.
+/// @internal
 template<typename T>
 class ListNode
 {
 public:
-	using Value = T;
-
 	T m_value;
 	ListNode* m_prev = nullptr;
 	ListNode* m_next = nullptr;
@@ -32,17 +33,34 @@ public:
 	ListNode(TArgs&&... args)
 		: m_value(std::forward<TArgs>(args)...)
 	{}
+
+	T& getValue()
+	{
+		return m_value;
+	}
+
+	const T& getValue() const
+	{
+		return m_value;
+	}
 };
 
 /// List bidirectional iterator.
+/// @internal
 template<typename TNodePointer, typename TValuePointer,
 	typename TValueReference, typename TListPointer>
 class ListIterator
 {
-public:
-	TNodePointer m_node = nullptr;
-	TListPointer m_list = nullptr; ///< Used to go back from the end
+	template<typename, typename>
+	friend class ListBase;
 
+	template<typename>
+	friend class List;
+
+	template<typename, typename, typename, typename>
+	friend class ListIterator;
+
+public:
 	ListIterator() = default;
 
 	ListIterator(const ListIterator& b)
@@ -69,13 +87,13 @@ public:
 	TValueReference operator*() const
 	{
 		ANKI_ASSERT(m_node);
-		return m_node->m_value;
+		return m_node->getValue();
 	}
 
 	TValuePointer operator->() const
 	{
 		ANKI_ASSERT(m_node);
-		return &m_node->m_value;
+		return &m_node->getValue();
 	}
 
 	ListIterator& operator++()
@@ -152,87 +170,61 @@ public:
 	{
 		return !(*this == b);
 	}
+
+private:
+	TNodePointer m_node = nullptr;
+	TListPointer m_list = nullptr; ///< Used to go back from the end
 };
-/// @}
 
-/// @addtogroup util_containers
-/// @{
-
-/// Double linked list.
-template<typename T>
-class List: public NonCopyable
+/// Double linked list base.
+/// @internal
+template<typename T, typename TNode>
+class ListBase: public NonCopyable
 {
-	template<typename TNodePointer, typename TValuePointer,
-		typename TValueReference, typename TListPointer>
+	template<typename, typename, typename, typename>
 	friend class ListIterator;
 
 public:
 	using Value = T;
-	using Node = ListNode<Value>;
 	using Reference = Value&;
 	using ConstReference = const Value&;
 	using Pointer = Value*;
 	using ConstPointer = const Value*;
-	using Iterator = ListIterator<Node*, Pointer, Reference, List*>;
-	using ConstIterator =
-		ListIterator<const Node*, ConstPointer, ConstReference, const List*>;
+	using Iterator = ListIterator<TNode*, Pointer, Reference, ListBase*>;
+	using ConstIterator = ListIterator<const TNode*, ConstPointer,
+		ConstReference, const ListBase*>;
 
-	List() = default;
-
-	/// Move.
-	List(List&& b)
-		: List()
-	{
-		move(b);
-	}
-
-	/// You need to manually destroy the list.
-	/// @see List::destroy
-	~List()
-	{
-		ANKI_ASSERT(m_head == nullptr && "Requires manual destruction");
-	}
-
-	/// Move.
-	List& operator=(List&& b)
-	{
-		move(b);
-		return *this;
-	}
+	ListBase() = default;
 
 	/// Compare with another list.
-	Bool operator==(const List& b) const;
-
-	/// Destroy the list.
-	template<typename TAllocator>
-	void destroy(TAllocator alloc);
+	Bool operator==(const ListBase& b) const;
 
 	/// Get first element.
 	ConstReference getFront() const
 	{
 		ANKI_ASSERT(!isEmpty());
-		return m_head->m_value;
+		return m_head->getValue();
 	}
 
 	/// Get first element.
 	Reference getFront()
 	{
 		ANKI_ASSERT(!isEmpty());
-		return m_head->m_value;
+		return m_head->getValue();
 	}
 
 	/// Get last element.
 	ConstReference getBack() const
 	{
 		ANKI_ASSERT(!isEmpty());
-		return m_tail->m_value;
+		return m_tail->getValue();
 	}
 
 	/// Get last element.
 	Reference getBack()
 	{
 		ANKI_ASSERT(!isEmpty());
-		return m_tail->m_value;
+		return m_tail->getValue();
 	}
 
 	/// Get begin.
@@ -289,43 +281,6 @@ public:
 		return m_head == nullptr;
 	}
 
-	/// Copy an element at the end of the list.
-	template<typename TAllocator>
-	void pushBack(TAllocator alloc, const Value& x)
-	{
-		Node* node = alloc.template newInstance<Node>(x);
-		pushBackNode(node);
-	}
-
-	/// Construct an element at the end of the list.
-	template<typename TAllocator, typename... TArgs>
-	void emplaceBack(TAllocator alloc, TArgs&&... args)
-	{
-		Node* node = alloc.template newInstance<Node>(
-			std::forward<TArgs>(args)...);
-		pushBackNode(node);
-	}
-
-	/// Construct element at the beginning of the list.
-	template<typename TAllocator, typename... TArgs>
-	void emplaceFront(TAllocator alloc, TArgs&&... args);
-
-	/// Construct element at the the given position.
-	template<typename TAllocator, typename... TArgs>
-	void emplace(TAllocator alloc, Iterator pos, TArgs&&... args);
-
-	/// Pop a value from the back of the list.
-	template<typename TAllocator>
-	void popBack(TAllocator alloc);
-
-	/// Pop a value from the front of the list.
-	template<typename TAllocator>
-	void popFront(TAllocator alloc);
-
-	/// Erase an element.
-	template<typename TAllocator>
-	void erase(TAllocator alloc, Iterator position);
-
 	/// Iterate the list using lambda.
 	template<typename TFunc>
 	ANKI_USE_RESULT Error iterateForward(TFunc func);
@@ -347,22 +302,157 @@ public:
 	PtrSize getSize() const;
 
 protected:
-	Node* m_head = nullptr;
-	Node* m_tail = nullptr;
+	TNode* m_head = nullptr;
+	TNode* m_tail = nullptr;
 
-	void move(List& b)
+	void move(ListBase& b)
 	{
-		ANKI_ASSERT(isEmpty() && "Cannot move before destroying");
 		m_head = b.m_head;
 		b.m_head = nullptr;
 		m_tail = b.m_tail;
 		b.m_tail = nullptr;
 	}
 
-	/// Used in sort.
-	Node* swap(Node* one, Node* two);
+	void pushBackNode(TNode* node);
+	void pushFrontNode(TNode* node);
+	void insertNode(TNode* pos, TNode* node);
+	void removeNode(TNode* node);
+	void popBack();
+	void popFront();
 
-	void pushBackNode(Node* node);
+private:
+	/// Used in sort.
+	TNode* swap(TNode* one, TNode* two);
+};
+
+} // end namespace detail
+
+/// Double linked list.
+template<typename T>
+class List: public detail::ListBase<T, detail::ListNode<T>>
+{
+private:
+	using Base = detail::ListBase<T, detail::ListNode<T>>;
+	using Node = detail::ListNode<T>;
+
+public:
+	/// Default constructor.
+	List()
+		: Base()
+	{}
+
+	/// Move.
+	List(List&& b)
+		: List()
+	{
+		move(b);
+	}
+
+	/// You need to manually destroy the list.
+	/// @see List::destroy
+	~List()
+	{
+		ANKI_ASSERT(!Base::isCreated() && "Requires manual destruction");
+	}
+
+	/// Move.
+	List& operator=(List&& b)
+	{
+		move(b);
+		return *this;
+	}
+
+	/// Destroy the list.
+	template<typename TAllocator>
+	void destroy(TAllocator alloc);
+
+	/// Copy an element at the end of the list.
+	template<typename TAllocator>
+	void pushBack(TAllocator alloc, const T& x)
+	{
+		Node* node = alloc.template newInstance<Node>(x);
+		Base::pushBackNode(node);
+	}
+
+	/// Construct an element at the end of the list.
+	template<typename TAllocator, typename... TArgs>
+	void emplaceBack(TAllocator alloc, TArgs&&... args)
+	{
+		Node* node = alloc.template newInstance<Node>(
+			std::forward<TArgs>(args)...);
+		Base::pushBackNode(node);
+	}
+
+	/// Copy an element at the beginning of the list.
+	template<typename TAllocator>
+	void pushFront(TAllocator alloc, const T& x)
+	{
+		Node* node = alloc.template newInstance<Node>(x);
+		Base::pushFrontNode(node);
+	}
+
+	/// Construct element at the beginning of the list.
+	template<typename TAllocator, typename... TArgs>
+	void emplaceFront(TAllocator alloc, TArgs&&... args)
+	{
+		Node* node = alloc.template newInstance<Node>(
+			std::forward<TArgs>(args)...);
+		Base::pushFrontNode(node);
+	}
+
+	/// Copy an element at the given position of the list.
+	template<typename TAllocator>
+	void insert(TAllocator alloc, typename Base::Iterator pos, const T& x)
+	{
+		Node* node = alloc.template newInstance<Node>(x);
+		Base::insertNode(pos.m_node, node);
+	}
+
+	/// Construct element at the the given position.
+	template<typename TAllocator, typename... TArgs>
+	void emplace(TAllocator alloc, typename Base::Iterator pos, TArgs&&... args)
+	{
+		Node* node = alloc.template newInstance<Node>(
+			std::forward<TArgs>(args)...);
+		Base::insertNode(pos.m_node, node);
+	}
+
+	/// Pop a value from the back of the list.
+	template<typename TAllocator>
+	void popBack(TAllocator alloc)
+	{
+		ANKI_ASSERT(Base::m_tail);
+		Node* node = Base::m_tail;
+		Base::popBack();
+		alloc.deleteInstance(node);
+	}
+
+	/// Pop a value from the front of the list.
+	template<typename TAllocator>
+	void popFront(TAllocator alloc)
+	{
+		ANKI_ASSERT(Base::m_head);
+		Node* node = Base::m_head;
+		Base::popFront();
+		alloc.deleteInstance(node);
+	}
+
+	/// Erase an element.
+	template<typename TAllocator>
+	void erase(TAllocator alloc, typename Base::Iterator pos)
+	{
+		ANKI_ASSERT(pos.m_node);
+		ANKI_ASSERT(pos.m_list == this);
+		Base::removeNode(pos.m_node);
+		alloc.deleteInstance(pos.m_node);
+	}
+
+private:
+	void move(List& b)
+	{
+		ANKI_ASSERT(!Base::isCreated() && "Requires manual destruction");
+		Base::move(b);
+	}
 };
 
 /// List with automatic destruction.
@@ -452,6 +542,113 @@ private:
 	{
 		Base::move(b);
 		m_alloc = b.m_alloc;
+	}
+};
+
+/// The classes that will use the ListAllocFree need to inherit from this
+/// one.
+template<typename TClass>
+class ListAllocFreeEnabled
+{
+	template<typename, typename, typename, typename>
+	friend class ListIterator;
+
+	template<typename, typename>
+	friend class ListBase;
+
+	template<typename>
+	friend class List;
+
+	template<typename>
+	friend class ListAllocFree;
+
+private:
+	TClass* m_left;
+	TClass* m_right;
+
+	ListAllocFreeEnabled()
+		: m_left(nullptr)
+		, m_right(nullptr)
+	{}
+
+	TClass& getValue()
+	{
+		return *static_cast<TClass*>(this);
+	}
+
+	const TClass& getValue() const
+	{
+		return *static_cast<const TClass*>(this);
+	}
+};
+
+/// List that doesn't perform any allocations. To work the T nodes will
+/// have to inherit from ListAllocFree.
+template<typename T>
+class ListAllocFree: public detail::ListBase<T, T>
+{
+	template<typename, typename, typename, typename>
+	friend class detail::ListIterator;
+
+private:
+	using Base = detail::ListBase<T, T>;
+
+public:
+	/// Default constructor.
+	ListAllocFree()
+		: Base()
+	{}
+
+	/// Move.
+	ListAllocFree(ListAllocFree&& b)
+		: ListAllocFree()
+	{
+		Base::move(b);
+	}
+
+	~ListAllocFree() = default;
+
+	/// Move.
+	ListAllocFree& operator=(ListAllocFree&& b)
+	{
+		Base::move(b);
+		return *this;
+	}
+
+	/// Copy an element at the end of the list.
+	void pushBack(T* x)
+	{
+		Base::pushBackNode(x);
+	}
+
+	/// Copy an element at the beginning of the list.
+	void pushFront(T* x)
+	{
+		Base::pushFrontNode(x);
+	}
+
+	/// Copy an element at the given position of the list.
+	void insert(typename Base::Iterator pos, T* x)
+	{
+		Base::insertNode(pos.m_node, x);
+	}
+
+	/// Pop a value from the back of the list.
+	void popBack()
+	{
+		Base::popBack();
+	}
+
+	/// Pop a value from the front of the list.
+	void popFront()
+	{
+		Base::popFront();
+	}
+
+	/// Erase an element.
+	void erase(typename Base::Iterator pos)
+	{
+		Base::removeNode(pos.m_node);
 	}
 };
 /// @}

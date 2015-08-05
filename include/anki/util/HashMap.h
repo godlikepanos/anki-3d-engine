@@ -55,12 +55,10 @@ template<typename TNodePointer, typename TValuePointer,
 	typename TValueReference>
 class HashMapIterator
 {
-	template<typename TKey, typename TValue, typename THasher,
-		typename TCompare>
+	template<typename, typename, typename, typename>
 	friend class HashMap;
 
-	template<typename TKey, typename TValue, typename THasher,
-		typename TCompare>
+	template<typename, typename, typename, typename>
 	friend class HashMapAllocFree;
 
 public:
@@ -393,7 +391,7 @@ private:
 	}
 };
 
-/// Hash map that doesn't do any allocations. To work the TValue nodes will
+/// Hash map that doesn't perform any allocations. To work the TValue nodes will
 /// have to inherit from HashMapAllocFree.
 template<typename TKey, typename TValue, typename THasher, typename TCompare>
 class HashMapAllocFree: public detail::HashMapBase<TKey, TValue, THasher,

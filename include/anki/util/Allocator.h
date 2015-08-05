@@ -34,7 +34,7 @@ namespace anki {
 template<typename T, typename TPool>
 class GenericPoolAllocator
 {
-	template<typename Y, typename TPool_>
+	template<typename, typename>
 	friend class GenericPoolAllocator;
 
 public:
