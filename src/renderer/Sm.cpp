@@ -54,24 +54,46 @@ Error Sm::init(const ConfigSet& config)
 		: SamplingFilter::NEAREST;
 	sminit.m_sampling.m_compareOperation = CompareOperation::LESS_EQUAL;
 
-	m_sm2DArrayTex = getGrManager().newInstance<Texture>(sminit);
+	m_spotTexArray = getGrManager().newInstance<Texture>(sminit);
 
-	// Init sms
-	m_sms.create(getAllocator(), config.getNumber("is.sm.maxLights"));
+	sminit.m_type = TextureType::CUBE_ARRAY;
+	m_omniTexArray = getGrManager().newInstance<Texture>(sminit);;
+
+	// Init 2D layers
+	m_spots.create(getAllocator(), config.getNumber("is.sm.maxLights"));
 
 	FramebufferInitializer fbInit;
-	fbInit.m_depthStencilAttachment.m_texture = m_sm2DArrayTex;
+	fbInit.m_depthStencilAttachment.m_texture = m_spotTexArray;
 	fbInit.m_depthStencilAttachment.m_loadOperation =
 		AttachmentLoadOperation::CLEAR;
 	fbInit.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0;
 
-	U32 layer = 0;
-	for(Shadowmap& sm : m_sms)
+	U layer = 0;
+	for(ShadowmapSpot& sm : m_spots)
 	{
 		sm.m_layerId = layer;
 
 		fbInit.m_depthStencilAttachment.m_layer = layer;
 		sm.m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
+
+		++layer;
+	}
+
+	// Init cube layers
+	m_omnis.create(getAllocator(), config.getNumber("is.sm.maxLights"));
+
+	fbInit.m_depthStencilAttachment.m_texture = m_omniTexArray;
+
+	layer = 0;
+	for(ShadowmapOmni& sm : m_omnis)
+	{
+		sm.m_layerId = layer;
+
+		for(U i = 0; i < 6; ++i)
+		{
+			fbInit.m_depthStencilAttachment.m_layer = layer * 6 + i;
+			sm.m_fb[i] = getGrManager().newInstance<Framebuffer>(fbInit);
+		}
 
 		++layer;
 	}
@@ -93,8 +115,8 @@ void Sm::finishDraw(CommandBufferPtr& cmdBuff)
 }
 
 //==============================================================================
-Error Sm::run(SceneNode* shadowCasters[], U32 shadowCastersCount,
-	CommandBufferPtr& cmdBuff)
+Error Sm::run(SArray<SceneNode*> spotShadowCasters,
+	SArray<SceneNode*> omniShadowCasters, CommandBufferPtr& cmdBuff)
 {
 	ANKI_ASSERT(m_enabled);
 	Error err = ErrorCode::NONE;
@@ -102,13 +124,14 @@ Error Sm::run(SceneNode* shadowCasters[], U32 shadowCastersCount,
 	prepareDraw(cmdBuff);
 
 	// render all
-	for(U32 i = 0; i < shadowCastersCount; i++)
+	for(SceneNode* node : spotShadowCasters)
 	{
-		Shadowmap* sm;
-		ANKI_CHECK(doLight(*shadowCasters[i], cmdBuff, sm));
+		ANKI_CHECK(doSpotLight(*node, cmdBuff));
+	}
 
-		ANKI_ASSERT(sm != nullptr);
-		(void)sm;
+	for(SceneNode* node : omniShadowCasters)
+	{
+		ANKI_CHECK(doOmniLight(*node, cmdBuff));
 	}
 
 	finishDraw(cmdBuff);
@@ -117,108 +140,160 @@ Error Sm::run(SceneNode* shadowCasters[], U32 shadowCastersCount,
 }
 
 //==============================================================================
-Sm::Shadowmap& Sm::bestCandidate(SceneNode& light)
+template<typename TShadowmap, typename TContainer>
+void Sm::bestCandidate(SceneNode& light, TContainer& arr, TShadowmap*& out)
 {
 	// Allready there
-	for(Shadowmap& sm : m_sms)
+	for(TShadowmap& sm : arr)
 	{
 		if(&light == sm.m_light)
 		{
-			return sm;
+			out = &sm;
+			return;
 		}
 	}
 
 	// Find a null
-	for(Shadowmap& sm : m_sms)
+	for(TShadowmap& sm : arr)
 	{
 		if(sm.m_light == nullptr)
 		{
 			sm.m_light = &light;
 			sm.m_timestamp = 0;
-			return sm;
+			out = &sm;
+			return;
 		}
 	}
 
 	// Find an old and replace it
-	Shadowmap* sm = &m_sms[0];
-	for(U i = 1; i < m_sms.getSize(); i++)
+	TShadowmap* sm = &arr[0];
+	for(U i = 1; i < arr.getSize(); i++)
 	{
-		if(m_sms[i].m_timestamp < sm->m_timestamp)
+		if(arr[i].m_timestamp < sm->m_timestamp)
 		{
-			sm = &m_sms[i];
+			sm = &arr[i];
 		}
 	}
 
 	sm->m_light = &light;
 	sm->m_timestamp = 0;
-	return *sm;
+	out = sm;
 }
 
 //==============================================================================
-Error Sm::doLight(
-	SceneNode& light, CommandBufferPtr& cmdBuff, Sm::Shadowmap*& sm)
+Bool Sm::skip(SceneNode& light, ShadowmapBase& sm)
 {
-	sm = &bestCandidate(light);
+	Timestamp lastUpdate = light.getComponent<MoveComponent>().getTimestamp();
+
+	Error err = light.iterateComponentsOfType<FrustumComponent>(
+		[&lastUpdate](FrustumComponent& fr)
+	{
+		lastUpdate = max(lastUpdate, fr.getTimestamp());
+		VisibilityTestResults& vi = fr.getVisibilityTestResults();
+
+		auto it = vi.getRenderablesBegin();
+		auto end = vi.getRenderablesEnd();
+		for(; it != end; ++it)
+		{
+			SceneNode* node = it->m_node;
+
+			FrustumComponent* bfr = node->tryGetComponent<FrustumComponent>();
+			if(bfr)
+			{
+				lastUpdate = max(lastUpdate, bfr->getTimestamp());
+			}
+
+			MoveComponent* bmov = node->tryGetComponent<MoveComponent>();
+			if(bmov)
+			{
+				lastUpdate = max(lastUpdate, bmov->getTimestamp());
+			}
+
+			SpatialComponent* sp = node->tryGetComponent<SpatialComponent>();
+			if(sp)
+			{
+				lastUpdate = max(lastUpdate, sp->getTimestamp());
+			}
+		}
+
+		return ErrorCode::NONE;
+	});
+	(void)err;
+
+	Bool shouldUpdate = lastUpdate >= sm.m_timestamp;
+	if(shouldUpdate)
+	{
+		sm.m_timestamp = getGlobalTimestamp();
+		LightComponent& lcomp = light.getComponent<LightComponent>();
+		lcomp.setShadowMapIndex(sm.m_layerId);
+	}
+
+	return !shouldUpdate;
+}
+
+//==============================================================================
+Error Sm::doSpotLight(SceneNode& light, CommandBufferPtr& cmdBuff)
+{
+	ShadowmapSpot* sm;
+	bestCandidate(light, m_spots, sm);
+
+	if(skip(light, *sm))
+	{
+		return ErrorCode::NONE;
+	}
 
 	FrustumComponent& fr = light.getComponent<FrustumComponent>();
 	VisibilityTestResults& vi = fr.getVisibilityTestResults();
-	LightComponent& lcomp = light.getComponent<LightComponent>();
 
-	//
-	// Find last update
-	//
-	U32 lastUpdate = light.getComponent<MoveComponent>().getTimestamp();
-	lastUpdate = std::max(lastUpdate, fr.getTimestamp());
+	cmdBuff->bindFramebuffer(sm->m_fb);
+	cmdBuff->setViewport(0, 0, m_resolution, m_resolution);
 
 	auto it = vi.getRenderablesBegin();
 	auto end = vi.getRenderablesEnd();
 	for(; it != end; ++it)
 	{
-		SceneNode* node = it->m_node;
-
-		FrustumComponent* bfr = node->tryGetComponent<FrustumComponent>();
-		if(bfr)
-		{
-			lastUpdate = std::max(lastUpdate, bfr->getTimestamp());
-		}
-
-		MoveComponent* bmov = node->tryGetComponent<MoveComponent>();
-		if(bmov)
-		{
-			lastUpdate = std::max(lastUpdate, bmov->getTimestamp());
-		}
-
-		SpatialComponent* sp = node->tryGetComponent<SpatialComponent>();
-		if(sp)
-		{
-			lastUpdate = std::max(lastUpdate, sp->getTimestamp());
-		}
+		ANKI_CHECK(m_r->getSceneDrawer().render(light, *it));
 	}
 
-	Bool shouldUpdate = lastUpdate >= sm->m_timestamp;
-	if(!shouldUpdate)
+	ANKI_COUNTER_INC(RENDERER_SHADOW_PASSES, U64(1));
+
+	return ErrorCode::NONE;
+}
+
+//==============================================================================
+Error Sm::doOmniLight(SceneNode& light, CommandBufferPtr& cmdBuff)
+{
+	ShadowmapOmni* sm;
+	bestCandidate(light, m_omnis, sm);
+
+	if(skip(light, *sm))
 	{
 		return ErrorCode::NONE;
 	}
 
-	sm->m_timestamp = getGlobalTimestamp();
-	lcomp.setShadowMapIndex(sm - &m_sms[0]);
-
-	//
-	// Render
-	//
-	cmdBuff->bindFramebuffer(sm->m_fb);
 	cmdBuff->setViewport(0, 0, m_resolution, m_resolution);
+	U frCount = 0;
 
-	it = vi.getRenderablesBegin();
-	for(; it != end; ++it)
+	Error err = light.iterateComponentsOfType<FrustumComponent>(
+		[&](FrustumComponent& fr) -> Error
 	{
-		ANKI_CHECK(m_r->getSceneDrawer().render(light, *it));
-	}
+		cmdBuff->bindFramebuffer(sm->m_fb[frCount]);
+		VisibilityTestResults& vi = fr.getVisibilityTestResults();
 
-	ANKI_COUNTER_INC(RENDERER_SHADOW_PASSES, (U64)1);
+		auto it = vi.getRenderablesBegin();
+		auto end = vi.getRenderablesEnd();
+		for(; it != end; ++it)
+		{
+			ANKI_CHECK(m_r->getSceneDrawer().render(light, *it));
+		}
 
-	return ErrorCode::NONE;
+		++frCount;
+		return ErrorCode::NONE;
+	});
+
+	ANKI_COUNTER_INC(RENDERER_SHADOW_PASSES, U64(6));
+
+	return err;
 }
 
 } // end namespace anki

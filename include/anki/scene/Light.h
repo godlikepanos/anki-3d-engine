@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SCENE_LIGHT_H
-#define ANKI_SCENE_LIGHT_H
+#pragma once
 
 #include "anki/scene/SceneNode.h"
 #include "anki/scene/Forward.h"
@@ -34,15 +33,14 @@ public:
 
 	ANKI_USE_RESULT Error loadLensFlare(const CString& filename);
 
-	ANKI_USE_RESULT Error frameUpdate(
-		F32 prevUpdateTime, F32 crntTime) override;
-
 protected:
 	/// Called when moved
 	void onMoveUpdateCommon(MoveComponent& move);
 
 	/// One of the frustums got updated
 	void onShapeUpdateCommon(LightComponent& light);
+
+	void frameUpdateCommon();
 
 	virtual void onMoveUpdate(MoveComponent& move) = 0;
 
@@ -54,35 +52,23 @@ class PointLight: public Light
 {
 public:
 	PointLight(SceneGraph* scene);
+	~PointLight();
 
 	ANKI_USE_RESULT Error create(const CString& name);
 
-	/// @name SceneNode virtuals
-	/// @{
 	ANKI_USE_RESULT Error frameUpdate(
 		F32 prevUpdateTime, F32 crntTime) override;
-	/// @}
 
 public:
-	class ShadowData
+	class ShadowCombo
 	{
 	public:
-#if 0
-		ShadowData(SceneNode* node)
-		:	m_frustumComps{{
-				{node, &m_frustums[0]}, {node, &m_frustums[1]},
-				{node, &m_frustums[2]}, {node, &m_frustums[3]},
-				{node, &m_frustums[4]}, {node, &m_frustums[5]}}}
-		{}
-
-		Array<PerspectiveFrustum, 6> m_frustums;
-		Array<FrustumComponent, 6> m_frustumComps;
-		Array<Transform, 6> m_localTrfs;
-#endif
+		PerspectiveFrustum m_frustum;
+		Transform m_localTrf;
 	};
 
 	Sphere m_sphereW = Sphere(Vec4(0.0), 1.0);
-	ShadowData* m_shadowData = nullptr;
+	DArray<ShadowCombo> m_shadowData;
 
 	void onMoveUpdate(MoveComponent& move) override;
 	void onShapeUpdate(LightComponent& light) override;
@@ -96,6 +82,9 @@ public:
 
 	ANKI_USE_RESULT Error create(const CString& name);
 
+	ANKI_USE_RESULT Error frameUpdate(
+		F32 prevUpdateTime, F32 crntTime) override;
+
 private:
 	PerspectiveFrustum m_frustum;
 
@@ -106,4 +95,3 @@ private:
 
 } // end namespace anki
 
-#endif

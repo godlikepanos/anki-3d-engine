@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_COLLISION_FRUSTUM_H
-#define ANKI_COLLISION_FRUSTUM_H
+#pragma once
 
 #include "anki/collision/CompoundShape.h"
 #include "anki/collision/Plane.h"
@@ -43,7 +42,7 @@ public:
 	};
 
 	Frustum(Type type)
-	:	m_type(type)
+		: m_type(type)
 	{}
 
 	virtual ~Frustum()
@@ -159,7 +158,7 @@ public:
 
 	/// Set all
 	PerspectiveFrustum(F32 fovX, F32 fovY, F32 near, F32 far)
-	:	PerspectiveFrustum()
+		: PerspectiveFrustum()
 	{
 		setAll(fovX, fovY, near, far);
 	}
@@ -358,4 +357,3 @@ private:
 
 } // end namespace anki
 
-#endif

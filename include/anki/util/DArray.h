@@ -316,8 +316,11 @@ public:
 	SArray(T* mem, PtrSize size)
 		: Base()
 	{
-		ANKI_ASSERT(mem);
-		ANKI_ASSERT(size);
+		if(size)
+		{
+			ANKI_ASSERT(mem);
+		}
+
 		Base::m_data = mem;
 		Base::m_size = size;
 	}

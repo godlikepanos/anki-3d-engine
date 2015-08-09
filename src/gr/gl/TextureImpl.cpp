@@ -35,6 +35,9 @@ static GLenum convertTextureType(TextureType type)
 	case TextureType::CUBE:
 		out = GL_TEXTURE_CUBE_MAP;
 		break;
+	case TextureType::CUBE_ARRAY:
+		out = GL_TEXTURE_CUBE_MAP_ARRAY;
+		break;
 	};
 
 	return out;
@@ -239,6 +242,15 @@ void TextureImpl::create(const TextureInitializer& init)
 			m_internalFormat,
 			m_width,
 			m_height);
+		break;
+	case GL_TEXTURE_CUBE_MAP_ARRAY:
+		glTexStorage3D(
+			m_target,
+			m_mipsCount,
+			m_internalFormat,
+			m_width,
+			m_height,
+			init.m_depth * 6);
 		break;
 	case GL_TEXTURE_CUBE_MAP:
 	case GL_TEXTURE_2D_ARRAY:

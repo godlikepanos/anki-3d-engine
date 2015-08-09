@@ -293,7 +293,8 @@ Error Is::initInternal(const ConfigSet& config)
 		init.m_textures[1].m_texture = m_r->getMs().getRt1();
 		init.m_textures[2].m_texture = m_r->getMs().getRt2();
 		init.m_textures[3].m_texture = m_r->getMs().getDepthRt();
-		init.m_textures[4].m_texture = m_sm.getTextureArray();
+		init.m_textures[4].m_texture = m_sm.getSpotTextureArray();
+		init.m_textures[5].m_texture = m_sm.getOmniTextureArray();
 
 		init.m_storageBuffers[0].m_buffer = m_pLightsBuffs[i];
 		init.m_storageBuffers[1].m_buffer = m_sLightsBuffs[i];
@@ -333,6 +334,8 @@ Error Is::lightPass(CommandBufferPtr& cmdBuff)
 	U visibleSpotLightsCount = 0;
 	U visibleSpotTexLightsCount = 0;
 	Array<SceneNode*, Sm::MAX_SHADOW_CASTERS> shadowCasters;
+	Array<SceneNode*, Sm::MAX_SHADOW_CASTERS> omniCasters;
+	U omniCastersCount = 0;
 
 	auto it = vi.getLightsBegin();
 	auto lend = vi.getLightsEnd();
@@ -344,6 +347,11 @@ Error Is::lightPass(CommandBufferPtr& cmdBuff)
 		{
 		case LightComponent::LightType::POINT:
 			++visiblePointLightsCount;
+
+			if(light.getShadowEnabled())
+			{
+				omniCasters[omniCastersCount++] = node;
+			}
 			break;
 		case LightComponent::LightType::SPOT:
 			{
@@ -376,7 +384,10 @@ Error Is::lightPass(CommandBufferPtr& cmdBuff)
 	//
 	// Do shadows pass
 	//
-	ANKI_CHECK(m_sm.run(&shadowCasters[0], visibleSpotTexLightsCount, cmdBuff));
+	ANKI_CHECK(m_sm.run(
+		{&shadowCasters[0], visibleSpotTexLightsCount},
+		{&omniCasters[0], omniCastersCount},
+		cmdBuff));
 
 	//
 	// Write the lights and tiles UBOs
@@ -623,6 +634,16 @@ I Is::writePointLight(const LightComponent& lightc,
 
 	slight.m_posRadius = Vec4(pos.xyz(), -1.0 / lightc.getRadius());
 	slight.m_diffuseColorShadowmapId = lightc.getDiffuseColor();
+
+	if(!lightc.getShadowEnabled())
+	{
+		slight.m_diffuseColorShadowmapId.w() = 128.0;
+	}
+	else
+	{
+		slight.m_diffuseColorShadowmapId.w() = lightc.getShadowMapIndex();
+	}
+
 	slight.m_specularColorTexId = lightc.getSpecularColor();
 
 	return i;

@@ -286,10 +286,9 @@ public:
 	template<typename Y>
 	void deleteInstance(Y* ptr)
 	{
-		typename rebind<Y>::other alloc(*this);
-
 		if(ptr != nullptr)
 		{
+			typename rebind<Y>::other alloc(*this);
 			alloc.destroy(ptr);
 			alloc.deallocate(ptr, 1);
 		}

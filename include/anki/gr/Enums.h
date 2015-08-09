@@ -152,7 +152,8 @@ enum class TextureType: U8
 	_2D,
 	_3D,
 	_2D_ARRAY,
-	CUBE
+	CUBE,
+	CUBE_ARRAY
 };
 
 enum class SamplingFilter: U8

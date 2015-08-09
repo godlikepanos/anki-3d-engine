@@ -32,7 +32,7 @@ public:
 	TextureType m_type = TextureType::_2D;
 	U32 m_width = 0;
 	U32 m_height = 0;
-	U32 m_depth = 0; ///< Relevant only for 3D and 2DArray textures
+	U32 m_depth = 0; ///< Relevant only for 3D, 2DArray and CubeArray textures
 	PixelFormat m_format;
 	U8 m_mipmapsCount = 0;
 	U8 m_samples = 1;

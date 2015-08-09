@@ -100,6 +100,12 @@ public:
 		return *m_visible;
 	}
 
+	const VisibilityTestResults& getVisibilityTestResults() const
+	{
+		ANKI_ASSERT(m_visible != nullptr);
+		return *m_visible;
+	}
+
 	const VisibilityStats& getLastVisibilityStats() const
 	{
 		return m_stats;

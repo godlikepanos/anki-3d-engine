@@ -89,7 +89,7 @@ Error Light::create(const CString& name,
 }
 
 //==============================================================================
-Error Light::frameUpdate(F32 prevUpdateTime, F32 crntTime)
+void Light::frameUpdateCommon()
 {
 	// Update frustum comps shadow info
 	const LightComponent& lc = getComponent<LightComponent>();
@@ -112,25 +112,11 @@ Error Light::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 		return ErrorCode::NONE;
 	});
 	(void) err;
-
-	return ErrorCode::NONE;
 }
 
 //==============================================================================
 void Light::onMoveUpdateCommon(MoveComponent& move)
 {
-	// Update the frustums
-	Error err = iterateComponentsOfType<FrustumComponent>(
-		[&](FrustumComponent& fr) -> Error
-	{
-		fr.markTransformForUpdate();
-		fr.getFrustum().resetTransform(move.getWorldTransform());
-
-		return ErrorCode::NONE;
-	});
-
-	(void)err;
-
 	// Update the spatial
 	SpatialComponent& sp = getComponent<SpatialComponent>();
 	sp.markForUpdate();
@@ -192,6 +178,12 @@ PointLight::PointLight(SceneGraph* scene)
 {}
 
 //==============================================================================
+PointLight::~PointLight()
+{
+	m_shadowData.destroy(getSceneAllocator());
+}
+
+//==============================================================================
 Error PointLight::create(const CString& name)
 {
 	return Light::create(name, LightComponent::LightType::POINT, &m_sphereW);
@@ -201,48 +193,78 @@ Error PointLight::create(const CString& name)
 void PointLight::onMoveUpdate(MoveComponent& move)
 {
 	onMoveUpdateCommon(move);
+
+	// Update the frustums
+	U count = 0;
+	Error err = iterateComponentsOfType<FrustumComponent>(
+		[&](FrustumComponent& fr) -> Error
+	{
+		fr.markTransformForUpdate();
+		fr.getFrustum().resetTransform(
+			move.getWorldTransform().combineTransformations(
+			m_shadowData[count++].m_localTrf));
+
+		return ErrorCode::NONE;
+	});
+
+	(void)err;
+
 	m_sphereW.setCenter(move.getWorldTransform().getOrigin());
 }
 
 //==============================================================================
 void PointLight::onShapeUpdate(LightComponent& light)
 {
-	onShapeUpdateCommon(light);
+	for(ShadowCombo& c : m_shadowData)
+	{
+		c.m_frustum.setFar(light.getRadius());
+	}
+
 	m_sphereW.setRadius(light.getRadius());
+
+	onShapeUpdateCommon(light);
 }
 
 //==============================================================================
 Error PointLight::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 {
-#if 0
-	if(getShadowEnabled() && m_shadowData == nullptr)
+	if(getComponent<LightComponent>().getShadowEnabled()
+		&& !m_shadowData.isEmpty())
 	{
-		m_shadowData = getSceneAllocator().newInstance<ShadowData>(this);
-		if(m_shadowData == nullptr)
-		{
-			return ErrorCode::OUT_OF_MEMORY;
-		}
+		m_shadowData.create(getSceneAllocator(), 6);
 
 		const F32 ang = toRad(90.0);
-		F32 dist = m_sphereW.getRadius();
+		const F32 dist = m_sphereW.getRadius();
+		const F32 zNear = 0.1;
 
 		for(U i = 0; i < 6; i++)
 		{
-			m_shadowData->m_frustums[i].setAll(ang, ang, 0.1, dist);
-			m_shadowData->m_localTrfs[i] = Transform::getIdentity();
+			m_shadowData[i].m_frustum.setAll(ang, ang, zNear, dist);
+			m_shadowData[i].m_localTrf = Transform::getIdentity();
+
+			FrustumComponent* comp =
+				getSceneAllocator().newInstance<FrustumComponent>(this,
+				&m_shadowData[i].m_frustum);
+
+			addComponent(comp, true);
 		}
 
-		auto& trfs = m_shadowData->m_localTrfs;
 		Vec3 axis = Vec3(0.0, 1.0, 0.0);
-		trfs[1].setRotation(Mat3x4(Mat3(Axisang(ang, axis))));
-		trfs[2].setRotation(Mat3x4(Mat3(Axisang(ang * 2.0, axis))));
-		trfs[3].setRotation(Mat3x4(Mat3(Axisang(ang * 3.0, axis))));
+		m_shadowData[1].m_localTrf.setRotation(
+			Mat3x4(Mat3(Axisang(ang, axis))));
+		m_shadowData[2].m_localTrf.setRotation(
+			Mat3x4(Mat3(Axisang(ang * 2.0, axis))));
+		m_shadowData[3].m_localTrf.setRotation(
+			Mat3x4(Mat3(Axisang(ang * 3.0, axis))));
 
 		axis = Vec3(1.0, 0.0, 0.0);
-		trfs[4].setRotation(Mat3x4(Mat3(Axisang(ang, axis))));
-		trfs[5].setRotation(Mat3x4(Mat3(Axisang(-ang, axis))));
+		m_shadowData[4].m_localTrf.setRotation(
+			Mat3x4(Mat3(Axisang(ang, axis))));
+		m_shadowData[5].m_localTrf.setRotation(
+			Mat3x4(Mat3(Axisang(-ang, axis))));
 	}
-#endif
+
+	frameUpdateCommon();
 
 	return ErrorCode::NONE;
 }
@@ -275,6 +297,18 @@ Error SpotLight::create(const CString& name)
 //==============================================================================
 void SpotLight::onMoveUpdate(MoveComponent& move)
 {
+	// Update the frustums
+	Error err = iterateComponentsOfType<FrustumComponent>(
+		[&](FrustumComponent& fr) -> Error
+	{
+		fr.markTransformForUpdate();
+		fr.getFrustum().resetTransform(move.getWorldTransform());
+
+		return ErrorCode::NONE;
+	});
+
+	(void)err;
+
 	onMoveUpdateCommon(move);
 }
 
@@ -285,6 +319,13 @@ void SpotLight::onShapeUpdate(LightComponent& light)
 	m_frustum.setAll(
 		light.getOuterAngle(), light.getOuterAngle(),
 		0.5, light.getDistance());
+}
+
+//==============================================================================
+Error SpotLight::frameUpdate(F32 prevUpdateTime, F32 crntTime)
+{
+	frameUpdateCommon();
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

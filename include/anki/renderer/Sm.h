@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RENDERER_SM_H
-#define ANKI_RENDERER_SM_H
+#pragma once
 
 #include "anki/renderer/RenderingPass.h"
 #include "anki/Gr.h"
@@ -33,13 +32,14 @@ public:
 
 	~Sm()
 	{
-		m_sms.destroy(getAllocator());
+		m_spots.destroy(getAllocator());
+		m_omnis.destroy(getAllocator());
 	}
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 	ANKI_USE_RESULT Error run(
-		SceneNode* shadowCasters[],
-		U32 shadowCastersCount,
+		SArray<SceneNode*> spotShadowCasters,
+		SArray<SceneNode*> omniShadowCasters,
 		CommandBufferPtr& cmdBuff);
 
 	Bool getEnabled() const
@@ -55,28 +55,46 @@ public:
 	/// Get max shadow casters
 	U32 getMaxLightsCount()
 	{
-		return m_sms.getSize();
+		return m_spots.getSize();
 	}
 
-	TexturePtr& getTextureArray()
+	TexturePtr& getSpotTextureArray()
 	{
-		return m_sm2DArrayTex;
+		return m_spotTexArray;
+	}
+
+	TexturePtr& getOmniTextureArray()
+	{
+		return m_omniTexArray;
 	}
 #endif
 
 private:
-	TexturePtr m_sm2DArrayTex;
+	TexturePtr m_spotTexArray;
+	TexturePtr m_omniTexArray;
 
-	/// Shadowmap
-	struct Shadowmap
+	class ShadowmapBase
 	{
+	public:
 		U32 m_layerId;
-		FramebufferPtr m_fb;
 		SceneNode* m_light = nullptr;
 		U32 m_timestamp = 0; ///< Timestamp of last render or light change
 	};
 
-	DArray<Shadowmap> m_sms;
+	class ShadowmapSpot: public ShadowmapBase
+	{
+	public:
+		FramebufferPtr m_fb;
+	};
+
+	class ShadowmapOmni: public ShadowmapBase
+	{
+	public:
+		Array<FramebufferPtr, 6> m_fb;
+	};
+
+	DArray<ShadowmapSpot> m_spots;
+	DArray<ShadowmapOmni> m_omnis;
 
 	/// If false then disable SM at all
 	Bool8 m_enabled;
@@ -94,14 +112,20 @@ private:
 	void finishDraw(CommandBufferPtr& cmdBuff);
 
 	/// Find the best shadowmap for that light
-	Shadowmap& bestCandidate(SceneNode& light);
+	template<typename TShadowmap, typename TContainer>
+	void bestCandidate(SceneNode& light, TContainer& arr, TShadowmap*& out);
 
-	ANKI_USE_RESULT Error doLight(
-		SceneNode& light, CommandBufferPtr& cmdBuff, Shadowmap*& sm);
+	/// Check if a shadow pass can be skipped.
+	Bool skip(SceneNode& light, ShadowmapBase& sm);
+
+	ANKI_USE_RESULT Error doSpotLight(SceneNode& light,
+		CommandBufferPtr& cmdBuff);
+
+	ANKI_USE_RESULT Error doOmniLight(SceneNode& light,
+		CommandBufferPtr& cmdBuff);
 };
 
 /// @}
 
 } // end namespace anki
 
-#endif

@@ -43,7 +43,7 @@ App* app;
 ModelNode* horse;
 PerspectiveCamera* cam;
 
-#define NO_PLAYER 0
+#define NO_PLAYER 1
 
 Bool profile = false;
 
@@ -118,21 +118,19 @@ Error init()
 	}
 #endif
 
-#if 0
-	err = scene.newSceneNode<SpotLight>("spot0", spot);
-	if(err) return err;
+#if 1
+	PointLight* plight;
+	scene.newSceneNode<PointLight>("spot0", plight);
 
-	lightc = spot->tryGetComponent<LightComponent>();
-	lightc->setOuterAngle(toRad(35.0));
-	lightc->setInnerAngle(toRad(15.0));
-	lightc->setDiffuseColor(Vec4(1.0));
+	lightc = plight->tryGetComponent<LightComponent>();
+	lightc->setDiffuseColor(Vec4(0.0, 10.0, 0.0, 1.0));
 	lightc->setSpecularColor(Vec4(1.2));
-	lightc->setDistance(30.0);
+	lightc->setDistance(5.0);
 	lightc->setShadowEnabled(true);
 
-	move = spot->tryGetComponent<MoveComponent>();
-	move->setLocalTransform(Transform(Vec4(8.27936, 5.86285, 1.85526, 0.0),
-		Mat3x4(Quat(-0.125117, 0.620465, 0.154831, 0.758544)), 1.0));
+	move = plight->tryGetComponent<MoveComponent>();
+	move->setLocalTransform(Transform(Vec4(-0.0, 4.0, -3.0, 0.0),
+		Mat3x4::getIdentity(), 1.0));
 
 #endif
 
@@ -352,7 +350,7 @@ Error mainLoopExtra(App& app, void*, Bool& quit)
 	}
 	if(in.getKey(KeyCode::_2))
 	{
-		mover = &scene.findSceneNode("horse").getComponent<MoveComponent>();
+		mover = &scene.findSceneNode("Point_058").getComponent<MoveComponent>();
 	}
 	if(in.getKey(KeyCode::_3))
 	{

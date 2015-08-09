@@ -100,9 +100,18 @@ void FramebufferImpl::attachTextureInternal(
 		break;
 	case GL_TEXTURE_2D_ARRAY:
 	case GL_TEXTURE_3D:
-		ANKI_ASSERT((GLuint)layer < tex.m_depth);
+	case GL_TEXTURE_CUBE_MAP_ARRAY:
+		if(tex.m_target == GL_TEXTURE_CUBE_MAP_ARRAY)
+		{
+			ANKI_ASSERT((GLuint)layer < tex.m_depth * 6);
+		}
+		else
+		{
+			ANKI_ASSERT((GLuint)layer < tex.m_depth);
+		}
 		glFramebufferTextureLayer(
 			target, attachment, tex.getGlName(), 0, layer);
+		break;
 		break;
 	default:
 		ANKI_ASSERT(0);

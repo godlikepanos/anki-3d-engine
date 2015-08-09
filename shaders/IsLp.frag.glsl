@@ -71,7 +71,8 @@ layout(binding = 0) uniform sampler2D u_msRt0;
 layout(binding = 1) uniform sampler2D u_msRt1;
 layout(binding = 2) uniform sampler2D u_msRt2;
 layout(binding = 3) uniform sampler2D u_msDepthRt;
-layout(binding = 4) uniform highp sampler2DArrayShadow u_shadowMapArr;
+layout(binding = 4) uniform highp sampler2DArrayShadow u_spotMapArr;
+layout(binding = 5) uniform highp samplerCubeArrayShadow u_omniMapArr;
 
 layout(location = 0) in vec2 in_texCoord;
 layout(location = 1) flat in int in_instanceId;
@@ -200,7 +201,7 @@ float computeShadowFactor(
 		vec2 cordpart1 = texCoords3.xy + poissonDisk[i] / (300.0);
 		vec4 tcoord = vec4(cordpart1, cordpart0);
 
-		shadowFactor += texture(u_shadowMapArr, tcoord);
+		shadowFactor += texture(u_spotMapArr, tcoord);
 	}
 
 	return shadowFactor / 4.0;
@@ -210,6 +211,29 @@ float computeShadowFactor(
 
 	return shadowFactor;
 #endif
+}
+
+//==============================================================================
+float computeShadowFactorOmni(
+	in vec3 frag2Light,
+	in float layer)
+{
+	vec3 dir = -frag2Light;
+	float dist = length(dir);
+	dir /= dist;
+
+	const float f = 1.0 / tan(90.0 * (PI / 180.0) * 0.5);
+	const float near = 0.1;
+	const float far = 5.0;
+	float g = near - far;
+
+	float z = (far + near) / g * dist + (2.0 * far * near) / g;
+	float w = -dist;
+	z /= w;
+
+	float shadowFactor = texture(u_omniMapArr, vec4(-frag2Light, layer), z);
+
+	return shadowFactor;
 }
 
 //==============================================================================
@@ -293,7 +317,15 @@ void main()
 
 		LIGHTING_COMMON();
 
-		out_color += (specC + diffC) * (att * max(subsurface, lambert));
+		float shadow = 1.0;
+		if(light.diffuseColorShadowmapId.w < 128.0)
+		{
+			shadow = computeShadowFactorOmni(frag2Light,
+				light.diffuseColorShadowmapId.w);
+		}
+
+		out_color += (specC + diffC)
+			* (att * max(subsurface, lambert * shadow));
 	}
 
 	// Spot lights
@@ -331,7 +363,7 @@ void main()
 
 		float shadowmapLayerId = light.diffuseColorShadowmapId.w;
 		float shadow = computeShadowFactor(slight.texProjectionMat,
-			fragPos, u_shadowMapArr, shadowmapLayerId);
+			fragPos, u_spotMapArr, shadowmapLayerId);
 
 		out_color += (diffC + specC)
 			* (att * spot * max(subsurface, lambert * shadow));
