@@ -51,6 +51,9 @@ protected:
 class PointLight: public Light
 {
 public:
+	/// The near plane on the shadow map frustums.
+	static constexpr F32 FRUSTUM_NEAR_PLANE = 0.1;
+
 	PointLight(SceneGraph* scene);
 	~PointLight();
 

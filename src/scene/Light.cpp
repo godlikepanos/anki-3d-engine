@@ -239,7 +239,7 @@ Error PointLight::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 
 		const F32 ang = toRad(90.0);
 		const F32 dist = m_sphereW.getRadius();
-		const F32 zNear = 0.1;
+		const F32 zNear = FRUSTUM_NEAR_PLANE;
 
 		Mat3 rot;
 		const F32 PI = getPi<F32>();

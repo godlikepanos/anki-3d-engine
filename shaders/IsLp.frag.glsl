@@ -222,15 +222,17 @@ float computeShadowFactorOmni(in vec3 frag2Light, in float layer,
 	float dist = -max(dirabs.x, max(dirabs.y, dirabs.z));
 	dir = normalize(dir);
 
-	const float f = 1.0 / tan(PI / 2.0 * 0.5);
-	const float near = 0.1;
+	const float near = OMNI_LIGHT_FRUSTUM_NEAR_PLANE;
 	const float far = radius;
-	float g = near - far;
 
-	float z = (far + near) / g * dist + (2.0 * far * near) / g;
-	float w = -dist;
-	z /= w;
-	z = z * 0.5 + 0.5;
+	// Original code:
+	// float g = near - far;
+	// float z = (far + near) / g * dist + (2.0 * far * near) / g;
+	// float w = -dist;
+	// z /= w;
+	// z = z * 0.5 + 0.5;
+	// Optimized:
+	float z = (far * (dist + near)) / (dist * (far - near));
 
 	float shadowFactor = texture(u_omniMapArr, vec4(dir, layer), z).r;
 	return shadowFactor;

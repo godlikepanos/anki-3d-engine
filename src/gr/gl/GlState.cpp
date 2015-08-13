@@ -130,6 +130,7 @@ void GlState::init()
 
 	// Set some GL state
 	glEnable(GL_PROGRAM_POINT_SIZE);
+	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
 	// Other
 	memset(&m_vertexBindingStrides[0], 0, sizeof(m_vertexBindingStrides));

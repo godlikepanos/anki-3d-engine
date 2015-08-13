@@ -202,7 +202,8 @@ Error Is::initInternal(const ConfigSet& config)
 		"#define MAX_LIGHT_INDICES %u\n"
 		"#define GROUND_LIGHT %u\n"
 		"#define TILES_BLOCK_BINDING %u\n"
-		"#define POISSON %u\n",
+		"#define POISSON %u\n"
+		"#define OMNI_LIGHT_FRUSTUM_NEAR_PLANE %f\n",
 		m_r->getTilesCount().x(),
 		m_r->getTilesCount().y(),
 		(m_r->getTilesCount().x() * m_r->getTilesCount().y()),
@@ -214,7 +215,8 @@ Error Is::initInternal(const ConfigSet& config)
 		m_maxLightIds,
 		m_groundLightEnabled,
 		TILES_BLOCK_BINDING,
-		m_sm.getPoissonEnabled());
+		m_sm.getPoissonEnabled(),
+		PointLight::FRUSTUM_NEAR_PLANE);
 
 	// point light
 	ANKI_CHECK(getResourceManager().loadResourceToCache(m_lightVert,
