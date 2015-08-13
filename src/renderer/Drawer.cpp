@@ -276,7 +276,7 @@ void RenderableDrawer::setupUniforms(
 }
 
 //==============================================================================
-Error RenderableDrawer::render(SceneNode& frsn, VisibleNode& visibleNode)
+Error RenderableDrawer::render(FrustumComponent& fr, VisibleNode& visibleNode)
 {
 	RenderingBuildData build;
 
@@ -290,8 +290,6 @@ Error RenderableDrawer::render(SceneNode& frsn, VisibleNode& visibleNode)
 	{
 		return ErrorCode::NONE;
 	}
-
-	FrustumComponent& fr = frsn.getComponent<FrustumComponent>();
 
 	// Calculate the key
 	RenderingKey key;

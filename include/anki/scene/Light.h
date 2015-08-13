@@ -64,7 +64,7 @@ public:
 	{
 	public:
 		PerspectiveFrustum m_frustum;
-		Transform m_localTrf;
+		Transform m_localTrf = Transform::getIdentity();
 	};
 
 	Sphere m_sphereW = Sphere(Vec4(0.0), 1.0);

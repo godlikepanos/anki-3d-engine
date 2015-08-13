@@ -236,6 +236,7 @@ void TextureImpl::create(const TextureInitializer& init)
 	switch(m_target)
 	{
 	case GL_TEXTURE_2D:
+	case GL_TEXTURE_CUBE_MAP:
 		glTexStorage2D(
 			m_target,
 			m_mipsCount,
@@ -252,7 +253,6 @@ void TextureImpl::create(const TextureInitializer& init)
 			m_height,
 			init.m_depth * 6);
 		break;
-	case GL_TEXTURE_CUBE_MAP:
 	case GL_TEXTURE_2D_ARRAY:
 	case GL_TEXTURE_3D:
 		glTexStorage3D(

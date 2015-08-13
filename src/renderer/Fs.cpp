@@ -49,7 +49,7 @@ Error Fs::run(CommandBufferPtr& cmdb)
 	auto end = camFr.getVisibilityTestResults().getRenderablesEnd();
 	for(; !err && it != end; ++it)
 	{
-		err = drawer.render(cam, *it);
+		err = drawer.render(camFr, *it);
 	}
 
 	if(!err)

@@ -199,10 +199,14 @@ void PointLight::onMoveUpdate(MoveComponent& move)
 	Error err = iterateComponentsOfType<FrustumComponent>(
 		[&](FrustumComponent& fr) -> Error
 	{
+		Transform trf = m_shadowData[count].m_localTrf;
+		trf.setOrigin(
+			move.getWorldTransform().getOrigin()
+			+ m_shadowData[count].m_localTrf.getOrigin());
+
+		fr.getFrustum().resetTransform(trf);
 		fr.markTransformForUpdate();
-		fr.getFrustum().resetTransform(
-			move.getWorldTransform().combineTransformations(
-			m_shadowData[count++].m_localTrf));
+		++count;
 
 		return ErrorCode::NONE;
 	});
@@ -229,7 +233,7 @@ void PointLight::onShapeUpdate(LightComponent& light)
 Error PointLight::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 {
 	if(getComponent<LightComponent>().getShadowEnabled()
-		&& !m_shadowData.isEmpty())
+		&& m_shadowData.isEmpty())
 	{
 		m_shadowData.create(getSceneAllocator(), 6);
 
@@ -237,10 +241,29 @@ Error PointLight::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 		const F32 dist = m_sphereW.getRadius();
 		const F32 zNear = 0.1;
 
+		Mat3 rot;
+		const F32 PI = getPi<F32>();
+
+		rot = Mat3(Euler(0.0, -PI / 2.0, 0.0)) * Mat3(Euler(0.0, 0.0, PI));
+		m_shadowData[0].m_localTrf.setRotation(Mat3x4(rot));
+		rot = Mat3(Euler(0.0, PI / 2.0, 0.0)) * Mat3(Euler(0.0, 0.0, PI));
+		m_shadowData[1].m_localTrf.setRotation(Mat3x4(rot));
+		rot = Mat3(Euler(PI / 2.0, 0.0, 0.0));
+		m_shadowData[2].m_localTrf.setRotation(Mat3x4(rot));
+		rot = Mat3(Euler(-PI / 2.0, 0.0, 0.0));
+		m_shadowData[3].m_localTrf.setRotation(Mat3x4(rot));
+		rot = Mat3(Euler(0.0, PI, 0.0)) * Mat3(Euler(0.0, 0.0, PI));
+		m_shadowData[4].m_localTrf.setRotation(Mat3x4(rot));
+		rot = Mat3(Euler(0.0, 0.0, PI));
+		m_shadowData[5].m_localTrf.setRotation(Mat3x4(rot));
+
+		const Transform& trf =
+			getComponent<MoveComponent>().getWorldTransform();
 		for(U i = 0; i < 6; i++)
 		{
 			m_shadowData[i].m_frustum.setAll(ang, ang, zNear, dist);
-			m_shadowData[i].m_localTrf = Transform::getIdentity();
+			m_shadowData[i].m_frustum.resetTransform(
+				trf.combineTransformations(m_shadowData[i].m_localTrf));
 
 			FrustumComponent* comp =
 				getSceneAllocator().newInstance<FrustumComponent>(this,
@@ -248,20 +271,6 @@ Error PointLight::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 
 			addComponent(comp, true);
 		}
-
-		Vec3 axis = Vec3(0.0, 1.0, 0.0);
-		m_shadowData[1].m_localTrf.setRotation(
-			Mat3x4(Mat3(Axisang(ang, axis))));
-		m_shadowData[2].m_localTrf.setRotation(
-			Mat3x4(Mat3(Axisang(ang * 2.0, axis))));
-		m_shadowData[3].m_localTrf.setRotation(
-			Mat3x4(Mat3(Axisang(ang * 3.0, axis))));
-
-		axis = Vec3(1.0, 0.0, 0.0);
-		m_shadowData[4].m_localTrf.setRotation(
-			Mat3x4(Mat3(Axisang(ang, axis))));
-		m_shadowData[5].m_localTrf.setRotation(
-			Mat3x4(Mat3(Axisang(-ang, axis))));
 	}
 
 	frameUpdateCommon();

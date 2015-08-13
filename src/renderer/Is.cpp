@@ -58,6 +58,7 @@ struct CommonUniforms
 	Vec4 m_projectionParams;
 	Vec4 m_sceneAmbientColor;
 	Vec4 m_groundLightDir;
+	Mat4 m_viewMat;
 };
 
 } // end namespace shader
@@ -461,7 +462,7 @@ Error Is::lightPass(CommandBufferPtr& cmdBuff)
 	setState(cmdBuff);
 
 	// Update uniforms
-	updateCommonBlock(cmdBuff);
+	updateCommonBlock(cmdBuff, fr);
 
 	// Sync
 	ANKI_CHECK(threadPool.waitForAllThreadsToFinish());
@@ -794,7 +795,7 @@ Error Is::run(CommandBufferPtr& cmdBuff)
 }
 
 //==============================================================================
-void Is::updateCommonBlock(CommandBufferPtr& cmdb)
+void Is::updateCommonBlock(CommandBufferPtr& cmdb, FrustumComponent& fr)
 {
 	shader::CommonUniforms* blk;
 	cmdb->updateDynamicUniforms(sizeof(*blk), blk);
@@ -802,6 +803,7 @@ void Is::updateCommonBlock(CommandBufferPtr& cmdb)
 	// Start writing
 	blk->m_projectionParams = m_r->getProjectionParameters();
 	blk->m_sceneAmbientColor = m_ambientColor;
+	blk->m_viewMat = fr.getViewMatrix().getTransposed();
 
 	Vec3 groundLightDir;
 	if(m_groundLightEnabled)

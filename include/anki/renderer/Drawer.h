@@ -47,9 +47,7 @@ public:
 		m_cmdBuff = cmdBuff;
 	}
 
-	ANKI_USE_RESULT Error render(
-		SceneNode& frsn,
-		VisibleNode& visible);
+	ANKI_USE_RESULT Error render(FrustumComponent& frc, VisibleNode& visible);
 
 	void finishDraw()
 	{

@@ -57,7 +57,7 @@ Error Sm::init(const ConfigSet& config)
 	m_spotTexArray = getGrManager().newInstance<Texture>(sminit);
 
 	sminit.m_type = TextureType::CUBE_ARRAY;
-	m_omniTexArray = getGrManager().newInstance<Texture>(sminit);;
+	m_omniTexArray = getGrManager().newInstance<Texture>(sminit);
 
 	// Init 2D layers
 	m_spots.create(getAllocator(), config.getNumber("is.sm.maxLights"));
@@ -252,7 +252,7 @@ Error Sm::doSpotLight(SceneNode& light, CommandBufferPtr& cmdBuff)
 	auto end = vi.getRenderablesEnd();
 	for(; it != end; ++it)
 	{
-		ANKI_CHECK(m_r->getSceneDrawer().render(light, *it));
+		ANKI_CHECK(m_r->getSceneDrawer().render(fr, *it));
 	}
 
 	ANKI_COUNTER_INC(RENDERER_SHADOW_PASSES, U64(1));
@@ -284,7 +284,7 @@ Error Sm::doOmniLight(SceneNode& light, CommandBufferPtr& cmdBuff)
 		auto end = vi.getRenderablesEnd();
 		for(; it != end; ++it)
 		{
-			ANKI_CHECK(m_r->getSceneDrawer().render(light, *it));
+			ANKI_CHECK(m_r->getSceneDrawer().render(fr, *it));
 		}
 
 		++frCount;

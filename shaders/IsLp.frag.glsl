@@ -214,25 +214,25 @@ float computeShadowFactor(
 }
 
 //==============================================================================
-float computeShadowFactorOmni(
-	in vec3 frag2Light,
-	in float layer)
+float computeShadowFactorOmni(in vec3 frag2Light, in float layer,
+	in float radius)
 {
-	vec3 dir = -frag2Light;
-	float dist = length(dir);
-	dir /= dist;
+	vec3 dir = (u_viewMat * vec4(-frag2Light, 1.0)).xyz;
+	vec3 dirabs = abs(dir);
+	float dist = -max(dirabs.x, max(dirabs.y, dirabs.z));
+	dir = normalize(dir);
 
-	const float f = 1.0 / tan(90.0 * (PI / 180.0) * 0.5);
+	const float f = 1.0 / tan(PI / 2.0 * 0.5);
 	const float near = 0.1;
-	const float far = 5.0;
+	const float far = radius;
 	float g = near - far;
 
 	float z = (far + near) / g * dist + (2.0 * far * near) / g;
 	float w = -dist;
 	z /= w;
+	z = z * 0.5 + 0.5;
 
-	float shadowFactor = texture(u_omniMapArr, vec4(-frag2Light, layer), z);
-
+	float shadowFactor = texture(u_omniMapArr, vec4(dir, layer), z).r;
 	return shadowFactor;
 }
 
@@ -321,7 +321,8 @@ void main()
 		if(light.diffuseColorShadowmapId.w < 128.0)
 		{
 			shadow = computeShadowFactorOmni(frag2Light,
-				light.diffuseColorShadowmapId.w);
+				light.diffuseColorShadowmapId.w,
+				-1.0 / light.posRadius.w);
 		}
 
 		out_color += (specC + diffC)

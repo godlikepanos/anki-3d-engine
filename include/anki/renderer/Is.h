@@ -153,7 +153,7 @@ private:
 	/// Calculate the size of the tile
 	PtrSize calcTileSize() const;
 
-	void updateCommonBlock(CommandBufferPtr& cmdBuff);
+	void updateCommonBlock(CommandBufferPtr& cmdBuff, FrustumComponent& frc);
 
 	// Binning
 	void binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& data);

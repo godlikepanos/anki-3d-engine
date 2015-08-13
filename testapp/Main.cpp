@@ -86,8 +86,8 @@ Error init()
 
 #if NO_PLAYER
 	cam->getComponent<MoveComponent>().
-		setLocalTransform(Transform(Vec4(-0.0, 4.0, -3.0, 0.0),
-		Mat3x4(Euler(toRad(-26.0), toRad(180.0), toRad(0.0))),
+		setLocalTransform(Transform(Vec4(-11.0, 2.5, 15.0, 0.0),
+		Mat3x4(Euler(toRad(0.0), toRad(0.0), toRad(0.0))),
 		1.0));
 #endif
 
@@ -123,13 +123,13 @@ Error init()
 	scene.newSceneNode<PointLight>("spot0", plight);
 
 	lightc = plight->tryGetComponent<LightComponent>();
-	lightc->setDiffuseColor(Vec4(0.0, 10.0, 0.0, 1.0));
+	lightc->setDiffuseColor(Vec4(0.0, 30.0, 0.0, 1.0));
 	lightc->setSpecularColor(Vec4(1.2));
 	lightc->setDistance(5.0);
 	lightc->setShadowEnabled(true);
 
 	move = plight->tryGetComponent<MoveComponent>();
-	move->setLocalTransform(Transform(Vec4(-0.0, 4.0, -3.0, 0.0),
+	move->setLocalTransform(Transform(Vec4(-11.0, 2.5, 12.0, 0.0),
 		Mat3x4::getIdentity(), 1.0));
 
 #endif

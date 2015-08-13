@@ -13,4 +13,5 @@ layout(std140, row_major, binding = 0) uniform _0
 	vec4 u_projectionParams;
 	vec4 u_sceneAmbientColor;
 	vec4 u_groundLightDir;
+	mat4 u_viewMat;
 };

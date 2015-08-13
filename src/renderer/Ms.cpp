@@ -115,14 +115,14 @@ Error Ms::run(CommandBufferPtr& cmdb)
 
 	SceneNode& cam = m_r->getActiveCamera();
 
-	VisibilityTestResults& vi =
-		cam.getComponent<FrustumComponent>().getVisibilityTestResults();
+	FrustumComponent& frc = cam.getComponent<FrustumComponent>();
+	VisibilityTestResults& vi = frc.getVisibilityTestResults();
 
 	auto it = vi.getRenderablesBegin();
 	auto end = vi.getRenderablesEnd();
 	for(; it != end; ++it)
 	{
-		ANKI_CHECK(m_r->getSceneDrawer().render(cam, *it));
+		ANKI_CHECK(m_r->getSceneDrawer().render(frc, *it));
 	}
 
 	m_r->getSceneDrawer().finishDraw();
