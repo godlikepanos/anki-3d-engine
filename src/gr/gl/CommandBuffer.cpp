@@ -203,6 +203,8 @@ public:
 				m_info.m_baseInstance);
 
 			ANKI_COUNTER_INC(GL_DRAWCALLS_COUNT, U64(1));
+			ANKI_COUNTER_INC(GL_VERTICES_COUNT,
+				U64(m_info.m_instanceCount * m_info.m_count));
 		}
 
 		return ErrorCode::NONE;

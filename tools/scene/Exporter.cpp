@@ -663,6 +663,28 @@ void Exporter::exportModel(const Model& model) const
 		<< getMeshName(getMeshAt(model.m_meshIndex))
 		<< ".ankimesh</mesh>\n";
 
+	// Write mesh1
+	if(!model.m_lod1MeshName.empty())
+	{
+		bool found = false;
+		for(unsigned i = 0; i < m_scene->mNumMeshes; i++)
+		{
+			if(m_scene->mMeshes[i]->mName.C_Str() == model.m_lod1MeshName)
+			{
+				file << "\t\t\t<mesh1>" << m_rpath
+					<< getMeshName(getMeshAt(i))
+					<< ".ankimesh</mesh1>\n";
+				found = true;
+				break;
+			}
+		}
+
+		if(!found)
+		{
+			ERROR("Couldn't find the LOD1 %s", model.m_lod1MeshName.c_str());
+		}
+	}
+
 	// Write material
 	file << "\t\t\t<material>" << m_rpath
 		<< getMaterialName(getMaterialAt(model.m_materialIndex),
@@ -964,6 +986,7 @@ void Exporter::visitNode(const aiNode* ainode)
 		unsigned mtlIndex =  m_scene->mMeshes[meshIndex]->mMaterialIndex;
 
 		// Check properties
+		std::string lod1MeshName;
 		bool special = false;
 		for(const auto& prop : m_scene->mMeshes[meshIndex]->mProperties)
 		{
@@ -998,6 +1021,11 @@ void Exporter::visitNode(const aiNode* ainode)
 				sector.m_transform = ainode->mTransformation;
 				m_sectors.push_back(sector);
 				special = true;
+			}
+			else if(prop.first == "lod1")
+			{
+				lod1MeshName = prop.second;
+				special = false;
 			}
 		}
 
@@ -1040,6 +1068,7 @@ void Exporter::visitNode(const aiNode* ainode)
 		Model mdl;
 		mdl.m_meshIndex = meshIndex;
 		mdl.m_materialIndex = mtlIndex;
+		mdl.m_lod1MeshName = lod1MeshName;
 		m_models.push_back(mdl);
 
 		// Create new node

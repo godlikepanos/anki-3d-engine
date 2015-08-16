@@ -26,6 +26,7 @@ struct Model
 	uint32_t m_meshIndex = INVALID_INDEX; ///< Mesh index in the scene
 	uint32_t m_materialIndex = INVALID_INDEX;
 	uint32_t m_instancesCount = 1;
+	std::string m_lod1MeshName;
 };
 
 /// Scene node.
