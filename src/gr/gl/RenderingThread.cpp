@@ -130,25 +130,16 @@ void RenderingThread::finishCommandBuffer(CommandBufferPtr commands)
 }
 
 //==============================================================================
-void RenderingThread::start(
-	MakeCurrentCallback makeCurrentCb, void* makeCurrentCbData, void* ctx,
-	SwapBuffersCallback swapBuffersCallback, void* swapBuffersCbData,
+void RenderingThread::start(WeakPtr<GrManagerInterface> interface,
 	Bool registerMessages)
 {
 	ANKI_ASSERT(m_tail == 0 && m_head == 0);
+	ANKI_ASSERT(interface);
+	m_interface = interface;
 	m_state.m_registerMessages = registerMessages;
 	m_queue.create(m_manager->getAllocator(), QUEUE_SIZE);
 
-	// Context
-	ANKI_ASSERT(ctx != nullptr && makeCurrentCb != nullptr);
-	m_ctx = ctx;
-	m_makeCurrentCbData = makeCurrentCbData;
-	m_makeCurrentCb = makeCurrentCb;
-
 	// Swap buffers stuff
-	ANKI_ASSERT(swapBuffersCallback != nullptr);
-	m_swapBuffersCallback = swapBuffersCallback;
-	m_swapBuffersCbData = swapBuffersCbData;
 	m_swapBuffersCommands = m_manager->newInstance<CommandBuffer>();
 	m_swapBuffersCommands->getImplementation().
 		pushBackNewCommand<SwapBuffersCommand>(this);
@@ -188,8 +179,7 @@ void RenderingThread::stop()
 //==============================================================================
 void RenderingThread::prepare()
 {
-	ANKI_ASSERT(m_makeCurrentCb && m_ctx);
-	(*m_makeCurrentCb)(m_makeCurrentCbData, m_ctx);
+	m_interface->makeCurrentCommand(true);
 
 	// Ignore the first error
 	glGetError();
@@ -232,7 +222,7 @@ void RenderingThread::finish()
 
 	// Cleanup
 	glFinish();
-	(*m_makeCurrentCb)(m_makeCurrentCbData, nullptr);
+	m_interface->makeCurrentCommand(false);
 }
 
 //==============================================================================
@@ -300,7 +290,7 @@ void RenderingThread::syncClientServer()
 void RenderingThread::swapBuffersInternal()
 {
 	// Do the swap buffers
-	m_swapBuffersCallback(m_swapBuffersCbData);
+	m_interface->swapBuffersCommand();
 
 	// Notify the main thread that we are done
 	{

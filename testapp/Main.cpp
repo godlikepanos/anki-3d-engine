@@ -43,7 +43,7 @@ App* app;
 ModelNode* horse;
 PerspectiveCamera* cam;
 
-#define NO_PLAYER 1
+#define NO_PLAYER 0
 
 Bool profile = false;
 
@@ -86,7 +86,7 @@ Error init()
 
 #if NO_PLAYER
 	cam->getComponent<MoveComponent>().
-		setLocalTransform(Transform(Vec4(-11.0, 2.5, 15.0, 0.0),
+		setLocalTransform(Transform(Vec4(147.392776, -10.132728, 16.607138, 0.0),
 		Mat3x4(Euler(toRad(0.0), toRad(0.0), toRad(0.0))),
 		1.0));
 #endif
@@ -118,7 +118,7 @@ Error init()
 	}
 #endif
 
-#if 1
+#if 0
 	PointLight* plight;
 	scene.newSceneNode<PointLight>("spot0", plight);
 
@@ -272,7 +272,8 @@ Error init()
 
 #if !NO_PLAYER
 	PlayerNode* pnode;
-	scene.newSceneNode<PlayerNode>("player", pnode, Vec4(1.0, 3.0, 0.0, 0.0));
+	scene.newSceneNode<PlayerNode>("player", pnode,
+		Vec4(147.392776, -11.132728, 16.607138, 0.0));
 
 	pnode->addChild(cam);
 
@@ -375,16 +376,8 @@ Error mainLoopExtra(App& app, void*, Bool& quit)
 
 	if(in.getKey(KeyCode::L) == 1)
 	{
-		/*SceneNode& l = scene.findSceneNode("horse");
-
-		BodyComponent* bodyc = l.tryGetComponent<BodyComponent>();
-		if(bodyc)
-		{
-			Vec4 pos(randRange(-2, 10), 10, randRange(-6, 6), 0);
-
-			bodyc->setTransform(
-				Transform(pos, Mat3x4::getIdentity(), 1.0));
-		}*/
+		Vec3 origin = mover->getWorldTransform().getOrigin().xyz();
+		printf("%f %f %f\n", origin.x(), origin.y(), origin.z());
 	}
 
 	if(in.getKey(KeyCode::F1) == 1)
@@ -480,6 +473,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("is.sm.bilinearEnabled", true);
 	config.set("is.groundLightEnabled", false);
 	config.set("is.sm.enabled", true);
+	config.set("is.sm.maxLights", 16);
 	config.set("is.sm.poissonEnabled", true);
 	config.set("is.sm.resolution", 1024);
 	config.set("pps.enabled", true);
@@ -511,6 +505,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("fullscreenDesktopResolution", true);
 	config.set("debugContext", false);
 	config.set("dataPaths", "assets");
+	config.set("sceneFrameAllocatorSize", 1024 * 1024 * 10);
 
 	app = new App;
 	err = app->create(config, allocAligned, nullptr);

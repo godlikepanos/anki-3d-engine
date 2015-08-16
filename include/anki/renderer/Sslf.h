@@ -15,8 +15,7 @@ namespace anki {
 /// Screen space lens flare pass.
 class Sslf: public RenderingPass
 {
-public:
-#ifdef ANKI_BUILD
+anki_internal:
 	Sslf(Renderer* r)
 		: RenderingPass(r)
 	{}
@@ -28,7 +27,6 @@ public:
 	{
 		return m_rt;
 	}
-#endif
 
 private:
 	TexturePtr m_rt;

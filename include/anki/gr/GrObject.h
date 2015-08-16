@@ -18,10 +18,7 @@ namespace anki {
 class GrObject: public NonCopyable
 {
 public:
-	GrObject(GrManager* manager)
-		: m_refcount(0)
-		, m_manager(manager)
-	{}
+	GrObject(GrManager* manager);
 
 	virtual ~GrObject()
 	{}
@@ -43,9 +40,16 @@ public:
 		return m_refcount;
 	}
 
+	/// A unique identifier for caching objects.
+	U64 getUuid() const
+	{
+		return m_uuid;
+	}
+
 private:
 	Atomic<I32> m_refcount;
 	GrManager* m_manager;
+	U64 m_uuid;
 };
 /// @}
 

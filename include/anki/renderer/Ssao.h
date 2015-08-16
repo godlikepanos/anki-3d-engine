@@ -19,8 +19,7 @@ namespace anki {
 /// Screen space ambient occlusion pass
 class Ssao: public RenderingPass
 {
-public:
-#ifdef ANKI_BUILD
+anki_internal:
 	static const PixelFormat RT_PIXEL_FORMAT;
 
 	Ssao(Renderer* r)
@@ -39,7 +38,6 @@ public:
 	{
 		return m_uniformsBuff;
 	}
-#endif
 
 private:
 	U32 m_width, m_height; ///< Blur passes size

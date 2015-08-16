@@ -22,7 +22,17 @@ class ShaderProgram;
 class Bloom: public RenderingPass
 {
 public:
-#ifdef ANKI_BUILD
+	U32 getBlurringIterationsCount() const
+	{
+		return m_blurringIterationsCount;
+	}
+
+	void setBlurringIterationsCount(const U32 x)
+	{
+		m_blurringIterationsCount = x;
+	}
+
+anki_internal:
 	static const PixelFormat RT_PIXEL_FORMAT;
 
 	Bloom(Renderer* r)
@@ -47,17 +57,6 @@ public:
 	U32 getHeight() const
 	{
 		return m_height;
-	}
-#endif
-
-	U32 getBlurringIterationsCount() const
-	{
-		return m_blurringIterationsCount;
-	}
-
-	void setBlurringIterationsCount(const U32 x)
-	{
-		m_blurringIterationsCount = x;
 	}
 
 private:

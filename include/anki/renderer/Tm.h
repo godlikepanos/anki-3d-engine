@@ -15,8 +15,7 @@ namespace anki {
 /// Tonemapping.
 class Tm: public RenderingPass
 {
-public:
-#ifdef ANKI_BUILD
+anki_internal:
 	Tm(Renderer* r)
 		: RenderingPass(r)
 	{}
@@ -29,7 +28,6 @@ public:
 	ANKI_USE_RESULT Error create(const ConfigSet& initializer);
 
 	void run(CommandBufferPtr& cmdb);
-#endif
 
 private:
 	ShaderResourcePtr m_luminanceShader;

@@ -117,7 +117,7 @@ Error Dbg::run(CommandBufferPtr& cmdb)
 
 	(void)err;
 
-	if(0)
+	if(1)
 	{
 		PhysicsDebugDrawer phyd(m_drawer);
 

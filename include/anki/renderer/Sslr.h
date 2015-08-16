@@ -16,15 +16,13 @@ namespace anki {
 /// Screen space local reflections pass
 class Sslr: public RenderingPass
 {
-public:
-#ifdef ANKI_BUILD
+anki_internal:
 	Sslr(Renderer* r)
 		: RenderingPass(r)
 	{}
 
 	ANKI_USE_RESULT Error init(const ConfigSet& config);
 	void run(CommandBufferPtr& cmdBuff);
-#endif
 
 private:
 	U32 m_width;

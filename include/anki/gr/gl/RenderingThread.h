@@ -11,10 +11,12 @@
 
 namespace anki {
 
+class GrManagerInterface;
+
 /// @addtogroup opengl
 /// @{
 
-#define ANKI_DISABLE_GL_RENDERING_THREAD 1
+#define ANKI_DISABLE_GL_RENDERING_THREAD 0
 
 /// Command queue. It's essentialy a queue of command buffers waiting for
 /// execution and a server
@@ -40,10 +42,7 @@ public:
 
 	/// Start the working thread
 	/// @note Don't free the context before calling #stop
-	void start(
-		MakeCurrentCallback makeCurrentCb, void* makeCurrentCbData, void* ctx,
-		SwapBuffersCallback swapBuffersCallback, void* swapBuffersCbData,
-		Bool registerMessages);
+	void start(WeakPtr<GrManagerInterface> interface, Bool registerMessages);
 
 	/// Stop the working thread
 	void stop();
@@ -67,7 +66,8 @@ public:
 	void swapBuffers();
 
 private:
-	GrManager* m_manager = nullptr;
+	WeakPtr<GrManager> m_manager;
+	WeakPtr<GrManagerInterface> m_interface;
 
 	static const U QUEUE_SIZE = 512;
 	DArray<CommandBufferPtr> m_queue; ///< Command queue
@@ -78,13 +78,7 @@ private:
 	ConditionVariable m_condVar; ///< To wake up the thread
 	Thread m_thread;
 
-	void* m_makeCurrentCbData = nullptr; ///< Pointer first param of makecurrent
-	void* m_ctx = nullptr; ///< Pointer to the system GL context
-	MakeCurrentCallback m_makeCurrentCb; ///< Making a context current
-
 	CommandBufferPtr m_swapBuffersCommands;
-	SwapBuffersCallback m_swapBuffersCallback;
-	void* m_swapBuffersCbData;
 	ConditionVariable m_frameCondVar;
 	Mutex m_frameMtx;
 	Bool8 m_frameWait = false;

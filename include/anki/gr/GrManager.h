@@ -13,6 +13,22 @@ namespace anki {
 /// @addtogroup graphics
 /// @{
 
+/// A collection of functions that some backends need from other libraries.
+class GrManagerInterface
+{
+public:
+	virtual ~GrManagerInterface()
+	{}
+
+	/// Swap buffers.
+	virtual void swapBuffersCommand() = 0;
+
+	/// Make a context current.
+	/// @param bind If true make a context current to this thread, if false
+	///        make no contexts current to a thread.
+	virtual void makeCurrentCommand(Bool bind) = 0;
+};
+
 /// Manager initializer.
 class GrManagerInitializer
 {
@@ -20,12 +36,7 @@ public:
 	AllocAlignedCallback m_allocCallback = nullptr;
 	void* m_allocCallbackUserData = nullptr;
 
-	MakeCurrentCallback m_makeCurrentCallback = nullptr;
-	void* m_makeCurrentCallbackData = nullptr;
-	void* m_ctx = nullptr;
-
-	SwapBuffersCallback m_swapBuffersCallback = nullptr;
-	void* m_swapBuffersCallbackData = nullptr;
+	WeakPtr<GrManagerInterface> m_interface;
 
 	CString m_cacheDirectory;
 	Bool m_registerDebugMessages = false;
@@ -54,7 +65,7 @@ public:
 	template<typename T, typename... Args>
 	IntrusivePtr<T> newInstance(Args&&... args);
 
-#ifdef ANKI_BUILD
+anki_internal:
 	GrAllocator<U8>& getAllocator()
 	{
 		return m_alloc;
@@ -74,12 +85,17 @@ public:
 	{
 		return m_cacheDir.toCString();
 	}
-#endif
+
+	U64& getUuidIndex()
+	{
+		return m_uuidIndex;
+	}
 
 private:
 	GrAllocator<U8> m_alloc; ///< Keep it first to get deleted last
 	UniquePtr<GrManagerImpl> m_impl;
 	String m_cacheDir;
+	U64 m_uuidIndex = 1;
 };
 
 template<typename T, typename... Args>

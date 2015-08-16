@@ -8,6 +8,7 @@
 
 #include "anki/util/Allocator.h"
 #include "anki/util/String.h"
+#include "anki/util/Ptr.h"
 #include "anki/core/Timestamp.h"
 #if ANKI_OS == ANKI_OS_ANDROID
 #	include <android_native_app_glue.h>
@@ -31,10 +32,13 @@ class SceneGraph;
 class ScriptManager;
 class ResourceManager;
 class ResourceFilesystem;
+class GrManagerInterfaceImpl;
 
 /// The core class of the engine.
 class App
 {
+	friend class GrManagerInterfaceImpl;
+
 public:
 	/// User callback of main loop
 	using UserMainLoopCallback = Error(*)(App& app, void* userData, Bool& quit);
@@ -141,6 +145,7 @@ private:
 	// Sybsystems
 	NativeWindow* m_window = nullptr;
 	Input* m_input = nullptr;
+	WeakPtr<GrManagerInterfaceImpl> m_grInterface;
 	GrManager* m_gr = nullptr;
 	PhysicsWorld* m_physics = nullptr;
 	ResourceFilesystem* m_resourceFs = nullptr;
@@ -151,7 +156,6 @@ private:
 
 	// Misc
 	Timestamp m_globalTimestamp = 0;
-	void* m_ctx = nullptr;
 	Threadpool* m_threadpool = nullptr;
 	String m_settingsDir; ///< The path that holds the configuration
 	String m_cacheDir; ///< This is used as a cache

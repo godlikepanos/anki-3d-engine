@@ -15,8 +15,7 @@ namespace anki {
 /// Forward rendering stage. The objects that blend must be handled differently
 class Fs: public RenderingPass
 {
-public:
-#ifdef ANKI_BUILD
+anki_internal:
 	Fs(Renderer* r)
 		: RenderingPass(r)
 	{}
@@ -25,7 +24,6 @@ public:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 	ANKI_USE_RESULT Error run(CommandBufferPtr& cmdb);
-#endif
 
 private:
 	FramebufferPtr m_fb;

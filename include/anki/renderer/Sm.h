@@ -22,8 +22,9 @@ class SceneNode;
 class Sm: private RenderingPass
 {
 public:
-	static const U32 MAX_SHADOW_CASTERS = 8;
-#ifdef ANKI_BUILD
+	static const U32 MAX_SHADOW_CASTERS = 16;
+
+anki_internal:
 	static const PixelFormat DEPTH_RT_PIXEL_FORMAT;
 
 	Sm(Renderer* r)
@@ -67,7 +68,6 @@ public:
 	{
 		return m_omniTexArray;
 	}
-#endif
 
 private:
 	TexturePtr m_spotTexArray;

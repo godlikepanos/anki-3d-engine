@@ -8,6 +8,7 @@
 #include "anki/util/Assert.h"
 #include "anki/util/Memory.h"
 #include "anki/util/Logger.h"
+#include "anki/util/Ptr.h"
 #include <cstddef> // For ptrdiff_t
 #include <utility> // For forward
 
@@ -175,7 +176,7 @@ public:
 	void construct(pointer p, const T& val)
 	{
 		// Placement new
-		new ((T*)p) T(val);
+		::new (p) T(val);
 	}
 
 	/// Call constructor with many arguments
@@ -291,6 +292,19 @@ public:
 			typename rebind<Y>::other alloc(*this);
 			alloc.destroy(ptr);
 			alloc.deallocate(ptr, 1);
+		}
+	}
+
+	/// Call the destructor and deallocate an object
+	/// @note This is AnKi specific
+	template<typename Y>
+	void deleteInstance(WeakPtr<Y> ptr)
+	{
+		if(ptr)
+		{
+			typename rebind<Y>::other alloc(*this);
+			alloc.destroy(&ptr[0]);
+			alloc.deallocate(&ptr[0], 1);
 		}
 	}
 

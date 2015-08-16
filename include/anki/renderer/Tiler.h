@@ -78,7 +78,12 @@ public:
 	using TestResult = TilerTestResult;
 	using TestParameters = TilerTestParameters;
 
-#ifdef ANKI_BUILD
+	/// Test against all tiles.
+	/// @param[in, out] params The collision parameters.
+	/// @return If visible return true.
+	Bool test(TestParameters& params) const;
+
+anki_internal:
 	Tiler(Renderer* r);
 	~Tiler();
 
@@ -95,12 +100,6 @@ public:
 		U i = (getGlobalTimestamp() - m_pbos.getSize() + 1) % m_pbos.getSize();
 		return m_pbos[i];
 	}
-#endif
-
-	/// Test against all tiles.
-	/// @param[in, out] params The collision parameters.
-	/// @return If visible return true.
-	Bool test(TestParameters& params) const;
 
 private:
 	/// Tile planes

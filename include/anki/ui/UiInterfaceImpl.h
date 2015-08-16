@@ -84,6 +84,13 @@ private:
 
 	Array<Stage, StageId::COUNT> m_stages;
 
+	class ResourceGroupKey
+	{
+	public:
+		StageId m_stage;
+		U64 m_textureId;
+	};
+
 	// Intermediate
 	U8 m_timestamp = 0; ///< Local timestamp.
 	CommandBufferPtr m_cmdb;

@@ -29,10 +29,28 @@
 
 namespace anki {
 
+//==============================================================================
 #if ANKI_OS == ANKI_OS_ANDROID
 /// The one and only android hack
 android_app* gAndroidApp = nullptr;
 #endif
+
+class GrManagerInterfaceImpl: public GrManagerInterface
+{
+public:
+	WeakPtr<App> m_app;
+	void* m_ctx;
+
+	void swapBuffersCommand() override
+	{
+		m_app->m_window->swapBuffers();
+	}
+
+	void makeCurrentCommand(Bool bind) override
+	{
+		m_app->m_window->contextMakeCurrent(bind ? m_ctx : nullptr);
+	}
+};
 
 //==============================================================================
 App::App()
@@ -87,6 +105,11 @@ void App::cleanup()
 	{
 		m_heapAlloc.deleteInstance(m_gr);
 		m_gr = nullptr;
+	}
+
+	if(m_grInterface)
+	{
+		m_heapAlloc.deleteInstance(m_grInterface);
 	}
 
 	if(m_threadpool)
@@ -180,9 +203,6 @@ Error App::createInternal(const ConfigSet& config_,
 
 	ANKI_CHECK(m_window->create(nwinit, m_heapAlloc));
 
-	m_ctx = m_window->getCurrentContext();
-	m_window->contextMakeCurrent(nullptr);
-
 	//
 	// Input
 	//
@@ -196,18 +216,19 @@ Error App::createInternal(const ConfigSet& config_,
 	m_threadpool = m_heapAlloc.newInstance<Threadpool>(getCpuCoresCount());
 
 	//
-	// GL
+	// Graphics API
 	//
+	m_grInterface = m_heapAlloc.newInstance<GrManagerInterfaceImpl>();
+	m_grInterface->m_app = this;
+	m_grInterface->m_ctx = m_window->getCurrentContext();
+	m_window->contextMakeCurrent(nullptr);
+
 	m_gr = m_heapAlloc.newInstance<GrManager>();
 
 	GrManagerInitializer grInit;
 	grInit.m_allocCallback = m_allocCb;
 	grInit.m_allocCallbackUserData = m_allocCbData;
-	grInit.m_makeCurrentCallback = makeCurrent;
-	grInit.m_makeCurrentCallbackData = this;
-	grInit.m_ctx = m_ctx;
-	grInit.m_swapBuffersCallback = swapWindow;
-	grInit.m_swapBuffersCallbackData = m_window;
+	grInit.m_interface = m_grInterface;
 	grInit.m_cacheDirectory = m_cacheDir.toCString();
 	grInit.m_registerDebugMessages = nwinit.m_debugContext;
 

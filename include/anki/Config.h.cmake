@@ -155,4 +155,10 @@
 #endif
 /// @}
 
+#ifdef ANKI_BUILD
+#	define anki_internal public
+#else
+#	define anki_internal protected
+#endif
+
 #endif

@@ -18,8 +18,7 @@ namespace anki {
 /// Lens flare rendering pass. Part of forward shading.
 class Lf: public RenderingPass
 {
-public:
-#ifdef ANKI_BUILD
+anki_internal:
 	Lf(Renderer* r)
 		: RenderingPass(r)
 	{}
@@ -32,7 +31,6 @@ public:
 	void runOcclusionTests(CommandBufferPtr& cmdb);
 
 	void run(CommandBufferPtr& cmdb);
-#endif
 
 private:
 	// Occlusion query

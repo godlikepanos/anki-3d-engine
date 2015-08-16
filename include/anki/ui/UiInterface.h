@@ -9,8 +9,6 @@
 
 namespace anki {
 
-class UiImage;
-
 /// @addtogroup ui
 /// @{
 

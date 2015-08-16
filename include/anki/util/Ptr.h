@@ -35,16 +35,16 @@ public:
 		return m_ptr;
 	}
 
-	T& get()
+	T* get()
 	{
 		ANKI_ASSERT(m_ptr);
-		return *m_ptr;
+		return m_ptr;
 	}
 
-	const T& get() const
+	const T* get() const
 	{
 		ANKI_ASSERT(m_ptr);
-		return *m_ptr;
+		return m_ptr;
 	}
 
 	Bool isCreated() const
@@ -106,6 +106,9 @@ protected:
 template<typename T>
 class WeakPtr: public PtrBase<T>
 {
+	template<typename>
+	friend class WeakPtr;
+
 public:
 	using Base = PtrBase<T>;
 
@@ -118,6 +121,11 @@ public:
 	{}
 
 	WeakPtr(const WeakPtr& other)
+		: Base(other.m_ptr)
+	{}
+
+	template<typename Y>
+	WeakPtr(const WeakPtr<Y>& other)
 		: Base(other.m_ptr)
 	{}
 
@@ -137,6 +145,29 @@ public:
 	WeakPtr& operator=(const WeakPtr& other)
 	{
 		Base::m_ptr = other.m_ptr;
+		return *this;
+	}
+
+	/// Copy.
+	template<typename Y>
+	WeakPtr& operator=(const WeakPtr<Y>& other)
+	{
+		Base::m_ptr = other.m_ptr;
+		return *this;
+	}
+
+	/// Copy.
+	WeakPtr& operator=(T* ptr)
+	{
+		Base::m_ptr = ptr;
+		return *this;
+	}
+
+	/// Copy.
+	template<typename Y>
+	WeakPtr& operator=(Y* ptr)
+	{
+		Base::m_ptr = ptr;
 		return *this;
 	}
 

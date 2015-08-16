@@ -72,7 +72,7 @@ public:
 
 	/// Global UBO ring buffer
 	/// @{
-	U32 m_globalUboSize = MAX_UBO_SIZE * 128; ///< 8MB
+	U32 m_globalUboSize = MAX_UBO_SIZE * 256; ///< 16MB
 	DArray<GLuint> m_globalUbos; ///< Multiple cause of the spec's UBO max size.
 	DArray<U8*> m_globalUboAddresses;
 	Atomic<U32> m_globalUboCurrentOffset = {0};

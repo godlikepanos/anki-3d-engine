@@ -257,13 +257,15 @@ Error PointLight::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 		rot = Mat3(Euler(0.0, 0.0, PI));
 		m_shadowData[5].m_localTrf.setRotation(Mat3x4(rot));
 
-		const Transform& trf =
-			getComponent<MoveComponent>().getWorldTransform();
+		const Vec4& origin =
+			getComponent<MoveComponent>().getWorldTransform().getOrigin();
 		for(U i = 0; i < 6; i++)
 		{
 			m_shadowData[i].m_frustum.setAll(ang, ang, zNear, dist);
-			m_shadowData[i].m_frustum.resetTransform(
-				trf.combineTransformations(m_shadowData[i].m_localTrf));
+
+			Transform trf = m_shadowData[i].m_localTrf;
+			trf.setOrigin(origin);
+			m_shadowData[i].m_frustum.resetTransform(trf);
 
 			FrustumComponent* comp =
 				getSceneAllocator().newInstance<FrustumComponent>(this,

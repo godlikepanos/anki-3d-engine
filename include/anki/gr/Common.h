@@ -51,10 +51,6 @@ const U MAX_TEXTURE_BINDINGS = 8;
 const U MAX_UNIFORM_BUFFER_BINDINGS = 8;
 const U MAX_STORAGE_BUFFER_BINDINGS = 8;
 const U MAX_FRAMES_IN_FLIGHT = 3;
-
-/// GL generic callback
-using SwapBuffersCallback = void(*)(void*);
-using MakeCurrentCallback = void(*)(void*, void*);
 /// @}
 
 } // end namespace anki

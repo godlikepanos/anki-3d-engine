@@ -39,7 +39,8 @@ class Is: public RenderingPass
 
 public:
 	static const U MIPMAPS_COUNT = 7;
-#ifdef ANKI_BUILD
+
+anki_internal:
 	static const PixelFormat RT_PIXEL_FORMAT;
 
 	Is(Renderer* r);
@@ -64,7 +65,6 @@ public:
 	{
 		m_ambientColor = color;
 	}
-#endif
 
 private:
 	enum

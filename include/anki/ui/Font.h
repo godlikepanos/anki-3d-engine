@@ -36,7 +36,7 @@ public:
 	/// Initialize the font.
 	ANKI_USE_RESULT Error init(const CString& filename, U32 fontHeight);
 
-#ifdef ANKI_BUILD
+anki_internal:
 	/// Get info for a character.
 	const FontCharInfo& getCharInfo(char c) const
 	{
@@ -49,7 +49,6 @@ public:
 	{
 		return m_img;
 	}
-#endif
 
 private:
 	static const char FIRST_CHAR = ' ';

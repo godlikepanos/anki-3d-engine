@@ -16,8 +16,7 @@ namespace anki {
 /// Material stage also known as G buffer stage. It populates the G buffer
 class Ms: public RenderingPass
 {
-public:
-#ifdef ANKI_BUILD
+anki_internal:
 	static const U ATTACHMENT_COUNT = 3;
 	static const Array<PixelFormat, ATTACHMENT_COUNT> RT_PIXEL_FORMATS;
 	static const PixelFormat DEPTH_RT_PIXEL_FORMAT;
@@ -58,7 +57,6 @@ public:
 	}
 
 	void generateMipmaps(CommandBufferPtr& cmdb);
-#endif
 
 private:
 	/// A collection of data

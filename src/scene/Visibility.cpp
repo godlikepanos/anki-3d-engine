@@ -345,10 +345,10 @@ void VisibilityTestTask::combineTestResults(
 
 	visible->prepareMerge();
 
-	if(renderablesSize == 0)
+	/*if(renderablesSize == 0)
 	{
 		ANKI_LOGW("No visible renderables");
-	}
+	}*/
 
 	// Append thread results
 	VisibleNode* renderables = visible->getRenderablesBegin();

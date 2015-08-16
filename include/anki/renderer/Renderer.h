@@ -28,10 +28,6 @@ class ResourceManager;
 class Renderer
 {
 public:
-#ifdef ANKI_BUILD
-	const U TILE_SIZE = 64;
-#endif
-
 	Renderer();
 
 	~Renderer();
@@ -123,7 +119,9 @@ public:
 		SceneNode& frustumableNode,
 		Array<CommandBufferPtr, RENDERER_COMMAND_BUFFERS_COUNT>& cmdBuff);
 
-#ifdef ANKI_BUILD
+anki_internal:
+	const U TILE_SIZE = 64;
+
 	void getOutputFramebuffer(FramebufferPtr& outputFb, U32& width, U32& height)
 	{
 		if(m_outputFb.isCreated())
@@ -276,7 +274,6 @@ public:
 	{
 		return *m_globalTimestamp;
 	}
-#endif
 
 private:
 	Threadpool* m_threadpool;

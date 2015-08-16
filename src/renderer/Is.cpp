@@ -139,7 +139,7 @@ Is::~Is()
 {
 	if(m_barrier)
 	{
-		getAllocator().deleteInstance(&m_barrier.get());
+		getAllocator().deleteInstance(m_barrier.get());
 	}
 }
 

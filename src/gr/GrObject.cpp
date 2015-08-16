@@ -9,6 +9,13 @@
 namespace anki {
 
 //==============================================================================
+GrObject::GrObject(GrManager* manager)
+	: m_refcount(0)
+	, m_manager(manager)
+	, m_uuid(m_manager->getUuidIndex()++)
+{}
+
+//==============================================================================
 GrAllocator<U8> GrObject::getAllocator() const
 {
 	return m_manager->getAllocator();
