@@ -506,6 +506,8 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("debugContext", false);
 	config.set("dataPaths", "assets");
 	config.set("sceneFrameAllocatorSize", 1024 * 1024 * 10);
+	config.set("maxTextureSize", 256);
+	config.set("lodDistance", 3.0);
 
 	app = new App;
 	err = app->create(config, allocAligned, nullptr);

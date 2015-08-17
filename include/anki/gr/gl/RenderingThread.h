@@ -69,7 +69,7 @@ private:
 	WeakPtr<GrManager> m_manager;
 	WeakPtr<GrManagerInterface> m_interface;
 
-	static const U QUEUE_SIZE = 512;
+	static const U QUEUE_SIZE = 1024;
 	DArray<CommandBufferPtr> m_queue; ///< Command queue
 	U64 m_tail; ///< Tail of queue
 	U64 m_head; ///< Head of queue. Points to the end

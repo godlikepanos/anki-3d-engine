@@ -990,7 +990,7 @@ void Exporter::visitNode(const aiNode* ainode)
 		bool special = false;
 		for(const auto& prop : m_scene->mMeshes[meshIndex]->mProperties)
 		{
-			if(prop.first == "particles_file")
+			if(prop.first == "particles")
 			{
 				ParticleEmitter p;
 				p.m_filename = prop.second;
