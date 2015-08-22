@@ -84,7 +84,7 @@ public:
 			if(hasWorldTrfs)
 			{
 				Mat4* mvp = m_drawer->m_r->getFrameAllocator().
-					newInstance<Mat4>(arraySize);
+					newArray<Mat4>(arraySize);
 
 				for(U i = 0; i < arraySize; i++)
 				{
@@ -108,7 +108,7 @@ public:
 			{
 				ANKI_ASSERT(hasWorldTrfs);
 				Mat4* mv = m_drawer->m_r->getFrameAllocator().
-					newInstance<Mat4>(arraySize);
+					newArray<Mat4>(arraySize);
 
 				for(U i = 0; i < arraySize; i++)
 				{
@@ -129,9 +129,8 @@ public:
 		case BuildinMaterialVariableId::NORMAL_MATRIX:
 			if(hasWorldTrfs)
 			{
-				Mat3* normMats =
-					m_drawer->m_r->getFrameAllocator().
-					newInstance<Mat3>(arraySize);
+				Mat3* normMats = m_drawer->m_r->getFrameAllocator().
+					newArray<Mat3>(arraySize);
 
 				for(U i = 0; i < arraySize; i++)
 				{
@@ -163,9 +162,8 @@ public:
 				Mat3 rot =
 					m_fr->getViewMatrix().getRotationPart().getTransposed();
 
-				Mat4* bmvp =
-					m_drawer->m_r->getFrameAllocator().
-					newInstance<Mat4>(arraySize);
+				Mat4* bmvp = m_drawer->m_r->getFrameAllocator().
+					newArray<Mat4>(arraySize);
 
 				for(U i = 0; i < arraySize; i++)
 				{

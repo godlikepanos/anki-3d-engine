@@ -43,8 +43,8 @@ App* app;
 ModelNode* horse;
 PerspectiveCamera* cam;
 
-#define NO_PLAYER 1
-#define MOUSE 0
+#define PLAYER 1
+#define MOUSE 1
 
 Bool profile = false;
 
@@ -85,7 +85,7 @@ Error init()
 		Mat3x4(Euler(toRad(0.0), toRad(180.0), toRad(0.0))),
 		1.0));
 
-#if NO_PLAYER
+#if !PLAYER
 	cam->getComponent<MoveComponent>().
 		setLocalTransform(Transform(Vec4(147.392776, -10.132728, 16.607138, 0.0),
 		Mat3x4(Euler(toRad(0.0), toRad(90.0), toRad(0.0))),
@@ -271,7 +271,7 @@ Error init()
 	}
 #endif
 
-#if !NO_PLAYER
+#if PLAYER
 	PlayerNode* pnode;
 	scene.newSceneNode<PlayerNode>("player", pnode,
 		Vec4(147.392776, -11.132728, 16.607138, 0.0));
@@ -410,7 +410,7 @@ Error mainLoopExtra(App& app, void*, Bool& quit)
 		//renderer.takeScreenshot("screenshot.tga");
 	}
 
-#if NO_PLAYER
+#if !PLAYER
 	if(in.getKey(KeyCode::UP)) mover->rotateLocalX(ang);
 	if(in.getKey(KeyCode::DOWN)) mover->rotateLocalX(-ang);
 	if(in.getKey(KeyCode::LEFT)) mover->rotateLocalY(ang);
@@ -437,7 +437,7 @@ Error mainLoopExtra(App& app, void*, Bool& quit)
 	}
 #endif
 
-#if NO_PLAYER && MOUSE
+#if !PLAYER && MOUSE
 	if(in.getMousePosition() != Vec2(0.0) && !profile)
 	{
 		//printf("%f %f\n", in.getMousePosition().x(), in.getMousePosition().y());
@@ -515,9 +515,11 @@ Error initSubsystems(int argc, char* argv[])
 	if(err) return err;
 
 	// Input
+#if MOUSE
 	app->getInput().lockCursor(true);
 	app->getInput().hideCursor(true);
 	app->getInput().moveCursor(Vec2(0.0));
+#endif
 
 	return err;
 }

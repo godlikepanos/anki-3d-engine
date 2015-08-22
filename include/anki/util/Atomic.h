@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_UTIL_ATOMIC_H
-#define ANKI_UTIL_ATOMIC_H
+#pragma once
 
 #include "anki/util/StdTypes.h"
 #include "anki/util/NonCopyable.h"
@@ -37,11 +36,11 @@ public:
 	static constexpr AtomicMemoryOrder MEMORY_ORDER = tmemOrd;
 
 	Atomic()
-	:	m_val(static_cast<Value>(0))
+		: m_val(static_cast<Value>(0))
 	{}
 
 	Atomic(const Value a)
-	:	m_val(a)
+		: m_val(a)
 	{}
 
 	Value load(AtomicMemoryOrder memOrd = MEMORY_ORDER) const
@@ -91,7 +90,7 @@ public:
 	/// 	return false;
 	/// }
 	/// @endcode
-	Bool compareExchange(Value& expected, const Value desired, 
+	Bool compareExchange(Value& expected, const Value desired,
 		AtomicMemoryOrder memOrd = MEMORY_ORDER)
 	{
 #if defined(__GNUC__)
@@ -118,6 +117,4 @@ private:
 /// @}
 
 } // end namespace anki
-
-#endif
 

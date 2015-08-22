@@ -255,7 +255,7 @@ anki_internal:
 		return m_alloc;
 	}
 
-	StackAllocator<U8>& getFrameAllocator()
+	StackAllocator<U8> getFrameAllocator() const
 	{
 		return m_frameAlloc;
 	}
