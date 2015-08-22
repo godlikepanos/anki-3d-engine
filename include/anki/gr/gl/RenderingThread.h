@@ -16,8 +16,6 @@ class GrManagerInterface;
 /// @addtogroup opengl
 /// @{
 
-#define ANKI_DISABLE_GL_RENDERING_THREAD 0
-
 /// Command queue. It's essentialy a queue of command buffers waiting for
 /// execution and a server
 class RenderingThread

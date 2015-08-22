@@ -181,6 +181,8 @@ public:
 
 	/// Append a second level command buffer.
 	void pushSecondLevelCommandBuffer(CommandBufferPtr cmdb);
+
+	Bool isEmpty() const;
 	/// @}
 
 private:

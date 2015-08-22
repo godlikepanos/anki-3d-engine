@@ -93,6 +93,11 @@ public:
 		return *m_manager;
 	}
 
+	Bool isEmpty() const
+	{
+		return m_firstCommand == nullptr;
+	}
+
 private:
 	GrManager* m_manager = nullptr;
 	GlCommand* m_firstCommand = nullptr;

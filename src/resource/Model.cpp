@@ -127,38 +127,35 @@ PipelinePtr ModelPatch::getPipeline(const RenderingKey& key) const
 		ANKI_ASSERT(0);
 	}
 
+	LockGuard<SpinLock> lock(m_lock);
+
 	PipelinePtr& ppline =
 		m_pplines[U(key.m_pass)][key.m_lod][key.m_tessellation];
 
 	// Lazily create it
 	if(ANKI_UNLIKELY(!ppline.isCreated()))
 	{
-		LockGuard<SpinLock> lock(m_lock);
+		PipelineInitializer pplineInit;
+		computePipelineInitializer(key, pplineInit);
 
-		if(!ppline.isCreated())
+		pplineInit.m_shaders[U(ShaderType::VERTEX)] =
+			m_mtl->getShader(key, ShaderType::VERTEX);
+
+		if(key.m_tessellation)
 		{
-			PipelineInitializer pplineInit;
-			computePipelineInitializer(key, pplineInit);
+			pplineInit.m_shaders[U(ShaderType::TESSELLATION_CONTROL)] =
+				m_mtl->getShader(key, ShaderType::TESSELLATION_CONTROL);
 
-			pplineInit.m_shaders[U(ShaderType::VERTEX)] =
-				m_mtl->getShader(key, ShaderType::VERTEX);
-
-			if(key.m_tessellation)
-			{
-				pplineInit.m_shaders[U(ShaderType::TESSELLATION_CONTROL)] =
-					m_mtl->getShader(key, ShaderType::TESSELLATION_CONTROL);
-
-				pplineInit.m_shaders[U(ShaderType::TESSELLATION_EVALUATION)] =
-					m_mtl->getShader(key, ShaderType::TESSELLATION_EVALUATION);
-			}
-
-			pplineInit.m_shaders[U(ShaderType::FRAGMENT)] =
-				m_mtl->getShader(key, ShaderType::FRAGMENT);
-
-			// Create
-			ppline = m_model->getManager().getGrManager()
-				.newInstance<Pipeline>(pplineInit);
+			pplineInit.m_shaders[U(ShaderType::TESSELLATION_EVALUATION)] =
+				m_mtl->getShader(key, ShaderType::TESSELLATION_EVALUATION);
 		}
+
+		pplineInit.m_shaders[U(ShaderType::FRAGMENT)] =
+			m_mtl->getShader(key, ShaderType::FRAGMENT);
+
+		// Create
+		ppline = m_model->getManager().getGrManager()
+			.newInstance<Pipeline>(pplineInit);
 	}
 
 	return ppline;

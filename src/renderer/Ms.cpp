@@ -145,7 +145,10 @@ Error Ms::run(CommandBufferPtr& cmdb)
 
 	for(U i = 0; i < m_secondLevelCmdbs.getSize(); ++i)
 	{
-		cmdb->pushSecondLevelCommandBuffer(m_secondLevelCmdbs[i]);
+		if(!m_secondLevelCmdbs[i]->isEmpty())
+		{
+			cmdb->pushSecondLevelCommandBuffer(m_secondLevelCmdbs[i]);
+		}
 	}
 
 	return ErrorCode::NONE;

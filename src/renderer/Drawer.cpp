@@ -293,8 +293,8 @@ Error RenderableDrawer::render(FrustumComponent& frc,
 	RenderingStage stage, Pass pass, SArray<CommandBufferPtr>& cmdbs)
 {
 	Error err = ErrorCode::NONE;
-	ANKI_ASSERT(cmdb.getSize() == threadPool.getThreadsCount() ||
-		cmdb.getSize() == 1);
+	ANKI_ASSERT(cmdbs.getSize() == m_r->getThreadpool().getThreadsCount() ||
+		cmdbs.getSize() == 1);
 
 	if(cmdbs.getSize() > 1)
 	{

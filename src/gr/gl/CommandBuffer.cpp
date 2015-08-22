@@ -548,5 +548,11 @@ void CommandBuffer::pushSecondLevelCommandBuffer(CommandBufferPtr cmdb)
 	m_impl->pushBackNewCommand<ExecCmdbCommand>(cmdb);
 }
 
+//==============================================================================
+Bool CommandBuffer::isEmpty() const
+{
+	return m_impl->isEmpty();
+}
+
 } // end namespace anki
 

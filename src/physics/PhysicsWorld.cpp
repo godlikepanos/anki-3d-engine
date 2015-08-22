@@ -16,12 +16,12 @@ static HeapAllocator<U8>* gAlloc = nullptr;
 
 static void* newtonAlloc(int size)
 {
-	return gAlloc->allocate(size);
+	return gAlloc->allocate(size + 16);
 }
 
 static void newtonFree(void* const ptr, int size)
 {
-	gAlloc->deallocate(ptr, size);
+	gAlloc->deallocate(ptr, size + 16);
 }
 
 //==============================================================================

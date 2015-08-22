@@ -16,6 +16,8 @@ namespace anki {
 // Misc                                                                        =
 //==============================================================================
 
+#define ANKI_DISABLE_GL_RENDERING_THREAD 0
+
 /// Sync rendering thread command.
 class SyncCommand final: public GlCommand
 {
