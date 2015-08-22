@@ -203,8 +203,8 @@ private:
 
 	ANKI_USE_RESULT Error doInstancingCalcs();
 
-	ANKI_USE_RESULT Error buildRendering(RenderingBuildData& data);
-	void getRenderWorldTransform(U index, Transform& trf);
+	ANKI_USE_RESULT Error buildRendering(RenderingBuildData& data) const;
+	void getRenderWorldTransform(U index, Transform& trf) const;
 
 	void onMoveComponentUpdate(MoveComponent& move);
 };

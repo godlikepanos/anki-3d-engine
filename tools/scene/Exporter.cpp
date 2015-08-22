@@ -1218,7 +1218,7 @@ void Exporter::exportAll()
 		// Write instance nodes
 		for(unsigned j = 1; j < node.m_transforms.size(); j++)
 		{
-			file << "inst = scene:newInstanceNode(\""
+			file << "\ninst = scene:newInstanceNode(\""
 				<< nodeName << "_inst" << (j - 1) << "\")\n"
 				<< "node:getSceneNodeBase():addChild("
 				<< "inst:getSceneNodeBase())\n";

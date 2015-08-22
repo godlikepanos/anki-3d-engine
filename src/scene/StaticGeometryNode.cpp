@@ -20,18 +20,13 @@ public:
 	StaticGeometryPatchNode* m_node;
 
 	StaticGeometryRenderComponent(StaticGeometryPatchNode* node)
-		: RenderComponent(node)
+		: RenderComponent(node, &node->m_modelPatch->getMaterial())
 		, m_node(node)
 	{}
 
-	Error buildRendering(RenderingBuildData& data) override
+	Error buildRendering(RenderingBuildData& data) const override
 	{
 		return m_node->buildRendering(data);
-	}
-
-	const Material& getMaterial()
-	{
-		return m_node->m_modelPatch->getMaterial();
 	}
 };
 
@@ -80,7 +75,7 @@ Error StaticGeometryPatchNode::create(
 }
 
 //==============================================================================
-Error StaticGeometryPatchNode::buildRendering(RenderingBuildData& data)
+Error StaticGeometryPatchNode::buildRendering(RenderingBuildData& data) const
 {
 	Array<U32, ANKI_GL_MAX_SUB_DRAWCALLS> indicesCountArray;
 	Array<PtrSize, ANKI_GL_MAX_SUB_DRAWCALLS> indicesOffsetArray;

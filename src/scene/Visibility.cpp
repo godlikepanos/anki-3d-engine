@@ -81,7 +81,7 @@ public:
 	void combineTestResults(FrustumComponent& frc, PtrSize threadsCount);
 
 	/// Do the tests
-	Error operator()(U32 threadId, PtrSize threadsCount)
+	Error operator()(U32 threadId, PtrSize threadsCount) override
 	{
 		auto& list = m_shared->m_frustumsList;
 		auto alloc = m_shared->m_scene->getFrameAllocator();
@@ -266,14 +266,13 @@ void VisibilityTestTask::test(FrustumComponent& testedFrc,
 			visibleNode.m_spatialIndices[i] = sps[i].m_idx;
 		}
 
-		if(rc && wantsRenderComponents)
+		if(rc)
 		{
-			visible->moveBackRenderable(alloc, visibleNode);
-		}
-
-		if(rc && wantsShadowCasters && rc->getCastsShadow())
-		{
-			visible->moveBackRenderable(alloc, visibleNode);
+			if(wantsRenderComponents ||
+				(wantsShadowCasters && rc->getCastsShadow()))
+			{
+				visible->moveBackRenderable(alloc, visibleNode);
+			}
 		}
 
 		if(lc && wantsLightComponents)

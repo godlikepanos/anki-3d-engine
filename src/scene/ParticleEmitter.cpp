@@ -201,29 +201,26 @@ void Particle::revive(const ParticleEmitter& pe,
 class ParticleEmitterRenderComponent: public RenderComponent
 {
 public:
-	ParticleEmitter* m_node;
+	ParticleEmitter* m_node = nullptr;
 
 	ParticleEmitterRenderComponent(ParticleEmitter* node)
-		: RenderComponent(node)
+		: RenderComponent(node,
+			&node->m_particleEmitterResource->getMaterial())
 		, m_node(node)
 	{}
 
-	ANKI_USE_RESULT Error buildRendering(RenderingBuildData& data) override
+	ANKI_USE_RESULT Error buildRendering(
+		RenderingBuildData& data) const override
 	{
 		return m_node->buildRendering(data);
 	}
 
-	const Material& getMaterial() override
-	{
-		return m_node->m_particleEmitterResource->getMaterial();
-	}
-
-	void getRenderWorldTransform(U index, Transform& trf) override
+	void getRenderWorldTransform(U index, Transform& trf) const override
 	{
 		m_node->getRenderWorldTransform(index, trf);
 	}
 
-	Bool getHasWorldTransforms() override
+	Bool getHasWorldTransforms() const override
 	{
 		return true;
 	}
@@ -359,7 +356,7 @@ Error ParticleEmitter::create(
 }
 
 //==============================================================================
-Error ParticleEmitter::buildRendering(RenderingBuildData& data)
+Error ParticleEmitter::buildRendering(RenderingBuildData& data) const
 {
 	ANKI_ASSERT(data.m_subMeshIndicesCount <= m_transforms.getSize() + 1);
 
@@ -703,7 +700,7 @@ Error ParticleEmitter::doInstancingCalcs()
 }
 
 //==============================================================================
-void ParticleEmitter::getRenderWorldTransform(U index, Transform& trf)
+void ParticleEmitter::getRenderWorldTransform(U index, Transform& trf) const
 {
 	if(index == 0)
 	{

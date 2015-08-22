@@ -39,6 +39,7 @@ endif()
 
 option(ANKI_OPTIMIZE "Optimize" ON)
 option(ANKI_DEBUG_SYMBOLS "Debug symbols" OFF)
+option(ANKI_DEBUG "Debugging checks" OFF)
 
 option(ANKI_BUILD_TOOLS "Build tools" ON)
 option(ANKI_BUILD_TESTS "Build unit tests" OFF)
@@ -121,10 +122,12 @@ if(ANKI_ENABLE_SIMD)
 	endif()
 endif()
 
-# Add debug sumbols
+# Add debug
 if(ANKI_DEBUG_SYMBOLS)
 	set(COMPILER_FLAGS "${COMPILER_FLAGS} -g3 ")
+endif()
 
+if(ANKI_DEBUG)
 	if(${CMAKE_C_COMPILER_ID} MATCHES "GNU")
 		set(COMPILER_FLAGS "${COMPILER_FLAGS} -fstack-check ")
 	endif()
@@ -206,7 +209,7 @@ if(${ANKI_WINDOW_BACKEND} STREQUAL "SDL")
 		DOWNLOAD_COMMAND ""
 		PREFIX "${CMAKE_CURRENT_BINARY_DIR}/sdl2_build"
 		SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/SDL2"
-		CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/sdl2_build -DSDL_SHARED=OFF -DSDL_STATIC=ON)
+		CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/sdl2_build -DSDL_SHARED=OFF -DSDL_STATIC=ON -DCMAKE_BUILD_TYPE=Release)
 
 	ExternalProject_Get_Property(SDL2_PROJECT install_dir)
 	set(SDL2_INSTALL_DIR ${install_dir})
@@ -258,7 +261,7 @@ set(ANKI_VERSION_MAJOR 0)
 set(ANKI_VERSION_MINOR 1)
 message("++ AnKi version: ${ANKI_VERSION_MAJOR}.${ANKI_VERSION_MINOR}")
 
-if(ANKI_DEBUG_SYMBOLS)
+if(ANKI_DEBUG)
 	set(ANKI_DEBUG 1)
 else()
 	set(ANKI_DEBUG 0)

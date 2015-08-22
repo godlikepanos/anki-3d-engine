@@ -26,26 +26,22 @@ public:
 	ModelPatchNode* m_node;
 
 	ModelPatchRenderComponent(ModelPatchNode* node)
-		: RenderComponent(node)
+		: RenderComponent(node, &node->m_modelPatch->getMaterial())
 		, m_node(node)
 	{}
 
-	ANKI_USE_RESULT Error buildRendering(RenderingBuildData& data) override
+	ANKI_USE_RESULT Error buildRendering(
+		RenderingBuildData& data) const override
 	{
 		return m_node->buildRendering(data);
 	}
 
-	const Material& getMaterial() override
-	{
-		return m_node->m_modelPatch->getMaterial();
-	}
-
-	void getRenderWorldTransform(U index, Transform& trf) override
+	void getRenderWorldTransform(U index, Transform& trf) const override
 	{
 		m_node->getRenderWorldTransform(index, trf);
 	}
 
-	Bool getHasWorldTransforms() override
+	Bool getHasWorldTransforms() const override
 	{
 		return true;
 	}
@@ -98,7 +94,7 @@ Error ModelPatchNode::create(const CString& name,
 }
 
 //==============================================================================
-Error ModelPatchNode::buildRendering(RenderingBuildData& data)
+Error ModelPatchNode::buildRendering(RenderingBuildData& data) const
 {
 	// That will not work on multi-draw and instanced at the same time. Make
 	// sure that there is no multi-draw anywhere
@@ -140,11 +136,11 @@ Error ModelPatchNode::buildRendering(RenderingBuildData& data)
 }
 
 //==============================================================================
-void ModelPatchNode::getRenderWorldTransform(U index, Transform& trf)
+void ModelPatchNode::getRenderWorldTransform(U index, Transform& trf) const
 {
-	SceneNode* parent = getParent();
+	const SceneNode* parent = getParent();
 	ANKI_ASSERT(parent);
-	MoveComponent& move = parent->getComponent<MoveComponent>();
+	const MoveComponent& move = parent->getComponent<MoveComponent>();
 
 	if(index == 0)
 	{
@@ -154,9 +150,9 @@ void ModelPatchNode::getRenderWorldTransform(U index, Transform& trf)
 	else
 	{
 		// Asking for a next instance
-		SceneNode* parent = getParent();
+		const SceneNode* parent = getParent();
 		ANKI_ASSERT(parent);
-		ModelNode* mnode = staticCastPtr<ModelNode*>(parent);
+		const ModelNode* mnode = staticCastPtr<const ModelNode*>(parent);
 
 		--index;
 		trf = mnode->m_transforms[index];

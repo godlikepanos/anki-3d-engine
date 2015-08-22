@@ -79,6 +79,7 @@ private:
 	Array<MeshResourcePtr, MAX_LODS> m_meshes; ///< One for each LOD
 	U8 m_meshCount = 0;
 	MaterialResourcePtr m_mtl;
+	mutable SpinLock m_lock;
 
 	mutable Array3d<PipelinePtr, U(Pass::COUNT), MAX_LODS, 2> m_pplines;
 	Array<ResourceGroupPtr, MAX_LODS> m_grResources;

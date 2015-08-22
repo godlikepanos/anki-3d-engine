@@ -92,6 +92,9 @@ Error Ms::initInternal(const ConfigSet& initializer)
 
 	ANKI_CHECK(createRt(1, 1));
 
+	m_secondLevelCmdbs.create(
+		getAllocator(), m_r->getThreadpool().getThreadsCount());
+
 	return ErrorCode::NONE;
 }
 
@@ -105,27 +108,28 @@ Error Ms::run(CommandBufferPtr& cmdb)
 		planeId = 1;
 	}
 
+	// Create 2nd level cmdbs
+	U threadCount = m_r->getThreadpool().getThreadsCount();
+	GrManager& gr = m_r->getGrManager();
+	for(U i = 0; i < threadCount; ++i)
+	{
+		// TODO Add hints
+		m_secondLevelCmdbs[i] = gr.newInstance<CommandBuffer>();
+	}
+
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 
 	cmdb->bindFramebuffer(m_planes[planeId].m_fb);
 
 	// render all
-	m_r->getSceneDrawer().prepareDraw(
-		RenderingStage::MATERIAL, Pass::MS_FS, cmdb);
-
 	SceneNode& cam = m_r->getActiveCamera();
 
 	FrustumComponent& frc = cam.getComponent<FrustumComponent>();
-	VisibilityTestResults& vi = frc.getVisibilityTestResults();
-
-	auto it = vi.getRenderablesBegin();
-	auto end = vi.getRenderablesEnd();
-	for(; it != end; ++it)
-	{
-		ANKI_CHECK(m_r->getSceneDrawer().render(frc, *it));
-	}
-
-	m_r->getSceneDrawer().finishDraw();
+	SArray<CommandBufferPtr> cmdbs(
+		&m_secondLevelCmdbs[0], m_secondLevelCmdbs.getSize());
+	//SArray<CommandBufferPtr> cmdbs(&cmdb, 1);
+	ANKI_CHECK(m_r->getSceneDrawer().render(
+		frc, RenderingStage::MATERIAL, Pass::MS_FS, cmdbs));
 
 	// If there is multisampling then resolve to singlesampled
 	if(m_r->getSamples() > 1)
@@ -137,6 +141,11 @@ Error Ms::run(CommandBufferPtr& cmdb)
 			GL_NEAREST_BASE);
 #endif
 		ANKI_ASSERT(0 && "TODO");
+	}
+
+	for(U i = 0; i < m_secondLevelCmdbs.getSize(); ++i)
+	{
+		cmdb->pushSecondLevelCommandBuffer(m_secondLevelCmdbs[i]);
 	}
 
 	return ErrorCode::NONE;

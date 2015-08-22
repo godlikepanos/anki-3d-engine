@@ -90,36 +90,38 @@ RenderComponentVariable::~RenderComponentVariable()
 //==============================================================================
 
 //==============================================================================
-RenderComponent::RenderComponent(SceneNode* node)
+RenderComponent::RenderComponent(SceneNode* node, const Material* mtl)
 	: SceneComponent(Type::RENDER, node)
-	, m_alloc(node->getSceneAllocator())
+	, m_mtl(mtl)
 {}
 
 //==============================================================================
 RenderComponent::~RenderComponent()
 {
+	auto alloc = m_node->getSceneAllocator();
 	for(RenderComponentVariable* var : m_vars)
 	{
-		var->destroy(m_alloc);
-		m_alloc.deleteInstance(var);
+		var->destroy(alloc);
+		alloc.deleteInstance(var);
 	}
 
-	m_vars.destroy(m_alloc);
+	m_vars.destroy(alloc);
 }
 
 //==============================================================================
 Error RenderComponent::create()
 {
 	const Material& mtl = getMaterial();
+	auto alloc = m_node->getSceneAllocator();
 
 	// Create the material variables using a visitor
 	CreateNewRenderComponentVariableVisitor vis;
 	U32 count = 0;
 	vis.m_vars = &m_vars;
 	vis.m_count = &count;
-	vis.m_alloc = m_alloc;
+	vis.m_alloc = alloc;
 
-	m_vars.create(m_alloc, mtl.getVariables().getSize());
+	m_vars.create(alloc, mtl.getVariables().getSize());
 
 	auto it = mtl.getVariables().getBegin();
 	auto end = mtl.getVariables().getEnd();

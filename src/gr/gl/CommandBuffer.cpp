@@ -527,5 +527,26 @@ CommandBufferInitHints CommandBuffer::computeInitHints() const
 	return m_impl->computeInitHints();
 }
 
+//==============================================================================
+class ExecCmdbCommand final: public GlCommand
+{
+public:
+	CommandBufferPtr m_cmdb;
+
+	ExecCmdbCommand(const CommandBufferPtr& cmdb)
+		: m_cmdb(cmdb)
+	{}
+
+	Error operator()(GlState&)
+	{
+		return m_cmdb->getImplementation().executeAllCommands();
+	}
+};
+
+void CommandBuffer::pushSecondLevelCommandBuffer(CommandBufferPtr cmdb)
+{
+	m_impl->pushBackNewCommand<ExecCmdbCommand>(cmdb);
+}
+
 } // end namespace anki
 

@@ -102,26 +102,10 @@ Error Sm::init(const ConfigSet& config)
 }
 
 //==============================================================================
-void Sm::prepareDraw(CommandBufferPtr& cmdBuff)
-{
-	m_r->getSceneDrawer().prepareDraw(
-		RenderingStage::MATERIAL, Pass::SM, cmdBuff);
-}
-
-//==============================================================================
-void Sm::finishDraw(CommandBufferPtr& cmdBuff)
-{
-	m_r->getSceneDrawer().finishDraw();
-}
-
-//==============================================================================
 Error Sm::run(SArray<SceneNode*> spotShadowCasters,
 	SArray<SceneNode*> omniShadowCasters, CommandBufferPtr& cmdBuff)
 {
 	ANKI_ASSERT(m_enabled);
-	Error err = ErrorCode::NONE;
-
-	prepareDraw(cmdBuff);
 
 	// render all
 	for(SceneNode* node : spotShadowCasters)
@@ -134,9 +118,7 @@ Error Sm::run(SArray<SceneNode*> spotShadowCasters,
 		ANKI_CHECK(doOmniLight(*node, cmdBuff));
 	}
 
-	finishDraw(cmdBuff);
-
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -242,21 +224,15 @@ Error Sm::doSpotLight(SceneNode& light, CommandBufferPtr& cmdBuff)
 		return ErrorCode::NONE;
 	}
 
-	FrustumComponent& fr = light.getComponent<FrustumComponent>();
-	VisibilityTestResults& vi = fr.getVisibilityTestResults();
-
 	cmdBuff->bindFramebuffer(sm->m_fb);
 	cmdBuff->setViewport(0, 0, m_resolution, m_resolution);
 
-	auto it = vi.getRenderablesBegin();
-	auto end = vi.getRenderablesEnd();
-	for(; it != end; ++it)
-	{
-		ANKI_CHECK(m_r->getSceneDrawer().render(fr, *it));
-	}
+	FrustumComponent& fr = light.getComponent<FrustumComponent>();
+	SArray<CommandBufferPtr> cmdbs(&cmdBuff, 1);
+	ANKI_CHECK(m_r->getSceneDrawer().render(
+		fr, RenderingStage::MATERIAL, Pass::SM, cmdbs));
 
 	ANKI_COUNTER_INC(RENDERER_SHADOW_PASSES, U64(1));
-
 	return ErrorCode::NONE;
 }
 
@@ -278,14 +254,10 @@ Error Sm::doOmniLight(SceneNode& light, CommandBufferPtr& cmdBuff)
 		[&](FrustumComponent& fr) -> Error
 	{
 		cmdBuff->bindFramebuffer(sm->m_fb[frCount]);
-		VisibilityTestResults& vi = fr.getVisibilityTestResults();
 
-		auto it = vi.getRenderablesBegin();
-		auto end = vi.getRenderablesEnd();
-		for(; it != end; ++it)
-		{
-			ANKI_CHECK(m_r->getSceneDrawer().render(fr, *it));
-		}
+		SArray<CommandBufferPtr> cmdbs(&cmdBuff, 1);
+		ANKI_CHECK(m_r->getSceneDrawer().render(
+			fr, RenderingStage::MATERIAL, Pass::SM, cmdbs));
 
 		++frCount;
 		return ErrorCode::NONE;

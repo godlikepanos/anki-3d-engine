@@ -108,9 +108,6 @@ private:
 	/// Shadowmap resolution
 	U32 m_resolution;
 
-	void prepareDraw(CommandBufferPtr& cmdBuff);
-	void finishDraw(CommandBufferPtr& cmdBuff);
-
 	/// Find the best shadowmap for that light
 	template<typename TShadowmap, typename TContainer>
 	void bestCandidate(SceneNode& light, TContainer& arr, TShadowmap*& out);

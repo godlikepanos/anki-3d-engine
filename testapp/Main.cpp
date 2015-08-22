@@ -43,7 +43,8 @@ App* app;
 ModelNode* horse;
 PerspectiveCamera* cam;
 
-#define NO_PLAYER 0
+#define NO_PLAYER 1
+#define MOUSE 0
 
 Bool profile = false;
 
@@ -87,7 +88,7 @@ Error init()
 #if NO_PLAYER
 	cam->getComponent<MoveComponent>().
 		setLocalTransform(Transform(Vec4(147.392776, -10.132728, 16.607138, 0.0),
-		Mat3x4(Euler(toRad(0.0), toRad(0.0), toRad(0.0))),
+		Mat3x4(Euler(toRad(0.0), toRad(90.0), toRad(0.0))),
 		1.0));
 #endif
 
@@ -436,7 +437,7 @@ Error mainLoopExtra(App& app, void*, Bool& quit)
 	}
 #endif
 
-#if NO_PLAYER
+#if NO_PLAYER && MOUSE
 	if(in.getMousePosition() != Vec2(0.0) && !profile)
 	{
 		//printf("%f %f\n", in.getMousePosition().x(), in.getMousePosition().y());
@@ -506,8 +507,8 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("debugContext", false);
 	config.set("dataPaths", "assets");
 	config.set("sceneFrameAllocatorSize", 1024 * 1024 * 10);
-	config.set("maxTextureSize", 256);
-	config.set("lodDistance", 3.0);
+	//config.set("maxTextureSize", 256);
+	//config.set("lodDistance", 3.0);
 
 	app = new App;
 	err = app->create(config, allocAligned, nullptr);

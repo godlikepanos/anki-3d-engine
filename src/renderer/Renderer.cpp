@@ -21,6 +21,7 @@ namespace anki {
 
 //==============================================================================
 Renderer::Renderer()
+	: m_sceneDrawer(this)
 {}
 
 //==============================================================================
@@ -93,9 +94,6 @@ Error Renderer::initInternal(const ConfigSet& config)
 		ANKI_LOGE("Height is not multiple of tile height");
 		return ErrorCode::USER_DATA;
 	}
-
-	// Drawer
-	ANKI_CHECK(m_sceneDrawer.create(this));
 
 	// quad setup
 	ANKI_CHECK(

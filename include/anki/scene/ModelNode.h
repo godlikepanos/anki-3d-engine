@@ -44,9 +44,9 @@ private:
 		const MoveComponent* instanceMoves[],
 		U32 instanceMovesCount);
 
-	ANKI_USE_RESULT Error buildRendering(RenderingBuildData& data);
+	ANKI_USE_RESULT Error buildRendering(RenderingBuildData& data) const;
 
-	void getRenderWorldTransform(U index, Transform& trf);
+	void getRenderWorldTransform(U index, Transform& trf) const;
 };
 
 /// The model scene node

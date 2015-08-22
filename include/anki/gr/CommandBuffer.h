@@ -178,6 +178,9 @@ public:
 
 	/// End query.
 	void endOcclusionQuery(OcclusionQueryPtr query);
+
+	/// Append a second level command buffer.
+	void pushSecondLevelCommandBuffer(CommandBufferPtr cmdb);
 	/// @}
 
 private:

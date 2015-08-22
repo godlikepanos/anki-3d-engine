@@ -63,7 +63,7 @@ public:
 		return *this;
 	}
 
-	U8 getSpatialIndex(U i)
+	U8 getSpatialIndex(U i) const
 	{
 		ANKI_ASSERT(m_spatialsCount != 0 && i < m_spatialsCount);
 		return m_spatialIndices[i];

@@ -15,7 +15,6 @@ namespace anki {
 
 // Forward
 class Renderer;
-class SetupRenderableVariableVisitor;
 
 /// @addtogroup renderer
 /// @{
@@ -31,47 +30,35 @@ enum class RenderingStage: U8
 class RenderableDrawer
 {
 	friend class SetupRenderableVariableVisitor;
+	friend class RenderTask;
 
 public:
-	RenderableDrawer();
+	RenderableDrawer(Renderer* r)
+		: m_r(r)
+	{}
 
 	~RenderableDrawer();
 
-	/// The one and only constructor
-	ANKI_USE_RESULT Error create(Renderer* r);
-
-	void prepareDraw(RenderingStage stage, Pass pass, CommandBufferPtr& cmdBuff)
-	{
-		m_stage = stage;
-		m_pass = pass;
-		m_cmdBuff = cmdBuff;
-	}
-
-	ANKI_USE_RESULT Error render(FrustumComponent& frc, VisibleNode& visible);
-
-	void finishDraw()
-	{
-		m_cmdBuff = CommandBufferPtr();
-	}
+	ANKI_USE_RESULT Error render(FrustumComponent& frc, RenderingStage stage,
+		Pass pass, SArray<CommandBufferPtr>& cmdbs);
 
 private:
 	Renderer* m_r;
-	UniquePtr<SetupRenderableVariableVisitor> m_variableVisitor;
-
-	/// @name State
-	/// @{
-	CommandBufferPtr m_cmdBuff;
-	RenderingStage m_stage;
-	Pass m_pass;
-	/// @}
 
 	void setupUniforms(
-		VisibleNode& visibleNode,
-		RenderComponent& renderable,
-		FrustumComponent& fr,
-		F32 flod);
-};
+		const VisibleNode& visibleNode,
+		const RenderComponent& renderable,
+		const FrustumComponent& fr,
+		F32 flod,
+		CommandBufferPtr cmdb);
 
+	ANKI_USE_RESULT Error renderSingle(
+		const FrustumComponent& fr,
+		RenderingStage stage,
+		Pass pass,
+		CommandBufferPtr cmdb,
+		const VisibleNode& visibleNode);
+};
 /// @}
 
 } // end namespace anki

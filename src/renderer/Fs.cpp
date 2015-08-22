@@ -35,29 +35,16 @@ Error Fs::init(const ConfigSet&)
 //==============================================================================
 Error Fs::run(CommandBufferPtr& cmdb)
 {
-	Error err = ErrorCode::NONE;
-
 	cmdb->bindFramebuffer(m_fb);
-
-	RenderableDrawer& drawer = m_r->getSceneDrawer();
-	drawer.prepareDraw(RenderingStage::BLEND, Pass::MS_FS, cmdb);
 
 	SceneNode& cam = m_r->getActiveCamera();
 	FrustumComponent& camFr = cam.getComponent<FrustumComponent>();
 
-	auto it = camFr.getVisibilityTestResults().getRenderablesBegin();
-	auto end = camFr.getVisibilityTestResults().getRenderablesEnd();
-	for(; !err && it != end; ++it)
-	{
-		err = drawer.render(camFr, *it);
-	}
+	SArray<CommandBufferPtr> cmdbs(&cmdb, 1);
+	ANKI_CHECK(m_r->getSceneDrawer().render(
+		camFr, RenderingStage::BLEND, Pass::MS_FS, cmdbs));
 
-	if(!err)
-	{
-		drawer.finishDraw();
-	}
-
-	return err;
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

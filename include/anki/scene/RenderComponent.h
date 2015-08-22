@@ -137,7 +137,7 @@ public:
 	typedef T Type;
 
 	RenderComponentVariableTemplate(const MaterialVariable* mvar)
-	:	RenderComponentVariable(mvar)
+		: RenderComponentVariable(mvar)
 	{
 		setupVisitable(this);
 	}
@@ -229,7 +229,7 @@ public:
 	}
 
 	/// @param node Pass node to steal it's allocator
-	RenderComponent(SceneNode* node);
+	RenderComponent(SceneNode* node, const Material* mtl);
 
 	~RenderComponent();
 
@@ -245,18 +245,33 @@ public:
 		return m_vars.end();
 	}
 
+	Variables::ConstIterator getVariablesBegin() const
+	{
+		return m_vars.begin();
+	}
+
+	Variables::ConstIterator getVariablesEnd() const
+	{
+		return m_vars.end();
+	}
+
 	/// Build up the rendering.
 	/// Given an array of submeshes that are visible append jobs to the GL
 	/// job chain
-	virtual ANKI_USE_RESULT Error buildRendering(RenderingBuildData& data) = 0;
+	virtual ANKI_USE_RESULT Error buildRendering(
+		RenderingBuildData& data) const = 0;
 
 	/// Access the material
-	virtual const Material& getMaterial() = 0;
+	const Material& getMaterial() const
+	{
+		ANKI_ASSERT(m_mtl);
+		return *m_mtl;
+	}
 
 	/// Information for movables. It's actualy an array of transformations.
 	/// @param index The index of the transform to get
 	/// @param[out] trf The transform to set
-	virtual void getRenderWorldTransform(U index, Transform& trf)
+	virtual void getRenderWorldTransform(U index, Transform& trf) const
 	{
 		ANKI_ASSERT(getHasWorldTransforms());
 		(void)index;
@@ -264,12 +279,12 @@ public:
 	}
 
 	/// Return true if the renderable has world transforms
-	virtual Bool getHasWorldTransforms()
+	virtual Bool getHasWorldTransforms() const
 	{
 		return false;
 	}
 
-	Bool getCastsShadow()
+	Bool getCastsShadow() const
 	{
 		const Material& mtl = getMaterial();
 		return mtl.getShadowEnabled();
@@ -290,8 +305,8 @@ public:
 	}
 
 private:
-	SceneAllocator<U8> m_alloc;
 	Variables m_vars;
+	const Material* m_mtl;
 };
 /// @}
 

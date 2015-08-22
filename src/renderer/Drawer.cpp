@@ -15,9 +15,12 @@
 #include "anki/renderer/Renderer.h"
 #include "anki/core/Counters.h"
 #include "anki/util/Logger.h"
+#include "anki/util/Thread.h"
 
 namespace anki {
 
+//==============================================================================
+// Misc                                                                        =
 //==============================================================================
 static const U MATERIAL_BLOCK_MAX_SIZE = 1024 * 4;
 
@@ -26,31 +29,21 @@ class SetupRenderableVariableVisitor
 {
 public:
 	// Used to get the visible spatials
-	WeakPtr<VisibleNode> m_visibleNode;
+	const VisibleNode* m_visibleNode;
 
-	WeakPtr<RenderComponent> m_renderable; ///< To get the transforms
-	WeakPtr<RenderComponentVariable> m_rvar;
-	WeakPtr<const FrustumComponent> m_fr;
-	WeakPtr<RenderableDrawer> m_drawer;
+	const RenderComponent* m_renderable; ///< To get the transforms
+	const RenderComponentVariable* m_rvar;
+	const FrustumComponent* m_fr;
+	const RenderableDrawer* m_drawer;
 	U8 m_instanceCount;
 	CommandBufferPtr m_cmdBuff;
 	SArray<U8> m_uniformBuffer;
 
 	F32 m_flod;
 
-	SetupRenderableVariableVisitor(RenderableDrawer* drawer)
-		: m_drawer(drawer)
-	{}
-
-	HeapAllocator<U8> getAllocator() const
-	{
-		return m_drawer->m_r->getAllocator();
-	}
-
 	/// Set a uniform in a client block
 	template<typename T>
-	void uniSet(const MaterialVariable& mtlVar,
-		const T* value, U32 size)
+	void uniSet(const MaterialVariable& mtlVar, const T* value, U32 size)
 	{
 		mtlVar.writeShaderBlockMemory<T>(
 			value,
@@ -223,70 +216,139 @@ void SetupRenderableVariableVisitor::uniSet<TextureResourcePtr>(
 	// Do nothing
 }
 
+/// Task to render a single node.
+class RenderTask: public Threadpool::Task
+{
+public:
+	RenderableDrawer* m_drawer;
+	CommandBufferPtr m_cmdb;
+	FrustumComponent* m_frc;
+	RenderingStage m_stage;
+	Pass m_pass;
+
+	Error operator()(U32 threadId, PtrSize threadsCount) override
+	{
+		VisibilityTestResults& vis = m_frc->getVisibilityTestResults();
+
+		PtrSize start, end;
+		U problemSize = vis.getRenderablesEnd() - vis.getRenderablesBegin();
+		choseStartEnd(threadId, threadsCount, problemSize, start, end);
+
+		for(U i = start; i < end; ++i)
+		{
+			VisibleNode* node = vis.getRenderablesBegin() + i;
+			ANKI_CHECK(
+				m_drawer->renderSingle(*m_frc, m_stage, m_pass, m_cmdb, *node));
+		}
+
+		return ErrorCode::NONE;
+	}
+};
+
 //==============================================================================
-RenderableDrawer::RenderableDrawer()
-{}
+// RenderableDrawer                                                            =
+//==============================================================================
 
 //==============================================================================
 RenderableDrawer::~RenderableDrawer()
 {}
 
 //==============================================================================
-Error RenderableDrawer::create(Renderer* r)
-{
-	m_r = r;
-	m_variableVisitor.reset(
-		m_r->getAllocator().newInstance<SetupRenderableVariableVisitor>(this));
-	return ErrorCode::NONE;
-}
-
-//==============================================================================
 void RenderableDrawer::setupUniforms(
-	VisibleNode& visibleNode,
-	RenderComponent& renderable,
-	FrustumComponent& fr,
-	F32 flod)
+	const VisibleNode& visibleNode,
+	const RenderComponent& renderable,
+	const FrustumComponent& fr,
+	F32 flod,
+	CommandBufferPtr cmdb)
 {
 	const Material& mtl = renderable.getMaterial();
 
 	// Get some memory for uniforms
 	ANKI_ASSERT(mtl.getDefaultBlockSize() < MATERIAL_BLOCK_MAX_SIZE);
 	U8* uniforms = nullptr;
-	m_cmdBuff->updateDynamicUniforms(mtl.getDefaultBlockSize(), uniforms);
+	cmdb->updateDynamicUniforms(mtl.getDefaultBlockSize(), uniforms);
 
 	// Call the visitor
-	m_variableVisitor->m_visibleNode = &visibleNode;
-	m_variableVisitor->m_renderable = &renderable;
-	m_variableVisitor->m_fr = &fr;
-	m_variableVisitor->m_instanceCount = visibleNode.m_spatialsCount;
-	m_variableVisitor->m_cmdBuff = m_cmdBuff;
-	m_variableVisitor->m_flod = flod;
-	m_variableVisitor->m_uniformBuffer =
-		SArray<U8>(uniforms, mtl.getDefaultBlockSize());
+	SetupRenderableVariableVisitor visitor;
+	visitor.m_visibleNode = &visibleNode;
+	visitor.m_renderable = &renderable;
+	visitor.m_fr = &fr;
+	visitor.m_drawer = this;
+	visitor.m_instanceCount = visibleNode.m_spatialsCount;
+	visitor.m_cmdBuff = cmdb;
+	visitor.m_uniformBuffer = SArray<U8>(uniforms, mtl.getDefaultBlockSize());
+	visitor.m_flod = flod;
 
 	for(auto it = renderable.getVariablesBegin();
 		it != renderable.getVariablesEnd(); ++it)
 	{
 		RenderComponentVariable* rvar = *it;
 
-		m_variableVisitor->m_rvar = rvar;
-		Error err = rvar->acceptVisitor(*m_variableVisitor);
+		visitor.m_rvar = rvar;
+		Error err = rvar->acceptVisitor(visitor);
 		(void)err;
 	}
 }
 
 //==============================================================================
-Error RenderableDrawer::render(FrustumComponent& fr, VisibleNode& visibleNode)
+Error RenderableDrawer::render(FrustumComponent& frc,
+	RenderingStage stage, Pass pass, SArray<CommandBufferPtr>& cmdbs)
+{
+	Error err = ErrorCode::NONE;
+	ANKI_ASSERT(cmdb.getSize() == threadPool.getThreadsCount() ||
+		cmdb.getSize() == 1);
+
+	if(cmdbs.getSize() > 1)
+	{
+		Array<RenderTask, Threadpool::MAX_THREADS> tasks;
+
+		Threadpool& threadPool = m_r->getThreadpool();
+		for(U i = 0; i < threadPool.getThreadsCount(); i++)
+		{
+			auto& task = tasks[i];
+			task.m_drawer = this;
+			task.m_cmdb = cmdbs[i];
+			task.m_frc = &frc;
+			task.m_stage = stage;
+			task.m_pass = pass;
+
+			threadPool.assignNewTask(i, &task);
+		}
+
+		err = threadPool.waitForAllThreadsToFinish();
+	}
+	else
+	{
+		RenderTask task;
+		task.m_drawer = this;
+		task.m_cmdb = cmdbs[0];
+		task.m_frc = &frc;
+		task.m_stage = stage;
+		task.m_pass = pass;
+
+		err = task(0, 1);
+	}
+
+	return err;
+}
+
+//==============================================================================
+Error RenderableDrawer::renderSingle(
+	const FrustumComponent& fr,
+	RenderingStage stage,
+	Pass pass,
+	CommandBufferPtr cmdb,
+	const VisibleNode& visibleNode)
 {
 	RenderingBuildData build;
 
 	// Get components
-	RenderComponent& renderable =
+	const RenderComponent& renderable =
 		visibleNode.m_node->getComponent<RenderComponent>();
 	const Material& mtl = renderable.getMaterial();
 
-	if((m_stage == RenderingStage::BLEND && !mtl.getForwardShading())
-		|| (m_stage == RenderingStage::MATERIAL && mtl.getForwardShading()))
+	if((stage == RenderingStage::BLEND && !mtl.getForwardShading())
+		|| (stage == RenderingStage::MATERIAL && mtl.getForwardShading()))
 	{
 		return ErrorCode::NONE;
 	}
@@ -300,24 +362,24 @@ Error RenderableDrawer::render(FrustumComponent& fr, VisibleNode& visibleNode)
 		getSpatialOrigin() - camPos).getLength();
 	F32 flod = m_r->calculateLod(dist);
 	build.m_key.m_lod = flod;
-	build.m_key.m_pass = m_pass;
+	build.m_key.m_pass = pass;
 	build.m_key.m_tessellation =
 		m_r->getTessellationEnabled()
 		&& mtl.getTessellationEnabled()
 		&& build.m_key.m_lod == 0;
 
-	if(m_pass == Pass::SM)
+	if(pass == Pass::SM)
 	{
 		build.m_key.m_tessellation = false;
 	}
 
 	// Enqueue uniform state updates
-	setupUniforms(visibleNode, renderable, fr, flod);
+	setupUniforms(visibleNode, renderable, fr, flod, cmdb);
 
 	// Enqueue vertex, program and drawcall
 	build.m_subMeshIndicesArray = &visibleNode.m_spatialIndices[0];
 	build.m_subMeshIndicesCount = visibleNode.m_spatialsCount;
-	build.m_cmdb = m_cmdBuff;
+	build.m_cmdb = cmdb;
 
 	ANKI_CHECK(renderable.buildRendering(build));
 

@@ -3,13 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RENDERER_H
-#define ANKI_RENDERER_H
+#pragma once
 
 #include "anki/renderer/MainRenderer.h"
 #include "anki/renderer/Dbg.h"
 
 /// @defgroup renderer Renderering system
-
-#endif
 

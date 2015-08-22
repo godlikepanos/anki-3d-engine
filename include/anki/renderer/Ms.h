@@ -80,6 +80,7 @@ private:
 
 	/// One for multisampled and one for not. 0: multisampled, 1: not
 	Array<Plane, 2> m_planes;
+	DArray<CommandBufferPtr> m_secondLevelCmdbs;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 
