@@ -151,7 +151,7 @@ public:
 
 	/// Copy
 	PerspectiveFrustum(const PerspectiveFrustum& b)
-	:	PerspectiveFrustum()
+		: PerspectiveFrustum()
 	{
 		*this = b;
 	}
@@ -163,6 +163,7 @@ public:
 		setAll(fovX, fovY, near, far);
 	}
 
+	/// Get FOV on X axis.
 	F32 getFovX() const
 	{
 		return m_fovX;
@@ -173,6 +174,7 @@ public:
 		m_frustumDirty = true;
 	}
 
+	/// Get FOV on Y axis.
 	F32 getFovY() const
 	{
 		return m_fovY;
@@ -250,7 +252,7 @@ public:
 
 	/// Copy
 	OrthographicFrustum(const OrthographicFrustum& b)
-	:	OrthographicFrustum()
+		: OrthographicFrustum()
 	{
 		*this = b;
 	}

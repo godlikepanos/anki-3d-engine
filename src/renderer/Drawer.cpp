@@ -97,6 +97,8 @@ public:
 				}
 
 				uniSet(glvar, &mvp[0], arraySize);
+
+				m_drawer->m_r->getFrameAllocator().deleteArray(mvp, arraySize);
 			}
 			else
 			{
@@ -121,6 +123,8 @@ public:
 				}
 
 				uniSet(glvar, &mv[0], arraySize);
+
+				m_drawer->m_r->getFrameAllocator().deleteArray(mv, arraySize);
 			}
 			break;
 		case BuildinMaterialVariableId::VP_MATRIX:
@@ -145,6 +149,9 @@ public:
 				}
 
 				uniSet(glvar, &normMats[0], arraySize);
+
+				m_drawer->m_r->getFrameAllocator().deleteArray(
+					normMats, arraySize);
 			}
 			else
 			{
@@ -174,6 +181,8 @@ public:
 				}
 
 				uniSet(glvar, &bmvp[0], arraySize);
+
+				m_drawer->m_r->getFrameAllocator().deleteArray(bmvp, arraySize);
 			}
 			break;
 		case BuildinMaterialVariableId::MAX_TESS_LEVEL:
