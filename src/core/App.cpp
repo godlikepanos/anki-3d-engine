@@ -211,9 +211,9 @@ Error App::createInternal(const ConfigSet& config_,
 	ANKI_CHECK(m_input->create(m_window));
 
 	//
-	// Threadpool
+	// ThreadPool
 	//
-	m_threadpool = m_heapAlloc.newInstance<Threadpool>(getCpuCoresCount());
+	m_threadpool = m_heapAlloc.newInstance<ThreadPool>(getCpuCoresCount());
 
 	//
 	// Graphics API

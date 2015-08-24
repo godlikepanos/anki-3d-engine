@@ -137,6 +137,52 @@ static const aiNode* findNodeWithName(
 }
 
 //==============================================================================
+static std::vector<std::string> tokenize(const std::string &source)
+{
+	const char *delimiter = " ";
+	bool keepEmpty = false;
+	std::vector<std::string> results;
+
+	size_t prev = 0;
+	size_t next = 0;
+
+	while((next = source.find_first_of(delimiter, prev)) != std::string::npos)
+	{
+		if(keepEmpty || (next - prev != 0))
+		{
+			results.push_back(source.substr(prev, next - prev));
+		}
+
+		prev = next + 1;
+	}
+
+	if(prev < source.size())
+	{
+		results.push_back(source.substr(prev));
+	}
+
+	return results;
+}
+
+//==============================================================================
+template<int N, typename Arr>
+static void stringToFloatArray(const std::string& in, Arr& out)
+{
+	std::vector<std::string> tokens = tokenize(in);
+	if(tokens.size() != N)
+	{
+		ERROR("Failed to parse %s", in.c_str());
+	}
+
+	int count = 0;
+	for(const std::string& s : tokens)
+	{
+		out[count] = std::stof(s);
+		++count;
+	}
+}
+
+//==============================================================================
 // Exporter                                                                    =
 //==============================================================================
 
@@ -727,7 +773,8 @@ void Exporter::exportLight(const aiLight& light)
 
 	// Colors
 	//aiColor3D linear = computeLightColor(light.mColorDiffuse);
-	aiColor3D linear = light.mColorDiffuse;
+	aiVector3D linear(light.mColorDiffuse[0], light.mColorDiffuse[1],
+		light.mColorDiffuse[2]);
 	file << "lcomp:setDiffuseColor(Vec4.new("
 		<< linear[0] << ", "
 		<< linear[1] << ", "
@@ -735,7 +782,11 @@ void Exporter::exportLight(const aiLight& light)
 		<< "1))\n";
 
 	//linear = computeLightColor(light.mColorSpecular);
-	linear = light.mColorSpecular;
+	if(light.mProperties.find("specular_color") != light.mProperties.end())
+	{
+		stringToFloatArray<3>(light.mProperties.at("specular_color"), linear);
+	}
+
 	file << "lcomp:setSpecularColor(Vec4.new("
 		<< linear[0] << ", "
 		<< linear[1] << ", "
@@ -796,19 +847,28 @@ void Exporter::exportLight(const aiLight& light)
 	writeNodeTransform("node", node->mTransformation * rot);
 
 	// Extra
-	if(light.mShadow)
+	if(light.mProperties.find("shadow") != light.mProperties.end())
 	{
-		file << "lcomp:setShadowEnabled(1)\n";
+		if(light.mProperties.at("shadow") == "true")
+		{
+			file << "lcomp:setShadowEnabled(1)\n";
+		}
+		else
+		{
+			file << "lcomp:setShadowEnabled(0)\n";
+		}
 	}
 
-	if(light.mLensFlare)
+	if(light.mProperties.find("lens_flare") != light.mProperties.end())
 	{
-		file << "node:loadLensFlare(\"" << light.mLensFlare << "\")\n";
+		file << "node:loadLensFlare(\"" << light.mProperties.at("lens_flare")
+			<< "\")\n";
 	}
 
 	bool lfCompRetrieved = false;
 
-	if(light.mLensFlareFirstSpriteSize != aiVector3D(0, 0, 0))
+	if(light.mProperties.find("lens_flare_first_sprite_size")
+		!= light.mProperties.end())
 	{
 		if(!lfCompRetrieved)
 		{
@@ -817,12 +877,14 @@ void Exporter::exportLight(const aiLight& light)
 			lfCompRetrieved = true;
 		}
 
+		aiVector3D vec;
+		stringToFloatArray<2>(
+			light.mProperties.at("lens_flare_first_sprite_size"), vec);
 		file << "lfcomp:setFirstFlareSize(Vec2.new("
-			<< light.mLensFlareFirstSpriteSize[0] << ", "
-			<< light.mLensFlareFirstSpriteSize[1] << "))\n";
+			<< vec[0] << ", " << vec[1] << "))\n";
 	}
 
-	if(light.mLensFlareColor != aiColor4D(0, 0, 0, 0))
+	if(light.mProperties.find("lens_flare_color") != light.mProperties.end())
 	{
 		if(!lfCompRetrieved)
 		{
@@ -831,11 +893,13 @@ void Exporter::exportLight(const aiLight& light)
 			lfCompRetrieved = true;
 		}
 
+		aiVector3D vec;
+		stringToFloatArray<4>(light.mProperties.at("lens_flare_color"), vec);
 		file << "lfcomp:setColorMultiplier(Vec4.new("
-			<< light.mLensFlareColor.r << ", "
-			<< light.mLensFlareColor.g << ", "
-			<< light.mLensFlareColor.b << ", "
-			<< light.mLensFlareColor.a << "))\n";
+			<< vec[0] << ", "
+			<< vec[1] << ", "
+			<< vec[2] << ", "
+			<< vec[3] << "))\n";
 	}
 }
 

@@ -42,7 +42,7 @@ public:
 		AllocAlignedCallback allocCb,
 		void* allocCbData,
 		U32 frameAllocatorSize,
-		Threadpool* threadpool,
+		ThreadPool* threadpool,
 		ResourceManager* resources,
 		Input* input,
 		const Timestamp* globalTimestamp);
@@ -111,7 +111,7 @@ public:
 		return m_events;
 	}
 
-	Threadpool& _getThreadpool()
+	ThreadPool& _getThreadPool()
 	{
 		return *m_threadpool;
 	}
@@ -194,7 +194,7 @@ private:
 	Timestamp m_timestamp = 0; ///< Cached timestamp
 
 	// Sub-systems
-	Threadpool* m_threadpool = nullptr;
+	ThreadPool* m_threadpool = nullptr;
 	ResourceManager* m_resources = nullptr;
 	GrManager* m_gr = nullptr;
 	PhysicsWorld* m_physics = nullptr;

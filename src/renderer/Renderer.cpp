@@ -30,7 +30,7 @@ Renderer::~Renderer()
 
 //==============================================================================
 Error Renderer::init(
-	Threadpool* threadpool,
+	ThreadPool* threadpool,
 	ResourceManager* resources,
 	GrManager* gl,
 	HeapAllocator<U8> alloc,

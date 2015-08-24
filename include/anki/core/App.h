@@ -22,7 +22,7 @@ extern android_app* gAndroidApp;
 
 // Forward
 class ConfigSet;
-class Threadpool;
+class ThreadPool;
 class NativeWindow;
 class Input;
 class GrManager;
@@ -79,7 +79,7 @@ public:
 		return m_allocCbData;
 	}
 
-	Threadpool& getThreadpool()
+	ThreadPool& getThreadPool()
 	{
 		return *m_threadpool;
 	}
@@ -156,7 +156,7 @@ private:
 
 	// Misc
 	Timestamp m_globalTimestamp = 0;
-	Threadpool* m_threadpool = nullptr;
+	ThreadPool* m_threadpool = nullptr;
 	String m_settingsDir; ///< The path that holds the configuration
 	String m_cacheDir; ///< This is used as a cache
 	F32 m_timerTick;

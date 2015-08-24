@@ -60,7 +60,7 @@ public:
 	SpinLock m_lock;
 
 	// Data per thread but that can be accessed by all threads
-	Array<VisibilityTestResults*, Threadpool::MAX_THREADS> m_testResults;
+	Array<VisibilityTestResults*, ThreadPool::MAX_THREADS> m_testResults;
 
 	VisibilityShared(U threadCount)
 		: m_barrier(threadCount)
@@ -70,7 +70,7 @@ public:
 };
 
 /// Task.
-class VisibilityTestTask: public Threadpool::Task
+class VisibilityTestTask: public ThreadPool::Task
 {
 public:
 	VisibilityShared* m_shared;
@@ -440,14 +440,14 @@ void VisibilityTestResults::moveBack(
 Error doVisibilityTests(SceneNode& fsn, SceneGraph& scene, MainRenderer& r)
 {
 	// Do the tests in parallel
-	Threadpool& threadPool = scene._getThreadpool();
+	ThreadPool& threadPool = scene._getThreadPool();
 
 	VisibilityShared shared(threadPool.getThreadsCount());
 	shared.m_scene = &scene;
 	shared.m_frustumsList.pushBack(
 		scene.getFrameAllocator(), &fsn.getComponent<FrustumComponent>());
 
-	Array<VisibilityTestTask, Threadpool::MAX_THREADS> tasks;
+	Array<VisibilityTestTask, ThreadPool::MAX_THREADS> tasks;
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
 		tasks[i].m_shared = &shared;

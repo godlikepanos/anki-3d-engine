@@ -112,7 +112,7 @@ public:
 };
 
 /// Write the lights to the GPU buffers.
-class WriteLightsTask: public Threadpool::Task
+class WriteLightsTask: public ThreadPool::Task
 {
 public:
 	TaskCommonData* m_data = nullptr;
@@ -311,7 +311,7 @@ Error Is::initInternal(const ConfigSet& config)
 	//
 	// Misc
 	//
-	Threadpool& threadPool = m_r->getThreadpool();
+	ThreadPool& threadPool = m_r->getThreadPool();
 	m_barrier = getAllocator().newInstance<Barrier>(
 		threadPool.getThreadsCount());
 
@@ -321,7 +321,7 @@ Error Is::initInternal(const ConfigSet& config)
 //==============================================================================
 Error Is::lightPass(CommandBufferPtr& cmdBuff)
 {
-	Threadpool& threadPool = m_r->getThreadpool();
+	ThreadPool& threadPool = m_r->getThreadPool();
 	m_cam = &m_r->getActiveCamera();
 	FrustumComponent& fr = m_cam->getComponent<FrustumComponent>();
 	VisibilityTestResults& vi = fr.getVisibilityTestResults();
@@ -395,7 +395,7 @@ Error Is::lightPass(CommandBufferPtr& cmdBuff)
 	//
 	// Write the lights and tiles UBOs
 	//
-	Array<WriteLightsTask, Threadpool::MAX_THREADS> tasks;
+	Array<WriteLightsTask, ThreadPool::MAX_THREADS> tasks;
 	TaskCommonData taskData;
 	memset(&taskData, 0, sizeof(taskData));
 
@@ -507,7 +507,7 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 
 	// Iterate lights and bin them
 	PtrSize start, end;
-	Threadpool::Task::choseStartEnd(
+	ThreadPool::Task::choseStartEnd(
 		threadId, threadsCount, ligthsCount, start, end);
 
 	for(U64 i = start; i < end; i++)
@@ -553,7 +553,7 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 	const UVec2 tilesCount2d = m_r->getTilesCount();
 	U tilesCount = tilesCount2d.x() * tilesCount2d.y();
 
-	Threadpool::Task::choseStartEnd(
+	ThreadPool::Task::choseStartEnd(
 		threadId, threadsCount, tilesCount, start, end);
 
 	// Run per tile

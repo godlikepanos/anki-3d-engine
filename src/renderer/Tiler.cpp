@@ -18,7 +18,7 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-class UpdatePlanesPerspectiveCameraTask: public Threadpool::Task
+class UpdatePlanesPerspectiveCameraTask: public ThreadPool::Task
 {
 public:
 	Tiler* m_tiler = nullptr;
@@ -192,7 +192,7 @@ void Tiler::updateTiles(Camera& cam)
 	//
 	// Issue parallel jobs
 	//
-	Array<UpdatePlanesPerspectiveCameraTask, Threadpool::MAX_THREADS> jobs;
+	Array<UpdatePlanesPerspectiveCameraTask, ThreadPool::MAX_THREADS> jobs;
 	const FrustumComponent& camFr = cam.getComponent<FrustumComponent>();
 	U32 camTimestamp = camFr.getTimestamp();
 
@@ -202,7 +202,7 @@ void Tiler::updateTiles(Camera& cam)
 	Bool frustumChanged =
 		camTimestamp >= m_planes4UpdateTimestamp || m_prevCam != &cam;
 
-	Threadpool& threadPool = m_r->getThreadpool();
+	ThreadPool& threadPool = m_r->getThreadPool();
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
 		jobs[i].m_tiler = this;
@@ -600,7 +600,7 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 		// Re-calculate the planes in local space
 
 		// First the top looking planes
-		Threadpool::Task::choseStartEnd(
+		ThreadPool::Task::choseStartEnd(
 			threadId, threadsCount, m_r->getTilesCount().y() - 1,
 			start, end);
 
@@ -612,7 +612,7 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 		}
 
 		// Then the right looking planes
-		Threadpool::Task::choseStartEnd(
+		ThreadPool::Task::choseStartEnd(
 			threadId, threadsCount, m_r->getTilesCount().x() - 1,
 			start, end);
 
@@ -628,7 +628,7 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 		// Only transform planes
 
 		// First the top looking planes
-		Threadpool::Task::choseStartEnd(
+		ThreadPool::Task::choseStartEnd(
 			threadId, threadsCount, m_r->getTilesCount().y() - 1,
 			start, end);
 
@@ -638,7 +638,7 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 		}
 
 		// Then the right looking planes
-		Threadpool::Task::choseStartEnd(
+		ThreadPool::Task::choseStartEnd(
 			threadId, threadsCount, m_r->getTilesCount().x() - 1,
 			start, end);
 
@@ -654,7 +654,7 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 		const U tilesCount =
 			m_r->getTilesCount().x() * m_r->getTilesCount().y();
 
-		Threadpool::Task::choseStartEnd(
+		ThreadPool::Task::choseStartEnd(
 			threadId, threadsCount, tilesCount, start, end);
 
 		// Setup pixel buffer

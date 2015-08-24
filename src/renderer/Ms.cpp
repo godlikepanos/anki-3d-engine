@@ -93,7 +93,7 @@ Error Ms::initInternal(const ConfigSet& initializer)
 	ANKI_CHECK(createRt(1, 1));
 
 	m_secondLevelCmdbs.create(
-		getAllocator(), m_r->getThreadpool().getThreadsCount());
+		getAllocator(), m_r->getThreadPool().getThreadsCount());
 
 	return ErrorCode::NONE;
 }
@@ -109,7 +109,7 @@ Error Ms::run(CommandBufferPtr& cmdb)
 	}
 
 	// Create 2nd level cmdbs
-	U threadCount = m_r->getThreadpool().getThreadsCount();
+	U threadCount = m_r->getThreadPool().getThreadsCount();
 	GrManager& gr = m_r->getGrManager();
 	for(U i = 0; i < threadCount; ++i)
 	{

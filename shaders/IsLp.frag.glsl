@@ -138,7 +138,7 @@ vec3 computeSpecularColorBrdf(
 {
 	vec3 h = normalize(l + v);
 
-	// Fresnel
+	// Fresnel (Schlick)
 	float loh = max(EPSILON, dot(l, h));
 	vec3 f = specCol + (1.0 - specCol) * pow((1.0 + EPSILON - loh), 5.0);
 	//float f = specColor + (1.0 - specColor)

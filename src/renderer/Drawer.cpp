@@ -224,7 +224,7 @@ void SetupRenderableVariableVisitor::uniSet<TextureResourcePtr>(
 }
 
 /// Task to render a single node.
-class RenderTask: public Threadpool::Task
+class RenderTask: public ThreadPool::Task
 {
 public:
 	RenderableDrawer* m_drawer;
@@ -302,14 +302,14 @@ Error RenderableDrawer::render(FrustumComponent& frc,
 	RenderingStage stage, Pass pass, SArray<CommandBufferPtr>& cmdbs)
 {
 	Error err = ErrorCode::NONE;
-	ANKI_ASSERT(cmdbs.getSize() == m_r->getThreadpool().getThreadsCount() ||
+	ANKI_ASSERT(cmdbs.getSize() == m_r->getThreadPool().getThreadsCount() ||
 		cmdbs.getSize() == 1);
 
 	if(cmdbs.getSize() > 1)
 	{
-		Array<RenderTask, Threadpool::MAX_THREADS> tasks;
+		Array<RenderTask, ThreadPool::MAX_THREADS> tasks;
 
-		Threadpool& threadPool = m_r->getThreadpool();
+		ThreadPool& threadPool = m_r->getThreadPool();
 		for(U i = 0; i < threadPool.getThreadsCount(); i++)
 		{
 			auto& task = tasks[i];

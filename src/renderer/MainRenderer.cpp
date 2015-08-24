@@ -33,7 +33,7 @@ MainRenderer::~MainRenderer()
 
 //==============================================================================
 Error MainRenderer::create(
-	Threadpool* threadpool,
+	ThreadPool* threadpool,
 	ResourceManager* resources,
 	GrManager* gr,
 	AllocAlignedCallback allocCb,

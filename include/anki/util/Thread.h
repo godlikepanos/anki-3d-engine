@@ -15,7 +15,7 @@
 namespace anki {
 
 // Forward
-class Threadpool;
+class ThreadPool;
 
 /// @addtogroup util_thread
 /// @{
@@ -190,19 +190,19 @@ private:
 
 // Forward
 namespace detail {
-class ThreadpoolThread;
+class ThreadPoolThread;
 }
 
 /// Parallel task dispatcher. You feed it with tasks and sends them for
 /// execution in parallel and then waits for all to finish
-class Threadpool: public NonCopyable
+class ThreadPool: public NonCopyable
 {
-	friend class detail::ThreadpoolThread;
+	friend class detail::ThreadPoolThread;
 
 public:
 	static constexpr U MAX_THREADS = 32; ///< An absolute limit
 
-	/// A task assignment for a Threadpool
+	/// A task assignment for a ThreadPool
 	class Task
 	{
 	public:
@@ -223,9 +223,9 @@ public:
 	};
 
 	/// Constructor
-	Threadpool(U32 threadsCount);
+	ThreadPool(U32 threadsCount);
 
-	~Threadpool();
+	~ThreadPool();
 
 	/// Assign a task to a working thread
 	/// @param slot The slot of the task
@@ -250,7 +250,7 @@ public:
 	}
 
 private:
-	/// A dummy task for a Threadpool
+	/// A dummy task for a ThreadPool
 	class DummyTask: public Task
 	{
 	public:
@@ -264,7 +264,7 @@ private:
 
 #if !ANKI_DISABLE_THREADPOOL_THREADING
 	Barrier m_barrier; ///< Synchronization barrier
-	detail::ThreadpoolThread* m_threads = nullptr; ///< Threads array
+	detail::ThreadPoolThread* m_threads = nullptr; ///< Threads array
 #endif
 	U8 m_threadsCount = 0;
 	Error m_err = ErrorCode::NONE;

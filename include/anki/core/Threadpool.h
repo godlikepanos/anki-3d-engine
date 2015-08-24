@@ -12,7 +12,7 @@
 namespace anki {
 
 /// Singleton
-typedef Singleton<Threadpool> ThreadpoolSingleton;
+typedef Singleton<ThreadPool> ThreadPoolSingleton;
 
 } // end namespace anki
 

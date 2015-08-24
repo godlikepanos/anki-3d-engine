@@ -29,7 +29,7 @@ public:
 	~MainRenderer();
 
 	ANKI_USE_RESULT Error create(
-		Threadpool* threadpool,
+		ThreadPool* threadpool,
 		ResourceManager* resources,
 		GrManager* gl,
 		AllocAlignedCallback allocCb,

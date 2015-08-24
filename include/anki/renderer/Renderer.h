@@ -99,7 +99,7 @@ public:
 
 	/// Init the renderer.
 	ANKI_USE_RESULT Error init(
-		Threadpool* threadpool,
+		ThreadPool* threadpool,
 		ResourceManager* resources,
 		GrManager* gr,
 		HeapAllocator<U8> alloc,
@@ -265,7 +265,7 @@ anki_internal:
 		return *m_resources;
 	}
 
-	Threadpool& getThreadpool()
+	ThreadPool& getThreadPool()
 	{
 		return *m_threadpool;
 	}
@@ -276,7 +276,7 @@ anki_internal:
 	}
 
 private:
-	Threadpool* m_threadpool;
+	ThreadPool* m_threadpool;
 	ResourceManager* m_resources;
 	GrManager* m_gr;
 	HeapAllocator<U8> m_alloc;

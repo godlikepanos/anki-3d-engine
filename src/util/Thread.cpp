@@ -14,27 +14,27 @@
 namespace anki {
 
 //==============================================================================
-// ThreadpoolThread                                                            =
+// ThreadPoolThread                                                            =
 //==============================================================================
 
 #if !ANKI_DISABLE_THREADPOOL_THREADING
 
 namespace detail {
 
-/// The thread that executes a Threadpool::Task
-class ThreadpoolThread
+/// The thread that executes a ThreadPool::Task
+class ThreadPoolThread
 {
 public:
 	U32 m_id; ///< An ID
 	Thread m_thread; ///< Runs the workingFunc
 	Mutex m_mutex; ///< Protect the task
 	ConditionVariable m_condVar; ///< To wake up the thread
-	Threadpool::Task* m_task; ///< Its NULL if there is no pending task
-	Threadpool* m_threadpool;
+	ThreadPool::Task* m_task; ///< Its NULL if there is no pending task
+	ThreadPool* m_threadpool;
 	Bool8 m_quit = false;
 
 	/// Constructor
-	ThreadpoolThread(U32 id, Threadpool* threadpool)
+	ThreadPoolThread(U32 id, ThreadPool* threadpool)
 		: m_id(id)
 		, m_thread("anki_threadpool")
 		, m_task(nullptr)
@@ -45,7 +45,7 @@ public:
 	}
 
 	/// Assign new task to the thread
-	void assignNewTask(Threadpool::Task* task)
+	void assignNewTask(ThreadPool::Task* task)
 	{
 		m_mutex.lock();
 		ANKI_ASSERT(m_task == nullptr && "Probably forgot to wait for tasks");
@@ -58,8 +58,8 @@ private:
 	/// Thread callaback
 	static Error threadCallback(Thread::Info& info)
 	{
-		ThreadpoolThread& self =
-			*reinterpret_cast<ThreadpoolThread*>(info.m_userData);
+		ThreadPoolThread& self =
+			*reinterpret_cast<ThreadPoolThread*>(info.m_userData);
 		Barrier& barrier = self.m_threadpool->m_barrier;
 		Mutex& mtx = self.m_mutex;
 		const PtrSize threadCount = self.m_threadpool->getThreadsCount();
@@ -67,7 +67,7 @@ private:
 
 		while(!quit)
 		{
-			Threadpool::Task* task;
+			ThreadPool::Task* task;
 
 			// Wait for something
 			{
@@ -104,14 +104,14 @@ private:
 #endif
 
 //==============================================================================
-// Threadpool                                                                  =
+// ThreadPool                                                                  =
 //==============================================================================
 
 //==============================================================================
-Threadpool::DummyTask Threadpool::m_dummyTask;
+ThreadPool::DummyTask ThreadPool::m_dummyTask;
 
 //==============================================================================
-Threadpool::Threadpool(U32 threadsCount)
+ThreadPool::ThreadPool(U32 threadsCount)
 #if !ANKI_DISABLE_THREADPOOL_THREADING
 	: m_barrier(threadsCount + 1)
 #endif
@@ -120,10 +120,10 @@ Threadpool::Threadpool(U32 threadsCount)
 	ANKI_ASSERT(m_threadsCount <= MAX_THREADS && m_threadsCount > 0);
 
 #if ANKI_DISABLE_THREADPOOL_THREADING
-	ANKI_LOGW("Threadpool works in synchronous mode");
+	ANKI_LOGW("ThreadPool works in synchronous mode");
 #else
-	m_threads = reinterpret_cast<detail::ThreadpoolThread*>(
-		malloc(sizeof(detail::ThreadpoolThread) * m_threadsCount));
+	m_threads = reinterpret_cast<detail::ThreadPoolThread*>(
+		malloc(sizeof(detail::ThreadPoolThread) * m_threadsCount));
 
 	if(m_threads == nullptr)
 	{
@@ -132,21 +132,21 @@ Threadpool::Threadpool(U32 threadsCount)
 
 	while(threadsCount-- != 0)
 	{
-		::new(&m_threads[threadsCount]) detail::ThreadpoolThread(
+		::new(&m_threads[threadsCount]) detail::ThreadPoolThread(
 			threadsCount, this);
 	}
 #endif
 }
 
 //==============================================================================
-Threadpool::~Threadpool()
+ThreadPool::~ThreadPool()
 {
 #if !ANKI_DISABLE_THREADPOOL_THREADING
 	// Terminate threads
 	U count = m_threadsCount;
 	while(count-- != 0)
 	{
-		detail::ThreadpoolThread& thread = m_threads[count];
+		detail::ThreadPoolThread& thread = m_threads[count];
 
 		thread.m_quit = true;
 		thread.assignNewTask(&m_dummyTask); // Wake it
@@ -159,7 +159,7 @@ Threadpool::~Threadpool()
 	{
 		Error err = m_threads[m_threadsCount].m_thread.join();
 		(void)err;
-		m_threads[m_threadsCount].~ThreadpoolThread();
+		m_threads[m_threadsCount].~ThreadPoolThread();
 	}
 
 	if(m_threads)
@@ -170,7 +170,7 @@ Threadpool::~Threadpool()
 }
 
 //==============================================================================
-void Threadpool::assignNewTask(U32 slot, Task* task)
+void ThreadPool::assignNewTask(U32 slot, Task* task)
 {
 	ANKI_ASSERT(slot < getThreadsCount());
 	if(task == nullptr)

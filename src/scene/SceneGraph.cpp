@@ -21,7 +21,7 @@ namespace anki {
 namespace {
 
 //==============================================================================
-class UpdateSceneNodesTask: public Threadpool::Task
+class UpdateSceneNodesTask: public ThreadPool::Task
 {
 public:
 	SceneGraph* m_scene = nullptr;
@@ -117,7 +117,7 @@ Error SceneGraph::create(
 	AllocAlignedCallback allocCb,
 	void* allocCbData,
 	U32 frameAllocatorSize,
-	Threadpool* threadpool,
+	ThreadPool* threadpool,
 	ResourceManager* resources,
 	Input* input,
 	const Timestamp* globalTimestamp)
@@ -268,7 +268,7 @@ Error SceneGraph::update(F32 prevUpdateTime, F32 crntTime,
 	m_events.deleteEventsMarkedForDeletion();
 	deleteNodesMarkedForDeletion();
 
-	Threadpool& threadPool = *m_threadpool;
+	ThreadPool& threadPool = *m_threadpool;
 	(void)threadPool;
 
 	// Update
@@ -278,7 +278,7 @@ Error SceneGraph::update(F32 prevUpdateTime, F32 crntTime,
 	if(err) return err;
 
 	// Then the rest
-	Array<UpdateSceneNodesTask, Threadpool::MAX_THREADS> jobs2;
+	Array<UpdateSceneNodesTask, ThreadPool::MAX_THREADS> jobs2;
 
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
