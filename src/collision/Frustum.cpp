@@ -114,7 +114,7 @@ void Frustum::update() const
 void Frustum::updateInternal()
 {
 	ANKI_ASSERT(m_frustumDirty);
-	m_frustumDirty = false;	
+	m_frustumDirty = false;
 	recalculate();
 
 	// Transform derived
@@ -205,50 +205,37 @@ void PerspectiveFrustum::recalculate()
 }
 
 //==============================================================================
+void PerspectiveFrustum::calculateProjectionMatrix(F32 fovX, F32 fovY, F32 near,
+	F32 far, Mat4& proj)
+{
+	ANKI_ASSERT(fovX != 0.0 && fovY != 0.0 && near != 0.0 && far != 0.0);
+	F32 g = near - far;
+
+	F32 f = 1.0 / tan(fovY * 0.5); // f = cot(m_fovY/2)
+
+	proj(0, 0) = f * fovY / fovX; // = f/aspectRatio;
+	proj(0, 1) = 0.0;
+	proj(0, 2) = 0.0;
+	proj(0, 3) = 0.0;
+	proj(1, 0) = 0.0;
+	proj(1, 1) = f;
+	proj(1, 2) = 0.0;
+	proj(1, 3) = 0.0;
+	proj(2, 0) = 0.0;
+	proj(2, 1) = 0.0;
+	proj(2, 2) = (far + near) / g;
+	proj(2, 3) = (2.0 * far * near) / g;
+	proj(3, 0) = 0.0;
+	proj(3, 1) = 0.0;
+	proj(3, 2) = -1.0;
+	proj(3, 3) = 0.0;
+}
+
+//==============================================================================
 Mat4 PerspectiveFrustum::calculateProjectionMatrix() const
 {
-	ANKI_ASSERT(m_fovX != 0.0 && m_fovY != 0.0 && m_near != 0.0);
 	Mat4 projectionMat;
-	F32 g = m_near - m_far;
-
-#if 0
-	projectionMat(0, 0) = 1.0 / tanf(m_fovX * 0.5);
-	projectionMat(0, 1) = 0.0;
-	projectionMat(0, 2) = 0.0;
-	projectionMat(0, 3) = 0.0;
-	projectionMat(1, 0) = 0.0;
-	projectionMat(1, 1) = 1.0 / tanf(m_fovY * 0.5);
-	projectionMat(1, 2) = 0.0;
-	projectionMat(1, 3) = 0.0;
-	projectionMat(2, 0) = 0.0;
-	projectionMat(2, 1) = 0.0;
-	projectionMat(2, 2) = (m_far + m_near) / g;
-	projectionMat(2, 3) = (2.0 * m_far * m_near) / g;
-	projectionMat(3, 0) = 0.0;
-	projectionMat(3, 1) = 0.0;
-	projectionMat(3, 2) = -1.0;
-	projectionMat(3, 3) = 0.0;
-#else
-	float f = 1.0 / tan(m_fovY * 0.5); // f = cot(m_fovY/2)
-
-	projectionMat(0, 0) = f * m_fovY / m_fovX; // = f/aspectRatio;
-	projectionMat(0, 1) = 0.0;
-	projectionMat(0, 2) = 0.0;
-	projectionMat(0, 3) = 0.0;
-	projectionMat(1, 0) = 0.0;
-	projectionMat(1, 1) = f;
-	projectionMat(1, 2) = 0.0;
-	projectionMat(1, 3) = 0.0;
-	projectionMat(2, 0) = 0.0;
-	projectionMat(2, 1) = 0.0;
-	projectionMat(2, 2) = (m_far + m_near) / g;
-	projectionMat(2, 3) = (2.0 * m_far * m_near) / g;
-	projectionMat(3, 0) = 0.0;
-	projectionMat(3, 1) = 0.0;
-	projectionMat(3, 2) = -1.0;
-	projectionMat(3, 3) = 0.0;
-#endif
-
+	calculateProjectionMatrix(m_fovX, m_fovY, m_near, m_far, projectionMat);
 	return projectionMat;
 }
 
@@ -280,7 +267,7 @@ OrthographicFrustum& OrthographicFrustum::operator=(
 //==============================================================================
 Mat4 OrthographicFrustum::calculateProjectionMatrix() const
 {
-	ANKI_ASSERT(m_right != 0.0 && m_left != 0.0 && m_top != 0.0 
+	ANKI_ASSERT(m_right != 0.0 && m_left != 0.0 && m_top != 0.0
 		&& m_bottom != 0.0 && m_near != 0.0 && m_far != 0.0);
 	F32 difx = m_right - m_left;
 	F32 dify = m_top - m_bottom;
@@ -314,23 +301,23 @@ Mat4 OrthographicFrustum::calculateProjectionMatrix() const
 void OrthographicFrustum::recalculate()
 {
 	// Planes
-	m_planesL[(U)PlaneType::LEFT] = 
+	m_planesL[(U)PlaneType::LEFT] =
 		Plane(Vec4(1.0, 0.0, 0.0, 0.0), m_left);
-	m_planesL[(U)PlaneType::RIGHT] = 
+	m_planesL[(U)PlaneType::RIGHT] =
 		Plane(Vec4(-1.0, 0.0, 0.0, 0.0), -m_right);
 
-	m_planesL[(U)PlaneType::NEAR] = 
+	m_planesL[(U)PlaneType::NEAR] =
 		Plane(Vec4(0.0, 0.0, -1.0, 0.0), m_near);
-	m_planesL[(U)PlaneType::FAR] = 
+	m_planesL[(U)PlaneType::FAR] =
 		Plane(Vec4(0.0, 0.0, 1.0, 0.0), -m_far);
-	m_planesL[(U)PlaneType::TOP] = 
+	m_planesL[(U)PlaneType::TOP] =
 		Plane(Vec4(0.0, -1.0, 0.0, 0.0), -m_top);
-	m_planesL[(U)PlaneType::BOTTOM] = 
+	m_planesL[(U)PlaneType::BOTTOM] =
 		Plane(Vec4(0.0, 1.0, 0.0, 0.0), m_bottom);
 
 	// OBB
-	Vec4 c((m_right + m_left) * 0.5, 
-		(m_top + m_bottom) * 0.5, 
+	Vec4 c((m_right + m_left) * 0.5,
+		(m_top + m_bottom) * 0.5,
 		-(m_far + m_near) * 0.5,
 		0.0);
 	Vec4 e = Vec4(m_right, m_top, -m_far, 0.0) - c;

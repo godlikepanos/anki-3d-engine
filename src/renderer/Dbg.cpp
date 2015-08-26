@@ -19,6 +19,7 @@
 #include "anki/collision/ConvexHullShape.h"
 #include "anki/util/Rtti.h"
 #include "anki/Ui.h" /// XXX
+#include "anki/scene/Clusterer.h" /// XXX
 
 namespace anki {
 
@@ -125,7 +126,7 @@ Error Dbg::run(CommandBufferPtr& cmdb)
 		phyd.drawWorld(scene._getPhysicsWorld());
 	}
 
-#if 1
+#if 0
 	{
 		static Bool firstTime = true;
 		static UiInterfaceImpl* interface;
@@ -149,6 +150,18 @@ Error Dbg::run(CommandBufferPtr& cmdb)
 		canvas->paint();
 		interface->endRendering();
 		cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
+	}
+#endif
+
+#if 1
+	{
+		Clusterer c(getAllocator());
+
+		c.init(2, 2);
+		c.prepare(&camFr, SArray<Vec2>());
+
+		CollisionDebugDrawer cd(m_drawer);
+		camFr.getFrustum().accept(cd);
 	}
 #endif
 

@@ -62,14 +62,18 @@ public:
 		m_clusters.destroy(m_alloc);
 	}
 
-	void init(U tileCountX, U tileCountY);
+	void init(U tileCountX, U tileCountY)
+	{
+		m_counts[0] = tileCountX;
+		m_counts[1] = tileCountY;
+	}
 
 	void initTempTestResults(const GenericMemoryPoolAllocator<U8>& alloc,
 		ClustererTestResult& rez) const;
 
 	void prepare(FrustumComponent* frc, const SArray<Vec2>& minMaxTileDepth);
 
-private:
+public:
 	class Cluster
 	{
 	public:
@@ -83,14 +87,25 @@ private:
 	/// [z][y][x]
 	DArray<Cluster> m_clusters;
 
-	FrustumComponent* m_frc = nullptr;
-	Timestamp m_frcTimestamp = 0;
+	F32 m_near = 0.0;
+	F32 m_far = 0.0;
+	F32 m_fovY = 0.0;
+	F32 m_fovX = 0.0;
 
 	Cluster& cluster(U x, U y, U z)
 	{
+		ANKI_ASSERT(x < m_counts[0]);
+		ANKI_ASSERT(y < m_counts[1]);
+		ANKI_ASSERT(z < m_counts[2]);
 		return m_clusters[m_counts[0] * (z * m_counts[1] + y) + x];
 	}
+
+	F32 calcNear(U k) const;
+
+	void initClusters();
 };
 /// @}
 
 } // end namespace anki
+
+

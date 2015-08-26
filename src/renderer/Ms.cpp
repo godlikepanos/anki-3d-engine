@@ -24,7 +24,9 @@ const PixelFormat Ms::DEPTH_RT_PIXEL_FORMAT(
 
 //==============================================================================
 Ms::~Ms()
-{}
+{
+	m_secondLevelCmdbs.destroy(getAllocator());
+}
 
 //==============================================================================
 Error Ms::createRt(U32 index, U32 samples)
@@ -127,7 +129,6 @@ Error Ms::run(CommandBufferPtr& cmdb)
 	FrustumComponent& frc = cam.getComponent<FrustumComponent>();
 	SArray<CommandBufferPtr> cmdbs(
 		&m_secondLevelCmdbs[0], m_secondLevelCmdbs.getSize());
-	//SArray<CommandBufferPtr> cmdbs(&cmdb, 1);
 	ANKI_CHECK(m_r->getSceneDrawer().render(
 		frc, RenderingStage::MATERIAL, Pass::MS_FS, cmdbs));
 
@@ -148,6 +149,7 @@ Error Ms::run(CommandBufferPtr& cmdb)
 		if(!m_secondLevelCmdbs[i]->isEmpty())
 		{
 			cmdb->pushSecondLevelCommandBuffer(m_secondLevelCmdbs[i]);
+			m_secondLevelCmdbs[i].reset(nullptr);
 		}
 	}
 

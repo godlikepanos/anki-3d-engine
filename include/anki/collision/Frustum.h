@@ -216,6 +216,9 @@ public:
 	/// Implements Frustum::calculateProjectionMatrix
 	Mat4 calculateProjectionMatrix() const override;
 
+	static void calculateProjectionMatrix(F32 fovX, F32 fovY, F32 near, F32 far,
+		Mat4& proj);
+
 private:
 	/// @name Viewing variables
 	/// @{
@@ -260,7 +263,7 @@ public:
 	/// Set all
 	OrthographicFrustum(F32 left, F32 right, F32 near,
 		F32 far, F32 top, F32 bottom)
-	:	OrthographicFrustum()
+		: OrthographicFrustum()
 	{
 		setAll(left, right, near, far, top, bottom);
 	}
