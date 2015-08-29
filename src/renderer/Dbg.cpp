@@ -89,7 +89,7 @@ Error Dbg::run(CommandBufferPtr& cmdb)
 	m_drawer->prepareDraw(cmdb);
 	m_drawer->setViewProjectionMatrix(camFr.getViewProjectionMatrix());
 	m_drawer->setModelMatrix(Mat4::getIdentity());
-	m_drawer->drawGrid();
+	//m_drawer->drawGrid();
 
 	SceneGraph& scene = cam.getSceneGraph();
 
@@ -118,7 +118,7 @@ Error Dbg::run(CommandBufferPtr& cmdb)
 
 	(void)err;
 
-	if(1)
+	if(0)
 	{
 		PhysicsDebugDrawer phyd(m_drawer);
 
@@ -155,13 +155,48 @@ Error Dbg::run(CommandBufferPtr& cmdb)
 
 #if 1
 	{
+		Vec4 origin(0.0);
+
+		PerspectiveFrustum fr;
+		const F32 ang = 55.0;
+		fr.setAll(toRad(ang) * m_r->getAspectRatio(), toRad(ang), 1.0, 250.0);
+		fr.resetTransform(Transform(origin, Mat3x4::getIdentity(), 1.0));
+
 		Clusterer c(getAllocator());
 
-		c.init(2, 2);
-		c.prepare(&camFr, SArray<Vec2>());
+		c.init(m_r->getWidth() / 64, m_r->getHeight() / 64);
+		c.prepare(fr, SArray<Vec2>());
 
 		CollisionDebugDrawer cd(m_drawer);
-		camFr.getFrustum().accept(cd);
+		m_drawer->setColor(Vec4(1.0, 0.0, 0.0, 1.0));
+		fr.accept(cd);
+		/*m_drawer->begin(PrimitiveTopology::LINES);
+		m_drawer->pushBackVertex(Vec3(0.f));
+		m_drawer->pushBackVertex(Vec3(0.f, 0.f, -10.f));
+		m_drawer->end();*/
+
+
+		U k = 0;
+		while(0)
+		{
+			F32 neark = c.calcNear(k);
+			if(neark >= c.m_far)
+			{
+				break;
+			}
+			Plane p;
+			p.setNormal(Vec4(0.0, 0.0, -1.0, 0.0));
+			p.setOffset(neark);
+			p.accept(cd);
+			++k;
+		}
+
+		m_drawer->setColor(Vec4(1.0));
+		for(U i = 0; i < c.m_clusters.getSize(); ++i)
+		{
+			Aabb box(c.m_clusters[i].m_min.xyz0(), c.m_clusters[i].m_max.xyz0());
+			box.accept(cd);
+		}
 	}
 #endif
 

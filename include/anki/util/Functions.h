@@ -122,6 +122,14 @@ inline Bool isAligned(PtrSize alignment, Type value)
 	return ((PtrSize)value % alignment) == 0;
 }
 
+template<typename T>
+inline void swapValues(T& a, T& b)
+{
+	T tmp = b;
+	b = a;
+	a = tmp;
+}
+
 /// A simple template trick to remove the pointer from one type
 ///
 /// Example:

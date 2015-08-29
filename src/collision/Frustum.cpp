@@ -171,49 +171,45 @@ void PerspectiveFrustum::recalculate()
 
 	sinCos(getPi<F32>() + m_fovX / 2.0, s, c);
 	// right
-	m_planesL[(U)PlaneType::RIGHT] = Plane(Vec4(c, 0.0, s, 0.0), 0.0);
+	m_planesL[PlaneType::RIGHT] = Plane(Vec4(c, 0.0, s, 0.0), 0.0);
 	// left
-	m_planesL[(U)PlaneType::LEFT] = Plane(Vec4(-c, 0.0, s, 0.0), 0.0);
+	m_planesL[PlaneType::LEFT] = Plane(Vec4(-c, 0.0, s, 0.0), 0.0);
 
 	sinCos((getPi<F32>() + m_fovY) * 0.5, s, c);
 	// bottom
-	m_planesL[(U)PlaneType::BOTTOM] = Plane(Vec4(0.0, s, c, 0.0), 0.0);
+	m_planesL[PlaneType::BOTTOM] = Plane(Vec4(0.0, s, c, 0.0), 0.0);
 	// top
-	m_planesL[(U)PlaneType::TOP] = Plane(Vec4(0.0, -s, c, 0.0), 0.0);
+	m_planesL[PlaneType::TOP] = Plane(Vec4(0.0, -s, c, 0.0), 0.0);
 
 	// near
-	m_planesL[(U)PlaneType::NEAR] = Plane(Vec4(0.0, 0.0, -1.0, 0.0), m_near);
+	m_planesL[PlaneType::NEAR] = Plane(Vec4(0.0, 0.0, -1.0, 0.0), m_near);
 	// far
-	m_planesL[(U)PlaneType::FAR] = Plane(Vec4(0.0, 0.0, 1.0, 0.0), -m_far);
+	m_planesL[PlaneType::FAR] = Plane(Vec4(0.0, 0.0, 1.0, 0.0), -m_far);
 
 	// Points
 	//
-	Vec4 eye = Vec4(0.0, 0.0, -m_near, 0.0);
-	for(Vec4& p : m_pointsL)
-	{
-		p = eye;
-	}
 
-	F32 x = m_far / tan((getPi<F32>() - m_fovX) / 2.0);
+	// This came from unprojecting. It works, don't touch it
+	F32 x = m_far * tan(m_fovY / 2.0) * m_fovX / m_fovY;
 	F32 y = tan(m_fovY / 2.0) * m_far;
 	F32 z = -m_far;
 
-	m_pointsL[0] += Vec4(x, y, z - m_near, 0.0); // top right
-	m_pointsL[1] += Vec4(-x, y, z - m_near, 0.0); // top left
-	m_pointsL[2] += Vec4(-x, -y, z - m_near, 0.0); // bot left
-	m_pointsL[3] += Vec4(x, -y, z - m_near, 0.0); // bot right
+	m_pointsL[0] = Vec4(x, y, z, 0.0); // top right
+	m_pointsL[1] = Vec4(-x, y, z, 0.0); // top left
+	m_pointsL[2] = Vec4(-x, -y, z, 0.0); // bot left
+	m_pointsL[3] = Vec4(x, -y, z, 0.0); // bot right
 }
 
 //==============================================================================
 void PerspectiveFrustum::calculateProjectionMatrix(F32 fovX, F32 fovY, F32 near,
 	F32 far, Mat4& proj)
 {
-	ANKI_ASSERT(fovX != 0.0 && fovY != 0.0 && near != 0.0 && far != 0.0);
+	ANKI_ASSERT(fovX > 0.0 && fovY > 0.0 && near > 0.0 && far > 0.0);
 	F32 g = near - far;
 
-	F32 f = 1.0 / tan(fovY * 0.5); // f = cot(m_fovY/2)
+	F32 f = 1.0 / tan(fovY / 2.0); // f = cot(m_fovY/2)
 
-	proj(0, 0) = f * fovY / fovX; // = f/aspectRatio;
+	proj(0, 0) = f * (fovY / fovX); // = f/aspectRatio;
 	proj(0, 1) = 0.0;
 	proj(0, 2) = 0.0;
 	proj(0, 3) = 0.0;

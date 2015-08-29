@@ -43,7 +43,7 @@ App* app;
 ModelNode* horse;
 PerspectiveCamera* cam;
 
-#define PLAYER 1
+#define PLAYER 0
 #define MOUSE 1
 
 Bool profile = false;
@@ -80,16 +80,18 @@ Error init()
 		toRad(ang), 0.2, 200.0);
 	scene.setActiveCamera(cam);
 
-	cam->getComponent<MoveComponent>().
+	/*cam->getComponent<MoveComponent>().
 		setLocalTransform(Transform(Vec4(0.0),
 		Mat3x4(Euler(toRad(0.0), toRad(180.0), toRad(0.0))),
-		1.0));
+		1.0));*/
 
 #if !PLAYER
-	cam->getComponent<MoveComponent>().
-		setLocalTransform(Transform(Vec4(147.392776, -10.132728, 16.607138, 0.0),
+	/*cam->getComponent<MoveComponent>().
+		setLocalTransform(Transform(
+		//Vec4(147.392776, -10.132728, 16.607138, 0.0),
+		Vec4(0.0),
 		Mat3x4(Euler(toRad(0.0), toRad(90.0), toRad(0.0))),
-		1.0));
+		1.0));*/
 #endif
 
 	// lights

@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_COLLISION_AABB_H
-#define ANKI_COLLISION_AABB_H
+#pragma once
 
 #include "anki/collision/ConvexShape.h"
 #include "anki/math/Vec3.h"
@@ -26,19 +25,19 @@ public:
 	}
 
 	Aabb()
-	:	Base(Type::AABB)
+		: Base(Type::AABB)
 	{}
 
 	Aabb(const Vec4& min, const Vec4& max)
-	:	Base(Type::AABB),
-		m_min(min),
-		m_max(max)
+		: Base(Type::AABB)
+		, m_min(min)
+		, m_max(max)
 	{
 		ANKI_ASSERT(m_min.xyz() < m_max.xyz());
 	}
 
 	Aabb(const Aabb& b)
-	:	Base(Type::AABB)
+		: Base(Type::AABB)
 	{
 		operator=(b);
 	}
@@ -126,4 +125,3 @@ private:
 
 } // end namespace anki
 
-#endif

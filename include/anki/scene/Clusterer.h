@@ -12,7 +12,7 @@
 
 namespace anki {
 
-class FrustumComponent;
+class PerspectiveFrustum;
 
 /// @addtogroup scene
 /// @{
@@ -51,7 +51,8 @@ private:
 class Clusterer
 {
 public:
-	static const U TILE_SIZE = 64;
+	static constexpr U TILE_SIZE = 64;
+	static constexpr F32 NEAR_BIAS = 2.0;
 
 	Clusterer(const GenericMemoryPoolAllocator<U8>& alloc)
 		: m_alloc(alloc)
@@ -68,16 +69,22 @@ public:
 		m_counts[1] = tileCountY;
 	}
 
+	void prepare(
+		const PerspectiveFrustum& fr, const SArray<Vec2>& minMaxTileDepth);
+
 	void initTempTestResults(const GenericMemoryPoolAllocator<U8>& alloc,
 		ClustererTestResult& rez) const;
 
-	void prepare(FrustumComponent* frc, const SArray<Vec2>& minMaxTileDepth);
+	void bin(const CollisionShape& cs, const Aabb& aabb,
+		ClustererTestResult& rez) const;
 
 public:
 	class Cluster
 	{
 	public:
-		Aabb m_box;
+		// Intead of Aabb use minimum size variables
+		Vec3 m_min;
+		Vec3 m_max;
 	};
 
 	GenericMemoryPoolAllocator<U8> m_alloc;
@@ -91,6 +98,8 @@ public:
 	F32 m_far = 0.0;
 	F32 m_fovY = 0.0;
 	F32 m_fovX = 0.0;
+
+	F32 m_calcNearOpt = 0.0;
 
 	Cluster& cluster(U x, U y, U z)
 	{

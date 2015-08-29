@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_COLLISION_PLANE_H
-#define ANKI_COLLISION_PLANE_H
+#pragma once
 
 #include "anki/collision/CollisionShape.h"
 #include "anki/Math.h"
@@ -27,12 +26,12 @@ public:
 
 	/// Default constructor
 	Plane()
-	:	CollisionShape(Type::PLANE)
+		: CollisionShape(Type::PLANE)
 	{}
 
 	/// Copy constructor
 	Plane(const Plane& b)
-	:	CollisionShape(Type::PLANE)
+		: CollisionShape(Type::PLANE)
 	{
 		operator=(b);
 	}
@@ -42,14 +41,14 @@ public:
 
 	/// @see setFrom3Points
 	Plane(const Vec3& p0, const Vec3& p1, const Vec3& p2)
-	:	CollisionShape(Type::PLANE)
+		: CollisionShape(Type::PLANE)
 	{
 		setFrom3Points(p0, p1, p2);
 	}
 
 	/// @see setFromPlaneEquation
 	Plane(F32 a, F32 b, F32 c, F32 d)
-	:	CollisionShape(Type::PLANE)
+		: CollisionShape(Type::PLANE)
 	{
 		setFromPlaneEquation(a, b, c, d);
 	}
@@ -136,6 +135,25 @@ public:
 		return point - m_normal * test(point);
 	}
 
+	/// Find intersection with a vector.
+	Bool intersectVector(const Vec4& p, Vec4& intersection) const
+	{
+		ANKI_ASSERT(p.w() == 0.0);
+		Vec4 pp = p.getNormalized();
+		F32 dot = pp.dot(m_normal);
+
+		if(!isZero(dot))
+		{
+			F32 s = m_offset / dot;
+			intersection = pp * s;
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
 	/// Test a CollisionShape
 	template<typename T>
 	F32 testShape(const T& x) const
@@ -160,4 +178,3 @@ private:
 
 } // end namespace anki
 
-#endif

@@ -231,7 +231,7 @@ void DebugDrawer::drawGrid()
 	Vec4 col2(1.0, 0.0, 0.0, 1.0);
 
 	const F32 SPACE = 1.0; // space between lines
-	const U NUM = 57;  // lines number. must be odd
+	const I NUM = 57;  // lines number. must be odd
 
 	const F32 GRID_HALF_SIZE = ((NUM - 1) * SPACE / 2);
 
@@ -239,7 +239,7 @@ void DebugDrawer::drawGrid()
 
 	begin(PrimitiveTopology::LINES);
 
-	for(U x = - NUM / 2 * SPACE; x < NUM / 2 * SPACE; x += SPACE)
+	for(I x = - NUM / 2 * SPACE; x < NUM / 2 * SPACE; x += SPACE)
 	{
 		setColor(col0);
 

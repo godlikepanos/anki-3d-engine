@@ -32,16 +32,18 @@ public:
 
 	Value m_data[N];
 
-	Reference operator[](const PtrSize n)
+	template<typename Y>
+	Reference operator[](const Y n)
 	{
-		ANKI_ASSERT(n < N);
-		return m_data[n];
+		ANKI_ASSERT(static_cast<U>(n) < N);
+		return m_data[static_cast<U>(n)];
 	}
 
-	ConstReference operator[](const PtrSize n) const
+	template<typename Y>
+	ConstReference operator[](const Y n) const
 	{
-		ANKI_ASSERT(n < N);
-		return m_data[n];
+		ANKI_ASSERT(static_cast<U>(n) < N);
+		return m_data[static_cast<U>(n)];
 	}
 
 	Iterator getBegin()

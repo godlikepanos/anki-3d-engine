@@ -20,24 +20,15 @@ void Clusterer::initTempTestResults(const GenericMemoryPoolAllocator<U8>& alloc,
 //==============================================================================
 F32 Clusterer::calcNear(U k) const
 {
-	F32 Sy = m_counts[1];
-	F32 theta = m_fovY / 2.0;
-	F32 a = 1.0 + (4.0 * tan(theta)) / Sy;
-	F32 neark = m_near * pow(a, F32(k));
+	F32 neark = m_near * pow(m_calcNearOpt, F32(k));
 	return neark;
 }
 
 //==============================================================================
-void Clusterer::prepare(FrustumComponent* frc,
+void Clusterer::prepare(const PerspectiveFrustum& fr,
 	const SArray<Vec2>& minMaxTileDepth)
 {
-	ANKI_ASSERT(frc);
-
 	// Get some things
-	ANKI_ASSERT(frc->getFrustum().getType() == Frustum::Type::PERSPECTIVE);
-	const PerspectiveFrustum& fr =
-		static_cast<const PerspectiveFrustum&>(frc->getFrustum());
-
 	F32 near = fr.getNear();
 	F32 far = fr.getFar();
 	F32 fovY = fr.getFovY();
@@ -54,31 +45,44 @@ void Clusterer::prepare(FrustumComponent* frc,
 	m_near = near;
 	m_far = far;
 
+	{
+		F32 Sy = m_counts[1];
+		F32 theta = m_fovY / 2.0;
+		m_calcNearOpt = 1.0 + (2.0 * tan(theta)) / Sy;
+	}
+
 	// Calc depth
 	U k = 1;
 	while(1)
 	{
-		F32 neark = calcNear(k);
+		F32 neark = calcNear(k++);
 		if(neark >= far)
 		{
 			break;
 		}
-		++k;
 	}
-	m_counts[2] = k + 1;
+	m_counts[2] = k - 1;
 
-	// Alloc clusters
+	// Alloc and init clusters
 	U clusterCount = m_counts[0] * m_counts[1] * m_counts[2];
 	if(clusterCount != m_clusters.getSize())
 	{
 		m_clusters.resize(m_alloc, clusterCount);
 	}
+
+	initClusters();
 }
 
 //==============================================================================
 void Clusterer::initClusters()
 {
-	for(U z = 0; z < U(m_counts[2] - 1); ++z)
+	Mat4 proj;
+	PerspectiveFrustum::calculateProjectionMatrix(m_fovX, m_fovY, m_near, m_far,
+		proj);
+	Mat4 invProj = proj.getInverse();
+
+	// For every claster
+	for(U z = 0; z < m_counts[2]; ++z)
 	{
 		for(U y = 0; y < m_counts[1]; ++y)
 		{
@@ -87,12 +91,10 @@ void Clusterer::initClusters()
 				// Compute projection matrix
 				F32 near = calcNear(z);
 				F32 far = calcNear(z + 1);
-
-				Mat4 proj;
-				PerspectiveFrustum::calculateProjectionMatrix(m_fovX, m_fovY,
-					near, far, proj);
-
-				Mat4 invProj = proj.getInverse();
+				if(far > m_far)
+				{
+					far = m_far;
+				}
 
 				// Project some points
 				Vec2 tileMin, tileMax;
@@ -104,13 +106,19 @@ void Clusterer::initClusters()
 				tileMin = tileMin * 2.0 - 1.0;
 				tileMax = tileMax * 2.0 - 1.0;
 
-				Aabb box;
-				Vec4 a = invProj * Vec4(tileMin, 0.0, 1.0);
-				box.setMin(a.xyz0());
-				a = invProj * Vec4(tileMax, 1.0, 1.0);
-				box.setMax(a.xyz0());
+				Vec4 min = invProj * Vec4(tileMin, 0.0, 1.0);
+				min.w() = 0.0;
+				Plane p(Vec4(0.0, 0.0, -1.0, 0.0), near);
+				p.intersectVector(min, min);
+				min.z() = -far;
 
-				cluster(x, y, z).m_box = box;
+				Vec4 max = invProj * Vec4(tileMax, 0.0, 1.0);
+				max.w() = 0.0;
+				p = Plane(Vec4(0.0, 0.0, -1.0, 0.0), near);
+				p.intersectVector(max, max);
+
+				cluster(x, y, z).m_min = min.xyz();
+				cluster(x, y, z).m_max = max.xyz();
 			}
 		}
 	}
