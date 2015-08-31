@@ -63,10 +63,11 @@ public:
 		m_clusters.destroy(m_alloc);
 	}
 
-	void init(U tileCountX, U tileCountY)
+	void init(U clusterCountX, U clusterCountY, U clusterCountZ)
 	{
-		m_counts[0] = tileCountX;
-		m_counts[1] = tileCountY;
+		m_counts[0] = clusterCountX;
+		m_counts[1] = clusterCountY;
+		m_counts[2] = clusterCountZ;
 	}
 
 	void prepare(
@@ -75,8 +76,9 @@ public:
 	void initTempTestResults(const GenericMemoryPoolAllocator<U8>& alloc,
 		ClustererTestResult& rez) const;
 
-	void bin(const CollisionShape& cs, const Aabb& aabb,
-		ClustererTestResult& rez) const;
+	/// Bin collision shape.
+	/// @param[in] cs The collision shape should be in view space.
+	void bin(const CollisionShape& cs, ClustererTestResult& rez) const;
 
 public:
 	class Cluster
@@ -100,6 +102,7 @@ public:
 	F32 m_fovX = 0.0;
 
 	F32 m_calcNearOpt = 0.0;
+	Mat4 m_projMat;
 
 	Cluster& cluster(U x, U y, U z)
 	{
@@ -109,9 +112,27 @@ public:
 		return m_clusters[m_counts[0] * (z * m_counts[1] + y) + x];
 	}
 
+	const Cluster& cluster(U x, U y, U z) const
+	{
+		ANKI_ASSERT(x < m_counts[0]);
+		ANKI_ASSERT(y < m_counts[1]);
+		ANKI_ASSERT(z < m_counts[2]);
+		return m_clusters[m_counts[0] * (z * m_counts[1] + y) + x];
+	}
+
 	F32 calcNear(U k) const;
+	U calcK(F32 zVspace) const;
 
 	void initClusters();
+
+	void binSphere(const Sphere& s, ClustererTestResult& rez) const;
+
+	void binGeneric(const CollisionShape& cs, ClustererTestResult& rez) const;
+
+	void findTilesFromAabb(const Aabb& box, U& tileBeginX, U& tileBeginY,
+		U& tileEndX, U& tileEndY) const;
+
+	void findSplitsFromAabb(const Aabb& box, U& zFrom, U& zTo) const;
 };
 /// @}
 

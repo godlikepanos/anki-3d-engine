@@ -159,12 +159,14 @@ Error Dbg::run(CommandBufferPtr& cmdb)
 
 		PerspectiveFrustum fr;
 		const F32 ang = 55.0;
-		fr.setAll(toRad(ang) * m_r->getAspectRatio(), toRad(ang), 1.0, 250.0);
+		F32 far = 200.0;
+		fr.setAll(toRad(ang) * m_r->getAspectRatio(), toRad(ang), 1.0, far);
 		fr.resetTransform(Transform(origin, Mat3x4::getIdentity(), 1.0));
 
 		Clusterer c(getAllocator());
 
-		c.init(m_r->getWidth() / 64, m_r->getHeight() / 64);
+		c.init(m_r->getWidth() / 64, m_r->getHeight() / 64, 20);
+		//c.init(5, 3, 10);
 		c.prepare(fr, SArray<Vec2>());
 
 		CollisionDebugDrawer cd(m_drawer);
@@ -191,11 +193,45 @@ Error Dbg::run(CommandBufferPtr& cmdb)
 			++k;
 		}
 
+		SceneNode& lnode = scene.findSceneNode("spot0");
+		SpatialComponent& sp = lnode.getComponent<SpatialComponent>();
+
+		m_drawer->setColor(Vec4(0.0, 0.0, 1.0, 1.0));
+		sp.getSpatialCollisionShape().accept(cd);
+
+		ClustererTestResult rez;
+		c.initTempTestResults(getAllocator(), rez);
+
+		c.bin(sp.getSpatialCollisionShape(), rez);
+
 		m_drawer->setColor(Vec4(1.0));
-		for(U i = 0; i < c.m_clusters.getSize(); ++i)
+		for(U z = 0; z < c.m_counts[2]; ++z)
 		{
-			Aabb box(c.m_clusters[i].m_min.xyz0(), c.m_clusters[i].m_max.xyz0());
-			box.accept(cd);
+			for(U y = 0; y < c.m_counts[1]; ++y)
+			{
+				for(U x = 0; x < c.m_counts[0]; ++x)
+				{
+					auto& cluster = c.cluster(x, y, z);
+					Aabb box(cluster.m_min.xyz0(), cluster.m_max.xyz0());
+					m_drawer->setColor(Vec4(1.0));
+
+					Bool found = false;
+					auto it = rez.getClustersBegin();
+					auto end = rez.getClustersEnd();
+					for(; it != end; ++it)
+					{
+						if((*it)[0] == x && (*it)[1] == y && (*it)[2] == z)
+						{
+							m_drawer->setColor(Vec4(1.0, 0.0, 0.0, 1.0));
+							found = true;
+							break;
+						}
+					}
+
+					if(found)
+					box.accept(cd);
+				}
+			}
 		}
 	}
 #endif

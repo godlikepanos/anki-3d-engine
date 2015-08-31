@@ -188,7 +188,10 @@ public:
 	/// Set all the parameters and recalculate the planes and shape
 	void setAll(F32 fovX, F32 fovY, F32 near, F32 far)
 	{
+		ANKI_ASSERT(near > 0.0);
 		ANKI_ASSERT(far > near);
+		ANKI_ASSERT(fovX <= getPi<F32>());
+		ANKI_ASSERT(fovY <= getPi<F32>());
 		m_fovX = fovX;
 		m_fovY = fovY,
 		m_near = near;

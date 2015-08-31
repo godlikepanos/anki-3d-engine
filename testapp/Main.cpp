@@ -44,7 +44,7 @@ ModelNode* horse;
 PerspectiveCamera* cam;
 
 #define PLAYER 0
-#define MOUSE 1
+#define MOUSE 0
 
 Bool profile = false;
 
@@ -94,34 +94,7 @@ Error init()
 		1.0));*/
 #endif
 
-	// lights
-#if 0
-	Vec3 lpos(-24.0, 0.1, -10.0);
-	for(int i = 0; i < 50; i++)
-	{
-		for(int j = 0; j < 10; j++)
-		{
-			std::string name = "plight" + std::to_string(i) + std::to_string(j);
-
-			PointLight* point;
-			err = scene.newSceneNode<PointLight>(name.c_str(), point);
-			if(err) return err;
-			point->setRadius(0.5);
-			point->setDiffuseColor(Vec4(randFloat(6.0) - 2.0,
-				randFloat(6.0) - 2.0, randFloat(6.0) - 2.0, 0.0));
-			point->setSpecularColor(Vec4(randFloat(6.0) - 3.0,
-				randFloat(6.0) - 3.0, randFloat(6.0) - 3.0, 0.0));
-			point->setLocalOrigin(lpos.xyz0());
-
-			lpos.z() += 2.0;
-		}
-
-		lpos.x() += 0.93;
-		lpos.z() = -10;
-	}
-#endif
-
-#if 0
+#if 1
 	PointLight* plight;
 	scene.newSceneNode<PointLight>("spot0", plight);
 
@@ -129,12 +102,25 @@ Error init()
 	lightc->setDiffuseColor(Vec4(0.0, 30.0, 0.0, 1.0));
 	lightc->setSpecularColor(Vec4(1.2));
 	lightc->setDistance(5.0);
-	lightc->setShadowEnabled(true);
 
 	move = plight->tryGetComponent<MoveComponent>();
-	move->setLocalTransform(Transform(Vec4(-11.0, 2.5, 12.0, 0.0),
+	move->setLocalTransform(Transform(Vec4(0.0, 0.5, 0.0, 0.0),
 		Mat3x4::getIdentity(), 1.0));
+#endif
+#if 0
+	SpotLight* light;
+	scene.newSceneNode<SpotLight>("spot0", light);
 
+	lightc = light->tryGetComponent<LightComponent>();
+	lightc->setOuterAngle(toRad(45.0));
+	lightc->setInnerAngle(toRad(15.0));
+	lightc->setDiffuseColor(Vec4(0.0, 30.0, 0.0, 1.0));
+	lightc->setSpecularColor(Vec4(1.2));
+	lightc->setDistance(5.0);
+
+	move = light->tryGetComponent<MoveComponent>();
+	move->setLocalTransform(Transform(Vec4(0.0, 0.5, 0.0, 0.0),
+		Mat3x4::getIdentity(), 1.0));
 #endif
 
 #if 0

@@ -40,28 +40,28 @@ public:
 
 	/// @name Constructors
 	/// @{
-	explicit TVec3()
-	:	Base()
+	TVec3()
+		: Base()
 	{}
 
 	TVec3(const TVec3& b)
-	:	Base(b)
+		: Base(b)
 	{}
 
-	explicit TVec3(const T x_, const T y_, const T z_)
-	:	Base(x_, y_, z_)
+	TVec3(const T x_, const T y_, const T z_)
+		: Base(x_, y_, z_)
 	{}
 
 	explicit TVec3(const T f)
-	:	Base(f)
+		: Base(f)
 	{}
 
 	explicit TVec3(const T arr[])
-	:	Base(arr)
+		: Base(arr)
 	{}
 
-	explicit TVec3(const TVec2<T>& v, const T z_)
-	:	Base(v.x(), v.y(), z_)
+	TVec3(const TVec2<T>& v, const T z_)
+		: Base(v.x(), v.y(), z_)
 	{}
 	/// @}
 

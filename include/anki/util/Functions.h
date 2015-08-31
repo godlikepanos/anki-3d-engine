@@ -51,6 +51,7 @@ inline T max(T a, T b)
 template<typename T>
 inline T clamp(T v, T minv, T maxv)
 {
+	ANKI_ASSERT(minv < maxv);
 	return min<T>(max<T>(minv, v), maxv);
 }
 
