@@ -153,7 +153,7 @@ Error Dbg::run(CommandBufferPtr& cmdb)
 	}
 #endif
 
-#if 1
+#if 0
 	{
 		Vec4 origin(0.0);
 

@@ -14,6 +14,8 @@
 #include "anki/util/File.h"
 #include "anki/util/Filesystem.h"
 #include "anki/misc/Xml.h"
+#include "anki/renderer/Renderer.h"
+#include "anki/renderer/Ms.h"
 #include <algorithm>
 #include <sstream>
 
@@ -28,6 +30,7 @@ class UpdateTexturesVisitor
 {
 public:
 	ResourceGroupInitializer* m_init = nullptr;
+	ResourceManager* m_manager = nullptr;
 
 	template<typename TMaterialVariableTemplate>
 	Error visit(const TMaterialVariableTemplate& var)
@@ -43,8 +46,16 @@ Error UpdateTexturesVisitor
 	::visit<MaterialVariableTemplate<TextureResourcePtr>>(
 	const MaterialVariableTemplate<TextureResourcePtr>& var)
 {
-	m_init->m_textures[var.getTextureUnit()].m_texture =
-		(*var.begin())->getGrTexture();
+	if(var.getName() == "uMsDepthMap")
+	{
+		m_init->m_textures[var.getTextureUnit()].m_texture =
+			m_manager->getRenderer().getMs().getDepthRt();
+	}
+	else
+	{
+		m_init->m_textures[var.getTextureUnit()].m_texture =
+			(*var.begin())->getGrTexture();
+	}
 	return ErrorCode::NONE;
 }
 
@@ -457,6 +468,7 @@ void Material::fillResourceGroupInitializer(ResourceGroupInitializer& rcinit)
 {
 	UpdateTexturesVisitor visitor;
 	visitor.m_init = &rcinit;
+	visitor.m_manager = &getManager();
 
 	for(const auto& var : m_vars)
 	{

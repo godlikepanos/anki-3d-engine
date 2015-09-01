@@ -732,10 +732,20 @@ void Exporter::exportModel(const Model& model) const
 	}
 
 	// Write material
-	file << "\t\t\t<material>" << m_rpath
-		<< getMaterialName(getMaterialAt(model.m_materialIndex),
-			model.m_instancesCount)
-		<< ".ankimtl</material>\n";
+	const aiMaterial& mtl = *m_scene->mMaterials[model.m_materialIndex];
+	if(mtl.mAnKiProperties.find("material_override")
+		== mtl.mAnKiProperties.end())
+	{
+		file << "\t\t\t<material>" << m_rpath
+			<< getMaterialName(getMaterialAt(model.m_materialIndex),
+				model.m_instancesCount)
+			<< ".ankimtl</material>\n";
+	}
+	else
+	{
+		file << "\t\t\t<material>"
+			<< mtl.mAnKiProperties.at("material_override") << "</material>\n";
+	}
 
 	// End patches
 	file << "\t\t</modelPatch>\n";

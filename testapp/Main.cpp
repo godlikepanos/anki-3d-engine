@@ -275,8 +275,8 @@ Error init()
 			"models/fog/volumetric_fog_box.ankimdl");
 		MoveComponent& move = fog->getComponent<MoveComponent>();
 		//move.setLocalOrigin(Vec4(10.0, -19.0, 0.0, 0.0));
-		move.setLocalOrigin(Vec4(10.0, -16.5, 0.0, 0.0));
-		move.setLocalScale(20.0);
+		move.setLocalOrigin(Vec4(10.0, -26.5, 0.0, 0.0));
+		move.setLocalScale(100.0);
 	}
 #endif
 

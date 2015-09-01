@@ -285,6 +285,7 @@ Error App::createInternal(const ConfigSet& config_,
 
 	m_resources->_setShadersPrependedSource(
 		m_renderer->getMaterialShaderSource().toCString());
+	m_resources->setRenderer(&m_renderer->getOffscreenRenderer());
 
 	// Scene
 	m_scene = m_heapAlloc.newInstance<SceneGraph>();

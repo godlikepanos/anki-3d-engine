@@ -46,7 +46,7 @@ anki_internal:
 		return m_planes[1].m_rt2;
 	}
 
-	TexturePtr& getDepthRt()
+	TexturePtr getDepthRt() const
 	{
 		return m_planes[1].m_depthRt;
 	}

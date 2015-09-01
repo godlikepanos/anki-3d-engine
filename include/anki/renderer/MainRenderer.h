@@ -50,6 +50,16 @@ public:
 
 	F32 getAspectRatio() const;
 
+	const Renderer& getOffscreenRenderer() const
+	{
+		return *m_r;
+	}
+
+	Renderer& getOffscreenRenderer()
+	{
+		return *m_r;
+	}
+
 private:
 	HeapAllocator<U8> m_alloc;
 	StackAllocator<U8> m_frameAlloc;

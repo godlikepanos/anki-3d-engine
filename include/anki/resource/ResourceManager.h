@@ -19,6 +19,7 @@ class PhysicsWorld;
 class ResourceManager;
 class AsyncLoader;
 class ResourceManagerModel;
+class Renderer;
 
 /// @addtogroup resource
 /// @{
@@ -104,6 +105,9 @@ class ResourceManager:
 	TypeResourceManager<CollisionResource>,
 	TypeResourceManager<GenericResource>
 {
+	template<typename T>
+	friend class ResourcePtrDeleter;
+
 public:
 	class Initializer
 	{
@@ -134,8 +138,7 @@ public:
 	ANKI_USE_RESULT Error loadResourceToCache(
 		ResourcePtr<T>& out, TArgs&&... args);
 
-	/// @privatesection
-	/// @{
+anki_internal:
 	U32 getMaxTextureSize() const
 	{
 		return m_maxTextureSize;
@@ -185,6 +188,17 @@ public:
 		m_shadersPrependedSource.create(m_alloc, cstr);
 	}
 
+	void setRenderer(Renderer* r)
+	{
+		m_r = r;
+	}
+
+	const Renderer& getRenderer() const
+	{
+		ANKI_ASSERT(m_r);
+		return *m_r;
+	}
+
 	const String& _getShadersPrependedSource() const
 	{
 		return m_shadersPrependedSource;
@@ -212,12 +226,12 @@ public:
 	{
 		return *m_asyncLoader;
 	}
-	/// @}
 
 private:
 	GrManager* m_gr = nullptr;
 	PhysicsWorld* m_physics = nullptr;
 	ResourceFilesystem* m_fs = nullptr;
+	Renderer* m_r = nullptr;
 	ResourceAllocator<U8> m_alloc;
 	TempResourceAllocator<U8> m_tmpAlloc;
 	String m_cacheDir;

@@ -204,6 +204,9 @@ public:
 				uniSet(glvar, &tess, 1);
 			}
 			break;
+		case BuildinMaterialVariableId::MS_DEPTH_MAP:
+			// Do nothing
+			break;
 		default:
 			ANKI_ASSERT(0);
 			break;
