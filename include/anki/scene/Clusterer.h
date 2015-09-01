@@ -52,7 +52,6 @@ class Clusterer
 {
 public:
 	static constexpr U TILE_SIZE = 64;
-	static constexpr F32 NEAR_BIAS = 2.0;
 
 	Clusterer(const GenericMemoryPoolAllocator<U8>& alloc)
 		: m_alloc(alloc)
@@ -61,6 +60,7 @@ public:
 	~Clusterer()
 	{
 		m_clusters.destroy(m_alloc);
+		m_splitInfo.destroy(m_alloc);
 	}
 
 	void init(U clusterCountX, U clusterCountY, U clusterCountZ)
@@ -81,6 +81,10 @@ public:
 	void bin(const CollisionShape& cs, ClustererTestResult& rez) const;
 
 public:
+	GenericMemoryPoolAllocator<U8> m_alloc;
+
+	Array<U8, 3> m_counts;
+
 	class Cluster
 	{
 	public:
@@ -89,12 +93,17 @@ public:
 		Vec3 m_max;
 	};
 
-	GenericMemoryPoolAllocator<U8> m_alloc;
-
-	Array<U8, 3> m_counts;
-
 	/// [z][y][x]
 	DArray<Cluster> m_clusters;
+
+	class SplitInfo
+	{
+	public:
+		Vec2 m_xy;
+		Vec2 m_sizes;
+	};
+
+	DArray<SplitInfo> m_splitInfo;
 
 	F32 m_near = 0.0;
 	F32 m_far = 0.0;
@@ -124,13 +133,6 @@ public:
 	U calcK(F32 zVspace) const;
 
 	void initClusters();
-
-	void binSphere(const Sphere& s, ClustererTestResult& rez) const;
-
-	void binGeneric(const CollisionShape& cs, ClustererTestResult& rez) const;
-
-	void findTilesFromAabb(const Aabb& box, U& tileBeginX, U& tileBeginY,
-		U& tileEndX, U& tileEndY) const;
 
 	void findSplitsFromAabb(const Aabb& box, U& zFrom, U& zTo) const;
 };

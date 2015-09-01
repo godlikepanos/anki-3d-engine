@@ -43,8 +43,8 @@ App* app;
 ModelNode* horse;
 PerspectiveCamera* cam;
 
-#define PLAYER 0
-#define MOUSE 0
+#define PLAYER 1
+#define MOUSE 1
 
 Bool profile = false;
 
@@ -80,21 +80,21 @@ Error init()
 		toRad(ang), 0.2, 200.0);
 	scene.setActiveCamera(cam);
 
-	/*cam->getComponent<MoveComponent>().
+	cam->getComponent<MoveComponent>().
 		setLocalTransform(Transform(Vec4(0.0),
 		Mat3x4(Euler(toRad(0.0), toRad(180.0), toRad(0.0))),
-		1.0));*/
+		1.0));
 
 #if !PLAYER
-	/*cam->getComponent<MoveComponent>().
+	cam->getComponent<MoveComponent>().
 		setLocalTransform(Transform(
 		//Vec4(147.392776, -10.132728, 16.607138, 0.0),
 		Vec4(0.0),
 		Mat3x4(Euler(toRad(0.0), toRad(90.0), toRad(0.0))),
-		1.0));*/
+		1.0));
 #endif
 
-#if 1
+#if 0
 	PointLight* plight;
 	scene.newSceneNode<PointLight>("spot0", plight);
 
@@ -465,6 +465,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("is.sm.maxLights", 16);
 	config.set("is.sm.poissonEnabled", true);
 	config.set("is.sm.resolution", 1024);
+	config.set("lf.maxFlares", 32);
 	config.set("pps.enabled", true);
 	config.set("pps.bloom.enabled", true);
 	config.set("pps.bloom.renderingQuality", 0.5);

@@ -176,7 +176,7 @@ void Lf::runOcclusionTests(CommandBufferPtr& cmdb)
 
 		if(vi.getLensFlaresCount() > m_maxFlares)
 		{
-			ANKI_LOGW("Visible flares exceed the limit");
+			ANKI_LOGW("Visible flares exceed the limit. Increase lf.maxFlares");
 		}
 
 		U frame = getGlobalTimestamp() % m_positionsVertBuff.getSize();
