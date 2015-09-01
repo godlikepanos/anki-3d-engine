@@ -494,7 +494,14 @@ Error initSubsystems(int argc, char* argv[])
 	//config.set("maxTextureSize", 256);
 	config.set("fullscreenDesktopResolution", true);
 	config.set("debugContext", false);
-	config.set("dataPaths", "assets");
+	if(getenv("ANKI_DATA_PATH"))
+	{
+		config.set("dataPaths", getenv("ANKI_DATA_PATH"));
+	}
+	else
+	{
+		config.set("dataPaths", "assets:./");
+	}
 	config.set("sceneFrameAllocatorSize", 1024 * 1024 * 10);
 	//config.set("maxTextureSize", 256);
 	//config.set("lodDistance", 3.0);
