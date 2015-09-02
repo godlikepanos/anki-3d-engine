@@ -191,6 +191,8 @@ message("++ Lib install dir: ${LIB_INSTALL_DIR}")
 ################################################################################
 # Thirdparty                                                                   #
 ################################################################################
+include(ExternalProject)
+
 set(ANKI_EXTERN_SUB_DIRS tinyxml2 lua z newton)
 
 if(LINUX OR MACOS OR WINDOWS)
@@ -201,9 +203,8 @@ if(ANKI_BUILD_TOOLS)
 	set(ANKI_EXTERN_SUB_DIRS ${ANKI_EXTERN_SUB_DIRS} assimp)
 endif()
 
+# SDL
 if(${ANKI_WINDOW_BACKEND} STREQUAL "SDL")
-	include(ExternalProject)
-
 	ExternalProject_Add(
 		SDL2_PROJECT
 		DOWNLOAD_COMMAND ""
@@ -220,6 +221,20 @@ if(${ANKI_WINDOW_BACKEND} STREQUAL "SDL")
 else()
 	set(SDL2_INSTALL_DIR "")
 endif()
+
+# freetype
+ExternalProject_Add(
+	FREETYPE_PROJECT
+	DOWNLOAD_COMMAND ""
+	PREFIX "${CMAKE_CURRENT_BINARY_DIR}/freetype_build"
+	SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/freetype"
+	CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/freetype_build -DCMAKE_BUILD_TYPE=Release)
+
+ExternalProject_Get_Property(FREETYPE_PROJECT install_dir)
+set(FREETYPE_INSTALL_DIR ${install_dir})
+add_library(FREETYPE_LIB STATIC IMPORTED)
+set_property(TARGET FREETYPE_LIB PROPERTY IMPORTED_LOCATION ${FREETYPE_INSTALL_DIR}/lib/libfreetype.a)
+add_dependencies(FREETYPE_LIB FREETYPE_PROJECT)
 
 foreach(TMP ${ANKI_EXTERN_SUB_DIRS})
 	add_subdirectory(thirdparty/${TMP})
@@ -271,8 +286,8 @@ CONFIGURE_FILE("include/anki/Config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/anki/C
 INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h" DESTINATION "${INCLUDE_INSTALL_DIR}/anki")
 
 # Include & lib directories
-include_directories("thirdparty/tinyxml2/include" "thirdparty/lua" "thirdparty/z" "thirdparty/bullet"
-	"${SDL2_INSTALL_DIR}/include/SDL2/" "include" "thirdparty/newton/newton" "${CMAKE_CURRENT_BINARY_DIR}")
+include_directories("thirdparty/tinyxml2/include" "thirdparty/lua" "thirdparty/z"
+	"${SDL2_INSTALL_DIR}/include/SDL2/" "${FREETYPE_INSTALL_DIR}/include/freetype2/" "include" "thirdparty/newton/newton" "${CMAKE_CURRENT_BINARY_DIR}")
 
 if(LINUX OR MACOS OR WINDOWS)
 	include_directories("thirdparty/GLEW/include")
@@ -283,9 +298,6 @@ endif()
 if(ANDROID)
 	include_directories("${ANDROID_NDK}/sources/android/native_app_glue")
 endif()
-
-find_package(Freetype REQUIRED)
-include_directories(${FREETYPE_INCLUDE_DIRS})
 
 # AnKi compiler flags (Mainly warnings)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -Wall -W -Wextra -Wstrict-aliasing -Wwrite-strings -Wunused -Wunused-variable -Wno-unused-parameter -Wundef -std=c++11 ")
@@ -312,6 +324,8 @@ if(${ANKI_WINDOW_BACKEND} STREQUAL "SDL")
 	link_directories(${SDL2_INSTALL_DIR}/lib)
 endif()
 
+link_directories(${FREETYPE_INSTALL_DIR}/lib)
+
 # Add anki sub libraries
 set(ANKI_SUB_DIRS core script renderer scene ui event input physics resource misc gr collision math util)
 set(ANKI_LIBS "")
@@ -322,8 +336,8 @@ foreach(TMP ${ANKI_SUB_DIRS})
 endforeach()
 
 add_library(anki src/Dummy.cpp "${_SYS_SRC}")
-add_dependencies(anki SDL2_LIB)
-target_link_libraries(anki ${ANKI_LIBS} ankitinyxml2 ankilua ankiz ankinewton ${ANKI_GPERFTOOLS_LIBS} ${_SYS} SDL2_LIB ${FREETYPE_LIBRARIES})
+add_dependencies(anki SDL2_LIB FREETYPE_LIB)
+target_link_libraries(anki ${ANKI_LIBS} ankitinyxml2 ankilua ankiz ankinewton ${ANKI_GPERFTOOLS_LIBS} ${_SYS} SDL2_LIB FREETYPE_LIB ${FREETYPE_LIBRARIES})
 
 ################################################################################
 # AnKi extra                                                                   #

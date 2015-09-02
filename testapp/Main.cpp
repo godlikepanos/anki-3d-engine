@@ -500,7 +500,7 @@ Error initSubsystems(int argc, char* argv[])
 	}
 	else
 	{
-		config.set("dataPaths", "assets:./");
+		config.set("dataPaths", "assets");
 	}
 	config.set("sceneFrameAllocatorSize", 1024 * 1024 * 10);
 	//config.set("maxTextureSize", 256);
