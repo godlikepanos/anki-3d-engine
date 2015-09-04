@@ -44,7 +44,8 @@ Error MainRenderer::create(
 	ANKI_LOGI("Initializing main renderer");
 
 	m_alloc = HeapAllocator<U8>(allocCb, allocCbUserData);
-	m_frameAlloc = StackAllocator<U8>(allocCb, allocCbUserData, 1024 * 1024);
+	m_frameAlloc = StackAllocator<U8>(allocCb, allocCbUserData,
+		1024 * 1024 * 5);
 
 	// Init default FB
 	m_width = config.getNumber("width");

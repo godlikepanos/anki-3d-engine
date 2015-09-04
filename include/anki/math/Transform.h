@@ -3,14 +3,11 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_MATH_TRANSFORM_H
-#define ANKI_MATH_TRANSFORM_H
+#pragma once
 
 #include "anki/math/CommonIncludes.h"
 
 namespace anki {
-
-#define ANKI_CHECK_W() ANKI_ASSERT(m_origin.w() == 0.0)
 
 /// @addtogroup math
 /// @{
@@ -26,11 +23,11 @@ public:
 	{}
 
 	TTransform(const TTransform& b)
-	:	m_origin(b.m_origin), 
-		m_rotation(b.m_rotation), 
-		m_scale(b.m_scale)
+		: m_origin(b.m_origin)
+		, m_rotation(b.m_rotation)
+		, m_scale(b.m_scale)
 	{
-		ANKI_CHECK_W();
+		checkW();
 	}
 
 	explicit TTransform(const Mat4& m4)
@@ -38,16 +35,16 @@ public:
 		m_rotation = TMat3x4<T>(m4.getRotationPart());
 		m_origin = m4.getTranslationPart().xyz0();
 		m_scale = 1.0;
-		ANKI_CHECK_W();
+		checkW();
 	}
 
-	explicit TTransform(const TVec4<T>& origin, const TMat3x4<T>& rotation,
+	TTransform(const TVec4<T>& origin, const TMat3x4<T>& rotation,
 		const T scale)
-	:	m_origin(origin), 
-		m_rotation(rotation), 
-		m_scale(scale)
+		: m_origin(origin)
+		, m_rotation(rotation)
+		, m_scale(scale)
 	{
-		ANKI_CHECK_W();
+		checkW();
 	}
 	/// @}
 
@@ -66,7 +63,7 @@ public:
 	void setOrigin(const TVec4<T>& o)
 	{
 		m_origin = o;
-		ANKI_CHECK_W();
+		checkW();
 	}
 
 	const TMat3x4<T>& getRotation() const
@@ -107,13 +104,13 @@ public:
 		m_origin = b.m_origin;
 		m_rotation = b.m_rotation;
 		m_scale = b.m_scale;
-		ANKI_CHECK_W();
+		checkW();
 		return *this;
 	}
 
 	Bool operator==(const TTransform& b) const
 	{
-		return m_origin == b.m_origin && m_rotation == b.m_rotation 
+		return m_origin == b.m_origin && m_rotation == b.m_rotation
 			&& m_scale == b.m_scale;
 	}
 
@@ -140,11 +137,11 @@ public:
 	/// @copybrief combineTTransformations
 	TTransform combineTransformations(const TTransform& b) const
 	{
-		ANKI_CHECK_W();
+		checkW();
 		const TTransform& a = *this;
 		TTransform out;
 
-		out.m_origin = 
+		out.m_origin =
 			TVec4<T>(a.m_rotation * (b.m_origin * a.m_scale), 0.0) + a.m_origin;
 
 		out.m_rotation = a.m_rotation.combineTransformations(b.m_rotation);
@@ -156,7 +153,7 @@ public:
 	/// Get the inverse transformation. Its faster that inverting a Mat4
 	TTransform getInverse() const
 	{
-		ANKI_CHECK_W();
+		checkW();
 		TTransform o;
 		o.m_rotation = m_rotation;
 		o.m_rotation.transposeRotationPart();
@@ -175,14 +172,14 @@ public:
 	/// Transform a TVec3
 	TVec3<T> transform(const TVec3<T>& b) const
 	{
-		ANKI_CHECK_W();
+		checkW();
 		return (m_rotation.getRotationPart() * (b * m_scale)) + m_origin.xyz();
 	}
 
 	/// Transform a TVec4. SIMD optimized
 	TVec4<T> transform(const TVec4<T>& b) const
 	{
-		ANKI_CHECK_W();
+		checkW();
 		TVec4<T> out = TVec4<T>(m_rotation * (b * m_scale), 0.0) + m_origin;
 		return out;
 	}
@@ -202,15 +199,16 @@ private:
 	TMat3x4<T> m_rotation; ///< The translation
 	T m_scale; ///< The uniform scaling
 	/// @}
+
+	void checkW() const
+	{
+		ANKI_ASSERT(m_origin.w() == 0.0);
+	}
 };
 
 /// F32 transformation
 typedef TTransform<F32> Transform;
-
 /// @}
-
-#undef ANKI_CHECK_W
 
 } // end namespace anki
 
-#endif

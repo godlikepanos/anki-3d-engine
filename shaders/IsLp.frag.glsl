@@ -16,11 +16,7 @@
 #	define BRDF 1
 #endif
 
-// Representation of a tile
-struct Tile
-{
-	uvec4 offsetCounts; // x:offset y:points_count z:spots_count w:stex_count
-};
+const uint CLUSTER_COUNT_Z = CLUSTER_COUNT / (TILES_X_COUNT * TILES_Y_COUNT);
 
 // The base of all lights
 struct Light
@@ -36,7 +32,7 @@ struct Light
 // Spot light
 struct SpotLight
 {
-	Light lightBase;
+	Light base;
 	vec4 lightDir;
 	vec4 outerCosInnerCos;
 	mat4 texProjectionMat;
@@ -52,14 +48,9 @@ layout(std140, binding = 1) readonly buffer _s1
 	SpotLight u_spotLights[MAX_SPOT_LIGHTS];
 };
 
-layout(std140, binding = 2) readonly buffer _s2
+layout(std430, binding = 3) readonly buffer _s3
 {
-	SpotLight u_spotTexLights[MAX_SPOT_TEX_LIGHTS];
-};
-
-layout(std140, binding = 3) readonly buffer _s3
-{
-	Tile u_tiles[TILES_COUNT];
+	uint u_clusters[CLUSTER_COUNT];
 };
 
 layout(std430, binding = 4) readonly buffer _s5
@@ -91,6 +82,17 @@ vec3 getFragPosVSpace()
 	fragPos.xy = in_projectionParams * fragPos.z;
 
 	return fragPos;
+}
+
+//==============================================================================
+/// Calculate the cluster split
+uint calcK(float zVspace)
+{
+	zVspace = -zVspace;
+	float fk = sqrt((zVspace - u_clustererParams.x) / u_clustererParams.y);
+	uint k = uint(fk);
+	k = min(k, CLUSTER_COUNT_Z);
+	return k;
 }
 
 //==============================================================================
@@ -298,7 +300,7 @@ void main()
 		in_texCoord, diffCol, normal, specCol, specPower);
 
 #if BRDF
-	float a2 = pow(max(EPSILON, specPower), 2.5);
+	float a2 = pow(max(EPSILON, specPower), 2.5); // XXX ?
 #else
 	specPower = max(EPSILON, specPower) * 128.0;
 #endif
@@ -306,12 +308,14 @@ void main()
 	// Ambient color
 	out_color = diffCol * u_sceneAmbientColor.rgb;
 
-	//Tile tile = u_tiles[in_instanceId];
-	#define tile u_tiles[in_instanceId]
+	// Get counts and offsets
+	uint k = calcK(fragPos.z);
+	uint cluster = u_clusters[in_instanceId + k * CLUSTER_COUNT_Z];
+	uint lightOffset = cluster >> 16u;
+	uint pointLightsCount = (cluster >> 8u) & 0xFFu;
+	uint spotLightsCount = cluster & 0xFFu;
 
 	// Point lights
-	uint lightOffset = tile.offsetCounts.x;
-	uint pointLightsCount = tile.offsetCounts.y;
 	for(uint i = 0U; i < pointLightsCount; ++i)
 	{
 		uint lightId = u_lightIndices[lightOffset++];
@@ -320,11 +324,11 @@ void main()
 		LIGHTING_COMMON();
 
 		float shadow = 1.0;
+		float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
 		if(light.diffuseColorShadowmapId.w < 128.0)
 		{
 			shadow = computeShadowFactorOmni(frag2Light,
-				light.diffuseColorShadowmapId.w,
-				-1.0 / light.posRadius.w);
+				shadowmapLayerIdx, -1.0 / light.posRadius.w);
 		}
 
 		out_color += (specC + diffC)
@@ -332,12 +336,11 @@ void main()
 	}
 
 	// Spot lights
-	uint spotLightsCount = tile.offsetCounts.z;
 	for(uint i = 0U; i < spotLightsCount; ++i)
 	{
 		uint lightId = u_lightIndices[lightOffset++];
 		SpotLight slight = u_spotLights[lightId];
-		Light light = slight.lightBase;
+		Light light = slight.base;
 
 		LIGHTING_COMMON();
 
@@ -346,27 +349,13 @@ void main()
 			slight.outerCosInnerCos.y,
 			slight.lightDir.xyz);
 
-		out_color += (diffC + specC) * (att * max(subsurface, lambert) * spot);
-	}
-
-	// Spot lights with shadow
-	uint spotTexLightsCount = tile.offsetCounts.w;
-	for(uint i = 0U; i < spotTexLightsCount; ++i)
-	{
-		uint lightId = u_lightIndices[lightOffset++];
-		SpotLight slight = u_spotTexLights[lightId];
-		Light light = slight.lightBase;
-
-		LIGHTING_COMMON();
-
-		float spot = computeSpotFactor(
-			l, slight.outerCosInnerCos.x,
-			slight.outerCosInnerCos.y,
-			slight.lightDir.xyz);
-
-		float shadowmapLayerId = light.diffuseColorShadowmapId.w;
-		float shadow = computeShadowFactor(slight.texProjectionMat,
-			fragPos, u_spotMapArr, shadowmapLayerId);
+		float shadow = 1.0;
+		float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
+		if(shadowmapLayerIdx < 128.0)
+		{
+			shadow = computeShadowFactor(slight.texProjectionMat,
+				fragPos, u_spotMapArr, shadowmapLayerIdx);
+		}
 
 		out_color += (diffC + specC)
 			* (att * spot * max(subsurface, lambert * shadow));

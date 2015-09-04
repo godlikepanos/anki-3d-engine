@@ -10,6 +10,7 @@
 #include "anki/Math.h"
 #include "anki/Gr.h"
 #include "anki/scene/Forward.h"
+#include "anki/scene/Clusterer.h"
 #include "anki/resource/Forward.h"
 #include "anki/resource/ShaderResource.h"
 #include "anki/core/Timestamp.h"
@@ -120,7 +121,8 @@ public:
 		Array<CommandBufferPtr, RENDERER_COMMAND_BUFFERS_COUNT>& cmdBuff);
 
 anki_internal:
-	const U TILE_SIZE = 64;
+	static const U TILE_SIZE = 64;
+	static const U CLUSTER_SPLIT_COUNT = 12;
 
 	void getOutputFramebuffer(FramebufferPtr& outputFb, U32& width, U32& height)
 	{
@@ -177,19 +179,24 @@ anki_internal:
 		return m_tessellation;
 	}
 
-	const UVec2& getTilesCount() const
+	U getTileCount() const
 	{
-		return m_tilesCount;
+		return m_tileCount;
 	}
 
-	U getTilesCountXY() const
+	const UVec2& getTileCountXY() const
 	{
-		return m_tilesCountXY;
+		return m_tileCountXY;
 	}
 
-	UVec2 getTileSize() const
+	U getClusterCount() const
 	{
-		return UVec2(TILE_SIZE, TILE_SIZE);
+		return m_clusterer.getClusterCount();
+	}
+
+	const Clusterer& getClusterer() const
+	{
+		return m_clusterer;
 	}
 
 	const ShaderPtr& getDrawQuadVertexShader() const
@@ -283,6 +290,8 @@ private:
 	StackAllocator<U8> m_frameAlloc;
 	const Timestamp* m_globalTimestamp = nullptr;
 
+	Clusterer m_clusterer;
+
 	/// @name Rendering stages
 	/// @{
 	UniquePtr<Ms> m_ms; ///< Material rendering stage
@@ -301,8 +310,8 @@ private:
 	U8 m_samples; ///< Number of sample in multisampling
 	Bool8 m_isOffscreen; ///< Is offscreen renderer?
 	Bool8 m_tessellation;
-	UVec2 m_tilesCount;
-	U32 m_tilesCountXY;
+	U32 m_tileCount;
+	UVec2 m_tileCountXY;
 
 	ShaderResourcePtr m_drawQuadVert;
 

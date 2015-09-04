@@ -63,9 +63,12 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_lodDistance = config.getNumber("lodDistance");
 	m_framesNum = 0;
 	m_samples = config.getNumber("samples");
-	m_tilesCount.x() = m_width / TILE_SIZE;
-	m_tilesCount.y() = m_height / TILE_SIZE;
-	m_tilesCountXY = m_tilesCount.x() * m_tilesCount.y();
+	m_tileCountXY.x() = m_width / TILE_SIZE;
+	m_tileCountXY.y() = m_height / TILE_SIZE;
+	m_tileCount = m_tileCountXY.x() * m_tileCountXY.y();
+
+	m_clusterer.init(getAllocator(), m_tileCountXY.x(), m_tileCountXY.y(),
+		CLUSTER_SPLIT_COUNT);
 
 	m_tessellation = config.getNumber("tessellation");
 
@@ -83,13 +86,13 @@ Error Renderer::initInternal(const ConfigSet& config)
 		return ErrorCode::USER_DATA;
 	}
 
-	if(m_width % m_tilesCount.x() != 0)
+	if(m_width % m_tileCountXY.x() != 0)
 	{
 		ANKI_LOGE("Width is not multiple of tile width");
 		return ErrorCode::USER_DATA;
 	}
 
-	if(m_height % m_tilesCount.y() != 0)
+	if(m_height % m_tileCountXY.y() != 0)
 	{
 		ANKI_LOGE("Height is not multiple of tile height");
 		return ErrorCode::USER_DATA;
@@ -140,6 +143,10 @@ Error Renderer::render(SceneNode& frustumableNode,
 		m_projectionParams = frc.getProjectionParameters();
 		m_projectionParamsUpdateTimestamp = getGlobalTimestamp();
 	}
+
+	ANKI_ASSERT(frc.getFrustum().getType() == Frustum::Type::PERSPECTIVE);
+	m_clusterer.prepare(
+		static_cast<const PerspectiveFrustum&>(frc.getFrustum()));
 
 	ANKI_COUNTER_START_TIMER(RENDERER_MS_TIME);
 	ANKI_CHECK(m_ms->run(cmdb[0]));

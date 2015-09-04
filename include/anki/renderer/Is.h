@@ -28,6 +28,7 @@ class MoveComponent;
 class SpatialComponent;
 class FrustumComponent;
 class TaskCommonData;
+class ClustererTestResult;
 
 /// @addtogroup renderer
 /// @{
@@ -99,12 +100,8 @@ private:
 	Array<BufferPtr, MAX_FRAMES_IN_FLIGHT> m_sLightsBuffs;
 	U32 m_sLightsBuffSize = 0;
 
-	/// Contains all the textured spot lights
-	Array<BufferPtr, MAX_FRAMES_IN_FLIGHT> m_stLightsBuffs;
-	U32 m_stLightsBuffSize = 0;
-
-	/// Contains the number of lights per tile
-	Array<BufferPtr, MAX_FRAMES_IN_FLIGHT> m_tilesBuffers;
+	/// Contains the cluster info
+	Array<BufferPtr, MAX_FRAMES_IN_FLIGHT> m_clusterBuffers;
 
 	/// Contains light indices.
 	Array<BufferPtr, MAX_FRAMES_IN_FLIGHT> m_lightIdsBuffers;
@@ -150,9 +147,6 @@ private:
 	/// Prepare GL for rendering
 	void setState(CommandBufferPtr& cmdBuff);
 
-	/// Calculate the size of the tile
-	PtrSize calcTileSize() const;
-
 	void updateCommonBlock(CommandBufferPtr& cmdBuff, FrustumComponent& frc);
 
 	// Binning
@@ -164,7 +158,7 @@ private:
 		const MoveComponent& camMove, const FrustumComponent& camFrc,
 		TaskCommonData& task);
 	void binLight(SpatialComponent& sp, U pos, U lightType,
-		TaskCommonData& task);
+		TaskCommonData& task, ClustererTestResult& testResult);
 };
 
 /// @}

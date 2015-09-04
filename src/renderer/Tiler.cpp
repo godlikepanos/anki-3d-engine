@@ -89,10 +89,10 @@ Error Tiler::initInternal()
 		"#define TILE_SIZE_Y %u\n"
 		"#define TILES_COUNT_X %u\n"
 		"#define TILES_COUNT_Y %u\n",
-		m_r->getTileSize().x(),
-		m_r->getTileSize().y(),
-		m_r->getTilesCount().x(),
-		m_r->getTilesCount().y());
+		Renderer::TILE_SIZE,
+		Renderer::TILE_SIZE,
+		m_r->getTileCountXY().x(),
+		m_r->getTileCountXY().y());
 
 	ANKI_CHECK(getResourceManager().loadResourceToCache(
 		m_shader, "shaders/TilerMinMax.comp.glsl", pps.toCString(), "r_"));
@@ -104,9 +104,9 @@ Error Tiler::initInternal()
 	// Init planes. One plane for each direction, plus near/far plus the world
 	// space of those
 	U planesCount =
-		(m_r->getTilesCount().x() - 1) * 2 // planes J
-		+ (m_r->getTilesCount().y() - 1) * 2  // planes I
-		+ (m_r->getTilesCount().x() * m_r->getTilesCount().y() * 2); // near+far
+		(m_r->getTileCountXY().x() - 1) * 2 // planes J
+		+ (m_r->getTileCountXY().y() - 1) * 2  // planes I
+		+ (m_r->getTileCountXY().x() * m_r->getTileCountXY().y() * 2); // near+far
 
 	m_allPlanes.create(getAllocator(), planesCount);
 
@@ -114,31 +114,31 @@ Error Tiler::initInternal()
 	U count = 0;
 	using S = SArray<Plane>;
 
-	m_planesX = std::move(S(base + count, m_r->getTilesCount().x() - 1));
+	m_planesX = std::move(S(base + count, m_r->getTileCountXY().x() - 1));
 	count += m_planesX.getSize();
 
-	m_planesY = std::move(S(base + count, m_r->getTilesCount().y() - 1));
+	m_planesY = std::move(S(base + count, m_r->getTileCountXY().y() - 1));
 	count += m_planesY.getSize();
 
-	m_planesXW = std::move(S(base + count, m_r->getTilesCount().x() - 1));
+	m_planesXW = std::move(S(base + count, m_r->getTileCountXY().x() - 1));
 	count += m_planesXW.getSize();
 
-	m_planesYW = std::move(S(base + count, m_r->getTilesCount().y() - 1));
+	m_planesYW = std::move(S(base + count, m_r->getTileCountXY().y() - 1));
 	count += m_planesYW.getSize();
 
 	m_nearPlanesW = std::move(S(base + count,
-		m_r->getTilesCount().x() * m_r->getTilesCount().y()));
+		m_r->getTileCountXY().x() * m_r->getTileCountXY().y()));
 	count += m_nearPlanesW.getSize();
 
 	m_farPlanesW = std::move(S(base + count,
-		m_r->getTilesCount().x() * m_r->getTilesCount().y()));
+		m_r->getTileCountXY().x() * m_r->getTileCountXY().y()));
 
 	ANKI_ASSERT(count + m_farPlanesW.getSize() == m_allPlanes.getSize());
 
 	ANKI_CHECK(initPbos());
 
 	m_prevMinMaxDepth.create(getAllocator(),
-		m_r->getTilesCount().x() * m_r->getTilesCount().y(), Vec2(0.0, 1.0));
+		m_r->getTileCountXY().x() * m_r->getTileCountXY().y(), Vec2(0.0, 1.0));
 
 	return ErrorCode::NONE;
 }
@@ -147,7 +147,7 @@ Error Tiler::initInternal()
 Error Tiler::initPbos()
 {
 	// Allocate the buffers
-	U pboSize = m_r->getTilesCount().x() * m_r->getTilesCount().y();
+	U pboSize = m_r->getTileCountXY().x() * m_r->getTileCountXY().y();
 	pboSize *= sizeof(Vec2); // The pixel size
 
 	for(U i = 0; i < m_pbos.getSize(); ++i)
@@ -180,7 +180,7 @@ void Tiler::runMinMax(CommandBufferPtr& cmd)
 		cmd->bindResourceGroup(m_rcGroups[pboIdx]);
 
 		cmd->dispatchCompute(
-			m_r->getTilesCount().x(), m_r->getTilesCount().y(), 1);
+			m_r->getTileCountXY().x(), m_r->getTileCountXY().y(), 1);
 
 		m_r->drawQuad(cmd);
 	}
@@ -255,7 +255,7 @@ Bool Tiler::test(TestParameters& params) const
 		testRange(
 			*params.m_collisionShape,
 			params.m_nearPlane,
-			0, m_r->getTilesCount().y(), 0, m_r->getTilesCount().x(),
+			0, m_r->getTileCountXY().y(), 0, m_r->getTileCountXY().x(),
 			params.m_output,
 			count);
 	}
@@ -282,7 +282,7 @@ void Tiler::testRange(const CollisionShape& cs, Bool nearPlane,
 
 		if(m_enableGpuTests && getGlobalTimestamp() >= m_pbos.getSize())
 		{
-			U tileId = m_r->getTilesCount().x() * yFrom + xFrom;
+			U tileId = m_r->getTileCountXY().x() * yFrom + xFrom;
 
 			if(cs.testPlane(m_farPlanesW[tileId]) >= 0.0)
 			{
@@ -467,9 +467,9 @@ void Tiler::testFastSphere(const Sphere& s, const Aabb& aabb,
 	if(ANKI_UNLIKELY(eye.getLengthSquared() <= srad * srad))
 	{
 		// Camera totaly inside the sphere
-		for(U y = 0; y < m_r->getTilesCount().y(); ++y)
+		for(U y = 0; y < m_r->getTileCountXY().y(); ++y)
 		{
-			for(U x = 0; x < m_r->getTilesCount().x(); ++x)
+			for(U x = 0; x < m_r->getTileCountXY().x(); ++x)
 			{
 				visible->pushBack(x, y);
 				++count;
@@ -507,20 +507,20 @@ void Tiler::testFastSphere(const Sphere& s, const Aabb& aabb,
 	max2 = max2 * 0.5 + 0.5;
 
 	// Do a box test
-	F32 tcountX = m_r->getTilesCount().x();
-	F32 tcountY = m_r->getTilesCount().y();
+	F32 tcountX = m_r->getTileCountXY().x();
+	F32 tcountY = m_r->getTileCountXY().y();
 
 	I xFrom = floor(tcountX * min2.x());
-	xFrom = clamp<I>(xFrom, 0, m_r->getTilesCount().x());
+	xFrom = clamp<I>(xFrom, 0, m_r->getTileCountXY().x());
 
 	I xTo = ceil(tcountX * max2.x());
-	xTo = min<U>(xTo, m_r->getTilesCount().x());
+	xTo = min<U>(xTo, m_r->getTileCountXY().x());
 
 	I yFrom = floor(tcountY * min2.y());
-	yFrom = clamp<I>(yFrom, 0, m_r->getTilesCount().y());
+	yFrom = clamp<I>(yFrom, 0, m_r->getTileCountXY().y());
 
 	I yTo = ceil(tcountY * max2.y());
-	yTo = min<I>(yTo, m_r->getTilesCount().y());
+	yTo = min<I>(yTo, m_r->getTileCountXY().y());
 
 
 	ANKI_ASSERT(xFrom >= 0 && xFrom <= tcountX
@@ -601,7 +601,7 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 
 		// First the top looking planes
 		ThreadPool::Task::choseStartEnd(
-			threadId, threadsCount, m_r->getTilesCount().y() - 1,
+			threadId, threadsCount, m_r->getTileCountXY().y() - 1,
 			start, end);
 
 		for(U i = start; i < end; i++)
@@ -613,7 +613,7 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 
 		// Then the right looking planes
 		ThreadPool::Task::choseStartEnd(
-			threadId, threadsCount, m_r->getTilesCount().x() - 1,
+			threadId, threadsCount, m_r->getTileCountXY().x() - 1,
 			start, end);
 
 		for(U j = start; j < end; j++)
@@ -629,7 +629,7 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 
 		// First the top looking planes
 		ThreadPool::Task::choseStartEnd(
-			threadId, threadsCount, m_r->getTilesCount().y() - 1,
+			threadId, threadsCount, m_r->getTileCountXY().y() - 1,
 			start, end);
 
 		for(U i = start; i < end; i++)
@@ -639,7 +639,7 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 
 		// Then the right looking planes
 		ThreadPool::Task::choseStartEnd(
-			threadId, threadsCount, m_r->getTilesCount().x() - 1,
+			threadId, threadsCount, m_r->getTileCountXY().x() - 1,
 			start, end);
 
 		for(U j = start; j < end; j++)
@@ -652,7 +652,7 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 	if(m_enableGpuTests && getGlobalTimestamp() >= m_pbos.getSize())
 	{
 		const U tilesCount =
-			m_r->getTilesCount().x() * m_r->getTilesCount().y();
+			m_r->getTileCountXY().x() * m_r->getTileCountXY().y();
 
 		ThreadPool::Task::choseStartEnd(
 			threadId, threadsCount, tilesCount, start, end);
@@ -674,9 +674,9 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 			// p1 = CrntCamTrf * p0
 			// n1 = project(p1, CamProj)
 			// Using n1 get the tile depth and use that to set the planes
-			U x = k % m_r->getTilesCount().x();
-			U y = k / m_r->getTilesCount().x();
-			Vec2 tileCountf(m_r->getTilesCount().x(), m_r->getTilesCount().y());
+			U x = k % m_r->getTileCountXY().x();
+			U y = k / m_r->getTileCountXY().x();
+			Vec2 tileCountf(m_r->getTileCountXY().x(), m_r->getTileCountXY().y());
 			Vec2 ndc0 = Vec2(x, y) / tileCountf * 2.0 - 1.0;
 			for(U i = 0; i < 2; ++i)
 			{
@@ -706,7 +706,7 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 				else
 				{
 					// Inside view
-					U tileid = U(t.y()) * m_r->getTilesCount().x() + U(t.x());
+					U tileid = U(t.y()) * m_r->getTileCountXY().x() + U(t.x());
 					minMax[i] = pixels[tileid][i];
 				}
 			}
@@ -731,7 +731,7 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 void Tiler::calcPlaneY(U i, const Vec4& projParams)
 {
 	Plane& plane = m_planesY[i];
-	F32 y = F32(i + 1) / m_r->getTilesCount().y() * 2.0 - 1.0;
+	F32 y = F32(i + 1) / m_r->getTileCountXY().y() * 2.0 - 1.0;
 
 	Vec4 viewA = unproject(1.0, Vec2(-1.0, y), projParams);
 	Vec4 viewB = unproject(1.0, Vec2(1.0, y), projParams);
@@ -746,7 +746,7 @@ void Tiler::calcPlaneY(U i, const Vec4& projParams)
 void Tiler::calcPlaneX(U j, const Vec4& projParams)
 {
 	Plane& plane = m_planesX[j];
-	F32 x = F32(j + 1) / m_r->getTilesCount().x() * 2.0 - 1.0;
+	F32 x = F32(j + 1) / m_r->getTileCountXY().x() * 2.0 - 1.0;
 
 	Vec4 viewA = unproject(1.0, Vec2(x, -1.0), projParams);
 	Vec4 viewB = unproject(1.0, Vec2(x, 1.0), projParams);

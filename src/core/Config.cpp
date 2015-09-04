@@ -29,7 +29,7 @@ Config::Config()
 	newOption("is.maxPointLights", 384);
 	newOption("is.maxSpotLights", 16);
 	newOption("is.maxSpotTexLights", 8);
-	newOption("is.maxLightsPerTile", 16);
+	newOption("is.maxLightsPerCluster", 8);
 
 	newOption("lf.maxSpritesPerFlare", 8);
 	newOption("lf.maxFlares", 16);

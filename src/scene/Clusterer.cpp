@@ -10,7 +10,7 @@
 namespace anki {
 
 //==============================================================================
-void Clusterer::initTempTestResults(const GenericMemoryPoolAllocator<U8>& alloc,
+void Clusterer::initTestResults(const GenericMemoryPoolAllocator<U8>& alloc,
 	ClustererTestResult& rez) const
 {
 	rez.m_clusterIds.create(alloc, m_clusters.getSize());
@@ -38,8 +38,7 @@ U Clusterer::calcK(F32 zVspace) const
 }
 
 //==============================================================================
-void Clusterer::prepare(const PerspectiveFrustum& fr,
-	const SArray<Vec2>& minMaxTileDepth)
+void Clusterer::prepare(const PerspectiveFrustum& fr)
 {
 	// Get some things
 	F32 near = fr.getNear();

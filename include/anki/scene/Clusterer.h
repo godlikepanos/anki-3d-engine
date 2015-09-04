@@ -51,10 +51,7 @@ private:
 class Clusterer
 {
 public:
-	static constexpr U TILE_SIZE = 64;
-
-	Clusterer(const GenericMemoryPoolAllocator<U8>& alloc)
-		: m_alloc(alloc)
+	Clusterer()
 	{}
 
 	~Clusterer()
@@ -63,22 +60,33 @@ public:
 		m_splitInfo.destroy(m_alloc);
 	}
 
-	void init(U clusterCountX, U clusterCountY, U clusterCountZ)
+	void init(const GenericMemoryPoolAllocator<U8>& alloc, U clusterCountX,
+		U clusterCountY, U clusterCountZ)
 	{
+		m_alloc = alloc;
 		m_counts[0] = clusterCountX;
 		m_counts[1] = clusterCountY;
 		m_counts[2] = clusterCountZ;
 	}
 
-	void prepare(
-		const PerspectiveFrustum& fr, const SArray<Vec2>& minMaxTileDepth);
+	U getClusterCount() const
+	{
+		return U(m_counts[0]) * U(m_counts[1]) * U(m_counts[2]);
+	}
 
-	void initTempTestResults(const GenericMemoryPoolAllocator<U8>& alloc,
+	void prepare(const PerspectiveFrustum& fr);
+
+	void initTestResults(const GenericMemoryPoolAllocator<U8>& alloc,
 		ClustererTestResult& rez) const;
 
 	/// Bin collision shape.
 	/// @param[in] cs The collision shape should be in view space.
 	void bin(const CollisionShape& cs, ClustererTestResult& rez) const;
+
+	void fillShaderParams(Vec4& params) const
+	{
+		params = Vec4(m_near, m_calcNearOpt, 0.0, 0.0);
+	}
 
 public:
 	GenericMemoryPoolAllocator<U8> m_alloc;

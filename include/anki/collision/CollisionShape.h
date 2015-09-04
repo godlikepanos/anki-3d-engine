@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_COLLISION_COLLISION_SHAPE_H
-#define ANKI_COLLISION_COLLISION_SHAPE_H
+#pragma once
 
 #include "anki/collision/Forward.h"
 #include "anki/collision/Common.h"
@@ -71,11 +70,11 @@ public:
 	};
 
 	CollisionShape(Type cid)
-	:	m_cid(cid)
+		: m_cid(cid)
 	{}
 
 	CollisionShape(const CollisionShape& b)
-	:	m_cid(b.m_cid)
+		: m_cid(b.m_cid)
 	{
 		operator=(b);
 	}
@@ -146,4 +145,3 @@ private:
 
 } // end namespace anki
 
-#endif
