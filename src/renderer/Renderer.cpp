@@ -15,7 +15,6 @@
 #include "anki/renderer/Fs.h"
 #include "anki/renderer/Lf.h"
 #include "anki/renderer/Dbg.h"
-#include "anki/renderer/Tiler.h"
 
 namespace anki {
 
@@ -68,7 +67,7 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_tileCount = m_tileCountXY.x() * m_tileCountXY.y();
 
 	m_clusterer.init(getAllocator(), m_tileCountXY.x(), m_tileCountXY.y(),
-		CLUSTER_SPLIT_COUNT);
+		config.getNumber("clusterSizeZ"));
 
 	m_tessellation = config.getNumber("tessellation");
 
@@ -106,9 +105,6 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_ms.reset(m_alloc.newInstance<Ms>(this));
 	ANKI_CHECK(m_ms->init(config));
 
-	m_tiler.reset(m_alloc.newInstance<Tiler>(this));
-	ANKI_CHECK(m_tiler->init());
-
 	m_is.reset(m_alloc.newInstance<Is>(this));
 	ANKI_CHECK(m_is->init(config));
 
@@ -145,8 +141,7 @@ Error Renderer::render(SceneNode& frustumableNode,
 	}
 
 	ANKI_ASSERT(frc.getFrustum().getType() == Frustum::Type::PERSPECTIVE);
-	m_clusterer.prepare(
-		static_cast<const PerspectiveFrustum&>(frc.getFrustum()));
+	m_clusterer.prepare(getThreadPool(), frustumableNode);
 
 	ANKI_COUNTER_START_TIMER(RENDERER_MS_TIME);
 	ANKI_CHECK(m_ms->run(cmdb[0]));
@@ -156,7 +151,6 @@ Error Renderer::render(SceneNode& frustumableNode,
 
 	m_ms->generateMipmaps(cmdb[0]);
 
-	m_tiler->runMinMax(cmdb[0]);
 	cmdb[0]->flush();
 
 	ANKI_COUNTER_START_TIMER(RENDERER_IS_TIME);
@@ -259,8 +253,6 @@ void Renderer::createDrawQuadPipeline(
 
 //==============================================================================
 void Renderer::prepareForVisibilityTests(Camera& cam)
-{
-	m_tiler->updateTiles(cam);
-}
+{}
 
 } // end namespace anki

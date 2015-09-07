@@ -72,6 +72,7 @@ Config::Config()
 	newOption("samples", 1);
 	newOption("tessellation", true);
 	newOption("sceneFrameAllocatorSize", 1024 * 1024);
+	newOption("clusterSizeZ", 32);
 
 	newOption("offscreen", false);
 

@@ -116,60 +116,6 @@ public:
 	}
 };
 
-/// Visitor that transforms a collision object.
-class ShapeTransformer final: public CollisionShape::ConstVisitor
-{
-public:
-	Sphere m_sphere;
-	ConvexHullShape m_hull;
-	Array<Vec4, 5> m_hullPoints;
-	CollisionShape* m_outShape = nullptr;
-	Transform* m_trf = nullptr;
-
-	void visit(const LineSegment&)
-	{
-		ANKI_ASSERT(0);
-	}
-
-	void visit(const Obb&)
-	{
-		ANKI_ASSERT(0);
-	}
-
-	void visit(const Plane&)
-	{
-		ANKI_ASSERT(0);
-	}
-
-	void visit(const Sphere& s)
-	{
-		m_sphere = s;
-		m_sphere.transform(*m_trf);
-		m_outShape = &m_sphere;
-	}
-
-	void visit(const Aabb&)
-	{
-		ANKI_ASSERT(0);
-	}
-
-	void visit(const CompoundShape&)
-	{
-	}
-
-	void visit(const ConvexHullShape& hull)
-	{
-		ANKI_ASSERT(hull.getPointsCount() == m_hullPoints.getSize());
-		memcpy(&m_hullPoints[0], hull.getPoints(), sizeof(m_hullPoints));
-		for(Vec4& p : m_hullPoints)
-		{
-			p = m_trf->transform(p);
-		}
-		m_hull.initStorage(&m_hullPoints[0], m_hullPoints.getSize());
-		m_outShape = &m_hull;
-	}
-};
-
 //==============================================================================
 // Is                                                                          =
 //==============================================================================
@@ -339,8 +285,8 @@ Error Is::initInternal(const ConfigSet& config)
 
 		init.m_storageBuffers[0].m_buffer = m_pLightsBuffs[i];
 		init.m_storageBuffers[1].m_buffer = m_sLightsBuffs[i];
-		init.m_storageBuffers[3].m_buffer = m_clusterBuffers[i];
-		init.m_storageBuffers[4].m_buffer = m_lightIdsBuffers[i];
+		init.m_storageBuffers[2].m_buffer = m_clusterBuffers[i];
+		init.m_storageBuffers[3].m_buffer = m_lightIdsBuffers[i];
 
 		m_rcGroups[i] = getGrManager().newInstance<ResourceGroup>(init);
 	}
@@ -580,10 +526,15 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 		const U countS = cluster.m_spotCount.load();
 		const U count = countP + countS;
 
-		const U offset = task.m_lightIdsCount.fetchAdd(count);
-
 		auto& c = task.m_clusters[i];
 		c.m_combo = 0;
+
+		if(ANKI_UNLIKELY(count == 0))
+		{
+			continue;
+		}
+
+		const U offset = task.m_lightIdsCount.fetchAdd(count);
 
 		if(offset + count <= m_maxLightIds)
 		{
@@ -608,8 +559,6 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 		}
 		else
 		{
-			memset(&c, 0, sizeof(c));
-
 			ANKI_LOGW("Light IDs buffer too small");
 		}
 	}
@@ -720,15 +669,8 @@ void Is::binLight(
 	TaskCommonData& task,
 	ClustererTestResult& testResult)
 {
-	// Transform the spatial collision shape to view space for the cluster tests
-	FrustumComponent& frc =
-		m_r->getActiveCamera().getComponent<FrustumComponent>();
-	Transform viewTrf(frc.getViewMatrix());
-	ShapeTransformer transformer;
-	transformer.m_trf = &viewTrf;
-	sp.getSpatialCollisionShape().accept(transformer);
-
-	m_r->getClusterer().bin(*transformer.m_outShape, testResult);
+	m_r->getClusterer().bin(sp.getSpatialCollisionShape(), sp.getAabb(),
+		testResult);
 
 	// Bin to the correct tiles
 	auto it = testResult.getClustersBegin();

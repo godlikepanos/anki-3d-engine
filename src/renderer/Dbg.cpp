@@ -160,14 +160,14 @@ Error Dbg::run(CommandBufferPtr& cmdb)
 		PerspectiveFrustum fr;
 		const F32 ang = 55.0;
 		F32 far = 200.0;
-		fr.setAll(toRad(ang) * m_r->getAspectRatio(), toRad(ang), 1.0, far);
+		fr.setAll(toRad(ang) * m_r->getAspectRatio(), toRad(ang), 0.2, far);
 		fr.resetTransform(Transform(origin, Mat3x4::getIdentity(), 1.0));
 
-		Clusterer c(getAllocator());
+		Clusterer c;
 
-		c.init(m_r->getWidth() / 64, m_r->getHeight() / 64, 20);
+		c.init(getAllocator(), m_r->getWidth() / 64, m_r->getHeight() / 64, 30);
 		//c.init(5, 3, 10);
-		c.prepare(fr, SArray<Vec2>());
+		c.prepare(fr);
 
 		CollisionDebugDrawer cd(m_drawer);
 		m_drawer->setColor(Vec4(1.0, 0.0, 0.0, 1.0));
@@ -200,7 +200,7 @@ Error Dbg::run(CommandBufferPtr& cmdb)
 		sp.getSpatialCollisionShape().accept(cd);
 
 		ClustererTestResult rez;
-		c.initTempTestResults(getAllocator(), rez);
+		c.initTestResults(getAllocator(), rez);
 
 		c.bin(sp.getSpatialCollisionShape(), rez);
 

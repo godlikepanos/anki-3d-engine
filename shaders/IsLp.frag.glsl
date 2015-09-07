@@ -17,6 +17,7 @@
 #endif
 
 const uint CLUSTER_COUNT_Z = CLUSTER_COUNT / (TILES_X_COUNT * TILES_Y_COUNT);
+const uint TILE_COUNT = TILES_X_COUNT * TILES_Y_COUNT;
 
 // The base of all lights
 struct Light
@@ -48,12 +49,12 @@ layout(std140, binding = 1) readonly buffer _s1
 	SpotLight u_spotLights[MAX_SPOT_LIGHTS];
 };
 
-layout(std430, binding = 3) readonly buffer _s3
+layout(std430, binding = 2) readonly buffer _s3
 {
 	uint u_clusters[CLUSTER_COUNT];
 };
 
-layout(std430, binding = 4) readonly buffer _s5
+layout(std430, binding = 3) readonly buffer _s5
 {
 	uint u_lightIndices[MAX_LIGHT_INDICES];
 };
@@ -310,7 +311,7 @@ void main()
 
 	// Get counts and offsets
 	uint k = calcK(fragPos.z);
-	uint cluster = u_clusters[in_instanceId + k * CLUSTER_COUNT_Z];
+	uint cluster = u_clusters[in_instanceId + k * TILE_COUNT];
 	uint lightOffset = cluster >> 16u;
 	uint pointLightsCount = (cluster >> 8u) & 0xFFu;
 	uint spotLightsCount = cluster & 0xFFu;
@@ -369,7 +370,7 @@ void main()
 #if 0
 	if(pointLightsCount != 0)
 	{
-		out_color = vec3(float(pointLightsCount) * 0.05);
+		out_color = vec3(1.0);
 	}
 
 	/*uint x = in_instanceId % 60;

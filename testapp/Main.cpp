@@ -43,7 +43,7 @@ App* app;
 ModelNode* horse;
 PerspectiveCamera* cam;
 
-#define PLAYER 0
+#define PLAYER 1
 #define MOUSE 1
 
 Bool profile = false;
@@ -89,6 +89,7 @@ Error init()
 	cam->getComponent<MoveComponent>().
 		setLocalTransform(Transform(
 		Vec4(147.392776, -10.132728, 16.607138, 0.0),
+		//Vec4(0.0),
 		Mat3x4(Euler(toRad(0.0), toRad(90.0), toRad(0.0))),
 		1.0));
 #endif
@@ -103,7 +104,7 @@ Error init()
 	lightc->setDistance(5.0);
 
 	move = plight->tryGetComponent<MoveComponent>();
-	move->setLocalTransform(Transform(Vec4(0.0, 0.5, 0.0, 0.0),
+	move->setLocalTransform(Transform(Vec4(0.0, 0.0, 0.0, 0.0),
 		Mat3x4::getIdentity(), 1.0));
 #endif
 #if 0
@@ -491,7 +492,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("samples", 1);
 	config.set("tessellation", true);
 	//config.set("maxTextureSize", 256);
-	config.set("fullscreenDesktopResolution", false);
+	config.set("fullscreenDesktopResolution", true);
 	config.set("debugContext", false);
 	if(getenv("ANKI_DATA_PATH"))
 	{

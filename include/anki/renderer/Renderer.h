@@ -53,16 +53,6 @@ public:
 		return *m_is;
 	}
 
-	const Tiler& getTiler() const
-	{
-		return *m_tiler;
-	}
-
-	Tiler& getTiler()
-	{
-		return *m_tiler;
-	}
-
 	const Pps& getPps() const
 	{
 		return *m_pps;
@@ -122,7 +112,6 @@ public:
 
 anki_internal:
 	static const U TILE_SIZE = 64;
-	static const U CLUSTER_SPLIT_COUNT = 12;
 
 	void getOutputFramebuffer(FramebufferPtr& outputFb, U32& width, U32& height)
 	{
@@ -299,7 +288,6 @@ private:
 	UniquePtr<Pps> m_pps; ///< Postprocessing rendering stage
 	UniquePtr<Fs> m_fs; ///< Forward shading.
 	UniquePtr<Lf> m_lf; ///< Forward shading lens flares.
-	UniquePtr<Tiler> m_tiler;
 	UniquePtr<Dbg> m_dbg; ///< Debug stage.
 	/// @}
 

@@ -12,7 +12,7 @@
 
 namespace anki {
 
-class PerspectiveFrustum;
+class FrustumComponent;
 
 /// @addtogroup scene
 /// @{
@@ -45,47 +45,46 @@ private:
 	DArray<Array<U8, 3>> m_clusterIds;
 	U32 m_count = 0;
 	GenericMemoryPoolAllocator<U8> m_alloc;
+
+	void pushBack(U x, U y, U z)
+	{
+		ANKI_ASSERT(x <= 0xFF && y <= 0xFF && z <= 0xFF);
+		m_clusterIds[m_count++] = Array<U8, 3>{U8(x), U8(y), U8(z)};
+	}
 };
 
 /// Collection of clusters for visibility tests.
 class Clusterer
 {
+	friend class UpdatePlanesPerspectiveCameraTask;
+
 public:
 	Clusterer()
 	{}
 
-	~Clusterer()
-	{
-		m_clusters.destroy(m_alloc);
-		m_splitInfo.destroy(m_alloc);
-	}
+	~Clusterer();
 
 	void init(const GenericMemoryPoolAllocator<U8>& alloc, U clusterCountX,
-		U clusterCountY, U clusterCountZ)
-	{
-		m_alloc = alloc;
-		m_counts[0] = clusterCountX;
-		m_counts[1] = clusterCountY;
-		m_counts[2] = clusterCountZ;
-	}
+		U clusterCountY, U clusterCountZ);
 
-	U getClusterCount() const
-	{
-		return U(m_counts[0]) * U(m_counts[1]) * U(m_counts[2]);
-	}
-
-	void prepare(const PerspectiveFrustum& fr);
+	/// Prepare for visibility tests.
+	void prepare(ThreadPool& threadpool, const SceneNode& node);
 
 	void initTestResults(const GenericMemoryPoolAllocator<U8>& alloc,
 		ClustererTestResult& rez) const;
 
 	/// Bin collision shape.
-	/// @param[in] cs The collision shape should be in view space.
-	void bin(const CollisionShape& cs, ClustererTestResult& rez) const;
+	void bin(const CollisionShape& cs, const Aabb& csBox,
+		ClustererTestResult& rez) const;
 
 	void fillShaderParams(Vec4& params) const
 	{
 		params = Vec4(m_near, m_calcNearOpt, 0.0, 0.0);
+	}
+
+	U getClusterCount() const
+	{
+		return m_counts[0] * m_counts[1] * m_counts[2];
 	}
 
 public:
@@ -93,56 +92,48 @@ public:
 
 	Array<U8, 3> m_counts;
 
-	class Cluster
-	{
-	public:
-		// Intead of Aabb use minimum size variables
-		Vec3 m_min;
-		Vec3 m_max;
-	};
+	/// Tile planes.
+	DArray<Plane> m_allPlanes; ///< Do one allocation.
+	SArray<Plane> m_planesY; ///< Local space.
+	SArray<Plane> m_planesX; ///< Local space.
+	SArray<Plane> m_planesYW;
+	SArray<Plane> m_planesXW;
+	Plane* m_nearPlane; ///< In world space
+	Plane* m_farPlane; ///< In world space
 
-	/// [z][y][x]
-	DArray<Cluster> m_clusters;
+	/// Used to check if the frustum is changed and we need to update the
+	/// planes.
+	const SceneNode* m_node = nullptr;
 
-	class SplitInfo
-	{
-	public:
-		Vec2 m_xy;
-		Vec2 m_sizes;
-	};
+	const FrustumComponent* m_frc = nullptr; ///< Cache it.
 
-	DArray<SplitInfo> m_splitInfo;
+	/// Timestamp for the same reason as m_frc.
+	Timestamp m_planesLSpaceTimestamp = 0;
 
 	F32 m_near = 0.0;
 	F32 m_far = 0.0;
-	F32 m_fovY = 0.0;
-	F32 m_fovX = 0.0;
-
 	F32 m_calcNearOpt = 0.0;
-	Mat4 m_projMat;
-
-	Cluster& cluster(U x, U y, U z)
-	{
-		ANKI_ASSERT(x < m_counts[0]);
-		ANKI_ASSERT(y < m_counts[1]);
-		ANKI_ASSERT(z < m_counts[2]);
-		return m_clusters[m_counts[0] * (z * m_counts[1] + y) + x];
-	}
-
-	const Cluster& cluster(U x, U y, U z) const
-	{
-		ANKI_ASSERT(x < m_counts[0]);
-		ANKI_ASSERT(y < m_counts[1]);
-		ANKI_ASSERT(z < m_counts[2]);
-		return m_clusters[m_counts[0] * (z * m_counts[1] + y) + x];
-	}
 
 	F32 calcNear(U k) const;
-	U calcK(F32 zVspace) const;
 
-	void initClusters();
+	U calcZ(F32 zVspace) const;
 
-	void findSplitsFromAabb(const Aabb& box, U& zFrom, U& zTo) const;
+	void binGeneric(const CollisionShape& cs, U xBegin, U xEnd, U yBegin,
+		U yEnd, U zBegin, U zEnd, ClustererTestResult& rez) const;
+
+	/// Special fast path for binning spheres.
+	void binSphere(const Sphere& s, const Aabb& aabb,
+		ClustererTestResult& rez) const;
+
+	void computeSplitRange(const CollisionShape& cs, U& zBegin, U& zEnd) const;
+
+	void update(U32 threadId, PtrSize threadsCount, Bool frustumChanged);
+
+	/// Calculate and set a top looking plane.
+	void calcPlaneY(U i, const Vec4& projParams);
+
+	/// Calculate and set a right looking plane.
+	void calcPlaneX(U j, const Vec4& projParams);
 };
 /// @}
 
