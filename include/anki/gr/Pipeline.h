@@ -110,6 +110,25 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(PipelineSubStateBit, inline)
 class PipelineInitializer
 {
 public:
+	PipelineInitializer()
+	{
+		// Do a special construction. Since the state will be hashed the padding
+		// may contain garbage. With this trick zero the padding
+#define ANKI_CONSTRUCT_AND_ZERO_PADDING(member_) \
+	memset(&member_, 0, sizeof(member_)); \
+	new (&member_) decltype(member_)()
+
+		ANKI_CONSTRUCT_AND_ZERO_PADDING(m_vertex);
+		ANKI_CONSTRUCT_AND_ZERO_PADDING(m_inputAssembler);
+		ANKI_CONSTRUCT_AND_ZERO_PADDING(m_tessellation);
+		ANKI_CONSTRUCT_AND_ZERO_PADDING(m_viewport);
+		ANKI_CONSTRUCT_AND_ZERO_PADDING(m_rasterizer);
+		ANKI_CONSTRUCT_AND_ZERO_PADDING(m_depthStencil);
+		ANKI_CONSTRUCT_AND_ZERO_PADDING(m_color);
+
+#undef ANKI_CONSTRUCT_AND_ZERO_PADDING
+	}
+
 	VertexStateInfo m_vertex;
 	InputAssemblerStateInfo m_inputAssembler;
 	TessellationStateInfo m_tessellation;

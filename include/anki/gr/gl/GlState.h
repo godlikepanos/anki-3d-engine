@@ -34,6 +34,8 @@ public:
 	U32 m_uniBuffOffsetAlignment = 0;
 	U32 m_ssBuffOffsetAlignment = 0;
 
+	GLuint m_defaultVao;
+
 	/// @name Cached state
 	/// @{
 	Array<U16, 4> m_viewport = {{0, 0, 0, 0}};

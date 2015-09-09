@@ -132,6 +132,16 @@ void GlState::init()
 	glEnable(GL_PROGRAM_POINT_SIZE);
 	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
+	// Create default VAO
+	glGenVertexArrays(1, &m_defaultVao);
+	glBindVertexArray(m_defaultVao);
+
+	// Enable all attributes
+	for(U i = 0; i < MAX_VERTEX_ATTRIBUTES; ++i)
+	{
+		glEnableVertexAttribArray(i);
+	}
+
 	// Other
 	memset(&m_vertexBindingStrides[0], 0, sizeof(m_vertexBindingStrides));
 	initGlobalUbo();
@@ -173,6 +183,8 @@ void GlState::destroy()
 	{
 		glDeleteBuffers(1, &name);
 	}
+
+	glDeleteVertexArrays(1, &m_defaultVao);
 
 	auto alloc = m_manager->getAllocator();
 	m_globalUbos.destroy(alloc);

@@ -196,10 +196,6 @@ void RenderingThread::prepare()
 
 	// Init state
 	m_state.init();
-
-	// Create default VAO
-	glGenVertexArrays(1, &m_defaultVao);
-	glBindVertexArray(m_defaultVao);
 }
 
 //==============================================================================
@@ -219,7 +215,6 @@ void RenderingThread::finish()
 	}
 
 	// Cleanup GL
-	glDeleteVertexArrays(1, &m_defaultVao);
 	m_state.destroy();
 
 	// Cleanup

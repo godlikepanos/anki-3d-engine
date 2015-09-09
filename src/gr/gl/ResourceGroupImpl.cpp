@@ -200,8 +200,7 @@ void ResourceGroupImpl::bind(GlState& state)
 		}
 		else
 		{
-			glBindSamplers(
-				0, m_textureNamesCount, &m_samplerNames[0]);
+			glBindSamplers(0, m_textureNamesCount, &m_samplerNames[0]);
 		}
 	}
 

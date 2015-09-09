@@ -84,7 +84,6 @@ private:
 	Thread::Id m_serverThreadId;
 
 	GlState m_state;
-	GLuint m_defaultVao;
 
 	/// A special command buffer that is called every time we want to wait for
 	/// the server

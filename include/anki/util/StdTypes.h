@@ -69,6 +69,7 @@ const F64 MIN_F64 = -std::numeric_limits<F64>::max();
 
 using Bool = bool; ///< Fast boolean type
 using Bool8 = U8; ///< Small 8bit boolean type
+using Bool32 = U32; ///< A 32bit boolean
 
 /// Error codes
 enum class ErrorCode: I32

@@ -466,8 +466,6 @@ void PipelineImpl::setVertexState(GlState& state) const
 		const Attribute& attrib = m_cache.m_attribs[i];
 		ANKI_ASSERT(attrib.m_type);
 
-		glEnableVertexAttribArray(i);
-
 		glVertexAttribFormat(i, attrib.m_compCount, attrib.m_type,
 			attrib.m_normalized, m_in.m_vertex.m_attributes[i].m_offset);
 
