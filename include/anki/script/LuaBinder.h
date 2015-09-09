@@ -3,28 +3,89 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SCRIPT_LUA_BINDER_H
-#define ANKI_SCRIPT_LUA_BINDER_H
+#pragma once
 
 #include "anki/util/Assert.h"
 #include "anki/util/StdTypes.h"
 #include "anki/util/Allocator.h"
 #include "anki/util/String.h"
+#include "anki/util/Functions.h"
 #include <lua.hpp>
 #ifndef ANKI_LUA_HPP
 #	error "Wrong LUA header included"
 #endif
-#include <functional>
 
 namespace anki {
 
-/// LUA userdata
+/// LUA userdata.
 class UserData
 {
 public:
+	/// @note NEVER ADD A DESTRUCTOR. LUA cannot call that.
+	~UserData() = delete;
+
+	I64 getSig() const
+	{
+		return m_sig;
+	}
+
+	void initGarbageCollected(I64 sig)
+	{
+		m_sig = sig;
+		m_addressAndGarbageCollect = GC_MASK;
+	}
+
+	void initPointed(I64 sig, void* ptrToObject)
+	{
+		m_sig = sig;
+		U64 addr = ptrToNumber(ptrToObject);
+		ANKI_ASSERT((addr & GC_MASK) == 0
+			&& "Address too high, cannot encode a flag");
+		m_addressAndGarbageCollect = addr;
+	}
+
+	Bool isGarbageCollected() const
+	{
+		return m_addressAndGarbageCollect == GC_MASK;
+	}
+
+	template<typename T>
+	T* getData()
+	{
+		T* out = nullptr;
+		if(isGarbageCollected())
+		{
+			// Garbage collected
+			PtrSize mem = ptrToNumber(this);
+			mem += getAlignedRoundUp(alignof(T), sizeof(UserData));
+			out = numberToPtr<T*>(mem);
+		}
+		else
+		{
+			// Pointed
+			PtrSize mem = static_cast<PtrSize>(m_addressAndGarbageCollect);
+			out = numberToPtr<T*>(mem);
+		}
+
+		ANKI_ASSERT(out);
+		ANKI_ASSERT(isAligned(alignof(T), out));
+		return out;
+	}
+
+	template<typename T>
+	static PtrSize computeSizeForGarbageCollected()
+	{
+		return getAlignedRoundUp(alignof(T), sizeof(UserData)) + sizeof(T);
+	}
+
+private:
+	static constexpr U64 GC_MASK = 1ul << 63ul;
+
 	I64 m_sig = 0; ///< Signature to identify the user data.
-	void* m_data = nullptr;
-	Bool8 m_gc = false; ///< Garbage collection on?
+
+	/// Encodes an address and a flag for garbage collection.
+	/// High bit is the GC flag and the rest are an address.
+	U64 m_addressAndGarbageCollect = 0;
 };
 
 /// Lua binder class. A wrapper on top of LUA
@@ -92,14 +153,14 @@ public:
 		lua_State* l, I32 stackIdx, const char*& out);
 
 	/// Get some user data from the stack.
-	/// The function uses the type signature to validate the type and not the 
+	/// The function uses the type signature to validate the type and not the
 	/// typeName. That is supposed to be faster.
 	static ANKI_USE_RESULT Error checkUserData(
-		lua_State* l, I32 stackIdx, const char* typeName, I64 typeSignature, 
+		lua_State* l, I32 stackIdx, const char* typeName, I64 typeSignature,
 		UserData*& out);
 
 	/// Allocate memory.
-	static void* luaAlloc(lua_State* l, size_t size);
+	static void* luaAlloc(lua_State* l, size_t size, U32 alignment);
 
 	/// Free memory.
 	static void luaFree(lua_State* l, void* ptr);
@@ -142,14 +203,11 @@ template<typename T>
 inline void LuaBinder::exposeVariable(const char* name, T* y)
 {
 	void* ptr = lua_newuserdata(m_l, sizeof(UserData));
-	UserData* ud = reinterpret_cast<UserData*>(ptr);
-	ud->m_data = y;
-	ud->m_gc = false;
-	ud->m_sig = getWrappedTypeSignature<T>();
+	UserData* ud = static_cast<UserData*>(ptr);
+	ud->initPointed(getWrappedTypeSignature<T>(), y);
 	luaL_setmetatable(m_l, getWrappedTypeName<T>());
 	lua_setglobal(m_l, name);
 }
 
 } // end namespace anki
 
-#endif

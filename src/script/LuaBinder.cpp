@@ -66,7 +66,7 @@ void* LuaBinder::luaAllocCallback(
 
 		if(ptr == nullptr)
 		{
-			out = binder.m_alloc.allocate(nsize);
+			out = binder.m_alloc.getMemoryPool().allocate(nsize, 16);
 		}
 		else if(nsize <= osize)
 		{
@@ -76,7 +76,7 @@ void* LuaBinder::luaAllocCallback(
 		{
 			// realloc
 
-			out = binder.m_alloc.allocate(nsize);
+			out = binder.m_alloc.getMemoryPool().allocate(nsize, 16);
 			std::memcpy(out, ptr, osize);
 			binder.m_alloc.getMemoryPool().free(ptr);
 		}
@@ -216,11 +216,8 @@ Error LuaBinder::checkUserData(
 	if(p != nullptr)
 	{
 		out = reinterpret_cast<UserData*>(p);
-		if(out->m_sig == typeSignature)
+		if(out->getSig() == typeSignature)
 		{
-			// All done!
-			ANKI_ASSERT(out->m_data);
-
 			// Check using a LUA method again
 			ANKI_ASSERT(luaL_testudata(l, stackIdx, typeName) != nullptr
 				&& "ANKI type check passes but LUA's type check failed");
@@ -247,21 +244,25 @@ Error LuaBinder::checkUserData(
 }
 
 //==============================================================================
-void* LuaBinder::luaAlloc(lua_State* l, size_t size)
+void* LuaBinder::luaAlloc(lua_State* l, size_t size, U32 alignment)
 {
 	void* ud;
-	lua_Alloc alloc = lua_getallocf(l, &ud);
+	lua_getallocf(l, &ud);
+	ANKI_ASSERT(ud);
+	LuaBinder* binder = static_cast<LuaBinder*>(ud);
 
-	return alloc(ud, nullptr, 0, size);
+	return binder->m_alloc.getMemoryPool().allocate(size, alignment);
 }
 
 //==============================================================================
 void LuaBinder::luaFree(lua_State* l, void* ptr)
 {
 	void* ud;
-	lua_Alloc alloc = lua_getallocf(l, &ud);
+	lua_getallocf(l, &ud);
+	ANKI_ASSERT(ud);
+	LuaBinder* binder = static_cast<LuaBinder*>(ud);
 
-	alloc(ud, ptr, 0, 0);
+	binder->m_alloc.getMemoryPool().free(ptr);
 }
 
 } // end namespace anki

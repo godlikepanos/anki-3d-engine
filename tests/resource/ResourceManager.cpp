@@ -57,7 +57,7 @@ ANKI_TEST(Resource, ResourceManager)
 		ANKI_TEST_EXPECT_EQ(b->getRefcount().load(), a->getRefcount().load());
 		ANKI_TEST_EXPECT_EQ(a->getRefcount().load(), refcount + 1);
 
-		ANKI_TEST_EXPECT_EQ(&b.get(), &a.get());
+		ANKI_TEST_EXPECT_EQ(b.get(), a.get());
 
 		// Again
 		DummyResourcePtr c;

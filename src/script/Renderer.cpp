@@ -37,13 +37,14 @@ static inline int pwrapDbggetEnabled(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
+	PtrSize size;
+	(void)size;
 	
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameDbg, -2784798555522127122, ud)) return -1;
-	Dbg* self = static_cast<Dbg*>(ud->m_data);
-	ANKI_ASSERT(self != nullptr);
+	Dbg* self = ud->getData<Dbg>();
 	
 	// Call the method
 	Bool ret = self->getEnabled();
@@ -72,13 +73,14 @@ static inline int pwrapDbgsetEnabled(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
+	PtrSize size;
+	(void)size;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameDbg, -2784798555522127122, ud)) return -1;
-	Dbg* self = static_cast<Dbg*>(ud->m_data);
-	ANKI_ASSERT(self != nullptr);
+	Dbg* self = ud->getData<Dbg>();
 	
 	// Pop arguments
 	Bool arg0;

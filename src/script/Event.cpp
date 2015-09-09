@@ -95,13 +95,14 @@ static inline int pwrapEventManagernewSceneAmbientColorEvent(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
+	PtrSize size;
+	(void)size;
 	
 	LuaBinder::checkArgsCount(l, 4);
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameEventManager, -6959305329499243407, ud)) return -1;
-	EventManager* self = static_cast<EventManager*>(ud->m_data);
-	ANKI_ASSERT(self != nullptr);
+	EventManager* self = ud->getData<EventManager>();
 	
 	// Pop arguments
 	F32 arg0;
@@ -111,7 +112,7 @@ static inline int pwrapEventManagernewSceneAmbientColorEvent(lua_State* l)
 	if(LuaBinder::checkNumber(l, 3, arg1)) return -1;
 	
 	if(LuaBinder::checkUserData(l, 4, "Vec4", 6804478823655046386, ud)) return -1;
-	Vec4* iarg2 = static_cast<Vec4*>(ud->m_data);
+	Vec4* iarg2 = ud->getData<Vec4>();
 	const Vec4& arg2(*iarg2);
 	
 	// Call the method
@@ -127,9 +128,7 @@ static inline int pwrapEventManagernewSceneAmbientColorEvent(lua_State* l)
 	voidp = lua_newuserdata(l, sizeof(UserData));
 	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "SceneAmbientColorEvent");
-	ud->m_data = static_cast<void*>(ret);
-	ud->m_gc = false;
-	ud->m_sig = -2736282921550252951;
+	ud->initPointed(-2736282921550252951, const_cast<SceneAmbientColorEvent*>(ret));
 	
 	return 1;
 }
@@ -161,6 +160,8 @@ static inline int pwrapgetEventManager(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
+	PtrSize size;
+	(void)size;
 	
 	LuaBinder::checkArgsCount(l, 0);
 	
@@ -177,9 +178,7 @@ static inline int pwrapgetEventManager(lua_State* l)
 	voidp = lua_newuserdata(l, sizeof(UserData));
 	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "EventManager");
-	ud->m_data = static_cast<void*>(ret);
-	ud->m_gc = false;
-	ud->m_sig = -6959305329499243407;
+	ud->initPointed(-6959305329499243407, const_cast<EventManager*>(ret));
 	
 	return 1;
 }

@@ -131,6 +131,26 @@ inline void swapValues(T& a, T& b)
 	a = tmp;
 }
 
+/// Convert any pointer to a number.
+template<typename TPtr>
+inline PtrSize ptrToNumber(TPtr ptr)
+{
+	ANKI_ASSERT(ptr);
+	uintptr_t i = reinterpret_cast<uintptr_t>(ptr);
+	PtrSize size = i;
+	return size;
+}
+
+/// Convert a number to a pointer.
+template<typename TPtr>
+inline TPtr numberToPtr(PtrSize num)
+{
+	ANKI_ASSERT(num);
+	uintptr_t i = static_cast<uintptr_t>(num);
+	TPtr ptr = reinterpret_cast<TPtr>(i);
+	return ptr;
+}
+
 /// A simple template trick to remove the pointer from one type
 ///
 /// Example:

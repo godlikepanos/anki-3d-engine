@@ -139,7 +139,7 @@ endif()
 # Add optimization flags
 if(ANKI_OPTIMIZE)
 	# -flto ?
-	set(COMPILER_FLAGS "${COMPILER_FLAGS} -ffast-math -O3 -flto ")
+	set(COMPILER_FLAGS "${COMPILER_FLAGS} -ffast-math -O3 ")
 
 	# Add this because Android compiler complains
 	if(ANDROID)

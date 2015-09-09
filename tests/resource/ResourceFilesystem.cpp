@@ -3,8 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#define private public
 #include "tests/framework/Framework.h"
+#define private public
 #include "anki/resource/ResourceFilesystem.h"
 
 namespace anki {

@@ -22,8 +22,8 @@ ANKI_TEST(Util, Thread)
 
 	t.start(&u, [](Thread::Info& info) -> Error
 	{
-		Bool check = true; 
-		
+		Bool check = true;
+
 		// Check name
 		check = check && (std::strcmp(info.m_threadName, THREAD_NAME) == 0);
 
@@ -106,14 +106,14 @@ ANKI_TEST(Util, Mutex)
 //==============================================================================
 
 /// Struct for our tests
-struct TestJobTP: Threadpool::Task
+struct TestJobTP: ThreadPool::Task
 {
 	U32 in = 0;
 	U32 iterations = 0;
 
 	Error operator()(U32 /*threadId*/, PtrSize /*threadsCount*/)
 	{
-		for(U32 i = 0; i < iterations; i++)	
+		for(U32 i = 0; i < iterations; i++)
 		{
 			++in;
 		}
@@ -124,11 +124,11 @@ struct TestJobTP: Threadpool::Task
 
 } // end namespace anki
 
-ANKI_TEST(Util, Threadpool)
+ANKI_TEST(Util, ThreadPool)
 {
 	const U32 threadsCount = 4;
 	const U32 repeat = 5;
-	Threadpool* tp = new Threadpool(threadsCount);
+	ThreadPool* tp = new ThreadPool(threadsCount);
 
 	TestJobTP jobs[threadsCount];
 

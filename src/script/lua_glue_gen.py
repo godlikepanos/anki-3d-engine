@@ -15,7 +15,7 @@ def parse_commandline():
 	""" Parse the command line arguments """
 
 	parser = optparse.OptionParser(usage = "usage: %prog [options]", \
-		description = "Create LUA bindings using XML")	
+		description = "Create LUA bindings using XML")
 
 	parser.add_option("-i", "--input", dest = "inp",
 		type = "string", help = "specify the XML files to parse. " \
@@ -59,7 +59,7 @@ def type_is_number(type):
 		"U", "I", "PtrSize", "F32", "F64", \
 		"int", "unsigned", "unsigned int", "short", "unsigned short", "uint", \
 		"float", "double"]
-		
+
 	it_is = False
 	for num in numbers:
 		if num == type:
@@ -113,7 +113,7 @@ def ret(ret_el):
 		ident(-1)
 		wglue("}")
 		wglue("")
-	
+
 	if type_is_bool(type):
 		wglue("lua_pushboolean(l, ret);")
 	elif type_is_number(type):
@@ -131,40 +131,27 @@ def ret(ret_el):
 		wglue("")
 		wglue("lua_pushnumber(l, ret);")
 	else:
-	 	wglue("voidp = lua_newuserdata(l, sizeof(UserData));")
-		wglue("ud = static_cast<UserData*>(voidp);")
-		wglue("luaL_setmetatable(l, \"%s\");" % type)
+		if is_ptr or is_ref:
+		 	wglue("voidp = lua_newuserdata(l, sizeof(UserData));")
+			wglue("ud = static_cast<UserData*>(voidp);")
+			wglue("luaL_setmetatable(l, \"%s\");" % type)
 
-		if is_ptr:
-			if is_const:
-				wglue("ud->m_data = const_cast<void*>(" \
-					"static_cast<const void*>(ret));")
-			else:
-				wglue("ud->m_data = static_cast<void*>(ret);")
-			wglue("ud->m_gc = false;")
-		elif is_ref:
-			if is_const:
-				wglue("ud->m_data = const_cast<void*>(" \
-					"static_cast<const void*>(&ret));")
-			else:
-				wglue("ud->m_data = static_cast<void*>(&ret);")
-			wglue("ud->m_gc = false;")
+			if is_ptr:
+				wglue("ud->initPointed(%d, const_cast<%s*>(ret));"
+						% (type_sig(type), type))
+			elif is_ref:
+				wglue("ud->initPointed(%d, const_cast<%s*>(&ret));"
+						% (type_sig(type), type))
 		else:
-			wglue("ud->m_data = LuaBinder::luaAlloc(l, sizeof(%s));" % type)
-	
-			wglue("if(ANKI_UNLIKELY(ud->m_data == nullptr))")
-			wglue("{")
-			ident(1)
-			wglue("ud->m_gc = false;")
-			wglue("lua_pushstring(l, \"Out of memory\");")
-			wglue("return -1;")
-			ident(-1)
-			wglue("}")
-			wglue("")
+			wglue("size = UserData::computeSizeForGarbageCollected<%s>();" \
+					% type)
+			wglue("voidp = lua_newuserdata(l, size);")
+			wglue("luaL_setmetatable(l, \"%s\");" % type)
 
-			wglue("::new(ud->m_data) %s(std::move(ret));" % type)
-			wglue("ud->m_gc = true;")
-		wglue("ud->m_sig = %d;" % type_sig(type))
+			wglue("ud = static_cast<UserData*>(voidp);")
+			wglue("ud->initGarbageCollected(%d);" % type_sig(type))
+
+			wglue("::new(ud->getData<%s>()) %s(std::move(ret));" % (type, type))
 
 	wglue("")
 	wglue("return 1;")
@@ -185,7 +172,7 @@ def arg(arg_txt, stack_index, index):
 	else:
 		wglue("if(LuaBinder::checkUserData(l, %d, \"%s\", %d, ud)) return -1;" \
 			% (stack_index, type, type_sig(type)))
-		wglue("%s* iarg%d = static_cast<%s*>(ud->m_data);" \
+		wglue("%s* iarg%d = ud->getData<%s>();" \
 			% (type, index, type))
 
 		if is_ptr:
@@ -271,6 +258,8 @@ def write_local_vars():
 	wglue("(void)ud;")
 	wglue("void* voidp;")
 	wglue("(void)voidp;")
+	wglue("PtrSize size;")
+	wglue("(void)size;")
 	wglue("")
 
 def method(class_name, meth_el):
@@ -295,9 +284,7 @@ def method(class_name, meth_el):
 	wglue("// Get \"this\" as \"self\"")
 	wglue("if(LuaBinder::checkUserData(l, 1, classname%s, %d, ud)) return -1;" \
 		% (class_name, type_sig(class_name)))
-	wglue("%s* self = static_cast<%s*>(ud->m_data);" \
-		% (class_name, class_name))
-	wglue("ANKI_ASSERT(self != nullptr);")
+	wglue("%s* self = ud->getData<%s>();" % (class_name, class_name))
 	wglue("")
 
 	args_str = args(meth_el.find("args"), 2)
@@ -363,7 +350,7 @@ def static_method(class_name, meth_el):
 
 	# Args
 	args_str = args(meth_el.find("args"), 1)
-	
+
 	# Return value
 	ret_txt = None
 	ret_el = meth_el.find("return")
@@ -401,7 +388,7 @@ def static_method(class_name, meth_el):
 
 def constructor(constr_el, class_name):
 	""" Handle constructor """
-	
+
 	global separator
 
 	wglue(separator)
@@ -419,28 +406,17 @@ def constructor(constr_el, class_name):
 	# Create new userdata
 	wglue("// Create user data")
 
-	wglue("void* inst = LuaBinder::luaAlloc(l, sizeof(%s));" % class_name)
-	wglue("if(ANKI_UNLIKELY(inst == nullptr))")
-	wglue("{")
-	ident(1)
-	wglue("lua_pushstring(l, \"Out of memory\");")
-	wglue("return -1;")
-	ident(-1)
-	wglue("}")
-	wglue("")
-	wglue("::new(inst) %s(%s);" % (class_name, args_str))
-	wglue("")
-
-	wglue("voidp = lua_newuserdata(l, sizeof(UserData));")
-	wglue("ud = static_cast<UserData*>(voidp);")
-	wglue("ud->m_data = inst;")
-	wglue("ud->m_gc = true;")
-	wglue("ud->m_sig = %d;" % type_sig(class_name))
+	wglue("size = UserData::computeSizeForGarbageCollected<%s>();" % class_name)
+	wglue("voidp = lua_newuserdata(l, size);")
 	wglue("luaL_setmetatable(l, classname%s);" % class_name)
+	wglue("ud = static_cast<UserData*>(voidp);")
+	wglue("ud->initGarbageCollected(%d);" % type_sig(class_name))
+	wglue("::new(ud->getData<%s>()) %s(%s);" \
+			% (class_name, class_name, args_str))
 	wglue("")
 
 	wglue("return 1;")
-	
+
 	ident(-1)
 	wglue("}")
 	wglue("")
@@ -461,7 +437,7 @@ def constructor(constr_el, class_name):
 
 def destructor(class_name):
 	""" Create a destroctor """
-	
+
 	global separator
 
 	wglue(separator)
@@ -475,13 +451,12 @@ def destructor(class_name):
 	wglue("if(LuaBinder::checkUserData(l, 1, classname%s, %d, ud)) return -1;" \
 		% (class_name, type_sig(class_name)))
 
-	wglue("if(ud->m_gc)")
+	wglue("if(ud->isGarbageCollected())")
 	wglue("{")
 	ident(1)
-	wglue("%s* inst = static_cast<%s*>(ud->m_data);" \
+	wglue("%s* inst = ud->getData<%s>();" \
 		% (class_name, class_name))
 	wglue("inst->~%s();" % class_name)
-	wglue("LuaBinder::luaFree(l, inst);")
 	ident(-1)
 	wglue("}")
 	wglue("")
@@ -494,7 +469,7 @@ def destructor(class_name):
 
 def class_(class_el):
 	""" Create a class """
-	
+
 	global separator
 	class_name = class_el.get("name")
 
@@ -612,7 +587,7 @@ def function(func_el):
 
 	# Args
 	args_str = args(func_el.find("args"), 1)
-	
+
 	# Return value
 	ret_txt = None
 	ret_el = func_el.find("return")
