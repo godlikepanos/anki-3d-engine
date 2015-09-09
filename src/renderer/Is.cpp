@@ -70,6 +70,55 @@ public:
 
 	Array<Lid, MAX_TYPED_LIGHTS_PER_CLUSTER> m_pointIds;
 	Array<Lid, MAX_TYPED_LIGHTS_PER_CLUSTER> m_spotIds;
+
+	void sortLightIds()
+	{
+		const U pointCount = m_pointCount.load();
+		const U spotCount = m_spotCount.load();
+
+		if(pointCount > 1)
+		{
+			std::sort(&m_pointIds[0], &m_pointIds[0] + pointCount);
+		}
+
+		if(spotCount > 1)
+		{
+			std::sort(&m_spotIds[0], &m_spotIds[0] + spotCount);
+		}
+	}
+
+	Bool operator==(const ClusterData& b) const
+	{
+		const U pointCount = m_pointCount.load();
+		const U spotCount = m_spotCount.load();
+		const U pointCount2 = b.m_pointCount.load();
+		const U spotCount2 = b.m_spotCount.load();
+
+		if(pointCount != pointCount2 || spotCount != spotCount2)
+		{
+			return false;
+		}
+
+		if(pointCount > 0)
+		{
+			if(memcmp(&m_pointIds[0], &b.m_pointIds[0],
+				sizeof(Lid) * pointCount) != 0)
+			{
+				return false;
+			}
+		}
+
+		if(spotCount > 0)
+		{
+			if(memcmp(&m_spotIds[0], &b.m_spotIds[0],
+				sizeof(Lid) * spotCount) != 0)
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
 };
 
 /// Common data for all tasks.
@@ -520,7 +569,7 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 	// Run per tile
 	for(U i = start; i < end; ++i)
 	{
-		const auto& cluster = task.m_tempClusters[i];
+		auto& cluster = task.m_tempClusters[i];
 
 		const U countP = cluster.m_pointCount.load();
 		const U countS = cluster.m_spotCount.load();
@@ -529,9 +578,25 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 		auto& c = task.m_clusters[i];
 		c.m_combo = 0;
 
+		// Early exit
 		if(ANKI_UNLIKELY(count == 0))
 		{
 			continue;
+		}
+
+		// Check if the previous cluster contains the same lights as this one
+		// and if yes then merge them. This will avoid allocating new IDs (and
+		// thrashing GPU caches).
+		cluster.sortLightIds();
+		if(i != start)
+		{
+			const auto& clusterB = task.m_tempClusters[i - 1];
+
+			if(cluster == clusterB)
+			{
+				c.m_combo = task.m_clusters[i - 1].m_combo;
+				continue;
+			}
 		}
 
 		const U offset = task.m_lightIdsCount.fetchAdd(count);

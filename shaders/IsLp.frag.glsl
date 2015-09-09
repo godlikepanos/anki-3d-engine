@@ -368,10 +368,26 @@ void main()
 #endif
 
 #if 0
-	if(pointLightsCount != 0)
+	if(pointLightsCount == 0)
 	{
-		out_color = vec3(1.0);
 	}
+	else if(pointLightsCount == 1)
+	{
+		out_color += vec3(0.0, 1.0, 0.0);
+	}
+	else if(pointLightsCount == 2)
+	{
+		out_color += vec3(0.0, 0.0, 1.0);
+	}
+	else if(pointLightsCount == 3)
+	{
+		out_color += vec3(1.0, 0.0, 1.0);
+	}
+	else
+	{
+		out_color += vec3(1.0, 0.0, 0.0);
+	}
+
 
 	/*uint x = in_instanceId % 60;
 	uint y = in_instanceId / 60;
