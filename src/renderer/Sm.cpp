@@ -167,8 +167,9 @@ Bool Sm::skip(SceneNode& light, ShadowmapBase& sm)
 {
 	Timestamp lastUpdate = light.getComponent<MoveComponent>().getTimestamp();
 
+	Bool shouldUpdate = false;
 	Error err = light.iterateComponentsOfType<FrustumComponent>(
-		[&lastUpdate](FrustumComponent& fr)
+		[&](FrustumComponent& fr)
 	{
 		lastUpdate = max(lastUpdate, fr.getTimestamp());
 		VisibilityTestResults& vi = fr.getVisibilityTestResults();
@@ -196,13 +197,18 @@ Bool Sm::skip(SceneNode& light, ShadowmapBase& sm)
 			{
 				lastUpdate = max(lastUpdate, sp->getTimestamp());
 			}
+
+			if(lastUpdate >= sm.m_timestamp)
+			{
+				shouldUpdate = true;
+				break;
+			}
 		}
 
 		return ErrorCode::NONE;
 	});
 	(void)err;
 
-	Bool shouldUpdate = lastUpdate >= sm.m_timestamp;
 	if(shouldUpdate)
 	{
 		sm.m_timestamp = getGlobalTimestamp();
