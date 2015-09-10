@@ -773,7 +773,7 @@ void Is::setState(CommandBufferPtr& cmdBuff)
 	cmdBuff->bindFramebuffer(m_fb);
 	cmdBuff->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 	cmdBuff->bindPipeline(m_lightPpline);
-	cmdBuff->bindResourceGroup(m_rcGroups[m_currentFrame]);
+	cmdBuff->bindResourceGroup(m_rcGroups[m_currentFrame], 0);
 }
 
 //==============================================================================

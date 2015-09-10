@@ -109,7 +109,7 @@ void Sslr::run(CommandBufferPtr& cmdBuff)
 	cmdBuff->bindFramebuffer(m_fb);
 	cmdBuff->setViewport(0, 0, m_width, m_height);
 	cmdBuff->bindPipeline(m_reflectionPpline);
-	cmdBuff->bindResourceGroup(m_rcGroup);
+	cmdBuff->bindResourceGroup(m_rcGroup, 0);
 
 	m_r->drawQuad(cmdBuff);
 
@@ -118,7 +118,7 @@ void Sslr::run(CommandBufferPtr& cmdBuff)
 	cmdBuff->bindFramebuffer(m_isFb);
 	cmdBuff->bindPipeline(m_blitPpline);
 	cmdBuff->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
-	cmdBuff->bindResourceGroup(m_rcGroupBlit);
+	cmdBuff->bindResourceGroup(m_rcGroupBlit, 0);
 
 	m_r->drawQuad(cmdBuff);
 }

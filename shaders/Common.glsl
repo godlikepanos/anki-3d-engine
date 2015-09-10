@@ -27,6 +27,9 @@ precision DEFAULT_FLOAT_PRECISION int;
 //#define textureRt(tex_, texc_) texture(tex_, texc_)
 #define textureRt(tex_, texc_) textureLod(tex_, texc_, 0.0)
 
+// Binding
+#define BINDING(slot_, binding_) binding = slot_ * 8 + binding_
+
 // Common locations
 #define POSITION_LOCATION 0
 #define TEXTURE_COORDINATE_LOCATION 1

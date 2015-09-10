@@ -30,7 +30,7 @@ public:
 	void create(const ResourceGroupInitializer& init);
 
 	/// Set state.
-	void bind(GlState& state);
+	void bind(U slot, GlState& state);
 
 private:
 	class InternalBufferBinding

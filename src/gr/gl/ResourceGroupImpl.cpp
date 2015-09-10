@@ -186,21 +186,25 @@ void ResourceGroupImpl::initResourceReferences(
 }
 
 //==============================================================================
-void ResourceGroupImpl::bind(GlState& state)
+void ResourceGroupImpl::bind(U slot, GlState& state)
 {
+	ANKI_ASSERT(slot < MAX_RESOURCE_GROUPS);
+
 	// Bind textures
 	if(m_textureNamesCount)
 	{
-		glBindTextures(
-			0, m_textureNamesCount, &m_textureNames[0]);
+		glBindTextures(MAX_TEXTURE_BINDINGS * slot, m_textureNamesCount,
+			&m_textureNames[0]);
 
 		if(m_allSamplersZero)
 		{
-			glBindSamplers(0, m_textureNamesCount, nullptr);
+			glBindSamplers(MAX_TEXTURE_BINDINGS * slot, m_textureNamesCount,
+				nullptr);
 		}
 		else
 		{
-			glBindSamplers(0, m_textureNamesCount, &m_samplerNames[0]);
+			glBindSamplers(MAX_TEXTURE_BINDINGS * slot, m_textureNamesCount,
+				&m_samplerNames[0]);
 		}
 	}
 
@@ -208,7 +212,8 @@ void ResourceGroupImpl::bind(GlState& state)
 	for(U i = 0; i < m_ubosCount; ++i)
 	{
 		const auto& binding = m_ubos[i];
-		glBindBufferRange(GL_UNIFORM_BUFFER, i, binding.m_name,
+		glBindBufferRange(GL_UNIFORM_BUFFER,
+			MAX_UNIFORM_BUFFER_BINDINGS * slot + i, binding.m_name,
 			binding.m_offset, binding.m_range);
 	}
 
@@ -216,13 +221,15 @@ void ResourceGroupImpl::bind(GlState& state)
 	for(U i = 0; i < m_ssbosCount; ++i)
 	{
 		const auto& binding = m_ssbos[i];
-		glBindBufferRange(GL_SHADER_STORAGE_BUFFER, i, binding.m_name,
+		glBindBufferRange(GL_SHADER_STORAGE_BUFFER,
+			MAX_STORAGE_BUFFER_BINDINGS * slot + i, binding.m_name,
 			binding.m_offset, binding.m_range);
 	}
 
 	// Vertex buffers
 	if(m_vertBindingsCount)
 	{
+		ANKI_ASSERT(slot == 0 && "Only slot 0 can have vertex buffers");
 		glBindVertexBuffers(
 			0, m_vertBindingsCount, &m_vertBuffNames[0],
 			&m_vertBuffOffsets[0], &state.m_vertexBindingStrides[0]);
@@ -231,6 +238,7 @@ void ResourceGroupImpl::bind(GlState& state)
 	// Index buffer
 	if(m_indexSize > 0)
 	{
+		ANKI_ASSERT(slot == 0 && "Only slot 0 can have index buffers");
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indexBuffName);
 		state.m_indexSize = m_indexSize;
 	}

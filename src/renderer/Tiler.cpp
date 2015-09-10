@@ -177,7 +177,7 @@ void Tiler::runMinMax(CommandBufferPtr& cmd)
 		U pboIdx = getGlobalTimestamp() % m_pbos.getSize();
 
 		cmd->bindPipeline(m_ppline);
-		cmd->bindResourceGroup(m_rcGroups[pboIdx]);
+		cmd->bindResourceGroup(m_rcGroups[pboIdx], 0);
 
 		cmd->dispatchCompute(
 			m_r->getTileCountXY().x(), m_r->getTileCountXY().y(), 1);

@@ -178,7 +178,7 @@ Error DebugDrawer::flushInternal(PrimitiveTopology topology)
 		m_cmdb->bindPipeline(m_pplineLinesNoDepth);
 	}
 
-	m_cmdb->bindResourceGroup(m_rcGroup);
+	m_cmdb->bindResourceGroup(m_rcGroup, 0);
 	m_cmdb->drawArrays(clientVerts);
 
 	return ErrorCode::NONE;

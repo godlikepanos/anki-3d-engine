@@ -51,6 +51,7 @@ const U MAX_TEXTURE_BINDINGS = 8;
 const U MAX_UNIFORM_BUFFER_BINDINGS = 8;
 const U MAX_STORAGE_BUFFER_BINDINGS = 8;
 const U MAX_FRAMES_IN_FLIGHT = 3;
+const U MAX_RESOURCE_GROUPS = 2;
 /// @}
 
 } // end namespace anki

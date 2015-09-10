@@ -112,7 +112,7 @@ class PipelineInitializer
 public:
 	PipelineInitializer()
 	{
-		// Do a special construction. Since the state will be hashed the padding
+		// Do a special construction. The state will be hashed and the padding
 		// may contain garbage. With this trick zero the padding
 #define ANKI_CONSTRUCT_AND_ZERO_PADDING(member_) \
 	memset(&member_, 0, sizeof(member_)); \

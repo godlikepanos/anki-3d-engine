@@ -143,22 +143,24 @@ class BindResourcesCommand final: public GlCommand
 {
 public:
 	ResourceGroupPtr m_rc;
+	U8 m_slot;
 
-	BindResourcesCommand(ResourceGroupPtr rc)
+	BindResourcesCommand(ResourceGroupPtr rc, U8 slot)
 		: m_rc(rc)
+		, m_slot(slot)
 	{}
 
 	Error operator()(GlState& state)
 	{
-		m_rc->getImplementation().bind(state);
+		m_rc->getImplementation().bind(m_slot, state);
 		return ErrorCode::NONE;
 	}
 };
 
-void CommandBuffer::bindResourceGroup(ResourceGroupPtr rc)
+void CommandBuffer::bindResourceGroup(ResourceGroupPtr rc, U slot)
 {
 	ANKI_ASSERT(rc.isCreated());
-	m_impl->pushBackNewCommand<BindResourcesCommand>(rc);
+	m_impl->pushBackNewCommand<BindResourcesCommand>(rc, slot);
 }
 
 //==============================================================================

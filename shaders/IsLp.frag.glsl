@@ -301,7 +301,7 @@ void main()
 		in_texCoord, diffCol, normal, specCol, specPower);
 
 #if BRDF
-	float a2 = pow(max(EPSILON, specPower), 2.5); // XXX ?
+	float a2 = pow(max(EPSILON, specPower), 2.0);
 #else
 	specPower = max(EPSILON, specPower) * 128.0;
 #endif

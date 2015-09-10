@@ -114,7 +114,7 @@ public:
 	void bindFramebuffer(FramebufferPtr fb);
 
 	/// Bind resources.
-	void bindResourceGroup(ResourceGroupPtr rc);
+	void bindResourceGroup(ResourceGroupPtr rc, U slot);
 	/// @}
 
 	/// @name Drawcalls

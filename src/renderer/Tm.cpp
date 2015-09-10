@@ -57,7 +57,7 @@ Error Tm::create(const ConfigSet& initializer)
 void Tm::run(CommandBufferPtr& cmdb)
 {
 	cmdb->bindPipeline(m_luminancePpline);
-	cmdb->bindResourceGroup(m_rcGroup);
+	cmdb->bindResourceGroup(m_rcGroup, 0);
 
 	cmdb->dispatchCompute(1, 1, 1);
 }

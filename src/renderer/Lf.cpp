@@ -183,7 +183,7 @@ void Lf::runOcclusionTests(CommandBufferPtr& cmdb)
 
 		// Setup state
 		cmdb->bindPipeline(m_occlusionPpline);
-		cmdb->bindResourceGroup(m_occlusionRcGroups[frame]);
+		cmdb->bindResourceGroup(m_occlusionRcGroups[frame], 0);
 
 		// Setup MVP UBO
 		Mat4* mvp = nullptr;
@@ -260,7 +260,7 @@ void Lf::run(CommandBufferPtr& cmdb)
 			U count = 0;
 			U spritesCount = max<U>(1, m_maxSpritesPerFlare); // TODO
 
-			cmdb->bindResourceGroup(lf.getResourceGroup());
+			cmdb->bindResourceGroup(lf.getResourceGroup(), 0);
 
 			// Get uniform memory
 			Sprite* tmpSprites = nullptr;
