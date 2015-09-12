@@ -210,7 +210,7 @@ if(${ANKI_WINDOW_BACKEND} STREQUAL "SDL")
 		DOWNLOAD_COMMAND ""
 		PREFIX "${CMAKE_CURRENT_BINARY_DIR}/sdl2_build"
 		SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/SDL2"
-		CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/sdl2_build -DSDL_SHARED=OFF -DSDL_STATIC=ON -DCMAKE_BUILD_TYPE=Release)
+		CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/sdl2_build -DSDL_SHARED=OFF -DSDL_STATIC=ON -DCMAKE_BUILD_TYPE=Release -DDIRECTX=OFF)
 
 	ExternalProject_Get_Property(SDL2_PROJECT install_dir)
 	set(SDL2_INSTALL_DIR ${install_dir})
@@ -313,7 +313,7 @@ elseif(ANDROID)
 	include_directories("${ANDROID_NDK}/sources/android/native_app_glue")
 	set(_SYS_SRC "${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c")
 elseif(WINDOWS)
-	set(_SYS ankiglew opengl32 version)
+	set(_SYS ankiglew opengl32 version Imm32 Winmm)
 
 	add_definitions(-DGLEW_STATIC -D_NEWTON_STATIC_LIB)
 else()
@@ -337,7 +337,7 @@ endforeach()
 
 add_library(anki src/Dummy.cpp "${_SYS_SRC}")
 add_dependencies(anki SDL2_LIB FREETYPE_LIB)
-target_link_libraries(anki ${ANKI_LIBS} ankitinyxml2 ankilua ankiz ankinewton ${ANKI_GPERFTOOLS_LIBS} ${_SYS} SDL2_LIB FREETYPE_LIB ${FREETYPE_LIBRARIES})
+target_link_libraries(anki ${ANKI_LIBS} ankitinyxml2 ankilua ankiz ankinewton ${ANKI_GPERFTOOLS_LIBS} SDL2_LIB FREETYPE_LIB ${_SYS})
 
 ################################################################################
 # AnKi extra                                                                   #
