@@ -9,7 +9,6 @@
 #pragma anki include "shaders/LinearDepth.glsl"
 #pragma anki include "shaders/Pack.glsl"
 
-const float PI = 3.14159265358979323846;
 const float ONE = 0.9;
 
 layout(location = 0) in vec2 in_texCoords;

@@ -235,8 +235,8 @@ Error Is::initInternal(const ConfigSet& config)
 	StringAuto pps(getAllocator());
 
 	pps.sprintf(
-		"\n#define TILES_X_COUNT %u\n"
-		"#define TILES_Y_COUNT %u\n"
+		"\n#define TILES_COUNT_X %u\n"
+		"#define TILES_COUNT_Y %u\n"
 		"#define CLUSTER_COUNT %u\n"
 		"#define RENDERER_WIDTH %u\n"
 		"#define RENDERER_HEIGHT %u\n"
@@ -298,6 +298,11 @@ Error Is::initInternal(const ConfigSet& config)
 
 	for(U i = 0; i < m_pLightsBuffs.getSize(); ++i)
 	{
+		// Common variables
+		m_commonVarsBuffs[i] = getGrManager().newInstance<Buffer>(
+			sizeof(ShaderCommonUniforms), BufferUsageBit::STORAGE,
+			BufferAccessBit::CLIENT_MAP_WRITE);
+
 		// Point lights
 		m_pLightsBuffs[i] = getGrManager().newInstance<Buffer>(
 			m_pLightsBuffSize, BufferUsageBit::STORAGE,
@@ -332,10 +337,11 @@ Error Is::initInternal(const ConfigSet& config)
 		init.m_textures[4].m_texture = m_sm.getSpotTextureArray();
 		init.m_textures[5].m_texture = m_sm.getOmniTextureArray();
 
-		init.m_storageBuffers[0].m_buffer = m_pLightsBuffs[i];
-		init.m_storageBuffers[1].m_buffer = m_sLightsBuffs[i];
-		init.m_storageBuffers[2].m_buffer = m_clusterBuffers[i];
-		init.m_storageBuffers[3].m_buffer = m_lightIdsBuffers[i];
+		init.m_storageBuffers[0].m_buffer = m_commonVarsBuffs[i];
+		init.m_storageBuffers[1].m_buffer = m_pLightsBuffs[i];
+		init.m_storageBuffers[2].m_buffer = m_sLightsBuffs[i];
+		init.m_storageBuffers[3].m_buffer = m_clusterBuffers[i];
+		init.m_storageBuffers[4].m_buffer = m_lightIdsBuffers[i];
 
 		m_rcGroups[i] = getGrManager().newInstance<ResourceGroup>(init);
 	}
@@ -786,8 +792,11 @@ Error Is::run(CommandBufferPtr& cmdBuff)
 //==============================================================================
 void Is::updateCommonBlock(CommandBufferPtr& cmdb, FrustumComponent& fr)
 {
-	ShaderCommonUniforms* blk;
-	cmdb->updateDynamicUniforms(sizeof(*blk), blk);
+	ShaderCommonUniforms* blk =
+		static_cast<ShaderCommonUniforms*>(
+			m_commonVarsBuffs[m_currentFrame]->map(
+			0, sizeof(ShaderCommonUniforms),
+			BufferAccessBit::CLIENT_MAP_WRITE));
 
 	// Start writing
 	blk->m_projectionParams = m_r->getProjectionParameters();
@@ -802,6 +811,8 @@ void Is::updateCommonBlock(CommandBufferPtr& cmdb, FrustumComponent& fr)
 			m_cam->getComponent<FrustumComponent>().getViewMatrix();
 		blk->m_groundLightDir = Vec4(-viewMat.getColumn(1).xyz(), 1.0);
 	}
+
+	m_commonVarsBuffs[m_currentFrame]->unmap();
 }
 
 } // end namespace anki

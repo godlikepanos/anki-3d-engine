@@ -21,14 +21,16 @@
 precision DEFAULT_FLOAT_PRECISION float;
 precision DEFAULT_FLOAT_PRECISION int;
 
-#define EPSILON (0.000001)
+const float EPSILON = 0.000001;
+const float PI = 3.14159265358979323846;
 
 // Read from a render target texture
 //#define textureRt(tex_, texc_) texture(tex_, texc_)
 #define textureRt(tex_, texc_) textureLod(tex_, texc_, 0.0)
 
 // Binding
-#define BINDING(slot_, binding_) binding = slot_ * 8 + binding_
+#define SS_BINDING(slot_, binding_) binding = slot_ * 8 + binding_
+#define TEX_BINDING(slot_, binding_) binding = slot_ * 8 + binding_
 
 // Common locations
 #define POSITION_LOCATION 0

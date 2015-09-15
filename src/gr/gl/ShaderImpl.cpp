@@ -42,6 +42,10 @@ Error ShaderImpl::create(ShaderType type, const CString& source)
 		GL_TESS_CONTROL_SHADER, GL_TESS_EVALUATION_SHADER, GL_GEOMETRY_SHADER,
 		GL_FRAGMENT_SHADER, GL_COMPUTE_SHADER}};
 
+	static const Array<const char*, 6> shaderName = {{"VERTEX_SHADER",
+		"TESSELATION_CONTROL_SHADER", "TESSELATION_EVALUATION_SHADER",
+		"GEOMETRY_SHADER", "FRAGMENT_SHADER", "COMPUTE_SHADER"}};
+
 	m_type = type;
 	m_glType = gltype[U(type)];
 
@@ -58,10 +62,13 @@ Error ShaderImpl::create(ShaderType type, const CString& source)
 	auto alloc = getAllocator();
 	StringAuto fullSrc(alloc);
 #if ANKI_GL == ANKI_GL_DESKTOP
-	fullSrc.sprintf("#version %d core\n%s\n", version, &source[0]);
+	static const char* versionType = "core";
 #else
-	fullSrc.sprintf("#version %d es\n%s\n", version, &source[0]);
+	static const char* versionType = "es";
 #endif
+
+	fullSrc.sprintf("#version %d %s\n#define %s\n%s\n", version, versionType,
+		shaderName[U(type)], &source[0]);
 
 	// 2) Gen name, create, compile and link
 	//

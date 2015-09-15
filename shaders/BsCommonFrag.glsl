@@ -8,12 +8,19 @@
 #pragma anki include "shaders/MsBsCommon.glsl"
 #pragma anki include "shaders/LinearDepth.glsl"
 
+// Global resources
+layout(TEX_BINDING(1, 0)) uniform sampler2D anki_u_msDepthRt;
+#define LIGHT_SET 1
+#define LIGHT_SS_BINDING 0
+#define LIGHT_TEX_BINDING 1
+#pragma anki include "shaders/LightResources.glsl"
+#undef LIGHT_SET
+#undef LIGHT_SS_BINDING
+#undef LIGHT_TEX_BINDING
+
 layout(location = 1) flat in float inAlpha;
 
-#if PASS == COLOR
-layout(location = 0) out vec4 outColor;
-#	define outColor_DEFINED
-#endif
+layout(location = 0) out vec4 out_color;
 
 #if PASS == COLOR
 #	define texture_DEFINED
@@ -35,7 +42,7 @@ float getAlpha()
 #	define writeGBuffer_DEFINED
 void writeGBuffer(in vec4 color)
 {
-	outColor = color;
+	out_color = color;
 }
 #endif
 

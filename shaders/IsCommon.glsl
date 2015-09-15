@@ -8,7 +8,7 @@
 #pragma anki include "shaders/Common.glsl"
 
 // Common uniforms between lights
-layout(std140, row_major, binding = 0) uniform _0
+layout(std140, row_major, binding = 0) readonly buffer _s0
 {
 	vec4 u_projectionParams;
 	vec4 u_sceneAmbientColor;

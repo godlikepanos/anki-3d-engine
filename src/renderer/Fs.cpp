@@ -29,6 +29,29 @@ Error Fs::init(const ConfigSet&)
 		AttachmentLoadOperation::LOAD;
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
+	// Init the global resources
+	for(U i = 0; i < m_globalResources.getSize(); ++i)
+	{
+		ResourceGroupInitializer init;
+		init.m_textures[0].m_texture = m_r->getMs().getDepthRt();
+		init.m_textures[1].m_texture =
+			m_r->getIs().getSm().getSpotTextureArray();
+		init.m_textures[2].m_texture =
+			m_r->getIs().getSm().getOmniTextureArray();
+
+		init.m_storageBuffers[0].m_buffer =
+			m_r->getIs().getCommonVarsBuffer(i);
+		init.m_storageBuffers[1].m_buffer =
+			m_r->getIs().getPointLightsBuffer(i);
+		init.m_storageBuffers[2].m_buffer =
+			m_r->getIs().getSpotLightsBuffer(i);
+		init.m_storageBuffers[3].m_buffer = m_r->getIs().getClusterBuffer(i);
+		init.m_storageBuffers[4].m_buffer =
+			m_r->getIs().getLightIndicesBuffer(i);
+
+		m_globalResources[i] = getGrManager().newInstance<ResourceGroup>(init);
+	}
+
 	return ErrorCode::NONE;
 }
 
@@ -39,6 +62,8 @@ Error Fs::run(CommandBufferPtr& cmdb)
 
 	SceneNode& cam = m_r->getActiveCamera();
 	FrustumComponent& camFr = cam.getComponent<FrustumComponent>();
+
+	cmdb->bindResourceGroup(m_globalResources[getGlobalTimestamp() % 3], 1);
 
 	SArray<CommandBufferPtr> cmdbs(&cmdb, 1);
 	ANKI_CHECK(m_r->getSceneDrawer().render(

@@ -19,22 +19,23 @@ layout(early_fragment_tests) in;
 //
 // Input
 //
-layout(location = 0) in mediump vec2 inTexCoord;
+layout(location = 0) in mediump vec2 in_uv;
 #if PASS == COLOR
-layout(location = 1) in mediump vec3 inNormal;
-layout(location = 2) in mediump vec4 inTangent;
-layout(location = 3) in mediump vec3 inVertPosViewSpace;
+layout(location = 1) in mediump vec3 in_normal;
+layout(location = 2) in mediump vec4 in_tangent;
+layout(location = 3) in mediump vec3 in_vertPosViewSpace;
 #endif
 
 //
 // Output
 //
 #if PASS == COLOR
-layout(location = 0) out vec4 outMsRt0;
-layout(location = 1) out vec4 outMsRt1;
-layout(location = 2) out vec4 outMsRt2;
-#	define outMsRt0_DEFINED
-#	define outMsRt1_DEFINED
+layout(location = 0) out vec4 out_msRt0;
+layout(location = 1) out vec4 out_msRt1;
+layout(location = 2) out vec4 out_msRt2;
+#	define out_msRt0_DEFINED
+#	define out_msRt1_DEFINED
+#	define out_msRt2_DEFINED
 #endif
 
 //==============================================================================
@@ -46,7 +47,7 @@ layout(location = 2) out vec4 outMsRt2;
 #	define getNormal_DEFINED
 vec3 getNormal()
 {
-	return normalize(inNormal);
+	return normalize(in_normal);
 }
 #endif
 
@@ -55,7 +56,7 @@ vec3 getNormal()
 #	define getTangent_DEFINED
 vec4 getTangent()
 {
-	return inTangent;
+	return in_tangent;
 }
 #endif
 
@@ -63,7 +64,7 @@ vec4 getTangent()
 #define getTextureCoord_DEFINED
 vec2 getTextureCoord()
 {
-	return inTexCoord;
+	return in_uv;
 }
 
 // Getter
@@ -74,7 +75,7 @@ vec3 getPositionViewSpace()
 #if TESSELLATION
 	return vec3(0.0);
 #else
-	return inVertPosViewSpace;
+	return in_vertPosViewSpace;
 #endif
 }
 #endif
@@ -218,6 +219,6 @@ void writeRts(
 	in float blurring)
 {
 	writeGBuffer(diffColor, normal, specularColor, specularPower,
-		outMsRt0, outMsRt1, outMsRt2);
+		out_msRt0, out_msRt1, out_msRt2);
 }
 #endif

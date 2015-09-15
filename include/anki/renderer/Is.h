@@ -67,17 +67,37 @@ anki_internal:
 		m_ambientColor = color;
 	}
 
-private:
-	enum
+	Sm& getSm()
 	{
-		COMMON_UNIFORMS_BLOCK_BINDING = 0,
-		POINT_LIGHTS_BLOCK_BINDING = 1,
-		SPOT_LIGHTS_BLOCK_BINDING = 2,
-		SPOT_TEX_LIGHTS_BLOCK_BINDING = 3,
-		TILES_BLOCK_BINDING = 4,
-		LIGHT_IDS_BLOCK_BINDING = 5
-	};
+		return m_sm;
+	}
 
+	BufferPtr getCommonVarsBuffer(U idx) const
+	{
+		return m_commonVarsBuffs[idx];
+	}
+
+	BufferPtr getPointLightsBuffer(U idx) const
+	{
+		return m_pLightsBuffs[idx];
+	}
+
+	BufferPtr getSpotLightsBuffer(U idx) const
+	{
+		return m_sLightsBuffs[idx];
+	}
+
+	BufferPtr getClusterBuffer(U idx) const
+	{
+		return m_clusterBuffers[idx];
+	}
+
+	BufferPtr getLightIndicesBuffer(U idx) const
+	{
+		return m_lightIdsBuffers[idx];
+	}
+
+private:
 	U32 m_currentFrame = 0; ///< Cache value.
 
 	/// The IS render target
@@ -89,8 +109,8 @@ private:
 	/// @name GPU buffers
 	/// @{
 
-	/// Track the updates of commonUbo
-	Timestamp m_commonBuffUpdateTimestamp = 0;
+	/// Contains some variables.
+	Array<BufferPtr, MAX_FRAMES_IN_FLIGHT> m_commonVarsBuffs;
 
 	/// Contains all the point lights
 	Array<BufferPtr, MAX_FRAMES_IN_FLIGHT> m_pLightsBuffs;

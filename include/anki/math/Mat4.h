@@ -35,7 +35,7 @@ public:
 /// row major. SSE optimized
 /// @note TMat4*TMat4: 64 muls 48 adds
 template<typename T>
-class alignas(16) TMat4: public TMat<T, 4, 4, typename TMat4Simd<T>::Type, 
+class alignas(16) TMat4: public TMat<T, 4, 4, typename TMat4Simd<T>::Type,
 	  TMat4<T>, TVec4<T>, TVec4<T>>
 {
 	/// @name Friends
@@ -51,7 +51,7 @@ class alignas(16) TMat4: public TMat<T, 4, 4, typename TMat4Simd<T>::Type,
 	/// @}
 
 public:
-	using Base = TMat<T, 4, 4, typename TMat4Simd<T>::Type, 
+	using Base = TMat<T, 4, 4, typename TMat4Simd<T>::Type,
 	  TMat4<T>, TVec4<T>, TVec4<T>>;
 
 	using Base::getTranslationPart;
@@ -62,14 +62,14 @@ public:
 	/// @name Constructors
 	/// @{
 	explicit TMat4()
-	:	Base()
+		: Base()
 	{}
 
 	TMat4(const TMat4& b)
-	:	Base(b)
+		: Base(b)
 	{}
 
-	explicit TMat4(T m00, T m01, T m02, T m03, T m10, T m11, T m12, T m13, 
+	explicit TMat4(T m00, T m01, T m02, T m03, T m10, T m11, T m12, T m13,
 		T m20, T m21, T m22, T m23, T m30, T m31, T m32, T m33)
 	{
 		TMat4& m = *this;
@@ -184,9 +184,9 @@ public:
 	}
 
 	explicit TMat4(const TTransform<T>& t)
-	:	TMat4(TVec4<T>(t.getOrigin().xyz(), 1.0), 
-		t.getRotation().getRotationPart(), 
-		t.getScale())
+		: TMat4(TVec4<T>(t.getOrigin().xyz(), 1.0)
+		, t.getRotation().getRotationPart()
+		, t.getScale())
 	{}
 	/// @}
 
@@ -195,29 +195,29 @@ public:
 	T getDet() const
 	{
 		const TMat4& t = *this;
-		return t(0, 3) * t(1, 2) * t(2, 1) * t(3, 0) 
-			- t(0, 2) * t(1, 3) * t(2, 1) * t(3, 0) 
-			- t(0, 3) * t(1, 1) * t(2, 2) * t(3, 0) 
+		return t(0, 3) * t(1, 2) * t(2, 1) * t(3, 0)
+			- t(0, 2) * t(1, 3) * t(2, 1) * t(3, 0)
+			- t(0, 3) * t(1, 1) * t(2, 2) * t(3, 0)
 			+ t(0, 1) * t(1, 3) * t(2, 2) * t(3, 0)
-			+ t(0, 2) * t(1, 1) * t(2, 3) * t(3, 0) 
-			- t(0, 1) * t(1, 2) * t(2, 3) * t(3, 0) 
-			- t(0, 3) * t(1, 2) * t(2, 0) * t(3, 1) 
-			+ t(0, 2) * t(1, 3) * t(2, 0) * t(3, 1) 
-			+ t(0, 3) * t(1, 0) * t(2, 2) * t(3, 1) 
+			+ t(0, 2) * t(1, 1) * t(2, 3) * t(3, 0)
+			- t(0, 1) * t(1, 2) * t(2, 3) * t(3, 0)
+			- t(0, 3) * t(1, 2) * t(2, 0) * t(3, 1)
+			+ t(0, 2) * t(1, 3) * t(2, 0) * t(3, 1)
+			+ t(0, 3) * t(1, 0) * t(2, 2) * t(3, 1)
 			- t(0, 0) * t(1, 3) * t(2, 2) * t(3, 1)
-			- t(0, 2) * t(1, 0) * t(2, 3) * t(3, 1) 
-			+ t(0, 0) * t(1, 2) * t(2, 3) * t(3, 1) 
-			+ t(0, 3) * t(1, 1) * t(2, 0) * t(3, 2) 
+			- t(0, 2) * t(1, 0) * t(2, 3) * t(3, 1)
+			+ t(0, 0) * t(1, 2) * t(2, 3) * t(3, 1)
+			+ t(0, 3) * t(1, 1) * t(2, 0) * t(3, 2)
 			- t(0, 1) * t(1, 3) * t(2, 0) * t(3, 2)
 			- t(0, 3) * t(1, 0) * t(2, 1) * t(3, 2)
-			+ t(0, 0) * t(1, 3) * t(2, 1) * t(3, 2) 
+			+ t(0, 0) * t(1, 3) * t(2, 1) * t(3, 2)
 			+ t(0, 1) * t(1, 0) * t(2, 3) * t(3, 2)
 			- t(0, 0) * t(1, 1) * t(2, 3) * t(3, 2)
 			- t(0, 2) * t(1, 1) * t(2, 0) * t(3, 3)
 			+ t(0, 1) * t(1, 2) * t(2, 0) * t(3, 3)
 			+ t(0, 2) * t(1, 0) * t(2, 1) * t(3, 3)
-			- t(0, 0) * t(1, 2) * t(2, 1) * t(3, 3) 
-			- t(0, 1) * t(1, 0) * t(2, 2) * t(3, 3) 
+			- t(0, 0) * t(1, 2) * t(2, 1) * t(3, 3)
+			- t(0, 1) * t(1, 0) * t(2, 2) * t(3, 3)
 			+ t(0, 0) * t(1, 1) * t(2, 2) * t(3, 3);
 	}
 
@@ -288,7 +288,7 @@ public:
 		m4(3, 3) =  tmp[10] * in(2, 2) + tmp[4] * in(0, 2) + tmp[9] * in(1, 2);
 		m4(3, 3) -= tmp[8] * in(1, 2) + tmp[11] * in(2, 2) + tmp[5] * in(0, 2);
 
-		T det = in(0, 0) * m4(0, 0) + in(1, 0) * m4(0, 1) 
+		T det = in(0, 0) * m4(0, 0) + in(1, 0) * m4(0, 1)
 			+ in(2, 0) * m4(0, 2) + in(3, 0) * m4(0, 3);
 
 		ANKI_ASSERT(!isZero<T>(det)); // Cannot invert, det == 0
@@ -308,9 +308,9 @@ public:
 	TMat4 getInverseTransformation() const
 	{
 		TMat3<T> invertedRot = getRotationPart().getTransposed();
-		TVec3<T> invertedTsl = getTranslationPart();
+		TVec3<T> invertedTsl = getTranslationPart().xyz();
 		invertedTsl = -(invertedRot * invertedTsl);
-		return TMat4(invertedTsl, invertedRot);
+		return TMat4(invertedTsl.xyz0(), invertedRot);
 	}
 
 	void setIdentity()
@@ -321,9 +321,9 @@ public:
 	static const TMat4& getIdentity()
 	{
 		static const TMat4 ident(
-			1.0, 0.0, 0.0, 0.0, 
-			0.0, 1.0, 0.0, 0.0, 
-			0.0, 0.0, 1.0, 0.0, 
+			1.0, 0.0, 0.0, 0.0,
+			0.0, 1.0, 0.0, 0.0,
+			0.0, 0.0, 1.0, 0.0,
 			0.0, 0.0, 0.0, 1.0);
 		return ident;
 	}
@@ -340,32 +340,32 @@ public:
 
 		TMat4 m4;
 
-		m4(0, 0) = 
+		m4(0, 0) =
 			m0(0, 0) * m1(0, 0) + m0(0, 1) * m1(1, 0) + m0(0, 2) * m1(2, 0);
-		m4(0, 1) = 
+		m4(0, 1) =
 			m0(0, 0) * m1(0, 1) + m0(0, 1) * m1(1, 1) + m0(0, 2) * m1(2, 1);
-		m4(0, 2) = 
+		m4(0, 2) =
 			m0(0, 0) * m1(0, 2) + m0(0, 1) * m1(1, 2) + m0(0, 2) * m1(2, 2);
-		m4(1, 0) = 
+		m4(1, 0) =
 			m0(1, 0) * m1(0, 0) + m0(1, 1) * m1(1, 0) + m0(1, 2) * m1(2, 0);
-		m4(1, 1) = 
+		m4(1, 1) =
 			m0(1, 0) * m1(0, 1) + m0(1, 1) * m1(1, 1) + m0(1, 2) * m1(2, 1);
-		m4(1, 2) = 
+		m4(1, 2) =
 			m0(1, 0) * m1(0, 2) + m0(1, 1) * m1(1, 2) + m0(1, 2) * m1(2, 2);
 		m4(2, 0) =
 			m0(2, 0) * m1(0, 0) + m0(2, 1) * m1(1, 0) + m0(2, 2) * m1(2, 0);
-		m4(2, 1) = 
+		m4(2, 1) =
 			m0(2, 0) * m1(0, 1) + m0(2, 1) * m1(1, 1) + m0(2, 2) * m1(2, 1);
 		m4(2, 2) =
 			m0(2, 0) * m1(0, 2) + m0(2, 1) * m1(1, 2) + m0(2, 2) * m1(2, 2);
 
-		m4(0, 3) = m0(0, 0) * m1(0, 3) + m0(0, 1) * m1(1, 3) 
+		m4(0, 3) = m0(0, 0) * m1(0, 3) + m0(0, 1) * m1(1, 3)
 			+ m0(0, 2) * m1(2, 3) + m0(0, 3);
 
-		m4(1, 3) = m0(1, 0) * m1(0, 3) + m0(1, 1) * m1(1, 3) 
+		m4(1, 3) = m0(1, 0) * m1(0, 3) + m0(1, 1) * m1(1, 3)
 			+ m0(1, 2) * m1(2, 3) + m0(1, 3);
 
-		m4(2, 3) = m0(2, 0) * m1(0, 3) + m0(2, 1) * m1(1, 3) 
+		m4(2, 3) = m0(2, 0) * m1(0, 3) + m0(2, 1) * m1(1, 3)
 			+ m0(2, 2) * m1(2, 3) + m0(2, 3);
 
 		m4(3, 0) = m4(3, 1) = m4(3, 2) = 0.0;
@@ -380,11 +380,11 @@ public:
 		const TMat4& m = *this;
 
 		return TVec3<T>(
-			m(0, 0) * v.x() + m(0, 1) * v.y() 
+			m(0, 0) * v.x() + m(0, 1) * v.y()
 			+ m(0, 2) * v.z() + m(0, 3),
-			m(1, 0) * v.x() + m(1, 1) * v.y() 
+			m(1, 0) * v.x() + m(1, 1) * v.y()
 			+ m(1, 2) * v.z() + m(1, 3),
-			m(2, 0) * v.x() + m(2, 1) * v.y() 
+			m(2, 0) * v.x() + m(2, 1) * v.y()
 			+ m(2, 2) * v.z() + m(2, 3));
 	}
 	/// @}
@@ -422,7 +422,7 @@ template<>
 TVec4<F32> TMat4<F32>::Base::operator*(const TVec4<F32>& b) const;
 
 template<>
-void TMat4<F32>::Base::setRows(const TVec4<F32>& a, const TVec4<F32>& b, 
+void TMat4<F32>::Base::setRows(const TVec4<F32>& a, const TVec4<F32>& b,
 	const TVec4<F32>& c, const TVec4<F32>& d);
 
 template<>

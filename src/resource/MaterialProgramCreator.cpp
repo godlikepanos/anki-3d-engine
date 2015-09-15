@@ -605,7 +605,7 @@ Error MaterialProgramCreator::parseOperationTag(
 	CString cstr;
 	XmlElement el;
 
-	static const char OUT[] = "out";
+	static const char* OUT = "out";
 
 	CString funcName;
 	StringListAuto argsList(m_alloc);
@@ -653,12 +653,14 @@ Error MaterialProgramCreator::parseOperationTag(
 				}
 			}
 
-			// The argument should be an input variable or an outXX
-			if(!(input != nullptr
-				|| std::memcmp(&arg[0], OUT, 3) == 0))
+			// The argument should be an input variable or an outXX or global
+			if(input == nullptr)
 			{
-				ANKI_LOGE("Incorrect argument: %s", &arg[0]);
-				return ErrorCode::USER_DATA;
+				if(arg.find(OUT) != 0 && arg.find("anki_") != 0)
+				{
+					ANKI_LOGE("Incorrect argument: %s", &arg[0]);
+					return ErrorCode::USER_DATA;
+				}
 			}
 
 			// Add to a list and do something special if instanced

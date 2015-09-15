@@ -72,10 +72,6 @@ void ParticleSimple::simulate(const ParticleEmitter& pe,
 {
 	F32 dt = crntTime - prevUpdateTime;
 
-	ANKI_ASSERT(
-		static_cast<const ParticleEmitterProperties&>(pe).
-		m_particle.m_gravity.getLength() > 0.0);
-
 	Vec4 xp = m_position;
 	Vec4 xc = m_acceleration * (dt * dt) + m_velocity * dt + xp;
 

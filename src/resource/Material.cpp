@@ -46,16 +46,8 @@ Error UpdateTexturesVisitor
 	::visit<MaterialVariableTemplate<TextureResourcePtr>>(
 	const MaterialVariableTemplate<TextureResourcePtr>& var)
 {
-	if(var.getName() == "uMsDepthMap")
-	{
-		m_init->m_textures[var.getTextureUnit()].m_texture =
-			m_manager->getRenderer().getMs().getDepthRt();
-	}
-	else
-	{
-		m_init->m_textures[var.getTextureUnit()].m_texture =
-			(*var.begin())->getGrTexture();
-	}
+	m_init->m_textures[var.getTextureUnit()].m_texture =
+		(*var.begin())->getGrTexture();
 	return ErrorCode::NONE;
 }
 
