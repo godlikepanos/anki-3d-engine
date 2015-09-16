@@ -4,7 +4,12 @@
 // http://www.anki3d.org/LICENSE
 
 #pragma anki type vert
-#pragma anki include "shaders/IsCommon.glsl"
+
+#define LIGHT_SET 0
+#define LIGHT_SS_BINDING 0
+#pragma anki include "shaders/LightResources.glsl"
+#undef LIGHT_SET
+#undef LIGHT_SS_BINDING
 
 layout(location = 0) out vec2 out_texCoord;
 layout(location = 1) flat out int out_instanceId;

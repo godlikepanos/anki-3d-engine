@@ -77,9 +77,9 @@ public:
 	void bin(const CollisionShape& cs, const Aabb& csBox,
 		ClustererTestResult& rez) const;
 
-	void fillShaderParams(Vec4& params) const
+	F32 getDivisor() const
 	{
-		params = Vec4(m_near, m_calcNearOpt, 0.0, 0.0);
+		return m_calcNearOpt;
 	}
 
 	U getClusterCount() const

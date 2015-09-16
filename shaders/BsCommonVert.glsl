@@ -10,7 +10,8 @@ layout(location = POSITION_LOCATION) in vec3 in_position;
 layout(location = SCALE_LOCATION) in float in_scale;
 layout(location = ALPHA_LOCATION) in float in_alpha;
 
-layout(location = 1) flat out float outAlpha;
+layout(location = 0) out vec3 out_vertPosViewSpace;
+layout(location = 1) flat out float out_alpha;
 
 out gl_PerVertex
 {
@@ -44,7 +45,7 @@ void writePositionMvp(in mat4 mvp)
 void particle(in mat4 mvp)
 {
 	gl_Position = mvp * vec4(in_position, 1);
-	outAlpha = in_alpha;
+	out_alpha = in_alpha;
 	gl_PointSize = in_scale * float(ANKI_RENDERER_WIDTH) / gl_Position.w;
 }
 
@@ -52,5 +53,12 @@ void particle(in mat4 mvp)
 #define writeAlpha_DEFINED
 void writeAlpha(in float alpha)
 {
-	outAlpha = alpha;
+	out_alpha = alpha;
+}
+
+//==============================================================================
+#define writeVertPosViewSpace_DEFINED
+void writeVertPosViewSpace(in mat4 modelViewMat)
+{
+	out_vertPosViewSpace = vec3(modelViewMat * vec4(in_position, 1.0));
 }

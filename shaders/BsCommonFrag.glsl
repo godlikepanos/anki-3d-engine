@@ -18,10 +18,14 @@ layout(TEX_BINDING(1, 0)) uniform sampler2D anki_u_msDepthRt;
 #undef LIGHT_SS_BINDING
 #undef LIGHT_TEX_BINDING
 
-layout(location = 1) flat in float inAlpha;
+layout(location = 0) in vec3 in_vertPosViewSpace;
+layout(location = 1) flat in float in_alpha;
 
 layout(location = 0) out vec4 out_color;
 
+#pragma anki include "shaders/LightFunctions.glsl"
+
+//==============================================================================
 #if PASS == COLOR
 #	define texture_DEFINED
 #endif
@@ -30,7 +34,7 @@ layout(location = 0) out vec4 out_color;
 #define getAlpha_DEFINED
 float getAlpha()
 {
-	return inAlpha;
+	return in_alpha;
 }
 
 //==============================================================================
@@ -128,16 +132,37 @@ void fog(in sampler2D depthMap, in vec3 color, in float fogScale)
 
 	vec2 texCoords = gl_FragCoord.xy * screenSize;
 	float depth = texture(depthMap, texCoords).r;
-	float zNear = 0.2;
-	float zFar = 200.0;
+	float zNear = u_nearFarClustererDivisor.x;
+	float zFar = u_nearFarClustererDivisor.y;
 	float linearDepth = (2.0 * zNear) / (zFar + zNear - depth * (zFar - zNear));
 
 	float depth2 = gl_FragCoord.z;
-	float linearDepth2 = (2.0 * zNear) / (zFar + zNear - depth2 * (zFar - zNear));
+	float linearDepth2 =
+		(2.0 * zNear) / (zFar + zNear - depth2 * (zFar - zNear));
 
 	float diff = linearDepth - linearDepth2;
 
 	//writeGBuffer(vec4(vec3(diff * fogScale), 1.0));
 	writeGBuffer(vec4(color, diff * fogScale));
+}
+#endif
+
+//==============================================================================
+#if PASS == COLOR
+#	define computeLightColor_DEFINED
+vec3 computeLightColor()
+{
+	// Find the cluster
+	uint cluster;
+	{
+		uint k = calcClusterSplit(in_vertPosViewSpace.z);
+
+		vec2 tilef = ceil(gl_FragCoord.xy / u_tileCount.xy);
+		uint tile = uint(tilef.y) * u_tileCount.x + uint(tilef.x);
+
+		cluster = u_clusters[tile + k * u_tileCount.z];
+	}
+
+	return vec3(0.0);
 }
 #endif

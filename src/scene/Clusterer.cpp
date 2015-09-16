@@ -168,7 +168,7 @@ void Clusterer::prepare(ThreadPool& threadPool, const SceneNode& node)
 	m_frc = &frc;
 	m_near = pfr.getNear();
 	m_far = pfr.getFar();
-	m_calcNearOpt = (pfr.getFar() - m_near) / pow(m_counts[2], 2.0);
+	m_calcNearOpt = (m_far - m_near) / pow(m_counts[2], 2.0);
 
 	//
 	// Issue parallel jobs
@@ -217,7 +217,7 @@ void Clusterer::computeSplitRange(const CollisionShape& cs, U& zBegin,
 	dist = m_far - dist;
 
 	// Find split
-	zEnd = calcZ(-dist) + 1;
+	zEnd = min<U>(calcZ(-dist) + 1, m_counts[2]);
 	ANKI_ASSERT(zEnd <= m_counts[2]);
 }
 

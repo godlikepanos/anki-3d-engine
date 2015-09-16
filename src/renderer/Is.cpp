@@ -54,8 +54,9 @@ struct ShaderCommonUniforms
 	Vec4 m_projectionParams;
 	Vec4 m_sceneAmbientColor;
 	Vec4 m_groundLightDir;
-	Vec4 m_clustererParams;
+	Vec4 m_nearFarClustererDivisor;
 	Mat4 m_viewMat;
+	UVec4 m_tileCount;
 };
 
 using Lid = U32; ///< Light ID
@@ -244,8 +245,7 @@ Error Is::initInternal(const ConfigSet& config)
 		"#define MAX_SPOT_LIGHTS %u\n"
 		"#define MAX_LIGHT_INDICES %u\n"
 		"#define GROUND_LIGHT %u\n"
-		"#define POISSON %u\n"
-		"#define OMNI_LIGHT_FRUSTUM_NEAR_PLANE %f\n",
+		"#define POISSON %u\n",
 		m_r->getTileCountXY().x(),
 		m_r->getTileCountXY().y(),
 		m_r->getClusterCount(),
@@ -255,8 +255,7 @@ Error Is::initInternal(const ConfigSet& config)
 		m_maxSpotLights,
 		m_maxLightIds,
 		m_groundLightEnabled,
-		m_sm.getPoissonEnabled(),
-		PointLight::FRUSTUM_NEAR_PLANE);
+		m_sm.getPoissonEnabled());
 
 	// point light
 	ANKI_CHECK(getResourceManager().loadResourceToCache(m_lightVert,
@@ -790,7 +789,7 @@ Error Is::run(CommandBufferPtr& cmdBuff)
 }
 
 //==============================================================================
-void Is::updateCommonBlock(CommandBufferPtr& cmdb, FrustumComponent& fr)
+void Is::updateCommonBlock(CommandBufferPtr& cmdb, const FrustumComponent& fr)
 {
 	ShaderCommonUniforms* blk =
 		static_cast<ShaderCommonUniforms*>(
@@ -802,7 +801,11 @@ void Is::updateCommonBlock(CommandBufferPtr& cmdb, FrustumComponent& fr)
 	blk->m_projectionParams = m_r->getProjectionParameters();
 	blk->m_sceneAmbientColor = m_ambientColor;
 	blk->m_viewMat = fr.getViewMatrix().getTransposed();
-	m_r->getClusterer().fillShaderParams(blk->m_clustererParams);
+	blk->m_nearFarClustererDivisor = Vec4(
+		fr.getFrustum().getNear(),
+		fr.getFrustum().getFar(),
+		m_r->getClusterer().getDivisor(),
+		0.0);
 
 	Vec3 groundLightDir;
 	if(m_groundLightEnabled)
@@ -811,6 +814,8 @@ void Is::updateCommonBlock(CommandBufferPtr& cmdb, FrustumComponent& fr)
 			m_cam->getComponent<FrustumComponent>().getViewMatrix();
 		blk->m_groundLightDir = Vec4(-viewMat.getColumn(1).xyz(), 1.0);
 	}
+
+	blk->m_tileCount = UVec4(m_r->getTileCountXY(), m_r->getTileCount(), 0);
 
 	m_commonVarsBuffs[m_currentFrame]->unmap();
 }

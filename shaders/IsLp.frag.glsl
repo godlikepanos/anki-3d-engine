@@ -27,6 +27,8 @@ layout(location = 0) out vec3 out_color;
 
 #pragma anki include "shaders/LightFunctions.glsl"
 
+const uint TILE_COUNT = TILES_COUNT_X * TILES_COUNT_Y;
+
 //==============================================================================
 // Return frag pos in view space
 vec3 getFragPosVSpace()

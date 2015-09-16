@@ -167,7 +167,8 @@ private:
 	/// Prepare GL for rendering
 	void setState(CommandBufferPtr& cmdBuff);
 
-	void updateCommonBlock(CommandBufferPtr& cmdBuff, FrustumComponent& frc);
+	void updateCommonBlock(
+		CommandBufferPtr& cmdBuff, const FrustumComponent& frc);
 
 	// Binning
 	void binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& data);
