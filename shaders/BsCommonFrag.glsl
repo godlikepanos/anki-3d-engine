@@ -150,19 +150,51 @@ void fog(in sampler2D depthMap, in vec3 color, in float fogScale)
 //==============================================================================
 #if PASS == COLOR
 #	define computeLightColor_DEFINED
-vec3 computeLightColor()
+vec3 computeLightColor(vec3 diffColor)
 {
-	// Find the cluster
-	uint cluster;
+	vec3 fragPos = in_vertPosViewSpace;
+	vec3 outColor = diffCol * u_sceneAmbientColor.rgb;
+
+	// Find the cluster and then the light counts
+	uint lightOffset;
+	uint pointLightsCount;
+	uint spotLightsCount;
 	{
-		uint k = calcClusterSplit(in_vertPosViewSpace.z);
+		uint k = calcClusterSplit(fragPos.z);
 
 		vec2 tilef = ceil(gl_FragCoord.xy / u_tileCount.xy);
 		uint tile = uint(tilef.y) * u_tileCount.x + uint(tilef.x);
 
-		cluster = u_clusters[tile + k * u_tileCount.z];
+		uint cluster = u_clusters[tile + k * u_tileCount.z];
+
+		lightOffset = cluster >> 16u;
+		pointLightsCount = (cluster >> 8u) & 0xFFu;
+		spotLightsCount = cluster & 0xFFu;
 	}
 
-	return vec3(0.0);
+	// Point lights
+	for(uint i = 0U; i < pointLightsCount; ++i)
+	{
+		uint lightId = u_lightIndices[lightOffset++];
+		PointLight light = u_pointLights[lightId];
+
+		vec3 diffC = computeDiffuseColor(
+			diffCol, light.diffuseColorShadowmapId.rgb);
+
+		vec3 frag2Light = light.posRadius.xyz - fragPos;
+		float att = computeAttenuationFactor(light.posRadius.w, frag2Light);
+
+		float shadow = 1.0;
+		float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
+		if(light.diffuseColorShadowmapId.w < 128.0)
+		{
+			shadow = computeShadowFactorOmni(frag2Light,
+				shadowmapLayerIdx, -1.0 / light.posRadius.w);
+		}
+
+		outColor += diffC * (att * shadow);
+	}
+
+	return outColor;
 }
 #endif
