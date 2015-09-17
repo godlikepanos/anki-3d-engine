@@ -123,37 +123,25 @@ void particleSoftColorAlpha(in sampler2D depthMap, in vec3 icolor,
 
 //==============================================================================
 #if PASS == COLOR
-#	define fog_DEFINED
-void fog(in sampler2D depthMap, in vec3 color, in float fogScale)
-{
-	const vec2 screenSize = vec2(
-		1.0 / float(ANKI_RENDERER_WIDTH),
-		1.0 / float(ANKI_RENDERER_HEIGHT));
-
-	vec2 texCoords = gl_FragCoord.xy * screenSize;
-	float depth = texture(depthMap, texCoords).r;
-	float zNear = u_nearFarClustererDivisor.x;
-	float zFar = u_nearFarClustererDivisor.y;
-	float linearDepth = (2.0 * zNear) / (zFar + zNear - depth * (zFar - zNear));
-
-	float depth2 = gl_FragCoord.z;
-	float linearDepth2 =
-		(2.0 * zNear) / (zFar + zNear - depth2 * (zFar - zNear));
-
-	float diff = linearDepth - linearDepth2;
-
-	//writeGBuffer(vec4(vec3(diff * fogScale), 1.0));
-	writeGBuffer(vec4(color, diff * fogScale));
-}
-#endif
-
-//==============================================================================
-#if PASS == COLOR
 #	define computeLightColor_DEFINED
-vec3 computeLightColor(vec3 diffColor)
+vec3 computeLightColor(vec3 diffCol)
 {
-	vec3 fragPos = in_vertPosViewSpace;
 	vec3 outColor = diffCol * u_sceneAmbientColor.rgb;
+
+	// Compute frag pos in view space
+	vec3 fragPos;
+	{
+		float depth = gl_FragCoord.z;
+		fragPos.z = u_projectionParams.z / (u_projectionParams.w + depth);
+
+		const vec2 screenSize = vec2(
+			1.0 / float(ANKI_RENDERER_WIDTH),
+			1.0 / float(ANKI_RENDERER_HEIGHT));
+
+		vec2 ndc = gl_FragCoord.xy * screenSize * 2.0 - 1.0;
+
+		fragPos.xy = ndc * u_projectionParams.xy * fragPos.z;
+	}
 
 	// Find the cluster and then the light counts
 	uint lightOffset;
@@ -162,7 +150,7 @@ vec3 computeLightColor(vec3 diffColor)
 	{
 		uint k = calcClusterSplit(fragPos.z);
 
-		vec2 tilef = ceil(gl_FragCoord.xy / u_tileCount.xy);
+		vec2 tilef = gl_FragCoord.xy / float(TILE_SIZE);
 		uint tile = uint(tilef.y) * u_tileCount.x + uint(tilef.x);
 
 		uint cluster = u_clusters[tile + k * u_tileCount.z];
@@ -195,6 +183,75 @@ vec3 computeLightColor(vec3 diffColor)
 		outColor += diffC * (att * shadow);
 	}
 
+	// Spot lights
+	for(uint i = 0U; i < spotLightsCount; ++i)
+	{
+		uint lightId = u_lightIndices[lightOffset++];
+		SpotLight light = u_spotLights[lightId];
+
+		vec3 diffC = computeDiffuseColor(
+			diffCol, light.diffuseColorShadowmapId.rgb);
+
+		vec3 frag2Light = light.posRadius.xyz - fragPos;
+		float att = computeAttenuationFactor(light.posRadius.w, frag2Light);
+
+		vec3 l = normalize(frag2Light);
+
+		float spot = computeSpotFactor(
+			l, light.outerCosInnerCos.x,
+			light.outerCosInnerCos.y,
+			light.lightDir.xyz);
+
+		float shadow = 1.0;
+		float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
+		if(shadowmapLayerIdx < 128.0)
+		{
+			shadow = computeShadowFactorSpot(light.texProjectionMat,
+				fragPos, shadowmapLayerIdx);
+		}
+
+		outColor += diffC * (att * spot * shadow);
+	}
+
 	return outColor;
+}
+#endif
+
+//==============================================================================
+#if PASS == COLOR
+#	define particleTextureAlphaLight_DEFINED
+void particleTextureAlphaLight(in sampler2D tex, in float alpha)
+{
+	vec4 color = texture(tex, gl_PointCoord);
+	color.a *= alpha;
+
+	vec3 lightColor = computeLightColor(color.rgb);
+
+	writeGBuffer(vec4(lightColor, color.a));
+}
+#endif
+
+//==============================================================================
+#if PASS == COLOR
+#	define fog_DEFINED
+void fog(in sampler2D depthMap, in vec3 color, in float fogScale)
+{
+	const vec2 screenSize = vec2(
+		1.0 / float(ANKI_RENDERER_WIDTH),
+		1.0 / float(ANKI_RENDERER_HEIGHT));
+
+	vec2 texCoords = gl_FragCoord.xy * screenSize;
+	float depth = texture(depthMap, texCoords).r;
+	float zNear = u_nearFarClustererDivisor.x;
+	float zFar = u_nearFarClustererDivisor.y;
+	float linearDepth = (2.0 * zNear) / (zFar + zNear - depth * (zFar - zNear));
+
+	float depth2 = gl_FragCoord.z;
+	float linearDepth2 =
+		(2.0 * zNear) / (zFar + zNear - depth2 * (zFar - zNear));
+
+	float diff = linearDepth - linearDepth2;
+
+	writeGBuffer(vec4(color, diff * fogScale));
 }
 #endif

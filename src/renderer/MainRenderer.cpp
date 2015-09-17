@@ -67,8 +67,9 @@ Error MainRenderer::create(
 	m_materialShaderSource.sprintf(
 		m_alloc,
 		"#define ANKI_RENDERER_WIDTH %u\n"
-		"#define ANKI_RENDERER_HEIGHT %u\n",
-		m_r->getWidth(), m_r->getHeight());
+		"#define ANKI_RENDERER_HEIGHT %u\n"
+		"#define TILE_SIZE %u\n",
+		m_r->getWidth(), m_r->getHeight(), Renderer::TILE_SIZE);
 
 	// Init other
 	ANKI_CHECK(m_r->getResourceManager().loadResource(
