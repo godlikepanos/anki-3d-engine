@@ -15,10 +15,12 @@ install:
   - export CC="gcc-4.8"
 
 script:
-  - echo `$CC --version`
   - cd build
-  - cmake .. -DANKI_BUILD_TOOLS=OFF
-  - make -j 2
+  - cmake .. -DANKI_OPTIMIZE=ON -DANKI_DEBUG=OFF -DANKI_DEBUG_SYMBOLS=OFF -DANKI_BUILD_TOOLS=ON -DANKI_BUILD_TESTS=ON -DANKI_ENABLE_COUNTERS=OFF
+  - make
+  - ./clean.sh
+  - cmake .. -DANKI_OPTIMIZE=OFF -DANKI_DEBUG=ON -DANKI_DEBUG_SYMBOLS=ON -DANKI_BUILD_TOOLS=ON -DANKI_BUILD_TESTS=ON -DANKI_ENABLE_COUNTERS=ON
+  - make
 
 branches:
   only:
@@ -27,7 +29,6 @@ branches:
 notifications:
   email: false
 
-os:
-  - linux
+os: linux
 
 
