@@ -3,17 +3,19 @@ language: cpp
 sudo: required
 
 compiler:
-  - gcc-4.8
+  - gcc
 
-addons:
-  apt:
-    packages:
-      - gcc-4.8
-      - g++-4.8
-      - cmake
+before_install:
+  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+  - sudo apt-get update -qq
+
+install:
+  - sudo apt-get install -qq g++-4.8
+  - export CXX="g++-4.8"
+  - export CC="gcc-4.8"
 
 script:
-  - $CC --version
+  - echo `$CC --version`
   - cd build
   - cmake .. -DANKI_BUILD_TOOLS=OFF
   - make -j 2
