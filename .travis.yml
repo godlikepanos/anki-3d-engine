@@ -10,9 +10,8 @@ addons:
       - g++-4.8
       - cmake
 
-env:
-  - CC=gcc-4.8
-  - CXX=g++4.8
+install:
+  - export CC=gcc-4.8 && export CXX=g++4.8
 
 script:
   - cd build
