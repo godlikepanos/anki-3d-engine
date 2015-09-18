@@ -3,9 +3,16 @@ language: cpp
 compiler:
   - gcc
 
+addons:
+  apt:
+    packages:
+      - gcc-4.8
+      - g++-4.8
+      - cmake
+
 script:
-  - bundle exec cd build
-  - bundle exec cmake .. -DANKI_BUILD_TOOLS=OFF
+  - cd build
+  - cmake .. -DANKI_BUILD_TOOLS=OFF
 
 branches:
   only:
