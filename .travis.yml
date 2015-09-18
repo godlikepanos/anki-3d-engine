@@ -10,12 +10,9 @@ addons:
       - g++-4.8
       - cmake
 
-install:
-  - export CC=gcc-4.8 && export CXX=g++4.8
-
 script:
   - cd build
-  - cmake .. -DANKI_BUILD_TOOLS=OFF
+  - cmake .. -DANKI_BUILD_TOOLS=OFF -DCMAKE_CXX_COMPILER=`which g++4.8` -DCMAKE_C_COMPILER=`which gcc-4.8`
   - make -j 2
 
 branches:
