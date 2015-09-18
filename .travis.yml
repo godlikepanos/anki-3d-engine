@@ -1,0 +1,20 @@
+language: cpp
+
+compiler:
+  - gcc
+
+script:
+  - bundle exec cd build
+  - bundle exec cmake .. -DANKI_BUILD_TOOLS=OFF
+
+branches:
+  only:
+    - master
+
+notifications:
+  email: false
+
+os:
+  - linux
+
+
