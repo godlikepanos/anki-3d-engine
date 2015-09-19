@@ -6,6 +6,8 @@
 #pragma once
 
 #include "anki/renderer/MainRenderer.h"
+#include "anki/renderer/Renderer.h"
+#include "anki/renderer/Pps.h"
 #include "anki/renderer/Dbg.h"
 
 /// @defgroup renderer Renderering system

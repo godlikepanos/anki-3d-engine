@@ -64,6 +64,7 @@ Error init()
 	ResourceManager& resources = app->getResourceManager();
 
 	scene.setAmbientColor(Vec4(1.0) * 0.05);
+	renderer.getOffscreenRenderer().getPps().setFog(Vec3(1.0, 0.9, 0.9), 0.5);
 
 	if(getenv("PROFILE"))
 	{

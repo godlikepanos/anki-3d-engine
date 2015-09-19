@@ -60,6 +60,13 @@ public:
 	/// Load the color grading texture.
 	Error loadColorGradingTexture(CString filename);
 
+	void setFog(const Vec3& color, F32 factor)
+	{
+		m_uniformsDirty = true;
+		m_fogColor = color;
+		m_fogFactor = factor;
+	}
+
 anki_internal:
 	static const PixelFormat RT_PIXEL_FORMAT;
 
@@ -93,6 +100,11 @@ private:
 	ResourceGroupPtr m_rcGroup;
 
 	TextureResourcePtr m_lut; ///< Color grading lookup texture.
+
+	Bool8 m_uniformsDirty = true;
+	BufferPtr m_uniformsBuff;
+	Vec3 m_fogColor = Vec3(1.0);
+	F32 m_fogFactor = 1.0;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& config);
 };

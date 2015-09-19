@@ -8,19 +8,35 @@
 #pragma anki include "shaders/Tonemapping.glsl"
 #pragma anki include "shaders/LinearDepth.glsl"
 
-layout(binding = 0) uniform lowp sampler2D u_isRt;
-layout(binding = 1) uniform lowp sampler2D u_ppsSsaoRt;
-layout(binding = 2) uniform lowp sampler2D u_ppsBloomLfRt;
-layout(binding = 3) uniform lowp sampler3D u_lut;
-layout(binding = 4) uniform lowp sampler2D u_ppsSslfRt;
+layout(binding = 0) uniform sampler2D u_isRt;
+layout(binding = 1) uniform sampler2D u_ppsSsaoRt;
+layout(binding = 2) uniform sampler2D u_ppsBloomLfRt;
+layout(binding = 3) uniform sampler3D u_lut;
+layout(binding = 4) uniform sampler2D u_ppsSslfRt;
+layout(binding = 5) uniform sampler2D u_msDepthRt;
 
-layout(std140, binding = 0) readonly buffer _blk
+struct Luminance
 {
-	vec4 u_averageLuminancePad3;
+	vec4 averageLuminancePad3;
 };
 
-layout(location = 0) in vec2 in_texCoords;
+layout(std140, SS_BINDING(0, 0)) readonly buffer _s0
+{
+	Luminance u_luminance;
+};
 
+struct Uniforms
+{
+	vec4 nearFarPad2;
+	vec4 fogColorFogFactor;
+};
+
+layout(std140, SS_BINDING(0, 1)) readonly buffer _s1
+{
+	Uniforms u_uniforms;
+};
+
+layout(location = 0) in vec2 in_uv;
 layout(location = 0) out vec3 out_color;
 
 const vec2 TEX_OFFSET = vec2(1.0 / float(FBO_WIDTH), 1.0 / float(FBO_HEIGHT));
@@ -109,28 +125,42 @@ vec3 colorGrading(in vec3 color)
 }
 
 //==============================================================================
+vec3 fog(vec3 colorIn, vec2 uv)
+{
+	float depth = textureLod(u_msDepthRt, uv, 2.0).r;
+	float linearDepth = linearizeDepth(depth, u_uniforms.nearFarPad2.x,
+		u_uniforms.nearFarPad2.y);
+
+	linearDepth = pow(linearDepth, 1.0);
+	float t = linearDepth * u_uniforms.fogColorFogFactor.w;
+	return colorIn * (1.0 - t) + u_uniforms.fogColorFogFactor.rgb * t;
+}
+
+//==============================================================================
 void main()
 {
 #if SHARPEN_ENABLED
-	out_color = sharpen(u_isRt, in_texCoords);
+	out_color = sharpen(u_isRt, in_uv);
 #else
-	out_color = textureLod(u_isRt, in_texCoords, 0.0).rgb;
+	out_color = textureLod(u_isRt, in_uv, 0.0).rgb;
 #endif
 
 #if SSAO_ENABLED
-	float ssao = textureLod(u_ppsSsaoRt, in_texCoords, 0.0).r;
+	float ssao = textureLod(u_ppsSsaoRt, in_uv, 0.0).r;
 	out_color *= ssao;
 #endif
 
-	out_color = tonemap(out_color, u_averageLuminancePad3.x, 0.0);
+	out_color = tonemap(out_color, u_luminance.averageLuminancePad3.x, 0.0);
+
+	out_color = fog(out_color, in_uv);
 
 #if BLOOM_ENABLED
-	vec3 bloom = textureLod(u_ppsBloomLfRt, in_texCoords, 0.0).rgb;
+	vec3 bloom = textureLod(u_ppsBloomLfRt, in_uv, 0.0).rgb;
 	out_color += bloom;
 #endif
 
 #if SSLF_ENABLED
-	vec3 sslf = textureLod(u_ppsSslfRt, in_texCoords, 0.0).rgb;
+	vec3 sslf = textureLod(u_ppsSslfRt, in_uv, 0.0).rgb;
 	out_color += sslf;
 #endif
 
@@ -139,7 +169,7 @@ void main()
 #if 0
 	if(out_color.x != 0.0000001)
 	{
-		out_color = vec3(mip);
+		out_color = u_uniforms.fogColorFogFactor.rgb;
 	}
 #endif
 }

@@ -11,11 +11,27 @@
 #include "anki/renderer/Sslr.h"
 #include "anki/renderer/Tm.h"
 #include "anki/renderer/Is.h"
+#include "anki/renderer/Ms.h"
 #include "anki/renderer/Dbg.h"
 #include "anki/util/Logger.h"
 #include "anki/misc/ConfigSet.h"
+#include "anki/scene/SceneNode.h"
+#include "anki/scene/FrustumComponent.h"
 
 namespace anki {
+
+//==============================================================================
+// Misc                                                                        =
+//==============================================================================
+struct Uniforms
+{
+	Vec4 m_nearFarPad2;
+	Vec4 m_fogColorFogFactor;
+};
+
+//==============================================================================
+// Pps                                                                         =
+//==============================================================================
 
 //==============================================================================
 const PixelFormat Pps::RT_PIXEL_FORMAT(
@@ -98,6 +114,10 @@ Error Pps::initInternal(const ConfigSet& config)
 	// LUT
 	ANKI_CHECK(loadColorGradingTexture("engine_data/default_lut.ankitex"));
 
+	// Uniforms
+	m_uniformsBuff = getGrManager().newInstance<Buffer>(sizeof(Uniforms),
+		BufferUsageBit::STORAGE, BufferAccessBit::CLIENT_WRITE);
+
 	// RC goup
 	ResourceGroupInitializer rcInit;
 	rcInit.m_textures[0].m_texture = m_r->getIs().getRt();
@@ -119,7 +139,10 @@ Error Pps::initInternal(const ConfigSet& config)
 		rcInit.m_textures[4].m_texture = m_sslf->getRt();
 	}
 
+	rcInit.m_textures[5].m_texture = m_r->getMs().getDepthRt();
+
 	rcInit.m_storageBuffers[0].m_buffer = m_tm->getAverageLuminanceBuffer();
+	rcInit.m_storageBuffers[1].m_buffer = m_uniformsBuff;
 
 	m_rcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);
 
@@ -188,6 +211,19 @@ void Pps::run(CommandBufferPtr& cmdb)
 	cmdb->setViewport(0, 0, width, height);
 	cmdb->bindPipeline(m_ppline);
 	cmdb->bindResourceGroup(m_rcGroup, 0);
+
+	if(m_uniformsDirty)
+	{
+		m_uniformsDirty = false;
+		Uniforms* unis = nullptr;
+		cmdb->writeBuffer(m_uniformsBuff, 0, sizeof(*unis), unis);
+		unis->m_fogColorFogFactor = Vec4(m_fogColor, m_fogFactor);
+
+		const SceneNode& cam = m_r->getActiveCamera();
+		const FrustumComponent& frc = cam.getComponent<FrustumComponent>();
+		unis->m_nearFarPad2 = Vec4(frc.getFrustum().getNear(),
+			frc.getFrustum().getFar(), 0.0, 0.0);
+	}
 
 	m_r->drawQuad(cmdb);
 }
