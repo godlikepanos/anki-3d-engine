@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_EVENT_SCENE_AMBIENT_COLOR_EVENT_H
-#define ANKI_EVENT_SCENE_AMBIENT_COLOR_EVENT_H
+#pragma once
 
 #include "anki/event/Event.h"
 #include "anki/Math.h"
@@ -19,8 +18,11 @@ class SceneAmbientColorEvent: public Event
 {
 public:
 	/// Create
-	ANKI_USE_RESULT Error create(
-		EventManager* manager, F32 startTime, F32 duration,
+	SceneAmbientColorEvent(EventManager* manager)
+		: Event(manager)
+	{}
+
+	ANKI_USE_RESULT Error init(F32 startTime, F32 duration,
 		const Vec4& finalColor);
 
 	/// Implements Event::update
@@ -34,4 +36,3 @@ private:
 
 } // end namespace anki
 
-#endif

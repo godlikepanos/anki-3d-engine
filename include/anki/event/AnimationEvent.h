@@ -15,9 +15,9 @@ namespace anki {
 class AnimationEvent: public Event
 {
 public:
-	ANKI_USE_RESULT Error create(
-		EventManager* manager, 
-		const AnimationResourcePtr& anim, 
+	AnimationEvent(EventManager* manager);
+
+	ANKI_USE_RESULT Error init(const AnimationResourcePtr& anim,
 		SceneNode* movableSceneNode);
 
 	/// Implements Event::update

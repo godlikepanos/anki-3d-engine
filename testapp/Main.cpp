@@ -64,7 +64,7 @@ Error init()
 	ResourceManager& resources = app->getResourceManager();
 
 	scene.setAmbientColor(Vec4(1.0) * 0.05);
-	renderer.getOffscreenRenderer().getPps().setFog(Vec3(1.0, 0.9, 0.9), 0.5);
+	renderer.getOffscreenRenderer().getPps().setFog(Vec3(1.0, 0.9, 0.9), 0.7);
 
 	if(getenv("PROFILE"))
 	{
@@ -259,6 +259,14 @@ Error init()
 		if(err) return err;
 	}
 #endif
+
+	/*{
+		SceneNode* node = scene.tryFindSceneNode("Point_026");
+		LightEvent* event = scene.getEventManager().newEvent<LightEvent>(
+			0.0f, 50.0f, node);
+		event->setIntensityMultiplier(Vec4(1.5));
+		event->setFrequency(3.0, 0.1);
+	}*/
 
 #if PLAYER
 	PlayerNode* pnode;

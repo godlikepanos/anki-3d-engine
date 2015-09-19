@@ -11,18 +11,16 @@
 namespace anki {
 
 //==============================================================================
-Error JitterMoveEvent::create(EventManager* manager, F32 startTime, 
-	F32 duration, SceneNode* node)
+Error JitterMoveEvent::init(F32 startTime, F32 duration, SceneNode* node)
 {
 	ANKI_ASSERT(node);
-	Error err = Event::create(manager, startTime, duration, node);
-	if(err) return err;
+	Event::init(startTime, duration, node);
 
 	const MoveComponent& move = node->getComponent<MoveComponent>();
 
 	m_originalPos = move.getLocalTransform().getOrigin();
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

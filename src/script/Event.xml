@@ -14,23 +14,6 @@
 namespace anki {
 
 //==============================================================================
-template<typename T, typename... TArgs>
-static T* newEvent(EventManager* events, TArgs... args)
-{
-	T* ptr;
-	Error err = events->template newEvent<T>(ptr, args...);
-
-	if(!err)
-	{
-		return ptr;
-	}
-	else
-	{
-		return nullptr;
-	}
-}
-
-//==============================================================================
 static EventManager* getEventManager(lua_State* l)
 {
 	LuaBinder* binder = nullptr;
@@ -45,16 +28,35 @@ static EventManager* getEventManager(lua_State* l)
 	<classes>
 		<class name="SceneAmbientColorEvent">
 		</class>
+		<class name="LightEvent">
+			<methods>
+				<method name="setIntensityMultiplier">
+					<args><arg>const Vec4&amp;</arg></args>
+				</method>
+				<method name="setFrequency">
+					<args><arg>F32</arg><arg>F32</arg></args>
+				</method>
+			</methods>
+		</class>
 		<class name="EventManager">
 			<methods>
 				<method name="newSceneAmbientColorEvent">
-					<overrideCall><![CDATA[SceneAmbientColorEvent* ret = newEvent<SceneAmbientColorEvent>(self, arg0, arg1, arg2);]]></overrideCall>
+					<overrideCall><![CDATA[SceneAmbientColorEvent* ret = self->newEvent<SceneAmbientColorEvent>(arg0, arg1, arg2);]]></overrideCall>
 					<args>
 						<arg>F32</arg>
 						<arg>F32</arg>
 						<arg>const Vec4&amp;</arg>
 					</args>
 					<return>SceneAmbientColorEvent*</return>
+				</method>
+				<method name="newLightEvent">
+					<overrideCall><![CDATA[LightEvent* ret = self->newEvent<LightEvent>(arg0, arg1, arg2);]]></overrideCall>
+					<args>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>SceneNode*</arg>
+					</args>
+					<return>LightEvent*</return>
 				</method>
 			</methods>
 		</class>

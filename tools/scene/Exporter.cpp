@@ -911,6 +911,42 @@ void Exporter::exportLight(const aiLight& light)
 			<< vec[2] << ", "
 			<< vec[3] << "))\n";
 	}
+
+	bool eventCreated = false;
+	if(light.mProperties.find("light_event_intensity")
+		!= light.mProperties.end())
+	{
+		if(!eventCreated)
+		{
+			file << "event = events:newLightEvent(0.0, -1.0, "
+				"node:getSceneNodeBase())\n";
+			eventCreated = true;
+		}
+
+		aiVector3D vec;
+		stringToFloatArray<4>(light.mProperties.at("light_event_intensity"),
+			vec);
+
+		file << "event:setIntensityMultiplier(Vec4.new(" << vec[0] << ", "
+			<< vec[1] << ", " << vec[2] << ", " << vec[3] << "))\n";
+	}
+
+	if(light.mProperties.find("light_event_frequency")
+		!= light.mProperties.end())
+	{
+		if(!eventCreated)
+		{
+			file << "event = events:newLightEvent(0.0, -1.0, "
+				"node:getSceneNodeBase())\n";
+			eventCreated = true;
+		}
+
+		float vec[2];
+		stringToFloatArray<2>(light.mProperties.at("light_event_frequency"),
+			vec);
+
+		file << "event:setFrequency(" << vec[0] << ", " << vec[1] << ")\n";
+	}
 }
 
 //==============================================================================
@@ -1188,6 +1224,7 @@ void Exporter::exportAll()
 	std::ofstream& file = m_sceneFile;
 
 	file << "local scene = getSceneGraph()\n"
+		<< "local events = getEventManager()\n"
 		<< "local rot\n"
 		<< "local node\n"
 		<< "local inst\n"

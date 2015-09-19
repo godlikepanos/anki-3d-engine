@@ -61,12 +61,18 @@ public:
 
 	/// Create a new event
 	template<typename T, typename... Args>
-	ANKI_USE_RESULT Error newEvent(T*& event, Args... args)
+	T* newEvent(Args... args)
 	{
-		event = getSceneAllocator().template newInstance<T>();
-		ANKI_CHECK(event->create(this, args...));
-		registerEvent(event);
-		return ErrorCode::NONE;
+		T* event = getSceneAllocator().template newInstance<T>(this);
+		if(!event->init(args...))
+		{
+			registerEvent(event);
+		}
+		else
+		{
+			getSceneAllocator().deleteInstance(event);
+		}
+		return event;
 	}
 
 	/// Delete an event. It actualy marks it for deletion

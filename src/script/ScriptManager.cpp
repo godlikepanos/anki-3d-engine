@@ -24,7 +24,7 @@ ScriptManager::~ScriptManager()
 
 //==============================================================================
 Error ScriptManager::create(
-	AllocAlignedCallback allocCb, 
+	AllocAlignedCallback allocCb,
 	void* allocCbData, SceneGraph* scene)
 {
 	ANKI_LOGI("Initializing scripting engine...");
@@ -41,6 +41,7 @@ Error ScriptManager::create(
 	ANKI_SCRIPT_CALL_WRAP(Math);
 	ANKI_SCRIPT_CALL_WRAP(Renderer);
 	ANKI_SCRIPT_CALL_WRAP(Scene);
+	ANKI_SCRIPT_CALL_WRAP(Event);
 
 	ANKI_LOGI("Scripting engine initialized");
 	return err;

@@ -11,7 +11,8 @@
 namespace anki {
 
 //==============================================================================
-Event::Event()
+Event::Event(EventManager* manager)
+	: m_manager(manager)
 {}
 
 //==============================================================================
@@ -19,19 +20,18 @@ Event::~Event()
 {}
 
 //==============================================================================
-Error Event::create(
-	EventManager* manager, F32 startTime, F32 duration, 
-	SceneNode* node, Flag flags)
+void Event::init(F32 startTime, F32 duration, SceneNode* snode, Flag flags)
 {
-	ANKI_ASSERT(manager);
-
-	m_flags = flags;
-	m_manager = manager;
 	m_startTime = startTime;
 	m_duration = duration;
-	m_node = node;
+	m_node = snode;
+	m_flags = flags;
 
-	return ErrorCode::NONE;
+	if(duration < 0.0)
+	{
+		m_duration = 1000.0;
+		m_flags |= Flag::REANIMATE;
+	}
 }
 
 //==============================================================================

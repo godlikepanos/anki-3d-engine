@@ -9,18 +9,15 @@
 namespace anki {
 
 //==============================================================================
-Error SceneAmbientColorEvent::create(EventManager* manager,
-	F32 startTime, F32 duration, const Vec4& finalColor)
+Error SceneAmbientColorEvent::init(F32 startTime, F32 duration,
+	const Vec4& finalColor)
 {
-	Error err = Event::create(manager, startTime, duration);
+	Event::init(startTime, duration);
 
-	if(!err)
-	{
-		m_finalColor = finalColor;
-		m_originalColor = getSceneGraph().getAmbientColor();
-	}
+	m_finalColor = finalColor;
+	m_originalColor = getSceneGraph().getAmbientColor();
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

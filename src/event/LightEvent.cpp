@@ -9,12 +9,10 @@
 namespace anki {
 
 //==============================================================================
-Error LightEvent::create(EventManager* manager, F32 startTime, F32 duration,
-	Light* light)
+Error LightEvent::init(F32 startTime, F32 duration, SceneNode* light)
 {
-	Error err = Event::create(manager, startTime, duration, light);
-	if(err) return err;
-	
+	Event::init(startTime, duration, light);
+
 	LightComponent& lightc = light->getComponent<LightComponent>();
 
 	switch(lightc.getLightType())
@@ -35,22 +33,21 @@ Error LightEvent::create(EventManager* manager, F32 startTime, F32 duration,
 	m_originalDiffColor = lightc.getDiffuseColor();
 	m_originalSpecColor = lightc.getSpecularColor();
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
 Error LightEvent::update(F32 prevUpdateTime, F32 crntTime)
 {
-	F32 factor = sin(getDelta(crntTime) * getPi<F32>());
+	F32 freq = randRange(m_freq - m_freqDeviation, m_freq + m_freqDeviation);
+
+	F32 factor = sin(crntTime * freq * getPi<F32>()) / 2.0 + 0.5;
 	LightComponent& lightc = getSceneNode()->getComponent<LightComponent>();
 
 	switch(lightc.getLightType())
 	{
 	case LightComponent::LightType::POINT:
-		{
-			lightc.setRadius(
-				factor * m_radiusMultiplier + m_originalRadius);
-		}
+		lightc.setRadius(m_originalRadius + factor * m_radiusMultiplier);
 		break;
 	case LightComponent::LightType::SPOT:
 		ANKI_ASSERT("TODO");

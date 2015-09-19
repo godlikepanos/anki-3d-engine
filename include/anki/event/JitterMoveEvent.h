@@ -19,10 +19,12 @@ class JitterMoveEvent: public Event
 {
 public:
 	/// Constructor
-	ANKI_USE_RESULT Error create(
-		EventManager* manager, F32 startTime, F32 duration,
+	JitterMoveEvent(EventManager* manager)
+		: Event(manager)
+	{}
+
+	ANKI_USE_RESULT Error init(F32 startTime, F32 duration,
 		SceneNode* movableSceneNode);
-	/// @}
 
 	/// Implements Event::update
 	ANKI_USE_RESULT Error update(F32 prevUpdateTime, F32 crntTime);

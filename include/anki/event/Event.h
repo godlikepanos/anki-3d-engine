@@ -36,12 +36,11 @@ public:
 	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Flag, friend);
 
 	/// Constructor
-	Event();
+	Event(EventManager* manager);
 
 	virtual ~Event();
 
-	ANKI_USE_RESULT Error create(
-		EventManager* manager, F32 startTime, F32 duration,  
+	void init(F32 startTime, F32 duration,
 		SceneNode* snode = nullptr, Flag flags = Flag::NONE);
 
 	F32 getStartTime() const
@@ -88,8 +87,8 @@ public:
 
 	void setReanimate(Bool reanimate)
 	{
-		m_flags = (reanimate) 
-			? (m_flags | Flag::REANIMATE) 
+		m_flags = (reanimate)
+			? (m_flags | Flag::REANIMATE)
 			: (m_flags & ~Flag::REANIMATE);
 	}
 
@@ -121,14 +120,15 @@ public:
 	}
 
 protected:
-	Flag m_flags = Flag::NONE;
 	EventManager* m_manager = nullptr;
-	
-	F32 m_startTime; ///< The time the event will start. Eg 23:00. If it's < 0 
+
+	F32 m_startTime; ///< The time the event will start. Eg 23:00. If it's < 0
 	                 ///< then start the event now.
 	F32 m_duration; ///< The duration of the event
 
 	SceneNode* m_node = nullptr;
+
+	Flag m_flags = Flag::NONE;
 
 	/// Return the u between current time and when the event started
 	/// @return A number [0.0, 1.0]

@@ -12,23 +12,22 @@
 namespace anki {
 
 //==============================================================================
-Error AnimationEvent::create(EventManager* manager,
-	const AnimationResourcePtr& anim,
+AnimationEvent::AnimationEvent(EventManager* manager)
+	: Event(manager)
+{}
+
+//==============================================================================
+Error AnimationEvent::init(const AnimationResourcePtr& anim,
 	SceneNode* movableSceneNode)
 {
 	ANKI_ASSERT(movableSceneNode);
 	m_anim = anim;
 
-	Flag f = Flag::NONE;
-	if(m_anim->getRepeat())
-	{
-		f = Flag::REANIMATE;
-	}
+	Event::init(m_anim->getStartingTime(),
+		m_anim->getDuration(), movableSceneNode,
+		m_anim->getRepeat() ? Flag::REANIMATE : Flag::NONE);
 
-	Error err = Event::create(manager, m_anim->getStartingTime(),
-		m_anim->getDuration(), movableSceneNode, f);
-
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

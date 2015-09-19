@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_EVENT_LIGHT_EVENT_H
-#define ANKI_EVENT_LIGHT_EVENT_H
+#pragma once
 
 #include "anki/event/Event.h"
 #include "anki/Math.h"
@@ -22,12 +21,14 @@ class LightEvent: public Event
 {
 public:
 	/// Create
-	ANKI_USE_RESULT Error create(
-		EventManager* manager, F32 startTime, F32 duration,
-		Light* light);
+	LightEvent(EventManager* manager)
+		: Event(manager)
+	{}
+
+	ANKI_USE_RESULT Error init(F32 startTime, F32 duration, SceneNode* light);
 
 	/// Implements Event::update
-	ANKI_USE_RESULT Error update(F32 prevUpdateTime, F32 crntTime);
+	ANKI_USE_RESULT Error update(F32 prevUpdateTime, F32 crntTime) override;
 
 	void setRadiusMultiplier(F32 v)
 	{
@@ -44,7 +45,20 @@ public:
 		m_specularIntensityMultiplier = v;
 	}
 
+	/// Set the frequency of changes.
+	/// @param freq The higher it is the faster things happen.
+	/// @param deviation Add a randomization to the frequency.
+	void setFrequency(F32 freq, F32 deviation)
+	{
+		ANKI_ASSERT(freq > 0.0);
+		ANKI_ASSERT(freq > deviation);
+		m_freq = freq;
+		m_freqDeviation = deviation;
+	}
+
 private:
+	F32 m_freq = 1.0;
+	F32 m_freqDeviation = 0.0;
 	F32 m_radiusMultiplier = 0.0;
 	Vec4 m_intensityMultiplier = Vec4(0.0);
 	Vec4 m_specularIntensityMultiplier = Vec4(0.0);
@@ -57,4 +71,3 @@ private:
 
 } // end namespace anki
 
-#endif
