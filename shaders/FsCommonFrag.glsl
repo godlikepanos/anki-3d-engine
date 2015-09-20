@@ -18,6 +18,8 @@ layout(TEX_BINDING(1, 0)) uniform sampler2D anki_u_msDepthRt;
 #undef LIGHT_SS_BINDING
 #undef LIGHT_TEX_BINDING
 
+#define anki_u_time u_lightingUniforms.groundLightDirTime.w
+
 layout(location = 0) in vec3 in_vertPosViewSpace;
 layout(location = 1) flat in float in_alpha;
 
@@ -152,10 +154,11 @@ vec3 computeLightColor(vec3 diffCol)
 		uint k = calcClusterSplit(fragPos.z);
 
 		vec2 tilef = gl_FragCoord.xy / float(TILE_SIZE);
-		uint tile = uint(tilef.y) * u_lightingUniforms.tileCount.x
+		uint tile = uint(tilef.y) * u_lightingUniforms.tileCountPad1.x
 			+ uint(tilef.x);
 
-		uint cluster = u_clusters[tile + k * u_lightingUniforms.tileCount.z];
+		uint cluster =
+			u_clusters[tile + k * u_lightingUniforms.tileCountPad1.z];
 
 		lightOffset = cluster >> 16u;
 		pointLightsCount = (cluster >> 8u) & 0xFFu;
@@ -225,6 +228,22 @@ vec3 computeLightColor(vec3 diffCol)
 void particleTextureAlphaLight(in sampler2D tex, in float alpha)
 {
 	vec4 color = texture(tex, gl_PointCoord);
+	color.a *= alpha;
+
+	vec3 lightColor = computeLightColor(color.rgb);
+
+	writeGBuffer(vec4(lightColor, color.a));
+}
+#endif
+
+//==============================================================================
+#if PASS == COLOR
+#	define particleAnimatedTextureAlphaLight_DEFINED
+void particleAnimatedTextureAlphaLight(sampler2DArray tex, float alpha,
+	float layerCount, float period)
+{
+	vec4 color = readAnimatedTextureRgba(tex, layerCount, period, gl_PointCoord,
+		anki_u_time);
 	color.a *= alpha;
 
 	vec3 lightColor = computeLightColor(color.rgb);

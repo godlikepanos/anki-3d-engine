@@ -99,6 +99,10 @@ ANKI_USE_RESULT Error computeShaderVariableDataType(
 	{
 		out = ShaderVariableDataType::SAMPLER_2D;
 	}
+	else if(str == "sampler2DArray")
+	{
+		out = ShaderVariableDataType::SAMPLER_2D_ARRAY;
+	}
 	else if(str == "samplerCube")
 	{
 		out = ShaderVariableDataType::SAMPLER_CUBE;
@@ -118,7 +122,7 @@ ANKI_USE_RESULT Error computeShaderVariableDataType(
 
 //==============================================================================
 MaterialProgramCreator::MaterialProgramCreator(TempResourceAllocator<U8> alloc)
-:	m_alloc(alloc)
+	: m_alloc(alloc)
 {}
 
 //==============================================================================

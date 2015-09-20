@@ -5,6 +5,10 @@
 
 #pragma anki include "shaders/Common.glsl"
 
+// Misc
+#define COLOR 0
+#define DEPTH 1
+
 // Generic functions because materials cannot use operators
 #define add_DEFINED
 #define add(a, b) ((a) + (b))
@@ -27,6 +31,11 @@
 #define setW_DEFINED
 #define setW(a, b) ((a).w = (b))
 
-// Misc
-#define COLOR 0
-#define DEPTH 1
+// Read from animated texture
+#define readAnimatedTextureRgba_DEFINED
+vec4 readAnimatedTextureRgba(sampler2DArray tex, float layerCount, float period,
+	vec2 uv, float time)
+{
+	float layer = mod(time * layerCount / period, layerCount);
+	return texture(tex, vec3(uv, layer));
+}

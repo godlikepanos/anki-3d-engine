@@ -143,7 +143,8 @@ void main()
 	}
 
 #if GROUND_LIGHT
-	out_color += max(dot(normal, u_lightingUniforms.groundLightDir.xyz), 0.0)
+	out_color +=
+		max(dot(normal, u_lightingUniforms.groundLightDirTime.xyz), 0.0)
 		* vec3(0.01, 0.001, 0.001);
 #endif
 

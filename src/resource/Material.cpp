@@ -372,6 +372,7 @@ Error Material::populateVariables(const MaterialProgramCreator& loader)
 		{
 		// samplers
 		case ShaderVariableDataType::SAMPLER_2D:
+		case ShaderVariableDataType::SAMPLER_2D_ARRAY:
 		case ShaderVariableDataType::SAMPLER_CUBE:
 			{
 				TextureResourcePtr tp;

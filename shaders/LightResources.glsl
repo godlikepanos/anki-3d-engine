@@ -13,10 +13,10 @@ struct LightingUniforms
 {
 	vec4 projectionParams;
 	vec4 sceneAmbientColor;
-	vec4 groundLightDir;
+	vec4 groundLightDirTime;
 	vec4 nearFarClustererDivisor;
 	mat4 viewMat;
-	uvec4 tileCount;
+	uvec4 tileCountPad1;
 };
 
 layout(std140, row_major, SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING))

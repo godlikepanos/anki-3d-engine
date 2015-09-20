@@ -311,7 +311,7 @@ static ANKI_USE_RESULT Error loadAnkiTexture(
 		return ErrorCode::USER_DATA;
 	}
 
-	if(header.m_depth < 1 || header.m_depth > 16)
+	if(header.m_depth < 1 || header.m_depth > 128)
 	{
 		ANKI_LOGE("Zero or too big depth");
 		return ErrorCode::USER_DATA;
