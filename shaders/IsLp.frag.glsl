@@ -36,7 +36,8 @@ vec3 getFragPosVSpace()
 	float depth = textureRt(u_msDepthRt, in_texCoord).r;
 
 	vec3 fragPos;
-	fragPos.z = u_projectionParams.z / (u_projectionParams.w + depth);
+	fragPos.z = u_lightingUniforms.projectionParams.z
+		/ (u_lightingUniforms.projectionParams.w + depth);
 	fragPos.xy = in_projectionParams * fragPos.z;
 
 	return fragPos;
@@ -87,7 +88,7 @@ void main()
 	float a2 = pow(max(EPSILON, specPower), 2.0);
 
 	// Ambient color
-	out_color = diffCol * u_sceneAmbientColor.rgb;
+	out_color = diffCol * u_lightingUniforms.sceneAmbientColor.rgb;
 
 	// Get counts and offsets
 	uint k = calcClusterSplit(fragPos.z);
@@ -142,7 +143,7 @@ void main()
 	}
 
 #if GROUND_LIGHT
-	out_color += max(dot(normal, u_groundLightDir.xyz), 0.0)
+	out_color += max(dot(normal, u_lightingUniforms.groundLightDir.xyz), 0.0)
 		* vec3(0.01, 0.001, 0.001);
 #endif
 

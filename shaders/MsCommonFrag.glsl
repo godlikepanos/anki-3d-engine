@@ -10,7 +10,7 @@ layout(early_fragment_tests) in;
 #endif
 
 #pragma anki include "shaders/Pack.glsl"
-#pragma anki include "shaders/MsBsCommon.glsl"
+#pragma anki include "shaders/MsFsCommon.glsl"
 
 //==============================================================================
 // Variables                                                                   =

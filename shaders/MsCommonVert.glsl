@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki include "shaders/MsBsCommon.glsl"
+#pragma anki include "shaders/MsFsCommon.glsl"
 
 //
 // Attributes
@@ -37,7 +37,7 @@ layout(location = 1) out mediump vec3 outNormal;
 layout(location = 2) out mediump vec4 outTangent;
 
 // For env mapping. AKA view vector
-layout(location = 3) out mediump vec3 outVertPosViewSpace; 
+layout(location = 3) out mediump vec3 outVertPosViewSpace;
 #endif
 
 #if INSTANCE_ID_FRAGMENT_SHADER

@@ -43,7 +43,7 @@ void main()
 	vec2 pos = out_texCoord * 2.0 - 1.0;
 
 	gl_Position = vec4(pos, 0.0, 1.0);
-	out_projectionParams = u_projectionParams.xy * pos;
+	out_projectionParams = u_lightingUniforms.projectionParams.xy * pos;
 }
 
 

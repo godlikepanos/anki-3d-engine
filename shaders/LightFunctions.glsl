@@ -19,7 +19,8 @@ uint calcClusterSplit(float zVspace)
 {
 	zVspace = -zVspace;
 	float fk = sqrt(
-		(zVspace - u_nearFarClustererDivisor.x) / u_nearFarClustererDivisor.z);
+		(zVspace - u_lightingUniforms.nearFarClustererDivisor.x)
+		/ u_lightingUniforms.nearFarClustererDivisor.z);
 	uint k = uint(fk);
 	return k;
 }
@@ -124,7 +125,7 @@ float computeShadowFactorSpot(mat4 lightProjectionMat, vec3 fragPos,
 //==============================================================================
 float computeShadowFactorOmni(vec3 frag2Light, float layer, float radius)
 {
-	vec3 dir = (u_viewMat * vec4(-frag2Light, 1.0)).xyz;
+	vec3 dir = (u_lightingUniforms.viewMat * vec4(-frag2Light, 1.0)).xyz;
 	vec3 dirabs = abs(dir);
 	float dist = -max(dirabs.x, max(dirabs.y, dirabs.z));
 	dir = normalize(dir);

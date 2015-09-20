@@ -3,8 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-// Common code for all vertex shaders of BS
-#pragma anki include "shaders/MsBsCommon.glsl"
+// Common code for all vertex shaders of FS
+#pragma anki include "shaders/MsFsCommon.glsl"
 
 layout(location = POSITION_LOCATION) in vec3 in_position;
 layout(location = SCALE_LOCATION) in float in_scale;

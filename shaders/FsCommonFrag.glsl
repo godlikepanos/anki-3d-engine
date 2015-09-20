@@ -5,7 +5,7 @@
 
 // Common code for all fragment shaders of BS
 #pragma anki include "shaders/Common.glsl"
-#pragma anki include "shaders/MsBsCommon.glsl"
+#pragma anki include "shaders/MsFsCommon.glsl"
 #pragma anki include "shaders/LinearDepth.glsl"
 
 // Global resources
@@ -126,13 +126,14 @@ void particleSoftColorAlpha(in sampler2D depthMap, in vec3 icolor,
 #	define computeLightColor_DEFINED
 vec3 computeLightColor(vec3 diffCol)
 {
-	vec3 outColor = diffCol * u_sceneAmbientColor.rgb;
+	vec3 outColor = diffCol * u_lightingUniforms.sceneAmbientColor.rgb;
 
 	// Compute frag pos in view space
 	vec3 fragPos;
 	{
 		float depth = gl_FragCoord.z;
-		fragPos.z = u_projectionParams.z / (u_projectionParams.w + depth);
+		fragPos.z = u_lightingUniforms.projectionParams.z
+			/ (u_lightingUniforms.projectionParams.w + depth);
 
 		const vec2 screenSize = vec2(
 			1.0 / float(ANKI_RENDERER_WIDTH),
@@ -140,7 +141,7 @@ vec3 computeLightColor(vec3 diffCol)
 
 		vec2 ndc = gl_FragCoord.xy * screenSize * 2.0 - 1.0;
 
-		fragPos.xy = ndc * u_projectionParams.xy * fragPos.z;
+		fragPos.xy = ndc * u_lightingUniforms.projectionParams.xy * fragPos.z;
 	}
 
 	// Find the cluster and then the light counts
@@ -151,9 +152,10 @@ vec3 computeLightColor(vec3 diffCol)
 		uint k = calcClusterSplit(fragPos.z);
 
 		vec2 tilef = gl_FragCoord.xy / float(TILE_SIZE);
-		uint tile = uint(tilef.y) * u_tileCount.x + uint(tilef.x);
+		uint tile = uint(tilef.y) * u_lightingUniforms.tileCount.x
+			+ uint(tilef.x);
 
-		uint cluster = u_clusters[tile + k * u_tileCount.z];
+		uint cluster = u_clusters[tile + k * u_lightingUniforms.tileCount.z];
 
 		lightOffset = cluster >> 16u;
 		pointLightsCount = (cluster >> 8u) & 0xFFu;
@@ -242,8 +244,8 @@ void fog(in sampler2D depthMap, in vec3 color, in float fogScale)
 
 	vec2 texCoords = gl_FragCoord.xy * screenSize;
 	float depth = texture(depthMap, texCoords).r;
-	float zNear = u_nearFarClustererDivisor.x;
-	float zFar = u_nearFarClustererDivisor.y;
+	float zNear = u_lightingUniforms.nearFarClustererDivisor.x;
+	float zFar = u_lightingUniforms.nearFarClustererDivisor.y;
 	float linearDepth = (2.0 * zNear) / (zFar + zNear - depth * (zFar - zNear));
 
 	float depth2 = gl_FragCoord.z;

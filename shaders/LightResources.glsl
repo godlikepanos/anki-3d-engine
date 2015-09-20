@@ -9,15 +9,20 @@
 #pragma anki include "shaders/Common.glsl"
 
 // Common uniforms between lights
+struct LightingUniforms
+{
+	vec4 projectionParams;
+	vec4 sceneAmbientColor;
+	vec4 groundLightDir;
+	vec4 nearFarClustererDivisor;
+	mat4 viewMat;
+	uvec4 tileCount;
+};
+
 layout(std140, row_major, SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING))
 	readonly buffer _s0
 {
-	vec4 u_projectionParams;
-	vec4 u_sceneAmbientColor;
-	vec4 u_groundLightDir;
-	vec4 u_nearFarClustererDivisor;
-	mat4 u_viewMat;
-	uvec4 u_tileCount;
+	LightingUniforms u_lightingUniforms;
 };
 
 #ifdef FRAGMENT_SHADER
@@ -30,6 +35,11 @@ struct PointLight
 	vec4 specularColorTexId; // xyz: spec color, w: diffuse tex ID
 };
 
+layout(std140, SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 1)) readonly buffer _s1
+{
+	PointLight u_pointLights[];
+};
+
 // Spot light
 struct SpotLight
 {
@@ -39,11 +49,6 @@ struct SpotLight
 	vec4 lightDir;
 	vec4 outerCosInnerCos;
 	mat4 texProjectionMat;
-};
-
-layout(std140, SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 1)) readonly buffer _s1
-{
-	PointLight u_pointLights[];
 };
 
 layout(std140, SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 2)) readonly buffer _s2
