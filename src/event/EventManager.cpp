@@ -14,7 +14,15 @@ EventManager::EventManager()
 
 //==============================================================================
 EventManager::~EventManager()
-{}
+{
+	iterateEvents([&](Event& event) -> Error
+	{
+		event.setMarkedForDeletion();
+		return ErrorCode::NONE;
+	});
+
+	deleteEventsMarkedForDeletion();
+}
 
 //==============================================================================
 Error EventManager::create(SceneGraph* scene)
@@ -44,8 +52,8 @@ void EventManager::registerEvent(Event* event)
 }
 
 //==============================================================================
-void EventManager::unregisterEvent(EventsContainer::Iterator it)
-{	
+void EventManager::unregisterEvent(List<Event*>::Iterator it)
+{
 	ANKI_ASSERT(it != m_events.getEnd());
 	m_events.erase(getSceneAllocator(), it);
 }
@@ -63,14 +71,14 @@ Error EventManager::updateAllEvents(F32 prevUpdateTime, F32 crntTime)
 	{
 		Event* event = *it;
 
-		// If event or the node's event is marked for deletion then dont 
+		// If event or the node's event is marked for deletion then dont
 		// do anything else for that event
 		if(event->getMarkedForDeletion())
 		{
 			continue;
 		}
 
-		if(event->getSceneNode() != nullptr 
+		if(event->getSceneNode() != nullptr
 			&& event->getSceneNode()->getMarkedForDeletion())
 		{
 			event->setMarkedForDeletion();

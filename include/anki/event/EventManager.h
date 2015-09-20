@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_EVENT_MANAGER_H
-#define ANKI_EVENT_MANAGER_H
+#pragma once
 
 #include "anki/event/Event.h"
 #include "anki/util/List.h"
@@ -24,8 +23,6 @@ class SceneGraph;
 class EventManager
 {
 public:
-	using EventsContainer = List<Event*>;
-
 	EventManager();
 	~EventManager();
 
@@ -94,7 +91,7 @@ public:
 
 private:
 	SceneGraph* m_scene = nullptr;
-	EventsContainer m_events;
+	List<Event*> m_events;
 	U32 m_markedForDeletionCount = 0;
 	F32 m_prevUpdateTime;
 	F32 m_crntTime;
@@ -103,10 +100,9 @@ private:
 	void registerEvent(Event* event);
 
 	/// Remove an event from the container
-	void unregisterEvent(EventsContainer::Iterator it);
+	void unregisterEvent(List<Event*>::Iterator it);
 };
 /// @}
 
 } // end namespace anki
 
-#endif
