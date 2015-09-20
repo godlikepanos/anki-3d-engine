@@ -434,13 +434,13 @@ void PipelineImpl::initColorState()
 		}
 
 		out.m_channelWriteMask[0] =
-			(in.m_channelWriteMask | ColorBit::RED) != 0;
+			(in.m_channelWriteMask & ColorBit::RED) != 0;
 		out.m_channelWriteMask[1] =
-			(in.m_channelWriteMask | ColorBit::GREEN) != 0;
+			(in.m_channelWriteMask & ColorBit::GREEN) != 0;
 		out.m_channelWriteMask[2] =
-			(in.m_channelWriteMask | ColorBit::BLUE) != 0;
+			(in.m_channelWriteMask & ColorBit::BLUE) != 0;
 		out.m_channelWriteMask[3] =
-			(in.m_channelWriteMask | ColorBit::ALPHA) != 0;
+			(in.m_channelWriteMask & ColorBit::ALPHA) != 0;
 
 		if(!(out.m_srcBlendMethod == GL_ONE && out.m_dstBlendMethod == GL_ZERO))
 		{
