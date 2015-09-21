@@ -30,6 +30,7 @@ const float PI = 3.14159265358979323846;
 
 // Binding
 #define SS_BINDING(slot_, binding_) binding = slot_ * 8 + binding_
+#define UBO_BINDING(slot_, binding_) binding = slot_ * 8 + binding_
 #define TEX_BINDING(slot_, binding_) binding = slot_ * 8 + binding_
 
 // Common locations

@@ -51,12 +51,13 @@ struct SpotLight
 	mat4 texProjectionMat;
 };
 
-layout(std140, SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 2)) readonly buffer _s2
+layout(SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 2), std140, row_major)
+	readonly buffer _s2
 {
 	SpotLight u_spotLights[];
 };
 
-layout(std430, SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 3)) readonly buffer _s3
+layout(SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 3), std430) readonly buffer _s3
 {
 	uint u_clusters[];
 };

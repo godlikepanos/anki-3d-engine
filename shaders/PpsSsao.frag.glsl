@@ -19,25 +19,30 @@ const float DARKNESS_MULTIPLIER = 2.5;
 
 layout(location = 0) in vec2 in_texCoords;
 
-layout(location = 0) out float outColor;
+layout(location = 0) out float out_color;
 
-layout(std140, binding = 0) uniform _blk
+struct Uniforms
 {
-	vec4 uProjectionParams;
+	vec4 projectionParams;
 
 	/// The projection matrix
-	mat4 uProjectionMatrix;
+	mat4 projectionMatrix;
 };
 
-layout(binding = 0) uniform sampler2D uMsDepthRt;
-layout(binding = 1) uniform sampler2D uMsRt;
-layout(binding = 2) uniform sampler2D uNoiseMap;
+layout(UBO_BINDING(0, 0), std140, row_major) uniform _blk
+{
+	Uniforms u_uniforms;
+};
+
+layout(TEX_BINDING(0, 0)) uniform sampler2D u_mMsDepthRt;
+layout(TEX_BINDING(0, 1)) uniform sampler2D u_msRt;
+layout(TEX_BINDING(0, 2)) uniform sampler2D u_noiseMap;
 
 // Get normal
 vec3 readNormal(in vec2 uv)
 {
 	vec3 normal;
-	readNormalFromGBuffer(uMsRt, uv, normal);
+	readNormalFromGBuffer(u_msRt, uv, normal);
 	return normal;
 }
 
@@ -48,7 +53,7 @@ vec3 readRandom(in vec2 uv)
 		float(WIDTH) / float(NOISE_MAP_SIZE),
 		float(HEIGHT) / float(NOISE_MAP_SIZE));
 
-	vec3 noise = texture(uNoiseMap, tmp * uv).xyz;
+	vec3 noise = texture(u_noiseMap, tmp * uv).xyz;
 	//return normalize(noise * 2.0 - 1.0);
 	return noise;
 }
@@ -56,21 +61,22 @@ vec3 readRandom(in vec2 uv)
 // Returns the Z of the position in view space
 float readZ(in vec2 uv)
 {
-	float depth = textureLod(uMsDepthRt, uv, 1.0).r;
-	float z = uProjectionParams.z / (uProjectionParams.w + depth);
+	float depth = textureLod(u_mMsDepthRt, uv, 1.0).r;
+	float z = u_uniforms.projectionParams.z
+		/ (u_uniforms.projectionParams.w + depth);
 	return z;
 }
 
 // Read position in view space
 vec3 readPosition(in vec2 uv)
 {
-	float depth = textureLod(uMsDepthRt, uv, 1.0).r;
+	float depth = textureLod(u_mMsDepthRt, uv, 1.0).r;
 
 	vec3 fragPosVspace;
 	fragPosVspace.z = readZ(uv);
 
 	fragPosVspace.xy =
-		(2.0 * uv - 1.0) * uProjectionParams.xy * fragPosVspace.z;
+		(2.0 * uv - 1.0) * u_uniforms.projectionParams.xy * fragPosVspace.z;
 
 	return fragPosVspace;
 }
@@ -96,7 +102,7 @@ void main(void)
 
 		// project sample position:
 		vec4 offset = vec4(sample_, 1.0);
-		offset = uProjectionMatrix * offset;
+		offset = u_uniforms.projectionMatrix * offset;
 		offset.xy = offset.xy / (2.0 * offset.w) + 0.5; // persp div &
 		                                                // to NDC -> [0, 1]
 
@@ -118,6 +124,6 @@ void main(void)
 #endif
 	}
 
-	outColor = 1.0 - factor;
+	out_color = 1.0 - factor;
 }
 

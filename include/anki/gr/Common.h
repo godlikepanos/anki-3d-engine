@@ -43,6 +43,7 @@ template<typename T>
 using GrAllocator = HeapAllocator<T>;
 
 // Some constants
+// WARNING: If you change those update the shaders
 const U MAX_VERTEX_ATTRIBUTES = 8;
 const U MAX_COLOR_ATTACHMENTS = 4;
 const U MAX_MIPMAPS = 16;

@@ -79,8 +79,7 @@ static void writeShaderBlockMemoryMatrix(
 	for(U i = 0; i < elementsCount; i++)
 	{
 		U8* subbuff = buff;
-		T matrix = reinterpret_cast<const T*>(elements)[i];
-		matrix.transpose();
+		const T& matrix = static_cast<const T*>(elements)[i];
 		for(U j = 0; j < sizeof(T) / sizeof(Vec); j++)
 		{
 			ANKI_ASSERT(

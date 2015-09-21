@@ -284,7 +284,7 @@ void Ssao::run(CommandBufferPtr& cmdb)
 		blk = static_cast<ShaderCommonUniforms*>(data);
 
 		blk->m_projectionParams = m_r->getProjectionParameters();
-		blk->m_projectionMatrix = camFr.getProjectionMatrix().getTransposed();
+		blk->m_projectionMatrix = camFr.getProjectionMatrix();
 
 		m_commonUboUpdateTimestamp = getGlobalTimestamp();
 	}

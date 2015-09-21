@@ -697,9 +697,6 @@ I Is::writeSpotLight(const LightComponent& lightc,
 			* lightFrc->getViewProjectionMatrix()
 			* Mat4(camMove.getWorldTransform());
 
-		// Transpose because of driver bug
-		light.m_texProjectionMat.transpose();
-
 		shadowmapIndex = (F32)lightc.getShadowMapIndex();
 	}
 

@@ -250,7 +250,8 @@ Error MaterialProgramCreator::parseProgramTag(
 		&& (m_uniformBlockReferencedMask & glshaderbit) != ShaderTypeBit::NONE)
 	{
 		lines.pushBackSprintf(m_alloc,
-			"\nlayout(binding = 0, std140) uniform bDefaultBlock\n{");
+			"\nlayout(UBO_BINDING(0, 0), std140, row_major) "
+			"uniform bDefaultBlock\n{");
 
 		for(auto& str : m_uniformBlock)
 		{

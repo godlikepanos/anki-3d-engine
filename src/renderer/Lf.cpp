@@ -188,7 +188,7 @@ void Lf::runOcclusionTests(CommandBufferPtr& cmdb)
 		// Setup MVP UBO
 		Mat4* mvp = nullptr;
 		cmdb->updateDynamicUniforms(sizeof(Mat4), mvp);
-		*mvp = camFr.getViewProjectionMatrix().getTransposed();
+		*mvp = camFr.getViewProjectionMatrix();
 
 		// Allocate vertices and fire write job
 		BufferPtr& positionsVertBuff = m_positionsVertBuff[frame];

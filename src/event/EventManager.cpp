@@ -15,11 +15,12 @@ EventManager::EventManager()
 //==============================================================================
 EventManager::~EventManager()
 {
-	iterateEvents([&](Event& event) -> Error
+	Error err = iterateEvents([&](Event& event) -> Error
 	{
 		event.setMarkedForDeletion();
 		return ErrorCode::NONE;
 	});
+	(void)err;
 
 	deleteEventsMarkedForDeletion();
 }
