@@ -88,8 +88,9 @@ void main()
 
 	float a2 = pow(max(EPSILON, roughness), 2.0);
 
-	// Ambient color
-	out_color = diffCol * u_lightingUniforms.sceneAmbientColor.rgb + emission;
+	// Ambient and emissive color
+	out_color = diffCol * u_lightingUniforms.sceneAmbientColor.rgb
+		+ diffCol * emission;
 
 	// Get counts and offsets
 	uint k = calcClusterSplit(fragPos.z);

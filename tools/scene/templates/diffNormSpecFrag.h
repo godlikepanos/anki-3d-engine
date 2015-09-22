@@ -34,6 +34,7 @@ R"(		<program>
 				%normalFunc%
 				%specularColorFunc%
 				%specularPowerFunc%
+				%emissionFunc%
 				<operation>
 					<id>100</id>
 					<returnType>void</returnType>

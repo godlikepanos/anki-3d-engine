@@ -152,6 +152,13 @@ private:
 
 	/// Export a static collision mesh.
 	void exportCollisionMesh(uint32_t meshIdx);
+
+	/// Helper.
+	static std::string getMaterialName(const aiMaterial& mtl,
+		uint32_t instances);
+
+	/// Round up the instances count.
+	static uint32_t roundUpInstancesCount(uint32_t instances);
 };
 
 #endif

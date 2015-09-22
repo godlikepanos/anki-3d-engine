@@ -82,9 +82,12 @@ vec2 unpackUnorm1ToUnorm2(in float c)
 {
 	float temp = c * (255.0 / 16.0);
 	float a = floor(temp);
-	float b = fract(temp);
+	float b = temp - a; // b = fract(temp)
 	return vec2(a, b) * vec2(1.0 / 15.0, 16.0 / 15.0);
 }
+
+// Max emission. Keep as low as possible
+const float MAX_EMISSION = 10.0;
 
 // Populate the G buffer
 void writeGBuffer(
@@ -98,8 +101,9 @@ void writeGBuffer(
 	out vec4 rt1,
 	out vec4 rt2)
 {
-	rt0 = vec4(diffColor, packUnorm2ToUnorm1(vec2(subsurface, emission)));
-	rt1 = vec4(specColor, roughness);
+	rt0 = vec4(diffColor, subsurface);
+	rt1 = vec4(packUnorm2ToUnorm1(specColor.rg), specColor.b, roughness,
+		emission / MAX_EMISSION);
 	rt2 = vec4(normal * 0.5 + 0.5, 0.0);
 }
 
@@ -108,7 +112,7 @@ void readGBuffer(
 	in sampler2D rt0,
 	in sampler2D rt1,
 	in sampler2D rt2,
-	in vec2 texCoord,
+	in vec2 uv,
 	out vec3 diffColor,
 	out vec3 normal,
 	out vec3 specColor,
@@ -116,39 +120,41 @@ void readGBuffer(
 	out float subsurface,
 	out float emission)
 {
-	vec4 comp = textureLod(rt0, texCoord, 0.0);
-	diffColor = comp.rgb;
-	vec2 tmp = unpackUnorm1ToUnorm2(comp.a);
-	subsurface = tmp.x;
-	emission = tmp.y;
+	vec4 comp = textureLod(rt0, uv, 0.0);
+	diffColor = comp.xyz;
+	subsurface = comp.w;
 
-	comp = textureLod(rt1, texCoord, 0.0);
-	specColor = comp.rgb;
-	roughness = comp.a;
+	comp = textureLod(rt1, uv, 0.0);
+	specColor = vec3(unpackUnorm1ToUnorm2(comp.x), comp.y);
+	roughness = comp.z;
+	emission = comp.w * MAX_EMISSION;
 
-	normal = textureLod(rt2, texCoord, 0.0).rgb;
+	normal = textureLod(rt2, uv, 0.0).xyz;
 	normal = normalize(normal * 2.0 - 1.0);
 }
 
 // Read only normal from G buffer
 void readNormalFromGBuffer(
 	in sampler2D fai2,
-	in vec2 texCoord,
+	in vec2 uv,
 	out vec3 normal)
 {
-	normal = normalize(textureLod(fai2, texCoord, 0.0).rgb * 2.0 - 1.0);
+	normal = normalize(textureLod(fai2, uv, 0.0).rgb * 2.0 - 1.0);
 }
 
 // Read only normal and specular color from G buffer
 void readNormalSpecularColorFromGBuffer(
 	in sampler2D fai1,
 	in sampler2D fai2,
-	in vec2 texCoord,
+	in vec2 uv,
 	out vec3 normal,
 	out vec3 specColor)
 {
-	normal = normalize(textureLod(fai2, texCoord, 0.0).rgb * 2.0 - 1.0);
-	specColor = textureLod(fai1, texCoord, 0.0).rgb;
+	normal = normalize(textureLod(fai2, uv, 0.0).rgb * 2.0 - 1.0);
+
+	vec2 tmp = textureLod(fai1, uv, 0.0).xy;
+	specColor.rg = unpackUnorm1ToUnorm2(tmp.x);
+	specColor.b = tmp.y;
 }
 
 #endif
