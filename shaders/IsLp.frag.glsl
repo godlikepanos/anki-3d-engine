@@ -78,17 +78,18 @@ void main()
 	vec3 normal;
 	vec3 diffCol;
 	vec3 specCol;
-	float specPower;
-	const float subsurface = 0.0;
+	float roughness;
+	float subsurface;
+	float emission;
 
 	readGBuffer(
 		u_msRt0, u_msRt1, u_msRt2,
-		in_texCoord, diffCol, normal, specCol, specPower);
+		in_texCoord, diffCol, normal, specCol, roughness, subsurface, emission);
 
-	float a2 = pow(max(EPSILON, specPower), 2.0);
+	float a2 = pow(max(EPSILON, roughness), 2.0);
 
 	// Ambient color
-	out_color = diffCol * u_lightingUniforms.sceneAmbientColor.rgb;
+	out_color = diffCol * u_lightingUniforms.sceneAmbientColor.rgb + emission;
 
 	// Get counts and offsets
 	uint k = calcClusterSplit(fragPos.z);

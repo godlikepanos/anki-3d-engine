@@ -92,34 +92,41 @@ void writeGBuffer(
 	in vec3 normal,
 	in vec3 specColor,
 	in float roughness,
-	out vec4 fai0,
-	out vec4 fai1,
-	out vec4 fai2)
+	in float subsurface,
+	in float emission,
+	out vec4 rt0,
+	out vec4 rt1,
+	out vec4 rt2)
 {
-	fai0 = vec4(diffColor, 0.0);
-	fai1 = vec4(specColor, roughness);
-	fai2 = vec4(normal * 0.5 + 0.5, 0.0);
+	rt0 = vec4(diffColor, packUnorm2ToUnorm1(vec2(subsurface, emission)));
+	rt1 = vec4(specColor, roughness);
+	rt2 = vec4(normal * 0.5 + 0.5, 0.0);
 }
 
 // Read from the G buffer
 void readGBuffer(
-	in sampler2D fai0,
-	in sampler2D fai1,
-	in sampler2D fai2,
+	in sampler2D rt0,
+	in sampler2D rt1,
+	in sampler2D rt2,
 	in vec2 texCoord,
 	out vec3 diffColor,
 	out vec3 normal,
 	out vec3 specColor,
-	out float roughness)
+	out float roughness,
+	out float subsurface,
+	out float emission)
 {
-	vec4 comp = textureLod(fai0, texCoord, 0.0);
+	vec4 comp = textureLod(rt0, texCoord, 0.0);
 	diffColor = comp.rgb;
+	vec2 tmp = unpackUnorm1ToUnorm2(comp.a);
+	subsurface = tmp.x;
+	emission = tmp.y;
 
-	comp = textureLod(fai1, texCoord, 0.0);
+	comp = textureLod(rt1, texCoord, 0.0);
 	specColor = comp.rgb;
 	roughness = comp.a;
 
-	normal = textureLod(fai2, texCoord, 0.0).rgb;
+	normal = textureLod(rt2, texCoord, 0.0).rgb;
 	normal = normalize(normal * 2.0 - 1.0);
 }
 

@@ -676,6 +676,20 @@ void Exporter::exportMaterial(
 	materialStr = replaceAllString(materialStr, "%diffuseMap%",
 		m_texrpath + diffTex);
 
+	// Subsurface
+	materialStr = replaceAllString(materialStr, "%subsurfaceInput%",
+		"<input><type>float</type><name>subsurface</name>"
+		"<const>1</const><value>0.0</value></input>");
+	materialStr = replaceAllString(materialStr, "%subsurfaceArg%",
+		"subsurface");
+
+	// Emission
+	materialStr = replaceAllString(materialStr, "%emissionInput%",
+		"<input><type>float</type><name>emission</name>"
+		"<const>1</const><value>0.0</value></input>");
+	materialStr = replaceAllString(materialStr, "%emissionArg%",
+		"emission");
+
 	// Replace texture extensions with .anki
 	materialStr = replaceAllString(materialStr, ".tga", ".ankitex");
 	materialStr = replaceAllString(materialStr, ".png", ".ankitex");

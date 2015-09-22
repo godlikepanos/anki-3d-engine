@@ -8,11 +8,12 @@ R"(		<program>
 			<inputs>
 				%specularColorInput%
 				%specularPowerInput%
-				<input><type>float</type><name>uBlurring</name><value>0.0</value><const>1</const></input>
 				%diffuseColorInput%
 				%normalInput%
+				%subsurfaceInput%
+				%emissionInput%
 			</inputs>
-			
+
 			<operations>
 				<operation>
 					<id>0</id>
@@ -42,7 +43,8 @@ R"(		<program>
 						<argument>%normalArg%</argument>
 						<argument>%specularColorArg%</argument>
 						<argument>%specularPowerArg%</argument>
-						<argument>uBlurring</argument>
+						<argument>%subsurfaceArg%</argument>
+						<argument>%emissionArg%</argument>
 					</arguments>
 				</operation>
 			</operations>
