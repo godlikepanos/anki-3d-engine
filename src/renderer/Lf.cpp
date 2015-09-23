@@ -276,7 +276,10 @@ void Lf::run(CommandBufferPtr& cmdb)
 			sprites[count].m_scale =
 				lf.getFirstFlareSize() * Vec2(1.0, m_r->getAspectRatio());
 			sprites[count].m_depth = 0.0;
-			sprites[count].m_alpha = lf.getColorMultiplier().w();
+			// Fade the flare on the edges
+			sprites[count].m_alpha = lf.getColorMultiplier().w()
+				* (1.0 - pow(abs(posNdc.x()), 6.0))
+				* (1.0 - pow(abs(posNdc.y()), 6.0));
 			++count;
 
 			// Render
