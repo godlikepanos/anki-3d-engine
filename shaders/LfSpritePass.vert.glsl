@@ -11,8 +11,9 @@
 // Per flare information
 struct Sprite
 {
-	vec4 posScale; // xy: Position, z: Scale, w: Scale again
-	vec4 alphaDepth; // x: alpha, y: texture depth
+	vec4 posScale; // xy: Position, zw: Scale
+	vec4 color;
+	vec4 depthPad3;
 };
 
 // The block contains data for all flares
@@ -21,8 +22,8 @@ layout(std140) uniform _blk
 	Sprite u_sprites[MAX_SPRITES];
 };
 
-layout(location = 0) out vec3 out_texCoord;
-layout(location = 1) flat out float out_alpha;
+layout(location = 0) out vec3 out_uv;
+layout(location = 1) flat out vec4 out_color;
 
 out gl_PerVertex
 {
@@ -42,10 +43,10 @@ void main()
 	Sprite sprite = u_sprites[gl_InstanceID];
 
 	// Write tex coords of the 2D array texture
-	out_texCoord = vec3((position * 0.5) + 0.5, sprite.alphaDepth.y);
+	out_uv = vec3((position * 0.5) + 0.5, sprite.depthPad3.x);
 
 	vec4 posScale = sprite.posScale;
 	gl_Position = vec4(position * posScale.zw + posScale.xy , 0.0, 1.0);
 
-	out_alpha = sprite.alphaDepth.x;
+	out_color = sprite.color;
 }

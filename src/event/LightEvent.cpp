@@ -5,6 +5,7 @@
 
 #include "anki/event/LightEvent.h"
 #include "anki/scene/Light.h"
+#include "anki/scene/LensFlareComponent.h"
 
 namespace anki {
 
@@ -57,8 +58,24 @@ Error LightEvent::update(F32 prevUpdateTime, F32 crntTime)
 		break;
 	}
 
-	lightc.setDiffuseColor(
-		m_originalDiffColor + factor * m_intensityMultiplier);
+	// Update the color and the lens flare's color if they are the same
+	if(m_intensityMultiplier != Vec4(0.0))
+	{
+		Vec4 outCol = m_originalDiffColor + factor * m_intensityMultiplier;
+
+		LensFlareComponent* lfc =
+			getSceneNode()->tryGetComponent<LensFlareComponent>();
+
+		if(lfc && lfc->getColorMultiplier().xyz()
+			== lightc.getDiffuseColor().xyz())
+		{
+			lfc->setColorMultiplier(
+				Vec4(outCol.xyz(), lfc->getColorMultiplier().w()));
+		}
+
+		lightc.setDiffuseColor(outCol);
+	}
+
 	lightc.setSpecularColor(
 		m_originalSpecColor + factor * m_specularIntensityMultiplier);
 

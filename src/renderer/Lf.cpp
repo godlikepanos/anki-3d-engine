@@ -26,9 +26,9 @@ struct Sprite
 {
 	Vec2 m_pos; ///< Position in NDC
 	Vec2 m_scale; ///< Scale of the quad
-	F32 m_alpha; ///< Alpha value
+	Vec4 m_color;
 	F32 m_depth; ///< Texture depth
-	U32 m_padding[2];
+	U32 m_padding[3];
 };
 
 //==============================================================================
@@ -277,9 +277,11 @@ void Lf::run(CommandBufferPtr& cmdb)
 				lf.getFirstFlareSize() * Vec2(1.0, m_r->getAspectRatio());
 			sprites[count].m_depth = 0.0;
 			// Fade the flare on the edges
-			sprites[count].m_alpha = lf.getColorMultiplier().w()
+			F32 alpha = lf.getColorMultiplier().w()
 				* (1.0 - pow(abs(posNdc.x()), 6.0))
 				* (1.0 - pow(abs(posNdc.y()), 6.0));
+
+			sprites[count].m_color = Vec4(lf.getColorMultiplier().xyz(), alpha);
 			++count;
 
 			// Render
