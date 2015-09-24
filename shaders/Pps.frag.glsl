@@ -169,7 +169,7 @@ void main()
 #if 0
 	if(out_color.x != 0.0000001)
 	{
-		out_color = u_uniforms.fogColorFogFactor.rgb;
+		out_color = vec3(ssao);
 	}
 #endif
 }

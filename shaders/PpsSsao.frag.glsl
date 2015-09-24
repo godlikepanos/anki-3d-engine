@@ -11,11 +11,14 @@
 
 const vec3 KERNEL[KERNEL_SIZE] = KERNEL_ARRAY; // This will be appended in C++
 
-const float RADIUS = 0.5;
+// Radius in game units
+const float RADIUS = 1.1;
+
 // Initial is 1.0 but the bigger it is the more darker the SSAO factor gets
 const float DARKNESS_MULTIPLIER = 2.5;
 
-
+// The algorithm will chose the number of samples depending on the distance
+const float MAX_DISTANCE = 40.0;
 
 layout(location = 0) in vec2 in_texCoords;
 
@@ -85,6 +88,11 @@ void main(void)
 {
 	vec3 origin = readPosition(in_texCoords);
 
+	// Chose the number of samples dynamicaly
+	float sampleCountf =
+		max(1.0 + origin.z / MAX_DISTANCE, 0.0) * float(KERNEL_SIZE);
+	uint sampleCount = uint(sampleCountf);
+
 	vec3 normal = readNormal(in_texCoords);
 	vec3 rvec = readRandom(in_texCoords);
 
@@ -94,7 +102,7 @@ void main(void)
 
 	// Iterate kernel
 	float factor = 0.0;
-	for(uint i = 0U; i < KERNEL_SIZE; ++i)
+	for(uint i = 0U; i < sampleCount; ++i)
 	{
 		// get position
 		vec3 sample_ = tbn * KERNEL[i];
@@ -110,7 +118,7 @@ void main(void)
 		float sampleDepth = readZ(offset.xy);
 
 		// range check & accumulate:
-		const float ADVANCE = DARKNESS_MULTIPLIER / float(KERNEL_SIZE);
+		const float ADVANCE = DARKNESS_MULTIPLIER / sampleCountf;
 
 #if 1
 		float rangeCheck =
