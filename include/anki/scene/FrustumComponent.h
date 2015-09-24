@@ -38,10 +38,12 @@ public:
 		TEST_LIGHT_COMPONENTS = 1 << 1,
 		TEST_LENS_FLARE_COMPONENTS = 1 << 2,
 		TEST_SHADOW_CASTERS = 1 << 3,
-		TEST_ALL = TEST_RENDER_COMPONENTS
-			| TEST_LIGHT_COMPONENTS
-			| TEST_LENS_FLARE_COMPONENTS
-			| TEST_SHADOW_CASTERS
+
+		ALL_TESTS =
+			VisibilityTestFlag::TEST_RENDER_COMPONENTS
+			| VisibilityTestFlag::TEST_LIGHT_COMPONENTS
+			| VisibilityTestFlag::TEST_LENS_FLARE_COMPONENTS
+			| VisibilityTestFlag::TEST_SHADOW_CASTERS
 	};
 	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VisibilityTestFlag, friend)
 
@@ -142,8 +144,20 @@ public:
 
 	void setEnabledVisibilityTests(VisibilityTestFlag bits)
 	{
-		m_flags.disableBits(VisibilityTestFlag::TEST_ALL);
+		m_flags.disableBits(VisibilityTestFlag::ALL_TESTS);
 		m_flags.enableBits(bits, true);
+
+#if ANKI_ASSERTS_ENABLED
+		if(m_flags.bitsEnabled(VisibilityTestFlag::TEST_RENDER_COMPONENTS)
+			|| m_flags.bitsEnabled(VisibilityTestFlag::TEST_SHADOW_CASTERS))
+		{
+			if(m_flags.bitsEnabled(VisibilityTestFlag::TEST_RENDER_COMPONENTS)
+				== m_flags.bitsEnabled(VisibilityTestFlag::TEST_SHADOW_CASTERS))
+			{
+				ANKI_ASSERT(0 && "Cannot have them both");
+			}
+		}
+#endif
 	}
 
 	Bool visibilityTestsEnabled(VisibilityTestFlag bits) const
@@ -153,7 +167,7 @@ public:
 
 	Bool anyVisibilityTestEnabled() const
 	{
-		return m_flags.anyBitsEnabled(VisibilityTestFlag::TEST_ALL);
+		return m_flags.anyBitsEnabled(VisibilityTestFlag::ALL_TESTS);
 	}
 
 	static Bool classof(const SceneComponent& c)
@@ -165,7 +179,7 @@ private:
 	enum Flags
 	{
 		SHAPE_MARKED_FOR_UPDATE = 1 << 4,
-		TRANSFORM_MARKED_FOR_UPDATE = 1 << 5
+		TRANSFORM_MARKED_FOR_UPDATE = 1 << 5,
 	};
 	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Flags, friend)
 

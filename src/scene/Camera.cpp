@@ -89,8 +89,13 @@ Error Camera::create(const CString& name, Frustum* frustum)
 	addComponent(comp, true);
 
 	// Frustum component
-	comp = getSceneAllocator().newInstance<FrustumComponent>(this, frustum);
-	addComponent(comp, true);
+	FrustumComponent* frc =
+		getSceneAllocator().newInstance<FrustumComponent>(this, frustum);
+	frc->setEnabledVisibilityTests(
+		FrustumComponent::VisibilityTestFlag::TEST_RENDER_COMPONENTS
+		| FrustumComponent::VisibilityTestFlag::TEST_LIGHT_COMPONENTS
+		| FrustumComponent::VisibilityTestFlag::TEST_LENS_FLARE_COMPONENTS);
+	addComponent(frc, true);
 
 	// Feedback component #2
 	comp =

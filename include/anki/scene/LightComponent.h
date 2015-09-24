@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SCENE_LIGHT_COMPONENT_H
-#define ANKI_SCENE_LIGHT_COMPONENT_H
+#pragma once
 
 #include "anki/scene/SceneComponent.h"
 #include "anki/Math.h"
@@ -158,6 +157,4 @@ private:
 /// @}
 
 } // end namespace anki
-
-#endif
 

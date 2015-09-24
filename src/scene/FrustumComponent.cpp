@@ -20,7 +20,7 @@ FrustumComponent::FrustumComponent(SceneNode* node, Frustum* frustum)
 	markShapeForUpdate();
 	markTransformForUpdate();
 
-	setEnabledVisibilityTests(VisibilityTestFlag::TEST_ALL);
+	setEnabledVisibilityTests(VisibilityTestFlag::TEST_NONE);
 }
 
 //==============================================================================

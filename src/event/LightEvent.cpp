@@ -45,17 +45,21 @@ Error LightEvent::update(F32 prevUpdateTime, F32 crntTime)
 	F32 factor = sin(crntTime * freq * getPi<F32>()) / 2.0 + 0.5;
 	LightComponent& lightc = getSceneNode()->getComponent<LightComponent>();
 
-	switch(lightc.getLightType())
+	// Update radius
+	if(m_radiusMultiplier != 0.0)
 	{
-	case LightComponent::LightType::POINT:
-		lightc.setRadius(m_originalRadius + factor * m_radiusMultiplier);
-		break;
-	case LightComponent::LightType::SPOT:
-		ANKI_ASSERT("TODO");
-		break;
-	default:
-		ANKI_ASSERT(0);
-		break;
+		switch(lightc.getLightType())
+		{
+		case LightComponent::LightType::POINT:
+			lightc.setRadius(m_originalRadius + factor * m_radiusMultiplier);
+			break;
+		case LightComponent::LightType::SPOT:
+			ANKI_ASSERT("TODO");
+			break;
+		default:
+			ANKI_ASSERT(0);
+			break;
+		}
 	}
 
 	// Update the color and the lens flare's color if they are the same

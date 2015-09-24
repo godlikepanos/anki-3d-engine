@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_UTIL_ENUM_H
-#define ANKI_UTIL_ENUM_H
+#pragma once
 
 #include "anki/Config.h"
 
@@ -21,38 +20,39 @@ struct EnumUnderlyingType
 
 /// Convert an enum to it's integer type.
 template<typename TEnum>
-inline typename EnumUnderlyingType<TEnum>::Type enumToType(TEnum e)
+constexpr inline typename EnumUnderlyingType<TEnum>::Type enumToType(TEnum e)
 {
 	return static_cast<typename EnumUnderlyingType<TEnum>::Type>(e);
 }
 
 #define _ANKI_ENUM_OPERATOR(enum_, qualifier_, operator_, selfOperator_) \
-	qualifier_ enum_ operator operator_ (enum_ a, enum_ b) \
+	constexpr qualifier_ enum_ operator operator_ ( \
+		const enum_ a, const enum_ b) \
 	{ \
 		using Int = EnumUnderlyingType<enum_>::Type; \
 		return static_cast<enum_>( \
 			static_cast<Int>(a) operator_ static_cast<Int>(b)); \
 	} \
-	qualifier_ enum_ operator operator_ ( \
-		enum_ a, EnumUnderlyingType<enum_>::Type b) \
+	constexpr qualifier_ enum_ operator operator_ ( \
+		const enum_ a, const EnumUnderlyingType<enum_>::Type b) \
 	{ \
 		using Int = EnumUnderlyingType<enum_>::Type; \
 		return static_cast<enum_>(static_cast<Int>(a) operator_ b); \
 	} \
-	qualifier_ enum_ operator operator_ ( \
-		EnumUnderlyingType<enum_>::Type a, enum_ b) \
+	constexpr qualifier_ enum_ operator operator_ ( \
+		const EnumUnderlyingType<enum_>::Type a, const enum_ b) \
 	{ \
 		using Int = EnumUnderlyingType<enum_>::Type; \
 		return static_cast<enum_>(a operator_ static_cast<Int>(b)); \
 	} \
-	qualifier_ enum_& operator selfOperator_ (enum_& a, enum_ b) \
+	qualifier_ enum_& operator selfOperator_ (enum_& a, const enum_ b) \
 	{ \
 		a = a operator_ b; \
 		return a; \
-	} \
+	}
 
 #define _ANKI_ENUM_UNARAY_OPERATOR(enum_, qualifier_, operator_) \
-	qualifier_ enum_ operator operator_ (enum_ a) \
+	constexpr qualifier_ enum_ operator operator_ (const enum_ a) \
 	{ \
 		using Int = EnumUnderlyingType<enum_>::Type; \
 		return static_cast<enum_>(operator_ static_cast<Int>(a)); \
@@ -71,7 +71,6 @@ inline typename EnumUnderlyingType<TEnum>::Type enumToType(TEnum e)
 		a = static_cast<enum_>(static_cast<Int>(a) - 1); \
 		return  a; \
 	}
-
 /// @}
 
 /// @addtogroup util_other
@@ -106,7 +105,4 @@ inline TEnum valueToEnum(typename EnumUnderlyingType<TEnum>::Type v)
 	return static_cast<TEnum>(v);
 }
 /// @}
-
-#endif
-
 

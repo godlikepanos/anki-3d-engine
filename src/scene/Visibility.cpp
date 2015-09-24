@@ -9,6 +9,7 @@
 #include "anki/scene/FrustumComponent.h"
 #include "anki/scene/LensFlareComponent.h"
 #include "anki/scene/Light.h"
+#include "anki/scene/MoveComponent.h"
 #include "anki/renderer/MainRenderer.h"
 #include "anki/util/Logger.h"
 
@@ -59,6 +60,9 @@ public:
 	List<FrustumComponent*> m_frustumsList; ///< Frustums to test
 	SpinLock m_lock;
 
+	Timestamp m_timestamp = 0;
+	SpinLock m_timestampLock;
+
 	// Data per thread but that can be accessed by all threads
 	Array<VisibilityTestResults*, ThreadPool::MAX_THREADS> m_testResults;
 
@@ -97,6 +101,9 @@ public:
 			if(threadId == 0)
 			{
 				list.popFront(alloc);
+
+				// Set initial value of timestamp
+				m_shared->m_timestamp = 0;
 			}
 
 			m_shared->m_barrier.wait();
@@ -104,6 +111,33 @@ public:
 		}
 
 		return ErrorCode::NONE;
+	}
+
+	/// Update the timestamp if the node moved or changed its shape.
+	void updateTimestamp(const SceneNode& node)
+	{
+		Timestamp lastUpdate = 0;
+
+		const FrustumComponent* bfr = node.tryGetComponent<FrustumComponent>();
+		if(bfr)
+		{
+			lastUpdate = max(lastUpdate, bfr->getTimestamp());
+		}
+
+		const MoveComponent* bmov = node.tryGetComponent<MoveComponent>();
+		if(bmov)
+		{
+			lastUpdate = max(lastUpdate, bmov->getTimestamp());
+		}
+
+		const SpatialComponent* sp = node.tryGetComponent<SpatialComponent>();
+		if(sp)
+		{
+			lastUpdate = max(lastUpdate, sp->getTimestamp());
+		}
+
+		LockGuard<SpinLock> lock(m_shared->m_timestampLock);
+		m_shared->m_timestamp = max(m_shared->m_timestamp, lastUpdate);
 	}
 };
 
@@ -272,6 +306,11 @@ void VisibilityTestTask::test(FrustumComponent& testedFrc,
 				(wantsShadowCasters && rc->getCastsShadow()))
 			{
 				visible->moveBackRenderable(alloc, visibleNode);
+
+				if(wantsShadowCasters)
+				{
+					updateTimestamp(node);
+				}
 			}
 		}
 
@@ -335,6 +374,8 @@ void VisibilityTestTask::combineTestResults(
 
 	// Allocate
 	VisibilityTestResults* visible = alloc.newInstance<VisibilityTestResults>();
+
+	visible->setShapeUpdateTimestamp(m_shared->m_timestamp);
 
 	visible->create(
 		alloc,

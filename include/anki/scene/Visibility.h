@@ -158,6 +158,16 @@ public:
 		moveBack(alloc, m_flares, m_flaresCount, x);
 	}
 
+	Timestamp getShapeUpdateTimestamp() const
+	{
+		return m_shapeUpdateTimestamp;
+	}
+
+	void setShapeUpdateTimestamp(Timestamp t)
+	{
+		m_shapeUpdateTimestamp = t;
+	}
+
 private:
 	Container m_renderables;
 	Container m_lights;
@@ -165,6 +175,8 @@ private:
 	U32 m_renderablesCount = 0;
 	U32 m_lightsCount = 0;
 	U32 m_flaresCount = 0;
+
+	Timestamp m_shapeUpdateTimestamp = 0;
 
 	void moveBack(SceneFrameAllocator<U8> alloc,
 		Container& c, U32& count, VisibleNode& x);

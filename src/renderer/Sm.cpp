@@ -107,6 +107,12 @@ Error Sm::run(SArray<SceneNode*> spotShadowCasters,
 {
 	ANKI_ASSERT(m_enabled);
 
+	if(omniShadowCasters.getSize() > m_omnis.getSize()
+		|| spotShadowCasters.getSize() > m_spots.getSize())
+	{
+		ANKI_LOGW("Too many shadow casters");
+	}
+
 	// render all
 	for(SceneNode* node : spotShadowCasters)
 	{
@@ -165,50 +171,24 @@ void Sm::bestCandidate(SceneNode& light, TContainer& arr, TShadowmap*& out)
 //==============================================================================
 Bool Sm::skip(SceneNode& light, ShadowmapBase& sm)
 {
-	Timestamp lastUpdate = light.getComponent<MoveComponent>().getTimestamp();
+	MoveComponent* movc =
+		light.tryGetComponent<MoveComponent>();
 
-	Bool shouldUpdate = false;
+	Timestamp lastUpdate = movc->getTimestamp();
+
 	Error err = light.iterateComponentsOfType<FrustumComponent>(
 		[&](FrustumComponent& fr)
 	{
 		lastUpdate = max(lastUpdate, fr.getTimestamp());
+
 		VisibilityTestResults& vi = fr.getVisibilityTestResults();
-
-		auto it = vi.getRenderablesBegin();
-		auto end = vi.getRenderablesEnd();
-		for(; it != end; ++it)
-		{
-			SceneNode* node = it->m_node;
-
-			FrustumComponent* bfr = node->tryGetComponent<FrustumComponent>();
-			if(bfr)
-			{
-				lastUpdate = max(lastUpdate, bfr->getTimestamp());
-			}
-
-			MoveComponent* bmov = node->tryGetComponent<MoveComponent>();
-			if(bmov)
-			{
-				lastUpdate = max(lastUpdate, bmov->getTimestamp());
-			}
-
-			SpatialComponent* sp = node->tryGetComponent<SpatialComponent>();
-			if(sp)
-			{
-				lastUpdate = max(lastUpdate, sp->getTimestamp());
-			}
-
-			if(lastUpdate >= sm.m_timestamp)
-			{
-				shouldUpdate = true;
-				break;
-			}
-		}
+		lastUpdate = max(lastUpdate, vi.getShapeUpdateTimestamp());
 
 		return ErrorCode::NONE;
 	});
 	(void)err;
 
+	Bool shouldUpdate = lastUpdate >= sm.m_timestamp;
 	if(shouldUpdate)
 	{
 		sm.m_timestamp = getGlobalTimestamp();

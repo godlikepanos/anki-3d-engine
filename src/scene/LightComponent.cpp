@@ -25,6 +25,10 @@ Error LightComponent::update(SceneNode&, F32, F32, Bool& updated)
 		updated = true;
 		m_dirty = false;
 	}
+	else
+	{
+		updated = false;
+	}
 
 	return ErrorCode::NONE;
 }
