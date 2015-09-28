@@ -142,6 +142,7 @@ Bool Tiler::test(const CollisionShape& cs, const Aabb& aabb) const
 	}
 
 	dist += m_near;
+	dist = -dist; // Because m_nearPlaneWspace has negatives
 
 	// Find the tiles that affect it
 	const Vec4& minv = aabb.getMin();
@@ -192,6 +193,7 @@ Bool Tiler::test(const CollisionShape& cs, const Aabb& aabb) const
 		&& yEnd >= 0 && yBegin <= tcountY);
 
 	// Check every tile
+	U visibleCount = (yEnd - yBegin) * (xEnd - xBegin);
 	for(I y = yBegin; y < yEnd; y++)
 	{
 		for(I x = xBegin; x < xEnd; x++)
@@ -199,14 +201,14 @@ Bool Tiler::test(const CollisionShape& cs, const Aabb& aabb) const
 			U tileIdx = y * tcountX + x;
 			F32 tileMaxDist = m_currentMinMax[tileIdx].y();
 
-			if(dist > tileMaxDist)
+			if(dist < tileMaxDist)
 			{
-				return false;
+				--visibleCount;
 			}
 		}
 	}
 
-	return true;
+	return visibleCount > 0;
 }
 
 } // end namespace anki
