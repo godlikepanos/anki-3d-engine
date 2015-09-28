@@ -15,6 +15,7 @@
 #include "anki/renderer/Fs.h"
 #include "anki/renderer/Lf.h"
 #include "anki/renderer/Dbg.h"
+#include "anki/renderer/Tiler.h"
 
 namespace anki {
 
@@ -105,6 +106,9 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_ms.reset(m_alloc.newInstance<Ms>(this));
 	ANKI_CHECK(m_ms->init(config));
 
+	m_tiler.reset(m_alloc.newInstance<Tiler>(this));
+	ANKI_CHECK(m_tiler->init());
+
 	m_is.reset(m_alloc.newInstance<Is>(this));
 	ANKI_CHECK(m_is->init(config));
 
@@ -150,6 +154,8 @@ Error Renderer::render(SceneNode& frustumableNode,
 	m_lf->runOcclusionTests(cmdb[0]);
 
 	m_ms->generateMipmaps(cmdb[0]);
+
+	m_tiler->run(cmdb[0]);
 
 	cmdb[0]->flush();
 
@@ -252,7 +258,16 @@ void Renderer::createDrawQuadPipeline(
 }
 
 //==============================================================================
-void Renderer::prepareForVisibilityTests(Camera& cam)
-{}
+void Renderer::prepareForVisibilityTests(const SceneNode& cam)
+{
+	m_tiler->prepareForVisibilityTests(cam);
+}
+
+//==============================================================================
+Bool Renderer::doGpuVisibilityTest(const CollisionShape& cs,
+	const Aabb& aabb) const
+{
+	return m_tiler->test(cs, aabb);
+}
 
 } // end namespace anki

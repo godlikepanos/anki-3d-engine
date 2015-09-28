@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SCENE_SECTOR_H
-#define ANKI_SCENE_SECTOR_H
+#pragma once
 
 #include "anki/scene/SceneNode.h"
 #include "anki/scene/SceneComponent.h"
@@ -18,6 +17,7 @@ class SectorGroup;
 class FrustumComponent;
 class SpatialComponent;
 class ReflectionProbeComponent;
+class Renderer;
 
 /// @addtogroup scene
 /// @{
@@ -27,7 +27,7 @@ class PortalSectorComponent: public SceneComponent
 {
 public:
 	PortalSectorComponent(SceneNode* node)
-	:	SceneComponent(Type::SECTOR_PORTAL, node)
+		: SceneComponent(Type::SECTOR_PORTAL, node)
 	{}
 
 	static Bool classof(const SceneComponent& c)
@@ -44,7 +44,7 @@ class PortalSectorBase: public SceneNode
 
 public:
 	PortalSectorBase(SceneGraph* scene)
-	:	SceneNode(scene)
+		: SceneNode(scene)
 	{}
 
 	~PortalSectorBase();
@@ -89,7 +89,7 @@ public:
 	using Base = PortalSectorBase;
 
 	Portal(SceneGraph* scene)
-	:	PortalSectorBase(scene)
+		: PortalSectorBase(scene)
 	{}
 
 	~Portal();
@@ -121,7 +121,7 @@ public:
 
 	/// Default constructor
 	Sector(SceneGraph* scene)
-	:	PortalSectorBase(scene)
+		: PortalSectorBase(scene)
 	{}
 
 	~Sector();
@@ -156,7 +156,7 @@ class SectorGroup
 public:
 	/// Default constructor
 	SectorGroup(SceneGraph* scene)
-	:	m_scene(scene)
+		: m_scene(scene)
 	{}
 
 	/// Destructor
@@ -165,7 +165,8 @@ public:
 	void spatialUpdated(SpatialComponent* sp);
 	void spatialDeleted(SpatialComponent* sp);
 
-	void prepareForVisibilityTests(const FrustumComponent& frc);
+	void prepareForVisibilityTests(const FrustumComponent& frc,
+		const Renderer& r);
 
 	PtrSize getVisibleNodesCount() const
 	{
@@ -190,14 +191,16 @@ private:
 	void findVisibleSectors(
 		const FrustumComponent& frc,
 		List<Sector*>& visibleSectors,
-		U& spatialsCount);
+		U& spatialsCount,
+		const Renderer& r);
 
 	/// Recursive method
 	void findVisibleSectorsInternal(
 		const FrustumComponent& frc,
 		Sector& s,
 		List<Sector*>& visibleSectors,
-		U& spatialsCount);
+		U& spatialsCount,
+		const Renderer& r);
 
 	void binSpatial(SpatialComponent* sp);
 };
@@ -225,4 +228,3 @@ inline Error SectorGroup::iterateVisibleSceneNodes(
 
 } // end namespace anki
 
-#endif

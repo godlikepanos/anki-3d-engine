@@ -56,6 +56,7 @@ class VisibilityShared
 {
 public:
 	SceneGraph* m_scene = nullptr;
+	const Renderer* m_r = nullptr;
 	Barrier m_barrier;
 	List<FrustumComponent*> m_frustumsList; ///< Frustums to test
 	SpinLock m_lock;
@@ -189,7 +190,7 @@ void VisibilityTestTask::test(FrustumComponent& testedFrc,
 	SectorGroup& sectors = m_shared->m_scene->getSectorGroup();
 	if(threadId == 0)
 	{
-		sectors.prepareForVisibilityTests(testedFrc);
+		sectors.prepareForVisibilityTests(testedFrc, *m_shared->m_r);
 	}
 	m_shared->m_barrier.wait();
 
@@ -478,13 +479,14 @@ void VisibilityTestResults::moveBack(
 //==============================================================================
 
 //==============================================================================
-Error doVisibilityTests(SceneNode& fsn, SceneGraph& scene, MainRenderer& r)
+Error doVisibilityTests(SceneNode& fsn, SceneGraph& scene, const Renderer& r)
 {
 	// Do the tests in parallel
 	ThreadPool& threadPool = scene._getThreadPool();
 
 	VisibilityShared shared(threadPool.getThreadsCount());
 	shared.m_scene = &scene;
+	shared.m_r = &r;
 	shared.m_frustumsList.pushBack(
 		scene.getFrameAllocator(), &fsn.getComponent<FrustumComponent>());
 

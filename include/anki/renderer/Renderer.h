@@ -239,7 +239,9 @@ anki_internal:
 		const PixelFormat& format, U32 samples, SamplingFilter filter,
 		U mipsCount, TexturePtr& rt);
 
-	void prepareForVisibilityTests(Camera& cam);
+	Bool doGpuVisibilityTest(const CollisionShape& cs, const Aabb& aabb) const;
+
+	void prepareForVisibilityTests(const SceneNode& cam);
 
 	GrManager& getGrManager()
 	{
@@ -285,6 +287,7 @@ private:
 	/// @{
 	UniquePtr<Ms> m_ms; ///< Material rendering stage
 	UniquePtr<Is> m_is; ///< Illumination rendering stage
+	UniquePtr<Tiler> m_tiler;
 	UniquePtr<Pps> m_pps; ///< Postprocessing rendering stage
 	UniquePtr<Fs> m_fs; ///< Forward shading.
 	UniquePtr<Lf> m_lf; ///< Forward shading lens flares.

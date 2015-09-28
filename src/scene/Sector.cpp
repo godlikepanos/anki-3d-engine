@@ -12,6 +12,7 @@
 #include "anki/util/Logger.h"
 #include "anki/resource/ResourceManager.h"
 #include "anki/resource/MeshLoader.h"
+#include "anki/renderer/Renderer.h"
 
 namespace anki {
 
@@ -528,7 +529,8 @@ void SectorGroup::spatialDeleted(SpatialComponent* sp)
 void SectorGroup::findVisibleSectors(
 	const FrustumComponent& frc,
 	List<Sector*>& visibleSectors,
-	U& spatialsCount)
+	U& spatialsCount,
+	const Renderer& r)
 {
 	// Find the sector the eye is in
 	Sphere eye(frc.getFrustumOrigin(), frc.getFrustum().getNear());
@@ -561,7 +563,7 @@ void SectorGroup::findVisibleSectors(
 			if(frc.insideFrustum(s.getBoundingShape()))
 			{
 				findVisibleSectorsInternal(
-					frc, s, visibleSectors, spatialsCount);
+					frc, s, visibleSectors, spatialsCount, r);
 			}
 		}
 	}
@@ -569,7 +571,7 @@ void SectorGroup::findVisibleSectors(
 	{
 		// eye inside a sector
 		findVisibleSectorsInternal(
-			frc, *(*it), visibleSectors, spatialsCount);
+			frc, *(*it), visibleSectors, spatialsCount, r);
 	}
 }
 
@@ -578,7 +580,8 @@ void SectorGroup::findVisibleSectorsInternal(
 	const FrustumComponent& frc,
 	Sector& s,
 	List<Sector*>& visibleSectors,
-	U& spatialsCount)
+	U& spatialsCount,
+	const Renderer& r)
 {
 	auto alloc = m_scene->getFrameAllocator();
 
@@ -599,13 +602,17 @@ void SectorGroup::findVisibleSectorsInternal(
 	spatialsCount += s.m_spatials.getSize();
 
 	// Check visible portals
-#if 1
 	auto itp = s.m_portals.getBegin();
 	auto itend = s.m_portals.getEnd();
 	for(; itp != itend; ++itp)
 	{
 		Portal& p = *(*itp);
-		if(frc.insideFrustum(p.getBoundingShape()))
+
+		Aabb box;
+		p.getBoundingShape().computeAabb(box);
+
+		if(frc.insideFrustum(p.getBoundingShape())
+			&& r.doGpuVisibilityTest(p.getBoundingShape(), box))
 		{
 			it = p.m_sectors.getBegin();
 			end = p.m_sectors.getEnd();
@@ -614,16 +621,16 @@ void SectorGroup::findVisibleSectorsInternal(
 				if(*it != &s)
 				{
 					findVisibleSectorsInternal(
-						frc, *(*it), visibleSectors, spatialsCount);
+						frc, *(*it), visibleSectors, spatialsCount, r);
 				}
 			}
 		}
 	}
-#endif
 }
 
 //==============================================================================
-void SectorGroup::prepareForVisibilityTests(const FrustumComponent& frc)
+void SectorGroup::prepareForVisibilityTests(const FrustumComponent& frc,
+	const Renderer& r)
 {
 	auto alloc = m_scene->getFrameAllocator();
 
@@ -641,7 +648,7 @@ void SectorGroup::prepareForVisibilityTests(const FrustumComponent& frc)
 	// Find visible sectors
 	ListAuto<Sector*> visSectors(m_scene->getFrameAllocator());
 	U spatialsCount = 0;
-	findVisibleSectors(frc, visSectors, spatialsCount);
+	findVisibleSectors(frc, visSectors, spatialsCount, r);
 
 	if(ANKI_UNLIKELY(spatialsCount == 0))
 	{

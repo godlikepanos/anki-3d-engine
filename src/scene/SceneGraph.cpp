@@ -11,6 +11,8 @@
 #include "anki/core/Counters.h"
 #include "anki/physics/PhysicsWorld.h"
 #include "anki/resource/ResourceManager.h"
+#include "anki/renderer/MainRenderer.h"
+#include "anki/renderer/Renderer.h"
 
 namespace anki {
 
@@ -255,8 +257,6 @@ Error SceneGraph::update(F32 prevUpdateTime, F32 crntTime,
 {
 	ANKI_ASSERT(m_mainCam);
 
-	Error err = ErrorCode::NONE;
-
 	m_timestamp = *m_globalTimestamp;
 
 	ANKI_COUNTER_START_TIMER(SCENE_UPDATE_TIME);
@@ -274,8 +274,7 @@ Error SceneGraph::update(F32 prevUpdateTime, F32 crntTime,
 	// Update
 	m_physics->updateAsync(crntTime - prevUpdateTime);
 	m_physics->waitUpdate();
-	err = m_events.updateAllEvents(prevUpdateTime, crntTime);
-	if(err) return err;
+	ANKI_CHECK(m_events.updateAllEvents(prevUpdateTime, crntTime));
 
 	// Then the rest
 	Array<UpdateSceneNodesTask, ThreadPool::MAX_THREADS> jobs2;
@@ -291,15 +290,15 @@ Error SceneGraph::update(F32 prevUpdateTime, F32 crntTime,
 		threadPool.assignNewTask(i, &job);
 	}
 
-	err = threadPool.waitForAllThreadsToFinish();
+	ANKI_CHECK(threadPool.waitForAllThreadsToFinish());
 
-	if(!err)
-	{
-		err = doVisibilityTests(*m_mainCam, *this, renderer);
-	}
+	renderer.getOffscreenRenderer().prepareForVisibilityTests(*m_mainCam);
+
+	ANKI_CHECK(doVisibilityTests(*m_mainCam, *this,
+		renderer.getOffscreenRenderer()));
 
 	ANKI_COUNTER_STOP_TIMER_INC(SCENE_UPDATE_TIME);
-	return err;
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

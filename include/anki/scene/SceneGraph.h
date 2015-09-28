@@ -159,8 +159,7 @@ public:
 		m_objectsMarkedForDeletionCount.fetchAdd(1);
 	}
 
-	/// @privatesection
-	/// @{
+anki_internal:
 	ResourceManager& _getResourceManager()
 	{
 		return *m_resources;
@@ -187,7 +186,6 @@ public:
 		ANKI_ASSERT(m_sectors);
 		return *m_sectors;
 	}
-	/// @}
 
 private:
 	const Timestamp* m_globalTimestamp = nullptr;

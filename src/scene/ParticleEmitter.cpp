@@ -361,7 +361,8 @@ Error ParticleEmitter::buildRendering(RenderingBuildData& data) const
 		return ErrorCode::NONE;
 	}
 
-	PipelinePtr ppline = m_particleEmitterResource->getPipeline();
+	PipelinePtr ppline =
+		m_particleEmitterResource->getPipeline(data.m_key.m_lod);
 	data.m_cmdb->bindPipeline(ppline);
 
 	U frame = (getGlobalTimestamp() % 3);

@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SCENE_VISIBILITY_TEST_RESULTS_H
-#define ANKI_SCENE_VISIBILITY_TEST_RESULTS_H
+#pragma once
 
 #include "anki/scene/Common.h"
 #include "anki/collision/Forward.h"
@@ -16,7 +15,7 @@
 namespace anki {
 
 // Forward
-class MainRenderer;
+class Renderer;
 
 /// @addtogroup scene
 /// @{
@@ -186,9 +185,8 @@ private:
 ANKI_USE_RESULT Error doVisibilityTests(
 	SceneNode& frustumable,
 	SceneGraph& scene,
-	MainRenderer& renderer);
+	const Renderer& renderer);
 /// @}
 
 } // end namespace anki
 
-#endif

@@ -177,6 +177,9 @@ vec3 computeLightColor(vec3 diffCol)
 		vec3 frag2Light = light.posRadius.xyz - fragPos;
 		float att = computeAttenuationFactor(light.posRadius.w, frag2Light);
 
+#if LOD > 0
+		const float shadow = 1.0;
+#else
 		float shadow = 1.0;
 		float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
 		if(light.diffuseColorShadowmapId.w < 128.0)
@@ -184,6 +187,7 @@ vec3 computeLightColor(vec3 diffCol)
 			shadow = computeShadowFactorOmni(frag2Light,
 				shadowmapLayerIdx, -1.0 / light.posRadius.w);
 		}
+#endif
 
 		outColor += diffC * (att * shadow);
 	}
@@ -207,6 +211,9 @@ vec3 computeLightColor(vec3 diffCol)
 			light.outerCosInnerCos.y,
 			light.lightDir.xyz);
 
+#if LOD > 0
+		const float shadow = 1.0;
+#else
 		float shadow = 1.0;
 		float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
 		if(shadowmapLayerIdx < 128.0)
@@ -214,11 +221,13 @@ vec3 computeLightColor(vec3 diffCol)
 			shadow = computeShadowFactorSpot(light.texProjectionMat,
 				fragPos, shadowmapLayerIdx);
 		}
+#endif
 
 		outColor += diffC * (att * spot * shadow);
 	}
 
 	return outColor;
+
 }
 #endif
 

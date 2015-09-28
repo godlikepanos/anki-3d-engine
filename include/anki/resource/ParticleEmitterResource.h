@@ -6,6 +6,7 @@
 #pragma once
 
 #include "anki/resource/ResourceObject.h"
+#include "anki/resource/RenderingKey.h"
 #include "anki/Math.h"
 #include "anki/Gr.h"
 
@@ -119,9 +120,10 @@ public:
 	}
 
 	/// Get pipeline for rendering.
-	PipelinePtr getPipeline() const
+	PipelinePtr getPipeline(U lod) const
 	{
-		return m_ppline;
+		lod = min<U>(lod, m_lodCount - 1);
+		return m_pplines[lod];
 	}
 
 	/// Load it
@@ -129,7 +131,8 @@ public:
 
 private:
 	MaterialResourcePtr m_material;
-	PipelinePtr m_ppline;
+	Array<PipelinePtr, MAX_LODS> m_pplines;
+	U8 m_lodCount = 1; ///< Cache the value from the material
 
 	void loadInternal(const XmlElement& el);
 };

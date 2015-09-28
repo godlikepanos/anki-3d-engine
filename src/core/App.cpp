@@ -390,8 +390,6 @@ Error App::mainLoop(UserMainLoopCallback callback, void* userData)
 		// User update
 		ANKI_CHECK(callback(*this, userData, quit));
 
-		m_renderer->prepareForVisibilityTests(m_scene->getActiveCamera());
-
 		ANKI_CHECK(m_scene->update(prevUpdateTime, crntTime, *m_renderer));
 
 		ANKI_CHECK(m_renderer->render(*m_scene));

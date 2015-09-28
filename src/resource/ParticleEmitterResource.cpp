@@ -251,15 +251,19 @@ Error ParticleEmitterResource::load(const ResourceFilename& filename)
 	pinit.m_color.m_attachments[0].m_dstBlendMethod =
 		BlendMethod::ONE_MINUS_SRC_ALPHA;
 
-	pinit.m_shaders[U(ShaderType::VERTEX)] = m_material->getShader(
-		RenderingKey(Pass::MS_FS, 0, false), ShaderType::VERTEX);
-
-	pinit.m_shaders[U(ShaderType::FRAGMENT)] = m_material->getShader(
-		RenderingKey(Pass::MS_FS, 0, false), ShaderType::FRAGMENT);
-
 	pinit.m_inputAssembler.m_topology = PrimitiveTopology::POINTS;
 
-	m_ppline = getManager().getGrManager().newInstance<Pipeline>(pinit);
+	m_lodCount = m_material->getLodCount();
+	for(U i = 0; i < m_lodCount; ++i)
+	{
+		pinit.m_shaders[U(ShaderType::VERTEX)] = m_material->getShader(
+			RenderingKey(Pass::MS_FS, i, false), ShaderType::VERTEX);
+
+		pinit.m_shaders[U(ShaderType::FRAGMENT)] = m_material->getShader(
+			RenderingKey(Pass::MS_FS, i, false), ShaderType::FRAGMENT);
+
+		m_pplines[i] = getManager().getGrManager().newInstance<Pipeline>(pinit);
+	}
 
 	return ErrorCode::NONE;
 }
