@@ -180,8 +180,6 @@ private:
 	DArray<ParticleBase*> m_particles;
 	F32 m_timeLeftForNextEmission = 0.0;
 	Obb m_obb;
-	DArray<Transform> m_transforms; ///< InstanceTransforms
-	Timestamp m_transformsTimestamp = 0;
 
 	// Opt: We dont have to make extra calculations if the ParticleEmitter's
 	// rotation is the identity
@@ -201,10 +199,7 @@ private:
 	void createParticlesSimulation(SceneGraph* scene);
 	void createParticlesSimpleSimulation();
 
-	ANKI_USE_RESULT Error doInstancingCalcs();
-
-	ANKI_USE_RESULT Error buildRendering(RenderingBuildData& data) const;
-	void getRenderWorldTransform(U index, Transform& trf) const;
+	ANKI_USE_RESULT Error buildRendering(RenderingBuildInfo& data) const;
 
 	void onMoveComponentUpdate(MoveComponent& move);
 };

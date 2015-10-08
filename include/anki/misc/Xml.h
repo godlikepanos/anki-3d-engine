@@ -34,7 +34,8 @@ public:
 		, m_alloc(b.m_alloc)
 	{}
 
-	XmlElement(tinyxml2::XMLElement* el, GenericMemoryPoolAllocator<U8> alloc)
+	XmlElement(const tinyxml2::XMLElement* el,
+		GenericMemoryPoolAllocator<U8> alloc)
 		: m_el(el)
 		, m_alloc(alloc)
 	{}
@@ -92,7 +93,7 @@ public:
 	ANKI_USE_RESULT Error getSiblingElementsCount(U32& out) const;
 
 private:
-	tinyxml2::XMLElement* m_el;
+	const tinyxml2::XMLElement* m_el;
 	GenericMemoryPoolAllocator<U8> m_alloc;
 
 	ANKI_USE_RESULT Error check() const;
@@ -108,7 +109,8 @@ public:
 	ANKI_USE_RESULT Error parse(
 		const CString& xmlText, GenericMemoryPoolAllocator<U8> alloc);
 
-	ANKI_USE_RESULT Error getChildElement(const CString& name, XmlElement& out);
+	ANKI_USE_RESULT Error getChildElement(const CString& name,
+		XmlElement& out) const;
 
 private:
 	tinyxml2::XMLDocument m_doc;

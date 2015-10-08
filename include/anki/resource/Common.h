@@ -22,6 +22,13 @@ class ResourcePointer;
 /// @addtogroup resource
 /// @{
 
+/// @name Constants
+/// @{
+const U MAX_LODS = 3;
+const U MAX_INSTANCES = 64;
+const U MAX_INSTANCE_GROUPS = log2(MAX_INSTANCES) + 1;
+/// @}
+
 /// Deleter for ResourcePtr.
 template<typename T>
 class ResourcePtrDeleter
@@ -49,7 +56,6 @@ ANKI_FORWARD(TextureResource, TextureResourcePtr)
 ANKI_FORWARD(ShaderResource, ShaderResourcePtr)
 ANKI_FORWARD(Material, MaterialResourcePtr)
 ANKI_FORWARD(Mesh, MeshResourcePtr)
-ANKI_FORWARD(BucketMesh, BucketMeshResourcePtr)
 ANKI_FORWARD(Skeleton, SkeletonResourcePtr)
 ANKI_FORWARD(ParticleEmitterResource, ParticleEmitterResourcePtr)
 ANKI_FORWARD(Model, ModelResourcePtr)

@@ -5,8 +5,7 @@
 
 #pragma once
 
-#include "anki/util/StdTypes.h"
-#include "anki/util/Assert.h"
+#include "anki/resource/Common.h"
 
 namespace anki {
 
@@ -18,8 +17,6 @@ enum class Pass: U8
 	COUNT
 };
 
-const U MAX_LODS = 3;
-
 /// A key that consistst of the rendering pass and the level of detail
 class RenderingKey
 {
@@ -27,19 +24,24 @@ public:
 	Pass m_pass;
 	U8 m_lod;
 	Bool8 m_tessellation;
+	U8 m_instanceCount;
 
-	explicit RenderingKey(Pass pass, U8 lod, Bool tessellation)
+	RenderingKey(Pass pass, U8 lod, Bool tessellation, U instanceCount)
 		: m_pass(pass)
 		, m_lod(lod)
 		, m_tessellation(tessellation)
-	{}
+		, m_instanceCount(instanceCount)
+	{
+		ANKI_ASSERT(m_instanceCount <= MAX_INSTANCES && m_instanceCount != 0);
+		ANKI_ASSERT(m_lod <= MAX_LODS);
+	}
 
 	RenderingKey()
-		: RenderingKey(Pass::MS_FS, 0, false)
+		: RenderingKey(Pass::MS_FS, 0, false, 1)
 	{}
 
 	RenderingKey(const RenderingKey& b)
-		: RenderingKey(b.m_pass, b.m_lod, b.m_tessellation)
+		: RenderingKey(b.m_pass, b.m_lod, b.m_tessellation, b.m_instanceCount)
 	{}
 };
 
@@ -49,7 +51,8 @@ class RenderingKeyHasher
 public:
 	PtrSize operator()(const RenderingKey& key) const
 	{
-		return U8(key.m_pass) | (key.m_lod << 8) | (key.m_tessellation << 16);
+		return U8(key.m_pass) | (key.m_lod << 8) | (key.m_tessellation << 16)
+			| (key.m_instanceCount << 24);
 	}
 };
 
@@ -60,7 +63,8 @@ public:
 	Bool operator()(const RenderingKey& a, const RenderingKey& b) const
 	{
 		return a.m_pass == b.m_pass && a.m_lod == b.m_lod
-			&& a.m_tessellation == b.m_tessellation;
+			&& a.m_tessellation == b.m_tessellation
+			&& a.m_instanceCount == b.m_instanceCount;
 	}
 };
 

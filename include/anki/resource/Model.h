@@ -79,9 +79,11 @@ private:
 	Array<MeshResourcePtr, MAX_LODS> m_meshes; ///< One for each LOD
 	U8 m_meshCount = 0;
 	MaterialResourcePtr m_mtl;
-	mutable SpinLock m_lock;
 
-	mutable Array3d<PipelinePtr, U(Pass::COUNT), MAX_LODS, 2> m_pplines;
+	mutable Array4d<PipelinePtr, U(Pass::COUNT), MAX_LODS, 2,
+		MAX_INSTANCE_GROUPS> m_pplines;
+	mutable SpinLock m_lock; ///< Protect m_pplines
+
 	Array<ResourceGroupPtr, MAX_LODS> m_grResources;
 
 	/// Return the maximum number of LODs
@@ -101,12 +103,9 @@ private:
 /// <model>
 /// 	<modelPatches>
 /// 		<modelPatch>
-/// 			[<mesh>path/to/mesh.mesh</mesh>
+/// 			<mesh>path/to/mesh.mesh</mesh>
 ///				[<mesh1>path/to/mesh_lod_1.mesh</mesh1>]
-///				[<mesh2>path/to/mesh_lod_2.mesh</mesh2>]] |
-/// 			[<bucketMesh>path/to/mesh.bmesh</bucketMesh>
-///				[<bucketMesh1>path/to/mesh_lod_1.bmesh</bucketMesh1>]
-///				[<bucketMesh2>path/to/mesh_lod_2.bmesh</bucketMesh2>]]
+///				[<mesh2>path/to/mesh_lod_2.mesh</mesh2>]
 /// 			<material>path/to/material.mtl</material>
 /// 		</modelPatch>
 /// 		...

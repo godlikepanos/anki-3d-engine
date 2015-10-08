@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/resource/MaterialProgramCreator.h"
+#include "anki/resource/MaterialLoader.h"
 #include "anki/util/Assert.h"
 #include "anki/misc/Xml.h"
 #include "anki/util/Logger.h"
@@ -18,11 +18,8 @@ namespace anki {
 
 //==============================================================================
 /// Given a string return info about the shader
-static ANKI_USE_RESULT Error getShaderInfo(
-	const CString& str,
-	ShaderType& type,
-	ShaderTypeBit& bit,
-	U& idx)
+static ANKI_USE_RESULT Error getShaderInfo(const CString& str, ShaderType& type,
+	ShaderTypeBit& bit, U& idx)
 {
 	Error err = ErrorCode::NONE;
 
@@ -66,7 +63,7 @@ static ANKI_USE_RESULT Error getShaderInfo(
 }
 
 //==============================================================================
-ANKI_USE_RESULT Error computeShaderVariableDataType(
+static ANKI_USE_RESULT Error computeShaderVariableDataType(
 	const CString& str, ShaderVariableDataType& out)
 {
 	Error err = ErrorCode::NONE;
@@ -117,16 +114,86 @@ ANKI_USE_RESULT Error computeShaderVariableDataType(
 }
 
 //==============================================================================
-// MaterialProgramCreator                                                      =
+static ANKI_USE_RESULT Error computeBuiltin(const CString& name,
+	BuiltinMaterialVariableId& out)
+{
+	if(name == "anki_mvp")
+	{
+		out = BuiltinMaterialVariableId::MVP_MATRIX;
+	}
+	else if(name == "anki_mv")
+	{
+		out = BuiltinMaterialVariableId::MV_MATRIX;
+	}
+	else if(name == "anki_vp")
+	{
+		out = BuiltinMaterialVariableId::VP_MATRIX;
+	}
+	else if(name == "anki_n")
+	{
+		out = BuiltinMaterialVariableId::NORMAL_MATRIX;
+	}
+	else if(name == "anki_billboardMvp")
+	{
+		out = BuiltinMaterialVariableId::BILLBOARD_MVP_MATRIX;
+	}
+	else if(name == "anki_tessLevel")
+	{
+		out = BuiltinMaterialVariableId::MAX_TESS_LEVEL;
+	}
+	else if(name == "anki_msDepthRt")
+	{
+		out = BuiltinMaterialVariableId::MS_DEPTH_MAP;
+	}
+	else if(name.find("anki_") == 0)
+	{
+		ANKI_LOGE("Unknown builtin %s", &name[0]);
+		return ErrorCode::USER_DATA;
+	}
+	else
+	{
+		out = BuiltinMaterialVariableId::NONE;
+	}
+
+	return ErrorCode::NONE;
+}
+
+//==============================================================================
+// MaterialLoaderInputVariable                                                 =
 //==============================================================================
 
 //==============================================================================
-MaterialProgramCreator::MaterialProgramCreator(TempResourceAllocator<U8> alloc)
+void MaterialLoaderInputVariable::move(MaterialLoaderInputVariable& b)
+{
+	m_alloc = std::move(b.m_alloc);
+	m_name = std::move(b.m_name);
+	m_typeStr = std::move(b.m_typeStr);
+	m_type = b.m_type;
+	m_value = std::move(b.m_value);
+	m_constant = b.m_constant;
+	m_instanced = b.m_instanced;
+	m_builtin = b.m_builtin;
+	m_line = std::move(b.m_line);
+	m_shaderDefinedMask = b.m_shaderDefinedMask;
+	m_shaderReferencedMask = b.m_shaderReferencedMask;
+	m_inBlock = b.m_inBlock;
+	m_binding = b.m_binding;
+	m_index = b.m_index;
+	m_blockInfo = b.m_blockInfo;
+	m_inShadow = b.m_inShadow;
+}
+
+//==============================================================================
+// MaterialLoader                                                              =
+//==============================================================================
+
+//==============================================================================
+MaterialLoader::MaterialLoader(TempResourceAllocator<U8> alloc)
 	: m_alloc(alloc)
 {}
 
 //==============================================================================
-MaterialProgramCreator::~MaterialProgramCreator()
+MaterialLoader::~MaterialLoader()
 {
 	for(auto& it : m_source)
 	{
@@ -139,12 +206,63 @@ MaterialProgramCreator::~MaterialProgramCreator()
 	}
 
 	m_inputs.destroy(m_alloc);
-
 	m_uniformBlock.destroy(m_alloc);
 }
 
 //==============================================================================
-Error MaterialProgramCreator::parseProgramsTag(const XmlElement& el)
+Error MaterialLoader::parseXmlDocument(const XmlDocument& doc)
+{
+	XmlElement materialEl, el;
+
+	// <levelsOfDetail>
+	ANKI_CHECK(doc.getChildElement("material", materialEl));
+
+	// <levelsOfDetail>
+	ANKI_CHECK(materialEl.getChildElementOptional("levelsOfDetail", el));
+	if(el)
+	{
+		I64 tmp;
+		ANKI_CHECK(el.getI64(tmp));
+		m_lodCount = (tmp < 1) ? 1 : tmp;
+	}
+	else
+	{
+		m_lodCount = 1;
+	}
+
+	if(m_lodCount > MAX_LODS)
+	{
+		ANKI_LOGW("Too many <levelsOfDetail>");
+		m_lodCount = MAX_LODS;
+	}
+
+	// <shadow>
+	ANKI_CHECK(materialEl.getChildElementOptional("shadow", el));
+	if(el)
+	{
+		I64 tmp;
+		ANKI_CHECK(el.getI64(tmp));
+		m_shadow = tmp;
+	}
+
+	// <forwardShading>
+	ANKI_CHECK(materialEl.getChildElementOptional("forwardShading", el));
+	if(el)
+	{
+		I64 tmp;
+		ANKI_CHECK(el.getI64(tmp));
+		m_forwardShading = tmp;
+	}
+
+	// <programs>
+	ANKI_CHECK(materialEl.getChildElement("programs", el));
+	ANKI_CHECK(parseProgramsTag(el));
+
+	return ErrorCode::NONE;
+}
+
+//==============================================================================
+Error MaterialLoader::parseProgramsTag(const XmlElement& el)
 {
 	//
 	// First gather all the inputs
@@ -179,7 +297,7 @@ Error MaterialProgramCreator::parseProgramsTag(const XmlElement& el)
 	// Sanity checks
 	//
 
-	// Check that all input is referenced
+	// Check that all inputs are referenced
 	for(auto& in : m_inputs)
 	{
 		if(in.m_shaderDefinedMask != in.m_shaderReferencedMask)
@@ -190,22 +308,11 @@ Error MaterialProgramCreator::parseProgramsTag(const XmlElement& el)
 		}
 	}
 
-	//
-	// Merge strings
-	//
-	for(U i = 0; i < m_sourceBaked.getSize(); i++)
-	{
-		if(!m_source[i].isEmpty())
-		{
-			m_source[i].join(m_alloc, "\n", m_sourceBaked[i]);
-		}
-	}
-
 	return ErrorCode::NONE;
 }
 
 //==============================================================================
-Error MaterialProgramCreator::parseProgramTag(
+Error MaterialLoader::parseProgramTag(
 	const XmlElement& programEl)
 {
 	XmlElement el;
@@ -251,7 +358,7 @@ Error MaterialProgramCreator::parseProgramTag(
 	{
 		lines.pushBackSprintf(m_alloc,
 			"\nlayout(UBO_BINDING(0, 0), std140, row_major) "
-			"uniform bDefaultBlock\n{");
+			"uniform _ublk00\n{");
 
 		for(auto& str : m_uniformBlock)
 		{
@@ -294,7 +401,7 @@ Error MaterialProgramCreator::parseProgramTag(
 }
 
 //==============================================================================
-Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
+Error MaterialLoader::parseInputsTag(const XmlElement& programEl)
 {
 	XmlElement el;
 	CString cstr;
@@ -325,6 +432,18 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 		ANKI_CHECK(el.getText(cstr));
 		inpvar.m_name.create(m_alloc, cstr);
 
+		ANKI_CHECK(computeBuiltin(inpvar.m_name.toCString(), inpvar.m_builtin));
+
+		// Check if instanced
+		if(inpvar.m_builtin == BuiltinMaterialVariableId::MVP_MATRIX
+			|| inpvar.m_builtin == BuiltinMaterialVariableId::NORMAL_MATRIX
+			|| inpvar.m_builtin
+				== BuiltinMaterialVariableId::BILLBOARD_MVP_MATRIX)
+		{
+			inpvar.m_instanced = true;
+			m_instanced = true;
+		}
+
 		// <type>
 		ANKI_CHECK(inputEl.getChildElement("type", el));
 		ANKI_CHECK(el.getText(cstr));
@@ -332,21 +451,34 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 		ANKI_CHECK(computeShaderVariableDataType(cstr, inpvar.m_type));
 
 		// <value>
-		XmlElement valueEl;
-		ANKI_CHECK(inputEl.getChildElement("value", valueEl));
-		ANKI_CHECK(valueEl.getText(cstr));
+		ANKI_CHECK(inputEl.getChildElement("value", el));
+		ANKI_CHECK(el.getText(cstr));
 		if(cstr)
 		{
 			inpvar.m_value.splitString(m_alloc, cstr, ' ');
+
+			if(inpvar.m_builtin != BuiltinMaterialVariableId::NONE)
+			{
+				ANKI_LOGE("Builtins cannot have value %s", &inpvar.m_name[0]);
+				return ErrorCode::USER_DATA;
+			}
+		}
+		else
+		{
+			if(inpvar.m_builtin == BuiltinMaterialVariableId::NONE)
+			{
+				ANKI_LOGE("Non-builtins should have a value %s",
+					&inpvar.m_name[0]);
+				return ErrorCode::USER_DATA;
+			}
 		}
 
 		// <const>
-		XmlElement constEl;
-		ANKI_CHECK(inputEl.getChildElementOptional("const", constEl));
-		if(constEl)
+		ANKI_CHECK(inputEl.getChildElementOptional("const", el));
+		if(el)
 		{
 			I64 tmp;
-			ANKI_CHECK(constEl.getI64(tmp));
+			ANKI_CHECK(el.getI64(tmp));
 			inpvar.m_constant = tmp;
 		}
 		else
@@ -354,53 +486,24 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 			inpvar.m_constant = false;
 		}
 
-		// <arraySize>
-		XmlElement arrSizeEl;
-		ANKI_CHECK(inputEl.getChildElementOptional("arraySize", arrSizeEl));
-		if(arrSizeEl)
+		if(inpvar.m_builtin != BuiltinMaterialVariableId::NONE
+			&& inpvar.m_constant)
+		{
+			ANKI_LOGE("Builtins cannot be consts %s", &inpvar.m_name[0]);
+			return ErrorCode::USER_DATA;
+		}
+
+		// <inShadow>
+		ANKI_CHECK(inputEl.getChildElementOptional("inShadow", el));
+		if(el)
 		{
 			I64 tmp;
-			ANKI_CHECK(arrSizeEl.getI64(tmp));
-			if(tmp <= 0)
-			{
-				ANKI_LOGE("Incorrect arraySize value %d", tmp);
-				return ErrorCode::USER_DATA;
-			}
-
-			inpvar.m_arraySize = tmp;
+			ANKI_CHECK(el.getI64(tmp));
+			inpvar.m_inShadow = tmp;
 		}
 		else
 		{
-			inpvar.m_arraySize = 1;
-		}
-
-		// <instanced>
-		XmlElement instancedEl;
-		ANKI_CHECK(
-			inputEl.getChildElementOptional("instanced", instancedEl));
-
-		if(instancedEl)
-		{
-			I64 tmp;
-			ANKI_CHECK(instancedEl.getI64(tmp));
-			inpvar.m_instanced = tmp;
-
-			if(inpvar.m_instanced && inpvar.m_arraySize == 1)
-			{
-				ANKI_LOGE("On instanced the array size should be >1");
-				return ErrorCode::USER_DATA;
-			}
-		}
-		else
-		{
-			inpvar.m_instanced = false;
-		}
-
-		// If one input var is instanced notify the whole program that
-		// it's instanced
-		if(inpvar.m_instanced)
-		{
-			m_instanced = true;
+			inpvar.m_inShadow = true;
 		}
 
 		// Now you have the info to check if duplicate
@@ -440,124 +543,42 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 			goto advance;
 		}
 
-		if(inpvar.m_constant == false)
+		if(!inpvar.m_constant)
 		{
 			// Handle NON-consts
 
-			inpvar.m_line.sprintf(
-				m_alloc, "%s %s", &inpvar.m_typeStr[0], &inpvar.m_name[0]);
-
-			if(inpvar.m_arraySize > 1)
-			{
-				String tmp;
-				tmp.sprintf(m_alloc, "[%uU]", inpvar.m_arraySize);
-				inpvar.m_line.append(m_alloc, tmp);
-				tmp.destroy(m_alloc);
-			}
-
-			inpvar.m_line.append(m_alloc, ";");
-
-			// Can put it block
 			if(inpvar.m_type >= ShaderVariableDataType::SAMPLERS_FIRST
 				&& inpvar.m_type <= ShaderVariableDataType::SAMPLERS_LAST)
 			{
-				String tmp;
-
-				tmp.sprintf(
-					m_alloc, "layout(binding = %u) uniform %s",
-					m_texBinding, &inpvar.m_line[0]);
-
-				inpvar.m_line.destroy(m_alloc);
-				inpvar.m_line = std::move(tmp);
+				// Not in block
 
 				inpvar.m_inBlock = false;
-				inpvar.m_binding = m_texBinding;
-				++m_texBinding;
+				inpvar.m_binding = m_texBinding++;
+
+				inpvar.m_line.sprintf(
+					m_alloc, "layout(TEX_BINDING(0, %u)) uniform tex%u",
+					inpvar.m_binding, inpvar.m_binding);
 			}
 			else
 			{
 				// In block
-				String tmp;
 
-				tmp.create(m_alloc, inpvar.m_line);
-				m_uniformBlock.emplaceBack(m_alloc);
-				m_uniformBlock.getBack() = std::move(tmp);
-
-				m_uniformBlockReferencedMask |= glshaderbit;
 				inpvar.m_inBlock = true;
+				inpvar.m_index = m_nextIndex++;
+				m_uniformBlockReferencedMask |= glshaderbit;
 
-				// std140 rules
-				inpvar.m_offset = m_blockSize;
+				inpvar.m_line.sprintf(m_alloc,
+					"#if %s\n"
+					"%s var%u %s\n;"
+					"#endif",
+					inpvar.m_inShadow ? "SHADOW" : "1",
+					&inpvar.m_typeStr[0],
+					inpvar.m_index,
+					inpvar.m_instanced ? "[INSTANCE_COUNT]" : " ");
 
-				if(inpvar.m_type == ShaderVariableDataType::FLOAT)
-				{
-					inpvar.m_arrayStride = sizeof(Vec4);
-
-					if(inpvar.m_arraySize == 1)
-					{
-						// No need to align the inpvar.m_offset
-						m_blockSize += sizeof(F32);
-					}
-					else
-					{
-						alignRoundUp(sizeof(Vec4), inpvar.m_offset);
-						m_blockSize += sizeof(Vec4) * inpvar.m_arraySize;
-					}
-				}
-				else if(inpvar.m_type == ShaderVariableDataType::VEC2)
-				{
-					inpvar.m_arrayStride = sizeof(Vec4);
-
-					if(inpvar.m_arraySize == 1)
-					{
-						alignRoundUp(sizeof(Vec2), inpvar.m_offset);
-						m_blockSize += sizeof(Vec2);
-					}
-					else
-					{
-						alignRoundUp(sizeof(Vec4), inpvar.m_offset);
-						m_blockSize += sizeof(Vec4) * inpvar.m_arraySize;
-					}
-				}
-				else if(inpvar.m_type == ShaderVariableDataType::VEC3)
-				{
-					alignRoundUp(sizeof(Vec4), inpvar.m_offset);
-					inpvar.m_arrayStride = sizeof(Vec4);
-
-					if(inpvar.m_arraySize == 1)
-					{
-						m_blockSize += sizeof(Vec3);
-					}
-					else
-					{
-						m_blockSize += sizeof(Vec4) * inpvar.m_arraySize;
-					}
-				}
-				else if(inpvar.m_type == ShaderVariableDataType::VEC4)
-				{
-					inpvar.m_arrayStride = sizeof(Vec4);
-					alignRoundUp(sizeof(Vec4), inpvar.m_offset);
-					m_blockSize += sizeof(Vec4) * inpvar.m_arraySize;
-				}
-				else if(inpvar.m_type == ShaderVariableDataType::MAT3)
-				{
-					alignRoundUp(sizeof(Vec4), inpvar.m_offset);
-					inpvar.m_arrayStride = sizeof(Vec4) * 3;
-					m_blockSize += sizeof(Vec4) * 3 * inpvar.m_arraySize;
-					inpvar.m_matrixStride = sizeof(Vec4);
-				}
-				else if(inpvar.m_type == ShaderVariableDataType::MAT4)
-				{
-					alignRoundUp(sizeof(Vec4), inpvar.m_offset);
-					inpvar.m_arrayStride = sizeof(Mat4);
-					m_blockSize += sizeof(Mat4) * inpvar.m_arraySize;
-					inpvar.m_matrixStride = sizeof(Vec4);
-				}
-				else
-				{
-					ANKI_LOGE("Unsupported type %s", &inpvar.m_typeStr[0]);
-					return ErrorCode::USER_DATA;
-				}
+				String tmp;
+				tmp.create(m_alloc, inpvar.m_line);
+				m_uniformBlock.emplaceBack(m_alloc, std::move(tmp));
 			}
 		}
 		else
@@ -570,20 +591,19 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 				return ErrorCode::USER_DATA;
 			}
 
-			if(inpvar.m_arraySize > 1)
-			{
-				ANKI_LOGE("Const arrays currently cannot be handled");
-				return ErrorCode::USER_DATA;
-			}
-
 			inpvar.m_inBlock = false;
+			inpvar.m_index = m_nextIndex++;
 
 			String initList;
 			inpvar.m_value.join(m_alloc, ", ", initList);
 
-			inpvar.m_line.sprintf(m_alloc, "const %s %s = %s(%s);",
-				&inpvar.m_typeStr[0], &inpvar.m_name[0], &inpvar.m_typeStr[0],
+			inpvar.m_line.sprintf(m_alloc,
+				"const %s var%u = %s(%s);",
+				&inpvar.m_typeStr[0],
+				&inpvar.m_index,
+				&inpvar.m_typeStr[0],
 				&initList[0]);
+
 			initList.destroy(m_alloc);
 		}
 
@@ -601,7 +621,7 @@ advance:
 }
 
 //==============================================================================
-Error MaterialProgramCreator::parseOperationTag(
+Error MaterialLoader::parseOperationTag(
 	const XmlElement& operationTag,
 	ShaderType glshader,
 	ShaderTypeBit glshaderbit,
@@ -673,15 +693,19 @@ Error MaterialProgramCreator::parseOperationTag(
 			{
 				ANKI_CHECK(argEl.getText(cstr));
 
-				if(glshader == ShaderType::VERTEX)
+				if(glshader == ShaderType::VERTEX
+					|| glshader == ShaderType::FRAGMENT)
 				{
-					argsList.pushBackSprintf("%s [gl_InstanceID]", &cstr[0]);
-
-					m_instanceIdMask |= glshaderbit;
-				}
-				else if(glshader == ShaderType::FRAGMENT)
-				{
-					argsList.pushBackSprintf("%s [vInstanceId]", &cstr[0]);
+					argsList.pushBackSprintf(
+						"%s%u\n"
+						"#if INSTANCE_COUNT > 1\n"
+						"[%s]\n"
+						"#endif",
+						input->m_binding >= 0 ? "tex" : "var",
+						input->m_binding >= 0
+							? input->m_binding : input->m_index,
+						(glshader == ShaderType::VERTEX)
+							? "gl_InstanceID" : "vInstanceId");
 
 					m_instanceIdMask |= glshaderbit;
 				}
@@ -744,6 +768,144 @@ Error MaterialProgramCreator::parseOperationTag(
 	lines.join(m_alloc, " ", out);
 
 	return ErrorCode::NONE;
+}
+
+//==============================================================================
+void MaterialLoader::mutate(const RenderingKey& key)
+{
+	U instanceCount = key.m_instanceCount;
+	Bool tessellation = key.m_tessellation;
+	U lod = key.m_lod;
+	Pass pass = key.m_pass;
+
+	// Preconditions
+	if(tessellation)
+	{
+		ANKI_ASSERT(m_tessellation);
+	}
+
+	if(instanceCount > 1)
+	{
+		ANKI_ASSERT(m_instanced);
+	}
+
+	// Compute the block info for each var
+	m_blockSize = 0;
+	for(Input& inpvar : m_inputs)
+	{
+		// Invalidate the var's block info
+		inpvar.m_blockInfo = ShaderVariableBlockInfo();
+
+		if(!inpvar.m_inBlock)
+		{
+			continue;
+		}
+
+		if(pass == Pass::SM && !inpvar.m_inShadow)
+		{
+			continue;
+		}
+
+		// std140 rules
+		inpvar.m_blockInfo.m_offset = m_blockSize;
+		inpvar.m_blockInfo.m_arraySize = inpvar.m_instanced ? instanceCount : 1;
+
+		if(inpvar.m_type == ShaderVariableDataType::FLOAT)
+		{
+			inpvar.m_blockInfo.m_arrayStride = sizeof(Vec4);
+
+			if(inpvar.m_blockInfo.m_arraySize == 1)
+			{
+				// No need to align the inpvar.m_offset
+				m_blockSize += sizeof(F32);
+			}
+			else
+			{
+				alignRoundUp(sizeof(Vec4), inpvar.m_blockInfo.m_offset);
+				m_blockSize += sizeof(Vec4) * inpvar.m_blockInfo.m_arraySize;
+			}
+		}
+		else if(inpvar.m_type == ShaderVariableDataType::VEC2)
+		{
+			inpvar.m_blockInfo.m_arrayStride = sizeof(Vec4);
+
+			if(inpvar.m_blockInfo.m_arraySize == 1)
+			{
+				alignRoundUp(sizeof(Vec2), inpvar.m_blockInfo.m_offset);
+				m_blockSize += sizeof(Vec2);
+			}
+			else
+			{
+				alignRoundUp(sizeof(Vec4), inpvar.m_blockInfo.m_offset);
+				m_blockSize += sizeof(Vec4) * inpvar.m_blockInfo.m_arraySize;
+			}
+		}
+		else if(inpvar.m_type == ShaderVariableDataType::VEC3)
+		{
+			alignRoundUp(sizeof(Vec4), inpvar.m_blockInfo.m_offset);
+			inpvar.m_blockInfo.m_arrayStride = sizeof(Vec4);
+
+			if(inpvar.m_blockInfo.m_arraySize == 1)
+			{
+				m_blockSize += sizeof(Vec3);
+			}
+			else
+			{
+				m_blockSize += sizeof(Vec4) * inpvar.m_blockInfo.m_arraySize;
+			}
+		}
+		else if(inpvar.m_type == ShaderVariableDataType::VEC4)
+		{
+			inpvar.m_blockInfo.m_arrayStride = sizeof(Vec4);
+			alignRoundUp(sizeof(Vec4), inpvar.m_blockInfo.m_offset);
+			m_blockSize += sizeof(Vec4) * inpvar.m_blockInfo.m_arraySize;
+		}
+		else if(inpvar.m_type == ShaderVariableDataType::MAT3)
+		{
+			alignRoundUp(sizeof(Vec4), inpvar.m_blockInfo.m_offset);
+			inpvar.m_blockInfo.m_arrayStride = sizeof(Vec4) * 3;
+			m_blockSize += sizeof(Vec4) * 3 * inpvar.m_blockInfo.m_arraySize;
+			inpvar.m_blockInfo.m_matrixStride = sizeof(Vec4);
+		}
+		else if(inpvar.m_type == ShaderVariableDataType::MAT4)
+		{
+			alignRoundUp(sizeof(Vec4), inpvar.m_blockInfo.m_offset);
+			inpvar.m_blockInfo.m_arrayStride = sizeof(Mat4);
+			m_blockSize += sizeof(Mat4) * inpvar.m_blockInfo.m_arraySize;
+			inpvar.m_blockInfo.m_matrixStride = sizeof(Vec4);
+		}
+		else
+		{
+			ANKI_ASSERT(0);
+		}
+	}
+
+	// Update the defines
+	StringAuto defines(m_alloc);
+	defines.sprintf(
+		"#define INSTANCE_COUNT %u\n"
+		"#define TESSELATION %u\n"
+		"#define LOD %u\n"
+		"#define PASS %s\n",
+		instanceCount,
+		tessellation,
+		lod,
+		(pass == Pass::SM) ? "DEPTH" : "COLOR");
+
+	// Merge strings
+	for(U i = 0; i < m_sourceBaked.getSize(); i++)
+	{
+		if(!m_source[i].isEmpty())
+		{
+			m_sourceBaked[i].destroy(m_alloc);
+
+			String tmp;
+			m_source[i].join(m_alloc, "\n", tmp);
+
+			m_sourceBaked[i].sprintf(m_alloc, "%s%s", &defines[0], &tmp[0]);
+			tmp.destroy(m_alloc);
+		}
+	}
 }
 
 } // end namespace anki

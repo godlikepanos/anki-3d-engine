@@ -15,6 +15,7 @@ namespace anki {
 
 // Forward
 class Renderer;
+struct RenderContext;
 
 /// @addtogroup renderer
 /// @{
@@ -46,18 +47,11 @@ private:
 	Renderer* m_r;
 
 	void setupUniforms(
-		const VisibleNode& visibleNode,
+		RenderContext& ctx,
 		const RenderComponent& renderable,
-		const FrustumComponent& fr,
-		F32 flod,
-		CommandBufferPtr cmdb);
+		const RenderingKey& key);
 
-	ANKI_USE_RESULT Error renderSingle(
-		const FrustumComponent& fr,
-		RenderingStage stage,
-		Pass pass,
-		CommandBufferPtr cmdb,
-		const VisibleNode& visibleNode);
+	ANKI_USE_RESULT Error renderSingle(RenderContext& ctx);
 };
 /// @}
 

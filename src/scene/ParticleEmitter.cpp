@@ -197,28 +197,27 @@ void Particle::revive(const ParticleEmitter& pe,
 class ParticleEmitterRenderComponent: public RenderComponent
 {
 public:
-	ParticleEmitter* m_node = nullptr;
+	const ParticleEmitter& getNode() const
+	{
+		return static_cast<const ParticleEmitter&>(getSceneNode());
+	}
 
 	ParticleEmitterRenderComponent(ParticleEmitter* node)
 		: RenderComponent(node,
 			&node->m_particleEmitterResource->getMaterial())
-		, m_node(node)
 	{}
 
 	ANKI_USE_RESULT Error buildRendering(
-		RenderingBuildData& data) const override
+		RenderingBuildInfo& data) const override
 	{
-		return m_node->buildRendering(data);
+		return getNode().buildRendering(data);
 	}
 
-	void getRenderWorldTransform(U index, Transform& trf) const override
+	void getRenderWorldTransform(Bool& hasTransform,
+		Transform& trf) const override
 	{
-		m_node->getRenderWorldTransform(index, trf);
-	}
-
-	Bool getHasWorldTransforms() const override
-	{
-		return true;
+		hasTransform = true;
+		trf = getNode().getComponent<MoveComponent>().getWorldTransform();
 	}
 };
 
@@ -237,7 +236,7 @@ public:
 	ANKI_USE_RESULT Error update(
 		SceneNode& node, F32, F32, Bool& updated) override
 	{
-		updated = false;
+		updated = false; // Don't care about updates for this component
 
 		MoveComponent& move = node.getComponent<MoveComponent>();
 		if(move.getTimestamp() == node.getGlobalTimestamp())
@@ -271,7 +270,6 @@ ParticleEmitter::~ParticleEmitter()
 	}
 
 	m_particles.destroy(getSceneAllocator());
-	m_transforms.destroy(getSceneAllocator());
 }
 
 //==============================================================================
@@ -352,9 +350,9 @@ Error ParticleEmitter::create(
 }
 
 //==============================================================================
-Error ParticleEmitter::buildRendering(RenderingBuildData& data) const
+Error ParticleEmitter::buildRendering(RenderingBuildInfo& data) const
 {
-	ANKI_ASSERT(data.m_subMeshIndicesCount <= m_transforms.getSize() + 1);
+	ANKI_ASSERT(data.m_subMeshIndicesCount == 1);
 
 	if(m_aliveParticlesCount == 0)
 	{
@@ -558,164 +556,7 @@ Error ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 		m_timeLeftForNextEmission -= crntTime - prevUpdateTime;
 	}
 
-	// Do something more
-	return doInstancingCalcs();
-}
-
-//==============================================================================
-Error ParticleEmitter::doInstancingCalcs()
-{
-	Error err = ErrorCode::NONE;
-
-#if 0
-	//
-	// Gather the move components of the instances
-	//
-	SceneFrameDArrayAuto<MoveComponent*> instanceMoves(
-		getFrameAllocator());
-	U instanceMovesCount = 0;
-	Timestamp instancesTimestamp = 0;
-
-	err = instanceMoves.create(64);
-	if(err)	return err;
-
-	err = SceneNode::visitChildren([&](SceneNode& sn) -> Error
-	{
-		if(sn.tryGetComponent<InstanceComponent>())
-		{
-			MoveComponent& move = sn.getComponent<MoveComponent>();
-
-			instanceMoves[instanceMovesCount++] = &move;
-
-			instancesTimestamp =
-				std::max(instancesTimestamp, move.getTimestamp());
-		}
-
-		return ErrorCode::NONE;
-	});
-
-	//
-	// If instancing
-	//
-	if(instanceMovesCount > 0)
-	{
-		Bool transformsNeedUpdate = false;
-
-		// Check if an instance was added or removed and reset the spatials and
-		// the transforms
-		if(instanceMovesCount != m_transforms.getSize())
-		{
-			transformsNeedUpdate = true;
-
-			// Check if instances added or removed
-			if(m_transforms.getSize() < instanceMovesCount)
-			{
-				// Instances added
-
-				U diff = instanceMovesCount - m_transforms.getSize();
-
-				while(diff-- != 0)
-				{
-					ObbSpatialComponent* newSpatial = getSceneAllocator().
-						newInstance<ObbSpatialComponent>(this);
-
-					if(newSpatial == nullptr)
-					{
-						err = ErrorCode::OUT_OF_MEMORY;
-						break;
-					}
-
-					err = addComponent(newSpatial);
-					if(err)
-					{
-						break;
-					}
-				}
-			}
-			else
-			{
-				// Instances removed
-
-				// TODO
-				ANKI_ASSERT(0 && "TODO");
-			}
-
-			err = m_transforms.resize(getSceneAllocator(), instanceMovesCount);
-		}
-
-		if(!err && (transformsNeedUpdate
-			|| m_transformsTimestamp < instancesTimestamp))
-		{
-			m_transformsTimestamp = instancesTimestamp;
-
-			// Update the transforms
-			for(U i = 0; i < instanceMovesCount; i++)
-			{
-				m_transforms[i] = instanceMoves[i]->getWorldTransform();
-			}
-		}
-
-		// Update the spatials anyway
-		if(!err)
-		{
-			U count = 0;
-			SpatialComponent* meSpatial = this;
-			err = iterateComponentsOfType<SpatialComponent>(
-				[&](SpatialComponent& sp) -> Error
-			{
-				Error err2 = ErrorCode::NONE;
-
-				// Skip the first
-				if(&sp != meSpatial)
-				{
-					ObbSpatialComponent* msp =
-						staticCastPtr<ObbSpatialComponent*>(&sp);
-
-					if(msp)
-					{
-						Obb aobb = m_obb;
-						aobb.setCenter(Vec4(0.0));
-						msp->m_obb = aobb.getTransformed(m_transforms[count]);
-						++count;
-						msp->markForUpdate();
-					}
-					else
-					{
-						err2 = ErrorCode::OUT_OF_MEMORY;
-					}
-				}
-
-				return err2;
-			});
-
-			ANKI_ASSERT(count == m_transforms.getSize());
-		}
-	} // end if instancing
-#endif
-
-	return err;
-}
-
-//==============================================================================
-void ParticleEmitter::getRenderWorldTransform(U index, Transform& trf) const
-{
-	if(index == 0)
-	{
-		// Don't transform the particle positions. They are already in world
-		// space
-		trf = Transform::getIdentity();
-	}
-	else
-	{
-		--index;
-		ANKI_ASSERT(index < m_transforms.getSize());
-
-		// The particle positions are already in word space. Move them back to
-		// local space
-		const MoveComponent& move = getComponent<MoveComponent>();
-		Transform invTrf = move.getWorldTransform().getInverse();
-		trf = m_transforms[index].combineTransformations(invTrf);
-	}
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

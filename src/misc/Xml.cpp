@@ -279,7 +279,7 @@ Error XmlElement::getSiblingElementsCount(U32& out) const
 	Error err = check();
 	if(!err)
 	{
-		tinyxml2::XMLElement* el = m_el;
+		const tinyxml2::XMLElement* el = m_el;
 
 		I count = -1;
 		do
@@ -337,7 +337,7 @@ Error XmlDocument::parse(
 
 //==============================================================================
 ANKI_USE_RESULT Error XmlDocument::getChildElement(
-	const CString& name, XmlElement& out)
+	const CString& name, XmlElement& out) const
 {
 	Error err = ErrorCode::NONE;
 	out = XmlElement(m_doc.FirstChildElement(&name[0]), m_alloc);

@@ -15,97 +15,48 @@ namespace anki {
 /// @addtogroup scene
 /// @{
 
-/// The ID of a buildin material variable
-enum class BuildinMaterialVariableId: U8
-{
-	NO_BUILDIN = 0,
-	MVP_MATRIX,
-	MV_MATRIX,
-	VP_MATRIX,
-	NORMAL_MATRIX,
-	BILLBOARD_MVP_MATRIX,
-	MAX_TESS_LEVEL,
-	BLURRING,
-	MS_DEPTH_MAP,
-	COUNT
-};
-
 // Forward
 class RenderComponentVariable;
 
 template<typename T>
 class RenderComponentVariableTemplate;
 
-/// RenderComponent variable base. Its a visitable
-typedef VisitableCommonBase<
-	RenderComponentVariable, //< The base
+/// RenderComponent variable base. It's a visitable.
+using RenderComponentVariableVisitable = VisitableCommonBase<
+	RenderComponentVariable, // The base
 	RenderComponentVariableTemplate<F32>,
 	RenderComponentVariableTemplate<Vec2>,
 	RenderComponentVariableTemplate<Vec3>,
 	RenderComponentVariableTemplate<Vec4>,
 	RenderComponentVariableTemplate<Mat3>,
 	RenderComponentVariableTemplate<Mat4>,
-	RenderComponentVariableTemplate<TextureResourcePtr>>
-	RenderComponentVariableVisitable;
+	RenderComponentVariableTemplate<TextureResourcePtr>>;
 
 /// A wrapper on top of MaterialVariable
 class RenderComponentVariable: public RenderComponentVariableVisitable
 {
 public:
-	typedef RenderComponentVariableVisitable Base;
+	using Base = RenderComponentVariableVisitable;
 
 	RenderComponentVariable(const MaterialVariable* mvar);
 	virtual ~RenderComponentVariable();
 
-	BuildinMaterialVariableId getBuildinId() const
-	{
-		return m_buildinId;
-	}
-
-	CString getName() const
-	{
-		return m_mvar->getName();
-	}
-
-	template<typename T>
-	const T* begin() const
-	{
-		ANKI_ASSERT(Base::isTypeOf<RenderComponentVariableTemplate<T>>());
-		auto derived =
-			static_cast<const RenderComponentVariableTemplate<T>*>(this);
-		return derived->begin();
-	}
-
-	template<typename T>
-	const T* end() const
-	{
-		ANKI_ASSERT(Base::isTypeOf<RenderComponentVariableTemplate<T>>());
-		auto derived =
-			static_cast<const RenderComponentVariableTemplate<T>*>(this);
-		return derived->end();
-	}
-
-	template<typename T>
-	const T& operator[](U idx) const
-	{
-		ANKI_ASSERT(Base::isTypeOf<RenderComponentVariableTemplate<T>>());
-		auto derived =
-			static_cast<const RenderComponentVariableTemplate<T>*>(this);
-		return (*derived)[idx];
-	}
-
 	/// This will trigger copy on write
 	template<typename T>
-	void setValues(const T* values, U32 size, SceneAllocator<U8> alloc)
+	void setValue(const T& value)
 	{
 		ANKI_ASSERT(Base::isTypeOf<RenderComponentVariableTemplate<T>>());
 		auto derived = static_cast<RenderComponentVariableTemplate<T>*>(this);
-		derived->setValues(values, size, alloc);
+		derived->setValue(value);
 	}
 
-	U32 getArraySize() const
+	template<typename T>
+	const T& getValue() const
 	{
-		return m_mvar->getArraySize();
+		ANKI_ASSERT(Base::isTypeOf<RenderComponentVariableTemplate<T>>());
+		auto derived =
+			static_cast<const RenderComponentVariableTemplate<T>*>(this);
+		return derived->getValue();
 	}
 
 	const MaterialVariable& getMaterialVariable() const
@@ -113,19 +64,8 @@ public:
 		return *m_mvar;
 	}
 
-	Bool isInstanced() const
-	{
-		return m_mvar->isInstanced();
-	}
-
-	/// A custom cleanup method
-	virtual void destroy(SceneAllocator<U8> alloc) = 0;
-
 protected:
 	const MaterialVariable* m_mvar = nullptr;
-
-private:
-	BuildinMaterialVariableId m_buildinId;
 };
 
 /// RenderComponent variable. This class should not be visible to other
@@ -134,7 +74,8 @@ template<typename T>
 class RenderComponentVariableTemplate: public RenderComponentVariable
 {
 public:
-	typedef T Type;
+	using Base = RenderComponentVariable;
+	using Type = T;
 
 	RenderComponentVariableTemplate(const MaterialVariable* mvar)
 		: RenderComponentVariable(mvar)
@@ -143,72 +84,28 @@ public:
 	}
 
 	~RenderComponentVariableTemplate()
+	{}
+
+	void setValue(const T& value)
 	{
-		ANKI_ASSERT(m_copy == nullptr && "Forgot to delete");
+		ANKI_ASSERT(isTypeOf<RenderComponentVariableTemplate<T>>());
+		ANKI_ASSERT(Base::getMaterialVariable().getBuiltin()
+			== BuiltinMaterialVariableId::NONE);
+		m_copy = value;
 	}
 
-	const T* begin() const
+	const T& getValue() const
 	{
-		ANKI_ASSERT((m_mvar->hasValues() || m_copy != nullptr)
-			&& "Variable does not have any values");
-		return (m_copy) ? m_copy : m_mvar->template begin<T>();
-	}
-
-	const T* end() const
-	{
-		ANKI_ASSERT((m_mvar->hasValues() || m_copy != nullptr)
-			&& "Variable does not have any values");
-		return (m_copy) ? (m_copy + getArraySize()) : m_mvar->template end<T>();
-	}
-
-	const T& operator[](U idx) const
-	{
-		ANKI_ASSERT((m_mvar->hasValues() || m_copy != nullptr)
-			&& "Variable does not have any values");
-		ANKI_ASSERT(idx < getArraySize());
-
-		// NOTE Working on GCC is wrong
-		if(m_copy)
-		{
-			return m_copy[idx];
-		}
-		else
-		{
-			return m_mvar->template operator[]<T>(idx);
-		}
-	}
-
-	void setValues(const T* values, U32 size, SceneAllocator<U8> alloc)
-	{
-		ANKI_ASSERT(size <= m_mvar->getArraySize());
-		if(m_copy == nullptr)
-		{
-			m_copy = alloc.newArray<T>(getArraySize());
-		}
-
-		for(U i = 0; i < size; i++)
-		{
-			m_copy[i] = values[i];
-		}
-	}
-
-	/// Call that manually
-	void destroy(SceneAllocator<U8> alloc)
-	{
-		if(m_copy)
-		{
-			alloc.deleteArray(m_copy, getArraySize());
-			m_copy = nullptr;
-		}
+		return m_copy;
 	}
 
 private:
-	T* m_copy = nullptr; ///< Copy of the data
+	T m_copy; ///< Copy of the data
 };
 
 /// Rendering data input and output. This is a structure because we don't want
 /// to change what buildRendering accepts all the time
-class RenderingBuildData
+class RenderingBuildInfo
 {
 public:
 	RenderingKey m_key;
@@ -228,8 +125,7 @@ public:
 		return c.getType() == Type::RENDER;
 	}
 
-	/// @param node Pass node to steal it's allocator
-	RenderComponent(SceneNode* node, const Material* mtl);
+	RenderComponent(SceneNode* node, const Material* mtl, U64 hash = 0);
 
 	~RenderComponent();
 
@@ -259,7 +155,7 @@ public:
 	/// Given an array of submeshes that are visible append jobs to the GL
 	/// job chain
 	virtual ANKI_USE_RESULT Error buildRendering(
-		RenderingBuildData& data) const = 0;
+		RenderingBuildInfo& data) const = 0;
 
 	/// Access the material
 	const Material& getMaterial() const
@@ -269,19 +165,11 @@ public:
 	}
 
 	/// Information for movables. It's actualy an array of transformations.
-	/// @param index The index of the transform to get
-	/// @param[out] trf The transform to set
-	virtual void getRenderWorldTransform(U index, Transform& trf) const
+	virtual void getRenderWorldTransform(Bool& hasWorldTransforms,
+		Transform& trf) const
 	{
-		ANKI_ASSERT(getHasWorldTransforms());
-		(void)index;
+		hasWorldTransforms = false;
 		(void)trf;
-	}
-
-	/// Return true if the renderable has world transforms
-	virtual Bool getHasWorldTransforms() const
-	{
-		return false;
 	}
 
 	Bool getCastsShadow() const
@@ -304,9 +192,18 @@ public:
 		return err;
 	}
 
+	Bool canMergeDrawcalls(const RenderComponent& b) const
+	{
+		return m_mtl->isInstanced() && m_hash != 0 && m_hash == b.m_hash;
+	}
+
 private:
 	Variables m_vars;
 	const Material* m_mtl;
+
+	/// If 2 components have the same hash the renderer may potentially try
+	/// to merge them.
+	U64 m_hash = 0;
 };
 /// @}
 

@@ -177,7 +177,7 @@ vec3 computeLightColor(vec3 diffCol)
 		vec3 frag2Light = light.posRadius.xyz - fragPos;
 		float att = computeAttenuationFactor(light.posRadius.w, frag2Light);
 
-#if LOD > 0
+#if LOD > 1
 		const float shadow = 1.0;
 #else
 		float shadow = 1.0;
@@ -211,7 +211,7 @@ vec3 computeLightColor(vec3 diffCol)
 			light.outerCosInnerCos.y,
 			light.lightDir.xyz);
 
-#if LOD > 0
+#if LOD > 1
 		const float shadow = 1.0;
 #else
 		float shadow = 1.0;

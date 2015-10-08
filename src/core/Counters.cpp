@@ -39,6 +39,7 @@ static const Array<CounterInfo, (U)Counter::COUNT> cinfo = {{
 	{"RENDERER_PPS_TIME", CF_PER_FRAME | CF_PER_RUN | CF_F64},
 	{"RENDERER_SHADOW_PASSES", CF_PER_FRAME | CF_PER_RUN | CF_U64},
 	{"RENDERER_LIGHTS_COUNT", CF_PER_FRAME | CF_PER_RUN | CF_U64},
+	{"RENDERER_MERGED_DRAWCALLS", CF_PER_FRAME | CF_PER_RUN | CF_U64},
 	{"SCENE_UPDATE_TIME", CF_PER_RUN | CF_F64},
 	{"SWAP_BUFFERS_TIME", CF_PER_RUN | CF_F64},
 	{"GL_CLIENT_WAIT_TIME", CF_PER_FRAME | CF_PER_RUN | CF_F64},
@@ -49,7 +50,7 @@ static const Array<CounterInfo, (U)Counter::COUNT> cinfo = {{
 	{"GL_CLIENT_BUFFERS_SIZE", CF_PER_FRAME | CF_PER_RUN | CF_U64}
 }};
 
-#define MAX_NAME "24"
+#define MAX_NAME "25"
 
 //==============================================================================
 Error CountersManager::create(

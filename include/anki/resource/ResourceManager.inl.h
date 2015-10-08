@@ -48,7 +48,8 @@ Error ResourceManager::loadResource(
 				&& "Forgot to deallocate");
 		}
 
-		ptr->setUuid(filename);
+		ptr->setFilename(filename);
+		ptr->setUuid(++m_uuid);
 
 		// Reset the memory pool if no-one is using it.
 		// NOTE: Check because resources load other resources

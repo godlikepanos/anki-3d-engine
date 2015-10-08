@@ -152,7 +152,9 @@ void main()
 
 	out_color = tonemap(out_color, u_luminance.averageLuminancePad3.x, 0.0);
 
+#if 1
 	out_color = fog(out_color, in_uv);
+#endif
 
 #if BLOOM_ENABLED
 	vec3 bloom = textureLod(u_ppsBloomLfRt, in_uv, 0.0).rgb;

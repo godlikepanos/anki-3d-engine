@@ -170,6 +170,13 @@ private:
 			return ErrorCode::OUT_OF_MEMORY; \
 		} \
 	} while(0)
+
+/// Macro to nuliffy a pointer on debug builds.
+#if ANKI_DEBUG == 1
+#	define ANKI_DBG_NULLIFY_PTR = nullptr
+#else
+#	define ANKI_DBG_NULLIFY_PTR
+#endif
 /// @}
 
 } // end namespace anki

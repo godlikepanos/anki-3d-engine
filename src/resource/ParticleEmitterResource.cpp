@@ -256,11 +256,14 @@ Error ParticleEmitterResource::load(const ResourceFilename& filename)
 	m_lodCount = m_material->getLodCount();
 	for(U i = 0; i < m_lodCount; ++i)
 	{
-		pinit.m_shaders[U(ShaderType::VERTEX)] = m_material->getShader(
-			RenderingKey(Pass::MS_FS, i, false), ShaderType::VERTEX);
+		RenderingKey key(Pass::MS_FS, i, false, 1);
+		const MaterialVariant& variant = m_material->getVariant(key);
 
-		pinit.m_shaders[U(ShaderType::FRAGMENT)] = m_material->getShader(
-			RenderingKey(Pass::MS_FS, i, false), ShaderType::FRAGMENT);
+		pinit.m_shaders[U(ShaderType::VERTEX)] =
+			variant.getShader(ShaderType::VERTEX);
+
+		pinit.m_shaders[U(ShaderType::FRAGMENT)] =
+			variant.getShader(ShaderType::FRAGMENT);
 
 		m_pplines[i] = getManager().getGrManager().newInstance<Pipeline>(pinit);
 	}

@@ -502,7 +502,7 @@ Error ImageLoader::load(ResourceFilePtr file, const CString& filename,
 	}
 
 	// load from this extension
-	U32 bpp;
+	U32 bpp = 0;
 	m_textureType = TextureType::_2D;
 	m_compression = DataCompression::RAW;
 

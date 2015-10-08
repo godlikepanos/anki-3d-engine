@@ -24,7 +24,7 @@ public:
 		, m_node(node)
 	{}
 
-	Error buildRendering(RenderingBuildData& data) const override
+	Error buildRendering(RenderingBuildInfo& data) const override
 	{
 		return m_node->buildRendering(data);
 	}
@@ -75,7 +75,7 @@ Error StaticGeometryPatchNode::create(
 }
 
 //==============================================================================
-Error StaticGeometryPatchNode::buildRendering(RenderingBuildData& data) const
+Error StaticGeometryPatchNode::buildRendering(RenderingBuildInfo& data) const
 {
 	Array<U32, ANKI_GL_MAX_SUB_DRAWCALLS> indicesCountArray;
 	Array<PtrSize, ANKI_GL_MAX_SUB_DRAWCALLS> indicesOffsetArray;

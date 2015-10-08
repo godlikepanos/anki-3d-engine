@@ -8,6 +8,7 @@
 #include "anki/util/StringList.h"
 #include "anki/Gr.h"
 #include "anki/resource/Common.h"
+#include "anki/resource/Material.h"
 
 namespace anki {
 
@@ -16,7 +17,7 @@ class XmlElement;
 
 /// Material loader variable. It's the information on whatever is inside
 /// \<input\>
-class MaterialProgramCreatorInputVariable: public NonCopyable
+class MaterialLoaderInputVariable: public NonCopyable
 {
 public:
 	TempResourceAllocator<U8> m_alloc;
@@ -25,8 +26,8 @@ public:
 	ShaderVariableDataType m_type = ShaderVariableDataType::NONE;
 	StringList m_value;
 	Bool8 m_constant = false;
-	U16 m_arraySize = 0;
 	Bool8 m_instanced = false;
+	BuiltinMaterialVariableId m_builtin = BuiltinMaterialVariableId::NONE;
 
 	String m_line;
 	ShaderTypeBit m_shaderDefinedMask = ShaderTypeBit::NONE; ///< Defined in
@@ -35,21 +36,21 @@ public:
 	Bool8 m_inBlock = true;
 
 	I16 m_binding = -1; ///< Texture unit
-	I32 m_offset = -1; ///< Offset inside the UBO
-	I32 m_arrayStride = -1;
-	/// Identifying the stride between columns of a column-major matrix or
-	/// rows of a row-major matrix
-	I32 m_matrixStride = -1;
+	U16 m_index = 666;
 
-	MaterialProgramCreatorInputVariable()
+	ShaderVariableBlockInfo m_blockInfo;
+
+	Bool8 m_inShadow = true;
+
+	MaterialLoaderInputVariable()
 	{}
 
-	MaterialProgramCreatorInputVariable(MaterialProgramCreatorInputVariable&& b)
+	MaterialLoaderInputVariable(MaterialLoaderInputVariable&& b)
 	{
 		move(b);
 	}
 
-	~MaterialProgramCreatorInputVariable()
+	~MaterialLoaderInputVariable()
 	{
 		m_name.destroy(m_alloc);
 		m_typeStr.destroy(m_alloc);
@@ -57,78 +58,70 @@ public:
 		m_line.destroy(m_alloc);
 	}
 
-	MaterialProgramCreatorInputVariable& operator=(
-		MaterialProgramCreatorInputVariable&& b)
+	MaterialLoaderInputVariable& operator=(
+		MaterialLoaderInputVariable&& b)
 	{
 		move(b);
 		return *this;
 	}
 
-	void move(MaterialProgramCreatorInputVariable& b)
-	{
-		m_alloc = std::move(b.m_alloc);
-		m_name = std::move(b.m_name);
-		m_type = b.m_type;
-		m_typeStr = std::move(b.m_typeStr);
-		m_value = std::move(b.m_value);
-		m_constant = b.m_constant;
-		m_arraySize = b.m_arraySize;
-		m_instanced = b.m_instanced;
-		m_line = std::move(b.m_line);
-		m_shaderDefinedMask = b.m_shaderDefinedMask;
-		m_shaderReferencedMask = b.m_shaderReferencedMask;
-		m_inBlock = b.m_inBlock;
-		m_binding = b.m_binding;
-		m_offset = b.m_offset;
-		m_arrayStride = b.m_arrayStride;
-		m_matrixStride = b.m_matrixStride;
-	}
+	void move(MaterialLoaderInputVariable& b);
 
-	Bool duplicate(const MaterialProgramCreatorInputVariable& b) const
+	Bool duplicate(const MaterialLoaderInputVariable& b) const
 	{
 		return b.m_name == m_name
 			&& b.m_type == m_type
 			&& b.m_value == m_value
 			&& b.m_constant == m_constant
-			&& b.m_arraySize == m_arraySize
-			&& b.m_instanced == m_instanced;
+			&& b.m_instanced == m_instanced
+			&& b.m_builtin == m_builtin
+			&& b.m_inShadow == m_inShadow;
 	}
 };
 
 /// Creator of shader programs. This class parses between
-/// @code <shaderProgams></shaderPrograms> @endcode located inside a
 /// @code <material></material> @endcode and creates the source of a custom
 /// program.
 ///
 /// @note Be carefull when you change the methods. Some change may create more
 ///       unique shaders and this is never good.
-class MaterialProgramCreator
+class MaterialLoader
 {
 public:
-	using Input = MaterialProgramCreatorInputVariable;
+	using Input = MaterialLoaderInputVariable;
 
-	explicit MaterialProgramCreator(TempResourceAllocator<U8> alloc);
+	explicit MaterialLoader(TempResourceAllocator<U8> alloc);
 
-	~MaterialProgramCreator();
+	~MaterialLoader();
 
-	/// Parse what is within the
-	/// @code <programs></programs> @endcode
-	ANKI_USE_RESULT Error parseProgramsTag(const XmlElement& el);
+	ANKI_USE_RESULT Error parseXmlDocument(const XmlDocument& doc);
 
-	/// Get the shader program source code
-	const String& getProgramSource(ShaderType shaderType_) const
+	/// Get the shader source code
+	const String& getShaderSource(ShaderType shaderType_) const
 	{
 		U shaderType = enumToType(shaderType_);
 		ANKI_ASSERT(!m_sourceBaked[shaderType].isEmpty());
 		return m_sourceBaked[shaderType];
 	}
 
-	const List<Input>& getInputVariables() const
+	/// After parsing the program mutate the sources for a specific use case.
+	void mutate(const RenderingKey& key);
+
+	/// Iterate all the variables.
+	template<typename TFunc>
+	ANKI_USE_RESULT Error iterateAllInputVariables(TFunc func) const
 	{
-		return m_inputs;
+		for(const Input& in : m_inputs)
+		{
+			if(!in.m_constant)
+			{
+				ANKI_CHECK(func(in));
+			}
+		}
+		return ErrorCode::NONE;
 	}
 
-	Bool hasTessellation() const
+	Bool getTessellationEnabled() const
 	{
 		return m_tessellation;
 	}
@@ -136,6 +129,26 @@ public:
 	U32 getUniformBlockSize() const
 	{
 		return m_blockSize;
+	}
+
+	Bool getInstancingEnabled() const
+	{
+		return m_instanced;
+	}
+
+	U getLodCount() const
+	{
+		return m_lodCount;
+	}
+
+	Bool getShadowEnabled() const
+	{
+		return m_shadow;
+	}
+
+	Bool isForwardShading() const
+	{
+		return m_forwardShading;
 	}
 
 private:
@@ -150,6 +163,14 @@ private:
 	U32 m_texBinding = 0;
 	ShaderTypeBit m_instanceIdMask = ShaderTypeBit::NONE;
 	Bool8 m_tessellation = false;
+	U8 m_lodCount = 0;
+	Bool8 m_shadow = false;
+	Bool8 m_forwardShading = false;
+	U32 m_nextIndex = 0;
+
+	/// Parse what is within the
+	/// @code <programs></programs> @endcode
+	ANKI_USE_RESULT Error parseProgramsTag(const XmlElement& el);
 
 	/// Parse what is within the
 	/// @code <program></program> @endcode

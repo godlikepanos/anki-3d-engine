@@ -23,27 +23,29 @@ namespace anki {
 class ModelPatchRenderComponent: public RenderComponent
 {
 public:
-	ModelPatchNode* m_node;
+	const ModelPatchNode& getNode() const
+	{
+		return static_cast<const ModelPatchNode&>(getSceneNode());
+	}
 
 	ModelPatchRenderComponent(ModelPatchNode* node)
-		: RenderComponent(node, &node->m_modelPatch->getMaterial())
-		, m_node(node)
+		: RenderComponent(node, &node->m_modelPatch->getMaterial(),
+			node->m_modelPatch->getMaterial().getUuid())
 	{}
 
 	ANKI_USE_RESULT Error buildRendering(
-		RenderingBuildData& data) const override
+		RenderingBuildInfo& data) const override
 	{
-		return m_node->buildRendering(data);
+		return getNode().buildRendering(data);
 	}
 
-	void getRenderWorldTransform(U index, Transform& trf) const override
+	void getRenderWorldTransform(Bool& hasTransform,
+		Transform& trf) const override
 	{
-		m_node->getRenderWorldTransform(index, trf);
-	}
-
-	Bool getHasWorldTransforms() const override
-	{
-		return true;
+		hasTransform = true;
+		const SceneNode* node = getNode().getParent();
+		ANKI_ASSERT(node);
+		trf = node->getComponent<MoveComponent>().getWorldTransform();
 	}
 };
 
@@ -58,14 +60,7 @@ ModelPatchNode::ModelPatchNode(SceneGraph* scene)
 
 //==============================================================================
 ModelPatchNode::~ModelPatchNode()
-{
-	for(SpatialComponent* sp : m_spatials)
-	{
-		getSceneAllocator().deleteInstance(sp);
-	}
-
-	m_spatials.destroy(getSceneAllocator());
-}
+{}
 
 //==============================================================================
 Error ModelPatchNode::create(const CString& name,
@@ -94,13 +89,11 @@ Error ModelPatchNode::create(const CString& name,
 }
 
 //==============================================================================
-Error ModelPatchNode::buildRendering(RenderingBuildData& data) const
+Error ModelPatchNode::buildRendering(RenderingBuildInfo& data) const
 {
 	// That will not work on multi-draw and instanced at the same time. Make
 	// sure that there is no multi-draw anywhere
 	ANKI_ASSERT(m_modelPatch->getSubMeshesCount() == 0);
-
-	auto instancesCount = data.m_subMeshIndicesCount;
 
 	Array<U32, ANKI_GL_MAX_SUB_DRAWCALLS> indicesCountArray;
 	Array<PtrSize, ANKI_GL_MAX_SUB_DRAWCALLS> indicesOffsetArray;
@@ -129,92 +122,10 @@ Error ModelPatchNode::buildRendering(RenderingBuildData& data) const
 	U32 offset = indicesOffsetArray[0] / sizeof(U16);
 	data.m_cmdb->drawElements(
 		indicesCountArray[0],
-		instancesCount,
+		data.m_key.m_instanceCount,
 		offset);
 
 	return ErrorCode::NONE;
-}
-
-//==============================================================================
-void ModelPatchNode::getRenderWorldTransform(U index, Transform& trf) const
-{
-	const SceneNode* parent = getParent();
-	ANKI_ASSERT(parent);
-	const MoveComponent& move = parent->getComponent<MoveComponent>();
-
-	if(index == 0)
-	{
-		// Asking for the first instance which is this
-		trf = move.getWorldTransform();
-	}
-	else
-	{
-		// Asking for a next instance
-		const SceneNode* parent = getParent();
-		ANKI_ASSERT(parent);
-		const ModelNode* mnode = staticCastPtr<const ModelNode*>(parent);
-
-		--index;
-		trf = mnode->m_transforms[index];
-	}
-}
-
-//==============================================================================
-void ModelPatchNode::updateInstanceSpatials(
-	const MoveComponent* instanceMoves[],
-	U32 instanceMovesCount)
-{
-	Bool fullUpdate = false;
-
-	const U oldSize = m_spatials.getSize();
-	const U newSize = instanceMovesCount;
-
-	if(oldSize < newSize)
-	{
-		// We need to add spatials
-
-		fullUpdate = true;
-
-		m_spatials.resize(getSceneAllocator(), newSize);
-
-		U diff = newSize - oldSize;
-		U index = oldSize;
-		while(diff-- != 0)
-		{
-			ObbSpatialComponent* newSpatial = getSceneAllocator().
-				newInstance<ObbSpatialComponent>(this);
-
-			addComponent(newSpatial);
-			m_spatials[index++] = newSpatial;
-		}
-	}
-	else if(oldSize > newSize)
-	{
-		// Need to remove spatials
-
-		fullUpdate = true;
-
-		// TODO
-		ANKI_ASSERT(0 && "TODO");
-	}
-
-	U count = newSize;
-	const Obb& localBoundingShape = m_modelPatch->getBoundingShape();
-	while(count-- != 0)
-	{
-		ObbSpatialComponent& sp = *m_spatials[count];
-		ANKI_ASSERT(count < instanceMovesCount);
-		const MoveComponent& inst = *instanceMoves[count];
-
-		if(sp.getTimestamp() < inst.getTimestamp() || fullUpdate)
-		{
-			sp.m_obb = localBoundingShape.getTransformed(
-				inst.getWorldTransform());
-
-			sp.markForUpdate();
-			sp.setSpatialOrigin(inst.getWorldTransform().getOrigin());
-		}
-	}
 }
 
 //==============================================================================
@@ -252,14 +163,12 @@ public:
 //==============================================================================
 ModelNode::ModelNode(SceneGraph* scene)
 	: SceneNode(scene)
-	, m_transformsTimestamp(0)
 {}
 
 //==============================================================================
 ModelNode::~ModelNode()
 {
 	m_modelPatches.destroy(getSceneAllocator());
-	m_transforms.destroy(getSceneAllocator());
 }
 
 //==============================================================================
@@ -295,66 +204,6 @@ Error ModelNode::create(const CString& name, const CString& modelFname)
 	// Feedback component
 	comp = getSceneAllocator().newInstance<ModelMoveFeedbackComponent>(this);
 	addComponent(comp, true);
-
-	return ErrorCode::NONE;
-}
-
-//==============================================================================
-Error ModelNode::frameUpdate(F32, F32)
-{
-	// Gather the move components of the instances
-	DArrayAuto<const MoveComponent*> instanceMoves(getFrameAllocator());
-	U instanceMovesCount = 0;
-	Timestamp instancesTimestamp = 0;
-
-	instanceMoves.create(64);
-
-	Error err = visitChildren([&](SceneNode& sn) -> Error
-	{
-		if(sn.tryGetComponent<InstanceComponent>())
-		{
-			MoveComponent& move = sn.getComponent<MoveComponent>();
-
-			instanceMoves[instanceMovesCount++] = &move;
-
-			instancesTimestamp =
-				max(instancesTimestamp, move.getTimestamp());
-		}
-
-		return ErrorCode::NONE;
-	});
-	(void)err;
-
-	// If having instances
-	if(instanceMovesCount > 0)
-	{
-		Bool fullUpdate = false;
-
-		if(instanceMovesCount != m_transforms.getSize())
-		{
-			fullUpdate = true;
-			m_transforms.resize(getSceneAllocator(), instanceMovesCount);
-		}
-
-		if(fullUpdate || m_transformsTimestamp < instancesTimestamp)
-		{
-			m_transformsTimestamp = instancesTimestamp;
-
-			for(U i = 0; i < instanceMovesCount; ++i)
-			{
-				m_transforms[i] = instanceMoves[i]->getWorldTransform();
-			}
-		}
-
-		// Update children
-		auto it = m_modelPatches.getBegin();
-		auto end = m_modelPatches.getEnd();
-		for(; it != end; ++it)
-		{
-			(*it)->updateInstanceSpatials(
-				&instanceMoves[0], instanceMovesCount);
-		}
-	}
 
 	return ErrorCode::NONE;
 }

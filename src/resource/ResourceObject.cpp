@@ -18,7 +18,7 @@ ResourceObject::ResourceObject(ResourceManager* manager)
 //==============================================================================
 ResourceObject::~ResourceObject()
 {
-	m_uuid.destroy(getAllocator());
+	m_fname.destroy(getAllocator());
 }
 
 //==============================================================================

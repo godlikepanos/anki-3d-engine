@@ -28,7 +28,8 @@ class Renderer;
 template<typename Type>
 class TypeResourceManager
 {
-public:
+protected:
+	/// @privatesection
 	using Container = List<Type*>;
 
 	TypeResourceManager()
@@ -40,8 +41,6 @@ public:
 		m_ptrs.destroy(m_alloc);
 	}
 
-	/// @privatesection
-	/// @{
 	Type* findLoadedResource(const CString& filename)
 	{
 		auto it = find(filename);
@@ -51,19 +50,17 @@ public:
 	void registerResource(Type* ptr)
 	{
 		ANKI_ASSERT(ptr->getRefcount().load() == 0);
-		ANKI_ASSERT(find(ptr->getUuid().toCString()) == m_ptrs.getEnd());
+		ANKI_ASSERT(find(ptr->getFilename()) == m_ptrs.getEnd());
 		m_ptrs.pushBack(m_alloc, ptr);
 	}
 
 	void unregisterResource(Type* ptr)
 	{
-		auto it = find(ptr->getUuid().toCString());
+		auto it = find(ptr->getFilename());
 		ANKI_ASSERT(it != m_ptrs.end());
 		m_ptrs.erase(m_alloc, it);
 	}
-	/// @}
 
-protected:
 	void init(ResourceAllocator<U8> alloc)
 	{
 		m_alloc = alloc;
@@ -79,7 +76,7 @@ private:
 
 		for(it = m_ptrs.getBegin(); it != m_ptrs.getEnd(); ++it)
 		{
-			if((*it)->getUuid() == filename)
+			if((*it)->getFilename() == filename)
 			{
 				break;
 			}
@@ -91,19 +88,18 @@ private:
 
 /// Resource manager. It holds a few global variables
 class ResourceManager:
-	TypeResourceManager<Animation>,
-	TypeResourceManager<TextureResource>,
-	TypeResourceManager<ShaderResource>,
-	TypeResourceManager<Material>,
-	TypeResourceManager<Mesh>,
-	TypeResourceManager<BucketMesh>,
-	TypeResourceManager<Skeleton>,
-	TypeResourceManager<ParticleEmitterResource>,
-	TypeResourceManager<Model>,
-	TypeResourceManager<Script>,
-	TypeResourceManager<DummyRsrc>,
-	TypeResourceManager<CollisionResource>,
-	TypeResourceManager<GenericResource>
+	public TypeResourceManager<Animation>,
+	public TypeResourceManager<TextureResource>,
+	public TypeResourceManager<ShaderResource>,
+	public TypeResourceManager<Material>,
+	public TypeResourceManager<Mesh>,
+	public TypeResourceManager<Skeleton>,
+	public TypeResourceManager<ParticleEmitterResource>,
+	public TypeResourceManager<Model>,
+	public TypeResourceManager<Script>,
+	public TypeResourceManager<DummyRsrc>,
+	public TypeResourceManager<CollisionResource>,
+	public TypeResourceManager<GenericResource>
 {
 	template<typename T>
 	friend class ResourcePtrDeleter;
@@ -239,6 +235,7 @@ private:
 	U32 m_textureAnisotropy;
 	String m_shadersPrependedSource;
 	AsyncLoader* m_asyncLoader = nullptr; ///< Async loading thread
+	U64 m_uuid = 0;
 };
 /// @}
 

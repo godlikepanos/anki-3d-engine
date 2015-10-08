@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2015, Panagiotis Christopoulos Charitos.
+// Copyright (C) 2009-2015, Panagiotis Christopoulos Cinclude/anki/resource/Model.h
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
@@ -127,31 +127,39 @@ PipelinePtr ModelPatch::getPipeline(const RenderingKey& key) const
 		ANKI_ASSERT(0);
 	}
 
+	if(key.m_instanceCount > 1 && !m_mtl->isInstanced())
+	{
+		ANKI_ASSERT(0);
+	}
+
 	LockGuard<SpinLock> lock(m_lock);
 
-	PipelinePtr& ppline =
-		m_pplines[U(key.m_pass)][key.m_lod][key.m_tessellation];
+	PipelinePtr& ppline = m_pplines[U(key.m_pass)][key.m_lod]
+		[key.m_tessellation]
+		[Material::getInstanceGroupIdx(key.m_instanceCount)];
 
 	// Lazily create it
 	if(ANKI_UNLIKELY(!ppline.isCreated()))
 	{
+		const MaterialVariant& variant = m_mtl->getVariant(key);
+
 		PipelineInitializer pplineInit;
 		computePipelineInitializer(key, pplineInit);
 
 		pplineInit.m_shaders[U(ShaderType::VERTEX)] =
-			m_mtl->getShader(key, ShaderType::VERTEX);
+			variant.getShader(ShaderType::VERTEX);
 
 		if(key.m_tessellation)
 		{
 			pplineInit.m_shaders[U(ShaderType::TESSELLATION_CONTROL)] =
-				m_mtl->getShader(key, ShaderType::TESSELLATION_CONTROL);
+				variant.getShader(ShaderType::TESSELLATION_CONTROL);
 
 			pplineInit.m_shaders[U(ShaderType::TESSELLATION_EVALUATION)] =
-				m_mtl->getShader(key, ShaderType::TESSELLATION_EVALUATION);
+				variant.getShader(ShaderType::TESSELLATION_EVALUATION);
 		}
 
 		pplineInit.m_shaders[U(ShaderType::FRAGMENT)] =
-			m_mtl->getShader(key, ShaderType::FRAGMENT);
+			variant.getShader(ShaderType::FRAGMENT);
 
 		// Create
 		ppline = m_model->getManager().getGrManager()

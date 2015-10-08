@@ -21,13 +21,14 @@ class XmlDocument;
 /// The base of all resource objects.
 class ResourceObject
 {
+	friend class ResourceManager;
+
 public:
 	ResourceObject(ResourceManager* manager);
 
 	virtual ~ResourceObject();
 
 	/// @privatesection
-	/// @{
 	ResourceManager& getManager()
 	{
 		return *m_manager;
@@ -46,16 +47,30 @@ public:
 		return m_refcount;
 	}
 
-	const String& getUuid() const
+	CString getFilename() const
 	{
-		ANKI_ASSERT(!m_uuid.isEmpty());
-		return m_uuid;
+		ANKI_ASSERT(!m_fname.isEmpty());
+		return m_fname.toCString();
 	}
 
-	void setUuid(const CString& uuid)
+anki_internal:
+	void setFilename(const CString& fname)
 	{
-		ANKI_ASSERT(m_uuid.isEmpty());
-		m_uuid.create(getAllocator(), uuid);
+		ANKI_ASSERT(m_fname.isEmpty());
+		m_fname.create(getAllocator(), fname);
+	}
+
+	void setUuid(U64 uuid)
+	{
+		ANKI_ASSERT(uuid > 0);
+		m_uuid = uuid;
+	}
+
+	/// To check if 2 resource pointers are actually the same.
+	U64 getUuid() const
+	{
+		ANKI_ASSERT(m_uuid > 0);
+		return m_uuid;
 	}
 
 	ANKI_USE_RESULT Error openFile(
@@ -69,12 +84,12 @@ public:
 	ANKI_USE_RESULT Error openFileParseXml(
 		const ResourceFilename& filename,
 		XmlDocument& xml);
-	/// @}
 
 private:
 	ResourceManager* m_manager;
 	Atomic<I32> m_refcount;
-	String m_uuid; ///< Unique resource name.
+	String m_fname; ///< Unique resource name.
+	U64 m_uuid = 0;
 };
 /// @}
 

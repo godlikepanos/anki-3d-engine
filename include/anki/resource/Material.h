@@ -7,6 +7,7 @@
 
 #include "anki/resource/ResourceObject.h"
 #include "anki/resource/ShaderResource.h"
+#include "anki/resource/TextureResource.h"
 #include "anki/resource/RenderingKey.h"
 #include "anki/Math.h"
 #include "anki/util/Visitor.h"
@@ -17,34 +18,47 @@ namespace anki {
 // Forward
 class XmlElement;
 class Material;
-class MaterialProgramCreator;
-class MaterialProgramCreatorInputVariable;
-
+class MaterialLoader;
+class MaterialLoaderInputVariable;
 template<typename T>
 class MaterialVariableTemplate;
-
 class MaterialVariable;
+class MaterialVariant;
 
 /// @addtogroup resource
 /// @{
 
-/// Material variable base. Its a visitable
-typedef VisitableCommonBase<
-	MaterialVariable,
+/// The ID of a buildin material variable
+enum class BuiltinMaterialVariableId: U8
+{
+	NONE = 0,
+	MVP_MATRIX,
+	MV_MATRIX,
+	VP_MATRIX,
+	NORMAL_MATRIX,
+	BILLBOARD_MVP_MATRIX,
+	MAX_TESS_LEVEL,
+	MS_DEPTH_MAP,
+	COUNT
+};
+
+/// Material variable base. It's a visitable.
+using MateriaVariableVisitable = VisitableCommonBase<
+	MaterialVariable, // The base
 	MaterialVariableTemplate<F32>,
 	MaterialVariableTemplate<Vec2>,
 	MaterialVariableTemplate<Vec3>,
 	MaterialVariableTemplate<Vec4>,
 	MaterialVariableTemplate<Mat3>,
 	MaterialVariableTemplate<Mat4>,
-	MaterialVariableTemplate<TextureResourcePtr>>
-	MateriaVariableVisitable;
+	MaterialVariableTemplate<TextureResourcePtr>>;
 
 /// Holds the shader variables. Its a container for shader program variables
 /// that share the same name
 class MaterialVariable: public MateriaVariableVisitable, public NonCopyable
 {
 	friend class Material;
+	friend class MaterialVariant;
 
 public:
 	using Base = MateriaVariableVisitable;
@@ -52,52 +66,19 @@ public:
 	MaterialVariable()
 	{}
 
-	virtual ~MaterialVariable();
+	~MaterialVariable()
+	{}
 
-	virtual void destroy(ResourceAllocator<U8> alloc) = 0;
-
-	template<typename T>
-	const T* begin() const
-	{
-		ANKI_ASSERT(Base::isTypeOf<MaterialVariableTemplate<T>>());
-		auto derived = static_cast<const MaterialVariableTemplate<T>*>(this);
-		return derived->begin();
-	}
-
-	template<typename T>
-	const T* end() const
-	{
-		ANKI_ASSERT(Base::isTypeOf<MaterialVariableTemplate<T>>());
-		auto derived = static_cast<const MaterialVariableTemplate<T>*>(this);
-		return derived->end();
-	}
-
-	template<typename T>
-	const T& operator[](U idx) const
-	{
-		ANKI_ASSERT(Base::isTypeOf<MaterialVariableTemplate<T>>());
-		auto derived = static_cast<const MaterialVariableTemplate<T>*>(this);
-		return (*derived)[idx];
-	}
-
-	/// Get the name of all the shader program variables
+	/// Get the name.
 	CString getName() const
 	{
 		return m_name.toCString();
 	}
 
-	/// If false then it should be buildin
-	virtual Bool hasValues() const = 0;
-
-	U32 getArraySize() const
+	/// Get the builtin info.
+	BuiltinMaterialVariableId getBuiltin() const
 	{
-		ANKI_ASSERT(m_varBlkInfo.m_arraySize > 0);
-		return m_varBlkInfo.m_arraySize;
-	}
-
-	Bool isInstanced() const
-	{
-		return m_instanced;
+		return m_builtin;
 	}
 
 	U32 getTextureUnit() const
@@ -106,88 +87,121 @@ public:
 		return static_cast<U32>(m_textureUnit);
 	}
 
-	template<typename T>
-	void writeShaderBlockMemory(
-		const T* elements,
-		U32 elementsCount,
-		void* buffBegin,
-		const void* buffEnd) const
-	{
-		ANKI_ASSERT(Base::isTypeOf<MaterialVariableTemplate<T>>());
-		ANKI_ASSERT(m_varType == getShaderVariableTypeFromTypename<T>());
-		anki::writeShaderBlockMemory(m_varType, m_varBlkInfo,
-			elements, elementsCount, buffBegin, buffEnd);
-	}
-
 	ShaderVariableDataType getShaderVariableType() const
 	{
 		return m_varType;
 	}
 
+	Bool isInstanced() const
+	{
+		return m_instanced;
+	}
+
+	template<typename T>
+	void writeShaderBlockMemory(
+		const MaterialVariant& variant,
+		const T* elements,
+		U32 elementsCount,
+		void* buffBegin,
+		const void* buffEnd) const;
+
 protected:
+	U8 m_idx = MAX_U8; ///< Index in the Material::m_vars array.
 	ShaderVariableDataType m_varType = ShaderVariableDataType::NONE;
-	ShaderVariableBlockInfo m_varBlkInfo;
 	I16 m_textureUnit = -1;
 	String m_name;
-
+	BuiltinMaterialVariableId m_builtin = BuiltinMaterialVariableId::NONE;
 	Bool8 m_instanced = false;
+
+	/// Deallocate stuff.
+	void destroy(ResourceAllocator<U8> alloc)
+	{
+		m_name.destroy(alloc);
+	}
 };
 
 /// Material variable with data. A complete type
-template<typename TData>
+template<typename T>
 class MaterialVariableTemplate: public MaterialVariable
 {
+	friend class Material;
+	friend class MaterialVariant;
+
 public:
-	using Type = TData;
+	using Base = MaterialVariable;
+	using Type = T;
 
 	MaterialVariableTemplate()
 	{
-		setupVisitable(this);
+		Base::setupVisitable(this);
 	}
 
 	~MaterialVariableTemplate()
 	{}
 
-	void create(ResourceAllocator<U8> alloc,
-		const CString& name, const TData* x, U32 size);
+	const T& getValue() const
+	{
+		checkGetValue();
+		return m_value;
+	}
+
+private:
+	T m_value;
+
+	void checkGetValue() const
+	{
+		ANKI_ASSERT(isTypeOf<MaterialVariableTemplate<T>>());
+		ANKI_ASSERT(
+			MaterialVariable::m_builtin == BuiltinMaterialVariableId::NONE);
+	}
+
+	ANKI_USE_RESULT Error init(U idx,
+		const MaterialLoaderInputVariable& in, Material& mtl);
+};
+
+/// Material variant.
+class MaterialVariant: public NonCopyable
+{
+	friend class Material;
+	friend class MaterialVariable;
+
+public:
+	MaterialVariant();
+
+	~MaterialVariant();
+
+	ShaderPtr getShader(ShaderType type) const
+	{
+		return m_shaders[U(type)]->getGrShader();
+	}
+
+	U getDefaultBlockSize() const
+	{
+		ANKI_ASSERT(m_shaderBlockSize);
+		return m_shaderBlockSize;
+	}
+
+	/// Return true of the the variable is active.
+	Bool variableActive(const MaterialVariable& var) const
+	{
+		return m_varActive[var.m_idx];
+	}
+
+private:
+	/// All shaders except compute and geometry.
+	Array<ShaderResourcePtr, 5> m_shaders;
+	U32 m_shaderBlockSize = 0;
+	DArray<ShaderVariableBlockInfo> m_blockInfo;
+	DArray<Bool8> m_varActive;
+
+	ANKI_USE_RESULT Error init(const RenderingKey& key, Material& mtl,
+		MaterialLoader& loader);
 
 	void destroy(ResourceAllocator<U8> alloc)
 	{
-		m_name.destroy(alloc);
-		m_data.destroy(alloc);
+		m_blockInfo.destroy(alloc);
+		m_varActive.destroy(alloc);
 	}
-
-	const TData* begin() const
-	{
-		ANKI_ASSERT(hasValues());
-		return m_data.begin();
-	}
-	const TData* end() const
-	{
-		ANKI_ASSERT(hasValues());
-		return m_data.end();
-	}
-
-	const TData& operator[](U idx) const
-	{
-		ANKI_ASSERT(hasValues());
-		return m_data[idx];
-	}
-
-	/// Implements hasValues
-	Bool hasValues() const
-	{
-		return m_data.getSize() > 0;
-	}
-
-	static ANKI_USE_RESULT Error _newInstance(
-		const MaterialProgramCreatorInputVariable& in,
-		ResourceAllocator<U8> alloc,
-		TempResourceAllocator<U8> talloc,
-		MaterialVariable*& out);
-
-private:
-	DArray<TData> m_data;
 };
 
 /// Material resource.
@@ -217,8 +231,7 @@ private:
 ///							[a_series_of_numbers | path/to/image.ankitex]
 ///						</value>
 ///						[<const>0 | 1</const>] (3)
-///						[<instanced>0 | 1</instanced>]
-///						[<arraySize>N</<arraySize>]
+/// 					[<inShadow>0 | 1</inShadow>] (4)
 ///					</input>
 ///				</inputs>]
 ///
@@ -250,25 +263,16 @@ private:
 /// (2): The \<value\> can be left empty for build-in variables
 /// (3): The \<const\> will mark a variable as constant and it cannot be changed
 ///      at all. Default is 0
+/// (4): Optimization. Set to 1 if the var will be used in shadow passes as well
 class Material: public ResourceObject
 {
 	friend class MaterialVariable;
+	friend class MaterialVariant;
 
 public:
 	Material(ResourceManager* manager);
 
 	~Material();
-
-	// Variable accessors
-	const DArray<MaterialVariable*>& getVariables() const
-	{
-		return m_vars;
-	}
-
-	U32 getDefaultBlockSize() const
-	{
-		return m_shaderBlockSize;
-	}
 
 	/// Load a material file
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename);
@@ -276,6 +280,7 @@ public:
 	/// For sorting
 	Bool operator<(const Material& b) const
 	{
+		ANKI_ASSERT(m_hash != 0 && b.m_hash != 0);
 		return m_hash < b.m_hash;
 	}
 
@@ -299,37 +304,68 @@ public:
 		return m_forwardShading;
 	}
 
-	ShaderPtr getShader(const RenderingKey& key, ShaderType type) const;
+	Bool isInstanced() const
+	{
+		return m_instanced;
+	}
+
+	const MaterialVariant& getVariant(const RenderingKey& key) const;
+
+	const DArray<MaterialVariable*>& getVariables() const
+	{
+		return m_vars;
+	}
 
 	void fillResourceGroupInitializer(ResourceGroupInitializer& rcinit);
 
+	static U getInstanceGroupIdx(U instanceCount);
+
 private:
-	DArray<MaterialVariable*> m_vars;
-
-	/// [pass][lod][tess][shader]
-	Array4d<ShaderResourcePtr, U(Pass::COUNT), MAX_LODS, 2, 5> m_shaders;
-
-	U32 m_shaderBlockSize;
-
 	/// Used for sorting
-	U64 m_hash;
+	U64 m_hash = 0;
 
 	Bool8 m_shadow = true;
 	Bool8 m_tessellation = false;
 	Bool8 m_forwardShading = false;
 	U8 m_lodCount = 1;
+	Bool8 m_instanced = false;
 
-	/// Parse what is within the @code <material></material> @endcode
-	ANKI_USE_RESULT Error parseMaterialTag(const XmlElement& el);
+	DArray<MaterialVariant> m_variants;
+
+	/// This is a matrix of variants. It holds indices to m_variants. If the
+	/// idx is MAX_U16 then the variant is not present
+	Array4d<U16, U(Pass::COUNT), MAX_LODS, 2, MAX_INSTANCE_GROUPS>
+		m_variantMatrix;
+
+	DArray<MaterialVariable*> m_vars;
+
+	/// Populate the m_varNames.
+	ANKI_USE_RESULT Error createVars(const MaterialLoader& loader);
+
+	/// Create the variants.
+	ANKI_USE_RESULT Error createVariants(MaterialLoader& loader);
 
 	/// Create a unique shader source in chache. If already exists do nothing
 	ANKI_USE_RESULT Error createProgramSourceToCache(
-		const StringAuto& source, StringAuto& out);
-
-	/// Read all shader programs and pupulate the @a vars and @a nameToVar
-	/// containers
-	ANKI_USE_RESULT Error populateVariables(const MaterialProgramCreator& mspc);
+		const String& source, StringAuto& out);
 };
+
+//==============================================================================
+template<typename T>
+inline void MaterialVariable::writeShaderBlockMemory(
+	const MaterialVariant& variant,
+	const T* elements,
+	U32 elementsCount,
+	void* buffBegin,
+	const void* buffEnd) const
+{
+	ANKI_ASSERT(Base::isTypeOf<MaterialVariableTemplate<T>>());
+	ANKI_ASSERT(m_varType == getShaderVariableTypeFromTypename<T>());
+
+	const auto& blockInfo = variant.m_blockInfo[m_idx];
+	anki::writeShaderBlockMemory(m_varType, blockInfo, elements, elementsCount,
+		buffBegin, buffEnd);
+}
 /// @}
 
 } // end namespace anki

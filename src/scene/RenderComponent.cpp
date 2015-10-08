@@ -20,33 +20,23 @@ struct CreateNewRenderComponentVariableVisitor
 {
 	const MaterialVariable* m_mvar = nullptr;
 	mutable RenderComponent::Variables* m_vars = nullptr;
-	mutable U32* m_count = nullptr;
+	mutable U32 m_count = 0;
 	mutable SceneAllocator<U8> m_alloc;
 
 	template<typename TMaterialVariableTemplate>
-	Error visit(const TMaterialVariableTemplate&) const
+	Error visit(const TMaterialVariableTemplate& mvart) const
 	{
 		using Type = typename TMaterialVariableTemplate::Type;
 
 		RenderComponentVariableTemplate<Type>* rvar =
 			m_alloc.newInstance<RenderComponentVariableTemplate<Type>>(m_mvar);
 
-		(*m_vars)[(*m_count)++] = rvar;
+		rvar->setValue(mvart.getValue());
+
+		(*m_vars)[m_count++] = rvar;
 		return ErrorCode::NONE;
 	}
 };
-
-/// The names of the buildins
-static Array<const char*, (U)BuildinMaterialVariableId::COUNT - 1>
-	buildinNames = {{
-	"uMvp",
-	"uMv",
-	"uVp",
-	"uN",
-	"uBillboardMvp",
-	"uMaxTessLevel",
-	"uBlurring",
-	"uMsDepthMap"}};
 
 //==============================================================================
 // RenderComponentVariable                                                     =
@@ -58,27 +48,6 @@ RenderComponentVariable::RenderComponentVariable(
 	: m_mvar(mvar)
 {
 	ANKI_ASSERT(m_mvar);
-
-	// Set buildin id
-	CString name = getName();
-
-	m_buildinId = BuildinMaterialVariableId::NO_BUILDIN;
-	for(U i = 0; i < buildinNames.getSize(); i++)
-	{
-		if(name == buildinNames[i])
-		{
-			m_buildinId = (BuildinMaterialVariableId)(i + 1);
-			break;
-		}
-	}
-
-	// Sanity checks
-	if(!m_mvar->hasValues()
-		&& m_buildinId == BuildinMaterialVariableId::NO_BUILDIN)
-	{
-		ANKI_LOGW("Material variable no buildin and not initialized: %s",
-			&name[0]);
-	}
 }
 
 //==============================================================================
@@ -90,9 +59,10 @@ RenderComponentVariable::~RenderComponentVariable()
 //==============================================================================
 
 //==============================================================================
-RenderComponent::RenderComponent(SceneNode* node, const Material* mtl)
+RenderComponent::RenderComponent(SceneNode* node, const Material* mtl, U64 hash)
 	: SceneComponent(Type::RENDER, node)
 	, m_mtl(mtl)
+	, m_hash(hash)
 {}
 
 //==============================================================================
@@ -101,7 +71,6 @@ RenderComponent::~RenderComponent()
 	auto alloc = m_node->getSceneAllocator();
 	for(RenderComponentVariable* var : m_vars)
 	{
-		var->destroy(alloc);
 		alloc.deleteInstance(var);
 	}
 
@@ -115,19 +84,14 @@ Error RenderComponent::create()
 	auto alloc = m_node->getSceneAllocator();
 
 	// Create the material variables using a visitor
-	CreateNewRenderComponentVariableVisitor vis;
-	U32 count = 0;
-	vis.m_vars = &m_vars;
-	vis.m_count = &count;
-	vis.m_alloc = alloc;
-
 	m_vars.create(alloc, mtl.getVariables().getSize());
 
-	auto it = mtl.getVariables().getBegin();
-	auto end = mtl.getVariables().getEnd();
-	for(; it != end; it++)
+	CreateNewRenderComponentVariableVisitor vis;
+	vis.m_vars = &m_vars;
+	vis.m_alloc = alloc;
+
+	for(const MaterialVariable* mv : mtl.getVariables())
 	{
-		const MaterialVariable* mv = (*it);
 		vis.m_mvar = mv;
 		ANKI_CHECK(mv->acceptVisitor(vis));
 	}

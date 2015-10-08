@@ -36,17 +36,10 @@ public:
 		const CString& name, const ModelPatch* modelPatch);
 
 private:
-	Obb m_obb; ///< In world space
-	const ModelPatch* m_modelPatch; ///< The resource
-	DArray<ObbSpatialComponent*> m_spatials;
+	Obb m_obb; ///< In world space. ModelNode will update it.
+	const ModelPatch* m_modelPatch = nullptr; ///< The resource
 
-	void updateInstanceSpatials(
-		const MoveComponent* instanceMoves[],
-		U32 instanceMovesCount);
-
-	ANKI_USE_RESULT Error buildRendering(RenderingBuildData& data) const;
-
-	void getRenderWorldTransform(U index, Transform& trf) const;
+	ANKI_USE_RESULT Error buildRendering(RenderingBuildInfo& data) const;
 };
 
 /// The model scene node
@@ -68,14 +61,9 @@ public:
 		return *m_model;
 	}
 
-	/// Override SceneNode::frameUpdate
-	ANKI_USE_RESULT Error frameUpdate(F32, F32) override;
-
 private:
 	ModelResourcePtr m_model; ///< The resource
 	DArray<ModelPatchNode*> m_modelPatches;
-	DArray<Transform> m_transforms; ///< Cache the transforms of instances
-	Timestamp m_transformsTimestamp;
 
 	void onMoveComponentUpdate(MoveComponent& move);
 };
