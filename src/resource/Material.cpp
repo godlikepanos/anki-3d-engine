@@ -63,7 +63,7 @@ Error MaterialVariableTemplate<T>::init(U idx,
 	m_varType = in.m_type;
 	m_name.create(mtl.getAllocator(), in.m_name);
 	m_builtin = in.m_builtin;
-	m_instanced = in.m_instanced;
+	m_instanced = in.m_flags.m_instanced;
 
 	// Set value
 	if(in.m_value.getSize() > 0)
@@ -173,12 +173,12 @@ Error MaterialVariant::init(const RenderingKey& key2, Material& mtl,
 		const MaterialLoader::Input& in) -> Error
 	{
 		m_varActive[count] = true;
-		if(!in.m_inShadow && key.m_pass == Pass::SM)
+		if(!in.m_flags.m_inShadow && key.m_pass == Pass::SM)
 		{
 			m_varActive[count] = false;
 		}
 
-		if(in.m_inBlock && m_varActive[count])
+		if(in.m_flags.m_inBlock && m_varActive[count])
 		{
 			m_blockInfo[count] = in.m_blockInfo;
 		}

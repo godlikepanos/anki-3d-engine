@@ -20,27 +20,39 @@ class XmlElement;
 class MaterialLoaderInputVariable: public NonCopyable
 {
 public:
-	TempResourceAllocator<U8> m_alloc;
+	GenericMemoryPoolAllocator<U8> m_alloc;
+
 	String m_name;
-	String m_typeStr;
-	ShaderVariableDataType m_type = ShaderVariableDataType::NONE;
 	StringList m_value;
-	Bool8 m_constant = false;
-	Bool8 m_instanced = false;
+	String m_line;
+
+	ShaderVariableDataType m_type = ShaderVariableDataType::NONE;
 	BuiltinMaterialVariableId m_builtin = BuiltinMaterialVariableId::NONE;
 
-	String m_line;
-	ShaderTypeBit m_shaderDefinedMask = ShaderTypeBit::NONE; ///< Defined in
-	/// Referenced by
-	ShaderTypeBit m_shaderReferencedMask = ShaderTypeBit::NONE;
-	Bool8 m_inBlock = true;
+	// Flags
+	class Flags
+	{
+	public:
+		Bool8 m_inBlock = false;
+		Bool8 m_texture = false;
+		Bool8 m_builtin = false;
+		Bool8 m_const = false;
+		Bool8 m_instanced = false;
+		Bool8 m_inShadow = false;
+		Bool8 m_specialBuiltin = false;
+
+		Bool operator==(const Flags& b) const
+		{
+			return memcmp(this, &b, sizeof(*this)) == 0;
+		}
+	} m_flags;
 
 	I16 m_binding = -1; ///< Texture unit
-	U16 m_index = 666;
-
+	I16 m_index = -1;
 	ShaderVariableBlockInfo m_blockInfo;
 
-	Bool8 m_inShadow = true;
+	ShaderTypeBit m_shaderDefinedMask = ShaderTypeBit::NONE; ///< Defined in
+	ShaderTypeBit m_shaderReferencedMask = ShaderTypeBit::NONE; ///< Referenced
 
 	MaterialLoaderInputVariable()
 	{}
@@ -53,13 +65,11 @@ public:
 	~MaterialLoaderInputVariable()
 	{
 		m_name.destroy(m_alloc);
-		m_typeStr.destroy(m_alloc);
 		m_value.destroy(m_alloc);
 		m_line.destroy(m_alloc);
 	}
 
-	MaterialLoaderInputVariable& operator=(
-		MaterialLoaderInputVariable&& b)
+	MaterialLoaderInputVariable& operator=(MaterialLoaderInputVariable&& b)
 	{
 		move(b);
 		return *this;
@@ -70,13 +80,13 @@ public:
 	Bool duplicate(const MaterialLoaderInputVariable& b) const
 	{
 		return b.m_name == m_name
-			&& b.m_type == m_type
 			&& b.m_value == m_value
-			&& b.m_constant == m_constant
-			&& b.m_instanced == m_instanced
+			&& b.m_type == m_type
 			&& b.m_builtin == m_builtin
-			&& b.m_inShadow == m_inShadow;
+			&& b.m_flags == m_flags;
 	}
+
+	CString typeStr() const;
 };
 
 /// Creator of shader programs. This class parses between
@@ -90,7 +100,7 @@ class MaterialLoader
 public:
 	using Input = MaterialLoaderInputVariable;
 
-	explicit MaterialLoader(TempResourceAllocator<U8> alloc);
+	explicit MaterialLoader(GenericMemoryPoolAllocator<U8> alloc);
 
 	~MaterialLoader();
 
@@ -113,7 +123,7 @@ public:
 	{
 		for(const Input& in : m_inputs)
 		{
-			if(!in.m_constant)
+			if(!in.m_flags.m_const && !in.m_flags.m_specialBuiltin)
 			{
 				ANKI_CHECK(func(in));
 			}
@@ -152,11 +162,10 @@ public:
 	}
 
 private:
-	TempResourceAllocator<char> m_alloc;
+	GenericMemoryPoolAllocator<char> m_alloc;
 	Array<StringList, 5> m_source; ///< Shader program final source
 	Array<String, 5> m_sourceBaked; ///< Final source baked
 	List<Input> m_inputs;
-	StringList m_uniformBlock;
 	ShaderTypeBit m_uniformBlockReferencedMask = ShaderTypeBit::NONE;
 	U32 m_blockSize = 0;
 	Bool8 m_instanced = false;
@@ -178,6 +187,8 @@ private:
 
 	/// Parse what is within the @code <inputs></inputs> @endcode
 	ANKI_USE_RESULT Error parseInputsTag(const XmlElement& programEl);
+
+	void processInputs();
 
 	/// Parse what is within the @code <operation></operation> @endcode
 	ANKI_USE_RESULT Error parseOperationTag(

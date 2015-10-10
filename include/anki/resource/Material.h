@@ -227,9 +227,9 @@ private:
 ///					<input>
 ///						<name>xx</name>
 ///						<type>any glsl type</type>
-///						<value> (2)
+///						[<value> (2)
 ///							[a_series_of_numbers | path/to/image.ankitex]
-///						</value>
+///						</value>]
 ///						[<const>0 | 1</const>] (3)
 /// 					[<inShadow>0 | 1</inShadow>] (4)
 ///					</input>
@@ -260,7 +260,7 @@ private:
 /// </material>
 /// @endcode
 /// (1): AKA uniforms
-/// (2): The \<value\> can be left empty for build-in variables
+/// (2): The \<value\> can be omitted for build-in variables
 /// (3): The \<const\> will mark a variable as constant and it cannot be changed
 ///      at all. Default is 0
 /// (4): Optimization. Set to 1 if the var will be used in shadow passes as well
