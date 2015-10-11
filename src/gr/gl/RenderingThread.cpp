@@ -45,9 +45,9 @@ public:
 		: m_renderingThread(renderingThread)
 	{}
 
-	ANKI_USE_RESULT Error operator()(GlState&)
+	ANKI_USE_RESULT Error operator()(GlState& state)
 	{
-		m_renderingThread->swapBuffersInternal();
+		m_renderingThread->swapBuffersInternal(state);
 		return ErrorCode::NONE;
 	}
 };
@@ -284,7 +284,7 @@ void RenderingThread::syncClientServer()
 }
 
 //==============================================================================
-void RenderingThread::swapBuffersInternal()
+void RenderingThread::swapBuffersInternal(GlState& state)
 {
 	// Do the swap buffers
 	m_interface->swapBuffersCommand();
@@ -296,6 +296,13 @@ void RenderingThread::swapBuffersInternal()
 	}
 
 	m_frameCondVar.notifyOne();
+
+	auto bytesUsed = state.m_globalUboBytesUsaged.exchange(0);
+	ANKI_COUNTER_INC(GR_UNIFORM_SIZE, U64(bytesUsed));
+	if(bytesUsed >= state.m_globalUboSize / MAX_FRAMES_IN_FLIGHT)
+	{
+		ANKI_LOGW("Using too much uniform memory. Increase the limit");
+	}
 }
 
 //==============================================================================

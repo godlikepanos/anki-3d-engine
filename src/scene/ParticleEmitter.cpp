@@ -217,6 +217,7 @@ public:
 		Transform& trf) const override
 	{
 		hasTransform = true;
+		// The particles are already in world position
 		trf = Transform::getIdentity();
 	}
 };

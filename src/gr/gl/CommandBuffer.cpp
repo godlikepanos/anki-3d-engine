@@ -343,6 +343,7 @@ void CommandBuffer::updateDynamicUniformsInternal(U32 originalSize, void*& data)
 
 	// Get offset in the contiguous buffer
 	U size = getAlignedRoundUp(state.m_uniBuffOffsetAlignment, originalSize);
+	state.m_globalUboBytesUsaged.fetchAdd(size);
 	U offset = state.m_globalUboCurrentOffset.fetchAdd(size);
 	offset = offset % uboSize;
 

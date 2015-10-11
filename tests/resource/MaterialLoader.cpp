@@ -128,6 +128,15 @@ ANKI_TEST(Resource, MaterialLoader)
 		});
 		(void)err;
 	}
+
+	// Check block size
+	/*{
+		RenderingKey key(Pass::MS_FS, 1, false, 4);
+		loader.mutate(key);
+
+		ANKI_TEST_EXPECT_EQ(loader.getUniformBlockSize(),
+			16 * 4 * sizeof(F32) + 4 * sizeof(F32) + 3 * sizeof(F32));
+	}*/
 }
 
 } // end namespace anki

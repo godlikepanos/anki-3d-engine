@@ -99,7 +99,7 @@ private:
 	void prepare();
 	void finish();
 
-	void swapBuffersInternal();
+	void swapBuffersInternal(GlState& state);
 };
 /// @}
 

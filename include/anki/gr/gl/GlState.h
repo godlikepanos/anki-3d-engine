@@ -78,6 +78,7 @@ public:
 	DArray<GLuint> m_globalUbos; ///< Multiple cause of the spec's UBO max size.
 	DArray<U8*> m_globalUboAddresses;
 	Atomic<U32> m_globalUboCurrentOffset = {0};
+	Atomic<U32> m_globalUboBytesUsaged = {0}; ///< Per frame
 	/// @}
 
 	GlState(GrManager* manager)
