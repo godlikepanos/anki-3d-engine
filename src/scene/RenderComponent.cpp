@@ -31,7 +31,10 @@ struct CreateNewRenderComponentVariableVisitor
 		RenderComponentVariableTemplate<Type>* rvar =
 			m_alloc.newInstance<RenderComponentVariableTemplate<Type>>(m_mvar);
 
-		rvar->setValue(mvart.getValue());
+		if(mvart.getBuiltin() == BuiltinMaterialVariableId::NONE)
+		{
+			rvar->setValue(mvart.getValue());
+		}
 
 		(*m_vars)[m_count++] = rvar;
 		return ErrorCode::NONE;

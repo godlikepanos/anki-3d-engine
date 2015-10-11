@@ -332,7 +332,7 @@ public:
 void CommandBuffer::updateDynamicUniformsInternal(U32 originalSize, void*& data)
 {
 	ANKI_ASSERT(originalSize > 0);
-	ANKI_ASSERT(originalSize <= 1024 * 4 && "Too high?");
+	ANKI_ASSERT(originalSize <= 1024 * 8 && "Too high?");
 
 	// Will be used in a thread safe way
 	GlState& state =

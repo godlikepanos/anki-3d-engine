@@ -8,15 +8,15 @@
 //
 // Attributes
 //
-layout(location = POSITION_LOCATION) in highp vec3 inPosition;
-layout(location = TEXTURE_COORDINATE_LOCATION) in mediump vec2 inTexCoord;
+layout(location = POSITION_LOCATION) in highp vec3 in_position;
+layout(location = TEXTURE_COORDINATE_LOCATION) in mediump vec2 in_uv;
 
 #if PASS == COLOR || TESSELLATION
-layout(location = NORMAL_LOCATION) in mediump vec4 inNormal;
+layout(location = NORMAL_LOCATION) in mediump vec4 in_normal;
 #endif
 
 #if PASS == COLOR
-layout(location = TANGENT_LOCATION) in mediump vec4 inTangent;
+layout(location = TANGENT_LOCATION) in mediump vec4 in_tangent;
 #endif
 
 //
@@ -27,71 +27,71 @@ out gl_PerVertex
 	vec4 gl_Position;
 };
 
-layout(location = 0) out mediump vec2 outTexCoords;
+layout(location = 0) out mediump vec2 out_uv;
 
 #if PASS == COLOR || TESSELLATION
-layout(location = 1) out mediump vec3 outNormal;
+layout(location = 1) out mediump vec3 out_normal;
 #endif
 
 #if PASS == COLOR
-layout(location = 2) out mediump vec4 outTangent;
+layout(location = 2) out mediump vec4 out_tangent;
 
 // For env mapping. AKA view vector
-layout(location = 3) out mediump vec3 outVertPosViewSpace;
+layout(location = 3) out mediump vec3 out_vertPosViewSpace;
 #endif
 
 #if INSTANCE_ID_FRAGMENT_SHADER
-layout(location = 4) flat out uint outInstanceId;
+layout(location = 4) flat out uint out_instanceId;
 #endif
 
 //==============================================================================
-#define writePositionTexCoord_DEFINED
-void writePositionTexCoord(in mat4 mvp)
+#define writePositionAndUv_DEFINED
+void writePositionAndUv(in mat4 mvp)
 {
 #if PASS == DEPTH && LOD > 0
 	// No tex coords for you
 #else
-	outTexCoords = inTexCoord;
+	out_uv = in_uv;
 #endif
 
 #if TESSELLATION
-	gl_Position = vec4(inPosition, 1.0);
+	gl_Position = vec4(in_position, 1.0);
 #else
-	gl_Position = mvp * vec4(inPosition, 1.0);
+	gl_Position = mvp * vec4(in_position, 1.0);
 #endif
 }
 
 //==============================================================================
-#define writePositionNormalTangentTexCoord_DEFINED
-void writePositionNormalTangentTexCoord(in mat4 mvp, in mat3 normalMat)
+#if PASS == COLOR
+#define writeNormalAndTangent_DEFINED
+void writeNormalAndTangent(in mat3 normalMat)
 {
 
 #if TESSELLATION
 
 	// Passthrough
-	outNormal = inNormal.xyz;
+	out_normal = in_normal.xyz;
 #	if PASS == COLOR
-	outTangent = inTangent;
+	out_tangent = in_tangent;
 #	endif
 
 #else
 
 #	if PASS == COLOR
-	outNormal = normalMat * inNormal.xyz;
-	outTangent.xyz = normalMat * inTangent.xyz;
-	outTangent.w = inTangent.w;
+	out_normal = normalMat * in_normal.xyz;
+	out_tangent.xyz = normalMat * in_tangent.xyz;
+	out_tangent.w = in_tangent.w;
 #	endif
 
 #endif
-
-	writePositionTexCoord(mvp);
 }
+#endif
 
 //==============================================================================
 #if PASS == COLOR
 #define writeVertPosViewSpace_DEFINED
 void writeVertPosViewSpace(in mat4 modelViewMat)
 {
-	outVertPosViewSpace = vec3(modelViewMat * vec4(inPosition, 1.0));
+	out_vertPosViewSpace = vec3(modelViewMat * vec4(in_position, 1.0));
 }
 #endif

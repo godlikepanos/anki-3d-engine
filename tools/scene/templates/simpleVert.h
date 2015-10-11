@@ -5,16 +5,22 @@ R"(		<program>
 			</includes>
 
 			<inputs>
-				<input><type>mat4</type><name>uMvp</name><value></value><instanced>%instanced%</instanced><arraySize>%arraySize%</arraySize></input>
-				<input><type>mat3</type><name>uN</name><value></value><instanced>%instanced%</instanced><arraySize>%arraySize%</arraySize></input>
+				<input><type>mat4</type><name>anki_mvp</name></input>
+				<input><type>mat3</type><name>anki_n</name><inShadow>0</inShadow></input>
 			</inputs>
 
 			<operations>
 				<operation>
+					<id>0</id>
+					<returnType>void</returnType>
+					<function>writePositionAndUv</function>
+					<arguments><argument>anki_mvp</argument></arguments>
+				</operation>
+				<operation>
 					<id>1</id>
 					<returnType>void</returnType>
-					<function>writePositionNormalTangentTexCoord</function>
-					<arguments><argument>uMvp</argument><argument>uN</argument></arguments>
+					<function>writeNormalAndTangent</function>
+					<arguments><argument>anki_n</argument></arguments>
 				</operation>
 			</operations>
 		</program>)"

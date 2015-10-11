@@ -148,6 +148,9 @@ Error MaterialVariant::init(const RenderingKey& key2, Material& mtl,
 {
 	RenderingKey key = key2;
 
+	m_varActive.create(mtl.getAllocator(), mtl.m_vars.getSize());
+	m_blockInfo.create(mtl.getAllocator(), mtl.m_vars.getSize());
+
 	// Disable tessellation under some keys
 	if(key.m_tessellation)
 	{
@@ -246,6 +249,10 @@ Material::~Material()
 {
 	auto alloc = getAllocator();
 
+	for(MaterialVariant& var : m_variants)
+	{
+		var.destroy(alloc);
+	}
 	m_variants.destroy(alloc);
 
 	for(MaterialVariable* var : m_vars)
@@ -269,6 +276,7 @@ Error Material::load(const ResourceFilename& filename)
 	m_shadow = loader.getShadowEnabled();
 	m_forwardShading = loader.isForwardShading();
 	m_tessellation = loader.getTessellationEnabled();
+	m_instanced = loader.isInstanced();
 
 	// Start initializing
 	ANKI_CHECK(createVars(loader));
@@ -447,7 +455,8 @@ void Material::fillResourceGroupInitializer(ResourceGroupInitializer& rcinit)
 //==============================================================================
 const MaterialVariant& Material::getVariant(const RenderingKey& key) const
 {
-	U16 idx = m_variantMatrix[U(key.m_pass)][key.m_lod][key.m_tessellation][
+	U lod = min<U>(m_lodCount - 1, key.m_lod);
+	U16 idx = m_variantMatrix[U(key.m_pass)][lod][key.m_tessellation][
 		getInstanceGroupIdx(key.m_instanceCount)];
 
 	ANKI_ASSERT(idx != MAX_U16);

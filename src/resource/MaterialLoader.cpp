@@ -580,6 +580,12 @@ Error MaterialLoader::parseInputsTag(const XmlElement& programEl)
 		{
 			ANKI_CHECK(el.getText(cstr));
 
+			if(!cstr)
+			{
+				ANKI_LOGE("Value tag is empty for: %s", &in.m_name[0]);
+				return ErrorCode::USER_DATA;
+			}
+
 			if(in.m_flags.m_builtin)
 			{
 				ANKI_LOGE("Builtins cannot have value: %s", &in.m_name[0]);
@@ -702,8 +708,8 @@ void MaterialLoader::processInputs()
 					in.m_binding = m_texBinding++;
 
 					in.m_line.sprintf(
-						m_alloc, "layout(TEX_BINDING(0, %u)) uniform tex%u",
-						in.m_binding, in.m_binding);
+						m_alloc, "layout(TEX_BINDING(0, %u)) uniform %s tex%u;",
+						in.m_binding, &in.typeStr()[0], in.m_binding);
 				}
 			}
 			else if(in.m_flags.m_inBlock)

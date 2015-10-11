@@ -141,7 +141,7 @@ public:
 		return m_blockSize;
 	}
 
-	Bool getInstancingEnabled() const
+	Bool isInstanced() const
 	{
 		return m_instanced;
 	}
@@ -173,7 +173,7 @@ private:
 	ShaderTypeBit m_instanceIdMask = ShaderTypeBit::NONE;
 	Bool8 m_tessellation = false;
 	U8 m_lodCount = 0;
-	Bool8 m_shadow = false;
+	Bool8 m_shadow = true;
 	Bool8 m_forwardShading = false;
 	U32 m_nextIndex = 0;
 

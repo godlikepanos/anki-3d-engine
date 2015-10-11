@@ -823,8 +823,9 @@ void Exporter::visitNode(const aiNode* ainode)
 		}
 
 		// Find if there is another node with the same mesh-material-group pair
-		std::vector<Node>::iterator it;
-		for(it = m_nodes.begin(); it != m_nodes.end(); ++it)
+		std::vector<Node>::iterator it = m_nodes.begin();
+#if 0
+		for(; it != m_nodes.end(); ++it)
 		{
 			const Node& node = *it;
 			const Model& model = m_models[node.m_modelIndex];
@@ -837,6 +838,9 @@ void Exporter::visitNode(const aiNode* ainode)
 				break;
 			}
 		}
+#else
+	it = m_nodes.end();
+#endif
 
 		if(it != m_nodes.end())
 		{

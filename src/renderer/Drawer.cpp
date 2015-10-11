@@ -317,6 +317,13 @@ Error RenderableDrawer::renderSingle(RenderContext& ctx)
 	// Get components
 	const RenderComponent& renderable =
 		ctx.m_visibleNode->m_node->getComponent<RenderComponent>();
+	const Material& mtl = renderable.getMaterial();
+
+	if((ctx.m_stage == RenderingStage::BLEND && !mtl.getForwardShading())
+		|| (ctx.m_stage == RenderingStage::MATERIAL && mtl.getForwardShading()))
+	{
+		return ErrorCode::NONE;
+	}
 
 	// Check if it can merge drawcalls
 	if(ctx.m_nextVisibleNode)
@@ -339,14 +346,6 @@ Error RenderableDrawer::renderSingle(RenderContext& ctx)
 		}
 	}
 
-	const Material& mtl = renderable.getMaterial();
-
-	if((ctx.m_stage == RenderingStage::BLEND && !mtl.getForwardShading())
-		|| (ctx.m_stage == RenderingStage::MATERIAL && mtl.getForwardShading()))
-	{
-		ANKI_ASSERT(0);
-	}
-
 	// Stash the transform
 	{
 		Bool hasTransform;
@@ -360,12 +359,11 @@ Error RenderableDrawer::renderSingle(RenderContext& ctx)
 	}
 
 	// Calculate the key
-	RenderingKey key;
-
 	Vec4 camPos = ctx.m_frc->getFrustumOrigin();
 	F32 dist = (ctx.m_visibleNode->m_node->getComponent<SpatialComponent>().
 		getSpatialOrigin() - camPos).getLength();
 	F32 flod = m_r->calculateLod(dist);
+	flod = min<F32>(flod, MAX_LODS - 1);
 	ctx.m_flod = flod;
 
 	RenderingBuildInfo build;
@@ -384,7 +382,7 @@ Error RenderableDrawer::renderSingle(RenderContext& ctx)
 	}
 
 	// Enqueue uniform state updates
-	setupUniforms(ctx, renderable, key);
+	setupUniforms(ctx, renderable, build.m_key);
 
 	// Enqueue vertex, program and drawcall
 	build.m_subMeshIndicesArray = &ctx.m_visibleNode->m_spatialIndices[0];
@@ -394,6 +392,10 @@ Error RenderableDrawer::renderSingle(RenderContext& ctx)
 	ANKI_CHECK(renderable.buildRendering(build));
 
 	// Rendered something, reset the cached transforms
+	if(ctx.m_cachedTrfCount > 1)
+	{
+		ANKI_COUNTER_INC(RENDERER_MERGED_DRAWCALLS, ctx.m_cachedTrfCount - 1);
+	}
 	ctx.m_cachedTrfCount = 0;
 
 	return ErrorCode::NONE;
