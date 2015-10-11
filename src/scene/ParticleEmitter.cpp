@@ -217,7 +217,7 @@ public:
 		Transform& trf) const override
 	{
 		hasTransform = true;
-		trf = getNode().getComponent<MoveComponent>().getWorldTransform();
+		trf = Transform::getIdentity();
 	}
 };
 
