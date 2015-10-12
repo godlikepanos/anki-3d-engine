@@ -374,9 +374,9 @@ Error RenderableDrawer::renderSingle(RenderContext& ctx)
 		&& mtl.getTessellationEnabled()
 		&& build.m_key.m_lod == 0;
 	build.m_key.m_instanceCount =
-		ctx.m_cachedTrfCount == 0 ? 1 : ctx.m_cachedTrfCount;
+		(ctx.m_cachedTrfCount == 0) ? 1 : ctx.m_cachedTrfCount;
 
-	if(ctx.m_pass == Pass::SM && build.m_key.m_lod > 1)
+	if(ctx.m_pass == Pass::SM && build.m_key.m_lod > 0)
 	{
 		build.m_key.m_tessellation = false;
 	}

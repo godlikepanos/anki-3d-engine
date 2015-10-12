@@ -30,7 +30,7 @@ public:
 
 	ModelPatchRenderComponent(ModelPatchNode* node)
 		: RenderComponent(node, &node->m_modelPatch->getMaterial(),
-			node->m_modelPatch->getMaterial().getUuid())
+			node->m_modelPatch->getModel().getUuid())
 	{}
 
 	ANKI_USE_RESULT Error buildRendering(

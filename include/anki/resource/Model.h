@@ -41,6 +41,12 @@ public:
 		return *m_meshes[key.m_lod];
 	}
 
+	const Model& getModel() const
+	{
+		ANKI_ASSERT(m_model);
+		return *m_model;
+	}
+
 	const Obb& getBoundingShape() const
 	{
 		return m_meshes[0]->getBoundingShape();
@@ -74,7 +80,7 @@ public:
 		U32& drawcallCount) const;
 
 private:
-	Model* m_model;
+	Model* m_model ANKI_DBG_NULLIFY_PTR;
 
 	Array<MeshResourcePtr, MAX_LODS> m_meshes; ///< One for each LOD
 	U8 m_meshCount = 0;
