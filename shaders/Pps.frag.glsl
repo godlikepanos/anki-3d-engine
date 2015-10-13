@@ -128,6 +128,7 @@ vec3 colorGrading(in vec3 color)
 vec3 fog(vec3 colorIn, vec2 uv)
 {
 	float depth = textureLod(u_msDepthRt, uv, 1.0).r;
+
 	float linearDepth = linearizeDepth(depth, u_uniforms.nearFarPad2.x,
 		u_uniforms.nearFarPad2.y);
 

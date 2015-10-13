@@ -95,25 +95,46 @@ float computeShadowFactorSpot(mat4 lightProjectionMat, vec3 fragPos,
 	vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
 
 #if POISSON == 1
-	const vec2 poissonDisk[4] = vec2[](
-		vec2(-0.94201624, -0.39906216),
-		vec2(0.94558609, -0.76890725),
-		vec2(-0.094184101, -0.92938870),
-		vec2(0.34495938, 0.29387760));
+	const uint COUNT = 16;
+	const vec2 poissonDisk[COUNT] = vec2[](
+		vec2(0.751688, 0.619709) * 2.0 - 1.0,
+		vec2(0.604741, 0.778485) * 2.0 - 1.0,
+		vec2(0.936216, 0.463094) * 2.0 - 1.0,
+		vec2(0.808758, 0.284966) * 2.0 - 1.0,
+		vec2(0.812927, 0.786332) * 2.0 - 1.0,
+		vec2(0.608651, 0.303919) * 2.0 - 1.0,
+		vec2(0.482117, 0.573285) * 2.0 - 1.0,
+		vec2(0.55819, 0.988451) * 2.0 - 1.0,
+		vec2(0.340001, 0.728732) * 2.0 - 1.0,
+		vec2(0.681775, 0.119789) * 2.0 - 1.0,
+		vec2(0.217429, 0.522558) * 2.0 - 1.0,
+		vec2(0.384257, 0.352163) * 2.0 - 1.0,
+		vec2(0.143769, 0.738606) * 2.0 - 1.0,
+		vec2(0.383474, 0.910019) * 2.0 - 1.0,
+		vec2(0.409305, 0.177022) * 2.0 - 1.0,
+		vec2(0.158647, 0.239097) * 2.0 - 1.0);
+
+	// Compute number of samples
+	const float MAX_DISTANCE = 5.0;
+	float z = clamp(fragPos.z, -MAX_DISTANCE, -EPSILON);
+	float sampleCountf = float(COUNT) + z * (float(COUNT) / MAX_DISTANCE);
+	sampleCountf = max(sampleCountf, 1.0);
+	sampleCountf = round(sampleCountf);
+	uint sampleCount = uint(sampleCountf);
 
 	float shadowFactor = 0.0;
 
 	vec2 cordpart0 = vec2(layer, texCoords3.z);
 
-	for(int i = 0; i < 4; i++)
+	for(uint i = 0; i < sampleCount; i++)
 	{
-		vec2 cordpart1 = texCoords3.xy + poissonDisk[i] / (300.0);
+		vec2 cordpart1 = texCoords3.xy + poissonDisk[i] / 512.0;
 		vec4 tcoord = vec4(cordpart1, cordpart0);
 
 		shadowFactor += texture(u_spotMapArr, tcoord);
 	}
 
-	return shadowFactor / 4.0;
+	return shadowFactor / sampleCountf;
 #else
 	vec4 tcoord = vec4(texCoords3.x, texCoords3.y, layer, texCoords3.z);
 	float shadowFactor = texture(u_spotMapArr, tcoord);
