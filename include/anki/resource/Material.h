@@ -66,7 +66,7 @@ public:
 	MaterialVariable()
 	{}
 
-	~MaterialVariable()
+	virtual ~MaterialVariable()
 	{}
 
 	/// Get the name.

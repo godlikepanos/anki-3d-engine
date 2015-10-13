@@ -248,7 +248,6 @@ Error init()
 		move->setLocalRotation(Mat3x4(Axisang(toRad(90.0), Vec3(0, 1, 0))));
 	}
 
-#if 1
 	{
 		ScriptResourcePtr script;
 
@@ -258,7 +257,6 @@ Error init()
 		err = app->getScriptManager().evalString(script->getSource());
 		if(err) return err;
 	}
-#endif
 
 	/*{
 		SceneNode* node = scene.tryFindSceneNode("Point_026");

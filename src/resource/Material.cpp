@@ -297,8 +297,8 @@ Error Material::createVars(const MaterialLoader& loader)
 		return ErrorCode::NONE;
 	});
 
-	m_vars.create(getAllocator(), count);
 	auto alloc = getAllocator();
+	m_vars.create(alloc, count);
 
 	// Find the name
 	count = 0;
