@@ -13,6 +13,8 @@
 const float ATTENUATION_BOOST = 0.05;
 const float OMNI_LIGHT_FRUSTUM_NEAR_PLANE = 0.1 / 4.0;
 
+const uint SHADOW_SAMPLE_COUNT = 16;
+
 //==============================================================================
 /// Calculate the cluster split
 uint calcClusterSplit(float zVspace)
@@ -88,15 +90,27 @@ float computeSpotFactor(
 }
 
 //==============================================================================
+uint computeShadowSampleCount(const uint COUNT, float zVSpace)
+{
+	const float MAX_DISTANCE = 5.0;
+
+	float z = max(zVSpace, -MAX_DISTANCE);
+	float sampleCountf = float(COUNT) + z * (float(COUNT) / MAX_DISTANCE);
+	sampleCountf = max(sampleCountf, 1.0);
+	uint sampleCount = uint(sampleCountf);
+
+	return sampleCount;
+}
+
+//==============================================================================
 float computeShadowFactorSpot(mat4 lightProjectionMat, vec3 fragPos,
-	float layer)
+	float layer, uint sampleCount)
 {
 	vec4 texCoords4 = lightProjectionMat * vec4(fragPos, 1.0);
 	vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
 
 #if POISSON == 1
-	const uint COUNT = 16;
-	const vec2 poissonDisk[COUNT] = vec2[](
+	const vec2 poissonDisk[SHADOW_SAMPLE_COUNT] = vec2[](
 		vec2(0.751688, 0.619709) * 2.0 - 1.0,
 		vec2(0.604741, 0.778485) * 2.0 - 1.0,
 		vec2(0.936216, 0.463094) * 2.0 - 1.0,
@@ -114,13 +128,6 @@ float computeShadowFactorSpot(mat4 lightProjectionMat, vec3 fragPos,
 		vec2(0.409305, 0.177022) * 2.0 - 1.0,
 		vec2(0.158647, 0.239097) * 2.0 - 1.0);
 
-	// Compute number of samples
-	const float MAX_DISTANCE = 5.0;
-	float z = clamp(fragPos.z, -MAX_DISTANCE, -EPSILON);
-	float sampleCountf = float(COUNT) + z * (float(COUNT) / MAX_DISTANCE);
-	sampleCountf = max(sampleCountf, 1.0);
-	sampleCountf = round(sampleCountf);
-	uint sampleCount = uint(sampleCountf);
 
 	float shadowFactor = 0.0;
 
@@ -134,7 +141,7 @@ float computeShadowFactorSpot(mat4 lightProjectionMat, vec3 fragPos,
 		shadowFactor += texture(u_spotMapArr, tcoord);
 	}
 
-	return shadowFactor / sampleCountf;
+	return shadowFactor / float(sampleCount);
 #else
 	vec4 tcoord = vec4(texCoords3.x, texCoords3.y, layer, texCoords3.z);
 	float shadowFactor = texture(u_spotMapArr, tcoord);

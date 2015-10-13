@@ -334,7 +334,7 @@ static ANKI_USE_RESULT Error loadAnkiTexture(
 	if((header.m_compressionFormats & preferredCompression)
 		== ImageLoader::DataCompression::NONE)
 	{
-		ANKI_LOGI("File does not contain the requested compression");
+		ANKI_LOGW("File does not contain the requested compression");
 
 		// Fallback
 		preferredCompression = ImageLoader::DataCompression::RAW;
@@ -342,7 +342,7 @@ static ANKI_USE_RESULT Error loadAnkiTexture(
 		if((header.m_compressionFormats & preferredCompression)
 			== ImageLoader::DataCompression::NONE)
 		{
-			ANKI_LOGI("File does not contain raw compression");
+			ANKI_LOGE("File does not contain raw compression");
 			return ErrorCode::USER_DATA;
 		}
 	}

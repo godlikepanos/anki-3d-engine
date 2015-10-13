@@ -99,6 +99,10 @@ void main()
 	uint pointLightsCount = (cluster >> 8u) & 0xFFu;
 	uint spotLightsCount = cluster & 0xFFu;
 
+	// Shadowpass sample count
+	uint shadowSampleCount = computeShadowSampleCount(SHADOW_SAMPLE_COUNT,
+		fragPos.z);
+
 	// Point lights
 	for(uint i = 0U; i < pointLightsCount; ++i)
 	{
@@ -137,7 +141,7 @@ void main()
 		if(shadowmapLayerIdx < 128.0)
 		{
 			shadow = computeShadowFactorSpot(light.texProjectionMat,
-				fragPos, shadowmapLayerIdx);
+				fragPos, shadowmapLayerIdx, shadowSampleCount);
 		}
 
 		out_color += (diffC + specC)

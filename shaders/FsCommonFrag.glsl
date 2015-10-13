@@ -219,7 +219,7 @@ vec3 computeLightColor(vec3 diffCol)
 		if(shadowmapLayerIdx < 128.0)
 		{
 			shadow = computeShadowFactorSpot(light.texProjectionMat,
-				fragPos, shadowmapLayerIdx);
+				fragPos, shadowmapLayerIdx, 1);
 		}
 #endif
 
