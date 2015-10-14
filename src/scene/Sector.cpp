@@ -74,6 +74,7 @@ Error PortalSectorBase::create(const CString& name, const CString& meshFname)
 	ConvexHullShape* hull = alloc.newInstance<ConvexHullShape>();
 	m_shape = hull;
 	hull->initStorage(&m_shapeStorageWSpace[0], vertsCount);
+	updateTransform(Transform::getIdentity());
 
 	// Store indices
 	ANKI_ASSERT(

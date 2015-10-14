@@ -43,8 +43,8 @@ App* app;
 ModelNode* horse;
 PerspectiveCamera* cam;
 
-#define PLAYER 1
-#define MOUSE 1
+#define PLAYER 0
+#define MOUSE 0
 
 Bool profile = false;
 
