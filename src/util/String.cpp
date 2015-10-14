@@ -3,11 +3,68 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#include <anki/util/String.h>
+#include <cmath> // For HUGE_VAL
+#include <climits> // For LLONG_MAX
+#include <cstdarg> // For var args
+
 namespace anki {
 
 //==============================================================================
-template<typename TAllocator>
-inline void String::create(TAllocator alloc, const CStringType& cstr)
+// CString                                                                     =
+//==============================================================================
+
+//==============================================================================
+Error CString::toF64(F64& out) const
+{
+	checkInit();
+	Error err = ErrorCode::NONE;
+	out = std::strtod(m_ptr, nullptr);
+
+	if(out == HUGE_VAL)
+	{
+		ANKI_LOGE("Conversion failed");
+		err = ErrorCode::USER_DATA;
+	}
+
+	return err;
+}
+
+//==============================================================================
+Error CString::toF32(F32& out) const
+{
+	F64 d;
+	Error err = toF64(d);
+	if(!err)
+	{
+		out = d;
+	}
+
+	return err;
+}
+
+//==============================================================================
+Error CString::toI64(I64& out) const
+{
+	checkInit();
+	Error err = ErrorCode::NONE;
+	out = std::strtoll(m_ptr, nullptr, 10);
+
+	if(out == LLONG_MAX || out == LLONG_MIN)
+	{
+		ANKI_LOGE("Conversion failed");
+		err = ErrorCode::USER_DATA;
+	}
+
+	return err;
+}
+
+//==============================================================================
+// String                                                                      =
+//==============================================================================
+
+//==============================================================================
+void String::create(Allocator alloc, const CStringType& cstr)
 {
 	auto len = cstr.getLength();
 	if(len > 0)
@@ -19,9 +76,7 @@ inline void String::create(TAllocator alloc, const CStringType& cstr)
 }
 
 //==============================================================================
-template<typename TAllocator>
-inline void String::create(
-	TAllocator alloc, ConstIterator first, ConstIterator last)
+void String::create(Allocator alloc, ConstIterator first, ConstIterator last)
 {
 	ANKI_ASSERT(first != 0 && last != 0);
 	auto length = last - first;
@@ -32,8 +87,7 @@ inline void String::create(
 }
 
 //==============================================================================
-template<typename TAllocator>
-inline void String::create(TAllocator alloc, Char c, PtrSize length)
+void String::create(Allocator alloc, Char c, PtrSize length)
 {
 	ANKI_ASSERT(c != '\0');
 	m_data.create(alloc, length + 1);
@@ -43,9 +97,7 @@ inline void String::create(TAllocator alloc, Char c, PtrSize length)
 }
 
 //==============================================================================
-template<typename TAllocator>
-inline void String::appendInternal(
-	TAllocator alloc, const Char* str, PtrSize strSize)
+void String::appendInternal(Allocator alloc, const Char* str, PtrSize strSize)
 {
 	ANKI_ASSERT(str != nullptr);
 	ANKI_ASSERT(strSize > 1);
@@ -58,7 +110,7 @@ inline void String::appendInternal(
 		size = 1;
 	}
 
-	DArray<Char> newData;	
+	DArray<Char> newData;
 	newData.create(alloc, size + strSize - 1);
 
 	if(!m_data.isEmpty())
@@ -73,8 +125,7 @@ inline void String::appendInternal(
 }
 
 //==============================================================================
-template<typename TAllocator>
-inline void String::sprintf(TAllocator alloc, CString fmt, ...)
+void String::sprintf(Allocator alloc, CString fmt, ...)
 {
 	Array<Char, 512> buffer;
 	va_list args;
@@ -103,26 +154,6 @@ inline void String::sprintf(TAllocator alloc, CString fmt, ...)
 	{
 		// buffer was enough
 		create(alloc, CString(&buffer[0]));
-	}
-}
-
-//==============================================================================
-template<typename TAllocator, typename TNumber>
-inline void String::toString(TAllocator alloc, TNumber number)
-{
-	destroy(alloc);
-
-	Array<Char, 512> buff;
-	I ret = std::snprintf(
-		&buff[0], buff.size(), detail::toStringFormat<TNumber>(), number);
-
-	if(ret < 0 || ret > static_cast<I>(buff.getSize()))
-	{
-		ANKI_LOGF("To small intermediate buffer");
-	}
-	else
-	{
-		create(alloc, &buff[0]);
 	}
 }
 

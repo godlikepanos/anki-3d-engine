@@ -9,9 +9,6 @@
 #include "anki/util/Array.h"
 #include "anki/util/NonCopyable.h"
 #include <cstring>
-#include <cmath> // For HUGE_VAL
-#include <climits> // For LLONG_MAX
-#include <cstdarg> // For var args
 
 namespace anki {
 
@@ -206,49 +203,13 @@ public:
 	}
 
 	/// Convert to F64.
-	ANKI_USE_RESULT Error toF64(F64& out) const
-	{
-		checkInit();
-		Error err = ErrorCode::NONE;
-		out = std::strtod(m_ptr, nullptr);
-
-		if(out == HUGE_VAL)
-		{
-			ANKI_LOGE("Conversion failed");
-			err = ErrorCode::USER_DATA;
-		}
-
-		return err;
-	}
+	ANKI_USE_RESULT Error toF64(F64& out) const;
 
 	/// Convert to F32.
-	ANKI_USE_RESULT Error toF32(F32& out) const
-	{
-		F64 d;
-		Error err = toF64(d);
-		if(!err)
-		{
-			out = d;
-		}
-
-		return err;
-	}
+	ANKI_USE_RESULT Error toF32(F32& out) const;
 
 	/// Convert to I64.
-	ANKI_USE_RESULT Error toI64(I64& out) const
-	{
-		checkInit();
-		Error err = ErrorCode::NONE;
-		out = std::strtoll(m_ptr, nullptr, 10);
-
-		if(out == LLONG_MAX || out == LLONG_MIN)
-		{
-			ANKI_LOGE("Conversion failed");
-			err = ErrorCode::USER_DATA;
-		}
-
-		return err;
-	}
+	ANKI_USE_RESULT Error toI64(I64& out) const;
 
 private:
 	const Char* m_ptr = nullptr;
@@ -267,6 +228,7 @@ public:
 	using CStringType = CString;
 	using Iterator = Char*;
 	using ConstIterator = const Char*;
+	using Allocator = GenericMemoryPoolAllocator<Char>;
 
 	static const PtrSize NPOS = MAX_PTR_SIZE;
 
@@ -285,28 +247,23 @@ public:
 	{}
 
 	/// Initialize using a const string.
-	template<typename TAllocator>
-	void create(TAllocator alloc, const CStringType& cstr);
+	void create(Allocator alloc, const CStringType& cstr);
 
 	/// Initialize using a range. Copies the range of [first, last)
-	template<typename TAllocator>
-	void create(TAllocator alloc,
+	void create(Allocator alloc,
 		ConstIterator first, ConstIterator last);
 
 	/// Initialize using a character.
-	template<typename TAllocator>
-	void create(TAllocator alloc, Char c, PtrSize length);
+	void create(Allocator alloc, Char c, PtrSize length);
 
 	/// Copy one string to this one.
-	template<typename TAllocator>
-	void create(TAllocator alloc, const String& b)
+	void create(Allocator alloc, const String& b)
 	{
 		create(alloc, b.toCString());
 	}
 
 	/// Destroy the string.
-	template<typename TAllocator>
-	void destroy(TAllocator alloc)
+	void destroy(Allocator alloc)
 	{
 		m_data.destroy(alloc);
 	}
@@ -460,8 +417,7 @@ public:
 	}
 
 	/// Append another string to this one.
-	template<typename TAllocator>
-	void append(TAllocator alloc, const String& b)
+	void append(Allocator alloc, const String& b)
 	{
 		if(!b.isEmpty())
 		{
@@ -470,8 +426,7 @@ public:
 	}
 
 	/// Append a const string to this one.
-	template<typename TAllocator>
-	void append(TAllocator alloc, const CStringType& cstr)
+	void append(Allocator alloc, const CStringType& cstr)
 	{
 		if(!cstr.isEmpty())
 		{
@@ -480,8 +435,7 @@ public:
 	}
 
 	/// Create formated string.
-	template<typename TAllocator>
-	void sprintf(TAllocator alloc, CString fmt, ...);
+	void sprintf(Allocator alloc, CString fmt, ...);
 
 	/// Return true if it's empty.
 	Bool isEmpty() const
@@ -512,8 +466,8 @@ public:
 	}
 
 	/// Convert a number to a string.
-	template<typename TAllocator, typename TNumber>
-	void toString(TAllocator alloc, TNumber number);
+	template<typename TNumber>
+	void toString(Allocator alloc, TNumber number);
 
 	/// Convert to F64.
 	ANKI_USE_RESULT Error toF64(F64& out) const
@@ -536,8 +490,7 @@ protected:
 	}
 
 	/// Append to this string.
-	template<typename TAllocator>
-	void appendInternal(TAllocator alloc, const Char* str, PtrSize strSize);
+	void appendInternal(Allocator alloc, const Char* str, PtrSize strSize);
 
 	void move(String& b)
 	{
@@ -546,15 +499,35 @@ protected:
 	}
 };
 
+//==============================================================================
+template<typename TNumber>
+inline void String::toString(Allocator alloc, TNumber number)
+{
+	destroy(alloc);
+
+	Array<Char, 512> buff;
+	I ret = std::snprintf(
+		&buff[0], buff.size(), detail::toStringFormat<TNumber>(), number);
+
+	if(ret < 0 || ret > static_cast<I>(buff.getSize()))
+	{
+		ANKI_LOGF("To small intermediate buffer");
+	}
+	else
+	{
+		create(alloc, &buff[0]);
+	}
+}
+
 /// String with automatic cleanup.
 class StringAuto: public String
 {
 public:
 	using Base = String;
+	using Allocator = typename Base::Allocator;
 
 	/// Create with allocator.
-	template<typename TAllocator>
-	StringAuto(TAllocator alloc)
+	StringAuto(Allocator alloc)
 		: Base()
 		, m_alloc(alloc)
 	{}
@@ -641,6 +614,4 @@ private:
 /// @}
 
 } // end namespace anki
-
-#include "anki/util/String.inl.h"
 
