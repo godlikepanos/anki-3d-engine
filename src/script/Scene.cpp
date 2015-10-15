@@ -1354,73 +1354,6 @@ static inline void wrapModelNode(lua_State* l)
 }
 
 //==============================================================================
-// InstanceNode                                                                =
-//==============================================================================
-
-//==============================================================================
-static const char* classnameInstanceNode = "InstanceNode";
-
-template<>
-I64 LuaBinder::getWrappedTypeSignature<InstanceNode>()
-{
-	return -2063375830923741403;
-}
-
-template<>
-const char* LuaBinder::getWrappedTypeName<InstanceNode>()
-{
-	return classnameInstanceNode;
-}
-
-//==============================================================================
-/// Pre-wrap method InstanceNode::getSceneNodeBase.
-static inline int pwrapInstanceNodegetSceneNodeBase(lua_State* l)
-{
-	UserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
-	
-	LuaBinder::checkArgsCount(l, 1);
-	
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameInstanceNode, -2063375830923741403, ud)) return -1;
-	InstanceNode* self = ud->getData<InstanceNode>();
-	
-	// Call the method
-	SceneNode& ret = *self;
-	
-	// Push return value
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
-	luaL_setmetatable(l, "SceneNode");
-	ud->initPointed(-2220074417980276571, const_cast<SceneNode*>(&ret));
-	
-	return 1;
-}
-
-//==============================================================================
-/// Wrap method InstanceNode::getSceneNodeBase.
-static int wrapInstanceNodegetSceneNodeBase(lua_State* l)
-{
-	int res = pwrapInstanceNodegetSceneNodeBase(l);
-	if(res >= 0) return res;
-	lua_error(l);
-	return 0;
-}
-
-//==============================================================================
-/// Wrap class InstanceNode.
-static inline void wrapInstanceNode(lua_State* l)
-{
-	LuaBinder::createClass(l, classnameInstanceNode);
-	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapInstanceNodegetSceneNodeBase);
-	lua_settop(l, 0);
-}
-
-//==============================================================================
 // PointLight                                                                  =
 //==============================================================================
 
@@ -1941,55 +1874,6 @@ static int wrapSceneGraphnewModelNode(lua_State* l)
 }
 
 //==============================================================================
-/// Pre-wrap method SceneGraph::newInstanceNode.
-static inline int pwrapSceneGraphnewInstanceNode(lua_State* l)
-{
-	UserData* ud;
-	(void)ud;
-	void* voidp;
-	(void)voidp;
-	PtrSize size;
-	(void)size;
-	
-	LuaBinder::checkArgsCount(l, 2);
-	
-	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud)) return -1;
-	SceneGraph* self = ud->getData<SceneGraph>();
-	
-	// Pop arguments
-	const char* arg0;
-	if(LuaBinder::checkString(l, 2, arg0)) return -1;
-	
-	// Call the method
-	InstanceNode* ret = newSceneNode<InstanceNode>(self, arg0);
-	
-	// Push return value
-	if(ANKI_UNLIKELY(ret == nullptr))
-	{
-		lua_pushstring(l, "Glue code returned nullptr");
-		return -1;
-	}
-	
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = static_cast<UserData*>(voidp);
-	luaL_setmetatable(l, "InstanceNode");
-	ud->initPointed(-2063375830923741403, const_cast<InstanceNode*>(ret));
-	
-	return 1;
-}
-
-//==============================================================================
-/// Wrap method SceneGraph::newInstanceNode.
-static int wrapSceneGraphnewInstanceNode(lua_State* l)
-{
-	int res = pwrapSceneGraphnewInstanceNode(l);
-	if(res >= 0) return res;
-	lua_error(l);
-	return 0;
-}
-
-//==============================================================================
 /// Pre-wrap method SceneGraph::newPointLight.
 static inline int pwrapSceneGraphnewPointLight(lua_State* l)
 {
@@ -2305,7 +2189,6 @@ static inline void wrapSceneGraph(lua_State* l)
 {
 	LuaBinder::createClass(l, classnameSceneGraph);
 	LuaBinder::pushLuaCFuncMethod(l, "newModelNode", wrapSceneGraphnewModelNode);
-	LuaBinder::pushLuaCFuncMethod(l, "newInstanceNode", wrapSceneGraphnewInstanceNode);
 	LuaBinder::pushLuaCFuncMethod(l, "newPointLight", wrapSceneGraphnewPointLight);
 	LuaBinder::pushLuaCFuncMethod(l, "newSpotLight", wrapSceneGraphnewSpotLight);
 	LuaBinder::pushLuaCFuncMethod(l, "newStaticCollisionNode", wrapSceneGraphnewStaticCollisionNode);
@@ -2365,7 +2248,6 @@ void wrapModuleScene(lua_State* l)
 	wrapLensFlareComponent(l);
 	wrapSceneNode(l);
 	wrapModelNode(l);
-	wrapInstanceNode(l);
 	wrapPointLight(l);
 	wrapSpotLight(l);
 	wrapStaticCollisionNode(l);

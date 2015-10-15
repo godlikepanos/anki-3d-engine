@@ -5,7 +5,6 @@
 
 #include "anki/scene/ParticleEmitter.h"
 #include "anki/scene/SceneGraph.h"
-#include "anki/scene/InstanceNode.h"
 #include "anki/scene/Misc.h"
 #include "anki/resource/Model.h"
 #include "anki/resource/ResourceManager.h"
