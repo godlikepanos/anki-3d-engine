@@ -3,15 +3,16 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/scene/Visibility.h"
-#include "anki/scene/SceneGraph.h"
-#include "anki/scene/Sector.h"
-#include "anki/scene/FrustumComponent.h"
-#include "anki/scene/LensFlareComponent.h"
-#include "anki/scene/Light.h"
-#include "anki/scene/MoveComponent.h"
-#include "anki/renderer/MainRenderer.h"
-#include "anki/util/Logger.h"
+#include <anki/scene/Visibility.h>
+#include <anki/scene/SceneGraph.h>
+#include <anki/scene/Sector.h>
+#include <anki/scene/FrustumComponent.h>
+#include <anki/scene/LensFlareComponent.h>
+#include <anki/scene/ReflectionProbe.h>
+#include <anki/scene/Light.h>
+#include <anki/scene/MoveComponent.h>
+#include <anki/renderer/MainRenderer.h>
+#include <anki/util/Logger.h>
 
 namespace anki {
 
@@ -175,6 +176,9 @@ void VisibilityTestTask::test(FrustumComponent& testedFrc,
 	Bool wantsShadowCasters = testedFrc.visibilityTestsEnabled(
 		FrustumComponent::VisibilityTestFlag::TEST_SHADOW_CASTERS);
 
+	Bool wantsReflectionProbes = testedFrc.visibilityTestsEnabled(
+		FrustumComponent::VisibilityTestFlag::TEST_REFLECTION_PROBES);
+
 #if 0
 	ANKI_LOGW("Running test code");
 
@@ -231,6 +235,13 @@ void VisibilityTestTask::test(FrustumComponent& testedFrc,
 
 		LensFlareComponent* lfc = node.tryGetComponent<LensFlareComponent>();
 		if(lfc && wantsFlareComponents)
+		{
+			wantNode = true;
+		}
+
+		ReflectionProbeComponent* reflc =
+			node.tryGetComponent<ReflectionProbeComponent>();
+		if(reflc && wantsReflectionProbes)
 		{
 			wantNode = true;
 		}
@@ -323,6 +334,11 @@ void VisibilityTestTask::test(FrustumComponent& testedFrc,
 		if(lfc && wantsFlareComponents)
 		{
 			visible->moveBackLensFlare(alloc, visibleNode);
+		}
+
+		if(reflc && wantsReflectionProbes)
+		{
+			visible->moveBackReflectionProbe(alloc, visibleNode);
 		}
 
 		// Add more frustums to the list
@@ -455,23 +471,37 @@ void VisibilityTestResults::create(
 	U32 lightsReservedSize,
 	U32 lensFlaresReservedSize)
 {
-	m_renderables.create(alloc, renderablesReservedSize);
-	m_lights.create(alloc, lightsReservedSize);
-	m_flares.create(alloc, lensFlaresReservedSize);
+	m_groups[RENDERABLES].m_nodes.create(alloc, renderablesReservedSize);
+	m_groups[LIGHTS].m_nodes.create(alloc, lightsReservedSize);
+	m_groups[FLARES].m_nodes.create(alloc, lensFlaresReservedSize);
 }
 
 //==============================================================================
-void VisibilityTestResults::moveBack(
-	SceneFrameAllocator<U8> alloc, Container& c, U32& count, VisibleNode& x)
+void VisibilityTestResults::moveBack(SceneFrameAllocator<U8> alloc,
+	GroupType type, VisibleNode& x)
 {
-	if(count + 1 > c.getSize())
+	Group& group = m_groups[type];
+	if(group.m_count + 1 > group.m_nodes.getSize())
 	{
 		// Need to grow
-		U newSize = (c.getSize() != 0) ? c.getSize() * 2 : 2;
-		c.resize(alloc, newSize);
+		U newSize = (group.m_nodes.getSize() != 0)
+			? group.m_nodes.getSize() * 2
+			: 2;
+		group.m_nodes.resize(alloc, newSize);
 	}
 
-	c[count++] = x;
+	group.m_nodes[group.m_count++] = x;
+}
+
+//==============================================================================
+void VisibilityTestResults::prepareMerge()
+{
+	for(U i = 0; i < TYPE_COUNT; ++i)
+	{
+		Group& group = m_groups[i];
+		ANKI_ASSERT(group.m_count == 0);
+		group.m_count = group.m_nodes.getSize();
+	}
 }
 
 //==============================================================================

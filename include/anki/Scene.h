@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SCENE_SCENE_H
-#define ANKI_SCENE_SCENE_H
+#pragma once
 
 #include "anki/scene/SceneGraph.h"
 #include "anki/scene/LensFlareComponent.h"
@@ -20,4 +19,3 @@
 #include "anki/scene/StaticCollisionNode.h"
 #include "anki/scene/BodyNode.h"
 
-#endif

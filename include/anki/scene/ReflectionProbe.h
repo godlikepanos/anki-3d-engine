@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SCENE_REFLECTION_PROBE_H
-#define ANKI_SCENE_REFLECTION_PROBE_H
+#pragma once
 
 #include "anki/scene/SceneNode.h"
 #include "anki/collision/Frustum.h"
@@ -36,6 +35,8 @@ class ReflectionProbe: public SceneNode
 	friend class ReflectionProbeMoveFeedbackComponent;
 
 public:
+	const F32 FRUSTUM_NEAR_PLANE = 0.1 / 4.0;
+
 	ReflectionProbe(SceneGraph* scene)
 		: SceneNode(scene)
 	{}
@@ -45,12 +46,18 @@ public:
 	ANKI_USE_RESULT Error create(const CString& name, F32 radius);
 
 private:
-	Array<PerspectiveFrustum, 6> m_frustums;
+	class CubeSide
+	{
+	public:
+		PerspectiveFrustum m_frustum;
+		Transform m_localTrf;
+		FramebufferPtr m_fb;
+	};
+
+	Array<CubeSide, 6> m_cubeSides;
+
 	TexturePtr m_colorTex;
-	TexturePtr m_depthTex;
-	Array<FramebufferPtr, 6> m_fbs;
 	U32 m_fbSize = 128;
-	Array<Transform, 6> m_localFrustumTrfs;
 	Sphere m_spatialSphere;
 
 	void onMoveUpdate(MoveComponent& move);
@@ -60,6 +67,4 @@ private:
 /// @}
 
 } // end namespace anki
-
-#endif
 

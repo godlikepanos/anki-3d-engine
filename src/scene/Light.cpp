@@ -200,9 +200,7 @@ void PointLight::onMoveUpdate(MoveComponent& move)
 		[&](FrustumComponent& fr) -> Error
 	{
 		Transform trf = m_shadowData[count].m_localTrf;
-		trf.setOrigin(
-			move.getWorldTransform().getOrigin()
-			+ m_shadowData[count].m_localTrf.getOrigin());
+		trf.setOrigin(move.getWorldTransform().getOrigin());
 
 		fr.getFrustum().resetTransform(trf);
 		fr.markTransformForUpdate();

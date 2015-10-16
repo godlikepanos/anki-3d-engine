@@ -28,7 +28,6 @@ public:
 		RENDER,
 		SPATIAL,
 		LIGHT,
-		INSTANCE,
 		LENS_FLARE,
 		BODY,
 		SECTOR_PORTAL,

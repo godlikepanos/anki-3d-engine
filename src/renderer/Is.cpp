@@ -147,8 +147,8 @@ public:
 	Atomic<U32> m_lightIdsCount = {0};
 
 	// Misc
-	VisibilityTestResults::Container::ConstIterator m_lightsBegin = nullptr;
-	VisibilityTestResults::Container::ConstIterator m_lightsEnd = nullptr;
+	const VisibleNode* m_lightsBegin = nullptr;
+	const VisibleNode* m_lightsEnd = nullptr;
 
 	Is* m_is = nullptr;
 };

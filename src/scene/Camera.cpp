@@ -94,7 +94,8 @@ Error Camera::create(const CString& name, Frustum* frustum)
 	frc->setEnabledVisibilityTests(
 		FrustumComponent::VisibilityTestFlag::TEST_RENDER_COMPONENTS
 		| FrustumComponent::VisibilityTestFlag::TEST_LIGHT_COMPONENTS
-		| FrustumComponent::VisibilityTestFlag::TEST_LENS_FLARE_COMPONENTS);
+		| FrustumComponent::VisibilityTestFlag::TEST_LENS_FLARE_COMPONENTS
+		| FrustumComponent::VisibilityTestFlag::TEST_REFLECTION_PROBES);
 	addComponent(frc, true);
 
 	// Feedback component #2

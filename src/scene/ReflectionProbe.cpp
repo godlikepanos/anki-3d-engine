@@ -3,10 +3,12 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/scene/ReflectionProbe.h"
-#include "anki/scene/MoveComponent.h"
-#include "anki/scene/FrustumComponent.h"
-#include "anki/scene/SceneGraph.h"
+#include <anki/scene/ReflectionProbe.h>
+#include <anki/scene/MoveComponent.h>
+#include <anki/scene/FrustumComponent.h>
+#include <anki/scene/SceneGraph.h>
+#include <anki/scene/SceneGraph.h>
+#include <anki/renderer/Is.h>
 
 namespace anki {
 
@@ -59,35 +61,47 @@ Error ReflectionProbe::create(const CString& name, F32 radius)
 	addComponent(comp, true);
 
 	// The frustum components
-	Array<Transform, 6>& trfs = m_localFrustumTrfs;
-	const F32 PI_2 = toRad(90.0);
-	const F32 PI = toRad(180.0);
-	trfs[0] = Transform(Vec4(0.0), Mat3x4(Euler(0.0, -PI_2, 0.0)), 1.0);
-	trfs[1] = Transform(Vec4(0.0), Mat3x4(Euler(PI_2, 0.0, 0.0)), 1.0);
-	trfs[2] = Transform(Vec4(0.0), Mat3x4(Euler(0.0, PI, 0.0)), 1.0);
-	trfs[3] = Transform(Vec4(0.0), Mat3x4(Euler(0.0, PI_2, 0.0)), 1.0);
-	trfs[4] = Transform(Vec4(0.0), Mat3x4(Euler(-PI_2, 0.0, 0.0)), 1.0);
-	trfs[5] = Transform(Vec4(0.0), Mat3x4::getIdentity(), 1.0);
+	const F32 ang = toRad(90.0);
+	const F32 zNear = FRUSTUM_NEAR_PLANE;
+
+	Mat3 rot;
+	const F32 PI = getPi<F32>();
+
+	rot = Mat3(Euler(0.0, -PI / 2.0, 0.0)) * Mat3(Euler(0.0, 0.0, PI));
+	m_cubeSides[0].m_localTrf.setRotation(Mat3x4(rot));
+	rot = Mat3(Euler(0.0, PI / 2.0, 0.0)) * Mat3(Euler(0.0, 0.0, PI));
+	m_cubeSides[1].m_localTrf.setRotation(Mat3x4(rot));
+	rot = Mat3(Euler(PI / 2.0, 0.0, 0.0));
+	m_cubeSides[2].m_localTrf.setRotation(Mat3x4(rot));
+	rot = Mat3(Euler(-PI / 2.0, 0.0, 0.0));
+	m_cubeSides[3].m_localTrf.setRotation(Mat3x4(rot));
+	rot = Mat3(Euler(0.0, PI, 0.0)) * Mat3(Euler(0.0, 0.0, PI));
+	m_cubeSides[4].m_localTrf.setRotation(Mat3x4(rot));
+	rot = Mat3(Euler(0.0, 0.0, PI));
+	m_cubeSides[5].m_localTrf.setRotation(Mat3x4(rot));
 
 	for(U i = 0; i < 6; ++i)
 	{
+		m_cubeSides[i].m_localTrf.setOrigin(Vec4(0.0));
+		m_cubeSides[i].m_localTrf.setScale(1.0);
+
+		m_cubeSides[i].m_frustum.setAll(ang, ang, zNear, radius);
+		m_cubeSides[i].m_frustum.resetTransform(m_cubeSides[i].m_localTrf);
+
 		FrustumComponent* frc =
 			getSceneAllocator().newInstance<FrustumComponent>(
-			this, &m_frustums[i]);
+			this, &m_cubeSides[i].m_frustum);
 
 		frc->setEnabledVisibilityTests(
 			FrustumComponent::VisibilityTestFlag::TEST_RENDER_COMPONENTS
 			| FrustumComponent::VisibilityTestFlag::TEST_LIGHT_COMPONENTS);
 
 		addComponent(frc, true);
-
-		m_frustums[i].setAll(toRad(90.0), toRad(90.0), 0.5, radius);
-		m_frustums[i].resetTransform(trfs[i]);
 	}
 
 	// Spatial component
 	m_spatialSphere.setCenter(Vec4(0.0));
-	m_spatialSphere.setRadius(0.1);
+	m_spatialSphere.setRadius(radius);
 	comp = getSceneAllocator().newInstance<SpatialComponent>(
 		this, &m_spatialSphere);
 
@@ -108,14 +122,10 @@ void ReflectionProbe::createGraphics()
 	TextureInitializer init;
 	init.m_type = TextureType::CUBE;
 	init.m_width = init.m_height = m_fbSize;
-	init.m_format =
-		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM);
+	init.m_format = Is::RT_PIXEL_FORMAT;
 	init.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
 
 	m_colorTex = getSceneGraph().getGrManager().newInstance<Texture>(init);
-
-	init.m_format = PixelFormat(ComponentFormat::D16, TransformFormat::FLOAT);
-	m_depthTex = getSceneGraph().getGrManager().newInstance<Texture>(init);
 
 	// Create framebuffers
 	for(U i = 0; i < 6; ++i)
@@ -127,11 +137,7 @@ void ReflectionProbe::createGraphics()
 		fbInit.m_colorAttachments[0].m_loadOperation =
 			AttachmentLoadOperation::DONT_CARE;
 
-		fbInit.m_depthStencilAttachment.m_texture = m_depthTex;
-		fbInit.m_depthStencilAttachment.m_loadOperation =
-			AttachmentLoadOperation::CLEAR;
-
-		m_fbs[i] =
+		m_cubeSides[i].m_fb =
 			getSceneGraph().getGrManager().newInstance<Framebuffer>(fbInit);
 	}
 }
@@ -144,11 +150,10 @@ void ReflectionProbe::onMoveUpdate(MoveComponent& move)
 	Error err = iterateComponentsOfType<FrustumComponent>(
 		[&](FrustumComponent& frc) -> Error
 	{
-		Transform trf = m_localFrustumTrfs[count].combineTransformations(
-			move.getWorldTransform());
+		Transform trf = m_cubeSides[count].m_localTrf;
+		trf.setOrigin(move.getWorldTransform().getOrigin());
 
 		frc.getFrustum().resetTransform(trf);
-
 		frc.markTransformForUpdate();
 		++count;
 

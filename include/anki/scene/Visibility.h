@@ -5,12 +5,12 @@
 
 #pragma once
 
-#include "anki/scene/Common.h"
-#include "anki/collision/Forward.h"
-#include "anki/scene/SceneNode.h"
-#include "anki/scene/SpatialComponent.h"
-#include "anki/scene/RenderComponent.h"
-#include "anki/util/NonCopyable.h"
+#include <anki/scene/Common.h>
+#include <anki/collision/Forward.h>
+#include <anki/scene/SceneNode.h>
+#include <anki/scene/SpatialComponent.h>
+#include <anki/scene/RenderComponent.h>
+#include <anki/util/NonCopyable.h>
 
 namespace anki {
 
@@ -73,8 +73,6 @@ public:
 class VisibilityTestResults
 {
 public:
-	using Container = DArray<VisibleNode>;
-
 	~VisibilityTestResults()
 	{
 		ANKI_ASSERT(0 && "It's supposed to be deallocated on frame start");
@@ -86,75 +84,95 @@ public:
 		U32 lightsReservedSize,
 		U32 lensFlaresReservedSize);
 
-	void prepareMerge()
-	{
-		ANKI_ASSERT(m_renderablesCount == 0
-			&& m_lightsCount == 0
-			&& m_flaresCount == 0);
-		m_renderablesCount = m_renderables.getSize();
-		m_lightsCount = m_lights.getSize();
-		m_flaresCount = m_flares.getSize();
-	}
+	void prepareMerge();
 
 	VisibleNode* getRenderablesBegin()
 	{
-		return (m_renderablesCount) ? &m_renderables[0] : nullptr;
+		return (getRenderablesCount())
+			? &m_groups[RENDERABLES].m_nodes[0] : nullptr;
 	}
 
 	VisibleNode* getRenderablesEnd()
 	{
-		return (m_renderablesCount)
-			? (&m_renderables[0] + m_renderablesCount) : nullptr;
+		return (getRenderablesCount())
+			? (&m_groups[RENDERABLES].m_nodes[0] + getRenderablesCount())
+			: nullptr;
 	}
 
 	VisibleNode* getLightsBegin()
 	{
-		return (m_lightsCount) ? &m_lights[0] : nullptr;
+		return (getLightsCount()) ? &m_groups[LIGHTS].m_nodes[0] : nullptr;
 	}
 
 	VisibleNode* getLightsEnd()
 	{
-		return (m_lightsCount) ? (&m_lights[0] + m_lightsCount) : nullptr;
+		return (getLightsCount())
+			? (&m_groups[LIGHTS].m_nodes[0] + getLightsCount()) : nullptr;
 	}
 
 	VisibleNode* getLensFlaresBegin()
 	{
-		return (m_flaresCount) ? &m_flares[0] : nullptr;
+		return (getLensFlaresCount()) ? &m_groups[FLARES].m_nodes[0] : nullptr;
 	}
 
 	VisibleNode* getLensFlaresEnd()
 	{
-		return (m_flaresCount) ? (&m_flares[0] + m_flaresCount) : nullptr;
+		return (getLensFlaresCount())
+			? (&m_groups[FLARES].m_nodes[0] + getLightsCount()) : nullptr;
+	}
+
+	VisibleNode* getReflectionProbesBegin()
+	{
+		return (getReflectionProbeCount())
+			? &m_groups[REFLECTION_PROBES].m_nodes[0] : nullptr;
+	}
+
+	VisibleNode* getReflectionProbesEnd()
+	{
+		return (getReflectionProbeCount())
+			? (&m_groups[REFLECTION_PROBES].m_nodes[0]
+			+ getReflectionProbeCount())
+			: nullptr;
 	}
 
 	U32 getRenderablesCount() const
 	{
-		return m_renderablesCount;
+		return m_groups[RENDERABLES].m_count;
 	}
 
 	U32 getLightsCount() const
 	{
-		return m_lightsCount;
+		return m_groups[LIGHTS].m_count;
 	}
 
 	U32 getLensFlaresCount() const
 	{
-		return m_flaresCount;
+		return m_groups[FLARES].m_count;
+	}
+
+	U32 getReflectionProbeCount() const
+	{
+		return m_groups[REFLECTION_PROBES].m_count;
 	}
 
 	void moveBackRenderable(SceneFrameAllocator<U8> alloc, VisibleNode& x)
 	{
-		moveBack(alloc, m_renderables, m_renderablesCount, x);
+		moveBack(alloc, RENDERABLES, x);
 	}
 
 	void moveBackLight(SceneFrameAllocator<U8> alloc, VisibleNode& x)
 	{
-		moveBack(alloc, m_lights, m_lightsCount, x);
+		moveBack(alloc, LIGHTS, x);
 	}
 
 	void moveBackLensFlare(SceneFrameAllocator<U8> alloc, VisibleNode& x)
 	{
-		moveBack(alloc, m_flares, m_flaresCount, x);
+		moveBack(alloc, FLARES, x);
+	}
+
+	void moveBackReflectionProbe(SceneFrameAllocator<U8> alloc, VisibleNode& x)
+	{
+		moveBack(alloc, REFLECTION_PROBES, x);
 	}
 
 	Timestamp getShapeUpdateTimestamp() const
@@ -168,17 +186,29 @@ public:
 	}
 
 private:
-	Container m_renderables;
-	Container m_lights;
-	Container m_flares;
-	U32 m_renderablesCount = 0;
-	U32 m_lightsCount = 0;
-	U32 m_flaresCount = 0;
+	using Container = DArray<VisibleNode>;
+
+	enum GroupType
+	{
+		RENDERABLES,
+		LIGHTS,
+		FLARES,
+		REFLECTION_PROBES,
+		TYPE_COUNT
+	};
+
+	class Group
+	{
+	public:
+		Container m_nodes;
+		U32 m_count = 0;
+	};
+
+	Array<Group, TYPE_COUNT> m_groups;
 
 	Timestamp m_shapeUpdateTimestamp = 0;
 
-	void moveBack(SceneFrameAllocator<U8> alloc,
-		Container& c, U32& count, VisibleNode& x);
+	void moveBack(SceneFrameAllocator<U8> alloc, GroupType, VisibleNode& x);
 };
 
 /// Do visibility tests bypassing portals
