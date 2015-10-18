@@ -219,8 +219,7 @@ void Pps::run(CommandBufferPtr& cmdb)
 		cmdb->writeBuffer(m_uniformsBuff, 0, sizeof(*unis), unis);
 		unis->m_fogColorFogFactor = Vec4(m_fogColor, m_fogFactor);
 
-		const SceneNode& cam = m_r->getActiveCamera();
-		const FrustumComponent& frc = cam.getComponent<FrustumComponent>();
+		const FrustumComponent& frc = m_r->getActiveFrustumComponent();
 		unis->m_nearFarPad2 = Vec4(frc.getFrustum().getNear(),
 			frc.getFrustum().getFar(), 0.0, 0.0);
 	}

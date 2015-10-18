@@ -138,7 +138,7 @@ private:
 	Sm m_sm;
 
 	/// Opt because many ask for it
-	SceneNode* m_cam;
+	FrustumComponent* m_frc = nullptr;
 
 	/// If enabled the ground emmits a light
 	Bool8 m_groundLightEnabled;

@@ -60,8 +60,7 @@ Error Fs::run(CommandBufferPtr& cmdb)
 {
 	cmdb->bindFramebuffer(m_fb);
 
-	SceneNode& cam = m_r->getActiveCamera();
-	FrustumComponent& camFr = cam.getComponent<FrustumComponent>();
+	FrustumComponent& camFr = m_r->getActiveFrustumComponent();
 
 	cmdb->bindResourceGroup(m_globalResources[getGlobalTimestamp() % 3], 1);
 

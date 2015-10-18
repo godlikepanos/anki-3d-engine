@@ -5,10 +5,10 @@
 
 #pragma once
 
-#include "anki/scene/SceneNode.h"
-#include "anki/collision/Frustum.h"
-#include "anki/collision/Sphere.h"
-#include "anki/Gr.h"
+#include <anki/scene/SceneNode.h>
+#include <anki/collision/Frustum.h>
+#include <anki/collision/Sphere.h>
+#include <anki/Gr.h>
 
 namespace anki {
 
@@ -45,24 +45,31 @@ public:
 
 	ANKI_USE_RESULT Error create(const CString& name, F32 radius);
 
+	U getCubemapArrayIndex() const
+	{
+		ANKI_ASSERT(m_cubemapArrayIdx < 0xFF);
+		return m_cubemapArrayIdx;
+	}
+
+	void setCubemapArrayIndex(U cubemapArrayIdx)
+	{
+		ANKI_ASSERT(cubemapArrayIdx < 0xFF);
+		m_cubemapArrayIdx = cubemapArrayIdx;
+	}
+
 private:
 	class CubeSide
 	{
 	public:
 		PerspectiveFrustum m_frustum;
 		Transform m_localTrf;
-		FramebufferPtr m_fb;
 	};
 
 	Array<CubeSide, 6> m_cubeSides;
-
-	TexturePtr m_colorTex;
-	U32 m_fbSize = 128;
 	Sphere m_spatialSphere;
+	U8 m_cubemapArrayIdx = 0xFF; ///< Used by the renderer
 
 	void onMoveUpdate(MoveComponent& move);
-
-	void createGraphics();
 };
 /// @}
 

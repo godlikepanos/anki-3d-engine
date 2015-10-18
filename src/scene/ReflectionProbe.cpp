@@ -45,6 +45,10 @@ public:
 //==============================================================================
 
 //==============================================================================
+ReflectionProbe::~ReflectionProbe()
+{}
+
+//==============================================================================
 Error ReflectionProbe::create(const CString& name, F32 radius)
 {
 	SceneComponent* comp;
@@ -104,42 +108,13 @@ Error ReflectionProbe::create(const CString& name, F32 radius)
 	m_spatialSphere.setRadius(radius);
 	comp = getSceneAllocator().newInstance<SpatialComponent>(
 		this, &m_spatialSphere);
+	addComponent(comp, true);
 
-	// Reflection probe
+	// Reflection probe comp
 	comp = getSceneAllocator().newInstance<ReflectionProbeComponent>(this);
 	addComponent(comp, true);
 
-	// Create graphics objects
-	createGraphics();
-
 	return ErrorCode::NONE;
-}
-
-//==============================================================================
-void ReflectionProbe::createGraphics()
-{
-	// Create textures
-	TextureInitializer init;
-	init.m_type = TextureType::CUBE;
-	init.m_width = init.m_height = m_fbSize;
-	init.m_format = Is::RT_PIXEL_FORMAT;
-	init.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
-
-	m_colorTex = getSceneGraph().getGrManager().newInstance<Texture>(init);
-
-	// Create framebuffers
-	for(U i = 0; i < 6; ++i)
-	{
-		FramebufferInitializer fbInit;
-		fbInit.m_colorAttachmentsCount = 1;
-		fbInit.m_colorAttachments[0].m_texture = m_colorTex;
-		fbInit.m_colorAttachments[0].m_layer = i;
-		fbInit.m_colorAttachments[0].m_loadOperation =
-			AttachmentLoadOperation::DONT_CARE;
-
-		m_cubeSides[i].m_fb =
-			getSceneGraph().getGrManager().newInstance<Framebuffer>(fbInit);
-	}
 }
 
 //==============================================================================

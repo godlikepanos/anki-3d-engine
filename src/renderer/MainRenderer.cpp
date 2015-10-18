@@ -3,20 +3,21 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/renderer/MainRenderer.h"
-#include "anki/renderer/Renderer.h"
-#include "anki/renderer/Is.h"
-#include "anki/renderer/Pps.h"
-#include "anki/renderer/Dbg.h"
-#include "anki/renderer/Ms.h"
-#include "anki/scene/SceneGraph.h"
-#include "anki/scene/Camera.h"
-#include "anki/util/Logger.h"
-#include "anki/util/File.h"
-#include "anki/util/Filesystem.h"
-#include "anki/core/Counters.h"
-#include "anki/core/App.h"
-#include "anki/misc/ConfigSet.h"
+#include <anki/renderer/MainRenderer.h>
+#include <anki/renderer/Renderer.h>
+#include <anki/renderer/Is.h>
+#include <anki/renderer/Pps.h>
+#include <anki/renderer/Dbg.h>
+#include <anki/renderer/Ms.h>
+#include <anki/renderer/Ir.h>
+#include <anki/scene/SceneGraph.h>
+#include <anki/scene/Camera.h>
+#include <anki/util/Logger.h>
+#include <anki/util/File.h>
+#include <anki/util/Filesystem.h>
+#include <anki/core/Counters.h>
+#include <anki/core/App.h>
+#include <anki/misc/ConfigSet.h>
 
 namespace anki {
 
@@ -62,6 +63,11 @@ Error MainRenderer::create(
 	m_r.reset(m_alloc.newInstance<Renderer>());
 	ANKI_CHECK(m_r->init(threadpool, resources, gr, m_alloc,
 		m_frameAlloc, config2, globalTimestamp));
+
+	// Init IR
+	m_ir.reset(m_alloc.newInstance<Ir>());
+	ANKI_CHECK(m_ir->init(threadpool, resources, gr, m_alloc,
+		m_frameAlloc, config, globalTimestamp));
 
 	// Set the default preprocessor string
 	m_materialShaderSource.sprintf(
@@ -136,9 +142,12 @@ Error MainRenderer::render(SceneGraph& scene)
 		m_r->setOutputFramebuffer(FramebufferPtr(), 0, 0);
 	}
 
+	// Run reflection passes
+	ANKI_CHECK(m_ir->run(scene.getActiveCamera()));
+
 	// Run renderer
 	m_r->getIs().setAmbientColor(scene.getAmbientColor());
-	ANKI_CHECK(m_r->render(scene.getActiveCamera(), cmdbs));
+	ANKI_CHECK(m_r->render(scene.getActiveCamera(), 0, cmdbs));
 
 	if(!rDrawToDefault)
 	{
@@ -151,8 +160,11 @@ Error MainRenderer::render(SceneGraph& scene)
 		m_r->drawQuad(cmdb);
 	}
 
-	// Flush the last command buffer
-	cmdb->flush();
+	// Flush the command buffers
+	for(U i = 0; i < RENDERER_COMMAND_BUFFERS_COUNT; i++)
+	{
+		cmdbs[i]->flush();
+	}
 
 	// Set the hints
 	for(U i = 0; i < RENDERER_COMMAND_BUFFERS_COUNT; i++)

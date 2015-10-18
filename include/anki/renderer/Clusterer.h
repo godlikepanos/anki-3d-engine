@@ -5,16 +5,17 @@
 
 #pragma once
 
-#include "anki/scene/Common.h"
-#include "anki/Math.h"
-#include "anki/collision/Aabb.h"
-#include "anki/core/Timestamp.h"
+#include <anki/renderer/Common.h>
+#include <anki/Math.h>
+#include <anki/collision/Aabb.h>
+#include <anki/core/Timestamp.h>
 
 namespace anki {
 
 class FrustumComponent;
+class SceneNode;
 
-/// @addtogroup scene
+/// @addtogroup renderer
 /// @{
 
 /// The result of the cluster tests.

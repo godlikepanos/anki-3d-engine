@@ -3,11 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RENDERER_COMMON_H
-#define ANKI_RENDERER_COMMON_H
+#pragma once
 
-#include "anki/Gr.h"
-#include "anki/util/Ptr.h"
+#include <anki/Gr.h>
+#include <anki/util/Ptr.h>
 
 namespace anki {
 
@@ -25,6 +24,7 @@ class Bloom;
 class Pps;
 class Dbg;
 class Tiler;
+class Ir;
 
 /// Cut the job submition into multiple chains. We want to avoid feeding
 /// GL with a huge job chain
@@ -32,4 +32,3 @@ const U RENDERER_COMMAND_BUFFERS_COUNT = 2;
 
 } // end namespace anki
 
-#endif

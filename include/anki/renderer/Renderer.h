@@ -5,15 +5,15 @@
 
 #pragma once
 
-#include "anki/renderer/Common.h"
-#include "anki/renderer/Drawer.h"
-#include "anki/Math.h"
-#include "anki/Gr.h"
-#include "anki/scene/Forward.h"
-#include "anki/scene/Clusterer.h"
-#include "anki/resource/Forward.h"
-#include "anki/resource/ShaderResource.h"
-#include "anki/core/Timestamp.h"
+#include <anki/renderer/Common.h>
+#include <anki/renderer/Drawer.h>
+#include <anki/renderer/Clusterer.h>
+#include <anki/Math.h>
+#include <anki/Gr.h>
+#include <anki/scene/Forward.h>
+#include <anki/resource/Forward.h>
+#include <anki/resource/ShaderResource.h>
+#include <anki/core/Timestamp.h>
 
 namespace anki {
 
@@ -96,7 +96,8 @@ public:
 		HeapAllocator<U8> alloc,
 		StackAllocator<U8> frameAlloc,
 		const ConfigSet& config,
-		const Timestamp* globalTimestamp);
+		const Timestamp* globalTimestamp,
+		TexturePtr reflections = TexturePtr());
 
 	/// Set the output of the renderer before calling #render.
 	void setOutputFramebuffer(FramebufferPtr outputFb, U32 width, U32 height)
@@ -107,7 +108,7 @@ public:
 
 	/// This function does all the rendering stages and produces a final result.
 	ANKI_USE_RESULT Error render(
-		SceneNode& frustumableNode,
+		SceneNode& frustumableNode, U frustumIdx,
 		Array<CommandBufferPtr, RENDERER_COMMAND_BUFFERS_COUNT>& cmdBuff);
 
 anki_internal:
@@ -128,14 +129,16 @@ anki_internal:
 		return m_framesNum;
 	}
 
-	const SceneNode& getActiveCamera() const
+	const FrustumComponent& getActiveFrustumComponent() const
 	{
-		return *m_frustumable;
+		ANKI_ASSERT(m_frc);
+		return *m_frc;
 	}
 
-	SceneNode& getActiveCamera()
+	FrustumComponent& getActiveFrustumComponent()
 	{
-		return *m_frustumable;
+		ANKI_ASSERT(m_frc);
+		return *m_frc;
 	}
 
 	const RenderableDrawer& getSceneDrawer() const
@@ -248,7 +251,7 @@ anki_internal:
 		return *m_gr;
 	}
 
-	HeapAllocator<U8>& getAllocator()
+	HeapAllocator<U8> getAllocator() const
 	{
 		return m_alloc;
 	}
@@ -271,6 +274,11 @@ anki_internal:
 	Timestamp getGlobalTimestamp() const
 	{
 		return *m_globalTimestamp;
+	}
+
+	TexturePtr getReflectionsCubemapArr() const
+	{
+		return m_reflectionsCubemapArr;
 	}
 
 private:
@@ -317,13 +325,15 @@ private:
 	Timestamp m_projectionParamsUpdateTimestamp = 0;
 	/// @}
 
-	SceneNode* m_frustumable = nullptr; ///< Cache current frustumable node.
+	FrustumComponent* m_frc = nullptr; ///< Cache current frustum component.
 	RenderableDrawer m_sceneDrawer;
 
 	U m_framesNum; ///< Frame number
 
 	FramebufferPtr m_outputFb;
 	UVec2 m_outputFbSize;
+
+	TexturePtr m_reflectionsCubemapArr;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 };

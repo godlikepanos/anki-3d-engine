@@ -3,11 +3,11 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/scene/Clusterer.h"
-#include "anki/scene/FrustumComponent.h"
-#include "anki/scene/MoveComponent.h"
-#include "anki/scene/SceneNode.h"
-#include "anki/util/Rtti.h"
+#include <anki/renderer/Clusterer.h>
+#include <anki/scene/FrustumComponent.h>
+#include <anki/scene/MoveComponent.h>
+#include <anki/scene/SceneNode.h>
+#include <anki/util/Rtti.h>
 
 namespace anki {
 

@@ -44,6 +44,10 @@ public:
 	/// Generate mipmaps.
 	void generateMipmaps();
 
+	/// Copy a single slice from one texture to another.
+	static void copy(const TextureImpl& src, U srcSlice, U srcLevel,
+		const TextureImpl& dest, U destSlice, U destLevel);
+
 	void bind();
 
 private:

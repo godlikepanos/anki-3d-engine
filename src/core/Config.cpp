@@ -61,6 +61,10 @@ Config::Config()
 	newOption("pps.sharpen", true);
 	newOption("pps.gammaCorrection", true);
 
+	// Reflections
+	newOption("ir.rendererSize", 64);
+	newOption("ir.cubemapTextureArraySize", 8);
+
 	// Dbg
 	newOption("dbg.enabled", false);
 

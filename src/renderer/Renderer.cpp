@@ -36,7 +36,8 @@ Error Renderer::init(
 	HeapAllocator<U8> alloc,
 	StackAllocator<U8> frameAlloc,
 	const ConfigSet& config,
-	const Timestamp* globalTimestamp)
+	const Timestamp* globalTimestamp,
+	TexturePtr reflections)
 {
 	m_globalTimestamp = globalTimestamp;
 	m_threadpool = threadpool;
@@ -44,6 +45,7 @@ Error Renderer::init(
 	m_gr = gl;
 	m_alloc = alloc;
 	m_frameAlloc = frameAlloc;
+	m_reflectionsCubemapArr = reflections;
 
 	Error err = initInternal(config);
 	if(err)
@@ -128,23 +130,38 @@ Error Renderer::initInternal(const ConfigSet& config)
 }
 
 //==============================================================================
-Error Renderer::render(SceneNode& frustumableNode,
+Error Renderer::render(SceneNode& frustumableNode, U frustumIdx,
 	Array<CommandBufferPtr, RENDERER_COMMAND_BUFFERS_COUNT>& cmdb)
 {
-	m_frustumable = &frustumableNode;
+	m_frc = nullptr;
+	Error err = frustumableNode.iterateComponentsOfType<FrustumComponent>(
+		[&](FrustumComponent& frc) -> Error
+	{
+		if(frustumIdx == 0)
+		{
+			m_frc = &frc;
+		}
+		else
+		{
+			--frustumIdx;
+		}
+
+		return ErrorCode::NONE;
+	});
+	(void)err;
+	ANKI_ASSERT(m_frc && "Not enough frustum components");
+
 	m_frameAlloc.getMemoryPool().reset();
 
 	// Calc a few vars
 	//
-	const FrustumComponent& frc =
-		m_frustumable->getComponent<FrustumComponent>();
-	if(frc.getProjectionParameters() != m_projectionParams)
+	if(m_frc->getProjectionParameters() != m_projectionParams)
 	{
-		m_projectionParams = frc.getProjectionParameters();
+		m_projectionParams = m_frc->getProjectionParameters();
 		m_projectionParamsUpdateTimestamp = getGlobalTimestamp();
 	}
 
-	ANKI_ASSERT(frc.getFrustum().getType() == Frustum::Type::PERSPECTIVE);
+	ANKI_ASSERT(m_frc->getFrustum().getType() == Frustum::Type::PERSPECTIVE);
 	m_clusterer.prepare(getThreadPool(), frustumableNode);
 
 	ANKI_COUNTER_START_TIMER(RENDERER_MS_TIME);
@@ -156,8 +173,6 @@ Error Renderer::render(SceneNode& frustumableNode,
 	m_ms->generateMipmaps(cmdb[0]);
 
 	m_tiler->run(cmdb[0]);
-
-	cmdb[0]->flush();
 
 	ANKI_COUNTER_START_TIMER(RENDERER_IS_TIME);
 	ANKI_CHECK(m_is->run(cmdb[1]));

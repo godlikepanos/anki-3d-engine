@@ -557,5 +557,41 @@ Bool CommandBuffer::isEmpty() const
 	return m_impl->isEmpty();
 }
 
+//==============================================================================
+class CopyTexCommand final: public GlCommand
+{
+public:
+	TexturePtr m_src;
+	U16 m_srcSlice;
+	U16 m_srcLevel;
+	TexturePtr m_dest;
+	U16 m_destSlice;
+	U16 m_destLevel;
+
+	CopyTexCommand(TexturePtr src, U srcSlice, U srcLevel, TexturePtr dest,
+		U destSlice, U destLevel)
+		: m_src(src)
+		, m_srcSlice(srcSlice)
+		, m_srcLevel(srcLevel)
+		, m_dest(dest)
+		, m_destSlice(destSlice)
+		, m_destLevel(destLevel)
+	{}
+
+	Error operator()(GlState&)
+	{
+		TextureImpl::copy(m_src->getImplementation(), m_srcSlice, m_srcLevel,
+			m_dest->getImplementation(), m_destSlice, m_destLevel);
+		return ErrorCode::NONE;
+	}
+};
+
+void CommandBuffer::copyTextureToTexture(TexturePtr src, U srcSlice, U srcLevel,
+	TexturePtr dest, U destSlice, U destLevel)
+{
+	m_impl->pushBackNewCommand<CopyTexCommand>(src, srcSlice, srcLevel, dest,
+		destSlice, destLevel);
+}
+
 } // end namespace anki
 

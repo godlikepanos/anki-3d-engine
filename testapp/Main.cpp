@@ -95,6 +95,13 @@ Error init()
 		1.0));
 #endif
 
+	{
+		ReflectionProbe* refl;
+		scene.newSceneNode<ReflectionProbe>("refl", refl, 6.0f);
+		move = refl->tryGetComponent<MoveComponent>();
+		move->setLocalOrigin(Vec4(147.392776, -10.132728, 14.607138, 0.0));
+	}
+
 #if 0
 	PointLight* plight;
 	scene.newSceneNode<PointLight>("spot0", plight);

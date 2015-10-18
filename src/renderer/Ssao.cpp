@@ -270,8 +270,7 @@ void Ssao::run(CommandBufferPtr& cmdb)
 	cmdb->bindResourceGroup(m_rcFirst, 0);
 
 	// Write common block
-	const FrustumComponent& camFr =
-		m_r->getActiveCamera().getComponent<FrustumComponent>();
+	const FrustumComponent& camFr = m_r->getActiveFrustumComponent();
 
 	if(m_commonUboUpdateTimestamp
 			< m_r->getProjectionParametersUpdateTimestamp()

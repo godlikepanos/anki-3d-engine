@@ -19,7 +19,6 @@
 #include "anki/collision/ConvexHullShape.h"
 #include "anki/util/Rtti.h"
 #include "anki/Ui.h" /// XXX
-#include "anki/scene/Clusterer.h" /// XXX
 
 namespace anki {
 
@@ -84,8 +83,8 @@ Error Dbg::run(CommandBufferPtr& cmdb)
 
 	cmdb->bindFramebuffer(m_fb);
 
-	SceneNode& cam = m_r->getActiveCamera();
-	FrustumComponent& camFr = cam.getComponent<FrustumComponent>();
+	FrustumComponent& camFr = m_r->getActiveFrustumComponent();
+	SceneNode& cam = camFr.getSceneNode();
 	m_drawer->prepareDraw(cmdb);
 	m_drawer->setViewProjectionMatrix(camFr.getViewProjectionMatrix());
 	m_drawer->setModelMatrix(Mat4::getIdentity());

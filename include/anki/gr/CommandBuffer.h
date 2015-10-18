@@ -117,7 +117,7 @@ public:
 	void bindResourceGroup(ResourceGroupPtr rc, U slot);
 	/// @}
 
-	/// @name Drawcalls
+	/// @name Jobs
 	/// @{
 	void drawElements(U32 count, U32 instanceCount = 1, U32 firstIndex = 0,
 		U32 baseVertex = 0, U32 baseInstance = 0);
@@ -135,6 +135,9 @@ public:
 	void dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ);
 
 	void generateMipmaps(TexturePtr tex);
+
+	void copyTextureToTexture(TexturePtr src, U srcSlice, U srcLevel,
+		TexturePtr dest, U destSlice, U destLevel);
 	/// @}
 
 	/// @name Resource upload

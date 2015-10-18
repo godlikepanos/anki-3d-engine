@@ -165,8 +165,7 @@ Error Lf::initInternal(const ConfigSet& config)
 void Lf::runOcclusionTests(CommandBufferPtr& cmdb)
 {
 	// Retrieve some things
-	FrustumComponent& camFr =
-		m_r->getActiveCamera().getComponent<FrustumComponent>();
+	FrustumComponent& camFr = m_r->getActiveFrustumComponent();
 	VisibilityTestResults& vi = camFr.getVisibilityTestResults();
 
 	U totalCount = min<U>(vi.getLensFlaresCount(), m_maxFlares);
@@ -228,8 +227,7 @@ void Lf::runOcclusionTests(CommandBufferPtr& cmdb)
 void Lf::run(CommandBufferPtr& cmdb)
 {
 	// Retrieve some things
-	SceneNode& cam = m_r->getActiveCamera();
-	FrustumComponent& camFr = cam.getComponent<FrustumComponent>();
+	FrustumComponent& camFr = m_r->getActiveFrustumComponent();
 	VisibilityTestResults& vi = camFr.getVisibilityTestResults();
 
 	U totalCount = min<U>(vi.getLensFlaresCount(), m_maxFlares);

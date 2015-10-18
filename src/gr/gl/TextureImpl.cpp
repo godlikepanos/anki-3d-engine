@@ -460,4 +460,37 @@ U32 TextureImpl::computeMaxMipmapCount(U32 w, U32 h)
 	return count;
 }
 
+//==============================================================================
+void TextureImpl::copy(const TextureImpl& src, U srcSlice, U srcLevel,
+	const TextureImpl& dest, U destSlice, U destLevel)
+{
+	ANKI_ASSERT(src.m_internalFormat == dest.m_internalFormat);
+	ANKI_ASSERT(src.m_format == dest.m_format);
+	ANKI_ASSERT(src.m_type == dest.m_type);
+
+	U width = src.m_width >> srcLevel;
+	U height = src.m_height >> srcLevel;
+
+	ANKI_ASSERT(width > 0 && height > 0);
+	ANKI_ASSERT(width == (dest.m_width >> destLevel)
+		&& height == (dest.m_height >> destLevel));
+
+	glCopyImageSubData(
+		src.getGlName(),
+		src.m_target,
+		srcLevel,
+		0,
+		0,
+		srcSlice,
+		dest.getGlName(),
+		dest.m_target,
+		destLevel,
+		0,
+		0,
+		destSlice,
+		width,
+		height,
+		1);
+}
+
 } // end namespace anki

@@ -124,9 +124,7 @@ Error Ms::run(CommandBufferPtr& cmdb)
 	cmdb->bindFramebuffer(m_planes[planeId].m_fb);
 
 	// render all
-	SceneNode& cam = m_r->getActiveCamera();
-
-	FrustumComponent& frc = cam.getComponent<FrustumComponent>();
+	FrustumComponent& frc = m_r->getActiveFrustumComponent();
 	SArray<CommandBufferPtr> cmdbs(
 		&m_secondLevelCmdbs[0], m_secondLevelCmdbs.getSize());
 	ANKI_CHECK(m_r->getSceneDrawer().render(

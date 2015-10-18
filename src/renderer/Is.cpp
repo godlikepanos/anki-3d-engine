@@ -359,9 +359,8 @@ Error Is::initInternal(const ConfigSet& config)
 Error Is::lightPass(CommandBufferPtr& cmdBuff)
 {
 	ThreadPool& threadPool = m_r->getThreadPool();
-	m_cam = &m_r->getActiveCamera();
-	FrustumComponent& fr = m_cam->getComponent<FrustumComponent>();
-	VisibilityTestResults& vi = fr.getVisibilityTestResults();
+	m_frc = &m_r->getActiveFrustumComponent();
+	VisibilityTestResults& vi = m_frc->getVisibilityTestResults();
 
 	m_currentFrame = getGlobalTimestamp() % MAX_FRAMES_IN_FLIGHT;
 
@@ -482,7 +481,7 @@ Error Is::lightPass(CommandBufferPtr& cmdBuff)
 	setState(cmdBuff);
 
 	// Update uniforms
-	updateCommonBlock(cmdBuff, fr);
+	updateCommonBlock(cmdBuff, *m_frc);
 
 	// Sync
 	ANKI_CHECK(threadPool.waitForAllThreadsToFinish());
@@ -515,8 +514,9 @@ Error Is::lightPass(CommandBufferPtr& cmdBuff)
 void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 {
 	U lightsCount = task.m_lightsEnd - task.m_lightsBegin;
-	const FrustumComponent& camfrc = m_cam->getComponent<FrustumComponent>();
-	const MoveComponent& cammove = m_cam->getComponent<MoveComponent>();
+	const FrustumComponent& camfrc = *m_frc;
+	const MoveComponent& cammove =
+		m_frc->getSceneNode().getComponent<MoveComponent>();
 
 	// Iterate lights and bin them
 	PtrSize start, end;
@@ -807,8 +807,7 @@ void Is::updateCommonBlock(CommandBufferPtr& cmdb, const FrustumComponent& fr)
 	Vec3 groundLightDir;
 	if(m_groundLightEnabled)
 	{
-		const Mat4& viewMat =
-			m_cam->getComponent<FrustumComponent>().getViewMatrix();
+		const Mat4& viewMat = m_frc->getViewMatrix();
 		blk->m_groundLightDirTime =
 			Vec4(-viewMat.getColumn(1).xyz(), HighRezTimer::getCurrentTime());
 	}
