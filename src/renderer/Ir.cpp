@@ -14,18 +14,26 @@
 namespace anki {
 
 //==============================================================================
+// Misc                                                                        =
+//==============================================================================
+
+//==============================================================================
+struct ShaderReflectionProbe
+{
+	Vec3 m_pos;
+	F32 m_radius;
+};
+
+//==============================================================================
+// Ir                                                                          =
+//==============================================================================
+
+//==============================================================================
 Ir::~Ir()
 {}
 
 //==============================================================================
-Error Ir::init(
-	ThreadPool* threadpool,
-	ResourceManager* resources,
-	GrManager* gr,
-	HeapAllocator<U8> alloc,
-	StackAllocator<U8> frameAlloc,
-	const ConfigSet& initializer,
-	const Timestamp* globalTimestamp)
+Error Ir::init(const ConfigSet& initializer)
 {
 	ANKI_LOGI("Initializing IR (Image Reflections)");
 	m_fbSize = initializer.getNumber("ir.rendererSize");
@@ -60,9 +68,11 @@ Error Ir::init(
 	config.set("height", m_fbSize);
 	config.set("lodDistance", 10.0);
 	config.set("samples", 1);
+	config.set("ir.enabled", false); // Very important to disable that
 
-	ANKI_CHECK(m_r.init(threadpool, resources, gr, alloc, frameAlloc, config,
-		globalTimestamp));
+	ANKI_CHECK(m_nestedR.init(&m_r->getThreadPool(),
+		&m_r->getResourceManager(), &m_r->getGrManager(), m_r->getAllocator(),
+		m_r->getFrameAllocator(), config, m_r->getGlobalTimestampPtr()));
 
 	// Init the texture
 	TextureInitializer texinit;
@@ -70,21 +80,29 @@ Error Ir::init(
 	texinit.m_width = m_fbSize;
 	texinit.m_height = m_fbSize;
 	texinit.m_depth = m_cubemapArrSize;
-	texinit.m_type = TextureType::CUBE;
+	texinit.m_type = TextureType::CUBE_ARRAY;
 	texinit.m_format = Is::RT_PIXEL_FORMAT;
 	texinit.m_mipmapsCount = 1;
 	texinit.m_samples = 1;
 	texinit.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
 
-	m_cubemapArr = gr->newInstance<Texture>(texinit);
+	m_cubemapArr = getGrManager().newInstance<Texture>(texinit);
+
+	// Init buffers
+	m_probesBuffSize = sizeof(ShaderReflectionProbe) * m_cubemapArrSize;
+	for(U i = 0; i < m_probesBuff.getSize(); ++i)
+	{
+		m_probesBuff[i] = getGrManager().newInstance<Buffer>(m_probesBuffSize,
+			BufferUsageBit::STORAGE, BufferAccessBit::CLIENT_MAP_WRITE);
+	}
 
 	return ErrorCode::NONE;
 }
 
 //==============================================================================
-Error Ir::run(SceneNode& frustumNode)
+Error Ir::run()
 {
-	FrustumComponent& frc = frustumNode.getComponent<FrustumComponent>();
+	FrustumComponent& frc = m_r->getActiveFrustumComponent();
 	VisibilityTestResults& visRez = frc.getVisibilityTestResults();
 
 	if(visRez.getReflectionProbeCount() == 0)
@@ -93,36 +111,50 @@ Error Ir::run(SceneNode& frustumNode)
 		return ErrorCode::NONE;
 	}
 
-	const VisibleNode* begin = visRez.getReflectionProbesBegin();
-	const VisibleNode* end = visRez.getReflectionProbesBegin();
-	while(begin != end)
+	BufferPtr buff =
+		m_probesBuff[getGlobalTimestamp() % m_probesBuff.getSize()];
+	ShaderReflectionProbe* probes = static_cast<ShaderReflectionProbe*>(
+		buff->map(0,m_probesBuffSize, BufferAccessBit::CLIENT_MAP_WRITE));
+
+	const VisibleNode* it = visRez.getReflectionProbesBegin();
+	const VisibleNode* end = visRez.getReflectionProbesEnd();
+	while(it != end)
 	{
-		ANKI_CHECK(renderReflection(*begin->m_node));
+		ANKI_CHECK(renderReflection(*it->m_node, *probes));
+		++it;
+		++probes;
 	}
+
+	buff->unmap();
 
 	return ErrorCode::NONE;
 }
 
 //==============================================================================
-Error Ir::renderReflection(SceneNode& node)
+Error Ir::renderReflection(SceneNode& node, ShaderReflectionProbe& shaderProb)
 {
 	const ReflectionProbeComponent& reflc =
 		node.getComponent<ReflectionProbeComponent>();
 
+	// Write shader var
+	shaderProb.m_pos = reflc.getPosition().xyz();
+	shaderProb.m_radius = reflc.getRadius();
+
+	// Render cubemap
 	for(U i = 0; i < 6; ++i)
 	{
 		Array<CommandBufferPtr, RENDERER_COMMAND_BUFFERS_COUNT> cmdb;
 		for(U j = 0; j < cmdb.getSize(); ++j)
 		{
-			cmdb[j] = m_r.getGrManager().newInstance<CommandBuffer>();
+			cmdb[j] = getGrManager().newInstance<CommandBuffer>();
 		}
 
 		// Render
-		ANKI_CHECK(m_r.render(node, i, cmdb));
+		ANKI_CHECK(m_nestedR.render(node, i, cmdb));
 
 		// Copy textures
-		cmdb[1]->copyTextureToTexture(m_r.getIs().getRt(), 0, 0,
-			m_cubemapArr, i, 0);
+		cmdb[cmdb.getSize() - 1]->copyTextureToTexture(
+			m_nestedR.getIs().getRt(), 0, 0, m_cubemapArr, i, 0);
 
 		// Flush
 		for(U j = 0; j < cmdb.getSize(); ++j)

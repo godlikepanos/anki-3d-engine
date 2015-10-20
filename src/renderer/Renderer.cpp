@@ -3,19 +3,20 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/renderer/Renderer.h"
-#include "anki/scene/Camera.h"
-#include "anki/scene/SceneGraph.h"
-#include "anki/core/Counters.h"
-#include "anki/misc/ConfigSet.h"
+#include <anki/renderer/Renderer.h>
+#include <anki/scene/Camera.h>
+#include <anki/scene/SceneGraph.h>
+#include <anki/core/Counters.h>
+#include <anki/misc/ConfigSet.h>
 
-#include "anki/renderer/Ms.h"
-#include "anki/renderer/Is.h"
-#include "anki/renderer/Pps.h"
-#include "anki/renderer/Fs.h"
-#include "anki/renderer/Lf.h"
-#include "anki/renderer/Dbg.h"
-#include "anki/renderer/Tiler.h"
+#include <anki/renderer/Ms.h>
+#include <anki/renderer/Is.h>
+#include <anki/renderer/Pps.h>
+#include <anki/renderer/Fs.h>
+#include <anki/renderer/Lf.h>
+#include <anki/renderer/Dbg.h>
+#include <anki/renderer/Tiler.h>
+#include <anki/renderer/Ir.h>
 
 namespace anki {
 
@@ -36,8 +37,7 @@ Error Renderer::init(
 	HeapAllocator<U8> alloc,
 	StackAllocator<U8> frameAlloc,
 	const ConfigSet& config,
-	const Timestamp* globalTimestamp,
-	TexturePtr reflections)
+	const Timestamp* globalTimestamp)
 {
 	m_globalTimestamp = globalTimestamp;
 	m_threadpool = threadpool;
@@ -45,7 +45,6 @@ Error Renderer::init(
 	m_gr = gl;
 	m_alloc = alloc;
 	m_frameAlloc = frameAlloc;
-	m_reflectionsCubemapArr = reflections;
 
 	Error err = initInternal(config);
 	if(err)
@@ -105,6 +104,13 @@ Error Renderer::initInternal(const ConfigSet& config)
 		m_resources->loadResource("shaders/Quad.vert.glsl", m_drawQuadVert));
 
 	// Init the stages. Careful with the order!!!!!!!!!!
+	Bool irEnabled = config.getNumber("ir.enabled");
+	if(irEnabled)
+	{
+		m_ir.reset(m_alloc.newInstance<Ir>(this));
+		ANKI_CHECK(m_ir->init(config));
+	}
+
 	m_ms.reset(m_alloc.newInstance<Ms>(this));
 	ANKI_CHECK(m_ms->init(config));
 
@@ -141,11 +147,8 @@ Error Renderer::render(SceneNode& frustumableNode, U frustumIdx,
 		{
 			m_frc = &frc;
 		}
-		else
-		{
-			--frustumIdx;
-		}
 
+		--frustumIdx;
 		return ErrorCode::NONE;
 	});
 	(void)err;
@@ -163,6 +166,12 @@ Error Renderer::render(SceneNode& frustumableNode, U frustumIdx,
 
 	ANKI_ASSERT(m_frc->getFrustum().getType() == Frustum::Type::PERSPECTIVE);
 	m_clusterer.prepare(getThreadPool(), frustumableNode);
+
+	// Run reflection passes
+	if(m_ir.isCreated())
+	{
+		ANKI_CHECK(m_ir->run());
+	}
 
 	ANKI_COUNTER_START_TIMER(RENDERER_MS_TIME);
 	ANKI_CHECK(m_ms->run(cmdb[0]));

@@ -15,7 +15,7 @@ namespace anki {
 /// @addtogroup scene
 /// @{
 
-/// Dummy component to define a type.
+/// Reflection probe component.
 class ReflectionProbeComponent: public SceneComponent
 {
 public:
@@ -27,6 +27,32 @@ public:
 	{
 		return c.getType() == Type::REFLECTION_PROBE;
 	}
+
+	const Vec4& getPosition() const
+	{
+		return m_pos;
+	}
+
+	void setPosition(const Vec4& pos)
+	{
+		m_pos = pos.xyz0();
+	}
+
+	F32 getRadius() const
+	{
+		ANKI_ASSERT(m_radius > 0.0);
+		return m_radius;
+	}
+
+	void setRadius(F32 radius)
+	{
+		ANKI_ASSERT(radius > 0.0);
+		m_radius = radius;
+	}
+
+private:
+	Vec4 m_pos = Vec4(0.0);
+	F32 m_radius = 0.0;
 };
 
 /// Probe used in realtime reflections.

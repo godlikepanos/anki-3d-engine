@@ -82,7 +82,8 @@ public:
 		SceneFrameAllocator<U8> alloc,
 		U32 renderablesReservedSize,
 		U32 lightsReservedSize,
-		U32 lensFlaresReservedSize);
+		U32 lensFlaresReservedSize,
+		U32 reflectionProbesReservedSize);
 
 	void prepareMerge();
 

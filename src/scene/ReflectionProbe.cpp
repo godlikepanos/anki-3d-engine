@@ -111,8 +111,10 @@ Error ReflectionProbe::create(const CString& name, F32 radius)
 	addComponent(comp, true);
 
 	// Reflection probe comp
-	comp = getSceneAllocator().newInstance<ReflectionProbeComponent>(this);
-	addComponent(comp, true);
+	ReflectionProbeComponent* reflc =
+		getSceneAllocator().newInstance<ReflectionProbeComponent>(this);
+	reflc->setRadius(radius);
+	addComponent(reflc, true);
 
 	return ErrorCode::NONE;
 }
@@ -142,6 +144,11 @@ void ReflectionProbe::onMoveUpdate(MoveComponent& move)
 	SpatialComponent& sp = getComponent<SpatialComponent>();
 	sp.markForUpdate();
 	sp.setSpatialOrigin(move.getWorldTransform().getOrigin());
+	m_spatialSphere.setCenter(move.getWorldTransform().getOrigin());
+
+	// Update the refl comp
+	ReflectionProbeComponent& reflc = getComponent<ReflectionProbeComponent>();
+	reflc.setPosition(move.getWorldTransform().getOrigin());
 }
 
 } // end namespace anki

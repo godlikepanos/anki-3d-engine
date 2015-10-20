@@ -158,7 +158,7 @@ void VisibilityTestTask::test(FrustumComponent& testedFrc,
 	FrustumComponent::VisibilityStats stats =
 		testedFrc.getLastVisibilityStats();
 
-	visible->create(alloc, stats.m_renderablesCount, stats.m_lightsCount, 4);
+	visible->create(alloc, stats.m_renderablesCount, stats.m_lightsCount, 4, 4);
 
 	m_shared->m_testResults[threadId] = visible;
 
@@ -345,10 +345,28 @@ void VisibilityTestTask::test(FrustumComponent& testedFrc,
 		err = node.iterateComponentsOfType<FrustumComponent>(
 			[&](FrustumComponent& frc)
 		{
-			if(frc.anyVisibilityTestEnabled())
+			// Check enabled and make sure that the results are null (this can
+			// happen on multiple on circular viewing)
+			if(frc.anyVisibilityTestEnabled()
+				&& !frc.hasVisibilityTestResults())
 			{
 				LockGuard<SpinLock> l(m_shared->m_lock);
-				m_shared->m_frustumsList.pushBack(alloc, &frc);
+
+				// Check if already in the list
+				Bool alreadyThere = false;
+				for(const FrustumComponent* x : m_shared->m_frustumsList)
+				{
+					if(x == &frc)
+					{
+						alreadyThere = true;
+						break;
+					}
+				}
+
+				if(!alreadyThere)
+				{
+					m_shared->m_frustumsList.pushBack(alloc, &frc);
+				}
 			}
 
 			return ErrorCode::NONE;
@@ -377,9 +395,10 @@ void VisibilityTestTask::combineTestResults(
 
 	// Count the visible scene nodes to optimize the allocation of the
 	// final result
-	U32 renderablesSize = 0;
-	U32 lightsSize = 0;
-	U32 lensFlaresSize = 0;
+	U renderablesSize = 0;
+	U lightsSize = 0;
+	U lensFlaresSize = 0;
+	U reflSize = 0;
 	for(U i = 0; i < threadsCount; i++)
 	{
 		VisibilityTestResults& rez = *m_shared->m_testResults[i];
@@ -387,6 +406,7 @@ void VisibilityTestTask::combineTestResults(
 		renderablesSize += rez.getRenderablesCount();
 		lightsSize += rez.getLightsCount();
 		lensFlaresSize += rez.getLensFlaresCount();
+		reflSize += rez.getReflectionProbeCount();
 	}
 
 	// Allocate
@@ -398,19 +418,16 @@ void VisibilityTestTask::combineTestResults(
 		alloc,
 		renderablesSize,
 		lightsSize,
-		lensFlaresSize);
+		lensFlaresSize,
+		reflSize);
 
 	visible->prepareMerge();
-
-	/*if(renderablesSize == 0)
-	{
-		ANKI_LOGW("No visible renderables");
-	}*/
 
 	// Append thread results
 	VisibleNode* renderables = visible->getRenderablesBegin();
 	VisibleNode* lights = visible->getLightsBegin();
 	VisibleNode* lensFlares = visible->getLensFlaresBegin();
+	VisibleNode* refl = visible->getReflectionProbesBegin();
 	for(U i = 0; i < threadsCount; i++)
 	{
 		VisibilityTestResults& from = *m_shared->m_testResults[i];
@@ -418,6 +435,7 @@ void VisibilityTestTask::combineTestResults(
 		U rCount = from.getRenderablesCount();
 		U lCount = from.getLightsCount();
 		U lfCount = from.getLensFlaresCount();
+		U reflCount = from.getReflectionProbeCount();
 
 		if(rCount > 0)
 		{
@@ -445,6 +463,15 @@ void VisibilityTestTask::combineTestResults(
 
 			lensFlares += lfCount;
 		}
+
+		if(reflCount > 0)
+		{
+			memcpy(refl,
+				from.getReflectionProbesBegin(),
+				sizeof(VisibleNode) * reflCount);
+
+			refl += reflCount;
+		}
 	}
 
 	// Set the frustumable
@@ -469,11 +496,14 @@ void VisibilityTestResults::create(
 	SceneFrameAllocator<U8> alloc,
 	U32 renderablesReservedSize,
 	U32 lightsReservedSize,
-	U32 lensFlaresReservedSize)
+	U32 lensFlaresReservedSize,
+	U32 reflectionProbesReservedSize)
 {
 	m_groups[RENDERABLES].m_nodes.create(alloc, renderablesReservedSize);
 	m_groups[LIGHTS].m_nodes.create(alloc, lightsReservedSize);
 	m_groups[FLARES].m_nodes.create(alloc, lensFlaresReservedSize);
+	m_groups[REFLECTION_PROBES].m_nodes.create(alloc,
+		reflectionProbesReservedSize);
 }
 
 //==============================================================================

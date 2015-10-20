@@ -64,11 +64,6 @@ Error MainRenderer::create(
 	ANKI_CHECK(m_r->init(threadpool, resources, gr, m_alloc,
 		m_frameAlloc, config2, globalTimestamp));
 
-	// Init IR
-	m_ir.reset(m_alloc.newInstance<Ir>());
-	ANKI_CHECK(m_ir->init(threadpool, resources, gr, m_alloc,
-		m_frameAlloc, config, globalTimestamp));
-
 	// Set the default preprocessor string
 	m_materialShaderSource.sprintf(
 		m_alloc,
@@ -141,9 +136,6 @@ Error MainRenderer::render(SceneGraph& scene)
 	{
 		m_r->setOutputFramebuffer(FramebufferPtr(), 0, 0);
 	}
-
-	// Run reflection passes
-	ANKI_CHECK(m_ir->run(scene.getActiveCamera()));
 
 	// Run renderer
 	m_r->getIs().setAmbientColor(scene.getAmbientColor());

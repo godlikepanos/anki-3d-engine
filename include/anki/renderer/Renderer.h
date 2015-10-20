@@ -96,8 +96,7 @@ public:
 		HeapAllocator<U8> alloc,
 		StackAllocator<U8> frameAlloc,
 		const ConfigSet& config,
-		const Timestamp* globalTimestamp,
-		TexturePtr reflections = TexturePtr());
+		const Timestamp* globalTimestamp);
 
 	/// Set the output of the renderer before calling #render.
 	void setOutputFramebuffer(FramebufferPtr outputFb, U32 width, U32 height)
@@ -276,9 +275,9 @@ anki_internal:
 		return *m_globalTimestamp;
 	}
 
-	TexturePtr getReflectionsCubemapArr() const
+	const Timestamp* getGlobalTimestampPtr()
 	{
-		return m_reflectionsCubemapArr;
+		return m_globalTimestamp;
 	}
 
 private:
@@ -293,6 +292,7 @@ private:
 
 	/// @name Rendering stages
 	/// @{
+	UniquePtr<Ir> m_ir;
 	UniquePtr<Ms> m_ms; ///< Material rendering stage
 	UniquePtr<Is> m_is; ///< Illumination rendering stage
 	UniquePtr<Tiler> m_tiler;

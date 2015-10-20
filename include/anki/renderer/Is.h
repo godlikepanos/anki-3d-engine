@@ -52,7 +52,7 @@ anki_internal:
 
 	ANKI_USE_RESULT Error run(CommandBufferPtr& cmdBuff);
 
-	TexturePtr& getRt()
+	TexturePtr getRt() const
 	{
 		return m_rt;
 	}

@@ -79,6 +79,7 @@ Error Sslr::init(const ConfigSet& config)
 	rcInit.m_textures[1].m_texture = m_r->getMs().getDepthRt();
 	rcInit.m_textures[2].m_texture = m_r->getMs().getRt1();
 	rcInit.m_textures[3].m_texture = m_r->getMs().getRt2();
+
 	rcInit.m_uniformBuffers[0].m_buffer =
 		m_r->getPps().getSsao().getUniformBuffer();
 

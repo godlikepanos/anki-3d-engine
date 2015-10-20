@@ -62,6 +62,7 @@ Config::Config()
 	newOption("pps.gammaCorrection", true);
 
 	// Reflections
+	newOption("ir.enabled", true);
 	newOption("ir.rendererSize", 64);
 	newOption("ir.cubemapTextureArraySize", 8);
 

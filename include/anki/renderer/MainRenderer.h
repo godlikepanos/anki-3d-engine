@@ -65,7 +65,6 @@ private:
 	StackAllocator<U8> m_frameAlloc;
 
 	UniquePtr<Renderer> m_r;
-	UniquePtr<Ir> m_ir;
 
 	ShaderResourcePtr m_blitFrag;
 	PipelinePtr m_blitPpline;

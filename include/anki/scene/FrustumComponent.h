@@ -110,6 +110,11 @@ public:
 		return *m_visible;
 	}
 
+	Bool hasVisibilityTestResults() const
+	{
+		return m_visible != nullptr;
+	}
+
 	const VisibilityStats& getLastVisibilityStats() const
 	{
 		return m_stats;
@@ -180,8 +185,8 @@ public:
 private:
 	enum Flags
 	{
-		SHAPE_MARKED_FOR_UPDATE = 1 << 4,
-		TRANSFORM_MARKED_FOR_UPDATE = 1 << 5,
+		SHAPE_MARKED_FOR_UPDATE = 1 << 5,
+		TRANSFORM_MARKED_FOR_UPDATE = 1 << 6,
 	};
 	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Flags, friend)
 
