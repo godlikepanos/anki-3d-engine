@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_MATH_VEC4_H
-#define ANKI_MATH_VEC4_H
+#pragma once
 
 #include "anki/math/CommonIncludes.h"
 
@@ -38,7 +37,7 @@ struct TVec4Simd<F32>
 
 /// 4D vector. SIMD optimized
 template<typename T>
-class alignas(16) TVec4: 
+class alignas(16) TVec4:
 	public TVec<T, 4, typename TVec4Simd<T>::Type, TVec4<T>>
 {
 	/// @name Friends
@@ -55,7 +54,7 @@ class alignas(16) TVec4:
 
 public:
 	using Base = TVec<T, 4, typename TVec4Simd<T>::Type, TVec4<T>>;
-	
+
 	using Base::x;
 	using Base::y;
 	using Base::z;
@@ -65,35 +64,35 @@ public:
 	/// @name Constructors
 	/// @{
 	explicit TVec4()
-	:	Base()
+		: Base()
 	{}
 
 	TVec4(const TVec4& b)
-	:	Base(b)
+		: Base(b)
 	{}
 
 	explicit TVec4(const T x_, const T y_, const T z_, const T w_)
-	:	Base(x_, y_, z_, w_)
+		: Base(x_, y_, z_, w_)
 	{}
 
 	explicit TVec4(const T f)
-	:	Base(f)
+		: Base(f)
 	{}
 
 	explicit TVec4(const T arr[])
-	:	Base(arr)
+		: Base(arr)
 	{}
 
 	explicit TVec4(const typename Base::Simd& simd)
-	:	Base(simd)
+		: Base(simd)
 	{}
 
 	explicit TVec4(const TVec2<T>& v, const T z_, const T w_)
-	:	Base(v.x(), v.y(), z_, w_)
+		: Base(v.x(), v.y(), z_, w_)
 	{}
 
 	explicit TVec4(const TVec3<T>& v, const T w_)
-	:	Base(v.x(), v.y(), v.z(), w_)
+		: Base(v.x(), v.y(), v.z(), w_)
 	{}
 	/// @}
 
@@ -108,10 +107,16 @@ public:
 		return TVec4(Base::xyz().cross(b.xyz()), static_cast<T>(0));
 	}
 
-	TVec4 getProjection(const TVec4& toThis) const
+	TVec4 projectTo(const TVec4& toThis) const
 	{
 		ANKI_ASSERT(w() == T(0));
 		return (toThis * ((*this).dot(toThis) / (toThis.dot(toThis)))).xyz0();
+	}
+
+	TVec4 projectTo(const TVec4& rayOrigin, const TVec4& rayDir) const
+	{
+		const auto& a = *this;
+		return rayOrigin + rayDir * ((a - rayOrigin).dot(rayDir));
 	}
 	/// @{
 
@@ -212,4 +217,3 @@ typedef TVec4<U32> UVec4;
 
 #include "anki/math/Vec4.inl.h"
 
-#endif

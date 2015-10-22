@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_MATH_VEC3_H
-#define ANKI_MATH_VEC3_H
+#pragma once
 
 #include "anki/math/CommonIncludes.h"
 #include "anki/math/Vec.h"
@@ -76,9 +75,15 @@ public:
 			x() * b.y() - y() * b.x());
 	}
 
-	TVec3 getProjection(const TVec3& toThis) const
+	TVec3 projectTo(const TVec3& toThis) const
 	{
 		return toThis * ((*this).dot(toThis) / (toThis.dot(toThis)));
+	}
+
+	TVec3 projectTo(const TVec3& rayOrigin, const TVec3& rayDir) const
+	{
+		const auto& a = *this;
+		return rayOrigin + rayDir * ((a - rayOrigin).dot(rayDir));
 	}
 	/// @}
 };
@@ -127,4 +132,3 @@ typedef TVec3<U32> UVec3;
 
 } // end namespace anki
 
-#endif

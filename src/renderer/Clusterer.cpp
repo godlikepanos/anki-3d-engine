@@ -361,7 +361,7 @@ void Clusterer::binSphere(const Sphere& s, const Aabb& aabb,
 
 			// Do a simple ray-sphere test
 			Vec4 dir = view;
-			Vec4 proj = sphereCenterVSpace.getProjection(dir);
+			Vec4 proj = sphereCenterVSpace.projectTo(dir);
 			F32 lenSq = (sphereCenterVSpace - proj).getLengthSquared();
 			Bool inside = lenSq <= (srad * srad);
 
