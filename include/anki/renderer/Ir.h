@@ -35,6 +35,11 @@ anki_internal:
 		return m_cubemapArr;
 	}
 
+	DynamicBufferToken getProbesToken() const
+	{
+		return m_probesToken;
+	}
+
 private:
 	Renderer m_nestedR;
 	TexturePtr m_cubemapArr;

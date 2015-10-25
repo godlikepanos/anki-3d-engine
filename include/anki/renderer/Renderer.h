@@ -68,6 +68,21 @@ public:
 		return *m_dbg;
 	}
 
+	const Ir& getIr() const
+	{
+		return *m_ir;
+	}
+
+	Ir& getIr()
+	{
+		return *m_ir;
+	}
+
+	Bool irEnabled() const
+	{
+		return m_ir.isCreated();
+	}
+
 	Dbg& getDbg()
 	{
 		return *m_dbg;

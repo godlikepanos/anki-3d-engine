@@ -89,8 +89,8 @@ Error init()
 #if !PLAYER
 	cam->getComponent<MoveComponent>().
 		setLocalTransform(Transform(
-		Vec4(147.392776, -10.132728, 16.607138, 0.0),
-		//Vec4(0.0),
+		//Vec4(147.392776, -10.132728, 16.607138, 0.0),
+		Vec4(0.0, 10, 0, 0),
 		Mat3x4(Euler(toRad(0.0), toRad(90.0), toRad(0.0))),
 		1.0));
 #endif
@@ -100,7 +100,7 @@ Error init()
 		ReflectionProbe* refl;
 		scene.newSceneNode<ReflectionProbe>("refl", refl, 6.0f);
 		move = refl->tryGetComponent<MoveComponent>();
-		move->setLocalOrigin(Vec4(137.392166, -10.132728, 16.407137, 0.0));
+		move->setLocalOrigin(Vec4(0.0, 10, 0, 0));
 	}
 
 #if 0
@@ -481,7 +481,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("is.sm.poissonEnabled", true);
 	config.set("is.sm.resolution", 1024);
 	config.set("lf.maxFlares", 32);
-	config.set("pps.enabled", true);
+	config.set("pps.enabled", false);
 	config.set("pps.bloom.enabled", true);
 	config.set("pps.bloom.renderingQuality", 0.5);
 	config.set("pps.bloom.blurringDist", 1.0);

@@ -17,7 +17,7 @@ struct ReflectionProbe
 	vec4 positionRadiusSq;
 
 	// Slice in u_reflectionsTex vector.
-	vec4 cubemapSlicePad3;
+	vec4 cubemapIndexPad3;
 };
 
 layout(std140, row_major, SS_BINDING(IMAGE_REFLECTIONS_SET,
@@ -50,6 +50,8 @@ vec3 computeCubemapVec(in vec3 r, in float R2, in vec3 f)
 	pp = min(pp, R2);
 	float sq = sqrt(R2 - pp);
 	vec3 x = p + sq * r;
+
+	return normalize(x);
 }
 
 //==============================================================================
@@ -66,15 +68,15 @@ vec3 readReflection(in vec3 posVSpace, in vec3 normalVSpace)
 	for(uint i = 0; i < count; ++i)
 	{
 		float R2 = u_reflectionProbes[i].positionRadiusSq.w;
-		vec3 c = u_reflectionProbes[i].positionRadius.xyz;
+		vec3 c = u_reflectionProbes[i].positionRadiusSq.xyz;
 
 		// Check if posVSpace is inside the sphere
 		vec3 f = posVSpace - c;
-		if(dot(f) < R2)
+		if(dot(f, f) < R2)
 		{
 			vec3 uv = computeCubemapVec(r, R2, f);
 			color += texture(u_reflectionsTex, vec4(uv,
-				u_reflectionProbes[i].cubemapSlicePad3.x));
+				u_reflectionProbes[i].cubemapIndexPad3.x));
 		}
 	}
 

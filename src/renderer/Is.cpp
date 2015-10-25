@@ -3,17 +3,17 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/renderer/Is.h"
-#include "anki/renderer/Renderer.h"
-#include "anki/renderer/Ms.h"
-#include "anki/renderer/Pps.h"
-#include "anki/renderer/Tiler.h"
-#include "anki/scene/Camera.h"
-#include "anki/scene/Light.h"
-#include "anki/scene/Visibility.h"
-#include "anki/core/Counters.h"
-#include "anki/util/Logger.h"
-#include "anki/misc/ConfigSet.h"
+#include <anki/renderer/Is.h>
+#include <anki/renderer/Renderer.h>
+#include <anki/renderer/Ms.h>
+#include <anki/renderer/Pps.h>
+#include <anki/renderer/Ir.h>
+#include <anki/scene/Camera.h>
+#include <anki/scene/Light.h>
+#include <anki/scene/Visibility.h>
+#include <anki/core/Counters.h>
+#include <anki/util/Logger.h>
+#include <anki/misc/ConfigSet.h>
 
 namespace anki {
 
@@ -245,7 +245,8 @@ Error Is::initInternal(const ConfigSet& config)
 		"#define MAX_SPOT_LIGHTS %u\n"
 		"#define MAX_LIGHT_INDICES %u\n"
 		"#define GROUND_LIGHT %u\n"
-		"#define POISSON %u\n",
+		"#define POISSON %u\n"
+		"#define IR %u\n",
 		m_r->getTileCountXY().x(),
 		m_r->getTileCountXY().y(),
 		m_r->getClusterCount(),
@@ -255,7 +256,8 @@ Error Is::initInternal(const ConfigSet& config)
 		m_maxSpotLights,
 		m_maxLightIds,
 		m_groundLightEnabled,
-		m_sm.getPoissonEnabled());
+		m_sm.getPoissonEnabled(),
+		m_r->irEnabled());
 
 	// point light
 	ANKI_CHECK(getResourceManager().loadResourceToCache(m_lightVert,
@@ -300,12 +302,20 @@ Error Is::initInternal(const ConfigSet& config)
 		init.m_textures[3].m_texture = m_r->getMs().getDepthRt();
 		init.m_textures[4].m_texture = m_sm.getSpotTextureArray();
 		init.m_textures[5].m_texture = m_sm.getOmniTextureArray();
+		if(m_r->irEnabled())
+		{
+			init.m_textures[6].m_texture = m_r->getIr().getCubemapArray();
+		}
 
 		init.m_storageBuffers[0].m_dynamic = true;
 		init.m_storageBuffers[1].m_dynamic = true;
 		init.m_storageBuffers[2].m_dynamic = true;
 		init.m_storageBuffers[3].m_dynamic = true;
 		init.m_storageBuffers[4].m_dynamic = true;
+		if(m_r->irEnabled())
+		{
+			init.m_storageBuffers[5].m_dynamic = true;
+		}
 
 		m_rcGroup = getGrManager().newInstance<ResourceGroup>(init);
 	}
@@ -381,10 +391,13 @@ Error Is::lightPass(CommandBufferPtr& cmdb)
 	//
 	// Do shadows pass
 	//
-	ANKI_CHECK(m_sm.run(
-		{&spotCasters[0], spotCastersCount},
-		{&omniCasters[0], omniCastersCount},
-		cmdb));
+	if(m_sm.getEnabled())
+	{
+		ANKI_CHECK(m_sm.run(
+			{&spotCasters[0], spotCastersCount},
+			{&omniCasters[0], omniCastersCount},
+			cmdb));
+	}
 
 	//
 	// Write the lights and tiles UBOs
@@ -604,7 +617,7 @@ I Is::writePointLight(const LightComponent& lightc,
 	slight.m_posRadius = Vec4(pos.xyz(), -1.0 / lightc.getRadius());
 	slight.m_diffuseColorShadowmapId = lightc.getDiffuseColor();
 
-	if(!lightc.getShadowEnabled())
+	if(!lightc.getShadowEnabled() || !m_sm.getEnabled())
 	{
 		slight.m_diffuseColorShadowmapId.w() = INVALID_TEXTURE_INDEX;
 	}
@@ -633,7 +646,7 @@ I Is::writeSpotLight(const LightComponent& lightc,
 	ShaderSpotLight& light = task.m_spotLights[i];
 	F32 shadowmapIndex = INVALID_TEXTURE_INDEX;
 
-	if(lightc.getShadowEnabled())
+	if(lightc.getShadowEnabled() && m_sm.getEnabled())
 	{
 		// Write matrix
 		static const Mat4 biasMat4(
@@ -732,6 +745,10 @@ void Is::setState(CommandBufferPtr& cmdb)
 	dyn.m_storageBuffers[2] = m_sLightsToken;
 	dyn.m_storageBuffers[3] = m_clustersToken;
 	dyn.m_storageBuffers[4] = m_lightIdsToken;
+	if(m_r->irEnabled())
+	{
+		dyn.m_storageBuffers[5] = m_r->getIr().getProbesToken();
+	}
 
 	cmdb->bindResourceGroup(m_rcGroup, 0, &dyn);
 }

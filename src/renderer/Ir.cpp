@@ -21,7 +21,9 @@ namespace anki {
 struct ShaderReflectionProbe
 {
 	Vec3 m_pos;
-	F32 m_radius;
+	F32 m_radiusSq;
+	F32 m_cubemapIndex;
+	U32 _m_pading[3];
 };
 
 //==============================================================================
@@ -57,7 +59,7 @@ Error Ir::init(const ConfigSet& initializer)
 	config.set("dbg.enabled", false);
 	config.set("is.sm.bilinearEnabled", true);
 	config.set("is.groundLightEnabled", false);
-	config.set("is.sm.enabled", true);
+	config.set("is.sm.enabled", false);
 	config.set("is.sm.maxLights", 8);
 	config.set("is.sm.poissonEnabled", false);
 	config.set("is.sm.resolution", 16);
@@ -97,19 +99,19 @@ Error Ir::run(CommandBufferPtr cmdb)
 	FrustumComponent& frc = m_r->getActiveFrustumComponent();
 	VisibilityTestResults& visRez = frc.getVisibilityTestResults();
 
-	if(visRez.getReflectionProbeCount() == 0)
-	{
-		// Early out
-		return ErrorCode::NONE;
-	}
-
 	const VisibleNode* it = visRez.getReflectionProbesBegin();
 	const VisibleNode* end = visRez.getReflectionProbesEnd();
 	U probCount = end - it;
 
-	ShaderReflectionProbe* probes =
-		cmdb->allocateDynamicMemory<ShaderReflectionProbe>(probCount,
-		BufferUsage::UNIFORM, m_probesToken);
+	U8* data = cmdb->allocateDynamicMemory<U8>(
+		sizeof(ShaderReflectionProbe) * m_cubemapArrSize + sizeof(UVec4),
+		BufferUsage::STORAGE, m_probesToken);
+
+	UVec4* counts = reinterpret_cast<UVec4*>(data);
+	counts->x() = probCount;
+
+	ShaderReflectionProbe* probes = reinterpret_cast<ShaderReflectionProbe*>(
+		counts + 1);
 
 	while(it != end)
 	{
@@ -124,12 +126,14 @@ Error Ir::run(CommandBufferPtr cmdb)
 //==============================================================================
 Error Ir::renderReflection(SceneNode& node, ShaderReflectionProbe& shaderProb)
 {
+	const FrustumComponent& frc = m_r->getActiveFrustumComponent();
 	const ReflectionProbeComponent& reflc =
 		node.getComponent<ReflectionProbeComponent>();
 
 	// Write shader var
-	shaderProb.m_pos = reflc.getPosition().xyz();
-	shaderProb.m_radius = reflc.getRadius();
+	shaderProb.m_pos = (frc.getViewMatrix() * reflc.getPosition()).xyz();
+	shaderProb.m_radiusSq = reflc.getRadius() * reflc.getRadius();
+	shaderProb.m_cubemapIndex = 0;
 
 	// Render cubemap
 	for(U i = 0; i < 6; ++i)
