@@ -72,29 +72,29 @@ anki_internal:
 		return m_sm;
 	}
 
-	BufferPtr getCommonVarsBuffer(U idx) const
+	DynamicBufferToken getCommonVarsToken() const
 	{
-		return m_commonVarsBuffs[idx];
+		return m_commonVarsToken;
 	}
 
-	BufferPtr getPointLightsBuffer(U idx) const
+	DynamicBufferToken getPointLightsToken() const
 	{
-		return m_pLightsBuffs[idx];
+		return m_pLightsToken;
 	}
 
-	BufferPtr getSpotLightsBuffer(U idx) const
+	DynamicBufferToken getSpotLightsToken() const
 	{
-		return m_sLightsBuffs[idx];
+		return m_sLightsToken;
 	}
 
-	BufferPtr getClusterBuffer(U idx) const
+	DynamicBufferToken getClustersToken() const
 	{
-		return m_clusterBuffers[idx];
+		return m_clustersToken;
 	}
 
-	BufferPtr getLightIndicesBuffer(U idx) const
+	DynamicBufferToken getLightIndicesToken() const
 	{
-		return m_lightIdsBuffers[idx];
+		return m_lightIdsToken;
 	}
 
 private:
@@ -106,28 +106,13 @@ private:
 	/// The IS FBO
 	FramebufferPtr m_fb;
 
-	/// @name GPU buffers
-	/// @{
+	DynamicBufferToken m_commonVarsToken;
+	DynamicBufferToken m_pLightsToken;
+	DynamicBufferToken m_sLightsToken;
+	DynamicBufferToken m_clustersToken;
+	DynamicBufferToken m_lightIdsToken;
 
-	/// Contains some variables.
-	Array<BufferPtr, MAX_FRAMES_IN_FLIGHT> m_commonVarsBuffs;
-
-	/// Contains all the point lights
-	Array<BufferPtr, MAX_FRAMES_IN_FLIGHT> m_pLightsBuffs;
-	U32 m_pLightsBuffSize = 0;
-
-	/// Contains all the spot lights
-	Array<BufferPtr, MAX_FRAMES_IN_FLIGHT> m_sLightsBuffs;
-	U32 m_sLightsBuffSize = 0;
-
-	/// Contains the cluster info
-	Array<BufferPtr, MAX_FRAMES_IN_FLIGHT> m_clusterBuffers;
-
-	/// Contains light indices.
-	Array<BufferPtr, MAX_FRAMES_IN_FLIGHT> m_lightIdsBuffers;
-	/// @}
-
-	Array<ResourceGroupPtr, MAX_FRAMES_IN_FLIGHT> m_rcGroups;
+	ResourceGroupPtr m_rcGroup;
 
 	// Light shaders
 	ShaderResourcePtr m_lightVert;

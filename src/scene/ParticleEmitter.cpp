@@ -365,7 +365,8 @@ Error ParticleEmitter::buildRendering(RenderingBuildInfo& data) const
 
 	U frame = (getGlobalTimestamp() % 3);
 
-	data.m_cmdb->bindResourceGroup(m_grGroups[frame], 0);
+	data.m_cmdb->bindResourceGroup(m_grGroups[frame], 0,
+		data.m_dynamicBufferInfo);
 
 	data.m_cmdb->drawArrays(m_aliveParticlesCount, data.m_subMeshIndicesCount);
 

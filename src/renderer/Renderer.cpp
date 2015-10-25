@@ -170,7 +170,7 @@ Error Renderer::render(SceneNode& frustumableNode, U frustumIdx,
 	// Run reflection passes
 	if(m_ir.isCreated())
 	{
-		ANKI_CHECK(m_ir->run());
+		ANKI_CHECK(m_ir->run(cmdb[0]));
 	}
 
 	ANKI_COUNTER_START_TIMER(RENDERER_MS_TIME);

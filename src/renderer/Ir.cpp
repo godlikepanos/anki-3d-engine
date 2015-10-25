@@ -88,19 +88,11 @@ Error Ir::init(const ConfigSet& initializer)
 
 	m_cubemapArr = getGrManager().newInstance<Texture>(texinit);
 
-	// Init buffers
-	m_probesBuffSize = sizeof(ShaderReflectionProbe) * m_cubemapArrSize;
-	for(U i = 0; i < m_probesBuff.getSize(); ++i)
-	{
-		m_probesBuff[i] = getGrManager().newInstance<Buffer>(m_probesBuffSize,
-			BufferUsageBit::STORAGE, BufferAccessBit::CLIENT_MAP_WRITE);
-	}
-
 	return ErrorCode::NONE;
 }
 
 //==============================================================================
-Error Ir::run()
+Error Ir::run(CommandBufferPtr cmdb)
 {
 	FrustumComponent& frc = m_r->getActiveFrustumComponent();
 	VisibilityTestResults& visRez = frc.getVisibilityTestResults();
@@ -111,21 +103,20 @@ Error Ir::run()
 		return ErrorCode::NONE;
 	}
 
-	BufferPtr buff =
-		m_probesBuff[getGlobalTimestamp() % m_probesBuff.getSize()];
-	ShaderReflectionProbe* probes = static_cast<ShaderReflectionProbe*>(
-		buff->map(0,m_probesBuffSize, BufferAccessBit::CLIENT_MAP_WRITE));
-
 	const VisibleNode* it = visRez.getReflectionProbesBegin();
 	const VisibleNode* end = visRez.getReflectionProbesEnd();
+	U probCount = end - it;
+
+	ShaderReflectionProbe* probes =
+		cmdb->allocateDynamicMemory<ShaderReflectionProbe>(probCount,
+		BufferUsage::UNIFORM, m_probesToken);
+
 	while(it != end)
 	{
 		ANKI_CHECK(renderReflection(*it->m_node, *probes));
 		++it;
 		++probes;
 	}
-
-	buff->unmap();
 
 	return ErrorCode::NONE;
 }

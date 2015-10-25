@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include "anki/gr/gl/GlObject.h"
-#include "anki/gr/ResourceGroup.h"
-#include "anki/util/DArray.h"
+#include <anki/gr/gl/GlObject.h>
+#include <anki/gr/ResourceGroup.h>
+#include <anki/util/DArray.h>
 
 namespace anki {
 
@@ -30,13 +30,13 @@ public:
 	void create(const ResourceGroupInitializer& init);
 
 	/// Set state.
-	void bind(U slot, GlState& state);
+	void bind(U slot, const DynamicBufferInfo& dynInfo, GlState& state);
 
 private:
 	class InternalBufferBinding
 	{
 	public:
-		GLuint m_name = 0;
+		GLuint m_name = 0; ///< If it's MAX_U32 then it's dynamic
 		U32 m_offset = 0;
 		U32 m_range = 0;
 	};
@@ -54,6 +54,7 @@ private:
 
 	Array<GLuint, MAX_VERTEX_ATTRIBUTES> m_vertBuffNames;
 	Array<GLintptr, MAX_VERTEX_ATTRIBUTES> m_vertBuffOffsets;
+	Bool8 m_hasDynamicVertexBuff = false;
 	U8 m_vertBindingsCount = 0;
 
 	GLuint m_indexBuffName = 0;
@@ -65,7 +66,7 @@ private:
 
 	template<typename InBindings, typename OutBindings>
 	void initBuffers(const InBindings& in, OutBindings& out, U8& count,
-		U& resourcesCount);
+		U& resourcesCount, U& dynCount);
 
 	void initResourceReferences(const ResourceGroupInitializer& init, U count);
 };

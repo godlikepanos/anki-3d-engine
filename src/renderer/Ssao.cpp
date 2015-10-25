@@ -267,7 +267,7 @@ void Ssao::run(CommandBufferPtr& cmdb)
 	cmdb->bindFramebuffer(m_vblurFb);
 	cmdb->setViewport(0, 0, m_width, m_height);
 	cmdb->bindPipeline(m_ssaoPpline);
-	cmdb->bindResourceGroup(m_rcFirst, 0);
+	cmdb->bindResourceGroup(m_rcFirst, 0, nullptr);
 
 	// Write common block
 	const FrustumComponent& camFr = m_r->getActiveFrustumComponent();
@@ -298,13 +298,13 @@ void Ssao::run(CommandBufferPtr& cmdb)
 		// hpass
 		cmdb->bindFramebuffer(m_hblurFb);
 		cmdb->bindPipeline(m_hblurPpline);
-		cmdb->bindResourceGroup(m_hblurRc, 0);
+		cmdb->bindResourceGroup(m_hblurRc, 0, nullptr);
 		m_r->drawQuad(cmdb);
 
 		// vpass
 		cmdb->bindFramebuffer(m_vblurFb);
 		cmdb->bindPipeline(m_vblurPpline);
-		cmdb->bindResourceGroup(m_vblurRc, 0);
+		cmdb->bindResourceGroup(m_vblurRc, 0, nullptr);
 		m_r->drawQuad(cmdb);
 	}
 }

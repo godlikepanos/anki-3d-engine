@@ -3,12 +3,12 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/renderer/Fs.h"
-#include "anki/renderer/Renderer.h"
-#include "anki/renderer/Ms.h"
-#include "anki/renderer/Is.h"
-#include "anki/scene/SceneGraph.h"
-#include "anki/scene/Camera.h"
+#include <anki/renderer/Fs.h>
+#include <anki/renderer/Renderer.h>
+#include <anki/renderer/Ms.h>
+#include <anki/renderer/Is.h>
+#include <anki/scene/SceneGraph.h>
+#include <anki/scene/Camera.h>
 
 namespace anki {
 
@@ -30,7 +30,6 @@ Error Fs::init(const ConfigSet&)
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 	// Init the global resources
-	for(U i = 0; i < m_globalResources.getSize(); ++i)
 	{
 		ResourceGroupInitializer init;
 		init.m_textures[0].m_texture = m_r->getMs().getDepthRt();
@@ -39,17 +38,13 @@ Error Fs::init(const ConfigSet&)
 		init.m_textures[2].m_texture =
 			m_r->getIs().getSm().getOmniTextureArray();
 
-		init.m_storageBuffers[0].m_buffer =
-			m_r->getIs().getCommonVarsBuffer(i);
-		init.m_storageBuffers[1].m_buffer =
-			m_r->getIs().getPointLightsBuffer(i);
-		init.m_storageBuffers[2].m_buffer =
-			m_r->getIs().getSpotLightsBuffer(i);
-		init.m_storageBuffers[3].m_buffer = m_r->getIs().getClusterBuffer(i);
-		init.m_storageBuffers[4].m_buffer =
-			m_r->getIs().getLightIndicesBuffer(i);
+		init.m_storageBuffers[0].m_dynamic = true;
+		init.m_storageBuffers[1].m_dynamic = true;
+		init.m_storageBuffers[2].m_dynamic = true;
+		init.m_storageBuffers[3].m_dynamic = true;
+		init.m_storageBuffers[4].m_dynamic = true;
 
-		m_globalResources[i] = getGrManager().newInstance<ResourceGroup>(init);
+		m_globalResources = getGrManager().newInstance<ResourceGroup>(init);
 	}
 
 	return ErrorCode::NONE;
@@ -62,7 +57,14 @@ Error Fs::run(CommandBufferPtr& cmdb)
 
 	FrustumComponent& camFr = m_r->getActiveFrustumComponent();
 
-	cmdb->bindResourceGroup(m_globalResources[getGlobalTimestamp() % 3], 1);
+	DynamicBufferInfo dyn;
+	dyn.m_storageBuffers[0] = m_r->getIs().getCommonVarsToken();
+	dyn.m_storageBuffers[1] = m_r->getIs().getPointLightsToken();
+	dyn.m_storageBuffers[2] = m_r->getIs().getSpotLightsToken();
+	dyn.m_storageBuffers[3] = m_r->getIs().getClustersToken();
+	dyn.m_storageBuffers[4] = m_r->getIs().getLightIndicesToken();
+
+	cmdb->bindResourceGroup(m_globalResources, 1, &dyn);
 
 	SArray<CommandBufferPtr> cmdbs(&cmdb, 1);
 	ANKI_CHECK(m_r->getSceneDrawer().render(

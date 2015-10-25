@@ -26,13 +26,13 @@ enum class GpuVendor: U8
 class GlState
 {
 public:
-	static const U MAX_UBO_SIZE = 16384;
+	// Spec limits
+	static const U MAX_UNIFORM_BLOCK_SIZE = 16384;
+	static const U MAX_STORAGE_BLOCK_SIZE = 2 << 27;
 
 	I32 m_version = -1; ///< Minor major GL version. Something like 430
 	GpuVendor m_gpu = GpuVendor::UNKNOWN;
 	Bool8 m_registerMessages = false;
-	U32 m_uniBuffOffsetAlignment = 0;
-	U32 m_ssBuffOffsetAlignment = 0;
 
 	GLuint m_defaultVao;
 
@@ -72,13 +72,23 @@ public:
 	Bool m_depthWriteMask = true;
 	/// @}
 
-	/// Global UBO ring buffer
+	/// Ring buffers
 	/// @{
-	U32 m_globalUboSize = MAX_UBO_SIZE * 512; ///< 32MB
-	DArray<GLuint> m_globalUbos; ///< Multiple cause of the spec's UBO max size.
-	DArray<U8*> m_globalUboAddresses;
-	Atomic<U32> m_globalUboCurrentOffset = {0};
-	Atomic<U32> m_globalUboBytesUsaged = {0}; ///< Per frame
+
+	// Ring buffer for dynamic buffers.
+	class DynamicBuffer
+	{
+	public:
+		GLuint m_name;
+		U8* m_address;
+		PtrSize m_size; ///< This is aligned compared to GLOBAL_XXX_SIZE
+		U32 m_alignment;
+		U32 m_maxAllocationSize; ///< For debugging.
+		Atomic<PtrSize> m_currentOffset = {0};
+		Atomic<PtrSize> m_bytesUsed = {0}; ///< Per frame. Mainly for debug
+	};
+
+	Array<DynamicBuffer, U(BufferUsage::COUNT)> m_dynamicBuffers;
 	/// @}
 
 	GlState(GrManager* manager)
@@ -91,11 +101,48 @@ public:
 	/// Call this from the rendering thread.
 	void destroy();
 
+	/// Allocate memory for a dynamic buffer.
+	void* allocateDynamicMemory(PtrSize size, BufferUsage usage);
+
+	void checkDynamicMemoryConsumption();
+
 private:
 	GrManager* m_manager;
 
-	void initGlobalUbo();
+	void initDynamicBuffer(GLenum target, U32 aligment, PtrSize size,
+		U32 maxAllocationSize, BufferUsage usage);
 };
+
+//==============================================================================
+inline void* GlState::allocateDynamicMemory(PtrSize size, BufferUsage usage)
+{
+	ANKI_ASSERT(size > 0);
+
+	DynamicBuffer& buff = m_dynamicBuffers[usage];
+	ANKI_ASSERT(buff.m_name != 0);
+
+	// Align size
+	size = getAlignedRoundUp(buff.m_alignment, size);
+	ANKI_ASSERT(size <= buff.m_maxAllocationSize && "Too high!");
+
+	// Allocate
+	PtrSize offset = 0;
+
+	// Run in loop in case the begining of the range falls inside but the end
+	// outside the buffer
+	do
+	{
+		offset = buff.m_currentOffset.fetchAdd(size);
+		offset = offset % buff.m_size;
+	} while((offset + size) > buff.m_size);
+
+	ANKI_ASSERT(isAligned(buff.m_alignment, buff.m_address + offset));
+	ANKI_ASSERT((offset + size) <= buff.m_size);
+
+	buff.m_bytesUsed.fetchAdd(size);
+
+	return static_cast<void*>(buff.m_address + offset);
+}
 /// @}
 
 } // end namespace anki

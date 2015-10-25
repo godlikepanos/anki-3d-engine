@@ -36,6 +36,7 @@ struct RenderContext
 	Array<Mat4, MAX_INSTANCES> m_cachedTrfs;
 	U m_cachedTrfCount = 0;
 	F32 m_flod;
+	DynamicBufferInfo m_dynBufferInfo;
 };
 
 /// Visitor that sets a uniform
@@ -246,8 +247,9 @@ void RenderableDrawer::setupUniforms(RenderContext& ctx,
 	ctx.m_variant = &variant;
 
 	// Get some memory for uniforms
-	U8* uniforms = nullptr;
-	ctx.m_cmdb->updateDynamicUniforms(variant.getDefaultBlockSize(), uniforms);
+	U8* uniforms = ctx.m_cmdb->allocateDynamicMemory<U8>(
+		variant.getDefaultBlockSize(), BufferUsage::UNIFORM,
+		ctx.m_dynBufferInfo.m_uniformBuffers[0]);
 
 	// Call the visitor
 	SetupRenderableVariableVisitor visitor;
@@ -388,6 +390,7 @@ Error RenderableDrawer::renderSingle(RenderContext& ctx)
 	build.m_subMeshIndicesArray = &ctx.m_visibleNode->m_spatialIndices[0];
 	build.m_subMeshIndicesCount = ctx.m_visibleNode->m_spatialsCount;
 	build.m_cmdb = ctx.m_cmdb;
+	build.m_dynamicBufferInfo = &ctx.m_dynBufferInfo;
 
 	ANKI_CHECK(renderable.buildRendering(build));
 

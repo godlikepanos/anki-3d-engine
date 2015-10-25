@@ -5,10 +5,10 @@
 
 #pragma once
 
-#include "anki/gr/GrObject.h"
-#include "anki/gr/Texture.h"
-#include "anki/gr/Sampler.h"
-#include "anki/gr/Buffer.h"
+#include <anki/gr/GrObject.h>
+#include <anki/gr/Texture.h>
+#include <anki/gr/Sampler.h>
+#include <anki/gr/Buffer.h>
 
 namespace anki {
 
@@ -23,13 +23,14 @@ public:
 	SamplerPtr m_sampler; ///< Use it to override texture's sampler.
 };
 
-/// Buffer binding point.
+/// Buffer binding info.
 class BufferBinding
 {
 public:
 	BufferPtr m_buffer;
 	PtrSize m_offset = 0;
 	PtrSize m_range = 0;
+	Bool m_dynamic = false;
 };
 
 /// Resource group initializer.
@@ -42,6 +43,29 @@ public:
 	Array<BufferBinding, MAX_VERTEX_ATTRIBUTES> m_vertexBuffers;
 	BufferBinding m_indexBuffer;
 	I8 m_indexSize = -1; ///< Index size in bytes. 2 or 4
+};
+
+/// Token that gets returned when requesting for memory to write to a dynamic
+/// buffer.
+class DynamicBufferToken
+{
+anki_internal:
+	U32 m_offset = 0;
+	U32 m_range = 0;
+
+	void invalidate()
+	{
+		m_offset = m_range = MAX_U32;
+	}
+};
+
+/// Struct to help update the offset of the dynamic buffers.
+class DynamicBufferInfo
+{
+public:
+	Array<DynamicBufferToken, MAX_UNIFORM_BUFFER_BINDINGS> m_uniformBuffers;
+	Array<DynamicBufferToken, MAX_STORAGE_BUFFER_BINDINGS> m_storageBuffers;
+	Array<DynamicBufferToken, MAX_VERTEX_ATTRIBUTES> m_vertexBuffers;
 };
 
 /// Resource group.

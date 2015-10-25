@@ -147,7 +147,7 @@ Error MainRenderer::render(SceneGraph& scene)
 		cmdb->setViewport(0, 0, m_width, m_height);
 
 		cmdb->bindPipeline(m_blitPpline);
-		cmdb->bindResourceGroup(m_rcGroup, 0);
+		cmdb->bindResourceGroup(m_rcGroup, 0, nullptr);
 
 		m_r->drawQuad(cmdb);
 	}

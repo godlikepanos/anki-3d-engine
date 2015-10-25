@@ -28,7 +28,7 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 
-	ANKI_USE_RESULT Error run();
+	ANKI_USE_RESULT Error run(CommandBufferPtr cmdb);
 
 	TexturePtr getCubemapArray() const
 	{
@@ -40,8 +40,7 @@ private:
 	TexturePtr m_cubemapArr;
 	U16 m_cubemapArrSize = 0;
 	U16 m_fbSize = 0;
-	U16 m_probesBuffSize = 0;
-	Array<BufferPtr, MAX_FRAMES_IN_FLIGHT> m_probesBuff;
+	DynamicBufferToken m_probesToken;
 
 	ANKI_USE_RESULT Error renderReflection(SceneNode& node,
 		ShaderReflectionProbe& shaderProb);

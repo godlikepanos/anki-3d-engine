@@ -34,12 +34,10 @@ anki_internal:
 
 private:
 	// Occlusion query
-	Array<BufferPtr, MAX_FRAMES_IN_FLIGHT> m_positionsVertBuff;
-	U32 m_positionsVertBuffSize;
 	ShaderResourcePtr m_occlusionVert;
 	ShaderResourcePtr m_occlusionFrag;
 	PipelinePtr m_occlusionPpline;
-	Array<ResourceGroupPtr, MAX_FRAMES_IN_FLIGHT> m_occlusionRcGroups;
+	ResourceGroupPtr m_occlusionRcGroup;
 
 	// Sprite billboards
 	ShaderResourcePtr m_realVert;

@@ -3,12 +3,12 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/gr/gl/RenderingThread.h"
-#include "anki/gr/gl/CommandBufferImpl.h"
-#include "anki/gr/GrManager.h"
-#include "anki/gr/gl/GrManagerImpl.h"
-#include "anki/util/Logger.h"
-#include "anki/core/Counters.h"
+#include <anki/gr/gl/RenderingThread.h>
+#include <anki/gr/gl/CommandBufferImpl.h>
+#include <anki/gr/GrManager.h>
+#include <anki/gr/gl/GrManagerImpl.h>
+#include <anki/util/Logger.h>
+#include <anki/core/Counters.h>
 
 namespace anki {
 
@@ -296,13 +296,7 @@ void RenderingThread::swapBuffersInternal(GlState& state)
 	}
 
 	m_frameCondVar.notifyOne();
-
-	auto bytesUsed = state.m_globalUboBytesUsaged.exchange(0);
-	ANKI_COUNTER_INC(GR_UNIFORM_SIZE, U64(bytesUsed));
-	if(bytesUsed >= state.m_globalUboSize / MAX_FRAMES_IN_FLIGHT)
-	{
-		ANKI_LOGW("Using too much uniform memory. Increase the limit");
-	}
+	state.checkDynamicMemoryConsumption();
 }
 
 //==============================================================================

@@ -95,6 +95,7 @@ Error init()
 		1.0));
 #endif
 
+	if(0)
 	{
 		ReflectionProbe* refl;
 		scene.newSceneNode<ReflectionProbe>("refl", refl, 6.0f);
@@ -480,7 +481,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("is.sm.poissonEnabled", true);
 	config.set("is.sm.resolution", 1024);
 	config.set("lf.maxFlares", 32);
-	config.set("pps.enabled", false);
+	config.set("pps.enabled", true);
 	config.set("pps.bloom.enabled", true);
 	config.set("pps.bloom.renderingQuality", 0.5);
 	config.set("pps.bloom.blurringDist", 1.0);

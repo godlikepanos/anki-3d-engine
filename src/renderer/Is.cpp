@@ -290,43 +290,8 @@ Error Is::initInternal(const ConfigSet& config)
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 	//
-	// Create UBOs
+	// Create resource group
 	//
-	m_pLightsBuffSize = m_maxPointLights * sizeof(ShaderPointLight);
-	m_sLightsBuffSize = m_maxSpotLights * sizeof(ShaderSpotLight);
-
-	for(U i = 0; i < m_pLightsBuffs.getSize(); ++i)
-	{
-		// Common variables
-		m_commonVarsBuffs[i] = getGrManager().newInstance<Buffer>(
-			sizeof(ShaderCommonUniforms), BufferUsageBit::STORAGE,
-			BufferAccessBit::CLIENT_MAP_WRITE);
-
-		// Point lights
-		m_pLightsBuffs[i] = getGrManager().newInstance<Buffer>(
-			m_pLightsBuffSize, BufferUsageBit::STORAGE,
-			BufferAccessBit::CLIENT_MAP_WRITE);
-
-		// Spot lights
-		m_sLightsBuffs[i] = getGrManager().newInstance<Buffer>(
-			m_sLightsBuffSize, BufferUsageBit::STORAGE,
-			BufferAccessBit::CLIENT_MAP_WRITE);
-
-		// Clusters
-		m_clusterBuffers[i] = getGrManager().newInstance<Buffer>(
-			m_r->getClusterCount() * sizeof(ShaderCluster),
-			BufferUsageBit::STORAGE, BufferAccessBit::CLIENT_MAP_WRITE);
-
-		// Index
-		m_lightIdsBuffers[i] = getGrManager().newInstance<Buffer>(
-			m_maxLightIds * sizeof(Lid),
-			BufferUsageBit::STORAGE, BufferAccessBit::CLIENT_MAP_WRITE);
-	}
-
-	//
-	// Create resource groups
-	//
-	for(U i = 0; i < m_rcGroups.getSize(); ++i)
 	{
 		ResourceGroupInitializer init;
 		init.m_textures[0].m_texture = m_r->getMs().getRt0();
@@ -336,13 +301,13 @@ Error Is::initInternal(const ConfigSet& config)
 		init.m_textures[4].m_texture = m_sm.getSpotTextureArray();
 		init.m_textures[5].m_texture = m_sm.getOmniTextureArray();
 
-		init.m_storageBuffers[0].m_buffer = m_commonVarsBuffs[i];
-		init.m_storageBuffers[1].m_buffer = m_pLightsBuffs[i];
-		init.m_storageBuffers[2].m_buffer = m_sLightsBuffs[i];
-		init.m_storageBuffers[3].m_buffer = m_clusterBuffers[i];
-		init.m_storageBuffers[4].m_buffer = m_lightIdsBuffers[i];
+		init.m_storageBuffers[0].m_dynamic = true;
+		init.m_storageBuffers[1].m_dynamic = true;
+		init.m_storageBuffers[2].m_dynamic = true;
+		init.m_storageBuffers[3].m_dynamic = true;
+		init.m_storageBuffers[4].m_dynamic = true;
 
-		m_rcGroups[i] = getGrManager().newInstance<ResourceGroup>(init);
+		m_rcGroup = getGrManager().newInstance<ResourceGroup>(init);
 	}
 
 	//
@@ -356,7 +321,7 @@ Error Is::initInternal(const ConfigSet& config)
 }
 
 //==============================================================================
-Error Is::lightPass(CommandBufferPtr& cmdBuff)
+Error Is::lightPass(CommandBufferPtr& cmdb)
 {
 	ThreadPool& threadPool = m_r->getThreadPool();
 	m_frc = &m_r->getActiveFrustumComponent();
@@ -419,7 +384,7 @@ Error Is::lightPass(CommandBufferPtr& cmdBuff)
 	ANKI_CHECK(m_sm.run(
 		{&spotCasters[0], spotCastersCount},
 		{&omniCasters[0], omniCastersCount},
-		cmdBuff));
+		cmdb));
 
 	//
 	// Write the lights and tiles UBOs
@@ -430,22 +395,28 @@ Error Is::lightPass(CommandBufferPtr& cmdBuff)
 
 	if(visiblePointLightsCount)
 	{
-		void* data = m_pLightsBuffs[m_currentFrame]->map(
-			0, visiblePointLightsCount * sizeof(ShaderPointLight),
-			BufferAccessBit::CLIENT_MAP_WRITE);
+		ShaderPointLight* data = cmdb->allocateDynamicMemory<ShaderPointLight>(
+			visiblePointLightsCount, BufferUsage::STORAGE, m_pLightsToken);
 
-		taskData.m_pointLights = SArray<ShaderPointLight>(
-			static_cast<ShaderPointLight*>(data), visiblePointLightsCount);
+		taskData.m_pointLights = SArray<ShaderPointLight>(data,
+			visiblePointLightsCount);
+	}
+	else
+	{
+		m_pLightsToken.invalidate();
 	}
 
 	if(visibleSpotLightsCount)
 	{
-		void* data = m_sLightsBuffs[m_currentFrame]->map(
-			0, visibleSpotLightsCount * sizeof(ShaderSpotLight),
-			BufferAccessBit::CLIENT_MAP_WRITE);
+		ShaderSpotLight* data = cmdb->allocateDynamicMemory<ShaderSpotLight>(
+			visibleSpotLightsCount, BufferUsage::STORAGE, m_sLightsToken);
 
-		taskData.m_spotLights = SArray<ShaderSpotLight>(
-			static_cast<ShaderSpotLight*>(data), visibleSpotLightsCount);
+		taskData.m_spotLights = SArray<ShaderSpotLight>(data,
+			visibleSpotLightsCount);
+	}
+	else
+	{
+		m_sLightsToken.invalidate();
 	}
 
 	taskData.m_lightsBegin = vi.getLightsBegin();
@@ -453,22 +424,17 @@ Error Is::lightPass(CommandBufferPtr& cmdBuff)
 
 	taskData.m_is = this;
 
-	// Map clusters
-	void* data = m_clusterBuffers[m_currentFrame]->map(
-		0,
-		clusterCount * sizeof(ShaderCluster),
-		BufferAccessBit::CLIENT_MAP_WRITE);
+	// Get mem for clusters
+	ShaderCluster* data = cmdb->allocateDynamicMemory<ShaderCluster>(
+		clusterCount, BufferUsage::STORAGE, m_clustersToken);
 
-	taskData.m_clusters = SArray<ShaderCluster>(
-		static_cast<ShaderCluster*>(data), clusterCount);
+	taskData.m_clusters = SArray<ShaderCluster>(data, clusterCount);
 
-	// Map light IDs
-	data = m_lightIdsBuffers[m_currentFrame]->map(
-		0,
-		m_maxLightIds * sizeof(Lid),
-		BufferAccessBit::CLIENT_MAP_WRITE);
+	// Allocate light IDs
+	Lid* data2 = cmdb->allocateDynamicMemory<Lid>(m_maxLightIds,
+		BufferUsage::STORAGE, m_lightIdsToken);
 
-	taskData.m_lightIds = SArray<Lid>(static_cast<Lid*>(data), m_maxLightIds);
+	taskData.m_lightIds = SArray<Lid>(data2, m_maxLightIds);
 
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
@@ -477,35 +443,19 @@ Error Is::lightPass(CommandBufferPtr& cmdBuff)
 		threadPool.assignNewTask(i, &tasks[i]);
 	}
 
-	// In the meantime set the state
-	setState(cmdBuff);
-
 	// Update uniforms
-	updateCommonBlock(cmdBuff, *m_frc);
+	updateCommonBlock(cmdb, *m_frc);
+
+	// In the meantime set the state
+	setState(cmdb);
 
 	// Sync
 	ANKI_CHECK(threadPool.waitForAllThreadsToFinish());
 
 	//
-	// Unmap
-	//
-	if(visiblePointLightsCount)
-	{
-		m_pLightsBuffs[m_currentFrame]->unmap();
-	}
-
-	if(visibleSpotLightsCount)
-	{
-		m_sLightsBuffs[m_currentFrame]->unmap();
-	}
-
-	m_clusterBuffers[m_currentFrame]->unmap();
-	m_lightIdsBuffers[m_currentFrame]->unmap();
-
-	//
 	// Draw
 	//
-	cmdBuff->drawArrays(4, m_r->getTileCount());
+	cmdb->drawArrays(4, m_r->getTileCount());
 
 	return ErrorCode::NONE;
 }
@@ -770,29 +720,35 @@ void Is::binLight(
 }
 
 //==============================================================================
-void Is::setState(CommandBufferPtr& cmdBuff)
+void Is::setState(CommandBufferPtr& cmdb)
 {
-	cmdBuff->bindFramebuffer(m_fb);
-	cmdBuff->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
-	cmdBuff->bindPipeline(m_lightPpline);
-	cmdBuff->bindResourceGroup(m_rcGroups[m_currentFrame], 0);
+	cmdb->bindFramebuffer(m_fb);
+	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
+	cmdb->bindPipeline(m_lightPpline);
+
+	DynamicBufferInfo dyn;
+	dyn.m_storageBuffers[0] = m_commonVarsToken;
+	dyn.m_storageBuffers[1] = m_pLightsToken;
+	dyn.m_storageBuffers[2] = m_sLightsToken;
+	dyn.m_storageBuffers[3] = m_clustersToken;
+	dyn.m_storageBuffers[4] = m_lightIdsToken;
+
+	cmdb->bindResourceGroup(m_rcGroup, 0, &dyn);
 }
 
 //==============================================================================
-Error Is::run(CommandBufferPtr& cmdBuff)
+Error Is::run(CommandBufferPtr& cmdb)
 {
 	// Do the light pass including the shadow passes
-	return lightPass(cmdBuff);
+	return lightPass(cmdb);
 }
 
 //==============================================================================
 void Is::updateCommonBlock(CommandBufferPtr& cmdb, const FrustumComponent& fr)
 {
 	ShaderCommonUniforms* blk =
-		static_cast<ShaderCommonUniforms*>(
-			m_commonVarsBuffs[m_currentFrame]->map(
-			0, sizeof(ShaderCommonUniforms),
-			BufferAccessBit::CLIENT_MAP_WRITE));
+		cmdb->allocateDynamicMemory<ShaderCommonUniforms>(1,
+		BufferUsage::STORAGE, m_commonVarsToken);
 
 	// Start writing
 	blk->m_projectionParams = m_r->getProjectionParameters();
@@ -818,8 +774,6 @@ void Is::updateCommonBlock(CommandBufferPtr& cmdb, const FrustumComponent& fr)
 	}
 
 	blk->m_tileCount = UVec4(m_r->getTileCountXY(), m_r->getTileCount(), 0);
-
-	m_commonVarsBuffs[m_currentFrame]->unmap();
 }
 
 } // end namespace anki

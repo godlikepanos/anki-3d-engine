@@ -1,5 +1,9 @@
-#ifndef ANKI_CONFIG_H
-#define ANKI_CONFIG_H
+// Copyright (C) 2009-2015, Panagiotis Christopoulos Charitos.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma once
 
 /// @addtogroup config
 /// @{
@@ -105,34 +109,6 @@
 #define ANKI_ENABLE_COUNTERS ${_ANKI_ENABLE_COUNTERS}
 
 //==============================================================================
-// Engine config                                                               =
-//==============================================================================
-
-// General config
-#define ANKI_SAFE_ALIGNMENT 16
-
-// Renderer and rendering related config options
-#define ANKI_RENDERER_MAX_TILES_X 64
-#define ANKI_RENDERER_MAX_TILES_Y 64
-
-#define ANKI_RENDERER_USE_MATERIAL_UBOS 0
-
-/// @{
-/// Used to optimize the initial vectors of VisibilityTestResults
-#define ANKI_FRUSTUMABLE_AVERAGE_VISIBLE_RENDERABLES_COUNT 16
-#define ANKI_FRUSTUMABLE_AVERAGE_VISIBLE_LIGHTS_COUNT 8
-/// @}
-
-/// If true then we can place spatials in a thread-safe way
-#define ANKI_CFG_OCTREE_THREAD_SAFE 1
-
-// GL
-#define ANKI_GL_MAX_MIPMAPS 32
-#define ANKI_GL_MAX_TEXTURE_LAYERS 32
-#define ANKI_GL_MAX_SUB_DRAWCALLS 64
-#define ANKI_GL_MAX_INSTANCES 64
-
-//==============================================================================
 // Other                                                                       =
 //==============================================================================
 
@@ -153,7 +129,6 @@
 #	define ANKI_USE_RESULT
 #	define ANKI_FORCE_INLINE
 #endif
-/// @}
 
 #ifdef ANKI_BUILD
 #	define anki_internal public
@@ -161,4 +136,30 @@
 #	define anki_internal protected
 #endif
 
-#endif
+//==============================================================================
+// Engine config                                                               =
+//==============================================================================
+
+// General config
+#define ANKI_SAFE_ALIGNMENT 16
+
+// GL
+#define ANKI_GL_MAX_SUB_DRAWCALLS 64
+
+namespace anki {
+
+/// Max size of the dynamic uniforms ring buffer. You will get a warning it's
+/// not enough
+const unsigned GR_DYNAMIC_UNIFORMS_SIZE = 1024 * 1024 * 16;
+
+/// Max size of the dynamic storage ring buffer. You will get a warning it's
+/// not enough
+const unsigned GR_DYNAMIC_STORAGE_SIZE = 1024 * 1024 * 16;
+
+/// Max size of the dynamic vertex ring buffer. You will get a warning it's
+/// not enough
+const unsigned GR_DYNAMIC_VERTEX_SIZE = 1024 * 1024 * 2;
+
+} // end namespace anki
+
+/// @}

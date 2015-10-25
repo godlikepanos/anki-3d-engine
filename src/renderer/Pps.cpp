@@ -210,7 +210,7 @@ void Pps::run(CommandBufferPtr& cmdb)
 	cmdb->bindFramebuffer(fb);
 	cmdb->setViewport(0, 0, width, height);
 	cmdb->bindPipeline(m_ppline);
-	cmdb->bindResourceGroup(m_rcGroup, 0);
+	cmdb->bindResourceGroup(m_rcGroup, 0, nullptr);
 
 	if(m_uniformsDirty)
 	{

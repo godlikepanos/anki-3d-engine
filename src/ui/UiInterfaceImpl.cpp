@@ -142,7 +142,7 @@ void UiInterfaceImpl::drawLines(const SArray<UVec2>& positions,
 
 	m_cmdb->bindPipeline(m_stages[StageId::LINES].m_ppline);
 	m_cmdb->bindResourceGroup(m_stages[StageId::LINES].m_rcGroups[m_timestamp],
-		0);
+		0, nullptr);
 	m_cmdb->drawArrays(positions.getSize(), 1, m_vertCounts[stageId]);
 
 	for(const UVec2& pos : positions)

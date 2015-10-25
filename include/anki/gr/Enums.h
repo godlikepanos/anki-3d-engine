@@ -282,6 +282,20 @@ enum class BufferUsageBit: U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferUsageBit, inline)
 
+/// Buffer usage modes.
+enum class BufferUsage: U8
+{
+	UNIFORM,
+	STORAGE,
+	INDEX,
+	VERTEX,
+	INDIRECT,
+
+	COUNT,
+	FIRST = UNIFORM
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferUsage, inline)
+
 /// Buffer access from client modes.
 enum class BufferAccessBit: U8
 {

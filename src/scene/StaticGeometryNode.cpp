@@ -97,7 +97,8 @@ Error StaticGeometryPatchNode::buildRendering(RenderingBuildInfo& data) const
 
 	if(drawCount == 1)
 	{
-		data.m_cmdb->bindResourceGroup(grResources, 0);
+		data.m_cmdb->bindResourceGroup(grResources, 0,
+			data.m_dynamicBufferInfo);
 
 		data.m_cmdb->drawElements(
 			indicesCountArray[0],

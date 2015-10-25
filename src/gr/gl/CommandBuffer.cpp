@@ -3,24 +3,24 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/gr/CommandBuffer.h"
-#include "anki/gr/gl/CommandBufferImpl.h"
-#include "anki/gr/GrManager.h"
-#include "anki/gr/gl/GrManagerImpl.h"
-#include "anki/gr/gl/RenderingThread.h"
-#include "anki/gr/Pipeline.h"
-#include "anki/gr/gl/PipelineImpl.h"
-#include "anki/gr/Framebuffer.h"
-#include "anki/gr/gl/FramebufferImpl.h"
-#include "anki/gr/ResourceGroup.h"
-#include "anki/gr/gl/ResourceGroupImpl.h"
-#include "anki/gr/OcclusionQuery.h"
-#include "anki/gr/gl/OcclusionQueryImpl.h"
-#include "anki/gr/Texture.h"
-#include "anki/gr/gl/TextureImpl.h"
-#include "anki/gr/Buffer.h"
-#include "anki/gr/gl/BufferImpl.h"
-#include "anki/core/Counters.h"
+#include <anki/gr/CommandBuffer.h>
+#include <anki/gr/gl/CommandBufferImpl.h>
+#include <anki/gr/GrManager.h>
+#include <anki/gr/gl/GrManagerImpl.h>
+#include <anki/gr/gl/RenderingThread.h>
+#include <anki/gr/Pipeline.h>
+#include <anki/gr/gl/PipelineImpl.h>
+#include <anki/gr/Framebuffer.h>
+#include <anki/gr/gl/FramebufferImpl.h>
+#include <anki/gr/ResourceGroup.h>
+#include <anki/gr/gl/ResourceGroupImpl.h>
+#include <anki/gr/OcclusionQuery.h>
+#include <anki/gr/gl/OcclusionQueryImpl.h>
+#include <anki/gr/Texture.h>
+#include <anki/gr/gl/TextureImpl.h>
+#include <anki/gr/Buffer.h>
+#include <anki/gr/gl/BufferImpl.h>
+#include <anki/core/Counters.h>
 
 namespace anki {
 
@@ -144,23 +144,31 @@ class BindResourcesCommand final: public GlCommand
 public:
 	ResourceGroupPtr m_rc;
 	U8 m_slot;
+	DynamicBufferInfo m_dynInfo;
 
-	BindResourcesCommand(ResourceGroupPtr rc, U8 slot)
+	BindResourcesCommand(ResourceGroupPtr rc, U8 slot,
+		const DynamicBufferInfo* dynInfo)
 		: m_rc(rc)
 		, m_slot(slot)
-	{}
+	{
+		if(dynInfo)
+		{
+			m_dynInfo = *dynInfo;
+		}
+	}
 
 	Error operator()(GlState& state)
 	{
-		m_rc->getImplementation().bind(m_slot, state);
+		m_rc->getImplementation().bind(m_slot, m_dynInfo, state);
 		return ErrorCode::NONE;
 	}
 };
 
-void CommandBuffer::bindResourceGroup(ResourceGroupPtr rc, U slot)
+void CommandBuffer::bindResourceGroup(ResourceGroupPtr rc, U slot,
+	const DynamicBufferInfo* dynInfo)
 {
 	ANKI_ASSERT(rc.isCreated());
-	m_impl->pushBackNewCommand<BindResourcesCommand>(rc, slot);
+	m_impl->pushBackNewCommand<BindResourcesCommand>(rc, slot, dynInfo);
 }
 
 //==============================================================================
@@ -306,69 +314,24 @@ void CommandBuffer::dispatchCompute(
 }
 
 //==============================================================================
-class UpdateUniformsCommand final: public GlCommand
+void* CommandBuffer::allocateDynamicMemoryInternal(U32 size, BufferUsage usage,
+	DynamicBufferToken& token)
 {
-public:
-	GLuint m_uboName;
-	U32 m_offset;
-	U16 m_range;
-
-	UpdateUniformsCommand(GLuint ubo, U32 offset, U16 range)
-		: m_uboName(ubo)
-		, m_offset(offset)
-		, m_range(range)
-	{}
-
-	Error operator()(GlState&)
-	{
-		const U binding = 0;
-		glBindBufferRange(
-			GL_UNIFORM_BUFFER, binding, m_uboName, m_offset, m_range);
-
-		return ErrorCode::NONE;
-	}
-};
-
-void CommandBuffer::updateDynamicUniformsInternal(U32 originalSize, void*& data)
-{
-	ANKI_ASSERT(originalSize > 0);
-	ANKI_ASSERT(originalSize <= 1024 * 8 && "Too high?");
-
 	// Will be used in a thread safe way
 	GlState& state =
 		getManager().getImplementation().getRenderingThread().getState();
 
-	const U uboSize = state.m_globalUboSize;
-	const U subUboSize = GlState::MAX_UBO_SIZE;
+	void* data = state.allocateDynamicMemory(size, usage);
+	ANKI_ASSERT(data);
 
-	// Get offset in the contiguous buffer
-	U size = getAlignedRoundUp(state.m_uniBuffOffsetAlignment, originalSize);
-	state.m_globalUboBytesUsaged.fetchAdd(size);
-	U offset = state.m_globalUboCurrentOffset.fetchAdd(size);
-	offset = offset % uboSize;
+	// Encode token
+	PtrSize offset =
+		static_cast<U8*>(data) - state.m_dynamicBuffers[usage].m_address;
+	ANKI_ASSERT(offset < MAX_U32 && size < MAX_U32);
+	token.m_offset = offset;
+	token.m_range = size;
 
-	while((offset % subUboSize) + size > subUboSize)
-	{
-		// Update area will fall between UBOs, need to start over
-		offset = state.m_globalUboCurrentOffset.fetchAdd(size);
-		offset = offset % uboSize;
-	}
-
-	ANKI_ASSERT(isAligned(state.m_uniBuffOffsetAlignment, offset));
-	ANKI_ASSERT(offset + size <= uboSize);
-
-	// Get actual UBO address to write
-	U uboIdx = offset / subUboSize;
-	U subUboOffset = offset % subUboSize;
-	ANKI_ASSERT(isAligned(state.m_uniBuffOffsetAlignment, subUboOffset));
-
-	U8* addressToWrite = state.m_globalUboAddresses[uboIdx] + subUboOffset;
-
-	data = static_cast<void*>(addressToWrite);
-
-	// Push bind command
-	m_impl->pushBackNewCommand<UpdateUniformsCommand>(
-		state.m_globalUbos[uboIdx], subUboOffset, originalSize);
+	return data;
 }
 
 //==============================================================================

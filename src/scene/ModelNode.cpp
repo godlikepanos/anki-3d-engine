@@ -115,7 +115,7 @@ Error ModelPatchNode::buildRendering(RenderingBuildInfo& data) const
 
 	// Set jobs
 	data.m_cmdb->bindPipeline(ppline);
-	data.m_cmdb->bindResourceGroup(grResources, 0);
+	data.m_cmdb->bindResourceGroup(grResources, 0, data.m_dynamicBufferInfo);
 
 	// Drawcall
 	U32 offset = indicesOffsetArray[0] / sizeof(U16);

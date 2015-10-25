@@ -20,6 +20,9 @@ class GrManagerInitializer;
 class PipelineInitializer;
 class FramebufferInitializer;
 
+class DynamicBufferToken;
+class DynamicBufferInfo;
+
 #define ANKI_GR_CLASS(x_) \
 	class x_##Impl; \
 	class x_; \
@@ -49,7 +52,7 @@ const U MAX_COLOR_ATTACHMENTS = 4;
 const U MAX_MIPMAPS = 16;
 const U MAX_TEXTURE_LAYERS = 32;
 const U MAX_TEXTURE_BINDINGS = 8;
-const U MAX_UNIFORM_BUFFER_BINDINGS = 8;
+const U MAX_UNIFORM_BUFFER_BINDINGS = 1;
 const U MAX_STORAGE_BUFFER_BINDINGS = 8;
 const U MAX_FRAMES_IN_FLIGHT = 3;
 const U MAX_RESOURCE_GROUPS = 2;

@@ -132,7 +132,6 @@ Error Bloom::initInternal(const ConfigSet& config)
 	descInit.m_uniformBuffers[0].m_range = sizeof(Vec4);
 	descInit.m_storageBuffers[0].m_buffer =
 		m_r->getPps().getTm().getAverageLuminanceBuffer();
-	descInit.m_storageBuffers[0].m_range = sizeof(Vec4);
 
 	m_firstDescrGroup = gl.newInstance<ResourceGroup>(descInit);
 
@@ -180,7 +179,7 @@ void Bloom::run(CommandBufferPtr& cmdb)
 		m_commonUboUpdateTimestamp = getGlobalTimestamp();
 	}
 
-	cmdb->bindResourceGroup(m_firstDescrGroup, 0);
+	cmdb->bindResourceGroup(m_firstDescrGroup, 0, nullptr);
 
 	m_r->drawQuad(cmdb);
 
@@ -189,13 +188,13 @@ void Bloom::run(CommandBufferPtr& cmdb)
 	{
 		// hpass
 		cmdb->bindFramebuffer(m_hblurFb);
-		cmdb->bindResourceGroup(m_hDescrGroup, 0);
+		cmdb->bindResourceGroup(m_hDescrGroup, 0, nullptr);
 		cmdb->bindPipeline(m_hblurPpline);
 		m_r->drawQuad(cmdb);
 
 		// vpass
 		cmdb->bindFramebuffer(m_vblurFb);
-		cmdb->bindResourceGroup(m_vDescrGroup, 0);
+		cmdb->bindResourceGroup(m_vDescrGroup, 0, nullptr);
 		cmdb->bindPipeline(m_vblurPpline);
 		m_r->drawQuad(cmdb);
 	}

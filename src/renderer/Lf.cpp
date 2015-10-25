@@ -96,16 +96,6 @@ Error Lf::initSprite(const ConfigSet& config)
 //==============================================================================
 Error Lf::initOcclusion(const ConfigSet& config)
 {
-	// Init vert buff
-	m_positionsVertBuffSize = sizeof(Vec3) * m_maxFlares;
-
-	for(U i = 0; i < m_positionsVertBuff.getSize(); ++i)
-	{
-		m_positionsVertBuff[i] = getGrManager().newInstance<Buffer>(
-			m_positionsVertBuffSize, BufferUsageBit::VERTEX,
-			BufferAccessBit::CLIENT_MAP_WRITE);
-	}
-
 	// Shaders
 	ANKI_CHECK(getResourceManager().loadResource(
 		"shaders/LfOcclusion.vert.glsl", m_occlusionVert));
@@ -141,12 +131,11 @@ Error Lf::initOcclusion(const ConfigSet& config)
 	m_occlusionPpline = getGrManager().newInstance<Pipeline>(init);
 
 	// Init resource group
-	for(U i = 0; i < m_occlusionRcGroups.getSize(); ++i)
 	{
 		ResourceGroupInitializer rcInit;
-		rcInit.m_vertexBuffers[0].m_buffer = m_positionsVertBuff[i];
-		m_occlusionRcGroups[i] =
-			getGrManager().newInstance<ResourceGroup>(rcInit);
+		rcInit.m_vertexBuffers[0].m_dynamic = true;
+		rcInit.m_uniformBuffers[0].m_dynamic = true;
+		m_occlusionRcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);
 	}
 
 	return ErrorCode::NONE;
@@ -168,33 +157,32 @@ void Lf::runOcclusionTests(CommandBufferPtr& cmdb)
 	FrustumComponent& camFr = m_r->getActiveFrustumComponent();
 	VisibilityTestResults& vi = camFr.getVisibilityTestResults();
 
+	if(vi.getLensFlaresCount() > m_maxFlares)
+	{
+		ANKI_LOGW("Visible flares exceed the limit. Increase lf.maxFlares");
+	}
+
 	U totalCount = min<U>(vi.getLensFlaresCount(), m_maxFlares);
 	if(totalCount > 0)
 	{
-		ANKI_ASSERT(sizeof(Vec3) * totalCount <= m_positionsVertBuffSize);
+		// Setup MVP UBO
+		DynamicBufferToken token;
+		Mat4* mvp = cmdb->allocateDynamicMemory<Mat4>(1, BufferUsage::UNIFORM,
+			token);
+		*mvp = camFr.getViewProjectionMatrix();
 
-		if(vi.getLensFlaresCount() > m_maxFlares)
-		{
-			ANKI_LOGW("Visible flares exceed the limit. Increase lf.maxFlares");
-		}
-
-		U frame = getGlobalTimestamp() % m_positionsVertBuff.getSize();
+		// Alloc dyn mem
+		DynamicBufferToken token2;
+		Vec3* positions = cmdb->allocateDynamicMemory<Vec3>(totalCount,
+			BufferUsage::VERTEX, token2);
+		const Vec3* initialPositions = positions;
 
 		// Setup state
 		cmdb->bindPipeline(m_occlusionPpline);
-		cmdb->bindResourceGroup(m_occlusionRcGroups[frame], 0);
-
-		// Setup MVP UBO
-		Mat4* mvp = nullptr;
-		cmdb->updateDynamicUniforms(sizeof(Mat4), mvp);
-		*mvp = camFr.getViewProjectionMatrix();
-
-		// Allocate vertices and fire write job
-		BufferPtr& positionsVertBuff = m_positionsVertBuff[frame];
-
-		Vec3* positions = static_cast<Vec3*>(positionsVertBuff->map(
-			0, sizeof(Vec3) * totalCount, BufferAccessBit::CLIENT_MAP_WRITE));
-		Vec3* initialPositions = positions;
+		DynamicBufferInfo dyn;
+		dyn.m_uniformBuffers[0] = token;
+		dyn.m_vertexBuffers[0] = token2;
+		cmdb->bindResourceGroup(m_occlusionRcGroup, 0, &dyn);
 
 		// Iterate lens flare
 		auto it = vi.getLensFlaresBegin();
@@ -216,8 +204,6 @@ void Lf::runOcclusionTests(CommandBufferPtr& cmdb)
 
 			++positions;
 		}
-
-		positionsVertBuff->unmap();
 
 		ANKI_ASSERT(positions == initialPositions + totalCount);
 	}
@@ -258,12 +244,10 @@ void Lf::run(CommandBufferPtr& cmdb)
 			U count = 0;
 			U spritesCount = max<U>(1, m_maxSpritesPerFlare); // TODO
 
-			cmdb->bindResourceGroup(lf.getResourceGroup(), 0);
-
 			// Get uniform memory
-			Sprite* tmpSprites = nullptr;
-			cmdb->updateDynamicUniforms(
-				sizeof(Sprite) * spritesCount, tmpSprites);
+			DynamicBufferToken token;
+			Sprite* tmpSprites = cmdb->allocateDynamicMemory<Sprite>(
+				spritesCount, BufferUsage::UNIFORM, token);
 			SArray<Sprite> sprites(tmpSprites, spritesCount);
 
 			// misc
@@ -289,6 +273,9 @@ void Lf::run(CommandBufferPtr& cmdb)
 
 			if(!queryInvalid)
 			{
+				DynamicBufferInfo dyn;
+				dyn.m_uniformBuffers[0] = token;
+				cmdb->bindResourceGroup(lf.getResourceGroup(), 0, &dyn);
 				cmdb->drawArraysConditional(query, 4);
 			}
 			else

@@ -441,6 +441,8 @@ Error Material::createProgramSourceToCache(
 //==============================================================================
 void Material::fillResourceGroupInitializer(ResourceGroupInitializer& rcinit)
 {
+	rcinit.m_uniformBuffers[0].m_dynamic = true;
+
 	UpdateTexturesVisitor visitor;
 	visitor.m_init = &rcinit;
 	visitor.m_manager = &getManager();

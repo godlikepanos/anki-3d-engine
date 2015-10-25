@@ -5,7 +5,8 @@
 
 #pragma once
 
-#include "anki/gr/GrObject.h"
+#include <anki/gr/GrObject.h>
+#include <anki/util/Functions.h>
 
 namespace anki {
 
@@ -114,7 +115,8 @@ public:
 	void bindFramebuffer(FramebufferPtr fb);
 
 	/// Bind resources.
-	void bindResourceGroup(ResourceGroupPtr rc, U slot);
+	void bindResourceGroup(ResourceGroupPtr rc, U slot,
+		const DynamicBufferInfo* dynInfo);
 	/// @}
 
 	/// @name Jobs
@@ -163,13 +165,15 @@ public:
 		data = static_cast<Type*>(vdata);
 	}
 
-	/// Update dynamic uniforms.
+	/// Allocate memory for dynamic buffers.
 	template<typename Type>
-	void updateDynamicUniforms(U32 size, Type*& data)
+	Type* allocateDynamicMemory(U32 count, BufferUsage usage,
+		DynamicBufferToken& token)
 	{
-		void* vdata = nullptr;
-		updateDynamicUniformsInternal(size, vdata);
-		data = static_cast<Type*>(vdata);
+		void* ptr = allocateDynamicMemoryInternal(count * sizeof(Type),
+			usage, token);
+		ANKI_ASSERT(isAligned(alignof(Type), static_cast<U8*>(ptr)));
+		return static_cast<Type*>(ptr);
 	}
 	/// @}
 
@@ -197,7 +201,8 @@ private:
 	void writeBufferInternal(BufferPtr buff, PtrSize offset, PtrSize range,
 		void*& data);
 
-	void updateDynamicUniformsInternal(U32 size, void*& data);
+	void* allocateDynamicMemoryInternal(U32 size, BufferUsage usage,
+		DynamicBufferToken& token);
 };
 /// @}
 

@@ -89,7 +89,7 @@ void Tiler::run(CommandBufferPtr& cmd)
 	U pboIdx = getGlobalTimestamp() % m_outBuffers.getSize();
 
 	cmd->bindPipeline(m_ppline);
-	cmd->bindResourceGroup(m_rcGroups[pboIdx], 0);
+	cmd->bindResourceGroup(m_rcGroups[pboIdx], 0, nullptr);
 
 	cmd->dispatchCompute(
 		m_r->getTileCountXY().x(), m_r->getTileCountXY().y(), 1);

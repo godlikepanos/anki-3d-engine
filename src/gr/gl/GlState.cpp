@@ -3,10 +3,11 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/gr/gl/GlState.h"
-#include "anki/gr/gl/BufferImpl.h"
-#include "anki/gr/GrManager.h"
-#include "anki/util/Logger.h"
+#include <anki/gr/gl/GlState.h>
+#include <anki/gr/gl/BufferImpl.h>
+#include <anki/gr/GrManager.h>
+#include <anki/util/Logger.h>
+#include <anki/core/Counters.h>
 #include <algorithm>
 #include <cstring>
 
@@ -119,15 +120,6 @@ void GlState::init()
 		}
 	}
 #endif
-
-	// Buffer offset alignment
-	GLint64 alignment;
-	glGetInteger64v(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &alignment);
-	m_uniBuffOffsetAlignment = alignment;
-
-	glGetInteger64v(GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT, &alignment);
-	m_ssBuffOffsetAlignment = alignment;
-
 	// Set some GL state
 	glEnable(GL_PROGRAM_POINT_SIZE);
 	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
@@ -144,51 +136,87 @@ void GlState::init()
 
 	// Other
 	memset(&m_vertexBindingStrides[0], 0, sizeof(m_vertexBindingStrides));
-	initGlobalUbo();
+
+	// Init ring buffers
+	GLint64 blockAlignment;
+	glGetInteger64v(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &blockAlignment);
+	initDynamicBuffer(GL_UNIFORM_BUFFER, blockAlignment,
+		GR_DYNAMIC_UNIFORMS_SIZE, MAX_UNIFORM_BLOCK_SIZE, BufferUsage::UNIFORM);
+
+	glGetInteger64v(GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT, &blockAlignment);
+	initDynamicBuffer(GL_SHADER_STORAGE_BUFFER, blockAlignment,
+		GR_DYNAMIC_STORAGE_SIZE, MAX_STORAGE_BLOCK_SIZE, BufferUsage::STORAGE);
+
+	initDynamicBuffer(GL_ARRAY_BUFFER, 8, GR_DYNAMIC_VERTEX_SIZE,
+		MAX_U32, BufferUsage::VERTEX);
 }
 
 //==============================================================================
-void GlState::initGlobalUbo()
+void GlState::initDynamicBuffer(GLenum target, U32 alignment, PtrSize size,
+	U32 maxAllocationSize, BufferUsage usage)
 {
-	ANKI_ASSERT(m_globalUboSize > 0);
-	auto alloc = m_manager->getAllocator();
+	DynamicBuffer& buff = m_dynamicBuffers[usage];
 
-	m_globalUboSize = getAlignedRoundUp(MAX_UBO_SIZE, m_globalUboSize);
-	U ubosCount = m_globalUboSize / MAX_UBO_SIZE;
+	const U FLAGS = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT;
 
-	m_globalUbos.create(alloc, ubosCount);
-	m_globalUboAddresses.create(alloc, ubosCount);
+	alignRoundUp(alignment, size);
 
-	for(U i = 0; i < ubosCount; ++i)
+	glGenBuffers(1, &buff.m_name);
+
+	glBindBuffer(target, buff.m_name);
+	glBufferStorage(target, size, nullptr, FLAGS);
+
+	buff.m_address = static_cast<U8*>(glMapBufferRange(target, 0, size, FLAGS));
+	buff.m_size = size;
+	buff.m_alignment = alignment;
+	buff.m_maxAllocationSize = maxAllocationSize;
+}
+
+//==============================================================================
+void GlState::checkDynamicMemoryConsumption()
+{
+	for(BufferUsage usage = BufferUsage::FIRST; usage < BufferUsage::COUNT;
+		++usage)
 	{
-		const U FLAGS = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT;
+		DynamicBuffer& buff = m_dynamicBuffers[usage];
 
-		GLuint name;
-		glGenBuffers(1, &name);
+		if(buff.m_name)
+		{
+			auto bytesUsed = buff.m_bytesUsed.exchange(0);
+			if(bytesUsed >= buff.m_size / MAX_FRAMES_IN_FLIGHT)
+			{
+				ANKI_LOGW("Using too much dynamic memory (type: %u). "
+					"Increase the limit", U(usage));
+			}
 
-		glBindBuffer(GL_UNIFORM_BUFFER, name);
-		glBufferStorage(GL_UNIFORM_BUFFER, MAX_UBO_SIZE, nullptr, FLAGS);
-
-		m_globalUbos[i] = name;
-
-		m_globalUboAddresses[i] = static_cast<U8*>(
-			glMapBufferRange(GL_UNIFORM_BUFFER, 0, MAX_UBO_SIZE, FLAGS));
+			// Increase the counters
+			switch(usage)
+			{
+			case BufferUsage::UNIFORM:
+				ANKI_COUNTER_INC(GR_DYNAMIC_UNIFORMS_SIZE, U64(bytesUsed));
+				break;
+			case BufferUsage::STORAGE:
+				ANKI_COUNTER_INC(GR_DYNAMIC_STORAGE_SIZE, U64(bytesUsed));
+				break;
+			default:
+				break;
+			}
+		}
 	}
 }
 
 //==============================================================================
 void GlState::destroy()
 {
-	for(GLuint name : m_globalUbos)
+	for(auto& x : m_dynamicBuffers)
 	{
-		glDeleteBuffers(1, &name);
+		if(x.m_name)
+		{
+			glDeleteBuffers(1, &x.m_name);
+		}
 	}
 
 	glDeleteVertexArrays(1, &m_defaultVao);
-
-	auto alloc = m_manager->getAllocator();
-	m_globalUbos.destroy(alloc);
-	m_globalUboAddresses.destroy(alloc);
 }
 
 } // end namespace anki

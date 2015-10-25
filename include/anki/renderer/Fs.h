@@ -28,7 +28,7 @@ anki_internal:
 private:
 	FramebufferPtr m_fb;
 
-	Array<ResourceGroupPtr, MAX_FRAMES_IN_FLIGHT> m_globalResources;
+	ResourceGroupPtr m_globalResources;
 };
 /// @}
 

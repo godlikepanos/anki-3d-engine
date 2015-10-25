@@ -89,7 +89,7 @@ void Sslf::run(CommandBufferPtr& cmdb)
 		m_r->getPps().getBloom().getHeight());
 
 	cmdb->bindPipeline(m_ppline);
-	cmdb->bindResourceGroup(m_rcGroup, 0);
+	cmdb->bindResourceGroup(m_rcGroup, 0, nullptr);
 
 	m_r->drawQuad(cmdb);
 }
