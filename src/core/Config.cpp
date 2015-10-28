@@ -79,7 +79,13 @@ Config::Config()
 	newOption("sceneFrameAllocatorSize", 1024 * 1024);
 	newOption("clusterSizeZ", 32);
 
-	newOption("offscreen", false);
+	//
+	// GR
+	//
+	newOption("gr.frameUniformsSize", 1024 * 1024 * 16);
+	newOption("gr.frameStorageSize", 1024 * 1024 * 16);
+	newOption("gr.frameVertexSize", 1024 * 1024 * 2);
+	newOption("gr.frameTransferSize", 1024 * 1024 * 16);
 
 	//
 	// Resource

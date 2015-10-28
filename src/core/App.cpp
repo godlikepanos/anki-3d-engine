@@ -231,6 +231,7 @@ Error App::createInternal(const ConfigSet& config_,
 	grInit.m_interface = m_grInterface;
 	grInit.m_cacheDirectory = m_cacheDir.toCString();
 	grInit.m_registerDebugMessages = nwinit.m_debugContext;
+	grInit.m_config = &config;
 
 	ANKI_CHECK(m_gr->create(grInit));
 

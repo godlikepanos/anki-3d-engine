@@ -40,4 +40,24 @@ void GrManager::swapBuffers()
 	m_impl->getRenderingThread().swapBuffers();
 }
 
+//==============================================================================
+void* GrManager::allocateFrameHostVisibleMemory(PtrSize size, BufferUsage usage,
+	DynamicBufferToken& token)
+{
+	// Will be used in a thread safe way
+	GlState& state = m_impl->getRenderingThread().getState();
+
+	void* data = state.allocateDynamicMemory(size, usage, token);
+	ANKI_ASSERT(data);
+
+	// Encode token
+	PtrSize offset =
+		static_cast<U8*>(data) - state.m_dynamicBuffers[usage].m_address;
+	ANKI_ASSERT(offset < MAX_U32 && size < MAX_U32);
+	token.m_offset = offset;
+	token.m_range = size;
+
+	return data;
+}
+
 } // end namespace anki

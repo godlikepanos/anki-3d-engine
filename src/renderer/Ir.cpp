@@ -103,7 +103,7 @@ Error Ir::run(CommandBufferPtr cmdb)
 	const VisibleNode* end = visRez.getReflectionProbesEnd();
 	U probCount = end - it;
 
-	U8* data = cmdb->allocateDynamicMemory<U8>(
+	void* data = getGrManager().allocateFrameHostVisibleMemory(
 		sizeof(ShaderReflectionProbe) * m_cubemapArrSize + sizeof(UVec4),
 		BufferUsage::STORAGE, m_probesToken);
 

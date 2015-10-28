@@ -36,7 +36,8 @@ void GrManagerImpl::create(GrManagerInitializer& init)
 		m_manager->getAllocator().newInstance<RenderingThread>(m_manager);
 
 	// Start it
-	m_thread->start(init.m_interface, init.m_registerDebugMessages);
+	m_thread->start(init.m_interface, init.m_registerDebugMessages,
+		*init.m_config);
 	m_thread->syncClientServer();
 }
 

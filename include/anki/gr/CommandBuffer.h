@@ -145,36 +145,15 @@ public:
 	/// @name Resource upload
 	/// @{
 
-	/// Used to upload data to a texture.
-	template<typename Type>
-	void textureUpload(TexturePtr tex, U32 mipmap, U32 slice, PtrSize dataSize,
-		Type*& data)
-	{
-		void* vdata = nullptr;
-		textureUploadInternal(tex, mipmap, slice, dataSize, vdata);
-		data = static_cast<Type*>(vdata);
-	}
+	/// Upload data to a texture.
+	void textureUpload(TexturePtr tex, U32 mipmap, U32 slice,
+		const DynamicBufferToken& token);
 
-	/// Write data to a buffer.
-	template<typename Type>
-	void writeBuffer(BufferPtr buff, PtrSize offset, PtrSize range,
-		Type*& data)
-	{
-		void* vdata = nullptr;
-		writeBufferInternal(buff, offset, range, vdata);
-		data = static_cast<Type*>(vdata);
-	}
-
-	/// Allocate memory for dynamic buffers.
-	template<typename Type>
-	Type* allocateDynamicMemory(U32 count, BufferUsage usage,
-		DynamicBufferToken& token)
-	{
-		void* ptr = allocateDynamicMemoryInternal(count * sizeof(Type),
-			usage, token);
-		ANKI_ASSERT(isAligned(alignof(Type), static_cast<U8*>(ptr)));
-		return static_cast<Type*>(ptr);
-	}
+	/// Write data to a buffer. It will copy the dynamic memory to the buffer
+	/// starting from offset to the range indicated by the allocation of the
+	/// token.
+	void writeBuffer(BufferPtr buff, PtrSize offset,
+		const DynamicBufferToken& token);
 	/// @}
 
 	/// @name Other
@@ -194,15 +173,6 @@ public:
 
 private:
 	UniquePtr<CommandBufferImpl> m_impl;
-
-	void textureUploadInternal(TexturePtr tex, U32 mipmap, U32 slice,
-		PtrSize dataSize, void*& data);
-
-	void writeBufferInternal(BufferPtr buff, PtrSize offset, PtrSize range,
-		void*& data);
-
-	void* allocateDynamicMemoryInternal(U32 size, BufferUsage usage,
-		DynamicBufferToken& token);
 };
 /// @}
 

@@ -408,28 +408,32 @@ Error Is::lightPass(CommandBufferPtr& cmdb)
 
 	if(visiblePointLightsCount)
 	{
-		ShaderPointLight* data = cmdb->allocateDynamicMemory<ShaderPointLight>(
-			visiblePointLightsCount, BufferUsage::STORAGE, m_pLightsToken);
+		ShaderPointLight* data = static_cast<ShaderPointLight*>(
+			getGrManager().allocateFrameHostVisibleMemory(
+			sizeof(ShaderPointLight) * visiblePointLightsCount,
+			BufferUsage::STORAGE, m_pLightsToken));
 
 		taskData.m_pointLights = SArray<ShaderPointLight>(data,
 			visiblePointLightsCount);
 	}
 	else
 	{
-		m_pLightsToken.invalidate();
+		m_pLightsToken.markUnused();
 	}
 
 	if(visibleSpotLightsCount)
 	{
-		ShaderSpotLight* data = cmdb->allocateDynamicMemory<ShaderSpotLight>(
-			visibleSpotLightsCount, BufferUsage::STORAGE, m_sLightsToken);
+		ShaderSpotLight* data = static_cast<ShaderSpotLight*>(
+			getGrManager().allocateFrameHostVisibleMemory(
+			sizeof(ShaderSpotLight) * visibleSpotLightsCount,
+			BufferUsage::STORAGE, m_sLightsToken));
 
 		taskData.m_spotLights = SArray<ShaderSpotLight>(data,
 			visibleSpotLightsCount);
 	}
 	else
 	{
-		m_sLightsToken.invalidate();
+		m_sLightsToken.markUnused();
 	}
 
 	taskData.m_lightsBegin = vi.getLightsBegin();
@@ -438,14 +442,17 @@ Error Is::lightPass(CommandBufferPtr& cmdb)
 	taskData.m_is = this;
 
 	// Get mem for clusters
-	ShaderCluster* data = cmdb->allocateDynamicMemory<ShaderCluster>(
-		clusterCount, BufferUsage::STORAGE, m_clustersToken);
+	ShaderCluster* data = static_cast<ShaderCluster*>(
+		getGrManager().allocateFrameHostVisibleMemory(
+		sizeof(ShaderCluster) * clusterCount, BufferUsage::STORAGE,
+		m_clustersToken));
 
 	taskData.m_clusters = SArray<ShaderCluster>(data, clusterCount);
 
 	// Allocate light IDs
-	Lid* data2 = cmdb->allocateDynamicMemory<Lid>(m_maxLightIds,
-		BufferUsage::STORAGE, m_lightIdsToken);
+	Lid* data2 = static_cast<Lid*>(
+		getGrManager().allocateFrameHostVisibleMemory(
+		m_maxLightIds * sizeof(Lid), BufferUsage::STORAGE, m_lightIdsToken));
 
 	taskData.m_lightIds = SArray<Lid>(data2, m_maxLightIds);
 
@@ -764,8 +771,9 @@ Error Is::run(CommandBufferPtr& cmdb)
 void Is::updateCommonBlock(CommandBufferPtr& cmdb, const FrustumComponent& fr)
 {
 	ShaderCommonUniforms* blk =
-		cmdb->allocateDynamicMemory<ShaderCommonUniforms>(1,
-		BufferUsage::STORAGE, m_commonVarsToken);
+		static_cast<ShaderCommonUniforms*>(
+		getGrManager().allocateFrameHostVisibleMemory(
+		sizeof(ShaderCommonUniforms), BufferUsage::STORAGE, m_commonVarsToken));
 
 	// Start writing
 	blk->m_projectionParams = m_r->getProjectionParameters();

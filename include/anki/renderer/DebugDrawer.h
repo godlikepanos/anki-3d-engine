@@ -92,6 +92,7 @@ private:
 		Vec4 m_color;
 	};
 
+	Renderer* m_r;
 	ShaderResourcePtr m_frag;
 	ShaderResourcePtr m_vert;
 	PipelinePtr m_pplineLinesDepth;

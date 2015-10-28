@@ -215,8 +215,11 @@ void Pps::run(CommandBufferPtr& cmdb)
 	if(m_uniformsDirty)
 	{
 		m_uniformsDirty = false;
-		Uniforms* unis = nullptr;
-		cmdb->writeBuffer(m_uniformsBuff, 0, sizeof(*unis), unis);
+		DynamicBufferToken token;
+		Uniforms* unis = static_cast<Uniforms*>(
+			getGrManager().allocateFrameHostVisibleMemory(
+			sizeof(*unis), BufferUsage::TRANSFER, token));
+		cmdb->writeBuffer(m_uniformsBuff, 0, token);
 		unis->m_fogColorFogFactor = Vec4(m_fogColor, m_fogFactor);
 
 		const FrustumComponent& frc = m_r->getActiveFrustumComponent();

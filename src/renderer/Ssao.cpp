@@ -137,11 +137,14 @@ Error Ssao::initInternal(const ConfigSet& config)
 
 	PtrSize noiseSize = NOISE_TEX_SIZE * NOISE_TEX_SIZE * sizeof(Vec3);
 
-	Vec3* noise = nullptr;
-	cmdb->textureUpload(m_noiseTex, 0, 0, noiseSize, noise);
+	DynamicBufferToken token;
+	Vec3* noise = static_cast<Vec3*>(
+		getGrManager().allocateFrameHostVisibleMemory(noiseSize,
+		BufferUsage::TRANSFER, token));
 
 	genNoise(noise, noise + NOISE_TEX_SIZE * NOISE_TEX_SIZE);
 
+	cmdb->textureUpload(m_noiseTex, 0, 0, token);
 	cmdb->flush();
 
 	//
@@ -277,13 +280,15 @@ void Ssao::run(CommandBufferPtr& cmdb)
 		|| m_commonUboUpdateTimestamp < camFr.getTimestamp()
 		|| m_commonUboUpdateTimestamp == 1)
 	{
-		ShaderCommonUniforms* blk;
-		void* data;
-		cmdb->writeBuffer(m_uniformsBuff, 0, sizeof(*blk), data);
-		blk = static_cast<ShaderCommonUniforms*>(data);
+		DynamicBufferToken token;
+		ShaderCommonUniforms* blk = static_cast<ShaderCommonUniforms*>(
+			getGrManager().allocateFrameHostVisibleMemory(
+			sizeof(ShaderCommonUniforms), BufferUsage::TRANSFER, token));
 
 		blk->m_projectionParams = m_r->getProjectionParameters();
 		blk->m_projectionMatrix = camFr.getProjectionMatrix();
+
+		cmdb->writeBuffer(m_uniformsBuff, 0, token);
 
 		m_commonUboUpdateTimestamp = getGlobalTimestamp();
 	}

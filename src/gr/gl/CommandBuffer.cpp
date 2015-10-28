@@ -314,27 +314,6 @@ void CommandBuffer::dispatchCompute(
 }
 
 //==============================================================================
-void* CommandBuffer::allocateDynamicMemoryInternal(U32 size, BufferUsage usage,
-	DynamicBufferToken& token)
-{
-	// Will be used in a thread safe way
-	GlState& state =
-		getManager().getImplementation().getRenderingThread().getState();
-
-	void* data = state.allocateDynamicMemory(size, usage);
-	ANKI_ASSERT(data);
-
-	// Encode token
-	PtrSize offset =
-		static_cast<U8*>(data) - state.m_dynamicBuffers[usage].m_address;
-	ANKI_ASSERT(offset < MAX_U32 && size < MAX_U32);
-	token.m_offset = offset;
-	token.m_range = size;
-
-	return data;
-}
-
-//==============================================================================
 class OqBeginCommand final: public GlCommand
 {
 public:
@@ -385,42 +364,35 @@ public:
 	TexturePtr m_handle;
 	U32 m_mipmap;
 	U32 m_slice;
-	PtrSize m_dataSize;
-	void* m_data;
-	CommandBufferAllocator<U8> m_alloc; ///< Alloc that was used for m_data.
+	DynamicBufferToken m_token;
 
 	TexUploadCommand(const TexturePtr& handle, U32 mipmap, U32 slice,
-		PtrSize dataSize, void* data, const CommandBufferAllocator<U8>& alloc)
+		const DynamicBufferToken& token)
 		: m_handle(handle)
 		, m_mipmap(mipmap)
 		, m_slice(slice)
-		, m_dataSize(dataSize)
-		, m_data(data)
-		, m_alloc(alloc)
+		, m_token(token)
 	{}
 
-	Error operator()(GlState&)
+	Error operator()(GlState& state)
 	{
-		m_handle->getImplementation().write(
-			m_mipmap, m_slice, m_data, m_dataSize);
+		U8* data =
+			state.m_dynamicBuffers[BufferUsage::TRANSFER].m_address
+			+ m_token.m_offset;
 
-		// Cleanup to avoid warnings
-		m_alloc.deallocate(m_data, 1);
+		m_handle->getImplementation().write(
+			m_mipmap, m_slice, data, m_token.m_range);
 
 		return ErrorCode::NONE;
 	}
 };
 
-void CommandBuffer::textureUploadInternal(TexturePtr tex, U32 mipmap, U32 slice,
-	PtrSize dataSize, void*& data)
+void CommandBuffer::textureUpload(TexturePtr tex, U32 mipmap, U32 slice,
+	const DynamicBufferToken& token)
 {
-	ANKI_ASSERT(dataSize > 0);
+	ANKI_ASSERT(token.m_range > 0);
 
-	// Allocate memory to write
-	data = m_impl->getInternalAllocator().allocate(dataSize);
-
-	m_impl->pushBackNewCommand<TexUploadCommand>(
-		tex, mipmap, slice, dataSize, data, m_impl->getInternalAllocator());
+	m_impl->pushBackNewCommand<TexUploadCommand>(tex, mipmap, slice, token);
 }
 
 //==============================================================================
@@ -429,40 +401,31 @@ class BuffWriteCommand final: public GlCommand
 public:
 	BufferPtr m_handle;
 	PtrSize m_offset;
-	PtrSize m_range;
-	void* m_data;
-	CommandBufferAllocator<U8> m_alloc;
+	DynamicBufferToken m_token;
 
-	BuffWriteCommand(const BufferPtr& handle, PtrSize offset, PtrSize range,
-		void* data, const CommandBufferAllocator<U8>& alloc)
+	BuffWriteCommand(const BufferPtr& handle, PtrSize offset,
+		const DynamicBufferToken& token)
 		: m_handle(handle)
 		, m_offset(offset)
-		, m_range(range)
-		, m_data(data)
-		, m_alloc(alloc)
+		, m_token(token)
 	{}
 
-	Error operator()(GlState&)
+	Error operator()(GlState& state)
 	{
-		m_handle->getImplementation().write(m_data, m_offset, m_range);
+		U8* data =
+			state.m_dynamicBuffers[BufferUsage::TRANSFER].m_address
+			+ m_token.m_offset;
 
-		// Cleanup to avoid warnings
-		m_alloc.deallocate(m_data, 1);
+		m_handle->getImplementation().write(data, m_offset, m_token.m_range);
 
 		return ErrorCode::NONE;
 	}
 };
 
-void CommandBuffer::writeBufferInternal(BufferPtr buff, PtrSize offset,
-	PtrSize range, void*& data)
+void CommandBuffer::writeBuffer(BufferPtr buff, PtrSize offset,
+	const DynamicBufferToken& token)
 {
-	ANKI_ASSERT(range > 0);
-
-	// Allocate memory to write
-	data = m_impl->getInternalAllocator().allocate(range);
-
-	m_impl->pushBackNewCommand<BuffWriteCommand>(
-		buff, offset, range, data, m_impl->getInternalAllocator());
+	m_impl->pushBackNewCommand<BuffWriteCommand>(buff, offset, token);
 }
 
 //==============================================================================

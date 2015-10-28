@@ -45,6 +45,20 @@ ANKI_GR_CLASS(ResourceGroup)
 template<typename T>
 using GrAllocator = HeapAllocator<T>;
 
+/// Token that gets returned when requesting for memory to write to a dynamic
+/// buffer.
+class DynamicBufferToken
+{
+anki_internal:
+	U32 m_offset = 0;
+	U32 m_range = 0;
+
+	void markUnused()
+	{
+		m_offset = m_range = MAX_U32;
+	}
+};
+
 // Some constants
 // WARNING: If you change those update the shaders
 const U MAX_VERTEX_ATTRIBUTES = 8;

@@ -290,6 +290,7 @@ enum class BufferUsage: U8
 	INDEX,
 	VERTEX,
 	INDIRECT,
+	TRANSFER, ///< For texture upload and buffer write.
 
 	COUNT,
 	FIRST = UNIFORM

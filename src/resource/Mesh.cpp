@@ -68,16 +68,20 @@ void Mesh::createBuffers(const MeshLoader& loader)
 	m_vertBuff = gr.newInstance<Buffer>(loader.getVertexDataSize(),
 		BufferUsageBit::VERTEX, BufferAccessBit::CLIENT_WRITE);
 
-	void* data = nullptr;
-	cmdb->writeBuffer(m_vertBuff, 0, loader.getVertexDataSize(), data);
+	DynamicBufferToken token;
+	void* data = gr.allocateFrameHostVisibleMemory(loader.getVertexDataSize(),
+		BufferUsage::TRANSFER, token);
 	memcpy(data, loader.getVertexData(), loader.getVertexDataSize());
+	cmdb->writeBuffer(m_vertBuff, 0, token);
 
 	// Create index buffer
 	m_indicesBuff = gr.newInstance<Buffer>(loader.getIndexDataSize(),
 		BufferUsageBit::INDEX, BufferAccessBit::CLIENT_WRITE);
 
-	cmdb->writeBuffer(m_indicesBuff, 0, loader.getIndexDataSize(), data);
+	data = gr.allocateFrameHostVisibleMemory(loader.getIndexDataSize(),
+		BufferUsage::TRANSFER, token);
 	memcpy(data, loader.getIndexData(), loader.getIndexDataSize());
+	cmdb->writeBuffer(m_indicesBuff, 0, token);
 
 	cmdb->flush();
 }

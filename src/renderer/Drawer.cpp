@@ -247,9 +247,10 @@ void RenderableDrawer::setupUniforms(RenderContext& ctx,
 	ctx.m_variant = &variant;
 
 	// Get some memory for uniforms
-	U8* uniforms = ctx.m_cmdb->allocateDynamicMemory<U8>(
+	U8* uniforms = static_cast<U8*>(
+		m_r->getGrManager().allocateFrameHostVisibleMemory(
 		variant.getDefaultBlockSize(), BufferUsage::UNIFORM,
-		ctx.m_dynBufferInfo.m_uniformBuffers[0]);
+		ctx.m_dynBufferInfo.m_uniformBuffers[0]));
 
 	// Call the visitor
 	SetupRenderableVariableVisitor visitor;

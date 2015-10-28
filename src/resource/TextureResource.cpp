@@ -144,11 +144,12 @@ Error TextureResource::load(const ResourceFilename& filename)
 		{
 			const auto& surf = img->getSurface(level, layer);
 
-			void* data;
-			cmdb->textureUpload(
-				m_tex, level, layer, surf.m_data.getSize(), data);
-
+			DynamicBufferToken token;
+			void* data = gr.allocateFrameHostVisibleMemory(
+				surf.m_data.getSize(), BufferUsage::TRANSFER, token);
 			memcpy(data, &surf.m_data[0], surf.m_data.getSize());
+
+			cmdb->textureUpload(m_tex, level, layer, token);
 		}
 	}
 

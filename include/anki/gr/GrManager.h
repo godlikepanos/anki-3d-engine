@@ -10,6 +10,9 @@
 
 namespace anki {
 
+// Forward
+class ConfigSet;
+
 /// @addtogroup graphics
 /// @{
 
@@ -40,6 +43,8 @@ public:
 
 	CString m_cacheDirectory;
 	Bool m_registerDebugMessages = false;
+
+	const ConfigSet* m_config = nullptr;
 };
 
 /// The graphics manager, owner of all graphics objects.
@@ -64,6 +69,11 @@ public:
 	/// Create a new graphics object.
 	template<typename T, typename... Args>
 	IntrusivePtr<T> newInstance(Args&&... args);
+
+	/// Allocate memory for dynamic buffers. The memory will be reclaimed at
+	/// the begining of the next frame.
+	void* allocateFrameHostVisibleMemory(PtrSize size, BufferUsage usage,
+		DynamicBufferToken& token);
 
 anki_internal:
 	GrAllocator<U8>& getAllocator()

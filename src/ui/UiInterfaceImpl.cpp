@@ -212,9 +212,11 @@ Error UiInterfaceImpl::createR8Image(const SArray<U8>& data, const UVec2& size,
 
 	// Load data
 	CommandBufferPtr cmdb = m_gr->newInstance<CommandBuffer>();
-	void* loadData = nullptr;
-	cmdb->textureUpload(tex, 0, 0, data.getSize(), loadData);
+	DynamicBufferToken token;
+	void* loadData = m_gr->allocateFrameHostVisibleMemory(data.getSize(),
+		BufferUsage::TRANSFER, token);
 	memcpy(loadData, &data[0], data.getSize());
+	cmdb->textureUpload(tex, 0, 0, token);
 
 	// Gen mips
 	cmdb->generateMipmaps(tex);

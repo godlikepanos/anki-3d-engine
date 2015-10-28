@@ -133,7 +133,7 @@ void RenderingThread::finishCommandBuffer(CommandBufferPtr commands)
 
 //==============================================================================
 void RenderingThread::start(WeakPtr<GrManagerInterface> interface,
-	Bool registerMessages)
+	Bool registerMessages, const ConfigSet& config)
 {
 	ANKI_ASSERT(m_tail == 0 && m_head == 0);
 	ANKI_ASSERT(interface);
@@ -145,6 +145,8 @@ void RenderingThread::start(WeakPtr<GrManagerInterface> interface,
 	m_swapBuffersCommands = m_manager->newInstance<CommandBuffer>();
 	m_swapBuffersCommands->getImplementation().
 		pushBackNewCommand<SwapBuffersCommand>(this);
+
+	m_state.init0(config);
 
 #if !ANKI_DISABLE_GL_RENDERING_THREAD
 	// Start thread
@@ -195,7 +197,7 @@ void RenderingThread::prepare()
 	m_serverThreadId = Thread::getCurrentThreadId();
 
 	// Init state
-	m_state.init();
+	m_state.init1();
 }
 
 //==============================================================================

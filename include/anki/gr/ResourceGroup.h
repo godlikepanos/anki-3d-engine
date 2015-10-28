@@ -45,20 +45,6 @@ public:
 	I8 m_indexSize = -1; ///< Index size in bytes. 2 or 4
 };
 
-/// Token that gets returned when requesting for memory to write to a dynamic
-/// buffer.
-class DynamicBufferToken
-{
-anki_internal:
-	U32 m_offset = 0;
-	U32 m_range = 0;
-
-	void invalidate()
-	{
-		m_offset = m_range = MAX_U32;
-	}
-};
-
 /// Struct to help update the offset of the dynamic buffers.
 class DynamicBufferInfo
 {

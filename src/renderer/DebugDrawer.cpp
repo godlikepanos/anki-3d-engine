@@ -32,6 +32,7 @@ DebugDrawer::~DebugDrawer()
 //==============================================================================
 Error DebugDrawer::create(Renderer* r)
 {
+	m_r = r;
 	GrManager& gr = r->getGrManager();
 
 	ANKI_CHECK(
@@ -165,9 +166,11 @@ Error DebugDrawer::flushInternal(PrimitiveTopology topology)
 
 	U size = sizeof(Vertex) * clientVerts;
 
-	void* data = nullptr;
-	m_cmdb->writeBuffer(m_vertBuff, 0, size, data);
+	DynamicBufferToken token;
+	void* data = m_r->getGrManager().allocateFrameHostVisibleMemory(
+		size, BufferUsage::TRANSFER, token);
 	memcpy(data, vertBuff, size);
+	m_cmdb->writeBuffer(m_vertBuff, 0, token);
 
 	if(m_depthTestEnabled)
 	{

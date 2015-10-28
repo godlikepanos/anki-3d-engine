@@ -8,6 +8,7 @@
 #include <anki/gr/GrManager.h>
 #include <anki/util/Logger.h>
 #include <anki/core/Counters.h>
+#include <anki/misc/ConfigSet.h>
 #include <algorithm>
 #include <cstring>
 
@@ -80,7 +81,23 @@ void oglMessagesCallback(GLenum source,
 #endif
 
 //==============================================================================
-void GlState::init()
+void GlState::init0(const ConfigSet& config)
+{
+	m_dynamicBuffers[BufferUsage::UNIFORM].m_size =
+		config.getNumber("gr.frameUniformsSize");
+
+	m_dynamicBuffers[BufferUsage::STORAGE].m_size =
+		config.getNumber("gr.frameStorageSize");
+
+	m_dynamicBuffers[BufferUsage::VERTEX].m_size =
+		config.getNumber("gr.frameVertexSize");
+
+	m_dynamicBuffers[BufferUsage::TRANSFER].m_size =
+		config.getNumber("gr.frameTransferSize");
+}
+
+//==============================================================================
+void GlState::init1()
 {
 	// GL version
 	GLint major, minor;
@@ -140,34 +157,44 @@ void GlState::init()
 	// Init ring buffers
 	GLint64 blockAlignment;
 	glGetInteger64v(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &blockAlignment);
-	initDynamicBuffer(GL_UNIFORM_BUFFER, blockAlignment,
-		GR_DYNAMIC_UNIFORMS_SIZE, MAX_UNIFORM_BLOCK_SIZE, BufferUsage::UNIFORM);
+	initDynamicBuffer(GL_UNIFORM_BUFFER, blockAlignment, MAX_UNIFORM_BLOCK_SIZE,
+		BufferUsage::UNIFORM);
 
 	glGetInteger64v(GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT, &blockAlignment);
 	initDynamicBuffer(GL_SHADER_STORAGE_BUFFER, blockAlignment,
-		GR_DYNAMIC_STORAGE_SIZE, MAX_STORAGE_BLOCK_SIZE, BufferUsage::STORAGE);
+		MAX_STORAGE_BLOCK_SIZE, BufferUsage::STORAGE);
 
-	initDynamicBuffer(GL_ARRAY_BUFFER, 8, GR_DYNAMIC_VERTEX_SIZE,
-		MAX_U32, BufferUsage::VERTEX);
+	initDynamicBuffer(GL_ARRAY_BUFFER, 8, MAX_U32, BufferUsage::VERTEX);
+
+	{
+		m_transferBuffer.create(m_manager->getAllocator(),
+			m_dynamicBuffers[BufferUsage::TRANSFER].m_size);
+
+		auto& buff = m_dynamicBuffers[BufferUsage::TRANSFER];
+		buff.m_address = &m_transferBuffer[0];
+		buff.m_alignment = 8;
+		buff.m_maxAllocationSize = MAX_U32;
+	}
 }
 
 //==============================================================================
-void GlState::initDynamicBuffer(GLenum target, U32 alignment, PtrSize size,
+void GlState::initDynamicBuffer(GLenum target, U32 alignment,
 	U32 maxAllocationSize, BufferUsage usage)
 {
 	DynamicBuffer& buff = m_dynamicBuffers[usage];
+	ANKI_ASSERT(buff.m_size > 0);
 
 	const U FLAGS = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT;
 
-	alignRoundUp(alignment, size);
+	alignRoundUp(alignment, buff.m_size);
 
 	glGenBuffers(1, &buff.m_name);
 
 	glBindBuffer(target, buff.m_name);
-	glBufferStorage(target, size, nullptr, FLAGS);
+	glBufferStorage(target, buff.m_size, nullptr, FLAGS);
 
-	buff.m_address = static_cast<U8*>(glMapBufferRange(target, 0, size, FLAGS));
-	buff.m_size = size;
+	buff.m_address = static_cast<U8*>(
+		glMapBufferRange(target, 0, buff.m_size, FLAGS));
 	buff.m_alignment = alignment;
 	buff.m_maxAllocationSize = maxAllocationSize;
 }
@@ -180,13 +207,14 @@ void GlState::checkDynamicMemoryConsumption()
 	{
 		DynamicBuffer& buff = m_dynamicBuffers[usage];
 
-		if(buff.m_name)
+		if(buff.m_address)
 		{
 			auto bytesUsed = buff.m_bytesUsed.exchange(0);
 			if(bytesUsed >= buff.m_size / MAX_FRAMES_IN_FLIGHT)
 			{
-				ANKI_LOGW("Using too much dynamic memory (type: %u). "
-					"Increase the limit", U(usage));
+				ANKI_LOGW("Using too much dynamic memory (mem_type: %u, "
+					"mem_used: %u). Increase the limit", U(usage),
+					U(bytesUsed));
 			}
 
 			// Increase the counters
@@ -217,6 +245,7 @@ void GlState::destroy()
 	}
 
 	glDeleteVertexArrays(1, &m_defaultVao);
+	m_transferBuffer.destroy(m_manager->getAllocator());
 }
 
 } // end namespace anki

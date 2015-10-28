@@ -203,8 +203,10 @@ void Bloom::run(CommandBufferPtr& cmdb)
 //==============================================================================
 void Bloom::updateDefaultBlock(CommandBufferPtr& cmdb)
 {
-	void* uniforms = nullptr;
-	cmdb->writeBuffer(m_commonBuff, 0, sizeof(Vec4), uniforms);
+	DynamicBufferToken token;
+	void* uniforms = getGrManager().allocateFrameHostVisibleMemory(
+		sizeof(Vec4), BufferUsage::TRANSFER, token);
+	cmdb->writeBuffer(m_commonBuff, 0, token);
 	*static_cast<Vec4*>(uniforms) = Vec4(m_threshold, m_scale, 0.0, 0.0);
 }
 

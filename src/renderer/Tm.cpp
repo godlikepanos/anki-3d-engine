@@ -37,9 +37,11 @@ Error Tm::create(const ConfigSet& initializer)
 		sizeof(Vec4), BufferUsageBit::STORAGE, BufferAccessBit::CLIENT_WRITE);
 
 	CommandBufferPtr cmdb = getGrManager().newInstance<CommandBuffer>();
-	void* data;
-	cmdb->writeBuffer(m_luminanceBuff, 0, sizeof(Vec4), data);
+	DynamicBufferToken token;
+	void* data = getGrManager().allocateFrameHostVisibleMemory(
+		sizeof(Vec4), BufferUsage::TRANSFER, token);
 	*static_cast<Vec4*>(data) = Vec4(0.5);
+	cmdb->writeBuffer(m_luminanceBuff, 0, token);
 	cmdb->flush();
 
 	// Create descriptors

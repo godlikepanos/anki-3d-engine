@@ -10,6 +10,9 @@
 
 namespace anki {
 
+// Forward
+class ConfigSet;
+
 /// @addtogroup opengl
 /// @{
 
@@ -79,13 +82,13 @@ public:
 	class DynamicBuffer
 	{
 	public:
-		GLuint m_name;
-		U8* m_address;
-		PtrSize m_size; ///< This is aligned compared to GLOBAL_XXX_SIZE
-		U32 m_alignment;
-		U32 m_maxAllocationSize; ///< For debugging.
+		GLuint m_name = 0;
+		U8* m_address = nullptr; ///< Host address of the buffer.
+		PtrSize m_size = 0; ///< This is aligned compared to GLOBAL_XXX_SIZE
+		U32 m_alignment = 0; ///< Always work in that alignment.
+		U32 m_maxAllocationSize = 0; ///< For debugging.
 		Atomic<PtrSize> m_currentOffset = {0};
-		Atomic<PtrSize> m_bytesUsed = {0}; ///< Per frame. Mainly for debug
+		Atomic<PtrSize> m_bytesUsed = {0}; ///< Per frame. For debugging.
 	};
 
 	Array<DynamicBuffer, U(BufferUsage::COUNT)> m_dynamicBuffers;
@@ -95,34 +98,40 @@ public:
 		: m_manager(manager)
 	{}
 
+	/// Call this from the main thread.
+	void init0(const ConfigSet& config);
+
 	/// Call this from the rendering thread.
-	void init();
+	void init1();
 
 	/// Call this from the rendering thread.
 	void destroy();
 
 	/// Allocate memory for a dynamic buffer.
-	void* allocateDynamicMemory(PtrSize size, BufferUsage usage);
+	void* allocateDynamicMemory(PtrSize size, BufferUsage usage,
+		DynamicBufferToken& token);
 
 	void checkDynamicMemoryConsumption();
 
 private:
 	GrManager* m_manager;
+	DArray<U8> m_transferBuffer;
 
-	void initDynamicBuffer(GLenum target, U32 aligment, PtrSize size,
-		U32 maxAllocationSize, BufferUsage usage);
+	void initDynamicBuffer(GLenum target, U32 aligment, U32 maxAllocationSize,
+		BufferUsage usage);
 };
 
 //==============================================================================
-inline void* GlState::allocateDynamicMemory(PtrSize size, BufferUsage usage)
+inline void* GlState::allocateDynamicMemory(PtrSize originalSize,
+	BufferUsage usage, DynamicBufferToken& token)
 {
-	ANKI_ASSERT(size > 0);
+	ANKI_ASSERT(originalSize > 0);
 
 	DynamicBuffer& buff = m_dynamicBuffers[usage];
-	ANKI_ASSERT(buff.m_name != 0);
+	ANKI_ASSERT(buff.m_address);
 
 	// Align size
-	size = getAlignedRoundUp(buff.m_alignment, size);
+	PtrSize size = getAlignedRoundUp(buff.m_alignment, originalSize);
 	ANKI_ASSERT(size <= buff.m_maxAllocationSize && "Too high!");
 
 	// Allocate
@@ -140,6 +149,10 @@ inline void* GlState::allocateDynamicMemory(PtrSize size, BufferUsage usage)
 	ANKI_ASSERT((offset + size) <= buff.m_size);
 
 	buff.m_bytesUsed.fetchAdd(size);
+
+	// Encode token
+	token.m_offset = offset;
+	token.m_range = originalSize;
 
 	return static_cast<void*>(buff.m_address + offset);
 }

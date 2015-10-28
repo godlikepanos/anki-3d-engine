@@ -167,14 +167,16 @@ void Lf::runOcclusionTests(CommandBufferPtr& cmdb)
 	{
 		// Setup MVP UBO
 		DynamicBufferToken token;
-		Mat4* mvp = cmdb->allocateDynamicMemory<Mat4>(1, BufferUsage::UNIFORM,
-			token);
+		Mat4* mvp = static_cast<Mat4*>(
+			getGrManager().allocateFrameHostVisibleMemory(sizeof(Mat4),
+			BufferUsage::UNIFORM, token));
 		*mvp = camFr.getViewProjectionMatrix();
 
 		// Alloc dyn mem
 		DynamicBufferToken token2;
-		Vec3* positions = cmdb->allocateDynamicMemory<Vec3>(totalCount,
-			BufferUsage::VERTEX, token2);
+		Vec3* positions = static_cast<Vec3*>(
+			getGrManager().allocateFrameHostVisibleMemory(
+			sizeof(Vec3) * totalCount, BufferUsage::VERTEX, token2));
 		const Vec3* initialPositions = positions;
 
 		// Setup state
@@ -246,8 +248,9 @@ void Lf::run(CommandBufferPtr& cmdb)
 
 			// Get uniform memory
 			DynamicBufferToken token;
-			Sprite* tmpSprites = cmdb->allocateDynamicMemory<Sprite>(
-				spritesCount, BufferUsage::UNIFORM, token);
+			Sprite* tmpSprites = static_cast<Sprite*>(
+				getGrManager().allocateFrameHostVisibleMemory(
+				spritesCount * sizeof(Sprite), BufferUsage::UNIFORM, token));
 			SArray<Sprite> sprites(tmpSprites, spritesCount);
 
 			// misc

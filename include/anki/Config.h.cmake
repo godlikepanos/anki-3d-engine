@@ -146,20 +146,4 @@
 // GL
 #define ANKI_GL_MAX_SUB_DRAWCALLS 64
 
-namespace anki {
-
-/// Max size of the dynamic uniforms ring buffer. You will get a warning it's
-/// not enough
-const unsigned GR_DYNAMIC_UNIFORMS_SIZE = 1024 * 1024 * 16;
-
-/// Max size of the dynamic storage ring buffer. You will get a warning it's
-/// not enough
-const unsigned GR_DYNAMIC_STORAGE_SIZE = 1024 * 1024 * 16;
-
-/// Max size of the dynamic vertex ring buffer. You will get a warning it's
-/// not enough
-const unsigned GR_DYNAMIC_VERTEX_SIZE = 1024 * 1024 * 2;
-
-} // end namespace anki
-
 /// @}
