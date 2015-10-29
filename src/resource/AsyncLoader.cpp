@@ -3,14 +3,14 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/resource/AsyncLoader.h"
-#include "anki/util/Logger.h"
+#include <anki/resource/AsyncLoader.h>
+#include <anki/util/Logger.h>
 
 namespace anki {
 
 //==============================================================================
 AsyncLoader::AsyncLoader()
-:	m_thread("anki_asyload")
+	: m_thread("anki_asyload")
 {}
 
 //==============================================================================
@@ -23,11 +23,11 @@ AsyncLoader::~AsyncLoader()
 		ANKI_ASSERT(m_tail != nullptr);
 		ANKI_LOGW("Stoping loading thread while there is work to do");
 
-		Task* task = m_head;
+		AsyncLoaderTask* task = m_head;
 
 		do
 		{
-			Task* next = task->m_next;
+			AsyncLoaderTask* next = task->m_next;
 			m_alloc.deleteInstance(task);
 			task = next;
 		}while(task != nullptr);
@@ -58,9 +58,7 @@ void AsyncLoader::stop()
 //==============================================================================
 Error AsyncLoader::threadCallback(Thread::Info& info)
 {
-	AsyncLoader& self = 
-		*reinterpret_cast<AsyncLoader*>(info.m_userData);
-
+	AsyncLoader& self = *reinterpret_cast<AsyncLoader*>(info.m_userData);
 	return self.threadWorker();
 }
 
@@ -71,7 +69,7 @@ Error AsyncLoader::threadWorker()
 
 	while(!err)
 	{
-		Task* task;
+		AsyncLoaderTask* task;
 
 		{
 			// Wait for something

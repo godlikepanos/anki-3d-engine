@@ -272,15 +272,23 @@ void fog(in sampler2D depthMap, in vec3 color, in float fogScale)
 
 	vec2 texCoords = gl_FragCoord.xy * screenSize;
 	float depth = texture(depthMap, texCoords).r;
-	float zNear = u_lightingUniforms.nearFarClustererDivisor.x;
-	float zFar = u_lightingUniforms.nearFarClustererDivisor.y;
-	float linearDepth = (2.0 * zNear) / (zFar + zNear - depth * (zFar - zNear));
+	float diff;
 
-	float depth2 = gl_FragCoord.z;
-	float linearDepth2 =
-		(2.0 * zNear) / (zFar + zNear - depth2 * (zFar - zNear));
+	if(depth < 1.0)
+	{
+		float zNear = u_lightingUniforms.nearFarClustererDivisor.x;
+		float zFar = u_lightingUniforms.nearFarClustererDivisor.y;
+		vec2 linearDepths = (2.0 * zNear)
+			/ (zFar + zNear - vec2(depth, gl_FragCoord.z) * (zFar - zNear));
 
-	float diff = linearDepth - linearDepth2;
+		diff = linearDepths.x - linearDepths.y;
+	}
+	else
+	{
+		// The depth buffer is cleared at this place. Set the diff to zero to
+		// avoid weird pop ups
+		diff = 0.0;
+	}
 
 	writeGBuffer(vec4(color, diff * fogScale));
 }

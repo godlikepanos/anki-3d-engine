@@ -3,11 +3,67 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/resource/TextureResource.h"
-#include "anki/resource/ImageLoader.h"
-#include "anki/resource/ResourceManager.h"
+#include <anki/resource/TextureResource.h>
+#include <anki/resource/ImageLoader.h>
+#include <anki/resource/ResourceManager.h>
+#include <anki/resource/AsyncLoader.h>
 
 namespace anki {
+
+//==============================================================================
+// Misc                                                                        =
+//==============================================================================
+
+class TexUploadTask: public AsyncLoaderTask
+{
+public:
+	UniquePtr<ImageLoader> m_loader;
+	TexturePtr m_tex;
+	GrManager* m_gr ANKI_DBG_NULLIFY_PTR;
+	U32 m_layerCount = 0;
+
+	TexUploadTask(UniquePtr<ImageLoader>& loader, TexturePtr tex,
+		GrManager* gr, U32 layerCount)
+		: m_loader(std::move(loader))
+		, m_tex(tex)
+		, m_gr(gr)
+		, m_layerCount(layerCount)
+	{}
+
+	Error operator()() final;
+};
+
+//==============================================================================
+Error TexUploadTask::operator()()
+{
+	CommandBufferPtr cmdb = m_gr->newInstance<CommandBuffer>();
+
+	// Upload the data
+	for(U layer = 0; layer < m_layerCount; layer++)
+	{
+		for(U level = 0; level < m_loader->getMipLevelsCount(); level++)
+		{
+			const auto& surf = m_loader->getSurface(level, layer);
+
+			DynamicBufferToken token;
+			void* data = m_gr->allocateFrameHostVisibleMemory(
+				surf.m_data.getSize(), BufferUsage::TRANSFER, token);
+			memcpy(data, &surf.m_data[0], surf.m_data.getSize());
+
+			cmdb->textureUpload(m_tex, level, layer, token);
+		}
+	}
+
+	// Finaly enque the GL job chain
+	// TODO This is probably a bad idea
+	cmdb->finish();
+
+	return ErrorCode::NONE;
+}
+
+//==============================================================================
+// TextureResource                                                             =
+//==============================================================================
 
 //==============================================================================
 TextureResource::~TextureResource()
@@ -137,25 +193,9 @@ Error TextureResource::load(const ResourceFilename& filename)
 	// Create the texture
 	m_tex = gr.newInstance<Texture>(init);
 
-	// Upload the data
-	for(U layer = 0; layer < layers; layer++)
-	{
-		for(U level = 0; level < init.m_mipmapsCount; level++)
-		{
-			const auto& surf = img->getSurface(level, layer);
-
-			DynamicBufferToken token;
-			void* data = gr.allocateFrameHostVisibleMemory(
-				surf.m_data.getSize(), BufferUsage::TRANSFER, token);
-			memcpy(data, &surf.m_data[0], surf.m_data.getSize());
-
-			cmdb->textureUpload(m_tex, level, layer, token);
-		}
-	}
-
-	// Finaly enque the GL job chain
-	// TODO Make asynchronous
-	cmdb->finish();
+	// Upload the data asynchronously
+	getManager().getAsyncLoader().newTask<TexUploadTask>(img, m_tex, &gr,
+		layers);
 
 	m_size = UVec3(init.m_width, init.m_height, init.m_depth);
 

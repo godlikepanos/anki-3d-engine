@@ -164,7 +164,7 @@ void GlState::init1()
 	initDynamicBuffer(GL_SHADER_STORAGE_BUFFER, blockAlignment,
 		MAX_STORAGE_BLOCK_SIZE, BufferUsage::STORAGE);
 
-	initDynamicBuffer(GL_ARRAY_BUFFER, 8, MAX_U32, BufferUsage::VERTEX);
+	initDynamicBuffer(GL_ARRAY_BUFFER, 16, MAX_U32, BufferUsage::VERTEX);
 
 	{
 		m_transferBuffer.create(m_manager->getAllocator(),
@@ -172,7 +172,7 @@ void GlState::init1()
 
 		auto& buff = m_dynamicBuffers[BufferUsage::TRANSFER];
 		buff.m_address = &m_transferBuffer[0];
-		buff.m_alignment = 8;
+		buff.m_alignment = ANKI_SAFE_ALIGNMENT;
 		buff.m_maxAllocationSize = MAX_U32;
 	}
 }

@@ -43,7 +43,7 @@ App* app;
 ModelNode* horse;
 PerspectiveCamera* cam;
 
-#define PLAYER 0
+#define PLAYER 1
 #define MOUSE 1
 
 Bool profile = false;
@@ -481,7 +481,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("is.sm.poissonEnabled", true);
 	config.set("is.sm.resolution", 1024);
 	config.set("lf.maxFlares", 32);
-	config.set("pps.enabled", false);
+	config.set("pps.enabled", true);
 	config.set("pps.bloom.enabled", true);
 	config.set("pps.bloom.renderingQuality", 0.5);
 	config.set("pps.bloom.blurringDist", 1.0);

@@ -5,10 +5,10 @@
 
 #pragma once
 
-#include "anki/resource/Common.h"
-#include "anki/util/List.h"
-#include "anki/util/Functions.h"
-#include "anki/util/String.h"
+#include <anki/resource/Common.h>
+#include <anki/util/List.h>
+#include <anki/util/Functions.h>
+#include <anki/util/String.h>
 
 namespace anki {
 
@@ -218,7 +218,7 @@ anki_internal:
 		TypeResourceManager<T>::unregisterResource(ptr);
 	}
 
-	AsyncLoader& _getAsyncLoader()
+	AsyncLoader& getAsyncLoader()
 	{
 		return *m_asyncLoader;
 	}

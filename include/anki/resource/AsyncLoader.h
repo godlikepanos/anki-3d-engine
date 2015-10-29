@@ -5,33 +5,33 @@
 
 #pragma once
 
-#include "anki/resource/Common.h"
-#include "anki/util/Thread.h"
+#include <anki/resource/Common.h>
+#include <anki/util/Thread.h>
 
 namespace anki {
 
 /// @addtogroup resource
 /// @{
 
+/// Loader asynchronous task.
+class AsyncLoaderTask
+{
+	friend class AsyncLoader;
+
+public:
+	virtual ~AsyncLoaderTask()
+	{}
+
+	virtual ANKI_USE_RESULT Error operator()() = 0;
+
+private:
+	AsyncLoaderTask* m_next = nullptr;
+};
+
 /// Asynchronous resource loader.
 class AsyncLoader
 {
 public:
-	/// Loader asynchronous task.
-	class Task
-	{
-		friend class AsyncLoader;
-
-	public:
-		virtual ~Task()
-		{}
-
-		virtual ANKI_USE_RESULT Error operator()() = 0;
-
-	private:
-		Task* m_next = nullptr;
-	};
-
 	AsyncLoader();
 
 	~AsyncLoader();
@@ -40,15 +40,15 @@ public:
 
 	/// Create a new asynchronous loading task.
 	template<typename TTask, typename... TArgs>
-	ANKI_USE_RESULT Error newTask(TArgs&&... args);
+	void newTask(TArgs&&... args);
 
 private:
 	HeapAllocator<U8> m_alloc;
 	Thread m_thread;
 	Mutex m_mtx;
 	ConditionVariable m_condVar;
-	Task* m_head = nullptr;
-	Task* m_tail = nullptr;
+	AsyncLoaderTask* m_head = nullptr;
+	AsyncLoaderTask* m_tail = nullptr;
 	Bool8 m_quit = false;
 
 	/// Thread callback
@@ -59,8 +59,9 @@ private:
 	void stop();
 };
 
+//==============================================================================
 template<typename TTask, typename... TArgs>
-Error AsyncLoader::newTask(TArgs&&... args)
+void AsyncLoader::newTask(TArgs&&... args)
 {
 	TTask* newTask = m_alloc.template newInstance<TTask>(
 		std::forward<TArgs>(args)...);
@@ -85,8 +86,6 @@ Error AsyncLoader::newTask(TArgs&&... args)
 
 	// Wake up the thread
 	m_condVar.notifyOne();
-
-	return ErrorCode::NONE;
 }
 
 /// @}

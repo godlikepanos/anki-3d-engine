@@ -12,7 +12,7 @@
 namespace anki {
 
 //==============================================================================
-class Task: public AsyncLoader::Task
+class Task: public AsyncLoaderTask
 {
 public:
 	F32 m_sleepTime = 0.0;
@@ -21,10 +21,10 @@ public:
 	I32 m_id = -1;
 
 	Task(F32 time, Barrier* barrier, Atomic<U32>* count, I32 id = -1)
-	:	m_sleepTime(time),
-		m_barrier(barrier),
-		m_count(count),
-		m_id(id)
+		: m_sleepTime(time)
+		, m_barrier(barrier)
+		, m_count(count)
+		, m_id(id)
 	{}
 
 	Error operator()()
@@ -60,15 +60,15 @@ public:
 };
 
 //==============================================================================
-class MemTask: public AsyncLoader::Task
+class MemTask: public AsyncLoaderTask
 {
 public:
 	HeapAllocator<U8> m_alloc;
 	Barrier* m_barrier = nullptr;
 
 	MemTask(HeapAllocator<U8> alloc, Barrier* barrier)
-	:	m_alloc(alloc),
-		m_barrier(barrier)
+		: m_alloc(alloc)
+		, m_barrier(barrier)
 	{}
 
 	Error operator()()
@@ -106,7 +106,7 @@ ANKI_TEST(Resource, AsyncLoader)
 		ANKI_TEST_EXPECT_NO_ERR(a.create(alloc));
 		Barrier barrier(2);
 
-		ANKI_TEST_EXPECT_NO_ERR(a.newTask<Task>(0.0, &barrier, nullptr));
+		a.newTask<Task>(0.0, &barrier, nullptr);
 		barrier.wait();
 	}
 
@@ -126,7 +126,7 @@ ANKI_TEST(Resource, AsyncLoader)
 				pbarrier = &barrier;
 			}
 
-			ANKI_TEST_EXPECT_NO_ERR(a.newTask<Task>(0.0, pbarrier, &counter));
+			a.newTask<Task>(0.0, pbarrier, &counter);
 		}
 
 		barrier.wait();
@@ -141,7 +141,7 @@ ANKI_TEST(Resource, AsyncLoader)
 
 		for(U i = 0; i < 100; i++)
 		{
-			ANKI_TEST_EXPECT_NO_ERR(a.newTask<Task>(0.0, nullptr, nullptr));
+			a.newTask<Task>(0.0, nullptr, nullptr);
 		}
 	}
 
@@ -160,7 +160,7 @@ ANKI_TEST(Resource, AsyncLoader)
 				pbarrier = &barrier;
 			}
 
-			ANKI_TEST_EXPECT_NO_ERR(a.newTask<MemTask>(alloc, pbarrier));
+			a.newTask<MemTask>(alloc, pbarrier);
 		}
 
 		barrier.wait();
@@ -173,7 +173,7 @@ ANKI_TEST(Resource, AsyncLoader)
 
 		for(U i = 0; i < 10; i++)
 		{
-			ANKI_TEST_EXPECT_NO_ERR(a.newTask<MemTask>(alloc, nullptr));
+			a.newTask<MemTask>(alloc, nullptr);
 		}
 	}
 
@@ -193,8 +193,7 @@ ANKI_TEST(Resource, AsyncLoader)
 				pbarrier = &barrier;
 			}
 
-			ANKI_TEST_EXPECT_NO_ERR(
-				a.newTask<Task>(randRange(0.0, 0.5), pbarrier, &counter, i));
+			a.newTask<Task>(randRange(0.0, 0.5), pbarrier, &counter, i);
 		}
 
 		barrier.wait();

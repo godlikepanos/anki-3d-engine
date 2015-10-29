@@ -3,20 +3,20 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/resource/ResourceManager.h"
-#include "anki/resource/AsyncLoader.h"
-#include "anki/resource/Animation.h"
-#include "anki/resource/Material.h"
-#include "anki/resource/Mesh.h"
-#include "anki/resource/Model.h"
-#include "anki/resource/Script.h"
-#include "anki/resource/DummyRsrc.h"
-#include "anki/resource/ShaderResource.h"
-#include "anki/resource/ParticleEmitterResource.h"
-#include "anki/resource/TextureResource.h"
-#include "anki/resource/GenericResource.h"
-#include "anki/util/Logger.h"
-#include "anki/misc/ConfigSet.h"
+#include <anki/resource/ResourceManager.h>
+#include <anki/resource/AsyncLoader.h>
+#include <anki/resource/Animation.h>
+#include <anki/resource/Material.h>
+#include <anki/resource/Mesh.h>
+#include <anki/resource/Model.h>
+#include <anki/resource/Script.h>
+#include <anki/resource/DummyRsrc.h>
+#include <anki/resource/ShaderResource.h>
+#include <anki/resource/ParticleEmitterResource.h>
+#include <anki/resource/TextureResource.h>
+#include <anki/resource/GenericResource.h>
+#include <anki/util/Logger.h>
+#include <anki/misc/ConfigSet.h>
 
 namespace anki {
 
