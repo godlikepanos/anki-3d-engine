@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include "anki/ui/UiObject.h"
-#include "anki/util/Hierarchy.h"
-#include "anki/util/Bitset.h"
+#include <anki/ui/UiObject.h>
+#include <anki/util/Hierarchy.h>
+#include <anki/util/Bitset.h>
 
 namespace anki {
 

@@ -5,12 +5,12 @@
 
 #pragma once
 
-#include "anki/collision/CompoundShape.h"
-#include "anki/collision/Plane.h"
-#include "anki/collision/Obb.h"
-#include "anki/collision/ConvexHullShape.h"
-#include "anki/Math.h"
-#include "anki/util/Array.h"
+#include <anki/collision/CompoundShape.h>
+#include <anki/collision/Plane.h>
+#include <anki/collision/Obb.h>
+#include <anki/collision/ConvexHullShape.h>
+#include <anki/Math.h>
+#include <anki/util/Array.h>
 
 namespace anki {
 

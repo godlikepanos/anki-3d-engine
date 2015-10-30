@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include "anki/scene/SceneNode.h"
-#include "anki/resource/Forward.h"
-#include "anki/physics/Forward.h"
+#include <anki/scene/SceneNode.h>
+#include <anki/resource/Forward.h>
+#include <anki/physics/Forward.h>
 
 namespace anki {
 

@@ -5,5 +5,5 @@
 
 #pragma once
 
-#include "anki/resource/Common.h"
+#include <anki/resource/Common.h>
 

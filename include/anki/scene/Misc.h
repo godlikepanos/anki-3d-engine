@@ -6,7 +6,7 @@
 #ifndef ANKI_SCENE_MISC_H
 #define ANKI_SCENE_MISC_H
 
-#include "anki/scene/SpatialComponent.h"
+#include <anki/scene/SpatialComponent.h>
 
 namespace anki {
 

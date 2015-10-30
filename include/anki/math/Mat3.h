@@ -6,8 +6,8 @@
 #ifndef ANKI_MATH_MAT3_H
 #define ANKI_MATH_MAT3_H
 
-#include "anki/math/CommonIncludes.h"
-#include "anki/math/Mat.h"
+#include <anki/math/CommonIncludes.h>
+#include <anki/math/Mat.h>
 
 namespace anki {
 

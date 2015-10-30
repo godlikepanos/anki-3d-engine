@@ -6,7 +6,7 @@
 #ifndef ANKI_COLLISION_TESTS_H
 #define ANKI_COLLISION_TESTS_H
 
-#include "anki/collision/Common.h"
+#include <anki/collision/Common.h>
 
 namespace anki {
 

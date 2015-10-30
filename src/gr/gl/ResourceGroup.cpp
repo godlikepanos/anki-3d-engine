@@ -3,12 +3,12 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/gr/ResourceGroup.h"
-#include "anki/gr/gl/ResourceGroupImpl.h"
-#include "anki/gr/gl/CommandBufferImpl.h"
-#include "anki/gr/Texture.h"
-#include "anki/gr/Sampler.h"
-#include "anki/gr/Buffer.h"
+#include <anki/gr/ResourceGroup.h>
+#include <anki/gr/gl/ResourceGroupImpl.h>
+#include <anki/gr/gl/CommandBufferImpl.h>
+#include <anki/gr/Texture.h>
+#include <anki/gr/Sampler.h>
+#include <anki/gr/Buffer.h>
 
 namespace anki {
 

@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "anki/misc/ConfigSet.h"
+#include <anki/misc/ConfigSet.h>
 
 namespace anki {
 

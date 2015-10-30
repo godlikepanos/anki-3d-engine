@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "anki/script/LuaBinder.h"
+#include <anki/script/LuaBinder.h>
 
 namespace anki {
 

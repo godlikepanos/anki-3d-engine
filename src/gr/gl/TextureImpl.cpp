@@ -3,10 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/gr/gl/TextureImpl.h"
-#include "anki/gr/Texture.h"
-#include "anki/gr/gl/Error.h"
-#include "anki/util/Functions.h"
+#include <anki/gr/gl/TextureImpl.h>
+#include <anki/gr/Texture.h>
+#include <anki/gr/gl/Error.h>
+#include <anki/util/Functions.h>
 
 namespace anki {
 

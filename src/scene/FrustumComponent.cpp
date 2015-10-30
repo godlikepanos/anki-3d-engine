@@ -3,9 +3,9 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/scene/FrustumComponent.h"
-#include "anki/scene/Visibility.h"
-#include "anki/util/Rtti.h"
+#include <anki/scene/FrustumComponent.h>
+#include <anki/scene/Visibility.h>
+#include <anki/util/Rtti.h>
 
 namespace anki {
 

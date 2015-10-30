@@ -3,13 +3,13 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/renderer/Sslr.h"
-#include "anki/renderer/Ssao.h"
-#include "anki/renderer/Ms.h"
-#include "anki/renderer/Is.h"
-#include "anki/renderer/Pps.h"
-#include "anki/renderer/Renderer.h"
-#include "anki/misc/ConfigSet.h"
+#include <anki/renderer/Sslr.h>
+#include <anki/renderer/Ssao.h>
+#include <anki/renderer/Ms.h>
+#include <anki/renderer/Is.h>
+#include <anki/renderer/Pps.h>
+#include <anki/renderer/Renderer.h>
+#include <anki/misc/ConfigSet.h>
 
 namespace anki {
 

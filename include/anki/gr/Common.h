@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include "anki/gr/Enums.h"
-#include "anki/util/Allocator.h"
-#include "anki/util/Ptr.h"
+#include <anki/gr/Enums.h>
+#include <anki/util/Allocator.h>
+#include <anki/util/Ptr.h>
 
 namespace anki {
 

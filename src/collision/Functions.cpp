@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/collision/Functions.h"
+#include <anki/collision/Functions.h>
 
 namespace anki {
 

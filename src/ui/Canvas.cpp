@@ -3,8 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/ui/Canvas.h"
-#include "anki/ui/Widget.h"
+#include <anki/ui/Canvas.h>
+#include <anki/ui/Widget.h>
 
 namespace anki {
 

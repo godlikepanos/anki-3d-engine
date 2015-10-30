@@ -5,12 +5,12 @@
 
 #pragma once
 
-#include "anki/scene/SceneNode.h"
-#include "anki/scene/RenderComponent.h"
-#include "anki/scene/MoveComponent.h"
-#include "anki/scene/SpatialComponent.h"
-#include "anki/resource/Model.h"
-#include "anki/collision/Obb.h"
+#include <anki/scene/SceneNode.h>
+#include <anki/scene/RenderComponent.h>
+#include <anki/scene/MoveComponent.h>
+#include <anki/scene/SpatialComponent.h>
+#include <anki/resource/Model.h>
+#include <anki/collision/Obb.h>
 
 namespace anki {
 

@@ -5,10 +5,10 @@
 
 #pragma once
 
-#include "anki/resource/ResourceManager.h"
-#include "anki/util/StdTypes.h"
-#include "anki/util/StringList.h"
-#include "anki/Gr.h"
+#include <anki/resource/ResourceManager.h>
+#include <anki/util/StdTypes.h>
+#include <anki/util/StringList.h>
+#include <anki/Gr.h>
 
 namespace anki {
 

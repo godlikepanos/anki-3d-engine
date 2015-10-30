@@ -3,11 +3,11 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/scene/Light.h"
-#include "anki/scene/LensFlareComponent.h"
-#include "anki/scene/MoveComponent.h"
-#include "anki/scene/SpatialComponent.h"
-#include "anki/scene/FrustumComponent.h"
+#include <anki/scene/Light.h>
+#include <anki/scene/LensFlareComponent.h>
+#include <anki/scene/MoveComponent.h>
+#include <anki/scene/SpatialComponent.h>
+#include <anki/scene/FrustumComponent.h>
 
 namespace anki {
 

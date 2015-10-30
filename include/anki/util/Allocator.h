@@ -5,10 +5,10 @@
 
 #pragma once
 
-#include "anki/util/Assert.h"
-#include "anki/util/Memory.h"
-#include "anki/util/Logger.h"
-#include "anki/util/Ptr.h"
+#include <anki/util/Assert.h>
+#include <anki/util/Memory.h>
+#include <anki/util/Logger.h>
+#include <anki/util/Ptr.h>
 #include <cstddef> // For ptrdiff_t
 #include <utility> // For forward
 

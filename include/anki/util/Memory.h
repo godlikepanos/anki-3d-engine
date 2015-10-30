@@ -5,10 +5,10 @@
 
 #pragma once
 
-#include "anki/util/StdTypes.h"
-#include "anki/util/NonCopyable.h"
-#include "anki/util/Atomic.h"
-#include "anki/util/Assert.h"
+#include <anki/util/StdTypes.h>
+#include <anki/util/NonCopyable.h>
+#include <anki/util/Atomic.h>
+#include <anki/util/Assert.h>
 #include <utility> // For forward
 
 namespace anki {

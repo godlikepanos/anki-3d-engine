@@ -3,12 +3,12 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/scene/StaticCollisionNode.h"
-#include "anki/scene/SceneGraph.h"
-#include "anki/resource/CollisionResource.h"
-#include "anki/resource/ResourceManager.h"
-#include "anki/physics/PhysicsBody.h"
-#include "anki/physics/PhysicsWorld.h"
+#include <anki/scene/StaticCollisionNode.h>
+#include <anki/scene/SceneGraph.h>
+#include <anki/resource/CollisionResource.h>
+#include <anki/resource/ResourceManager.h>
+#include <anki/physics/PhysicsBody.h>
+#include <anki/physics/PhysicsWorld.h>
 
 namespace anki {
 

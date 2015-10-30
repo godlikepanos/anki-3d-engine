@@ -6,8 +6,8 @@
 #ifndef ANKI_COLLISION_COMPOUND_SHAPE_H
 #define ANKI_COLLISION_COMPOUND_SHAPE_H
 
-#include "anki/collision/CollisionShape.h"
-#include "anki/util/NonCopyable.h"
+#include <anki/collision/CollisionShape.h>
+#include <anki/util/NonCopyable.h>
 
 namespace anki {
 

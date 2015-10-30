@@ -6,8 +6,8 @@
 #ifndef ANKI_COLLISION_SPHERE_H
 #define ANKI_COLLISION_SPHERE_H
 
-#include "anki/collision/ConvexShape.h"
-#include "anki/Math.h"
+#include <anki/collision/ConvexShape.h>
+#include <anki/Math.h>
 
 namespace anki {
 

@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include "anki/util/String.h"
-#include "anki/util/Enum.h"
-#include "anki/util/NonCopyable.h"
+#include <anki/util/String.h>
+#include <anki/util/Enum.h>
+#include <anki/util/NonCopyable.h>
 #include <cstdio>
 
 namespace anki {

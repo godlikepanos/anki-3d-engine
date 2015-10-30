@@ -6,8 +6,8 @@
 #ifndef ANKI_EVENT_FOLLOW_PATH_EVENT_H
 #define ANKI_EVENT_FOLLOW_PATH_EVENT_H
 
-#include "anki/event/Event.h"
-#include "anki/scene/SceneNode.h"
+#include <anki/event/Event.h>
+#include <anki/scene/SceneNode.h>
 
 namespace anki {
 

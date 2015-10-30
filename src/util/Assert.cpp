@@ -3,8 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/util/Assert.h"
-#include "anki/util/System.h"
+#include <anki/util/Assert.h>
+#include <anki/util/System.h>
 #include <cstdlib>
 #include <cstdio>
 #if ANKI_OS == ANKI_OS_ANDROID

@@ -6,7 +6,7 @@
 #ifndef ANKI_CORE_TIMESTAMP_H
 #define ANKI_CORE_TIMESTAMP_H
 
-#include "anki/util/StdTypes.h"
+#include <anki/util/StdTypes.h>
 
 namespace anki {
 

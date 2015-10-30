@@ -6,9 +6,9 @@
 #ifndef ANKI_CORE_STDIN_LISTENER_H
 #define ANKI_CORE_STDIN_LISTENER_H
 
-#include "anki/util/String.h"
-#include "anki/util/Thread.h"
-#include "anki/util/List.h"
+#include <anki/util/String.h>
+#include <anki/util/Thread.h>
+#include <anki/util/List.h>
 
 namespace anki {
 

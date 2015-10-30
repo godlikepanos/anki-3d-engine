@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "anki/input/KeyCode.h"
+#include <anki/input/KeyCode.h>
 #include <SDL_keycode.h>
 #include <unordered_map>
 

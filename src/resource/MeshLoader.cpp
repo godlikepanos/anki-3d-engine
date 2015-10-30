@@ -3,9 +3,9 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/resource/MeshLoader.h"
-#include "anki/resource/ResourceManager.h"
-#include "anki/resource/ResourceFilesystem.h"
+#include <anki/resource/MeshLoader.h>
+#include <anki/resource/ResourceManager.h>
+#include <anki/resource/ResourceFilesystem.h>
 
 namespace anki {
 

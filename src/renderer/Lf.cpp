@@ -3,17 +3,17 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/renderer/Lf.h"
-#include "anki/renderer/Bloom.h"
-#include "anki/renderer/Is.h"
-#include "anki/renderer/Ms.h"
-#include "anki/renderer/Renderer.h"
-#include "anki/scene/SceneGraph.h"
-#include "anki/scene/MoveComponent.h"
-#include "anki/scene/LensFlareComponent.h"
-#include "anki/scene/Camera.h"
-#include "anki/misc/ConfigSet.h"
-#include "anki/util/Functions.h"
+#include <anki/renderer/Lf.h>
+#include <anki/renderer/Bloom.h>
+#include <anki/renderer/Is.h>
+#include <anki/renderer/Ms.h>
+#include <anki/renderer/Renderer.h>
+#include <anki/scene/SceneGraph.h>
+#include <anki/scene/MoveComponent.h>
+#include <anki/scene/LensFlareComponent.h>
+#include <anki/scene/Camera.h>
+#include <anki/misc/ConfigSet.h>
+#include <anki/util/Functions.h>
 
 namespace anki {
 

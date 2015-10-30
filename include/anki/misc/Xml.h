@@ -6,9 +6,9 @@
 #ifndef ANKI_XML_H
 #define ANKI_XML_H
 
-#include "anki/util/String.h"
-#include "anki/util/DArray.h"
-#include "anki/Math.h"
+#include <anki/util/String.h>
+#include <anki/util/DArray.h>
+#include <anki/Math.h>
 #include <tinyxml2.h>
 #if !ANKI_TINYXML2
 #	error "Wrong tinyxml2 included"

@@ -6,7 +6,7 @@
 #ifndef ANKI_RESOURCE_PATH_H
 #define ANKI_RESOURCE_PATH_H
 
-#include "anki/Math.h"
+#include <anki/Math.h>
 
 namespace anki {
 

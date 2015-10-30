@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include "anki/util/String.h"
-#include "anki/util/List.h"
+#include <anki/util/String.h>
+#include <anki/util/List.h>
 #include <algorithm>
 
 namespace anki {
@@ -116,5 +116,5 @@ private:
 
 } // end namespace anki
 
-#include "anki/util/StringList.inl.h"
+#include <anki/util/StringList.inl.h>
 

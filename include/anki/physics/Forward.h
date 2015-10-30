@@ -6,7 +6,7 @@
 #ifndef ANKI_PHYSICS_FORWARD_H
 #define ANKI_PHYSICS_FORWARD_H
 
-#include "anki/physics/Common.h"
+#include <anki/physics/Common.h>
 
 #endif
 

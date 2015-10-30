@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include "anki/gr/gl/Common.h"
-#include "anki/util/DArray.h"
+#include <anki/gr/gl/Common.h>
+#include <anki/util/DArray.h>
 
 namespace anki {
 

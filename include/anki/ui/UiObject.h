@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include "anki/ui/Common.h"
-#include "anki/util/Ptr.h"
+#include <anki/ui/Common.h>
+#include <anki/util/Ptr.h>
 
 namespace anki {
 

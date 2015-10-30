@@ -4,9 +4,9 @@
 // http://www.anki3d.org/LICENSE
 
 #if 0
-#include "anki/scene/Grid.h"
-#include "anki/scene/SpatialComponent.h"
-#include "anki/scene/SceneNode.h"
+#include <anki/scene/Grid.h>
+#include <anki/scene/SpatialComponent.h>
+#include <anki/scene/SceneNode.h>
 
 namespace anki {
 

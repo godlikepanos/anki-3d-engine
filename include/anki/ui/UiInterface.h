@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "anki/ui/UiObject.h"
+#include <anki/ui/UiObject.h>
 
 namespace anki {
 

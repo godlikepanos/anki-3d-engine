@@ -6,7 +6,7 @@
 #ifndef ANKI_COLLISION_GJK_EPA_H
 #define ANKI_COLLISION_GJK_EPA_H
 
-#include "anki/Math.h"
+#include <anki/Math.h>
 
 namespace anki {
 

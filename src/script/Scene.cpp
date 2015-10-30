@@ -5,9 +5,9 @@
 
 // WARNING: The file is auto generated.
 
-#include "anki/script/LuaBinder.h"
-#include "anki/script/ScriptManager.h"
-#include "anki/Scene.h"
+#include <anki/script/LuaBinder.h>
+#include <anki/script/ScriptManager.h>
+#include <anki/Scene.h>
 
 namespace anki {
 

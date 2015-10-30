@@ -6,8 +6,8 @@
 #ifndef ANKI_COLLISION_COMMON_H
 #define ANKI_COLLISION_COMMON_H
 
-#include "anki/collision/Forward.h"
-#include "anki/util/Allocator.h"
+#include <anki/collision/Forward.h>
+#include <anki/util/Allocator.h>
 
 namespace anki {
 

@@ -5,11 +5,11 @@
 
 #pragma once
 
-#include "anki/util/Assert.h"
-#include "anki/util/List.h"
-#include "anki/util/StdTypes.h"
-#include "anki/util/Allocator.h"
-#include "anki/util/NonCopyable.h"
+#include <anki/util/Assert.h>
+#include <anki/util/List.h>
+#include <anki/util/StdTypes.h>
+#include <anki/util/Allocator.h>
+#include <anki/util/NonCopyable.h>
 #include <algorithm>
 
 namespace anki {
@@ -104,5 +104,5 @@ private:
 
 } // end namespace anki
 
-#include "anki/util/Hierarchy.inl.h"
+#include <anki/util/Hierarchy.inl.h>
 

@@ -3,10 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/input/Input.h"
-#include "anki/input/InputSdl.h"
-#include "anki/core/NativeWindowSdl.h"
-#include "anki/util/Logger.h"
+#include <anki/input/Input.h>
+#include <anki/input/InputSdl.h>
+#include <anki/core/NativeWindowSdl.h>
+#include <anki/util/Logger.h>
 #include <SDL.h>
 
 namespace anki {

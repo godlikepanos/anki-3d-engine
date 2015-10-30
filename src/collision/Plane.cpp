@@ -3,14 +3,16 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/collision/Plane.h"
-#include "anki/util/Assert.h"
+#include <anki/collision/Plane.h>
+#include <anki/util/Assert.h>
 
 namespace anki {
 
 //==============================================================================
 Plane::Plane(const Vec4& normal, F32 offset)
-	: CollisionShape(Type::PLANE), m_normal(normal), m_offset(offset)
+	: CollisionShape(Type::PLANE)
+	, m_normal(normal)
+	, m_offset(offset)
 {}
 
 //==============================================================================
@@ -33,7 +35,7 @@ void Plane::setFrom3Points(const Vec3& p0, const Vec3& p1, const Vec3& p2)
 	ANKI_ASSERT(!isZero(m_normal.getLengthSquared()));
 
 	m_normal.normalize();
-	m_offset = m_normal.dot(Vec4(p0, 0.0)); // XXX: correct??
+	m_offset = m_normal.dot(Vec4(p0, 0.0));
 }
 
 //==============================================================================
@@ -68,6 +70,49 @@ Plane Plane::getTransformed(const Transform& trf) const
 void Plane::computeAabb(Aabb&) const
 {
 	ANKI_ASSERT(0 && "Can't do that");
+}
+
+//==============================================================================
+Bool Plane::intersectVector(const Vec4& p, Vec4& intersection) const
+{
+	ANKI_ASSERT(p.w() == 0.0);
+	Vec4 pp = p.getNormalized();
+	F32 dot = pp.dot(m_normal);
+
+	if(!isZero(dot))
+	{
+		F32 s = m_offset / dot;
+		intersection = pp * s;
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+//==============================================================================
+Bool Plane::intersectRay(const Vec4& rayOrigin, const Vec4& rayDir,
+	Vec4& intersection) const
+{
+	ANKI_ASSERT(rayOrigin.w() == 0.0 && rayDir.w() == 0.0);
+	Bool intersects = false;
+
+	F32 d = test(rayOrigin); // Dist of origin to the plane
+	F32 a = m_normal.dot(rayDir);
+
+	if(d > 0.0 && a < 0.0)
+	{
+		// To have intersection the d should be positive and the s as well. So
+		// the 'a' must be negative and not zero because of the division.
+		F32 s = -d / a;
+		ANKI_ASSERT(s > 0.0);
+
+		intersection = rayOrigin + s * rayDir;
+		intersects = true;
+	}
+
+	return intersects;
 }
 
 } // end namespace anki

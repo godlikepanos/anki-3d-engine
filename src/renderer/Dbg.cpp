@@ -3,22 +3,22 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/renderer/Dbg.h"
-#include "anki/renderer/Renderer.h"
-#include "anki/renderer/Ms.h"
-#include "anki/renderer/Is.h"
-#include "anki/renderer/Pps.h"
-#include "anki/resource/ShaderResource.h"
-#include "anki/scene/SceneGraph.h"
-#include "anki/scene/Sector.h"
-#include "anki/scene/Camera.h"
-#include "anki/scene/Light.h"
-#include "anki/util/Logger.h"
-#include "anki/util/Enum.h"
-#include "anki/misc/ConfigSet.h"
-#include "anki/collision/ConvexHullShape.h"
-#include "anki/util/Rtti.h"
-#include "anki/Ui.h" /// XXX
+#include <anki/renderer/Dbg.h>
+#include <anki/renderer/Renderer.h>
+#include <anki/renderer/Ms.h>
+#include <anki/renderer/Is.h>
+#include <anki/renderer/Pps.h>
+#include <anki/resource/ShaderResource.h>
+#include <anki/scene/SceneGraph.h>
+#include <anki/scene/Sector.h>
+#include <anki/scene/Camera.h>
+#include <anki/scene/Light.h>
+#include <anki/util/Logger.h>
+#include <anki/util/Enum.h>
+#include <anki/misc/ConfigSet.h>
+#include <anki/collision/ConvexHullShape.h>
+#include <anki/util/Rtti.h>
+#include <anki/Ui.h> /// XXX
 
 namespace anki {
 
@@ -152,88 +152,64 @@ Error Dbg::run(CommandBufferPtr& cmdb)
 	}
 #endif
 
-#if 0
 	{
-		Vec4 origin(0.0);
-
-		PerspectiveFrustum fr;
-		const F32 ang = 55.0;
-		F32 far = 200.0;
-		fr.setAll(toRad(ang) * m_r->getAspectRatio(), toRad(ang), 0.2, far);
-		fr.resetTransform(Transform(origin, Mat3x4::getIdentity(), 1.0));
-
-		Clusterer c;
-
-		c.init(getAllocator(), m_r->getWidth() / 64, m_r->getHeight() / 64, 30);
-		//c.init(5, 3, 10);
-		c.prepare(fr);
-
 		CollisionDebugDrawer cd(m_drawer);
-		m_drawer->setColor(Vec4(1.0, 0.0, 0.0, 1.0));
-		fr.accept(cd);
-		/*m_drawer->begin(PrimitiveTopology::LINES);
-		m_drawer->pushBackVertex(Vec3(0.f));
-		m_drawer->pushBackVertex(Vec3(0.f, 0.f, -10.f));
-		m_drawer->end();*/
 
+		Array<Vec3, 4> poly;
+		poly[0] = Vec3(0.0, 0.0, 0.0);
+		poly[1] = Vec3(2.5, 0.0, 0.0);
+		poly[2] = Vec3(2.5, 3.9, 0.0);
+		poly[3] = Vec3(0.0, 3.9, 0.0);
 
-		U k = 0;
-		while(0)
+		Mat4 trf(Vec4(1.2, 14.0, 1.1, 1.0), Mat3(Euler(toRad(10.0), toRad(35.0),
+			toRad(85.0))), 1.0);
+
+		Array<Vec3, 4> polyw;
+		polyw[0] = trf.transform(poly[0]);
+		polyw[1] = trf.transform(poly[1]);
+		polyw[2] = trf.transform(poly[2]);
+		polyw[3] = trf.transform(poly[3]);
+
+		m_drawer->setModelMatrix(Mat4::getIdentity());
+		m_drawer->drawLine(polyw[0], polyw[1], Vec4(1.0));
+		m_drawer->drawLine(polyw[1], polyw[2], Vec4(0.9));
+		m_drawer->drawLine(polyw[2], polyw[3], Vec4(0.8));
+		m_drawer->drawLine(polyw[3], polyw[0], Vec4(0.7));
+
+		SceneNode& node = scene.findSceneNode("Cube.001Material_003-materialnone1");
+		MoveComponent& movc = node.getComponent<MoveComponent>();
+
+		Vec3 p0(movc.getWorldTransform().getOrigin().xyz());
+		Vec3 r(-movc.getWorldTransform().getRotation().getColumn(2).xyz());
+		r.normalize();
+
+		m_drawer->drawLine(p0, p0 + r * 25.0, Vec4(1.0, 0.0, 0.0, 1.0));
+
+		Plane plane(polyw[0], polyw[1], polyw[2]);
+		plane.accept(cd);
+		m_drawer->setModelMatrix(Mat4::getIdentity());
+
+		Vec3 n = plane.getNormal().xyz();
+		F32 O = plane.getOffset();
+		Vec4 i;
+		Bool collides = plane.intersectRay(p0.xyz0(), r.xyz0(), i);
+
+		if(collides)
 		{
-			F32 neark = c.calcNear(k);
-			if(neark >= c.m_far)
-			{
-				break;
-			}
-			Plane p;
-			p.setNormal(Vec4(0.0, 0.0, -1.0, 0.0));
-			p.setOffset(neark);
-			p.accept(cd);
-			++k;
+			Vec4 dots;
+			dots[0] = n.cross(polyw[1] - polyw[0]).dot(i.xyz() - polyw[0]);
+			dots[1] = n.cross(polyw[2] - polyw[1]).dot(i.xyz() - polyw[1]);
+			dots[2] = n.cross(polyw[3] - polyw[2]).dot(i.xyz() - polyw[2]);
+			dots[3] = n.cross(polyw[0] - polyw[3]).dot(i.xyz() - polyw[3]);
+
+			if(dots > Vec4(0.0))
+				m_drawer->drawLine(p0, i.xyz(), Vec4(0.0, 1.0, 0.0, 1.0));
 		}
-
-		SceneNode& lnode = scene.findSceneNode("spot0");
-		SpatialComponent& sp = lnode.getComponent<SpatialComponent>();
-
-		m_drawer->setColor(Vec4(0.0, 0.0, 1.0, 1.0));
-		sp.getSpatialCollisionShape().accept(cd);
-
-		ClustererTestResult rez;
-		c.initTestResults(getAllocator(), rez);
-
-		c.bin(sp.getSpatialCollisionShape(), rez);
-
-		m_drawer->setColor(Vec4(1.0));
-		for(U z = 0; z < c.m_counts[2]; ++z)
+		else
 		{
-			for(U y = 0; y < c.m_counts[1]; ++y)
-			{
-				for(U x = 0; x < c.m_counts[0]; ++x)
-				{
-					auto& cluster = c.cluster(x, y, z);
-					Aabb box(cluster.m_min.xyz0(), cluster.m_max.xyz0());
-					m_drawer->setColor(Vec4(1.0));
-
-					Bool found = false;
-					auto it = rez.getClustersBegin();
-					auto end = rez.getClustersEnd();
-					for(; it != end; ++it)
-					{
-						if((*it)[0] == x && (*it)[1] == y && (*it)[2] == z)
-						{
-							m_drawer->setColor(Vec4(1.0, 0.0, 0.0, 1.0));
-							found = true;
-							break;
-						}
-					}
-
-					if(found)
-					box.accept(cd);
-				}
-			}
+			//m_drawer->drawLine(p0, i.xyz(), Vec4(0.0, 0.0, 1.0, 1.0));
 		}
 	}
-#endif
 
 	return m_drawer->flush();
 }

@@ -5,10 +5,10 @@
 
 #pragma once
 
-#include "anki/util/StdTypes.h"
-#include "anki/util/Enum.h"
-#include "anki/util/Ptr.h"
-#include "anki/Math.h"
+#include <anki/util/StdTypes.h>
+#include <anki/util/Enum.h>
+#include <anki/util/Ptr.h>
+#include <anki/Math.h>
 #include <Newton.h>
 
 namespace anki {

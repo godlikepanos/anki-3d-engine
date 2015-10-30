@@ -5,8 +5,8 @@
 
 // WARNING: The file is auto generated.
 
-#include "anki/script/LuaBinder.h"
-#include "anki/Math.h"
+#include <anki/script/LuaBinder.h>
+#include <anki/Math.h>
 
 namespace anki {
 

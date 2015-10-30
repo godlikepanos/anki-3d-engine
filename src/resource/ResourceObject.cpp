@@ -3,9 +3,9 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/resource/ResourceObject.h"
-#include "anki/resource/ResourceManager.h"
-#include "anki/misc/Xml.h"
+#include <anki/resource/ResourceObject.h>
+#include <anki/resource/ResourceManager.h>
+#include <anki/misc/Xml.h>
 
 namespace anki {
 

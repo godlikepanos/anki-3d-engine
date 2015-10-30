@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include "anki/resource/ResourceObject.h"
-#include "anki/Math.h"
+#include <anki/resource/ResourceObject.h>
+#include <anki/Math.h>
 
 namespace anki {
 

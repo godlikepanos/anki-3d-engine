@@ -3,12 +3,12 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/core/NativeWindowAndroid.h"
-#include "anki/core/App.h"
-#include "anki/util/Logger.h"
-#include "anki/util/Array.h"
-#include "anki/util/StdTypes.h"
-#include "anki/core/Counters.h"
+#include <anki/core/NativeWindowAndroid.h>
+#include <anki/core/App.h>
+#include <anki/util/Logger.h>
+#include <anki/util/Array.h>
+#include <anki/util/StdTypes.h>
+#include <anki/core/Counters.h>
 
 namespace anki {
 

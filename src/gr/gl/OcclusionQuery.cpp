@@ -3,9 +3,9 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/gr/OcclusionQuery.h"
-#include "anki/gr/gl/OcclusionQueryImpl.h"
-#include "anki/gr/gl/CommandBufferImpl.h"
+#include <anki/gr/OcclusionQuery.h>
+#include <anki/gr/gl/OcclusionQueryImpl.h>
+#include <anki/gr/gl/CommandBufferImpl.h>
 
 namespace anki {
 

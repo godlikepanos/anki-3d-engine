@@ -3,8 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/script/LuaBinder.h"
-#include "anki/util/Logger.h"
+#include <anki/script/LuaBinder.h>
+#include <anki/util/Logger.h>
 #include <iostream>
 #include <cstring>
 

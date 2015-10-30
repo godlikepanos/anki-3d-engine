@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "anki/util/Assert.h"
+#include <anki/util/Assert.h>
 
 namespace anki {
 

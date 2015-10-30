@@ -6,7 +6,7 @@
 #ifndef ANKI_MATH_MAT4_H
 #define ANKI_MATH_MAT4_H
 
-#include "anki/math/CommonIncludes.h"
+#include <anki/math/CommonIncludes.h>
 
 namespace anki {
 
@@ -444,6 +444,6 @@ static_assert(sizeof(Mat4) == sizeof(F32) * 4 * 4, "Incorrect size");
 
 } // end namespace anki
 
-#include "anki/math/Mat4.inl.h"
+#include <anki/math/Mat4.inl.h>
 
 #endif

@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include "anki/resource/ResourceObject.h"
-#include "anki/physics/PhysicsCollisionShape.h"
+#include <anki/resource/ResourceObject.h>
+#include <anki/physics/PhysicsCollisionShape.h>
 
 namespace anki {
 

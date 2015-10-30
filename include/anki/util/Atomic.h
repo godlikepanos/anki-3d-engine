@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include "anki/util/StdTypes.h"
-#include "anki/util/NonCopyable.h"
+#include <anki/util/StdTypes.h>
+#include <anki/util/NonCopyable.h>
 
 namespace anki {
 

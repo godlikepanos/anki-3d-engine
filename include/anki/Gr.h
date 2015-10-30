@@ -14,14 +14,14 @@
 /// @defgroup opengl OpenGL backend
 /// @ingroup graphics
 
-#include "anki/gr/Buffer.h"
-#include "anki/gr/Texture.h"
-#include "anki/gr/Sampler.h"
-#include "anki/gr/Shader.h"
-#include "anki/gr/Framebuffer.h"
-#include "anki/gr/Pipeline.h"
-#include "anki/gr/CommandBuffer.h"
-#include "anki/gr/OcclusionQuery.h"
-#include "anki/gr/ResourceGroup.h"
-#include "anki/gr/GrManager.h"
+#include <anki/gr/Buffer.h>
+#include <anki/gr/Texture.h>
+#include <anki/gr/Sampler.h>
+#include <anki/gr/Shader.h>
+#include <anki/gr/Framebuffer.h>
+#include <anki/gr/Pipeline.h>
+#include <anki/gr/CommandBuffer.h>
+#include <anki/gr/OcclusionQuery.h>
+#include <anki/gr/ResourceGroup.h>
+#include <anki/gr/GrManager.h>
 

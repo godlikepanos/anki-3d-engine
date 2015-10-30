@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "anki/util/String.h"
+#include <anki/util/String.h>
 
 namespace anki {
 

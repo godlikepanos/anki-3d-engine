@@ -16,7 +16,7 @@
 /// Other modules should not use them.
 /// @ingroup resource
 
-#include "anki/resource/ResourceManager.h"
+#include <anki/resource/ResourceManager.h>
 
 #endif
 

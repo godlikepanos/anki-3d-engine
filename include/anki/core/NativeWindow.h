@@ -6,10 +6,10 @@
 #ifndef ANKI_CORE_NATIVE_WINDOW_H
 #define ANKI_CORE_NATIVE_WINDOW_H
 
-#include "anki/util/StdTypes.h"
-#include "anki/util/Array.h"
-#include "anki/util/String.h"
-#include "anki/util/Allocator.h"
+#include <anki/util/StdTypes.h>
+#include <anki/util/Array.h>
+#include <anki/util/String.h>
+#include <anki/util/Allocator.h>
 
 namespace anki {
 

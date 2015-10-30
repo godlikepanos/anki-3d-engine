@@ -3,8 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/script/ScriptManager.h"
-#include "anki/util/Logger.h"
+#include <anki/script/ScriptManager.h>
+#include <anki/util/Logger.h>
 
 #define ANKI_SCRIPT_CALL_WRAP(x_) \
 	extern void wrapModule##x_(lua_State*); \

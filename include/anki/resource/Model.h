@@ -5,14 +5,14 @@
 
 #pragma once
 
-#include "anki/resource/ResourceObject.h"
-#include "anki/Gr.h"
-#include "anki/collision/Obb.h"
-#include "anki/resource/RenderingKey.h"
-#include "anki/resource/Mesh.h"
-#include "anki/resource/Material.h"
-#include "anki/resource/Skeleton.h"
-#include "anki/resource/Animation.h"
+#include <anki/resource/ResourceObject.h>
+#include <anki/Gr.h>
+#include <anki/collision/Obb.h>
+#include <anki/resource/RenderingKey.h>
+#include <anki/resource/Mesh.h>
+#include <anki/resource/Material.h>
+#include <anki/resource/Skeleton.h>
+#include <anki/resource/Animation.h>
 
 namespace anki {
 

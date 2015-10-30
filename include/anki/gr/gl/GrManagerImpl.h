@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "anki/gr/Common.h"
+#include <anki/gr/Common.h>
 
 namespace anki {
 

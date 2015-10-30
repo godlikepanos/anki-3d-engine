@@ -6,8 +6,8 @@
 #ifndef ANKI_MATH_QUAT_H
 #define ANKI_MATH_QUAT_H
 
-#include "anki/math/CommonIncludes.h"
-#include "anki/math/Vec4.h"
+#include <anki/math/CommonIncludes.h>
+#include <anki/math/Vec4.h>
 
 namespace anki {
 

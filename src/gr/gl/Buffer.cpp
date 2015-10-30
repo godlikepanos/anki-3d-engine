@@ -3,9 +3,9 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/gr/Buffer.h"
-#include "anki/gr/gl/BufferImpl.h"
-#include "anki/gr/gl/CommandBufferImpl.h"
+#include <anki/gr/Buffer.h>
+#include <anki/gr/gl/BufferImpl.h>
+#include <anki/gr/gl/CommandBufferImpl.h>
 
 namespace anki {
 

@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "anki/math/CommonIncludes.h"
+#include <anki/math/CommonIncludes.h>
 
 namespace anki {
 
@@ -215,5 +215,5 @@ typedef TVec4<U32> UVec4;
 
 } // end namespace anki
 
-#include "anki/math/Vec4.inl.h"
+#include <anki/math/Vec4.inl.h>
 

@@ -6,9 +6,9 @@
 #ifndef ANKI_EVENT_EVENT_H
 #define ANKI_EVENT_EVENT_H
 
-#include "anki/scene/Common.h"
-#include "anki/Math.h"
-#include "anki/util/Enum.h"
+#include <anki/scene/Common.h>
+#include <anki/Math.h>
+#include <anki/util/Enum.h>
 
 namespace anki {
 

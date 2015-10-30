@@ -7,7 +7,7 @@
 
 /// @defgroup ui User interface
 
-#include "anki/ui/UiInterfaceImpl.h"
-#include "anki/ui/Canvas.h"
-#include "anki/ui/Widget.h"
+#include <anki/ui/UiInterfaceImpl.h>
+#include <anki/ui/Canvas.h>
+#include <anki/ui/Widget.h>
 

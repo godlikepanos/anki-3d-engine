@@ -6,7 +6,7 @@
 #ifndef ANKI_EVENT_MAIN_RENDERER_PPS_HDR_EVENT_H
 #define ANKI_EVENT_MAIN_RENDERER_PPS_HDR_EVENT_H
 
-#include "anki/event/Event.h"
+#include <anki/event/Event.h>
 #include <cstdint>
 
 namespace anki {

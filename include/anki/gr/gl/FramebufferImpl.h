@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include "anki/gr/gl/GlObject.h"
-#include "anki/gr/Framebuffer.h"
+#include <anki/gr/gl/GlObject.h>
+#include <anki/gr/Framebuffer.h>
 
 namespace anki {
 

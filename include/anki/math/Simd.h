@@ -6,7 +6,7 @@
 #ifndef ANKI_MATH_MATH_SIMD_H
 #define ANKI_MATH_MATH_SIMD_H
 
-#include "anki/Config.h"
+#include <anki/Config.h>
 
 #if ANKI_SIMD == ANKI_SIMD_SSE
 #	include <smmintrin.h>

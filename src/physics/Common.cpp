@@ -3,9 +3,9 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/physics/Common.h"
-#include "anki/physics/PhysicsObject.h"
-#include "anki/physics/PhysicsWorld.h"
+#include <anki/physics/Common.h>
+#include <anki/physics/PhysicsObject.h>
+#include <anki/physics/PhysicsWorld.h>
 
 namespace anki {
 

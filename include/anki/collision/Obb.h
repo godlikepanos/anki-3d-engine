@@ -6,10 +6,10 @@
 #ifndef ANKI_COLLISION_OBB_H
 #define ANKI_COLLISION_OBB_H
 
-#include "anki/collision/ConvexShape.h"
-#include "anki/collision/Aabb.h"
-#include "anki/Math.h"
-#include "anki/util/Array.h"
+#include <anki/collision/ConvexShape.h>
+#include <anki/collision/Aabb.h>
+#include <anki/Math.h>
+#include <anki/util/Array.h>
 
 namespace anki {
 

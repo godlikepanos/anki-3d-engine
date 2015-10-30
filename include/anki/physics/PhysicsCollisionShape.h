@@ -6,7 +6,7 @@
 #ifndef ANKI_PHYSICS_PHYSICS_COLLISION_SHAPE_H
 #define ANKI_PHYSICS_PHYSICS_COLLISION_SHAPE_H
 
-#include "anki/physics/PhysicsObject.h"
+#include <anki/physics/PhysicsObject.h>
 
 namespace anki {
 

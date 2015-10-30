@@ -6,9 +6,9 @@
 #ifndef ANKI_ANKI_H
 #define ANKI_ANKI_H
 
-#include "anki/Util.h"
-#include "anki/Math.h"
-#include "anki/Scene.h"
-#include "anki/Event.h"
+#include <anki/Util.h>
+#include <anki/Math.h>
+#include <anki/Scene.h>
+#include <anki/Event.h>
 
 #endif

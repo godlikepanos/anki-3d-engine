@@ -3,10 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/event/JitterMoveEvent.h"
-#include "anki/scene/SceneNode.h"
-#include "anki/scene/MoveComponent.h"
-#include "anki/util/Functions.h"
+#include <anki/event/JitterMoveEvent.h>
+#include <anki/scene/SceneNode.h>
+#include <anki/scene/MoveComponent.h>
+#include <anki/util/Functions.h>
 
 namespace anki {
 

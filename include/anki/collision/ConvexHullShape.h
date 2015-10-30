@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include "anki/collision/ConvexShape.h"
-#include "anki/Math.h"
-#include "anki/util/NonCopyable.h"
+#include <anki/collision/ConvexShape.h>
+#include <anki/Math.h>
+#include <anki/util/NonCopyable.h>
 
 namespace anki {
 

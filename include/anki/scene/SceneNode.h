@@ -5,13 +5,13 @@
 
 #pragma once
 
-#include "anki/scene/Common.h"
-#include "anki/util/Hierarchy.h"
-#include "anki/util/Rtti.h"
-#include "anki/util/Bitset.h"
-#include "anki/util/List.h"
-#include "anki/util/Enum.h"
-#include "anki/scene/SceneComponent.h"
+#include <anki/scene/Common.h>
+#include <anki/util/Hierarchy.h>
+#include <anki/util/Rtti.h>
+#include <anki/util/Bitset.h>
+#include <anki/util/List.h>
+#include <anki/util/Enum.h>
+#include <anki/scene/SceneComponent.h>
 
 namespace anki {
 

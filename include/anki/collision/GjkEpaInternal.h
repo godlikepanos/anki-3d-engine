@@ -6,8 +6,8 @@
 #ifndef ANKI_COLLISION_GJK_EPA_INTERNAL_H
 #define ANKI_COLLISION_GJK_EPA_INTERNAL_H
 
-#include "anki/Math.h"
-#include "anki/collision/Common.h"
+#include <anki/Math.h>
+#include <anki/collision/Common.h>
 
 namespace anki {
 namespace detail {

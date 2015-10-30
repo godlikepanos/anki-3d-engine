@@ -6,10 +6,10 @@
 #ifndef ANKI_CORE_APP_H
 #define ANKI_CORE_APP_H
 
-#include "anki/util/Allocator.h"
-#include "anki/util/String.h"
-#include "anki/util/Ptr.h"
-#include "anki/core/Timestamp.h"
+#include <anki/util/Allocator.h>
+#include <anki/util/String.h>
+#include <anki/util/Ptr.h>
+#include <anki/core/Timestamp.h>
 #if ANKI_OS == ANKI_OS_ANDROID
 #	include <android_native_app_glue.h>
 #endif

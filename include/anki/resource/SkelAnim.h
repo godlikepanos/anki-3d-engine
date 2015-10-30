@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include "anki/Math.h"
-#include "anki/util/Vector.h"
+#include <anki/Math.h>
+#include <anki/util/Vector.h>
 
 namespace anki {
 

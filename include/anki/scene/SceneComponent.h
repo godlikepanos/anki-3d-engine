@@ -5,10 +5,10 @@
 
 #pragma once
 
-#include "anki/scene/Common.h"
-#include "anki/core/Timestamp.h"
-#include "anki/util/Functions.h"
-#include "anki/util/Bitset.h"
+#include <anki/scene/Common.h>
+#include <anki/core/Timestamp.h>
+#include <anki/util/Functions.h>
+#include <anki/util/Bitset.h>
 
 namespace anki {
 

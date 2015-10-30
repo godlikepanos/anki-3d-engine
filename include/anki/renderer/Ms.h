@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include "anki/renderer/RenderingPass.h"
-#include "anki/Gr.h"
+#include <anki/renderer/RenderingPass.h>
+#include <anki/Gr.h>
 
 namespace anki {
 

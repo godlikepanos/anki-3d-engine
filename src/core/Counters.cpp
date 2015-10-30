@@ -3,13 +3,13 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/Config.h"
+#include <anki/Config.h>
 
 #if ANKI_ENABLE_COUNTERS
 
-#include "anki/core/Counters.h"
-#include "anki/core/App.h"
-#include "anki/util/Array.h"
+#include <anki/core/Counters.h>
+#include <anki/core/App.h>
+#include <anki/util/Array.h>
 #include <cstring>
 
 namespace anki {

@@ -6,7 +6,7 @@
 #ifndef ANKI_MATH_EULER_H
 #define ANKI_MATH_EULER_H
 
-#include "anki/math/CommonIncludes.h"
+#include <anki/math/CommonIncludes.h>
 
 namespace anki {
 

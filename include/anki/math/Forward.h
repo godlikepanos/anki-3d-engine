@@ -6,7 +6,7 @@
 #ifndef ANKI_MATH_FORWARD_H
 #define ANKI_MATH_FORWARD_H
 
-#include "anki/util/StdTypes.h"
+#include <anki/util/StdTypes.h>
 
 namespace anki {
 

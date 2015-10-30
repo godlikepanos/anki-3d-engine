@@ -6,8 +6,8 @@
 #ifndef ANKI_JITTER_EVENT_MOVE_EVENT_H
 #define ANKI_JITTER_EVENT_MOVE_EVENT_H
 
-#include "anki/event/Event.h"
-#include "anki/Math.h"
+#include <anki/event/Event.h>
+#include <anki/Math.h>
 
 namespace anki {
 

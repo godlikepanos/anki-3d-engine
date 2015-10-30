@@ -3,15 +3,15 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/util/System.h"
-#include "anki/Config.h"
+#include <anki/util/System.h>
+#include <anki/Config.h>
 #include <cstdio>
 
 #if ANKI_POSIX
 #	include <unistd.h>
 #	include <signal.h>
 #elif ANKI_OS == ANKI_OS_WINDOWS
-#	include "Windows.h"
+#	include "Windows.h>
 #else
 #	error "Unimplemented"
 #endif

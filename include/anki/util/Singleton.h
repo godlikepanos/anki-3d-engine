@@ -6,7 +6,7 @@
 #ifndef ANKI_UTIL_SINGLETON_H
 #define ANKI_UTIL_SINGLETON_H
 
-#include "anki/util/Assert.h"
+#include <anki/util/Assert.h>
 #include <utility>
 
 namespace anki {

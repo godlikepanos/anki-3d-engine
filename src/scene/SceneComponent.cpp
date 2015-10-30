@@ -3,8 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/scene/SceneComponent.h"
-#include "anki/scene/SceneNode.h"
+#include <anki/scene/SceneComponent.h>
+#include <anki/scene/SceneNode.h>
 
 namespace anki {
 

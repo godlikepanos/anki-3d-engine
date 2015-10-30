@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include "anki/util/Allocator.h"
-#include "anki/util/Functions.h"
-#include "anki/util/NonCopyable.h"
+#include <anki/util/Allocator.h>
+#include <anki/util/Functions.h>
+#include <anki/util/NonCopyable.h>
 
 namespace anki {
 
@@ -444,5 +444,5 @@ public:
 
 } // end namespace anki
 
-#include "anki/util/HashMap.inl.h"
+#include <anki/util/HashMap.inl.h>
 

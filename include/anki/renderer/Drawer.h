@@ -5,11 +5,11 @@
 
 #pragma once
 
-#include "anki/util/StdTypes.h"
-#include "anki/util/Ptr.h"
-#include "anki/resource/RenderingKey.h"
-#include "anki/scene/Forward.h"
-#include "anki/Gr.h"
+#include <anki/util/StdTypes.h>
+#include <anki/util/Ptr.h>
+#include <anki/resource/RenderingKey.h>
+#include <anki/scene/Forward.h>
+#include <anki/Gr.h>
 
 namespace anki {
 

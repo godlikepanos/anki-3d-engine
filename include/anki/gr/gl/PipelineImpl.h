@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include "anki/gr/gl/GlObject.h"
-#include "anki/gr/Pipeline.h"
+#include <anki/gr/gl/GlObject.h>
+#include <anki/gr/Pipeline.h>
 
 namespace anki {
 

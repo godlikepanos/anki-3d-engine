@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "anki/gr/Common.h"
+#include <anki/gr/Common.h>
 
 #if ANKI_GL == ANKI_GL_DESKTOP
 #	if ANKI_OS == ANKI_OS_WINDOWS && !defined(GLEW_STATIC)

@@ -4,11 +4,11 @@
 // http://www.anki3d.org/LICENSE
 
 #if 0
-#include "anki/scene/SkinNode.h"
-#include "anki/resource/Skin.h"
-#include "anki/resource/Skeleton.h"
-#include "anki/resource/SkelAnim.h"
-#include "anki/resource/MeshLoader.h"
+#include <anki/scene/SkinNode.h>
+#include <anki/resource/Skin.h>
+#include <anki/resource/Skeleton.h>
+#include <anki/resource/SkelAnim.h>
+#include <anki/resource/MeshLoader.h>
 
 namespace anki {
 

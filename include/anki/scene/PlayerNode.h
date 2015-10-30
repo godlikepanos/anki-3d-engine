@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include "anki/scene/SceneNode.h"
-#include "anki/Math.h"
-#include "anki/physics/PhysicsPlayerController.h"
+#include <anki/scene/SceneNode.h>
+#include <anki/Math.h>
+#include <anki/physics/PhysicsPlayerController.h>
 
 namespace anki {
 

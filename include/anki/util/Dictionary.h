@@ -6,8 +6,8 @@
 #ifndef ANKI_UTIL_DICTIONARY_H
 #define ANKI_UTIL_DICTIONARY_H
 
-#include "anki/util/Allocator.h"
-#include "anki/util/String.h"
+#include <anki/util/Allocator.h>
+#include <anki/util/String.h>
 #include <unordered_map>
 
 namespace anki {

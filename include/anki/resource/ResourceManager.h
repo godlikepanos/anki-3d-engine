@@ -241,5 +241,5 @@ private:
 
 } // end namespace anki
 
-#include "anki/resource/ResourceManager.inl.h"
+#include <anki/resource/ResourceManager.inl.h>
 

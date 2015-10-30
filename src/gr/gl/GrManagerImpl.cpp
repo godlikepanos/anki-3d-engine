@@ -3,9 +3,9 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/gr/gl/GrManagerImpl.h"
-#include "anki/gr/GrManager.h"
-#include "anki/gr/gl/RenderingThread.h"
+#include <anki/gr/gl/GrManagerImpl.h>
+#include <anki/gr/GrManager.h>
+#include <anki/gr/gl/RenderingThread.h>
 
 namespace anki {
 

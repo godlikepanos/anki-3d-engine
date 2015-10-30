@@ -43,7 +43,7 @@ App* app;
 ModelNode* horse;
 PerspectiveCamera* cam;
 
-#define PLAYER 1
+#define PLAYER 0
 #define MOUSE 1
 
 Bool profile = false;
@@ -89,8 +89,8 @@ Error init()
 #if !PLAYER
 	cam->getComponent<MoveComponent>().
 		setLocalTransform(Transform(
-		Vec4(147.392776, -10.132728, 16.607138, 0.0),
-		//Vec4(0.0, 10, 0, 0),
+		//Vec4(147.392776, -10.132728, 16.607138, 0.0),
+		Vec4(0.0, 10, 0, 0),
 		Mat3x4(Euler(toRad(0.0), toRad(90.0), toRad(0.0))),
 		1.0));
 #endif
@@ -355,7 +355,8 @@ Error mainLoopExtra(App& app, void*, Bool& quit)
 	}
 	if(in.getKey(KeyCode::_2))
 	{
-		mover = &scene.findSceneNode("Point_058").getComponent<MoveComponent>();
+		mover = &scene.findSceneNode("Cube.001Material_003-materialnone1").
+			getComponent<MoveComponent>();
 	}
 	if(in.getKey(KeyCode::_3))
 	{
@@ -481,7 +482,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("is.sm.poissonEnabled", true);
 	config.set("is.sm.resolution", 1024);
 	config.set("lf.maxFlares", 32);
-	config.set("pps.enabled", true);
+	config.set("pps.enabled", false);
 	config.set("pps.bloom.enabled", true);
 	config.set("pps.bloom.renderingQuality", 0.5);
 	config.set("pps.bloom.blurringDist", 1.0);

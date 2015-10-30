@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include "anki/collision/ConvexShape.h"
-#include "anki/math/Vec3.h"
+#include <anki/collision/ConvexShape.h>
+#include <anki/math/Vec3.h>
 
 namespace anki {
 

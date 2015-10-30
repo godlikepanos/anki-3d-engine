@@ -3,10 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/core/NativeWindowEglFbdev.h"
-#include "anki/util/Vector.h"
-#include "anki/util/Array.h"
-#include "anki/util/StdTypes.h"
+#include <anki/core/NativeWindowEglFbdev.h>
+#include <anki/util/Vector.h>
+#include <anki/util/Array.h>
+#include <anki/util/StdTypes.h>
 
 namespace anki {
 

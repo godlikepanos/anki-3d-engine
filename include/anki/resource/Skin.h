@@ -6,8 +6,8 @@
 #pragma once
 
 #if 0
-#include "anki/resource/ResourceManager.h"
-#include "anki/resource/Model.h"
+#include <anki/resource/ResourceManager.h>
+#include <anki/resource/Model.h>
 
 namespace anki {
 

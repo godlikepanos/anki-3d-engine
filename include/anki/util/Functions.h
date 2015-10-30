@@ -9,8 +9,8 @@
 #ifndef ANKI_UTIL_FUNCTIONS_H
 #define ANKI_UTIL_FUNCTIONS_H
 
-#include "anki/util/StdTypes.h"
-#include "anki/util/Assert.h"
+#include <anki/util/StdTypes.h>
+#include <anki/util/Assert.h>
 #include <cmath>
 #include <utility>
 #include <new>

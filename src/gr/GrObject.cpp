@@ -3,8 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/gr/GrObject.h"
-#include "anki/gr/GrManager.h"
+#include <anki/gr/GrObject.h>
+#include <anki/gr/GrManager.h>
 
 namespace anki {
 

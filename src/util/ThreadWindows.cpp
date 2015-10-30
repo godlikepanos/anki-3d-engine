@@ -6,9 +6,9 @@
 // Add support for condition variables
 #define _WIN32_WINNT _WIN32_WINNT_VISTA
 
-#include "anki/util/Thread.h"
-#include "anki/util/Functions.h"
-#include "anki/util/Logger.h"
+#include <anki/util/Thread.h>
+#include <anki/util/Functions.h>
+#include <anki/util/Logger.h>
 #include <cstring>
 #include <Windows.h>
 #include <WinBase.h>

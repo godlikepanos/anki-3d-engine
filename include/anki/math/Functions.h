@@ -6,7 +6,7 @@
 #ifndef ANKI_MATH_FUNCTIONS_H
 #define ANKI_MATH_FUNCTIONS_H
 
-#include "anki/util/StdTypes.h"
+#include <anki/util/StdTypes.h>
 #include <cmath>
 #include <cstdlib>
 

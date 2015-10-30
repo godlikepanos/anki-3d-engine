@@ -5,11 +5,11 @@
 
 #pragma once
 
-#include "anki/util/Assert.h"
-#include "anki/util/StdTypes.h"
-#include "anki/util/Allocator.h"
-#include "anki/util/String.h"
-#include "anki/util/Functions.h"
+#include <anki/util/Assert.h>
+#include <anki/util/StdTypes.h>
+#include <anki/util/Allocator.h>
+#include <anki/util/String.h>
+#include <anki/util/Functions.h>
 #include <lua.hpp>
 #ifndef ANKI_LUA_HPP
 #	error "Wrong LUA header included"

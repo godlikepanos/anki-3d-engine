@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "anki/util/StdTypes.h"
+#include <anki/util/StdTypes.h>
 
 namespace anki {
 

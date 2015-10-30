@@ -6,7 +6,7 @@
 #ifndef ANKI_UTIL_ASSERT_H
 #define ANKI_UTIL_ASSERT_H
 
-#include "anki/Config.h"
+#include <anki/Config.h>
 
 /// Assertion. Print an error and stop the debugger (if it runs through a
 /// debugger) and then abort

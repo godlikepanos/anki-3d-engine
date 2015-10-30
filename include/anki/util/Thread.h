@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include "anki/util/StdTypes.h"
-#include "anki/util/Array.h"
-#include "anki/util/NonCopyable.h"
+#include <anki/util/StdTypes.h>
+#include <anki/util/Array.h>
+#include <anki/util/NonCopyable.h>
 #include <atomic>
 
 #define ANKI_DISABLE_THREADPOOL_THREADING 0

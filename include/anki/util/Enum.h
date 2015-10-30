@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "anki/Config.h"
+#include <anki/Config.h>
 
 /// @privatesection
 /// @{

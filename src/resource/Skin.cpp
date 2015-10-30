@@ -4,15 +4,15 @@
 // http://www.anki3d.org/LICENSE
 
 #if 0
-#include "anki/resource/Skin.h"
-#include "anki/resource/Model.h"
-#include "anki/resource/Skeleton.h"
-#include "anki/resource/SkelAnim.h"
-#include "anki/resource/Mesh.h"
-#include "anki/resource/RenderingKey.h"
-#include "anki/resource/Model.h"
-#include "anki/resource/Material.h"
-#include "anki/misc/Xml.h"
+#include <anki/resource/Skin.h>
+#include <anki/resource/Model.h>
+#include <anki/resource/Skeleton.h>
+#include <anki/resource/SkelAnim.h>
+#include <anki/resource/Mesh.h>
+#include <anki/resource/RenderingKey.h>
+#include <anki/resource/Model.h>
+#include <anki/resource/Material.h>
+#include <anki/misc/Xml.h>
 
 
 namespace anki {

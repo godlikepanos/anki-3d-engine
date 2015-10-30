@@ -6,8 +6,8 @@
 #ifndef ANKI_CORE_THREADPOOL_H
 #define ANKI_CORE_THREADPOOL_H
 
-#include "anki/util/Thread.h"
-#include "anki/util/Singleton.h"
+#include <anki/util/Thread.h>
+#include <anki/util/Singleton.h>
 
 namespace anki {
 

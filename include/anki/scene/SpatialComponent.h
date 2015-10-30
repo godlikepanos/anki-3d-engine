@@ -6,12 +6,12 @@
 #ifndef ANKI_SCENE_SPATIAL_COMPONENT_H
 #define ANKI_SCENE_SPATIAL_COMPONENT_H
 
-#include "anki/scene/Common.h"
-#include "anki/scene/SceneComponent.h"
-#include "anki/Collision.h"
-#include "anki/util/Bitset.h"
-#include "anki/util/Enum.h"
-#include "anki/util/List.h"
+#include <anki/scene/Common.h>
+#include <anki/scene/SceneComponent.h>
+#include <anki/Collision.h>
+#include <anki/util/Bitset.h>
+#include <anki/util/Enum.h>
+#include <anki/util/List.h>
 
 namespace anki {
 

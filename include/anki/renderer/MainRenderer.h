@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include "anki/renderer/Common.h"
-#include "anki/core/Timestamp.h"
-#include "anki/resource/Forward.h"
+#include <anki/renderer/Common.h>
+#include <anki/core/Timestamp.h>
+#include <anki/resource/Forward.h>
 
 namespace anki {
 

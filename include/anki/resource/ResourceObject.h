@@ -5,10 +5,10 @@
 
 #pragma once
 
-#include "anki/resource/Common.h"
-#include "anki/resource/ResourceFilesystem.h"
-#include "anki/util/Atomic.h"
-#include "anki/util/String.h"
+#include <anki/resource/Common.h>
+#include <anki/resource/ResourceFilesystem.h>
+#include <anki/util/Atomic.h>
+#include <anki/util/String.h>
 
 namespace anki {
 

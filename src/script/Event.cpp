@@ -5,10 +5,10 @@
 
 // WARNING: The file is auto generated.
 
-#include "anki/script/LuaBinder.h"
-#include "anki/script/ScriptManager.h"
-#include "anki/scene/SceneGraph.h"
-#include "anki/Event.h"
+#include <anki/script/LuaBinder.h>
+#include <anki/script/ScriptManager.h>
+#include <anki/scene/SceneGraph.h>
+#include <anki/Event.h>
 
 namespace anki {
 

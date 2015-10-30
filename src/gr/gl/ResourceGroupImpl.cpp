@@ -3,17 +3,17 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/gr/gl/ResourceGroupImpl.h"
-#include "anki/gr/gl/TextureImpl.h"
-#include "anki/gr/Texture.h"
-#include "anki/gr/gl/SamplerImpl.h"
-#include "anki/gr/Sampler.h"
-#include "anki/gr/gl/BufferImpl.h"
-#include "anki/gr/Buffer.h"
-#include "anki/gr/gl/GlState.h"
-#include "anki/gr/gl/GrManagerImpl.h"
-#include "anki/gr/GrManager.h"
-#include "anki/gr/gl/RenderingThread.h"
+#include <anki/gr/gl/ResourceGroupImpl.h>
+#include <anki/gr/gl/TextureImpl.h>
+#include <anki/gr/Texture.h>
+#include <anki/gr/gl/SamplerImpl.h>
+#include <anki/gr/Sampler.h>
+#include <anki/gr/gl/BufferImpl.h>
+#include <anki/gr/Buffer.h>
+#include <anki/gr/gl/GlState.h>
+#include <anki/gr/gl/GrManagerImpl.h>
+#include <anki/gr/GrManager.h>
+#include <anki/gr/gl/RenderingThread.h>
 
 namespace anki {
 

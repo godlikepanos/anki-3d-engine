@@ -5,13 +5,13 @@
 
 #pragma once
 
-#include "anki/resource/ResourceObject.h"
-#include "anki/resource/ShaderResource.h"
-#include "anki/resource/TextureResource.h"
-#include "anki/resource/RenderingKey.h"
-#include "anki/Math.h"
-#include "anki/util/Visitor.h"
-#include "anki/util/NonCopyable.h"
+#include <anki/resource/ResourceObject.h>
+#include <anki/resource/ShaderResource.h>
+#include <anki/resource/TextureResource.h>
+#include <anki/resource/RenderingKey.h>
+#include <anki/Math.h>
+#include <anki/util/Visitor.h>
+#include <anki/util/NonCopyable.h>
 
 namespace anki {
 

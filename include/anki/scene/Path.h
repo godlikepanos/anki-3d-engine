@@ -6,9 +6,9 @@
 #ifndef ANKI_SCENE_PATH_H
 #define ANKI_SCENE_PATH_H
 
-#include "anki/scene/Common.h"
-#include "anki/scene/SceneNode.h"
-#include "anki/scene/MoveComponent.h"
+#include <anki/scene/Common.h>
+#include <anki/scene/SceneNode.h>
+#include <anki/scene/MoveComponent.h>
 
 namespace anki {
 

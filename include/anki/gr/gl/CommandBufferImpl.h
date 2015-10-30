@@ -5,10 +5,10 @@
 
 #pragma once
 
-#include "anki/gr/GrManager.h"
-#include "anki/gr/CommandBuffer.h"
-#include "anki/util/Assert.h"
-#include "anki/util/Allocator.h"
+#include <anki/gr/GrManager.h>
+#include <anki/gr/CommandBuffer.h>
+#include <anki/util/Assert.h>
+#include <anki/util/Allocator.h>
 
 namespace anki {
 

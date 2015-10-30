@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include "anki/Collision.h"
-#include "anki/renderer/RenderingPass.h"
-#include "anki/core/Timestamp.h"
+#include <anki/Collision.h>
+#include <anki/renderer/RenderingPass.h>
+#include <anki/core/Timestamp.h>
 
 namespace anki {
 

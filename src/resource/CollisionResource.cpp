@@ -3,11 +3,11 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/resource/CollisionResource.h"
-#include "anki/resource/ResourceManager.h"
-#include "anki/resource/MeshLoader.h"
-#include "anki/physics/PhysicsWorld.h"
-#include "anki/misc/Xml.h"
+#include <anki/resource/CollisionResource.h>
+#include <anki/resource/ResourceManager.h>
+#include <anki/resource/MeshLoader.h>
+#include <anki/physics/PhysicsWorld.h>
+#include <anki/misc/Xml.h>
 
 namespace anki {
 

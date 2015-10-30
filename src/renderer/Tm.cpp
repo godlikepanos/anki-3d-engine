@@ -3,9 +3,9 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/renderer/Tm.h"
-#include "anki/renderer/Is.h"
-#include "anki/renderer/Renderer.h"
+#include <anki/renderer/Tm.h>
+#include <anki/renderer/Is.h>
+#include <anki/renderer/Renderer.h>
 
 namespace anki {
 

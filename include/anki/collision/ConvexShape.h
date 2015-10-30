@@ -6,7 +6,7 @@
 #ifndef ANKI_COLLISION_CONVEX_SHAPE_H
 #define ANKI_COLLISION_CONVEX_SHAPE_H
 
-#include "anki/collision/CollisionShape.h"
+#include <anki/collision/CollisionShape.h>
 
 namespace anki {
 

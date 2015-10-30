@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "anki/physics/PhysicsObject.h"
+#include <anki/physics/PhysicsObject.h>
 
 namespace anki {
 

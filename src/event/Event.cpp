@@ -3,10 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/event/Event.h"
-#include "anki/event/EventManager.h"
-#include "anki/scene/SceneGraph.h"
-#include "anki/util/Assert.h"
+#include <anki/event/Event.h>
+#include <anki/event/EventManager.h>
+#include <anki/scene/SceneGraph.h>
+#include <anki/util/Assert.h>
 
 namespace anki {
 

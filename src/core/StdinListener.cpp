@@ -3,9 +3,9 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/core/StdinListener.h"
-#include "anki/util/Array.h"
-#include "anki/util/Thread.h"
+#include <anki/core/StdinListener.h>
+#include <anki/util/Array.h>
+#include <anki/util/Thread.h>
 #include <unistd.h>
 
 namespace anki {

@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include "anki/collision/CollisionShape.h"
-#include "anki/Math.h"
+#include <anki/collision/CollisionShape.h>
+#include <anki/Math.h>
 
 namespace anki {
 
@@ -113,9 +113,9 @@ public:
 	/// Return the transformed
 	Plane getTransformed(const Transform& trf) const;
 
-	/// It gives the distance between a point and a plane. if returns >0
-	/// then the point lies in front of the plane, if <0 then it is behind
-	/// and if =0 then it is co-planar
+	/// It gives the distance between a point and a plane. It returns >0 if the
+	/// point lies in front of the plane, <0 if it's behind and ==0 when it's
+	/// co-planar.
 	F32 test(const Vec4& point) const
 	{
 		ANKI_ASSERT(isZero<F32>(point.w()));
@@ -136,23 +136,12 @@ public:
 	}
 
 	/// Find intersection with a vector.
-	Bool intersectVector(const Vec4& p, Vec4& intersection) const
-	{
-		ANKI_ASSERT(p.w() == 0.0);
-		Vec4 pp = p.getNormalized();
-		F32 dot = pp.dot(m_normal);
+	Bool intersectVector(const Vec4& p, Vec4& intersection) const;
 
-		if(!isZero(dot))
-		{
-			F32 s = m_offset / dot;
-			intersection = pp * s;
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	}
+	/// Find the intersection point of this plane and a ray. If the ray hits
+	/// the back of the plane then there is no intersection.
+	Bool intersectRay(const Vec4& rayOrigin, const Vec4& rayDir,
+		Vec4& intersection) const;
 
 	/// Test a CollisionShape
 	template<typename T>

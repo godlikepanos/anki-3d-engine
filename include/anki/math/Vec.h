@@ -6,7 +6,7 @@
 #ifndef ANKI_MATH_VEC_H
 #define ANKI_MATH_VEC_H
 
-#include "anki/math/CommonIncludes.h"
+#include <anki/math/CommonIncludes.h>
 #include <type_traits>
 
 namespace anki {

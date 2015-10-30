@@ -6,10 +6,10 @@
 #ifndef ANKI_SCENE_OCTREE_H
 #define ANKI_SCENE_OCTREE_H
 
-#include "anki/collision/Aabb.h"
-#include "anki/util/Array.h"
-#include "anki/scene/Common.h"
-#include "anki/scene/Visibility.h"
+#include <anki/collision/Aabb.h>
+#include <anki/util/Array.h>
+#include <anki/scene/Common.h>
+#include <anki/scene/Visibility.h>
 #include <memory>
 #if ANKI_CFG_OCTREE_THREAD_SAFE
 #	include <mutex>

@@ -5,11 +5,11 @@
 
 #pragma once
 
-#include "anki/collision/Frustum.h"
-#include "anki/scene/SpatialComponent.h"
-#include "anki/scene/Common.h"
-#include "anki/scene/SceneComponent.h"
-#include "anki/util/Bitset.h"
+#include <anki/collision/Frustum.h>
+#include <anki/scene/SpatialComponent.h>
+#include <anki/scene/Common.h>
+#include <anki/scene/SceneComponent.h>
+#include <anki/util/Bitset.h>
 
 namespace anki {
 

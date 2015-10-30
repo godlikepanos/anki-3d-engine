@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include "anki/gr/CommandBuffer.h"
-#include "anki/gr/gl/GlState.h"
-#include "anki/util/Thread.h"
+#include <anki/gr/CommandBuffer.h>
+#include <anki/gr/gl/GlState.h>
+#include <anki/util/Thread.h>
 
 namespace anki {
 

@@ -5,10 +5,10 @@
 
 #pragma once
 
-#include "anki/ui/UiInterface.h"
-#include "anki/Gr.h"
-#include "anki/resource/ShaderResource.h"
-#include "anki/resource/TextureResource.h"
+#include <anki/ui/UiInterface.h>
+#include <anki/Gr.h>
+#include <anki/resource/ShaderResource.h>
+#include <anki/resource/TextureResource.h>
 
 namespace anki {
 

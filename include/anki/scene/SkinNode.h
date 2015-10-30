@@ -6,12 +6,12 @@
 #pragma once
 
 #if 0
-#include "anki/scene/SceneNode.h"
-#include "anki/scene/RenderComponent.h"
-#include "anki/scene/MoveComponent.h"
-#include "anki/scene/SpatialComponent.h"
-#include "anki/resource/Model.h"
-#include "anki/Math.h"
+#include <anki/scene/SceneNode.h>
+#include <anki/scene/RenderComponent.h>
+#include <anki/scene/MoveComponent.h>
+#include <anki/scene/SpatialComponent.h>
+#include <anki/resource/Model.h>
+#include <anki/Math.h>
 
 namespace anki {
 

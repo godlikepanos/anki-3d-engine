@@ -3,8 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/collision/CompoundShape.h"
-#include "anki/collision/Aabb.h"
+#include <anki/collision/CompoundShape.h>
+#include <anki/collision/Aabb.h>
 #include <cstring>
 
 namespace anki {

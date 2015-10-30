@@ -3,8 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/resource/Script.h"
-#include "anki/util/File.h"
+#include <anki/resource/Script.h>
+#include <anki/util/File.h>
 
 namespace anki {
 

@@ -5,11 +5,11 @@
 
 #pragma once
 
-#include "anki/event/Event.h"
-#include "anki/util/List.h"
-#include "anki/util/StdTypes.h"
-#include "anki/scene/Common.h"
-#include "anki/Math.h"
+#include <anki/event/Event.h>
+#include <anki/util/List.h>
+#include <anki/util/StdTypes.h>
+#include <anki/scene/Common.h>
+#include <anki/Math.h>
 
 namespace anki {
 

@@ -6,8 +6,8 @@
 #ifndef ANKI_COLLISION_FUNCTIONS_H
 #define ANKI_COLLISION_FUNCTIONS_H
 
-#include "anki/collision/Plane.h"
-#include "anki/collision/Frustum.h"
+#include <anki/collision/Plane.h>
+#include <anki/collision/Frustum.h>
 
 namespace anki {
 

@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/core/Config.h"
+#include <anki/core/Config.h>
 
 namespace anki {
 

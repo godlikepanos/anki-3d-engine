@@ -3,8 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/util/Thread.h"
-#include "anki/util/Logger.h"
+#include <anki/util/Thread.h>
+#include <anki/util/Logger.h>
 #include <cstring>
 #include <algorithm>
 #include <pthread.h>

@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include "anki/util/DArray.h"
-#include "anki/util/Array.h"
-#include "anki/util/NonCopyable.h"
+#include <anki/util/DArray.h>
+#include <anki/util/Array.h>
+#include <anki/util/NonCopyable.h>
 #include <cstring>
 
 namespace anki {

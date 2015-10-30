@@ -3,12 +3,12 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/renderer/Bloom.h"
-#include "anki/renderer/Is.h"
-#include "anki/renderer/Pps.h"
-#include "anki/renderer/Renderer.h"
-#include "anki/renderer/Tm.h"
-#include "anki/misc/ConfigSet.h"
+#include <anki/renderer/Bloom.h>
+#include <anki/renderer/Is.h>
+#include <anki/renderer/Pps.h>
+#include <anki/renderer/Renderer.h>
+#include <anki/renderer/Tm.h>
+#include <anki/misc/ConfigSet.h>
 
 namespace anki {
 

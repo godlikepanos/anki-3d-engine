@@ -3,15 +3,15 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/gr/gl/ShaderImpl.h"
-#include "anki/gr/GrManager.h"
-#include "anki/util/StringList.h"
-#include "anki/util/Logger.h"
+#include <anki/gr/gl/ShaderImpl.h>
+#include <anki/gr/GrManager.h>
+#include <anki/util/StringList.h>
+#include <anki/util/Logger.h>
 
 #define ANKI_DUMP_SHADERS ANKI_DEBUG
 
 #if ANKI_DUMP_SHADERS
-#	include "anki/util/File.h"
+#	include <anki/util/File.h>
 #endif
 
 namespace anki {

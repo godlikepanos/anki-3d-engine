@@ -6,9 +6,9 @@
 #ifndef ANKI_UTIL_LOGGER_H
 #define ANKI_UTIL_LOGGER_H
 
-#include "anki/Config.h"
-#include "anki/util/Singleton.h"
-#include "anki/util/Thread.h"
+#include <anki/Config.h>
+#include <anki/util/Singleton.h>
+#include <anki/util/Thread.h>
 
 namespace anki {
 

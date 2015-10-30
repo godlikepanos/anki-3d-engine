@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include "anki/util/StdTypes.h"
-#include "anki/util/Enum.h"
+#include <anki/util/StdTypes.h>
+#include <anki/util/Enum.h>
 
 namespace anki {
 

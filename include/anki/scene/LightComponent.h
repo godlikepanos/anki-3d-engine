@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include "anki/scene/SceneComponent.h"
-#include "anki/Math.h"
+#include <anki/scene/SceneComponent.h>
+#include <anki/Math.h>
 
 namespace anki {
 

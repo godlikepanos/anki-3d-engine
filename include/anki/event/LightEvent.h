@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include "anki/event/Event.h"
-#include "anki/Math.h"
+#include <anki/event/Event.h>
+#include <anki/Math.h>
 
 namespace anki {
 

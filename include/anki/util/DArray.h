@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include "anki/util/Allocator.h"
-#include "anki/util/NonCopyable.h"
-#include "anki/util/Functions.h"
+#include <anki/util/Allocator.h>
+#include <anki/util/NonCopyable.h>
+#include <anki/util/Functions.h>
 
 namespace anki {
 

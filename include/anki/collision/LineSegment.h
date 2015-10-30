@@ -6,8 +6,8 @@
 #ifndef ANKI_COLLISION_LINE_SEGMENT_H
 #define ANKI_COLLISION_LINE_SEGMENT_H
 
-#include "anki/collision/CollisionShape.h"
-#include "anki/math/Vec3.h"
+#include <anki/collision/CollisionShape.h>
+#include <anki/math/Vec3.h>
 
 namespace anki {
 

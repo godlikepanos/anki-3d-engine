@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include "anki/physics/Common.h"
-#include "anki/util/List.h"
-#include "anki/util/Rtti.h"
+#include <anki/physics/Common.h>
+#include <anki/util/List.h>
+#include <anki/util/Rtti.h>
 
 namespace anki {
 

@@ -5,11 +5,11 @@
 
 #pragma once
 
-#include "anki/scene/SceneNode.h"
-#include "anki/scene/Forward.h"
-#include "anki/scene/LightComponent.h"
-#include "anki/resource/TextureResource.h"
-#include "anki/Collision.h"
+#include <anki/scene/SceneNode.h>
+#include <anki/scene/Forward.h>
+#include <anki/scene/LightComponent.h>
+#include <anki/resource/TextureResource.h>
+#include <anki/Collision.h>
 
 namespace anki {
 

@@ -6,8 +6,8 @@
 #ifndef ANKI_SCENE_GRID_H
 #define ANKI_SCENE_GRID_H
 
-#include "anki/Collision.h"
-#include "anki/scene/Common.h"
+#include <anki/Collision.h>
+#include <anki/scene/Common.h>
 
 namespace anki {
 

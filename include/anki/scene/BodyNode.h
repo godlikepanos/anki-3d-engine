@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include "anki/scene/SceneNode.h"
-#include "anki/resource/CollisionResource.h"
+#include <anki/scene/SceneNode.h>
+#include <anki/resource/CollisionResource.h>
 
 namespace anki {
 

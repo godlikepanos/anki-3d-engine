@@ -3,13 +3,13 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/resource/ParticleEmitterResource.h"
-#include "anki/resource/ResourceManager.h"
-#include "anki/resource/Model.h"
-#include "anki/util/StringList.h"
-#include "anki/misc/Xml.h"
-#include "anki/renderer/Ms.h"
-#include "anki/renderer/Is.h"
+#include <anki/resource/ParticleEmitterResource.h>
+#include <anki/resource/ResourceManager.h>
+#include <anki/resource/Model.h>
+#include <anki/util/StringList.h>
+#include <anki/misc/Xml.h>
+#include <anki/renderer/Ms.h>
+#include <anki/renderer/Is.h>
 #include <cstring>
 
 namespace anki {

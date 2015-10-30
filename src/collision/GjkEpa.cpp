@@ -4,8 +4,8 @@
 // http://www.anki3d.org/LICENSE
 // Inspired by http://vec3.ca/gjk/implementation/
 
-#include "anki/collision/GjkEpa.h"
-#include "anki/collision/ConvexShape.h"
+#include <anki/collision/GjkEpa.h>
+#include <anki/collision/ConvexShape.h>
 
 namespace anki {
 

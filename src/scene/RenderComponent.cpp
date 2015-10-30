@@ -3,11 +3,11 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/scene/RenderComponent.h"
-#include "anki/scene/SceneNode.h"
-#include "anki/resource/TextureResource.h"
-#include "anki/resource/ResourceManager.h"
-#include "anki/util/Logger.h"
+#include <anki/scene/RenderComponent.h>
+#include <anki/scene/SceneNode.h>
+#include <anki/resource/TextureResource.h>
+#include <anki/resource/ResourceManager.h>
+#include <anki/util/Logger.h>
 
 namespace anki {
 

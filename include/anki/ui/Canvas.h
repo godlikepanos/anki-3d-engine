@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include "anki/ui/UiInterface.h"
-#include "anki/input/KeyCode.h"
+#include <anki/ui/UiInterface.h>
+#include <anki/input/KeyCode.h>
 
 namespace anki {
 

@@ -3,9 +3,9 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/core/NativeWindowSdl.h"
-#include "anki/core/Counters.h"
-#include "anki/util/Logger.h"
+#include <anki/core/NativeWindowSdl.h>
+#include <anki/core/Counters.h>
+#include <anki/util/Logger.h>
 #include <GL/glew.h>
 
 namespace anki {

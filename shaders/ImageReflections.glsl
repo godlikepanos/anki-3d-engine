@@ -10,6 +10,91 @@
 
 #pragma anki include "shaders/Common.glsl"
 
+#if 0
+
+/// Basically a quad in view space.
+struct ReflectionProxy
+{
+	// xyz: plane.n, w: plane.offset.
+	vec4 plane;
+
+	// xyz: -plane.n, w: plane.offset.
+	vec4 negPlane;
+
+	// The points of the quad.
+	vec4 quadPoints[4];
+
+	// Used to check if the intersection point fall inside the quad. It's:
+	// edgeCrossProd[0] = cross(plane.n, (quadPoints[1] - quadPoints[0]));
+	// edgeCrossProd[1] = cross(plane.n, (quadPoints[2] - quadPoints[1]));
+	// etc...
+	vec4 edgeCrossProd[4];
+};
+
+// Representation of a reflection probe
+struct ReflectionProbe
+{
+	// Position of the prove in view space. Radius of probe squared
+	vec4 positionRadiusSq;
+
+	// Slice in u_reflectionsTex vector.
+	vec4 cubemapIndexPad3;
+};
+
+layout(std140, row_major, SS_BINDING(IMAGE_REFLECTIONS_SET,
+	IMAGE_REFLECTIONS_PROXY_SS_BINDING)) readonly buffer _irs0
+{
+	uvec4 u_proxyCountReflectionProbeCountPad3;
+	ReflectionProxy u_proxies[];
+};
+
+layout(std140, row_major, SS_BINDING(IMAGE_REFLECTIONS_SET,
+	IMAGE_REFLECTIONS_PROBE_SS_BINDING)) readonly buffer _irs1
+{
+	ReflectionProbe u_reflectionProbes[];
+};
+
+layout(TEX_BINDING(IMAGE_REFLECTIONS_SET, IMAGE_REFLECTIONS_TEX_BINDING))
+	uniform samplerCubeArray u_reflectionsTex;
+
+//==============================================================================
+// Test if a ray intersects with the proxy.
+// p is the origin of the ray, r the ray vector, c is the intersection point.
+bool testReflectionProxy(in uint proxyIdx, in vec3 p, in vec3 r, out vec3 c)
+{
+	ReflectionProxy proxy = u_proxies[proxyIdx];
+	bool intersect;
+
+	// Compute the inverce direction of p to the plane
+	float d = dot(proxy.negPlane, vec4(p, 1.0));
+
+	// Compute another dot
+	float a = dot(proxy.plane.xyz, r);
+
+	if(d < 0.0 && a < 0.0)
+	{
+		float s = d / a;
+		c = p + s * r;
+
+		// Now check each edge
+		vec4 tests;
+		for(uint i = 0; i < 4; ++i)
+		{
+			tests[i] = dot(c - proxy.quadPoints[i], proxy.edgeCrossProd[i]);
+		}
+
+		intersect = all(greaterThan(tests, vec4(0.0)));
+	}
+	else
+	{
+		intersect = false;
+	}
+
+	return intersect;
+}
+
+#endif
+
 // Representation of a reflection probe
 struct ReflectionProbe
 {

@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include "anki/scene/SceneNode.h"
-#include "anki/Gr.h"
-#include "anki/resource/TextureResource.h"
+#include <anki/scene/SceneNode.h>
+#include <anki/Gr.h>
+#include <anki/resource/TextureResource.h>
 
 namespace anki {
 

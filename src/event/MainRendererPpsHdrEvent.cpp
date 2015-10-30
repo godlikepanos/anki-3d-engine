@@ -3,8 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/event/MainRendererPpsHdrEvent.h"
-#include "anki/renderer/MainRenderer.h"
+#include <anki/event/MainRendererPpsHdrEvent.h>
+#include <anki/renderer/MainRenderer.h>
 
 namespace anki {
 

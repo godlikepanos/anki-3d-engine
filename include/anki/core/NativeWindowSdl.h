@@ -6,7 +6,7 @@
 #ifndef ANKI_CORE_NATIVE_WINDOW_SDL_H
 #define ANKI_CORE_NATIVE_WINDOW_SDL_H
 
-#include "anki/core/NativeWindow.h"
+#include <anki/core/NativeWindow.h>
 #include <SDL.h>
 
 namespace anki {
