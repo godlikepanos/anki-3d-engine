@@ -27,6 +27,7 @@ layout(location = 0) out vec3 out_color;
 
 #pragma anki include "shaders/LightFunctions.glsl"
 
+#if 0
 #if IR == 1
 #define IMAGE_REFLECTIONS_SET 0
 #define IMAGE_REFLECTIONS_SS_BINDING 5
@@ -35,6 +36,7 @@ layout(location = 0) out vec3 out_color;
 #undef IMAGE_REFLECTIONS_SET
 #undef IMAGE_REFLECTIONS_SS_BINDING
 #undef IMAGE_REFLECTIONS_TEX_BINDING
+#endif
 #endif
 
 const uint TILE_COUNT = TILES_COUNT_X * TILES_COUNT_Y;

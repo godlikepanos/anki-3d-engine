@@ -10,8 +10,6 @@
 
 #pragma anki include "shaders/Common.glsl"
 
-#if 0
-
 /// Basically a quad in view space.
 struct ReflectionProxy
 {
@@ -45,12 +43,13 @@ layout(std140, row_major, SS_BINDING(IMAGE_REFLECTIONS_SET,
 	IMAGE_REFLECTIONS_PROXY_SS_BINDING)) readonly buffer _irs0
 {
 	uvec4 u_proxyCountReflectionProbeCountPad3;
-	ReflectionProxy u_proxies[];
+	ReflectionProxy u_reflectionProxies[];
 };
 
 layout(std140, row_major, SS_BINDING(IMAGE_REFLECTIONS_SET,
 	IMAGE_REFLECTIONS_PROBE_SS_BINDING)) readonly buffer _irs1
 {
+	mat3 u_invViewRotation;
 	ReflectionProbe u_reflectionProbes[];
 };
 
@@ -62,7 +61,7 @@ layout(TEX_BINDING(IMAGE_REFLECTIONS_SET, IMAGE_REFLECTIONS_TEX_BINDING))
 // p is the origin of the ray, r the ray vector, c is the intersection point.
 bool testReflectionProxy(in uint proxyIdx, in vec3 p, in vec3 r, out vec3 c)
 {
-	ReflectionProxy proxy = u_proxies[proxyIdx];
+	ReflectionProxy proxy = u_reflectionProxies[proxyIdx];
 	bool intersect;
 
 	// Compute the inverce direction of p to the plane
@@ -71,7 +70,7 @@ bool testReflectionProxy(in uint proxyIdx, in vec3 p, in vec3 r, out vec3 c)
 	// Compute another dot
 	float a = dot(proxy.plane.xyz, r);
 
-	if(d < 0.0 && a < 0.0)
+	if(all(lessThan(vec2(d, a), vec2(0.0))))
 	{
 		float s = d / a;
 		c = p + s * r;
@@ -80,7 +79,7 @@ bool testReflectionProxy(in uint proxyIdx, in vec3 p, in vec3 r, out vec3 c)
 		vec4 tests;
 		for(uint i = 0; i < 4; ++i)
 		{
-			tests[i] = dot(c - proxy.quadPoints[i], proxy.edgeCrossProd[i]);
+			tests[i] = dot(c - proxy.quadPoints[i], proxy.edgeCrossProd[i].xyz);
 		}
 
 		intersect = all(greaterThan(tests, vec4(0.0)));
@@ -93,50 +92,57 @@ bool testReflectionProxy(in uint proxyIdx, in vec3 p, in vec3 r, out vec3 c)
 	return intersect;
 }
 
-#endif
-
-// Representation of a reflection probe
-struct ReflectionProbe
+//==============================================================================
+// Find a point that the ray (p,r) hit a proxy. Return the intersection point.
+bool findCloseProxyIntersection(in vec3 p, in vec3 r, out vec3 c)
 {
-	// Position of the prove in view space. Radius of probe squared
-	vec4 positionRadiusSq;
+	const float BIG_FLOAT = 1000000.0;
+	float distSq = BIG_FLOAT;
+	uint proxyCount = u_proxyCountReflectionProbeCountPad3.x;
+	for(uint i = 0; i < proxyCount; ++i)
+	{
+		vec3 intersection;
+		bool intersects = testReflectionProxy(j, posVSpace, r, intersection);
+		if(intersects)
+		{
+			// Compute the distance^2
+			vec3 a = intersection - p;
+			float b = dot(a, a);
 
-	// Slice in u_reflectionsTex vector.
-	vec4 cubemapIndexPad3;
-};
+			if(b < distSq)
+			{
+				// Intersection point is closer than the prev one
+				distSq = b;
+				c = intersection;
+			}
+		}
+	}
 
-layout(std140, row_major, SS_BINDING(IMAGE_REFLECTIONS_SET,
-	IMAGE_REFLECTIONS_SS_BINDING)) readonly buffer _irs0
-{
-	uvec4 u_reflectionProbeCountPad3;
-	ReflectionProbe u_reflectionProbes[];
-};
-
-layout(TEX_BINDING(IMAGE_REFLECTIONS_SET, IMAGE_REFLECTIONS_TEX_BINDING))
-	uniform samplerCubeArray u_reflectionsTex;
+	return lessThan(distSq, BIG_FLOAT);
+}
 
 //==============================================================================
-// Compute the cubemap texture lookup vector given the reflection vector (r)
-// the radius squared of the probe (R2) and the frag pos in sphere space (f)
-vec3 computeCubemapVec(in vec3 r, in float R2, in vec3 f)
+bool findProbe(in vec3 c, out float cubemapIndex, out vec3 probeOrigin)
 {
-	// Compute the collision of the r to the inner part of the sphere
-	// From now on we work on the sphere's space
+	// Iterate probes to find the cubemap
+	uint count = u_proxyCountReflectionProbeCountPad3.y;
+	for(uint i = 0; i < count; ++i)
+	{
+		float R2 = u_reflectionProbes[i].positionRadiusSq.w;
+		vec3 center = u_reflectionProbes[i].positionRadiusSq.xyz;
 
-	// Project the center of the sphere (it's zero now since we are in sphere
-	// space) in ray "f,r"
-	vec3 p = f - r * dot(f, r);
+		// Check if posVSpace is inside the sphere
+		vec3 f = c - center;
+		if(dot(f, f) < R2)
+		{
+			// Found something
+			cubemapIndex = u_reflectionProbes[i].cubemapIndexPad3.x;
+			probeOrigin = u_reflectionProbes[i].positionRadiusSq.xyz;
+			return true;
+		}
+	}
 
-	// The collision to the sphere is point x where x = p + T * r
-	// Because of the pythagorean theorem: R^2 = dot(p, p) + dot(T * r, T * r)
-	// solving for T, T = R / |p|
-	// then x becomes x = sqrt(R^2 - dot(p, p)) * r + p;
-	float pp = dot(p, p);
-	pp = min(pp, R2);
-	float sq = sqrt(R2 - pp);
-	vec3 x = p + sq * r;
-
-	return normalize(x);
+	return false;
 }
 
 //==============================================================================
@@ -148,20 +154,23 @@ vec3 readReflection(in vec3 posVSpace, in vec3 normalVSpace)
 	vec3 eye = normalize(posVSpace);
 	vec3 r = reflect(eye, normalVSpace);
 
-	// Iterate probes
-	uint count = u_reflectionProbeCountPad3.x;
-	for(uint i = 0; i < count; ++i)
+	// Check proxy
+	vec3 intersection;
+	if(findCloseProxyIntersection(posVSpace, r, intersection))
 	{
-		float R2 = u_reflectionProbes[i].positionRadiusSq.w;
-		vec3 c = u_reflectionProbes[i].positionRadiusSq.xyz;
-
-		// Check if posVSpace is inside the sphere
-		vec3 f = posVSpace - c;
-		if(dot(f, f) < R2)
+		// Check for probes
+		float cubemapIdx;
+		vec3 probeOrigin;
+		if(findProbe(intersection, cubemapIdx, probeOrigin))
 		{
-			vec3 uv = computeCubemapVec(r, R2, f);
-			color += texture(u_reflectionsTex, vec4(uv,
-				u_reflectionProbes[i].cubemapIndexPad3.x));
+			// Cubemap UV in view space
+			vec3 uv = normalize(intersection - probeOrigin);
+
+			// Rotate UV to move it to world space
+			uv = u_invViewRotation * uv;
+
+			// Read!
+			color = texture(u_reflectionsTex, vec4(uv, cubemapIdx));
 		}
 	}
 

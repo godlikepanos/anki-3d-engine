@@ -9,7 +9,7 @@
 #include <anki/scene/SceneNode.h>
 #include <anki/scene/Visibility.h>
 #include <anki/scene/FrustumComponent.h>
-#include <anki/scene/ReflectionProbe.h>
+#include <anki/scene/ReflectionProbeComponent.h>
 
 namespace anki {
 
@@ -17,13 +17,20 @@ namespace anki {
 // Misc                                                                        =
 //==============================================================================
 
-//==============================================================================
 struct ShaderReflectionProbe
 {
 	Vec3 m_pos;
 	F32 m_radiusSq;
 	F32 m_cubemapIndex;
 	U32 _m_pading[3];
+};
+
+struct ShaderReflectionProxy
+{
+	Vec4 m_plane;
+	Vec4 m_negPlane;
+	Array<Vec4, 4> m_quadPoints;
+	Array<Vec4, 4> m_edgeCrossProd;
 };
 
 //==============================================================================

@@ -8,7 +8,8 @@
 #include <anki/scene/Sector.h>
 #include <anki/scene/FrustumComponent.h>
 #include <anki/scene/LensFlareComponent.h>
-#include <anki/scene/ReflectionProbe.h>
+#include <anki/scene/ReflectionProbeComponent.h>
+#include <anki/scene/ReflectionProxyComponent.h>
 #include <anki/scene/Light.h>
 #include <anki/scene/MoveComponent.h>
 #include <anki/renderer/MainRenderer.h>
@@ -393,98 +394,30 @@ void VisibilityTestTask::combineTestResults(
 {
 	auto alloc = m_shared->m_scene->getFrameAllocator();
 
-	// Count the visible scene nodes to optimize the allocation of the
-	// final result
-	U renderablesSize = 0;
-	U lightsSize = 0;
-	U lensFlaresSize = 0;
-	U reflSize = 0;
+	// Prepare
+	Array<VisibilityTestResults*, ThreadPool::MAX_THREADS> results;
 	for(U i = 0; i < threadsCount; i++)
 	{
-		VisibilityTestResults& rez = *m_shared->m_testResults[i];
-
-		renderablesSize += rez.getRenderablesCount();
-		lightsSize += rez.getLightsCount();
-		lensFlaresSize += rez.getLensFlaresCount();
-		reflSize += rez.getReflectionProbeCount();
+		results[i] = m_shared->m_testResults[i];
 	}
+	SArray<VisibilityTestResults*> rez(&results[0], threadsCount);
 
-	// Allocate
+	// Create the new combined results
 	VisibilityTestResults* visible = alloc.newInstance<VisibilityTestResults>();
-
+	visible->combineWith(alloc, rez);
 	visible->setShapeUpdateTimestamp(m_shared->m_timestamp);
-
-	visible->create(
-		alloc,
-		renderablesSize,
-		lightsSize,
-		lensFlaresSize,
-		reflSize);
-
-	visible->prepareMerge();
-
-	// Append thread results
-	VisibleNode* renderables = visible->getRenderablesBegin();
-	VisibleNode* lights = visible->getLightsBegin();
-	VisibleNode* lensFlares = visible->getLensFlaresBegin();
-	VisibleNode* refl = visible->getReflectionProbesBegin();
-	for(U i = 0; i < threadsCount; i++)
-	{
-		VisibilityTestResults& from = *m_shared->m_testResults[i];
-
-		U rCount = from.getRenderablesCount();
-		U lCount = from.getLightsCount();
-		U lfCount = from.getLensFlaresCount();
-		U reflCount = from.getReflectionProbeCount();
-
-		if(rCount > 0)
-		{
-			memcpy(renderables,
-				from.getRenderablesBegin(),
-				sizeof(VisibleNode) * rCount);
-
-			renderables += rCount;
-		}
-
-		if(lCount > 0)
-		{
-			memcpy(lights,
-				from.getLightsBegin(),
-				sizeof(VisibleNode) * lCount);
-
-			lights += lCount;
-		}
-
-		if(lfCount > 0)
-		{
-			memcpy(lensFlares,
-				from.getLensFlaresBegin(),
-				sizeof(VisibleNode) * lfCount);
-
-			lensFlares += lfCount;
-		}
-
-		if(reflCount > 0)
-		{
-			memcpy(refl,
-				from.getReflectionProbesBegin(),
-				sizeof(VisibleNode) * reflCount);
-
-			refl += reflCount;
-		}
-	}
 
 	// Set the frustumable
 	frc.setVisibilityTestResults(visible);
 
-	// Sort lights
+	// Sort some of the arrays
 	DistanceSortFunctor comp;
 	comp.m_origin = frc.getFrustumOrigin();
-	//std::sort(visible->getLightsBegin(), visible->getLightsEnd(), comp);
+	std::sort(visible->getRenderablesBegin(), visible->getRenderablesEnd(),
+		comp);
 
-	// Sort the renderables
-	std::sort(
-		visible->getRenderablesBegin(), visible->getRenderablesEnd(), comp);
+	std::sort(visible->getReflectionProbesBegin(),
+		visible->getReflectionProbesEnd(), comp);
 }
 
 //==============================================================================
@@ -524,13 +457,53 @@ void VisibilityTestResults::moveBack(SceneFrameAllocator<U8> alloc,
 }
 
 //==============================================================================
-void VisibilityTestResults::prepareMerge()
+void VisibilityTestResults::combineWith(SceneFrameAllocator<U8> alloc,
+	SArray<VisibilityTestResults*>& results)
 {
-	for(U i = 0; i < TYPE_COUNT; ++i)
+	ANKI_ASSERT(results.getSize() > 0);
+
+	// Count the visible scene nodes to optimize the allocation of the
+	// final result
+	Array<U, TYPE_COUNT> counts;
+	memset(&counts[0], 0, sizeof(counts));
+	for(U i = 0; i < results.getSize(); i++)
 	{
-		Group& group = m_groups[i];
-		ANKI_ASSERT(group.m_count == 0);
-		group.m_count = group.m_nodes.getSize();
+		VisibilityTestResults& rez = *results[i];
+
+		for(U t = 0; t < TYPE_COUNT; ++t)
+		{
+			counts[t] += rez.m_groups[t].m_count;
+		}
+	}
+
+	// Allocate
+	for(U t = 0; t < TYPE_COUNT; ++t)
+	{
+		if(counts[t] > 0)
+		{
+			m_groups[t].m_nodes.create(alloc, counts[t]);
+			m_groups[t].m_count = counts[t];
+		}
+	}
+
+	// Combine
+	memset(&counts[0], 0, sizeof(counts)); // Re-use
+	for(U i = 0; i < results.getSize(); ++i)
+	{
+		VisibilityTestResults& rez = *results[i];
+
+		for(U t = 0; t < TYPE_COUNT; ++t)
+		{
+			U copyCount = rez.m_groups[t].m_count;
+			if(copyCount > 0)
+			{
+				memcpy(&m_groups[t].m_nodes[0] + counts[t],
+					&rez.m_groups[t].m_nodes[0],
+					sizeof(VisibleNode) * copyCount);
+
+				counts[t] += copyCount;
+			}
+		}
 	}
 }
 

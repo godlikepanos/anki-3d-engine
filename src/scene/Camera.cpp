@@ -95,7 +95,8 @@ Error Camera::create(const CString& name, Frustum* frustum)
 		FrustumComponent::VisibilityTestFlag::TEST_RENDER_COMPONENTS
 		| FrustumComponent::VisibilityTestFlag::TEST_LIGHT_COMPONENTS
 		| FrustumComponent::VisibilityTestFlag::TEST_LENS_FLARE_COMPONENTS
-		| FrustumComponent::VisibilityTestFlag::TEST_REFLECTION_PROBES);
+		| FrustumComponent::VisibilityTestFlag::TEST_REFLECTION_PROBES
+		| FrustumComponent::VisibilityTestFlag::TEST_REFLECTION_PROXIES);
 	addComponent(frc, true);
 
 	// Feedback component #2

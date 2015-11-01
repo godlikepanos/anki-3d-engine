@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/scene/ReflectionProbe.h>
+#include <anki/scene/ReflectionProbeComponent.h>
 #include <anki/scene/MoveComponent.h>
 #include <anki/scene/FrustumComponent.h>
 #include <anki/scene/SceneGraph.h>

@@ -89,71 +89,77 @@ public:
 
 	VisibleNode* getRenderablesBegin()
 	{
-		return (getRenderablesCount())
-			? &m_groups[RENDERABLES].m_nodes[0] : nullptr;
+		return getBegin(RENDERABLES);
 	}
 
 	VisibleNode* getRenderablesEnd()
 	{
-		return (getRenderablesCount())
-			? (&m_groups[RENDERABLES].m_nodes[0] + getRenderablesCount())
-			: nullptr;
+		return getEnd(RENDERABLES);
 	}
 
 	VisibleNode* getLightsBegin()
 	{
-		return (getLightsCount()) ? &m_groups[LIGHTS].m_nodes[0] : nullptr;
+		return getBegin(LIGHTS);
 	}
 
 	VisibleNode* getLightsEnd()
 	{
-		return (getLightsCount())
-			? (&m_groups[LIGHTS].m_nodes[0] + getLightsCount()) : nullptr;
+		return getEnd(LIGHTS);
 	}
 
 	VisibleNode* getLensFlaresBegin()
 	{
-		return (getLensFlaresCount()) ? &m_groups[FLARES].m_nodes[0] : nullptr;
+		return getBegin(FLARES);
 	}
 
 	VisibleNode* getLensFlaresEnd()
 	{
-		return (getLensFlaresCount())
-			? (&m_groups[FLARES].m_nodes[0] + getLightsCount()) : nullptr;
+		return getEnd(FLARES);
 	}
 
 	VisibleNode* getReflectionProbesBegin()
 	{
-		return (getReflectionProbeCount())
-			? &m_groups[REFLECTION_PROBES].m_nodes[0] : nullptr;
+		return getBegin(REFLECTION_PROBES);
 	}
 
 	VisibleNode* getReflectionProbesEnd()
 	{
-		return (getReflectionProbeCount())
-			? (&m_groups[REFLECTION_PROBES].m_nodes[0]
-			+ getReflectionProbeCount())
-			: nullptr;
+		return getEnd(REFLECTION_PROBES);
+	}
+
+	VisibleNode* getReflectionProxiesBegin()
+	{
+		return getBegin(REFLECTION_PROXIES);
+	}
+
+	VisibleNode* getReflectionProxiesEnd()
+	{
+		return getEnd(REFLECTION_PROXIES);
 	}
 
 	U32 getRenderablesCount() const
 	{
-		return m_groups[RENDERABLES].m_count;
+		return getCount(RENDERABLES);
 	}
 
 	U32 getLightsCount() const
 	{
-		return m_groups[LIGHTS].m_count;
+		return getCount(LIGHTS);
 	}
 
 	U32 getLensFlaresCount() const
 	{
-		return m_groups[FLARES].m_count;
+		return getCount(FLARES);
 	}
 
 	U32 getReflectionProbeCount() const
 	{
-		return m_groups[REFLECTION_PROBES].m_count;
+		return getCount(REFLECTION_PROBES);
+	}
+
+	U32 getReflectionProxyCount() const
+	{
+		return getCount(REFLECTION_PROBES);
 	}
 
 	void moveBackRenderable(SceneFrameAllocator<U8> alloc, VisibleNode& x)
@@ -176,6 +182,11 @@ public:
 		moveBack(alloc, REFLECTION_PROBES, x);
 	}
 
+	void moveBackReflectionProxy(SceneFrameAllocator<U8> alloc, VisibleNode& x)
+	{
+		moveBack(alloc, REFLECTION_PROXIES, x);
+	}
+
 	Timestamp getShapeUpdateTimestamp() const
 	{
 		return m_shapeUpdateTimestamp;
@@ -186,6 +197,9 @@ public:
 		m_shapeUpdateTimestamp = t;
 	}
 
+	void combineWith(SceneFrameAllocator<U8> alloc,
+		SArray<VisibilityTestResults*>& results);
+
 private:
 	using Container = DArray<VisibleNode>;
 
@@ -195,6 +209,7 @@ private:
 		LIGHTS,
 		FLARES,
 		REFLECTION_PROBES,
+		REFLECTION_PROXIES,
 		TYPE_COUNT
 	};
 
@@ -208,6 +223,22 @@ private:
 	Array<Group, TYPE_COUNT> m_groups;
 
 	Timestamp m_shapeUpdateTimestamp = 0;
+
+	U32 getCount(GroupType type) const
+	{
+		return m_groups[type].m_count;
+	}
+
+	VisibleNode* getBegin(GroupType type)
+	{
+		return (getCount(type)) ? &m_groups[type].m_nodes[0] : nullptr;
+	}
+
+	VisibleNode* getEnd(GroupType type)
+	{
+		return (getCount(type))
+			? (&m_groups[type].m_nodes[0] + getCount(type)) : nullptr;
+	}
 
 	void moveBack(SceneFrameAllocator<U8> alloc, GroupType, VisibleNode& x);
 };
