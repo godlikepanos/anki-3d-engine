@@ -180,6 +180,9 @@ void VisibilityTestTask::test(FrustumComponent& testedFrc,
 	Bool wantsReflectionProbes = testedFrc.visibilityTestsEnabled(
 		FrustumComponent::VisibilityTestFlag::TEST_REFLECTION_PROBES);
 
+	Bool wantsReflectionProxies = testedFrc.visibilityTestsEnabled(
+		FrustumComponent::VisibilityTestFlag::TEST_REFLECTION_PROXIES);
+
 #if 0
 	ANKI_LOGW("Running test code");
 
@@ -243,6 +246,13 @@ void VisibilityTestTask::test(FrustumComponent& testedFrc,
 		ReflectionProbeComponent* reflc =
 			node.tryGetComponent<ReflectionProbeComponent>();
 		if(reflc && wantsReflectionProbes)
+		{
+			wantNode = true;
+		}
+
+		ReflectionProxyComponent* proxyc =
+			node.tryGetComponent<ReflectionProxyComponent>();
+		if(reflc && wantsReflectionProxies)
 		{
 			wantNode = true;
 		}
@@ -340,6 +350,11 @@ void VisibilityTestTask::test(FrustumComponent& testedFrc,
 		if(reflc && wantsReflectionProbes)
 		{
 			visible->moveBackReflectionProbe(alloc, visibleNode);
+		}
+
+		if(proxyc && wantsReflectionProxies)
+		{
+			visible->moveBackReflectionProxy(alloc, visibleNode);
 		}
 
 		// Add more frustums to the list

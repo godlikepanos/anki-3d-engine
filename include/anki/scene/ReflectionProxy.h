@@ -7,6 +7,7 @@
 
 #include <anki/scene/SceneNode.h>
 #include <anki/Math.h>
+#include <anki/collision/Obb.h>
 
 namespace anki {
 
@@ -28,11 +29,13 @@ public:
 
 	/// Create the proxy. The points form a quad and they should be in local
 	/// space.
-	ANKI_USE_RESULT Error create(const CString& name, const Vec4& p0,
-		const Vec4& p1, const Vec4& p2, const Vec4& p3);
+	ANKI_USE_RESULT Error create(const CString& name, F32 width, F32 height,
+		F32 maxDistance);
 
 private:
 	Array<Vec4, 4> m_quadLSpace; ///< Quad verts.
+	Obb m_boxLSpace;
+	Obb m_boxWSpace;
 
 	void onMoveUpdate(const MoveComponent& move);
 };

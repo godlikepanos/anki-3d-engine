@@ -152,6 +152,7 @@ Error Dbg::run(CommandBufferPtr& cmdb)
 	}
 #endif
 
+#if 0
 	{
 		CollisionDebugDrawer cd(m_drawer);
 
@@ -210,6 +211,7 @@ Error Dbg::run(CommandBufferPtr& cmdb)
 			//m_drawer->drawLine(p0, i.xyz(), Vec4(0.0, 0.0, 1.0, 1.0));
 		}
 	}
+#endif
 
 	return m_drawer->flush();
 }

@@ -19,4 +19,6 @@
 #include <anki/scene/StaticCollisionNode.h>
 #include <anki/scene/BodyNode.h>
 #include <anki/scene/ReflectionProbe.h>
-
+#include <anki/scene/ReflectionProbeComponent.h>
+#include <anki/scene/ReflectionProxy.h>
+#include <anki/scene/ReflectionProxyComponent.h>

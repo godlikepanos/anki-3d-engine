@@ -41,7 +41,8 @@ public:
 		n0.normalize();
 		n1.normalize();
 		n2.normalize();
-		ANKI_ASSERT(n0.dot(n1) == n1.dot(n2) && n0.dot(n2) == n0.dot(n1));
+		ANKI_ASSERT(isZero(n0.dot(n1) - n1.dot(n2))
+			&& isZero(n0.dot(n2) - n0.dot(n1)));
 
 		updated = false;
 		return ErrorCode::NONE;

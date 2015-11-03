@@ -91,16 +91,20 @@ Error init()
 		setLocalTransform(Transform(
 		//Vec4(147.392776, -10.132728, 16.607138, 0.0),
 		Vec4(0.0, 10, 0, 0),
-		Mat3x4(Euler(toRad(0.0), toRad(90.0), toRad(0.0))),
+		//Mat3x4(Euler(toRad(0.0), toRad(90.0), toRad(0.0))),
+		Mat3x4::getIdentity(),
 		1.0));
 #endif
 
-	if(0)
+	if(1)
 	{
-		ReflectionProbe* refl;
+		/*ReflectionProbe* refl;
 		scene.newSceneNode<ReflectionProbe>("refl", refl, 6.0f);
 		move = refl->tryGetComponent<MoveComponent>();
-		move->setLocalOrigin(Vec4(0.0, 10, 0, 0));
+		move->setLocalOrigin(Vec4(0.0, 10, 0, 0));*/
+
+		ReflectionProxy* proxy;
+		scene.newSceneNode<ReflectionProxy>("proxy", proxy, 2.0, 5.0, 10.0);
 	}
 
 #if 0
@@ -355,7 +359,7 @@ Error mainLoopExtra(App& app, void*, Bool& quit)
 	}
 	if(in.getKey(KeyCode::_2))
 	{
-		mover = &scene.findSceneNode("Cube.001Material_003-materialnone1").
+		mover = &scene.findSceneNode("proxy").
 			getComponent<MoveComponent>();
 	}
 	if(in.getKey(KeyCode::_3))
