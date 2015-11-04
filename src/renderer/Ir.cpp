@@ -10,6 +10,7 @@
 #include <anki/scene/Visibility.h>
 #include <anki/scene/FrustumComponent.h>
 #include <anki/scene/ReflectionProbeComponent.h>
+#include <anki/scene/ReflectionProxyComponent.h>
 
 namespace anki {
 
@@ -17,20 +18,20 @@ namespace anki {
 // Misc                                                                        =
 //==============================================================================
 
-struct ShaderReflectionProbe
-{
-	Vec3 m_pos;
-	F32 m_radiusSq;
-	F32 m_cubemapIndex;
-	U32 _m_pading[3];
-};
-
 struct ShaderReflectionProxy
 {
 	Vec4 m_plane;
 	Vec4 m_negPlane;
 	Array<Vec4, 4> m_quadPoints;
 	Array<Vec4, 4> m_edgeCrossProd;
+};
+
+struct ShaderReflectionProbe
+{
+	Vec3 m_pos;
+	F32 m_radiusSq;
+	F32 m_cubemapIndex;
+	U32 _m_pading[3];
 };
 
 //==============================================================================
@@ -106,19 +107,61 @@ Error Ir::run(CommandBufferPtr cmdb)
 	FrustumComponent& frc = m_r->getActiveFrustumComponent();
 	VisibilityTestResults& visRez = frc.getVisibilityTestResults();
 
-	const VisibleNode* it = visRez.getReflectionProbesBegin();
-	const VisibleNode* end = visRez.getReflectionProbesEnd();
-	U probCount = end - it;
-
+	// Do the proxies
 	void* data = getGrManager().allocateFrameHostVisibleMemory(
-		sizeof(ShaderReflectionProbe) * m_cubemapArrSize + sizeof(UVec4),
-		BufferUsage::STORAGE, m_probesToken);
+		sizeof(ShaderReflectionProxy) * visRez.getReflectionProxyCount()
+		+ sizeof(UVec4), BufferUsage::STORAGE, m_proxiesToken);
 
 	UVec4* counts = reinterpret_cast<UVec4*>(data);
-	counts->x() = probCount;
+	counts->x() = visRez.getReflectionProxyCount();
+	counts->y() = visRez.getReflectionProbeCount();
+
+	const VisibleNode* it = visRez.getReflectionProxiesBegin();
+	const VisibleNode* end = visRez.getReflectionProxiesEnd();
+	ShaderReflectionProxy* proxies = reinterpret_cast<ShaderReflectionProxy*>(
+		counts + 1);
+
+	while(it != end)
+	{
+		const ReflectionProxyComponent& proxyc =
+			it->m_node->getComponent<ReflectionProxyComponent>();
+		Plane plane = proxyc.getPlane();
+		plane.transform(Transform(frc.getViewMatrix()));
+
+		proxies->m_plane = Vec4(plane.getNormal().xyz(), plane.getOffset());
+		proxies->m_negPlane = Vec4(-plane.getNormal().xyz(), plane.getOffset());
+
+		for(U i = 0; i < 4; ++i)
+		{
+			proxies->m_quadPoints[i] =
+				(frc.getViewMatrix() * proxyc.getVertices()[i]).xyz0();
+		}
+
+		for(U i = 0; i < 4; ++i)
+		{
+			U next = (i < 3) ? i + 1 : 0;
+			proxies->m_edgeCrossProd[i] = plane.getNormal().cross(
+				proxies->m_quadPoints[next] - proxies->m_quadPoints[i]);
+		}
+
+		++it;
+		++proxies;
+	}
+
+	// Do the probes
+	it = visRez.getReflectionProbesBegin();
+	end = visRez.getReflectionProbesEnd();
+
+	data = getGrManager().allocateFrameHostVisibleMemory(
+		sizeof(ShaderReflectionProbe) * visRez.getReflectionProbeCount()
+		+ sizeof(Mat4),
+		BufferUsage::STORAGE, m_probesToken);
+
+	Mat4* invViewRotation = static_cast<Mat4*>(data);
+	*invViewRotation = Mat4(frc.getViewMatrix().getInverse().getRotationPart());
 
 	ShaderReflectionProbe* probes = reinterpret_cast<ShaderReflectionProbe*>(
-		counts + 1);
+		invViewRotation + 1);
 
 	while(it != end)
 	{

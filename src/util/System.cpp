@@ -11,7 +11,7 @@
 #	include <unistd.h>
 #	include <signal.h>
 #elif ANKI_OS == ANKI_OS_WINDOWS
-#	include "Windows.h>
+#	include <Windows.h>
 #else
 #	error "Unimplemented"
 #endif
@@ -48,7 +48,7 @@ void printBacktrace()
 	size = backtrace(array, 10);
 
 	// print out all the frames to stderr
-	backtrace_symbols_fd(array, size, 2);	
+	backtrace_symbols_fd(array, size, 2);
 #else
 	printf("TODO\n");
 #endif

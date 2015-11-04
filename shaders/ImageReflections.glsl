@@ -79,7 +79,8 @@ bool testReflectionProxy(in uint proxyIdx, in vec3 p, in vec3 r, out vec3 c)
 		vec4 tests;
 		for(uint i = 0; i < 4; ++i)
 		{
-			tests[i] = dot(c - proxy.quadPoints[i], proxy.edgeCrossProd[i].xyz);
+			tests[i] =
+				dot(c - proxy.quadPoints[i].xyz, proxy.edgeCrossProd[i].xyz);
 		}
 
 		intersect = all(greaterThan(tests, vec4(0.0)));
@@ -102,7 +103,7 @@ bool findCloseProxyIntersection(in vec3 p, in vec3 r, out vec3 c)
 	for(uint i = 0; i < proxyCount; ++i)
 	{
 		vec3 intersection;
-		bool intersects = testReflectionProxy(j, posVSpace, r, intersection);
+		bool intersects = testReflectionProxy(i, p, r, intersection);
 		if(intersects)
 		{
 			// Compute the distance^2
@@ -118,7 +119,7 @@ bool findCloseProxyIntersection(in vec3 p, in vec3 r, out vec3 c)
 		}
 	}
 
-	return lessThan(distSq, BIG_FLOAT);
+	return distSq < BIG_FLOAT;
 }
 
 //==============================================================================
@@ -158,6 +159,7 @@ vec3 readReflection(in vec3 posVSpace, in vec3 normalVSpace)
 	vec3 intersection;
 	if(findCloseProxyIntersection(posVSpace, r, intersection))
 	{
+#if 0
 		// Check for probes
 		float cubemapIdx;
 		vec3 probeOrigin;
@@ -170,8 +172,10 @@ vec3 readReflection(in vec3 posVSpace, in vec3 normalVSpace)
 			uv = u_invViewRotation * uv;
 
 			// Read!
-			color = texture(u_reflectionsTex, vec4(uv, cubemapIdx));
+			color = texture(u_reflectionsTex, vec4(uv, cubemapIdx)).rgb;
 		}
+#endif
+		color = vec3(1.0, 0.0, 0.0);
 	}
 
 	return color;

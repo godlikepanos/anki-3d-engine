@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/scene/SceneComponent.h>
+#include <anki/collision/Plane.h>
 
 namespace anki {
 
@@ -28,29 +29,26 @@ public:
 	void setVertex(U idx, const Vec4& v)
 	{
 		m_quad[idx] = v;
+		m_dirty = true;
 	}
 
-#if ANKI_ASSERTS_ENABLED
-	ANKI_USE_RESULT Error update(SceneNode& node, F32 prevTime, F32 crntTime,
-		Bool& updated) final
+	const Array<Vec4, 4>& getVertices() const
 	{
-		// Check that the quad is planar
-		Vec4 n0 = (m_quad[1] - m_quad[0]).cross(m_quad[2] - m_quad[1]);
-		Vec4 n1 = (m_quad[2] - m_quad[1]).cross(m_quad[3] - m_quad[2]);
-		Vec4 n2 = (m_quad[3] - m_quad[2]).cross(m_quad[0] - m_quad[3]);
-		n0.normalize();
-		n1.normalize();
-		n2.normalize();
-		ANKI_ASSERT(isZero(n0.dot(n1) - n1.dot(n2))
-			&& isZero(n0.dot(n2) - n0.dot(n1)));
-
-		updated = false;
-		return ErrorCode::NONE;
+		return m_quad;
 	}
-#endif
+
+	const Plane& getPlane() const
+	{
+		return m_plane;
+	}
+
+	ANKI_USE_RESULT Error update(SceneNode& node, F32 prevTime, F32 crntTime,
+		Bool& updated) final;
 
 private:
 	Array<Vec4, 4> m_quad; ///< Quad verts.
+	Plane m_plane; ///< Caches some values.
+	Bool8 m_dirty = true;
 };
 /// @}
 

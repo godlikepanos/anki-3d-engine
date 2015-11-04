@@ -530,6 +530,7 @@ void SceneDebugDrawer::draw(SceneNode& node)
 		draw(sp);
 		return ErrorCode::NONE;
 	});
+	(void)err;
 
 	PortalSectorComponent* ps = node.tryGetComponent<PortalSectorComponent>();
 	if(ps)
@@ -537,7 +538,12 @@ void SceneDebugDrawer::draw(SceneNode& node)
 		draw(*ps);
 	}
 
-	(void)err;
+	ReflectionProxyComponent* proxy =
+		node.tryGetComponent<ReflectionProxyComponent>();
+	if(proxy)
+	{
+		draw(*proxy);
+	}
 }
 
 //==============================================================================
@@ -608,6 +614,20 @@ void SceneDebugDrawer::drawPath(const Path& path) const
 	}
 
 	m_dbg->end();*/
+}
+
+//==============================================================================
+void SceneDebugDrawer::draw(const ReflectionProxyComponent& proxy) const
+{
+	m_dbg->setModelMatrix(Mat4::getIdentity());
+	m_dbg->begin(PrimitiveTopology::LINES);
+	m_dbg->setColor(Vec3(0.4, 0.4, 1.0));
+	for(U i = 0; i < 3; ++i)
+	{
+		m_dbg->pushBackVertex(proxy.getVertices()[i].xyz());
+		m_dbg->pushBackVertex(proxy.getVertices()[i + 1].xyz());
+	}
+	m_dbg->end();
 }
 
 }  // end namespace anki

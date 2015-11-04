@@ -27,8 +27,6 @@ class ThreadPoolThread
 public:
 	U32 m_id; ///< An ID
 	Thread m_thread; ///< Runs the workingFunc
-	Mutex m_mutex; ///< Protect the task
-	ConditionVariable m_condVar; ///< To wake up the thread
 	ThreadPool::Task* m_task; ///< Its NULL if there is no pending task
 	ThreadPool* m_threadpool;
 	Bool8 m_quit = false;
@@ -44,16 +42,6 @@ public:
 		m_thread.start(this, threadCallback);
 	}
 
-	/// Assign new task to the thread
-	void assignNewTask(ThreadPool::Task* task)
-	{
-		m_mutex.lock();
-		ANKI_ASSERT(m_task == nullptr && "Probably forgot to wait for tasks");
-		m_task = task;
-		m_mutex.unlock();
-		m_condVar.notifyOne(); // Wake the thread
-	}
-
 private:
 	/// Thread callaback
 	static Error threadCallback(Thread::Info& info)
@@ -61,33 +49,19 @@ private:
 		ThreadPoolThread& self =
 			*reinterpret_cast<ThreadPoolThread*>(info.m_userData);
 		Barrier& barrier = self.m_threadpool->m_barrier;
-		Mutex& mtx = self.m_mutex;
 		const PtrSize threadCount = self.m_threadpool->getThreadsCount();
 		Bool quit = false;
 
 		while(!quit)
 		{
-			ThreadPool::Task* task;
-
 			// Wait for something
-			{
-				LockGuard<Mutex> lock(mtx);
-				while(self.m_task == nullptr)
-				{
-					self.m_condVar.wait(mtx);
-				}
-				task = self.m_task;
-				self.m_task = nullptr;
-
-				quit = self.m_quit;
-			}
+			barrier.wait();
+			quit = self.m_quit;
 
 			// Exec
-			Error err = (*task)(self.m_id, threadCount);
-
+			Error err = (*self.m_task)(self.m_id, threadCount);
 			if(err)
 			{
-				LockGuard<Mutex> lock(mtx);
 				self.m_threadpool->m_err = err;
 			}
 
@@ -149,11 +123,14 @@ ThreadPool::~ThreadPool()
 		detail::ThreadPoolThread& thread = m_threads[count];
 
 		thread.m_quit = true;
-		thread.assignNewTask(&m_dummyTask); // Wake it
+		thread.m_task = &m_dummyTask;
 	}
 
-	Error err = waitForAllThreadsToFinish();
-	(void)err;
+	// Wakeup the threads
+	m_barrier.wait();
+
+	// Wait the threads
+	m_barrier.wait();
 
 	while(m_threadsCount-- != 0)
 	{
@@ -179,7 +156,14 @@ void ThreadPool::assignNewTask(U32 slot, Task* task)
 	}
 
 #if !ANKI_DISABLE_THREADPOOL_THREADING
-	m_threads[slot].assignNewTask(task);
+	m_threads[slot].m_task = task;
+	++m_tasksAssigned;
+
+	if(m_tasksAssigned == m_threadsCount)
+	{
+		// Last task is assigned. Wake all threads
+		m_barrier.wait();
+	}
 #else
 	Error err = (*task)(slot, m_threadsCount);
 

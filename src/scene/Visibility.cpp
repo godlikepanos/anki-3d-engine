@@ -252,7 +252,7 @@ void VisibilityTestTask::test(FrustumComponent& testedFrc,
 
 		ReflectionProxyComponent* proxyc =
 			node.tryGetComponent<ReflectionProxyComponent>();
-		if(reflc && wantsReflectionProxies)
+		if(proxyc && wantsReflectionProxies)
 		{
 			wantNode = true;
 		}
@@ -451,6 +451,8 @@ void VisibilityTestResults::create(
 	m_groups[LIGHTS].m_nodes.create(alloc, lightsReservedSize);
 	m_groups[FLARES].m_nodes.create(alloc, lensFlaresReservedSize);
 	m_groups[REFLECTION_PROBES].m_nodes.create(alloc,
+		reflectionProbesReservedSize);
+	m_groups[REFLECTION_PROXIES].m_nodes.create(alloc,
 		reflectionProbesReservedSize);
 }
 

@@ -27,16 +27,15 @@ layout(location = 0) out vec3 out_color;
 
 #pragma anki include "shaders/LightFunctions.glsl"
 
-#if 0
 #if IR == 1
 #define IMAGE_REFLECTIONS_SET 0
-#define IMAGE_REFLECTIONS_SS_BINDING 5
+#define IMAGE_REFLECTIONS_PROXY_SS_BINDING 5
+#define IMAGE_REFLECTIONS_PROBE_SS_BINDING 6
 #define IMAGE_REFLECTIONS_TEX_BINDING 6
 #pragma anki include "shaders/ImageReflections.glsl"
 #undef IMAGE_REFLECTIONS_SET
-#undef IMAGE_REFLECTIONS_SS_BINDING
-#undef IMAGE_REFLECTIONS_TEX_BINDING
-#endif
+#undef IMAGE_REFLECTIONS_PROXY_SS_BINDING
+#undef IMAGE_REFLECTIONS_PROBE_SS_BINDING
 #endif
 
 const uint TILE_COUNT = TILES_COUNT_X * TILES_COUNT_Y;
@@ -186,13 +185,8 @@ void main()
 	{
 		out_color += vec3(1.0, 0.0, 0.0);
 	}
-
-
-	/*uint x = in_instanceId % 60;
-	uint y = in_instanceId / 60;
-	if(x == 30 && y == 20)
-	{
-		out_color = vec3(1.0, 0.0, 0.0);
-	}*/
+#endif
+#if 1 && IR == 1
+	out_color = out_color * 0.5 + readReflection(fragPos, normal) *0.5;
 #endif
 }

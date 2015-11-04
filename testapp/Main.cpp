@@ -98,13 +98,15 @@ Error init()
 
 	if(1)
 	{
-		/*ReflectionProbe* refl;
-		scene.newSceneNode<ReflectionProbe>("refl", refl, 6.0f);
+		ReflectionProbe* refl;
+		scene.newSceneNode<ReflectionProbe>("refl", refl, 68.0f);
 		move = refl->tryGetComponent<MoveComponent>();
-		move->setLocalOrigin(Vec4(0.0, 10, 0, 0));*/
+		move->setLocalOrigin(Vec4(0.0, 10, 0, 0));
 
 		ReflectionProxy* proxy;
 		scene.newSceneNode<ReflectionProxy>("proxy", proxy, 2.0, 5.0, 10.0);
+		move = proxy->tryGetComponent<MoveComponent>();
+		move->setLocalOrigin(Vec4(0.0, 9, -5, 0));
 	}
 
 #if 0

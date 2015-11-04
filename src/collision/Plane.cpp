@@ -23,11 +23,13 @@ F32 Plane::testPlane(const Plane& /*p*/) const
 }
 
 //==============================================================================
-void Plane::setFrom3Points(const Vec3& p0, const Vec3& p1, const Vec3& p2)
+void Plane::setFrom3Points(const Vec4& p0, const Vec4& p1, const Vec4& p2)
 {
+	ANKI_ASSERT(p0.w() == 0.0 && p1.w() == 0.0 && p2.w() == 0.0);
+
 	// get plane vectors
-	Vec4 u = Vec4(p1 - p0, 0.0);
-	Vec4 v = Vec4(p2 - p0, 0.0);
+	Vec4 u = p1 - p0;
+	Vec4 v = p2 - p0;
 
 	m_normal = u.cross(v);
 
@@ -35,7 +37,7 @@ void Plane::setFrom3Points(const Vec3& p0, const Vec3& p1, const Vec3& p2)
 	ANKI_ASSERT(!isZero(m_normal.getLengthSquared()));
 
 	m_normal.normalize();
-	m_offset = m_normal.dot(Vec4(p0, 0.0));
+	m_offset = m_normal.dot(p0);
 }
 
 //==============================================================================

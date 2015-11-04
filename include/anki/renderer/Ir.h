@@ -40,12 +40,18 @@ anki_internal:
 		return m_probesToken;
 	}
 
+	DynamicBufferToken getProxiesToken() const
+	{
+		return m_proxiesToken;
+	}
+
 private:
 	Renderer m_nestedR;
 	TexturePtr m_cubemapArr;
 	U16 m_cubemapArrSize = 0;
 	U16 m_fbSize = 0;
 	DynamicBufferToken m_probesToken;
+	DynamicBufferToken m_proxiesToken;
 
 	ANKI_USE_RESULT Error renderReflection(SceneNode& node,
 		ShaderReflectionProbe& shaderProb);

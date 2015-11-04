@@ -238,6 +238,7 @@ public:
 	{
 #if !ANKI_DISABLE_THREADPOOL_THREADING
 		m_barrier.wait();
+		m_tasksAssigned = 0;
 #endif
 		Error err = m_err;
 		m_err = ErrorCode::NONE;
@@ -265,12 +266,12 @@ private:
 #if !ANKI_DISABLE_THREADPOOL_THREADING
 	Barrier m_barrier; ///< Synchronization barrier
 	detail::ThreadPoolThread* m_threads = nullptr; ///< Threads array
+	U m_tasksAssigned = 0;
 #endif
 	U8 m_threadsCount = 0;
 	Error m_err = ErrorCode::NONE;
 	static DummyTask m_dummyTask;
 };
-
 /// @}
 
 } // end namespace anki

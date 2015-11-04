@@ -159,7 +159,7 @@ public:
 
 	U32 getReflectionProxyCount() const
 	{
-		return getCount(REFLECTION_PROBES);
+		return getCount(REFLECTION_PROXIES);
 	}
 
 	void moveBackRenderable(SceneFrameAllocator<U8> alloc, VisibleNode& x)

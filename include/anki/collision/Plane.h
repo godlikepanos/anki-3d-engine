@@ -40,7 +40,7 @@ public:
 	Plane(const Vec4& normal, F32 offset);
 
 	/// @see setFrom3Points
-	Plane(const Vec3& p0, const Vec3& p1, const Vec3& p2)
+	Plane(const Vec4& p0, const Vec4& p1, const Vec4& p2)
 		: CollisionShape(Type::PLANE)
 	{
 		setFrom3Points(p0, p1, p2);
@@ -150,15 +150,15 @@ public:
 		return x.testPlane(*this, x);
 	}
 
+	/// Set the plane from 3 points
+	void setFrom3Points(const Vec4& p0, const Vec4& p1, const Vec4& p2);
+
 private:
 	/// @name Data
 	/// @{
 	Vec4 m_normal;
 	F32 m_offset;
 	/// @}
-
-	/// Set the plane from 3 points
-	void setFrom3Points(const Vec3& p0, const Vec3& p1, const Vec3& p2);
 
 	/// Set from plane equation is ax+by+cz+d
 	void setFromPlaneEquation(F32 a, F32 b, F32 c, F32 d);

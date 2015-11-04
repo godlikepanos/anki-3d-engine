@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_UTIL_LOGGER_H
-#define ANKI_UTIL_LOGGER_H
+#pragma once
 
 #include <anki/Config.h>
 #include <anki/util/Singleton.h>
@@ -20,7 +19,7 @@ class File;
 
 /// The logger singleton class. The logger cannot print errors or throw
 /// exceptions, it has to recover somehow. Its thread safe
-/// To add a new signal: 
+/// To add a new signal:
 /// @code logger.addMessageHandler((void*)obj, &function) @endcode
 class Logger
 {
@@ -80,15 +79,15 @@ private:
 		Handler(const Handler&) = default;
 
 		Handler(void* data, MessageHandlerCallback callback)
-		:	m_data(data),
-			m_callback(callback)
+			: m_data(data)
+			, m_callback(callback)
 		{}
 	};
 
 	Mutex m_mutex; ///< For thread safety
 	Array<Handler, 4> m_handlers;
 	U32 m_handlersCount = 0;
-	
+
 	static void defaultSystemMessageHandler(void*, const Info& info);
 	static void fileMessageHandler(void* file, const Info& info);
 };
@@ -125,4 +124,3 @@ typedef Singleton<Logger> LoggerSingleton;
 
 } // end namespace anki
 
-#endif

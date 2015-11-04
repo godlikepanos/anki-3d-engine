@@ -18,6 +18,7 @@ namespace anki {
 // Forward
 class Renderer;
 class PortalSectorComponent;
+class ReflectionProxyComponent;
 
 /// @addtogroup renderer
 /// @{
@@ -197,6 +198,8 @@ private:
 	void draw(const PortalSectorComponent& c) const;
 
 	void drawPath(const Path& path) const;
+
+	void draw(const ReflectionProxyComponent& proxy) const;
 };
 /// @}
 
