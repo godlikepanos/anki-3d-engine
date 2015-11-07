@@ -134,12 +134,12 @@ Error Ir::run(CommandBufferPtr cmdb)
 		for(U i = 0; i < 4; ++i)
 		{
 			proxies->m_quadPoints[i] =
-				(frc.getViewMatrix() * proxyc.getVertices()[i]).xyz0();
+				frc.getViewMatrix() * proxyc.getVertices()[i].xyz1();
 		}
 
 		for(U i = 0; i < 4; ++i)
 		{
-			U next = (i < 3) ? i + 1 : 0;
+			U next = (i < 3) ? (i + 1) : 0;
 			proxies->m_edgeCrossProd[i] = plane.getNormal().cross(
 				proxies->m_quadPoints[next] - proxies->m_quadPoints[i]);
 		}
@@ -154,11 +154,12 @@ Error Ir::run(CommandBufferPtr cmdb)
 
 	data = getGrManager().allocateFrameHostVisibleMemory(
 		sizeof(ShaderReflectionProbe) * visRez.getReflectionProbeCount()
-		+ sizeof(Mat4),
+		+ sizeof(Mat3x4),
 		BufferUsage::STORAGE, m_probesToken);
 
-	Mat4* invViewRotation = static_cast<Mat4*>(data);
-	*invViewRotation = Mat4(frc.getViewMatrix().getInverse().getRotationPart());
+	Mat3x4* invViewRotation = static_cast<Mat3x4*>(data);
+	*invViewRotation =
+		Mat3x4(frc.getViewMatrix().getInverse().getRotationPart());
 
 	ShaderReflectionProbe* probes = reinterpret_cast<ShaderReflectionProbe*>(
 		invViewRotation + 1);
@@ -181,7 +182,7 @@ Error Ir::renderReflection(SceneNode& node, ShaderReflectionProbe& shaderProb)
 		node.getComponent<ReflectionProbeComponent>();
 
 	// Write shader var
-	shaderProb.m_pos = (frc.getViewMatrix() * reflc.getPosition()).xyz();
+	shaderProb.m_pos = (frc.getViewMatrix() * reflc.getPosition().xyz1()).xyz();
 	shaderProb.m_radiusSq = reflc.getRadius() * reflc.getRadius();
 	shaderProb.m_cubemapIndex = 0;
 

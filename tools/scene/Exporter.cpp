@@ -129,6 +129,29 @@ static void stringToFloatArray(const std::string& in, Arr& out)
 }
 
 //==============================================================================
+static void removeScale(aiMatrix4x4& m)
+{
+	aiVector3D xAxis(m.a1, m.b1, m.c1);
+	aiVector3D yAxis(m.a2, m.b2, m.c2);
+	aiVector3D zAxis(m.a3, m.b3, m.c3);
+
+	float scale = xAxis.Length();
+	m.a1 /= scale;
+	m.b1 /= scale;
+	m.c1 /= scale;
+
+	scale = yAxis.Length();
+	m.a2 /= scale;
+	m.b2 /= scale;
+	m.c2 /= scale;
+
+	scale = zAxis.Length();
+	m.a3 /= scale;
+	m.b3 /= scale;
+	m.c3 /= scale;
+}
+
+//==============================================================================
 // Exporter                                                                    =
 //==============================================================================
 
@@ -238,12 +261,10 @@ void Exporter::writeTransform(const aiMatrix4x4& mat)
 {
 	std::ofstream& file = m_sceneFile;
 
-	aiMatrix4x4 m = toAnkiMatrix(mat);
-
 	float pos[3];
-	pos[0] = m[0][3];
-	pos[1] = m[1][3];
-	pos[2] = m[2][3];
+	pos[0] = mat[0][3];
+	pos[1] = mat[1][3];
+	pos[2] = mat[2][3];
 
 	file << "trf = Transform.new()\n";
 
@@ -262,7 +283,7 @@ void Exporter::writeTransform(const aiMatrix4x4& mat)
 			}
 			else
 			{
-				file << m[j][i];
+				file << mat[j][i];
 			}
 
 			if(!(i == 3 && j == 2))
@@ -532,7 +553,7 @@ void Exporter::exportLight(const aiLight& light)
 
 	aiMatrix4x4 rot;
 	aiMatrix4x4::RotationX(-3.1415 / 2.0, rot);
-	writeNodeTransform("node", node->mTransformation * rot);
+	writeNodeTransform("node", toAnkiMatrix(node->mTransformation * rot));
 
 	// Extra
 	if(light.mProperties.find("shadow") != light.mProperties.end())
@@ -782,7 +803,7 @@ void Exporter::visitNode(const aiNode* ainode)
 			{
 				ParticleEmitter p;
 				p.m_filename = prop.second;
-				p.m_transform = ainode->mTransformation;
+				p.m_transform = toAnkiMatrix(ainode->mTransformation);
 				m_particleEmitters.push_back(p);
 				special = true;
 			}
@@ -790,7 +811,7 @@ void Exporter::visitNode(const aiNode* ainode)
 			{
 				StaticCollisionNode n;
 				n.m_meshIndex = meshIndex;
-				n.m_transform = ainode->mTransformation;
+				n.m_transform = toAnkiMatrix(ainode->mTransformation);
 				m_staticCollisionNodes.push_back(n);
 				special = true;
 			}
@@ -798,7 +819,7 @@ void Exporter::visitNode(const aiNode* ainode)
 			{
 				Portal portal;
 				portal.m_meshIndex = meshIndex;
-				portal.m_transform = ainode->mTransformation;
+				portal.m_transform = toAnkiMatrix(ainode->mTransformation);
 				m_portals.push_back(portal);
 				special = true;
 			}
@@ -806,7 +827,7 @@ void Exporter::visitNode(const aiNode* ainode)
 			{
 				Sector sector;
 				sector.m_meshIndex = meshIndex;
-				sector.m_transform = ainode->mTransformation;
+				sector.m_transform = toAnkiMatrix(ainode->mTransformation);
 				m_sectors.push_back(sector);
 				special = true;
 			}
@@ -814,6 +835,38 @@ void Exporter::visitNode(const aiNode* ainode)
 			{
 				lod1MeshName = prop.second;
 				special = false;
+			}
+			else if(prop.first == "reflection_probe" && prop.second == "true")
+			{
+				ReflectionProbe probe;
+				aiMatrix4x4 trf = toAnkiMatrix(ainode->mTransformation);
+				probe.m_position = aiVector3D(trf.a4, trf.b4, trf.c4);
+
+				aiVector3D zAxis(trf.a3, trf.b3, trf.c3);
+				float scale = zAxis.Length();
+				probe.m_radius = scale;
+
+				m_reflectionProbes.push_back(probe);
+
+				special = true;
+			}
+			else if(prop.first == "reflection_proxy_distance")
+			{
+				ReflectionProxy proxy;
+
+				aiMatrix4x4 trf = toAnkiMatrix(ainode->mTransformation);
+				aiVector3D xAxis(trf.a1, trf.b1, trf.c1);
+				aiVector3D yAxis(trf.a2, trf.b2, trf.c2);
+
+				proxy.m_width = xAxis.Length() * 2.0;
+				proxy.m_height = yAxis.Length() * 2.0;
+				proxy.m_maxDistance = std::stof(prop.second);
+				proxy.m_transform = trf;
+				removeScale(proxy.m_transform);
+
+				m_reflectionProxies.push_back(proxy);
+
+				special = true;
 			}
 		}
 
@@ -850,7 +903,7 @@ void Exporter::visitNode(const aiNode* ainode)
 			Model& model = m_models[node.m_modelIndex];
 
 			assert(node.m_transforms.size() > 0);
-			node.m_transforms.push_back(ainode->mTransformation);
+			node.m_transforms.push_back(toAnkiMatrix(ainode->mTransformation));
 
 			++model.m_instancesCount;
 			break;
@@ -866,7 +919,7 @@ void Exporter::visitNode(const aiNode* ainode)
 		// Create new node
 		Node node;
 		node.m_modelIndex = m_models.size() - 1;
-		node.m_transforms.push_back(ainode->mTransformation);
+		node.m_transforms.push_back(toAnkiMatrix(ainode->mTransformation));
 		node.m_group = ainode->mGroup.C_Str();
 		m_nodes.push_back(node);
 	}
@@ -981,6 +1034,38 @@ void Exporter::exportAll()
 			<< p.m_filename << "\")\n";
 
 		writeNodeTransform("node", p.m_transform);
+		++i;
+	}
+
+	//
+	// Export probes
+	//
+	i = 0;
+	for(const ReflectionProbe& probe : m_reflectionProbes)
+	{
+		std::string name = "reflprobe" + std::to_string(i);
+		file << "\nnode = scene:newReflectionProbe(\"" << name << "\", "
+			<< probe.m_radius << ")\n";
+
+		aiMatrix4x4 trf;
+		aiMatrix4x4::Translation(probe.m_position, trf);
+
+		writeNodeTransform("node", trf);
+		++i;
+	}
+
+	//
+	// Export proxies
+	//
+	i = 0;
+	for(const ReflectionProxy& proxy : m_reflectionProxies)
+	{
+		std::string name = "reflproxy" + std::to_string(i);
+		file << "\nnode = scene:newReflectionProxy(\"" << name << "\", "
+			<< proxy.m_width << ", " << proxy.m_height << ", "
+			<< proxy.m_maxDistance << ")\n";
+
+		writeNodeTransform("node", proxy.m_transform);
 		++i;
 	}
 

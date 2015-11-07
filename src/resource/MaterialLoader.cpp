@@ -954,12 +954,13 @@ void MaterialLoader::mutate(const RenderingKey& key)
 			if(in.m_blockInfo.m_arraySize == 1)
 			{
 				alignRoundUp(sizeof(Vec2), in.m_blockInfo.m_offset);
-				m_blockSize += sizeof(Vec2);
+				m_blockSize = in.m_blockInfo.m_offset + sizeof(Vec2);
 			}
 			else
 			{
 				alignRoundUp(sizeof(Vec4), in.m_blockInfo.m_offset);
-				m_blockSize += sizeof(Vec4) * in.m_blockInfo.m_arraySize;
+				m_blockSize = in.m_blockInfo.m_offset
+					+ sizeof(Vec4) * in.m_blockInfo.m_arraySize;
 			}
 		}
 		else if(in.m_type == ShaderVariableDataType::VEC3)
@@ -969,31 +970,35 @@ void MaterialLoader::mutate(const RenderingKey& key)
 
 			if(in.m_blockInfo.m_arraySize == 1)
 			{
-				m_blockSize += sizeof(Vec3);
+				m_blockSize = in.m_blockInfo.m_offset + sizeof(Vec3);
 			}
 			else
 			{
-				m_blockSize += sizeof(Vec4) * in.m_blockInfo.m_arraySize;
+				m_blockSize = in.m_blockInfo.m_offset
+					+ sizeof(Vec4) * in.m_blockInfo.m_arraySize;
 			}
 		}
 		else if(in.m_type == ShaderVariableDataType::VEC4)
 		{
 			in.m_blockInfo.m_arrayStride = sizeof(Vec4);
 			alignRoundUp(sizeof(Vec4), in.m_blockInfo.m_offset);
-			m_blockSize += sizeof(Vec4) * in.m_blockInfo.m_arraySize;
+			m_blockSize = in.m_blockInfo.m_offset
+				+ sizeof(Vec4) * in.m_blockInfo.m_arraySize;
 		}
 		else if(in.m_type == ShaderVariableDataType::MAT3)
 		{
 			alignRoundUp(sizeof(Vec4), in.m_blockInfo.m_offset);
 			in.m_blockInfo.m_arrayStride = sizeof(Vec4) * 3;
-			m_blockSize += sizeof(Vec4) * 3 * in.m_blockInfo.m_arraySize;
+			m_blockSize = in.m_blockInfo.m_offset
+				+ sizeof(Vec4) * 3 * in.m_blockInfo.m_arraySize;
 			in.m_blockInfo.m_matrixStride = sizeof(Vec4);
 		}
 		else if(in.m_type == ShaderVariableDataType::MAT4)
 		{
 			alignRoundUp(sizeof(Vec4), in.m_blockInfo.m_offset);
 			in.m_blockInfo.m_arrayStride = sizeof(Mat4);
-			m_blockSize += sizeof(Mat4) * in.m_blockInfo.m_arraySize;
+			m_blockSize = in.m_blockInfo.m_offset
+				+ sizeof(Mat4) * in.m_blockInfo.m_arraySize;
 			in.m_blockInfo.m_matrixStride = sizeof(Vec4);
 		}
 		else

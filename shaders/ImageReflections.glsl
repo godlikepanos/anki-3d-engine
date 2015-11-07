@@ -59,7 +59,8 @@ layout(TEX_BINDING(IMAGE_REFLECTIONS_SET, IMAGE_REFLECTIONS_TEX_BINDING))
 //==============================================================================
 // Test if a ray intersects with the proxy.
 // p is the origin of the ray, r the ray vector, c is the intersection point.
-bool testReflectionProxy(in uint proxyIdx, in vec3 p, in vec3 r, out vec3 c)
+bool testReflectionProxy(in uint proxyIdx, in vec3 p, in vec3 r, out vec3 c,
+	out float s)
 {
 	ReflectionProxy proxy = u_reflectionProxies[proxyIdx];
 	bool intersect;
@@ -72,7 +73,7 @@ bool testReflectionProxy(in uint proxyIdx, in vec3 p, in vec3 r, out vec3 c)
 
 	if(all(lessThan(vec2(d, a), vec2(0.0))))
 	{
-		float s = d / a;
+		s = d / a;
 		c = p + s * r;
 
 		// Now check each edge
@@ -103,17 +104,13 @@ bool findCloseProxyIntersection(in vec3 p, in vec3 r, out vec3 c)
 	for(uint i = 0; i < proxyCount; ++i)
 	{
 		vec3 intersection;
-		bool intersects = testReflectionProxy(i, p, r, intersection);
-		if(intersects)
+		float s;
+		if(testReflectionProxy(i, p, r, intersection, s))
 		{
-			// Compute the distance^2
-			vec3 a = intersection - p;
-			float b = dot(a, a);
-
-			if(b < distSq)
+			if(s < distSq)
 			{
 				// Intersection point is closer than the prev one
-				distSq = b;
+				distSq = s;
 				c = intersection;
 			}
 		}
@@ -123,7 +120,7 @@ bool findCloseProxyIntersection(in vec3 p, in vec3 r, out vec3 c)
 }
 
 //==============================================================================
-bool findProbe(in vec3 c, out float cubemapIndex, out vec3 probeOrigin)
+void readFromProbes(in vec3 c, out vec3 color)
 {
 	// Iterate probes to find the cubemap
 	uint count = u_proxyCountReflectionProbeCountPad3.y;
@@ -131,19 +128,26 @@ bool findProbe(in vec3 c, out float cubemapIndex, out vec3 probeOrigin)
 	{
 		float R2 = u_reflectionProbes[i].positionRadiusSq.w;
 		vec3 center = u_reflectionProbes[i].positionRadiusSq.xyz;
+		color = vec3(1.0);
 
 		// Check if posVSpace is inside the sphere
 		vec3 f = c - center;
 		if(dot(f, f) < R2)
 		{
 			// Found something
-			cubemapIndex = u_reflectionProbes[i].cubemapIndexPad3.x;
-			probeOrigin = u_reflectionProbes[i].positionRadiusSq.xyz;
-			return true;
+			float cubemapIndex = u_reflectionProbes[i].cubemapIndexPad3.x;
+			vec3 probeOrigin = u_reflectionProbes[i].positionRadiusSq.xyz;
+
+			// Cubemap UV in view space
+			vec3 uv = normalize(c - probeOrigin);
+
+			// Rotate UV to move it to world space
+			uv = u_invViewRotation * uv;
+
+			// Read!
+			color = texture(u_reflectionsTex, vec4(uv, cubemapIndex)).rgb;
 		}
 	}
-
-	return false;
 }
 
 //==============================================================================
@@ -159,23 +163,7 @@ vec3 readReflection(in vec3 posVSpace, in vec3 normalVSpace)
 	vec3 intersection;
 	if(findCloseProxyIntersection(posVSpace, r, intersection))
 	{
-#if 0
-		// Check for probes
-		float cubemapIdx;
-		vec3 probeOrigin;
-		if(findProbe(intersection, cubemapIdx, probeOrigin))
-		{
-			// Cubemap UV in view space
-			vec3 uv = normalize(intersection - probeOrigin);
-
-			// Rotate UV to move it to world space
-			uv = u_invViewRotation * uv;
-
-			// Read!
-			color = texture(u_reflectionsTex, vec4(uv, cubemapIdx)).rgb;
-		}
-#endif
-		color = vec3(1.0, 0.0, 0.0);
+		readFromProbes(intersection, color);
 	}
 
 	return color;

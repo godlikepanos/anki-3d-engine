@@ -96,7 +96,7 @@ Error init()
 		1.0));
 #endif
 
-	if(1)
+	if(0)
 	{
 		ReflectionProbe* refl;
 		scene.newSceneNode<ReflectionProbe>("refl", refl, 68.0f);
@@ -104,9 +104,9 @@ Error init()
 		move->setLocalOrigin(Vec4(0.0, 10, 0, 0));
 
 		ReflectionProxy* proxy;
-		scene.newSceneNode<ReflectionProxy>("proxy", proxy, 2.0, 5.0, 10.0);
+		scene.newSceneNode<ReflectionProxy>("proxy", proxy, 100.0, 15.0, 10.0);
 		move = proxy->tryGetComponent<MoveComponent>();
-		move->setLocalOrigin(Vec4(0.0, 9, -5, 0));
+		move->setLocalOrigin(Vec4(0.0, 12, -15, 0));
 	}
 
 #if 0
@@ -514,7 +514,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("samples", 1);
 	config.set("tessellation", true);
 	//config.set("maxTextureSize", 256);
-	config.set("ir.rendererSize", 256);
+	config.set("ir.rendererSize", 64);
 	config.set("fullscreenDesktopResolution", true);
 	config.set("debugContext", false);
 	if(getenv("ANKI_DATA_PATH"))

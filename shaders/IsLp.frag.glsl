@@ -99,6 +99,10 @@ void main()
 
 	float a2 = pow(max(EPSILON, roughness), 2.0);
 
+#if IR == 1
+	specCol *= readReflection(fragPos, normal);
+#endif
+
 	// Ambient and emissive color
 	out_color = diffCol * u_lightingUniforms.sceneAmbientColor.rgb
 		+ diffCol * emission;
@@ -185,8 +189,8 @@ void main()
 	{
 		out_color += vec3(1.0, 0.0, 0.0);
 	}
-#endif
-#if 1 && IR == 1
+
 	out_color = out_color * 0.5 + readReflection(fragPos, normal) *0.5;
 #endif
+	//out_color = vec3(roughness);
 }

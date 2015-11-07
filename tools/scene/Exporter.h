@@ -70,6 +70,22 @@ public:
 	aiMatrix4x4 m_transform;
 };
 
+class ReflectionProbe
+{
+public:
+	aiVector3D m_position;
+	float m_radius;
+};
+
+class ReflectionProxy
+{
+public:
+	aiMatrix4x4 m_transform;
+	float m_width;
+	float m_height;
+	float m_maxDistance;
+};
+
 /// AnKi exporter.
 class Exporter
 {
@@ -93,6 +109,8 @@ public:
 	std::vector<Portal> m_portals;
 	std::vector<Sector> m_sectors;
 	std::vector<ParticleEmitter> m_particleEmitters;
+	std::vector<ReflectionProbe> m_reflectionProbes;
+	std::vector<ReflectionProxy> m_reflectionProxies;
 
 	/// Load the scene.
 	void load();
