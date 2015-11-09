@@ -30,13 +30,11 @@ uint calcClusterSplit(float zVspace)
 //==============================================================================
 float computeAttenuationFactor(float lightRadius, vec3 frag2Light)
 {
-	float fragLightDist = length(frag2Light);
+	float fragLightDist = dot(frag2Light, frag2Light);
+	fragLightDist = min(fragLightDist, lightRadius);
 
-	float att = (fragLightDist * lightRadius) + (1.0 + ATTENUATION_BOOST);
-	att = max(0.0, att);
-	att *= att;
-
-	return att;
+	float att = 1.0 - fragLightDist / lightRadius;
+	return att * att;
 }
 
 //==============================================================================
@@ -48,13 +46,15 @@ vec3 computeSpecularColorBrdf(
 	vec3 specCol,
 	vec3 lightSpecCol,
 	float a2, // rougness^2
-	float nol) // N dot L
+	float nol, // N dot L
+	vec3 reflection) // For fresnel
 {
 	vec3 h = normalize(l + v);
 
 	// Fresnel (Schlick)
 	float loh = max(EPSILON, dot(l, h));
 	vec3 f = specCol + (1.0 - specCol) * pow((1.0 + EPSILON - loh), 5.0);
+	f *= reflection;
 	//float f = specColor + (1.0 - specColor)
 	//	* pow(2.0, (-5.55473 * loh - 6.98316) * loh);
 

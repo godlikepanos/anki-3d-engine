@@ -128,7 +128,6 @@ void readFromProbes(in vec3 c, out vec3 color)
 	{
 		float R2 = u_reflectionProbes[i].positionRadiusSq.w;
 		vec3 center = u_reflectionProbes[i].positionRadiusSq.xyz;
-		color = vec3(1.0);
 
 		// Check if posVSpace is inside the sphere
 		vec3 f = c - center;

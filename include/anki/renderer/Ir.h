@@ -46,15 +46,26 @@ anki_internal:
 	}
 
 private:
+	class CacheEntry
+	{
+	public:
+		const SceneNode* m_node = nullptr;
+		Timestamp m_timestamp = 0; ///< When last rendered.
+	};
+
 	Renderer m_nestedR;
 	TexturePtr m_cubemapArr;
 	U16 m_cubemapArrSize = 0;
 	U16 m_fbSize = 0;
 	DynamicBufferToken m_probesToken;
 	DynamicBufferToken m_proxiesToken;
+	DArray<CacheEntry> m_cacheEntries;
 
 	ANKI_USE_RESULT Error renderReflection(SceneNode& node,
 		ShaderReflectionProbe& shaderProb);
+
+	/// Find a cache entry to store the reflection.
+	void findCacheEntry(SceneNode& node, U& entry, Bool& render);
 };
 /// @}
 

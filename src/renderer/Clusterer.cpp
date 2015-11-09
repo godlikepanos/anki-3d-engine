@@ -322,7 +322,7 @@ void Clusterer::binSphere(const Sphere& s, const Aabb& aabb,
 	Vec2 tileSize(1.0 / tcountX, 1.0 / tcountY);
 
 	Vec4 a = vp * s.getCenter().xyz1();
-	Vec2 c = a.xy() / a.w();
+	Vec2 c = (a.w() != 0.0) ? (a.xy() / a.w()) : a.xy();
 	c = c * 0.5 + 0.5;
 
 	Vec4 sphereCenterVSpace = (v * scent.xyz1()).xyz0();

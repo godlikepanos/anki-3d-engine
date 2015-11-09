@@ -78,7 +78,7 @@ Error init()
 	const F32 ang = 55.0;
 	cam->setAll(
 		renderer.getAspectRatio() * toRad(ang),
-		toRad(ang), 0.2, 200.0);
+		toRad(ang), 0.2, 300.0);
 	scene.setActiveCamera(cam);
 
 	cam->getComponent<MoveComponent>().

@@ -70,6 +70,18 @@ public:
 		}
 	}
 
+	/// Check if it's confined in a single sector.
+	Bool getSingleSector() const
+	{
+		return m_bits.bitsEnabled(Flag::SINGLE_SECTOR);
+	}
+
+	/// Confine it or not in a single sector.
+	void setSingleSector(Bool yes)
+	{
+		m_bits.enableBits(Flag::SINGLE_SECTOR, yes);
+	}
+
 	/// Used for sorting spatials. In most object the origin is the center of
 	/// mess but for cameras the origin is the eye point
 	const Vec4& getSpatialOrigin() const
@@ -115,7 +127,8 @@ private:
 		VISIBLE_CAMERA = 1 << 1,
 		VISIBLE_LIGHT = 1 << 2,
 		VISIBLE_ANY = VISIBLE_CAMERA | VISIBLE_LIGHT,
-		MARKED_FOR_UPDATE = 1 << 3
+		MARKED_FOR_UPDATE = 1 << 3,
+		SINGLE_SECTOR = 1 << 4
 	};
 	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Flag, friend)
 

@@ -622,7 +622,8 @@ I Is::writePointLight(const LightComponent& lightc,
 	Vec4 pos = camFrc.getViewMatrix()
 		* lightMove.getWorldTransform().getOrigin().xyz1();
 
-	slight.m_posRadius = Vec4(pos.xyz(), -1.0 / lightc.getRadius());
+	slight.m_posRadius = Vec4(pos.xyz(),
+		lightc.getRadius() * lightc.getRadius());
 	slight.m_diffuseColorShadowmapId = lightc.getDiffuseColor();
 
 	if(!lightc.getShadowEnabled() || !m_sm.getEnabled())
@@ -675,7 +676,8 @@ I Is::writeSpotLight(const LightComponent& lightc,
 	Vec4 pos =
 		camFrc.getViewMatrix()
 		* lightMove.getWorldTransform().getOrigin().xyz1();
-	light.m_posRadius = Vec4(pos.xyz(), -1.0 / lightc.getDistance());
+	light.m_posRadius = Vec4(pos.xyz(),
+		lightc.getDistance() * lightc.getDistance());
 
 	// Diff color and shadowmap ID now
 	light.m_diffuseColorShadowmapId =

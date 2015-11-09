@@ -62,7 +62,7 @@ vec3 getFragPosVSpace()
 	vec3 l = normalize(frag2Light); \
 	float nol = max(0.0, dot(normal, l)); \
 	vec3 specC = computeSpecularColorBrdf(viewDir, l, normal, specCol, \
-		light.specularColorTexId.rgb, a2, nol); \
+		light.specularColorTexId.rgb, a2, nol, refl); \
 	vec3 diffC = computeDiffuseColor( \
 		diffCol, light.diffuseColorShadowmapId.rgb); \
 	float att = computeAttenuationFactor(light.posRadius.w, frag2Light); \
@@ -100,7 +100,9 @@ void main()
 	float a2 = pow(max(EPSILON, roughness), 2.0);
 
 #if IR == 1
-	specCol *= readReflection(fragPos, normal);
+	vec3 refl = readReflection(fragPos, normal);
+#else
+	const vec3 refl = vec3(1.0);
 #endif
 
 	// Ambient and emissive color
@@ -192,5 +194,4 @@ void main()
 
 	out_color = out_color * 0.5 + readReflection(fragPos, normal) *0.5;
 #endif
-	//out_color = vec3(roughness);
 }

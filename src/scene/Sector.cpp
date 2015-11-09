@@ -468,12 +468,42 @@ void SectorGroup::binSpatial(SpatialComponent* sp)
 	{
 		Sector& sector = *(*it);
 
-		Bool collide = testCollisionShapes(sector.m_aabb, sp->getAabb());
-
-		if(collide)
+		Bool collide = false;
+		if(!sp->getSingleSector())
 		{
-			collide = testCollisionShapes(
-				sector.getBoundingShape(), sp->getSpatialCollisionShape());
+			// Spatial can belong to multiple sectors
+
+			// Fast test
+			collide = testCollisionShapes(sector.m_aabb, sp->getAabb());
+
+			// Detailed test
+			if(collide)
+			{
+				collide = testCollisionShapes(
+					sector.getBoundingShape(), sp->getSpatialCollisionShape());
+			}
+		}
+		else
+		{
+			// Spatial can belong to one sector
+
+			// Make sure the origin of the spatial is inside the sector
+			const Vec4& center = sp->getSpatialOrigin();
+
+			if(center >= sector.m_aabb.getMin()
+				&& center <= sector.m_aabb.getMax())
+			{
+				collide = true;
+			}
+
+			// Detailed test
+			const F32 smallf = getEpsilon<F32>() * 10.0;
+			Aabb smallBox(center, center + Vec4(smallf, smallf, smallf, 0.0));
+			if(collide)
+			{
+				collide = testCollisionShapes(
+					sector.getBoundingShape(), smallBox);
+			}
 		}
 
 		if(collide)

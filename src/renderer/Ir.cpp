@@ -40,7 +40,9 @@ struct ShaderReflectionProbe
 
 //==============================================================================
 Ir::~Ir()
-{}
+{
+	m_cacheEntries.destroy(getAllocator());
+}
 
 //==============================================================================
 Error Ir::init(const ConfigSet& initializer)
@@ -61,6 +63,8 @@ Error Ir::init(const ConfigSet& initializer)
 		ANKI_LOGE("Too low ir.cubemapTextureArraySize");
 		return ErrorCode::USER_DATA;
 	}
+
+	m_cacheEntries.create(getAllocator(), m_cubemapArrSize);
 
 	// Init the renderer
 	Config config;
@@ -181,35 +185,110 @@ Error Ir::renderReflection(SceneNode& node, ShaderReflectionProbe& shaderProb)
 	const ReflectionProbeComponent& reflc =
 		node.getComponent<ReflectionProbeComponent>();
 
+	// Get cache entry
+	Bool render = false;
+	U entry;
+	findCacheEntry(node, entry, render);
+
 	// Write shader var
 	shaderProb.m_pos = (frc.getViewMatrix() * reflc.getPosition().xyz1()).xyz();
 	shaderProb.m_radiusSq = reflc.getRadius() * reflc.getRadius();
-	shaderProb.m_cubemapIndex = 0;
+	shaderProb.m_cubemapIndex = entry;
 
 	// Render cubemap
-	for(U i = 0; i < 6; ++i)
+	if(render)
 	{
-		Array<CommandBufferPtr, RENDERER_COMMAND_BUFFERS_COUNT> cmdb;
-		for(U j = 0; j < cmdb.getSize(); ++j)
+		for(U i = 0; i < 6; ++i)
 		{
-			cmdb[j] = getGrManager().newInstance<CommandBuffer>();
-		}
+			Array<CommandBufferPtr, RENDERER_COMMAND_BUFFERS_COUNT> cmdb;
+			for(U j = 0; j < cmdb.getSize(); ++j)
+			{
+				cmdb[j] = getGrManager().newInstance<CommandBuffer>();
+			}
 
-		// Render
-		ANKI_CHECK(m_nestedR.render(node, i, cmdb));
+			// Render
+			ANKI_CHECK(m_nestedR.render(node, i, cmdb));
 
-		// Copy textures
-		cmdb[cmdb.getSize() - 1]->copyTextureToTexture(
-			m_nestedR.getIs().getRt(), 0, 0, m_cubemapArr, i, 0);
+			// Copy textures
+			cmdb[cmdb.getSize() - 1]->copyTextureToTexture(
+				m_nestedR.getIs().getRt(), 0, 0, m_cubemapArr, 6 * entry + i,
+				0);
 
-		// Flush
-		for(U j = 0; j < cmdb.getSize(); ++j)
-		{
-			cmdb[j]->flush();
+			// Flush
+			for(U j = 0; j < cmdb.getSize(); ++j)
+			{
+				cmdb[j]->flush();
+			}
 		}
 	}
 
 	return ErrorCode::NONE;
+}
+
+//==============================================================================
+void Ir::findCacheEntry(SceneNode& node, U& entry, Bool& render)
+{
+	CacheEntry* it = m_cacheEntries.getBegin();
+	const CacheEntry* const end = m_cacheEntries.getEnd();
+
+	CacheEntry* canditate = nullptr;
+	CacheEntry* empty = nullptr;
+	CacheEntry* kick = nullptr;
+	Timestamp kickTime = MAX_TIMESTAMP;
+
+	while(it != end)
+	{
+		if(it->m_node == &node)
+		{
+			// Already there
+			canditate = it;
+			break;
+		}
+		else if(empty == nullptr && it->m_node == nullptr)
+		{
+			// Found empty
+			empty = it;
+		}
+		else if(it->m_timestamp < kickTime)
+		{
+			// Found one to kick
+			kick = it;
+			kickTime = it->m_timestamp;
+		}
+
+		++it;
+	}
+
+	if(canditate)
+	{
+		// Update timestamp
+		canditate->m_timestamp = getGlobalTimestamp();
+		it = canditate;
+		render = false;
+	}
+	else if(empty)
+	{
+		ANKI_ASSERT(empty->m_node == nullptr);
+		empty->m_node = &node;
+		empty->m_timestamp = getGlobalTimestamp();
+
+		it = empty;
+		render = true;
+	}
+	else if(kick)
+	{
+		kick->m_node = &node;
+		kick->m_timestamp = getGlobalTimestamp();
+
+		it = kick;
+		render = true;
+	}
+	else
+	{
+		ANKI_ASSERT(0);
+	}
+
+	entry = it - m_cacheEntries.getBegin();
 }
 
 } // end namespace anki
