@@ -31,7 +31,7 @@ struct CounterInfo
 	U32 m_flags;
 };
 
-static const Array<CounterInfo, (U)Counter::COUNT> cinfo = {{
+static const Array<CounterInfo, U(Counter::COUNT)> cinfo = {{
 	{"FPS", CF_PER_RUN | CF_FPS | CF_F64},
 	{"MAIN_RENDERER_TIME", CF_PER_FRAME | CF_PER_RUN | CF_F64},
 	{"RENDERER_MS_TIME", CF_PER_FRAME | CF_PER_RUN | CF_F64},
@@ -281,103 +281,6 @@ void CountersManager::flush()
 	if(err)
 	{
 		ANKI_LOGE("Error in counters file");
-	}
-}
-
-//==============================================================================
-// TraceManager                                                                =
-//==============================================================================
-
-//==============================================================================
-TraceManager::~TraceManager()
-{
-	flushAll();
-}
-
-//==============================================================================
-Error TraceManager::create(HeapAllocator<U8>& alloc, const CString& storeDir)
-{
-	String filename;
-	filename.sprintf(alloc, "%s/trace", &storeDir[0]);
-
-	ANKI_CHECK(m_traceFile.open(filename.toCString(), File::OpenFlag::WRITE));
-
-	ANKI_CHECK(m_traceFile.writeText(
-			"thread_id, depth, event_name, start_time, stop_time\n"));
-
-	filename.destroy(alloc);
-	return ErrorCode::NONE;
-}
-
-//==============================================================================
-void TraceManager::flush(ThreadTraceManager& thread)
-{
-	ANKI_ASSERT(thread.m_depth == 0);
-	Error err = ErrorCode::NONE;
-
-	LockGuard<Mutex> lock(m_fileMtx);
-	for(U i = 0; i < thread.m_bufferedEventsCount; i++)
-	{
-		const ThreadTraceManager::Event& event = thread.m_bufferedEvents[i];
-
-		err = m_traceFile.writeText("%u, %u, %s, %f, %f\n",
-			thread.m_id,
-			event.m_depth,
-			event.m_name,
-			event.m_startTime,
-			event.m_stopTime);
-
-		(void)err;
-	}
-
-	thread.m_bufferedEventsCount = 0;
-}
-
-//==============================================================================
-void TraceManager::flushAll()
-{
-	auto count = m_threadCount.load();
-	while(count-- != 0)
-	{
-		flush(*m_threadData[count]);
-	}
-
-	m_traceFile.close();
-}
-
-//==============================================================================
-ThreadTraceManager::ThreadTraceManager()
-{
-	TraceManager& master = TraceManagerSingleton::get();
-	m_master = &master;
-
-	auto index = master.m_threadCount.fetchAdd(1);
-	master.m_threadData[index] = this;
-	m_id = index;
-}
-
-//==============================================================================
-void ThreadTraceManager::pushEvent(const char* name)
-{
-	Event& event = m_inflightEvents[m_depth];
-	event.m_depth = m_depth++;
-	event.m_name = name;
-	event.m_startTime = HighRezTimer::getCurrentTime();
-}
-
-//==============================================================================
-void ThreadTraceManager::popEvent()
-{
-	ANKI_ASSERT(m_depth > 0);
-	Event& event = m_inflightEvents[--m_depth];
-	event.m_stopTime = HighRezTimer::getCurrentTime();
-
-	ANKI_ASSERT(m_bufferedEventsCount < m_bufferedEvents.getSize());
-	m_bufferedEvents[m_bufferedEventsCount++] = event;
-
-	if(m_bufferedEventsCount == m_bufferedEvents.getSize())
-	{
-		m_master->flush(*this);
 	}
 }
 

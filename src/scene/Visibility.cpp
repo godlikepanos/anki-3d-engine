@@ -14,6 +14,7 @@
 #include <anki/scene/MoveComponent.h>
 #include <anki/renderer/MainRenderer.h>
 #include <anki/util/Logger.h>
+#include <anki/core/Trace.h>
 
 namespace anki {
 
@@ -90,6 +91,7 @@ public:
 	/// Do the tests
 	Error operator()(U32 threadId, PtrSize threadsCount) override
 	{
+		ANKI_TRACE_START_EVENT(SCENE_VISIBILITY_TESTS);
 		auto& list = m_shared->m_frustumsList;
 		auto alloc = m_shared->m_scene->getFrameAllocator();
 
@@ -112,6 +114,7 @@ public:
 			m_shared->m_barrier.wait();
 			test(*frc, threadId, threadsCount);
 		}
+		ANKI_TRACE_STOP_EVENT(SCENE_VISIBILITY_TESTS);
 
 		return ErrorCode::NONE;
 	}

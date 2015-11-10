@@ -89,10 +89,10 @@ Error init()
 #if !PLAYER
 	cam->getComponent<MoveComponent>().
 		setLocalTransform(Transform(
-		//Vec4(147.392776, -10.132728, 16.607138, 0.0),
-		Vec4(0.0, 10, 0, 0),
-		//Mat3x4(Euler(toRad(0.0), toRad(90.0), toRad(0.0))),
-		Mat3x4::getIdentity(),
+		Vec4(147.392776, -10.132728, 16.607138, 0.0),
+		//Vec4(0.0, 10, 0, 0),
+		Mat3x4(Euler(toRad(0.0), toRad(90.0), toRad(0.0))),
+		//Mat3x4::getIdentity(),
 		1.0));
 #endif
 

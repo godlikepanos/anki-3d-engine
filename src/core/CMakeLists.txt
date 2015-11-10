@@ -1,4 +1,4 @@
-set(ANKI_CORE_SOURCES App.cpp StdinListener.cpp Counters.cpp Config.cpp)
+set(ANKI_CORE_SOURCES App.cpp StdinListener.cpp Counters.cpp Config.cpp Trace.cpp)
 
 if(${ANKI_WINDOW_BACKEND} STREQUAL "GLXX11")
 	set(ANKI_CORE_SOURCES ${ANKI_CORE_SOURCES} NativeWindowGlxX11.cpp)

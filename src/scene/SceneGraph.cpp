@@ -8,6 +8,7 @@
 #include <anki/scene/ModelNode.h>
 #include <anki/scene/Sector.h>
 #include <anki/core/Counters.h>
+#include <anki/core/Trace.h>
 #include <anki/physics/PhysicsWorld.h>
 #include <anki/resource/ResourceManager.h>
 #include <anki/renderer/MainRenderer.h>
@@ -31,6 +32,7 @@ public:
 
 	Error operator()(U32 taskId, PtrSize threadsCount)
 	{
+		ANKI_TRACE_START_EVENT(SCENE_NODES_UPDATE);
 		PtrSize start, end;
 		choseStartEnd(
 			taskId, threadsCount, m_scene->getSceneNodesCount(), start, end);
@@ -48,6 +50,7 @@ public:
 			return err;
 		});
 
+		ANKI_TRACE_STOP_EVENT(SCENE_NODES_UPDATE);
 		return err;
 	}
 
@@ -255,6 +258,7 @@ Error SceneGraph::update(F32 prevUpdateTime, F32 crntTime,
 	MainRenderer& renderer)
 {
 	ANKI_ASSERT(m_mainCam);
+	ANKI_TRACE_START_EVENT(SCENE_UPDATE);
 
 	m_timestamp = *m_globalTimestamp;
 
@@ -264,15 +268,21 @@ Error SceneGraph::update(F32 prevUpdateTime, F32 crntTime,
 	m_frameAlloc.getMemoryPool().reset();
 
 	// Delete stuff
+	ANKI_TRACE_START_EVENT(SCENE_DELETE_STUFF);
 	m_events.deleteEventsMarkedForDeletion();
 	deleteNodesMarkedForDeletion();
+	ANKI_TRACE_STOP_EVENT(SCENE_DELETE_STUFF);
 
 	ThreadPool& threadPool = *m_threadpool;
 	(void)threadPool;
 
 	// Update
+	ANKI_TRACE_START_EVENT(SCENE_PHYSICS_UPDATE);
 	m_physics->updateAsync(crntTime - prevUpdateTime);
 	m_physics->waitUpdate();
+	ANKI_TRACE_STOP_EVENT(SCENE_PHYSICS_UPDATE);
+
+	ANKI_TRACE_START_EVENT(SCENE_NODES_UPDATE);
 	ANKI_CHECK(m_events.updateAllEvents(prevUpdateTime, crntTime));
 
 	// Then the rest
@@ -290,13 +300,17 @@ Error SceneGraph::update(F32 prevUpdateTime, F32 crntTime,
 	}
 
 	ANKI_CHECK(threadPool.waitForAllThreadsToFinish());
+	ANKI_TRACE_STOP_EVENT(SCENE_NODES_UPDATE);
 
 	renderer.getOffscreenRenderer().prepareForVisibilityTests(*m_mainCam);
 
+	ANKI_TRACE_START_EVENT(SCENE_VISIBILITY_TESTS);
 	ANKI_CHECK(doVisibilityTests(*m_mainCam, *this,
 		renderer.getOffscreenRenderer()));
+	ANKI_TRACE_STOP_EVENT(SCENE_VISIBILITY_TESTS);
 
 	ANKI_COUNTER_STOP_TIMER_INC(SCENE_UPDATE_TIME);
+	ANKI_TRACE_STOP_EVENT(SCENE_UPDATE);
 	return ErrorCode::NONE;
 }
 

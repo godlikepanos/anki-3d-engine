@@ -9,6 +9,7 @@
 #include <anki/gr/gl/GrManagerImpl.h>
 #include <anki/util/Logger.h>
 #include <anki/core/Counters.h>
+#include <anki/core/Trace.h>
 
 namespace anki {
 
@@ -264,7 +265,9 @@ void RenderingThread::threadLoop()
 			++m_head;
 		}
 
+		ANKI_TRACE_START_EVENT(GL_THREAD);
 		Error err = cmd->getImplementation().executeAllCommands();
+		ANKI_TRACE_STOP_EVENT(GL_THREAD);
 
 		if(err)
 		{
@@ -304,6 +307,7 @@ void RenderingThread::swapBuffersInternal(GlState& state)
 //==============================================================================
 void RenderingThread::swapBuffers()
 {
+	ANKI_TRACE_START_EVENT(SWAP_BUFFERS);
 #if !ANKI_DISABLE_GL_RENDERING_THREAD
 	// Wait for the rendering thread to finish swap buffers...
 	{
@@ -320,6 +324,7 @@ void RenderingThread::swapBuffers()
 #endif
 	// ...and then flush a new swap buffers
 	flushCommandBuffer(m_swapBuffersCommands);
+	ANKI_TRACE_STOP_EVENT(SWAP_BUFFERS);
 }
 
 } // end namespace anki

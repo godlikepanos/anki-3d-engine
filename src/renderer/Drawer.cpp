@@ -14,6 +14,7 @@
 #include <anki/resource/TextureResource.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/core/Counters.h>
+#include <anki/core/Trace.h>
 #include <anki/util/Logger.h>
 #include <anki/util/Thread.h>
 
@@ -204,6 +205,7 @@ public:
 
 	Error operator()(U32 threadId, PtrSize threadsCount) override
 	{
+		ANKI_TRACE_START_EVENT(RENDER_DRAWER);
 		VisibilityTestResults& vis = m_ctx.m_frc->getVisibilityTestResults();
 
 		PtrSize start, end;
@@ -225,6 +227,8 @@ public:
 
 			ANKI_CHECK(m_drawer->renderSingle(m_ctx));
 		}
+
+		ANKI_TRACE_STOP_EVENT(RENDER_DRAWER);
 
 		return ErrorCode::NONE;
 	}

@@ -7,6 +7,7 @@
 #include <anki/renderer/Renderer.h>
 #include <anki/core/App.h>
 #include <anki/core/Counters.h>
+#include <anki/core/Trace.h>
 #include <anki/scene/SceneGraph.h>
 #include <anki/scene/Camera.h>
 #include <anki/scene/Light.h>
@@ -106,6 +107,7 @@ Error Sm::run(SArray<SceneNode*> spotShadowCasters,
 	SArray<SceneNode*> omniShadowCasters, CommandBufferPtr& cmdBuff)
 {
 	ANKI_ASSERT(m_enabled);
+	ANKI_TRACE_START_EVENT(RENDER_SM);
 
 	if(omniShadowCasters.getSize() > m_omnis.getSize()
 		|| spotShadowCasters.getSize() > m_spots.getSize())
@@ -124,6 +126,7 @@ Error Sm::run(SArray<SceneNode*> spotShadowCasters,
 		ANKI_CHECK(doOmniLight(*node, cmdBuff));
 	}
 
+	ANKI_TRACE_STOP_EVENT(RENDER_SM);
 	return ErrorCode::NONE;
 }
 

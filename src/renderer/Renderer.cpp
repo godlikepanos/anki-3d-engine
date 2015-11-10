@@ -7,6 +7,7 @@
 #include <anki/scene/Camera.h>
 #include <anki/scene/SceneGraph.h>
 #include <anki/core/Counters.h>
+#include <anki/core/Trace.h>
 #include <anki/misc/ConfigSet.h>
 
 #include <anki/renderer/Ms.h>
@@ -174,7 +175,9 @@ Error Renderer::render(SceneNode& frustumableNode, U frustumIdx,
 	}
 
 	ANKI_COUNTER_START_TIMER(RENDERER_MS_TIME);
+	ANKI_TRACE_START_EVENT(RENDER_MS);
 	ANKI_CHECK(m_ms->run(cmdb[0]));
+	ANKI_TRACE_STOP_EVENT(RENDER_MS);
 	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_MS_TIME);
 
 	m_lf->runOcclusionTests(cmdb[0]);

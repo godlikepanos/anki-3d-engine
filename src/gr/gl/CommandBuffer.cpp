@@ -21,6 +21,7 @@
 #include <anki/gr/Buffer.h>
 #include <anki/gr/gl/BufferImpl.h>
 #include <anki/core/Counters.h>
+#include <anki/core/Trace.h>
 
 namespace anki {
 

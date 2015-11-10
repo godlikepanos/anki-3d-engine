@@ -10,6 +10,7 @@
 #include <anki/util/Filesystem.h>
 #include <anki/util/System.h>
 #include <anki/core/Counters.h>
+#include <anki/core/Trace.h>
 
 #include <anki/core/NativeWindow.h>
 #include <anki/input/Input.h>
@@ -132,6 +133,10 @@ void App::cleanup()
 
 	m_settingsDir.destroy(m_heapAlloc);
 	m_cacheDir.destroy(m_heapAlloc);
+
+#if ANKI_ENABLE_COUNTERS
+	TraceManagerSingleton::destroy();
+#endif
 }
 
 //==============================================================================
@@ -397,6 +402,7 @@ Error App::mainLoop(UserMainLoopCallback callback, void* userData)
 
 		m_gr->swapBuffers();
 		ANKI_COUNTERS_RESOLVE_FRAME();
+		ANKI_TRACE_FLUSH();
 
 		// Sleep
 		timer.stop();
@@ -411,7 +417,6 @@ Error App::mainLoop(UserMainLoopCallback callback, void* userData)
 	// Performance ends
 	ANKI_COUNTER_STOP_TIMER_INC(FPS);
 	ANKI_COUNTERS_FLUSH();
-	ANKI_TRACE_FLUSH();
 
 	return ErrorCode::NONE;
 }

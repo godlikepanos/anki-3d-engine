@@ -12,6 +12,7 @@
 #include <anki/scene/Light.h>
 #include <anki/scene/Visibility.h>
 #include <anki/core/Counters.h>
+#include <anki/core/Trace.h>
 #include <anki/util/Logger.h>
 #include <anki/misc/ConfigSet.h>
 
@@ -161,7 +162,9 @@ public:
 
 	Error operator()(U32 threadId, PtrSize threadsCount)
 	{
+		ANKI_TRACE_START_EVENT(RENDER_IS);
 		m_data->m_is->binLights(threadId, threadsCount, *m_data);
+		ANKI_TRACE_STOP_EVENT(RENDER_IS);
 		return ErrorCode::NONE;
 	}
 };
@@ -334,6 +337,7 @@ Error Is::initInternal(const ConfigSet& config)
 //==============================================================================
 Error Is::lightPass(CommandBufferPtr& cmdb)
 {
+	ANKI_TRACE_START_EVENT(RENDER_IS);
 	ThreadPool& threadPool = m_r->getThreadPool();
 	m_frc = &m_r->getActiveFrustumComponent();
 	VisibilityTestResults& vi = m_frc->getVisibilityTestResults();
@@ -478,6 +482,7 @@ Error Is::lightPass(CommandBufferPtr& cmdb)
 	//
 	cmdb->drawArrays(4, m_r->getTileCount());
 
+	ANKI_TRACE_STOP_EVENT(RENDER_IS);
 	return ErrorCode::NONE;
 }
 

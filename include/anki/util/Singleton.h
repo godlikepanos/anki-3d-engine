@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_UTIL_SINGLETON_H
-#define ANKI_UTIL_SINGLETON_H
+#pragma once
 
 #include <anki/util/Assert.h>
 #include <utility>
@@ -132,11 +131,10 @@ private:
 };
 
 template <typename T>
-thread_local typename SingletonThreadSafe<T>::Value* 
+thread_local typename SingletonThreadSafe<T>::Value*
 	SingletonThreadSafe<T>::m_instance = nullptr;
 
 /// @}
 
 } // end namespace anki
 
-#endif
