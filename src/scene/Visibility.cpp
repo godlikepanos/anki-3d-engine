@@ -151,6 +151,7 @@ public:
 void VisibilityTestTask::test(FrustumComponent& testedFrc,
 	U32 threadId, PtrSize threadsCount)
 {
+	ANKI_TRACE_START_EVENT(SCENE_VISIBILITY_TEST);
 	ANKI_ASSERT(testedFrc.anyVisibilityTestEnabled());
 
 	SceneNode& testedNode = testedFrc.getSceneNode();
@@ -396,12 +397,16 @@ void VisibilityTestTask::test(FrustumComponent& testedFrc,
 	}); // end for
 	(void)err;
 
+	ANKI_TRACE_STOP_EVENT(SCENE_VISIBILITY_TEST);
+
 	// Gather the results from all threads
 	m_shared->m_barrier.wait();
 
 	if(threadId == 0)
 	{
+		ANKI_TRACE_START_EVENT(SCENE_VISIBILITY_COMBINE_RESULTS);
 		combineTestResults(testedFrc, threadsCount);
+		ANKI_TRACE_STOP_EVENT(SCENE_VISIBILITY_COMBINE_RESULTS);
 	}
 }
 

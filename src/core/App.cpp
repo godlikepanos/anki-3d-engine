@@ -384,6 +384,7 @@ Error App::mainLoop(UserMainLoopCallback callback, void* userData)
 	ANKI_COUNTER_START_TIMER(FPS);
 	while(!quit)
 	{
+		ANKI_TRACE_START_FRAME();
 		HighRezTimer timer;
 		timer.start();
 
@@ -402,7 +403,6 @@ Error App::mainLoop(UserMainLoopCallback callback, void* userData)
 
 		m_gr->swapBuffers();
 		ANKI_COUNTERS_RESOLVE_FRAME();
-		ANKI_TRACE_FLUSH();
 
 		// Sleep
 		timer.stop();
@@ -412,6 +412,8 @@ Error App::mainLoop(UserMainLoopCallback callback, void* userData)
 		}
 
 		++m_globalTimestamp;
+
+		ANKI_TRACE_STOP_FRAME();
 	}
 
 	// Performance ends

@@ -8,6 +8,7 @@
 #include <anki/gr/GrManager.h>
 #include <anki/util/Logger.h>
 #include <anki/core/Counters.h>
+#include <anki/core/Trace.h>
 #include <anki/misc/ConfigSet.h>
 #include <algorithm>
 #include <cstring>
@@ -222,6 +223,7 @@ void GlState::checkDynamicMemoryConsumption()
 			{
 			case BufferUsage::UNIFORM:
 				ANKI_COUNTER_INC(GR_DYNAMIC_UNIFORMS_SIZE, U64(bytesUsed));
+				ANKI_TRACE_INC_COUNTER(GR_DYNAMIC_UNIFORMS_SIZE, bytesUsed);
 				break;
 			case BufferUsage::STORAGE:
 				ANKI_COUNTER_INC(GR_DYNAMIC_STORAGE_SIZE, U64(bytesUsed));

@@ -392,6 +392,8 @@ Error Is::lightPass(CommandBufferPtr& cmdb)
 
 	ANKI_COUNTER_INC(RENDERER_LIGHTS_COUNT,
 		U64(visiblePointLightsCount + visibleSpotLightsCount));
+	ANKI_TRACE_INC_COUNTER(RENDERER_LIGHT_COUNT,
+		U64(visiblePointLightsCount + visibleSpotLightsCount));
 
 	//
 	// Do shadows pass

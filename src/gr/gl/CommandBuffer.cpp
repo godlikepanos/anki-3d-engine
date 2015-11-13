@@ -213,6 +213,7 @@ public:
 				m_info.m_baseVertex,
 				m_info.m_baseInstance);
 
+			ANKI_TRACE_INC_COUNTER(GR_DRAWCALLS, 1);
 			ANKI_COUNTER_INC(GL_DRAWCALLS_COUNT, U64(1));
 			ANKI_COUNTER_INC(GL_VERTICES_COUNT,
 				U64(m_info.m_instanceCount * m_info.m_count));
@@ -256,6 +257,7 @@ public:
 				m_info.m_instanceCount,
 				m_info.m_baseInstance);
 
+			ANKI_TRACE_INC_COUNTER(GR_DRAWCALLS, 1);
 			ANKI_COUNTER_INC(GL_DRAWCALLS_COUNT, U64(1));
 		}
 

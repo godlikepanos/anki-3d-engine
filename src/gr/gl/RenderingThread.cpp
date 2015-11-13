@@ -291,6 +291,8 @@ void RenderingThread::syncClientServer()
 //==============================================================================
 void RenderingThread::swapBuffersInternal(GlState& state)
 {
+	ANKI_TRACE_START_EVENT(SWAP_BUFFERS);
+
 	// Do the swap buffers
 	m_interface->swapBuffersCommand();
 
@@ -302,6 +304,8 @@ void RenderingThread::swapBuffersInternal(GlState& state)
 
 	m_frameCondVar.notifyOne();
 	state.checkDynamicMemoryConsumption();
+
+	ANKI_TRACE_STOP_EVENT(SWAP_BUFFERS);
 }
 
 //==============================================================================
