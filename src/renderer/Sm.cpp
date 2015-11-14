@@ -6,7 +6,6 @@
 #include <anki/renderer/Sm.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/core/App.h>
-#include <anki/core/Counters.h>
 #include <anki/core/Trace.h>
 #include <anki/scene/SceneGraph.h>
 #include <anki/scene/Camera.h>
@@ -221,7 +220,7 @@ Error Sm::doSpotLight(SceneNode& light, CommandBufferPtr& cmdBuff)
 	ANKI_CHECK(m_r->getSceneDrawer().render(
 		fr, RenderingStage::MATERIAL, Pass::SM, cmdbs));
 
-	ANKI_COUNTER_INC(RENDERER_SHADOW_PASSES, U64(1));
+	ANKI_TRACE_INC_COUNTER(RENDERER_SHADOW_PASSES, 1);
 	return ErrorCode::NONE;
 }
 
@@ -252,7 +251,7 @@ Error Sm::doOmniLight(SceneNode& light, CommandBufferPtr& cmdBuff)
 		return ErrorCode::NONE;
 	});
 
-	ANKI_COUNTER_INC(RENDERER_SHADOW_PASSES, U64(6));
+	ANKI_TRACE_INC_COUNTER(RENDERER_SHADOW_PASSES, 6);
 
 	return err;
 }

@@ -9,7 +9,6 @@
 #include <anki/gr/gl/RenderingThread.h>
 #include <anki/gr/gl/Error.h>
 #include <anki/util/Logger.h>
-#include <anki/core/Counters.h>
 #include <cstring>
 
 namespace anki {
@@ -83,9 +82,6 @@ CommandBufferImpl::InitHints CommandBufferImpl::computeInitHints() const
 {
 	InitHints out;
 	out.m_chunkSize = m_alloc.getMemoryPool().getAllocatedSize() + 16;
-
-	ANKI_COUNTER_INC(GL_QUEUES_SIZE,
-		U64(m_alloc.getMemoryPool().getAllocatedSize()));
 
 	return out;
 }

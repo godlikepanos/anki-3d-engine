@@ -9,7 +9,6 @@
 #include <anki/util/File.h>
 #include <anki/util/Filesystem.h>
 #include <anki/util/System.h>
-#include <anki/core/Counters.h>
 #include <anki/core/Trace.h>
 
 #include <anki/core/NativeWindow.h>
@@ -134,7 +133,7 @@ void App::cleanup()
 	m_settingsDir.destroy(m_heapAlloc);
 	m_cacheDir.destroy(m_heapAlloc);
 
-#if ANKI_ENABLE_COUNTERS
+#if ANKI_ENABLE_TRACE
 	TraceManagerSingleton::destroy();
 #endif
 }
@@ -183,10 +182,7 @@ Error App::createInternal(const ConfigSet& config_,
 
 	m_timerTick = 1.0 / 60.0; // in sec. 1.0 / period
 
-#if ANKI_ENABLE_COUNTERS
-	ANKI_CHECK(CountersManagerSingleton::get().create(
-		m_heapAlloc, m_settingsDir.toCString(), &m_globalTimestamp));
-
+#if ANKI_ENABLE_TRACE
 	ANKI_CHECK(TraceManagerSingleton::get().create(
 		m_heapAlloc, m_settingsDir.toCString()));
 #endif
@@ -381,7 +377,6 @@ Error App::mainLoop(UserMainLoopCallback callback, void* userData)
 	HighRezTimer::Scalar prevUpdateTime = HighRezTimer::getCurrentTime();
 	HighRezTimer::Scalar crntTime = prevUpdateTime;
 
-	ANKI_COUNTER_START_TIMER(FPS);
 	while(!quit)
 	{
 		ANKI_TRACE_START_FRAME();
@@ -402,7 +397,6 @@ Error App::mainLoop(UserMainLoopCallback callback, void* userData)
 		ANKI_CHECK(m_renderer->render(*m_scene));
 
 		m_gr->swapBuffers();
-		ANKI_COUNTERS_RESOLVE_FRAME();
 
 		// Sleep
 		timer.stop();
@@ -415,10 +409,6 @@ Error App::mainLoop(UserMainLoopCallback callback, void* userData)
 
 		ANKI_TRACE_STOP_FRAME();
 	}
-
-	// Performance ends
-	ANKI_COUNTER_STOP_TIMER_INC(FPS);
-	ANKI_COUNTERS_FLUSH();
 
 	return ErrorCode::NONE;
 }

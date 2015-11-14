@@ -128,7 +128,7 @@ Thread::Id Thread::getCurrentThreadId()
 //==============================================================================
 Mutex::Mutex()
 {
-	pthread_mutex_t* mtx = 
+	pthread_mutex_t* mtx =
 		reinterpret_cast<pthread_mutex_t*>(malloc(sizeof(pthread_mutex_t)));
 	if(mtx == nullptr)
 	{
@@ -198,7 +198,7 @@ void Mutex::unlock()
 //==============================================================================
 ConditionVariable::ConditionVariable()
 {
-	pthread_cond_t* cond = 
+	pthread_cond_t* cond =
 		reinterpret_cast<pthread_cond_t*>(malloc(sizeof(pthread_cond_t)));
 	if(cond == nullptr)
 	{
@@ -260,54 +260,58 @@ void ConditionVariable::wait(Mutex& amtx)
 // Barrier                                                                     =
 //==============================================================================
 
+#define ANKI_BARR_GET() \
+	(*reinterpret_cast<pthread_barrier_t*>(&this->m_posixImpl[0]))
+
 //==============================================================================
 Barrier::Barrier(U32 count)
 {
+	static_assert(sizeof(m_posixImpl) >= sizeof(pthread_barrier_t),
+		"Wrong assumption");
+	static_assert(alignof(Barrier) >= alignof(pthread_barrier_t),
+		"Wrong assumption");
+
 	ANKI_ASSERT(count > 1);
 
-	pthread_barrier_t* barrier = 
-		reinterpret_cast<pthread_barrier_t*>(malloc(sizeof(pthread_barrier_t)));
-	if(barrier == nullptr)
-	{
-		ANKI_LOGF("Out of memory");
-	}
-
-	I err = pthread_barrier_init(barrier, nullptr, count);
+	pthread_barrierattr_t attr;
+	I err = pthread_barrierattr_init(&attr);
 	if(err)
 	{
-		free(barrier);
+		ANKI_LOGF("pthread_barrierattr_init() failed");
+	}
+
+	err = pthread_barrierattr_setpshared(&attr, PTHREAD_PROCESS_PRIVATE);
+	if(err)
+	{
+		pthread_barrierattr_destroy(&attr);
+		ANKI_LOGF("pthread_barrierattr_setpshared() failed");
+	}
+
+	err = pthread_barrier_init(&ANKI_BARR_GET(), &attr, count);
+	if(err)
+	{
+		pthread_barrierattr_destroy(&attr);
 		ANKI_LOGF("pthread_barrier_init() failed");
 	}
 
-	m_impl = barrier;
+	pthread_barrierattr_destroy(&attr);
 }
 
 //==============================================================================
 Barrier::~Barrier()
 {
-	ANKI_ASSERT(m_impl);
-	pthread_barrier_t* barrier = reinterpret_cast<pthread_barrier_t*>(m_impl);
-
-	I err = pthread_barrier_destroy(barrier);
+	I err = pthread_barrier_destroy(&ANKI_BARR_GET());
 	if(err)
 	{
 		ANKI_LOGE("pthread_barrier_destroy() failed");
 	}
-
-	free(barrier);
-	m_impl = nullptr;
 }
 
 //==============================================================================
 Bool Barrier::wait()
 {
-	ANKI_ASSERT(m_impl);
-
-	pthread_barrier_t* barrier = 
-		reinterpret_cast<pthread_barrier_t*>(m_impl);
-
-	I err = pthread_barrier_wait(barrier);
-	if(err != PTHREAD_BARRIER_SERIAL_THREAD && err != 0)
+	I err = pthread_barrier_wait(&ANKI_BARR_GET());
+	if(ANKI_UNLIKELY(err != PTHREAD_BARRIER_SERIAL_THREAD && err != 0))
 	{
 		ANKI_LOGF("pthread_barrier_wait() failed");
 	}

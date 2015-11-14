@@ -36,7 +36,6 @@ enum class TraceEventType
 	RENDER_DRAWER,
 	GL_THREAD,
 	SWAP_BUFFERS,
-	IDLE,
 
 	COUNT
 };
@@ -46,7 +45,12 @@ enum class TraceCounterType
 {
 	GR_DRAWCALLS,
 	GR_DYNAMIC_UNIFORMS_SIZE,
-	RENDERER_LIGHT_COUNT,
+	GR_DYNAMIC_STORAGE_SIZE,
+	GR_VERTICES,
+	RENDERER_LIGHTS,
+	RENDERER_SHADOW_PASSES,
+	RENDERER_MERGED_DRAWCALLS,
+	SCENE_NODES_UPDATED,
 
 	COUNT
 };
@@ -69,9 +73,7 @@ public:
 
 	void incCounter(TraceCounterType c, U64 val)
 	{
-		U idx = U(TraceEventType::COUNT) + U(c);
-		m_perFrameCounters[idx].fetchAdd(val);
-		m_perRunCounters[idx].fetchAdd(val);
+		m_perFrameCounters[U(c)].fetchAdd(val);
 	}
 
 	void startFrame()
@@ -94,7 +96,9 @@ private:
 	static const U BUFFERED_ENTRIES = 1024 * 10;
 	Array<Entry, BUFFERED_ENTRIES> m_entries;
 	Atomic<U32> m_count = {0};
-	File m_file;
+	File m_traceFile;
+	File m_perFrameFile;
+	File m_perRunFile;
 	HighRezTimer::Scalar m_startFrameTime;
 
 	Array<Atomic<U64>, U(TraceEventType::COUNT) + U(TraceCounterType::COUNT)>
@@ -102,7 +106,8 @@ private:
 	Array<Atomic<U64>, U(TraceEventType::COUNT) + U(TraceCounterType::COUNT)>
 		m_perRunCounters = {{}};
 
-	void flushCounters();
+	ANKI_USE_RESULT Error flushCounters();
+	ANKI_USE_RESULT Error flushEvents();
 };
 
 using TraceManagerSingleton = Singleton<TraceManager>;
@@ -110,7 +115,7 @@ using TraceManagerSingleton = Singleton<TraceManager>;
 /// @name Trace macros.
 /// @{
 
-#if ANKI_ENABLE_COUNTERS
+#if ANKI_ENABLE_TRACE
 
 #	define ANKI_TRACE_START_EVENT(name_) \
 	TraceManagerSingleton::get().startEvent()

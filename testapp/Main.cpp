@@ -28,7 +28,6 @@
 #include "anki/event/LightEvent.h"
 #include "anki/event/AnimationEvent.h"
 #include "anki/event/JitterMoveEvent.h"
-#include "anki/core/Counters.h"
 #include "anki/core/Config.h"
 #include "anki/physics/PhysicsWorld.h"
 #include "anki/scene/LensFlareComponent.h"
@@ -488,7 +487,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("is.sm.poissonEnabled", true);
 	config.set("is.sm.resolution", 1024);
 	config.set("lf.maxFlares", 32);
-	config.set("pps.enabled", true);
+	config.set("pps.enabled", false);
 	config.set("pps.bloom.enabled", true);
 	config.set("pps.bloom.renderingQuality", 0.5);
 	config.set("pps.bloom.blurringDist", 1.0);
@@ -508,14 +507,14 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("pps.sslf.enabled", true);
 	config.set("pps.sharpen", true);
 	config.set("renderingQuality", 1.0);
-	config.set("width", 1280);
-	config.set("height", 720);
+	config.set("width", 128);
+	config.set("height", 128);
 	config.set("lodDistance", 20.0);
 	config.set("samples", 1);
 	config.set("tessellation", true);
 	//config.set("maxTextureSize", 256);
 	config.set("ir.rendererSize", 64);
-	config.set("fullscreenDesktopResolution", true);
+	config.set("fullscreenDesktopResolution", false);
 	config.set("debugContext", false);
 	if(getenv("ANKI_DATA_PATH"))
 	{

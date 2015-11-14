@@ -106,7 +106,7 @@
 #endif
 
 // Enable performance counters
-#define ANKI_ENABLE_COUNTERS ${_ANKI_ENABLE_COUNTERS}
+#define ANKI_ENABLE_TRACE ${_ANKI_ENABLE_TRACE}
 
 //==============================================================================
 // Other                                                                       =

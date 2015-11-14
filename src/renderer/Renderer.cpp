@@ -6,7 +6,6 @@
 #include <anki/renderer/Renderer.h>
 #include <anki/scene/Camera.h>
 #include <anki/scene/SceneGraph.h>
-#include <anki/core/Counters.h>
 #include <anki/core/Trace.h>
 #include <anki/misc/ConfigSet.h>
 
@@ -174,11 +173,9 @@ Error Renderer::render(SceneNode& frustumableNode, U frustumIdx,
 		ANKI_CHECK(m_ir->run(cmdb[0]));
 	}
 
-	ANKI_COUNTER_START_TIMER(RENDERER_MS_TIME);
 	ANKI_TRACE_START_EVENT(RENDER_MS);
 	ANKI_CHECK(m_ms->run(cmdb[0]));
 	ANKI_TRACE_STOP_EVENT(RENDER_MS);
-	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_MS_TIME);
 
 	m_lf->runOcclusionTests(cmdb[0]);
 
@@ -186,19 +183,15 @@ Error Renderer::render(SceneNode& frustumableNode, U frustumIdx,
 
 	m_tiler->run(cmdb[0]);
 
-	ANKI_COUNTER_START_TIMER(RENDERER_IS_TIME);
 	ANKI_CHECK(m_is->run(cmdb[1]));
-	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_IS_TIME);
 
 	ANKI_CHECK(m_fs->run(cmdb[1]));
 	m_lf->run(cmdb[1]);
 
-	ANKI_COUNTER_START_TIMER(RENDERER_PPS_TIME);
 	if(m_pps->getEnabled())
 	{
 		m_pps->run(cmdb[1]);
 	}
-	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_PPS_TIME);
 
 	if(m_dbg->getEnabled())
 	{

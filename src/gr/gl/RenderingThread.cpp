@@ -8,7 +8,6 @@
 #include <anki/gr/GrManager.h>
 #include <anki/gr/gl/GrManagerImpl.h>
 #include <anki/util/Logger.h>
-#include <anki/core/Counters.h>
 #include <anki/core/Trace.h>
 
 namespace anki {
@@ -318,9 +317,7 @@ void RenderingThread::swapBuffers()
 		LockGuard<Mutex> lock(m_frameMtx);
 		while(m_frameWait)
 		{
-			ANKI_COUNTER_START_TIMER(GL_SERVER_WAIT_TIME);
 			m_frameCondVar.wait(m_frameMtx);
-			ANKI_COUNTER_STOP_TIMER_INC(GL_SERVER_WAIT_TIME);
 		}
 
 		m_frameWait = true;

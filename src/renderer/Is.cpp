@@ -11,7 +11,6 @@
 #include <anki/scene/Camera.h>
 #include <anki/scene/Light.h>
 #include <anki/scene/Visibility.h>
-#include <anki/core/Counters.h>
 #include <anki/core/Trace.h>
 #include <anki/util/Logger.h>
 #include <anki/misc/ConfigSet.h>
@@ -390,10 +389,8 @@ Error Is::lightPass(CommandBufferPtr& cmdb)
 	visiblePointLightsCount = min<U>(visiblePointLightsCount, m_maxPointLights);
 	visibleSpotLightsCount = min<U>(visibleSpotLightsCount, m_maxSpotLights);
 
-	ANKI_COUNTER_INC(RENDERER_LIGHTS_COUNT,
-		U64(visiblePointLightsCount + visibleSpotLightsCount));
-	ANKI_TRACE_INC_COUNTER(RENDERER_LIGHT_COUNT,
-		U64(visiblePointLightsCount + visibleSpotLightsCount));
+	ANKI_TRACE_INC_COUNTER(RENDERER_LIGHTS,
+		visiblePointLightsCount + visibleSpotLightsCount);
 
 	//
 	// Do shadows pass

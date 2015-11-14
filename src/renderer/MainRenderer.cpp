@@ -15,7 +15,6 @@
 #include <anki/util/Logger.h>
 #include <anki/util/File.h>
 #include <anki/util/Filesystem.h>
-#include <anki/core/Counters.h>
 #include <anki/core/Trace.h>
 #include <anki/core/App.h>
 #include <anki/misc/ConfigSet.h>
@@ -106,7 +105,6 @@ Error MainRenderer::create(
 //==============================================================================
 Error MainRenderer::render(SceneGraph& scene)
 {
-	ANKI_COUNTER_START_TIMER(MAIN_RENDERER_TIME);
 	ANKI_TRACE_START_EVENT(RENDER);
 
 	GrManager& gl = m_r->getGrManager();
@@ -166,7 +164,6 @@ Error MainRenderer::render(SceneGraph& scene)
 		m_cbInitHints[i] = cmdbs[i]->computeInitHints();
 	}
 
-	ANKI_COUNTER_STOP_TIMER_INC(MAIN_RENDERER_TIME);
 	ANKI_TRACE_STOP_EVENT(RENDER);
 
 	return ErrorCode::NONE;

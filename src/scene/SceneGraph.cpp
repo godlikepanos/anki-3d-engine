@@ -7,7 +7,6 @@
 #include <anki/scene/Camera.h>
 #include <anki/scene/ModelNode.h>
 #include <anki/scene/Sector.h>
-#include <anki/core/Counters.h>
 #include <anki/core/Trace.h>
 #include <anki/physics/PhysicsWorld.h>
 #include <anki/resource/ResourceManager.h>
@@ -30,25 +29,55 @@ public:
 	F32 m_prevUpdateTime;
 	F32 m_crntTime;
 
+	ListAllocFree<SceneNode>::Iterator* m_crntNode;
+	SpinLock* m_crntNodeLock;
+	ListAllocFree<SceneNode>::Iterator m_nodesEnd;
+
 	Error operator()(U32 taskId, PtrSize threadsCount)
 	{
 		ANKI_TRACE_START_EVENT(SCENE_NODES_UPDATE);
-		PtrSize start, end;
-		choseStartEnd(
-			taskId, threadsCount, m_scene->getSceneNodesCount(), start, end);
 
-		// Start with the root nodes
-		Error err = m_scene->iterateSceneNodes(
-			start, end, [&](SceneNode& node) -> Error
+		ListAllocFree<SceneNode>::Iterator& it = *m_crntNode;
+		SpinLock& lock = *m_crntNodeLock;
+
+		Bool quit = false;
+		Error err = ErrorCode::NONE;
+		while(!quit && !err)
 		{
-			Error err = ErrorCode::NONE;
-			if(node.getParent() == nullptr)
+			// Fetch a few scene nodes
+			Array<SceneNode*, 5> nodes = {{nullptr, }};
+			lock.lock();
+			for(SceneNode*& node : nodes)
 			{
-				err = updateInternal(node, m_prevUpdateTime, m_crntTime);
+				if(it != m_nodesEnd)
+				{
+					node = &(*it);
+					++it;
+				}
+			}
+			lock.unlock();
+
+			// Process nodes
+			U count = 0;
+			for(U i = 0; i < nodes.getSize(); ++i)
+			{
+				if(nodes[i])
+				{
+					if(nodes[i]->getParent() == nullptr)
+					{
+						err = updateInternal(
+							*nodes[i], m_prevUpdateTime, m_crntTime);
+						ANKI_TRACE_INC_COUNTER(SCENE_NODES_UPDATED, 1);
+					}
+					++count;
+				}
 			}
 
-			return err;
-		});
+			if(ANKI_UNLIKELY(count == 0))
+			{
+				quit = true;
+			}
+		}
 
 		ANKI_TRACE_STOP_EVENT(SCENE_NODES_UPDATE);
 		return err;
@@ -262,8 +291,6 @@ Error SceneGraph::update(F32 prevUpdateTime, F32 crntTime,
 
 	m_timestamp = *m_globalTimestamp;
 
-	ANKI_COUNTER_START_TIMER(SCENE_UPDATE_TIME);
-
 	// Reset the framepool
 	m_frameAlloc.getMemoryPool().reset();
 
@@ -287,6 +314,8 @@ Error SceneGraph::update(F32 prevUpdateTime, F32 crntTime,
 
 	// Then the rest
 	Array<UpdateSceneNodesTask, ThreadPool::MAX_THREADS> jobs2;
+	ListAllocFree<SceneNode>::Iterator nodeIt = m_nodes.getBegin();
+	SpinLock nodeItLock;
 
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
@@ -295,6 +324,9 @@ Error SceneGraph::update(F32 prevUpdateTime, F32 crntTime,
 		job.m_scene = this;
 		job.m_prevUpdateTime = prevUpdateTime;
 		job.m_crntTime = crntTime;
+		job.m_crntNode = &nodeIt;
+		job.m_crntNodeLock = &nodeItLock;
+		job.m_nodesEnd = m_nodes.getEnd();
 
 		threadPool.assignNewTask(i, &job);
 	}
@@ -309,7 +341,6 @@ Error SceneGraph::update(F32 prevUpdateTime, F32 crntTime,
 		renderer.getOffscreenRenderer()));
 	ANKI_TRACE_STOP_EVENT(SCENE_VISIBILITY_TESTS);
 
-	ANKI_COUNTER_STOP_TIMER_INC(SCENE_UPDATE_TIME);
 	ANKI_TRACE_STOP_EVENT(SCENE_UPDATE);
 	return ErrorCode::NONE;
 }

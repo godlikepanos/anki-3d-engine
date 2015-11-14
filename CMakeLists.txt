@@ -50,11 +50,11 @@ option(ANKI_WITH_GPERFTOOLS_PROF "Link with gperftools profiler" OFF)
 
 option(ANKI_STRIP "Srip the symbols from the executables" OFF)
 
-option(ANKI_ENABLE_COUNTERS "Enable performance counters. Small overhead" OFF)
-if(ANKI_ENABLE_COUNTERS)
-	set(_ANKI_ENABLE_COUNTERS 1)
+option(ANKI_ENABLE_TRACE "Enable performance tracing. Small overhead" OFF)
+if(ANKI_ENABLE_TRACE)
+	set(_ANKI_ENABLE_TRACE 1)
 else()
-	set(_ANKI_ENABLE_COUNTERS 0)
+	set(_ANKI_ENABLE_TRACE 0)
 endif()
 
 set(ANKI_CPU_ADDR_SPACE "0" CACHE STRING "The CPU architecture (0 or 32 or 64). If zero go native")

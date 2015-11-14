@@ -20,7 +20,6 @@
 #include <anki/gr/gl/TextureImpl.h>
 #include <anki/gr/Buffer.h>
 #include <anki/gr/gl/BufferImpl.h>
-#include <anki/core/Counters.h>
 #include <anki/core/Trace.h>
 
 namespace anki {
@@ -214,9 +213,8 @@ public:
 				m_info.m_baseInstance);
 
 			ANKI_TRACE_INC_COUNTER(GR_DRAWCALLS, 1);
-			ANKI_COUNTER_INC(GL_DRAWCALLS_COUNT, U64(1));
-			ANKI_COUNTER_INC(GL_VERTICES_COUNT,
-				U64(m_info.m_instanceCount * m_info.m_count));
+			ANKI_TRACE_INC_COUNTER(GR_VERTICES,
+				m_info.m_instanceCount * m_info.m_count);
 		}
 
 		return ErrorCode::NONE;
@@ -258,7 +256,6 @@ public:
 				m_info.m_baseInstance);
 
 			ANKI_TRACE_INC_COUNTER(GR_DRAWCALLS, 1);
-			ANKI_COUNTER_INC(GL_DRAWCALLS_COUNT, U64(1));
 		}
 
 		return ErrorCode::NONE;

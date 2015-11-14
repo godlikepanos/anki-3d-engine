@@ -4,14 +4,13 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/core/NativeWindowSdl.h>
-#include <anki/core/Counters.h>
 #include <anki/util/Logger.h>
 #include <GL/glew.h>
 
 namespace anki {
 
-const U32 INIT_SUBSYSTEMS = 
-	SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_EVENTS 
+const U32 INIT_SUBSYSTEMS =
+	SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_EVENTS
 	| SDL_INIT_GAMECONTROLLER;
 
 //==============================================================================
@@ -25,11 +24,11 @@ Error NativeWindow::create(Initializer& init, HeapAllocator<U8>& alloc)
 		ANKI_LOGE("SDL_Init() failed");
 		return ErrorCode::FUNCTION_FAILED;
 	}
-	
+
 	//
 	// Set GL attributes
 	//
-	ANKI_LOGI("Creating SDL window (OpenGL context to be requested %u.%u)...", 
+	ANKI_LOGI("Creating SDL window (OpenGL context to be requested %u.%u)...",
 		init.m_majorVersion, init.m_minorVersion);
 
 	if(SDL_GL_SetAttribute(SDL_GL_RED_SIZE, init.m_rgbaBits[0]) != 0
@@ -71,7 +70,7 @@ Error NativeWindow::create(Initializer& init, HeapAllocator<U8>& alloc)
 
 	m_impl->m_window = SDL_CreateWindow(
     	init.m_title,
-		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
+		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
 		init.m_width, init.m_height, flags);
 
 	if(m_impl->m_window == nullptr)
@@ -146,10 +145,8 @@ void NativeWindow::destroy()
 //==============================================================================
 void NativeWindow::swapBuffers()
 {
-	ANKI_COUNTER_START_TIMER(SWAP_BUFFERS_TIME);
 	ANKI_ASSERT(isCreated());
 	SDL_GL_SwapWindow(m_impl->m_window);
-	ANKI_COUNTER_STOP_TIMER_INC(SWAP_BUFFERS_TIME);
 }
 
 //==============================================================================

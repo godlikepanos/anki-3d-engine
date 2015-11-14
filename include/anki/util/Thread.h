@@ -185,7 +185,13 @@ public:
 	Bool wait();
 
 private:
-	void* m_impl = nullptr;
+	union
+	{
+		void* m_impl = nullptr;
+
+		/// Opt to save the indirection.
+		alignas(alignof(long int)) char m_posixImpl[32];
+	};
 };
 
 // Forward

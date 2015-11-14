@@ -13,7 +13,6 @@
 #include <anki/scene/SceneGraph.h>
 #include <anki/resource/TextureResource.h>
 #include <anki/renderer/Renderer.h>
-#include <anki/core/Counters.h>
 #include <anki/core/Trace.h>
 #include <anki/util/Logger.h>
 #include <anki/util/Thread.h>
@@ -402,7 +401,8 @@ Error RenderableDrawer::renderSingle(RenderContext& ctx)
 	// Rendered something, reset the cached transforms
 	if(ctx.m_cachedTrfCount > 1)
 	{
-		ANKI_COUNTER_INC(RENDERER_MERGED_DRAWCALLS, ctx.m_cachedTrfCount - 1);
+		ANKI_TRACE_INC_COUNTER(RENDERER_MERGED_DRAWCALLS,
+			ctx.m_cachedTrfCount - 1);
 	}
 	ctx.m_cachedTrfCount = 0;
 
