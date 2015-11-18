@@ -514,7 +514,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("tessellation", true);
 	//config.set("maxTextureSize", 256);
 	config.set("ir.rendererSize", 64);
-	config.set("fullscreenDesktopResolution", false);
+	config.set("fullscreenDesktopResolution", true);
 	config.set("debugContext", false);
 	if(getenv("ANKI_DATA_PATH"))
 	{

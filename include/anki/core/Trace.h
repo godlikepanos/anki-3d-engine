@@ -136,6 +136,7 @@ using TraceManagerSingleton = Singleton<TraceManager>;
 
 #	define ANKI_TRACE_START_EVENT(name_) ((void)0)
 #	define ANKI_TRACE_STOP_EVENT(name_) ((void)0)
+#	define ANKI_TRACE_INC_COUNTER(name_, val_) ((void)0)
 #	define ANKI_TRACE_START_FRAME() ((void)0)
 #	define ANKI_TRACE_STOP_FRAME() ((void)0)
 

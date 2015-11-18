@@ -37,13 +37,15 @@ enum VisibleBy
 };
 
 /// Visible node pointer with some more info
-/// @note Keep this structore as small as possible
+/// @note Keep this structure as small as possible
 class VisibleNode
 {
 public:
 	SceneNode* m_node = nullptr;
 	/// An array of the visible spatials
 	U8* m_spatialIndices = nullptr;
+	/// Distance from the frustum component.
+	F32 m_frustumDistanceSquared = 0.0;
 	U8 m_spatialsCount = 0;
 
 	VisibleNode()

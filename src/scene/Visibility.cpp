@@ -26,18 +26,10 @@ namespace anki {
 class DistanceSortFunctor
 {
 public:
-	Vec4 m_origin;
-
 	Bool operator()(const VisibleNode& a, const VisibleNode& b)
 	{
 		ANKI_ASSERT(a.m_node && b.m_node);
-
-		F32 dist0 = m_origin.getDistanceSquared(
-			a.m_node->getComponent<SpatialComponent>().getSpatialOrigin());
-		F32 dist1 = m_origin.getDistanceSquared(
-			b.m_node->getComponent<SpatialComponent>().getSpatialOrigin());
-
-		return dist0 < dist1;
+		return a.m_frustumDistanceSquared < b.m_frustumDistanceSquared;
 	}
 };
 
@@ -272,6 +264,7 @@ void VisibilityTestTask::test(FrustumComponent& testedFrc,
 		{
 			SpatialComponent* m_sp;
 			U8 m_idx;
+			Vec4 m_origin;
 		};
 		Array<SpatialTemp, ANKI_GL_MAX_SUB_DRAWCALLS> sps;
 
@@ -284,7 +277,8 @@ void VisibilityTestTask::test(FrustumComponent& testedFrc,
 			{
 				// Inside
 				ANKI_ASSERT(spIdx < MAX_U8);
-				sps[count++] = SpatialTemp{&sp, static_cast<U8>(spIdx)};
+				sps[count++] = SpatialTemp{&sp, static_cast<U8>(spIdx),
+					sp.getSpatialOrigin()};
 
 				sp.setVisibleByCamera(true);
 			}
@@ -305,8 +299,8 @@ void VisibilityTestTask::test(FrustumComponent& testedFrc,
 		std::sort(sps.begin(), sps.begin() + count,
 			[origin](const SpatialTemp& a, const SpatialTemp& b) -> Bool
 		{
-			Vec4 spa = a.m_sp->getSpatialOrigin();
-			Vec4 spb = b.m_sp->getSpatialOrigin();
+			const Vec4& spa = a.m_origin;
+			const Vec4& spb = b.m_origin;
 
 			F32 dist0 = origin.getDistanceSquared(spa);
 			F32 dist1 = origin.getDistanceSquared(spb);
@@ -317,6 +311,10 @@ void VisibilityTestTask::test(FrustumComponent& testedFrc,
 		// Update the visibleNode
 		VisibleNode visibleNode;
 		visibleNode.m_node = &node;
+
+		// Compute distance from the frustum
+		visibleNode.m_frustumDistanceSquared =
+			(sps[0].m_origin - testedFrc.getFrustumOrigin()).getLengthSquared();
 
 		ANKI_ASSERT(count < MAX_U8);
 		visibleNode.m_spatialsCount = count;
@@ -435,7 +433,6 @@ void VisibilityTestTask::combineTestResults(
 
 	// Sort some of the arrays
 	DistanceSortFunctor comp;
-	comp.m_origin = frc.getFrustumOrigin();
 	std::sort(visible->getRenderablesBegin(), visible->getRenderablesEnd(),
 		comp);
 
