@@ -244,6 +244,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 	rcinit.m_textures[0].m_texture = m_hblurRt;
 	m_vblurRc = getGrManager().newInstance<ResourceGroup>(rcinit);
 
+	getGrManager().finish();
 	return ErrorCode::NONE;
 }
 

@@ -147,6 +147,7 @@ Error Lf::initInternal(const ConfigSet& config)
 	ANKI_CHECK(initSprite(config));
 	ANKI_CHECK(initOcclusion(config));
 
+	getGrManager().finish();
 	return ErrorCode::NONE;
 }
 

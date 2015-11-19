@@ -756,21 +756,23 @@ void Exporter::load()
 {
 	LOGI("Loading file %s", &m_inputFilename[0]);
 
-	//Assimp::DefaultLogger::create("", Logger::VERBOSE);
+	const int smoothAngle = 170;
 
-	m_importer.SetPropertyFloat(AI_CONFIG_PP_CT_MAX_SMOOTHING_ANGLE, 170);
+	m_importer.SetPropertyFloat(AI_CONFIG_PP_CT_MAX_SMOOTHING_ANGLE,
+		smoothAngle);
 
-	const aiScene* scene = m_importer.ReadFile(m_inputFilename, 0
+	unsigned flags = 0
 		//| aiProcess_FindInstances
-		| aiProcess_Triangulate
 		| aiProcess_JoinIdenticalVertices
 		//| aiProcess_SortByPType
 		| aiProcess_ImproveCacheLocality
 		| aiProcess_OptimizeMeshes
 		| aiProcess_RemoveRedundantMaterials
 		| aiProcess_CalcTangentSpace
-		| aiProcess_GenSmoothNormals
-		);
+		| aiProcess_GenSmoothNormals;
+
+	const aiScene* scene = m_importer.ReadFile(m_inputFilename,
+		flags | aiProcess_Triangulate);
 
 	if(!scene)
 	{
@@ -778,6 +780,19 @@ void Exporter::load()
 	}
 
 	m_scene = scene;
+
+	// Load without triangulation
+	m_importerNoTriangles.SetPropertyFloat(
+		AI_CONFIG_PP_CT_MAX_SMOOTHING_ANGLE, smoothAngle);
+
+	scene = m_importerNoTriangles.ReadFile(m_inputFilename, flags);
+
+	if(!scene)
+	{
+		ERROR("%s", m_importerNoTriangles.GetErrorString());
+	}
+
+	m_sceneNoTriangles = scene;
 }
 
 //==============================================================================
@@ -850,20 +865,29 @@ void Exporter::visitNode(const aiNode* ainode)
 
 				special = true;
 			}
-			else if(prop.first == "reflection_proxy_distance")
+			else if(prop.first == "reflection_proxy" && prop.second == "true")
 			{
 				ReflectionProxy proxy;
 
-				aiMatrix4x4 trf = toAnkiMatrix(ainode->mTransformation);
-				aiVector3D xAxis(trf.a1, trf.b1, trf.c1);
-				aiVector3D yAxis(trf.a2, trf.b2, trf.c2);
+				// Find proxy in the other scene
+				proxy.m_meshIndex = 0xFFFFFFFF;
+				for(unsigned i = 0; i < m_sceneNoTriangles->mNumMeshes; ++i)
+				{
+					if(m_sceneNoTriangles->mMeshes[i]->mName
+						== m_scene->mMeshes[meshIndex]->mName)
+					{
+						// Found
+						proxy.m_meshIndex = i;
+						break;
+					}
+				}
 
-				proxy.m_width = xAxis.Length() * 2.0;
-				proxy.m_height = yAxis.Length() * 2.0;
-				proxy.m_maxDistance = std::stof(prop.second);
-				proxy.m_transform = trf;
-				removeScale(proxy.m_transform);
+				if(proxy.m_meshIndex == 0xFFFFFFFF)
+				{
+					ERROR("Reflection proxy mesh not found");
+				}
 
+				proxy.m_transform = toAnkiMatrix(ainode->mTransformation);
 				m_reflectionProxies.push_back(proxy);
 
 				special = true;
@@ -975,7 +999,7 @@ void Exporter::exportAll()
 	//
 	for(auto n : m_staticCollisionNodes)
 	{
-		exportMesh(*m_scene->mMeshes[n.m_meshIndex], nullptr);
+		exportMesh(*m_scene->mMeshes[n.m_meshIndex], nullptr, 3);
 		exportCollisionMesh(n.m_meshIndex);
 
 		file << "\n";
@@ -994,7 +1018,7 @@ void Exporter::exportAll()
 	for(const Portal& portal : m_portals)
 	{
 		uint32_t meshIndex = portal.m_meshIndex;
-		exportMesh(*m_scene->mMeshes[meshIndex], nullptr);
+		exportMesh(*m_scene->mMeshes[meshIndex], nullptr, 3);
 
 		std::string name = getMeshName(getMeshAt(meshIndex));
 		std::string fname = m_rpath + name + ".ankimesh";
@@ -1012,7 +1036,7 @@ void Exporter::exportAll()
 	for(const Sector& sector : m_sectors)
 	{
 		uint32_t meshIndex = sector.m_meshIndex;
-		exportMesh(*m_scene->mMeshes[meshIndex], nullptr);
+		exportMesh(*m_scene->mMeshes[meshIndex], nullptr, 3);
 
 		std::string name = getMeshName(getMeshAt(meshIndex));
 		std::string fname = m_rpath + name + ".ankimesh";
@@ -1060,10 +1084,12 @@ void Exporter::exportAll()
 	i = 0;
 	for(const ReflectionProxy& proxy : m_reflectionProxies)
 	{
+		const aiMesh& mesh = *m_sceneNoTriangles->mMeshes[proxy.m_meshIndex];
+		exportMesh(mesh, nullptr, 4);
+
 		std::string name = "reflproxy" + std::to_string(i);
-		file << "\nnode = scene:newReflectionProxy(\"" << name << "\", "
-			<< proxy.m_width << ", " << proxy.m_height << ", "
-			<< proxy.m_maxDistance << ")\n";
+		file << "\nnode = scene:newReflectionProxy(\"" << name << "\", \""
+			<< m_rpath << mesh.mName.C_Str() << ".ankimesh\")\n";
 
 		writeNodeTransform("node", proxy.m_transform);
 		++i;
@@ -1078,7 +1104,7 @@ void Exporter::exportAll()
 		Model& model = m_models[node.m_modelIndex];
 
 		// TODO If not instanced bake transform
-		exportMesh(*m_scene->mMeshes[model.m_meshIndex], nullptr);
+		exportMesh(*m_scene->mMeshes[model.m_meshIndex], nullptr, 3);
 
 		exportMaterial(*m_scene->mMaterials[model.m_materialIndex],
 			model.m_instancesCount);

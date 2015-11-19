@@ -45,8 +45,8 @@ void main()
 	{
 		for(uint x = 0; x < PIXEL_READ_X; ++x)
 		{
-			vec3 color = texelFetchOffset(
-				u_isRt, ivec2(xStart, yStart), IS_RT_MIPMAP, ivec2(x, y)).rgb;
+			vec3 color = texelFetch(
+				u_isRt, ivec2(xStart, yStart) + ivec2(x, y), IS_RT_MIPMAP).rgb;
 			float lum = computeLuminance(color);
 			//avgLum += log(lum);
 			avgLum += lum / float(MIPMAP_WIDTH * MIPMAP_HEIGHT);

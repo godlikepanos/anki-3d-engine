@@ -97,6 +97,8 @@ Error Ms::initInternal(const ConfigSet& initializer)
 	m_secondLevelCmdbs.create(
 		getAllocator(), m_r->getThreadPool().getThreadsCount());
 
+	getGrManager().finish();
+
 	return ErrorCode::NONE;
 }
 

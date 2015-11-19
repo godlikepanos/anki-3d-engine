@@ -14,7 +14,7 @@
 namespace anki {
 
 //==============================================================================
-Error Sslr::init(const ConfigSet& config)
+Error Sslr::initInternal(const ConfigSet& config)
 {
 	m_enabled = config.getNumber("pps.sslr.enabled");
 
@@ -97,7 +97,21 @@ Error Sslr::init(const ConfigSet& config)
 		AttachmentLoadOperation::LOAD;
 	m_isFb = getGrManager().newInstance<Framebuffer>(fbInit);
 
+	getGrManager().finish();
 	return ErrorCode::NONE;
+}
+
+//==============================================================================
+Error Sslr::init(const ConfigSet& config)
+{
+	Error err = initInternal(config);
+
+	if(err)
+	{
+		ANKI_LOGE("Failed to init PPS SSLR");
+	}
+
+	return err;
 }
 
 //==============================================================================

@@ -202,12 +202,11 @@ Error PipelineImpl::createGlPipeline()
 	{
 		GLint infoLen = 0;
 		GLint charsWritten = 0;
-		DArray<char> infoLogTxt;
+		DArrayAuto<char> infoLogTxt(getAllocator());
 
 		glGetProgramPipelineiv(m_glName, GL_INFO_LOG_LENGTH, &infoLen);
 
-		auto alloc = getAllocator();
-		infoLogTxt.create(alloc, infoLen + 1);
+		infoLogTxt.create(infoLen + 1);
 
 		glGetProgramPipelineInfoLog(
 			m_glName, infoLen, &charsWritten, &infoLogTxt[0]);

@@ -24,6 +24,7 @@ class ResourceManager;
 class Camera;
 class Input;
 class SectorGroup;
+class ConfigSet;
 
 /// @addtogroup scene
 /// @{
@@ -38,14 +39,15 @@ public:
 
 	~SceneGraph();
 
-	ANKI_USE_RESULT Error create(
+	ANKI_USE_RESULT Error init(
 		AllocAlignedCallback allocCb,
 		void* allocCbData,
 		U32 frameAllocatorSize,
 		ThreadPool* threadpool,
 		ResourceManager* resources,
 		Input* input,
-		const Timestamp* globalTimestamp);
+		const Timestamp* globalTimestamp,
+		const ConfigSet& config);
 
 	Timestamp getGlobalTimestamp() const
 	{
@@ -187,6 +189,12 @@ anki_internal:
 		return *m_sectors;
 	}
 
+	F32 getMaxReflectionProxyDistance() const
+	{
+		ANKI_ASSERT(m_maxReflectionProxyDistance > 0.0);
+		return m_maxReflectionProxyDistance;
+	}
+
 private:
 	const Timestamp* m_globalTimestamp = nullptr;
 	Timestamp m_timestamp = 0; ///< Cached timestamp
@@ -214,6 +222,8 @@ private:
 	SectorGroup* m_sectors;
 
 	Atomic<U32> m_objectsMarkedForDeletionCount;
+
+	F32 m_maxReflectionProxyDistance = 0.0;
 
 	/// Put a node in the appropriate containers
 	ANKI_USE_RESULT Error registerNode(SceneNode* node);

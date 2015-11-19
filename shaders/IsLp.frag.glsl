@@ -191,7 +191,8 @@ void main()
 	{
 		out_color += vec3(1.0, 0.0, 0.0);
 	}
-
+#if IR == 1
 	out_color = out_color * 0.5 + readReflection(fragPos, normal) *0.5;
+#endif
 #endif
 }

@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_COLLISION_OBB_H
-#define ANKI_COLLISION_OBB_H
+#pragma once
 
 #include <anki/collision/ConvexShape.h>
 #include <anki/collision/Aabb.h>
@@ -136,4 +135,3 @@ public:
 
 } // end namespace anki
 
-#endif

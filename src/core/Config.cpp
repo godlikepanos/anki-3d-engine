@@ -78,6 +78,7 @@ Config::Config()
 	newOption("tessellation", true);
 	newOption("sceneFrameAllocatorSize", 1024 * 1024);
 	newOption("clusterSizeZ", 32);
+	newOption("imageReflectionMaxDistance", 30.0);
 
 	//
 	// GR

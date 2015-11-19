@@ -11,27 +11,27 @@ namespace anki {
 
 //==============================================================================
 Obb::Obb()
-:	Base(Type::OBB),
-	m_center(Vec4(0.0)),
-	m_rotation(Mat3x4::getIdentity()),
-	m_transposedRotation(Mat3x4::getIdentity()),
-	m_extend(Vec3(getEpsilon<F32>()), 0.0)
+	: Base(Type::OBB)
+	, m_center(Vec4(0.0))
+	, m_rotation(Mat3x4::getIdentity())
+	, m_transposedRotation(Mat3x4::getIdentity())
+	, m_extend(Vec3(getEpsilon<F32>()), 0.0)
 {}
 
 //==============================================================================
 Obb::Obb(const Obb& b)
-: 	Base(Type::OBB)
+	: Base(Type::OBB)
 {
 	operator=(b);
 }
 
 //==============================================================================
 Obb::Obb(const Vec4& center, const Mat3x4& rotation, const Vec4& extend)
-:	Base(Type::OBB),
-	m_center(center),
-	m_rotation(rotation),
-	m_transposedRotation(rotation),
-	m_extend(extend)
+	: Base(Type::OBB)
+	, m_center(center)
+	, m_rotation(rotation)
+	, m_transposedRotation(rotation)
+	, m_extend(extend)
 {
 	m_transposedRotation.transposeRotationPart();
 }

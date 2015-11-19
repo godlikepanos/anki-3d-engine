@@ -44,4 +44,10 @@ const SceneGraph& SceneComponent::getSceneGraph() const
 	return m_node->getSceneGraph();
 }
 
+//==============================================================================
+SceneAllocator<U8> SceneComponent::getAllocator() const
+{
+	return m_node->getSceneAllocator();
+}
+
 } // end namespace anki

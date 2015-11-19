@@ -52,6 +52,7 @@ Error Tm::create(const ConfigSet& initializer)
 
 	m_rcGroup = getGrManager().newInstance<ResourceGroup>(rcinit);
 
+	getGrManager().finish();
 	return ErrorCode::NONE;
 }
 

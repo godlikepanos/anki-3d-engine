@@ -7,6 +7,7 @@
 #include <anki/scene/ReflectionProxyComponent.h>
 #include <anki/scene/MoveComponent.h>
 #include <anki/scene/SpatialComponent.h>
+#include <anki/resource/MeshLoader.h>
 
 namespace anki {
 
@@ -43,8 +44,7 @@ public:
 //==============================================================================
 
 //==============================================================================
-Error ReflectionProxy::create(const CString& name, F32 width, F32 height,
-	F32 maxDistance)
+Error ReflectionProxy::create(const CString& name, const CString& proxyMesh)
 {
 	ANKI_CHECK(SceneNode::create(name));
 
@@ -57,25 +57,51 @@ Error ReflectionProxy::create(const CString& name, F32 width, F32 height,
 		newInstance<ReflectionProxyMoveFeedbackComponent>(this);
 	addComponent(comp, true);
 
-	// Proxy component
-	ReflectionProxyComponent* proxyc =
-		getSceneAllocator().newInstance<ReflectionProxyComponent>(this);
-	m_quadLSpace[0] = Vec4(-width / 2.0, -height / 2.0, 0.0, 0.0);
-	m_quadLSpace[1] = Vec4(width / 2.0, -height / 2.0, 0.0, 0.0);
-	m_quadLSpace[2] = Vec4(width / 2.0, height / 2.0, 0.0, 0.0);
-	m_quadLSpace[3] = Vec4(-width / 2.0, height / 2.0, 0.0, 0.0);
-	proxyc->setVertex(0, m_quadLSpace[0]);
-	proxyc->setVertex(1, m_quadLSpace[1]);
-	proxyc->setVertex(2, m_quadLSpace[2]);
-	proxyc->setVertex(3, m_quadLSpace[3]);
+	// Load vertices
+	MeshLoader loader(&getResourceManager());
+	ANKI_CHECK(loader.load(proxyMesh));
 
-	addComponent(proxyc, true);
+	if((loader.getHeader().m_flags & MeshLoader::Flag::QUADS)
+		== MeshLoader::Flag::NONE)
+	{
+		ANKI_LOGE("Expecting quad mesh");
+		return ErrorCode::USER_DATA;
+	}
+
+	const U indexCount = loader.getHeader().m_totalIndicesCount;
+	const U quadCount = indexCount / 4;
+	m_quadsLSpace.create(getSceneAllocator(), quadCount);
+
+	const U8* buff = loader.getVertexData();
+	const U8* buffEnd = loader.getVertexData() + loader.getVertexDataSize();
+	SArray<const U16> indices(
+		reinterpret_cast<const U16*>(loader.getIndexData()), indexCount);
+	for(U i = 0; i < quadCount; ++i)
+	{
+		Array<Vec4, 4>& quad = m_quadsLSpace[i];
+
+		for(U j = 0; j < 4; ++j)
+		{
+			U index = indices[i * 4 + j];
+
+			const Vec3* vert = reinterpret_cast<const Vec3*>(
+				buff + loader.getVertexSize() * index);
+			ANKI_ASSERT(vert + 1 < reinterpret_cast<const Vec3*>(buffEnd));
+			(void)buffEnd;
+
+			quad[j] = vert->xyz0();
+		}
+	}
+
+	// Proxy component
+	comp = getSceneAllocator().newInstance<ReflectionProxyComponent>(this,
+		quadCount);
+	addComponent(comp, true);
 
 	// Spatial component
-	m_boxLSpace.setCenter(Vec4(0.0, 0.0, maxDistance / 2.0, 0.0));
-	m_boxLSpace.setRotation(Mat3x4::getIdentity());
-	m_boxLSpace.setExtend(Vec4(width / 2.0 + maxDistance,
-		height / 2.0 + maxDistance, maxDistance / 2.0, 0.0));
+	m_boxLSpace.setFromPointCloud(loader.getVertexData(),
+		loader.getHeader().m_totalVerticesCount,
+		loader.getVertexSize(), loader.getVertexDataSize());
 
 	m_boxWSpace = m_boxLSpace;
 
@@ -93,15 +119,23 @@ void ReflectionProxy::onMoveUpdate(const MoveComponent& move)
 
 	// Update proxy comp
 	ReflectionProxyComponent& proxyc = getComponent<ReflectionProxyComponent>();
-	for(U i = 0; i < 4; ++i)
+	for(U i = 0; i < m_quadsLSpace.getSize(); ++i)
 	{
-		proxyc.setVertex(i, trf.transform(m_quadLSpace[i]));
+		Array<Vec4, 4> quadWSpace;
+		for(U j = 0; j < 4; ++j)
+		{
+			quadWSpace[j] = trf.transform(m_quadsLSpace[i][j]);
+		}
+
+		proxyc.setQuad(i, quadWSpace[0], quadWSpace[1], quadWSpace[2],
+			quadWSpace[3]);
 	}
 
 	// Update spatial
 	m_boxWSpace = m_boxLSpace;
 	m_boxWSpace.transform(trf);
 	SpatialComponent& spatial = getComponent<SpatialComponent>();
+	spatial.setSpatialOrigin(move.getWorldTransform().getOrigin());
 	spatial.markForUpdate();
 }
 

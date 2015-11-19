@@ -24,8 +24,8 @@ layout(std430, binding = 0) writeonly buffer _blk
 };
 
 layout(
-	local_size_x = WORKGROUP_SIZE_X, 
-	local_size_y = WORKGROUP_SIZE_Y, 
+	local_size_x = WORKGROUP_SIZE_X,
+	local_size_y = WORKGROUP_SIZE_Y,
 	local_size_z = 1) in;
 
 shared uint g_minDepth;
@@ -42,7 +42,7 @@ void main()
 	barrier();
 
 	// Get max/min depth
-	ivec2 coord = 
+	ivec2 coord =
 		ivec2(gl_GlobalInvocationID.xy) * ivec2(PIXEL_READ_X, PIXEL_READ_Y);
 
 	float mind = 10.0;
@@ -51,7 +51,7 @@ void main()
 	{
 		for(uint x = 0; x < PIXEL_READ_X; ++x)
 		{
-			float depth = texelFetchOffset(u_depthMap, coord, 0, ivec2(x, y)).r;
+			float depth = texelFetch(u_depthMap, coord + ivec2(x, y), 0).r;
 			mind = min(mind, depth);
 			maxd = max(maxd, depth);
 		}

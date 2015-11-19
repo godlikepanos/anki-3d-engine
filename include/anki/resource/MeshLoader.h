@@ -7,6 +7,7 @@
 
 #include <anki/resource/Common.h>
 #include <anki/Math.h>
+#include <anki/util/Enum.h>
 
 namespace anki {
 
@@ -62,6 +63,13 @@ public:
 		FormatTransform m_transform = FormatTransform::NONE;
 	};
 
+	enum class Flag: U32
+	{
+		NONE = 0,
+		QUADS = 1 << 0
+	};
+	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Flag, friend);
+
 	struct Header
 	{
 		Array<U8, 8> m_magic; ///< Magic word.
@@ -88,8 +96,9 @@ public:
 
 	static_assert(sizeof(Header) == 128, "Check size of struct");
 
-	struct SubMesh
+	class SubMesh
 	{
+	public:
 		U32 m_firstIndex = 0;
 		U32 m_indicesCount = 0;
 	};

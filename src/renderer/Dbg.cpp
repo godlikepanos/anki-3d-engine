@@ -71,6 +71,7 @@ Error Dbg::init(const ConfigSet& initializer)
 
 	m_sceneDrawer = getAllocator().newInstance<SceneDebugDrawer>(m_drawer);
 
+	getGrManager().finish();
 	return ErrorCode::NONE;
 }
 
@@ -152,17 +153,17 @@ Error Dbg::run(CommandBufferPtr& cmdb)
 	}
 #endif
 
-#if 0
+#if 1
 	{
 		CollisionDebugDrawer cd(m_drawer);
 
 		Array<Vec3, 4> poly;
 		poly[0] = Vec3(0.0, 0.0, 0.0);
 		poly[1] = Vec3(2.5, 0.0, 0.0);
-		poly[2] = Vec3(2.5, 3.9, 0.0);
-		poly[3] = Vec3(0.0, 3.9, 0.0);
+		poly[2] = Vec3(2.0, 4.9, 0.0);
+		poly[3] = Vec3(0.5, 3.9, 0.0);
 
-		Mat4 trf(Vec4(1.2, 14.0, 1.1, 1.0), Mat3(Euler(toRad(10.0), toRad(35.0),
+		Mat4 trf(Vec4(1.2, 14.0, 1.1, 1.0), Mat3(Euler(toRad(-120.0), toRad(35.0),
 			toRad(85.0))), 1.0);
 
 		Array<Vec3, 4> polyw;
@@ -173,43 +174,49 @@ Error Dbg::run(CommandBufferPtr& cmdb)
 
 		m_drawer->setModelMatrix(Mat4::getIdentity());
 		m_drawer->drawLine(polyw[0], polyw[1], Vec4(1.0));
-		m_drawer->drawLine(polyw[1], polyw[2], Vec4(0.9));
-		m_drawer->drawLine(polyw[2], polyw[3], Vec4(0.8));
-		m_drawer->drawLine(polyw[3], polyw[0], Vec4(0.7));
+		m_drawer->drawLine(polyw[1], polyw[2], Vec4(0.8));
+		m_drawer->drawLine(polyw[2], polyw[3], Vec4(0.6));
+		m_drawer->drawLine(polyw[3], polyw[0], Vec4(0.4));
 
-		SceneNode& node = scene.findSceneNode("Cube.001Material_003-materialnone1");
-		MoveComponent& movc = node.getComponent<MoveComponent>();
 
-		Vec3 p0(movc.getWorldTransform().getOrigin().xyz());
-		Vec3 r(-movc.getWorldTransform().getRotation().getColumn(2).xyz());
-		r.normalize();
 
-		m_drawer->drawLine(p0, p0 + r * 25.0, Vec4(1.0, 0.0, 0.0, 1.0));
+		Vec3 edge0 = polyw[2] - polyw[1];
+		Vec3 edge1 = polyw[3] - polyw[2];
 
-		Plane plane(polyw[0], polyw[1], polyw[2]);
-		plane.accept(cd);
-		m_drawer->setModelMatrix(Mat4::getIdentity());
+		Vec3 xAxis = edge0;
+		xAxis.normalize();
+		Vec3 zAxis = edge0.cross(edge1);
+		zAxis.normalize();
+		Vec3 yAxis = zAxis.cross(xAxis);
 
-		Vec3 n = plane.getNormal().xyz();
-		F32 O = plane.getOffset();
-		Vec4 i;
-		Bool collides = plane.intersectRay(p0.xyz0(), r.xyz0(), i);
+		Mat3 rot;
+		rot.setColumns(xAxis.xyz(), yAxis.xyz(), zAxis.xyz());
 
-		if(collides)
+		Mat3 invRot = rot.getInverse();
+
+		Array<Vec3, 8> polyl;
+		for(U i = 0; i < 4; ++i)
 		{
-			Vec4 dots;
-			dots[0] = n.cross(polyw[1] - polyw[0]).dot(i.xyz() - polyw[0]);
-			dots[1] = n.cross(polyw[2] - polyw[1]).dot(i.xyz() - polyw[1]);
-			dots[2] = n.cross(polyw[3] - polyw[2]).dot(i.xyz() - polyw[2]);
-			dots[3] = n.cross(polyw[0] - polyw[3]).dot(i.xyz() - polyw[3]);
+			polyl[i] = invRot * polyw[i];
+		}
 
-			if(dots > Vec4(0.0))
-				m_drawer->drawLine(p0, i.xyz(), Vec4(0.0, 1.0, 0.0, 1.0));
-		}
-		else
+		m_drawer->drawLine(polyl[0], polyl[1], Vec4(1.0));
+		m_drawer->drawLine(polyl[1], polyl[2], Vec4(0.8));
+		m_drawer->drawLine(polyl[2], polyl[3], Vec4(0.6));
+		m_drawer->drawLine(polyl[3], polyl[0], Vec4(0.4));
+
+
+		for(U i = 4; i < 8; ++i)
 		{
-			//m_drawer->drawLine(p0, i.xyz(), Vec4(0.0, 0.0, 1.0, 1.0));
+			polyl[i] = polyl[i - 4] + Vec3(0.0, 0.0, 10.0);
 		}
+
+		Obb obb;
+		obb.setFromPointCloud(&polyl[0], 8, sizeof(Vec3), sizeof(polyl));
+
+		obb.transform(Transform(Vec4(0.0), Mat3x4(rot), 1.0));
+
+		obb.accept(cd);
 	}
 #endif
 

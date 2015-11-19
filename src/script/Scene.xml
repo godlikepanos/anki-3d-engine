@@ -318,12 +318,10 @@ static SceneGraph* getSceneGraph(lua_State* l)
 					<return>ReflectionProbe*</return>
 				</method>
 				<method name="newReflectionProxy">
-					<overrideCall><![CDATA[ReflectionProxy* ret = newSceneNode<ReflectionProxy>(self, arg0, arg1, arg2, arg3);]]></overrideCall>
+					<overrideCall><![CDATA[ReflectionProxy* ret = newSceneNode<ReflectionProxy>(self, arg0, arg1);]]></overrideCall>
 					<args>
 						<arg>const CString&amp;</arg>
-						<arg>F32</arg>
-						<arg>F32</arg>
-						<arg>F32</arg>
+						<arg>const CString&amp;</arg>
 					</args>
 					<return>ReflectionProxy*</return>
 				</method>

@@ -101,6 +101,8 @@ public:
 		return *m_node;
 	}
 
+	SceneAllocator<U8> getAllocator() const;
+
 	SceneGraph& getSceneGraph();
 	const SceneGraph& getSceneGraph() const;
 

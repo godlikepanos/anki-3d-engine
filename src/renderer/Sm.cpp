@@ -98,6 +98,7 @@ Error Sm::init(const ConfigSet& config)
 		++layer;
 	}
 
+	getGrManager().finish();
 	return ErrorCode::NONE;
 }
 

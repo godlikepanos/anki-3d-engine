@@ -292,9 +292,9 @@ Error App::createInternal(const ConfigSet& config_,
 	// Scene
 	m_scene = m_heapAlloc.newInstance<SceneGraph>();
 
-	ANKI_CHECK(m_scene->create(m_allocCb, m_allocCbData,
+	ANKI_CHECK(m_scene->init(m_allocCb, m_allocCbData,
 		config.getNumber("sceneFrameAllocatorSize"), m_threadpool, m_resources,
-		m_input, &m_globalTimestamp));
+		m_input, &m_globalTimestamp, config));
 
 	// Script
 	m_script = m_heapAlloc.newInstance<ScriptManager>();

@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_UTIL_ASSERT_H
-#define ANKI_UTIL_ASSERT_H
+#pragma once
 
 #include <anki/Config.h>
 
@@ -17,9 +16,8 @@
 
 namespace anki {
 
-/// Its separate so we will not include iostream
-void akassert(const char* exprTxt, const char* file,
-	int line, const char* func);
+void akassert(const char* exprTxt, const char* file, int line,
+	const char* func);
 
 } // end namespace
 
@@ -33,4 +31,3 @@ void akassert(const char* exprTxt, const char* file,
 
 #endif
 
-#endif

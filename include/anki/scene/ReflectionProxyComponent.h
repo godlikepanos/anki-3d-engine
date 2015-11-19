@@ -17,37 +17,45 @@ namespace anki {
 class ReflectionProxyComponent: public SceneComponent
 {
 public:
-	ReflectionProxyComponent(SceneNode* node)
+	/// Reflection proxy face. One out of many
+	class Face
+	{
+	public:
+		Array<Vec4, 4> m_vertices;
+		Plane m_plane;
+	};
+
+	ReflectionProxyComponent(SceneNode* node, U faceCount)
 		: SceneComponent(SceneComponent::Type::REFLECTION_PROXY, node)
-	{}
+	{
+		ANKI_ASSERT(faceCount > 0);
+		m_faces.create(getAllocator(), faceCount);
+	}
+
+	~ReflectionProxyComponent()
+	{
+		m_faces.destroy(getAllocator());
+	}
 
 	static Bool classof(const SceneComponent& c)
 	{
 		return c.getType() == Type::REFLECTION_PROXY;
 	}
 
-	void setVertex(U idx, const Vec4& v)
-	{
-		m_quad[idx] = v;
-		m_dirty = true;
-	}
+	void setQuad(U index, const Vec4& a, const Vec4& b, const Vec4& c,
+		const Vec4& d);
 
-	const Array<Vec4, 4>& getVertices() const
+	const DArray<Face>& getFaces() const
 	{
-		return m_quad;
-	}
-
-	const Plane& getPlane() const
-	{
-		return m_plane;
+		ANKI_ASSERT(m_faces.getSize() > 0);
+		return m_faces;
 	}
 
 	ANKI_USE_RESULT Error update(SceneNode& node, F32 prevTime, F32 crntTime,
 		Bool& updated) final;
 
 private:
-	Array<Vec4, 4> m_quad; ///< Quad verts.
-	Plane m_plane; ///< Caches some values.
+	DArray<Face> m_faces; ///< Quads.
 	Bool8 m_dirty = true;
 };
 /// @}

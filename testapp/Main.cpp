@@ -88,14 +88,14 @@ Error init()
 #if !PLAYER
 	cam->getComponent<MoveComponent>().
 		setLocalTransform(Transform(
-		Vec4(147.392776, -10.132728, 16.607138, 0.0),
-		//Vec4(0.0, 10, 0, 0),
-		Mat3x4(Euler(toRad(0.0), toRad(90.0), toRad(0.0))),
-		//Mat3x4::getIdentity(),
+		//Vec4(147.392776, -10.132728, 16.607138, 0.0),
+		Vec4(0.0, 10, 0, 0),
+		//Mat3x4(Euler(toRad(0.0), toRad(90.0), toRad(0.0))),
+		Mat3x4::getIdentity(),
 		1.0));
 #endif
 
-	if(0)
+#if 0
 	{
 		ReflectionProbe* refl;
 		scene.newSceneNode<ReflectionProbe>("refl", refl, 68.0f);
@@ -107,6 +107,7 @@ Error init()
 		move = proxy->tryGetComponent<MoveComponent>();
 		move->setLocalOrigin(Vec4(0.0, 12, -15, 0));
 	}
+#endif
 
 #if 0
 	PointLight* plight;
@@ -507,14 +508,14 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("pps.sslf.enabled", true);
 	config.set("pps.sharpen", true);
 	config.set("renderingQuality", 1.0);
-	config.set("width", 128);
-	config.set("height", 128);
+	config.set("width", 1280);
+	config.set("height", 1024);
 	config.set("lodDistance", 20.0);
 	config.set("samples", 1);
 	config.set("tessellation", true);
 	//config.set("maxTextureSize", 256);
 	config.set("ir.rendererSize", 64);
-	config.set("fullscreenDesktopResolution", true);
+	config.set("fullscreenDesktopResolution", false);
 	config.set("debugContext", false);
 	if(getenv("ANKI_DATA_PATH"))
 	{

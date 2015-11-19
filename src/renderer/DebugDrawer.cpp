@@ -621,12 +621,15 @@ void SceneDebugDrawer::draw(const ReflectionProxyComponent& proxy) const
 {
 	m_dbg->setModelMatrix(Mat4::getIdentity());
 	m_dbg->begin(PrimitiveTopology::LINES);
-	for(U i = 0; i < 3; ++i)
+	for(const auto& face : proxy.getFaces())
 	{
-		m_dbg->setColor(Vec3(0.4, 0.4, 1.0));
-		m_dbg->pushBackVertex(proxy.getVertices()[i].xyz());
-		m_dbg->setColor(Vec3(1.0, 0.4, 0.4));
-		m_dbg->pushBackVertex(proxy.getVertices()[i + 1].xyz());
+		for(U i = 0; i < 3; ++i)
+		{
+			m_dbg->setColor(Vec3(0.4, 0.4, 1.0));
+			m_dbg->pushBackVertex(face.m_vertices[i].xyz());
+			m_dbg->setColor(Vec3(1.0, 0.4, 0.4));
+			m_dbg->pushBackVertex(face.m_vertices[i + 1].xyz());
+		}
 	}
 	m_dbg->end();
 }

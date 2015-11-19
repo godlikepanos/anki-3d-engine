@@ -109,7 +109,7 @@ void main()
 
 	steps = min(steps, 300.0);
 
-	for(float i = 10.0; i < steps; i += 1.5)
+	for(float i = 0.0; i < steps; i += 1.0)
 	{
 		vec2 ndc = pp0 + dir * (i * stepInc);
 

@@ -66,6 +66,9 @@ public:
 	/// Swap buffers
 	void swapBuffers();
 
+	/// Wait for all work to finish.
+	void finish();
+
 	/// Create a new graphics object.
 	template<typename T, typename... Args>
 	IntrusivePtr<T> newInstance(Args&&... args);

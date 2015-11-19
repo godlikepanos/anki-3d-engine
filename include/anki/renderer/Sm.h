@@ -100,7 +100,7 @@ private:
 	Bool8 m_enabled;
 
 	/// Enable Poisson for all the levels
-	Bool8 m_poissonEnabled;
+	Bool8 m_poissonEnabled = false;
 
 	/// Shadowmap bilinear filtering for the first level. Better quality
 	Bool8 m_bilinearEnabled;

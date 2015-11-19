@@ -47,6 +47,7 @@ Error Fs::init(const ConfigSet&)
 		m_globalResources = getGrManager().newInstance<ResourceGroup>(init);
 	}
 
+	getGrManager().finish();
 	return ErrorCode::NONE;
 }
 

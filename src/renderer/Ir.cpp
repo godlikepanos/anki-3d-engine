@@ -102,6 +102,7 @@ Error Ir::init(const ConfigSet& initializer)
 
 	m_cubemapArr = getGrManager().newInstance<Texture>(texinit);
 
+	getGrManager().finish();
 	return ErrorCode::NONE;
 }
 
@@ -111,17 +112,37 @@ Error Ir::run(CommandBufferPtr cmdb)
 	FrustumComponent& frc = m_r->getActiveFrustumComponent();
 	VisibilityTestResults& visRez = frc.getVisibilityTestResults();
 
+	const VisibleNode* it;
+	const VisibleNode* end;
+
+	//
 	// Do the proxies
+	//
+
+	// Count them
+	U quadCount = 0;
+	it = visRez.getReflectionProxiesBegin();
+	end = visRez.getReflectionProxiesEnd();
+	while(it != end)
+	{
+		const ReflectionProxyComponent& proxyc =
+			it->m_node->getComponent<ReflectionProxyComponent>();
+
+		quadCount += proxyc.getFaces().getSize();
+		++it;
+	}
+
+	// Allocate
 	void* data = getGrManager().allocateFrameHostVisibleMemory(
-		sizeof(ShaderReflectionProxy) * visRez.getReflectionProxyCount()
+		sizeof(ShaderReflectionProxy) * quadCount
 		+ sizeof(UVec4), BufferUsage::STORAGE, m_proxiesToken);
 
 	UVec4* counts = reinterpret_cast<UVec4*>(data);
-	counts->x() = visRez.getReflectionProxyCount();
+	counts->x() = quadCount;
 	counts->y() = visRez.getReflectionProbeCount();
 
-	const VisibleNode* it = visRez.getReflectionProxiesBegin();
-	const VisibleNode* end = visRez.getReflectionProxiesEnd();
+	it = visRez.getReflectionProxiesBegin();
+	end = visRez.getReflectionProxiesEnd();
 	ShaderReflectionProxy* proxies = reinterpret_cast<ShaderReflectionProxy*>(
 		counts + 1);
 
@@ -129,30 +150,38 @@ Error Ir::run(CommandBufferPtr cmdb)
 	{
 		const ReflectionProxyComponent& proxyc =
 			it->m_node->getComponent<ReflectionProxyComponent>();
-		Plane plane = proxyc.getPlane();
-		plane.transform(Transform(frc.getViewMatrix()));
-
-		proxies->m_plane = Vec4(plane.getNormal().xyz(), plane.getOffset());
-		proxies->m_negPlane = Vec4(-plane.getNormal().xyz(), plane.getOffset());
-
-		for(U i = 0; i < 4; ++i)
+		for(const auto& face : proxyc.getFaces())
 		{
-			proxies->m_quadPoints[i] =
-				frc.getViewMatrix() * proxyc.getVertices()[i].xyz1();
-		}
+			Plane plane = face.m_plane;
+			plane.transform(Transform(frc.getViewMatrix()));
 
-		for(U i = 0; i < 4; ++i)
-		{
-			U next = (i < 3) ? (i + 1) : 0;
-			proxies->m_edgeCrossProd[i] = plane.getNormal().cross(
-				proxies->m_quadPoints[next] - proxies->m_quadPoints[i]);
+			proxies->m_plane =
+				Vec4(plane.getNormal().xyz(), plane.getOffset());
+			proxies->m_negPlane =
+				Vec4(-plane.getNormal().xyz(), plane.getOffset());
+
+			for(U i = 0; i < 4; ++i)
+			{
+				proxies->m_quadPoints[i] =
+					frc.getViewMatrix() * face.m_vertices[i].xyz1();
+			}
+
+			for(U i = 0; i < 4; ++i)
+			{
+				U next = (i < 3) ? (i + 1) : 0;
+				proxies->m_edgeCrossProd[i] = plane.getNormal().cross(
+					proxies->m_quadPoints[next] - proxies->m_quadPoints[i]);
+			}
+
+			++proxies;
 		}
 
 		++it;
-		++proxies;
 	}
 
+	//
 	// Do the probes
+	//
 	it = visRez.getReflectionProbesBegin();
 	end = visRez.getReflectionProbesEnd();
 

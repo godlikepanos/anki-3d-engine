@@ -145,6 +145,7 @@ Error Bloom::initInternal(const ConfigSet& config)
 	m_parameterUpdateTimestamp = getGlobalTimestamp();
 	m_commonUboUpdateTimestamp = getGlobalTimestamp();
 
+	getGrManager().finish();
 	return ErrorCode::NONE;
 }
 

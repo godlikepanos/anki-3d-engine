@@ -25,15 +25,17 @@ public:
 	{}
 
 	~ReflectionProxy()
-	{}
+	{
+		m_quadsLSpace.destroy(getSceneAllocator());
+	}
 
 	/// Create the proxy. The points form a quad and they should be in local
 	/// space.
-	ANKI_USE_RESULT Error create(const CString& name, F32 width, F32 height,
-		F32 maxDistance);
+	ANKI_USE_RESULT Error create(const CString& name,
+		const CString& proxyMesh);
 
 private:
-	Array<Vec4, 4> m_quadLSpace; ///< Quad verts.
+	DArray<Array<Vec4, 4>> m_quadsLSpace; ///< Quads in local space.
 	Obb m_boxLSpace;
 	Obb m_boxWSpace;
 

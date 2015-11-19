@@ -330,6 +330,7 @@ Error Is::initInternal(const ConfigSet& config)
 	m_barrier = getAllocator().newInstance<Barrier>(
 		threadPool.getThreadsCount());
 
+	getGrManager().finish();
 	return ErrorCode::NONE;
 }
 

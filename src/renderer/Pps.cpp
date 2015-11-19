@@ -146,6 +146,7 @@ Error Pps::initInternal(const ConfigSet& config)
 
 	m_rcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);
 
+	getGrManager().finish();
 	return ErrorCode::NONE;
 }
 

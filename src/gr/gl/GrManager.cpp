@@ -60,4 +60,10 @@ void* GrManager::allocateFrameHostVisibleMemory(PtrSize size, BufferUsage usage,
 	return data;
 }
 
+//==============================================================================
+void GrManager::finish()
+{
+	m_impl->getRenderingThread().syncClientServer();
+}
+
 } // end namespace anki

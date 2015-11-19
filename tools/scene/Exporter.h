@@ -81,9 +81,7 @@ class ReflectionProxy
 {
 public:
 	aiMatrix4x4 m_transform;
-	float m_width;
-	float m_height;
-	float m_maxDistance;
+	uint32_t m_meshIndex; ///< Points to the scene that is not triangulated.
 };
 
 /// AnKi exporter.
@@ -98,7 +96,9 @@ public:
 	bool m_flipyz = false;
 
 	const aiScene* m_scene = nullptr;
+	const aiScene* m_sceneNoTriangles = nullptr;
 	Assimp::Importer m_importer;
+	Assimp::Importer m_importerNoTriangles;
 
 	std::vector<Model> m_models;
 	std::vector<Node> m_nodes;
@@ -145,9 +145,8 @@ private:
 
 	/// Export a mesh.
 	/// @param transform If not nullptr then transform the vertices using that.
-	void exportMesh(
-		const aiMesh& mesh,
-		const aiMatrix4x4* transform) const;
+	void exportMesh(const aiMesh& mesh, const aiMatrix4x4* transform,
+		unsigned vertCountPerFace) const;
 
 	/// Export a skeleton.
 	void exportSkeleton(const aiMesh& mesh) const;

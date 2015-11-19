@@ -2380,7 +2380,7 @@ static inline int pwrapSceneGraphnewReflectionProxy(lua_State* l)
 	PtrSize size;
 	(void)size;
 	
-	LuaBinder::checkArgsCount(l, 5);
+	LuaBinder::checkArgsCount(l, 3);
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud)) return -1;
@@ -2390,17 +2390,11 @@ static inline int pwrapSceneGraphnewReflectionProxy(lua_State* l)
 	const char* arg0;
 	if(LuaBinder::checkString(l, 2, arg0)) return -1;
 	
-	F32 arg1;
-	if(LuaBinder::checkNumber(l, 3, arg1)) return -1;
-	
-	F32 arg2;
-	if(LuaBinder::checkNumber(l, 4, arg2)) return -1;
-	
-	F32 arg3;
-	if(LuaBinder::checkNumber(l, 5, arg3)) return -1;
+	const char* arg1;
+	if(LuaBinder::checkString(l, 3, arg1)) return -1;
 	
 	// Call the method
-	ReflectionProxy* ret = newSceneNode<ReflectionProxy>(self, arg0, arg1, arg2, arg3);
+	ReflectionProxy* ret = newSceneNode<ReflectionProxy>(self, arg0, arg1);
 	
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))

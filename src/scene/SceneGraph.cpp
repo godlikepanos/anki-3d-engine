@@ -12,6 +12,7 @@
 #include <anki/resource/ResourceManager.h>
 #include <anki/renderer/MainRenderer.h>
 #include <anki/renderer/Renderer.h>
+#include <anki/misc/ConfigSet.h>
 
 namespace anki {
 
@@ -146,14 +147,15 @@ SceneGraph::~SceneGraph()
 }
 
 //==============================================================================
-Error SceneGraph::create(
+Error SceneGraph::init(
 	AllocAlignedCallback allocCb,
 	void* allocCbData,
 	U32 frameAllocatorSize,
 	ThreadPool* threadpool,
 	ResourceManager* resources,
 	Input* input,
-	const Timestamp* globalTimestamp)
+	const Timestamp* globalTimestamp,
+	const ConfigSet& config)
 {
 	Error err = ErrorCode::NONE;
 
@@ -182,6 +184,9 @@ Error SceneGraph::create(
 	}
 
 	m_sectors = m_alloc.newInstance<SectorGroup>(this);
+
+	m_maxReflectionProxyDistance = config.getNumber(
+		"imageReflectionMaxDistance");
 
 	return err;
 }

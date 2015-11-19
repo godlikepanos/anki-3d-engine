@@ -50,6 +50,8 @@ struct Format
 	FormatTransform m_transform = FormatTransform::NONE;
 };
 
+const uint32_t FLAG_QUADS = 1;
+
 struct Header
 {
 	char m_magic[8]; ///< Magic word.
@@ -187,9 +189,8 @@ uint32_t toR10G10B10A2Sint(float r, float g, float b, float a)
 }
 
 //==============================================================================
-void Exporter::exportMesh(
-	const aiMesh& mesh,
-	const aiMatrix4x4* transform) const
+void Exporter::exportMesh(const aiMesh& mesh, const aiMatrix4x4* transform,
+	unsigned vertCountPerFace) const
 {
 	std::string name = mesh.mName.C_Str();
 	std::fstream file;
@@ -237,6 +238,11 @@ void Exporter::exportMesh(
 	static const char* magic = "ANKIMES3";
 	memcpy(&header.m_magic, magic, 8);
 
+	if(vertCountPerFace == 4)
+	{
+		header.m_flags = FLAG_QUADS;
+	}
+
 	header.m_positionsFormat.m_components = ComponentFormat::R32G32B32;
 	header.m_positionsFormat.m_transform = FormatTransform::FLOAT;
 
@@ -252,7 +258,7 @@ void Exporter::exportMesh(
 	header.m_indicesFormat.m_components = ComponentFormat::R16;
 	header.m_indicesFormat.m_transform = FormatTransform::UINT;
 
-	header.m_totalIndicesCount = mesh.mNumFaces * 3;
+	header.m_totalIndicesCount = mesh.mNumFaces * vertCountPerFace;
 	header.m_totalVerticesCount = mesh.mNumVertices;
 	header.m_uvsChannelCount = 1;
 	header.m_subMeshCount = 1;
@@ -270,14 +276,14 @@ void Exporter::exportMesh(
 	{
 		const aiFace& face = mesh.mFaces[i];
 
-		if(face.mNumIndices != 3)
+		if(face.mNumIndices != vertCountPerFace)
 		{
 			ERROR("For some reason assimp returned wrong number of verts "
 				"for a face (face.mNumIndices=%d). Probably degenerates in "
 				"input file", face.mNumIndices);
 		}
 
-		for(unsigned j = 0; j < 3; j++)
+		for(unsigned j = 0; j < vertCountPerFace; j++)
 		{
 			uint32_t index32 = face.mIndices[j];
 			if(index32 > 0xFFFF)
