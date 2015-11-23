@@ -69,7 +69,7 @@ public:
 		U clusterCountY, U clusterCountZ);
 
 	/// Prepare for visibility tests.
-	void prepare(ThreadPool& threadpool, const SceneNode& node);
+	void prepare(ThreadPool& threadpool, const FrustumComponent& frc);
 
 	void initTestResults(const GenericMemoryPoolAllocator<U8>& alloc,
 		ClustererTestResult& rez) const;

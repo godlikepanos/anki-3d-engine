@@ -165,7 +165,7 @@ Error Renderer::render(SceneNode& frustumableNode, U frustumIdx,
 	}
 
 	ANKI_ASSERT(m_frc->getFrustum().getType() == Frustum::Type::PERSPECTIVE);
-	m_clusterer.prepare(getThreadPool(), frustumableNode);
+	m_clusterer.prepare(getThreadPool(), *m_frc);
 
 	// Run reflection passes
 	if(m_ir.isCreated())

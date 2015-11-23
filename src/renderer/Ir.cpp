@@ -78,6 +78,7 @@ Error Ir::init(const ConfigSet& initializer)
 	config.set("lf.maxFlares", 8);
 	config.set("pps.enabled", false);
 	config.set("renderingQuality", 1.0);
+	config.set("clusterSizeZ", 1); // XXX A bug if more. Fix it
 	config.set("width", m_fbSize);
 	config.set("height", m_fbSize);
 	config.set("lodDistance", 10.0);

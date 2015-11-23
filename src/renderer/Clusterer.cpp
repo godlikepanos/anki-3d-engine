@@ -154,17 +154,17 @@ void Clusterer::init(const GenericMemoryPoolAllocator<U8>& alloc,
 }
 
 //==============================================================================
-void Clusterer::prepare(ThreadPool& threadPool, const SceneNode& node)
+void Clusterer::prepare(ThreadPool& threadPool, const FrustumComponent& frc)
 {
 	// Get some things
-	const FrustumComponent& frc = node.getComponent<FrustumComponent>();
 	Timestamp frcTimestamp = frc.getTimestamp();
 	const Frustum& fr = frc.getFrustum();
 	ANKI_ASSERT(fr.getType() == Frustum::Type::PERSPECTIVE);
 	const PerspectiveFrustum& pfr = static_cast<const PerspectiveFrustum&>(fr);
 
 	// Set some things
-	m_node = &node;
+	const SceneNode* node = m_node; // Save for later compare
+	m_node = &frc.getSceneNode();
 	m_frc = &frc;
 	m_near = pfr.getNear();
 	m_far = pfr.getFar();
@@ -179,7 +179,7 @@ void Clusterer::prepare(ThreadPool& threadPool, const SceneNode& node)
 	// - it's the same frustum component as before and
 	// - the component has not changed
 	Bool frustumChanged =
-		frcTimestamp >= m_planesLSpaceTimestamp || m_node != &node;
+		frcTimestamp >= m_planesLSpaceTimestamp || m_node != node;
 
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
