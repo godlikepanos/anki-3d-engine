@@ -133,7 +133,7 @@ void Frustum::updateInternal()
 
 //==============================================================================
 PerspectiveFrustum::PerspectiveFrustum()
-:	Frustum(Type::PERSPECTIVE)
+	: Frustum(Type::PERSPECTIVE)
 {
 	addShape(&m_hull);
 	m_hull.initStorage(&m_pointsW[0], m_pointsW.getSize());

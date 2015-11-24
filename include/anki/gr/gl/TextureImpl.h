@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/gr/gl/GlObject.h>
+#include <anki/util/DArray.h>
 
 namespace anki {
 
@@ -23,17 +24,16 @@ public:
 	U32 m_width = 0;
 	U32 m_height = 0;
 	U32 m_depth = 0;
+	U32 m_surfaceCount = 0;
 	U8 m_mipsCount = 0;
 	Bool8 m_compressed = false;
+	DArray<GLuint> m_texViews; ///< Temp views for gen mips.
 
 	TextureImpl(GrManager* manager)
 		: GlObject(manager)
 	{}
 
-	~TextureImpl()
-	{
-		destroyDeferred(glDeleteTextures);
-	}
+	~TextureImpl();
 
 	/// Create the texture storage.
 	void create(const TextureInitializer& init);
@@ -42,7 +42,7 @@ public:
 	void write(U32 mipmap, U32 slice, void* data, PtrSize dataSize);
 
 	/// Generate mipmaps.
-	void generateMipmaps();
+	void generateMipmaps(U surface);
 
 	/// Copy a single slice from one texture to another.
 	static void copy(const TextureImpl& src, U srcSlice, U srcLevel,
@@ -56,3 +56,4 @@ private:
 /// @}
 
 } // end namespace anki
+

@@ -63,7 +63,7 @@ public:
 
 	/// @name Constructors
 	/// @{
-	explicit TVec4()
+	TVec4()
 		: Base()
 	{}
 
@@ -71,7 +71,7 @@ public:
 		: Base(b)
 	{}
 
-	explicit TVec4(const T x_, const T y_, const T z_, const T w_)
+	TVec4(const T x_, const T y_, const T z_, const T w_)
 		: Base(x_, y_, z_, w_)
 	{}
 
@@ -87,11 +87,11 @@ public:
 		: Base(simd)
 	{}
 
-	explicit TVec4(const TVec2<T>& v, const T z_, const T w_)
+	TVec4(const TVec2<T>& v, const T z_, const T w_)
 		: Base(v.x(), v.y(), z_, w_)
 	{}
 
-	explicit TVec4(const TVec3<T>& v, const T w_)
+	TVec4(const TVec3<T>& v, const T w_)
 		: Base(v.x(), v.y(), v.z(), w_)
 	{}
 	/// @}
@@ -131,6 +131,16 @@ public:
 			x() * m4(0, 1) + y() * m4(1, 1) + z() * m4(2, 1) + w() * m4(3, 1),
 			x() * m4(0, 2) + y() * m4(1, 2) + z() * m4(2, 2) + w() * m4(3, 2),
 			x() * m4(0, 3) + y() * m4(1, 3) + z() * m4(2, 3) + w() * m4(3, 3));
+	}
+
+	/// Perspective divide. Divide the xyzw of this to the w of this. This
+	/// method will handle some edge cases.
+	TVec4 perspectiveDivide() const
+	{
+		auto invw = T(1) / w(); // This may become (+-)inf
+		invw = (invw > 1e+11) ? 1e+11 : invw; // Clamp
+		invw = (invw < -1e+11) ? -1e+11 : invw; // Clamp
+		return (*this) * invw;
 	}
 	/// @}
 };

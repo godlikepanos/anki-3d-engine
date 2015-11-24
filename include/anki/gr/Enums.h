@@ -223,9 +223,9 @@ public:
 	PixelFormat(const PixelFormat&) = default;
 
 	PixelFormat(ComponentFormat cf, TransformFormat tf, Bool srgb = false)
-	:	m_components(cf),
-		m_transform(tf),
-		m_srgb(srgb)
+		: m_components(cf)
+		, m_transform(tf)
+		, m_srgb(srgb)
 	{}
 
 	PixelFormat& operator=(const PixelFormat&) = default;

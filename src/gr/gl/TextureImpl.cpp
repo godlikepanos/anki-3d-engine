@@ -7,6 +7,11 @@
 #include <anki/gr/Texture.h>
 #include <anki/gr/gl/Error.h>
 #include <anki/util/Functions.h>
+#include <anki/gr/GrManager.h>
+#include <anki/gr/gl/GrManagerImpl.h>
+#include <anki/gr/gl/RenderingThread.h>
+#include <anki/gr/CommandBuffer.h>
+#include <anki/gr/gl/CommandBufferImpl.h>
 
 namespace anki {
 
@@ -194,6 +199,69 @@ static void convertTextureInformation(
 //==============================================================================
 
 //==============================================================================
+class DeleteTextureCommand final: public GlCommand
+{
+public:
+	GLuint m_tex;
+	DArray<GLuint> m_views;
+	GrAllocator<U8> m_alloc;
+
+	DeleteTextureCommand(GLuint tex, DArray<GLuint>& views,
+		GrAllocator<U8> alloc)
+		: m_tex(tex)
+		, m_views(std::move(views))
+		, m_alloc(alloc)
+	{}
+
+	Error operator()(GlState& state)
+	{
+		// Delete views
+		if(m_views.getSize() > 0)
+		{
+			for(GLuint name : m_views)
+			{
+				if(name != 0)
+				{
+					glDeleteTextures(1, &name);
+				}
+			}
+		}
+		m_views.destroy(m_alloc);
+
+		// Delete texture
+		if(m_tex != 0)
+		{
+			glDeleteTextures(1, &m_tex);
+		}
+
+		return ErrorCode::NONE;
+	}
+};
+
+TextureImpl::~TextureImpl()
+{
+	GrManager& manager = getManager();
+	RenderingThread& thread = manager.getImplementation().getRenderingThread();
+
+	if(!thread.isServerThread())
+	{
+		CommandBufferPtr commands;
+
+		commands = manager.newInstance<CommandBuffer>();
+		commands->getImplementation().pushBackNewCommand<DeleteTextureCommand>(
+			m_glName, m_texViews, getAllocator());
+		commands->flush();
+	}
+	else
+	{
+		DeleteTextureCommand cmd(m_glName, m_texViews, getAllocator());
+		cmd(thread.getState());
+	}
+
+	m_glName = 0;
+}
+
+//==============================================================================
 void TextureImpl::bind()
 {
 	glActiveTexture(GL_TEXTURE0);
@@ -271,6 +339,28 @@ void TextureImpl::create(const TextureInitializer& init)
 			m_width,
 			m_height,
 			GL_FALSE);
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+
+	// Surface count
+	switch(m_target)
+	{
+	case GL_TEXTURE_1D:
+	case GL_TEXTURE_2D:
+	case GL_TEXTURE_2D_MULTISAMPLE:
+		m_surfaceCount = 1;
+		break;
+	case GL_TEXTURE_CUBE_MAP:
+		m_surfaceCount = 6;
+		break;
+	case GL_TEXTURE_CUBE_MAP_ARRAY:
+		m_surfaceCount = init.m_depth * 6;
+		break;
+	case GL_TEXTURE_2D_ARRAY:
+	case GL_TEXTURE_3D:
+		m_surfaceCount = init.m_depth;
 		break;
 	default:
 		ANKI_ASSERT(0);
@@ -439,11 +529,48 @@ void TextureImpl::write(U32 mipmap, U32 slice, void* data, PtrSize dataSize)
 }
 
 //==============================================================================
-void TextureImpl::generateMipmaps()
+void TextureImpl::generateMipmaps(U surface)
 {
+	ANKI_ASSERT(surface < m_surfaceCount);
 	ANKI_ASSERT(!m_compressed);
-	bind();
-	glGenerateMipmap(m_target);
+
+	if(m_surfaceCount > 1)
+	{
+		// Create the view array
+		if(m_texViews.getSize() == 0)
+		{
+			m_texViews.create(getAllocator(), m_surfaceCount);
+			memset(&m_texViews[0], 0, m_texViews.getSize() * sizeof(GLuint));
+		}
+
+		// Create the view
+		if(m_texViews[surface] == 0)
+		{
+			glGenTextures(1, &m_texViews[surface]);
+
+			// Get the target
+			GLenum target = GL_NONE;
+			switch(m_target)
+			{
+			case GL_TEXTURE_CUBE_MAP:
+			case GL_TEXTURE_2D_ARRAY:
+			case GL_TEXTURE_CUBE_MAP_ARRAY:
+				target = GL_TEXTURE_2D;
+				break;
+			default:
+				ANKI_ASSERT(0);
+			}
+
+			glTextureView(m_texViews[surface], target, m_glName,
+				m_internalFormat, 0, m_mipsCount, surface, 1);
+		}
+
+		glGenerateTextureMipmap(m_texViews[surface]);
+	}
+	else
+	{
+		glGenerateTextureMipmap(m_glName);
+	}
 }
 
 //==============================================================================

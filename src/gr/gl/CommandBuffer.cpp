@@ -440,7 +440,7 @@ public:
 
 	Error operator()(GlState&)
 	{
-		m_tex->getImplementation().generateMipmaps();
+		m_tex->getImplementation().generateMipmaps(0);
 		return ErrorCode::NONE;
 	}
 };
@@ -448,6 +448,30 @@ public:
 void CommandBuffer::generateMipmaps(TexturePtr tex)
 {
 	m_impl->pushBackNewCommand<GenMipsCommand>(tex);
+}
+
+//==============================================================================
+class GenMipsCommand1 final: public GlCommand
+{
+public:
+	TexturePtr m_tex;
+	U32 m_surface;
+
+	GenMipsCommand1(const TexturePtr& tex, U surface)
+		: m_tex(tex)
+		, m_surface(surface)
+	{}
+
+	Error operator()(GlState&)
+	{
+		m_tex->getImplementation().generateMipmaps(m_surface);
+		return ErrorCode::NONE;
+	}
+};
+
+void CommandBuffer::generateMipmaps(TexturePtr tex, U surface)
+{
+	m_impl->pushBackNewCommand<GenMipsCommand1>(tex, surface);
 }
 
 //==============================================================================

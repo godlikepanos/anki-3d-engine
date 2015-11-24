@@ -147,7 +147,7 @@ void readFromProbes(in vec3 intersection, out vec3 color)
 			// Read!
 			vec3 c = texture(u_reflectionsTex, vec4(uv, cubemapIndex)).rgb;
 
-			// Combine
+			// Combine with previous color
 			float factor = d / R2;
 			color = color * factor + c * (1.0 - factor);
 		}
@@ -157,7 +157,7 @@ void readFromProbes(in vec3 intersection, out vec3 color)
 //==============================================================================
 vec3 readReflection(in vec3 posVSpace, in vec3 normalVSpace)
 {
-	vec3 color = vec3(0.0);
+	vec3 color = IMAGE_REFLECTIONS_DEFAULT_COLOR;
 
 	// Reflection direction
 	vec3 eye = normalize(posVSpace);

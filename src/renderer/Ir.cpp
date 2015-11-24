@@ -97,9 +97,10 @@ Error Ir::init(const ConfigSet& initializer)
 	texinit.m_depth = m_cubemapArrSize;
 	texinit.m_type = TextureType::CUBE_ARRAY;
 	texinit.m_format = Is::RT_PIXEL_FORMAT;
-	texinit.m_mipmapsCount = 1;
+	texinit.m_mipmapsCount = MAX_U8;
 	texinit.m_samples = 1;
 	texinit.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
+	texinit.m_sampling.m_mipmapFilter = SamplingFilter::NEAREST;
 
 	m_cubemapArr = getGrManager().newInstance<Texture>(texinit);
 
@@ -243,6 +244,10 @@ Error Ir::renderReflection(SceneNode& node, ShaderReflectionProbe& shaderProb)
 			cmdb[cmdb.getSize() - 1]->copyTextureToTexture(
 				m_nestedR.getIs().getRt(), 0, 0, m_cubemapArr, 6 * entry + i,
 				0);
+
+			// Gen mips
+			cmdb[cmdb.getSize() - 1]->generateMipmaps(m_cubemapArr,
+				6 * entry + i);
 
 			// Flush
 			for(U j = 0; j < cmdb.getSize(); ++j)

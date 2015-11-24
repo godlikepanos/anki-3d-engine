@@ -98,7 +98,7 @@ Config::Config()
 	//
 	// Window
 	//
-	newOption("glminor", 4);
+	newOption("glminor", 5);
 	newOption("glmajor", 4);
 	newOption("fullscreenDesktopResolution", false);
 	newOption("debugContext",

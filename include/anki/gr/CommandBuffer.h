@@ -138,6 +138,8 @@ public:
 
 	void generateMipmaps(TexturePtr tex);
 
+	void generateMipmaps(TexturePtr tex, U surface);
+
 	void copyTextureToTexture(TexturePtr src, U srcSlice, U srcLevel,
 		TexturePtr dest, U destSlice, U destLevel);
 	/// @}

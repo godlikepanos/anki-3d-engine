@@ -124,7 +124,7 @@ template<typename T>
 inline T mod(const T x, const T y)
 {
 	return x - y * std::floor(x / y);
-}       
+}
 
 //==============================================================================
 // Other math functions                                                        =
@@ -132,7 +132,7 @@ inline T mod(const T x, const T y)
 
 template<typename T>
 inline T abs(const T f)
-{ 
+{
 	return std::fabs(f);
 }
 
@@ -222,7 +222,7 @@ static Type cosInterpolate(const Type& from, const Type& to, F32 u)
 ///              from [0.0, 1.0]
 template<typename Type>
 static Type cubicInterpolate(
-	const Type& a, const Type& b, const Type& c, 
+	const Type& a, const Type& b, const Type& c,
 	const Type& d, F32 u)
 {
 	F32 u2 = u * u;
