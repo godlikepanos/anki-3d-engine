@@ -145,8 +145,10 @@ Error MeshLoader::load(const ResourceFilename& filename)
 	}
 
 	// Check indices
-	if(m_header.m_totalIndicesCount < 3
-		|| (m_header.m_totalIndicesCount % 3) != 0
+	U indicesPerFace = ((m_header.m_flags & Flag::QUADS) == Flag::QUADS)
+		? 4 : 3;
+	if(m_header.m_totalIndicesCount < indicesPerFace
+		|| (m_header.m_totalIndicesCount % indicesPerFace) != 0
 		|| m_header.m_totalIndicesCount > MAX_U16
 		|| m_header.m_indicesFormat.m_components != ComponentFormat::R16
 		|| m_header.m_indicesFormat.m_transform != FormatTransform::UINT)

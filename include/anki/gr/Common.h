@@ -70,6 +70,20 @@ const U MAX_UNIFORM_BUFFER_BINDINGS = 1;
 const U MAX_STORAGE_BUFFER_BINDINGS = 8;
 const U MAX_FRAMES_IN_FLIGHT = 3;
 const U MAX_RESOURCE_GROUPS = 2;
+
+/// Compute max number of mipmaps for a 2D surface.
+inline U32 computeMaxMipmapCount(U32 w, U32 h)
+{
+	U32 s = (w < h) ? w : h;
+	U count = 0;
+	while(s)
+	{
+		s /= 2;
+		++count;
+	}
+
+	return count;
+}
 /// @}
 
 } // end namespace anki

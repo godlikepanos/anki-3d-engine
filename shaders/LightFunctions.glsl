@@ -31,9 +31,8 @@ uint calcClusterSplit(float zVspace)
 float computeAttenuationFactor(float lightRadius, vec3 frag2Light)
 {
 	float fragLightDist = dot(frag2Light, frag2Light);
-	fragLightDist = min(fragLightDist, lightRadius);
-
-	float att = 1.0 - fragLightDist / lightRadius;
+	float att = 1.0 - fragLightDist * lightRadius;
+	att = max(0.0, att);
 	return att * att;
 }
 

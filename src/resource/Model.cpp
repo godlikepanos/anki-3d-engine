@@ -219,8 +219,8 @@ void ModelPatch::computePipelineInitializer(
 	if(key.m_pass == Pass::SM)
 	{
 		ds.m_format = Sm::DEPTH_RT_PIXEL_FORMAT;
-		ds.m_polygonOffsetFactor = 7.0;
-		ds.m_polygonOffsetUnits = 5.0;
+		ds.m_polygonOffsetFactor = 1.0;
+		ds.m_polygonOffsetUnits = 2.0;
 	}
 	else if(m_mtl->getForwardShading())
 	{

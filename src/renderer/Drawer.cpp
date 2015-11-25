@@ -338,7 +338,7 @@ Error RenderableDrawer::renderSingle(RenderContext& ctx)
 			ctx.m_nextVisibleNode->m_node->getComponent<RenderComponent>();
 
 		if(nextRenderable.canMergeDrawcalls(renderable)
-			&& ctx.m_cachedTrfCount <= MAX_INSTANCES)
+			&& ctx.m_cachedTrfCount < MAX_INSTANCES - 1)
 		{
 			// Can merge, will cache the drawcall and skip the drawcall
 			Bool hasTransform;
@@ -346,7 +346,8 @@ Error RenderableDrawer::renderSingle(RenderContext& ctx)
 			renderable.getRenderWorldTransform(hasTransform, trf);
 			ANKI_ASSERT(hasTransform);
 
-			ctx.m_cachedTrfs[ctx.m_cachedTrfCount++] = Mat4(trf);
+			ctx.m_cachedTrfs[ctx.m_cachedTrfCount] = Mat4(trf);
+			++ctx.m_cachedTrfCount;
 
 			return ErrorCode::NONE;
 		}
@@ -360,7 +361,8 @@ Error RenderableDrawer::renderSingle(RenderContext& ctx)
 
 		if(hasTransform)
 		{
-			ctx.m_cachedTrfs[ctx.m_cachedTrfCount++] = Mat4(trf);
+			ctx.m_cachedTrfs[ctx.m_cachedTrfCount] = Mat4(trf);
+			++ctx.m_cachedTrfCount;
 		}
 	}
 

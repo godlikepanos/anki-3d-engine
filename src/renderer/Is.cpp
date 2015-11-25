@@ -248,7 +248,8 @@ Error Is::initInternal(const ConfigSet& config)
 		"#define MAX_LIGHT_INDICES %u\n"
 		"#define GROUND_LIGHT %u\n"
 		"#define POISSON %u\n"
-		"#define IR %u\n",
+		"#define IR %u\n"
+		"#define IR_MIPMAP_COUNT %u\n",
 		m_r->getTileCountXY().x(),
 		m_r->getTileCountXY().y(),
 		m_r->getClusterCount(),
@@ -259,7 +260,8 @@ Error Is::initInternal(const ConfigSet& config)
 		m_maxLightIds,
 		m_groundLightEnabled,
 		m_sm.getPoissonEnabled(),
-		m_r->irEnabled());
+		m_r->irEnabled(),
+		m_r->irEnabled() ? m_r->getIr().getCubemapArrayMipmapCount() : 0);
 
 	// point light
 	ANKI_CHECK(getResourceManager().loadResourceToCache(m_lightVert,
@@ -628,7 +630,7 @@ I Is::writePointLight(const LightComponent& lightc,
 		* lightMove.getWorldTransform().getOrigin().xyz1();
 
 	slight.m_posRadius = Vec4(pos.xyz(),
-		lightc.getRadius() * lightc.getRadius());
+		1.0 / (lightc.getRadius() * lightc.getRadius()));
 	slight.m_diffuseColorShadowmapId = lightc.getDiffuseColor();
 
 	if(!lightc.getShadowEnabled() || !m_sm.getEnabled())
@@ -682,7 +684,7 @@ I Is::writeSpotLight(const LightComponent& lightc,
 		camFrc.getViewMatrix()
 		* lightMove.getWorldTransform().getOrigin().xyz1();
 	light.m_posRadius = Vec4(pos.xyz(),
-		lightc.getDistance() * lightc.getDistance());
+		1.0 / (lightc.getDistance() * lightc.getDistance()));
 
 	// Diff color and shadowmap ID now
 	light.m_diffuseColorShadowmapId =

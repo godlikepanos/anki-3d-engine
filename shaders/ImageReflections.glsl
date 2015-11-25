@@ -84,7 +84,7 @@ bool testReflectionProxy(in uint proxyIdx, in vec3 p, in vec3 r, out vec3 c,
 				dot(c - proxy.quadPoints[i].xyz, proxy.edgeCrossProd[i].xyz);
 		}
 
-		intersect = all(greaterThan(tests, vec4(0.0)));
+		intersect = all(greaterThanEqual(tests, vec4(0.0)));
 	}
 	else
 	{
@@ -120,7 +120,7 @@ bool findCloseProxyIntersection(in vec3 p, in vec3 r, out vec3 c)
 }
 
 //==============================================================================
-void readFromProbes(in vec3 intersection, out vec3 color)
+void readFromProbes(in vec3 intersection, in float lod, out vec3 color)
 {
 	// Iterate probes to find the cubemap
 	uint count = u_proxyCountReflectionProbeCountPad3.y;
@@ -145,17 +145,19 @@ void readFromProbes(in vec3 intersection, out vec3 color)
 			uv = u_invViewRotation * uv;
 
 			// Read!
-			vec3 c = texture(u_reflectionsTex, vec4(uv, cubemapIndex)).rgb;
+			vec3 c =
+				textureLod(u_reflectionsTex, vec4(uv, cubemapIndex), lod).rgb;
 
-			// Combine with previous color
+			// Combine (lerp) with previous color
 			float factor = d / R2;
-			color = color * factor + c * (1.0 - factor);
+			color = mix(c, color, factor);
+			//Equivelent: color = c * (1.0 - factor) + color * factor;
 		}
 	}
 }
 
 //==============================================================================
-vec3 readReflection(in vec3 posVSpace, in vec3 normalVSpace)
+vec3 readReflection(in vec3 posVSpace, in vec3 normalVSpace, in float lod)
 {
 	vec3 color = IMAGE_REFLECTIONS_DEFAULT_COLOR;
 
@@ -167,7 +169,7 @@ vec3 readReflection(in vec3 posVSpace, in vec3 normalVSpace)
 	vec3 intersection;
 	if(findCloseProxyIntersection(posVSpace, r, intersection))
 	{
-		readFromProbes(intersection, color);
+		readFromProbes(intersection, lod, color);
 	}
 
 	return color;

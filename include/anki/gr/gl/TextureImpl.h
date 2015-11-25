@@ -49,9 +49,6 @@ public:
 		const TextureImpl& dest, U destSlice, U destLevel);
 
 	void bind();
-
-private:
-	static U32 computeMaxMipmapCount(U32 w, U32 h);
 };
 /// @}
 

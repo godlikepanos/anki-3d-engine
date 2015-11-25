@@ -88,10 +88,10 @@ Error init()
 #if !PLAYER
 	cam->getComponent<MoveComponent>().
 		setLocalTransform(Transform(
-		//Vec4(147.392776, -10.132728, 16.607138, 0.0),
-		Vec4(0.0, 10, 0, 0),
-		//Mat3x4(Euler(toRad(0.0), toRad(90.0), toRad(0.0))),
-		Mat3x4::getIdentity(),
+		Vec4(147.392776, -10.132728, 16.607138, 0.0),
+		//Vec4(0.0, 10, 0, 0),
+		Mat3x4(Euler(toRad(0.0), toRad(90.0), toRad(0.0))),
+		//Mat3x4::getIdentity(),
 		1.0));
 #endif
 
@@ -488,7 +488,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("is.sm.poissonEnabled", true);
 	config.set("is.sm.resolution", 1024);
 	config.set("lf.maxFlares", 32);
-	config.set("pps.enabled", false);
+	config.set("pps.enabled", true);
 	config.set("pps.bloom.enabled", true);
 	config.set("pps.bloom.renderingQuality", 0.5);
 	config.set("pps.bloom.blurringDist", 1.0);
@@ -509,13 +509,13 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("pps.sharpen", true);
 	config.set("renderingQuality", 1.0);
 	config.set("width", 1280);
-	config.set("height", 1024);
+	config.set("height", 720);
 	config.set("lodDistance", 20.0);
 	config.set("samples", 1);
 	config.set("tessellation", true);
 	//config.set("maxTextureSize", 256);
 	config.set("ir.rendererSize", 64);
-	config.set("fullscreenDesktopResolution", false);
+	config.set("fullscreenDesktopResolution", true);
 	config.set("debugContext", false);
 	if(getenv("ANKI_DATA_PATH"))
 	{

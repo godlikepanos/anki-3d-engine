@@ -102,7 +102,8 @@ void main()
 	float a2 = pow(max(EPSILON, roughness), 2.0);
 
 #if IR == 1
-	vec3 refl = readReflection(fragPos, normal);
+	float reflLod = float(IR_MIPMAP_COUNT) * roughness;
+	vec3 refl = readReflection(fragPos, normal, reflLod);
 #else
 	const vec3 refl = vec3(1.0);
 #endif
@@ -135,7 +136,7 @@ void main()
 		if(light.diffuseColorShadowmapId.w < 128.0)
 		{
 			shadow = computeShadowFactorOmni(frag2Light,
-				shadowmapLayerIdx, -1.0 / light.posRadius.w);
+				shadowmapLayerIdx, 1.0 / sqrt(light.posRadius.w));
 		}
 
 		out_color += (specC + diffC)
@@ -194,7 +195,7 @@ void main()
 		out_color += vec3(1.0, 0.0, 0.0);
 	}
 #if IR == 1
-	out_color = out_color * 0.0000 + readReflection(fragPos, normal) *1.0;
+	out_color = out_color * 0.0000 + readReflection(fragPos, normal, 0.0) *1.0;
 #endif
 #endif
 }

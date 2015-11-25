@@ -90,6 +90,7 @@ private:
 	/// the server
 	CommandBufferPtr m_syncCommands;
 	Barrier m_syncBarrier{2};
+	SpinLock m_syncLock;
 
 	/// Command buffer with an empty command.
 	CommandBufferPtr m_emptyCmdb;

@@ -282,6 +282,10 @@ void RenderingThread::threadLoop()
 void RenderingThread::syncClientServer()
 {
 #if !ANKI_DISABLE_GL_RENDERING_THREAD
+	// Lock because there is only one barrier. If multiple threads call
+	// syncClientServer all of them will hit the same barrier.
+	LockGuard<SpinLock> lock(m_syncLock);
+
 	flushCommandBuffer(m_syncCommands);
 	m_syncBarrier.wait();
 #endif

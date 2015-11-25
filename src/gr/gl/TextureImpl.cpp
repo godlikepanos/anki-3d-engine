@@ -574,20 +574,6 @@ void TextureImpl::generateMipmaps(U surface)
 }
 
 //==============================================================================
-U32 TextureImpl::computeMaxMipmapCount(U32 w, U32 h)
-{
-	U32 s = min(w, h);
-	U count = 0;
-	while(s)
-	{
-		s /= 2;
-		++count;
-	}
-
-	return count;
-}
-
-//==============================================================================
 void TextureImpl::copy(const TextureImpl& src, U srcSlice, U srcLevel,
 	const TextureImpl& dest, U destSlice, U destLevel)
 {

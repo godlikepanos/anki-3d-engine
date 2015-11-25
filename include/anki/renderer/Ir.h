@@ -45,6 +45,11 @@ anki_internal:
 		return m_proxiesToken;
 	}
 
+	U getCubemapArrayMipmapCount() const
+	{
+		return m_cubemapArrMipCount;
+	}
+
 private:
 	class CacheEntry
 	{
@@ -55,6 +60,7 @@ private:
 
 	Renderer m_nestedR;
 	TexturePtr m_cubemapArr;
+	U m_cubemapArrMipCount = 0;
 	U16 m_cubemapArrSize = 0;
 	U16 m_fbSize = 0;
 	DynamicBufferToken m_probesToken;

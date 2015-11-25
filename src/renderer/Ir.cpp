@@ -100,9 +100,11 @@ Error Ir::init(const ConfigSet& initializer)
 	texinit.m_mipmapsCount = MAX_U8;
 	texinit.m_samples = 1;
 	texinit.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
-	texinit.m_sampling.m_mipmapFilter = SamplingFilter::NEAREST;
+	texinit.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
 
 	m_cubemapArr = getGrManager().newInstance<Texture>(texinit);
+
+	m_cubemapArrMipCount = computeMaxMipmapCount(m_fbSize, m_fbSize);
 
 	getGrManager().finish();
 	return ErrorCode::NONE;
