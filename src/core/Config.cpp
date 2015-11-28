@@ -14,10 +14,6 @@ Config::Config()
 	// Renderer
 	//
 
-	// Ms
-	newOption("ms.ez.enabled", false);
-	newOption("ms.ez.maxObjectsToDraw", 10);
-
 	// Is
 	newOption("is.sm.enabled", true);
 	newOption("is.sm.poissonEnabled", true);
@@ -64,7 +60,7 @@ Config::Config()
 	// Reflections
 	newOption("ir.enabled", true);
 	newOption("ir.rendererSize", 64);
-	newOption("ir.cubemapTextureArraySize", 8);
+	newOption("ir.cubemapTextureArraySize", 16);
 
 	// Dbg
 	newOption("dbg.enabled", false);

@@ -45,15 +45,13 @@ vec3 computeSpecularColorBrdf(
 	vec3 specCol,
 	vec3 lightSpecCol,
 	float a2, // rougness^2
-	float nol, // N dot L
-	vec3 reflection) // For fresnel
+	float nol) // N dot L
 {
 	vec3 h = normalize(l + v);
 
 	// Fresnel (Schlick)
 	float loh = max(EPSILON, dot(l, h));
 	vec3 f = specCol + (1.0 - specCol) * pow((1.0 + EPSILON - loh), 5.0);
-	f *= reflection;
 	//float f = specColor + (1.0 - specColor)
 	//	* pow(2.0, (-5.55473 * loh - 6.98316) * loh);
 

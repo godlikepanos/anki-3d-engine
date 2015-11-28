@@ -42,7 +42,7 @@ App* app;
 ModelNode* horse;
 PerspectiveCamera* cam;
 
-#define PLAYER 0
+#define PLAYER 1
 #define MOUSE 1
 
 Bool profile = false;
@@ -478,8 +478,6 @@ Error initSubsystems(int argc, char* argv[])
 
 	// Config
 	Config config;
-	config.set("ms.ez.enabled", false);
-	config.set("ms.ez.maxObjectsToDraw", 100);
 	config.set("dbg.enabled", false);
 	config.set("is.sm.bilinearEnabled", true);
 	config.set("is.groundLightEnabled", false);
@@ -514,6 +512,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("samples", 1);
 	config.set("tessellation", true);
 	//config.set("maxTextureSize", 256);
+	config.set("ir.enabled", true);
 	config.set("ir.rendererSize", 64);
 	config.set("fullscreenDesktopResolution", true);
 	config.set("debugContext", false);

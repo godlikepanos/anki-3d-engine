@@ -367,10 +367,8 @@ Error RenderableDrawer::renderSingle(RenderContext& ctx)
 	}
 
 	// Calculate the key
-	Vec4 camPos = ctx.m_frc->getFrustumOrigin();
-	F32 dist = (ctx.m_visibleNode->m_node->getComponent<SpatialComponent>().
-		getSpatialOrigin() - camPos).getLength();
-	F32 flod = m_r->calculateLod(dist);
+	F32 flod = m_r->calculateLod(
+		sqrt(ctx.m_visibleNode->m_frustumDistanceSquared));
 	flod = min<F32>(flod, MAX_LODS - 1);
 	ctx.m_flod = flod;
 

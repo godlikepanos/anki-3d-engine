@@ -60,6 +60,7 @@ public:
 	{
 		m_node = other.m_node;
 		m_spatialIndices = other.m_spatialIndices;
+		m_frustumDistanceSquared = other.m_frustumDistanceSquared;
 		m_spatialsCount = other.m_spatialsCount;
 		return *this;
 	}

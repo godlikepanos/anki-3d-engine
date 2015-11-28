@@ -29,13 +29,11 @@ layout(location = 0) out vec3 out_color;
 
 #if IR == 1
 #define IMAGE_REFLECTIONS_SET 0
-#define IMAGE_REFLECTIONS_PROXY_SS_BINDING 5
-#define IMAGE_REFLECTIONS_PROBE_SS_BINDING 6
+#define IMAGE_REFLECTIONS_PROBE_SS_BINDING 5
 #define IMAGE_REFLECTIONS_TEX_BINDING 6
-#define IMAGE_REFLECTIONS_DEFAULT_COLOR vec3(1.0)
+#define IMAGE_REFLECTIONS_DEFAULT_COLOR vec3(0.0)
 #pragma anki include "shaders/ImageReflections.glsl"
 #undef IMAGE_REFLECTIONS_SET
-#undef IMAGE_REFLECTIONS_PROXY_SS_BINDING
 #undef IMAGE_REFLECTIONS_PROBE_SS_BINDING
 #undef IMAGE_REFLECTIONS_DEFAULT_COLOR
 #endif
@@ -64,7 +62,7 @@ vec3 getFragPosVSpace()
 	vec3 l = normalize(frag2Light); \
 	float nol = max(0.0, dot(normal, l)); \
 	vec3 specC = computeSpecularColorBrdf(viewDir, l, normal, specCol, \
-		light.specularColorTexId.rgb, a2, nol, refl); \
+		light.specularColorTexId.rgb, a2, nol); \
 	vec3 diffC = computeDiffuseColor( \
 		diffCol, light.diffuseColorShadowmapId.rgb); \
 	float att = computeAttenuationFactor(light.posRadius.w, frag2Light); \
@@ -100,13 +98,6 @@ void main()
 		in_texCoord, diffCol, normal, specCol, roughness, subsurface, emission);
 
 	float a2 = pow(max(EPSILON, roughness), 2.0);
-
-#if IR == 1
-	float reflLod = float(IR_MIPMAP_COUNT) * roughness;
-	vec3 refl = readReflection(fragPos, normal, reflLod);
-#else
-	const vec3 refl = vec3(1.0);
-#endif
 
 	// Ambient and emissive color
 	out_color = diffCol * u_lightingUniforms.sceneAmbientColor.rgb
@@ -174,6 +165,14 @@ void main()
 		* vec3(0.01, 0.001, 0.001);
 #endif
 
+#if IR == 1
+	{
+		float reflLod = float(IR_MIPMAP_COUNT) * roughness;
+		vec3 refl = readReflection(fragPos, normal, reflLod);
+		out_color += refl * (1.0 - roughness);
+	}
+#endif
+
 #if 0
 	if(pointLightsCount == 0)
 	{
@@ -195,7 +194,7 @@ void main()
 		out_color += vec3(1.0, 0.0, 0.0);
 	}
 #if IR == 1
-	out_color = out_color * 0.0000 + readReflection(fragPos, normal, 0.0) *1.0;
+	out_color = readReflection(fragPos, normal, 0.0);
 #endif
 #endif
 }

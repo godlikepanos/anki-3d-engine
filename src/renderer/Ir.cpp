@@ -5,26 +5,18 @@
 
 #include <anki/renderer/Ir.h>
 #include <anki/renderer/Is.h>
+#include <anki/renderer/Pps.h>
 #include <anki/core/Config.h>
 #include <anki/scene/SceneNode.h>
 #include <anki/scene/Visibility.h>
 #include <anki/scene/FrustumComponent.h>
 #include <anki/scene/ReflectionProbeComponent.h>
-#include <anki/scene/ReflectionProxyComponent.h>
 
 namespace anki {
 
 //==============================================================================
 // Misc                                                                        =
 //==============================================================================
-
-struct ShaderReflectionProxy
-{
-	Vec4 m_plane;
-	Vec4 m_negPlane;
-	Array<Vec4, 4> m_quadPoints;
-	Array<Vec4, 4> m_edgeCrossProd;
-};
 
 struct ShaderReflectionProbe
 {
@@ -76,7 +68,10 @@ Error Ir::init(const ConfigSet& initializer)
 	config.set("is.sm.poissonEnabled", false);
 	config.set("is.sm.resolution", 16);
 	config.set("lf.maxFlares", 8);
-	config.set("pps.enabled", false);
+	config.set("pps.enabled", true);
+	config.set("pps.bloom.enabled", true);
+	config.set("pps.ssao.enabled", false);
+	config.set("pps.sslr.enabled", false);
 	config.set("renderingQuality", 1.0);
 	config.set("clusterSizeZ", 1); // XXX A bug if more. Fix it
 	config.set("width", m_fbSize);
@@ -96,7 +91,7 @@ Error Ir::init(const ConfigSet& initializer)
 	texinit.m_height = m_fbSize;
 	texinit.m_depth = m_cubemapArrSize;
 	texinit.m_type = TextureType::CUBE_ARRAY;
-	texinit.m_format = Is::RT_PIXEL_FORMAT;
+	texinit.m_format = Pps::RT_PIXEL_FORMAT;
 	texinit.m_mipmapsCount = MAX_U8;
 	texinit.m_samples = 1;
 	texinit.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
@@ -116,90 +111,31 @@ Error Ir::run(CommandBufferPtr cmdb)
 	FrustumComponent& frc = m_r->getActiveFrustumComponent();
 	VisibilityTestResults& visRez = frc.getVisibilityTestResults();
 
-	const VisibleNode* it;
-	const VisibleNode* end;
 
-	//
-	// Do the proxies
-	//
-
-	// Count them
-	U quadCount = 0;
-	it = visRez.getReflectionProxiesBegin();
-	end = visRez.getReflectionProxiesEnd();
-	while(it != end)
+	if(visRez.getReflectionProbeCount() > m_cubemapArrSize)
 	{
-		const ReflectionProxyComponent& proxyc =
-			it->m_node->getComponent<ReflectionProxyComponent>();
-
-		quadCount += proxyc.getFaces().getSize();
-		++it;
+		ANKI_LOGW("Increase the ir.cubemapTextureArraySize");
 	}
 
-	// Allocate
-	void* data = getGrManager().allocateFrameHostVisibleMemory(
-		sizeof(ShaderReflectionProxy) * quadCount
-		+ sizeof(UVec4), BufferUsage::STORAGE, m_proxiesToken);
-
-	UVec4* counts = reinterpret_cast<UVec4*>(data);
-	counts->x() = quadCount;
-	counts->y() = visRez.getReflectionProbeCount();
-
-	it = visRez.getReflectionProxiesBegin();
-	end = visRez.getReflectionProxiesEnd();
-	ShaderReflectionProxy* proxies = reinterpret_cast<ShaderReflectionProxy*>(
-		counts + 1);
-
-	while(it != end)
-	{
-		const ReflectionProxyComponent& proxyc =
-			it->m_node->getComponent<ReflectionProxyComponent>();
-		for(const auto& face : proxyc.getFaces())
-		{
-			Plane plane = face.m_plane;
-			plane.transform(Transform(frc.getViewMatrix()));
-
-			proxies->m_plane =
-				Vec4(plane.getNormal().xyz(), plane.getOffset());
-			proxies->m_negPlane =
-				Vec4(-plane.getNormal().xyz(), plane.getOffset());
-
-			for(U i = 0; i < 4; ++i)
-			{
-				proxies->m_quadPoints[i] =
-					frc.getViewMatrix() * face.m_vertices[i].xyz1();
-			}
-
-			for(U i = 0; i < 4; ++i)
-			{
-				U next = (i < 3) ? (i + 1) : 0;
-				proxies->m_edgeCrossProd[i] = plane.getNormal().cross(
-					proxies->m_quadPoints[next] - proxies->m_quadPoints[i]);
-			}
-
-			++proxies;
-		}
-
-		++it;
-	}
-
-	//
 	// Do the probes
-	//
-	it = visRez.getReflectionProbesBegin();
-	end = visRez.getReflectionProbesEnd();
+	const VisibleNode* it = visRez.getReflectionProbesBegin();
+	const VisibleNode* end = visRez.getReflectionProbesEnd();
 
-	data = getGrManager().allocateFrameHostVisibleMemory(
+	void* data = getGrManager().allocateFrameHostVisibleMemory(
 		sizeof(ShaderReflectionProbe) * visRez.getReflectionProbeCount()
-		+ sizeof(Mat3x4),
+		+ sizeof(Mat3x4) + sizeof(UVec4),
 		BufferUsage::STORAGE, m_probesToken);
 
-	Mat3x4* invViewRotation = static_cast<Mat3x4*>(data);
+	UVec4* counts = static_cast<UVec4*>(data);
+	counts->x() = visRez.getReflectionProbeCount();
+
+	Mat3x4* invViewRotation = reinterpret_cast<Mat3x4*>(counts + 1);
 	*invViewRotation =
 		Mat3x4(frc.getViewMatrix().getInverse().getRotationPart());
 
 	ShaderReflectionProbe* probes = reinterpret_cast<ShaderReflectionProbe*>(
 		invViewRotation + 1);
+	ShaderReflectionProbe* probesBegin = probes;
 
 	while(it != end)
 	{
@@ -207,6 +143,13 @@ Error Ir::run(CommandBufferPtr cmdb)
 		++it;
 		++probes;
 	}
+
+	// Sort the probes to satisfy hierarchy
+	std::sort(probesBegin, probes, [](const ShaderReflectionProbe& a,
+		const ShaderReflectionProbe& b) -> Bool
+	{
+		return a.m_radiusSq < b.m_radiusSq;
+	});
 
 	return ErrorCode::NONE;
 }
@@ -244,7 +187,7 @@ Error Ir::renderReflection(SceneNode& node, ShaderReflectionProbe& shaderProb)
 
 			// Copy textures
 			cmdb[cmdb.getSize() - 1]->copyTextureToTexture(
-				m_nestedR.getIs().getRt(), 0, 0, m_cubemapArr, 6 * entry + i,
+				m_nestedR.getPps().getRt(), 0, 0, m_cubemapArr, 6 * entry + i,
 				0);
 
 			// Gen mips
