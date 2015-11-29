@@ -286,7 +286,7 @@ void Clusterer::binSphere(const Sphere& s, const Aabb& aabb,
 	for(Vec4& p : points)
 	{
 		p = vp * p;
-		p /= abs(p.w());
+		p = p.perspectiveDivide();
 
 		for(U i = 0; i < 2; ++i)
 		{

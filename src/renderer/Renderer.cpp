@@ -154,8 +154,6 @@ Error Renderer::render(SceneNode& frustumableNode, U frustumIdx,
 	(void)err;
 	ANKI_ASSERT(m_frc && "Not enough frustum components");
 
-	m_frameAlloc.getMemoryPool().reset();
-
 	// Calc a few vars
 	//
 	if(m_frc->getProjectionParameters() != m_projectionParams)

@@ -29,12 +29,12 @@ layout(location = 0) out vec3 out_color;
 
 #if IR == 1
 #define IMAGE_REFLECTIONS_SET 0
-#define IMAGE_REFLECTIONS_PROBE_SS_BINDING 5
+#define IMAGE_REFLECTIONS_FIRST_SS_BINDING 5
 #define IMAGE_REFLECTIONS_TEX_BINDING 6
 #define IMAGE_REFLECTIONS_DEFAULT_COLOR vec3(0.0)
 #pragma anki include "shaders/ImageReflections.glsl"
 #undef IMAGE_REFLECTIONS_SET
-#undef IMAGE_REFLECTIONS_PROBE_SS_BINDING
+#undef IMAGE_REFLECTIONS_FIRST_SS_BINDING
 #undef IMAGE_REFLECTIONS_DEFAULT_COLOR
 #endif
 
@@ -105,7 +105,8 @@ void main()
 
 	// Get counts and offsets
 	uint k = calcClusterSplit(fragPos.z);
-	uint cluster = u_clusters[in_instanceId + k * TILE_COUNT];
+	uint clusterIndex = in_instanceId + k * TILE_COUNT;
+	uint cluster = u_clusters[clusterIndex];
 	uint lightOffset = cluster >> 16u;
 	uint pointLightsCount = (cluster >> 8u) & 0xFFu;
 	uint spotLightsCount = cluster & 0xFFu;
@@ -168,7 +169,7 @@ void main()
 #if IR == 1
 	{
 		float reflLod = float(IR_MIPMAP_COUNT) * roughness;
-		vec3 refl = readReflection(fragPos, normal, reflLod);
+		vec3 refl = readReflection(clusterIndex, fragPos, normal, reflLod);
 		out_color += refl * (1.0 - roughness);
 	}
 #endif
@@ -194,7 +195,7 @@ void main()
 		out_color += vec3(1.0, 0.0, 0.0);
 	}
 #if IR == 1
-	out_color = readReflection(fragPos, normal, 0.0);
+	out_color = readReflection(clusterIndex, fragPos, normal, 0.0);
 #endif
 #endif
 }

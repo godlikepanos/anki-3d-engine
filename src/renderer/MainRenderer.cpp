@@ -46,7 +46,7 @@ Error MainRenderer::create(
 
 	m_alloc = HeapAllocator<U8>(allocCb, allocCbUserData);
 	m_frameAlloc = StackAllocator<U8>(allocCb, allocCbUserData,
-		1024 * 1024 * 5);
+		1024 * 1024 * 10);
 
 	// Init default FB
 	m_width = config.getNumber("width");
@@ -106,6 +106,9 @@ Error MainRenderer::create(
 Error MainRenderer::render(SceneGraph& scene)
 {
 	ANKI_TRACE_START_EVENT(RENDER);
+
+	// First thing, reset the temp mem pool
+	m_frameAlloc.getMemoryPool().reset();
 
 	GrManager& gl = m_r->getGrManager();
 	Array<CommandBufferPtr, RENDERER_COMMAND_BUFFERS_COUNT> cmdbs;

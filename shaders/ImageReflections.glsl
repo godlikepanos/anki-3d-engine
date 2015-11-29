@@ -21,11 +21,22 @@ struct ReflectionProbe
 };
 
 layout(std140, row_major, SS_BINDING(IMAGE_REFLECTIONS_SET,
-	IMAGE_REFLECTIONS_PROBE_SS_BINDING)) readonly buffer _irs1
+	IMAGE_REFLECTIONS_FIRST_SS_BINDING)) readonly buffer _irs1
 {
-	uvec4 u_reflectionProbeCountPad3;
 	mat3 u_invViewRotation;
 	ReflectionProbe u_reflectionProbes[];
+};
+
+layout(std430, row_major, SS_BINDING(IMAGE_REFLECTIONS_SET,
+	IMAGE_REFLECTIONS_FIRST_SS_BINDING + 1)) readonly buffer _irs2
+{
+	uint u_reflectionProbeIndices[];
+};
+
+layout(std430, row_major, SS_BINDING(IMAGE_REFLECTIONS_SET,
+	IMAGE_REFLECTIONS_FIRST_SS_BINDING + 2)) readonly buffer _irs3
+{
+	uint u_reflectionClusters[];
 };
 
 layout(TEX_BINDING(IMAGE_REFLECTIONS_SET, IMAGE_REFLECTIONS_TEX_BINDING))
@@ -59,7 +70,8 @@ vec3 computeCubemapVec(in vec3 r, in float R2, in vec3 f)
 }
 
 //==============================================================================
-vec3 readReflection(in vec3 posVSpace, in vec3 normalVSpace, in float lod)
+vec3 readReflection(in uint clusterIndex, in vec3 posVSpace,
+	in vec3 normalVSpace, in float lod)
 {
 	vec3 color = IMAGE_REFLECTIONS_DEFAULT_COLOR;
 
@@ -68,32 +80,34 @@ vec3 readReflection(in vec3 posVSpace, in vec3 normalVSpace, in float lod)
 	vec3 r = reflect(eye, normalVSpace);
 
 	// Check proxy
-	uint count = u_reflectionProbeCountPad3.x;
-	for(uint i = 0; i < count; ++i)
+	uint cluster = u_reflectionClusters[clusterIndex];
+	uint indexOffset = cluster >> 16u;
+	uint indexCount = cluster & 0xFFFFu;
+	for(uint i = 0; i < indexCount; ++i)
 	{
-		float R2 = u_reflectionProbes[i].positionRadiusSq.w;
-		vec3 center = u_reflectionProbes[i].positionRadiusSq.xyz;
+		uint probeIndex = u_reflectionProbeIndices[indexOffset++];
+		ReflectionProbe probe = u_reflectionProbes[probeIndex];
 
-		// Check if the point is inside the sphere
+		float R2 = probe.positionRadiusSq.w;
+		vec3 center = probe.positionRadiusSq.xyz;
+
+		// Get distance from the center of the probe
 		vec3 f = posVSpace - center;
+
+		// Cubemap UV in view space
+		vec3 uv = computeCubemapVec(r, R2, f);
+
+		// Read!
+		float cubemapIndex = probe.cubemapIndexPad3.x;
+		vec3 c =
+			textureLod(u_reflectionsTex, vec4(uv, cubemapIndex), lod).rgb;
+
+		// Combine (lerp) with previous color
 		float d = dot(f, f);
-		if(d < R2)
-		{
-			// Found something
-
-			// Cubemap UV in view space
-			vec3 uv = computeCubemapVec(r, R2, f);
-
-			// Read!
-			float cubemapIndex = u_reflectionProbes[i].cubemapIndexPad3.x;
-			vec3 c =
-				textureLod(u_reflectionsTex, vec4(uv, cubemapIndex), lod).rgb;
-
-			// Combine (lerp) with previous color
-			float factor = d / R2;
-			color = mix(c, color, factor);
-			//Equivelent: color = c * (1.0 - factor) + color * factor;
-		}
+		float factor = d / R2;
+		factor = min(factor, 1.0);
+		color = mix(c, color, factor);
+		//Equivelent: color = c * (1.0 - factor) + color * factor;
 	}
 
 	return color;

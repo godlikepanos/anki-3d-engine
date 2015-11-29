@@ -12,6 +12,7 @@ namespace anki {
 
 // Forward
 struct ShaderReflectionProbe;
+class IrBuildContext;
 
 /// @addtogroup renderer
 /// @{
@@ -40,6 +41,16 @@ anki_internal:
 		return m_probesToken;
 	}
 
+	DynamicBufferToken getProbeIndicesToken() const
+	{
+		return m_indicesToken;
+	}
+
+	DynamicBufferToken getClustersToken() const
+	{
+		return m_clustersToken;
+	}
+
 	U getCubemapArrayMipmapCount() const
 	{
 		return m_cubemapArrMipCount;
@@ -55,17 +66,24 @@ private:
 
 	Renderer m_nestedR;
 	TexturePtr m_cubemapArr;
-	U m_cubemapArrMipCount = 0;
+	U16 m_cubemapArrMipCount = 0;
 	U16 m_cubemapArrSize = 0;
 	U16 m_fbSize = 0;
-	DynamicBufferToken m_probesToken;
 	DArray<CacheEntry> m_cacheEntries;
+
+	// Tokens
+	DynamicBufferToken m_probesToken;
+	DynamicBufferToken m_clustersToken;
+	DynamicBufferToken m_indicesToken;
 
 	ANKI_USE_RESULT Error renderReflection(SceneNode& node,
 		ShaderReflectionProbe& shaderProb);
 
 	/// Find a cache entry to store the reflection.
 	void findCacheEntry(SceneNode& node, U& entry, Bool& render);
+
+	void binProbe(const SceneNode& node, U index, IrBuildContext& ctx);
+	void populateIndexAndClusterBuffers(IrBuildContext& ctx);
 };
 /// @}
 

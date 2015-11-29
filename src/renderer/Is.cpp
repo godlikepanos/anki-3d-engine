@@ -319,6 +319,8 @@ Error Is::initInternal(const ConfigSet& config)
 		if(m_r->irEnabled())
 		{
 			init.m_storageBuffers[5].m_dynamic = true;
+			init.m_storageBuffers[6].m_dynamic = true;
+			init.m_storageBuffers[7].m_dynamic = true;
 		}
 
 		m_rcGroup = getGrManager().newInstance<ResourceGroup>(init);
@@ -764,6 +766,9 @@ void Is::setState(CommandBufferPtr& cmdb)
 	if(m_r->irEnabled())
 	{
 		dyn.m_storageBuffers[5] = m_r->getIr().getProbesToken();
+		dyn.m_storageBuffers[6] = m_r->getIr().getProbeIndicesToken();
+		dyn.m_storageBuffers[7] = m_r->getIr().getClustersToken();
+
 	}
 
 	cmdb->bindResourceGroup(m_rcGroup, 0, &dyn);

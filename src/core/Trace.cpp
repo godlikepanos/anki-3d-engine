@@ -25,6 +25,7 @@ static Array<const char*, U(TraceEventType::COUNT)> eventNames = {{
 	"RENDER_MS",
 	"RENDER_IS",
 	"RENDER_SM",
+	"RENDER_IR",
 	"RENDER_DRAWER",
 	"GL_THREAD",
 	"SWAP_BUFFERS"
