@@ -240,6 +240,22 @@ void Clusterer::bin(const CollisionShape& cs, const Aabb& csBox,
 }
 
 //==============================================================================
+void Clusterer::totallyInsideAllTiles(
+	U zBegin, U zEnd, ClustererTestResult& rez) const
+{
+	for(U z = zBegin; z < zEnd; ++z)
+	{
+		for(U y = 0; y < m_counts[1]; ++y)
+		{
+			for(U x = 0; x < m_counts[0]; ++x)
+			{
+				rez.pushBack(x, y, z);
+			}
+		}
+	}
+}
+
+//==============================================================================
 void Clusterer::binSphere(const Sphere& s, const Aabb& aabb,
 	ClustererTestResult& rez) const
 {
@@ -257,16 +273,7 @@ void Clusterer::binSphere(const Sphere& s, const Aabb& aabb,
 	if(ANKI_UNLIKELY(eye.getLengthSquared() <= srad * srad))
 	{
 		// Camera totaly inside the sphere
-		for(U z = zBegin; z < zEnd; ++z)
-		{
-			for(U y = 0; y < m_counts[1]; ++y)
-			{
-				for(U x = 0; x < m_counts[0]; ++x)
-				{
-					rez.pushBack(x, y, z);
-				}
-			}
-		}
+		totallyInsideAllTiles(zBegin, zEnd, rez);
 		return;
 	}
 
@@ -286,6 +293,14 @@ void Clusterer::binSphere(const Sphere& s, const Aabb& aabb,
 	for(Vec4& p : points)
 	{
 		p = vp * p;
+		if(p.w() <= 0.0)
+		{
+			// This point is behind the near plane. It's a big hustle to
+			// properly clip it. Mark the shape totally inside
+			totallyInsideAllTiles(zBegin, zEnd, rez);
+			return;
+		}
+
 		p = p.perspectiveDivide();
 
 		for(U i = 0; i < 2; ++i)

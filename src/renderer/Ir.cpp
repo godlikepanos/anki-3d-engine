@@ -61,7 +61,7 @@ public:
 		if(m_probeCount > 0)
 		{
 			if(memcmp(&m_probeIds[0], &b.m_probeIds[0],
-				sizeof(U32) * m_probeCount) != 0)
+				sizeof(m_probeIds[0]) * m_probeCount) != 0)
 			{
 				return false;
 			}

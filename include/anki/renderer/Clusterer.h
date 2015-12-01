@@ -135,6 +135,9 @@ public:
 
 	/// Calculate and set a right looking plane.
 	void calcPlaneX(U j, const Vec4& projParams);
+
+	/// Call this when a shape is visible by all tiles.
+	void totallyInsideAllTiles(U zBegin, U zEnd, ClustererTestResult& rez) const;
 };
 /// @}
 
