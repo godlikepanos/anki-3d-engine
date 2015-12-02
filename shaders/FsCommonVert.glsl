@@ -6,6 +6,16 @@
 // Common code for all vertex shaders of FS
 #pragma anki include "shaders/MsFsCommon.glsl"
 
+// Global resources
+#define LIGHT_SET 1
+#define LIGHT_SS_BINDING 0
+#define LIGHT_TEX_BINDING 1
+#pragma anki include "shaders/LightResources.glsl"
+#undef LIGHT_SET
+#undef LIGHT_SS_BINDING
+#undef LIGHT_TEX_BINDING
+
+// In/out
 layout(location = POSITION_LOCATION) in vec3 in_position;
 layout(location = SCALE_LOCATION) in float in_scale;
 layout(location = ALPHA_LOCATION) in float in_alpha;
@@ -46,7 +56,8 @@ void particle(in mat4 mvp)
 {
 	gl_Position = mvp * vec4(in_position, 1);
 	out_alpha = in_alpha;
-	gl_PointSize = in_scale * float(ANKI_RENDERER_WIDTH) / gl_Position.w;
+	gl_PointSize =
+		in_scale * u_lightingUniforms.rendererSizeTimePad1.x / gl_Position.w;
 }
 
 //==============================================================================

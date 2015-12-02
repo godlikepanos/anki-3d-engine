@@ -53,7 +53,7 @@ struct ShaderCommonUniforms
 {
 	Vec4 m_projectionParams;
 	Vec4 m_sceneAmbientColor;
-	Vec4 m_groundLightDirTime;
+	Vec4 m_rendererSizeTimePad1;
 	Vec4 m_nearFarClustererDivisor;
 	Mat4 m_viewMat;
 	UVec4 m_tileCount;
@@ -799,18 +799,8 @@ void Is::updateCommonBlock(CommandBufferPtr& cmdb, const FrustumComponent& fr)
 		m_r->getClusterer().getDivisor(),
 		0.0);
 
-	Vec3 groundLightDir;
-	if(m_groundLightEnabled)
-	{
-		const Mat4& viewMat = m_frc->getViewMatrix();
-		blk->m_groundLightDirTime =
-			Vec4(-viewMat.getColumn(1).xyz(), HighRezTimer::getCurrentTime());
-	}
-	else
-	{
-		blk->m_groundLightDirTime =
-			Vec4(Vec3(0.0), HighRezTimer::getCurrentTime());
-	}
+	blk->m_rendererSizeTimePad1 = Vec4(m_r->getWidth(), m_r->getHeight(),
+		HighRezTimer::getCurrentTime(), 0.0);
 
 	blk->m_tileCount = UVec4(m_r->getTileCountXY(), m_r->getTileCount(), 0);
 }

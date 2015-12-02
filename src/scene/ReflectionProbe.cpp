@@ -14,8 +14,12 @@
 namespace anki {
 
 //==============================================================================
-// ReflectionProbeMoveFeedbackComponent                                        =
+// Misc                                                                        =
 //==============================================================================
+
+const FrustumComponent::VisibilityTestFlag FRUSTUM_TEST_FLAGS =
+	FrustumComponent::VisibilityTestFlag::TEST_RENDER_COMPONENTS
+	| FrustumComponent::VisibilityTestFlag::TEST_LIGHT_COMPONENTS;
 
 /// Feedback component
 class ReflectionProbeMoveFeedbackComponent: public SceneComponent
@@ -98,8 +102,7 @@ Error ReflectionProbe::create(const CString& name, F32 radius)
 			this, &m_cubeSides[i].m_frustum);
 
 		frc->setEnabledVisibilityTests(
-			FrustumComponent::VisibilityTestFlag::TEST_RENDER_COMPONENTS
-			| FrustumComponent::VisibilityTestFlag::TEST_LIGHT_COMPONENTS);
+			FrustumComponent::VisibilityTestFlag::TEST_NONE);
 
 		addComponent(frc, true);
 	}
@@ -150,6 +153,30 @@ void ReflectionProbe::onMoveUpdate(MoveComponent& move)
 	// Update the refl comp
 	ReflectionProbeComponent& reflc = getComponent<ReflectionProbeComponent>();
 	reflc.setPosition(move.getWorldTransform().getOrigin());
+}
+
+//==============================================================================
+Error ReflectionProbe::frameUpdate(F32 prevUpdateTime, F32 crntTime)
+{
+	// Check the reflection probe component and if it's marked for rendering
+	// enable the frustum components
+	const ReflectionProbeComponent& reflc =
+		getComponent<ReflectionProbeComponent>();
+
+	FrustumComponent::VisibilityTestFlag testFlags =
+		reflc.getMarkedForRendering()
+		? FRUSTUM_TEST_FLAGS
+		: FrustumComponent::VisibilityTestFlag::TEST_NONE;
+
+	Error err = iterateComponentsOfType<FrustumComponent>(
+		[testFlags](FrustumComponent& frc) -> Error
+	{
+		frc.setEnabledVisibilityTests(testFlags);
+		return ErrorCode::NONE;
+	});
+	(void)err;
+
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

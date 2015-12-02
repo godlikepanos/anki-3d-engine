@@ -13,7 +13,7 @@ struct LightingUniforms
 {
 	vec4 projectionParams;
 	vec4 sceneAmbientColor;
-	vec4 groundLightDirTime;
+	vec4 rendererSizeTimePad1;
 	vec4 nearFarClustererDivisor;
 	mat4 viewMat;
 	uvec4 tileCountPad1;

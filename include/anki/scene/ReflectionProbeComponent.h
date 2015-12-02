@@ -47,9 +47,20 @@ public:
 		m_radius = radius;
 	}
 
+	Bool getMarkedForRendering() const
+	{
+		return m_markedForRendering;
+	}
+
+	void setMarkedForRendering(Bool render)
+	{
+		m_markedForRendering = render;
+	}
+
 private:
 	Vec4 m_pos = Vec4(0.0);
 	F32 m_radius = 0.0;
+	Bool8 m_markedForRendering = false;
 };
 /// @}
 

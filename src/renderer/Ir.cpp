@@ -141,7 +141,7 @@ Error Ir::init(const ConfigSet& initializer)
 	config.set("pps.ssao.enabled", false);
 	config.set("pps.sslr.enabled", false);
 	config.set("renderingQuality", 1.0);
-	config.set("clusterSizeZ", 1); // XXX A bug if more. Fix it
+	config.set("clusterSizeZ", 4); // XXX A bug if more. Fix it
 	config.set("width", m_fbSize);
 	config.set("height", m_fbSize);
 	config.set("lodDistance", 10.0);
@@ -340,7 +340,7 @@ void Ir::binProbe(const SceneNode& node, U index, IrBuildContext& ctx)
 Error Ir::renderReflection(SceneNode& node, ShaderReflectionProbe& shaderProb)
 {
 	const FrustumComponent& frc = m_r->getActiveFrustumComponent();
-	const ReflectionProbeComponent& reflc =
+	ReflectionProbeComponent& reflc =
 		node.getComponent<ReflectionProbeComponent>();
 
 	// Get cache entry
@@ -354,7 +354,7 @@ Error Ir::renderReflection(SceneNode& node, ShaderReflectionProbe& shaderProb)
 	shaderProb.m_cubemapIndex = entry;
 
 	// Render cubemap
-	if(render)
+	if(reflc.getMarkedForRendering())
 	{
 		for(U i = 0; i < 6; ++i)
 		{
@@ -382,6 +382,14 @@ Error Ir::renderReflection(SceneNode& node, ShaderReflectionProbe& shaderProb)
 				cmdb[j]->flush();
 			}
 		}
+
+		reflc.setMarkedForRendering(false);
+	}
+
+	// If you need to render it mark it for the next frame
+	if(render)
+	{
+		reflc.setMarkedForRendering(true);
 	}
 
 	return ErrorCode::NONE;
