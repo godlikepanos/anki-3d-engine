@@ -30,9 +30,8 @@ struct ShaderReflectionProbe
 
 struct ShaderCluster
 {
-	/// If m_combo = 0xFFFFAAAA then FFFF is the probe index offset, AAAA the
-	/// number of probes
-	U32 m_combo;
+	U32 m_indexOffset;
+	U32 m_probeCount;
 };
 
 static const U MAX_PROBES_PER_CLUSTER = 16;
@@ -283,12 +282,13 @@ void Ir::populateIndexAndClusterBuffers(IrBuildContext& ctx)
 			if(i > 0 && cdata == ctx.m_clusterData[i - 1])
 			{
 				// Same data
-				cluster.m_combo = clusters[i - 1].m_combo;
+				cluster = clusters[i - 1];
 			}
 			else
 			{
 				// Have to store the indices
-				cluster.m_combo = (indexCount << 16) | cdata.m_probeCount;
+				cluster.m_indexOffset = indexCount;
+				cluster.m_probeCount = cdata.m_probeCount;
 				for(U j = 0; j < cdata.m_probeCount; ++j)
 				{
 					indices[indexCount] = cdata.m_probeIds[j].m_index;
@@ -298,7 +298,8 @@ void Ir::populateIndexAndClusterBuffers(IrBuildContext& ctx)
 		}
 		else
 		{
-			cluster.m_combo = 0;
+			cluster.m_indexOffset = 0;
+			cluster.m_probeCount = 0;
 		}
 	}
 }

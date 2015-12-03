@@ -36,7 +36,7 @@ layout(std430, row_major, SS_BINDING(IMAGE_REFLECTIONS_SET,
 layout(std430, row_major, SS_BINDING(IMAGE_REFLECTIONS_SET,
 	IMAGE_REFLECTIONS_FIRST_SS_BINDING + 2)) readonly buffer _irs3
 {
-	uint u_reflectionClusters[];
+	uvec2 u_reflectionClusters[];
 };
 
 layout(TEX_BINDING(IMAGE_REFLECTIONS_SET, IMAGE_REFLECTIONS_TEX_BINDING))
@@ -80,9 +80,9 @@ vec3 readReflection(in uint clusterIndex, in vec3 posVSpace,
 	vec3 r = reflect(eye, normalVSpace);
 
 	// Check proxy
-	uint cluster = u_reflectionClusters[clusterIndex];
-	uint indexOffset = cluster >> 16u;
-	uint indexCount = cluster & 0xFFFFu;
+	uvec2 cluster = u_reflectionClusters[clusterIndex];
+	uint indexOffset = cluster[0];
+	uint indexCount = cluster[1];
 	for(uint i = 0; i < indexCount; ++i)
 	{
 		uint probeIndex = u_reflectionProbeIndices[indexOffset++];

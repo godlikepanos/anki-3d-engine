@@ -49,23 +49,39 @@ vec3 computeSpecularColorBrdf(
 {
 	vec3 h = normalize(l + v);
 
-	// Fresnel (Schlick)
-	float loh = max(EPSILON, dot(l, h));
-	vec3 f = specCol + (1.0 - specCol) * pow((1.0 + EPSILON - loh), 5.0);
-	//float f = specColor + (1.0 - specColor)
-	//	* pow(2.0, (-5.55473 * loh - 6.98316) * loh);
+	// Fresnel
+	float voh = max(EPSILON, dot(v, h));
+#if 0
+	// Schlick
+	vec3 F = specCol + (1.0 - specCol) * pow((1.0 + EPSILON - loh), 5.0);
+#else
+	// Unreal
+	vec3 F = specCol + (1.0 - specCol)
+		* pow(2.0, (-5.55473 * voh - 6.98316) * voh);
+#endif
 
-	// NDF: GGX Trowbridge-Reitz
+	// D(n,h) aka NDF: GGX Trowbridge-Reitz
 	float noh = max(EPSILON, dot(n, h));
-	float d = a2 / (PI * pow(noh * noh * (a2 - 1.0) + 1.0, 2.0));
+	float D = noh * noh * (a2 - 1.0) + 1.0;
+	D = a2 / (PI * D * D);
 
-	// Visibility term: Geometric shadowing devided by BRDF denominator
+	// G(l,v,h)/(4*dot(n,h)*dot(n,v)) aka Visibility term: Geometric shadowing
+	// divided by BRDF denominator
+#if 0
 	float nov = max(EPSILON, dot(n, v));
-	float vv = nov + sqrt((nov - nov * a2) * nov + a2);
-	float vl = nol + sqrt((nol - nol * a2) * nol + a2);
-	float vis = 1.0 / (vv * vl);
+	float V_v = nov + sqrt((nov - nov * a2) * nov + a2);
+	float V_l = nol + sqrt((nol - nol * a2) * nol + a2);
+	float V = 1.0 / (V_l * V_v);
+#else
+	float k = (a2 + 1.0);
+	k = k * k / 8.0;
+	float nov = max(EPSILON, dot(n, v));
+	float V_v = nov * (1.0 - k) + k;
+	float V_l = nol * (1.0 - k) + k;
+	float V = 1.0 / (4.0 * V_l * V_v);
+#endif
 
-	return f * (vis * d) * lightSpecCol;
+	return F * (V * D) * lightSpecCol;
 }
 
 //==============================================================================
