@@ -11,8 +11,10 @@
 namespace anki {
 
 // Forward
-struct ShaderReflectionProbe;
-class IrBuildContext;
+struct IrShaderReflectionProbe;
+class IrRunContext;
+class IrTaskContext;
+class ReflectionProbeComponent;
 
 /// @addtogroup renderer
 /// @{
@@ -20,10 +22,10 @@ class IrBuildContext;
 /// Image based reflections.
 class Ir: public RenderingPass
 {
+	friend class IrTask;
+
 anki_internal:
-	Ir(Renderer* r)
-		: RenderingPass(r)
-	{}
+	Ir(Renderer* r);
 
 	~Ir();
 
@@ -70,20 +72,29 @@ private:
 	U16 m_cubemapArrSize = 0;
 	U16 m_fbSize = 0;
 	DArray<CacheEntry> m_cacheEntries;
+	Barrier m_barrier;
 
 	// Tokens
 	DynamicBufferToken m_probesToken;
 	DynamicBufferToken m_clustersToken;
 	DynamicBufferToken m_indicesToken;
 
+	/// Bin probes in clusters.
+	void binProbes(U32 threadId, PtrSize threadsCount, IrRunContext& ctx);
+
+	ANKI_USE_RESULT Error writeProbeAndRender(SceneNode& node,
+		IrShaderReflectionProbe& probe);
+
+	void binProbe(U probeIdx, IrRunContext& ctx, IrTaskContext& task) const;
+
 	ANKI_USE_RESULT Error renderReflection(SceneNode& node,
-		ShaderReflectionProbe& shaderProb);
+		ReflectionProbeComponent& reflc, U cubemapIdx);
+
+	static void writeIndicesAndCluster(U clusterIdx, Bool hasPrevCluster,
+		IrRunContext& ctx);
 
 	/// Find a cache entry to store the reflection.
 	void findCacheEntry(SceneNode& node, U& entry, Bool& render);
-
-	void binProbe(const SceneNode& node, U index, IrBuildContext& ctx);
-	void populateIndexAndClusterBuffers(IrBuildContext& ctx);
 };
 /// @}
 

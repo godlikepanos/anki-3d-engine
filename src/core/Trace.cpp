@@ -39,6 +39,7 @@ static Array<const char*, U(TraceCounterType::COUNT)> counterNames = {{
 	"RENDERER_LIGHTS",
 	"RENDERER_SHADOW_PASSES",
 	"RENDERER_MERGED_DRAWCALLS",
+	"RENDERER_REFLECTIONS",
 	"SCENE_NODES_UPDATED"
 }};
 

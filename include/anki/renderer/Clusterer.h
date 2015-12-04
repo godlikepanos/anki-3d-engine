@@ -42,6 +42,11 @@ public:
 		return m_clusterIds.getBegin() + m_count;
 	}
 
+	U getClusterCount() const
+	{
+		return m_count;
+	}
+
 private:
 	DArray<Array<U8, 3>> m_clusterIds;
 	U32 m_count = 0;

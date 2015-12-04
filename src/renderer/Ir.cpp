@@ -20,7 +20,7 @@ namespace anki {
 // Misc                                                                        =
 //==============================================================================
 
-struct ShaderReflectionProbe
+struct IrShaderReflectionProbe
 {
 	Vec3 m_pos;
 	F32 m_radiusSq;
@@ -28,7 +28,7 @@ struct ShaderReflectionProbe
 	U32 _m_pading[3];
 };
 
-struct ShaderCluster
+struct IrShaderCluster
 {
 	U32 m_indexOffset;
 	U32 m_probeCount;
@@ -47,20 +47,23 @@ public:
 class IrClusterData
 {
 public:
-	U32 m_probeCount = 0;
+	Atomic<U32> m_probeCount = {0};
 	Array<ClusterDataIndex, MAX_PROBES_PER_CLUSTER> m_probeIds;
 
 	Bool operator==(const IrClusterData& b) const
 	{
-		if(m_probeCount != b.m_probeCount)
+		const U probeCount = m_probeCount.load() % MAX_PROBES_PER_CLUSTER;
+		const U bProbeCount = b.m_probeCount.load() % MAX_PROBES_PER_CLUSTER;
+
+		if(probeCount != bProbeCount)
 		{
 			return false;
 		}
 
-		if(m_probeCount > 0)
+		if(probeCount > 0)
 		{
 			if(memcmp(&m_probeIds[0], &b.m_probeIds[0],
-				sizeof(m_probeIds[0]) * m_probeCount) != 0)
+				sizeof(m_probeIds[0]) * probeCount) != 0)
 			{
 				return false;
 			}
@@ -72,10 +75,11 @@ public:
 	/// Sort the indices from the smallest probe to the biggest.
 	void sort()
 	{
-		if(m_probeCount > 1)
+		const U probeCount = m_probeCount.load() % MAX_PROBES_PER_CLUSTER;
+		if(probeCount > 1)
 		{
 			std::sort(m_probeIds.getBegin(),
-				m_probeIds.getBegin() + m_probeCount,
+				m_probeIds.getBegin() + probeCount,
 				[](const ClusterDataIndex& a, const ClusterDataIndex& b)
 			{
 				ANKI_ASSERT(a.m_probeRadius > 0.0 && b.m_probeRadius > 0.0);
@@ -85,17 +89,62 @@ public:
 	}
 };
 
-class IrBuildContext
+/// Context for the whole run.
+class IrRunContext
 {
 public:
+	Ir* m_ir ANKI_DBG_NULLIFY_PTR;
+
 	DArray<IrClusterData> m_clusterData;
-	U32 m_indexCount = 0;
+	SArray<IrShaderCluster> m_clusters;
+	SArray<U32> m_indices;
+	Atomic<U32> m_indexCount = {0};
+	VisibilityTestResults* m_visRez ANKI_DBG_NULLIFY_PTR;
+
+	/// An atomic that will help allocating the index buffer
+	Atomic<U32> m_probeIndicesAllocate = {0};
+	/// Same as m_probeIndicesAllocate
+	Atomic<U32> m_clustersAllocate = {0};
+
+	StackAllocator<U8> m_alloc;
+
+	~IrRunContext()
+	{
+		// Deallocate. Watch the order
+		m_clusterData.destroy(m_alloc);
+	}
+};
+
+/// Thread specific context.
+class IrTaskContext
+{
+public:
 	ClustererTestResult m_clustererTestResult;
+	SceneNode* m_node ANKI_DBG_NULLIFY_PTR;
+};
+
+/// Write the lights to the GPU buffers.
+class IrTask: public ThreadPool::Task
+{
+public:
+	IrRunContext* m_ctx ANKI_DBG_NULLIFY_PTR;
+
+	Error operator()(U32 threadId, PtrSize threadsCount) override
+	{
+		m_ctx->m_ir->binProbes(threadId, threadsCount, *m_ctx);
+		return ErrorCode::NONE;
+	}
 };
 
 //==============================================================================
 // Ir                                                                          =
 //==============================================================================
+
+//==============================================================================
+Ir::Ir(Renderer* r)
+	: RenderingPass(r)
+	, m_barrier(r->getThreadPool().getThreadsCount())
+{}
 
 //==============================================================================
 Ir::~Ir()
@@ -184,18 +233,25 @@ Error Ir::run(CommandBufferPtr cmdb)
 		ANKI_LOGW("Increase the ir.cubemapTextureArraySize");
 	}
 
-	IrBuildContext ctx;
-
 	//
-	// Perform some allocations
+	// Perform some initialization
 	//
+	IrRunContext ctx;
 
-	// Allocate temp mem for clusters
+	ctx.m_visRez = &visRez;
+	ctx.m_ir = this;
+	ctx.m_alloc = getFrameAllocator();
+
+	// Allocate temp CPU mem
 	ctx.m_clusterData.create(getFrameAllocator(), m_r->getClusterCount());
 
-	// Probes
+	//
+	// Render and populate probes GPU mem
+	//
+
+	// Probes GPU mem
 	void* data = getGrManager().allocateFrameHostVisibleMemory(
-		sizeof(ShaderReflectionProbe) * visRez.getReflectionProbeCount()
+		sizeof(IrShaderReflectionProbe) * visRez.getReflectionProbeCount()
 		+ sizeof(Mat3x4),
 		BufferUsage::STORAGE, m_probesToken);
 
@@ -203,27 +259,20 @@ Error Ir::run(CommandBufferPtr cmdb)
 	*invViewRotation =
 		Mat3x4(frc.getViewMatrix().getInverse().getRotationPart());
 
-	SArray<ShaderReflectionProbe> probes(
-		reinterpret_cast<ShaderReflectionProbe*>(invViewRotation + 1),
+	SArray<IrShaderReflectionProbe> probes(
+		reinterpret_cast<IrShaderReflectionProbe*>(invViewRotation + 1),
 		visRez.getReflectionProbeCount());
 
-	//
-	// Render and bin the probes
-	//
+	// Render some of the probes
 	const VisibleNode* it = visRez.getReflectionProbesBegin();
 	const VisibleNode* end = visRez.getReflectionProbesEnd();
-
-	m_r->getClusterer().initTestResults(getFrameAllocator(),
-		ctx.m_clustererTestResult);
 
 	U probeIdx = 0;
 	while(it != end)
 	{
-		// Render the probe
-		ANKI_CHECK(renderReflection(*it->m_node, probes[probeIdx]));
-
-		// Bin the probe
-		binProbe(*it->m_node, probeIdx, ctx);
+		// Write and render probe
+		ANKI_CHECK(
+			writeProbeAndRender(*it->m_node, probes[probeIdx]));
 
 		++it;
 		++probeIdx;
@@ -231,92 +280,157 @@ Error Ir::run(CommandBufferPtr cmdb)
 	ANKI_ASSERT(probeIdx == visRez.getReflectionProbeCount());
 
 	//
-	// Populate the index buffer and the clusters
+	// Start the jobs that can run in parallel
 	//
-	populateIndexAndClusterBuffers(ctx);
+	ThreadPool& threadPool = m_r->getThreadPool();
+	Array<IrTask, ThreadPool::MAX_THREADS> tasks;
+	for(U i = 0; i < threadPool.getThreadsCount(); i++)
+	{
+		tasks[i].m_ctx = &ctx;
+		threadPool.assignNewTask(i, &tasks[i]);
+	}
+
+	// Sync
+	ANKI_CHECK(threadPool.waitForAllThreadsToFinish());
 
 	// Bye
-	ctx.m_clusterData.destroy(getFrameAllocator());
 	ANKI_TRACE_STOP_EVENT(RENDER_IR);
 	return ErrorCode::NONE;
 }
 
 //==============================================================================
-void Ir::populateIndexAndClusterBuffers(IrBuildContext& ctx)
+void Ir::binProbes(U32 threadId, PtrSize threadsCount, IrRunContext& ctx)
 {
-	// Allocate GPU mem for indices
-	SArray<U32> indices;
-	if(ctx.m_indexCount > 0)
+	ANKI_TRACE_START_EVENT(RENDER_IR);
+	IrTaskContext task;
+
+	//
+	// Bin the probes
+	//
+
+	PtrSize start, end;
+	ThreadPool::Task::choseStartEnd(threadId, threadsCount,
+		ctx.m_visRez->getReflectionProbeCount(), start, end);
+
+	// Init clusterer test result for this thread
+	if(start < end)
+	{
+		m_r->getClusterer().initTestResults(getFrameAllocator(),
+			task.m_clustererTestResult);
+	}
+
+	for(auto i = start; i < end; i++)
+	{
+		VisibleNode* vnode = ctx.m_visRez->getReflectionProbesBegin() + i;
+		SceneNode& node = *vnode->m_node;
+
+		task.m_node = &node;
+
+		// Bin it to temp clusters
+		binProbe(i, ctx, task);
+	}
+
+	//
+	// Write the clusters
+	//
+
+	// Allocate the cluster buffer. First come first served
+	U who = ctx.m_clustersAllocate.fetchAdd(1);
+	if(who == 0)
 	{
 		void* mem = getGrManager().allocateFrameHostVisibleMemory(
-			ctx.m_indexCount * sizeof(U32), BufferUsage::STORAGE,
-			m_indicesToken);
+			m_r->getClusterCount() * sizeof(IrShaderCluster),
+			BufferUsage::STORAGE, m_clustersToken);
 
-		indices = SArray<U32>(static_cast<U32*>(mem), ctx.m_indexCount);
-	}
-	else
-	{
-		m_indicesToken.markUnused();
+		ctx.m_clusters = SArray<IrShaderCluster>(
+			static_cast<IrShaderCluster*>(mem), m_r->getClusterCount());
 	}
 
-	U indexCount = 0;
+	// Use the same trick to allocate the indices
+	ANKI_TRACE_STOP_EVENT(RENDER_IR);
+	m_barrier.wait();
+	ANKI_TRACE_START_EVENT(RENDER_IR);
 
-	// Allocate GPU mem for clusters
-	void* mem = getGrManager().allocateFrameHostVisibleMemory(
-		m_r->getClusterCount() * sizeof(ShaderCluster), BufferUsage::STORAGE,
-		m_clustersToken);
-	SArray<ShaderCluster> clusters(static_cast<ShaderCluster*>(mem),
-		m_r->getClusterCount());
-
-	for(U i = 0; i < m_r->getClusterCount(); ++i)
+	who = ctx.m_probeIndicesAllocate.fetchAdd(1);
+	if(who == 0)
 	{
-		IrClusterData& cdata = ctx.m_clusterData[i];
-		ShaderCluster& cluster = clusters[i];
-
-		if(cdata.m_probeCount > 0)
+		// Set it to zero in order to reuse it
+		U indexCount = ctx.m_indexCount.exchange(0);
+		if(indexCount > 0)
 		{
-			// Sort to satisfy the probe hierarchy
-			cdata.sort();
+			void* mem = getGrManager().allocateFrameHostVisibleMemory(
+				indexCount * sizeof(U32), BufferUsage::STORAGE,
+				m_indicesToken);
 
-			// Check if the cdata is the same for the previous
-			if(i > 0 && cdata == ctx.m_clusterData[i - 1])
-			{
-				// Same data
-				cluster = clusters[i - 1];
-			}
-			else
-			{
-				// Have to store the indices
-				cluster.m_indexOffset = indexCount;
-				cluster.m_probeCount = cdata.m_probeCount;
-				for(U j = 0; j < cdata.m_probeCount; ++j)
-				{
-					indices[indexCount] = cdata.m_probeIds[j].m_index;
-					++indexCount;
-				}
-			}
+			ctx.m_indices = SArray<U32>(static_cast<U32*>(mem), indexCount);
 		}
 		else
 		{
-			cluster.m_indexOffset = 0;
-			cluster.m_probeCount = 0;
+			m_indicesToken.markUnused();
 		}
 	}
+
+	// Sync
+	ANKI_TRACE_STOP_EVENT(RENDER_IR);
+	m_barrier.wait();
+	ANKI_TRACE_START_EVENT(RENDER_IR);
+
+	ThreadPool::Task::choseStartEnd(threadId, threadsCount,
+		m_r->getClusterCount(), start, end);
+
+	for(auto i = start; i < end; i++)
+	{
+		Bool hasPrevCluster = (i != start);
+		writeIndicesAndCluster(i, hasPrevCluster, ctx);
+	}
+	ANKI_TRACE_STOP_EVENT(RENDER_IR);
 }
 
 //==============================================================================
-void Ir::binProbe(const SceneNode& node, U index, IrBuildContext& ctx)
+Error Ir::writeProbeAndRender(SceneNode& node, IrShaderReflectionProbe& probe)
 {
-	const SpatialComponent& sp = node.getComponent<SpatialComponent>();
-	const ReflectionProbeComponent& reflc =
+	const FrustumComponent& frc = m_r->getActiveFrustumComponent();
+	ReflectionProbeComponent& reflc =
 		node.getComponent<ReflectionProbeComponent>();
 
+	Bool render = false;
+	U entry;
+	findCacheEntry(node, entry, render);
+
+	// Write shader var
+	probe.m_pos = (frc.getViewMatrix() * reflc.getPosition().xyz1()).xyz();
+	probe.m_radiusSq = reflc.getRadius() * reflc.getRadius();
+	probe.m_cubemapIndex = entry;
+
+	if(reflc.getMarkedForRendering())
+	{
+		reflc.setMarkedForRendering(false);
+		ANKI_CHECK(renderReflection(node, reflc, entry));
+	}
+
+	// If you need to render it mark it for the next frame
+	if(render)
+	{
+		reflc.setMarkedForRendering(true);
+	}
+
+	return ErrorCode::NONE;
+}
+
+//==============================================================================
+void Ir::binProbe(U probeIdx, IrRunContext& ctx, IrTaskContext& task) const
+{
+	const SpatialComponent& sp = task.m_node->getComponent<SpatialComponent>();
+	const ReflectionProbeComponent& reflc =
+		task.m_node->getComponent<ReflectionProbeComponent>();
+
+	// Perform the expensive tests
 	m_r->getClusterer().bin(sp.getSpatialCollisionShape(), sp.getAabb(),
-		ctx.m_clustererTestResult);
+		task.m_clustererTestResult);
 
 	// Bin to the correct tiles
-	auto it = ctx.m_clustererTestResult.getClustersBegin();
-	auto end = ctx.m_clustererTestResult.getClustersEnd();
+	auto it = task.m_clustererTestResult.getClustersBegin();
+	auto end = task.m_clustererTestResult.getClustersEnd();
 	for(; it != end; ++it)
 	{
 		U x = (*it)[0];
@@ -328,69 +442,86 @@ void Ir::binProbe(const SceneNode& node, U index, IrBuildContext& ctx)
 
 		auto& cluster = ctx.m_clusterData[i];
 
-		i = cluster.m_probeCount % MAX_PROBES_PER_CLUSTER;
-		++cluster.m_probeCount;
-		cluster.m_probeIds[i].m_index = index;
+		i = cluster.m_probeCount.fetchAdd(1) % MAX_PROBES_PER_CLUSTER;
+		cluster.m_probeIds[i].m_index = probeIdx;
 		cluster.m_probeIds[i].m_probeRadius = reflc.getRadius();
+	}
 
-		++ctx.m_indexCount;
+	ctx.m_indexCount.fetchAdd(task.m_clustererTestResult.getClusterCount());
+}
+
+//==============================================================================
+void Ir::writeIndicesAndCluster(U clusterIdx, Bool hasPrevCluster,
+	IrRunContext& ctx)
+{
+	IrClusterData& cdata = ctx.m_clusterData[clusterIdx];
+	IrShaderCluster& cluster = ctx.m_clusters[clusterIdx];
+
+	const U probeCount = cdata.m_probeCount.load() % MAX_PROBES_PER_CLUSTER;
+	if(probeCount > 0)
+	{
+		// Sort to satisfy the probe hierarchy
+		cdata.sort();
+
+		// Check if the cdata is the same for the previous
+		if(hasPrevCluster && cdata == ctx.m_clusterData[clusterIdx - 1])
+		{
+			// Same data
+			cluster = ctx.m_clusters[clusterIdx - 1];
+		}
+		else
+		{
+			// Have to store the indices
+			U idx = ctx.m_indexCount.fetchAdd(probeCount);
+
+			cluster.m_indexOffset = idx;
+			cluster.m_probeCount = probeCount;
+			for(U j = 0; j < probeCount; ++j)
+			{
+				ctx.m_indices[idx] = cdata.m_probeIds[j].m_index;
+				++idx;
+			}
+		}
+	}
+	else
+	{
+		cluster.m_indexOffset = 0;
+		cluster.m_probeCount = 0;
 	}
 }
 
 //==============================================================================
-Error Ir::renderReflection(SceneNode& node, ShaderReflectionProbe& shaderProb)
+Error Ir::renderReflection(SceneNode& node, ReflectionProbeComponent& reflc,
+	U cubemapIdx)
 {
-	const FrustumComponent& frc = m_r->getActiveFrustumComponent();
-	ReflectionProbeComponent& reflc =
-		node.getComponent<ReflectionProbeComponent>();
-
-	// Get cache entry
-	Bool render = false;
-	U entry;
-	findCacheEntry(node, entry, render);
-
-	// Write shader var
-	shaderProb.m_pos = (frc.getViewMatrix() * reflc.getPosition().xyz1()).xyz();
-	shaderProb.m_radiusSq = reflc.getRadius() * reflc.getRadius();
-	shaderProb.m_cubemapIndex = entry;
+	ANKI_TRACE_INC_COUNTER(RENDERER_REFLECTIONS, 1);
 
 	// Render cubemap
-	if(reflc.getMarkedForRendering())
+	for(U i = 0; i < 6; ++i)
 	{
-		for(U i = 0; i < 6; ++i)
+		Array<CommandBufferPtr, RENDERER_COMMAND_BUFFERS_COUNT> cmdb;
+		for(U j = 0; j < cmdb.getSize(); ++j)
 		{
-			Array<CommandBufferPtr, RENDERER_COMMAND_BUFFERS_COUNT> cmdb;
-			for(U j = 0; j < cmdb.getSize(); ++j)
-			{
-				cmdb[j] = getGrManager().newInstance<CommandBuffer>();
-			}
-
-			// Render
-			ANKI_CHECK(m_nestedR.render(node, i, cmdb));
-
-			// Copy textures
-			cmdb[cmdb.getSize() - 1]->copyTextureToTexture(
-				m_nestedR.getPps().getRt(), 0, 0, m_cubemapArr, 6 * entry + i,
-				0);
-
-			// Gen mips
-			cmdb[cmdb.getSize() - 1]->generateMipmaps(m_cubemapArr,
-				6 * entry + i);
-
-			// Flush
-			for(U j = 0; j < cmdb.getSize(); ++j)
-			{
-				cmdb[j]->flush();
-			}
+			cmdb[j] = getGrManager().newInstance<CommandBuffer>();
 		}
 
-		reflc.setMarkedForRendering(false);
-	}
+		// Render
+		ANKI_CHECK(m_nestedR.render(node, i, cmdb));
 
-	// If you need to render it mark it for the next frame
-	if(render)
-	{
-		reflc.setMarkedForRendering(true);
+		// Copy textures
+		cmdb[cmdb.getSize() - 1]->copyTextureToTexture(
+			m_nestedR.getPps().getRt(), 0, 0, m_cubemapArr,
+			6 * cubemapIdx + i, 0);
+
+		// Gen mips
+		cmdb[cmdb.getSize() - 1]->generateMipmaps(m_cubemapArr,
+			6 * cubemapIdx + i);
+
+		// Flush
+		for(U j = 0; j < cmdb.getSize(); ++j)
+		{
+			cmdb[j]->flush();
+		}
 	}
 
 	return ErrorCode::NONE;

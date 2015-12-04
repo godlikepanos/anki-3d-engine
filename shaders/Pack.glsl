@@ -114,7 +114,7 @@ void readGBuffer(
 	in sampler2D rt0,
 	in sampler2D rt1,
 	in sampler2D rt2,
-	in vec2 uv,
+	in vec2 uv_,
 	out vec3 diffColor,
 	out vec3 normal,
 	out vec3 specColor,
@@ -122,16 +122,18 @@ void readGBuffer(
 	out float subsurface,
 	out float emission)
 {
-	vec4 comp = textureLod(rt0, uv, 0.0);
+	ivec2 uv = ivec2(gl_FragCoord.xy);
+
+	vec4 comp = texelFetch(rt0, uv, 0);
 	diffColor = comp.xyz;
 	subsurface = comp.w;
 
-	comp = textureLod(rt1, uv, 0.0);
+	comp = texelFetch(rt1, uv, 0);
 	specColor = vec3(unpackUnorm1ToUnorm2(comp.x), comp.y);
 	roughness = comp.z;
 	emission = comp.w * MAX_EMISSION;
 
-	normal = textureLod(rt2, uv, 0.0).xyz;
+	normal = texelFetch(rt2, uv, 0).xyz;
 	normal = normalize(normal * 2.0 - 1.0);
 }
 

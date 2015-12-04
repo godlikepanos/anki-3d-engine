@@ -74,8 +74,8 @@ public:
 
 	void sortLightIds()
 	{
-		const U pointCount = m_pointCount.load();
-		const U spotCount = m_spotCount.load();
+		const U pointCount = m_pointCount.load() % MAX_TYPED_LIGHTS_PER_CLUSTER;
+		const U spotCount = m_spotCount.load() % MAX_TYPED_LIGHTS_PER_CLUSTER;
 
 		if(pointCount > 1)
 		{
@@ -90,10 +90,12 @@ public:
 
 	Bool operator==(const ClusterData& b) const
 	{
-		const U pointCount = m_pointCount.load();
-		const U spotCount = m_spotCount.load();
-		const U pointCount2 = b.m_pointCount.load();
-		const U spotCount2 = b.m_spotCount.load();
+		const U pointCount = m_pointCount.load() % MAX_TYPED_LIGHTS_PER_CLUSTER;
+		const U spotCount = m_spotCount.load() % MAX_TYPED_LIGHTS_PER_CLUSTER;
+		const U pointCount2 =
+			b.m_pointCount.load() % MAX_TYPED_LIGHTS_PER_CLUSTER;
+		const U spotCount2 =
+			b.m_spotCount.load() % MAX_TYPED_LIGHTS_PER_CLUSTER;
 
 		if(pointCount != pointCount2 || spotCount != spotCount2)
 		{
@@ -505,7 +507,7 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 	ClustererTestResult testResult;
 	m_r->getClusterer().initTestResults(getFrameAllocator(), testResult);
 
-	for(U64 i = start; i < end; i++)
+	for(auto i = start; i < end; i++)
 	{
 		SceneNode* snode = (*(task.m_lightsBegin + i)).m_node;
 		MoveComponent& move = snode->getComponent<MoveComponent>();
@@ -555,8 +557,10 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 	{
 		auto& cluster = task.m_tempClusters[i];
 
-		const U countP = cluster.m_pointCount.load();
-		const U countS = cluster.m_spotCount.load();
+		const U countP =
+			cluster.m_pointCount.load() % MAX_TYPED_LIGHTS_PER_CLUSTER;
+		const U countS =
+			cluster.m_spotCount.load() % MAX_TYPED_LIGHTS_PER_CLUSTER;
 		const U count = countP + countS;
 
 		auto& c = task.m_clusters[i];
