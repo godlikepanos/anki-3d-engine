@@ -7,7 +7,6 @@
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/Ms.h>
 #include <anki/renderer/Pps.h>
-#include <anki/renderer/Ir.h>
 #include <anki/scene/Camera.h>
 #include <anki/scene/Light.h>
 #include <anki/scene/Visibility.h>
@@ -249,9 +248,7 @@ Error Is::initInternal(const ConfigSet& config)
 		"#define MAX_SPOT_LIGHTS %u\n"
 		"#define MAX_LIGHT_INDICES %u\n"
 		"#define GROUND_LIGHT %u\n"
-		"#define POISSON %u\n"
-		"#define IR %u\n"
-		"#define IR_MIPMAP_COUNT %u\n",
+		"#define POISSON %u\n",
 		m_r->getTileCountXY().x(),
 		m_r->getTileCountXY().y(),
 		m_r->getClusterCount(),
@@ -261,9 +258,7 @@ Error Is::initInternal(const ConfigSet& config)
 		m_maxSpotLights,
 		m_maxLightIds,
 		m_groundLightEnabled,
-		m_sm.getPoissonEnabled(),
-		m_r->irEnabled(),
-		m_r->irEnabled() ? m_r->getIr().getCubemapArrayMipmapCount() : 0);
+		m_sm.getPoissonEnabled());
 
 	// point light
 	ANKI_CHECK(getResourceManager().loadResourceToCache(m_lightVert,
@@ -308,22 +303,12 @@ Error Is::initInternal(const ConfigSet& config)
 		init.m_textures[3].m_texture = m_r->getMs().getDepthRt();
 		init.m_textures[4].m_texture = m_sm.getSpotTextureArray();
 		init.m_textures[5].m_texture = m_sm.getOmniTextureArray();
-		if(m_r->irEnabled())
-		{
-			init.m_textures[6].m_texture = m_r->getIr().getCubemapArray();
-		}
 
 		init.m_storageBuffers[0].m_dynamic = true;
 		init.m_storageBuffers[1].m_dynamic = true;
 		init.m_storageBuffers[2].m_dynamic = true;
 		init.m_storageBuffers[3].m_dynamic = true;
 		init.m_storageBuffers[4].m_dynamic = true;
-		if(m_r->irEnabled())
-		{
-			init.m_storageBuffers[5].m_dynamic = true;
-			init.m_storageBuffers[6].m_dynamic = true;
-			init.m_storageBuffers[7].m_dynamic = true;
-		}
 
 		m_rcGroup = getGrManager().newInstance<ResourceGroup>(init);
 	}
@@ -767,13 +752,6 @@ void Is::setState(CommandBufferPtr& cmdb)
 	dyn.m_storageBuffers[2] = m_sLightsToken;
 	dyn.m_storageBuffers[3] = m_clustersToken;
 	dyn.m_storageBuffers[4] = m_lightIdsToken;
-	if(m_r->irEnabled())
-	{
-		dyn.m_storageBuffers[5] = m_r->getIr().getProbesToken();
-		dyn.m_storageBuffers[6] = m_r->getIr().getProbeIndicesToken();
-		dyn.m_storageBuffers[7] = m_r->getIr().getClustersToken();
-
-	}
 
 	cmdb->bindResourceGroup(m_rcGroup, 0, &dyn);
 }

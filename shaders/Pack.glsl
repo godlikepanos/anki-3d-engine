@@ -137,6 +137,12 @@ void readGBuffer(
 	normal = normalize(normal * 2.0 - 1.0);
 }
 
+// Rear roughness from G-Buffer
+void readRoughnessFromGBuffer(in sampler2D rt1, in vec2 uv, out float r)
+{
+	r = textureLod(rt1, uv, 0.0).z;
+}
+
 // Read only normal from G buffer
 void readNormalFromGBuffer(
 	in sampler2D fai2,

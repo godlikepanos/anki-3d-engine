@@ -7,6 +7,7 @@
 
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/RenderingPass.h>
+#include <anki/renderer/Clusterer.h>
 
 namespace anki {
 
@@ -73,6 +74,7 @@ private:
 	U16 m_fbSize = 0;
 	DArray<CacheEntry> m_cacheEntries;
 	Barrier m_barrier;
+	Clusterer m_clusterer;
 
 	// Tokens
 	DynamicBufferToken m_probesToken;

@@ -37,16 +37,6 @@ public:
 		return *m_ssao;
 	}
 
-	const Sslr& getSslr() const
-	{
-		return *m_sslr;
-	}
-
-	Sslr& getSslr()
-	{
-		return *m_sslr;
-	}
-
 	const Tm& getTm() const
 	{
 		return *m_tm;
@@ -88,7 +78,6 @@ anki_internal:
 
 private:
 	UniquePtr<Ssao> m_ssao;
-	UniquePtr<Sslr> m_sslr;
 	UniquePtr<Tm> m_tm;
 	UniquePtr<Bloom> m_bloom;
 	UniquePtr<Sslf> m_sslf;

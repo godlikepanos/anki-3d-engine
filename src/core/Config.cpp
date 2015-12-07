@@ -43,10 +43,6 @@ Config::Config()
 	newOption("pps.ssao.renderingQuality", 0.3);
 	newOption("pps.ssao.blurringIterationsCount", 1);
 
-	newOption("pps.sslr.enabled", true);
-	newOption("pps.sslr.renderingQuality", 0.2);
-	newOption("pps.sslr.blurringIterationsCount", 0);
-
 	newOption("pps.bl.enabled", true);
 	newOption("pps.bl.blurringIterationsCount", 1);
 	newOption("pps.bl.sideBlurFactor", 1.0);
@@ -58,9 +54,13 @@ Config::Config()
 	newOption("pps.gammaCorrection", true);
 
 	// Reflections
+	newOption("refl.renderingQuality", 0.5);
 	newOption("ir.enabled", true);
-	newOption("ir.rendererSize", 64);
+	newOption("ir.rendererSize", 128);
 	newOption("ir.cubemapTextureArraySize", 16);
+	newOption("ir.clusterSizeZ", 16);
+	newOption("sslr.enabled", true);
+	newOption("sslr.startRoughnes", 0.2);
 
 	// Dbg
 	newOption("dbg.enabled", false);

@@ -8,7 +8,6 @@
 #include <anki/renderer/Bloom.h>
 #include <anki/renderer/Sslf.h>
 #include <anki/renderer/Ssao.h>
-#include <anki/renderer/Sslr.h>
 #include <anki/renderer/Tm.h>
 #include <anki/renderer/Is.h>
 #include <anki/renderer/Ms.h>
@@ -59,9 +58,6 @@ Error Pps::initInternal(const ConfigSet& config)
 
 	m_ssao.reset(getAllocator().newInstance<Ssao>(m_r));
 	ANKI_CHECK(m_ssao->init(config));
-
-	m_sslr.reset(getAllocator().newInstance<Sslr>(m_r));
-	ANKI_CHECK(m_sslr->init(config));
 
 	m_tm.reset(getAllocator().newInstance<Tm>(m_r));
 	ANKI_CHECK(m_tm->create(config));
@@ -179,13 +175,7 @@ void Pps::run(CommandBufferPtr& cmdb)
 		m_ssao->run(cmdb);
 	}
 
-	// Then SSLR because HDR depends on it
-	if(m_sslr->getEnabled())
-	{
-		m_sslr->run(cmdb);
-	}
-
-	m_r->getIs().generateMipmaps(cmdb);
+	m_r->getIs().generateMipmaps(cmdb); // XXX
 	m_tm->run(cmdb);
 
 	if(m_bloom->getEnabled())

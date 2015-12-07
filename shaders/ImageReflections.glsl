@@ -24,6 +24,7 @@ layout(std140, row_major, SS_BINDING(IMAGE_REFLECTIONS_SET,
 	IMAGE_REFLECTIONS_FIRST_SS_BINDING)) readonly buffer _irs1
 {
 	mat3 u_invViewRotation;
+	vec4 u_nearClusterDivisorPad2;
 	ReflectionProbe u_reflectionProbes[];
 };
 
@@ -71,13 +72,9 @@ vec3 computeCubemapVec(in vec3 r, in float R2, in vec3 f)
 
 //==============================================================================
 vec3 readReflection(in uint clusterIndex, in vec3 posVSpace,
-	in vec3 normalVSpace, in float lod)
+	in vec3 r, in float lod)
 {
-	vec3 color = IMAGE_REFLECTIONS_DEFAULT_COLOR;
-
-	// Reflection direction
-	vec3 eye = normalize(posVSpace);
-	vec3 r = reflect(eye, normalVSpace);
+	vec3 color = vec3(0.0);
 
 	// Check proxy
 	uvec2 cluster = u_reflectionClusters[clusterIndex];
@@ -111,6 +108,40 @@ vec3 readReflection(in uint clusterIndex, in vec3 posVSpace,
 	}
 
 	return color;
+}
+
+//==============================================================================
+uint computeClusterIndex(in vec3 posVSpace)
+{
+#if TILE_SIZE == 64
+	// Compute tile idx
+	uint tileX = uint(gl_FragCoord.x) >> 6;
+	uint tileY = uint(gl_FragCoord.y) >> 6;
+
+	const uint TILE_COUNT_X = (WIDTH / TILE_SIZE);
+	uint tileIdx = tileY * TILE_COUNT_X + tileX;
+
+	// Calc split
+	float zVspace = -posVSpace.z;
+	float fk = sqrt(
+		(zVspace - u_nearClusterDivisorPad2.x) / u_nearClusterDivisorPad2.y);
+	uint k = uint(fk);
+
+	// Finally
+	const uint TILE_COUNT = TILE_COUNT_X * (HEIGHT / TILE_SIZE);
+	uint clusterIdx = tileIdx + k * TILE_COUNT;
+
+	return clusterIdx;
+#else
+#	error Not designed for this tile size
+#endif
+}
+
+//==============================================================================
+vec3 doImageReflections(in vec3 posVSpace, in vec3 r, in float lod)
+{
+	uint clusterIdx = computeClusterIndex(posVSpace);
+	return readReflection(clusterIdx, posVSpace, r, lod);
 }
 
 #endif

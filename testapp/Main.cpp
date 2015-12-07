@@ -494,9 +494,6 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("pps.bloom.threshold", 2.0);
 	config.set("pps.bloom.scale", 2.0);
 	config.set("pps.bloom.samples", 17);
-	config.set("pps.sslr.enabled", true);
-	config.set("pps.sslr.renderingQuality", 0.25);
-	config.set("pps.sslr.blurringIterationsCount", 0);
 	config.set("pps.ssao.blurringIterationsCount", 2);
 	config.set("pps.ssao.enabled", true);
 	config.set("pps.ssao.renderingQuality", 0.35);

@@ -16,7 +16,7 @@
 #include <anki/renderer/Lf.h>
 #include <anki/renderer/Dbg.h>
 #include <anki/renderer/Tiler.h>
-#include <anki/renderer/Ir.h>
+#include <anki/renderer/Refl.h>
 
 namespace anki {
 
@@ -104,13 +104,6 @@ Error Renderer::initInternal(const ConfigSet& config)
 		m_resources->loadResource("shaders/Quad.vert.glsl", m_drawQuadVert));
 
 	// Init the stages. Careful with the order!!!!!!!!!!
-	Bool irEnabled = config.getNumber("ir.enabled");
-	if(irEnabled)
-	{
-		m_ir.reset(m_alloc.newInstance<Ir>(this));
-		ANKI_CHECK(m_ir->init(config));
-	}
-
 	m_ms.reset(m_alloc.newInstance<Ms>(this));
 	ANKI_CHECK(m_ms->init(config));
 
@@ -119,6 +112,9 @@ Error Renderer::initInternal(const ConfigSet& config)
 
 	m_is.reset(m_alloc.newInstance<Is>(this));
 	ANKI_CHECK(m_is->init(config));
+
+	m_refl.reset(m_alloc.newInstance<Refl>(this));
+	ANKI_CHECK(m_refl->init(config));
 
 	m_fs.reset(m_alloc.newInstance<Fs>(this));
 	ANKI_CHECK(m_fs->init(config));
@@ -165,10 +161,10 @@ Error Renderer::render(SceneNode& frustumableNode, U frustumIdx,
 	ANKI_ASSERT(m_frc->getFrustum().getType() == Frustum::Type::PERSPECTIVE);
 	m_clusterer.prepare(getThreadPool(), *m_frc);
 
-	// Run reflection passes
-	if(m_ir.isCreated())
+	// First part of reflections
+	if(m_refl->getEnabled())
 	{
-		ANKI_CHECK(m_ir->run(cmdb[0]));
+		ANKI_CHECK(m_refl->run1(cmdb[0]));
 	}
 
 	ANKI_TRACE_START_EVENT(RENDER_MS);
@@ -185,6 +181,12 @@ Error Renderer::render(SceneNode& frustumableNode, U frustumIdx,
 
 	ANKI_CHECK(m_fs->run(cmdb[1]));
 	m_lf->run(cmdb[1]);
+
+	// 2nd part of reflections
+	if(m_refl->getEnabled())
+	{
+		m_refl->run2(cmdb[1]);
+	}
 
 	if(m_pps->getEnabled())
 	{

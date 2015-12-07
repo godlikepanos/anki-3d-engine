@@ -17,7 +17,6 @@ class Is;
 class Fs;
 class Lf;
 class Ssao;
-class Sslr;
 class Sslf;
 class Tm;
 class Bloom;
@@ -25,6 +24,7 @@ class Pps;
 class Dbg;
 class Tiler;
 class Ir;
+class Refl;
 
 /// Cut the job submition into multiple chains. We want to avoid feeding
 /// GL with a huge job chain

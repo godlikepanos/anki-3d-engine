@@ -68,21 +68,6 @@ public:
 		return *m_dbg;
 	}
 
-	const Ir& getIr() const
-	{
-		return *m_ir;
-	}
-
-	Ir& getIr()
-	{
-		return *m_ir;
-	}
-
-	Bool irEnabled() const
-	{
-		return m_ir.isCreated();
-	}
-
 	Dbg& getDbg()
 	{
 		return *m_dbg;
@@ -307,9 +292,9 @@ private:
 
 	/// @name Rendering stages
 	/// @{
-	UniquePtr<Ir> m_ir;
 	UniquePtr<Ms> m_ms; ///< Material rendering stage
 	UniquePtr<Is> m_is; ///< Illumination rendering stage
+	UniquePtr<Refl> m_refl; ///< Reflections.
 	UniquePtr<Tiler> m_tiler;
 	UniquePtr<Pps> m_pps; ///< Postprocessing rendering stage
 	UniquePtr<Fs> m_fs; ///< Forward shading.

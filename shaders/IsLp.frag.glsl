@@ -27,17 +27,6 @@ layout(location = 0) out vec3 out_color;
 
 #pragma anki include "shaders/LightFunctions.glsl"
 
-#if IR == 1
-#define IMAGE_REFLECTIONS_SET 0
-#define IMAGE_REFLECTIONS_FIRST_SS_BINDING 5
-#define IMAGE_REFLECTIONS_TEX_BINDING 6
-#define IMAGE_REFLECTIONS_DEFAULT_COLOR vec3(0.0)
-#pragma anki include "shaders/ImageReflections.glsl"
-#undef IMAGE_REFLECTIONS_SET
-#undef IMAGE_REFLECTIONS_FIRST_SS_BINDING
-#undef IMAGE_REFLECTIONS_DEFAULT_COLOR
-#endif
-
 const uint TILE_COUNT = TILES_COUNT_X * TILES_COUNT_Y;
 
 //==============================================================================
@@ -160,14 +149,6 @@ void main()
 			* (att * spot * max(subsurface, lambert * shadow));
 	}
 
-#if IR == 1
-	{
-		float reflLod = float(IR_MIPMAP_COUNT) * roughness;
-		vec3 refl = readReflection(clusterIndex, fragPos, normal, reflLod);
-		out_color += refl * (1.0 - roughness);
-	}
-#endif
-
 #if 0
 	if(pointLightsCount == 0)
 	{
@@ -188,8 +169,5 @@ void main()
 	{
 		out_color += vec3(1.0, 0.0, 0.0);
 	}
-#if IR == 1
-	out_color = readReflection(clusterIndex, fragPos, normal, 0.0);
-#endif
 #endif
 }

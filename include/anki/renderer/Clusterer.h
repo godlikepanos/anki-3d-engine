@@ -88,6 +88,21 @@ public:
 		return m_calcNearOpt;
 	}
 
+	U getClusterCountX() const
+	{
+		return m_counts[0];
+	}
+
+	U getClusterCountY() const
+	{
+		return m_counts[1];
+	}
+
+	U getClusterCountZ() const
+	{
+		return m_counts[2];
+	}
+
 	U getClusterCount() const
 	{
 		return m_counts[0] * m_counts[1] * m_counts[2];
