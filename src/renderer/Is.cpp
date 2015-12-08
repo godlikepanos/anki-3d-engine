@@ -53,7 +53,7 @@ struct ShaderCommonUniforms
 	Vec4 m_projectionParams;
 	Vec4 m_sceneAmbientColor;
 	Vec4 m_rendererSizeTimePad1;
-	Vec4 m_nearFarClustererDivisor;
+	Vec4 m_nearFarClustererMagicPad1;
 	Mat4 m_viewMat;
 	UVec4 m_tileCount;
 };
@@ -239,8 +239,8 @@ Error Is::initInternal(const ConfigSet& config)
 	StringAuto pps(getAllocator());
 
 	pps.sprintf(
-		"\n#define TILES_COUNT_X %u\n"
-		"#define TILES_COUNT_Y %u\n"
+		"\n#define TILE_COUNT_X %u\n"
+		"#define TILE_COUNT_Y %u\n"
 		"#define CLUSTER_COUNT %u\n"
 		"#define RENDERER_WIDTH %u\n"
 		"#define RENDERER_HEIGHT %u\n"
@@ -775,10 +775,10 @@ void Is::updateCommonBlock(CommandBufferPtr& cmdb, const FrustumComponent& fr)
 	blk->m_projectionParams = m_r->getProjectionParameters();
 	blk->m_sceneAmbientColor = m_ambientColor;
 	blk->m_viewMat = fr.getViewMatrix().getTransposed();
-	blk->m_nearFarClustererDivisor = Vec4(
+	blk->m_nearFarClustererMagicPad1 = Vec4(
 		fr.getFrustum().getNear(),
 		fr.getFrustum().getFar(),
-		m_r->getClusterer().getDivisor(),
+		m_r->getClusterer().getShaderMagicValue(),
 		0.0);
 
 	blk->m_rendererSizeTimePad1 = Vec4(m_r->getWidth(), m_r->getHeight(),

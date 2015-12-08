@@ -111,6 +111,7 @@ public:
 		Array<CommandBufferPtr, RENDERER_COMMAND_BUFFERS_COUNT>& cmdBuff);
 
 anki_internal:
+	/// WARNING: If you change the tile size you need to change some shaders
 	static const U TILE_SIZE = 64;
 
 	void getOutputFramebuffer(FramebufferPtr& outputFb, U32& width, U32& height)

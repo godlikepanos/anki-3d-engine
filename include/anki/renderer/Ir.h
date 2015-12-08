@@ -59,6 +59,11 @@ anki_internal:
 		return m_cubemapArrMipCount;
 	}
 
+	const Clusterer& getClusterer() const
+	{
+		return m_clusterer;
+	}
+
 private:
 	class CacheEntry
 	{

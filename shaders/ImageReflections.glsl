@@ -8,7 +8,7 @@
 #ifndef ANKI_SHADERS_IMAGE_REFLECTIONS_GLSL
 #define ANKI_SHADERS_IMAGE_REFLECTIONS_GLSL
 
-#pragma anki include "shaders/Common.glsl"
+#pragma anki include "shaders/Clusterer.glsl"
 
 // Representation of a reflection probe
 struct ReflectionProbe
@@ -24,7 +24,7 @@ layout(std140, row_major, SS_BINDING(IMAGE_REFLECTIONS_SET,
 	IMAGE_REFLECTIONS_FIRST_SS_BINDING)) readonly buffer _irs1
 {
 	mat3 u_invViewRotation;
-	vec4 u_nearClusterDivisorPad2;
+	vec4 u_nearClusterMagicPad2;
 	ReflectionProbe u_reflectionProbes[];
 };
 
@@ -111,36 +111,13 @@ vec3 readReflection(in uint clusterIndex, in vec3 posVSpace,
 }
 
 //==============================================================================
-uint computeClusterIndex(in vec3 posVSpace)
-{
-#if TILE_SIZE == 64
-	// Compute tile idx
-	uint tileX = uint(gl_FragCoord.x) >> 6;
-	uint tileY = uint(gl_FragCoord.y) >> 6;
-
-	const uint TILE_COUNT_X = (WIDTH / TILE_SIZE);
-	uint tileIdx = tileY * TILE_COUNT_X + tileX;
-
-	// Calc split
-	float zVspace = -posVSpace.z;
-	float fk = sqrt(
-		(zVspace - u_nearClusterDivisorPad2.x) / u_nearClusterDivisorPad2.y);
-	uint k = uint(fk);
-
-	// Finally
-	const uint TILE_COUNT = TILE_COUNT_X * (HEIGHT / TILE_SIZE);
-	uint clusterIdx = tileIdx + k * TILE_COUNT;
-
-	return clusterIdx;
-#else
-#	error Not designed for this tile size
-#endif
-}
-
-//==============================================================================
 vec3 doImageReflections(in vec3 posVSpace, in vec3 r, in float lod)
 {
-	uint clusterIdx = computeClusterIndex(posVSpace);
+	uint clusterIdx = computeClusterIndexUsingFragCoord(
+		u_nearClusterMagicPad2.x,
+		u_nearClusterMagicPad2.y,
+		posVSpace.z,
+		TILE_COUNT_X);
 	return readReflection(clusterIdx, posVSpace, r, lod);
 }
 

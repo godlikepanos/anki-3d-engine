@@ -16,18 +16,6 @@ const float OMNI_LIGHT_FRUSTUM_NEAR_PLANE = 0.1 / 4.0;
 const uint SHADOW_SAMPLE_COUNT = 16;
 
 //==============================================================================
-/// Calculate the cluster split
-uint calcClusterSplit(float zVspace)
-{
-	zVspace = -zVspace;
-	float fk = sqrt(
-		(zVspace - u_lightingUniforms.nearFarClustererDivisor.x)
-		/ u_lightingUniforms.nearFarClustererDivisor.z);
-	uint k = uint(fk);
-	return k;
-}
-
-//==============================================================================
 float computeAttenuationFactor(float lightRadius, vec3 frag2Light)
 {
 	float fragLightDist = dot(frag2Light, frag2Light);

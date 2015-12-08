@@ -169,6 +169,8 @@ void Clusterer::prepare(ThreadPool& threadPool, const FrustumComponent& frc)
 	m_near = pfr.getNear();
 	m_far = pfr.getFar();
 	m_calcNearOpt = (m_far - m_near) / pow(m_counts[2], 2.0);
+	U countXY = m_counts[0] * m_counts[1];
+	m_shaderMagicVal = -(countXY * countXY) / m_calcNearOpt;
 
 	//
 	// Issue parallel jobs

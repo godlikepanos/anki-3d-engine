@@ -279,7 +279,7 @@ Error Ir::run(CommandBufferPtr cmdb)
 
 	Vec4* nearClusterDivisor = reinterpret_cast<Vec4*>(invViewRotation + 1);
 	nearClusterDivisor->x() = frc.getFrustum().getNear();
-	nearClusterDivisor->y() = m_clusterer.getDivisor();
+	nearClusterDivisor->y() = m_clusterer.getShaderMagicValue();
 	nearClusterDivisor->z() = 0.0;
 	nearClusterDivisor->w() = 0.0;
 

@@ -90,6 +90,8 @@ Error Refl::init1stPass(const ConfigSet& config)
 	pps.sprintf(
 		"#define WIDTH %u\n"
 		"#define HEIGHT %u\n"
+		"#define TILE_COUNT_X %u\n"
+		"#define TILE_COUNT_Y %u\n"
 		"#define SSLR_ENABLED %u\n"
 		"#define IR_ENABLED %u\n"
 		"#define IR_MIPMAP_COUNT %u\n"
@@ -97,6 +99,8 @@ Error Refl::init1stPass(const ConfigSet& config)
 		"#define SSLR_START_ROUGHNESS %f\n",
 		m_width,
 		m_height,
+		(m_irEnabled) ? m_ir->getClusterer().getClusterCountX() : 0,
+		(m_irEnabled) ? m_ir->getClusterer().getClusterCountY() : 0,
 		U(m_sslrEnabled),
 		U(m_irEnabled),
 		(m_irEnabled) ? m_ir->getCubemapArrayMipmapCount() : 0,

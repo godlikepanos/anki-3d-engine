@@ -14,7 +14,7 @@ struct LightingUniforms
 	vec4 projectionParams;
 	vec4 sceneAmbientColor;
 	vec4 rendererSizeTimePad1;
-	vec4 nearFarClustererDivisor;
+	vec4 nearFarClustererMagicPad1;
 	mat4 viewMat;
 	uvec4 tileCountPad1;
 };

@@ -25,13 +25,13 @@ void main()
 	float instIdF = float(gl_InstanceID);
 
 	vec2 ij = vec2(
-		mod(instIdF, float(TILES_COUNT_X)),
-		floor(instIdF / float(TILES_COUNT_X)));
+		mod(instIdF, float(TILE_COUNT_X)),
+		floor(instIdF / float(TILE_COUNT_X)));
 
 	out_instanceId = int(gl_InstanceID);
 
 	const vec2 SIZES =
-		vec2(1.0 / float(TILES_COUNT_X), 1.0 / float(TILES_COUNT_Y));
+		vec2(1.0 / float(TILE_COUNT_X), 1.0 / float(TILE_COUNT_Y));
 
 	const vec2 UVS[4] = vec2[](
 		vec2(0.0, 0.0) * SIZES,

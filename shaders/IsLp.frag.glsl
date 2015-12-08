@@ -5,6 +5,7 @@
 
 #pragma anki type frag
 #pragma anki include "shaders/Pack.glsl"
+#pragma anki include "shaders/Clusterer.glsl"
 
 #define LIGHT_SET 0
 #define LIGHT_SS_BINDING 0
@@ -27,7 +28,7 @@ layout(location = 0) out vec3 out_color;
 
 #pragma anki include "shaders/LightFunctions.glsl"
 
-const uint TILE_COUNT = TILES_COUNT_X * TILES_COUNT_Y;
+const uint TILE_COUNT = TILE_COUNT_X * TILE_COUNT_Y;
 
 //==============================================================================
 // Return frag pos in view space
@@ -93,9 +94,13 @@ void main()
 		+ diffCol * emission;
 
 	// Get counts and offsets
-	uint k = calcClusterSplit(fragPos.z);
-	uint clusterIndex = in_instanceId + k * TILE_COUNT;
-	uint cluster = u_clusters[clusterIndex];
+	uint clusterIdx = computeClusterIndexUsingTileIdx(
+		u_lightingUniforms.nearFarClustererMagicPad1.x,
+		u_lightingUniforms.nearFarClustererMagicPad1.z,
+		fragPos.z,
+		in_instanceId);
+
+	uint cluster = u_clusters[clusterIdx];
 	uint lightOffset = cluster >> 16u;
 	uint pointLightsCount = (cluster >> 8u) & 0xFFu;
 	uint spotLightsCount = cluster & 0xFFu;

@@ -83,9 +83,10 @@ public:
 	void bin(const CollisionShape& cs, const Aabb& csBox,
 		ClustererTestResult& rez) const;
 
-	F32 getDivisor() const
+	/// A value that will be used in shaders to calculate the cluster index.
+	F32 getShaderMagicValue() const
 	{
-		return m_calcNearOpt;
+		return m_shaderMagicVal;
 	}
 
 	U getClusterCountX() const
@@ -134,6 +135,7 @@ public:
 	F32 m_near = 0.0;
 	F32 m_far = 0.0;
 	F32 m_calcNearOpt = 0.0;
+	F32 m_shaderMagicVal = 0.0;
 
 	F32 calcNear(U k) const;
 

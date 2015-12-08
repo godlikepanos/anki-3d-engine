@@ -7,6 +7,7 @@
 #pragma anki include "shaders/Common.glsl"
 #pragma anki include "shaders/MsFsCommon.glsl"
 #pragma anki include "shaders/LinearDepth.glsl"
+#pragma anki include "shaders/Clusterer.glsl"
 
 // Global resources
 layout(TEX_BINDING(1, 0)) uniform sampler2D anki_msDepthRt;
@@ -151,14 +152,13 @@ vec3 computeLightColor(vec3 diffCol)
 	uint pointLightsCount;
 	uint spotLightsCount;
 	{
-		uint k = calcClusterSplit(fragPos.z);
+		uint clusterIdx = computeClusterIndexUsingFragCoord(
+			u_lightingUniforms.nearFarClustererMagicPad1.x,
+			u_lightingUniforms.nearFarClustererMagicPad1.z,
+			fragPos.z,
+			u_lightingUniforms.tileCountPad1.x);
 
-		vec2 tilef = gl_FragCoord.xy / float(TILE_SIZE);
-		uint tile = uint(tilef.y) * u_lightingUniforms.tileCountPad1.x
-			+ uint(tilef.x);
-
-		uint cluster =
-			u_clusters[tile + k * u_lightingUniforms.tileCountPad1.z];
+		uint cluster = u_clusters[clusterIdx];
 
 		lightOffset = cluster >> 16u;
 		pointLightsCount = (cluster >> 8u) & 0xFFu;
@@ -276,8 +276,8 @@ void fog(in sampler2D depthMap, in vec3 color, in float fogScale)
 
 	if(depth < 1.0)
 	{
-		float zNear = u_lightingUniforms.nearFarClustererDivisor.x;
-		float zFar = u_lightingUniforms.nearFarClustererDivisor.y;
+		float zNear = u_lightingUniforms.nearFarClustererMagicPad1.x;
+		float zFar = u_lightingUniforms.nearFarClustererMagicPad1.y;
 		vec2 linearDepths = (2.0 * zNear)
 			/ (zFar + zNear - vec2(depth, gl_FragCoord.z) * (zFar - zNear));
 

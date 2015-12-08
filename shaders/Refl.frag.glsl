@@ -40,43 +40,54 @@ layout(location = 0) out vec3 out_color;
 
 void main()
 {
-
-#if 0
-	#if IR == 1
-	{
-		float reflLod = float(IR_MIPMAP_COUNT) * roughness;
-		vec3 refl = readReflection(clusterIndex, fragPos, normal, reflLod);
-		out_color += refl * (1.0 - roughness);
-	}
-#endif
-
-// Don't bother for very rough surfaces
-	if(roughness > SSLR_START_ROUGHNESS)
-	{
-		contribution = 0.0;
-		return vec3(0.0);
-	}
-
+	//
 	// Decode the G-buffer
-	float depth = textureRt(u_msDepthRt, in_texCoord).r;
+	//
+	float depth = textureRt(u_depthRt, in_texCoord).r;
 	vec3 posVSpace;
 	posVSpace.z = u_projectionParams.z / (u_projectionParams.w + depth);
 	posVSpace.xy =
 		(2.0 * in_texCoord - 1.0) * u_projectionParams.xy * posVSpace.z;
 
 	float roughness;
-	readRoughnessFromGBuffer(u_rt1, in_texCoord, roughness);
+	readRoughnessFromGBuffer(u_msRt1, in_texCoord, roughness);
 
 	vec3 normal;
-	readNormalFromGBuffer(u_rt2, in_texCoord, normal);
+	readNormalFromGBuffer(u_msRt2, in_texCoord, normal);
 
-	// First the SSLR
+	// Compute relflection vector
+	vec3 eye = normalize(posVSpace);
+	vec3 r = reflect(eye, normal);
+
+	//
+	// SSLR
+	//
 #if SSLR_ENABLED
+	float sslrContribution;
 
+	// Don't bother for very rough surfaces
+	if(roughness > SSLR_START_ROUGHNESS)
+	{
+		sslrContribution = 1.0;
+		out_color = vec3(1.0, 0.0, 1.0);
+	}
+	else
+	{
+		sslrContribution = 0.0;
+	}
 #else
+	const sslrContribution = 0.0;
 #endif
 
+	//
+	// IR
+	//
+#if IR_ENABLED
+	float reflLod = float(IR_MIPMAP_COUNT) * roughness;
+	vec3 imgRefl = doImageReflections(posVSpace, r, reflLod);
+	out_color = mix(imgRefl, out_color, sslrContribution);
 #endif
 
-	out_color = vec3(0.0, 0.0, 1.0);
+	//out_color *= (1.0 - roughness);
+	out_color = vec3(0.0);
 }

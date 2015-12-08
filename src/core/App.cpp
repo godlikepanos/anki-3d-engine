@@ -260,7 +260,7 @@ Error App::createInternal(const ConfigSet& config_,
 	rinit.m_cacheDir = m_cacheDir.toCString();
 	rinit.m_allocCallback = m_allocCb;
 	rinit.m_allocCallbackData = m_allocCbData;
-	rinit.m_tempAllocatorMemorySize = 1024 * 1024 * 4;
+	rinit.m_tempAllocatorMemorySize = 1024 * 1024 * 5;
 	m_resources = m_heapAlloc.newInstance<ResourceManager>();
 
 	ANKI_CHECK(m_resources->create(rinit));

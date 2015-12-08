@@ -26,10 +26,6 @@ uint computeClusterIndexUsingTileIdx(float near, float clustererMagic,
 uint computeClusterIndexUsingFragCoord(float near, float clustererMagic,
 	float zVSpace, uint tileCountX)
 {
-#if TILE_SIZE != 64
-#	error Not designed for this tile size
-#endif
-
 	// Compute tile idx
 	uvec2 f = uvec2(gl_FragCoord.xy) >> 6;
 	uint tileIdx = f.y * tileCountX + f.x;
