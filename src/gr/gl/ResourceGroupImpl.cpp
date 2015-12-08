@@ -75,7 +75,7 @@ void ResourceGroupImpl::create(const ResourceGroupInitializer& init)
 		{
 			m_textureNames[i] =
 				init.m_textures[i].m_texture->getImplementation().getGlName();
-			++m_textureNamesCount;
+			m_textureNamesCount = i + 1;
 			++resourcesCount;
 		}
 		else

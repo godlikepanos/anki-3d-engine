@@ -13,25 +13,25 @@
 //==============================================================================
 // Compute the cluster index using the tile index.
 uint computeClusterIndexUsingTileIdx(float near, float clustererMagic,
-	float zVSpace, uint tileIdx)
+	float zVSpace, uint tileIdx, uint tileCountX, uint tileCountY)
 {
-	float fk = sqrt((near + zVSpace) * clustererMagic);
+	float fk = sqrt((zVSpace + near) * clustererMagic);
 	uint k = uint(fk);
 
-	return tileIdx + k;
+	return tileIdx + k * (tileCountX * tileCountY);
 }
 
 //==============================================================================
 // Compute the cluster index using the gl_FragCoord.xy.
 uint computeClusterIndexUsingFragCoord(float near, float clustererMagic,
-	float zVSpace, uint tileCountX)
+	float zVSpace, uint tileCountX, uint tileCountY)
 {
 	// Compute tile idx
 	uvec2 f = uvec2(gl_FragCoord.xy) >> 6;
 	uint tileIdx = f.y * tileCountX + f.x;
 
 	return computeClusterIndexUsingTileIdx(near, clustererMagic, zVSpace,
-		tileIdx);
+		tileIdx, tileCountX, tileCountY);
 }
 
 #endif

@@ -76,7 +76,7 @@ void main()
 		sslrContribution = 0.0;
 	}
 #else
-	const sslrContribution = 0.0;
+	const float sslrContribution = 0.0;
 #endif
 
 	//
@@ -88,6 +88,5 @@ void main()
 	out_color = mix(imgRefl, out_color, sslrContribution);
 #endif
 
-	//out_color *= (1.0 - roughness);
-	out_color = vec3(0.0);
+	out_color *= (1.0 - roughness);
 }

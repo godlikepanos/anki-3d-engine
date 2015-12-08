@@ -417,7 +417,9 @@ Error mainLoopExtra(App& app, void*, Bool& quit)
 	}
 	if(in.getKey(KeyCode::F12) == 1)
 	{
-		//renderer.takeScreenshot("screenshot.tga");
+		printf("F12\n");
+		scene.getActiveCamera().getComponent<FrustumComponent>().markShapeForUpdate();
+		scene.getActiveCamera().getComponent<FrustumComponent>().markTransformForUpdate();
 	}
 
 #if !PLAYER
@@ -509,9 +511,13 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("samples", 1);
 	config.set("tessellation", true);
 	//config.set("maxTextureSize", 256);
+	config.set("refl.renderingQuality", 1.0);
 	config.set("ir.enabled", true);
+	//config.set("ir.clusterSizeZ", 32);
+	config.set("sslr.enabled", false);
 	config.set("ir.rendererSize", 64);
 	config.set("fullscreenDesktopResolution", true);
+	//config.set("clusterSizeZ", 16);
 	config.set("debugContext", false);
 	if(getenv("ANKI_DATA_PATH"))
 	{

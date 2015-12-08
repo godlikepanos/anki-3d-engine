@@ -8,6 +8,7 @@
 #include <anki/renderer/Ms.h>
 #include <anki/renderer/Ir.h>
 #include <anki/renderer/Is.h>
+#include <anki/renderer/Pps.h>
 #include <anki/misc/ConfigSet.h>
 #include <anki/scene/FrustumComponent.h>
 
@@ -86,6 +87,7 @@ Error Refl::init1stPass(const ConfigSet& config)
 {
 	// Create shader
 	StringAuto pps(getFrameAllocator());
+	const PixelFormat& pixFormat = Pps::RT_PIXEL_FORMAT;
 
 	pps.sprintf(
 		"#define WIDTH %u\n"
@@ -113,7 +115,7 @@ Error Refl::init1stPass(const ConfigSet& config)
 	// Create ppline
 	ColorStateInfo colorState;
 	colorState.m_attachmentCount = 1;
-	colorState.m_attachments[0].m_format = Is::RT_PIXEL_FORMAT;
+	colorState.m_attachments[0].m_format = pixFormat;
 
 	m_r->createDrawQuadPipeline(m_frag->getGrShader(), colorState, m_ppline);
 
@@ -150,7 +152,7 @@ Error Refl::init1stPass(const ConfigSet& config)
 
 	// Create RT
 	m_r->createRenderTarget(m_width, m_height,
-		Is::RT_PIXEL_FORMAT, 1, SamplingFilter::LINEAR, 1, m_rt);
+		pixFormat, 1, SamplingFilter::NEAREST, 1, m_rt);
 
 	// Create FB
 	FramebufferInitializer fbInit;
@@ -248,7 +250,7 @@ void Refl::writeUniforms(CommandBufferPtr cmdb)
 	if(m_uniformsUpdateTimestamp
 			< m_r->getProjectionParametersUpdateTimestamp()
 		|| m_uniformsUpdateTimestamp < frc.getTimestamp()
-		|| m_uniformsUpdateTimestamp == 1)
+		|| m_uniformsUpdateTimestamp == 0)
 	{
 		DynamicBufferToken token;
 		ReflUniforms* blk = static_cast<ReflUniforms*>(

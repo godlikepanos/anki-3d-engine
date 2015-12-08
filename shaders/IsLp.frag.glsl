@@ -98,7 +98,9 @@ void main()
 		u_lightingUniforms.nearFarClustererMagicPad1.x,
 		u_lightingUniforms.nearFarClustererMagicPad1.z,
 		fragPos.z,
-		in_instanceId);
+		in_instanceId,
+		TILE_COUNT_X,
+		TILE_COUNT_Y);
 
 	uint cluster = u_clusters[clusterIdx];
 	uint lightOffset = cluster >> 16u;

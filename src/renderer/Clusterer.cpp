@@ -169,8 +169,7 @@ void Clusterer::prepare(ThreadPool& threadPool, const FrustumComponent& frc)
 	m_near = pfr.getNear();
 	m_far = pfr.getFar();
 	m_calcNearOpt = (m_far - m_near) / pow(m_counts[2], 2.0);
-	U countXY = m_counts[0] * m_counts[1];
-	m_shaderMagicVal = -(countXY * countXY) / m_calcNearOpt;
+	m_shaderMagicVal = -1.0 / m_calcNearOpt;
 
 	//
 	// Issue parallel jobs
@@ -181,7 +180,7 @@ void Clusterer::prepare(ThreadPool& threadPool, const FrustumComponent& frc)
 	// - it's the same frustum component as before and
 	// - the component has not changed
 	Bool frustumChanged =
-		frcTimestamp >= m_planesLSpaceTimestamp || m_node != node;
+		frcTimestamp > m_planesLSpaceTimestamp || m_node != node;
 
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{

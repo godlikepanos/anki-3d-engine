@@ -65,7 +65,7 @@ vec3 computeCubemapVec(in vec3 r, in float R2, in vec3 f)
 	vec3 x = p + sq * r;
 
 	// Rotate UV to move it to world space
-	vec3 uv = u_invViewRotation * normalize(x);
+	vec3 uv = u_invViewRotation * x;
 
 	return uv;
 }
@@ -96,8 +96,7 @@ vec3 readReflection(in uint clusterIndex, in vec3 posVSpace,
 
 		// Read!
 		float cubemapIndex = probe.cubemapIndexPad3.x;
-		vec3 c =
-			textureLod(u_reflectionsTex, vec4(uv, cubemapIndex), lod).rgb;
+		vec3 c = textureLod(u_reflectionsTex, vec4(uv, cubemapIndex), lod).rgb;
 
 		// Combine (lerp) with previous color
 		float d = dot(f, f);
@@ -117,7 +116,8 @@ vec3 doImageReflections(in vec3 posVSpace, in vec3 r, in float lod)
 		u_nearClusterMagicPad2.x,
 		u_nearClusterMagicPad2.y,
 		posVSpace.z,
-		TILE_COUNT_X);
+		TILE_COUNT_X,
+		TILE_COUNT_Y);
 	return readReflection(clusterIdx, posVSpace, r, lod);
 }
 

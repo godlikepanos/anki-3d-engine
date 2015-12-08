@@ -156,7 +156,8 @@ vec3 computeLightColor(vec3 diffCol)
 			u_lightingUniforms.nearFarClustererMagicPad1.x,
 			u_lightingUniforms.nearFarClustererMagicPad1.z,
 			fragPos.z,
-			u_lightingUniforms.tileCountPad1.x);
+			u_lightingUniforms.tileCountPad1.x,
+			u_lightingUniforms.tileCountPad1.y);
 
 		uint cluster = u_clusters[clusterIdx];
 

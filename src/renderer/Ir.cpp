@@ -152,10 +152,10 @@ Ir::~Ir()
 }
 
 //==============================================================================
-Error Ir::init(const ConfigSet& initializer)
+Error Ir::init(const ConfigSet& config)
 {
 	ANKI_LOGI("Initializing IR (Image Reflections)");
-	m_fbSize = initializer.getNumber("ir.rendererSize");
+	m_fbSize = config.getNumber("ir.rendererSize");
 
 	if(m_fbSize < Renderer::TILE_SIZE)
 	{
@@ -163,7 +163,7 @@ Error Ir::init(const ConfigSet& initializer)
 		return ErrorCode::USER_DATA;
 	}
 
-	m_cubemapArrSize = initializer.getNumber("ir.cubemapTextureArraySize");
+	m_cubemapArrSize = config.getNumber("ir.cubemapTextureArraySize");
 
 	if(m_cubemapArrSize < 2)
 	{
@@ -174,30 +174,31 @@ Error Ir::init(const ConfigSet& initializer)
 	m_cacheEntries.create(getAllocator(), m_cubemapArrSize);
 
 	// Init the renderer
-	Config config;
-	config.set("dbg.enabled", false);
-	config.set("is.sm.bilinearEnabled", true);
-	config.set("is.groundLightEnabled", false);
-	config.set("is.sm.enabled", false);
-	config.set("is.sm.maxLights", 8);
-	config.set("is.sm.poissonEnabled", false);
-	config.set("is.sm.resolution", 16);
-	config.set("lf.maxFlares", 8);
-	config.set("pps.enabled", true);
-	config.set("pps.bloom.enabled", true);
-	config.set("pps.ssao.enabled", false);
-	config.set("renderingQuality", 1.0);
-	config.set("clusterSizeZ", 4);
-	config.set("width", m_fbSize);
-	config.set("height", m_fbSize);
-	config.set("lodDistance", 10.0);
-	config.set("samples", 1);
-	config.set("ir.enabled", false); // Very important to disable that
-	config.set("sslr.enabled", false);
+	Config nestedRConfig;
+	nestedRConfig.set("dbg.enabled", false);
+	nestedRConfig.set("is.sm.bilinearEnabled", true);
+	nestedRConfig.set("is.groundLightEnabled", false);
+	nestedRConfig.set("is.sm.enabled", false);
+	nestedRConfig.set("is.sm.maxLights", 8);
+	nestedRConfig.set("is.sm.poissonEnabled", false);
+	nestedRConfig.set("is.sm.resolution", 16);
+	nestedRConfig.set("lf.maxFlares", 8);
+	nestedRConfig.set("pps.enabled", true);
+	nestedRConfig.set("pps.bloom.enabled", true);
+	nestedRConfig.set("pps.ssao.enabled", false);
+	nestedRConfig.set("renderingQuality", 1.0);
+	nestedRConfig.set("clusterSizeZ", 4);
+	nestedRConfig.set("width", m_fbSize);
+	nestedRConfig.set("height", m_fbSize);
+	nestedRConfig.set("lodDistance", 10.0);
+	nestedRConfig.set("samples", 1);
+	nestedRConfig.set("ir.enabled", false); // Very important to disable that
+	nestedRConfig.set("sslr.enabled", false); // And that
 
 	ANKI_CHECK(m_nestedR.init(&m_r->getThreadPool(),
 		&m_r->getResourceManager(), &m_r->getGrManager(), m_r->getAllocator(),
-		m_r->getFrameAllocator(), config, m_r->getGlobalTimestampPtr()));
+		m_r->getFrameAllocator(), nestedRConfig, m_r->getGlobalTimestampPtr()));
+	m_nestedR.getPps().setFog(Vec3(1.0, 0.0, 1.0), 0.0);
 
 	// Init the texture
 	TextureInitializer texinit;
