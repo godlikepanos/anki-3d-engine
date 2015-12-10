@@ -160,63 +160,57 @@ Error Dbg::run(CommandBufferPtr& cmdb)
 		Array<Vec3, 4> poly;
 		poly[0] = Vec3(0.0, 0.0, 0.0);
 		poly[1] = Vec3(2.5, 0.0, 0.0);
-		poly[2] = Vec3(2.0, 4.9, 0.0);
-		poly[3] = Vec3(0.5, 3.9, 0.0);
 
-		Mat4 trf(Vec4(1.2, 14.0, 1.1, 1.0), Mat3(Euler(toRad(-120.0), toRad(35.0),
-			toRad(85.0))), 1.0);
+		Mat4 trf(Vec4(147.392776, -12.132728, 16.607138, 1.0),
+			Mat3(Euler(toRad(45.0), toRad(0.0),
+			toRad(120.0))), 1.0);
 
 		Array<Vec3, 4> polyw;
 		polyw[0] = trf.transform(poly[0]);
 		polyw[1] = trf.transform(poly[1]);
-		polyw[2] = trf.transform(poly[2]);
-		polyw[3] = trf.transform(poly[3]);
 
 		m_drawer->setModelMatrix(Mat4::getIdentity());
 		m_drawer->drawLine(polyw[0], polyw[1], Vec4(1.0));
-		m_drawer->drawLine(polyw[1], polyw[2], Vec4(0.8));
-		m_drawer->drawLine(polyw[2], polyw[3], Vec4(0.6));
-		m_drawer->drawLine(polyw[3], polyw[0], Vec4(0.4));
 
 
+		Vec4 p0 = camFr.getViewMatrix() * polyw[0].xyz1();
+		p0.w() = 0.0;
+		Vec4 p1 = camFr.getViewMatrix() * polyw[1].xyz1();
+		p1.w() = 0.0;
 
-		Vec3 edge0 = polyw[2] - polyw[1];
-		Vec3 edge1 = polyw[3] - polyw[2];
+		Vec4 r = p1 - p0;
+		r.normalize();
 
-		Vec3 xAxis = edge0;
-		xAxis.normalize();
-		Vec3 zAxis = edge0.cross(edge1);
-		zAxis.normalize();
-		Vec3 yAxis = zAxis.cross(xAxis);
+		Vec4 a = camFr.getProjectionMatrix() * p0.xyz1();
+		a /= a.w();
 
-		Mat3 rot;
-		rot.setColumns(xAxis.xyz(), yAxis.xyz(), zAxis.xyz());
 
-		Mat3 invRot = rot.getInverse();
-
-		Array<Vec3, 8> polyl;
-		for(U i = 0; i < 4; ++i)
+		Vec4 i;
+		if(r.z() > 0)
 		{
-			polyl[i] = invRot * polyw[i];
+			//Plane near(Vec4(0, 0, -1, 0), camFr.getFrustum().getNear() + 0.001);
+			//Bool in = near.intersectRay(p0, r * 100000.0, i);
+			i.z() = -camFr.getFrustum().getNear();
+			F32 t = (i.z() - p0.z()) / r.z();
+			i.x() = p0.x() + t * r.x();
+			i.y() = p0.y() + t * r.y();
+
+			i = camFr.getProjectionMatrix() * i.xyz1();
+			i /= i.w();
+		}
+		else
+		{
+			i = camFr.getProjectionMatrix() * (r * 100000.0).xyz1();
+			i /= i.w();
 		}
 
-		m_drawer->drawLine(polyl[0], polyl[1], Vec4(1.0));
-		m_drawer->drawLine(polyl[1], polyl[2], Vec4(0.8));
-		m_drawer->drawLine(polyl[2], polyl[3], Vec4(0.6));
-		m_drawer->drawLine(polyl[3], polyl[0], Vec4(0.4));
+		/*r *= 0.01;
+		Vec4 b = polyw[0].xyz0() + r;
+		b = camFr.getViewProjectionMatrix() * b.xyz1();
+		Vec4 d = b / b.w();*/
 
-
-		for(U i = 4; i < 8; ++i)
-		{
-			polyl[i] = polyl[i - 4] + Vec3(0.0, 0.0, 10.0);
-		}
-
-		Obb obb;
-		obb.setFromPointCloud(&polyl[0], 8, sizeof(Vec3), sizeof(polyl));
-
-		obb.transform(Transform(Vec4(0.0), Mat3x4(rot), 1.0));
-
-		obb.accept(cd);
+		m_drawer->setViewProjectionMatrix(Mat4::getIdentity());
+		m_drawer->drawLine(Vec3(a.xy(), 0.1), Vec3(i.xy(), 0.1), Vec4(1.0, 0, 0, 1));
 	}
 #endif
 

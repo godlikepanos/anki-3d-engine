@@ -516,6 +516,7 @@ Error initSubsystems(int argc, char* argv[])
 	//config.set("ir.clusterSizeZ", 32);
 	config.set("sslr.enabled", false);
 	config.set("ir.rendererSize", 64);
+	config.set("ir.clusterSizeZ", 16);
 	config.set("fullscreenDesktopResolution", true);
 	//config.set("clusterSizeZ", 16);
 	config.set("debugContext", false);

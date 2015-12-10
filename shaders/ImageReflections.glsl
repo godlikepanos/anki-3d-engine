@@ -10,6 +10,8 @@
 
 #pragma anki include "shaders/Clusterer.glsl"
 
+#define ACCURATE_RAYS 0
+
 // Representation of a reflection probe
 struct ReflectionProbe
 {
@@ -48,6 +50,7 @@ layout(TEX_BINDING(IMAGE_REFLECTIONS_SET, IMAGE_REFLECTIONS_TEX_BINDING))
 // the radius squared of the probe (R2) and the frag pos in sphere space (f)
 vec3 computeCubemapVec(in vec3 r, in float R2, in vec3 f)
 {
+#if ACCURATE_RAYS
 	// Compute the collision of the r to the inner part of the sphere
 	// From now on we work on the sphere's space
 
@@ -68,6 +71,9 @@ vec3 computeCubemapVec(in vec3 r, in float R2, in vec3 f)
 	vec3 uv = u_invViewRotation * x;
 
 	return uv;
+#else
+	return u_invViewRotation * r;
+#endif
 }
 
 //==============================================================================
