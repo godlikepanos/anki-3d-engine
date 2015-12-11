@@ -296,7 +296,7 @@ public:
 	Array<U32, 3> m_size;
 
 	DispatchCommand(U32 x, U32 y, U32 z)
-		: m_size({x, y, z})
+		: m_size({{x, y, z}})
 	{}
 
 	Error operator()(GlState&)

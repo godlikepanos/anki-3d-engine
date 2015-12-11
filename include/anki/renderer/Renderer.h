@@ -308,7 +308,6 @@ private:
 
 	F32 m_lodDistance; ///< Distance that used to calculate the LOD
 	U8 m_samples; ///< Number of sample in multisampling
-	Bool8 m_isOffscreen; ///< Is offscreen renderer?
 	Bool8 m_tessellation;
 	U32 m_tileCount;
 	UVec2 m_tileCountXY;

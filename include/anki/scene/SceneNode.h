@@ -23,7 +23,7 @@ class ResourceManager;
 
 /// Interface class backbone of scene
 class SceneNode: public Hierarchy<SceneNode>,
-	public ListAllocFreeEnabled<SceneNode>
+	public IntrusiveListEnabled<SceneNode>
 {
 public:
 	using Base = Hierarchy<SceneNode>;

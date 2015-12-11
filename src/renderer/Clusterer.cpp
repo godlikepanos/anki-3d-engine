@@ -132,16 +132,16 @@ void Clusterer::init(const GenericMemoryPoolAllocator<U8>& alloc,
 	Plane* base = &m_allPlanes[0];
 	U count = 0;
 
-	m_planesX = std::move(SArray<Plane>(base + count, m_counts[0] - 1));
+	m_planesX = SArray<Plane>(base + count, m_counts[0] - 1);
 	count += m_planesX.getSize();
 
-	m_planesY = std::move(SArray<Plane>(base + count, m_counts[1] - 1));
+	m_planesY = SArray<Plane>(base + count, m_counts[1] - 1);
 	count += m_planesY.getSize();
 
-	m_planesXW = std::move(SArray<Plane>(base + count, m_counts[0] - 1));
+	m_planesXW = SArray<Plane>(base + count, m_counts[0] - 1);
 	count += m_planesXW.getSize();
 
-	m_planesYW = std::move(SArray<Plane>(base + count, m_counts[1] - 1));
+	m_planesYW = SArray<Plane>(base + count, m_counts[1] - 1);
 	count += m_planesYW.getSize();
 
 	m_nearPlane = base + count;

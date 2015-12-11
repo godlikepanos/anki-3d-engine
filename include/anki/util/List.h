@@ -55,7 +55,7 @@ class ListIterator
 	friend class ListBase;
 
 	template<typename>
-	friend class List;
+	friend class anki::List;
 
 	template<typename, typename, typename, typename>
 	friend class ListIterator;
@@ -545,10 +545,10 @@ private:
 	}
 };
 
-/// The classes that will use the ListAllocFree need to inherit from this
+/// The classes that will use the IntrusiveList need to inherit from this
 /// one.
 template<typename TClass>
-class ListAllocFreeEnabled
+class IntrusiveListEnabled
 {
 	template<typename, typename, typename, typename>
 	friend class detail::ListIterator;
@@ -560,7 +560,7 @@ class ListAllocFreeEnabled
 	friend class List;
 
 	template<typename>
-	friend class ListAllocFree;
+	friend class IntrusiveList;
 
 	friend TClass;
 
@@ -568,7 +568,7 @@ private:
 	TClass* m_prev;
 	TClass* m_next;
 
-	ListAllocFreeEnabled()
+	IntrusiveListEnabled()
 		: m_prev(nullptr)
 		, m_next(nullptr)
 	{}
@@ -585,9 +585,9 @@ private:
 };
 
 /// List that doesn't perform any allocations. To work the T nodes will
-/// have to inherit from ListAllocFree.
+/// have to inherit from IntrusiveListEnabled.
 template<typename T>
-class ListAllocFree: public detail::ListBase<T, T>
+class IntrusiveList: public detail::ListBase<T, T>
 {
 	template<typename, typename, typename, typename>
 	friend class detail::ListIterator;
@@ -597,21 +597,21 @@ private:
 
 public:
 	/// Default constructor.
-	ListAllocFree()
+	IntrusiveList()
 		: Base()
 	{}
 
 	/// Move.
-	ListAllocFree(ListAllocFree&& b)
-		: ListAllocFree()
+	IntrusiveList(IntrusiveList&& b)
+		: IntrusiveList()
 	{
 		Base::move(b);
 	}
 
-	~ListAllocFree() = default;
+	~IntrusiveList() = default;
 
 	/// Move.
-	ListAllocFree& operator=(ListAllocFree&& b)
+	IntrusiveList& operator=(IntrusiveList&& b)
 	{
 		Base::move(b);
 		return *this;

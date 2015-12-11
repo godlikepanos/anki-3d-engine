@@ -299,7 +299,7 @@ Error ResourceFilesystem::addNewPath(const CString& path)
 	{
 		// It's simple directory
 
-		m_paths.emplaceFront(m_alloc, std::move(Path()));
+		m_paths.emplaceFront(m_alloc, Path());
 		Path& p = m_paths.getFront();
 		p.m_path.sprintf(m_alloc, "%s", &path[0]);
 		p.m_isArchive = false;

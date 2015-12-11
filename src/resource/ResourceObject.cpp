@@ -49,7 +49,7 @@ Error ResourceObject::openFileReadAllText(
 	ANKI_CHECK(m_manager->getFilesystem().openFile(filename, file));
 
 	// Read string
-	text = std::move(StringAuto(getTempAllocator()));
+	text = StringAuto(getTempAllocator());
 	ANKI_CHECK(file->readAllText(getTempAllocator(), text));
 
 	return ErrorCode::NONE;

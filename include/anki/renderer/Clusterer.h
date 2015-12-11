@@ -12,6 +12,7 @@
 
 namespace anki {
 
+// Forward
 class FrustumComponent;
 class SceneNode;
 
@@ -55,7 +56,10 @@ private:
 	void pushBack(U x, U y, U z)
 	{
 		ANKI_ASSERT(x <= 0xFF && y <= 0xFF && z <= 0xFF);
-		m_clusterIds[m_count++] = Array<U8, 3>{U8(x), U8(y), U8(z)};
+		m_clusterIds[m_count][0] = U8(x);
+		m_clusterIds[m_count][1] = U8(y);
+		m_clusterIds[m_count][2] = U8(z);
+		++m_count;
 	}
 };
 
@@ -109,7 +113,7 @@ public:
 		return m_counts[0] * m_counts[1] * m_counts[2];
 	}
 
-public:
+private:
 	GenericMemoryPoolAllocator<U8> m_alloc;
 
 	Array<U8, 3> m_counts;
@@ -159,7 +163,8 @@ public:
 	void calcPlaneX(U j, const Vec4& projParams);
 
 	/// Call this when a shape is visible by all tiles.
-	void totallyInsideAllTiles(U zBegin, U zEnd, ClustererTestResult& rez) const;
+	void totallyInsideAllTiles(U zBegin, U zEnd,
+		ClustererTestResult& rez) const;
 };
 /// @}
 

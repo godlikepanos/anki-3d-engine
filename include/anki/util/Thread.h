@@ -14,9 +14,6 @@
 
 namespace anki {
 
-// Forward
-class ThreadPool;
-
 /// @addtogroup util_thread
 /// @{
 
@@ -55,23 +52,21 @@ public:
 	/// Identify the current thread
 	static Id getCurrentThreadId();
 
-	/// @privatesection
-	/// @{
-	const char* _getName() const
+anki_internal:
+	const char* getName() const
 	{
 		return &m_name[0];
 	}
 
-	void* _getUserData() const
+	void* getUserData() const
 	{
 		return m_userData;
 	}
 
-	Callback _getCallback() const
+	Callback getCallback() const
 	{
 		return m_callback;
 	}
-	/// @}
 
 private:
 	void* m_impl = nullptr; ///< The system native type
@@ -185,13 +180,7 @@ public:
 	Bool wait();
 
 private:
-	union
-	{
-		void* m_impl = nullptr;
-
-		/// Opt to save the indirection.
-		alignas(alignof(long int)) char m_posixImpl[32];
-	};
+	void* m_impl = nullptr;
 };
 
 // Forward

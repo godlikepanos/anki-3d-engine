@@ -26,17 +26,17 @@ static DWORD WINAPI threadCallback(LPVOID ud)
 	Thread* thread = reinterpret_cast<Thread*>(ud);
 
 	// Set thread name
-	if(thread->_getName()[0] != '\0')
+	if(thread->getName()[0] != '\0')
 	{
 		// TODO
 	}
 
 	// Call the callback
 	Thread::Info info;
-	info.m_userData = thread->_getUserData();
-	info.m_threadName = thread->_getName();
+	info.m_userData = thread->getUserData();
+	info.m_threadName = thread->getName();
 
-	Error err = thread->_getCallback()(info);
+	Error err = thread->getCallback()(info);
 
 	return err._getCodeInt();
 }
@@ -95,7 +95,7 @@ Error Thread::join()
 
 	// Wait thread
 	WaitForSingleObject(m_impl, INFINITE);
-	
+
 	// Get return code
 	DWORD exitCode = 0;
 	BOOL ok = GetExitCodeThread(m_impl, &exitCode);
@@ -134,7 +134,7 @@ Thread::Id Thread::getCurrentThreadId()
 //==============================================================================
 Mutex::Mutex()
 {
-	CRITICAL_SECTION* mtx = 
+	CRITICAL_SECTION* mtx =
 		reinterpret_cast<CRITICAL_SECTION*>(malloc(sizeof(CRITICAL_SECTION)));
 	if(mtx == nullptr)
 	{
@@ -246,7 +246,7 @@ Barrier::Barrier(U32 count)
 {
 	ANKI_ASSERT(count > 1);
 
-	BarrierImpl* barrier = 
+	BarrierImpl* barrier =
 		reinterpret_cast<BarrierImpl*>(malloc(sizeof(BarrierImpl)));
 	if(barrier == nullptr)
 	{

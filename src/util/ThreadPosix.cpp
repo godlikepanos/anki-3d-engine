@@ -22,17 +22,17 @@ static void* pthreadCallback(void* ud)
 	Thread* thread = reinterpret_cast<Thread*>(ud);
 
 	// Set thread name
-	if(thread->_getName()[0] != '\0')
+	if(thread->getName()[0] != '\0')
 	{
-		pthread_setname_np(pthread_self(), &thread->_getName()[0]);
+		pthread_setname_np(pthread_self(), &thread->getName()[0]);
 	}
 
 	// Call the callback
 	Thread::Info info;
-	info.m_userData = thread->_getUserData();
-	info.m_threadName = thread->_getName();
+	info.m_userData = thread->getUserData();
+	info.m_threadName = thread->getName();
 
-	Error err = thread->_getCallback()(info);
+	Error err = thread->getCallback()(info);
 
 	return reinterpret_cast<void*>(static_cast<PtrSize>(err._getCode()));
 }
@@ -261,17 +261,18 @@ void ConditionVariable::wait(Mutex& amtx)
 //==============================================================================
 
 #define ANKI_BARR_GET() \
-	(*reinterpret_cast<pthread_barrier_t*>(&this->m_posixImpl[0]))
+	(*static_cast<pthread_barrier_t*>(this->m_impl))
 
 //==============================================================================
 Barrier::Barrier(U32 count)
 {
-	static_assert(sizeof(m_posixImpl) >= sizeof(pthread_barrier_t),
-		"Wrong assumption");
-	static_assert(alignof(Barrier) >= alignof(pthread_barrier_t),
-		"Wrong assumption");
-
 	ANKI_ASSERT(count > 1);
+
+	m_impl = static_cast<pthread_barrier_t*>(malloc(sizeof(pthread_barrier_t)));
+	if(m_impl == nullptr)
+	{
+		ANKI_LOGF("Out of memory");
+	}
 
 	pthread_barrierattr_t attr;
 	I err = pthread_barrierattr_init(&attr);
@@ -300,10 +301,16 @@ Barrier::Barrier(U32 count)
 //==============================================================================
 Barrier::~Barrier()
 {
-	I err = pthread_barrier_destroy(&ANKI_BARR_GET());
-	if(err)
+	if(m_impl)
 	{
-		ANKI_LOGE("pthread_barrier_destroy() failed");
+		I err = pthread_barrier_destroy(&ANKI_BARR_GET());
+		if(err)
+		{
+			ANKI_LOGE("pthread_barrier_destroy() failed");
+		}
+
+		free(m_impl);
+		m_impl = nullptr;
 	}
 }
 

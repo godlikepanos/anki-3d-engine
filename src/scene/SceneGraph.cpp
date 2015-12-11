@@ -30,15 +30,15 @@ public:
 	F32 m_prevUpdateTime;
 	F32 m_crntTime;
 
-	ListAllocFree<SceneNode>::Iterator* m_crntNode;
+	IntrusiveList<SceneNode>::Iterator* m_crntNode;
 	SpinLock* m_crntNodeLock;
-	ListAllocFree<SceneNode>::Iterator m_nodesEnd;
+	IntrusiveList<SceneNode>::Iterator m_nodesEnd;
 
 	Error operator()(U32 taskId, PtrSize threadsCount)
 	{
 		ANKI_TRACE_START_EVENT(SCENE_NODES_UPDATE);
 
-		ListAllocFree<SceneNode>::Iterator& it = *m_crntNode;
+		IntrusiveList<SceneNode>::Iterator& it = *m_crntNode;
 		SpinLock& lock = *m_crntNodeLock;
 
 		Bool quit = false;
@@ -318,7 +318,7 @@ Error SceneGraph::update(F32 prevUpdateTime, F32 crntTime,
 
 	// Then the rest
 	Array<UpdateSceneNodesTask, ThreadPool::MAX_THREADS> jobs2;
-	ListAllocFree<SceneNode>::Iterator nodeIt = m_nodes.getBegin();
+	IntrusiveList<SceneNode>::Iterator nodeIt = m_nodes.getBegin();
 	SpinLock nodeItLock;
 
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)

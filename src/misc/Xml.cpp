@@ -86,7 +86,7 @@ Error XmlElement::getF64(F64& out) const
 	return err;
 }
 
-//==============================================================================V
+//==============================================================================
 Error XmlElement::getFloats(DArrayAuto<F64>& out) const
 {
 	Error err = check();
@@ -107,7 +107,7 @@ Error XmlElement::getFloats(DArrayAuto<F64>& out) const
 		list.splitString(m_alloc, txt, ' ');
 	}
 
-	out = std::move(DArrayAuto<F64>(m_alloc));
+	out = DArrayAuto<F64>(m_alloc);
 
 	if(!err)
 	{

@@ -208,7 +208,7 @@ private:
 	SceneAllocator<U8> m_alloc;
 	SceneFrameAllocator<U8> m_frameAlloc;
 
-	ListAllocFree<SceneNode> m_nodes;
+	IntrusiveList<SceneNode> m_nodes;
 	U32 m_nodesCount = 0;
 	//SceneDictionary<SceneNode*> m_dict;
 

@@ -181,7 +181,7 @@ ANKI_TEST(Util, HashMap)
 	}
 }
 
-class Hashable: public HashMapAllocFreeEnabled<Hashable>
+class Hashable: public IntrusiveHashMapEnabled<Hashable>
 {
 public:
 	Hashable(int x)
@@ -191,13 +191,13 @@ public:
 	int m_x;
 };
 
-ANKI_TEST(Util, HashMapAllocFree)
+ANKI_TEST(Util, IntrusiveHashMap)
 {
 	Hashable a(1);
 	Hashable b(2);
 	Hashable c(10);
 
-	HashMapAllocFree<int, Hashable, Hasher, Compare> map;
+	IntrusiveHashMap<int, Hashable, Hasher, Compare> map;
 
 	// Add vals
 	map.pushBack(1, &a);
@@ -212,7 +212,7 @@ ANKI_TEST(Util, HashMapAllocFree)
 	map.erase(map.find(10));
 	ANKI_TEST_EXPECT_EQ(map.find(10), map.getEnd());
 
-	// Put bach
+	// Put back
 	map.pushBack(10, &c);
 	ANKI_TEST_EXPECT_NEQ(map.find(10), map.getEnd());
 }

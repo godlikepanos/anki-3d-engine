@@ -115,17 +115,15 @@ Error walkDirectoryTree(
 }
 
 //==============================================================================
+// To avoid having the g_removeDirectoryPath in stack or having to allocate it,
+// make it global.
+static char g_removeDirectoryPath[PATH_MAX];
+Mutex g_removeDirectoryLock;
+
 Error removeDirectory(const CString& dirname)
 {
 	DIR* dir;
 	struct dirent* entry;
-	char path[PATH_MAX];
-
-	if(path == nullptr)
-	{
-		ANKI_LOGE("Out of memory error");
-		return ErrorCode::FUNCTION_FAILED;
-	}
 
 	dir = opendir(dirname.get());
 	if(dir == nullptr)
@@ -134,16 +132,17 @@ Error removeDirectory(const CString& dirname)
 		return ErrorCode::FUNCTION_FAILED;
 	}
 
+	LockGuard<Mutex> lock(g_removeDirectoryLock);
 	while((entry = readdir(dir)) != nullptr)
 	{
 		if(strcmp(entry->d_name, ".") && strcmp(entry->d_name, ".."))
 		{
-			std::snprintf(
-				path, (size_t)PATH_MAX, "%s/%s", dirname.get(), entry->d_name);
+			std::snprintf(g_removeDirectoryPath, size_t(PATH_MAX),
+				"%s/%s", dirname.get(), entry->d_name);
 
 			if(entry->d_type == DT_DIR)
 			{
-				Error err = removeDirectory(CString(path));
+				Error err = removeDirectory(CString(g_removeDirectoryPath));
 				if(err)
 				{
 					return err;
@@ -151,7 +150,7 @@ Error removeDirectory(const CString& dirname)
 			}
 			else
 			{
-				remove(path);
+				remove(g_removeDirectoryPath);
 			}
 		}
 

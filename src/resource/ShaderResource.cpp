@@ -85,7 +85,7 @@ Error ShaderResource::createToCache(
 	suffix.toString(h);
 
 	// Create out
-	out = std::move(StringAuto(alloc));
+	out = StringAuto(alloc);
 	out.sprintf("%s%s.glsl", &filenamePrefix[0], &suffix[0]);
 
 	// Compose cached filename
