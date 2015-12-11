@@ -46,7 +46,7 @@ Error MainRenderer::create(
 
 	m_alloc = HeapAllocator<U8>(allocCb, allocCbUserData);
 	m_frameAlloc = StackAllocator<U8>(allocCb, allocCbUserData,
-		1024 * 1024 * 10);
+		1024 * 1024 * 1);
 
 	// Init default FB
 	m_width = config.getNumber("width");

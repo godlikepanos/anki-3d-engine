@@ -42,7 +42,6 @@ public:
 	ANKI_USE_RESULT Error init(
 		AllocAlignedCallback allocCb,
 		void* allocCbData,
-		U32 frameAllocatorSize,
 		ThreadPool* threadpool,
 		ResourceManager* resources,
 		Input* input,

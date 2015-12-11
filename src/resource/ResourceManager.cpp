@@ -45,7 +45,7 @@ Error ResourceManager::create(Initializer& init)
 
 	m_tmpAlloc = TempResourceAllocator<U8>(
 		init.m_allocCallback, init.m_allocCallbackData,
-		init.m_tempAllocatorMemorySize);
+		10 * 1024 * 1024);
 
 	m_cacheDir.create(m_alloc, init.m_cacheDir);
 

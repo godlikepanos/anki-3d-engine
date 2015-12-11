@@ -150,7 +150,6 @@ SceneGraph::~SceneGraph()
 Error SceneGraph::init(
 	AllocAlignedCallback allocCb,
 	void* allocCbData,
-	U32 frameAllocatorSize,
 	ThreadPool* threadpool,
 	ResourceManager* resources,
 	Input* input,
@@ -174,7 +173,7 @@ Error SceneGraph::init(
 		1.0,
 		0);
 	m_frameAlloc = SceneFrameAllocator<U8>(
-		allocCb, allocCbData, frameAllocatorSize);
+		allocCb, allocCbData, 1 * 1024 * 1024);
 
 	err = m_events.create(this);
 

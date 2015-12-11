@@ -27,7 +27,7 @@ enum class AtomicMemoryOrder
 #endif
 };
 
-/// Atomic template.
+/// Atomic template. At the moment it doesn't work well with pointers.
 template<typename T, AtomicMemoryOrder tmemOrd = AtomicMemoryOrder::RELAXED>
 class Atomic: public NonCopyable
 {
@@ -35,6 +35,7 @@ public:
 	using Value = T;
 	static constexpr AtomicMemoryOrder MEMORY_ORDER = tmemOrd;
 
+	/// It will set it to zero.
 	Atomic()
 		: m_val(static_cast<Value>(0))
 	{}
@@ -43,6 +44,7 @@ public:
 		: m_val(a)
 	{}
 
+	/// Get the value of the atomic.
 	Value load(AtomicMemoryOrder memOrd = MEMORY_ORDER) const
 	{
 #if defined(__GNUC__)
@@ -52,6 +54,17 @@ public:
 #endif
 	}
 
+	/// @copybrief load
+	Value load(AtomicMemoryOrder memOrd = MEMORY_ORDER) const volatile
+	{
+#if defined(__GNUC__)
+		return __atomic_load_n(&m_val, static_cast<int>(memOrd));
+#else
+#	error "TODO"
+#endif
+	}
+
+	/// Store
 	void store(const Value a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
 	{
 #if defined(__GNUC__)
@@ -61,6 +74,17 @@ public:
 #endif
 	}
 
+	/// @copybrief store
+	void store(const Value a, AtomicMemoryOrder memOrd = MEMORY_ORDER) volatile
+	{
+#if defined(__GNUC__)
+		__atomic_store_n(&m_val, a, static_cast<int>(memOrd));
+#else
+#	error "TODO"
+#endif
+	}
+
+	/// Fetch and add.
 	template<typename Y>
 	Value fetchAdd(const Y a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
 	{
@@ -71,8 +95,31 @@ public:
 #endif
 	}
 
+	/// @copybrief fetchAdd
+	template<typename Y>
+	Value fetchAdd(const Y a, AtomicMemoryOrder memOrd = MEMORY_ORDER) volatile
+	{
+#if defined(__GNUC__)
+		return __atomic_fetch_add(&m_val, a, static_cast<int>(memOrd));
+#else
+#	error "TODO"
+#endif
+	}
+
+	/// Fetch and subtract.
 	template<typename Y>
 	Value fetchSub(const Y a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
+	{
+#if defined(__GNUC__)
+		return __atomic_fetch_sub(&m_val, a, static_cast<int>(memOrd));
+#else
+#	error "TODO"
+#endif
+	}
+
+	/// @copybrief fetchSub
+	template<typename Y>
+	Value fetchSub(const Y a, AtomicMemoryOrder memOrd = MEMORY_ORDER) volatile
 	{
 #if defined(__GNUC__)
 		return __atomic_fetch_sub(&m_val, a, static_cast<int>(memOrd));
@@ -101,8 +148,31 @@ public:
 #endif
 	}
 
+	/// @copybrief compareExchange
+	Bool compareExchange(Value& expected, const Value desired,
+		AtomicMemoryOrder memOrd = MEMORY_ORDER) volatile
+	{
+#if defined(__GNUC__)
+		return __atomic_compare_exchange_n(&m_val, &expected, desired,
+			false, static_cast<int>(memOrd), __ATOMIC_RELAXED);
+#else
+#	error "TODO"
+#endif
+	}
+
 	/// Set @a a to the atomic and return the previous value.
 	Value exchange(const Value a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
+	{
+#if defined(__GNUC__)
+		return __atomic_exchange_n(&m_val, a, static_cast<int>(memOrd));
+#else
+#	error "TODO"
+#endif
+	}
+
+	/// @copybrief exchange
+	Value exchange(const Value a,
+		AtomicMemoryOrder memOrd = MEMORY_ORDER) volatile
 	{
 #if defined(__GNUC__)
 		return __atomic_exchange_n(&m_val, a, static_cast<int>(memOrd));

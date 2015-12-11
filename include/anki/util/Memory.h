@@ -9,6 +9,8 @@
 #include <anki/util/NonCopyable.h>
 #include <anki/util/Atomic.h>
 #include <anki/util/Assert.h>
+#include <anki/util/Array.h>
+#include <anki/util/Thread.h>
 #include <utility> // For forward
 
 namespace anki {
@@ -74,8 +76,7 @@ public:
 	/// @return The allocated memory or nullptr on failure
 	void* allocate(PtrSize size, PtrSize alignmentBytes);
 
-	/// Free memory. If the ptr is not the last allocation of the chunk
-	/// then nothing happens and the method returns false
+	/// Free memory.
 	/// @param[in, out] ptr Memory block to deallocate
 	void free(void* ptr);
 
@@ -179,7 +180,9 @@ public:
 	/// Create with parameters
 	/// @param allocCb The allocation function callback
 	/// @param allocCbUserData The user data to pass to the allocation function
-	/// @param size The size of the pool
+	/// @param initialChunkSize The size of the first chunk.
+	/// @param nextChunkScale Value that controls the next chunk.
+	/// @param nextChunkBias Value that controls the next chunk.
 	/// @param ignoreDeallocationErrors Method free() may fail if the ptr is
 	///        not in the top of the stack. Set that to true to suppress such
 	///        errors
@@ -188,7 +191,9 @@ public:
 	void create(
 		AllocAlignedCallback allocCb,
 		void* allocCbUserData,
-		PtrSize size,
+		PtrSize initialChunkSize,
+		F32 nextChunkScale = 2.0,
+		PtrSize nextChunkBias = 0,
 		Bool ignoreDeallocationErrors = true,
 		PtrSize alignmentBytes = ANKI_SAFE_ALIGNMENT);
 
@@ -198,63 +203,71 @@ public:
 	/// @return The allocated memory or nullptr on failure
 	void* allocate(PtrSize size, PtrSize alignmentBytes);
 
-	/// Free memory in StackMemoryPool. If the ptr is not the last allocation
-	/// then nothing happens and the method returns false. The operation is
-	/// threadsafe
+	/// Free memory in StackMemoryPool. It will not actially free anything.
 	/// @param[in, out] ptr Memory block to deallocate
 	void free(void* ptr);
-
-	/// Get the total size.
-	PtrSize getTotalSize() const
-	{
-		return m_memsize;
-	}
-
-	/// Get the allocated size.
-	PtrSize getAllocatedSize() const
-	{
-		return m_top.load() - m_memory;
-	}
-
-	/// Get a snapshot of the current state that can be used to reset the
-	/// pool's state later on. Not recommended on multithreading scenarios
-	/// @return The current state of the pool
-	Snapshot getShapshot() const;
-
-	/// Reset the poll using a snapshot. Not recommended on multithreading
-	/// scenarios
-	/// @param s The snapshot to be used
-	void resetUsingSnapshot(Snapshot s);
 
 	/// Reinit the pool. All existing allocated memory will be lost
 	void reset();
 
 private:
-	/// The header of each allocation
-	struct MemoryBlockHeader
+	/// The memory chunk.
+	class Chunk
 	{
-		U8 m_size[sizeof(U32)]; ///< It's U8 to allow whatever alignment
-	};
+	public:
+		/// The base memory of the chunk.
+		U8* m_baseMem = nullptr;
 
-	static_assert(alignof(MemoryBlockHeader) == 1, "Alignment error");
-	static_assert(sizeof(MemoryBlockHeader) == sizeof(U32), "Size error");
+		/// The moving ptr for the next allocation.
+		Atomic<U8*> m_mem = {nullptr};
+
+		/// The chunk size.
+		PtrSize m_size = 0;
+
+		/// Check that it's initialized.
+		void check() const
+		{
+			ANKI_ASSERT(m_baseMem != nullptr);
+			ANKI_ASSERT(m_mem.load() >= m_baseMem);
+			ANKI_ASSERT(m_size > 0);
+		}
+
+		// Check that it's in reset state.
+		void checkReset() const
+		{
+			ANKI_ASSERT(m_baseMem != nullptr);
+			ANKI_ASSERT(m_mem.load() == m_baseMem);
+			ANKI_ASSERT(m_size > 0);
+		}
+	};
 
 	/// Alignment of allocations
 	PtrSize m_alignmentBytes = 0;
 
-	/// Aligned size of MemoryBlockHeader
-	PtrSize m_headerSize = 0;
+	/// The size of the first chunk.
+	PtrSize m_initialChunkSize = 0;
 
-	/// Pre-allocated memory chunk.
-	U8* m_memory = nullptr;
+	/// Chunk scale.
+	F32 m_nextChunkScale = 0.0;
 
-	/// Size of the pre-allocated memory chunk
-	PtrSize m_memsize = 0;
+	/// Chunk bias.
+	PtrSize m_nextChunkBias = 0;
 
-	/// Points to the memory and more specifically to the top of the stack
-	Atomic<U8*> m_top = {nullptr};
-
+	/// Ignore deallocation errors.
 	Bool8 m_ignoreDeallocationErrors = false;
+
+	/// The current chunk. Chose the more strict memory order to avoid compiler
+	/// re-ordering of instructions
+	Atomic<U32, AtomicMemoryOrder::SEQ_CST> m_crntChunkIdx = {0};
+
+	/// The max number of chunks.
+	static const U MAX_CHUNKS = 256;
+
+	/// The chunks.
+	Array<Chunk, MAX_CHUNKS> m_chunks;
+
+	/// Protect the m_crntChunkIdx.
+	Mutex m_lock;
 };
 
 /// Chain memory pool. Almost similar to StackMemoryPool but more flexible and

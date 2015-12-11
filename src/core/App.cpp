@@ -260,7 +260,6 @@ Error App::createInternal(const ConfigSet& config_,
 	rinit.m_cacheDir = m_cacheDir.toCString();
 	rinit.m_allocCallback = m_allocCb;
 	rinit.m_allocCallbackData = m_allocCbData;
-	rinit.m_tempAllocatorMemorySize = 1024 * 1024 * 5;
 	m_resources = m_heapAlloc.newInstance<ResourceManager>();
 
 	ANKI_CHECK(m_resources->create(rinit));
@@ -289,14 +288,17 @@ Error App::createInternal(const ConfigSet& config_,
 		m_renderer->getMaterialShaderSource().toCString());
 	m_resources->setRenderer(&m_renderer->getOffscreenRenderer());
 
+	//
 	// Scene
+	//
 	m_scene = m_heapAlloc.newInstance<SceneGraph>();
 
-	ANKI_CHECK(m_scene->init(m_allocCb, m_allocCbData,
-		config.getNumber("sceneFrameAllocatorSize"), m_threadpool, m_resources,
-		m_input, &m_globalTimestamp, config));
+	ANKI_CHECK(m_scene->init(m_allocCb, m_allocCbData, m_threadpool,
+		m_resources, m_input, &m_globalTimestamp, config));
 
+	//
 	// Script
+	//
 	m_script = m_heapAlloc.newInstance<ScriptManager>();
 
 	ANKI_CHECK(m_script->create(m_allocCb, m_allocCbData, m_scene));
