@@ -1,5 +1,10 @@
 #!/usr/bin/python3
 
+# Copyright (C) 2009-2016, Panagiotis Christopoulos Charitos.
+# All rights reserved.
+# Code licensed under the BSD License.
+# http://www.anki3d.org/LICENSE
+
 import optparse
 import sys
 import struct
@@ -66,7 +71,7 @@ def split(filename, split_size, out_dir):
 
 	if len(tga_header) != 12:
 		raise Exception("Failed reading TGA header")
-	
+
 	if uncompressed_tga_header != tga_header:
 		raise Exception("Incorrect TGA header")
 
@@ -75,7 +80,7 @@ def split(filename, split_size, out_dir):
 
 	if len(header6_buff) != 6:
 		raise Exception("Failed reading TGA header #2")
-		
+
 	header6 = struct.unpack("BBBBBB", header6_buff)
 
 	img_width = header6[1] * 256 + header6[0]
@@ -88,7 +93,7 @@ def split(filename, split_size, out_dir):
 	# Check split size against the image
 	if (img_width % split_size[0]) != 0 or (img_height % split_size[1]) != 0:
 		raise Exception("Sizes of the input image and the split are not " \
-				"compatible: %d %d vs %d %d" 
+				"compatible: %d %d vs %d %d"
 				% (img_width, img_height, split_size[0], split_size[1]))
 
 	# Dump the data to an array
@@ -100,13 +105,13 @@ def split(filename, split_size, out_dir):
 
 			if img_bpp == 24:
 				pixel = in_file.read(3)
-				
+
 				pixels[y][x].append(pixel[0])
 				pixels[y][x].append(pixel[1])
 				pixels[y][x].append(pixel[2])
 			else:
 				pixel = in_file.read(4)
-				
+
 				pixels[y][x].append(pixel[0])
 				pixels[y][x].append(pixel[1])
 				pixels[y][x].append(pixel[2])
@@ -122,11 +127,11 @@ def split(filename, split_size, out_dir):
 
 			# Open file and write header
 			out_file = open("%s/out_%02d.tga" % (out_dir, count), "wb")
-			
+
 			out_file.write(uncompressed_tga_header)
 
-			header2 = struct.pack("BBBBBB", split_size[0] % 256, 
-					int(split_size[0] / 256), split_size[1] % 256, 
+			header2 = struct.pack("BBBBBB", split_size[0] % 256,
+					int(split_size[0] / 256), split_size[1] % 256,
 					int(split_size[1] / 256), img_bpp, 0)
 
 			out_file.write(header2)
@@ -142,7 +147,7 @@ def split(filename, split_size, out_dir):
 						pixels_s = struct.pack("BBB", pixels[in_y][in_x][0],
 								pixels[in_y][in_x][1], pixels[in_y][in_x][2])
 					else:
-						pixels_s = struct.pack("BBBB", pixels[in_y][in_x][0], 
+						pixels_s = struct.pack("BBBB", pixels[in_y][in_x][0],
 								pixels[in_x][in_y][1], pixels[in_y][in_x][2],
 								pixels[in_y][in_x][3])
 
@@ -155,7 +160,7 @@ def main():
 	""" The main """
 
 	config = parse_commandline();
-	
+
 	split(config.in_file, config.size, config.out_dir)
 
 	printi("Done!")

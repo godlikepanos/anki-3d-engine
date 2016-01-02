@@ -1,5 +1,10 @@
 #!/usr/bin/python
 
+# Copyright (C) 2009-2016, Panagiotis Christopoulos Charitos.
+# All rights reserved.
+# Code licensed under the BSD License.
+# http://www.anki3d.org/LICENSE
+
 import optparse
 import subprocess
 import re
@@ -16,7 +21,7 @@ class Config:
 	in_files = []
 	out_file = ""
 	fast = False
-	type = 0 
+	type = 0
 	normal = False
 	convert_path = ""
 	no_alpha = False
@@ -100,7 +105,7 @@ class DdsHeader:
 		('dwDepth', 'I'),
 		('dwMipMapCount', 'I'),
 		('dwReserved1', '44s'),
-	
+
 		# Pixel format
 		('dwSize', 'I'),
 		('dwFlags', 'I'),
@@ -135,7 +140,7 @@ class DdsHeader:
 #
 class PkmHeader:
 	""" The header of a pkm file """
-	
+
 	_fields = [
 		("magic", "6s"),
 		("type", "H"),
@@ -157,10 +162,10 @@ class PkmHeader:
 	@classmethod
 	def get_size(cls):
 		return struct.calcsize(cls.get_format())
-	
+
 #
 # Functions
-# 
+#
 def printi(s):
 	print("[I] %s" % s)
 
@@ -194,7 +199,7 @@ def parse_commandline():
 			type = "string", help = "specify output AnKi image. ")
 
 	parser.add_option("-t", "--type", dest = "type",
-			type = "string", default = "2D", 
+			type = "string", default = "2D",
 			help = "type of the image (2D or cube or 3D or 2DArray)")
 
 	parser.add_option("-f", "--fast", dest = "fast",
@@ -205,24 +210,24 @@ def parse_commandline():
 			type = "int", action = "store", default = 0,
 			help = "assume the texture is normal")
 
-	parser.add_option("-c", "--convert-path", dest = "convert_path", 
-			type = "string", default = "/usr/bin/convert", 
+	parser.add_option("-c", "--convert-path", dest = "convert_path",
+			type = "string", default = "/usr/bin/convert",
 			help = "the executable where convert tool is " \
 			"located. Stupid etcpack cannot get it from PATH")
 
-	parser.add_option("--no-alpha", dest = "no_alpha", 
-			type = "int", action = "store", default = 0, 
+	parser.add_option("--no-alpha", dest = "no_alpha",
+			type = "int", action = "store", default = 0,
 			help = "remove alpha channel")
 
-	parser.add_option("--store-uncompressed", dest = "store_uncompressed", 
-			type = "int", action = "store", default = 0, 
+	parser.add_option("--store-uncompressed", dest = "store_uncompressed",
+			type = "int", action = "store", default = 0,
 			help = "store or not uncompressed data")
 
-	parser.add_option("--store-compressed", dest = "store_compressed", 
-			type = "int", action = "store", default = 1, 
+	parser.add_option("--store-compressed", dest = "store_compressed",
+			type = "int", action = "store", default = 1,
 			help = "store or not compressed data")
 
-	parser.add_option("--to-linear-rgb", dest = "to_linear_rgb", 
+	parser.add_option("--to-linear-rgb", dest = "to_linear_rgb",
 			type = "int", action = "store", default = 0,
 			help = "assume the input textures are sRGB. If this option is " \
 			"true then convert them to linear RGB")
@@ -310,7 +315,7 @@ def identify_image(in_file):
 
 	if not reg:
 		raise Exception("Cannot extract size")
-	
+
 	# Identify the color space
 	"""if not re.search(r"red: 8-bit", stdout_str) \
 			or not re.search(r"green: 8-bit", stdout_str) \
@@ -351,24 +356,24 @@ def create_mipmaps(in_file, tmp_dir, width_, height_, color_format, \
 		mips_fnames.append(out_file_str)
 
 		args = ["convert", in_file]
-		
+
 		# to linear
 		if to_linear_rgb:
 			if color_format != CF_RGB8:
 				raise Exception("to linear RGB only supported for RGB textures")
-			
-			args.append("-set") 
+
+			args.append("-set")
 			args.append("colorspace")
 			args.append("sRGB")
 			args.append("-colorspace")
 			args.append("RGB")
 
 		# resize
-		args.append("-resize") 
-		args.append(size_str) 
+		args.append("-resize")
+		args.append(size_str)
 
 		# alpha
-		args.append("-alpha") 
+		args.append("-alpha")
 		if color_format == CF_RGB8:
 			args.append("deactivate")
 		else:
@@ -474,7 +479,7 @@ def write_raw(tex_file, fname, width, height, color_format):
 
 	if len(tga_header) != 12:
 		raise Exception("Failed reading TGA header")
-	
+
 	if uncompressed_tga_header != tga_header:
 		raise Exception("Incorrect TGA header")
 
@@ -483,7 +488,7 @@ def write_raw(tex_file, fname, width, height, color_format):
 
 	if len(header6_buff) != 6:
 		raise Exception("Failed reading TGA header #2")
-		
+
 	header6 = struct.unpack("BBBBBB", header6_buff)
 
 	img_width = header6[1] * 256 + header6[0]
@@ -493,7 +498,7 @@ def write_raw(tex_file, fname, width, height, color_format):
 	if (color_format != CF_RGB8 or img_bpp != 24) \
 			and (color_format != CF_RGBA8 or img_bpp != 32):
 		raise Exception("Unexpected bpp")
-		
+
 	if img_width != width or img_height != height:
 		raise Exception("Unexpected width or height")
 
@@ -570,7 +575,7 @@ def write_s3tc(out_file, fname, width, height, color_format):
 
 def write_etc(out_file, fname, width, height, color_format):
 	""" Append etc2 data to the AnKi texture file """
-	
+
 	printi("  Appending %s" % fname)
 
 	# Read header
@@ -647,14 +652,14 @@ def convert(config):
 	# Write header
 	ak_format = "8sIIIIIIII"
 
-	data_compression = 0 
+	data_compression = 0
 	if config.store_compressed:
 		data_compression = data_compression | DC_S3TC | DC_ETC2
 
 	if config.store_uncompressed:
 		data_compression = data_compression | DC_RAW
 
-	buff = struct.pack(ak_format, 
+	buff = struct.pack(ak_format,
 			b"ANKITEX1",
 			width,
 			height,
@@ -703,7 +708,7 @@ def convert(config):
 				elif compression == 2 and config.store_compressed:
 					write_etc(tex_file, in_base_fname + "_flip.pkm", \
 							tmp_width, tmp_height, color_format)
-			
+
 			tmp_width = tmp_width / 2
 			tmp_height = tmp_height / 2
 
@@ -735,7 +740,7 @@ def main():
 		convert(config)
 	finally:
 		shutil.rmtree(config.tmp_dir)
-		
+
 	# Done
 	printi("Done!")
 
