@@ -1,3 +1,5 @@
+[![AnKi logo](http://anki3d.org/wp-content/uploads/2015/11/logo_248.png)](http://anki3d.org)
+
 [![Build Status](https://travis-ci.org/godlikepanos/anki-3d-engine.svg?branch=master)](https://travis-ci.org/godlikepanos/anki-3d-engine)
 
 AnKi 3D engine is a Linux and Windows opensource game engine that runs on
