@@ -54,6 +54,7 @@ private:
 	ResourceGroupPtr m_blitRcGroup;
 	FramebufferPtr m_isFb;
 	ShaderResourcePtr m_blitFrag;
+	ShaderResourcePtr m_blitVert;
 	PipelinePtr m_blitPpline;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& config);

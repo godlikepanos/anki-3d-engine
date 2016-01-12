@@ -407,6 +407,9 @@ void TextureImpl::create(const TextureInitializer& init)
 			glTexParameteri(m_target, GL_TEXTURE_COMPARE_FUNC,
 				convertCompareOperation(sinit.m_compareOperation));
 		}
+
+		glTexParameteri(m_target, GL_TEXTURE_MIN_LOD, sinit.m_minLod);
+		glTexParameteri(m_target, GL_TEXTURE_MAX_LOD, sinit.m_maxLod);
 	}
 
 	ANKI_CHECK_GL_ERROR();

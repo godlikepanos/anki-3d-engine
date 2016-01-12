@@ -99,6 +99,8 @@ Error Ssao::initInternal(const ConfigSet& config)
 		return ErrorCode::NONE;
 	}
 
+	GrManager& gr = getGrManager();
+
 	m_blurringIterationsCount =
 		config.getNumber("pps.ssao.blurringIterationsCount");
 
@@ -128,19 +130,19 @@ Error Ssao::initInternal(const ConfigSet& config)
 	tinit.m_format =
 		PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
 	tinit.m_mipmapsCount = 1;
-	tinit.m_sampling.m_minMagFilter = SamplingFilter::NEAREST;
+	tinit.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
 	tinit.m_sampling.m_repeat = true;
 
-	m_noiseTex = getGrManager().newInstance<Texture>(tinit);
+	m_noiseTex = gr.newInstance<Texture>(tinit);
 
-	CommandBufferPtr cmdb = getGrManager().newInstance<CommandBuffer>();
+	CommandBufferPtr cmdb = gr.newInstance<CommandBuffer>();
 
 	PtrSize noiseSize = NOISE_TEX_SIZE * NOISE_TEX_SIZE * sizeof(Vec3);
 
 	DynamicBufferToken token;
 	Vec3* noise = static_cast<Vec3*>(
-		getGrManager().allocateFrameHostVisibleMemory(noiseSize,
-		BufferUsage::TRANSFER, token));
+		gr.allocateFrameHostVisibleMemory(noiseSize, BufferUsage::TRANSFER,
+		token));
 
 	genNoise(noise, noise + NOISE_TEX_SIZE * NOISE_TEX_SIZE);
 
@@ -169,9 +171,8 @@ Error Ssao::initInternal(const ConfigSet& config)
 	//
 	// Shaders
 	//
-	m_uniformsBuff = getGrManager().newInstance<Buffer>(
-		sizeof(ShaderCommonUniforms), BufferUsageBit::UNIFORM,
-		BufferAccessBit::CLIENT_WRITE);
+	m_uniformsBuff = gr.newInstance<Buffer>(sizeof(ShaderCommonUniforms),
+		BufferUsageBit::UNIFORM, BufferAccessBit::CLIENT_WRITE);
 
 	ColorStateInfo colorState;
 	colorState.m_attachmentCount = 1;
@@ -230,21 +231,31 @@ Error Ssao::initInternal(const ConfigSet& config)
 	// Resource groups
 	//
 	ResourceGroupInitializer rcinit;
+	SamplerInitializer sinit;
+	sinit.m_minMagFilter = SamplingFilter::LINEAR;
+	sinit.m_mipmapFilter = SamplingFilter::NEAREST;
+	sinit.m_repeat = false;
+	sinit.m_minLod = 0.0;
+
 	rcinit.m_textures[0].m_texture = m_r->getMs().getDepthRt();
+	rcinit.m_textures[0].m_sampler = gr.newInstance<Sampler>(sinit);
+
 	rcinit.m_textures[1].m_texture = m_r->getMs().getRt2();
+	rcinit.m_textures[1].m_sampler = rcinit.m_textures[0].m_sampler;
+
 	rcinit.m_textures[2].m_texture = m_noiseTex;
 	rcinit.m_uniformBuffers[0].m_buffer = m_uniformsBuff;
-	m_rcFirst = getGrManager().newInstance<ResourceGroup>(rcinit);
+	m_rcFirst = gr.newInstance<ResourceGroup>(rcinit);
 
 	rcinit = ResourceGroupInitializer();
 	rcinit.m_textures[0].m_texture = m_vblurRt;
-	m_hblurRc = getGrManager().newInstance<ResourceGroup>(rcinit);
+	m_hblurRc = gr.newInstance<ResourceGroup>(rcinit);
 
 	rcinit = ResourceGroupInitializer();
 	rcinit.m_textures[0].m_texture = m_hblurRt;
-	m_vblurRc = getGrManager().newInstance<ResourceGroup>(rcinit);
+	m_vblurRc = gr.newInstance<ResourceGroup>(rcinit);
 
-	getGrManager().finish();
+	gr.finish();
 	return ErrorCode::NONE;
 }
 
@@ -279,7 +290,7 @@ void Ssao::run(CommandBufferPtr& cmdb)
 	if(m_commonUboUpdateTimestamp
 			< m_r->getProjectionParametersUpdateTimestamp()
 		|| m_commonUboUpdateTimestamp < camFr.getTimestamp()
-		|| m_commonUboUpdateTimestamp == 1)
+		|| m_commonUboUpdateTimestamp == 0)
 	{
 		DynamicBufferToken token;
 		ShaderCommonUniforms* blk = static_cast<ShaderCommonUniforms*>(

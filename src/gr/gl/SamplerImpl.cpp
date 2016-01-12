@@ -40,6 +40,9 @@ void SamplerImpl::create(const SamplerInitializer& sinit)
 			GLint(sinit.m_anisotropyLevel));
 	}
 #endif
+
+	glSamplerParameteri(m_glName, GL_TEXTURE_MIN_LOD, sinit.m_minLod);
+	glSamplerParameteri(m_glName, GL_TEXTURE_MAX_LOD, sinit.m_maxLod);
 }
 
 } // end namespace anki

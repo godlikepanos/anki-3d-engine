@@ -41,10 +41,10 @@ Error Ms::createRt(U32 index, U32 samples)
 		RT_PIXEL_FORMATS[0], samples, SamplingFilter::NEAREST, 1, plane.m_rt0);
 
 	m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(),
-		RT_PIXEL_FORMATS[1], samples, SamplingFilter::NEAREST, 1, plane.m_rt1);
+		RT_PIXEL_FORMATS[1], samples, SamplingFilter::NEAREST, 2, plane.m_rt1);
 
 	m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(),
-		RT_PIXEL_FORMATS[2], samples, SamplingFilter::NEAREST, 1, plane.m_rt2);
+		RT_PIXEL_FORMATS[2], samples, SamplingFilter::NEAREST, 2, plane.m_rt2);
 
 	AttachmentLoadOperation loadop = AttachmentLoadOperation::DONT_CARE;
 #if ANKI_DEBUG
@@ -161,6 +161,8 @@ void Ms::generateMipmaps(CommandBufferPtr& cmdb)
 {
 	U planeId = (m_r->getSamples() == 1) ? 1 : 0;
 	cmdb->generateMipmaps(m_planes[planeId].m_depthRt);
+	cmdb->generateMipmaps(m_planes[planeId].m_rt1);
+	cmdb->generateMipmaps(m_planes[planeId].m_rt2);
 }
 
 } // end namespace anki

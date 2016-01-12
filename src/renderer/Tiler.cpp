@@ -160,7 +160,8 @@ Bool Tiler::test(const CollisionShape& cs, const Aabb& aabb) const
 	for(Vec4& p : points)
 	{
 		p = m_viewProjMat * p;
-		p /= abs(p.w());
+		ANKI_ASSERT(p.w() > 0.0);
+		p = p.perspectiveDivide();
 
 		for(U i = 0; i < 2; ++i)
 		{

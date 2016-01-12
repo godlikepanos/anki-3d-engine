@@ -62,11 +62,8 @@ Error Refl::initInternal(const ConfigSet& config)
 	}
 
 	// Size
-	const F32 quality = config.getNumber("refl.renderingQuality");
-
-	m_width = getAlignedRoundUp(Renderer::TILE_SIZE, quality * m_r->getWidth());
-	m_height =
-		getAlignedRoundUp(Renderer::TILE_SIZE, quality * m_r->getHeight());
+	m_width = m_r->getWidth() / 2;
+	m_height = m_r->getHeight() / 2;
 
 	// IR
 	if(m_irEnabled)
@@ -85,6 +82,8 @@ Error Refl::initInternal(const ConfigSet& config)
 //==============================================================================
 Error Refl::init1stPass(const ConfigSet& config)
 {
+	GrManager& gr = getGrManager();
+
 	// Create shader
 	StringAuto pps(getFrameAllocator());
 	const PixelFormat& pixFormat = Pps::RT_PIXEL_FORMAT;
@@ -125,9 +124,19 @@ Error Refl::init1stPass(const ConfigSet& config)
 
 	// Create RC group
 	ResourceGroupInitializer rcInit;
+	SamplerInitializer sinit;
+
+	sinit.m_minLod = 1.0;
+	sinit.m_minMagFilter = SamplingFilter::NEAREST;
+	sinit.m_mipmapFilter = SamplingFilter::NEAREST;
 	rcInit.m_textures[0].m_texture = m_r->getMs().getDepthRt();
+	rcInit.m_textures[0].m_sampler = gr.newInstance<Sampler>(sinit);
+
 	rcInit.m_textures[1].m_texture = m_r->getMs().getRt1();
+	rcInit.m_textures[1].m_sampler = gr.newInstance<Sampler>(sinit);
+
 	rcInit.m_textures[2].m_texture = m_r->getMs().getRt2();
+	rcInit.m_textures[2].m_sampler = gr.newInstance<Sampler>(sinit);
 
 	if(m_sslrEnabled)
 	{
@@ -168,25 +177,59 @@ Error Refl::init1stPass(const ConfigSet& config)
 //==============================================================================
 Error Refl::init2ndPass()
 {
+	GrManager& gr = getGrManager();
+
 	// Create RC group
+	SamplerInitializer sinit;
 	ResourceGroupInitializer rcInit;
-	rcInit.m_textures[0].m_texture = m_rt;
+
+	sinit.m_mipmapFilter = SamplingFilter::NEAREST;
+	rcInit.m_textures[0].m_texture = m_r->getMs().getDepthRt();
+	rcInit.m_textures[0].m_sampler = gr.newInstance<Sampler>(sinit);
+
+	sinit.m_minLod = 1.0;
+	rcInit.m_textures[1].m_texture = m_r->getMs().getDepthRt();
+	rcInit.m_textures[1].m_sampler = gr.newInstance<Sampler>(sinit);
+
+	sinit.m_minLod = 0.0;
+	rcInit.m_textures[2].m_texture = m_rt;
+	rcInit.m_textures[2].m_sampler = gr.newInstance<Sampler>(sinit);
+
+	sinit.m_minMagFilter = SamplingFilter::LINEAR;
+	rcInit.m_textures[3].m_texture = m_rt;
+	rcInit.m_textures[3].m_sampler = gr.newInstance<Sampler>(sinit);
 
 	m_blitRcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);
 
 	// Shader
-	ANKI_CHECK(getResourceManager().loadResource(
-		"shaders/Blit.frag.glsl", m_blitFrag));
+	StringAuto pps(getFrameAllocator());
+	pps.sprintf(
+		"#define TEXTURE_WIDTH %uu\n"
+		"#define TEXTURE_HEIGHT %uu\n",
+		m_width, m_height);
+
+	ANKI_CHECK(getResourceManager().loadResourceToCache(m_blitFrag,
+		"shaders/NearDepthUpscale.frag.glsl", pps.toCString(), "r_refl_"));
+
+	ANKI_CHECK(getResourceManager().loadResourceToCache(m_blitVert,
+		"shaders/NearDepthUpscale.vert.glsl", pps.toCString(), "r_refl_"));
 
 	// Ppline
-	ColorStateInfo colorState;
-	colorState.m_attachmentCount = 1;
-	colorState.m_attachments[0].m_format = Is::RT_PIXEL_FORMAT;
-	colorState.m_attachments[0].m_srcBlendMethod = BlendMethod::ONE;
-	colorState.m_attachments[0].m_dstBlendMethod = BlendMethod::ONE;
+	PipelineInitializer ppinit;
 
-	m_r->createDrawQuadPipeline(m_blitFrag->getGrShader(), colorState,
-		m_blitPpline);
+	ppinit.m_inputAssembler.m_topology = PrimitiveTopology::TRIANGLE_STRIP;
+
+	ppinit.m_depthStencil.m_depthWriteEnabled = false;
+	ppinit.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
+
+	ppinit.m_color.m_attachmentCount = 1;
+	ppinit.m_color.m_attachments[0].m_format = Is::RT_PIXEL_FORMAT;
+	ppinit.m_color.m_attachments[0].m_srcBlendMethod = BlendMethod::ONE;
+	ppinit.m_color.m_attachments[0].m_dstBlendMethod = BlendMethod::ONE;
+
+	ppinit.m_shaders[U(ShaderType::VERTEX)] = m_blitVert->getGrShader();
+	ppinit.m_shaders[U(ShaderType::FRAGMENT)] = m_blitFrag->getGrShader();
+	m_blitPpline = gr.newInstance<Pipeline>(ppinit);
 
 	// Create FB
 	FramebufferInitializer fbInit;

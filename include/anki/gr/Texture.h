@@ -22,7 +22,7 @@ public:
 	F32 m_minLod = -1000.0;
 	F32 m_maxLod = 1000.0;
 	I8 m_anisotropyLevel = 0;
-	Bool8 m_repeat = true;
+	Bool8 m_repeat = true; ///< Repeat or clamp.
 };
 
 /// Texture initializer.

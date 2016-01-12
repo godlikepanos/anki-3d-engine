@@ -140,7 +140,7 @@ void readGBuffer(
 // Rear roughness from G-Buffer
 void readRoughnessFromGBuffer(in sampler2D rt1, in vec2 uv, out float r)
 {
-	r = textureLod(rt1, uv, 0.0).z;
+	r = texture(rt1, uv).z;
 }
 
 // Read only normal from G buffer
@@ -149,7 +149,7 @@ void readNormalFromGBuffer(
 	in vec2 uv,
 	out vec3 normal)
 {
-	normal = normalize(textureLod(fai2, uv, 0.0).rgb * 2.0 - 1.0);
+	normal = normalize(texture(fai2, uv).rgb * 2.0 - 1.0);
 }
 
 // Read only normal and specular color from G buffer

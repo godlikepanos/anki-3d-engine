@@ -43,7 +43,7 @@ void main()
 	//
 	// Decode the G-buffer
 	//
-	float depth = textureRt(u_depthRt, in_texCoord).r;
+	float depth = texture(u_depthRt, in_texCoord).r;
 	vec3 posVSpace;
 	posVSpace.z = u_projectionParams.z / (u_projectionParams.w + depth);
 	posVSpace.xy =
