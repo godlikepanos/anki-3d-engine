@@ -168,15 +168,32 @@ def arg(arg_txt, stack_index, index):
 
 	if type_is_bool(type) or type_is_number(type):
 		wglue("%s arg%d;" % (type, index))
-		wglue("if(LuaBinder::checkNumber(l, %d, arg%d)) return -1;" \
+		wglue("if(LuaBinder::checkNumber(l, %d, arg%d))" \
 			% (stack_index, index))
+		wglue("{")
+		ident(1)
+		wglue("return -1;")
+		ident(-1)
+		wglue("}")
 	elif type == "char" or type == "CString":
 		wglue("const char* arg%d;" % index)
-		wglue("if(LuaBinder::checkString(l, %d, arg%d)) return -1;" \
+		wglue("if(LuaBinder::checkString(l, %d, arg%d))" \
 			% (stack_index, index))
+		wglue("{")
+		ident(1)
+		wglue("return -1;")
+		ident(-1)
+		wglue("}")
 	else:
-		wglue("if(LuaBinder::checkUserData(l, %d, \"%s\", %d, ud)) return -1;" \
+		wglue("if(LuaBinder::checkUserData(l, %d, \"%s\", %d, ud))" \
 			% (stack_index, type, type_sig(type)))
+		wglue("{")
+		ident(1)
+		wglue("return -1;")
+		ident(-1)
+		wglue("}")
+		wglue("")
+
 		wglue("%s* iarg%d = ud->getData<%s>();" \
 			% (type, index, type))
 
@@ -287,8 +304,14 @@ def method(class_name, meth_el):
 
 	# Get this pointer
 	wglue("// Get \"this\" as \"self\"")
-	wglue("if(LuaBinder::checkUserData(l, 1, classname%s, %d, ud)) return -1;" \
+	wglue("if(LuaBinder::checkUserData(l, 1, classname%s, %d, ud))" \
 		% (class_name, type_sig(class_name)))
+	wglue("{")
+	ident(1)
+	wglue("return -1;")
+	ident(-1)
+	wglue("}")
+	wglue("")
 	wglue("%s* self = ud->getData<%s>();" % (class_name, class_name))
 	wglue("")
 
@@ -328,7 +351,13 @@ def method(class_name, meth_el):
 	wglue("{")
 	ident(1)
 	wglue("int res = pwrap%s%s(l);" % (class_name, meth_alias))
-	wglue("if(res >= 0) return res;")
+	wglue("if(res >= 0)")
+	wglue("{")
+	ident(1)
+	wglue("return res;")
+	ident(-1)
+	wglue("}")
+	wglue("")
 	wglue("lua_error(l);")
 	wglue("return 0;")
 	ident(-1)
@@ -384,7 +413,13 @@ def static_method(class_name, meth_el):
 	wglue("{")
 	ident(1)
 	wglue("int res = pwrap%s%s(l);" % (class_name, meth_alias))
-	wglue("if(res >= 0) return res;")
+	wglue("if(res >= 0)")
+	wglue("{")
+	ident(1)
+	wglue("return res;")
+	ident(-1)
+	wglue("}")
+	wglue("")
 	wglue("lua_error(l);")
 	wglue("return 0;")
 	ident(-1)
@@ -433,7 +468,13 @@ def constructor(constr_el, class_name):
 	wglue("{")
 	ident(1)
 	wglue("int res = pwrap%sCtor(l);" % class_name)
-	wglue("if(res >= 0) return res;")
+	wglue("if(res >= 0)")
+	wglue("{")
+	ident(1)
+	wglue("return res;")
+	ident(-1)
+	wglue("}")
+	wglue("")
 	wglue("lua_error(l);")
 	wglue("return 0;")
 	ident(-1)
@@ -453,8 +494,14 @@ def destructor(class_name):
 	write_local_vars();
 
 	wglue("LuaBinder::checkArgsCount(l, 1);")
-	wglue("if(LuaBinder::checkUserData(l, 1, classname%s, %d, ud)) return -1;" \
+	wglue("if(LuaBinder::checkUserData(l, 1, classname%s, %d, ud))" \
 		% (class_name, type_sig(class_name)))
+	wglue("{")
+	ident(1)
+	wglue("return -1;")
+	ident(-1)
+	wglue("}")
+	wglue("");
 
 	wglue("if(ud->isGarbageCollected())")
 	wglue("{")
@@ -627,7 +674,13 @@ def function(func_el):
 	wglue("{")
 	ident(1)
 	wglue("int res = pwrap%s(l);" % func_alias)
-	wglue("if(res >= 0) return res;")
+	wglue("if(res >= 0)")
+	wglue("{")
+	ident(1)
+	wglue("return res;")
+	ident(-1)
+	wglue("}")
+	wglue("")
 	wglue("lua_error(l);")
 	wglue("return 0;")
 	ident(-1)

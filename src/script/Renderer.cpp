@@ -43,7 +43,11 @@ static inline int pwrapDbggetEnabled(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameDbg, -2784798555522127122, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameDbg, -2784798555522127122, ud))
+	{
+		return -1;
+	}
+	
 	Dbg* self = ud->getData<Dbg>();
 	
 	// Call the method
@@ -60,7 +64,11 @@ static inline int pwrapDbggetEnabled(lua_State* l)
 static int wrapDbggetEnabled(lua_State* l)
 {
 	int res = pwrapDbggetEnabled(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -79,12 +87,19 @@ static inline int pwrapDbgsetEnabled(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameDbg, -2784798555522127122, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameDbg, -2784798555522127122, ud))
+	{
+		return -1;
+	}
+	
 	Dbg* self = ud->getData<Dbg>();
 	
 	// Pop arguments
 	Bool arg0;
-	if(LuaBinder::checkNumber(l, 2, arg0)) return -1;
+	if(LuaBinder::checkNumber(l, 2, arg0))
+	{
+		return -1;
+	}
 	
 	// Call the method
 	self->setEnabled(arg0);
@@ -97,7 +112,11 @@ static inline int pwrapDbgsetEnabled(lua_State* l)
 static int wrapDbgsetEnabled(lua_State* l)
 {
 	int res = pwrapDbgsetEnabled(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }

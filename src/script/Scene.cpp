@@ -74,11 +74,19 @@ static inline int pwrapMoveComponentsetLocalOrigin(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud))
+	{
+		return -1;
+	}
+	
 	MoveComponent* self = ud->getData<MoveComponent>();
 	
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud))
+	{
+		return -1;
+	}
+	
 	Vec4* iarg0 = ud->getData<Vec4>();
 	const Vec4& arg0(*iarg0);
 	
@@ -93,7 +101,11 @@ static inline int pwrapMoveComponentsetLocalOrigin(lua_State* l)
 static int wrapMoveComponentsetLocalOrigin(lua_State* l)
 {
 	int res = pwrapMoveComponentsetLocalOrigin(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -112,7 +124,11 @@ static inline int pwrapMoveComponentgetLocalOrigin(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud))
+	{
+		return -1;
+	}
+	
 	MoveComponent* self = ud->getData<MoveComponent>();
 	
 	// Call the method
@@ -132,7 +148,11 @@ static inline int pwrapMoveComponentgetLocalOrigin(lua_State* l)
 static int wrapMoveComponentgetLocalOrigin(lua_State* l)
 {
 	int res = pwrapMoveComponentgetLocalOrigin(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -151,11 +171,19 @@ static inline int pwrapMoveComponentsetLocalRotation(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud))
+	{
+		return -1;
+	}
+	
 	MoveComponent* self = ud->getData<MoveComponent>();
 	
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Mat3x4", -2654194732934255869, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 2, "Mat3x4", -2654194732934255869, ud))
+	{
+		return -1;
+	}
+	
 	Mat3x4* iarg0 = ud->getData<Mat3x4>();
 	const Mat3x4& arg0(*iarg0);
 	
@@ -170,7 +198,11 @@ static inline int pwrapMoveComponentsetLocalRotation(lua_State* l)
 static int wrapMoveComponentsetLocalRotation(lua_State* l)
 {
 	int res = pwrapMoveComponentsetLocalRotation(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -189,7 +221,11 @@ static inline int pwrapMoveComponentgetLocalRotation(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud))
+	{
+		return -1;
+	}
+	
 	MoveComponent* self = ud->getData<MoveComponent>();
 	
 	// Call the method
@@ -209,7 +245,11 @@ static inline int pwrapMoveComponentgetLocalRotation(lua_State* l)
 static int wrapMoveComponentgetLocalRotation(lua_State* l)
 {
 	int res = pwrapMoveComponentgetLocalRotation(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -228,12 +268,19 @@ static inline int pwrapMoveComponentsetLocalScale(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud))
+	{
+		return -1;
+	}
+	
 	MoveComponent* self = ud->getData<MoveComponent>();
 	
 	// Pop arguments
 	F32 arg0;
-	if(LuaBinder::checkNumber(l, 2, arg0)) return -1;
+	if(LuaBinder::checkNumber(l, 2, arg0))
+	{
+		return -1;
+	}
 	
 	// Call the method
 	self->setLocalScale(arg0);
@@ -246,7 +293,11 @@ static inline int pwrapMoveComponentsetLocalScale(lua_State* l)
 static int wrapMoveComponentsetLocalScale(lua_State* l)
 {
 	int res = pwrapMoveComponentsetLocalScale(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -265,7 +316,11 @@ static inline int pwrapMoveComponentgetLocalScale(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud))
+	{
+		return -1;
+	}
+	
 	MoveComponent* self = ud->getData<MoveComponent>();
 	
 	// Call the method
@@ -282,7 +337,11 @@ static inline int pwrapMoveComponentgetLocalScale(lua_State* l)
 static int wrapMoveComponentgetLocalScale(lua_State* l)
 {
 	int res = pwrapMoveComponentgetLocalScale(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -301,11 +360,19 @@ static inline int pwrapMoveComponentsetLocalTransform(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud))
+	{
+		return -1;
+	}
+	
 	MoveComponent* self = ud->getData<MoveComponent>();
 	
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Transform", 7048620195620777229, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 2, "Transform", 7048620195620777229, ud))
+	{
+		return -1;
+	}
+	
 	Transform* iarg0 = ud->getData<Transform>();
 	const Transform& arg0(*iarg0);
 	
@@ -320,7 +387,11 @@ static inline int pwrapMoveComponentsetLocalTransform(lua_State* l)
 static int wrapMoveComponentsetLocalTransform(lua_State* l)
 {
 	int res = pwrapMoveComponentsetLocalTransform(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -339,7 +410,11 @@ static inline int pwrapMoveComponentgetLocalTransform(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud))
+	{
+		return -1;
+	}
+	
 	MoveComponent* self = ud->getData<MoveComponent>();
 	
 	// Call the method
@@ -359,7 +434,11 @@ static inline int pwrapMoveComponentgetLocalTransform(lua_State* l)
 static int wrapMoveComponentgetLocalTransform(lua_State* l)
 {
 	int res = pwrapMoveComponentgetLocalTransform(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -413,11 +492,19 @@ static inline int pwrapLightComponentsetDiffuseColor(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud))
+	{
+		return -1;
+	}
+	
 	LightComponent* self = ud->getData<LightComponent>();
 	
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud))
+	{
+		return -1;
+	}
+	
 	Vec4* iarg0 = ud->getData<Vec4>();
 	const Vec4& arg0(*iarg0);
 	
@@ -432,7 +519,11 @@ static inline int pwrapLightComponentsetDiffuseColor(lua_State* l)
 static int wrapLightComponentsetDiffuseColor(lua_State* l)
 {
 	int res = pwrapLightComponentsetDiffuseColor(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -451,7 +542,11 @@ static inline int pwrapLightComponentgetDiffuseColor(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud))
+	{
+		return -1;
+	}
+	
 	LightComponent* self = ud->getData<LightComponent>();
 	
 	// Call the method
@@ -471,7 +566,11 @@ static inline int pwrapLightComponentgetDiffuseColor(lua_State* l)
 static int wrapLightComponentgetDiffuseColor(lua_State* l)
 {
 	int res = pwrapLightComponentgetDiffuseColor(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -490,11 +589,19 @@ static inline int pwrapLightComponentsetSpecularColor(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud))
+	{
+		return -1;
+	}
+	
 	LightComponent* self = ud->getData<LightComponent>();
 	
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud))
+	{
+		return -1;
+	}
+	
 	Vec4* iarg0 = ud->getData<Vec4>();
 	const Vec4& arg0(*iarg0);
 	
@@ -509,7 +616,11 @@ static inline int pwrapLightComponentsetSpecularColor(lua_State* l)
 static int wrapLightComponentsetSpecularColor(lua_State* l)
 {
 	int res = pwrapLightComponentsetSpecularColor(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -528,7 +639,11 @@ static inline int pwrapLightComponentgetSpecularColor(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud))
+	{
+		return -1;
+	}
+	
 	LightComponent* self = ud->getData<LightComponent>();
 	
 	// Call the method
@@ -548,7 +663,11 @@ static inline int pwrapLightComponentgetSpecularColor(lua_State* l)
 static int wrapLightComponentgetSpecularColor(lua_State* l)
 {
 	int res = pwrapLightComponentgetSpecularColor(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -567,12 +686,19 @@ static inline int pwrapLightComponentsetRadius(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud))
+	{
+		return -1;
+	}
+	
 	LightComponent* self = ud->getData<LightComponent>();
 	
 	// Pop arguments
 	F32 arg0;
-	if(LuaBinder::checkNumber(l, 2, arg0)) return -1;
+	if(LuaBinder::checkNumber(l, 2, arg0))
+	{
+		return -1;
+	}
 	
 	// Call the method
 	self->setRadius(arg0);
@@ -585,7 +711,11 @@ static inline int pwrapLightComponentsetRadius(lua_State* l)
 static int wrapLightComponentsetRadius(lua_State* l)
 {
 	int res = pwrapLightComponentsetRadius(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -604,7 +734,11 @@ static inline int pwrapLightComponentgetRadius(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud))
+	{
+		return -1;
+	}
+	
 	LightComponent* self = ud->getData<LightComponent>();
 	
 	// Call the method
@@ -621,7 +755,11 @@ static inline int pwrapLightComponentgetRadius(lua_State* l)
 static int wrapLightComponentgetRadius(lua_State* l)
 {
 	int res = pwrapLightComponentgetRadius(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -640,12 +778,19 @@ static inline int pwrapLightComponentsetDistance(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud))
+	{
+		return -1;
+	}
+	
 	LightComponent* self = ud->getData<LightComponent>();
 	
 	// Pop arguments
 	F32 arg0;
-	if(LuaBinder::checkNumber(l, 2, arg0)) return -1;
+	if(LuaBinder::checkNumber(l, 2, arg0))
+	{
+		return -1;
+	}
 	
 	// Call the method
 	self->setDistance(arg0);
@@ -658,7 +803,11 @@ static inline int pwrapLightComponentsetDistance(lua_State* l)
 static int wrapLightComponentsetDistance(lua_State* l)
 {
 	int res = pwrapLightComponentsetDistance(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -677,7 +826,11 @@ static inline int pwrapLightComponentgetDistance(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud))
+	{
+		return -1;
+	}
+	
 	LightComponent* self = ud->getData<LightComponent>();
 	
 	// Call the method
@@ -694,7 +847,11 @@ static inline int pwrapLightComponentgetDistance(lua_State* l)
 static int wrapLightComponentgetDistance(lua_State* l)
 {
 	int res = pwrapLightComponentgetDistance(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -713,12 +870,19 @@ static inline int pwrapLightComponentsetInnerAngle(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud))
+	{
+		return -1;
+	}
+	
 	LightComponent* self = ud->getData<LightComponent>();
 	
 	// Pop arguments
 	F32 arg0;
-	if(LuaBinder::checkNumber(l, 2, arg0)) return -1;
+	if(LuaBinder::checkNumber(l, 2, arg0))
+	{
+		return -1;
+	}
 	
 	// Call the method
 	self->setInnerAngle(arg0);
@@ -731,7 +895,11 @@ static inline int pwrapLightComponentsetInnerAngle(lua_State* l)
 static int wrapLightComponentsetInnerAngle(lua_State* l)
 {
 	int res = pwrapLightComponentsetInnerAngle(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -750,7 +918,11 @@ static inline int pwrapLightComponentgetInnerAngle(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud))
+	{
+		return -1;
+	}
+	
 	LightComponent* self = ud->getData<LightComponent>();
 	
 	// Call the method
@@ -767,7 +939,11 @@ static inline int pwrapLightComponentgetInnerAngle(lua_State* l)
 static int wrapLightComponentgetInnerAngle(lua_State* l)
 {
 	int res = pwrapLightComponentgetInnerAngle(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -786,12 +962,19 @@ static inline int pwrapLightComponentsetOuterAngle(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud))
+	{
+		return -1;
+	}
+	
 	LightComponent* self = ud->getData<LightComponent>();
 	
 	// Pop arguments
 	F32 arg0;
-	if(LuaBinder::checkNumber(l, 2, arg0)) return -1;
+	if(LuaBinder::checkNumber(l, 2, arg0))
+	{
+		return -1;
+	}
 	
 	// Call the method
 	self->setOuterAngle(arg0);
@@ -804,7 +987,11 @@ static inline int pwrapLightComponentsetOuterAngle(lua_State* l)
 static int wrapLightComponentsetOuterAngle(lua_State* l)
 {
 	int res = pwrapLightComponentsetOuterAngle(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -823,7 +1010,11 @@ static inline int pwrapLightComponentgetOuterAngle(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud))
+	{
+		return -1;
+	}
+	
 	LightComponent* self = ud->getData<LightComponent>();
 	
 	// Call the method
@@ -840,7 +1031,11 @@ static inline int pwrapLightComponentgetOuterAngle(lua_State* l)
 static int wrapLightComponentgetOuterAngle(lua_State* l)
 {
 	int res = pwrapLightComponentgetOuterAngle(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -859,12 +1054,19 @@ static inline int pwrapLightComponentsetShadowEnabled(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud))
+	{
+		return -1;
+	}
+	
 	LightComponent* self = ud->getData<LightComponent>();
 	
 	// Pop arguments
 	Bool arg0;
-	if(LuaBinder::checkNumber(l, 2, arg0)) return -1;
+	if(LuaBinder::checkNumber(l, 2, arg0))
+	{
+		return -1;
+	}
 	
 	// Call the method
 	self->setShadowEnabled(arg0);
@@ -877,7 +1079,11 @@ static inline int pwrapLightComponentsetShadowEnabled(lua_State* l)
 static int wrapLightComponentsetShadowEnabled(lua_State* l)
 {
 	int res = pwrapLightComponentsetShadowEnabled(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -896,7 +1102,11 @@ static inline int pwrapLightComponentgetShadowEnabled(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud))
+	{
+		return -1;
+	}
+	
 	LightComponent* self = ud->getData<LightComponent>();
 	
 	// Call the method
@@ -913,7 +1123,11 @@ static inline int pwrapLightComponentgetShadowEnabled(lua_State* l)
 static int wrapLightComponentgetShadowEnabled(lua_State* l)
 {
 	int res = pwrapLightComponentgetShadowEnabled(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -973,11 +1187,19 @@ static inline int pwrapLensFlareComponentsetFirstFlareSize(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLensFlareComponent, -2019248835133422777, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameLensFlareComponent, -2019248835133422777, ud))
+	{
+		return -1;
+	}
+	
 	LensFlareComponent* self = ud->getData<LensFlareComponent>();
 	
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Vec2", 6804478823655046388, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 2, "Vec2", 6804478823655046388, ud))
+	{
+		return -1;
+	}
+	
 	Vec2* iarg0 = ud->getData<Vec2>();
 	const Vec2& arg0(*iarg0);
 	
@@ -992,7 +1214,11 @@ static inline int pwrapLensFlareComponentsetFirstFlareSize(lua_State* l)
 static int wrapLensFlareComponentsetFirstFlareSize(lua_State* l)
 {
 	int res = pwrapLensFlareComponentsetFirstFlareSize(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -1011,11 +1237,19 @@ static inline int pwrapLensFlareComponentsetColorMultiplier(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLensFlareComponent, -2019248835133422777, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameLensFlareComponent, -2019248835133422777, ud))
+	{
+		return -1;
+	}
+	
 	LensFlareComponent* self = ud->getData<LensFlareComponent>();
 	
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud))
+	{
+		return -1;
+	}
+	
 	Vec4* iarg0 = ud->getData<Vec4>();
 	const Vec4& arg0(*iarg0);
 	
@@ -1030,7 +1264,11 @@ static inline int pwrapLensFlareComponentsetColorMultiplier(lua_State* l)
 static int wrapLensFlareComponentsetColorMultiplier(lua_State* l)
 {
 	int res = pwrapLensFlareComponentsetColorMultiplier(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -1078,7 +1316,11 @@ static inline int pwrapSceneNodegetName(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneNode, -2220074417980276571, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameSceneNode, -2220074417980276571, ud))
+	{
+		return -1;
+	}
+	
 	SceneNode* self = ud->getData<SceneNode>();
 	
 	// Call the method
@@ -1095,7 +1337,11 @@ static inline int pwrapSceneNodegetName(lua_State* l)
 static int wrapSceneNodegetName(lua_State* l)
 {
 	int res = pwrapSceneNodegetName(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -1114,11 +1360,19 @@ static inline int pwrapSceneNodeaddChild(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneNode, -2220074417980276571, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameSceneNode, -2220074417980276571, ud))
+	{
+		return -1;
+	}
+	
 	SceneNode* self = ud->getData<SceneNode>();
 	
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "SceneNode", -2220074417980276571, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 2, "SceneNode", -2220074417980276571, ud))
+	{
+		return -1;
+	}
+	
 	SceneNode* iarg0 = ud->getData<SceneNode>();
 	SceneNode* arg0(iarg0);
 	
@@ -1133,7 +1387,11 @@ static inline int pwrapSceneNodeaddChild(lua_State* l)
 static int wrapSceneNodeaddChild(lua_State* l)
 {
 	int res = pwrapSceneNodeaddChild(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -1152,7 +1410,11 @@ static inline int pwrapSceneNodegetMoveComponent(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneNode, -2220074417980276571, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameSceneNode, -2220074417980276571, ud))
+	{
+		return -1;
+	}
+	
 	SceneNode* self = ud->getData<SceneNode>();
 	
 	// Call the method
@@ -1178,7 +1440,11 @@ static inline int pwrapSceneNodegetMoveComponent(lua_State* l)
 static int wrapSceneNodegetMoveComponent(lua_State* l)
 {
 	int res = pwrapSceneNodegetMoveComponent(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -1197,7 +1463,11 @@ static inline int pwrapSceneNodegetLightComponent(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneNode, -2220074417980276571, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameSceneNode, -2220074417980276571, ud))
+	{
+		return -1;
+	}
+	
 	SceneNode* self = ud->getData<SceneNode>();
 	
 	// Call the method
@@ -1223,7 +1493,11 @@ static inline int pwrapSceneNodegetLightComponent(lua_State* l)
 static int wrapSceneNodegetLightComponent(lua_State* l)
 {
 	int res = pwrapSceneNodegetLightComponent(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -1242,7 +1516,11 @@ static inline int pwrapSceneNodegetLensFlareComponent(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneNode, -2220074417980276571, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameSceneNode, -2220074417980276571, ud))
+	{
+		return -1;
+	}
+	
 	SceneNode* self = ud->getData<SceneNode>();
 	
 	// Call the method
@@ -1268,7 +1546,11 @@ static inline int pwrapSceneNodegetLensFlareComponent(lua_State* l)
 static int wrapSceneNodegetLensFlareComponent(lua_State* l)
 {
 	int res = pwrapSceneNodegetLensFlareComponent(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -1319,7 +1601,11 @@ static inline int pwrapModelNodegetSceneNodeBase(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameModelNode, -1856316251880904290, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameModelNode, -1856316251880904290, ud))
+	{
+		return -1;
+	}
+	
 	ModelNode* self = ud->getData<ModelNode>();
 	
 	// Call the method
@@ -1339,7 +1625,11 @@ static inline int pwrapModelNodegetSceneNodeBase(lua_State* l)
 static int wrapModelNodegetSceneNodeBase(lua_State* l)
 {
 	int res = pwrapModelNodegetSceneNodeBase(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -1386,7 +1676,11 @@ static inline int pwrapPointLightgetSceneNodeBase(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnamePointLight, 3561037663389896020, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnamePointLight, 3561037663389896020, ud))
+	{
+		return -1;
+	}
+	
 	PointLight* self = ud->getData<PointLight>();
 	
 	// Call the method
@@ -1406,7 +1700,11 @@ static inline int pwrapPointLightgetSceneNodeBase(lua_State* l)
 static int wrapPointLightgetSceneNodeBase(lua_State* l)
 {
 	int res = pwrapPointLightgetSceneNodeBase(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -1425,12 +1723,19 @@ static inline int pwrapPointLightloadLensFlare(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnamePointLight, 3561037663389896020, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnamePointLight, 3561037663389896020, ud))
+	{
+		return -1;
+	}
+	
 	PointLight* self = ud->getData<PointLight>();
 	
 	// Pop arguments
 	const char* arg0;
-	if(LuaBinder::checkString(l, 2, arg0)) return -1;
+	if(LuaBinder::checkString(l, 2, arg0))
+	{
+		return -1;
+	}
 	
 	// Call the method
 	Error ret = self->loadLensFlare(arg0);
@@ -1452,7 +1757,11 @@ static inline int pwrapPointLightloadLensFlare(lua_State* l)
 static int wrapPointLightloadLensFlare(lua_State* l)
 {
 	int res = pwrapPointLightloadLensFlare(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -1500,7 +1809,11 @@ static inline int pwrapSpotLightgetSceneNodeBase(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSpotLight, 7940385212889719421, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameSpotLight, 7940385212889719421, ud))
+	{
+		return -1;
+	}
+	
 	SpotLight* self = ud->getData<SpotLight>();
 	
 	// Call the method
@@ -1520,7 +1833,11 @@ static inline int pwrapSpotLightgetSceneNodeBase(lua_State* l)
 static int wrapSpotLightgetSceneNodeBase(lua_State* l)
 {
 	int res = pwrapSpotLightgetSceneNodeBase(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -1567,7 +1884,11 @@ static inline int pwrapStaticCollisionNodegetSceneNodeBase(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameStaticCollisionNode, -4376619865753613291, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameStaticCollisionNode, -4376619865753613291, ud))
+	{
+		return -1;
+	}
+	
 	StaticCollisionNode* self = ud->getData<StaticCollisionNode>();
 	
 	// Call the method
@@ -1587,7 +1908,11 @@ static inline int pwrapStaticCollisionNodegetSceneNodeBase(lua_State* l)
 static int wrapStaticCollisionNodegetSceneNodeBase(lua_State* l)
 {
 	int res = pwrapStaticCollisionNodegetSceneNodeBase(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -1634,7 +1959,11 @@ static inline int pwrapPortalgetSceneNodeBase(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnamePortal, 7450426072538297652, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnamePortal, 7450426072538297652, ud))
+	{
+		return -1;
+	}
+	
 	Portal* self = ud->getData<Portal>();
 	
 	// Call the method
@@ -1654,7 +1983,11 @@ static inline int pwrapPortalgetSceneNodeBase(lua_State* l)
 static int wrapPortalgetSceneNodeBase(lua_State* l)
 {
 	int res = pwrapPortalgetSceneNodeBase(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -1701,7 +2034,11 @@ static inline int pwrapSectorgetSceneNodeBase(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSector, 2371391302432627552, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameSector, 2371391302432627552, ud))
+	{
+		return -1;
+	}
+	
 	Sector* self = ud->getData<Sector>();
 	
 	// Call the method
@@ -1721,7 +2058,11 @@ static inline int pwrapSectorgetSceneNodeBase(lua_State* l)
 static int wrapSectorgetSceneNodeBase(lua_State* l)
 {
 	int res = pwrapSectorgetSceneNodeBase(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -1768,7 +2109,11 @@ static inline int pwrapParticleEmittergetSceneNodeBase(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameParticleEmitter, -1716560948193631017, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameParticleEmitter, -1716560948193631017, ud))
+	{
+		return -1;
+	}
+	
 	ParticleEmitter* self = ud->getData<ParticleEmitter>();
 	
 	// Call the method
@@ -1788,7 +2133,11 @@ static inline int pwrapParticleEmittergetSceneNodeBase(lua_State* l)
 static int wrapParticleEmittergetSceneNodeBase(lua_State* l)
 {
 	int res = pwrapParticleEmittergetSceneNodeBase(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -1835,7 +2184,11 @@ static inline int pwrapReflectionProbegetSceneNodeBase(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameReflectionProbe, 205427259474779436, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameReflectionProbe, 205427259474779436, ud))
+	{
+		return -1;
+	}
+	
 	ReflectionProbe* self = ud->getData<ReflectionProbe>();
 	
 	// Call the method
@@ -1855,7 +2208,11 @@ static inline int pwrapReflectionProbegetSceneNodeBase(lua_State* l)
 static int wrapReflectionProbegetSceneNodeBase(lua_State* l)
 {
 	int res = pwrapReflectionProbegetSceneNodeBase(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -1902,7 +2259,11 @@ static inline int pwrapReflectionProxygetSceneNodeBase(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameReflectionProxy, 205427259496779646, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameReflectionProxy, 205427259496779646, ud))
+	{
+		return -1;
+	}
+	
 	ReflectionProxy* self = ud->getData<ReflectionProxy>();
 	
 	// Call the method
@@ -1922,7 +2283,11 @@ static inline int pwrapReflectionProxygetSceneNodeBase(lua_State* l)
 static int wrapReflectionProxygetSceneNodeBase(lua_State* l)
 {
 	int res = pwrapReflectionProxygetSceneNodeBase(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -1969,15 +2334,25 @@ static inline int pwrapSceneGraphnewModelNode(lua_State* l)
 	LuaBinder::checkArgsCount(l, 3);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud))
+	{
+		return -1;
+	}
+	
 	SceneGraph* self = ud->getData<SceneGraph>();
 	
 	// Pop arguments
 	const char* arg0;
-	if(LuaBinder::checkString(l, 2, arg0)) return -1;
+	if(LuaBinder::checkString(l, 2, arg0))
+	{
+		return -1;
+	}
 	
 	const char* arg1;
-	if(LuaBinder::checkString(l, 3, arg1)) return -1;
+	if(LuaBinder::checkString(l, 3, arg1))
+	{
+		return -1;
+	}
 	
 	// Call the method
 	ModelNode* ret = newSceneNode<ModelNode>(self, arg0, arg1);
@@ -2002,7 +2377,11 @@ static inline int pwrapSceneGraphnewModelNode(lua_State* l)
 static int wrapSceneGraphnewModelNode(lua_State* l)
 {
 	int res = pwrapSceneGraphnewModelNode(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -2021,12 +2400,19 @@ static inline int pwrapSceneGraphnewPointLight(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud))
+	{
+		return -1;
+	}
+	
 	SceneGraph* self = ud->getData<SceneGraph>();
 	
 	// Pop arguments
 	const char* arg0;
-	if(LuaBinder::checkString(l, 2, arg0)) return -1;
+	if(LuaBinder::checkString(l, 2, arg0))
+	{
+		return -1;
+	}
 	
 	// Call the method
 	PointLight* ret = newSceneNode<PointLight>(self, arg0);
@@ -2051,7 +2437,11 @@ static inline int pwrapSceneGraphnewPointLight(lua_State* l)
 static int wrapSceneGraphnewPointLight(lua_State* l)
 {
 	int res = pwrapSceneGraphnewPointLight(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -2070,12 +2460,19 @@ static inline int pwrapSceneGraphnewSpotLight(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud))
+	{
+		return -1;
+	}
+	
 	SceneGraph* self = ud->getData<SceneGraph>();
 	
 	// Pop arguments
 	const char* arg0;
-	if(LuaBinder::checkString(l, 2, arg0)) return -1;
+	if(LuaBinder::checkString(l, 2, arg0))
+	{
+		return -1;
+	}
 	
 	// Call the method
 	SpotLight* ret = newSceneNode<SpotLight>(self, arg0);
@@ -2100,7 +2497,11 @@ static inline int pwrapSceneGraphnewSpotLight(lua_State* l)
 static int wrapSceneGraphnewSpotLight(lua_State* l)
 {
 	int res = pwrapSceneGraphnewSpotLight(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -2119,17 +2520,31 @@ static inline int pwrapSceneGraphnewStaticCollisionNode(lua_State* l)
 	LuaBinder::checkArgsCount(l, 4);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud))
+	{
+		return -1;
+	}
+	
 	SceneGraph* self = ud->getData<SceneGraph>();
 	
 	// Pop arguments
 	const char* arg0;
-	if(LuaBinder::checkString(l, 2, arg0)) return -1;
+	if(LuaBinder::checkString(l, 2, arg0))
+	{
+		return -1;
+	}
 	
 	const char* arg1;
-	if(LuaBinder::checkString(l, 3, arg1)) return -1;
+	if(LuaBinder::checkString(l, 3, arg1))
+	{
+		return -1;
+	}
 	
-	if(LuaBinder::checkUserData(l, 4, "Transform", 7048620195620777229, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 4, "Transform", 7048620195620777229, ud))
+	{
+		return -1;
+	}
+	
 	Transform* iarg2 = ud->getData<Transform>();
 	const Transform& arg2(*iarg2);
 	
@@ -2156,7 +2571,11 @@ static inline int pwrapSceneGraphnewStaticCollisionNode(lua_State* l)
 static int wrapSceneGraphnewStaticCollisionNode(lua_State* l)
 {
 	int res = pwrapSceneGraphnewStaticCollisionNode(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -2175,15 +2594,25 @@ static inline int pwrapSceneGraphnewPortal(lua_State* l)
 	LuaBinder::checkArgsCount(l, 3);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud))
+	{
+		return -1;
+	}
+	
 	SceneGraph* self = ud->getData<SceneGraph>();
 	
 	// Pop arguments
 	const char* arg0;
-	if(LuaBinder::checkString(l, 2, arg0)) return -1;
+	if(LuaBinder::checkString(l, 2, arg0))
+	{
+		return -1;
+	}
 	
 	const char* arg1;
-	if(LuaBinder::checkString(l, 3, arg1)) return -1;
+	if(LuaBinder::checkString(l, 3, arg1))
+	{
+		return -1;
+	}
 	
 	// Call the method
 	Portal* ret = newSceneNode<Portal>(self, arg0, arg1);
@@ -2208,7 +2637,11 @@ static inline int pwrapSceneGraphnewPortal(lua_State* l)
 static int wrapSceneGraphnewPortal(lua_State* l)
 {
 	int res = pwrapSceneGraphnewPortal(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -2227,15 +2660,25 @@ static inline int pwrapSceneGraphnewSector(lua_State* l)
 	LuaBinder::checkArgsCount(l, 3);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud))
+	{
+		return -1;
+	}
+	
 	SceneGraph* self = ud->getData<SceneGraph>();
 	
 	// Pop arguments
 	const char* arg0;
-	if(LuaBinder::checkString(l, 2, arg0)) return -1;
+	if(LuaBinder::checkString(l, 2, arg0))
+	{
+		return -1;
+	}
 	
 	const char* arg1;
-	if(LuaBinder::checkString(l, 3, arg1)) return -1;
+	if(LuaBinder::checkString(l, 3, arg1))
+	{
+		return -1;
+	}
 	
 	// Call the method
 	Sector* ret = newSceneNode<Sector>(self, arg0, arg1);
@@ -2260,7 +2703,11 @@ static inline int pwrapSceneGraphnewSector(lua_State* l)
 static int wrapSceneGraphnewSector(lua_State* l)
 {
 	int res = pwrapSceneGraphnewSector(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -2279,15 +2726,25 @@ static inline int pwrapSceneGraphnewParticleEmitter(lua_State* l)
 	LuaBinder::checkArgsCount(l, 3);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud))
+	{
+		return -1;
+	}
+	
 	SceneGraph* self = ud->getData<SceneGraph>();
 	
 	// Pop arguments
 	const char* arg0;
-	if(LuaBinder::checkString(l, 2, arg0)) return -1;
+	if(LuaBinder::checkString(l, 2, arg0))
+	{
+		return -1;
+	}
 	
 	const char* arg1;
-	if(LuaBinder::checkString(l, 3, arg1)) return -1;
+	if(LuaBinder::checkString(l, 3, arg1))
+	{
+		return -1;
+	}
 	
 	// Call the method
 	ParticleEmitter* ret = newSceneNode<ParticleEmitter>(self, arg0, arg1);
@@ -2312,7 +2769,11 @@ static inline int pwrapSceneGraphnewParticleEmitter(lua_State* l)
 static int wrapSceneGraphnewParticleEmitter(lua_State* l)
 {
 	int res = pwrapSceneGraphnewParticleEmitter(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -2331,15 +2792,25 @@ static inline int pwrapSceneGraphnewReflectionProbe(lua_State* l)
 	LuaBinder::checkArgsCount(l, 3);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud))
+	{
+		return -1;
+	}
+	
 	SceneGraph* self = ud->getData<SceneGraph>();
 	
 	// Pop arguments
 	const char* arg0;
-	if(LuaBinder::checkString(l, 2, arg0)) return -1;
+	if(LuaBinder::checkString(l, 2, arg0))
+	{
+		return -1;
+	}
 	
 	F32 arg1;
-	if(LuaBinder::checkNumber(l, 3, arg1)) return -1;
+	if(LuaBinder::checkNumber(l, 3, arg1))
+	{
+		return -1;
+	}
 	
 	// Call the method
 	ReflectionProbe* ret = newSceneNode<ReflectionProbe>(self, arg0, arg1);
@@ -2364,7 +2835,11 @@ static inline int pwrapSceneGraphnewReflectionProbe(lua_State* l)
 static int wrapSceneGraphnewReflectionProbe(lua_State* l)
 {
 	int res = pwrapSceneGraphnewReflectionProbe(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -2383,15 +2858,25 @@ static inline int pwrapSceneGraphnewReflectionProxy(lua_State* l)
 	LuaBinder::checkArgsCount(l, 3);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud))
+	{
+		return -1;
+	}
+	
 	SceneGraph* self = ud->getData<SceneGraph>();
 	
 	// Pop arguments
 	const char* arg0;
-	if(LuaBinder::checkString(l, 2, arg0)) return -1;
+	if(LuaBinder::checkString(l, 2, arg0))
+	{
+		return -1;
+	}
 	
 	const char* arg1;
-	if(LuaBinder::checkString(l, 3, arg1)) return -1;
+	if(LuaBinder::checkString(l, 3, arg1))
+	{
+		return -1;
+	}
 	
 	// Call the method
 	ReflectionProxy* ret = newSceneNode<ReflectionProxy>(self, arg0, arg1);
@@ -2416,7 +2901,11 @@ static inline int pwrapSceneGraphnewReflectionProxy(lua_State* l)
 static int wrapSceneGraphnewReflectionProxy(lua_State* l)
 {
 	int res = pwrapSceneGraphnewReflectionProxy(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -2474,7 +2963,11 @@ static inline int pwrapgetSceneGraph(lua_State* l)
 static int wrapgetSceneGraph(lua_State* l)
 {
 	int res = pwrapgetSceneGraph(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }

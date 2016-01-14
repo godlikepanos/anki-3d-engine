@@ -193,7 +193,7 @@ public:
 		ANKI_ASSERT(fovX <= getPi<F32>());
 		ANKI_ASSERT(fovY <= getPi<F32>());
 		m_fovX = fovX;
-		m_fovY = fovY,
+		m_fovY = fovY;
 		m_near = near;
 		m_far = far;
 		m_frustumDirty = true;

@@ -84,11 +84,19 @@ static inline int pwrapLightEventsetIntensityMultiplier(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightEvent, 840634010629725278, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameLightEvent, 840634010629725278, ud))
+	{
+		return -1;
+	}
+	
 	LightEvent* self = ud->getData<LightEvent>();
 	
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud))
+	{
+		return -1;
+	}
+	
 	Vec4* iarg0 = ud->getData<Vec4>();
 	const Vec4& arg0(*iarg0);
 	
@@ -103,7 +111,11 @@ static inline int pwrapLightEventsetIntensityMultiplier(lua_State* l)
 static int wrapLightEventsetIntensityMultiplier(lua_State* l)
 {
 	int res = pwrapLightEventsetIntensityMultiplier(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -122,15 +134,25 @@ static inline int pwrapLightEventsetFrequency(lua_State* l)
 	LuaBinder::checkArgsCount(l, 3);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightEvent, 840634010629725278, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameLightEvent, 840634010629725278, ud))
+	{
+		return -1;
+	}
+	
 	LightEvent* self = ud->getData<LightEvent>();
 	
 	// Pop arguments
 	F32 arg0;
-	if(LuaBinder::checkNumber(l, 2, arg0)) return -1;
+	if(LuaBinder::checkNumber(l, 2, arg0))
+	{
+		return -1;
+	}
 	
 	F32 arg1;
-	if(LuaBinder::checkNumber(l, 3, arg1)) return -1;
+	if(LuaBinder::checkNumber(l, 3, arg1))
+	{
+		return -1;
+	}
 	
 	// Call the method
 	self->setFrequency(arg0, arg1);
@@ -143,7 +165,11 @@ static inline int pwrapLightEventsetFrequency(lua_State* l)
 static int wrapLightEventsetFrequency(lua_State* l)
 {
 	int res = pwrapLightEventsetFrequency(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -191,17 +217,31 @@ static inline int pwrapEventManagernewSceneAmbientColorEvent(lua_State* l)
 	LuaBinder::checkArgsCount(l, 4);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameEventManager, -6959305329499243407, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameEventManager, -6959305329499243407, ud))
+	{
+		return -1;
+	}
+	
 	EventManager* self = ud->getData<EventManager>();
 	
 	// Pop arguments
 	F32 arg0;
-	if(LuaBinder::checkNumber(l, 2, arg0)) return -1;
+	if(LuaBinder::checkNumber(l, 2, arg0))
+	{
+		return -1;
+	}
 	
 	F32 arg1;
-	if(LuaBinder::checkNumber(l, 3, arg1)) return -1;
+	if(LuaBinder::checkNumber(l, 3, arg1))
+	{
+		return -1;
+	}
 	
-	if(LuaBinder::checkUserData(l, 4, "Vec4", 6804478823655046386, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 4, "Vec4", 6804478823655046386, ud))
+	{
+		return -1;
+	}
+	
 	Vec4* iarg2 = ud->getData<Vec4>();
 	const Vec4& arg2(*iarg2);
 	
@@ -228,7 +268,11 @@ static inline int pwrapEventManagernewSceneAmbientColorEvent(lua_State* l)
 static int wrapEventManagernewSceneAmbientColorEvent(lua_State* l)
 {
 	int res = pwrapEventManagernewSceneAmbientColorEvent(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -247,17 +291,31 @@ static inline int pwrapEventManagernewLightEvent(lua_State* l)
 	LuaBinder::checkArgsCount(l, 4);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameEventManager, -6959305329499243407, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameEventManager, -6959305329499243407, ud))
+	{
+		return -1;
+	}
+	
 	EventManager* self = ud->getData<EventManager>();
 	
 	// Pop arguments
 	F32 arg0;
-	if(LuaBinder::checkNumber(l, 2, arg0)) return -1;
+	if(LuaBinder::checkNumber(l, 2, arg0))
+	{
+		return -1;
+	}
 	
 	F32 arg1;
-	if(LuaBinder::checkNumber(l, 3, arg1)) return -1;
+	if(LuaBinder::checkNumber(l, 3, arg1))
+	{
+		return -1;
+	}
 	
-	if(LuaBinder::checkUserData(l, 4, "SceneNode", -2220074417980276571, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 4, "SceneNode", -2220074417980276571, ud))
+	{
+		return -1;
+	}
+	
 	SceneNode* iarg2 = ud->getData<SceneNode>();
 	SceneNode* arg2(iarg2);
 	
@@ -284,7 +342,11 @@ static inline int pwrapEventManagernewLightEvent(lua_State* l)
 static int wrapEventManagernewLightEvent(lua_State* l)
 {
 	int res = pwrapEventManagernewLightEvent(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
@@ -335,7 +397,11 @@ static inline int pwrapgetEventManager(lua_State* l)
 static int wrapgetEventManager(lua_State* l)
 {
 	int res = pwrapgetEventManager(l);
-	if(res >= 0) return res;
+	if(res >= 0)
+	{
+		return res;
+	}
+	
 	lua_error(l);
 	return 0;
 }
