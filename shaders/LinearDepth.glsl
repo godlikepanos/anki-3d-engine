@@ -3,15 +3,15 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-// convert to linear depth
-
+// Convert to linear depth
 float linearizeDepth(in float depth, in float zNear, in float zFar)
 {
 	return (2.0 * zNear) / (zFar + zNear - depth * (zFar - zNear));
 }
 
-float readFromTextureAndLinearizeDepth(in sampler2D depthMap, in vec2 texCoord, 
-	in float zNear, in float zFar)
+// This is the optimal linearizeDepth where a=(f+n)/2n and b=(n-f)/2n
+float linearizeDepthOptimal(in float depth, in float a, in float b)
 {
-	return linearizeDepth(texture(depthMap, texCoord).r, zNear, zFar);
+	return 1.0 / (a + depth * b);
 }
+

@@ -180,24 +180,21 @@ Error Refl::init2ndPass()
 	GrManager& gr = getGrManager();
 
 	// Create RC group
-	SamplerInitializer sinit;
 	ResourceGroupInitializer rcInit;
 
-	sinit.m_mipmapFilter = SamplingFilter::NEAREST;
 	rcInit.m_textures[0].m_texture = m_r->getMs().getDepthRt();
-	rcInit.m_textures[0].m_sampler = gr.newInstance<Sampler>(sinit);
 
-	sinit.m_minLod = 1.0;
-	rcInit.m_textures[1].m_texture = m_r->getMs().getDepthRt();
+	SamplerInitializer sinit;
+	sinit.m_repeat = false;
+	sinit.m_mipmapFilter = SamplingFilter::NEAREST;
+	rcInit.m_textures[1].m_texture = m_rt;
 	rcInit.m_textures[1].m_sampler = gr.newInstance<Sampler>(sinit);
 
-	sinit.m_minLod = 0.0;
+	sinit.m_minMagFilter = SamplingFilter::LINEAR;
 	rcInit.m_textures[2].m_texture = m_rt;
 	rcInit.m_textures[2].m_sampler = gr.newInstance<Sampler>(sinit);
 
-	sinit.m_minMagFilter = SamplingFilter::LINEAR;
-	rcInit.m_textures[3].m_texture = m_rt;
-	rcInit.m_textures[3].m_sampler = gr.newInstance<Sampler>(sinit);
+	rcInit.m_uniformBuffers[0].m_dynamic = true;
 
 	m_blitRcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);
 
@@ -277,10 +274,21 @@ void Refl::run2(CommandBufferPtr cmdb)
 
 	// Write the reflection back to IS RT
 	//
+	DynamicBufferToken token;
+	Vec4* linearDepth = static_cast<Vec4*>(
+		getGrManager().allocateFrameHostVisibleMemory(
+		sizeof(Vec4), BufferUsage::UNIFORM, token));
+	const Frustum& fr = m_r->getActiveFrustumComponent().getFrustum();
+	computeLinearizeDepthOptimal(
+		fr.getNear(), fr.getFar(), linearDepth->x(), linearDepth->y());
+
+	DynamicBufferInfo dyn1;
+	dyn1.m_uniformBuffers[0] = token;
+
 	cmdb->bindFramebuffer(m_isFb);
 	cmdb->bindPipeline(m_blitPpline);
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
-	cmdb->bindResourceGroup(m_blitRcGroup, 0, nullptr);
+	cmdb->bindResourceGroup(m_blitRcGroup, 0, &dyn1);
 
 	m_r->drawQuad(cmdb);
 }

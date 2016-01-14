@@ -30,5 +30,12 @@ class Refl;
 /// GL with a huge job chain
 const U RENDERER_COMMAND_BUFFERS_COUNT = 2;
 
+/// Computes the 'a' and 'b' numbers for linearizeDepthOptimal
+inline void computeLinearizeDepthOptimal(F32 near, F32 far, F32& a, F32& b)
+{
+	a = (far + near) / (2.0 * near);
+	b = (near - far) / (2.0 * near);
+}
+
 } // end namespace anki
 

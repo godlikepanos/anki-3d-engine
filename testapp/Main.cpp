@@ -43,7 +43,7 @@ ModelNode* horse;
 PerspectiveCamera* cam;
 
 #define PLAYER 0
-#define MOUSE 0
+#define MOUSE 1
 
 Bool profile = false;
 
@@ -89,8 +89,8 @@ Error init()
 	cam->getComponent<MoveComponent>().
 		setLocalTransform(Transform(
 		//Vec4(147.392776, -10.132728, 16.607138, 0.0),
-		Vec4(120.124107, -12.032735, 12.564746, 0),
-		Mat3x4(Euler(toRad(0.0), toRad(0.0), toRad(0.0))),
+		Vec4(102.984535, -11.532733, 16.394911, 0),
+		Mat3x4(Euler(toRad(0.0), toRad(-10.0), toRad(0.0))),
 		//Mat3x4::getIdentity(),
 		1.0));
 #endif
@@ -506,7 +506,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("pps.sharpen", true);
 	config.set("renderingQuality", 1.0);
 	config.set("width", 1920);
-	config.set("height", 1080);
+	config.set("height", 1088);
 	config.set("lodDistance", 20.0);
 	config.set("samples", 1);
 	config.set("tessellation", true);
@@ -517,7 +517,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("sslr.enabled", false);
 	config.set("ir.rendererSize", 64);
 	config.set("ir.clusterSizeZ", 16);
-	config.set("fullscreenDesktopResolution", true);
+	config.set("fullscreenDesktopResolution", false);
 	//config.set("clusterSizeZ", 16);
 	config.set("debugContext", false);
 	if(getenv("ANKI_DATA_PATH"))
