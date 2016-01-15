@@ -7,7 +7,8 @@
 
 #include <anki/gr/Common.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class RenderingThread;
@@ -48,4 +49,3 @@ private:
 /// @}
 
 } // end namespace anki
-

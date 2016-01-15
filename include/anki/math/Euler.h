@@ -7,7 +7,8 @@
 
 #include <anki/math/CommonIncludes.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup math
 /// @{
@@ -76,7 +77,7 @@ public:
 		sy = m3(0, 2);
 		cy = sqrt<T>(1.0 - sy * sy);
 		// normal case
-		if (!isZero<T>(cy))
+		if(!isZero<T>(cy))
 		{
 			T factor = 1.0 / cy;
 			sx = -m3(1, 2) * factor;
@@ -101,12 +102,12 @@ public:
 
 	/// @name Accessors
 	/// @{
-	T& operator [](const U i)
+	T& operator[](const U i)
 	{
 		return m_arr[i];
 	}
 
-	T operator [](const U i) const
+	T operator[](const U i) const
 	{
 		return m_arr[i];
 	}
@@ -186,4 +187,3 @@ typedef TEuler<F32> Euler;
 /// @}
 
 } // end namespace anki
-

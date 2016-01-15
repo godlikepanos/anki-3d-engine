@@ -5,7 +5,8 @@
 
 #include <anki/gr/gl/OcclusionQueryImpl.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 void OcclusionQueryImpl::create(OcclusionQueryResultBit condRenderingBit)
@@ -41,13 +42,11 @@ OcclusionQueryResult OcclusionQueryImpl::getResult() const
 	{
 		glGetQueryObjectuiv(m_glName, GL_QUERY_RESULT, &params);
 
-		result = (params == 1)
-			? OcclusionQueryResult::VISIBLE
-			: OcclusionQueryResult::NOT_VISIBLE;
+		result = (params == 1) ? OcclusionQueryResult::VISIBLE
+							   : OcclusionQueryResult::NOT_VISIBLE;
 	}
 
 	return result;
 }
 
 } // end namespace anki
-

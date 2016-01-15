@@ -6,7 +6,8 @@
 #include <anki/physics/PhysicsDrawer.h>
 #include <anki/physics/PhysicsWorld.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 struct CallbackData
@@ -19,9 +20,8 @@ struct CallbackData
 void PhysicsDrawer::drawWorld(const PhysicsWorld& world)
 {
 	NewtonWorld* nworld = world._getNewtonWorld();
-	for(NewtonBody* body = NewtonWorldGetFirstBody(nworld); 
-		body != nullptr; 
-		body = NewtonWorldGetNextBody(nworld, body)) 
+	for(NewtonBody* body = NewtonWorldGetFirstBody(nworld); body != nullptr;
+		body = NewtonWorldGetNextBody(nworld, body))
 	{
 		if(m_drawAabbs)
 		{
@@ -38,16 +38,15 @@ void PhysicsDrawer::drawWorld(const PhysicsWorld& world)
 //==============================================================================
 void PhysicsDrawer::drawAabb(const NewtonBody* body)
 {
-	Vec4 p0; 
-	Vec4 p1; 
+	Vec4 p0;
+	Vec4 p1;
 	Mat4 matrix;
 
 	NewtonCollision* collision = NewtonBodyGetCollision(body);
 	NewtonBodyGetMatrix(body, &matrix[0]);
 	NewtonCollisionCalculateAABB(collision, &matrix[0], &p0[0], &p1[0]);
 
-	Vec3 lines[] = {
-		Vec3(p0.x(), p0.y(), p0.z()),
+	Vec3 lines[] = {Vec3(p0.x(), p0.y(), p0.z()),
 		Vec3(p1.x(), p0.y(), p0.z()),
 		Vec3(p0.x(), p1.y(), p0.z()),
 		Vec3(p1.x(), p1.y(), p0.z()),
@@ -86,13 +85,15 @@ void PhysicsDrawer::drawCollision(const NewtonBody* body)
 	data.m_body = body;
 	data.m_drawer = this;
 
-	NewtonCollisionForEachPolygonDo(NewtonBodyGetCollision(body), 
-		&matrix[0], drawGeometryCallback, static_cast<void*>(&data));
+	NewtonCollisionForEachPolygonDo(NewtonBodyGetCollision(body),
+		&matrix[0],
+		drawGeometryCallback,
+		static_cast<void*>(&data));
 }
 
 //==============================================================================
-void PhysicsDrawer::drawGeometryCallback(void* userData, 
-	int vertexCount, const dFloat* const faceVertec, int id)
+void PhysicsDrawer::drawGeometryCallback(
+	void* userData, int vertexCount, const dFloat* const faceVertec, int id)
 {
 	CallbackData* data = static_cast<CallbackData*>(userData);
 	const NewtonBody* body = data->m_body;
@@ -112,15 +113,12 @@ void PhysicsDrawer::drawGeometryCallback(void* userData,
 
 	Array<Vec3, 2> points;
 	points[0] = Vec3(
-		faceVertec[i * 3 + 0], 
-		faceVertec[i * 3 + 1], 
-		faceVertec[i * 3 + 2]);
+		faceVertec[i * 3 + 0], faceVertec[i * 3 + 1], faceVertec[i * 3 + 2]);
 
-	for (I i = 0; i < vertexCount; i ++) 
+	for(I i = 0; i < vertexCount; i++)
 	{
-		points[1] = Vec3(
-			faceVertec[i * 3 + 0], 
-			faceVertec[i * 3 + 1], 
+		points[1] = Vec3(faceVertec[i * 3 + 0],
+			faceVertec[i * 3 + 1],
 			faceVertec[i * 3 + 2]);
 
 		data->m_drawer->drawLines(&points[0], 1, color);
@@ -130,4 +128,3 @@ void PhysicsDrawer::drawGeometryCallback(void* userData,
 }
 
 } // end namespace anki
-

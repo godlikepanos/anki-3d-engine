@@ -7,18 +7,20 @@
 
 #include <anki/renderer/RenderingPass.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup renderer
 /// @{
 
 /// Tonemapping.
-class Tm: public RenderingPass
+class Tm : public RenderingPass
 {
 anki_internal:
 	Tm(Renderer* r)
 		: RenderingPass(r)
-	{}
+	{
+	}
 
 	BufferPtr& getAverageLuminanceBuffer()
 	{
@@ -38,4 +40,3 @@ private:
 /// @}
 
 } // end namespace anki
-

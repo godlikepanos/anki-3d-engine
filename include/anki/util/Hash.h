@@ -7,7 +7,8 @@
 
 #include <anki/util/StdTypes.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup util_other
 /// @{
@@ -23,4 +24,3 @@ U64 computeHash(const void* buffer, U32 bufferSize, U64 seed = 123);
 /// @}
 
 } // end namespace anki
-

@@ -7,18 +7,20 @@
 
 #include <anki/gr/gl/GlObject.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup opengl
 /// @{
 
 /// Occlusion query.
-class OcclusionQueryImpl: public GlObject
+class OcclusionQueryImpl : public GlObject
 {
 public:
 	OcclusionQueryImpl(GrManager* manager)
 		: GlObject(manager)
-	{}
+	{
+	}
 
 	~OcclusionQueryImpl()
 	{
@@ -54,4 +56,3 @@ private:
 /// @}
 
 } // end namespace anki
-

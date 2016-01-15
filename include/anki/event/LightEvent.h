@@ -8,7 +8,8 @@
 #include <anki/event/Event.h>
 #include <anki/Math.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class Light;
@@ -17,13 +18,14 @@ class Light;
 /// @{
 
 /// An event for light animation
-class LightEvent: public Event
+class LightEvent : public Event
 {
 public:
 	/// Create
 	LightEvent(EventManager* manager)
 		: Event(manager)
-	{}
+	{
+	}
 
 	ANKI_USE_RESULT Error init(F32 startTime, F32 duration, SceneNode* light);
 
@@ -70,4 +72,3 @@ private:
 /// @}
 
 } // end namespace anki
-

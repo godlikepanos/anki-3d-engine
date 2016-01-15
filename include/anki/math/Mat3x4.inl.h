@@ -5,7 +5,8 @@
 
 #include <anki/math/CommonSrc.h>
 
-namespace anki {
+namespace anki
+{
 
 #if ANKI_SIMD == ANKI_SIMD_SSE
 
@@ -46,7 +47,7 @@ template<>
 inline TVec3<F32> TMat3x4<F32>::Base::operator*(const TVec4<F32>& b) const
 {
 	TVec3<F32> v;
-	
+
 	for(U i = 0; i < 3; i++)
 	{
 		_mm_store_ss(&v[i], _mm_dp_ps(m_simd[i], b.getSimd(), 0xF1));
@@ -73,9 +74,9 @@ inline TMat3x4<F32> TMat3x4<F32>::combineTransformations(
 
 		t1 = _mm_set1_ps(a(i, 0));
 		t2 = _mm_mul_ps(b.m_simd[0], t1);
-		t1 =_mm_set1_ps(a(i, 1));
+		t1 = _mm_set1_ps(a(i, 1));
 		t2 = _mm_add_ps(_mm_mul_ps(b.m_simd[1], t1), t2);
-		t1 =_mm_set1_ps(a(i, 2));
+		t1 = _mm_set1_ps(a(i, 2));
 		t2 = _mm_add_ps(_mm_mul_ps(b.m_simd[2], t1), t2);
 
 		TVec4<F32> v4(0.0, 0.0, 0.0, a(i, 3));
@@ -90,4 +91,3 @@ inline TMat3x4<F32> TMat3x4<F32>::combineTransformations(
 #endif
 
 } // end namespace anki
-

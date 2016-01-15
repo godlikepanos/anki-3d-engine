@@ -15,7 +15,8 @@
 #include <anki/renderer/Is.h>
 #include <anki/renderer/Sm.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // ModelPatch                                                                  =
@@ -24,15 +25,16 @@ namespace anki {
 //==============================================================================
 ModelPatch::ModelPatch(Model* model)
 	: m_model(model)
-{}
+{
+}
 
 //==============================================================================
 ModelPatch::~ModelPatch()
-{}
+{
+}
 
 //==============================================================================
-void ModelPatch::getRenderingDataSub(
-	const RenderingKey& key,
+void ModelPatch::getRenderingDataSub(const RenderingKey& key,
 	SArray<U8> subMeshIndicesArray,
 	ResourceGroupPtr& resourceGroup,
 	PipelinePtr& ppline,
@@ -71,8 +73,7 @@ U ModelPatch::getLodCount() const
 }
 
 //==============================================================================
-Error ModelPatch::create(
-	SArray<CString> meshFNames,
+Error ModelPatch::create(SArray<CString> meshFNames,
 	const CString& mtlFName,
 	ResourceManager* manager)
 {
@@ -134,9 +135,9 @@ PipelinePtr ModelPatch::getPipeline(const RenderingKey& key) const
 
 	LockGuard<SpinLock> lock(m_lock);
 
-	PipelinePtr& ppline = m_pplines[U(key.m_pass)][key.m_lod]
-		[key.m_tessellation]
-		[Material::getInstanceGroupIdx(key.m_instanceCount)];
+	PipelinePtr& ppline =
+		m_pplines[U(key.m_pass)][key.m_lod][key.m_tessellation]
+				 [Material::getInstanceGroupIdx(key.m_instanceCount)];
 
 	// Lazily create it
 	if(ANKI_UNLIKELY(!ppline.isCreated()))
@@ -162,8 +163,8 @@ PipelinePtr ModelPatch::getPipeline(const RenderingKey& key) const
 			variant.getShader(ShaderType::FRAGMENT);
 
 		// Create
-		ppline = m_model->getManager().getGrManager()
-			.newInstance<Pipeline>(pplineInit);
+		ppline = m_model->getManager().getGrManager().newInstance<Pipeline>(
+			pplineInit);
 	}
 
 	return ppline;
@@ -188,12 +189,12 @@ void ModelPatch::computePipelineInitializer(
 		vert.m_bindings[0].m_stride =
 			sizeof(Vec3) + sizeof(HVec2) + 2 * sizeof(U32);
 
-		vert.m_attributes[0].m_format = PixelFormat(
-			ComponentFormat::R32G32B32, TransformFormat::FLOAT);
+		vert.m_attributes[0].m_format =
+			PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
 		vert.m_attributes[0].m_offset = 0;
 
-		vert.m_attributes[1].m_format = PixelFormat(
-			ComponentFormat::R16G16, TransformFormat::FLOAT);
+		vert.m_attributes[1].m_format =
+			PixelFormat(ComponentFormat::R16G16, TransformFormat::FLOAT);
 		vert.m_attributes[1].m_offset = sizeof(Vec3);
 
 		if(key.m_pass == Pass::MS_FS)
@@ -265,7 +266,8 @@ void ModelPatch::computePipelineInitializer(
 //==============================================================================
 Model::Model(ResourceManager* manager)
 	: ResourceObject(manager)
-{}
+{
+}
 
 //==============================================================================
 Model::~Model()
@@ -363,9 +365,10 @@ Error Model::load(const ResourceFilename& filename)
 			return ErrorCode::OUT_OF_MEMORY;
 		}
 
-		ANKI_CHECK(mpatch->create(
-			SArray<CString>(&meshesFnames[0], meshesCount), cstr,
-			&getManager()));
+		ANKI_CHECK(
+			mpatch->create(SArray<CString>(&meshesFnames[0], meshesCount),
+				cstr,
+				&getManager()));
 
 		m_modelPatches[count++] = mpatch;
 
@@ -379,9 +382,7 @@ Error Model::load(const ResourceFilename& filename)
 	key.m_lod = 0;
 	m_visibilityShape = m_modelPatches[0]->getMesh(key).getBoundingShape();
 
-	for(auto it = m_modelPatches.begin() + 1;
-		it != m_modelPatches.end();
-		++it)
+	for(auto it = m_modelPatches.begin() + 1; it != m_modelPatches.end(); ++it)
 	{
 		m_visibilityShape = m_visibilityShape.getCompoundShape(
 			(*it)->getMesh(key).getBoundingShape());

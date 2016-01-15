@@ -10,7 +10,8 @@
 #include <anki/util/Atomic.h>
 #include <anki/util/String.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class XmlDocument;
@@ -74,16 +75,13 @@ anki_internal:
 	}
 
 	ANKI_USE_RESULT Error openFile(
-		const ResourceFilename& filename,
-		ResourceFilePtr& file);
+		const ResourceFilename& filename, ResourceFilePtr& file);
 
 	ANKI_USE_RESULT Error openFileReadAllText(
-		const ResourceFilename& filename,
-		StringAuto& file);
+		const ResourceFilename& filename, StringAuto& file);
 
 	ANKI_USE_RESULT Error openFileParseXml(
-		const ResourceFilename& filename,
-		XmlDocument& xml);
+		const ResourceFilename& filename, XmlDocument& xml);
 
 private:
 	ResourceManager* m_manager;
@@ -94,4 +92,3 @@ private:
 /// @}
 
 } // end namespace anki
-

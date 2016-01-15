@@ -5,7 +5,8 @@
 
 #include <anki/input/Input.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 void Input::handleEvents()
@@ -32,4 +33,3 @@ void Input::hideCursor(Bool hide)
 }
 
 } // end namespace anki
-

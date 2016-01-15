@@ -7,29 +7,33 @@
 #include <anki/gr/gl/FramebufferImpl.h>
 #include <anki/gr/gl/CommandBufferImpl.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 Framebuffer::Framebuffer(GrManager* manager)
 	: GrObject(manager)
-{}
+{
+}
 
 //==============================================================================
 Framebuffer::~Framebuffer()
-{}
+{
+}
 
 //==============================================================================
-class CreateFramebufferCommand final: public GlCommand
+class CreateFramebufferCommand final : public GlCommand
 {
 public:
 	FramebufferPtr m_fb;
 	FramebufferInitializer m_init;
 
-	CreateFramebufferCommand(Framebuffer* handle,
-		const FramebufferInitializer& init)
+	CreateFramebufferCommand(
+		Framebuffer* handle, const FramebufferInitializer& init)
 		: m_fb(handle)
 		, m_init(init)
-	{}
+	{
+	}
 
 	Error operator()(GlState&)
 	{
@@ -57,4 +61,3 @@ void Framebuffer::create(const FramebufferInitializer& init)
 }
 
 } // end namespace anki
-

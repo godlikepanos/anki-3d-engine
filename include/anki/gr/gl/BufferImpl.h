@@ -7,13 +7,14 @@
 
 #include <anki/gr/gl/GlObject.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup opengl
 /// @{
 
 /// Buffer implementation
-class BufferImpl: public GlObject
+class BufferImpl : public GlObject
 {
 public:
 	U32 m_size = 0; ///< The size of the buffer
@@ -27,7 +28,8 @@ public:
 
 	BufferImpl(GrManager* manager)
 		: GlObject(manager)
-	{}
+	{
+	}
 
 	~BufferImpl()
 	{

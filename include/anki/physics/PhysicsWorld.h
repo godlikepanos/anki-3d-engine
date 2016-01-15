@@ -9,7 +9,8 @@
 #include <anki/util/List.h>
 #include <anki/util/Rtti.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup physics
 /// @{
@@ -83,8 +84,7 @@ private:
 
 	/// Custom update
 	static void postUpdateCallback(
-		const NewtonWorld* const world,
-		void* const listenerUserData, F32 dt)
+		const NewtonWorld* const world, void* const listenerUserData, F32 dt)
 	{
 		static_cast<PhysicsWorld*>(listenerUserData)->postUpdate(dt);
 	}
@@ -92,14 +92,13 @@ private:
 	void postUpdate(F32 dt);
 
 	static void destroyCallback(
-		const NewtonWorld* const world,
-		void* const listenerUserData)
-	{}
+		const NewtonWorld* const world, void* const listenerUserData)
+	{
+	}
 
 	void registerObject(PhysicsObject* ptr);
 
-	static int onAabbOverlapCallback(
-		const NewtonMaterial* const material,
+	static int onAabbOverlapCallback(const NewtonMaterial* const material,
 		const NewtonBody* const body0,
 		const NewtonBody* const body1,
 		int threadIndex)
@@ -112,9 +111,7 @@ private:
 	}
 
 	static void onContactCallback(
-		const NewtonJoint* contactJoint,
-		F32 timestep,
-		int threadIndex);
+		const NewtonJoint* contactJoint, F32 timestep, int threadIndex);
 };
 
 //==============================================================================
@@ -147,4 +144,3 @@ inline PhysicsPtr<T> PhysicsWorld::newInstance(TArgs&&... args)
 /// @}
 
 } // end namespace anki
-

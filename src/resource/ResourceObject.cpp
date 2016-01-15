@@ -7,13 +7,15 @@
 #include <anki/resource/ResourceManager.h>
 #include <anki/misc/Xml.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 ResourceObject::ResourceObject(ResourceManager* manager)
 	: m_manager(manager)
 	, m_refcount(0)
-{}
+{
+}
 
 //==============================================================================
 ResourceObject::~ResourceObject()
@@ -41,8 +43,7 @@ Error ResourceObject::openFile(const CString& filename, ResourceFilePtr& file)
 
 //==============================================================================
 Error ResourceObject::openFileReadAllText(
-	const CString& filename,
-	StringAuto& text)
+	const CString& filename, StringAuto& text)
 {
 	// Load file
 	ResourceFilePtr file;
@@ -57,8 +58,7 @@ Error ResourceObject::openFileReadAllText(
 
 //==============================================================================
 Error ResourceObject::openFileParseXml(
-	const CString& filename,
-	XmlDocument& xml)
+	const CString& filename, XmlDocument& xml)
 {
 	StringAuto txt(getTempAllocator());
 	ANKI_CHECK(openFileReadAllText(filename, txt));

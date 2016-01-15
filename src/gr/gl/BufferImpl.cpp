@@ -7,7 +7,8 @@
 #include <anki/util/Logger.h>
 #include <cmath>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 void BufferImpl::create(
@@ -35,12 +36,15 @@ void BufferImpl::create(
 		if(size > 16384)
 		{
 			ANKI_LOGW("The size (%u) of the uniform buffer is greater "
-				"than the spec's min", size);
+					  "than the spec's min",
+				size);
 		}
 		else if(size > PtrSize(maxBufferSize))
 		{
 			ANKI_LOGW("The size (%u) of the uniform buffer is greater "
-				"than the implementation's min (%u)", size, maxBufferSize);
+					  "than the implementation's min (%u)",
+				size,
+				maxBufferSize);
 		}
 
 		m_target = GL_UNIFORM_BUFFER;
@@ -54,12 +58,15 @@ void BufferImpl::create(
 		if(size > pow(2, 24))
 		{
 			ANKI_LOGW("The size (%u) of the uniform buffer is greater "
-				"than the spec's min", size);
+					  "than the spec's min",
+				size);
 		}
 		else if(size > PtrSize(maxBufferSize))
 		{
 			ANKI_LOGW("The size (%u) of the shader storage buffer is greater "
-				"than the implementation's min (%u)", size, maxBufferSize);
+					  "than the implementation's min (%u)",
+				size,
+				maxBufferSize);
 		}
 
 		m_target = GL_SHADER_STORAGE_BUFFER;

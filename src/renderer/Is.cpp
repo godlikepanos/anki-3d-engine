@@ -14,7 +14,8 @@
 #include <anki/util/Logger.h>
 #include <anki/misc/ConfigSet.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // Misc                                                                        =
@@ -38,10 +39,11 @@ struct ShaderLight
 	Vec4 m_specularColorTexId;
 };
 
-struct ShaderPointLight: ShaderLight
-{};
+struct ShaderPointLight : ShaderLight
+{
+};
 
-struct ShaderSpotLight: ShaderLight
+struct ShaderSpotLight : ShaderLight
 {
 	Vec4 m_lightDir;
 	Vec4 m_outerCosInnerCos;
@@ -103,8 +105,9 @@ public:
 
 		if(pointCount > 0)
 		{
-			if(memcmp(&m_pointIds[0], &b.m_pointIds[0],
-				sizeof(Lid) * pointCount) != 0)
+			if(memcmp(
+				   &m_pointIds[0], &b.m_pointIds[0], sizeof(Lid) * pointCount)
+				!= 0)
 			{
 				return false;
 			}
@@ -112,8 +115,8 @@ public:
 
 		if(spotCount > 0)
 		{
-			if(memcmp(&m_spotIds[0], &b.m_spotIds[0],
-				sizeof(Lid) * spotCount) != 0)
+			if(memcmp(&m_spotIds[0], &b.m_spotIds[0], sizeof(Lid) * spotCount)
+				!= 0)
 			{
 				return false;
 			}
@@ -129,7 +132,8 @@ class TaskCommonData
 public:
 	TaskCommonData(StackAllocator<U8> alloc)
 		: m_tempClusters(alloc)
-	{}
+	{
+	}
 
 	// To fill the light buffers
 	SArray<ShaderPointLight> m_pointLights;
@@ -155,7 +159,7 @@ public:
 };
 
 /// Write the lights to the GPU buffers.
-class WriteLightsTask: public ThreadPool::Task
+class WriteLightsTask : public ThreadPool::Task
 {
 public:
 	TaskCommonData* m_data = nullptr;
@@ -180,7 +184,8 @@ const PixelFormat Is::RT_PIXEL_FORMAT(
 Is::Is(Renderer* r)
 	: RenderingPass(r)
 	, m_sm(r)
-{}
+{
+}
 
 //==============================================================================
 Is::~Is()
@@ -238,17 +243,16 @@ Error Is::initInternal(const ConfigSet& config)
 	//
 	StringAuto pps(getAllocator());
 
-	pps.sprintf(
-		"\n#define TILE_COUNT_X %u\n"
-		"#define TILE_COUNT_Y %u\n"
-		"#define CLUSTER_COUNT %u\n"
-		"#define RENDERER_WIDTH %u\n"
-		"#define RENDERER_HEIGHT %u\n"
-		"#define MAX_POINT_LIGHTS %u\n"
-		"#define MAX_SPOT_LIGHTS %u\n"
-		"#define MAX_LIGHT_INDICES %u\n"
-		"#define GROUND_LIGHT %u\n"
-		"#define POISSON %u\n",
+	pps.sprintf("\n#define TILE_COUNT_X %u\n"
+				"#define TILE_COUNT_Y %u\n"
+				"#define CLUSTER_COUNT %u\n"
+				"#define RENDERER_WIDTH %u\n"
+				"#define RENDERER_HEIGHT %u\n"
+				"#define MAX_POINT_LIGHTS %u\n"
+				"#define MAX_SPOT_LIGHTS %u\n"
+				"#define MAX_LIGHT_INDICES %u\n"
+				"#define GROUND_LIGHT %u\n"
+				"#define POISSON %u\n",
 		m_r->getTileCountXY().x(),
 		m_r->getTileCountXY().y(),
 		m_r->getClusterCount(),
@@ -261,11 +265,11 @@ Error Is::initInternal(const ConfigSet& config)
 		m_sm.getPoissonEnabled());
 
 	// point light
-	ANKI_CHECK(getResourceManager().loadResourceToCache(m_lightVert,
-		"shaders/IsLp.vert.glsl", pps.toCString(), "r_"));
+	ANKI_CHECK(getResourceManager().loadResourceToCache(
+		m_lightVert, "shaders/IsLp.vert.glsl", pps.toCString(), "r_"));
 
-	ANKI_CHECK(getResourceManager().loadResourceToCache(m_lightFrag,
-		"shaders/IsLp.frag.glsl", pps.toCString(), "r_"));
+	ANKI_CHECK(getResourceManager().loadResourceToCache(
+		m_lightFrag, "shaders/IsLp.frag.glsl", pps.toCString(), "r_"));
 
 	PipelineInitializer init;
 
@@ -281,9 +285,13 @@ Error Is::initInternal(const ConfigSet& config)
 	//
 	// Create framebuffer
 	//
-	m_r->createRenderTarget(
-		m_r->getWidth(), m_r->getHeight(),
-		RT_PIXEL_FORMAT, 1, SamplingFilter::LINEAR, MIPMAPS_COUNT, m_rt);
+	m_r->createRenderTarget(m_r->getWidth(),
+		m_r->getHeight(),
+		RT_PIXEL_FORMAT,
+		1,
+		SamplingFilter::LINEAR,
+		MIPMAPS_COUNT,
+		m_rt);
 
 	FramebufferInitializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
@@ -317,8 +325,8 @@ Error Is::initInternal(const ConfigSet& config)
 	// Misc
 	//
 	ThreadPool& threadPool = m_r->getThreadPool();
-	m_barrier = getAllocator().newInstance<Barrier>(
-		threadPool.getThreadsCount());
+	m_barrier =
+		getAllocator().newInstance<Barrier>(threadPool.getThreadsCount());
 
 	getGrManager().finish();
 	return ErrorCode::NONE;
@@ -380,16 +388,15 @@ Error Is::lightPass(CommandBufferPtr& cmdb)
 	visiblePointLightsCount = min<U>(visiblePointLightsCount, m_maxPointLights);
 	visibleSpotLightsCount = min<U>(visibleSpotLightsCount, m_maxSpotLights);
 
-	ANKI_TRACE_INC_COUNTER(RENDERER_LIGHTS,
-		visiblePointLightsCount + visibleSpotLightsCount);
+	ANKI_TRACE_INC_COUNTER(
+		RENDERER_LIGHTS, visiblePointLightsCount + visibleSpotLightsCount);
 
 	//
 	// Do shadows pass
 	//
 	if(m_sm.getEnabled())
 	{
-		ANKI_CHECK(m_sm.run(
-			{&spotCasters[0], spotCastersCount},
+		ANKI_CHECK(m_sm.run({&spotCasters[0], spotCastersCount},
 			{&omniCasters[0], omniCastersCount},
 			cmdb));
 	}
@@ -405,11 +412,12 @@ Error Is::lightPass(CommandBufferPtr& cmdb)
 	{
 		ShaderPointLight* data = static_cast<ShaderPointLight*>(
 			getGrManager().allocateFrameHostVisibleMemory(
-			sizeof(ShaderPointLight) * visiblePointLightsCount,
-			BufferUsage::STORAGE, m_pLightsToken));
+				sizeof(ShaderPointLight) * visiblePointLightsCount,
+				BufferUsage::STORAGE,
+				m_pLightsToken));
 
-		taskData.m_pointLights = SArray<ShaderPointLight>(data,
-			visiblePointLightsCount);
+		taskData.m_pointLights =
+			SArray<ShaderPointLight>(data, visiblePointLightsCount);
 	}
 	else
 	{
@@ -420,11 +428,12 @@ Error Is::lightPass(CommandBufferPtr& cmdb)
 	{
 		ShaderSpotLight* data = static_cast<ShaderSpotLight*>(
 			getGrManager().allocateFrameHostVisibleMemory(
-			sizeof(ShaderSpotLight) * visibleSpotLightsCount,
-			BufferUsage::STORAGE, m_sLightsToken));
+				sizeof(ShaderSpotLight) * visibleSpotLightsCount,
+				BufferUsage::STORAGE,
+				m_sLightsToken));
 
-		taskData.m_spotLights = SArray<ShaderSpotLight>(data,
-			visibleSpotLightsCount);
+		taskData.m_spotLights =
+			SArray<ShaderSpotLight>(data, visibleSpotLightsCount);
 	}
 	else
 	{
@@ -439,15 +448,18 @@ Error Is::lightPass(CommandBufferPtr& cmdb)
 	// Get mem for clusters
 	ShaderCluster* data = static_cast<ShaderCluster*>(
 		getGrManager().allocateFrameHostVisibleMemory(
-		sizeof(ShaderCluster) * clusterCount, BufferUsage::STORAGE,
-		m_clustersToken));
+			sizeof(ShaderCluster) * clusterCount,
+			BufferUsage::STORAGE,
+			m_clustersToken));
 
 	taskData.m_clusters = SArray<ShaderCluster>(data, clusterCount);
 
 	// Allocate light IDs
-	Lid* data2 = static_cast<Lid*>(
-		getGrManager().allocateFrameHostVisibleMemory(
-		m_maxLightIds * sizeof(Lid), BufferUsage::STORAGE, m_lightIdsToken));
+	Lid* data2 =
+		static_cast<Lid*>(getGrManager().allocateFrameHostVisibleMemory(
+			m_maxLightIds * sizeof(Lid),
+			BufferUsage::STORAGE,
+			m_lightIdsToken));
 
 	taskData.m_lightIds = SArray<Lid>(data2, m_maxLightIds);
 
@@ -502,25 +514,25 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 		switch(light.getLightType())
 		{
 		case LightComponent::LightType::POINT:
+		{
+			I pos = writePointLight(light, move, camfrc, task);
+			if(pos != -1)
 			{
-				I pos = writePointLight(light, move, camfrc, task);
-				if(pos != -1)
-				{
-					binLight(sp, pos, 0, task, testResult);
-				}
+				binLight(sp, pos, 0, task, testResult);
 			}
-			break;
+		}
+		break;
 		case LightComponent::LightType::SPOT:
+		{
+			const FrustumComponent* frc =
+				snode->tryGetComponent<FrustumComponent>();
+			I pos = writeSpotLight(light, move, frc, cammove, camfrc, task);
+			if(pos != -1)
 			{
-				const FrustumComponent* frc =
-					snode->tryGetComponent<FrustumComponent>();
-				I pos = writeSpotLight(light, move, frc, cammove, camfrc, task);
-				if(pos != -1)
-				{
-					binLight(sp, pos, 1, task, testResult);
-				}
+				binLight(sp, pos, 1, task, testResult);
 			}
-			break;
+		}
+		break;
 		default:
 			ANKI_ASSERT(0);
 			break;
@@ -583,7 +595,8 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 			{
 				ANKI_ASSERT(countP <= 0xFF);
 				c.m_combo |= countP << 8;
-				memcpy(&task.m_lightIds[offset], &cluster.m_pointIds[0],
+				memcpy(&task.m_lightIds[offset],
+					&cluster.m_pointIds[0],
 					countP * sizeof(Lid));
 			}
 
@@ -591,7 +604,8 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 			{
 				ANKI_ASSERT(countS <= 0xFF);
 				c.m_combo |= countS;
-				memcpy(&task.m_lightIds[offset + countP], &cluster.m_spotIds[0],
+				memcpy(&task.m_lightIds[offset + countP],
+					&cluster.m_spotIds[0],
 					countS * sizeof(Lid));
 			}
 		}
@@ -605,7 +619,8 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 //==============================================================================
 I Is::writePointLight(const LightComponent& lightc,
 	const MoveComponent& lightMove,
-	const FrustumComponent& camFrc, TaskCommonData& task)
+	const FrustumComponent& camFrc,
+	TaskCommonData& task)
 {
 	// Get GPU light
 	I i = task.m_pointLightsCount.fetchAdd(1);
@@ -619,8 +634,8 @@ I Is::writePointLight(const LightComponent& lightc,
 	Vec4 pos = camFrc.getViewMatrix()
 		* lightMove.getWorldTransform().getOrigin().xyz1();
 
-	slight.m_posRadius = Vec4(pos.xyz(),
-		1.0 / (lightc.getRadius() * lightc.getRadius()));
+	slight.m_posRadius =
+		Vec4(pos.xyz(), 1.0 / (lightc.getRadius() * lightc.getRadius()));
 	slight.m_diffuseColorShadowmapId = lightc.getDiffuseColor();
 
 	if(!lightc.getShadowEnabled() || !m_sm.getEnabled())
@@ -639,8 +654,10 @@ I Is::writePointLight(const LightComponent& lightc,
 
 //==============================================================================
 I Is::writeSpotLight(const LightComponent& lightc,
-	const MoveComponent& lightMove, const FrustumComponent* lightFrc,
-	const MoveComponent& camMove, const FrustumComponent& camFrc,
+	const MoveComponent& lightMove,
+	const FrustumComponent* lightFrc,
+	const MoveComponent& camMove,
+	const FrustumComponent& camFrc,
 	TaskCommonData& task)
 {
 	I i = task.m_spotLightsCount.fetchAdd(1);
@@ -655,14 +672,24 @@ I Is::writeSpotLight(const LightComponent& lightc,
 	if(lightc.getShadowEnabled() && m_sm.getEnabled())
 	{
 		// Write matrix
-		static const Mat4 biasMat4(
-			0.5, 0.0, 0.0, 0.5,
-			0.0, 0.5, 0.0, 0.5,
-			0.0, 0.0, 0.5, 0.5,
-			0.0, 0.0, 0.0, 1.0);
+		static const Mat4 biasMat4(0.5,
+			0.0,
+			0.0,
+			0.5,
+			0.0,
+			0.5,
+			0.0,
+			0.5,
+			0.0,
+			0.0,
+			0.5,
+			0.5,
+			0.0,
+			0.0,
+			0.0,
+			1.0);
 		// bias * proj_l * view_l * world_c
-		light.m_texProjectionMat =
-			biasMat4
+		light.m_texProjectionMat = biasMat4
 			* lightFrc->getViewProjectionMatrix()
 			* Mat4(camMove.getWorldTransform());
 
@@ -670,11 +697,10 @@ I Is::writeSpotLight(const LightComponent& lightc,
 	}
 
 	// Pos & dist
-	Vec4 pos =
-		camFrc.getViewMatrix()
+	Vec4 pos = camFrc.getViewMatrix()
 		* lightMove.getWorldTransform().getOrigin().xyz1();
-	light.m_posRadius = Vec4(pos.xyz(),
-		1.0 / (lightc.getDistance() * lightc.getDistance()));
+	light.m_posRadius =
+		Vec4(pos.xyz(), 1.0 / (lightc.getDistance() * lightc.getDistance()));
 
 	// Diff color and shadowmap ID now
 	light.m_diffuseColorShadowmapId =
@@ -689,25 +715,21 @@ I Is::writeSpotLight(const LightComponent& lightc,
 	light.m_lightDir = Vec4(lightDir, 0.0);
 
 	// Angles
-	light.m_outerCosInnerCos = Vec4(
-		lightc.getOuterAngleCos(),
-		lightc.getInnerAngleCos(),
-		1.0,
-		1.0);
+	light.m_outerCosInnerCos =
+		Vec4(lightc.getOuterAngleCos(), lightc.getInnerAngleCos(), 1.0, 1.0);
 
 	return i;
 }
 
 //==============================================================================
-void Is::binLight(
-	SpatialComponent& sp,
+void Is::binLight(SpatialComponent& sp,
 	U pos,
 	U lightType,
 	TaskCommonData& task,
 	ClustererTestResult& testResult)
 {
-	m_r->getClusterer().bin(sp.getSpatialCollisionShape(), sp.getAabb(),
-		testResult);
+	m_r->getClusterer().bin(
+		sp.getSpatialCollisionShape(), sp.getAabb(), testResult);
 
 	// Bin to the correct tiles
 	auto it = testResult.getClustersBegin();
@@ -766,23 +788,23 @@ Error Is::run(CommandBufferPtr& cmdb)
 //==============================================================================
 void Is::updateCommonBlock(CommandBufferPtr& cmdb, const FrustumComponent& fr)
 {
-	ShaderCommonUniforms* blk =
-		static_cast<ShaderCommonUniforms*>(
+	ShaderCommonUniforms* blk = static_cast<ShaderCommonUniforms*>(
 		getGrManager().allocateFrameHostVisibleMemory(
-		sizeof(ShaderCommonUniforms), BufferUsage::STORAGE, m_commonVarsToken));
+			sizeof(ShaderCommonUniforms),
+			BufferUsage::STORAGE,
+			m_commonVarsToken));
 
 	// Start writing
 	blk->m_projectionParams = m_r->getProjectionParameters();
 	blk->m_sceneAmbientColor = m_ambientColor;
 	blk->m_viewMat = fr.getViewMatrix().getTransposed();
-	blk->m_nearFarClustererMagicPad1 = Vec4(
-		fr.getFrustum().getNear(),
+	blk->m_nearFarClustererMagicPad1 = Vec4(fr.getFrustum().getNear(),
 		fr.getFrustum().getFar(),
 		m_r->getClusterer().getShaderMagicValue(),
 		0.0);
 
-	blk->m_rendererSizeTimePad1 = Vec4(m_r->getWidth(), m_r->getHeight(),
-		HighRezTimer::getCurrentTime(), 0.0);
+	blk->m_rendererSizeTimePad1 = Vec4(
+		m_r->getWidth(), m_r->getHeight(), HighRezTimer::getCurrentTime(), 0.0);
 
 	blk->m_tileCount = UVec4(m_r->getTileCountXY(), m_r->getTileCount(), 0);
 }

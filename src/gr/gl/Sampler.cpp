@@ -7,36 +7,40 @@
 #include <anki/gr/gl/SamplerImpl.h>
 #include <anki/gr/gl/CommandBufferImpl.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 Sampler::Sampler(GrManager* manager)
 	: GrObject(manager)
-{}
+{
+}
 
 //==============================================================================
 Sampler::~Sampler()
-{}
+{
+}
 
 //==============================================================================
-class CreateSamplerCommand: public GlCommand
+class CreateSamplerCommand : public GlCommand
 {
 public:
 	SamplerPtr m_sampler;
 	SamplerInitializer m_init;
 
 	CreateSamplerCommand(Sampler* sampler, const SamplerInitializer& init)
-        : m_sampler(sampler)
+		: m_sampler(sampler)
 		, m_init(init)
-	{}
+	{
+	}
 
 	Error operator()(GlState&)
 	{
-        SamplerImpl& impl = m_sampler->getImplementation();
+		SamplerImpl& impl = m_sampler->getImplementation();
 
 		impl.create(m_init);
 
-        GlObject::State oldState =
+		GlObject::State oldState =
 			impl.setStateAtomically(GlObject::State::CREATED);
 
 		(void)oldState;

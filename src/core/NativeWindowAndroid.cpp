@@ -10,22 +10,24 @@
 #include <anki/util/StdTypes.h>
 #include <anki/core/Counters.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 static void loopUntilWindowIsReady(android_app& app)
 {
-	while(app.window == nullptr) 
+	while(app.window == nullptr)
 	{
 		int ident;
 		int events;
 		android_poll_source* source;
 
 		const U timeoutMs = 5;
-		while((ident = 
-			ALooper_pollAll(timeoutMs, NULL, &events, (void**)&source)) >= 0) 
+		while(
+			(ident = ALooper_pollAll(timeoutMs, NULL, &events, (void**)&source))
+			>= 0)
 		{
-			if (source != NULL) 
+			if(source != NULL)
 			{
 				source->process(&app, source);
 			}
@@ -66,9 +68,9 @@ void NativeWindowImpl::create(NativeWindowInitializer& init)
 		throw ANKI_EXCEPTION("Failed to initialize EGL");
 	}
 
-	// 
+	//
 	// EGL config
-	//  
+	//
 	attribs[attr++] = EGL_SURFACE_TYPE;
 	attribs[attr++] = EGL_WINDOW_BIT;
 
@@ -97,8 +99,8 @@ void NativeWindowImpl::create(NativeWindowInitializer& init)
 
 	attribs[attr++] = EGL_NONE;
 
-	if(eglChooseConfig(
-		display, &attribs[0], &config, 1, &configsCount) == EGL_FALSE)
+	if(eglChooseConfig(display, &attribs[0], &config, 1, &configsCount)
+		== EGL_FALSE)
 	{
 		throw ANKI_EXCEPTION("Failed to query required EGL configs");
 	}
@@ -149,16 +151,16 @@ void NativeWindowImpl::create(NativeWindowInitializer& init)
 //==============================================================================
 void NativeWindowImpl::destroy()
 {
-	if(display != EGL_NO_DISPLAY) 
+	if(display != EGL_NO_DISPLAY)
 	{
 		eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 
-		if(context != EGL_NO_CONTEXT) 
+		if(context != EGL_NO_CONTEXT)
 		{
 			eglDestroyContext(display, context);
 		}
 
-		if(surface != EGL_NO_SURFACE) 
+		if(surface != EGL_NO_SURFACE)
 		{
 			eglDestroySurface(display, surface);
 		}
@@ -167,14 +169,14 @@ void NativeWindowImpl::destroy()
 	}
 }
 
-
 //==============================================================================
 // NativeWindow                                                                =
 //==============================================================================
 
 //==============================================================================
 NativeWindow::~NativeWindow()
-{}
+{
+}
 
 //==============================================================================
 void NativeWindow::create(NativeWindowInitializer& initializer)
@@ -207,4 +209,3 @@ void NativeWindow::swapBuffers()
 }
 
 } // end namespace anki
-

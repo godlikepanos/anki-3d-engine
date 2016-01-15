@@ -15,7 +15,8 @@
 #include <anki/resource/ShaderResource.h>
 #include <anki/core/Timestamp.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class ConfigSet;
@@ -89,8 +90,7 @@ public:
 	}
 
 	/// Init the renderer.
-	ANKI_USE_RESULT Error init(
-		ThreadPool* threadpool,
+	ANKI_USE_RESULT Error init(ThreadPool* threadpool,
 		ResourceManager* resources,
 		GrManager* gr,
 		HeapAllocator<U8> alloc,
@@ -106,8 +106,8 @@ public:
 	}
 
 	/// This function does all the rendering stages and produces a final result.
-	ANKI_USE_RESULT Error render(
-		SceneNode& frustumableNode, U frustumIdx,
+	ANKI_USE_RESULT Error render(SceneNode& frustumableNode,
+		U frustumIdx,
 		Array<CommandBufferPtr, RENDERER_COMMAND_BUFFERS_COUNT>& cmdBuff);
 
 anki_internal:
@@ -203,7 +203,8 @@ anki_internal:
 	/// @param view The view vector
 	/// @return The unprojected coords
 	static Vec3 unproject(const Vec3& windowCoords,
-		const Mat4& modelViewMat, const Mat4& projectionMat,
+		const Mat4& modelViewMat,
+		const Mat4& projectionMat,
 		const int view[4]);
 
 	/// Draws a quad. Actually it draws 2 triangles because OpenGL will no
@@ -213,8 +214,7 @@ anki_internal:
 		drawQuadInstanced(cmdb, 1);
 	}
 
-	void drawQuadConditional(
-		OcclusionQueryPtr& q, CommandBufferPtr& cmdb)
+	void drawQuadConditional(OcclusionQueryPtr& q, CommandBufferPtr& cmdb)
 	{
 		cmdb->drawArraysConditional(q, 3, 1);
 	}
@@ -233,14 +233,16 @@ anki_internal:
 	/// Create a pipeline object that has as a vertex shader the m_drawQuadVert
 	/// and the given fragment progam
 	void createDrawQuadPipeline(
-		ShaderPtr frag,
-		const ColorStateInfo& colorState,
-		PipelinePtr& ppline);
+		ShaderPtr frag, const ColorStateInfo& colorState, PipelinePtr& ppline);
 
 	/// Create a framebuffer attachment texture
-	void createRenderTarget(U32 w, U32 h,
-		const PixelFormat& format, U32 samples, SamplingFilter filter,
-		U mipsCount, TexturePtr& rt);
+	void createRenderTarget(U32 w,
+		U32 h,
+		const PixelFormat& format,
+		U32 samples,
+		SamplingFilter filter,
+		U mipsCount,
+		TexturePtr& rt);
 
 	Bool doGpuVisibilityTest(const CollisionShape& cs, const Aabb& aabb) const;
 
@@ -340,4 +342,3 @@ private:
 /// @}
 
 } // end namespace anki
-

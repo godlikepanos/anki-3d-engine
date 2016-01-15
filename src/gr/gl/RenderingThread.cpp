@@ -11,7 +11,8 @@
 #include <anki/core/Trace.h>
 #include <cstdlib>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // Misc                                                                        =
@@ -20,14 +21,15 @@ namespace anki {
 #define ANKI_DISABLE_GL_RENDERING_THREAD 0
 
 /// Sync rendering thread command.
-class SyncCommand final: public GlCommand
+class SyncCommand final : public GlCommand
 {
 public:
 	RenderingThread* m_renderingThread;
 
 	SyncCommand(RenderingThread* renderingThread)
 		: m_renderingThread(renderingThread)
-	{}
+	{
+	}
 
 	ANKI_USE_RESULT Error operator()(GlState&)
 	{
@@ -37,14 +39,15 @@ public:
 };
 
 /// Swap buffers command.
-class SwapBuffersCommand final: public GlCommand
+class SwapBuffersCommand final : public GlCommand
 {
 public:
 	RenderingThread* m_renderingThread;
 
 	SwapBuffersCommand(RenderingThread* renderingThread)
 		: m_renderingThread(renderingThread)
-	{}
+	{
+	}
 
 	ANKI_USE_RESULT Error operator()(GlState& state)
 	{
@@ -54,7 +57,7 @@ public:
 };
 
 /// Empty command
-class EmptyCommand final: public GlCommand
+class EmptyCommand final : public GlCommand
 {
 public:
 	ANKI_USE_RESULT Error operator()(GlState&)
@@ -134,7 +137,8 @@ void RenderingThread::finishCommandBuffer(CommandBufferPtr commands)
 
 //==============================================================================
 void RenderingThread::start(WeakPtr<GrManagerInterface> interface,
-	Bool registerMessages, const ConfigSet& config)
+	Bool registerMessages,
+	const ConfigSet& config)
 {
 	ANKI_ASSERT(m_tail == 0 && m_head == 0);
 	ANKI_ASSERT(interface);
@@ -144,8 +148,8 @@ void RenderingThread::start(WeakPtr<GrManagerInterface> interface,
 
 	// Swap buffers stuff
 	m_swapBuffersCommands = m_manager->newInstance<CommandBuffer>();
-	m_swapBuffersCommands->getImplementation().
-		pushBackNewCommand<SwapBuffersCommand>(this);
+	m_swapBuffersCommands->getImplementation()
+		.pushBackNewCommand<SwapBuffersCommand>(this);
 
 	m_state.init0(config);
 
@@ -192,7 +196,7 @@ void RenderingThread::prepare()
 	ANKI_LOGI("OpenGL async thread started: OpenGL version %s, GLSL version %s",
 		reinterpret_cast<const char*>(glGetString(GL_VERSION)),
 		reinterpret_cast<const char*>(
-		glGetString(GL_SHADING_LANGUAGE_VERSION)));
+				  glGetString(GL_SHADING_LANGUAGE_VERSION)));
 
 	// Get thread id
 	m_serverThreadId = Thread::getCurrentThreadId();
@@ -334,4 +338,3 @@ void RenderingThread::swapBuffers()
 }
 
 } // end namespace anki
-

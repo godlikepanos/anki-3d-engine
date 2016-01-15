@@ -10,4 +10,3 @@
 #include <anki/math/Functions.h>
 
 /// @defgroup math Math library
-

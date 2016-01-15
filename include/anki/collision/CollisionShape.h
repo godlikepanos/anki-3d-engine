@@ -11,7 +11,8 @@
 #include <anki/util/StdTypes.h>
 #include <anki/util/Visitor.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup collision
 /// @{
@@ -23,7 +24,7 @@ class CollisionShape
 public:
 	/// Collision shape type
 	/// @note WARNING: Order is important
-	enum class Type: U8
+	enum class Type : U8
 	{
 		PLANE,
 		LINE_SEG,
@@ -42,7 +43,8 @@ public:
 	{
 	public:
 		virtual ~MutableVisitor()
-		{}
+		{
+		}
 
 		virtual void visit(LineSegment&) = 0;
 		virtual void visit(Obb&) = 0;
@@ -58,7 +60,8 @@ public:
 	{
 	public:
 		virtual ~ConstVisitor()
-		{}
+		{
+		}
 
 		virtual void visit(const LineSegment&) = 0;
 		virtual void visit(const Obb&) = 0;
@@ -71,7 +74,8 @@ public:
 
 	CollisionShape(Type cid)
 		: m_cid(cid)
-	{}
+	{
+	}
 
 	CollisionShape(const CollisionShape& b)
 		: m_cid(b.m_cid)
@@ -80,7 +84,8 @@ public:
 	}
 
 	virtual ~CollisionShape()
-	{}
+	{
+	}
 
 	CollisionShape& operator=(const CollisionShape& b)
 	{
@@ -115,8 +120,7 @@ protected:
 	/// Function that iterates a point cloud
 	template<typename TFunc>
 	void iteratePointCloud(
-		const void* buff, U count, PtrSize stride, PtrSize buffSize,
-		TFunc func)
+		const void* buff, U count, PtrSize stride, PtrSize buffSize, TFunc func)
 	{
 		ANKI_ASSERT(buff);
 		ANKI_ASSERT(count > 1);
@@ -144,4 +148,3 @@ private:
 /// @}
 
 } // end namespace anki
-

@@ -10,22 +10,23 @@
 #include <anki/physics/PhysicsWorld.h>
 #include <anki/resource/ResourceManager.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // BodyFeedbackComponent                                                       =
 //==============================================================================
 
 /// Body feedback component.
-class BodyFeedbackComponent: public SceneComponent
+class BodyFeedbackComponent : public SceneComponent
 {
 public:
 	BodyFeedbackComponent(SceneNode* node)
 		: SceneComponent(SceneComponent::Type::NONE, node)
-	{}
+	{
+	}
 
-	ANKI_USE_RESULT Error update(
-		SceneNode& node, F32, F32, Bool& updated)
+	ANKI_USE_RESULT Error update(SceneNode& node, F32, F32, Bool& updated)
 	{
 		updated = false;
 
@@ -48,11 +49,13 @@ public:
 //==============================================================================
 BodyNode::BodyNode(SceneGraph* scene)
 	: SceneNode(scene)
-{}
+{
+}
 
 //==============================================================================
 BodyNode::~BodyNode()
-{}
+{
+}
 
 //==============================================================================
 Error BodyNode::create(const CString& name, const CString& resourceFname)
@@ -84,4 +87,3 @@ Error BodyNode::create(const CString& name, const CString& resourceFname)
 }
 
 } // end namespace anki
-

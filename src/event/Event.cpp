@@ -8,16 +8,19 @@
 #include <anki/scene/SceneGraph.h>
 #include <anki/util/Assert.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 Event::Event(EventManager* manager)
 	: m_manager(manager)
-{}
+{
+}
 
 //==============================================================================
 Event::~Event()
-{}
+{
+}
 
 //==============================================================================
 void Event::init(F32 startTime, F32 duration, SceneNode* snode, Flag flags)

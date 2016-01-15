@@ -7,7 +7,8 @@
 
 #include <anki/physics/PhysicsObject.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup physics
 /// @{
@@ -24,7 +25,7 @@ struct PhysicsBodyInitializer
 };
 
 /// Rigid body.
-class PhysicsBody: public PhysicsObject
+class PhysicsBody : public PhysicsObject
 {
 public:
 	using Initializer = PhysicsBodyInitializer;
@@ -84,18 +85,14 @@ private:
 	Bool8 m_updated = true;
 
 	/// Newton callback.
-	static void onTransformCallback(
-		const NewtonBody* const body,
+	static void onTransformCallback(const NewtonBody* const body,
 		const dFloat* const matrix,
 		int threadIndex);
 
 	/// Newton callback
 	static void applyGravityForce(
-		const NewtonBody* body,
-		dFloat timestep,
-		int threadIndex);
+		const NewtonBody* body, dFloat timestep, int threadIndex);
 };
 /// @}
 
 } // end namespace anki
-

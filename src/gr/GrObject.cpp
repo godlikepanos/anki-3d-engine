@@ -6,14 +6,16 @@
 #include <anki/gr/GrObject.h>
 #include <anki/gr/GrManager.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 GrObject::GrObject(GrManager* manager)
 	: m_refcount(0)
 	, m_manager(manager)
 	, m_uuid(m_manager->getUuidIndex()++)
-{}
+{
+}
 
 //==============================================================================
 GrAllocator<U8> GrObject::getAllocator() const

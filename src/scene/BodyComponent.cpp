@@ -5,10 +5,12 @@
 
 #include <anki/scene/BodyComponent.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 BodyComponent::~BodyComponent()
-{}
+{
+}
 
 } // end namespace anki

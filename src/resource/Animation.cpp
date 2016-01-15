@@ -6,12 +6,14 @@
 #include <anki/resource/Animation.h>
 #include <anki/misc/Xml.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 Animation::Animation(ResourceManager* manager)
 	: ResourceObject(manager)
-{}
+{
+}
 
 //==============================================================================
 Animation::~Animation()
@@ -229,8 +231,8 @@ Error Animation::load(const ResourceFilename& filename)
 }
 
 //==============================================================================
-void Animation::interpolate(U channelIndex, F32 time,
-	Vec3& pos, Quat& rot, F32& scale) const
+void Animation::interpolate(
+	U channelIndex, F32 time, Vec3& pos, Quat& rot, F32& scale) const
 {
 	// Audjust time
 	if(m_repeat && time > m_startTime + m_duration)

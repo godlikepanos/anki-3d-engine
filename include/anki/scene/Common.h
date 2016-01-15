@@ -9,7 +9,8 @@
 #include <anki/util/String.h>
 #include <anki/util/Dictionary.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class SceneGraph;
@@ -34,4 +35,3 @@ using SceneDictionary =
 /// @}
 
 } // end namespace anki
-

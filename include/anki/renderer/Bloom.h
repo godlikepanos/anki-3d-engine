@@ -11,7 +11,8 @@
 #include <anki/resource/ShaderResource.h>
 #include <anki/core/Timestamp.h>
 
-namespace anki {
+namespace anki
+{
 
 class ShaderProgram;
 
@@ -19,7 +20,7 @@ class ShaderProgram;
 /// @{
 
 /// Bloom pass.
-class Bloom: public RenderingPass
+class Bloom : public RenderingPass
 {
 public:
 	U32 getBlurringIterationsCount() const
@@ -37,7 +38,8 @@ anki_internal:
 
 	Bloom(Renderer* r)
 		: RenderingPass(r)
-	{}
+	{
+	}
 
 	~Bloom();
 
@@ -98,4 +100,3 @@ private:
 /// @}
 
 } // end namespace anki
-

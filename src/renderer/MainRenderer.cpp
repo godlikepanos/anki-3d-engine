@@ -19,11 +19,13 @@
 #include <anki/core/App.h>
 #include <anki/misc/ConfigSet.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 MainRenderer::MainRenderer()
-{}
+{
+}
 
 //==============================================================================
 MainRenderer::~MainRenderer()
@@ -33,8 +35,7 @@ MainRenderer::~MainRenderer()
 }
 
 //==============================================================================
-Error MainRenderer::create(
-	ThreadPool* threadpool,
+Error MainRenderer::create(ThreadPool* threadpool,
 	ResourceManager* resources,
 	GrManager* gr,
 	AllocAlignedCallback allocCb,
@@ -45,8 +46,8 @@ Error MainRenderer::create(
 	ANKI_LOGI("Initializing main renderer");
 
 	m_alloc = HeapAllocator<U8>(allocCb, allocCbUserData);
-	m_frameAlloc = StackAllocator<U8>(allocCb, allocCbUserData,
-		1024 * 1024 * 10, 1.0);
+	m_frameAlloc =
+		StackAllocator<U8>(allocCb, allocCbUserData, 1024 * 1024 * 10, 1.0);
 
 	// Init default FB
 	m_width = config.getNumber("width");
@@ -61,16 +62,22 @@ Error MainRenderer::create(
 	config2.set("height", m_renderingQuality * F32(m_height));
 
 	m_r.reset(m_alloc.newInstance<Renderer>());
-	ANKI_CHECK(m_r->init(threadpool, resources, gr, m_alloc,
-		m_frameAlloc, config2, globalTimestamp));
+	ANKI_CHECK(m_r->init(threadpool,
+		resources,
+		gr,
+		m_alloc,
+		m_frameAlloc,
+		config2,
+		globalTimestamp));
 
 	// Set the default preprocessor string
-	m_materialShaderSource.sprintf(
-		m_alloc,
+	m_materialShaderSource.sprintf(m_alloc,
 		"#define ANKI_RENDERER_WIDTH %u\n"
 		"#define ANKI_RENDERER_HEIGHT %u\n"
 		"#define TILE_SIZE %u\n",
-		m_r->getWidth(), m_r->getHeight(), Renderer::TILE_SIZE);
+		m_r->getWidth(),
+		m_r->getHeight(),
+		Renderer::TILE_SIZE);
 
 	// Init other
 	ANKI_CHECK(m_r->getResourceManager().loadResource(
@@ -83,8 +90,8 @@ Error MainRenderer::create(
 	m_r->createDrawQuadPipeline(
 		m_blitFrag->getGrShader(), colorState, m_blitPpline);
 
-	ANKI_LOGI("Main renderer initialized. Rendering size %dx%d",
-		m_width, m_height);
+	ANKI_LOGI(
+		"Main renderer initialized. Rendering size %dx%d", m_width, m_height);
 
 	// Init RC group
 	ResourceGroupInitializer rcinit;

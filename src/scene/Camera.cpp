@@ -5,22 +5,23 @@
 
 #include <anki/scene/Camera.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // CameraMoveFeedbackComponent                                                 =
 //==============================================================================
 
 /// Feedback component.
-class CameraMoveFeedbackComponent: public SceneComponent
+class CameraMoveFeedbackComponent : public SceneComponent
 {
 public:
 	CameraMoveFeedbackComponent(Camera* node)
 		: SceneComponent(SceneComponent::Type::NONE, node)
-	{}
+	{
+	}
 
-	ANKI_USE_RESULT Error update(
-		SceneNode& node, F32, F32, Bool& updated)
+	ANKI_USE_RESULT Error update(SceneNode& node, F32, F32, Bool& updated)
 	{
 		updated = false;
 
@@ -40,15 +41,15 @@ public:
 //==============================================================================
 
 /// Feedback component.
-class CameraFrustumFeedbackComponent: public SceneComponent
+class CameraFrustumFeedbackComponent : public SceneComponent
 {
 public:
 	CameraFrustumFeedbackComponent(Camera* node)
 		: SceneComponent(SceneComponent::Type::NONE, node)
-	{}
+	{
+	}
 
-	ANKI_USE_RESULT Error update(
-		SceneNode& node, F32, F32, Bool& updated)
+	ANKI_USE_RESULT Error update(SceneNode& node, F32, F32, Bool& updated)
 	{
 		updated = false;
 
@@ -71,7 +72,8 @@ public:
 Camera::Camera(SceneGraph* scene, Type type)
 	: SceneNode(scene)
 	, m_type(type)
-{}
+{
+}
 
 //==============================================================================
 Error Camera::create(const CString& name, Frustum* frustum)
@@ -113,7 +115,8 @@ Error Camera::create(const CString& name, Frustum* frustum)
 
 //==============================================================================
 Camera::~Camera()
-{}
+{
+}
 
 //==============================================================================
 void Camera::lookAtPoint(const Vec3& point)
@@ -160,11 +163,13 @@ void Camera::onMoveComponentUpdate(MoveComponent& move)
 //==============================================================================
 PerspectiveCamera::PerspectiveCamera(SceneGraph* scene)
 	: Camera(scene, Type::PERSPECTIVE)
-{}
+{
+}
 
 //==============================================================================
 PerspectiveCamera::~PerspectiveCamera()
-{}
+{
+}
 
 //==============================================================================
 void PerspectiveCamera::setAll(F32 fovX, F32 fovY, F32 near, F32 far)
@@ -180,10 +185,12 @@ void PerspectiveCamera::setAll(F32 fovX, F32 fovY, F32 near, F32 far)
 //==============================================================================
 OrthographicCamera::OrthographicCamera(SceneGraph* scene)
 	: Camera(scene, Type::ORTHOGRAPHIC)
-{}
+{
+}
 
 //==============================================================================
 OrthographicCamera::~OrthographicCamera()
-{}
+{
+}
 
 } // end namespace anki

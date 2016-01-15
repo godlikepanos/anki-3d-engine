@@ -8,13 +8,14 @@
 #include <anki/collision/CollisionShape.h>
 #include <anki/util/NonCopyable.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup collision
 /// @{
 
 /// A shape that contains other shapes
-class CompoundShape: public CollisionShape, public NonCopyable
+class CompoundShape : public CollisionShape, public NonCopyable
 {
 public:
 	static Bool classof(const CollisionShape& c)
@@ -92,4 +93,3 @@ Error CompoundShape::iterateShapes(TFunc f) const
 /// @}
 
 } // end namespace anki
-

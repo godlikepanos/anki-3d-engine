@@ -11,7 +11,8 @@
 #include <anki/util/StdTypes.h>
 #include <anki/input/KeyCode.h>
 
-namespace anki {
+namespace anki
+{
 
 class InputImpl;
 class NativeWindow;
@@ -22,7 +23,7 @@ class NativeWindow;
 class Input
 {
 public:
-	enum class Event: U8
+	enum class Event : U8
 	{
 		WINDOW_FOCUS_LOST,
 		WINDOW_FOCUS_GAINED,
@@ -31,7 +32,8 @@ public:
 	};
 
 	Input()
-	{}
+	{
+	}
 
 	~Input()
 	{
@@ -124,4 +126,3 @@ private:
 };
 
 } // end namespace anki
-

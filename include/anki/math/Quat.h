@@ -8,15 +8,16 @@
 #include <anki/math/CommonIncludes.h>
 #include <anki/math/Vec4.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup math
 /// @{
 
 /// Quaternion. Used in rotations
 template<typename T>
-class alignas(16) TQuat:
-	public TVec<T, 4, typename TVec4Simd<T>::Type, TQuat<T>>
+class alignas(16) TQuat
+	: public TVec<T, 4, typename TVec4Simd<T>::Type, TQuat<T>>
 {
 public:
 	using Base = TVec<T, 4, typename TVec4Simd<T>::Type, TQuat<T>>;
@@ -31,40 +32,49 @@ public:
 	/// @name Constructors
 	/// @{
 	TQuat()
-	:	Base()
-	{}
+		: Base()
+	{
+	}
 
 	TQuat(const TQuat& b)
-	:	Base(b)
-	{}
+		: Base(b)
+	{
+	}
 
 	TQuat(const T x_, const T y_, const T z_, const T w_)
-	:	Base(x_, y_, z_, w_)
-	{}
+		: Base(x_, y_, z_, w_)
+	{
+	}
 
 	explicit TQuat(const T f)
-	:	Base(f)
-	{}
+		: Base(f)
+	{
+	}
 
 	explicit TQuat(const T arr[])
-	:	Base(arr)
-	{}
+		: Base(arr)
+	{
+	}
 
 	explicit TQuat(const typename Base::Simd& simd)
-	:	Base(simd)
-	{}
+		: Base(simd)
+	{
+	}
 
 	TQuat(const TVec2<T>& v, const T z_, const T w_)
-	:	Base(v, z_, w_)
-	{}
+		: Base(v, z_, w_)
+	{
+	}
 
 	TQuat(const TVec3<T>& v, const T w_)
-	:	Base(v, w_)
-	{}
+		: Base(v, w_)
+	{
+	}
 
 	explicit TQuat(const TVec4<T>& v)
-	:	Base(v.x(), v.y(), v.z(), v.w())
-	{}
+		: Base(v.x(), v.y(), v.z(), v.w())
+	{
+	}
 
 	explicit TQuat(const TMat3<T>& m3)
 	{
@@ -107,10 +117,10 @@ public:
 	}
 
 	explicit TQuat(const TMat3x4<T>& m)
-	:	TQuat(m.getRotationPart())
+		: TQuat(m.getRotationPart())
 	{
-		ANKI_ASSERT(isZero<T>(m(0, 3)) && isZero<T>(m(1, 3))
-			&& isZero<T>(m(2, 3)));
+		ANKI_ASSERT(
+			isZero<T>(m(0, 3)) && isZero<T>(m(1, 3)) && isZero<T>(m(2, 3)));
 	}
 
 	explicit TQuat(const TEuler<T>& eu)
@@ -260,8 +270,7 @@ public:
 	{
 		ANKI_ASSERT(isZero<T>(1.0 - Base::getLength())); // Not normalized quat
 		TVec3<T> qXyz(Base::xyz());
-		return
-			v + qXyz.cross(qXyz.cross(v) + v * Base::w()) * 2.0;
+		return v + qXyz.cross(qXyz.cross(v) + v * Base::w()) * 2.0;
 	}
 
 	void setIdentity()
@@ -281,4 +290,3 @@ typedef TQuat<F32> Quat;
 /// @}
 
 } // end namespace anki
-

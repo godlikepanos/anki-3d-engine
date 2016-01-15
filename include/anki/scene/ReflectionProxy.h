@@ -9,20 +9,22 @@
 #include <anki/Math.h>
 #include <anki/collision/Obb.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup scene
 /// @{
 
 /// Proxy used in realtime reflections.
-class ReflectionProxy: public SceneNode
+class ReflectionProxy : public SceneNode
 {
 	friend class ReflectionProxyMoveFeedbackComponent;
 
 public:
 	ReflectionProxy(SceneGraph* scene)
 		: SceneNode(scene)
-	{}
+	{
+	}
 
 	~ReflectionProxy()
 	{
@@ -31,8 +33,7 @@ public:
 
 	/// Create the proxy. The points form a quad and they should be in local
 	/// space.
-	ANKI_USE_RESULT Error create(const CString& name,
-		const CString& proxyMesh);
+	ANKI_USE_RESULT Error create(const CString& name, const CString& proxyMesh);
 
 private:
 	DArray<Array<Vec4, 4>> m_quadsLSpace; ///< Quads in local space.
@@ -44,4 +45,3 @@ private:
 /// @}
 
 } // end namespace anki
-

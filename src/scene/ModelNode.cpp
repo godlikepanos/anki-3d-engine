@@ -12,14 +12,15 @@
 #include <anki/resource/Skeleton.h>
 #include <anki/physics/PhysicsWorld.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // ModelPatchRenderComponent                                                   =
 //==============================================================================
 
 /// Render component implementation.
-class ModelPatchRenderComponent: public RenderComponent
+class ModelPatchRenderComponent : public RenderComponent
 {
 public:
 	const ModelPatchNode& getNode() const
@@ -28,9 +29,11 @@ public:
 	}
 
 	ModelPatchRenderComponent(ModelPatchNode* node)
-		: RenderComponent(node, &node->m_modelPatch->getMaterial(),
-			node->m_modelPatch->getModel().getUuid())
-	{}
+		: RenderComponent(node,
+			  &node->m_modelPatch->getMaterial(),
+			  node->m_modelPatch->getModel().getUuid())
+	{
+	}
 
 	ANKI_USE_RESULT Error buildRendering(
 		RenderingBuildInfo& data) const override
@@ -38,8 +41,8 @@ public:
 		return getNode().buildRendering(data);
 	}
 
-	void getRenderWorldTransform(Bool& hasTransform,
-		Transform& trf) const override
+	void getRenderWorldTransform(
+		Bool& hasTransform, Transform& trf) const override
 	{
 		hasTransform = true;
 		const SceneNode* node = getNode().getParent();
@@ -55,15 +58,16 @@ public:
 //==============================================================================
 ModelPatchNode::ModelPatchNode(SceneGraph* scene)
 	: SceneNode(scene)
-{}
+{
+}
 
 //==============================================================================
 ModelPatchNode::~ModelPatchNode()
-{}
+{
+}
 
 //==============================================================================
-Error ModelPatchNode::create(const CString& name,
-	const ModelPatch* modelPatch)
+Error ModelPatchNode::create(const CString& name, const ModelPatch* modelPatch)
 {
 	ANKI_ASSERT(modelPatch);
 	ANKI_CHECK(SceneNode::create(name));
@@ -71,8 +75,8 @@ Error ModelPatchNode::create(const CString& name,
 	m_modelPatch = modelPatch;
 
 	// Spatial component
-	SceneComponent* comp = getSceneAllocator().newInstance<SpatialComponent>(
-		this, &m_obb);
+	SceneComponent* comp =
+		getSceneAllocator().newInstance<SpatialComponent>(this, &m_obb);
 
 	addComponent(comp, true);
 
@@ -101,8 +105,7 @@ Error ModelPatchNode::buildRendering(RenderingBuildInfo& data) const
 	PipelinePtr ppline;
 	ResourceGroupPtr grResources;
 
-	m_modelPatch->getRenderingDataSub(
-		data.m_key,
+	m_modelPatch->getRenderingDataSub(data.m_key,
 		SArray<U8>(),
 		grResources,
 		ppline,
@@ -120,9 +123,7 @@ Error ModelPatchNode::buildRendering(RenderingBuildInfo& data) const
 	// Drawcall
 	U32 offset = indicesOffsetArray[0] / sizeof(U16);
 	data.m_cmdb->drawElements(
-		indicesCountArray[0],
-		data.m_key.m_instanceCount,
-		offset);
+		indicesCountArray[0], data.m_key.m_instanceCount, offset);
 
 	return ErrorCode::NONE;
 }
@@ -132,15 +133,15 @@ Error ModelPatchNode::buildRendering(RenderingBuildInfo& data) const
 //==============================================================================
 
 /// Feedback component.
-class ModelMoveFeedbackComponent: public SceneComponent
+class ModelMoveFeedbackComponent : public SceneComponent
 {
 public:
 	ModelMoveFeedbackComponent(SceneNode* node)
 		: SceneComponent(SceneComponent::Type::NONE, node)
-	{}
+	{
+	}
 
-	ANKI_USE_RESULT Error update(
-		SceneNode& node, F32, F32, Bool& updated)
+	ANKI_USE_RESULT Error update(SceneNode& node, F32, F32, Bool& updated)
 	{
 		updated = false;
 
@@ -162,7 +163,8 @@ public:
 //==============================================================================
 ModelNode::ModelNode(SceneGraph* scene)
 	: SceneNode(scene)
-{}
+{
+}
 
 //==============================================================================
 ModelNode::~ModelNode()

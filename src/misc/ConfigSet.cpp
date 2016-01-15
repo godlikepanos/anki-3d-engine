@@ -6,7 +6,8 @@
 #include <anki/misc/ConfigSet.h>
 #include <anki/util/Logger.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 ConfigSet::ConfigSet()

@@ -8,22 +8,24 @@
 #include <anki/event/Event.h>
 #include <anki/Math.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup event
 /// @{
 
 /// Change the scene color
-class SceneAmbientColorEvent: public Event
+class SceneAmbientColorEvent : public Event
 {
 public:
 	/// Create
 	SceneAmbientColorEvent(EventManager* manager)
 		: Event(manager)
-	{}
+	{
+	}
 
-	ANKI_USE_RESULT Error init(F32 startTime, F32 duration,
-		const Vec4& finalColor);
+	ANKI_USE_RESULT Error init(
+		F32 startTime, F32 duration, const Vec4& finalColor);
 
 	/// Implements Event::update
 	ANKI_USE_RESULT Error update(F32 prevUpdateTime, F32 crntTime);
@@ -35,4 +37,3 @@ private:
 /// @}
 
 } // end namespace anki
-

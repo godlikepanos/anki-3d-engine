@@ -7,19 +7,22 @@
 #include <anki/gr/gl/BufferImpl.h>
 #include <anki/gr/gl/CommandBufferImpl.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 Buffer::Buffer(GrManager* manager)
 	: GrObject(manager)
-{}
+{
+}
 
 //==============================================================================
 Buffer::~Buffer()
-{}
+{
+}
 
 //==============================================================================
-class BufferCreateCommand final: public GlCommand
+class BufferCreateCommand final : public GlCommand
 {
 public:
 	BufferPtr m_buff;
@@ -27,13 +30,16 @@ public:
 	BufferUsageBit m_usage;
 	BufferAccessBit m_access;
 
-	BufferCreateCommand(Buffer* buff, PtrSize size, BufferUsageBit usage,
+	BufferCreateCommand(Buffer* buff,
+		PtrSize size,
+		BufferUsageBit usage,
 		BufferAccessBit access)
 		: m_buff(buff)
 		, m_size(size)
 		, m_usage(usage)
 		, m_access(access)
-	{}
+	{
+	}
 
 	Error operator()(GlState&)
 	{

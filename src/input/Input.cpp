@@ -6,7 +6,8 @@
 #include <anki/input/Input.h>
 #include <cstring>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 void Input::reset()

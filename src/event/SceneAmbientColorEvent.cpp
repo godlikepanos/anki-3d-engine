@@ -6,11 +6,12 @@
 #include <anki/event/SceneAmbientColorEvent.h>
 #include <anki/scene/SceneGraph.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
-Error SceneAmbientColorEvent::init(F32 startTime, F32 duration,
-	const Vec4& finalColor)
+Error SceneAmbientColorEvent::init(
+	F32 startTime, F32 duration, const Vec4& finalColor)
 {
 	Event::init(startTime, duration);
 

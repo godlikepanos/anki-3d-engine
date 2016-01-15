@@ -8,7 +8,8 @@
 #include <anki/scene/Sector.h>
 #include <anki/scene/SceneGraph.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 SpatialComponent::SpatialComponent(SceneNode* node, const CollisionShape* shape)

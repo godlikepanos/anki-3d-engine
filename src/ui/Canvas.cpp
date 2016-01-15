@@ -6,7 +6,8 @@
 #include <anki/ui/Canvas.h>
 #include <anki/ui/Widget.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 Canvas::Canvas(UiInterface* interface)
@@ -35,8 +36,7 @@ void Canvas::update(F64 dt)
 //==============================================================================
 void Canvas::paint()
 {
-	Error err = m_rootWidget->visitTree([&](Widget& w) -> Error
-	{
+	Error err = m_rootWidget->visitTree([&](Widget& w) -> Error {
 		if(m_debugDrawEnabled)
 		{
 			U c = 0;
@@ -60,14 +60,15 @@ void Canvas::paint()
 
 			m_interface->drawLines(
 				SArray<UVec2>(&positions[0], positions.getSize()),
-				Vec4(1.0, 0.0, 0.0, 1.0), m_size);
+				Vec4(1.0, 0.0, 0.0, 1.0),
+				m_size);
 		}
 
 		return ErrorCode::NONE;
 	});
 	(void)err;
 
-	//m_interface->
+	// m_interface->
 }
 
 //==============================================================================

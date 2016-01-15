@@ -10,13 +10,14 @@
 #include <anki/scene/SpatialComponent.h>
 #include <anki/scene/RenderComponent.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup scene
 /// @{
 
 /// Static geometry scene node patch
-class StaticGeometryPatchNode: public SceneNode
+class StaticGeometryPatchNode : public SceneNode
 {
 	friend class StaticGeometryRenderComponent;
 
@@ -35,15 +36,14 @@ private:
 };
 
 /// Static geometry scene node
-class StaticGeometryNode: public SceneNode
+class StaticGeometryNode : public SceneNode
 {
 public:
 	StaticGeometryNode(SceneGraph* scene);
 
 	~StaticGeometryNode();
 
-	ANKI_USE_RESULT Error create(
-		const CString& name, const CString& filename);
+	ANKI_USE_RESULT Error create(const CString& name, const CString& filename);
 
 private:
 	ModelResourcePtr m_model;
@@ -51,4 +51,3 @@ private:
 /// @}
 
 } // end namespace anki
-

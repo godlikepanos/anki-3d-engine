@@ -12,7 +12,8 @@
 #include <anki/physics/PhysicsWorld.h>
 #include <anki/Gr.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // Misc                                                                        =
@@ -21,9 +22,8 @@ namespace anki {
 //==============================================================================
 static F32 getRandom(F32 initial, F32 deviation)
 {
-	return (deviation == 0.0)
-		? initial
-		: initial + randFloat(deviation) * 2.0 - deviation;
+	return (deviation == 0.0) ? initial : initial + randFloat(deviation) * 2.0
+			- deviation;
 }
 
 //==============================================================================
@@ -49,15 +49,17 @@ static Vec3 getRandom(const Vec3& initial, const Vec3& deviation)
 //==============================================================================
 
 //==============================================================================
-void ParticleBase::revive(const ParticleEmitter& pe, const Transform& trf,
-	F32 /*prevUpdateTime*/, F32 crntTime)
+void ParticleBase::revive(const ParticleEmitter& pe,
+	const Transform& trf,
+	F32 /*prevUpdateTime*/,
+	F32 crntTime)
 {
 	ANKI_ASSERT(isDead());
 	const ParticleEmitterProperties& props = pe;
 
 	// life
-	m_timeOfDeath = getRandom(crntTime + props.m_particle.m_life,
-		props.m_particle.m_lifeDeviation);
+	m_timeOfDeath = getRandom(
+		crntTime + props.m_particle.m_life, props.m_particle.m_lifeDeviation);
 	m_timeOfBirth = crntTime;
 }
 
@@ -66,8 +68,8 @@ void ParticleBase::revive(const ParticleEmitter& pe, const Transform& trf,
 //==============================================================================
 
 //==============================================================================
-void ParticleSimple::simulate(const ParticleEmitter& pe,
-	F32 prevUpdateTime, F32 crntTime)
+void ParticleSimple::simulate(
+	const ParticleEmitter& pe, F32 prevUpdateTime, F32 crntTime)
 {
 	F32 dt = crntTime - prevUpdateTime;
 
@@ -80,8 +82,10 @@ void ParticleSimple::simulate(const ParticleEmitter& pe,
 }
 
 //==============================================================================
-void ParticleSimple::revive(const ParticleEmitter& pe, const Transform& trf,
-	F32 prevUpdateTime, F32 crntTime)
+void ParticleSimple::revive(const ParticleEmitter& pe,
+	const Transform& trf,
+	F32 prevUpdateTime,
+	F32 crntTime)
 {
 	ParticleBase::revive(pe, trf, prevUpdateTime, crntTime);
 	m_velocity = Vec4(0.0);
@@ -89,11 +93,13 @@ void ParticleSimple::revive(const ParticleEmitter& pe, const Transform& trf,
 	const ParticleEmitterProperties& props = pe;
 
 	m_acceleration = getRandom(props.m_particle.m_gravity,
-			props.m_particle.m_gravityDeviation).xyz0();
+						 props.m_particle.m_gravityDeviation)
+						 .xyz0();
 
 	// Set the initial position
 	m_position = getRandom(props.m_particle.m_startingPos,
-		props.m_particle.m_startingPosDeviation).xyz0();
+					 props.m_particle.m_startingPosDeviation)
+					 .xyz0();
 
 	m_position += trf.getOrigin();
 }
@@ -193,7 +199,7 @@ void Particle::revive(const ParticleEmitter& pe,
 //==============================================================================
 
 /// The derived render component for particle emitters.
-class ParticleEmitterRenderComponent: public RenderComponent
+class ParticleEmitterRenderComponent : public RenderComponent
 {
 public:
 	const ParticleEmitter& getNode() const
@@ -202,9 +208,9 @@ public:
 	}
 
 	ParticleEmitterRenderComponent(ParticleEmitter* node)
-		: RenderComponent(node,
-			&node->m_particleEmitterResource->getMaterial())
-	{}
+		: RenderComponent(node, &node->m_particleEmitterResource->getMaterial())
+	{
+	}
 
 	ANKI_USE_RESULT Error buildRendering(
 		RenderingBuildInfo& data) const override
@@ -212,8 +218,8 @@ public:
 		return getNode().buildRendering(data);
 	}
 
-	void getRenderWorldTransform(Bool& hasTransform,
-		Transform& trf) const override
+	void getRenderWorldTransform(
+		Bool& hasTransform, Transform& trf) const override
 	{
 		hasTransform = true;
 		// The particles are already in world position
@@ -226,12 +232,13 @@ public:
 //==============================================================================
 
 /// Feedback component
-class MoveFeedbackComponent: public SceneComponent
+class MoveFeedbackComponent : public SceneComponent
 {
 public:
 	MoveFeedbackComponent(ParticleEmitter* node)
 		: SceneComponent(SceneComponent::Type::NONE, node)
-	{}
+	{
+	}
 
 	ANKI_USE_RESULT Error update(
 		SceneNode& node, F32, F32, Bool& updated) override
@@ -255,7 +262,8 @@ public:
 //==============================================================================
 ParticleEmitter::ParticleEmitter(SceneGraph* scene)
 	: SceneNode(scene)
-{}
+{
+}
 
 //==============================================================================
 ParticleEmitter::~ParticleEmitter()
@@ -273,8 +281,7 @@ ParticleEmitter::~ParticleEmitter()
 }
 
 //==============================================================================
-Error ParticleEmitter::create(
-	const CString& name, const CString& filename)
+Error ParticleEmitter::create(const CString& name, const CString& filename)
 {
 	ANKI_CHECK(SceneNode::create(name));
 	SceneComponent* comp;
@@ -326,8 +333,7 @@ Error ParticleEmitter::create(
 	}
 
 	// Create the vertex buffer and object
-	m_vertBuffSize =
-		m_maxNumOfParticles * ParticleEmitterResource::VERTEX_SIZE;
+	m_vertBuffSize = m_maxNumOfParticles * ParticleEmitterResource::VERTEX_SIZE;
 
 	GrManager& gr = getSceneGraph().getGrManager();
 
@@ -337,8 +343,8 @@ Error ParticleEmitter::create(
 
 	for(U i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
 	{
-		m_vertBuffs[i] = gr.newInstance<Buffer>(
-			m_vertBuffSize, BufferUsageBit::VERTEX,
+		m_vertBuffs[i] = gr.newInstance<Buffer>(m_vertBuffSize,
+			BufferUsageBit::VERTEX,
 			BufferAccessBit::CLIENT_MAP_WRITE);
 
 		rcinit.m_vertexBuffers[0].m_buffer = m_vertBuffs[i];
@@ -365,8 +371,8 @@ Error ParticleEmitter::buildRendering(RenderingBuildInfo& data) const
 
 	U frame = (getGlobalTimestamp() % 3);
 
-	data.m_cmdb->bindResourceGroup(m_grGroups[frame], 0,
-		data.m_dynamicBufferInfo);
+	data.m_cmdb->bindResourceGroup(
+		m_grGroups[frame], 0, data.m_dynamicBufferInfo);
 
 	data.m_cmdb->drawArrays(m_aliveParticlesCount, data.m_subMeshIndicesCount);
 
@@ -423,8 +429,7 @@ void ParticleEmitter::createParticlesSimpleSimulation()
 		ParticleSimple* part =
 			getSceneAllocator().newInstance<ParticleSimple>();
 
-		part->m_size =
-			getRandom(m_particle.m_size, m_particle.m_sizeDeviation);
+		part->m_size = getRandom(m_particle.m_size, m_particle.m_sizeDeviation);
 		part->m_alpha =
 			getRandom(m_particle.m_alpha, m_particle.m_alphaDeviation);
 
@@ -468,7 +473,8 @@ Error ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 
 			// Do checks
 			ANKI_ASSERT((PtrSize(verts) + ParticleEmitterResource::VERTEX_SIZE
-				- PtrSize(verts_base)) <= m_vertBuffSize);
+							- PtrSize(verts_base))
+				<= m_vertBuffSize);
 
 			// This will calculate a new world transformation
 			p->simulate(*this, prevUpdateTime, crntTime);
@@ -494,7 +500,7 @@ Error ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 			// Set alpha
 			if(m_particle.m_alphaAnimation)
 			{
-				verts[4] = sin((lifePercent) * getPi<F32>()) * p->m_alpha;
+				verts[4] = sin((lifePercent)*getPi<F32>()) * p->m_alpha;
 			}
 			else
 			{

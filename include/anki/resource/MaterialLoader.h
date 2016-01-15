@@ -10,14 +10,15 @@
 #include <anki/resource/Common.h>
 #include <anki/resource/Material.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class XmlElement;
 
 /// Material loader variable. It's the information on whatever is inside
 /// \<input\>
-class MaterialLoaderInputVariable: public NonCopyable
+class MaterialLoaderInputVariable : public NonCopyable
 {
 public:
 	GenericMemoryPoolAllocator<U8> m_alloc;
@@ -55,7 +56,8 @@ public:
 	ShaderTypeBit m_shaderReferencedMask = ShaderTypeBit::NONE; ///< Referenced
 
 	MaterialLoaderInputVariable()
-	{}
+	{
+	}
 
 	MaterialLoaderInputVariable(MaterialLoaderInputVariable&& b)
 	{
@@ -79,11 +81,8 @@ public:
 
 	Bool duplicate(const MaterialLoaderInputVariable& b) const
 	{
-		return b.m_name == m_name
-			&& b.m_value == m_value
-			&& b.m_type == m_type
-			&& b.m_builtin == m_builtin
-			&& b.m_flags == m_flags;
+		return b.m_name == m_name && b.m_value == m_value && b.m_type == m_type
+			&& b.m_builtin == m_builtin && b.m_flags == m_flags;
 	}
 
 	CString typeStr() const;
@@ -191,10 +190,10 @@ private:
 	void processInputs();
 
 	/// Parse what is within the @code <operation></operation> @endcode
-	ANKI_USE_RESULT Error parseOperationTag(
-		const XmlElement& el, ShaderType glshader,
-		ShaderTypeBit glshaderbit, String& out);
+	ANKI_USE_RESULT Error parseOperationTag(const XmlElement& el,
+		ShaderType glshader,
+		ShaderTypeBit glshaderbit,
+		String& out);
 };
 
 } // end namespace anki
-

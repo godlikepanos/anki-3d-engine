@@ -12,25 +12,26 @@
 #include <anki/Math.h>
 #include <anki/util/Array.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup Collision
 /// @{
 
 /// Frustum collision shape. This shape consists from 6 planes. The planes are
 /// being used to find shapes that are inside the frustum
-class Frustum: public CompoundShape
+class Frustum : public CompoundShape
 {
 public:
 	/// Frustum type
-	enum class Type: U8
+	enum class Type : U8
 	{
 		PERSPECTIVE,
 		ORTHOGRAPHIC
 	};
 
 	/// The 6 frustum planes
-	enum class PlaneType: U8
+	enum class PlaneType : U8
 	{
 		NEAR,
 		FAR,
@@ -43,10 +44,12 @@ public:
 
 	Frustum(Type type)
 		: m_type(type)
-	{}
+	{
+	}
 
 	virtual ~Frustum()
-	{}
+	{
+	}
 
 	Type getType() const
 	{
@@ -138,7 +141,7 @@ private:
 };
 
 /// Frustum shape for perspective cameras
-class PerspectiveFrustum: public Frustum
+class PerspectiveFrustum : public Frustum
 {
 public:
 	static Bool classof(const Frustum& c)
@@ -219,8 +222,8 @@ public:
 	/// Implements Frustum::calculateProjectionMatrix
 	Mat4 calculateProjectionMatrix() const override;
 
-	static void calculateProjectionMatrix(F32 fovX, F32 fovY, F32 near, F32 far,
-		Mat4& proj);
+	static void calculateProjectionMatrix(
+		F32 fovX, F32 fovY, F32 near, F32 far, Mat4& proj);
 
 private:
 	/// @name Viewing variables
@@ -245,7 +248,7 @@ private:
 };
 
 /// Frustum shape for orthographic cameras
-class OrthographicFrustum: public Frustum
+class OrthographicFrustum : public Frustum
 {
 public:
 	static Bool classof(const Frustum& c)
@@ -264,8 +267,8 @@ public:
 	}
 
 	/// Set all
-	OrthographicFrustum(F32 left, F32 right, F32 near,
-		F32 far, F32 top, F32 bottom)
+	OrthographicFrustum(
+		F32 left, F32 right, F32 near, F32 far, F32 top, F32 bottom)
 		: OrthographicFrustum()
 	{
 		setAll(left, right, near, far, top, bottom);
@@ -312,8 +315,7 @@ public:
 	}
 
 	/// Set all
-	void setAll(F32 left, F32 right, F32 near,
-		F32 far, F32 top, F32 bottom)
+	void setAll(F32 left, F32 right, F32 near, F32 far, F32 top, F32 bottom)
 	{
 		m_left = left;
 		m_right = right;
@@ -364,4 +366,3 @@ private:
 /// @}
 
 } // end namespace anki
-

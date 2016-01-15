@@ -8,7 +8,8 @@
 #include <anki/gr/GrObject.h>
 #include <anki/util/Functions.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup graphics
 /// @{
@@ -19,16 +20,21 @@ class DrawElementsIndirectInfo
 {
 public:
 	DrawElementsIndirectInfo()
-	{}
+	{
+	}
 
-	DrawElementsIndirectInfo(U32 count, U32 instanceCount, U32 firstIndex,
-		U32 baseVertex, U32 baseInstance)
+	DrawElementsIndirectInfo(U32 count,
+		U32 instanceCount,
+		U32 firstIndex,
+		U32 baseVertex,
+		U32 baseInstance)
 		: m_count(count)
 		, m_instanceCount(instanceCount)
 		, m_firstIndex(firstIndex)
 		, m_baseVertex(baseVertex)
 		, m_baseInstance(baseInstance)
-	{}
+	{
+	}
 
 	U32 m_count = MAX_U32;
 	U32 m_instanceCount = 1;
@@ -43,15 +49,17 @@ class DrawArraysIndirectInfo
 {
 public:
 	DrawArraysIndirectInfo()
-	{}
+	{
+	}
 
-	DrawArraysIndirectInfo(U32 count, U32 instanceCount, U32 first,
-		U32 baseInstance)
+	DrawArraysIndirectInfo(
+		U32 count, U32 instanceCount, U32 first, U32 baseInstance)
 		: m_count(count)
 		, m_instanceCount(instanceCount)
 		, m_first(first)
 		, m_baseInstance(baseInstance)
-	{}
+	{
+	}
 
 	U32 m_count = MAX_U32;
 	U32 m_instanceCount = 1;
@@ -75,7 +83,7 @@ private:
 };
 
 /// Command buffer.
-class CommandBuffer: public GrObject
+class CommandBuffer : public GrObject
 {
 public:
 	/// Construct.
@@ -115,24 +123,33 @@ public:
 	void bindFramebuffer(FramebufferPtr fb);
 
 	/// Bind resources.
-	void bindResourceGroup(ResourceGroupPtr rc, U slot,
-		const DynamicBufferInfo* dynInfo);
+	void bindResourceGroup(
+		ResourceGroupPtr rc, U slot, const DynamicBufferInfo* dynInfo);
 	/// @}
 
 	/// @name Jobs
 	/// @{
-	void drawElements(U32 count, U32 instanceCount = 1, U32 firstIndex = 0,
-		U32 baseVertex = 0, U32 baseInstance = 0);
-
-	void drawArrays(U32 count, U32 instanceCount = 1, U32 first = 0,
+	void drawElements(U32 count,
+		U32 instanceCount = 1,
+		U32 firstIndex = 0,
+		U32 baseVertex = 0,
 		U32 baseInstance = 0);
 
-	void drawElementsConditional(OcclusionQueryPtr query, U32 count,
-		U32 instanceCount = 1, U32 firstIndex = 0, U32 baseVertex = 0,
+	void drawArrays(
+		U32 count, U32 instanceCount = 1, U32 first = 0, U32 baseInstance = 0);
+
+	void drawElementsConditional(OcclusionQueryPtr query,
+		U32 count,
+		U32 instanceCount = 1,
+		U32 firstIndex = 0,
+		U32 baseVertex = 0,
 		U32 baseInstance = 0);
 
-	void drawArraysConditional(OcclusionQueryPtr query, U32 count,
-		U32 instanceCount = 1, U32 first = 0, U32 baseInstance = 0);
+	void drawArraysConditional(OcclusionQueryPtr query,
+		U32 count,
+		U32 instanceCount = 1,
+		U32 first = 0,
+		U32 baseInstance = 0);
 
 	void dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ);
 
@@ -140,22 +157,26 @@ public:
 
 	void generateMipmaps(TexturePtr tex, U surface);
 
-	void copyTextureToTexture(TexturePtr src, U srcSlice, U srcLevel,
-		TexturePtr dest, U destSlice, U destLevel);
+	void copyTextureToTexture(TexturePtr src,
+		U srcSlice,
+		U srcLevel,
+		TexturePtr dest,
+		U destSlice,
+		U destLevel);
 	/// @}
 
 	/// @name Resource upload
 	/// @{
 
 	/// Upload data to a texture.
-	void textureUpload(TexturePtr tex, U32 mipmap, U32 slice,
-		const DynamicBufferToken& token);
+	void textureUpload(
+		TexturePtr tex, U32 mipmap, U32 slice, const DynamicBufferToken& token);
 
 	/// Write data to a buffer. It will copy the dynamic memory to the buffer
 	/// starting from offset to the range indicated by the allocation of the
 	/// token.
-	void writeBuffer(BufferPtr buff, PtrSize offset,
-		const DynamicBufferToken& token);
+	void writeBuffer(
+		BufferPtr buff, PtrSize offset, const DynamicBufferToken& token);
 	/// @}
 
 	/// @name Other

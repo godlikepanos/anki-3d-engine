@@ -7,7 +7,8 @@
 
 #include <anki/ui/UiInterface.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup ui
 /// @{
@@ -29,7 +30,8 @@ class Font
 public:
 	Font(UiInterface* interface)
 		: m_interface(interface)
-	{}
+	{
+	}
 
 	~Font();
 
@@ -75,4 +77,3 @@ using FontPtr = IntrusivePtr<Font>;
 /// @}
 
 } // end namespace anki
-

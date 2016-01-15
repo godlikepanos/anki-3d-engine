@@ -8,7 +8,8 @@
 #include <anki/event/Event.h>
 #include <anki/scene/SceneNode.h>
 
-namespace anki {
+namespace anki
+{
 
 #if 0
 
@@ -36,4 +37,3 @@ private:
 #endif
 
 } // end namespace anki
-

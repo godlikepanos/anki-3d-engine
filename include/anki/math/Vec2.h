@@ -8,14 +8,15 @@
 #include <anki/math/CommonIncludes.h>
 #include <anki/math/Vec.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup math
 /// @{
 
 /// 2D vector
 template<typename T>
-class TVec2: public TVec<T, 2, Array<T, 2>, TVec2<T>>
+class TVec2 : public TVec<T, 2, Array<T, 2>, TVec2<T>>
 {
 	/// @name Friends
 	/// @{
@@ -36,23 +37,28 @@ public:
 	/// @{
 	TVec2()
 		: Base()
-	{}
+	{
+	}
 
 	TVec2(const TVec2& b)
 		: Base(b)
-	{}
+	{
+	}
 
 	TVec2(const T x_, const T y_)
 		: Base(x_, y_)
-	{}
+	{
+	}
 
 	explicit TVec2(const T f)
 		: Base(f)
-	{}
+	{
+	}
 
 	explicit TVec2(const T arr[])
 		: Base(arr)
-	{}
+	{
+	}
 	/// @}
 };
 
@@ -99,4 +105,3 @@ typedef TVec2<U32> UVec2;
 /// @}
 
 } // end namespace anki
-

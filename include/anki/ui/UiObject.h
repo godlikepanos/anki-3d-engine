@@ -8,7 +8,8 @@
 #include <anki/ui/Common.h>
 #include <anki/util/Ptr.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup ui
 /// @{
@@ -43,4 +44,3 @@ private:
 /// @}
 
 } // end namespace anki
-

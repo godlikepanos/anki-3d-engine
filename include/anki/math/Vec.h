@@ -8,7 +8,8 @@
 #include <anki/math/CommonIncludes.h>
 #include <type_traits>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup math
 /// @{
@@ -26,7 +27,8 @@ public:
 	/// @name Constructors
 	/// @{
 	TVec()
-	{}
+	{
+	}
 
 	TVec(const TVec& b)
 	{
@@ -309,7 +311,6 @@ public:
 		static_assert(N > 2, "Wrong vector");
 		return TVec3<T>(z(), z(), z());
 	}
-
 
 	TVec4<T> xxxx() const
 	{
@@ -2185,4 +2186,3 @@ protected:
 /// @}
 
 } // end namespace anki
-

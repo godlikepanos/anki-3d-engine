@@ -8,7 +8,8 @@
 #include <cmath>
 #include <cstring>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 I32 randRange(I32 min, I32 max)

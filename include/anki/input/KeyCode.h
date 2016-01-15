@@ -5,7 +5,8 @@
 
 #pragma once
 
-namespace anki {
+namespace anki
+{
 
 /// Keyboard scancodes taken from SDL
 enum class KeyCode
@@ -271,4 +272,3 @@ enum class MouseButton
 };
 
 } // end namespace anki
-

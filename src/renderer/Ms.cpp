@@ -11,13 +11,14 @@
 #include <anki/scene/SceneGraph.h>
 #include <anki/misc/ConfigSet.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
-const Array<PixelFormat, Ms::ATTACHMENT_COUNT> Ms::RT_PIXEL_FORMATS = {{
-	PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM),
-	PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM),
-	PixelFormat(ComponentFormat::R10G10B10A2, TransformFormat::UNORM)}};
+const Array<PixelFormat, Ms::ATTACHMENT_COUNT> Ms::RT_PIXEL_FORMATS = {
+	{PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM),
+		PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM),
+		PixelFormat(ComponentFormat::R10G10B10A2, TransformFormat::UNORM)}};
 
 const PixelFormat Ms::DEPTH_RT_PIXEL_FORMAT(
 	ComponentFormat::D24, TransformFormat::FLOAT);
@@ -33,18 +34,37 @@ Error Ms::createRt(U32 index, U32 samples)
 {
 	Plane& plane = m_planes[index];
 
-	m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(),
-		DEPTH_RT_PIXEL_FORMAT, samples, SamplingFilter::NEAREST, 4,
+	m_r->createRenderTarget(m_r->getWidth(),
+		m_r->getHeight(),
+		DEPTH_RT_PIXEL_FORMAT,
+		samples,
+		SamplingFilter::NEAREST,
+		4,
 		plane.m_depthRt);
 
-	m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(),
-		RT_PIXEL_FORMATS[0], samples, SamplingFilter::NEAREST, 1, plane.m_rt0);
+	m_r->createRenderTarget(m_r->getWidth(),
+		m_r->getHeight(),
+		RT_PIXEL_FORMATS[0],
+		samples,
+		SamplingFilter::NEAREST,
+		1,
+		plane.m_rt0);
 
-	m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(),
-		RT_PIXEL_FORMATS[1], samples, SamplingFilter::NEAREST, 2, plane.m_rt1);
+	m_r->createRenderTarget(m_r->getWidth(),
+		m_r->getHeight(),
+		RT_PIXEL_FORMATS[1],
+		samples,
+		SamplingFilter::NEAREST,
+		2,
+		plane.m_rt1);
 
-	m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(),
-		RT_PIXEL_FORMATS[2], samples, SamplingFilter::NEAREST, 2, plane.m_rt2);
+	m_r->createRenderTarget(m_r->getWidth(),
+		m_r->getHeight(),
+		RT_PIXEL_FORMATS[2],
+		samples,
+		SamplingFilter::NEAREST,
+		2,
+		plane.m_rt2);
 
 	AttachmentLoadOperation loadop = AttachmentLoadOperation::DONT_CARE;
 #if ANKI_DEBUG

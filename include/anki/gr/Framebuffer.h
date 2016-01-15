@@ -9,7 +9,8 @@
 #include <anki/gr/Texture.h>
 #include <cstring>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup graphics
 /// @{
@@ -89,7 +90,7 @@ public:
 };
 
 /// GPU framebuffer.
-class Framebuffer: public GrObject
+class Framebuffer : public GrObject
 {
 public:
 	/// Construct.
@@ -113,4 +114,3 @@ private:
 /// @}
 
 } // end namespace anki
-

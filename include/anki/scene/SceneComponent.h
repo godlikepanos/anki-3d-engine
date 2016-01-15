@@ -10,7 +10,8 @@
 #include <anki/util/Functions.h>
 #include <anki/util/Bitset.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup scene
 /// @{
@@ -20,7 +21,7 @@ class SceneComponent
 {
 public:
 	// The type of the components
-	enum class Type: U16
+	enum class Type : U16
 	{
 		NONE,
 		FRUSTUM,
@@ -41,10 +42,12 @@ public:
 	SceneComponent(Type type, SceneNode* node)
 		: m_node(node)
 		, m_type(type)
-	{}
+	{
+	}
 
 	virtual ~SceneComponent()
-	{}
+	{
+	}
 
 	Type getType() const
 	{
@@ -122,4 +125,3 @@ private:
 /// @}
 
 } // end namespace anki
-

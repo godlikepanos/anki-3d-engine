@@ -6,17 +6,18 @@
 #include <anki/event/EventManager.h>
 #include <anki/scene/SceneGraph.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 EventManager::EventManager()
-{}
+{
+}
 
 //==============================================================================
 EventManager::~EventManager()
 {
-	Error err = iterateEvents([&](Event& event) -> Error
-	{
+	Error err = iterateEvents([&](Event& event) -> Error {
 		event.setMarkedForDeletion();
 		return ErrorCode::NONE;
 	});

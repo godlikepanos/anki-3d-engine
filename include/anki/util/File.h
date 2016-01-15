@@ -10,7 +10,8 @@
 #include <anki/util/NonCopyable.h>
 #include <cstdio>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup util_file
 /// @{
@@ -24,11 +25,11 @@ namespace anki {
 /// - If the filename starts with '$' it will try to load a system specific
 ///   file. For Android this is a file in the .apk
 /// - If the above are false then try to load a regular C file
-class File: public NonCopyable
+class File : public NonCopyable
 {
 public:
 	/// Open mode
-	enum class OpenFlag: U8
+	enum class OpenFlag : U8
 	{
 		NONE = 0,
 		READ = 1 << 0,
@@ -117,7 +118,7 @@ public:
 
 private:
 	/// Internal filetype
-	enum class Type: U8
+	enum class Type : U8
 	{
 		NONE = 0,
 		C, ///< C file
@@ -135,8 +136,10 @@ private:
 
 	/// Get the type of the file
 	ANKI_USE_RESULT Error identifyFile(const CString& filename,
-		char* archiveFilename, PtrSize archiveFilenameSize,
-		CString& filenameInArchive, Type& type);
+		char* archiveFilename,
+		PtrSize archiveFilenameSize,
+		CString& filenameInArchive,
+		Type& type);
 
 	/// Open a C file
 	ANKI_USE_RESULT Error openCFile(const CString& filename, OpenFlag flags);
@@ -149,7 +152,7 @@ private:
 
 #if ANKI_OS == ANKI_OS_ANDROID
 	/// Open an Android file
-	ANKI_USE_RESULT Error  openAndroidFile(
+	ANKI_USE_RESULT Error openAndroidFile(
 		const CString& filename, OpenFlag flags);
 #endif
 
@@ -164,4 +167,3 @@ private:
 /// @}
 
 } // end namespace anki
-

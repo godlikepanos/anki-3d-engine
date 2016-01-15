@@ -10,7 +10,8 @@
 #include <anki/gr/Sampler.h>
 #include <anki/gr/Buffer.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup graphics
 /// @{
@@ -55,7 +56,7 @@ public:
 };
 
 /// Resource group.
-class ResourceGroup: public GrObject
+class ResourceGroup : public GrObject
 {
 public:
 	/// Construct.
@@ -79,4 +80,3 @@ private:
 /// @}
 
 } // end namespace anki
-

@@ -9,13 +9,14 @@
 #include <anki/Gr.h>
 #include <anki/resource/TextureResource.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup scene
 /// @{
 
 /// Lens flare scene component.
-class LensFlareComponent final: public SceneComponent
+class LensFlareComponent final : public SceneComponent
 {
 public:
 	LensFlareComponent(SceneNode* node);
@@ -80,8 +81,7 @@ public:
 	/// @param[out] q The returned query.
 	/// @param[out] queryInvalid It's true if the query has an old result that
 	///             cannot be used.
-	void getOcclusionQueryToCheck(
-		OcclusionQueryPtr& q, Bool& queryInvalid);
+	void getOcclusionQueryToCheck(OcclusionQueryPtr& q, Bool& queryInvalid);
 
 	/// @name SceneComponent virtuals
 	/// @{
@@ -108,8 +108,8 @@ private:
 	Vec2 m_otherFlareSize = Vec2(1.0);
 
 	Array<OcclusionQueryPtr, MAX_FRAMES_IN_FLIGHT> m_queries;
-	Array<Timestamp, MAX_FRAMES_IN_FLIGHT> m_queryTestTimestamp =
-		{{MAX_U32, MAX_U32, MAX_U32}};
+	Array<Timestamp, MAX_FRAMES_IN_FLIGHT> m_queryTestTimestamp = {
+		{MAX_U32, MAX_U32, MAX_U32}};
 	U8 m_crntQueryIndex = 0;
 
 	Vec4 m_worldPosition = Vec4(0.0);
@@ -119,4 +119,3 @@ private:
 /// @}
 
 } // end namespace anki
-

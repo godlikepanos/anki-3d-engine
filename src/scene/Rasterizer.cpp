@@ -5,7 +5,8 @@
 
 #include <anki/scene/Rasterizer.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 Rasterizer::~Rasterizer()
@@ -59,14 +60,14 @@ void Rasterizer::rasterizeTriangle(const Vec4& a, const Vec4& b, const Vec4& c)
 	}
 
 	// Cull
-	if(boxMin.x() > m_width || boxMin.y() > m_height
-		|| boxMax.x() < 0 || boxMax.y() < 0)
+	if(boxMin.x() > m_width || boxMin.y() > m_height || boxMax.x() < 0
+		|| boxMax.y() < 0)
 	{
 		return;
 	}
 
 	// Backface culling
-	//Vec4 n = (positions[1].xyz0() - positions[0].xyz0()).cross(
+	// Vec4 n = (positions[1].xyz0() - positions[0].xyz0()).cross(
 	//	positions[2].xyz0() - positions[1].xyz0());
 }
 

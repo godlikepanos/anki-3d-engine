@@ -7,7 +7,8 @@
 
 #include <anki/math/CommonIncludes.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup math
 /// @{
@@ -27,7 +28,8 @@ public:
 	/// @name Constructors
 	/// @{
 	F16()
-	{}
+	{
+	}
 
 	F16(const F16& b)
 	{
@@ -218,4 +220,3 @@ inline F32 operator/(const F32 f, const F16 h)
 static_assert(sizeof(F16) == 2, "Incorrect size");
 
 } // end namespace anki
-

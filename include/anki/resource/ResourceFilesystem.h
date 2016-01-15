@@ -11,7 +11,8 @@
 #include <anki/util/File.h>
 #include <anki/util/Ptr.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class ConfigSet;
@@ -20,17 +21,19 @@ class ConfigSet;
 /// @{
 
 /// Resource filesystem file. An interface that abstracts the resource file.
-class ResourceFile: public NonCopyable
+class ResourceFile : public NonCopyable
 {
 public:
 	using SeekOrigin = File::SeekOrigin;
 
 	ResourceFile(GenericMemoryPoolAllocator<U8> alloc)
 		: m_alloc(alloc)
-	{}
+	{
+	}
 
 	virtual ~ResourceFile()
-	{}
+	{
+	}
 
 	/// Read data from the file
 	virtual ANKI_USE_RESULT Error read(void* buff, PtrSize size) = 0;
@@ -75,26 +78,25 @@ private:
 using ResourceFilePtr = IntrusivePtr<ResourceFile>;
 
 /// Resource filesystem.
-class ResourceFilesystem: public NonCopyable
+class ResourceFilesystem : public NonCopyable
 {
 public:
 	ResourceFilesystem(GenericMemoryPoolAllocator<U8> alloc)
 		: m_alloc(alloc)
-	{}
+	{
+	}
 
 	~ResourceFilesystem();
 
 	ANKI_USE_RESULT Error init(
-		const ConfigSet& config,
-		const CString& cacheDir);
+		const ConfigSet& config, const CString& cacheDir);
 
 	/// Search the path list to find the file. Then open the file for reading.
 	ANKI_USE_RESULT Error openFile(
-		const ResourceFilename& filename,
-		ResourceFilePtr& file);
+		const ResourceFilename& filename, ResourceFilePtr& file);
 
 private:
-	class Path: public NonCopyable
+	class Path : public NonCopyable
 	{
 	public:
 		StringList m_files; ///< Files inside the directory.
@@ -109,7 +111,8 @@ private:
 			, m_path(std::move(b.m_path))
 			, m_isArchive(std::move(b.m_isArchive))
 			, m_isCache(std::move(b.m_isCache))
-		{}
+		{
+		}
 
 		Path& operator=(Path&& b)
 		{
@@ -133,4 +136,3 @@ private:
 /// @}
 
 } // end namespace anki
-

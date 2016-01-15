@@ -9,7 +9,8 @@
 #include <anki/renderer/RenderingPass.h>
 #include <anki/core/Timestamp.h>
 
-namespace anki {
+namespace anki
+{
 
 class SceneNode;
 
@@ -17,7 +18,7 @@ class SceneNode;
 /// @{
 
 /// Tiler used for visibility tests
-class Tiler: public RenderingPass
+class Tiler : public RenderingPass
 {
 	friend class UpdatePlanesPerspectiveCameraTask;
 
@@ -54,4 +55,3 @@ private:
 /// @}
 
 } // end namespace anki
-

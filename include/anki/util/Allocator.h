@@ -12,7 +12,8 @@
 #include <cstddef> // For ptrdiff_t
 #include <utility> // For forward
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup util_memory
 /// @{
@@ -55,7 +56,8 @@ public:
 
 	/// Default constructor
 	GenericPoolAllocator()
-	{}
+	{
+	}
 
 	/// Copy constructor
 	GenericPoolAllocator(const GenericPoolAllocator& b)
@@ -82,8 +84,7 @@ public:
 	/// Constuctor that creates a pool
 	template<typename... TArgs>
 	explicit GenericPoolAllocator(
-		AllocAlignedCallback allocCb, void* allocCbUserData,
-		TArgs&&... args)
+		AllocAlignedCallback allocCb, void* allocCbUserData, TArgs&&... args)
 	{
 		m_pool = reinterpret_cast<TPool*>(
 			allocCb(allocCbUserData, nullptr, sizeof(TPool), alignof(TPool)));
@@ -92,7 +93,7 @@ public:
 			ANKI_LOGF("Out of memory");
 		}
 
-		new (m_pool) TPool();
+		new(m_pool) TPool();
 
 		m_pool->create(allocCb, allocCbUserData, std::forward<TArgs>(args)...);
 		m_pool->getRefcount().store(1);
@@ -169,7 +170,7 @@ public:
 	void construct(pointer p, const T& val)
 	{
 		// Placement new
-		::new (p) T(val);
+		::new(p) T(val);
 	}
 
 	/// Call constructor with many arguments
@@ -362,8 +363,7 @@ private:
 
 /// Another allocator of the same type can deallocate from this one
 template<typename T1, typename T2, typename TPool>
-inline Bool operator==(
-	const GenericPoolAllocator<T1, TPool>&,
+inline Bool operator==(const GenericPoolAllocator<T1, TPool>&,
 	const GenericPoolAllocator<T2, TPool>&)
 {
 	return true;
@@ -372,16 +372,14 @@ inline Bool operator==(
 /// Another allocator of the another type cannot deallocate from this one
 template<typename T1, typename AnotherAllocator, typename TPool>
 inline Bool operator==(
-	const GenericPoolAllocator<T1, TPool>&,
-	const AnotherAllocator&)
+	const GenericPoolAllocator<T1, TPool>&, const AnotherAllocator&)
 {
 	return false;
 }
 
 /// Another allocator of the same type can deallocate from this one
 template<typename T1, typename T2, typename TPool>
-inline Bool operator!=(
-	const GenericPoolAllocator<T1, TPool>&,
+inline Bool operator!=(const GenericPoolAllocator<T1, TPool>&,
 	const GenericPoolAllocator<T2, TPool>&)
 {
 	return false;
@@ -390,8 +388,7 @@ inline Bool operator!=(
 /// Another allocator of the another type cannot deallocate from this one
 template<typename T1, typename AnotherAllocator, typename TPool>
 inline Bool operator!=(
-	const GenericPoolAllocator<T1, TPool>&,
-	const AnotherAllocator&)
+	const GenericPoolAllocator<T1, TPool>&, const AnotherAllocator&)
 {
 	return true;
 }
@@ -416,4 +413,3 @@ using ChainAllocator = GenericPoolAllocator<T, ChainMemoryPool>;
 /// @}
 
 } // end namespace anki
-

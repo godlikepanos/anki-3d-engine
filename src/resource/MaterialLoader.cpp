@@ -10,7 +10,8 @@
 #include <anki/util/Functions.h>
 #include <algorithm>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // Misc                                                                        =
@@ -18,8 +19,8 @@ namespace anki {
 
 //==============================================================================
 /// Given a string return info about the shader
-static ANKI_USE_RESULT Error getShaderInfo(const CString& str, ShaderType& type,
-	ShaderTypeBit& bit, U& idx)
+static ANKI_USE_RESULT Error getShaderInfo(
+	const CString& str, ShaderType& type, ShaderTypeBit& bit, U& idx)
 {
 	Error err = ErrorCode::NONE;
 
@@ -155,8 +156,8 @@ static CString toString(ShaderVariableDataType in)
 }
 
 //==============================================================================
-static ANKI_USE_RESULT Error computeBuiltin(const CString& name,
-	BuiltinMaterialVariableId& out)
+static ANKI_USE_RESULT Error computeBuiltin(
+	const CString& name, BuiltinMaterialVariableId& out)
 {
 	if(name == "anki_mvp")
 	{
@@ -272,7 +273,8 @@ CString MaterialLoaderInputVariable::typeStr() const
 //==============================================================================
 MaterialLoader::MaterialLoader(GenericMemoryPoolAllocator<U8> alloc)
 	: m_alloc(alloc)
-{}
+{
+}
 
 //==============================================================================
 MaterialLoader::~MaterialLoader()
@@ -379,8 +381,8 @@ Error MaterialLoader::parseProgramsTag(const XmlElement& el)
 	{
 		if(in.m_shaderDefinedMask != in.m_shaderReferencedMask)
 		{
-			ANKI_LOGE("Variable not referenced or not defined %s",
-				&in.m_name[0]);
+			ANKI_LOGE(
+				"Variable not referenced or not defined %s", &in.m_name[0]);
 			return ErrorCode::USER_DATA;
 		}
 	}
@@ -389,8 +391,7 @@ Error MaterialLoader::parseProgramsTag(const XmlElement& el)
 }
 
 //==============================================================================
-Error MaterialLoader::parseProgramTag(
-	const XmlElement& programEl)
+Error MaterialLoader::parseProgramTag(const XmlElement& programEl)
 {
 	XmlElement el;
 
@@ -537,8 +538,7 @@ Error MaterialLoader::parseInputsTag(const XmlElement& programEl)
 		// Check if instanced
 		if(in.m_builtin == BuiltinMaterialVariableId::MVP_MATRIX
 			|| in.m_builtin == BuiltinMaterialVariableId::NORMAL_MATRIX
-			|| in.m_builtin
-				== BuiltinMaterialVariableId::BILLBOARD_MVP_MATRIX)
+			|| in.m_builtin == BuiltinMaterialVariableId::BILLBOARD_MVP_MATRIX)
 		{
 			in.m_flags.m_instanced = true;
 			m_instanced = true;
@@ -554,7 +554,8 @@ Error MaterialLoader::parseInputsTag(const XmlElement& programEl)
 			if(getBuiltinType(in.m_builtin) != in.m_type)
 			{
 				ANKI_LOGE("Builtin variable %s cannot be of type %s",
-					&in.m_name[0], &cstr[0]);
+					&in.m_name[0],
+					&cstr[0]);
 				return ErrorCode::USER_DATA;
 			}
 		}
@@ -598,8 +599,8 @@ Error MaterialLoader::parseInputsTag(const XmlElement& programEl)
 		{
 			if(!in.m_flags.m_builtin)
 			{
-				ANKI_LOGE("Non-builtins should have a value: %s",
-					&in.m_name[0]);
+				ANKI_LOGE(
+					"Non-builtins should have a value: %s", &in.m_name[0]);
 				return ErrorCode::USER_DATA;
 			}
 
@@ -637,17 +638,16 @@ Error MaterialLoader::parseInputsTag(const XmlElement& programEl)
 
 		// Now you have the info to check if duplicate
 		Input* duplicateInp = nullptr;
-		Error err = m_inputs.iterateForward(
-			[&duplicateInp, &in](Input& inp) -> Error
-		{
-			if(in.m_name == inp.m_name)
-			{
-				duplicateInp = &in;
-				return ErrorCode::NONE;
-			}
+		Error err =
+			m_inputs.iterateForward([&duplicateInp, &in](Input& inp) -> Error {
+				if(in.m_name == inp.m_name)
+				{
+					duplicateInp = &in;
+					return ErrorCode::NONE;
+				}
 
-			return ErrorCode::NONE;
-		});
+				return ErrorCode::NONE;
+			});
 		(void)err;
 
 		if(duplicateInp != nullptr)
@@ -658,7 +658,8 @@ Error MaterialLoader::parseInputsTag(const XmlElement& programEl)
 			if(!same)
 			{
 				ANKI_LOGE("Variable defined differently between "
-					"shaders: %s", &in.m_name[0]);
+						  "shaders: %s",
+					&in.m_name[0]);
 				return ErrorCode::USER_DATA;
 			}
 
@@ -688,10 +689,8 @@ Error MaterialLoader::parseInputsTag(const XmlElement& programEl)
 void MaterialLoader::processInputs()
 {
 	// Sort the variables to decrease the change of creating unique shaders
-	m_inputs.sort([](const Input& a, const Input& b)
-	{
-		return a.m_name < b.m_name;
-	});
+	m_inputs.sort(
+		[](const Input& a, const Input& b) { return a.m_name < b.m_name; });
 
 	for(auto& in : m_inputs)
 	{
@@ -707,9 +706,11 @@ void MaterialLoader::processInputs()
 				{
 					in.m_binding = m_texBinding++;
 
-					in.m_line.sprintf(
-						m_alloc, "layout(TEX_BINDING(0, %u)) uniform %s tex%u;",
-						in.m_binding, &in.typeStr()[0], in.m_binding);
+					in.m_line.sprintf(m_alloc,
+						"layout(TEX_BINDING(0, %u)) uniform %s tex%u;",
+						in.m_binding,
+						&in.typeStr()[0],
+						in.m_binding);
 				}
 			}
 			else if(in.m_flags.m_inBlock)
@@ -754,8 +755,7 @@ void MaterialLoader::processInputs()
 }
 
 //==============================================================================
-Error MaterialLoader::parseOperationTag(
-	const XmlElement& operationTag,
+Error MaterialLoader::parseOperationTag(const XmlElement& operationTag,
 	ShaderType glshader,
 	ShaderTypeBit glshaderbit,
 	String& out)
@@ -826,11 +826,10 @@ Error MaterialLoader::parseOperationTag(
 			{
 				if(!input->m_flags.m_specialBuiltin)
 				{
-					argsList.pushBackSprintf(
-						"%s%d%s",
+					argsList.pushBackSprintf("%s%d%s",
 						input->m_flags.m_texture ? "tex" : "var",
-						!input->m_flags.m_texture
-							? input->m_index : input->m_binding,
+						!input->m_flags.m_texture ? input->m_index
+												  : input->m_binding,
 						input->m_flags.m_instanced ? " INSTANCE_ID" : "");
 				}
 				else
@@ -869,9 +868,11 @@ Error MaterialLoader::parseOperationTag(
 	if(!retTypeVoid)
 	{
 		ANKI_CHECK(retTypeEl.getText(cstr));
-		lines.pushBackSprintf(
-			"#define out%u_DEFINED\n"
-			"%s out%u = ", id, &cstr[0], id);
+		lines.pushBackSprintf("#define out%u_DEFINED\n"
+							  "%s out%u = ",
+			id,
+			&cstr[0],
+			id);
 	}
 
 	// write the "func(args...)" of "blah = func(args...)"
@@ -1009,11 +1010,10 @@ void MaterialLoader::mutate(const RenderingKey& key)
 
 	// Update the defines
 	StringAuto defines(m_alloc);
-	defines.sprintf(
-		"#define INSTANCE_COUNT %u\n"
-		"#define TESSELATION %u\n"
-		"#define LOD %u\n"
-		"#define PASS %s\n",
+	defines.sprintf("#define INSTANCE_COUNT %u\n"
+					"#define TESSELATION %u\n"
+					"#define LOD %u\n"
+					"#define PASS %s\n",
 		instanceCount,
 		tessellation,
 		lod,

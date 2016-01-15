@@ -11,7 +11,8 @@
 #include <new>
 #include <cstdio>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // ThreadPoolThread                                                            =
@@ -19,7 +20,8 @@ namespace anki {
 
 #if !ANKI_DISABLE_THREADPOOL_THREADING
 
-namespace detail {
+namespace detail
+{
 
 /// The thread that executes a ThreadPool::Task
 class ThreadPoolThread
@@ -106,8 +108,8 @@ ThreadPool::ThreadPool(U32 threadsCount)
 
 	while(threadsCount-- != 0)
 	{
-		::new(&m_threads[threadsCount]) detail::ThreadPoolThread(
-			threadsCount, this);
+		::new(&m_threads[threadsCount])
+			detail::ThreadPoolThread(threadsCount, this);
 	}
 #endif
 }

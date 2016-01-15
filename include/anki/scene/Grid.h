@@ -8,7 +8,8 @@
 #include <anki/Collision.h>
 #include <anki/scene/Common.h>
 
-namespace anki {
+namespace anki
+{
 
 class SceneNode;
 class Frustumable;
@@ -41,8 +42,7 @@ public:
 	Bool placeSceneNode(SceneNode* sn);
 
 	/// XXX
-	void getVisible(const Frustumable& cam,
-		SceneVector<SceneNode*>& nodes);
+	void getVisible(const Frustumable& cam, SceneVector<SceneNode*>& nodes);
 
 private:
 	Aabb aabb;
@@ -54,4 +54,3 @@ private:
 };
 
 } // end namespace anki
-

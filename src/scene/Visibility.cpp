@@ -16,7 +16,8 @@
 #include <anki/util/Logger.h>
 #include <anki/core/Trace.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // Misc                                                                        =
@@ -70,7 +71,7 @@ public:
 };
 
 /// Task.
-class VisibilityTestTask: public ThreadPool::Task
+class VisibilityTestTask : public ThreadPool::Task
 {
 public:
 	VisibilityShared* m_shared;
@@ -140,8 +141,8 @@ public:
 };
 
 //==============================================================================
-void VisibilityTestTask::test(FrustumComponent& testedFrc,
-	U32 threadId, PtrSize threadsCount)
+void VisibilityTestTask::test(
+	FrustumComponent& testedFrc, U32 threadId, PtrSize threadsCount)
 {
 	ANKI_TRACE_START_EVENT(SCENE_VISIBILITY_TEST);
 	ANKI_ASSERT(testedFrc.anyVisibilityTestEnabled());
@@ -203,8 +204,9 @@ void VisibilityTestTask::test(FrustumComponent& testedFrc,
 	U nodesCount = sectors.getVisibleNodesCount();
 	choseStartEnd(threadId, threadsCount, nodesCount, start, end);
 
-	Error err = sectors.iterateVisibleSceneNodes(
-		start, end, [&](SceneNode& node) -> Error
+	Error err = sectors.iterateVisibleSceneNodes(start,
+		end,
+		[&](SceneNode& node) -> Error
 #endif
 	{
 		// Skip if it is the same
@@ -271,22 +273,21 @@ void VisibilityTestTask::test(FrustumComponent& testedFrc,
 		U spIdx = 0;
 		U count = 0;
 		Error err = node.iterateComponentsOfType<SpatialComponent>(
-			[&](SpatialComponent& sp)
-		{
-			if(testedFrc.insideFrustum(sp))
-			{
-				// Inside
-				ANKI_ASSERT(spIdx < MAX_U8);
-				sps[count++] = SpatialTemp{&sp, static_cast<U8>(spIdx),
-					sp.getSpatialOrigin()};
+			[&](SpatialComponent& sp) {
+				if(testedFrc.insideFrustum(sp))
+				{
+					// Inside
+					ANKI_ASSERT(spIdx < MAX_U8);
+					sps[count++] = SpatialTemp{
+						&sp, static_cast<U8>(spIdx), sp.getSpatialOrigin()};
 
-				sp.setVisibleByCamera(true);
-			}
+					sp.setVisibleByCamera(true);
+				}
 
-			++spIdx;
+				++spIdx;
 
-			return ErrorCode::NONE;
-		});
+				return ErrorCode::NONE;
+			});
 		(void)err;
 
 		if(ANKI_UNLIKELY(count == 0))
@@ -296,17 +297,17 @@ void VisibilityTestTask::test(FrustumComponent& testedFrc,
 
 		// Sort sub-spatials
 		Vec4 origin = testedFrc.getFrustumOrigin();
-		std::sort(sps.begin(), sps.begin() + count,
-			[origin](const SpatialTemp& a, const SpatialTemp& b) -> Bool
-		{
-			const Vec4& spa = a.m_origin;
-			const Vec4& spb = b.m_origin;
+		std::sort(sps.begin(),
+			sps.begin() + count,
+			[origin](const SpatialTemp& a, const SpatialTemp& b) -> Bool {
+				const Vec4& spa = a.m_origin;
+				const Vec4& spb = b.m_origin;
 
-			F32 dist0 = origin.getDistanceSquared(spa);
-			F32 dist1 = origin.getDistanceSquared(spb);
+				F32 dist0 = origin.getDistanceSquared(spa);
+				F32 dist1 = origin.getDistanceSquared(spb);
 
-			return dist0 < dist1;
-		});
+				return dist0 < dist1;
+			});
 
 		// Update the visibleNode
 		VisibleNode visibleNode;
@@ -327,8 +328,8 @@ void VisibilityTestTask::test(FrustumComponent& testedFrc,
 
 		if(rc)
 		{
-			if(wantsRenderComponents ||
-				(wantsShadowCasters && rc->getCastsShadow()))
+			if(wantsRenderComponents
+				|| (wantsShadowCasters && rc->getCastsShadow()))
 			{
 				visible->moveBackRenderable(alloc, visibleNode);
 
@@ -361,34 +362,34 @@ void VisibilityTestTask::test(FrustumComponent& testedFrc,
 
 		// Add more frustums to the list
 		err = node.iterateComponentsOfType<FrustumComponent>(
-			[&](FrustumComponent& frc)
-		{
-			// Check enabled and make sure that the results are null (this can
-			// happen on multiple on circular viewing)
-			if(frc.anyVisibilityTestEnabled()
-				&& !frc.hasVisibilityTestResults())
-			{
-				LockGuard<SpinLock> l(m_shared->m_lock);
-
-				// Check if already in the list
-				Bool alreadyThere = false;
-				for(const FrustumComponent* x : m_shared->m_frustumsList)
+			[&](FrustumComponent& frc) {
+				// Check enabled and make sure that the results are null (this
+				// can
+				// happen on multiple on circular viewing)
+				if(frc.anyVisibilityTestEnabled()
+					&& !frc.hasVisibilityTestResults())
 				{
-					if(x == &frc)
+					LockGuard<SpinLock> l(m_shared->m_lock);
+
+					// Check if already in the list
+					Bool alreadyThere = false;
+					for(const FrustumComponent* x : m_shared->m_frustumsList)
 					{
-						alreadyThere = true;
-						break;
+						if(x == &frc)
+						{
+							alreadyThere = true;
+							break;
+						}
+					}
+
+					if(!alreadyThere)
+					{
+						m_shared->m_frustumsList.pushBack(alloc, &frc);
 					}
 				}
 
-				if(!alreadyThere)
-				{
-					m_shared->m_frustumsList.pushBack(alloc, &frc);
-				}
-			}
-
-			return ErrorCode::NONE;
-		});
+				return ErrorCode::NONE;
+			});
 		(void)err;
 
 		return ErrorCode::NONE;
@@ -410,8 +411,7 @@ void VisibilityTestTask::test(FrustumComponent& testedFrc,
 
 //==============================================================================
 void VisibilityTestTask::combineTestResults(
-	FrustumComponent& frc,
-	PtrSize threadsCount)
+	FrustumComponent& frc, PtrSize threadsCount)
 {
 	auto alloc = m_shared->m_scene->getFrameAllocator();
 
@@ -433,11 +433,12 @@ void VisibilityTestTask::combineTestResults(
 
 	// Sort some of the arrays
 	DistanceSortFunctor comp;
-	std::sort(visible->getRenderablesBegin(), visible->getRenderablesEnd(),
-		comp);
+	std::sort(
+		visible->getRenderablesBegin(), visible->getRenderablesEnd(), comp);
 
 	std::sort(visible->getReflectionProbesBegin(),
-		visible->getReflectionProbesEnd(), comp);
+		visible->getReflectionProbesEnd(),
+		comp);
 }
 
 //==============================================================================
@@ -445,8 +446,7 @@ void VisibilityTestTask::combineTestResults(
 //==============================================================================
 
 //==============================================================================
-void VisibilityTestResults::create(
-	SceneFrameAllocator<U8> alloc,
+void VisibilityTestResults::create(SceneFrameAllocator<U8> alloc,
 	U32 renderablesReservedSize,
 	U32 lightsReservedSize,
 	U32 lensFlaresReservedSize,
@@ -455,23 +455,22 @@ void VisibilityTestResults::create(
 	m_groups[RENDERABLES].m_nodes.create(alloc, renderablesReservedSize);
 	m_groups[LIGHTS].m_nodes.create(alloc, lightsReservedSize);
 	m_groups[FLARES].m_nodes.create(alloc, lensFlaresReservedSize);
-	m_groups[REFLECTION_PROBES].m_nodes.create(alloc,
-		reflectionProbesReservedSize);
-	m_groups[REFLECTION_PROXIES].m_nodes.create(alloc,
-		reflectionProbesReservedSize);
+	m_groups[REFLECTION_PROBES].m_nodes.create(
+		alloc, reflectionProbesReservedSize);
+	m_groups[REFLECTION_PROXIES].m_nodes.create(
+		alloc, reflectionProbesReservedSize);
 }
 
 //==============================================================================
-void VisibilityTestResults::moveBack(SceneFrameAllocator<U8> alloc,
-	GroupType type, VisibleNode& x)
+void VisibilityTestResults::moveBack(
+	SceneFrameAllocator<U8> alloc, GroupType type, VisibleNode& x)
 {
 	Group& group = m_groups[type];
 	if(group.m_count + 1 > group.m_nodes.getSize())
 	{
 		// Need to grow
-		U newSize = (group.m_nodes.getSize() != 0)
-			? group.m_nodes.getSize() * 2
-			: 2;
+		U newSize =
+			(group.m_nodes.getSize() != 0) ? group.m_nodes.getSize() * 2 : 2;
 		group.m_nodes.resize(alloc, newSize);
 	}
 
@@ -479,8 +478,8 @@ void VisibilityTestResults::moveBack(SceneFrameAllocator<U8> alloc,
 }
 
 //==============================================================================
-void VisibilityTestResults::combineWith(SceneFrameAllocator<U8> alloc,
-	SArray<VisibilityTestResults*>& results)
+void VisibilityTestResults::combineWith(
+	SceneFrameAllocator<U8> alloc, SArray<VisibilityTestResults*>& results)
 {
 	ANKI_ASSERT(results.getSize() > 0);
 

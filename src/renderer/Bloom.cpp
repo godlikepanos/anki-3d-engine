@@ -10,7 +10,8 @@
 #include <anki/renderer/Tm.h>
 #include <anki/misc/ConfigSet.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 const PixelFormat Bloom::RT_PIXEL_FORMAT(
@@ -18,14 +19,15 @@ const PixelFormat Bloom::RT_PIXEL_FORMAT(
 
 //==============================================================================
 Bloom::~Bloom()
-{}
+{
+}
 
 //==============================================================================
 Error Bloom::initFb(FramebufferPtr& fb, TexturePtr& rt)
 {
 	// Set to bilinear because the blurring techniques take advantage of that
-	m_r->createRenderTarget(m_width, m_height, RT_PIXEL_FORMAT,
-		1, SamplingFilter::LINEAR, 1, rt);
+	m_r->createRenderTarget(
+		m_width, m_height, RT_PIXEL_FORMAT, 1, SamplingFilter::LINEAR, 1, rt);
 
 	// Create FB
 	FramebufferInitializer fbInit;
@@ -48,8 +50,7 @@ Error Bloom::initInternal(const ConfigSet& config)
 		return ErrorCode::NONE;
 	}
 
-	const F32 renderingQuality =
-		config.getNumber("pps.bloom.renderingQuality");
+	const F32 renderingQuality = config.getNumber("pps.bloom.renderingQuality");
 
 	m_width = renderingQuality * F32(m_r->getWidth());
 	alignRoundDown(16, m_width);
@@ -80,9 +81,8 @@ Error Bloom::initInternal(const ConfigSet& config)
 	cmdb->flush();
 
 	StringAuto pps(getAllocator());
-	pps.sprintf(
-		"#define ANKI_RENDERER_WIDTH %u\n"
-		"#define ANKI_RENDERER_HEIGHT %u\n",
+	pps.sprintf("#define ANKI_RENDERER_WIDTH %u\n"
+				"#define ANKI_RENDERER_HEIGHT %u\n",
 		m_r->getWidth(),
 		m_r->getHeight());
 
@@ -96,31 +96,29 @@ Error Bloom::initInternal(const ConfigSet& config)
 		"shaders/VariableSamplingBlurGeneric.frag.glsl";
 
 	pps.destroy(getAllocator());
-	pps.sprintf(
-		"#define HPASS\n"
-		"#define COL_RGB\n"
-		"#define BLURRING_DIST float(1.1)\n"
-		"#define IMG_DIMENSION %u\n"
-		"#define SAMPLES 17\n",
+	pps.sprintf("#define HPASS\n"
+				"#define COL_RGB\n"
+				"#define BLURRING_DIST float(1.1)\n"
+				"#define IMG_DIMENSION %u\n"
+				"#define SAMPLES 17\n",
 		m_height);
 
-	ANKI_CHECK(getResourceManager().loadResourceToCache(m_hblurFrag,
-		SHADER_FILENAME, pps.toCString(), "r_"));
+	ANKI_CHECK(getResourceManager().loadResourceToCache(
+		m_hblurFrag, SHADER_FILENAME, pps.toCString(), "r_"));
 
 	m_r->createDrawQuadPipeline(
 		m_hblurFrag->getGrShader(), colorState, m_hblurPpline);
 
 	pps.destroy(getAllocator());
-	pps.sprintf(
-		"#define VPASS\n"
-		"#define COL_RGB\n"
-		"#define BLURRING_DIST float(1.0)\n"
-		"#define IMG_DIMENSION %u\n"
-		"#define SAMPLES 15\n",
+	pps.sprintf("#define VPASS\n"
+				"#define COL_RGB\n"
+				"#define BLURRING_DIST float(1.0)\n"
+				"#define IMG_DIMENSION %u\n"
+				"#define SAMPLES 15\n",
 		m_width);
 
-	ANKI_CHECK(getResourceManager().loadResourceToCache(m_vblurFrag,
-		SHADER_FILENAME, pps.toCString(), "r_"));
+	ANKI_CHECK(getResourceManager().loadResourceToCache(
+		m_vblurFrag, SHADER_FILENAME, pps.toCString(), "r_"));
 
 	m_r->createDrawQuadPipeline(
 		m_vblurFrag->getGrShader(), colorState, m_vblurPpline);
@@ -167,7 +165,7 @@ void Bloom::run(CommandBufferPtr& cmdb)
 	ANKI_ASSERT(m_enabled);
 
 	// For the passes it should be NEAREST_BASE
-	//vblurFai.setFiltering(Texture::TFrustumType::NEAREST_BASE);
+	// vblurFai.setFiltering(Texture::TFrustumType::NEAREST_BASE);
 
 	// pass 0
 	cmdb->bindFramebuffer(m_vblurFb);

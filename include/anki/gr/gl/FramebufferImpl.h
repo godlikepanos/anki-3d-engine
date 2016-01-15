@@ -8,18 +8,20 @@
 #include <anki/gr/gl/GlObject.h>
 #include <anki/gr/Framebuffer.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup opengl
 /// @{
 
 /// Framebuffer implementation.
-class FramebufferImpl: public GlObject
+class FramebufferImpl : public GlObject
 {
 public:
 	FramebufferImpl(GrManager* manager)
 		: GlObject(manager)
-	{}
+	{
+	}
 
 	~FramebufferImpl()
 	{
@@ -42,8 +44,8 @@ private:
 	Bool8 m_bindDefault = false;
 
 	/// Attach a texture
-	static void attachTextureInternal(GLenum attachment, const TextureImpl& tex,
-		const U32 layer);
+	static void attachTextureInternal(
+		GLenum attachment, const TextureImpl& tex, const U32 layer);
 
 	/// Create the FBO
 	ANKI_USE_RESULT Error createFbo(
@@ -53,4 +55,3 @@ private:
 /// @}
 
 } // end namespace anki
-

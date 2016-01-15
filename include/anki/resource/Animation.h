@@ -9,7 +9,8 @@
 #include <anki/Math.h>
 #include <anki/util/String.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class XmlElement;
@@ -63,7 +64,7 @@ public:
 };
 
 /// Animation consists of keyframe data.
-class Animation: public ResourceObject
+class Animation : public ResourceObject
 {
 public:
 	Animation(ResourceManager* manager);
@@ -97,8 +98,11 @@ public:
 	}
 
 	/// Get the interpolated data
-	void interpolate(U channelIndex, F32 time,
-		Vec3& position, Quat& rotation, F32& scale) const;
+	void interpolate(U channelIndex,
+		F32 time,
+		Vec3& position,
+		Quat& rotation,
+		F32& scale) const;
 
 private:
 	DArray<AnimationChannel> m_channels;
@@ -109,4 +113,3 @@ private:
 /// @}
 
 } // end namespace anki
-

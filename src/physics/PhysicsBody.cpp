@@ -7,12 +7,14 @@
 #include <anki/physics/PhysicsWorld.h>
 #include <anki/physics/PhysicsCollisionShape.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 PhysicsBody::PhysicsBody(PhysicsWorld* world)
 	: PhysicsObject(Type::BODY, world)
-{}
+{
+}
 
 //==============================================================================
 PhysicsBody::~PhysicsBody()
@@ -34,7 +36,8 @@ PhysicsBody::~PhysicsBody()
 //==============================================================================
 Error PhysicsBody::create(const Initializer& init)
 {
-	//I collisionType = NewtonCollisionGetType(init.m_shape->_getNewtonShape());
+	// I collisionType =
+	// NewtonCollisionGetType(init.m_shape->_getNewtonShape());
 
 	// Create
 	Mat4 trf = toNewton(Mat4(init.m_startTrf));
@@ -61,7 +64,8 @@ Error PhysicsBody::create(const Initializer& init)
 	else
 	{
 		m_body = NewtonCreateDynamicBody(m_world->_getNewtonWorld(),
-			init.m_shape->_getNewtonShape(), &trf(0, 0));
+			init.m_shape->_getNewtonShape(),
+			&trf(0, 0));
 	}
 
 	if(!m_body)
@@ -104,9 +108,7 @@ void PhysicsBody::setTransform(const Transform& trf)
 
 //==============================================================================
 void PhysicsBody::onTransformCallback(
-	const NewtonBody* const body,
-	const dFloat* const matrix,
-	int threadIndex)
+	const NewtonBody* const body, const dFloat* const matrix, int threadIndex)
 {
 	ANKI_ASSERT(body);
 	ANKI_ASSERT(matrix);
@@ -125,9 +127,7 @@ void PhysicsBody::onTransformCallback(
 
 //==============================================================================
 void PhysicsBody::applyGravityForce(
-	const NewtonBody* body,
-	dFloat timestep,
-	int threadIndex)
+	const NewtonBody* body, dFloat timestep, int threadIndex)
 {
 	dFloat Ixx;
 	dFloat Iyy;

@@ -5,12 +5,14 @@
 
 #include <anki/resource/GenericResource.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 GenericResource::GenericResource(ResourceManager* manager)
 	: ResourceObject(manager)
-{}
+{
+}
 
 //==============================================================================
 GenericResource::~GenericResource()
@@ -32,4 +34,3 @@ Error GenericResource::load(const ResourceFilename& filename)
 }
 
 } // end namespace anki
-

@@ -8,13 +8,14 @@
 #include <anki/renderer/RenderingPass.h>
 #include <anki/resource/TextureResource.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup renderer
 /// @{
 
 /// Post-processing stage.
-class Pps: public RenderingPass
+class Pps : public RenderingPass
 {
 public:
 	const Bloom& getBloom() const
@@ -100,4 +101,3 @@ private:
 /// @}
 
 } // end namespace anki
-

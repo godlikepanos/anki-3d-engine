@@ -8,7 +8,8 @@
 #include <anki/util/Array.h>
 #include <anki/util/StdTypes.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // NativeWindowImpl                                                            =
@@ -24,10 +25,10 @@ void NativeWindowImpl::create(NativeWindowInitializer& init)
 	{
 		throw ANKI_EXCEPTION("malloc() failed");
 	}
-	
+
 	fbwin->width = init.width;
 	fbwin->height = init.height;
-	
+
 	// EGL init
 	//
 	display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
@@ -83,8 +84,9 @@ void NativeWindowImpl::create(NativeWindowInitializer& init)
 	attribs[attr++] = EGL_NONE;
 
 	EGLint configsCount;
-	if(eglChooseConfig(display, &attribs[0], &configs[0], maxConfigs, 
-		&configsCount) == EGL_FALSE)
+	if(eglChooseConfig(
+		   display, &attribs[0], &configs[0], maxConfigs, &configsCount)
+		== EGL_FALSE)
 	{
 		throw ANKI_EXCEPTION("Failed to query required EGL configs");
 	}
@@ -100,22 +102,22 @@ void NativeWindowImpl::create(NativeWindowInitializer& init)
 		EGLint value;
 		EGLConfig config = configs[i];
 
-		// Use this to explicitly check that the EGL config has the 
+		// Use this to explicitly check that the EGL config has the
 		// expected color depths
 		eglGetConfigAttrib(display, config, EGL_RED_SIZE, &value);
-		if(value != (EGLint)init.rgbaBits[0]) 
+		if(value != (EGLint)init.rgbaBits[0])
 		{
 			continue;
 		}
 
 		eglGetConfigAttrib(display, config, EGL_GREEN_SIZE, &value);
-		if(value != (EGLint)init.rgbaBits[1]) 
+		if(value != (EGLint)init.rgbaBits[1])
 		{
 			continue;
 		}
 
 		eglGetConfigAttrib(display, config, EGL_BLUE_SIZE, &value);
-	    if(value != (EGLint)init.rgbaBits[2])
+		if(value != (EGLint)init.rgbaBits[2])
 		{
 			continue;
 		}
@@ -156,8 +158,8 @@ void NativeWindowImpl::create(NativeWindowInitializer& init)
 
 	// Surface
 	//
-	surface = eglCreateWindowSurface(display, config_, 
-		static_cast<EGLNativeWindowType>(fbwin), NULL);
+	surface = eglCreateWindowSurface(
+		display, config_, static_cast<EGLNativeWindowType>(fbwin), NULL);
 
 	if(surface == EGL_NO_SURFACE)
 	{
@@ -168,8 +170,7 @@ void NativeWindowImpl::create(NativeWindowInitializer& init)
 	//
 	EGLint ctxAttribs[] = {EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE};
 
-	context = eglCreateContext(display, config_, EGL_NO_CONTEXT, 
-		ctxAttribs);
+	context = eglCreateContext(display, config_, EGL_NO_CONTEXT, ctxAttribs);
 
 	if(context == EGL_NO_CONTEXT)
 	{
@@ -188,14 +189,14 @@ void NativeWindowImpl::destroy()
 	// XXX
 }
 
-
 //==============================================================================
 // NativeWindow                                                                =
 //==============================================================================
 
 //==============================================================================
 NativeWindow::~NativeWindow()
-{}
+{
+}
 
 //==============================================================================
 void NativeWindow::create(NativeWindowInitializer& initializer)

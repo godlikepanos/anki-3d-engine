@@ -14,7 +14,8 @@
 #include <anki/collision/GjkEpa.h>
 #include <anki/util/Rtti.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // Misc                                                                        =
@@ -66,7 +67,7 @@ Bool test(const Aabb& aabb, const LineSegment& ls)
 		if(isZero(ls.getDirection()[i]))
 		{
 			// segment passes by box
-			if(ls.getOrigin()[i] < aabb.getMin()[i] 
+			if(ls.getOrigin()[i] < aabb.getMin()[i]
 				|| ls.getOrigin()[i] > aabb.getMax()[i])
 			{
 				return false;
@@ -75,10 +76,10 @@ Bool test(const Aabb& aabb, const LineSegment& ls)
 		else
 		{
 			// compute intersection parameters and sort
-			F32 s = (aabb.getMin()[i] - ls.getOrigin()[i]) 
-				/ ls.getDirection()[i];
-			F32 t = (aabb.getMax()[i] - ls.getOrigin()[i]) 
-				/ ls.getDirection()[i];
+			F32 s =
+				(aabb.getMin()[i] - ls.getOrigin()[i]) / ls.getDirection()[i];
+			F32 t =
+				(aabb.getMax()[i] - ls.getOrigin()[i]) / ls.getDirection()[i];
 			if(s > t)
 			{
 				F32 temp = s;
@@ -281,8 +282,7 @@ static Bool tcx(const CollisionShape& a, const CollisionShape& b)
 	const CompoundShape& c = dcast<const CompoundShape&>(a);
 
 	// Use the error to stop the loop
-	Error err = c.iterateShapes([&](const CollisionShape& cs)
-	{
+	Error err = c.iterateShapes([&](const CollisionShape& cs) {
 		if(testCollisionShapes(cs, b))
 		{
 			inside = true;
@@ -302,10 +302,11 @@ static Bool txc(const CollisionShape& a, const CollisionShape& b)
 	return tcx(b, a);
 }
 
-using Callback = Bool(*)(const CollisionShape& a, const CollisionShape& b);
+using Callback = Bool (*)(const CollisionShape& a, const CollisionShape& b);
 
 static const U COUNT = U(CollisionShape::Type::COUNT);
 
+// clang-format off
 static const Callback matrix[COUNT][COUNT] = {
 /*          P                     LS                      Comp  AABB                  S                        OBB                   CH */
 /* P    */ {nullptr,              txp<LineSegment>,       tcx,  txp<Aabb>,            txp<Sphere>,             txp<Obb>,             txp<ConvexHullShape>},
@@ -315,6 +316,7 @@ static const Callback matrix[COUNT][COUNT] = {
 /* S    */ {tpx<Sphere>,          t<LineSegment, Sphere>, tcx,  t<Aabb, Sphere>,      t<Sphere, Sphere>,       gjk,                  gjk                 },
 /* OBB  */ {tpx<Obb>,             t<LineSegment, Obb>,    tcx,  gjk,                  gjk,                     gjk,                  gjk                 },
 /* CH   */ {tpx<ConvexHullShape>, nullptr,                tcx,  gjk,                  gjk,                     gjk,                  gjk                 }};
+// clang-format on
 
 Bool testCollisionShapes(const CollisionShape& a, const CollisionShape& b)
 {
@@ -328,4 +330,3 @@ Bool testCollisionShapes(const CollisionShape& a, const CollisionShape& b)
 }
 
 } // end namespace anki
-

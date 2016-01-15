@@ -9,19 +9,21 @@
 #include <anki/scene/SceneComponent.h>
 #include <anki/physics/PhysicsBody.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup scene
 /// @{
 
 /// Rigid body component.
-class BodyComponent: public SceneComponent
+class BodyComponent : public SceneComponent
 {
 public:
 	BodyComponent(SceneNode* node, PhysicsBodyPtr body)
 		: SceneComponent(Type::BODY, node)
 		, m_body(body)
-	{}
+	{
+	}
 
 	~BodyComponent();
 
@@ -58,4 +60,3 @@ private:
 /// @}
 
 } // end namespace anki
-

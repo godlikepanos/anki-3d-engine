@@ -7,7 +7,8 @@
 #include <anki/collision/LineSegment.h>
 #include <anki/collision/Aabb.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // Frustum                                                                     =
@@ -201,8 +202,8 @@ void PerspectiveFrustum::recalculate()
 }
 
 //==============================================================================
-void PerspectiveFrustum::calculateProjectionMatrix(F32 fovX, F32 fovY, F32 near,
-	F32 far, Mat4& proj)
+void PerspectiveFrustum::calculateProjectionMatrix(
+	F32 fovX, F32 fovY, F32 near, F32 far, Mat4& proj)
 {
 	ANKI_ASSERT(fovX > 0.0 && fovY > 0.0 && near > 0.0 && far > 0.0);
 	F32 g = near - far;
@@ -241,7 +242,7 @@ Mat4 PerspectiveFrustum::calculateProjectionMatrix() const
 
 //==============================================================================
 OrthographicFrustum::OrthographicFrustum()
-:	Frustum(Type::ORTHOGRAPHIC)
+	: Frustum(Type::ORTHOGRAPHIC)
 {
 	addShape(&m_obbW);
 }
@@ -264,7 +265,9 @@ OrthographicFrustum& OrthographicFrustum::operator=(
 Mat4 OrthographicFrustum::calculateProjectionMatrix() const
 {
 	ANKI_ASSERT(m_right != 0.0 && m_left != 0.0 && m_top != 0.0
-		&& m_bottom != 0.0 && m_near != 0.0 && m_far != 0.0);
+		&& m_bottom != 0.0
+		&& m_near != 0.0
+		&& m_far != 0.0);
 	F32 difx = m_right - m_left;
 	F32 dify = m_top - m_bottom;
 	F32 difz = m_far - m_near;
@@ -297,19 +300,13 @@ Mat4 OrthographicFrustum::calculateProjectionMatrix() const
 void OrthographicFrustum::recalculate()
 {
 	// Planes
-	m_planesL[(U)PlaneType::LEFT] =
-		Plane(Vec4(1.0, 0.0, 0.0, 0.0), m_left);
-	m_planesL[(U)PlaneType::RIGHT] =
-		Plane(Vec4(-1.0, 0.0, 0.0, 0.0), -m_right);
+	m_planesL[(U)PlaneType::LEFT] = Plane(Vec4(1.0, 0.0, 0.0, 0.0), m_left);
+	m_planesL[(U)PlaneType::RIGHT] = Plane(Vec4(-1.0, 0.0, 0.0, 0.0), -m_right);
 
-	m_planesL[(U)PlaneType::NEAR] =
-		Plane(Vec4(0.0, 0.0, -1.0, 0.0), m_near);
-	m_planesL[(U)PlaneType::FAR] =
-		Plane(Vec4(0.0, 0.0, 1.0, 0.0), -m_far);
-	m_planesL[(U)PlaneType::TOP] =
-		Plane(Vec4(0.0, -1.0, 0.0, 0.0), -m_top);
-	m_planesL[(U)PlaneType::BOTTOM] =
-		Plane(Vec4(0.0, 1.0, 0.0, 0.0), m_bottom);
+	m_planesL[(U)PlaneType::NEAR] = Plane(Vec4(0.0, 0.0, -1.0, 0.0), m_near);
+	m_planesL[(U)PlaneType::FAR] = Plane(Vec4(0.0, 0.0, 1.0, 0.0), -m_far);
+	m_planesL[(U)PlaneType::TOP] = Plane(Vec4(0.0, -1.0, 0.0, 0.0), -m_top);
+	m_planesL[(U)PlaneType::BOTTOM] = Plane(Vec4(0.0, 1.0, 0.0, 0.0), m_bottom);
 
 	// OBB
 	Vec4 c((m_right + m_left) * 0.5,

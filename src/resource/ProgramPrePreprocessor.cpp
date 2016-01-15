@@ -12,13 +12,13 @@
 #include <iomanip>
 #include <cstring>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // Keep the strings in that order so that the start pragmas will match to the
 // ShaderType enums
-static Array<const char*, 7> commands = {{
-	"#pragma anki type vert",
+static Array<const char*, 7> commands = {{"#pragma anki type vert",
 	"#pragma anki type tesc",
 	"#pragma anki type tese",
 	"#pragma anki type geom",
@@ -62,7 +62,7 @@ Error ProgramPrePreprocessor::parseFileForPragmas(
 	if(depth > MAX_DEPTH)
 	{
 		ANKI_LOGE("The include depth is too high. "
-			"Probably circular includance");
+				  "Probably circular includance");
 		return ErrorCode::USER_DATA;
 	}
 
@@ -102,8 +102,7 @@ Error ProgramPrePreprocessor::parseFileForPragmas(
 				{
 					StringAuto filen(m_alloc);
 
-					filen.create(
-						line.begin() + std::strlen(commands[6]),
+					filen.create(line.begin() + std::strlen(commands[6]),
 						line.end() - 1);
 
 					StringAuto filenFixed(m_alloc);

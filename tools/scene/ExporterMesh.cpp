@@ -7,7 +7,7 @@
 #include <cmath>
 
 //==============================================================================
-enum class ComponentFormat: uint32_t
+enum class ComponentFormat : uint32_t
 {
 	NONE,
 
@@ -31,7 +31,7 @@ enum class ComponentFormat: uint32_t
 	COUNT
 };
 
-enum class FormatTransform: uint32_t
+enum class FormatTransform : uint32_t
 {
 	NONE,
 
@@ -138,18 +138,18 @@ static uint16_t toF16(float f)
 	}
 	else
 	{
-		if(m &  0x00001000)
+		if(m & 0x00001000)
 		{
 			m += 0x00002000;
 
 			if(m & 0x00800000)
 			{
-				m =  0;
+				m = 0;
 				e += 1;
 			}
 		}
 
-		if (e > 30)
+		if(e > 30)
 		{
 			assert(0 && "Overflow");
 			out = s | 0x7c00;
@@ -168,10 +168,10 @@ union SignedR10G10B10A10
 {
 	struct
 	{
-		int m_x: 10;
-		int m_y: 10;
-		int m_z: 10;
-		int m_w: 2;
+		int m_x : 10;
+		int m_y : 10;
+		int m_z : 10;
+		int m_w : 2;
 	} m_unpacked;
 	uint32_t m_packed;
 };
@@ -189,7 +189,8 @@ uint32_t toR10G10B10A2Sint(float r, float g, float b, float a)
 }
 
 //==============================================================================
-void Exporter::exportMesh(const aiMesh& mesh, const aiMatrix4x4* transform,
+void Exporter::exportMesh(const aiMesh& mesh,
+	const aiMatrix4x4* transform,
 	unsigned vertCountPerFace) const
 {
 	std::string name = mesh.mName.C_Str();
@@ -279,8 +280,9 @@ void Exporter::exportMesh(const aiMesh& mesh, const aiMatrix4x4* transform,
 		if(face.mNumIndices != vertCountPerFace)
 		{
 			ERROR("For some reason assimp returned wrong number of verts "
-				"for a face (face.mNumIndices=%d). Probably degenerates in "
-				"input file", face.mNumIndices);
+				  "for a face (face.mNumIndices=%d). Probably degenerates in "
+				  "input file",
+				face.mNumIndices);
 		}
 
 		for(unsigned j = 0; j < vertCountPerFace; j++)
@@ -322,10 +324,7 @@ void Exporter::exportMesh(const aiMesh& mesh, const aiMatrix4x4* transform,
 		if(m_flipyz)
 		{
 			static const aiMatrix4x4 toLefthanded(
-				1, 0, 0, 0,
-				0, 0, 1, 0,
-				0, -1, 0, 0,
-				0, 0, 0, 1);
+				1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1);
 
 			pos = toLefthanded * pos;
 			n = toLefthanded * n;

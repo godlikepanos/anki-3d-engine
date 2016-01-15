@@ -16,4 +16,3 @@
 /// @ingroup resource
 
 #include <anki/resource/ResourceManager.h>
-

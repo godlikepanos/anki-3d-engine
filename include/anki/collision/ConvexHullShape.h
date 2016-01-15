@@ -9,13 +9,14 @@
 #include <anki/Math.h>
 #include <anki/util/NonCopyable.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup collision
 /// @{
 
 /// Convex hull collision shape
-class ConvexHullShape: public NonCopyable, public ConvexShape
+class ConvexHullShape : public NonCopyable, public ConvexShape
 {
 public:
 	using Base = ConvexShape;
@@ -27,7 +28,8 @@ public:
 
 	ConvexHullShape()
 		: Base(Type::CONVEX_HULL)
-	{}
+	{
+	}
 
 	ConvexHullShape(ConvexHullShape&& b)
 		: Base(Type::CONVEX_HULL)
@@ -121,4 +123,3 @@ private:
 /// @}
 
 } // end namespace anki
-

@@ -7,18 +7,20 @@
 
 #include <anki/resource/ResourceObject.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup resource_private
 /// @{
 
 /// A dummy resource for the unit tests of the ResourceManager
-class DummyRsrc: public ResourceObject
+class DummyRsrc : public ResourceObject
 {
 public:
 	DummyRsrc(ResourceManager* manager)
 		: ResourceObject(manager)
-	{}
+	{
+	}
 
 	~DummyRsrc()
 	{
@@ -54,4 +56,3 @@ private:
 /// @}
 
 } // end namespace anki
-

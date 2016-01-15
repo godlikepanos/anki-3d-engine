@@ -10,7 +10,8 @@
 #include <anki/util/Functions.h>
 #include <anki/util/String.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class ConfigSet;
@@ -33,7 +34,8 @@ protected:
 	using Container = List<Type*>;
 
 	TypeResourceManager()
-	{}
+	{
+	}
 
 	~TypeResourceManager()
 	{
@@ -87,19 +89,18 @@ private:
 };
 
 /// Resource manager. It holds a few global variables
-class ResourceManager:
-	public TypeResourceManager<Animation>,
-	public TypeResourceManager<TextureResource>,
-	public TypeResourceManager<ShaderResource>,
-	public TypeResourceManager<Material>,
-	public TypeResourceManager<Mesh>,
-	public TypeResourceManager<Skeleton>,
-	public TypeResourceManager<ParticleEmitterResource>,
-	public TypeResourceManager<Model>,
-	public TypeResourceManager<Script>,
-	public TypeResourceManager<DummyRsrc>,
-	public TypeResourceManager<CollisionResource>,
-	public TypeResourceManager<GenericResource>
+class ResourceManager : public TypeResourceManager<Animation>,
+						public TypeResourceManager<TextureResource>,
+						public TypeResourceManager<ShaderResource>,
+						public TypeResourceManager<Material>,
+						public TypeResourceManager<Mesh>,
+						public TypeResourceManager<Skeleton>,
+						public TypeResourceManager<ParticleEmitterResource>,
+						public TypeResourceManager<Model>,
+						public TypeResourceManager<Script>,
+						public TypeResourceManager<DummyRsrc>,
+						public TypeResourceManager<CollisionResource>,
+						public TypeResourceManager<GenericResource>
 {
 	template<typename T>
 	friend class ResourcePtrDeleter;
@@ -241,4 +242,3 @@ private:
 } // end namespace anki
 
 #include <anki/resource/ResourceManager.inl.h>
-

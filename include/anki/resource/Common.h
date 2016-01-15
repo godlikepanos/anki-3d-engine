@@ -10,7 +10,8 @@
 #include <anki/util/String.h>
 #include <anki/util/Ptr.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class GrManager;
@@ -52,8 +53,8 @@ template<typename T>
 using ResourcePtr = IntrusivePtr<T, ResourcePtrDeleter<T>>;
 
 // NOTE: Add resources in 3 places
-#define ANKI_FORWARD(rsrc_, name_) \
-	class rsrc_; \
+#define ANKI_FORWARD(rsrc_, name_)                                             \
+	class rsrc_;                                                               \
 	using name_ = ResourcePtr<rsrc_>;
 
 ANKI_FORWARD(Animation, AnimationResourcePtr)
@@ -82,4 +83,3 @@ using ResourceFilename = CString;
 /// @}
 
 } // end namespace anki
-

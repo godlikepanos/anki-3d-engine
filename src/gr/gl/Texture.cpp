@@ -7,19 +7,22 @@
 #include <anki/gr/gl/TextureImpl.h>
 #include <anki/gr/gl/CommandBufferImpl.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 Texture::Texture(GrManager* manager)
 	: GrObject(manager)
-{}
+{
+}
 
 //==============================================================================
 Texture::~Texture()
-{}
+{
+}
 
 //==============================================================================
-class CreateTextureCommand final: public GlCommand
+class CreateTextureCommand final : public GlCommand
 {
 public:
 	IntrusivePtr<Texture> m_tex;
@@ -28,7 +31,8 @@ public:
 	CreateTextureCommand(Texture* tex, const TextureInitializer& init)
 		: m_tex(tex)
 		, m_init(init)
-	{}
+	{
+	}
 
 	Error operator()(GlState&)
 	{
@@ -36,8 +40,8 @@ public:
 
 		impl.create(m_init);
 
-		GlObject::State oldState = impl.setStateAtomically(
-			GlObject::State::CREATED);
+		GlObject::State oldState =
+			impl.setStateAtomically(GlObject::State::CREATED);
 		ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
 		(void)oldState;
 

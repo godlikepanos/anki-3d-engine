@@ -6,19 +6,20 @@
 #include <anki/event/Event.h>
 #include <anki/resource/Animation.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup event
 /// @{
 
 /// Event controled by animation resource
-class AnimationEvent: public Event
+class AnimationEvent : public Event
 {
 public:
 	AnimationEvent(EventManager* manager);
 
-	ANKI_USE_RESULT Error init(const AnimationResourcePtr& anim,
-		SceneNode* movableSceneNode);
+	ANKI_USE_RESULT Error init(
+		const AnimationResourcePtr& anim, SceneNode* movableSceneNode);
 
 	/// Implements Event::update
 	ANKI_USE_RESULT Error update(F32 prevUpdateTime, F32 crntTime) override;

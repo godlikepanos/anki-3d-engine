@@ -24,4 +24,3 @@
 #include <anki/gr/OcclusionQuery.h>
 #include <anki/gr/ResourceGroup.h>
 #include <anki/gr/GrManager.h>
-

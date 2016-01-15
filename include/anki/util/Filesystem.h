@@ -7,7 +7,8 @@
 
 #include <anki/util/String.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup util_file
 /// @{
@@ -17,9 +18,7 @@ Bool fileExists(const CString& filename);
 
 /// Get file extension.
 void getFileExtension(
-	const CString& filename,
-	GenericMemoryPoolAllocator<U8> alloc,
-	String& out);
+	const CString& filename, GenericMemoryPoolAllocator<U8> alloc, String& out);
 
 /// Return true if directory exists?
 Bool directoryExists(const CString& dir);
@@ -28,14 +27,12 @@ Bool directoryExists(const CString& dir);
 /// - 1st parameter: The file or directory name.
 /// - 2nd parameter: User data passed to walkDirectoryTree.
 /// - 3rd parameter: True if it's directory, false if it's regular file.
-using WalkDirectoryTreeCallback = Error(*)(const CString&, void*, Bool);
+using WalkDirectoryTreeCallback = Error (*)(const CString&, void*, Bool);
 
 /// Walk a directory and it's subdirectories. Will walk and list all
 /// directories and files of a directory.
 ANKI_USE_RESULT Error walkDirectoryTree(
-	const CString& dir,
-	void* userData,
-	WalkDirectoryTreeCallback callback);
+	const CString& dir, void* userData, WalkDirectoryTreeCallback callback);
 
 /// Equivalent to: rm -rf dir
 ANKI_USE_RESULT Error removeDirectory(const CString& dir);
@@ -52,4 +49,3 @@ ANKI_USE_RESULT Error getHomeDirectory(
 /// @}
 
 } // end namespace anki
-

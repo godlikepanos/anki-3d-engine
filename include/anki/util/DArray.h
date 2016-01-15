@@ -9,7 +9,8 @@
 #include <anki/util/NonCopyable.h>
 #include <anki/util/Functions.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup util_containers
 /// @{
@@ -18,7 +19,7 @@ namespace anki {
 /// that makes it compact. At the same time that requires manual destruction.
 /// Used in permanent classes.
 template<typename T>
-class DArray: public NonCopyable
+class DArray : public NonCopyable
 {
 public:
 	using Value = T;
@@ -30,7 +31,8 @@ public:
 	DArray()
 		: m_data(nullptr)
 		, m_size(0)
-	{}
+	{
+	}
 
 	/// Move.
 	DArray(DArray&& b)
@@ -41,8 +43,8 @@ public:
 
 	~DArray()
 	{
-		ANKI_ASSERT(m_data == nullptr && m_size == 0
-			&& "Requires manual destruction");
+		ANKI_ASSERT(
+			m_data == nullptr && m_size == 0 && "Requires manual destruction");
 	}
 
 	/// Move.
@@ -242,7 +244,7 @@ protected:
 /// holds the allocator in order to perform automatic destruction. Use it for
 /// temp operations and on transient classes.
 template<typename T>
-class DArrayAuto: public DArray<T>
+class DArrayAuto : public DArray<T>
 {
 public:
 	using Base = DArray<T>;
@@ -252,7 +254,8 @@ public:
 	DArrayAuto(TAllocator alloc)
 		: Base()
 		, m_alloc(alloc)
-	{}
+	{
+	}
 
 	/// Move.
 	DArrayAuto(DArrayAuto&& b)
@@ -303,7 +306,7 @@ private:
 
 /// Array with preallocated memory.
 template<typename T>
-class SArray: public DArray<T>
+class SArray : public DArray<T>
 {
 public:
 	using Base = DArray<T>;
@@ -311,7 +314,8 @@ public:
 
 	SArray()
 		: Base()
-	{}
+	{
+	}
 
 	SArray(T* mem, PtrSize size)
 		: Base()
@@ -359,4 +363,3 @@ private:
 /// @}
 
 } // end namespace anki
-

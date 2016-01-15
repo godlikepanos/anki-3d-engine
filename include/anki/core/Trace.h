@@ -14,7 +14,8 @@
 #include <anki/util/Logger.h>
 #include <anki/util/File.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup core
 /// @{
@@ -62,12 +63,13 @@ class TraceManager
 {
 public:
 	TraceManager()
-	{}
+	{
+	}
 
 	~TraceManager();
 
-	ANKI_USE_RESULT Error create(HeapAllocator<U8> alloc,
-		const CString& cacheDir);
+	ANKI_USE_RESULT Error create(
+		HeapAllocator<U8> alloc, const CString& cacheDir);
 
 	void startEvent();
 
@@ -119,31 +121,27 @@ using TraceManagerSingleton = Singleton<TraceManager>;
 
 #if ANKI_ENABLE_TRACE
 
-#	define ANKI_TRACE_START_EVENT(name_) \
-	TraceManagerSingleton::get().startEvent()
+#define ANKI_TRACE_START_EVENT(name_) TraceManagerSingleton::get().startEvent()
 
-#	define ANKI_TRACE_STOP_EVENT(name_) \
+#define ANKI_TRACE_STOP_EVENT(name_)                                           \
 	TraceManagerSingleton::get().stopEvent(TraceEventType::name_)
 
-#	define ANKI_TRACE_INC_COUNTER(name_, val_) \
-	TraceManagerSingleton::get().incCounter(TraceCounterType:: name_, val_)
+#define ANKI_TRACE_INC_COUNTER(name_, val_)                                    \
+	TraceManagerSingleton::get().incCounter(TraceCounterType::name_, val_)
 
-#	define ANKI_TRACE_START_FRAME() \
-	TraceManagerSingleton::get().startFrame()
+#define ANKI_TRACE_START_FRAME() TraceManagerSingleton::get().startFrame()
 
-#	define ANKI_TRACE_STOP_FRAME() \
-	TraceManagerSingleton::get().stopFrame()
+#define ANKI_TRACE_STOP_FRAME() TraceManagerSingleton::get().stopFrame()
 
 #else
 
-#	define ANKI_TRACE_START_EVENT(name_) ((void)0)
-#	define ANKI_TRACE_STOP_EVENT(name_) ((void)0)
-#	define ANKI_TRACE_INC_COUNTER(name_, val_) ((void)0)
-#	define ANKI_TRACE_START_FRAME() ((void)0)
-#	define ANKI_TRACE_STOP_FRAME() ((void)0)
+#define ANKI_TRACE_START_EVENT(name_) ((void)0)
+#define ANKI_TRACE_STOP_EVENT(name_) ((void)0)
+#define ANKI_TRACE_INC_COUNTER(name_, val_) ((void)0)
+#define ANKI_TRACE_START_FRAME() ((void)0)
+#define ANKI_TRACE_STOP_FRAME() ((void)0)
 
 #endif
 /// @}
 
 } // end namespace anki
-

@@ -7,23 +7,25 @@
 
 #include <anki/collision/CollisionShape.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup collision
 /// @{
 
 /// Abstact class for convex collision shapes
-class ConvexShape: public CollisionShape
+class ConvexShape : public CollisionShape
 {
 public:
 	using Base = CollisionShape;
 
 	ConvexShape(Type cid)
-	:	Base(cid)
-	{}
+		: Base(cid)
+	{
+	}
 
 	ConvexShape(const ConvexShape& b)
-	:	Base(b)
+		: Base(b)
 	{
 		operator=(b);
 	}
@@ -46,4 +48,3 @@ public:
 /// @}
 
 } // end namespace anki
-

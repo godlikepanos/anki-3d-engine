@@ -20,12 +20,14 @@
 #include <anki/util/Rtti.h>
 #include <anki/Ui.h> /// XXX
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 Dbg::Dbg(Renderer* r)
 	: RenderingPass(r)
-{}
+{
+}
 
 //==============================================================================
 Dbg::~Dbg()
@@ -89,12 +91,11 @@ Error Dbg::run(CommandBufferPtr& cmdb)
 	m_drawer->prepareDraw(cmdb);
 	m_drawer->setViewProjectionMatrix(camFr.getViewProjectionMatrix());
 	m_drawer->setModelMatrix(Mat4::getIdentity());
-	//m_drawer->drawGrid();
+	// m_drawer->drawGrid();
 
 	SceneGraph& scene = cam.getSceneGraph();
 
-	err = scene.iterateSceneNodes([&](SceneNode& node) -> Error
-	{
+	err = scene.iterateSceneNodes([&](SceneNode& node) -> Error {
 		SpatialComponent* sp = node.tryGetComponent<SpatialComponent>();
 
 		if(&cam.getComponent<SpatialComponent>() == sp)
@@ -162,8 +163,8 @@ Error Dbg::run(CommandBufferPtr& cmdb)
 		poly[1] = Vec3(2.5, 0.0, 0.0);
 
 		Mat4 trf(Vec4(147.392776, -12.132728, 16.607138, 1.0),
-			Mat3(Euler(toRad(45.0), toRad(0.0),
-			toRad(120.0))), 1.0);
+			Mat3(Euler(toRad(45.0), toRad(0.0), toRad(120.0))),
+			1.0);
 
 		Array<Vec3, 4> polyw;
 		polyw[0] = trf.transform(poly[0]);
@@ -171,7 +172,6 @@ Error Dbg::run(CommandBufferPtr& cmdb)
 
 		m_drawer->setModelMatrix(Mat4::getIdentity());
 		m_drawer->drawLine(polyw[0], polyw[1], Vec4(1.0));
-
 
 		Vec4 p0 = camFr.getViewMatrix() * polyw[0].xyz1();
 		p0.w() = 0.0;
@@ -184,12 +184,12 @@ Error Dbg::run(CommandBufferPtr& cmdb)
 		Vec4 a = camFr.getProjectionMatrix() * p0.xyz1();
 		a /= a.w();
 
-
 		Vec4 i;
 		if(r.z() > 0)
 		{
-			//Plane near(Vec4(0, 0, -1, 0), camFr.getFrustum().getNear() + 0.001);
-			//Bool in = near.intersectRay(p0, r * 100000.0, i);
+			// Plane near(Vec4(0, 0, -1, 0), camFr.getFrustum().getNear() +
+			// 0.001);
+			// Bool in = near.intersectRay(p0, r * 100000.0, i);
 			i.z() = -camFr.getFrustum().getNear();
 			F32 t = (i.z() - p0.z()) / r.z();
 			i.x() = p0.x() + t * r.x();
@@ -210,7 +210,8 @@ Error Dbg::run(CommandBufferPtr& cmdb)
 		Vec4 d = b / b.w();*/
 
 		m_drawer->setViewProjectionMatrix(Mat4::getIdentity());
-		m_drawer->drawLine(Vec3(a.xy(), 0.1), Vec3(i.xy(), 0.1), Vec4(1.0, 0, 0, 1));
+		m_drawer->drawLine(
+			Vec3(a.xy(), 0.1), Vec3(i.xy(), 0.1), Vec4(1.0, 0, 0, 1));
 	}
 #endif
 

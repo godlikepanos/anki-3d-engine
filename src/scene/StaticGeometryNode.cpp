@@ -7,14 +7,15 @@
 #include <anki/scene/SceneGraph.h>
 #include <anki/resource/ResourceManager.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // StaticGeometryRenderComponent                                               =
 //==============================================================================
 
 /// The implementation of static geometry node renderable component.
-class StaticGeometryRenderComponent: public RenderComponent
+class StaticGeometryRenderComponent : public RenderComponent
 {
 public:
 	StaticGeometryPatchNode* m_node;
@@ -22,7 +23,8 @@ public:
 	StaticGeometryRenderComponent(StaticGeometryPatchNode* node)
 		: RenderComponent(node, &node->m_modelPatch->getMaterial())
 		, m_node(node)
-	{}
+	{
+	}
 
 	Error buildRendering(RenderingBuildInfo& data) const override
 	{
@@ -37,11 +39,13 @@ public:
 //==============================================================================
 StaticGeometryPatchNode::StaticGeometryPatchNode(SceneGraph* scene)
 	: SceneNode(scene)
-{}
+{
+}
 
 //==============================================================================
 StaticGeometryPatchNode::~StaticGeometryPatchNode()
-{}
+{
+}
 
 //==============================================================================
 Error StaticGeometryPatchNode::create(
@@ -57,7 +61,7 @@ Error StaticGeometryPatchNode::create(
 	{
 		SpatialComponent* spatial =
 			getSceneAllocator().newInstance<SpatialComponent>(
-			this, &m_modelPatch->getBoundingShapeSub(i));
+				this, &m_modelPatch->getBoundingShapeSub(i));
 
 		addComponent(spatial, true);
 
@@ -83,10 +87,9 @@ Error StaticGeometryPatchNode::buildRendering(RenderingBuildInfo& data) const
 	ResourceGroupPtr grResources;
 	PipelinePtr ppline;
 
-	m_modelPatch->getRenderingDataSub(
-		data.m_key,
+	m_modelPatch->getRenderingDataSub(data.m_key,
 		SArray<U8>(const_cast<U8*>(data.m_subMeshIndicesArray),
-			data.m_subMeshIndicesCount),
+										  data.m_subMeshIndicesCount),
 		grResources,
 		ppline,
 		indicesCountArray,
@@ -97,13 +100,11 @@ Error StaticGeometryPatchNode::buildRendering(RenderingBuildInfo& data) const
 
 	if(drawCount == 1)
 	{
-		data.m_cmdb->bindResourceGroup(grResources, 0,
-			data.m_dynamicBufferInfo);
+		data.m_cmdb->bindResourceGroup(
+			grResources, 0, data.m_dynamicBufferInfo);
 
 		data.m_cmdb->drawElements(
-			indicesCountArray[0],
-			1,
-			indicesOffsetArray[0] / sizeof(U16));
+			indicesCountArray[0], 1, indicesOffsetArray[0] / sizeof(U16));
 	}
 	else if(drawCount == 0)
 	{
@@ -125,11 +126,13 @@ Error StaticGeometryPatchNode::buildRendering(RenderingBuildInfo& data) const
 //==============================================================================
 StaticGeometryNode::StaticGeometryNode(SceneGraph* scene)
 	: SceneNode(scene)
-{}
+{
+}
 
 //==============================================================================
 StaticGeometryNode::~StaticGeometryNode()
-{}
+{
+}
 
 //==============================================================================
 Error StaticGeometryNode::create(const CString& name, const CString& filename)

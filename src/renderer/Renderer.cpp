@@ -18,20 +18,22 @@
 #include <anki/renderer/Tiler.h>
 #include <anki/renderer/Refl.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 Renderer::Renderer()
 	: m_sceneDrawer(this)
-{}
+{
+}
 
 //==============================================================================
 Renderer::~Renderer()
-{}
+{
+}
 
 //==============================================================================
-Error Renderer::init(
-	ThreadPool* threadpool,
+Error Renderer::init(ThreadPool* threadpool,
 	ResourceManager* resources,
 	GrManager* gl,
 	HeapAllocator<U8> alloc,
@@ -68,7 +70,9 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_tileCountXY.y() = m_height / TILE_SIZE;
 	m_tileCount = m_tileCountXY.x() * m_tileCountXY.y();
 
-	m_clusterer.init(getAllocator(), m_tileCountXY.x(), m_tileCountXY.y(),
+	m_clusterer.init(getAllocator(),
+		m_tileCountXY.x(),
+		m_tileCountXY.y(),
 		config.getNumber("clusterSizeZ"));
 
 	m_tessellation = config.getNumber("tessellation");
@@ -132,21 +136,21 @@ Error Renderer::initInternal(const ConfigSet& config)
 }
 
 //==============================================================================
-Error Renderer::render(SceneNode& frustumableNode, U frustumIdx,
+Error Renderer::render(SceneNode& frustumableNode,
+	U frustumIdx,
 	Array<CommandBufferPtr, RENDERER_COMMAND_BUFFERS_COUNT>& cmdb)
 {
 	m_frc = nullptr;
 	Error err = frustumableNode.iterateComponentsOfType<FrustumComponent>(
-		[&](FrustumComponent& frc) -> Error
-	{
-		if(frustumIdx == 0)
-		{
-			m_frc = &frc;
-		}
+		[&](FrustumComponent& frc) -> Error {
+			if(frustumIdx == 0)
+			{
+				m_frc = &frc;
+			}
 
-		--frustumIdx;
-		return ErrorCode::NONE;
-	});
+			--frustumIdx;
+			return ErrorCode::NONE;
+		});
 	(void)err;
 	ANKI_ASSERT(m_frc && "Not enough frustum components");
 
@@ -204,8 +208,10 @@ Error Renderer::render(SceneNode& frustumableNode, U frustumIdx,
 }
 
 //==============================================================================
-Vec3 Renderer::unproject(const Vec3& windowCoords, const Mat4& modelViewMat,
-	const Mat4& projectionMat, const int view[4])
+Vec3 Renderer::unproject(const Vec3& windowCoords,
+	const Mat4& modelViewMat,
+	const Mat4& projectionMat,
+	const int view[4])
 {
 	Mat4 invPm = projectionMat * modelViewMat;
 	invPm.invert();
@@ -223,8 +229,13 @@ Vec3 Renderer::unproject(const Vec3& windowCoords, const Mat4& modelViewMat,
 }
 
 //==============================================================================
-void Renderer::createRenderTarget(U32 w, U32 h, const PixelFormat& format,
-	U32 samples, SamplingFilter filter, U mipsCount, TexturePtr& rt)
+void Renderer::createRenderTarget(U32 w,
+	U32 h,
+	const PixelFormat& format,
+	U32 samples,
+	SamplingFilter filter,
+	U mipsCount,
+	TexturePtr& rt)
 {
 	// Not very important but keep the resolution of render targets aligned to
 	// 16
@@ -260,8 +271,7 @@ void Renderer::createRenderTarget(U32 w, U32 h, const PixelFormat& format,
 
 //==============================================================================
 void Renderer::createDrawQuadPipeline(
-	ShaderPtr frag, const ColorStateInfo& colorState,
-	PipelinePtr& ppline)
+	ShaderPtr frag, const ColorStateInfo& colorState, PipelinePtr& ppline)
 {
 	PipelineInitializer init;
 
@@ -284,8 +294,8 @@ void Renderer::prepareForVisibilityTests(const SceneNode& cam)
 }
 
 //==============================================================================
-Bool Renderer::doGpuVisibilityTest(const CollisionShape& cs,
-	const Aabb& aabb) const
+Bool Renderer::doGpuVisibilityTest(
+	const CollisionShape& cs, const Aabb& aabb) const
 {
 	return m_tiler->test(cs, aabb);
 }

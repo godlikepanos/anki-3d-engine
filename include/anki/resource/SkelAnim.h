@@ -8,7 +8,8 @@
 #include <anki/Math.h>
 #include <anki/util/Vector.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup resource
 /// @{
@@ -40,16 +41,17 @@ private:
 	Vec3 translation;
 };
 
-
 inline BonePose::BonePose(const Quat& r, const Vec3& trs)
-	: rotation(r), translation(trs)
-{}
-
+	: rotation(r)
+	, translation(trs)
+{
+}
 
 inline BonePose::BonePose(const BonePose& b)
-	: rotation(b.rotation), translation(b.translation)
-{}
-
+	: rotation(b.rotation)
+	, translation(b.translation)
+{
+}
 
 /// Bone animation
 class BoneAnim
@@ -70,7 +72,6 @@ private:
 	/// any animation
 	Vector<BonePose> bonePoses;
 };
-
 
 /// Skeleton animation resource
 ///
@@ -122,4 +123,3 @@ private:
 /// @}
 
 } // end namespace
-

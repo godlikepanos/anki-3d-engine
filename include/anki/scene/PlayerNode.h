@@ -9,13 +9,14 @@
 #include <anki/Math.h>
 #include <anki/physics/PhysicsPlayerController.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup scene
 /// @{
 
 /// Player scene node. It uses input and physics to move inside the world.
-class PlayerNode: public SceneNode
+class PlayerNode : public SceneNode
 {
 	friend class PlayerNodeFeedbackComponent;
 
@@ -32,4 +33,3 @@ private:
 /// @}
 
 } // end namespace anki
-

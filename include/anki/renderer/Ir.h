@@ -9,7 +9,8 @@
 #include <anki/renderer/RenderingPass.h>
 #include <anki/renderer/Clusterer.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 struct IrShaderReflectionProbe;
@@ -21,7 +22,7 @@ class ReflectionProbeComponent;
 /// @{
 
 /// Image based reflections.
-class Ir: public RenderingPass
+class Ir : public RenderingPass
 {
 	friend class IrTask;
 
@@ -89,16 +90,16 @@ private:
 	/// Bin probes in clusters.
 	void binProbes(U32 threadId, PtrSize threadsCount, IrRunContext& ctx);
 
-	ANKI_USE_RESULT Error writeProbeAndRender(SceneNode& node,
-		IrShaderReflectionProbe& probe);
+	ANKI_USE_RESULT Error writeProbeAndRender(
+		SceneNode& node, IrShaderReflectionProbe& probe);
 
 	void binProbe(U probeIdx, IrRunContext& ctx, IrTaskContext& task) const;
 
-	ANKI_USE_RESULT Error renderReflection(SceneNode& node,
-		ReflectionProbeComponent& reflc, U cubemapIdx);
+	ANKI_USE_RESULT Error renderReflection(
+		SceneNode& node, ReflectionProbeComponent& reflc, U cubemapIdx);
 
-	static void writeIndicesAndCluster(U clusterIdx, Bool hasPrevCluster,
-		IrRunContext& ctx);
+	static void writeIndicesAndCluster(
+		U clusterIdx, Bool hasPrevCluster, IrRunContext& ctx);
 
 	/// Find a cache entry to store the reflection.
 	void findCacheEntry(SceneNode& node, U& entry, Bool& render);
@@ -106,4 +107,3 @@ private:
 /// @}
 
 } // end namespace anki
-

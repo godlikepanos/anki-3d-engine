@@ -7,7 +7,8 @@
 
 #include <anki/util/StdTypes.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup util_system
 /// @{
@@ -21,4 +22,3 @@ extern void printBacktrace();
 /// @}
 
 } // end namespace anki
-

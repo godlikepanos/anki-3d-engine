@@ -11,20 +11,22 @@
 #include <anki/Gr.h>
 #include <anki/core/Timestamp.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup renderer
 /// @{
 
 /// Screen space ambient occlusion pass
-class Ssao: public RenderingPass
+class Ssao : public RenderingPass
 {
 anki_internal:
 	static const PixelFormat RT_PIXEL_FORMAT;
 
 	Ssao(Renderer* r)
 		: RenderingPass(r)
-	{}
+	{
+	}
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 	void run(CommandBufferPtr& cmdBuff);
@@ -63,11 +65,9 @@ private:
 	ResourceGroupPtr m_hblurRc;
 	ResourceGroupPtr m_vblurRc;
 
-	ANKI_USE_RESULT Error createFb(
-		FramebufferPtr& fb, TexturePtr& rt);
+	ANKI_USE_RESULT Error createFb(FramebufferPtr& fb, TexturePtr& rt);
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 };
 /// @}
 
 } // end namespace anki
-

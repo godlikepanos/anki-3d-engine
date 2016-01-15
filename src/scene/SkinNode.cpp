@@ -12,7 +12,7 @@
 
 namespace anki {
 
-#define BUFFER_OFFSET(i) ((char *)NULL + (i))
+#define BUFFER_OFFSET(i) ((char*)NULL + (i))
 
 //==============================================================================
 // SkinMesh                                                                    =

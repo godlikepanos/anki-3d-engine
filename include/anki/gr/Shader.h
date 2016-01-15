@@ -8,7 +8,8 @@
 #include <anki/gr/GrObject.h>
 #include <anki/Math.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup graphics
 /// @{
@@ -17,11 +18,12 @@ namespace anki {
 template<typename T>
 ShaderVariableDataType getShaderVariableTypeFromTypename();
 
-#define ANKI_SPECIALIZE_SHADER_VAR_TYPE_GET(typename_, type_) \
-	template<> \
-	inline ShaderVariableDataType \
-		getShaderVariableTypeFromTypename<typename_>() { \
-		return ShaderVariableDataType::type_; \
+#define ANKI_SPECIALIZE_SHADER_VAR_TYPE_GET(typename_, type_)                  \
+	template<>                                                                 \
+	inline ShaderVariableDataType                                              \
+	getShaderVariableTypeFromTypename<typename_>()                             \
+	{                                                                          \
+		return ShaderVariableDataType::type_;                                  \
 	}
 
 ANKI_SPECIALIZE_SHADER_VAR_TYPE_GET(F32, FLOAT)
@@ -50,8 +52,7 @@ public:
 };
 
 /// Populate the memory of a variable that is inside a shader block.
-void writeShaderBlockMemory(
-	ShaderVariableDataType type,
+void writeShaderBlockMemory(ShaderVariableDataType type,
 	const ShaderVariableBlockInfo& varBlkInfo,
 	const void* elements,
 	U32 elementsCount,
@@ -59,7 +60,7 @@ void writeShaderBlockMemory(
 	const void* buffEnd);
 
 /// GPU shader.
-class Shader: public GrObject
+class Shader : public GrObject
 {
 public:
 	/// Construct.
@@ -83,4 +84,3 @@ private:
 /// @}
 
 } // end namespace anki
-

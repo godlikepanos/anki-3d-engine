@@ -8,16 +8,17 @@
 #include <anki/gr/GrObject.h>
 #include <anki/gr/Texture.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup graphics
 /// @{
 
 /// GPU sampler.
-class Sampler: public GrObject
+class Sampler : public GrObject
 {
 public:
-    /// Construct.
+	/// Construct.
 	Sampler(GrManager* manager);
 
 	/// Destroy.
@@ -29,11 +30,11 @@ public:
 		return *m_impl;
 	}
 
-    /// Create it.
+	/// Create it.
 	void create(const SamplerInitializer& init);
 
 private:
-    UniquePtr<SamplerImpl> m_impl;
+	UniquePtr<SamplerImpl> m_impl;
 };
 /// @}
 

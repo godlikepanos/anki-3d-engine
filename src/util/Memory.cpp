@@ -14,7 +14,8 @@
 #include <cstring>
 #include <cstdio>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // Misc                                                                        =
@@ -59,7 +60,7 @@ void* mallocAligned(PtrSize size, PtrSize alignmentBytes)
 	ANKI_ASSERT(alignmentBytes > 0);
 
 #if ANKI_POSIX
-#	if ANKI_OS != ANKI_OS_ANDROID
+#if ANKI_OS != ANKI_OS_ANDROID
 	void* out = nullptr;
 	U alignment = getAlignedRoundUp(alignmentBytes, sizeof(void*));
 	int err = posix_memalign(&out, alignment, size);
@@ -76,9 +77,9 @@ void* mallocAligned(PtrSize size, PtrSize alignmentBytes)
 	}
 
 	return out;
-#	else
-	void* out = memalign(
-		getAlignedRoundUp(alignmentBytes, sizeof(void*)), size);
+#else
+	void* out =
+		memalign(getAlignedRoundUp(alignmentBytes, sizeof(void*)), size);
 
 	if(out)
 	{
@@ -91,7 +92,7 @@ void* mallocAligned(PtrSize size, PtrSize alignmentBytes)
 	}
 
 	return out;
-#	endif
+#endif
 #elif ANKI_OS == ANKI_OS_WINDOWS
 	void* out = _aligned_malloc(size, alignmentBytes);
 
@@ -107,7 +108,7 @@ void* mallocAligned(PtrSize size, PtrSize alignmentBytes)
 
 	return out;
 #else
-#	error "Unimplemented"
+#error "Unimplemented"
 #endif
 }
 
@@ -119,13 +120,12 @@ void freeAligned(void* ptr)
 #elif ANKI_OS == ANKI_OS_WINDOWS
 	_aligned_free(ptr);
 #else
-#	error "Unimplemented"
+#error "Unimplemented"
 #endif
 }
 
 //==============================================================================
-void* allocAligned(
-	void* userData, void* ptr, PtrSize size, PtrSize alignment)
+void* allocAligned(void* userData, void* ptr, PtrSize size, PtrSize alignment)
 {
 	(void)userData;
 	void* out;
@@ -172,16 +172,16 @@ void* BaseMemoryPool::allocate(PtrSize size, PtrSize alignmentBytes)
 	switch(m_type)
 	{
 	case Type::HEAP:
-		out = static_cast<HeapMemoryPool*>(this)->allocate(
-			size, alignmentBytes);
+		out =
+			static_cast<HeapMemoryPool*>(this)->allocate(size, alignmentBytes);
 		break;
 	case Type::STACK:
-		out = static_cast<StackMemoryPool*>(this)->allocate(
-			size, alignmentBytes);
+		out =
+			static_cast<StackMemoryPool*>(this)->allocate(size, alignmentBytes);
 		break;
 	case Type::CHAIN:
-		out = static_cast<ChainMemoryPool*>(this)->allocate(
-			size, alignmentBytes);
+		out =
+			static_cast<ChainMemoryPool*>(this)->allocate(size, alignmentBytes);
 		break;
 	default:
 		ANKI_ASSERT(0);
@@ -216,7 +216,8 @@ void BaseMemoryPool::free(void* ptr)
 //==============================================================================
 HeapMemoryPool::HeapMemoryPool()
 	: BaseMemoryPool(Type::HEAP)
-{}
+{
+}
 
 //==============================================================================
 HeapMemoryPool::~HeapMemoryPool()
@@ -228,8 +229,7 @@ HeapMemoryPool::~HeapMemoryPool()
 }
 
 //==============================================================================
-void HeapMemoryPool::create(
-	AllocAlignedCallback allocCb, void* allocCbUserData)
+void HeapMemoryPool::create(AllocAlignedCallback allocCb, void* allocCbUserData)
 {
 	ANKI_ASSERT(!isCreated());
 	ANKI_ASSERT(m_allocCb == nullptr);
@@ -300,7 +300,8 @@ void HeapMemoryPool::free(void* ptr)
 //==============================================================================
 StackMemoryPool::StackMemoryPool()
 	: BaseMemoryPool(Type::STACK)
-{}
+{
+}
 
 //==============================================================================
 StackMemoryPool::~StackMemoryPool()
@@ -330,10 +331,13 @@ StackMemoryPool::~StackMemoryPool()
 }
 
 //==============================================================================
-void StackMemoryPool::create(
-	AllocAlignedCallback allocCb, void* allocCbUserData,
-	PtrSize initialChunkSize, F32 nextChunkScale, PtrSize nextChunkBias,
-	Bool ignoreDeallocationErrors, PtrSize alignmentBytes)
+void StackMemoryPool::create(AllocAlignedCallback allocCb,
+	void* allocCbUserData,
+	PtrSize initialChunkSize,
+	F32 nextChunkScale,
+	PtrSize nextChunkBias,
+	Bool ignoreDeallocationErrors,
+	PtrSize alignmentBytes)
 {
 	ANKI_ASSERT(!isCreated());
 	ANKI_ASSERT(allocCb);
@@ -378,8 +382,9 @@ void* StackMemoryPool::allocate(PtrSize size, PtrSize alignment)
 
 	size = getAlignedRoundUp(m_alignmentBytes, size);
 	ANKI_ASSERT(size > 0);
-	ANKI_ASSERT(size <= m_initialChunkSize && "The chunks should have enough "
-		"space to hold at least one allocation");
+	ANKI_ASSERT(size <= m_initialChunkSize
+		&& "The chunks should have enough "
+		   "space to hold at least one allocation");
 
 	Chunk* crntChunk = nullptr;
 	Bool retry = true;
@@ -426,8 +431,10 @@ void* StackMemoryPool::allocate(PtrSize size, PtrSize alignment)
 						oldChunkSize * m_nextChunkScale + m_nextChunkBias;
 					alignRoundUp(m_alignmentBytes, newChunkSize);
 
-					void* mem = m_allocCb(m_allocCbUserData, nullptr,
-						newChunkSize, m_alignmentBytes);
+					void* mem = m_allocCb(m_allocCbUserData,
+						nullptr,
+						newChunkSize,
+						m_alignmentBytes);
 
 					if(mem != nullptr)
 					{
@@ -520,7 +527,8 @@ void StackMemoryPool::reset()
 //==============================================================================
 ChainMemoryPool::ChainMemoryPool()
 	: BaseMemoryPool(Type::CHAIN)
-{}
+{
+}
 
 //==============================================================================
 ChainMemoryPool::~ChainMemoryPool()
@@ -547,8 +555,7 @@ ChainMemoryPool::~ChainMemoryPool()
 }
 
 //==============================================================================
-void ChainMemoryPool::create(
-	AllocAlignedCallback allocCb,
+void ChainMemoryPool::create(AllocAlignedCallback allocCb,
 	void* allocCbUserData,
 	PtrSize initialChunkSize,
 	F32 nextChunkScale,
@@ -641,8 +648,8 @@ void ChainMemoryPool::free(void* ptr)
 	Chunk* chunk = *reinterpret_cast<Chunk**>(mem);
 
 	ANKI_ASSERT(chunk != nullptr);
-	ANKI_ASSERT((mem >= chunk->m_memory
-		&& mem < (chunk->m_memory + chunk->m_memsize))
+	ANKI_ASSERT(
+		(mem >= chunk->m_memory && mem < (chunk->m_memory + chunk->m_memsize))
 		&& "Wrong chunk");
 
 	LockGuard<SpinLock> lock(*m_lock);
@@ -820,8 +827,8 @@ void ChainMemoryPool::destroyChunk(Chunk* ch)
 		ch->m_next->m_prev = ch->m_prev;
 	}
 
-	invalidateMemory(ch,
-		getAlignedRoundUp(m_alignmentBytes, sizeof(Chunk)) + ch->m_memsize);
+	invalidateMemory(
+		ch, getAlignedRoundUp(m_alignmentBytes, sizeof(Chunk)) + ch->m_memsize);
 	m_allocCb(m_allocCbUserData, ch, 0, 0);
 }
 

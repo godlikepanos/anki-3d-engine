@@ -87,4 +87,3 @@ ANKI_TEST(Object, Test)
 }
 
 #endif
-

@@ -7,7 +7,8 @@
 
 #include <anki/math/CommonIncludes.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup math
 /// @{
@@ -34,8 +35,13 @@ public:
 /// row major. SSE optimized
 /// @note TMat4*TMat4: 64 muls 48 adds
 template<typename T>
-class alignas(16) TMat4: public TMat<T, 4, 4, typename TMat4Simd<T>::Type,
-	  TMat4<T>, TVec4<T>, TVec4<T>>
+class alignas(16) TMat4 : public TMat<T,
+							  4,
+							  4,
+							  typename TMat4Simd<T>::Type,
+							  TMat4<T>,
+							  TVec4<T>,
+							  TVec4<T>>
 {
 	/// @name Friends
 	/// @{
@@ -50,8 +56,13 @@ class alignas(16) TMat4: public TMat<T, 4, 4, typename TMat4Simd<T>::Type,
 	/// @}
 
 public:
-	using Base = TMat<T, 4, 4, typename TMat4Simd<T>::Type,
-	  TMat4<T>, TVec4<T>, TVec4<T>>;
+	using Base = TMat<T,
+		4,
+		4,
+		typename TMat4Simd<T>::Type,
+		TMat4<T>,
+		TVec4<T>,
+		TVec4<T>>;
 
 	using Base::getTranslationPart;
 	using Base::setTranslationPart;
@@ -62,14 +73,30 @@ public:
 	/// @{
 	TMat4()
 		: Base()
-	{}
+	{
+	}
 
 	TMat4(const TMat4& b)
 		: Base(b)
-	{}
+	{
+	}
 
-	TMat4(T m00, T m01, T m02, T m03, T m10, T m11, T m12, T m13,
-		T m20, T m21, T m22, T m23, T m30, T m31, T m32, T m33)
+	TMat4(T m00,
+		T m01,
+		T m02,
+		T m03,
+		T m10,
+		T m11,
+		T m12,
+		T m13,
+		T m20,
+		T m21,
+		T m22,
+		T m23,
+		T m30,
+		T m31,
+		T m32,
+		T m33)
 	{
 		TMat4& m = *this;
 		m(0, 0) = m00;
@@ -92,7 +119,8 @@ public:
 
 	explicit TMat4(const T f)
 		: Base(f)
-	{}
+	{
+	}
 
 	explicit TMat4(const TMat3<T>& m3)
 	{
@@ -183,10 +211,11 @@ public:
 	}
 
 	explicit TMat4(const TTransform<T>& t)
-		: TMat4(TVec4<T>(t.getOrigin().xyz(), 1.0)
-		, t.getRotation().getRotationPart()
-		, t.getScale())
-	{}
+		: TMat4(TVec4<T>(t.getOrigin().xyz(), 1.0),
+			  t.getRotation().getRotationPart(),
+			  t.getScale())
+	{
+	}
 	/// @}
 
 	/// @name Other
@@ -240,21 +269,21 @@ public:
 		tmp[10] = in(0, 2) * in(1, 3);
 		tmp[11] = in(1, 2) * in(0, 3);
 
-		m4(0, 0) =  tmp[0] * in(1, 1) + tmp[3] * in(2, 1) + tmp[4] * in(3, 1);
+		m4(0, 0) = tmp[0] * in(1, 1) + tmp[3] * in(2, 1) + tmp[4] * in(3, 1);
 		m4(0, 0) -= tmp[1] * in(1, 1) + tmp[2] * in(2, 1) + tmp[5] * in(3, 1);
-		m4(0, 1) =  tmp[1] * in(0, 1) + tmp[6] * in(2, 1) + tmp[9] * in(3, 1);
+		m4(0, 1) = tmp[1] * in(0, 1) + tmp[6] * in(2, 1) + tmp[9] * in(3, 1);
 		m4(0, 1) -= tmp[0] * in(0, 1) + tmp[7] * in(2, 1) + tmp[8] * in(3, 1);
-		m4(0, 2) =  tmp[2] * in(0, 1) + tmp[7] * in(1, 1) + tmp[10] * in(3, 1);
+		m4(0, 2) = tmp[2] * in(0, 1) + tmp[7] * in(1, 1) + tmp[10] * in(3, 1);
 		m4(0, 2) -= tmp[3] * in(0, 1) + tmp[6] * in(1, 1) + tmp[11] * in(3, 1);
-		m4(0, 3) =  tmp[5] * in(0, 1) + tmp[8] * in(1, 1) + tmp[11] * in(2, 1);
+		m4(0, 3) = tmp[5] * in(0, 1) + tmp[8] * in(1, 1) + tmp[11] * in(2, 1);
 		m4(0, 3) -= tmp[4] * in(0, 1) + tmp[9] * in(1, 1) + tmp[10] * in(2, 1);
-		m4(1, 0) =  tmp[1] * in(1, 0) + tmp[2] * in(2, 0) + tmp[5] * in(3, 0);
+		m4(1, 0) = tmp[1] * in(1, 0) + tmp[2] * in(2, 0) + tmp[5] * in(3, 0);
 		m4(1, 0) -= tmp[0] * in(1, 0) + tmp[3] * in(2, 0) + tmp[4] * in(3, 0);
-		m4(1, 1) =  tmp[0] * in(0, 0) + tmp[7] * in(2, 0) + tmp[8] * in(3, 0);
+		m4(1, 1) = tmp[0] * in(0, 0) + tmp[7] * in(2, 0) + tmp[8] * in(3, 0);
 		m4(1, 1) -= tmp[1] * in(0, 0) + tmp[6] * in(2, 0) + tmp[9] * in(3, 0);
-		m4(1, 2) =  tmp[3] * in(0, 0) + tmp[6] * in(1, 0) + tmp[11] * in(3, 0);
+		m4(1, 2) = tmp[3] * in(0, 0) + tmp[6] * in(1, 0) + tmp[11] * in(3, 0);
 		m4(1, 2) -= tmp[2] * in(0, 0) + tmp[7] * in(1, 0) + tmp[10] * in(3, 0);
-		m4(1, 3) =  tmp[4] * in(0, 0) + tmp[9] * in(1, 0) + tmp[10] * in(2, 0);
+		m4(1, 3) = tmp[4] * in(0, 0) + tmp[9] * in(1, 0) + tmp[10] * in(2, 0);
 		m4(1, 3) -= tmp[5] * in(0, 0) + tmp[8] * in(1, 0) + tmp[11] * in(2, 0);
 
 		tmp[0] = in(2, 0) * in(3, 1);
@@ -270,25 +299,25 @@ public:
 		tmp[10] = in(0, 0) * in(1, 1);
 		tmp[11] = in(1, 0) * in(0, 1);
 
-		m4(2, 0) =  tmp[0] * in(1, 3) + tmp[3] * in(2, 3) + tmp[4] * in(3, 3);
+		m4(2, 0) = tmp[0] * in(1, 3) + tmp[3] * in(2, 3) + tmp[4] * in(3, 3);
 		m4(2, 0) -= tmp[1] * in(1, 3) + tmp[2] * in(2, 3) + tmp[5] * in(3, 3);
-		m4(2, 1) =  tmp[1] * in(0, 3) + tmp[6] * in(2, 3) + tmp[9] * in(3, 3);
+		m4(2, 1) = tmp[1] * in(0, 3) + tmp[6] * in(2, 3) + tmp[9] * in(3, 3);
 		m4(2, 1) -= tmp[0] * in(0, 3) + tmp[7] * in(2, 3) + tmp[8] * in(3, 3);
-		m4(2, 2) =  tmp[2] * in(0, 3) + tmp[7] * in(1, 3) + tmp[10] * in(3, 3);
+		m4(2, 2) = tmp[2] * in(0, 3) + tmp[7] * in(1, 3) + tmp[10] * in(3, 3);
 		m4(2, 2) -= tmp[3] * in(0, 3) + tmp[6] * in(1, 3) + tmp[11] * in(3, 3);
-		m4(2, 3) =  tmp[5] * in(0, 3) + tmp[8] * in(1, 3) + tmp[11] * in(2, 3);
+		m4(2, 3) = tmp[5] * in(0, 3) + tmp[8] * in(1, 3) + tmp[11] * in(2, 3);
 		m4(2, 3) -= tmp[4] * in(0, 3) + tmp[9] * in(1, 3) + tmp[10] * in(2, 3);
-		m4(3, 0) =  tmp[2] * in(2, 2) + tmp[5] * in(3, 2) + tmp[1] * in(1, 2);
+		m4(3, 0) = tmp[2] * in(2, 2) + tmp[5] * in(3, 2) + tmp[1] * in(1, 2);
 		m4(3, 0) -= tmp[4] * in(3, 2) + tmp[0] * in(1, 2) + tmp[3] * in(2, 2);
-		m4(3, 1) =  tmp[8] * in(3, 2) + tmp[0] * in(0, 2) + tmp[7] * in(2, 2);
+		m4(3, 1) = tmp[8] * in(3, 2) + tmp[0] * in(0, 2) + tmp[7] * in(2, 2);
 		m4(3, 1) -= tmp[6] * in(2, 2) + tmp[9] * in(3, 2) + tmp[1] * in(0, 2);
-		m4(3, 2) =  tmp[6] * in(1, 2) + tmp[11] * in(3, 2) + tmp[3] * in(0, 2);
+		m4(3, 2) = tmp[6] * in(1, 2) + tmp[11] * in(3, 2) + tmp[3] * in(0, 2);
 		m4(3, 2) -= tmp[10] * in(3, 2) + tmp[2] * in(0, 2) + tmp[7] * in(1, 2);
-		m4(3, 3) =  tmp[10] * in(2, 2) + tmp[4] * in(0, 2) + tmp[9] * in(1, 2);
+		m4(3, 3) = tmp[10] * in(2, 2) + tmp[4] * in(0, 2) + tmp[9] * in(1, 2);
 		m4(3, 3) -= tmp[8] * in(1, 2) + tmp[11] * in(2, 2) + tmp[5] * in(0, 2);
 
-		T det = in(0, 0) * m4(0, 0) + in(1, 0) * m4(0, 1)
-			+ in(2, 0) * m4(0, 2) + in(3, 0) * m4(0, 3);
+		T det = in(0, 0) * m4(0, 0) + in(1, 0) * m4(0, 1) + in(2, 0) * m4(0, 2)
+			+ in(3, 0) * m4(0, 3);
 
 		ANKI_ASSERT(!isZero<T>(det)); // Cannot invert, det == 0
 		det = 1.0 / det;
@@ -319,11 +348,22 @@ public:
 
 	static const TMat4& getIdentity()
 	{
-		static const TMat4 ident(
-			1.0, 0.0, 0.0, 0.0,
-			0.0, 1.0, 0.0, 0.0,
-			0.0, 0.0, 1.0, 0.0,
-			0.0, 0.0, 0.0, 1.0);
+		static const TMat4 ident(1.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			1.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			1.0,
+			0.0,
+			0.0,
+			0.0,
+			0.0,
+			1.0);
 		return ident;
 	}
 
@@ -379,12 +419,9 @@ public:
 		const TMat4& m = *this;
 
 		return TVec3<T>(
-			m(0, 0) * v.x() + m(0, 1) * v.y()
-			+ m(0, 2) * v.z() + m(0, 3),
-			m(1, 0) * v.x() + m(1, 1) * v.y()
-			+ m(1, 2) * v.z() + m(1, 3),
-			m(2, 0) * v.x() + m(2, 1) * v.y()
-			+ m(2, 2) * v.z() + m(2, 3));
+			m(0, 0) * v.x() + m(0, 1) * v.y() + m(0, 2) * v.z() + m(0, 3),
+			m(1, 0) * v.x() + m(1, 1) * v.y() + m(1, 2) * v.z() + m(1, 3),
+			m(2, 0) * v.x() + m(2, 1) * v.y() + m(2, 2) * v.z() + m(2, 3));
 	}
 	/// @}
 };
@@ -421,8 +458,10 @@ template<>
 TVec4<F32> TMat4<F32>::Base::operator*(const TVec4<F32>& b) const;
 
 template<>
-void TMat4<F32>::Base::setRows(const TVec4<F32>& a, const TVec4<F32>& b,
-	const TVec4<F32>& c, const TVec4<F32>& d);
+void TMat4<F32>::Base::setRows(const TVec4<F32>& a,
+	const TVec4<F32>& b,
+	const TVec4<F32>& c,
+	const TVec4<F32>& d);
 
 template<>
 void TMat4<F32>::Base::setRow(const U i, const TVec4<F32>& v);
@@ -432,7 +471,7 @@ void TMat4<F32>::Base::transpose();
 
 #elif ANKI_SIMD == ANKI_SIMD_NEON
 
-#	error "TODO"
+#error "TODO"
 
 #endif
 
@@ -444,4 +483,3 @@ static_assert(sizeof(Mat4) == sizeof(F32) * 4 * 4, "Incorrect size");
 } // end namespace anki
 
 #include <anki/math/Mat4.inl.h>
-

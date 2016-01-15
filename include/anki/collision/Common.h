@@ -8,7 +8,8 @@
 #include <anki/collision/Forward.h>
 #include <anki/util/Allocator.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup collision
 /// @{
@@ -22,4 +23,3 @@ using CollisionAllocator = ChainAllocator<T>;
 /// @}
 
 } // end namespace anki
-

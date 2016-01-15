@@ -6,7 +6,8 @@
 #include <anki/event/FollowPathEvent.h>
 #include <anki/scene/Path.h>
 
-namespace anki {
+namespace anki
+{
 
 #if 0
 

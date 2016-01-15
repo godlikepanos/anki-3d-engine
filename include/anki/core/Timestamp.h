@@ -7,7 +7,8 @@
 
 #include <anki/util/StdTypes.h>
 
-namespace anki {
+namespace anki
+{
 
 /// Timestamp type
 using Timestamp = U32;
@@ -15,4 +16,3 @@ using Timestamp = U32;
 const U MAX_TIMESTAMP = MAX_U32;
 
 } // end namespace anki
-

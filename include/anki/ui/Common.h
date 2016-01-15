@@ -8,7 +8,8 @@
 #include <anki/Math.h>
 #include <anki/util/Allocator.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class Widget;
@@ -32,9 +33,7 @@ public:
 };
 
 /// Used in widget classes.
-#define ANKI_WIDGET \
-	friend class Canvas;
+#define ANKI_WIDGET friend class Canvas;
 /// @}
 
 } // end namespace anki
-

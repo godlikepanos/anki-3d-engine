@@ -7,7 +7,8 @@
 
 #include <anki/physics/Common.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup physics
 /// @{
@@ -17,7 +18,7 @@ class PhysicsObject
 {
 public:
 	/// Type of the physics object.
-	enum class Type: U8
+	enum class Type : U8
 	{
 		COLLISION_SHAPE,
 		BODY,
@@ -35,7 +36,8 @@ public:
 	}
 
 	virtual ~PhysicsObject()
-	{}
+	{
+	}
 
 	Type getType() const
 	{
@@ -67,4 +69,3 @@ private:
 /// @}
 
 } // end namespace anki
-

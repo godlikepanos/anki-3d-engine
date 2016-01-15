@@ -13,7 +13,8 @@
 #include <Windows.h>
 #include <WinBase.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // Thread                                                                      =
@@ -301,6 +302,4 @@ Bool Barrier::wait()
 	return false;
 }
 
-
 } // end namespace anki
-

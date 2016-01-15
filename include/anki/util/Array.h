@@ -8,7 +8,8 @@
 #include <anki/util/Assert.h>
 #include <anki/util/StdTypes.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup util_containers
 /// @{
@@ -163,4 +164,3 @@ using Array4d = Array<Array<Array<Array<T, L>, K>, J>, I>;
 /// @}
 
 } // end namespace anki
-

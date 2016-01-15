@@ -7,7 +7,8 @@
 
 #include <anki/ui/UiObject.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup ui
 /// @{
@@ -20,7 +21,8 @@ class UiInterface
 public:
 	UiInterface(UiAllocator alloc)
 		: m_alloc(alloc)
-	{}
+	{
+	}
 
 	virtual ~UiInterface() = default;
 
@@ -35,22 +37,25 @@ public:
 		const CString& filename, UiImagePtr& img) = 0;
 
 	/// Create a 8bit image. Used for fonts.
-	virtual ANKI_USE_RESULT Error createR8Image(const SArray<U8>& data,
-		const UVec2& size, UiImagePtr& img) = 0;
+	virtual ANKI_USE_RESULT Error createR8Image(
+		const SArray<U8>& data, const UVec2& size, UiImagePtr& img) = 0;
 	/// @}
 
 	/// @name Misc methods.
 	/// @{
-	virtual ANKI_USE_RESULT Error readFile(const CString& filename,
-		DArrayAuto<U8>& data) = 0;
+	virtual ANKI_USE_RESULT Error readFile(
+		const CString& filename, DArrayAuto<U8>& data) = 0;
 	/// @}
 
 	/// @name Painting related methods.
 	/// @{
-	virtual void drawImage(UiImagePtr image, const Rect& uvs,
-		const Rect& drawingRect, const UVec2& canvasSize) = 0;
+	virtual void drawImage(UiImagePtr image,
+		const Rect& uvs,
+		const Rect& drawingRect,
+		const UVec2& canvasSize) = 0;
 
-	virtual void drawLines(const SArray<UVec2>& lines, const Color& color,
+	virtual void drawLines(const SArray<UVec2>& lines,
+		const Color& color,
 		const UVec2& canvasSize) = 0;
 	/// @}
 
@@ -67,7 +72,8 @@ class UiImage
 public:
 	UiImage(UiInterface* interface)
 		: m_alloc(interface->getAllocator())
-	{}
+	{
+	}
 
 	virtual ~UiImage() = default;
 

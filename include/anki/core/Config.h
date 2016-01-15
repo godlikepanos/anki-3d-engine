@@ -7,13 +7,14 @@
 
 #include <anki/misc/ConfigSet.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup core
 /// @{
 
 /// Global configuration set
-class Config: public ConfigSet
+class Config : public ConfigSet
 {
 public:
 	Config();
@@ -22,4 +23,3 @@ public:
 /// @}
 
 } // end namespace anki
-

@@ -8,7 +8,8 @@
 #include <anki/util/List.h>
 #include <anki/util/String.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup misc
 /// @{
@@ -47,7 +48,7 @@ protected:
 	void newOption(const CString& name, F64 value);
 
 private:
-	class Option: public NonCopyable
+	class Option : public NonCopyable
 	{
 	public:
 		String m_name;
@@ -62,7 +63,8 @@ private:
 			, m_strVal(std::move(b.m_strVal))
 			, m_fVal(b.m_fVal)
 			, m_type(b.m_type)
-		{}
+		{
+		}
 
 		~Option() = default;
 
@@ -78,4 +80,3 @@ private:
 /// @}
 
 } // end namespace anki
-

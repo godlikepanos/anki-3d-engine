@@ -13,7 +13,8 @@
 #include <anki/util/Enum.h>
 #include <anki/scene/SceneComponent.h>
 
-namespace anki {
+namespace anki
+{
 
 class SceneGraph; // Don't include
 class ResourceManager;
@@ -22,8 +23,8 @@ class ResourceManager;
 /// @{
 
 /// Interface class backbone of scene
-class SceneNode: public Hierarchy<SceneNode>,
-	public IntrusiveListEnabled<SceneNode>
+class SceneNode : public Hierarchy<SceneNode>,
+				  public IntrusiveListEnabled<SceneNode>
 {
 public:
 	using Base = Hierarchy<SceneNode>;
@@ -211,4 +212,3 @@ private:
 /// @}
 
 } // end namespace anki
-

@@ -5,7 +5,8 @@
 
 #include <anki/util/Hash.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 U64 computeHash(const void* buffer, U32 bufferSize, U64 seed)
@@ -59,4 +60,3 @@ U64 computeHash(const void* buffer, U32 bufferSize, U64 seed)
 }
 
 } // end namespace anki
-

@@ -8,20 +8,22 @@
 #include <anki/scene/SceneComponent.h>
 #include <anki/physics/PhysicsPlayerController.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup scene
 /// @{
 
 /// Physics player controller component.
-class PlayerControllerComponent: public SceneComponent
+class PlayerControllerComponent : public SceneComponent
 {
 public:
-	PlayerControllerComponent(SceneNode* node,
-		PhysicsPlayerControllerPtr player)
+	PlayerControllerComponent(
+		SceneNode* node, PhysicsPlayerControllerPtr player)
 		: SceneComponent(Type::PLAYER_CONTROLLER, node)
 		, m_player(player)
-	{}
+	{
+	}
 
 	~PlayerControllerComponent() = default;
 
@@ -35,7 +37,9 @@ public:
 		m_player->moveToPosition(trf.getOrigin());
 	}
 
-	void setVelocity(F32 forwardSpeed, F32 strafeSpeed, F32 jumpSpeed,
+	void setVelocity(F32 forwardSpeed,
+		F32 strafeSpeed,
+		F32 jumpSpeed,
 		const Vec4& forwardDir)
 	{
 		m_player->setVelocity(forwardSpeed, strafeSpeed, jumpSpeed, forwardDir);
@@ -59,4 +63,3 @@ private:
 /// @}
 
 } // end namespace anki
-

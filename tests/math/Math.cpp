@@ -95,7 +95,7 @@ void length()
 		vec[i] = x;
 		res += x * x;
 	}
-	
+
 	res = sqrt(res);
 	ANKI_TEST_EXPECT_EQ(vec.getLength(), res);
 
@@ -316,9 +316,15 @@ ANKI_TEST(Math, Mat3)
 		Mat3 a = getNonEmptyMat<Mat3>(0);
 		Mat3 b = getNonEmptyMat<Mat3>(1);
 		Mat3 c = a * b;
-		Mat3 d = Mat3(18.000,  21.000,  24.000,
-			54.000,  66.000,  78.000,
-			90.000, 111.000, 132.000);
+		Mat3 d = Mat3(18.000,
+			21.000,
+			24.000,
+			54.000,
+			66.000,
+			78.000,
+			90.000,
+			111.000,
+			132.000);
 		ANKI_TEST_EXPECT_EQ(c, d);
 	}
 
@@ -341,10 +347,22 @@ ANKI_TEST(Math, Mat4)
 		Mat4 a = getNonEmptyMat<Mat4>(0);
 		Mat4 b = getNonEmptyMat<Mat4>(1);
 		Mat4 c = a * b;
-		Mat4 d = Mat4(62.0,  68.0,  74.0,  80.0,
-			174.000, 196.000, 218.000, 240.000,
-			286.000, 324.000, 362.000, 400.000,
-			398.000, 452.000, 506.000, 560.000);
+		Mat4 d = Mat4(62.0,
+			68.0,
+			74.0,
+			80.0,
+			174.000,
+			196.000,
+			218.000,
+			240.000,
+			286.000,
+			324.000,
+			362.000,
+			400.000,
+			398.000,
+			452.000,
+			506.000,
+			560.000);
 		ANKI_TEST_EXPECT_EQ(c, d);
 	}
 
@@ -366,9 +384,18 @@ ANKI_TEST(Math, Mat3x4)
 		Mat3x4 a = getNonEmptyMat<Mat3x4>(0);
 		Mat3x4 b = getNonEmptyMat<Mat3x4>(1);
 		Mat3x4 c = a.combineTransformations(b);
-		Mat3x4 d = Mat3x4(23.000, 26.000, 29.000, 35.000,
-			83.000, 98.000, 113.000, 135.000,
-			143.000, 170.000, 197.000, 235.000);
+		Mat3x4 d = Mat3x4(23.000,
+			26.000,
+			29.000,
+			35.000,
+			83.000,
+			98.000,
+			113.000,
+			135.000,
+			143.000,
+			170.000,
+			197.000,
+			235.000);
 		ANKI_TEST_EXPECT_EQ(c, d);
 	}
 
@@ -380,4 +407,3 @@ ANKI_TEST(Math, Mat3x4)
 		ANKI_TEST_EXPECT_EQ(m * v, Vec3(20, 44, 68));
 	}
 }
-

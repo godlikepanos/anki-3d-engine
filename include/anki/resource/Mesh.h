@@ -10,7 +10,8 @@
 #include <anki/Gr.h>
 #include <anki/collision/Obb.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class MeshLoader;
@@ -19,7 +20,7 @@ class MeshLoader;
 /// @{
 
 /// Mesh Resource. It contains the geometry packed in GPU buffers.
-class Mesh: public ResourceObject
+class Mesh : public ResourceObject
 {
 public:
 	/// Default constructor
@@ -113,4 +114,3 @@ protected:
 /// @}
 
 } // end namespace anki
-

@@ -15,7 +15,8 @@
 #include <anki/misc/ConfigSet.h>
 #include <anki/util/Functions.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // Misc                                                                        =
@@ -37,7 +38,8 @@ struct Sprite
 
 //==============================================================================
 Lf::~Lf()
-{}
+{
+}
 
 //==============================================================================
 Error Lf::init(const ConfigSet& config)
@@ -71,10 +73,10 @@ Error Lf::initSprite(const ConfigSet& config)
 	pps.sprintf("#define MAX_SPRITES %u\n", m_maxSprites);
 
 	ANKI_CHECK(getResourceManager().loadResourceToCache(
-		m_realVert,	"shaders/LfSpritePass.vert.glsl", pps.toCString(), "r_"));
+		m_realVert, "shaders/LfSpritePass.vert.glsl", pps.toCString(), "r_"));
 
 	ANKI_CHECK(getResourceManager().loadResourceToCache(
-		m_realFrag,	"shaders/LfSpritePass.frag.glsl", pps.toCString(), "r_"));
+		m_realFrag, "shaders/LfSpritePass.frag.glsl", pps.toCString(), "r_"));
 
 	// Create ppline.
 	// Writes to IS with blending
@@ -88,7 +90,7 @@ Error Lf::initSprite(const ConfigSet& config)
 	init.m_color.m_attachments[0].m_dstBlendMethod = BlendMethod::ONE;
 	init.m_shaders[U(ShaderType::VERTEX)] = m_realVert->getGrShader();
 	init.m_shaders[U(ShaderType::FRAGMENT)] = m_realFrag->getGrShader();
-	m_realPpline= getGrManager().newInstance<Pipeline>(init);
+	m_realPpline = getGrManager().newInstance<Pipeline>(init);
 
 	return ErrorCode::NONE;
 }
@@ -168,16 +170,16 @@ void Lf::runOcclusionTests(CommandBufferPtr& cmdb)
 	{
 		// Setup MVP UBO
 		DynamicBufferToken token;
-		Mat4* mvp = static_cast<Mat4*>(
-			getGrManager().allocateFrameHostVisibleMemory(sizeof(Mat4),
-			BufferUsage::UNIFORM, token));
+		Mat4* mvp =
+			static_cast<Mat4*>(getGrManager().allocateFrameHostVisibleMemory(
+				sizeof(Mat4), BufferUsage::UNIFORM, token));
 		*mvp = camFr.getViewProjectionMatrix();
 
 		// Alloc dyn mem
 		DynamicBufferToken token2;
-		Vec3* positions = static_cast<Vec3*>(
-			getGrManager().allocateFrameHostVisibleMemory(
-			sizeof(Vec3) * totalCount, BufferUsage::VERTEX, token2));
+		Vec3* positions =
+			static_cast<Vec3*>(getGrManager().allocateFrameHostVisibleMemory(
+				sizeof(Vec3) * totalCount, BufferUsage::VERTEX, token2));
 		const Vec3* initialPositions = positions;
 
 		// Setup state
@@ -238,7 +240,8 @@ void Lf::run(CommandBufferPtr& cmdb)
 			Vec4 posClip = camFr.getViewProjectionMatrix() * lfPos;
 
 			if(posClip.x() > posClip.w() || posClip.x() < -posClip.w()
-				|| posClip.y() > posClip.w() || posClip.y() < -posClip.w())
+				|| posClip.y() > posClip.w()
+				|| posClip.y() < -posClip.w())
 			{
 				// Outside clip
 				continue;
@@ -251,7 +254,9 @@ void Lf::run(CommandBufferPtr& cmdb)
 			DynamicBufferToken token;
 			Sprite* tmpSprites = static_cast<Sprite*>(
 				getGrManager().allocateFrameHostVisibleMemory(
-				spritesCount * sizeof(Sprite), BufferUsage::UNIFORM, token));
+					spritesCount * sizeof(Sprite),
+					BufferUsage::UNIFORM,
+					token));
 			SArray<Sprite> sprites(tmpSprites, spritesCount);
 
 			// misc

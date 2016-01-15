@@ -7,7 +7,8 @@
 
 #include <anki/util/Assert.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup util_private
 /// @{
@@ -77,4 +78,3 @@ inline TTo dcast(TFrom* c)
 /// @}
 
 } // end namespace anki
-

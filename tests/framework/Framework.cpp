@@ -8,7 +8,8 @@
 #include <cstring>
 #include <malloc.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 TestSuite::~TestSuite()
@@ -23,7 +24,7 @@ TestSuite::~TestSuite()
 void Test::run()
 {
 	std::cout << "========\nRunning " << suite->name << " " << name
-		<< "\n========" << std::endl;
+			  << "\n========" << std::endl;
 
 #if ANKI_OS == ANKI_OS_LINUX
 	struct mallinfo a = mallinfo();
@@ -45,8 +46,8 @@ void Test::run()
 }
 
 //==============================================================================
-void Tester::addTest(const char* name, const char* suiteName,
-	TestCallback callback)
+void Tester::addTest(
+	const char* name, const char* suiteName, TestCallback callback)
 {
 	std::vector<TestSuite*>::iterator it;
 	for(it = suites.begin(); it != suites.end(); it++)
@@ -186,7 +187,7 @@ Options:
 
 	int failed = run - passed;
 	std::cout << "========\nRun " << run << " tests, failed " << failed
-		<< std::endl;
+			  << std::endl;
 
 	if(failed == 0)
 	{
@@ -208,7 +209,7 @@ int Tester::listTests()
 		for(Test* test : suite->tests)
 		{
 			std::cout << programName << " --suite \"" << suite->name
-				<< "\" --test \"" << test->name << "\"" << std::endl;
+					  << "\" --test \"" << test->name << "\"" << std::endl;
 		}
 	}
 

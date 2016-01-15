@@ -11,15 +11,15 @@
 #include <anki/util/Logger.h>
 #include <cstring>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 void CommandBufferImpl::create(const InitHints& hints)
 {
 	auto& pool = m_manager->getAllocator().getMemoryPool();
 
-	m_alloc = CommandBufferAllocator<GlCommand*>(
-		pool.getAllocationCallback(),
+	m_alloc = CommandBufferAllocator<GlCommand*>(pool.getAllocationCallback(),
 		pool.getAllocationCallbackUserData(),
 		hints.m_chunkSize,
 		1.0,
@@ -33,7 +33,7 @@ void CommandBufferImpl::destroy()
 	if(!m_executed && m_firstCommand)
 	{
 		ANKI_LOGW("Chain contains commands but never executed. "
-			"This should only happen on exceptions");
+				  "This should only happen on exceptions");
 	}
 #endif
 

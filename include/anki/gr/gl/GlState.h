@@ -8,7 +8,8 @@
 #include <anki/gr/gl/Common.h>
 #include <anki/util/DArray.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class ConfigSet;
@@ -17,7 +18,7 @@ class ConfigSet;
 /// @{
 
 /// Knowing the ventor allows some optimizations
-enum class GpuVendor: U8
+enum class GpuVendor : U8
 {
 	UNKNOWN,
 	ARM,
@@ -67,11 +68,11 @@ public:
 		U64 m_color = 0;
 	} m_stateHashes;
 
-	Array2d<Bool, MAX_COLOR_ATTACHMENTS, 4> m_colorWriteMasks  = {{
-		{{true, true, true, true}},
-		{{true, true, true, true}},
-		{{true, true, true, true}},
-		{{true, true, true, true}}}};
+	Array2d<Bool, MAX_COLOR_ATTACHMENTS, 4> m_colorWriteMasks = {
+		{{{true, true, true, true}},
+			{{true, true, true, true}},
+			{{true, true, true, true}},
+			{{true, true, true, true}}}};
 	Bool m_depthWriteMask = true;
 	/// @}
 
@@ -96,7 +97,8 @@ public:
 
 	GlState(GrManager* manager)
 		: m_manager(manager)
-	{}
+	{
+	}
 
 	/// Call this from the main thread.
 	void init0(const ConfigSet& config);
@@ -108,8 +110,8 @@ public:
 	void destroy();
 
 	/// Allocate memory for a dynamic buffer.
-	void* allocateDynamicMemory(PtrSize size, BufferUsage usage,
-		DynamicBufferToken& token);
+	void* allocateDynamicMemory(
+		PtrSize size, BufferUsage usage, DynamicBufferToken& token);
 
 	void checkDynamicMemoryConsumption();
 
@@ -117,13 +119,13 @@ private:
 	GrManager* m_manager;
 	DArray<U8> m_transferBuffer;
 
-	void initDynamicBuffer(GLenum target, U32 aligment, U32 maxAllocationSize,
-		BufferUsage usage);
+	void initDynamicBuffer(
+		GLenum target, U32 aligment, U32 maxAllocationSize, BufferUsage usage);
 };
 
 //==============================================================================
-inline void* GlState::allocateDynamicMemory(PtrSize originalSize,
-	BufferUsage usage, DynamicBufferToken& token)
+inline void* GlState::allocateDynamicMemory(
+	PtrSize originalSize, BufferUsage usage, DynamicBufferToken& token)
 {
 	ANKI_ASSERT(originalSize > 0);
 
@@ -159,4 +161,3 @@ inline void* GlState::allocateDynamicMemory(PtrSize originalSize,
 /// @}
 
 } // end namespace anki
-

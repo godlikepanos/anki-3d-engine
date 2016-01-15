@@ -10,7 +10,8 @@
 #include <anki/util/Functions.h>
 #include <anki/util/Enum.h>
 
-namespace anki {
+namespace anki
+{
 
 /// Image loader.
 /// Used in Texture::load. Supported types: TGA and an AnKi specific format.
@@ -18,7 +19,7 @@ class ImageLoader
 {
 public:
 	/// Texture type
-	enum class TextureType: U32
+	enum class TextureType : U32
 	{
 		NONE,
 		_2D,
@@ -28,7 +29,7 @@ public:
 	};
 
 	/// The acceptable color types of AnKi
-	enum class ColorFormat: U32
+	enum class ColorFormat : U32
 	{
 		NONE,
 		RGB8, ///< RGB
@@ -36,7 +37,7 @@ public:
 	};
 
 	/// The data compression
-	enum class DataCompression: U32
+	enum class DataCompression : U32
 	{
 		NONE,
 		RAW = 1 << 0,
@@ -58,7 +59,8 @@ public:
 
 	ImageLoader(GenericMemoryPoolAllocator<U8> alloc)
 		: m_alloc(alloc)
-	{}
+	{
+	}
 
 	~ImageLoader()
 	{
@@ -103,8 +105,7 @@ public:
 	}
 
 	/// Load an image file.
-	ANKI_USE_RESULT Error load(
-		ResourceFilePtr file,
+	ANKI_USE_RESULT Error load(ResourceFilePtr file,
 		const CString& filename,
 		U32 maxTextureSize = MAX_U32);
 
@@ -128,4 +129,3 @@ private:
 };
 
 } // end namespace anki
-

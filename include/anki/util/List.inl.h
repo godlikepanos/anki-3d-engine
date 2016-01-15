@@ -3,16 +3,20 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-namespace anki {
-namespace detail {
+namespace anki
+{
+namespace detail
+{
 
 //==============================================================================
 // ListIterator                                                                =
 //==============================================================================
 
 //==============================================================================
-template<typename TNodePointer, typename TValuePointer,
-	typename TValueReference, typename TList>
+template<typename TNodePointer,
+	typename TValuePointer,
+	typename TValueReference,
+	typename TList>
 ListIterator<TNodePointer, TValuePointer, TValueReference, TList>&
 	ListIterator<TNodePointer, TValuePointer, TValueReference, TList>::
 	operator--()
@@ -354,4 +358,3 @@ void List<T>::destroy(TAllocator alloc)
 }
 
 } // end namespace anki
-

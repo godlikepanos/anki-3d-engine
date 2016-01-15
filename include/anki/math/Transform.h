@@ -7,7 +7,8 @@
 
 #include <anki/math/CommonIncludes.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup math
 /// @{
@@ -20,7 +21,8 @@ public:
 	/// @name Constructors
 	/// @{
 	TTransform()
-	{}
+	{
+	}
 
 	TTransform(const TTransform& b)
 		: m_origin(b.m_origin)
@@ -38,8 +40,8 @@ public:
 		checkW();
 	}
 
-	TTransform(const TVec4<T>& origin, const TMat3x4<T>& rotation,
-		const T scale)
+	TTransform(
+		const TVec4<T>& origin, const TMat3x4<T>& rotation, const T scale)
 		: m_origin(origin)
 		, m_rotation(rotation)
 		, m_scale(scale)
@@ -211,4 +213,3 @@ typedef TTransform<F32> Transform;
 /// @}
 
 } // end namespace anki
-

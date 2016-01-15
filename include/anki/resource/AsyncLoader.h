@@ -8,7 +8,8 @@
 #include <anki/resource/Common.h>
 #include <anki/util/Thread.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup resource
 /// @{
@@ -20,7 +21,8 @@ class AsyncLoaderTask
 
 public:
 	virtual ~AsyncLoaderTask()
-	{}
+	{
+	}
 
 	virtual ANKI_USE_RESULT Error operator()() = 0;
 
@@ -63,8 +65,8 @@ private:
 template<typename TTask, typename... TArgs>
 void AsyncLoader::newTask(TArgs&&... args)
 {
-	TTask* newTask = m_alloc.template newInstance<TTask>(
-		std::forward<TArgs>(args)...);
+	TTask* newTask =
+		m_alloc.template newInstance<TTask>(std::forward<TArgs>(args)...);
 
 	// Append task to the list
 	{
@@ -91,4 +93,3 @@ void AsyncLoader::newTask(TArgs&&... args)
 /// @}
 
 } // end namespace anki
-

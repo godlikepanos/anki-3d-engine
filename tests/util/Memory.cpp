@@ -97,7 +97,7 @@ ANKI_TEST(Util, StackMemoryPool)
 		const U ALLOC_SIZE = 25;
 		ThreadPool threadPool(THREAD_COUNT);
 
-		class AllocateTask: public ThreadPool::Task
+		class AllocateTask : public ThreadPool::Task
 		{
 		public:
 			StackMemoryPool* m_pool = nullptr;
@@ -177,9 +177,7 @@ ANKI_TEST(Util, ChainMemoryPool)
 		const U size = 8;
 		ChainMemoryPool pool;
 
-		pool.create(
-			allocAligned, nullptr,
-			size, 2.0, 0, 1);
+		pool.create(allocAligned, nullptr, size, 2.0, 0, 1);
 
 		void* mem = pool.allocate(5, 1);
 		ANKI_TEST_EXPECT_NEQ(mem, nullptr);
@@ -197,9 +195,7 @@ ANKI_TEST(Util, ChainMemoryPool)
 		const U size = sizeof(PtrSize) + 10;
 		ChainMemoryPool pool;
 
-		pool.create(
-			allocAligned, nullptr,
-			size, 2.0, 0, 1);
+		pool.create(allocAligned, nullptr, size, 2.0, 0, 1);
 
 		void* mem = pool.allocate(size, 1);
 		ANKI_TEST_EXPECT_NEQ(mem, nullptr);

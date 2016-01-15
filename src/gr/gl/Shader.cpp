@@ -7,19 +7,22 @@
 #include <anki/gr/gl/ShaderImpl.h>
 #include <anki/gr/gl/CommandBufferImpl.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 Shader::Shader(GrManager* manager)
 	: GrObject(manager)
-{}
+{
+}
 
 //==============================================================================
 Shader::~Shader()
-{}
+{
+}
 
 //==============================================================================
-class ShaderCreateCommand final: public GlCommand
+class ShaderCreateCommand final : public GlCommand
 {
 public:
 	ShaderPtr m_shader;
@@ -27,13 +30,16 @@ public:
 	char* m_source;
 	CommandBufferAllocator<char> m_alloc;
 
-	ShaderCreateCommand(Shader* shader, ShaderType type, char* source,
+	ShaderCreateCommand(Shader* shader,
+		ShaderType type,
+		char* source,
 		const CommandBufferAllocator<char>& alloc)
 		: m_shader(shader)
 		, m_type(type)
 		, m_source(source)
 		, m_alloc(alloc)
-	{}
+	{
+	}
 
 	Error operator()(GlState&)
 	{
@@ -53,8 +59,8 @@ public:
 	}
 };
 
-void Shader::create(ShaderType shaderType, const void* source,
-	PtrSize sourceSize)
+void Shader::create(
+	ShaderType shaderType, const void* source, PtrSize sourceSize)
 {
 	ANKI_ASSERT(source);
 	ANKI_ASSERT(sourceSize
@@ -76,4 +82,3 @@ void Shader::create(ShaderType shaderType, const void* source,
 }
 
 } // end namespace anki
-

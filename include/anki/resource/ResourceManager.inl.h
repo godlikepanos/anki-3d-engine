@@ -5,7 +5,8 @@
 
 #include <anki/resource/ResourceManager.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 template<typename T>
@@ -68,8 +69,7 @@ Error ResourceManager::loadResource(
 
 //==============================================================================
 template<typename T, typename... TArgs>
-Error ResourceManager::loadResourceToCache(
-	ResourcePtr<T>& out, TArgs&&... args)
+Error ResourceManager::loadResourceToCache(ResourcePtr<T>& out, TArgs&&... args)
 {
 	StringAuto fname(m_tmpAlloc);
 

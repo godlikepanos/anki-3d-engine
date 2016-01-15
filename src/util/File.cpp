@@ -11,7 +11,8 @@
 #include <cstdarg>
 #include <contrib/minizip/unzip.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // Misc
@@ -52,13 +53,15 @@ File::~File()
 //==============================================================================
 Error File::open(const CString& filename, OpenFlag flags)
 {
-	ANKI_ASSERT(m_file == nullptr && m_flags == OpenFlag::NONE
-		&& m_type == Type::NONE);
+	ANKI_ASSERT(
+		m_file == nullptr && m_flags == OpenFlag::NONE && m_type == Type::NONE);
 
 	// Only these flags are accepted
 	ANKI_ASSERT((flags & (OpenFlag::READ | OpenFlag::WRITE | OpenFlag::APPEND
-		| OpenFlag::BINARY | OpenFlag::ENDIAN_LITTLE
-		| OpenFlag::ENDIAN_BIG)) != OpenFlag::NONE);
+							 | OpenFlag::BINARY
+							 | OpenFlag::ENDIAN_LITTLE
+							 | OpenFlag::ENDIAN_BIG))
+		!= OpenFlag::NONE);
 
 	// Cannot be both
 	ANKI_ASSERT((flags & OpenFlag::READ) != (flags & OpenFlag::WRITE));
@@ -249,8 +252,7 @@ Error File::openAndroidFile(const CString& filename, OpenFlag flags)
 	ANKI_ASSERT(gAndroidApp != nullptr && gAndroidApp->activity
 		&& gAndroidApp->activity->assetManager);
 
-	m_file = AAssetManager_open(
-		gAndroidApp->activity->assetManager,
+	m_file = AAssetManager_open(gAndroidApp->activity->assetManager,
 		&filename[0] + 1,
 		AASSET_MODE_STREAMING);
 
@@ -541,8 +543,7 @@ Error File::seek(PtrSize offset, SeekOrigin origin)
 		// Rewind if needed
 		if(origin == SeekOrigin::BEGINNING)
 		{
-			if(unzCloseCurrentFile(m_file)
-				|| unzOpenCurrentFile(m_file))
+			if(unzCloseCurrentFile(m_file) || unzOpenCurrentFile(m_file))
 			{
 				ANKI_LOGE("Rewind failed");
 				err = ErrorCode::FUNCTION_FAILED;
@@ -581,8 +582,10 @@ Error File::seek(PtrSize offset, SeekOrigin origin)
 
 //==============================================================================
 Error File::identifyFile(const CString& filename,
-	char* archiveFilename, PtrSize archiveFilenameLength,
-	CString& filenameInArchive, Type& type)
+	char* archiveFilename,
+	PtrSize archiveFilenameLength,
+	CString& filenameInArchive,
+	Type& type)
 {
 	Error err = ErrorCode::NONE;
 
@@ -662,8 +665,7 @@ File::OpenFlag File::getMachineEndianness()
 }
 
 //==============================================================================
-Error File::readAllText(
-	GenericMemoryPoolAllocator<U8> alloc, String& out)
+Error File::readAllText(GenericMemoryPoolAllocator<U8> alloc, String& out)
 {
 	Error err = ErrorCode::NONE;
 	PtrSize size = getSize();

@@ -8,16 +8,19 @@
 #include <anki/resource/TextureResource.h>
 #include <anki/resource/ResourceManager.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 LensFlareComponent::LensFlareComponent(SceneNode* node)
 	: SceneComponent(Type::LENS_FLARE, node)
-{}
+{
+}
 
 //==============================================================================
 LensFlareComponent::~LensFlareComponent()
-{}
+{
+}
 
 //==============================================================================
 Error LensFlareComponent::create(const CString& textureFilename)
@@ -30,8 +33,8 @@ Error LensFlareComponent::create(const CString& textureFilename)
 	GrManager& gr = getSceneGraph().getGrManager();
 	for(auto it = m_queries.getBegin(); it != m_queries.getEnd(); ++it)
 	{
-		(*it) = gr.newInstance<OcclusionQuery>(
-			OcclusionQueryResultBit::VISIBLE);
+		(*it) =
+			gr.newInstance<OcclusionQuery>(OcclusionQueryResultBit::VISIBLE);
 	}
 
 	// Resource group
@@ -74,4 +77,3 @@ void LensFlareComponent::getOcclusionQueryToCheck(
 }
 
 } // end namespace anki
-

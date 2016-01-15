@@ -7,7 +7,8 @@
 
 #include <anki/renderer/RenderingPass.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class Ir;
@@ -16,7 +17,7 @@ class Ir;
 /// @{
 
 /// Reflections.
-class Refl: public RenderingPass
+class Refl : public RenderingPass
 {
 anki_internal:
 	Refl(Renderer* r);
@@ -66,4 +67,3 @@ private:
 /// @}
 
 } // end namespace anki
-

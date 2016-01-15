@@ -7,18 +7,20 @@
 
 #include <anki/renderer/RenderingPass.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup renderer
 /// @{
 
 /// Forward rendering stage. The objects that blend must be handled differently
-class Fs: public RenderingPass
+class Fs : public RenderingPass
 {
 anki_internal:
 	Fs(Renderer* r)
 		: RenderingPass(r)
-	{}
+	{
+	}
 
 	~Fs();
 
@@ -33,4 +35,3 @@ private:
 /// @}
 
 } // end namespace anki
-

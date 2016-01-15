@@ -107,9 +107,12 @@ ANKI_TEST(Util, HashMap)
 	// Bench it
 	{
 		HashMap<int, int, Hasher, Compare> akMap;
-		std::unordered_map<int, int, std::hash<int>, std::equal_to<int>,
-			HeapAllocator<std::pair<int, int>>> stdMap(10, std::hash<int>(),
-			std::equal_to<int>(), alloc);
+		std::unordered_map<int,
+			int,
+			std::hash<int>,
+			std::equal_to<int>,
+			HeapAllocator<std::pair<int, int>>>
+			stdMap(10, std::hash<int>(), std::equal_to<int>(), alloc);
 
 		std::unordered_map<int, int> tmpMap;
 
@@ -152,7 +155,9 @@ ANKI_TEST(Util, HashMap)
 		timer.stop();
 		HighRezTimer::Scalar stlTime = timer.getElapsedTime();
 
-		printf("Inserting bench: STL %f AnKi %f | %f%%\n", stlTime, akTime,
+		printf("Inserting bench: STL %f AnKi %f | %f%%\n",
+			stlTime,
+			akTime,
 			stlTime / akTime * 100.0);
 
 		// Find values AnKi
@@ -174,19 +179,22 @@ ANKI_TEST(Util, HashMap)
 		timer.stop();
 		stlTime = timer.getElapsedTime();
 
-		printf("Find bench: STL %f AnKi %f | %f%%\n", stlTime, akTime,
+		printf("Find bench: STL %f AnKi %f | %f%%\n",
+			stlTime,
+			akTime,
 			stlTime / akTime * 100.0);
 
 		akMap.destroy(alloc);
 	}
 }
 
-class Hashable: public IntrusiveHashMapEnabled<Hashable>
+class Hashable : public IntrusiveHashMapEnabled<Hashable>
 {
 public:
 	Hashable(int x)
 		: m_x(x)
-	{}
+	{
+	}
 
 	int m_x;
 };

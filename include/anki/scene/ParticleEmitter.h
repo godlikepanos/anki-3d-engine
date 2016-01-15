@@ -11,7 +11,8 @@
 #include <anki/scene/RenderComponent.h>
 #include <anki/resource/ParticleEmitterResource.h>
 
-namespace anki {
+namespace anki
+{
 
 class ParticleEmitter;
 
@@ -25,10 +26,12 @@ class ParticleBase
 
 public:
 	ParticleBase()
-	{}
+	{
+	}
 
 	virtual ~ParticleBase()
-	{}
+	{
+	}
 
 	F32 getTimeOfBirth() const
 	{
@@ -73,12 +76,14 @@ public:
 	}
 
 	/// Revive the particle
-	virtual void revive(const ParticleEmitter& pe, const Transform& trf,
-		F32 prevUpdateTime, F32 crntTime);
+	virtual void revive(const ParticleEmitter& pe,
+		const Transform& trf,
+		F32 prevUpdateTime,
+		F32 crntTime);
 
 	/// Only relevant for non-bullet simulations
-	virtual void simulate(const ParticleEmitter& pe,
-		F32 prevUpdateTime, F32 crntTime)
+	virtual void simulate(
+		const ParticleEmitter& pe, F32 prevUpdateTime, F32 crntTime)
 	{
 		(void)pe;
 		(void)prevUpdateTime;
@@ -95,17 +100,20 @@ protected:
 };
 
 /// Simple particle for simple simulation
-class ParticleSimple: public ParticleBase
+class ParticleSimple : public ParticleBase
 {
 public:
 	ParticleSimple()
-	{}
+	{
+	}
 
-	void revive(const ParticleEmitter& pe, const Transform& trf,
-		F32 prevUpdateTime, F32 crntTime) override;
-
-	void simulate(const ParticleEmitter& pe, F32 prevUpdateTime,
+	void revive(const ParticleEmitter& pe,
+		const Transform& trf,
+		F32 prevUpdateTime,
 		F32 crntTime) override;
+
+	void simulate(
+		const ParticleEmitter& pe, F32 prevUpdateTime, F32 crntTime) override;
 
 	const Vec4& getPosition() const override
 	{
@@ -146,7 +154,7 @@ private:
 #endif
 
 /// The particle emitter scene node. This scene node emitts
-class ParticleEmitter: public SceneNode, private ParticleEmitterProperties
+class ParticleEmitter : public SceneNode, private ParticleEmitterProperties
 {
 	friend class ParticleBase;
 	friend class Particle;
@@ -159,8 +167,7 @@ public:
 
 	~ParticleEmitter();
 
-	ANKI_USE_RESULT Error create(
-		const CString& name, const CString& filename);
+	ANKI_USE_RESULT Error create(const CString& name, const CString& filename);
 
 	/// @name SceneNode virtuals
 	/// @{
@@ -169,7 +176,7 @@ public:
 	/// @}
 
 private:
-	enum class SimulationType: U8
+	enum class SimulationType : U8
 	{
 		UNDEFINED,
 		SIMPLE,
@@ -206,4 +213,3 @@ private:
 /// @}
 
 } // end namespace anki
-

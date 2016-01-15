@@ -9,7 +9,8 @@
 #include <anki/scene/SceneComponent.h>
 #include <anki/Collision.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class Sector;
@@ -22,12 +23,13 @@ class Renderer;
 /// @{
 
 /// Dummy component to identify a portal or sector.
-class PortalSectorComponent: public SceneComponent
+class PortalSectorComponent : public SceneComponent
 {
 public:
 	PortalSectorComponent(SceneNode* node)
 		: SceneComponent(Type::SECTOR_PORTAL, node)
-	{}
+	{
+	}
 
 	static Bool classof(const SceneComponent& c)
 	{
@@ -36,7 +38,7 @@ public:
 };
 
 /// The base for portals and sectors.
-class PortalSectorBase: public SceneNode
+class PortalSectorBase : public SceneNode
 {
 	friend class Portal;
 	friend class Sector;
@@ -44,7 +46,8 @@ class PortalSectorBase: public SceneNode
 public:
 	PortalSectorBase(SceneGraph* scene)
 		: SceneNode(scene)
-	{}
+	{
+	}
 
 	~PortalSectorBase();
 
@@ -80,7 +83,7 @@ protected:
 };
 
 /// 2 way portal.
-class Portal: public PortalSectorBase
+class Portal : public PortalSectorBase
 {
 	friend class SectorGroup;
 
@@ -89,7 +92,8 @@ public:
 
 	Portal(SceneGraph* scene)
 		: PortalSectorBase(scene)
-	{}
+	{
+	}
 
 	~Portal();
 
@@ -111,7 +115,7 @@ private:
 };
 
 /// A sector. It consists of an octree and some portals
-class Sector: public PortalSectorBase
+class Sector : public PortalSectorBase
 {
 	friend class SectorGroup;
 
@@ -121,7 +125,8 @@ public:
 	/// Default constructor
 	Sector(SceneGraph* scene)
 		: PortalSectorBase(scene)
-	{}
+	{
+	}
 
 	~Sector();
 
@@ -155,7 +160,8 @@ public:
 	/// Default constructor
 	SectorGroup(SceneGraph* scene)
 		: m_scene(scene)
-	{}
+	{
+	}
 
 	/// Destructor
 	~SectorGroup();
@@ -163,8 +169,8 @@ public:
 	void spatialUpdated(SpatialComponent* sp);
 	void spatialDeleted(SpatialComponent* sp);
 
-	void prepareForVisibilityTests(const FrustumComponent& frc,
-		const Renderer& r);
+	void prepareForVisibilityTests(
+		const FrustumComponent& frc, const Renderer& r);
 
 	PtrSize getVisibleNodesCount() const
 	{
@@ -186,15 +192,13 @@ private:
 	List<SpatialComponent*> m_spatialsDeferredBinning;
 	SpinLock m_mtx;
 
-	void findVisibleSectors(
-		const FrustumComponent& frc,
+	void findVisibleSectors(const FrustumComponent& frc,
 		List<Sector*>& visibleSectors,
 		U& spatialsCount,
 		const Renderer& r);
 
 	/// Recursive method
-	void findVisibleSectorsInternal(
-		const FrustumComponent& frc,
+	void findVisibleSectorsInternal(const FrustumComponent& frc,
 		Sector& s,
 		List<Sector*>& visibleSectors,
 		U& spatialsCount,
@@ -225,4 +229,3 @@ inline Error SectorGroup::iterateVisibleSceneNodes(
 /// @}
 
 } // end namespace anki
-

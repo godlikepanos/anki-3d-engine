@@ -7,7 +7,8 @@
 #include <anki/scene/Visibility.h>
 #include <anki/util/Rtti.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 FrustumComponent::FrustumComponent(SceneNode* node, Frustum* frustum)

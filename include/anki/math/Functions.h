@@ -9,7 +9,8 @@
 #include <cmath>
 #include <cstdlib>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup math
 /// @{
@@ -135,11 +136,11 @@ inline T abs(const T f)
 	return std::fabs(f);
 }
 
-#define ANKI_SPECIALIZE_ABS_INT(type_) \
-	template<> \
-	inline type_ abs(const type_ f) \
-	{ \
-		return std::abs(f); \
+#define ANKI_SPECIALIZE_ABS_INT(type_)                                         \
+	template<>                                                                 \
+	inline type_ abs(const type_ f)                                            \
+	{                                                                          \
+		return std::abs(f);                                                    \
 	}
 
 ANKI_SPECIALIZE_ABS_INT(I8)
@@ -155,11 +156,11 @@ inline Bool isZero(const T f)
 	return abs<T>(f) < getEpsilon<T>();
 }
 
-#define ANKI_SPECIALIZE_IS_ZERO_INT(type_) \
-	template<> \
-	inline Bool isZero(const type_ x) \
-	{ \
-		return x == type_(0); \
+#define ANKI_SPECIALIZE_IS_ZERO_INT(type_)                                     \
+	template<>                                                                 \
+	inline Bool isZero(const type_ x)                                          \
+	{                                                                          \
+		return x == type_(0);                                                  \
 	}
 
 ANKI_SPECIALIZE_IS_ZERO_INT(I8)
@@ -221,8 +222,7 @@ static Type cosInterpolate(const Type& from, const Type& to, F32 u)
 ///              from [0.0, 1.0]
 template<typename Type>
 static Type cubicInterpolate(
-	const Type& a, const Type& b, const Type& c,
-	const Type& d, F32 u)
+	const Type& a, const Type& b, const Type& c, const Type& d, F32 u)
 {
 	F32 u2 = u * u;
 	Type a0 = d - c - a + b;
@@ -230,9 +230,8 @@ static Type cubicInterpolate(
 	Type a2 = c - a;
 	Type a3 = b;
 
-	return(a0 * u * u2 + a1 * u2 + a2 * u + a3);
+	return (a0 * u * u2 + a1 * u2 + a2 * u + a3);
 }
 /// @}
 
 } // end namespace anki
-

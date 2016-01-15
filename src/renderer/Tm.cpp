@@ -7,7 +7,8 @@
 #include <anki/renderer/Is.h>
 #include <anki/renderer/Renderer.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 Error Tm::create(const ConfigSet& initializer)
@@ -15,16 +16,17 @@ Error Tm::create(const ConfigSet& initializer)
 	// Create shader
 	StringAuto pps(getAllocator());
 
-	pps.sprintf(
-		"#define IS_RT_MIPMAP %u\n"
-		"#define ANKI_RENDERER_WIDTH %u\n"
-		"#define ANKI_RENDERER_HEIGHT %u\n",
+	pps.sprintf("#define IS_RT_MIPMAP %u\n"
+				"#define ANKI_RENDERER_WIDTH %u\n"
+				"#define ANKI_RENDERER_HEIGHT %u\n",
 		min<U>(Is::MIPMAPS_COUNT, 5) - 1,
 		m_r->getWidth(),
 		m_r->getHeight());
 
 	ANKI_CHECK(getResourceManager().loadResourceToCache(m_luminanceShader,
-		"shaders/PpsTmAverageLuminance.comp.glsl", pps.toCString(), "rppstm_"));
+		"shaders/PpsTmAverageLuminance.comp.glsl",
+		pps.toCString(),
+		"rppstm_"));
 
 	// Create ppline
 	PipelineInitializer pplineInit;

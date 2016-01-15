@@ -8,22 +8,24 @@
 #include <anki/event/Event.h>
 #include <anki/Math.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup event
 /// @{
 
 /// An event for simple movable animations
-class JitterMoveEvent: public Event
+class JitterMoveEvent : public Event
 {
 public:
 	/// Constructor
 	JitterMoveEvent(EventManager* manager)
 		: Event(manager)
-	{}
+	{
+	}
 
-	ANKI_USE_RESULT Error init(F32 startTime, F32 duration,
-		SceneNode* movableSceneNode);
+	ANKI_USE_RESULT Error init(
+		F32 startTime, F32 duration, SceneNode* movableSceneNode);
 
 	/// Implements Event::update
 	ANKI_USE_RESULT Error update(F32 prevUpdateTime, F32 crntTime);
@@ -37,4 +39,3 @@ private:
 /// @}
 
 } // end namespace anki
-

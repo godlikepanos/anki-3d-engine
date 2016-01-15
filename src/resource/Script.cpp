@@ -6,7 +6,8 @@
 #include <anki/resource/Script.h>
 #include <anki/util/File.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 Script::~Script()

@@ -16,13 +16,15 @@
 #include <anki/util/Array.h>
 #include <anki/util/StdTypes.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup util_patterns
 /// @{
 
 /// Namespace for visitor internal classes
-namespace visitor_detail {
+namespace visitor_detail
+{
 
 /// A smart struct that given a type and a list of types finds a const integer
 /// indicating the type's position from the back of the list.
@@ -42,8 +44,9 @@ struct GetVariadicTypeId
 
 	// Declaration
 	template<typename Type, typename TFirst, typename... Types_>
-	struct Helper<Type, TFirst, Types_...>: Helper<Type, Types_...>
-	{};
+	struct Helper<Type, TFirst, Types_...> : Helper<Type, Types_...>
+	{
+	};
 
 	// Specialized
 	template<typename Type, typename... Types_>
@@ -56,7 +59,7 @@ struct GetVariadicTypeId
 	template<typename Type>
 	static constexpr I get()
 	{
-		return sizeof...(Types) - Helper<Type, Types...>::ID - 1;
+		return sizeof...(Types)-Helper<Type, Types...>::ID - 1;
 	}
 };
 
@@ -77,8 +80,9 @@ struct GetTypeUsingId
 
 	// Declaration
 	template<I id, typename TFirst, typename... Types_>
-	struct Helper<id, TFirst, Types_...>: Helper<id - 1, Types_...>
-	{};
+	struct Helper<id, TFirst, Types_...> : Helper<id - 1, Types_...>
+	{
+	};
 
 	// Specialized
 	template<typename TFirst, typename... Types_>
@@ -99,7 +103,8 @@ class Visitable
 {
 public:
 	Visitable()
-	{}
+	{
+	}
 
 	template<typename T>
 	Visitable(T* t)
@@ -138,8 +143,8 @@ public:
 	template<typename T>
 	void setupVisitable(T* t)
 	{
-		ANKI_ASSERT(t != nullptr); // Null arg
-		// Setting for second time? Now allowed
+		// Null arg. Setting for second time? Now allowed
+		ANKI_ASSERT(t != nullptr);
 		ANKI_ASSERT(address == nullptr && m_what == -1);
 		address = t;
 		m_what = visitor_detail::GetVariadicTypeId<Types...>::template get<T>();
@@ -165,11 +170,13 @@ private:
 		}
 	}
 
-	template<typename TVisitor, typename TFirst, typename TSecond,
+	template<typename TVisitor,
+		typename TFirst,
+		typename TSecond,
 		typename... Types_>
 	void acceptVisitorInternal(TVisitor& v)
 	{
-		constexpr I i = sizeof...(Types) - sizeof...(Types_) - 1;
+		constexpr I i = sizeof...(Types) - sizeof...(Types_)-1;
 
 		switch(m_what)
 		{
@@ -196,11 +203,13 @@ private:
 		}
 	}
 
-	template<typename TVisitor, typename TFirst, typename TSecond,
+	template<typename TVisitor,
+		typename TFirst,
+		typename TSecond,
 		typename... Types_>
 	void acceptVisitorInternalConst(TVisitor& v) const
 	{
-		constexpr I i = sizeof...(Types) - sizeof...(Types_) - 1;
+		constexpr I i = sizeof...(Types) - sizeof...(Types_)-1;
 
 		switch(m_what)
 		{
@@ -225,11 +234,11 @@ template<typename TBase, typename... Types>
 class VisitableCommonBase
 {
 public:
-
 #if ANKI_DEBUG
 	// Allow dynamic cast in acceptVisitor
 	virtual ~VisitableCommonBase()
-	{}
+	{
+	}
 #endif
 
 	I getVisitableTypeId() const
@@ -288,16 +297,16 @@ private:
 		switch(m_what)
 		{
 		case 0:
-			{
+		{
 #if ANKI_DEBUG
-				TFirst* base = dynamic_cast<TFirst*>(this);
-				ANKI_ASSERT(base != nullptr);
+			TFirst* base = dynamic_cast<TFirst*>(this);
+			ANKI_ASSERT(base != nullptr);
 #else
-				TFirst* base = static_cast<TFirst*>(this);
+			TFirst* base = static_cast<TFirst*>(this);
 #endif
-				err = v.template visit(*base);
-			}
-			break;
+			err = v.template visit(*base);
+		}
+		break;
 		default:
 			ANKI_ASSERT(0 && "Wrong type ID");
 			break;
@@ -306,26 +315,28 @@ private:
 		return err;
 	}
 
-	template<typename TVisitor, typename TFirst, typename TSecond,
+	template<typename TVisitor,
+		typename TFirst,
+		typename TSecond,
 		typename... Types_>
 	ANKI_USE_RESULT Error acceptVisitorInternal(TVisitor& v)
 	{
 		Error err = ErrorCode::NONE;
-		constexpr I i = sizeof...(Types) - sizeof...(Types_) - 1;
+		constexpr I i = sizeof...(Types) - sizeof...(Types_)-1;
 
 		switch(m_what)
 		{
 		case i:
-			{
+		{
 #if ANKI_DEBUG
-				TSecond* base = dynamic_cast<TSecond*>(this);
-				ANKI_ASSERT(base != nullptr);
+			TSecond* base = dynamic_cast<TSecond*>(this);
+			ANKI_ASSERT(base != nullptr);
 #else
-				TSecond* base = static_cast<TSecond*>(this);
+			TSecond* base = static_cast<TSecond*>(this);
 #endif
-				err = v.template visit(*base);
-			}
-			break;
+			err = v.template visit(*base);
+		}
+		break;
 		default:
 			err = acceptVisitorInternal<TVisitor, TFirst, Types_...>(v);
 			break;
@@ -342,16 +353,16 @@ private:
 		switch(m_what)
 		{
 		case 0:
-			{
+		{
 #if ANKI_DEBUG
-				const TFirst* base = dynamic_cast<const TFirst*>(this);
-				ANKI_ASSERT(base != nullptr);
+			const TFirst* base = dynamic_cast<const TFirst*>(this);
+			ANKI_ASSERT(base != nullptr);
 #else
-				const TFirst* base = static_cast<const TFirst*>(this);
+			const TFirst* base = static_cast<const TFirst*>(this);
 #endif
-				err = v.template visit(*base);
-			}
+			err = v.template visit(*base);
 			break;
+		}
 		default:
 			ANKI_ASSERT(0 && "Wrong type ID");
 			break;
@@ -360,26 +371,28 @@ private:
 		return err;
 	}
 
-	template<typename TVisitor, typename TFirst, typename TSecond,
+	template<typename TVisitor,
+		typename TFirst,
+		typename TSecond,
 		typename... Types_>
 	ANKI_USE_RESULT Error acceptVisitorInternalConst(TVisitor& v) const
 	{
 		Error err = ErrorCode::NONE;
-		constexpr I i = sizeof...(Types) - sizeof...(Types_) - 1;
+		constexpr I i = sizeof...(Types) - sizeof...(Types_)-1;
 
 		switch(m_what)
 		{
 		case i:
-			{
+		{
 #if ANKI_DEBUG
-				const TSecond* base = dynamic_cast<const TSecond*>(this);
-				ANKI_ASSERT(base != nullptr);
+			const TSecond* base = dynamic_cast<const TSecond*>(this);
+			ANKI_ASSERT(base != nullptr);
 #else
-				const TSecond* base = static_cast<const TSecond*>(this);
+			const TSecond* base = static_cast<const TSecond*>(this);
 #endif
-				err = v.template visit(*base);
-			}
+			err = v.template visit(*base);
 			break;
+		}
 		default:
 			err = acceptVisitorInternalConst<TVisitor, TFirst, Types_...>(v);
 			break;
@@ -392,4 +405,3 @@ private:
 /// @}
 
 } // end namespace anki
-

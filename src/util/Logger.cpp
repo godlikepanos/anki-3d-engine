@@ -10,10 +10,11 @@
 #include <cstdio>
 #include <cstdlib>
 #if ANKI_OS == ANKI_OS_ANDROID
-#	include <android/log.h>
+#include <android/log.h>
 #endif
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 static const Array<const char*, static_cast<U>(Logger::MessageType::COUNT)>
@@ -27,17 +28,21 @@ Logger::Logger()
 
 //==============================================================================
 Logger::~Logger()
-{}
+{
+}
 
 //==============================================================================
 void Logger::addMessageHandler(void* data, MessageHandlerCallback callback)
 {
-	m_handlers[m_handlersCount++] =  Handler(data, callback);
+	m_handlers[m_handlersCount++] = Handler(data, callback);
 }
 
 //==============================================================================
-void Logger::write(const char* file, int line, const char* func,
-	MessageType type, const char* msg)
+void Logger::write(const char* file,
+	int line,
+	const char* func,
+	MessageType type,
+	const char* msg)
 {
 	m_mutex.lock();
 
@@ -58,8 +63,12 @@ void Logger::write(const char* file, int line, const char* func,
 }
 
 //==============================================================================
-void Logger::writeFormated(const char* file, int line, const char* func,
-	MessageType type, const char* fmt, ...)
+void Logger::writeFormated(const char* file,
+	int line,
+	const char* func,
+	MessageType type,
+	const char* fmt,
+	...)
 {
 	char buffer[1024 * 40];
 	va_list args;
@@ -99,8 +108,13 @@ void Logger::defaultSystemMessageHandler(void*, const Info& info)
 		ANKI_ASSERT(0);
 	}
 
-	fprintf(out, "%s(%s:%d %s) %s: %s\033[0m\n", terminalColor, info.m_file,
-		info.m_line, info.m_func, MSG_TEXT[static_cast<U>(info.m_type)],
+	fprintf(out,
+		"%s(%s:%d %s) %s: %s\033[0m\n",
+		terminalColor,
+		info.m_file,
+		info.m_line,
+		info.m_func,
+		MSG_TEXT[static_cast<U>(info.m_type)],
 		info.m_msg);
 #elif ANKI_OS == ANKI_OS_ANDROID
 	U32 andMsgType = ANDROID_LOG_INFO;
@@ -125,8 +139,13 @@ void Logger::defaultSystemMessageHandler(void*, const Info& info)
 
 	std::stringstream ss;
 
-	__android_log_print(andMsgType, "AnKi", "(%s:%d %s) %s", info.m_file,
-		info.m_line, info.m_func, info.m_msg);
+	__android_log_print(andMsgType,
+		"AnKi",
+		"(%s:%d %s) %s",
+		info.m_file,
+		info.m_line,
+		info.m_func,
+		info.m_msg);
 #else
 	FILE* out = NULL;
 
@@ -148,8 +167,12 @@ void Logger::defaultSystemMessageHandler(void*, const Info& info)
 		ANKI_ASSERT(0);
 	}
 
-	fprintf(out, "(%s:%d %s) %s: %s\n", info.m_file,
-		info.m_line, info.m_func, MSG_TEXT[static_cast<U>(info.m_type)],
+	fprintf(out,
+		"(%s:%d %s) %s: %s\n",
+		info.m_file,
+		info.m_line,
+		info.m_func,
+		MSG_TEXT[static_cast<U>(info.m_type)],
 		info.m_msg);
 
 	fflush(out);
@@ -162,8 +185,11 @@ void Logger::fileMessageHandler(void* pfile, const Info& info)
 	File* file = reinterpret_cast<File*>(pfile);
 
 	Error err = file->writeText("(%s:%d %s) %s: %s\n",
-		info.m_file, info.m_line, info.m_func,
-		MSG_TEXT[static_cast<U>(info.m_type)], info.m_msg);
+		info.m_file,
+		info.m_line,
+		info.m_func,
+		MSG_TEXT[static_cast<U>(info.m_type)],
+		info.m_msg);
 
 	if(!err)
 	{

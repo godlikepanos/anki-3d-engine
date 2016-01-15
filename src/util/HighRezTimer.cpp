@@ -6,7 +6,8 @@
 #include <anki/util/HighRezTimer.h>
 #include <anki/util/Assert.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 void HighRezTimer::start()

@@ -8,7 +8,8 @@
 #include <anki/collision/Obb.h>
 #include <array>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 Aabb Aabb::getTransformed(const Transform& trf) const
@@ -90,8 +91,7 @@ void Aabb::setFromPointCloud(
 	m_min = Vec4(Vec3(MAX_F32), 0.0);
 	m_max = Vec4(Vec3(MIN_F32), 0.0);
 
-	iteratePointCloud(buff, count, stride, buffSize, [&](const Vec3& pos)
-	{
+	iteratePointCloud(buff, count, stride, buffSize, [&](const Vec3& pos) {
 		for(U j = 0; j < 3; j++)
 		{
 			if(pos[j] > m_max[j])
@@ -110,11 +110,11 @@ void Aabb::setFromPointCloud(
 Vec4 Aabb::computeSupport(const Vec4& dir) const
 {
 	Vec4 ret(0.0);
- 
+
 	ret.x() = dir.x() >= 0.0 ? m_max.x() : m_min.x();
 	ret.y() = dir.y() >= 0.0 ? m_max.y() : m_min.y();
 	ret.z() = dir.z() >= 0.0 ? m_max.z() : m_min.z();
- 
+
 	return ret;
 }
 

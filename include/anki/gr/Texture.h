@@ -7,7 +7,8 @@
 
 #include <anki/gr/GrObject.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup graphics
 /// @{
@@ -41,7 +42,7 @@ public:
 };
 
 /// GPU texture
-class Texture: public GrObject
+class Texture : public GrObject
 {
 public:
 	/// Construct.

@@ -66,9 +66,9 @@ ANKI_TEST(Util, WalkDir)
 
 	// Walk crnt dir
 	U32 count = 0;
-	ANKI_TEST_EXPECT_NO_ERR(walkDirectoryTree("./data/dir", &count,
-		[](const CString& fname, void* pCount, Bool isDir) -> Error
-		{
+	ANKI_TEST_EXPECT_NO_ERR(walkDirectoryTree("./data/dir",
+		&count,
+		[](const CString& fname, void* pCount, Bool isDir) -> Error {
 			if(isDir)
 			{
 				printf("-- %s\n", &fname[0]);
@@ -82,9 +82,9 @@ ANKI_TEST(Util, WalkDir)
 
 	// Walk again
 	count = 0;
-	ANKI_TEST_EXPECT_NO_ERR(walkDirectoryTree("./data/dir///////", &count,
-		[](const CString& fname, void* pCount, Bool isDir) -> Error
-		{
+	ANKI_TEST_EXPECT_NO_ERR(walkDirectoryTree("./data/dir///////",
+		&count,
+		[](const CString& fname, void* pCount, Bool isDir) -> Error {
 			printf("-- %s\n", &fname[0]);
 			++(*static_cast<U32*>(pCount));
 
@@ -95,13 +95,14 @@ ANKI_TEST(Util, WalkDir)
 
 	// Test error
 	count = 0;
-	ANKI_TEST_EXPECT_ERR(walkDirectoryTree("./data///dir////", &count,
-		[](const CString& fname, void* pCount, Bool isDir) -> Error
-		{
-			printf("-- %s\n", &fname[0]);
-			++(*static_cast<U32*>(pCount));
-			return ErrorCode::FUNCTION_FAILED;
-		}),
+	ANKI_TEST_EXPECT_ERR(
+		walkDirectoryTree("./data///dir////",
+			&count,
+			[](const CString& fname, void* pCount, Bool isDir) -> Error {
+				printf("-- %s\n", &fname[0]);
+				++(*static_cast<U32*>(pCount));
+				return ErrorCode::FUNCTION_FAILED;
+			}),
 		ErrorCode::FUNCTION_FAILED);
 
 	ANKI_TEST_EXPECT_EQ(count, 1);

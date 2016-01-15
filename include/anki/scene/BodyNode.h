@@ -8,13 +8,14 @@
 #include <anki/scene/SceneNode.h>
 #include <anki/resource/CollisionResource.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup scene
 /// @{
 
 /// Node that gets affected by physics.
-class BodyNode: public SceneNode
+class BodyNode : public SceneNode
 {
 public:
 	BodyNode(SceneGraph* scene);
@@ -31,4 +32,3 @@ private:
 /// @}
 
 } // end namespace anki
-

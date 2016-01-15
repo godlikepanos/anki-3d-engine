@@ -7,7 +7,8 @@
 
 #include <anki/util/StdTypes.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup util_containers
 /// @{
@@ -21,11 +22,13 @@ public:
 
 	Bitset()
 		: m_bitmask(static_cast<Value>(0))
-	{}
+	{
+	}
 
 	Bitset(Value bitmask)
 		: m_bitmask(bitmask)
-	{}
+	{
+	}
 
 	/// @name Bits manipulation
 	/// @{
@@ -83,4 +86,3 @@ protected:
 /// @}
 
 } // end namespace anki
-

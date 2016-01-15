@@ -12,7 +12,8 @@
 #include <anki/resource/ResourceManager.h>
 #include <anki/resource/ShaderResource.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class Renderer;
@@ -39,10 +40,12 @@ public:
 anki_internal:
 	RenderingPass(Renderer* r)
 		: m_r(r)
-	{}
+	{
+	}
 
 	~RenderingPass()
-	{}
+	{
+	}
 
 	Timestamp getGlobalTimestamp() const;
 
@@ -62,4 +65,3 @@ protected:
 /// @}
 
 } // end namespace anki
-

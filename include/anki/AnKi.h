@@ -9,4 +9,3 @@
 #include <anki/Math.h>
 #include <anki/Scene.h>
 #include <anki/Event.h>
-

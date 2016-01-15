@@ -9,7 +9,8 @@
 #include <anki/Math.h>
 #include <anki/collision/Aabb.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup scene
 /// @{

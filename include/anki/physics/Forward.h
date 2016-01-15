@@ -6,4 +6,3 @@
 #pragma once
 
 #include <anki/physics/Common.h>
-

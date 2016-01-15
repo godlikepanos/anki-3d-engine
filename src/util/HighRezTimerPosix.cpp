@@ -10,10 +10,12 @@
 #include <errno.h>
 #include <time.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
-namespace {
+namespace
+{
 
 /// A dummy struct that inits the timer
 class StartTime
@@ -30,7 +32,7 @@ public:
 
 StartTime startTime;
 
-} // end namespace anonymous 
+} // end namespace anonymous
 
 //==============================================================================
 static U64 getNs()
@@ -39,8 +41,7 @@ static U64 getNs()
 
 	timespec now;
 	clock_gettime(CLOCK_MONOTONIC, &now);
-	ticks = 
-		static_cast<U64>(now.tv_sec - startTime.m_time.tv_sec) * 1000000000 
+	ticks = static_cast<U64>(now.tv_sec - startTime.m_time.tv_sec) * 1000000000
 		+ (now.tv_nsec - startTime.m_time.tv_nsec);
 
 	return ticks;
@@ -58,7 +59,7 @@ void HighRezTimer::sleep(Scalar sec)
 	elapsed.tv_sec = ns / 1000000000;
 	elapsed.tv_nsec = (ns % 1000000000);
 
-	do 
+	do
 	{
 		errno = 0;
 		tv.tv_sec = elapsed.tv_sec;

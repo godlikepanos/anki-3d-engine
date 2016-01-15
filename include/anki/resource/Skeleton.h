@@ -8,7 +8,8 @@
 #include <anki/resource/ResourceObject.h>
 #include <anki/Math.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup resource
 /// @{
@@ -64,12 +65,13 @@ private:
 /// 	</bones>
 /// </skeleton>
 /// @endcode
-class Skeleton: public ResourceObject
+class Skeleton : public ResourceObject
 {
 public:
 	Skeleton(ResourceManager* manager)
 		: ResourceObject(manager)
-	{}
+	{
+	}
 
 	~Skeleton();
 
@@ -87,4 +89,3 @@ private:
 /// @}
 
 } // end namespace anki
-

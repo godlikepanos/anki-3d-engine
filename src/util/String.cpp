@@ -9,7 +9,8 @@
 #include <cstdarg> // For var args
 #include <cstdlib> // For stdtod and strtol
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // CString                                                                     =
@@ -159,4 +160,3 @@ void String::sprintf(Allocator alloc, CString fmt, ...)
 }
 
 } // end namespace anki
-

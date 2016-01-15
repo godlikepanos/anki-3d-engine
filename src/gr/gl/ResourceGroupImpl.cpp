@@ -15,12 +15,15 @@
 #include <anki/gr/GrManager.h>
 #include <anki/gr/gl/RenderingThread.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 template<typename InBindings, typename OutBindings>
-void ResourceGroupImpl::initBuffers(
-	const InBindings& in, OutBindings& out, U8& count, U& resourcesCount,
+void ResourceGroupImpl::initBuffers(const InBindings& in,
+	OutBindings& out,
+	U8& count,
+	U& resourcesCount,
 	U& dynCount)
 {
 	count = 0;
@@ -38,8 +41,7 @@ void ResourceGroupImpl::initBuffers(
 
 			outBinding.m_name = buff.getGlName();
 			outBinding.m_offset = binding.m_offset;
-			outBinding.m_range =
-				(binding.m_range != 0)
+			outBinding.m_range = (binding.m_range != 0)
 				? binding.m_range
 				: (buff.m_size - binding.m_offset);
 
@@ -97,10 +99,10 @@ void ResourceGroupImpl::create(const ResourceGroupInitializer& init)
 	}
 
 	// Init shader buffers
-	initBuffers(init.m_uniformBuffers, m_ubos, m_ubosCount, resourcesCount,
-		dynCount);
-	initBuffers(init.m_storageBuffers, m_ssbos, m_ssbosCount, resourcesCount,
-		dynCount);
+	initBuffers(
+		init.m_uniformBuffers, m_ubos, m_ubosCount, resourcesCount, dynCount);
+	initBuffers(
+		init.m_storageBuffers, m_ssbos, m_ssbosCount, resourcesCount, dynCount);
 
 	// Init vert buffers
 	m_vertBindingsCount = 0;
@@ -121,8 +123,10 @@ void ResourceGroupImpl::create(const ResourceGroupInitializer& init)
 		else if(binding.m_dynamic)
 		{
 			++dynCount;
-			const GlState& state = getManager().getImplementation().
-				getRenderingThread().getState();
+			const GlState& state = getManager()
+									   .getImplementation()
+									   .getRenderingThread()
+									   .getState();
 
 			m_vertBuffNames[i] =
 				state.m_dynamicBuffers[BufferUsage::VERTEX].m_name;
@@ -214,25 +218,27 @@ void ResourceGroupImpl::initResourceReferences(
 }
 
 //==============================================================================
-void ResourceGroupImpl::bind(U slot, const DynamicBufferInfo& dynInfo,
-	GlState& state)
+void ResourceGroupImpl::bind(
+	U slot, const DynamicBufferInfo& dynInfo, GlState& state)
 {
 	ANKI_ASSERT(slot < MAX_RESOURCE_GROUPS);
 
 	// Bind textures
 	if(m_textureNamesCount)
 	{
-		glBindTextures(MAX_TEXTURE_BINDINGS * slot, m_textureNamesCount,
+		glBindTextures(MAX_TEXTURE_BINDINGS * slot,
+			m_textureNamesCount,
 			&m_textureNames[0]);
 
 		if(m_allSamplersZero)
 		{
-			glBindSamplers(MAX_TEXTURE_BINDINGS * slot, m_textureNamesCount,
-				nullptr);
+			glBindSamplers(
+				MAX_TEXTURE_BINDINGS * slot, m_textureNamesCount, nullptr);
 		}
 		else
 		{
-			glBindSamplers(MAX_TEXTURE_BINDINGS * slot, m_textureNamesCount,
+			glBindSamplers(MAX_TEXTURE_BINDINGS * slot,
+				m_textureNamesCount,
 				&m_samplerNames[0]);
 		}
 	}
@@ -252,7 +258,8 @@ void ResourceGroupImpl::bind(U slot, const DynamicBufferInfo& dynInfo,
 				glBindBufferRange(GL_UNIFORM_BUFFER,
 					MAX_UNIFORM_BUFFER_BINDINGS * slot + i,
 					state.m_dynamicBuffers[BufferUsage::UNIFORM].m_name,
-					token.m_offset, token.m_range);
+					token.m_offset,
+					token.m_range);
 			}
 			else
 			{
@@ -263,8 +270,10 @@ void ResourceGroupImpl::bind(U slot, const DynamicBufferInfo& dynInfo,
 		{
 			// Static
 			glBindBufferRange(GL_UNIFORM_BUFFER,
-				MAX_UNIFORM_BUFFER_BINDINGS * slot + i, binding.m_name,
-				binding.m_offset, binding.m_range);
+				MAX_UNIFORM_BUFFER_BINDINGS * slot + i,
+				binding.m_name,
+				binding.m_offset,
+				binding.m_range);
 		}
 	}
 
@@ -283,7 +292,8 @@ void ResourceGroupImpl::bind(U slot, const DynamicBufferInfo& dynInfo,
 				glBindBufferRange(GL_SHADER_STORAGE_BUFFER,
 					MAX_STORAGE_BUFFER_BINDINGS * slot + i,
 					state.m_dynamicBuffers[BufferUsage::STORAGE].m_name,
-					token.m_offset, token.m_range);
+					token.m_offset,
+					token.m_range);
 			}
 			else
 			{
@@ -294,8 +304,10 @@ void ResourceGroupImpl::bind(U slot, const DynamicBufferInfo& dynInfo,
 		{
 			// Static
 			glBindBufferRange(GL_SHADER_STORAGE_BUFFER,
-				MAX_STORAGE_BUFFER_BINDINGS * slot + i, binding.m_name,
-				binding.m_offset, binding.m_range);
+				MAX_STORAGE_BUFFER_BINDINGS * slot + i,
+				binding.m_name,
+				binding.m_offset,
+				binding.m_range);
 		}
 	}
 
@@ -306,9 +318,11 @@ void ResourceGroupImpl::bind(U slot, const DynamicBufferInfo& dynInfo,
 
 		if(!m_hasDynamicVertexBuff)
 		{
-			glBindVertexBuffers(
-				0, m_vertBindingsCount, &m_vertBuffNames[0],
-				&m_vertBuffOffsets[0], &state.m_vertexBindingStrides[0]);
+			glBindVertexBuffers(0,
+				m_vertBindingsCount,
+				&m_vertBuffNames[0],
+				&m_vertBuffOffsets[0],
+				&state.m_vertexBindingStrides[0]);
 		}
 		else
 		{
@@ -329,9 +343,11 @@ void ResourceGroupImpl::bind(U slot, const DynamicBufferInfo& dynInfo,
 			}
 
 			// Bind
-			glBindVertexBuffers(
-				0, m_vertBindingsCount, &m_vertBuffNames[0],
-				&offsets[0], &state.m_vertexBindingStrides[0]);
+			glBindVertexBuffers(0,
+				m_vertBindingsCount,
+				&m_vertBuffNames[0],
+				&offsets[0],
+				&state.m_vertexBindingStrides[0]);
 		}
 	}
 

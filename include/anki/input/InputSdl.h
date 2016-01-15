@@ -9,24 +9,25 @@
 #include <SDL_keycode.h>
 #include <unordered_map>
 
-namespace anki {
+namespace anki
+{
 
 /// SDL input implementation
 class InputImpl
 {
 public:
-	std::unordered_map<
-		SDL_Keycode,
+	std::unordered_map<SDL_Keycode,
 		KeyCode,
 		std::hash<SDL_Keycode>,
 		std::equal_to<SDL_Keycode>,
-		HeapAllocator<std::pair<const SDL_Keycode, KeyCode>>> m_sdlToAnki;
+		HeapAllocator<std::pair<const SDL_Keycode, KeyCode>>>
+		m_sdlToAnki;
 
 	InputImpl(HeapAllocator<std::pair<const SDL_Keycode, KeyCode>>& alloc)
-		: m_sdlToAnki(10, std::hash<SDL_Keycode>(),
-			std::equal_to<SDL_Keycode>(), alloc)
-	{}
+		: m_sdlToAnki(
+			  10, std::hash<SDL_Keycode>(), std::equal_to<SDL_Keycode>(), alloc)
+	{
+	}
 };
 
 } // end namespace anki
-

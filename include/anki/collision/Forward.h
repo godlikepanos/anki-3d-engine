@@ -5,7 +5,8 @@
 
 #pragma once
 
-namespace anki {
+namespace anki
+{
 
 class CollisionShape;
 
@@ -21,4 +22,3 @@ class ConvexHullShape;
 class ContactPoint;
 
 } // end namespace anki
-

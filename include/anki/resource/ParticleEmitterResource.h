@@ -10,7 +10,8 @@
 #include <anki/Math.h>
 #include <anki/Gr.h>
 
-namespace anki {
+namespace anki
+{
 
 class XmlElement;
 
@@ -23,7 +24,8 @@ class ParticleEmitterProperties
 {
 public:
 	ParticleEmitterProperties()
-	{}
+	{
+	}
 
 	ParticleEmitterProperties(const ParticleEmitterProperties& b)
 	{
@@ -93,8 +95,8 @@ public:
 };
 
 /// This is the properties of the particle emitter resource
-class ParticleEmitterResource: public ResourceObject,
-	private ParticleEmitterProperties
+class ParticleEmitterResource : public ResourceObject,
+								private ParticleEmitterProperties
 {
 public:
 	/// Size of a single vertex.
@@ -139,4 +141,3 @@ private:
 /// @}
 
 } // end namespace anki
-

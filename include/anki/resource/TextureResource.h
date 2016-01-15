@@ -8,7 +8,8 @@
 #include <anki/resource/ResourceObject.h>
 #include <anki/Gr.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup resource
 /// @{
@@ -17,12 +18,13 @@ namespace anki {
 ///
 /// It loads or creates an image and then loads it in the GPU. It supports
 /// compressed and uncompressed TGAs and AnKi's texture format.
-class TextureResource: public ResourceObject
+class TextureResource : public ResourceObject
 {
 public:
 	TextureResource(ResourceManager* manager)
 		: ResourceObject(manager)
-	{}
+	{
+	}
 
 	~TextureResource();
 
@@ -63,4 +65,3 @@ private:
 /// @}
 
 } // end namespace anki
-

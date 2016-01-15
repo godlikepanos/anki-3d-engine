@@ -6,7 +6,8 @@
 #include <anki/physics/PhysicsCollisionShape.h>
 #include <anki/physics/PhysicsWorld.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // PhysicsCollisionShape                                                       =
@@ -53,9 +54,12 @@ Error PhysicsBox::create(Initializer& init, const Vec3& extend)
 {
 	Error err = ErrorCode::NONE;
 
-	m_shape = NewtonCreateBox(
-		m_world->_getNewtonWorld(), extend.x(), extend.y(), extend.z(),
-		m_gid++, nullptr);
+	m_shape = NewtonCreateBox(m_world->_getNewtonWorld(),
+		extend.x(),
+		extend.y(),
+		extend.z(),
+		m_gid++,
+		nullptr);
 	if(!m_shape)
 	{
 		ANKI_LOGE("NewtonCreateBox() failed");
@@ -71,8 +75,10 @@ Error PhysicsBox::create(Initializer& init, const Vec3& extend)
 
 //==============================================================================
 Error PhysicsTriangleSoup::create(Initializer& init,
-	const Vec3* positions, U32 positionsStride, 
-	const U16* indices, U32 indicesCount)
+	const Vec3* positions,
+	U32 positionsStride,
+	const U16* indices,
+	U32 indicesCount)
 {
 	m_shape = NewtonCreateTreeCollision(m_world->_getNewtonWorld(), 0);
 	if(!m_shape)
@@ -92,7 +98,7 @@ Error PhysicsTriangleSoup::create(Initializer& init,
 		for(U i = 0; i < 3; ++i)
 		{
 			U idx = indices[i];
-			const U8* ptr = 
+			const U8* ptr =
 				reinterpret_cast<const U8*>(positions) + positionsStride * idx;
 
 			facePos[i] = *reinterpret_cast<const Vec3*>(ptr);
@@ -108,4 +114,3 @@ Error PhysicsTriangleSoup::create(Initializer& init,
 }
 
 } // end namespace anki
-

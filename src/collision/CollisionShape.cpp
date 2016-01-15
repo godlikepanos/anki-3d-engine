@@ -6,7 +6,7 @@
 #include <anki/collision/CollisionShape.h>
 #include <anki/Collision.h>
 
-namespace anki {
-
+namespace anki
+{
 
 } // end namespace anki

@@ -11,13 +11,14 @@
 #include <anki/resource/TextureResource.h>
 #include <anki/Collision.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup scene
 /// @{
 
 /// Light scene node. It can be spot or point.
-class Light: public SceneNode
+class Light : public SceneNode
 {
 	friend class LightFeedbackComponent;
 
@@ -26,8 +27,7 @@ public:
 
 	~Light();
 
-	ANKI_USE_RESULT Error create(
-		const CString& name,
+	ANKI_USE_RESULT Error create(const CString& name,
 		LightComponent::LightType type,
 		CollisionShape* shape);
 
@@ -48,7 +48,7 @@ protected:
 };
 
 /// Point light
-class PointLight: public Light
+class PointLight : public Light
 {
 public:
 	/// The near plane on the shadow map frustums.
@@ -79,7 +79,7 @@ public:
 };
 
 /// Spot light
-class SpotLight: public Light
+class SpotLight : public Light
 {
 public:
 	SpotLight(SceneGraph* scene);
@@ -98,4 +98,3 @@ private:
 /// @}
 
 } // end namespace anki
-

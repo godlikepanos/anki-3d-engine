@@ -11,10 +11,11 @@
 #define ANKI_DUMP_SHADERS ANKI_DEBUG
 
 #if ANKI_DUMP_SHADERS
-#	include <anki/util/File.h>
+#include <anki/util/File.h>
 #endif
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 /// Fake glDeletePrograms because some jenius created conflicting interface
@@ -39,12 +40,18 @@ Error ShaderImpl::create(ShaderType type, const CString& source)
 	ANKI_ASSERT(!isCreated());
 
 	static const Array<GLenum, 6> gltype = {{GL_VERTEX_SHADER,
-		GL_TESS_CONTROL_SHADER, GL_TESS_EVALUATION_SHADER, GL_GEOMETRY_SHADER,
-		GL_FRAGMENT_SHADER, GL_COMPUTE_SHADER}};
+		GL_TESS_CONTROL_SHADER,
+		GL_TESS_EVALUATION_SHADER,
+		GL_GEOMETRY_SHADER,
+		GL_FRAGMENT_SHADER,
+		GL_COMPUTE_SHADER}};
 
 	static const Array<const char*, 6> shaderName = {{"VERTEX_SHADER",
-		"TESSELATION_CONTROL_SHADER", "TESSELATION_EVALUATION_SHADER",
-		"GEOMETRY_SHADER", "FRAGMENT_SHADER", "COMPUTE_SHADER"}};
+		"TESSELATION_CONTROL_SHADER",
+		"TESSELATION_EVALUATION_SHADER",
+		"GEOMETRY_SHADER",
+		"FRAGMENT_SHADER",
+		"COMPUTE_SHADER"}};
 
 	m_type = type;
 	m_glType = gltype[U(type)];
@@ -67,8 +74,11 @@ Error ShaderImpl::create(ShaderType type, const CString& source)
 	static const char* versionType = "es";
 #endif
 
-	fullSrc.sprintf("#version %d %s\n#define %s\n%s\n", version, versionType,
-		shaderName[U(type)], &source[0]);
+	fullSrc.sprintf("#version %d %s\n#define %s\n%s\n",
+		version,
+		versionType,
+		shaderName[U(type)],
+		&source[0]);
 
 	// 2) Gen name, create, compile and link
 	//
@@ -111,8 +121,8 @@ Error ShaderImpl::create(ShaderType type, const CString& source)
 
 		StringAuto fname(alloc);
 		CString cacheDir = m_manager->getCacheDirectory();
-		fname.sprintf("%s/%05u.%s", &cacheDir[0],
-			static_cast<U32>(m_glName), ext);
+		fname.sprintf(
+			"%s/%05u.%s", &cacheDir[0], static_cast<U32>(m_glName), ext);
 
 		File file;
 		ANKI_CHECK(file.open(fname.toCString(), File::OpenFlag::WRITE));
@@ -142,9 +152,8 @@ void ShaderImpl::handleError(String& src)
 	String prettySrc;
 	StringList lines;
 
-	static const char* padding =
-		"======================================="
-		"=======================================";
+	static const char* padding = "======================================="
+								 "=======================================";
 
 	glGetProgramiv(m_glName, GL_INFO_LOG_LENGTH, &compilerLogLen);
 
@@ -166,7 +175,11 @@ void ShaderImpl::handleError(String& src)
 	}
 
 	ANKI_LOGE("Shader compilation failed (type %x):\n%s\n%s\n%s\n%s",
-		m_glType, padding, &compilerLog[0], padding, &prettySrc[0]);
+		m_glType,
+		padding,
+		&compilerLog[0],
+		padding,
+		&prettySrc[0]);
 
 	lines.destroy(alloc);
 	prettySrc.destroy(alloc);
@@ -174,4 +187,3 @@ void ShaderImpl::handleError(String& src)
 }
 
 } // end namespace anki
-

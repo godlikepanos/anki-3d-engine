@@ -12,7 +12,8 @@
 #include <anki/scene/RenderComponent.h>
 #include <anki/util/NonCopyable.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class Renderer;
@@ -49,7 +50,8 @@ public:
 	U8 m_spatialsCount = 0;
 
 	VisibleNode()
-	{}
+	{
+	}
 
 	VisibleNode(const VisibleNode& other)
 	{
@@ -81,8 +83,7 @@ public:
 		ANKI_ASSERT(0 && "It's supposed to be deallocated on frame start");
 	}
 
-	void create(
-		SceneFrameAllocator<U8> alloc,
+	void create(SceneFrameAllocator<U8> alloc,
 		U32 renderablesReservedSize,
 		U32 lightsReservedSize,
 		U32 lensFlaresReservedSize,
@@ -200,8 +201,8 @@ public:
 		m_shapeUpdateTimestamp = t;
 	}
 
-	void combineWith(SceneFrameAllocator<U8> alloc,
-		SArray<VisibilityTestResults*>& results);
+	void combineWith(
+		SceneFrameAllocator<U8> alloc, SArray<VisibilityTestResults*>& results);
 
 private:
 	using Container = DArray<VisibleNode>;
@@ -239,8 +240,8 @@ private:
 
 	VisibleNode* getEnd(GroupType type)
 	{
-		return (getCount(type))
-			? (&m_groups[type].m_nodes[0] + getCount(type)) : nullptr;
+		return (getCount(type)) ? (&m_groups[type].m_nodes[0] + getCount(type))
+								: nullptr;
 	}
 
 	void moveBack(SceneFrameAllocator<U8> alloc, GroupType, VisibleNode& x);
@@ -248,10 +249,7 @@ private:
 
 /// Do visibility tests bypassing portals
 ANKI_USE_RESULT Error doVisibilityTests(
-	SceneNode& frustumable,
-	SceneGraph& scene,
-	const Renderer& renderer);
+	SceneNode& frustumable, SceneGraph& scene, const Renderer& renderer);
 /// @}
 
 } // end namespace anki
-

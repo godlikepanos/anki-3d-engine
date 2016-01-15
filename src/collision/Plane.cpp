@@ -6,14 +6,16 @@
 #include <anki/collision/Plane.h>
 #include <anki/util/Assert.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 Plane::Plane(const Vec4& normal, F32 offset)
 	: CollisionShape(Type::PLANE)
 	, m_normal(normal)
 	, m_offset(offset)
-{}
+{
+}
 
 //==============================================================================
 F32 Plane::testPlane(const Plane& /*p*/) const
@@ -94,8 +96,8 @@ Bool Plane::intersectVector(const Vec4& p, Vec4& intersection) const
 }
 
 //==============================================================================
-Bool Plane::intersectRay(const Vec4& rayOrigin, const Vec4& rayDir,
-	Vec4& intersection) const
+Bool Plane::intersectRay(
+	const Vec4& rayOrigin, const Vec4& rayDir, Vec4& intersection) const
 {
 	ANKI_ASSERT(rayOrigin.w() == 0.0 && rayDir.w() == 0.0);
 	Bool intersects = false;

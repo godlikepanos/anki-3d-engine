@@ -5,6 +5,6 @@
 
 #include <anki/resource/DummyRsrc.h>
 
-namespace anki {
-
+namespace anki
+{
 } // end namespace

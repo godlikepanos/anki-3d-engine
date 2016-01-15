@@ -8,7 +8,8 @@
 #include <anki/util/Logger.h>
 #include <anki/core/App.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // Other                                                                       =
@@ -36,7 +37,8 @@ static void handleAndroidEvents(android_app* app, int32_t cmd)
 
 //==============================================================================
 Input::~Input()
-{}
+{
+}
 
 //==============================================================================
 void Input::handleEvents()
@@ -47,9 +49,9 @@ void Input::handleEvents()
 
 	memset(&events[0], 0, sizeof(events));
 
-	while((ident = ALooper_pollAll(0, NULL, &outEvents, (void**)&source)) >= 0) 
+	while((ident = ALooper_pollAll(0, NULL, &outEvents, (void**)&source)) >= 0)
 	{
-		if(source != NULL) 
+		if(source != NULL)
 		{
 			source->process(gAndroidApp, source);
 		}
@@ -61,7 +63,7 @@ void Input::init(NativeWindow* /*nativeWindow*/)
 {
 	ANKI_ASSERT(gAndroidApp);
 	gAndroidApp->userData = this;
-    gAndroidApp->onAppCmd = handleAndroidEvents;
+	gAndroidApp->onAppCmd = handleAndroidEvents;
 }
 
 //==============================================================================

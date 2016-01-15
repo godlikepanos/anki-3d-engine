@@ -12,16 +12,19 @@
 #include <anki/util/Hash.h>
 #include <anki/util/Assert.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 ShaderResource::ShaderResource(ResourceManager* manager)
 	: ResourceObject(manager)
-{}
+{
+}
 
 //==============================================================================
 ShaderResource::~ShaderResource()
-{}
+{
+}
 
 //==============================================================================
 Error ShaderResource::load(const ResourceFilename& filename)
@@ -30,8 +33,8 @@ Error ShaderResource::load(const ResourceFilename& filename)
 }
 
 //==============================================================================
-Error ShaderResource::load(const ResourceFilename& filename,
-	const CString& extraSrc)
+Error ShaderResource::load(
+	const ResourceFilename& filename, const CString& extraSrc)
 {
 	auto alloc = getTempAllocator();
 
@@ -60,9 +63,11 @@ Error ShaderResource::load(const ResourceFilename& filename,
 }
 
 //==============================================================================
-Error ShaderResource::createToCache(
-	const ResourceFilename& filename, const CString& preAppendedSrcCode,
-	const CString& filenamePrefix, ResourceManager& manager, StringAuto& out)
+Error ShaderResource::createToCache(const ResourceFilename& filename,
+	const CString& preAppendedSrcCode,
+	const CString& filenamePrefix,
+	ResourceManager& manager,
+	StringAuto& out)
 {
 	auto alloc = manager.getTempAllocator();
 
@@ -91,10 +96,7 @@ Error ShaderResource::createToCache(
 	// Compose cached filename
 	StringAuto newFilename(alloc);
 
-	newFilename.sprintf(
-		"%s/%s",
-		&manager._getCacheDirectory()[0],
-		&out[0]);
+	newFilename.sprintf("%s/%s", &manager._getCacheDirectory()[0], &out[0]);
 
 	if(fileExists(newFilename.toCString()))
 	{

@@ -8,7 +8,8 @@
 #include <anki/collision/Aabb.h>
 #include <algorithm>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 F32 LineSegment::testPlane(const Plane& p) const

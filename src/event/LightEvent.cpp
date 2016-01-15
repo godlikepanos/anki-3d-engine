@@ -7,7 +7,8 @@
 #include <anki/scene/Light.h>
 #include <anki/scene/LensFlareComponent.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 Error LightEvent::init(F32 startTime, F32 duration, SceneNode* light)
@@ -19,10 +20,10 @@ Error LightEvent::init(F32 startTime, F32 duration, SceneNode* light)
 	switch(lightc.getLightType())
 	{
 	case LightComponent::LightType::POINT:
-		{
-			m_originalRadius = lightc.getRadius();
-		}
-		break;
+	{
+		m_originalRadius = lightc.getRadius();
+	}
+	break;
 	case LightComponent::LightType::SPOT:
 		ANKI_ASSERT("TODO");
 		break;
@@ -70,8 +71,9 @@ Error LightEvent::update(F32 prevUpdateTime, F32 crntTime)
 		LensFlareComponent* lfc =
 			getSceneNode()->tryGetComponent<LensFlareComponent>();
 
-		if(lfc && lfc->getColorMultiplier().xyz()
-			== lightc.getDiffuseColor().xyz())
+		if(lfc
+			&& lfc->getColorMultiplier().xyz()
+				== lightc.getDiffuseColor().xyz())
 		{
 			lfc->setColorMultiplier(
 				Vec4(outCol.xyz(), lfc->getColorMultiplier().w()));

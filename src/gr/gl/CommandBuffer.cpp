@@ -22,16 +22,19 @@
 #include <anki/gr/gl/BufferImpl.h>
 #include <anki/core/Trace.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 CommandBuffer::CommandBuffer(GrManager* manager)
 	: GrObject(manager)
-{}
+{
+}
 
 //==============================================================================
 CommandBuffer::~CommandBuffer()
-{}
+{
+}
 
 //==============================================================================
 void CommandBuffer::create(CommandBufferInitHints hints)
@@ -43,19 +46,19 @@ void CommandBuffer::create(CommandBufferInitHints hints)
 //==============================================================================
 void CommandBuffer::flush()
 {
-	getManager().getImplementation().
-		getRenderingThread().flushCommandBuffer(this);
+	getManager().getImplementation().getRenderingThread().flushCommandBuffer(
+		this);
 }
 
 //==============================================================================
 void CommandBuffer::finish()
 {
-	getManager().getImplementation().
-		getRenderingThread().finishCommandBuffer(this);
+	getManager().getImplementation().getRenderingThread().finishCommandBuffer(
+		this);
 }
 
 //==============================================================================
-class ViewportCommand final: public GlCommand
+class ViewportCommand final : public GlCommand
 {
 public:
 	Array<U16, 4> m_value;
@@ -87,14 +90,15 @@ void CommandBuffer::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 }
 
 //==============================================================================
-class BindPipelineCommand final: public GlCommand
+class BindPipelineCommand final : public GlCommand
 {
 public:
 	PipelinePtr m_ppline;
 
 	BindPipelineCommand(PipelinePtr& ppline)
 		: m_ppline(ppline)
-	{}
+	{
+	}
 
 	Error operator()(GlState& state)
 	{
@@ -117,14 +121,15 @@ void CommandBuffer::bindPipeline(PipelinePtr ppline)
 }
 
 //==============================================================================
-class BindFramebufferCommand final: public GlCommand
+class BindFramebufferCommand final : public GlCommand
 {
 public:
 	FramebufferPtr m_fb;
 
 	BindFramebufferCommand(FramebufferPtr fb)
 		: m_fb(fb)
-	{}
+	{
+	}
 
 	Error operator()(GlState& state)
 	{
@@ -139,15 +144,15 @@ void CommandBuffer::bindFramebuffer(FramebufferPtr fb)
 }
 
 //==============================================================================
-class BindResourcesCommand final: public GlCommand
+class BindResourcesCommand final : public GlCommand
 {
 public:
 	ResourceGroupPtr m_rc;
 	U8 m_slot;
 	DynamicBufferInfo m_dynInfo;
 
-	BindResourcesCommand(ResourceGroupPtr rc, U8 slot,
-		const DynamicBufferInfo* dynInfo)
+	BindResourcesCommand(
+		ResourceGroupPtr rc, U8 slot, const DynamicBufferInfo* dynInfo)
 		: m_rc(rc)
 		, m_slot(slot)
 	{
@@ -164,26 +169,26 @@ public:
 	}
 };
 
-void CommandBuffer::bindResourceGroup(ResourceGroupPtr rc, U slot,
-	const DynamicBufferInfo* dynInfo)
+void CommandBuffer::bindResourceGroup(
+	ResourceGroupPtr rc, U slot, const DynamicBufferInfo* dynInfo)
 {
 	ANKI_ASSERT(rc.isCreated());
 	m_impl->pushBackNewCommand<BindResourcesCommand>(rc, slot, dynInfo);
 }
 
 //==============================================================================
-class DrawElementsCondCommand: public GlCommand
+class DrawElementsCondCommand : public GlCommand
 {
 public:
 	DrawElementsIndirectInfo m_info;
 	OcclusionQueryPtr m_query;
 
-	DrawElementsCondCommand(
-		const DrawElementsIndirectInfo& info,
+	DrawElementsCondCommand(const DrawElementsIndirectInfo& info,
 		OcclusionQueryPtr query = OcclusionQueryPtr())
 		: m_info(info)
 		, m_query(query)
-	{}
+	{
+	}
 
 	Error operator()(GlState& state)
 	{
@@ -203,8 +208,7 @@ public:
 
 		if(!m_query.isCreated() || !m_query->getImplementation().skipDrawcall())
 		{
-			glDrawElementsInstancedBaseVertexBaseInstance(
-				state.m_topology,
+			glDrawElementsInstancedBaseVertexBaseInstance(state.m_topology,
 				m_info.m_count,
 				indicesType,
 				(const void*)(PtrSize)(m_info.m_firstIndex * state.m_indexSize),
@@ -213,43 +217,45 @@ public:
 				m_info.m_baseInstance);
 
 			ANKI_TRACE_INC_COUNTER(GR_DRAWCALLS, 1);
-			ANKI_TRACE_INC_COUNTER(GR_VERTICES,
-				m_info.m_instanceCount * m_info.m_count);
+			ANKI_TRACE_INC_COUNTER(
+				GR_VERTICES, m_info.m_instanceCount * m_info.m_count);
 		}
 
 		return ErrorCode::NONE;
 	}
 };
 
-void CommandBuffer::drawElements(U32 count, U32 instanceCount, U32 firstIndex,
-	U32 baseVertex, U32 baseInstance)
+void CommandBuffer::drawElements(U32 count,
+	U32 instanceCount,
+	U32 firstIndex,
+	U32 baseVertex,
+	U32 baseInstance)
 {
-	DrawElementsIndirectInfo info(count, instanceCount, firstIndex,
-		baseVertex, baseInstance);
+	DrawElementsIndirectInfo info(
+		count, instanceCount, firstIndex, baseVertex, baseInstance);
 
 	m_impl->pushBackNewCommand<DrawElementsCondCommand>(info);
 }
 
 //==============================================================================
-class DrawArraysCondCommand final: public GlCommand
+class DrawArraysCondCommand final : public GlCommand
 {
 public:
 	DrawArraysIndirectInfo m_info;
 	OcclusionQueryPtr m_query;
 
-	DrawArraysCondCommand(
-		const DrawArraysIndirectInfo& info,
+	DrawArraysCondCommand(const DrawArraysIndirectInfo& info,
 		OcclusionQueryPtr query = OcclusionQueryPtr())
 		: m_info(info)
 		, m_query(query)
-	{}
+	{
+	}
 
 	Error operator()(GlState& state)
 	{
 		if(!m_query.isCreated() || !m_query->getImplementation().skipDrawcall())
 		{
-			glDrawArraysInstancedBaseInstance(
-				state.m_topology,
+			glDrawArraysInstancedBaseInstance(state.m_topology,
 				m_info.m_first,
 				m_info.m_count,
 				m_info.m_instanceCount,
@@ -262,8 +268,8 @@ public:
 	}
 };
 
-void CommandBuffer::drawArrays(U32 count, U32 instanceCount, U32 first,
-	U32 baseInstance)
+void CommandBuffer::drawArrays(
+	U32 count, U32 instanceCount, U32 first, U32 baseInstance)
 {
 	DrawArraysIndirectInfo info(count, instanceCount, first, baseInstance);
 
@@ -271,18 +277,25 @@ void CommandBuffer::drawArrays(U32 count, U32 instanceCount, U32 first,
 }
 
 //==============================================================================
-void CommandBuffer::drawElementsConditional(OcclusionQueryPtr query, U32 count,
-	U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance)
+void CommandBuffer::drawElementsConditional(OcclusionQueryPtr query,
+	U32 count,
+	U32 instanceCount,
+	U32 firstIndex,
+	U32 baseVertex,
+	U32 baseInstance)
 {
-	DrawElementsIndirectInfo info(count, instanceCount, firstIndex,
-		baseVertex, baseInstance);
+	DrawElementsIndirectInfo info(
+		count, instanceCount, firstIndex, baseVertex, baseInstance);
 
 	m_impl->pushBackNewCommand<DrawElementsCondCommand>(info, query);
 }
 
 //==============================================================================
-void CommandBuffer::drawArraysConditional(OcclusionQueryPtr query, U32 count,
-	U32 instanceCount, U32 first, U32 baseInstance)
+void CommandBuffer::drawArraysConditional(OcclusionQueryPtr query,
+	U32 count,
+	U32 instanceCount,
+	U32 first,
+	U32 baseInstance)
 {
 	DrawArraysIndirectInfo info(count, instanceCount, first, baseInstance);
 
@@ -290,14 +303,15 @@ void CommandBuffer::drawArraysConditional(OcclusionQueryPtr query, U32 count,
 }
 
 //==============================================================================
-class DispatchCommand final: public GlCommand
+class DispatchCommand final : public GlCommand
 {
 public:
 	Array<U32, 3> m_size;
 
 	DispatchCommand(U32 x, U32 y, U32 z)
 		: m_size({{x, y, z}})
-	{}
+	{
+	}
 
 	Error operator()(GlState&)
 	{
@@ -314,14 +328,15 @@ void CommandBuffer::dispatchCompute(
 }
 
 //==============================================================================
-class OqBeginCommand final: public GlCommand
+class OqBeginCommand final : public GlCommand
 {
 public:
 	OcclusionQueryPtr m_handle;
 
 	OqBeginCommand(const OcclusionQueryPtr& handle)
 		: m_handle(handle)
-	{}
+	{
+	}
 
 	Error operator()(GlState&)
 	{
@@ -336,14 +351,15 @@ void CommandBuffer::beginOcclusionQuery(OcclusionQueryPtr query)
 }
 
 //==============================================================================
-class OqEndCommand final: public GlCommand
+class OqEndCommand final : public GlCommand
 {
 public:
 	OcclusionQueryPtr m_handle;
 
 	OqEndCommand(const OcclusionQueryPtr& handle)
 		: m_handle(handle)
-	{}
+	{
+	}
 
 	Error operator()(GlState&)
 	{
@@ -358,7 +374,7 @@ void CommandBuffer::endOcclusionQuery(OcclusionQueryPtr query)
 }
 
 //==============================================================================
-class TexUploadCommand final: public GlCommand
+class TexUploadCommand final : public GlCommand
 {
 public:
 	TexturePtr m_handle;
@@ -366,18 +382,20 @@ public:
 	U32 m_slice;
 	DynamicBufferToken m_token;
 
-	TexUploadCommand(const TexturePtr& handle, U32 mipmap, U32 slice,
+	TexUploadCommand(const TexturePtr& handle,
+		U32 mipmap,
+		U32 slice,
 		const DynamicBufferToken& token)
 		: m_handle(handle)
 		, m_mipmap(mipmap)
 		, m_slice(slice)
 		, m_token(token)
-	{}
+	{
+	}
 
 	Error operator()(GlState& state)
 	{
-		U8* data =
-			state.m_dynamicBuffers[BufferUsage::TRANSFER].m_address
+		U8* data = state.m_dynamicBuffers[BufferUsage::TRANSFER].m_address
 			+ m_token.m_offset;
 
 		m_handle->getImplementation().write(
@@ -387,8 +405,8 @@ public:
 	}
 };
 
-void CommandBuffer::textureUpload(TexturePtr tex, U32 mipmap, U32 slice,
-	const DynamicBufferToken& token)
+void CommandBuffer::textureUpload(
+	TexturePtr tex, U32 mipmap, U32 slice, const DynamicBufferToken& token)
 {
 	ANKI_ASSERT(token.m_range > 0);
 
@@ -396,24 +414,25 @@ void CommandBuffer::textureUpload(TexturePtr tex, U32 mipmap, U32 slice,
 }
 
 //==============================================================================
-class BuffWriteCommand final: public GlCommand
+class BuffWriteCommand final : public GlCommand
 {
 public:
 	BufferPtr m_handle;
 	PtrSize m_offset;
 	DynamicBufferToken m_token;
 
-	BuffWriteCommand(const BufferPtr& handle, PtrSize offset,
+	BuffWriteCommand(const BufferPtr& handle,
+		PtrSize offset,
 		const DynamicBufferToken& token)
 		: m_handle(handle)
 		, m_offset(offset)
 		, m_token(token)
-	{}
+	{
+	}
 
 	Error operator()(GlState& state)
 	{
-		U8* data =
-			state.m_dynamicBuffers[BufferUsage::TRANSFER].m_address
+		U8* data = state.m_dynamicBuffers[BufferUsage::TRANSFER].m_address
 			+ m_token.m_offset;
 
 		m_handle->getImplementation().write(data, m_offset, m_token.m_range);
@@ -422,21 +441,22 @@ public:
 	}
 };
 
-void CommandBuffer::writeBuffer(BufferPtr buff, PtrSize offset,
-	const DynamicBufferToken& token)
+void CommandBuffer::writeBuffer(
+	BufferPtr buff, PtrSize offset, const DynamicBufferToken& token)
 {
 	m_impl->pushBackNewCommand<BuffWriteCommand>(buff, offset, token);
 }
 
 //==============================================================================
-class GenMipsCommand final: public GlCommand
+class GenMipsCommand final : public GlCommand
 {
 public:
 	TexturePtr m_tex;
 
 	GenMipsCommand(const TexturePtr& tex)
 		: m_tex(tex)
-	{}
+	{
+	}
 
 	Error operator()(GlState&)
 	{
@@ -451,7 +471,7 @@ void CommandBuffer::generateMipmaps(TexturePtr tex)
 }
 
 //==============================================================================
-class GenMipsCommand1 final: public GlCommand
+class GenMipsCommand1 final : public GlCommand
 {
 public:
 	TexturePtr m_tex;
@@ -460,7 +480,8 @@ public:
 	GenMipsCommand1(const TexturePtr& tex, U surface)
 		: m_tex(tex)
 		, m_surface(surface)
-	{}
+	{
+	}
 
 	Error operator()(GlState&)
 	{
@@ -481,14 +502,15 @@ CommandBufferInitHints CommandBuffer::computeInitHints() const
 }
 
 //==============================================================================
-class ExecCmdbCommand final: public GlCommand
+class ExecCmdbCommand final : public GlCommand
 {
 public:
 	CommandBufferPtr m_cmdb;
 
 	ExecCmdbCommand(const CommandBufferPtr& cmdb)
 		: m_cmdb(cmdb)
-	{}
+	{
+	}
 
 	Error operator()(GlState&)
 	{
@@ -508,7 +530,7 @@ Bool CommandBuffer::isEmpty() const
 }
 
 //==============================================================================
-class CopyTexCommand final: public GlCommand
+class CopyTexCommand final : public GlCommand
 {
 public:
 	TexturePtr m_src;
@@ -518,30 +540,42 @@ public:
 	U16 m_destSlice;
 	U16 m_destLevel;
 
-	CopyTexCommand(TexturePtr src, U srcSlice, U srcLevel, TexturePtr dest,
-		U destSlice, U destLevel)
+	CopyTexCommand(TexturePtr src,
+		U srcSlice,
+		U srcLevel,
+		TexturePtr dest,
+		U destSlice,
+		U destLevel)
 		: m_src(src)
 		, m_srcSlice(srcSlice)
 		, m_srcLevel(srcLevel)
 		, m_dest(dest)
 		, m_destSlice(destSlice)
 		, m_destLevel(destLevel)
-	{}
+	{
+	}
 
 	Error operator()(GlState&)
 	{
-		TextureImpl::copy(m_src->getImplementation(), m_srcSlice, m_srcLevel,
-			m_dest->getImplementation(), m_destSlice, m_destLevel);
+		TextureImpl::copy(m_src->getImplementation(),
+			m_srcSlice,
+			m_srcLevel,
+			m_dest->getImplementation(),
+			m_destSlice,
+			m_destLevel);
 		return ErrorCode::NONE;
 	}
 };
 
-void CommandBuffer::copyTextureToTexture(TexturePtr src, U srcSlice, U srcLevel,
-	TexturePtr dest, U destSlice, U destLevel)
+void CommandBuffer::copyTextureToTexture(TexturePtr src,
+	U srcSlice,
+	U srcLevel,
+	TexturePtr dest,
+	U destSlice,
+	U destLevel)
 {
-	m_impl->pushBackNewCommand<CopyTexCommand>(src, srcSlice, srcLevel, dest,
-		destSlice, destLevel);
+	m_impl->pushBackNewCommand<CopyTexCommand>(
+		src, srcSlice, srcLevel, dest, destSlice, destLevel);
 }
 
 } // end namespace anki
-

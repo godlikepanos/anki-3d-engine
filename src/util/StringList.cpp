@@ -5,25 +5,20 @@
 
 #include <anki/util/StringList.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 void StringList::sortAll(const Sort method)
 {
 	if(method == Sort::ASCENDING)
 	{
-		Base::sort([](const String& a, const String& b)
-		{
-			return a < b;
-		});
+		Base::sort([](const String& a, const String& b) { return a < b; });
 	}
 	else
 	{
 		ANKI_ASSERT(method == Sort::DESCENDING);
-		Base::sort([](const String& a, const String& b)
-		{
-			return a < b;
-		});
+		Base::sort([](const String& a, const String& b) { return a < b; });
 	}
 }
 
@@ -38,11 +33,10 @@ I StringList::getIndexOf(const CString& value) const
 		{
 			break;
 		}
-		++ pos;
+		++pos;
 	}
 
 	return (pos == Base::getSize()) ? -1 : pos;
 }
 
 } // end namespace anki
-

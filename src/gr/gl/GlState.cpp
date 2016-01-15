@@ -12,7 +12,8 @@
 #include <algorithm>
 #include <cstring>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 #if ANKI_GL == ANKI_GL_DESKTOP
@@ -30,8 +31,7 @@ static const GlDbg gldbgsource[] = {
 	{GL_DEBUG_SOURCE_APPLICATION, "GL_DEBUG_SOURCE_APPLICATION"},
 	{GL_DEBUG_SOURCE_OTHER, "GL_DEBUG_SOURCE_OTHER"}};
 
-static const GlDbg gldbgtype[] = {
-	{GL_DEBUG_TYPE_ERROR, "GL_DEBUG_TYPE_ERROR"},
+static const GlDbg gldbgtype[] = {{GL_DEBUG_TYPE_ERROR, "GL_DEBUG_TYPE_ERROR"},
 	{GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR, "GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR"},
 	{GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR, "GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR"},
 	{GL_DEBUG_TYPE_PORTABILITY, "GL_DEBUG_TYPE_PORTABILITY"},
@@ -47,9 +47,14 @@ static const GlDbg gldbgseverity[] = {
 #if ANKI_OS == ANKI_OS_WINDOWS
 __stdcall
 #endif
-void oglMessagesCallback(GLenum source,
-	GLenum type, GLuint id, GLenum severity, GLsizei length,
-	const char* message, const GLvoid* userParam)
+	void
+	oglMessagesCallback(GLenum source,
+		GLenum type,
+		GLuint id,
+		GLenum severity,
+		GLsizei length,
+		const char* message,
+		const GLvoid* userParam)
 {
 	using namespace anki;
 
@@ -117,7 +122,7 @@ void GlState::init1()
 		m_gpu = GpuVendor::NVIDIA;
 	}
 
-	// Enable debug messages
+// Enable debug messages
 #if ANKI_GL == ANKI_GL_DESKTOP
 	if(m_registerMessages)
 	{
@@ -130,8 +135,11 @@ void GlState::init1()
 				for(U sv = 0; sv < sizeof(gldbgseverity) / sizeof(GlDbg); sv++)
 				{
 					glDebugMessageControl(gldbgsource[s].token,
-						gldbgtype[t].token, gldbgseverity[sv].token, 0,
-						nullptr, GL_TRUE);
+						gldbgtype[t].token,
+						gldbgseverity[sv].token,
+						0,
+						nullptr,
+						GL_TRUE);
 				}
 			}
 		}
@@ -157,12 +165,16 @@ void GlState::init1()
 	// Init ring buffers
 	GLint64 blockAlignment;
 	glGetInteger64v(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &blockAlignment);
-	initDynamicBuffer(GL_UNIFORM_BUFFER, blockAlignment, MAX_UNIFORM_BLOCK_SIZE,
+	initDynamicBuffer(GL_UNIFORM_BUFFER,
+		blockAlignment,
+		MAX_UNIFORM_BLOCK_SIZE,
 		BufferUsage::UNIFORM);
 
 	glGetInteger64v(GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT, &blockAlignment);
-	initDynamicBuffer(GL_SHADER_STORAGE_BUFFER, blockAlignment,
-		MAX_STORAGE_BLOCK_SIZE, BufferUsage::STORAGE);
+	initDynamicBuffer(GL_SHADER_STORAGE_BUFFER,
+		blockAlignment,
+		MAX_STORAGE_BLOCK_SIZE,
+		BufferUsage::STORAGE);
 
 	initDynamicBuffer(GL_ARRAY_BUFFER, 16, MAX_U32, BufferUsage::VERTEX);
 
@@ -178,8 +190,8 @@ void GlState::init1()
 }
 
 //==============================================================================
-void GlState::initDynamicBuffer(GLenum target, U32 alignment,
-	U32 maxAllocationSize, BufferUsage usage)
+void GlState::initDynamicBuffer(
+	GLenum target, U32 alignment, U32 maxAllocationSize, BufferUsage usage)
 {
 	DynamicBuffer& buff = m_dynamicBuffers[usage];
 	ANKI_ASSERT(buff.m_size > 0);
@@ -193,8 +205,8 @@ void GlState::initDynamicBuffer(GLenum target, U32 alignment,
 	glBindBuffer(target, buff.m_name);
 	glBufferStorage(target, buff.m_size, nullptr, FLAGS);
 
-	buff.m_address = static_cast<U8*>(
-		glMapBufferRange(target, 0, buff.m_size, FLAGS));
+	buff.m_address =
+		static_cast<U8*>(glMapBufferRange(target, 0, buff.m_size, FLAGS));
 	buff.m_alignment = alignment;
 	buff.m_maxAllocationSize = maxAllocationSize;
 }
@@ -213,7 +225,8 @@ void GlState::checkDynamicMemoryConsumption()
 			if(bytesUsed >= buff.m_size / MAX_FRAMES_IN_FLIGHT)
 			{
 				ANKI_LOGW("Using too much dynamic memory (mem_type: %u, "
-					"mem_used: %u). Increase the limit", U(usage),
+						  "mem_used: %u). Increase the limit",
+					U(usage),
 					U(bytesUsed));
 			}
 
@@ -249,4 +262,3 @@ void GlState::destroy()
 }
 
 } // end namespace anki
-

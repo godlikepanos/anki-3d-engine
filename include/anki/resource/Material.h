@@ -13,7 +13,8 @@
 #include <anki/util/Visitor.h>
 #include <anki/util/NonCopyable.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class XmlElement;
@@ -29,7 +30,7 @@ class MaterialVariant;
 /// @{
 
 /// The ID of a buildin material variable
-enum class BuiltinMaterialVariableId: U8
+enum class BuiltinMaterialVariableId : U8
 {
 	NONE = 0,
 	MVP_MATRIX,
@@ -43,19 +44,19 @@ enum class BuiltinMaterialVariableId: U8
 };
 
 /// Material variable base. It's a visitable.
-using MateriaVariableVisitable = VisitableCommonBase<
-	MaterialVariable, // The base
-	MaterialVariableTemplate<F32>,
-	MaterialVariableTemplate<Vec2>,
-	MaterialVariableTemplate<Vec3>,
-	MaterialVariableTemplate<Vec4>,
-	MaterialVariableTemplate<Mat3>,
-	MaterialVariableTemplate<Mat4>,
-	MaterialVariableTemplate<TextureResourcePtr>>;
+using MateriaVariableVisitable =
+	VisitableCommonBase<MaterialVariable, // The base
+		MaterialVariableTemplate<F32>,
+		MaterialVariableTemplate<Vec2>,
+		MaterialVariableTemplate<Vec3>,
+		MaterialVariableTemplate<Vec4>,
+		MaterialVariableTemplate<Mat3>,
+		MaterialVariableTemplate<Mat4>,
+		MaterialVariableTemplate<TextureResourcePtr>>;
 
 /// Holds the shader variables. Its a container for shader program variables
 /// that share the same name
-class MaterialVariable: public MateriaVariableVisitable, public NonCopyable
+class MaterialVariable : public MateriaVariableVisitable, public NonCopyable
 {
 	friend class Material;
 	friend class MaterialVariant;
@@ -64,10 +65,12 @@ public:
 	using Base = MateriaVariableVisitable;
 
 	MaterialVariable()
-	{}
+	{
+	}
 
 	virtual ~MaterialVariable()
-	{}
+	{
+	}
 
 	/// Get the name.
 	CString getName() const
@@ -98,8 +101,7 @@ public:
 	}
 
 	template<typename T>
-	void writeShaderBlockMemory(
-		const MaterialVariant& variant,
+	void writeShaderBlockMemory(const MaterialVariant& variant,
 		const T* elements,
 		U32 elementsCount,
 		void* buffBegin,
@@ -122,7 +124,7 @@ protected:
 
 /// Material variable with data. A complete type
 template<typename T>
-class MaterialVariableTemplate: public MaterialVariable
+class MaterialVariableTemplate : public MaterialVariable
 {
 	friend class Material;
 	friend class MaterialVariant;
@@ -137,7 +139,8 @@ public:
 	}
 
 	~MaterialVariableTemplate()
-	{}
+	{
+	}
 
 	const T& getValue() const
 	{
@@ -155,12 +158,12 @@ private:
 			MaterialVariable::m_builtin == BuiltinMaterialVariableId::NONE);
 	}
 
-	ANKI_USE_RESULT Error init(U idx,
-		const MaterialLoaderInputVariable& in, Material& mtl);
+	ANKI_USE_RESULT Error init(
+		U idx, const MaterialLoaderInputVariable& in, Material& mtl);
 };
 
 /// Material variant.
-class MaterialVariant: public NonCopyable
+class MaterialVariant : public NonCopyable
 {
 	friend class Material;
 	friend class MaterialVariable;
@@ -194,8 +197,8 @@ private:
 	DArray<ShaderVariableBlockInfo> m_blockInfo;
 	DArray<Bool8> m_varActive;
 
-	ANKI_USE_RESULT Error init(const RenderingKey& key, Material& mtl,
-		MaterialLoader& loader);
+	ANKI_USE_RESULT Error init(
+		const RenderingKey& key, Material& mtl, MaterialLoader& loader);
 
 	void destroy(ResourceAllocator<U8> alloc)
 	{
@@ -264,7 +267,7 @@ private:
 /// (3): The \<const\> will mark a variable as constant and it cannot be changed
 ///      at all. Default is 0
 /// (4): Optimization. Set to 1 if the var will be used in shadow passes as well
-class Material: public ResourceObject
+class Material : public ResourceObject
 {
 	friend class MaterialVariable;
 	friend class MaterialVariant;
@@ -363,10 +366,9 @@ inline void MaterialVariable::writeShaderBlockMemory(
 	ANKI_ASSERT(m_varType == getShaderVariableTypeFromTypename<T>());
 
 	const auto& blockInfo = variant.m_blockInfo[m_idx];
-	anki::writeShaderBlockMemory(m_varType, blockInfo, elements, elementsCount,
-		buffBegin, buffEnd);
+	anki::writeShaderBlockMemory(
+		m_varType, blockInfo, elements, elementsCount, buffBegin, buffEnd);
 }
 /// @}
 
 } // end namespace anki
-

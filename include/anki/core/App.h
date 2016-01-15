@@ -10,10 +10,11 @@
 #include <anki/util/Ptr.h>
 #include <anki/core/Timestamp.h>
 #if ANKI_OS == ANKI_OS_ANDROID
-#	include <android_native_app_glue.h>
+#include <android_native_app_glue.h>
 #endif
 
-namespace anki {
+namespace anki
+{
 
 #if ANKI_OS == ANKI_OS_ANDROID
 extern android_app* gAndroidApp;
@@ -40,13 +41,15 @@ class App
 
 public:
 	/// User callback of main loop
-	using UserMainLoopCallback = Error(*)(App& app, void* userData, Bool& quit);
+	using UserMainLoopCallback = Error (*)(
+		App& app, void* userData, Bool& quit);
 
 	App();
 	~App();
 
 	ANKI_USE_RESULT Error create(const ConfigSet& config,
-		AllocAlignedCallback allocCb, void* allocCbUserData);
+		AllocAlignedCallback allocCb,
+		void* allocCbUserData);
 
 	F32 getTimerTick() const
 	{
@@ -161,7 +164,8 @@ private:
 	F32 m_timerTick;
 
 	ANKI_USE_RESULT Error createInternal(const ConfigSet& config,
-		AllocAlignedCallback allocCb, void* allocCbUserData);
+		AllocAlignedCallback allocCb,
+		void* allocCbUserData);
 
 	ANKI_USE_RESULT Error initDirs();
 	void cleanup();
@@ -171,4 +175,3 @@ private:
 };
 
 } // end namespace anki
-

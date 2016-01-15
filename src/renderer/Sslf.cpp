@@ -9,7 +9,8 @@
 #include <anki/renderer/Bloom.h>
 #include <anki/misc/ConfigSet.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 Error Sslf::init(const ConfigSet& config)
@@ -38,13 +39,12 @@ Error Sslf::initInternal(const ConfigSet& config)
 	// Load program 1
 	StringAuto pps(getAllocator());
 
-	pps.sprintf(
-		"#define TEX_DIMENSIONS vec2(%u.0, %u.0)\n",
+	pps.sprintf("#define TEX_DIMENSIONS vec2(%u.0, %u.0)\n",
 		m_r->getPps().getBloom().getWidth(),
 		m_r->getPps().getBloom().getHeight());
 
 	ANKI_CHECK(getResourceManager().loadResourceToCache(
-		m_frag,	"shaders/PpsSslf.frag.glsl", pps.toCString(), "r_"));
+		m_frag, "shaders/PpsSslf.frag.glsl", pps.toCString(), "r_"));
 
 	ColorStateInfo colorState;
 	colorState.m_attachmentCount = 1;
@@ -59,7 +59,11 @@ Error Sslf::initInternal(const ConfigSet& config)
 	// Create the render target and FB
 	m_r->createRenderTarget(m_r->getPps().getBloom().getWidth(),
 		m_r->getPps().getBloom().getHeight(),
-		pixelFormat, 1, SamplingFilter::LINEAR, 1, m_rt);
+		pixelFormat,
+		1,
+		SamplingFilter::LINEAR,
+		1,
+		m_rt);
 
 	FramebufferInitializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
@@ -86,7 +90,9 @@ void Sslf::run(CommandBufferPtr& cmdb)
 
 	// Draw to the SSLF FB
 	cmdb->bindFramebuffer(m_fb);
-	cmdb->setViewport(0, 0, m_r->getPps().getBloom().getWidth(),
+	cmdb->setViewport(0,
+		0,
+		m_r->getPps().getBloom().getWidth(),
 		m_r->getPps().getBloom().getHeight());
 
 	cmdb->bindPipeline(m_ppline);
@@ -96,4 +102,3 @@ void Sslf::run(CommandBufferPtr& cmdb)
 }
 
 } // end namespace anki
-

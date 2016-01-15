@@ -5,7 +5,8 @@
 
 #include <anki/gr/gl/Common.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 GLenum convertCompareOperation(CompareOperation in)
@@ -43,8 +44,10 @@ GLenum convertCompareOperation(CompareOperation in)
 }
 
 //==============================================================================
-void convertFilter(SamplingFilter minMagFilter, SamplingFilter mipFilter,
-	GLenum& minFilter, GLenum& magFilter)
+void convertFilter(SamplingFilter minMagFilter,
+	SamplingFilter mipFilter,
+	GLenum& minFilter,
+	GLenum& magFilter)
 {
 	switch(minMagFilter)
 	{

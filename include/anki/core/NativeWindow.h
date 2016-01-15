@@ -10,7 +10,8 @@
 #include <anki/util/String.h>
 #include <anki/util/Allocator.h>
 
-namespace anki {
+namespace anki
+{
 
 class NativeWindowImpl;
 using Context = void*;
@@ -47,7 +48,8 @@ public:
 	};
 
 	NativeWindow()
-	{}
+	{
+	}
 
 	~NativeWindow()
 	{
@@ -101,4 +103,3 @@ private:
 };
 
 } // end namespace anki
-

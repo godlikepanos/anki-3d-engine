@@ -6,12 +6,14 @@
 #include <anki/scene/SceneNode.h>
 #include <anki/scene/SceneGraph.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 SceneNode::SceneNode(SceneGraph* scene)
 	: m_scene(scene)
-{}
+{
+}
 
 //==============================================================================
 SceneNode::~SceneNode()
@@ -52,8 +54,7 @@ void SceneNode::setMarkedForDeletion()
 		m_scene->increaseObjectsMarkedForDeletion();
 	}
 
-	Error err = visitChildren([](SceneNode& obj) -> Error
-	{
+	Error err = visitChildren([](SceneNode& obj) -> Error {
 		obj.setMarkedForDeletion();
 		return ErrorCode::NONE;
 	});
@@ -86,8 +87,7 @@ U32 SceneNode::getLastUpdateFrame() const
 {
 	U32 max = 0;
 
-	Error err = iterateComponents([&max](const SceneComponent& comp) -> Error
-	{
+	Error err = iterateComponents([&max](const SceneComponent& comp) -> Error {
 		max = std::max(max, comp.getTimestamp());
 		return ErrorCode::NONE;
 	});
@@ -103,8 +103,7 @@ void SceneNode::addComponent(SceneComponent* comp, Bool transferOwnership)
 	ANKI_ASSERT(comp);
 
 #if ANKI_ASSERTIONS
-	Error err = iterateComponents([&](const SceneComponent& bcomp) -> Error
-	{
+	Error err = iterateComponents([&](const SceneComponent& bcomp) -> Error {
 		ANKI_ASSERT(comp != &bcomp);
 		return ErrorCode::NONE;
 	});

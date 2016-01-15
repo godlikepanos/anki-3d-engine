@@ -7,7 +7,8 @@
 #include <anki/misc/Xml.h>
 #include <anki/util/StringList.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 Skeleton::~Skeleton()

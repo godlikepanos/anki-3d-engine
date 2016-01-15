@@ -7,7 +7,8 @@
 #include <anki/renderer/Renderer.h>
 #include <anki/util/Enum.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 Timestamp RenderingPass::getGlobalTimestamp() const
@@ -46,4 +47,3 @@ ResourceManager& RenderingPass::getResourceManager()
 }
 
 } // end namespace anki
-

@@ -12,7 +12,8 @@
 #include <anki/scene/Light.h>
 #include <anki/misc/ConfigSet.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 const PixelFormat Sm::DEPTH_RT_PIXEL_FORMAT(
@@ -49,9 +50,8 @@ Error Sm::init(const ConfigSet& config)
 	sminit.m_depth = config.getNumber("is.sm.maxLights");
 	sminit.m_format = DEPTH_RT_PIXEL_FORMAT;
 	sminit.m_mipmapsCount = 1;
-	sminit.m_sampling.m_minMagFilter = m_bilinearEnabled
-		? SamplingFilter::LINEAR
-		: SamplingFilter::NEAREST;
+	sminit.m_sampling.m_minMagFilter =
+		m_bilinearEnabled ? SamplingFilter::LINEAR : SamplingFilter::NEAREST;
 	sminit.m_sampling.m_compareOperation = CompareOperation::LESS_EQUAL;
 
 	m_spotTexArray = getGrManager().newInstance<Texture>(sminit);
@@ -104,7 +104,8 @@ Error Sm::init(const ConfigSet& config)
 
 //==============================================================================
 Error Sm::run(SArray<SceneNode*> spotShadowCasters,
-	SArray<SceneNode*> omniShadowCasters, CommandBufferPtr& cmdBuff)
+	SArray<SceneNode*> omniShadowCasters,
+	CommandBufferPtr& cmdBuff)
 {
 	ANKI_ASSERT(m_enabled);
 	ANKI_TRACE_START_EVENT(RENDER_SM);
@@ -174,21 +175,19 @@ void Sm::bestCandidate(SceneNode& light, TContainer& arr, TShadowmap*& out)
 //==============================================================================
 Bool Sm::skip(SceneNode& light, ShadowmapBase& sm)
 {
-	MoveComponent* movc =
-		light.tryGetComponent<MoveComponent>();
+	MoveComponent* movc = light.tryGetComponent<MoveComponent>();
 
 	Timestamp lastUpdate = movc->getTimestamp();
 
 	Error err = light.iterateComponentsOfType<FrustumComponent>(
-		[&](FrustumComponent& fr)
-	{
-		lastUpdate = max(lastUpdate, fr.getTimestamp());
+		[&](FrustumComponent& fr) {
+			lastUpdate = max(lastUpdate, fr.getTimestamp());
 
-		VisibilityTestResults& vi = fr.getVisibilityTestResults();
-		lastUpdate = max(lastUpdate, vi.getShapeUpdateTimestamp());
+			VisibilityTestResults& vi = fr.getVisibilityTestResults();
+			lastUpdate = max(lastUpdate, vi.getShapeUpdateTimestamp());
 
-		return ErrorCode::NONE;
-	});
+			return ErrorCode::NONE;
+		});
 	(void)err;
 
 	Bool shouldUpdate = lastUpdate >= sm.m_timestamp;
@@ -240,17 +239,16 @@ Error Sm::doOmniLight(SceneNode& light, CommandBufferPtr& cmdBuff)
 	U frCount = 0;
 
 	Error err = light.iterateComponentsOfType<FrustumComponent>(
-		[&](FrustumComponent& fr) -> Error
-	{
-		cmdBuff->bindFramebuffer(sm->m_fb[frCount]);
+		[&](FrustumComponent& fr) -> Error {
+			cmdBuff->bindFramebuffer(sm->m_fb[frCount]);
 
-		SArray<CommandBufferPtr> cmdbs(&cmdBuff, 1);
-		ANKI_CHECK(m_r->getSceneDrawer().render(
-			fr, RenderingStage::MATERIAL, Pass::SM, cmdbs));
+			SArray<CommandBufferPtr> cmdbs(&cmdBuff, 1);
+			ANKI_CHECK(m_r->getSceneDrawer().render(
+				fr, RenderingStage::MATERIAL, Pass::SM, cmdbs));
 
-		++frCount;
-		return ErrorCode::NONE;
-	});
+			++frCount;
+			return ErrorCode::NONE;
+		});
 
 	ANKI_TRACE_INC_COUNTER(RENDERER_SHADOW_PASSES, 6);
 

@@ -10,13 +10,14 @@
 #include <anki/collision/Sphere.h>
 #include <anki/Gr.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup scene
 /// @{
 
 /// Probe used in realtime reflections.
-class ReflectionProbe: public SceneNode
+class ReflectionProbe : public SceneNode
 {
 	friend class ReflectionProbeMoveFeedbackComponent;
 
@@ -25,7 +26,8 @@ public:
 
 	ReflectionProbe(SceneGraph* scene)
 		: SceneNode(scene)
-	{}
+	{
+	}
 
 	~ReflectionProbe();
 
@@ -43,8 +45,8 @@ public:
 		m_cubemapArrayIdx = cubemapArrayIdx;
 	}
 
-	ANKI_USE_RESULT Error frameUpdate(F32 prevUpdateTime,
-		F32 crntTime) override;
+	ANKI_USE_RESULT Error frameUpdate(
+		F32 prevUpdateTime, F32 crntTime) override;
 
 private:
 	class CubeSide
@@ -63,4 +65,3 @@ private:
 /// @}
 
 } // end namespace anki
-

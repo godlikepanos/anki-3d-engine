@@ -11,12 +11,14 @@
 #include <anki/scene/MoveComponent.h>
 #include <anki/scene/SceneNode.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 Tiler::Tiler(Renderer* r)
 	: RenderingPass(r)
-{}
+{
+}
 
 //==============================================================================
 Tiler::~Tiler()
@@ -43,11 +45,10 @@ Error Tiler::initInternal()
 	// Load the program
 	StringAuto pps(getAllocator());
 
-	pps.sprintf(
-		"#define TILE_SIZE_X %u\n"
-		"#define TILE_SIZE_Y %u\n"
-		"#define TILES_COUNT_X %u\n"
-		"#define TILES_COUNT_Y %u\n",
+	pps.sprintf("#define TILE_SIZE_X %u\n"
+				"#define TILE_SIZE_Y %u\n"
+				"#define TILES_COUNT_X %u\n"
+				"#define TILES_COUNT_Y %u\n",
 		Renderer::TILE_SIZE,
 		Renderer::TILE_SIZE,
 		m_r->getTileCountXY().x(),
@@ -66,8 +67,8 @@ Error Tiler::initInternal()
 	for(U i = 0; i < m_outBuffers.getSize(); ++i)
 	{
 		// Create the buffer
-		m_outBuffers[i] = getGrManager().newInstance<Buffer>(pboSize,
-			BufferUsageBit::STORAGE, BufferAccessBit::CLIENT_MAP_READ);
+		m_outBuffers[i] = getGrManager().newInstance<Buffer>(
+			pboSize, BufferUsageBit::STORAGE, BufferAccessBit::CLIENT_MAP_READ);
 
 		// Create graphics resources
 		ResourceGroupInitializer rcinit;
@@ -122,8 +123,8 @@ void Tiler::prepareForVisibilityTests(const SceneNode& node)
 
 	// Other
 	const MoveComponent& movec = node.getComponent<MoveComponent>();
-	m_nearPlaneWspace = Plane(Vec4(0.0, 0.0, -1.0, 0.0),
-		frc.getFrustum().getNear());
+	m_nearPlaneWspace =
+		Plane(Vec4(0.0, 0.0, -1.0, 0.0), frc.getFrustum().getNear());
 	m_nearPlaneWspace.transform(movec.getWorldTransform());
 
 	m_viewProjMat = frc.getViewProjectionMatrix();
@@ -188,10 +189,10 @@ Bool Tiler::test(const CollisionShape& cs, const Aabb& aabb) const
 	I yEnd = ceil(tcountY * max2.y());
 	yEnd = min<I>(yEnd, tcountY);
 
-	ANKI_ASSERT(xBegin >= 0 && xBegin <= tcountX
-		&& xEnd >= 0 && xEnd <= tcountX);
-	ANKI_ASSERT(yBegin >= 0 && yBegin <= tcountX
-		&& yEnd >= 0 && yBegin <= tcountY);
+	ANKI_ASSERT(
+		xBegin >= 0 && xBegin <= tcountX && xEnd >= 0 && xEnd <= tcountX);
+	ANKI_ASSERT(
+		yBegin >= 0 && yBegin <= tcountX && yEnd >= 0 && yBegin <= tcountY);
 
 	// Check every tile
 	U visibleCount = (yEnd - yBegin) * (xEnd - xBegin);

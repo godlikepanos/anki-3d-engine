@@ -7,7 +7,8 @@
 #include <anki/resource/ResourceManager.h>
 #include <anki/resource/GenericResource.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 struct Vertex
@@ -20,21 +21,23 @@ struct Vertex
 //==============================================================================
 UiInterfaceImpl::UiInterfaceImpl(UiAllocator alloc)
 	: UiInterface(alloc)
-{}
+{
+}
 
 //==============================================================================
 UiInterfaceImpl::~UiInterfaceImpl()
-{}
+{
+}
 
 //==============================================================================
 Error UiInterfaceImpl::init(GrManager* gr, ResourceManager* rc)
 {
 	// Load shaders
-	ANKI_CHECK(rc->loadResource("shaders/UiLines.vert.glsl",
-		m_stages[StageId::LINES].m_vShader));
+	ANKI_CHECK(rc->loadResource(
+		"shaders/UiLines.vert.glsl", m_stages[StageId::LINES].m_vShader));
 
-	ANKI_CHECK(rc->loadResource("shaders/UiLines.frag.glsl",
-		m_stages[StageId::LINES].m_fShader));
+	ANKI_CHECK(rc->loadResource(
+		"shaders/UiLines.frag.glsl", m_stages[StageId::LINES].m_fShader));
 
 	// Init pplines
 	PipelineInitializer ppinit;
@@ -74,9 +77,10 @@ Error UiInterfaceImpl::init(GrManager* gr, ResourceManager* rc)
 	{
 		for(U i = 0; i < m_stages[s].m_vertBuffs.getSize(); ++i)
 		{
-			m_stages[s].m_vertBuffs[i] = gr->newInstance<Buffer>(
-				MAX_VERTS * sizeof(Vertex), BufferUsageBit::VERTEX,
-				BufferAccessBit::CLIENT_MAP_WRITE);
+			m_stages[s].m_vertBuffs[i] =
+				gr->newInstance<Buffer>(MAX_VERTS * sizeof(Vertex),
+					BufferUsageBit::VERTEX,
+					BufferAccessBit::CLIENT_MAP_WRITE);
 		}
 	}
 
@@ -110,9 +114,8 @@ void UiInterfaceImpl::beginRendering(CommandBufferPtr cmdb)
 	{
 		BufferPtr buff = m_stages[s].m_vertBuffs[m_timestamp];
 
-		m_vertMappings[s] = static_cast<Vertex*>(
-			buff->map(0, sizeof(Vertex) * MAX_VERTS,
-			BufferAccessBit::CLIENT_MAP_WRITE));
+		m_vertMappings[s] = static_cast<Vertex*>(buff->map(
+			0, sizeof(Vertex) * MAX_VERTS, BufferAccessBit::CLIENT_MAP_WRITE));
 
 		m_vertCounts[s] = 0;
 	}
@@ -133,23 +136,24 @@ void UiInterfaceImpl::endRendering()
 }
 
 //==============================================================================
-void UiInterfaceImpl::drawLines(const SArray<UVec2>& positions,
-	const Color& color, const UVec2& canvasSize)
+void UiInterfaceImpl::drawLines(
+	const SArray<UVec2>& positions, const Color& color, const UVec2& canvasSize)
 {
 	StageId stageId = StageId::LINES;
 
 	ANKI_ASSERT(m_vertCounts[stageId] + positions.getSize() <= MAX_VERTS);
 
 	m_cmdb->bindPipeline(m_stages[StageId::LINES].m_ppline);
-	m_cmdb->bindResourceGroup(m_stages[StageId::LINES].m_rcGroups[m_timestamp],
-		0, nullptr);
+	m_cmdb->bindResourceGroup(
+		m_stages[StageId::LINES].m_rcGroups[m_timestamp], 0, nullptr);
 	m_cmdb->drawArrays(positions.getSize(), 1, m_vertCounts[stageId]);
 
 	for(const UVec2& pos : positions)
 	{
 		Vertex v;
-		v.m_pos = Vec2(pos.x(), pos.y()) / Vec2(canvasSize.x(), canvasSize.y())
-			* 2.0 - 1.0;
+		v.m_pos =
+			Vec2(pos.x(), pos.y()) / Vec2(canvasSize.x(), canvasSize.y()) * 2.0
+			- 1.0;
 		v.m_uv = Vec2(0.0);
 		Color c = color * 255.0;
 		v.m_color = {{U8(c[0]), U8(c[1]), U8(c[2]), U8(c[3])}};
@@ -161,8 +165,10 @@ void UiInterfaceImpl::drawLines(const SArray<UVec2>& positions,
 }
 
 //==============================================================================
-void UiInterfaceImpl::drawImage(UiImagePtr image, const Rect& uvs,
-	const Rect& drawingRect, const UVec2& canvasSize)
+void UiInterfaceImpl::drawImage(UiImagePtr image,
+	const Rect& uvs,
+	const Rect& drawingRect,
+	const UVec2& canvasSize)
 {
 	StageId stageId = StageId::TEXTURED_TRIANGLES;
 
@@ -185,8 +191,8 @@ Error UiInterfaceImpl::loadImage(
 }
 
 //==============================================================================
-Error UiInterfaceImpl::createR8Image(const SArray<U8>& data, const UVec2& size,
-	IntrusivePtr<UiImage>& img)
+Error UiInterfaceImpl::createR8Image(
+	const SArray<U8>& data, const UVec2& size, IntrusivePtr<UiImage>& img)
 {
 	ANKI_ASSERT(data.getSize() == size.x() * size.y());
 
@@ -213,8 +219,8 @@ Error UiInterfaceImpl::createR8Image(const SArray<U8>& data, const UVec2& size,
 	// Load data
 	CommandBufferPtr cmdb = m_gr->newInstance<CommandBuffer>();
 	DynamicBufferToken token;
-	void* loadData = m_gr->allocateFrameHostVisibleMemory(data.getSize(),
-		BufferUsage::TRANSFER, token);
+	void* loadData = m_gr->allocateFrameHostVisibleMemory(
+		data.getSize(), BufferUsage::TRANSFER, token);
 	memcpy(loadData, &data[0], data.getSize());
 	cmdb->textureUpload(tex, 0, 0, token);
 

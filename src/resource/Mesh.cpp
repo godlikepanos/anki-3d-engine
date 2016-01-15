@@ -9,12 +9,14 @@
 #include <anki/util/Functions.h>
 #include <anki/misc/Xml.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 Mesh::Mesh(ResourceManager* manager)
 	: ResourceObject(manager)
-{}
+{
+}
 
 //==============================================================================
 Mesh::~Mesh()
@@ -40,8 +42,10 @@ Error Mesh::load(const ResourceFilename& filename)
 	m_indicesCount = header.m_totalIndicesCount;
 
 	PtrSize vertexSize = loader.getVertexSize();
-	m_obb.setFromPointCloud(loader.getVertexData(), header.m_totalVerticesCount,
-		vertexSize, loader.getVertexDataSize());
+	m_obb.setFromPointCloud(loader.getVertexData(),
+		header.m_totalVerticesCount,
+		vertexSize,
+		loader.getVertexDataSize());
 	ANKI_ASSERT(m_indicesCount > 0);
 	ANKI_ASSERT(m_indicesCount % 3 == 0 && "Expecting triangles");
 
@@ -66,20 +70,22 @@ void Mesh::createBuffers(const MeshLoader& loader)
 
 	// Create vertex buffer
 	m_vertBuff = gr.newInstance<Buffer>(loader.getVertexDataSize(),
-		BufferUsageBit::VERTEX, BufferAccessBit::CLIENT_WRITE);
+		BufferUsageBit::VERTEX,
+		BufferAccessBit::CLIENT_WRITE);
 
 	DynamicBufferToken token;
-	void* data = gr.allocateFrameHostVisibleMemory(loader.getVertexDataSize(),
-		BufferUsage::TRANSFER, token);
+	void* data = gr.allocateFrameHostVisibleMemory(
+		loader.getVertexDataSize(), BufferUsage::TRANSFER, token);
 	memcpy(data, loader.getVertexData(), loader.getVertexDataSize());
 	cmdb->writeBuffer(m_vertBuff, 0, token);
 
 	// Create index buffer
 	m_indicesBuff = gr.newInstance<Buffer>(loader.getIndexDataSize(),
-		BufferUsageBit::INDEX, BufferAccessBit::CLIENT_WRITE);
+		BufferUsageBit::INDEX,
+		BufferAccessBit::CLIENT_WRITE);
 
-	data = gr.allocateFrameHostVisibleMemory(loader.getIndexDataSize(),
-		BufferUsage::TRANSFER, token);
+	data = gr.allocateFrameHostVisibleMemory(
+		loader.getIndexDataSize(), BufferUsage::TRANSFER, token);
 	memcpy(data, loader.getIndexData(), loader.getIndexDataSize());
 	cmdb->writeBuffer(m_indicesBuff, 0, token);
 

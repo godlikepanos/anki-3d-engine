@@ -6,14 +6,15 @@
 #include <anki/math/Functions.h>
 #include <anki/Config.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 template<typename Scalar>
 static Scalar polynomialSinQuadrant(const Scalar a)
 {
-	return a * (1.0 + a * a * (-0.16666 + a * a *
-		(0.0083143 - a * a * 0.00018542)));
+	return a
+		* (1.0 + a * a * (-0.16666 + a * a * (0.0083143 - a * a * 0.00018542)));
 }
 
 //==============================================================================

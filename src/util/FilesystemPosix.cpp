@@ -16,10 +16,11 @@
 
 // Define PATH_MAX if needed
 #ifndef PATH_MAX
-#	define PATH_MAX 4096
+#define PATH_MAX 4096
 #endif
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 Bool fileExists(const CString& filename)
@@ -56,9 +57,7 @@ static void* walkDirUserData = nullptr;
 static Array<char, PATH_MAX> walkDirDir;
 
 static int ftwCallback(
-	const char* fpath,
-	const struct stat* /*sb*/,
-	int typeflag)
+	const char* fpath, const struct stat* /*sb*/, int typeflag)
 {
 	Error err = ErrorCode::NONE;
 
@@ -90,9 +89,7 @@ static int ftwCallback(
 }
 
 Error walkDirectoryTree(
-	const CString& dir,
-	void* userData,
-	WalkDirectoryTreeCallback callback)
+	const CString& dir, void* userData, WalkDirectoryTreeCallback callback)
 {
 	ANKI_ASSERT(callback != nullptr);
 
@@ -138,8 +135,11 @@ Error removeDirectory(const CString& dirname)
 	{
 		if(strcmp(entry->d_name, ".") && strcmp(entry->d_name, ".."))
 		{
-			std::snprintf(g_removeDirectoryPath, size_t(PATH_MAX),
-				"%s/%s", dirname.get(), entry->d_name);
+			std::snprintf(g_removeDirectoryPath,
+				size_t(PATH_MAX),
+				"%s/%s",
+				dirname.get(),
+				entry->d_name);
 
 			if(entry->d_type == DT_DIR)
 			{
@@ -154,7 +154,6 @@ Error removeDirectory(const CString& dirname)
 				remove(g_removeDirectoryPath);
 			}
 		}
-
 	}
 
 	closedir(dir);

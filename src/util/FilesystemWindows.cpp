@@ -11,7 +11,8 @@
 // Someone pollutes the global namespace
 #undef ERROR
 
-namespace anki {
+namespace anki
+{
 
 #if !defined(MAX_PATH)
 static const U MAX_PATH = 1024 * 4;
@@ -51,8 +52,7 @@ Error removeDirectory(const CString& dirname)
 	dirname2[dirname.getLength() + 1] = '\0';
 
 	Error err = ErrorCode::NONE;
-	SHFILEOPSTRUCTA fileOperation = {
-		NULL,
+	SHFILEOPSTRUCTA fileOperation = {NULL,
 		FO_DELETE,
 		&dirname2[0],
 		"",
@@ -111,8 +111,7 @@ Error getHomeDirectory(GenericMemoryPoolAllocator<U8> alloc, String& out)
 }
 
 //==============================================================================
-static Error walkDirectoryTreeInternal(
-	const CString& dir,
+static Error walkDirectoryTreeInternal(const CString& dir,
 	void* userData,
 	WalkDirectoryTreeCallback callback,
 	U baseDirLen)
@@ -190,7 +189,7 @@ static Error walkDirectoryTreeInternal(
 
 			dir2[oldLen] = '\0';
 		}
-	}while(FindNextFile(handle, &find) != 0);
+	} while(FindNextFile(handle, &find) != 0);
 
 	if(GetLastError() != ERROR_NO_MORE_FILES)
 	{
@@ -204,9 +203,7 @@ static Error walkDirectoryTreeInternal(
 }
 
 Error walkDirectoryTree(
-	const CString& dir,
-	void* userData,
-	WalkDirectoryTreeCallback callback)
+	const CString& dir, void* userData, WalkDirectoryTreeCallback callback)
 {
 	U baseDirLen = 0;
 	U len = dir.getLength();
@@ -221,6 +218,5 @@ Error walkDirectoryTree(
 
 	return walkDirectoryTreeInternal(dir, userData, callback, baseDirLen);
 }
-
 
 } // end namespace anki

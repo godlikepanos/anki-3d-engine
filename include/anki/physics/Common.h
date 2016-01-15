@@ -11,7 +11,8 @@
 #include <anki/Math.h>
 #include <Newton.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class PhysicsObject;
@@ -39,7 +40,7 @@ using PhysicsBodyPtr = PhysicsPtr<PhysicsBody>;
 using PhysicsPlayerControllerPtr = PhysicsPtr<PhysicsPlayerController>;
 
 /// Material types.
-enum class PhysicsMaterialBit: U16
+enum class PhysicsMaterialBit : U16
 {
 	NONE = 0,
 	STATIC_GEOMETRY = 1 << 0,
@@ -76,4 +77,3 @@ ANKI_USE_RESULT inline Mat4 toNewton(const Mat4& m)
 /// @}
 
 } // end namespace anki
-

@@ -7,7 +7,8 @@
 #include "anki/util/String.h"
 #include <string>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 ANKI_TEST(Util, String)
@@ -33,7 +34,6 @@ ANKI_TEST(Util, String)
 		b.destroy(alloc);
 		a.destroy(alloc);
 	}
-
 
 	// Move
 	{
@@ -66,7 +66,7 @@ ANKI_TEST(Util, String)
 			++c;
 			++count;
 		}
-	
+
 		ANKI_TEST_EXPECT_EQ(a, "234");
 		ANKI_TEST_EXPECT_EQ(count, 3);
 
@@ -74,7 +74,6 @@ ANKI_TEST(Util, String)
 		ANKI_TEST_EXPECT_EQ(a.end(), &a[0] + 3);
 		a.destroy(alloc);
 	}
-
 
 	// Append
 	{
@@ -96,14 +95,13 @@ ANKI_TEST(Util, String)
 
 	// Compare
 	{
-#define COMPARE(x_, y_, op_) \
-	a.append(alloc, x_); \
-	b.append(alloc, y_); \
-	ANKI_TEST_EXPECT_EQ(a op_ b, \
-		std::string(x_) op_ std::string(y_)) \
-	a.destroy(alloc); \
-	b.destroy(alloc); 
-	
+#define COMPARE(x_, y_, op_)                                                   \
+	a.append(alloc, x_);                                                       \
+	b.append(alloc, y_);                                                       \
+	ANKI_TEST_EXPECT_EQ(a op_ b, std::string(x_) op_ std::string(y_))          \
+	a.destroy(alloc);                                                          \
+	b.destroy(alloc);
+
 		String a, b;
 		COMPARE("123", "1233", <);
 		COMPARE("0123", "1233", <=);
@@ -124,8 +122,20 @@ ANKI_TEST(Util, String)
 
 		// Extreme
 		const char* s = "1234567890ABCDEF!@#$%^&*()_+asfghjkl:,.;ljk\"><{}[]/";
-		a.sprintf(alloc, "%s%s%s%s%s%s%s%s%s%s%s %d", 
-			s, s, s, s, s, s, s, s, s, s, s, 88);
+		a.sprintf(alloc,
+			"%s%s%s%s%s%s%s%s%s%s%s %d",
+			s,
+			s,
+			s,
+			s,
+			s,
+			s,
+			s,
+			s,
+			s,
+			s,
+			s,
+			88);
 
 		String b;
 		for(U i = 0; i < 11; i++)
@@ -214,4 +224,3 @@ ANKI_TEST(Util, String)
 }
 
 } // end namespace anki
-

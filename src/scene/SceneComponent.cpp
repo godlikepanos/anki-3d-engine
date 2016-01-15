@@ -6,7 +6,8 @@
 #include <anki/scene/SceneComponent.h>
 #include <anki/scene/SceneNode.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 Timestamp SceneComponent::getGlobalTimestamp() const
@@ -15,8 +16,8 @@ Timestamp SceneComponent::getGlobalTimestamp() const
 }
 
 //==============================================================================
-Error SceneComponent::updateReal(SceneNode& node, F32 prevTime, F32 crntTime,
-	Bool& updated)
+Error SceneComponent::updateReal(
+	SceneNode& node, F32 prevTime, F32 crntTime, Bool& updated)
 {
 	Error err = update(node, prevTime, crntTime, updated);
 	if(!err && updated)

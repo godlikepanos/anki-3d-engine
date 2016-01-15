@@ -6,7 +6,8 @@
 #include <anki/ui/Widget.h>
 #include <anki/ui/Canvas.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 Widget::Widget(Canvas* canvas)
@@ -31,8 +32,7 @@ void Widget::markForDeletion()
 		getCanvas().getMarkedForDeletionCount().fetchAdd(1);
 	}
 
-	Error err = visitChildren([](Widget& obj) -> Error
-	{
+	Error err = visitChildren([](Widget& obj) -> Error {
 		obj.markForDeletion();
 		return ErrorCode::NONE;
 	});
@@ -64,4 +64,3 @@ void Widget::setSize(const UVec2& size)
 }
 
 } // end namespace anki
-

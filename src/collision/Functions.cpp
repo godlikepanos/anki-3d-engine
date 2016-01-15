@@ -5,11 +5,12 @@
 
 #include <anki/collision/Functions.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
-void extractClipPlanes(const Mat4& mvp, 
-	Plane* planes[(U)Frustum::PlaneType::COUNT])
+void extractClipPlanes(
+	const Mat4& mvp, Plane* planes[(U)Frustum::PlaneType::COUNT])
 {
 	// Plane equation coefficients
 	F32 a, b, c, d;
@@ -72,7 +73,7 @@ void extractClipPlanes(const Mat4& mvp,
 		d = mvp(3, 3) + mvp(1, 3);
 
 		*planes[(U)Frustum::PlaneType::BOTTOM] = Plane(a, b, c, d);
-	}	
+	}
 }
 
 } // end namespace anki

@@ -7,18 +7,20 @@
 
 #include <anki/resource/ResourceObject.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup resource
 /// @{
 
 /// Script resource.
-class Script: public ResourceObject
+class Script : public ResourceObject
 {
 public:
 	Script(ResourceManager* manager)
 		: ResourceObject(manager)
-	{}
+	{
+	}
 
 	~Script();
 
@@ -35,4 +37,3 @@ private:
 /// @}
 
 } // end namespace
-

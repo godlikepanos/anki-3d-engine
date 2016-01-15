@@ -11,19 +11,21 @@
 #include <anki/physics/PhysicsWorld.h>
 #include <anki/input/Input.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // PlayerNodeFeedbackComponent                                                 =
 //==============================================================================
 
 /// Feedback component.
-class PlayerNodeFeedbackComponent final: public SceneComponent
+class PlayerNodeFeedbackComponent final : public SceneComponent
 {
 public:
 	PlayerNodeFeedbackComponent(SceneNode* node)
 		: SceneComponent(SceneComponent::Type::NONE, node)
-	{}
+	{
+	}
 
 	Error update(SceneNode& node, F32, F32, Bool& updated) override
 	{
@@ -36,8 +38,7 @@ public:
 
 		F32 y = in.getMousePosition().y();
 		F32 x = in.getMousePosition().x();
-		if(playerc.getTimestamp() == node.getGlobalTimestamp()
-			|| y != 0.0
+		if(playerc.getTimestamp() == node.getGlobalTimestamp() || y != 0.0
 			|| x != 0.0)
 		{
 			MoveComponent& move = node.getComponent<MoveComponent>();
@@ -70,12 +71,13 @@ public:
 //==============================================================================
 
 /// Feedback component.
-class PlayerNodeFeedbackComponent2 final: public SceneComponent
+class PlayerNodeFeedbackComponent2 final : public SceneComponent
 {
 public:
 	PlayerNodeFeedbackComponent2(SceneNode* node)
-	:	SceneComponent(SceneComponent::Type::NONE, node)
-	{}
+		: SceneComponent(SceneComponent::Type::NONE, node)
+	{
+	}
 
 	Error update(SceneNode& node, F32, F32, Bool& updated) override
 	{
@@ -113,11 +115,7 @@ public:
 		dir.y() = 0.0;
 		dir.normalize();
 
-		playerc.setVelocity(
-			moveVec.z() * speed,
-			moveVec.x() * speed,
-			0.0,
-			dir);
+		playerc.setVelocity(moveVec.z() * speed, moveVec.x() * speed, 0.0, dir);
 
 		return ErrorCode::NONE;
 	}
@@ -130,11 +128,13 @@ public:
 //==============================================================================
 PlayerNode::PlayerNode(SceneGraph* scene)
 	: SceneNode(scene)
-{}
+{
+}
 
 //==============================================================================
 PlayerNode::~PlayerNode()
-{}
+{
+}
 
 //==============================================================================
 Error PlayerNode::create(const CString& name, const Vec4& position)
@@ -144,8 +144,9 @@ Error PlayerNode::create(const CString& name, const Vec4& position)
 	// Create physics object
 	PhysicsPlayerController::Initializer init;
 	init.m_position = position;
-	m_player = getSceneGraph()._getPhysicsWorld().
-		newInstance<PhysicsPlayerController>(init);
+	m_player =
+		getSceneGraph()._getPhysicsWorld().newInstance<PhysicsPlayerController>(
+			init);
 
 	SceneComponent* comp;
 
@@ -170,4 +171,3 @@ Error PlayerNode::create(const CString& name, const Vec4& position)
 }
 
 } // end namespace anki
-

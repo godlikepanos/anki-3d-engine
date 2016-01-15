@@ -7,13 +7,14 @@
 
 #include <anki/gr/gl/Common.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup opengl
 /// @{
 
 /// State of the handle
-enum class GlObjectState: U32
+enum class GlObjectState : U32
 {
 	NEW,
 	TO_BE_CREATED,

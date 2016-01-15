@@ -131,9 +131,7 @@ private:
 	void writeTransform(const aiMatrix4x4& mat);
 
 	/// Write transformation of a node
-	void writeNodeTransform(
-		const std::string& node,
-		const aiMatrix4x4& mat);
+	void writeNodeTransform(const std::string& node, const aiMatrix4x4& mat);
 
 	const aiMesh& getMeshAt(unsigned index) const;
 	const aiMaterial& getMaterialAt(unsigned index) const;
@@ -145,16 +143,15 @@ private:
 
 	/// Export a mesh.
 	/// @param transform If not nullptr then transform the vertices using that.
-	void exportMesh(const aiMesh& mesh, const aiMatrix4x4* transform,
+	void exportMesh(const aiMesh& mesh,
+		const aiMatrix4x4* transform,
 		unsigned vertCountPerFace) const;
 
 	/// Export a skeleton.
 	void exportSkeleton(const aiMesh& mesh) const;
 
 	/// Export a material.
-	void exportMaterial(
-		const aiMaterial& mtl,
-		uint32_t instances) const;
+	void exportMaterial(const aiMaterial& mtl, uint32_t instances) const;
 
 	/// Export a model.
 	void exportModel(const Model& model) const;
@@ -163,20 +160,17 @@ private:
 	void exportLight(const aiLight& light);
 
 	/// Export an animation.
-	void exportAnimation(
-		const aiAnimation& anim,
-		unsigned index);
+	void exportAnimation(const aiAnimation& anim, unsigned index);
 
 	/// Export a static collision mesh.
 	void exportCollisionMesh(uint32_t meshIdx);
 
 	/// Helper.
-	static std::string getMaterialName(const aiMaterial& mtl,
-		uint32_t instances);
+	static std::string getMaterialName(
+		const aiMaterial& mtl, uint32_t instances);
 
 	/// Round up the instances count.
 	static uint32_t roundUpInstancesCount(uint32_t instances);
 };
 
 #endif
-

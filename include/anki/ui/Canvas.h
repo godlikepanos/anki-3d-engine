@@ -8,7 +8,8 @@
 #include <anki/ui/UiInterface.h>
 #include <anki/input/KeyCode.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup ui
 /// @{

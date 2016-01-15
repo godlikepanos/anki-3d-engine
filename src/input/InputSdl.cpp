@@ -9,7 +9,8 @@
 #include <anki/util/Logger.h>
 #include <SDL.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 Error Input::init(NativeWindow* nativeWindow)
@@ -23,9 +24,8 @@ Error Input::init(NativeWindow* nativeWindow)
 
 	m_impl = m_nativeWindow->_getAllocator().newInstance<InputImpl>(alloc);
 
-	//impl
-#define MAP(sdl, ak)\
-	m_impl->m_sdlToAnki[sdl] = KeyCode::ak
+// impl
+#define MAP(sdl, ak) m_impl->m_sdlToAnki[sdl] = KeyCode::ak
 
 	MAP(SDLK_RETURN, RETURN);
 	MAP(SDLK_ESCAPE, ESCAPE);
@@ -303,7 +303,7 @@ Error Input::handleEvents()
 
 	SDL_Event event;
 	KeyCode akkey;
-    SDL_StartTextInput();
+	SDL_StartTextInput();
 	while(SDL_PollEvent(&event))
 	{
 		switch(event.type)
@@ -317,17 +317,16 @@ Error Input::handleEvents()
 			m_keys[static_cast<U>(akkey)] = 0;
 			break;
 		case SDL_MOUSEBUTTONDOWN:
-			//XXX
+			// XXX
 			break;
 		case SDL_MOUSEBUTTONUP:
-			//XXX
+			// XXX
 			break;
 		case SDL_MOUSEMOTION:
 			m_mousePosNdc.x() =
 				(F32)event.button.x / m_nativeWindow->getWidth() * 2.0 - 1.0;
-			m_mousePosNdc.y() =
-				-((F32)event.button.y
-				/ m_nativeWindow->getHeight() * 2.0 - 1.0);
+			m_mousePosNdc.y() = -(
+				(F32)event.button.y / m_nativeWindow->getHeight() * 2.0 - 1.0);
 			break;
 		case SDL_QUIT:
 			addEvent(Event::WINDOW_CLOSED);
@@ -351,8 +350,7 @@ void Input::moveCursor(const Vec2& pos)
 {
 	if(pos != m_mousePosNdc)
 	{
-		SDL_WarpMouseInWindow(
-			m_nativeWindow->getNative().m_window,
+		SDL_WarpMouseInWindow(m_nativeWindow->getNative().m_window,
 			m_nativeWindow->getWidth() * (pos.x() * 0.5 + 0.5),
 			m_nativeWindow->getHeight() * (pos.y() * 0.5 + 0.5));
 	}

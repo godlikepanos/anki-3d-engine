@@ -8,7 +8,8 @@
 #include <anki/math/CommonIncludes.h>
 #include <anki/math/Mat.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup math
 /// @{
@@ -17,7 +18,7 @@ namespace anki {
 /// functions. Its row major. The columns are the x,y,z axis
 /// @note TMat3*TMat3: 27 muls 18 adds
 template<typename T>
-class TMat3: public TMat<T, 3, 3, Array<T, 9>, TMat3<T>, TVec3<T>, TVec3<T>>
+class TMat3 : public TMat<T, 3, 3, Array<T, 9>, TMat3<T>, TVec3<T>, TVec3<T>>
 {
 	/// @name Friends
 	/// @{
@@ -39,15 +40,16 @@ public:
 	/// @name Constructors
 	/// @{
 	TMat3()
-	:	Base()
-	{}
+		: Base()
+	{
+	}
 
 	TMat3(const TMat3& b)
-	:	Base(b)
-	{}
+		: Base(b)
+	{
+	}
 
-	TMat3(
-		T m00, T m01, T m02, T m10, T m11, T m12, T m20, T m21, T m22)
+	TMat3(T m00, T m01, T m02, T m10, T m11, T m12, T m20, T m21, T m22)
 	{
 		TMat3& m = *this;
 		m(0, 0) = m00;
@@ -62,12 +64,14 @@ public:
 	}
 
 	explicit TMat3(const T f)
-	:	Base(f)
-	{}
+		: Base(f)
+	{
+	}
 
 	explicit TMat3(const T arr[])
-	:	Base(arr)
-	{}
+		: Base(arr)
+	{
+	}
 
 	explicit TMat3(const TQuat<T>& q)
 	{
@@ -91,10 +95,9 @@ public:
 	{
 		const TMat3& m = *this;
 		// For the accurate method see < r664
-		return m(0, 0) * (m(1, 1) * m(2, 2)
-			- m(1, 2) * m(2, 1)) - m(0, 1) * (m(1, 0)
-			* m(2, 2) - m(1, 2) * m(2, 0)) + m(0, 2)
-			* (m(0, 1) * m(2, 1) - m(1, 1) * m(2, 0));
+		return m(0, 0) * (m(1, 1) * m(2, 2) - m(1, 2) * m(2, 1))
+			- m(0, 1) * (m(1, 0) * m(2, 2) - m(1, 2) * m(2, 0))
+			+ m(0, 2) * (m(0, 1) * m(2, 1) - m(1, 1) * m(2, 0));
 	}
 
 	TMat3 getInverse() const
@@ -107,8 +110,7 @@ public:
 		T cofactor0 = m(1, 1) * m(2, 2) - m(1, 2) * m(2, 1);
 		T cofactor3 = m(0, 2) * m(2, 1) - m(0, 1) * m(2, 2);
 		T cofactor6 = m(0, 1) * m(1, 2) - m(0, 2) * m(1, 1);
-		T det = m(0, 0) * cofactor0 + m(1, 0) * cofactor3
-			+ m(2, 0) * cofactor6;
+		T det = m(0, 0) * cofactor0 + m(1, 0) * cofactor3 + m(2, 0) * cofactor6;
 
 		ANKI_ASSERT(!isZero<T>(det)); // Cannot invert det == 0
 
@@ -198,4 +200,3 @@ static_assert(sizeof(Mat3) == sizeof(F32) * 3 * 3, "Incorrect size");
 /// @}
 
 } // end namespace anki
-

@@ -8,7 +8,8 @@
 #include <anki/collision/Aabb.h>
 #include <anki/util/Functions.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 void ConvexHullShape::destroy()
@@ -40,7 +41,7 @@ void ConvexHullShape::move(ConvexHullShape& b)
 
 	m_invTrf = b.m_invTrf;
 	b.m_invTrf = Transform::getIdentity();
-	
+
 	m_points = b.m_points;
 	b.m_points = nullptr;
 
@@ -62,9 +63,9 @@ void ConvexHullShape::initStorage(CollisionAllocator<U8>& alloc, U pointCount)
 {
 	destroy();
 
-	m_points = 
+	m_points =
 		reinterpret_cast<Vec4*>(alloc.allocate(pointCount * sizeof(Vec4)));
-	
+
 	m_alloc = alloc;
 	m_ownsTheStorage = true;
 	m_pointsCount = pointCount;
@@ -75,7 +76,7 @@ void ConvexHullShape::initStorage(void* buffer, U pointCount)
 {
 	ANKI_ASSERT(buffer);
 	ANKI_ASSERT(pointCount > 0);
-	
+
 	destroy();
 	m_points = static_cast<Vec4*>(buffer);
 	m_pointsCount = pointCount;
@@ -99,7 +100,7 @@ F32 ConvexHullShape::testPlane(const Plane& p) const
 		if(ANKI_UNLIKELY(test == 0.0))
 		{
 			// Early exit
-			return 0.0; 	
+			return 0.0;
 		}
 
 		minDist = min(minDist, test);
@@ -132,7 +133,7 @@ void ConvexHullShape::transform(const Transform& trf)
 void ConvexHullShape::computeAabb(Aabb& aabb) const
 {
 	ANKI_ASSERT(m_points);
-	
+
 	Vec3 mina(MAX_F32);
 	Vec3 maxa(MIN_F32);
 	const Vec4* points = m_points;

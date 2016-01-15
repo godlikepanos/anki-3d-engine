@@ -22,12 +22,13 @@
 
 #include <signal.h>
 #if ANKI_OS == ANKI_OS_ANDROID
-#	include <android_native_app_glue.h>
+#include <android_native_app_glue.h>
 #endif
 
 // Sybsystems
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 #if ANKI_OS == ANKI_OS_ANDROID
@@ -35,7 +36,7 @@ namespace anki {
 android_app* gAndroidApp = nullptr;
 #endif
 
-class GrManagerInterfaceImpl: public GrManagerInterface
+class GrManagerInterfaceImpl : public GrManagerInterface
 {
 public:
 	WeakPtr<App> m_app;
@@ -54,7 +55,8 @@ public:
 
 //==============================================================================
 App::App()
-{}
+{
+}
 
 //==============================================================================
 App::~App()
@@ -140,7 +142,8 @@ void App::cleanup()
 
 //==============================================================================
 Error App::create(const ConfigSet& config,
-	AllocAlignedCallback allocCb, void* allocCbUserData)
+	AllocAlignedCallback allocCb,
+	void* allocCbUserData)
 {
 	Error err = createInternal(config, allocCb, allocCbUserData);
 	if(err)
@@ -154,7 +157,8 @@ Error App::create(const ConfigSet& config,
 
 //==============================================================================
 Error App::createInternal(const ConfigSet& config_,
-	AllocAlignedCallback allocCb, void* allocCbUserData)
+	AllocAlignedCallback allocCb,
+	void* allocCbUserData)
 {
 	m_allocCb = allocCb;
 	m_allocCbData = allocCbUserData;
@@ -172,10 +176,11 @@ Error App::createInternal(const ConfigSet& config_,
 #endif
 
 	ANKI_LOGI("Initializing application ("
-		"version %u.%u, "
-		"build %s %s, "
-		"commit %s)...",
-		ANKI_VERSION_MAJOR, ANKI_VERSION_MINOR,
+			  "version %u.%u, "
+			  "build %s %s, "
+			  "commit %s)...",
+		ANKI_VERSION_MAJOR,
+		ANKI_VERSION_MINOR,
 		buildType,
 		__DATE__,
 		ANKI_REVISION);
@@ -275,8 +280,7 @@ Error App::createInternal(const ConfigSet& config_,
 
 	m_renderer = m_heapAlloc.newInstance<MainRenderer>();
 
-	ANKI_CHECK(m_renderer->create(
-		m_threadpool,
+	ANKI_CHECK(m_renderer->create(m_threadpool,
 		m_resources,
 		m_gr,
 		m_allocCb,
@@ -293,8 +297,13 @@ Error App::createInternal(const ConfigSet& config_,
 	//
 	m_scene = m_heapAlloc.newInstance<SceneGraph>();
 
-	ANKI_CHECK(m_scene->init(m_allocCb, m_allocCbData, m_threadpool,
-		m_resources, m_input, &m_globalTimestamp, config));
+	ANKI_CHECK(m_scene->init(m_allocCb,
+		m_allocCbData,
+		m_threadpool,
+		m_resources,
+		m_input,
+		&m_globalTimestamp,
+		config));
 
 	//
 	// Script
@@ -346,11 +355,11 @@ Error App::initDirs()
 
 	ANKI_CHECK(createDirectory(m_cacheDir.toCString()));
 #else
-	//ANKI_ASSERT(gAndroidApp);
-	//ANativeActivity* activity = gAndroidApp->activity;
+	// ANKI_ASSERT(gAndroidApp);
+	// ANativeActivity* activity = gAndroidApp->activity;
 
 	// Settings path
-	//settingsDir = String(activity->internalDataDir, alloc);
+	// settingsDir = String(activity->internalDataDir, alloc);
 	settingsDir = String("/sdcard/.anki/");
 	if(!directoryExists(settingsDir.c_str()))
 	{

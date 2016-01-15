@@ -8,7 +8,8 @@
 #include <anki/resource/ResourceObject.h>
 #include <anki/physics/PhysicsCollisionShape.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup resource
 /// @{
@@ -20,15 +21,17 @@ namespace anki {
 /// 	<type>sphere | box | mesh</type>
 /// 	<value>radius | extend | path/to/mesh</value>
 /// </collisionShape>
-class CollisionResource: public ResourceObject
+class CollisionResource : public ResourceObject
 {
 public:
 	CollisionResource(ResourceManager* manager)
 		: ResourceObject(manager)
-	{}
+	{
+	}
 
 	~CollisionResource()
-	{}
+	{
+	}
 
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename);
 
@@ -43,4 +46,3 @@ private:
 /// @}
 
 } // end namespace anki
-

@@ -7,11 +7,12 @@
 #include <anki/collision/Aabb.h>
 #include <cstring>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 CompoundShape::CompoundShape()
-:	CollisionShape(Type::COMPOUND)
+	: CollisionShape(Type::COMPOUND)
 {
 	memset(&m_dflt, 0, sizeof(m_dflt));
 }
@@ -22,8 +23,7 @@ F32 CompoundShape::testPlane(const Plane& p) const
 	F32 minv = MAX_F32;
 	F32 maxv = MIN_F32;
 
-	Error err = iterateShapes([&](const CollisionShape& cs) -> Error
-	{
+	Error err = iterateShapes([&](const CollisionShape& cs) -> Error {
 		F32 a = cs.testPlane(p);
 		minv = min(minv, a);
 		maxv = max(maxv, a);
@@ -46,8 +46,7 @@ F32 CompoundShape::testPlane(const Plane& p) const
 //==============================================================================
 void CompoundShape::accept(MutableVisitor& v)
 {
-	Error err = iterateShapes([&](CollisionShape& cs) -> Error
-	{
+	Error err = iterateShapes([&](CollisionShape& cs) -> Error {
 		cs.accept(v);
 		return ErrorCode::NONE;
 	});
@@ -57,8 +56,7 @@ void CompoundShape::accept(MutableVisitor& v)
 //==============================================================================
 void CompoundShape::accept(ConstVisitor& v) const
 {
-	Error err = iterateShapes([&](const CollisionShape& cs) -> Error
-	{
+	Error err = iterateShapes([&](const CollisionShape& cs) -> Error {
 		cs.accept(v);
 		return ErrorCode::NONE;
 	});
@@ -68,8 +66,7 @@ void CompoundShape::accept(ConstVisitor& v) const
 //==============================================================================
 void CompoundShape::transform(const Transform& trf)
 {
-	Error err = iterateShapes([&](CollisionShape& cs) -> Error
-	{
+	Error err = iterateShapes([&](CollisionShape& cs) -> Error {
 		cs.transform(trf);
 		return ErrorCode::NONE;
 	});
@@ -81,8 +78,7 @@ void CompoundShape::computeAabb(Aabb& out) const
 {
 	Vec4 minv(Vec3(MAX_F32), 0.0), maxv(Vec3(MIN_F32), 0.0);
 
-	Error err = iterateShapes([&](const CollisionShape& cs) -> Error
-	{
+	Error err = iterateShapes([&](const CollisionShape& cs) -> Error {
 		Aabb aabb;
 		cs.computeAabb(aabb);
 
@@ -123,4 +119,3 @@ void CompoundShape::addShape(CollisionShape* shape)
 }
 
 } // end namespace anki
-

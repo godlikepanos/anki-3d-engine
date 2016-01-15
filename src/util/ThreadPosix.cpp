@@ -9,7 +9,8 @@
 #include <algorithm>
 #include <pthread.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // Thread                                                                      =
@@ -260,8 +261,7 @@ void ConditionVariable::wait(Mutex& amtx)
 // Barrier                                                                     =
 //==============================================================================
 
-#define ANKI_BARR_GET() \
-	(*static_cast<pthread_barrier_t*>(this->m_impl))
+#define ANKI_BARR_GET() (*static_cast<pthread_barrier_t*>(this->m_impl))
 
 //==============================================================================
 Barrier::Barrier(U32 count)
@@ -327,4 +327,3 @@ Bool Barrier::wait()
 }
 
 } // end namespace anki
-

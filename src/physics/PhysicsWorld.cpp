@@ -8,7 +8,8 @@
 #include <anki/physics/PhysicsCollisionShape.h>
 #include <anki/physics/PhysicsBody.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // Ugly but there is no other way
@@ -26,7 +27,8 @@ static void newtonFree(void* const ptr, int size)
 
 //==============================================================================
 PhysicsWorld::PhysicsWorld()
-{}
+{
+}
 
 //==============================================================================
 PhysicsWorld::~PhysicsWorld()
@@ -87,14 +89,16 @@ Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
 	m_sceneCollision = NewtonBodyGetCollision(m_sceneBody);
 
 	// Set the post update listener
-	NewtonWorldAddPostListener(m_world, "world", this, postUpdateCallback,
-		destroyCallback);
+	NewtonWorldAddPostListener(
+		m_world, "world", this, postUpdateCallback, destroyCallback);
 
 	// Set callbacks
-	NewtonMaterialSetCollisionCallback(
-		m_world, NewtonMaterialGetDefaultGroupID(m_world),
-		NewtonMaterialGetDefaultGroupID(m_world), nullptr,
-		onAabbOverlapCallback, onContactCallback);
+	NewtonMaterialSetCollisionCallback(m_world,
+		NewtonMaterialGetDefaultGroupID(m_world),
+		NewtonMaterialGetDefaultGroupID(m_world),
+		nullptr,
+		onAabbOverlapCallback,
+		onContactCallback);
 
 	return err;
 }
@@ -159,8 +163,8 @@ void PhysicsWorld::postUpdate(F32 dt)
 {
 	for(PhysicsPlayerController* player : m_playerControllers)
 	{
-		NewtonDispachThreadJob(m_world,
-			PhysicsPlayerController::postUpdateKernelCallback, player);
+		NewtonDispachThreadJob(
+			m_world, PhysicsPlayerController::postUpdateKernelCallback, player);
 	}
 }
 
@@ -177,9 +181,7 @@ void PhysicsWorld::registerObject(PhysicsObject* ptr)
 
 //==============================================================================
 void PhysicsWorld::onContactCallback(
-	const NewtonJoint* contactJoint,
-	F32 timestep,
-	int threadIndex)
+	const NewtonJoint* contactJoint, F32 timestep, int threadIndex)
 {
 	const NewtonBody* body0 = NewtonJointGetBody0(contactJoint);
 	const NewtonBody* body1 = NewtonJointGetBody1(contactJoint);

@@ -5,7 +5,8 @@
 
 #pragma once
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup util_patterns
 /// @{
@@ -14,15 +15,16 @@ namespace anki {
 struct NonCopyable
 {
 	NonCopyable()
-	{}
+	{
+	}
 
 	NonCopyable(const NonCopyable&) = delete;
 	NonCopyable& operator=(const NonCopyable&) = delete;
 
 	~NonCopyable()
-	{}
+	{
+	}
 };
 /// @}
 
 } // end namespace anki
-

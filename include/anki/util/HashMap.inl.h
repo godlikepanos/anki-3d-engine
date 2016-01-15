@@ -3,15 +3,20 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-namespace anki {
-namespace detail {
+namespace anki
+{
+namespace detail
+{
 
 //==============================================================================
 // HashMapBase                                                                 =
 //==============================================================================
 
 //==============================================================================
-template<typename TKey, typename TValue, typename THasher, typename TCompare,
+template<typename TKey,
+	typename TValue,
+	typename THasher,
+	typename TCompare,
 	typename TNode>
 void HashMapBase<TKey, TValue, THasher, TCompare, TNode>::insertNode(
 	TNode* node)
@@ -63,11 +68,13 @@ void HashMapBase<TKey, TValue, THasher, TCompare, TNode>::insertNode(
 }
 
 //==============================================================================
-template<typename TKey, typename TValue, typename THasher, typename TCompare,
+template<typename TKey,
+	typename TValue,
+	typename THasher,
+	typename TCompare,
 	typename TNode>
 typename HashMapBase<TKey, TValue, THasher, TCompare, TNode>::Iterator
-	HashMapBase<TKey, TValue, THasher, TCompare, TNode>
-	::find(const Key& key)
+HashMapBase<TKey, TValue, THasher, TCompare, TNode>::find(const Key& key)
 {
 	const U64 hash = THasher()(key);
 
@@ -95,7 +102,10 @@ typename HashMapBase<TKey, TValue, THasher, TCompare, TNode>::Iterator
 }
 
 //==============================================================================
-template<typename TKey, typename TValue, typename THasher, typename TCompare,
+template<typename TKey,
+	typename TValue,
+	typename THasher,
+	typename TCompare,
 	typename TNode>
 void HashMapBase<TKey, TValue, THasher, TCompare, TNode>::removeNode(TNode* del)
 {
@@ -183,8 +193,8 @@ void HashMap<TKey, TValue, THasher, TCompare>::destroy(TAllocator alloc)
 //==============================================================================
 template<typename TKey, typename TValue, typename THasher, typename TCompare>
 template<typename TAllocator>
-void HashMap<TKey, TValue, THasher, TCompare>
-	::destroyInternal(TAllocator alloc, Node* node)
+void HashMap<TKey, TValue, THasher, TCompare>::destroyInternal(
+	TAllocator alloc, Node* node)
 {
 	ANKI_ASSERT(node);
 
@@ -202,4 +212,3 @@ void HashMap<TKey, TValue, THasher, TCompare>
 }
 
 } // end namespace anki
-

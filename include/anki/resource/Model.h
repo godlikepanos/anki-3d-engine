@@ -14,7 +14,8 @@
 #include <anki/resource/Skeleton.h>
 #include <anki/resource/Animation.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class PhysicsCollisionShape;
@@ -62,16 +63,14 @@ public:
 		return m_meshes[0]->getSubMeshesCount();
 	}
 
-	ANKI_USE_RESULT Error create(
-		SArray<CString> meshFNames,
+	ANKI_USE_RESULT Error create(SArray<CString> meshFNames,
 		const CString& mtlFName,
 		ResourceManager* resources);
 
 	/// Get information for multiDraw rendering.
 	/// Given an array of submeshes that are visible return the correct indices
 	/// offsets and counts.
-	void getRenderingDataSub(
-		const RenderingKey& key,
+	void getRenderingDataSub(const RenderingKey& key,
 		SArray<U8> subMeshIndicesArray,
 		ResourceGroupPtr& resourceGroup,
 		PipelinePtr& ppline,
@@ -86,8 +85,12 @@ private:
 	U8 m_meshCount = 0;
 	MaterialResourcePtr m_mtl;
 
-	mutable Array4d<PipelinePtr, U(Pass::COUNT), MAX_LODS, 2,
-		MAX_INSTANCE_GROUPS> m_pplines;
+	mutable Array4d<PipelinePtr,
+		U(Pass::COUNT),
+		MAX_LODS,
+		2,
+		MAX_INSTANCE_GROUPS>
+		m_pplines;
 	mutable SpinLock m_lock; ///< Protect m_pplines
 
 	Array<ResourceGroupPtr, MAX_LODS> m_grResources;
@@ -129,7 +132,7 @@ private:
 /// - If the materials need texture coords then mesh should have them
 /// - The skeleton and skelAnims are optional
 /// - Its an error to have skelAnims without skeleton
-class Model: public ResourceObject
+class Model : public ResourceObject
 {
 public:
 	Model(ResourceManager* manager);
@@ -157,4 +160,3 @@ private:
 /// @}
 
 } // end namespace anki
-

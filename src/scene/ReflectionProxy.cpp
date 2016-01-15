@@ -9,19 +9,21 @@
 #include <anki/scene/SpatialComponent.h>
 #include <anki/resource/MeshLoader.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // ReflectionProxyMoveFeedbackComponent                                        =
 //==============================================================================
 
 /// Feedback component
-class ReflectionProxyMoveFeedbackComponent: public SceneComponent
+class ReflectionProxyMoveFeedbackComponent : public SceneComponent
 {
 public:
 	ReflectionProxyMoveFeedbackComponent(SceneNode* node)
 		: SceneComponent(SceneComponent::Type::NONE, node)
-	{}
+	{
+	}
 
 	Error update(SceneNode& node, F32, F32, Bool& updated) final
 	{
@@ -53,8 +55,9 @@ Error ReflectionProxy::create(const CString& name, const CString& proxyMesh)
 	addComponent(comp, true);
 
 	// Feedback component
-	comp = getSceneAllocator().
-		newInstance<ReflectionProxyMoveFeedbackComponent>(this);
+	comp =
+		getSceneAllocator().newInstance<ReflectionProxyMoveFeedbackComponent>(
+			this);
 	addComponent(comp, true);
 
 	// Load vertices
@@ -94,19 +97,20 @@ Error ReflectionProxy::create(const CString& name, const CString& proxyMesh)
 	}
 
 	// Proxy component
-	comp = getSceneAllocator().newInstance<ReflectionProxyComponent>(this,
-		quadCount);
+	comp = getSceneAllocator().newInstance<ReflectionProxyComponent>(
+		this, quadCount);
 	addComponent(comp, true);
 
 	// Spatial component
 	m_boxLSpace.setFromPointCloud(loader.getVertexData(),
 		loader.getHeader().m_totalVerticesCount,
-		loader.getVertexSize(), loader.getVertexDataSize());
+		loader.getVertexSize(),
+		loader.getVertexDataSize());
 
 	m_boxWSpace = m_boxLSpace;
 
-	comp = getSceneAllocator().newInstance<SpatialComponent>(this,
-		&m_boxWSpace);
+	comp =
+		getSceneAllocator().newInstance<SpatialComponent>(this, &m_boxWSpace);
 	addComponent(comp, true);
 
 	return ErrorCode::NONE;
@@ -127,8 +131,8 @@ void ReflectionProxy::onMoveUpdate(const MoveComponent& move)
 			quadWSpace[j] = trf.transform(m_quadsLSpace[i][j]);
 		}
 
-		proxyc.setQuad(i, quadWSpace[0], quadWSpace[1], quadWSpace[2],
-			quadWSpace[3]);
+		proxyc.setQuad(
+			i, quadWSpace[0], quadWSpace[1], quadWSpace[2], quadWSpace[3]);
 	}
 
 	// Update spatial
@@ -140,4 +144,3 @@ void ReflectionProxy::onMoveUpdate(const MoveComponent& move)
 }
 
 } // end namespace anki
-

@@ -10,7 +10,8 @@
 #include <EGL/egl.h>
 #include <GLES3/gl3.h>
 
-namespace anki {
+namespace anki
+{
 
 /// Native window implementation for EGL & FBDEV
 struct NativeWindowImpl
@@ -30,4 +31,3 @@ struct NativeWindowImpl
 };
 
 } // end namespace anki
-

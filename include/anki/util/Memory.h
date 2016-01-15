@@ -13,7 +13,8 @@
 #include <anki/util/Thread.h>
 #include <utility> // For forward
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class SpinLock;
@@ -47,16 +48,15 @@ using AllocationSignature = U32;
 /// @param alignment The allocation alignment or 0
 /// @return On allocation mode it will return the newelly allocated block or
 ///         nullptr on error. On deallocation mode returns nullptr
-void* allocAligned(
-	void* userData, void* ptr, PtrSize size, PtrSize alignment);
+void* allocAligned(void* userData, void* ptr, PtrSize size, PtrSize alignment);
 
 /// Generic memory pool. The base of HeapMemoryPool or StackMemoryPool or
 /// ChainMemoryPool.
-class BaseMemoryPool: public NonCopyable
+class BaseMemoryPool : public NonCopyable
 {
 public:
 	/// Pool type.
-	enum class Type: U8
+	enum class Type : U8
 	{
 		NONE,
 		HEAP,
@@ -66,7 +66,8 @@ public:
 
 	BaseMemoryPool(Type type)
 		: m_type(type)
-	{}
+	{
+	}
 
 	virtual ~BaseMemoryPool();
 
@@ -133,7 +134,7 @@ private:
 
 /// A dummy interface to match the StackMemoryPool and ChainMemoryPool
 /// interfaces in order to be used by the same allocator template
-class HeapMemoryPool: public BaseMemoryPool
+class HeapMemoryPool : public BaseMemoryPool
 {
 public:
 	/// Default constructor.
@@ -165,7 +166,7 @@ private:
 /// Thread safe memory pool. It's a preallocated memory pool that is used for
 /// memory allocations on top of that preallocated memory. It is mainly used by
 /// fast stack allocators
-class StackMemoryPool: public BaseMemoryPool
+class StackMemoryPool : public BaseMemoryPool
 {
 public:
 	/// The type of the pool's snapshot
@@ -188,8 +189,7 @@ public:
 	///        errors
 	/// @param alignmentBytes The maximum supported alignment for returned
 	///        memory
-	void create(
-		AllocAlignedCallback allocCb,
+	void create(AllocAlignedCallback allocCb,
 		void* allocCbUserData,
 		PtrSize initialChunkSize,
 		F32 nextChunkScale = 2.0,
@@ -272,7 +272,7 @@ private:
 
 /// Chain memory pool. Almost similar to StackMemoryPool but more flexible and
 /// at the same time a bit slower.
-class ChainMemoryPool: public BaseMemoryPool
+class ChainMemoryPool : public BaseMemoryPool
 {
 public:
 	/// Default constructor
@@ -289,8 +289,7 @@ public:
 	/// @param nextChunkBias Value that controls the next chunk.
 	/// @param alignmentBytes The maximum supported alignment for returned
 	///                       memory.
-	void create(
-		AllocAlignedCallback allocCb,
+	void create(AllocAlignedCallback allocCb,
 		void* allocCbUserData,
 		PtrSize initialChunkSize,
 		F32 nextChunkScale = 2.0,
@@ -378,4 +377,3 @@ private:
 /// @}
 
 } // end namespace anki
-

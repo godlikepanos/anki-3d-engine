@@ -11,9 +11,11 @@
 #include <anki/util/Bitset.h>
 #include <anki/util/Enum.h>
 
-namespace anki {
+namespace anki
+{
 
-namespace detail {
+namespace detail
+{
 
 /// Dbg flags. Define them first so they can be parameter to the bitset
 enum class DbgFlag
@@ -34,7 +36,7 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DbgFlag, inline)
 /// @{
 
 /// Debugging stage
-class Dbg: public RenderingPass, public Bitset<detail::DbgFlag>
+class Dbg : public RenderingPass, public Bitset<detail::DbgFlag>
 {
 public:
 	using Flag = detail::DbgFlag;
@@ -63,4 +65,3 @@ private:
 /// @}
 
 } // end namespace anki
-

@@ -9,13 +9,14 @@
 #include <anki/util/List.h>
 #include <algorithm>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup util_containers
 /// @{
 
 /// A simple convenience class for string lists
-class StringList: public List<String>
+class StringList : public List<String>
 {
 public:
 	using Char = char; ///< Char type
@@ -58,7 +59,7 @@ public:
 };
 
 /// String list with automatic destruction.
-class StringListAuto: public StringList
+class StringListAuto : public StringList
 {
 public:
 	using Base = StringList;
@@ -68,7 +69,8 @@ public:
 	StringListAuto(TAllocator alloc)
 		: Base()
 		, m_alloc(alloc)
-	{}
+	{
+	}
 
 	/// Move.
 	StringListAuto(StringListAuto&& b)
@@ -117,4 +119,3 @@ private:
 } // end namespace anki
 
 #include <anki/util/StringList.inl.h>
-

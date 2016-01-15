@@ -8,7 +8,8 @@
 #include <anki/util/File.h>
 #include <anki/util/Logger.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // XmlElement                                                                  =
@@ -303,8 +304,8 @@ Error XmlElement::getSiblingElementsCount(U32& out) const
 //==============================================================================
 
 //==============================================================================
-Error XmlDocument::loadFile(const CString& filename,
-	GenericMemoryPoolAllocator<U8> alloc)
+Error XmlDocument::loadFile(
+	const CString& filename, GenericMemoryPoolAllocator<U8> alloc)
 {
 	File file;
 	ANKI_CHECK(file.open(filename, File::OpenFlag::READ));
@@ -326,8 +327,8 @@ Error XmlDocument::parse(
 	if(m_doc.Parse(&xmlText[0]))
 	{
 		ANKI_LOGE("Cannot parse file. Reason: %s",
-			((m_doc.GetErrorStr1() == nullptr)
-			? "unknown" : m_doc.GetErrorStr1()));
+			((m_doc.GetErrorStr1() == nullptr) ? "unknown"
+											   : m_doc.GetErrorStr1()));
 
 		return ErrorCode::USER_DATA;
 	}

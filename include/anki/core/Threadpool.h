@@ -8,10 +8,10 @@
 #include <anki/util/Thread.h>
 #include <anki/util/Singleton.h>
 
-namespace anki {
+namespace anki
+{
 
 /// Singleton
 typedef Singleton<ThreadPool> ThreadPoolSingleton;
 
 } // end namespace anki
-

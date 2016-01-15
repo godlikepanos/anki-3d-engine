@@ -11,7 +11,8 @@
 #include <cstring>
 #include <cstdio>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class String;
@@ -19,7 +20,8 @@ class String;
 /// @addtogroup util_private
 /// @{
 
-namespace detail {
+namespace detail
+{
 
 template<typename TNumber>
 constexpr const char* toStringFormat()
@@ -27,11 +29,11 @@ constexpr const char* toStringFormat()
 	return nullptr;
 }
 
-#define ANKI_DEPLOY_TO_STRING(type_, string_) \
-	template<> \
-	constexpr const char* toStringFormat<type_>() \
-	{ \
-		return string_; \
+#define ANKI_DEPLOY_TO_STRING(type_, string_)                                  \
+	template<>                                                                 \
+	constexpr const char* toStringFormat<type_>()                              \
+	{                                                                          \
+		return string_;                                                        \
 	}
 
 ANKI_DEPLOY_TO_STRING(I8, "%d")
@@ -62,7 +64,7 @@ public:
 
 	static const PtrSize NPOS = MAX_PTR_SIZE;
 
-	CString()  = default;
+	CString() = default;
 
 	CString(const Char* ptr)
 		: m_ptr(ptr)
@@ -222,7 +224,7 @@ private:
 };
 
 /// The base class for strings.
-class String: public NonCopyable
+class String : public NonCopyable
 {
 public:
 	using Char = char; ///< Character type
@@ -235,7 +237,8 @@ public:
 
 	/// Default constructor.
 	String()
-	{}
+	{
+	}
 
 	/// Move constructor.
 	String(String&& b)
@@ -245,14 +248,14 @@ public:
 
 	/// Requires manual destruction.
 	~String()
-	{}
+	{
+	}
 
 	/// Initialize using a const string.
 	void create(Allocator alloc, const CStringType& cstr);
 
 	/// Initialize using a range. Copies the range of [first, last)
-	void create(Allocator alloc,
-		ConstIterator first, ConstIterator last);
+	void create(Allocator alloc, ConstIterator first, ConstIterator last);
 
 	/// Initialize using a character.
 	void create(Allocator alloc, Char c, PtrSize length);
@@ -521,7 +524,7 @@ inline void String::toString(Allocator alloc, TNumber number)
 }
 
 /// String with automatic cleanup.
-class StringAuto: public String
+class StringAuto : public String
 {
 public:
 	using Base = String;
@@ -531,7 +534,8 @@ public:
 	StringAuto(Allocator alloc)
 		: Base()
 		, m_alloc(alloc)
-	{}
+	{
+	}
 
 	/// Move constructor.
 	StringAuto(StringAuto&& b)
@@ -615,4 +619,3 @@ private:
 /// @}
 
 } // end namespace anki
-

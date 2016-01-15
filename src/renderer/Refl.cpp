@@ -12,7 +12,8 @@
 #include <anki/misc/ConfigSet.h>
 #include <anki/scene/FrustumComponent.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // Misc                                                                        =
@@ -31,11 +32,13 @@ struct ReflUniforms
 //==============================================================================
 Refl::Refl(Renderer* r)
 	: RenderingPass(r)
-{}
+{
+}
 
 //==============================================================================
 Refl::~Refl()
-{}
+{
+}
 
 //==============================================================================
 Error Refl::init(const ConfigSet& config)
@@ -88,16 +91,15 @@ Error Refl::init1stPass(const ConfigSet& config)
 	StringAuto pps(getFrameAllocator());
 	const PixelFormat& pixFormat = Pps::RT_PIXEL_FORMAT;
 
-	pps.sprintf(
-		"#define WIDTH %u\n"
-		"#define HEIGHT %u\n"
-		"#define TILE_COUNT_X %u\n"
-		"#define TILE_COUNT_Y %u\n"
-		"#define SSLR_ENABLED %u\n"
-		"#define IR_ENABLED %u\n"
-		"#define IR_MIPMAP_COUNT %u\n"
-		"#define TILE_SIZE %u\n"
-		"#define SSLR_START_ROUGHNESS %f\n",
+	pps.sprintf("#define WIDTH %u\n"
+				"#define HEIGHT %u\n"
+				"#define TILE_COUNT_X %u\n"
+				"#define TILE_COUNT_Y %u\n"
+				"#define SSLR_ENABLED %u\n"
+				"#define IR_ENABLED %u\n"
+				"#define IR_MIPMAP_COUNT %u\n"
+				"#define TILE_SIZE %u\n"
+				"#define SSLR_START_ROUGHNESS %f\n",
 		m_width,
 		m_height,
 		(m_irEnabled) ? m_ir->getClusterer().getClusterCountX() : 0,
@@ -108,8 +110,8 @@ Error Refl::init1stPass(const ConfigSet& config)
 		Renderer::TILE_SIZE,
 		config.getNumber("sslr.startRoughnes"));
 
-	ANKI_CHECK(getResourceManager().loadResourceToCache(m_frag,
-		"shaders/Refl.frag.glsl", pps.toCString(), "r_refl_"));
+	ANKI_CHECK(getResourceManager().loadResourceToCache(
+		m_frag, "shaders/Refl.frag.glsl", pps.toCString(), "r_refl_"));
 
 	// Create ppline
 	ColorStateInfo colorState;
@@ -120,7 +122,8 @@ Error Refl::init1stPass(const ConfigSet& config)
 
 	// Create uniform buffer
 	m_uniforms = getGrManager().newInstance<Buffer>(sizeof(ReflUniforms),
-		BufferUsageBit::UNIFORM, BufferAccessBit::CLIENT_WRITE);
+		BufferUsageBit::UNIFORM,
+		BufferAccessBit::CLIENT_WRITE);
 
 	// Create RC group
 	ResourceGroupInitializer rcInit;
@@ -160,8 +163,8 @@ Error Refl::init1stPass(const ConfigSet& config)
 	m_rcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);
 
 	// Create RT
-	m_r->createRenderTarget(m_width, m_height,
-		pixFormat, 1, SamplingFilter::NEAREST, 1, m_rt);
+	m_r->createRenderTarget(
+		m_width, m_height, pixFormat, 1, SamplingFilter::NEAREST, 1, m_rt);
 
 	// Create FB
 	FramebufferInitializer fbInit;
@@ -200,16 +203,20 @@ Error Refl::init2ndPass()
 
 	// Shader
 	StringAuto pps(getFrameAllocator());
-	pps.sprintf(
-		"#define TEXTURE_WIDTH %uu\n"
-		"#define TEXTURE_HEIGHT %uu\n",
-		m_width, m_height);
+	pps.sprintf("#define TEXTURE_WIDTH %uu\n"
+				"#define TEXTURE_HEIGHT %uu\n",
+		m_width,
+		m_height);
 
 	ANKI_CHECK(getResourceManager().loadResourceToCache(m_blitFrag,
-		"shaders/NearDepthUpscale.frag.glsl", pps.toCString(), "r_refl_"));
+		"shaders/NearDepthUpscale.frag.glsl",
+		pps.toCString(),
+		"r_refl_"));
 
 	ANKI_CHECK(getResourceManager().loadResourceToCache(m_blitVert,
-		"shaders/NearDepthUpscale.vert.glsl", pps.toCString(), "r_refl_"));
+		"shaders/NearDepthUpscale.vert.glsl",
+		pps.toCString(),
+		"r_refl_"));
 
 	// Ppline
 	PipelineInitializer ppinit;
@@ -275,9 +282,9 @@ void Refl::run2(CommandBufferPtr cmdb)
 	// Write the reflection back to IS RT
 	//
 	DynamicBufferToken token;
-	Vec4* linearDepth = static_cast<Vec4*>(
-		getGrManager().allocateFrameHostVisibleMemory(
-		sizeof(Vec4), BufferUsage::UNIFORM, token));
+	Vec4* linearDepth =
+		static_cast<Vec4*>(getGrManager().allocateFrameHostVisibleMemory(
+			sizeof(Vec4), BufferUsage::UNIFORM, token));
 	const Frustum& fr = m_r->getActiveFrustumComponent().getFrustum();
 	computeLinearizeDepthOptimal(
 		fr.getNear(), fr.getFar(), linearDepth->x(), linearDepth->y());
@@ -298,15 +305,14 @@ void Refl::writeUniforms(CommandBufferPtr cmdb)
 {
 	const FrustumComponent& frc = m_r->getActiveFrustumComponent();
 
-	if(m_uniformsUpdateTimestamp
-			< m_r->getProjectionParametersUpdateTimestamp()
+	if(m_uniformsUpdateTimestamp < m_r->getProjectionParametersUpdateTimestamp()
 		|| m_uniformsUpdateTimestamp < frc.getTimestamp()
 		|| m_uniformsUpdateTimestamp == 0)
 	{
 		DynamicBufferToken token;
 		ReflUniforms* blk = static_cast<ReflUniforms*>(
 			getGrManager().allocateFrameHostVisibleMemory(
-			sizeof(ReflUniforms), BufferUsage::TRANSFER, token));
+				sizeof(ReflUniforms), BufferUsage::TRANSFER, token));
 
 		blk->m_projectionParams = m_r->getProjectionParameters();
 		blk->m_projectionMat = frc.getProjectionMatrix();
@@ -318,4 +324,3 @@ void Refl::writeUniforms(CommandBufferPtr cmdb)
 }
 
 } // end namespace anki
-

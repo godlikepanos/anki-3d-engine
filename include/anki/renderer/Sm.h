@@ -10,7 +10,8 @@
 #include <anki/resource/TextureResource.h>
 #include <anki/util/Array.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class SceneNode;
@@ -19,7 +20,7 @@ class SceneNode;
 /// @{
 
 /// Shadowmapping pass
-class Sm: private RenderingPass
+class Sm : private RenderingPass
 {
 public:
 	static const U32 MAX_SHADOW_CASTERS = 16;
@@ -29,7 +30,8 @@ anki_internal:
 
 	Sm(Renderer* r)
 		: RenderingPass(r)
-	{}
+	{
+	}
 
 	~Sm()
 	{
@@ -38,8 +40,7 @@ anki_internal:
 	}
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
-	ANKI_USE_RESULT Error run(
-		SArray<SceneNode*> spotShadowCasters,
+	ANKI_USE_RESULT Error run(SArray<SceneNode*> spotShadowCasters,
 		SArray<SceneNode*> omniShadowCasters,
 		CommandBufferPtr& cmdBuff);
 
@@ -81,13 +82,13 @@ private:
 		U32 m_timestamp = 0; ///< Timestamp of last render or light change
 	};
 
-	class ShadowmapSpot: public ShadowmapBase
+	class ShadowmapSpot : public ShadowmapBase
 	{
 	public:
 		FramebufferPtr m_fb;
 	};
 
-	class ShadowmapOmni: public ShadowmapBase
+	class ShadowmapOmni : public ShadowmapBase
 	{
 	public:
 		Array<FramebufferPtr, 6> m_fb;
@@ -115,14 +116,13 @@ private:
 	/// Check if a shadow pass can be skipped.
 	Bool skip(SceneNode& light, ShadowmapBase& sm);
 
-	ANKI_USE_RESULT Error doSpotLight(SceneNode& light,
-		CommandBufferPtr& cmdBuff);
+	ANKI_USE_RESULT Error doSpotLight(
+		SceneNode& light, CommandBufferPtr& cmdBuff);
 
-	ANKI_USE_RESULT Error doOmniLight(SceneNode& light,
-		CommandBufferPtr& cmdBuff);
+	ANKI_USE_RESULT Error doOmniLight(
+		SceneNode& light, CommandBufferPtr& cmdBuff);
 };
 
 /// @}
 
 } // end namespace anki
-

@@ -7,7 +7,8 @@
 
 #include <anki/math/CommonIncludes.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup math
 /// @{
@@ -37,8 +38,8 @@ struct TVec4Simd<F32>
 
 /// 4D vector. SIMD optimized
 template<typename T>
-class alignas(16) TVec4:
-	public TVec<T, 4, typename TVec4Simd<T>::Type, TVec4<T>>
+class alignas(16) TVec4
+	: public TVec<T, 4, typename TVec4Simd<T>::Type, TVec4<T>>
 {
 	/// @name Friends
 	/// @{
@@ -65,35 +66,43 @@ public:
 	/// @{
 	TVec4()
 		: Base()
-	{}
+	{
+	}
 
 	TVec4(const TVec4& b)
 		: Base(b)
-	{}
+	{
+	}
 
 	TVec4(const T x_, const T y_, const T z_, const T w_)
 		: Base(x_, y_, z_, w_)
-	{}
+	{
+	}
 
 	explicit TVec4(const T f)
 		: Base(f)
-	{}
+	{
+	}
 
 	explicit TVec4(const T arr[])
 		: Base(arr)
-	{}
+	{
+	}
 
 	explicit TVec4(const typename Base::Simd& simd)
 		: Base(simd)
-	{}
+	{
+	}
 
 	TVec4(const TVec2<T>& v, const T z_, const T w_)
 		: Base(v.x(), v.y(), z_, w_)
-	{}
+	{
+	}
 
 	TVec4(const TVec3<T>& v, const T w_)
 		: Base(v.x(), v.y(), v.z(), w_)
-	{}
+	{
+	}
 	/// @}
 
 	/// @name Operators with same
@@ -205,7 +214,7 @@ TVec4<F32> TVec4<F32>::Base::getAbs() const;
 
 #elif ANKI_SIMD == ANKI_SIMD_NEON
 
-#	error "TODO"
+#error "TODO"
 
 #endif
 
@@ -226,4 +235,3 @@ typedef TVec4<U32> UVec4;
 } // end namespace anki
 
 #include <anki/math/Vec4.inl.h>
-

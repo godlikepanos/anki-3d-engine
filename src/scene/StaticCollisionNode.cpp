@@ -10,20 +10,24 @@
 #include <anki/physics/PhysicsBody.h>
 #include <anki/physics/PhysicsWorld.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 StaticCollisionNode::StaticCollisionNode(SceneGraph* scene)
 	: SceneNode(scene)
-{}
+{
+}
 
 //==============================================================================
 StaticCollisionNode::~StaticCollisionNode()
-{}
+{
+}
 
 //==============================================================================
 Error StaticCollisionNode::create(const CString& name,
-	const CString& resourceFname, const Transform& transform)
+	const CString& resourceFname,
+	const Transform& transform)
 {
 	// Load resource
 	ANKI_CHECK(getResourceManager().loadResource(resourceFname, m_rsrc));

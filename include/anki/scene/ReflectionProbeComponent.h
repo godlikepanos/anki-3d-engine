@@ -7,18 +7,20 @@
 
 #include <anki/scene/SceneComponent.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup scene
 /// @{
 
 /// Reflection probe component.
-class ReflectionProbeComponent: public SceneComponent
+class ReflectionProbeComponent : public SceneComponent
 {
 public:
 	ReflectionProbeComponent(SceneNode* node)
 		: SceneComponent(SceneComponent::Type::REFLECTION_PROBE, node)
-	{}
+	{
+	}
 
 	static Bool classof(const SceneComponent& c)
 	{
@@ -65,4 +67,3 @@ private:
 /// @}
 
 } // end namespace anki
-

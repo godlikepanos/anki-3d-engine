@@ -9,11 +9,13 @@
 #include <anki/core/Timestamp.h>
 #include <cstring>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 GrManager::GrManager()
-{}
+{
+}
 
 //==============================================================================
 GrManager::~GrManager()
@@ -24,8 +26,8 @@ GrManager::~GrManager()
 //==============================================================================
 Error GrManager::create(Initializer& init)
 {
-	m_alloc = HeapAllocator<U8>(
-		init.m_allocCallback, init.m_allocCallbackUserData);
+	m_alloc =
+		HeapAllocator<U8>(init.m_allocCallback, init.m_allocCallbackUserData);
 
 	m_cacheDir.create(m_alloc, init.m_cacheDirectory);
 	m_impl.reset(m_alloc.newInstance<GrManagerImpl>(this));
@@ -41,8 +43,8 @@ void GrManager::swapBuffers()
 }
 
 //==============================================================================
-void* GrManager::allocateFrameHostVisibleMemory(PtrSize size, BufferUsage usage,
-	DynamicBufferToken& token)
+void* GrManager::allocateFrameHostVisibleMemory(
+	PtrSize size, BufferUsage usage, DynamicBufferToken& token)
 {
 	// Will be used in a thread safe way
 	GlState& state = m_impl->getRenderingThread().getState();

@@ -12,7 +12,8 @@
 #include <anki/gr/gl/RenderingThread.h>
 #include <anki/util/Logger.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 Error FramebufferImpl::create(const FramebufferInitializer& init)
@@ -90,13 +91,16 @@ void FramebufferImpl::attachTextureInternal(
 	case GL_TEXTURE_2D_MULTISAMPLE:
 #endif
 		ANKI_ASSERT(layer == 0);
-		glFramebufferTexture2D(target, attachment,
-			tex.m_target, tex.getGlName(), 0);
+		glFramebufferTexture2D(
+			target, attachment, tex.m_target, tex.getGlName(), 0);
 		break;
 	case GL_TEXTURE_CUBE_MAP:
 		ANKI_ASSERT(layer < 6);
-		glFramebufferTexture2D(target, attachment,
-			GL_TEXTURE_CUBE_MAP_POSITIVE_X + layer, tex.getGlName(), 0);
+		glFramebufferTexture2D(target,
+			attachment,
+			GL_TEXTURE_CUBE_MAP_POSITIVE_X + layer,
+			tex.getGlName(),
+			0);
 		break;
 	case GL_TEXTURE_2D_ARRAY:
 	case GL_TEXTURE_3D:
@@ -140,7 +144,8 @@ void FramebufferImpl::bind(const GlState& state)
 		// Invalidate
 		if(m_invalidateBuffersCount)
 		{
-			glInvalidateFramebuffer(GL_FRAMEBUFFER, m_invalidateBuffersCount,
+			glInvalidateFramebuffer(GL_FRAMEBUFFER,
+				m_invalidateBuffersCount,
 				&m_invalidateBuffers[0]);
 		}
 
@@ -167,7 +172,8 @@ void FramebufferImpl::bind(const GlState& state)
 
 				if(restore)
 				{
-					glColorMaski(i, state.m_colorWriteMasks[i][0],
+					glColorMaski(i,
+						state.m_colorWriteMasks[i][0],
 						state.m_colorWriteMasks[i][1],
 						state.m_colorWriteMasks[i][2],
 						state.m_colorWriteMasks[i][3]);
@@ -186,8 +192,10 @@ void FramebufferImpl::bind(const GlState& state)
 				glDepthMask(true);
 			}
 
-			glClearBufferfv(GL_DEPTH, 0, &m_in.m_depthStencilAttachment
-				.m_clearValue.m_depthStencil.m_depth);
+			glClearBufferfv(GL_DEPTH,
+				0,
+				&m_in.m_depthStencilAttachment.m_clearValue.m_depthStencil
+					 .m_depth);
 
 			if(state.m_depthWriteMask == false)
 			{
@@ -198,5 +206,3 @@ void FramebufferImpl::bind(const GlState& state)
 }
 
 } // end namespace anki
-
-

@@ -11,7 +11,8 @@
 #include <anki/scene/Forward.h>
 #include <anki/Gr.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class Renderer;
@@ -21,7 +22,7 @@ struct RenderContext;
 /// @{
 
 /// The rendering stage
-enum class RenderingStage: U8
+enum class RenderingStage : U8
 {
 	MATERIAL,
 	BLEND
@@ -36,18 +37,20 @@ class RenderableDrawer
 public:
 	RenderableDrawer(Renderer* r)
 		: m_r(r)
-	{}
+	{
+	}
 
 	~RenderableDrawer();
 
-	ANKI_USE_RESULT Error render(FrustumComponent& frc, RenderingStage stage,
-		Pass pass, SArray<CommandBufferPtr>& cmdbs);
+	ANKI_USE_RESULT Error render(FrustumComponent& frc,
+		RenderingStage stage,
+		Pass pass,
+		SArray<CommandBufferPtr>& cmdbs);
 
 private:
 	Renderer* m_r;
 
-	void setupUniforms(
-		RenderContext& ctx,
+	void setupUniforms(RenderContext& ctx,
 		const RenderComponent& renderable,
 		const RenderingKey& key);
 
@@ -56,4 +59,3 @@ private:
 /// @}
 
 } // end namespace anki
-

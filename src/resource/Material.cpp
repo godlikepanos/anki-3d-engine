@@ -18,7 +18,8 @@
 #include <anki/renderer/Ms.h>
 #include <algorithm>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // Misc                                                                        =
@@ -41,9 +42,9 @@ public:
 
 // Specialize for texture
 template<>
-Error UpdateTexturesVisitor
-	::visit<MaterialVariableTemplate<TextureResourcePtr>>(
-	const MaterialVariableTemplate<TextureResourcePtr>& var)
+Error UpdateTexturesVisitor::
+	visit<MaterialVariableTemplate<TextureResourcePtr>>(
+		const MaterialVariableTemplate<TextureResourcePtr>& var)
 {
 	m_init->m_textures[var.getTextureUnit()].m_texture =
 		var.getValue()->getGrTexture();
@@ -56,8 +57,8 @@ Error UpdateTexturesVisitor
 
 //==============================================================================
 template<typename T>
-Error MaterialVariableTemplate<T>::init(U idx,
-	const MaterialLoader::Input& in, Material& mtl)
+Error MaterialVariableTemplate<T>::init(
+	U idx, const MaterialLoader::Input& in, Material& mtl)
 {
 	m_idx = idx;
 	m_varType = in.m_type;
@@ -105,8 +106,8 @@ Error MaterialVariableTemplate<T>::init(U idx,
 
 //==============================================================================
 template<>
-Error MaterialVariableTemplate<TextureResourcePtr>::init(U idx,
-	const MaterialLoader::Input& in, Material& mtl)
+Error MaterialVariableTemplate<TextureResourcePtr>::init(
+	U idx, const MaterialLoader::Input& in, Material& mtl)
 {
 	m_idx = idx;
 	m_varType = in.m_type;
@@ -136,15 +137,17 @@ Error MaterialVariableTemplate<TextureResourcePtr>::init(U idx,
 
 //==============================================================================
 MaterialVariant::MaterialVariant()
-{}
+{
+}
 
 //==============================================================================
 MaterialVariant::~MaterialVariant()
-{}
+{
+}
 
 //==============================================================================
-Error MaterialVariant::init(const RenderingKey& key2, Material& mtl,
-	MaterialLoader& loader)
+Error MaterialVariant::init(
+	const RenderingKey& key2, Material& mtl, MaterialLoader& loader)
 {
 	RenderingKey key = key2;
 
@@ -172,25 +175,24 @@ Error MaterialVariant::init(const RenderingKey& key2, Material& mtl,
 	m_shaderBlockSize = loader.getUniformBlockSize();
 
 	U count = 0;
-	Error err = loader.iterateAllInputVariables([&](
-		const MaterialLoader::Input& in) -> Error
-	{
-		m_varActive[count] = true;
-		if(!in.m_flags.m_inShadow && key.m_pass == Pass::SM)
-		{
-			m_varActive[count] = false;
-		}
+	Error err = loader.iterateAllInputVariables(
+		[&](const MaterialLoader::Input& in) -> Error {
+			m_varActive[count] = true;
+			if(!in.m_flags.m_inShadow && key.m_pass == Pass::SM)
+			{
+				m_varActive[count] = false;
+			}
 
-		if(in.m_flags.m_inBlock && m_varActive[count])
-		{
-			m_blockInfo[count] = in.m_blockInfo;
-		}
+			if(in.m_flags.m_inBlock && m_varActive[count])
+			{
+				m_blockInfo[count] = in.m_blockInfo;
+			}
 
-		++count;
+			++count;
 
-		return ErrorCode::NONE;
-	});
-	(void) err;
+			return ErrorCode::NONE;
+		});
+	(void)err;
 
 	//
 	// Shaders
@@ -204,7 +206,7 @@ Error MaterialVariant::init(const RenderingKey& key2, Material& mtl,
 		}
 
 		if((stype == ShaderType::TESSELLATION_CONTROL
-			|| stype == ShaderType::TESSELLATION_EVALUATION)
+			   || stype == ShaderType::TESSELLATION_EVALUATION)
 			&& !key.m_tessellation)
 		{
 			continue;
@@ -217,8 +219,7 @@ Error MaterialVariant::init(const RenderingKey& key2, Material& mtl,
 
 		ShaderResourcePtr& shader = m_shaders[U(stype)];
 
-		ANKI_CHECK(
-			mtl.getManager().loadResource(filename.toCString(), shader));
+		ANKI_CHECK(mtl.getManager().loadResource(filename.toCString(), shader));
 
 		// Update the hash
 		mtl.m_hash ^= computeHash(&src[0], src.getLength());
@@ -290,64 +291,64 @@ Error Material::createVars(const MaterialLoader& loader)
 {
 	// Count them and allocate
 	U count = 0;
-	Error err = loader.iterateAllInputVariables([&](
-		const MaterialLoader::Input&) -> Error
-	{
-		++count;
-		return ErrorCode::NONE;
-	});
+	Error err = loader.iterateAllInputVariables(
+		[&](const MaterialLoader::Input&) -> Error {
+			++count;
+			return ErrorCode::NONE;
+		});
 
 	auto alloc = getAllocator();
 	m_vars.create(alloc, count);
 
 	// Find the name
 	count = 0;
-	err = loader.iterateAllInputVariables([&](
-		const MaterialLoader::Input& in) -> Error
-	{
-		MaterialVariable* mtlvar = nullptr;
+	err = loader.iterateAllInputVariables(
+		[&](const MaterialLoader::Input& in) -> Error {
+			MaterialVariable* mtlvar = nullptr;
 
-#define ANKI_INIT_VAR(type_) { \
-	MaterialVariableTemplate<type_>* var = \
-		alloc.newInstance<MaterialVariableTemplate<type_>>(); \
-	ANKI_CHECK(var->init(count, in, *this)); \
-	mtlvar = var; }
+#define ANKI_INIT_VAR(type_)                                                   \
+	{                                                                          \
+		MaterialVariableTemplate<type_>* var =                                 \
+			alloc.newInstance<MaterialVariableTemplate<type_>>();              \
+		ANKI_CHECK(var->init(count, in, *this));                               \
+		mtlvar = var;                                                          \
+	}
 
-		switch(in.m_type)
-		{
-		case ShaderVariableDataType::SAMPLER_2D:
-		case ShaderVariableDataType::SAMPLER_2D_ARRAY:
-		case ShaderVariableDataType::SAMPLER_CUBE:
-			ANKI_INIT_VAR(TextureResourcePtr);
-			break;
-		case ShaderVariableDataType::FLOAT:
-			ANKI_INIT_VAR(F32);
-			break;
-		case ShaderVariableDataType::VEC2:
-			ANKI_INIT_VAR(Vec2);
-			break;
-		case ShaderVariableDataType::VEC3:
-			ANKI_INIT_VAR(Vec3);
-			break;
-		case ShaderVariableDataType::VEC4:
-			ANKI_INIT_VAR(Vec4);
-			break;
-		case ShaderVariableDataType::MAT3:
-			ANKI_INIT_VAR(Mat3);
-			break;
-		case ShaderVariableDataType::MAT4:
-			ANKI_INIT_VAR(Mat4);
-			break;
-		default:
-			ANKI_ASSERT(0);
-		}
+			switch(in.m_type)
+			{
+			case ShaderVariableDataType::SAMPLER_2D:
+			case ShaderVariableDataType::SAMPLER_2D_ARRAY:
+			case ShaderVariableDataType::SAMPLER_CUBE:
+				ANKI_INIT_VAR(TextureResourcePtr);
+				break;
+			case ShaderVariableDataType::FLOAT:
+				ANKI_INIT_VAR(F32);
+				break;
+			case ShaderVariableDataType::VEC2:
+				ANKI_INIT_VAR(Vec2);
+				break;
+			case ShaderVariableDataType::VEC3:
+				ANKI_INIT_VAR(Vec3);
+				break;
+			case ShaderVariableDataType::VEC4:
+				ANKI_INIT_VAR(Vec4);
+				break;
+			case ShaderVariableDataType::MAT3:
+				ANKI_INIT_VAR(Mat3);
+				break;
+			case ShaderVariableDataType::MAT4:
+				ANKI_INIT_VAR(Mat4);
+				break;
+			default:
+				ANKI_ASSERT(0);
+			}
 
 #undef ANKI_INIT_VAR
 
-		m_vars[count] = mtlvar;
-		++count;
-		return ErrorCode::NONE;
-	});
+			m_vars[count] = mtlvar;
+			++count;
+			return ErrorCode::NONE;
+		});
 
 	return err;
 }
@@ -422,9 +423,7 @@ Error Material::createProgramSourceToCache(
 
 	// Create path
 	StringAuto fullFname(alloc);
-	fullFname.sprintf("%s/%s",
-		&getManager()._getCacheDirectory()[0],
-		&out[0]);
+	fullFname.sprintf("%s/%s", &getManager()._getCacheDirectory()[0], &out[0]);
 
 	// If file not exists write it
 	if(!fileExists(fullFname.toCString()))
@@ -458,8 +457,8 @@ void Material::fillResourceGroupInitializer(ResourceGroupInitializer& rcinit)
 const MaterialVariant& Material::getVariant(const RenderingKey& key) const
 {
 	U lod = min<U>(m_lodCount - 1, key.m_lod);
-	U16 idx = m_variantMatrix[U(key.m_pass)][lod][key.m_tessellation][
-		getInstanceGroupIdx(key.m_instanceCount)];
+	U16 idx = m_variantMatrix[U(key.m_pass)][lod][key.m_tessellation]
+							 [getInstanceGroupIdx(key.m_instanceCount)];
 
 	ANKI_ASSERT(idx != MAX_U16);
 	return m_variants[idx];

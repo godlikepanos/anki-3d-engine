@@ -11,10 +11,11 @@
 #include <anki/scene/Visibility.h>
 #include <memory>
 #if ANKI_CFG_OCTREE_THREAD_SAFE
-#	include <mutex>
+#include <mutex>
 #endif
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class Frustumable;
@@ -30,8 +31,8 @@ class OctreeNode
 public:
 	typedef Array<OctreeNode*, 8> ChildrenContainer;
 
-	OctreeNode(const Aabb& aabb, OctreeNode* parent,
-		const SceneAllocator<U8>& alloc);
+	OctreeNode(
+		const Aabb& aabb, OctreeNode* parent, const SceneAllocator<U8>& alloc);
 
 	~OctreeNode();
 
@@ -98,15 +99,16 @@ private:
 };
 
 /// Root octree node. Its seperate because it holds pointer to the octree
-class RootOctreeNode: public OctreeNode
+class RootOctreeNode : public OctreeNode
 {
 	friend class OctreeNode;
 	friend class Octree;
 
 public:
-	RootOctreeNode(const Aabb& aabb, const SceneAllocator<U8>& alloc,
-		Octree* octree_)
-		: OctreeNode(aabb, nullptr, alloc), octree(octree_)
+	RootOctreeNode(
+		const Aabb& aabb, const SceneAllocator<U8>& alloc, Octree* octree_)
+		: OctreeNode(aabb, nullptr, alloc)
+		, octree(octree_)
 	{
 		ANKI_ASSERT(octree != nullptr);
 	}
@@ -154,7 +156,8 @@ public:
 
 	/// Do the visibility tests
 	void doVisibilityTests(SceneNode& frustumableSceneNode,
-		VisibilityTest test, VisibilityTestResults& visibles);
+		VisibilityTest test,
+		VisibilityTestResults& visibles);
 
 private:
 	Sector* sector;
@@ -171,8 +174,7 @@ private:
 	OctreeNode* place(const Aabb& aabb);
 
 	/// Recursive method
-	void doVisibilityTestsInternal(
-		SceneNode& frustumableSceneNode,
+	void doVisibilityTestsInternal(SceneNode& frustumableSceneNode,
 		VisibilityTest test,
 		VisibilityTestResults& visibles,
 		OctreeNode& node);
@@ -190,4 +192,3 @@ private:
 };
 
 } // end namespace anki
-

@@ -9,7 +9,8 @@
 #include <anki/gr/gl/GlState.h>
 #include <anki/util/Thread.h>
 
-namespace anki {
+namespace anki
+{
 
 class GrManagerInterface;
 
@@ -40,7 +41,8 @@ public:
 
 	/// Start the working thread
 	/// @note Don't free the context before calling #stop
-	void start(WeakPtr<GrManagerInterface> interface, Bool registerMessages,
+	void start(WeakPtr<GrManagerInterface> interface,
+		Bool registerMessages,
 		const ConfigSet& config);
 
 	/// Stop the working thread
@@ -106,4 +108,3 @@ private:
 /// @}
 
 } // end namespace anki
-

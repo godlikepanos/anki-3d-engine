@@ -9,7 +9,8 @@
 #include <anki/util/Assert.h>
 #include <anki/util/Array.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // TGA                                                                         =
@@ -20,8 +21,11 @@ static U8 tgaHeaderUncompressed[12] = {0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 static U8 tgaHeaderCompressed[12] = {0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 //==============================================================================
-static ANKI_USE_RESULT Error loadUncompressedTga(
-	ResourceFilePtr fs, U32& width, U32& height, U32& bpp, DArray<U8>& data,
+static ANKI_USE_RESULT Error loadUncompressedTga(ResourceFilePtr fs,
+	U32& width,
+	U32& height,
+	U32& bpp,
+	DArray<U8>& data,
 	GenericMemoryPoolAllocator<U8>& alloc)
 {
 	Array<U8, 6> header6;
@@ -29,7 +33,7 @@ static ANKI_USE_RESULT Error loadUncompressedTga(
 	// read the info from header
 	ANKI_CHECK(fs->read((char*)&header6[0], sizeof(header6)));
 
-	width  = header6[1] * 256 + header6[0];
+	width = header6[1] * 256 + header6[0];
 	height = header6[3] * 256 + header6[2];
 	bpp = header6[4];
 
@@ -58,16 +62,19 @@ static ANKI_USE_RESULT Error loadUncompressedTga(
 }
 
 //==============================================================================
-static ANKI_USE_RESULT Error loadCompressedTga(
-	ResourceFilePtr fs, U32& width, U32& height, U32& bpp, DArray<U8>& data,
+static ANKI_USE_RESULT Error loadCompressedTga(ResourceFilePtr fs,
+	U32& width,
+	U32& height,
+	U32& bpp,
+	DArray<U8>& data,
 	GenericMemoryPoolAllocator<U8>& alloc)
 {
 	Array<U8, 6> header6;
 	ANKI_CHECK(fs->read(reinterpret_cast<char*>(&header6[0]), sizeof(header6)));
 
-	width  = header6[1] * 256 + header6[0];
+	width = header6[1] * 256 + header6[0];
 	height = header6[3] * 256 + header6[2];
-	bpp	= header6[4];
+	bpp = header6[4];
 
 	if((width <= 0) || (height <= 0) || ((bpp != 24) && (bpp != 32)))
 	{
@@ -150,7 +157,10 @@ static ANKI_USE_RESULT Error loadCompressedTga(
 
 //==============================================================================
 static ANKI_USE_RESULT Error loadTga(ResourceFilePtr fs,
-	U32& width, U32& height, U32& bpp, DArray<U8>& data,
+	U32& width,
+	U32& height,
+	U32& bpp,
+	DArray<U8>& data,
 	GenericMemoryPoolAllocator<U8>& alloc)
 {
 	char myTgaHeader[12];
@@ -161,8 +171,9 @@ static ANKI_USE_RESULT Error loadTga(ResourceFilePtr fs,
 	{
 		ANKI_CHECK(loadUncompressedTga(fs, width, height, bpp, data, alloc));
 	}
-	else if(std::memcmp(tgaHeaderCompressed, &myTgaHeader[0],
-		sizeof(myTgaHeader)) == 0)
+	else if(std::memcmp(
+				tgaHeaderCompressed, &myTgaHeader[0], sizeof(myTgaHeader))
+		== 0)
 	{
 		ANKI_CHECK(loadCompressedTga(fs, width, height, bpp, data, alloc));
 	}
@@ -201,13 +212,15 @@ public:
 	U8 m_padding[88];
 };
 
-static_assert(sizeof(AnkiTextureHeader) == 128,
-	"Check sizeof AnkiTextureHeader");
+static_assert(
+	sizeof(AnkiTextureHeader) == 128, "Check sizeof AnkiTextureHeader");
 
 //==============================================================================
 /// Get the size in bytes of a single surface
-static PtrSize calcSurfaceSize(const U width, const U height,
-	const ImageLoader::DataCompression comp, const ImageLoader::ColorFormat cf)
+static PtrSize calcSurfaceSize(const U width,
+	const U height,
+	const ImageLoader::DataCompression comp,
+	const ImageLoader::ColorFormat cf)
 {
 	PtrSize out = 0;
 
@@ -236,8 +249,8 @@ static PtrSize calcSurfaceSize(const U width, const U height,
 
 //==============================================================================
 /// Calculate the size of a compressed or uncomressed color data
-static PtrSize calcSizeOfSegment(const AnkiTextureHeader& header,
-	ImageLoader::DataCompression comp)
+static PtrSize calcSizeOfSegment(
+	const AnkiTextureHeader& header, ImageLoader::DataCompression comp)
 {
 	PtrSize out = 0;
 	U width = header.m_width;
@@ -266,8 +279,8 @@ static PtrSize calcSizeOfSegment(const AnkiTextureHeader& header,
 
 	while(mips-- != 0)
 	{
-		out += calcSurfaceSize(width, height, comp, header.m_colorFormat)
-			* layers;
+		out +=
+			calcSurfaceSize(width, height, comp, header.m_colorFormat) * layers;
 
 		width /= 2;
 		height /= 2;
@@ -277,8 +290,7 @@ static PtrSize calcSizeOfSegment(const AnkiTextureHeader& header,
 }
 
 //==============================================================================
-static ANKI_USE_RESULT Error loadAnkiTexture(
-	ResourceFilePtr file,
+static ANKI_USE_RESULT Error loadAnkiTexture(ResourceFilePtr file,
 	U32 maxTextureSize,
 	ImageLoader::DataCompression& preferredCompression,
 	DArray<ImageLoader::Surface>& surfaces,
@@ -300,8 +312,7 @@ static ANKI_USE_RESULT Error loadAnkiTexture(
 		return ErrorCode::USER_DATA;
 	}
 
-	if(header.m_width == 0
-		|| !isPowerOfTwo(header.m_width)
+	if(header.m_width == 0 || !isPowerOfTwo(header.m_width)
 		|| header.m_width > 4096
 		|| header.m_height == 0
 		|| !isPowerOfTwo(header.m_height)
@@ -454,8 +465,9 @@ static ANKI_USE_RESULT Error loadAnkiTexture(
 	{
 		for(U d = 0; d < depth; d++)
 		{
-			U dataSize = calcSurfaceSize(
-				mipWidth, mipHeight, preferredCompression,
+			U dataSize = calcSurfaceSize(mipWidth,
+				mipHeight,
+				preferredCompression,
 				header.m_colorFormat);
 
 			// Check if this mipmap can be skipped because of size
@@ -488,8 +500,8 @@ static ANKI_USE_RESULT Error loadAnkiTexture(
 //==============================================================================
 
 //==============================================================================
-Error ImageLoader::load(ResourceFilePtr file, const CString& filename,
-	U32 maxTextureSize)
+Error ImageLoader::load(
+	ResourceFilePtr file, const CString& filename, U32 maxTextureSize)
 {
 	// get the extension
 	StringAuto ext(m_alloc);
@@ -512,8 +524,12 @@ Error ImageLoader::load(ResourceFilePtr file, const CString& filename,
 
 		m_mipLevels = 1;
 		m_depth = 1;
-		ANKI_CHECK(loadTga(file, m_surfaces[0].m_width,
-			m_surfaces[0].m_height, bpp, m_surfaces[0].m_data, m_alloc));
+		ANKI_CHECK(loadTga(file,
+			m_surfaces[0].m_width,
+			m_surfaces[0].m_height,
+			bpp,
+			m_surfaces[0].m_data,
+			m_alloc));
 
 		if(bpp == 32)
 		{
@@ -538,10 +554,15 @@ Error ImageLoader::load(ResourceFilePtr file, const CString& filename,
 		m_compression = ImageLoader::DataCompression::ETC;
 #endif
 
-		ANKI_CHECK(loadAnkiTexture(file, maxTextureSize,
-			m_compression, m_surfaces, m_alloc, m_depth,
-			m_mipLevels, m_textureType, m_colorFormat));
-
+		ANKI_CHECK(loadAnkiTexture(file,
+			maxTextureSize,
+			m_compression,
+			m_surfaces,
+			m_alloc,
+			m_depth,
+			m_mipLevels,
+			m_textureType,
+			m_colorFormat));
 	}
 	else
 	{

@@ -8,7 +8,8 @@
 #include <anki/script/LuaBinder.h>
 #include <anki/Math.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // Vec2                                                                        =
@@ -39,22 +40,22 @@ static inline int pwrapVec2Ctor(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Pop arguments
 	F32 arg0;
 	if(LuaBinder::checkNumber(l, 1, arg0))
 	{
 		return -1;
 	}
-	
+
 	F32 arg1;
 	if(LuaBinder::checkNumber(l, 2, arg1))
 	{
 		return -1;
 	}
-	
+
 	// Create user data
 	size = UserData::computeSizeForGarbageCollected<Vec2>();
 	voidp = lua_newuserdata(l, size);
@@ -62,7 +63,7 @@ static inline int pwrapVec2Ctor(lua_State* l)
 	ud = static_cast<UserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046388);
 	::new(ud->getData<Vec2>()) Vec2(arg0, arg1);
-	
+
 	return 1;
 }
 
@@ -75,7 +76,7 @@ static int wrapVec2Ctor(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -90,19 +91,19 @@ static int wrapVec2Dtor(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
 	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud))
 	{
 		return -1;
 	}
-	
+
 	if(ud->isGarbageCollected())
 	{
 		Vec2* inst = ud->getData<Vec2>();
 		inst->~Vec2();
 	}
-	
+
 	return 0;
 }
 
@@ -116,23 +117,23 @@ static inline int pwrapVec2getX(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec2* self = ud->getData<Vec2>();
-	
+
 	// Call the method
 	F32 ret = (*self).x();
-	
+
 	// Push return value
 	lua_pushnumber(l, ret);
-	
+
 	return 1;
 }
 
@@ -145,7 +146,7 @@ static int wrapVec2getX(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -160,23 +161,23 @@ static inline int pwrapVec2getY(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec2* self = ud->getData<Vec2>();
-	
+
 	// Call the method
 	F32 ret = (*self).y();
-	
+
 	// Push return value
 	lua_pushnumber(l, ret);
-	
+
 	return 1;
 }
 
@@ -189,7 +190,7 @@ static int wrapVec2getY(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -204,27 +205,27 @@ static inline int pwrapVec2setX(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec2* self = ud->getData<Vec2>();
-	
+
 	// Pop arguments
 	F32 arg0;
 	if(LuaBinder::checkNumber(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	(*self).x() = arg0;
-	
+
 	return 0;
 }
 
@@ -237,7 +238,7 @@ static int wrapVec2setX(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -252,27 +253,27 @@ static inline int pwrapVec2setY(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec2* self = ud->getData<Vec2>();
-	
+
 	// Pop arguments
 	F32 arg0;
 	if(LuaBinder::checkNumber(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	(*self).y() = arg0;
-	
+
 	return 0;
 }
 
@@ -285,7 +286,7 @@ static int wrapVec2setY(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -300,33 +301,33 @@ static inline int pwrapVec2setAll(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 3);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec2* self = ud->getData<Vec2>();
-	
+
 	// Pop arguments
 	F32 arg0;
 	if(LuaBinder::checkNumber(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	F32 arg1;
 	if(LuaBinder::checkNumber(l, 3, arg1))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	(*self) = Vec2(arg0, arg1);
-	
+
 	return 0;
 }
 
@@ -339,7 +340,7 @@ static int wrapVec2setAll(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -354,30 +355,30 @@ static inline int pwrapVec2getAt(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec2* self = ud->getData<Vec2>();
-	
+
 	// Pop arguments
 	U arg0;
 	if(LuaBinder::checkNumber(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	F32 ret = (*self)[arg0];
-	
+
 	// Push return value
 	lua_pushnumber(l, ret);
-	
+
 	return 1;
 }
 
@@ -390,7 +391,7 @@ static int wrapVec2getAt(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -405,33 +406,33 @@ static inline int pwrapVec2setAt(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 3);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec2* self = ud->getData<Vec2>();
-	
+
 	// Pop arguments
 	U arg0;
 	if(LuaBinder::checkNumber(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	F32 arg1;
 	if(LuaBinder::checkNumber(l, 3, arg1))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	(*self)[arg0] = arg1;
-	
+
 	return 0;
 }
 
@@ -444,7 +445,7 @@ static int wrapVec2setAt(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -459,29 +460,29 @@ static inline int pwrapVec2copy(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec2* self = ud->getData<Vec2>();
-	
+
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec2", 6804478823655046388, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec2* iarg0 = ud->getData<Vec2>();
 	const Vec2& arg0(*iarg0);
-	
+
 	// Call the method
 	self->operator=(arg0);
-	
+
 	return 0;
 }
 
@@ -494,7 +495,7 @@ static int wrapVec2copy(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -509,29 +510,29 @@ static inline int pwrapVec2__add(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec2* self = ud->getData<Vec2>();
-	
+
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec2", 6804478823655046388, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec2* iarg0 = ud->getData<Vec2>();
 	const Vec2& arg0(*iarg0);
-	
+
 	// Call the method
 	Vec2 ret = self->operator+(arg0);
-	
+
 	// Push return value
 	size = UserData::computeSizeForGarbageCollected<Vec2>();
 	voidp = lua_newuserdata(l, size);
@@ -539,7 +540,7 @@ static inline int pwrapVec2__add(lua_State* l)
 	ud = static_cast<UserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046388);
 	::new(ud->getData<Vec2>()) Vec2(std::move(ret));
-	
+
 	return 1;
 }
 
@@ -552,7 +553,7 @@ static int wrapVec2__add(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -567,29 +568,29 @@ static inline int pwrapVec2__sub(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec2* self = ud->getData<Vec2>();
-	
+
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec2", 6804478823655046388, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec2* iarg0 = ud->getData<Vec2>();
 	const Vec2& arg0(*iarg0);
-	
+
 	// Call the method
 	Vec2 ret = self->operator-(arg0);
-	
+
 	// Push return value
 	size = UserData::computeSizeForGarbageCollected<Vec2>();
 	voidp = lua_newuserdata(l, size);
@@ -597,7 +598,7 @@ static inline int pwrapVec2__sub(lua_State* l)
 	ud = static_cast<UserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046388);
 	::new(ud->getData<Vec2>()) Vec2(std::move(ret));
-	
+
 	return 1;
 }
 
@@ -610,7 +611,7 @@ static int wrapVec2__sub(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -625,29 +626,29 @@ static inline int pwrapVec2__mul(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec2* self = ud->getData<Vec2>();
-	
+
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec2", 6804478823655046388, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec2* iarg0 = ud->getData<Vec2>();
 	const Vec2& arg0(*iarg0);
-	
+
 	// Call the method
 	Vec2 ret = self->operator*(arg0);
-	
+
 	// Push return value
 	size = UserData::computeSizeForGarbageCollected<Vec2>();
 	voidp = lua_newuserdata(l, size);
@@ -655,7 +656,7 @@ static inline int pwrapVec2__mul(lua_State* l)
 	ud = static_cast<UserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046388);
 	::new(ud->getData<Vec2>()) Vec2(std::move(ret));
-	
+
 	return 1;
 }
 
@@ -668,7 +669,7 @@ static int wrapVec2__mul(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -683,29 +684,29 @@ static inline int pwrapVec2__div(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec2* self = ud->getData<Vec2>();
-	
+
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec2", 6804478823655046388, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec2* iarg0 = ud->getData<Vec2>();
 	const Vec2& arg0(*iarg0);
-	
+
 	// Call the method
 	Vec2 ret = self->operator/(arg0);
-	
+
 	// Push return value
 	size = UserData::computeSizeForGarbageCollected<Vec2>();
 	voidp = lua_newuserdata(l, size);
@@ -713,7 +714,7 @@ static inline int pwrapVec2__div(lua_State* l)
 	ud = static_cast<UserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046388);
 	::new(ud->getData<Vec2>()) Vec2(std::move(ret));
-	
+
 	return 1;
 }
 
@@ -726,7 +727,7 @@ static int wrapVec2__div(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -741,32 +742,32 @@ static inline int pwrapVec2__eq(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec2* self = ud->getData<Vec2>();
-	
+
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec2", 6804478823655046388, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec2* iarg0 = ud->getData<Vec2>();
 	const Vec2& arg0(*iarg0);
-	
+
 	// Call the method
 	Bool ret = self->operator==(arg0);
-	
+
 	// Push return value
 	lua_pushboolean(l, ret);
-	
+
 	return 1;
 }
 
@@ -779,7 +780,7 @@ static int wrapVec2__eq(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -794,23 +795,23 @@ static inline int pwrapVec2getLength(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec2* self = ud->getData<Vec2>();
-	
+
 	// Call the method
 	F32 ret = self->getLength();
-	
+
 	// Push return value
 	lua_pushnumber(l, ret);
-	
+
 	return 1;
 }
 
@@ -823,7 +824,7 @@ static int wrapVec2getLength(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -838,20 +839,20 @@ static inline int pwrapVec2getNormalized(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec2* self = ud->getData<Vec2>();
-	
+
 	// Call the method
 	Vec2 ret = self->getNormalized();
-	
+
 	// Push return value
 	size = UserData::computeSizeForGarbageCollected<Vec2>();
 	voidp = lua_newuserdata(l, size);
@@ -859,7 +860,7 @@ static inline int pwrapVec2getNormalized(lua_State* l)
 	ud = static_cast<UserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046388);
 	::new(ud->getData<Vec2>()) Vec2(std::move(ret));
-	
+
 	return 1;
 }
 
@@ -872,7 +873,7 @@ static int wrapVec2getNormalized(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -887,20 +888,20 @@ static inline int pwrapVec2normalize(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec2* self = ud->getData<Vec2>();
-	
+
 	// Call the method
 	self->normalize();
-	
+
 	return 0;
 }
 
@@ -913,7 +914,7 @@ static int wrapVec2normalize(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -928,32 +929,32 @@ static inline int pwrapVec2dot(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec2* self = ud->getData<Vec2>();
-	
+
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec2", 6804478823655046388, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec2* iarg0 = ud->getData<Vec2>();
 	const Vec2& arg0(*iarg0);
-	
+
 	// Call the method
 	F32 ret = self->dot(arg0);
-	
+
 	// Push return value
 	lua_pushnumber(l, ret);
-	
+
 	return 1;
 }
 
@@ -966,7 +967,7 @@ static int wrapVec2dot(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -1027,28 +1028,28 @@ static inline int pwrapVec3Ctor(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 3);
-	
+
 	// Pop arguments
 	F32 arg0;
 	if(LuaBinder::checkNumber(l, 1, arg0))
 	{
 		return -1;
 	}
-	
+
 	F32 arg1;
 	if(LuaBinder::checkNumber(l, 2, arg1))
 	{
 		return -1;
 	}
-	
+
 	F32 arg2;
 	if(LuaBinder::checkNumber(l, 3, arg2))
 	{
 		return -1;
 	}
-	
+
 	// Create user data
 	size = UserData::computeSizeForGarbageCollected<Vec3>();
 	voidp = lua_newuserdata(l, size);
@@ -1056,7 +1057,7 @@ static inline int pwrapVec3Ctor(lua_State* l)
 	ud = static_cast<UserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046389);
 	::new(ud->getData<Vec3>()) Vec3(arg0, arg1, arg2);
-	
+
 	return 1;
 }
 
@@ -1069,7 +1070,7 @@ static int wrapVec3Ctor(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -1084,19 +1085,19 @@ static int wrapVec3Dtor(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
 	{
 		return -1;
 	}
-	
+
 	if(ud->isGarbageCollected())
 	{
 		Vec3* inst = ud->getData<Vec3>();
 		inst->~Vec3();
 	}
-	
+
 	return 0;
 }
 
@@ -1110,23 +1111,23 @@ static inline int pwrapVec3getX(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec3* self = ud->getData<Vec3>();
-	
+
 	// Call the method
 	F32 ret = (*self).x();
-	
+
 	// Push return value
 	lua_pushnumber(l, ret);
-	
+
 	return 1;
 }
 
@@ -1139,7 +1140,7 @@ static int wrapVec3getX(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -1154,23 +1155,23 @@ static inline int pwrapVec3getY(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec3* self = ud->getData<Vec3>();
-	
+
 	// Call the method
 	F32 ret = (*self).y();
-	
+
 	// Push return value
 	lua_pushnumber(l, ret);
-	
+
 	return 1;
 }
 
@@ -1183,7 +1184,7 @@ static int wrapVec3getY(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -1198,23 +1199,23 @@ static inline int pwrapVec3getZ(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec3* self = ud->getData<Vec3>();
-	
+
 	// Call the method
 	F32 ret = (*self).z();
-	
+
 	// Push return value
 	lua_pushnumber(l, ret);
-	
+
 	return 1;
 }
 
@@ -1227,7 +1228,7 @@ static int wrapVec3getZ(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -1242,27 +1243,27 @@ static inline int pwrapVec3setX(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec3* self = ud->getData<Vec3>();
-	
+
 	// Pop arguments
 	F32 arg0;
 	if(LuaBinder::checkNumber(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	(*self).x() = arg0;
-	
+
 	return 0;
 }
 
@@ -1275,7 +1276,7 @@ static int wrapVec3setX(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -1290,27 +1291,27 @@ static inline int pwrapVec3setY(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec3* self = ud->getData<Vec3>();
-	
+
 	// Pop arguments
 	F32 arg0;
 	if(LuaBinder::checkNumber(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	(*self).y() = arg0;
-	
+
 	return 0;
 }
 
@@ -1323,7 +1324,7 @@ static int wrapVec3setY(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -1338,27 +1339,27 @@ static inline int pwrapVec3setZ(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec3* self = ud->getData<Vec3>();
-	
+
 	// Pop arguments
 	F32 arg0;
 	if(LuaBinder::checkNumber(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	(*self).z() = arg0;
-	
+
 	return 0;
 }
 
@@ -1371,7 +1372,7 @@ static int wrapVec3setZ(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -1386,39 +1387,39 @@ static inline int pwrapVec3setAll(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 4);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec3* self = ud->getData<Vec3>();
-	
+
 	// Pop arguments
 	F32 arg0;
 	if(LuaBinder::checkNumber(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	F32 arg1;
 	if(LuaBinder::checkNumber(l, 3, arg1))
 	{
 		return -1;
 	}
-	
+
 	F32 arg2;
 	if(LuaBinder::checkNumber(l, 4, arg2))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	(*self) = Vec3(arg0, arg1, arg2);
-	
+
 	return 0;
 }
 
@@ -1431,7 +1432,7 @@ static int wrapVec3setAll(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -1446,30 +1447,30 @@ static inline int pwrapVec3getAt(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec3* self = ud->getData<Vec3>();
-	
+
 	// Pop arguments
 	U arg0;
 	if(LuaBinder::checkNumber(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	F32 ret = (*self)[arg0];
-	
+
 	// Push return value
 	lua_pushnumber(l, ret);
-	
+
 	return 1;
 }
 
@@ -1482,7 +1483,7 @@ static int wrapVec3getAt(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -1497,33 +1498,33 @@ static inline int pwrapVec3setAt(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 3);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec3* self = ud->getData<Vec3>();
-	
+
 	// Pop arguments
 	U arg0;
 	if(LuaBinder::checkNumber(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	F32 arg1;
 	if(LuaBinder::checkNumber(l, 3, arg1))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	(*self)[arg0] = arg1;
-	
+
 	return 0;
 }
 
@@ -1536,7 +1537,7 @@ static int wrapVec3setAt(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -1551,29 +1552,29 @@ static inline int pwrapVec3copy(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec3* self = ud->getData<Vec3>();
-	
+
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec3", 6804478823655046389, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec3* iarg0 = ud->getData<Vec3>();
 	const Vec3& arg0(*iarg0);
-	
+
 	// Call the method
 	self->operator=(arg0);
-	
+
 	return 0;
 }
 
@@ -1586,7 +1587,7 @@ static int wrapVec3copy(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -1601,29 +1602,29 @@ static inline int pwrapVec3__add(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec3* self = ud->getData<Vec3>();
-	
+
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec3", 6804478823655046389, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec3* iarg0 = ud->getData<Vec3>();
 	const Vec3& arg0(*iarg0);
-	
+
 	// Call the method
 	Vec3 ret = self->operator+(arg0);
-	
+
 	// Push return value
 	size = UserData::computeSizeForGarbageCollected<Vec3>();
 	voidp = lua_newuserdata(l, size);
@@ -1631,7 +1632,7 @@ static inline int pwrapVec3__add(lua_State* l)
 	ud = static_cast<UserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046389);
 	::new(ud->getData<Vec3>()) Vec3(std::move(ret));
-	
+
 	return 1;
 }
 
@@ -1644,7 +1645,7 @@ static int wrapVec3__add(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -1659,29 +1660,29 @@ static inline int pwrapVec3__sub(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec3* self = ud->getData<Vec3>();
-	
+
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec3", 6804478823655046389, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec3* iarg0 = ud->getData<Vec3>();
 	const Vec3& arg0(*iarg0);
-	
+
 	// Call the method
 	Vec3 ret = self->operator-(arg0);
-	
+
 	// Push return value
 	size = UserData::computeSizeForGarbageCollected<Vec3>();
 	voidp = lua_newuserdata(l, size);
@@ -1689,7 +1690,7 @@ static inline int pwrapVec3__sub(lua_State* l)
 	ud = static_cast<UserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046389);
 	::new(ud->getData<Vec3>()) Vec3(std::move(ret));
-	
+
 	return 1;
 }
 
@@ -1702,7 +1703,7 @@ static int wrapVec3__sub(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -1717,29 +1718,29 @@ static inline int pwrapVec3__mul(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec3* self = ud->getData<Vec3>();
-	
+
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec3", 6804478823655046389, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec3* iarg0 = ud->getData<Vec3>();
 	const Vec3& arg0(*iarg0);
-	
+
 	// Call the method
 	Vec3 ret = self->operator*(arg0);
-	
+
 	// Push return value
 	size = UserData::computeSizeForGarbageCollected<Vec3>();
 	voidp = lua_newuserdata(l, size);
@@ -1747,7 +1748,7 @@ static inline int pwrapVec3__mul(lua_State* l)
 	ud = static_cast<UserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046389);
 	::new(ud->getData<Vec3>()) Vec3(std::move(ret));
-	
+
 	return 1;
 }
 
@@ -1760,7 +1761,7 @@ static int wrapVec3__mul(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -1775,29 +1776,29 @@ static inline int pwrapVec3__div(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec3* self = ud->getData<Vec3>();
-	
+
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec3", 6804478823655046389, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec3* iarg0 = ud->getData<Vec3>();
 	const Vec3& arg0(*iarg0);
-	
+
 	// Call the method
 	Vec3 ret = self->operator/(arg0);
-	
+
 	// Push return value
 	size = UserData::computeSizeForGarbageCollected<Vec3>();
 	voidp = lua_newuserdata(l, size);
@@ -1805,7 +1806,7 @@ static inline int pwrapVec3__div(lua_State* l)
 	ud = static_cast<UserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046389);
 	::new(ud->getData<Vec3>()) Vec3(std::move(ret));
-	
+
 	return 1;
 }
 
@@ -1818,7 +1819,7 @@ static int wrapVec3__div(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -1833,32 +1834,32 @@ static inline int pwrapVec3__eq(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec3* self = ud->getData<Vec3>();
-	
+
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec3", 6804478823655046389, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec3* iarg0 = ud->getData<Vec3>();
 	const Vec3& arg0(*iarg0);
-	
+
 	// Call the method
 	Bool ret = self->operator==(arg0);
-	
+
 	// Push return value
 	lua_pushboolean(l, ret);
-	
+
 	return 1;
 }
 
@@ -1871,7 +1872,7 @@ static int wrapVec3__eq(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -1886,23 +1887,23 @@ static inline int pwrapVec3getLength(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec3* self = ud->getData<Vec3>();
-	
+
 	// Call the method
 	F32 ret = self->getLength();
-	
+
 	// Push return value
 	lua_pushnumber(l, ret);
-	
+
 	return 1;
 }
 
@@ -1915,7 +1916,7 @@ static int wrapVec3getLength(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -1930,20 +1931,20 @@ static inline int pwrapVec3getNormalized(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec3* self = ud->getData<Vec3>();
-	
+
 	// Call the method
 	Vec3 ret = self->getNormalized();
-	
+
 	// Push return value
 	size = UserData::computeSizeForGarbageCollected<Vec3>();
 	voidp = lua_newuserdata(l, size);
@@ -1951,7 +1952,7 @@ static inline int pwrapVec3getNormalized(lua_State* l)
 	ud = static_cast<UserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046389);
 	::new(ud->getData<Vec3>()) Vec3(std::move(ret));
-	
+
 	return 1;
 }
 
@@ -1964,7 +1965,7 @@ static int wrapVec3getNormalized(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -1979,20 +1980,20 @@ static inline int pwrapVec3normalize(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec3* self = ud->getData<Vec3>();
-	
+
 	// Call the method
 	self->normalize();
-	
+
 	return 0;
 }
 
@@ -2005,7 +2006,7 @@ static int wrapVec3normalize(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -2020,32 +2021,32 @@ static inline int pwrapVec3dot(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec3* self = ud->getData<Vec3>();
-	
+
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec3", 6804478823655046389, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec3* iarg0 = ud->getData<Vec3>();
 	const Vec3& arg0(*iarg0);
-	
+
 	// Call the method
 	F32 ret = self->dot(arg0);
-	
+
 	// Push return value
 	lua_pushnumber(l, ret);
-	
+
 	return 1;
 }
 
@@ -2058,7 +2059,7 @@ static int wrapVec3dot(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -2121,34 +2122,34 @@ static inline int pwrapVec4Ctor(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 4);
-	
+
 	// Pop arguments
 	F32 arg0;
 	if(LuaBinder::checkNumber(l, 1, arg0))
 	{
 		return -1;
 	}
-	
+
 	F32 arg1;
 	if(LuaBinder::checkNumber(l, 2, arg1))
 	{
 		return -1;
 	}
-	
+
 	F32 arg2;
 	if(LuaBinder::checkNumber(l, 3, arg2))
 	{
 		return -1;
 	}
-	
+
 	F32 arg3;
 	if(LuaBinder::checkNumber(l, 4, arg3))
 	{
 		return -1;
 	}
-	
+
 	// Create user data
 	size = UserData::computeSizeForGarbageCollected<Vec4>();
 	voidp = lua_newuserdata(l, size);
@@ -2156,7 +2157,7 @@ static inline int pwrapVec4Ctor(lua_State* l)
 	ud = static_cast<UserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046386);
 	::new(ud->getData<Vec4>()) Vec4(arg0, arg1, arg2, arg3);
-	
+
 	return 1;
 }
 
@@ -2169,7 +2170,7 @@ static int wrapVec4Ctor(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -2184,19 +2185,19 @@ static int wrapVec4Dtor(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
 	{
 		return -1;
 	}
-	
+
 	if(ud->isGarbageCollected())
 	{
 		Vec4* inst = ud->getData<Vec4>();
 		inst->~Vec4();
 	}
-	
+
 	return 0;
 }
 
@@ -2210,23 +2211,23 @@ static inline int pwrapVec4getX(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec4* self = ud->getData<Vec4>();
-	
+
 	// Call the method
 	F32 ret = (*self).x();
-	
+
 	// Push return value
 	lua_pushnumber(l, ret);
-	
+
 	return 1;
 }
 
@@ -2239,7 +2240,7 @@ static int wrapVec4getX(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -2254,23 +2255,23 @@ static inline int pwrapVec4getY(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec4* self = ud->getData<Vec4>();
-	
+
 	// Call the method
 	F32 ret = (*self).y();
-	
+
 	// Push return value
 	lua_pushnumber(l, ret);
-	
+
 	return 1;
 }
 
@@ -2283,7 +2284,7 @@ static int wrapVec4getY(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -2298,23 +2299,23 @@ static inline int pwrapVec4getZ(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec4* self = ud->getData<Vec4>();
-	
+
 	// Call the method
 	F32 ret = (*self).z();
-	
+
 	// Push return value
 	lua_pushnumber(l, ret);
-	
+
 	return 1;
 }
 
@@ -2327,7 +2328,7 @@ static int wrapVec4getZ(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -2342,23 +2343,23 @@ static inline int pwrapVec4getW(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec4* self = ud->getData<Vec4>();
-	
+
 	// Call the method
 	F32 ret = (*self).w();
-	
+
 	// Push return value
 	lua_pushnumber(l, ret);
-	
+
 	return 1;
 }
 
@@ -2371,7 +2372,7 @@ static int wrapVec4getW(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -2386,27 +2387,27 @@ static inline int pwrapVec4setX(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec4* self = ud->getData<Vec4>();
-	
+
 	// Pop arguments
 	F32 arg0;
 	if(LuaBinder::checkNumber(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	(*self).x() = arg0;
-	
+
 	return 0;
 }
 
@@ -2419,7 +2420,7 @@ static int wrapVec4setX(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -2434,27 +2435,27 @@ static inline int pwrapVec4setY(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec4* self = ud->getData<Vec4>();
-	
+
 	// Pop arguments
 	F32 arg0;
 	if(LuaBinder::checkNumber(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	(*self).y() = arg0;
-	
+
 	return 0;
 }
 
@@ -2467,7 +2468,7 @@ static int wrapVec4setY(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -2482,27 +2483,27 @@ static inline int pwrapVec4setZ(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec4* self = ud->getData<Vec4>();
-	
+
 	// Pop arguments
 	F32 arg0;
 	if(LuaBinder::checkNumber(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	(*self).z() = arg0;
-	
+
 	return 0;
 }
 
@@ -2515,7 +2516,7 @@ static int wrapVec4setZ(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -2530,27 +2531,27 @@ static inline int pwrapVec4setW(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec4* self = ud->getData<Vec4>();
-	
+
 	// Pop arguments
 	F32 arg0;
 	if(LuaBinder::checkNumber(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	(*self).w() = arg0;
-	
+
 	return 0;
 }
 
@@ -2563,7 +2564,7 @@ static int wrapVec4setW(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -2578,45 +2579,45 @@ static inline int pwrapVec4setAll(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 5);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec4* self = ud->getData<Vec4>();
-	
+
 	// Pop arguments
 	F32 arg0;
 	if(LuaBinder::checkNumber(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	F32 arg1;
 	if(LuaBinder::checkNumber(l, 3, arg1))
 	{
 		return -1;
 	}
-	
+
 	F32 arg2;
 	if(LuaBinder::checkNumber(l, 4, arg2))
 	{
 		return -1;
 	}
-	
+
 	F32 arg3;
 	if(LuaBinder::checkNumber(l, 5, arg3))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	(*self) = Vec4(arg0, arg1, arg2, arg3);
-	
+
 	return 0;
 }
 
@@ -2629,7 +2630,7 @@ static int wrapVec4setAll(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -2644,30 +2645,30 @@ static inline int pwrapVec4getAt(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec4* self = ud->getData<Vec4>();
-	
+
 	// Pop arguments
 	U arg0;
 	if(LuaBinder::checkNumber(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	F32 ret = (*self)[arg0];
-	
+
 	// Push return value
 	lua_pushnumber(l, ret);
-	
+
 	return 1;
 }
 
@@ -2680,7 +2681,7 @@ static int wrapVec4getAt(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -2695,33 +2696,33 @@ static inline int pwrapVec4setAt(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 3);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec4* self = ud->getData<Vec4>();
-	
+
 	// Pop arguments
 	U arg0;
 	if(LuaBinder::checkNumber(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	F32 arg1;
 	if(LuaBinder::checkNumber(l, 3, arg1))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	(*self)[arg0] = arg1;
-	
+
 	return 0;
 }
 
@@ -2734,7 +2735,7 @@ static int wrapVec4setAt(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -2749,29 +2750,29 @@ static inline int pwrapVec4copy(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec4* self = ud->getData<Vec4>();
-	
+
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec4* iarg0 = ud->getData<Vec4>();
 	const Vec4& arg0(*iarg0);
-	
+
 	// Call the method
 	self->operator=(arg0);
-	
+
 	return 0;
 }
 
@@ -2784,7 +2785,7 @@ static int wrapVec4copy(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -2799,29 +2800,29 @@ static inline int pwrapVec4__add(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec4* self = ud->getData<Vec4>();
-	
+
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec4* iarg0 = ud->getData<Vec4>();
 	const Vec4& arg0(*iarg0);
-	
+
 	// Call the method
 	Vec4 ret = self->operator+(arg0);
-	
+
 	// Push return value
 	size = UserData::computeSizeForGarbageCollected<Vec4>();
 	voidp = lua_newuserdata(l, size);
@@ -2829,7 +2830,7 @@ static inline int pwrapVec4__add(lua_State* l)
 	ud = static_cast<UserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046386);
 	::new(ud->getData<Vec4>()) Vec4(std::move(ret));
-	
+
 	return 1;
 }
 
@@ -2842,7 +2843,7 @@ static int wrapVec4__add(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -2857,29 +2858,29 @@ static inline int pwrapVec4__sub(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec4* self = ud->getData<Vec4>();
-	
+
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec4* iarg0 = ud->getData<Vec4>();
 	const Vec4& arg0(*iarg0);
-	
+
 	// Call the method
 	Vec4 ret = self->operator-(arg0);
-	
+
 	// Push return value
 	size = UserData::computeSizeForGarbageCollected<Vec4>();
 	voidp = lua_newuserdata(l, size);
@@ -2887,7 +2888,7 @@ static inline int pwrapVec4__sub(lua_State* l)
 	ud = static_cast<UserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046386);
 	::new(ud->getData<Vec4>()) Vec4(std::move(ret));
-	
+
 	return 1;
 }
 
@@ -2900,7 +2901,7 @@ static int wrapVec4__sub(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -2915,29 +2916,29 @@ static inline int pwrapVec4__mul(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec4* self = ud->getData<Vec4>();
-	
+
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec4* iarg0 = ud->getData<Vec4>();
 	const Vec4& arg0(*iarg0);
-	
+
 	// Call the method
 	Vec4 ret = self->operator*(arg0);
-	
+
 	// Push return value
 	size = UserData::computeSizeForGarbageCollected<Vec4>();
 	voidp = lua_newuserdata(l, size);
@@ -2945,7 +2946,7 @@ static inline int pwrapVec4__mul(lua_State* l)
 	ud = static_cast<UserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046386);
 	::new(ud->getData<Vec4>()) Vec4(std::move(ret));
-	
+
 	return 1;
 }
 
@@ -2958,7 +2959,7 @@ static int wrapVec4__mul(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -2973,29 +2974,29 @@ static inline int pwrapVec4__div(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec4* self = ud->getData<Vec4>();
-	
+
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec4* iarg0 = ud->getData<Vec4>();
 	const Vec4& arg0(*iarg0);
-	
+
 	// Call the method
 	Vec4 ret = self->operator/(arg0);
-	
+
 	// Push return value
 	size = UserData::computeSizeForGarbageCollected<Vec4>();
 	voidp = lua_newuserdata(l, size);
@@ -3003,7 +3004,7 @@ static inline int pwrapVec4__div(lua_State* l)
 	ud = static_cast<UserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046386);
 	::new(ud->getData<Vec4>()) Vec4(std::move(ret));
-	
+
 	return 1;
 }
 
@@ -3016,7 +3017,7 @@ static int wrapVec4__div(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -3031,32 +3032,32 @@ static inline int pwrapVec4__eq(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec4* self = ud->getData<Vec4>();
-	
+
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec4* iarg0 = ud->getData<Vec4>();
 	const Vec4& arg0(*iarg0);
-	
+
 	// Call the method
 	Bool ret = self->operator==(arg0);
-	
+
 	// Push return value
 	lua_pushboolean(l, ret);
-	
+
 	return 1;
 }
 
@@ -3069,7 +3070,7 @@ static int wrapVec4__eq(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -3084,23 +3085,23 @@ static inline int pwrapVec4getLength(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec4* self = ud->getData<Vec4>();
-	
+
 	// Call the method
 	F32 ret = self->getLength();
-	
+
 	// Push return value
 	lua_pushnumber(l, ret);
-	
+
 	return 1;
 }
 
@@ -3113,7 +3114,7 @@ static int wrapVec4getLength(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -3128,20 +3129,20 @@ static inline int pwrapVec4getNormalized(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec4* self = ud->getData<Vec4>();
-	
+
 	// Call the method
 	Vec4 ret = self->getNormalized();
-	
+
 	// Push return value
 	size = UserData::computeSizeForGarbageCollected<Vec4>();
 	voidp = lua_newuserdata(l, size);
@@ -3149,7 +3150,7 @@ static inline int pwrapVec4getNormalized(lua_State* l)
 	ud = static_cast<UserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046386);
 	::new(ud->getData<Vec4>()) Vec4(std::move(ret));
-	
+
 	return 1;
 }
 
@@ -3162,7 +3163,7 @@ static int wrapVec4getNormalized(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -3177,20 +3178,20 @@ static inline int pwrapVec4normalize(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec4* self = ud->getData<Vec4>();
-	
+
 	// Call the method
 	self->normalize();
-	
+
 	return 0;
 }
 
@@ -3203,7 +3204,7 @@ static int wrapVec4normalize(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -3218,32 +3219,32 @@ static inline int pwrapVec4dot(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec4* self = ud->getData<Vec4>();
-	
+
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec4* iarg0 = ud->getData<Vec4>();
 	const Vec4& arg0(*iarg0);
-	
+
 	// Call the method
 	F32 ret = self->dot(arg0);
-	
+
 	// Push return value
 	lua_pushnumber(l, ret);
-	
+
 	return 1;
 }
 
@@ -3256,7 +3257,7 @@ static int wrapVec4dot(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -3321,9 +3322,9 @@ static inline int pwrapMat3Ctor(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 0);
-	
+
 	// Create user data
 	size = UserData::computeSizeForGarbageCollected<Mat3>();
 	voidp = lua_newuserdata(l, size);
@@ -3331,7 +3332,7 @@ static inline int pwrapMat3Ctor(lua_State* l)
 	ud = static_cast<UserData*>(voidp);
 	ud->initGarbageCollected(6306819796139686981);
 	::new(ud->getData<Mat3>()) Mat3();
-	
+
 	return 1;
 }
 
@@ -3344,7 +3345,7 @@ static int wrapMat3Ctor(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -3359,19 +3360,19 @@ static int wrapMat3Dtor(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
 	if(LuaBinder::checkUserData(l, 1, classnameMat3, 6306819796139686981, ud))
 	{
 		return -1;
 	}
-	
+
 	if(ud->isGarbageCollected())
 	{
 		Mat3* inst = ud->getData<Mat3>();
 		inst->~Mat3();
 	}
-	
+
 	return 0;
 }
 
@@ -3385,29 +3386,29 @@ static inline int pwrapMat3copy(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameMat3, 6306819796139686981, ud))
 	{
 		return -1;
 	}
-	
+
 	Mat3* self = ud->getData<Mat3>();
-	
+
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Mat3", 6306819796139686981, ud))
 	{
 		return -1;
 	}
-	
+
 	Mat3* iarg0 = ud->getData<Mat3>();
 	const Mat3& arg0(*iarg0);
-	
+
 	// Call the method
 	self->operator=(arg0);
-	
+
 	return 0;
 }
 
@@ -3420,7 +3421,7 @@ static int wrapMat3copy(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -3435,36 +3436,36 @@ static inline int pwrapMat3getAt(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 3);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameMat3, 6306819796139686981, ud))
 	{
 		return -1;
 	}
-	
+
 	Mat3* self = ud->getData<Mat3>();
-	
+
 	// Pop arguments
 	U arg0;
 	if(LuaBinder::checkNumber(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	U arg1;
 	if(LuaBinder::checkNumber(l, 3, arg1))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	F32 ret = (*self)(arg0, arg1);
-	
+
 	// Push return value
 	lua_pushnumber(l, ret);
-	
+
 	return 1;
 }
 
@@ -3477,7 +3478,7 @@ static int wrapMat3getAt(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -3492,39 +3493,39 @@ static inline int pwrapMat3setAt(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 4);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameMat3, 6306819796139686981, ud))
 	{
 		return -1;
 	}
-	
+
 	Mat3* self = ud->getData<Mat3>();
-	
+
 	// Pop arguments
 	U arg0;
 	if(LuaBinder::checkNumber(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	U arg1;
 	if(LuaBinder::checkNumber(l, 3, arg1))
 	{
 		return -1;
 	}
-	
+
 	F32 arg2;
 	if(LuaBinder::checkNumber(l, 4, arg2))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	(*self)(arg0, arg1) = arg2;
-	
+
 	return 0;
 }
 
@@ -3537,7 +3538,7 @@ static int wrapMat3setAt(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -3552,75 +3553,75 @@ static inline int pwrapMat3setAll(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 10);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameMat3, 6306819796139686981, ud))
 	{
 		return -1;
 	}
-	
+
 	Mat3* self = ud->getData<Mat3>();
-	
+
 	// Pop arguments
 	F32 arg0;
 	if(LuaBinder::checkNumber(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	F32 arg1;
 	if(LuaBinder::checkNumber(l, 3, arg1))
 	{
 		return -1;
 	}
-	
+
 	F32 arg2;
 	if(LuaBinder::checkNumber(l, 4, arg2))
 	{
 		return -1;
 	}
-	
+
 	F32 arg3;
 	if(LuaBinder::checkNumber(l, 5, arg3))
 	{
 		return -1;
 	}
-	
+
 	F32 arg4;
 	if(LuaBinder::checkNumber(l, 6, arg4))
 	{
 		return -1;
 	}
-	
+
 	F32 arg5;
 	if(LuaBinder::checkNumber(l, 7, arg5))
 	{
 		return -1;
 	}
-	
+
 	F32 arg6;
 	if(LuaBinder::checkNumber(l, 8, arg6))
 	{
 		return -1;
 	}
-	
+
 	F32 arg7;
 	if(LuaBinder::checkNumber(l, 9, arg7))
 	{
 		return -1;
 	}
-	
+
 	F32 arg8;
 	if(LuaBinder::checkNumber(l, 10, arg8))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	(*self) = Mat3(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
-	
+
 	return 0;
 }
 
@@ -3633,7 +3634,7 @@ static int wrapMat3setAll(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -3681,9 +3682,9 @@ static inline int pwrapMat3x4Ctor(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 0);
-	
+
 	// Create user data
 	size = UserData::computeSizeForGarbageCollected<Mat3x4>();
 	voidp = lua_newuserdata(l, size);
@@ -3691,7 +3692,7 @@ static inline int pwrapMat3x4Ctor(lua_State* l)
 	ud = static_cast<UserData*>(voidp);
 	ud->initGarbageCollected(-2654194732934255869);
 	::new(ud->getData<Mat3x4>()) Mat3x4();
-	
+
 	return 1;
 }
 
@@ -3704,7 +3705,7 @@ static int wrapMat3x4Ctor(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -3719,19 +3720,20 @@ static int wrapMat3x4Dtor(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	if(LuaBinder::checkUserData(l, 1, classnameMat3x4, -2654194732934255869, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameMat3x4, -2654194732934255869, ud))
 	{
 		return -1;
 	}
-	
+
 	if(ud->isGarbageCollected())
 	{
 		Mat3x4* inst = ud->getData<Mat3x4>();
 		inst->~Mat3x4();
 	}
-	
+
 	return 0;
 }
 
@@ -3745,29 +3747,30 @@ static inline int pwrapMat3x4copy(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameMat3x4, -2654194732934255869, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameMat3x4, -2654194732934255869, ud))
 	{
 		return -1;
 	}
-	
+
 	Mat3x4* self = ud->getData<Mat3x4>();
-	
+
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Mat3x4", -2654194732934255869, ud))
 	{
 		return -1;
 	}
-	
+
 	Mat3x4* iarg0 = ud->getData<Mat3x4>();
 	const Mat3x4& arg0(*iarg0);
-	
+
 	// Call the method
 	self->operator=(arg0);
-	
+
 	return 0;
 }
 
@@ -3780,7 +3783,7 @@ static int wrapMat3x4copy(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -3795,36 +3798,37 @@ static inline int pwrapMat3x4getAt(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 3);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameMat3x4, -2654194732934255869, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameMat3x4, -2654194732934255869, ud))
 	{
 		return -1;
 	}
-	
+
 	Mat3x4* self = ud->getData<Mat3x4>();
-	
+
 	// Pop arguments
 	U arg0;
 	if(LuaBinder::checkNumber(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	U arg1;
 	if(LuaBinder::checkNumber(l, 3, arg1))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	F32 ret = (*self)(arg0, arg1);
-	
+
 	// Push return value
 	lua_pushnumber(l, ret);
-	
+
 	return 1;
 }
 
@@ -3837,7 +3841,7 @@ static int wrapMat3x4getAt(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -3852,39 +3856,40 @@ static inline int pwrapMat3x4setAt(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 4);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameMat3x4, -2654194732934255869, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameMat3x4, -2654194732934255869, ud))
 	{
 		return -1;
 	}
-	
+
 	Mat3x4* self = ud->getData<Mat3x4>();
-	
+
 	// Pop arguments
 	U arg0;
 	if(LuaBinder::checkNumber(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	U arg1;
 	if(LuaBinder::checkNumber(l, 3, arg1))
 	{
 		return -1;
 	}
-	
+
 	F32 arg2;
 	if(LuaBinder::checkNumber(l, 4, arg2))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	(*self)(arg0, arg1) = arg2;
-	
+
 	return 0;
 }
 
@@ -3897,7 +3902,7 @@ static int wrapMat3x4setAt(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -3912,93 +3917,105 @@ static inline int pwrapMat3x4setAll(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 13);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameMat3x4, -2654194732934255869, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameMat3x4, -2654194732934255869, ud))
 	{
 		return -1;
 	}
-	
+
 	Mat3x4* self = ud->getData<Mat3x4>();
-	
+
 	// Pop arguments
 	F32 arg0;
 	if(LuaBinder::checkNumber(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	F32 arg1;
 	if(LuaBinder::checkNumber(l, 3, arg1))
 	{
 		return -1;
 	}
-	
+
 	F32 arg2;
 	if(LuaBinder::checkNumber(l, 4, arg2))
 	{
 		return -1;
 	}
-	
+
 	F32 arg3;
 	if(LuaBinder::checkNumber(l, 5, arg3))
 	{
 		return -1;
 	}
-	
+
 	F32 arg4;
 	if(LuaBinder::checkNumber(l, 6, arg4))
 	{
 		return -1;
 	}
-	
+
 	F32 arg5;
 	if(LuaBinder::checkNumber(l, 7, arg5))
 	{
 		return -1;
 	}
-	
+
 	F32 arg6;
 	if(LuaBinder::checkNumber(l, 8, arg6))
 	{
 		return -1;
 	}
-	
+
 	F32 arg7;
 	if(LuaBinder::checkNumber(l, 9, arg7))
 	{
 		return -1;
 	}
-	
+
 	F32 arg8;
 	if(LuaBinder::checkNumber(l, 10, arg8))
 	{
 		return -1;
 	}
-	
+
 	F32 arg9;
 	if(LuaBinder::checkNumber(l, 11, arg9))
 	{
 		return -1;
 	}
-	
+
 	F32 arg10;
 	if(LuaBinder::checkNumber(l, 12, arg10))
 	{
 		return -1;
 	}
-	
+
 	F32 arg11;
 	if(LuaBinder::checkNumber(l, 13, arg11))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
-	(*self) = Mat3x4(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
-	
+	(*self) = Mat3x4(arg0,
+		arg1,
+		arg2,
+		arg3,
+		arg4,
+		arg5,
+		arg6,
+		arg7,
+		arg8,
+		arg9,
+		arg10,
+		arg11);
+
 	return 0;
 }
 
@@ -4011,7 +4028,7 @@ static int wrapMat3x4setAll(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -4021,7 +4038,8 @@ static int wrapMat3x4setAll(lua_State* l)
 static inline void wrapMat3x4(lua_State* l)
 {
 	LuaBinder::createClass(l, classnameMat3x4);
-	LuaBinder::pushLuaCFuncStaticMethod(l, classnameMat3x4, "new", wrapMat3x4Ctor);
+	LuaBinder::pushLuaCFuncStaticMethod(
+		l, classnameMat3x4, "new", wrapMat3x4Ctor);
 	LuaBinder::pushLuaCFuncMethod(l, "__gc", wrapMat3x4Dtor);
 	LuaBinder::pushLuaCFuncMethod(l, "copy", wrapMat3x4copy);
 	LuaBinder::pushLuaCFuncMethod(l, "getAt", wrapMat3x4getAt);
@@ -4059,9 +4077,9 @@ static inline int pwrapTransformCtor(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 0);
-	
+
 	// Create user data
 	size = UserData::computeSizeForGarbageCollected<Transform>();
 	voidp = lua_newuserdata(l, size);
@@ -4069,7 +4087,7 @@ static inline int pwrapTransformCtor(lua_State* l)
 	ud = static_cast<UserData*>(voidp);
 	ud->initGarbageCollected(7048620195620777229);
 	::new(ud->getData<Transform>()) Transform();
-	
+
 	return 1;
 }
 
@@ -4082,7 +4100,7 @@ static int wrapTransformCtor(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -4097,19 +4115,20 @@ static int wrapTransformDtor(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	if(LuaBinder::checkUserData(l, 1, classnameTransform, 7048620195620777229, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameTransform, 7048620195620777229, ud))
 	{
 		return -1;
 	}
-	
+
 	if(ud->isGarbageCollected())
 	{
 		Transform* inst = ud->getData<Transform>();
 		inst->~Transform();
 	}
-	
+
 	return 0;
 }
 
@@ -4123,29 +4142,30 @@ static inline int pwrapTransformcopy(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameTransform, 7048620195620777229, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameTransform, 7048620195620777229, ud))
 	{
 		return -1;
 	}
-	
+
 	Transform* self = ud->getData<Transform>();
-	
+
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Transform", 7048620195620777229, ud))
 	{
 		return -1;
 	}
-	
+
 	Transform* iarg0 = ud->getData<Transform>();
 	const Transform& arg0(*iarg0);
-	
+
 	// Call the method
 	self->operator=(arg0);
-	
+
 	return 0;
 }
 
@@ -4158,7 +4178,7 @@ static int wrapTransformcopy(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -4173,20 +4193,21 @@ static inline int pwrapTransformgetOrigin(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameTransform, 7048620195620777229, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameTransform, 7048620195620777229, ud))
 	{
 		return -1;
 	}
-	
+
 	Transform* self = ud->getData<Transform>();
-	
+
 	// Call the method
 	Vec4 ret = self->getOrigin();
-	
+
 	// Push return value
 	size = UserData::computeSizeForGarbageCollected<Vec4>();
 	voidp = lua_newuserdata(l, size);
@@ -4194,7 +4215,7 @@ static inline int pwrapTransformgetOrigin(lua_State* l)
 	ud = static_cast<UserData*>(voidp);
 	ud->initGarbageCollected(6804478823655046386);
 	::new(ud->getData<Vec4>()) Vec4(std::move(ret));
-	
+
 	return 1;
 }
 
@@ -4207,7 +4228,7 @@ static int wrapTransformgetOrigin(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -4222,29 +4243,30 @@ static inline int pwrapTransformsetOrigin(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameTransform, 7048620195620777229, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameTransform, 7048620195620777229, ud))
 	{
 		return -1;
 	}
-	
+
 	Transform* self = ud->getData<Transform>();
-	
+
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec4* iarg0 = ud->getData<Vec4>();
 	const Vec4& arg0(*iarg0);
-	
+
 	// Call the method
 	self->setOrigin(arg0);
-	
+
 	return 0;
 }
 
@@ -4257,7 +4279,7 @@ static int wrapTransformsetOrigin(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -4272,20 +4294,21 @@ static inline int pwrapTransformgetRotation(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameTransform, 7048620195620777229, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameTransform, 7048620195620777229, ud))
 	{
 		return -1;
 	}
-	
+
 	Transform* self = ud->getData<Transform>();
-	
+
 	// Call the method
 	Mat3x4 ret = self->getRotation();
-	
+
 	// Push return value
 	size = UserData::computeSizeForGarbageCollected<Mat3x4>();
 	voidp = lua_newuserdata(l, size);
@@ -4293,7 +4316,7 @@ static inline int pwrapTransformgetRotation(lua_State* l)
 	ud = static_cast<UserData*>(voidp);
 	ud->initGarbageCollected(-2654194732934255869);
 	::new(ud->getData<Mat3x4>()) Mat3x4(std::move(ret));
-	
+
 	return 1;
 }
 
@@ -4306,7 +4329,7 @@ static int wrapTransformgetRotation(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -4321,29 +4344,30 @@ static inline int pwrapTransformsetRotation(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameTransform, 7048620195620777229, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameTransform, 7048620195620777229, ud))
 	{
 		return -1;
 	}
-	
+
 	Transform* self = ud->getData<Transform>();
-	
+
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Mat3x4", -2654194732934255869, ud))
 	{
 		return -1;
 	}
-	
+
 	Mat3x4* iarg0 = ud->getData<Mat3x4>();
 	const Mat3x4& arg0(*iarg0);
-	
+
 	// Call the method
 	self->setRotation(arg0);
-	
+
 	return 0;
 }
 
@@ -4356,7 +4380,7 @@ static int wrapTransformsetRotation(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -4371,23 +4395,24 @@ static inline int pwrapTransformgetScale(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameTransform, 7048620195620777229, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameTransform, 7048620195620777229, ud))
 	{
 		return -1;
 	}
-	
+
 	Transform* self = ud->getData<Transform>();
-	
+
 	// Call the method
 	F32 ret = self->getScale();
-	
+
 	// Push return value
 	lua_pushnumber(l, ret);
-	
+
 	return 1;
 }
 
@@ -4400,7 +4425,7 @@ static int wrapTransformgetScale(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -4415,27 +4440,28 @@ static inline int pwrapTransformsetScale(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameTransform, 7048620195620777229, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameTransform, 7048620195620777229, ud))
 	{
 		return -1;
 	}
-	
+
 	Transform* self = ud->getData<Transform>();
-	
+
 	// Pop arguments
 	F32 arg0;
 	if(LuaBinder::checkNumber(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	self->setScale(arg0);
-	
+
 	return 0;
 }
 
@@ -4448,7 +4474,7 @@ static int wrapTransformsetScale(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -4458,7 +4484,8 @@ static int wrapTransformsetScale(lua_State* l)
 static inline void wrapTransform(lua_State* l)
 {
 	LuaBinder::createClass(l, classnameTransform);
-	LuaBinder::pushLuaCFuncStaticMethod(l, classnameTransform, "new", wrapTransformCtor);
+	LuaBinder::pushLuaCFuncStaticMethod(
+		l, classnameTransform, "new", wrapTransformCtor);
 	LuaBinder::pushLuaCFuncMethod(l, "__gc", wrapTransformDtor);
 	LuaBinder::pushLuaCFuncMethod(l, "copy", wrapTransformcopy);
 	LuaBinder::pushLuaCFuncMethod(l, "getOrigin", wrapTransformgetOrigin);
@@ -4483,4 +4510,3 @@ void wrapModuleMath(lua_State* l)
 }
 
 } // end namespace anki
-

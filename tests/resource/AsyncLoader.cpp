@@ -9,10 +9,11 @@
 #include "anki/util/Atomic.h"
 #include "anki/util/Functions.h"
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
-class Task: public AsyncLoaderTask
+class Task : public AsyncLoaderTask
 {
 public:
 	F32 m_sleepTime = 0.0;
@@ -25,7 +26,8 @@ public:
 		, m_barrier(barrier)
 		, m_count(count)
 		, m_id(id)
-	{}
+	{
+	}
 
 	Error operator()()
 	{
@@ -60,7 +62,7 @@ public:
 };
 
 //==============================================================================
-class MemTask: public AsyncLoaderTask
+class MemTask : public AsyncLoaderTask
 {
 public:
 	HeapAllocator<U8> m_alloc;
@@ -69,12 +71,14 @@ public:
 	MemTask(HeapAllocator<U8> alloc, Barrier* barrier)
 		: m_alloc(alloc)
 		, m_barrier(barrier)
-	{}
+	{
+	}
 
 	Error operator()()
 	{
 		void* mem = m_alloc.allocate(10);
-		if(!mem) return ErrorCode::FUNCTION_FAILED;
+		if(!mem)
+			return ErrorCode::FUNCTION_FAILED;
 
 		HighRezTimer::sleep(0.1);
 

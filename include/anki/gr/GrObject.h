@@ -9,19 +9,21 @@
 #include <anki/util/Atomic.h>
 #include <anki/util/NonCopyable.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup graphics
 /// @{
 
 /// Base of all graphics objects.
-class GrObject: public NonCopyable
+class GrObject : public NonCopyable
 {
 public:
 	GrObject(GrManager* manager);
 
 	virtual ~GrObject()
-	{}
+	{
+	}
 
 	GrManager& getManager()
 	{
@@ -54,4 +56,3 @@ private:
 /// @}
 
 } // end namespace anki
-

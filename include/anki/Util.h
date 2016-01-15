@@ -66,4 +66,3 @@
 #include <anki/util/System.h>
 #include <anki/util/Thread.h>
 #include <anki/util/Visitor.h>
-

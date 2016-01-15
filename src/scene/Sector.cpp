@@ -13,7 +13,8 @@
 #include <anki/resource/MeshLoader.h>
 #include <anki/renderer/Renderer.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // PortalSectorBase                                                            =
@@ -164,13 +165,12 @@ Error Portal::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 		{
 			Sector* sector = *it;
 
-			Bool collide = testCollisionShapes(
-				m_aabb, sector->m_aabb);
+			Bool collide = testCollisionShapes(m_aabb, sector->m_aabb);
 
 			if(collide)
 			{
-				collide = testCollisionShapes(
-					*m_shape, sector->getBoundingShape());
+				collide =
+					testCollisionShapes(*m_shape, sector->getBoundingShape());
 			}
 
 			if(collide)
@@ -417,8 +417,8 @@ Error Sector::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 
 			if(collide)
 			{
-				collide = testCollisionShapes(
-					*m_shape, portal->getBoundingShape());
+				collide =
+					testCollisionShapes(*m_shape, portal->getBoundingShape());
 			}
 
 			if(collide)
@@ -501,8 +501,8 @@ void SectorGroup::binSpatial(SpatialComponent* sp)
 			Aabb smallBox(center, center + Vec4(smallf, smallf, smallf, 0.0));
 			if(collide)
 			{
-				collide = testCollisionShapes(
-					sector.getBoundingShape(), smallBox);
+				collide =
+					testCollisionShapes(sector.getBoundingShape(), smallBox);
 			}
 		}
 
@@ -530,8 +530,7 @@ void SectorGroup::spatialDeleted(SpatialComponent* sp)
 }
 
 //==============================================================================
-void SectorGroup::findVisibleSectors(
-	const FrustumComponent& frc,
+void SectorGroup::findVisibleSectors(const FrustumComponent& frc,
 	List<Sector*>& visibleSectors,
 	U& spatialsCount,
 	const Renderer& r)
@@ -580,8 +579,7 @@ void SectorGroup::findVisibleSectors(
 }
 
 //==============================================================================
-void SectorGroup::findVisibleSectorsInternal(
-	const FrustumComponent& frc,
+void SectorGroup::findVisibleSectorsInternal(const FrustumComponent& frc,
 	Sector& s,
 	List<Sector*>& visibleSectors,
 	U& spatialsCount,
@@ -633,8 +631,8 @@ void SectorGroup::findVisibleSectorsInternal(
 }
 
 //==============================================================================
-void SectorGroup::prepareForVisibilityTests(const FrustumComponent& frc,
-	const Renderer& r)
+void SectorGroup::prepareForVisibilityTests(
+	const FrustumComponent& frc, const Renderer& r)
 {
 	auto alloc = m_scene->getFrameAllocator();
 

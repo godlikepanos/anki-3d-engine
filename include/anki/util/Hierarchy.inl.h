@@ -3,7 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 template<typename T>
@@ -38,8 +39,8 @@ void Hierarchy<T>::addChild(TAllocator alloc, Value* child)
 	ANKI_ASSERT(child->m_parent == nullptr && "Child already has parent");
 	ANKI_ASSERT(child->findChild(getSelf()) == child->m_children.getEnd()
 		&& "Cyclic add");
-	ANKI_ASSERT(findChild(child) == m_children.getEnd() 
-		&& "Already has that child");
+	ANKI_ASSERT(
+		findChild(child) == m_children.getEnd() && "Already has that child");
 
 	child->m_parent = getSelf();
 	m_children.emplaceBack(alloc, child);
@@ -135,4 +136,3 @@ Error Hierarchy<T>::visitChildrenMaxDepth(I maxDepth, VisitorFunc vis)
 }
 
 } // end namespace anki
-

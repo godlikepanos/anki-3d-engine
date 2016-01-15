@@ -13,7 +13,8 @@
 #include <anki/resource/ShaderResource.h>
 #include <anki/util/Array.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class Renderer;
@@ -123,13 +124,14 @@ private:
 };
 
 /// Contains methods to render the collision shapes
-class CollisionDebugDrawer: public CollisionShape::ConstVisitor
+class CollisionDebugDrawer : public CollisionShape::ConstVisitor
 {
 public:
 	/// Constructor
 	CollisionDebugDrawer(DebugDrawer* dbg)
 		: m_dbg(dbg)
-	{}
+	{
+	}
 
 	void visit(const LineSegment&);
 
@@ -152,17 +154,16 @@ private:
 };
 
 /// Implement physics debug drawer.
-class PhysicsDebugDrawer: public PhysicsDrawer
+class PhysicsDebugDrawer : public PhysicsDrawer
 {
 public:
 	PhysicsDebugDrawer(DebugDrawer* dbg)
 		: m_dbg(dbg)
-	{}
+	{
+	}
 
 	void drawLines(
-		const Vec3* lines,
-		const U32 linesCount,
-		const Vec4& color) final;
+		const Vec3* lines, const U32 linesCount, const Vec4& color) final;
 
 private:
 	DebugDrawer* m_dbg; ///< The debug drawer
@@ -174,14 +175,16 @@ class SceneDebugDrawer
 public:
 	SceneDebugDrawer(DebugDrawer* d)
 		: m_dbg(d)
-	{}
+	{
+	}
 
 	~SceneDebugDrawer()
-	{}
+	{
+	}
 
 	void draw(SceneNode& node);
 
-	//void draw(const Sector& sector);
+	// void draw(const Sector& sector);
 
 	void setViewProjectionMatrix(const Mat4& m)
 	{
@@ -204,4 +207,3 @@ private:
 /// @}
 
 } // end namespace anki
-

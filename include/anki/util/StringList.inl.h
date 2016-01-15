@@ -6,7 +6,8 @@
 #include <anki/util/StringList.h>
 #include <cstring>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 template<typename TAllocator>
@@ -25,9 +26,7 @@ inline void StringList::destroy(TAllocator alloc)
 //==============================================================================
 template<typename TAllocator>
 inline void StringList::join(
-	TAllocator alloc,
-	const CString& separator,
-	String& out) const
+	TAllocator alloc, const CString& separator, String& out) const
 {
 	if(Base::isEmpty())
 	{
@@ -68,9 +67,7 @@ inline void StringList::join(
 //==============================================================================
 template<typename TAllocator>
 inline void StringList::splitString(
-	TAllocator alloc,
-	const CString& s, 
-	const Char separator)
+	TAllocator alloc, const CString& s, const Char separator)
 {
 	ANKI_ASSERT(Base::isEmpty());
 
@@ -116,12 +113,11 @@ inline void StringList::splitString(
 
 //==============================================================================
 template<typename TAllocator, typename... TArgs>
-inline void StringList::pushBackSprintf(
-	TAllocator alloc, const TArgs&... args)
+inline void StringList::pushBackSprintf(TAllocator alloc, const TArgs&... args)
 {
 	String str;
 	str.sprintf(alloc, args...);
-	
+
 	Base::emplaceBack(alloc);
 	Base::getBack() = std::move(str);
 }

@@ -12,13 +12,14 @@
 
 #define ANKI_DISABLE_THREADPOOL_THREADING 0
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup util_thread
 /// @{
 
 /// Thread implementation
-class Thread: public NonCopyable
+class Thread : public NonCopyable
 {
 public:
 	using Id = U64;
@@ -32,7 +33,7 @@ public:
 	};
 
 	/// The type of the tread callback
-	using Callback = Error(*)(Info&);
+	using Callback = Error (*)(Info&);
 
 	/// Create a thread with or without a name
 	/// @param[in] name The name of the new thread. Can be nullptr
@@ -80,7 +81,7 @@ private:
 };
 
 /// Mutex
-class Mutex: public NonCopyable
+class Mutex : public NonCopyable
 {
 	friend class ConditionVariable;
 
@@ -104,7 +105,7 @@ private:
 };
 
 /// Condition variable
-class ConditionVariable: public NonCopyable
+class ConditionVariable : public NonCopyable
 {
 public:
 	ConditionVariable();
@@ -127,14 +128,15 @@ private:
 
 /// Spin lock. Good if the critical section will be executed in a short period
 /// of time
-class SpinLock: public NonCopyable
+class SpinLock : public NonCopyable
 {
 public:
 	/// Lock
 	void lock()
 	{
 		while(m_lock.test_and_set(std::memory_order_acquire))
-		{}
+		{
+		}
 	}
 
 	/// Unlock
@@ -169,7 +171,7 @@ private:
 };
 
 /// A barrier for thread synchronization. It works almost like boost::barrier
-class Barrier: public NonCopyable
+class Barrier : public NonCopyable
 {
 public:
 	Barrier(U32 count);
@@ -184,13 +186,14 @@ private:
 };
 
 // Forward
-namespace detail {
+namespace detail
+{
 class ThreadPoolThread;
 }
 
 /// Parallel task dispatcher. You feed it with tasks and sends them for
 /// execution in parallel and then waits for all to finish
-class ThreadPool: public NonCopyable
+class ThreadPool : public NonCopyable
 {
 	friend class detail::ThreadPoolThread;
 
@@ -202,13 +205,17 @@ public:
 	{
 	public:
 		virtual ~Task()
-		{}
+		{
+		}
 
 		virtual Error operator()(U32 taskId, PtrSize threadsCount) = 0;
 
 		/// Chose a starting and end index
-		static void choseStartEnd(U32 taskId, PtrSize threadsCount,
-			PtrSize elementsCount, PtrSize& start, PtrSize& end)
+		static void choseStartEnd(U32 taskId,
+			PtrSize threadsCount,
+			PtrSize elementsCount,
+			PtrSize& start,
+			PtrSize& end)
 		{
 			F32 tid = taskId;
 			F32 div = F32(elementsCount) / threadsCount;
@@ -247,7 +254,7 @@ public:
 
 private:
 	/// A dummy task for a ThreadPool
-	class DummyTask: public Task
+	class DummyTask : public Task
 	{
 	public:
 		Error operator()(U32 taskId, PtrSize threadsCount)
@@ -270,4 +277,3 @@ private:
 /// @}
 
 } // end namespace anki
-

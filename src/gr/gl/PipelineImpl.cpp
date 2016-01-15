@@ -12,19 +12,25 @@
 #include <anki/util/Logger.h>
 #include <anki/util/Hash.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 static GLenum computeGlShaderType(const ShaderType idx, GLbitfield* bit)
 {
 	static const Array<GLenum, 6> gltype = {{GL_VERTEX_SHADER,
-		GL_TESS_CONTROL_SHADER, GL_TESS_EVALUATION_SHADER, GL_GEOMETRY_SHADER,
-		GL_FRAGMENT_SHADER, GL_COMPUTE_SHADER}};
+		GL_TESS_CONTROL_SHADER,
+		GL_TESS_EVALUATION_SHADER,
+		GL_GEOMETRY_SHADER,
+		GL_FRAGMENT_SHADER,
+		GL_COMPUTE_SHADER}};
 
-	static const Array<GLuint, 6> glbit = {{
-		GL_VERTEX_SHADER_BIT, GL_TESS_CONTROL_SHADER_BIT,
-		GL_TESS_EVALUATION_SHADER_BIT, GL_GEOMETRY_SHADER_BIT,
-		GL_FRAGMENT_SHADER_BIT, GL_COMPUTE_SHADER_BIT}};
+	static const Array<GLuint, 6> glbit = {{GL_VERTEX_SHADER_BIT,
+		GL_TESS_CONTROL_SHADER_BIT,
+		GL_TESS_EVALUATION_SHADER_BIT,
+		GL_GEOMETRY_SHADER_BIT,
+		GL_FRAGMENT_SHADER_BIT,
+		GL_COMPUTE_SHADER_BIT}};
 
 	if(bit)
 	{
@@ -250,57 +256,57 @@ void PipelineImpl::initVertexState()
 		Attribute& cache = m_cache.m_attribs[i];
 
 		// Component count
-		if(binding.m_format == PixelFormat(
-			ComponentFormat::R32, TransformFormat::FLOAT))
+		if(binding.m_format
+			== PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT))
 		{
 			cache.m_compCount = 1;
 			cache.m_type = GL_FLOAT;
 			cache.m_normalized = false;
 		}
-		else if(binding.m_format == PixelFormat(
-			ComponentFormat::R32G32, TransformFormat::FLOAT))
+		else if(binding.m_format
+			== PixelFormat(ComponentFormat::R32G32, TransformFormat::FLOAT))
 		{
 			cache.m_compCount = 2;
 			cache.m_type = GL_FLOAT;
 			cache.m_normalized = false;
 		}
-		else if(binding.m_format == PixelFormat(
-			ComponentFormat::R32G32B32, TransformFormat::FLOAT))
+		else if(binding.m_format
+			== PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT))
 		{
 			cache.m_compCount = 3;
 			cache.m_type = GL_FLOAT;
 			cache.m_normalized = false;
 		}
-		else if(binding.m_format == PixelFormat(
-			ComponentFormat::R32G32B32A32, TransformFormat::FLOAT))
+		else if(binding.m_format == PixelFormat(ComponentFormat::R32G32B32A32,
+										TransformFormat::FLOAT))
 		{
 			cache.m_compCount = 4;
 			cache.m_type = GL_FLOAT;
 			cache.m_normalized = false;
 		}
-		else if(binding.m_format == PixelFormat(
-			ComponentFormat::R16G16, TransformFormat::FLOAT))
+		else if(binding.m_format
+			== PixelFormat(ComponentFormat::R16G16, TransformFormat::FLOAT))
 		{
 			cache.m_compCount = 2;
 			cache.m_type = GL_HALF_FLOAT;
 			cache.m_normalized = false;
 		}
-		else if(binding.m_format == PixelFormat(
-			ComponentFormat::R16G16, TransformFormat::UNORM))
+		else if(binding.m_format
+			== PixelFormat(ComponentFormat::R16G16, TransformFormat::UNORM))
 		{
 			cache.m_compCount = 2;
 			cache.m_type = GL_UNSIGNED_SHORT;
 			cache.m_normalized = true;
 		}
-		else if(binding.m_format == PixelFormat(
-			ComponentFormat::R10G10B10A2, TransformFormat::SNORM))
+		else if(binding.m_format == PixelFormat(ComponentFormat::R10G10B10A2,
+										TransformFormat::SNORM))
 		{
 			cache.m_compCount = 4;
 			cache.m_type = GL_INT_2_10_10_10_REV;
 			cache.m_normalized = true;
 		}
-		else if(binding.m_format == PixelFormat(
-			ComponentFormat::R8G8B8A8, TransformFormat::UNORM))
+		else if(binding.m_format
+			== PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM))
 		{
 			cache.m_compCount = 4;
 			cache.m_type = GL_UNSIGNED_BYTE;
@@ -465,8 +471,11 @@ void PipelineImpl::setVertexState(GlState& state) const
 		const Attribute& attrib = m_cache.m_attribs[i];
 		ANKI_ASSERT(attrib.m_type);
 
-		glVertexAttribFormat(i, attrib.m_compCount, attrib.m_type,
-			attrib.m_normalized, m_in.m_vertex.m_attributes[i].m_offset);
+		glVertexAttribFormat(i,
+			attrib.m_compCount,
+			attrib.m_type,
+			attrib.m_normalized,
+			m_in.m_vertex.m_attributes[i].m_offset);
 
 		glVertexAttribBinding(i, m_in.m_vertex.m_attributes[i].m_binding);
 	}
@@ -511,8 +520,8 @@ void PipelineImpl::setTessellationState(GlState& state) const
 
 	state.m_stateHashes.m_tessellation = m_hashes.m_tessellation;
 
-	glPatchParameteri(GL_PATCH_VERTICES,
-		m_in.m_tessellation.m_patchControlPointsCount);
+	glPatchParameteri(
+		GL_PATCH_VERTICES, m_in.m_tessellation.m_patchControlPointsCount);
 }
 
 //==============================================================================
@@ -587,8 +596,10 @@ void PipelineImpl::setColorState(GlState& state) const
 
 			glBlendFunci(i, att.m_srcBlendMethod, att.m_dstBlendMethod);
 			glBlendEquationi(i, att.m_blendFunction);
-			glColorMaski(i, att.m_channelWriteMask[0],
-				att.m_channelWriteMask[1], att.m_channelWriteMask[2],
+			glColorMaski(i,
+				att.m_channelWriteMask[0],
+				att.m_channelWriteMask[1],
+				att.m_channelWriteMask[2],
 				att.m_channelWriteMask[3]);
 
 			state.m_colorWriteMasks[i][0] = att.m_channelWriteMask[0];
@@ -605,8 +616,10 @@ void PipelineImpl::setColorState(GlState& state) const
 		{
 			const Attachment& att = m_cache.m_attachments[i];
 
-			glColorMaski(i, att.m_channelWriteMask[0],
-				att.m_channelWriteMask[1], att.m_channelWriteMask[2],
+			glColorMaski(i,
+				att.m_channelWriteMask[0],
+				att.m_channelWriteMask[1],
+				att.m_channelWriteMask[2],
 				att.m_channelWriteMask[3]);
 
 			state.m_colorWriteMasks[i][0] = att.m_channelWriteMask[0];
@@ -618,4 +631,3 @@ void PipelineImpl::setColorState(GlState& state) const
 }
 
 } // end namespace anki
-

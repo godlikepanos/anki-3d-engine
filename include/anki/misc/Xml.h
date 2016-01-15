@@ -10,10 +10,11 @@
 #include <anki/Math.h>
 #include <tinyxml2.h>
 #if !ANKI_TINYXML2
-#	error "Wrong tinyxml2 included"
+#error "Wrong tinyxml2 included"
 #endif
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup misc
 /// @{
@@ -26,18 +27,21 @@ class XmlElement
 public:
 	XmlElement()
 		: m_el(nullptr)
-	{}
+	{
+	}
 
 	XmlElement(const XmlElement& b)
 		: m_el(b.m_el)
 		, m_alloc(b.m_alloc)
-	{}
+	{
+	}
 
-	XmlElement(const tinyxml2::XMLElement* el,
-		GenericMemoryPoolAllocator<U8> alloc)
+	XmlElement(
+		const tinyxml2::XMLElement* el, GenericMemoryPoolAllocator<U8> alloc)
 		: m_el(el)
 		, m_alloc(alloc)
-	{}
+	{
+	}
 
 	/// If element has something return true
 	operator Bool() const
@@ -108,8 +112,8 @@ public:
 	ANKI_USE_RESULT Error parse(
 		const CString& xmlText, GenericMemoryPoolAllocator<U8> alloc);
 
-	ANKI_USE_RESULT Error getChildElement(const CString& name,
-		XmlElement& out) const;
+	ANKI_USE_RESULT Error getChildElement(
+		const CString& name, XmlElement& out) const;
 
 private:
 	tinyxml2::XMLDocument m_doc;
@@ -118,4 +122,3 @@ private:
 /// @}
 
 } // end namespace anki
-

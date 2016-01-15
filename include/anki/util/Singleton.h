@@ -8,7 +8,8 @@
 #include <anki/util/Assert.h>
 #include <utility>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup util_patterns
 /// @{
@@ -47,7 +48,7 @@ private:
 	static Value* m_instance;
 };
 
-template <typename T>
+template<typename T>
 typename Singleton<T>::Value* Singleton<T>::m_instance = nullptr;
 
 /// This template makes a class with a destructor with arguments singleton
@@ -93,7 +94,7 @@ private:
 	static Value* m_instance;
 };
 
-template <typename T>
+template<typename T>
 typename SingletonInit<T>::Value* SingletonInit<T>::m_instance = nullptr;
 
 /// This template makes a class singleton with thread local instance
@@ -130,11 +131,11 @@ private:
 	static thread_local Value* m_instance;
 };
 
-template <typename T>
-thread_local typename SingletonThreadSafe<T>::Value*
-	SingletonThreadSafe<T>::m_instance = nullptr;
+template<typename T>
+thread_local
+	typename SingletonThreadSafe<T>::Value* SingletonThreadSafe<T>::m_instance =
+		nullptr;
 
 /// @}
 
 } // end namespace anki
-

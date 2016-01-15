@@ -17,7 +17,8 @@
 #include <anki/util/Logger.h>
 #include <anki/util/Thread.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // Misc                                                                        =
@@ -51,8 +52,7 @@ public:
 	template<typename T>
 	void uniSet(const MaterialVariable& mtlVar, const T* value, U32 size)
 	{
-		mtlVar.writeShaderBlockMemory<T>(
-			*m_ctx->m_variant,
+		mtlVar.writeShaderBlockMemory<T>(*m_ctx->m_variant,
 			value,
 			size,
 			&m_uniformBuffer[0],
@@ -86,93 +86,93 @@ Error SetupRenderableVariableVisitor::visit(
 		uniSet<DataType>(mvar, &rvar.getValue(), 1);
 		break;
 	case BuiltinMaterialVariableId::MVP_MATRIX:
+	{
+		ANKI_ASSERT(cachedTrfs > 0);
+
+		DArrayAuto<Mat4> mvp(m_drawer->m_r->getFrameAllocator());
+		mvp.create(cachedTrfs);
+
+		for(U i = 0; i < cachedTrfs; i++)
 		{
-			ANKI_ASSERT(cachedTrfs > 0);
-
-			DArrayAuto<Mat4> mvp(m_drawer->m_r->getFrameAllocator());
-			mvp.create(cachedTrfs);
-
-			for(U i = 0; i < cachedTrfs; i++)
-			{
-				mvp[i] = vp * m_ctx->m_cachedTrfs[i];
-			}
-
-			uniSet(mvar, &mvp[0], cachedTrfs);
+			mvp[i] = vp * m_ctx->m_cachedTrfs[i];
 		}
-		break;
+
+		uniSet(mvar, &mvp[0], cachedTrfs);
+	}
+	break;
 	case BuiltinMaterialVariableId::MV_MATRIX:
+	{
+		ANKI_ASSERT(cachedTrfs > 0);
+
+		DArrayAuto<Mat4> mv(m_drawer->m_r->getFrameAllocator());
+		mv.create(cachedTrfs);
+
+		for(U i = 0; i < cachedTrfs; i++)
 		{
-			ANKI_ASSERT(cachedTrfs > 0);
-
-			DArrayAuto<Mat4> mv(m_drawer->m_r->getFrameAllocator());
-			mv.create(cachedTrfs);
-
-			for(U i = 0; i < cachedTrfs; i++)
-			{
-				mv[i] = v * m_ctx->m_cachedTrfs[i];
-			}
-
-			uniSet(mvar, &mv[0], cachedTrfs);
+			mv[i] = v * m_ctx->m_cachedTrfs[i];
 		}
-		break;
+
+		uniSet(mvar, &mv[0], cachedTrfs);
+	}
+	break;
 	case BuiltinMaterialVariableId::VP_MATRIX:
 		ANKI_ASSERT(cachedTrfs == 0 && "Cannot have transform");
 		uniSet(mvar, &vp, 1);
 		break;
 	case BuiltinMaterialVariableId::NORMAL_MATRIX:
+	{
+		ANKI_ASSERT(cachedTrfs > 0);
+
+		DArrayAuto<Mat3> normMats(m_drawer->m_r->getFrameAllocator());
+		normMats.create(cachedTrfs);
+
+		for(U i = 0; i < cachedTrfs; i++)
 		{
-			ANKI_ASSERT(cachedTrfs > 0);
-
-			DArrayAuto<Mat3> normMats(m_drawer->m_r->getFrameAllocator());
-			normMats.create(cachedTrfs);
-
-			for(U i = 0; i < cachedTrfs; i++)
-			{
-				Mat4 mv = v * m_ctx->m_cachedTrfs[i];
-				normMats[i] = mv.getRotationPart();
-				normMats[i].reorthogonalize();
-			}
-
-			uniSet(mvar, &normMats[0], cachedTrfs);
+			Mat4 mv = v * m_ctx->m_cachedTrfs[i];
+			normMats[i] = mv.getRotationPart();
+			normMats[i].reorthogonalize();
 		}
-		break;
+
+		uniSet(mvar, &normMats[0], cachedTrfs);
+	}
+	break;
 	case BuiltinMaterialVariableId::BILLBOARD_MVP_MATRIX:
+	{
+		// Calc the billboard rotation matrix
+		Mat3 rot = v.getRotationPart().getTransposed();
+
+		DArrayAuto<Mat4> bmvp(m_drawer->m_r->getFrameAllocator());
+		bmvp.create(cachedTrfs);
+
+		for(U i = 0; i < cachedTrfs; i++)
 		{
-			// Calc the billboard rotation matrix
-			Mat3 rot = v.getRotationPart().getTransposed();
-
-			DArrayAuto<Mat4> bmvp(m_drawer->m_r->getFrameAllocator());
-			bmvp.create(cachedTrfs);
-
-			for(U i = 0; i < cachedTrfs; i++)
-			{
-				Mat4 trf = m_ctx->m_cachedTrfs[i];
-				trf.setRotationPart(rot);
-				bmvp[i] = vp * trf;
-			}
-
-			uniSet(mvar, &bmvp[0], cachedTrfs);
+			Mat4 trf = m_ctx->m_cachedTrfs[i];
+			trf.setRotationPart(rot);
+			bmvp[i] = vp * trf;
 		}
-		break;
+
+		uniSet(mvar, &bmvp[0], cachedTrfs);
+	}
+	break;
 	case BuiltinMaterialVariableId::MAX_TESS_LEVEL:
+	{
+		const RenderComponentVariable& base = rvar;
+		F32 maxtess = base.getValue<F32>();
+		F32 tess = 0.0;
+
+		if(m_ctx->m_flod >= 1.0)
 		{
-			const RenderComponentVariable& base = rvar;
-			F32 maxtess = base.getValue<F32>();
-			F32 tess = 0.0;
-
-			if(m_ctx->m_flod >= 1.0)
-			{
-				tess = 1.0;
-			}
-			else
-			{
-				tess = maxtess - m_ctx->m_flod * maxtess;
-				tess = std::max(tess, 1.0f);
-			}
-
-			uniSet(mvar, &tess, 1);
+			tess = 1.0;
 		}
-		break;
+		else
+		{
+			tess = maxtess - m_ctx->m_flod * maxtess;
+			tess = std::max(tess, 1.0f);
+		}
+
+		uniSet(mvar, &tess, 1);
+	}
+	break;
 	case BuiltinMaterialVariableId::MS_DEPTH_MAP:
 		// Do nothing
 		break;
@@ -188,15 +188,14 @@ Error SetupRenderableVariableVisitor::visit(
 // Texture specialization
 template<>
 void SetupRenderableVariableVisitor::uniSet<TextureResourcePtr>(
-	const MaterialVariable& mtlvar,
-	const TextureResourcePtr* values, U32 size)
+	const MaterialVariable& mtlvar, const TextureResourcePtr* values, U32 size)
 {
 	ANKI_ASSERT(size == 1);
 	// Do nothing
 }
 
 /// Task to render a single node.
-class RenderTask: public ThreadPool::Task
+class RenderTask : public ThreadPool::Task
 {
 public:
 	RenderableDrawer* m_drawer;
@@ -239,21 +238,24 @@ public:
 
 //==============================================================================
 RenderableDrawer::~RenderableDrawer()
-{}
+{
+}
 
 //==============================================================================
 void RenderableDrawer::setupUniforms(RenderContext& ctx,
-	const RenderComponent& renderable, const RenderingKey& key)
+	const RenderComponent& renderable,
+	const RenderingKey& key)
 {
 	const Material& mtl = renderable.getMaterial();
 	const MaterialVariant& variant = mtl.getVariant(key);
 	ctx.m_variant = &variant;
 
 	// Get some memory for uniforms
-	U8* uniforms = static_cast<U8*>(
-		m_r->getGrManager().allocateFrameHostVisibleMemory(
-		variant.getDefaultBlockSize(), BufferUsage::UNIFORM,
-		ctx.m_dynBufferInfo.m_uniformBuffers[0]));
+	U8* uniforms =
+		static_cast<U8*>(m_r->getGrManager().allocateFrameHostVisibleMemory(
+			variant.getDefaultBlockSize(),
+			BufferUsage::UNIFORM,
+			ctx.m_dynBufferInfo.m_uniformBuffers[0]));
 
 	// Call the visitor
 	SetupRenderableVariableVisitor visitor;
@@ -263,7 +265,8 @@ void RenderableDrawer::setupUniforms(RenderContext& ctx,
 		SArray<U8>(uniforms, variant.getDefaultBlockSize());
 
 	for(auto it = renderable.getVariablesBegin();
-		it != renderable.getVariablesEnd(); ++it)
+		it != renderable.getVariablesEnd();
+		++it)
 	{
 		RenderComponentVariable* rvar = *it;
 
@@ -277,11 +280,13 @@ void RenderableDrawer::setupUniforms(RenderContext& ctx,
 
 //==============================================================================
 Error RenderableDrawer::render(FrustumComponent& frc,
-	RenderingStage stage, Pass pass, SArray<CommandBufferPtr>& cmdbs)
+	RenderingStage stage,
+	Pass pass,
+	SArray<CommandBufferPtr>& cmdbs)
 {
 	Error err = ErrorCode::NONE;
-	ANKI_ASSERT(cmdbs.getSize() == m_r->getThreadPool().getThreadsCount() ||
-		cmdbs.getSize() == 1);
+	ANKI_ASSERT(cmdbs.getSize() == m_r->getThreadPool().getThreadsCount()
+		|| cmdbs.getSize() == 1);
 
 	if(cmdbs.getSize() > 1)
 	{
@@ -367,18 +372,16 @@ Error RenderableDrawer::renderSingle(RenderContext& ctx)
 	}
 
 	// Calculate the key
-	F32 flod = m_r->calculateLod(
-		sqrt(ctx.m_visibleNode->m_frustumDistanceSquared));
+	F32 flod =
+		m_r->calculateLod(sqrt(ctx.m_visibleNode->m_frustumDistanceSquared));
 	flod = min<F32>(flod, MAX_LODS - 1);
 	ctx.m_flod = flod;
 
 	RenderingBuildInfo build;
 	build.m_key.m_lod = flod;
 	build.m_key.m_pass = ctx.m_pass;
-	build.m_key.m_tessellation =
-		m_r->getTessellationEnabled()
-		&& mtl.getTessellationEnabled()
-		&& build.m_key.m_lod == 0;
+	build.m_key.m_tessellation = m_r->getTessellationEnabled()
+		&& mtl.getTessellationEnabled() && build.m_key.m_lod == 0;
 	build.m_key.m_instanceCount =
 		(ctx.m_cachedTrfCount == 0) ? 1 : ctx.m_cachedTrfCount;
 
@@ -401,12 +404,12 @@ Error RenderableDrawer::renderSingle(RenderContext& ctx)
 	// Rendered something, reset the cached transforms
 	if(ctx.m_cachedTrfCount > 1)
 	{
-		ANKI_TRACE_INC_COUNTER(RENDERER_MERGED_DRAWCALLS,
-			ctx.m_cachedTrfCount - 1);
+		ANKI_TRACE_INC_COUNTER(
+			RENDERER_MERGED_DRAWCALLS, ctx.m_cachedTrfCount - 1);
 	}
 	ctx.m_cachedTrfCount = 0;
 
 	return ErrorCode::NONE;
 }
 
-}  // end namespace anki
+} // end namespace anki

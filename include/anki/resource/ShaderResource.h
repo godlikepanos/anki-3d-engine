@@ -8,13 +8,14 @@
 #include <anki/resource/ResourceObject.h>
 #include <anki/Gr.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup resource
 /// @{
 
 /// Shader resource
-class ShaderResource: public ResourceObject
+class ShaderResource : public ResourceObject
 {
 public:
 	ShaderResource(ResourceManager* manager);
@@ -42,8 +43,7 @@ public:
 	///        ways to identify the file in the cache
 	/// @param out The file pathname of the new shader prog. It's
 	///        filenamePrefix + hash + .glsl
-	static ANKI_USE_RESULT Error createToCache(
-		const ResourceFilename& filename,
+	static ANKI_USE_RESULT Error createToCache(const ResourceFilename& filename,
 		const CString& preAppendedSrcCode,
 		const CString& filenamePrefix,
 		ResourceManager& manager,
@@ -61,4 +61,3 @@ private:
 /// @}
 
 } // end namespace anki
-

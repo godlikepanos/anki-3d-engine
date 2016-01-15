@@ -7,7 +7,8 @@
 
 #include <anki/gr/gl/Common.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup opengl
 /// @{
@@ -20,12 +21,11 @@ namespace anki {
 /// ANKI_CHECK_GL_ERROR macro
 void glConditionalCheckError(const char* file, int line, const char* func);
 
-#	define ANKI_CHECK_GL_ERROR() \
-		glConditionalCheckError(ANKI_FILE, __LINE__, ANKI_FUNC)
+#define ANKI_CHECK_GL_ERROR()                                                  \
+	glConditionalCheckError(ANKI_FILE, __LINE__, ANKI_FUNC)
 #else
-#	define ANKI_CHECK_GL_ERROR() ((void)0)
+#define ANKI_CHECK_GL_ERROR() ((void)0)
 #endif
 /// @}
 
 } // end namespace anki
-

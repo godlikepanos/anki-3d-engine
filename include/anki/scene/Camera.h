@@ -10,20 +10,21 @@
 #include <anki/scene/MoveComponent.h>
 #include <anki/scene/FrustumComponent.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup Scene
 /// @{
 
 /// Camera SceneNode interface class
-class Camera: public SceneNode
+class Camera : public SceneNode
 {
 	friend class CameraMoveFeedbackComponent;
 	friend class CameraFrustumFeedbackComponent;
 
 public:
 	/// @note Don't EVER change the order
-	enum class Type: U8
+	enum class Type : U8
 	{
 		PERSPECTIVE,
 		ORTHOGRAPHIC,
@@ -54,7 +55,7 @@ private:
 };
 
 /// Perspective camera
-class PerspectiveCamera: public Camera
+class PerspectiveCamera : public Camera
 {
 public:
 	PerspectiveCamera(SceneGraph* scene);
@@ -73,7 +74,7 @@ private:
 };
 
 /// Orthographic camera
-class OrthographicCamera: public Camera
+class OrthographicCamera : public Camera
 {
 public:
 	OrthographicCamera(SceneGraph* scene);
@@ -91,4 +92,3 @@ private:
 /// @}
 
 } // end namespace anki
-

@@ -10,21 +10,22 @@
 #include <anki/resource/ShaderResource.h>
 #include <anki/resource/TextureResource.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup renderer
 /// @{
 
 /// Lens flare rendering pass. Part of forward shading.
-class Lf: public RenderingPass
+class Lf : public RenderingPass
 {
 anki_internal:
 	Lf(Renderer* r)
 		: RenderingPass(r)
-	{}
+	{
+	}
 
 	~Lf();
-
 
 	ANKI_USE_RESULT Error init(const ConfigSet& config);
 
@@ -55,4 +56,3 @@ private:
 /// @}
 
 } // end namespace anki
-

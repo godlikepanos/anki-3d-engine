@@ -8,13 +8,14 @@
 #include <anki/scene/SceneComponent.h>
 #include <anki/collision/Plane.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup scene
 /// @{
 
 /// Reflection proxy component.
-class ReflectionProxyComponent: public SceneComponent
+class ReflectionProxyComponent : public SceneComponent
 {
 public:
 	/// Reflection proxy face. One out of many
@@ -42,8 +43,8 @@ public:
 		return c.getType() == Type::REFLECTION_PROXY;
 	}
 
-	void setQuad(U index, const Vec4& a, const Vec4& b, const Vec4& c,
-		const Vec4& d);
+	void setQuad(
+		U index, const Vec4& a, const Vec4& b, const Vec4& c, const Vec4& d);
 
 	const DArray<Face>& getFaces() const
 	{
@@ -51,8 +52,8 @@ public:
 		return m_faces;
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode& node, F32 prevTime, F32 crntTime,
-		Bool& updated) final;
+	ANKI_USE_RESULT Error update(
+		SceneNode& node, F32 prevTime, F32 crntTime, Bool& updated) final;
 
 private:
 	DArray<Face> m_faces; ///< Quads.
@@ -61,4 +62,3 @@ private:
 /// @}
 
 } // end namespace anki
-

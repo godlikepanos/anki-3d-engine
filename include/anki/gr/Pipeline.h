@@ -8,7 +8,8 @@
 #include <anki/gr/GrObject.h>
 #include <anki/gr/Shader.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup graphics
 /// @{
@@ -91,7 +92,7 @@ public:
 	Array<ColorAttachmentStateInfo, MAX_COLOR_ATTACHMENTS> m_attachments;
 };
 
-enum class PipelineSubStateBit: U16
+enum class PipelineSubStateBit : U16
 {
 	NONE = 0,
 	VERTEX = 1 << 0,
@@ -102,7 +103,8 @@ enum class PipelineSubStateBit: U16
 	DEPTH_STENCIL = 1 << 5,
 	COLOR = 1 << 6,
 	ALL = VERTEX | INPUT_ASSEMBLER | TESSELLATION | VIEWPORT | RASTERIZER
-		| DEPTH_STENCIL | COLOR
+		| DEPTH_STENCIL
+		| COLOR
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(PipelineSubStateBit, inline)
 
@@ -112,11 +114,11 @@ class PipelineInitializer
 public:
 	PipelineInitializer()
 	{
-		// Do a special construction. The state will be hashed and the padding
-		// may contain garbage. With this trick zero the padding
-#define ANKI_CONSTRUCT_AND_ZERO_PADDING(member_) \
-	memset(&member_, 0, sizeof(member_)); \
-	new (&member_) decltype(member_)()
+// Do a special construction. The state will be hashed and the padding
+// may contain garbage. With this trick zero the padding
+#define ANKI_CONSTRUCT_AND_ZERO_PADDING(member_)                               \
+	memset(&member_, 0, sizeof(member_));                                      \
+	new(&member_) decltype(member_)()
 
 		ANKI_CONSTRUCT_AND_ZERO_PADDING(m_vertex);
 		ANKI_CONSTRUCT_AND_ZERO_PADDING(m_inputAssembler);
@@ -141,7 +143,7 @@ public:
 };
 
 /// Graphics and compute pipeline. Contains the static state.
-class Pipeline: public GrObject
+class Pipeline : public GrObject
 {
 public:
 	/// Construct.
@@ -165,4 +167,3 @@ private:
 /// @}
 
 } // end namespace anki
-

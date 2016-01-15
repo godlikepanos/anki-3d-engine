@@ -8,7 +8,8 @@
 #include <anki/util/Thread.h>
 #include <unistd.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 StdinListener::~StdinListener()
@@ -19,7 +20,7 @@ StdinListener::~StdinListener()
 	{
 		ANKI_LOGE("Error when joining StdinListener");
 	}
-	
+
 	for(String& s : m_q)
 	{
 		s.destroy(m_alloc);
@@ -36,7 +37,6 @@ Error StdinListener::create(HeapAllocator<String>& alloc)
 
 	return ErrorCode::NONE;
 }
-
 
 //==============================================================================
 Error StdinListener::workingFunc(Thread::Info& info)
@@ -64,7 +64,7 @@ String StdinListener::getLine()
 {
 	String ret;
 	m_mtx.lock();
-	
+
 	if(!m_q.isEmpty())
 	{
 		ret = std::move(m_q.getFront());
@@ -77,4 +77,3 @@ String StdinListener::getLine()
 }
 
 } // end namespace anki
-

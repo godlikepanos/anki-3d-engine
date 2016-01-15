@@ -11,7 +11,8 @@
 #include <anki/scene/SceneComponent.h>
 #include <anki/util/Bitset.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class VisibilityTestResults;
@@ -21,7 +22,7 @@ class VisibilityTestResults;
 
 /// Frustum component interface for scene nodes. Useful for nodes that are
 /// frustums like cameras and lights
-class FrustumComponent: public SceneComponent
+class FrustumComponent : public SceneComponent
 {
 public:
 	struct VisibilityStats
@@ -31,7 +32,7 @@ public:
 	};
 
 	/// Flags that affect visibility tests.
-	enum class VisibilityTestFlag: U8
+	enum class VisibilityTestFlag : U8
 	{
 		TEST_NONE = 0,
 		TEST_RENDER_COMPONENTS = 1 << 0,
@@ -41,9 +42,7 @@ public:
 		TEST_REFLECTION_PROBES = 1 << 4,
 		TEST_REFLECTION_PROXIES = 1 << 5,
 
-		ALL_TESTS =
-			TEST_RENDER_COMPONENTS
-			| TEST_LIGHT_COMPONENTS
+		ALL_TESTS = TEST_RENDER_COMPONENTS | TEST_LIGHT_COMPONENTS
 			| TEST_LENS_FLARE_COMPONENTS
 			| TEST_SHADOW_CASTERS
 			| TEST_REFLECTION_PROBES
@@ -211,4 +210,3 @@ private:
 /// @}
 
 } // end namespace anki
-

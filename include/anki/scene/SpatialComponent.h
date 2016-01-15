@@ -12,7 +12,8 @@
 #include <anki/util/Enum.h>
 #include <anki/util/List.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class Sector;
@@ -22,7 +23,7 @@ class Sector;
 
 /// Spatial component for scene nodes. It indicates scene nodes that need to
 /// be placed in the a sector and they participate in the visibility tests
-class SpatialComponent: public SceneComponent
+class SpatialComponent : public SceneComponent
 {
 public:
 	static Bool classof(const SceneComponent& c)
@@ -30,9 +31,7 @@ public:
 		return c.getType() == Type::SPATIAL;
 	}
 
-	SpatialComponent(
-		SceneNode* node,
-		const CollisionShape* shape);
+	SpatialComponent(SceneNode* node, const CollisionShape* shape);
 
 	~SpatialComponent();
 
@@ -121,7 +120,7 @@ public:
 
 private:
 	/// Spatial flags
-	enum class Flag: U8
+	enum class Flag : U8
 	{
 		NONE = 0,
 		VISIBLE_CAMERA = 1 << 1,
@@ -141,4 +140,3 @@ private:
 /// @}
 
 } // end namespace anki
-

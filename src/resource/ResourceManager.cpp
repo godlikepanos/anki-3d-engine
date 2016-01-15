@@ -18,11 +18,13 @@
 #include <anki/util/Logger.h>
 #include <anki/misc/ConfigSet.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 ResourceManager::ResourceManager()
-{}
+{
+}
 
 //==============================================================================
 ResourceManager::~ResourceManager()
@@ -40,12 +42,11 @@ Error ResourceManager::create(Initializer& init)
 	m_gr = init.m_gr;
 	m_physics = init.m_physics;
 	m_fs = init.m_resourceFs;
-	m_alloc = ResourceAllocator<U8>(
-		init.m_allocCallback, init.m_allocCallbackData);
+	m_alloc =
+		ResourceAllocator<U8>(init.m_allocCallback, init.m_allocCallbackData);
 
 	m_tmpAlloc = TempResourceAllocator<U8>(
-		init.m_allocCallback, init.m_allocCallbackData,
-		10 * 1024 * 1024);
+		init.m_allocCallback, init.m_allocCallbackData, 10 * 1024 * 1024);
 
 	m_cacheDir.create(m_alloc, init.m_cacheDir);
 
@@ -54,10 +55,9 @@ Error ResourceManager::create(Initializer& init)
 	m_maxTextureSize = init.m_config->getNumber("maxTextureSize");
 	m_textureAnisotropy = init.m_config->getNumber("textureAnisotropy");
 
-	// Init type resource managers
-	//
-#define ANKI_RESOURCE(type_) \
-	TypeResourceManager<type_>::init(m_alloc);
+// Init type resource managers
+//
+#define ANKI_RESOURCE(type_) TypeResourceManager<type_>::init(m_alloc);
 
 	ANKI_RESOURCE(Animation)
 	ANKI_RESOURCE(TextureResource)

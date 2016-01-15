@@ -11,7 +11,8 @@
 #include <anki/scene/SceneGraph.h>
 #include <anki/renderer/Is.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // Misc                                                                        =
@@ -22,12 +23,13 @@ const FrustumComponent::VisibilityTestFlag FRUSTUM_TEST_FLAGS =
 	| FrustumComponent::VisibilityTestFlag::TEST_LIGHT_COMPONENTS;
 
 /// Feedback component
-class ReflectionProbeMoveFeedbackComponent: public SceneComponent
+class ReflectionProbeMoveFeedbackComponent : public SceneComponent
 {
 public:
 	ReflectionProbeMoveFeedbackComponent(SceneNode* node)
 		: SceneComponent(SceneComponent::Type::NONE, node)
-	{}
+	{
+	}
 
 	Error update(SceneNode& node, F32, F32, Bool& updated) override
 	{
@@ -51,7 +53,8 @@ public:
 
 //==============================================================================
 ReflectionProbe::~ReflectionProbe()
-{}
+{
+}
 
 //==============================================================================
 Error ReflectionProbe::create(const CString& name, F32 radius)
@@ -65,8 +68,9 @@ Error ReflectionProbe::create(const CString& name, F32 radius)
 	addComponent(comp, true);
 
 	// Feedback component
-	comp = getSceneAllocator().
-		newInstance<ReflectionProbeMoveFeedbackComponent>(this);
+	comp =
+		getSceneAllocator().newInstance<ReflectionProbeMoveFeedbackComponent>(
+			this);
 	addComponent(comp, true);
 
 	// The frustum components
@@ -99,7 +103,7 @@ Error ReflectionProbe::create(const CString& name, F32 radius)
 
 		FrustumComponent* frc =
 			getSceneAllocator().newInstance<FrustumComponent>(
-			this, &m_cubeSides[i].m_frustum);
+				this, &m_cubeSides[i].m_frustum);
 
 		frc->setEnabledVisibilityTests(
 			FrustumComponent::VisibilityTestFlag::TEST_NONE);
@@ -129,17 +133,16 @@ void ReflectionProbe::onMoveUpdate(MoveComponent& move)
 	// Update frustum components
 	U count = 0;
 	Error err = iterateComponentsOfType<FrustumComponent>(
-		[&](FrustumComponent& frc) -> Error
-	{
-		Transform trf = m_cubeSides[count].m_localTrf;
-		trf.setOrigin(move.getWorldTransform().getOrigin());
+		[&](FrustumComponent& frc) -> Error {
+			Transform trf = m_cubeSides[count].m_localTrf;
+			trf.setOrigin(move.getWorldTransform().getOrigin());
 
-		frc.getFrustum().resetTransform(trf);
-		frc.markTransformForUpdate();
-		++count;
+			frc.getFrustum().resetTransform(trf);
+			frc.markTransformForUpdate();
+			++count;
 
-		return ErrorCode::NONE;
-	});
+			return ErrorCode::NONE;
+		});
 
 	ANKI_ASSERT(count == 6);
 	(void)err;
@@ -169,11 +172,10 @@ Error ReflectionProbe::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 		: FrustumComponent::VisibilityTestFlag::TEST_NONE;
 
 	Error err = iterateComponentsOfType<FrustumComponent>(
-		[testFlags](FrustumComponent& frc) -> Error
-	{
-		frc.setEnabledVisibilityTests(testFlags);
-		return ErrorCode::NONE;
-	});
+		[testFlags](FrustumComponent& frc) -> Error {
+			frc.setEnabledVisibilityTests(testFlags);
+			return ErrorCode::NONE;
+		});
 	(void)err;
 
 	return ErrorCode::NONE;

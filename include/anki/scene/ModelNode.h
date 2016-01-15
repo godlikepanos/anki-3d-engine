@@ -12,7 +12,8 @@
 #include <anki/resource/Model.h>
 #include <anki/collision/Obb.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class ObbSpatialComponent;
@@ -22,7 +23,7 @@ class BodyComponent;
 /// @{
 
 /// A fragment of the ModelNode
-class ModelPatchNode: public SceneNode
+class ModelPatchNode : public SceneNode
 {
 	friend class ModelNode;
 	friend class ModelPatchRenderComponent;
@@ -43,7 +44,7 @@ private:
 };
 
 /// The model scene node
-class ModelNode: public SceneNode
+class ModelNode : public SceneNode
 {
 	friend class ModelPatchNode;
 	friend class ModelMoveFeedbackComponent;
@@ -70,4 +71,3 @@ private:
 /// @}
 
 } // end namespace anki
-

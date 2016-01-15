@@ -9,7 +9,8 @@
 #include <anki/util/Allocator.h>
 #include <anki/util/Ptr.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class GrManager;
@@ -23,9 +24,9 @@ class FramebufferInitializer;
 class DynamicBufferToken;
 class DynamicBufferInfo;
 
-#define ANKI_GR_CLASS(x_) \
-	class x_##Impl; \
-	class x_; \
+#define ANKI_GR_CLASS(x_)                                                      \
+	class x_##Impl;                                                            \
+	class x_;                                                                  \
 	using x_##Ptr = IntrusivePtr<x_>;
 
 ANKI_GR_CLASS(Buffer)
@@ -87,4 +88,3 @@ inline U32 computeMaxMipmapCount(U32 w, U32 h)
 /// @}
 
 } // end namespace anki
-

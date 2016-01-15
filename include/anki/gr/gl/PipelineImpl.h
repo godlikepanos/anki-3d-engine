@@ -8,18 +8,20 @@
 #include <anki/gr/gl/GlObject.h>
 #include <anki/gr/Pipeline.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup opengl
 /// @{
 
 /// Program pipeline
-class PipelineImpl: public GlObject
+class PipelineImpl : public GlObject
 {
 public:
 	PipelineImpl(GrManager* manager)
 		: GlObject(manager)
-	{}
+	{
+	}
 
 	~PipelineImpl()
 	{
@@ -96,7 +98,8 @@ private:
 	void setInputAssemblerState(GlState& state) const;
 	void setTessellationState(GlState& state) const;
 	void setViewportState(GlState& state) const
-	{}
+	{
+	}
 	void setRasterizerState(GlState& state) const;
 	void setDepthStencilState(GlState& state) const;
 	void setColorState(GlState& state) const;
@@ -104,4 +107,3 @@ private:
 /// @}
 
 } // end namespace anki
-

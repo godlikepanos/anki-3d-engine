@@ -6,12 +6,14 @@
 #include <anki/resource/AsyncLoader.h>
 #include <anki/util/Logger.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 AsyncLoader::AsyncLoader()
 	: m_thread("anki_asyload")
-{}
+{
+}
 
 //==============================================================================
 AsyncLoader::~AsyncLoader()
@@ -30,7 +32,7 @@ AsyncLoader::~AsyncLoader()
 			AsyncLoaderTask* next = task->m_next;
 			m_alloc.deleteInstance(task);
 			task = next;
-		}while(task != nullptr);
+		} while(task != nullptr);
 	}
 }
 
@@ -114,4 +116,3 @@ Error AsyncLoader::threadWorker()
 }
 
 } // end namespace anki
-

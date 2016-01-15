@@ -9,13 +9,14 @@
 #include <anki/resource/Forward.h>
 #include <anki/physics/Forward.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup scene
 /// @{
 
 /// Node that interacts with physics.
-class StaticCollisionNode: public SceneNode
+class StaticCollisionNode : public SceneNode
 {
 public:
 	StaticCollisionNode(SceneGraph* scene);
@@ -23,7 +24,8 @@ public:
 	~StaticCollisionNode();
 
 	ANKI_USE_RESULT Error create(const CString& name,
-		const CString& resourceFname, const Transform& transform);
+		const CString& resourceFname,
+		const Transform& transform);
 
 private:
 	CollisionResourcePtr m_rsrc;
@@ -32,4 +34,3 @@ private:
 /// @}
 
 } // end namespace anki
-

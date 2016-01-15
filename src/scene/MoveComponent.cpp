@@ -6,7 +6,8 @@
 #include <anki/scene/MoveComponent.h>
 #include <anki/scene/SceneNode.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 MoveComponent::MoveComponent(SceneNode* node, Flag flags)
@@ -18,7 +19,8 @@ MoveComponent::MoveComponent(SceneNode* node, Flag flags)
 
 //==============================================================================
 MoveComponent::~MoveComponent()
-{}
+{
+}
 
 //==============================================================================
 Error MoveComponent::update(SceneNode& node, F32, F32, Bool& updated)
@@ -58,8 +60,8 @@ Bool MoveComponent::updateWorldTransform(SceneNode& node)
 			}
 			else
 			{
-				m_wtrf = parentMove->getWorldTransform().
-					combineTransformations(m_ltrf);
+				m_wtrf = parentMove->getWorldTransform().combineTransformations(
+					m_ltrf);
 			}
 		}
 		else
@@ -77,20 +79,18 @@ Bool MoveComponent::updateWorldTransform(SceneNode& node)
 	// whole tree because you will re-walk it later
 	if(dirty)
 	{
-		Error err = node.visitChildrenMaxDepth(1,
-			[](SceneNode& childNode) -> Error
-		{
-			Error e = childNode.iterateComponentsOfType<MoveComponent>(
-				[](MoveComponent& mov) -> Error
-			{
-				mov.markForUpdate();
+		Error err =
+			node.visitChildrenMaxDepth(1, [](SceneNode& childNode) -> Error {
+				Error e = childNode.iterateComponentsOfType<MoveComponent>(
+					[](MoveComponent& mov) -> Error {
+						mov.markForUpdate();
+						return ErrorCode::NONE;
+					});
+
+				(void)e;
+
 				return ErrorCode::NONE;
 			});
-
-			(void)e;
-
-			return ErrorCode::NONE;
-		});
 
 		(void)err;
 	}

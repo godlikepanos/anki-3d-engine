@@ -7,7 +7,8 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // Misc                                                                        =
@@ -39,7 +40,8 @@ public:
 
 //==============================================================================
 Font::~Font()
-{}
+{
+}
 
 //==============================================================================
 Error Font::init(const CString& filename, U32 fontHeight)
@@ -59,8 +61,8 @@ Error Font::init(const CString& filename, U32 fontHeight)
 	}
 
 	// Create face and set glyph size
-	if(FT_New_Memory_Face(ft.m_lib, &fontData[0], fontData.getSize(),
-		0, &ft.m_face))
+	if(FT_New_Memory_Face(
+		   ft.m_lib, &fontData[0], fontData.getSize(), 0, &ft.m_face))
 	{
 		ANKI_LOGE("FT_New_Face() failed");
 		return ErrorCode::FUNCTION_FAILED;
@@ -147,4 +149,3 @@ Error Font::init(const CString& filename, U32 fontHeight)
 }
 
 } // end namespace anki
-

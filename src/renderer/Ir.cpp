@@ -13,7 +13,8 @@
 #include <anki/scene/ReflectionProbeComponent.h>
 #include <anki/core/Trace.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // Misc                                                                        =
@@ -61,8 +62,10 @@ public:
 
 		if(probeCount > 0)
 		{
-			if(memcmp(&m_probeIds[0], &b.m_probeIds[0],
-				sizeof(m_probeIds[0]) * probeCount) != 0)
+			if(memcmp(&m_probeIds[0],
+				   &b.m_probeIds[0],
+				   sizeof(m_probeIds[0]) * probeCount)
+				!= 0)
 			{
 				return false;
 			}
@@ -79,11 +82,10 @@ public:
 		{
 			std::sort(m_probeIds.getBegin(),
 				m_probeIds.getBegin() + probeCount,
-				[](const ClusterDataIndex& a, const ClusterDataIndex& b)
-			{
-				ANKI_ASSERT(a.m_probeRadius > 0.0 && b.m_probeRadius > 0.0);
-				return a.m_probeRadius < b.m_probeRadius;
-			});
+				[](const ClusterDataIndex& a, const ClusterDataIndex& b) {
+					ANKI_ASSERT(a.m_probeRadius > 0.0 && b.m_probeRadius > 0.0);
+					return a.m_probeRadius < b.m_probeRadius;
+				});
 		}
 	}
 };
@@ -123,7 +125,7 @@ public:
 };
 
 /// Write the lights to the GPU buffers.
-class IrTask: public ThreadPool::Task
+class IrTask : public ThreadPool::Task
 {
 public:
 	IrRunContext* m_ctx ANKI_DBG_NULLIFY_PTR;
@@ -143,7 +145,8 @@ public:
 Ir::Ir(Renderer* r)
 	: RenderingPass(r)
 	, m_barrier(r->getThreadPool().getThreadsCount())
-{}
+{
+}
 
 //==============================================================================
 Ir::~Ir()
@@ -196,8 +199,12 @@ Error Ir::init(const ConfigSet& config)
 	nestedRConfig.set("sslr.enabled", false); // And that
 
 	ANKI_CHECK(m_nestedR.init(&m_r->getThreadPool(),
-		&m_r->getResourceManager(), &m_r->getGrManager(), m_r->getAllocator(),
-		m_r->getFrameAllocator(), nestedRConfig, m_r->getGlobalTimestampPtr()));
+		&m_r->getResourceManager(),
+		&m_r->getGrManager(),
+		m_r->getAllocator(),
+		m_r->getFrameAllocator(),
+		nestedRConfig,
+		m_r->getGlobalTimestampPtr()));
 	m_nestedR.getPps().setFog(Vec3(1.0, 0.0, 1.0), 0.0);
 
 	// Init the texture
@@ -261,8 +268,8 @@ Error Ir::run(CommandBufferPtr cmdb)
 	ctx.m_alloc = getFrameAllocator();
 
 	// Allocate temp CPU mem
-	ctx.m_clusterData.create(getFrameAllocator(),
-		m_clusterer.getClusterCount());
+	ctx.m_clusterData.create(
+		getFrameAllocator(), m_clusterer.getClusterCount());
 
 	//
 	// Render and populate probes GPU mem
@@ -271,8 +278,10 @@ Error Ir::run(CommandBufferPtr cmdb)
 	// Probes GPU mem
 	void* data = getGrManager().allocateFrameHostVisibleMemory(
 		sizeof(IrShaderReflectionProbe) * visRez.getReflectionProbeCount()
-		+ sizeof(Mat3x4) + sizeof(Vec4),
-		BufferUsage::STORAGE, m_probesToken);
+			+ sizeof(Mat3x4)
+			+ sizeof(Vec4),
+		BufferUsage::STORAGE,
+		m_probesToken);
 
 	Mat3x4* invViewRotation = static_cast<Mat3x4*>(data);
 	*invViewRotation =
@@ -296,8 +305,7 @@ Error Ir::run(CommandBufferPtr cmdb)
 	while(it != end)
 	{
 		// Write and render probe
-		ANKI_CHECK(
-			writeProbeAndRender(*it->m_node, probes[probeIdx]));
+		ANKI_CHECK(writeProbeAndRender(*it->m_node, probes[probeIdx]));
 
 		++it;
 		++probeIdx;
@@ -334,14 +342,17 @@ void Ir::binProbes(U32 threadId, PtrSize threadsCount, IrRunContext& ctx)
 	//
 
 	PtrSize start, end;
-	ThreadPool::Task::choseStartEnd(threadId, threadsCount,
-		ctx.m_visRez->getReflectionProbeCount(), start, end);
+	ThreadPool::Task::choseStartEnd(threadId,
+		threadsCount,
+		ctx.m_visRez->getReflectionProbeCount(),
+		start,
+		end);
 
 	// Init clusterer test result for this thread
 	if(start < end)
 	{
-		m_clusterer.initTestResults(getFrameAllocator(),
-			task.m_clustererTestResult);
+		m_clusterer.initTestResults(
+			getFrameAllocator(), task.m_clustererTestResult);
 	}
 
 	for(auto i = start; i < end; i++)
@@ -365,7 +376,8 @@ void Ir::binProbes(U32 threadId, PtrSize threadsCount, IrRunContext& ctx)
 	{
 		void* mem = getGrManager().allocateFrameHostVisibleMemory(
 			m_clusterer.getClusterCount() * sizeof(IrShaderCluster),
-			BufferUsage::STORAGE, m_clustersToken);
+			BufferUsage::STORAGE,
+			m_clustersToken);
 
 		ctx.m_clusters = SArray<IrShaderCluster>(
 			static_cast<IrShaderCluster*>(mem), m_clusterer.getClusterCount());
@@ -384,8 +396,7 @@ void Ir::binProbes(U32 threadId, PtrSize threadsCount, IrRunContext& ctx)
 		if(indexCount > 0)
 		{
 			void* mem = getGrManager().allocateFrameHostVisibleMemory(
-				indexCount * sizeof(U32), BufferUsage::STORAGE,
-				m_indicesToken);
+				indexCount * sizeof(U32), BufferUsage::STORAGE, m_indicesToken);
 
 			ctx.m_indices = SArray<U32>(static_cast<U32*>(mem), indexCount);
 		}
@@ -400,8 +411,8 @@ void Ir::binProbes(U32 threadId, PtrSize threadsCount, IrRunContext& ctx)
 	m_barrier.wait();
 	ANKI_TRACE_START_EVENT(RENDER_IR);
 
-	ThreadPool::Task::choseStartEnd(threadId, threadsCount,
-		m_clusterer.getClusterCount(), start, end);
+	ThreadPool::Task::choseStartEnd(
+		threadId, threadsCount, m_clusterer.getClusterCount(), start, end);
 
 	for(auto i = start; i < end; i++)
 	{
@@ -450,7 +461,8 @@ void Ir::binProbe(U probeIdx, IrRunContext& ctx, IrTaskContext& task) const
 		task.m_node->getComponent<ReflectionProbeComponent>();
 
 	// Perform the expensive tests
-	m_clusterer.bin(sp.getSpatialCollisionShape(), sp.getAabb(),
+	m_clusterer.bin(sp.getSpatialCollisionShape(),
+		sp.getAabb(),
 		task.m_clustererTestResult);
 
 	// Bin to the correct tiles
@@ -463,7 +475,8 @@ void Ir::binProbe(U probeIdx, IrRunContext& ctx, IrTaskContext& task) const
 		U z = (*it)[2];
 
 		U i = m_clusterer.getClusterCountX()
-			* (z * m_clusterer.getClusterCountY() + y) + x;
+				* (z * m_clusterer.getClusterCountY() + y)
+			+ x;
 
 		auto& cluster = ctx.m_clusterData[i];
 
@@ -476,8 +489,8 @@ void Ir::binProbe(U probeIdx, IrRunContext& ctx, IrTaskContext& task) const
 }
 
 //==============================================================================
-void Ir::writeIndicesAndCluster(U clusterIdx, Bool hasPrevCluster,
-	IrRunContext& ctx)
+void Ir::writeIndicesAndCluster(
+	U clusterIdx, Bool hasPrevCluster, IrRunContext& ctx)
 {
 	IrClusterData& cdata = ctx.m_clusterData[clusterIdx];
 	IrShaderCluster& cluster = ctx.m_clusters[clusterIdx];
@@ -516,8 +529,8 @@ void Ir::writeIndicesAndCluster(U clusterIdx, Bool hasPrevCluster,
 }
 
 //==============================================================================
-Error Ir::renderReflection(SceneNode& node, ReflectionProbeComponent& reflc,
-	U cubemapIdx)
+Error Ir::renderReflection(
+	SceneNode& node, ReflectionProbeComponent& reflc, U cubemapIdx)
 {
 	ANKI_TRACE_INC_COUNTER(RENDERER_REFLECTIONS, 1);
 
@@ -535,12 +548,16 @@ Error Ir::renderReflection(SceneNode& node, ReflectionProbeComponent& reflc,
 
 		// Copy textures
 		cmdb[cmdb.getSize() - 1]->copyTextureToTexture(
-			m_nestedR.getPps().getRt(), 0, 0, m_cubemapArr,
-			6 * cubemapIdx + i, 0);
+			m_nestedR.getPps().getRt(),
+			0,
+			0,
+			m_cubemapArr,
+			6 * cubemapIdx + i,
+			0);
 
 		// Gen mips
-		cmdb[cmdb.getSize() - 1]->generateMipmaps(m_cubemapArr,
-			6 * cubemapIdx + i);
+		cmdb[cmdb.getSize() - 1]->generateMipmaps(
+			m_cubemapArr, 6 * cubemapIdx + i);
 
 		// Flush
 		for(U j = 0; j < cmdb.getSize(); ++j)
@@ -619,4 +636,3 @@ void Ir::findCacheEntry(SceneNode& node, U& entry, Bool& render)
 }
 
 } // end namespace anki
-

@@ -14,7 +14,8 @@
 #include <utility>
 #include <new>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup util_other
 /// @{
@@ -186,7 +187,7 @@ inline U32 countBits(U32 number)
 #if defined(__GNUC__)
 	return __builtin_popcount(number);
 #else
-#	error "Unimplemented"
+#error "Unimplemented"
 #endif
 }
 
@@ -194,7 +195,7 @@ inline U32 countBits(U32 number)
 template<class T, class Y>
 struct TypesAreTheSame
 {
-    enum
+	enum
 	{
 		m_value = 0
 	};
@@ -203,7 +204,7 @@ struct TypesAreTheSame
 template<class T>
 struct TypesAreTheSame<T, T>
 {
-    enum
+	enum
 	{
 		m_value = 1
 	};
@@ -211,4 +212,3 @@ struct TypesAreTheSame<T, T>
 /// @}
 
 } // end namespace anki
-

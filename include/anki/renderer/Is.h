@@ -16,7 +16,8 @@
 #include <anki/core/Timestamp.h>
 #include <anki/collision/Plane.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class Camera;
@@ -34,7 +35,7 @@ class ClustererTestResult;
 /// @{
 
 /// Illumination stage
-class Is: public RenderingPass
+class Is : public RenderingPass
 {
 	friend class WriteLightsTask;
 
@@ -157,17 +158,23 @@ private:
 
 	// Binning
 	void binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& data);
-	I writePointLight(const LightComponent& light, const MoveComponent& move,
-		const FrustumComponent& camfrc, TaskCommonData& task);
-	I writeSpotLight(const LightComponent& lightc,
-		const MoveComponent& lightMove, const FrustumComponent* lightFrc,
-		const MoveComponent& camMove, const FrustumComponent& camFrc,
+	I writePointLight(const LightComponent& light,
+		const MoveComponent& move,
+		const FrustumComponent& camfrc,
 		TaskCommonData& task);
-	void binLight(SpatialComponent& sp, U pos, U lightType,
-		TaskCommonData& task, ClustererTestResult& testResult);
+	I writeSpotLight(const LightComponent& lightc,
+		const MoveComponent& lightMove,
+		const FrustumComponent* lightFrc,
+		const MoveComponent& camMove,
+		const FrustumComponent& camFrc,
+		TaskCommonData& task);
+	void binLight(SpatialComponent& sp,
+		U pos,
+		U lightType,
+		TaskCommonData& task,
+		ClustererTestResult& testResult);
 };
 
 /// @}
 
 } // end namespace anki
-

@@ -8,7 +8,8 @@
 #include "anki/misc/Xml.h"
 #include <unordered_map>
 
-namespace anki {
+namespace anki
+{
 
 static const char* MTL = R"(
 <material>
@@ -111,21 +112,22 @@ ANKI_TEST(Resource, MaterialLoader)
 		map["mouse"] = true;
 		map["cat"] = true;
 
-		Error err = loader.iterateAllInputVariables([&](
-			const MaterialLoaderInputVariable& in) -> Error
-		{
-			ANKI_TEST_EXPECT_EQ(map[&in.m_name.toCString()[0]], true);
+		Error err = loader.iterateAllInputVariables(
+			[&](const MaterialLoaderInputVariable& in) -> Error {
+				ANKI_TEST_EXPECT_EQ(map[&in.m_name.toCString()[0]], true);
 
-			if(in.m_flags.m_inBlock)
-			{
-				printf("var in block: %s %d %d %d %d\n", &in.m_name[0],
-					in.m_blockInfo.m_offset, in.m_blockInfo.m_arraySize,
-					in.m_blockInfo.m_arrayStride,
-					in.m_blockInfo.m_matrixStride);
-			}
+				if(in.m_flags.m_inBlock)
+				{
+					printf("var in block: %s %d %d %d %d\n",
+						&in.m_name[0],
+						in.m_blockInfo.m_offset,
+						in.m_blockInfo.m_arraySize,
+						in.m_blockInfo.m_arrayStride,
+						in.m_blockInfo.m_matrixStride);
+				}
 
-			return ErrorCode::NONE;
-		});
+				return ErrorCode::NONE;
+			});
 		(void)err;
 	}
 

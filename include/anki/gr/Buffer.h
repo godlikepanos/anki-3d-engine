@@ -7,13 +7,14 @@
 
 #include <anki/gr/GrObject.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup graphics
 /// @{
 
 /// GPU buffer.
-class Buffer: public GrObject
+class Buffer : public GrObject
 {
 public:
 	/// Construct.

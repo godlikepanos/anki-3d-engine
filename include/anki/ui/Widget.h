@@ -9,13 +9,14 @@
 #include <anki/util/Hierarchy.h>
 #include <anki/util/Bitset.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup ui
 /// @{
 
 /// Widget state.
-enum class WidgetState: U8
+enum class WidgetState : U8
 {
 	DEFAULT,
 	HOVER,
@@ -25,7 +26,7 @@ enum class WidgetState: U8
 };
 
 /// UI widget.
-class Widget: public UiObject, private Hierarchy<Widget>
+class Widget : public UiObject, private Hierarchy<Widget>
 {
 	ANKI_WIDGET
 	friend Hierarchy<Widget>;
@@ -43,7 +44,8 @@ public:
 	}
 
 	virtual void paint()
-	{}
+	{
+	}
 
 	/// Set position relatively to the parent.
 	void setRelativePosition(const UVec2& pos);

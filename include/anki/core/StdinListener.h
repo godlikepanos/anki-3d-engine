@@ -9,7 +9,8 @@
 #include <anki/util/Thread.h>
 #include <anki/util/List.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup core
 /// @{
@@ -21,8 +22,9 @@ class StdinListener
 {
 public:
 	StdinListener()
-	:	m_thrd("anki_stdin")
-	{}
+		: m_thrd("anki_stdin")
+	{
+	}
 
 	~StdinListener();
 
@@ -44,4 +46,3 @@ private:
 /// @}
 
 } // end namespace anki
-

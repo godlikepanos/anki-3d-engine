@@ -10,7 +10,8 @@
 #include <anki/util/Assert.h>
 #include <anki/util/Allocator.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class GlState;
@@ -28,7 +29,8 @@ public:
 	GlCommand* m_nextCommand = nullptr;
 
 	virtual ~GlCommand()
-	{}
+	{
+	}
 
 	/// Execute command
 	virtual ANKI_USE_RESULT Error operator()(GlState& state) = 0;
@@ -43,7 +45,8 @@ public:
 	/// Default constructor
 	CommandBufferImpl(GrManager* manager)
 		: m_manager(manager)
-	{}
+	{
+	}
 
 	~CommandBufferImpl()
 	{
@@ -117,8 +120,8 @@ template<typename TCommand, typename... TArgs>
 inline void CommandBufferImpl::pushBackNewCommand(TArgs&&... args)
 {
 	ANKI_ASSERT(!m_immutable);
-	TCommand* newCommand = m_alloc.template newInstance<TCommand>(
-		std::forward<TArgs>(args)...);
+	TCommand* newCommand =
+		m_alloc.template newInstance<TCommand>(std::forward<TArgs>(args)...);
 
 	if(m_firstCommand != nullptr)
 	{
@@ -137,4 +140,3 @@ inline void CommandBufferImpl::pushBackNewCommand(TArgs&&... args)
 /// @}
 
 } // end namespace anki
-

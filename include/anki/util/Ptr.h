@@ -8,7 +8,8 @@
 #include <anki/util/Assert.h>
 #include <anki/util/StdTypes.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup util_memory
 /// @{
@@ -56,7 +57,7 @@ public:
 	/// @{
 	operator bool() const
 	{
-    	return isCreated();
+		return isCreated();
 	}
 
 	Bool operator==(const PtrBase& other) const
@@ -95,16 +96,18 @@ protected:
 
 	PtrBase()
 		: m_ptr(nullptr)
-	{}
+	{
+	}
 
 	PtrBase(T* ptr)
 		: m_ptr(ptr)
-	{}
+	{
+	}
 };
 
 /// A simple template class to wrap simple pointers.
 template<typename T>
-class WeakPtr: public PtrBase<T>
+class WeakPtr : public PtrBase<T>
 {
 	template<typename>
 	friend class WeakPtr;
@@ -114,20 +117,24 @@ public:
 
 	WeakPtr()
 		: Base()
-	{}
+	{
+	}
 
 	WeakPtr(T* ptr)
 		: Base(ptr)
-	{}
+	{
+	}
 
 	WeakPtr(const WeakPtr& other)
 		: Base(other.m_ptr)
-	{}
+	{
+	}
 
 	template<typename Y>
 	WeakPtr(const WeakPtr<Y>& other)
 		: Base(other.m_ptr)
-	{}
+	{
+	}
 
 	WeakPtr(WeakPtr&& other)
 		: Base(other.m_ptr)
@@ -249,7 +256,7 @@ public:
 
 /// A unique pointer.
 template<typename T, typename TDeleter = DefaultPtrDeleter<T>>
-class UniquePtr: public PtrBase<T>
+class UniquePtr : public PtrBase<T>
 {
 public:
 	using Base = PtrBase<T>;
@@ -257,18 +264,20 @@ public:
 
 	UniquePtr()
 		: Base()
-	{}
+	{
+	}
 
 	explicit UniquePtr(T* ptr)
 		: Base(ptr)
-	{}
+	{
+	}
 
 	/// Non-copyable.
 	UniquePtr(const UniquePtr& other) = delete;
 
 	/// Move.
 	UniquePtr(UniquePtr&& other)
-	:	Base()
+		: Base()
 	{
 		move(other);
 	}
@@ -316,7 +325,7 @@ private:
 
 /// An intrusive pointer.
 template<typename T, typename TDeleter = DefaultPtrDeleter<T>>
-class IntrusivePtr: public PtrBase<T>
+class IntrusivePtr : public PtrBase<T>
 {
 	template<typename Y, typename TD>
 	friend class IntrusivePtr;
@@ -327,7 +336,8 @@ public:
 
 	IntrusivePtr()
 		: Base()
-	{}
+	{
+	}
 
 	IntrusivePtr(T* ptr)
 		: Base()
@@ -401,4 +411,3 @@ private:
 /// @}
 
 } // end namespace anki
-

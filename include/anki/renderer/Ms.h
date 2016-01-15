@@ -8,13 +8,14 @@
 #include <anki/renderer/RenderingPass.h>
 #include <anki/Gr.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup renderer
 /// @{
 
 /// Material stage also known as G buffer stage. It populates the G buffer
-class Ms: public RenderingPass
+class Ms : public RenderingPass
 {
 anki_internal:
 	static const U ATTACHMENT_COUNT = 3;
@@ -23,7 +24,8 @@ anki_internal:
 
 	Ms(Renderer* r)
 		: RenderingPass(r)
-	{}
+	{
+	}
 
 	~Ms();
 
@@ -91,4 +93,3 @@ private:
 /// @}
 
 } // end namespace anki
-

@@ -8,13 +8,14 @@
 #include <anki/collision/ConvexShape.h>
 #include <anki/Math.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup collision
 /// @{
 
 /// Sphere collision shape
-class Sphere: public ConvexShape
+class Sphere : public ConvexShape
 {
 public:
 	using Base = ConvexShape;
@@ -26,22 +27,24 @@ public:
 
 	/// Default constructor
 	Sphere()
-	:	Base(Type::SPHERE)
-	{}
+		: Base(Type::SPHERE)
+	{
+	}
 
 	/// Copy constructor
 	Sphere(const Sphere& b)
-	:	Base(Type::SPHERE)
+		: Base(Type::SPHERE)
 	{
 		operator=(b);
 	}
 
 	/// Constructor
 	Sphere(const Vec4& center, F32 radius)
-	:	Base(Type::SPHERE),
-		m_center(center),
-		m_radius(radius)
-	{}
+		: Base(Type::SPHERE)
+		, m_center(center)
+		, m_radius(radius)
+	{
+	}
 
 	const Vec4& getCenter() const
 	{
@@ -124,4 +127,3 @@ private:
 /// @}
 
 } // end namespace anki
-

@@ -7,18 +7,20 @@
 
 #include <anki/renderer/RenderingPass.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup renderer
 /// @{
 
 /// Screen space lens flare pass.
-class Sslf: public RenderingPass
+class Sslf : public RenderingPass
 {
 anki_internal:
 	Sslf(Renderer* r)
 		: RenderingPass(r)
-	{}
+	{
+	}
 
 	ANKI_USE_RESULT Error init(const ConfigSet& config);
 	void run(CommandBufferPtr& cmdb);
@@ -41,4 +43,3 @@ private:
 /// @}
 
 } // end namespace anki
-

@@ -11,4 +11,3 @@
 #include <anki/renderer/Dbg.h>
 
 /// @defgroup renderer Renderering system
-

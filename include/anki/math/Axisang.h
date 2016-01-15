@@ -7,7 +7,8 @@
 
 #include <anki/math/CommonIncludes.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup math
 /// @{
@@ -20,19 +21,22 @@ public:
 	/// @name Constructors
 	/// @{
 	TAxisang()
-	:	m_ang(0.0),
-		m_axis(0.0)
-	{}
+		: m_ang(0.0)
+		, m_axis(0.0)
+	{
+	}
 
 	TAxisang(const TAxisang& b)
-	:	m_ang(b.m_ang),
-		m_axis(b.m_axis)
-	{}
+		: m_ang(b.m_ang)
+		, m_axis(b.m_axis)
+	{
+	}
 
 	TAxisang(const T rad, const TVec3<T>& axis)
-	:	m_ang(rad),
-		m_axis(axis)
-	{}
+		: m_ang(rad)
+		, m_axis(axis)
+	{
+	}
 
 	explicit TAxisang(const TQuat<T>& q)
 	{
@@ -51,8 +55,7 @@ public:
 
 	explicit TAxisang(const TMat3<T>& m3)
 	{
-		if(isZero<T>(m3(0, 1) - m3(1, 0))
-			&& isZero<T>(m3(0, 2) - m3(2, 0))
+		if(isZero<T>(m3(0, 1) - m3(1, 0)) && isZero<T>(m3(0, 2) - m3(2, 0))
 			&& isZero<T>(m3(1, 2) - m3(2, 1)))
 		{
 
@@ -193,7 +196,10 @@ public:
 	{
 		String s;
 		Error err = s.sprintf("axis: %f %f %f, angle: %f",
-			m_axis[0], m_axis[1], m_axis[2], m_ang);
+			m_axis[0],
+			m_axis[1],
+			m_axis[2],
+			m_ang);
 		(void)err;
 		return s;
 	}
@@ -212,4 +218,3 @@ typedef TAxisang<F32> Axisang;
 /// @}
 
 } // end namespace anki
-

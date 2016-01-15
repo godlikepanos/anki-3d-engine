@@ -14,16 +14,18 @@
 #include <anki/renderer/Renderer.h>
 #include <anki/misc/ConfigSet.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // Misc                                                                        =
 //==============================================================================
 
-namespace {
+namespace
+{
 
 //==============================================================================
-class UpdateSceneNodesTask: public ThreadPool::Task
+class UpdateSceneNodesTask : public ThreadPool::Task
 {
 public:
 	SceneGraph* m_scene = nullptr;
@@ -46,7 +48,9 @@ public:
 		while(!quit && !err)
 		{
 			// Fetch a few scene nodes
-			Array<SceneNode*, 5> nodes = {{nullptr, }};
+			Array<SceneNode*, 5> nodes = {{
+				nullptr,
+			}};
 			lock.lock();
 			for(SceneNode*& node : nodes)
 			{
@@ -90,8 +94,7 @@ public:
 		Error err = ErrorCode::NONE;
 
 		// Components update
-		err = node.iterateComponents([&](SceneComponent& comp) -> Error
-		{
+		err = node.iterateComponents([&](SceneComponent& comp) -> Error {
 			Bool updated = false;
 			return comp.updateReal(node, prevTime, crntTime, updated);
 		});
@@ -102,8 +105,7 @@ public:
 		}
 
 		// Update children
-		err = node.visitChildren([&](SceneNode& child) -> Error
-		{
+		err = node.visitChildren([&](SceneNode& child) -> Error {
 			return updateInternal(child, prevTime, crntTime);
 		});
 
@@ -125,13 +127,13 @@ public:
 
 //==============================================================================
 SceneGraph::SceneGraph()
-{}
+{
+}
 
 //==============================================================================
 SceneGraph::~SceneGraph()
 {
-	Error err = iterateSceneNodes([&](SceneNode& s) -> Error
-	{
+	Error err = iterateSceneNodes([&](SceneNode& s) -> Error {
 		s.setMarkedForDeletion();
 		return ErrorCode::NONE;
 	});
@@ -147,8 +149,7 @@ SceneGraph::~SceneGraph()
 }
 
 //==============================================================================
-Error SceneGraph::init(
-	AllocAlignedCallback allocCb,
+Error SceneGraph::init(AllocAlignedCallback allocCb,
 	void* allocCbData,
 	ThreadPool* threadpool,
 	ResourceManager* resources,
@@ -167,13 +168,9 @@ Error SceneGraph::init(
 	m_physics = &m_resources->_getPhysicsWorld();
 	m_input = input;
 
-	m_alloc = SceneAllocator<U8>(
-		allocCb, allocCbData,
-		1024 * 10,
-		1.0,
-		0);
-	m_frameAlloc = SceneFrameAllocator<U8>(
-		allocCb, allocCbData, 1 * 1024 * 1024);
+	m_alloc = SceneAllocator<U8>(allocCb, allocCbData, 1024 * 10, 1.0, 0);
+	m_frameAlloc =
+		SceneFrameAllocator<U8>(allocCb, allocCbData, 1 * 1024 * 1024);
 
 	err = m_events.create(this);
 
@@ -184,8 +181,8 @@ Error SceneGraph::init(
 
 	m_sectors = m_alloc.newInstance<SectorGroup>(this);
 
-	m_maxReflectionProxyDistance = config.getNumber(
-		"imageReflectionMaxDistance");
+	m_maxReflectionProxyDistance =
+		config.getNumber("imageReflectionMaxDistance");
 
 	return err;
 }
@@ -204,7 +201,7 @@ Error SceneGraph::registerNode(SceneNode* node)
 			return ErrorCode::FUNCTION_FAILED;
 		}
 
-		//m_dict[node->getName()] = node;
+		// m_dict[node->getName()] = node;
 	}
 
 	// Add to vector
@@ -221,7 +218,7 @@ void SceneGraph::unregisterNode(SceneNode* node)
 	m_nodes.erase(node);
 	--m_nodesCount;
 
-	// Remove from dict
+// Remove from dict
 #if 0
 	if(node->getName())
 	{
@@ -287,8 +284,8 @@ void SceneGraph::deleteNodesMarkedForDeletion()
 }
 
 //==============================================================================
-Error SceneGraph::update(F32 prevUpdateTime, F32 crntTime,
-	MainRenderer& renderer)
+Error SceneGraph::update(
+	F32 prevUpdateTime, F32 crntTime, MainRenderer& renderer)
 {
 	ANKI_ASSERT(m_mainCam);
 	ANKI_TRACE_START_EVENT(SCENE_UPDATE);
@@ -341,8 +338,8 @@ Error SceneGraph::update(F32 prevUpdateTime, F32 crntTime,
 	renderer.getOffscreenRenderer().prepareForVisibilityTests(*m_mainCam);
 
 	ANKI_TRACE_START_EVENT(SCENE_VISIBILITY_TESTS);
-	ANKI_CHECK(doVisibilityTests(*m_mainCam, *this,
-		renderer.getOffscreenRenderer()));
+	ANKI_CHECK(
+		doVisibilityTests(*m_mainCam, *this, renderer.getOffscreenRenderer()));
 	ANKI_TRACE_STOP_EVENT(SCENE_VISIBILITY_TESTS);
 
 	ANKI_TRACE_STOP_EVENT(SCENE_UPDATE);

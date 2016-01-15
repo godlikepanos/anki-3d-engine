@@ -8,13 +8,14 @@
 #include <anki/scene/SceneComponent.h>
 #include <anki/Math.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup scene
 /// @{
 
 /// Light component. It's a dummy component used to identify lights
-class LightComponent: public SceneComponent
+class LightComponent : public SceneComponent
 {
 public:
 	static Bool classof(const SceneComponent& c)
@@ -22,12 +23,12 @@ public:
 		return c.getType() == Type::LIGHT;
 	}
 
-	enum class LightType: U8
+	enum class LightType : U8
 	{
 		POINT,
 		SPOT,
 		COUNT
- 	};
+	};
 
 	LightComponent(SceneNode* node, LightType type);
 
@@ -157,4 +158,3 @@ private:
 /// @}
 
 } // end namespace anki
-

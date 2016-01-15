@@ -9,22 +9,25 @@
 #include <anki/scene/MoveComponent.h>
 #include <anki/resource/ResourceManager.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 AnimationEvent::AnimationEvent(EventManager* manager)
 	: Event(manager)
-{}
+{
+}
 
 //==============================================================================
-Error AnimationEvent::init(const AnimationResourcePtr& anim,
-	SceneNode* movableSceneNode)
+Error AnimationEvent::init(
+	const AnimationResourcePtr& anim, SceneNode* movableSceneNode)
 {
 	ANKI_ASSERT(movableSceneNode);
 	m_anim = anim;
 
 	Event::init(m_anim->getStartingTime(),
-		m_anim->getDuration(), movableSceneNode,
+		m_anim->getDuration(),
+		movableSceneNode,
 		m_anim->getRepeat() ? Flag::REANIMATE : Flag::NONE);
 
 	return ErrorCode::NONE;

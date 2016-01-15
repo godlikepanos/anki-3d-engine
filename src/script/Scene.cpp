@@ -9,15 +9,15 @@
 #include <anki/script/ScriptManager.h>
 #include <anki/Scene.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 template<typename T, typename... TArgs>
 static T* newSceneNode(SceneGraph* scene, CString name, TArgs... args)
 {
 	T* ptr;
-	Error err = scene->template newSceneNode<T>(
-		name, ptr, args...);
+	Error err = scene->template newSceneNode<T>(name, ptr, args...);
 
 	if(!err)
 	{
@@ -70,29 +70,30 @@ static inline int pwrapMoveComponentsetLocalOrigin(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameMoveComponent, 2038493110845313445, ud))
 	{
 		return -1;
 	}
-	
+
 	MoveComponent* self = ud->getData<MoveComponent>();
-	
+
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec4* iarg0 = ud->getData<Vec4>();
 	const Vec4& arg0(*iarg0);
-	
+
 	// Call the method
 	self->setLocalOrigin(arg0);
-	
+
 	return 0;
 }
 
@@ -105,7 +106,7 @@ static int wrapMoveComponentsetLocalOrigin(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -120,26 +121,27 @@ static inline int pwrapMoveComponentgetLocalOrigin(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameMoveComponent, 2038493110845313445, ud))
 	{
 		return -1;
 	}
-	
+
 	MoveComponent* self = ud->getData<MoveComponent>();
-	
+
 	// Call the method
 	const Vec4& ret = self->getLocalOrigin();
-	
+
 	// Push return value
 	voidp = lua_newuserdata(l, sizeof(UserData));
 	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "Vec4");
 	ud->initPointed(6804478823655046386, const_cast<Vec4*>(&ret));
-	
+
 	return 1;
 }
 
@@ -152,7 +154,7 @@ static int wrapMoveComponentgetLocalOrigin(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -167,29 +169,30 @@ static inline int pwrapMoveComponentsetLocalRotation(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameMoveComponent, 2038493110845313445, ud))
 	{
 		return -1;
 	}
-	
+
 	MoveComponent* self = ud->getData<MoveComponent>();
-	
+
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Mat3x4", -2654194732934255869, ud))
 	{
 		return -1;
 	}
-	
+
 	Mat3x4* iarg0 = ud->getData<Mat3x4>();
 	const Mat3x4& arg0(*iarg0);
-	
+
 	// Call the method
 	self->setLocalRotation(arg0);
-	
+
 	return 0;
 }
 
@@ -202,7 +205,7 @@ static int wrapMoveComponentsetLocalRotation(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -217,26 +220,27 @@ static inline int pwrapMoveComponentgetLocalRotation(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameMoveComponent, 2038493110845313445, ud))
 	{
 		return -1;
 	}
-	
+
 	MoveComponent* self = ud->getData<MoveComponent>();
-	
+
 	// Call the method
 	const Mat3x4& ret = self->getLocalRotation();
-	
+
 	// Push return value
 	voidp = lua_newuserdata(l, sizeof(UserData));
 	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "Mat3x4");
 	ud->initPointed(-2654194732934255869, const_cast<Mat3x4*>(&ret));
-	
+
 	return 1;
 }
 
@@ -249,7 +253,7 @@ static int wrapMoveComponentgetLocalRotation(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -264,27 +268,28 @@ static inline int pwrapMoveComponentsetLocalScale(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameMoveComponent, 2038493110845313445, ud))
 	{
 		return -1;
 	}
-	
+
 	MoveComponent* self = ud->getData<MoveComponent>();
-	
+
 	// Pop arguments
 	F32 arg0;
 	if(LuaBinder::checkNumber(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	self->setLocalScale(arg0);
-	
+
 	return 0;
 }
 
@@ -297,7 +302,7 @@ static int wrapMoveComponentsetLocalScale(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -312,23 +317,24 @@ static inline int pwrapMoveComponentgetLocalScale(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameMoveComponent, 2038493110845313445, ud))
 	{
 		return -1;
 	}
-	
+
 	MoveComponent* self = ud->getData<MoveComponent>();
-	
+
 	// Call the method
 	F32 ret = self->getLocalScale();
-	
+
 	// Push return value
 	lua_pushnumber(l, ret);
-	
+
 	return 1;
 }
 
@@ -341,7 +347,7 @@ static int wrapMoveComponentgetLocalScale(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -356,29 +362,30 @@ static inline int pwrapMoveComponentsetLocalTransform(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameMoveComponent, 2038493110845313445, ud))
 	{
 		return -1;
 	}
-	
+
 	MoveComponent* self = ud->getData<MoveComponent>();
-	
+
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Transform", 7048620195620777229, ud))
 	{
 		return -1;
 	}
-	
+
 	Transform* iarg0 = ud->getData<Transform>();
 	const Transform& arg0(*iarg0);
-	
+
 	// Call the method
 	self->setLocalTransform(arg0);
-	
+
 	return 0;
 }
 
@@ -391,7 +398,7 @@ static int wrapMoveComponentsetLocalTransform(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -406,26 +413,27 @@ static inline int pwrapMoveComponentgetLocalTransform(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameMoveComponent, 2038493110845313445, ud))
 	{
 		return -1;
 	}
-	
+
 	MoveComponent* self = ud->getData<MoveComponent>();
-	
+
 	// Call the method
 	const Transform& ret = self->getLocalTransform();
-	
+
 	// Push return value
 	voidp = lua_newuserdata(l, sizeof(UserData));
 	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "Transform");
 	ud->initPointed(7048620195620777229, const_cast<Transform*>(&ret));
-	
+
 	return 1;
 }
 
@@ -438,7 +446,7 @@ static int wrapMoveComponentgetLocalTransform(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -448,14 +456,22 @@ static int wrapMoveComponentgetLocalTransform(lua_State* l)
 static inline void wrapMoveComponent(lua_State* l)
 {
 	LuaBinder::createClass(l, classnameMoveComponent);
-	LuaBinder::pushLuaCFuncMethod(l, "setLocalOrigin", wrapMoveComponentsetLocalOrigin);
-	LuaBinder::pushLuaCFuncMethod(l, "getLocalOrigin", wrapMoveComponentgetLocalOrigin);
-	LuaBinder::pushLuaCFuncMethod(l, "setLocalRotation", wrapMoveComponentsetLocalRotation);
-	LuaBinder::pushLuaCFuncMethod(l, "getLocalRotation", wrapMoveComponentgetLocalRotation);
-	LuaBinder::pushLuaCFuncMethod(l, "setLocalScale", wrapMoveComponentsetLocalScale);
-	LuaBinder::pushLuaCFuncMethod(l, "getLocalScale", wrapMoveComponentgetLocalScale);
-	LuaBinder::pushLuaCFuncMethod(l, "setLocalTransform", wrapMoveComponentsetLocalTransform);
-	LuaBinder::pushLuaCFuncMethod(l, "getLocalTransform", wrapMoveComponentgetLocalTransform);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "setLocalOrigin", wrapMoveComponentsetLocalOrigin);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "getLocalOrigin", wrapMoveComponentgetLocalOrigin);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "setLocalRotation", wrapMoveComponentsetLocalRotation);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "getLocalRotation", wrapMoveComponentgetLocalRotation);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "setLocalScale", wrapMoveComponentsetLocalScale);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "getLocalScale", wrapMoveComponentgetLocalScale);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "setLocalTransform", wrapMoveComponentsetLocalTransform);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "getLocalTransform", wrapMoveComponentgetLocalTransform);
 	lua_settop(l, 0);
 }
 
@@ -488,29 +504,30 @@ static inline int pwrapLightComponentsetDiffuseColor(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameLightComponent, 7940823622056993903, ud))
 	{
 		return -1;
 	}
-	
+
 	LightComponent* self = ud->getData<LightComponent>();
-	
+
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec4* iarg0 = ud->getData<Vec4>();
 	const Vec4& arg0(*iarg0);
-	
+
 	// Call the method
 	self->setDiffuseColor(arg0);
-	
+
 	return 0;
 }
 
@@ -523,7 +540,7 @@ static int wrapLightComponentsetDiffuseColor(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -538,26 +555,27 @@ static inline int pwrapLightComponentgetDiffuseColor(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameLightComponent, 7940823622056993903, ud))
 	{
 		return -1;
 	}
-	
+
 	LightComponent* self = ud->getData<LightComponent>();
-	
+
 	// Call the method
 	const Vec4& ret = self->getDiffuseColor();
-	
+
 	// Push return value
 	voidp = lua_newuserdata(l, sizeof(UserData));
 	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "Vec4");
 	ud->initPointed(6804478823655046386, const_cast<Vec4*>(&ret));
-	
+
 	return 1;
 }
 
@@ -570,7 +588,7 @@ static int wrapLightComponentgetDiffuseColor(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -585,29 +603,30 @@ static inline int pwrapLightComponentsetSpecularColor(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameLightComponent, 7940823622056993903, ud))
 	{
 		return -1;
 	}
-	
+
 	LightComponent* self = ud->getData<LightComponent>();
-	
+
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec4* iarg0 = ud->getData<Vec4>();
 	const Vec4& arg0(*iarg0);
-	
+
 	// Call the method
 	self->setSpecularColor(arg0);
-	
+
 	return 0;
 }
 
@@ -620,7 +639,7 @@ static int wrapLightComponentsetSpecularColor(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -635,26 +654,27 @@ static inline int pwrapLightComponentgetSpecularColor(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameLightComponent, 7940823622056993903, ud))
 	{
 		return -1;
 	}
-	
+
 	LightComponent* self = ud->getData<LightComponent>();
-	
+
 	// Call the method
 	const Vec4& ret = self->getSpecularColor();
-	
+
 	// Push return value
 	voidp = lua_newuserdata(l, sizeof(UserData));
 	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "Vec4");
 	ud->initPointed(6804478823655046386, const_cast<Vec4*>(&ret));
-	
+
 	return 1;
 }
 
@@ -667,7 +687,7 @@ static int wrapLightComponentgetSpecularColor(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -682,27 +702,28 @@ static inline int pwrapLightComponentsetRadius(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameLightComponent, 7940823622056993903, ud))
 	{
 		return -1;
 	}
-	
+
 	LightComponent* self = ud->getData<LightComponent>();
-	
+
 	// Pop arguments
 	F32 arg0;
 	if(LuaBinder::checkNumber(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	self->setRadius(arg0);
-	
+
 	return 0;
 }
 
@@ -715,7 +736,7 @@ static int wrapLightComponentsetRadius(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -730,23 +751,24 @@ static inline int pwrapLightComponentgetRadius(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameLightComponent, 7940823622056993903, ud))
 	{
 		return -1;
 	}
-	
+
 	LightComponent* self = ud->getData<LightComponent>();
-	
+
 	// Call the method
 	F32 ret = self->getRadius();
-	
+
 	// Push return value
 	lua_pushnumber(l, ret);
-	
+
 	return 1;
 }
 
@@ -759,7 +781,7 @@ static int wrapLightComponentgetRadius(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -774,27 +796,28 @@ static inline int pwrapLightComponentsetDistance(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameLightComponent, 7940823622056993903, ud))
 	{
 		return -1;
 	}
-	
+
 	LightComponent* self = ud->getData<LightComponent>();
-	
+
 	// Pop arguments
 	F32 arg0;
 	if(LuaBinder::checkNumber(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	self->setDistance(arg0);
-	
+
 	return 0;
 }
 
@@ -807,7 +830,7 @@ static int wrapLightComponentsetDistance(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -822,23 +845,24 @@ static inline int pwrapLightComponentgetDistance(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameLightComponent, 7940823622056993903, ud))
 	{
 		return -1;
 	}
-	
+
 	LightComponent* self = ud->getData<LightComponent>();
-	
+
 	// Call the method
 	F32 ret = self->getDistance();
-	
+
 	// Push return value
 	lua_pushnumber(l, ret);
-	
+
 	return 1;
 }
 
@@ -851,7 +875,7 @@ static int wrapLightComponentgetDistance(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -866,27 +890,28 @@ static inline int pwrapLightComponentsetInnerAngle(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameLightComponent, 7940823622056993903, ud))
 	{
 		return -1;
 	}
-	
+
 	LightComponent* self = ud->getData<LightComponent>();
-	
+
 	// Pop arguments
 	F32 arg0;
 	if(LuaBinder::checkNumber(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	self->setInnerAngle(arg0);
-	
+
 	return 0;
 }
 
@@ -899,7 +924,7 @@ static int wrapLightComponentsetInnerAngle(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -914,23 +939,24 @@ static inline int pwrapLightComponentgetInnerAngle(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameLightComponent, 7940823622056993903, ud))
 	{
 		return -1;
 	}
-	
+
 	LightComponent* self = ud->getData<LightComponent>();
-	
+
 	// Call the method
 	F32 ret = self->getInnerAngle();
-	
+
 	// Push return value
 	lua_pushnumber(l, ret);
-	
+
 	return 1;
 }
 
@@ -943,7 +969,7 @@ static int wrapLightComponentgetInnerAngle(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -958,27 +984,28 @@ static inline int pwrapLightComponentsetOuterAngle(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameLightComponent, 7940823622056993903, ud))
 	{
 		return -1;
 	}
-	
+
 	LightComponent* self = ud->getData<LightComponent>();
-	
+
 	// Pop arguments
 	F32 arg0;
 	if(LuaBinder::checkNumber(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	self->setOuterAngle(arg0);
-	
+
 	return 0;
 }
 
@@ -991,7 +1018,7 @@ static int wrapLightComponentsetOuterAngle(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -1006,23 +1033,24 @@ static inline int pwrapLightComponentgetOuterAngle(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameLightComponent, 7940823622056993903, ud))
 	{
 		return -1;
 	}
-	
+
 	LightComponent* self = ud->getData<LightComponent>();
-	
+
 	// Call the method
 	F32 ret = self->getOuterAngle();
-	
+
 	// Push return value
 	lua_pushnumber(l, ret);
-	
+
 	return 1;
 }
 
@@ -1035,7 +1063,7 @@ static int wrapLightComponentgetOuterAngle(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -1050,27 +1078,28 @@ static inline int pwrapLightComponentsetShadowEnabled(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameLightComponent, 7940823622056993903, ud))
 	{
 		return -1;
 	}
-	
+
 	LightComponent* self = ud->getData<LightComponent>();
-	
+
 	// Pop arguments
 	Bool arg0;
 	if(LuaBinder::checkNumber(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	self->setShadowEnabled(arg0);
-	
+
 	return 0;
 }
 
@@ -1083,7 +1112,7 @@ static int wrapLightComponentsetShadowEnabled(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -1098,23 +1127,24 @@ static inline int pwrapLightComponentgetShadowEnabled(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameLightComponent, 7940823622056993903, ud))
 	{
 		return -1;
 	}
-	
+
 	LightComponent* self = ud->getData<LightComponent>();
-	
+
 	// Call the method
 	Bool ret = self->getShadowEnabled();
-	
+
 	// Push return value
 	lua_pushboolean(l, ret);
-	
+
 	return 1;
 }
 
@@ -1127,7 +1157,7 @@ static int wrapLightComponentgetShadowEnabled(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -1137,20 +1167,32 @@ static int wrapLightComponentgetShadowEnabled(lua_State* l)
 static inline void wrapLightComponent(lua_State* l)
 {
 	LuaBinder::createClass(l, classnameLightComponent);
-	LuaBinder::pushLuaCFuncMethod(l, "setDiffuseColor", wrapLightComponentsetDiffuseColor);
-	LuaBinder::pushLuaCFuncMethod(l, "getDiffuseColor", wrapLightComponentgetDiffuseColor);
-	LuaBinder::pushLuaCFuncMethod(l, "setSpecularColor", wrapLightComponentsetSpecularColor);
-	LuaBinder::pushLuaCFuncMethod(l, "getSpecularColor", wrapLightComponentgetSpecularColor);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "setDiffuseColor", wrapLightComponentsetDiffuseColor);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "getDiffuseColor", wrapLightComponentgetDiffuseColor);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "setSpecularColor", wrapLightComponentsetSpecularColor);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "getSpecularColor", wrapLightComponentgetSpecularColor);
 	LuaBinder::pushLuaCFuncMethod(l, "setRadius", wrapLightComponentsetRadius);
 	LuaBinder::pushLuaCFuncMethod(l, "getRadius", wrapLightComponentgetRadius);
-	LuaBinder::pushLuaCFuncMethod(l, "setDistance", wrapLightComponentsetDistance);
-	LuaBinder::pushLuaCFuncMethod(l, "getDistance", wrapLightComponentgetDistance);
-	LuaBinder::pushLuaCFuncMethod(l, "setInnerAngle", wrapLightComponentsetInnerAngle);
-	LuaBinder::pushLuaCFuncMethod(l, "getInnerAngle", wrapLightComponentgetInnerAngle);
-	LuaBinder::pushLuaCFuncMethod(l, "setOuterAngle", wrapLightComponentsetOuterAngle);
-	LuaBinder::pushLuaCFuncMethod(l, "getOuterAngle", wrapLightComponentgetOuterAngle);
-	LuaBinder::pushLuaCFuncMethod(l, "setShadowEnabled", wrapLightComponentsetShadowEnabled);
-	LuaBinder::pushLuaCFuncMethod(l, "getShadowEnabled", wrapLightComponentgetShadowEnabled);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "setDistance", wrapLightComponentsetDistance);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "getDistance", wrapLightComponentgetDistance);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "setInnerAngle", wrapLightComponentsetInnerAngle);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "getInnerAngle", wrapLightComponentgetInnerAngle);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "setOuterAngle", wrapLightComponentsetOuterAngle);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "getOuterAngle", wrapLightComponentgetOuterAngle);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "setShadowEnabled", wrapLightComponentsetShadowEnabled);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "getShadowEnabled", wrapLightComponentgetShadowEnabled);
 	lua_settop(l, 0);
 }
 
@@ -1183,29 +1225,30 @@ static inline int pwrapLensFlareComponentsetFirstFlareSize(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLensFlareComponent, -2019248835133422777, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameLensFlareComponent, -2019248835133422777, ud))
 	{
 		return -1;
 	}
-	
+
 	LensFlareComponent* self = ud->getData<LensFlareComponent>();
-	
+
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec2", 6804478823655046388, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec2* iarg0 = ud->getData<Vec2>();
 	const Vec2& arg0(*iarg0);
-	
+
 	// Call the method
 	self->setFirstFlareSize(arg0);
-	
+
 	return 0;
 }
 
@@ -1218,7 +1261,7 @@ static int wrapLensFlareComponentsetFirstFlareSize(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -1233,29 +1276,30 @@ static inline int pwrapLensFlareComponentsetColorMultiplier(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLensFlareComponent, -2019248835133422777, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameLensFlareComponent, -2019248835133422777, ud))
 	{
 		return -1;
 	}
-	
+
 	LensFlareComponent* self = ud->getData<LensFlareComponent>();
-	
+
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud))
 	{
 		return -1;
 	}
-	
+
 	Vec4* iarg0 = ud->getData<Vec4>();
 	const Vec4& arg0(*iarg0);
-	
+
 	// Call the method
 	self->setColorMultiplier(arg0);
-	
+
 	return 0;
 }
 
@@ -1268,7 +1312,7 @@ static int wrapLensFlareComponentsetColorMultiplier(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -1278,8 +1322,10 @@ static int wrapLensFlareComponentsetColorMultiplier(lua_State* l)
 static inline void wrapLensFlareComponent(lua_State* l)
 {
 	LuaBinder::createClass(l, classnameLensFlareComponent);
-	LuaBinder::pushLuaCFuncMethod(l, "setFirstFlareSize", wrapLensFlareComponentsetFirstFlareSize);
-	LuaBinder::pushLuaCFuncMethod(l, "setColorMultiplier", wrapLensFlareComponentsetColorMultiplier);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "setFirstFlareSize", wrapLensFlareComponentsetFirstFlareSize);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "setColorMultiplier", wrapLensFlareComponentsetColorMultiplier);
 	lua_settop(l, 0);
 }
 
@@ -1312,23 +1358,24 @@ static inline int pwrapSceneNodegetName(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneNode, -2220074417980276571, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameSceneNode, -2220074417980276571, ud))
 	{
 		return -1;
 	}
-	
+
 	SceneNode* self = ud->getData<SceneNode>();
-	
+
 	// Call the method
 	CString ret = self->getName();
-	
+
 	// Push return value
 	lua_pushstring(l, &ret[0]);
-	
+
 	return 1;
 }
 
@@ -1341,7 +1388,7 @@ static int wrapSceneNodegetName(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -1356,29 +1403,30 @@ static inline int pwrapSceneNodeaddChild(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneNode, -2220074417980276571, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameSceneNode, -2220074417980276571, ud))
 	{
 		return -1;
 	}
-	
+
 	SceneNode* self = ud->getData<SceneNode>();
-	
+
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "SceneNode", -2220074417980276571, ud))
 	{
 		return -1;
 	}
-	
+
 	SceneNode* iarg0 = ud->getData<SceneNode>();
 	SceneNode* arg0(iarg0);
-	
+
 	// Call the method
 	self->addChild(arg0);
-	
+
 	return 0;
 }
 
@@ -1391,7 +1439,7 @@ static int wrapSceneNodeaddChild(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -1406,32 +1454,33 @@ static inline int pwrapSceneNodegetMoveComponent(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneNode, -2220074417980276571, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameSceneNode, -2220074417980276571, ud))
 	{
 		return -1;
 	}
-	
+
 	SceneNode* self = ud->getData<SceneNode>();
-	
+
 	// Call the method
 	MoveComponent* ret = self->tryGetComponent<MoveComponent>();
-	
+
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
 	}
-	
+
 	voidp = lua_newuserdata(l, sizeof(UserData));
 	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "MoveComponent");
 	ud->initPointed(2038493110845313445, const_cast<MoveComponent*>(ret));
-	
+
 	return 1;
 }
 
@@ -1444,7 +1493,7 @@ static int wrapSceneNodegetMoveComponent(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -1459,32 +1508,33 @@ static inline int pwrapSceneNodegetLightComponent(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneNode, -2220074417980276571, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameSceneNode, -2220074417980276571, ud))
 	{
 		return -1;
 	}
-	
+
 	SceneNode* self = ud->getData<SceneNode>();
-	
+
 	// Call the method
 	LightComponent* ret = self->tryGetComponent<LightComponent>();
-	
+
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
 	}
-	
+
 	voidp = lua_newuserdata(l, sizeof(UserData));
 	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "LightComponent");
 	ud->initPointed(7940823622056993903, const_cast<LightComponent*>(ret));
-	
+
 	return 1;
 }
 
@@ -1497,7 +1547,7 @@ static int wrapSceneNodegetLightComponent(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -1512,32 +1562,33 @@ static inline int pwrapSceneNodegetLensFlareComponent(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneNode, -2220074417980276571, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameSceneNode, -2220074417980276571, ud))
 	{
 		return -1;
 	}
-	
+
 	SceneNode* self = ud->getData<SceneNode>();
-	
+
 	// Call the method
 	LensFlareComponent* ret = self->tryGetComponent<LensFlareComponent>();
-	
+
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
 	}
-	
+
 	voidp = lua_newuserdata(l, sizeof(UserData));
 	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "LensFlareComponent");
 	ud->initPointed(-2019248835133422777, const_cast<LensFlareComponent*>(ret));
-	
+
 	return 1;
 }
 
@@ -1550,7 +1601,7 @@ static int wrapSceneNodegetLensFlareComponent(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -1562,9 +1613,12 @@ static inline void wrapSceneNode(lua_State* l)
 	LuaBinder::createClass(l, classnameSceneNode);
 	LuaBinder::pushLuaCFuncMethod(l, "getName", wrapSceneNodegetName);
 	LuaBinder::pushLuaCFuncMethod(l, "addChild", wrapSceneNodeaddChild);
-	LuaBinder::pushLuaCFuncMethod(l, "getMoveComponent", wrapSceneNodegetMoveComponent);
-	LuaBinder::pushLuaCFuncMethod(l, "getLightComponent", wrapSceneNodegetLightComponent);
-	LuaBinder::pushLuaCFuncMethod(l, "getLensFlareComponent", wrapSceneNodegetLensFlareComponent);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "getMoveComponent", wrapSceneNodegetMoveComponent);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "getLightComponent", wrapSceneNodegetLightComponent);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "getLensFlareComponent", wrapSceneNodegetLensFlareComponent);
 	lua_settop(l, 0);
 }
 
@@ -1597,26 +1651,27 @@ static inline int pwrapModelNodegetSceneNodeBase(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameModelNode, -1856316251880904290, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameModelNode, -1856316251880904290, ud))
 	{
 		return -1;
 	}
-	
+
 	ModelNode* self = ud->getData<ModelNode>();
-	
+
 	// Call the method
 	SceneNode& ret = *self;
-	
+
 	// Push return value
 	voidp = lua_newuserdata(l, sizeof(UserData));
 	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
 	ud->initPointed(-2220074417980276571, const_cast<SceneNode*>(&ret));
-	
+
 	return 1;
 }
 
@@ -1629,7 +1684,7 @@ static int wrapModelNodegetSceneNodeBase(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -1639,7 +1694,8 @@ static int wrapModelNodegetSceneNodeBase(lua_State* l)
 static inline void wrapModelNode(lua_State* l)
 {
 	LuaBinder::createClass(l, classnameModelNode);
-	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapModelNodegetSceneNodeBase);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "getSceneNodeBase", wrapModelNodegetSceneNodeBase);
 	lua_settop(l, 0);
 }
 
@@ -1672,26 +1728,27 @@ static inline int pwrapPointLightgetSceneNodeBase(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnamePointLight, 3561037663389896020, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnamePointLight, 3561037663389896020, ud))
 	{
 		return -1;
 	}
-	
+
 	PointLight* self = ud->getData<PointLight>();
-	
+
 	// Call the method
 	SceneNode& ret = *self;
-	
+
 	// Push return value
 	voidp = lua_newuserdata(l, sizeof(UserData));
 	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
 	ud->initPointed(-2220074417980276571, const_cast<SceneNode*>(&ret));
-	
+
 	return 1;
 }
 
@@ -1704,7 +1761,7 @@ static int wrapPointLightgetSceneNodeBase(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -1719,36 +1776,37 @@ static inline int pwrapPointLightloadLensFlare(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnamePointLight, 3561037663389896020, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnamePointLight, 3561037663389896020, ud))
 	{
 		return -1;
 	}
-	
+
 	PointLight* self = ud->getData<PointLight>();
-	
+
 	// Pop arguments
 	const char* arg0;
 	if(LuaBinder::checkString(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	Error ret = self->loadLensFlare(arg0);
-	
+
 	// Push return value
 	if(ANKI_UNLIKELY(ret))
 	{
 		lua_pushstring(l, "Glue code returned an error");
 		return -1;
 	}
-	
+
 	lua_pushnumber(l, ret);
-	
+
 	return 1;
 }
 
@@ -1761,7 +1819,7 @@ static int wrapPointLightloadLensFlare(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -1771,8 +1829,10 @@ static int wrapPointLightloadLensFlare(lua_State* l)
 static inline void wrapPointLight(lua_State* l)
 {
 	LuaBinder::createClass(l, classnamePointLight);
-	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapPointLightgetSceneNodeBase);
-	LuaBinder::pushLuaCFuncMethod(l, "loadLensFlare", wrapPointLightloadLensFlare);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "getSceneNodeBase", wrapPointLightgetSceneNodeBase);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "loadLensFlare", wrapPointLightloadLensFlare);
 	lua_settop(l, 0);
 }
 
@@ -1805,26 +1865,27 @@ static inline int pwrapSpotLightgetSceneNodeBase(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSpotLight, 7940385212889719421, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameSpotLight, 7940385212889719421, ud))
 	{
 		return -1;
 	}
-	
+
 	SpotLight* self = ud->getData<SpotLight>();
-	
+
 	// Call the method
 	SceneNode& ret = *self;
-	
+
 	// Push return value
 	voidp = lua_newuserdata(l, sizeof(UserData));
 	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
 	ud->initPointed(-2220074417980276571, const_cast<SceneNode*>(&ret));
-	
+
 	return 1;
 }
 
@@ -1837,7 +1898,7 @@ static int wrapSpotLightgetSceneNodeBase(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -1847,7 +1908,8 @@ static int wrapSpotLightgetSceneNodeBase(lua_State* l)
 static inline void wrapSpotLight(lua_State* l)
 {
 	LuaBinder::createClass(l, classnameSpotLight);
-	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapSpotLightgetSceneNodeBase);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "getSceneNodeBase", wrapSpotLightgetSceneNodeBase);
 	lua_settop(l, 0);
 }
 
@@ -1880,26 +1942,27 @@ static inline int pwrapStaticCollisionNodegetSceneNodeBase(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameStaticCollisionNode, -4376619865753613291, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameStaticCollisionNode, -4376619865753613291, ud))
 	{
 		return -1;
 	}
-	
+
 	StaticCollisionNode* self = ud->getData<StaticCollisionNode>();
-	
+
 	// Call the method
 	SceneNode& ret = *self;
-	
+
 	// Push return value
 	voidp = lua_newuserdata(l, sizeof(UserData));
 	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
 	ud->initPointed(-2220074417980276571, const_cast<SceneNode*>(&ret));
-	
+
 	return 1;
 }
 
@@ -1912,7 +1975,7 @@ static int wrapStaticCollisionNodegetSceneNodeBase(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -1922,7 +1985,8 @@ static int wrapStaticCollisionNodegetSceneNodeBase(lua_State* l)
 static inline void wrapStaticCollisionNode(lua_State* l)
 {
 	LuaBinder::createClass(l, classnameStaticCollisionNode);
-	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapStaticCollisionNodegetSceneNodeBase);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "getSceneNodeBase", wrapStaticCollisionNodegetSceneNodeBase);
 	lua_settop(l, 0);
 }
 
@@ -1955,26 +2019,26 @@ static inline int pwrapPortalgetSceneNodeBase(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnamePortal, 7450426072538297652, ud))
 	{
 		return -1;
 	}
-	
+
 	Portal* self = ud->getData<Portal>();
-	
+
 	// Call the method
 	SceneNode& ret = *self;
-	
+
 	// Push return value
 	voidp = lua_newuserdata(l, sizeof(UserData));
 	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
 	ud->initPointed(-2220074417980276571, const_cast<SceneNode*>(&ret));
-	
+
 	return 1;
 }
 
@@ -1987,7 +2051,7 @@ static int wrapPortalgetSceneNodeBase(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -1997,7 +2061,8 @@ static int wrapPortalgetSceneNodeBase(lua_State* l)
 static inline void wrapPortal(lua_State* l)
 {
 	LuaBinder::createClass(l, classnamePortal);
-	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapPortalgetSceneNodeBase);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "getSceneNodeBase", wrapPortalgetSceneNodeBase);
 	lua_settop(l, 0);
 }
 
@@ -2030,26 +2095,26 @@ static inline int pwrapSectorgetSceneNodeBase(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameSector, 2371391302432627552, ud))
 	{
 		return -1;
 	}
-	
+
 	Sector* self = ud->getData<Sector>();
-	
+
 	// Call the method
 	SceneNode& ret = *self;
-	
+
 	// Push return value
 	voidp = lua_newuserdata(l, sizeof(UserData));
 	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
 	ud->initPointed(-2220074417980276571, const_cast<SceneNode*>(&ret));
-	
+
 	return 1;
 }
 
@@ -2062,7 +2127,7 @@ static int wrapSectorgetSceneNodeBase(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -2072,7 +2137,8 @@ static int wrapSectorgetSceneNodeBase(lua_State* l)
 static inline void wrapSector(lua_State* l)
 {
 	LuaBinder::createClass(l, classnameSector);
-	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapSectorgetSceneNodeBase);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "getSceneNodeBase", wrapSectorgetSceneNodeBase);
 	lua_settop(l, 0);
 }
 
@@ -2105,26 +2171,27 @@ static inline int pwrapParticleEmittergetSceneNodeBase(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameParticleEmitter, -1716560948193631017, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameParticleEmitter, -1716560948193631017, ud))
 	{
 		return -1;
 	}
-	
+
 	ParticleEmitter* self = ud->getData<ParticleEmitter>();
-	
+
 	// Call the method
 	SceneNode& ret = *self;
-	
+
 	// Push return value
 	voidp = lua_newuserdata(l, sizeof(UserData));
 	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
 	ud->initPointed(-2220074417980276571, const_cast<SceneNode*>(&ret));
-	
+
 	return 1;
 }
 
@@ -2137,7 +2204,7 @@ static int wrapParticleEmittergetSceneNodeBase(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -2147,7 +2214,8 @@ static int wrapParticleEmittergetSceneNodeBase(lua_State* l)
 static inline void wrapParticleEmitter(lua_State* l)
 {
 	LuaBinder::createClass(l, classnameParticleEmitter);
-	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapParticleEmittergetSceneNodeBase);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "getSceneNodeBase", wrapParticleEmittergetSceneNodeBase);
 	lua_settop(l, 0);
 }
 
@@ -2180,26 +2248,27 @@ static inline int pwrapReflectionProbegetSceneNodeBase(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameReflectionProbe, 205427259474779436, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameReflectionProbe, 205427259474779436, ud))
 	{
 		return -1;
 	}
-	
+
 	ReflectionProbe* self = ud->getData<ReflectionProbe>();
-	
+
 	// Call the method
 	SceneNode& ret = *self;
-	
+
 	// Push return value
 	voidp = lua_newuserdata(l, sizeof(UserData));
 	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
 	ud->initPointed(-2220074417980276571, const_cast<SceneNode*>(&ret));
-	
+
 	return 1;
 }
 
@@ -2212,7 +2281,7 @@ static int wrapReflectionProbegetSceneNodeBase(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -2222,7 +2291,8 @@ static int wrapReflectionProbegetSceneNodeBase(lua_State* l)
 static inline void wrapReflectionProbe(lua_State* l)
 {
 	LuaBinder::createClass(l, classnameReflectionProbe);
-	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapReflectionProbegetSceneNodeBase);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "getSceneNodeBase", wrapReflectionProbegetSceneNodeBase);
 	lua_settop(l, 0);
 }
 
@@ -2255,26 +2325,27 @@ static inline int pwrapReflectionProxygetSceneNodeBase(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameReflectionProxy, 205427259496779646, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameReflectionProxy, 205427259496779646, ud))
 	{
 		return -1;
 	}
-	
+
 	ReflectionProxy* self = ud->getData<ReflectionProxy>();
-	
+
 	// Call the method
 	SceneNode& ret = *self;
-	
+
 	// Push return value
 	voidp = lua_newuserdata(l, sizeof(UserData));
 	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
 	ud->initPointed(-2220074417980276571, const_cast<SceneNode*>(&ret));
-	
+
 	return 1;
 }
 
@@ -2287,7 +2358,7 @@ static int wrapReflectionProxygetSceneNodeBase(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -2297,7 +2368,8 @@ static int wrapReflectionProxygetSceneNodeBase(lua_State* l)
 static inline void wrapReflectionProxy(lua_State* l)
 {
 	LuaBinder::createClass(l, classnameReflectionProxy);
-	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapReflectionProxygetSceneNodeBase);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "getSceneNodeBase", wrapReflectionProxygetSceneNodeBase);
 	lua_settop(l, 0);
 }
 
@@ -2330,45 +2402,46 @@ static inline int pwrapSceneGraphnewModelNode(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 3);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameSceneGraph, -7754439619132389154, ud))
 	{
 		return -1;
 	}
-	
+
 	SceneGraph* self = ud->getData<SceneGraph>();
-	
+
 	// Pop arguments
 	const char* arg0;
 	if(LuaBinder::checkString(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	const char* arg1;
 	if(LuaBinder::checkString(l, 3, arg1))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	ModelNode* ret = newSceneNode<ModelNode>(self, arg0, arg1);
-	
+
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
 	}
-	
+
 	voidp = lua_newuserdata(l, sizeof(UserData));
 	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "ModelNode");
 	ud->initPointed(-1856316251880904290, const_cast<ModelNode*>(ret));
-	
+
 	return 1;
 }
 
@@ -2381,7 +2454,7 @@ static int wrapSceneGraphnewModelNode(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -2396,39 +2469,40 @@ static inline int pwrapSceneGraphnewPointLight(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameSceneGraph, -7754439619132389154, ud))
 	{
 		return -1;
 	}
-	
+
 	SceneGraph* self = ud->getData<SceneGraph>();
-	
+
 	// Pop arguments
 	const char* arg0;
 	if(LuaBinder::checkString(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	PointLight* ret = newSceneNode<PointLight>(self, arg0);
-	
+
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
 	}
-	
+
 	voidp = lua_newuserdata(l, sizeof(UserData));
 	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "PointLight");
 	ud->initPointed(3561037663389896020, const_cast<PointLight*>(ret));
-	
+
 	return 1;
 }
 
@@ -2441,7 +2515,7 @@ static int wrapSceneGraphnewPointLight(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -2456,39 +2530,40 @@ static inline int pwrapSceneGraphnewSpotLight(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameSceneGraph, -7754439619132389154, ud))
 	{
 		return -1;
 	}
-	
+
 	SceneGraph* self = ud->getData<SceneGraph>();
-	
+
 	// Pop arguments
 	const char* arg0;
 	if(LuaBinder::checkString(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	SpotLight* ret = newSceneNode<SpotLight>(self, arg0);
-	
+
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
 	}
-	
+
 	voidp = lua_newuserdata(l, sizeof(UserData));
 	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "SpotLight");
 	ud->initPointed(7940385212889719421, const_cast<SpotLight*>(ret));
-	
+
 	return 1;
 }
 
@@ -2501,7 +2576,7 @@ static int wrapSceneGraphnewSpotLight(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -2516,53 +2591,56 @@ static inline int pwrapSceneGraphnewStaticCollisionNode(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 4);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameSceneGraph, -7754439619132389154, ud))
 	{
 		return -1;
 	}
-	
+
 	SceneGraph* self = ud->getData<SceneGraph>();
-	
+
 	// Pop arguments
 	const char* arg0;
 	if(LuaBinder::checkString(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	const char* arg1;
 	if(LuaBinder::checkString(l, 3, arg1))
 	{
 		return -1;
 	}
-	
+
 	if(LuaBinder::checkUserData(l, 4, "Transform", 7048620195620777229, ud))
 	{
 		return -1;
 	}
-	
+
 	Transform* iarg2 = ud->getData<Transform>();
 	const Transform& arg2(*iarg2);
-	
+
 	// Call the method
-	StaticCollisionNode* ret = newSceneNode<StaticCollisionNode>(self, arg0, arg1, arg2);
-	
+	StaticCollisionNode* ret =
+		newSceneNode<StaticCollisionNode>(self, arg0, arg1, arg2);
+
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
 	}
-	
+
 	voidp = lua_newuserdata(l, sizeof(UserData));
 	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "StaticCollisionNode");
-	ud->initPointed(-4376619865753613291, const_cast<StaticCollisionNode*>(ret));
-	
+	ud->initPointed(
+		-4376619865753613291, const_cast<StaticCollisionNode*>(ret));
+
 	return 1;
 }
 
@@ -2575,7 +2653,7 @@ static int wrapSceneGraphnewStaticCollisionNode(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -2590,45 +2668,46 @@ static inline int pwrapSceneGraphnewPortal(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 3);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameSceneGraph, -7754439619132389154, ud))
 	{
 		return -1;
 	}
-	
+
 	SceneGraph* self = ud->getData<SceneGraph>();
-	
+
 	// Pop arguments
 	const char* arg0;
 	if(LuaBinder::checkString(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	const char* arg1;
 	if(LuaBinder::checkString(l, 3, arg1))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	Portal* ret = newSceneNode<Portal>(self, arg0, arg1);
-	
+
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
 	}
-	
+
 	voidp = lua_newuserdata(l, sizeof(UserData));
 	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "Portal");
 	ud->initPointed(7450426072538297652, const_cast<Portal*>(ret));
-	
+
 	return 1;
 }
 
@@ -2641,7 +2720,7 @@ static int wrapSceneGraphnewPortal(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -2656,45 +2735,46 @@ static inline int pwrapSceneGraphnewSector(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 3);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameSceneGraph, -7754439619132389154, ud))
 	{
 		return -1;
 	}
-	
+
 	SceneGraph* self = ud->getData<SceneGraph>();
-	
+
 	// Pop arguments
 	const char* arg0;
 	if(LuaBinder::checkString(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	const char* arg1;
 	if(LuaBinder::checkString(l, 3, arg1))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	Sector* ret = newSceneNode<Sector>(self, arg0, arg1);
-	
+
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
 	}
-	
+
 	voidp = lua_newuserdata(l, sizeof(UserData));
 	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "Sector");
 	ud->initPointed(2371391302432627552, const_cast<Sector*>(ret));
-	
+
 	return 1;
 }
 
@@ -2707,7 +2787,7 @@ static int wrapSceneGraphnewSector(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -2722,45 +2802,46 @@ static inline int pwrapSceneGraphnewParticleEmitter(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 3);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameSceneGraph, -7754439619132389154, ud))
 	{
 		return -1;
 	}
-	
+
 	SceneGraph* self = ud->getData<SceneGraph>();
-	
+
 	// Pop arguments
 	const char* arg0;
 	if(LuaBinder::checkString(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	const char* arg1;
 	if(LuaBinder::checkString(l, 3, arg1))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	ParticleEmitter* ret = newSceneNode<ParticleEmitter>(self, arg0, arg1);
-	
+
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
 	}
-	
+
 	voidp = lua_newuserdata(l, sizeof(UserData));
 	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "ParticleEmitter");
 	ud->initPointed(-1716560948193631017, const_cast<ParticleEmitter*>(ret));
-	
+
 	return 1;
 }
 
@@ -2773,7 +2854,7 @@ static int wrapSceneGraphnewParticleEmitter(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -2788,45 +2869,46 @@ static inline int pwrapSceneGraphnewReflectionProbe(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 3);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameSceneGraph, -7754439619132389154, ud))
 	{
 		return -1;
 	}
-	
+
 	SceneGraph* self = ud->getData<SceneGraph>();
-	
+
 	// Pop arguments
 	const char* arg0;
 	if(LuaBinder::checkString(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	F32 arg1;
 	if(LuaBinder::checkNumber(l, 3, arg1))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	ReflectionProbe* ret = newSceneNode<ReflectionProbe>(self, arg0, arg1);
-	
+
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
 	}
-	
+
 	voidp = lua_newuserdata(l, sizeof(UserData));
 	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "ReflectionProbe");
 	ud->initPointed(205427259474779436, const_cast<ReflectionProbe*>(ret));
-	
+
 	return 1;
 }
 
@@ -2839,7 +2921,7 @@ static int wrapSceneGraphnewReflectionProbe(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -2854,45 +2936,46 @@ static inline int pwrapSceneGraphnewReflectionProxy(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 3);
-	
+
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud))
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameSceneGraph, -7754439619132389154, ud))
 	{
 		return -1;
 	}
-	
+
 	SceneGraph* self = ud->getData<SceneGraph>();
-	
+
 	// Pop arguments
 	const char* arg0;
 	if(LuaBinder::checkString(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	const char* arg1;
 	if(LuaBinder::checkString(l, 3, arg1))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	ReflectionProxy* ret = newSceneNode<ReflectionProxy>(self, arg0, arg1);
-	
+
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
 	}
-	
+
 	voidp = lua_newuserdata(l, sizeof(UserData));
 	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "ReflectionProxy");
 	ud->initPointed(205427259496779646, const_cast<ReflectionProxy*>(ret));
-	
+
 	return 1;
 }
 
@@ -2905,7 +2988,7 @@ static int wrapSceneGraphnewReflectionProxy(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -2915,15 +2998,22 @@ static int wrapSceneGraphnewReflectionProxy(lua_State* l)
 static inline void wrapSceneGraph(lua_State* l)
 {
 	LuaBinder::createClass(l, classnameSceneGraph);
-	LuaBinder::pushLuaCFuncMethod(l, "newModelNode", wrapSceneGraphnewModelNode);
-	LuaBinder::pushLuaCFuncMethod(l, "newPointLight", wrapSceneGraphnewPointLight);
-	LuaBinder::pushLuaCFuncMethod(l, "newSpotLight", wrapSceneGraphnewSpotLight);
-	LuaBinder::pushLuaCFuncMethod(l, "newStaticCollisionNode", wrapSceneGraphnewStaticCollisionNode);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "newModelNode", wrapSceneGraphnewModelNode);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "newPointLight", wrapSceneGraphnewPointLight);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "newSpotLight", wrapSceneGraphnewSpotLight);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "newStaticCollisionNode", wrapSceneGraphnewStaticCollisionNode);
 	LuaBinder::pushLuaCFuncMethod(l, "newPortal", wrapSceneGraphnewPortal);
 	LuaBinder::pushLuaCFuncMethod(l, "newSector", wrapSceneGraphnewSector);
-	LuaBinder::pushLuaCFuncMethod(l, "newParticleEmitter", wrapSceneGraphnewParticleEmitter);
-	LuaBinder::pushLuaCFuncMethod(l, "newReflectionProbe", wrapSceneGraphnewReflectionProbe);
-	LuaBinder::pushLuaCFuncMethod(l, "newReflectionProxy", wrapSceneGraphnewReflectionProxy);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "newParticleEmitter", wrapSceneGraphnewParticleEmitter);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "newReflectionProbe", wrapSceneGraphnewReflectionProbe);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "newReflectionProxy", wrapSceneGraphnewReflectionProxy);
 	lua_settop(l, 0);
 }
 
@@ -2937,24 +3027,24 @@ static inline int pwrapgetSceneGraph(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 0);
-	
+
 	// Call the function
 	SceneGraph* ret = getSceneGraph(l);
-	
+
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))
 	{
 		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
 	}
-	
+
 	voidp = lua_newuserdata(l, sizeof(UserData));
 	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "SceneGraph");
 	ud->initPointed(-7754439619132389154, const_cast<SceneGraph*>(ret));
-	
+
 	return 1;
 }
 
@@ -2967,7 +3057,7 @@ static int wrapgetSceneGraph(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -2994,4 +3084,3 @@ void wrapModuleScene(lua_State* l)
 }
 
 } // end namespace anki
-

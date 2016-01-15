@@ -8,7 +8,8 @@
 #include <anki/util/StdTypes.h>
 #include <anki/util/NonCopyable.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup util_other
 /// @{
@@ -23,13 +24,13 @@ enum class AtomicMemoryOrder
 	ACQ_REL = __ATOMIC_ACQ_REL,
 	SEQ_CST = __ATOMIC_SEQ_CST
 #else
-#	error "TODO"
+#error "TODO"
 #endif
 };
 
 /// Atomic template. At the moment it doesn't work well with pointers.
 template<typename T, AtomicMemoryOrder tmemOrd = AtomicMemoryOrder::RELAXED>
-class Atomic: public NonCopyable
+class Atomic : public NonCopyable
 {
 public:
 	using Value = T;
@@ -38,11 +39,13 @@ public:
 	/// It will set it to zero.
 	Atomic()
 		: m_val(static_cast<Value>(0))
-	{}
+	{
+	}
 
 	Atomic(const Value a)
 		: m_val(a)
-	{}
+	{
+	}
 
 	/// Get the value of the atomic.
 	Value load(AtomicMemoryOrder memOrd = MEMORY_ORDER) const
@@ -50,7 +53,7 @@ public:
 #if defined(__GNUC__)
 		return __atomic_load_n(&m_val, static_cast<int>(memOrd));
 #else
-#	error "TODO"
+#error "TODO"
 #endif
 	}
 
@@ -60,7 +63,7 @@ public:
 #if defined(__GNUC__)
 		return __atomic_load_n(&m_val, static_cast<int>(memOrd));
 #else
-#	error "TODO"
+#error "TODO"
 #endif
 	}
 
@@ -70,7 +73,7 @@ public:
 #if defined(__GNUC__)
 		__atomic_store_n(&m_val, a, static_cast<int>(memOrd));
 #else
-#	error "TODO"
+#error "TODO"
 #endif
 	}
 
@@ -80,7 +83,7 @@ public:
 #if defined(__GNUC__)
 		__atomic_store_n(&m_val, a, static_cast<int>(memOrd));
 #else
-#	error "TODO"
+#error "TODO"
 #endif
 	}
 
@@ -91,7 +94,7 @@ public:
 #if defined(__GNUC__)
 		return __atomic_fetch_add(&m_val, a, static_cast<int>(memOrd));
 #else
-#	error "TODO"
+#error "TODO"
 #endif
 	}
 
@@ -102,7 +105,7 @@ public:
 #if defined(__GNUC__)
 		return __atomic_fetch_add(&m_val, a, static_cast<int>(memOrd));
 #else
-#	error "TODO"
+#error "TODO"
 #endif
 	}
 
@@ -113,7 +116,7 @@ public:
 #if defined(__GNUC__)
 		return __atomic_fetch_sub(&m_val, a, static_cast<int>(memOrd));
 #else
-#	error "TODO"
+#error "TODO"
 #endif
 	}
 
@@ -124,7 +127,7 @@ public:
 #if defined(__GNUC__)
 		return __atomic_fetch_sub(&m_val, a, static_cast<int>(memOrd));
 #else
-#	error "TODO"
+#error "TODO"
 #endif
 	}
 
@@ -137,26 +140,36 @@ public:
 	/// 	return false;
 	/// }
 	/// @endcode
-	Bool compareExchange(Value& expected, const Value desired,
+	Bool compareExchange(Value& expected,
+		const Value desired,
 		AtomicMemoryOrder memOrd = MEMORY_ORDER)
 	{
 #if defined(__GNUC__)
-		return __atomic_compare_exchange_n(&m_val, &expected, desired,
-			false, static_cast<int>(memOrd), __ATOMIC_RELAXED);
+		return __atomic_compare_exchange_n(&m_val,
+			&expected,
+			desired,
+			false,
+			static_cast<int>(memOrd),
+			__ATOMIC_RELAXED);
 #else
-#	error "TODO"
+#error "TODO"
 #endif
 	}
 
 	/// @copybrief compareExchange
-	Bool compareExchange(Value& expected, const Value desired,
+	Bool compareExchange(Value& expected,
+		const Value desired,
 		AtomicMemoryOrder memOrd = MEMORY_ORDER) volatile
 	{
 #if defined(__GNUC__)
-		return __atomic_compare_exchange_n(&m_val, &expected, desired,
-			false, static_cast<int>(memOrd), __ATOMIC_RELAXED);
+		return __atomic_compare_exchange_n(&m_val,
+			&expected,
+			desired,
+			false,
+			static_cast<int>(memOrd),
+			__ATOMIC_RELAXED);
 #else
-#	error "TODO"
+#error "TODO"
 #endif
 	}
 
@@ -166,18 +179,18 @@ public:
 #if defined(__GNUC__)
 		return __atomic_exchange_n(&m_val, a, static_cast<int>(memOrd));
 #else
-#	error "TODO"
+#error "TODO"
 #endif
 	}
 
 	/// @copybrief exchange
-	Value exchange(const Value a,
-		AtomicMemoryOrder memOrd = MEMORY_ORDER) volatile
+	Value exchange(
+		const Value a, AtomicMemoryOrder memOrd = MEMORY_ORDER) volatile
 	{
 #if defined(__GNUC__)
 		return __atomic_exchange_n(&m_val, a, static_cast<int>(memOrd));
 #else
-#	error "TODO"
+#error "TODO"
 #endif
 	}
 
@@ -187,4 +200,3 @@ private:
 /// @}
 
 } // end namespace anki
-

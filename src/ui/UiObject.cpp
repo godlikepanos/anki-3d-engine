@@ -6,7 +6,8 @@
 #include <anki/ui/UiObject.h>
 #include <anki/ui/Canvas.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 UiAllocator UiObject::getAllocator() const

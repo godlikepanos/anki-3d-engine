@@ -8,7 +8,8 @@
 #include <anki/gr/Shader.h>
 #include <anki/gr/gl/GlObject.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class CString;
@@ -19,7 +20,7 @@ class String;
 
 /// Shader program. It only contains a single shader and it can be combined
 /// with other programs in a program pipiline.
-class ShaderImpl: public GlObject
+class ShaderImpl : public GlObject
 {
 public:
 	GLenum m_glType = 0;
@@ -27,7 +28,8 @@ public:
 
 	ShaderImpl(GrManager* manager)
 		: GlObject(manager)
-	{}
+	{
+	}
 
 	~ShaderImpl();
 
@@ -42,4 +44,3 @@ private:
 /// @}
 
 } // end namespace anki
-

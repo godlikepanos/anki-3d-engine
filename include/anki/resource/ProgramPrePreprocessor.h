@@ -10,7 +10,8 @@
 #include <anki/util/StringList.h>
 #include <anki/Gr.h>
 
-namespace anki {
+namespace anki
+{
 
 /// Helper class used for shader program loading
 ///
@@ -31,7 +32,8 @@ public:
 	ProgramPrePreprocessor(ResourceManager* manager)
 		: m_alloc(manager->getTempAllocator())
 		, m_manager(manager)
-	{}
+	{
+	}
 
 	~ProgramPrePreprocessor()
 	{
@@ -84,8 +86,7 @@ protected:
 	/// Parse the type
 	ANKI_USE_RESULT Error parseType(const String& line, Bool& found);
 
-	void printSourceLines() const;  ///< For debugging
+	void printSourceLines() const; ///< For debugging
 };
 
 } // end namespace anki
-

@@ -8,7 +8,8 @@
 #include <anki/core/NativeWindow.h>
 #include <SDL.h>
 
-namespace anki {
+namespace anki
+{
 
 static_assert(sizeof(SDL_GLContext) == sizeof(void*), "Incorrect assumption");
 
@@ -21,4 +22,3 @@ public:
 };
 
 } // end namespace anki
-

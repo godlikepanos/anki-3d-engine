@@ -7,7 +7,8 @@
 
 #include <anki/Math.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup collision
 /// @{
@@ -24,4 +25,3 @@ public:
 /// @}
 
 } // end namespace anki
-

@@ -16,7 +16,7 @@ void log(const char* file, int line, unsigned type, const char* fmt, ...)
 {
 	char buffer[1024];
 	va_list args;
-	
+
 	va_start(args, fmt);
 	vsnprintf(buffer, sizeof(buffer), fmt, args);
 	va_end(args);
@@ -24,25 +24,32 @@ void log(const char* file, int line, unsigned type, const char* fmt, ...)
 	switch(type)
 	{
 	case 1:
-		fprintf(stdout, TERMINAL_COL_INFO "(%s:%4d) Info: %s\n" 
-			TERMINAL_COL_RESET, file, line, buffer);
+		fprintf(stdout,
+			TERMINAL_COL_INFO "(%s:%4d) Info: %s\n" TERMINAL_COL_RESET,
+			file,
+			line,
+			buffer);
 		break;
 	case 2:
-		fprintf(stderr, TERMINAL_COL_ERROR "(%s:%4d) Error: %s\n" 
-			TERMINAL_COL_RESET, file, line, buffer);
+		fprintf(stderr,
+			TERMINAL_COL_ERROR "(%s:%4d) Error: %s\n" TERMINAL_COL_RESET,
+			file,
+			line,
+			buffer);
 		break;
 	case 3:
-		fprintf(stderr, TERMINAL_COL_WARNING "(%s:%4d) Warning: %s\n" 
-			TERMINAL_COL_RESET, file, line, buffer);
+		fprintf(stderr,
+			TERMINAL_COL_WARNING "(%s:%4d) Warning: %s\n" TERMINAL_COL_RESET,
+			file,
+			line,
+			buffer);
 		break;
 	};
 }
 
 //==============================================================================
 std::string replaceAllString(
-	const std::string& str, 
-	const std::string& from, 
-	const std::string& to)
+	const std::string& str, const std::string& from, const std::string& to)
 {
 	if(from.empty())
 	{
@@ -51,7 +58,7 @@ std::string replaceAllString(
 
 	std::string out = str;
 	size_t start_pos = 0;
-	while((start_pos = out.find(from, start_pos)) != std::string::npos) 
+	while((start_pos = out.find(from, start_pos)) != std::string::npos)
 	{
 		out.replace(start_pos, from.length(), to);
 		start_pos += to.length();
@@ -77,4 +84,3 @@ std::string getFilename(const std::string& path)
 
 	return out;
 }
-

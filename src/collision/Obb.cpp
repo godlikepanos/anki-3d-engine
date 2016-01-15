@@ -7,7 +7,8 @@
 #include <anki/collision/Plane.h>
 #include <anki/collision/Aabb.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 Obb::Obb()
@@ -16,7 +17,8 @@ Obb::Obb()
 	, m_rotation(Mat3x4::getIdentity())
 	, m_transposedRotation(Mat3x4::getIdentity())
 	, m_extend(Vec3(getEpsilon<F32>()), 0.0)
-{}
+{
+}
 
 //==============================================================================
 Obb::Obb(const Obb& b)
@@ -107,8 +109,8 @@ Obb Obb::getCompoundShape(const Obb& b) const
 		points[i + 8] = points1[i];
 	}
 
-	out.setFromPointCloud(&points[0], points.size(), sizeof(Vec4),
-		sizeof(Vec4) * points.size());
+	out.setFromPointCloud(
+		&points[0], points.size(), sizeof(Vec4), sizeof(Vec4) * points.size());
 	return out;
 }
 
@@ -122,7 +124,6 @@ void Obb::getExtremePoints(Array<Vec4, 8>& points) const
 	}
 
 	m_cache.m_dirtyExtremePoints = false;
-
 
 	// L: left, R: right, T: top, B: bottom, F: front, B: back
 	enum
@@ -187,8 +188,7 @@ void Obb::computeAabb(Aabb& aabb) const
 
 	// Add a small epsilon to avoid some assertions
 	Vec4 epsilon(Vec3(getEpsilon<F32>() * 100.0), 0.0);
-	aabb = Aabb(m_center - newE,
-		m_center + newE + epsilon);
+	aabb = Aabb(m_center - newE, m_center + newE + epsilon);
 
 	// Update cache
 	m_cache.m_aabb = aabb;
@@ -201,8 +201,7 @@ void Obb::setFromPointCloud(
 	Vec4 min = Vec4(Vec3(MAX_F32), 0.0);
 	Vec4 max = Vec4(Vec3(MIN_F32), 0.0);
 
-	iteratePointCloud(buff, count, stride, buffSize, [&](const Vec3& pos)
-	{
+	iteratePointCloud(buff, count, stride, buffSize, [&](const Vec3& pos) {
 		for(U j = 0; j < 3; j++)
 		{
 			if(pos[j] > max[j])

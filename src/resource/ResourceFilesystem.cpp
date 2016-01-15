@@ -8,21 +8,23 @@
 #include <anki/misc/ConfigSet.h>
 #include <contrib/minizip/unzip.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // File classes                                                                =
 //==============================================================================
 
 /// C resource file
-class CResourceFile final: public ResourceFile
+class CResourceFile final : public ResourceFile
 {
 public:
 	File m_file;
 
 	CResourceFile(GenericMemoryPoolAllocator<U8> alloc)
 		: ResourceFile(alloc)
-	{}
+	{
+	}
 
 	ANKI_USE_RESULT Error read(void* buff, PtrSize size) override
 	{
@@ -57,7 +59,7 @@ public:
 };
 
 /// ZIP file
-class ZipResourceFile final: public ResourceFile
+class ZipResourceFile final : public ResourceFile
 {
 public:
 	unzFile m_archive = nullptr;
@@ -65,7 +67,8 @@ public:
 
 	ZipResourceFile(GenericMemoryPoolAllocator<U8> alloc)
 		: ResourceFile(alloc)
-	{}
+	{
+	}
 
 	~ZipResourceFile()
 	{
@@ -79,8 +82,7 @@ public:
 	}
 
 	ANKI_USE_RESULT Error open(
-		const CString& archive,
-		const CString& archivedFname)
+		const CString& archive, const CString& archivedFname)
 	{
 		// Open archive
 		m_archive = unzOpen(&archive[0]);
@@ -277,8 +279,15 @@ Error ResourceFilesystem::addNewPath(const CString& path)
 			Array<char, 1024> filename;
 
 			unz_file_info info;
-			if(unzGetCurrentFileInfo(zfile, &info, &filename[0],
-				filename.getSize(), nullptr, 0, nullptr, 0) != UNZ_OK)
+			if(unzGetCurrentFileInfo(zfile,
+				   &info,
+				   &filename[0],
+				   filename.getSize(),
+				   nullptr,
+				   0,
+				   nullptr,
+				   0)
+				!= UNZ_OK)
 			{
 				unzClose(zfile);
 				ANKI_LOGE("unzGetCurrentFileInfo() failed");
@@ -304,20 +313,20 @@ Error ResourceFilesystem::addNewPath(const CString& path)
 		p.m_path.sprintf(m_alloc, "%s", &path[0]);
 		p.m_isArchive = false;
 
-		ANKI_CHECK(walkDirectoryTree(path, this,
-			[](const CString& fname, void* ud, Bool isDir) -> Error
-		{
-			if(isDir)
-			{
+		ANKI_CHECK(walkDirectoryTree(path,
+			this,
+			[](const CString& fname, void* ud, Bool isDir) -> Error {
+				if(isDir)
+				{
+					return ErrorCode::NONE;
+				}
+
+				ResourceFilesystem* self = static_cast<ResourceFilesystem*>(ud);
+
+				Path& p = self->m_paths.getFront();
+				p.m_files.pushBackSprintf(self->m_alloc, "%s", &fname[0]);
 				return ErrorCode::NONE;
-			}
-
-			ResourceFilesystem* self = static_cast<ResourceFilesystem*>(ud);
-
-			Path& p = self->m_paths.getFront();
-			p.m_files.pushBackSprintf(self->m_alloc, "%s", &fname[0]);
-			return ErrorCode::NONE;
-		}));
+			}));
 
 		if(p.m_files.getSize() < 1)
 		{

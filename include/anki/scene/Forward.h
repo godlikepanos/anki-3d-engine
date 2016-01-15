@@ -5,7 +5,8 @@
 
 #pragma once
 
-namespace anki {
+namespace anki
+{
 
 // Components
 class FrustumComponent;
@@ -28,4 +29,3 @@ class VisibleNode;
 class Sector;
 
 } // end namespace anki
-

@@ -7,45 +7,45 @@
 
 #if ANKI_ENABLE_TRACE
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // Misc                                                                        =
 //==============================================================================
 
-static Array<const char*, U(TraceEventType::COUNT)> eventNames = {{
-	"SCENE_UPDATE",
-	"SCENE_DELETE_STUFF",
-	"SCENE_PHYSICS_UPDATE",
-	"SCENE_NODES_UPDATE",
-	"SCENE_VISIBILITY_TESTS",
-	"SCENE_VISIBILITY_TEST",
-	"SCENE_VISIBILITY_COMBINE_RESULTS",
-	"RENDER",
-	"RENDER_MS",
-	"RENDER_IS",
-	"RENDER_SM",
-	"RENDER_IR",
-	"RENDER_DRAWER",
-	"GL_THREAD",
-	"SWAP_BUFFERS"
-}};
+static Array<const char*, U(TraceEventType::COUNT)> eventNames = {
+	{"SCENE_UPDATE",
+		"SCENE_DELETE_STUFF",
+		"SCENE_PHYSICS_UPDATE",
+		"SCENE_NODES_UPDATE",
+		"SCENE_VISIBILITY_TESTS",
+		"SCENE_VISIBILITY_TEST",
+		"SCENE_VISIBILITY_COMBINE_RESULTS",
+		"RENDER",
+		"RENDER_MS",
+		"RENDER_IS",
+		"RENDER_SM",
+		"RENDER_IR",
+		"RENDER_DRAWER",
+		"GL_THREAD",
+		"SWAP_BUFFERS"}};
 
-static Array<const char*, U(TraceCounterType::COUNT)> counterNames = {{
-	"GR_DRAWCALLS",
-	"GR_DYNAMIC_UNIFORMS_SIZE",
-	"GR_DYNAMIC_STORAGE_SIZE",
-	"GR_VERTICES",
-	"RENDERER_LIGHTS",
-	"RENDERER_SHADOW_PASSES",
-	"RENDERER_MERGED_DRAWCALLS",
-	"RENDERER_REFLECTIONS",
-	"SCENE_NODES_UPDATED"
-}};
+static Array<const char*, U(TraceCounterType::COUNT)> counterNames = {
+	{"GR_DRAWCALLS",
+		"GR_DYNAMIC_UNIFORMS_SIZE",
+		"GR_DYNAMIC_STORAGE_SIZE",
+		"GR_VERTICES",
+		"RENDERER_LIGHTS",
+		"RENDERER_SHADOW_PASSES",
+		"RENDERER_MERGED_DRAWCALLS",
+		"RENDERER_REFLECTIONS",
+		"SCENE_NODES_UPDATED"}};
 
-#define ANKI_TRACE_FILE_ERROR() \
-	if(err) { \
-		ANKI_LOGE("Error writing the trace file"); \
+#define ANKI_TRACE_FILE_ERROR()                                                \
+	if(err)                                                                    \
+	{                                                                          \
+		ANKI_LOGE("Error writing the trace file");                             \
 	}
 
 const U MAX_EVENTS_DEPTH = 10;
@@ -61,9 +61,11 @@ TraceManager::~TraceManager()
 {
 	if(m_traceFile.isOpen())
 	{
-		Error err = m_traceFile.writeText("{\"name\": \"dummy\", "
+		Error err = m_traceFile.writeText(
+			"{\"name\": \"dummy\", "
 			"\"cat\": \"PERF\", \"ph\": \"X\", \"pid\": 666, \"tid\": %llu, "
-			"\"ts\": 0, \"dur\": 1}]}", Thread::getCurrentThreadId());
+			"\"ts\": 0, \"dur\": 1}]}",
+			Thread::getCurrentThreadId());
 
 		ANKI_TRACE_FILE_ERROR();
 	}
@@ -77,16 +79,15 @@ Error TraceManager::create(HeapAllocator<U8> alloc, const CString& cacheDir)
 	fname.sprintf("%s/trace.json", &cacheDir[0]);
 
 	ANKI_CHECK(m_traceFile.open(fname.toCString(), File::OpenFlag::WRITE));
-	ANKI_CHECK(m_traceFile.writeText(
-		"{\n"
-		"\"displayTimeUnit\": \"ms\",\n"
-		"\"traceEvents\": [\n"));
+	ANKI_CHECK(m_traceFile.writeText("{\n"
+									 "\"displayTimeUnit\": \"ms\",\n"
+									 "\"traceEvents\": [\n"));
 
 	// Create per frame file
 	StringAuto perFrameFname(alloc);
 	perFrameFname.sprintf("%s/per_frame.csv", &cacheDir[0]);
-	ANKI_CHECK(m_perFrameFile.open(perFrameFname.toCString(),
-		File::OpenFlag::WRITE));
+	ANKI_CHECK(
+		m_perFrameFile.open(perFrameFname.toCString(), File::OpenFlag::WRITE));
 
 	ANKI_CHECK(m_perFrameFile.writeText("FPS, "));
 	for(U i = 0; i < U(TraceCounterType::COUNT); ++i)
@@ -96,8 +97,7 @@ Error TraceManager::create(HeapAllocator<U8> alloc, const CString& cacheDir)
 
 	for(U i = 0; i < U(TraceEventType::COUNT); ++i)
 	{
-		const char* fmt =
-			(i < U(TraceEventType::COUNT) - 1) ? "%s, " : "%s\n";
+		const char* fmt = (i < U(TraceEventType::COUNT) - 1) ? "%s, " : "%s\n";
 		ANKI_CHECK(m_perFrameFile.writeText(fmt, eventNames[i]));
 	}
 
@@ -127,8 +127,8 @@ void TraceManager::stopEvent(TraceEventType type)
 		auto now = HighRezTimer::getCurrentTime();
 		auto dur = now - startedTime;
 
-		m_entries[id] = Entry{type, startedTime, dur,
-			Thread::getCurrentThreadId()};
+		m_entries[id] =
+			Entry{type, startedTime, dur, Thread::getCurrentThreadId()};
 
 		m_perFrameCounters[U(TraceCounterType::COUNT) + U(type)].fetchAdd(
 			U64(dur * 1000000000.0));
@@ -150,7 +150,8 @@ Error TraceManager::flushCounters()
 	ANKI_CHECK(m_traceFile.writeText(
 		"{\"name\": \"FPS\", \"cat\": \"PERF\", \"ph\": \"C\", "
 		"\"pid\": 666, \"ts\": %llu, \"args\": {\"val\": %f}},\n",
-		U64(m_startFrameTime * 1000000.0), fps));
+		U64(m_startFrameTime * 1000000.0),
+		fps));
 
 	ANKI_CHECK(m_perFrameFile.writeText("%f, ", fps));
 
@@ -161,7 +162,9 @@ Error TraceManager::flushCounters()
 		ANKI_CHECK(m_traceFile.writeText(
 			"{\"name\": \"%s\", \"cat\": \"PERF\", \"ph\": \"C\", "
 			"\"pid\": 666, \"ts\": %llu, \"args\": {\"val\": %llu}},\n",
-			counterNames[i], U64(m_startFrameTime * 1000000.0), count));
+			counterNames[i],
+			U64(m_startFrameTime * 1000000.0),
+			count));
 
 		ANKI_CHECK(m_perFrameFile.writeText("%llu, ", count));
 	}
@@ -183,16 +186,16 @@ Error TraceManager::flushEvents()
 		ANKI_CHECK(m_traceFile.writeText(
 			"{\"name\": \"%s\", \"cat\": \"PERF\", \"ph\": \"X\", "
 			"\"pid\": 666, \"tid\": %llu, \"ts\": %llu, \"dur\": %llu},\n",
-			eventNames[e.m_event], e.m_tid, U64(e.m_timestamp * 1000000.0),
+			eventNames[e.m_event],
+			e.m_tid,
+			U64(e.m_timestamp * 1000000.0),
 			U64(e.m_duration * 1000000.0)));
 	}
 
 	for(U i = 0; i < U(TraceEventType::COUNT); ++i)
 	{
-		const char* fmt =
-			(i < U(TraceEventType::COUNT) - 1) ? "%f, " : "%f\n";
-		U64 ns = m_perFrameCounters[
-			i + U(TraceCounterType::COUNT)].exchange(0);
+		const char* fmt = (i < U(TraceEventType::COUNT) - 1) ? "%f, " : "%f\n";
+		U64 ns = m_perFrameCounters[i + U(TraceCounterType::COUNT)].exchange(0);
 		ANKI_CHECK(m_perFrameFile.writeText(fmt, F64(ns) / 1000000.0));
 	}
 

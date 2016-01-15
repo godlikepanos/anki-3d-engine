@@ -7,7 +7,8 @@
 #include <anki/collision/Plane.h>
 #include <anki/collision/Aabb.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 F32 Sphere::testPlane(const Plane& p) const
@@ -78,7 +79,7 @@ Sphere Sphere::getCompoundShape(const Sphere& b) const
 	*/
 
 	Vec4 c = b.getCenter() - a.getCenter(); // Vector from one center to the
-	                                        // other
+	// other
 	F32 cLen = c.getLength();
 
 	if(cLen + b.getRadius() < a.getRadius())
@@ -93,7 +94,7 @@ Sphere Sphere::getCompoundShape(const Sphere& b) const
 	Vec4 bnorm = c / cLen;
 
 	Vec4 ca = (-bnorm) * a.getRadius() + a.getCenter();
-	Vec4 cb = (bnorm) * b.getRadius() + b.getCenter();
+	Vec4 cb = (bnorm)*b.getRadius() + b.getCenter();
 
 	return Sphere((ca + cb) / 2.0, (ca - cb).getLength() / 2.0);
 }
@@ -112,9 +113,8 @@ void Sphere::setFromPointCloud(
 	// Calc min/max
 	Vec4 min(Vec3(MAX_F32), 0.0);
 	Vec4 max(Vec3(MIN_F32), 0.0);
-	
-	iteratePointCloud(buff, count, stride, buffSize, [&](const Vec3& pos)
-	{
+
+	iteratePointCloud(buff, count, stride, buffSize, [&](const Vec3& pos) {
 		for(U j = 0; j < 3; j++)
 		{
 			if(pos[j] > max[j])
@@ -133,8 +133,7 @@ void Sphere::setFromPointCloud(
 	// max distance between center and the vec3 arr
 	F32 maxDist = MIN_F32;
 
-	iteratePointCloud(buff, count, stride, buffSize, [&](const Vec3& pos)
-	{
+	iteratePointCloud(buff, count, stride, buffSize, [&](const Vec3& pos) {
 		F32 dist = (Vec4(pos, 0.0) - m_center).getLengthSquared();
 		if(dist > maxDist)
 		{

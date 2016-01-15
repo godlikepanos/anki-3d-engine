@@ -17,7 +17,8 @@
 #include <anki/scene/SceneNode.h>
 #include <anki/scene/FrustumComponent.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // Misc                                                                        =
@@ -39,11 +40,13 @@ const PixelFormat Pps::RT_PIXEL_FORMAT(
 //==============================================================================
 Pps::Pps(Renderer* r)
 	: RenderingPass(r)
-{}
+{
+}
 
 //==============================================================================
 Pps::~Pps()
-{}
+{
+}
 
 //==============================================================================
 Error Pps::initInternal(const ConfigSet& config)
@@ -69,9 +72,13 @@ Error Pps::initInternal(const ConfigSet& config)
 	ANKI_CHECK(m_sslf->init(config));
 
 	// FBO
-	m_r->createRenderTarget(
-		m_r->getWidth(), m_r->getHeight(),
-		RT_PIXEL_FORMAT, 1, SamplingFilter::LINEAR, 1, m_rt);
+	m_r->createRenderTarget(m_r->getWidth(),
+		m_r->getHeight(),
+		RT_PIXEL_FORMAT,
+		1,
+		SamplingFilter::LINEAR,
+		1,
+		m_rt);
 
 	FramebufferInitializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
@@ -83,14 +90,13 @@ Error Pps::initInternal(const ConfigSet& config)
 	// SProg
 	StringAuto pps(getAllocator());
 
-	pps.sprintf(
-		"#define SSAO_ENABLED %u\n"
-		"#define BLOOM_ENABLED %u\n"
-		"#define SSLF_ENABLED %u\n"
-		"#define SHARPEN_ENABLED %u\n"
-		"#define GAMMA_CORRECTION_ENABLED %u\n"
-		"#define FBO_WIDTH %u\n"
-		"#define FBO_HEIGHT %u\n",
+	pps.sprintf("#define SSAO_ENABLED %u\n"
+				"#define BLOOM_ENABLED %u\n"
+				"#define SSLF_ENABLED %u\n"
+				"#define SHARPEN_ENABLED %u\n"
+				"#define GAMMA_CORRECTION_ENABLED %u\n"
+				"#define FBO_WIDTH %u\n"
+				"#define FBO_HEIGHT %u\n",
 		m_ssao->getEnabled(),
 		m_bloom->getEnabled(),
 		m_sslf->getEnabled(),
@@ -112,7 +118,8 @@ Error Pps::initInternal(const ConfigSet& config)
 
 	// Uniforms
 	m_uniformsBuff = getGrManager().newInstance<Buffer>(sizeof(Uniforms),
-		BufferUsageBit::STORAGE, BufferAccessBit::CLIENT_WRITE);
+		BufferUsageBit::STORAGE,
+		BufferAccessBit::CLIENT_WRITE);
 
 	// RC goup
 	ResourceGroupInitializer rcInit;
@@ -209,13 +216,13 @@ void Pps::run(CommandBufferPtr& cmdb)
 		DynamicBufferToken token;
 		Uniforms* unis = static_cast<Uniforms*>(
 			getGrManager().allocateFrameHostVisibleMemory(
-			sizeof(*unis), BufferUsage::TRANSFER, token));
+				sizeof(*unis), BufferUsage::TRANSFER, token));
 		cmdb->writeBuffer(m_uniformsBuff, 0, token);
 		unis->m_fogColorFogFactor = Vec4(m_fogColor, m_fogFactor);
 
 		const FrustumComponent& frc = m_r->getActiveFrustumComponent();
-		unis->m_nearFarPad2 = Vec4(frc.getFrustum().getNear(),
-			frc.getFrustum().getFar(), 0.0, 0.0);
+		unis->m_nearFarPad2 = Vec4(
+			frc.getFrustum().getNear(), frc.getFrustum().getFar(), 0.0, 0.0);
 	}
 
 	m_r->drawQuad(cmdb);

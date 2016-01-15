@@ -8,13 +8,14 @@
 #include <anki/resource/ResourceManager.h>
 #include <anki/resource/AsyncLoader.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // Misc                                                                        =
 //==============================================================================
 
-class TexUploadTask: public AsyncLoaderTask
+class TexUploadTask : public AsyncLoaderTask
 {
 public:
 	UniquePtr<ImageLoader> m_loader;
@@ -22,13 +23,16 @@ public:
 	GrManager* m_gr ANKI_DBG_NULLIFY_PTR;
 	U32 m_layerCount = 0;
 
-	TexUploadTask(UniquePtr<ImageLoader>& loader, TexturePtr tex,
-		GrManager* gr, U32 layerCount)
+	TexUploadTask(UniquePtr<ImageLoader>& loader,
+		TexturePtr tex,
+		GrManager* gr,
+		U32 layerCount)
 		: m_loader(std::move(loader))
 		, m_tex(tex)
 		, m_gr(gr)
 		, m_layerCount(layerCount)
-	{}
+	{
+	}
 
 	Error operator()() final;
 };
@@ -67,7 +71,8 @@ Error TexUploadTask::operator()()
 
 //==============================================================================
 TextureResource::~TextureResource()
-{}
+{
+}
 
 //==============================================================================
 Error TextureResource::load(const ResourceFilename& filename)
@@ -187,15 +192,14 @@ Error TextureResource::load(const ResourceFilename& filename)
 	init.m_sampling.m_repeat = true;
 
 	// anisotropyLevel
-	init.m_sampling.m_anisotropyLevel =
-		getManager().getTextureAnisotropy();
+	init.m_sampling.m_anisotropyLevel = getManager().getTextureAnisotropy();
 
 	// Create the texture
 	m_tex = gr.newInstance<Texture>(init);
 
 	// Upload the data asynchronously
-	getManager().getAsyncLoader().newTask<TexUploadTask>(img, m_tex, &gr,
-		layers);
+	getManager().getAsyncLoader().newTask<TexUploadTask>(
+		img, m_tex, &gr, layers);
 
 	m_size = UVec3(init.m_width, init.m_height, init.m_depth);
 

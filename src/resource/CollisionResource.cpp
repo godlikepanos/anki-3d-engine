@@ -9,7 +9,8 @@
 #include <anki/physics/PhysicsWorld.h>
 #include <anki/misc/Xml.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 Error CollisionResource::load(const ResourceFilename& filename)
@@ -51,8 +52,7 @@ Error CollisionResource::load(const ResourceFilename& filename)
 		MeshLoader loader(&getManager());
 		ANKI_CHECK(loader.load(meshfname));
 
-		m_physicsShape = physics.newInstance<PhysicsTriangleSoup>(
-			csInit,
+		m_physicsShape = physics.newInstance<PhysicsTriangleSoup>(csInit,
 			reinterpret_cast<const Vec3*>(loader.getVertexData()),
 			loader.getVertexSize(),
 			reinterpret_cast<const U16*>(loader.getIndexData()),

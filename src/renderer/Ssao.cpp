@@ -11,7 +11,8 @@
 #include <anki/util/Functions.h>
 #include <anki/misc/ConfigSet.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // Misc                                                                        =
@@ -21,8 +22,7 @@ const U NOISE_TEX_SIZE = 8;
 const U KERNEL_SIZE = 16;
 
 //==============================================================================
-static void genKernel(Vec3* ANKI_RESTRICT arr,
-	Vec3* ANKI_RESTRICT arrEnd)
+static void genKernel(Vec3* ANKI_RESTRICT arr, Vec3* ANKI_RESTRICT arrEnd)
 {
 	ANKI_ASSERT(arr && arrEnd && arr != arrEnd);
 
@@ -40,8 +40,7 @@ static void genKernel(Vec3* ANKI_RESTRICT arr,
 }
 
 //==============================================================================
-static void genNoise(Vec3* ANKI_RESTRICT arr,
-	Vec3* ANKI_RESTRICT arrEnd)
+static void genNoise(Vec3* ANKI_RESTRICT arr, Vec3* ANKI_RESTRICT arrEnd)
 {
 	ANKI_ASSERT(arr && arrEnd && arr != arrEnd);
 
@@ -75,8 +74,8 @@ const PixelFormat Ssao::RT_PIXEL_FORMAT(
 Error Ssao::createFb(FramebufferPtr& fb, TexturePtr& rt)
 {
 	// Set to bilinear because the blurring techniques take advantage of that
-	m_r->createRenderTarget(m_width, m_height,
-		RT_PIXEL_FORMAT, 1, SamplingFilter::LINEAR, 1, rt);
+	m_r->createRenderTarget(
+		m_width, m_height, RT_PIXEL_FORMAT, 1, SamplingFilter::LINEAR, 1, rt);
 
 	// Create FB
 	FramebufferInitializer fbInit;
@@ -140,9 +139,8 @@ Error Ssao::initInternal(const ConfigSet& config)
 	PtrSize noiseSize = NOISE_TEX_SIZE * NOISE_TEX_SIZE * sizeof(Vec3);
 
 	DynamicBufferToken token;
-	Vec3* noise = static_cast<Vec3*>(
-		gr.allocateFrameHostVisibleMemory(noiseSize, BufferUsage::TRANSFER,
-		token));
+	Vec3* noise = static_cast<Vec3*>(gr.allocateFrameHostVisibleMemory(
+		noiseSize, BufferUsage::TRANSFER, token));
 
 	genNoise(noise, noise + NOISE_TEX_SIZE * NOISE_TEX_SIZE);
 
@@ -162,7 +160,9 @@ Error Ssao::initInternal(const ConfigSet& config)
 		StringAuto tmp(getAllocator());
 
 		tmp.sprintf("vec3(%f, %f, %f) %s",
-			kernel[i].x(), kernel[i].y(), kernel[i].z(),
+			kernel[i].x(),
+			kernel[i].y(),
+			kernel[i].z(),
 			(i != kernel.size() - 1) ? ", " : ")");
 
 		kernelStr.append(tmp);
@@ -172,7 +172,8 @@ Error Ssao::initInternal(const ConfigSet& config)
 	// Shaders
 	//
 	m_uniformsBuff = gr.newInstance<Buffer>(sizeof(ShaderCommonUniforms),
-		BufferUsageBit::UNIFORM, BufferAccessBit::CLIENT_WRITE);
+		BufferUsageBit::UNIFORM,
+		BufferAccessBit::CLIENT_WRITE);
 
 	ColorStateInfo colorState;
 	colorState.m_attachmentCount = 1;
@@ -181,13 +182,16 @@ Error Ssao::initInternal(const ConfigSet& config)
 	StringAuto pps(getAllocator());
 
 	// main pass prog
-	pps.sprintf(
-		"#define NOISE_MAP_SIZE %u\n"
-		"#define WIDTH %u\n"
-		"#define HEIGHT %u\n"
-		"#define KERNEL_SIZE %u\n"
-		"#define KERNEL_ARRAY %s\n",
-		NOISE_TEX_SIZE, m_width, m_height, KERNEL_SIZE, &kernelStr[0]);
+	pps.sprintf("#define NOISE_MAP_SIZE %u\n"
+				"#define WIDTH %u\n"
+				"#define HEIGHT %u\n"
+				"#define KERNEL_SIZE %u\n"
+				"#define KERNEL_ARRAY %s\n",
+		NOISE_TEX_SIZE,
+		m_width,
+		m_height,
+		KERNEL_SIZE,
+		&kernelStr[0]);
 
 	ANKI_CHECK(getResourceManager().loadResourceToCache(
 		m_ssaoFrag, "shaders/PpsSsao.frag.glsl", pps.toCString(), "r_"));
@@ -200,11 +204,10 @@ Error Ssao::initInternal(const ConfigSet& config)
 		"shaders/VariableSamplingBlurGeneric.frag.glsl";
 
 	pps.destroy(getAllocator());
-	pps.sprintf(
-		"#define HPASS\n"
-		"#define COL_R\n"
-		"#define IMG_DIMENSION %u\n"
-		"#define SAMPLES 11\n",
+	pps.sprintf("#define HPASS\n"
+				"#define COL_R\n"
+				"#define IMG_DIMENSION %u\n"
+				"#define SAMPLES 11\n",
 		m_height);
 
 	ANKI_CHECK(getResourceManager().loadResourceToCache(
@@ -214,11 +217,10 @@ Error Ssao::initInternal(const ConfigSet& config)
 		m_hblurFrag->getGrShader(), colorState, m_hblurPpline);
 
 	pps.destroy(getAllocator());
-	pps.sprintf(
-		"#define VPASS\n"
-		"#define COL_R\n"
-		"#define IMG_DIMENSION %u\n"
-		"#define SAMPLES 9\n",
+	pps.sprintf("#define VPASS\n"
+				"#define COL_R\n"
+				"#define IMG_DIMENSION %u\n"
+				"#define SAMPLES 9\n",
 		m_width);
 
 	ANKI_CHECK(getResourceManager().loadResourceToCache(
@@ -295,7 +297,7 @@ void Ssao::run(CommandBufferPtr& cmdb)
 		DynamicBufferToken token;
 		ShaderCommonUniforms* blk = static_cast<ShaderCommonUniforms*>(
 			getGrManager().allocateFrameHostVisibleMemory(
-			sizeof(ShaderCommonUniforms), BufferUsage::TRANSFER, token));
+				sizeof(ShaderCommonUniforms), BufferUsage::TRANSFER, token));
 
 		blk->m_projectionParams = m_r->getProjectionParameters();
 		blk->m_projectionMatrix = camFr.getProjectionMatrix();

@@ -3,7 +3,7 @@
 #include <fstream>
 
 #ifdef ANKI_BUILD
-#	undef ANKI_BUILD
+#undef ANKI_BUILD
 #endif
 
 #include "anki/input/Input.h"
@@ -73,25 +73,21 @@ Error init()
 
 	// camera
 	err = scene.newSceneNode<PerspectiveCamera>("main-camera", cam);
-	if(err) return err;
+	if(err)
+		return err;
 	const F32 ang = 55.0;
-	cam->setAll(
-		renderer.getAspectRatio() * toRad(ang),
-		toRad(ang), 0.2, 300.0);
+	cam->setAll(renderer.getAspectRatio() * toRad(ang), toRad(ang), 0.2, 300.0);
 	scene.setActiveCamera(cam);
 
-	cam->getComponent<MoveComponent>().
-		setLocalTransform(Transform(Vec4(0.0),
-		Mat3x4(Euler(toRad(0.0), toRad(180.0), toRad(0.0))),
-		1.0));
+	cam->getComponent<MoveComponent>().setLocalTransform(Transform(
+		Vec4(0.0), Mat3x4(Euler(toRad(0.0), toRad(180.0), toRad(0.0))), 1.0));
 
 #if !PLAYER
-	cam->getComponent<MoveComponent>().
-		setLocalTransform(Transform(
-		//Vec4(147.392776, -10.132728, 16.607138, 0.0),
+	cam->getComponent<MoveComponent>().setLocalTransform(Transform(
+		// Vec4(147.392776, -10.132728, 16.607138, 0.0),
 		Vec4(102.984535, -11.532733, 16.394911, 0),
 		Mat3x4(Euler(toRad(0.0), toRad(-10.0), toRad(0.0))),
-		//Mat3x4::getIdentity(),
+		// Mat3x4::getIdentity(),
 		1.0));
 #endif
 
@@ -250,7 +246,8 @@ Error init()
 	if(0)
 	{
 		err = scene.newSceneNode<PointLight>("plight0", point);
-		if(err) return err;
+		if(err)
+			return err;
 
 		lightc = point->tryGetComponent<LightComponent>();
 		lightc->setDistance(2.2);
@@ -266,24 +263,26 @@ Error init()
 		ScriptResourcePtr script;
 
 		ANKI_CHECK(resources.loadResource("maps/hell/scene.lua", script));
-		if(err) return err;
+		if(err)
+			return err;
 
 		err = app->getScriptManager().evalString(script->getSource());
-		if(err) return err;
+		if(err)
+			return err;
 	}
 
-	/*{
-		SceneNode* node = scene.tryFindSceneNode("Point_026");
-		LightEvent* event = scene.getEventManager().newEvent<LightEvent>(
-			0.0f, 50.0f, node);
-		event->setIntensityMultiplier(Vec4(1.5));
-		event->setFrequency(3.0, 0.1);
-	}*/
+/*{
+	SceneNode* node = scene.tryFindSceneNode("Point_026");
+	LightEvent* event = scene.getEventManager().newEvent<LightEvent>(
+		0.0f, 50.0f, node);
+	event->setIntensityMultiplier(Vec4(1.5));
+	event->setFrequency(3.0, 0.1);
+}*/
 
 #if PLAYER
 	PlayerNode* pnode;
-	scene.newSceneNode<PlayerNode>("player", pnode,
-		Vec4(147.392776, -11.132728, 16.607138, 0.0));
+	scene.newSceneNode<PlayerNode>(
+		"player", pnode, Vec4(147.392776, -11.132728, 16.607138, 0.0));
 
 	pnode->addChild(cam);
 
@@ -361,8 +360,7 @@ Error mainLoopExtra(App& app, void*, Bool& quit)
 	}
 	if(in.getKey(KeyCode::_2))
 	{
-		mover = &scene.findSceneNode("proxy").
-			getComponent<MoveComponent>();
+		mover = &scene.findSceneNode("proxy").getComponent<MoveComponent>();
 	}
 	if(in.getKey(KeyCode::_3))
 	{
@@ -418,27 +416,42 @@ Error mainLoopExtra(App& app, void*, Bool& quit)
 	if(in.getKey(KeyCode::F12) == 1)
 	{
 		printf("F12\n");
-		scene.getActiveCamera().getComponent<FrustumComponent>().markShapeForUpdate();
-		scene.getActiveCamera().getComponent<FrustumComponent>().markTransformForUpdate();
+		scene.getActiveCamera()
+			.getComponent<FrustumComponent>()
+			.markShapeForUpdate();
+		scene.getActiveCamera()
+			.getComponent<FrustumComponent>()
+			.markTransformForUpdate();
 	}
 
 #if !PLAYER
-	if(in.getKey(KeyCode::UP)) mover->rotateLocalX(ang);
-	if(in.getKey(KeyCode::DOWN)) mover->rotateLocalX(-ang);
-	if(in.getKey(KeyCode::LEFT)) mover->rotateLocalY(ang);
-	if(in.getKey(KeyCode::RIGHT)) mover->rotateLocalY(-ang);
+	if(in.getKey(KeyCode::UP))
+		mover->rotateLocalX(ang);
+	if(in.getKey(KeyCode::DOWN))
+		mover->rotateLocalX(-ang);
+	if(in.getKey(KeyCode::LEFT))
+		mover->rotateLocalY(ang);
+	if(in.getKey(KeyCode::RIGHT))
+		mover->rotateLocalY(-ang);
 
 	if(in.getKey(KeyCode::A))
 	{
 		mover->moveLocalX(-dist);
 	}
-	if(in.getKey(KeyCode::D)) mover->moveLocalX(dist);
-	if(in.getKey(KeyCode::Z)) mover->moveLocalY(dist);
-	if(in.getKey(KeyCode::SPACE)) mover->moveLocalY(-dist);
-	if(in.getKey(KeyCode::W)) mover->moveLocalZ(-dist);
-	if(in.getKey(KeyCode::S)) mover->moveLocalZ(dist);
-	if(in.getKey(KeyCode::Q)) mover->rotateLocalZ(ang);
-	if(in.getKey(KeyCode::E)) mover->rotateLocalZ(-ang);
+	if(in.getKey(KeyCode::D))
+		mover->moveLocalX(dist);
+	if(in.getKey(KeyCode::Z))
+		mover->moveLocalY(dist);
+	if(in.getKey(KeyCode::SPACE))
+		mover->moveLocalY(-dist);
+	if(in.getKey(KeyCode::W))
+		mover->moveLocalZ(-dist);
+	if(in.getKey(KeyCode::S))
+		mover->moveLocalZ(dist);
+	if(in.getKey(KeyCode::Q))
+		mover->rotateLocalZ(ang);
+	if(in.getKey(KeyCode::E))
+		mover->rotateLocalZ(-ang);
 	if(in.getKey(KeyCode::PAGEUP))
 	{
 		mover->scale(scale);
@@ -452,17 +465,18 @@ Error mainLoopExtra(App& app, void*, Bool& quit)
 #if !PLAYER && MOUSE
 	if(in.getMousePosition() != Vec2(0.0) && !profile)
 	{
-		//printf("%f %f\n", in.getMousePosition().x(), in.getMousePosition().y());
+		// printf("%f %f\n", in.getMousePosition().x(),
+		// in.getMousePosition().y());
 
-		F32 angY = -ang * in.getMousePosition().x() * mouseSensivity *
-			renderer.getAspectRatio();
+		F32 angY = -ang * in.getMousePosition().x() * mouseSensivity
+			* renderer.getAspectRatio();
 
 		mover->rotateLocalY(angY);
 		mover->rotateLocalX(ang * in.getMousePosition().y() * mouseSensivity);
 	}
 #endif
 
-	//execStdinScpripts();
+	// execStdinScpripts();
 
 	if(profile && app.getGlobalTimestamp() == 500)
 	{
@@ -510,15 +524,15 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("lodDistance", 20.0);
 	config.set("samples", 1);
 	config.set("tessellation", true);
-	//config.set("maxTextureSize", 256);
+	// config.set("maxTextureSize", 256);
 	config.set("refl.renderingQuality", 1.0);
 	config.set("ir.enabled", true);
-	//config.set("ir.clusterSizeZ", 32);
+	// config.set("ir.clusterSizeZ", 32);
 	config.set("sslr.enabled", false);
 	config.set("ir.rendererSize", 64);
 	config.set("ir.clusterSizeZ", 16);
 	config.set("fullscreenDesktopResolution", false);
-	//config.set("clusterSizeZ", 16);
+	// config.set("clusterSizeZ", 16);
 	config.set("debugContext", false);
 	if(getenv("ANKI_DATA_PATH"))
 	{
@@ -529,14 +543,15 @@ Error initSubsystems(int argc, char* argv[])
 		config.set("dataPaths", "assets");
 	}
 	config.set("sceneFrameAllocatorSize", 1024 * 1024 * 10);
-	//config.set("maxTextureSize", 256);
-	//config.set("lodDistance", 3.0);
+	// config.set("maxTextureSize", 256);
+	// config.set("lodDistance", 3.0);
 
 	app = new App;
 	err = app->create(config, allocAligned, nullptr);
-	if(err) return err;
+	if(err)
+		return err;
 
-	// Input
+// Input
 #if MOUSE
 	app->getInput().lockCursor(true);
 	app->getInput().hideCursor(true);

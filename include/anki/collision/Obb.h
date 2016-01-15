@@ -10,13 +10,14 @@
 #include <anki/Math.h>
 #include <anki/util/Array.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup collision
 /// @{
 
 /// Object oriented bounding box
-class Obb: public ConvexShape
+class Obb : public ConvexShape
 {
 public:
 	using Base = ConvexShape;
@@ -134,4 +135,3 @@ public:
 /// @}
 
 } // end namespace anki
-

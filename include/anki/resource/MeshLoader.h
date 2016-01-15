@@ -9,7 +9,8 @@
 #include <anki/Math.h>
 #include <anki/util/Enum.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup resource
 /// @{
@@ -20,7 +21,7 @@ class MeshLoader
 {
 public:
 	/// Type of the components.
-	enum class ComponentFormat: U32
+	enum class ComponentFormat : U32
 	{
 		NONE,
 
@@ -44,7 +45,7 @@ public:
 		COUNT
 	};
 
-	enum class FormatTransform: U32
+	enum class FormatTransform : U32
 	{
 		NONE,
 
@@ -63,7 +64,7 @@ public:
 		FormatTransform m_transform = FormatTransform::NONE;
 	};
 
-	enum class Flag: U32
+	enum class Flag : U32
 	{
 		NONE = 0,
 		QUADS = 1 << 0
@@ -105,7 +106,8 @@ public:
 
 	MeshLoader(ResourceManager* manager)
 		: m_manager(manager)
-	{}
+	{
+	}
 
 	~MeshLoader();
 
@@ -150,8 +152,8 @@ public:
 	Bool hasBoneInfo() const
 	{
 		ANKI_ASSERT(isLoaded());
-		return
-			m_header.m_boneWeightsFormat.m_components != ComponentFormat::NONE;
+		return m_header.m_boneWeightsFormat.m_components
+			!= ComponentFormat::NONE;
 	}
 
 private:
@@ -172,11 +174,8 @@ private:
 	}
 
 	static ANKI_USE_RESULT Error checkFormat(
-		const Format& fmt,
-		const CString& attrib,
-		Bool cannotBeEmpty);
+		const Format& fmt, const CString& attrib, Bool cannotBeEmpty);
 };
 /// @}
 
 } // end namespace anki
-

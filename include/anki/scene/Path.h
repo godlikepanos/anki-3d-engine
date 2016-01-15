@@ -9,7 +9,8 @@
 #include <anki/scene/SceneNode.h>
 #include <anki/scene/MoveComponent.h>
 
-namespace anki {
+namespace anki
+{
 
 #if 0
 
@@ -75,4 +76,3 @@ private:
 #endif
 
 } // end namespace anki
-

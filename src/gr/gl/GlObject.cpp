@@ -10,14 +10,16 @@
 #include <anki/gr/CommandBuffer.h>
 #include <anki/gr/gl/CommandBufferImpl.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 GlObject::GlObject(GrManager* manager)
 	: m_manager(manager)
 	, m_glName(0)
 	, m_state(I32(State::TO_BE_CREATED))
-{}
+{
+}
 
 //==============================================================================
 Error GlObject::serializeRenderingThread()
@@ -46,7 +48,7 @@ Error GlObject::serializeRenderingThread()
 }
 
 //==============================================================================
-class DeleteGlObjectCommand final: public GlCommand
+class DeleteGlObjectCommand final : public GlCommand
 {
 public:
 	GlObject::GlDeleteFunction m_callback;
@@ -55,7 +57,8 @@ public:
 	DeleteGlObjectCommand(GlObject::GlDeleteFunction callback, GLuint name)
 		: m_callback(callback)
 		, m_glName(name)
-	{}
+	{
+	}
 
 	Error operator()(GlState&)
 	{

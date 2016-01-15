@@ -7,13 +7,14 @@
 
 #include <anki/resource/ResourceObject.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup resource
 /// @{
 
 /// A generic resource. It just loads a file to memory.
-class GenericResource: public ResourceObject
+class GenericResource : public ResourceObject
 {
 public:
 	GenericResource(ResourceManager* manager);
@@ -34,6 +35,3 @@ private:
 /// @}
 
 } // end namespace anki
-
-
-

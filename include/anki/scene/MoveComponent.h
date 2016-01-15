@@ -11,12 +11,13 @@
 #include <anki/util/Enum.h>
 #include <anki/Math.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup scene
 /// @{
 
-enum class MoveComponentFlag: U8
+enum class MoveComponentFlag : U8
 {
 	NONE = 0,
 
@@ -32,7 +33,7 @@ enum class MoveComponentFlag: U8
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(MoveComponentFlag, inline)
 
 /// Interface for movable scene nodes
-class MoveComponent: public SceneComponent, public Bitset<MoveComponentFlag>
+class MoveComponent : public SceneComponent, public Bitset<MoveComponentFlag>
 {
 public:
 	using Flag = MoveComponentFlag;
@@ -192,4 +193,3 @@ private:
 /// @}
 
 } // end namespace anki
-

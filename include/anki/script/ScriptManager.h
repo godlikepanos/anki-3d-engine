@@ -7,7 +7,8 @@
 
 #include <anki/script/LuaBinder.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class SceneGraph;
@@ -25,9 +26,7 @@ public:
 
 	/// Create the script manager.
 	ANKI_USE_RESULT Error create(
-		AllocAlignedCallback allocCb,
-		void* allocCbData,
-		SceneGraph* scene);
+		AllocAlignedCallback allocCb, void* allocCbData, SceneGraph* scene);
 
 	SceneGraph& _getSceneGraph()
 	{
@@ -57,4 +56,3 @@ private:
 /// @}
 
 } // end namespace anki
-

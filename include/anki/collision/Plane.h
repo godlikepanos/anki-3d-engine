@@ -8,13 +8,14 @@
 #include <anki/collision/CollisionShape.h>
 #include <anki/Math.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup collision
 /// @{
 
 /// Plane collision shape
-class Plane: public CollisionShape
+class Plane : public CollisionShape
 {
 public:
 	using Base = CollisionShape;
@@ -27,7 +28,8 @@ public:
 	/// Default constructor
 	Plane()
 		: CollisionShape(Type::PLANE)
-	{}
+	{
+	}
 
 	/// Copy constructor
 	Plane(const Plane& b)
@@ -140,8 +142,8 @@ public:
 
 	/// Find the intersection point of this plane and a ray. If the ray hits
 	/// the back of the plane then there is no intersection.
-	Bool intersectRay(const Vec4& rayOrigin, const Vec4& rayDir,
-		Vec4& intersection) const;
+	Bool intersectRay(
+		const Vec4& rayOrigin, const Vec4& rayDir, Vec4& intersection) const;
 
 	/// Test a CollisionShape
 	template<typename T>
@@ -166,4 +168,3 @@ private:
 /// @}
 
 } // end namespace anki
-

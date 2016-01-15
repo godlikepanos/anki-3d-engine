@@ -11,4 +11,3 @@
 #include <anki/event/LightEvent.h>
 #include <anki/event/JitterMoveEvent.h>
 #include <anki/event/AnimationEvent.h>
-

@@ -10,7 +10,8 @@
 #include <anki/resource/ShaderResource.h>
 #include <anki/resource/TextureResource.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class GrManager;
@@ -20,19 +21,20 @@ struct Vertex;
 /// @{
 
 /// Implements UiImage.
-class UiImageImpl: public UiImage
+class UiImageImpl : public UiImage
 {
 public:
 	UiImageImpl(UiInterface* i)
 		: UiImage(i)
-	{}
+	{
+	}
 
 	TextureResourcePtr m_resource;
 	TexturePtr m_texture;
 };
 
 /// Implements UiInterface.
-class UiInterfaceImpl final: public UiInterface
+class UiInterfaceImpl final : public UiInterface
 {
 public:
 	UiInterfaceImpl(UiAllocator alloc);
@@ -45,15 +47,19 @@ public:
 		const CString& filename, IntrusivePtr<UiImage>& img) override;
 
 	ANKI_USE_RESULT Error createR8Image(const SArray<U8>& data,
-		const UVec2& size, IntrusivePtr<UiImage>& img) override;
+		const UVec2& size,
+		IntrusivePtr<UiImage>& img) override;
 
-	ANKI_USE_RESULT Error readFile(const CString& filename,
-		DArrayAuto<U8>& data) override;
+	ANKI_USE_RESULT Error readFile(
+		const CString& filename, DArrayAuto<U8>& data) override;
 
-	void drawImage(UiImagePtr image, const Rect& uvs,
-		const Rect& drawingRect, const UVec2& canvasSize) override;
+	void drawImage(UiImagePtr image,
+		const Rect& uvs,
+		const Rect& drawingRect,
+		const UVec2& canvasSize) override;
 
-	void drawLines(const SArray<UVec2>& positions, const Color& color,
+	void drawLines(const SArray<UVec2>& positions,
+		const Color& color,
 		const UVec2& canvasSize) override;
 
 	void beginRendering(CommandBufferPtr cmdb);

@@ -16,7 +16,8 @@
 
 #include <anki/event/EventManager.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class MainRenderer;
@@ -39,8 +40,7 @@ public:
 
 	~SceneGraph();
 
-	ANKI_USE_RESULT Error init(
-		AllocAlignedCallback allocCb,
+	ANKI_USE_RESULT Error init(AllocAlignedCallback allocCb,
 		void* allocCbData,
 		ThreadPool* threadpool,
 		ResourceManager* resources,
@@ -117,8 +117,8 @@ public:
 		return *m_threadpool;
 	}
 
-	ANKI_USE_RESULT Error update(F32 prevUpdateTime, F32 crntTime,
-		MainRenderer& renderer);
+	ANKI_USE_RESULT Error update(
+		F32 prevUpdateTime, F32 crntTime, MainRenderer& renderer);
 
 	SceneNode& findSceneNode(const CString& name);
 	SceneNode* tryFindSceneNode(const CString& name);
@@ -210,7 +210,7 @@ private:
 
 	IntrusiveList<SceneNode> m_nodes;
 	U32 m_nodesCount = 0;
-	//SceneDictionary<SceneNode*> m_dict;
+	// SceneDictionary<SceneNode*> m_dict;
 
 	Vec3 m_ambientCol = Vec3(1.0); ///< The global ambient color
 	Timestamp m_ambiendColorUpdateTimestamp = getGlobalTimestamp();
@@ -293,4 +293,3 @@ Error SceneGraph::iterateSceneNodes(PtrSize begin, PtrSize end, Func func)
 /// @}
 
 } // end namespace anki
-

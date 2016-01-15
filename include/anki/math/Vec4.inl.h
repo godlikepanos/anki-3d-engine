@@ -5,7 +5,8 @@
 
 #include <anki/math/CommonSrc.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // Friends                                                                     =
@@ -69,8 +70,7 @@ inline TVec4<F32>::TVec4(const F32 arr[])
 
 //==============================================================================
 template<>
-inline TVec4<F32>::TVec4(const F32 x_, const F32 y_, const F32 z_, 
-	const F32 w_)
+inline TVec4<F32>::TVec4(const F32 x_, const F32 y_, const F32 z_, const F32 w_)
 {
 	m_simd = _mm_set_ps(w_, z_, y_, x_);
 }
@@ -166,12 +166,12 @@ inline TVec4<F32> TVec4<F32>::cross(const TVec4<F32>& b) const
 	const auto mask0 = _MM_SHUFFLE(3, 0, 2, 1);
 	const auto mask1 = _MM_SHUFFLE(3, 1, 0, 2);
 
-	__m128 tmp0 = _mm_mul_ps(_mm_shuffle_ps(a.m_simd, a.m_simd, mask0), 
+	__m128 tmp0 = _mm_mul_ps(_mm_shuffle_ps(a.m_simd, a.m_simd, mask0),
 		_mm_shuffle_ps(b.m_simd, b.m_simd, mask1));
-	__m128 tmp1 = _mm_mul_ps(_mm_shuffle_ps(a.m_simd, a.m_simd, mask1), 
+	__m128 tmp1 = _mm_mul_ps(_mm_shuffle_ps(a.m_simd, a.m_simd, mask1),
 		_mm_shuffle_ps(b.m_simd, b.m_simd, mask0));
 
-	return TVec4<F32>(_mm_sub_ps(tmp0, tmp1));	
+	return TVec4<F32>(_mm_sub_ps(tmp0, tmp1));
 }
 
 //==============================================================================
@@ -208,7 +208,7 @@ template<>
 inline TVec4<F32> TVec4<F32>::Base::getAbs() const
 {
 	static const __m128 signMask = _mm_set1_ps(-0.0f);
-	return TVec4<F32>(_mm_andnot_ps(signMask, m_simd));	
+	return TVec4<F32>(_mm_andnot_ps(signMask, m_simd));
 }
 
 #elif ANKI_SIMD == ANKI_SIMD_NEON
@@ -217,7 +217,7 @@ inline TVec4<F32> TVec4<F32>::Base::getAbs() const
 // NEON specializations                                                        =
 //==============================================================================
 
-#	error "TODO"
+#error "TODO"
 
 #endif
 

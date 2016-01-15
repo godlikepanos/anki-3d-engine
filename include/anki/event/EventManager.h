@@ -11,7 +11,8 @@
 #include <anki/scene/Common.h>
 #include <anki/Math.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class SceneGraph;
@@ -105,4 +106,3 @@ private:
 /// @}
 
 } // end namespace anki
-

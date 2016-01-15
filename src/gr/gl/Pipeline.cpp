@@ -7,19 +7,22 @@
 #include <anki/gr/gl/PipelineImpl.h>
 #include <anki/gr/gl/CommandBufferImpl.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 Pipeline::Pipeline(GrManager* manager)
 	: GrObject(manager)
-{}
+{
+}
 
 //==============================================================================
 Pipeline::~Pipeline()
-{}
+{
+}
 
 //==============================================================================
-class CreatePipelineCommand final: public GlCommand
+class CreatePipelineCommand final : public GlCommand
 {
 public:
 	PipelinePtr m_ppline;
@@ -28,7 +31,8 @@ public:
 	CreatePipelineCommand(Pipeline* ppline, const PipelineInitializer& init)
 		: m_ppline(ppline)
 		, m_init(init)
-	{}
+	{
+	}
 
 	Error operator()(GlState&)
 	{
@@ -57,4 +61,3 @@ void Pipeline::create(const PipelineInitializer& init)
 }
 
 } // end namespace anki
-

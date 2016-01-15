@@ -9,7 +9,8 @@
 #include <anki/util/Singleton.h>
 #include <anki/util/Thread.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class File;
@@ -25,7 +26,7 @@ class Logger
 {
 public:
 	/// Logger message type
-	enum class MessageType: U8
+	enum class MessageType : U8
 	{
 		NORMAL,
 		ERROR,
@@ -60,12 +61,19 @@ public:
 	void addFileMessageHandler(File* file);
 
 	/// Send a message
-	void write(const char* file, int line, const char* func,
-		MessageType type, const char* msg);
+	void write(const char* file,
+		int line,
+		const char* func,
+		MessageType type,
+		const char* msg);
 
 	/// Send a formated message
-	void writeFormated(const char* file, int line, const char* func,
-		MessageType type, const char* fmt, ...);
+	void writeFormated(const char* file,
+		int line,
+		const char* func,
+		MessageType type,
+		const char* fmt,
+		...);
 
 private:
 	class Handler
@@ -81,7 +89,8 @@ private:
 		Handler(void* data, MessageHandlerCallback callback)
 			: m_data(data)
 			, m_callback(callback)
-		{}
+		{
+		}
 	};
 
 	Mutex m_mutex; ///< For thread safety
@@ -94,11 +103,11 @@ private:
 
 typedef Singleton<Logger> LoggerSingleton;
 
-#define ANKI_LOGGER_MESSAGE(t, ...) \
-	do \
-	{ \
-		LoggerSingleton::get().writeFormated(ANKI_FILE, __LINE__, ANKI_FUNC, \
-			t, __VA_ARGS__); \
+#define ANKI_LOGGER_MESSAGE(t, ...)                                            \
+	do                                                                         \
+	{                                                                          \
+		LoggerSingleton::get().writeFormated(                                  \
+			ANKI_FILE, __LINE__, ANKI_FUNC, t, __VA_ARGS__);                   \
 	} while(false);
 /// @}
 
@@ -106,21 +115,20 @@ typedef Singleton<Logger> LoggerSingleton;
 /// @{
 
 /// Log information message.
-#define ANKI_LOGI(...) \
+#define ANKI_LOGI(...)                                                         \
 	ANKI_LOGGER_MESSAGE(Logger::MessageType::NORMAL, __VA_ARGS__)
 
 /// Log warning message.
-#define ANKI_LOGW(...) \
+#define ANKI_LOGW(...)                                                         \
 	ANKI_LOGGER_MESSAGE(Logger::MessageType::WARNING, __VA_ARGS__)
 
 /// Log error message.
-#define ANKI_LOGE(...) \
+#define ANKI_LOGE(...)                                                         \
 	ANKI_LOGGER_MESSAGE(Logger::MessageType::ERROR, __VA_ARGS__)
 
 /// Log fatal message. It will will abort.
-#define ANKI_LOGF(...) \
+#define ANKI_LOGF(...)                                                         \
 	ANKI_LOGGER_MESSAGE(Logger::MessageType::FATAL, __VA_ARGS__)
 /// @}
 
 } // end namespace anki
-

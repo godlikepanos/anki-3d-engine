@@ -7,13 +7,14 @@
 
 #include <anki/gr/GrObject.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup graphics
 /// @{
 
 /// Occlusion query.
-class OcclusionQuery: public GrObject
+class OcclusionQuery : public GrObject
 {
 public:
 	/// Construct.
@@ -37,4 +38,3 @@ private:
 /// @}
 
 } // end namespace anki
-

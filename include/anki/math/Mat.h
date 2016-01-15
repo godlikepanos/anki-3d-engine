@@ -8,7 +8,8 @@
 #include <anki/math/CommonIncludes.h>
 #include <anki/math/Vec.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup math
 /// @{
@@ -20,7 +21,12 @@ namespace anki {
 /// @tparam TM The type of the derived class. Eg TMat3.
 /// @tparam TVJ The vector type of the row.
 /// @tparam TVI The vector type of the column.
-template<typename T, U J, U I, typename TSimd, typename TM, typename TVJ,
+template<typename T,
+	U J,
+	U I,
+	typename TSimd,
+	typename TM,
+	typename TVJ,
 	typename TVI>
 class TMat
 {
@@ -33,7 +39,8 @@ public:
 	/// @name Constructors
 	/// @{
 	TMat()
-	{}
+	{
+	}
 
 	TMat(const TMat& b)
 	{
@@ -483,8 +490,7 @@ public:
 		m(2, 2) = m(2, 2) * cosa - m(2, 1) * sina;
 
 		// zAxis.normalize();
-		T len = sqrt(m(0, 2) * m(0, 2)
-			+ m(1, 2) * m(1, 2) + m(2, 2) * m(2, 2));
+		T len = sqrt(m(0, 2) * m(0, 2) + m(1, 2) * m(1, 2) + m(2, 2) * m(2, 2));
 		m(0, 2) /= len;
 		m(1, 2) /= len;
 		m(2, 2) /= len;
@@ -511,8 +517,7 @@ public:
 		m(2, 2) = m(2, 2) * cosa + m(2, 0) * sina;
 
 		// zAxis.normalize();
-		T len = sqrt(m(0, 2) * m(0, 2)
-			+ m(1, 2) * m(1, 2) + m(2, 2) * m(2, 2));
+		T len = sqrt(m(0, 2) * m(0, 2) + m(1, 2) * m(1, 2) + m(2, 2) * m(2, 2));
 		m(0, 2) /= len;
 		m(1, 2) /= len;
 		m(2, 2) /= len;
@@ -537,8 +542,7 @@ public:
 		m(2, 0) = m(2, 0) * cosa + m(2, 1) * sina;
 
 		// xAxis.normalize();
-		T len = sqrt(m(0, 0) * m(0, 0)
-			+ m(1, 0) * m(1, 0) + m(2, 0) * m(2, 0));
+		T len = sqrt(m(0, 0) * m(0, 0) + m(1, 0) * m(1, 0) + m(2, 0) * m(2, 0));
 		m(0, 0) /= len;
 		m(1, 0) /= len;
 		m(2, 0) /= len;
@@ -663,8 +667,7 @@ public:
 	{
 		if(ROW_SIZE == 4)
 		{
-			ANKI_ASSERT(isZero<T>(v[3] - static_cast<T>(1))
-				&& "w should be 1");
+			ANKI_ASSERT(isZero<T>(v[3] - static_cast<T>(1)) && "w should be 1");
 		}
 		setColumn(3, v);
 	}
@@ -775,4 +778,3 @@ protected:
 /// @}
 
 } // end namespace anki
-

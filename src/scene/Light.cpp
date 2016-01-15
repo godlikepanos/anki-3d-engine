@@ -9,19 +9,21 @@
 #include <anki/scene/SpatialComponent.h>
 #include <anki/scene/FrustumComponent.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // LightFeedbackComponent                                                      =
 //==============================================================================
 
 /// Feedback component.
-class LightFeedbackComponent: public SceneComponent
+class LightFeedbackComponent : public SceneComponent
 {
 public:
 	LightFeedbackComponent(SceneNode* node)
 		: SceneComponent(SceneComponent::Type::NONE, node)
-	{}
+	{
+	}
 
 	Error update(SceneNode& node, F32, F32, Bool& updated) override
 	{
@@ -53,17 +55,17 @@ public:
 //==============================================================================
 Light::Light(SceneGraph* scene)
 	: SceneNode(scene)
-{}
+{
+}
 
 //==============================================================================
 Light::~Light()
-{}
-
+{
+}
 
 //==============================================================================
-Error Light::create(const CString& name,
-	LightComponent::LightType type,
-	CollisionShape* shape)
+Error Light::create(
+	const CString& name, LightComponent::LightType type, CollisionShape* shape)
 {
 	ANKI_CHECK(SceneNode::create(name));
 
@@ -96,22 +98,21 @@ void Light::frameUpdateCommon()
 	Bool castsShadow = lc.getShadowEnabled();
 
 	Error err = iterateComponentsOfType<FrustumComponent>(
-		[&](FrustumComponent& frc) -> Error
-	{
-		if(castsShadow)
-		{
-			frc.setEnabledVisibilityTests(
-				FrustumComponent::VisibilityTestFlag::TEST_SHADOW_CASTERS);
-		}
-		else
-		{
-			frc.setEnabledVisibilityTests(
-				FrustumComponent::VisibilityTestFlag::TEST_NONE);
-		}
+		[&](FrustumComponent& frc) -> Error {
+			if(castsShadow)
+			{
+				frc.setEnabledVisibilityTests(
+					FrustumComponent::VisibilityTestFlag::TEST_SHADOW_CASTERS);
+			}
+			else
+			{
+				frc.setEnabledVisibilityTests(
+					FrustumComponent::VisibilityTestFlag::TEST_NONE);
+			}
 
-		return ErrorCode::NONE;
-	});
-	(void) err;
+			return ErrorCode::NONE;
+		});
+	(void)err;
 }
 
 //==============================================================================
@@ -135,11 +136,10 @@ void Light::onShapeUpdateCommon(LightComponent& light)
 {
 	// Update the frustums
 	Error err = iterateComponentsOfType<FrustumComponent>(
-		[&](FrustumComponent& fr) -> Error
-	{
-		fr.markShapeForUpdate();
-		return ErrorCode::NONE;
-	});
+		[&](FrustumComponent& fr) -> Error {
+			fr.markShapeForUpdate();
+			return ErrorCode::NONE;
+		});
 
 	(void)err;
 
@@ -175,7 +175,8 @@ Error Light::loadLensFlare(const CString& filename)
 //==============================================================================
 PointLight::PointLight(SceneGraph* scene)
 	: Light(scene)
-{}
+{
+}
 
 //==============================================================================
 PointLight::~PointLight()
@@ -197,17 +198,16 @@ void PointLight::onMoveUpdate(MoveComponent& move)
 	// Update the frustums
 	U count = 0;
 	Error err = iterateComponentsOfType<FrustumComponent>(
-		[&](FrustumComponent& fr) -> Error
-	{
-		Transform trf = m_shadowData[count].m_localTrf;
-		trf.setOrigin(move.getWorldTransform().getOrigin());
+		[&](FrustumComponent& fr) -> Error {
+			Transform trf = m_shadowData[count].m_localTrf;
+			trf.setOrigin(move.getWorldTransform().getOrigin());
 
-		fr.getFrustum().resetTransform(trf);
-		fr.markTransformForUpdate();
-		++count;
+			fr.getFrustum().resetTransform(trf);
+			fr.markTransformForUpdate();
+			++count;
 
-		return ErrorCode::NONE;
-	});
+			return ErrorCode::NONE;
+		});
 
 	(void)err;
 
@@ -266,8 +266,8 @@ Error PointLight::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 			m_shadowData[i].m_frustum.resetTransform(trf);
 
 			FrustumComponent* comp =
-				getSceneAllocator().newInstance<FrustumComponent>(this,
-				&m_shadowData[i].m_frustum);
+				getSceneAllocator().newInstance<FrustumComponent>(
+					this, &m_shadowData[i].m_frustum);
 
 			addComponent(comp, true);
 		}
@@ -285,13 +285,14 @@ Error PointLight::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 //==============================================================================
 SpotLight::SpotLight(SceneGraph* scene)
 	: Light(scene)
-{}
+{
+}
 
 //==============================================================================
 Error SpotLight::create(const CString& name)
 {
-	ANKI_CHECK(Light::create(
-		name, LightComponent::LightType::SPOT, &m_frustum));
+	ANKI_CHECK(
+		Light::create(name, LightComponent::LightType::SPOT, &m_frustum));
 
 	FrustumComponent* fr =
 		getSceneAllocator().newInstance<FrustumComponent>(this, &m_frustum);
@@ -308,13 +309,12 @@ void SpotLight::onMoveUpdate(MoveComponent& move)
 {
 	// Update the frustums
 	Error err = iterateComponentsOfType<FrustumComponent>(
-		[&](FrustumComponent& fr) -> Error
-	{
-		fr.markTransformForUpdate();
-		fr.getFrustum().resetTransform(move.getWorldTransform());
+		[&](FrustumComponent& fr) -> Error {
+			fr.markTransformForUpdate();
+			fr.getFrustum().resetTransform(move.getWorldTransform());
 
-		return ErrorCode::NONE;
-	});
+			return ErrorCode::NONE;
+		});
 
 	(void)err;
 
@@ -326,8 +326,7 @@ void SpotLight::onShapeUpdate(LightComponent& light)
 {
 	onShapeUpdateCommon(light);
 	m_frustum.setAll(
-		light.getOuterAngle(), light.getOuterAngle(),
-		0.5, light.getDistance());
+		light.getOuterAngle(), light.getOuterAngle(), 0.5, light.getDistance());
 }
 
 //==============================================================================

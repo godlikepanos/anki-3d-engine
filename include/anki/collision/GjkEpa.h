@@ -7,7 +7,8 @@
 
 #include <anki/Math.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class ConvexShape;
@@ -51,8 +52,10 @@ private:
 	Vec4 m_dir;
 
 	/// Compute the support
-	static void support(const ConvexShape& shape0, const ConvexShape& shape1,
-		const Vec4& dir, Support& support);
+	static void support(const ConvexShape& shape0,
+		const ConvexShape& shape1,
+		const Vec4& dir,
+		Support& support);
 
 	/// Update simplex
 	Bool update(const Support& a);
@@ -60,4 +63,3 @@ private:
 /// @}
 
 } // end namespace anki
-

@@ -9,7 +9,8 @@
 #include <anki/core/Timestamp.h>
 #include <anki/resource/Forward.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class ResourceManager;
@@ -28,8 +29,7 @@ public:
 
 	~MainRenderer();
 
-	ANKI_USE_RESULT Error create(
-		ThreadPool* threadpool,
+	ANKI_USE_RESULT Error create(ThreadPool* threadpool,
 		ResourceManager* resources,
 		GrManager* gl,
 		AllocAlignedCallback allocCb,
@@ -84,4 +84,3 @@ private:
 /// @}
 
 } // end namespace anki
-

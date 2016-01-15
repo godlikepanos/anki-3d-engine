@@ -10,7 +10,8 @@
 #include <anki/collision/Aabb.h>
 #include <anki/core/Timestamp.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class FrustumComponent;
@@ -26,7 +27,8 @@ class ClustererTestResult
 
 public:
 	ClustererTestResult()
-	{}
+	{
+	}
 
 	~ClustererTestResult()
 	{
@@ -70,12 +72,15 @@ class Clusterer
 
 public:
 	Clusterer()
-	{}
+	{
+	}
 
 	~Clusterer();
 
-	void init(const GenericMemoryPoolAllocator<U8>& alloc, U clusterCountX,
-		U clusterCountY, U clusterCountZ);
+	void init(const GenericMemoryPoolAllocator<U8>& alloc,
+		U clusterCountX,
+		U clusterCountY,
+		U clusterCountZ);
 
 	/// Prepare for visibility tests.
 	void prepare(ThreadPool& threadpool, const FrustumComponent& frc);
@@ -84,7 +89,8 @@ public:
 		ClustererTestResult& rez) const;
 
 	/// Bin collision shape.
-	void bin(const CollisionShape& cs, const Aabb& csBox,
+	void bin(const CollisionShape& cs,
+		const Aabb& csBox,
 		ClustererTestResult& rez) const;
 
 	/// A value that will be used in shaders to calculate the cluster index.
@@ -145,12 +151,18 @@ private:
 
 	U calcZ(F32 zVspace) const;
 
-	void binGeneric(const CollisionShape& cs, U xBegin, U xEnd, U yBegin,
-		U yEnd, U zBegin, U zEnd, ClustererTestResult& rez) const;
+	void binGeneric(const CollisionShape& cs,
+		U xBegin,
+		U xEnd,
+		U yBegin,
+		U yEnd,
+		U zBegin,
+		U zEnd,
+		ClustererTestResult& rez) const;
 
 	/// Special fast path for binning spheres.
-	void binSphere(const Sphere& s, const Aabb& aabb,
-		ClustererTestResult& rez) const;
+	void binSphere(
+		const Sphere& s, const Aabb& aabb, ClustererTestResult& rez) const;
 
 	void computeSplitRange(const CollisionShape& cs, U& zBegin, U& zEnd) const;
 
@@ -163,11 +175,9 @@ private:
 	void calcPlaneX(U j, const Vec4& projParams);
 
 	/// Call this when a shape is visible by all tiles.
-	void totallyInsideAllTiles(U zBegin, U zEnd,
-		ClustererTestResult& rez) const;
+	void totallyInsideAllTiles(
+		U zBegin, U zEnd, ClustererTestResult& rez) const;
 };
 /// @}
 
 } // end namespace anki
-
-

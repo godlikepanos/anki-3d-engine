@@ -9,18 +9,20 @@
 #include <anki/gr/ResourceGroup.h>
 #include <anki/util/DArray.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup opengl
 /// @{
 
 /// Resource group implementation.
-class ResourceGroupImpl: public GlObject
+class ResourceGroupImpl : public GlObject
 {
 public:
 	ResourceGroupImpl(GrManager* manager)
 		: GlObject(manager)
-	{}
+	{
+	}
 
 	~ResourceGroupImpl()
 	{
@@ -65,12 +67,14 @@ private:
 	DArray<IntrusivePtr<GrObject>> m_refs;
 
 	template<typename InBindings, typename OutBindings>
-	void initBuffers(const InBindings& in, OutBindings& out, U8& count,
-		U& resourcesCount, U& dynCount);
+	void initBuffers(const InBindings& in,
+		OutBindings& out,
+		U8& count,
+		U& resourcesCount,
+		U& dynCount);
 
 	void initResourceReferences(const ResourceGroupInitializer& init, U count);
 };
 /// @}
 
 } // end namespace anki
-

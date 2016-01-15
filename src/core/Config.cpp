@@ -5,7 +5,8 @@
 
 #include <anki/core/Config.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 Config::Config()
@@ -108,7 +109,7 @@ Config::Config()
 
 //==============================================================================
 Config::~Config()
-{}
+{
+}
 
 } // end namespace anki
-

@@ -8,7 +8,8 @@
 #include <anki/script/LuaBinder.h>
 #include <anki/Renderer.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // Dbg                                                                         =
@@ -39,23 +40,23 @@ static inline int pwrapDbggetEnabled(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 1);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameDbg, -2784798555522127122, ud))
 	{
 		return -1;
 	}
-	
+
 	Dbg* self = ud->getData<Dbg>();
-	
+
 	// Call the method
 	Bool ret = self->getEnabled();
-	
+
 	// Push return value
 	lua_pushboolean(l, ret);
-	
+
 	return 1;
 }
 
@@ -68,7 +69,7 @@ static int wrapDbggetEnabled(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -83,27 +84,27 @@ static inline int pwrapDbgsetEnabled(lua_State* l)
 	(void)voidp;
 	PtrSize size;
 	(void)size;
-	
+
 	LuaBinder::checkArgsCount(l, 2);
-	
+
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameDbg, -2784798555522127122, ud))
 	{
 		return -1;
 	}
-	
+
 	Dbg* self = ud->getData<Dbg>();
-	
+
 	// Pop arguments
 	Bool arg0;
 	if(LuaBinder::checkNumber(l, 2, arg0))
 	{
 		return -1;
 	}
-	
+
 	// Call the method
 	self->setEnabled(arg0);
-	
+
 	return 0;
 }
 
@@ -116,7 +117,7 @@ static int wrapDbgsetEnabled(lua_State* l)
 	{
 		return res;
 	}
-	
+
 	lua_error(l);
 	return 0;
 }
@@ -139,4 +140,3 @@ void wrapModuleRenderer(lua_State* l)
 }
 
 } // end namespace anki
-

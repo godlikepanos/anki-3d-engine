@@ -7,19 +7,22 @@
 #include <anki/gr/gl/OcclusionQueryImpl.h>
 #include <anki/gr/gl/CommandBufferImpl.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 OcclusionQuery::OcclusionQuery(GrManager* manager)
 	: GrObject(manager)
-{}
+{
+}
 
 //==============================================================================
 OcclusionQuery::~OcclusionQuery()
-{}
+{
+}
 
 //==============================================================================
-class CreateOqCommand final: public GlCommand
+class CreateOqCommand final : public GlCommand
 {
 public:
 	OcclusionQueryPtr m_q;
@@ -28,7 +31,8 @@ public:
 	CreateOqCommand(OcclusionQuery* q, OcclusionQueryResultBit condRenderingBit)
 		: m_q(q)
 		, m_condRenderingBit(condRenderingBit)
-	{}
+	{
+	}
 
 	Error operator()(GlState&)
 	{

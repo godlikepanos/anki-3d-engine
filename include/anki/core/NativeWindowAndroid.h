@@ -10,7 +10,8 @@
 #include <GLES3/gl3.h>
 #include <android_native_app_glue.h>
 
-namespace anki {
+namespace anki
+{
 
 /// Native window implementation for Android
 struct NativeWindowImpl
@@ -29,4 +30,3 @@ struct NativeWindowImpl
 };
 
 } // end namespace anki
-

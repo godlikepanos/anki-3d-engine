@@ -7,10 +7,11 @@
 
 #include <anki/resource/Common.h>
 
-namespace anki {
+namespace anki
+{
 
 /// The AnKi passes visible to materials.
-enum class Pass: U8
+enum class Pass : U8
 {
 	MS_FS, ///< MS or FS
 	SM,
@@ -38,11 +39,13 @@ public:
 
 	RenderingKey()
 		: RenderingKey(Pass::MS_FS, 0, false, 1)
-	{}
+	{
+	}
 
 	RenderingKey(const RenderingKey& b)
 		: RenderingKey(b.m_pass, b.m_lod, b.m_tessellation, b.m_instanceCount)
-	{}
+	{
+	}
 };
 
 /// The hash function
@@ -69,4 +72,3 @@ public:
 };
 
 } // end namespace anki
-

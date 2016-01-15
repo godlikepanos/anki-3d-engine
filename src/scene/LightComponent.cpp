@@ -5,7 +5,8 @@
 
 #include <anki/scene/LightComponent.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 LightComponent::LightComponent(SceneNode* node, LightType type)
@@ -34,4 +35,3 @@ Error LightComponent::update(SceneNode&, F32, F32, Bool& updated)
 }
 
 } // end namespace anki
-

@@ -7,7 +7,8 @@
 #define private public
 #include "anki/resource/ResourceFilesystem.h"
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 ANKI_TEST(Resource, ResourceFilesystem)

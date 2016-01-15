@@ -8,13 +8,13 @@
 #include <cstdio>
 
 #ifndef ANKI_TESTS_FOO_VERBOSE
-#	define ANKI_TESTS_FOO_VERBOSE 0
+#define ANKI_TESTS_FOO_VERBOSE 0
 #endif
 
 #if ANKI_TESTS_FOO_VERBOSE
-#	define ANKI_TESTS_FOO_PRINT() printf("%s\n", __PRETTY_FUNCTION__)
+#define ANKI_TESTS_FOO_PRINT() printf("%s\n", __PRETTY_FUNCTION__)
 #else
-#	define ANKI_TESTS_FOO_PRINT() ((void)0)
+#define ANKI_TESTS_FOO_PRINT() ((void)0)
 #endif
 
 /// Struct for testing
@@ -31,21 +31,21 @@ struct Foo
 	}
 
 	Foo(int x_)
-	:	x(x_)
+		: x(x_)
 	{
 		ANKI_TESTS_FOO_PRINT();
 		++constructorCallCount;
 	}
 
 	Foo(const Foo& b)
-	:	x(b.x)
+		: x(b.x)
 	{
 		ANKI_TESTS_FOO_PRINT();
 		++constructorCallCount;
 	}
 
 	Foo(Foo&& b)
-	:	x(b.x)
+		: x(b.x)
 	{
 		ANKI_TESTS_FOO_PRINT();
 		b.x = 0;
@@ -88,4 +88,3 @@ struct Foo
 		destructorCallCount = constructorCallCount = 0;
 	}
 };
-

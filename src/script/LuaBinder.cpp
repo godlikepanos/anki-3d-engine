@@ -8,7 +8,8 @@
 #include <iostream>
 #include <cstring>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 static int luaPanic(lua_State* l)
@@ -19,15 +20,16 @@ static int luaPanic(lua_State* l)
 
 //==============================================================================
 LuaBinder::LuaBinder()
-{}
+{
+}
 
 //==============================================================================
 LuaBinder::~LuaBinder()
 {
 	lua_close(m_l);
 
-	ANKI_ASSERT(m_alloc.getMemoryPool().getAllocationsCount() == 0
-		&& "Leaking memory");
+	ANKI_ASSERT(
+		m_alloc.getMemoryPool().getAllocationsCount() == 0 && "Leaking memory");
 }
 
 //==============================================================================
@@ -83,7 +85,7 @@ void* LuaBinder::luaAllocCallback(
 	}
 #else
 	void* out = nullptr;
-	if (nsize == 0)
+	if(nsize == 0)
 	{
 		free(ptr);
 	}
@@ -119,8 +121,8 @@ void LuaBinder::checkArgsCount(lua_State* l, I argsCount)
 	I actualArgsCount = lua_gettop(l);
 	if(argsCount != actualArgsCount)
 	{
-		luaL_error(l, "Expecting %d arguments, got %d", argsCount,
-			actualArgsCount);
+		luaL_error(
+			l, "Expecting %d arguments, got %d", argsCount, actualArgsCount);
 	}
 }
 
@@ -131,8 +133,8 @@ void LuaBinder::createClass(lua_State* l, const char* className)
 	lua_setglobal(l, className); // pop and make global
 	luaL_newmetatable(l, className); // push
 	lua_pushstring(l, "__index"); // push
-	lua_pushvalue(l, -2);  // pushes copy of the metatable
-	lua_settable(l, -3);  // pop*2: metatable.__index = metatable
+	lua_pushvalue(l, -2); // pushes copy of the metatable
+	lua_settable(l, -3); // pop*2: metatable.__index = metatable
 
 	// After all these the metatable is in the top of tha stack
 }
@@ -147,8 +149,10 @@ void LuaBinder::pushLuaCFuncMethod(
 }
 
 //==============================================================================
-void LuaBinder::pushLuaCFuncStaticMethod(lua_State* l, const char* className,
-	const char* name, lua_CFunction luafunc)
+void LuaBinder::pushLuaCFuncStaticMethod(lua_State* l,
+	const char* className,
+	const char* name,
+	lua_CFunction luafunc)
 {
 	lua_getglobal(l, className); // push
 	lua_pushcfunction(l, luafunc); // push
@@ -206,8 +210,10 @@ Error LuaBinder::checkString(lua_State* l, I32 stackIdx, const char*& out)
 }
 
 //==============================================================================
-Error LuaBinder::checkUserData(
-	lua_State* l, I32 stackIdx, const char* typeName, I64 typeSignature,
+Error LuaBinder::checkUserData(lua_State* l,
+	I32 stackIdx,
+	const char* typeName,
+	I64 typeSignature,
 	UserData*& out)
 {
 	Error err = ErrorCode::NONE;
@@ -236,8 +242,10 @@ Error LuaBinder::checkUserData(
 
 	if(err)
 	{
-		lua_pushfstring(l, "Userdata of %s expected. Got %s",
-			typeName, luaL_typename(l, stackIdx));
+		lua_pushfstring(l,
+			"Userdata of %s expected. Got %s",
+			typeName,
+			luaL_typename(l, stackIdx));
 	}
 
 	return err;

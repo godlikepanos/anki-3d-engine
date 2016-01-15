@@ -8,7 +8,8 @@
 #include <anki/Gr.h>
 #include <anki/util/Ptr.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class Renderer;
@@ -38,4 +39,3 @@ inline void computeLinearizeDepthOptimal(F32 near, F32 far, F32& a, F32& b)
 }
 
 } // end namespace anki
-

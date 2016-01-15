@@ -9,14 +9,15 @@
 #include <anki/scene/SceneNode.h>
 #include <anki/util/Rtti.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // Misc                                                                        =
 //==============================================================================
 
 //==============================================================================
-class UpdatePlanesPerspectiveCameraTask: public ThreadPool::Task
+class UpdatePlanesPerspectiveCameraTask : public ThreadPool::Task
 {
 public:
 	Clusterer* m_clusterer = nullptr;
@@ -54,8 +55,8 @@ Clusterer::~Clusterer()
 }
 
 //==============================================================================
-void Clusterer::initTestResults(const GenericMemoryPoolAllocator<U8>& alloc,
-	ClustererTestResult& rez) const
+void Clusterer::initTestResults(
+	const GenericMemoryPoolAllocator<U8>& alloc, ClustererTestResult& rez) const
 {
 	rez.m_clusterIds.create(alloc, getClusterCount());
 	rez.m_count = 0;
@@ -113,7 +114,9 @@ void Clusterer::calcPlaneX(U j, const Vec4& projParams)
 
 //==============================================================================
 void Clusterer::init(const GenericMemoryPoolAllocator<U8>& alloc,
-	U clusterCountX, U clusterCountY, U clusterCountZ)
+	U clusterCountX,
+	U clusterCountY,
+	U clusterCountZ)
 {
 	m_alloc = alloc;
 	m_counts[0] = clusterCountX;
@@ -122,8 +125,7 @@ void Clusterer::init(const GenericMemoryPoolAllocator<U8>& alloc,
 
 	// Init planes. One plane for each direction, plus near/far plus the world
 	// space of those
-	U planesCount =
-		(m_counts[0] - 1) * 2 // planes J
+	U planesCount = (m_counts[0] - 1) * 2 // planes J
 		+ (m_counts[1] - 1) * 2 // planes I
 		+ 2; // Near and far planes
 
@@ -201,8 +203,8 @@ void Clusterer::prepare(ThreadPool& threadPool, const FrustumComponent& frc)
 }
 
 //==============================================================================
-void Clusterer::computeSplitRange(const CollisionShape& cs, U& zBegin,
-	U& zEnd) const
+void Clusterer::computeSplitRange(
+	const CollisionShape& cs, U& zBegin, U& zEnd) const
 {
 	// Find the distance between cs and near plane
 	F32 dist = cs.testPlane(*m_nearPlane);
@@ -223,8 +225,8 @@ void Clusterer::computeSplitRange(const CollisionShape& cs, U& zBegin,
 }
 
 //==============================================================================
-void Clusterer::bin(const CollisionShape& cs, const Aabb& csBox,
-	ClustererTestResult& rez) const
+void Clusterer::bin(
+	const CollisionShape& cs, const Aabb& csBox, ClustererTestResult& rez) const
 {
 	rez.m_count = 0;
 
@@ -257,8 +259,8 @@ void Clusterer::totallyInsideAllTiles(
 }
 
 //==============================================================================
-void Clusterer::binSphere(const Sphere& s, const Aabb& aabb,
-	ClustererTestResult& rez) const
+void Clusterer::binSphere(
+	const Sphere& s, const Aabb& aabb, ClustererTestResult& rez) const
 {
 	const Mat4& vp = m_frc->getViewProjectionMatrix();
 	const Mat4& v = m_frc->getViewMatrix();
@@ -330,10 +332,10 @@ void Clusterer::binSphere(const Sphere& s, const Aabb& aabb,
 	I yEnd = ceil(tcountY * max2.y());
 	yEnd = min<I>(yEnd, m_counts[1]);
 
-	ANKI_ASSERT(xBegin >= 0 && xBegin <= tcountX
-		&& xEnd >= 0 && xEnd <= tcountX);
-	ANKI_ASSERT(yBegin >= 0 && yBegin <= tcountX
-		&& yEnd >= 0 && yBegin <= tcountY);
+	ANKI_ASSERT(
+		xBegin >= 0 && xBegin <= tcountX && xEnd >= 0 && xEnd <= tcountX);
+	ANKI_ASSERT(
+		yBegin >= 0 && yBegin <= tcountX && yEnd >= 0 && yBegin <= tcountY);
 
 	Vec2 tileSize(1.0 / tcountX, 1.0 / tcountY);
 
@@ -360,7 +362,7 @@ void Clusterer::binSphere(const Sphere& s, const Aabb& aabb,
 				{
 					cp[i] = tileMax[i];
 				}
-				else if (c[i] < tileMin[i])
+				else if(c[i] < tileMin[i])
 				{
 					cp[i] = tileMin[i];
 				}
@@ -393,8 +395,14 @@ void Clusterer::binSphere(const Sphere& s, const Aabb& aabb,
 }
 
 //==============================================================================
-void Clusterer::binGeneric(const CollisionShape& cs, U xBegin, U xEnd, U yBegin,
-	U yEnd, U zBegin, U zEnd, ClustererTestResult& rez) const
+void Clusterer::binGeneric(const CollisionShape& cs,
+	U xBegin,
+	U xEnd,
+	U yBegin,
+	U yEnd,
+	U zBegin,
+	U zEnd,
+	ClustererTestResult& rez) const
 {
 	U my = (yEnd - yBegin) / 2;
 	U mx = (xEnd - xBegin) / 2;
@@ -419,14 +427,14 @@ void Clusterer::binGeneric(const CollisionShape& cs, U xBegin, U xEnd, U yBegin,
 
 			if(test <= 0.0)
 			{
-				binGeneric(cs, xBegin, xEnd, yBegin, yBegin + my, zBegin, zEnd,
-					rez);
+				binGeneric(
+					cs, xBegin, xEnd, yBegin, yBegin + my, zBegin, zEnd, rez);
 			}
 
 			if(test >= 0.0)
 			{
-				binGeneric(cs, xBegin, xEnd, yBegin + my, yEnd, zBegin, zEnd,
-					rez);
+				binGeneric(
+					cs, xBegin, xEnd, yBegin + my, yEnd, zBegin, zEnd, rez);
 			}
 		}
 		else
@@ -436,14 +444,14 @@ void Clusterer::binGeneric(const CollisionShape& cs, U xBegin, U xEnd, U yBegin,
 
 			if(test <= 0.0)
 			{
-				binGeneric(cs, xBegin, xBegin + mx, yBegin, yEnd, zBegin, zEnd,
-					rez);
+				binGeneric(
+					cs, xBegin, xBegin + mx, yBegin, yEnd, zBegin, zEnd, rez);
 			}
 
 			if(test >= 0.0)
 			{
-				binGeneric(cs, xBegin + mx, xEnd, yBegin, yEnd, zBegin, zEnd,
-					rez);
+				binGeneric(
+					cs, xBegin + mx, xEnd, yBegin, yEnd, zBegin, zEnd, rez);
 			}
 		}
 
@@ -503,26 +511,25 @@ void Clusterer::binGeneric(const CollisionShape& cs, U xBegin, U xEnd, U yBegin,
 	// Now move lower to the hierarchy
 	if(inside[0][0])
 	{
-		binGeneric(cs, xBegin, xBegin + mx, yBegin, yBegin + my, zBegin, zEnd,
-			rez);
+		binGeneric(
+			cs, xBegin, xBegin + mx, yBegin, yBegin + my, zBegin, zEnd, rez);
 	}
 
 	if(inside[0][1])
 	{
-		binGeneric(cs, xBegin + mx, xEnd, yBegin, yBegin + my, zBegin, zEnd,
-			rez);
+		binGeneric(
+			cs, xBegin + mx, xEnd, yBegin, yBegin + my, zBegin, zEnd, rez);
 	}
 
 	if(inside[1][0])
 	{
-		binGeneric(cs, xBegin, xBegin + mx, yBegin + my, yEnd, zBegin, zEnd,
-			rez);
+		binGeneric(
+			cs, xBegin, xBegin + mx, yBegin + my, yEnd, zBegin, zEnd, rez);
 	}
 
 	if(inside[1][1])
 	{
-		binGeneric(cs, xBegin + mx, xEnd, yBegin + my, yEnd, zBegin, zEnd,
-			rez);
+		binGeneric(cs, xBegin + mx, xEnd, yBegin + my, yEnd, zBegin, zEnd, rez);
 	}
 }
 
@@ -542,8 +549,8 @@ void Clusterer::update(U32 threadId, PtrSize threadsCount, Bool frustumChanged)
 		// Re-calculate the planes in local space
 
 		// First the top looking planes
-		ThreadPool::Task::choseStartEnd(threadId, threadsCount,
-			m_planesYW.getSize(), start, end);
+		ThreadPool::Task::choseStartEnd(
+			threadId, threadsCount, m_planesYW.getSize(), start, end);
 
 		for(U i = start; i < end; i++)
 		{
@@ -553,8 +560,8 @@ void Clusterer::update(U32 threadId, PtrSize threadsCount, Bool frustumChanged)
 		}
 
 		// Then the right looking planes
-		ThreadPool::Task::choseStartEnd(threadId, threadsCount,
-			m_planesXW.getSize(), start, end);
+		ThreadPool::Task::choseStartEnd(
+			threadId, threadsCount, m_planesXW.getSize(), start, end);
 
 		for(U j = start; j < end; j++)
 		{
@@ -568,8 +575,8 @@ void Clusterer::update(U32 threadId, PtrSize threadsCount, Bool frustumChanged)
 		// Only transform planes
 
 		// First the top looking planes
-		ThreadPool::Task::choseStartEnd(threadId, threadsCount,
-			m_planesYW.getSize(), start, end);
+		ThreadPool::Task::choseStartEnd(
+			threadId, threadsCount, m_planesYW.getSize(), start, end);
 
 		for(U i = start; i < end; i++)
 		{
@@ -577,8 +584,8 @@ void Clusterer::update(U32 threadId, PtrSize threadsCount, Bool frustumChanged)
 		}
 
 		// Then the right looking planes
-		ThreadPool::Task::choseStartEnd(threadId, threadsCount,
-			m_planesXW.getSize(), start, end);
+		ThreadPool::Task::choseStartEnd(
+			threadId, threadsCount, m_planesXW.getSize(), start, end);
 
 		for(U j = start; j < end; j++)
 		{
@@ -598,4 +605,3 @@ void Clusterer::update(U32 threadId, PtrSize threadsCount, Bool frustumChanged)
 }
 
 } // end namespace anki
-

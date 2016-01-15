@@ -10,7 +10,8 @@
 #include <cstddef>
 #include <limits>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup util_other
 /// @{
@@ -72,7 +73,7 @@ using Bool8 = U8; ///< Small 8bit boolean type
 using Bool32 = U32; ///< A 32bit boolean
 
 /// Error codes
-enum class ErrorCode: I32
+enum class ErrorCode : I32
 {
 	NONE,
 	OUT_OF_MEMORY,
@@ -93,12 +94,14 @@ public:
 	/// Construct using an error code.
 	Error(ErrorCode code)
 		: m_code(code)
-	{}
+	{
+	}
 
 	/// Copy.
 	Error(const Error& b)
 		: m_code(b.m_code)
-	{}
+	{
+	}
 
 	/// Copy.
 	Error& operator=(const Error& b)
@@ -155,29 +158,32 @@ private:
 };
 
 /// Macro to check if a method/function returned an error.
-#define ANKI_CHECK(x_) \
-	do { \
-		Error error = x_; \
-		if(ANKI_UNLIKELY(error)) { \
-			return error; \
-		} \
+#define ANKI_CHECK(x_)                                                         \
+	do                                                                         \
+	{                                                                          \
+		Error error = x_;                                                      \
+		if(ANKI_UNLIKELY(error))                                               \
+		{                                                                      \
+			return error;                                                      \
+		}                                                                      \
 	} while(0)
 
 /// Macro the check if a memory allocation is OOM.
-#define ANKI_CHECK_OOM(x_) \
-	do { \
-		if(ANKI_UNLIKELY(x_ == nullptr)) { \
-			return ErrorCode::OUT_OF_MEMORY; \
-		} \
+#define ANKI_CHECK_OOM(x_)                                                     \
+	do                                                                         \
+	{                                                                          \
+		if(ANKI_UNLIKELY(x_ == nullptr))                                       \
+		{                                                                      \
+			return ErrorCode::OUT_OF_MEMORY;                                   \
+		}                                                                      \
 	} while(0)
 
 /// Macro to nuliffy a pointer on debug builds.
 #if ANKI_DEBUG == 1
-#	define ANKI_DBG_NULLIFY_PTR = nullptr
+#define ANKI_DBG_NULLIFY_PTR = nullptr
 #else
-#	define ANKI_DBG_NULLIFY_PTR
+#define ANKI_DBG_NULLIFY_PTR
 #endif
 /// @}
 
 } // end namespace anki
-

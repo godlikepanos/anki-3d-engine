@@ -6,7 +6,8 @@
 #include <anki/event/MainRendererPpsHdrEvent.h>
 #include <anki/renderer/MainRenderer.h>
 
-namespace anki {
+namespace anki
+{
 
 #if 0
 

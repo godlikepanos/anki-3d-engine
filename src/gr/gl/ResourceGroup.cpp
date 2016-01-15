@@ -10,29 +10,32 @@
 #include <anki/gr/Sampler.h>
 #include <anki/gr/Buffer.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 ResourceGroup::ResourceGroup(GrManager* manager)
 	: GrObject(manager)
-{}
+{
+}
 
 //==============================================================================
 ResourceGroup::~ResourceGroup()
-{}
+{
+}
 
 //==============================================================================
-class RcgCreateCommand final: public GlCommand
+class RcgCreateCommand final : public GlCommand
 {
 public:
 	ResourceGroupPtr m_ptr;
 	ResourceGroupInitializer m_init;
 
-	RcgCreateCommand(ResourceGroup* ptr,
-		const ResourceGroupInitializer& init)
+	RcgCreateCommand(ResourceGroup* ptr, const ResourceGroupInitializer& init)
 		: m_ptr(ptr)
 		, m_init(init)
-	{}
+	{
+	}
 
 	Error operator()(GlState&)
 	{

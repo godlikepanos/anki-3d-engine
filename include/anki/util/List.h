@@ -9,7 +9,8 @@
 #include <anki/util/NonCopyable.h>
 #include <functional>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 template<typename T>
@@ -18,7 +19,8 @@ class List;
 /// @addtogroup util_containers
 /// @{
 
-namespace detail {
+namespace detail
+{
 
 /// List node.
 /// @internal
@@ -33,7 +35,8 @@ public:
 	template<typename... TArgs>
 	ListNode(TArgs&&... args)
 		: m_value(std::forward<TArgs>(args)...)
-	{}
+	{
+	}
 
 	T& getValue()
 	{
@@ -48,8 +51,10 @@ public:
 
 /// List bidirectional iterator.
 /// @internal
-template<typename TNodePointer, typename TValuePointer,
-	typename TValueReference, typename TListPointer>
+template<typename TNodePointer,
+	typename TValuePointer,
+	typename TValueReference,
+	typename TListPointer>
 class ListIterator
 {
 	template<typename, typename>
@@ -67,16 +72,21 @@ public:
 	ListIterator(const ListIterator& b)
 		: m_node(b.m_node)
 		, m_list(b.m_list)
-	{}
+	{
+	}
 
 	/// Allow conversion from iterator to const iterator.
-	template<typename YNodePointer, typename YValuePointer,
-		typename YValueReference, typename YList>
-	ListIterator(const ListIterator<YNodePointer,
-		YValuePointer, YValueReference, YList>& b)
+	template<typename YNodePointer,
+		typename YValuePointer,
+		typename YValueReference,
+		typename YList>
+	ListIterator(
+		const ListIterator<YNodePointer, YValuePointer, YValueReference, YList>&
+			b)
 		: m_node(b.m_node)
 		, m_list(b.m_list)
-	{}
+	{
+	}
 
 	ListIterator(TNodePointer node, TListPointer list)
 		: m_node(node)
@@ -162,8 +172,8 @@ public:
 
 	Bool operator==(const ListIterator& b) const
 	{
-		ANKI_ASSERT(m_list == b.m_list
-			&& "Comparing iterators from different lists");
+		ANKI_ASSERT(
+			m_list == b.m_list && "Comparing iterators from different lists");
 		return m_node == b.m_node;
 	}
 
@@ -180,7 +190,7 @@ private:
 /// Double linked list base.
 /// @internal
 template<typename T, typename TNode>
-class ListBase: public NonCopyable
+class ListBase : public NonCopyable
 {
 	template<typename, typename, typename, typename>
 	friend class ListIterator;
@@ -192,8 +202,10 @@ public:
 	using Pointer = Value*;
 	using ConstPointer = const Value*;
 	using Iterator = ListIterator<TNode*, Pointer, Reference, ListBase*>;
-	using ConstIterator = ListIterator<const TNode*, ConstPointer,
-		ConstReference, const ListBase*>;
+	using ConstIterator = ListIterator<const TNode*,
+		ConstPointer,
+		ConstReference,
+		const ListBase*>;
 
 	ListBase() = default;
 
@@ -330,7 +342,7 @@ private:
 
 /// Double linked list.
 template<typename T>
-class List: public detail::ListBase<T, detail::ListNode<T>>
+class List : public detail::ListBase<T, detail::ListNode<T>>
 {
 private:
 	using Base = detail::ListBase<T, detail::ListNode<T>>;
@@ -340,7 +352,8 @@ public:
 	/// Default constructor.
 	List()
 		: Base()
-	{}
+	{
+	}
 
 	/// Move.
 	List(List&& b)
@@ -379,8 +392,8 @@ public:
 	template<typename TAllocator, typename... TArgs>
 	void emplaceBack(TAllocator alloc, TArgs&&... args)
 	{
-		Node* node = alloc.template newInstance<Node>(
-			std::forward<TArgs>(args)...);
+		Node* node =
+			alloc.template newInstance<Node>(std::forward<TArgs>(args)...);
 		Base::pushBackNode(node);
 	}
 
@@ -396,8 +409,8 @@ public:
 	template<typename TAllocator, typename... TArgs>
 	void emplaceFront(TAllocator alloc, TArgs&&... args)
 	{
-		Node* node = alloc.template newInstance<Node>(
-			std::forward<TArgs>(args)...);
+		Node* node =
+			alloc.template newInstance<Node>(std::forward<TArgs>(args)...);
 		Base::pushFrontNode(node);
 	}
 
@@ -413,8 +426,8 @@ public:
 	template<typename TAllocator, typename... TArgs>
 	void emplace(TAllocator alloc, typename Base::Iterator pos, TArgs&&... args)
 	{
-		Node* node = alloc.template newInstance<Node>(
-			std::forward<TArgs>(args)...);
+		Node* node =
+			alloc.template newInstance<Node>(std::forward<TArgs>(args)...);
 		Base::insertNode(pos.m_node, node);
 	}
 
@@ -458,7 +471,7 @@ private:
 
 /// List with automatic destruction.
 template<typename T>
-class ListAuto: public List<T>
+class ListAuto : public List<T>
 {
 public:
 	using Base = List<T>;
@@ -469,7 +482,8 @@ public:
 	ListAuto(GenericMemoryPoolAllocator<T> alloc)
 		: Base()
 		, m_alloc(alloc)
-	{}
+	{
+	}
 
 	/// Move.
 	ListAuto(ListAuto&& b)
@@ -572,7 +586,8 @@ private:
 	IntrusiveListEnabled()
 		: m_prev(nullptr)
 		, m_next(nullptr)
-	{}
+	{
+	}
 
 	TClass& getValue()
 	{
@@ -588,7 +603,7 @@ private:
 /// List that doesn't perform any allocations. To work the T nodes will
 /// have to inherit from IntrusiveListEnabled.
 template<typename T>
-class IntrusiveList: public detail::ListBase<T, T>
+class IntrusiveList : public detail::ListBase<T, T>
 {
 	template<typename, typename, typename, typename>
 	friend class detail::ListIterator;
@@ -600,7 +615,8 @@ public:
 	/// Default constructor.
 	IntrusiveList()
 		: Base()
-	{}
+	{
+	}
 
 	/// Move.
 	IntrusiveList(IntrusiveList&& b)
@@ -665,4 +681,3 @@ public:
 } // end namespace anki
 
 #include <anki/util/List.inl.h>
-

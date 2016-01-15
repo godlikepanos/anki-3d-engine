@@ -23,8 +23,7 @@ ANKI_TEST(Util, List)
 
 		U sum = 0;
 
-		err = a.iterateForward([&](const Foo& f) -> Error
-		{
+		err = a.iterateForward([&](const Foo& f) -> Error {
 			sum += f.x;
 			return ErrorCode::NONE;
 		});
@@ -50,8 +49,7 @@ ANKI_TEST(Util, List)
 		Array<I, 4> arr = {{2, 9, 10, 11}};
 		U u = 0;
 
-		err = a.iterateForward([&](const I& i) -> Error
-		{
+		err = a.iterateForward([&](const I& i) -> Error {
 			if(arr[u++] == i)
 			{
 				return ErrorCode::NONE;
@@ -64,16 +62,12 @@ ANKI_TEST(Util, List)
 
 		ANKI_TEST_EXPECT_EQ(err, ErrorCode::NONE);
 
-		a.sort([](I& a, I& b) -> Bool
-		{
-			return a > b;
-		});
+		a.sort([](I& a, I& b) -> Bool { return a > b; });
 
 		Array<I, 4> arr2 = {{11, 10, 9, 2}};
 		u = 0;
 
-		err = a.iterateForward([&](const I& i) -> Error
-		{
+		err = a.iterateForward([&](const I& i) -> Error {
 			if(arr2[u++] == i)
 			{
 				return ErrorCode::NONE;
@@ -104,13 +98,13 @@ ANKI_TEST(Util, List)
 			b.push_back(f);
 		}
 
-		//auto ta = HighRezTimer::getCurrentTime();
-		b.sort([](const Foo& a, const Foo& b){return a.x < b.x;});
-		//auto tb = HighRezTimer::getCurrentTime();
-		a.sort([](const Foo& a, const Foo& b){return a.x < b.x;});
-		//auto tc = HighRezTimer::getCurrentTime();
+		// auto ta = HighRezTimer::getCurrentTime();
+		b.sort([](const Foo& a, const Foo& b) { return a.x < b.x; });
+		// auto tb = HighRezTimer::getCurrentTime();
+		a.sort([](const Foo& a, const Foo& b) { return a.x < b.x; });
+		// auto tc = HighRezTimer::getCurrentTime();
 
-		//printf("%f %f\n", tb - ta, tc - tb);
+		// printf("%f %f\n", tb - ta, tc - tb);
 
 		auto ait = a.getBegin();
 		auto bit = b.begin();
@@ -144,7 +138,7 @@ ANKI_TEST(Util, List)
 
 		Array<I, 4> arr = {{10, 9, 11, 2}};
 		U count = 0;
-		
+
 		// Forward
 		List<I>::ConstIterator it = a.getBegin();
 		for(; it != a.getEnd() && !err; ++it)
@@ -154,7 +148,7 @@ ANKI_TEST(Util, List)
 				err = ErrorCode::UNKNOWN;
 			}
 		}
-		
+
 		ANKI_TEST_EXPECT_EQ(err, ErrorCode::NONE);
 
 		// Backwards
@@ -193,7 +187,7 @@ ANKI_TEST(Util, List)
 		ANKI_TEST_EXPECT_EQ(5, *(a.getBegin()));
 		ANKI_TEST_EXPECT_EQ(10, *(a.getEnd() - 2));
 		ANKI_TEST_EXPECT_EQ(30, *(a.getEnd() - 1));
-		
+
 		a.erase(alloc, a.getEnd() - 2);
 		ANKI_TEST_EXPECT_EQ(5, *(a.getBegin()));
 		ANKI_TEST_EXPECT_EQ(30, *(a.getEnd() - 1));
@@ -202,4 +196,3 @@ ANKI_TEST(Util, List)
 		a.erase(alloc, a.getBegin());
 	}
 }
-

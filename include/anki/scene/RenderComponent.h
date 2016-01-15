@@ -10,7 +10,8 @@
 #include <anki/resource/Material.h>
 #include <anki/resource/Model.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup scene
 /// @{
@@ -22,18 +23,18 @@ template<typename T>
 class RenderComponentVariableTemplate;
 
 /// RenderComponent variable base. It's a visitable.
-using RenderComponentVariableVisitable = VisitableCommonBase<
-	RenderComponentVariable, // The base
-	RenderComponentVariableTemplate<F32>,
-	RenderComponentVariableTemplate<Vec2>,
-	RenderComponentVariableTemplate<Vec3>,
-	RenderComponentVariableTemplate<Vec4>,
-	RenderComponentVariableTemplate<Mat3>,
-	RenderComponentVariableTemplate<Mat4>,
-	RenderComponentVariableTemplate<TextureResourcePtr>>;
+using RenderComponentVariableVisitable =
+	VisitableCommonBase<RenderComponentVariable, // The base
+		RenderComponentVariableTemplate<F32>,
+		RenderComponentVariableTemplate<Vec2>,
+		RenderComponentVariableTemplate<Vec3>,
+		RenderComponentVariableTemplate<Vec4>,
+		RenderComponentVariableTemplate<Mat3>,
+		RenderComponentVariableTemplate<Mat4>,
+		RenderComponentVariableTemplate<TextureResourcePtr>>;
 
 /// A wrapper on top of MaterialVariable
-class RenderComponentVariable: public RenderComponentVariableVisitable
+class RenderComponentVariable : public RenderComponentVariableVisitable
 {
 public:
 	using Base = RenderComponentVariableVisitable;
@@ -71,7 +72,7 @@ protected:
 /// RenderComponent variable. This class should not be visible to other
 /// interfaces except render component
 template<typename T>
-class RenderComponentVariableTemplate: public RenderComponentVariable
+class RenderComponentVariableTemplate : public RenderComponentVariable
 {
 public:
 	using Base = RenderComponentVariable;
@@ -84,7 +85,8 @@ public:
 	}
 
 	~RenderComponentVariableTemplate()
-	{}
+	{
+	}
 
 	void setValue(const T& value)
 	{
@@ -116,7 +118,7 @@ public:
 };
 
 /// RenderComponent interface. Implemented by renderable scene nodes
-class RenderComponent: public SceneComponent
+class RenderComponent : public SceneComponent
 {
 public:
 	using Variables = DArray<RenderComponentVariable*>;
@@ -166,8 +168,8 @@ public:
 	}
 
 	/// Information for movables. It's actualy an array of transformations.
-	virtual void getRenderWorldTransform(Bool& hasWorldTransforms,
-		Transform& trf) const
+	virtual void getRenderWorldTransform(
+		Bool& hasWorldTransforms, Transform& trf) const
 	{
 		hasWorldTransforms = false;
 		(void)trf;
@@ -209,4 +211,3 @@ private:
 /// @}
 
 } // end namespace anki
-

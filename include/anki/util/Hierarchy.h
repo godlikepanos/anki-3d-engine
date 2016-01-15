@@ -12,14 +12,15 @@
 #include <anki/util/NonCopyable.h>
 #include <algorithm>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup util_patterns
 /// @{
 
 /// A hierarchical object
 template<typename T>
-class Hierarchy: public NonCopyable
+class Hierarchy : public NonCopyable
 {
 public:
 	using Value = T;
@@ -27,7 +28,8 @@ public:
 
 	Hierarchy()
 		: m_parent(nullptr)
-	{}
+	{
+	}
 
 	/// Delete children from the last entered to the first and update parent
 	virtual ~Hierarchy()
@@ -105,4 +107,3 @@ private:
 } // end namespace anki
 
 #include <anki/util/Hierarchy.inl.h>
-

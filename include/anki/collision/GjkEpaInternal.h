@@ -8,8 +8,10 @@
 #include <anki/Math.h>
 #include <anki/collision/Common.h>
 
-namespace anki {
-namespace detail {
+namespace anki
+{
+namespace detail
+{
 
 // Forward
 class Polytope;
@@ -26,9 +28,10 @@ public:
 	Face* m_face;
 
 	Edge(U32 i, U32 j, Face* face)
-	:	m_idx{{i, j}},
-		m_face(face)
-	{}
+		: m_idx{{i, j}}
+		, m_face(face)
+	{
+	}
 
 	Edge(const Edge&) = default;
 
@@ -80,7 +83,7 @@ public:
 	}
 
 	Face(U i, U j, U k)
-	:	Face()
+		: Face()
 	{
 		m_idx[0] = i;
 		m_idx[1] = j;
@@ -137,14 +140,14 @@ class Polytope
 	friend class Face;
 
 public:
-	Polytope(CollisionTempAllocator<U8>& alloc,
-		U32 maxSimplexSize,
-		U32 maxFaceCount)
-	:	m_maxSimplexSize(maxSimplexSize),
-		m_maxFaceCount(maxFaceCount),
-		m_simplex(alloc),
-		m_faces(alloc)
-	{}
+	Polytope(
+		CollisionTempAllocator<U8>& alloc, U32 maxSimplexSize, U32 maxFaceCount)
+		: m_maxSimplexSize(maxSimplexSize)
+		, m_maxFaceCount(maxFaceCount)
+		, m_simplex(alloc)
+		, m_faces(alloc)
+	{
+	}
 
 	void init(const Array<Support, 4>& gjkSupport);
 
@@ -187,4 +190,3 @@ public: // XXX
 
 } // end namesapce detail
 } // end namesapce anki
-

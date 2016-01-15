@@ -15,7 +15,8 @@
 #include <anki/Collision.h>
 #include <anki/Scene.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // DebugDrawer                                                                 =
@@ -23,11 +24,13 @@ namespace anki {
 
 //==============================================================================
 DebugDrawer::DebugDrawer()
-{}
+{
+}
 
 //==============================================================================
 DebugDrawer::~DebugDrawer()
-{}
+{
+}
 
 //==============================================================================
 Error DebugDrawer::create(Renderer* r)
@@ -66,7 +69,8 @@ Error DebugDrawer::create(Renderer* r)
 	m_pplineLinesNoDepth = gr.newInstance<Pipeline>(init);
 
 	m_vertBuff = gr.newInstance<Buffer>(sizeof(m_clientLineVerts),
-		BufferUsageBit::VERTEX, BufferAccessBit::CLIENT_WRITE);
+		BufferUsageBit::VERTEX,
+		BufferAccessBit::CLIENT_WRITE);
 
 	ResourceGroupInitializer rcinit;
 	rcinit.m_vertexBuffers[0].m_buffer = m_vertBuff;
@@ -221,8 +225,8 @@ void DebugDrawer::drawLine(const Vec3& from, const Vec3& to, const Vec4& color)
 {
 	setColor(color);
 	begin(PrimitiveTopology::LINES);
-		pushBackVertex(from);
-		pushBackVertex(to);
+	pushBackVertex(from);
+	pushBackVertex(to);
 	end();
 }
 
@@ -234,7 +238,7 @@ void DebugDrawer::drawGrid()
 	Vec4 col2(1.0, 0.0, 0.0, 1.0);
 
 	const F32 SPACE = 1.0; // space between lines
-	const I NUM = 57;  // lines number. must be odd
+	const I NUM = 57; // lines number. must be odd
 
 	const F32 GRID_HALF_SIZE = ((NUM - 1) * SPACE / 2);
 
@@ -242,7 +246,7 @@ void DebugDrawer::drawGrid()
 
 	begin(PrimitiveTopology::LINES);
 
-	for(I x = - NUM / 2 * SPACE; x < NUM / 2 * SPACE; x += SPACE)
+	for(I x = -NUM / 2 * SPACE; x < NUM / 2 * SPACE; x += SPACE)
 	{
 		setColor(col0);
 
@@ -278,8 +282,8 @@ void DebugDrawer::drawSphere(F32 radius, I complexity)
 	Mat4 oldMMat = m_mMat;
 	Mat4 oldVpMat = m_vpMat;
 
-	setModelMatrix(m_mMat * Mat4(Vec4(0.0, 0.0, 0.0, 1.0),
-		Mat3::getIdentity(), radius));
+	setModelMatrix(
+		m_mMat * Mat4(Vec4(0.0, 0.0, 0.0, 1.0), Mat3::getIdentity(), radius));
 
 	begin(PrimitiveTopology::LINES);
 
@@ -324,25 +328,46 @@ void DebugDrawer::drawCube(F32 size)
 	Vec3 minPos = Vec3(-0.5 * size);
 
 	Array<Vec3, 8> points = {{
-		Vec3(maxPos.x(), maxPos.y(), maxPos.z()),  // right top front
-		Vec3(minPos.x(), maxPos.y(), maxPos.z()),  // left top front
-		Vec3(minPos.x(), minPos.y(), maxPos.z()),  // left bottom front
-		Vec3(maxPos.x(), minPos.y(), maxPos.z()),  // right bottom front
-		Vec3(maxPos.x(), maxPos.y(), minPos.z()),  // right top back
-		Vec3(minPos.x(), maxPos.y(), minPos.z()),  // left top back
-		Vec3(minPos.x(), minPos.y(), minPos.z()),  // left bottom back
-		Vec3(maxPos.x(), minPos.y(), minPos.z())   // right bottom back
+		Vec3(maxPos.x(), maxPos.y(), maxPos.z()), // right top front
+		Vec3(minPos.x(), maxPos.y(), maxPos.z()), // left top front
+		Vec3(minPos.x(), minPos.y(), maxPos.z()), // left bottom front
+		Vec3(maxPos.x(), minPos.y(), maxPos.z()), // right bottom front
+		Vec3(maxPos.x(), maxPos.y(), minPos.z()), // right top back
+		Vec3(minPos.x(), maxPos.y(), minPos.z()), // left top back
+		Vec3(minPos.x(), minPos.y(), minPos.z()), // left bottom back
+		Vec3(maxPos.x(), minPos.y(), minPos.z()) // right bottom back
 	}};
 
-	static const Array<U32, 24> indeces = {{
-		0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6,
-		6, 7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7}};
+	static const Array<U32, 24> indeces = {{0,
+		1,
+		1,
+		2,
+		2,
+		3,
+		3,
+		0,
+		4,
+		5,
+		5,
+		6,
+		6,
+		7,
+		7,
+		4,
+		0,
+		4,
+		1,
+		5,
+		2,
+		6,
+		3,
+		7}};
 
 	begin(PrimitiveTopology::LINES);
-		for(U32 id : indeces)
-		{
-			pushBackVertex(points[id]);
-		}
+	for(U32 id : indeces)
+	{
+		pushBackVertex(points[id]);
+	}
 	end();
 }
 
@@ -426,34 +451,32 @@ void CollisionDebugDrawer::visit(const Frustum& f)
 		visit(static_cast<const OrthographicFrustum&>(f).getObb());
 		break;
 	case Frustum::Type::PERSPECTIVE:
+	{
+		const PerspectiveFrustum& pf =
+			static_cast<const PerspectiveFrustum&>(f);
+
+		F32 camLen = pf.getFar();
+		F32 tmp0 = camLen / tan((getPi<F32>() - pf.getFovX()) * 0.5) + 0.001;
+		F32 tmp1 = camLen * tan(pf.getFovY() * 0.5) + 0.001;
+
+		Vec3 points[] = {
+			Vec3(0.0, 0.0, 0.0), // 0: eye point
+			Vec3(-tmp0, tmp1, -camLen), // 1: top left
+			Vec3(-tmp0, -tmp1, -camLen), // 2: bottom left
+			Vec3(tmp0, -tmp1, -camLen), // 3: bottom right
+			Vec3(tmp0, tmp1, -camLen) // 4: top right
+		};
+
+		const U32 indeces[] = {0, 1, 0, 2, 0, 3, 0, 4, 1, 2, 2, 3, 3, 4, 4, 1};
+
+		m_dbg->begin(PrimitiveTopology::LINES);
+		for(U32 i = 0; i < sizeof(indeces) / sizeof(U32); i++)
 		{
-			const PerspectiveFrustum& pf =
-				static_cast<const PerspectiveFrustum&>(f);
-
-			F32 camLen = pf.getFar();
-			F32 tmp0 = camLen / tan((getPi<F32>() - pf.getFovX()) * 0.5)
-				+ 0.001;
-			F32 tmp1 = camLen * tan(pf.getFovY() * 0.5) + 0.001;
-
-			Vec3 points[] = {
-				Vec3(0.0, 0.0, 0.0), // 0: eye point
-				Vec3(-tmp0, tmp1, -camLen), // 1: top left
-				Vec3(-tmp0, -tmp1, -camLen), // 2: bottom left
-				Vec3(tmp0, -tmp1, -camLen), // 3: bottom right
-				Vec3(tmp0, tmp1, -camLen) // 4: top right
-			};
-
-			const U32 indeces[] = {0, 1, 0, 2, 0, 3, 0, 4, 1, 2, 2,
-				3, 3, 4, 4, 1};
-
-			m_dbg->begin(PrimitiveTopology::LINES);
-			for(U32 i = 0; i < sizeof(indeces) / sizeof(U32); i++)
-			{
-				m_dbg->pushBackVertex(points[indeces[i]]);
-			}
-			m_dbg->end();
-			break;
+			m_dbg->pushBackVertex(points[indeces[i]]);
 		}
+		m_dbg->end();
+		break;
+	}
 	}
 }
 
@@ -461,12 +484,11 @@ void CollisionDebugDrawer::visit(const Frustum& f)
 void CollisionDebugDrawer::visit(const CompoundShape& cs)
 {
 	CollisionDebugDrawer* self = this;
-	Error err = cs.iterateShapes([&](const CollisionShape& a) -> Error
-	{
+	Error err = cs.iterateShapes([&](const CollisionShape& a) -> Error {
 		a.accept(*self);
 		return ErrorCode::NONE;
 	});
-	(void) err;
+	(void)err;
 }
 
 //==============================================================================
@@ -488,9 +510,7 @@ void CollisionDebugDrawer::visit(const ConvexHullShape& hull)
 // PhysicsDebugDrawer                                                          =
 //==============================================================================
 void PhysicsDebugDrawer::drawLines(
-	const Vec3* lines,
-	const U32 linesCount,
-	const Vec4& color)
+	const Vec3* lines, const U32 linesCount, const Vec4& color)
 {
 	m_dbg->begin(PrimitiveTopology::LINES);
 	m_dbg->setColor(color);
@@ -525,11 +545,10 @@ void SceneDebugDrawer::draw(SceneNode& node)
 	}
 
 	Error err = node.iterateComponentsOfType<SpatialComponent>(
-		[&](SpatialComponent& sp) -> Error
-	{
-		draw(sp);
-		return ErrorCode::NONE;
-	});
+		[&](SpatialComponent& sp) -> Error {
+			draw(sp);
+			return ErrorCode::NONE;
+		});
 	(void)err;
 
 	PortalSectorComponent* ps = node.tryGetComponent<PortalSectorComponent>();
@@ -609,8 +628,8 @@ void SceneDebugDrawer::drawPath(const Path& path) const
 
 	for(U i = 0; i < count - 1; i++)
 	{
-		m_dbg->pushBackVertex(path.getPoints()[i].getPosition());
-		m_dbg->pushBackVertex(path.getPoints()[i + 1].getPosition());
+			m_dbg->pushBackVertex(path.getPoints()[i].getPosition());
+			m_dbg->pushBackVertex(path.getPoints()[i + 1].getPosition());
 	}
 
 	m_dbg->end();*/
@@ -634,4 +653,4 @@ void SceneDebugDrawer::draw(const ReflectionProxyComponent& proxy) const
 	m_dbg->end();
 }
 
-}  // end namespace anki
+} // end namespace anki

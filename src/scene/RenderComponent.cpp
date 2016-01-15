@@ -9,7 +9,8 @@
 #include <anki/resource/ResourceManager.h>
 #include <anki/util/Logger.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 // Misc                                                                        =
@@ -46,8 +47,7 @@ struct CreateNewRenderComponentVariableVisitor
 //==============================================================================
 
 //==============================================================================
-RenderComponentVariable::RenderComponentVariable(
-	const MaterialVariable* mvar)
+RenderComponentVariable::RenderComponentVariable(const MaterialVariable* mvar)
 	: m_mvar(mvar)
 {
 	ANKI_ASSERT(m_mvar);
@@ -55,7 +55,8 @@ RenderComponentVariable::RenderComponentVariable(
 
 //==============================================================================
 RenderComponentVariable::~RenderComponentVariable()
-{}
+{
+}
 
 //==============================================================================
 // RenderComponent                                                             =
@@ -66,7 +67,8 @@ RenderComponent::RenderComponent(SceneNode* node, const Material* mtl, U64 hash)
 	: SceneComponent(Type::RENDER, node)
 	, m_mtl(mtl)
 	, m_hash(hash)
-{}
+{
+}
 
 //==============================================================================
 RenderComponent::~RenderComponent()
@@ -102,4 +104,4 @@ Error RenderComponent::create()
 	return ErrorCode::NONE;
 }
 
-}  // end namespace anki
+} // end namespace anki

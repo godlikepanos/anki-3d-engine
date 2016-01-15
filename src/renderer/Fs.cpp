@@ -10,11 +10,13 @@
 #include <anki/scene/SceneGraph.h>
 #include <anki/scene/Camera.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 Fs::~Fs()
-{}
+{
+}
 
 //==============================================================================
 Error Fs::init(const ConfigSet&)

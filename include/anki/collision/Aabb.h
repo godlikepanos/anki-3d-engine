@@ -8,13 +8,14 @@
 #include <anki/collision/ConvexShape.h>
 #include <anki/math/Vec3.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup collision
 /// @{
 
 /// Axis align bounding box collision shape
-class Aabb: public ConvexShape
+class Aabb : public ConvexShape
 {
 public:
 	using Base = ConvexShape;
@@ -26,7 +27,8 @@ public:
 
 	Aabb()
 		: Base(Type::AABB)
-	{}
+	{
+	}
 
 	Aabb(const Vec4& min, const Vec4& max)
 		: Base(Type::AABB)
@@ -124,4 +126,3 @@ private:
 /// @}
 
 } // end namespace anki
-

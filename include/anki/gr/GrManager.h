@@ -8,7 +8,8 @@
 #include <anki/gr/Common.h>
 #include <anki/util/String.h>
 
-namespace anki {
+namespace anki
+{
 
 // Forward
 class ConfigSet;
@@ -21,7 +22,8 @@ class GrManagerInterface
 {
 public:
 	virtual ~GrManagerInterface()
-	{}
+	{
+	}
 
 	/// Swap buffers.
 	virtual void swapBuffersCommand() = 0;
@@ -75,8 +77,8 @@ public:
 
 	/// Allocate memory for dynamic buffers. The memory will be reclaimed at
 	/// the begining of the next frame.
-	void* allocateFrameHostVisibleMemory(PtrSize size, BufferUsage usage,
-		DynamicBufferToken& token);
+	void* allocateFrameHostVisibleMemory(
+		PtrSize size, BufferUsage usage, DynamicBufferToken& token);
 
 anki_internal:
 	GrAllocator<U8>& getAllocator()
@@ -121,4 +123,3 @@ IntrusivePtr<T> GrManager::newInstance(Args&&... args)
 /// @}
 
 } // end namespace anki
-

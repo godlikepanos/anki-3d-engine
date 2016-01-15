@@ -7,7 +7,8 @@
 
 #include <anki/collision/Common.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup collision
 /// @{
@@ -17,4 +18,3 @@ Bool testCollisionShapes(const CollisionShape& a, const CollisionShape& b);
 /// @}
 
 } // end namespace anki
-

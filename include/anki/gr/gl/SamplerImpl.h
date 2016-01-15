@@ -7,18 +7,20 @@
 
 #include <anki/gr/gl/GlObject.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup opengl
 /// @{
 
 /// Sampler GL object.
-class SamplerImpl: public GlObject
+class SamplerImpl : public GlObject
 {
 public:
 	SamplerImpl(GrManager* manager)
 		: GlObject(manager)
-	{}
+	{
+	}
 
 	~SamplerImpl()
 	{

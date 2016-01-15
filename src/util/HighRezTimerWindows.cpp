@@ -7,10 +7,12 @@
 #include <anki/util/Assert.h>
 #include <Windows.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
-namespace {
+namespace
+{
 
 /// A dummy struct that inits the timer
 class DummyInitTimer
@@ -26,7 +28,7 @@ public:
 
 DummyInitTimer init;
 
-} // end namespace anonymous 
+} // end namespace anonymous
 
 //==============================================================================
 static U32 getMs()

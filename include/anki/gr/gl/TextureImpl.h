@@ -8,13 +8,14 @@
 #include <anki/gr/gl/GlObject.h>
 #include <anki/util/DArray.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup opengl
 /// @{
 
 /// Texture container.
-class TextureImpl: public GlObject
+class TextureImpl : public GlObject
 {
 public:
 	GLenum m_target = GL_NONE; ///< GL_TEXTURE_2D, GL_TEXTURE_3D... etc
@@ -31,7 +32,8 @@ public:
 
 	TextureImpl(GrManager* manager)
 		: GlObject(manager)
-	{}
+	{
+	}
 
 	~TextureImpl();
 
@@ -45,12 +47,15 @@ public:
 	void generateMipmaps(U surface);
 
 	/// Copy a single slice from one texture to another.
-	static void copy(const TextureImpl& src, U srcSlice, U srcLevel,
-		const TextureImpl& dest, U destSlice, U destLevel);
+	static void copy(const TextureImpl& src,
+		U srcSlice,
+		U srcLevel,
+		const TextureImpl& dest,
+		U destSlice,
+		U destLevel);
 
 	void bind();
 };
 /// @}
 
 } // end namespace anki
-

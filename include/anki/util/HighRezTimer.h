@@ -7,7 +7,8 @@
 
 #include <anki/util/StdTypes.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup util_time
 /// @{
@@ -43,4 +44,3 @@ private:
 /// @}
 
 } // end namespace anki
-

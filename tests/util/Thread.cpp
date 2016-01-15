@@ -9,7 +9,8 @@
 #include "anki/util/HighRezTimer.h"
 #include <cstring>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 ANKI_TEST(Util, Thread)
@@ -20,8 +21,7 @@ ANKI_TEST(Util, Thread)
 	static const U64 NUMBER = 0xFAFAFAFABABABA;
 	U64 u = NUMBER;
 
-	t.start(&u, [](Thread::Info& info) -> Error
-	{
+	t.start(&u, [](Thread::Info& info) -> Error {
 		Bool check = true;
 
 		// Check name
@@ -63,8 +63,7 @@ ANKI_TEST(Util, Mutex)
 	In in;
 	in.m_mtx = &mtx;
 
-	t0.start(&in, [](Thread::Info& info) -> Error
-	{
+	t0.start(&in, [](Thread::Info& info) -> Error {
 		In& in = *reinterpret_cast<In*>(info.m_userData);
 		I64& num = in.m_num;
 		Mutex& mtx = *in.m_mtx;
@@ -79,8 +78,7 @@ ANKI_TEST(Util, Mutex)
 		return ErrorCode::NONE;
 	});
 
-	t1.start(&in, [](Thread::Info& info) -> Error
-	{
+	t1.start(&in, [](Thread::Info& info) -> Error {
 		In& in = *reinterpret_cast<In*>(info.m_userData);
 		I64& num = in.m_num;
 		Mutex& mtx = *in.m_mtx;
@@ -96,7 +94,6 @@ ANKI_TEST(Util, Mutex)
 		return ErrorCode::NONE;
 	});
 
-
 	ANKI_TEST_EXPECT_NO_ERR(t0.join());
 	ANKI_TEST_EXPECT_NO_ERR(t1.join());
 
@@ -106,7 +103,7 @@ ANKI_TEST(Util, Mutex)
 //==============================================================================
 
 /// Struct for our tests
-struct TestJobTP: ThreadPool::Task
+struct TestJobTP : ThreadPool::Task
 {
 	U32 in = 0;
 	U32 iterations = 0;
@@ -163,8 +160,7 @@ ANKI_TEST(Util, Barrier)
 		Barrier b(2);
 		Thread t(nullptr);
 
-		t.start(&b, [](Thread::Info& info) -> Error
-		{
+		t.start(&b, [](Thread::Info& info) -> Error {
 			Barrier& b = *reinterpret_cast<Barrier*>(info.m_userData);
 			b.wait();
 			return ErrorCode::NONE;
@@ -174,4 +170,3 @@ ANKI_TEST(Util, Barrier)
 		ANKI_TEST_EXPECT_NO_ERR(t.join());
 	}
 }
-

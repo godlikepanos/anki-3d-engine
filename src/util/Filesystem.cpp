@@ -5,7 +5,8 @@
 
 #include <anki/util/Filesystem.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 void getFileExtension(
@@ -30,4 +31,3 @@ void getFileExtension(
 }
 
 } // end namespace anki
-

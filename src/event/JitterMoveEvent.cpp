@@ -8,7 +8,8 @@
 #include <anki/scene/MoveComponent.h>
 #include <anki/util/Functions.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 Error JitterMoveEvent::init(F32 startTime, F32 duration, SceneNode* node)
