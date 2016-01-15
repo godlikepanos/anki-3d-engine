@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SCENE_PATH_H
-#define ANKI_SCENE_PATH_H
+#pragma once
 
 #include <anki/scene/Common.h>
 #include <anki/scene/SceneNode.h>
@@ -77,4 +76,3 @@ private:
 
 } // end namespace anki
 
-#endif

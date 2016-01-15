@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_MATH_MATH_SIMD_H
-#define ANKI_MATH_MATH_SIMD_H
+#pragma once
 
 #include <anki/Config.h>
 
@@ -18,4 +17,3 @@
 #	error "See file"
 #endif
 
-#endif

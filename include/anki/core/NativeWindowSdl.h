@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_CORE_NATIVE_WINDOW_SDL_H
-#define ANKI_CORE_NATIVE_WINDOW_SDL_H
+#pragma once
 
 #include <anki/core/NativeWindow.h>
 #include <SDL.h>
@@ -22,6 +21,4 @@ public:
 };
 
 } // end namespace anki
-
-#endif
 

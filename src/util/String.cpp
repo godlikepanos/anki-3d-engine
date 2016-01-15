@@ -7,6 +7,7 @@
 #include <cmath> // For HUGE_VAL
 #include <climits> // For LLONG_MAX
 #include <cstdarg> // For var args
+#include <cstdlib> // For stdtod and strtol
 
 namespace anki {
 

@@ -12,15 +12,6 @@
 
 namespace anki {
 
-// Undefine some flags because someone else is polluting the global namespace
-#if defined(LITTLE_ENDIAN)
-#	undef LITTLE_ENDIAN
-#endif
-
-#if defined(BIG_ENDIAN)
-#	undef BIG_ENDIAN
-#endif
-
 /// @addtogroup util_file
 /// @{
 
@@ -44,8 +35,8 @@ public:
 		WRITE = 1 << 1,
 		APPEND = WRITE | (1 << 3),
 		BINARY = 1 << 4,
-		LITTLE_ENDIAN = 1 << 5, ///< The default
-		BIG_ENDIAN = 1 << 6
+		ENDIAN_LITTLE = 1 << 5, ///< The default
+		ENDIAN_BIG = 1 << 6
 	};
 
 	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(OpenFlag, friend);

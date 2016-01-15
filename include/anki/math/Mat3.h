@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_MATH_MAT3_H
-#define ANKI_MATH_MAT3_H
+#pragma once
 
 #include <anki/math/CommonIncludes.h>
 #include <anki/math/Mat.h>
@@ -39,7 +38,7 @@ public:
 
 	/// @name Constructors
 	/// @{
-	explicit TMat3() 
+	TMat3()
 	:	Base()
 	{}
 
@@ -47,7 +46,7 @@ public:
 	:	Base(b)
 	{}
 
-	explicit TMat3(
+	TMat3(
 		T m00, T m01, T m02, T m10, T m11, T m12, T m20, T m21, T m22)
 	{
 		TMat3& m = *this;
@@ -127,7 +126,7 @@ public:
 		r(2, 1) = invDet * (m(0, 1) * m(2, 0) - m(0, 0) * m(2, 1));
 		r(2, 2) = invDet * (m(0, 0) * m(1, 1) - m(0, 1) * m(1, 0));
 
-		return r;		
+		return r;
 	}
 
 	void invert()
@@ -200,4 +199,3 @@ static_assert(sizeof(Mat3) == sizeof(F32) * 3 * 3, "Incorrect size");
 
 } // end namespace anki
 
-#endif

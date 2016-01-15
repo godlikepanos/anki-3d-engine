@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_MATH_EULER_H
-#define ANKI_MATH_EULER_H
+#pragma once
 
 #include <anki/math/CommonIncludes.h>
 
@@ -21,12 +20,12 @@ class TEuler
 public:
 	/// @name Constructors
 	/// @{
-	explicit TEuler()
+	TEuler()
 	{
 		x() = y() = z() = 0.0;
 	}
 
-	explicit TEuler(const T x_, const T y_, const T z_)
+	TEuler(const T x_, const T y_, const T z_)
 	{
 		x() = x_;
 		y() = y_;
@@ -183,10 +182,8 @@ private:
 };
 
 /// F32 Euler angles
-typedef TEuler<F32> Euler; 
-
+typedef TEuler<F32> Euler;
 /// @}
 
 } // end namespace anki
 
-#endif

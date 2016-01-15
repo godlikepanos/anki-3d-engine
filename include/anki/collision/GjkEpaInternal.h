@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_COLLISION_GJK_EPA_INTERNAL_H
-#define ANKI_COLLISION_GJK_EPA_INTERNAL_H
+#pragma once
 
 #include <anki/Math.h>
 #include <anki/collision/Common.h>
@@ -87,7 +86,7 @@ public:
 		m_idx[1] = j;
 		m_idx[2] = k;
 	}
-	
+
 	const Array<U32, 3>& idx() const
 	{
 		return m_idx;
@@ -138,8 +137,8 @@ class Polytope
 	friend class Face;
 
 public:
-	Polytope(CollisionTempAllocator<U8>& alloc, 
-		U32 maxSimplexSize, 
+	Polytope(CollisionTempAllocator<U8>& alloc,
+		U32 maxSimplexSize,
 		U32 maxFaceCount)
 	:	m_maxSimplexSize(maxSimplexSize),
 		m_maxFaceCount(maxFaceCount),
@@ -184,10 +183,8 @@ public: // XXX
 
 	Bool expand(Face& cface, U supportIdx);
 };
-
 /// @}
 
 } // end namesapce detail
 } // end namesapce anki
 
-#endif

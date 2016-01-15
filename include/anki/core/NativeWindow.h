@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_CORE_NATIVE_WINDOW_H
-#define ANKI_CORE_NATIVE_WINDOW_H
+#pragma once
 
 #include <anki/util/StdTypes.h>
 #include <anki/util/Array.h>
@@ -103,4 +102,3 @@ private:
 
 } // end namespace anki
 
-#endif

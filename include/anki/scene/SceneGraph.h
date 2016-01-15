@@ -279,14 +279,11 @@ Error SceneGraph::iterateSceneNodes(PtrSize begin, PtrSize end, Func func)
 	auto it = m_nodes.getBegin() + begin;
 
 	PtrSize count = end - begin;
-	while(count-- != 0)
+	Error err = ErrorCode::NONE;
+	while(count-- != 0 && !err)
 	{
 		ANKI_ASSERT(it != m_nodes.getEnd());
-		Error err = func(*it);
-		if(err)
-		{
-			return err;
-		}
+		err = func(*it);
 
 		++it;
 	}

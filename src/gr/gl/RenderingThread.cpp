@@ -9,6 +9,7 @@
 #include <anki/gr/gl/GrManagerImpl.h>
 #include <anki/util/Logger.h>
 #include <anki/core/Trace.h>
+#include <cstdlib>
 
 namespace anki {
 

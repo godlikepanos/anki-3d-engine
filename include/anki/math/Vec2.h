@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_MATH_VEC2_H
-#define ANKI_MATH_VEC2_H
+#pragma once
 
 #include <anki/math/CommonIncludes.h>
 #include <anki/math/Vec.h>
@@ -35,7 +34,7 @@ public:
 
 	/// @name Constructors
 	/// @{
-	explicit TVec2()
+	TVec2()
 		: Base()
 	{}
 
@@ -43,7 +42,7 @@ public:
 		: Base(b)
 	{}
 
-	explicit TVec2(const T x_, const T y_)
+	TVec2(const T x_, const T y_)
 		: Base(x_, y_)
 	{}
 
@@ -92,14 +91,12 @@ static_assert(sizeof(Vec2) == sizeof(F32) * 2, "Incorrect size");
 /// Half float 2D vector
 typedef TVec2<F16> HVec2;
 
-/// 32bit signed integer 2D vector 
+/// 32bit signed integer 2D vector
 typedef TVec2<I32> IVec2;
 
-/// 32bit unsigned integer 2D vector 
+/// 32bit unsigned integer 2D vector
 typedef TVec2<U32> UVec2;
-
 /// @}
 
 } // end namespace anki
 
-#endif

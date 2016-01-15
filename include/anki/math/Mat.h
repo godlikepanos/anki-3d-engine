@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_MATH_MAT_H
-#define ANKI_MATH_MAT_H
+#pragma once
 
 #include <anki/math/CommonIncludes.h>
 #include <anki/math/Vec.h>
@@ -21,7 +20,7 @@ namespace anki {
 /// @tparam TM The type of the derived class. Eg TMat3.
 /// @tparam TVJ The vector type of the row.
 /// @tparam TVI The vector type of the column.
-template<typename T, U J, U I, typename TSimd, typename TM, typename TVJ, 
+template<typename T, U J, U I, typename TSimd, typename TM, typename TVJ,
 	typename TVI>
 class TMat
 {
@@ -33,14 +32,14 @@ public:
 
 	/// @name Constructors
 	/// @{
-	explicit TMat() 
+	TMat()
 	{}
 
 	TMat(const TMat& b)
 	{
 		for(U i = 0; i < N; i++)
 		{
-			m_arr1[i] = b.m_arr1[i]; 
+			m_arr1[i] = b.m_arr1[i];
 		}
 	}
 
@@ -56,7 +55,7 @@ public:
 	{
 		for(U i = 0; i < N; i++)
 		{
-			m_arr1[i] = arr[i]; 
+			m_arr1[i] = arr[i];
 		}
 	}
 	/// @}
@@ -469,9 +468,9 @@ public:
 	void rotateXAxis(const T rad)
 	{
 		TMat& m = *this;
-		// If we analize the mat3 we can extract the 3 unit vectors rotated by 
-		// the mat3. The 3 rotated vectors are in mat's columns. This means 
-		// that: mat3.colomn[0] == i * mat3. rotateXAxis() rotates rad angle 
+		// If we analize the mat3 we can extract the 3 unit vectors rotated by
+		// the mat3. The 3 rotated vectors are in mat's columns. This means
+		// that: mat3.colomn[0] == i * mat3. rotateXAxis() rotates rad angle
 		// not from i vector (aka x axis) but from the vector from colomn 0
 		// NOTE: See the clean code from < r664
 
@@ -677,7 +676,7 @@ public:
 
 	void reorthogonalize()
 	{
-		// There are 2 methods, the standard and the Gram-Schmidt method with a 
+		// There are 2 methods, the standard and the Gram-Schmidt method with a
 		// twist for zAxis. This uses the 2nd. For the first see < r664
 		TVI xAxis, yAxis, zAxis;
 		getColumns(xAxis, yAxis, zAxis);
@@ -773,10 +772,7 @@ protected:
 	};
 	/// @}
 };
-
 /// @}
 
 } // end namespace anki
-
-#endif
 

@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_MATH_MAT4_H
-#define ANKI_MATH_MAT4_H
+#pragma once
 
 #include <anki/math/CommonIncludes.h>
 
@@ -61,7 +60,7 @@ public:
 
 	/// @name Constructors
 	/// @{
-	explicit TMat4()
+	TMat4()
 		: Base()
 	{}
 
@@ -69,7 +68,7 @@ public:
 		: Base(b)
 	{}
 
-	explicit TMat4(T m00, T m01, T m02, T m03, T m10, T m11, T m12, T m13,
+	TMat4(T m00, T m01, T m02, T m03, T m10, T m11, T m12, T m13,
 		T m20, T m21, T m22, T m23, T m30, T m31, T m32, T m33)
 	{
 		TMat4& m = *this;
@@ -158,7 +157,7 @@ public:
 		m(3, 3) = v.w();
 	}
 
-	explicit TMat4(const TVec4<T>& transl, const TMat3<T>& rot)
+	TMat4(const TVec4<T>& transl, const TMat3<T>& rot)
 	{
 		setRotationPart(rot);
 		setTranslationPart(transl);
@@ -166,7 +165,7 @@ public:
 		m(3, 0) = m(3, 1) = m(3, 2) = 0.0;
 	}
 
-	explicit TMat4(const TVec4<T>& transl, const TMat3<T>& rot, const T scale)
+	TMat4(const TVec4<T>& transl, const TMat3<T>& rot, const T scale)
 	{
 		if(isZero<T>(scale - 1.0))
 		{
@@ -446,4 +445,3 @@ static_assert(sizeof(Mat4) == sizeof(F32) * 4 * 4, "Incorrect size");
 
 #include <anki/math/Mat4.inl.h>
 
-#endif

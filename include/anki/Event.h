@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_EVENT_H
-#define ANKI_EVENT_H
+#pragma once
 
 #include <anki/event/EventManager.h>
 
@@ -13,4 +12,3 @@
 #include <anki/event/JitterMoveEvent.h>
 #include <anki/event/AnimationEvent.h>
 
-#endif

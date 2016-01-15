@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_MATH_F16_H
-#define ANKI_MATH_F16_H
+#pragma once
 
 #include <anki/math/CommonIncludes.h>
 
@@ -27,7 +26,7 @@ class F16
 public:
 	/// @name Constructors
 	/// @{
-	explicit F16()
+	F16()
 	{}
 
 	F16(const F16& b)
@@ -220,4 +219,3 @@ static_assert(sizeof(F16) == 2, "Incorrect size");
 
 } // end namespace anki
 
-#endif

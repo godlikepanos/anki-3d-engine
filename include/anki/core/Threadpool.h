@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_CORE_THREADPOOL_H
-#define ANKI_CORE_THREADPOOL_H
+#pragma once
 
 #include <anki/util/Thread.h>
 #include <anki/util/Singleton.h>
@@ -16,4 +15,3 @@ typedef Singleton<ThreadPool> ThreadPoolSingleton;
 
 } // end namespace anki
 
-#endif

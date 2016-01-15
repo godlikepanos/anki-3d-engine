@@ -12,6 +12,7 @@
 #include <dirent.h>
 #include <cerrno>
 #include <ftw.h> // For walkDirectoryTree
+#include <cstdlib>
 
 // Define PATH_MAX if needed
 #ifndef PATH_MAX

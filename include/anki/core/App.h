@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_CORE_APP_H
-#define ANKI_CORE_APP_H
+#pragma once
 
 #include <anki/util/Allocator.h>
 #include <anki/util/String.h>
@@ -173,4 +172,3 @@ private:
 
 } // end namespace anki
 
-#endif

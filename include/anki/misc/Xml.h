@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_XML_H
-#define ANKI_XML_H
+#pragma once
 
 #include <anki/util/String.h>
 #include <anki/util/DArray.h>
@@ -120,4 +119,3 @@ private:
 
 } // end namespace anki
 
-#endif

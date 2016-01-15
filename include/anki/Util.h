@@ -38,8 +38,7 @@
 /// @defgroup util_private Private interfaces
 /// @ingroup util
 
-#ifndef ANKI_UTIL_H
-#define ANKI_UTIL_H
+#pragma once
 
 #include <anki/util/Allocator.h>
 #include <anki/util/Array.h>
@@ -68,4 +67,3 @@
 #include <anki/util/Thread.h>
 #include <anki/util/Visitor.h>
 
-#endif

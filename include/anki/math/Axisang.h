@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_MATH_AXISANG_H
-#define ANKI_MATH_AXISANG_H
+#pragma once
 
 #include <anki/math/CommonIncludes.h>
 
@@ -20,18 +19,18 @@ class TAxisang
 public:
 	/// @name Constructors
 	/// @{
-	explicit TAxisang()
-	:	m_ang(0.0), 
+	TAxisang()
+	:	m_ang(0.0),
 		m_axis(0.0)
 	{}
-	
+
 	TAxisang(const TAxisang& b)
-	:	m_ang(b.m_ang), 
+	:	m_ang(b.m_ang),
 		m_axis(b.m_axis)
 	{}
 
-	explicit TAxisang(const T rad, const TVec3<T>& axis)
-	:	m_ang(rad), 
+	TAxisang(const T rad, const TVec3<T>& axis)
+	:	m_ang(rad),
 		m_axis(axis)
 	{}
 
@@ -53,13 +52,13 @@ public:
 	explicit TAxisang(const TMat3<T>& m3)
 	{
 		if(isZero<T>(m3(0, 1) - m3(1, 0))
-			&& isZero<T>(m3(0, 2) - m3(2, 0)) 
+			&& isZero<T>(m3(0, 2) - m3(2, 0))
 			&& isZero<T>(m3(1, 2) - m3(2, 1)))
 		{
 
-			if((fabs<T>(m3(0, 1) + m3(1, 0)) < 0.1) 
-				&& (fabs<T>(m3(0, 2) + m3(2, 0)) < 0.1) 
-				&& (fabs<T>(m3(1, 2) + m3(2, 1)) < 0.1) 
+			if((fabs<T>(m3(0, 1) + m3(1, 0)) < 0.1)
+				&& (fabs<T>(m3(0, 2) + m3(2, 0)) < 0.1)
+				&& (fabs<T>(m3(1, 2) + m3(2, 1)) < 0.1)
 				&& (fabs<T>(m3(0, 0) + m3(1, 1) + m3(2, 2)) - 3) < 0.1)
 			{
 				m_axis = TVec3<T>(1.0, 0.0, 0.0);
@@ -128,8 +127,8 @@ public:
 			return;
 		}
 
-		T s = sqrt((m3(2, 1) - m3(1, 2)) * (m3(2, 1) - m3(1, 2)) 
-			+ (m3(0, 2) - m3(2, 0)) * (m3(0, 2) - m3(2, 0)) 
+		T s = sqrt((m3(2, 1) - m3(1, 2)) * (m3(2, 1) - m3(1, 2))
+			+ (m3(0, 2) - m3(2, 0)) * (m3(0, 2) - m3(2, 0))
 			+ (m3(1, 0) - m3(0, 1)) * (m3(1, 0) - m3(0, 1)));
 
 		if(fabs(s) < 0.001)
@@ -140,7 +139,7 @@ public:
 		m_ang = acos<T>((m3(0, 0) + m3(1, 1) + m3(2, 2) - 1.0) / 2.0);
 		m_axis.x() = (m3(2, 1) - m3(1, 2)) / s;
 		m_axis.y() = (m3(0, 2) - m3(2, 0)) / s;
-		m_axis.z() = (m3(1, 0) - m3(0, 1)) / s;		
+		m_axis.z() = (m3(1, 0) - m3(0, 1)) / s;
 	}
 	/// @}
 
@@ -193,7 +192,7 @@ public:
 	String toString(TAlloc alloc) const
 	{
 		String s;
-		Error err = s.sprintf("axis: %f %f %f, angle: %f", 
+		Error err = s.sprintf("axis: %f %f %f, angle: %f",
 			m_axis[0], m_axis[1], m_axis[2], m_ang);
 		(void)err;
 		return s;
@@ -214,4 +213,3 @@ typedef TAxisang<F32> Axisang;
 
 } // end namespace anki
 
-#endif

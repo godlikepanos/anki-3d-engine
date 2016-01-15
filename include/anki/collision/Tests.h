@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_COLLISION_TESTS_H
-#define ANKI_COLLISION_TESTS_H
+#pragma once
 
 #include <anki/collision/Common.h>
 
@@ -18,6 +17,4 @@ Bool testCollisionShapes(const CollisionShape& a, const CollisionShape& b);
 /// @}
 
 } // end namespace anki
-
-#endif
 

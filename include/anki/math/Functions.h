@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_MATH_FUNCTIONS_H
-#define ANKI_MATH_FUNCTIONS_H
+#pragma once
 
 #include <anki/util/StdTypes.h>
 #include <cmath>
@@ -233,9 +232,7 @@ static Type cubicInterpolate(
 
 	return(a0 * u * u2 + a1 * u2 + a2 * u + a3);
 }
-
 /// @}
 
 } // end namespace anki
 
-#endif

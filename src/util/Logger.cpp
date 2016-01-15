@@ -8,6 +8,7 @@
 #include <cstring>
 #include <cstdarg>
 #include <cstdio>
+#include <cstdlib>
 #if ANKI_OS == ANKI_OS_ANDROID
 #	include <android/log.h>
 #endif

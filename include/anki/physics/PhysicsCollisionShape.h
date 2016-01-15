@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_PHYSICS_PHYSICS_COLLISION_SHAPE_H
-#define ANKI_PHYSICS_PHYSICS_COLLISION_SHAPE_H
+#pragma once
 
 #include <anki/physics/PhysicsObject.h>
 
@@ -97,7 +96,7 @@ public:
 	~PhysicsConvexHull()
 	{}
 
-	ANKI_USE_RESULT Error create(Initializer& init, 
+	ANKI_USE_RESULT Error create(Initializer& init,
 		const Vec3* positions, U32 positionsCount, U32 positionsStride);
 };
 
@@ -113,12 +112,10 @@ public:
 	{}
 
 	ANKI_USE_RESULT Error create(Initializer& init,
-		const Vec3* positions, U32 positionsStride, 
+		const Vec3* positions, U32 positionsStride,
 		const U16* indices, U32 indicesCount);
 };
 /// @}
 
 } // end namespace anki
-
-#endif
 

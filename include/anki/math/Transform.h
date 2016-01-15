@@ -19,7 +19,7 @@ class TTransform
 public:
 	/// @name Constructors
 	/// @{
-	explicit TTransform()
+	TTransform()
 	{}
 
 	TTransform(const TTransform& b)

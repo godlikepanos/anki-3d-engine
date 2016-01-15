@@ -6,8 +6,7 @@
 /// @file
 /// Contains misc functions
 
-#ifndef ANKI_UTIL_FUNCTIONS_H
-#define ANKI_UTIL_FUNCTIONS_H
+#pragma once
 
 #include <anki/util/StdTypes.h>
 #include <anki/util/Assert.h>
@@ -213,4 +212,3 @@ struct TypesAreTheSame<T, T>
 
 } // end namespace anki
 
-#endif

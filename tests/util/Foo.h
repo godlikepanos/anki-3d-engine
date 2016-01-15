@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_TESTS_UTIL_FOO_H
-#define ANKI_TESTS_UTIL_FOO_H
+#pragma once
 
 #include <cstdio>
 
@@ -90,4 +89,3 @@ struct Foo
 	}
 };
 
-#endif

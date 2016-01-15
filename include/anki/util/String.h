@@ -9,6 +9,7 @@
 #include <anki/util/Array.h>
 #include <anki/util/NonCopyable.h>
 #include <cstring>
+#include <cstdio>
 
 namespace anki {
 

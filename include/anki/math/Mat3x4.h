@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_MATH_MAT3X4_H
-#define ANKI_MATH_MAT3X4_H
+#pragma once
 
 #include <anki/math/CommonIncludes.h>
 #include <anki/math/Mat.h>
@@ -35,18 +34,18 @@ public:
 /// 3x4 Matrix. Mainly used for transformations. It includes many helpful member
 /// functions. Its row major. The columns are the x,y,z axis
 template<typename T>
-class alignas(16) TMat3x4: public TMat<T, 3, 4, typename TMat3x4Simd<T>::Type, 
+class alignas(16) TMat3x4: public TMat<T, 3, 4, typename TMat3x4Simd<T>::Type,
 	  TMat3x4<T>, TVec4<T>, TVec3<T>>
 {
 public:
-	using Base = TMat<T, 3, 4, typename TMat3x4Simd<T>::Type, 
+	using Base = TMat<T, 3, 4, typename TMat3x4Simd<T>::Type,
 	  TMat3x4<T>, TVec4<T>, TVec3<T>>;
 
 	using Base::Base;
 
 	/// @name Constructors
 	/// @{
-	explicit TMat3x4()
+	TMat3x4()
 	:	Base()
 	{}
 
@@ -54,7 +53,7 @@ public:
 	:	Base(b)
 	{}
 
-	explicit TMat3x4(T m00, T m01, T m02, T m03, T m10, T m11, T m12, T m13, 
+	TMat3x4(T m00, T m01, T m02, T m03, T m10, T m11, T m12, T m13,
 		T m20, T m21, T m22, T m23)
 	{
 		TMat3x4& m = *this;
@@ -145,13 +144,13 @@ public:
 		Base::setTranslationPart(TVec3<T>(static_cast<T>(0)));
 	}
 
-	explicit TMat3x4(const TVec3<T>& transl, const TMat3<T>& rot)
+	TMat3x4(const TVec3<T>& transl, const TMat3<T>& rot)
 	{
 		Base::setRotationPart(rot);
 		Base::setTranslationPart(transl);
 	}
 
-	explicit TMat3x4(const TVec3<T>& transl, const TMat3<T>& rot, const T scale)
+	TMat3x4(const TVec3<T>& transl, const TMat3<T>& rot, const T scale)
 	{
 		if(isZero<T>(scale - static_cast<T>(1)))
 		{
@@ -180,32 +179,32 @@ public:
 		const TMat3x4& a = *static_cast<const TMat3x4*>(this);
 		TMat3x4 c;
 
-		c(0, 0) = 
+		c(0, 0) =
 			a(0, 0) * b(0, 0) + a(0, 1) * b(1, 0) + a(0, 2) * b(2, 0);
-		c(0, 1) = 
+		c(0, 1) =
 			a(0, 0) * b(0, 1) + a(0, 1) * b(1, 1) + a(0, 2) * b(2, 1);
-		c(0, 2) = 
+		c(0, 2) =
 			a(0, 0) * b(0, 2) + a(0, 1) * b(1, 2) + a(0, 2) * b(2, 2);
-		c(1, 0) = 
+		c(1, 0) =
 			a(1, 0) * b(0, 0) + a(1, 1) * b(1, 0) + a(1, 2) * b(2, 0);
-		c(1, 1) = 
+		c(1, 1) =
 			a(1, 0) * b(0, 1) + a(1, 1) * b(1, 1) + a(1, 2) * b(2, 1);
-		c(1, 2) = 
+		c(1, 2) =
 			a(1, 0) * b(0, 2) + a(1, 1) * b(1, 2) + a(1, 2) * b(2, 2);
 		c(2, 0) =
 			a(2, 0) * b(0, 0) + a(2, 1) * b(1, 0) + a(2, 2) * b(2, 0);
-		c(2, 1) = 
+		c(2, 1) =
 			a(2, 0) * b(0, 1) + a(2, 1) * b(1, 1) + a(2, 2) * b(2, 1);
 		c(2, 2) =
 			a(2, 0) * b(0, 2) + a(2, 1) * b(1, 2) + a(2, 2) * b(2, 2);
 
-		c(0, 3) = a(0, 0) * b(0, 3) + a(0, 1) * b(1, 3) 
+		c(0, 3) = a(0, 0) * b(0, 3) + a(0, 1) * b(1, 3)
 			+ a(0, 2) * b(2, 3) + a(0, 3);
 
-		c(1, 3) = a(1, 0) * b(0, 3) + a(1, 1) * b(1, 3) 
+		c(1, 3) = a(1, 0) * b(0, 3) + a(1, 1) * b(1, 3)
 			+ a(1, 2) * b(2, 3) + a(1, 3);
 
-		c(2, 3) = a(2, 0) * b(0, 3) + a(2, 1) * b(1, 3) 
+		c(2, 3) = a(2, 0) * b(0, 3) + a(2, 1) * b(1, 3)
 			+ a(2, 2) * b(2, 3) + a(2, 3);
 
 		return c;
@@ -219,12 +218,12 @@ public:
 	static const TMat3x4& getIdentity()
 	{
 		static const TMat3x4 ident(
-			1.0, 0.0, 0.0, 0.0, 
-			0.0, 1.0, 0.0, 0.0, 
+			1.0, 0.0, 0.0, 0.0,
+			0.0, 1.0, 0.0, 0.0,
 			0.0, 0.0, 1.0, 0.0);
 		return ident;
 	}
-	/// @}	
+	/// @}
 };
 
 #if ANKI_SIMD == ANKI_SIMD_SSE
@@ -258,4 +257,3 @@ static_assert(sizeof(Mat3x4) == sizeof(F32) * 3 * 4, "Incorrect size");
 
 #include <anki/math/Mat3x4.inl.h>
 
-#endif

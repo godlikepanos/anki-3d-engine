@@ -10,8 +10,7 @@
 /// @li Visitable: For non related types
 /// @li VisitableCommonBase: For types with common base
 
-#ifndef ANKI_UTIL_VISITOR_H
-#define ANKI_UTIL_VISITOR_H
+#pragma once
 
 #include <anki/util/Assert.h>
 #include <anki/util/Array.h>
@@ -166,7 +165,7 @@ private:
 		}
 	}
 
-	template<typename TVisitor, typename TFirst, typename TSecond, 
+	template<typename TVisitor, typename TFirst, typename TSecond,
 		typename... Types_>
 	void acceptVisitorInternal(TVisitor& v)
 	{
@@ -197,7 +196,7 @@ private:
 		}
 	}
 
-	template<typename TVisitor, typename TFirst, typename TSecond, 
+	template<typename TVisitor, typename TFirst, typename TSecond,
 		typename... Types_>
 	void acceptVisitorInternalConst(TVisitor& v) const
 	{
@@ -307,7 +306,7 @@ private:
 		return err;
 	}
 
-	template<typename TVisitor, typename TFirst, typename TSecond, 
+	template<typename TVisitor, typename TFirst, typename TSecond,
 		typename... Types_>
 	ANKI_USE_RESULT Error acceptVisitorInternal(TVisitor& v)
 	{
@@ -331,7 +330,7 @@ private:
 			err = acceptVisitorInternal<TVisitor, TFirst, Types_...>(v);
 			break;
 		}
-		
+
 		return err;
 	}
 
@@ -357,11 +356,11 @@ private:
 			ANKI_ASSERT(0 && "Wrong type ID");
 			break;
 		}
-		
+
 		return err;
 	}
 
-	template<typename TVisitor, typename TFirst, typename TSecond, 
+	template<typename TVisitor, typename TFirst, typename TSecond,
 		typename... Types_>
 	ANKI_USE_RESULT Error acceptVisitorInternalConst(TVisitor& v) const
 	{
@@ -385,7 +384,7 @@ private:
 			err = acceptVisitorInternalConst<TVisitor, TFirst, Types_...>(v);
 			break;
 		}
-		
+
 		return err;
 	}
 	/// @}
@@ -394,4 +393,3 @@ private:
 
 } // end namespace anki
 
-#endif

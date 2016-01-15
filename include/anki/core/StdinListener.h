@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_CORE_STDIN_LISTENER_H
-#define ANKI_CORE_STDIN_LISTENER_H
+#pragma once
 
 #include <anki/util/String.h>
 #include <anki/util/Thread.h>
@@ -46,4 +45,3 @@ private:
 
 } // end namespace anki
 
-#endif

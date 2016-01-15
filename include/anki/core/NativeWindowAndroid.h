@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_CORE_NATIVE_WINDOW_ANDROID_H
-#define ANKI_CORE_NATIVE_WINDOW_ANDROID_H
+#pragma once
 
 #include <anki/core/NativeWindow.h>
 #include <EGL/egl.h>
@@ -30,6 +29,4 @@ struct NativeWindowImpl
 };
 
 } // end namespace anki
-
-#endif
 

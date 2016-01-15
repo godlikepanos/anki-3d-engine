@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_JITTER_EVENT_MOVE_EVENT_H
-#define ANKI_JITTER_EVENT_MOVE_EVENT_H
+#pragma once
 
 #include <anki/event/Event.h>
 #include <anki/Math.h>
@@ -39,4 +38,3 @@ private:
 
 } // end namespace anki
 
-#endif

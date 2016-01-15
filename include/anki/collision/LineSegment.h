@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_COLLISION_LINE_SEGMENT_H
-#define ANKI_COLLISION_LINE_SEGMENT_H
+#pragma once
 
 #include <anki/collision/CollisionShape.h>
 #include <anki/math/Vec3.h>
@@ -33,8 +32,8 @@ public:
 	{}
 
 	LineSegment(const Vec4& origin, const Vec4& direction)
-	:	Base(Type::LINE_SEG), 
-		m_origin(origin), 
+	:	Base(Type::LINE_SEG),
+		m_origin(origin),
 		m_dir(direction)
 	{}
 
@@ -115,4 +114,3 @@ private:
 
 } // end namespace anki
 
-#endif

@@ -57,8 +57,8 @@ Error File::open(const CString& filename, OpenFlag flags)
 
 	// Only these flags are accepted
 	ANKI_ASSERT((flags & (OpenFlag::READ | OpenFlag::WRITE | OpenFlag::APPEND
-		| OpenFlag::BINARY | OpenFlag::LITTLE_ENDIAN
-		| OpenFlag::BIG_ENDIAN)) != OpenFlag::NONE);
+		| OpenFlag::BINARY | OpenFlag::ENDIAN_LITTLE
+		| OpenFlag::ENDIAN_BIG)) != OpenFlag::NONE);
 
 	// Cannot be both
 	ANKI_ASSERT((flags & OpenFlag::READ) != (flags & OpenFlag::WRITE));
@@ -99,7 +99,7 @@ Error File::open(const CString& filename, OpenFlag flags)
 	if(!err)
 	{
 		// If the open() DIDN'T provided us the file endianess
-		if((flags & (OpenFlag::BIG_ENDIAN | OpenFlag::LITTLE_ENDIAN))
+		if((flags & (OpenFlag::ENDIAN_BIG | OpenFlag::ENDIAN_LITTLE))
 			== OpenFlag::NONE)
 		{
 			// Set the machine's endianness
@@ -108,8 +108,8 @@ Error File::open(const CString& filename, OpenFlag flags)
 		else
 		{
 			// Else just make sure that only one of the flags is set
-			ANKI_ASSERT((flags & OpenFlag::BIG_ENDIAN)
-				!= (flags & OpenFlag::LITTLE_ENDIAN));
+			ANKI_ASSERT((flags & OpenFlag::ENDIAN_BIG)
+				!= (flags & OpenFlag::ENDIAN_LITTLE));
 		}
 	}
 
@@ -403,7 +403,7 @@ Error File::readU32(U32& out)
 	ANKI_ASSERT((m_flags & OpenFlag::BINARY) != OpenFlag::NONE
 		&& "Should be binary file");
 	ANKI_ASSERT(
-		(m_flags & OpenFlag::BIG_ENDIAN) != (m_flags & OpenFlag::LITTLE_ENDIAN)
+		(m_flags & OpenFlag::ENDIAN_BIG) != (m_flags & OpenFlag::ENDIAN_LITTLE)
 		&& "One of those 2 should be active");
 
 	Error err = read(&out, sizeof(out));
@@ -412,16 +412,16 @@ Error File::readU32(U32& out)
 		// Copy it
 		OpenFlag machineEndianness = getMachineEndianness();
 		OpenFlag fileEndianness =
-			((m_flags & OpenFlag::BIG_ENDIAN) != OpenFlag::NONE)
-			? OpenFlag::BIG_ENDIAN
-			: OpenFlag::LITTLE_ENDIAN;
+			((m_flags & OpenFlag::ENDIAN_BIG) != OpenFlag::NONE)
+			? OpenFlag::ENDIAN_BIG
+			: OpenFlag::ENDIAN_LITTLE;
 
 		if(machineEndianness == fileEndianness)
 		{
 			// Same endianness between the file and the machine. Do nothing
 		}
-		else if(machineEndianness == OpenFlag::BIG_ENDIAN
-			&& fileEndianness == OpenFlag::LITTLE_ENDIAN)
+		else if(machineEndianness == OpenFlag::ENDIAN_BIG
+			&& fileEndianness == OpenFlag::ENDIAN_LITTLE)
 		{
 			U8* c = reinterpret_cast<U8*>(&out);
 			out = (c[0] | (c[1] << 8) | (c[2] << 16) | (c[3] << 24));
@@ -653,11 +653,11 @@ File::OpenFlag File::getMachineEndianness()
 	I32 num = 1;
 	if(*(char*)&num == 1)
 	{
-		return OpenFlag::LITTLE_ENDIAN;
+		return OpenFlag::ENDIAN_LITTLE;
 	}
 	else
 	{
-		return OpenFlag::BIG_ENDIAN;
+		return OpenFlag::ENDIAN_BIG;
 	}
 }
 

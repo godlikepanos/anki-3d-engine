@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_CORE_NATIVE_WINDOW_EGL_FBDEV_H
-#define ANKI_CORE_NATIVE_WINDOW_EGL_FBDEV_H
+#pragma once
 
 #include <anki/core/NativeWindow.h>
 #define EGL_FBDEV 1
@@ -31,6 +30,4 @@ struct NativeWindowImpl
 };
 
 } // end namespace anki
-
-#endif
 

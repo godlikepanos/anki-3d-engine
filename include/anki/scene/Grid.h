@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SCENE_GRID_H
-#define ANKI_SCENE_GRID_H
+#pragma once
 
 #include <anki/Collision.h>
 #include <anki/scene/Common.h>
@@ -42,7 +41,7 @@ public:
 	Bool placeSceneNode(SceneNode* sn);
 
 	/// XXX
-	void getVisible(const Frustumable& cam, 
+	void getVisible(const Frustumable& cam,
 		SceneVector<SceneNode*>& nodes);
 
 private:
@@ -56,4 +55,3 @@ private:
 
 } // end namespace anki
 
-#endif

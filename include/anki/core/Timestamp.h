@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_CORE_TIMESTAMP_H
-#define ANKI_CORE_TIMESTAMP_H
+#pragma once
 
 #include <anki/util/StdTypes.h>
 
@@ -17,4 +16,3 @@ const U MAX_TIMESTAMP = MAX_U32;
 
 } // end namespace anki
 
-#endif

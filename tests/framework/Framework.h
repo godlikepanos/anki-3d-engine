@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_TESTS_FRAMEWORK_FRAMEWORK_H
-#define ANKI_TESTS_FRAMEWORK_FRAMEWORK_H
+#pragma once
 
 #include "anki/util/Singleton.h"
 #include <stdexcept>
@@ -215,4 +214,3 @@ extern void deleteTesterSingleton();
 
 } // end namespace anki
 
-#endif

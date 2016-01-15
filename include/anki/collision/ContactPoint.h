@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_COLLISION_CONTACT_POINT_H
-#define ANKI_COLLISION_CONTACT_POINT_H
+#pragma once
 
 #include <anki/Math.h>
 
@@ -25,6 +24,4 @@ public:
 /// @}
 
 } // end namespace anki
-
-#endif
 

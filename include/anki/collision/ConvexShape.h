@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_COLLISION_CONVEX_SHAPE_H
-#define ANKI_COLLISION_CONVEX_SHAPE_H
+#pragma once
 
 #include <anki/collision/CollisionShape.h>
 
@@ -47,6 +46,4 @@ public:
 /// @}
 
 } // end namespace anki
-
-#endif
 

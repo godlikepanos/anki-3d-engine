@@ -12,13 +12,6 @@
 #include <cstddef> // For ptrdiff_t
 #include <utility> // For forward
 
-#define ANKI_DEBUG_ALLOCATORS ANKI_DEBUG
-#define ANKI_PRINT_ALLOCATOR_MESSAGES 1
-
-#if ANKI_PRINT_ALLOCATOR_MESSAGES
-#	include <iostream> // Never include it on release
-#endif
-
 namespace anki {
 
 /// @addtogroup util_memory

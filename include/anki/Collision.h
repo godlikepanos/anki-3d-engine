@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_COLLISION_H
-#define ANKI_COLLISION_H
+#pragma once
 
 /// @defgroup collision Collision detection module
 
@@ -21,4 +20,3 @@
 #include <anki/collision/Functions.h>
 #include <anki/collision/Tests.h>
 
-#endif

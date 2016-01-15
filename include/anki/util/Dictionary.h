@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_UTIL_DICTIONARY_H
-#define ANKI_UTIL_DICTIONARY_H
+#pragma once
 
 #include <anki/util/Allocator.h>
 #include <anki/util/String.h>
@@ -45,9 +44,9 @@ public:
 /// char MUST NOT point to a temporary or the evaluation function will fail.
 /// Its template struct because C++ does not offer template typedefs
 template<
-	typename T, 
+	typename T,
 	typename TAlloc = HeapAllocator<std::pair<CString, T>>>
-using Dictionary = 
+using Dictionary =
 	std::unordered_map<
 		CString,
 		T,
@@ -59,4 +58,3 @@ using Dictionary =
 
 } // end namespace anki
 
-#endif

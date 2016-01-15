@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_COLLISION_FUNCTIONS_H
-#define ANKI_COLLISION_FUNCTIONS_H
+#pragma once
 
 #include <anki/collision/Plane.h>
 #include <anki/collision/Frustum.h>
@@ -20,11 +19,10 @@ namespace anki {
 /// @param[out] planes Pointers to the planes. Elements can be nullptr
 ///
 /// @note plane_count * 8 muls, plane_count sqrt
-extern void extractClipPlanes(const Mat4& mvp, 
+extern void extractClipPlanes(const Mat4& mvp,
 	Plane* planes[(U)Frustum::PlaneType::COUNT]);
 
 /// @}
 
 } // end namespace anki
 
-#endif

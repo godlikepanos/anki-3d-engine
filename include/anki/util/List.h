@@ -7,6 +7,7 @@
 
 #include <anki/util/Allocator.h>
 #include <anki/util/NonCopyable.h>
+#include <functional>
 
 namespace anki {
 

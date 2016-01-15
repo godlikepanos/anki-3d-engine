@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_UTIL_NON_COPYABLE_H
-#define ANKI_UTIL_NON_COPYABLE_H
+#pragma once
 
 namespace anki {
 
@@ -27,4 +26,3 @@ struct NonCopyable
 
 } // end namespace anki
 
-#endif

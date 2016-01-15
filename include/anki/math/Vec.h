@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_MATH_VEC_H
-#define ANKI_MATH_VEC_H
+#pragma once
 
 #include <anki/math/CommonIncludes.h>
 #include <type_traits>
@@ -26,7 +25,7 @@ public:
 
 	/// @name Constructors
 	/// @{
-	explicit TVec()
+	TVec()
 	{}
 
 	TVec(const TVec& b)
@@ -37,14 +36,14 @@ public:
 		}
 	}
 
-	explicit TVec(const T x_, const T y_)
+	TVec(const T x_, const T y_)
 	{
 		static_assert(N == 2, "Wrong vector");
 		x() = x_;
 		y() = y_;
 	}
 
-	explicit TVec(const T x_, const T y_, const T z_)
+	TVec(const T x_, const T y_, const T z_)
 	{
 		static_assert(N == 3, "Wrong vector");
 		x() = x_;
@@ -52,7 +51,7 @@ public:
 		z() = z_;
 	}
 
-	explicit TVec(const T x_, const T y_, const T z_, const T w_)
+	TVec(const T x_, const T y_, const T z_, const T w_)
 	{
 		static_assert(N == 4, "Wrong vector");
 		x() = x_;
@@ -1887,7 +1886,7 @@ public:
 	{
 		for(U i = 0; i < N; i++)
 		{
-			m_arr[i] = b.m_arr[i]; 
+			m_arr[i] = b.m_arr[i];
 		}
 		return *this;
 	}
@@ -1896,7 +1895,7 @@ public:
 	{
 		for(U i = 0; i < N; i++)
 		{
-			m_arr[i] = b.m_arr[i]; 
+			m_arr[i] = b.m_arr[i];
 		}
 		return static_cast<TV&>(*this);
 	}
@@ -2183,9 +2182,7 @@ protected:
 	};
 	/// @}
 };
-
 /// @}
 
 } // end namespace anki
 
-#endif

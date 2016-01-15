@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RESOURCE_PATH_H
-#define ANKI_RESOURCE_PATH_H
+#pragma once
 
 #include <anki/Math.h>
 
@@ -26,4 +25,3 @@ class Path
 
 } // end namespace anki
 
-#endif

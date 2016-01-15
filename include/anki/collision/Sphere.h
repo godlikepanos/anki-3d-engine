@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_COLLISION_SPHERE_H
-#define ANKI_COLLISION_SPHERE_H
+#pragma once
 
 #include <anki/collision/ConvexShape.h>
 #include <anki/Math.h>
@@ -39,8 +38,8 @@ public:
 
 	/// Constructor
 	Sphere(const Vec4& center, F32 radius)
-	:	Base(Type::SPHERE), 
-		m_center(center), 
+	:	Base(Type::SPHERE),
+		m_center(center),
 		m_radius(radius)
 	{}
 
@@ -126,4 +125,3 @@ private:
 
 } // end namespace anki
 
-#endif

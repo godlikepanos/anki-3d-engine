@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_COLLISION_GJK_EPA_H
-#define ANKI_COLLISION_GJK_EPA_H
+#pragma once
 
 #include <anki/Math.h>
 
@@ -61,6 +60,4 @@ private:
 /// @}
 
 } // end namespace anki
-
-#endif
 

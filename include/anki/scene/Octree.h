@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SCENE_OCTREE_H
-#define ANKI_SCENE_OCTREE_H
+#pragma once
 
 #include <anki/collision/Aabb.h>
 #include <anki/util/Array.h>
@@ -140,7 +139,7 @@ public:
 		return maxDepth;
 	}
 
-	Sector& getSector() 
+	Sector& getSector()
 	{
 		return *sector;
 	}
@@ -192,4 +191,3 @@ private:
 
 } // end namespace anki
 
-#endif
