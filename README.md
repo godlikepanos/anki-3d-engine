@@ -30,7 +30,7 @@ Prerequisites:
 
 To build the release version:
 
-	$cd <path_to_anki>
+	$cd path/to/anki
 	$cd mkdir build
 	$cd ./build
 	$cmake ..
@@ -59,7 +59,7 @@ To build the release version:
 
 - Open CMake GUI tool
 	- Point the source directory to where AnKi's CMakeLists.txt is located
-	- Select a build directory (eg <path_to_anki>/build)
+	- Select a build directory (eg path/to/anki/build)
 	- Configure by selecting mingw makefiles
 	- Generate the makefiles
 - Open a PowerShell

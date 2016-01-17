@@ -15,6 +15,7 @@ void Exporter::exportMaterial(const aiMaterial& mtl, uint32_t instances) const
 	std::string shininessTex;
 	std::string dispTex;
 	std::string emissiveTex;
+	std::string metallicTex;
 
 	aiString path;
 
@@ -92,6 +93,19 @@ void Exporter::exportMaterial(const aiMaterial& mtl, uint32_t instances) const
 		if(mtl.GetTexture(aiTextureType_EMISSIVE, 0, &path) == AI_SUCCESS)
 		{
 			emissiveTex = getFilename(path.C_Str());
+		}
+		else
+		{
+			ERROR("Failed to retrieve texture");
+		}
+	}
+
+	// Metallic texture
+	if(mtl.GetTextureCount(aiTextureType_REFLECTION) > 0)
+	{
+		if(mtl.GetTexture(aiTextureType_REFLECTION, 0, &path) == AI_SUCCESS)
+		{
+			metallicTex = getFilename(path.C_Str());
 		}
 		else
 		{
@@ -341,7 +355,7 @@ void Exporter::exportMaterial(const aiMaterial& mtl, uint32_t instances) const
 				+ "</value></input>)\n"
 				+ "\t\t\t\t<input><type>float</type><name>emission</"
 				  "name><value>"
-				+ std::to_string(5.0)
+				+ std::to_string(10.0)
 				+ "</value><const>1</const></input>");
 
 		std::string func = readRFromTextureTemplate;
@@ -378,6 +392,47 @@ void Exporter::exportMaterial(const aiMaterial& mtl, uint32_t instances) const
 			replaceAllString(materialStr, "%emissionArg%", "emission");
 	}
 
+	// Metallic
+	if(!metallicTex.empty())
+	{
+		materialStr = replaceAllString(materialStr,
+			"%metallicInput%",
+			"<input><type>sampler2D</type><name>metallicTex</name><value>"
+				+ m_texrpath
+				+ metallicTex
+				+ "</value></input>");
+
+		std::string func = readRFromTextureTemplate;
+		func = replaceAllString(func, "%id%", "80");
+		func = replaceAllString(func, "%map%", "metallicTex");
+
+		materialStr = replaceAllString(materialStr, "%metallicFunc%", func);
+
+		materialStr = replaceAllString(materialStr, "%map%", "metallicTex");
+
+		materialStr = replaceAllString(materialStr, "%metallicArg%", "out80");
+	}
+	else
+	{
+		float metallic = 0.0;
+		if(mtl.mAnKiProperties.find("metallic") != mtl.mAnKiProperties.end())
+		{
+			metallic = std::stof(mtl.mAnKiProperties.at("metallic"));
+		}
+
+		materialStr = replaceAllString(materialStr,
+			"%metallicInput%",
+			R"(<input><type>float</type><name>metallic</name><value>)"
+				+ std::to_string(metallic)
+				+ R"(</value><const>1</const></input>)");
+
+		materialStr = replaceAllString(materialStr, "%metallicFunc%", "");
+
+		materialStr =
+			replaceAllString(materialStr, "%metallicArg%", "metallic");
+	}
+
+	// Continue
 	materialStr = replaceAllString(
 		materialStr, "%instanced%", (instances > 1) ? "1" : "0");
 	materialStr = replaceAllString(materialStr,

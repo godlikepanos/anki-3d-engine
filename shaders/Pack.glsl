@@ -99,6 +99,7 @@ void writeGBuffer(
 	in float roughness,
 	in float subsurface,
 	in float emission,
+	in float metallic,
 	out vec4 rt0,
 	out vec4 rt1,
 	out vec4 rt2)

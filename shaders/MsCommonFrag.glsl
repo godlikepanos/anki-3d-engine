@@ -217,9 +217,10 @@ void writeRts(
 	in vec3 specularColor,
 	in float roughness,
 	in float subsurface,
-	in float emission)
+	in float emission,
+	in float metallic)
 {
 	writeGBuffer(diffColor, normal, specularColor, roughness, subsurface,
-		emission, out_msRt0, out_msRt1, out_msRt2);
+		emission, metallic, out_msRt0, out_msRt1, out_msRt2);
 }
 #endif

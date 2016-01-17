@@ -1,0 +1,391 @@
+diff --git a/source/blender/collada/DocumentExporter.cpp b/source/blender/collada/DocumentExporter.cpp
+index 1348d7e..7c1b09d 100644
+--- a/source/blender/collada/DocumentExporter.cpp
++++ b/source/blender/collada/DocumentExporter.cpp
+@@ -160,10 +160,10 @@ static COLLADABU::NativeString make_temp_filepath(const char *name, const char *
+ 	const char *tempdir = BKE_tempdir_session();
+ 
+ 	if (name == NULL) {
+-		name = tmpnam(NULL);
++		name = tempnam(tempdir, NULL);
+ 	}
+ 
+-	BLI_make_file_string(NULL, tempfile, tempdir, name);
++	strcpy(tempfile, name);
+ 
+ 	if (extension) {
+ 		BLI_ensure_extension(tempfile, FILE_MAX, extension);
+@@ -185,8 +185,7 @@ void DocumentExporter::exportCurrentScene(Scene *sce)
+ 
+ 	clear_global_id_map();
+ 
+-	COLLADABU::NativeString native_filename = make_temp_filepath(NULL, ".dae");
+-	COLLADASW::StreamWriter *writer = new COLLADASW::StreamWriter(native_filename);
++	COLLADASW::StreamWriter *writer = new COLLADASW::StreamWriter(COLLADABU::NativeString(this->export_settings->filepath));
+ 
+ 	fprintf(stdout, "Collada export: %s\n", this->export_settings->filepath);
+ 
+@@ -328,10 +327,6 @@ void DocumentExporter::exportCurrentScene(Scene *sce)
+ 	// close <Collada>
+ 	writer->endDocument();
+ 	delete writer;
+-
+-	// Finally move the created document into place
+-	BLI_rename(native_filename.c_str(), this->export_settings->filepath);
+-
+ }
+ 
+ void DocumentExporter::exportScenes(const char *filename)
+diff --git a/source/blender/collada/EffectExporter.cpp b/source/blender/collada/EffectExporter.cpp
+index 13dc1ed..6ea357f 100644
+--- a/source/blender/collada/EffectExporter.cpp
++++ b/source/blender/collada/EffectExporter.cpp
+@@ -46,7 +46,9 @@ extern "C" {
+ 	#include "BKE_customdata.h"
+ 	#include "BKE_mesh.h"
+ 	#include "BKE_material.h"
++	#include "BKE_idprop.h"
+ }
++#include <sstream>
+ 
+ // OB_MESH is assumed
+ static std::string getActiveUVLayerName(Object *ob)
+@@ -169,6 +171,31 @@ void EffectsExporter::writeTextures(COLLADASW::EffectProfile &ep,
+ 		texture.setChildElementName("bump");
+ 		ep.addExtraTechniqueColorOrTexture(COLLADASW::ColorOrTexture(texture));
+ 	}
++	// AnKi: Add some textures
++	if (t->mapto & MAP_HAR) {
++		COLLADASW::Texture texture(key);
++		texture.setTexcoord(uvname);
++		texture.setSampler(*sampler);
++		texture.setProfileName("blender");
++		texture.setChildElementName("roughness");
++		ep.addExtraTechniqueColorOrTexture(COLLADASW::ColorOrTexture(texture));
++	}
++	if (t->mapto & MAP_DISPLACE) {
++		COLLADASW::Texture texture(key);
++		texture.setTexcoord(uvname);
++		texture.setSampler(*sampler);
++		texture.setProfileName("blender");
++		texture.setChildElementName("height");
++		ep.addExtraTechniqueColorOrTexture(COLLADASW::ColorOrTexture(texture));
++	}
++	if ((t->mapto & MAP_COLMIR) || (t->mapto & MAP_RAYMIRR)) {
++		COLLADASW::Texture texture(key);
++		texture.setTexcoord(uvname);
++		texture.setSampler(*sampler);
++		texture.setProfileName("blender");
++		texture.setChildElementName("metallic");
++		ep.addExtraTechniqueColorOrTexture(COLLADASW::ColorOrTexture(texture));
++	}
+ }
+ 
+ void EffectsExporter::operator()(Material *ma, Object *ob)
+@@ -397,6 +424,67 @@ void EffectsExporter::operator()(Material *ma, Object *ob)
+ 		}
+ 	}
+ 
++	// AnKi: Export extra properties
++	static const char *property_names[] = {
++		"diffuse_texture_detail",
++		"normal_texture_detail",
++		"material_override",
++		"metallic",
++		"roughness",
++		NULL};
++	IDProperty *rprop = ma->id.properties;
++	while (rprop) {
++		if (rprop->type == IDP_GROUP) {
++			// Search properties
++			const char **iter = property_names;
++			while (*iter != NULL) {
++				const char *prop_name = *iter;
++				IDProperty *prop = IDP_GetPropertyFromGroup(rprop, prop_name);
++
++				if (prop) {
++					const char *value = NULL;
++					float valuef = 0.0;
++					bool ok = true;
++
++					if(prop->type == IDP_STRING) {
++						value = IDP_String(prop);
++					}
++					else if (prop->type == IDP_FLOAT) {
++						valuef = IDP_Float(prop);
++					}
++					else if (prop->type == IDP_DOUBLE) {
++						valuef = IDP_Double(prop);
++					}
++					else if (prop->type == IDP_INT) {
++						valuef = IDP_Int(prop);
++					}
++					else {
++						printf("Property value type cannot be handled\n");
++						ok = false;
++					}
++
++					if (ok)
++					{
++						if (value) {
++							printf("Found %s property \"%s\"\n", prop_name, value);
++							ep.addExtraTechniqueParameter("blender", prop_name, COLLADASW::String(value));
++						}
++						else {
++							printf("Found %s property %f\n", prop_name, valuef);
++							std::stringstream ss;
++							ss << valuef;
++							ep.addExtraTechniqueParameter("blender", prop_name, COLLADASW::String(ss.str()));
++						}
++					}
++				} // end found
++
++				++iter;
++			} // end iterate property_names
++		} // end group
++
++		rprop = rprop->next;
++	}
++
+ 	// performs the actual writing
+ 	ep.addProfileElements();
+ 	bool twoSided = false;
+diff --git a/source/blender/collada/GeometryExporter.cpp b/source/blender/collada/GeometryExporter.cpp
+index 7c7c57f..d4c2df0 100644
+--- a/source/blender/collada/GeometryExporter.cpp
++++ b/source/blender/collada/GeometryExporter.cpp
+@@ -47,6 +47,7 @@ extern "C" {
+ 	#include "BKE_customdata.h"
+ 	#include "BKE_material.h"
+ 	#include "BKE_mesh.h"
++	#include "BKE_idprop.h"
+ }
+ 
+ #include "collada_internal.h"
+@@ -143,13 +144,125 @@ void GeometryExporter::operator()(Object *ob)
+ 			createPolylist(0, has_uvs, has_color, ob, me, geom_id, norind);
+ 		}
+ 	}
+-	
++
++	// AnKi: Export mesh properties
++	{
++		static const char *property_names[] = {
++			"particles",
++			"collision",
++			"sector",
++			"portal",
++			"lod1",
++			"skip",
++			"reflection_probe",
++			"reflection_proxy",
++			NULL};
++
++		ID *mesh_id = (ID*)ob->data;
++		IDProperty *rprop = mesh_id->properties;
++		while (rprop) {
++			if (rprop->type == IDP_GROUP) {
++				const char **iter = property_names;
++				while (*iter != NULL) {
++					const char *prop_name = *iter;
++					IDProperty *prop = IDP_GetPropertyFromGroup(rprop, prop_name);
++
++					if (prop) {
++						const char *value = NULL;
++						float valuef = 0.0;
++						bool ok = true;
++
++						if(prop->type == IDP_STRING) {
++							value = IDP_String(prop);
++						}
++						else if (prop->type == IDP_FLOAT) {
++							valuef = IDP_Float(prop);
++						}
++						else if (prop->type == IDP_DOUBLE) {
++							valuef = IDP_Double(prop);
++						}
++						else if (prop->type == IDP_INT) {
++							valuef = IDP_Int(prop);
++						}
++						else {
++							printf("Property value type cannot be handled\n");
++							ok = false;
++						}
++
++						if (ok) {
++							if (value) {
++								printf("Found %s property \"%s\"\n", prop_name, value);
++
++								std::string str = std::string("<") + prop_name + ">" + value + "</" + prop_name + ">";
++								mSW->appendTextBlock(str.c_str());
++							}
++							else {
++								printf("Found %s property \"%f\"\n", prop_name, valuef);
++
++								std::stringstream ss;
++								ss << "<" << prop_name << ">" << valuef << "</" << prop_name << ">";
++								mSW->appendTextBlock(ss.str().c_str());
++							}
++						}
++					} // end found
++
++					++iter;
++				} // end iterate property_names
++			} // end group
++
++			rprop = rprop->next;
++		}
++	}
++
+ 	closeMesh();
+ 	
+ 	if (me->flag & ME_TWOSIDED) {
+ 		mSW->appendTextBlock("<extra><technique profile=\"MAYA\"><double_sided>1</double_sided></technique></extra>");
+ 	}
+ 
++	// AnKi: Export object properties
++	{
++		static const char *property_names[] = {
++			"add some",
++			NULL};
++		IDProperty *rprop = ob->id.properties;
++		while (rprop) {
++			if (rprop->type == IDP_GROUP) {
++				// Search properties
++				const char **iter = property_names;
++				while (*iter != NULL) {
++					const char *prop_name = *iter;
++					IDProperty *prop = IDP_GetPropertyFromGroup(rprop, prop_name);
++
++					if (prop) {
++						const char *value = NULL;
++
++						if(prop->type == IDP_STRING) {
++							value = IDP_String(prop);
++						}
++						else {
++							printf("Property's value is not string\n");
++						}
++
++						if (value) {
++							printf("Found %s property \"%s\"\n", prop_name, value);
++
++							std::string str = std::string("<") + prop_name + ">" + value + "</" + prop_name + ">";
++							mSW->appendTextBlock(str.c_str());
++						}
++						else {
++							printf("Value error in %s property\n", prop_name);
++						}
++					} // end found
++
++					++iter;
++				} // end iterate property_names
++			} // end group
++
++			rprop = rprop->next;
++		}
++	}
++
+ 	closeGeometry();
+ 
+ 	if (this->export_settings->include_shapekeys) {
+diff --git a/source/blender/collada/LightExporter.cpp b/source/blender/collada/LightExporter.cpp
+index ff50abf..205f687 100644
+--- a/source/blender/collada/LightExporter.cpp
++++ b/source/blender/collada/LightExporter.cpp
+@@ -31,6 +31,9 @@
+ #include "COLLADASWLight.h"
+ 
+ #include "BLI_math.h"
++extern "C" {
++#include "BKE_idprop.h"
++}
+ 
+ #include "LightExporter.h"
+ #include "collada_internal.h"
+@@ -107,6 +110,7 @@ void LightsExporter::operator()(Object *ob)
+ 		cla.setLinearAttenuation(linatt);
+ 		cla.setQuadraticAttenuation(quadatt);
+ 		exportBlenderProfile(cla, la);
++		cla.addExtraTechniqueParameter("FCOLLADA", "outer_cone", RAD2DEGF(la->spotsize)); // AnKi: Add cone angle
+ 		addLight(cla);
+ 	}
+ 	// lamp
+@@ -190,6 +194,49 @@ bool LightsExporter::exportBlenderProfile(COLLADASW::Light &cla, Lamp *la)
+ 	cla.addExtraTechniqueParameter("blender", "skyblendfac", la->skyblendfac);
+ 	cla.addExtraTechniqueParameter("blender", "sky_exposure", la->sky_exposure);
+ 	cla.addExtraTechniqueParameter("blender", "sky_colorspace", la->sky_colorspace);
+-	
++
++	// AnKi: Export properties
++	static const char *property_names[] = {
++		"lens_flare",
++		"lens_flare_first_sprite_size",
++		"lens_flare_color",
++		"specular_color",
++		"shadow",
++		"light_event_intensity",
++		"light_event_frequency",
++		NULL};
++	IDProperty *rprop = la->id.properties;
++	while (rprop) {
++		if (rprop->type == IDP_GROUP) {
++			// Search properties
++			const char **iter = property_names;
++			while (*iter != NULL) {
++				const char *prop_name = *iter;
++				IDProperty *prop = IDP_GetPropertyFromGroup(rprop, prop_name);
++
++				if (prop) {
++					const char *value = NULL;
++
++					if(prop->type == IDP_STRING) {
++						value = IDP_String(prop);
++					}
++
++					if (value) {
++						printf("Found %s property \"%s\"\n", prop_name, value);
++
++						cla.addExtraTechniqueParameter("blender", prop_name, COLLADASW::String(value));
++					}
++					else {
++						printf("Value error in %s property\n", prop_name);
++					}
++				} // end found
++
++				++iter;
++			} // end iterate property_names
++		} // end group
++
++		rprop = rprop->next;
++	}
++
+ 	return true;
+ }
+diff --git a/source/blender/collada/SceneExporter.cpp b/source/blender/collada/SceneExporter.cpp
+index 30cd6dd..17563dd 100644
+--- a/source/blender/collada/SceneExporter.cpp
++++ b/source/blender/collada/SceneExporter.cpp
+@@ -28,6 +28,7 @@ extern "C" {
+ 	#include "BLI_utildefines.h"
+ 	#include "BKE_object.h"
+ 	#include "BLI_listbase.h"
++	#include "BKE_group.h"
+ }
+ 
+ #include "SceneExporter.h"
+@@ -234,6 +235,14 @@ void SceneExporter::writeNodes(Object *ob, Scene *sce)
+ 		}
+ 	}
+ 
++	// AnKi: Export group
++	Group *group = BKE_group_object_find(NULL, ob);
++	if (group) {
++		colladaNode.addExtraTechniqueParameter("blender", "group", COLLADASW::String(group->id.name));
++	} else {
++		colladaNode.addExtraTechniqueParameter("blender", "group", COLLADASW::String("none"));
++	}
++
+ 	for (std::list<Object *>::iterator i = child_objects.begin(); i != child_objects.end(); ++i) {
+ 		if (bc_is_marked(*i)) {
+ 			bc_remove_mark(*i);

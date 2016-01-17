@@ -12,6 +12,7 @@ R"(		<program>
 				%normalInput%
 				%subsurfaceInput%
 				%emissionInput%
+				%metallicInput%
 			</inputs>
 
 			<operations>
@@ -35,6 +36,7 @@ R"(		<program>
 				%specularColorFunc%
 				%specularPowerFunc%
 				%emissionFunc%
+				%metallicFunc%
 				<operation>
 					<id>100</id>
 					<returnType>void</returnType>
@@ -46,6 +48,7 @@ R"(		<program>
 						<argument>%specularPowerArg%</argument>
 						<argument>%subsurfaceArg%</argument>
 						<argument>%emissionArg%</argument>
+						<argument>%metallicArg%</argument>
 					</arguments>
 				</operation>
 			</operations>
