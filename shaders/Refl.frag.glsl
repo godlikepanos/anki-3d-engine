@@ -8,10 +8,9 @@
 
 // Common
 layout(TEX_BINDING(0, 0)) uniform sampler2D u_depthRt;
-layout(TEX_BINDING(0, 1)) uniform sampler2D u_msRt1;
-layout(TEX_BINDING(0, 2)) uniform sampler2D u_msRt2;
+layout(TEX_BINDING(0, 1)) uniform sampler2D u_msRt2;
 
-layout(std140, UBO_BINDING(0, 0)) uniform _blk0
+layout(std140, UBO_BINDING(0, 0)) uniform u0_
 {
 	vec4 u_projectionParams;
 	mat4 u_projectionMat;
@@ -49,15 +48,12 @@ void main()
 	posVSpace.xy =
 		(2.0 * in_texCoord - 1.0) * u_projectionParams.xy * posVSpace.z;
 
-	float roughness;
-	readRoughnessFromGBuffer(u_msRt1, in_texCoord, roughness);
-
-	vec3 normal;
-	readNormalFromGBuffer(u_msRt2, in_texCoord, normal);
+	GbufferInfo gbuffer;
+	readNormalRoughnessMetallicFromGBuffer(u_msRt2, in_texCoord, gbuffer);
 
 	// Compute relflection vector
 	vec3 eye = normalize(posVSpace);
-	vec3 r = reflect(eye, normal);
+	vec3 r = reflect(eye, gbuffer.normal);
 
 	//
 	// SSLR
@@ -66,7 +62,7 @@ void main()
 	float sslrContribution;
 
 	// Don't bother for very rough surfaces
-	if(roughness > SSLR_START_ROUGHNESS)
+	if(gbuffer.roughness > SSLR_START_ROUGHNESS)
 	{
 		sslrContribution = 1.0;
 		out_color = vec3(1.0, 0.0, 1.0);
@@ -83,10 +79,10 @@ void main()
 	// IR
 	//
 #if IR_ENABLED
-	float reflLod = float(IR_MIPMAP_COUNT) * roughness;
+	float reflLod = float(IR_MIPMAP_COUNT) * gbuffer.roughness;
 	vec3 imgRefl = doImageReflections(posVSpace, r, reflLod);
 	out_color = mix(imgRefl, out_color, sslrContribution);
 #endif
 
-	out_color *= (1.0 - roughness);
+	out_color *= gbuffer.metallic;
 }

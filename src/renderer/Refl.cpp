@@ -135,11 +135,8 @@ Error Refl::init1stPass(const ConfigSet& config)
 	rcInit.m_textures[0].m_texture = m_r->getMs().getDepthRt();
 	rcInit.m_textures[0].m_sampler = gr.newInstance<Sampler>(sinit);
 
-	rcInit.m_textures[1].m_texture = m_r->getMs().getRt1();
+	rcInit.m_textures[1].m_texture = m_r->getMs().getRt2();
 	rcInit.m_textures[1].m_sampler = gr.newInstance<Sampler>(sinit);
-
-	rcInit.m_textures[2].m_texture = m_r->getMs().getRt2();
-	rcInit.m_textures[2].m_sampler = gr.newInstance<Sampler>(sinit);
 
 	if(m_sslrEnabled)
 	{

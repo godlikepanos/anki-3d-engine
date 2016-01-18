@@ -26,7 +26,7 @@ vec3 unpackNormal(in vec2 enc)
 	vec3 normal;
 	normal.xy = g * nn.xy;
 	normal.z = g - 1.0;
-	return normal;
+	return normalize(normal);
 }
 
 #if GL_ES || __VERSION__ < 400
@@ -82,90 +82,78 @@ float packUnorm2ToUnorm1(in vec2 comp)
 // Unpack a single float to vec2. Does the oposite of packUnorm2ToUnorm1.
 vec2 unpackUnorm1ToUnorm2(in float c)
 {
+#if 1
 	float temp = c * (255.0 / 16.0);
 	float a = floor(temp);
 	float b = temp - a; // b = fract(temp)
 	return vec2(a, b) * vec2(1.0 / 15.0, 16.0 / 15.0);
+#else
+	uint temp = uint(c * 255.0);
+	uint a = temp >> 4;
+	uint b = temp & 0xF;
+	return vec2(a, b) / 15.0;
+#endif
 }
 
 // Max emission. Keep as low as possible
 const float MAX_EMISSION = 10.0;
 
+// G-Buffer structure
+struct GbufferInfo
+{
+	vec3 diffuse;
+	vec3 specular;
+	vec3 normal;
+	float roughness;
+	float metallic;
+	float subsurface;
+	float emission;
+};
+
 // Populate the G buffer
-void writeGBuffer(
-	in vec3 diffColor,
-	in vec3 normal,
-	in vec3 specColor,
-	in float roughness,
-	in float subsurface,
-	in float emission,
-	in float metallic,
+void writeGBuffer(in GbufferInfo g, 
 	out vec4 rt0,
 	out vec4 rt1,
 	out vec4 rt2)
 {
-	rt0 = vec4(diffColor, subsurface);
-	rt1 = vec4(packUnorm2ToUnorm1(specColor.rg), specColor.b, roughness,
-		emission / MAX_EMISSION);
-	rt2 = vec4(normal * 0.5 + 0.5, 0.0);
+	rt0 = vec4(g.diffuse, g.subsurface);
+	rt1 = vec4(g.specular, g.emission / MAX_EMISSION);
+	rt2 = vec4(packNormal(g.normal), g.roughness, g.metallic);
+}
+
+// Read from G-buffer
+void readNormalRoughnessMetallicFromGBuffer(
+	in sampler2D rt2, in vec2 uv, inout GbufferInfo g)
+{
+	vec4 comp = texture(rt2, uv);
+	g.normal = unpackNormal(comp.xy);
+	g.roughness = comp.z;
+	g.metallic = comp.w;
+}
+
+// Read from G-buffer
+void readNormalFromGBuffer(in sampler2D rt2,  in vec2 uv, out vec3 normal)
+{
+	vec2 comp = texture(rt2, uv).rg;
+	normal = unpackNormal(comp);
 }
 
 // Read from the G buffer
-void readGBuffer(
-	in sampler2D rt0,
+void readGBuffer(in sampler2D rt0,
 	in sampler2D rt1,
 	in sampler2D rt2,
-	in vec2 uv_,
-	out vec3 diffColor,
-	out vec3 normal,
-	out vec3 specColor,
-	out float roughness,
-	out float subsurface,
-	out float emission)
-{
-	ivec2 uv = ivec2(gl_FragCoord.xy);
-
-	vec4 comp = texelFetch(rt0, uv, 0);
-	diffColor = comp.xyz;
-	subsurface = comp.w;
-
-	comp = texelFetch(rt1, uv, 0);
-	specColor = vec3(unpackUnorm1ToUnorm2(comp.x), comp.y);
-	roughness = comp.z;
-	emission = comp.w * MAX_EMISSION;
-
-	normal = texelFetch(rt2, uv, 0).xyz;
-	normal = normalize(normal * 2.0 - 1.0);
-}
-
-// Rear roughness from G-Buffer
-void readRoughnessFromGBuffer(in sampler2D rt1, in vec2 uv, out float r)
-{
-	r = texture(rt1, uv).z;
-}
-
-// Read only normal from G buffer
-void readNormalFromGBuffer(
-	in sampler2D fai2,
 	in vec2 uv,
-	out vec3 normal)
+	out GbufferInfo g)
 {
-	normal = normalize(texture(fai2, uv).rgb * 2.0 - 1.0);
-}
+	vec4 comp = texture(rt0, uv);
+	g.diffuse = comp.xyz;
+	g.subsurface = comp.w;
 
-// Read only normal and specular color from G buffer
-void readNormalSpecularColorFromGBuffer(
-	in sampler2D fai1,
-	in sampler2D fai2,
-	in vec2 uv,
-	out vec3 normal,
-	out vec3 specColor)
-{
-	normal = normalize(textureLod(fai2, uv, 0.0).rgb * 2.0 - 1.0);
+	comp = texture(rt1, uv);
+	g.specular = comp.xyz;
+	g.emission = comp.w * MAX_EMISSION;
 
-	vec2 tmp = textureLod(fai1, uv, 0.0).xy;
-	specColor.rg = unpackUnorm1ToUnorm2(tmp.x);
-	specColor.b = tmp.y;
+	readNormalRoughnessMetallicFromGBuffer(rt2, uv, g);
 }
 
 #endif

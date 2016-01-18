@@ -237,7 +237,6 @@ Error Ssao::initInternal(const ConfigSet& config)
 	sinit.m_minMagFilter = SamplingFilter::LINEAR;
 	sinit.m_mipmapFilter = SamplingFilter::NEAREST;
 	sinit.m_repeat = false;
-	sinit.m_minLod = 0.0;
 
 	rcinit.m_textures[0].m_texture = m_r->getMs().getDepthRt();
 	rcinit.m_textures[0].m_sampler = gr.newInstance<Sampler>(sinit);
@@ -246,6 +245,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 	rcinit.m_textures[1].m_sampler = rcinit.m_textures[0].m_sampler;
 
 	rcinit.m_textures[2].m_texture = m_noiseTex;
+
 	rcinit.m_uniformBuffers[0].m_buffer = m_uniformsBuff;
 	m_rcFirst = gr.newInstance<ResourceGroup>(rcinit);
 

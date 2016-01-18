@@ -82,10 +82,17 @@ void main()
 	float roughness;
 	float subsurface;
 	float emission;
+	float metallic;
 
-	readGBuffer(
-		u_msRt0, u_msRt1, u_msRt2,
-		in_texCoord, diffCol, normal, specCol, roughness, subsurface, emission);
+	GbufferInfo gbuffer;
+	readGBuffer(u_msRt0, u_msRt1, u_msRt2, in_texCoord, gbuffer);
+	diffCol = gbuffer.diffuse;
+	specCol = gbuffer.specular;
+	normal = gbuffer.normal;
+	roughness = gbuffer.roughness;
+	metallic = gbuffer.metallic;
+	subsurface = gbuffer.subsurface;
+	emission = gbuffer.emission;
 
 	float a2 = pow(max(EPSILON, roughness), 2.0);
 
@@ -156,6 +163,7 @@ void main()
 			* (att * spot * max(subsurface, lambert * shadow));
 	}
 
+	//out_color = diffCol;
 #if 0
 	if(pointLightsCount == 0)
 	{

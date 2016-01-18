@@ -220,7 +220,14 @@ void writeRts(
 	in float emission,
 	in float metallic)
 {
-	writeGBuffer(diffColor, normal, specularColor, roughness, subsurface,
-		emission, metallic, out_msRt0, out_msRt1, out_msRt2);
+	GbufferInfo g;
+	g.diffuse = diffColor;
+	g.normal = normal;
+	g.specular = specularColor;
+	g.roughness = roughness;
+	g.subsurface = subsurface;
+	g.emission = emission;
+	g.metallic = metallic;
+	writeGBuffer(g, out_msRt0, out_msRt1, out_msRt2);
 }
 #endif

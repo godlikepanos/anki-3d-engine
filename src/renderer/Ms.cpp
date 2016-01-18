@@ -18,7 +18,7 @@ namespace anki
 const Array<PixelFormat, Ms::ATTACHMENT_COUNT> Ms::RT_PIXEL_FORMATS = {
 	{PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM),
 		PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM),
-		PixelFormat(ComponentFormat::R10G10B10A2, TransformFormat::UNORM)}};
+		PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM)}};
 
 const PixelFormat Ms::DEPTH_RT_PIXEL_FORMAT(
 	ComponentFormat::D24, TransformFormat::FLOAT);
@@ -55,7 +55,7 @@ Error Ms::createRt(U32 index, U32 samples)
 		RT_PIXEL_FORMATS[1],
 		samples,
 		SamplingFilter::NEAREST,
-		2,
+		1,
 		plane.m_rt1);
 
 	m_r->createRenderTarget(m_r->getWidth(),
@@ -63,7 +63,7 @@ Error Ms::createRt(U32 index, U32 samples)
 		RT_PIXEL_FORMATS[2],
 		samples,
 		SamplingFilter::NEAREST,
-		2,
+		3,
 		plane.m_rt2);
 
 	AttachmentLoadOperation loadop = AttachmentLoadOperation::DONT_CARE;
@@ -181,7 +181,6 @@ void Ms::generateMipmaps(CommandBufferPtr& cmdb)
 {
 	U planeId = (m_r->getSamples() == 1) ? 1 : 0;
 	cmdb->generateMipmaps(m_planes[planeId].m_depthRt);
-	cmdb->generateMipmaps(m_planes[planeId].m_rt1);
 	cmdb->generateMipmaps(m_planes[planeId].m_rt2);
 }
 
