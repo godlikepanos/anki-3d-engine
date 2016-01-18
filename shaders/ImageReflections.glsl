@@ -8,7 +8,7 @@
 #ifndef ANKI_SHADERS_IMAGE_REFLECTIONS_GLSL
 #define ANKI_SHADERS_IMAGE_REFLECTIONS_GLSL
 
-#pragma anki include "shaders/Clusterer.glsl"
+#include "shaders/Clusterer.glsl"
 
 #define ACCURATE_RAYS 0
 

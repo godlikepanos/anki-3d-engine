@@ -13,29 +13,20 @@
 namespace anki
 {
 
-/// Helper class used for shader program loading
-///
-/// The class fills some of the GLSL spec deficiencies. It adds the include
-/// preprocessor directive and the support to have all the shaders in the same
-/// file. The file that includes all the shaders is called
-/// PrePreprocessor-compatible.
-///
-/// The preprocessor pragmas are:
-///
-/// - #pragma anki type <vert | tesc | tese | geom | frag | comp>
-/// - #pragma anki include "<filename>"
-class ProgramPrePreprocessor
+/// Helper class used for shader program loading. The class adds the include
+/// preprocessor directive.
+class ShaderLoader
 {
 public:
 	/// It loads a file and parses it
 	/// @param[in] filename The file to load
-	ProgramPrePreprocessor(ResourceManager* manager)
+	ShaderLoader(ResourceManager* manager)
 		: m_alloc(manager->getTempAllocator())
 		, m_manager(manager)
 	{
 	}
 
-	~ProgramPrePreprocessor()
+	~ShaderLoader()
 	{
 		m_shaderSource.destroy(m_alloc);
 		m_sourceLines.destroy(m_alloc);
@@ -74,17 +65,14 @@ protected:
 	/// Keep the manager for some path conversions.
 	ResourceManager* m_manager;
 
-	/// A recursive function that parses a file for pragmas and updates the
+	/// A recursive function that parses a file for #include and updates the
 	/// output
 	///
 	/// @param filename The file to parse
 	/// @param depth The #line in GLSL does not support filename so an
 	///              depth it being used. It also tracks the includance depth
-	ANKI_USE_RESULT Error parseFileForPragmas(
+	ANKI_USE_RESULT Error parseFileIncludes(
 		ResourceFilename filename, U32 depth);
-
-	/// Parse the type
-	ANKI_USE_RESULT Error parseType(const String& line, Bool& found);
 
 	void printSourceLines() const; ///< For debugging
 };

@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki include "shaders/MsBsCommon.glsl"
+#include "shaders/MsBsCommon.glsl"
 
 layout(vertices = 3) out;
 
@@ -81,7 +81,7 @@ vec3 projectToPlane(vec3 point, vec3 planePoint, vec3 planeNormal)
 	float pen = dot(v, planeNormal);
 	vec3 d = pen * planeNormal;
 	return (point - d);
-} 
+}
 
 // Calculate control points
 void calcPositions()
@@ -126,7 +126,7 @@ void calcPositions()
 	pnPatch.pos111 = (pnPatch.pos021 + pnPatch.pos012 + pnPatch.pos102 +
 		pnPatch.pos201 + pnPatch.pos210 + pnPatch.pos120) / 6.0;
 	pnPatch.pos111 += (pnPatch.pos111 - center) / 2.0;
-} 
+}
 
 vec3 calcFaceNormal(in vec3 v0, in vec3 v1, in vec3 v2)
 {
@@ -167,8 +167,8 @@ bool posOutsideClipSpace(in vec2 posNdc)
 bool isFaceOutsideClipSpace(in vec2 posNdc[3])
 {
 	return any(bvec3(
-		posOutsideClipSpace(posNdc[0]), 
-		posOutsideClipSpace(posNdc[1]), 
+		posOutsideClipSpace(posNdc[0]),
+		posOutsideClipSpace(posNdc[1]),
 		posOutsideClipSpace(posNdc[2])));
 }
 
@@ -177,7 +177,7 @@ bool isFaceVisible(in mat4 mvp)
 {
 	// Calculate clip positions
 	vec2 clip[3];
-	for(int i = 0 ; i < 3 ; i++) 
+	for(int i = 0 ; i < 3 ; i++)
 	{
 		vec4 v = mvp * IN_POS4(i);
 		clip[i] = v.xy / (v.w * 0.5 + 0.5);
@@ -243,8 +243,8 @@ void tessellatePNPositionNormalTangentTexCoord(
 	{
 		// The face is front facing
 
-		for(int i = 0 ; i < 3 ; i++) 
-		{		
+		for(int i = 0 ; i < 3 ; i++)
+		{
 			outTexCoord[i] = inTexCoords[i];
 			outNormal[i] = inNormal[i];
 #if PASS == COLOR

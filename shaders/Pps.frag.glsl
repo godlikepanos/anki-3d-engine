@@ -3,10 +3,9 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki type frag
-#pragma anki include "shaders/Common.glsl"
-#pragma anki include "shaders/Tonemapping.glsl"
-#pragma anki include "shaders/LinearDepth.glsl"
+#include "shaders/Common.glsl"
+#include "shaders/Tonemapping.glsl"
+#include "shaders/LinearDepth.glsl"
 
 layout(binding = 0) uniform sampler2D u_isRt;
 layout(binding = 1) uniform sampler2D u_ppsSsaoRt;

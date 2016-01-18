@@ -3,14 +3,14 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki include "shaders/Common.glsl"
+#include "shaders/Common.glsl"
 
 #if !GL_ES && __VERSION__ > 400
 layout(early_fragment_tests) in;
 #endif
 
-#pragma anki include "shaders/Pack.glsl"
-#pragma anki include "shaders/MsFsCommon.glsl"
+#include "shaders/Pack.glsl"
+#include "shaders/MsFsCommon.glsl"
 
 //==============================================================================
 // Variables                                                                   =

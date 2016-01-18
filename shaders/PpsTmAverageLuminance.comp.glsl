@@ -3,9 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki type comp
-#pragma anki include "shaders/Common.glsl"
-#pragma anki include "shaders/Tonemapping.glsl"
+#include "shaders/Common.glsl"
+#include "shaders/Tonemapping.glsl"
 
 #if IS_RT_MIPMAP == 0
 #	error Wrong mipmap

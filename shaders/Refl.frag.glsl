@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki type frag
-#pragma anki include "shaders/Pack.glsl"
+#include "shaders/Pack.glsl"
 
 // Common
 layout(TEX_BINDING(0, 0)) uniform sampler2D u_depthRt;
@@ -21,7 +20,7 @@ layout(std140, UBO_BINDING(0, 0)) uniform u0_
 #define IMAGE_REFLECTIONS_SET 0
 #define IMAGE_REFLECTIONS_FIRST_SS_BINDING 0
 #define IMAGE_REFLECTIONS_TEX_BINDING 4
-#pragma anki include "shaders/ImageReflections.glsl"
+#include "shaders/ImageReflections.glsl"
 #undef IMAGE_REFLECTIONS_SET
 #undef IMAGE_REFLECTIONS_FIRST_SS_BINDING
 #endif
@@ -30,7 +29,7 @@ layout(std140, UBO_BINDING(0, 0)) uniform u0_
 #if SSLR_ENABLED
 layout(TEX_BINDING(0, 3)) uniform sampler2D u_isRt;
 
-#pragma anki include "shaders/Sslr.glsl"
+#include "shaders/Sslr.glsl"
 #endif
 
 // In/out

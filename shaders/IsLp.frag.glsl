@@ -3,14 +3,13 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki type frag
-#pragma anki include "shaders/Pack.glsl"
-#pragma anki include "shaders/Clusterer.glsl"
+#include "shaders/Pack.glsl"
+#include "shaders/Clusterer.glsl"
 
 #define LIGHT_SET 0
 #define LIGHT_SS_BINDING 0
 #define LIGHT_TEX_BINDING 4
-#pragma anki include "shaders/LightResources.glsl"
+#include "shaders/LightResources.glsl"
 #undef LIGHT_SET
 #undef LIGHT_SS_BINDING
 #undef LIGHT_TEX_BINDING
@@ -26,7 +25,7 @@ layout(location = 2) in vec2 in_projectionParams;
 
 layout(location = 0) out vec3 out_color;
 
-#pragma anki include "shaders/LightFunctions.glsl"
+#include "shaders/LightFunctions.glsl"
 
 const uint TILE_COUNT = TILE_COUNT_X * TILE_COUNT_Y;
 

@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/resource/ShaderResource.h>
-#include <anki/resource/ProgramPrePreprocessor.h>
+#include <anki/resource/ShaderLoader.h>
 #include <anki/resource/ResourceManager.h>
 #include <anki/core/App.h> // To get cache dir
 #include <anki/util/File.h>
@@ -38,7 +38,7 @@ Error ShaderResource::load(
 {
 	auto alloc = getTempAllocator();
 
-	ProgramPrePreprocessor pars(&getManager());
+	ShaderLoader pars(&getManager());
 	ANKI_CHECK(pars.parseFile(filename));
 
 	// Allocate new source
@@ -91,7 +91,12 @@ Error ShaderResource::createToCache(const ResourceFilename& filename,
 
 	// Create out
 	out = StringAuto(alloc);
-	out.sprintf("%s%s.glsl", &filenamePrefix[0], &suffix[0]);
+	ShaderType inShaderType;
+	ANKI_CHECK(fileExtensionToShaderType(filename, inShaderType));
+	out.sprintf("%s%s%s",
+		&filenamePrefix[0],
+		&suffix[0],
+		&shaderTypeToFileExtension(inShaderType)[0]);
 
 	// Compose cached filename
 	StringAuto newFilename(alloc);

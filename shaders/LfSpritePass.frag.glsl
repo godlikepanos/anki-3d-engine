@@ -5,8 +5,7 @@
 
 // LF sprites frag shader
 
-#pragma anki type frag
-#pragma anki include "shaders/Common.glsl"
+#include "shaders/Common.glsl"
 
 layout(UBO_BINDING(0, 0)) uniform sampler2DArray u_tex;
 

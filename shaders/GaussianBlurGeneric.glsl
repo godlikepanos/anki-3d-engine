@@ -13,10 +13,9 @@
 ///
 /// This is an optimized version. See the clean one at r213
 
-#pragma anki start vertexShader
-#pragma anki include "shaders/SimpleVert.glsl"
+#if 0
 
-#pragma anki start fragmentShader
+#include "shaders/SimpleVert.glsl"
 
 precision mediump float;
 
@@ -62,7 +61,7 @@ in vec2 vTexCoords;
 // Weights
 const float first_weight = 0.2270270270;
 const float weights[4] = float[](
-	0.3162162162, 0.0702702703, 
+	0.3162162162, 0.0702702703,
 	0.3162162162, 0.0702702703);
 
 // Calc the kernel
@@ -97,7 +96,9 @@ void main()
 	// side pixels
 	for(int i = 0; i < KERNEL_SIZE; i++)
 	{
-		fFragColor += 
+		fFragColor +=
 			texture(img, vTexCoords + kernel[i]).TEX_FETCH * weights[i];
 	}
 }
+
+#endif

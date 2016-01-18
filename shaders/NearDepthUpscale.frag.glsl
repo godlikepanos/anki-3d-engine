@@ -3,9 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki type frag
-#pragma anki include "shaders/Common.glsl"
-#pragma anki include "shaders/LinearDepth.glsl"
+#include "shaders/Common.glsl"
+#include "shaders/LinearDepth.glsl"
 
 layout(location = 0) in vec2 in_uvLow;
 layout(location = 1) in vec2 in_uvHigh;

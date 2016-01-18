@@ -405,7 +405,6 @@ Error MaterialLoader::parseProgramTag(const XmlElement& programEl)
 	ANKI_CHECK(getShaderInfo(type, glshader, glshaderbit, shaderidx));
 
 	auto& lines = m_source[shaderidx];
-	lines.pushBackSprintf(m_alloc, "#pragma anki type %s", &type[0]);
 
 	if(glshader == ShaderType::TESSELLATION_CONTROL
 		|| glshader == ShaderType::TESSELLATION_EVALUATION)
@@ -434,7 +433,7 @@ Error MaterialLoader::parseProgramTag(const XmlElement& programEl)
 	{
 		CString tmp;
 		ANKI_CHECK(includeEl.getText(tmp));
-		lines.pushBackSprintf(m_alloc, "#pragma anki include \"%s\"", &tmp[0]);
+		lines.pushBackSprintf(m_alloc, "#include \"%s\"", &tmp[0]);
 
 		ANKI_CHECK(includeEl.getNextSiblingElement("include", includeEl));
 	} while(includeEl);
@@ -446,7 +445,7 @@ Error MaterialLoader::parseProgramTag(const XmlElement& programEl)
 	{
 		lines.pushBackSprintf(m_alloc,
 			"\nlayout(UBO_BINDING(0, 0), std140, row_major) "
-			"uniform _ublk00\n{");
+			"uniform u00_\n{");
 
 		for(Input& in : m_inputs)
 		{

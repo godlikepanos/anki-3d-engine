@@ -6,7 +6,7 @@
 #ifndef ANKI_SHADERS_LIGHT_RESOURCES_GLSL
 #define ANKI_SHADERS_LIGHT_RESOURCES_GLSL
 
-#pragma anki include "shaders/Common.glsl"
+#include "shaders/Common.glsl"
 
 // Common uniforms between lights
 struct LightingUniforms

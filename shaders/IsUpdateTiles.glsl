@@ -5,12 +5,10 @@
 
 // Compute shader that bins lights to the tiles
 
-#pragma anki start computeShader
-
 // Set number of work items
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
-#pragma anki include "shaders/IsCommon.glsl"
+#include "shaders/IsCommon.glsl"
 
 //
 // Data
@@ -26,7 +24,7 @@ layout(std140, binding = 0) buffer tilegridBuffer
 layout(std140, binding = 1) buffer lightsBuffer
 {
 	Lights lights;
-}; 
+};
 
 // The output buffer
 layout(std430, binding = 2) buffer tilesBuffer
@@ -54,9 +52,9 @@ layout(std430, binding = 3) buffer spotTexLightsCountBuffer
 
 // Return true if spere is in the half space defined by the plane
 bool pointLightInsidePlane(in PointLight light, in Plane plane)
-{	
-	// Result of the plane test. Distance of 
-	float dist = dot(plane.normalOffset.xyz, light.posRadius.xyz) 
+{
+	// Result of the plane test. Distance of
+	float dist = dot(plane.normalOffset.xyz, light.posRadius.xyz)
 		- plane.normalOffset.w;
 
 	return dist >= 0.0;
@@ -72,7 +70,7 @@ bool spotLightInsidePlane(in SpotLight light, in Plane plane)
 
 	for(uint i = 0U; i < 4; i++)
 	{
-		float dist = dot(plane.normalOffset.xyz, light.extendPoints[i].xyz) 
+		float dist = dot(plane.normalOffset.xyz, light.extendPoints[i].xyz)
 			- plane.normalOffset.w;
 
 		if(dist >= 0.0)
@@ -95,6 +93,6 @@ void main()
 	// First the point lights
 	for(uint i = 0U; i < lights.count.x; i++)
 	{
-		
+
 	}
 }

@@ -4,10 +4,9 @@
 // http://www.anki3d.org/LICENSE
 
 // SSAO fragment shader
-#pragma anki type frag
-#pragma anki include "shaders/Common.glsl"
-#pragma anki include "shaders/Pack.glsl"
-#pragma anki include "shaders/LinearDepth.glsl"
+#include "shaders/Common.glsl"
+#include "shaders/Pack.glsl"
+#include "shaders/LinearDepth.glsl"
 
 const vec3 KERNEL[KERNEL_SIZE] = KERNEL_ARRAY; // This will be appended in C++
 

@@ -6,7 +6,7 @@
 #ifndef ANKI_SHADERS_TONEMAP_GLSL
 #define ANKI_SHADERS_TONEMAP_GLSL
 
-#pragma anki include "shaders/Common.glsl"
+#include "shaders/Common.glsl"
 
 // A tick to compute log of base 10
 float log10(in float x)

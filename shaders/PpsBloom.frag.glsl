@@ -3,9 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki type frag
-#pragma anki include "shaders/Common.glsl"
-#pragma anki include "shaders/Tonemapping.glsl"
+#include "shaders/Common.glsl"
+#include "shaders/Tonemapping.glsl"
 
 // Vars
 layout(binding = 0) uniform lowp sampler2D u_tex; ///< Its the IS RT
@@ -45,8 +44,8 @@ void main()
 	out_color = readTexture(MIPMAP);
 	out_color += readTexture(MIPMAP - 1);
 	out_color += readTexture(MIPMAP - 2);
-	
+
 	out_color /= 3.0;
-	out_color = tonemap(out_color, u_averageLuminancePad3.x, 
+	out_color = tonemap(out_color, u_averageLuminancePad3.x,
 		u_thresholdScalePad2.x) * u_thresholdScalePad2.y;
 }

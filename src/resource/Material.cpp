@@ -215,7 +215,7 @@ Error MaterialVariant::init(
 		const String& src = loader.getShaderSource(stype);
 
 		StringAuto filename(mtl.getTempAllocator());
-		ANKI_CHECK(mtl.createProgramSourceToCache(src, filename));
+		ANKI_CHECK(mtl.createProgramSourceToCache(src, stype, filename));
 
 		ShaderResourcePtr& shader = m_shaders[U(stype)];
 
@@ -411,7 +411,7 @@ Error Material::createVariants(MaterialLoader& loader)
 
 //==============================================================================
 Error Material::createProgramSourceToCache(
-	const String& source, StringAuto& out)
+	const String& source, ShaderType type, StringAuto& out)
 {
 	auto alloc = getTempAllocator();
 
@@ -419,7 +419,7 @@ Error Material::createProgramSourceToCache(
 	U64 h = computeHash(&source[0], source.getLength());
 
 	// Create out
-	out.sprintf("mtl_%llu.glsl", h);
+	out.sprintf("mtl_%llu%s", h, &shaderTypeToFileExtension(type)[0]);
 
 	// Create path
 	StringAuto fullFname(alloc);

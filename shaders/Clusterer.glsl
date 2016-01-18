@@ -8,7 +8,7 @@
 #ifndef ANKI_SHADERS_CLUSTERER_GLSL
 #define ANKI_SHADERS_CLUSTERER_GLSL
 
-#pragma anki include "shaders/Common.glsl"
+#include "shaders/Common.glsl"
 
 //==============================================================================
 // Compute the cluster index using the tile index.

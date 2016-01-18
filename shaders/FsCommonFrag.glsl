@@ -1,20 +1,19 @@
-// Copyright (C) 2009-2016, Panagiotis Christopoulos Charitos.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
 // Common code for all fragment shaders of BS
-#pragma anki include "shaders/Common.glsl"
-#pragma anki include "shaders/MsFsCommon.glsl"
-#pragma anki include "shaders/LinearDepth.glsl"
-#pragma anki include "shaders/Clusterer.glsl"
+#include "shaders/Common.glsl"
+#include "shaders/MsFsCommon.glsl"
+#include "shaders/LinearDepth.glsl"
+#include "shaders/Clusterer.glsl"
 
 // Global resources
 layout(TEX_BINDING(1, 0)) uniform sampler2D anki_msDepthRt;
 #define LIGHT_SET 1
 #define LIGHT_SS_BINDING 0
 #define LIGHT_TEX_BINDING 1
-#pragma anki include "shaders/LightResources.glsl"
+#include "shaders/LightResources.glsl"
 #undef LIGHT_SET
 #undef LIGHT_SS_BINDING
 #undef LIGHT_TEX_BINDING
@@ -26,7 +25,7 @@ layout(location = 1) flat in float in_alpha;
 
 layout(location = 0) out vec4 out_color;
 
-#pragma anki include "shaders/LightFunctions.glsl"
+#include "shaders/LightFunctions.glsl"
 
 //==============================================================================
 #if PASS == COLOR

@@ -4,9 +4,9 @@
 // http://www.anki3d.org/LICENSE
 
 // SSLR functions and data
-#pragma anki include "shaders/Common.glsl"
-#pragma anki include "shaders/LinearDepth.glsl"
-#pragma anki include "shaders/Pack.glsl"
+#include "shaders/Common.glsl"
+#include "shaders/LinearDepth.glsl"
+#include "shaders/Pack.glsl"
 
 const float ONE = 0.9;
 

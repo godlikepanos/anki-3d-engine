@@ -5,11 +5,9 @@
 
 // This compute shader rejects lights
 
-#pragma anki start computeShader
-
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
-#pragma anki include "shaders/IsCommon.glsl"
+#include "shaders/IsCommon.glsl"
 
 #define TILE_W (DEPTHMAP_WIDTH / TILES_X_COUNT)
 #define TILE_H (DEPTHMAP_HEIGHT / TILES_Y_COUNT)
@@ -49,7 +47,7 @@ void main()
 	//
 	vec2 minMaxDepth = vec2(10000.0, -10000.0); // max depth of tile
 
-	const vec2 COORD = vec2(tileX, tileY) 
+	const vec2 COORD = vec2(tileX, tileY)
 		* (vec2(1.0) / vec2(float(TILES_X_COUNT), float(TILES_Y_COUNT)));
 
 	vec2 coord = COORD;
@@ -86,7 +84,7 @@ void main()
 		vec4 posRadius = pointLights[lightId].posRadius;
 		vec3 pos = posRadius.xyz;
 		float radius = -1.0 / posRadius.w;
-		
+
 		// Should reject?
 		if((pos.z + radius) >= z[1] && (pos.z - radius) <= z[0])
 		{
@@ -99,7 +97,7 @@ void main()
 	// Copy back
 	for(uint i = 0U; i < newPointLightsCount; i++)
 	{
-		tiles[tileIndex].pointLightIndices[i / 4U][i % 4U] = 
+		tiles[tileIndex].pointLightIndices[i / 4U][i % 4U] =
 			newPointLightIndices[i];
 	}
 	tiles[tileIndex].lightsCount[0] = newPointLightsCount;

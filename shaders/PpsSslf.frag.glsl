@@ -6,8 +6,7 @@
 // Screen space lens flare. Used the technique from here
 // http://john-chapman-graphics.blogspot.no/2013/02/pseudo-lens-flare.html
 
-#pragma anki type frag
-#pragma anki include "shaders/Common.glsl"
+#include "shaders/Common.glsl"
 
 #define MAX_GHOSTS 4
 #define GHOST_DISPERSAL (0.7)

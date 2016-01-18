@@ -5,8 +5,7 @@
 
 // LF occlusion vert shader
 
-#pragma anki type vert
-#pragma anki include "shaders/Common.glsl"
+#include "shaders/Common.glsl"
 
 layout(UBO_BINDING(0, 0), std140, row_major) uniform _block
 {

@@ -5,8 +5,7 @@
 
 // LF sprites vert shader
 
-#pragma anki type vert
-#pragma anki include "shaders/Common.glsl"
+#include "shaders/Common.glsl"
 
 // Per flare information
 struct Sprite

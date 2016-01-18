@@ -5,8 +5,7 @@
 
 // LF occlusion frag shader
 
-#pragma anki type frag
-#pragma anki include "shaders/Common.glsl"
+#include "shaders/Common.glsl"
 
 void main()
 {}

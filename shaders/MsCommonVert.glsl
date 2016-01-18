@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki include "shaders/MsFsCommon.glsl"
+#include "shaders/MsFsCommon.glsl"
 
 //
 // Attributes

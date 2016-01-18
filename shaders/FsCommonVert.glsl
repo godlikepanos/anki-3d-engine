@@ -4,13 +4,13 @@
 // http://www.anki3d.org/LICENSE
 
 // Common code for all vertex shaders of FS
-#pragma anki include "shaders/MsFsCommon.glsl"
+#include "shaders/MsFsCommon.glsl"
 
 // Global resources
 #define LIGHT_SET 1
 #define LIGHT_SS_BINDING 0
 #define LIGHT_TEX_BINDING 1
-#pragma anki include "shaders/LightResources.glsl"
+#include "shaders/LightResources.glsl"
 #undef LIGHT_SET
 #undef LIGHT_SS_BINDING
 #undef LIGHT_TEX_BINDING

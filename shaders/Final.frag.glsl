@@ -5,10 +5,8 @@
 
 // The final pass
 
-#pragma anki type frag
-
-#pragma anki include "shaders/Common.glsl"
-#pragma anki include "shaders/Pack.glsl"
+#include "shaders/Common.glsl"
+#include "shaders/Pack.glsl"
 
 layout(binding = 0) uniform sampler2D u_tex;
 

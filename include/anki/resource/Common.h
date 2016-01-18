@@ -9,6 +9,7 @@
 #include <anki/util/DArray.h>
 #include <anki/util/String.h>
 #include <anki/util/Ptr.h>
+#include <anki/gr/Enums.h>
 
 namespace anki
 {
@@ -80,6 +81,12 @@ using TempResourceAllocator = StackAllocator<T>;
 
 /// An alias that denotes a ResourceFilesystem path.
 using ResourceFilename = CString;
+
+/// Given a shader type return the appropriate file extension.
+const CString& shaderTypeToFileExtension(ShaderType type);
+
+/// Given a filename return the shader type.
+Error fileExtensionToShaderType(const CString& filename, ShaderType& type);
 /// @}
 
 } // end namespace anki

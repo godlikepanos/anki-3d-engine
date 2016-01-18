@@ -6,7 +6,7 @@
 #ifndef ANKI_SHADERS_PACK_GLSL
 #define ANKI_SHADERS_PACK_GLSL
 
-#pragma anki include "shaders/Common.glsl"
+#include "shaders/Common.glsl"
 
 /// Pack 3D normal to 2D vector
 /// See the clean code in comments in revision < r467

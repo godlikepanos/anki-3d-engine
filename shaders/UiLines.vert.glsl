@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma anki type vert
-#pragma anki include "shaders/Common.glsl"
+#include "shaders/Common.glsl"
 
 out gl_PerVertex
 {

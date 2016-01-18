@@ -350,7 +350,7 @@ private:
 
 	/// Create a unique shader source in chache. If already exists do nothing
 	ANKI_USE_RESULT Error createProgramSourceToCache(
-		const String& source, StringAuto& out);
+		const String& source, ShaderType type, StringAuto& out);
 };
 
 //==============================================================================

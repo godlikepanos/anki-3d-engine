@@ -9,9 +9,7 @@
 /// - SAMPLES is a number of 3 or 5 or 7 or 9
 /// - BLURRING_DIST is optional and it's extra pixels to move the blurring
 
-#pragma anki type frag
-
-#pragma anki include "shaders/Common.glsl"
+#include "shaders/Common.glsl"
 
 // Preprocessor switches sanity checks
 #if !defined(VPASS) && !defined(HPASS)
