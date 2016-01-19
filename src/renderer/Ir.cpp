@@ -220,7 +220,8 @@ Error Ir::init(const ConfigSet& config)
 	texinit.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
 	texinit.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
 
-	m_cubemapArr = getGrManager().newInstance<Texture>(texinit);
+	m_envCubemapArr = getGrManager().newInstance<Texture>(texinit);
+	m_irradianceCubemapArr = getGrManager().newInstance<Texture>(texinit);
 	m_cubemapArrMipCount = computeMaxMipmapCount(m_fbSize, m_fbSize);
 
 	getGrManager().finish();
@@ -551,13 +552,13 @@ Error Ir::renderReflection(
 			m_nestedR.getPps().getRt(),
 			0,
 			0,
-			m_cubemapArr,
+			m_envCubemapArr,
 			6 * cubemapIdx + i,
 			0);
 
 		// Gen mips
 		cmdb[cmdb.getSize() - 1]->generateMipmaps(
-			m_cubemapArr, 6 * cubemapIdx + i);
+			m_envCubemapArr, 6 * cubemapIdx + i);
 
 		// Flush
 		for(U j = 0; j < cmdb.getSize(); ++j)

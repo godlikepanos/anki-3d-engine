@@ -35,9 +35,9 @@ anki_internal:
 
 	ANKI_USE_RESULT Error run(CommandBufferPtr cmdb);
 
-	TexturePtr getCubemapArray() const
+	TexturePtr getEnvironmentCubemapArray() const
 	{
-		return m_cubemapArr;
+		return m_envCubemapArr;
 	}
 
 	DynamicBufferToken getProbesToken() const
@@ -74,7 +74,8 @@ private:
 	};
 
 	Renderer m_nestedR;
-	TexturePtr m_cubemapArr;
+	TexturePtr m_envCubemapArr;
+	TexturePtr m_irradianceCubemapArr;
 	U16 m_cubemapArrMipCount = 0;
 	U16 m_cubemapArrSize = 0;
 	U16 m_fbSize = 0;

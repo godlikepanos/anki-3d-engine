@@ -145,7 +145,7 @@ Error Refl::init1stPass(const ConfigSet& config)
 
 	if(m_irEnabled)
 	{
-		rcInit.m_textures[4].m_texture = m_ir->getCubemapArray();
+		rcInit.m_textures[4].m_texture = m_ir->getEnvironmentCubemapArray();
 	}
 
 	rcInit.m_uniformBuffers[0].m_buffer = m_uniforms;
