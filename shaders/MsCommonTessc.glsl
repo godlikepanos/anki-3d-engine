@@ -19,7 +19,8 @@ layout(vertices = 3) out;
 in gl_PerVertex
 {
 	vec4 gl_Position;
-} gl_in[];
+}
+gl_in[];
 
 layout(location = 0) in vec2 inTexCoords[];
 layout(location = 1) in mediump vec3 inNormal[];
@@ -37,7 +38,8 @@ layout(location = 3) flat in uint inInstanceId[];
 out gl_PerVertex
 {
 	vec4 gl_Position;
-} gl_out[];
+}
+gl_out[];
 
 layout(location = 0) out vec2 outTexCoord[];
 layout(location = 1) out vec3 outNormal[];
@@ -108,23 +110,20 @@ void calcPositions()
 	pnPatch.pos210 = pos300 + edgeB003 / 3.0;
 	pnPatch.pos120 = pos300 + edgeB003 * 2.0 / 3.0;
 
-	pnPatch.pos021 = projectToPlane(
-		pnPatch.pos021, pos030, outNormal[0]);
-	pnPatch.pos012 = projectToPlane(
-		pnPatch.pos012, pos003, outNormal[1]);
-	pnPatch.pos102 = projectToPlane(
-		pnPatch.pos102, pos003, outNormal[1]);
-	pnPatch.pos201 = projectToPlane(
-		pnPatch.pos201, pos300, outNormal[2]);
-	pnPatch.pos210 = projectToPlane(
-		pnPatch.pos210, pos300, outNormal[2]);
-	pnPatch.pos120 = projectToPlane(
-		pnPatch.pos120, pos030, outNormal[0]);
+	pnPatch.pos021 = projectToPlane(pnPatch.pos021, pos030, outNormal[0]);
+	pnPatch.pos012 = projectToPlane(pnPatch.pos012, pos003, outNormal[1]);
+	pnPatch.pos102 = projectToPlane(pnPatch.pos102, pos003, outNormal[1]);
+	pnPatch.pos201 = projectToPlane(pnPatch.pos201, pos300, outNormal[2]);
+	pnPatch.pos210 = projectToPlane(pnPatch.pos210, pos300, outNormal[2]);
+	pnPatch.pos120 = projectToPlane(pnPatch.pos120, pos030, outNormal[0]);
 
 	// Handle the center
 	vec3 center = (pos003 + pos030 + pos300) / 3.0;
-	pnPatch.pos111 = (pnPatch.pos021 + pnPatch.pos012 + pnPatch.pos102 +
-		pnPatch.pos201 + pnPatch.pos210 + pnPatch.pos120) / 6.0;
+	pnPatch.pos111 =
+		(pnPatch.pos021 + pnPatch.pos012 + pnPatch.pos102 + pnPatch.pos201
+			+ pnPatch.pos210
+			+ pnPatch.pos120)
+		/ 6.0;
 	pnPatch.pos111 += (pnPatch.pos111 - center) / 2.0;
 }
 
@@ -166,8 +165,7 @@ bool posOutsideClipSpace(in vec2 posNdc)
 // Check if a face in NDC is outside the clip space
 bool isFaceOutsideClipSpace(in vec2 posNdc[3])
 {
-	return any(bvec3(
-		posOutsideClipSpace(posNdc[0]),
+	return any(bvec3(posOutsideClipSpace(posNdc[0]),
 		posOutsideClipSpace(posNdc[1]),
 		posOutsideClipSpace(posNdc[2])));
 }
@@ -177,7 +175,7 @@ bool isFaceVisible(in mat4 mvp)
 {
 	// Calculate clip positions
 	vec2 clip[3];
-	for(int i = 0 ; i < 3 ; i++)
+	for(int i = 0; i < 3; i++)
 	{
 		vec4 v = mvp * IN_POS4(i);
 		clip[i] = v.xy / (v.w * 0.5 + 0.5);
@@ -199,8 +197,9 @@ void setSilhouetteTessLevels(in mat3 normalMat, in float maxTessLevel)
 	gl_TessLevelOuter[0] = calcEdgeTessLevel(nv[1], nv[2], maxTessLevel);
 	gl_TessLevelOuter[1] = calcEdgeTessLevel(nv[2], nv[0], maxTessLevel);
 	gl_TessLevelOuter[2] = calcEdgeTessLevel(nv[0], nv[1], maxTessLevel);
-	gl_TessLevelInner[0] = (gl_TessLevelOuter[0] + gl_TessLevelOuter[1]
-		+ gl_TessLevelOuter[2]) / 3.0;
+	gl_TessLevelInner[0] =
+		(gl_TessLevelOuter[0] + gl_TessLevelOuter[1] + gl_TessLevelOuter[2])
+		/ 3.0;
 }
 
 void setConstantTessLevels(in float maxTessLevel)
@@ -229,9 +228,7 @@ float calcPhongTerm(int ivId, int i, vec3 q)
 // This function is part of the point-normal tessellation method
 #define tessellatePNPositionNormalTangentTexCoord_DEFINED
 void tessellatePNPositionNormalTangentTexCoord(
-	in float maxTessLevel,
-	in mat4 mvp,
-	in mat3 normalMat)
+	in float maxTessLevel, in mat4 mvp, in mat3 normalMat)
 {
 	float tessLevel = 0.0;
 
@@ -243,7 +240,7 @@ void tessellatePNPositionNormalTangentTexCoord(
 	{
 		// The face is front facing
 
-		for(int i = 0 ; i < 3 ; i++)
+		for(int i = 0; i < 3; i++)
 		{
 			outTexCoord[i] = inTexCoords[i];
 			outNormal[i] = inNormal[i];
@@ -268,9 +265,7 @@ void tessellatePNPositionNormalTangentTexCoord(
 
 #define tessellatePhongPositionNormalTangentTexCoord_DEFINED
 void tessellatePhongPositionNormalTangentTexCoord(
-	in float maxTessLevel,
-	in mat4 mvp,
-	in mat3 normalMat)
+	in float maxTessLevel, in mat4 mvp, in mat3 normalMat)
 {
 	if(IID == 0)
 	{
@@ -307,9 +302,7 @@ void tessellatePhongPositionNormalTangentTexCoord(
 
 #define tessellateDispMapPositionNormalTangentTexCoord_DEFINED
 void tessellateDispMapPositionNormalTangentTexCoord(
-	in float maxTessLevel,
-	in mat4 mvp,
-	in mat3 normalMat)
+	in float maxTessLevel, in mat4 mvp, in mat3 normalMat)
 {
 	if(IID == 0)
 	{

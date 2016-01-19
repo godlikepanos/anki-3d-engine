@@ -22,28 +22,34 @@ struct ReflectionProbe
 	vec4 cubemapIndexPad3;
 };
 
-layout(std140, row_major, SS_BINDING(IMAGE_REFLECTIONS_SET,
-	IMAGE_REFLECTIONS_FIRST_SS_BINDING)) readonly buffer _irs1
+layout(std140,
+	row_major,
+	SS_BINDING(IMAGE_REFLECTIONS_SET,
+		   IMAGE_REFLECTIONS_FIRST_SS_BINDING)) readonly buffer _irs1
 {
 	mat3 u_invViewRotation;
 	vec4 u_nearClusterMagicPad2;
 	ReflectionProbe u_reflectionProbes[];
 };
 
-layout(std430, row_major, SS_BINDING(IMAGE_REFLECTIONS_SET,
-	IMAGE_REFLECTIONS_FIRST_SS_BINDING + 1)) readonly buffer _irs2
+layout(std430,
+	row_major,
+	SS_BINDING(IMAGE_REFLECTIONS_SET,
+		   IMAGE_REFLECTIONS_FIRST_SS_BINDING + 1)) readonly buffer _irs2
 {
 	uint u_reflectionProbeIndices[];
 };
 
-layout(std430, row_major, SS_BINDING(IMAGE_REFLECTIONS_SET,
-	IMAGE_REFLECTIONS_FIRST_SS_BINDING + 2)) readonly buffer _irs3
+layout(std430,
+	row_major,
+	SS_BINDING(IMAGE_REFLECTIONS_SET,
+		   IMAGE_REFLECTIONS_FIRST_SS_BINDING + 2)) readonly buffer _irs3
 {
 	uvec2 u_reflectionClusters[];
 };
 
-layout(TEX_BINDING(IMAGE_REFLECTIONS_SET, IMAGE_REFLECTIONS_TEX_BINDING))
-	uniform samplerCubeArray u_reflectionsTex;
+layout(TEX_BINDING(IMAGE_REFLECTIONS_SET,
+	IMAGE_REFLECTIONS_TEX_BINDING)) uniform samplerCubeArray u_reflectionsTex;
 
 //==============================================================================
 // Compute the cubemap texture lookup vector given the reflection vector (r)
@@ -77,8 +83,8 @@ vec3 computeCubemapVec(in vec3 r, in float R2, in vec3 f)
 }
 
 //==============================================================================
-vec3 readReflection(in uint clusterIndex, in vec3 posVSpace,
-	in vec3 r, in float lod)
+vec3 readReflection(
+	in uint clusterIndex, in vec3 posVSpace, in vec3 r, in float lod)
 {
 	vec3 color = vec3(0.0);
 
@@ -109,7 +115,7 @@ vec3 readReflection(in uint clusterIndex, in vec3 posVSpace,
 		float factor = d / R2;
 		factor = min(factor, 1.0);
 		color = mix(c, color, factor);
-		//Equivelent: color = c * (1.0 - factor) + color * factor;
+		// Equivelent: color = c * (1.0 - factor) + color * factor;
 	}
 
 	return color;
@@ -118,14 +124,13 @@ vec3 readReflection(in uint clusterIndex, in vec3 posVSpace,
 //==============================================================================
 vec3 doImageReflections(in vec3 posVSpace, in vec3 r, in float lod)
 {
-	uint clusterIdx = computeClusterIndexUsingFragCoord(
-		u_nearClusterMagicPad2.x,
-		u_nearClusterMagicPad2.y,
-		posVSpace.z,
-		TILE_COUNT_X,
-		TILE_COUNT_Y);
+	uint clusterIdx =
+		computeClusterIndexUsingFragCoord(u_nearClusterMagicPad2.x,
+			u_nearClusterMagicPad2.y,
+			posVSpace.z,
+			TILE_COUNT_X,
+			TILE_COUNT_Y);
 	return readReflection(clusterIdx, posVSpace, r, lod);
 }
 
 #endif
-

@@ -25,4 +25,3 @@ void main()
 	gl_Position = u_mvp * vec4(in_position, 1.0);
 	gl_PointSize = 16.0;
 }
-

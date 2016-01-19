@@ -44,7 +44,7 @@ Error Sslf::initInternal(const ConfigSet& config)
 		m_r->getPps().getBloom().getHeight());
 
 	ANKI_CHECK(getResourceManager().loadResourceToCache(
-		m_frag, "shaders/PpsSslf.frag.glsl", pps.toCString(), "r_"));
+		m_frag, "shaders/Sslf.frag.glsl", pps.toCString(), "r_"));
 
 	ColorStateInfo colorState;
 	colorState.m_attachmentCount = 1;

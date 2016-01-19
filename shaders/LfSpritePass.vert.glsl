@@ -32,10 +32,7 @@ out gl_PerVertex
 void main()
 {
 	const vec2 POSITIONS[4] = vec2[](
-		vec2(-1.0, -1.0),
-		vec2(1.0, -1.0),
-		vec2(-1.0, 1.0),
-		vec2(1.0, 1.0));
+		vec2(-1.0, -1.0), vec2(1.0, -1.0), vec2(-1.0, 1.0), vec2(1.0, 1.0));
 
 	vec2 position = POSITIONS[gl_VertexID];
 
@@ -45,7 +42,7 @@ void main()
 	out_uv = vec3((position * 0.5) + 0.5, sprite.depthPad3.x);
 
 	vec4 posScale = sprite.posScale;
-	gl_Position = vec4(position * posScale.zw + posScale.xy , 0.0, 1.0);
+	gl_Position = vec4(position * posScale.zw + posScale.xy, 0.0, 1.0);
 
 	out_color = sprite.color;
 }

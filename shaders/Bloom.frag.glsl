@@ -46,6 +46,7 @@ void main()
 	out_color += readTexture(MIPMAP - 2);
 
 	out_color /= 3.0;
-	out_color = tonemap(out_color, u_averageLuminancePad3.x,
-		u_thresholdScalePad2.x) * u_thresholdScalePad2.y;
+	out_color =
+		tonemap(out_color, u_averageLuminancePad3.x, u_thresholdScalePad2.x)
+		* u_thresholdScalePad2.y;
 }

@@ -40,8 +40,7 @@ layout(location = 0) out vec3 out_color;
 
 const vec2 TEX_OFFSET = vec2(1.0 / float(FBO_WIDTH), 1.0 / float(FBO_HEIGHT));
 
-const vec2 KERNEL[8] = vec2[](
-	vec2(TEX_OFFSET.x, TEX_OFFSET.y),
+const vec2 KERNEL[8] = vec2[](vec2(TEX_OFFSET.x, TEX_OFFSET.y),
 	vec2(0.0, TEX_OFFSET.y),
 	vec2(-TEX_OFFSET.x, TEX_OFFSET.y),
 	vec2(-TEX_OFFSET.x, 0.0),
@@ -101,15 +100,15 @@ vec3 sharpen(in sampler2D tex, in vec2 texCoords)
 //==============================================================================
 vec3 erosion(in sampler2D tex, in vec2 texCoords)
 {
-    vec3 minValue = textureRt(tex, texCoords).rgb;
+	vec3 minValue = textureRt(tex, texCoords).rgb;
 
-    for (int i = 0; i < 8; i++)
-    {
-        vec3 tmpCol = textureRt(tex, texCoords + KERNEL[i]).rgb;
-        minValue = min(tmpCol, minValue);
-    }
+	for(int i = 0; i < 8; i++)
+	{
+		vec3 tmpCol = textureRt(tex, texCoords + KERNEL[i]).rgb;
+		minValue = min(tmpCol, minValue);
+	}
 
-    return minValue;
+	return minValue;
 }
 
 //==============================================================================
@@ -128,8 +127,8 @@ vec3 fog(vec3 colorIn, vec2 uv)
 {
 	float depth = textureLod(u_msDepthRt, uv, 1.0).r;
 
-	float linearDepth = linearizeDepth(depth, u_uniforms.nearFarPad2.x,
-		u_uniforms.nearFarPad2.y);
+	float linearDepth = linearizeDepth(
+		depth, u_uniforms.nearFarPad2.x, u_uniforms.nearFarPad2.y);
 
 	linearDepth = pow(linearDepth, 1.0);
 	float t = linearDepth * u_uniforms.fogColorFogFactor.w;
@@ -177,4 +176,3 @@ void main()
 #endif
 #endif
 }
-

@@ -29,7 +29,7 @@ layout(location = 0) out vec4 out_color;
 
 //==============================================================================
 #if PASS == COLOR
-#	define texture_DEFINED
+#define texture_DEFINED
 #endif
 
 //==============================================================================
@@ -45,7 +45,7 @@ float getAlpha()
 
 //==============================================================================
 #if PASS == COLOR
-#	define writeGBuffer_DEFINED
+#define writeGBuffer_DEFINED
 void writeGBuffer(in vec4 color)
 {
 	out_color = color;
@@ -54,7 +54,7 @@ void writeGBuffer(in vec4 color)
 
 //==============================================================================
 #if PASS == COLOR
-#	define particleAlpha_DEFINED
+#define particleAlpha_DEFINED
 void particleAlpha(in sampler2D tex, in float alpha)
 {
 	vec4 color = texture(tex, gl_PointCoord);
@@ -65,12 +65,11 @@ void particleAlpha(in sampler2D tex, in float alpha)
 
 //==============================================================================
 #if PASS == COLOR
-#	define particleSoftTextureAlpha_DEFINED
-void particleSoftTextureAlpha(in sampler2D depthMap, in sampler2D tex,
-	in float alpha)
+#define particleSoftTextureAlpha_DEFINED
+void particleSoftTextureAlpha(
+	in sampler2D depthMap, in sampler2D tex, in float alpha)
 {
-	vec2 screenSize = vec2(
-		1.0 / u_lightingUniforms.rendererSizeTimePad1.x,
+	vec2 screenSize = vec2(1.0 / u_lightingUniforms.rendererSizeTimePad1.x,
 		1.0 / u_lightingUniforms.rendererSizeTimePad1.y);
 
 	float depth = texture(depthMap, gl_FragCoord.xy * screenSize).r;
@@ -80,7 +79,7 @@ void particleSoftTextureAlpha(in sampler2D depthMap, in sampler2D tex,
 
 	vec4 color = texture(tex, gl_PointCoord);
 	color.a *= alpha;
-	//color.a *= softalpha;
+	// color.a *= softalpha;
 
 	writeGBuffer(color);
 }
@@ -88,7 +87,7 @@ void particleSoftTextureAlpha(in sampler2D depthMap, in sampler2D tex,
 
 //==============================================================================
 #if PASS == COLOR
-#	define particleTextureAlpha_DEFINED
+#define particleTextureAlpha_DEFINED
 void particleTextureAlpha(in sampler2D tex, in float alpha)
 {
 	vec4 color = texture(tex, gl_PointCoord);
@@ -100,12 +99,11 @@ void particleTextureAlpha(in sampler2D tex, in float alpha)
 
 //==============================================================================
 #if PASS == COLOR
-#	define particleSoftColorAlpha_DEFINED
-void particleSoftColorAlpha(in sampler2D depthMap, in vec3 icolor,
-	in float alpha)
+#define particleSoftColorAlpha_DEFINED
+void particleSoftColorAlpha(
+	in sampler2D depthMap, in vec3 icolor, in float alpha)
 {
-	vec2 screenSize = vec2(
-		1.0 / u_lightingUniforms.rendererSizeTimePad1.x,
+	vec2 screenSize = vec2(1.0 / u_lightingUniforms.rendererSizeTimePad1.x,
 		1.0 / u_lightingUniforms.rendererSizeTimePad1.y);
 
 	float depth = texture(depthMap, gl_FragCoord.xy * screenSize).r;
@@ -125,7 +123,7 @@ void particleSoftColorAlpha(in sampler2D depthMap, in vec3 icolor,
 
 //==============================================================================
 #if PASS == COLOR
-#	define computeLightColor_DEFINED
+#define computeLightColor_DEFINED
 vec3 computeLightColor(vec3 diffCol)
 {
 	vec3 outColor = diffCol * u_lightingUniforms.sceneAmbientColor.rgb;
@@ -137,8 +135,7 @@ vec3 computeLightColor(vec3 diffCol)
 		fragPos.z = u_lightingUniforms.projectionParams.z
 			/ (u_lightingUniforms.projectionParams.w + depth);
 
-		vec2 screenSize = vec2(
-			1.0 / u_lightingUniforms.rendererSizeTimePad1.x,
+		vec2 screenSize = vec2(1.0 / u_lightingUniforms.rendererSizeTimePad1.x,
 			1.0 / u_lightingUniforms.rendererSizeTimePad1.y);
 
 		vec2 ndc = gl_FragCoord.xy * screenSize * 2.0 - 1.0;
@@ -171,8 +168,8 @@ vec3 computeLightColor(vec3 diffCol)
 		uint lightId = u_lightIndices[lightOffset++];
 		PointLight light = u_pointLights[lightId];
 
-		vec3 diffC = computeDiffuseColor(
-			diffCol, light.diffuseColorShadowmapId.rgb);
+		vec3 diffC =
+			computeDiffuseColor(diffCol, light.diffuseColorShadowmapId.rgb);
 
 		vec3 frag2Light = light.posRadius.xyz - fragPos;
 		float att = computeAttenuationFactor(light.posRadius.w, frag2Light);
@@ -184,8 +181,8 @@ vec3 computeLightColor(vec3 diffCol)
 		float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
 		if(light.diffuseColorShadowmapId.w < 128.0)
 		{
-			shadow = computeShadowFactorOmni(frag2Light,
-				shadowmapLayerIdx, -1.0 / light.posRadius.w);
+			shadow = computeShadowFactorOmni(
+				frag2Light, shadowmapLayerIdx, -1.0 / light.posRadius.w);
 		}
 #endif
 
@@ -198,16 +195,16 @@ vec3 computeLightColor(vec3 diffCol)
 		uint lightId = u_lightIndices[lightOffset++];
 		SpotLight light = u_spotLights[lightId];
 
-		vec3 diffC = computeDiffuseColor(
-			diffCol, light.diffuseColorShadowmapId.rgb);
+		vec3 diffC =
+			computeDiffuseColor(diffCol, light.diffuseColorShadowmapId.rgb);
 
 		vec3 frag2Light = light.posRadius.xyz - fragPos;
 		float att = computeAttenuationFactor(light.posRadius.w, frag2Light);
 
 		vec3 l = normalize(frag2Light);
 
-		float spot = computeSpotFactor(
-			l, light.outerCosInnerCos.x,
+		float spot = computeSpotFactor(l,
+			light.outerCosInnerCos.x,
 			light.outerCosInnerCos.y,
 			light.lightDir.xyz);
 
@@ -218,8 +215,8 @@ vec3 computeLightColor(vec3 diffCol)
 		float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
 		if(shadowmapLayerIdx < 128.0)
 		{
-			shadow = computeShadowFactorSpot(light.texProjectionMat,
-				fragPos, shadowmapLayerIdx, 1);
+			shadow = computeShadowFactorSpot(
+				light.texProjectionMat, fragPos, shadowmapLayerIdx, 1);
 		}
 #endif
 
@@ -227,13 +224,12 @@ vec3 computeLightColor(vec3 diffCol)
 	}
 
 	return outColor;
-
 }
 #endif
 
 //==============================================================================
 #if PASS == COLOR
-#	define particleTextureAlphaLight_DEFINED
+#define particleTextureAlphaLight_DEFINED
 void particleTextureAlphaLight(in sampler2D tex, in float alpha)
 {
 	vec4 color = texture(tex, gl_PointCoord);
@@ -247,12 +243,12 @@ void particleTextureAlphaLight(in sampler2D tex, in float alpha)
 
 //==============================================================================
 #if PASS == COLOR
-#	define particleAnimatedTextureAlphaLight_DEFINED
-void particleAnimatedTextureAlphaLight(sampler2DArray tex, float alpha,
-	float layerCount, float period)
+#define particleAnimatedTextureAlphaLight_DEFINED
+void particleAnimatedTextureAlphaLight(
+	sampler2DArray tex, float alpha, float layerCount, float period)
 {
-	vec4 color = readAnimatedTextureRgba(tex, layerCount, period, gl_PointCoord,
-		anki_u_time);
+	vec4 color = readAnimatedTextureRgba(
+		tex, layerCount, period, gl_PointCoord, anki_u_time);
 	color.a *= alpha;
 
 	vec3 lightColor = computeLightColor(color.rgb);
@@ -263,12 +259,12 @@ void particleAnimatedTextureAlphaLight(sampler2DArray tex, float alpha,
 
 //==============================================================================
 #if PASS == COLOR
-#	define fog_DEFINED
+#define fog_DEFINED
 void fog(in sampler2D depthMap, in vec3 color, in float fogScale)
 {
-	const vec2 screenSize = vec2(
-		1.0 / u_lightingUniforms.rendererSizeTimePad1.x,
-		1.0 / u_lightingUniforms.rendererSizeTimePad1.y);
+	const vec2 screenSize =
+		vec2(1.0 / u_lightingUniforms.rendererSizeTimePad1.x,
+			1.0 / u_lightingUniforms.rendererSizeTimePad1.y);
 
 	vec2 texCoords = gl_FragCoord.xy * screenSize;
 	float depth = texture(depthMap, texCoords).r;

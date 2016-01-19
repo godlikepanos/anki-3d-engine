@@ -8,5 +8,5 @@
 #include "shaders/Common.glsl"
 
 void main()
-{}
-
+{
+}

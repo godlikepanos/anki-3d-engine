@@ -49,7 +49,7 @@ layout(location = 4) flat out uint out_instanceId;
 void writePositionAndUv(in mat4 mvp)
 {
 #if PASS == DEPTH && LOD > 0
-	// No tex coords for you
+// No tex coords for you
 #else
 	out_uv = in_uv;
 #endif
@@ -71,17 +71,17 @@ void writeNormalAndTangent(in mat3 normalMat)
 
 	// Passthrough
 	out_normal = in_normal.xyz;
-#	if PASS == COLOR
+#if PASS == COLOR
 	out_tangent = in_tangent;
-#	endif
+#endif
 
 #else
 
-#	if PASS == COLOR
+#if PASS == COLOR
 	out_normal = normalMat * in_normal.xyz;
 	out_tangent.xyz = normalMat * in_tangent.xyz;
 	out_tangent.w = in_tangent.w;
-#	endif
+#endif
 
 #endif
 }

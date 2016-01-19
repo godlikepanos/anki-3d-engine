@@ -48,16 +48,17 @@ vec3 tonemapUncharted2(in vec3 color)
 	const float F = 0.30;
 
 	return ((color * (A * color + C * B) + D * E)
-		/ (color * (A * color + B) + D * F)) - E / F;
+			   / (color * (A * color + B) + D * F))
+		- E / F;
 }
 
 vec3 tonemap(in vec3 color, in float avgLum, in float threshold)
 {
 	vec3 c = computeExposedColor(color, avgLum, threshold);
-	//float saturation = clamp(avgLum, 0.0, 1.0);
+	// float saturation = clamp(avgLum, 0.0, 1.0);
 	float saturation = 1.0;
 	return tonemapReinhard(c, saturation);
-	//return tonemapUncharted2(c);
+	// return tonemapUncharted2(c);
 }
 
 #endif

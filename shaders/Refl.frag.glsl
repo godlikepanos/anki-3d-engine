@@ -54,9 +54,9 @@ void main()
 	vec3 eye = normalize(posVSpace);
 	vec3 r = reflect(eye, gbuffer.normal);
 
-	//
-	// SSLR
-	//
+//
+// SSLR
+//
 #if SSLR_ENABLED
 	float sslrContribution;
 
@@ -74,9 +74,9 @@ void main()
 	const float sslrContribution = 0.0;
 #endif
 
-	//
-	// IR
-	//
+//
+// IR
+//
 #if IR_ENABLED
 	float reflLod = float(IR_MIPMAP_COUNT) * gbuffer.roughness;
 	vec3 imgRefl = doImageReflections(posVSpace, r, reflLod);

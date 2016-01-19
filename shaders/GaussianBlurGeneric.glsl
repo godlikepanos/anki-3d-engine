@@ -21,15 +21,15 @@ precision mediump float;
 
 // Preprocessor switches sanity checks
 #if !defined(VPASS) && !defined(HPASS)
-#	error See file
+#error See file
 #endif
 
 #if !(defined(COL_RGBA) || defined(COL_RGB) || defined(COL_R))
-#	error See file
+#error See file
 #endif
 
 #if !defined(IMG_DIMENSION)
-#	error See file
+#error See file
 #endif
 
 uniform mediump sampler2D img; ///< Input FAI
@@ -37,25 +37,25 @@ uniform mediump sampler2D img; ///< Input FAI
 in vec2 vTexCoords;
 
 #if !defined(BLURRING_DIST)
-#	define BLURRING_DIST 0.0
+#define BLURRING_DIST 0.0
 #endif
 
 // Determine color type
 #if defined(COL_RGBA)
-#	define COL_TYPE vec4
+#define COL_TYPE vec4
 #elif defined(COL_RGB)
-#	define COL_TYPE vec3
+#define COL_TYPE vec3
 #elif defined(COL_R)
-#	define COL_TYPE float
+#define COL_TYPE float
 #endif
 
 // Determine tex fetch
 #if defined(COL_RGBA)
-#	define TEX_FETCH rgba
+#define TEX_FETCH rgba
 #elif defined(COL_RGB)
-#	define TEX_FETCH rgb
+#define TEX_FETCH rgb
 #elif defined(COL_R)
-#	define TEX_FETCH r
+#define TEX_FETCH r
 #endif
 
 // Weights
@@ -65,9 +65,11 @@ const float weights[4] = float[](
 	0.3162162162, 0.0702702703);
 
 // Calc the kernel
-#define BLURRING_OFFSET_DIM(val, sign_) ((val + float(BLURRING_DIST)) * float(sign_) / float(IMG_DIMENSION))
+#define BLURRING_OFFSET_DIM(val, sign_)                                        \
+	((val + float(BLURRING_DIST)) * float(sign_) / float(IMG_DIMENSION))
 
-#define BLURRING_OFFSET(valx, valy, sign_) vec2(BLURRING_OFFSET_DIM(valx, sign_), BLURRING_OFFSET_DIM(valy, sign_))
+#define BLURRING_OFFSET(valx, valy, sign_)                                     \
+	vec2(BLURRING_OFFSET_DIM(valx, sign_), BLURRING_OFFSET_DIM(valy, sign_))
 
 #define KERNEL_SIZE 4
 

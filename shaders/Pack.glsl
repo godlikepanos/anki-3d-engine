@@ -12,9 +12,9 @@
 /// See the clean code in comments in revision < r467
 vec2 packNormal(in vec3 normal)
 {
-    const float SCALE = 1.7777;
-    float scalar1 = (normal.z + 1.0) * (SCALE * 2.0);
-    return normal.xy / scalar1 + 0.5;
+	const float SCALE = 1.7777;
+	float scalar1 = (normal.z + 1.0) * (SCALE * 2.0);
+	return normal.xy / scalar1 + 0.5;
 }
 
 /// Reverse the packNormal
@@ -54,10 +54,10 @@ vec4 unpackUnorm4x8(in highp uint u)
 // The RGB should be in [0, 1] and the output YCbCr will be in [0, 1] as well.
 vec3 rgbToYCbCr(in vec3 rgb)
 {
-    float y = dot(rgb, vec3(0.299, 0.587, 0.114));
+	float y = dot(rgb, vec3(0.299, 0.587, 0.114));
 	float cb = 0.5 + dot(rgb, vec3(-0.168736, -0.331264, 0.5));
 	float cr = 0.5 + dot(rgb, vec3(0.5, -0.418688, -0.081312));
-    return vec3(y, cb, cr);
+	return vec3(y, cb, cr);
 }
 
 // Convert the output of rgbToYCbCr back to RGB.
@@ -111,10 +111,7 @@ struct GbufferInfo
 };
 
 // Populate the G buffer
-void writeGBuffer(in GbufferInfo g, 
-	out vec4 rt0,
-	out vec4 rt1,
-	out vec4 rt2)
+void writeGBuffer(in GbufferInfo g, out vec4 rt0, out vec4 rt1, out vec4 rt2)
 {
 	rt0 = vec4(g.diffuse, g.subsurface);
 	rt1 = vec4(g.specular, g.emission / MAX_EMISSION);
@@ -132,7 +129,7 @@ void readNormalRoughnessMetallicFromGBuffer(
 }
 
 // Read from G-buffer
-void readNormalFromGBuffer(in sampler2D rt2,  in vec2 uv, out vec3 normal)
+void readNormalFromGBuffer(in sampler2D rt2, in vec2 uv, out vec3 normal)
 {
 	vec2 comp = texture(rt2, uv).rg;
 	normal = unpackNormal(comp);

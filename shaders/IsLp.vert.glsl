@@ -22,8 +22,7 @@ void main()
 {
 	float instIdF = float(gl_InstanceID);
 
-	vec2 ij = vec2(
-		mod(instIdF, float(TILE_COUNT_X)),
+	vec2 ij = vec2(mod(instIdF, float(TILE_COUNT_X)),
 		floor(instIdF / float(TILE_COUNT_X)));
 
 	out_instanceId = int(gl_InstanceID);
@@ -31,8 +30,7 @@ void main()
 	const vec2 SIZES =
 		vec2(1.0 / float(TILE_COUNT_X), 1.0 / float(TILE_COUNT_Y));
 
-	const vec2 UVS[4] = vec2[](
-		vec2(0.0, 0.0) * SIZES,
+	const vec2 UVS[4] = vec2[](vec2(0.0, 0.0) * SIZES,
 		vec2(1.0, 0.0) * SIZES,
 		vec2(0.0, 1.0) * SIZES,
 		vec2(1.0, 1.0) * SIZES);
@@ -43,5 +41,3 @@ void main()
 	gl_Position = vec4(pos, 0.0, 1.0);
 	out_projectionParams = u_lightingUniforms.projectionParams.xy * pos;
 }
-
-

@@ -194,7 +194,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 		&kernelStr[0]);
 
 	ANKI_CHECK(getResourceManager().loadResourceToCache(
-		m_ssaoFrag, "shaders/PpsSsao.frag.glsl", pps.toCString(), "r_"));
+		m_ssaoFrag, "shaders/Ssao.frag.glsl", pps.toCString(), "r_"));
 
 	m_r->createDrawQuadPipeline(
 		m_ssaoFrag->getGrShader(), colorState, m_ssaoPpline);

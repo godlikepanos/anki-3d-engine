@@ -19,8 +19,9 @@ struct LightingUniforms
 	uvec4 tileCountPad1;
 };
 
-layout(std140, row_major, SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING))
-	readonly buffer _s0
+layout(std140,
+	row_major,
+	SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING)) readonly buffer _s0
 {
 	LightingUniforms u_lightingUniforms;
 };
@@ -51,8 +52,9 @@ struct SpotLight
 	mat4 texProjectionMat;
 };
 
-layout(SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 2), std140, row_major)
-	readonly buffer _s2
+layout(SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 2),
+	std140,
+	row_major) readonly buffer _s2
 {
 	SpotLight u_spotLights[];
 };
@@ -67,10 +69,10 @@ layout(std430, SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 4)) readonly buffer _s4
 	uint u_lightIndices[];
 };
 
-layout(TEX_BINDING(LIGHT_SET, LIGHT_TEX_BINDING))
-	uniform highp sampler2DArrayShadow u_spotMapArr;
-layout(TEX_BINDING(LIGHT_SET, LIGHT_TEX_BINDING + 1))
-	uniform highp samplerCubeArrayShadow u_omniMapArr;
+layout(TEX_BINDING(LIGHT_SET,
+	LIGHT_TEX_BINDING)) uniform highp sampler2DArrayShadow u_spotMapArr;
+layout(TEX_BINDING(LIGHT_SET,
+	LIGHT_TEX_BINDING + 1)) uniform highp samplerCubeArrayShadow u_omniMapArr;
 
 #endif // FRAGMENT_SHADER
 

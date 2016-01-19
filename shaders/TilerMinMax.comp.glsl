@@ -22,8 +22,7 @@ layout(std430, binding = 0) writeonly buffer _blk
 	vec2 u_depthLimits[];
 };
 
-layout(
-	local_size_x = WORKGROUP_SIZE_X,
+layout(local_size_x = WORKGROUP_SIZE_X,
 	local_size_y = WORKGROUP_SIZE_Y,
 	local_size_z = 1) in;
 
@@ -70,5 +69,3 @@ void main()
 		u_depthLimits[idx] = vec2(g_minDepth, g_maxDepth) / float(U32_MAX);
 	}
 }
-
-

@@ -51,12 +51,11 @@ vec3 readNormal(in vec2 uv)
 // Read the noise tex
 vec3 readRandom(in vec2 uv)
 {
-	const vec2 tmp = vec2(
-		float(WIDTH) / float(NOISE_MAP_SIZE),
+	const vec2 tmp = vec2(float(WIDTH) / float(NOISE_MAP_SIZE),
 		float(HEIGHT) / float(NOISE_MAP_SIZE));
 
 	vec3 noise = texture(u_noiseMap, tmp * uv).xyz;
-	//return normalize(noise * 2.0 - 1.0);
+	// return normalize(noise * 2.0 - 1.0);
 	return noise;
 }
 
@@ -64,8 +63,8 @@ vec3 readRandom(in vec2 uv)
 float readZ(in vec2 uv)
 {
 	float depth = texture(u_mMsDepthRt, uv).r;
-	float z = u_uniforms.projectionParams.z
-		/ (u_uniforms.projectionParams.w + depth);
+	float z =
+		u_uniforms.projectionParams.z / (u_uniforms.projectionParams.w + depth);
 	return z;
 }
 
@@ -111,7 +110,7 @@ void main(void)
 		vec4 offset = vec4(sample_, 1.0);
 		offset = u_uniforms.projectionMatrix * offset;
 		offset.xy = offset.xy / (2.0 * offset.w) + 0.5; // persp div &
-		                                                // to NDC -> [0, 1]
+		// to NDC -> [0, 1]
 
 		// get sample depth:
 		float sampleDepth = readZ(offset.xy);
@@ -133,4 +132,3 @@ void main(void)
 
 	out_color = 1.0 - factor;
 }
-

@@ -7,15 +7,14 @@
 #include "shaders/Tonemapping.glsl"
 
 #if IS_RT_MIPMAP == 0
-#	error Wrong mipmap
+#error Wrong mipmap
 #endif
 
 const uint WORKGROUP_SIZE_X = 16u;
 const uint WORKGROUP_SIZE_Y = 16u;
 const uint WORKGROUP_SIZE = WORKGROUP_SIZE_X * WORKGROUP_SIZE_Y;
 
-layout(
-	local_size_x = WORKGROUP_SIZE_X,
+layout(local_size_x = WORKGROUP_SIZE_X,
 	local_size_y = WORKGROUP_SIZE_Y,
 	local_size_z = 1) in;
 
@@ -44,15 +43,17 @@ void main()
 	{
 		for(uint x = 0; x < PIXEL_READ_X; ++x)
 		{
-			vec3 color = texelFetch(
-				u_isRt, ivec2(xStart, yStart) + ivec2(x, y), IS_RT_MIPMAP).rgb;
+			vec3 color =
+				texelFetch(
+					u_isRt, ivec2(xStart, yStart) + ivec2(x, y), IS_RT_MIPMAP)
+					.rgb;
 			float lum = computeLuminance(color);
-			//avgLum += log(lum);
+			// avgLum += log(lum);
 			avgLum += lum / float(MIPMAP_WIDTH * MIPMAP_HEIGHT);
 		}
 	}
 
-	//avgLum *= 1.0 / float(PIXEL_READ_X * PIXEL_READ_Y);
+	// avgLum *= 1.0 / float(PIXEL_READ_X * PIXEL_READ_Y);
 	g_avgLum[gl_LocalInvocationIndex] = avgLum;
 
 	memoryBarrierShared();
@@ -75,7 +76,7 @@ void main()
 	if(gl_LocalInvocationIndex == 0)
 	{
 		float crntLum = g_avgLum[0];
-		//crntLum = exp(crntLum / float(WORKGROUP_SIZE));
+		// crntLum = exp(crntLum / float(WORKGROUP_SIZE));
 		crntLum = max(crntLum, 0.04);
 
 #if 1
@@ -90,5 +91,3 @@ void main()
 #endif
 	}
 }
-
-

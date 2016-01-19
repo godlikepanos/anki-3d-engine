@@ -14,4 +14,3 @@ float linearizeDepthOptimal(in float depth, in float a, in float b)
 {
 	return 1.0 / (a + depth * b);
 }
-

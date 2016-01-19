@@ -46,22 +46,22 @@ vec3 getFragPosVSpace()
 //==============================================================================
 // Common code for lighting
 
-#define LIGHTING_COMMON_BRDF() \
-	vec3 frag2Light = light.posRadius.xyz - fragPos; \
-	vec3 l = normalize(frag2Light); \
-	float nol = max(0.0, dot(normal, l)); \
-	vec3 specC = computeSpecularColorBrdf(viewDir, l, normal, specCol, \
-		light.specularColorTexId.rgb, a2, nol); \
-	vec3 diffC = computeDiffuseColor( \
-		diffCol, light.diffuseColorShadowmapId.rgb); \
-	float att = computeAttenuationFactor(light.posRadius.w, frag2Light); \
+#define LIGHTING_COMMON_BRDF()                                                 \
+	vec3 frag2Light = light.posRadius.xyz - fragPos;                           \
+	vec3 l = normalize(frag2Light);                                            \
+	float nol = max(0.0, dot(normal, l));                                      \
+	vec3 specC = computeSpecularColorBrdf(                                     \
+		viewDir, l, normal, specCol, light.specularColorTexId.rgb, a2, nol);   \
+	vec3 diffC =                                                               \
+		computeDiffuseColor(diffCol, light.diffuseColorShadowmapId.rgb);       \
+	float att = computeAttenuationFactor(light.posRadius.w, frag2Light);       \
 	float lambert = nol;
 
 //==============================================================================
 void debugIncorrectColor(inout vec3 c)
 {
-	if(isnan(c.x) || isnan(c.y) || isnan(c.z)
-		|| isinf(c.x) || isinf(c.y) || isinf(c.z))
+	if(isnan(c.x) || isnan(c.y) || isnan(c.z) || isinf(c.x) || isinf(c.y)
+		|| isinf(c.z))
 	{
 		c = vec3(1.0, 0.0, 1.0);
 	}
@@ -96,8 +96,8 @@ void main()
 	float a2 = pow(max(EPSILON, roughness), 2.0);
 
 	// Ambient and emissive color
-	out_color = diffCol * u_lightingUniforms.sceneAmbientColor.rgb
-		+ diffCol * emission;
+	out_color =
+		diffCol * u_lightingUniforms.sceneAmbientColor.rgb + diffCol * emission;
 
 	// Get counts and offsets
 	uint clusterIdx = computeClusterIndexUsingTileIdx(
@@ -114,8 +114,8 @@ void main()
 	uint spotLightsCount = cluster & 0xFFu;
 
 	// Shadowpass sample count
-	uint shadowSampleCount = computeShadowSampleCount(SHADOW_SAMPLE_COUNT,
-		fragPos.z);
+	uint shadowSampleCount =
+		computeShadowSampleCount(SHADOW_SAMPLE_COUNT, fragPos.z);
 
 	// Point lights
 	for(uint i = 0U; i < pointLightsCount; ++i)
@@ -129,12 +129,12 @@ void main()
 		float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
 		if(light.diffuseColorShadowmapId.w < 128.0)
 		{
-			shadow = computeShadowFactorOmni(frag2Light,
-				shadowmapLayerIdx, 1.0 / sqrt(light.posRadius.w));
+			shadow = computeShadowFactorOmni(
+				frag2Light, shadowmapLayerIdx, 1.0 / sqrt(light.posRadius.w));
 		}
 
-		out_color += (specC + diffC)
-			* (att * max(subsurface, lambert * shadow));
+		out_color +=
+			(specC + diffC) * (att * max(subsurface, lambert * shadow));
 	}
 
 	// Spot lights
@@ -145,8 +145,8 @@ void main()
 
 		LIGHTING_COMMON_BRDF();
 
-		float spot = computeSpotFactor(
-			l, light.outerCosInnerCos.x,
+		float spot = computeSpotFactor(l,
+			light.outerCosInnerCos.x,
 			light.outerCosInnerCos.y,
 			light.lightDir.xyz);
 
@@ -155,14 +155,16 @@ void main()
 		if(shadowmapLayerIdx < 128.0)
 		{
 			shadow = computeShadowFactorSpot(light.texProjectionMat,
-				fragPos, shadowmapLayerIdx, shadowSampleCount);
+				fragPos,
+				shadowmapLayerIdx,
+				shadowSampleCount);
 		}
 
-		out_color += (diffC + specC)
-			* (att * spot * max(subsurface, lambert * shadow));
+		out_color +=
+			(diffC + specC) * (att * spot * max(subsurface, lambert * shadow));
 	}
 
-	//out_color = diffCol;
+// out_color = diffCol;
 #if 0
 	if(pointLightsCount == 0)
 	{

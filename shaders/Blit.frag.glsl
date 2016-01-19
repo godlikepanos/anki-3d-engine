@@ -15,4 +15,3 @@ void main()
 {
 	outColor = textureRt(uTex, inTexCoords).rgb;
 }
-

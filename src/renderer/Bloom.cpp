@@ -87,7 +87,7 @@ Error Bloom::initInternal(const ConfigSet& config)
 		m_r->getHeight());
 
 	ANKI_CHECK(getResourceManager().loadResourceToCache(
-		m_toneFrag, "shaders/PpsBloom.frag.glsl", pps.toCString(), "r_"));
+		m_toneFrag, "shaders/Bloom.frag.glsl", pps.toCString(), "r_"));
 
 	m_r->createDrawQuadPipeline(
 		m_toneFrag->getGrShader(), colorState, m_tonePpline);

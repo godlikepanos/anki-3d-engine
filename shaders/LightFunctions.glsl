@@ -26,8 +26,7 @@ float computeAttenuationFactor(float lightRadius, vec3 frag2Light)
 
 //==============================================================================
 // Performs BRDF specular lighting
-vec3 computeSpecularColorBrdf(
-	vec3 v, // view dir
+vec3 computeSpecularColorBrdf(vec3 v, // view dir
 	vec3 l, // light dir
 	vec3 n, // normal
 	vec3 specCol,
@@ -44,8 +43,8 @@ vec3 computeSpecularColorBrdf(
 	vec3 F = specCol + (1.0 - specCol) * pow((1.0 + EPSILON - loh), 5.0);
 #else
 	// Unreal
-	vec3 F = specCol + (1.0 - specCol)
-		* pow(2.0, (-5.55473 * voh - 6.98316) * voh);
+	vec3 F =
+		specCol + (1.0 - specCol) * pow(2.0, (-5.55473 * voh - 6.98316) * voh);
 #endif
 
 	// D(n,h) aka NDF: GGX Trowbridge-Reitz
@@ -53,8 +52,8 @@ vec3 computeSpecularColorBrdf(
 	float D = noh * noh * (a2 - 1.0) + 1.0;
 	D = a2 / (PI * D * D);
 
-	// G(l,v,h)/(4*dot(n,h)*dot(n,v)) aka Visibility term: Geometric shadowing
-	// divided by BRDF denominator
+// G(l,v,h)/(4*dot(n,h)*dot(n,v)) aka Visibility term: Geometric shadowing
+// divided by BRDF denominator
 #if 0
 	float nov = max(EPSILON, dot(n, v));
 	float V_v = nov + sqrt((nov - nov * a2) * nov + a2);
@@ -79,11 +78,7 @@ vec3 computeDiffuseColor(vec3 diffCol, vec3 lightDiffCol)
 }
 
 //==============================================================================
-float computeSpotFactor(
-	vec3 l,
-	float outerCos,
-	float innerCos,
-	vec3 spotDir)
+float computeSpotFactor(vec3 l, float outerCos, float innerCos, vec3 spotDir)
 {
 	float costheta = -dot(l, spotDir);
 	float spotFactor = smoothstep(outerCos, innerCos, costheta);
@@ -104,31 +99,30 @@ uint computeShadowSampleCount(const uint COUNT, float zVSpace)
 }
 
 //==============================================================================
-float computeShadowFactorSpot(mat4 lightProjectionMat, vec3 fragPos,
-	float layer, uint sampleCount)
+float computeShadowFactorSpot(
+	mat4 lightProjectionMat, vec3 fragPos, float layer, uint sampleCount)
 {
 	vec4 texCoords4 = lightProjectionMat * vec4(fragPos, 1.0);
 	vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
 
 #if POISSON == 1
-	const vec2 poissonDisk[SHADOW_SAMPLE_COUNT] = vec2[](
-		vec2(0.751688, 0.619709) * 2.0 - 1.0,
-		vec2(0.604741, 0.778485) * 2.0 - 1.0,
-		vec2(0.936216, 0.463094) * 2.0 - 1.0,
-		vec2(0.808758, 0.284966) * 2.0 - 1.0,
-		vec2(0.812927, 0.786332) * 2.0 - 1.0,
-		vec2(0.608651, 0.303919) * 2.0 - 1.0,
-		vec2(0.482117, 0.573285) * 2.0 - 1.0,
-		vec2(0.55819, 0.988451) * 2.0 - 1.0,
-		vec2(0.340001, 0.728732) * 2.0 - 1.0,
-		vec2(0.681775, 0.119789) * 2.0 - 1.0,
-		vec2(0.217429, 0.522558) * 2.0 - 1.0,
-		vec2(0.384257, 0.352163) * 2.0 - 1.0,
-		vec2(0.143769, 0.738606) * 2.0 - 1.0,
-		vec2(0.383474, 0.910019) * 2.0 - 1.0,
-		vec2(0.409305, 0.177022) * 2.0 - 1.0,
-		vec2(0.158647, 0.239097) * 2.0 - 1.0);
-
+	const vec2 poissonDisk[SHADOW_SAMPLE_COUNT] =
+		vec2[](vec2(0.751688, 0.619709) * 2.0 - 1.0,
+			vec2(0.604741, 0.778485) * 2.0 - 1.0,
+			vec2(0.936216, 0.463094) * 2.0 - 1.0,
+			vec2(0.808758, 0.284966) * 2.0 - 1.0,
+			vec2(0.812927, 0.786332) * 2.0 - 1.0,
+			vec2(0.608651, 0.303919) * 2.0 - 1.0,
+			vec2(0.482117, 0.573285) * 2.0 - 1.0,
+			vec2(0.55819, 0.988451) * 2.0 - 1.0,
+			vec2(0.340001, 0.728732) * 2.0 - 1.0,
+			vec2(0.681775, 0.119789) * 2.0 - 1.0,
+			vec2(0.217429, 0.522558) * 2.0 - 1.0,
+			vec2(0.384257, 0.352163) * 2.0 - 1.0,
+			vec2(0.143769, 0.738606) * 2.0 - 1.0,
+			vec2(0.383474, 0.910019) * 2.0 - 1.0,
+			vec2(0.409305, 0.177022) * 2.0 - 1.0,
+			vec2(0.158647, 0.239097) * 2.0 - 1.0);
 
 	float shadowFactor = 0.0;
 
@@ -176,4 +170,3 @@ float computeShadowFactorOmni(vec3 frag2Light, float layer, float radius)
 }
 
 #endif
-

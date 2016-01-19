@@ -23,15 +23,13 @@ layout(binding = 1) uniform sampler2D u_lensDirtTex;
 
 layout(location = 0) out vec3 out_color;
 
-vec3 textureDistorted(
-	in sampler2D tex,
+vec3 textureDistorted(in sampler2D tex,
 	in vec2 texcoord,
 	in vec2 direction, // direction of distortion
 	in vec3 distortion) // per-channel distortion factor
 {
 #if ENABLE_CHROMATIC_DISTORTION
-	return vec3(
-		textureRt(tex, texcoord + direction * distortion.r).r,
+	return vec3(textureRt(tex, texcoord + direction * distortion.r).r,
 		textureRt(tex, texcoord + direction * distortion.g).g,
 		textureRt(tex, texcoord + direction * distortion.b).b);
 #else
@@ -47,8 +45,7 @@ void main()
 
 	const vec2 texelSize = 1.0 / vec2(TEX_DIMENSIONS);
 
-	const vec3 distortion = vec3(
-		-texelSize.x * CHROMATIC_DISTORTION,
+	const vec3 distortion = vec3(-texelSize.x * CHROMATIC_DISTORTION,
 		0.0,
 		texelSize.x * CHROMATIC_DISTORTION);
 
@@ -70,11 +67,10 @@ void main()
 			textureDistorted(u_rt, offset, direction, distortion) * weight;
 	}
 
-	// sample halo
+// sample halo
 #if ENABLE_HALO
 	vec2 haloVec = normalize(ghostVec) * HALO_WIDTH;
-	float weight =
-		length(vec2(0.5) - fract(texcoord + haloVec)) / lenOfHalf;
+	float weight = length(vec2(0.5) - fract(texcoord + haloVec)) / lenOfHalf;
 	weight = pow(1.0 - weight, 20.0);
 	result += textureDistorted(u_rt, texcoord + haloVec, direction, distortion)
 		* (weight * HALO_OPACITY);
