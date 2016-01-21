@@ -47,14 +47,14 @@ void CommandBuffer::create(CommandBufferInitHints hints)
 void CommandBuffer::flush()
 {
 	getManager().getImplementation().getRenderingThread().flushCommandBuffer(
-		this);
+		CommandBufferPtr(this));
 }
 
 //==============================================================================
 void CommandBuffer::finish()
 {
 	getManager().getImplementation().getRenderingThread().finishCommandBuffer(
-		this);
+		CommandBufferPtr(this));
 }
 
 //==============================================================================

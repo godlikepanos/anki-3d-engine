@@ -127,16 +127,19 @@ Error Refl::init1stPass(const ConfigSet& config)
 
 	// Create RC group
 	ResourceGroupInitializer rcInit;
-	SamplerInitializer sinit;
 
+	SamplerInitializer sinit;
 	sinit.m_minLod = 1.0;
 	sinit.m_minMagFilter = SamplingFilter::NEAREST;
 	sinit.m_mipmapFilter = SamplingFilter::NEAREST;
 	rcInit.m_textures[0].m_texture = m_r->getMs().getDepthRt();
 	rcInit.m_textures[0].m_sampler = gr.newInstance<Sampler>(sinit);
 
-	rcInit.m_textures[1].m_texture = m_r->getMs().getRt2();
+	rcInit.m_textures[1].m_texture = m_r->getMs().getRt1();
 	rcInit.m_textures[1].m_sampler = gr.newInstance<Sampler>(sinit);
+
+	rcInit.m_textures[2].m_texture = m_r->getMs().getRt2();
+	rcInit.m_textures[2].m_sampler = gr.newInstance<Sampler>(sinit);
 
 	if(m_sslrEnabled)
 	{
@@ -146,6 +149,10 @@ Error Refl::init1stPass(const ConfigSet& config)
 	if(m_irEnabled)
 	{
 		rcInit.m_textures[4].m_texture = m_ir->getEnvironmentCubemapArray();
+		rcInit.m_textures[5].m_texture = m_ir->getIrradianceCubemapArray();
+
+		rcInit.m_textures[6].m_texture = m_ir->getIntegrationLut();
+		rcInit.m_textures[6].m_sampler = m_ir->getIntegrationLutSampler();
 	}
 
 	rcInit.m_uniformBuffers[0].m_buffer = m_uniforms;
@@ -170,18 +177,6 @@ Error Refl::init1stPass(const ConfigSet& config)
 	fbInit.m_colorAttachments[0].m_loadOperation =
 		AttachmentLoadOperation::DONT_CARE;
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
-
-	// Load split sum integration LUT
-	ANKI_CHECK(getResourceManager().loadResource(
-		"engine_data/SplitSumIntegration.ankitex", m_integrationLut));
-
-	sinit = SamplerInitializer();
-	sinit.m_minMagFilter = SamplingFilter::LINEAR;
-	sinit.m_mipmapFilter = SamplingFilter::BASE;
-	sinit.m_minLod = 0.0;
-	sinit.m_maxLod = 1.0;
-	sinit.m_repeat = false;
-	m_integrationLutSampler = getGrManager().newInstance<Sampler>(sinit);
 
 	return ErrorCode::NONE;
 }

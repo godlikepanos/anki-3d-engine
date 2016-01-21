@@ -51,6 +51,13 @@ layout(std430,
 layout(TEX_BINDING(IMAGE_REFLECTIONS_SET,
 	IMAGE_REFLECTIONS_TEX_BINDING)) uniform samplerCubeArray u_reflectionsTex;
 
+layout(TEX_BINDING(IMAGE_REFLECTIONS_SET,
+	IMAGE_REFLECTIONS_TEX_BINDING
+		+ 1)) uniform samplerCubeArray u_irradianceTex;
+
+layout(TEX_BINDING(IMAGE_REFLECTIONS_SET,
+	IMAGE_REFLECTIONS_TEX_BINDING + 2)) uniform sampler2D u_integrationLut;
+
 //==============================================================================
 // Compute the cubemap texture lookup vector given the reflection vector (r)
 // the radius squared of the probe (R2) and the frag pos in sphere space (f)
@@ -83,10 +90,16 @@ vec3 computeCubemapVec(in vec3 r, in float R2, in vec3 f)
 }
 
 //==============================================================================
-vec3 readReflection(
-	in uint clusterIndex, in vec3 posVSpace, in vec3 r, in float lod)
+void readIndirectInternal(in uint clusterIndex,
+	in vec3 posVSpace,
+	in vec3 r,
+	in vec3 n,
+	in float lod,
+	out vec3 specIndirect,
+	out vec3 diffIndirect)
 {
-	vec3 color = vec3(0.0);
+	specIndirect = vec3(0.0);
+	diffIndirect = vec3(0.0);
 
 	// Check proxy
 	uvec2 cluster = u_reflectionClusters[clusterIndex];
@@ -114,15 +127,23 @@ vec3 readReflection(
 		float d = dot(f, f);
 		float factor = d / R2;
 		factor = min(factor, 1.0);
-		color = mix(c, color, factor);
-		// Equivelent: color = c * (1.0 - factor) + color * factor;
-	}
+		specIndirect = mix(c, specIndirect, factor);
+		// Same as: specIndirect = c * (1.0 - factor) + specIndirect * factor
 
-	return color;
+		// Do the same for diffuse
+		uv = computeCubemapVec(n, R2, f);
+		vec3 id = texture(u_irradianceTex, vec4(uv, cubemapIndex)).rgb;
+		diffIndirect = mix(id, diffIndirect, factor);
+	}
 }
 
 //==============================================================================
-vec3 doImageReflections(in vec3 posVSpace, in vec3 r, in float lod)
+void readIndirect(in vec3 posVSpace,
+	in vec3 r,
+	in vec3 n,
+	in float lod,
+	out vec3 specIndirect,
+	out vec3 diffIndirect)
 {
 	uint clusterIdx =
 		computeClusterIndexUsingFragCoord(u_nearClusterMagicPad2.x,
@@ -130,7 +151,9 @@ vec3 doImageReflections(in vec3 posVSpace, in vec3 r, in float lod)
 			posVSpace.z,
 			TILE_COUNT_X,
 			TILE_COUNT_Y);
-	return readReflection(clusterIdx, posVSpace, r, lod);
+
+	readIndirectInternal(
+		clusterIdx, posVSpace, r, n, lod, specIndirect, diffIndirect);
 }
 
 #endif

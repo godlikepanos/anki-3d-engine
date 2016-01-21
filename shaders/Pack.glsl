@@ -113,26 +113,33 @@ struct GbufferInfo
 // Populate the G buffer
 void writeGBuffer(in GbufferInfo g, out vec4 rt0, out vec4 rt1, out vec4 rt2)
 {
-	rt0 = vec4(g.diffuse, g.subsurface);
-	rt1 = vec4(g.specular, g.emission / MAX_EMISSION);
-	rt2 = vec4(packNormal(g.normal), g.roughness, g.metallic);
+	float comp =
+		packUnorm2ToUnorm1(vec2(g.subsurface, g.emission / MAX_EMISSION));
+	rt0 = vec4(g.diffuse, comp);
+	rt1 = vec4(g.specular, g.roughness);
+	rt2 = vec4(g.normal * 0.5 + 0.5, g.metallic);
 }
 
 // Read from G-buffer
-void readNormalRoughnessMetallicFromGBuffer(
-	in sampler2D rt2, in vec2 uv, inout GbufferInfo g)
-{
-	vec4 comp = texture(rt2, uv);
-	g.normal = unpackNormal(comp.xy);
-	g.roughness = comp.z;
-	g.metallic = comp.w;
-}
+#define readSpecularRoughnessFromGBuffer(rt1_, uv_, g_)                        \
+	{                                                                          \
+		vec4 comp = texture(rt1_, uv_);                                        \
+		g_.specular = comp.xyz;                                                \
+		g_.roughness = comp.w;                                                 \
+	}
+
+// Read from G-buffer
+#define readNormalMetallicFromGBuffer(rt2_, uv_, g_)                           \
+	{                                                                          \
+		vec4 comp = texture(rt2_, uv_);                                        \
+		g_.normal = comp.xyz * 2.0 - 1.0;                                      \
+		g_.metallic = comp.w;                                                  \
+	}
 
 // Read from G-buffer
 void readNormalFromGBuffer(in sampler2D rt2, in vec2 uv, out vec3 normal)
 {
-	vec2 comp = texture(rt2, uv).rg;
-	normal = unpackNormal(comp);
+	normal = texture(rt2, uv).rgb * 2.0 - 1.0;
 }
 
 // Read from the G buffer
@@ -144,13 +151,12 @@ void readGBuffer(in sampler2D rt0,
 {
 	vec4 comp = texture(rt0, uv);
 	g.diffuse = comp.xyz;
-	g.subsurface = comp.w;
+	vec2 comp2 = unpackUnorm1ToUnorm2(comp.w);
+	g.subsurface = comp2.x;
+	g.emission = comp2.y * MAX_EMISSION;
 
-	comp = texture(rt1, uv);
-	g.specular = comp.xyz;
-	g.emission = comp.w * MAX_EMISSION;
-
-	readNormalRoughnessMetallicFromGBuffer(rt2, uv, g);
+	readSpecularRoughnessFromGBuffer(rt1, uv, g);
+	readNormalMetallicFromGBuffer(rt2, uv, g);
 }
 
 #endif

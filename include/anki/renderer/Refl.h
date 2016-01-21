@@ -42,7 +42,7 @@ private:
 	// Sub-stages
 	UniquePtr<Ir> m_ir;
 
-	// 1st pass
+	// 1st pass: Do the indirect lighting computation
 	ShaderResourcePtr m_frag;
 	PipelinePtr m_ppline;
 	TexturePtr m_rt;
@@ -50,8 +50,6 @@ private:
 	ResourceGroupPtr m_rcGroup;
 	BufferPtr m_uniforms;
 	Timestamp m_uniformsUpdateTimestamp = 0;
-	TextureResourcePtr m_integrationLut;
-	SamplerPtr m_integrationLutSampler;
 
 	// 2nd pass: Blit
 	ResourceGroupPtr m_blitRcGroup;

@@ -142,6 +142,10 @@ public:
 //==============================================================================
 
 //==============================================================================
+const PixelFormat Ir::IRRADIANCE_RT_PIXEL_FORMAT(
+	ComponentFormat::R8G8B8, TransformFormat::UNORM);
+
+//==============================================================================
 Ir::Ir(Renderer* r)
 	: RenderingPass(r)
 	, m_barrier(r->getThreadPool().getThreadsCount())
@@ -221,11 +225,26 @@ Error Ir::init(const ConfigSet& config)
 	texinit.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
 
 	m_envCubemapArr = getGrManager().newInstance<Texture>(texinit);
+
+	texinit.m_format = IRRADIANCE_RT_PIXEL_FORMAT;
 	m_irradianceCubemapArr = getGrManager().newInstance<Texture>(texinit);
+
 	m_cubemapArrMipCount = computeMaxMipmapCount(m_fbSize, m_fbSize);
 
 	// Create irradiance stuff
 	ANKI_CHECK(initIrradiance());
+
+	// Load split sum integration LUT
+	ANKI_CHECK(getResourceManager().loadResource(
+		"engine_data/SplitSumIntegration.ankitex", m_integrationLut));
+
+	SamplerInitializer sinit;
+	sinit.m_minMagFilter = SamplingFilter::LINEAR;
+	sinit.m_mipmapFilter = SamplingFilter::BASE;
+	sinit.m_minLod = 0.0;
+	sinit.m_maxLod = 1.0;
+	sinit.m_repeat = false;
+	m_integrationLutSampler = getGrManager().newInstance<Sampler>(sinit);
 
 	getGrManager().finish();
 
@@ -269,6 +288,7 @@ Error Ir::initIrradiance()
 	// Create the resources
 	ResourceGroupInitializer rcInit;
 	rcInit.m_uniformBuffers[0].m_dynamic = true;
+	rcInit.m_textures[0].m_texture = m_envCubemapArr;
 
 	m_computeIrradianceResources =
 		getGrManager().newInstance<ResourceGroup>(rcInit);
@@ -594,23 +614,29 @@ Error Ir::renderReflection(
 		cmdb->generateMipmaps(m_envCubemapArr, 6 * cubemapIdx + i);
 
 		// Compute irradiance
-		/*DynamicBufferInfo dinf;
-		UVec4* faceIdx =
+		DynamicBufferInfo dinf;
+		UVec4* faceIdxArrayIdx =
 			static_cast<UVec4*>(getGrManager().allocateFrameHostVisibleMemory(
 				sizeof(UVec4), BufferUsage::UNIFORM, dinf.m_uniformBuffers[0]));
-		faceIdx->x() = i;
+		faceIdxArrayIdx->x() = i;
+		faceIdxArrayIdx->y() = cubemapIdx;
 
 		FramebufferInitializer fbinit;
 		fbinit.m_colorAttachmentsCount = 1;
 		fbinit.m_colorAttachments[0].m_texture = m_irradianceCubemapArr;
 		fbinit.m_colorAttachments[0].m_arrayIndex = cubemapIdx;
 		fbinit.m_colorAttachments[0].m_faceIndex = i;
+		fbinit.m_colorAttachments[0].m_format = IRRADIANCE_RT_PIXEL_FORMAT;
+		fbinit.m_colorAttachments[0].m_loadOperation =
+			AttachmentLoadOperation::DONT_CARE;
 		FramebufferPtr fb = getGrManager().newInstance<Framebuffer>(fbinit);
 
 		cmdb->bindFramebuffer(fb);
-		cmdb->bindResourceGroup(0, m_computeIrradianceResources, &dinf);
+		cmdb->setViewport(0, 0, m_fbSize, m_fbSize);
+		cmdb->bindResourceGroup(m_computeIrradianceResources, 0, &dinf);
 		cmdb->bindPipeline(m_computeIrradiancePpline);
-		m_r->drawQuad(cmdb);*/
+		m_r->drawQuad(cmdb);
+		cmdb->generateMipmaps(m_irradianceCubemapArr, 6 * cubemapIdx + i);
 
 		// Flush
 		for(U j = 0; j < cmdbs.getSize(); ++j)

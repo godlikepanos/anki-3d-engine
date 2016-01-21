@@ -8,6 +8,7 @@
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/RenderingPass.h>
 #include <anki/renderer/Clusterer.h>
+#include <anki/resource/TextureResource.h>
 
 namespace anki
 {
@@ -40,6 +41,11 @@ anki_internal:
 		return m_envCubemapArr;
 	}
 
+	TexturePtr getIrradianceCubemapArray() const
+	{
+		return m_irradianceCubemapArr;
+	}
+
 	DynamicBufferToken getProbesToken() const
 	{
 		return m_probesToken;
@@ -65,6 +71,16 @@ anki_internal:
 		return m_clusterer;
 	}
 
+	TexturePtr getIntegrationLut() const
+	{
+		return m_integrationLut->getGrTexture();
+	}
+
+	SamplerPtr getIntegrationLutSampler() const
+	{
+		return m_integrationLutSampler;
+	}
+
 private:
 	class CacheEntry
 	{
@@ -72,6 +88,8 @@ private:
 		const SceneNode* m_node = nullptr;
 		Timestamp m_timestamp = 0; ///< When last rendered.
 	};
+
+	static const PixelFormat IRRADIANCE_RT_PIXEL_FORMAT;
 
 	Renderer m_nestedR;
 	TexturePtr m_envCubemapArr;
@@ -87,6 +105,10 @@ private:
 	ShaderResourcePtr m_computeIrradianceFrag;
 	PipelinePtr m_computeIrradiancePpline;
 	ResourceGroupPtr m_computeIrradianceResources;
+
+	// Other
+	TextureResourcePtr m_integrationLut;
+	SamplerPtr m_integrationLutSampler;
 
 	// Tokens
 	DynamicBufferToken m_probesToken;

@@ -120,7 +120,7 @@ public:
 	{
 	}
 
-	WeakPtr(T* ptr)
+	explicit WeakPtr(T* ptr)
 		: Base(ptr)
 	{
 	}
@@ -339,7 +339,7 @@ public:
 	{
 	}
 
-	IntrusivePtr(T* ptr)
+	explicit IntrusivePtr(T* ptr)
 		: Base()
 	{
 		reset(ptr);

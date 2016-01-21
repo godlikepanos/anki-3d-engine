@@ -10,11 +10,13 @@
 layout(location = 0) in vec2 in_uv;
 layout(location = 0) out vec3 out_color;
 
-layout(TEX_BINDING(0, 0)) uniform samplerCube u_envTex;
+layout(TEX_BINDING(0, 0)) uniform samplerCubeArray u_envTex;
 
 layout(UBO_BINDING(0, 0)) uniform u0_
 {
-	uvec4 u_faceIdxPad3;
+	// x: The face index to render to
+	// y: The array index to read from the u_envTex
+	uvec4 u_faceIdxArrayIdxPad2;
 };
 
 const mat3 CUBE_ROTATIONS[6] = mat3[](mat3(vec3(0.000000, 0.000000, -1.000000),
@@ -41,8 +43,11 @@ const mat3 CUBE_ROTATIONS[6] = mat3[](mat3(vec3(0.000000, 0.000000, -1.000000),
 
 //==============================================================================
 // Integrate the environment map to compute the irradiance for a single fragment
-vec3 computeIrradiance(in uint face)
+void main()
 {
+	uint face = u_faceIdxArrayIdxPad2.x;
+	float texArrIdx = float(u_faceIdxArrayIdxPad2.y);
+
 	// Get the r coordinate of the current face and fragment
 	vec2 ndc = in_uv * 2.0 - 1.0;
 	vec3 ri = CUBE_ROTATIONS[face] * normalize(vec3(ndc, -1.0));
@@ -61,7 +66,7 @@ vec3 computeIrradiance(in uint face)
 				vec2 ndc = uv * 2.0 - 1.0;
 				vec3 r = CUBE_ROTATIONS[f] * normalize(vec3(ndc, -1.0));
 
-				vec3 col = texture(u_envTex, r).rgb;
+				vec3 col = texture(u_envTex, vec4(r, texArrIdx)).rgb;
 
 				float lambert = max(0.0, dot(r, ri));
 				outCol += col * lambert;
@@ -70,11 +75,5 @@ vec3 computeIrradiance(in uint face)
 		}
 	}
 
-	return outCol / weight;
-}
-
-//==============================================================================
-void main()
-{
-	out_color = computeIrradiance(u_faceIdxPad3.x);
+	out_color = outCol / weight;
 }
