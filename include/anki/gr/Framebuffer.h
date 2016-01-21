@@ -15,12 +15,14 @@ namespace anki
 /// @addtogroup graphics
 /// @{
 
-/// Framebuffer attachment.
+/// Framebuffer attachment info.
 class Attachment
 {
 public:
 	TexturePtr m_texture;
-	U32 m_layer = 0;
+	U32 m_arrayIndex = 0; ///< For array textures
+	U32 m_depth = 0; ///< For 3D textures
+	U32 m_faceIndex = 0; ///< For cubemap textures
 	U32 m_mipmap = 0;
 	PixelFormat m_format;
 	AttachmentLoadOperation m_loadOperation = AttachmentLoadOperation::CLEAR;
@@ -49,7 +51,9 @@ public:
 	Attachment& operator=(const Attachment& b)
 	{
 		m_texture = b.m_texture;
-		m_layer = b.m_layer;
+		m_arrayIndex = b.m_arrayIndex;
+		m_depth = b.m_depth;
+		m_faceIndex = b.m_faceIndex;
 		m_mipmap = b.m_mipmap;
 		m_format = b.m_format;
 		m_loadOperation = b.m_loadOperation;

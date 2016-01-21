@@ -207,7 +207,7 @@ Error Ir::init(const ConfigSet& config)
 		m_r->getGlobalTimestampPtr()));
 	m_nestedR.getPps().setFog(Vec3(1.0, 0.0, 1.0), 0.0);
 
-	// Init the texture
+	// Init the textures
 	TextureInitializer texinit;
 
 	texinit.m_width = m_fbSize;
@@ -224,20 +224,54 @@ Error Ir::init(const ConfigSet& config)
 	m_irradianceCubemapArr = getGrManager().newInstance<Texture>(texinit);
 	m_cubemapArrMipCount = computeMaxMipmapCount(m_fbSize, m_fbSize);
 
+	// Create irradiance stuff
+	ANKI_CHECK(initIrradiance());
+
 	getGrManager().finish();
 
 	// Init the clusterer
-	F32 reflQuality = config.getNumber("refl.renderingQuality");
-	U width =
-		getAlignedRoundUp(Renderer::TILE_SIZE, m_r->getWidth() * reflQuality);
-	U height =
-		getAlignedRoundUp(Renderer::TILE_SIZE, m_r->getHeight() * reflQuality);
+	U width = m_r->getWidth() / 2;
+	U height = m_r->getHeight() / 2;
 
 	U tileCountX = width / Renderer::TILE_SIZE;
 	U tileCountY = height / Renderer::TILE_SIZE;
 	U clusterCountZ = config.getNumber("ir.clusterSizeZ");
 
 	m_clusterer.init(getAllocator(), tileCountX, tileCountY, clusterCountZ);
+
+	return ErrorCode::NONE;
+}
+
+//==============================================================================
+Error Ir::initIrradiance()
+{
+	// Create the shader
+	StringAuto pps(getFrameAllocator());
+	pps.sprintf("#define CUBEMAP_SIZE %u\n", m_fbSize);
+
+	ANKI_CHECK(getResourceManager().loadResourceToCache(m_computeIrradianceFrag,
+		"shaders/Irradiance.frag.glsl",
+		pps.toCString(),
+		"r_ir_"));
+
+	// Create the ppline
+	ColorStateInfo colorInf;
+	colorInf.m_attachmentCount = 3;
+	PixelFormat pfs(ComponentFormat::R8G8B8, TransformFormat::UNORM);
+	colorInf.m_attachments[0].m_format = pfs;
+	colorInf.m_attachments[2].m_format = pfs;
+	colorInf.m_attachments[3].m_format = pfs;
+
+	m_r->createDrawQuadPipeline(m_computeIrradianceFrag->getGrShader(),
+		colorInf,
+		m_computeIrradiancePpline);
+
+	// Create the resources
+	ResourceGroupInitializer rcInit;
+	rcInit.m_uniformBuffers[0].m_dynamic = true;
+
+	m_computeIrradianceResources =
+		getGrManager().newInstance<ResourceGroup>(rcInit);
 
 	return ErrorCode::NONE;
 }
@@ -538,32 +572,50 @@ Error Ir::renderReflection(
 	// Render cubemap
 	for(U i = 0; i < 6; ++i)
 	{
-		Array<CommandBufferPtr, RENDERER_COMMAND_BUFFERS_COUNT> cmdb;
-		for(U j = 0; j < cmdb.getSize(); ++j)
+		Array<CommandBufferPtr, RENDERER_COMMAND_BUFFERS_COUNT> cmdbs;
+		for(U j = 0; j < cmdbs.getSize(); ++j)
 		{
-			cmdb[j] = getGrManager().newInstance<CommandBuffer>();
+			cmdbs[j] = getGrManager().newInstance<CommandBuffer>();
 		}
 
 		// Render
-		ANKI_CHECK(m_nestedR.render(node, i, cmdb));
+		ANKI_CHECK(m_nestedR.render(node, i, cmdbs));
+		auto& cmdb = cmdbs[cmdbs.getSize() - 1];
 
-		// Copy textures
-		cmdb[cmdb.getSize() - 1]->copyTextureToTexture(
-			m_nestedR.getPps().getRt(),
+		// Copy env texture
+		cmdb->copyTextureToTexture(m_nestedR.getPps().getRt(),
 			0,
 			0,
 			m_envCubemapArr,
 			6 * cubemapIdx + i,
 			0);
 
-		// Gen mips
-		cmdb[cmdb.getSize() - 1]->generateMipmaps(
-			m_envCubemapArr, 6 * cubemapIdx + i);
+		// Gen mips of env tex
+		cmdb->generateMipmaps(m_envCubemapArr, 6 * cubemapIdx + i);
+
+		// Compute irradiance
+		/*DynamicBufferInfo dinf;
+		UVec4* faceIdx =
+			static_cast<UVec4*>(getGrManager().allocateFrameHostVisibleMemory(
+				sizeof(UVec4), BufferUsage::UNIFORM, dinf.m_uniformBuffers[0]));
+		faceIdx->x() = i;
+
+		FramebufferInitializer fbinit;
+		fbinit.m_colorAttachmentsCount = 1;
+		fbinit.m_colorAttachments[0].m_texture = m_irradianceCubemapArr;
+		fbinit.m_colorAttachments[0].m_arrayIndex = cubemapIdx;
+		fbinit.m_colorAttachments[0].m_faceIndex = i;
+		FramebufferPtr fb = getGrManager().newInstance<Framebuffer>(fbinit);
+
+		cmdb->bindFramebuffer(fb);
+		cmdb->bindResourceGroup(0, m_computeIrradianceResources, &dinf);
+		cmdb->bindPipeline(m_computeIrradiancePpline);
+		m_r->drawQuad(cmdb);*/
 
 		// Flush
-		for(U j = 0; j < cmdb.getSize(); ++j)
+		for(U j = 0; j < cmdbs.getSize(); ++j)
 		{
-			cmdb[j]->flush();
+			cmdbs[j]->flush();
 		}
 	}
 

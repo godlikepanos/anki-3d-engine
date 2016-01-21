@@ -525,7 +525,6 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("samples", 1);
 	config.set("tessellation", true);
 	// config.set("maxTextureSize", 256);
-	config.set("refl.renderingQuality", 1.0);
 	config.set("ir.enabled", true);
 	// config.set("ir.clusterSizeZ", 32);
 	config.set("sslr.enabled", false);

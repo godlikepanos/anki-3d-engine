@@ -45,7 +45,7 @@ private:
 
 	/// Attach a texture
 	static void attachTextureInternal(
-		GLenum attachment, const TextureImpl& tex, const U32 layer);
+		GLenum attachment, const TextureImpl& tex, const Attachment& info);
 
 	/// Create the FBO
 	ANKI_USE_RESULT Error createFbo(

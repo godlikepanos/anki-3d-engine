@@ -8,12 +8,14 @@
 #include "shaders/Common.glsl"
 
 layout(location = 0) in vec2 in_uv;
+layout(location = 0) out vec3 out_color;
 
-layout(TEX_BINDING(0, 0)) samplerCube u_envTex;
+layout(TEX_BINDING(0, 0)) uniform samplerCube u_envTex;
 
-layout(location = 0) out vec3 out_color0;
-layout(location = 1) out vec3 out_color1;
-layout(location = 2) out vec3 out_color2;
+layout(UBO_BINDING(0, 0)) uniform u0_
+{
+	uvec4 u_faceIdxPad3;
+};
 
 const mat3 CUBE_ROTATIONS[6] = mat3[](mat3(vec3(0.000000, 0.000000, -1.000000),
 										  vec3(0.000000, -1.000000, 0.000000),
@@ -47,7 +49,7 @@ vec3 computeIrradiance(in uint face)
 
 	vec3 outCol = vec3(0.0);
 	float weight = 0.0;
-	
+
 	// For all the faces and texels of the environment map calculate a color sum
 	for(uint f = 0u; f < 6u; ++f)
 	{
@@ -74,7 +76,5 @@ vec3 computeIrradiance(in uint face)
 //==============================================================================
 void main()
 {
-	out_color0 = computeIrradiance(FACE_INDEX + 0);
-	out_color1 = computeIrradiance(FACE_INDEX + 1);
-	out_color2 = computeIrradiance(FACE_INDEX + 2);
+	out_color = computeIrradiance(u_faceIdxPad3.x);
 }

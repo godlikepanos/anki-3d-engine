@@ -73,7 +73,7 @@ Error Sm::init(const ConfigSet& config)
 	{
 		sm.m_layerId = layer;
 
-		fbInit.m_depthStencilAttachment.m_layer = layer;
+		fbInit.m_depthStencilAttachment.m_arrayIndex = layer;
 		sm.m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 		++layer;
@@ -91,7 +91,8 @@ Error Sm::init(const ConfigSet& config)
 
 		for(U i = 0; i < 6; ++i)
 		{
-			fbInit.m_depthStencilAttachment.m_layer = layer * 6 + i;
+			fbInit.m_depthStencilAttachment.m_arrayIndex = layer;
+			fbInit.m_depthStencilAttachment.m_faceIndex = i;
 			sm.m_fb[i] = getGrManager().newInstance<Framebuffer>(fbInit);
 		}
 

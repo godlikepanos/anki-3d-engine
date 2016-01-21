@@ -171,6 +171,18 @@ Error Refl::init1stPass(const ConfigSet& config)
 		AttachmentLoadOperation::DONT_CARE;
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
+	// Load split sum integration LUT
+	ANKI_CHECK(getResourceManager().loadResource(
+		"engine_data/SplitSumIntegration.ankitex", m_integrationLut));
+
+	sinit = SamplerInitializer();
+	sinit.m_minMagFilter = SamplingFilter::LINEAR;
+	sinit.m_mipmapFilter = SamplingFilter::BASE;
+	sinit.m_minLod = 0.0;
+	sinit.m_maxLod = 1.0;
+	sinit.m_repeat = false;
+	m_integrationLutSampler = getGrManager().newInstance<Sampler>(sinit);
+
 	return ErrorCode::NONE;
 }
 

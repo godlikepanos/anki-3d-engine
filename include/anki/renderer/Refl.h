@@ -50,6 +50,8 @@ private:
 	ResourceGroupPtr m_rcGroup;
 	BufferPtr m_uniforms;
 	Timestamp m_uniformsUpdateTimestamp = 0;
+	TextureResourcePtr m_integrationLut;
+	SamplerPtr m_integrationLutSampler;
 
 	// 2nd pass: Blit
 	ResourceGroupPtr m_blitRcGroup;

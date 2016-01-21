@@ -75,7 +75,6 @@ private:
 
 	Renderer m_nestedR;
 	TexturePtr m_envCubemapArr;
-	TexturePtr m_irradianceCubemapArr;
 	U16 m_cubemapArrMipCount = 0;
 	U16 m_cubemapArrSize = 0;
 	U16 m_fbSize = 0;
@@ -83,10 +82,18 @@ private:
 	Barrier m_barrier;
 	Clusterer m_clusterer;
 
+	// Irradiance
+	TexturePtr m_irradianceCubemapArr;
+	ShaderResourcePtr m_computeIrradianceFrag;
+	PipelinePtr m_computeIrradiancePpline;
+	ResourceGroupPtr m_computeIrradianceResources;
+
 	// Tokens
 	DynamicBufferToken m_probesToken;
 	DynamicBufferToken m_clustersToken;
 	DynamicBufferToken m_indicesToken;
+
+	ANKI_USE_RESULT Error initIrradiance();
 
 	/// Bin probes in clusters.
 	void binProbes(U32 threadId, PtrSize threadsCount, IrRunContext& ctx);

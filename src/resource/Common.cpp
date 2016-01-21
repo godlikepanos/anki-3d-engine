@@ -9,16 +9,15 @@ namespace anki
 {
 
 //==============================================================================
-static const Array<CString, U(ShaderType::COUNT)> mapping = {{".vert.glsl",
-	".tc.glsl",
-	".te.glsl",
-	".geom.glsl",
-	".frag.glsl",
-	".comp.glsl"}};
-
-//==============================================================================
 const CString& shaderTypeToFileExtension(ShaderType type)
 {
+	static const Array<CString, U(ShaderType::COUNT)> mapping = {{".vert.glsl",
+		".tc.glsl",
+		".te.glsl",
+		".geom.glsl",
+		".frag.glsl",
+		".comp.glsl"}};
+
 	return mapping[type];
 }
 

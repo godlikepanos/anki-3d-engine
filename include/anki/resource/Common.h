@@ -83,10 +83,11 @@ using TempResourceAllocator = StackAllocator<T>;
 using ResourceFilename = CString;
 
 /// Given a shader type return the appropriate file extension.
-const CString& shaderTypeToFileExtension(ShaderType type);
+ANKI_USE_RESULT const CString& shaderTypeToFileExtension(ShaderType type);
 
 /// Given a filename return the shader type.
-Error fileExtensionToShaderType(const CString& filename, ShaderType& type);
+ANKI_USE_RESULT Error fileExtensionToShaderType(
+	const CString& filename, ShaderType& type);
 /// @}
 
 } // end namespace anki

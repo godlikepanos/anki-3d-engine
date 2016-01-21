@@ -98,8 +98,8 @@ Error SetupRenderableVariableVisitor::visit(
 		}
 
 		uniSet(mvar, &mvp[0], cachedTrfs);
+		break;
 	}
-	break;
 	case BuiltinMaterialVariableId::MV_MATRIX:
 	{
 		ANKI_ASSERT(cachedTrfs > 0);
@@ -113,8 +113,8 @@ Error SetupRenderableVariableVisitor::visit(
 		}
 
 		uniSet(mvar, &mv[0], cachedTrfs);
+		break;
 	}
-	break;
 	case BuiltinMaterialVariableId::VP_MATRIX:
 		ANKI_ASSERT(cachedTrfs == 0 && "Cannot have transform");
 		uniSet(mvar, &vp, 1);
@@ -134,8 +134,8 @@ Error SetupRenderableVariableVisitor::visit(
 		}
 
 		uniSet(mvar, &normMats[0], cachedTrfs);
+		break;
 	}
-	break;
 	case BuiltinMaterialVariableId::BILLBOARD_MVP_MATRIX:
 	{
 		// Calc the billboard rotation matrix
@@ -152,8 +152,8 @@ Error SetupRenderableVariableVisitor::visit(
 		}
 
 		uniSet(mvar, &bmvp[0], cachedTrfs);
+		break;
 	}
-	break;
 	case BuiltinMaterialVariableId::MAX_TESS_LEVEL:
 	{
 		const RenderComponentVariable& base = rvar;
@@ -171,8 +171,8 @@ Error SetupRenderableVariableVisitor::visit(
 		}
 
 		uniSet(mvar, &tess, 1);
+		break;
 	}
-	break;
 	case BuiltinMaterialVariableId::MS_DEPTH_MAP:
 		// Do nothing
 		break;

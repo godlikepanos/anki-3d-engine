@@ -20,20 +20,6 @@ class SceneGraph;
 class ScriptManager
 {
 public:
-#ifdef ANKI_BUILD
-	ScriptManager();
-	~ScriptManager();
-
-	/// Create the script manager.
-	ANKI_USE_RESULT Error create(
-		AllocAlignedCallback allocCb, void* allocCbData, SceneGraph* scene);
-
-	SceneGraph& _getSceneGraph()
-	{
-		return *m_scene;
-	}
-#endif
-
 	/// Expose a variable to the scripting engine.
 	template<typename T>
 	void exposeVariable(const char* name, T* y)
@@ -45,6 +31,19 @@ public:
 	ANKI_USE_RESULT Error evalString(const CString& str)
 	{
 		return m_lua.evalString(str);
+	}
+
+anki_internal:
+	ScriptManager();
+	~ScriptManager();
+
+	/// Create the script manager.
+	ANKI_USE_RESULT Error create(
+		AllocAlignedCallback allocCb, void* allocCbData, SceneGraph* scene);
+
+	SceneGraph& _getSceneGraph()
+	{
+		return *m_scene;
 	}
 
 private:
