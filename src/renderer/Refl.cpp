@@ -135,24 +135,28 @@ Error Refl::init1stPass(const ConfigSet& config)
 	rcInit.m_textures[0].m_texture = m_r->getMs().getDepthRt();
 	rcInit.m_textures[0].m_sampler = gr.newInstance<Sampler>(sinit);
 
-	rcInit.m_textures[1].m_texture = m_r->getMs().getRt1();
-	rcInit.m_textures[1].m_sampler = gr.newInstance<Sampler>(sinit);
+	rcInit.m_textures[1].m_texture = m_r->getMs().getRt0();
+	rcInit.m_textures[1].m_sampler = rcInit.m_textures[0].m_sampler;
 
-	rcInit.m_textures[2].m_texture = m_r->getMs().getRt2();
-	rcInit.m_textures[2].m_sampler = gr.newInstance<Sampler>(sinit);
+	rcInit.m_textures[2].m_texture = m_r->getMs().getRt1();
+	rcInit.m_textures[2].m_sampler = rcInit.m_textures[0].m_sampler;
+
+	rcInit.m_textures[3].m_texture = m_r->getMs().getRt2();
+	rcInit.m_textures[3].m_sampler = rcInit.m_textures[0].m_sampler;
 
 	if(m_sslrEnabled)
 	{
-		rcInit.m_textures[3].m_texture = m_r->getIs().getRt();
+		rcInit.m_textures[4].m_texture = m_r->getIs().getRt();
 	}
 
 	if(m_irEnabled)
 	{
-		rcInit.m_textures[4].m_texture = m_ir->getEnvironmentCubemapArray();
-		rcInit.m_textures[5].m_texture = m_ir->getIrradianceCubemapArray();
+		rcInit.m_textures[5].m_texture = m_ir->getEnvironmentCubemapArray();
+		
+		rcInit.m_textures[6].m_texture = m_ir->getIrradianceCubemapArray();
 
-		rcInit.m_textures[6].m_texture = m_ir->getIntegrationLut();
-		rcInit.m_textures[6].m_sampler = m_ir->getIntegrationLutSampler();
+		rcInit.m_textures[7].m_texture = m_ir->getIntegrationLut();
+		rcInit.m_textures[7].m_sampler = m_ir->getIntegrationLutSampler();
 	}
 
 	rcInit.m_uniformBuffers[0].m_buffer = m_uniforms;

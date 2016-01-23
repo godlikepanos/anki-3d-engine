@@ -47,7 +47,7 @@ Error Ms::createRt(U32 index, U32 samples)
 		RT_PIXEL_FORMATS[0],
 		samples,
 		SamplingFilter::NEAREST,
-		1,
+		2,
 		plane.m_rt0);
 
 	m_r->createRenderTarget(m_r->getWidth(),
@@ -181,6 +181,7 @@ void Ms::generateMipmaps(CommandBufferPtr& cmdb)
 {
 	U planeId = (m_r->getSamples() == 1) ? 1 : 0;
 	cmdb->generateMipmaps(m_planes[planeId].m_depthRt);
+	cmdb->generateMipmaps(m_planes[planeId].m_rt0);
 	cmdb->generateMipmaps(m_planes[planeId].m_rt1);
 	cmdb->generateMipmaps(m_planes[planeId].m_rt2);
 }

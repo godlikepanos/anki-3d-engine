@@ -62,7 +62,7 @@ Error init()
 	MainRenderer& renderer = app->getMainRenderer();
 	ResourceManager& resources = app->getResourceManager();
 
-	scene.setAmbientColor(Vec4(1.0) * 0.05);
+	scene.setAmbientColor(Vec4(1.0) * 0.0);
 	renderer.getOffscreenRenderer().getPps().setFog(Vec3(1.0, 0.9, 0.9), 0.7);
 
 	if(getenv("PROFILE"))
@@ -85,8 +85,8 @@ Error init()
 #if !PLAYER
 	cam->getComponent<MoveComponent>().setLocalTransform(Transform(
 		// Vec4(147.392776, -10.132728, 16.607138, 0.0),
-		Vec4(102.984535, -11.532733, 16.394911, 0),
-		Mat3x4(Euler(toRad(0.0), toRad(-10.0), toRad(0.0))),
+		Vec4(98.994728, -10.601542, 16.376123, 0),
+		Mat3x4(Euler(toRad(0.0), toRad(-90.0), toRad(0.0))),
 		// Mat3x4::getIdentity(),
 		1.0));
 #endif
@@ -502,7 +502,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("is.sm.poissonEnabled", true);
 	config.set("is.sm.resolution", 1024);
 	config.set("lf.maxFlares", 32);
-	config.set("pps.enabled", false);
+	config.set("pps.enabled", true);
 	config.set("pps.bloom.enabled", true);
 	config.set("pps.bloom.renderingQuality", 0.5);
 	config.set("pps.bloom.blurringDist", 1.0);

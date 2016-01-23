@@ -7,8 +7,9 @@
 
 // Common
 layout(TEX_BINDING(0, 0)) uniform sampler2D u_depthRt;
-layout(TEX_BINDING(0, 1)) uniform sampler2D u_msRt1;
-layout(TEX_BINDING(0, 2)) uniform sampler2D u_msRt2;
+layout(TEX_BINDING(0, 1)) uniform sampler2D u_msRt0;
+layout(TEX_BINDING(0, 2)) uniform sampler2D u_msRt1;
+layout(TEX_BINDING(0, 3)) uniform sampler2D u_msRt2;
 
 layout(std140, UBO_BINDING(0, 0)) uniform u0_
 {
@@ -18,7 +19,7 @@ layout(std140, UBO_BINDING(0, 0)) uniform u0_
 
 // SSLR
 #if SSLR_ENABLED
-layout(TEX_BINDING(0, 3)) uniform sampler2D u_isRt;
+layout(TEX_BINDING(0, 4)) uniform sampler2D u_isRt;
 #include "shaders/Sslr.glsl"
 #endif
 
@@ -26,7 +27,7 @@ layout(TEX_BINDING(0, 3)) uniform sampler2D u_isRt;
 #if IR_ENABLED
 #define IMAGE_REFLECTIONS_SET 0
 #define IMAGE_REFLECTIONS_FIRST_SS_BINDING 0
-#define IMAGE_REFLECTIONS_TEX_BINDING 4
+#define IMAGE_REFLECTIONS_TEX_BINDING 5
 #include "shaders/ImageReflections.glsl"
 #undef IMAGE_REFLECTIONS_SET
 #undef IMAGE_REFLECTIONS_FIRST_SS_BINDING
@@ -48,8 +49,7 @@ void main()
 		(2.0 * in_texCoord - 1.0) * u_projectionParams.xy * posVSpace.z;
 
 	GbufferInfo gbuffer;
-	readSpecularRoughnessFromGBuffer(u_msRt1, in_texCoord, gbuffer);
-	readNormalMetallicFromGBuffer(u_msRt2, in_texCoord, gbuffer);
+	readGBuffer(u_msRt0, u_msRt1, u_msRt2, in_texCoord, gbuffer);
 
 	// Compute relflection vector
 	vec3 eye = normalize(posVSpace);
@@ -84,6 +84,8 @@ void main()
 	vec3 specIndirect, diffIndirect;
 	readIndirect(
 		posVSpace, r, gbuffer.normal, reflLod, specIndirect, diffIndirect);
+
+	diffIndirect *= gbuffer.diffuse;
 #endif
 
 	// Finalize the indirect specular
@@ -92,5 +94,5 @@ void main()
 	specIndirect = specIndirect * (gbuffer.specular * envBRDF.x + envBRDF.y);
 
 	// Finalize
-	out_indirectColor = diffIndirect + specIndirect * gbuffer.metallic;
+	out_indirectColor = diffIndirect + specIndirect;
 }
