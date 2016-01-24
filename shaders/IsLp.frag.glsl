@@ -93,7 +93,7 @@ void main()
 	subsurface = gbuffer.subsurface;
 	emission = gbuffer.emission;
 
-	float a2 = pow(max(EPSILON, roughness), 2.0);
+	float a2 = pow(roughness, 2.0);
 
 	// Ambient and emissive color
 	out_color =

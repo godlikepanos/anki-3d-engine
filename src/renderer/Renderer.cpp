@@ -61,8 +61,12 @@ Error Renderer::init(ThreadPool* threadpool,
 Error Renderer::initInternal(const ConfigSet& config)
 {
 	// Set from the config
-	m_width = getAlignedRoundDown(TILE_SIZE, U(config.getNumber("width")));
-	m_height = getAlignedRoundDown(TILE_SIZE, U(config.getNumber("height")));
+	m_width = config.getNumber("width");
+	m_height = config.getNumber("height");
+	ANKI_ASSERT(isAligned(Renderer::TILE_SIZE, m_width)
+		&& isAligned(Renderer::TILE_SIZE, m_height));
+	ANKI_LOGI("Initializing offscreen renderer. Size %ux%u", m_width, m_height);
+
 	m_lodDistance = config.getNumber("lodDistance");
 	m_framesNum = 0;
 	m_samples = config.getNumber("samples");
@@ -177,7 +181,7 @@ Error Renderer::render(SceneNode& frustumableNode,
 
 	m_lf->runOcclusionTests(cmdb[0]);
 
-	m_ms->generateMipmaps(cmdb[0]);
+	m_ms->downScaleGBuffer(cmdb[0]);
 
 	m_tiler->run(cmdb[0]);
 

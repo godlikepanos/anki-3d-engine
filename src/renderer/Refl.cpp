@@ -67,6 +67,8 @@ Error Refl::initInternal(const ConfigSet& config)
 	// Size
 	m_width = m_r->getWidth() / 2;
 	m_height = m_r->getHeight() / 2;
+	ANKI_ASSERT(isAligned(Renderer::TILE_SIZE, m_width)
+		&& isAligned(Renderer::TILE_SIZE, m_height));
 
 	// IR
 	if(m_irEnabled)
@@ -152,7 +154,7 @@ Error Refl::init1stPass(const ConfigSet& config)
 	if(m_irEnabled)
 	{
 		rcInit.m_textures[5].m_texture = m_ir->getEnvironmentCubemapArray();
-		
+
 		rcInit.m_textures[6].m_texture = m_ir->getIrradianceCubemapArray();
 
 		rcInit.m_textures[7].m_texture = m_ir->getIntegrationLut();

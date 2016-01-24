@@ -125,7 +125,7 @@ void writeGBuffer(in GbufferInfo g, out vec4 rt0, out vec4 rt1, out vec4 rt2)
 	{                                                                          \
 		vec4 comp = texture(rt1_, uv_);                                        \
 		g_.specular = comp.xyz;                                                \
-		g_.roughness = comp.w;                                                 \
+		g_.roughness = max(EPSILON, comp.w);                                   \
 	}
 
 // Read from G-buffer

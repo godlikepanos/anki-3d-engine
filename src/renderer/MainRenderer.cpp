@@ -55,11 +55,16 @@ Error MainRenderer::create(ThreadPool* threadpool,
 	FramebufferInitializer fbInit;
 	m_defaultFb = gr->newInstance<Framebuffer>(fbInit);
 
-	// Init renderer
+	// Init renderer and manipulate the width/height
 	ConfigSet config2 = config;
 	m_renderingQuality = config.getNumber("renderingQuality");
-	config2.set("width", m_renderingQuality * F32(m_width));
-	config2.set("height", m_renderingQuality * F32(m_height));
+	UVec2 size(
+		m_renderingQuality * F32(m_width), m_renderingQuality * F32(m_height));
+	size.x() = getAlignedRoundDown(Renderer::TILE_SIZE, size.x() / 2) * 2;
+	size.y() = getAlignedRoundDown(Renderer::TILE_SIZE, size.y() / 2) * 2;
+
+	config2.set("width", size.x());
+	config2.set("height", size.y());
 
 	m_r.reset(m_alloc.newInstance<Renderer>());
 	ANKI_CHECK(m_r->init(threadpool,

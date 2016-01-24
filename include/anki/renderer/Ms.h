@@ -35,59 +35,52 @@ anki_internal:
 
 	TexturePtr& getRt0()
 	{
-		return m_planes[1].m_rt0;
+		return m_rt0;
 	}
 
 	TexturePtr& getRt1()
 	{
-		return m_planes[1].m_rt1;
+		return m_rt1;
 	}
 
 	TexturePtr& getRt2()
 	{
-		return m_planes[1].m_rt2;
+		return m_rt2;
 	}
 
 	TexturePtr getDepthRt() const
 	{
-		return m_planes[1].m_depthRt;
+		return m_depthRt;
 	}
 
 	FramebufferPtr& getFramebuffer()
 	{
-		return m_planes[1].m_fb;
+		return m_fb;
 	}
 
-	void generateMipmaps(CommandBufferPtr& cmdb);
+	void downScaleGBuffer(CommandBufferPtr& cmdb);
 
 private:
-	/// A collection of data
-	class Plane
-	{
-	public:
-		FramebufferPtr m_fb;
+	FramebufferPtr m_fb;
 
-		/// Contains diffuse color and emission
-		TexturePtr m_rt0;
+	/// Contains diffuse color and emission
+	TexturePtr m_rt0;
 
-		/// Contains specular color, roughness
-		TexturePtr m_rt1;
+	/// Contains specular color, roughness
+	TexturePtr m_rt1;
 
-		/// Contains normals
-		TexturePtr m_rt2;
+	/// Contains normals
+	TexturePtr m_rt2;
 
-		/// Depth stencil
-		TexturePtr m_depthRt;
-	};
+	/// Depth stencil
+	TexturePtr m_depthRt;
 
-	/// One for multisampled and one for not. 0: multisampled, 1: not
-	Array<Plane, 2> m_planes;
 	DArray<CommandBufferPtr> m_secondLevelCmdbs;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 
 	/// Create a G buffer FBO
-	ANKI_USE_RESULT Error createRt(U32 index, U32 samples);
+	ANKI_USE_RESULT Error createRt(U32 samples);
 };
 
 /// @}
