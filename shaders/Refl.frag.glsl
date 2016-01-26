@@ -42,14 +42,14 @@ void main()
 	//
 	// Decode the G-buffer
 	//
-	float depth = texture(u_depthRt, in_texCoord).r;
+	float depth = textureLod(u_depthRt, in_texCoord, 0.0).r;
 	vec3 posVSpace;
 	posVSpace.z = u_projectionParams.z / (u_projectionParams.w + depth);
 	posVSpace.xy =
 		(2.0 * in_texCoord - 1.0) * u_projectionParams.xy * posVSpace.z;
 
 	GbufferInfo gbuffer;
-	readGBuffer(u_msRt0, u_msRt1, u_msRt2, in_texCoord, gbuffer);
+	readGBuffer(u_msRt0, u_msRt1, u_msRt2, in_texCoord, 0.0, gbuffer);
 
 	// Compute relflection vector
 	vec3 eye = normalize(posVSpace);
@@ -95,4 +95,5 @@ void main()
 
 	// Finalize
 	out_indirectColor = diffIndirect + specIndirect;
+	gl_FragDepth = depth;
 }

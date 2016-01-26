@@ -84,7 +84,7 @@ void main()
 	float metallic;
 
 	GbufferInfo gbuffer;
-	readGBuffer(u_msRt0, u_msRt1, u_msRt2, in_texCoord, gbuffer);
+	readGBuffer(u_msRt0, u_msRt1, u_msRt2, in_texCoord, 0.0, gbuffer);
 	diffCol = gbuffer.diffuse;
 	specCol = gbuffer.specular;
 	normal = gbuffer.normal;

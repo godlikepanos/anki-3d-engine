@@ -574,6 +574,12 @@ public:
 		Base::create(m_alloc, b.toCString());
 	}
 
+	/// Destroy the string.
+	void destroy()
+	{
+		Base::destroy(m_alloc);
+	}
+
 	/// Move one string to this one.
 	StringAuto& operator=(StringAuto&& b)
 	{

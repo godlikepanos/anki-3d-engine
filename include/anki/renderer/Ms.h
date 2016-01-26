@@ -58,8 +58,6 @@ anki_internal:
 		return m_fb;
 	}
 
-	void downScaleGBuffer(CommandBufferPtr& cmdb);
-
 private:
 	FramebufferPtr m_fb;
 

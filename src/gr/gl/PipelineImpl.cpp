@@ -552,7 +552,8 @@ void PipelineImpl::setDepthStencilState(GlState& state) const
 	glDepthMask(m_in.m_depthStencil.m_depthWriteEnabled);
 	state.m_depthWriteMask = m_in.m_depthStencil.m_depthWriteEnabled;
 
-	if(m_cache.m_depthCompareFunction == GL_ALWAYS)
+	if(m_cache.m_depthCompareFunction == GL_ALWAYS
+		&& !m_in.m_depthStencil.m_depthWriteEnabled)
 	{
 		glDisable(GL_DEPTH_TEST);
 	}

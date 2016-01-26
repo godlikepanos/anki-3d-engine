@@ -181,8 +181,6 @@ Error Renderer::render(SceneNode& frustumableNode,
 
 	m_lf->runOcclusionTests(cmdb[0]);
 
-	m_ms->downScaleGBuffer(cmdb[0]);
-
 	m_tiler->run(cmdb[0]);
 
 	ANKI_CHECK(m_is->run(cmdb[1]));

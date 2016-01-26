@@ -37,7 +37,7 @@ Error Ms::createRt(U32 samples)
 		DEPTH_RT_PIXEL_FORMAT,
 		samples,
 		SamplingFilter::NEAREST,
-		4,
+		2,
 		m_depthRt);
 
 	m_r->createRenderTarget(m_r->getWidth(),
@@ -45,7 +45,7 @@ Error Ms::createRt(U32 samples)
 		RT_PIXEL_FORMATS[0],
 		samples,
 		SamplingFilter::NEAREST,
-		2,
+		1,
 		m_rt0);
 
 	m_r->createRenderTarget(m_r->getWidth(),
@@ -53,7 +53,7 @@ Error Ms::createRt(U32 samples)
 		RT_PIXEL_FORMATS[1],
 		samples,
 		SamplingFilter::NEAREST,
-		2,
+		1,
 		m_rt1);
 
 	m_r->createRenderTarget(m_r->getWidth(),
@@ -148,15 +148,6 @@ Error Ms::run(CommandBufferPtr& cmdb)
 	}
 
 	return ErrorCode::NONE;
-}
-
-//==============================================================================
-void Ms::downScaleGBuffer(CommandBufferPtr& cmdb)
-{
-	cmdb->generateMipmaps(m_depthRt);
-	cmdb->generateMipmaps(m_rt0);
-	cmdb->generateMipmaps(m_rt1);
-	cmdb->generateMipmaps(m_rt2);
 }
 
 } // end namespace anki

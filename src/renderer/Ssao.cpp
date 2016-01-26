@@ -203,7 +203,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 	const char* SHADER_FILENAME =
 		"shaders/VariableSamplingBlurGeneric.frag.glsl";
 
-	pps.destroy(getAllocator());
+	pps.destroy();
 	pps.sprintf("#define HPASS\n"
 				"#define COL_R\n"
 				"#define IMG_DIMENSION %u\n"
@@ -216,7 +216,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 	m_r->createDrawQuadPipeline(
 		m_hblurFrag->getGrShader(), colorState, m_hblurPpline);
 
-	pps.destroy(getAllocator());
+	pps.destroy();
 	pps.sprintf("#define VPASS\n"
 				"#define COL_R\n"
 				"#define IMG_DIMENSION %u\n"

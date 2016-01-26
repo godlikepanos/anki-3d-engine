@@ -44,6 +44,7 @@ private:
 
 	// 1st pass: Do the indirect lighting computation
 	ShaderResourcePtr m_frag;
+	ShaderResourcePtr m_vert;
 	PipelinePtr m_ppline;
 	TexturePtr m_rt;
 	FramebufferPtr m_fb;

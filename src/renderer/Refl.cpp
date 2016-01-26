@@ -115,12 +115,30 @@ Error Refl::init1stPass(const ConfigSet& config)
 	ANKI_CHECK(getResourceManager().loadResourceToCache(
 		m_frag, "shaders/Refl.frag.glsl", pps.toCString(), "r_refl_"));
 
+	// Create vert shader
+	pps.destroy();
+	pps.sprintf("#define UV_OFFSET vec2(%f, %f)",
+		(1.0 / m_width) / 2.0,
+		(1.0 / m_height) / 2.0);
+
+	ANKI_CHECK(getResourceManager().loadResourceToCache(
+		m_vert, "shaders/Quad.vert.glsl", pps.toCString(), "r_refl_"));
+
 	// Create ppline
 	ColorStateInfo colorState;
 	colorState.m_attachmentCount = 1;
 	colorState.m_attachments[0].m_format = pixFormat;
 
-	m_r->createDrawQuadPipeline(m_frag->getGrShader(), colorState, m_ppline);
+	PipelineInitializer ppinit;
+	ppinit.m_color.m_attachmentCount = 1;
+	ppinit.m_color.m_attachments[0].m_format = pixFormat;
+	ppinit.m_depthStencil.m_depthWriteEnabled = true;
+	ppinit.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
+	ppinit.m_depthStencil.m_format = Ms::DEPTH_RT_PIXEL_FORMAT;
+	ppinit.m_shaders[ShaderType::VERTEX] = m_vert->getGrShader();
+	ppinit.m_shaders[ShaderType::FRAGMENT] = m_frag->getGrShader();
+
+	m_ppline = gr.newInstance<Pipeline>(ppinit);
 
 	// Create uniform buffer
 	m_uniforms = getGrManager().newInstance<Buffer>(sizeof(ReflUniforms),
@@ -131,9 +149,7 @@ Error Refl::init1stPass(const ConfigSet& config)
 	ResourceGroupInitializer rcInit;
 
 	SamplerInitializer sinit;
-	sinit.m_minLod = 1.0;
-	sinit.m_minMagFilter = SamplingFilter::NEAREST;
-	sinit.m_mipmapFilter = SamplingFilter::NEAREST;
+	sinit.m_minMagFilter = SamplingFilter::LINEAR;
 	rcInit.m_textures[0].m_texture = m_r->getMs().getDepthRt();
 	rcInit.m_textures[0].m_sampler = gr.newInstance<Sampler>(sinit);
 
@@ -172,16 +188,28 @@ Error Refl::init1stPass(const ConfigSet& config)
 
 	m_rcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);
 
-	// Create RT
+	// Create RTs
 	m_r->createRenderTarget(
 		m_width, m_height, pixFormat, 1, SamplingFilter::NEAREST, 1, m_rt);
 
 	// Create FB
 	FramebufferInitializer fbInit;
-	fbInit.m_colorAttachmentsCount = 1;
+	fbInit.m_colorAttachmentsCount = 2;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation =
 		AttachmentLoadOperation::DONT_CARE;
+
+	fbInit.m_colorAttachments[1].m_texture = m_r->getMs().getRt2();
+	fbInit.m_colorAttachments[1].m_loadOperation =
+		AttachmentLoadOperation::DONT_CARE;
+	fbInit.m_colorAttachments[1].m_mipmap = 1;
+
+	fbInit.m_depthStencilAttachment.m_texture = m_r->getMs().getDepthRt();
+	fbInit.m_depthStencilAttachment.m_format = Ms::DEPTH_RT_PIXEL_FORMAT;
+	fbInit.m_depthStencilAttachment.m_loadOperation =
+		AttachmentLoadOperation::DONT_CARE;
+	fbInit.m_depthStencilAttachment.m_mipmap = 1;
+
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 	return ErrorCode::NONE;
@@ -194,18 +222,23 @@ Error Refl::init2ndPass()
 
 	// Create RC group
 	ResourceGroupInitializer rcInit;
+	SamplerInitializer sinit;
+	sinit.m_repeat = false;
 
 	rcInit.m_textures[0].m_texture = m_r->getMs().getDepthRt();
 
-	SamplerInitializer sinit;
-	sinit.m_repeat = false;
+	sinit.m_minLod = 1.0;
 	sinit.m_mipmapFilter = SamplingFilter::NEAREST;
-	rcInit.m_textures[1].m_texture = m_rt;
+	rcInit.m_textures[1].m_texture = m_r->getMs().getDepthRt();
 	rcInit.m_textures[1].m_sampler = gr.newInstance<Sampler>(sinit);
 
-	sinit.m_minMagFilter = SamplingFilter::LINEAR;
+	sinit.m_minLod = 0.0;
 	rcInit.m_textures[2].m_texture = m_rt;
 	rcInit.m_textures[2].m_sampler = gr.newInstance<Sampler>(sinit);
+
+	sinit.m_minMagFilter = SamplingFilter::LINEAR;
+	rcInit.m_textures[3].m_texture = m_rt;
+	rcInit.m_textures[3].m_sampler = gr.newInstance<Sampler>(sinit);
 
 	rcInit.m_uniformBuffers[0].m_dynamic = true;
 
@@ -238,8 +271,8 @@ Error Refl::init2ndPass()
 
 	ppinit.m_color.m_attachmentCount = 1;
 	ppinit.m_color.m_attachments[0].m_format = Is::RT_PIXEL_FORMAT;
-	ppinit.m_color.m_attachments[0].m_srcBlendMethod = BlendMethod::ONE;
-	ppinit.m_color.m_attachments[0].m_dstBlendMethod = BlendMethod::ONE;
+	// ppinit.m_color.m_attachments[0].m_srcBlendMethod = BlendMethod::ONE;
+	// ppinit.m_color.m_attachments[0].m_dstBlendMethod = BlendMethod::ONE;
 
 	ppinit.m_shaders[U(ShaderType::VERTEX)] = m_blitVert->getGrShader();
 	ppinit.m_shaders[U(ShaderType::FRAGMENT)] = m_blitFrag->getGrShader();

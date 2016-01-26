@@ -11,9 +11,10 @@ layout(location = 1) in vec2 in_uvHigh;
 
 layout(location = 0) out vec3 out_color;
 
-layout(TEX_BINDING(0, 0)) uniform sampler2D u_depthTex;
-layout(TEX_BINDING(0, 1)) uniform sampler2D u_colorTexNearest;
-layout(TEX_BINDING(0, 2)) uniform sampler2D u_colorTexLinear;
+layout(TEX_BINDING(0, 0)) uniform sampler2D u_depthFullTex;
+layout(TEX_BINDING(0, 1)) uniform sampler2D u_depthHalfTex;
+layout(TEX_BINDING(0, 2)) uniform sampler2D u_colorTexNearest;
+layout(TEX_BINDING(0, 3)) uniform sampler2D u_colorTexLinear;
 
 layout(UBO_BINDING(0, 0)) uniform _u0
 {
@@ -37,12 +38,12 @@ const vec2 OFFSETS[8] =
 void main()
 {
 	// Get the depth of the current fragment
-	float depth = textureLod(u_depthTex, in_uvHigh, 0.0).r;
+	float depth = texture(u_depthFullTex, in_uvHigh).r;
 
 	// Gather the depths around the current fragment and:
 	// - Get the min difference compared to crnt depth
 	// - Get the new UV that is closer to the crnt depth
-	float lowDepth = textureLod(u_depthTex, in_uvLow, 1.0).r;
+	float lowDepth = texture(u_depthHalfTex, in_uvLow).r;
 	float minDiff = abs(depth - lowDepth);
 	float maxDiff = minDiff;
 	vec2 newUv = in_uvLow;
@@ -50,7 +51,7 @@ void main()
 	{
 		// Read the low depth
 		vec2 uv = in_uvLow + OFFSETS[i];
-		float lowDepth = textureLod(u_depthTex, uv, 1.0).r;
+		float lowDepth = texture(u_depthHalfTex, uv).r;
 
 		// Update the max difference compared to the current fragment
 		float diff = abs(depth - lowDepth);
