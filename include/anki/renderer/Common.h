@@ -26,10 +26,7 @@ class Dbg;
 class Tiler;
 class Ir;
 class Refl;
-
-/// Cut the job submition into multiple chains. We want to avoid feeding
-/// GL with a huge job chain
-const U RENDERER_COMMAND_BUFFERS_COUNT = 2;
+class Upsample;
 
 /// Computes the 'a' and 'b' numbers for linearizeDepthOptimal
 inline void computeLinearizeDepthOptimal(F32 near, F32 far, F32& a, F32& b)

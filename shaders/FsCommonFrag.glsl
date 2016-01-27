@@ -19,6 +19,7 @@ layout(TEX_BINDING(1, 0)) uniform sampler2D anki_msDepthRt;
 #undef LIGHT_TEX_BINDING
 
 #define anki_u_time u_lightingUniforms.rendererSizeTimePad1.z
+#define RENDERER_SIZE (u_lightingUniforms.rendererSizeTimePad1.xy * 0.5)
 
 layout(location = 0) in vec3 in_vertPosViewSpace;
 layout(location = 1) flat in float in_alpha;
@@ -69,8 +70,7 @@ void particleAlpha(in sampler2D tex, in float alpha)
 void particleSoftTextureAlpha(
 	in sampler2D depthMap, in sampler2D tex, in float alpha)
 {
-	vec2 screenSize = vec2(1.0 / u_lightingUniforms.rendererSizeTimePad1.x,
-		1.0 / u_lightingUniforms.rendererSizeTimePad1.y);
+	vec2 screenSize = 1.0 / RENDERER_SIZE;
 
 	float depth = texture(depthMap, gl_FragCoord.xy * screenSize).r;
 
@@ -103,8 +103,7 @@ void particleTextureAlpha(in sampler2D tex, in float alpha)
 void particleSoftColorAlpha(
 	in sampler2D depthMap, in vec3 icolor, in float alpha)
 {
-	vec2 screenSize = vec2(1.0 / u_lightingUniforms.rendererSizeTimePad1.x,
-		1.0 / u_lightingUniforms.rendererSizeTimePad1.y);
+	vec2 screenSize = 1.0 / RENDERER_SIZE;
 
 	float depth = texture(depthMap, gl_FragCoord.xy * screenSize).r;
 
@@ -135,8 +134,7 @@ vec3 computeLightColor(vec3 diffCol)
 		fragPos.z = u_lightingUniforms.projectionParams.z
 			/ (u_lightingUniforms.projectionParams.w + depth);
 
-		vec2 screenSize = vec2(1.0 / u_lightingUniforms.rendererSizeTimePad1.x,
-			1.0 / u_lightingUniforms.rendererSizeTimePad1.y);
+		vec2 screenSize = 1.0 / RENDERER_SIZE;
 
 		vec2 ndc = gl_FragCoord.xy * screenSize * 2.0 - 1.0;
 
@@ -262,9 +260,7 @@ void particleAnimatedTextureAlphaLight(
 #define fog_DEFINED
 void fog(in sampler2D depthMap, in vec3 color, in float fogScale)
 {
-	const vec2 screenSize =
-		vec2(1.0 / u_lightingUniforms.rendererSizeTimePad1.x,
-			1.0 / u_lightingUniforms.rendererSizeTimePad1.y);
+	const vec2 screenSize = 1.0 / RENDERER_SIZE;
 
 	vec2 texCoords = gl_FragCoord.xy * screenSize;
 	float depth = texture(depthMap, texCoords).r;

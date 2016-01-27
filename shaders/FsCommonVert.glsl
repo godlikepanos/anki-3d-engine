@@ -56,8 +56,8 @@ void particle(in mat4 mvp)
 {
 	gl_Position = mvp * vec4(in_position, 1);
 	out_alpha = in_alpha;
-	gl_PointSize =
-		in_scale * u_lightingUniforms.rendererSizeTimePad1.x / gl_Position.w;
+	gl_PointSize = in_scale * u_lightingUniforms.rendererSizeTimePad1.x * 0.5
+		/ gl_Position.w;
 }
 
 //==============================================================================

@@ -36,6 +36,7 @@ layout(TEX_BINDING(0, 4)) uniform sampler2D u_isRt;
 // In/out
 layout(location = 0) in vec2 in_texCoord;
 layout(location = 0) out vec3 out_indirectColor;
+layout(location = 1) out vec4 out_rt2;
 
 void main()
 {
@@ -54,6 +55,8 @@ void main()
 	// Compute relflection vector
 	vec3 eye = normalize(posVSpace);
 	vec3 r = reflect(eye, gbuffer.normal);
+
+	out_indirectColor = vec3(0.0);
 
 //
 // SSLR
@@ -86,7 +89,6 @@ void main()
 		posVSpace, r, gbuffer.normal, reflLod, specIndirect, diffIndirect);
 
 	diffIndirect *= gbuffer.diffuse;
-#endif
 
 	// Finalize the indirect specular
 	float ndotv = dot(gbuffer.normal, -eye);
@@ -95,5 +97,8 @@ void main()
 
 	// Finalize
 	out_indirectColor = diffIndirect + specIndirect;
+#endif
+
+	out_rt2 = vec4(gbuffer.normal, 0.0);
 	gl_FragDepth = depth;
 }

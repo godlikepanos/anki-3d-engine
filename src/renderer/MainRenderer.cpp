@@ -123,13 +123,7 @@ Error MainRenderer::render(SceneGraph& scene)
 	m_frameAlloc.getMemoryPool().reset();
 
 	GrManager& gl = m_r->getGrManager();
-	Array<CommandBufferPtr, RENDERER_COMMAND_BUFFERS_COUNT> cmdbs;
-	CommandBufferPtr& cmdb = cmdbs[RENDERER_COMMAND_BUFFERS_COUNT - 1];
-
-	for(U i = 0; i < RENDERER_COMMAND_BUFFERS_COUNT; i++)
-	{
-		cmdbs[i] = gl.newInstance<CommandBuffer>(m_cbInitHints[i]);
-	}
+	CommandBufferPtr cmdb = gl.newInstance<CommandBuffer>(m_cbInitHints);
 
 	// Find where the m_r should draw
 	Bool rDrawToDefault;
@@ -154,7 +148,7 @@ Error MainRenderer::render(SceneGraph& scene)
 
 	// Run renderer
 	m_r->getIs().setAmbientColor(scene.getAmbientColor());
-	ANKI_CHECK(m_r->render(scene.getActiveCamera(), 0, cmdbs));
+	ANKI_CHECK(m_r->render(scene.getActiveCamera(), 0, cmdb));
 
 	if(!rDrawToDefault)
 	{
@@ -167,17 +161,11 @@ Error MainRenderer::render(SceneGraph& scene)
 		m_r->drawQuad(cmdb);
 	}
 
-	// Flush the command buffers
-	for(U i = 0; i < RENDERER_COMMAND_BUFFERS_COUNT; i++)
-	{
-		cmdbs[i]->flush();
-	}
+	// Flush the command buffer
+	cmdb->flush();
 
 	// Set the hints
-	for(U i = 0; i < RENDERER_COMMAND_BUFFERS_COUNT; i++)
-	{
-		m_cbInitHints[i] = cmdbs[i]->computeInitHints();
-	}
+	m_cbInitHints = cmdb->computeInitHints();
 
 	ANKI_TRACE_STOP_EVENT(RENDER);
 

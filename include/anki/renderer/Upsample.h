@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/renderer/Ms.h>
+#include <anki/renderer/RenderingPass.h>
 
 namespace anki
 {
@@ -13,26 +13,25 @@ namespace anki
 /// @addtogroup renderer
 /// @{
 
-/// Downsample some render targets.
-class Downsample : public RenderingPass
+/// Upsample some textures and append them to IS.
+class Upsample : public RenderingPass
 {
-anki_internal:
-	Downsample(Renderer* r)
+public:
+	Upsample(Renderer* r)
 		: RenderingPass(r)
 	{
 	}
 
-	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
+	ANKI_USE_RESULT Error init(const ConfigSet& config);
+
+	void run(CommandBufferPtr cmdb);
 
 private:
+	ResourceGroupPtr m_rcGroup;
+	FramebufferPtr m_fb;
 	ShaderResourcePtr m_frag;
 	ShaderResourcePtr m_vert;
 	PipelinePtr m_ppline;
-	FramebufferPtr m_fb;
-	Array<TexturePtr, Ms::ATTACHMENT_COUNT> m_msRts;
-	TexturePtr m_depthRt;
-	TexturePtr m_isRt;
-	ResourceGroupPtr m_rg;
 };
 /// @}
 

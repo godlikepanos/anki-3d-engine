@@ -191,7 +191,7 @@ Error Ir::init(const ConfigSet& config)
 	nestedRConfig.set("is.sm.resolution", 16);
 	nestedRConfig.set("lf.maxFlares", 8);
 	nestedRConfig.set("pps.enabled", true);
-	nestedRConfig.set("pps.bloom.enabled", true);
+	nestedRConfig.set("pps.bloom.enabled", true); // XXX ?
 	nestedRConfig.set("pps.ssao.enabled", false);
 	nestedRConfig.set("renderingQuality", 1.0);
 	nestedRConfig.set("clusterSizeZ", 4);
@@ -251,6 +251,8 @@ Error Ir::init(const ConfigSet& config)
 	// Init the clusterer
 	U width = m_r->getWidth() / 2;
 	U height = m_r->getHeight() / 2;
+	ANKI_ASSERT(isAligned(Renderer::TILE_SIZE, width)
+		&& isAligned(Renderer::TILE_SIZE, height));
 
 	U tileCountX = width / Renderer::TILE_SIZE;
 	U tileCountY = height / Renderer::TILE_SIZE;
@@ -360,7 +362,7 @@ Error Ir::run(CommandBufferPtr cmdb)
 	while(it != end)
 	{
 		// Write and render probe
-		ANKI_CHECK(writeProbeAndRender(*it->m_node, probes[probeIdx]));
+		ANKI_CHECK(writeProbeAndRender(*it->m_node, probes[probeIdx], cmdb));
 
 		++it;
 		++probeIdx;
@@ -478,7 +480,8 @@ void Ir::binProbes(U32 threadId, PtrSize threadsCount, IrRunContext& ctx)
 }
 
 //==============================================================================
-Error Ir::writeProbeAndRender(SceneNode& node, IrShaderReflectionProbe& probe)
+Error Ir::writeProbeAndRender(
+	SceneNode& node, IrShaderReflectionProbe& probe, CommandBufferPtr cmdb)
 {
 	const FrustumComponent& frc = m_r->getActiveFrustumComponent();
 	ReflectionProbeComponent& reflc =
@@ -496,7 +499,7 @@ Error Ir::writeProbeAndRender(SceneNode& node, IrShaderReflectionProbe& probe)
 	if(reflc.getMarkedForRendering())
 	{
 		reflc.setMarkedForRendering(false);
-		ANKI_CHECK(renderReflection(node, reflc, entry));
+		ANKI_CHECK(renderReflection(node, reflc, entry, cmdb));
 	}
 
 	// If you need to render it mark it for the next frame
@@ -584,23 +587,18 @@ void Ir::writeIndicesAndCluster(
 }
 
 //==============================================================================
-Error Ir::renderReflection(
-	SceneNode& node, ReflectionProbeComponent& reflc, U cubemapIdx)
+Error Ir::renderReflection(SceneNode& node,
+	ReflectionProbeComponent& reflc,
+	U cubemapIdx,
+	CommandBufferPtr cmdb)
 {
 	ANKI_TRACE_INC_COUNTER(RENDERER_REFLECTIONS, 1);
 
 	// Render cubemap
 	for(U i = 0; i < 6; ++i)
 	{
-		Array<CommandBufferPtr, RENDERER_COMMAND_BUFFERS_COUNT> cmdbs;
-		for(U j = 0; j < cmdbs.getSize(); ++j)
-		{
-			cmdbs[j] = getGrManager().newInstance<CommandBuffer>();
-		}
-
 		// Render
-		ANKI_CHECK(m_nestedR.render(node, i, cmdbs));
-		auto& cmdb = cmdbs[cmdbs.getSize() - 1];
+		ANKI_CHECK(m_nestedR.render(node, i, cmdb));
 
 		// Copy env texture
 		cmdb->copyTextureToTexture(m_nestedR.getPps().getRt(),
@@ -637,12 +635,6 @@ Error Ir::renderReflection(
 		cmdb->bindPipeline(m_computeIrradiancePpline);
 		m_r->drawQuad(cmdb);
 		cmdb->generateMipmaps(m_irradianceCubemapArr, 6 * cubemapIdx + i);
-
-		// Flush
-		for(U j = 0; j < cmdbs.getSize(); ++j)
-		{
-			cmdbs[j]->flush();
-		}
 	}
 
 	return ErrorCode::NONE;

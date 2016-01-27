@@ -9,6 +9,7 @@
 #include <anki/core/Trace.h>
 #include <anki/misc/ConfigSet.h>
 
+#include <anki/renderer/Ir.h>
 #include <anki/renderer/Ms.h>
 #include <anki/renderer/Is.h>
 #include <anki/renderer/Pps.h>
@@ -17,6 +18,7 @@
 #include <anki/renderer/Dbg.h>
 #include <anki/renderer/Tiler.h>
 #include <anki/renderer/Refl.h>
+#include <anki/renderer/Upsample.h>
 
 namespace anki
 {
@@ -112,6 +114,12 @@ Error Renderer::initInternal(const ConfigSet& config)
 		m_resources->loadResource("shaders/Quad.vert.glsl", m_drawQuadVert));
 
 	// Init the stages. Careful with the order!!!!!!!!!!
+	if(config.getNumber("ir.enabled"))
+	{
+		m_ir.reset(m_alloc.newInstance<Ir>(this));
+		ANKI_CHECK(m_ir->init(config));
+	}
+
 	m_ms.reset(m_alloc.newInstance<Ms>(this));
 	ANKI_CHECK(m_ms->init(config));
 
@@ -127,6 +135,9 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_fs.reset(m_alloc.newInstance<Fs>(this));
 	ANKI_CHECK(m_fs->init(config));
 
+	m_upsample.reset(m_alloc.newInstance<Upsample>(this));
+	ANKI_CHECK(m_upsample->init(config));
+
 	m_lf.reset(m_alloc.newInstance<Lf>(this));
 	ANKI_CHECK(m_lf->init(config));
 
@@ -140,9 +151,8 @@ Error Renderer::initInternal(const ConfigSet& config)
 }
 
 //==============================================================================
-Error Renderer::render(SceneNode& frustumableNode,
-	U frustumIdx,
-	Array<CommandBufferPtr, RENDERER_COMMAND_BUFFERS_COUNT>& cmdb)
+Error Renderer::render(
+	SceneNode& frustumableNode, U frustumIdx, CommandBufferPtr cmdb)
 {
 	m_frc = nullptr;
 	Error err = frustumableNode.iterateComponentsOfType<FrustumComponent>(
@@ -170,38 +180,34 @@ Error Renderer::render(SceneNode& frustumableNode,
 	m_clusterer.prepare(getThreadPool(), *m_frc);
 
 	// First part of reflections
-	if(m_refl->getEnabled())
+	if(m_ir)
 	{
-		ANKI_CHECK(m_refl->run1(cmdb[0]));
+		ANKI_CHECK(m_ir->run(cmdb));
 	}
 
-	ANKI_TRACE_START_EVENT(RENDER_MS);
-	ANKI_CHECK(m_ms->run(cmdb[0]));
-	ANKI_TRACE_STOP_EVENT(RENDER_MS);
+	ANKI_CHECK(m_ms->run(cmdb));
 
-	m_lf->runOcclusionTests(cmdb[0]);
+	m_lf->runOcclusionTests(cmdb);
 
-	m_tiler->run(cmdb[0]);
+	m_tiler->run(cmdb);
 
-	ANKI_CHECK(m_is->run(cmdb[1]));
+	ANKI_CHECK(m_is->run(cmdb));
 
-	ANKI_CHECK(m_fs->run(cmdb[1]));
-	m_lf->run(cmdb[1]);
+	m_refl->run(cmdb);
 
-	// 2nd part of reflections
-	if(m_refl->getEnabled())
-	{
-		m_refl->run2(cmdb[1]);
-	}
+	ANKI_CHECK(m_fs->run(cmdb));
+	m_lf->run(cmdb);
+
+	m_upsample->run(cmdb);
 
 	if(m_pps->getEnabled())
 	{
-		m_pps->run(cmdb[1]);
+		m_pps->run(cmdb);
 	}
 
 	if(m_dbg->getEnabled())
 	{
-		ANKI_CHECK(m_dbg->run(cmdb[1]));
+		ANKI_CHECK(m_dbg->run(cmdb));
 	}
 
 	++m_framesNum;

@@ -5,11 +5,11 @@
 
 #include <anki/renderer/Ms.h>
 #include <anki/renderer/Renderer.h>
-
 #include <anki/util/Logger.h>
 #include <anki/scene/Camera.h>
 #include <anki/scene/SceneGraph.h>
 #include <anki/misc/ConfigSet.h>
+#include <anki/core/Trace.h>
 
 namespace anki
 {
@@ -118,6 +118,8 @@ Error Ms::initInternal(const ConfigSet& initializer)
 //==============================================================================
 Error Ms::run(CommandBufferPtr& cmdb)
 {
+	ANKI_TRACE_START_EVENT(RENDER_MS);
+
 	// Create 2nd level cmdbs
 	U threadCount = m_r->getThreadPool().getThreadsCount();
 	GrManager& gr = m_r->getGrManager();
@@ -147,6 +149,7 @@ Error Ms::run(CommandBufferPtr& cmdb)
 		}
 	}
 
+	ANKI_TRACE_STOP_EVENT(RENDER_MS);
 	return ErrorCode::NONE;
 }
 

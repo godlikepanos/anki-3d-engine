@@ -7,6 +7,7 @@
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/Ms.h>
 #include <anki/renderer/Is.h>
+#include <anki/renderer/Refl.h>
 #include <anki/scene/SceneGraph.h>
 #include <anki/scene/Camera.h>
 
@@ -23,12 +24,13 @@ Error Fs::init(const ConfigSet&)
 {
 	FramebufferInitializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
-	fbInit.m_colorAttachments[0].m_texture = m_r->getIs().getRt();
+	fbInit.m_colorAttachments[0].m_texture = m_r->getRefl().getRt();
 	fbInit.m_colorAttachments[0].m_loadOperation =
 		AttachmentLoadOperation::LOAD;
 	fbInit.m_depthStencilAttachment.m_texture = m_r->getMs().getDepthRt();
 	fbInit.m_depthStencilAttachment.m_loadOperation =
 		AttachmentLoadOperation::LOAD;
+	fbInit.m_depthStencilAttachment.m_mipmap = 1;
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 	// Init the global resources
@@ -57,6 +59,7 @@ Error Fs::init(const ConfigSet&)
 Error Fs::run(CommandBufferPtr& cmdb)
 {
 	cmdb->bindFramebuffer(m_fb);
+	cmdb->setViewport(0, 0, m_r->getWidth() / 2, m_r->getHeight() / 2);
 
 	FrustumComponent& camFr = m_r->getActiveFrustumComponent();
 

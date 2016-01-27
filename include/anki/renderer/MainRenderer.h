@@ -79,7 +79,7 @@ private:
 	F32 m_renderingQuality = 1.0;
 
 	/// Optimize job chain
-	Array<CommandBufferInitHints, RENDERER_COMMAND_BUFFERS_COUNT> m_cbInitHints;
+	CommandBufferInitHints m_cbInitHints;
 };
 /// @}
 

@@ -34,6 +34,16 @@ public:
 
 	~Renderer();
 
+	Bool getIrEnabled() const
+	{
+		return m_ir.isCreated();
+	}
+
+	Ir& getIr()
+	{
+		return *m_ir;
+	}
+
 	const Ms& getMs() const
 	{
 		return *m_ms;
@@ -74,6 +84,11 @@ public:
 		return *m_dbg;
 	}
 
+	Refl& getRefl()
+	{
+		return *m_refl;
+	}
+
 	U32 getWidth() const
 	{
 		return m_width;
@@ -106,9 +121,8 @@ public:
 	}
 
 	/// This function does all the rendering stages and produces a final result.
-	ANKI_USE_RESULT Error render(SceneNode& frustumableNode,
-		U frustumIdx,
-		Array<CommandBufferPtr, RENDERER_COMMAND_BUFFERS_COUNT>& cmdBuff);
+	ANKI_USE_RESULT Error render(
+		SceneNode& frustumableNode, U frustumIdx, CommandBufferPtr cmdb);
 
 anki_internal:
 	/// WARNING: If you change the tile size you need to change some shaders
@@ -295,12 +309,14 @@ private:
 
 	/// @name Rendering stages
 	/// @{
+	UniquePtr<Ir> m_ir;
 	UniquePtr<Ms> m_ms; ///< Material rendering stage
 	UniquePtr<Is> m_is; ///< Illumination rendering stage
 	UniquePtr<Refl> m_refl; ///< Reflections.
 	UniquePtr<Tiler> m_tiler;
 	UniquePtr<Pps> m_pps; ///< Postprocessing rendering stage
 	UniquePtr<Fs> m_fs; ///< Forward shading.
+	UniquePtr<Upsample> m_upsample;
 	UniquePtr<Lf> m_lf; ///< Forward shading lens flares.
 	UniquePtr<Dbg> m_dbg; ///< Debug stage.
 	/// @}
@@ -334,8 +350,6 @@ private:
 
 	FramebufferPtr m_outputFb;
 	UVec2 m_outputFbSize;
-
-	TexturePtr m_reflectionsCubemapArr;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 };

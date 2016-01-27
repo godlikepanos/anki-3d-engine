@@ -121,12 +121,14 @@ private:
 	void binProbes(U32 threadId, PtrSize threadsCount, IrRunContext& ctx);
 
 	ANKI_USE_RESULT Error writeProbeAndRender(
-		SceneNode& node, IrShaderReflectionProbe& probe);
+		SceneNode& node, IrShaderReflectionProbe& probe, CommandBufferPtr cmdb);
 
 	void binProbe(U probeIdx, IrRunContext& ctx, IrTaskContext& task) const;
 
-	ANKI_USE_RESULT Error renderReflection(
-		SceneNode& node, ReflectionProbeComponent& reflc, U cubemapIdx);
+	ANKI_USE_RESULT Error renderReflection(SceneNode& node,
+		ReflectionProbeComponent& reflc,
+		U cubemapIdx,
+		CommandBufferPtr cmdb);
 
 	static void writeIndicesAndCluster(
 		U clusterIdx, Bool hasPrevCluster, IrRunContext& ctx);
