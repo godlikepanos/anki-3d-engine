@@ -89,8 +89,6 @@ private:
 		Timestamp m_timestamp = 0; ///< When last rendered.
 	};
 
-	static const PixelFormat IRRADIANCE_RT_PIXEL_FORMAT;
-
 	Renderer m_nestedR;
 	TexturePtr m_envCubemapArr;
 	U16 m_cubemapArrMipCount = 0;

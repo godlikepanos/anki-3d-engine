@@ -142,10 +142,6 @@ public:
 //==============================================================================
 
 //==============================================================================
-const PixelFormat Ir::IRRADIANCE_RT_PIXEL_FORMAT(
-	ComponentFormat::R8G8B8, TransformFormat::UNORM);
-
-//==============================================================================
 Ir::Ir(Renderer* r)
 	: RenderingPass(r)
 	, m_barrier(r->getThreadPool().getThreadsCount())
@@ -218,7 +214,7 @@ Error Ir::init(const ConfigSet& config)
 	texinit.m_height = m_fbSize;
 	texinit.m_depth = m_cubemapArrSize;
 	texinit.m_type = TextureType::CUBE_ARRAY;
-	texinit.m_format = Pps::RT_PIXEL_FORMAT;
+	texinit.m_format = Is::RT_PIXEL_FORMAT;
 	texinit.m_mipmapsCount = MAX_U8;
 	texinit.m_samples = 1;
 	texinit.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
@@ -226,7 +222,6 @@ Error Ir::init(const ConfigSet& config)
 
 	m_envCubemapArr = getGrManager().newInstance<Texture>(texinit);
 
-	texinit.m_format = IRRADIANCE_RT_PIXEL_FORMAT;
 	m_irradianceCubemapArr = getGrManager().newInstance<Texture>(texinit);
 
 	m_cubemapArrMipCount = computeMaxMipmapCount(m_fbSize, m_fbSize);
@@ -601,7 +596,7 @@ Error Ir::renderReflection(SceneNode& node,
 		ANKI_CHECK(m_nestedR.render(node, i, cmdb));
 
 		// Copy env texture
-		cmdb->copyTextureToTexture(m_nestedR.getPps().getRt(),
+		cmdb->copyTextureToTexture(m_nestedR.getIs().getRt(),
 			0,
 			0,
 			m_envCubemapArr,
@@ -624,7 +619,7 @@ Error Ir::renderReflection(SceneNode& node,
 		fbinit.m_colorAttachments[0].m_texture = m_irradianceCubemapArr;
 		fbinit.m_colorAttachments[0].m_arrayIndex = cubemapIdx;
 		fbinit.m_colorAttachments[0].m_faceIndex = i;
-		fbinit.m_colorAttachments[0].m_format = IRRADIANCE_RT_PIXEL_FORMAT;
+		fbinit.m_colorAttachments[0].m_format = Is::RT_PIXEL_FORMAT;
 		fbinit.m_colorAttachments[0].m_loadOperation =
 			AttachmentLoadOperation::DONT_CARE;
 		FramebufferPtr fb = getGrManager().newInstance<Framebuffer>(fbinit);

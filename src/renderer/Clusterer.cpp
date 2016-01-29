@@ -537,11 +537,10 @@ void Clusterer::binGeneric(const CollisionShape& cs,
 void Clusterer::update(U32 threadId, PtrSize threadsCount, Bool frustumChanged)
 {
 	PtrSize start, end;
-	const MoveComponent& move = m_node->getComponent<MoveComponent>();
 	const FrustumComponent& frc = *m_frc;
 	ANKI_ASSERT(frc.getFrustum().getType() == Frustum::Type::PERSPECTIVE);
 
-	const Transform& trf = move.getWorldTransform();
+	const Transform& trf = frc.getFrustum().getTransform();
 	const Vec4& projParams = frc.getProjectionParameters();
 
 	if(frustumChanged)
