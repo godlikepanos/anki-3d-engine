@@ -36,16 +36,6 @@ anki_internal:
 
 	ANKI_USE_RESULT Error run(CommandBufferPtr cmdb);
 
-	TexturePtr getEnvironmentCubemapArray() const
-	{
-		return m_envCubemapArr;
-	}
-
-	TexturePtr getIrradianceCubemapArray() const
-	{
-		return m_irradianceCubemapArr;
-	}
-
 	DynamicBufferToken getProbesToken() const
 	{
 		return m_probesToken;
@@ -71,14 +61,9 @@ anki_internal:
 		return m_clusterer;
 	}
 
-	TexturePtr getIntegrationLut() const
+	ResourceGroupPtr getResourceGroup() const
 	{
-		return m_integrationLut->getGrTexture();
-	}
-
-	SamplerPtr getIntegrationLutSampler() const
-	{
-		return m_integrationLutSampler;
+		return m_rcGroup;
 	}
 
 private:
@@ -114,6 +99,8 @@ private:
 	DynamicBufferToken m_probesToken;
 	DynamicBufferToken m_clustersToken;
 	DynamicBufferToken m_indicesToken;
+
+	ResourceGroupPtr m_rcGroup;
 
 	ANKI_USE_RESULT Error initIrradiance();
 

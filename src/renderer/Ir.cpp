@@ -243,8 +243,6 @@ Error Ir::init(const ConfigSet& config)
 	sinit.m_repeat = false;
 	m_integrationLutSampler = getGrManager().newInstance<Sampler>(sinit);
 
-	getGrManager().finish();
-
 	// Init the clusterer
 	U width = m_r->getWidth() / 2;
 	U height = m_r->getHeight() / 2;
@@ -256,6 +254,20 @@ Error Ir::init(const ConfigSet& config)
 	U clusterCountZ = config.getNumber("ir.clusterSizeZ");
 
 	m_clusterer.init(getAllocator(), tileCountX, tileCountY, clusterCountZ);
+
+	// Init the resource group
+	ResourceGroupInitializer rcInit;
+	rcInit.m_textures[0].m_texture = m_envCubemapArr;
+	rcInit.m_textures[1].m_texture = m_irradianceCubemapArr;
+
+	rcInit.m_textures[2].m_texture = m_integrationLut->getGrTexture();
+	rcInit.m_textures[2].m_sampler = m_integrationLutSampler;
+
+	rcInit.m_storageBuffers[0].m_dynamic = true;
+	rcInit.m_storageBuffers[1].m_dynamic = true;
+	rcInit.m_storageBuffers[2].m_dynamic = true;
+
+	m_rcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);
 
 	return ErrorCode::NONE;
 }

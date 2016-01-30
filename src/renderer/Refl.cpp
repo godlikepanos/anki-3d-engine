@@ -135,27 +135,7 @@ Error Refl::initInternal(const ConfigSet& config)
 		rcInit.m_textures[4].m_texture = m_r->getIs().getRt();
 	}
 
-	if(m_r->getIrEnabled())
-	{
-		rcInit.m_textures[5].m_texture =
-			m_r->getIr().getEnvironmentCubemapArray();
-
-		rcInit.m_textures[6].m_texture =
-			m_r->getIr().getIrradianceCubemapArray();
-
-		rcInit.m_textures[7].m_texture = m_r->getIr().getIntegrationLut();
-		rcInit.m_textures[7].m_sampler =
-			m_r->getIr().getIntegrationLutSampler();
-	}
-
 	rcInit.m_uniformBuffers[0].m_dynamic = true;
-
-	if(m_r->getIrEnabled())
-	{
-		rcInit.m_storageBuffers[0].m_dynamic = true;
-		rcInit.m_storageBuffers[1].m_dynamic = true;
-		rcInit.m_storageBuffers[2].m_dynamic = true;
-	}
 
 	m_rcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);
 
@@ -193,13 +173,8 @@ void Refl::run(CommandBufferPtr cmdb)
 	cmdb->setViewport(0, 0, m_width, m_height);
 	cmdb->bindPipeline(m_ppline);
 
+	// Bind first resource group
 	DynamicBufferInfo dyn;
-	if(m_r->getIrEnabled())
-	{
-		dyn.m_storageBuffers[0] = m_r->getIr().getProbesToken();
-		dyn.m_storageBuffers[1] = m_r->getIr().getProbeIndicesToken();
-		dyn.m_storageBuffers[2] = m_r->getIr().getClustersToken();
-	};
 
 	const FrustumComponent& frc = m_r->getActiveFrustumComponent();
 	ReflUniforms* blk = static_cast<ReflUniforms*>(
@@ -210,6 +185,18 @@ void Refl::run(CommandBufferPtr cmdb)
 	blk->m_projectionMat = frc.getProjectionMatrix();
 
 	cmdb->bindResourceGroup(m_rcGroup, 0, &dyn);
+
+	// Bind second resource group
+	if(m_r->getIrEnabled())
+	{
+		DynamicBufferInfo dyn;
+
+		dyn.m_storageBuffers[0] = m_r->getIr().getProbesToken();
+		dyn.m_storageBuffers[1] = m_r->getIr().getProbeIndicesToken();
+		dyn.m_storageBuffers[2] = m_r->getIr().getClustersToken();
+
+		cmdb->bindResourceGroup(m_r->getIr().getResourceGroup(), 1, &dyn);
+	};
 
 	m_r->drawQuad(cmdb);
 }
