@@ -614,7 +614,11 @@ void SectorGroup::findVisibleSectorsInternal(const FrustumComponent& frc,
 		p.getBoundingShape().computeAabb(box);
 
 		if(frc.insideFrustum(p.getBoundingShape())
+#if 0
 			&& r.doGpuVisibilityTest(p.getBoundingShape(), box))
+#else
+			)
+#endif
 		{
 			it = p.m_sectors.getBegin();
 			end = p.m_sectors.getEnd();

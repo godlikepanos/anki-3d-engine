@@ -222,6 +222,8 @@ Error Ir::init(const ConfigSet& config)
 
 	m_envCubemapArr = getGrManager().newInstance<Texture>(texinit);
 
+	texinit.m_width = IRRADIANCE_SIZE;
+	texinit.m_height = IRRADIANCE_SIZE;	
 	m_irradianceCubemapArr = getGrManager().newInstance<Texture>(texinit);
 
 	m_cubemapArrMipCount = computeMaxMipmapCount(m_fbSize, m_fbSize);
@@ -263,7 +265,7 @@ Error Ir::initIrradiance()
 {
 	// Create the shader
 	StringAuto pps(getFrameAllocator());
-	pps.sprintf("#define CUBEMAP_SIZE %u\n", m_fbSize);
+	pps.sprintf("#define CUBEMAP_SIZE %u\n", IRRADIANCE_SIZE);
 
 	ANKI_CHECK(getResourceManager().loadResourceToCache(m_computeIrradianceFrag,
 		"shaders/Irradiance.frag.glsl",
@@ -272,11 +274,8 @@ Error Ir::initIrradiance()
 
 	// Create the ppline
 	ColorStateInfo colorInf;
-	colorInf.m_attachmentCount = 3;
-	PixelFormat pfs(ComponentFormat::R8G8B8, TransformFormat::UNORM);
-	colorInf.m_attachments[0].m_format = pfs;
-	colorInf.m_attachments[2].m_format = pfs;
-	colorInf.m_attachments[3].m_format = pfs;
+	colorInf.m_attachmentCount = 1;
+	colorInf.m_attachments[0].m_format = Is::RT_PIXEL_FORMAT;
 
 	m_r->createDrawQuadPipeline(m_computeIrradianceFrag->getGrShader(),
 		colorInf,
@@ -605,14 +604,20 @@ Error Ir::renderReflection(SceneNode& node,
 
 		// Gen mips of env tex
 		cmdb->generateMipmaps(m_envCubemapArr, 6 * cubemapIdx + i);
+	}
 
-		// Compute irradiance
+	// Compute irradiance
+	cmdb->setViewport(0, 0, IRRADIANCE_SIZE, IRRADIANCE_SIZE);
+	for(U i = 0; i < 6; ++i)
+	{
 		DynamicBufferInfo dinf;
 		UVec4* faceIdxArrayIdx =
 			static_cast<UVec4*>(getGrManager().allocateFrameHostVisibleMemory(
 				sizeof(UVec4), BufferUsage::UNIFORM, dinf.m_uniformBuffers[0]));
 		faceIdxArrayIdx->x() = i;
 		faceIdxArrayIdx->y() = cubemapIdx;
+
+		cmdb->bindResourceGroup(m_computeIrradianceResources, 0, &dinf);
 
 		FramebufferInitializer fbinit;
 		fbinit.m_colorAttachmentsCount = 1;
@@ -623,10 +628,8 @@ Error Ir::renderReflection(SceneNode& node,
 		fbinit.m_colorAttachments[0].m_loadOperation =
 			AttachmentLoadOperation::DONT_CARE;
 		FramebufferPtr fb = getGrManager().newInstance<Framebuffer>(fbinit);
-
 		cmdb->bindFramebuffer(fb);
-		cmdb->setViewport(0, 0, m_fbSize, m_fbSize);
-		cmdb->bindResourceGroup(m_computeIrradianceResources, 0, &dinf);
+
 		cmdb->bindPipeline(m_computeIrradiancePpline);
 		m_r->drawQuad(cmdb);
 		cmdb->generateMipmaps(m_irradianceCubemapArr, 6 * cubemapIdx + i);

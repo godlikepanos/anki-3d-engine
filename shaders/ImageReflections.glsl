@@ -10,7 +10,7 @@
 
 #include "shaders/Clusterer.glsl"
 
-#define ACCURATE_RAYS 0
+#define ACCURATE_RAYS 1
 
 // Representation of a reflection probe
 struct ReflectionProbe

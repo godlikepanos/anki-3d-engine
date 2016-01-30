@@ -68,10 +68,14 @@ void main()
 	// Check for depth discontinuites. Use textureLod because it's undefined
 	// if you are sampling mipmaped in a conditional branch. See
 	// http://teknicool.tumblr.com/post/77263472964/glsl-dynamic-branching-and-texture-samplers
+#if 0
 	float a = u_linearizePad2.x;
 	float b = u_linearizePad2.y;
 	float maxDiffLinear = abs(linearizeDepthOptimal(depth + maxDiff, a, b)
 		- linearizeDepthOptimal(depth, a, b));
+#else
+	float maxDiffLinear = abs(maxDiff);
+#endif
 	if(maxDiffLinear < DEPTH_THRESHOLD)
 	{
 		// No major discontinuites, sample with bilinear
