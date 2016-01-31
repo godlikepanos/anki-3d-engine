@@ -9,12 +9,12 @@
 // Vars
 layout(binding = 0) uniform lowp sampler2D u_tex; ///< Its the IS RT
 
-layout(std140, binding = 0) uniform _blk
+layout(UBO_BINDING(0, 0), std140) uniform u0_
 {
 	vec4 u_thresholdScalePad2;
 };
 
-layout(std140, binding = 0) readonly buffer _blk1
+layout(SS_BINDING(0, 0), std140) readonly buffer ss0_
 {
 	vec4 u_averageLuminancePad3;
 };

@@ -83,22 +83,15 @@ Error Ssao::createFb(FramebufferPtr& fb, TexturePtr& rt)
 //==============================================================================
 Error Ssao::initInternal(const ConfigSet& config)
 {
-	m_enabled = config.getNumber("pps.ssao.enabled");
-
-	if(!m_enabled)
-	{
-		return ErrorCode::NONE;
-	}
-
 	GrManager& gr = getGrManager();
 
 	m_blurringIterationsCount =
-		config.getNumber("pps.ssao.blurringIterationsCount");
+		config.getNumber("ssao.blurringIterationsCount");
 
 	//
 	// Init the widths/heights
 	//
-	const F32 quality = config.getNumber("pps.ssao.renderingQuality");
+	const F32 quality = config.getNumber("ssao.renderingQuality");
 
 	m_width = quality * (F32)m_r->getWidth();
 	alignRoundUp(16, m_width);
@@ -265,8 +258,6 @@ Error Ssao::init(const ConfigSet& config)
 //==============================================================================
 void Ssao::run(CommandBufferPtr& cmdb)
 {
-	ANKI_ASSERT(m_enabled);
-
 	// 1st pass
 	//
 	cmdb->bindFramebuffer(m_vblurFb);

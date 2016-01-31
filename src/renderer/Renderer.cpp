@@ -13,6 +13,10 @@
 #include <anki/renderer/Ms.h>
 #include <anki/renderer/Is.h>
 #include <anki/renderer/Pps.h>
+#include <anki/renderer/Ssao.h>
+#include <anki/renderer/Sslf.h>
+#include <anki/renderer/Bloom.h>
+#include <anki/renderer/Tm.h>
 #include <anki/renderer/Fs.h>
 #include <anki/renderer/Lf.h>
 #include <anki/renderer/Dbg.h>
@@ -148,14 +152,42 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_fs.reset(m_alloc.newInstance<Fs>(this));
 	ANKI_CHECK(m_fs->init(config));
 
-	m_upsample.reset(m_alloc.newInstance<Upsample>(this));
-	ANKI_CHECK(m_upsample->init(config));
-
 	m_lf.reset(m_alloc.newInstance<Lf>(this));
 	ANKI_CHECK(m_lf->init(config));
 
-	m_pps.reset(m_alloc.newInstance<Pps>(this));
-	ANKI_CHECK(m_pps->init(config));
+	m_upsample.reset(m_alloc.newInstance<Upsample>(this));
+	ANKI_CHECK(m_upsample->init(config));
+
+	if(config.getNumber("tm.enabled") && config.getNumber("pps.enabled"))
+	{
+		m_tm.reset(getAllocator().newInstance<Tm>(this));
+		ANKI_CHECK(m_tm->create(config));
+	}
+
+	if(config.getNumber("ssao.enabled") && config.getNumber("pps.enabled"))
+	{
+		m_ssao.reset(m_alloc.newInstance<Ssao>(this));
+		ANKI_CHECK(m_ssao->init(config));
+	}
+
+	if(config.getNumber("bloom.enabled") && config.getNumber("pps.enabled"))
+	{
+		m_bloom.reset(m_alloc.newInstance<Bloom>(this));
+		ANKI_CHECK(m_bloom->init(config));
+	}
+
+	if(config.getNumber("sslf.enabled") && m_bloom
+		&& config.getNumber("pps.enabled"))
+	{
+		m_sslf.reset(m_alloc.newInstance<Sslf>(this));
+		ANKI_CHECK(m_sslf->init(config));
+	}
+
+	if(config.getNumber("pps.enabled"))
+	{
+		m_pps.reset(m_alloc.newInstance<Pps>(this));
+		ANKI_CHECK(m_pps->init(config));
+	}
 
 	m_dbg.reset(m_alloc.newInstance<Dbg>(this));
 	ANKI_CHECK(m_dbg->init(config));
@@ -213,7 +245,7 @@ Error Renderer::render(
 
 	m_lf->runOcclusionTests(cmdb);
 
-	m_tiler->run(cmdb);
+	// m_tiler->run(cmdb);
 
 	ANKI_CHECK(m_is->run(cmdb));
 
@@ -225,7 +257,29 @@ Error Renderer::render(
 
 	m_upsample->run(cmdb);
 
-	if(m_pps->getEnabled())
+	cmdb->generateMipmaps(m_is->getRt());
+
+	if(m_tm)
+	{
+		m_tm->run(cmdb);
+	}
+
+	if(m_bloom)
+	{
+		m_bloom->run(cmdb);
+	}
+
+	if(m_sslf)
+	{
+		m_sslf->run(cmdb);
+	}
+
+	if(m_ssao)
+	{
+		m_ssao->run(cmdb);
+	}
+
+	if(m_pps)
 	{
 		m_pps->run(cmdb);
 	}

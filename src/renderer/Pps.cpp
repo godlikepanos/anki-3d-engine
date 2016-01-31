@@ -51,25 +51,7 @@ Pps::~Pps()
 //==============================================================================
 Error Pps::initInternal(const ConfigSet& config)
 {
-	m_enabled = config.getNumber("pps.enabled");
-	if(!m_enabled)
-	{
-		return ErrorCode::NONE;
-	}
-
 	ANKI_ASSERT("Initializing PPS");
-
-	m_ssao.reset(getAllocator().newInstance<Ssao>(m_r));
-	ANKI_CHECK(m_ssao->init(config));
-
-	m_tm.reset(getAllocator().newInstance<Tm>(m_r));
-	ANKI_CHECK(m_tm->create(config));
-
-	m_bloom.reset(getAllocator().newInstance<Bloom>(m_r));
-	ANKI_CHECK(m_bloom->init(config));
-
-	m_sslf.reset(getAllocator().newInstance<Sslf>(m_r));
-	ANKI_CHECK(m_sslf->init(config));
 
 	// FBO
 	m_r->createRenderTarget(m_r->getWidth(),
@@ -97,9 +79,9 @@ Error Pps::initInternal(const ConfigSet& config)
 				"#define GAMMA_CORRECTION_ENABLED %u\n"
 				"#define FBO_WIDTH %u\n"
 				"#define FBO_HEIGHT %u\n",
-		m_ssao->getEnabled(),
-		m_bloom->getEnabled(),
-		m_sslf->getEnabled(),
+		m_r->getSsaoEnabled(),
+		m_r->getBloomEnabled(),
+		m_r->getSslfEnabled(),
 		U(config.getNumber("pps.sharpen")),
 		U(config.getNumber("pps.gammaCorrection")),
 		m_r->getWidth(),
@@ -125,26 +107,27 @@ Error Pps::initInternal(const ConfigSet& config)
 	ResourceGroupInitializer rcInit;
 	rcInit.m_textures[0].m_texture = m_r->getIs().getRt();
 
-	if(m_ssao->getEnabled())
+	if(m_r->getSsaoEnabled())
 	{
-		rcInit.m_textures[1].m_texture = m_ssao->getRt();
+		rcInit.m_textures[1].m_texture = m_r->getSsao().getRt();
 	}
 
-	if(m_bloom->getEnabled())
+	if(m_r->getBloomEnabled())
 	{
-		rcInit.m_textures[2].m_texture = m_bloom->getRt();
+		rcInit.m_textures[2].m_texture = m_r->getBloom().getRt();
 	}
 
 	rcInit.m_textures[3].m_texture = m_lut->getGrTexture();
 
-	if(m_sslf->getEnabled())
+	if(m_r->getSslfEnabled())
 	{
-		rcInit.m_textures[4].m_texture = m_sslf->getRt();
+		rcInit.m_textures[4].m_texture = m_r->getSslf().getRt();
 	}
 
 	rcInit.m_textures[5].m_texture = m_r->getMs().getDepthRt();
 
-	rcInit.m_storageBuffers[0].m_buffer = m_tm->getAverageLuminanceBuffer();
+	rcInit.m_storageBuffers[0].m_buffer =
+		m_r->getTm().getAverageLuminanceBuffer();
 	rcInit.m_storageBuffers[1].m_buffer = m_uniformsBuff;
 
 	m_rcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);
@@ -174,27 +157,6 @@ Error Pps::loadColorGradingTexture(CString filename)
 //==============================================================================
 void Pps::run(CommandBufferPtr& cmdb)
 {
-	ANKI_ASSERT(m_enabled);
-
-	// First SSAO because it depends on MS where HDR depends on IS
-	if(m_ssao->getEnabled())
-	{
-		m_ssao->run(cmdb);
-	}
-
-	m_r->getIs().generateMipmaps(cmdb); // XXX
-	m_tm->run(cmdb);
-
-	if(m_bloom->getEnabled())
-	{
-		m_bloom->run(cmdb);
-	}
-
-	if(m_sslf->getEnabled())
-	{
-		m_sslf->run(cmdb);
-	}
-
 	FramebufferPtr fb = m_fb;
 	U32 width = m_r->getWidth();
 	U32 height = m_r->getHeight();

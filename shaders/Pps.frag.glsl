@@ -168,11 +168,9 @@ void main()
 	out_color = colorGrading(out_color);
 
 #if 0
-#if SSAO_ENABLED
 	if(out_color.x != 0.0000001)
 	{
-		out_color = vec3(ssao);
+		out_color = vec3(bloom);
 	}
-#endif
 #endif
 }

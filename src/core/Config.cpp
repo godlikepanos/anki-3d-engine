@@ -15,7 +15,6 @@ Config::Config()
 	// Renderer
 	//
 
-	// Is
 	newOption("is.sm.enabled", true);
 	newOption("is.sm.poissonEnabled", true);
 	newOption("is.sm.bilinearEnabled", true);
@@ -31,39 +30,32 @@ Config::Config()
 	newOption("lf.maxSpritesPerFlare", 8);
 	newOption("lf.maxFlares", 16);
 
-	// Pps
-	newOption("pps.bloom.enabled", true);
-	newOption("pps.bloom.renderingQuality", 0.5);
-	newOption("pps.bloom.blurringDist", 1.0);
-	newOption("pps.bloom.samples", 5);
-	newOption("pps.bloom.blurringIterationsCount", 1);
-	newOption("pps.bloom.threshold", 1.0);
-	newOption("pps.bloom.scale", 2.0);
+	newOption("bloom.enabled", true);
+	newOption("bloom.renderingQuality", 0.5);
+	newOption("bloom.blurringDist", 1.0);
+	newOption("bloom.samples", 5);
+	newOption("bloom.blurringIterationsCount", 1);
+	newOption("bloom.threshold", 1.0);
+	newOption("bloom.scale", 2.0);
 
-	newOption("pps.ssao.enabled", true);
-	newOption("pps.ssao.renderingQuality", 0.3);
-	newOption("pps.ssao.blurringIterationsCount", 1);
+	newOption("ssao.enabled", true);
+	newOption("ssao.renderingQuality", 0.3);
+	newOption("ssao.blurringIterationsCount", 1);
 
-	newOption("pps.bl.enabled", true);
-	newOption("pps.bl.blurringIterationsCount", 1);
-	newOption("pps.bl.sideBlurFactor", 1.0);
-
-	newOption("pps.sslf.enabled", true);
+	newOption("sslf.enabled", true);
 
 	newOption("pps.enabled", true);
 	newOption("pps.sharpen", true);
 	newOption("pps.gammaCorrection", true);
 
-	// Reflections
 	newOption("ir.enabled", true);
 	newOption("ir.rendererSize", 128);
 	newOption("ir.cubemapTextureArraySize", 16);
-	newOption("ir.clusterSizeZ", 16);
 	newOption("sslr.enabled", true);
 	newOption("sslr.startRoughnes", 0.2);
 
-	// Dbg
 	newOption("dbg.enabled", false);
+	newOption("tm.enabled", true);
 
 	// Globals
 	newOption("width", 0);

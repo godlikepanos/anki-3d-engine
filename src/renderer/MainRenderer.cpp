@@ -100,7 +100,7 @@ Error MainRenderer::create(ThreadPool* threadpool,
 
 	// Init RC group
 	ResourceGroupInitializer rcinit;
-	if(m_r->getPps().getEnabled())
+	if(m_r->getPpsEnabled())
 	{
 		rcinit.m_textures[0].m_texture = m_r->getPps().getRt();
 	}
@@ -128,7 +128,7 @@ Error MainRenderer::render(SceneGraph& scene)
 	// Find where the m_r should draw
 	Bool rDrawToDefault;
 	if(m_renderingQuality == 1.0 && !m_r->getDbg().getEnabled()
-		&& m_r->getPps().getEnabled())
+		&& m_r->getPpsEnabled())
 	{
 		rDrawToDefault = true;
 	}

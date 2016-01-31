@@ -41,8 +41,21 @@ class Dbg : public RenderingPass, public Bitset<detail::DbgFlag>
 public:
 	using Flag = detail::DbgFlag;
 
-	/// @privatesection
-	/// @{
+	Bool getEnabled() const
+	{
+		return m_enabled;
+	}
+
+	void setEnabled(Bool e)
+	{
+		m_enabled = e;
+	}
+
+	Bool getDepthTestEnabled() const;
+	void setDepthTestEnabled(Bool enable);
+	void switchDepthTestEnabled();
+
+anki_internal:
 	Dbg(Renderer* r);
 
 	~Dbg();
@@ -51,12 +64,8 @@ public:
 
 	ANKI_USE_RESULT Error run(CommandBufferPtr& jobs);
 
-	Bool getDepthTestEnabled() const;
-	void setDepthTestEnabled(Bool enable);
-	void switchDepthTestEnabled();
-	/// @}
-
 private:
+	Bool m_enabled = false;
 	FramebufferPtr m_fb;
 	DebugDrawer* m_drawer = nullptr;
 	// Have it as ptr because the constructor calls opengl

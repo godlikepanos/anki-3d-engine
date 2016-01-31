@@ -25,17 +25,6 @@ class ConfigSet;
 /// Rendering pass
 class RenderingPass
 {
-public:
-	Bool getEnabled() const
-	{
-		return m_enabled;
-	}
-
-	void setEnabled(Bool e)
-	{
-		m_enabled = e;
-	}
-
 anki_internal:
 	RenderingPass(Renderer* r)
 		: m_r(r)
@@ -51,7 +40,6 @@ anki_internal:
 	StackAllocator<U8> getFrameAllocator() const;
 
 protected:
-	Bool8 m_enabled = false;
 	Renderer* m_r; ///< Know your father
 
 	GrManager& getGrManager();

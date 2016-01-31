@@ -186,11 +186,9 @@ Error Ir::init(const ConfigSet& config)
 	nestedRConfig.set("is.sm.poissonEnabled", false);
 	nestedRConfig.set("is.sm.resolution", 16);
 	nestedRConfig.set("lf.maxFlares", 8);
-	nestedRConfig.set("pps.enabled", true);
-	nestedRConfig.set("pps.bloom.enabled", true); // XXX ?
-	nestedRConfig.set("pps.ssao.enabled", false);
+	nestedRConfig.set("pps.enabled", false);
 	nestedRConfig.set("renderingQuality", 1.0);
-	nestedRConfig.set("clusterSizeZ", 4);
+	nestedRConfig.set("clusterSizeZ", 16);
 	nestedRConfig.set("width", m_fbSize);
 	nestedRConfig.set("height", m_fbSize);
 	nestedRConfig.set("lodDistance", 10.0);
@@ -205,7 +203,6 @@ Error Ir::init(const ConfigSet& config)
 		m_r->getFrameAllocator(),
 		nestedRConfig,
 		m_r->getGlobalTimestampPtr()));
-	m_nestedR.getPps().setFog(Vec3(1.0, 0.0, 1.0), 0.0);
 
 	// Init the textures
 	TextureInitializer texinit;

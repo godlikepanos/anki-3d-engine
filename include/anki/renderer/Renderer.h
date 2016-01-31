@@ -44,19 +44,9 @@ public:
 		return *m_ir;
 	}
 
-	const Ms& getMs() const
-	{
-		return *m_ms;
-	}
-
 	Ms& getMs()
 	{
 		return *m_ms;
-	}
-
-	const Is& getIs() const
-	{
-		return *m_is;
 	}
 
 	Is& getIs()
@@ -69,19 +59,49 @@ public:
 		return *m_fs;
 	}
 
-	const Pps& getPps() const
+	Tm& getTm()
 	{
-		return *m_pps;
+		return *m_tm;
+	}
+
+	Bool getSsaoEnabled() const
+	{
+		return m_ssao.isCreated();
+	}
+
+	Ssao& getSsao()
+	{
+		return *m_ssao;
+	}
+
+	Bool getBloomEnabled() const
+	{
+		return m_bloom.isCreated();
+	}
+
+	Bloom& getBloom()
+	{
+		return *m_bloom;
+	}
+
+	Bool getSslfEnabled() const
+	{
+		return m_sslf.isCreated();
+	}
+
+	Sslf& getSslf()
+	{
+		return *m_sslf;
+	}
+
+	Bool getPpsEnabled() const
+	{
+		return m_pps.isCreated();
 	}
 
 	Pps& getPps()
 	{
 		return *m_pps;
-	}
-
-	const Dbg& getDbg() const
-	{
-		return *m_dbg;
 	}
 
 	Dbg& getDbg()
@@ -309,11 +329,15 @@ private:
 	UniquePtr<Ir> m_ir;
 	UniquePtr<Ms> m_ms; ///< Material rendering stage
 	UniquePtr<Is> m_is; ///< Illumination rendering stage
-	UniquePtr<Tiler> m_tiler;
-	UniquePtr<Pps> m_pps; ///< Postprocessing rendering stage
 	UniquePtr<Fs> m_fs; ///< Forward shading.
-	UniquePtr<Upsample> m_upsample;
 	UniquePtr<Lf> m_lf; ///< Forward shading lens flares.
+	UniquePtr<Upsample> m_upsample;
+	UniquePtr<Tiler> m_tiler;
+	UniquePtr<Tm> m_tm;
+	UniquePtr<Ssao> m_ssao;
+	UniquePtr<Bloom> m_bloom;
+	UniquePtr<Sslf> m_sslf;
+	UniquePtr<Pps> m_pps; ///< Postprocessing rendering stage
 	UniquePtr<Dbg> m_dbg; ///< Debug stage.
 	/// @}
 

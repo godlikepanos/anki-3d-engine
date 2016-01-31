@@ -43,25 +43,18 @@ Error Bloom::initFb(FramebufferPtr& fb, TexturePtr& rt)
 //==============================================================================
 Error Bloom::initInternal(const ConfigSet& config)
 {
-	m_enabled = config.getNumber("pps.bloom.enabled");
-
-	if(!m_enabled)
-	{
-		return ErrorCode::NONE;
-	}
-
-	const F32 renderingQuality = config.getNumber("pps.bloom.renderingQuality");
+	const F32 renderingQuality = config.getNumber("bloom.renderingQuality");
 
 	m_width = renderingQuality * F32(m_r->getWidth());
 	alignRoundDown(16, m_width);
 	m_height = renderingQuality * F32(m_r->getHeight());
 	alignRoundDown(16, m_height);
 
-	m_threshold = config.getNumber("pps.bloom.threshold");
-	m_scale = config.getNumber("pps.bloom.scale");
-	m_blurringDist = config.getNumber("pps.bloom.blurringDist");
+	m_threshold = config.getNumber("bloom.threshold");
+	m_scale = config.getNumber("bloom.scale");
+	m_blurringDist = config.getNumber("bloom.blurringDist");
 	m_blurringIterationsCount =
-		config.getNumber("pps.bloom.blurringIterationsCount");
+		config.getNumber("bloom.blurringIterationsCount");
 
 	ANKI_CHECK(initFb(m_hblurFb, m_hblurRt));
 	ANKI_CHECK(initFb(m_vblurFb, m_vblurRt));
@@ -117,20 +110,28 @@ Error Bloom::initInternal(const ConfigSet& config)
 		m_vblurFrag->getGrShader(), colorState, m_vblurPpline);
 
 	// Set descriptors
-	ResourceGroupInitializer descInit;
-	descInit.m_textures[0].m_texture = m_r->getIs().getRt();
-	descInit.m_uniformBuffers[0].m_dynamic = true;
-	descInit.m_uniformBuffers[0].m_range = sizeof(Vec4);
-	descInit.m_storageBuffers[0].m_buffer =
-		m_r->getPps().getTm().getAverageLuminanceBuffer();
+	{
+		ResourceGroupInitializer descInit;
+		descInit.m_textures[0].m_texture = m_r->getIs().getRt();
+		descInit.m_uniformBuffers[0].m_dynamic = true;
 
-	m_firstDescrGroup = gl.newInstance<ResourceGroup>(descInit);
+		descInit.m_storageBuffers[0].m_buffer =
+			m_r->getTm().getAverageLuminanceBuffer();
 
-	descInit.m_textures[0].m_texture = m_vblurRt;
-	m_hDescrGroup = gl.newInstance<ResourceGroup>(descInit);
+		m_firstDescrGroup = gl.newInstance<ResourceGroup>(descInit);
+	}
 
-	descInit.m_textures[0].m_texture = m_hblurRt;
-	m_vDescrGroup = gl.newInstance<ResourceGroup>(descInit);
+	{
+		ResourceGroupInitializer descInit;
+		descInit.m_textures[0].m_texture = m_vblurRt;
+		m_hDescrGroup = gl.newInstance<ResourceGroup>(descInit);
+	}
+
+	{
+		ResourceGroupInitializer descInit;
+		descInit.m_textures[0].m_texture = m_hblurRt;
+		m_vDescrGroup = gl.newInstance<ResourceGroup>(descInit);
+	}
 
 	getGrManager().finish();
 	return ErrorCode::NONE;
@@ -151,8 +152,6 @@ Error Bloom::init(const ConfigSet& config)
 //==============================================================================
 void Bloom::run(CommandBufferPtr& cmdb)
 {
-	ANKI_ASSERT(m_enabled);
-
 	// For the passes it should be NEAREST_BASE
 	// vblurFai.setFiltering(Texture::TFrustumType::NEAREST_BASE);
 
@@ -162,9 +161,9 @@ void Bloom::run(CommandBufferPtr& cmdb)
 	cmdb->bindPipeline(m_tonePpline);
 
 	DynamicBufferInfo dyn;
-	Vec4* uniforms = static_cast<Vec4*>(
-		getGrManager().allocateFrameHostVisibleMemory(
-		sizeof(Vec4), BufferUsage::UNIFORM, dyn.m_uniformBuffers[0]));
+	Vec4* uniforms =
+		static_cast<Vec4*>(getGrManager().allocateFrameHostVisibleMemory(
+			sizeof(Vec4), BufferUsage::UNIFORM, dyn.m_uniformBuffers[0]));
 	*uniforms = Vec4(m_threshold, m_scale, 0.0, 0.0);
 
 	cmdb->bindResourceGroup(m_firstDescrGroup, 0, &dyn);

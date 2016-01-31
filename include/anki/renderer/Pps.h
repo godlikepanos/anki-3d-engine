@@ -18,36 +18,6 @@ namespace anki
 class Pps : public RenderingPass
 {
 public:
-	const Bloom& getBloom() const
-	{
-		return *m_bloom;
-	}
-
-	Bloom& getBloom()
-	{
-		return *m_bloom;
-	}
-
-	const Ssao& getSsao() const
-	{
-		return *m_ssao;
-	}
-
-	Ssao& getSsao()
-	{
-		return *m_ssao;
-	}
-
-	const Tm& getTm() const
-	{
-		return *m_tm;
-	}
-
-	Tm& getTm()
-	{
-		return *m_tm;
-	}
-
 	/// Load the color grading texture.
 	Error loadColorGradingTexture(CString filename);
 
@@ -78,11 +48,6 @@ anki_internal:
 	}
 
 private:
-	UniquePtr<Ssao> m_ssao;
-	UniquePtr<Tm> m_tm;
-	UniquePtr<Bloom> m_bloom;
-	UniquePtr<Sslf> m_sslf;
-
 	FramebufferPtr m_fb;
 	ShaderResourcePtr m_frag;
 	PipelinePtr m_ppline;

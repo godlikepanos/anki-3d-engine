@@ -55,7 +55,7 @@ Error Dbg::init(const ConfigSet& initializer)
 	fbInit.m_depthStencilAttachment.m_texture = m_r->getMs().getDepthRt();
 	fbInit.m_depthStencilAttachment.m_loadOperation =
 		AttachmentLoadOperation::LOAD;
-	if(m_r->getPps().getEnabled())
+	if(m_r->getPpsEnabled())
 	{
 		fbInit.m_colorAttachments[0].m_texture = m_r->getPps().getRt();
 	}

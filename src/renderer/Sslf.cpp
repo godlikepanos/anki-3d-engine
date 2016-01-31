@@ -27,12 +27,6 @@ Error Sslf::init(const ConfigSet& config)
 //==============================================================================
 Error Sslf::initInternal(const ConfigSet& config)
 {
-	m_enabled = config.getNumber("pps.sslf.enabled");
-	if(!m_enabled)
-	{
-		return ErrorCode::NONE;
-	}
-
 	const PixelFormat pixelFormat(
 		ComponentFormat::R8G8B8, TransformFormat::UNORM);
 
@@ -40,8 +34,8 @@ Error Sslf::initInternal(const ConfigSet& config)
 	StringAuto pps(getAllocator());
 
 	pps.sprintf("#define TEX_DIMENSIONS vec2(%u.0, %u.0)\n",
-		m_r->getPps().getBloom().getWidth(),
-		m_r->getPps().getBloom().getHeight());
+		m_r->getBloom().getWidth(),
+		m_r->getBloom().getHeight());
 
 	ANKI_CHECK(getResourceManager().loadResourceToCache(
 		m_frag, "shaders/Sslf.frag.glsl", pps.toCString(), "r_"));
@@ -57,8 +51,8 @@ Error Sslf::initInternal(const ConfigSet& config)
 		"engine_data/lens_dirt.ankitex", m_lensDirtTex));
 
 	// Create the render target and FB
-	m_r->createRenderTarget(m_r->getPps().getBloom().getWidth(),
-		m_r->getPps().getBloom().getHeight(),
+	m_r->createRenderTarget(m_r->getBloom().getWidth(),
+		m_r->getBloom().getHeight(),
 		pixelFormat,
 		1,
 		SamplingFilter::LINEAR,
@@ -74,7 +68,7 @@ Error Sslf::initInternal(const ConfigSet& config)
 
 	// Create the resource group
 	ResourceGroupInitializer rcInit;
-	rcInit.m_textures[0].m_texture = m_r->getPps().getBloom().getRt();
+	rcInit.m_textures[0].m_texture = m_r->getBloom().getRt();
 	rcInit.m_textures[1].m_texture = m_lensDirtTex->getGrTexture();
 
 	m_rcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);
@@ -86,14 +80,10 @@ Error Sslf::initInternal(const ConfigSet& config)
 //==============================================================================
 void Sslf::run(CommandBufferPtr& cmdb)
 {
-	ANKI_ASSERT(m_enabled);
-
 	// Draw to the SSLF FB
 	cmdb->bindFramebuffer(m_fb);
-	cmdb->setViewport(0,
-		0,
-		m_r->getPps().getBloom().getWidth(),
-		m_r->getPps().getBloom().getHeight());
+	cmdb->setViewport(
+		0, 0, m_r->getBloom().getWidth(), m_r->getBloom().getHeight());
 
 	cmdb->bindPipeline(m_ppline);
 	cmdb->bindResourceGroup(m_rcGroup, 0, nullptr);
