@@ -10,8 +10,6 @@
 
 #include "shaders/Clusterer.glsl"
 
-#define ACCURATE_RAYS 1
-
 // Representation of a reflection probe
 struct ReflectionProbe
 {
@@ -61,9 +59,8 @@ layout(TEX_BINDING(IMAGE_REFLECTIONS_SET,
 //==============================================================================
 // Compute the cubemap texture lookup vector given the reflection vector (r)
 // the radius squared of the probe (R2) and the frag pos in sphere space (f)
-vec3 computeCubemapVec(in vec3 r, in float R2, in vec3 f)
+vec3 computeCubemapVecAccurate(in vec3 r, in float R2, in vec3 f)
 {
-#if ACCURATE_RAYS
 	// Compute the collision of the r to the inner part of the sphere
 	// From now on we work on the sphere's space
 
@@ -84,9 +81,13 @@ vec3 computeCubemapVec(in vec3 r, in float R2, in vec3 f)
 	vec3 uv = u_invViewRotation * x;
 
 	return uv;
-#else
+}
+
+//==============================================================================
+// Cheap version of computeCubemapVecAccurate
+vec3 computeCubemapVecCheap(in vec3 r, in float R2, in vec3 f)
+{
 	return u_invViewRotation * r;
-#endif
 }
 
 //==============================================================================
@@ -117,7 +118,7 @@ void readIndirectInternal(in uint clusterIndex,
 		vec3 f = posVSpace - center;
 
 		// Cubemap UV in view space
-		vec3 uv = computeCubemapVec(r, R2, f);
+		vec3 uv = computeCubemapVecAccurate(r, R2, f);
 
 		// Read!
 		float cubemapIndex = probe.cubemapIndexPad3.x;
@@ -131,7 +132,7 @@ void readIndirectInternal(in uint clusterIndex,
 		// Same as: specIndirect = c * (1.0 - factor) + specIndirect * factor
 
 		// Do the same for diffuse
-		uv = computeCubemapVec(n, R2, f);
+		uv = computeCubemapVecCheap(n, R2, f);
 		vec3 id = texture(u_irradianceTex, vec4(uv, cubemapIndex)).rgb;
 		diffIndirect = mix(id, diffIndirect, factor);
 	}

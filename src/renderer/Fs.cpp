@@ -7,7 +7,6 @@
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/Ms.h>
 #include <anki/renderer/Is.h>
-#include <anki/renderer/Refl.h>
 #include <anki/scene/SceneGraph.h>
 #include <anki/scene/Camera.h>
 
@@ -22,11 +21,20 @@ Fs::~Fs()
 //==============================================================================
 Error Fs::init(const ConfigSet&)
 {
+	// Create RT
+	m_r->createRenderTarget(m_r->getWidth() / 2,
+		m_r->getHeight() / 2,
+		Is::RT_PIXEL_FORMAT,
+		1,
+		SamplingFilter::NEAREST,
+		1,
+		m_rt);
+
 	FramebufferInitializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
-	fbInit.m_colorAttachments[0].m_texture = m_r->getRefl().getRt();
+	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation =
-		AttachmentLoadOperation::LOAD;
+		AttachmentLoadOperation::CLEAR;
 	fbInit.m_depthStencilAttachment.m_texture = m_r->getMs().getDepthRt();
 	fbInit.m_depthStencilAttachment.m_loadOperation =
 		AttachmentLoadOperation::LOAD;

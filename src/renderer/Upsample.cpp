@@ -7,7 +7,7 @@
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/Ms.h>
 #include <anki/renderer/Is.h>
-#include <anki/renderer/Refl.h>
+#include <anki/renderer/Fs.h>
 #include <anki/scene/FrustumComponent.h>
 
 namespace anki
@@ -31,11 +31,11 @@ Error Upsample::init(const ConfigSet& config)
 	rcInit.m_textures[1].m_sampler = gr.newInstance<Sampler>(sinit);
 
 	sinit.m_minLod = 0.0;
-	rcInit.m_textures[2].m_texture = m_r->getRefl().getRt();
+	rcInit.m_textures[2].m_texture = m_r->getFs().getRt();
 	rcInit.m_textures[2].m_sampler = gr.newInstance<Sampler>(sinit);
 
 	sinit.m_minMagFilter = SamplingFilter::LINEAR;
-	rcInit.m_textures[3].m_texture = m_r->getRefl().getRt();
+	rcInit.m_textures[3].m_texture = m_r->getFs().getRt();
 	rcInit.m_textures[3].m_sampler = gr.newInstance<Sampler>(sinit);
 
 	rcInit.m_uniformBuffers[0].m_dynamic = true;

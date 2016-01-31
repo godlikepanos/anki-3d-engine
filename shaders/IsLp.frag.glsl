@@ -29,6 +29,15 @@ layout(location = 0) out vec3 out_color;
 
 const uint TILE_COUNT = TILE_COUNT_X * TILE_COUNT_Y;
 
+#if INDIRECT_ENABLED
+#define IMAGE_REFLECTIONS_SET 1
+#define IMAGE_REFLECTIONS_FIRST_SS_BINDING 0
+#define IMAGE_REFLECTIONS_TEX_BINDING 0
+#include "shaders/ImageReflections.glsl"
+#undef IMAGE_REFLECTIONS_SET
+#undef IMAGE_REFLECTIONS_FIRST_SS_BINDING
+#endif
+
 //==============================================================================
 // Return frag pos in view space
 vec3 getFragPosVSpace()
@@ -163,6 +172,24 @@ void main()
 		out_color +=
 			(diffC + specC) * (att * spot * max(subsurface, lambert * shadow));
 	}
+
+#if INDIRECT_ENABLED
+	vec3 eye = -viewDir;
+	vec3 r = reflect(eye, normal);
+	float reflLod = float(IR_MIPMAP_COUNT) * gbuffer.roughness;
+
+	vec3 specIndirect, diffIndirect;
+	readIndirect(fragPos, r, normal, reflLod, specIndirect, diffIndirect);
+
+	diffIndirect *= gbuffer.diffuse;
+
+	// Finalize the indirect specular
+	float ndotv = dot(gbuffer.normal, viewDir);
+	vec2 envBRDF = texture(u_integrationLut, vec2(gbuffer.roughness, ndotv)).xy;
+	specIndirect = specIndirect * (gbuffer.specular * envBRDF.x + envBRDF.y);
+
+	out_color += specIndirect + diffIndirect;
+#endif
 
 // out_color = diffCol;
 #if 0

@@ -56,11 +56,6 @@ anki_internal:
 		return m_cubemapArrMipCount;
 	}
 
-	const Clusterer& getClusterer() const
-	{
-		return m_clusterer;
-	}
-
 	ResourceGroupPtr getResourceGroup() const
 	{
 		return m_rcGroup;
@@ -83,7 +78,6 @@ private:
 	U16 m_fbSize = 0;
 	DArray<CacheEntry> m_cacheEntries;
 	Barrier m_barrier;
-	Clusterer m_clusterer;
 
 	// Irradiance
 	TexturePtr m_irradianceCubemapArr;

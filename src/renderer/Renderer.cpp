@@ -17,7 +17,6 @@
 #include <anki/renderer/Lf.h>
 #include <anki/renderer/Dbg.h>
 #include <anki/renderer/Tiler.h>
-#include <anki/renderer/Refl.h>
 #include <anki/renderer/Upsample.h>
 
 namespace anki
@@ -129,9 +128,6 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_is.reset(m_alloc.newInstance<Is>(this));
 	ANKI_CHECK(m_is->init(config));
 
-	m_refl.reset(m_alloc.newInstance<Refl>(this));
-	ANKI_CHECK(m_refl->init(config));
-
 	m_fs.reset(m_alloc.newInstance<Fs>(this));
 	ANKI_CHECK(m_fs->init(config));
 
@@ -193,7 +189,7 @@ Error Renderer::render(
 
 	ANKI_CHECK(m_is->run(cmdb));
 
-	m_refl->run(cmdb);
+	cmdb->generateMipmaps(m_ms->getDepthRt());
 
 	ANKI_CHECK(m_fs->run(cmdb));
 	m_lf->run(cmdb);

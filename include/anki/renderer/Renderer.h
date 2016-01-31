@@ -64,6 +64,11 @@ public:
 		return *m_is;
 	}
 
+	Fs& getFs()
+	{
+		return *m_fs;
+	}
+
 	const Pps& getPps() const
 	{
 		return *m_pps;
@@ -82,11 +87,6 @@ public:
 	Dbg& getDbg()
 	{
 		return *m_dbg;
-	}
-
-	Refl& getRefl()
-	{
-		return *m_refl;
 	}
 
 	U32 getWidth() const
@@ -312,7 +312,6 @@ private:
 	UniquePtr<Ir> m_ir;
 	UniquePtr<Ms> m_ms; ///< Material rendering stage
 	UniquePtr<Is> m_is; ///< Illumination rendering stage
-	UniquePtr<Refl> m_refl; ///< Reflections.
 	UniquePtr<Tiler> m_tiler;
 	UniquePtr<Pps> m_pps; ///< Postprocessing rendering stage
 	UniquePtr<Fs> m_fs; ///< Forward shading.

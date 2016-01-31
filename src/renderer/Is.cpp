@@ -7,6 +7,7 @@
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/Ms.h>
 #include <anki/renderer/Pps.h>
+#include <anki/renderer/Ir.h>
 #include <anki/scene/Camera.h>
 #include <anki/scene/Light.h>
 #include <anki/scene/Visibility.h>
@@ -252,7 +253,9 @@ Error Is::initInternal(const ConfigSet& config)
 				"#define MAX_SPOT_LIGHTS %u\n"
 				"#define MAX_LIGHT_INDICES %u\n"
 				"#define GROUND_LIGHT %u\n"
-				"#define POISSON %u\n",
+				"#define POISSON %u\n"
+				"#define INDIRECT_ENABLED %u\n"
+				"#define IR_MIPMAP_COUNT %u\n",
 		m_r->getTileCountXY().x(),
 		m_r->getTileCountXY().y(),
 		m_r->getClusterCount(),
@@ -262,7 +265,9 @@ Error Is::initInternal(const ConfigSet& config)
 		m_maxSpotLights,
 		m_maxLightIds,
 		m_groundLightEnabled,
-		m_sm.getPoissonEnabled());
+		m_sm.getPoissonEnabled(),
+		m_r->getIrEnabled(),
+		(m_r->getIrEnabled()) ? m_r->getIr().getCubemapArrayMipmapCount() : 0);
 
 	// point light
 	ANKI_CHECK(getResourceManager().loadResourceToCache(
@@ -776,6 +781,16 @@ void Is::setState(CommandBufferPtr& cmdb)
 	dyn.m_storageBuffers[4] = m_lightIdsToken;
 
 	cmdb->bindResourceGroup(m_rcGroup, 0, &dyn);
+
+	if(m_r->getIrEnabled())
+	{
+		DynamicBufferInfo dyn;
+		dyn.m_storageBuffers[0] = m_r->getIr().getProbesToken();
+		dyn.m_storageBuffers[1] = m_r->getIr().getProbeIndicesToken();
+		dyn.m_storageBuffers[2] = m_r->getIr().getClustersToken();
+
+		cmdb->bindResourceGroup(m_r->getIr().getResourceGroup(), 1, &dyn);
+	}
 }
 
 //==============================================================================

@@ -223,7 +223,7 @@ Error Ir::init(const ConfigSet& config)
 	m_envCubemapArr = getGrManager().newInstance<Texture>(texinit);
 
 	texinit.m_width = IRRADIANCE_SIZE;
-	texinit.m_height = IRRADIANCE_SIZE;	
+	texinit.m_height = IRRADIANCE_SIZE;
 	m_irradianceCubemapArr = getGrManager().newInstance<Texture>(texinit);
 
 	m_cubemapArrMipCount = computeMaxMipmapCount(m_fbSize, m_fbSize);
@@ -242,18 +242,6 @@ Error Ir::init(const ConfigSet& config)
 	sinit.m_maxLod = 1.0;
 	sinit.m_repeat = false;
 	m_integrationLutSampler = getGrManager().newInstance<Sampler>(sinit);
-
-	// Init the clusterer
-	U width = m_r->getWidth() / 2;
-	U height = m_r->getHeight() / 2;
-	ANKI_ASSERT(isAligned(Renderer::TILE_SIZE, width)
-		&& isAligned(Renderer::TILE_SIZE, height));
-
-	U tileCountX = width / Renderer::TILE_SIZE;
-	U tileCountY = height / Renderer::TILE_SIZE;
-	U clusterCountZ = config.getNumber("ir.clusterSizeZ");
-
-	m_clusterer.init(getAllocator(), tileCountX, tileCountY, clusterCountZ);
 
 	// Init the resource group
 	ResourceGroupInitializer rcInit;
@@ -317,11 +305,6 @@ Error Ir::run(CommandBufferPtr cmdb)
 	}
 
 	//
-	// Prepare clusterer
-	//
-	m_clusterer.prepare(m_r->getThreadPool(), frc);
-
-	//
 	// Perform some initialization
 	//
 	IrRunContext ctx;
@@ -332,7 +315,7 @@ Error Ir::run(CommandBufferPtr cmdb)
 
 	// Allocate temp CPU mem
 	ctx.m_clusterData.create(
-		getFrameAllocator(), m_clusterer.getClusterCount());
+		getFrameAllocator(), m_r->getClusterer().getClusterCount());
 
 	//
 	// Render and populate probes GPU mem
@@ -352,7 +335,7 @@ Error Ir::run(CommandBufferPtr cmdb)
 
 	Vec4* nearClusterDivisor = reinterpret_cast<Vec4*>(invViewRotation + 1);
 	nearClusterDivisor->x() = frc.getFrustum().getNear();
-	nearClusterDivisor->y() = m_clusterer.getShaderMagicValue();
+	nearClusterDivisor->y() = m_r->getClusterer().getShaderMagicValue();
 	nearClusterDivisor->z() = 0.0;
 	nearClusterDivisor->w() = 0.0;
 
@@ -414,7 +397,7 @@ void Ir::binProbes(U32 threadId, PtrSize threadsCount, IrRunContext& ctx)
 	// Init clusterer test result for this thread
 	if(start < end)
 	{
-		m_clusterer.initTestResults(
+		m_r->getClusterer().initTestResults(
 			getFrameAllocator(), task.m_clustererTestResult);
 	}
 
@@ -438,12 +421,13 @@ void Ir::binProbes(U32 threadId, PtrSize threadsCount, IrRunContext& ctx)
 	if(who == 0)
 	{
 		void* mem = getGrManager().allocateFrameHostVisibleMemory(
-			m_clusterer.getClusterCount() * sizeof(IrShaderCluster),
+			m_r->getClusterer().getClusterCount() * sizeof(IrShaderCluster),
 			BufferUsage::STORAGE,
 			m_clustersToken);
 
-		ctx.m_clusters = SArray<IrShaderCluster>(
-			static_cast<IrShaderCluster*>(mem), m_clusterer.getClusterCount());
+		ctx.m_clusters =
+			SArray<IrShaderCluster>(static_cast<IrShaderCluster*>(mem),
+				m_r->getClusterer().getClusterCount());
 	}
 
 	// Use the same trick to allocate the indices
@@ -474,8 +458,11 @@ void Ir::binProbes(U32 threadId, PtrSize threadsCount, IrRunContext& ctx)
 	m_barrier.wait();
 	ANKI_TRACE_START_EVENT(RENDER_IR);
 
-	ThreadPool::Task::choseStartEnd(
-		threadId, threadsCount, m_clusterer.getClusterCount(), start, end);
+	ThreadPool::Task::choseStartEnd(threadId,
+		threadsCount,
+		m_r->getClusterer().getClusterCount(),
+		start,
+		end);
 
 	for(auto i = start; i < end; i++)
 	{
@@ -525,7 +512,7 @@ void Ir::binProbe(U probeIdx, IrRunContext& ctx, IrTaskContext& task) const
 		task.m_node->getComponent<ReflectionProbeComponent>();
 
 	// Perform the expensive tests
-	m_clusterer.bin(sp.getSpatialCollisionShape(),
+	m_r->getClusterer().bin(sp.getSpatialCollisionShape(),
 		sp.getAabb(),
 		task.m_clustererTestResult);
 
@@ -538,8 +525,8 @@ void Ir::binProbe(U probeIdx, IrRunContext& ctx, IrTaskContext& task) const
 		U y = (*it)[1];
 		U z = (*it)[2];
 
-		U i = m_clusterer.getClusterCountX()
-				* (z * m_clusterer.getClusterCountY() + y)
+		U i = m_r->getClusterer().getClusterCountX()
+				* (z * m_r->getClusterer().getClusterCountY() + y)
 			+ x;
 
 		auto& cluster = ctx.m_clusterData[i];

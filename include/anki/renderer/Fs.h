@@ -27,8 +27,14 @@ anki_internal:
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 	ANKI_USE_RESULT Error run(CommandBufferPtr& cmdb);
 
+	TexturePtr getRt() const
+	{
+		return m_rt;
+	}
+
 private:
 	FramebufferPtr m_fb;
+	TexturePtr m_rt;
 
 	ResourceGroupPtr m_globalResources;
 };

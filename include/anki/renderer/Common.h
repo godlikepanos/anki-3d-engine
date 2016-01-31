@@ -25,7 +25,6 @@ class Pps;
 class Dbg;
 class Tiler;
 class Ir;
-class Refl;
 class Upsample;
 
 /// Computes the 'a' and 'b' numbers for linearizeDepthOptimal
