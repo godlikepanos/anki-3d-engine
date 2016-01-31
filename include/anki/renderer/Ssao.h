@@ -36,11 +36,6 @@ anki_internal:
 		return m_vblurRt;
 	}
 
-	BufferPtr& getUniformBuffer()
-	{
-		return m_uniformsBuff;
-	}
-
 private:
 	U32 m_width, m_height; ///< Blur passes size
 	U8 m_blurringIterationsCount;
@@ -57,8 +52,6 @@ private:
 	PipelinePtr m_hblurPpline;
 	PipelinePtr m_vblurPpline;
 
-	Timestamp m_commonUboUpdateTimestamp = 0;
-	BufferPtr m_uniformsBuff;
 	TexturePtr m_noiseTex;
 
 	ResourceGroupPtr m_rcFirst;

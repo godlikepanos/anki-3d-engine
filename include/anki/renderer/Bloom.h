@@ -81,11 +81,6 @@ private:
 
 	TexturePtr m_hblurRt; ///< pass0Fai with the horizontal blur FAI
 	TexturePtr m_vblurRt; ///< The final FAI
-	/// When a parameter changed by the setters
-	Timestamp m_parameterUpdateTimestamp = 0;
-	/// When the commonUbo got updated
-	Timestamp m_commonUboUpdateTimestamp = 0;
-	BufferPtr m_commonBuff;
 
 	ResourceGroupPtr m_firstDescrGroup;
 	ResourceGroupPtr m_hDescrGroup;
@@ -93,8 +88,6 @@ private:
 
 	ANKI_USE_RESULT Error initFb(FramebufferPtr& fb, TexturePtr& rt);
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
-
-	void updateDefaultBlock(CommandBufferPtr& jobs);
 };
 
 /// @}

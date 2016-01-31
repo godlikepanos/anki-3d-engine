@@ -674,7 +674,7 @@ void Ir::findCacheEntry(SceneNode& node, U& entry, Bool& render)
 	if(canditate)
 	{
 		// Update timestamp
-		canditate->m_timestamp = getGlobalTimestamp();
+		canditate->m_timestamp = m_r->getFrameCount();
 		it = canditate;
 		render = false;
 	}
@@ -682,7 +682,7 @@ void Ir::findCacheEntry(SceneNode& node, U& entry, Bool& render)
 	{
 		ANKI_ASSERT(empty->m_node == nullptr);
 		empty->m_node = &node;
-		empty->m_timestamp = getGlobalTimestamp();
+		empty->m_timestamp = m_r->getFrameCount();
 
 		it = empty;
 		render = true;
@@ -690,7 +690,7 @@ void Ir::findCacheEntry(SceneNode& node, U& entry, Bool& render)
 	else if(kick)
 	{
 		kick->m_node = &node;
-		kick->m_timestamp = getGlobalTimestamp();
+		kick->m_timestamp = m_r->getFrameCount();
 
 		it = kick;
 		render = true;

@@ -345,8 +345,6 @@ Error Is::lightPass(CommandBufferPtr& cmdb)
 	m_frc = &m_r->getActiveFrustumComponent();
 	VisibilityTestResults& vi = m_frc->getVisibilityTestResults();
 
-	m_currentFrame = getGlobalTimestamp() % MAX_FRAMES_IN_FLIGHT;
-
 	U clusterCount = m_r->getClusterCount();
 
 	//
@@ -810,7 +808,7 @@ void Is::updateCommonBlock(CommandBufferPtr& cmdb, const FrustumComponent& fr)
 			m_commonVarsToken));
 
 	// Start writing
-	blk->m_projectionParams = m_r->getProjectionParameters();
+	blk->m_projectionParams = fr.getProjectionParameters();
 	blk->m_sceneAmbientColor = m_ambientColor;
 	blk->m_viewMat = fr.getViewMatrix().getTransposed();
 	blk->m_nearFarClustererMagicPad1 = Vec4(fr.getFrustum().getNear(),

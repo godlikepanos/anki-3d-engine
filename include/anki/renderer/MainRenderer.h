@@ -6,8 +6,8 @@
 #pragma once
 
 #include <anki/renderer/Common.h>
-#include <anki/core/Timestamp.h>
 #include <anki/resource/Forward.h>
+#include <anki/core/Timestamp.h>
 
 namespace anki
 {
@@ -35,7 +35,7 @@ public:
 		AllocAlignedCallback allocCb,
 		void* allocCbUserData,
 		const ConfigSet& config,
-		const Timestamp* globalTimestamp);
+		Timestamp* globTimestamp);
 
 	ANKI_USE_RESULT Error render(SceneGraph& scene);
 

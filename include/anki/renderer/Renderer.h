@@ -111,7 +111,7 @@ public:
 		HeapAllocator<U8> alloc,
 		StackAllocator<U8> frameAlloc,
 		const ConfigSet& config,
-		const Timestamp* globalTimestamp);
+		Timestamp* globTimestamp);
 
 	/// Set the output of the renderer before calling #render.
 	void setOutputFramebuffer(FramebufferPtr outputFb, U32 width, U32 height)
@@ -138,9 +138,9 @@ anki_internal:
 		}
 	}
 
-	U32 getFramesCount() const
+	U64 getFrameCount() const
 	{
-		return m_framesNum;
+		return m_frameCount;
 	}
 
 	const FrustumComponent& getActiveFrustumComponent() const
@@ -163,16 +163,6 @@ anki_internal:
 	RenderableDrawer& getSceneDrawer()
 	{
 		return m_sceneDrawer;
-	}
-
-	Timestamp getProjectionParametersUpdateTimestamp() const
-	{
-		return m_projectionParamsUpdateTimestamp;
-	}
-
-	const Vec4& getProjectionParameters() const
-	{
-		return m_projectionParams;
 	}
 
 	U getSamples() const
@@ -287,25 +277,32 @@ anki_internal:
 		return *m_threadpool;
 	}
 
-	Timestamp getGlobalTimestamp() const
+	const DynamicBufferToken& getCommonUniformsDynamicBufferToken() const
 	{
-		return *m_globalTimestamp;
+		return m_commonUniformsToken;
 	}
 
-	const Timestamp* getGlobalTimestampPtr()
+	Timestamp getGlobalTimestamp() const
 	{
-		return m_globalTimestamp;
+		return *m_globTimestamp;
+	}
+
+	Timestamp* getGlobalTimestampPtr()
+	{
+		return m_globTimestamp;
 	}
 
 private:
 	ThreadPool* m_threadpool;
 	ResourceManager* m_resources;
 	GrManager* m_gr;
+	Timestamp* m_globTimestamp;
 	HeapAllocator<U8> m_alloc;
 	StackAllocator<U8> m_frameAlloc;
-	const Timestamp* m_globalTimestamp = nullptr;
 
 	Clusterer m_clusterer;
+
+	DynamicBufferToken m_commonUniformsToken;
 
 	/// @name Rendering stages
 	/// @{
@@ -331,21 +328,10 @@ private:
 
 	ShaderResourcePtr m_drawQuadVert;
 
-	/// @name Optimization vars
-	/// Used in other stages
-	/// @{
-
-	/// A vector that contains useful numbers for calculating the view space
-	/// position from the depth
-	Vec4 m_projectionParams = Vec4(0.0);
-
-	Timestamp m_projectionParamsUpdateTimestamp = 0;
-	/// @}
-
 	FrustumComponent* m_frc = nullptr; ///< Cache current frustum component.
 	RenderableDrawer m_sceneDrawer;
 
-	U m_framesNum; ///< Frame number
+	U64 m_frameCount; ///< Frame number
 
 	FramebufferPtr m_outputFb;
 	UVec2 m_outputFbSize;

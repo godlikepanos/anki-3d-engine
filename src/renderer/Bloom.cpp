@@ -73,13 +73,6 @@ Error Bloom::initInternal(const ConfigSet& config)
 	colorState.m_attachmentCount = 1;
 	colorState.m_attachments[0].m_format = RT_PIXEL_FORMAT;
 
-	m_commonBuff = gl.newInstance<Buffer>(
-		sizeof(Vec4), BufferUsageBit::UNIFORM, BufferAccessBit::CLIENT_WRITE);
-
-	CommandBufferPtr cmdb = gl.newInstance<CommandBuffer>();
-	updateDefaultBlock(cmdb);
-	cmdb->flush();
-
 	StringAuto pps(getAllocator());
 	pps.sprintf("#define ANKI_RENDERER_WIDTH %u\n"
 				"#define ANKI_RENDERER_HEIGHT %u\n",
@@ -126,7 +119,7 @@ Error Bloom::initInternal(const ConfigSet& config)
 	// Set descriptors
 	ResourceGroupInitializer descInit;
 	descInit.m_textures[0].m_texture = m_r->getIs().getRt();
-	descInit.m_uniformBuffers[0].m_buffer = m_commonBuff;
+	descInit.m_uniformBuffers[0].m_dynamic = true;
 	descInit.m_uniformBuffers[0].m_range = sizeof(Vec4);
 	descInit.m_storageBuffers[0].m_buffer =
 		m_r->getPps().getTm().getAverageLuminanceBuffer();
@@ -138,10 +131,6 @@ Error Bloom::initInternal(const ConfigSet& config)
 
 	descInit.m_textures[0].m_texture = m_hblurRt;
 	m_vDescrGroup = gl.newInstance<ResourceGroup>(descInit);
-
-	// Set timestamps
-	m_parameterUpdateTimestamp = getGlobalTimestamp();
-	m_commonUboUpdateTimestamp = getGlobalTimestamp();
 
 	getGrManager().finish();
 	return ErrorCode::NONE;
@@ -172,13 +161,13 @@ void Bloom::run(CommandBufferPtr& cmdb)
 	cmdb->setViewport(0, 0, m_width, m_height);
 	cmdb->bindPipeline(m_tonePpline);
 
-	if(m_parameterUpdateTimestamp > m_commonUboUpdateTimestamp)
-	{
-		updateDefaultBlock(cmdb);
-		m_commonUboUpdateTimestamp = getGlobalTimestamp();
-	}
+	DynamicBufferInfo dyn;
+	Vec4* uniforms = static_cast<Vec4*>(
+		getGrManager().allocateFrameHostVisibleMemory(
+		sizeof(Vec4), BufferUsage::UNIFORM, dyn.m_uniformBuffers[0]));
+	*uniforms = Vec4(m_threshold, m_scale, 0.0, 0.0);
 
-	cmdb->bindResourceGroup(m_firstDescrGroup, 0, nullptr);
+	cmdb->bindResourceGroup(m_firstDescrGroup, 0, &dyn);
 
 	m_r->drawQuad(cmdb);
 
@@ -197,16 +186,6 @@ void Bloom::run(CommandBufferPtr& cmdb)
 		cmdb->bindPipeline(m_vblurPpline);
 		m_r->drawQuad(cmdb);
 	}
-}
-
-//==============================================================================
-void Bloom::updateDefaultBlock(CommandBufferPtr& cmdb)
-{
-	DynamicBufferToken token;
-	void* uniforms = getGrManager().allocateFrameHostVisibleMemory(
-		sizeof(Vec4), BufferUsage::TRANSFER, token);
-	cmdb->writeBuffer(m_commonBuff, 0, token);
-	*static_cast<Vec4*>(uniforms) = Vec4(m_threshold, m_scale, 0.0, 0.0);
 }
 
 } // end namespace anki

@@ -8,7 +8,6 @@
 #include <anki/renderer/Common.h>
 #include <anki/util/StdTypes.h>
 #include <anki/Gr.h>
-#include <anki/core/Timestamp.h>
 #include <anki/resource/ResourceManager.h>
 #include <anki/resource/ShaderResource.h>
 
@@ -46,8 +45,6 @@ anki_internal:
 	~RenderingPass()
 	{
 	}
-
-	Timestamp getGlobalTimestamp() const;
 
 	HeapAllocator<U8> getAllocator() const;
 

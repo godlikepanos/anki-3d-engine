@@ -87,7 +87,7 @@ Error Tiler::initInternal()
 void Tiler::run(CommandBufferPtr& cmd)
 {
 	// Issue the min/max job
-	U pboIdx = getGlobalTimestamp() % m_outBuffers.getSize();
+	U pboIdx = m_r->getFrameCount() % m_outBuffers.getSize();
 
 	cmd->bindPipeline(m_ppline);
 	cmd->bindResourceGroup(m_rcGroups[pboIdx], 0, nullptr);
@@ -102,7 +102,7 @@ void Tiler::prepareForVisibilityTests(const SceneNode& node)
 	// Get the min max
 	U size = m_r->getTileCount() * sizeof(Vec2);
 
-	U buffIdx = max<U>(getGlobalTimestamp() % m_outBuffers.getSize(), 2u) - 2;
+	U buffIdx = max<U>(m_r->getFrameCount() % m_outBuffers.getSize(), 2u) - 2;
 	BufferPtr& buff = m_outBuffers[buffIdx];
 	void* mappedMem = buff->map(0, size, BufferAccessBit::CLIENT_MAP_READ);
 

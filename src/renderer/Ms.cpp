@@ -37,7 +37,7 @@ Error Ms::createRt(U32 samples)
 		DEPTH_RT_PIXEL_FORMAT,
 		samples,
 		SamplingFilter::NEAREST,
-		2,
+		3,
 		m_depthRt);
 
 	m_r->createRenderTarget(m_r->getWidth(),
@@ -61,7 +61,7 @@ Error Ms::createRt(U32 samples)
 		RT_PIXEL_FORMATS[2],
 		samples,
 		SamplingFilter::NEAREST,
-		2,
+		3,
 		m_rt2);
 
 	AttachmentLoadOperation loadop = AttachmentLoadOperation::DONT_CARE;

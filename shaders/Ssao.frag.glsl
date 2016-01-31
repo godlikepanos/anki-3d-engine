@@ -7,6 +7,7 @@
 #include "shaders/Common.glsl"
 #include "shaders/Pack.glsl"
 #include "shaders/LinearDepth.glsl"
+#include "shaders/RendererCommonUniforms.glsl"
 
 const vec3 KERNEL[KERNEL_SIZE] = KERNEL_ARRAY; // This will be appended in C++
 
@@ -23,17 +24,9 @@ layout(location = 0) in vec2 in_texCoords;
 
 layout(location = 0) out float out_color;
 
-struct Uniforms
-{
-	vec4 projectionParams;
-
-	/// The projection matrix
-	mat4 projectionMatrix;
-};
-
 layout(UBO_BINDING(0, 0), std140, row_major) uniform _blk
 {
-	Uniforms u_uniforms;
+	RendererCommonUniforms u_uniforms;
 };
 
 layout(TEX_BINDING(0, 0)) uniform sampler2D u_mMsDepthRt;

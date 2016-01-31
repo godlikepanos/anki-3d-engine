@@ -11,12 +11,6 @@ namespace anki
 {
 
 //==============================================================================
-Timestamp RenderingPass::getGlobalTimestamp() const
-{
-	return m_r->getGlobalTimestamp();
-}
-
-//==============================================================================
 GrManager& RenderingPass::getGrManager()
 {
 	return m_r->getGrManager();

@@ -55,14 +55,6 @@ static void genNoise(Vec3* ANKI_RESTRICT arr, Vec3* ANKI_RESTRICT arrEnd)
 }
 
 //==============================================================================
-class ShaderCommonUniforms
-{
-public:
-	Vec4 m_projectionParams;
-	Mat4 m_projectionMatrix;
-};
-
-//==============================================================================
 // Ssao                                                                        =
 //==============================================================================
 
@@ -171,10 +163,6 @@ Error Ssao::initInternal(const ConfigSet& config)
 	//
 	// Shaders
 	//
-	m_uniformsBuff = gr.newInstance<Buffer>(sizeof(ShaderCommonUniforms),
-		BufferUsageBit::UNIFORM,
-		BufferAccessBit::CLIENT_WRITE);
-
 	ColorStateInfo colorState;
 	colorState.m_attachmentCount = 1;
 	colorState.m_attachments[0].m_format = RT_PIXEL_FORMAT;
@@ -246,7 +234,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 
 	rcinit.m_textures[2].m_texture = m_noiseTex;
 
-	rcinit.m_uniformBuffers[0].m_buffer = m_uniformsBuff;
+	rcinit.m_uniformBuffers[0].m_dynamic = true;
 	m_rcFirst = gr.newInstance<ResourceGroup>(rcinit);
 
 	rcinit = ResourceGroupInitializer();
@@ -284,28 +272,10 @@ void Ssao::run(CommandBufferPtr& cmdb)
 	cmdb->bindFramebuffer(m_vblurFb);
 	cmdb->setViewport(0, 0, m_width, m_height);
 	cmdb->bindPipeline(m_ssaoPpline);
-	cmdb->bindResourceGroup(m_rcFirst, 0, nullptr);
 
-	// Write common block
-	const FrustumComponent& camFr = m_r->getActiveFrustumComponent();
-
-	if(m_commonUboUpdateTimestamp
-			< m_r->getProjectionParametersUpdateTimestamp()
-		|| m_commonUboUpdateTimestamp < camFr.getTimestamp()
-		|| m_commonUboUpdateTimestamp == 0)
-	{
-		DynamicBufferToken token;
-		ShaderCommonUniforms* blk = static_cast<ShaderCommonUniforms*>(
-			getGrManager().allocateFrameHostVisibleMemory(
-				sizeof(ShaderCommonUniforms), BufferUsage::TRANSFER, token));
-
-		blk->m_projectionParams = m_r->getProjectionParameters();
-		blk->m_projectionMatrix = camFr.getProjectionMatrix();
-
-		cmdb->writeBuffer(m_uniformsBuff, 0, token);
-
-		m_commonUboUpdateTimestamp = getGlobalTimestamp();
-	}
+	DynamicBufferInfo dyn;
+	dyn.m_uniformBuffers[0] = m_r->getCommonUniformsDynamicBufferToken();
+	cmdb->bindResourceGroup(m_rcFirst, 0, &dyn);
 
 	// Draw
 	m_r->drawQuad(cmdb);

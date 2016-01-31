@@ -41,7 +41,7 @@ Error MainRenderer::create(ThreadPool* threadpool,
 	AllocAlignedCallback allocCb,
 	void* allocCbUserData,
 	const ConfigSet& config,
-	const Timestamp* globalTimestamp)
+	Timestamp* globTimestamp)
 {
 	ANKI_LOGI("Initializing main renderer");
 
@@ -73,7 +73,7 @@ Error MainRenderer::create(ThreadPool* threadpool,
 		m_alloc,
 		m_frameAlloc,
 		config2,
-		globalTimestamp));
+		globTimestamp));
 
 	// Set the default preprocessor string
 	m_materialShaderSource.sprintf(m_alloc,

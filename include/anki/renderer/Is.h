@@ -99,8 +99,6 @@ anki_internal:
 	}
 
 private:
-	U32 m_currentFrame = 0; ///< Cache value.
-
 	/// The IS render target
 	TexturePtr m_rt;
 

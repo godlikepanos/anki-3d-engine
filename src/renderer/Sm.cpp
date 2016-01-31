@@ -194,7 +194,7 @@ Bool Sm::skip(SceneNode& light, ShadowmapBase& sm)
 	Bool shouldUpdate = lastUpdate >= sm.m_timestamp;
 	if(shouldUpdate)
 	{
-		sm.m_timestamp = getGlobalTimestamp();
+		sm.m_timestamp = m_r->getGlobalTimestamp();
 		LightComponent& lcomp = light.getComponent<LightComponent>();
 		lcomp.setShadowMapIndex(sm.m_layerId);
 	}

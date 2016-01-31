@@ -23,6 +23,23 @@ namespace anki
 {
 
 //==============================================================================
+// Misc                                                                        =
+//==============================================================================
+
+/// See shader for documentation
+class RendererCommonUniforms
+{
+public:
+	Vec4 m_projectionParams;
+	Vec4 m_nearFarLinearizeDepth;
+	Mat4 m_projectionMatrix;
+};
+
+//==============================================================================
+// Renderer                                                                    =
+//==============================================================================
+
+//==============================================================================
 Renderer::Renderer()
 	: m_sceneDrawer(this)
 {
@@ -40,9 +57,9 @@ Error Renderer::init(ThreadPool* threadpool,
 	HeapAllocator<U8> alloc,
 	StackAllocator<U8> frameAlloc,
 	const ConfigSet& config,
-	const Timestamp* globalTimestamp)
+	Timestamp* globTimestamp)
 {
-	m_globalTimestamp = globalTimestamp;
+	m_globTimestamp = globTimestamp;
 	m_threadpool = threadpool;
 	m_resources = resources;
 	m_gr = gl;
@@ -69,7 +86,7 @@ Error Renderer::initInternal(const ConfigSet& config)
 	ANKI_LOGI("Initializing offscreen renderer. Size %ux%u", m_width, m_height);
 
 	m_lodDistance = config.getNumber("lodDistance");
-	m_framesNum = 0;
+	m_frameCount = 0;
 	m_samples = config.getNumber("samples");
 	m_tileCountXY.x() = m_width / TILE_SIZE;
 	m_tileCountXY.y() = m_height / TILE_SIZE;
@@ -164,18 +181,29 @@ Error Renderer::render(
 	(void)err;
 	ANKI_ASSERT(m_frc && "Not enough frustum components");
 
-	// Calc a few vars
-	//
-	if(m_frc->getProjectionParameters() != m_projectionParams)
-	{
-		m_projectionParams = m_frc->getProjectionParameters();
-		m_projectionParamsUpdateTimestamp = getGlobalTimestamp();
-	}
-
+	// Misc
 	ANKI_ASSERT(m_frc->getFrustum().getType() == Frustum::Type::PERSPECTIVE);
 	m_clusterer.prepare(getThreadPool(), *m_frc);
 
-	// First part of reflections
+	// Write the common uniforms
+	RendererCommonUniforms* commonUniforms =
+		static_cast<RendererCommonUniforms*>(
+			getGrManager().allocateFrameHostVisibleMemory(
+				sizeof(*commonUniforms),
+				BufferUsage::UNIFORM,
+				m_commonUniformsToken));
+
+	commonUniforms->m_projectionParams = m_frc->getProjectionParameters();
+	commonUniforms->m_nearFarLinearizeDepth.x() = m_frc->getFrustum().getNear();
+	commonUniforms->m_nearFarLinearizeDepth.y() = m_frc->getFrustum().getFar();
+	computeLinearizeDepthOptimal(m_frc->getFrustum().getNear(),
+		m_frc->getFrustum().getFar(),
+		commonUniforms->m_nearFarLinearizeDepth.z(),
+		commonUniforms->m_nearFarLinearizeDepth.w());
+
+	commonUniforms->m_projectionMatrix = m_frc->getProjectionMatrix();
+
+	// Run stages
 	if(m_ir)
 	{
 		ANKI_CHECK(m_ir->run(cmdb));
@@ -190,6 +218,7 @@ Error Renderer::render(
 	ANKI_CHECK(m_is->run(cmdb));
 
 	cmdb->generateMipmaps(m_ms->getDepthRt());
+	cmdb->generateMipmaps(m_ms->getRt2());
 
 	ANKI_CHECK(m_fs->run(cmdb));
 	m_lf->run(cmdb);
@@ -206,7 +235,7 @@ Error Renderer::render(
 		ANKI_CHECK(m_dbg->run(cmdb));
 	}
 
-	++m_framesNum;
+	++m_frameCount;
 
 	return ErrorCode::NONE;
 }
