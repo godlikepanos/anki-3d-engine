@@ -170,7 +170,7 @@ void main()
 #if 0
 	if(out_color.x != 0.0000001)
 	{
-		out_color = vec3(bloom);
+		out_color = vec3(ssao);
 	}
 #endif
 }

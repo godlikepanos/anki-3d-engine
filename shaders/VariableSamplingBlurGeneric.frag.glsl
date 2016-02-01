@@ -29,7 +29,7 @@
 #endif
 
 // Input RT with different binding for less GL API calls
-layout(binding = 0) uniform mediump sampler2D uTex;
+layout(TEX_BINDING(0, 0)) uniform sampler2D uTex;
 
 layout(location = 0) in vec2 in_texCoord;
 
@@ -55,15 +55,12 @@ layout(location = 0) in vec2 in_texCoord;
 #define TEX_FETCH r
 #endif
 
-const float OFFSET = 1.0 / (2.0 * IMG_DIMENSION);
-
 // Calc the kernel. Use offsets of 3 to take advantage of bilinear filtering
 #define BLURRING(val, sign_)                                                   \
 	((float(val) * (float(BLURRING_DIST) + 1.0) / float(IMG_DIMENSION))        \
-			* float(sign_)                                                     \
-		+ OFFSET)
+		* float(sign_))
 
-#if defined(VPASS)
+#if defined(HPASS)
 #define BLURRING_OFFSET_X(val, sign_) BLURRING(val, sign_)
 #define BLURRING_OFFSET_Y(val, sign_) 0.0
 #else

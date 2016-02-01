@@ -111,7 +111,7 @@ void main(void)
 		// range check & accumulate:
 		const float ADVANCE = DARKNESS_MULTIPLIER / sampleCountf;
 
-#if 1
+#if 0
 		float rangeCheck =
 			abs(origin.z - sampleDepth) * (1.0 / (RADIUS * 10.0));
 		rangeCheck = 1.0 - rangeCheck;

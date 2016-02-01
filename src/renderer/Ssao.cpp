@@ -18,7 +18,7 @@ namespace anki
 // Misc                                                                        =
 //==============================================================================
 
-const U NOISE_TEX_SIZE = 8;
+const U NOISE_TEX_SIZE = 4;
 const U KERNEL_SIZE = 16;
 
 //==============================================================================
@@ -98,6 +98,8 @@ Error Ssao::initInternal(const ConfigSet& config)
 	m_height = quality * (F32)m_r->getHeight();
 	alignRoundUp(16, m_height);
 
+	ANKI_LOGI("Initializing SSAO. Size %ux%u", m_width, m_height);
+
 	//
 	// create FBOs
 	//
@@ -156,13 +158,26 @@ Error Ssao::initInternal(const ConfigSet& config)
 	//
 	// Shaders
 	//
-	ColorStateInfo colorState;
-	colorState.m_attachmentCount = 1;
-	colorState.m_attachments[0].m_format = RT_PIXEL_FORMAT;
+	PipelineInitializer ppinit;
+	ppinit.m_color.m_attachmentCount = 1;
+	ppinit.m_color.m_attachments[0].m_format = RT_PIXEL_FORMAT;
+	ppinit.m_depthStencil.m_depthWriteEnabled = false;
+	ppinit.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
 
 	StringAuto pps(getAllocator());
 
+	// vert shader
+	pps.sprintf("#define UV_OFFSET vec2(%f, %f)\n",
+		(1.0 / m_width) / 2.0,
+		(1.0 / m_height) / 2.0);
+
+	ANKI_CHECK(getResourceManager().loadResourceToCache(
+		m_quadVert, "shaders/Quad.vert.glsl", pps.toCString(), "r_"));
+
+	ppinit.m_shaders[ShaderType::VERTEX] = m_quadVert->getGrShader();
+
 	// main pass prog
+	pps.destroy();
 	pps.sprintf("#define NOISE_MAP_SIZE %u\n"
 				"#define WIDTH %u\n"
 				"#define HEIGHT %u\n"
@@ -177,38 +192,43 @@ Error Ssao::initInternal(const ConfigSet& config)
 	ANKI_CHECK(getResourceManager().loadResourceToCache(
 		m_ssaoFrag, "shaders/Ssao.frag.glsl", pps.toCString(), "r_"));
 
-	m_r->createDrawQuadPipeline(
-		m_ssaoFrag->getGrShader(), colorState, m_ssaoPpline);
+	ppinit.m_shaders[ShaderType::FRAGMENT] = m_ssaoFrag->getGrShader();
 
-	// blurring progs
-	const char* SHADER_FILENAME =
-		"shaders/VariableSamplingBlurGeneric.frag.glsl";
+	m_ssaoPpline = getGrManager().newInstance<Pipeline>(ppinit);
+
+	// h blur
+	const char* SHADER_FILENAME = "shaders/GaussianBlurGeneric.frag.glsl";
 
 	pps.destroy();
 	pps.sprintf("#define HPASS\n"
 				"#define COL_R\n"
-				"#define IMG_DIMENSION %u\n"
-				"#define SAMPLES 11\n",
-		m_height);
+				"#define TEXTURE_SIZE vec2(%f, %f)\n"
+				"#define KERNEL_SIZE 19\n",
+		F32(m_width),
+		F32(m_height));
 
 	ANKI_CHECK(getResourceManager().loadResourceToCache(
 		m_hblurFrag, SHADER_FILENAME, pps.toCString(), "r_"));
 
-	m_r->createDrawQuadPipeline(
-		m_hblurFrag->getGrShader(), colorState, m_hblurPpline);
+	ppinit.m_shaders[ShaderType::FRAGMENT] = m_hblurFrag->getGrShader();
 
+	m_hblurPpline = getGrManager().newInstance<Pipeline>(ppinit);
+
+	// v blur
 	pps.destroy();
 	pps.sprintf("#define VPASS\n"
 				"#define COL_R\n"
-				"#define IMG_DIMENSION %u\n"
-				"#define SAMPLES 9\n",
-		m_width);
+				"#define TEXTURE_SIZE vec2(%f, %f)\n"
+				"#define KERNEL_SIZE 15\n",
+		F32(m_width),
+		F32(m_height));
 
 	ANKI_CHECK(getResourceManager().loadResourceToCache(
 		m_vblurFrag, SHADER_FILENAME, pps.toCString(), "r_"));
 
-	m_r->createDrawQuadPipeline(
-		m_vblurFrag->getGrShader(), colorState, m_vblurPpline);
+	ppinit.m_shaders[ShaderType::FRAGMENT] = m_vblurFrag->getGrShader();
+
+	m_vblurPpline = getGrManager().newInstance<Pipeline>(ppinit);
 
 	//
 	// Resource groups

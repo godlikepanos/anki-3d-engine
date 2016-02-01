@@ -45,6 +45,7 @@ private:
 	FramebufferPtr m_vblurFb;
 	FramebufferPtr m_hblurFb;
 
+	ShaderResourcePtr m_quadVert;
 	ShaderResourcePtr m_ssaoFrag;
 	ShaderResourcePtr m_hblurFrag;
 	ShaderResourcePtr m_vblurFrag;

@@ -510,9 +510,9 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("bloom.threshold", 2.0);
 	config.set("bloom.scale", 2.0);
 	config.set("bloom.samples", 17);
-	config.set("ssao.blurringIterationsCount", 2);
+	config.set("ssao.blurringIterationsCount", 1);
 	config.set("ssao.enabled", true);
-	config.set("ssao.renderingQuality", 0.35);
+	config.set("ssao.renderingQuality", 0.25);
 	config.set("sslf.enabled", true);
 	config.set("pps.sharpen", true);
 	config.set("renderingQuality", 1.0);
