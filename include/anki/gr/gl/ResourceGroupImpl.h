@@ -54,6 +54,9 @@ private:
 	Array<InternalBufferBinding, MAX_STORAGE_BUFFER_BINDINGS> m_ssbos;
 	U8 m_ssbosCount = 0;
 
+	Array<InternalBufferBinding, MAX_ATOMIC_BUFFER_BINDINGS> m_atomics;
+	U8 m_atomicsCount = 0;
+
 	Array<GLuint, MAX_VERTEX_ATTRIBUTES> m_vertBuffNames;
 	Array<GLintptr, MAX_VERTEX_ATTRIBUTES> m_vertBuffOffsets;
 	Bool8 m_hasDynamicVertexBuff = false;

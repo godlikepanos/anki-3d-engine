@@ -280,7 +280,8 @@ enum class BufferUsageBit : U8
 	STORAGE = 1 << 1,
 	INDEX = 1 << 2,
 	VERTEX = 1 << 3,
-	INDIRECT = 1 << 4
+	INDIRECT = 1 << 4,
+	ATOMIC = 1 << 5
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferUsageBit, inline)
 
@@ -292,6 +293,7 @@ enum class BufferUsage : U8
 	INDEX,
 	VERTEX,
 	INDIRECT,
+	ATOMIC,
 	TRANSFER, ///< For texture upload and buffer write.
 
 	COUNT,

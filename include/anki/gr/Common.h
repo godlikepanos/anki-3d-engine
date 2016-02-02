@@ -39,6 +39,8 @@ ANKI_GR_CLASS(Framebuffer)
 ANKI_GR_CLASS(OcclusionQuery)
 ANKI_GR_CLASS(ResourceGroup)
 
+#undef ANKI_GR_CLASS
+
 /// @addtogroup graphics
 /// @{
 
@@ -69,6 +71,7 @@ const U MAX_TEXTURE_LAYERS = 32;
 const U MAX_TEXTURE_BINDINGS = 8;
 const U MAX_UNIFORM_BUFFER_BINDINGS = 1;
 const U MAX_STORAGE_BUFFER_BINDINGS = 8;
+const U MAX_ATOMIC_BUFFER_BINDINGS = 1;
 const U MAX_FRAMES_IN_FLIGHT = 3;
 const U MAX_RESOURCE_GROUPS = 2;
 

@@ -103,6 +103,8 @@ void ResourceGroupImpl::create(const ResourceGroupInitializer& init)
 		init.m_uniformBuffers, m_ubos, m_ubosCount, resourcesCount, dynCount);
 	initBuffers(
 		init.m_storageBuffers, m_ssbos, m_ssbosCount, resourcesCount, dynCount);
+	initBuffers(
+		init.m_atomicBuffers, m_atomics, m_atomicsCount, resourcesCount, dynCount);
 
 	// Init vert buffers
 	m_vertBindingsCount = 0;
@@ -194,6 +196,15 @@ void ResourceGroupImpl::initResourceReferences(
 	for(U i = 0; i < init.m_storageBuffers.getSize(); ++i)
 	{
 		const BufferBinding& binding = init.m_storageBuffers[i];
+		if(binding.m_buffer.isCreated())
+		{
+			m_refs[count++] = binding.m_buffer;
+		}
+	}
+
+	for(U i = 0; i < init.m_atomicBuffers.getSize(); ++i)
+	{
+		const BufferBinding& binding = init.m_atomicBuffers[i];
 		if(binding.m_buffer.isCreated())
 		{
 			m_refs[count++] = binding.m_buffer;
@@ -305,6 +316,26 @@ void ResourceGroupImpl::bind(
 			// Static
 			glBindBufferRange(GL_SHADER_STORAGE_BUFFER,
 				MAX_STORAGE_BUFFER_BINDINGS * slot + i,
+				binding.m_name,
+				binding.m_offset,
+				binding.m_range);
+		}
+	}
+
+	// Atomic
+	for(U i = 0; i < m_atomicsCount; ++i)
+	{
+		const auto& binding = m_atomics[i];
+		if(binding.m_name == MAX_U32)
+		{
+			// Dynamic
+			ANKI_ASSERT(0);
+		}
+		else if(binding.m_name != 0)
+		{
+			// Static
+			glBindBufferRange(GL_ATOMIC_COUNTER_BUFFER,
+				MAX_ATOMIC_BUFFER_BINDINGS * slot + i,
 				binding.m_name,
 				binding.m_offset,
 				binding.m_range);
