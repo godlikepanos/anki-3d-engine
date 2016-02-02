@@ -179,6 +179,15 @@ public:
 		BufferPtr buff, PtrSize offset, const DynamicBufferToken& token);
 	/// @}
 
+	/// @name Sync
+	/// @{
+	
+	void setPipelineBarrier(PipelineStageBit src, PipelineStageBit dst);
+
+	void setBufferMemoryBarrier(
+		BufferPtr buff, ResourceAccessBit src, ResourceAccessBit dst);
+	/// @}
+
 	/// @name Other
 	/// @{
 

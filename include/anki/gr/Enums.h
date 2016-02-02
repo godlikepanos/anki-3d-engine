@@ -310,6 +310,33 @@ enum class BufferAccessBit : U8
 	CLIENT_WRITE = 1 << 2,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferAccessBit, inline)
+
+/// GPU pipeline stages.
+enum class PipelineStageBit : U8
+{
+	NONE = 0,
+    VERTEX = 1 << 0,
+    FRAGMENT = 1 << 1,
+    COMPUTE = 1 << 2,
+    TRANSFER = 1 << 3,
+	CLIENT = 1 << 4
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(PipelineStageBit, inline)
+
+enum class ResourceAccessBit : U16
+{
+	NONE = 0,
+	INDIRECT_OR_INDEX_OR_VERTEX_OR_UNIFORM_READ = 1 << 0,
+	ATTACHMENT_READ = 1 << 1,
+	ATTACHMENT_WRITE = 1 << 2,
+	SHADER_READ = 1 << 3,
+	SHADER_WRITE = 1 << 4,
+	CLIENT_READ = 1 << 5,
+	CLIENT_WRITE = 1 << 6,
+	HOST_READ = 1 << 7,
+	HOST_WRITE = 1 << 8
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ResourceAccessBit, inline)
 /// @}
 
 } // end namespace anki
