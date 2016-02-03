@@ -181,7 +181,7 @@ public:
 
 	/// @name Sync
 	/// @{
-	
+
 	void setPipelineBarrier(PipelineStageBit src, PipelineStageBit dst);
 
 	void setBufferMemoryBarrier(

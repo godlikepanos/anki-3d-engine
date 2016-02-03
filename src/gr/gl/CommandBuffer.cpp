@@ -578,4 +578,70 @@ void CommandBuffer::copyTextureToTexture(TexturePtr src,
 		src, srcSlice, srcLevel, dest, destSlice, destLevel);
 }
 
+//==============================================================================
+class SetBufferMemBarrierCommand final : public GlCommand
+{
+public:
+	GLenum m_barrier;
+
+	SetBufferMemBarrierCommand(GLenum barrier)
+		: m_barrier(barrier)
+	{
+	}
+
+	Error operator()(GlState&)
+	{
+		glMemoryBarrier(m_barrier);
+		return ErrorCode::NONE;
+	}
+};
+
+void CommandBuffer::setBufferMemoryBarrier(
+	BufferPtr buff, ResourceAccessBit src, ResourceAccessBit dst)
+{
+	const ResourceAccessBit c = dst;
+	GLenum d = GL_NONE;
+
+	if((c & ResourceAccessBit::INDIRECT_OR_INDEX_OR_VERTEX_READ)
+		!= ResourceAccessBit::NONE)
+	{
+		d |= GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT | GL_ELEMENT_ARRAY_BARRIER_BIT
+			| GL_COMMAND_BARRIER_BIT;
+	}
+
+	if((c & ResourceAccessBit::UNIFORM_READ)
+		!= ResourceAccessBit::NONE)
+	{
+		d |= GL_UNIFORM_BARRIER_BIT;
+	}
+
+	if((c & ResourceAccessBit::ATTACHMENT_READ) != ResourceAccessBit::NONE
+		|| (c & ResourceAccessBit::ATTACHMENT_WRITE) != ResourceAccessBit::NONE)
+	{
+		d |= GL_FRAMEBUFFER_BARRIER_BIT;
+	}
+
+	if((c & ResourceAccessBit::SHADER_READ) != ResourceAccessBit::NONE
+		|| (c & ResourceAccessBit::SHADER_WRITE) != ResourceAccessBit::NONE)
+	{
+		d |= GL_ATOMIC_COUNTER_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT
+			| GL_TEXTURE_FETCH_BARRIER_BIT;
+	}
+
+	if((c & ResourceAccessBit::CLIENT_READ) != ResourceAccessBit::NONE
+		|| (c & ResourceAccessBit::CLIENT_WRITE) != ResourceAccessBit::NONE)
+	{
+		d |= GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT;
+	}
+
+	if((c & ResourceAccessBit::TRANSFER_READ) != ResourceAccessBit::NONE
+		|| (c & ResourceAccessBit::TRANSFER_WRITE) != ResourceAccessBit::NONE)
+	{
+		d |= GL_BUFFER_UPDATE_BARRIER_BIT | GL_TEXTURE_UPDATE_BARRIER_BIT;
+	}
+
+	ANKI_ASSERT(d != GL_NONE);
+	m_impl->pushBackNewCommand<SetBufferMemBarrierCommand>(d);
+}
+
 } // end namespace anki

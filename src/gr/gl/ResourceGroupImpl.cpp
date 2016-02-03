@@ -103,8 +103,11 @@ void ResourceGroupImpl::create(const ResourceGroupInitializer& init)
 		init.m_uniformBuffers, m_ubos, m_ubosCount, resourcesCount, dynCount);
 	initBuffers(
 		init.m_storageBuffers, m_ssbos, m_ssbosCount, resourcesCount, dynCount);
-	initBuffers(
-		init.m_atomicBuffers, m_atomics, m_atomicsCount, resourcesCount, dynCount);
+	initBuffers(init.m_atomicBuffers,
+		m_atomics,
+		m_atomicsCount,
+		resourcesCount,
+		dynCount);
 
 	// Init vert buffers
 	m_vertBindingsCount = 0;

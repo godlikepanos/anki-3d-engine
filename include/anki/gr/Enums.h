@@ -315,10 +315,10 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferAccessBit, inline)
 enum class PipelineStageBit : U8
 {
 	NONE = 0,
-    VERTEX = 1 << 0,
-    FRAGMENT = 1 << 1,
-    COMPUTE = 1 << 2,
-    TRANSFER = 1 << 3,
+	VERTEX = 1 << 0,
+	FRAGMENT = 1 << 1,
+	COMPUTE = 1 << 2,
+	TRANSFER = 1 << 3,
 	CLIENT = 1 << 4
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(PipelineStageBit, inline)
@@ -326,15 +326,36 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(PipelineStageBit, inline)
 enum class ResourceAccessBit : U16
 {
 	NONE = 0,
-	INDIRECT_OR_INDEX_OR_VERTEX_OR_UNIFORM_READ = 1 << 0,
-	ATTACHMENT_READ = 1 << 1,
-	ATTACHMENT_WRITE = 1 << 2,
-	SHADER_READ = 1 << 3,
-	SHADER_WRITE = 1 << 4,
-	CLIENT_READ = 1 << 5,
-	CLIENT_WRITE = 1 << 6,
-	HOST_READ = 1 << 7,
-	HOST_WRITE = 1 << 8
+
+	/// Read from any of the bellow.
+	INDIRECT_OR_INDEX_OR_VERTEX_READ = 1 << 0,
+
+	/// Read from a uniform buffer.
+	UNIFORM_READ = 1 << 1,
+
+	/// Read an attachment (eg blending).
+	ATTACHMENT_READ = 1 << 2,
+
+	/// Write to an attachment.
+	ATTACHMENT_WRITE = 1 << 3,
+
+	/// Any resource is read from any shader.
+	SHADER_READ = 1 << 4,
+
+	/// Any resource is written from any shader.
+	SHADER_WRITE = 1 << 5,
+
+	/// Client read.
+	CLIENT_READ = 1 << 6,
+
+	/// Client write.
+	CLIENT_WRITE = 1 << 7,
+
+	/// Read as part of texture upload or buffer write commands.
+	TRANSFER_READ = 1 << 8,
+
+	/// Written as part of texture upload or buffer write commands.
+	TRANSFER_WRITE = 1 << 9
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ResourceAccessBit, inline)
 /// @}

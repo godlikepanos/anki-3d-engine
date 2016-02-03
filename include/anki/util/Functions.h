@@ -59,11 +59,7 @@ inline T clamp(T v, T minv, T maxv)
 template<typename Int>
 inline Bool isPowerOfTwo(Int x)
 {
-	while(((x % 2) == 0) && x > 1)
-	{
-		x /= 2;
-	}
-	return (x == 1);
+	return !(x == 0) && !(x & (x - 1));
 }
 
 /// Get the next power of two number. For example if x is 130 this will return

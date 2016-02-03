@@ -65,6 +65,9 @@ void Tm::run(CommandBufferPtr& cmdb)
 	cmdb->bindResourceGroup(m_rcGroup, 0, nullptr);
 
 	cmdb->dispatchCompute(1, 1, 1);
+	cmdb->setBufferMemoryBarrier(m_luminanceBuff,
+		ResourceAccessBit::SHADER_WRITE,
+		ResourceAccessBit::SHADER_READ | ResourceAccessBit::UNIFORM_READ);
 }
 
 } // end namespace anki
