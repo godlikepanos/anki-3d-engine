@@ -609,8 +609,7 @@ void CommandBuffer::setBufferMemoryBarrier(
 			| GL_COMMAND_BARRIER_BIT;
 	}
 
-	if((c & ResourceAccessBit::UNIFORM_READ)
-		!= ResourceAccessBit::NONE)
+	if((c & ResourceAccessBit::UNIFORM_READ) != ResourceAccessBit::NONE)
 	{
 		d |= GL_UNIFORM_BARRIER_BIT;
 	}

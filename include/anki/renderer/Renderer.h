@@ -333,6 +333,7 @@ private:
 	UniquePtr<Lf> m_lf; ///< Forward shading lens flares.
 	UniquePtr<Upsample> m_upsample;
 	UniquePtr<Tiler> m_tiler;
+	UniquePtr<DownscaleBlur> m_downscale;
 	UniquePtr<Tm> m_tm;
 	UniquePtr<Ssao> m_ssao;
 	UniquePtr<Bloom> m_bloom;

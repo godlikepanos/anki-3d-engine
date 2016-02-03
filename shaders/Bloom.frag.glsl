@@ -7,7 +7,7 @@
 #include "shaders/Tonemapping.glsl"
 
 // Vars
-layout(binding = 0) uniform lowp sampler2D u_tex; ///< Its the IS RT
+layout(TEX_BINDING(0, 0)) uniform lowp sampler2D u_tex; ///< Its the IS RT
 
 layout(UBO_BINDING(0, 0), std140) uniform u0_
 {

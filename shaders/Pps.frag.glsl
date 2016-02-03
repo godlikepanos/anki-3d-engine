@@ -168,9 +168,8 @@ void main()
 	out_color = colorGrading(out_color);
 
 #if 0
-	if(out_color.x != 0.0000001)
 	{
-		out_color = vec3(ssao);
+		out_color = textureLod(u_isRt, in_uv, 3.0).rgb;
 	}
 #endif
 }

@@ -22,6 +22,7 @@
 #include <anki/renderer/Dbg.h>
 #include <anki/renderer/Tiler.h>
 #include <anki/renderer/Upsample.h>
+#include <anki/renderer/DownscaleBlur.h>
 
 namespace anki
 {
@@ -164,6 +165,12 @@ Error Renderer::initInternal(const ConfigSet& config)
 		ANKI_CHECK(m_tm->create(config));
 	}
 
+	if(config.getNumber("tm.enabled") && config.getNumber("pps.enabled"))
+	{
+		m_downscale.reset(getAllocator().newInstance<DownscaleBlur>(this));
+		ANKI_CHECK(m_downscale->init(config));
+	}
+
 	if(config.getNumber("ssao.enabled") && config.getNumber("pps.enabled"))
 	{
 		m_ssao.reset(m_alloc.newInstance<Ssao>(this));
@@ -258,6 +265,11 @@ Error Renderer::render(
 	m_upsample->run(cmdb);
 
 	cmdb->generateMipmaps(m_is->getRt());
+
+	if(m_downscale)
+	{
+		m_downscale->run(cmdb);
+	}
 
 	if(m_tm)
 	{
