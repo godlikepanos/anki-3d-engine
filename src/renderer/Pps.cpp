@@ -96,7 +96,7 @@ Error Pps::initInternal(const ConfigSet& config)
 	m_r->createDrawQuadPipeline(m_frag->getGrShader(), colorState, m_ppline);
 
 	// LUT
-	ANKI_CHECK(loadColorGradingTexture("engine_data/default_lut.ankitex"));
+	ANKI_CHECK(loadColorGradingTexture("engine_data/DefaultLut.ankitex"));
 
 	// Uniforms
 	m_uniformsBuff = getGrManager().newInstance<Buffer>(sizeof(Uniforms),

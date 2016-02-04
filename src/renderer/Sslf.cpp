@@ -48,7 +48,7 @@ Error Sslf::initInternal(const ConfigSet& config)
 
 	// Textures
 	ANKI_CHECK(getResourceManager().loadResource(
-		"engine_data/lens_dirt.ankitex", m_lensDirtTex));
+		"engine_data/LensDirt.ankitex", m_lensDirtTex));
 
 	// Create the render target and FB
 	m_r->createRenderTarget(m_r->getBloom().getWidth(),
