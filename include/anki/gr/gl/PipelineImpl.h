@@ -23,10 +23,7 @@ public:
 	{
 	}
 
-	~PipelineImpl()
-	{
-		destroyDeferred(glDeleteProgramPipelines);
-	}
+	~PipelineImpl();
 
 	ANKI_USE_RESULT Error create(const PipelineInitializer& init);
 

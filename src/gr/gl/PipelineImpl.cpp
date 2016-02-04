@@ -16,29 +16,8 @@ namespace anki
 {
 
 //==============================================================================
-static GLenum computeGlShaderType(const ShaderType idx, GLbitfield* bit)
-{
-	static const Array<GLenum, 6> gltype = {{GL_VERTEX_SHADER,
-		GL_TESS_CONTROL_SHADER,
-		GL_TESS_EVALUATION_SHADER,
-		GL_GEOMETRY_SHADER,
-		GL_FRAGMENT_SHADER,
-		GL_COMPUTE_SHADER}};
-
-	static const Array<GLuint, 6> glbit = {{GL_VERTEX_SHADER_BIT,
-		GL_TESS_CONTROL_SHADER_BIT,
-		GL_TESS_EVALUATION_SHADER_BIT,
-		GL_GEOMETRY_SHADER_BIT,
-		GL_FRAGMENT_SHADER_BIT,
-		GL_COMPUTE_SHADER_BIT}};
-
-	if(bit)
-	{
-		*bit = glbit[enumToType(idx)];
-	}
-
-	return gltype[enumToType(idx)];
-}
+// Misc                                                                        =
+//==============================================================================
 
 //==============================================================================
 static GLenum convertBlendMethod(BlendMethod in)
@@ -112,6 +91,24 @@ static GLenum convertBlendMethod(BlendMethod in)
 }
 
 //==============================================================================
+static void deletePrograms(GLsizei n, const GLuint* names)
+{
+	ANKI_ASSERT(n == 1);
+	ANKI_ASSERT(names);
+	glDeleteProgram(*names);
+}
+
+//==============================================================================
+// PipelineImpl                                                                =
+//==============================================================================
+
+//==============================================================================
+PipelineImpl::~PipelineImpl()
+{
+	destroyDeferred(deletePrograms);
+}
+
+//==============================================================================
 Error PipelineImpl::create(const PipelineInitializer& init)
 {
 	m_in = init;
@@ -175,10 +172,8 @@ Error PipelineImpl::createGlPipeline()
 	}
 
 	// Create and attach programs
-	glGenProgramPipelines(1, &m_glName);
+	m_glName = glCreateProgram();
 	ANKI_ASSERT(m_glName != 0);
-
-	glBindProgramPipeline(m_glName);
 
 	for(U i = 0; i < m_in.m_shaders.getSize(); i++)
 	{
@@ -186,10 +181,7 @@ Error PipelineImpl::createGlPipeline()
 
 		if(shader.isCreated())
 		{
-			GLbitfield bit;
-			computeGlShaderType(static_cast<ShaderType>(i), &bit);
-			glUseProgramStages(
-				m_glName, bit, shader->getImplementation().getGlName());
+			glAttachShader(m_glName, shader->getImplementation().getGlName());
 
 			if(i == U(ShaderType::TESSELLATION_CONTROL)
 				|| i == U(ShaderType::TESSELLATION_EVALUATION))
@@ -200,9 +192,9 @@ Error PipelineImpl::createGlPipeline()
 	}
 
 	// Validate and check error
-	glValidateProgramPipeline(m_glName);
+	glLinkProgram(m_glName);
 	GLint status = 0;
-	glGetProgramPipelineiv(m_glName, GL_VALIDATE_STATUS, &status);
+	glGetProgramiv(m_glName, GL_LINK_STATUS, &status);
 
 	if(!status)
 	{
@@ -210,18 +202,16 @@ Error PipelineImpl::createGlPipeline()
 		GLint charsWritten = 0;
 		DArrayAuto<char> infoLogTxt(getAllocator());
 
-		glGetProgramPipelineiv(m_glName, GL_INFO_LOG_LENGTH, &infoLen);
+		glGetProgramiv(m_glName, GL_INFO_LOG_LENGTH, &infoLen);
 
 		infoLogTxt.create(infoLen + 1);
 
-		glGetProgramPipelineInfoLog(
+		glGetProgramInfoLog(
 			m_glName, infoLen, &charsWritten, &infoLogTxt[0]);
 
 		ANKI_LOGE("Ppline error log follows:\n%s", &infoLogTxt[0]);
 		err = ErrorCode::USER_DATA;
 	}
-
-	glBindProgramPipeline(0);
 
 	return err;
 }
@@ -229,7 +219,7 @@ Error PipelineImpl::createGlPipeline()
 //==============================================================================
 void PipelineImpl::bind(GlState& state)
 {
-	glBindProgramPipeline(m_glName);
+	glUseProgram(m_glName);
 
 	if(m_compute)
 	{

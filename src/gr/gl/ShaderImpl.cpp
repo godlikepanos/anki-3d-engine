@@ -18,19 +18,26 @@ namespace anki
 {
 
 //==============================================================================
-/// Fake glDeletePrograms because some jenius created conflicting interface
-static void deleteProgram(GLsizei n, const GLuint* names)
+// Misc                                                                        =
+//==============================================================================
+
+//==============================================================================
+/// Fake glDeleteShaders because some jenius created a conflicting interface
+static void deleteShaders(GLsizei n, const GLuint* names)
 {
 	ANKI_ASSERT(n == 1);
 	ANKI_ASSERT(names);
-	ANKI_ASSERT(*names > 0);
-	glDeleteProgram(*names);
+	glDeleteShader(*names);
 }
+
+//==============================================================================
+// ShaderImpl                                                                  =
+//==============================================================================
 
 //==============================================================================
 ShaderImpl::~ShaderImpl()
 {
-	destroyDeferred(deleteProgram);
+	destroyDeferred(deleteShaders);
 }
 
 //==============================================================================
@@ -84,11 +91,9 @@ Error ShaderImpl::create(ShaderType type, const CString& source)
 	//
 	const char* sourceStrs[1] = {nullptr};
 	sourceStrs[0] = &fullSrc[0];
-	m_glName = glCreateShaderProgramv(m_glType, 1, sourceStrs);
-	if(m_glName == 0)
-	{
-		return ErrorCode::FUNCTION_FAILED;
-	}
+	m_glName = glCreateShader(m_glType);
+	glShaderSource(m_glName, 1, sourceStrs, NULL);
+	glCompileShader(m_glName);
 
 #if ANKI_DUMP_SHADERS
 	{
@@ -131,7 +136,7 @@ Error ShaderImpl::create(ShaderType type, const CString& source)
 #endif
 
 	GLint status = GL_FALSE;
-	glGetProgramiv(m_glName, GL_LINK_STATUS, &status);
+	glGetShaderiv(m_glName, GL_COMPILE_STATUS, &status);
 	if(status == GL_FALSE)
 	{
 		handleError(fullSrc);
@@ -155,11 +160,11 @@ void ShaderImpl::handleError(String& src)
 	static const char* padding = "======================================="
 								 "=======================================";
 
-	glGetProgramiv(m_glName, GL_INFO_LOG_LENGTH, &compilerLogLen);
+	glGetShaderiv(m_glName, GL_INFO_LOG_LENGTH, &compilerLogLen);
 
 	compilerLog.create(alloc, ' ', compilerLogLen + 1);
 
-	glGetProgramInfoLog(
+	glGetShaderInfoLog(
 		m_glName, compilerLogLen, &charsWritten, &compilerLog[0]);
 
 	lines.splitString(alloc, src.toCString(), '\n');

@@ -275,7 +275,7 @@ void RenderingThread::threadLoop()
 
 		if(err)
 		{
-			ANKI_LOGE("Error in rendering thread. Aborting\n");
+			ANKI_LOGE("Error in rendering thread. Aborting");
 			abort();
 		}
 	}

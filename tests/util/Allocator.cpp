@@ -7,6 +7,7 @@
 #include "tests/util/Foo.h"
 #include "anki/util/Allocator.h"
 #include <string>
+#include <iostream>
 
 ANKI_TEST(Util, StackAllocator)
 {
