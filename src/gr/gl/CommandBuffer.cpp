@@ -86,7 +86,43 @@ public:
 
 void CommandBuffer::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 {
+	m_impl->m_stateSet.m_viewport = true;
 	m_impl->pushBackNewCommand<ViewportCommand>(minx, miny, maxx, maxy);
+}
+
+//==============================================================================
+class SetPolygonOffsetCommand final : public GlCommand
+{
+public:
+	F32 m_offset;
+	F32 m_units;
+
+	SetPolygonOffsetCommand(F32 offset, F32 units)
+		: m_offset(offset)
+		, m_units(units)
+	{
+	}
+
+	Error operator()(GlState& state)
+	{
+		if(m_offset == 0.0 && m_units == 0.0)
+		{
+			glDisable(GL_POLYGON_OFFSET_FILL);
+		}
+		else
+		{
+			glEnable(GL_POLYGON_OFFSET_FILL);
+			glPolygonOffset(m_offset, m_units);
+		}
+
+		return ErrorCode::NONE;
+	}
+};
+
+void CommandBuffer::setPolygonOffset(F32 offset, F32 units)
+{
+	m_impl->m_stateSet.m_polygonOffset = true;
+	m_impl->pushBackNewCommand<SetPolygonOffsetCommand>(offset, units);
 }
 
 //==============================================================================
@@ -234,6 +270,7 @@ void CommandBuffer::drawElements(U32 count,
 	DrawElementsIndirectInfo info(
 		count, instanceCount, firstIndex, baseVertex, baseInstance);
 
+	m_impl->checkDrawcall();
 	m_impl->pushBackNewCommand<DrawElementsCondCommand>(info);
 }
 
@@ -273,6 +310,7 @@ void CommandBuffer::drawArrays(
 {
 	DrawArraysIndirectInfo info(count, instanceCount, first, baseInstance);
 
+	m_impl->checkDrawcall();
 	m_impl->pushBackNewCommand<DrawArraysCondCommand>(info);
 }
 
@@ -287,6 +325,7 @@ void CommandBuffer::drawElementsConditional(OcclusionQueryPtr query,
 	DrawElementsIndirectInfo info(
 		count, instanceCount, firstIndex, baseVertex, baseInstance);
 
+	m_impl->checkDrawcall();
 	m_impl->pushBackNewCommand<DrawElementsCondCommand>(info, query);
 }
 
@@ -299,6 +338,7 @@ void CommandBuffer::drawArraysConditional(OcclusionQueryPtr query,
 {
 	DrawArraysIndirectInfo info(count, instanceCount, first, baseInstance);
 
+	m_impl->checkDrawcall();
 	m_impl->pushBackNewCommand<DrawArraysCondCommand>(info, query);
 }
 

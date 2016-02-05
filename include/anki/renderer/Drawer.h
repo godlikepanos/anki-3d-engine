@@ -45,7 +45,8 @@ public:
 	ANKI_USE_RESULT Error render(FrustumComponent& frc,
 		RenderingStage stage,
 		Pass pass,
-		SArray<CommandBufferPtr>& cmdbs);
+		SArray<CommandBufferPtr>& cmdbs,
+		const UVec2& screenSize);
 
 private:
 	Renderer* m_r;

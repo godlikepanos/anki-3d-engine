@@ -42,6 +42,15 @@ class CommandBufferImpl
 public:
 	using InitHints = CommandBufferInitHints;
 
+#if ANKI_ASSERTS_ENABLED
+	class StateSet
+	{
+	public:
+		Bool m_viewport = false;
+		Bool m_polygonOffset = false;
+	} m_stateSet;
+#endif
+
 	/// Default constructor
 	CommandBufferImpl(GrManager* manager)
 		: m_manager(manager)
@@ -83,6 +92,12 @@ public:
 #if ANKI_DEBUG
 		m_executed = true;
 #endif
+	}
+
+	void checkDrawcall() const
+	{
+		ANKI_ASSERT(m_stateSet.m_viewport == true);
+		ANKI_ASSERT(m_stateSet.m_polygonOffset == true);
 	}
 
 	/// Make immutable

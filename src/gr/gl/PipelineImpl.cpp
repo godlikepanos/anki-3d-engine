@@ -551,18 +551,6 @@ void PipelineImpl::setDepthStencilState(GlState& state) const
 		glEnable(GL_DEPTH_TEST);
 	}
 
-	if(m_in.m_depthStencil.m_polygonOffsetFactor == 0.0
-		&& m_in.m_depthStencil.m_polygonOffsetUnits == 0.0)
-	{
-		glDisable(GL_POLYGON_OFFSET_FILL);
-	}
-	else
-	{
-		glEnable(GL_POLYGON_OFFSET_FILL);
-		glPolygonOffset(m_in.m_depthStencil.m_polygonOffsetFactor,
-			m_in.m_depthStencil.m_polygonOffsetUnits);
-	}
-
 	glDepthFunc(m_cache.m_depthCompareFunction);
 }
 

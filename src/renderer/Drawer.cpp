@@ -38,6 +38,7 @@ struct RenderContext
 	U m_cachedTrfCount = 0;
 	F32 m_flod;
 	DynamicBufferInfo m_dynBufferInfo;
+	UVec2 m_screenSize;
 };
 
 /// Visitor that sets a uniform
@@ -210,6 +211,19 @@ public:
 		U problemSize = vis.getRenderablesEnd() - vis.getRenderablesBegin();
 		choseStartEnd(threadId, threadsCount, problemSize, start, end);
 
+		// Set the state of the command buffer
+		if(m_ctx.m_pass == Pass::SM)
+		{
+			m_ctx.m_cmdb->setPolygonOffset(1.0, 2.0);
+		}
+		else
+		{
+			m_ctx.m_cmdb->setPolygonOffset(0.0, 0.0);
+		}
+
+		m_ctx.m_cmdb->setViewport(
+			0, 0, m_ctx.m_screenSize.x(), m_ctx.m_screenSize.y());
+
 		for(U i = start; i < end; ++i)
 		{
 			m_ctx.m_visibleNode = vis.getRenderablesBegin() + i;
@@ -282,7 +296,8 @@ void RenderableDrawer::setupUniforms(RenderContext& ctx,
 Error RenderableDrawer::render(FrustumComponent& frc,
 	RenderingStage stage,
 	Pass pass,
-	SArray<CommandBufferPtr>& cmdbs)
+	SArray<CommandBufferPtr>& cmdbs,
+	const UVec2& screenSize)
 {
 	Error err = ErrorCode::NONE;
 	ANKI_ASSERT(cmdbs.getSize() == m_r->getThreadPool().getThreadsCount()
@@ -301,6 +316,7 @@ Error RenderableDrawer::render(FrustumComponent& frc,
 			task.m_ctx.m_frc = &frc;
 			task.m_ctx.m_stage = stage;
 			task.m_ctx.m_pass = pass;
+			task.m_ctx.m_screenSize = screenSize;
 
 			threadPool.assignNewTask(i, &task);
 		}
@@ -315,6 +331,7 @@ Error RenderableDrawer::render(FrustumComponent& frc,
 		task.m_ctx.m_frc = &frc;
 		task.m_ctx.m_stage = stage;
 		task.m_ctx.m_pass = pass;
+		task.m_ctx.m_screenSize = screenSize;
 
 		err = task(0, 1);
 	}

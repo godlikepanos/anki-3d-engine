@@ -70,8 +70,6 @@ public:
 	Bool8 m_depthWriteEnabled = true;
 	CompareOperation m_depthCompareFunction = CompareOperation::LESS;
 	PixelFormat m_format;
-	F32 m_polygonOffsetFactor = 0.0;
-	F32 m_polygonOffsetUnits = 0.0;
 };
 
 class ColorAttachmentStateInfo

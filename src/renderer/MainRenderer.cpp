@@ -125,6 +125,9 @@ Error MainRenderer::render(SceneGraph& scene)
 	GrManager& gl = m_r->getGrManager();
 	CommandBufferPtr cmdb = gl.newInstance<CommandBuffer>(m_cbInitHints);
 
+	// Set some of the dynamic state
+	cmdb->setPolygonOffset(0.0, 0.0);
+
 	// Find where the m_r should draw
 	Bool rDrawToDefault;
 	if(m_renderingQuality == 1.0 && !m_r->getDbg().getEnabled()

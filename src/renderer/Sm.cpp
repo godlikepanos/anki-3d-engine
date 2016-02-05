@@ -219,7 +219,8 @@ Error Sm::doSpotLight(SceneNode& light, CommandBufferPtr& cmdBuff)
 	FrustumComponent& fr = light.getComponent<FrustumComponent>();
 	SArray<CommandBufferPtr> cmdbs(&cmdBuff, 1);
 	ANKI_CHECK(m_r->getSceneDrawer().render(
-		fr, RenderingStage::MATERIAL, Pass::SM, cmdbs));
+		fr, RenderingStage::MATERIAL, Pass::SM, cmdbs,
+		UVec2(m_resolution, m_resolution)));
 
 	ANKI_TRACE_INC_COUNTER(RENDERER_SHADOW_PASSES, 1);
 	return ErrorCode::NONE;
@@ -245,7 +246,8 @@ Error Sm::doOmniLight(SceneNode& light, CommandBufferPtr& cmdBuff)
 
 			SArray<CommandBufferPtr> cmdbs(&cmdBuff, 1);
 			ANKI_CHECK(m_r->getSceneDrawer().render(
-				fr, RenderingStage::MATERIAL, Pass::SM, cmdbs));
+				fr, RenderingStage::MATERIAL, Pass::SM, cmdbs, 
+				UVec2(m_resolution, m_resolution)));
 
 			++frCount;
 			return ErrorCode::NONE;
