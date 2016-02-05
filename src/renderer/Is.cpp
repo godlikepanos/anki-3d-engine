@@ -276,7 +276,7 @@ Error Is::initInternal(const ConfigSet& config)
 	ANKI_CHECK(getResourceManager().loadResourceToCache(
 		m_lightFrag, "shaders/IsLp.frag.glsl", pps.toCString(), "r_"));
 
-	PipelineInitializer init;
+	PipelineInitInfo init;
 
 	init.m_inputAssembler.m_topology = PrimitiveTopology::TRIANGLE_STRIP;
 	init.m_depthStencil.m_depthWriteEnabled = false;
@@ -298,7 +298,7 @@ Error Is::initInternal(const ConfigSet& config)
 		MIPMAPS_COUNT,
 		m_rt);
 
-	FramebufferInitializer fbInit;
+	FramebufferInitInfo fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation =
@@ -309,7 +309,7 @@ Error Is::initInternal(const ConfigSet& config)
 	// Create resource group
 	//
 	{
-		ResourceGroupInitializer init;
+		ResourceGroupInitInfo init;
 		init.m_textures[0].m_texture = m_r->getMs().getRt0();
 		init.m_textures[1].m_texture = m_r->getMs().getRt1();
 		init.m_textures[2].m_texture = m_r->getMs().getRt2();

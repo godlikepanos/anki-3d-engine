@@ -26,9 +26,9 @@ class CreatePipelineCommand final : public GlCommand
 {
 public:
 	PipelinePtr m_ppline;
-	PipelineInitializer m_init;
+	PipelineInitInfo m_init;
 
-	CreatePipelineCommand(Pipeline* ppline, const PipelineInitializer& init)
+	CreatePipelineCommand(Pipeline* ppline, const PipelineInitInfo& init)
 		: m_ppline(ppline)
 		, m_init(init)
 	{
@@ -49,7 +49,7 @@ public:
 	}
 };
 
-void Pipeline::create(const PipelineInitializer& init)
+void Pipeline::create(const PipelineInitInfo& init)
 {
 	m_impl.reset(getAllocator().newInstance<PipelineImpl>(&getManager()));
 

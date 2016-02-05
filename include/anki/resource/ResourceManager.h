@@ -88,6 +88,18 @@ private:
 	}
 };
 
+class ResourceManagerInitInfo
+{
+public:
+	GrManager* m_gr = nullptr;
+	PhysicsWorld* m_physics = nullptr;
+	ResourceFilesystem* m_resourceFs = nullptr;
+	const ConfigSet* m_config = nullptr;
+	CString m_cacheDir;
+	AllocAlignedCallback m_allocCallback = 0;
+	void* m_allocCallbackData = nullptr;
+};
+
 /// Resource manager. It holds a few global variables
 class ResourceManager : public TypeResourceManager<Animation>,
 						public TypeResourceManager<TextureResource>,
@@ -106,23 +118,11 @@ class ResourceManager : public TypeResourceManager<Animation>,
 	friend class ResourcePtrDeleter;
 
 public:
-	class Initializer
-	{
-	public:
-		GrManager* m_gr = nullptr;
-		PhysicsWorld* m_physics = nullptr;
-		ResourceFilesystem* m_resourceFs = nullptr;
-		const ConfigSet* m_config = nullptr;
-		CString m_cacheDir;
-		AllocAlignedCallback m_allocCallback = 0;
-		void* m_allocCallbackData = nullptr;
-	};
-
 	ResourceManager();
 
 	~ResourceManager();
 
-	ANKI_USE_RESULT Error create(Initializer& init);
+	ANKI_USE_RESULT Error create(ResourceManagerInitInfo& init);
 
 	/// Load a resource.
 	template<typename T>

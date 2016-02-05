@@ -31,7 +31,7 @@ public:
 	}
 
 	/// Create it.
-	void create(const SamplerInitializer& init);
+	void create(const SamplerInitInfo& init);
 
 private:
 	UniquePtr<SamplerImpl> m_impl;

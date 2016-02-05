@@ -16,7 +16,7 @@ namespace anki
 //==============================================================================
 
 //==============================================================================
-void NativeWindowImpl::create(NativeWindowInitializer& init)
+void NativeWindowImpl::create(NativeWindowInitInfo& init)
 {
 	// Create window
 	//
@@ -199,7 +199,7 @@ NativeWindow::~NativeWindow()
 }
 
 //==============================================================================
-void NativeWindow::create(NativeWindowInitializer& initializer)
+void NativeWindow::create(NativeWindowInitInfo& initializer)
 {
 	impl.reset(new NativeWindowImpl);
 	impl->create(initializer);

@@ -19,8 +19,8 @@ Error Upsample::init(const ConfigSet& config)
 	GrManager& gr = getGrManager();
 
 	// Create RC group
-	ResourceGroupInitializer rcInit;
-	SamplerInitializer sinit;
+	ResourceGroupInitInfo rcInit;
+	SamplerInitInfo sinit;
 	sinit.m_repeat = false;
 
 	rcInit.m_textures[0].m_texture = m_r->getMs().getDepthRt();
@@ -60,7 +60,7 @@ Error Upsample::init(const ConfigSet& config)
 		"r_refl_"));
 
 	// Ppline
-	PipelineInitializer ppinit;
+	PipelineInitInfo ppinit;
 
 	ppinit.m_depthStencil.m_depthWriteEnabled = false;
 	ppinit.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
@@ -75,7 +75,7 @@ Error Upsample::init(const ConfigSet& config)
 	m_ppline = gr.newInstance<Pipeline>(ppinit);
 
 	// Create FB
-	FramebufferInitializer fbInit;
+	FramebufferInitInfo fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_r->getIs().getRt();
 	fbInit.m_colorAttachments[0].m_loadOperation =

@@ -43,7 +43,7 @@ Error Sm::init(const ConfigSet& config)
 	}
 
 	// Create shadowmaps array
-	TextureInitializer sminit;
+	TextureInitInfo sminit;
 	sminit.m_type = TextureType::_2D_ARRAY;
 	sminit.m_width = m_resolution;
 	sminit.m_height = m_resolution;
@@ -62,7 +62,7 @@ Error Sm::init(const ConfigSet& config)
 	// Init 2D layers
 	m_spots.create(getAllocator(), config.getNumber("is.sm.maxLights"));
 
-	FramebufferInitializer fbInit;
+	FramebufferInitInfo fbInit;
 	fbInit.m_depthStencilAttachment.m_texture = m_spotTexArray;
 	fbInit.m_depthStencilAttachment.m_loadOperation =
 		AttachmentLoadOperation::CLEAR;

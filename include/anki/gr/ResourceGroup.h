@@ -35,7 +35,7 @@ public:
 };
 
 /// Resource group initializer.
-class ResourceGroupInitializer
+class ResourceGroupInitInfo
 {
 public:
 	Array<TextureBinding, MAX_TEXTURE_BINDINGS> m_textures;
@@ -73,7 +73,7 @@ public:
 	}
 
 	/// Create.
-	void create(const ResourceGroupInitializer& init);
+	void create(const ResourceGroupInitInfo& init);
 
 private:
 	UniquePtr<ResourceGroupImpl> m_impl;

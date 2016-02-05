@@ -83,8 +83,8 @@ Error ModelPatch::create(SArray<CString> meshFNames,
 	ANKI_CHECK(manager->loadResource(mtlFName, m_mtl));
 
 	// Iterate material variables for textures
-	ResourceGroupInitializer rcinit;
-	m_mtl->fillResourceGroupInitializer(rcinit);
+	ResourceGroupInitInfo rcinit;
+	m_mtl->fillResourceGroupInitInfo(rcinit);
 
 	// Load meshes and update resource group
 	m_meshCount = 0;
@@ -144,8 +144,8 @@ PipelinePtr ModelPatch::getPipeline(const RenderingKey& key) const
 	{
 		const MaterialVariant& variant = m_mtl->getVariant(key);
 
-		PipelineInitializer pplineInit;
-		computePipelineInitializer(key, pplineInit);
+		PipelineInitInfo pplineInit;
+		computePipelineInitInfo(key, pplineInit);
 
 		pplineInit.m_shaders[U(ShaderType::VERTEX)] =
 			variant.getShader(ShaderType::VERTEX);
@@ -171,8 +171,8 @@ PipelinePtr ModelPatch::getPipeline(const RenderingKey& key) const
 }
 
 //==============================================================================
-void ModelPatch::computePipelineInitializer(
-	const RenderingKey& key, PipelineInitializer& pinit) const
+void ModelPatch::computePipelineInitInfo(
+	const RenderingKey& key, PipelineInitInfo& pinit) const
 {
 	//
 	// Vertex state

@@ -50,7 +50,7 @@ Error Dbg::init(const ConfigSet& initializer)
 	enableBits(Flag::ALL);
 
 	// Chose the correct color FAI
-	FramebufferInitializer fbInit;
+	FramebufferInitInfo fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_depthStencilAttachment.m_texture = m_r->getMs().getDepthRt();
 	fbInit.m_depthStencilAttachment.m_loadOperation =

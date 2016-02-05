@@ -81,7 +81,7 @@ Error TextureResource::load(const ResourceFilename& filename)
 	// Always first to avoid assertions (because of the check of the allocator)
 	CommandBufferPtr cmdb = gr.newInstance<CommandBuffer>();
 
-	TextureInitializer init;
+	TextureInitInfo init;
 	U layers = 0;
 
 	// Load image

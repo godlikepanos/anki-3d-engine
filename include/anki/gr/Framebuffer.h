@@ -64,23 +64,23 @@ public:
 };
 
 /// Framebuffer initializer.
-class FramebufferInitializer
+class FramebufferInitInfo
 {
 public:
 	Array<Attachment, MAX_COLOR_ATTACHMENTS> m_colorAttachments;
 	U32 m_colorAttachmentsCount = 0;
 	Attachment m_depthStencilAttachment;
 
-	FramebufferInitializer() = default;
+	FramebufferInitInfo() = default;
 
-	FramebufferInitializer(const FramebufferInitializer& b)
+	FramebufferInitInfo(const FramebufferInitInfo& b)
 	{
 		operator=(b);
 	}
 
-	~FramebufferInitializer() = default;
+	~FramebufferInitInfo() = default;
 
-	FramebufferInitializer& operator=(const FramebufferInitializer& b)
+	FramebufferInitInfo& operator=(const FramebufferInitInfo& b)
 	{
 		for(U i = 0; i < b.m_colorAttachmentsCount; i++)
 		{
@@ -110,7 +110,7 @@ public:
 	}
 
 	/// Create.
-	void create(const FramebufferInitializer& init);
+	void create(const FramebufferInitInfo& init);
 
 private:
 	UniquePtr<FramebufferImpl> m_impl;

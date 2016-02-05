@@ -15,11 +15,11 @@ namespace anki
 // Forward
 class GrManager;
 class GrManagerImpl;
-class TextureInitializer;
-class SamplerInitializer;
-class GrManagerInitializer;
-class PipelineInitializer;
-class FramebufferInitializer;
+class TextureInitInfo;
+class SamplerInitInfo;
+class GrManagerInitInfo;
+class PipelineInitInfo;
+class FramebufferInitInfo;
 
 class DynamicBufferToken;
 class DynamicBufferInfo;

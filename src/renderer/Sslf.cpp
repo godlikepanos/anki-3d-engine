@@ -59,7 +59,7 @@ Error Sslf::initInternal(const ConfigSet& config)
 		1,
 		m_rt);
 
-	FramebufferInitializer fbInit;
+	FramebufferInitInfo fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation =
@@ -67,7 +67,7 @@ Error Sslf::initInternal(const ConfigSet& config)
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 	// Create the resource group
-	ResourceGroupInitializer rcInit;
+	ResourceGroupInitInfo rcInit;
 	rcInit.m_textures[0].m_texture = m_r->getBloom().getRt();
 	rcInit.m_textures[1].m_texture = m_lensDirtTex->getGrTexture();
 

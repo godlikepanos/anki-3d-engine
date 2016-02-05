@@ -26,9 +26,9 @@ class CreateSamplerCommand : public GlCommand
 {
 public:
 	SamplerPtr m_sampler;
-	SamplerInitializer m_init;
+	SamplerInitInfo m_init;
 
-	CreateSamplerCommand(Sampler* sampler, const SamplerInitializer& init)
+	CreateSamplerCommand(Sampler* sampler, const SamplerInitInfo& init)
 		: m_sampler(sampler)
 		, m_init(init)
 	{
@@ -50,7 +50,7 @@ public:
 	}
 };
 
-void Sampler::create(const SamplerInitializer& init)
+void Sampler::create(const SamplerInitInfo& init)
 {
 	m_impl.reset(getAllocator().newInstance<SamplerImpl>(&getManager()));
 

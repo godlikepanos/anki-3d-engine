@@ -52,7 +52,7 @@ Error MainRenderer::create(ThreadPool* threadpool,
 	// Init default FB
 	m_width = config.getNumber("width");
 	m_height = config.getNumber("height");
-	FramebufferInitializer fbInit;
+	FramebufferInitInfo fbInit;
 	m_defaultFb = gr->newInstance<Framebuffer>(fbInit);
 
 	// Init renderer and manipulate the width/height
@@ -99,7 +99,7 @@ Error MainRenderer::create(ThreadPool* threadpool,
 		"Main renderer initialized. Rendering size %dx%d", m_width, m_height);
 
 	// Init RC group
-	ResourceGroupInitializer rcinit;
+	ResourceGroupInitInfo rcinit;
 	if(m_r->getPpsEnabled())
 	{
 		rcinit.m_textures[0].m_texture = m_r->getPps().getRt();

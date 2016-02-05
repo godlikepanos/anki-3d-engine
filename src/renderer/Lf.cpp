@@ -80,7 +80,7 @@ Error Lf::initSprite(const ConfigSet& config)
 
 	// Create ppline.
 	// Writes to IS with blending
-	PipelineInitializer init;
+	PipelineInitInfo init;
 	init.m_inputAssembler.m_topology = PrimitiveTopology::TRIANGLE_STRIP;
 	init.m_depthStencil.m_depthWriteEnabled = false;
 	init.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
@@ -111,7 +111,7 @@ Error Lf::initOcclusion(const ConfigSet& config)
 	// - test depth no write
 	// - will run after MS
 	// - will not update color
-	PipelineInitializer init;
+	PipelineInitInfo init;
 	init.m_vertex.m_bindingCount = 1;
 	init.m_vertex.m_bindings[0].m_stride = sizeof(Vec3);
 	init.m_vertex.m_attributeCount = 1;
@@ -134,7 +134,7 @@ Error Lf::initOcclusion(const ConfigSet& config)
 
 	// Init resource group
 	{
-		ResourceGroupInitializer rcInit;
+		ResourceGroupInitInfo rcInit;
 		rcInit.m_vertexBuffers[0].m_dynamic = true;
 		rcInit.m_uniformBuffers[0].m_dynamic = true;
 		m_occlusionRcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);

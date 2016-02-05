@@ -109,10 +109,10 @@ enum class PipelineSubStateBit : U16
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(PipelineSubStateBit, inline)
 
 /// Pipeline initializer.
-class PipelineInitializer
+class PipelineInitInfo
 {
 public:
-	PipelineInitializer()
+	PipelineInitInfo()
 	{
 // Do a special construction. The state will be hashed and the padding
 // may contain garbage. With this trick zero the padding
@@ -159,7 +159,7 @@ public:
 	}
 
 	/// Create.
-	void create(const PipelineInitializer& init);
+	void create(const PipelineInitInfo& init);
 
 private:
 	UniquePtr<PipelineImpl> m_impl;

@@ -38,7 +38,7 @@ public:
 	~TextureImpl();
 
 	/// Create the texture storage.
-	void create(const TextureInitializer& init);
+	void create(const TextureInitInfo& init);
 
 	/// Write texture data.
 	void write(U32 mipmap, U32 slice, void* data, PtrSize dataSize);

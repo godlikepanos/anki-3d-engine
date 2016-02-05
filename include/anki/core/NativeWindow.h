@@ -16,37 +16,37 @@ namespace anki
 class NativeWindowImpl;
 using Context = void*;
 
+/// Window initializer
+struct NativeWindowInitInfo
+{
+	U32 m_width = 640;
+	U32 m_height = 768;
+	Array<U32, 4> m_rgbaBits = {{8, 8, 8, 0}};
+	U32 m_depthBits = 0;
+	U32 m_stencilBits = 0;
+	U32 m_samplesCount = 0;
+	static const Bool m_doubleBuffer = true;
+	/// Create a fullscreen window with the desktop's resolution
+	Bool8 m_fullscreenDesktopRez = false;
+
+	/// @name GL context properties
+	/// @{
+
+	/// Minor OpenGL version. Used to create core profile context
+	U32 m_minorVersion = 0;
+	/// Major OpenGL version. Used to create core profile context
+	U32 m_majorVersion = 0;
+	Bool8 m_useGles = false; ///< Use OpenGL ES
+	Bool8 m_debugContext = false; ///< Enables KHR_debug
+	/// @}
+
+	const char* m_title = "Untitled window";
+};
+
 /// Native window with GL context
 class NativeWindow
 {
 public:
-	/// Window initializer
-	struct Initializer
-	{
-		U32 m_width = 640;
-		U32 m_height = 768;
-		Array<U32, 4> m_rgbaBits = {{8, 8, 8, 0}};
-		U32 m_depthBits = 0;
-		U32 m_stencilBits = 0;
-		U32 m_samplesCount = 0;
-		static const Bool m_doubleBuffer = true;
-		/// Create a fullscreen window with the desktop's resolution
-		Bool8 m_fullscreenDesktopRez = false;
-
-		/// @name GL context properties
-		/// @{
-
-		/// Minor OpenGL version. Used to create core profile context
-		U32 m_minorVersion = 0;
-		/// Major OpenGL version. Used to create core profile context
-		U32 m_majorVersion = 0;
-		Bool8 m_useGles = false; ///< Use OpenGL ES
-		Bool8 m_debugContext = false; ///< Enables KHR_debug
-		/// @}
-
-		const char* m_title = "Untitled window";
-	};
-
 	NativeWindow()
 	{
 	}
@@ -57,7 +57,7 @@ public:
 	}
 
 	ANKI_USE_RESULT Error create(
-		Initializer& initializer, HeapAllocator<U8>& alloc);
+		NativeWindowInitInfo& initializer, HeapAllocator<U8>& alloc);
 
 	NativeWindowImpl& getNative()
 	{

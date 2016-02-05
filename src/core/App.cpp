@@ -195,7 +195,7 @@ Error App::createInternal(const ConfigSet& config_,
 	//
 	// Window
 	//
-	NativeWindow::Initializer nwinit;
+	NativeWindowInitInfo nwinit;
 	nwinit.m_width = config.getNumber("width");
 	nwinit.m_height = config.getNumber("height");
 	nwinit.m_majorVersion = config.getNumber("glmajor");
@@ -231,7 +231,7 @@ Error App::createInternal(const ConfigSet& config_,
 
 	m_gr = m_heapAlloc.newInstance<GrManager>();
 
-	GrManagerInitializer grInit;
+	GrManagerInitInfo grInit;
 	grInit.m_allocCallback = m_allocCb;
 	grInit.m_allocCallbackUserData = m_allocCbData;
 	grInit.m_interface = m_grInterface;
@@ -257,7 +257,7 @@ Error App::createInternal(const ConfigSet& config_,
 	//
 	// Resources
 	//
-	ResourceManager::Initializer rinit;
+	ResourceManagerInitInfo rinit;
 	rinit.m_gr = m_gr;
 	rinit.m_physics = m_physics;
 	rinit.m_resourceFs = m_resourceFs;

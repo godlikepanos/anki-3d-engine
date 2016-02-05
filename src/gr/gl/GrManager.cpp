@@ -24,7 +24,7 @@ GrManager::~GrManager()
 }
 
 //==============================================================================
-Error GrManager::create(Initializer& init)
+Error GrManager::create(GrManagerInitInfo& init)
 {
 	m_alloc =
 		HeapAllocator<U8>(init.m_allocCallback, init.m_allocCallbackUserData);

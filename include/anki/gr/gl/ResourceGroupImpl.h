@@ -29,7 +29,7 @@ public:
 		m_refs.destroy(getAllocator());
 	}
 
-	void create(const ResourceGroupInitializer& init);
+	void create(const ResourceGroupInitInfo& init);
 
 	/// Set state.
 	void bind(U slot, const DynamicBufferInfo& dynInfo, GlState& state);
@@ -76,7 +76,7 @@ private:
 		U& resourcesCount,
 		U& dynCount);
 
-	void initResourceReferences(const ResourceGroupInitializer& init, U count);
+	void initResourceReferences(const ResourceGroupInitInfo& init, U count);
 };
 /// @}
 

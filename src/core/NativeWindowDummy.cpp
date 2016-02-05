@@ -14,7 +14,7 @@ NativeWindow::~NativeWindow
 }
 
 //==============================================================================
-void NativeWindow::create(NativeWindowInitializer&)
+void NativeWindow::create(NativeWindowInitInfo&)
 {
 }
 

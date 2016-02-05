@@ -142,7 +142,7 @@ Error PlayerNode::create(const CString& name, const Vec4& position)
 	ANKI_CHECK(SceneNode::create(name));
 
 	// Create physics object
-	PhysicsPlayerController::Initializer init;
+	PhysicsPlayerControllerInitInfo init;
 	init.m_position = position;
 	m_player =
 		getSceneGraph()._getPhysicsWorld().newInstance<PhysicsPlayerController>(

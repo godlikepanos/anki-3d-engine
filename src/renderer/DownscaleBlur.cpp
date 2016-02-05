@@ -15,7 +15,7 @@ Error DownscaleBlur::initSubpass(U idx, const UVec2& inputTexSize)
 {
 	Subpass& pass = m_passes[idx];
 
-	PipelineInitializer ppinit;
+	PipelineInitInfo ppinit;
 	ppinit.m_color.m_attachmentCount = 1;
 	ppinit.m_color.m_attachments[0].m_format = Is::RT_PIXEL_FORMAT;
 	ppinit.m_depthStencil.m_depthWriteEnabled = false;
@@ -41,10 +41,8 @@ Error DownscaleBlur::initSubpass(U idx, const UVec2& inputTexSize)
 		F32(inputTexSize.y()),
 		idx);
 
-	ANKI_CHECK(getResourceManager().loadResourceToCache(pass.m_frag,
-		"shaders/DownscaleBlur.frag.glsl",
-		pps.toCString(),
-		"r_"));
+	ANKI_CHECK(getResourceManager().loadResourceToCache(
+		pass.m_frag, "shaders/DownscaleBlur.frag.glsl", pps.toCString(), "r_"));
 
 	ppinit.m_shaders[ShaderType::FRAGMENT] = pass.m_frag->getGrShader();
 
@@ -52,7 +50,7 @@ Error DownscaleBlur::initSubpass(U idx, const UVec2& inputTexSize)
 	pass.m_ppline = getGrManager().newInstance<Pipeline>(ppinit);
 
 	// FB
-	FramebufferInitializer fbInit;
+	FramebufferInitInfo fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_r->getIs().getRt();
 	fbInit.m_colorAttachments[0].m_loadOperation =
@@ -61,7 +59,7 @@ Error DownscaleBlur::initSubpass(U idx, const UVec2& inputTexSize)
 	pass.m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 	// Resources
-	ResourceGroupInitializer rcinit;
+	ResourceGroupInitInfo rcinit;
 	rcinit.m_textures[0].m_texture = m_r->getIs().getRt();
 	pass.m_rcGroup = getGrManager().newInstance<ResourceGroup>(rcinit);
 

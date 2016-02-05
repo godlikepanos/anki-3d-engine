@@ -33,7 +33,7 @@ Error StaticCollisionNode::create(const CString& name,
 	ANKI_CHECK(getResourceManager().loadResource(resourceFname, m_rsrc));
 
 	// Create body
-	PhysicsBody::Initializer init;
+	PhysicsBodyInitInfo init;
 	init.m_shape = m_rsrc->getShape();
 	init.m_static = true;
 	init.m_startTrf = transform;

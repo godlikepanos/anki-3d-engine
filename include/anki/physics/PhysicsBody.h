@@ -13,8 +13,8 @@ namespace anki
 /// @addtogroup physics
 /// @{
 
-/// Initializer for PhysicsBody.
-struct PhysicsBodyInitializer
+/// Init info for PhysicsBody.
+struct PhysicsBodyInitInfo
 {
 	PhysicsCollisionShapePtr m_shape;
 	F32 m_mass = 0.0;
@@ -28,13 +28,11 @@ struct PhysicsBodyInitializer
 class PhysicsBody : public PhysicsObject
 {
 public:
-	using Initializer = PhysicsBodyInitializer;
-
 	PhysicsBody(PhysicsWorld* world);
 
 	~PhysicsBody();
 
-	ANKI_USE_RESULT Error create(const Initializer& init);
+	ANKI_USE_RESULT Error create(const PhysicsBodyInitInfo& init);
 
 	const Transform& getTransform(Bool& updated)
 	{

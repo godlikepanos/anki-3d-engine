@@ -29,7 +29,7 @@ namespace anki
 class UpdateTexturesVisitor
 {
 public:
-	ResourceGroupInitializer* m_init = nullptr;
+	ResourceGroupInitInfo* m_init = nullptr;
 	ResourceManager* m_manager = nullptr;
 
 	template<typename TMaterialVariableTemplate>
@@ -438,7 +438,7 @@ Error Material::createProgramSourceToCache(
 }
 
 //==============================================================================
-void Material::fillResourceGroupInitializer(ResourceGroupInitializer& rcinit)
+void Material::fillResourceGroupInitInfo(ResourceGroupInitInfo& rcinit)
 {
 	rcinit.m_uniformBuffers[0].m_dynamic = true;
 

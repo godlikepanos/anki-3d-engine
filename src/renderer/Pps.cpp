@@ -62,7 +62,7 @@ Error Pps::initInternal(const ConfigSet& config)
 		1,
 		m_rt);
 
-	FramebufferInitializer fbInit;
+	FramebufferInitInfo fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation =
@@ -104,7 +104,7 @@ Error Pps::initInternal(const ConfigSet& config)
 		BufferAccessBit::CLIENT_WRITE);
 
 	// RC goup
-	ResourceGroupInitializer rcInit;
+	ResourceGroupInitInfo rcInit;
 	rcInit.m_textures[0].m_texture = m_r->getIs().getRt();
 
 	if(m_r->getSsaoEnabled())

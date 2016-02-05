@@ -337,9 +337,8 @@ Error ParticleEmitter::create(const CString& name, const CString& filename)
 
 	GrManager& gr = getSceneGraph().getGrManager();
 
-	ResourceGroupInitializer rcinit;
-	m_particleEmitterResource->getMaterial().fillResourceGroupInitializer(
-		rcinit);
+	ResourceGroupInitInfo rcinit;
+	m_particleEmitterResource->getMaterial().fillResourceGroupInitInfo(rcinit);
 
 	for(U i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
 	{

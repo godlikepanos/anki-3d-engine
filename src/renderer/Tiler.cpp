@@ -57,7 +57,7 @@ Error Tiler::initInternal()
 	ANKI_CHECK(getResourceManager().loadResourceToCache(
 		m_shader, "shaders/TilerMinMax.comp.glsl", pps.toCString(), "r_"));
 
-	PipelineInitializer pplineInit;
+	PipelineInitInfo pplineInit;
 	pplineInit.m_shaders[U(ShaderType::COMPUTE)] = m_shader->getGrShader();
 	m_ppline = getGrManager().newInstance<Pipeline>(pplineInit);
 
@@ -71,7 +71,7 @@ Error Tiler::initInternal()
 			pboSize, BufferUsageBit::STORAGE, BufferAccessBit::CLIENT_MAP_READ);
 
 		// Create graphics resources
-		ResourceGroupInitializer rcinit;
+		ResourceGroupInitInfo rcinit;
 		rcinit.m_storageBuffers[0].m_buffer = m_outBuffers[i];
 		rcinit.m_textures[0].m_texture = m_r->getMs().getDepthRt();
 

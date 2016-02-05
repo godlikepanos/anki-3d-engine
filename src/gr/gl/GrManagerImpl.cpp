@@ -30,7 +30,7 @@ GrAllocator<U8> GrManagerImpl::getAllocator() const
 }
 
 //==============================================================================
-void GrManagerImpl::create(GrManagerInitializer& init)
+void GrManagerImpl::create(GrManagerInitInfo& init)
 {
 	// Create thread
 	m_thread =

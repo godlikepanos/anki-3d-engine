@@ -227,7 +227,7 @@ Error ParticleEmitterResource::load(const ResourceFilename& filename)
 
 	// Create ppline
 	//
-	PipelineInitializer pinit;
+	PipelineInitInfo pinit;
 
 	pinit.m_vertex.m_bindingCount = 1;
 	pinit.m_vertex.m_bindings[0].m_stride = VERTEX_SIZE;

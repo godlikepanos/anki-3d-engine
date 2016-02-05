@@ -13,8 +13,8 @@ namespace anki
 /// @addtogroup physics
 /// @{
 
-/// Initializer for PhysicsPlayerController.
-class PhysicsPlayerControllerInitializer
+/// Init info for PhysicsPlayerController.
+class PhysicsPlayerControllerInitInfo
 {
 public:
 	F32 m_mass = 83.0;
@@ -29,8 +29,6 @@ public:
 class PhysicsPlayerController final : public PhysicsObject
 {
 public:
-	using Initializer = PhysicsPlayerControllerInitializer;
-
 	PhysicsPlayerController(PhysicsWorld* world)
 		: PhysicsObject(Type::PLAYER_CONTROLLER, world)
 	{
@@ -38,7 +36,7 @@ public:
 
 	~PhysicsPlayerController();
 
-	ANKI_USE_RESULT Error create(const Initializer& init);
+	ANKI_USE_RESULT Error create(const PhysicsPlayerControllerInitInfo& init);
 
 	// Update the state machine
 	void setVelocity(F32 forwardSpeed,

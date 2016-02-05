@@ -109,7 +109,7 @@ PipelineImpl::~PipelineImpl()
 }
 
 //==============================================================================
-Error PipelineImpl::create(const PipelineInitializer& init)
+Error PipelineImpl::create(const PipelineInitInfo& init)
 {
 	m_in = init;
 
@@ -206,8 +206,7 @@ Error PipelineImpl::createGlPipeline()
 
 		infoLogTxt.create(infoLen + 1);
 
-		glGetProgramInfoLog(
-			m_glName, infoLen, &charsWritten, &infoLogTxt[0]);
+		glGetProgramInfoLog(m_glName, infoLen, &charsWritten, &infoLogTxt[0]);
 
 		ANKI_LOGE("Ppline error log follows:\n%s", &infoLogTxt[0]);
 		err = ErrorCode::USER_DATA;

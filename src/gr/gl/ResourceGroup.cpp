@@ -29,9 +29,9 @@ class RcgCreateCommand final : public GlCommand
 {
 public:
 	ResourceGroupPtr m_ptr;
-	ResourceGroupInitializer m_init;
+	ResourceGroupInitInfo m_init;
 
-	RcgCreateCommand(ResourceGroup* ptr, const ResourceGroupInitializer& init)
+	RcgCreateCommand(ResourceGroup* ptr, const ResourceGroupInitInfo& init)
 		: m_ptr(ptr)
 		, m_init(init)
 	{
@@ -53,7 +53,7 @@ public:
 	}
 };
 
-void ResourceGroup::create(const ResourceGroupInitializer& init)
+void ResourceGroup::create(const ResourceGroupInitInfo& init)
 {
 	// NOTE: Create asynchronously because the initialization touches GL names
 	m_impl.reset(getAllocator().newInstance<ResourceGroupImpl>(&getManager()));

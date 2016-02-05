@@ -40,7 +40,7 @@ static void loopUntilWindowIsReady(android_app& app)
 //==============================================================================
 
 //==============================================================================
-void NativeWindowImpl::create(NativeWindowInitializer& init)
+void NativeWindowImpl::create(NativeWindowInitInfo& init)
 {
 	Array<EGLint, 256> attribs;
 	U attr = 0;
@@ -179,7 +179,7 @@ NativeWindow::~NativeWindow()
 }
 
 //==============================================================================
-void NativeWindow::create(NativeWindowInitializer& initializer)
+void NativeWindow::create(NativeWindowInitInfo& initializer)
 {
 	impl.reset(new NativeWindowImpl);
 	impl->create(initializer);

@@ -20,7 +20,7 @@ class GlState;
 /// @{
 
 template<typename T>
-using CommandBufferAllocator = ChainAllocator<T>;
+using CommandBufferAllocator = StackAllocator<T>;
 
 /// The base of all GL commands.
 class GlCommand

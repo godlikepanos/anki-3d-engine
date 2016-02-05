@@ -16,7 +16,7 @@ namespace anki
 {
 
 //==============================================================================
-Error FramebufferImpl::create(const FramebufferInitializer& init)
+Error FramebufferImpl::create(const FramebufferInitInfo& init)
 {
 	ANKI_ASSERT(!isCreated());
 	m_in = init;

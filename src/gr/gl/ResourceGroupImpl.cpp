@@ -63,7 +63,7 @@ void ResourceGroupImpl::initBuffers(const InBindings& in,
 }
 
 //==============================================================================
-void ResourceGroupImpl::create(const ResourceGroupInitializer& init)
+void ResourceGroupImpl::create(const ResourceGroupInitInfo& init)
 {
 	U resourcesCount = 0;
 	U dynCount = 0;
@@ -168,7 +168,7 @@ void ResourceGroupImpl::create(const ResourceGroupInitializer& init)
 
 //==============================================================================
 void ResourceGroupImpl::initResourceReferences(
-	const ResourceGroupInitializer& init, U refCount)
+	const ResourceGroupInitInfo& init, U refCount)
 {
 	m_refs.create(getAllocator(), refCount);
 

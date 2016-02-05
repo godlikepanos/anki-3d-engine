@@ -14,7 +14,7 @@ namespace anki
 /// @{
 
 /// Sampler initializer.
-class SamplerInitializer
+class SamplerInitInfo
 {
 public:
 	SamplingFilter m_minMagFilter = SamplingFilter::NEAREST;
@@ -27,7 +27,7 @@ public:
 };
 
 /// Texture initializer.
-class TextureInitializer
+class TextureInitInfo
 {
 public:
 	TextureType m_type = TextureType::_2D;
@@ -38,7 +38,7 @@ public:
 	U8 m_mipmapsCount = 0;
 	U8 m_samples = 1;
 
-	SamplerInitializer m_sampling;
+	SamplerInitInfo m_sampling;
 };
 
 /// GPU texture
@@ -58,7 +58,7 @@ public:
 	}
 
 	/// Create it.
-	void create(const TextureInitializer& init);
+	void create(const TextureInitInfo& init);
 
 private:
 	UniquePtr<TextureImpl> m_impl;

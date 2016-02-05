@@ -19,7 +19,7 @@ ANKI_TEST(Resource, ResourceManager)
 
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 
-	ResourceManager::Initializer rinit;
+	ResourceManagerInitInfo rinit;
 	rinit.m_gr = nullptr;
 	rinit.m_config = &config;
 	rinit.m_cacheDir = "/tmp/";

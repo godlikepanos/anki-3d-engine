@@ -205,7 +205,7 @@ Error Ir::init(const ConfigSet& config)
 		m_r->getGlobalTimestampPtr()));
 
 	// Init the textures
-	TextureInitializer texinit;
+	TextureInitInfo texinit;
 
 	texinit.m_width = m_fbSize;
 	texinit.m_height = m_fbSize;
@@ -232,7 +232,7 @@ Error Ir::init(const ConfigSet& config)
 	ANKI_CHECK(getResourceManager().loadResource(
 		"engine_data/SplitSumIntegration.ankitex", m_integrationLut));
 
-	SamplerInitializer sinit;
+	SamplerInitInfo sinit;
 	sinit.m_minMagFilter = SamplingFilter::LINEAR;
 	sinit.m_mipmapFilter = SamplingFilter::BASE;
 	sinit.m_minLod = 0.0;
@@ -241,7 +241,7 @@ Error Ir::init(const ConfigSet& config)
 	m_integrationLutSampler = getGrManager().newInstance<Sampler>(sinit);
 
 	// Init the resource group
-	ResourceGroupInitializer rcInit;
+	ResourceGroupInitInfo rcInit;
 	rcInit.m_textures[0].m_texture = m_envCubemapArr;
 	rcInit.m_textures[1].m_texture = m_irradianceCubemapArr;
 
@@ -279,7 +279,7 @@ Error Ir::initIrradiance()
 		m_computeIrradiancePpline);
 
 	// Create the resources
-	ResourceGroupInitializer rcInit;
+	ResourceGroupInitInfo rcInit;
 	rcInit.m_uniformBuffers[0].m_dynamic = true;
 	rcInit.m_textures[0].m_texture = m_envCubemapArr;
 
@@ -615,7 +615,7 @@ Error Ir::renderReflection(SceneNode& node,
 
 		cmdb->bindResourceGroup(m_computeIrradianceResources, 0, &dinf);
 
-		FramebufferInitializer fbinit;
+		FramebufferInitInfo fbinit;
 		fbinit.m_colorAttachmentsCount = 1;
 		fbinit.m_colorAttachments[0].m_texture = m_irradianceCubemapArr;
 		fbinit.m_colorAttachments[0].m_arrayIndex = cubemapIdx;

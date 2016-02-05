@@ -35,7 +35,7 @@ ResourceManager::~ResourceManager()
 }
 
 //==============================================================================
-Error ResourceManager::create(Initializer& init)
+Error ResourceManager::create(ResourceManagerInitInfo& init)
 {
 	Error err = ErrorCode::NONE;
 

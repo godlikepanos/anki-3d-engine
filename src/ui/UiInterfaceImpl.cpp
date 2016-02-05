@@ -40,7 +40,7 @@ Error UiInterfaceImpl::init(GrManager* gr, ResourceManager* rc)
 		"shaders/UiLines.frag.glsl", m_stages[StageId::LINES].m_fShader));
 
 	// Init pplines
-	PipelineInitializer ppinit;
+	PipelineInitInfo ppinit;
 	ppinit.m_vertex.m_bindingCount = 1;
 	ppinit.m_vertex.m_bindings[0].m_stride = sizeof(Vertex);
 	ppinit.m_vertex.m_attributeCount = 3;
@@ -89,7 +89,7 @@ Error UiInterfaceImpl::init(GrManager* gr, ResourceManager* rc)
 	{
 		for(U i = 0; i < m_stages[s].m_rcGroups.getSize(); ++i)
 		{
-			ResourceGroupInitializer rcinit;
+			ResourceGroupInitInfo rcinit;
 			rcinit.m_vertexBuffers[0].m_buffer = m_stages[s].m_vertBuffs[i];
 
 			if(s == StageId::TEXTURED_TRIANGLES)
@@ -206,7 +206,7 @@ Error UiInterfaceImpl::createR8Image(
 	}
 
 	// Allocate the texture
-	TextureInitializer tinit;
+	TextureInitInfo tinit;
 	tinit.m_width = size.x();
 	tinit.m_height = size.y();
 	tinit.m_format = PixelFormat(ComponentFormat::R8, TransformFormat::UNORM);

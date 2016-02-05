@@ -27,10 +27,10 @@ public:
 		destroyDeferred(glDeleteSamplers);
 	}
 
-	void create(const SamplerInitializer& sinit);
+	void create(const SamplerInitInfo& sinit);
 
 private:
-	void createInternal(const SamplerInitializer& sinit);
+	void createInternal(const SamplerInitInfo& sinit);
 };
 /// @}
 

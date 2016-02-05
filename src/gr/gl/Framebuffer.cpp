@@ -26,10 +26,10 @@ class CreateFramebufferCommand final : public GlCommand
 {
 public:
 	FramebufferPtr m_fb;
-	FramebufferInitializer m_init;
+	FramebufferInitInfo m_init;
 
 	CreateFramebufferCommand(
-		Framebuffer* handle, const FramebufferInitializer& init)
+		Framebuffer* handle, const FramebufferInitInfo& init)
 		: m_fb(handle)
 		, m_init(init)
 	{
@@ -49,7 +49,7 @@ public:
 	}
 };
 
-void Framebuffer::create(const FramebufferInitializer& init)
+void Framebuffer::create(const FramebufferInitInfo& init)
 {
 	m_impl.reset(getAllocator().newInstance<FramebufferImpl>(&getManager()));
 

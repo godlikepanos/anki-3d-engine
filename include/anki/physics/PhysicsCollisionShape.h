@@ -13,6 +13,12 @@ namespace anki
 /// @addtogroup physics
 /// @{
 
+/// Standard initializer for all collision shapes.
+struct PhysicsCollisionShapeInitInfo
+{
+	// Empty for now
+};
+
 /// The base of all collision shapes.
 class PhysicsCollisionShape : public PhysicsObject
 {
@@ -24,12 +30,6 @@ public:
 		SPHERE,
 		BOX,
 		STATIC_TRIANGLE_SOUP
-	};
-
-	/// Standard initializer for all collision shapes.
-	struct Initializer
-	{
-		// Empty for now
 	};
 
 	PhysicsCollisionShape(PhysicsWorld* world)
@@ -72,7 +72,8 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error create(Initializer& init, F32 radius);
+	ANKI_USE_RESULT Error create(
+		PhysicsCollisionShapeInitInfo& init, F32 radius);
 };
 
 /// Box collision shape.
@@ -88,7 +89,8 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error create(Initializer& init, const Vec3& extend);
+	ANKI_USE_RESULT Error create(
+		PhysicsCollisionShapeInitInfo& init, const Vec3& extend);
 };
 
 /// Convex hull collision shape.
@@ -104,7 +106,7 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error create(Initializer& init,
+	ANKI_USE_RESULT Error create(PhysicsCollisionShapeInitInfo& init,
 		const Vec3* positions,
 		U32 positionsCount,
 		U32 positionsStride);
@@ -123,7 +125,7 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error create(Initializer& init,
+	ANKI_USE_RESULT Error create(PhysicsCollisionShapeInitInfo& init,
 		const Vec3* positions,
 		U32 positionsStride,
 		const U16* indices,

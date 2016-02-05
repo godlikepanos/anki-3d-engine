@@ -26,9 +26,9 @@ class CreateTextureCommand final : public GlCommand
 {
 public:
 	IntrusivePtr<Texture> m_tex;
-	TextureInitializer m_init;
+	TextureInitInfo m_init;
 
-	CreateTextureCommand(Texture* tex, const TextureInitializer& init)
+	CreateTextureCommand(Texture* tex, const TextureInitInfo& init)
 		: m_tex(tex)
 		, m_init(init)
 	{
@@ -49,7 +49,7 @@ public:
 	}
 };
 
-void Texture::create(const TextureInitializer& init)
+void Texture::create(const TextureInitInfo& init)
 {
 	m_impl.reset(getAllocator().newInstance<TextureImpl>(&getManager()));
 

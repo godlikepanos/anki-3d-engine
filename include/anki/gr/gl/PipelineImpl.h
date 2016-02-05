@@ -25,7 +25,7 @@ public:
 
 	~PipelineImpl();
 
-	ANKI_USE_RESULT Error create(const PipelineInitializer& init);
+	ANKI_USE_RESULT Error create(const PipelineInitInfo& init);
 
 	/// Bind the pipeline to the state
 	void bind(GlState& state);
@@ -53,7 +53,7 @@ private:
 	Bool8 m_blendEnabled = false;
 
 	/// Input values.
-	PipelineInitializer m_in;
+	PipelineInitInfo m_in;
 
 	/// Cached values.
 	class

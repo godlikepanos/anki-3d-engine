@@ -319,7 +319,7 @@ public:
 		return m_vars;
 	}
 
-	void fillResourceGroupInitializer(ResourceGroupInitializer& rcinit);
+	void fillResourceGroupInitInfo(ResourceGroupInitInfo& rcinit);
 
 	static U getInstanceGroupIdx(U instanceCount);
 

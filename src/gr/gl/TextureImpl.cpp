@@ -269,10 +269,10 @@ void TextureImpl::bind()
 }
 
 //==============================================================================
-void TextureImpl::create(const TextureInitializer& init)
+void TextureImpl::create(const TextureInitInfo& init)
 {
 	GrAllocator<U8> alloc = getAllocator();
-	const SamplerInitializer& sinit = init.m_sampling;
+	const SamplerInitInfo& sinit = init.m_sampling;
 
 	// Sanity checks
 	//

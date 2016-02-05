@@ -35,7 +35,7 @@ public:
 };
 
 /// Manager initializer.
-class GrManagerInitializer
+class GrManagerInitInfo
 {
 public:
 	AllocAlignedCallback m_allocCallback = nullptr;
@@ -55,15 +55,13 @@ class GrManager
 	friend class GrManagerImpl;
 
 public:
-	using Initializer = GrManagerInitializer;
-
 	/// Default constructor
 	GrManager();
 
 	~GrManager();
 
 	/// Create.
-	ANKI_USE_RESULT Error create(Initializer& init);
+	ANKI_USE_RESULT Error create(GrManagerInitInfo& init);
 
 	/// Swap buffers
 	void swapBuffers();

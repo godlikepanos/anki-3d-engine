@@ -23,7 +23,8 @@ void CommandBufferImpl::create(const InitHints& hints)
 		pool.getAllocationCallbackUserData(),
 		hints.m_chunkSize,
 		1.0,
-		hints.m_chunkSize);
+		0,
+		false);
 }
 
 //==============================================================================
@@ -81,7 +82,7 @@ Error CommandBufferImpl::executeAllCommands()
 CommandBufferImpl::InitHints CommandBufferImpl::computeInitHints() const
 {
 	InitHints out;
-	out.m_chunkSize = m_alloc.getMemoryPool().getAllocatedSize() + 16;
+	out.m_chunkSize = m_alloc.getMemoryPool().getMemoryCapacity();
 
 	return out;
 }

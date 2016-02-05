@@ -210,6 +210,9 @@ public:
 	/// Reinit the pool. All existing allocated memory will be lost
 	void reset();
 
+	/// Get the current capacity of the pool. It's not thread safe.
+	PtrSize getMemoryCapacity() const;
+
 private:
 	/// The memory chunk.
 	class Chunk

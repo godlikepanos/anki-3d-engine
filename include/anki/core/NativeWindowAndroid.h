@@ -25,7 +25,7 @@ struct NativeWindowImpl
 		destroy();
 	}
 
-	void create(NativeWindowInitializer& init);
+	void create(NativeWindowInitInfo& init);
 	void destroy();
 };
 

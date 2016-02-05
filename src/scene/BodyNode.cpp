@@ -66,7 +66,7 @@ Error BodyNode::create(const CString& name, const CString& resourceFname)
 	ANKI_CHECK(getResourceManager().loadResource(resourceFname, m_rsrc));
 
 	// Create body
-	PhysicsBody::Initializer init;
+	PhysicsBodyInitInfo init;
 	init.m_mass = 1.0;
 	init.m_shape = m_rsrc->getShape();
 	m_body = getSceneGraph()._getPhysicsWorld().newInstance<PhysicsBody>(init);

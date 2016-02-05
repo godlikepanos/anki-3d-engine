@@ -30,7 +30,7 @@ PhysicsCollisionShape::~PhysicsCollisionShape()
 //==============================================================================
 
 //==============================================================================
-Error PhysicsSphere::create(Initializer& init, F32 radius)
+Error PhysicsSphere::create(PhysicsCollisionShapeInitInfo& init, F32 radius)
 {
 	Error err = ErrorCode::NONE;
 
@@ -50,7 +50,8 @@ Error PhysicsSphere::create(Initializer& init, F32 radius)
 //==============================================================================
 
 //==============================================================================
-Error PhysicsBox::create(Initializer& init, const Vec3& extend)
+Error PhysicsBox::create(
+	PhysicsCollisionShapeInitInfo& init, const Vec3& extend)
 {
 	Error err = ErrorCode::NONE;
 
@@ -74,7 +75,7 @@ Error PhysicsBox::create(Initializer& init, const Vec3& extend)
 //==============================================================================
 
 //==============================================================================
-Error PhysicsTriangleSoup::create(Initializer& init,
+Error PhysicsTriangleSoup::create(PhysicsCollisionShapeInitInfo& init,
 	const Vec3* positions,
 	U32 positionsStride,
 	const U16* indices,

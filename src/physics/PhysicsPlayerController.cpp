@@ -144,7 +144,8 @@ PhysicsPlayerController::~PhysicsPlayerController()
 }
 
 //==============================================================================
-Error PhysicsPlayerController::create(const Initializer& init)
+Error PhysicsPlayerController::create(
+	const PhysicsPlayerControllerInitInfo& init)
 {
 	NewtonWorld* world = m_world->_getNewtonWorld();
 

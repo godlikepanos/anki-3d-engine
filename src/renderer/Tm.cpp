@@ -29,7 +29,7 @@ Error Tm::create(const ConfigSet& initializer)
 		"rppstm_"));
 
 	// Create ppline
-	PipelineInitializer pplineInit;
+	PipelineInitInfo pplineInit;
 	pplineInit.m_shaders[U(ShaderType::COMPUTE)] =
 		m_luminanceShader->getGrShader();
 	m_luminancePpline = getGrManager().newInstance<Pipeline>(pplineInit);
@@ -47,7 +47,7 @@ Error Tm::create(const ConfigSet& initializer)
 	cmdb->flush();
 
 	// Create descriptors
-	ResourceGroupInitializer rcinit;
+	ResourceGroupInitInfo rcinit;
 	rcinit.m_storageBuffers[0].m_buffer = m_luminanceBuff;
 	rcinit.m_storageBuffers[0].m_range = sizeof(Vec4);
 	rcinit.m_textures[0].m_texture = m_r->getIs().getRt();

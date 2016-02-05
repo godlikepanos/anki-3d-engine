@@ -17,10 +17,14 @@ void main()
 	out_color = textureLod(u_tex, in_uv, TEXTURE_MIPMAP).rgb;
 	out_color += textureLod(u_tex, in_uv + TEXEL_SIZE, TEXTURE_MIPMAP).rgb;
 	out_color += textureLod(u_tex, in_uv - TEXEL_SIZE, TEXTURE_MIPMAP).rgb;
-	out_color += textureLod(
-		u_tex, in_uv + vec2(TEXEL_SIZE.x, -TEXEL_SIZE.y), TEXTURE_MIPMAP).rgb;
-	out_color += textureLod(
-		u_tex, in_uv + vec2(-TEXEL_SIZE.x, TEXEL_SIZE.y), TEXTURE_MIPMAP).rgb;
+	out_color +=
+		textureLod(
+			u_tex, in_uv + vec2(TEXEL_SIZE.x, -TEXEL_SIZE.y), TEXTURE_MIPMAP)
+			.rgb;
+	out_color +=
+		textureLod(
+			u_tex, in_uv + vec2(-TEXEL_SIZE.x, TEXEL_SIZE.y), TEXTURE_MIPMAP)
+			.rgb;
 
 	out_color /= 5.0;
 }

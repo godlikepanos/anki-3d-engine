@@ -34,7 +34,7 @@ PhysicsBody::~PhysicsBody()
 }
 
 //==============================================================================
-Error PhysicsBody::create(const Initializer& init)
+Error PhysicsBody::create(const PhysicsBodyInitInfo& init)
 {
 	// I collisionType =
 	// NewtonCollisionGetType(init.m_shape->_getNewtonShape());

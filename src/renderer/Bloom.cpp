@@ -30,7 +30,7 @@ Error Bloom::initFb(FramebufferPtr& fb, TexturePtr& rt)
 		m_width, m_height, RT_PIXEL_FORMAT, 1, SamplingFilter::LINEAR, 1, rt);
 
 	// Create FB
-	FramebufferInitializer fbInit;
+	FramebufferInitInfo fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = rt;
 	fbInit.m_colorAttachments[0].m_loadOperation =
@@ -111,7 +111,7 @@ Error Bloom::initInternal(const ConfigSet& config)
 
 	// Set descriptors
 	{
-		ResourceGroupInitializer descInit;
+		ResourceGroupInitInfo descInit;
 		descInit.m_textures[0].m_texture = m_r->getIs().getRt();
 		descInit.m_uniformBuffers[0].m_dynamic = true;
 
@@ -122,13 +122,13 @@ Error Bloom::initInternal(const ConfigSet& config)
 	}
 
 	{
-		ResourceGroupInitializer descInit;
+		ResourceGroupInitInfo descInit;
 		descInit.m_textures[0].m_texture = m_vblurRt;
 		m_hDescrGroup = gl.newInstance<ResourceGroup>(descInit);
 	}
 
 	{
-		ResourceGroupInitializer descInit;
+		ResourceGroupInitInfo descInit;
 		descInit.m_textures[0].m_texture = m_hblurRt;
 		m_vDescrGroup = gl.newInstance<ResourceGroup>(descInit);
 	}

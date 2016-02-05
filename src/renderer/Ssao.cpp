@@ -70,7 +70,7 @@ Error Ssao::createFb(FramebufferPtr& fb, TexturePtr& rt)
 		m_width, m_height, RT_PIXEL_FORMAT, 1, SamplingFilter::LINEAR, 1, rt);
 
 	// Create FB
-	FramebufferInitializer fbInit;
+	FramebufferInitInfo fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = rt;
 	fbInit.m_colorAttachments[0].m_loadOperation =
@@ -109,7 +109,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 	//
 	// noise texture
 	//
-	TextureInitializer tinit;
+	TextureInitInfo tinit;
 
 	tinit.m_width = tinit.m_height = NOISE_TEX_SIZE;
 	tinit.m_type = TextureType::_2D;
@@ -158,7 +158,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 	//
 	// Shaders
 	//
-	PipelineInitializer ppinit;
+	PipelineInitInfo ppinit;
 	ppinit.m_color.m_attachmentCount = 1;
 	ppinit.m_color.m_attachments[0].m_format = RT_PIXEL_FORMAT;
 	ppinit.m_depthStencil.m_depthWriteEnabled = false;
@@ -233,8 +233,8 @@ Error Ssao::initInternal(const ConfigSet& config)
 	//
 	// Resource groups
 	//
-	ResourceGroupInitializer rcinit;
-	SamplerInitializer sinit;
+	ResourceGroupInitInfo rcinit;
+	SamplerInitInfo sinit;
 	sinit.m_minMagFilter = SamplingFilter::LINEAR;
 	sinit.m_mipmapFilter = SamplingFilter::NEAREST;
 	sinit.m_repeat = false;
@@ -250,11 +250,11 @@ Error Ssao::initInternal(const ConfigSet& config)
 	rcinit.m_uniformBuffers[0].m_dynamic = true;
 	m_rcFirst = gr.newInstance<ResourceGroup>(rcinit);
 
-	rcinit = ResourceGroupInitializer();
+	rcinit = ResourceGroupInitInfo();
 	rcinit.m_textures[0].m_texture = m_vblurRt;
 	m_hblurRc = gr.newInstance<ResourceGroup>(rcinit);
 
-	rcinit = ResourceGroupInitializer();
+	rcinit = ResourceGroupInitInfo();
 	rcinit.m_textures[0].m_texture = m_hblurRt;
 	m_vblurRc = gr.newInstance<ResourceGroup>(rcinit);
 

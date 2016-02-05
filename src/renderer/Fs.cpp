@@ -30,7 +30,7 @@ Error Fs::init(const ConfigSet&)
 		1,
 		m_rt);
 
-	FramebufferInitializer fbInit;
+	FramebufferInitInfo fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation =
@@ -43,7 +43,7 @@ Error Fs::init(const ConfigSet&)
 
 	// Init the global resources
 	{
-		ResourceGroupInitializer init;
+		ResourceGroupInitInfo init;
 		init.m_textures[0].m_texture = m_r->getMs().getDepthRt();
 		init.m_textures[1].m_texture =
 			m_r->getIs().getSm().getSpotTextureArray();

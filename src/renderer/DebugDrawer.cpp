@@ -43,7 +43,7 @@ Error DebugDrawer::create(Renderer* r)
 	ANKI_CHECK(
 		r->getResourceManager().loadResource("shaders/Dbg.frag.glsl", m_frag));
 
-	PipelineInitializer init;
+	PipelineInitInfo init;
 	init.m_vertex.m_bindingCount = 1;
 	init.m_vertex.m_bindings[0].m_stride = 2 * sizeof(Vec4);
 	init.m_vertex.m_attributeCount = 2;
@@ -72,7 +72,7 @@ Error DebugDrawer::create(Renderer* r)
 		BufferUsageBit::VERTEX,
 		BufferAccessBit::CLIENT_WRITE);
 
-	ResourceGroupInitializer rcinit;
+	ResourceGroupInitInfo rcinit;
 	rcinit.m_vertexBuffers[0].m_buffer = m_vertBuff;
 	m_rcGroup = gr.newInstance<ResourceGroup>(rcinit);
 

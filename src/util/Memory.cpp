@@ -521,6 +521,19 @@ void StackMemoryPool::reset()
 }
 
 //==============================================================================
+PtrSize StackMemoryPool::getMemoryCapacity() const
+{
+	PtrSize sum = 0;
+	U crntChunkIdx = m_crntChunkIdx.load();
+	for(U i = 0; i <= crntChunkIdx; ++i)
+	{
+		sum += m_chunks[i].m_size;
+	}
+
+	return sum;
+}
+
+//==============================================================================
 // ChainMemoryPool                                                             =
 //==============================================================================
 

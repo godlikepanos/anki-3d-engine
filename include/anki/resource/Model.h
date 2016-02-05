@@ -100,8 +100,8 @@ private:
 
 	PipelinePtr getPipeline(const RenderingKey& key) const;
 
-	void computePipelineInitializer(
-		const RenderingKey& key, PipelineInitializer& pinit) const;
+	void computePipelineInitInfo(
+		const RenderingKey& key, PipelineInitInfo& pinit) const;
 };
 
 /// Model is an entity that acts as a container for other resources. Models are

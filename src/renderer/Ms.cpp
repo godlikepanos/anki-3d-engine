@@ -69,7 +69,7 @@ Error Ms::createRt(U32 samples)
 	loadop = AttachmentLoadOperation::CLEAR;
 #endif
 
-	FramebufferInitializer fbInit;
+	FramebufferInitInfo fbInit;
 	fbInit.m_colorAttachmentsCount = ATTACHMENT_COUNT;
 	fbInit.m_colorAttachments[0].m_texture = m_rt0;
 	fbInit.m_colorAttachments[0].m_loadOperation = loadop;

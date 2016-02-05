@@ -344,7 +344,7 @@ void Renderer::createRenderTarget(U32 w,
 		ANKI_ASSERT(isAligned(16, h));
 	}
 
-	TextureInitializer init;
+	TextureInitInfo init;
 
 	init.m_width = w;
 	init.m_height = h;
@@ -372,7 +372,7 @@ void Renderer::createRenderTarget(U32 w,
 void Renderer::createDrawQuadPipeline(
 	ShaderPtr frag, const ColorStateInfo& colorState, PipelinePtr& ppline)
 {
-	PipelineInitializer init;
+	PipelineInitInfo init;
 
 	init.m_inputAssembler.m_topology = PrimitiveTopology::TRIANGLE_STRIP;
 

@@ -67,6 +67,13 @@ public:
 	U32 m_baseInstance = 0;
 };
 
+/// Command buffer init info.
+class CommandBufferInitInfo
+{
+public:
+	Bool m_secondLevel = false;
+};
+
 /// Command buffer initialization hints. They are used to optimize the
 /// allocators of a command buffer.
 class CommandBufferInitHints
@@ -74,12 +81,7 @@ class CommandBufferInitHints
 	friend class CommandBufferImpl;
 
 private:
-	enum
-	{
-		MAX_CHUNK_SIZE = 4 * 1024 * 1024 // 4MB
-	};
-
-	PtrSize m_chunkSize = 1024;
+	PtrSize m_chunkSize = 1024 * 64;
 };
 
 /// Command buffer.
