@@ -81,8 +81,10 @@ Error Fs::run(CommandBufferPtr& cmdb)
 	cmdb->bindResourceGroup(m_globalResources, 1, &dyn);
 
 	SArray<CommandBufferPtr> cmdbs(&cmdb, 1);
-	ANKI_CHECK(m_r->getSceneDrawer().render(
-		camFr, RenderingStage::BLEND, Pass::MS_FS, cmdbs,
+	ANKI_CHECK(m_r->getSceneDrawer().render(camFr,
+		RenderingStage::BLEND,
+		Pass::MS_FS,
+		cmdbs,
 		UVec2(m_r->getWidth() / 2, m_r->getHeight() / 2)));
 
 	return ErrorCode::NONE;

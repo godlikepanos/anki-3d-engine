@@ -296,7 +296,8 @@ Error Ir::run(CommandBufferPtr cmdb)
 	FrustumComponent& frc = m_r->getActiveFrustumComponent();
 	VisibilityTestResults& visRez = frc.getVisibilityTestResults();
 
-	if(visRez.getReflectionProbeCount() > m_cubemapArrSize)
+	if(visRez.getCount(VisibilityGroupType::REFLECTION_PROBES)
+		> m_cubemapArrSize)
 	{
 		ANKI_LOGW("Increase the ir.cubemapTextureArraySize");
 	}
@@ -320,7 +321,8 @@ Error Ir::run(CommandBufferPtr cmdb)
 
 	// Probes GPU mem
 	void* data = getGrManager().allocateFrameHostVisibleMemory(
-		sizeof(IrShaderReflectionProbe) * visRez.getReflectionProbeCount()
+		sizeof(IrShaderReflectionProbe)
+				* visRez.getCount(VisibilityGroupType::REFLECTION_PROBES)
 			+ sizeof(Mat3x4)
 			+ sizeof(Vec4),
 		BufferUsage::STORAGE,
@@ -338,11 +340,13 @@ Error Ir::run(CommandBufferPtr cmdb)
 
 	SArray<IrShaderReflectionProbe> probes(
 		reinterpret_cast<IrShaderReflectionProbe*>(nearClusterDivisor + 1),
-		visRez.getReflectionProbeCount());
+		visRez.getCount(VisibilityGroupType::REFLECTION_PROBES));
 
 	// Render some of the probes
-	const VisibleNode* it = visRez.getReflectionProbesBegin();
-	const VisibleNode* end = visRez.getReflectionProbesEnd();
+	const VisibleNode* it =
+		visRez.getBegin(VisibilityGroupType::REFLECTION_PROBES);
+	const VisibleNode* end =
+		visRez.getEnd(VisibilityGroupType::REFLECTION_PROBES);
 
 	U probeIdx = 0;
 	while(it != end)
@@ -353,7 +357,8 @@ Error Ir::run(CommandBufferPtr cmdb)
 		++it;
 		++probeIdx;
 	}
-	ANKI_ASSERT(probeIdx == visRez.getReflectionProbeCount());
+	ANKI_ASSERT(
+		probeIdx == visRez.getCount(VisibilityGroupType::REFLECTION_PROBES));
 
 	//
 	// Start the jobs that can run in parallel
@@ -387,7 +392,7 @@ void Ir::binProbes(U32 threadId, PtrSize threadsCount, IrRunContext& ctx)
 	PtrSize start, end;
 	ThreadPool::Task::choseStartEnd(threadId,
 		threadsCount,
-		ctx.m_visRez->getReflectionProbeCount(),
+		ctx.m_visRez->getCount(VisibilityGroupType::REFLECTION_PROBES),
 		start,
 		end);
 
@@ -400,7 +405,8 @@ void Ir::binProbes(U32 threadId, PtrSize threadsCount, IrRunContext& ctx)
 
 	for(auto i = start; i < end; i++)
 	{
-		VisibleNode* vnode = ctx.m_visRez->getReflectionProbesBegin() + i;
+		VisibleNode* vnode =
+			ctx.m_visRez->getBegin(VisibilityGroupType::REFLECTION_PROBES) + i;
 		SceneNode& node = *vnode->m_node;
 
 		task.m_node = &node;

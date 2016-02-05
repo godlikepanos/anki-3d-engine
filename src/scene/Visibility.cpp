@@ -331,7 +331,8 @@ void VisibilityTestTask::test(
 			if(wantsRenderComponents
 				|| (wantsShadowCasters && rc->getCastsShadow()))
 			{
-				visible->moveBackRenderable(alloc, visibleNode);
+				visible->moveBack(
+					alloc, VisibilityGroupType::RENDERABLES, visibleNode);
 
 				if(wantsShadowCasters)
 				{
@@ -342,22 +343,24 @@ void VisibilityTestTask::test(
 
 		if(lc && wantsLightComponents)
 		{
-			visible->moveBackLight(alloc, visibleNode);
+			visible->moveBack(alloc, VisibilityGroupType::LIGHTS, visibleNode);
 		}
 
 		if(lfc && wantsFlareComponents)
 		{
-			visible->moveBackLensFlare(alloc, visibleNode);
+			visible->moveBack(alloc, VisibilityGroupType::FLARES, visibleNode);
 		}
 
 		if(reflc && wantsReflectionProbes)
 		{
-			visible->moveBackReflectionProbe(alloc, visibleNode);
+			visible->moveBack(
+				alloc, VisibilityGroupType::REFLECTION_PROBES, visibleNode);
 		}
 
 		if(proxyc && wantsReflectionProxies)
 		{
-			visible->moveBackReflectionProxy(alloc, visibleNode);
+			visible->moveBack(
+				alloc, VisibilityGroupType::REFLECTION_PROXIES, visibleNode);
 		}
 
 		// Add more frustums to the list
@@ -433,11 +436,12 @@ void VisibilityTestTask::combineTestResults(
 
 	// Sort some of the arrays
 	DistanceSortFunctor comp;
-	std::sort(
-		visible->getRenderablesBegin(), visible->getRenderablesEnd(), comp);
+	std::sort(visible->getBegin(VisibilityGroupType::RENDERABLES),
+		visible->getEnd(VisibilityGroupType::RENDERABLES),
+		comp);
 
-	std::sort(visible->getReflectionProbesBegin(),
-		visible->getReflectionProbesEnd(),
+	std::sort(visible->getBegin(VisibilityGroupType::REFLECTION_PROBES),
+		visible->getEnd(VisibilityGroupType::REFLECTION_PROBES),
 		comp);
 }
 
@@ -452,18 +456,21 @@ void VisibilityTestResults::create(SceneFrameAllocator<U8> alloc,
 	U32 lensFlaresReservedSize,
 	U32 reflectionProbesReservedSize)
 {
-	m_groups[RENDERABLES].m_nodes.create(alloc, renderablesReservedSize);
-	m_groups[LIGHTS].m_nodes.create(alloc, lightsReservedSize);
-	m_groups[FLARES].m_nodes.create(alloc, lensFlaresReservedSize);
-	m_groups[REFLECTION_PROBES].m_nodes.create(
+	m_groups[VisibilityGroupType::RENDERABLES].m_nodes.create(
+		alloc, renderablesReservedSize);
+	m_groups[VisibilityGroupType::LIGHTS].m_nodes.create(
+		alloc, lightsReservedSize);
+	m_groups[VisibilityGroupType::FLARES].m_nodes.create(
+		alloc, lensFlaresReservedSize);
+	m_groups[VisibilityGroupType::REFLECTION_PROBES].m_nodes.create(
 		alloc, reflectionProbesReservedSize);
-	m_groups[REFLECTION_PROXIES].m_nodes.create(
+	m_groups[VisibilityGroupType::REFLECTION_PROXIES].m_nodes.create(
 		alloc, reflectionProbesReservedSize);
 }
 
 //==============================================================================
 void VisibilityTestResults::moveBack(
-	SceneFrameAllocator<U8> alloc, GroupType type, VisibleNode& x)
+	SceneFrameAllocator<U8> alloc, VisibilityGroupType type, VisibleNode& x)
 {
 	Group& group = m_groups[type];
 	if(group.m_count + 1 > group.m_nodes.getSize())
@@ -485,20 +492,24 @@ void VisibilityTestResults::combineWith(
 
 	// Count the visible scene nodes to optimize the allocation of the
 	// final result
-	Array<U, TYPE_COUNT> counts;
+	Array<U, U(VisibilityGroupType::TYPE_COUNT)> counts;
 	memset(&counts[0], 0, sizeof(counts));
-	for(U i = 0; i < results.getSize(); i++)
+	for(U i = 0; i < results.getSize(); ++i)
 	{
 		VisibilityTestResults& rez = *results[i];
 
-		for(U t = 0; t < TYPE_COUNT; ++t)
+		for(VisibilityGroupType t = VisibilityGroupType::FIRST;
+			t < VisibilityGroupType::TYPE_COUNT;
+			++t)
 		{
 			counts[t] += rez.m_groups[t].m_count;
 		}
 	}
 
 	// Allocate
-	for(U t = 0; t < TYPE_COUNT; ++t)
+	for(VisibilityGroupType t = VisibilityGroupType::FIRST;
+		t < VisibilityGroupType::TYPE_COUNT;
+		++t)
 	{
 		if(counts[t] > 0)
 		{
@@ -513,7 +524,9 @@ void VisibilityTestResults::combineWith(
 	{
 		VisibilityTestResults& rez = *results[i];
 
-		for(U t = 0; t < TYPE_COUNT; ++t)
+		for(VisibilityGroupType t = VisibilityGroupType::FIRST;
+			t < VisibilityGroupType::TYPE_COUNT;
+			++t)
 		{
 			U copyCount = rez.m_groups[t].m_count;
 			if(copyCount > 0)

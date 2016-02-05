@@ -137,8 +137,10 @@ Error Ms::run(CommandBufferPtr& cmdb)
 	FrustumComponent& frc = m_r->getActiveFrustumComponent();
 	SArray<CommandBufferPtr> cmdbs(
 		&m_secondLevelCmdbs[0], m_secondLevelCmdbs.getSize());
-	ANKI_CHECK(m_r->getSceneDrawer().render(
-		frc, RenderingStage::MATERIAL, Pass::MS_FS, cmdbs, 
+	ANKI_CHECK(m_r->getSceneDrawer().render(frc,
+		RenderingStage::MATERIAL,
+		Pass::MS_FS,
+		cmdbs,
 		UVec2(m_r->getWidth(), m_r->getHeight())));
 
 	for(U i = 0; i < m_secondLevelCmdbs.getSize(); ++i)

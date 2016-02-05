@@ -30,8 +30,9 @@ void FrustumComponent::setVisibilityTestResults(VisibilityTestResults* visible)
 	ANKI_ASSERT(m_visible == nullptr);
 	m_visible = visible;
 
-	m_stats.m_renderablesCount = visible->getRenderablesCount();
-	m_stats.m_lightsCount = visible->getLightsCount();
+	m_stats.m_renderablesCount =
+		visible->getCount(VisibilityGroupType::RENDERABLES);
+	m_stats.m_lightsCount = visible->getCount(VisibilityGroupType::LIGHTS);
 }
 
 //==============================================================================

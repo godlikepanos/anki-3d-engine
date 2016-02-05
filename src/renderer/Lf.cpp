@@ -160,12 +160,13 @@ void Lf::runOcclusionTests(CommandBufferPtr& cmdb)
 	FrustumComponent& camFr = m_r->getActiveFrustumComponent();
 	VisibilityTestResults& vi = camFr.getVisibilityTestResults();
 
-	if(vi.getLensFlaresCount() > m_maxFlares)
+	if(vi.getCount(VisibilityGroupType::FLARES) > m_maxFlares)
 	{
 		ANKI_LOGW("Visible flares exceed the limit. Increase lf.maxFlares");
 	}
 
-	U totalCount = min<U>(vi.getLensFlaresCount(), m_maxFlares);
+	U totalCount =
+		min<U>(vi.getCount(VisibilityGroupType::FLARES), m_maxFlares);
 	if(totalCount > 0)
 	{
 		// Setup MVP UBO
@@ -190,8 +191,8 @@ void Lf::runOcclusionTests(CommandBufferPtr& cmdb)
 		cmdb->bindResourceGroup(m_occlusionRcGroup, 0, &dyn);
 
 		// Iterate lens flare
-		auto it = vi.getLensFlaresBegin();
-		auto end = vi.getLensFlaresBegin() + totalCount;
+		auto it = vi.getBegin(VisibilityGroupType::FLARES);
+		auto end = vi.getBegin(VisibilityGroupType::FLARES) + totalCount;
 		for(; it != end; ++it)
 		{
 			LensFlareComponent& lf =
@@ -221,15 +222,16 @@ void Lf::run(CommandBufferPtr& cmdb)
 	FrustumComponent& camFr = m_r->getActiveFrustumComponent();
 	VisibilityTestResults& vi = camFr.getVisibilityTestResults();
 
-	U totalCount = min<U>(vi.getLensFlaresCount(), m_maxFlares);
+	U totalCount =
+		min<U>(vi.getCount(VisibilityGroupType::FLARES), m_maxFlares);
 	if(totalCount > 0)
 	{
 		// Set common rendering state
 		cmdb->bindPipeline(m_realPpline);
 
 		// Iterate lens flare
-		auto it = vi.getLensFlaresBegin();
-		auto end = vi.getLensFlaresBegin() + totalCount;
+		auto it = vi.getBegin(VisibilityGroupType::FLARES);
+		auto end = vi.getBegin(VisibilityGroupType::FLARES) + totalCount;
 		for(; it != end; ++it)
 		{
 			LensFlareComponent& lf =

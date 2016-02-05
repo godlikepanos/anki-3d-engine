@@ -357,8 +357,8 @@ Error Is::lightPass(CommandBufferPtr& cmdb)
 	U spotCastersCount = 0;
 	U omniCastersCount = 0;
 
-	auto it = vi.getLightsBegin();
-	auto lend = vi.getLightsEnd();
+	auto it = vi.getBegin(VisibilityGroupType::LIGHTS);
+	auto lend = vi.getEnd(VisibilityGroupType::LIGHTS);
 	for(; it != lend; ++it)
 	{
 		SceneNode* node = (*it).m_node;
@@ -443,8 +443,8 @@ Error Is::lightPass(CommandBufferPtr& cmdb)
 		m_sLightsToken.markUnused();
 	}
 
-	taskData.m_lightsBegin = vi.getLightsBegin();
-	taskData.m_lightsEnd = vi.getLightsEnd();
+	taskData.m_lightsBegin = vi.getBegin(VisibilityGroupType::LIGHTS);
+	taskData.m_lightsEnd = vi.getEnd(VisibilityGroupType::LIGHTS);
 
 	taskData.m_is = this;
 

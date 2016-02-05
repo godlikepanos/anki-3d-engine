@@ -74,7 +74,21 @@ public:
 	}
 };
 
-/// Its actually a container for visible entities. It should be per frame
+/// The group of nodes that a VisibilityTestResults holds.
+enum class VisibilityGroupType
+{
+	RENDERABLES,
+	LIGHTS,
+	FLARES,
+	REFLECTION_PROBES,
+	REFLECTION_PROXIES,
+
+	TYPE_COUNT,
+	FIRST = RENDERABLES
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VisibilityGroupType, inline)
+
+/// It's actually a container for visible entities. It should be per frame.
 class VisibilityTestResults
 {
 public:
@@ -91,104 +105,24 @@ public:
 
 	void prepareMerge();
 
-	VisibleNode* getRenderablesBegin()
+	VisibleNode* getBegin(VisibilityGroupType type)
 	{
-		return getBegin(RENDERABLES);
+		return (getCount(type)) ? &m_groups[type].m_nodes[0] : nullptr;
 	}
 
-	VisibleNode* getRenderablesEnd()
+	VisibleNode* getEnd(VisibilityGroupType type)
 	{
-		return getEnd(RENDERABLES);
+		return (getCount(type)) ? (&m_groups[type].m_nodes[0] + getCount(type))
+								: nullptr;
 	}
 
-	VisibleNode* getLightsBegin()
-	{
-		return getBegin(LIGHTS);
-	}
+	void moveBack(SceneFrameAllocator<U8> alloc,
+		VisibilityGroupType type,
+		VisibleNode& x);
 
-	VisibleNode* getLightsEnd()
+	U32 getCount(VisibilityGroupType type) const
 	{
-		return getEnd(LIGHTS);
-	}
-
-	VisibleNode* getLensFlaresBegin()
-	{
-		return getBegin(FLARES);
-	}
-
-	VisibleNode* getLensFlaresEnd()
-	{
-		return getEnd(FLARES);
-	}
-
-	VisibleNode* getReflectionProbesBegin()
-	{
-		return getBegin(REFLECTION_PROBES);
-	}
-
-	VisibleNode* getReflectionProbesEnd()
-	{
-		return getEnd(REFLECTION_PROBES);
-	}
-
-	VisibleNode* getReflectionProxiesBegin()
-	{
-		return getBegin(REFLECTION_PROXIES);
-	}
-
-	VisibleNode* getReflectionProxiesEnd()
-	{
-		return getEnd(REFLECTION_PROXIES);
-	}
-
-	U32 getRenderablesCount() const
-	{
-		return getCount(RENDERABLES);
-	}
-
-	U32 getLightsCount() const
-	{
-		return getCount(LIGHTS);
-	}
-
-	U32 getLensFlaresCount() const
-	{
-		return getCount(FLARES);
-	}
-
-	U32 getReflectionProbeCount() const
-	{
-		return getCount(REFLECTION_PROBES);
-	}
-
-	U32 getReflectionProxyCount() const
-	{
-		return getCount(REFLECTION_PROXIES);
-	}
-
-	void moveBackRenderable(SceneFrameAllocator<U8> alloc, VisibleNode& x)
-	{
-		moveBack(alloc, RENDERABLES, x);
-	}
-
-	void moveBackLight(SceneFrameAllocator<U8> alloc, VisibleNode& x)
-	{
-		moveBack(alloc, LIGHTS, x);
-	}
-
-	void moveBackLensFlare(SceneFrameAllocator<U8> alloc, VisibleNode& x)
-	{
-		moveBack(alloc, FLARES, x);
-	}
-
-	void moveBackReflectionProbe(SceneFrameAllocator<U8> alloc, VisibleNode& x)
-	{
-		moveBack(alloc, REFLECTION_PROBES, x);
-	}
-
-	void moveBackReflectionProxy(SceneFrameAllocator<U8> alloc, VisibleNode& x)
-	{
-		moveBack(alloc, REFLECTION_PROXIES, x);
+		return m_groups[type].m_count;
 	}
 
 	Timestamp getShapeUpdateTimestamp() const
@@ -207,16 +141,6 @@ public:
 private:
 	using Container = DArray<VisibleNode>;
 
-	enum GroupType
-	{
-		RENDERABLES,
-		LIGHTS,
-		FLARES,
-		REFLECTION_PROBES,
-		REFLECTION_PROXIES,
-		TYPE_COUNT
-	};
-
 	class Group
 	{
 	public:
@@ -224,27 +148,9 @@ private:
 		U32 m_count = 0;
 	};
 
-	Array<Group, TYPE_COUNT> m_groups;
+	Array<Group, U(VisibilityGroupType::TYPE_COUNT)> m_groups;
 
 	Timestamp m_shapeUpdateTimestamp = 0;
-
-	U32 getCount(GroupType type) const
-	{
-		return m_groups[type].m_count;
-	}
-
-	VisibleNode* getBegin(GroupType type)
-	{
-		return (getCount(type)) ? &m_groups[type].m_nodes[0] : nullptr;
-	}
-
-	VisibleNode* getEnd(GroupType type)
-	{
-		return (getCount(type)) ? (&m_groups[type].m_nodes[0] + getCount(type))
-								: nullptr;
-	}
-
-	void moveBack(SceneFrameAllocator<U8> alloc, GroupType, VisibleNode& x);
 };
 
 /// Do visibility tests bypassing portals

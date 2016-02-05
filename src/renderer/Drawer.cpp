@@ -208,7 +208,8 @@ public:
 		VisibilityTestResults& vis = m_ctx.m_frc->getVisibilityTestResults();
 
 		PtrSize start, end;
-		U problemSize = vis.getRenderablesEnd() - vis.getRenderablesBegin();
+		U problemSize = vis.getEnd(VisibilityGroupType::RENDERABLES)
+			- vis.getBegin(VisibilityGroupType::RENDERABLES);
 		choseStartEnd(threadId, threadsCount, problemSize, start, end);
 
 		// Set the state of the command buffer
@@ -226,11 +227,13 @@ public:
 
 		for(U i = start; i < end; ++i)
 		{
-			m_ctx.m_visibleNode = vis.getRenderablesBegin() + i;
+			m_ctx.m_visibleNode =
+				vis.getBegin(VisibilityGroupType::RENDERABLES) + i;
 
 			if(i + 1 < end)
 			{
-				m_ctx.m_nextVisibleNode = vis.getRenderablesBegin() + i + 1;
+				m_ctx.m_nextVisibleNode =
+					vis.getBegin(VisibilityGroupType::RENDERABLES) + i + 1;
 			}
 			else
 			{
