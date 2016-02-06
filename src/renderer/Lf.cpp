@@ -154,10 +154,11 @@ Error Lf::initInternal(const ConfigSet& config)
 }
 
 //==============================================================================
-void Lf::runOcclusionTests(CommandBufferPtr& cmdb)
+void Lf::runOcclusionTests(RenderingContext& ctx)
 {
 	// Retrieve some things
-	FrustumComponent& camFr = m_r->getActiveFrustumComponent();
+	FrustumComponent& camFr = *ctx.m_frustumComponent;
+	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 	VisibilityTestResults& vi = camFr.getVisibilityTestResults();
 
 	if(vi.getCount(VisibilityGroupType::FLARES) > m_maxFlares)
@@ -216,10 +217,11 @@ void Lf::runOcclusionTests(CommandBufferPtr& cmdb)
 }
 
 //==============================================================================
-void Lf::run(CommandBufferPtr& cmdb)
+void Lf::run(RenderingContext& ctx)
 {
 	// Retrieve some things
-	FrustumComponent& camFr = m_r->getActiveFrustumComponent();
+	FrustumComponent& camFr = *ctx.m_frustumComponent;
+	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 	VisibilityTestResults& vi = camFr.getVisibilityTestResults();
 
 	U totalCount =

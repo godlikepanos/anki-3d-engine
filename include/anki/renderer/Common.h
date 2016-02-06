@@ -28,6 +28,8 @@ class Ir;
 class Upsample;
 class DownscaleBlur;
 
+class RenderingContext;
+
 /// Computes the 'a' and 'b' numbers for linearizeDepthOptimal
 inline void computeLinearizeDepthOptimal(F32 near, F32 far, F32& a, F32& b)
 {

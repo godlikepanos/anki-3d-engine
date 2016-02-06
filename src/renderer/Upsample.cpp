@@ -86,14 +86,15 @@ Error Upsample::init(const ConfigSet& config)
 }
 
 //==============================================================================
-void Upsample::run(CommandBufferPtr cmdb)
+void Upsample::run(RenderingContext& ctx)
 {
+	CommandBufferPtr cmdb = ctx.m_commandBuffer;
 	DynamicBufferInfo dyn;
 
 	Vec4* linearDepth =
 		static_cast<Vec4*>(getGrManager().allocateFrameHostVisibleMemory(
 			sizeof(Vec4), BufferUsage::UNIFORM, dyn.m_uniformBuffers[0]));
-	const Frustum& fr = m_r->getActiveFrustumComponent().getFrustum();
+	const Frustum& fr = ctx.m_frustumComponent->getFrustum();
 	computeLinearizeDepthOptimal(
 		fr.getNear(), fr.getFar(), linearDepth->x(), linearDepth->y());
 

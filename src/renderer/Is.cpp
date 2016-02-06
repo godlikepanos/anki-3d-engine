@@ -338,11 +338,12 @@ Error Is::initInternal(const ConfigSet& config)
 }
 
 //==============================================================================
-Error Is::lightPass(CommandBufferPtr& cmdb)
+Error Is::lightPass(RenderingContext& ctx)
 {
 	ANKI_TRACE_START_EVENT(RENDER_IS);
+	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 	ThreadPool& threadPool = m_r->getThreadPool();
-	m_frc = &m_r->getActiveFrustumComponent();
+	m_frc = ctx.m_frustumComponent;
 	VisibilityTestResults& vi = m_frc->getVisibilityTestResults();
 
 	U clusterCount = m_r->getClusterCount();
@@ -401,7 +402,7 @@ Error Is::lightPass(CommandBufferPtr& cmdb)
 	{
 		ANKI_CHECK(m_sm.run({&spotCasters[0], spotCastersCount},
 			{&omniCasters[0], omniCastersCount},
-			cmdb));
+			ctx));
 	}
 
 	//
@@ -792,10 +793,10 @@ void Is::setState(CommandBufferPtr& cmdb)
 }
 
 //==============================================================================
-Error Is::run(CommandBufferPtr& cmdb)
+Error Is::run(RenderingContext& ctx)
 {
 	// Do the light pass including the shadow passes
-	return lightPass(cmdb);
+	return lightPass(ctx);
 }
 
 //==============================================================================

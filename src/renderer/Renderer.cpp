@@ -203,26 +203,14 @@ Error Renderer::initInternal(const ConfigSet& config)
 }
 
 //==============================================================================
-Error Renderer::render(
-	SceneNode& frustumableNode, U frustumIdx, CommandBufferPtr cmdb)
+Error Renderer::render(RenderingContext& ctx)
 {
-	m_frc = nullptr;
-	Error err = frustumableNode.iterateComponentsOfType<FrustumComponent>(
-		[&](FrustumComponent& frc) -> Error {
-			if(frustumIdx == 0)
-			{
-				m_frc = &frc;
-			}
-
-			--frustumIdx;
-			return ErrorCode::NONE;
-		});
-	(void)err;
-	ANKI_ASSERT(m_frc && "Not enough frustum components");
+	FrustumComponent& frc = *ctx.m_frustumComponent;
+	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 	// Misc
-	ANKI_ASSERT(m_frc->getFrustum().getType() == Frustum::Type::PERSPECTIVE);
-	m_clusterer.prepare(getThreadPool(), *m_frc);
+	ANKI_ASSERT(frc.getFrustum().getType() == Frustum::Type::PERSPECTIVE);
+	m_clusterer.prepare(getThreadPool(), frc);
 
 	// Write the common uniforms
 	RendererCommonUniforms* commonUniforms =
@@ -232,73 +220,73 @@ Error Renderer::render(
 				BufferUsage::UNIFORM,
 				m_commonUniformsToken));
 
-	commonUniforms->m_projectionParams = m_frc->getProjectionParameters();
-	commonUniforms->m_nearFarLinearizeDepth.x() = m_frc->getFrustum().getNear();
-	commonUniforms->m_nearFarLinearizeDepth.y() = m_frc->getFrustum().getFar();
-	computeLinearizeDepthOptimal(m_frc->getFrustum().getNear(),
-		m_frc->getFrustum().getFar(),
+	commonUniforms->m_projectionParams = frc.getProjectionParameters();
+	commonUniforms->m_nearFarLinearizeDepth.x() = frc.getFrustum().getNear();
+	commonUniforms->m_nearFarLinearizeDepth.y() = frc.getFrustum().getFar();
+	computeLinearizeDepthOptimal(frc.getFrustum().getNear(),
+		frc.getFrustum().getFar(),
 		commonUniforms->m_nearFarLinearizeDepth.z(),
 		commonUniforms->m_nearFarLinearizeDepth.w());
 
-	commonUniforms->m_projectionMatrix = m_frc->getProjectionMatrix();
+	commonUniforms->m_projectionMatrix = frc.getProjectionMatrix();
 
 	// Run stages
 	if(m_ir)
 	{
-		ANKI_CHECK(m_ir->run(cmdb));
+		ANKI_CHECK(m_ir->run(ctx));
 	}
 
-	ANKI_CHECK(m_ms->run(cmdb));
+	ANKI_CHECK(m_ms->run(ctx));
 
-	m_lf->runOcclusionTests(cmdb);
+	m_lf->runOcclusionTests(ctx);
 
 	// m_tiler->run(cmdb);
 
-	ANKI_CHECK(m_is->run(cmdb));
+	ANKI_CHECK(m_is->run(ctx));
 
 	cmdb->generateMipmaps(m_ms->getDepthRt());
 	cmdb->generateMipmaps(m_ms->getRt2());
 
-	ANKI_CHECK(m_fs->run(cmdb));
-	m_lf->run(cmdb);
+	ANKI_CHECK(m_fs->run(ctx));
+	m_lf->run(ctx);
 
-	m_upsample->run(cmdb);
+	m_upsample->run(ctx);
 
 	cmdb->generateMipmaps(m_is->getRt());
 
 	if(m_downscale)
 	{
-		m_downscale->run(cmdb);
+		m_downscale->run(ctx);
 	}
 
 	if(m_tm)
 	{
-		m_tm->run(cmdb);
+		m_tm->run(ctx);
 	}
 
 	if(m_bloom)
 	{
-		m_bloom->run(cmdb);
+		m_bloom->run(ctx);
 	}
 
 	if(m_sslf)
 	{
-		m_sslf->run(cmdb);
+		m_sslf->run(ctx);
 	}
 
 	if(m_ssao)
 	{
-		m_ssao->run(cmdb);
+		m_ssao->run(ctx);
 	}
 
 	if(m_pps)
 	{
-		m_pps->run(cmdb);
+		m_pps->run(ctx);
 	}
 
 	if(m_dbg->getEnabled())
 	{
-		ANKI_CHECK(m_dbg->run(cmdb));
+		ANKI_CHECK(m_dbg->run(ctx));
 	}
 
 	++m_frameCount;

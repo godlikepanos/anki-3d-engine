@@ -151,7 +151,12 @@ Error MainRenderer::render(SceneGraph& scene)
 
 	// Run renderer
 	m_r->getIs().setAmbientColor(scene.getAmbientColor());
-	ANKI_CHECK(m_r->render(scene.getActiveCamera(), 0, cmdb));
+
+	RenderingContext ctx;
+	ctx.m_commandBuffer = cmdb;
+	ctx.m_frustumComponent = 
+		&scene.getActiveCamera().getComponent<FrustumComponent>();
+	ANKI_CHECK(m_r->render(ctx));
 
 	if(!rDrawToDefault)
 	{

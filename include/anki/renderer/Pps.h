@@ -35,7 +35,7 @@ anki_internal:
 	~Pps();
 
 	ANKI_USE_RESULT Error init(const ConfigSet& config);
-	void run(CommandBufferPtr& jobs);
+	void run(RenderingContext& ctx);
 
 	const TexturePtr& getRt() const
 	{

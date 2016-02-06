@@ -29,9 +29,9 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& config);
 
-	void runOcclusionTests(CommandBufferPtr& cmdb);
+	void runOcclusionTests(RenderingContext& ctx);
 
-	void run(CommandBufferPtr& cmdb);
+	void run(RenderingContext& ctx);
 
 private:
 	// Occlusion query

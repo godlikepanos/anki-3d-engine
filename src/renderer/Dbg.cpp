@@ -78,15 +78,16 @@ Error Dbg::init(const ConfigSet& initializer)
 }
 
 //==============================================================================
-Error Dbg::run(CommandBufferPtr& cmdb)
+Error Dbg::run(RenderingContext& ctx)
 {
 	Error err = ErrorCode::NONE;
 
 	ANKI_ASSERT(m_enabled);
 
+	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 	cmdb->bindFramebuffer(m_fb);
 
-	FrustumComponent& camFr = m_r->getActiveFrustumComponent();
+	FrustumComponent& camFr = *ctx.m_frustumComponent;
 	SceneNode& cam = camFr.getSceneNode();
 	m_drawer->prepareDraw(cmdb);
 	m_drawer->setViewProjectionMatrix(camFr.getViewProjectionMatrix());

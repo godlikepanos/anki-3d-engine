@@ -29,7 +29,7 @@ anki_internal:
 
 	ANKI_USE_RESULT Error create(const ConfigSet& initializer);
 
-	void run(CommandBufferPtr& cmdb);
+	void run(RenderingContext& ctx);
 
 private:
 	ShaderResourcePtr m_luminanceShader;

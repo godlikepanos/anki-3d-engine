@@ -34,7 +34,7 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 
-	ANKI_USE_RESULT Error run(CommandBufferPtr cmdb);
+	ANKI_USE_RESULT Error run(RenderingContext& ctx);
 
 	DynamicBufferToken getProbesToken() const
 	{
@@ -102,14 +102,14 @@ private:
 	void binProbes(U32 threadId, PtrSize threadsCount, IrRunContext& ctx);
 
 	ANKI_USE_RESULT Error writeProbeAndRender(
-		SceneNode& node, IrShaderReflectionProbe& probe, CommandBufferPtr cmdb);
+		RenderingContext& ctx, SceneNode& node, IrShaderReflectionProbe& probe);
 
 	void binProbe(U probeIdx, IrRunContext& ctx, IrTaskContext& task) const;
 
-	ANKI_USE_RESULT Error renderReflection(SceneNode& node,
+	ANKI_USE_RESULT Error renderReflection(RenderingContext& ctx,
+		SceneNode& node,
 		ReflectionProbeComponent& reflc,
-		U cubemapIdx,
-		CommandBufferPtr cmdb);
+		U cubemapIdx);
 
 	static void writeIndicesAndCluster(
 		U clusterIdx, Bool hasPrevCluster, IrRunContext& ctx);

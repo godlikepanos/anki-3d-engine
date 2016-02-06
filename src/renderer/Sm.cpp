@@ -106,10 +106,11 @@ Error Sm::init(const ConfigSet& config)
 //==============================================================================
 Error Sm::run(SArray<SceneNode*> spotShadowCasters,
 	SArray<SceneNode*> omniShadowCasters,
-	CommandBufferPtr& cmdBuff)
+	RenderingContext& ctx)
 {
 	ANKI_ASSERT(m_enabled);
 	ANKI_TRACE_START_EVENT(RENDER_SM);
+	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 	if(omniShadowCasters.getSize() > m_omnis.getSize()
 		|| spotShadowCasters.getSize() > m_spots.getSize())
@@ -120,12 +121,12 @@ Error Sm::run(SArray<SceneNode*> spotShadowCasters,
 	// render all
 	for(SceneNode* node : spotShadowCasters)
 	{
-		ANKI_CHECK(doSpotLight(*node, cmdBuff));
+		ANKI_CHECK(doSpotLight(*node, cmdb));
 	}
 
 	for(SceneNode* node : omniShadowCasters)
 	{
-		ANKI_CHECK(doOmniLight(*node, cmdBuff));
+		ANKI_CHECK(doOmniLight(*node, cmdb));
 	}
 
 	ANKI_TRACE_STOP_EVENT(RENDER_SM);

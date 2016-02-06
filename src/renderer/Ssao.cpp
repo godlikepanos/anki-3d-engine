@@ -276,8 +276,10 @@ Error Ssao::init(const ConfigSet& config)
 }
 
 //==============================================================================
-void Ssao::run(CommandBufferPtr& cmdb)
+void Ssao::run(RenderingContext& ctx)
 {
+	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
+
 	// 1st pass
 	//
 	cmdb->bindFramebuffer(m_vblurFb);

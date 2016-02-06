@@ -78,8 +78,10 @@ Error Sslf::initInternal(const ConfigSet& config)
 }
 
 //==============================================================================
-void Sslf::run(CommandBufferPtr& cmdb)
+void Sslf::run(RenderingContext& ctx)
 {
+	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
+
 	// Draw to the SSLF FB
 	cmdb->bindFramebuffer(m_fb);
 	cmdb->setViewport(

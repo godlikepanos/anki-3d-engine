@@ -150,10 +150,9 @@ Error Bloom::init(const ConfigSet& config)
 }
 
 //==============================================================================
-void Bloom::run(CommandBufferPtr& cmdb)
+void Bloom::run(RenderingContext& ctx)
 {
-	// For the passes it should be NEAREST_BASE
-	// vblurFai.setFiltering(Texture::TFrustumType::NEAREST_BASE);
+	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 	// pass 0
 	cmdb->bindFramebuffer(m_vblurFb);

@@ -25,6 +25,18 @@ class ResourceManager;
 /// @addtogroup renderer
 /// @{
 
+/// Rendering context.
+class RenderingContext
+{
+public:
+	/// Active frustum.
+	FrustumComponent* m_frustumComponent ANKI_DBG_NULLIFY_PTR;
+
+	CommandBufferPtr m_commandBuffer; ///< Primary command buffer.
+
+	DArray<CommandBufferPtr> m_fsCommandBuffers;
+};
+
 /// Offscreen renderer. It is a class and not a namespace because we may need
 /// external renderers for security cameras for example
 class Renderer
@@ -141,8 +153,7 @@ public:
 	}
 
 	/// This function does all the rendering stages and produces a final result.
-	ANKI_USE_RESULT Error render(
-		SceneNode& frustumableNode, U frustumIdx, CommandBufferPtr cmdb);
+	ANKI_USE_RESULT Error render(RenderingContext& ctx);
 
 anki_internal:
 	/// WARNING: If you change the tile size you need to change some shaders
@@ -161,18 +172,6 @@ anki_internal:
 	U64 getFrameCount() const
 	{
 		return m_frameCount;
-	}
-
-	const FrustumComponent& getActiveFrustumComponent() const
-	{
-		ANKI_ASSERT(m_frc);
-		return *m_frc;
-	}
-
-	FrustumComponent& getActiveFrustumComponent()
-	{
-		ANKI_ASSERT(m_frc);
-		return *m_frc;
 	}
 
 	const RenderableDrawer& getSceneDrawer() const
@@ -353,7 +352,6 @@ private:
 
 	ShaderResourcePtr m_drawQuadVert;
 
-	FrustumComponent* m_frc = nullptr; ///< Cache current frustum component.
 	RenderableDrawer m_sceneDrawer;
 
 	U64 m_frameCount; ///< Frame number

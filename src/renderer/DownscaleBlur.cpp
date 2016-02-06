@@ -80,8 +80,9 @@ Error DownscaleBlur::init(const ConfigSet& initializer)
 }
 
 //==============================================================================
-void DownscaleBlur::run(CommandBufferPtr& cmdb)
+void DownscaleBlur::run(RenderingContext& ctx)
 {
+	CommandBufferPtr cmdb = ctx.m_commandBuffer;
 	UVec2 size(m_r->getWidth(), m_r->getHeight());
 	for(U i = 0; i < m_passes.getSize(); ++i)
 	{

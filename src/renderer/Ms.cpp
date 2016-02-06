@@ -116,9 +116,10 @@ Error Ms::initInternal(const ConfigSet& initializer)
 }
 
 //==============================================================================
-Error Ms::run(CommandBufferPtr& cmdb)
+Error Ms::run(RenderingContext& ctx)
 {
 	ANKI_TRACE_START_EVENT(RENDER_MS);
+	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 	// Create 2nd level cmdbs
 	U threadCount = m_r->getThreadPool().getThreadsCount();
@@ -134,7 +135,7 @@ Error Ms::run(CommandBufferPtr& cmdb)
 	cmdb->bindFramebuffer(m_fb);
 
 	// render all
-	FrustumComponent& frc = m_r->getActiveFrustumComponent();
+	FrustumComponent& frc = *ctx.m_frustumComponent;
 	SArray<CommandBufferPtr> cmdbs(
 		&m_secondLevelCmdbs[0], m_secondLevelCmdbs.getSize());
 	ANKI_CHECK(m_r->getSceneDrawer().render(frc,

@@ -64,12 +64,13 @@ Error Fs::init(const ConfigSet&)
 }
 
 //==============================================================================
-Error Fs::run(CommandBufferPtr& cmdb)
+Error Fs::run(RenderingContext& ctx)
 {
+	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 	cmdb->bindFramebuffer(m_fb);
 	cmdb->setViewport(0, 0, m_r->getWidth() / 2, m_r->getHeight() / 2);
 
-	FrustumComponent& camFr = m_r->getActiveFrustumComponent();
+	FrustumComponent& camFr = *ctx.m_frustumComponent;
 
 	DynamicBufferInfo dyn;
 	dyn.m_storageBuffers[0] = m_r->getIs().getCommonVarsToken();

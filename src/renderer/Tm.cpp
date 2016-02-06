@@ -59,8 +59,9 @@ Error Tm::create(const ConfigSet& initializer)
 }
 
 //==============================================================================
-void Tm::run(CommandBufferPtr& cmdb)
+void Tm::run(RenderingContext& ctx)
 {
+	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 	cmdb->bindPipeline(m_luminancePpline);
 	cmdb->bindResourceGroup(m_rcGroup, 0, nullptr);
 

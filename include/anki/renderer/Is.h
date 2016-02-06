@@ -51,7 +51,7 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 
-	ANKI_USE_RESULT Error run(CommandBufferPtr& cmdBuff);
+	ANKI_USE_RESULT Error run(RenderingContext& ctx);
 
 	TexturePtr getRt() const
 	{
@@ -146,7 +146,7 @@ private:
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 
 	/// Do the actual pass
-	ANKI_USE_RESULT Error lightPass(CommandBufferPtr& cmdBuff);
+	ANKI_USE_RESULT Error lightPass(RenderingContext& ctx);
 
 	/// Prepare GL for rendering
 	void setState(CommandBufferPtr& cmdBuff);
@@ -156,16 +156,19 @@ private:
 
 	// Binning
 	void binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& data);
+
 	I writePointLight(const LightComponent& light,
 		const MoveComponent& move,
 		const FrustumComponent& camfrc,
 		TaskCommonData& task);
+
 	I writeSpotLight(const LightComponent& lightc,
 		const MoveComponent& lightMove,
 		const FrustumComponent* lightFrc,
 		const MoveComponent& camMove,
 		const FrustumComponent& camFrc,
 		TaskCommonData& task);
+
 	void binLight(SpatialComponent& sp,
 		U pos,
 		U lightType,

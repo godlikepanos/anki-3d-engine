@@ -24,7 +24,7 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 
-	void run(CommandBufferPtr& cmdb);
+	void run(RenderingContext& ctx);
 
 private:
 	class Subpass

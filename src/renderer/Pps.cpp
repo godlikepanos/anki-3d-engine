@@ -155,8 +155,9 @@ Error Pps::loadColorGradingTexture(CString filename)
 }
 
 //==============================================================================
-void Pps::run(CommandBufferPtr& cmdb)
+void Pps::run(RenderingContext& ctx)
 {
+	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 	FramebufferPtr fb = m_fb;
 	U32 width = m_r->getWidth();
 	U32 height = m_r->getHeight();
@@ -182,7 +183,7 @@ void Pps::run(CommandBufferPtr& cmdb)
 		cmdb->writeBuffer(m_uniformsBuff, 0, token);
 		unis->m_fogColorFogFactor = Vec4(m_fogColor, m_fogFactor);
 
-		const FrustumComponent& frc = m_r->getActiveFrustumComponent();
+		const FrustumComponent& frc = *ctx.m_frustumComponent;
 		unis->m_nearFarPad2 = Vec4(
 			frc.getFrustum().getNear(), frc.getFrustum().getFar(), 0.0, 0.0);
 	}

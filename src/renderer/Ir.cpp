@@ -290,10 +290,11 @@ Error Ir::initIrradiance()
 }
 
 //==============================================================================
-Error Ir::run(CommandBufferPtr cmdb)
+Error Ir::run(RenderingContext& rctx)
 {
 	ANKI_TRACE_START_EVENT(RENDER_IR);
-	FrustumComponent& frc = m_r->getActiveFrustumComponent();
+	CommandBufferPtr& cmdb = rctx.m_commandBuffer;
+	FrustumComponent& frc = *rctx.m_frustumComponent;
 	VisibilityTestResults& visRez = frc.getVisibilityTestResults();
 
 	if(visRez.getCount(VisibilityGroupType::REFLECTION_PROBES)
@@ -352,7 +353,7 @@ Error Ir::run(CommandBufferPtr cmdb)
 	while(it != end)
 	{
 		// Write and render probe
-		ANKI_CHECK(writeProbeAndRender(*it->m_node, probes[probeIdx], cmdb));
+		ANKI_CHECK(writeProbeAndRender(rctx, *it->m_node, probes[probeIdx]));
 
 		++it;
 		++probeIdx;
@@ -477,9 +478,9 @@ void Ir::binProbes(U32 threadId, PtrSize threadsCount, IrRunContext& ctx)
 
 //==============================================================================
 Error Ir::writeProbeAndRender(
-	SceneNode& node, IrShaderReflectionProbe& probe, CommandBufferPtr cmdb)
+	RenderingContext& ctx, SceneNode& node, IrShaderReflectionProbe& probe)
 {
-	const FrustumComponent& frc = m_r->getActiveFrustumComponent();
+	const FrustumComponent& frc = *ctx.m_frustumComponent;
 	ReflectionProbeComponent& reflc =
 		node.getComponent<ReflectionProbeComponent>();
 
@@ -495,7 +496,7 @@ Error Ir::writeProbeAndRender(
 	if(reflc.getMarkedForRendering())
 	{
 		reflc.setMarkedForRendering(false);
-		ANKI_CHECK(renderReflection(node, reflc, entry, cmdb));
+		ANKI_CHECK(renderReflection(ctx, node, reflc, entry));
 	}
 
 	// If you need to render it mark it for the next frame
@@ -583,18 +584,34 @@ void Ir::writeIndicesAndCluster(
 }
 
 //==============================================================================
-Error Ir::renderReflection(SceneNode& node,
+Error Ir::renderReflection(RenderingContext& ctx,
+	SceneNode& node,
 	ReflectionProbeComponent& reflc,
-	U cubemapIdx,
-	CommandBufferPtr cmdb)
+	U cubemapIdx)
 {
 	ANKI_TRACE_INC_COUNTER(RENDERER_REFLECTIONS, 1);
+	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
+
+	// Get the frustum components
+	Array<FrustumComponent*, 6> frustumComponents;
+	U count = 0;
+	Error err = node.iterateComponentsOfType<FrustumComponent>(
+		[&](FrustumComponent& frc) -> Error {
+			frustumComponents[count++] = &frc;
+			return ErrorCode::NONE;
+		});
+	(void)err;
+	ANKI_ASSERT(count == 6);
 
 	// Render cubemap
 	for(U i = 0; i < 6; ++i)
 	{
 		// Render
-		ANKI_CHECK(m_nestedR.render(node, i, cmdb));
+		RenderingContext nestedCtx;
+		nestedCtx.m_frustumComponent = frustumComponents[i];
+		nestedCtx.m_commandBuffer = cmdb;
+
+		ANKI_CHECK(m_nestedR.render(nestedCtx));
 
 		// Copy env texture
 		cmdb->copyTextureToTexture(m_nestedR.getIs().getRt(),

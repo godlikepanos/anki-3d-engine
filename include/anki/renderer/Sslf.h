@@ -23,7 +23,7 @@ anki_internal:
 	}
 
 	ANKI_USE_RESULT Error init(const ConfigSet& config);
-	void run(CommandBufferPtr& cmdb);
+	void run(RenderingContext& ctx);
 
 	TexturePtr& getRt()
 	{

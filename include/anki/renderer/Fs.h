@@ -25,7 +25,7 @@ anki_internal:
 	~Fs();
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
-	ANKI_USE_RESULT Error run(CommandBufferPtr& cmdb);
+	ANKI_USE_RESULT Error run(RenderingContext& ctx);
 
 	TexturePtr getRt() const
 	{

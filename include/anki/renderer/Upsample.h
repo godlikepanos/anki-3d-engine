@@ -24,7 +24,7 @@ public:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& config);
 
-	void run(CommandBufferPtr cmdb);
+	void run(RenderingContext& ctx);
 
 private:
 	ResourceGroupPtr m_rcGroup;

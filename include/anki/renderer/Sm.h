@@ -42,7 +42,7 @@ anki_internal:
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 	ANKI_USE_RESULT Error run(SArray<SceneNode*> spotShadowCasters,
 		SArray<SceneNode*> omniShadowCasters,
-		CommandBufferPtr& cmdBuff);
+		RenderingContext& ctx);
 
 	Bool getEnabled() const
 	{

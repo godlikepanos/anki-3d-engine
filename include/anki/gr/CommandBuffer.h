@@ -72,6 +72,7 @@ class CommandBufferInitInfo
 {
 public:
 	Bool m_secondLevel = false;
+	FramebufferPtr m_framebuffer; ///< For second level command buffers.
 };
 
 /// Command buffer initialization hints. They are used to optimize the
