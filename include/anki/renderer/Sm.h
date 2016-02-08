@@ -20,11 +20,8 @@ class SceneNode;
 /// @{
 
 /// Shadowmapping pass
-class Sm : private RenderingPass
+class Sm : public RenderingPass
 {
-public:
-	static const U32 MAX_SHADOW_CASTERS = 16;
-
 anki_internal:
 	static const PixelFormat DEPTH_RT_PIXEL_FORMAT;
 
@@ -40,32 +37,25 @@ anki_internal:
 	}
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
-	ANKI_USE_RESULT Error run(SArray<SceneNode*> spotShadowCasters,
-		SArray<SceneNode*> omniShadowCasters,
-		RenderingContext& ctx);
 
-	Bool getEnabled() const
-	{
-		return m_enabled;
-	}
+	void prepareBuildCommandBuffers(RenderingContext& ctx);
+
+	ANKI_USE_RESULT Error buildCommandBuffers(
+		RenderingContext& ctx, U threadId, U threadCount) const;
+
+	void run(RenderingContext& ctx);
 
 	Bool getPoissonEnabled() const
 	{
 		return m_poissonEnabled;
 	}
 
-	/// Get max shadow casters
-	U32 getMaxLightsCount()
-	{
-		return m_spots.getSize();
-	}
-
-	TexturePtr& getSpotTextureArray()
+	TexturePtr getSpotTextureArray() const
 	{
 		return m_spotTexArray;
 	}
 
-	TexturePtr& getOmniTextureArray()
+	TexturePtr getOmniTextureArray() const
 	{
 		return m_omniTexArray;
 	}
@@ -97,9 +87,6 @@ private:
 	DArray<ShadowmapSpot> m_spots;
 	DArray<ShadowmapOmni> m_omnis;
 
-	/// If false then disable SM at all
-	Bool8 m_enabled;
-
 	/// Enable Poisson for all the levels
 	Bool8 m_poissonEnabled = false;
 
@@ -116,11 +103,15 @@ private:
 	/// Check if a shadow pass can be skipped.
 	Bool skip(SceneNode& light, ShadowmapBase& sm);
 
-	ANKI_USE_RESULT Error doSpotLight(
-		SceneNode& light, CommandBufferPtr& cmdBuff);
+	ANKI_USE_RESULT Error doSpotLight(SceneNode& light,
+		CommandBufferPtr& cmdBuff,
+		U threadId,
+		U threadCount) const;
 
-	ANKI_USE_RESULT Error doOmniLight(
-		SceneNode& light, CommandBufferPtr& cmdBuff);
+	ANKI_USE_RESULT Error doOmniLight(SceneNode& light,
+		CommandBufferPtr cmdbs[],
+		U threadId,
+		U threadCount) const;
 };
 
 /// @}

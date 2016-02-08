@@ -25,27 +25,27 @@ namespace anki
 //==============================================================================
 
 /// Common stuff to pass to renderSingle
-struct RenderContext
+class DrawContext
 {
-	FrustumComponent* m_frc ANKI_DBG_NULLIFY_PTR;
-	RenderingStage m_stage;
+public:
+	const FrustumComponent* m_frc = nullptr;
 	Pass m_pass;
 	CommandBufferPtr m_cmdb;
-	const VisibleNode* m_visibleNode ANKI_DBG_NULLIFY_PTR;
-	const VisibleNode* m_nextVisibleNode ANKI_DBG_NULLIFY_PTR;
-	const MaterialVariant* m_variant ANKI_DBG_NULLIFY_PTR;
+
 	Array<Mat4, MAX_INSTANCES> m_cachedTrfs;
 	U m_cachedTrfCount = 0;
-	F32 m_flod;
+	const MaterialVariant* m_variant = nullptr;
 	DynamicBufferInfo m_dynBufferInfo;
-	UVec2 m_screenSize;
+	F32 m_flod = 0.0;
+	VisibleNode* m_visibleNode = nullptr;
+	VisibleNode* m_nextVisibleNode = nullptr;
 };
 
 /// Visitor that sets a uniform
 class SetupRenderableVariableVisitor
 {
 public:
-	RenderContext* m_ctx ANKI_DBG_NULLIFY_PTR;
+	DrawContext* m_ctx ANKI_DBG_NULLIFY_PTR;
 	const RenderableDrawer* m_drawer ANKI_DBG_NULLIFY_PTR;
 	SArray<U8> m_uniformBuffer;
 
@@ -195,60 +195,6 @@ void SetupRenderableVariableVisitor::uniSet<TextureResourcePtr>(
 	// Do nothing
 }
 
-/// Task to render a single node.
-class RenderTask : public ThreadPool::Task
-{
-public:
-	RenderableDrawer* m_drawer;
-	RenderContext m_ctx;
-
-	Error operator()(U32 threadId, PtrSize threadsCount) override
-	{
-		ANKI_TRACE_START_EVENT(RENDER_DRAWER);
-		VisibilityTestResults& vis = m_ctx.m_frc->getVisibilityTestResults();
-
-		PtrSize start, end;
-		U problemSize = vis.getEnd(VisibilityGroupType::RENDERABLES)
-			- vis.getBegin(VisibilityGroupType::RENDERABLES);
-		choseStartEnd(threadId, threadsCount, problemSize, start, end);
-
-		// Set the state of the command buffer
-		if(m_ctx.m_pass == Pass::SM)
-		{
-			m_ctx.m_cmdb->setPolygonOffset(1.0, 2.0);
-		}
-		else
-		{
-			m_ctx.m_cmdb->setPolygonOffset(0.0, 0.0);
-		}
-
-		m_ctx.m_cmdb->setViewport(
-			0, 0, m_ctx.m_screenSize.x(), m_ctx.m_screenSize.y());
-
-		for(U i = start; i < end; ++i)
-		{
-			m_ctx.m_visibleNode =
-				vis.getBegin(VisibilityGroupType::RENDERABLES) + i;
-
-			if(i + 1 < end)
-			{
-				m_ctx.m_nextVisibleNode =
-					vis.getBegin(VisibilityGroupType::RENDERABLES) + i + 1;
-			}
-			else
-			{
-				m_ctx.m_nextVisibleNode = nullptr;
-			}
-
-			ANKI_CHECK(m_drawer->renderSingle(m_ctx));
-		}
-
-		ANKI_TRACE_STOP_EVENT(RENDER_DRAWER);
-
-		return ErrorCode::NONE;
-	}
-};
-
 //==============================================================================
 // RenderableDrawer                                                            =
 //==============================================================================
@@ -259,7 +205,7 @@ RenderableDrawer::~RenderableDrawer()
 }
 
 //==============================================================================
-void RenderableDrawer::setupUniforms(RenderContext& ctx,
+void RenderableDrawer::setupUniforms(DrawContext& ctx,
 	const RenderComponent& renderable,
 	const RenderingKey& key)
 {
@@ -296,65 +242,45 @@ void RenderableDrawer::setupUniforms(RenderContext& ctx,
 }
 
 //==============================================================================
-Error RenderableDrawer::render(FrustumComponent& frc,
-	RenderingStage stage,
-	Pass pass,
-	SArray<CommandBufferPtr>& cmdbs,
-	const UVec2& screenSize)
+Error RenderableDrawer::drawRange(Pass pass,
+	const FrustumComponent& frc,
+	CommandBufferPtr cmdb,
+	VisibleNode* begin,
+	VisibleNode* end)
 {
-	Error err = ErrorCode::NONE;
-	ANKI_ASSERT(cmdbs.getSize() == m_r->getThreadPool().getThreadsCount()
-		|| cmdbs.getSize() == 1);
+	ANKI_ASSERT(begin && end && begin < end);
 
-	if(cmdbs.getSize() > 1)
+	DrawContext ctx;
+	ctx.m_frc = &frc;
+	ctx.m_pass = pass;
+	ctx.m_cmdb = cmdb;
+
+	for(; begin != end; ++begin)
 	{
-		Array<RenderTask, ThreadPool::MAX_THREADS> tasks;
+		ctx.m_visibleNode = begin;
 
-		ThreadPool& threadPool = m_r->getThreadPool();
-		for(U i = 0; i < threadPool.getThreadsCount(); i++)
+		if(begin + 1 < end)
 		{
-			auto& task = tasks[i];
-			task.m_drawer = this;
-			task.m_ctx.m_cmdb = cmdbs[i];
-			task.m_ctx.m_frc = &frc;
-			task.m_ctx.m_stage = stage;
-			task.m_ctx.m_pass = pass;
-			task.m_ctx.m_screenSize = screenSize;
-
-			threadPool.assignNewTask(i, &task);
+			ctx.m_nextVisibleNode = begin + 1;
+		}
+		else
+		{
+			ctx.m_nextVisibleNode = nullptr;
 		}
 
-		err = threadPool.waitForAllThreadsToFinish();
-	}
-	else
-	{
-		RenderTask task;
-		task.m_drawer = this;
-		task.m_ctx.m_cmdb = cmdbs[0];
-		task.m_ctx.m_frc = &frc;
-		task.m_ctx.m_stage = stage;
-		task.m_ctx.m_pass = pass;
-		task.m_ctx.m_screenSize = screenSize;
-
-		err = task(0, 1);
+		ANKI_CHECK(drawSingle(ctx));
 	}
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
-Error RenderableDrawer::renderSingle(RenderContext& ctx)
+Error RenderableDrawer::drawSingle(DrawContext& ctx)
 {
 	// Get components
 	const RenderComponent& renderable =
 		ctx.m_visibleNode->m_node->getComponent<RenderComponent>();
 	const Material& mtl = renderable.getMaterial();
-
-	if((ctx.m_stage == RenderingStage::BLEND && !mtl.getForwardShading())
-		|| (ctx.m_stage == RenderingStage::MATERIAL && mtl.getForwardShading()))
-	{
-		return ErrorCode::NONE;
-	}
 
 	// Check if it can merge drawcalls
 	if(ctx.m_nextVisibleNode)

@@ -77,14 +77,15 @@ public:
 /// The group of nodes that a VisibilityTestResults holds.
 enum class VisibilityGroupType
 {
-	RENDERABLES,
+	RENDERABLES_MS,
+	RENDERABLES_FS,
 	LIGHTS,
 	FLARES,
 	REFLECTION_PROBES,
 	REFLECTION_PROXIES,
 
 	TYPE_COUNT,
-	FIRST = RENDERABLES
+	FIRST = RENDERABLES_MS
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VisibilityGroupType, inline)
 
@@ -97,11 +98,7 @@ public:
 		ANKI_ASSERT(0 && "It's supposed to be deallocated on frame start");
 	}
 
-	void create(SceneFrameAllocator<U8> alloc,
-		U32 renderablesReservedSize,
-		U32 lightsReservedSize,
-		U32 lensFlaresReservedSize,
-		U32 reflectionProbesReservedSize);
+	void create(SceneFrameAllocator<U8> alloc);
 
 	void prepareMerge();
 

@@ -153,10 +153,7 @@ void VisibilityTestTask::test(
 	// Init test results
 	VisibilityTestResults* visible = alloc.newInstance<VisibilityTestResults>();
 
-	FrustumComponent::VisibilityStats stats =
-		testedFrc.getLastVisibilityStats();
-
-	visible->create(alloc, stats.m_renderablesCount, stats.m_lightsCount, 4, 4);
+	visible->create(alloc);
 
 	m_shared->m_testResults[threadId] = visible;
 
@@ -331,8 +328,11 @@ void VisibilityTestTask::test(
 			if(wantsRenderComponents
 				|| (wantsShadowCasters && rc->getCastsShadow()))
 			{
-				visible->moveBack(
-					alloc, VisibilityGroupType::RENDERABLES, visibleNode);
+				visible->moveBack(alloc,
+					rc->getMaterial().getForwardShading()
+						? VisibilityGroupType::RENDERABLES_FS
+						: VisibilityGroupType::RENDERABLES_MS,
+					visibleNode);
 
 				if(wantsShadowCasters)
 				{
@@ -436,8 +436,13 @@ void VisibilityTestTask::combineTestResults(
 
 	// Sort some of the arrays
 	DistanceSortFunctor comp;
-	std::sort(visible->getBegin(VisibilityGroupType::RENDERABLES),
-		visible->getEnd(VisibilityGroupType::RENDERABLES),
+	std::sort(visible->getBegin(VisibilityGroupType::RENDERABLES_MS),
+		visible->getEnd(VisibilityGroupType::RENDERABLES_MS),
+		comp);
+
+	// TODO: Reverse the sort
+	std::sort(visible->getBegin(VisibilityGroupType::RENDERABLES_FS),
+		visible->getEnd(VisibilityGroupType::RENDERABLES_FS),
 		comp);
 
 	std::sort(visible->getBegin(VisibilityGroupType::REFLECTION_PROBES),
@@ -450,22 +455,11 @@ void VisibilityTestTask::combineTestResults(
 //==============================================================================
 
 //==============================================================================
-void VisibilityTestResults::create(SceneFrameAllocator<U8> alloc,
-	U32 renderablesReservedSize,
-	U32 lightsReservedSize,
-	U32 lensFlaresReservedSize,
-	U32 reflectionProbesReservedSize)
+void VisibilityTestResults::create(SceneFrameAllocator<U8> alloc)
 {
-	m_groups[VisibilityGroupType::RENDERABLES].m_nodes.create(
-		alloc, renderablesReservedSize);
-	m_groups[VisibilityGroupType::LIGHTS].m_nodes.create(
-		alloc, lightsReservedSize);
-	m_groups[VisibilityGroupType::FLARES].m_nodes.create(
-		alloc, lensFlaresReservedSize);
-	m_groups[VisibilityGroupType::REFLECTION_PROBES].m_nodes.create(
-		alloc, reflectionProbesReservedSize);
-	m_groups[VisibilityGroupType::REFLECTION_PROXIES].m_nodes.create(
-		alloc, reflectionProbesReservedSize);
+	m_groups[VisibilityGroupType::RENDERABLES_MS].m_nodes.create(alloc, 64);
+	m_groups[VisibilityGroupType::RENDERABLES_FS].m_nodes.create(alloc, 8);
+	m_groups[VisibilityGroupType::LIGHTS].m_nodes.create(alloc, 32);
 }
 
 //==============================================================================

@@ -495,12 +495,12 @@ Error initSubsystems(int argc, char* argv[])
 	// Config
 	Config config;
 	config.set("dbg.enabled", false);
-	config.set("is.sm.bilinearEnabled", true);
+	config.set("sm.bilinearEnabled", true);
 	config.set("is.groundLightEnabled", false);
-	config.set("is.sm.enabled", true);
-	config.set("is.sm.maxLights", 16);
-	config.set("is.sm.poissonEnabled", true);
-	config.set("is.sm.resolution", 1024);
+	config.set("sm.enabled", true);
+	config.set("sm.maxLights", 16);
+	config.set("sm.poissonEnabled", true);
+	config.set("sm.resolution", 1024);
 	config.set("lf.maxFlares", 32);
 	config.set("pps.enabled", true);
 	config.set("bloom.enabled", true);

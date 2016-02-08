@@ -5,8 +5,6 @@
 
 #pragma once
 
-#include <anki/util/StdTypes.h>
-#include <anki/util/Ptr.h>
 #include <anki/resource/RenderingKey.h>
 #include <anki/scene/Forward.h>
 #include <anki/Gr.h>
@@ -16,17 +14,10 @@ namespace anki
 
 // Forward
 class Renderer;
-struct RenderContext;
+class DrawContext;
 
 /// @addtogroup renderer
 /// @{
-
-/// The rendering stage
-enum class RenderingStage : U8
-{
-	MATERIAL,
-	BLEND
-};
 
 /// It includes all the functions to render a Renderable
 class RenderableDrawer
@@ -42,20 +33,20 @@ public:
 
 	~RenderableDrawer();
 
-	ANKI_USE_RESULT Error render(FrustumComponent& frc,
-		RenderingStage stage,
-		Pass pass,
-		SArray<CommandBufferPtr>& cmdbs,
-		const UVec2& screenSize);
+	ANKI_USE_RESULT Error drawRange(Pass pass,
+		const FrustumComponent& frc,
+		CommandBufferPtr cmdb,
+		VisibleNode* begin,
+		VisibleNode* end);
 
 private:
 	Renderer* m_r;
 
-	void setupUniforms(RenderContext& ctx,
+	void setupUniforms(DrawContext& ctx,
 		const RenderComponent& renderable,
 		const RenderingKey& key);
 
-	ANKI_USE_RESULT Error renderSingle(RenderContext& ctx);
+	ANKI_USE_RESULT Error drawSingle(DrawContext& ctx);
 };
 /// @}
 

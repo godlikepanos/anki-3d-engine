@@ -86,7 +86,9 @@ public:
 
 void CommandBuffer::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 {
+#if ANKI_ASSERTS_ENABLED
 	m_impl->m_stateSet.m_viewport = true;
+#endif
 	m_impl->pushBackNewCommand<ViewportCommand>(minx, miny, maxx, maxy);
 }
 
@@ -121,7 +123,9 @@ public:
 
 void CommandBuffer::setPolygonOffset(F32 offset, F32 units)
 {
+#if ANKI_ASSERTS_ENABLED
 	m_impl->m_stateSet.m_polygonOffset = true;
+#endif
 	m_impl->pushBackNewCommand<SetPolygonOffsetCommand>(offset, units);
 }
 

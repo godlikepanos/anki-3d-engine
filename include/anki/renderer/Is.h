@@ -10,7 +10,6 @@
 #include <anki/resource/ShaderResource.h>
 #include <anki/Gr.h>
 #include <anki/Math.h>
-#include <anki/renderer/Sm.h>
 #include <anki/util/StdTypes.h>
 #include <anki/util/Array.h>
 #include <anki/core/Timestamp.h>
@@ -68,11 +67,6 @@ anki_internal:
 		m_ambientColor = color;
 	}
 
-	Sm& getSm()
-	{
-		return m_sm;
-	}
-
 	DynamicBufferToken getCommonVarsToken() const
 	{
 		return m_commonVarsToken;
@@ -118,9 +112,6 @@ private:
 	ShaderResourcePtr m_lightFrag;
 	PipelinePtr m_lightPpline;
 
-	/// Shadow mapping
-	Sm m_sm;
-
 	/// Opt because many ask for it
 	FrustumComponent* m_frc = nullptr;
 
@@ -151,8 +142,7 @@ private:
 	/// Prepare GL for rendering
 	void setState(CommandBufferPtr& cmdBuff);
 
-	void updateCommonBlock(
-		CommandBufferPtr& cmdBuff, const FrustumComponent& frc);
+	void updateCommonBlock(const FrustumComponent& frc);
 
 	// Binning
 	void binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& data);

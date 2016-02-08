@@ -7,6 +7,7 @@
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/Ms.h>
 #include <anki/renderer/Is.h>
+#include <anki/renderer/Sm.h>
 #include <anki/scene/SceneGraph.h>
 #include <anki/scene/Camera.h>
 
@@ -45,10 +46,12 @@ Error Fs::init(const ConfigSet&)
 	{
 		ResourceGroupInitInfo init;
 		init.m_textures[0].m_texture = m_r->getMs().getDepthRt();
-		init.m_textures[1].m_texture =
-			m_r->getIs().getSm().getSpotTextureArray();
-		init.m_textures[2].m_texture =
-			m_r->getIs().getSm().getOmniTextureArray();
+
+		if(m_r->getSmEnabled())
+		{
+			init.m_textures[1].m_texture = m_r->getSm().getSpotTextureArray();
+			init.m_textures[2].m_texture = m_r->getSm().getOmniTextureArray();
+		}
 
 		init.m_storageBuffers[0].m_dynamic = true;
 		init.m_storageBuffers[1].m_dynamic = true;
@@ -64,31 +67,68 @@ Error Fs::init(const ConfigSet&)
 }
 
 //==============================================================================
-Error Fs::run(RenderingContext& ctx)
+void Fs::prepareBuildCommandBuffers(RenderingContext& ctx)
 {
-	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
-	cmdb->bindFramebuffer(m_fb);
-	cmdb->setViewport(0, 0, m_r->getWidth() / 2, m_r->getHeight() / 2);
-
-	FrustumComponent& camFr = *ctx.m_frustumComponent;
-
-	DynamicBufferInfo dyn;
+	DynamicBufferInfo& dyn = ctx.m_fs.m_set1DynInfo;
 	dyn.m_storageBuffers[0] = m_r->getIs().getCommonVarsToken();
 	dyn.m_storageBuffers[1] = m_r->getIs().getPointLightsToken();
 	dyn.m_storageBuffers[2] = m_r->getIs().getSpotLightsToken();
 	dyn.m_storageBuffers[3] = m_r->getIs().getClustersToken();
 	dyn.m_storageBuffers[4] = m_r->getIs().getLightIndicesToken();
+}
 
-	cmdb->bindResourceGroup(m_globalResources, 1, &dyn);
+//==============================================================================
+Error Fs::buildCommandBuffers(
+	RenderingContext& ctx, U threadId, U threadCount) const
+{
+	// Get some stuff
+	VisibilityTestResults& vis =
+		ctx.m_frustumComponent->getVisibilityTestResults();
 
-	SArray<CommandBufferPtr> cmdbs(&cmdb, 1);
-	ANKI_CHECK(m_r->getSceneDrawer().render(camFr,
-		RenderingStage::BLEND,
-		Pass::MS_FS,
-		cmdbs,
-		UVec2(m_r->getWidth() / 2, m_r->getHeight() / 2)));
+	U problemSize = vis.getCount(VisibilityGroupType::RENDERABLES_FS);
+	PtrSize start, end;
+	ThreadPool::Task::choseStartEnd(
+		threadId, threadCount, problemSize, start, end);
 
-	return ErrorCode::NONE;
+	if(start == end)
+	{
+		// Early exit
+		return ErrorCode::NONE;
+	}
+
+	// Create the command buffer and set some state
+	CommandBufferPtr cmdb = m_r->getGrManager().newInstance<CommandBuffer>();
+	ctx.m_fs.m_commandBuffers[threadId] = cmdb;
+
+	cmdb->setViewport(0, 0, m_r->getWidth() / 2, m_r->getHeight() / 2);
+	cmdb->setPolygonOffset(0.0, 0.0);
+	cmdb->bindResourceGroup(m_globalResources, 1, &ctx.m_fs.m_set1DynInfo);
+
+	// Start drawing
+	Error err = m_r->getSceneDrawer().drawRange(Pass::MS_FS,
+		*ctx.m_frustumComponent,
+		cmdb,
+		vis.getBegin(VisibilityGroupType::RENDERABLES_FS) + start,
+		vis.getBegin(VisibilityGroupType::RENDERABLES_FS) + end);
+
+	return err;
+}
+
+//==============================================================================
+void Fs::run(RenderingContext& ctx)
+{
+	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
+	cmdb->bindFramebuffer(m_fb);
+	cmdb->setViewport(0, 0, m_r->getWidth() / 2, m_r->getHeight() / 2);
+	cmdb->setPolygonOffset(0.0, 0.0);
+
+	for(U i = 0; i < m_r->getThreadPool().getThreadsCount(); ++i)
+	{
+		if(ctx.m_fs.m_commandBuffers[i].isCreated())
+		{
+			cmdb->pushSecondLevelCommandBuffer(ctx.m_fs.m_commandBuffers[i]);
+		}
+	}
 }
 
 } // end namespace anki

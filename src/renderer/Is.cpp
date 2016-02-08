@@ -6,6 +6,7 @@
 #include <anki/renderer/Is.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/Ms.h>
+#include <anki/renderer/Sm.h>
 #include <anki/renderer/Pps.h>
 #include <anki/renderer/Ir.h>
 #include <anki/scene/Camera.h>
@@ -184,7 +185,6 @@ const PixelFormat Is::RT_PIXEL_FORMAT(
 //==============================================================================
 Is::Is(Renderer* r)
 	: RenderingPass(r)
-	, m_sm(r)
 {
 }
 
@@ -235,11 +235,6 @@ Error Is::initInternal(const ConfigSet& config)
 	m_maxLightIds *= m_r->getClusterCount();
 
 	//
-	// Init the passes
-	//
-	ANKI_CHECK(m_sm.init(config));
-
-	//
 	// Load the programs
 	//
 	StringAuto pps(getAllocator());
@@ -265,7 +260,7 @@ Error Is::initInternal(const ConfigSet& config)
 		m_maxSpotLights,
 		m_maxLightIds,
 		m_groundLightEnabled,
-		m_sm.getPoissonEnabled(),
+		m_r->getSmEnabled() ? m_r->getSm().getPoissonEnabled() : 0,
 		m_r->getIrEnabled(),
 		(m_r->getIrEnabled()) ? m_r->getIr().getCubemapArrayMipmapCount() : 0);
 
@@ -314,8 +309,12 @@ Error Is::initInternal(const ConfigSet& config)
 		init.m_textures[1].m_texture = m_r->getMs().getRt1();
 		init.m_textures[2].m_texture = m_r->getMs().getRt2();
 		init.m_textures[3].m_texture = m_r->getMs().getDepthRt();
-		init.m_textures[4].m_texture = m_sm.getSpotTextureArray();
-		init.m_textures[5].m_texture = m_sm.getOmniTextureArray();
+
+		if(m_r->getSmEnabled())
+		{
+			init.m_textures[4].m_texture = m_r->getSm().getSpotTextureArray();
+			init.m_textures[5].m_texture = m_r->getSm().getOmniTextureArray();
+		}
 
 		init.m_storageBuffers[0].m_dynamic = true;
 		init.m_storageBuffers[1].m_dynamic = true;
@@ -353,10 +352,6 @@ Error Is::lightPass(RenderingContext& ctx)
 	//
 	U visiblePointLightsCount = 0;
 	U visibleSpotLightsCount = 0;
-	Array<SceneNode*, Sm::MAX_SHADOW_CASTERS> spotCasters;
-	Array<SceneNode*, Sm::MAX_SHADOW_CASTERS> omniCasters;
-	U spotCastersCount = 0;
-	U omniCastersCount = 0;
 
 	auto it = vi.getBegin(VisibilityGroupType::LIGHTS);
 	auto lend = vi.getEnd(VisibilityGroupType::LIGHTS);
@@ -368,19 +363,9 @@ Error Is::lightPass(RenderingContext& ctx)
 		{
 		case LightComponent::LightType::POINT:
 			++visiblePointLightsCount;
-
-			if(light.getShadowEnabled())
-			{
-				omniCasters[omniCastersCount++] = node;
-			}
 			break;
 		case LightComponent::LightType::SPOT:
 			++visibleSpotLightsCount;
-
-			if(light.getShadowEnabled())
-			{
-				spotCasters[spotCastersCount++] = node;
-			}
 			break;
 		default:
 			ANKI_ASSERT(0);
@@ -394,16 +379,6 @@ Error Is::lightPass(RenderingContext& ctx)
 
 	ANKI_TRACE_INC_COUNTER(
 		RENDERER_LIGHTS, visiblePointLightsCount + visibleSpotLightsCount);
-
-	//
-	// Do shadows pass
-	//
-	if(m_sm.getEnabled())
-	{
-		ANKI_CHECK(m_sm.run({&spotCasters[0], spotCastersCount},
-			{&omniCasters[0], omniCastersCount},
-			ctx));
-	}
 
 	//
 	// Write the lights and tiles UBOs
@@ -475,7 +450,7 @@ Error Is::lightPass(RenderingContext& ctx)
 	}
 
 	// Update uniforms
-	updateCommonBlock(cmdb, *m_frc);
+	updateCommonBlock(*m_frc);
 
 	// In the meantime set the state
 	setState(cmdb);
@@ -642,7 +617,7 @@ I Is::writePointLight(const LightComponent& lightc,
 		Vec4(pos.xyz(), 1.0 / (lightc.getRadius() * lightc.getRadius()));
 	slight.m_diffuseColorShadowmapId = lightc.getDiffuseColor();
 
-	if(!lightc.getShadowEnabled() || !m_sm.getEnabled())
+	if(!lightc.getShadowEnabled() || !m_r->getSmEnabled())
 	{
 		slight.m_diffuseColorShadowmapId.w() = INVALID_TEXTURE_INDEX;
 	}
@@ -673,7 +648,7 @@ I Is::writeSpotLight(const LightComponent& lightc,
 	ShaderSpotLight& light = task.m_spotLights[i];
 	F32 shadowmapIndex = INVALID_TEXTURE_INDEX;
 
-	if(lightc.getShadowEnabled() && m_sm.getEnabled())
+	if(lightc.getShadowEnabled() && m_r->getSmEnabled())
 	{
 		// Write matrix
 		static const Mat4 biasMat4(0.5,
@@ -800,7 +775,7 @@ Error Is::run(RenderingContext& ctx)
 }
 
 //==============================================================================
-void Is::updateCommonBlock(CommandBufferPtr& cmdb, const FrustumComponent& fr)
+void Is::updateCommonBlock(const FrustumComponent& fr)
 {
 	ShaderCommonUniforms* blk = static_cast<ShaderCommonUniforms*>(
 		getGrManager().allocateFrameHostVisibleMemory(

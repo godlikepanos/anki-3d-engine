@@ -48,7 +48,7 @@ static Array<const char*, U(TraceCounterType::COUNT)> counterNames = {
 		ANKI_LOGE("Error writing the trace file");                             \
 	}
 
-const U MAX_EVENTS_DEPTH = 10;
+const U MAX_EVENTS_DEPTH = 20;
 thread_local HighRezTimer::Scalar g_traceEventStartTime[MAX_EVENTS_DEPTH];
 thread_local I g_traceEventsInFlight = 0;
 
@@ -117,6 +117,8 @@ void TraceManager::startEvent()
 //==============================================================================
 void TraceManager::stopEvent(TraceEventType type)
 {
+	ANKI_ASSERT(g_traceEventsInFlight > 0 
+		&& g_traceEventsInFlight < I(MAX_EVENTS_DEPTH));
 	I i = --g_traceEventsInFlight;
 	ANKI_ASSERT(i >= 0 && i < I(MAX_EVENTS_DEPTH));
 	auto startedTime = g_traceEventStartTime[i];

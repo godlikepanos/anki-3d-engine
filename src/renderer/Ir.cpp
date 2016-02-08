@@ -179,12 +179,8 @@ Error Ir::init(const ConfigSet& config)
 	// Init the renderer
 	Config nestedRConfig;
 	nestedRConfig.set("dbg.enabled", false);
-	nestedRConfig.set("is.sm.bilinearEnabled", true);
 	nestedRConfig.set("is.groundLightEnabled", false);
-	nestedRConfig.set("is.sm.enabled", false);
-	nestedRConfig.set("is.sm.maxLights", 8);
-	nestedRConfig.set("is.sm.poissonEnabled", false);
-	nestedRConfig.set("is.sm.resolution", 16);
+	nestedRConfig.set("sm.enabled", false);
 	nestedRConfig.set("lf.maxFlares", 8);
 	nestedRConfig.set("pps.enabled", false);
 	nestedRConfig.set("renderingQuality", 1.0);
@@ -607,7 +603,7 @@ Error Ir::renderReflection(RenderingContext& ctx,
 	for(U i = 0; i < 6; ++i)
 	{
 		// Render
-		RenderingContext nestedCtx;
+		RenderingContext nestedCtx(ctx.m_tempAllocator);
 		nestedCtx.m_frustumComponent = frustumComponents[i];
 		nestedCtx.m_commandBuffer = cmdb;
 

@@ -25,7 +25,13 @@ anki_internal:
 	~Fs();
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
-	ANKI_USE_RESULT Error run(RenderingContext& ctx);
+
+	void prepareBuildCommandBuffers(RenderingContext& ctx);
+
+	ANKI_USE_RESULT Error buildCommandBuffers(
+		RenderingContext& ctx, U threadId, U threadCount) const;
+
+	void run(RenderingContext& ctx);
 
 	TexturePtr getRt() const
 	{
@@ -35,7 +41,6 @@ anki_internal:
 private:
 	FramebufferPtr m_fb;
 	TexturePtr m_rt;
-
 	ResourceGroupPtr m_globalResources;
 };
 /// @}

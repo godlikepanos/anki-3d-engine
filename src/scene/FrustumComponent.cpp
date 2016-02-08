@@ -31,7 +31,7 @@ void FrustumComponent::setVisibilityTestResults(VisibilityTestResults* visible)
 	m_visible = visible;
 
 	m_stats.m_renderablesCount =
-		visible->getCount(VisibilityGroupType::RENDERABLES);
+		visible->getCount(VisibilityGroupType::RENDERABLES_MS);
 	m_stats.m_lightsCount = visible->getCount(VisibilityGroupType::LIGHTS);
 }
 

@@ -34,7 +34,60 @@ public:
 
 	CommandBufferPtr m_commandBuffer; ///< Primary command buffer.
 
-	DArray<CommandBufferPtr> m_fsCommandBuffers;
+	StackAllocator<U8> m_tempAllocator;
+
+	/// @name MS
+	/// @{
+	class Ms
+	{
+	public:
+		Array<CommandBufferPtr, ThreadPool::MAX_THREADS> m_commandBuffers;
+	} m_ms;
+	/// @}
+
+	/// @name Shadow mapping
+	/// @{
+	class Sm
+	{
+	public:
+		DArrayAuto<FramebufferPtr> m_spotFramebuffers;
+		DArrayAuto<Array<FramebufferPtr, 6>> m_omniFramebuffers;
+
+		/// [casterIdx][threadIdx]
+		DArrayAuto<CommandBufferPtr> m_spotCommandBuffers;
+		/// [casterIdx][threadIdx][faceIdx]
+		DArrayAuto<CommandBufferPtr> m_omniCommandBuffers;
+
+		DArrayAuto<SceneNode*> m_spots;
+		DArrayAuto<SceneNode*> m_omnis;
+
+		Sm(const StackAllocator<U8>& alloc)
+			: m_spotFramebuffers(alloc)
+			, m_omniFramebuffers(alloc)
+			, m_spotCommandBuffers(alloc)
+			, m_omniCommandBuffers(alloc)
+			, m_spots(alloc)
+			, m_omnis(alloc)
+		{
+		}
+	} m_sm;
+	/// @}
+
+	/// @name FS
+	/// @{
+	class Fs
+	{
+	public:
+		DynamicBufferInfo m_set1DynInfo;
+		Array<CommandBufferPtr, ThreadPool::MAX_THREADS> m_commandBuffers;
+	} m_fs;
+	/// @}
+
+	RenderingContext(const StackAllocator<U8>& alloc)
+		: m_tempAllocator(alloc)
+		, m_sm(alloc)
+	{
+	}
 };
 
 /// Offscreen renderer. It is a class and not a namespace because we may need
@@ -54,6 +107,16 @@ public:
 	Ir& getIr()
 	{
 		return *m_ir;
+	}
+
+	Sm& getSm()
+	{
+		return *m_sm;
+	}
+
+	Bool getSmEnabled() const
+	{
+		return m_sm.isCreated();
 	}
 
 	Ms& getMs()
@@ -326,6 +389,7 @@ private:
 	/// @name Rendering stages
 	/// @{
 	UniquePtr<Ir> m_ir;
+	UniquePtr<Sm> m_sm; ///< Shadow mapping.
 	UniquePtr<Ms> m_ms; ///< Material rendering stage
 	UniquePtr<Is> m_is; ///< Illumination rendering stage
 	UniquePtr<Fs> m_fs; ///< Forward shading.
@@ -360,6 +424,9 @@ private:
 	UVec2 m_outputFbSize;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
+
+	ANKI_USE_RESULT Error buildCommandBuffersSmMs(RenderingContext& ctx);
+	ANKI_USE_RESULT Error buildCommandBuffersFs(RenderingContext& ctx);
 };
 /// @}
 

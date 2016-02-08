@@ -116,45 +116,64 @@ Error Ms::initInternal(const ConfigSet& initializer)
 }
 
 //==============================================================================
-Error Ms::run(RenderingContext& ctx)
+Error Ms::buildCommandBuffers(
+	RenderingContext& ctx, U threadId, U threadCount) const
 {
 	ANKI_TRACE_START_EVENT(RENDER_MS);
-	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
-	// Create 2nd level cmdbs
-	U threadCount = m_r->getThreadPool().getThreadsCount();
-	GrManager& gr = m_r->getGrManager();
-	for(U i = 0; i < threadCount; ++i)
+	// Get some stuff
+	VisibilityTestResults& vis =
+		ctx.m_frustumComponent->getVisibilityTestResults();
+
+	U problemSize = vis.getCount(VisibilityGroupType::RENDERABLES_MS);
+	PtrSize start, end;
+	ThreadPool::Task::choseStartEnd(
+		threadId, threadCount, problemSize, start, end);
+
+	if(start == end)
 	{
-		// TODO Add hints
-		m_secondLevelCmdbs[i] = gr.newInstance<CommandBuffer>();
+		// Early exit
+		return ErrorCode::NONE;
 	}
 
+	// Create the command buffer and set some state
+	CommandBufferPtr cmdb = m_r->getGrManager().newInstance<CommandBuffer>();
+	ctx.m_ms.m_commandBuffers[threadId] = cmdb;
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
+	cmdb->setPolygonOffset(0.0, 0.0);
 
+	// Start drawing
+	Error err = m_r->getSceneDrawer().drawRange(Pass::MS_FS,
+		*ctx.m_frustumComponent,
+		cmdb,
+		vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + start,
+		vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + end);
+
+	ANKI_TRACE_STOP_EVENT(RENDER_MS);
+	return err;
+}
+
+//==============================================================================
+void Ms::run(RenderingContext& ctx)
+{
+	ANKI_TRACE_START_EVENT(RENDER_MS);
+
+	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 	cmdb->bindFramebuffer(m_fb);
 
-	// render all
-	FrustumComponent& frc = *ctx.m_frustumComponent;
-	SArray<CommandBufferPtr> cmdbs(
-		&m_secondLevelCmdbs[0], m_secondLevelCmdbs.getSize());
-	ANKI_CHECK(m_r->getSceneDrawer().render(frc,
-		RenderingStage::MATERIAL,
-		Pass::MS_FS,
-		cmdbs,
-		UVec2(m_r->getWidth(), m_r->getHeight())));
+	// Set some state anyway because other stages may depend on it
+	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
+	cmdb->setPolygonOffset(0.0, 0.0);
 
-	for(U i = 0; i < m_secondLevelCmdbs.getSize(); ++i)
+	for(U i = 0; i < m_r->getThreadPool().getThreadsCount(); ++i)
 	{
-		if(!m_secondLevelCmdbs[i]->isEmpty())
+		if(ctx.m_ms.m_commandBuffers[i].isCreated())
 		{
-			cmdb->pushSecondLevelCommandBuffer(m_secondLevelCmdbs[i]);
-			m_secondLevelCmdbs[i].reset(nullptr);
+			cmdb->pushSecondLevelCommandBuffer(ctx.m_ms.m_commandBuffers[i]);
 		}
 	}
 
 	ANKI_TRACE_STOP_EVENT(RENDER_MS);
-	return ErrorCode::NONE;
 }
 
 } // end namespace anki

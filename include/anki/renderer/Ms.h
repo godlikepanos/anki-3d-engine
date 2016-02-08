@@ -31,7 +31,14 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 
-	ANKI_USE_RESULT Error run(RenderingContext& ctx);
+	void prepareBuildCommandBuffers(RenderingContext& ctx)
+	{
+	}
+
+	ANKI_USE_RESULT Error buildCommandBuffers(
+		RenderingContext& ctx, U threadId, U threadCount) const;
+
+	void run(RenderingContext& ctx);
 
 	TexturePtr& getRt0()
 	{
@@ -80,7 +87,6 @@ private:
 	/// Create a G buffer FBO
 	ANKI_USE_RESULT Error createRt(U32 samples);
 };
-
 /// @}
 
 } // end namespace anki

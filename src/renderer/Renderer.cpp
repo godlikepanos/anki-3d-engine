@@ -12,6 +12,7 @@
 #include <anki/renderer/Ir.h>
 #include <anki/renderer/Ms.h>
 #include <anki/renderer/Is.h>
+#include <anki/renderer/Sm.h>
 #include <anki/renderer/Pps.h>
 #include <anki/renderer/Ssao.h>
 #include <anki/renderer/Sslf.h>
@@ -144,6 +145,12 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_ms.reset(m_alloc.newInstance<Ms>(this));
 	ANKI_CHECK(m_ms->init(config));
 
+	if(config.getNumber("sm.enabled"))
+	{
+		m_sm.reset(m_alloc.newInstance<Sm>(this));
+		ANKI_CHECK(m_sm->init(config));
+	}
+
 	m_tiler.reset(m_alloc.newInstance<Tiler>(this));
 	ANKI_CHECK(m_tiler->init());
 
@@ -236,18 +243,24 @@ Error Renderer::render(RenderingContext& ctx)
 		ANKI_CHECK(m_ir->run(ctx));
 	}
 
-	ANKI_CHECK(m_ms->run(ctx));
+	ANKI_CHECK(buildCommandBuffersSmMs(ctx));
+
+	if(m_sm)
+	{
+		m_sm->run(ctx);
+	}
+
+	m_ms->run(ctx);
 
 	m_lf->runOcclusionTests(ctx);
-
-	// m_tiler->run(cmdb);
 
 	ANKI_CHECK(m_is->run(ctx));
 
 	cmdb->generateMipmaps(m_ms->getDepthRt());
 	cmdb->generateMipmaps(m_ms->getRt2());
 
-	ANKI_CHECK(m_fs->run(ctx));
+	ANKI_CHECK(buildCommandBuffersFs(ctx));
+	m_fs->run(ctx);
 	m_lf->run(ctx);
 
 	m_upsample->run(ctx);
@@ -385,6 +398,82 @@ Bool Renderer::doGpuVisibilityTest(
 	const CollisionShape& cs, const Aabb& aabb) const
 {
 	return m_tiler->test(cs, aabb);
+}
+
+//==============================================================================
+Error Renderer::buildCommandBuffersSmMs(RenderingContext& ctx)
+{
+	// Prepare
+	m_ms->prepareBuildCommandBuffers(ctx);
+	if(m_sm)
+	{
+		m_sm->prepareBuildCommandBuffers(ctx);
+	}
+
+	// Build
+	class Task : public ThreadPool::Task
+	{
+	public:
+		Renderer* m_r ANKI_DBG_NULLIFY_PTR;
+		RenderingContext* m_ctx ANKI_DBG_NULLIFY_PTR;
+
+		Error operator()(U32 threadId, PtrSize threadsCount)
+		{
+			ANKI_CHECK(m_r->getMs().buildCommandBuffers(
+				*m_ctx, threadId, threadsCount));
+
+			if(m_r->getSmEnabled())
+			{
+				ANKI_CHECK(m_r->getSm().buildCommandBuffers(
+					*m_ctx, threadId, threadsCount));
+			}
+
+			return ErrorCode::NONE;
+		}
+	};
+
+	ThreadPool& threadPool = getThreadPool();
+	Task task;
+	task.m_r = this;
+	task.m_ctx = &ctx;
+	for(U i = 0; i < threadPool.getThreadsCount(); i++)
+	{
+		threadPool.assignNewTask(i, &task);
+	}
+
+	return threadPool.waitForAllThreadsToFinish();
+}
+
+//==============================================================================
+Error Renderer::buildCommandBuffersFs(RenderingContext& ctx)
+{
+	m_fs->prepareBuildCommandBuffers(ctx);
+
+	class Task : public ThreadPool::Task
+	{
+	public:
+		Renderer* m_r ANKI_DBG_NULLIFY_PTR;
+		RenderingContext* m_ctx ANKI_DBG_NULLIFY_PTR;
+
+		Error operator()(U32 threadId, PtrSize threadsCount)
+		{
+			ANKI_CHECK(m_r->getFs().buildCommandBuffers(
+				*m_ctx, threadId, threadsCount));
+
+			return ErrorCode::NONE;
+		}
+	};
+
+	ThreadPool& threadPool = getThreadPool();
+	Task task;
+	task.m_r = this;
+	task.m_ctx = &ctx;
+	for(U i = 0; i < threadPool.getThreadsCount(); i++)
+	{
+		threadPool.assignNewTask(i, &task);
+	}
+
+	return threadPool.waitForAllThreadsToFinish();
 }
 
 } // end namespace anki

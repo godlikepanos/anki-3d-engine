@@ -22,32 +22,20 @@ const PixelFormat Sm::DEPTH_RT_PIXEL_FORMAT(
 //==============================================================================
 Error Sm::init(const ConfigSet& config)
 {
-	m_enabled = config.getNumber("is.sm.enabled");
-
-	if(!m_enabled)
-	{
-		return ErrorCode::NONE;
-	}
-
-	m_poissonEnabled = config.getNumber("is.sm.poissonEnabled");
-	m_bilinearEnabled = config.getNumber("is.sm.bilinearEnabled");
-	m_resolution = config.getNumber("is.sm.resolution");
+	m_poissonEnabled = config.getNumber("sm.poissonEnabled");
+	m_bilinearEnabled = config.getNumber("sm.bilinearEnabled");
+	m_resolution = config.getNumber("sm.resolution");
 
 	//
 	// Init the shadowmaps
 	//
-	if(config.getNumber("is.sm.maxLights") > MAX_SHADOW_CASTERS)
-	{
-		ANKI_LOGE("Too many shadow casters");
-		return ErrorCode::FUNCTION_FAILED;
-	}
 
 	// Create shadowmaps array
 	TextureInitInfo sminit;
 	sminit.m_type = TextureType::_2D_ARRAY;
 	sminit.m_width = m_resolution;
 	sminit.m_height = m_resolution;
-	sminit.m_depth = config.getNumber("is.sm.maxLights");
+	sminit.m_depth = config.getNumber("sm.maxLights");
 	sminit.m_format = DEPTH_RT_PIXEL_FORMAT;
 	sminit.m_mipmapsCount = 1;
 	sminit.m_sampling.m_minMagFilter =
@@ -60,7 +48,7 @@ Error Sm::init(const ConfigSet& config)
 	m_omniTexArray = getGrManager().newInstance<Texture>(sminit);
 
 	// Init 2D layers
-	m_spots.create(getAllocator(), config.getNumber("is.sm.maxLights"));
+	m_spots.create(getAllocator(), config.getNumber("sm.maxLights"));
 
 	FramebufferInitInfo fbInit;
 	fbInit.m_depthStencilAttachment.m_texture = m_spotTexArray;
@@ -80,7 +68,7 @@ Error Sm::init(const ConfigSet& config)
 	}
 
 	// Init cube layers
-	m_omnis.create(getAllocator(), config.getNumber("is.sm.maxLights"));
+	m_omnis.create(getAllocator(), config.getNumber("sm.maxLights"));
 
 	fbInit.m_depthStencilAttachment.m_texture = m_omniTexArray;
 
@@ -104,33 +92,48 @@ Error Sm::init(const ConfigSet& config)
 }
 
 //==============================================================================
-Error Sm::run(SArray<SceneNode*> spotShadowCasters,
-	SArray<SceneNode*> omniShadowCasters,
-	RenderingContext& ctx)
+void Sm::run(RenderingContext& ctx)
 {
-	ANKI_ASSERT(m_enabled);
 	ANKI_TRACE_START_EVENT(RENDER_SM);
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
-	if(omniShadowCasters.getSize() > m_omnis.getSize()
-		|| spotShadowCasters.getSize() > m_spots.getSize())
+	const U threadCount = m_r->getThreadPool().getThreadsCount();
+
+	// Spot lights
+	for(U i = 0; i < ctx.m_sm.m_spots.getSize(); ++i)
 	{
-		ANKI_LOGW("Too many shadow casters");
+		cmdb->bindFramebuffer(ctx.m_sm.m_spotFramebuffers[i]);
+		for(U j = 0; j < threadCount; ++j)
+		{
+			U idx = i * threadCount + j;
+			CommandBufferPtr& cmdb2 = ctx.m_sm.m_spotCommandBuffers[idx];
+			if(cmdb2.isCreated())
+			{
+				cmdb->pushSecondLevelCommandBuffer(cmdb2);
+			}
+		}
 	}
 
-	// render all
-	for(SceneNode* node : spotShadowCasters)
+	// Omni lights
+	for(U i = 0; i < ctx.m_sm.m_omnis.getSize(); ++i)
 	{
-		ANKI_CHECK(doSpotLight(*node, cmdb));
-	}
+		for(U j = 0; j < 6; ++j)
+		{
+			cmdb->bindFramebuffer(ctx.m_sm.m_omniFramebuffers[i][j]);
 
-	for(SceneNode* node : omniShadowCasters)
-	{
-		ANKI_CHECK(doOmniLight(*node, cmdb));
+			for(U k = 0; k < threadCount; ++k)
+			{
+				U idx = i * threadCount * 6 + k * 6 + j;
+				CommandBufferPtr& cmdb2 = ctx.m_sm.m_omniCommandBuffers[idx];
+				if(cmdb2.isCreated())
+				{
+					cmdb->pushSecondLevelCommandBuffer(cmdb2);
+				}
+			}
+		}
 	}
 
 	ANKI_TRACE_STOP_EVENT(RENDER_SM);
-	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -196,71 +199,215 @@ Bool Sm::skip(SceneNode& light, ShadowmapBase& sm)
 	if(shouldUpdate)
 	{
 		sm.m_timestamp = m_r->getGlobalTimestamp();
-		LightComponent& lcomp = light.getComponent<LightComponent>();
-		lcomp.setShadowMapIndex(sm.m_layerId);
 	}
+
+	// Update the layer ID anyway
+	LightComponent& lcomp = light.getComponent<LightComponent>();
+	lcomp.setShadowMapIndex(sm.m_layerId);
 
 	return !shouldUpdate;
 }
 
 //==============================================================================
-Error Sm::doSpotLight(SceneNode& light, CommandBufferPtr& cmdBuff)
+Error Sm::buildCommandBuffers(
+	RenderingContext& ctx, U threadId, U threadCount) const
 {
-	ShadowmapSpot* sm;
-	bestCandidate(light, m_spots, sm);
+	ANKI_TRACE_START_EVENT(RENDER_SM);
 
-	if(skip(light, *sm))
+	for(U i = 0; i < ctx.m_sm.m_spots.getSize(); ++i)
 	{
-		return ErrorCode::NONE;
+		U idx = i * threadCount + threadId;
+
+		ANKI_CHECK(doSpotLight(*ctx.m_sm.m_spots[i],
+			ctx.m_sm.m_spotCommandBuffers[idx],
+			threadId,
+			threadCount));
 	}
 
-	cmdBuff->bindFramebuffer(sm->m_fb);
-	cmdBuff->setViewport(0, 0, m_resolution, m_resolution);
+	for(U i = 0; i < ctx.m_sm.m_omnis.getSize(); ++i)
+	{
+		U idx = i * threadCount * 6 + threadId * 6 + 0;
 
-	FrustumComponent& fr = light.getComponent<FrustumComponent>();
-	SArray<CommandBufferPtr> cmdbs(&cmdBuff, 1);
-	ANKI_CHECK(m_r->getSceneDrawer().render(fr,
-		RenderingStage::MATERIAL,
-		Pass::SM,
-		cmdbs,
-		UVec2(m_resolution, m_resolution)));
+		ANKI_CHECK(doOmniLight(*ctx.m_sm.m_omnis[i],
+			&ctx.m_sm.m_omniCommandBuffers[idx],
+			threadId,
+			threadCount));
+	}
 
-	ANKI_TRACE_INC_COUNTER(RENDERER_SHADOW_PASSES, 1);
+	ANKI_TRACE_STOP_EVENT(RENDER_SM);
 	return ErrorCode::NONE;
 }
 
 //==============================================================================
-Error Sm::doOmniLight(SceneNode& light, CommandBufferPtr& cmdBuff)
+Error Sm::doSpotLight(
+	SceneNode& light, CommandBufferPtr& cmdb, U threadId, U threadCount) const
 {
-	ShadowmapOmni* sm;
-	bestCandidate(light, m_omnis, sm);
+	FrustumComponent& frc = light.getComponent<FrustumComponent>();
+	VisibilityTestResults& vis = frc.getVisibilityTestResults();
+	U problemSize = vis.getCount(VisibilityGroupType::RENDERABLES_MS);
+	PtrSize start, end;
+	ThreadPool::Task::choseStartEnd(
+		threadId, threadCount, problemSize, start, end);
 
-	if(skip(light, *sm))
+	if(start == end)
 	{
 		return ErrorCode::NONE;
 	}
 
-	cmdBuff->setViewport(0, 0, m_resolution, m_resolution);
+	cmdb = m_r->getGrManager().newInstance<CommandBuffer>();
+	cmdb->setViewport(0, 0, m_resolution, m_resolution);
+	cmdb->setPolygonOffset(1.0, 2.0);
+
+	Error err = m_r->getSceneDrawer().drawRange(Pass::SM,
+		frc,
+		cmdb,
+		vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + start,
+		vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + end);
+
+	return err;
+}
+
+//==============================================================================
+Error Sm::doOmniLight(
+	SceneNode& light, CommandBufferPtr cmdbs[], U threadId, U threadCount) const
+{
 	U frCount = 0;
 
 	Error err = light.iterateComponentsOfType<FrustumComponent>(
-		[&](FrustumComponent& fr) -> Error {
-			cmdBuff->bindFramebuffer(sm->m_fb[frCount]);
+		[&](FrustumComponent& frc) -> Error {
+			VisibilityTestResults& vis = frc.getVisibilityTestResults();
+			U problemSize = vis.getCount(VisibilityGroupType::RENDERABLES_MS);
+			PtrSize start, end;
+			ThreadPool::Task::choseStartEnd(
+				threadId, threadCount, problemSize, start, end);
 
-			SArray<CommandBufferPtr> cmdbs(&cmdBuff, 1);
-			ANKI_CHECK(m_r->getSceneDrawer().render(fr,
-				RenderingStage::MATERIAL,
-				Pass::SM,
-				cmdbs,
-				UVec2(m_resolution, m_resolution)));
+			if(start != end)
+			{
+				cmdbs[frCount] = getGrManager().newInstance<CommandBuffer>();
+				cmdbs[frCount]->setViewport(0, 0, m_resolution, m_resolution);
+				cmdbs[frCount]->setPolygonOffset(1.0, 2.0);
+
+				ANKI_CHECK(m_r->getSceneDrawer().drawRange(Pass::SM,
+					frc,
+					cmdbs[frCount],
+					vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + start,
+					vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + end));
+			}
 
 			++frCount;
 			return ErrorCode::NONE;
 		});
 
-	ANKI_TRACE_INC_COUNTER(RENDERER_SHADOW_PASSES, 6);
-
 	return err;
+}
+
+//==============================================================================
+void Sm::prepareBuildCommandBuffers(RenderingContext& ctx)
+{
+	ANKI_TRACE_START_EVENT(RENDER_SM);
+
+	// Gather the lights
+	VisibilityTestResults& vi =
+		ctx.m_frustumComponent->getVisibilityTestResults();
+
+	const U MAX = 64;
+	Array<SceneNode*, MAX> spotCasters;
+	Array<SceneNode*, MAX> omniCasters;
+	U spotCastersCount = 0;
+	U omniCastersCount = 0;
+
+	auto it = vi.getBegin(VisibilityGroupType::LIGHTS);
+	const auto lend = vi.getEnd(VisibilityGroupType::LIGHTS);
+	for(; it != lend; ++it)
+	{
+		SceneNode* node = (*it).m_node;
+		LightComponent& light = node->getComponent<LightComponent>();
+		switch(light.getLightType())
+		{
+		case LightComponent::LightType::POINT:
+			if(light.getShadowEnabled())
+			{
+				ShadowmapOmni* sm;
+				bestCandidate(*node, m_omnis, sm);
+
+				if(!skip(*node, *sm))
+				{
+					omniCasters[omniCastersCount++] = node;
+				}
+			}
+			break;
+		case LightComponent::LightType::SPOT:
+			if(light.getShadowEnabled())
+			{
+				ShadowmapSpot* sm;
+				bestCandidate(*node, m_spots, sm);
+
+				if(!skip(*node, *sm))
+				{
+					spotCasters[spotCastersCount++] = node;
+				}
+			}
+			break;
+		default:
+			ANKI_ASSERT(0);
+			break;
+		}
+	}
+
+	if(omniCastersCount > m_omnis.getSize()
+		|| spotCastersCount > m_spots.getSize())
+	{
+		ANKI_LOGW("Too many shadow casters");
+		omniCastersCount = min(omniCastersCount, m_omnis.getSize());
+		spotCastersCount = min(spotCastersCount, m_spots.getSize());
+	}
+
+	if(spotCastersCount > 0)
+	{
+		ctx.m_sm.m_spots.create(spotCastersCount);
+		memcpy(&ctx.m_sm.m_spots[0],
+			&spotCasters[0],
+			sizeof(SceneNode*) * spotCastersCount);
+
+		ctx.m_sm.m_spotCommandBuffers.create(
+			spotCastersCount * m_r->getThreadPool().getThreadsCount());
+
+		ctx.m_sm.m_spotFramebuffers.create(spotCastersCount);
+		for(U i = 0; i < spotCastersCount; ++i)
+		{
+			const LightComponent& lightc =
+				ctx.m_sm.m_spots[i]->getComponent<LightComponent>();
+			U idx = lightc.getShadowMapIndex();
+
+			ctx.m_sm.m_spotFramebuffers[i] = m_spots[idx].m_fb;
+		}
+	}
+
+	if(omniCastersCount > 0)
+	{
+		ctx.m_sm.m_omnis.create(omniCastersCount);
+		memcpy(&ctx.m_sm.m_omnis[0],
+			&omniCasters[0],
+			sizeof(SceneNode*) * omniCastersCount);
+
+		ctx.m_sm.m_omniCommandBuffers.create(
+			omniCastersCount * 6 * m_r->getThreadPool().getThreadsCount());
+
+		ctx.m_sm.m_omniFramebuffers.create(omniCastersCount);
+		for(U i = 0; i < omniCastersCount; ++i)
+		{
+			const LightComponent& lightc =
+				ctx.m_sm.m_omnis[i]->getComponent<LightComponent>();
+			U idx = lightc.getShadowMapIndex();
+
+			for(U j = 0; j < 6; ++j)
+			{
+				ctx.m_sm.m_omniFramebuffers[i][j] = m_omnis[idx].m_fb[j];
+			}
+		}
+	}
+
+	ANKI_TRACE_STOP_EVENT(RENDER_SM);
 }
 
 } // end namespace anki

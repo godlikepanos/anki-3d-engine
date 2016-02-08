@@ -15,11 +15,11 @@ Config::Config()
 	// Renderer
 	//
 
-	newOption("is.sm.enabled", true);
-	newOption("is.sm.poissonEnabled", true);
-	newOption("is.sm.bilinearEnabled", true);
-	newOption("is.sm.resolution", 512);
-	newOption("is.sm.maxLights", 4);
+	newOption("sm.enabled", true);
+	newOption("sm.poissonEnabled", true);
+	newOption("sm.bilinearEnabled", true);
+	newOption("sm.resolution", 512);
+	newOption("sm.maxLights", 4);
 
 	newOption("is.groundLightEnabled", true);
 	newOption("is.maxPointLights", 384);

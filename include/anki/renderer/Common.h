@@ -14,6 +14,7 @@ namespace anki
 // Forward
 class Renderer;
 class Ms;
+class Sm;
 class Is;
 class Fs;
 class Lf;
