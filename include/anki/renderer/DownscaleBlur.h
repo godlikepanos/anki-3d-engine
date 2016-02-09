@@ -37,7 +37,7 @@ private:
 		FramebufferPtr m_fb;
 	};
 
-	Array<Subpass, 3> m_passes;
+	Array<Subpass, 5> m_passes;
 
 	Error initSubpass(U idx, const UVec2& inputTexSize);
 };

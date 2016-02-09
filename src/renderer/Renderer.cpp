@@ -265,8 +265,6 @@ Error Renderer::render(RenderingContext& ctx)
 
 	m_upsample->run(ctx);
 
-	cmdb->generateMipmaps(m_is->getRt());
-
 	if(m_downscale)
 	{
 		m_downscale->run(ctx);

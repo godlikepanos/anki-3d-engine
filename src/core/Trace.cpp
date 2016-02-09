@@ -117,7 +117,7 @@ void TraceManager::startEvent()
 //==============================================================================
 void TraceManager::stopEvent(TraceEventType type)
 {
-	ANKI_ASSERT(g_traceEventsInFlight > 0 
+	ANKI_ASSERT(g_traceEventsInFlight > 0
 		&& g_traceEventsInFlight < I(MAX_EVENTS_DEPTH));
 	I i = --g_traceEventsInFlight;
 	ANKI_ASSERT(i >= 0 && i < I(MAX_EVENTS_DEPTH));

@@ -506,7 +506,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("bloom.enabled", true);
 	config.set("bloom.renderingQuality", 0.5);
 	config.set("bloom.blurringDist", 1.0);
-	config.set("bloom.blurringIterationsCount", 3);
+	config.set("bloom.blurringIterationsCount", 1);
 	config.set("bloom.threshold", 2.0);
 	config.set("bloom.scale", 2.0);
 	config.set("bloom.samples", 17);

@@ -43,12 +43,8 @@ Error Bloom::initFb(FramebufferPtr& fb, TexturePtr& rt)
 //==============================================================================
 Error Bloom::initInternal(const ConfigSet& config)
 {
-	const F32 renderingQuality = config.getNumber("bloom.renderingQuality");
-
-	m_width = renderingQuality * F32(m_r->getWidth());
-	alignRoundDown(16, m_width);
-	m_height = renderingQuality * F32(m_r->getHeight());
-	alignRoundDown(16, m_height);
+	m_width = m_r->getWidth() / 4;
+	m_height = m_r->getHeight() / 4;
 
 	m_threshold = config.getNumber("bloom.threshold");
 	m_scale = config.getNumber("bloom.scale");
@@ -60,54 +56,64 @@ Error Bloom::initInternal(const ConfigSet& config)
 	ANKI_CHECK(initFb(m_vblurFb, m_vblurRt));
 
 	// init shaders & pplines
-	GrManager& gl = getGrManager();
+	GrManager& gr = getGrManager();
 
-	ColorStateInfo colorState;
-	colorState.m_attachmentCount = 1;
-	colorState.m_attachments[0].m_format = RT_PIXEL_FORMAT;
+	PipelineInitInfo ppinit;
+	ppinit.m_color.m_attachmentCount = 1;
+	ppinit.m_color.m_attachments[0].m_format = RT_PIXEL_FORMAT;
+	ppinit.m_depthStencil.m_depthWriteEnabled = false;
+	ppinit.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
 
 	StringAuto pps(getAllocator());
 	pps.sprintf("#define ANKI_RENDERER_WIDTH %u\n"
-				"#define ANKI_RENDERER_HEIGHT %u\n",
+				"#define ANKI_RENDERER_HEIGHT %u\n"
+				"#define UV_OFFSET vec2(%f, %f)\n",
 		m_r->getWidth(),
-		m_r->getHeight());
+		m_r->getHeight(),
+		(1.0 / m_width) / 2.0,
+		(1.0 / m_height) / 2.0);
+
+	ANKI_CHECK(getResourceManager().loadResourceToCache(
+		m_quadVert, "shaders/Quad.vert.glsl", pps.toCString(), "r_"));
+
+	ppinit.m_shaders[ShaderType::VERTEX] = m_quadVert->getGrShader();
 
 	ANKI_CHECK(getResourceManager().loadResourceToCache(
 		m_toneFrag, "shaders/Bloom.frag.glsl", pps.toCString(), "r_"));
 
-	m_r->createDrawQuadPipeline(
-		m_toneFrag->getGrShader(), colorState, m_tonePpline);
+	ppinit.m_shaders[ShaderType::FRAGMENT] = m_toneFrag->getGrShader();
 
-	const char* SHADER_FILENAME =
-		"shaders/VariableSamplingBlurGeneric.frag.glsl";
+	m_tonePpline = gr.newInstance<Pipeline>(ppinit);
+
+	const char* SHADER_FILENAME = "shaders/GaussianBlurGeneric.frag.glsl";
 
 	pps.destroy();
 	pps.sprintf("#define HPASS\n"
 				"#define COL_RGB\n"
-				"#define BLURRING_DIST float(1.1)\n"
-				"#define IMG_DIMENSION %u\n"
-				"#define SAMPLES 17\n",
-		m_height);
+				"#define TEXTURE_SIZE vec2(%f, %f)\n"
+				"#define KERNEL_SIZE 15\n",
+		F32(m_width),
+		F32(m_height));
 
 	ANKI_CHECK(getResourceManager().loadResourceToCache(
 		m_hblurFrag, SHADER_FILENAME, pps.toCString(), "r_"));
 
-	m_r->createDrawQuadPipeline(
-		m_hblurFrag->getGrShader(), colorState, m_hblurPpline);
+	ppinit.m_shaders[ShaderType::FRAGMENT] = m_hblurFrag->getGrShader();
+	m_hblurPpline = gr.newInstance<Pipeline>(ppinit);
 
 	pps.destroy();
 	pps.sprintf("#define VPASS\n"
 				"#define COL_RGB\n"
-				"#define BLURRING_DIST float(1.0)\n"
-				"#define IMG_DIMENSION %u\n"
-				"#define SAMPLES 15\n",
-		m_width);
+				"#define TEXTURE_SIZE vec2(%f, %f)\n"
+				"#define KERNEL_SIZE 15\n",
+		F32(m_width),
+		F32(m_height));
 
 	ANKI_CHECK(getResourceManager().loadResourceToCache(
 		m_vblurFrag, SHADER_FILENAME, pps.toCString(), "r_"));
 
-	m_r->createDrawQuadPipeline(
-		m_vblurFrag->getGrShader(), colorState, m_vblurPpline);
+	ppinit.m_shaders[ShaderType::FRAGMENT] = m_vblurFrag->getGrShader();
+	m_vblurPpline = gr.newInstance<Pipeline>(ppinit);
 
 	// Set descriptors
 	{
@@ -118,19 +124,19 @@ Error Bloom::initInternal(const ConfigSet& config)
 		descInit.m_storageBuffers[0].m_buffer =
 			m_r->getTm().getAverageLuminanceBuffer();
 
-		m_firstDescrGroup = gl.newInstance<ResourceGroup>(descInit);
+		m_firstDescrGroup = gr.newInstance<ResourceGroup>(descInit);
 	}
 
 	{
 		ResourceGroupInitInfo descInit;
 		descInit.m_textures[0].m_texture = m_vblurRt;
-		m_hDescrGroup = gl.newInstance<ResourceGroup>(descInit);
+		m_hDescrGroup = gr.newInstance<ResourceGroup>(descInit);
 	}
 
 	{
 		ResourceGroupInitInfo descInit;
 		descInit.m_textures[0].m_texture = m_hblurRt;
-		m_vDescrGroup = gl.newInstance<ResourceGroup>(descInit);
+		m_vDescrGroup = gr.newInstance<ResourceGroup>(descInit);
 	}
 
 	getGrManager().finish();

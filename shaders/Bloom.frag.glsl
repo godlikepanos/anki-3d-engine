@@ -23,7 +23,7 @@ layout(location = 0) in vec2 in_texCoord;
 layout(location = 0) out vec3 out_color;
 
 // Consts
-const uint MIPMAP = 6;
+const uint MIPMAP = 5;
 
 vec3 readTexture(in uint mipmap)
 {
