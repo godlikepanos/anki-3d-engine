@@ -91,12 +91,8 @@ Error Ssao::initInternal(const ConfigSet& config)
 	//
 	// Init the widths/heights
 	//
-	const F32 quality = config.getNumber("ssao.renderingQuality");
-
-	m_width = quality * (F32)m_r->getWidth();
-	alignRoundUp(16, m_width);
-	m_height = quality * (F32)m_r->getHeight();
-	alignRoundUp(16, m_height);
+	m_width = m_r->getWidth() / SSAO_FRACTION;
+	m_height = m_r->getHeight() / SSAO_FRACTION;
 
 	ANKI_LOGI("Initializing SSAO. Size %ux%u", m_width, m_height);
 
@@ -167,12 +163,8 @@ Error Ssao::initInternal(const ConfigSet& config)
 	StringAuto pps(getAllocator());
 
 	// vert shader
-	pps.sprintf("#define UV_OFFSET vec2(%f, %f)\n",
-		(1.0 / m_width) / 2.0,
-		(1.0 / m_height) / 2.0);
-
-	ANKI_CHECK(getResourceManager().loadResourceToCache(
-		m_quadVert, "shaders/Quad.vert.glsl", pps.toCString(), "r_"));
+	ANKI_CHECK(getResourceManager().loadResource(
+		"shaders/Quad.vert.glsl", m_quadVert));
 
 	ppinit.m_shaders[ShaderType::VERTEX] = m_quadVert->getGrShader();
 

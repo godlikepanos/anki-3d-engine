@@ -6,8 +6,7 @@
 #include "shaders/Common.glsl"
 #include "shaders/LinearDepth.glsl"
 
-layout(location = 0) in vec2 in_uvLow;
-layout(location = 1) in vec2 in_uvHigh;
+layout(location = 0) in vec2 in_uv;
 
 layout(location = 0) out vec3 out_color;
 
@@ -38,19 +37,19 @@ const vec2 OFFSETS[8] =
 void main()
 {
 	// Get the depth of the current fragment
-	float depth = texture(u_depthFullTex, in_uvHigh).r;
+	float depth = texture(u_depthFullTex, in_uv).r;
 
 	// Gather the depths around the current fragment and:
 	// - Get the min difference compared to crnt depth
 	// - Get the new UV that is closer to the crnt depth
-	float lowDepth = texture(u_depthHalfTex, in_uvLow).r;
+	float lowDepth = texture(u_depthHalfTex, in_uv).r;
 	float minDiff = abs(depth - lowDepth);
 	float maxDiff = minDiff;
-	vec2 newUv = in_uvLow;
+	vec2 newUv = in_uv;
 	for(uint i = 0u; i < 8u; ++i)
 	{
 		// Read the low depth
-		vec2 uv = in_uvLow + OFFSETS[i];
+		vec2 uv = in_uv + OFFSETS[i];
 		float lowDepth = texture(u_depthHalfTex, uv).r;
 
 		// Update the max difference compared to the current fragment
@@ -79,7 +78,7 @@ void main()
 	if(maxDiffLinear < DEPTH_THRESHOLD)
 	{
 		// No major discontinuites, sample with bilinear
-		out_color = textureLod(u_colorTexLinear, in_uvLow, 0.0).rgb;
+		out_color = textureLod(u_colorTexLinear, in_uv, 0.0).rgb;
 	}
 	else
 	{

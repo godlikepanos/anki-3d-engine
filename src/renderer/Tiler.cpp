@@ -49,8 +49,8 @@ Error Tiler::initInternal()
 				"#define TILE_SIZE_Y %u\n"
 				"#define TILES_COUNT_X %u\n"
 				"#define TILES_COUNT_Y %u\n",
-		Renderer::TILE_SIZE,
-		Renderer::TILE_SIZE,
+		TILE_SIZE,
+		TILE_SIZE,
 		m_r->getTileCountXY().x(),
 		m_r->getTileCountXY().y());
 

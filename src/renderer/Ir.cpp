@@ -160,7 +160,7 @@ Error Ir::init(const ConfigSet& config)
 	ANKI_LOGI("Initializing IR (Image Reflections)");
 	m_fbSize = config.getNumber("ir.rendererSize");
 
-	if(m_fbSize < Renderer::TILE_SIZE)
+	if(m_fbSize < TILE_SIZE)
 	{
 		ANKI_LOGE("Too low ir.rendererSize");
 		return ErrorCode::USER_DATA;
@@ -289,7 +289,6 @@ Error Ir::initIrradiance()
 Error Ir::run(RenderingContext& rctx)
 {
 	ANKI_TRACE_START_EVENT(RENDER_IR);
-	CommandBufferPtr& cmdb = rctx.m_commandBuffer;
 	FrustumComponent& frc = *rctx.m_frustumComponent;
 	VisibilityTestResults& visRez = frc.getVisibilityTestResults();
 

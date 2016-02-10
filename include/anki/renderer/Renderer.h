@@ -219,9 +219,6 @@ public:
 	ANKI_USE_RESULT Error render(RenderingContext& ctx);
 
 anki_internal:
-	/// WARNING: If you change the tile size you need to change some shaders
-	static const U TILE_SIZE = 64;
-
 	void getOutputFramebuffer(FramebufferPtr& outputFb, U32& width, U32& height)
 	{
 		if(m_outputFb.isCreated())

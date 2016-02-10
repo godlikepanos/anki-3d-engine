@@ -22,9 +22,12 @@ Fs::~Fs()
 //==============================================================================
 Error Fs::init(const ConfigSet&)
 {
+	m_width = m_r->getWidth() / FS_FRACTION;
+	m_height = m_r->getHeight() / FS_FRACTION;
+
 	// Create RT
-	m_r->createRenderTarget(m_r->getWidth() / 2,
-		m_r->getHeight() / 2,
+	m_r->createRenderTarget(m_width,
+		m_height,
 		Is::RT_PIXEL_FORMAT,
 		1,
 		SamplingFilter::NEAREST,
@@ -100,7 +103,7 @@ Error Fs::buildCommandBuffers(
 	CommandBufferPtr cmdb = m_r->getGrManager().newInstance<CommandBuffer>();
 	ctx.m_fs.m_commandBuffers[threadId] = cmdb;
 
-	cmdb->setViewport(0, 0, m_r->getWidth() / 2, m_r->getHeight() / 2);
+	cmdb->setViewport(0, 0, m_width, m_height);
 	cmdb->setPolygonOffset(0.0, 0.0);
 	cmdb->bindResourceGroup(m_globalResources, 1, &ctx.m_fs.m_set1DynInfo);
 
@@ -119,7 +122,7 @@ void Fs::run(RenderingContext& ctx)
 {
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 	cmdb->bindFramebuffer(m_fb);
-	cmdb->setViewport(0, 0, m_r->getWidth() / 2, m_r->getHeight() / 2);
+	cmdb->setViewport(0, 0, m_width, m_height);
 	cmdb->setPolygonOffset(0.0, 0.0);
 
 	for(U i = 0; i < m_r->getThreadPool().getThreadsCount(); ++i)

@@ -290,7 +290,7 @@ Error Is::initInternal(const ConfigSet& config)
 		RT_PIXEL_FORMAT,
 		1,
 		SamplingFilter::LINEAR,
-		MIPMAPS_COUNT,
+		IS_MIPMAP_COUNT,
 		m_rt);
 
 	FramebufferInitInfo fbInit;

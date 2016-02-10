@@ -43,8 +43,8 @@ Error Bloom::initFb(FramebufferPtr& fb, TexturePtr& rt)
 //==============================================================================
 Error Bloom::initInternal(const ConfigSet& config)
 {
-	m_width = m_r->getWidth() / 4;
-	m_height = m_r->getHeight() / 4;
+	m_width = m_r->getWidth() / BLOOM_FRACTION;
+	m_height = m_r->getHeight() / BLOOM_FRACTION;
 
 	m_threshold = config.getNumber("bloom.threshold");
 	m_scale = config.getNumber("bloom.scale");
@@ -67,11 +67,10 @@ Error Bloom::initInternal(const ConfigSet& config)
 	StringAuto pps(getAllocator());
 	pps.sprintf("#define ANKI_RENDERER_WIDTH %u\n"
 				"#define ANKI_RENDERER_HEIGHT %u\n"
-				"#define UV_OFFSET vec2(%f, %f)\n",
+				"#define MIPMAP %u\n",
 		m_r->getWidth(),
 		m_r->getHeight(),
-		(1.0 / m_width) / 2.0,
-		(1.0 / m_height) / 2.0);
+		IS_MIPMAP_COUNT - 1);
 
 	ANKI_CHECK(getResourceManager().loadResourceToCache(
 		m_quadVert, "shaders/Quad.vert.glsl", pps.toCString(), "r_"));

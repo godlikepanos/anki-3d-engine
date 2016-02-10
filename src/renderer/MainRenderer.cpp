@@ -60,8 +60,8 @@ Error MainRenderer::create(ThreadPool* threadpool,
 	m_renderingQuality = config.getNumber("renderingQuality");
 	UVec2 size(
 		m_renderingQuality * F32(m_width), m_renderingQuality * F32(m_height));
-	size.x() = getAlignedRoundDown(Renderer::TILE_SIZE, size.x() / 2) * 2;
-	size.y() = getAlignedRoundDown(Renderer::TILE_SIZE, size.y() / 2) * 2;
+	size.x() = getAlignedRoundDown(TILE_SIZE, size.x() / 2) * 2;
+	size.y() = getAlignedRoundDown(TILE_SIZE, size.y() / 2) * 2;
 
 	config2.set("width", size.x());
 	config2.set("height", size.y());
@@ -82,7 +82,7 @@ Error MainRenderer::create(ThreadPool* threadpool,
 		"#define TILE_SIZE %u\n",
 		m_r->getWidth(),
 		m_r->getHeight(),
-		Renderer::TILE_SIZE);
+		TILE_SIZE);
 
 	// Init other
 	ANKI_CHECK(m_r->getResourceManager().loadResource(

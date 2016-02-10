@@ -38,9 +38,6 @@ class Is : public RenderingPass
 {
 	friend class WriteLightsTask;
 
-public:
-	static const U MIPMAPS_COUNT = 7;
-
 anki_internal:
 	static const PixelFormat RT_PIXEL_FORMAT;
 

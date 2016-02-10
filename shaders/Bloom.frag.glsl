@@ -6,6 +6,10 @@
 #include "shaders/Common.glsl"
 #include "shaders/Tonemapping.glsl"
 
+#if MIPMAP - 2 < 0
+#error See file
+#endif
+
 // Vars
 layout(TEX_BINDING(0, 0)) uniform lowp sampler2D u_tex; ///< Its the IS RT
 
@@ -21,9 +25,6 @@ layout(SS_BINDING(0, 0), std140) readonly buffer ss0_
 
 layout(location = 0) in vec2 in_texCoord;
 layout(location = 0) out vec3 out_color;
-
-// Consts
-const uint MIPMAP = 5;
 
 vec3 readTexture(in uint mipmap)
 {

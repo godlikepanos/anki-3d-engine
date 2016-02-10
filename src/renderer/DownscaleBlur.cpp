@@ -24,12 +24,8 @@ Error DownscaleBlur::initSubpass(U idx, const UVec2& inputTexSize)
 	StringAuto pps(getAllocator());
 
 	// vert shader
-	pps.sprintf("#define UV_OFFSET vec2(%f, %f)\n",
-		1.0 / inputTexSize.x(),
-		1.0 / inputTexSize.y());
-
-	ANKI_CHECK(getResourceManager().loadResourceToCache(
-		pass.m_vert, "shaders/Quad.vert.glsl", pps.toCString(), "r_"));
+	ANKI_CHECK(getResourceManager().loadResource(
+		"shaders/Quad.vert.glsl", pass.m_vert));
 
 	ppinit.m_shaders[ShaderType::VERTEX] = pass.m_vert->getGrShader();
 

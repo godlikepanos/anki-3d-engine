@@ -46,18 +46,14 @@ Error Upsample::init(const ConfigSet& config)
 	StringAuto pps(getFrameAllocator());
 	pps.sprintf("#define TEXTURE_WIDTH %uu\n"
 				"#define TEXTURE_HEIGHT %uu\n",
-		m_r->getWidth() / 2,
-		m_r->getHeight() / 2);
+		m_r->getWidth() / FS_FRACTION,
+		m_r->getHeight() / FS_FRACTION);
 
-	ANKI_CHECK(getResourceManager().loadResourceToCache(m_frag,
-		"shaders/NearDepthUpscale.frag.glsl",
-		pps.toCString(),
-		"r_refl_"));
+	ANKI_CHECK(getResourceManager().loadResourceToCache(
+		m_frag, "shaders/NearDepthUpscale.frag.glsl", pps.toCString(), "r_"));
 
-	ANKI_CHECK(getResourceManager().loadResourceToCache(m_vert,
-		"shaders/NearDepthUpscale.vert.glsl",
-		pps.toCString(),
-		"r_refl_"));
+	ANKI_CHECK(getResourceManager().loadResourceToCache(
+		m_vert, "shaders/NearDepthUpscale.vert.glsl", pps.toCString(), "r_"));
 
 	// Ppline
 	PipelineInitInfo ppinit;

@@ -87,8 +87,8 @@ Error Renderer::initInternal(const ConfigSet& config)
 	// Set from the config
 	m_width = config.getNumber("width");
 	m_height = config.getNumber("height");
-	ANKI_ASSERT(isAligned(Renderer::TILE_SIZE, m_width)
-		&& isAligned(Renderer::TILE_SIZE, m_height));
+	ANKI_ASSERT(
+		isAligned(TILE_SIZE, m_width) && isAligned(TILE_SIZE, m_height));
 	ANKI_LOGI("Initializing offscreen renderer. Size %ux%u", m_width, m_height);
 
 	m_lodDistance = config.getNumber("lodDistance");

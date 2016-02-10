@@ -39,6 +39,8 @@ anki_internal:
 	}
 
 private:
+	U m_width;
+	U m_height;
 	FramebufferPtr m_fb;
 	TexturePtr m_rt;
 	ResourceGroupPtr m_globalResources;
