@@ -270,8 +270,10 @@ Error init()
 		if(err)
 			return err;
 
-		app->getMainRenderer().getOffscreenRenderer().getPps().loadColorGradingTexture(
-			"textures/adis/dungeon.ankitex");
+		app->getMainRenderer()
+			.getOffscreenRenderer()
+			.getPps()
+			.loadColorGradingTexture("textures/adis/dungeon.ankitex");
 	}
 
 /*{

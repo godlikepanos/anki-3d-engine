@@ -401,15 +401,15 @@ Error Is::lightPass(RenderingContext& ctx)
 	if(visiblePointLightsCount)
 	{
 		taskData.m_vPointLights = std::move(
-			SArray<VisibleNode>(vi.getBegin(VisibilityGroupType::LIGHTS_POINT), 
-			visiblePointLightsCount));
+			SArray<VisibleNode>(vi.getBegin(VisibilityGroupType::LIGHTS_POINT),
+				visiblePointLightsCount));
 	}
 
 	if(visibleSpotLightsCount)
 	{
 		taskData.m_vSpotLights = std::move(
-			SArray<VisibleNode>(vi.getBegin(VisibilityGroupType::LIGHTS_SPOT), 
-			visibleSpotLightsCount));
+			SArray<VisibleNode>(vi.getBegin(VisibilityGroupType::LIGHTS_SPOT),
+				visibleSpotLightsCount));
 	}
 
 	taskData.m_is = this;
@@ -483,7 +483,6 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 		{
 			binLight(sp, pos, 0, task, testResult);
 		}
-
 	}
 
 	ThreadPool::Task::choseStartEnd(
@@ -494,8 +493,7 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 		MoveComponent& move = snode.getComponent<MoveComponent>();
 		LightComponent& light = snode.getComponent<LightComponent>();
 		SpatialComponent& sp = snode.getComponent<SpatialComponent>();
-		const FrustumComponent* frc =
-			snode.tryGetComponent<FrustumComponent>();
+		const FrustumComponent* frc = snode.tryGetComponent<FrustumComponent>();
 
 		I pos = writeSpotLight(light, move, frc, cammove, camfrc, task);
 		if(pos != -1)

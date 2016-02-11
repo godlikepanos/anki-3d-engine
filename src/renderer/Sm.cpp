@@ -323,7 +323,7 @@ void Sm::prepareBuildCommandBuffers(RenderingContext& ctx)
 		SceneNode* node = (*it).m_node;
 		LightComponent& light = node->getComponent<LightComponent>();
 		ANKI_ASSERT(light.getLightType() == LightComponent::LightType::POINT);
-		
+
 		if(light.getShadowEnabled())
 		{
 			ShadowmapOmni* sm;
