@@ -343,7 +343,21 @@ void VisibilityTestTask::test(
 
 		if(lc && wantsLightComponents)
 		{
-			visible->moveBack(alloc, VisibilityGroupType::LIGHTS, visibleNode);
+			VisibilityGroupType gt;
+			switch(lc->getLightType())
+			{
+			case LightComponent::LightType::POINT:
+				gt = VisibilityGroupType::LIGHTS_POINT;
+				break;
+			case LightComponent::LightType::SPOT:
+				gt = VisibilityGroupType::LIGHTS_SPOT;
+				break;
+			default:
+				ANKI_ASSERT(0);
+				gt = VisibilityGroupType::TYPE_COUNT;
+			}
+
+			visible->moveBack(alloc, gt, visibleNode);
 		}
 
 		if(lfc && wantsFlareComponents)
@@ -459,7 +473,8 @@ void VisibilityTestResults::create(SceneFrameAllocator<U8> alloc)
 {
 	m_groups[VisibilityGroupType::RENDERABLES_MS].m_nodes.create(alloc, 64);
 	m_groups[VisibilityGroupType::RENDERABLES_FS].m_nodes.create(alloc, 8);
-	m_groups[VisibilityGroupType::LIGHTS].m_nodes.create(alloc, 32);
+	m_groups[VisibilityGroupType::LIGHTS_POINT].m_nodes.create(alloc, 8);
+	m_groups[VisibilityGroupType::LIGHTS_SPOT].m_nodes.create(alloc, 4);
 }
 
 //==============================================================================

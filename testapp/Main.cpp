@@ -269,6 +269,9 @@ Error init()
 		err = app->getScriptManager().evalString(script->getSource());
 		if(err)
 			return err;
+
+		app->getMainRenderer().getOffscreenRenderer().getPps().loadColorGradingTexture(
+			"textures/adis/dungeon.ankitex");
 	}
 
 /*{

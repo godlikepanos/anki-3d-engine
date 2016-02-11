@@ -154,8 +154,8 @@ public:
 	Atomic<U32> m_lightIdsCount = {0};
 
 	// Misc
-	const VisibleNode* m_lightsBegin = nullptr;
-	const VisibleNode* m_lightsEnd = nullptr;
+	SArray<VisibleNode> m_vPointLights;
+	SArray<VisibleNode> m_vSpotLights;
 
 	Is* m_is = nullptr;
 };
@@ -350,30 +350,9 @@ Error Is::lightPass(RenderingContext& ctx)
 	//
 	// Quickly get the lights
 	//
-	U visiblePointLightsCount = 0;
-	U visibleSpotLightsCount = 0;
+	U visiblePointLightsCount = vi.getCount(VisibilityGroupType::LIGHTS_POINT);
+	U visibleSpotLightsCount = vi.getCount(VisibilityGroupType::LIGHTS_SPOT);
 
-	auto it = vi.getBegin(VisibilityGroupType::LIGHTS);
-	auto lend = vi.getEnd(VisibilityGroupType::LIGHTS);
-	for(; it != lend; ++it)
-	{
-		SceneNode* node = (*it).m_node;
-		LightComponent& light = node->getComponent<LightComponent>();
-		switch(light.getLightType())
-		{
-		case LightComponent::LightType::POINT:
-			++visiblePointLightsCount;
-			break;
-		case LightComponent::LightType::SPOT:
-			++visibleSpotLightsCount;
-			break;
-		default:
-			ANKI_ASSERT(0);
-			break;
-		}
-	}
-
-	// Sanitize the counters
 	visiblePointLightsCount = min<U>(visiblePointLightsCount, m_maxPointLights);
 	visibleSpotLightsCount = min<U>(visibleSpotLightsCount, m_maxSpotLights);
 
@@ -419,8 +398,19 @@ Error Is::lightPass(RenderingContext& ctx)
 		m_sLightsToken.markUnused();
 	}
 
-	taskData.m_lightsBegin = vi.getBegin(VisibilityGroupType::LIGHTS);
-	taskData.m_lightsEnd = vi.getEnd(VisibilityGroupType::LIGHTS);
+	if(visiblePointLightsCount)
+	{
+		taskData.m_vPointLights = std::move(
+			SArray<VisibleNode>(vi.getBegin(VisibilityGroupType::LIGHTS_POINT), 
+			visiblePointLightsCount));
+	}
+
+	if(visibleSpotLightsCount)
+	{
+		taskData.m_vSpotLights = std::move(
+			SArray<VisibleNode>(vi.getBegin(VisibilityGroupType::LIGHTS_SPOT), 
+			visibleSpotLightsCount));
+	}
 
 	taskData.m_is = this;
 
@@ -470,51 +460,47 @@ Error Is::lightPass(RenderingContext& ctx)
 //==============================================================================
 void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 {
-	U lightsCount = task.m_lightsEnd - task.m_lightsBegin;
 	const FrustumComponent& camfrc = *m_frc;
 	const MoveComponent& cammove =
 		m_frc->getSceneNode().getComponent<MoveComponent>();
 
 	// Iterate lights and bin them
-	PtrSize start, end;
-	ThreadPool::Task::choseStartEnd(
-		threadId, threadsCount, lightsCount, start, end);
-
 	ClustererTestResult testResult;
 	m_r->getClusterer().initTestResults(getFrameAllocator(), testResult);
 
+	PtrSize start, end;
+	ThreadPool::Task::choseStartEnd(
+		threadId, threadsCount, task.m_vPointLights.getSize(), start, end);
 	for(auto i = start; i < end; i++)
 	{
-		SceneNode* snode = (*(task.m_lightsBegin + i)).m_node;
-		MoveComponent& move = snode->getComponent<MoveComponent>();
-		LightComponent& light = snode->getComponent<LightComponent>();
-		SpatialComponent& sp = snode->getComponent<SpatialComponent>();
+		SceneNode& snode = *task.m_vPointLights[i].m_node;
+		MoveComponent& move = snode.getComponent<MoveComponent>();
+		LightComponent& light = snode.getComponent<LightComponent>();
+		SpatialComponent& sp = snode.getComponent<SpatialComponent>();
 
-		switch(light.getLightType())
+		I pos = writePointLight(light, move, camfrc, task);
+		if(pos != -1)
 		{
-		case LightComponent::LightType::POINT:
-		{
-			I pos = writePointLight(light, move, camfrc, task);
-			if(pos != -1)
-			{
-				binLight(sp, pos, 0, task, testResult);
-			}
+			binLight(sp, pos, 0, task, testResult);
 		}
-		break;
-		case LightComponent::LightType::SPOT:
+
+	}
+
+	ThreadPool::Task::choseStartEnd(
+		threadId, threadsCount, task.m_vSpotLights.getSize(), start, end);
+	for(auto i = start; i < end; i++)
+	{
+		SceneNode& snode = *task.m_vSpotLights[i].m_node;
+		MoveComponent& move = snode.getComponent<MoveComponent>();
+		LightComponent& light = snode.getComponent<LightComponent>();
+		SpatialComponent& sp = snode.getComponent<SpatialComponent>();
+		const FrustumComponent* frc =
+			snode.tryGetComponent<FrustumComponent>();
+
+		I pos = writeSpotLight(light, move, frc, cammove, camfrc, task);
+		if(pos != -1)
 		{
-			const FrustumComponent* frc =
-				snode->tryGetComponent<FrustumComponent>();
-			I pos = writeSpotLight(light, move, frc, cammove, camfrc, task);
-			if(pos != -1)
-			{
-				binLight(sp, pos, 1, task, testResult);
-			}
-		}
-		break;
-		default:
-			ANKI_ASSERT(0);
-			break;
+			binLight(sp, pos, 1, task, testResult);
 		}
 	}
 

@@ -236,7 +236,7 @@ def parse_commandline():
 			default = "default", help = "texture filtering. Can be: " \
 			"default, linear, nearest")
 
-	parser.add_option("--mips_count", dest = "mips_count", type = "int",
+	parser.add_option("--mips-count", dest = "mips_count", type = "int",
 			default = "0xFFFF", help = "Max number of mipmaps")
 
 	# Add the default value on each option when printing help

@@ -37,7 +37,7 @@ vec3 computeSpecularColorBrdf(vec3 v, // view dir
 	vec3 h = normalize(l + v);
 
 	// Fresnel
-	float voh = max(EPSILON, dot(v, h));
+	float voh = dot(v, h);
 #if 0
 	// Schlick
 	vec3 F = specCol + (1.0 - specCol) * pow((1.0 + EPSILON - loh), 5.0);
@@ -48,9 +48,10 @@ vec3 computeSpecularColorBrdf(vec3 v, // view dir
 #endif
 
 	// D(n,h) aka NDF: GGX Trowbridge-Reitz
-	float noh = max(EPSILON, dot(n, h));
+	float noh = dot(n, h);
 	float D = noh * noh * (a2 - 1.0) + 1.0;
 	D = a2 / (PI * D * D);
+	D = clamp(D, EPSILON, 100.0); // Limit that because it may grow
 
 // G(l,v,h)/(4*dot(n,h)*dot(n,v)) aka Visibility term: Geometric shadowing
 // divided by BRDF denominator

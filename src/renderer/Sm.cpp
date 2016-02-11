@@ -316,41 +316,43 @@ void Sm::prepareBuildCommandBuffers(RenderingContext& ctx)
 	U spotCastersCount = 0;
 	U omniCastersCount = 0;
 
-	auto it = vi.getBegin(VisibilityGroupType::LIGHTS);
-	const auto lend = vi.getEnd(VisibilityGroupType::LIGHTS);
+	auto it = vi.getBegin(VisibilityGroupType::LIGHTS_POINT);
+	auto lend = vi.getEnd(VisibilityGroupType::LIGHTS_POINT);
 	for(; it != lend; ++it)
 	{
 		SceneNode* node = (*it).m_node;
 		LightComponent& light = node->getComponent<LightComponent>();
-		switch(light.getLightType())
+		ANKI_ASSERT(light.getLightType() == LightComponent::LightType::POINT);
+		
+		if(light.getShadowEnabled())
 		{
-		case LightComponent::LightType::POINT:
-			if(light.getShadowEnabled())
-			{
-				ShadowmapOmni* sm;
-				bestCandidate(*node, m_omnis, sm);
+			ShadowmapOmni* sm;
+			bestCandidate(*node, m_omnis, sm);
 
-				if(!skip(*node, *sm))
-				{
-					omniCasters[omniCastersCount++] = node;
-				}
-			}
-			break;
-		case LightComponent::LightType::SPOT:
-			if(light.getShadowEnabled())
+			if(!skip(*node, *sm))
 			{
-				ShadowmapSpot* sm;
-				bestCandidate(*node, m_spots, sm);
-
-				if(!skip(*node, *sm))
-				{
-					spotCasters[spotCastersCount++] = node;
-				}
+				omniCasters[omniCastersCount++] = node;
 			}
-			break;
-		default:
-			ANKI_ASSERT(0);
-			break;
+		}
+	}
+
+	it = vi.getBegin(VisibilityGroupType::LIGHTS_SPOT);
+	lend = vi.getEnd(VisibilityGroupType::LIGHTS_SPOT);
+	for(; it != lend; ++it)
+	{
+		SceneNode* node = (*it).m_node;
+		LightComponent& light = node->getComponent<LightComponent>();
+		ANKI_ASSERT(light.getLightType() == LightComponent::LightType::SPOT);
+
+		if(light.getShadowEnabled())
+		{
+			ShadowmapSpot* sm;
+			bestCandidate(*node, m_spots, sm);
+
+			if(!skip(*node, *sm))
+			{
+				spotCasters[spotCastersCount++] = node;
+			}
 		}
 	}
 

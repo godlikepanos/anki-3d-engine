@@ -150,6 +150,7 @@ Error Pps::init(const ConfigSet& config)
 //==============================================================================
 Error Pps::loadColorGradingTexture(CString filename)
 {
+	m_lut.reset(nullptr);
 	ANKI_CHECK(getResourceManager().loadResource(filename, m_lut));
 	return ErrorCode::NONE;
 }
