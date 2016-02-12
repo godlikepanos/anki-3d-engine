@@ -23,7 +23,6 @@ public:
 
 	void setFog(const Vec3& color, F32 factor)
 	{
-		m_uniformsDirty = true;
 		m_fogColor = color;
 		m_fogFactor = factor;
 	}
@@ -56,8 +55,6 @@ private:
 
 	TextureResourcePtr m_lut; ///< Color grading lookup texture.
 
-	Bool8 m_uniformsDirty = true;
-	BufferPtr m_uniformsBuff;
 	Vec3 m_fogColor = Vec3(1.0);
 	F32 m_fogFactor = 1.0;
 

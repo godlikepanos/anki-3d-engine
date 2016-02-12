@@ -19,7 +19,7 @@ struct Luminance
 	vec4 averageLuminancePad3;
 };
 
-layout(std140, SS_BINDING(0, 0)) readonly buffer _s0
+layout(std140, SS_BINDING(0, 0)) readonly buffer s0_
 {
 	Luminance u_luminance;
 };
@@ -30,7 +30,7 @@ struct Uniforms
 	vec4 fogColorFogFactor;
 };
 
-layout(std140, SS_BINDING(0, 1)) readonly buffer _s1
+layout(std140, UBO_BINDING(0, 0)) uniform ubo0_
 {
 	Uniforms u_uniforms;
 };

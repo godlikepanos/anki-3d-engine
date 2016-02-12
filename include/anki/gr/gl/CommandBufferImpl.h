@@ -48,7 +48,9 @@ public:
 	public:
 		Bool m_viewport = false;
 		Bool m_polygonOffset = false;
-	} m_stateSet;
+		Bool m_insideRenderPass = false;
+		Bool m_secondLevel = false;
+	} m_dbg;
 #endif
 
 	/// Default constructor
@@ -96,8 +98,8 @@ public:
 
 	void checkDrawcall() const
 	{
-		ANKI_ASSERT(m_stateSet.m_viewport == true);
-		ANKI_ASSERT(m_stateSet.m_polygonOffset == true);
+		ANKI_ASSERT(m_dbg.m_viewport == true);
+		ANKI_ASSERT(m_dbg.m_polygonOffset == true);
 	}
 
 	/// Make immutable

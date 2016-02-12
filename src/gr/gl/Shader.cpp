@@ -68,7 +68,8 @@ void Shader::create(
 
 	m_impl.reset(getAllocator().newInstance<ShaderImpl>(&getManager()));
 
-	CommandBufferPtr cmdb = getManager().newInstance<CommandBuffer>();
+	CommandBufferPtr cmdb =
+		getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
 
 	// Copy source to the command buffer
 	CommandBufferAllocator<char> alloc =

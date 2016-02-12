@@ -160,7 +160,7 @@ void Bloom::run(RenderingContext& ctx)
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 	// pass 0
-	cmdb->bindFramebuffer(m_vblurFb);
+	cmdb->beginRenderPass(m_vblurFb);
 	cmdb->setViewport(0, 0, m_width, m_height);
 	cmdb->bindPipeline(m_tonePpline);
 
@@ -173,21 +173,24 @@ void Bloom::run(RenderingContext& ctx)
 	cmdb->bindResourceGroup(m_firstDescrGroup, 0, &dyn);
 
 	m_r->drawQuad(cmdb);
+	cmdb->endRenderPass();
 
 	// Blurring passes
 	for(U i = 0; i < m_blurringIterationsCount; i++)
 	{
 		// hpass
-		cmdb->bindFramebuffer(m_hblurFb);
+		cmdb->beginRenderPass(m_hblurFb);
 		cmdb->bindResourceGroup(m_hDescrGroup, 0, nullptr);
 		cmdb->bindPipeline(m_hblurPpline);
 		m_r->drawQuad(cmdb);
+		cmdb->endRenderPass();
 
 		// vpass
-		cmdb->bindFramebuffer(m_vblurFb);
+		cmdb->beginRenderPass(m_vblurFb);
 		cmdb->bindResourceGroup(m_vDescrGroup, 0, nullptr);
 		cmdb->bindPipeline(m_vblurPpline);
 		m_r->drawQuad(cmdb);
+		cmdb->endRenderPass();
 	}
 }
 

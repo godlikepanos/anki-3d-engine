@@ -85,12 +85,13 @@ void DownscaleBlur::run(RenderingContext& ctx)
 		size /= 2;
 		Subpass& pass = m_passes[i];
 
-		cmdb->bindFramebuffer(pass.m_fb);
+		cmdb->beginRenderPass(pass.m_fb);
 		cmdb->setViewport(0, 0, size.x(), size.y());
 		cmdb->bindPipeline(pass.m_ppline);
 		cmdb->bindResourceGroup(pass.m_rcGroup, 0, nullptr);
 
 		m_r->drawQuad(cmdb);
+		cmdb->endRenderPass();
 	}
 }
 

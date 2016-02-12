@@ -58,7 +58,8 @@ void ResourceGroup::create(const ResourceGroupInitInfo& init)
 	// NOTE: Create asynchronously because the initialization touches GL names
 	m_impl.reset(getAllocator().newInstance<ResourceGroupImpl>(&getManager()));
 
-	CommandBufferPtr cmdb = getManager().newInstance<CommandBuffer>();
+	CommandBufferPtr cmdb =
+		getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
 
 	cmdb->getImplementation().pushBackNewCommand<RcgCreateCommand>(this, init);
 	cmdb->flush();

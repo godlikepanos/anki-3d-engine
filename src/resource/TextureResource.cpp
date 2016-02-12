@@ -40,7 +40,8 @@ public:
 //==============================================================================
 Error TexUploadTask::operator()()
 {
-	CommandBufferPtr cmdb = m_gr->newInstance<CommandBuffer>();
+	CommandBufferPtr cmdb =
+		m_gr->newInstance<CommandBuffer>(CommandBufferInitInfo());
 
 	// Upload the data
 	for(U layer = 0; layer < m_layerCount; layer++)
@@ -79,7 +80,8 @@ Error TextureResource::load(const ResourceFilename& filename)
 {
 	GrManager& gr = getManager().getGrManager();
 	// Always first to avoid assertions (because of the check of the allocator)
-	CommandBufferPtr cmdb = gr.newInstance<CommandBuffer>();
+	CommandBufferPtr cmdb =
+		gr.newInstance<CommandBuffer>(CommandBufferInitInfo());
 
 	TextureInitInfo init;
 	U layers = 0;

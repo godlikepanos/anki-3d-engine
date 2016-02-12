@@ -105,11 +105,13 @@ private:
 
 	ANKI_USE_RESULT Error doSpotLight(SceneNode& light,
 		CommandBufferPtr& cmdBuff,
+		FramebufferPtr& fb,
 		U threadId,
 		U threadCount) const;
 
 	ANKI_USE_RESULT Error doOmniLight(SceneNode& light,
 		CommandBufferPtr cmdbs[],
+		Array<FramebufferPtr, 6>& fbs,
 		U threadId,
 		U threadCount) const;
 };

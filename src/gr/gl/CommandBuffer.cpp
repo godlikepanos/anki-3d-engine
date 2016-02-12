@@ -37,15 +37,30 @@ CommandBuffer::~CommandBuffer()
 }
 
 //==============================================================================
-void CommandBuffer::create(CommandBufferInitHints hints)
+void CommandBuffer::create(CommandBufferInitInfo& inf)
 {
 	m_impl.reset(getAllocator().newInstance<CommandBufferImpl>(&getManager()));
-	m_impl->create(hints);
+	m_impl->create(inf.m_hints);
+
+#if ANKI_ASSERTS_ENABLED
+	if(inf.m_secondLevel)
+	{
+		ANKI_ASSERT(inf.m_framebuffer.isCreated());
+		m_impl->m_dbg.m_insideRenderPass = true;
+		m_impl->m_dbg.m_secondLevel = true;
+	}
+#endif
 }
 
 //==============================================================================
 void CommandBuffer::flush()
 {
+#if ANKI_ASSERTS_ENABLED
+	if(!m_impl->m_dbg.m_secondLevel)
+	{
+		ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
+	}
+#endif
 	getManager().getImplementation().getRenderingThread().flushCommandBuffer(
 		CommandBufferPtr(this));
 }
@@ -53,6 +68,12 @@ void CommandBuffer::flush()
 //==============================================================================
 void CommandBuffer::finish()
 {
+#if ANKI_ASSERTS_ENABLED
+	if(!m_impl->m_dbg.m_secondLevel)
+	{
+		ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
+	}
+#endif
 	getManager().getImplementation().getRenderingThread().finishCommandBuffer(
 		CommandBufferPtr(this));
 }
@@ -87,7 +108,7 @@ public:
 void CommandBuffer::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 {
 #if ANKI_ASSERTS_ENABLED
-	m_impl->m_stateSet.m_viewport = true;
+	m_impl->m_dbg.m_viewport = true;
 #endif
 	m_impl->pushBackNewCommand<ViewportCommand>(minx, miny, maxx, maxy);
 }
@@ -124,7 +145,7 @@ public:
 void CommandBuffer::setPolygonOffset(F32 offset, F32 units)
 {
 #if ANKI_ASSERTS_ENABLED
-	m_impl->m_stateSet.m_polygonOffset = true;
+	m_impl->m_dbg.m_polygonOffset = true;
 #endif
 	m_impl->pushBackNewCommand<SetPolygonOffsetCommand>(offset, units);
 }
@@ -178,9 +199,23 @@ public:
 	}
 };
 
-void CommandBuffer::bindFramebuffer(FramebufferPtr fb)
+void CommandBuffer::beginRenderPass(FramebufferPtr fb)
 {
+	ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
+#if ANKI_ASSERTS_ENABLED
+	m_impl->m_dbg.m_insideRenderPass = true;
+#endif
 	m_impl->pushBackNewCommand<BindFramebufferCommand>(fb);
+}
+
+//==============================================================================
+void CommandBuffer::endRenderPass()
+{
+	// Nothing for GL
+	ANKI_ASSERT(m_impl->m_dbg.m_insideRenderPass);
+#if ANKI_ASSERTS_ENABLED
+	m_impl->m_dbg.m_insideRenderPass = false;
+#endif
 }
 
 //==============================================================================
@@ -271,6 +306,7 @@ void CommandBuffer::drawElements(U32 count,
 	U32 baseVertex,
 	U32 baseInstance)
 {
+	ANKI_ASSERT(m_impl->m_dbg.m_insideRenderPass);
 	DrawElementsIndirectInfo info(
 		count, instanceCount, firstIndex, baseVertex, baseInstance);
 
@@ -312,6 +348,7 @@ public:
 void CommandBuffer::drawArrays(
 	U32 count, U32 instanceCount, U32 first, U32 baseInstance)
 {
+	ANKI_ASSERT(m_impl->m_dbg.m_insideRenderPass);
 	DrawArraysIndirectInfo info(count, instanceCount, first, baseInstance);
 
 	m_impl->checkDrawcall();
@@ -326,6 +363,7 @@ void CommandBuffer::drawElementsConditional(OcclusionQueryPtr query,
 	U32 baseVertex,
 	U32 baseInstance)
 {
+	ANKI_ASSERT(m_impl->m_dbg.m_insideRenderPass);
 	DrawElementsIndirectInfo info(
 		count, instanceCount, firstIndex, baseVertex, baseInstance);
 
@@ -340,6 +378,7 @@ void CommandBuffer::drawArraysConditional(OcclusionQueryPtr query,
 	U32 first,
 	U32 baseInstance)
 {
+	ANKI_ASSERT(m_impl->m_dbg.m_insideRenderPass);
 	DrawArraysIndirectInfo info(count, instanceCount, first, baseInstance);
 
 	m_impl->checkDrawcall();
@@ -367,6 +406,7 @@ public:
 void CommandBuffer::dispatchCompute(
 	U32 groupCountX, U32 groupCountY, U32 groupCountZ)
 {
+	ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
 	m_impl->pushBackNewCommand<DispatchCommand>(
 		groupCountX, groupCountY, groupCountZ);
 }
@@ -452,6 +492,7 @@ public:
 void CommandBuffer::textureUpload(
 	TexturePtr tex, U32 mipmap, U32 slice, const DynamicBufferToken& token)
 {
+	ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
 	ANKI_ASSERT(token.m_range > 0);
 
 	m_impl->pushBackNewCommand<TexUploadCommand>(tex, mipmap, slice, token);
@@ -488,6 +529,7 @@ public:
 void CommandBuffer::writeBuffer(
 	BufferPtr buff, PtrSize offset, const DynamicBufferToken& token)
 {
+	ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
 	m_impl->pushBackNewCommand<BuffWriteCommand>(buff, offset, token);
 }
 
@@ -511,6 +553,7 @@ public:
 
 void CommandBuffer::generateMipmaps(TexturePtr tex)
 {
+	ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
 	m_impl->pushBackNewCommand<GenMipsCommand>(tex);
 }
 
@@ -536,6 +579,7 @@ public:
 
 void CommandBuffer::generateMipmaps(TexturePtr tex, U surface)
 {
+	ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
 	m_impl->pushBackNewCommand<GenMipsCommand1>(tex, surface);
 }
 
@@ -618,6 +662,7 @@ void CommandBuffer::copyTextureToTexture(TexturePtr src,
 	U destSlice,
 	U destLevel)
 {
+	ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
 	m_impl->pushBackNewCommand<CopyTexCommand>(
 		src, srcSlice, srcLevel, dest, destSlice, destLevel);
 }

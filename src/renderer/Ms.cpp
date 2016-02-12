@@ -137,7 +137,11 @@ Error Ms::buildCommandBuffers(
 	}
 
 	// Create the command buffer and set some state
-	CommandBufferPtr cmdb = m_r->getGrManager().newInstance<CommandBuffer>();
+	CommandBufferInitInfo cinf;
+	cinf.m_secondLevel = true;
+	cinf.m_framebuffer = m_fb;
+	CommandBufferPtr cmdb =
+		m_r->getGrManager().newInstance<CommandBuffer>(cinf);
 	ctx.m_ms.m_commandBuffers[threadId] = cmdb;
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 	cmdb->setPolygonOffset(0.0, 0.0);
@@ -159,7 +163,7 @@ void Ms::run(RenderingContext& ctx)
 	ANKI_TRACE_START_EVENT(RENDER_MS);
 
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
-	cmdb->bindFramebuffer(m_fb);
+	cmdb->beginRenderPass(m_fb);
 
 	// Set some state anyway because other stages may depend on it
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());

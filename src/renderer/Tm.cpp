@@ -39,7 +39,8 @@ Error Tm::create(const ConfigSet& initializer)
 	m_luminanceBuff = getGrManager().newInstance<Buffer>(
 		sizeof(Vec4), BufferUsageBit::STORAGE, BufferAccessBit::CLIENT_WRITE);
 
-	CommandBufferPtr cmdb = getGrManager().newInstance<CommandBuffer>();
+	CommandBufferPtr cmdb =
+		getGrManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
 	DynamicBufferToken token;
 	void* data = getGrManager().allocateFrameHostVisibleMemory(
 		sizeof(Vec4), BufferUsage::TRANSFER, token);

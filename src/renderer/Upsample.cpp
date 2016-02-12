@@ -94,12 +94,13 @@ void Upsample::run(RenderingContext& ctx)
 	computeLinearizeDepthOptimal(
 		fr.getNear(), fr.getFar(), linearDepth->x(), linearDepth->y());
 
-	cmdb->bindFramebuffer(m_fb);
+	cmdb->beginRenderPass(m_fb);
 	cmdb->bindPipeline(m_ppline);
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 	cmdb->bindResourceGroup(m_rcGroup, 0, &dyn);
 
 	m_r->drawQuad(cmdb);
+	cmdb->endRenderPass();
 }
 
 } // end namespace anki

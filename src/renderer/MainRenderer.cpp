@@ -123,7 +123,9 @@ Error MainRenderer::render(SceneGraph& scene)
 	m_frameAlloc.getMemoryPool().reset();
 
 	GrManager& gl = m_r->getGrManager();
-	CommandBufferPtr cmdb = gl.newInstance<CommandBuffer>(m_cbInitHints);
+	CommandBufferInitInfo cinf;
+	cinf.m_hints = m_cbInitHints;
+	CommandBufferPtr cmdb = gl.newInstance<CommandBuffer>(cinf);
 
 	// Set some of the dynamic state
 	cmdb->setPolygonOffset(0.0, 0.0);
@@ -160,13 +162,14 @@ Error MainRenderer::render(SceneGraph& scene)
 
 	if(!rDrawToDefault)
 	{
-		cmdb->bindFramebuffer(m_defaultFb);
+		cmdb->beginRenderPass(m_defaultFb);
 		cmdb->setViewport(0, 0, m_width, m_height);
 
 		cmdb->bindPipeline(m_blitPpline);
 		cmdb->bindResourceGroup(m_rcGroup, 0, nullptr);
 
 		m_r->drawQuad(cmdb);
+		cmdb->endRenderPass();
 	}
 
 	// Flush the command buffer

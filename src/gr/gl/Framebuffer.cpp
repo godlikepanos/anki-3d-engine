@@ -53,7 +53,8 @@ void Framebuffer::create(const FramebufferInitInfo& init)
 {
 	m_impl.reset(getAllocator().newInstance<FramebufferImpl>(&getManager()));
 
-	CommandBufferPtr cmdb = getManager().newInstance<CommandBuffer>();
+	CommandBufferPtr cmdb =
+		getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
 
 	cmdb->getImplementation().pushBackNewCommand<CreateFramebufferCommand>(
 		this, init);

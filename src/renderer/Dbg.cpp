@@ -85,7 +85,7 @@ Error Dbg::run(RenderingContext& ctx)
 	ANKI_ASSERT(m_enabled);
 
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
-	cmdb->bindFramebuffer(m_fb);
+	cmdb->beginRenderPass(m_fb);
 
 	FrustumComponent& camFr = *ctx.m_frustumComponent;
 	SceneNode& cam = camFr.getSceneNode();
@@ -216,7 +216,10 @@ Error Dbg::run(RenderingContext& ctx)
 	}
 #endif
 
-	return m_drawer->flush();
+	ANKI_CHECK(m_drawer->flush());
+
+	cmdb->endRenderPass();
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

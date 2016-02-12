@@ -642,10 +642,12 @@ Error Ir::renderReflection(RenderingContext& ctx,
 		fbinit.m_colorAttachments[0].m_loadOperation =
 			AttachmentLoadOperation::DONT_CARE;
 		FramebufferPtr fb = getGrManager().newInstance<Framebuffer>(fbinit);
-		cmdb->bindFramebuffer(fb);
+		cmdb->beginRenderPass(fb);
 
 		cmdb->bindPipeline(m_computeIrradiancePpline);
 		m_r->drawQuad(cmdb);
+		cmdb->endRenderPass();
+
 		cmdb->generateMipmaps(m_irradianceCubemapArr, 6 * cubemapIdx + i);
 	}
 

@@ -53,7 +53,8 @@ void Texture::create(const TextureInitInfo& init)
 {
 	m_impl.reset(getAllocator().newInstance<TextureImpl>(&getManager()));
 
-	CommandBufferPtr cmdb = getManager().newInstance<CommandBuffer>();
+	CommandBufferPtr cmdb =
+		getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
 
 	cmdb->getImplementation().pushBackNewCommand<CreateTextureCommand>(
 		this, init);

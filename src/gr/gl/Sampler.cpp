@@ -54,7 +54,8 @@ void Sampler::create(const SamplerInitInfo& init)
 {
 	m_impl.reset(getAllocator().newInstance<SamplerImpl>(&getManager()));
 
-	CommandBufferPtr cmdb = getManager().newInstance<CommandBuffer>();
+	CommandBufferPtr cmdb =
+		getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
 
 	cmdb->getImplementation().pushBackNewCommand<CreateSamplerCommand>(
 		this, init);

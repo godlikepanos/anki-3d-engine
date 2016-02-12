@@ -54,7 +54,8 @@ void OcclusionQuery::create(OcclusionQueryResultBit condRenderingBit)
 {
 	m_impl.reset(getAllocator().newInstance<OcclusionQueryImpl>(&getManager()));
 
-	CommandBufferPtr cmdb = getManager().newInstance<CommandBuffer>();
+	CommandBufferPtr cmdb =
+		getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
 
 	cmdb->getImplementation().pushBackNewCommand<CreateOqCommand>(
 		this, condRenderingBit);

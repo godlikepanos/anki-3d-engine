@@ -66,7 +66,8 @@ void Mesh::createBuffers(const MeshLoader& loader)
 {
 	GrManager& gr = getManager().getGrManager();
 
-	CommandBufferPtr cmdb = gr.newInstance<CommandBuffer>();
+	CommandBufferPtr cmdb =
+		gr.newInstance<CommandBuffer>(CommandBufferInitInfo());
 
 	// Create vertex buffer
 	m_vertBuff = gr.newInstance<Buffer>(loader.getVertexDataSize(),

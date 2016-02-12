@@ -251,8 +251,8 @@ Error Renderer::render(RenderingContext& ctx)
 	}
 
 	m_ms->run(ctx);
-
 	m_lf->runOcclusionTests(ctx);
+	cmdb->endRenderPass();
 
 	ANKI_CHECK(m_is->run(ctx));
 
@@ -262,6 +262,7 @@ Error Renderer::render(RenderingContext& ctx)
 	ANKI_CHECK(buildCommandBuffersFs(ctx));
 	m_fs->run(ctx);
 	m_lf->run(ctx);
+	cmdb->endRenderPass();
 
 	m_upsample->run(ctx);
 

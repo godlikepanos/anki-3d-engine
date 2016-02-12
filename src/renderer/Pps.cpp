@@ -98,11 +98,6 @@ Error Pps::initInternal(const ConfigSet& config)
 	// LUT
 	ANKI_CHECK(loadColorGradingTexture("engine_data/DefaultLut.ankitex"));
 
-	// Uniforms
-	m_uniformsBuff = getGrManager().newInstance<Buffer>(sizeof(Uniforms),
-		BufferUsageBit::STORAGE,
-		BufferAccessBit::CLIENT_WRITE);
-
 	// RC goup
 	ResourceGroupInitInfo rcInit;
 	rcInit.m_textures[0].m_texture = m_r->getIs().getRt();
@@ -128,7 +123,7 @@ Error Pps::initInternal(const ConfigSet& config)
 
 	rcInit.m_storageBuffers[0].m_buffer =
 		m_r->getTm().getAverageLuminanceBuffer();
-	rcInit.m_storageBuffers[1].m_buffer = m_uniformsBuff;
+	rcInit.m_uniformBuffers[0].m_dynamic = true;
 
 	m_rcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);
 
@@ -169,19 +164,14 @@ void Pps::run(RenderingContext& ctx)
 		m_r->getOutputFramebuffer(fb, width, height);
 	}
 
-	cmdb->bindFramebuffer(fb);
-	cmdb->setViewport(0, 0, width, height);
-	cmdb->bindPipeline(m_ppline);
-	cmdb->bindResourceGroup(m_rcGroup, 0, nullptr);
-
-	if(m_uniformsDirty)
+	// Update uniforms
+	DynamicBufferInfo dyn;
 	{
-		m_uniformsDirty = false;
 		DynamicBufferToken token;
 		Uniforms* unis = static_cast<Uniforms*>(
 			getGrManager().allocateFrameHostVisibleMemory(
-				sizeof(*unis), BufferUsage::TRANSFER, token));
-		cmdb->writeBuffer(m_uniformsBuff, 0, token);
+				sizeof(*unis), BufferUsage::UNIFORM, dyn.m_uniformBuffers[0]));
+
 		unis->m_fogColorFogFactor = Vec4(m_fogColor, m_fogFactor);
 
 		const FrustumComponent& frc = *ctx.m_frustumComponent;
@@ -189,7 +179,12 @@ void Pps::run(RenderingContext& ctx)
 			frc.getFrustum().getNear(), frc.getFrustum().getFar(), 0.0, 0.0);
 	}
 
+	cmdb->beginRenderPass(fb);
+	cmdb->setViewport(0, 0, width, height);
+	cmdb->bindPipeline(m_ppline);
+	cmdb->bindResourceGroup(m_rcGroup, 0, &dyn);
 	m_r->drawQuad(cmdb);
+	cmdb->endRenderPass();
 }
 
 } // end namespace anki

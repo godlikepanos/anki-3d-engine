@@ -117,7 +117,8 @@ Error Ssao::initInternal(const ConfigSet& config)
 
 	m_noiseTex = gr.newInstance<Texture>(tinit);
 
-	CommandBufferPtr cmdb = gr.newInstance<CommandBuffer>();
+	CommandBufferPtr cmdb =
+		gr.newInstance<CommandBuffer>(CommandBufferInitInfo());
 
 	PtrSize noiseSize = NOISE_TEX_SIZE * NOISE_TEX_SIZE * sizeof(Vec3);
 
@@ -274,7 +275,7 @@ void Ssao::run(RenderingContext& ctx)
 
 	// 1st pass
 	//
-	cmdb->bindFramebuffer(m_vblurFb);
+	cmdb->beginRenderPass(m_vblurFb);
 	cmdb->setViewport(0, 0, m_width, m_height);
 	cmdb->bindPipeline(m_ssaoPpline);
 
@@ -284,22 +285,25 @@ void Ssao::run(RenderingContext& ctx)
 
 	// Draw
 	m_r->drawQuad(cmdb);
+	cmdb->endRenderPass();
 
 	// Blurring passes
 	//
 	for(U i = 0; i < m_blurringIterationsCount; i++)
 	{
 		// hpass
-		cmdb->bindFramebuffer(m_hblurFb);
+		cmdb->beginRenderPass(m_hblurFb);
 		cmdb->bindPipeline(m_hblurPpline);
 		cmdb->bindResourceGroup(m_hblurRc, 0, nullptr);
 		m_r->drawQuad(cmdb);
+		cmdb->endRenderPass();
 
 		// vpass
-		cmdb->bindFramebuffer(m_vblurFb);
+		cmdb->beginRenderPass(m_vblurFb);
 		cmdb->bindPipeline(m_vblurPpline);
 		cmdb->bindResourceGroup(m_vblurRc, 0, nullptr);
 		m_r->drawQuad(cmdb);
+		cmdb->endRenderPass();
 	}
 }
 

@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/gr/GrObject.h>
+#include <anki/gr/Framebuffer.h>
 #include <anki/util/Functions.h>
 
 namespace anki
@@ -67,14 +68,6 @@ public:
 	U32 m_baseInstance = 0;
 };
 
-/// Command buffer init info.
-class CommandBufferInitInfo
-{
-public:
-	Bool m_secondLevel = false;
-	FramebufferPtr m_framebuffer; ///< For second level command buffers.
-};
-
 /// Command buffer initialization hints. They are used to optimize the
 /// allocators of a command buffer.
 class CommandBufferInitHints
@@ -83,6 +76,15 @@ class CommandBufferInitHints
 
 private:
 	PtrSize m_chunkSize = 1024 * 64;
+};
+
+/// Command buffer init info.
+class CommandBufferInitInfo
+{
+public:
+	Bool m_secondLevel = false;
+	FramebufferPtr m_framebuffer; ///< For second level command buffers.
+	CommandBufferInitHints m_hints;
 };
 
 /// Command buffer.
@@ -102,7 +104,7 @@ public:
 	}
 
 	/// Create command buffer.
-	void create(CommandBufferInitHints hints = CommandBufferInitHints());
+	void create(CommandBufferInitInfo& inf);
 
 	/// Compute initialization hints.
 	CommandBufferInitHints computeInitHints() const;
@@ -125,8 +127,11 @@ public:
 	/// Bind pipeline.
 	void bindPipeline(PipelinePtr ppline);
 
-	/// Bind framebuffer.
-	void bindFramebuffer(FramebufferPtr fb);
+	/// Begin renderpass.
+	void beginRenderPass(FramebufferPtr fb);
+
+	/// End renderpass.
+	void endRenderPass();
 
 	/// Bind resources.
 	void bindResourceGroup(

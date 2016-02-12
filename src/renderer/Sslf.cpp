@@ -83,7 +83,7 @@ void Sslf::run(RenderingContext& ctx)
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 	// Draw to the SSLF FB
-	cmdb->bindFramebuffer(m_fb);
+	cmdb->beginRenderPass(m_fb);
 	cmdb->setViewport(
 		0, 0, m_r->getBloom().getWidth(), m_r->getBloom().getHeight());
 
@@ -91,6 +91,7 @@ void Sslf::run(RenderingContext& ctx)
 	cmdb->bindResourceGroup(m_rcGroup, 0, nullptr);
 
 	m_r->drawQuad(cmdb);
+	cmdb->endRenderPass();
 }
 
 } // end namespace anki

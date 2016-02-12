@@ -61,7 +61,8 @@ void Buffer::create(PtrSize size, BufferUsageBit usage, BufferAccessBit access)
 {
 	m_impl.reset(getAllocator().newInstance<BufferImpl>(&getManager()));
 
-	CommandBufferPtr cmdb = getManager().newInstance<CommandBuffer>();
+	CommandBufferPtr cmdb =
+		getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
 
 	cmdb->getImplementation().pushBackNewCommand<BufferCreateCommand>(
 		this, size, usage, access);

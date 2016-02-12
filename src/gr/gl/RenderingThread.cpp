@@ -147,7 +147,8 @@ void RenderingThread::start(WeakPtr<GrManagerInterface> interface,
 	m_queue.create(m_manager->getAllocator(), QUEUE_SIZE);
 
 	// Swap buffers stuff
-	m_swapBuffersCommands = m_manager->newInstance<CommandBuffer>();
+	m_swapBuffersCommands =
+		m_manager->newInstance<CommandBuffer>(CommandBufferInitInfo());
 	m_swapBuffersCommands->getImplementation()
 		.pushBackNewCommand<SwapBuffersCommand>(this);
 
@@ -158,10 +159,12 @@ void RenderingThread::start(WeakPtr<GrManagerInterface> interface,
 	m_thread.start(this, threadCallback);
 
 	// Create sync command buffer
-	m_syncCommands = m_manager->newInstance<CommandBuffer>();
+	m_syncCommands =
+		m_manager->newInstance<CommandBuffer>(CommandBufferInitInfo());
 	m_syncCommands->getImplementation().pushBackNewCommand<SyncCommand>(this);
 
-	m_emptyCmdb = m_manager->newInstance<CommandBuffer>();
+	m_emptyCmdb =
+		m_manager->newInstance<CommandBuffer>(CommandBufferInitInfo());
 	m_emptyCmdb->getImplementation().pushBackNewCommand<EmptyCommand>();
 #else
 	prepare();

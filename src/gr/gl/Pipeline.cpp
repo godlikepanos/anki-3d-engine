@@ -53,7 +53,8 @@ void Pipeline::create(const PipelineInitInfo& init)
 {
 	m_impl.reset(getAllocator().newInstance<PipelineImpl>(&getManager()));
 
-	CommandBufferPtr cmdb = getManager().newInstance<CommandBuffer>();
+	CommandBufferInitInfo inf;
+	CommandBufferPtr cmdb = getManager().newInstance<CommandBuffer>(inf);
 
 	cmdb->getImplementation().pushBackNewCommand<CreatePipelineCommand>(
 		this, init);

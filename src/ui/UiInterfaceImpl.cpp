@@ -217,7 +217,8 @@ Error UiInterfaceImpl::createR8Image(
 	TexturePtr tex = m_gr->newInstance<Texture>(tinit);
 
 	// Load data
-	CommandBufferPtr cmdb = m_gr->newInstance<CommandBuffer>();
+	CommandBufferPtr cmdb =
+		m_gr->newInstance<CommandBuffer>(CommandBufferInitInfo());
 	DynamicBufferToken token;
 	void* loadData = m_gr->allocateFrameHostVisibleMemory(
 		data.getSize(), BufferUsage::TRANSFER, token);

@@ -100,7 +100,11 @@ Error Fs::buildCommandBuffers(
 	}
 
 	// Create the command buffer and set some state
-	CommandBufferPtr cmdb = m_r->getGrManager().newInstance<CommandBuffer>();
+	CommandBufferInitInfo cinf;
+	cinf.m_secondLevel = true;
+	cinf.m_framebuffer = m_fb;
+	CommandBufferPtr cmdb =
+		m_r->getGrManager().newInstance<CommandBuffer>(cinf);
 	ctx.m_fs.m_commandBuffers[threadId] = cmdb;
 
 	cmdb->setViewport(0, 0, m_width, m_height);
@@ -121,7 +125,7 @@ Error Fs::buildCommandBuffers(
 void Fs::run(RenderingContext& ctx)
 {
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
-	cmdb->bindFramebuffer(m_fb);
+	cmdb->beginRenderPass(m_fb);
 	cmdb->setViewport(0, 0, m_width, m_height);
 	cmdb->setPolygonOffset(0.0, 0.0);
 

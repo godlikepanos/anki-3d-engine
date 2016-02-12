@@ -102,7 +102,7 @@ void Sm::run(RenderingContext& ctx)
 	// Spot lights
 	for(U i = 0; i < ctx.m_sm.m_spots.getSize(); ++i)
 	{
-		cmdb->bindFramebuffer(ctx.m_sm.m_spotFramebuffers[i]);
+		cmdb->beginRenderPass(ctx.m_sm.m_spotFramebuffers[i]);
 		for(U j = 0; j < threadCount; ++j)
 		{
 			U idx = i * threadCount + j;
@@ -112,6 +112,7 @@ void Sm::run(RenderingContext& ctx)
 				cmdb->pushSecondLevelCommandBuffer(cmdb2);
 			}
 		}
+		cmdb->endRenderPass();
 	}
 
 	// Omni lights
@@ -119,7 +120,7 @@ void Sm::run(RenderingContext& ctx)
 	{
 		for(U j = 0; j < 6; ++j)
 		{
-			cmdb->bindFramebuffer(ctx.m_sm.m_omniFramebuffers[i][j]);
+			cmdb->beginRenderPass(ctx.m_sm.m_omniFramebuffers[i][j]);
 
 			for(U k = 0; k < threadCount; ++k)
 			{
@@ -130,6 +131,7 @@ void Sm::run(RenderingContext& ctx)
 					cmdb->pushSecondLevelCommandBuffer(cmdb2);
 				}
 			}
+			cmdb->endRenderPass();
 		}
 	}
 
@@ -220,6 +222,7 @@ Error Sm::buildCommandBuffers(
 
 		ANKI_CHECK(doSpotLight(*ctx.m_sm.m_spots[i],
 			ctx.m_sm.m_spotCommandBuffers[idx],
+			ctx.m_sm.m_spotFramebuffers[i],
 			threadId,
 			threadCount));
 	}
@@ -230,6 +233,7 @@ Error Sm::buildCommandBuffers(
 
 		ANKI_CHECK(doOmniLight(*ctx.m_sm.m_omnis[i],
 			&ctx.m_sm.m_omniCommandBuffers[idx],
+			ctx.m_sm.m_omniFramebuffers[i],
 			threadId,
 			threadCount));
 	}
@@ -239,8 +243,11 @@ Error Sm::buildCommandBuffers(
 }
 
 //==============================================================================
-Error Sm::doSpotLight(
-	SceneNode& light, CommandBufferPtr& cmdb, U threadId, U threadCount) const
+Error Sm::doSpotLight(SceneNode& light,
+	CommandBufferPtr& cmdb,
+	FramebufferPtr& fb,
+	U threadId,
+	U threadCount) const
 {
 	FrustumComponent& frc = light.getComponent<FrustumComponent>();
 	VisibilityTestResults& vis = frc.getVisibilityTestResults();
@@ -254,7 +261,10 @@ Error Sm::doSpotLight(
 		return ErrorCode::NONE;
 	}
 
-	cmdb = m_r->getGrManager().newInstance<CommandBuffer>();
+	CommandBufferInitInfo cinf;
+	cinf.m_secondLevel = true;
+	cinf.m_framebuffer = fb;
+	cmdb = m_r->getGrManager().newInstance<CommandBuffer>(cinf);
 	cmdb->setViewport(0, 0, m_resolution, m_resolution);
 	cmdb->setPolygonOffset(1.0, 2.0);
 
@@ -268,8 +278,11 @@ Error Sm::doSpotLight(
 }
 
 //==============================================================================
-Error Sm::doOmniLight(
-	SceneNode& light, CommandBufferPtr cmdbs[], U threadId, U threadCount) const
+Error Sm::doOmniLight(SceneNode& light,
+	CommandBufferPtr cmdbs[],
+	Array<FramebufferPtr, 6>& fbs,
+	U threadId,
+	U threadCount) const
 {
 	U frCount = 0;
 
@@ -283,7 +296,11 @@ Error Sm::doOmniLight(
 
 			if(start != end)
 			{
-				cmdbs[frCount] = getGrManager().newInstance<CommandBuffer>();
+				CommandBufferInitInfo cinf;
+				cinf.m_secondLevel = true;
+				cinf.m_framebuffer = fbs[frCount];
+				cmdbs[frCount] =
+					getGrManager().newInstance<CommandBuffer>(cinf);
 				cmdbs[frCount]->setViewport(0, 0, m_resolution, m_resolution);
 				cmdbs[frCount]->setPolygonOffset(1.0, 2.0);
 

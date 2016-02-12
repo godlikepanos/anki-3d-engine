@@ -452,6 +452,7 @@ Error Is::lightPass(RenderingContext& ctx)
 	// Draw
 	//
 	cmdb->drawArrays(4, m_r->getTileCount());
+	cmdb->endRenderPass();
 
 	ANKI_TRACE_STOP_EVENT(RENDER_IS);
 	return ErrorCode::NONE;
@@ -727,7 +728,7 @@ void Is::binLight(SpatialComponent& sp,
 //==============================================================================
 void Is::setState(CommandBufferPtr& cmdb)
 {
-	cmdb->bindFramebuffer(m_fb);
+	cmdb->beginRenderPass(m_fb);
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 	cmdb->bindPipeline(m_lightPpline);
 
