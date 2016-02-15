@@ -105,6 +105,11 @@
 #	define ANKI_GL_STR "ANKI_GL_ES"
 #endif
 
+// Graphics backend
+#define ANKI_GR_BACKEND_GL 1
+#define ANKI_GR_BACKEND_VULKAN 2
+#define ANKI_GR_BACKEND ANKI_GR_BACKEND_${ANKI_GR_BACKEND}
+
 // Enable performance counters
 #define ANKI_ENABLE_TRACE ${_ANKI_ENABLE_TRACE}
 

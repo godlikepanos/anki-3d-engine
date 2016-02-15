@@ -89,6 +89,8 @@ set(ANKI_EXTRA_LIB_DIRS CACHE STRING "Some extra lib paths (Needed for some weir
 # Valgrind
 option(ANKI_VALGRIND_HAPPY "Make valgrind happy" OFF)
 
+set(ANKI_GR_BACKEND "GL" CACHE STRING "The graphics API (GL or VULKAN)")
+
 ################################################################################
 # Compiler & linker flags                                                      #
 ################################################################################

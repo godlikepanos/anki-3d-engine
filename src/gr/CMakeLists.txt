@@ -1,5 +1,10 @@
-file(GLOB_RECURSE ANKI_GR_SOURCES *.cpp)
-file(GLOB_RECURSE ANKI_GR_HEADERS *.h)
+file(GLOB ANKI_GR_SOURCES *.cpp)
 
-add_library(ankigr ${ANKI_GR_SOURCES} ${ANKI_GR_HEADERS})
+if(${ANKI_GR_BACKEND} STREQUAL "GL")
+	file(GLOB ANKI_GR_BACKEND_SOURCES gl/*.cpp)
+else()
+	file(GLOB ANKI_GR_BACKEND_SOURCES vulkan/*.cpp)
+endif()
+
+add_library(ankigr ${ANKI_GR_SOURCES} ${ANKI_GR_BACKEND_SOURCES})
 target_link_libraries(ankigr ankiutil)
