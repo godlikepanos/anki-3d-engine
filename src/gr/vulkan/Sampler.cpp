@@ -4,5 +4,3 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/gr/Sampler.h>
-
-

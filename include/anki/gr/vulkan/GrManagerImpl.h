@@ -7,7 +7,7 @@
 
 #include <anki/gr/vulkan/Common.h>
 
-namespace anki 
+namespace anki
 {
 
 /// @addtogroup vulkan

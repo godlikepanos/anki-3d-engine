@@ -4,4 +4,3 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/gr/vulkan/ShaderImpl.h>
-

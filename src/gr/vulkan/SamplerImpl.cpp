@@ -5,7 +5,8 @@
 
 #include <anki/gr/vulkan/SamplerImpl.h>
 
-namespace anki {
+namespace anki
+{
 
 //==============================================================================
 void SamplerImpl::init(const SamplerInitInfo& init)
@@ -13,4 +14,3 @@ void SamplerImpl::init(const SamplerInitInfo& init)
 }
 
 } // end namespace anki
-

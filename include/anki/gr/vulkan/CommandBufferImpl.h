@@ -28,4 +28,3 @@ public:
 /// @}
 
 } // end namespace anki
-

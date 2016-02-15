@@ -7,7 +7,8 @@
 
 #include <anki/gr/vulkan/VulkanObject.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup vulkan
 /// @{

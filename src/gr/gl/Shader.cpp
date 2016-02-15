@@ -59,8 +59,7 @@ public:
 	}
 };
 
-void Shader::init(
-	ShaderType shaderType, const void* source, PtrSize sourceSize)
+void Shader::init(ShaderType shaderType, const void* source, PtrSize sourceSize)
 {
 	ANKI_ASSERT(source);
 	ANKI_ASSERT(sourceSize

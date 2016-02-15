@@ -7,7 +7,8 @@
 
 #include <anki/gr/vulkan/Common.h>
 
-namespace anki {
+namespace anki
+{
 
 /// @addtogroup vulkan
 /// @{
@@ -23,7 +24,8 @@ public:
 	}
 
 	virtual ~VulkanObject()
-	{}
+	{
+	}
 
 private:
 	GrManager* m_manager = nullptr;
@@ -31,4 +33,3 @@ private:
 /// @}
 
 } // end namespace anki
-

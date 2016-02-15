@@ -27,4 +27,3 @@ public:
 /// @}
 
 } // end namespace anki
-
