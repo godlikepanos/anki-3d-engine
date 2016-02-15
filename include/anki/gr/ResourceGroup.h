@@ -73,7 +73,7 @@ public:
 	}
 
 	/// Create.
-	void create(const ResourceGroupInitInfo& init);
+	void init(const ResourceGroupInitInfo& init);
 
 private:
 	UniquePtr<ResourceGroupImpl> m_impl;

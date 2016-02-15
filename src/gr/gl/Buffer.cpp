@@ -45,7 +45,7 @@ public:
 	{
 		BufferImpl& impl = m_buff->getImplementation();
 
-		impl.create(m_size, m_usage, m_access);
+		impl.init(m_size, m_usage, m_access);
 
 		GlObject::State oldState =
 			impl.setStateAtomically(GlObject::State::CREATED);
@@ -57,7 +57,7 @@ public:
 	}
 };
 
-void Buffer::create(PtrSize size, BufferUsageBit usage, BufferAccessBit access)
+void Buffer::init(PtrSize size, BufferUsageBit usage, BufferAccessBit access)
 {
 	m_impl.reset(getAllocator().newInstance<BufferImpl>(&getManager()));
 

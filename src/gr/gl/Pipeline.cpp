@@ -38,7 +38,7 @@ public:
 	{
 		PipelineImpl& impl = m_ppline->getImplementation();
 
-		Error err = impl.create(m_init);
+		Error err = impl.init(m_init);
 
 		GlObject::State oldState = impl.setStateAtomically(
 			err ? GlObject::State::ERROR : GlObject::State::CREATED);
@@ -49,7 +49,7 @@ public:
 	}
 };
 
-void Pipeline::create(const PipelineInitInfo& init)
+void Pipeline::init(const PipelineInitInfo& init)
 {
 	m_impl.reset(getAllocator().newInstance<PipelineImpl>(&getManager()));
 

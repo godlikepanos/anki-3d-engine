@@ -58,7 +58,7 @@ public:
 	}
 
 	/// Create it.
-	void create(const TextureInitInfo& init);
+	void init(const TextureInitInfo& init);
 
 private:
 	UniquePtr<TextureImpl> m_impl;

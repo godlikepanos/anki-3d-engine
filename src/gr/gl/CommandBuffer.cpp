@@ -37,10 +37,10 @@ CommandBuffer::~CommandBuffer()
 }
 
 //==============================================================================
-void CommandBuffer::create(CommandBufferInitInfo& inf)
+void CommandBuffer::init(CommandBufferInitInfo& inf)
 {
 	m_impl.reset(getAllocator().newInstance<CommandBufferImpl>(&getManager()));
-	m_impl->create(inf.m_hints);
+	m_impl->init(inf.m_hints);
 
 #if ANKI_ASSERTS_ENABLED
 	if(inf.m_secondLevel)

@@ -76,7 +76,7 @@ public:
 	}
 
 	/// Create shader.
-	void create(ShaderType shaderType, const void* source, PtrSize sourceSize);
+	void init(ShaderType shaderType, const void* source, PtrSize sourceSize);
 
 private:
 	UniquePtr<ShaderImpl> m_impl;

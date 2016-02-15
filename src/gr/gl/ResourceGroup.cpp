@@ -41,7 +41,7 @@ public:
 	{
 		ResourceGroupImpl& impl = m_ptr->getImplementation();
 
-		impl.create(m_init);
+		impl.init(m_init);
 
 		GlObject::State oldState =
 			impl.setStateAtomically(GlObject::State::CREATED);
@@ -53,7 +53,7 @@ public:
 	}
 };
 
-void ResourceGroup::create(const ResourceGroupInitInfo& init)
+void ResourceGroup::init(const ResourceGroupInitInfo& init)
 {
 	// NOTE: Create asynchronously because the initialization touches GL names
 	m_impl.reset(getAllocator().newInstance<ResourceGroupImpl>(&getManager()));

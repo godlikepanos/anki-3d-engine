@@ -27,10 +27,7 @@ public:
 		destroyDeferred(glDeleteSamplers);
 	}
 
-	void create(const SamplerInitInfo& sinit);
-
-private:
-	void createInternal(const SamplerInitInfo& sinit);
+	void init(const SamplerInitInfo& sinit);
 };
 /// @}
 

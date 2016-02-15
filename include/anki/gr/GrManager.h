@@ -61,7 +61,7 @@ public:
 	~GrManager();
 
 	/// Create.
-	ANKI_USE_RESULT Error create(GrManagerInitInfo& init);
+	ANKI_USE_RESULT Error init(GrManagerInitInfo& init);
 
 	/// Swap buffers
 	void swapBuffers();
@@ -115,7 +115,7 @@ template<typename T, typename... Args>
 IntrusivePtr<T> GrManager::newInstance(Args&&... args)
 {
 	IntrusivePtr<T> ptr(m_alloc.newInstance<T>(this));
-	ptr->create(args...);
+	ptr->init(args...);
 	return ptr;
 }
 /// @}

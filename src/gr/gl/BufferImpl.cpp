@@ -11,7 +11,7 @@ namespace anki
 {
 
 //==============================================================================
-void BufferImpl::create(
+void BufferImpl::init(
 	PtrSize size, BufferUsageBit usage, BufferAccessBit access)
 {
 	ANKI_ASSERT(!isCreated());

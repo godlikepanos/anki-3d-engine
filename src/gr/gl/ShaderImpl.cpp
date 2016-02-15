@@ -41,7 +41,7 @@ ShaderImpl::~ShaderImpl()
 }
 
 //==============================================================================
-Error ShaderImpl::create(ShaderType type, const CString& source)
+Error ShaderImpl::init(ShaderType type, const CString& source)
 {
 	ANKI_ASSERT(source);
 	ANKI_ASSERT(!isCreated());

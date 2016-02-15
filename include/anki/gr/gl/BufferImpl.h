@@ -36,7 +36,7 @@ public:
 		destroyDeferred(glDeleteBuffers);
 	}
 
-	void create(PtrSize size, BufferUsageBit usage, BufferAccessBit access);
+	void init(PtrSize size, BufferUsageBit usage, BufferAccessBit access);
 
 	void bind(GLenum target, U32 binding, PtrSize offset, PtrSize size) const
 	{

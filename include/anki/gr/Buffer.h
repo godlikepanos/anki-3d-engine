@@ -30,7 +30,7 @@ public:
 	}
 
 	/// Allocate the buffer.
-	void create(PtrSize size, BufferUsageBit usage, BufferAccessBit access);
+	void init(PtrSize size, BufferUsageBit usage, BufferAccessBit access);
 
 	/// Map the buffer.
 	void* map(PtrSize offset, PtrSize range, BufferAccessBit access);

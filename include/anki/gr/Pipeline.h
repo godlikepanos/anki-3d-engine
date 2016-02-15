@@ -157,7 +157,7 @@ public:
 	}
 
 	/// Create.
-	void create(const PipelineInitInfo& init);
+	void init(const PipelineInitInfo& init);
 
 private:
 	UniquePtr<PipelineImpl> m_impl;

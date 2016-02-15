@@ -67,7 +67,7 @@ public:
 	/// Default constructor
 	/// @param server The command buffers server
 	/// @param hints Hints to optimize the command's allocator
-	void create(const InitHints& hints);
+	void init(const InitHints& hints);
 
 	/// Get the internal allocator.
 	CommandBufferAllocator<U8> getInternalAllocator() const

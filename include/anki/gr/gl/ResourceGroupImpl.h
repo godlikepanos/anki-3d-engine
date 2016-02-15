@@ -29,7 +29,7 @@ public:
 		m_refs.destroy(getAllocator());
 	}
 
-	void create(const ResourceGroupInitInfo& init);
+	void init(const ResourceGroupInitInfo& init);
 
 	/// Set state.
 	void bind(U slot, const DynamicBufferInfo& dynInfo, GlState& state);

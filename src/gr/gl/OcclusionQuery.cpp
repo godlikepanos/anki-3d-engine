@@ -38,7 +38,7 @@ public:
 	{
 		OcclusionQueryImpl& impl = m_q->getImplementation();
 
-		impl.create(m_condRenderingBit);
+		impl.init(m_condRenderingBit);
 
 		GlObject::State oldState =
 			impl.setStateAtomically(GlObject::State::CREATED);
@@ -50,7 +50,7 @@ public:
 	}
 };
 
-void OcclusionQuery::create(OcclusionQueryResultBit condRenderingBit)
+void OcclusionQuery::init(OcclusionQueryResultBit condRenderingBit)
 {
 	m_impl.reset(getAllocator().newInstance<OcclusionQueryImpl>(&getManager()));
 

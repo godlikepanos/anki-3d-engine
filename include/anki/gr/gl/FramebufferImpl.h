@@ -30,7 +30,7 @@ public:
 
 	/// Set all the attachments. It will overwrite the previous state. If the
 	/// initalizer list is empty the it will bind the default framebuffer
-	ANKI_USE_RESULT Error create(const FramebufferInitInfo& init);
+	ANKI_USE_RESULT Error init(const FramebufferInitInfo& init);
 
 	/// Bind it to the state. Call it in rendering thread
 	void bind(const GlState& state);

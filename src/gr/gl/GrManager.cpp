@@ -24,14 +24,14 @@ GrManager::~GrManager()
 }
 
 //==============================================================================
-Error GrManager::create(GrManagerInitInfo& init)
+Error GrManager::init(GrManagerInitInfo& init)
 {
 	m_alloc =
 		HeapAllocator<U8>(init.m_allocCallback, init.m_allocCallbackUserData);
 
 	m_cacheDir.create(m_alloc, init.m_cacheDirectory);
 	m_impl.reset(m_alloc.newInstance<GrManagerImpl>(this));
-	m_impl->create(init);
+	m_impl->init(init);
 
 	return ErrorCode::NONE;
 }

@@ -45,7 +45,7 @@ public:
 	{
 		ShaderImpl& impl = m_shader->getImplementation();
 
-		Error err = impl.create(m_type, m_source);
+		Error err = impl.init(m_type, m_source);
 
 		GlObject::State oldState = impl.setStateAtomically(
 			(err) ? GlObject::State::ERROR : GlObject::State::CREATED);
@@ -59,7 +59,7 @@ public:
 	}
 };
 
-void Shader::create(
+void Shader::init(
 	ShaderType shaderType, const void* source, PtrSize sourceSize)
 {
 	ANKI_ASSERT(source);

@@ -30,8 +30,8 @@ public:
 		return *m_impl;
 	}
 
-	/// Create it.
-	void create(const SamplerInitInfo& init);
+	/// Initialize it.
+	void init(const SamplerInitInfo& init);
 
 private:
 	UniquePtr<SamplerImpl> m_impl;

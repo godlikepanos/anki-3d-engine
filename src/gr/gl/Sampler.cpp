@@ -38,7 +38,7 @@ public:
 	{
 		SamplerImpl& impl = m_sampler->getImplementation();
 
-		impl.create(m_init);
+		impl.init(m_init);
 
 		GlObject::State oldState =
 			impl.setStateAtomically(GlObject::State::CREATED);
@@ -50,7 +50,7 @@ public:
 	}
 };
 
-void Sampler::create(const SamplerInitInfo& init)
+void Sampler::init(const SamplerInitInfo& init)
 {
 	m_impl.reset(getAllocator().newInstance<SamplerImpl>(&getManager()));
 

@@ -15,7 +15,7 @@ namespace anki
 {
 
 //==============================================================================
-void CommandBufferImpl::create(const InitHints& hints)
+void CommandBufferImpl::init(const InitHints& hints)
 {
 	auto& pool = m_manager->getAllocator().getMemoryPool();
 

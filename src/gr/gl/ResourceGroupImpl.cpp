@@ -63,7 +63,7 @@ void ResourceGroupImpl::initBuffers(const InBindings& in,
 }
 
 //==============================================================================
-void ResourceGroupImpl::create(const ResourceGroupInitInfo& init)
+void ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 {
 	U resourcesCount = 0;
 	U dynCount = 0;

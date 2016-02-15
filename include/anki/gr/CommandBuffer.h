@@ -103,8 +103,8 @@ public:
 		return *m_impl;
 	}
 
-	/// Create command buffer.
-	void create(CommandBufferInitInfo& inf);
+	/// Init the command buffer.
+	void init(CommandBufferInitInfo& inf);
 
 	/// Compute initialization hints.
 	CommandBufferInitHints computeInitHints() const;

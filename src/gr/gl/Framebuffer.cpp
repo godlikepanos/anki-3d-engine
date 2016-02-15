@@ -38,7 +38,7 @@ public:
 	Error operator()(GlState&)
 	{
 		FramebufferImpl& impl = m_fb->getImplementation();
-		Error err = impl.create(m_init);
+		Error err = impl.init(m_init);
 
 		GlObject::State oldState = impl.setStateAtomically(
 			(err) ? GlObject::State::ERROR : GlObject::State::CREATED);
@@ -49,7 +49,7 @@ public:
 	}
 };
 
-void Framebuffer::create(const FramebufferInitInfo& init)
+void Framebuffer::init(const FramebufferInitInfo& init)
 {
 	m_impl.reset(getAllocator().newInstance<FramebufferImpl>(&getManager()));
 

@@ -109,7 +109,7 @@ PipelineImpl::~PipelineImpl()
 }
 
 //==============================================================================
-Error PipelineImpl::create(const PipelineInitInfo& init)
+Error PipelineImpl::init(const PipelineInitInfo& init)
 {
 	m_in = init;
 

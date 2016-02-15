@@ -110,7 +110,7 @@ public:
 	}
 
 	/// Create.
-	void create(const FramebufferInitInfo& init);
+	void init(const FramebufferInitInfo& init);
 
 private:
 	UniquePtr<FramebufferImpl> m_impl;

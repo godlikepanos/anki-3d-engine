@@ -36,7 +36,7 @@ public:
 	/// Create the shader.
 	/// @param shaderType The type of the shader in the program
 	/// @param source The shader's source
-	ANKI_USE_RESULT Error create(ShaderType shaderType, const CString& source);
+	ANKI_USE_RESULT Error init(ShaderType shaderType, const CString& source);
 
 private:
 	void handleError(String& src);

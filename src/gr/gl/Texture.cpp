@@ -38,7 +38,7 @@ public:
 	{
 		TextureImpl& impl = m_tex->getImplementation();
 
-		impl.create(m_init);
+		impl.init(m_init);
 
 		GlObject::State oldState =
 			impl.setStateAtomically(GlObject::State::CREATED);
@@ -49,7 +49,7 @@ public:
 	}
 };
 
-void Texture::create(const TextureInitInfo& init)
+void Texture::init(const TextureInitInfo& init)
 {
 	m_impl.reset(getAllocator().newInstance<TextureImpl>(&getManager()));
 

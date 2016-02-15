@@ -30,7 +30,7 @@ public:
 	}
 
 	/// Create a query.
-	void create(OcclusionQueryResultBit condRenderingBit);
+	void init(OcclusionQueryResultBit condRenderingBit);
 
 private:
 	UniquePtr<OcclusionQueryImpl> m_impl;

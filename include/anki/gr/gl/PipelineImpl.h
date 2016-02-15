@@ -25,7 +25,7 @@ public:
 
 	~PipelineImpl();
 
-	ANKI_USE_RESULT Error create(const PipelineInitInfo& init);
+	ANKI_USE_RESULT Error init(const PipelineInitInfo& init);
 
 	/// Bind the pipeline to the state
 	void bind(GlState& state);

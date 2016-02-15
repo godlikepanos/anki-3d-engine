@@ -10,7 +10,7 @@ namespace anki
 {
 
 //==============================================================================
-void SamplerImpl::create(const SamplerInitInfo& sinit)
+void SamplerImpl::init(const SamplerInitInfo& sinit)
 {
 	glGenSamplers(1, &m_glName);
 	ANKI_ASSERT(m_glName);

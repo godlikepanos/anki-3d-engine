@@ -28,7 +28,7 @@ public:
 
 	~GrManagerImpl();
 
-	void create(GrManagerInitInfo& init);
+	void init(GrManagerInitInfo& init);
 
 	const RenderingThread& getRenderingThread() const
 	{
