@@ -17,6 +17,10 @@ namespace anki
 class GrManagerImpl
 {
 public:
+	VkInstance m_instance = VK_NULL_HANDLE;
+	VkDevice m_device = VK_NULL_HANDLE;
+	VkQueue m_queue = VK_NULL_HANDLE;
+
 	GrManagerImpl(GrManager* manager)
 		: m_manager(manager)
 	{
@@ -24,6 +28,9 @@ public:
 	}
 
 	~GrManagerImpl();
+
+private:
+	GrManager* m_manager = nullptr;
 };
 /// @}
 

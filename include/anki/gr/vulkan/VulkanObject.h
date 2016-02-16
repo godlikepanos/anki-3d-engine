@@ -27,7 +27,9 @@ public:
 	{
 	}
 
-private:
+	VkDevice getDevice() const;
+
+protected:
 	GrManager* m_manager = nullptr;
 };
 /// @}

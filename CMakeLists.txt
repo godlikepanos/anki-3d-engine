@@ -89,7 +89,15 @@ set(ANKI_EXTRA_LIB_DIRS CACHE STRING "Some extra lib paths (Needed for some weir
 # Valgrind
 option(ANKI_VALGRIND_HAPPY "Make valgrind happy" OFF)
 
-set(ANKI_GR_BACKEND "GL" CACHE STRING "The graphics API (GL or VULKAN)")
+set(ANKI_GR_BACKEND "GL" CACHE STRING "The graphics API (GL or vulkan)")
+
+if(${ANKI_GR_BACKEND} STREQUAL "GL")
+	set(GL TRUE)
+	set(VULKAN FALSE)
+else()
+	set(GL FALSE)
+	set(VULKAN TRUE)
+endif()
 
 ################################################################################
 # Compiler & linker flags                                                      #
@@ -197,7 +205,7 @@ include(ExternalProject)
 
 set(ANKI_EXTERN_SUB_DIRS tinyxml2 lua z newton)
 
-if(LINUX OR MACOS OR WINDOWS)
+if((LINUX OR MACOS OR WINDOWS) AND GL)
 	set(ANKI_EXTERN_SUB_DIRS ${ANKI_EXTERN_SUB_DIRS} GLEW)
 endif()
 
@@ -306,7 +314,13 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -Wall -W -Wextra -Wstrict-alia
 
 # Set platform specific
 if(LINUX)
-	set(_SYS GL ankiglew pthread dl)
+	if(GL)
+		set(_SYS ${ANKI_GR_BACKEND} ankiglew)
+	else()
+		set(_SYS vulkan)
+	endif()
+
+	set(_SYS ${_SYS} pthread dl)
 elseif(MACOS)
 	find_package(OpenGL REQUIRED)
 	set(_SYS ${OPENGL_LIBRARIES} ankiglew pthread)

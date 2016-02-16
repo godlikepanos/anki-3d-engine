@@ -17,6 +17,8 @@ namespace anki
 class SamplerImpl : public VulkanObject
 {
 public:
+	VkSampler m_sampler = VK_NULL_HANDLE;
+
 	SamplerImpl(GrManager* manager)
 		: VulkanObject(manager)
 	{

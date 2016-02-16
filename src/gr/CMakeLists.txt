@@ -1,6 +1,6 @@
 file(GLOB ANKI_GR_SOURCES *.cpp)
 
-if(${ANKI_GR_BACKEND} STREQUAL "GL")
+if(GL)
 	file(GLOB ANKI_GR_BACKEND_SOURCES gl/*.cpp)
 else()
 	file(GLOB ANKI_GR_BACKEND_SOURCES vulkan/*.cpp)
