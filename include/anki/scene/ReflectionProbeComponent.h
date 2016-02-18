@@ -59,10 +59,23 @@ public:
 		m_markedForRendering = render;
 	}
 
+	void setTextureArrayIndex(U idx)
+	{
+		m_textureArrayIndex = idx;
+	}
+
+	U getTextureArrayIndex() const
+	{
+		ANKI_ASSERT(m_textureArrayIndex < MAX_U16);
+		return m_textureArrayIndex;
+	}
+
 private:
 	Vec4 m_pos = Vec4(0.0);
 	F32 m_radius = 0.0;
 	Bool8 m_markedForRendering = false;
+
+	U16 m_textureArrayIndex = MAX_U16; ///< Used by the renderer
 };
 /// @}
 

@@ -136,6 +136,21 @@ vec3 fog(vec3 colorIn, vec2 uv)
 }
 
 //==============================================================================
+vec3 dither(in vec3 col)
+{
+	const float c0 = 16.0;
+
+	vec3 vDither = vec3(dot(vec2(171.0, 231.0), gl_FragCoord.xy));
+	vDither.rgb = fract(vDither.rgb / vec3(103.0, 71.0, 97.0));
+
+	col = col * (255.0 / c0) + vDither.rgb;
+	col = floor(col) / 255.0;
+	col *= c0;
+
+	return col;
+}
+
+//==============================================================================
 void main()
 {
 #if SHARPEN_ENABLED

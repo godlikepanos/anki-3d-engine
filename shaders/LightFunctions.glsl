@@ -16,6 +16,21 @@ const float OMNI_LIGHT_FRUSTUM_NEAR_PLANE = 0.1 / 4.0;
 const uint SHADOW_SAMPLE_COUNT = 16;
 
 //==============================================================================
+// Get element count attached in a cluster
+void getClusterInfo(in uint clusterIdx,
+	out uint indexOffset,
+	out uint pointLightCount,
+	out uint spotLightCount,
+	out uint probeCount)
+{
+	uint cluster = u_clusters[clusterIdx];
+	indexOffset = cluster >> 16u;
+	probeCount = (cluster >> 8u) & 0xFu;
+	pointLightCount = (cluster >> 4u) & 0xFu;
+	spotLightCount = cluster & 0xFu;
+}
+
+//==============================================================================
 float computeAttenuationFactor(float lightRadius, vec3 frag2Light)
 {
 	float fragLightDist = dot(frag2Light, frag2Light);
@@ -168,6 +183,86 @@ float computeShadowFactorOmni(vec3 frag2Light, float layer, float radius)
 
 	float shadowFactor = texture(u_omniMapArr, vec4(dir, layer), z).r;
 	return shadowFactor;
+}
+
+//==============================================================================
+// Compute the cubemap texture lookup vector given the reflection vector (r)
+// the radius squared of the probe (R2) and the frag pos in sphere space (f)
+vec3 computeCubemapVecAccurate(in vec3 r, in float R2, in vec3 f)
+{
+	// Compute the collision of the r to the inner part of the sphere
+	// From now on we work on the sphere's space
+
+	// Project the center of the sphere (it's zero now since we are in sphere
+	// space) in ray "f,r"
+	vec3 p = f - r * dot(f, r);
+
+	// The collision to the sphere is point x where x = p + T * r
+	// Because of the pythagorean theorem: R^2 = dot(p, p) + dot(T * r, T * r)
+	// solving for T, T = R / |p|
+	// then x becomes x = sqrt(R^2 - dot(p, p)) * r + p;
+	float pp = dot(p, p);
+	pp = min(pp, R2);
+	float sq = sqrt(R2 - pp);
+	vec3 x = p + sq * r;
+
+	// Rotate UV to move it to world space
+	vec3 uv = u_lightingUniforms.invViewRotation * x;
+
+	return uv;
+}
+
+//==============================================================================
+// Cheap version of computeCubemapVecAccurate
+vec3 computeCubemapVecCheap(in vec3 r, in float R2, in vec3 f)
+{
+	return u_lightingUniforms.invViewRotation * r;
+}
+
+//==============================================================================
+void readIndirect(in uint indexOffset,
+	in uint probeCount,
+	in vec3 posVSpace,
+	in vec3 r,
+	in vec3 n,
+	in float lod,
+	out vec3 specIndirect,
+	out vec3 diffIndirect)
+{
+	specIndirect = vec3(0.0);
+	diffIndirect = vec3(0.0);
+
+	// Check proxy
+	for(uint i = 0; i < probeCount; ++i)
+	{
+		uint probeIndex = u_lightIndices[indexOffset++];
+		ReflectionProbe probe = u_reflectionProbes[probeIndex];
+
+		float R2 = probe.positionRadiusSq.w;
+		vec3 center = probe.positionRadiusSq.xyz;
+
+		// Get distance from the center of the probe
+		vec3 f = posVSpace - center;
+
+		// Cubemap UV in view space
+		vec3 uv = computeCubemapVecAccurate(r, R2, f);
+
+		// Read!
+		float cubemapIndex = probe.cubemapIndexPad3.x;
+		vec3 c = textureLod(u_reflectionsTex, vec4(uv, cubemapIndex), lod).rgb;
+
+		// Combine (lerp) with previous color
+		float d = dot(f, f);
+		float factor = d / R2;
+		factor = min(factor, 1.0);
+		specIndirect = mix(c, specIndirect, factor);
+		// Same as: specIndirect = c * (1.0 - factor) + specIndirect * factor
+
+		// Do the same for diffuse
+		uv = computeCubemapVecCheap(n, R2, f);
+		vec3 id = texture(u_irradianceTex, vec4(uv, cubemapIndex)).rgb;
+		diffIndirect = mix(id, diffIndirect, factor);
+	}
 }
 
 #endif

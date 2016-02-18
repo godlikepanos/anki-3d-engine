@@ -5,7 +5,7 @@
 
 #include <anki/gr/vulkan/Common.h>
 
-namespace anki 
+namespace anki
 {
 
 //==============================================================================
@@ -46,4 +46,3 @@ VkCompareOp convertCompareOp(CompareOperation ak)
 }
 
 } // end namespace anki
-

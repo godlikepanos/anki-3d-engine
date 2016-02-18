@@ -300,7 +300,7 @@ Error Sm::doOmniLight(SceneNode& light,
 				cinf.m_secondLevel = true;
 				cinf.m_framebuffer = fbs[frCount];
 				cmdbs[frCount] =
-					getGrManager().newInstance<CommandBuffer>(cinf);
+					m_r->getGrManager().newInstance<CommandBuffer>(cinf);
 				cmdbs[frCount]->setViewport(0, 0, m_resolution, m_resolution);
 				cmdbs[frCount]->setPolygonOffset(1.0, 2.0);
 

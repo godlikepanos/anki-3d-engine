@@ -29,15 +29,6 @@ layout(location = 0) out vec3 out_color;
 
 const uint TILE_COUNT = TILE_COUNT_X * TILE_COUNT_Y;
 
-#if INDIRECT_ENABLED
-#define IMAGE_REFLECTIONS_SET 1
-#define IMAGE_REFLECTIONS_FIRST_SS_BINDING 0
-#define IMAGE_REFLECTIONS_TEX_BINDING 0
-#include "shaders/ImageReflections.glsl"
-#undef IMAGE_REFLECTIONS_SET
-#undef IMAGE_REFLECTIONS_FIRST_SS_BINDING
-#endif
-
 //==============================================================================
 // Return frag pos in view space
 vec3 getFragPosVSpace()
@@ -117,17 +108,19 @@ void main()
 		TILE_COUNT_X,
 		TILE_COUNT_Y);
 
-	uint cluster = u_clusters[clusterIdx];
-	uint lightOffset = cluster >> 16u;
-	uint pointLightsCount = (cluster >> 8u) & 0xFFu;
-	uint spotLightsCount = cluster & 0xFFu;
+	uint lightOffset;
+	uint pointLightCount;
+	uint spotLightCount;
+	uint probeCount;
+	getClusterInfo(
+		clusterIdx, lightOffset, pointLightCount, spotLightCount, probeCount);
 
 	// Shadowpass sample count
 	uint shadowSampleCount =
 		computeShadowSampleCount(SHADOW_SAMPLE_COUNT, fragPos.z);
 
 	// Point lights
-	for(uint i = 0U; i < pointLightsCount; ++i)
+	for(uint i = 0U; i < pointLightCount; ++i)
 	{
 		uint lightId = u_lightIndices[lightOffset++];
 		PointLight light = u_pointLights[lightId];
@@ -147,7 +140,7 @@ void main()
 	}
 
 	// Spot lights
-	for(uint i = 0U; i < spotLightsCount; ++i)
+	for(uint i = 0U; i < spotLightCount; ++i)
 	{
 		uint lightId = u_lightIndices[lightOffset++];
 		SpotLight light = u_spotLights[lightId];
@@ -179,7 +172,14 @@ void main()
 	float reflLod = float(IR_MIPMAP_COUNT) * gbuffer.roughness;
 
 	vec3 specIndirect, diffIndirect;
-	readIndirect(fragPos, r, normal, reflLod, specIndirect, diffIndirect);
+	readIndirect(lightOffset,
+		probeCount,
+		fragPos,
+		r,
+		normal,
+		reflLod,
+		specIndirect,
+		diffIndirect);
 
 	diffIndirect *= gbuffer.diffuse;
 
@@ -193,18 +193,18 @@ void main()
 
 // out_color = diffCol;
 #if 0
-	if(pointLightsCount == 0)
+	if(pointLightCount == 0)
 	{
 	}
-	else if(pointLightsCount == 1)
+	else if(pointLightCount == 1)
 	{
 		out_color += vec3(0.0, 1.0, 0.0);
 	}
-	else if(pointLightsCount == 2)
+	else if(pointLightCount == 2)
 	{
 		out_color += vec3(0.0, 0.0, 1.0);
 	}
-	else if(pointLightsCount == 3)
+	else if(pointLightCount == 3)
 	{
 		out_color += vec3(1.0, 0.0, 1.0);
 	}

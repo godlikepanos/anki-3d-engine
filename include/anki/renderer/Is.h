@@ -29,6 +29,7 @@ class SpatialComponent;
 class FrustumComponent;
 class TaskCommonData;
 class ClustererTestResult;
+class SceneNode;
 
 /// @addtogroup renderer
 /// @{
@@ -101,6 +102,7 @@ private:
 	DynamicBufferToken m_sLightsToken;
 	DynamicBufferToken m_clustersToken;
 	DynamicBufferToken m_lightIdsToken;
+	DynamicBufferToken m_probesToken;
 
 	ResourceGroupPtr m_rcGroup;
 
@@ -119,10 +121,6 @@ private:
 
 	/// @name Limits
 	/// @{
-	U16 m_maxPointLights;
-	U32 m_maxSpotLights;
-	U32 m_maxSpotTexLights;
-
 	U32 m_maxLightIds;
 	/// @}
 
@@ -159,6 +157,11 @@ private:
 	void binLight(SpatialComponent& sp,
 		U pos,
 		U lightType,
+		TaskCommonData& task,
+		ClustererTestResult& testResult);
+
+	void writeAndBinProbe(const FrustumComponent& camFrc,
+		const SceneNode& node,
 		TaskCommonData& task,
 		ClustererTestResult& testResult);
 };

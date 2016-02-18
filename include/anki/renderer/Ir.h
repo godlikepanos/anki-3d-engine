@@ -36,29 +36,29 @@ anki_internal:
 
 	ANKI_USE_RESULT Error run(RenderingContext& ctx);
 
-	DynamicBufferToken getProbesToken() const
-	{
-		return m_probesToken;
-	}
-
-	DynamicBufferToken getProbeIndicesToken() const
-	{
-		return m_indicesToken;
-	}
-
-	DynamicBufferToken getClustersToken() const
-	{
-		return m_clustersToken;
-	}
-
 	U getCubemapArrayMipmapCount() const
 	{
 		return m_cubemapArrMipCount;
 	}
 
-	ResourceGroupPtr getResourceGroup() const
+	TexturePtr getIrradianceTexture() const
 	{
-		return m_rcGroup;
+		return m_irradianceCubemapArr;
+	}
+
+	TexturePtr getReflectionTexture() const
+	{
+		return m_envCubemapArr;
+	}
+
+	TexturePtr getIntegrationLut() const
+	{
+		return m_integrationLut->getGrTexture();
+	}
+
+	SamplerPtr getIntegrationLutSampler() const
+	{
+		return m_integrationLutSampler;
 	}
 
 private:
@@ -77,7 +77,6 @@ private:
 	U16 m_cubemapArrSize = 0;
 	U16 m_fbSize = 0;
 	DArray<CacheEntry> m_cacheEntries;
-	Barrier m_barrier;
 
 	// Irradiance
 	TexturePtr m_irradianceCubemapArr;
@@ -89,20 +88,12 @@ private:
 	TextureResourcePtr m_integrationLut;
 	SamplerPtr m_integrationLutSampler;
 
-	// Tokens
-	DynamicBufferToken m_probesToken;
-	DynamicBufferToken m_clustersToken;
-	DynamicBufferToken m_indicesToken;
-
-	ResourceGroupPtr m_rcGroup;
-
 	ANKI_USE_RESULT Error initIrradiance();
 
 	/// Bin probes in clusters.
 	void binProbes(U32 threadId, PtrSize threadsCount, IrRunContext& ctx);
 
-	ANKI_USE_RESULT Error writeProbeAndRender(
-		RenderingContext& ctx, SceneNode& node, IrShaderReflectionProbe& probe);
+	ANKI_USE_RESULT Error tryRender(RenderingContext& ctx, SceneNode& node);
 
 	void binProbe(U probeIdx, IrRunContext& ctx, IrTaskContext& task) const;
 
