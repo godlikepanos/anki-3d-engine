@@ -176,7 +176,6 @@ void Bloom::run(RenderingContext& ctx)
 	cmdb->endRenderPass();
 
 	// Blurring passes
-	for(U i = 0; i < m_blurringIterationsCount; i++)
 	{
 		// hpass
 		cmdb->beginRenderPass(m_hblurFb);
@@ -190,7 +189,11 @@ void Bloom::run(RenderingContext& ctx)
 		cmdb->bindResourceGroup(m_vDescrGroup, 0, nullptr);
 		cmdb->bindPipeline(m_vblurPpline);
 		m_r->drawQuad(cmdb);
-		cmdb->endRenderPass();
+
+		if(!m_r->getSslfEnabled())
+		{
+			cmdb->endRenderPass();
+		}
 	}
 }
 

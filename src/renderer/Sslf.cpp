@@ -5,7 +5,6 @@
 
 #include <anki/renderer/Sslf.h>
 #include <anki/renderer/Renderer.h>
-#include <anki/renderer/Pps.h>
 #include <anki/renderer/Bloom.h>
 #include <anki/misc/ConfigSet.h>
 
@@ -27,9 +26,6 @@ Error Sslf::init(const ConfigSet& config)
 //==============================================================================
 Error Sslf::initInternal(const ConfigSet& config)
 {
-	const PixelFormat pixelFormat(
-		ComponentFormat::R8G8B8, TransformFormat::UNORM);
-
 	// Load program 1
 	StringAuto pps(getAllocator());
 
@@ -42,7 +38,8 @@ Error Sslf::initInternal(const ConfigSet& config)
 
 	ColorStateInfo colorState;
 	colorState.m_attachmentCount = 1;
-	colorState.m_attachments[0].m_format = pixelFormat;
+	colorState.m_attachments[0].m_srcBlendMethod = BlendMethod::ONE;
+	colorState.m_attachments[0].m_dstBlendMethod = BlendMethod::ONE;
 
 	m_r->createDrawQuadPipeline(m_frag->getGrShader(), colorState, m_ppline);
 
@@ -50,25 +47,9 @@ Error Sslf::initInternal(const ConfigSet& config)
 	ANKI_CHECK(getResourceManager().loadResource(
 		"engine_data/LensDirt.ankitex", m_lensDirtTex));
 
-	// Create the render target and FB
-	m_r->createRenderTarget(m_r->getBloom().getWidth(),
-		m_r->getBloom().getHeight(),
-		pixelFormat,
-		1,
-		SamplingFilter::LINEAR,
-		1,
-		m_rt);
-
-	FramebufferInitInfo fbInit;
-	fbInit.m_colorAttachmentsCount = 1;
-	fbInit.m_colorAttachments[0].m_texture = m_rt;
-	fbInit.m_colorAttachments[0].m_loadOperation =
-		AttachmentLoadOperation::DONT_CARE;
-	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
-
 	// Create the resource group
 	ResourceGroupInitInfo rcInit;
-	rcInit.m_textures[0].m_texture = m_r->getBloom().getRt();
+	rcInit.m_textures[0].m_texture = m_r->getBloom().getRt1();
 	rcInit.m_textures[1].m_texture = m_lensDirtTex->getGrTexture();
 
 	m_rcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);
@@ -83,10 +64,6 @@ void Sslf::run(RenderingContext& ctx)
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 	// Draw to the SSLF FB
-	cmdb->beginRenderPass(m_fb);
-	cmdb->setViewport(
-		0, 0, m_r->getBloom().getWidth(), m_r->getBloom().getHeight());
-
 	cmdb->bindPipeline(m_ppline);
 	cmdb->bindResourceGroup(m_rcGroup, 0, nullptr);
 

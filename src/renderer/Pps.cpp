@@ -74,14 +74,12 @@ Error Pps::initInternal(const ConfigSet& config)
 
 	pps.sprintf("#define SSAO_ENABLED %u\n"
 				"#define BLOOM_ENABLED %u\n"
-				"#define SSLF_ENABLED %u\n"
 				"#define SHARPEN_ENABLED %u\n"
 				"#define GAMMA_CORRECTION_ENABLED %u\n"
 				"#define FBO_WIDTH %u\n"
 				"#define FBO_HEIGHT %u\n",
 		m_r->getSsaoEnabled(),
 		m_r->getBloomEnabled(),
-		m_r->getSslfEnabled(),
 		U(config.getNumber("pps.sharpen")),
 		U(config.getNumber("pps.gammaCorrection")),
 		m_r->getWidth(),
@@ -113,11 +111,6 @@ Error Pps::initInternal(const ConfigSet& config)
 	}
 
 	rcInit.m_textures[3].m_texture = m_lut->getGrTexture();
-
-	if(m_r->getSslfEnabled())
-	{
-		rcInit.m_textures[4].m_texture = m_r->getSslf().getRt();
-	}
 
 	rcInit.m_textures[5].m_texture = m_r->getMs().getDepthRt();
 

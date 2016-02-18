@@ -11,7 +11,6 @@ layout(binding = 0) uniform sampler2D u_isRt;
 layout(binding = 1) uniform sampler2D u_ppsSsaoRt;
 layout(binding = 2) uniform sampler2D u_ppsBloomLfRt;
 layout(binding = 3) uniform sampler3D u_lut;
-layout(binding = 4) uniform sampler2D u_ppsSslfRt;
 layout(binding = 5) uniform sampler2D u_msDepthRt;
 
 struct Luminance
@@ -173,11 +172,6 @@ void main()
 #if BLOOM_ENABLED
 	vec3 bloom = textureLod(u_ppsBloomLfRt, in_uv, 0.0).rgb;
 	out_color += bloom;
-#endif
-
-#if SSLF_ENABLED
-	vec3 sslf = textureLod(u_ppsSslfRt, in_uv, 0.0).rgb;
-	out_color += sslf;
 #endif
 
 	out_color = colorGrading(out_color);

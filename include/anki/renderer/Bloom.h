@@ -51,6 +51,11 @@ anki_internal:
 		return m_vblurRt;
 	}
 
+	TexturePtr& getRt1()
+	{
+		return m_hblurRt;
+	}
+
 	U32 getWidth() const
 	{
 		return m_width;

@@ -25,14 +25,7 @@ anki_internal:
 	ANKI_USE_RESULT Error init(const ConfigSet& config);
 	void run(RenderingContext& ctx);
 
-	TexturePtr& getRt()
-	{
-		return m_rt;
-	}
-
 private:
-	TexturePtr m_rt;
-	FramebufferPtr m_fb;
 	ShaderResourcePtr m_frag;
 	PipelinePtr m_ppline;
 	TextureResourcePtr m_lensDirtTex;
