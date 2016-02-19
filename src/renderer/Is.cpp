@@ -287,6 +287,9 @@ public:
 	SArray<VisibleNode> m_vSpotLights;
 	SArray<VisibleNode> m_vProbes;
 
+	Atomic<U32> m_count = {0};
+	Atomic<U32> m_count2 = {0};
+
 	Is* m_is = nullptr;
 };
 
@@ -621,44 +624,53 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 	ANKI_TRACE_START_EVENT(RENDER_IS);
 
 	//
-	// Iterate lights and bin them
+	// Iterate lights and probes and bin them
 	//
 	ClustererTestResult testResult;
 	m_r->getClusterer().initTestResults(getFrameAllocator(), testResult);
+	U lightCount = task.m_vPointLights.getSize() + task.m_vSpotLights.getSize();
+	U totalCount = lightCount + task.m_vProbes.getSize();
 
-	ThreadPool::Task::choseStartEnd(
-		threadId, threadsCount, task.m_vPointLights.getSize(), start, end);
-	for(auto i = start; i < end; i++)
+	const U TO_BIN_COUNT = 1;
+	while((start = task.m_count2.fetchAdd(TO_BIN_COUNT)) < totalCount)
 	{
-		SceneNode& snode = *task.m_vPointLights[i].m_node;
-		MoveComponent& move = snode.getComponent<MoveComponent>();
-		LightComponent& light = snode.getComponent<LightComponent>();
-		SpatialComponent& sp = snode.getComponent<SpatialComponent>();
+		end = min<U>(start + TO_BIN_COUNT, totalCount);
 
-		I pos = writePointLight(light, move, camfrc, task);
-		binLight(sp, pos, 0, task, testResult);
-	}
+		for(U j = start; j < end; ++j)
+		{
+			if(j >= lightCount)
+			{
+				U i = j - lightCount;
+				SceneNode& snode = *task.m_vProbes[i].m_node;
+				writeAndBinProbe(camfrc, snode, task, testResult);
+			}
+			else if(j >= task.m_vPointLights.getSize())
+			{
+				U i = j - task.m_vPointLights.getSize();
 
-	ThreadPool::Task::choseStartEnd(
-		threadId, threadsCount, task.m_vSpotLights.getSize(), start, end);
-	for(auto i = start; i < end; i++)
-	{
-		SceneNode& snode = *task.m_vSpotLights[i].m_node;
-		MoveComponent& move = snode.getComponent<MoveComponent>();
-		LightComponent& light = snode.getComponent<LightComponent>();
-		SpatialComponent& sp = snode.getComponent<SpatialComponent>();
-		const FrustumComponent* frc = snode.tryGetComponent<FrustumComponent>();
+				SceneNode& snode = *task.m_vSpotLights[i].m_node;
+				MoveComponent& move = snode.getComponent<MoveComponent>();
+				LightComponent& light = snode.getComponent<LightComponent>();
+				SpatialComponent& sp = snode.getComponent<SpatialComponent>();
+				const FrustumComponent* frc = 
+					snode.tryGetComponent<FrustumComponent>();
 
-		I pos = writeSpotLight(light, move, frc, cammove, camfrc, task);
-		binLight(sp, pos, 1, task, testResult);
-	}
+				I pos = writeSpotLight(light, move, frc, cammove, camfrc, task);
+				binLight(sp, pos, 1, task, testResult);
+			}
+			else
+			{
+				U i = j;
 
-	ThreadPool::Task::choseStartEnd(
-		threadId, threadsCount, task.m_vProbes.getSize(), start, end);
-	for(auto i = start; i < end; i++)
-	{
-		SceneNode& snode = *task.m_vProbes[i].m_node;
-		writeAndBinProbe(camfrc, snode, task, testResult);
+				SceneNode& snode = *task.m_vPointLights[i].m_node;
+				MoveComponent& move = snode.getComponent<MoveComponent>();
+				LightComponent& light = snode.getComponent<LightComponent>();
+				SpatialComponent& sp = snode.getComponent<SpatialComponent>();
+
+				I pos = writePointLight(light, move, camfrc, task);
+				binLight(sp, pos, 0, task, testResult);
+			}
+		}
 	}
 
 	//
@@ -668,91 +680,95 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 	m_barrier->wait();
 	ANKI_TRACE_START_EVENT(RENDER_IS);
 
-	ThreadPool::Task::choseStartEnd(
-		threadId, threadsCount, clusterCount, start, end);
-
 	// Run per cluster
-	for(U i = start; i < end; ++i)
+	const U CLUSTER_GROUP = 16;
+	while((start = task.m_count.fetchAdd(CLUSTER_GROUP)) < clusterCount)
 	{
-		auto& cluster = task.m_tempClusters[i];
-		cluster.normalizeCounts();
+		end = min<U>(start + CLUSTER_GROUP, clusterCount);
 
-		const U countP = cluster.m_pointCount.get();
-		const U countS = cluster.m_spotCount.get();
-		const U countProbe = cluster.m_probeCount.get();
-		const U count = countP + countS + countProbe;
-
-		auto& c = task.m_clusters[i];
-		c.m_combo = 0;
-
-		// Early exit
-		if(ANKI_UNLIKELY(count == 0))
+		for(U i = start; i < end; ++i)
 		{
-			continue;
-		}
+			auto& cluster = task.m_tempClusters[i];
+			cluster.normalizeCounts();
 
-		// Check if the previous cluster contains the same lights as this one
-		// and if yes then merge them. This will avoid allocating new IDs (and
-		// thrashing GPU caches).
-		cluster.sortLightIds();
-		if(i != start)
-		{
-			const auto& clusterB = task.m_tempClusters[i - 1];
+			const U countP = cluster.m_pointCount.get();
+			const U countS = cluster.m_spotCount.get();
+			const U countProbe = cluster.m_probeCount.get();
+			const U count = countP + countS + countProbe;
 
-			if(cluster == clusterB)
+			auto& c = task.m_clusters[i];
+			c.m_combo = 0;
+
+			// Early exit
+			if(ANKI_UNLIKELY(count == 0))
 			{
-				c.m_combo = task.m_clusters[i - 1].m_combo;
 				continue;
 			}
-		}
 
-		U offset = task.m_lightIdsCount.fetchAdd(count);
-
-		if(offset + count <= m_maxLightIds)
-		{
-			ANKI_ASSERT(offset <= 0xFFFF);
-			c.m_combo = offset << 16;
-
-			if(countP > 0)
+			// Check if the previous cluster contains the same lights as this 
+			// one and if yes then merge them. This will avoid allocating new 
+			// IDs (and thrashing GPU caches).
+			cluster.sortLightIds();
+			if(i != start)
 			{
-				ANKI_ASSERT(countP <= 0xF);
-				c.m_combo |= countP << 4;
+				const auto& clusterB = task.m_tempClusters[i - 1];
 
-				for(U i = 0; i < countP; ++i)
+				if(cluster == clusterB)
 				{
-					task.m_lightIds[offset++] =
-						cluster.m_pointIds[i].getIndex();
+					c.m_combo = task.m_clusters[i - 1].m_combo;
+					continue;
 				}
 			}
 
-			if(countS > 0)
-			{
-				ANKI_ASSERT(countS <= 0xF);
-				c.m_combo |= countS;
+			U offset = task.m_lightIdsCount.fetchAdd(count);
 
-				for(U i = 0; i < countS; ++i)
+			if(offset + count <= m_maxLightIds)
+			{
+				ANKI_ASSERT(offset <= 0xFFFF);
+				c.m_combo = offset << 16;
+
+				if(countP > 0)
 				{
-					task.m_lightIds[offset++] = cluster.m_spotIds[i].getIndex();
+					ANKI_ASSERT(countP <= 0xF);
+					c.m_combo |= countP << 4;
+
+					for(U i = 0; i < countP; ++i)
+					{
+						task.m_lightIds[offset++] =
+							cluster.m_pointIds[i].getIndex();
+					}
+				}
+
+				if(countS > 0)
+				{
+					ANKI_ASSERT(countS <= 0xF);
+					c.m_combo |= countS;
+
+					for(U i = 0; i < countS; ++i)
+					{
+						task.m_lightIds[offset++] = 
+							cluster.m_spotIds[i].getIndex();
+					}
+				}
+
+				if(countProbe > 0)
+				{
+					ANKI_ASSERT(countProbe <= 0xF);
+					c.m_combo |= countProbe << 8;
+
+					for(U i = 0; i < countProbe; ++i)
+					{
+						task.m_lightIds[offset++] =
+							cluster.m_probeIds[i].getIndex();
+					}
 				}
 			}
-
-			if(countProbe > 0)
+			else
 			{
-				ANKI_ASSERT(countProbe <= 0xF);
-				c.m_combo |= countProbe << 8;
-
-				for(U i = 0; i < countProbe; ++i)
-				{
-					task.m_lightIds[offset++] =
-						cluster.m_probeIds[i].getIndex();
-				}
+				ANKI_LOGW("Light IDs buffer too small");
 			}
-		}
-		else
-		{
-			ANKI_LOGW("Light IDs buffer too small");
-		}
-	}
+		} // end for
+	} // end while
 
 	ANKI_TRACE_STOP_EVENT(RENDER_IS);
 }
