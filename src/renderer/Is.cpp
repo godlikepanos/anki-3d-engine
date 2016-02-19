@@ -73,67 +73,144 @@ struct ShaderCommonUniforms
 	UVec4 m_tileCount;
 };
 
-using Lid = U32; ///< Light ID
-static const U MAX_TYPED_LIGHTS_PER_CLUSTER = 16;
+static const U MAX_TYPED_LIGHTS_PER_CLUSTER = 8;
+static const U MAX_PROBES_PER_CLUSTER = 4;
 static const F32 INVALID_TEXTURE_INDEX = 128.0;
 
-/// Store the probe radius for sorting the indices.
-class ClusterDataIndex
+class ClusterLightIndex
 {
 public:
-	U32 m_index = 0;
-	F32 m_probeRadius = 0.0;
-};
-static_assert(sizeof(ClusterDataIndex) == sizeof(U32) * 2, "Because we memcmp");
+	ClusterLightIndex()
+	{
+		// Do nothing. No need to initialize
+	}
 
+	U getIndex() const
+	{
+		return m_index;
+	}
+
+	void setIndex(U i)
+	{
+		ANKI_ASSERT(i <= MAX_U16);
+		m_index = i;
+	}
+
+private:
+	U16 m_index;
+};
+
+static Bool operator<(const ClusterLightIndex& a, const ClusterLightIndex& b)
+{
+	return a.getIndex() < b.getIndex();
+}
+
+/// Store the probe radius for sorting the indices.
+/// WARNING: Keep it as small as possible, that's why the members are U16
+class ClusterProbeIndex
+{
+public:
+	ClusterProbeIndex()
+	{
+		// Do nothing. No need to initialize
+	}
+
+	U getIndex() const
+	{
+		return m_index;
+	}
+
+	void setIndex(U i)
+	{
+		ANKI_ASSERT(i <= MAX_U16);
+		m_index = i;
+	}
+
+	F32 getProbeRadius() const
+	{
+		return F32(m_probeRadius) / F32(MAX_U16) * F32(MAX_PROBE_RADIUS);
+	}
+
+	void setProbeRadius(F32 r)
+	{
+		ANKI_ASSERT(r < MAX_PROBE_RADIUS);
+		m_probeRadius = r / F32(MAX_PROBE_RADIUS) * F32(MAX_U16);
+	}
+
+private:
+	static const U MAX_PROBE_RADIUS = 1000;
+	U16 m_index;
+	U16 m_probeRadius;
+};
+static_assert(
+	sizeof(ClusterProbeIndex) == sizeof(U16) * 2, "Because we memcmp");
+
+/// WARNING: Keep it as small as possible. The number of clusters is huge
 class ClusterData
 {
 public:
-	Atomic<U32> m_pointCount = {0};
-	Atomic<U32> m_spotCount = {0};
-	Atomic<U32> m_probeCount = {0};
+	Atomic<U8> m_pointCount;
+	Atomic<U8> m_spotCount;
+	Atomic<U8> m_probeCount;
 
-	Array<Lid, MAX_TYPED_LIGHTS_PER_CLUSTER> m_pointIds;
-	Array<Lid, MAX_TYPED_LIGHTS_PER_CLUSTER> m_spotIds;
-	Array<ClusterDataIndex, MAX_TYPED_LIGHTS_PER_CLUSTER> m_probeIds;
+	Array<ClusterLightIndex, MAX_TYPED_LIGHTS_PER_CLUSTER> m_pointIds;
+	Array<ClusterLightIndex, MAX_TYPED_LIGHTS_PER_CLUSTER> m_spotIds;
+	Array<ClusterProbeIndex, MAX_PROBES_PER_CLUSTER> m_probeIds;
+
+	ClusterData()
+	{
+		// Do nothing. No need to initialize
+	}
+
+	void reset()
+	{
+		m_pointCount.set(0);
+		m_spotCount.set(0);
+		m_probeCount.set(0);
+	}
+
+	void normalizeCounts()
+	{
+		m_pointCount.set(m_pointCount.get() % MAX_TYPED_LIGHTS_PER_CLUSTER);
+		m_spotCount.set(m_spotCount.get() % MAX_TYPED_LIGHTS_PER_CLUSTER);
+		m_probeCount.set(m_probeCount.get() % MAX_PROBES_PER_CLUSTER);
+	}
 
 	void sortLightIds()
 	{
-		const U pointCount = m_pointCount.load() % MAX_TYPED_LIGHTS_PER_CLUSTER;
+		const U pointCount = m_pointCount.get();
 		if(pointCount > 1)
 		{
 			std::sort(&m_pointIds[0], &m_pointIds[0] + pointCount);
 		}
 
-		const U spotCount = m_spotCount.load() % MAX_TYPED_LIGHTS_PER_CLUSTER;
+		const U spotCount = m_spotCount.get();
 		if(spotCount > 1)
 		{
 			std::sort(&m_spotIds[0], &m_spotIds[0] + spotCount);
 		}
 
-		const U probeCount = m_probeCount.load() % MAX_TYPED_LIGHTS_PER_CLUSTER;
+		const U probeCount = m_probeCount.get();
 		if(probeCount > 1)
 		{
 			std::sort(m_probeIds.getBegin(),
 				m_probeIds.getBegin() + probeCount,
-				[](const ClusterDataIndex& a, const ClusterDataIndex& b) {
-					ANKI_ASSERT(a.m_probeRadius > 0.0 && b.m_probeRadius > 0.0);
-					return a.m_probeRadius < b.m_probeRadius;
+				[](const ClusterProbeIndex& a, const ClusterProbeIndex& b) {
+					ANKI_ASSERT(
+						a.getProbeRadius() > 0.0 && b.getProbeRadius() > 0.0);
+					return a.getProbeRadius() < b.getProbeRadius();
 				});
 		}
 	}
 
 	Bool operator==(const ClusterData& b) const
 	{
-		const U pointCount = m_pointCount.load() % MAX_TYPED_LIGHTS_PER_CLUSTER;
-		const U spotCount = m_spotCount.load() % MAX_TYPED_LIGHTS_PER_CLUSTER;
-		const U probeCount = m_probeCount.load() % MAX_TYPED_LIGHTS_PER_CLUSTER;
-		const U pointCount2 =
-			b.m_pointCount.load() % MAX_TYPED_LIGHTS_PER_CLUSTER;
-		const U spotCount2 =
-			b.m_spotCount.load() % MAX_TYPED_LIGHTS_PER_CLUSTER;
-		const U probeCount2 =
-			b.m_probeCount.load() % MAX_TYPED_LIGHTS_PER_CLUSTER;
+		const U pointCount = m_pointCount.get();
+		const U spotCount = m_spotCount.get();
+		const U probeCount = m_probeCount.get();
+		const U pointCount2 = b.m_pointCount.get();
+		const U spotCount2 = b.m_spotCount.get();
+		const U probeCount2 = b.m_probeCount.get();
 
 		if(pointCount != pointCount2 || spotCount != spotCount2
 			|| probeCount != probeCount2)
@@ -143,8 +220,9 @@ public:
 
 		if(pointCount > 0)
 		{
-			if(memcmp(
-				   &m_pointIds[0], &b.m_pointIds[0], sizeof(Lid) * pointCount)
+			if(memcmp(&m_pointIds[0],
+				   &b.m_pointIds[0],
+				   sizeof(m_pointIds[0]) * pointCount)
 				!= 0)
 			{
 				return false;
@@ -153,7 +231,9 @@ public:
 
 		if(spotCount > 0)
 		{
-			if(memcmp(&m_spotIds[0], &b.m_spotIds[0], sizeof(Lid) * spotCount)
+			if(memcmp(&m_spotIds[0],
+				   &b.m_spotIds[0],
+				   sizeof(m_spotIds[0]) * spotCount)
 				!= 0)
 			{
 				return false;
@@ -189,7 +269,7 @@ public:
 	SArray<ShaderSpotLight> m_spotLights;
 	SArray<ShaderProbe> m_probes;
 
-	SArray<Lid> m_lightIds;
+	SArray<U32> m_lightIds;
 	SArray<ShaderCluster> m_clusters;
 
 	Atomic<U32> m_pointLightsCount = {0};
@@ -218,9 +298,7 @@ public:
 
 	Error operator()(U32 threadId, PtrSize threadsCount)
 	{
-		ANKI_TRACE_START_EVENT(RENDER_IS);
 		m_data->m_is->binLights(threadId, threadsCount, *m_data);
-		ANKI_TRACE_STOP_EVENT(RENDER_IS);
 		return ErrorCode::NONE;
 	}
 };
@@ -483,13 +561,13 @@ Error Is::lightPass(RenderingContext& ctx)
 	taskData.m_clusters = SArray<ShaderCluster>(data, clusterCount);
 
 	// Allocate light IDs
-	Lid* data2 =
-		static_cast<Lid*>(getGrManager().allocateFrameHostVisibleMemory(
-			m_maxLightIds * sizeof(Lid),
+	U32* data2 =
+		static_cast<U32*>(getGrManager().allocateFrameHostVisibleMemory(
+			m_maxLightIds * sizeof(U32),
 			BufferUsage::STORAGE,
 			m_lightIdsToken));
 
-	taskData.m_lightIds = SArray<Lid>(data2, m_maxLightIds);
+	taskData.m_lightIds = SArray<U32>(data2, m_maxLightIds);
 
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
@@ -520,15 +598,34 @@ Error Is::lightPass(RenderingContext& ctx)
 //==============================================================================
 void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 {
+	ANKI_TRACE_START_EVENT(RENDER_IS);
 	const FrustumComponent& camfrc = *m_frc;
 	const MoveComponent& cammove =
 		m_frc->getSceneNode().getComponent<MoveComponent>();
+	U clusterCount = m_r->getClusterCount();
+	PtrSize start, end;
 
+	//
+	// Initialize the temp clusters
+	//
+	ThreadPool::Task::choseStartEnd(
+		threadId, threadsCount, clusterCount, start, end);
+
+	for(U i = start; i < end; ++i)
+	{
+		task.m_tempClusters[i].reset();
+	}
+
+	ANKI_TRACE_STOP_EVENT(RENDER_IS);
+	m_barrier->wait();
+	ANKI_TRACE_START_EVENT(RENDER_IS);
+
+	//
 	// Iterate lights and bin them
+	//
 	ClustererTestResult testResult;
 	m_r->getClusterer().initTestResults(getFrameAllocator(), testResult);
 
-	PtrSize start, end;
 	ThreadPool::Task::choseStartEnd(
 		threadId, threadsCount, task.m_vPointLights.getSize(), start, end);
 	for(auto i = start; i < end; i++)
@@ -567,9 +664,9 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 	//
 	// Last thing, update the real clusters
 	//
+	ANKI_TRACE_STOP_EVENT(RENDER_IS);
 	m_barrier->wait();
-
-	U clusterCount = m_r->getClusterCount();
+	ANKI_TRACE_START_EVENT(RENDER_IS);
 
 	ThreadPool::Task::choseStartEnd(
 		threadId, threadsCount, clusterCount, start, end);
@@ -578,13 +675,11 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 	for(U i = start; i < end; ++i)
 	{
 		auto& cluster = task.m_tempClusters[i];
+		cluster.normalizeCounts();
 
-		const U countP =
-			cluster.m_pointCount.load() % MAX_TYPED_LIGHTS_PER_CLUSTER;
-		const U countS =
-			cluster.m_spotCount.load() % MAX_TYPED_LIGHTS_PER_CLUSTER;
-		const U countProbe =
-			cluster.m_probeCount.load() % MAX_TYPED_LIGHTS_PER_CLUSTER;
+		const U countP = cluster.m_pointCount.get();
+		const U countS = cluster.m_spotCount.get();
+		const U countProbe = cluster.m_probeCount.get();
 		const U count = countP + countS + countProbe;
 
 		auto& c = task.m_clusters[i];
@@ -611,7 +706,7 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 			}
 		}
 
-		const U offset = task.m_lightIdsCount.fetchAdd(count);
+		U offset = task.m_lightIdsCount.fetchAdd(count);
 
 		if(offset + count <= m_maxLightIds)
 		{
@@ -622,18 +717,23 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 			{
 				ANKI_ASSERT(countP <= 0xF);
 				c.m_combo |= countP << 4;
-				memcpy(&task.m_lightIds[offset],
-					&cluster.m_pointIds[0],
-					countP * sizeof(Lid));
+
+				for(U i = 0; i < countP; ++i)
+				{
+					task.m_lightIds[offset++] =
+						cluster.m_pointIds[i].getIndex();
+				}
 			}
 
 			if(countS > 0)
 			{
 				ANKI_ASSERT(countS <= 0xF);
 				c.m_combo |= countS;
-				memcpy(&task.m_lightIds[offset + countP],
-					&cluster.m_spotIds[0],
-					countS * sizeof(Lid));
+
+				for(U i = 0; i < countS; ++i)
+				{
+					task.m_lightIds[offset++] = cluster.m_spotIds[i].getIndex();
+				}
 			}
 
 			if(countProbe > 0)
@@ -643,8 +743,8 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 
 				for(U i = 0; i < countProbe; ++i)
 				{
-					task.m_lightIds[offset + countP + countS + i] =
-						cluster.m_probeIds[i].m_index;
+					task.m_lightIds[offset++] =
+						cluster.m_probeIds[i].getIndex();
 				}
 			}
 		}
@@ -653,6 +753,8 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 			ANKI_LOGW("Light IDs buffer too small");
 		}
 	}
+
+	ANKI_TRACE_STOP_EVENT(RENDER_IS);
 }
 
 //==============================================================================
@@ -780,11 +882,11 @@ void Is::binLight(SpatialComponent& sp,
 		{
 		case 0:
 			i = cluster.m_pointCount.fetchAdd(1) % MAX_TYPED_LIGHTS_PER_CLUSTER;
-			cluster.m_pointIds[i] = pos;
+			cluster.m_pointIds[i].setIndex(pos);
 			break;
 		case 1:
 			i = cluster.m_spotCount.fetchAdd(1) % MAX_TYPED_LIGHTS_PER_CLUSTER;
-			cluster.m_spotIds[i] = pos;
+			cluster.m_spotIds[i].setIndex(pos);
 			break;
 		default:
 			ANKI_ASSERT(0);
@@ -829,9 +931,9 @@ void Is::writeAndBinProbe(const FrustumComponent& camFrc,
 
 		auto& cluster = task.m_tempClusters[i];
 
-		i = cluster.m_probeCount.fetchAdd(1) % MAX_TYPED_LIGHTS_PER_CLUSTER;
-		cluster.m_probeIds[i].m_index = idx;
-		cluster.m_probeIds[i].m_probeRadius = reflc.getRadius();
+		i = cluster.m_probeCount.fetchAdd(1) % MAX_PROBES_PER_CLUSTER;
+		cluster.m_probeIds[i].setIndex(idx);
+		cluster.m_probeIds[i].setProbeRadius(reflc.getRadius());
 	}
 }
 

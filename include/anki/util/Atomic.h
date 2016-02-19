@@ -36,15 +36,26 @@ public:
 	using Value = T;
 	static constexpr AtomicMemoryOrder MEMORY_ORDER = tmemOrd;
 
-	/// It will set it to zero.
+	/// It will not set itself to zero.
 	Atomic()
-		: m_val(static_cast<Value>(0))
 	{
 	}
 
 	Atomic(const Value a)
 		: m_val(a)
 	{
+	}
+
+	/// Set the value without protection.
+	void set(const Value& a)
+	{
+		m_val = a;
+	}
+
+	/// Get the value without protection.
+	const Value& get() const
+	{
+		return m_val;
 	}
 
 	/// Get the value of the atomic.
