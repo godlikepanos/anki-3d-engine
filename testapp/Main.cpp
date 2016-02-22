@@ -504,8 +504,8 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("is.groundLightEnabled", false);
 	config.set("sm.enabled", true);
 	config.set("sm.maxLights", 16);
-	config.set("sm.poissonEnabled", true);
-	config.set("sm.resolution", 1024);
+	config.set("sm.poissonEnabled", false);
+	config.set("sm.resolution", 512);
 	config.set("lf.maxFlares", 32);
 	config.set("pps.enabled", true);
 	config.set("bloom.enabled", true);

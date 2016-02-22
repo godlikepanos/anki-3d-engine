@@ -1,4 +1,4 @@
-file(GLOB ANKI_GR_SOURCES *.cpp)
+file(GLOB ANKI_GR_SOURCES *.cpp common/*.cpp)
 
 if(GL)
 	file(GLOB ANKI_GR_BACKEND_SOURCES gl/*.cpp)

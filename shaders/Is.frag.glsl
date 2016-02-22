@@ -5,6 +5,7 @@
 
 #include "shaders/Pack.glsl"
 #include "shaders/Clusterer.glsl"
+#include "shaders/Functions.glsl"
 
 #define LIGHT_SET 0
 #define LIGHT_SS_BINDING 0
@@ -133,6 +134,8 @@ void main()
 		{
 			shadow = computeShadowFactorOmni(
 				frag2Light, shadowmapLayerIdx, 1.0 / sqrt(light.posRadius.w));
+
+			shadow = dither(shadow, 64.0);
 		}
 
 		out_color +=
@@ -160,6 +163,8 @@ void main()
 				fragPos,
 				shadowmapLayerIdx,
 				shadowSampleCount);
+
+			shadow = dither(shadow, 64.0);
 		}
 
 		out_color +=

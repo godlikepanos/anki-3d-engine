@@ -73,8 +73,8 @@ struct ShaderCommonUniforms
 	UVec4 m_tileCount;
 };
 
-static const U MAX_TYPED_LIGHTS_PER_CLUSTER = 8;
-static const U MAX_PROBES_PER_CLUSTER = 4;
+static const U MAX_TYPED_LIGHTS_PER_CLUSTER = 16;
+static const U MAX_PROBES_PER_CLUSTER = 8;
 static const F32 INVALID_TEXTURE_INDEX = 128.0;
 
 class ClusterLightIndex
@@ -146,7 +146,7 @@ static_assert(
 	sizeof(ClusterProbeIndex) == sizeof(U16) * 2, "Because we memcmp");
 
 /// WARNING: Keep it as small as possible. The number of clusters is huge
-class ClusterData
+class alignas(U32) ClusterData
 {
 public:
 	Atomic<U8> m_pointCount;
@@ -164,16 +164,15 @@ public:
 
 	void reset()
 	{
-		m_pointCount.set(0);
-		m_spotCount.set(0);
-		m_probeCount.set(0);
+		// Set the counts to zero and try to be faster
+		*reinterpret_cast<U32*>(&m_pointCount) = 0;
 	}
 
 	void normalizeCounts()
 	{
-		m_pointCount.set(m_pointCount.get() % MAX_TYPED_LIGHTS_PER_CLUSTER);
-		m_spotCount.set(m_spotCount.get() % MAX_TYPED_LIGHTS_PER_CLUSTER);
-		m_probeCount.set(m_probeCount.get() % MAX_PROBES_PER_CLUSTER);
+		normalize(m_pointCount, MAX_TYPED_LIGHTS_PER_CLUSTER, "point lights");
+		normalize(m_spotCount, MAX_TYPED_LIGHTS_PER_CLUSTER, "spot lights");
+		normalize(m_probeCount, MAX_PROBES_PER_CLUSTER, "probes");
 	}
 
 	void sortLightIds()
@@ -252,6 +251,17 @@ public:
 		}
 
 		return true;
+	}
+
+private:
+	static void normalize(Atomic<U8>& count, const U maxCount, CString what)
+	{
+		U8 a = count.get();
+		count.set(a % maxCount);
+		if(a > maxCount)
+		{
+			ANKI_LOGW("Increase cluster limit: %s", &what[0]);
+		}
 	}
 };
 
@@ -384,10 +394,10 @@ Error Is::initInternal(const ConfigSet& config)
 
 	// point light
 	ANKI_CHECK(getResourceManager().loadResourceToCache(
-		m_lightVert, "shaders/IsLp.vert.glsl", pps.toCString(), "r_"));
+		m_lightVert, "shaders/Is.vert.glsl", pps.toCString(), "r_"));
 
 	ANKI_CHECK(getResourceManager().loadResourceToCache(
-		m_lightFrag, "shaders/IsLp.frag.glsl", pps.toCString(), "r_"));
+		m_lightFrag, "shaders/Is.frag.glsl", pps.toCString(), "r_"));
 
 	PipelineInitInfo init;
 
