@@ -49,40 +49,39 @@ struct ReflectionProbe
 	vec4 cubemapIndexPad3;
 };
 
-layout(std140,
-	row_major,
-	SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING)) readonly buffer _s0
+layout(
+	std140, row_major, UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING)) uniform ubo0_
 {
 	LightingUniforms u_lightingUniforms;
 };
 
 #ifdef FRAGMENT_SHADER
 
-layout(std140, SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 1)) readonly buffer _s1
+layout(std140, SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 0)) readonly buffer _s1
 {
 	PointLight u_pointLights[];
 };
 
-layout(SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 2),
+layout(SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 1),
 	std140,
 	row_major) readonly buffer _s2
 {
 	SpotLight u_spotLights[];
 };
 
-layout(SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 3), std430) readonly buffer _s3
+layout(SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 2), std430) readonly buffer _s3
 {
 	uint u_clusters[];
 };
 
-layout(std430, SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 4)) readonly buffer _s4
+layout(std430, SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 3)) readonly buffer _s4
 {
 	uint u_lightIndices[];
 };
 
 layout(std140,
 	row_major,
-	SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 5)) readonly buffer _s5
+	SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 4)) readonly buffer _s5
 {
 	ReflectionProbe u_reflectionProbes[];
 };

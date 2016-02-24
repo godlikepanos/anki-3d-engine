@@ -21,19 +21,6 @@ namespace anki
 {
 
 //==============================================================================
-// Misc                                                                        =
-//==============================================================================
-struct Uniforms
-{
-	Vec4 m_nearFarPad2;
-	Vec4 m_fogColorFogFactor;
-};
-
-//==============================================================================
-// Pps                                                                         =
-//==============================================================================
-
-//==============================================================================
 const PixelFormat Pps::RT_PIXEL_FORMAT(
 	ComponentFormat::R8G8B8, TransformFormat::UNORM);
 
@@ -112,11 +99,8 @@ Error Pps::initInternal(const ConfigSet& config)
 
 	rcInit.m_textures[3].m_texture = m_lut->getGrTexture();
 
-	rcInit.m_textures[5].m_texture = m_r->getMs().getDepthRt();
-
 	rcInit.m_storageBuffers[0].m_buffer =
 		m_r->getTm().getAverageLuminanceBuffer();
-	rcInit.m_uniformBuffers[0].m_dynamic = true;
 
 	m_rcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);
 
@@ -157,25 +141,10 @@ void Pps::run(RenderingContext& ctx)
 		m_r->getOutputFramebuffer(fb, width, height);
 	}
 
-	// Update uniforms
-	DynamicBufferInfo dyn;
-	{
-		DynamicBufferToken token;
-		Uniforms* unis = static_cast<Uniforms*>(
-			getGrManager().allocateFrameHostVisibleMemory(
-				sizeof(*unis), BufferUsage::UNIFORM, dyn.m_uniformBuffers[0]));
-
-		unis->m_fogColorFogFactor = Vec4(m_fogColor, m_fogFactor);
-
-		const FrustumComponent& frc = *ctx.m_frustumComponent;
-		unis->m_nearFarPad2 = Vec4(
-			frc.getFrustum().getNear(), frc.getFrustum().getFar(), 0.0, 0.0);
-	}
-
 	cmdb->beginRenderPass(fb);
 	cmdb->setViewport(0, 0, width, height);
 	cmdb->bindPipeline(m_ppline);
-	cmdb->bindResourceGroup(m_rcGroup, 0, &dyn);
+	cmdb->bindResourceGroup(m_rcGroup, 0, nullptr);
 	m_r->drawQuad(cmdb);
 	cmdb->endRenderPass();
 }

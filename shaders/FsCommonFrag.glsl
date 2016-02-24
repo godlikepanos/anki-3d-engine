@@ -5,18 +5,16 @@
 // Common code for all fragment shaders of BS
 #include "shaders/Common.glsl"
 #include "shaders/MsFsCommon.glsl"
-#include "shaders/LinearDepth.glsl"
+#include "shaders/Functions.glsl"
 #include "shaders/Clusterer.glsl"
 
 // Global resources
 layout(TEX_BINDING(1, 0)) uniform sampler2D anki_msDepthRt;
 #define LIGHT_SET 1
+#define LIGHT_UBO_BINDING 0
 #define LIGHT_SS_BINDING 0
 #define LIGHT_TEX_BINDING 1
 #include "shaders/LightResources.glsl"
-#undef LIGHT_SET
-#undef LIGHT_SS_BINDING
-#undef LIGHT_TEX_BINDING
 
 #define anki_u_time u_lightingUniforms.rendererSizeTimePad1.z
 #define RENDERER_SIZE (u_lightingUniforms.rendererSizeTimePad1.xy * 0.5)

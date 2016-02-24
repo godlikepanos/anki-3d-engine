@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include "shaders/Common.glsl"
-#include "shaders/LinearDepth.glsl"
+#include "shaders/Functions.glsl"
 
 layout(location = 0) in vec2 in_uv;
 

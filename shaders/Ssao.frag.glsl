@@ -6,7 +6,7 @@
 // SSAO fragment shader
 #include "shaders/Common.glsl"
 #include "shaders/Pack.glsl"
-#include "shaders/LinearDepth.glsl"
+#include "shaders/Functions.glsl"
 #include "shaders/RendererCommonUniforms.glsl"
 
 const vec3 KERNEL[KERNEL_SIZE] = KERNEL_ARRAY; // This will be appended in C++
@@ -15,7 +15,7 @@ const vec3 KERNEL[KERNEL_SIZE] = KERNEL_ARRAY; // This will be appended in C++
 const float RADIUS = 1.1;
 
 // Initial is 1.0 but the bigger it is the more darker the SSAO factor gets
-const float DARKNESS_MULTIPLIER = 2.5;
+const float DARKNESS_MULTIPLIER = 1.5;
 
 // The algorithm will chose the number of samples depending on the distance
 const float MAX_DISTANCE = 40.0;

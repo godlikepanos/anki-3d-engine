@@ -134,6 +134,11 @@ public:
 		return *m_fs;
 	}
 
+	Volumetric& getVolumetric()
+	{
+		return *m_vol;
+	}
+
 	Tm& getTm()
 	{
 		return *m_tm;
@@ -390,6 +395,7 @@ private:
 	UniquePtr<Ms> m_ms; ///< Material rendering stage
 	UniquePtr<Is> m_is; ///< Illumination rendering stage
 	UniquePtr<Fs> m_fs; ///< Forward shading.
+	UniquePtr<Volumetric> m_vol; ///< Volumetric effects.
 	UniquePtr<Lf> m_lf; ///< Forward shading lens flares.
 	UniquePtr<Upsample> m_upsample;
 	UniquePtr<Tiler> m_tiler;

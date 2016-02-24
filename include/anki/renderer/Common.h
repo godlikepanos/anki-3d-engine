@@ -28,6 +28,7 @@ class Tiler;
 class Ir;
 class Upsample;
 class DownscaleBlur;
+class Volumetric;
 
 class RenderingContext;
 

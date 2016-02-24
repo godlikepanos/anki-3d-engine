@@ -454,12 +454,13 @@ Error Is::initInternal(const ConfigSet& config)
 				m_r->getIr().getIntegrationLutSampler();
 		}
 
+		init.m_uniformBuffers[0].m_dynamic = true;
+
 		init.m_storageBuffers[0].m_dynamic = true;
 		init.m_storageBuffers[1].m_dynamic = true;
 		init.m_storageBuffers[2].m_dynamic = true;
 		init.m_storageBuffers[3].m_dynamic = true;
 		init.m_storageBuffers[4].m_dynamic = true;
-		init.m_storageBuffers[5].m_dynamic = true;
 
 		m_rcGroup = getGrManager().newInstance<ResourceGroup>(init);
 	}
@@ -662,7 +663,7 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 				MoveComponent& move = snode.getComponent<MoveComponent>();
 				LightComponent& light = snode.getComponent<LightComponent>();
 				SpatialComponent& sp = snode.getComponent<SpatialComponent>();
-				const FrustumComponent* frc = 
+				const FrustumComponent* frc =
 					snode.tryGetComponent<FrustumComponent>();
 
 				I pos = writeSpotLight(light, move, frc, cammove, camfrc, task);
@@ -715,8 +716,8 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 				continue;
 			}
 
-			// Check if the previous cluster contains the same lights as this 
-			// one and if yes then merge them. This will avoid allocating new 
+			// Check if the previous cluster contains the same lights as this
+			// one and if yes then merge them. This will avoid allocating new
 			// IDs (and thrashing GPU caches).
 			cluster.sortLightIds();
 			if(i != start)
@@ -756,7 +757,7 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 
 					for(U i = 0; i < countS; ++i)
 					{
-						task.m_lightIds[offset++] = 
+						task.m_lightIds[offset++] =
 							cluster.m_spotIds[i].getIndex();
 					}
 				}
@@ -971,12 +972,13 @@ void Is::setState(CommandBufferPtr& cmdb)
 	cmdb->bindPipeline(m_lightPpline);
 
 	DynamicBufferInfo dyn;
-	dyn.m_storageBuffers[0] = m_commonVarsToken;
-	dyn.m_storageBuffers[1] = m_pLightsToken;
-	dyn.m_storageBuffers[2] = m_sLightsToken;
-	dyn.m_storageBuffers[3] = m_clustersToken;
-	dyn.m_storageBuffers[4] = m_lightIdsToken;
-	dyn.m_storageBuffers[5] = m_probesToken;
+	dyn.m_uniformBuffers[0] = m_commonVarsToken;
+
+	dyn.m_storageBuffers[0] = m_pLightsToken;
+	dyn.m_storageBuffers[1] = m_sLightsToken;
+	dyn.m_storageBuffers[2] = m_clustersToken;
+	dyn.m_storageBuffers[3] = m_lightIdsToken;
+	dyn.m_storageBuffers[4] = m_probesToken;
 
 	cmdb->bindResourceGroup(m_rcGroup, 0, &dyn);
 }
@@ -994,7 +996,7 @@ void Is::updateCommonBlock(const FrustumComponent& fr)
 	ShaderCommonUniforms* blk = static_cast<ShaderCommonUniforms*>(
 		getGrManager().allocateFrameHostVisibleMemory(
 			sizeof(ShaderCommonUniforms),
-			BufferUsage::STORAGE,
+			BufferUsage::UNIFORM,
 			m_commonVarsToken));
 
 	// Start writing

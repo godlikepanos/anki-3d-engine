@@ -9,11 +9,13 @@
 
 #define LIGHT_SET 0
 #define LIGHT_SS_BINDING 0
+#define LIGHT_UBO_BINDING 0
 #define LIGHT_TEX_BINDING 4
 #include "shaders/LightResources.glsl"
 #undef LIGHT_SET
 #undef LIGHT_SS_BINDING
 #undef LIGHT_TEX_BINDING
+#undef LIGHT_UBO_BINDING
 
 layout(binding = 0) uniform sampler2D u_msRt0;
 layout(binding = 1) uniform sampler2D u_msRt1;

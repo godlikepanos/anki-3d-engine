@@ -380,7 +380,7 @@ Error App::initDirs()
 }
 
 //==============================================================================
-Error App::mainLoop(UserMainLoopCallback callback, void* userData)
+Error App::mainLoop()
 {
 	ANKI_LOGI("Entering main loop");
 	Bool quit = false;
@@ -401,7 +401,7 @@ Error App::mainLoop(UserMainLoopCallback callback, void* userData)
 		ANKI_CHECK(m_input->handleEvents());
 
 		// User update
-		ANKI_CHECK(callback(*this, userData, quit));
+		ANKI_CHECK(userMainLoop(quit));
 
 		ANKI_CHECK(m_scene->update(prevUpdateTime, crntTime, *m_renderer));
 

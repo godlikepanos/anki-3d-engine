@@ -56,11 +56,12 @@ Error Fs::init(const ConfigSet&)
 			init.m_textures[2].m_texture = m_r->getSm().getOmniTextureArray();
 		}
 
+		init.m_uniformBuffers[0].m_dynamic = true;
+
 		init.m_storageBuffers[0].m_dynamic = true;
 		init.m_storageBuffers[1].m_dynamic = true;
 		init.m_storageBuffers[2].m_dynamic = true;
 		init.m_storageBuffers[3].m_dynamic = true;
-		init.m_storageBuffers[4].m_dynamic = true;
 
 		m_globalResources = getGrManager().newInstance<ResourceGroup>(init);
 	}
@@ -73,11 +74,12 @@ Error Fs::init(const ConfigSet&)
 void Fs::prepareBuildCommandBuffers(RenderingContext& ctx)
 {
 	DynamicBufferInfo& dyn = ctx.m_fs.m_set1DynInfo;
-	dyn.m_storageBuffers[0] = m_r->getIs().getCommonVarsToken();
-	dyn.m_storageBuffers[1] = m_r->getIs().getPointLightsToken();
-	dyn.m_storageBuffers[2] = m_r->getIs().getSpotLightsToken();
-	dyn.m_storageBuffers[3] = m_r->getIs().getClustersToken();
-	dyn.m_storageBuffers[4] = m_r->getIs().getLightIndicesToken();
+	dyn.m_uniformBuffers[0] = m_r->getIs().getCommonVarsToken();
+
+	dyn.m_storageBuffers[0] = m_r->getIs().getPointLightsToken();
+	dyn.m_storageBuffers[1] = m_r->getIs().getSpotLightsToken();
+	dyn.m_storageBuffers[2] = m_r->getIs().getClustersToken();
+	dyn.m_storageBuffers[3] = m_r->getIs().getLightIndicesToken();
 }
 
 //==============================================================================

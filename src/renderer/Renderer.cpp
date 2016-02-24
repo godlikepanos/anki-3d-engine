@@ -24,6 +24,7 @@
 #include <anki/renderer/Tiler.h>
 #include <anki/renderer/Upsample.h>
 #include <anki/renderer/DownscaleBlur.h>
+#include <anki/renderer/Volumetric.h>
 
 namespace anki
 {
@@ -160,6 +161,9 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_fs.reset(m_alloc.newInstance<Fs>(this));
 	ANKI_CHECK(m_fs->init(config));
 
+	m_vol.reset(m_alloc.newInstance<Volumetric>(this));
+	ANKI_CHECK(m_vol->init(config));
+
 	m_lf.reset(m_alloc.newInstance<Lf>(this));
 	ANKI_CHECK(m_lf->init(config));
 
@@ -262,6 +266,7 @@ Error Renderer::render(RenderingContext& ctx)
 	ANKI_CHECK(buildCommandBuffersFs(ctx));
 	m_fs->run(ctx);
 	m_lf->run(ctx);
+	m_vol->run(ctx);
 	cmdb->endRenderPass();
 
 	m_upsample->run(ctx);

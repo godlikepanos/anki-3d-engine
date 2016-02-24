@@ -40,12 +40,8 @@ class App
 	friend class GrManagerInterfaceImpl;
 
 public:
-	/// User callback of main loop
-	using UserMainLoopCallback = Error (*)(
-		App& app, void* userData, Bool& quit);
-
 	App();
-	~App();
+	virtual ~App();
 
 	ANKI_USE_RESULT Error create(const ConfigSet& config,
 		AllocAlignedCallback allocCb,
@@ -97,11 +93,14 @@ public:
 	}
 
 	/// Run the main loop.
-	/// @param callback The user callback to run along with the other main loop
-	///                 code.
-	/// @param userData The data to pass to the user callback.
-	ANKI_USE_RESULT Error mainLoop(
-		UserMainLoopCallback callback, void* userData);
+	ANKI_USE_RESULT Error mainLoop();
+
+	/// The user code to run along with the other main loop code.
+	virtual ANKI_USE_RESULT Error userMainLoop(Bool& quit)
+	{
+		// Do nothing
+		return ErrorCode::NONE;
+	}
 
 	Input& getInput()
 	{

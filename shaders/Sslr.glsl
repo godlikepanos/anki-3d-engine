@@ -5,7 +5,7 @@
 
 // SSLR functions and data
 #include "shaders/Common.glsl"
-#include "shaders/LinearDepth.glsl"
+#include "shaders/Functions.glsl"
 #include "shaders/Pack.glsl"
 
 const float ONE = 0.9;

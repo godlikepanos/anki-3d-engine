@@ -16,3 +16,4 @@
 /// @ingroup resource
 
 #include <anki/resource/ResourceManager.h>
+#include <anki/resource/Script.h>

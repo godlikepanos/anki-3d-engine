@@ -5,13 +5,12 @@
 
 #include "shaders/Common.glsl"
 #include "shaders/Tonemapping.glsl"
-#include "shaders/LinearDepth.glsl"
+#include "shaders/Functions.glsl"
 
 layout(binding = 0) uniform sampler2D u_isRt;
 layout(binding = 1) uniform sampler2D u_ppsSsaoRt;
 layout(binding = 2) uniform sampler2D u_ppsBloomLfRt;
 layout(binding = 3) uniform sampler3D u_lut;
-layout(binding = 5) uniform sampler2D u_msDepthRt;
 
 struct Luminance
 {
@@ -21,17 +20,6 @@ struct Luminance
 layout(std140, SS_BINDING(0, 0)) readonly buffer s0_
 {
 	Luminance u_luminance;
-};
-
-struct Uniforms
-{
-	vec4 nearFarPad2;
-	vec4 fogColorFogFactor;
-};
-
-layout(std140, UBO_BINDING(0, 0)) uniform ubo0_
-{
-	Uniforms u_uniforms;
 };
 
 layout(location = 0) in vec2 in_uv;
@@ -122,19 +110,6 @@ vec3 colorGrading(in vec3 color)
 }
 
 //==============================================================================
-vec3 fog(vec3 colorIn, vec2 uv)
-{
-	float depth = textureLod(u_msDepthRt, uv, 1.0).r;
-
-	float linearDepth = linearizeDepth(
-		depth, u_uniforms.nearFarPad2.x, u_uniforms.nearFarPad2.y);
-
-	linearDepth = pow(linearDepth, 1.0);
-	float t = linearDepth * u_uniforms.fogColorFogFactor.w;
-	return colorIn * (1.0 - t) + u_uniforms.fogColorFogFactor.rgb * t;
-}
-
-//==============================================================================
 void main()
 {
 #if SHARPEN_ENABLED
@@ -150,8 +125,8 @@ void main()
 
 	out_color = tonemap(out_color, u_luminance.averageLuminancePad3.x, 0.0);
 
-#if 1
-	out_color = fog(out_color, in_uv);
+#if 0
+	out_color += fog(in_uv);
 #endif
 
 #if BLOOM_ENABLED
