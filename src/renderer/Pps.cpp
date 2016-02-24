@@ -7,7 +7,6 @@
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/Bloom.h>
 #include <anki/renderer/Sslf.h>
-#include <anki/renderer/Ssao.h>
 #include <anki/renderer/Tm.h>
 #include <anki/renderer/Is.h>
 #include <anki/renderer/Ms.h>
@@ -59,13 +58,11 @@ Error Pps::initInternal(const ConfigSet& config)
 	// SProg
 	StringAuto pps(getAllocator());
 
-	pps.sprintf("#define SSAO_ENABLED %u\n"
-				"#define BLOOM_ENABLED %u\n"
+	pps.sprintf("#define BLOOM_ENABLED %u\n"
 				"#define SHARPEN_ENABLED %u\n"
 				"#define GAMMA_CORRECTION_ENABLED %u\n"
 				"#define FBO_WIDTH %u\n"
 				"#define FBO_HEIGHT %u\n",
-		m_r->getSsaoEnabled(),
 		m_r->getBloomEnabled(),
 		U(config.getNumber("pps.sharpen")),
 		U(config.getNumber("pps.gammaCorrection")),
@@ -87,17 +84,12 @@ Error Pps::initInternal(const ConfigSet& config)
 	ResourceGroupInitInfo rcInit;
 	rcInit.m_textures[0].m_texture = m_r->getIs().getRt();
 
-	if(m_r->getSsaoEnabled())
-	{
-		rcInit.m_textures[1].m_texture = m_r->getSsao().getRt();
-	}
-
 	if(m_r->getBloomEnabled())
 	{
-		rcInit.m_textures[2].m_texture = m_r->getBloom().getRt();
+		rcInit.m_textures[1].m_texture = m_r->getBloom().getRt();
 	}
 
-	rcInit.m_textures[3].m_texture = m_lut->getGrTexture();
+	rcInit.m_textures[2].m_texture = m_lut->getGrTexture();
 
 	rcInit.m_storageBuffers[0].m_buffer =
 		m_r->getTm().getAverageLuminanceBuffer();

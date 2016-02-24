@@ -167,6 +167,12 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_lf.reset(m_alloc.newInstance<Lf>(this));
 	ANKI_CHECK(m_lf->init(config));
 
+	if(config.getNumber("ssao.enabled"))
+	{
+		m_ssao.reset(m_alloc.newInstance<Ssao>(this));
+		ANKI_CHECK(m_ssao->init(config));
+	}
+
 	m_upsample.reset(m_alloc.newInstance<Upsample>(this));
 	ANKI_CHECK(m_upsample->init(config));
 
@@ -180,12 +186,6 @@ Error Renderer::initInternal(const ConfigSet& config)
 	{
 		m_downscale.reset(getAllocator().newInstance<DownscaleBlur>(this));
 		ANKI_CHECK(m_downscale->init(config));
-	}
-
-	if(config.getNumber("ssao.enabled") && config.getNumber("pps.enabled"))
-	{
-		m_ssao.reset(m_alloc.newInstance<Ssao>(this));
-		ANKI_CHECK(m_ssao->init(config));
 	}
 
 	if(config.getNumber("bloom.enabled") && config.getNumber("pps.enabled"))
@@ -269,6 +269,11 @@ Error Renderer::render(RenderingContext& ctx)
 	m_vol->run(ctx);
 	cmdb->endRenderPass();
 
+	if(m_ssao)
+	{
+		m_ssao->run(ctx);
+	}
+
 	m_upsample->run(ctx);
 
 	if(m_downscale)
@@ -289,11 +294,6 @@ Error Renderer::render(RenderingContext& ctx)
 	if(m_sslf)
 	{
 		m_sslf->run(ctx);
-	}
-
-	if(m_ssao)
-	{
-		m_ssao->run(ctx);
 	}
 
 	if(m_pps)

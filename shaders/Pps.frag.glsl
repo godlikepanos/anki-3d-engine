@@ -8,9 +8,8 @@
 #include "shaders/Functions.glsl"
 
 layout(binding = 0) uniform sampler2D u_isRt;
-layout(binding = 1) uniform sampler2D u_ppsSsaoRt;
-layout(binding = 2) uniform sampler2D u_ppsBloomLfRt;
-layout(binding = 3) uniform sampler3D u_lut;
+layout(binding = 1) uniform sampler2D u_ppsBloomLfRt;
+layout(binding = 2) uniform sampler3D u_lut;
 
 struct Luminance
 {
@@ -118,11 +117,6 @@ void main()
 	out_color = textureLod(u_isRt, in_uv, 0.0).rgb;
 #endif
 
-#if SSAO_ENABLED
-	float ssao = textureLod(u_ppsSsaoRt, in_uv, 0.0).r;
-	out_color *= ssao;
-#endif
-
 	out_color = tonemap(out_color, u_luminance.averageLuminancePad3.x, 0.0);
 
 #if 0
@@ -138,7 +132,7 @@ void main()
 
 #if 0
 	{
-		out_color = textureLod(u_isRt, in_uv, 0.0).rgb;;
+		out_color = textureLod(u_isRt, in_uv, 0.0).rgb;
 	}
 #endif
 }

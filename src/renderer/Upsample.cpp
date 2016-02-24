@@ -8,6 +8,7 @@
 #include <anki/renderer/Ms.h>
 #include <anki/renderer/Is.h>
 #include <anki/renderer/Fs.h>
+#include <anki/renderer/Ssao.h>
 #include <anki/scene/FrustumComponent.h>
 
 namespace anki
@@ -38,6 +39,11 @@ Error Upsample::init(const ConfigSet& config)
 	rcInit.m_textures[3].m_texture = m_r->getFs().getRt();
 	rcInit.m_textures[3].m_sampler = gr.newInstance<Sampler>(sinit);
 
+	if(m_r->getSsaoEnabled())
+	{
+		rcInit.m_textures[4].m_texture = m_r->getSsao().getRt();
+	}
+
 	rcInit.m_uniformBuffers[0].m_dynamic = true;
 
 	m_rcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);
@@ -45,9 +51,11 @@ Error Upsample::init(const ConfigSet& config)
 	// Shader
 	StringAuto pps(getFrameAllocator());
 	pps.sprintf("#define TEXTURE_WIDTH %uu\n"
-				"#define TEXTURE_HEIGHT %uu\n",
+				"#define TEXTURE_HEIGHT %uu\n"
+				"#define SSAO_ENABLED %u\n",
 		m_r->getWidth() / FS_FRACTION,
-		m_r->getHeight() / FS_FRACTION);
+		m_r->getHeight() / FS_FRACTION,
+		m_r->getSsaoEnabled());
 
 	ANKI_CHECK(getResourceManager().loadResourceToCache(
 		m_frag, "shaders/NearDepthUpscale.frag.glsl", pps.toCString(), "r_"));
@@ -64,7 +72,7 @@ Error Upsample::init(const ConfigSet& config)
 	ppinit.m_color.m_attachmentCount = 1;
 	ppinit.m_color.m_attachments[0].m_format = Is::RT_PIXEL_FORMAT;
 	ppinit.m_color.m_attachments[0].m_srcBlendMethod = BlendMethod::ONE;
-	ppinit.m_color.m_attachments[0].m_dstBlendMethod = BlendMethod::ONE;
+	ppinit.m_color.m_attachments[0].m_dstBlendMethod = BlendMethod::SRC_ALPHA;
 
 	ppinit.m_shaders[U(ShaderType::VERTEX)] = m_vert->getGrShader();
 	ppinit.m_shaders[U(ShaderType::FRAGMENT)] = m_frag->getGrShader();

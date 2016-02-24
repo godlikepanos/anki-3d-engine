@@ -8,12 +8,15 @@
 
 layout(location = 0) in vec2 in_uv;
 
-layout(location = 0) out vec3 out_color;
+layout(location = 0) out vec4 out_color;
 
 layout(TEX_BINDING(0, 0)) uniform sampler2D u_depthFullTex;
 layout(TEX_BINDING(0, 1)) uniform sampler2D u_depthHalfTex;
 layout(TEX_BINDING(0, 2)) uniform sampler2D u_colorTexNearest;
 layout(TEX_BINDING(0, 3)) uniform sampler2D u_colorTexLinear;
+#if SSAO_ENABLED
+layout(TEX_BINDING(0, 4)) uniform sampler2D u_ssaoTex;
+#endif
 
 layout(UBO_BINDING(0, 0)) uniform _u0
 {
@@ -75,14 +78,23 @@ void main()
 #else
 	float maxDiffLinear = abs(maxDiff);
 #endif
+	vec3 color;
 	if(maxDiffLinear < DEPTH_THRESHOLD)
 	{
 		// No major discontinuites, sample with bilinear
-		out_color = textureLod(u_colorTexLinear, in_uv, 0.0).rgb;
+		color = textureLod(u_colorTexLinear, in_uv, 0.0).rgb;
 	}
 	else
 	{
 		// Some discontinuites, need to use the newUv
-		out_color = textureLod(u_colorTexNearest, newUv, 0.0).rgb;
+		color = textureLod(u_colorTexNearest, newUv, 0.0).rgb;
 	}
+
+#if SSAO_ENABLED
+	float ssao = texture(u_ssaoTex, in_uv).r;
+	ssao = dither(ssao, 16.0);
+	out_color = vec4(color, ssao);
+#else
+	out_color = vec4(color, 1.0);
+#endif
 }
