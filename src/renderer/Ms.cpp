@@ -130,31 +130,28 @@ Error Ms::buildCommandBuffers(
 	ThreadPool::Task::choseStartEnd(
 		threadId, threadCount, problemSize, start, end);
 
-	if(start == end)
+	if(start != end)
 	{
-		// Early exit
-		return ErrorCode::NONE;
+		// Create the command buffer and set some state
+		CommandBufferInitInfo cinf;
+		cinf.m_secondLevel = true;
+		cinf.m_framebuffer = m_fb;
+		CommandBufferPtr cmdb =
+			m_r->getGrManager().newInstance<CommandBuffer>(cinf);
+		ctx.m_ms.m_commandBuffers[threadId] = cmdb;
+		cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
+		cmdb->setPolygonOffset(0.0, 0.0);
+
+		// Start drawing
+		ANKI_CHECK(m_r->getSceneDrawer().drawRange(Pass::MS_FS,
+			*ctx.m_frustumComponent,
+			cmdb,
+			vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + start,
+			vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + end));
 	}
 
-	// Create the command buffer and set some state
-	CommandBufferInitInfo cinf;
-	cinf.m_secondLevel = true;
-	cinf.m_framebuffer = m_fb;
-	CommandBufferPtr cmdb =
-		m_r->getGrManager().newInstance<CommandBuffer>(cinf);
-	ctx.m_ms.m_commandBuffers[threadId] = cmdb;
-	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
-	cmdb->setPolygonOffset(0.0, 0.0);
-
-	// Start drawing
-	Error err = m_r->getSceneDrawer().drawRange(Pass::MS_FS,
-		*ctx.m_frustumComponent,
-		cmdb,
-		vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + start,
-		vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + end);
-
 	ANKI_TRACE_STOP_EVENT(RENDER_MS);
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
