@@ -99,8 +99,7 @@ void main()
 	float a2 = pow(roughness, 2.0);
 
 	// Ambient and emissive color
-	out_color =
-		diffCol * u_lightingUniforms.sceneAmbientColor.rgb + diffCol * emission;
+	out_color = diffCol * emission;
 
 	// Get counts and offsets
 	uint clusterIdx = computeClusterIndexUsingTileIdx(

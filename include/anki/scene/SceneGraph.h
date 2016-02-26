@@ -65,20 +65,6 @@ public:
 		return m_frameAlloc;
 	}
 
-	Vec4 getAmbientColor() const
-	{
-		return Vec4(m_ambientCol, 1.0);
-	}
-	void setAmbientColor(const Vec4& x)
-	{
-		m_ambientCol = x.xyz();
-		m_ambiendColorUpdateTimestamp = getGlobalTimestamp();
-	}
-	U32 getAmbientColorUpdateTimestamp() const
-	{
-		return m_ambiendColorUpdateTimestamp;
-	}
-
 	Camera& getActiveCamera()
 	{
 		ANKI_ASSERT(m_mainCam != nullptr);
@@ -212,8 +198,6 @@ private:
 	U32 m_nodesCount = 0;
 	// SceneDictionary<SceneNode*> m_dict;
 
-	Vec3 m_ambientCol = Vec3(1.0); ///< The global ambient color
-	Timestamp m_ambiendColorUpdateTimestamp = getGlobalTimestamp();
 	Camera* m_mainCam = nullptr;
 	Timestamp m_activeCameraChangeTimestamp = getGlobalTimestamp();
 

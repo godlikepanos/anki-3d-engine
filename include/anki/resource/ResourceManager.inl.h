@@ -30,7 +30,7 @@ Error ResourceManager::loadResource(
 		T* ptr = m_alloc.newInstance<T>(this);
 		ANKI_ASSERT(ptr->getRefcount().load() == 0);
 
-		// Populate the ptr. Use a block ton cleanup temp_pool allocations
+		// Populate the ptr. Use a block to cleanup temp_pool allocations
 		auto& pool = m_tmpAlloc.getMemoryPool();
 
 		{

@@ -22,3 +22,4 @@
 #include <anki/scene/ReflectionProbeComponent.h>
 #include <anki/scene/ReflectionProxy.h>
 #include <anki/scene/ReflectionProxyComponent.h>
+#include <anki/scene/PlayerNode.h>

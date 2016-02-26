@@ -60,11 +60,6 @@ anki_internal:
 		cmdb->generateMipmaps(m_rt);
 	}
 
-	void setAmbientColor(const Vec4& color)
-	{
-		m_ambientColor = color;
-	}
-
 	DynamicBufferToken getCommonVarsToken() const
 	{
 		return m_commonVarsToken;
@@ -123,8 +118,6 @@ private:
 	/// @{
 	U32 m_maxLightIds;
 	/// @}
-
-	Vec4 m_ambientColor = Vec4(0.0);
 
 	WeakPtr<Barrier> m_barrier;
 

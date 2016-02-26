@@ -395,6 +395,10 @@ Error ResourceFilesystem::openFile(
 					rfile = file;
 
 					err = file->m_file.open(&newFname[0], File::OpenFlag::READ);
+
+#if 0
+					printf("Opening asset %s\n", &newFname[0]);
+#endif
 				}
 			}
 		} // end if cache

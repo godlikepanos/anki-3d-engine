@@ -152,8 +152,6 @@ Error MainRenderer::render(SceneGraph& scene)
 	}
 
 	// Run renderer
-	m_r->getIs().setAmbientColor(scene.getAmbientColor());
-
 	RenderingContext ctx(m_frameAlloc);
 	ctx.m_commandBuffer = cmdb;
 	ctx.m_frustumComponent =

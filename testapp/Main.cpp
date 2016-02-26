@@ -10,7 +10,7 @@
 
 using namespace anki;
 
-#define PLAYER 0
+#define PLAYER 1
 #define MOUSE 1
 
 class MyApp : public App
@@ -35,7 +35,6 @@ Error MyApp::init()
 	MainRenderer& renderer = app->getMainRenderer();
 	ResourceManager& resources = app->getResourceManager();
 
-	scene.setAmbientColor(Vec4(1.0) * 0.0);
 	renderer.getOffscreenRenderer().getVolumetric().setFog(
 		Vec3(1.0, 0.9, 0.9), 0.7);
 
@@ -277,7 +276,7 @@ Error init(int argc, char* argv[])
 	config.set("ssao.enabled", true);
 	config.set("ssao.renderingQuality", 0.25);
 	config.set("sslf.enabled", true);
-	config.set("pps.sharpen", true);
+	config.set("pps.sharpen", false);
 	config.set("renderingQuality", 1.0);
 	config.set("width", 1920);
 	config.set("height", 1088);

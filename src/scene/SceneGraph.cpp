@@ -163,7 +163,6 @@ Error SceneGraph::init(AllocAlignedCallback allocCb,
 	m_threadpool = threadpool;
 	m_resources = resources;
 	m_objectsMarkedForDeletionCount.store(0);
-	m_ambientCol = Vec3(0.0);
 	m_gr = &m_resources->getGrManager();
 	m_physics = &m_resources->_getPhysicsWorld();
 	m_input = input;

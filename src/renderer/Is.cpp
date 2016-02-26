@@ -65,7 +65,6 @@ struct ShaderProbe
 struct ShaderCommonUniforms
 {
 	Vec4 m_projectionParams;
-	Vec4 m_sceneAmbientColor;
 	Vec4 m_rendererSizeTimePad1;
 	Vec4 m_nearFarClustererMagicPad1;
 	Mat4 m_viewMat;
@@ -1001,7 +1000,6 @@ void Is::updateCommonBlock(const FrustumComponent& fr)
 
 	// Start writing
 	blk->m_projectionParams = fr.getProjectionParameters();
-	blk->m_sceneAmbientColor = m_ambientColor;
 	blk->m_viewMat = fr.getViewMatrix().getTransposed();
 	blk->m_nearFarClustererMagicPad1 = Vec4(fr.getFrustum().getNear(),
 		fr.getFrustum().getFar(),

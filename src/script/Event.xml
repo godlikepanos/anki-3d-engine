@@ -26,8 +26,6 @@ static EventManager* getEventManager(lua_State* l)
 }]]></head>
 
 	<classes>
-		<class name="SceneAmbientColorEvent">
-		</class>
 		<class name="LightEvent">
 			<methods>
 				<method name="setIntensityMultiplier">
@@ -40,15 +38,6 @@ static EventManager* getEventManager(lua_State* l)
 		</class>
 		<class name="EventManager">
 			<methods>
-				<method name="newSceneAmbientColorEvent">
-					<overrideCall><![CDATA[SceneAmbientColorEvent* ret = self->newEvent<SceneAmbientColorEvent>(arg0, arg1, arg2);]]></overrideCall>
-					<args>
-						<arg>F32</arg>
-						<arg>F32</arg>
-						<arg>const Vec4&amp;</arg>
-					</args>
-					<return>SceneAmbientColorEvent*</return>
-				</method>
 				<method name="newLightEvent">
 					<overrideCall><![CDATA[LightEvent* ret = self->newEvent<LightEvent>(arg0, arg1, arg2);]]></overrideCall>
 					<args>

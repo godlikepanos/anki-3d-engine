@@ -123,7 +123,7 @@ void particleSoftColorAlpha(
 #define computeLightColor_DEFINED
 vec3 computeLightColor(vec3 diffCol)
 {
-	vec3 outColor = diffCol * u_lightingUniforms.sceneAmbientColor.rgb;
+	vec3 outColor = vec3(0.0);
 
 	// Compute frag pos in view space
 	vec3 fragPos;
@@ -233,9 +233,9 @@ void particleTextureAlphaLight(in sampler2D tex, in float alpha)
 	vec4 color = texture(tex, gl_PointCoord);
 	color.a *= alpha;
 
-	vec3 lightColor = computeLightColor(color.rgb);
+	color.rgb = computeLightColor(color.rgb);
 
-	writeGBuffer(vec4(lightColor, color.a));
+	writeGBuffer(color);
 }
 #endif
 
@@ -249,9 +249,9 @@ void particleAnimatedTextureAlphaLight(
 		tex, layerCount, period, gl_PointCoord, anki_u_time);
 	color.a *= alpha;
 
-	vec3 lightColor = computeLightColor(color.rgb);
+	color.rgb = computeLightColor(color.rgb);
 
-	writeGBuffer(vec4(lightColor, color.a));
+	writeGBuffer(color);
 }
 #endif
 
