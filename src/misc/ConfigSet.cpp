@@ -4,7 +4,9 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/misc/ConfigSet.h>
+#include <anki/misc/Xml.h>
 #include <anki/util/Logger.h>
+#include <anki/util/File.h>
 
 namespace anki
 {
@@ -140,6 +142,90 @@ CString ConfigSet::getString(const CString& name) const
 	ANKI_ASSERT(o);
 	ANKI_ASSERT(o->m_type == 0);
 	return o->m_strVal.toCString();
+}
+
+//==============================================================================
+Error ConfigSet::loadFromFile(CString filename)
+{
+	ANKI_LOGI("Loading config file %s", &filename[0]);
+	XmlDocument xml;
+	ANKI_CHECK(xml.loadFile(filename, m_alloc));
+
+	XmlElement rootel;
+	ANKI_CHECK(xml.getChildElement("config", rootel));
+
+	for(Option& option : m_options)
+	{
+		XmlElement el;
+		ANKI_CHECK(
+			rootel.getChildElementOptional(option.m_name.toCString(), el));
+
+		if(el)
+		{
+			if(option.m_type == 1)
+			{
+				ANKI_CHECK(el.getF64(option.m_fVal));
+			}
+			else
+			{
+				CString txt;
+				ANKI_CHECK(el.getText(txt));
+				option.m_strVal.destroy(m_alloc);
+				option.m_strVal.create(m_alloc, txt);
+			}
+		}
+		else
+		{
+			ANKI_LOGW("Missing option for \"%s\". Will use the default value",
+				&option.m_name[0]);
+		}
+	}
+
+	return ErrorCode::NONE;
+}
+
+//==============================================================================
+Error ConfigSet::saveToFile(CString filename) const
+{
+	ANKI_LOGI("Saving config file %s", &filename[0]);
+
+	File file;
+	ANKI_CHECK(file.open(filename, File::OpenFlag::WRITE));
+
+	ANKI_CHECK(file.writeText("%s\n<config>\n", &XmlDocument::XML_HEADER[0]));
+
+	for(const Option& option : m_options)
+	{
+		if(option.m_type == 1)
+		{
+			// Some of the options are integers so try not to make them appear
+			// as floats in the file
+			if(option.m_fVal == round(option.m_fVal) && option.m_fVal >= 0.0)
+			{
+				ANKI_CHECK(file.writeText("\t<%s>%u</%s>\n",
+					&option.m_name[0],
+					U(option.m_fVal),
+					&option.m_name[0]));
+			}
+			else
+			{
+				ANKI_CHECK(file.writeText("\t<%s>%f</%s>\n",
+					&option.m_name[0],
+					option.m_fVal,
+					&option.m_name[0]));
+			}
+		}
+		else
+		{
+			ANKI_CHECK(file.writeText("\t<%s>%s</%s>\n",
+				&option.m_name[0],
+				&option.m_strVal[0],
+				&option.m_name[0]));
+		}
+	}
+
+	ANKI_CHECK(file.writeText("</config>\n"));
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

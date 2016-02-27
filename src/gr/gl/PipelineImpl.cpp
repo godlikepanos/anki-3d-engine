@@ -210,11 +210,15 @@ Error PipelineImpl::createGlPipeline()
 
 		ANKI_LOGE("Ppline error log follows (vs:%u, fs:%u):\n%s",
 			m_in.m_shaders[ShaderType::VERTEX].isCreated()
-			? m_in.m_shaders[ShaderType::VERTEX]->getImplementation().getGlName()
-			: -1,
+				? m_in.m_shaders[ShaderType::VERTEX]
+					  ->getImplementation()
+					  .getGlName()
+				: -1,
 			m_in.m_shaders[ShaderType::FRAGMENT].isCreated()
-			? m_in.m_shaders[ShaderType::FRAGMENT]->getImplementation().getGlName()
-			: -1,
+				? m_in.m_shaders[ShaderType::FRAGMENT]
+					  ->getImplementation()
+					  .getGlName()
+				: -1,
 			&infoLogTxt[0]);
 		err = ErrorCode::USER_DATA;
 	}

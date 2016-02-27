@@ -64,7 +64,6 @@ Config::Config()
 	newOption("lodDistance", 10.0); // Distance that used to calculate the LOD
 	newOption("samples", 1);
 	newOption("tessellation", true);
-	newOption("sceneFrameAllocatorSize", 1024 * 1024);
 	newOption("clusterSizeZ", 32);
 	newOption("imageReflectionMaxDistance", 30.0);
 
@@ -86,8 +85,8 @@ Config::Config()
 	//
 	// Window
 	//
-	newOption("glminor", 5);
 	newOption("glmajor", 4);
+	newOption("glminor", 5);
 	newOption("fullscreenDesktopResolution", false);
 	newOption("debugContext",
 #if ANKI_DEBUG == 1

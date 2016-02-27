@@ -181,7 +181,7 @@ void GlState::init1()
 	{
 		m_transferBuffer.create(m_manager->getAllocator(),
 			m_dynamicBuffers[BufferUsage::TRANSFER].m_size
-			/ sizeof(Aligned16Type));
+				/ sizeof(Aligned16Type));
 
 		auto& buff = m_dynamicBuffers[BufferUsage::TRANSFER];
 		buff.m_address = reinterpret_cast<U8*>(&m_transferBuffer[0]);

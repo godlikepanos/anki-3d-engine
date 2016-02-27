@@ -299,9 +299,11 @@ Error init(int argc, char* argv[])
 	{
 		config.set("dataPaths", "assets");
 	}
-	config.set("sceneFrameAllocatorSize", 1024 * 1024 * 10);
 	// config.set("maxTextureSize", 256);
 	// config.set("lodDistance", 3.0);
+
+	// config.saveToFile("./config.xml");
+	// config.loadFromFile("./config.xml");
 
 	app = new MyApp;
 	ANKI_CHECK(app->create(config, allocAligned, nullptr));

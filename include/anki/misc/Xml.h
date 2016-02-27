@@ -106,6 +106,8 @@ private:
 class XmlDocument
 {
 public:
+	static CString XML_HEADER;
+
 	ANKI_USE_RESULT Error loadFile(
 		const CString& filename, GenericMemoryPoolAllocator<U8> alloc);
 

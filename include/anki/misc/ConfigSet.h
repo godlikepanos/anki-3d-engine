@@ -43,6 +43,10 @@ public:
 	CString getString(const CString& name) const;
 	/// @}
 
+	ANKI_USE_RESULT Error loadFromFile(CString filename);
+
+	ANKI_USE_RESULT Error saveToFile(CString filename) const;
+
 protected:
 	void newOption(const CString& name, const CString& value);
 	void newOption(const CString& name, F64 value);

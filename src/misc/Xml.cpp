@@ -304,6 +304,9 @@ Error XmlElement::getSiblingElementsCount(U32& out) const
 //==============================================================================
 
 //==============================================================================
+CString XmlDocument::XML_HEADER = R"(<?xml version="1.0" encoding="UTF-8" ?>)";
+
+//==============================================================================
 Error XmlDocument::loadFile(
 	const CString& filename, GenericMemoryPoolAllocator<U8> alloc)
 {
