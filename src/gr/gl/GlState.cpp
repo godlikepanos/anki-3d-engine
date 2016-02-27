@@ -180,10 +180,12 @@ void GlState::init1()
 
 	{
 		m_transferBuffer.create(m_manager->getAllocator(),
-			m_dynamicBuffers[BufferUsage::TRANSFER].m_size);
+			m_dynamicBuffers[BufferUsage::TRANSFER].m_size
+			/ sizeof(Aligned16Type));
 
 		auto& buff = m_dynamicBuffers[BufferUsage::TRANSFER];
-		buff.m_address = &m_transferBuffer[0];
+		buff.m_address = reinterpret_cast<U8*>(&m_transferBuffer[0]);
+		ANKI_ASSERT(isAligned(ANKI_SAFE_ALIGNMENT, buff.m_address));
 		buff.m_alignment = ANKI_SAFE_ALIGNMENT;
 		buff.m_maxAllocationSize = MAX_U32;
 	}

@@ -377,8 +377,8 @@ void Sm::prepareBuildCommandBuffers(RenderingContext& ctx)
 		|| spotCastersCount > m_spots.getSize())
 	{
 		ANKI_LOGW("Too many shadow casters");
-		omniCastersCount = min(omniCastersCount, m_omnis.getSize());
-		spotCastersCount = min(spotCastersCount, m_spots.getSize());
+		omniCastersCount = min<U>(omniCastersCount, m_omnis.getSize());
+		spotCastersCount = min<U>(spotCastersCount, m_spots.getSize());
 	}
 
 	if(spotCastersCount > 0)

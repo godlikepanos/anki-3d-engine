@@ -19,7 +19,7 @@ layout(early_fragment_tests) in;
 //
 // Input
 //
-layout(location = 0) in mediump vec2 in_uv;
+layout(location = 0) in highp vec2 in_uv;
 #if PASS == COLOR
 layout(location = 1) in mediump vec3 in_normal;
 layout(location = 2) in mediump vec4 in_tangent;

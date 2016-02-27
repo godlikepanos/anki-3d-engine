@@ -5,11 +5,11 @@
 
 #include "shaders/Common.glsl"
 
-layout(location = 0) in vec3 inColor;
+layout(location = 0) in vec4 in_color;
 
-out vec3 fColor;
+out vec4 out_color;
 
 void main()
 {
-	fColor = inColor;
+	out_color = in_color;
 }

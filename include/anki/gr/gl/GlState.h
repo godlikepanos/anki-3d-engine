@@ -117,7 +117,13 @@ public:
 
 private:
 	GrManager* m_manager;
-	DArray<U8> m_transferBuffer;
+
+	class alignas(16) Aligned16Type
+	{
+		U8 _m_val[16];
+	};
+
+	DArray<Aligned16Type> m_transferBuffer;
 
 	void initDynamicBuffer(
 		GLenum target, U32 aligment, U32 maxAllocationSize, BufferUsage usage);

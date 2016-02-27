@@ -9,7 +9,7 @@
 // Attributes
 //
 layout(location = POSITION_LOCATION) in highp vec3 in_position;
-layout(location = TEXTURE_COORDINATE_LOCATION) in mediump vec2 in_uv;
+layout(location = TEXTURE_COORDINATE_LOCATION) in highp vec2 in_uv;
 
 #if PASS == COLOR || TESSELLATION
 layout(location = NORMAL_LOCATION) in mediump vec4 in_normal;
@@ -27,7 +27,7 @@ out gl_PerVertex
 	vec4 gl_Position;
 };
 
-layout(location = 0) out mediump vec2 out_uv;
+layout(location = 0) out highp vec2 out_uv;
 
 #if PASS == COLOR || TESSELLATION
 layout(location = 1) out mediump vec3 out_normal;
