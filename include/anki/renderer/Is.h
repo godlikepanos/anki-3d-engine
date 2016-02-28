@@ -48,7 +48,10 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 
-	ANKI_USE_RESULT Error run(RenderingContext& ctx);
+	/// Populate light buffers.
+	ANKI_USE_RESULT Error populateBuffers(RenderingContext& ctx);
+
+	void run(RenderingContext& ctx);
 
 	TexturePtr getRt() const
 	{
@@ -123,9 +126,6 @@ private:
 
 	/// Called by init
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
-
-	/// Do the actual pass
-	ANKI_USE_RESULT Error lightPass(RenderingContext& ctx);
 
 	/// Prepare GL for rendering
 	void setState(CommandBufferPtr& cmdBuff);

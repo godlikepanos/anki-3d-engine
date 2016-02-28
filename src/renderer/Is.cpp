@@ -476,7 +476,7 @@ Error Is::initInternal(const ConfigSet& config)
 }
 
 //==============================================================================
-Error Is::lightPass(RenderingContext& ctx)
+Error Is::populateBuffers(RenderingContext& ctx)
 {
 	ANKI_TRACE_START_EVENT(RENDER_IS);
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
@@ -592,17 +592,8 @@ Error Is::lightPass(RenderingContext& ctx)
 	// Update uniforms
 	updateCommonBlock(*m_frc);
 
-	// In the meantime set the state
-	setState(cmdb);
-
 	// Sync
 	ANKI_CHECK(threadPool.waitForAllThreadsToFinish());
-
-	//
-	// Draw
-	//
-	cmdb->drawArrays(4, m_r->getTileCount());
-	cmdb->endRenderPass();
 
 	ANKI_TRACE_STOP_EVENT(RENDER_IS);
 	return ErrorCode::NONE;
@@ -983,10 +974,12 @@ void Is::setState(CommandBufferPtr& cmdb)
 }
 
 //==============================================================================
-Error Is::run(RenderingContext& ctx)
+void Is::run(RenderingContext& ctx)
 {
-	// Do the light pass including the shadow passes
-	return lightPass(ctx);
+	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
+	setState(cmdb);
+	cmdb->drawArrays(4, m_r->getTileCount());
+	cmdb->endRenderPass();
 }
 
 //==============================================================================
