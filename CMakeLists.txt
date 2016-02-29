@@ -45,6 +45,7 @@ option(ANKI_BUILD_TOOLS "Build tools" OFF)
 option(ANKI_BUILD_TESTS "Build unit tests" OFF)
 option(ANKI_BUILD_TESTAPP "Build test application" ON)
 option(ANKI_BUILD_BENCH "Build benchmark application" OFF)
+option(ANKI_BUILD_SAMPLES "Build sample applications" ON)
 
 option(ANKI_WITH_GPERFTOOLS_PROF "Link with gperftools profiler" OFF)
 
@@ -385,6 +386,10 @@ endif()
 
 if(ANKI_BUILD_TESTAPP)
 	add_subdirectory(testapp)
+endif()
+
+if(ANKI_BUILD_SAMPLES)
+	add_subdirectory(samples)
 endif()
 
 if(ANKI_BUILD_BENCH)
