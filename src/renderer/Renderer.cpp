@@ -265,7 +265,6 @@ Error Renderer::render(RenderingContext& ctx)
 	cmdb->generateMipmaps(m_ms->getDepthRt());
 	cmdb->generateMipmaps(m_ms->getRt2());
 
-	//ANKI_CHECK(buildCommandBuffersFs(ctx));
 	m_fs->run(ctx);
 	m_lf->run(ctx);
 	m_vol->run(ctx);

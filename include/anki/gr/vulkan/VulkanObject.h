@@ -29,6 +29,8 @@ public:
 
 	VkDevice getDevice() const;
 
+	GrAllocator<U8> getAllocator() const;
+
 protected:
 	GrManager* m_manager = nullptr;
 };

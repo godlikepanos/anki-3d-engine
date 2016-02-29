@@ -8,6 +8,7 @@
 #include <anki/gr/Enums.h>
 #include <anki/util/Allocator.h>
 #include <anki/util/Ptr.h>
+#include <anki/util/String.h>
 
 namespace anki
 {
@@ -88,6 +89,11 @@ inline U32 computeMaxMipmapCount(U32 w, U32 h)
 
 	return count;
 }
+
+/// Internal function that logs a shader error.
+void logShaderErrorCode(const CString& error,
+	const CString& source,
+	GenericMemoryPoolAllocator<U8> alloc);
 /// @}
 
 } // end namespace anki

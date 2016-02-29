@@ -6,6 +6,8 @@
 #pragma once
 
 #include <anki/gr/vulkan/VulkanObject.h>
+#include <anki/util/String.h>
+#include <vector>
 
 namespace anki
 {
@@ -13,6 +15,7 @@ namespace anki
 /// @addtogroup vulkan
 /// @{
 
+/// Shader vulkan implementation.
 class ShaderImpl : public VulkanObject
 {
 public:
@@ -22,6 +25,13 @@ public:
 	}
 
 	~ShaderImpl();
+
+	ANKI_USE_RESULT Error init(ShaderType shaderType, const CString& source);
+
+private:
+	ANKI_USE_RESULT Error genSpirv(ShaderType shaderType,
+		const CString& source,
+		std::vector<unsigned int>& spirv);
 };
 /// @}
 

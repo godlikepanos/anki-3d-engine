@@ -250,6 +250,22 @@ foreach(TMP ${ANKI_EXTERN_SUB_DIRS})
 	add_subdirectory(thirdparty/${TMP})
 endforeach()
 
+# glslang
+if(VULKAN)
+	ExternalProject_Add(
+		GLSLANG_PROJECT
+		DOWNLOAD_COMMAND ""
+		PREFIX "${CMAKE_CURRENT_BINARY_DIR}/glslang_build"
+		SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glslang"
+		CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/glslang_build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER} -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER})
+
+	ExternalProject_Get_Property(GLSLANG_PROJECT install_dir)
+	set(GLSLANG_INSTALL_DIR ${install_dir})
+	add_library(GLSLANG_LIB STATIC IMPORTED)
+	set_property(TARGET GLSLANG_LIB PROPERTY IMPORTED_LOCATION ${GLSLANG_INSTALL_DIR}/lib/libglslang.a)
+	add_dependencies(GLSLANG_LIB GLSLANG_PROJECT)
+endif()
+
 ################################################################################
 # AnKi                                                                         #
 ################################################################################
@@ -297,7 +313,7 @@ INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h" DESTINATION "${INCLUDE
 
 # Include & lib directories
 include_directories("thirdparty/tinyxml2/include" "thirdparty/lua" "thirdparty/z"
-	"${SDL2_INSTALL_DIR}/include/SDL2/" "${FREETYPE_INSTALL_DIR}/include/freetype2/" "include" "thirdparty/newton/newton" "${CMAKE_CURRENT_BINARY_DIR}")
+	"${SDL2_INSTALL_DIR}/include/SDL2/" "${FREETYPE_INSTALL_DIR}/include/freetype2/" "include" "thirdparty/newton/newton" "${CMAKE_CURRENT_BINARY_DIR}" ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glslang)
 
 if(LINUX OR MACOS OR WINDOWS)
 	include_directories("thirdparty/GLEW/include")
@@ -352,7 +368,7 @@ foreach(TMP ${ANKI_SUB_DIRS})
 endforeach()
 
 add_library(anki src/Dummy.cpp "${_SYS_SRC}")
-add_dependencies(anki SDL2_LIB FREETYPE_LIB)
+add_dependencies(anki SDL2_LIB FREETYPE_LIB GLSLANG_LIB)
 target_link_libraries(anki ${ANKI_LIBS} ankitinyxml2 ankilua ankiz ankinewton ${ANKI_GPERFTOOLS_LIBS} SDL2_LIB FREETYPE_LIB ${_SYS})
 
 ################################################################################

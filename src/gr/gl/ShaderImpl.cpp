@@ -139,56 +139,24 @@ Error ShaderImpl::init(ShaderType type, const CString& source)
 	glGetShaderiv(m_glName, GL_COMPILE_STATUS, &status);
 	if(status == GL_FALSE)
 	{
-		handleError(fullSrc);
+		auto alloc = getAllocator();
+		StringAuto compilerLog(alloc);
+		GLint compilerLogLen = 0;
+		GLint charsWritten = 0;
+
+		glGetShaderiv(m_glName, GL_INFO_LOG_LENGTH, &compilerLogLen);
+		compilerLog.create(' ', compilerLogLen + 1);
+
+		glGetShaderInfoLog(
+			m_glName, compilerLogLen, &charsWritten, &compilerLog[0]);
+
+		logShaderErrorCode(compilerLog.toCString(), fullSrc.toCString(), alloc);
+
 		// Compilation failed, set error anyway
 		return ErrorCode::USER_DATA;
 	}
 
 	return ErrorCode::NONE;
-}
-
-//==============================================================================
-void ShaderImpl::handleError(String& src)
-{
-	auto alloc = getAllocator();
-	GLint compilerLogLen = 0;
-	GLint charsWritten = 0;
-	String compilerLog;
-	String prettySrc;
-	StringList lines;
-
-	static const char* padding = "======================================="
-								 "=======================================";
-
-	glGetShaderiv(m_glName, GL_INFO_LOG_LENGTH, &compilerLogLen);
-
-	compilerLog.create(alloc, ' ', compilerLogLen + 1);
-
-	glGetShaderInfoLog(
-		m_glName, compilerLogLen, &charsWritten, &compilerLog[0]);
-
-	lines.splitString(alloc, src.toCString(), '\n');
-
-	I lineno = 0;
-	for(auto it = lines.getBegin(); it != lines.getEnd(); ++it)
-	{
-		String tmp;
-
-		tmp.sprintf(alloc, "%4d: %s\n", ++lineno, &(*it)[0]);
-		prettySrc.append(alloc, tmp);
-		tmp.destroy(alloc);
-	}
-
-	ANKI_LOGE("Shader compilation failed (type %x):\n%s\n%s\n%s\n%s",
-		m_glType,
-		padding,
-		&compilerLog[0],
-		padding,
-		&prettySrc[0]);
-
-	lines.destroy(alloc);
-	prettySrc.destroy(alloc);
-	compilerLog.destroy(alloc);
 }
 
 } // end namespace anki
