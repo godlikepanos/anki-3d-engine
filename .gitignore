@@ -8,4 +8,5 @@
 !*.glsl
 !*.py
 !*.xml
+!CMakeLists.txt
 build/*
