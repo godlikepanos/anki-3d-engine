@@ -13,16 +13,20 @@ namespace anki
 /// @addtogroup vulkan
 /// @{
 
-/// Program pipeline
+/// Program pipeline.
 class PipelineImpl : public VulkanObject
 {
 public:
+	VkPipeline m_ppline = VK_NULL_HANDLE;
+
 	PipelineImpl(GrManager* manager)
 		: VulkanObject(manager)
 	{
 	}
 
 	~PipelineImpl();
+
+	ANKI_USE_RESULT Error init(const PipelineInitInfo& init);
 };
 /// @}
 

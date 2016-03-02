@@ -191,7 +191,7 @@ Error ShaderImpl::genSpirv(ShaderType shaderType,
 Error ShaderImpl::init(ShaderType shaderType, const CString& source)
 {
 	ANKI_ASSERT(source);
-	ANKI_ASSERT(!isCreated());
+	ANKI_ASSERT(m_shaderModule);
 
 	// Setup the shader
 	auto alloc = getAllocator();
@@ -211,6 +211,16 @@ Error ShaderImpl::init(ShaderType shaderType, const CString& source)
 	std::vector<unsigned int> spirv;
 	ANKI_CHECK(genSpirv(shaderType, fullSrc.toCString(), spirv));
 	ANKI_ASSERT(!spirv.empty());
+
+	VkShaderModuleCreateInfo ci = {
+		VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+		nullptr,
+		0,
+		spirv.size() * sizeof(unsigned int),
+		&spirv[0]};
+
+	ANKI_VK_CHECK(
+		vkCreateShaderModule(getDevice(), &ci, nullptr, &m_shaderModule));
 
 	return ErrorCode::NONE;
 }

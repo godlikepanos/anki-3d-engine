@@ -19,6 +19,8 @@ namespace anki
 class ShaderImpl : public VulkanObject
 {
 public:
+	VkShaderModule m_shaderModule = VK_NULL_HANDLE;
+
 	ShaderImpl(GrManager* manager)
 		: VulkanObject(manager)
 	{
@@ -29,6 +31,7 @@ public:
 	ANKI_USE_RESULT Error init(ShaderType shaderType, const CString& source);
 
 private:
+	/// Generate SPIRV from GLSL.
 	ANKI_USE_RESULT Error genSpirv(ShaderType shaderType,
 		const CString& source,
 		std::vector<unsigned int>& spirv);

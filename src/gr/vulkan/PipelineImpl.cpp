@@ -4,3 +4,14 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/gr/vulkan/PipelineImpl.h>
+
+namespace anki
+{
+
+//==============================================================================
+Error PipelineImpl::init(const PipelineInitInfo& init)
+{
+	return ErrorCode::NONE;
+}
+
+} // end namespace anki
