@@ -153,11 +153,10 @@ static const TBuiltInResource GLSLANG_LIMITS = setLimits();
 //==============================================================================
 
 //==============================================================================
-Error ShaderImpl::genSpirv(ShaderType shaderType,
-	const CString& source,
-	std::vector<unsigned int>& spirv)
+Error ShaderImpl::genSpirv(
+	const CString& source, std::vector<unsigned int>& spirv)
 {
-	const EShLanguage stage = ankiToGlslangShaderType(shaderType);
+	const EShLanguage stage = ankiToGlslangShaderType(m_shaderType);
 	const EShMessages messages =
 		static_cast<EShMessages>(EShMsgSpvRules | EShMsgVulkanRules);
 
@@ -191,7 +190,8 @@ Error ShaderImpl::genSpirv(ShaderType shaderType,
 Error ShaderImpl::init(ShaderType shaderType, const CString& source)
 {
 	ANKI_ASSERT(source);
-	ANKI_ASSERT(m_shaderModule);
+	ANKI_ASSERT(m_handle == VK_NULL_HANDLE);
+	m_shaderType = shaderType;
 
 	// Setup the shader
 	auto alloc = getAllocator();
@@ -209,18 +209,16 @@ Error ShaderImpl::init(ShaderType shaderType, const CString& source)
 		&source[0]);
 
 	std::vector<unsigned int> spirv;
-	ANKI_CHECK(genSpirv(shaderType, fullSrc.toCString(), spirv));
+	ANKI_CHECK(genSpirv(fullSrc.toCString(), spirv));
 	ANKI_ASSERT(!spirv.empty());
 
-	VkShaderModuleCreateInfo ci = {
-		VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+	VkShaderModuleCreateInfo ci = {VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
 		nullptr,
 		0,
 		spirv.size() * sizeof(unsigned int),
 		&spirv[0]};
 
-	ANKI_VK_CHECK(
-		vkCreateShaderModule(getDevice(), &ci, nullptr, &m_shaderModule));
+	ANKI_VK_CHECK(vkCreateShaderModule(getDevice(), &ci, nullptr, &m_handle));
 
 	return ErrorCode::NONE;
 }

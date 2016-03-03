@@ -10,6 +10,10 @@
 namespace anki
 {
 
+// Forward
+class VertexStateInfo;
+class InputAssemblerStateInfo;
+
 /// @addtogroup vulkan
 /// @{
 
@@ -17,7 +21,7 @@ namespace anki
 class PipelineImpl : public VulkanObject
 {
 public:
-	VkPipeline m_ppline = VK_NULL_HANDLE;
+	VkPipeline m_handle = VK_NULL_HANDLE;
 
 	PipelineImpl(GrManager* manager)
 		: VulkanObject(manager)
@@ -27,6 +31,20 @@ public:
 	~PipelineImpl();
 
 	ANKI_USE_RESULT Error init(const PipelineInitInfo& init);
+
+private:
+	ANKI_USE_RESULT Error initGraphics(const PipelineInitInfo& init);
+
+	void initShaders(
+		const PipelineInitInfo& init, VkGraphicsPipelineCreateInfo& ci);
+
+	ANKI_USE_RESULT VkPipelineVertexInputStateCreateInfo* initVertexStage(
+		const VertexStateInfo& vertex,
+		VkPipelineVertexInputStateCreateInfo& ci);
+
+	ANKI_USE_RESULT VkPipelineInputAssemblyStateCreateInfo*
+	initInputAssemblyState(const InputAssemblerStateInfo& ia,
+		VkPipelineInputAssemblyStateCreateInfo& ci);
 };
 /// @}
 

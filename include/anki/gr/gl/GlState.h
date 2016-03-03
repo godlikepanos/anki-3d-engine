@@ -120,7 +120,7 @@ private:
 
 	class alignas(16) Aligned16Type
 	{
-		U8 _m_val[16];
+		U8 _m_val[16] ANKI_UNUSED;
 	};
 
 	DArray<Aligned16Type> m_transferBuffer;

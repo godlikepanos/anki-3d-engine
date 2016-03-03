@@ -479,7 +479,6 @@ Error Is::initInternal(const ConfigSet& config)
 Error Is::populateBuffers(RenderingContext& ctx)
 {
 	ANKI_TRACE_START_EVENT(RENDER_IS);
-	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 	ThreadPool& threadPool = m_r->getThreadPool();
 	m_frc = ctx.m_frustumComponent;
 	VisibilityTestResults& vi = m_frc->getVisibilityTestResults();
