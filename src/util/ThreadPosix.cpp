@@ -70,17 +70,28 @@ Thread::~Thread()
 }
 
 //==============================================================================
-void Thread::start(void* userData, Callback callback)
+void Thread::start(void* userData, Callback callback, I pinToCore)
 {
 	ANKI_ASSERT(!m_started);
 	ANKI_ASSERT(callback != nullptr);
+
+	pthread_attr_t attr;
+    cpu_set_t cpus;
+    pthread_attr_init(&attr);
+
+	if(pinToCore >= 0)
+	{
+		CPU_ZERO(&cpus);
+		CPU_SET(pinToCore, &cpus);
+		pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpus);
+	}
 
 	pthread_t* thread = reinterpret_cast<pthread_t*>(m_impl);
 
 	m_callback = callback;
 	m_userData = userData;
 
-	I err = pthread_create(thread, nullptr, pthreadCallback, this);
+	I err = pthread_create(thread, &attr, pthreadCallback, this);
 	if(err)
 	{
 		ANKI_LOGF("pthread_create() failed");

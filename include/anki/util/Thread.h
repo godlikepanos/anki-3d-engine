@@ -36,7 +36,7 @@ public:
 	using Callback = Error (*)(Info&);
 
 	/// Create a thread with or without a name
-	/// @param[in] name The name of the new thread. Can be nullptr
+	/// @param[in] name The name of the new thread. Can be nullptr.
 	Thread(const char* name);
 
 	~Thread();
@@ -44,7 +44,8 @@ public:
 	/// Start the thread
 	/// @param userData The user data of the thread callback
 	/// @param callback The thread callback that will be executed
-	void start(void* userData, Callback callback);
+	/// @param pinToCore Pin the thread to a core.
+	void start(void* userData, Callback callback, I pinToCore = -1);
 
 	/// Wait for the thread to finish
 	/// @return The error code of the thread's callback

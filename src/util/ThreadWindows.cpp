@@ -68,7 +68,7 @@ Thread::~Thread()
 }
 
 //==============================================================================
-void Thread::start(void* userData, Callback callback)
+void Thread::start(void* userData, Callback callback, I pinToCore)
 {
 	ANKI_ASSERT(!m_started);
 	ANKI_ASSERT(callback != nullptr);
