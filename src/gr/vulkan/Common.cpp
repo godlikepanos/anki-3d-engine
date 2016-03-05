@@ -250,7 +250,7 @@ static const ConvertFormat CONVERT_FORMAT_TABLE[] = {
 
 #undef ANKI_FMT
 
-const U CONVERT_FORMAT_TABLE_SIZE = 
+const U CONVERT_FORMAT_TABLE_SIZE =
 	sizeof(CONVERT_FORMAT_TABLE) / sizeof(CONVERT_FORMAT_TABLE[0]);
 
 VkFormat convertFormat(PixelFormat ak)

@@ -47,26 +47,55 @@ public:
 	}
 };
 
+/// Contains all the info of a single visibility test on a FrustumComponent.
+class SingleVisTest
+{
+public:
+	FrustumComponent* m_frc;
+	Array<VisibilityTestResults*, ThreadPool::MAX_THREADS> m_threadResults;
+	Timestamp m_timestamp = 0;
+	SpinLock m_timestampLock;
+
+	SingleVisTest(FrustumComponent* frc)
+		: m_frc(frc)
+	{
+		ANKI_ASSERT(m_frc);
+		memset(&m_threadResults[0], 0, sizeof(m_threadResults));
+	}
+
+	SingleVisTest(const SingleVisTest& b)
+	{
+		operator=(b);
+	}
+
+	/// Will not copy everything. There is no need.
+	SingleVisTest& operator=(const SingleVisTest& b)
+	{
+		m_frc = b.m_frc;
+		m_threadResults = b.m_threadResults;
+		m_timestamp = b.m_timestamp;
+		return *this;
+	}
+};
+
 /// Data common for all tasks.
-class VisibilityShared
+class VisibilityContext
 {
 public:
 	SceneGraph* m_scene = nullptr;
 	const Renderer* m_r = nullptr;
 	Barrier m_barrier;
-	List<FrustumComponent*> m_frustumsList; ///< Frustums to test
+	List<SingleVisTest> m_pendingTests; ///< Frustums to test
 	SpinLock m_lock;
+	List<SingleVisTest> m_completedTests;
+	U32 m_completedTestsCount = 0;
 
-	Timestamp m_timestamp = 0;
-	SpinLock m_timestampLock;
+	Atomic<U32> m_sectorPrepareRaceAtomic = {0};
+	Atomic<U32> m_listRaceAtomic = {0};
 
-	// Data per thread but that can be accessed by all threads
-	Array<VisibilityTestResults*, ThreadPool::MAX_THREADS> m_testResults;
-
-	VisibilityShared(U threadCount)
+	VisibilityContext(U threadCount)
 		: m_barrier(threadCount)
 	{
-		memset(&m_testResults[0], 0, sizeof(m_testResults));
 	}
 };
 
@@ -74,46 +103,73 @@ public:
 class VisibilityTestTask : public ThreadPool::Task
 {
 public:
-	VisibilityShared* m_shared;
+	VisibilityContext* m_ctx;
 
 	/// Test a frustum component
-	void test(FrustumComponent& frcToTest, U32 threadId, PtrSize threadsCount);
+	void test(SingleVisTest& testInfo, U32 threadId, PtrSize threadCount);
 
-	void combineTestResults(FrustumComponent& frc, PtrSize threadsCount);
+	void combineTestResults(SingleVisTest& testInfo, PtrSize threadCount);
 
 	/// Do the tests
-	Error operator()(U32 threadId, PtrSize threadsCount) override
+	Error operator()(U32 threadId, PtrSize threadCount) final
 	{
-		ANKI_TRACE_START_EVENT(SCENE_VISIBILITY_TESTS);
-		auto& list = m_shared->m_frustumsList;
-		auto alloc = m_shared->m_scene->getFrameAllocator();
+		auto alloc = m_ctx->m_scene->getFrameAllocator();
 
 		// Iterate the nodes to check against
-		while(!list.isEmpty())
+		while(!m_ctx->m_pendingTests.isEmpty())
 		{
-			// Get front and pop it
-			FrustumComponent* frc = list.getFront();
-			ANKI_ASSERT(frc);
+			// Try to find a test that hasn't completed
+			SingleVisTest& testInfo = m_ctx->m_pendingTests.getFront();
 
-			m_shared->m_barrier.wait();
-			if(threadId == 0)
+			// The first who touches the race atomic will prepare the sectors
+			U count = m_ctx->m_sectorPrepareRaceAtomic.fetchAdd(1);
+			if((count % threadCount) == 0)
 			{
-				list.popFront(alloc);
-
-				// Set initial value of timestamp
-				m_shared->m_timestamp = 0;
+				SectorGroup& sectors = m_ctx->m_scene->getSectorGroup();
+				sectors.prepareForVisibilityTests(*testInfo.m_frc, *m_ctx->m_r);
 			}
 
-			m_shared->m_barrier.wait();
-			test(*frc, threadId, threadsCount);
+			m_ctx->m_barrier.wait();
+			test(testInfo, threadId, threadCount);
+
+			// The last who will finish its tests will update the lists
+			count = m_ctx->m_listRaceAtomic.fetchAdd(1);
+			if((count % threadCount) == threadCount - 1)
+			{
+				m_ctx->m_completedTests.pushBack(alloc, testInfo);
+				++m_ctx->m_completedTestsCount;
+				m_ctx->m_pendingTests.popFront(alloc);
+			}
+
+			m_ctx->m_barrier.wait();
 		}
-		ANKI_TRACE_STOP_EVENT(SCENE_VISIBILITY_TESTS);
+
+		// Sort and combind the results
+		PtrSize start, end;
+		choseStartEnd(threadId,
+			threadCount,
+			m_ctx->m_completedTestsCount,
+			start,
+			end);
+		if(start != end)
+		{
+			auto it = m_ctx->m_completedTests.getBegin() + start;
+			for(U i = start; i < end; ++i)
+			{
+				ANKI_TRACE_START_EVENT(SCENE_VISIBILITY_COMBINE_RESULTS);
+
+				combineTestResults((*it), threadCount);
+				++it;
+
+				ANKI_TRACE_STOP_EVENT(SCENE_VISIBILITY_COMBINE_RESULTS);
+			}
+		}
 
 		return ErrorCode::NONE;
 	}
 
 	/// Update the timestamp if the node moved or changed its shape.
-	void updateTimestamp(const SceneNode& node)
+	static void updateTimestamp(const SceneNode& node, SingleVisTest& testInfo)
 	{
 		Timestamp lastUpdate = 0;
 
@@ -135,27 +191,30 @@ public:
 			lastUpdate = max(lastUpdate, sp->getTimestamp());
 		}
 
-		LockGuard<SpinLock> lock(m_shared->m_timestampLock);
-		m_shared->m_timestamp = max(m_shared->m_timestamp, lastUpdate);
+		LockGuard<SpinLock> lock(testInfo.m_timestampLock);
+		testInfo.m_timestamp = max(testInfo.m_timestamp, lastUpdate);
 	}
 };
 
 //==============================================================================
 void VisibilityTestTask::test(
-	FrustumComponent& testedFrc, U32 threadId, PtrSize threadsCount)
+	SingleVisTest& testInfo, U32 threadId, PtrSize threadCount)
 {
 	ANKI_TRACE_START_EVENT(SCENE_VISIBILITY_TEST);
+
+	ANKI_ASSERT(testInfo.m_frc);
+	FrustumComponent& testedFrc = *testInfo.m_frc;
 	ANKI_ASSERT(testedFrc.anyVisibilityTestEnabled());
 
 	SceneNode& testedNode = testedFrc.getSceneNode();
-	auto alloc = m_shared->m_scene->getFrameAllocator();
+	auto alloc = m_ctx->m_scene->getFrameAllocator();
 
 	// Init test results
 	VisibilityTestResults* visible = alloc.newInstance<VisibilityTestResults>();
 
 	visible->create(alloc);
 
-	m_shared->m_testResults[threadId] = visible;
+	testInfo.m_threadResults[threadId] = visible;
 
 	List<SceneNode*> frustumsList;
 
@@ -182,24 +241,18 @@ void VisibilityTestTask::test(
 
 	// Chose the test range and a few other things
 	PtrSize start, end;
-	U nodesCount = m_shared->m_scene->getSceneNodesCount();
-	choseStartEnd(threadId, threadsCount, nodesCount, start, end);
+	U nodesCount = m_ctx->m_scene->getSceneNodesCount();
+	choseStartEnd(threadId, threadCount, nodesCount, start, end);
 
 	// Iterate range of nodes
-	Error err = m_shared->m_scene->iterateSceneNodes(
+	Error err = m_ctx->m_scene->iterateSceneNodes(
 		start, end, [&](SceneNode& node) -> Error
 #else
-	SectorGroup& sectors = m_shared->m_scene->getSectorGroup();
-	if(threadId == 0)
-	{
-		sectors.prepareForVisibilityTests(testedFrc, *m_shared->m_r);
-	}
-	m_shared->m_barrier.wait();
-
+	SectorGroup& sectors = m_ctx->m_scene->getSectorGroup();
 	// Chose the test range and a few other things
 	PtrSize start, end;
 	U nodesCount = sectors.getVisibleNodesCount();
-	choseStartEnd(threadId, threadsCount, nodesCount, start, end);
+	choseStartEnd(threadId, threadCount, nodesCount, start, end);
 
 	Error err = sectors.iterateVisibleSceneNodes(start,
 		end,
@@ -336,7 +389,7 @@ void VisibilityTestTask::test(
 
 				if(wantsShadowCasters)
 				{
-					updateTimestamp(node);
+					updateTimestamp(node, testInfo);
 				}
 			}
 		}
@@ -378,35 +431,47 @@ void VisibilityTestTask::test(
 		}
 
 		// Add more frustums to the list
-		err = node.iterateComponentsOfType<FrustumComponent>(
-			[&](FrustumComponent& frc) {
-				// Check enabled and make sure that the results are null (this
-				// can
-				// happen on multiple on circular viewing)
-				if(frc.anyVisibilityTestEnabled()
-					&& !frc.hasVisibilityTestResults())
-				{
-					LockGuard<SpinLock> l(m_shared->m_lock);
+		err = node.iterateComponentsOfType<FrustumComponent>([&](
+			FrustumComponent& frc) {
+			// Check enabled and make sure that the results are null (this
+			// can
+			// happen on multiple on circular viewing)
+			if(frc.anyVisibilityTestEnabled()
+				&& !frc.hasVisibilityTestResults())
+			{
+				LockGuard<SpinLock> l(m_ctx->m_lock);
 
-					// Check if already in the list
-					Bool alreadyThere = false;
-					for(const FrustumComponent* x : m_shared->m_frustumsList)
+				// Check if already in the list
+				Bool alreadyThere = false;
+				for(const SingleVisTest& x : m_ctx->m_pendingTests)
+				{
+					if(x.m_frc == &frc)
 					{
-						if(x == &frc)
+						alreadyThere = true;
+						break;
+					}
+				}
+
+				if(!alreadyThere)
+				{
+					for(const SingleVisTest& x : m_ctx->m_completedTests)
+					{
+						if(x.m_frc == &frc)
 						{
 							alreadyThere = true;
 							break;
 						}
 					}
-
-					if(!alreadyThere)
-					{
-						m_shared->m_frustumsList.pushBack(alloc, &frc);
-					}
 				}
 
-				return ErrorCode::NONE;
-			});
+				if(!alreadyThere)
+				{
+					m_ctx->m_pendingTests.pushBack(alloc, SingleVisTest(&frc));
+				}
+			}
+
+			return ErrorCode::NONE;
+		});
 		(void)err;
 
 		return ErrorCode::NONE;
@@ -414,39 +479,29 @@ void VisibilityTestTask::test(
 	(void)err;
 
 	ANKI_TRACE_STOP_EVENT(SCENE_VISIBILITY_TEST);
-
-	// Gather the results from all threads
-	m_shared->m_barrier.wait();
-
-	if(threadId == 0)
-	{
-		ANKI_TRACE_START_EVENT(SCENE_VISIBILITY_COMBINE_RESULTS);
-		combineTestResults(testedFrc, threadsCount);
-		ANKI_TRACE_STOP_EVENT(SCENE_VISIBILITY_COMBINE_RESULTS);
-	}
 }
 
 //==============================================================================
 void VisibilityTestTask::combineTestResults(
-	FrustumComponent& frc, PtrSize threadsCount)
+	SingleVisTest& testInfo, PtrSize threadCount)
 {
-	auto alloc = m_shared->m_scene->getFrameAllocator();
+	auto alloc = m_ctx->m_scene->getFrameAllocator();
 
 	// Prepare
 	Array<VisibilityTestResults*, ThreadPool::MAX_THREADS> results;
-	for(U i = 0; i < threadsCount; i++)
+	for(U i = 0; i < threadCount; i++)
 	{
-		results[i] = m_shared->m_testResults[i];
+		results[i] = testInfo.m_threadResults[i];
 	}
-	SArray<VisibilityTestResults*> rez(&results[0], threadsCount);
+	SArray<VisibilityTestResults*> rez(&results[0], threadCount);
 
 	// Create the new combined results
 	VisibilityTestResults* visible = alloc.newInstance<VisibilityTestResults>();
 	visible->combineWith(alloc, rez);
-	visible->setShapeUpdateTimestamp(m_shared->m_timestamp);
+	visible->setShapeUpdateTimestamp(testInfo.m_timestamp);
 
 	// Set the frustumable
-	frc.setVisibilityTestResults(visible);
+	testInfo.m_frc->setVisibilityTestResults(visible);
 
 	// Sort some of the arrays
 	DistanceSortFunctor comp;
@@ -560,20 +615,22 @@ Error doVisibilityTests(SceneNode& fsn, SceneGraph& scene, const Renderer& r)
 	// Do the tests in parallel
 	ThreadPool& threadPool = scene._getThreadPool();
 
-	VisibilityShared shared(threadPool.getThreadsCount());
-	shared.m_scene = &scene;
-	shared.m_r = &r;
-	shared.m_frustumsList.pushBack(
-		scene.getFrameAllocator(), &fsn.getComponent<FrustumComponent>());
+	VisibilityContext ctx(threadPool.getThreadsCount());
+	ctx.m_scene = &scene;
+	ctx.m_r = &r;
+	ctx.m_pendingTests.pushBack(scene.getFrameAllocator(),
+		SingleVisTest(&fsn.getComponent<FrustumComponent>()));
 
 	Array<VisibilityTestTask, ThreadPool::MAX_THREADS> tasks;
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
-		tasks[i].m_shared = &shared;
+		tasks[i].m_ctx = &ctx;
 		threadPool.assignNewTask(i, &tasks[i]);
 	}
 
-	return threadPool.waitForAllThreadsToFinish();
+	Error err = threadPool.waitForAllThreadsToFinish();
+	ctx.m_completedTests.destroy(scene.getFrameAllocator());
+	return err;
 }
 
 } // end namespace anki

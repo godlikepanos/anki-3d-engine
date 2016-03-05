@@ -39,6 +39,7 @@ enum class TraceEventType
 	RENDERER_COMMAND_BUFFER_BUILDING,
 	GL_THREAD,
 	SWAP_BUFFERS,
+	BARRIER_WAIT,
 
 	COUNT
 };
@@ -98,7 +99,7 @@ private:
 		Thread::Id m_tid;
 	};
 
-	static const U BUFFERED_ENTRIES = 1024 * 10;
+	static const U BUFFERED_ENTRIES = 1024 * 20;
 	Array<Entry, BUFFERED_ENTRIES> m_entries;
 	Atomic<U32> m_count = {0};
 	File m_traceFile;
@@ -143,6 +144,14 @@ using TraceManagerSingleton = Singleton<TraceManager>;
 #define ANKI_TRACE_STOP_FRAME() ((void)0)
 
 #endif
+
+#define ANKI_TRACE_START_STOP_EVENT(execute, event)                            \
+	do                                                                         \
+	{                                                                          \
+		ANKI_TRACE_START_EVENT(event);                                         \
+		execute;                                                               \
+		ANKI_TRACE_STOP_EVENT(event);                                          \
+	} while(0)
 /// @}
 
 } // end namespace anki

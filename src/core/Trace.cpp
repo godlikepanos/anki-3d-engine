@@ -30,7 +30,8 @@ static Array<const char*, U(TraceEventType::COUNT)> eventNames = {
 		"RENDER_DRAWER",
 		"RENDERER_COMMAND_BUFFER_BUILDING",
 		"GL_THREAD",
-		"SWAP_BUFFERS"}};
+		"SWAP_BUFFERS",
+		"BARRIER_WAIT"}};
 
 static Array<const char*, U(TraceCounterType::COUNT)> counterNames = {
 	{"GR_DRAWCALLS",

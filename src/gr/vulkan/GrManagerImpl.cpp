@@ -42,8 +42,7 @@ public:
 class RenderPassCompare
 {
 public:
-	Bool operator()(
-		const RenderPassKey& a, const RenderPassKey& b) const
+	Bool operator()(const RenderPassKey& a, const RenderPassKey& b) const
 	{
 		for(U i = 0; i < a.m_colorAttachments.getSize(); ++i)
 		{
@@ -56,7 +55,7 @@ public:
 		return a.m_depthStencilAttachment == b.m_depthStencilAttachment;
 	}
 };
-	
+
 class GrManagerImpl::CompatibleRenderPassHashMap
 {
 public:
@@ -124,12 +123,12 @@ VkRenderPass GrManagerImpl::getOrCreateCompatibleRenderPass(
 
 		ci.attachmentCount = init.m_color.m_attachmentCount;
 
-		Bool hasDepthStencil = 
+		Bool hasDepthStencil =
 			init.m_depthStencil.m_format.m_components != ComponentFormat::NONE;
 		VkAttachmentReference dsReference = {0, VK_IMAGE_LAYOUT_UNDEFINED};
 		if(hasDepthStencil)
 		{
-			VkAttachmentDescription& desc = 
+			VkAttachmentDescription& desc =
 				attachmentDescriptions[ci.attachmentCount];
 			ANKI_VK_MEMSET_DBG(desc);
 			desc.flags = 0;
@@ -155,11 +154,11 @@ VkRenderPass GrManagerImpl::getOrCreateCompatibleRenderPass(
 		desc.inputAttachmentCount = 0;
 		desc.pInputAttachments = nullptr;
 		desc.colorAttachmentCount = init.m_color.m_attachmentCount;
-		desc.pColorAttachments = (init.m_color.m_attachmentCount) 
-			? &references[0] : nullptr;
+		desc.pColorAttachments =
+			(init.m_color.m_attachmentCount) ? &references[0] : nullptr;
 		desc.pResolveAttachments = nullptr;
-		desc.pDepthStencilAttachment = (hasDepthStencil) 
-			? &dsReference : nullptr;
+		desc.pDepthStencilAttachment =
+			(hasDepthStencil) ? &dsReference : nullptr;
 		desc.preserveAttachmentCount = 0;
 		desc.pPreserveAttachments = nullptr;
 
