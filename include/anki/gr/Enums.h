@@ -239,6 +239,11 @@ public:
 		return m_components == b.m_components && m_transform == b.m_transform
 			&& m_srgb == b.m_srgb;
 	}
+
+	Bool operator!=(const PixelFormat& b) const
+	{
+		return !(*this == b);
+	}
 };
 
 /// Occlusion query result bit.

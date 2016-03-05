@@ -29,8 +29,16 @@ public:
 
 	~GrManagerImpl();
 
+	/// Get or create a compatible render pass for a pipeline.
+	VkRenderPass getOrCreateCompatibleRenderPass(const PipelineInitInfo& init);
+
 private:
 	GrManager* m_manager = nullptr;
+	GrAllocator<U8> m_alloc;
+
+	/// Map for compatible render passes.
+	class CompatibleRenderPassHashMap;
+	CompatibleRenderPassHashMap* m_renderPasses = nullptr;
 };
 /// @}
 

@@ -31,13 +31,16 @@ namespace anki
 
 /// Debug initialize a vulkan structure
 #if ANKI_DEBUG
-#define ANKI_VK_MEMSET_DBG(struct_) memset(&struct_, 0xCC, sizeof(struct_));
+#define ANKI_VK_MEMSET_DBG(struct_) memset(&struct_, 0xCC, sizeof(struct_))
 #else
 #define ANKI_VK_MEMSET_DBG(struct_) ((void)0)
 #endif
 
 /// Convert compare op.
 VkCompareOp convertCompareOp(CompareOperation ak);
+
+/// Convert format.
+VkFormat convertFormat(PixelFormat ak);
 /// @}
 
 } // end namespace anki

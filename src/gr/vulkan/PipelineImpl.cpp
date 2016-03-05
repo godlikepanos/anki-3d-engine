@@ -169,7 +169,7 @@ VkPipelineVertexInputStateCreateInfo* PipelineImpl::initVertexStage(
 
 		vkAttrib.location = 0;
 		vkAttrib.binding = vertex.m_attributes[i].m_binding;
-		vkAttrib.format = VkFormat(0); // XXX
+		vkAttrib.format = convertFormat(vertex.m_attributes[i].m_format);
 		vkAttrib.offset = vertex.m_attributes[i].m_offset;
 	}
 
@@ -177,8 +177,8 @@ VkPipelineVertexInputStateCreateInfo* PipelineImpl::initVertexStage(
 }
 
 //==============================================================================
-VkPipelineInputAssemblyStateCreateInfo*
-PipelineImpl::initInputAssemblyState(const InputAssemblerStateInfo& ia,
+VkPipelineInputAssemblyStateCreateInfo* PipelineImpl::initInputAssemblyState(
+	const InputAssemblerStateInfo& ia,
 	VkPipelineInputAssemblyStateCreateInfo& ci)
 {
 	// TODO
