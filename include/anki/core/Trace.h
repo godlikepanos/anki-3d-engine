@@ -79,13 +79,13 @@ public:
 
 	void incCounter(TraceCounterType c, U64 val)
 	{
-		m_perFrameCounters[U(c)].fetchAdd(val);
+		if(!m_disabled)
+		{
+			m_perFrameCounters[U(c)].fetchAdd(val);
+		}
 	}
 
-	void startFrame()
-	{
-		m_startFrameTime = HighRezTimer::getCurrentTime();
-	}
+	void startFrame();
 
 	void stopFrame();
 
@@ -111,6 +111,8 @@ private:
 		m_perFrameCounters = {{}};
 	Array<Atomic<U64>, U(TraceEventType::COUNT) + U(TraceCounterType::COUNT)>
 		m_perRunCounters = {{}};
+
+	Bool m_disabled = false;
 
 	ANKI_USE_RESULT Error flushCounters();
 	ANKI_USE_RESULT Error flushEvents();

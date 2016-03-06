@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/core/Trace.h>
+#include <cstdlib>
 
 #if ANKI_ENABLE_TRACE
 
@@ -76,6 +77,13 @@ TraceManager::~TraceManager()
 //==============================================================================
 Error TraceManager::create(HeapAllocator<U8> alloc, const CString& cacheDir)
 {
+	if(getenv("ANKI_DISABLE_TRACE") 
+		&& CString(getenv("ANKI_DISABLE_TRACE")) == "1")
+	{
+		m_disabled = true;
+		return ErrorCode::NONE;
+	}
+
 	// Create trace file
 	StringAuto fname(alloc);
 	fname.sprintf("%s/trace.json", &cacheDir[0]);
@@ -109,6 +117,11 @@ Error TraceManager::create(HeapAllocator<U8> alloc, const CString& cacheDir)
 //==============================================================================
 void TraceManager::startEvent()
 {
+	if(ANKI_UNLIKELY(m_disabled))
+	{
+		return;
+	}
+
 	I i = ++g_traceEventsInFlight;
 	--i;
 	ANKI_ASSERT(i >= 0 && i <= I(MAX_EVENTS_DEPTH));
@@ -119,6 +132,11 @@ void TraceManager::startEvent()
 //==============================================================================
 void TraceManager::stopEvent(TraceEventType type)
 {
+	if(ANKI_UNLIKELY(m_disabled))
+	{
+		return;
+	}
+
 	ANKI_ASSERT(g_traceEventsInFlight > 0
 		&& g_traceEventsInFlight < I(MAX_EVENTS_DEPTH));
 	I i = --g_traceEventsInFlight;
@@ -147,6 +165,11 @@ void TraceManager::stopEvent(TraceEventType type)
 //==============================================================================
 Error TraceManager::flushCounters()
 {
+	if(ANKI_UNLIKELY(m_disabled))
+	{
+		return ErrorCode::NONE;
+	}
+
 	// Write the FPS counter
 	HighRezTimer::Scalar now = HighRezTimer::getCurrentTime();
 	HighRezTimer::Scalar time = now - m_startFrameTime;
@@ -179,6 +202,11 @@ Error TraceManager::flushCounters()
 //==============================================================================
 Error TraceManager::flushEvents()
 {
+	if(ANKI_UNLIKELY(m_disabled))
+	{
+		return ErrorCode::NONE;
+	}
+
 	// Write the events
 	U count = m_count.exchange(0);
 	count = min<U>(count, BUFFERED_ENTRIES);
@@ -207,8 +235,24 @@ Error TraceManager::flushEvents()
 }
 
 //==============================================================================
+void TraceManager::startFrame()
+{
+	if(ANKI_UNLIKELY(m_disabled))
+	{
+		return;
+	}
+
+	m_startFrameTime = HighRezTimer::getCurrentTime();
+}
+
+//==============================================================================
 void TraceManager::stopFrame()
 {
+	if(ANKI_UNLIKELY(m_disabled))
+	{
+		return;
+	}
+
 	Error err = flushCounters();
 
 	if(!err)
