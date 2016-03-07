@@ -20,6 +20,7 @@ GrManagerImpl::~GrManagerImpl()
 		m_thread = nullptr;
 	}
 
+	destroyBackend();
 	m_manager = nullptr;
 }
 
@@ -30,16 +31,20 @@ GrAllocator<U8> GrManagerImpl::getAllocator() const
 }
 
 //==============================================================================
-void GrManagerImpl::init(GrManagerInitInfo& init)
+Error GrManagerImpl::init(GrManagerInitInfo& init)
 {
+	// Init the backend of the backend
+	ANKI_CHECK(createBackend(init));
+
 	// Create thread
 	m_thread =
 		m_manager->getAllocator().newInstance<RenderingThread>(m_manager);
 
 	// Start it
-	m_thread->start(
-		init.m_interface, init.m_registerDebugMessages, *init.m_config);
+	m_thread->start(init.m_debugContext, *init.m_config);
 	m_thread->syncClientServer();
+
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

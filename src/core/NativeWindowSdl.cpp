@@ -5,7 +5,6 @@
 
 #include <anki/core/NativeWindowSdl.h>
 #include <anki/util/Logger.h>
-#include <GL/glew.h>
 
 namespace anki
 {
@@ -28,38 +27,17 @@ Error NativeWindow::create(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
 	//
 	// Set GL attributes
 	//
-	ANKI_LOGI("Creating SDL window (OpenGL context to be requested %u.%u)...",
-		init.m_majorVersion,
-		init.m_minorVersion);
+	ANKI_LOGI("Creating SDL window");
 
-	if(SDL_GL_SetAttribute(SDL_GL_RED_SIZE, init.m_rgbaBits[0]) != 0
-		|| SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, init.m_rgbaBits[1]) != 0
-		|| SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, init.m_rgbaBits[2]) != 0
-		|| SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, init.m_rgbaBits[3]) != 0
-		|| SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, init.m_depthBits) != 0
-		|| SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, init.m_doubleBuffer) != 0
-		|| SDL_GL_SetAttribute(
-			   SDL_GL_CONTEXT_MAJOR_VERSION, init.m_majorVersion)
-			!= 0
-		|| SDL_GL_SetAttribute(
-			   SDL_GL_CONTEXT_MINOR_VERSION, init.m_minorVersion)
-			!= 0
-		|| SDL_GL_SetAttribute(
-			   SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE)
-			!= 0)
+	if(SDL_GL_SetAttribute(SDL_GL_RED_SIZE, init.m_rgbaBits[0])
+		|| SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, init.m_rgbaBits[1])
+		|| SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, init.m_rgbaBits[2])
+		|| SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, init.m_rgbaBits[3])
+		|| SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, init.m_depthBits)
+		|| SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, init.m_doubleBuffer))
 	{
 		ANKI_LOGE("SDL_GL_SetAttribute() failed");
 		return ErrorCode::FUNCTION_FAILED;
-	}
-
-	if(init.m_debugContext)
-	{
-		if(SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG)
-			!= 0)
-		{
-			ANKI_LOGE("SDL_GL_SetAttribute() failed");
-			return ErrorCode::FUNCTION_FAILED;
-		}
 	}
 
 	//
@@ -72,7 +50,7 @@ Error NativeWindow::create(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
 		flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
 	}
 
-	m_impl->m_window = SDL_CreateWindow(init.m_title,
+	m_impl->m_window = SDL_CreateWindow(&init.m_title[0],
 		SDL_WINDOWPOS_UNDEFINED,
 		SDL_WINDOWPOS_UNDEFINED,
 		init.m_width,
@@ -100,28 +78,6 @@ Error NativeWindow::create(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
 		m_height = init.m_height;
 	}
 
-	//
-	// Create context
-	//
-	m_impl->m_context = SDL_GL_CreateContext(m_impl->m_window);
-
-	if(m_impl->m_context == nullptr)
-	{
-		ANKI_LOGE("SDL_GL_CreateContext() failed");
-		return ErrorCode::FUNCTION_FAILED;
-	}
-
-	//
-	// GLEW
-	//
-	glewExperimental = GL_TRUE;
-	if(glewInit() != GLEW_OK)
-	{
-		ANKI_LOGE("GLEW initialization failed");
-		return ErrorCode::FUNCTION_FAILED;
-	}
-	glGetError();
-
 	ANKI_LOGI("SDL window created");
 	return ErrorCode::NONE;
 }
@@ -131,11 +87,6 @@ void NativeWindow::destroy()
 {
 	if(m_impl != nullptr)
 	{
-		if(m_impl->m_context)
-		{
-			SDL_GL_DeleteContext(m_impl->m_context);
-		}
-
 		if(m_impl->m_window)
 		{
 			SDL_DestroyWindow(m_impl->m_window);
@@ -146,27 +97,6 @@ void NativeWindow::destroy()
 	}
 
 	m_alloc.deleteInstance(m_impl);
-}
-
-//==============================================================================
-void NativeWindow::swapBuffers()
-{
-	ANKI_ASSERT(isCreated());
-	SDL_GL_SwapWindow(m_impl->m_window);
-}
-
-//==============================================================================
-Context NativeWindow::getCurrentContext()
-{
-	SDL_GLContext sdlCtx = SDL_GL_GetCurrentContext();
-	return sdlCtx;
-}
-
-//==============================================================================
-void NativeWindow::contextMakeCurrent(Context ctx)
-{
-	SDL_GLContext sdlCtx = ctx;
-	SDL_GL_MakeCurrent(m_impl->m_window, sdlCtx);
 }
 
 } // end namespace anki

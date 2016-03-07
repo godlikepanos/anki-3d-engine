@@ -12,8 +12,6 @@
 namespace anki
 {
 
-class GrManagerInterface;
-
 /// @addtogroup opengl
 /// @{
 
@@ -41,9 +39,7 @@ public:
 
 	/// Start the working thread
 	/// @note Don't free the context before calling #stop
-	void start(WeakPtr<GrManagerInterface> interface,
-		Bool registerMessages,
-		const ConfigSet& config);
+	void start(Bool registerMessages, const ConfigSet& config);
 
 	/// Stop the working thread
 	void stop();
@@ -68,7 +64,6 @@ public:
 
 private:
 	WeakPtr<GrManager> m_manager;
-	WeakPtr<GrManagerInterface> m_interface;
 
 	static const U QUEUE_SIZE = 1024 * 2;
 	DArray<CommandBufferPtr> m_queue; ///< Command queue

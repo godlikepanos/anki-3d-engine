@@ -146,11 +146,8 @@ public:
 
 		// Sort and combind the results
 		PtrSize start, end;
-		choseStartEnd(threadId,
-			threadCount,
-			m_ctx->m_completedTestsCount,
-			start,
-			end);
+		choseStartEnd(
+			threadId, threadCount, m_ctx->m_completedTestsCount, start, end);
 		if(start != end)
 		{
 			auto it = m_ctx->m_completedTests.getBegin() + start;

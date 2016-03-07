@@ -13,26 +13,10 @@ namespace anki
 
 // Forward
 class ConfigSet;
+class NativeWindow;
 
 /// @addtogroup graphics
 /// @{
-
-/// A collection of functions that some backends need from other libraries.
-class GrManagerInterface
-{
-public:
-	virtual ~GrManagerInterface()
-	{
-	}
-
-	/// Swap buffers.
-	virtual void swapBuffersCommand() = 0;
-
-	/// Make a context current.
-	/// @param bind If true make a context current to this thread, if false
-	///        make no contexts current to a thread.
-	virtual void makeCurrentCommand(Bool bind) = 0;
-};
 
 /// Manager initializer.
 class GrManagerInitInfo
@@ -41,12 +25,21 @@ public:
 	AllocAlignedCallback m_allocCallback = nullptr;
 	void* m_allocCallbackUserData = nullptr;
 
-	WeakPtr<GrManagerInterface> m_interface;
-
 	CString m_cacheDirectory;
-	Bool m_registerDebugMessages = false;
 
 	const ConfigSet* m_config = nullptr;
+	NativeWindow* m_window = nullptr;
+
+	/// @name GL context properties
+	/// @{
+
+	/// Minor OpenGL version. Used to create core profile context
+	U32 m_minorVersion = 0;
+	/// Major OpenGL version. Used to create core profile context
+	U32 m_majorVersion = 0;
+	Bool8 m_useGles = false; ///< Use OpenGL ES
+	Bool8 m_debugContext = false; ///< Enables KHR_debug
+	/// @}
 };
 
 /// The graphics manager, owner of all graphics objects.

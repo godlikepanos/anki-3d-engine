@@ -77,7 +77,7 @@ TraceManager::~TraceManager()
 //==============================================================================
 Error TraceManager::create(HeapAllocator<U8> alloc, const CString& cacheDir)
 {
-	if(getenv("ANKI_DISABLE_TRACE") 
+	if(getenv("ANKI_DISABLE_TRACE")
 		&& CString(getenv("ANKI_DISABLE_TRACE")) == "1")
 	{
 		m_disabled = true;

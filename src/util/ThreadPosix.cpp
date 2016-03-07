@@ -76,8 +76,8 @@ void Thread::start(void* userData, Callback callback, I pinToCore)
 	ANKI_ASSERT(callback != nullptr);
 
 	pthread_attr_t attr;
-    cpu_set_t cpus;
-    pthread_attr_init(&attr);
+	cpu_set_t cpus;
+	pthread_attr_init(&attr);
 
 	if(pinToCore >= 0)
 	{

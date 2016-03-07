@@ -32,13 +32,10 @@ class SceneGraph;
 class ScriptManager;
 class ResourceManager;
 class ResourceFilesystem;
-class GrManagerInterfaceImpl;
 
 /// The core class of the engine.
 class App
 {
-	friend class GrManagerInterfaceImpl;
-
 public:
 	App();
 	virtual ~App();
@@ -146,7 +143,6 @@ private:
 	// Sybsystems
 	NativeWindow* m_window = nullptr;
 	Input* m_input = nullptr;
-	WeakPtr<GrManagerInterfaceImpl> m_grInterface;
 	GrManager* m_gr = nullptr;
 	PhysicsWorld* m_physics = nullptr;
 	ResourceFilesystem* m_resourceFs = nullptr;
@@ -168,9 +164,6 @@ private:
 
 	ANKI_USE_RESULT Error initDirs();
 	void cleanup();
-
-	static void makeCurrent(void* app, void* ctx);
-	static void swapWindow(void* window);
 };
 
 } // end namespace anki

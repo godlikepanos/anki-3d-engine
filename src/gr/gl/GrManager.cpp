@@ -31,7 +31,7 @@ Error GrManager::init(GrManagerInitInfo& init)
 
 	m_cacheDir.create(m_alloc, init.m_cacheDirectory);
 	m_impl.reset(m_alloc.newInstance<GrManagerImpl>(this));
-	m_impl->init(init);
+	ANKI_CHECK(m_impl->init(init));
 
 	return ErrorCode::NONE;
 }

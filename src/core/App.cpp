@@ -36,23 +36,6 @@ namespace anki
 android_app* gAndroidApp = nullptr;
 #endif
 
-class GrManagerInterfaceImpl : public GrManagerInterface
-{
-public:
-	WeakPtr<App> m_app;
-	void* m_ctx;
-
-	void swapBuffersCommand() override
-	{
-		m_app->m_window->swapBuffers();
-	}
-
-	void makeCurrentCommand(Bool bind) override
-	{
-		m_app->m_window->contextMakeCurrent(bind ? m_ctx : nullptr);
-	}
-};
-
 //==============================================================================
 App::App()
 {
@@ -107,11 +90,6 @@ void App::cleanup()
 	{
 		m_heapAlloc.deleteInstance(m_gr);
 		m_gr = nullptr;
-	}
-
-	if(m_grInterface)
-	{
-		m_heapAlloc.deleteInstance(m_grInterface);
 	}
 
 	if(m_threadpool)
@@ -198,13 +176,10 @@ Error App::createInternal(const ConfigSet& config_,
 	NativeWindowInitInfo nwinit;
 	nwinit.m_width = config.getNumber("width");
 	nwinit.m_height = config.getNumber("height");
-	nwinit.m_majorVersion = config.getNumber("glmajor");
-	nwinit.m_minorVersion = config.getNumber("glminor");
 	nwinit.m_depthBits = 0;
 	nwinit.m_stencilBits = 0;
 	nwinit.m_fullscreenDesktopRez =
 		config.getNumber("fullscreenDesktopResolution");
-	nwinit.m_debugContext = config.getNumber("debugContext");
 	m_window = m_heapAlloc.newInstance<NativeWindow>();
 
 	ANKI_CHECK(m_window->create(nwinit, m_heapAlloc));
@@ -224,20 +199,17 @@ Error App::createInternal(const ConfigSet& config_,
 	//
 	// Graphics API
 	//
-	m_grInterface = m_heapAlloc.newInstance<GrManagerInterfaceImpl>();
-	m_grInterface->m_app = this;
-	m_grInterface->m_ctx = m_window->getCurrentContext();
-	m_window->contextMakeCurrent(nullptr);
-
 	m_gr = m_heapAlloc.newInstance<GrManager>();
 
 	GrManagerInitInfo grInit;
 	grInit.m_allocCallback = m_allocCb;
 	grInit.m_allocCallbackUserData = m_allocCbData;
-	grInit.m_interface = m_grInterface;
 	grInit.m_cacheDirectory = m_cacheDir.toCString();
-	grInit.m_registerDebugMessages = nwinit.m_debugContext;
 	grInit.m_config = &config;
+	grInit.m_majorVersion = config.getNumber("glmajor");
+	grInit.m_minorVersion = config.getNumber("glminor");
+	grInit.m_debugContext = config.getNumber("debugContext");
+	grInit.m_window = m_window;
 
 	ANKI_CHECK(m_gr->init(grInit));
 
@@ -314,20 +286,6 @@ Error App::createInternal(const ConfigSet& config_,
 
 	ANKI_LOGI("Application initialized");
 	return ErrorCode::NONE;
-}
-
-//==============================================================================
-void App::makeCurrent(void* papp, void* ctx)
-{
-	ANKI_ASSERT(papp != nullptr);
-	App* app = reinterpret_cast<App*>(papp);
-	app->m_window->contextMakeCurrent(ctx);
-}
-
-//==============================================================================
-void App::swapWindow(void* window)
-{
-	reinterpret_cast<NativeWindow*>(window)->swapBuffers();
 }
 
 //==============================================================================

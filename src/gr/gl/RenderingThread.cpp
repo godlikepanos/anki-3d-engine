@@ -136,13 +136,9 @@ void RenderingThread::finishCommandBuffer(CommandBufferPtr commands)
 }
 
 //==============================================================================
-void RenderingThread::start(WeakPtr<GrManagerInterface> interface,
-	Bool registerMessages,
-	const ConfigSet& config)
+void RenderingThread::start(Bool registerMessages, const ConfigSet& config)
 {
 	ANKI_ASSERT(m_tail == 0 && m_head == 0);
-	ANKI_ASSERT(interface);
-	m_interface = interface;
 	m_state.m_registerMessages = registerMessages;
 	m_queue.create(m_manager->getAllocator(), QUEUE_SIZE);
 
@@ -153,6 +149,7 @@ void RenderingThread::start(WeakPtr<GrManagerInterface> interface,
 		.pushBackNewCommand<SwapBuffersCommand>(this);
 
 	m_state.init0(config);
+	m_manager->getImplementation().pinContextToCurrentThread(false);
 
 #if !ANKI_DISABLE_GL_RENDERING_THREAD
 	// Start thread
@@ -191,7 +188,7 @@ void RenderingThread::stop()
 //==============================================================================
 void RenderingThread::prepare()
 {
-	m_interface->makeCurrentCommand(true);
+	m_manager->getImplementation().pinContextToCurrentThread(true);
 
 	// Ignore the first error
 	glGetError();
@@ -229,7 +226,7 @@ void RenderingThread::finish()
 
 	// Cleanup
 	glFinish();
-	m_interface->makeCurrentCommand(false);
+	m_manager->getImplementation().pinContextToCurrentThread(false);
 }
 
 //==============================================================================
@@ -305,7 +302,7 @@ void RenderingThread::swapBuffersInternal(GlState& state)
 	ANKI_TRACE_START_EVENT(SWAP_BUFFERS);
 
 	// Do the swap buffers
-	m_interface->swapBuffersCommand();
+	m_manager->getImplementation().swapBuffers();
 
 	// Notify the main thread that we are done
 	{

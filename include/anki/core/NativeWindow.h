@@ -17,8 +17,9 @@ class NativeWindowImpl;
 using Context = void*;
 
 /// Window initializer
-struct NativeWindowInitInfo
+class NativeWindowInitInfo
 {
+public:
 	U32 m_width = 640;
 	U32 m_height = 768;
 	Array<U32, 4> m_rgbaBits = {{8, 8, 8, 0}};
@@ -29,18 +30,7 @@ struct NativeWindowInitInfo
 	/// Create a fullscreen window with the desktop's resolution
 	Bool8 m_fullscreenDesktopRez = false;
 
-	/// @name GL context properties
-	/// @{
-
-	/// Minor OpenGL version. Used to create core profile context
-	U32 m_minorVersion = 0;
-	/// Major OpenGL version. Used to create core profile context
-	U32 m_majorVersion = 0;
-	Bool8 m_useGles = false; ///< Use OpenGL ES
-	Bool8 m_debugContext = false; ///< Enables KHR_debug
-	/// @}
-
-	const char* m_title = "Untitled window";
+	CString m_title = "Untitled window";
 };
 
 /// Native window with GL context
@@ -73,11 +63,6 @@ public:
 	{
 		return m_height;
 	}
-
-	void swapBuffers();
-	Context createSharedContext();
-	Context getCurrentContext();
-	void contextMakeCurrent(Context ctx);
 
 	/// @privatesector
 	/// @{

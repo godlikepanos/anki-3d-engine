@@ -12,6 +12,7 @@ namespace anki
 
 // Forward
 class RenderingThread;
+class WindowingBackend;
 
 /// @addtogroup opengl
 /// @{
@@ -28,7 +29,7 @@ public:
 
 	~GrManagerImpl();
 
-	void init(GrManagerInitInfo& init);
+	ANKI_USE_RESULT Error init(GrManagerInitInfo& init);
 
 	const RenderingThread& getRenderingThread() const
 	{
@@ -42,9 +43,17 @@ public:
 
 	GrAllocator<U8> getAllocator() const;
 
+	void swapBuffers();
+
+	void pinContextToCurrentThread(Bool pin);
+
 private:
 	GrManager* m_manager;
 	RenderingThread* m_thread = nullptr;
+	WindowingBackend* m_backend = nullptr; ///< The backend of the backend.
+
+	ANKI_USE_RESULT Error createBackend(GrManagerInitInfo& init);
+	void destroyBackend();
 };
 /// @}
 
