@@ -182,6 +182,22 @@ static SceneGraph* getSceneGraph(lua_State* l)
 				</method>
 			</methods>
 		</class>
+		<class name="PerspectiveCamera">
+			<methods>
+				<method name="getSceneNodeBase">
+					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
+					<return>SceneNode&amp;</return>
+				</method>
+				<method name="setAll">
+					<args>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>F32</arg>
+					</args>
+				</method>
+			</methods>
+		</class>
 		<class name="PointLight">
 			<methods>
 				<method name="getSceneNodeBase">

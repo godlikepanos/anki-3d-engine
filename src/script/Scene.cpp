@@ -1700,6 +1700,151 @@ static inline void wrapModelNode(lua_State* l)
 }
 
 //==============================================================================
+// PerspectiveCamera                                                           =
+//==============================================================================
+
+//==============================================================================
+static const char* classnamePerspectiveCamera = "PerspectiveCamera";
+
+template<>
+I64 LuaBinder::getWrappedTypeSignature<PerspectiveCamera>()
+{
+	return -4317960537256382878;
+}
+
+template<>
+const char* LuaBinder::getWrappedTypeName<PerspectiveCamera>()
+{
+	return classnamePerspectiveCamera;
+}
+
+//==============================================================================
+/// Pre-wrap method PerspectiveCamera::getSceneNodeBase.
+static inline int pwrapPerspectiveCameragetSceneNodeBase(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	PtrSize size;
+	(void)size;
+
+	LuaBinder::checkArgsCount(l, 1);
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(
+		   l, 1, classnamePerspectiveCamera, -4317960537256382878, ud))
+	{
+		return -1;
+	}
+
+	PerspectiveCamera* self = ud->getData<PerspectiveCamera>();
+
+	// Call the method
+	SceneNode& ret = *self;
+
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(UserData));
+	ud = static_cast<UserData*>(voidp);
+	luaL_setmetatable(l, "SceneNode");
+	ud->initPointed(-2220074417980276571, const_cast<SceneNode*>(&ret));
+
+	return 1;
+}
+
+//==============================================================================
+/// Wrap method PerspectiveCamera::getSceneNodeBase.
+static int wrapPerspectiveCameragetSceneNodeBase(lua_State* l)
+{
+	int res = pwrapPerspectiveCameragetSceneNodeBase(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
+/// Pre-wrap method PerspectiveCamera::setAll.
+static inline int pwrapPerspectiveCamerasetAll(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	PtrSize size;
+	(void)size;
+
+	LuaBinder::checkArgsCount(l, 5);
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(
+		   l, 1, classnamePerspectiveCamera, -4317960537256382878, ud))
+	{
+		return -1;
+	}
+
+	PerspectiveCamera* self = ud->getData<PerspectiveCamera>();
+
+	// Pop arguments
+	F32 arg0;
+	if(LuaBinder::checkNumber(l, 2, arg0))
+	{
+		return -1;
+	}
+
+	F32 arg1;
+	if(LuaBinder::checkNumber(l, 3, arg1))
+	{
+		return -1;
+	}
+
+	F32 arg2;
+	if(LuaBinder::checkNumber(l, 4, arg2))
+	{
+		return -1;
+	}
+
+	F32 arg3;
+	if(LuaBinder::checkNumber(l, 5, arg3))
+	{
+		return -1;
+	}
+
+	// Call the method
+	self->setAll(arg0, arg1, arg2, arg3);
+
+	return 0;
+}
+
+//==============================================================================
+/// Wrap method PerspectiveCamera::setAll.
+static int wrapPerspectiveCamerasetAll(lua_State* l)
+{
+	int res = pwrapPerspectiveCamerasetAll(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
+/// Wrap class PerspectiveCamera.
+static inline void wrapPerspectiveCamera(lua_State* l)
+{
+	LuaBinder::createClass(l, classnamePerspectiveCamera);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "getSceneNodeBase", wrapPerspectiveCameragetSceneNodeBase);
+	LuaBinder::pushLuaCFuncMethod(l, "setAll", wrapPerspectiveCamerasetAll);
+	lua_settop(l, 0);
+}
+
+//==============================================================================
 // PointLight                                                                  =
 //==============================================================================
 
@@ -3071,6 +3216,7 @@ void wrapModuleScene(lua_State* l)
 	wrapLensFlareComponent(l);
 	wrapSceneNode(l);
 	wrapModelNode(l);
+	wrapPerspectiveCamera(l);
 	wrapPointLight(l);
 	wrapSpotLight(l);
 	wrapStaticCollisionNode(l);
