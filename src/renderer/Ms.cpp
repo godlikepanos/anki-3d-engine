@@ -6,8 +6,8 @@
 #include <anki/renderer/Ms.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/util/Logger.h>
-#include <anki/scene/Camera.h>
 #include <anki/scene/SceneGraph.h>
+#include <anki/scene/FrustumComponent.h>
 #include <anki/misc/ConfigSet.h>
 #include <anki/core/Trace.h>
 

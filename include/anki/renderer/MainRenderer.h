@@ -16,7 +16,7 @@ namespace anki
 class ResourceManager;
 class ConfigSet;
 class SceneGraph;
-class Camera;
+class SceneNode;
 
 /// @addtogroup renderer
 /// @{
@@ -39,7 +39,7 @@ public:
 
 	ANKI_USE_RESULT Error render(SceneGraph& scene);
 
-	void prepareForVisibilityTests(Camera& cam);
+	void prepareForVisibilityTests(SceneNode& cam);
 
 	const String& getMaterialShaderSource() const
 	{

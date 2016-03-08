@@ -8,8 +8,9 @@
 #include <anki/core/App.h>
 #include <anki/core/Trace.h>
 #include <anki/scene/SceneGraph.h>
-#include <anki/scene/Camera.h>
 #include <anki/scene/Light.h>
+#include <anki/scene/FrustumComponent.h>
+#include <anki/scene/MoveComponent.h>
 #include <anki/misc/ConfigSet.h>
 
 namespace anki

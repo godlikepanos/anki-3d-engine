@@ -66,16 +66,16 @@ public:
 		return m_frameAlloc;
 	}
 
-	Camera& getActiveCamera()
+	SceneNode& getActiveCamera()
 	{
 		ANKI_ASSERT(m_mainCam != nullptr);
 		return *m_mainCam;
 	}
-	const Camera& getActiveCamera() const
+	const SceneNode& getActiveCamera() const
 	{
 		return *m_mainCam;
 	}
-	void setActiveCamera(Camera* cam)
+	void setActiveCamera(SceneNode* cam)
 	{
 		m_mainCam = cam;
 		m_activeCameraChangeTimestamp = getGlobalTimestamp();
@@ -199,7 +199,7 @@ private:
 	U32 m_nodesCount = 0;
 	HashMap<CString, SceneNode*, CStringHasher, CStringCompare> m_nodesDict;
 
-	Camera* m_mainCam = nullptr;
+	SceneNode* m_mainCam = nullptr;
 	Timestamp m_activeCameraChangeTimestamp = getGlobalTimestamp();
 	PerspectiveCamera* m_defaultMainCam = nullptr;
 

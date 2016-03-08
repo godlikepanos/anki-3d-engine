@@ -11,7 +11,7 @@
 #include <anki/scene/SceneGraph.h>
 #include <anki/scene/MoveComponent.h>
 #include <anki/scene/LensFlareComponent.h>
-#include <anki/scene/Camera.h>
+#include <anki/scene/FrustumComponent.h>
 #include <anki/misc/ConfigSet.h>
 #include <anki/util/Functions.h>
 

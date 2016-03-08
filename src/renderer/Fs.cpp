@@ -9,7 +9,7 @@
 #include <anki/renderer/Is.h>
 #include <anki/renderer/Sm.h>
 #include <anki/scene/SceneGraph.h>
-#include <anki/scene/Camera.h>
+#include <anki/scene/FrustumComponent.h>
 
 namespace anki
 {

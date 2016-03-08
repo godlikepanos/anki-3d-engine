@@ -348,6 +348,11 @@ static SceneGraph* getSceneGraph(lua_State* l)
 					</args>
 					<return>ReflectionProxy*</return>
 				</method>
+				<method name="setActiveCamera">
+					<args>
+						<arg>SceneNode*</arg>
+					</args>
+				</method>
 			</methods>
 		</class>
 	</classes>

@@ -3200,6 +3200,57 @@ static int wrapSceneGraphnewReflectionProxy(lua_State* l)
 }
 
 //==============================================================================
+/// Pre-wrap method SceneGraph::setActiveCamera.
+static inline int pwrapSceneGraphsetActiveCamera(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	PtrSize size;
+	(void)size;
+
+	LuaBinder::checkArgsCount(l, 2);
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameSceneGraph, -7754439619132389154, ud))
+	{
+		return -1;
+	}
+
+	SceneGraph* self = ud->getData<SceneGraph>();
+
+	// Pop arguments
+	if(LuaBinder::checkUserData(l, 2, "SceneNode", -2220074417980276571, ud))
+	{
+		return -1;
+	}
+
+	SceneNode* iarg0 = ud->getData<SceneNode>();
+	SceneNode* arg0(iarg0);
+
+	// Call the method
+	self->setActiveCamera(arg0);
+
+	return 0;
+}
+
+//==============================================================================
+/// Wrap method SceneGraph::setActiveCamera.
+static int wrapSceneGraphsetActiveCamera(lua_State* l)
+{
+	int res = pwrapSceneGraphsetActiveCamera(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
 /// Wrap class SceneGraph.
 static inline void wrapSceneGraph(lua_State* l)
 {
@@ -3222,6 +3273,8 @@ static inline void wrapSceneGraph(lua_State* l)
 		l, "newReflectionProbe", wrapSceneGraphnewReflectionProbe);
 	LuaBinder::pushLuaCFuncMethod(
 		l, "newReflectionProxy", wrapSceneGraphnewReflectionProxy);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "setActiveCamera", wrapSceneGraphsetActiveCamera);
 	lua_settop(l, 0);
 }
 

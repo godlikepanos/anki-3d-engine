@@ -6,7 +6,6 @@
 #include <anki/renderer/Ssao.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/Ms.h>
-#include <anki/scene/Camera.h>
 #include <anki/scene/SceneGraph.h>
 #include <anki/util/Functions.h>
 #include <anki/misc/ConfigSet.h>

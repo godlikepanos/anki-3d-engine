@@ -194,7 +194,7 @@ F32 MainRenderer::getAspectRatio() const
 }
 
 //==============================================================================
-void MainRenderer::prepareForVisibilityTests(Camera& cam)
+void MainRenderer::prepareForVisibilityTests(SceneNode& cam)
 {
 	m_r->prepareForVisibilityTests(cam);
 }

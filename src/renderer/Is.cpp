@@ -9,8 +9,9 @@
 #include <anki/renderer/Sm.h>
 #include <anki/renderer/Pps.h>
 #include <anki/renderer/Ir.h>
-#include <anki/scene/Camera.h>
 #include <anki/scene/Light.h>
+#include <anki/scene/FrustumComponent.h>
+#include <anki/scene/MoveComponent.h>
 #include <anki/scene/ReflectionProbeComponent.h>
 #include <anki/scene/Visibility.h>
 #include <anki/core/Trace.h>

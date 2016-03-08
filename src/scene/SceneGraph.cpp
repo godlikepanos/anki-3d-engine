@@ -215,8 +215,7 @@ void SceneGraph::unregisterNode(SceneNode* node)
 	m_nodes.erase(node);
 	--m_nodesCount;
 
-	if(m_mainCam != m_defaultMainCam
-		&& static_cast<SceneNode*>(m_mainCam) == node)
+	if(m_mainCam != m_defaultMainCam && m_mainCam == node)
 	{
 		m_mainCam = m_defaultMainCam;
 	}

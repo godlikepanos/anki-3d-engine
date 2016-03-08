@@ -697,6 +697,8 @@ void Exporter::exportCamera(const aiCamera& cam)
 	file << "\nnode = scene:newPerspectiveCamera(\"" << cam.mName.C_Str()
 		 << "\")\n";
 
+	file << "scene:setActiveCamera(node:getSceneNodeBase())\n";
+
 	file << "node:setAll(" << cam.mHorizontalFOV * cam.mAspect << ", "
 		 << cam.mHorizontalFOV << ", " << cam.mClipPlaneNear << ", "
 		 << cam.mClipPlaneFar << ")\n";

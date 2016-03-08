@@ -60,9 +60,6 @@ Error MyApp::init()
 			.loadColorGradingTexture("textures/adis/dungeon.ankitex");
 	}
 
-	SceneNode& cam = scene.findSceneNode("Camera");
-	scene.setActiveCamera(static_cast<Camera*>(&cam));
-
 	return ErrorCode::NONE;
 }
 
