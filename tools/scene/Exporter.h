@@ -25,7 +25,6 @@ struct Model
 {
 	uint32_t m_meshIndex = INVALID_INDEX; ///< Mesh index in the scene
 	uint32_t m_materialIndex = INVALID_INDEX;
-	uint32_t m_instancesCount = 1;
 	std::string m_lod1MeshName;
 };
 
@@ -33,7 +32,7 @@ struct Model
 struct Node
 {
 	uint32_t m_modelIndex; ///< Index inside Exporter::m_models
-	std::vector<aiMatrix4x4> m_transforms;
+	aiMatrix4x4 m_transform;
 	std::string m_group;
 };
 
@@ -151,13 +150,16 @@ private:
 	void exportSkeleton(const aiMesh& mesh) const;
 
 	/// Export a material.
-	void exportMaterial(const aiMaterial& mtl, uint32_t instances) const;
+	void exportMaterial(const aiMaterial& mtl) const;
 
 	/// Export a model.
 	void exportModel(const Model& model) const;
 
 	/// Export a light.
 	void exportLight(const aiLight& light);
+
+	/// Export a camera.
+	void exportCamera(const aiCamera& cam);
 
 	/// Export an animation.
 	void exportAnimation(const aiAnimation& anim, unsigned index);
@@ -166,11 +168,7 @@ private:
 	void exportCollisionMesh(uint32_t meshIdx);
 
 	/// Helper.
-	static std::string getMaterialName(
-		const aiMaterial& mtl, uint32_t instances);
-
-	/// Round up the instances count.
-	static uint32_t roundUpInstancesCount(uint32_t instances);
+	static std::string getMaterialName(const aiMaterial& mtl);
 };
 
 #endif

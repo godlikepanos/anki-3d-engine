@@ -155,49 +155,13 @@ static void removeScale(aiMatrix4x4& m)
 //==============================================================================
 
 //==============================================================================
-uint32_t Exporter::roundUpInstancesCount(uint32_t instances)
-{
-	if(instances == 1)
-	{
-		instances = 1;
-	}
-	else if(instances <= 4)
-	{
-		instances = 4;
-	}
-	else if(instances <= 8)
-	{
-		instances = 8;
-	}
-	else if(instances <= 16)
-	{
-		instances = 16;
-	}
-	else if(instances <= 32)
-	{
-		instances = 32;
-	}
-	else
-	{
-		ERROR("Too many instances %u", instances);
-	}
-
-	return instances;
-}
-
-//==============================================================================
-std::string Exporter::getMaterialName(const aiMaterial& mtl, uint32_t instances)
+std::string Exporter::getMaterialName(const aiMaterial& mtl)
 {
 	aiString ainame;
 	std::string name;
 	if(mtl.Get(AI_MATKEY_NAME, ainame) == AI_SUCCESS)
 	{
 		name = ainame.C_Str();
-
-		if(instances > 1)
-		{
-			name += "_inst" + std::to_string(roundUpInstancesCount(instances));
-		}
 	}
 	else
 	{
@@ -316,8 +280,7 @@ std::string Exporter::getModelName(const Model& model) const
 {
 	std::string name = getMeshName(getMeshAt(model.m_meshIndex));
 
-	name += getMaterialName(
-		getMaterialAt(model.m_materialIndex), model.m_instancesCount);
+	name += getMaterialName(getMaterialAt(model.m_materialIndex));
 
 	return name;
 }
@@ -420,8 +383,7 @@ void Exporter::exportModel(const Model& model) const
 		== mtl.mAnKiProperties.end())
 	{
 		file << "\t\t\t<material>" << m_rpath
-			 << getMaterialName(getMaterialAt(model.m_materialIndex),
-					model.m_instancesCount)
+			 << getMaterialName(getMaterialAt(model.m_materialIndex))
 			 << ".ankimtl</material>\n";
 	}
 	else
@@ -725,6 +687,34 @@ void Exporter::exportAnimation(const aiAnimation& anim, unsigned index)
 }
 
 //==============================================================================
+void Exporter::exportCamera(const aiCamera& cam)
+{
+	std::ofstream& file = m_sceneFile;
+
+	LOGI("Exporting camera %s", cam.mName.C_Str());
+
+	// Write the main node
+	file << "\nnode = scene:newPerspectiveCamera(\"" << cam.mName.C_Str()
+		 << "\")\n";
+
+	file << "node:setAll(" << cam.mHorizontalFOV * cam.mAspect << ", "
+		 << cam.mHorizontalFOV << ", " << cam.mClipPlaneNear << ", "
+		 << cam.mClipPlaneFar << ")\n";
+
+	// Find the node
+	const aiNode* node =
+		findNodeWithName(cam.mName.C_Str(), m_scene->mRootNode);
+	if(node == nullptr)
+	{
+		ERROR("Couldn't find node for camera %s", cam.mName.C_Str());
+	}
+
+	aiMatrix4x4 rot;
+	aiMatrix4x4::RotationX(-3.1415 / 2.0, rot);
+	writeNodeTransform("node", toAnkiMatrix(node->mTransformation * rot));
+}
+
+//==============================================================================
 void Exporter::load()
 {
 	LOGI("Loading file %s", &m_inputFilename[0]);
@@ -870,40 +860,6 @@ void Exporter::visitNode(const aiNode* ainode)
 			continue;
 		}
 
-		// Find if there is another node with the same mesh-material-group pair
-		std::vector<Node>::iterator it = m_nodes.begin();
-#if 0
-		for(; it != m_nodes.end(); ++it)
-		{
-			const Node& node = *it;
-			const Model& model = m_models[node.m_modelIndex];
-
-			if(model.m_meshIndex == meshIndex
-				&& model.m_materialIndex == mtlIndex
-				&& node.m_group == ainode->mGroup.C_Str()
-				&& node.m_group != "none")
-			{
-				break;
-			}
-		}
-#else
-		it = m_nodes.end();
-#endif
-
-		if(it != m_nodes.end())
-		{
-			// A node with the same model exists. It's instanced
-
-			Node& node = *it;
-			Model& model = m_models[node.m_modelIndex];
-
-			assert(node.m_transforms.size() > 0);
-			node.m_transforms.push_back(toAnkiMatrix(ainode->mTransformation));
-
-			++model.m_instancesCount;
-			break;
-		}
-
 		// Create new model
 		Model mdl;
 		mdl.m_meshIndex = meshIndex;
@@ -914,7 +870,7 @@ void Exporter::visitNode(const aiNode* ainode)
 		// Create new node
 		Node node;
 		node.m_modelIndex = m_models.size() - 1;
-		node.m_transforms.push_back(toAnkiMatrix(ainode->mTransformation));
+		node.m_transform = toAnkiMatrix(ainode->mTransformation);
 		node.m_group = ainode->mGroup.C_Str();
 		m_nodes.push_back(node);
 	}
@@ -1073,11 +1029,10 @@ void Exporter::exportAll()
 		Node& node = m_nodes[i];
 		Model& model = m_models[node.m_modelIndex];
 
-		// TODO If not instanced bake transform
+		// TODO If static bake transform
 		exportMesh(*m_scene->mMeshes[model.m_meshIndex], nullptr, 3);
 
-		exportMaterial(*m_scene->mMaterials[model.m_materialIndex],
-			model.m_instancesCount);
+		exportMaterial(*m_scene->mMaterials[model.m_materialIndex]);
 
 		exportModel(model);
 		std::string modelName = getModelName(model);
@@ -1087,18 +1042,7 @@ void Exporter::exportAll()
 		file << "\nnode = scene:newModelNode(\"" << nodeName << "\", \""
 			 << m_rpath << modelName << ".ankimdl"
 			 << "\")\n";
-		writeNodeTransform("node", node.m_transforms[0]);
-
-		// Write instance nodes
-		for(unsigned j = 1; j < node.m_transforms.size(); j++)
-		{
-			file << "\ninst = scene:newInstanceNode(\"" << nodeName << "_inst"
-				 << (j - 1) << "\")\n"
-				 << "node:getSceneNodeBase():addChild("
-				 << "inst:getSceneNodeBase())\n";
-
-			writeNodeTransform("inst", node.m_transforms[j]);
-		}
+		writeNodeTransform("node", node.m_transform);
 	}
 
 	//
@@ -1115,6 +1059,14 @@ void Exporter::exportAll()
 	for(unsigned i = 0; i < m_scene->mNumAnimations; i++)
 	{
 		exportAnimation(*m_scene->mAnimations[i], i);
+	}
+
+	//
+	// Cameras
+	//
+	for(unsigned i = 0; i < m_scene->mNumCameras; i++)
+	{
+		exportCamera(*m_scene->mCameras[i]);
 	}
 
 	LOGI("Done exporting scene!");

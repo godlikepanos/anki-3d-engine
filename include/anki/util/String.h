@@ -8,6 +8,7 @@
 #include <anki/util/DArray.h>
 #include <anki/util/Array.h>
 #include <anki/util/NonCopyable.h>
+#include <anki/util/Hash.h>
 #include <cstring>
 #include <cstdio>
 
@@ -220,6 +221,27 @@ private:
 	void checkInit() const
 	{
 		ANKI_ASSERT(m_ptr != nullptr);
+	}
+};
+
+/// Hasher function for CStrings. Can be used in HashMap.
+class CStringHasher
+{
+public:
+	U64 operator()(CString str)
+	{
+		ANKI_ASSERT(!str.isEmpty());
+		return computeHash(&str[0], str.getLength());
+	}
+};
+
+/// Compare function for CStrings. Can be used in HashMap.
+class CStringCompare
+{
+public:
+	Bool operator()(CString a, CString b)
+	{
+		return a == b;
 	}
 };
 

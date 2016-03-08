@@ -2538,6 +2538,67 @@ const char* LuaBinder::getWrappedTypeName<SceneGraph>()
 }
 
 //==============================================================================
+/// Pre-wrap method SceneGraph::newPerspectiveCamera.
+static inline int pwrapSceneGraphnewPerspectiveCamera(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	PtrSize size;
+	(void)size;
+
+	LuaBinder::checkArgsCount(l, 2);
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameSceneGraph, -7754439619132389154, ud))
+	{
+		return -1;
+	}
+
+	SceneGraph* self = ud->getData<SceneGraph>();
+
+	// Pop arguments
+	const char* arg0;
+	if(LuaBinder::checkString(l, 2, arg0))
+	{
+		return -1;
+	}
+
+	// Call the method
+	PerspectiveCamera* ret = newSceneNode<PerspectiveCamera>(self, arg0);
+
+	// Push return value
+	if(ANKI_UNLIKELY(ret == nullptr))
+	{
+		lua_pushstring(l, "Glue code returned nullptr");
+		return -1;
+	}
+
+	voidp = lua_newuserdata(l, sizeof(UserData));
+	ud = static_cast<UserData*>(voidp);
+	luaL_setmetatable(l, "PerspectiveCamera");
+	ud->initPointed(-4317960537256382878, const_cast<PerspectiveCamera*>(ret));
+
+	return 1;
+}
+
+//==============================================================================
+/// Wrap method SceneGraph::newPerspectiveCamera.
+static int wrapSceneGraphnewPerspectiveCamera(lua_State* l)
+{
+	int res = pwrapSceneGraphnewPerspectiveCamera(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
 /// Pre-wrap method SceneGraph::newModelNode.
 static inline int pwrapSceneGraphnewModelNode(lua_State* l)
 {
@@ -3143,6 +3204,8 @@ static int wrapSceneGraphnewReflectionProxy(lua_State* l)
 static inline void wrapSceneGraph(lua_State* l)
 {
 	LuaBinder::createClass(l, classnameSceneGraph);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "newPerspectiveCamera", wrapSceneGraphnewPerspectiveCamera);
 	LuaBinder::pushLuaCFuncMethod(
 		l, "newModelNode", wrapSceneGraphnewModelNode);
 	LuaBinder::pushLuaCFuncMethod(

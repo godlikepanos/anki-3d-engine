@@ -50,7 +50,7 @@ Config::Config()
 
 	newOption("ir.enabled", true);
 	newOption("ir.rendererSize", 128);
-	newOption("ir.cubemapTextureArraySize", 16);
+	newOption("ir.cubemapTextureArraySize", 32);
 	newOption("sslr.enabled", true);
 	newOption("sslr.startRoughnes", 0.2);
 

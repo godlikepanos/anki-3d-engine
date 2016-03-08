@@ -157,8 +157,6 @@ Error SceneGraph::init(AllocAlignedCallback allocCb,
 	const Timestamp* globalTimestamp,
 	const ConfigSet& config)
 {
-	Error err = ErrorCode::NONE;
-
 	m_globalTimestamp = globalTimestamp;
 	m_threadpool = threadpool;
 	m_resources = resources;
@@ -171,19 +169,19 @@ Error SceneGraph::init(AllocAlignedCallback allocCb,
 	m_frameAlloc =
 		SceneFrameAllocator<U8>(allocCb, allocCbData, 1 * 1024 * 1024);
 
-	err = m_events.create(this);
-
-	if(err)
-	{
-		ANKI_LOGE("Scene creation failed");
-	}
+	ANKI_CHECK(m_events.create(this));
 
 	m_sectors = m_alloc.newInstance<SectorGroup>(this);
 
 	m_maxReflectionProxyDistance =
 		config.getNumber("imageReflectionMaxDistance");
 
-	return err;
+	// Init the default main camera
+	ANKI_CHECK(newSceneNode<PerspectiveCamera>("mainCamera", m_defaultMainCam));
+	m_defaultMainCam->setAll(toRad(60.0), toRad(60.0), 0.1, 1000.0);
+	m_mainCam = m_defaultMainCam;
+
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -197,10 +195,10 @@ Error SceneGraph::registerNode(SceneNode* node)
 		if(tryFindSceneNode(node->getName()))
 		{
 			ANKI_LOGE("Node with the same name already exists");
-			return ErrorCode::FUNCTION_FAILED;
+			return ErrorCode::USER_DATA;
 		}
 
-		// m_dict[node->getName()] = node;
+		m_nodesDict.pushBack(m_alloc, node->getName(), node);
 	}
 
 	// Add to vector
@@ -217,16 +215,19 @@ void SceneGraph::unregisterNode(SceneNode* node)
 	m_nodes.erase(node);
 	--m_nodesCount;
 
-// Remove from dict
-#if 0
+	if(m_mainCam != m_defaultMainCam
+		&& static_cast<SceneNode*>(m_mainCam) == node)
+	{
+		m_mainCam = m_defaultMainCam;
+	}
+
+	// Remove from dict
 	if(node->getName())
 	{
-		auto it = m_dict.find(node->getName());
-
-		ANKI_ASSERT(it != m_dict.end());
-		m_dict.erase(it);
+		auto it = m_nodesDict.find(node->getName());
+		ANKI_ASSERT(it != m_nodesDict.getEnd());
+		m_nodesDict.erase(m_alloc, it);
 	}
-#endif
 }
 
 //==============================================================================
@@ -240,16 +241,8 @@ SceneNode& SceneGraph::findSceneNode(const CString& name)
 //==============================================================================
 SceneNode* SceneGraph::tryFindSceneNode(const CString& name)
 {
-	auto it = m_nodes.getBegin();
-	for(; it != m_nodes.getEnd(); ++it)
-	{
-		if((*it).getName() == name)
-		{
-			break;
-		}
-	}
-
-	return (it == m_nodes.getEnd()) ? nullptr : &(*it);
+	auto it = m_nodesDict.find(name);
+	return (it == m_nodesDict.getEnd()) ? nullptr : (*it);
 }
 
 //==============================================================================

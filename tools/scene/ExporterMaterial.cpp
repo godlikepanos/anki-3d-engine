@@ -7,7 +7,7 @@
 #include <iostream>
 
 //==============================================================================
-void Exporter::exportMaterial(const aiMaterial& mtl, uint32_t instances) const
+void Exporter::exportMaterial(const aiMaterial& mtl) const
 {
 	std::string diffTex;
 	std::string normTex;
@@ -19,7 +19,7 @@ void Exporter::exportMaterial(const aiMaterial& mtl, uint32_t instances) const
 
 	aiString path;
 
-	std::string name = getMaterialName(mtl, instances);
+	std::string name = getMaterialName(mtl);
 	LOGI("Exporting material %s", name.c_str());
 
 	// Diffuse texture
@@ -433,11 +433,6 @@ void Exporter::exportMaterial(const aiMaterial& mtl, uint32_t instances) const
 	}
 
 	// Continue
-	materialStr = replaceAllString(
-		materialStr, "%instanced%", (instances > 1) ? "1" : "0");
-	materialStr = replaceAllString(materialStr,
-		"%arraySize%",
-		std::to_string(roundUpInstancesCount(instances)));
 	materialStr =
 		replaceAllString(materialStr, "%diffuseMap%", m_texrpath + diffTex);
 

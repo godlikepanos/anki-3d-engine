@@ -186,6 +186,8 @@ private:
 /// Hash map base.
 /// @tparam TKey The key of the map.
 /// @tparam TValue The value of the map.
+/// @tparam THasher Functor to hash type of TKey.
+/// @tparam TCompare Functor to compare TKey.
 /// @internal
 template<typename TKey,
 	typename TValue,

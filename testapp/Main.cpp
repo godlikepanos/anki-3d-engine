@@ -16,7 +16,6 @@ using namespace anki;
 class MyApp : public App
 {
 public:
-	PerspectiveCamera* m_cam = nullptr;
 	Bool m_profile = false;
 
 	Error init();
@@ -44,27 +43,6 @@ Error MyApp::init()
 		app->setTimerTick(0.0);
 	}
 
-	// camera
-	err = scene.newSceneNode<PerspectiveCamera>("main-camera", m_cam);
-	if(err)
-		return err;
-	const F32 ang = 55.0;
-	m_cam->setAll(
-		renderer.getAspectRatio() * toRad(ang), toRad(ang), 0.2, 300.0);
-	scene.setActiveCamera(m_cam);
-
-	m_cam->getComponent<MoveComponent>().setLocalTransform(Transform(
-		Vec4(0.0), Mat3x4(Euler(toRad(0.0), toRad(180.0), toRad(0.0))), 1.0));
-
-#if !PLAYER
-	m_cam->getComponent<MoveComponent>().setLocalTransform(Transform(
-		// Vec4(147.392776, -10.132728, 16.607138, 0.0),
-		Vec4(98.994728, -10.601542, 16.376123, 0),
-		Mat3x4(Euler(toRad(0.0), toRad(-90.0), toRad(0.0))),
-		// Mat3x4::getIdentity(),
-		1.0));
-#endif
-
 	{
 		ScriptResourcePtr script;
 
@@ -82,14 +60,8 @@ Error MyApp::init()
 			.loadColorGradingTexture("textures/adis/dungeon.ankitex");
 	}
 
-#if PLAYER
-	PlayerNode* pnode;
-	scene.newSceneNode<PlayerNode>(
-		"player", pnode, Vec4(147.392776, -11.132728, 16.607138, 0.0));
-
-	pnode->addChild(m_cam);
-
-#endif
+	SceneNode& cam = scene.findSceneNode("Camera");
+	scene.setActiveCamera(static_cast<Camera*>(&cam));
 
 	return ErrorCode::NONE;
 }

@@ -12,8 +12,8 @@
 #include <anki/Math.h>
 #include <anki/util/Singleton.h>
 #include <anki/util/HighRezTimer.h>
+#include <anki/util/HashMap.h>
 #include <anki/core/App.h>
-
 #include <anki/event/EventManager.h>
 
 namespace anki
@@ -26,6 +26,7 @@ class Camera;
 class Input;
 class SectorGroup;
 class ConfigSet;
+class PerspectiveCamera;
 
 /// @addtogroup scene
 /// @{
@@ -196,10 +197,11 @@ private:
 
 	IntrusiveList<SceneNode> m_nodes;
 	U32 m_nodesCount = 0;
-	// SceneDictionary<SceneNode*> m_dict;
+	HashMap<CString, SceneNode*, CStringHasher, CStringCompare> m_nodesDict;
 
 	Camera* m_mainCam = nullptr;
 	Timestamp m_activeCameraChangeTimestamp = getGlobalTimestamp();
+	PerspectiveCamera* m_defaultMainCam = nullptr;
 
 	EventManager m_events;
 	SectorGroup* m_sectors;

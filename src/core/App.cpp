@@ -165,6 +165,15 @@ Error App::createInternal(const ConfigSet& config_,
 
 	m_timerTick = 1.0 / 60.0; // in sec. 1.0 / period
 
+// Check SIMD support
+#if ANKI_SIMD == ANKI_SIMD_SSE
+	if(!__builtin_cpu_supports("sse4.2"))
+	{
+		ANKI_LOGF("AnKi is built with sse4.2 support but your CPU doesn't "
+				  "support it. Try bulding without SSE support");
+	}
+#endif
+
 #if ANKI_ENABLE_TRACE
 	ANKI_CHECK(TraceManagerSingleton::get().create(
 		m_heapAlloc, m_settingsDir.toCString()));
