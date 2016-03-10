@@ -10,9 +10,9 @@ namespace anki
 {
 
 //==============================================================================
-MoveComponent::MoveComponent(SceneNode* node, Flag flags)
+MoveComponent::MoveComponent(SceneNode* node, MoveComponentFlag flags)
 	: SceneComponent(Type::MOVE, node)
-	, Bitset<Flag>(flags)
+	, m_flags(flags)
 {
 	markForUpdate();
 }
@@ -33,7 +33,7 @@ Error MoveComponent::update(SceneNode& node, F32, F32, Bool& updated)
 Bool MoveComponent::updateWorldTransform(SceneNode& node)
 {
 	m_prevWTrf = m_wtrf;
-	const Bool dirty = bitsEnabled(Flag::MARKED_FOR_UPDATE);
+	const Bool dirty = m_flags.get(MoveComponentFlag::MARKED_FOR_UPDATE);
 
 	// If dirty then update world transform
 	if(dirty)
@@ -50,11 +50,11 @@ Bool MoveComponent::updateWorldTransform(SceneNode& node)
 				// Parent not movable
 				m_wtrf = m_ltrf;
 			}
-			else if(bitsEnabled(Flag::IGNORE_PARENT_TRANSFORM))
+			else if(m_flags.get(MoveComponentFlag::IGNORE_PARENT_TRANSFORM))
 			{
 				m_wtrf = m_ltrf;
 			}
-			else if(bitsEnabled(Flag::IGNORE_LOCAL_TRANSFORM))
+			else if(m_flags.get(MoveComponentFlag::IGNORE_LOCAL_TRANSFORM))
 			{
 				m_wtrf = parentMove->getWorldTransform();
 			}
@@ -72,7 +72,7 @@ Bool MoveComponent::updateWorldTransform(SceneNode& node)
 		}
 
 		// Now it's a good time to cleanse parent
-		disableBits(Flag::MARKED_FOR_UPDATE);
+		m_flags.unset(MoveComponentFlag::MARKED_FOR_UPDATE);
 	}
 
 	// If this is dirty then make children dirty as well. Don't walk the

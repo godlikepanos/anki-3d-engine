@@ -216,22 +216,22 @@ void VisibilityTestTask::test(
 	List<SceneNode*> frustumsList;
 
 	Bool wantsRenderComponents = testedFrc.visibilityTestsEnabled(
-		FrustumComponent::VisibilityTestFlag::TEST_RENDER_COMPONENTS);
+		FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS);
 
 	Bool wantsLightComponents = testedFrc.visibilityTestsEnabled(
-		FrustumComponent::VisibilityTestFlag::TEST_LIGHT_COMPONENTS);
+		FrustumComponentVisibilityTestFlag::LIGHT_COMPONENTS);
 
 	Bool wantsFlareComponents = testedFrc.visibilityTestsEnabled(
-		FrustumComponent::VisibilityTestFlag::TEST_LENS_FLARE_COMPONENTS);
+		FrustumComponentVisibilityTestFlag::LENS_FLARE_COMPONENTS);
 
 	Bool wantsShadowCasters = testedFrc.visibilityTestsEnabled(
-		FrustumComponent::VisibilityTestFlag::TEST_SHADOW_CASTERS);
+		FrustumComponentVisibilityTestFlag::SHADOW_CASTERS);
 
 	Bool wantsReflectionProbes = testedFrc.visibilityTestsEnabled(
-		FrustumComponent::VisibilityTestFlag::TEST_REFLECTION_PROBES);
+		FrustumComponentVisibilityTestFlag::REFLECTION_PROBES);
 
 	Bool wantsReflectionProxies = testedFrc.visibilityTestsEnabled(
-		FrustumComponent::VisibilityTestFlag::TEST_REFLECTION_PROXIES);
+		FrustumComponentVisibilityTestFlag::REFLECTION_PROXIES);
 
 #if 0
 	ANKI_LOGW("Running test code");

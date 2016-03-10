@@ -178,22 +178,6 @@ public:
 	{
 	}
 
-	~SceneDebugDrawer()
-	{
-	}
-
-	void draw(SceneNode& node);
-
-	// void draw(const Sector& sector);
-
-	void setViewProjectionMatrix(const Mat4& m)
-	{
-		m_dbg->setViewProjectionMatrix(m);
-	}
-
-private:
-	DebugDrawer* m_dbg;
-
 	void draw(FrustumComponent& fr) const;
 
 	void draw(SpatialComponent& sp) const;
@@ -203,6 +187,9 @@ private:
 	void drawPath(const Path& path) const;
 
 	void draw(const ReflectionProxyComponent& proxy) const;
+
+private:
+	DebugDrawer* m_dbg;
 };
 /// @}
 

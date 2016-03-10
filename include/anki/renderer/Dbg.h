@@ -7,40 +7,31 @@
 
 #include <anki/renderer/RenderingPass.h>
 #include <anki/Gr.h>
-#include <anki/renderer/DebugDrawer.h>
-#include <anki/util/Bitset.h>
+#include <anki/util/BitMask.h>
 #include <anki/util/Enum.h>
 
 namespace anki
 {
 
-namespace detail
-{
-
-/// Dbg flags. Define them first so they can be parameter to the bitset
-enum class DbgFlag
-{
-	NONE = 0,
-	SPATIAL = 1 << 0,
-	FRUSTUMABLE = 1 << 1,
-	SECTOR = 1 << 2,
-	OCTREE = 1 << 3,
-	PHYSICS = 1 << 4,
-	ALL = SPATIAL | FRUSTUMABLE | SECTOR | OCTREE | PHYSICS
-};
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DbgFlag, inline)
-
-} // end namespace detail
-
 /// @addtogroup renderer
 /// @{
 
+/// Dbg flags. Define them first so they can be parameter to the bitset
+enum class DbgFlag : U16
+{
+	NONE = 0,
+	SPATIAL_COMPONENT = 1 << 0,
+	FRUSTUM_COMPONENT = 1 << 1,
+	SECTOR_COMPONENT = 1 << 2,
+	PHYSICS = 1 << 3,
+	ALL = SPATIAL_COMPONENT | FRUSTUM_COMPONENT | SECTOR_COMPONENT | PHYSICS
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DbgFlag, inline)
+
 /// Debugging stage
-class Dbg : public RenderingPass, public Bitset<detail::DbgFlag>
+class Dbg : public RenderingPass
 {
 public:
-	using Flag = detail::DbgFlag;
-
 	Bool getEnabled() const
 	{
 		return m_enabled;
@@ -55,6 +46,21 @@ public:
 	void setDepthTestEnabled(Bool enable);
 	void switchDepthTestEnabled();
 
+	void setFlags(DbgFlag flags)
+	{
+		m_flags.set(flags);
+	}
+
+	void unsetFlags(DbgFlag flags)
+	{
+		m_flags.unset(flags);
+	}
+
+	void flipFlags(DbgFlag flags)
+	{
+		m_flags.flip(flags);
+	}
+
 anki_internal:
 	Dbg(Renderer* r);
 
@@ -68,8 +74,7 @@ private:
 	Bool m_enabled = false;
 	FramebufferPtr m_fb;
 	DebugDrawer* m_drawer = nullptr;
-	// Have it as ptr because the constructor calls opengl
-	SceneDebugDrawer* m_sceneDrawer = nullptr;
+	BitMask<DbgFlag> m_flags;
 };
 /// @}
 

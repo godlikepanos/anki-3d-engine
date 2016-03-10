@@ -12,6 +12,7 @@ namespace anki
 
 // Forward
 class SceneGraph;
+class MainRenderer;
 
 /// @addtogroup script
 /// @{
@@ -38,16 +39,24 @@ anki_internal:
 	~ScriptManager();
 
 	/// Create the script manager.
-	ANKI_USE_RESULT Error create(
-		AllocAlignedCallback allocCb, void* allocCbData, SceneGraph* scene);
+	ANKI_USE_RESULT Error init(AllocAlignedCallback allocCb,
+		void* allocCbData,
+		SceneGraph* scene,
+		MainRenderer* renderer);
 
-	SceneGraph& _getSceneGraph()
+	SceneGraph& getSceneGraph()
 	{
 		return *m_scene;
 	}
 
+	MainRenderer& getMainRenderer()
+	{
+		return *m_r;
+	}
+
 private:
 	SceneGraph* m_scene = nullptr;
+	MainRenderer* m_r = nullptr;
 	ChainAllocator<U8> m_alloc;
 	LuaBinder m_lua;
 };

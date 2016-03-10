@@ -29,14 +29,14 @@ SpatialComponent::~SpatialComponent()
 //==============================================================================
 Error SpatialComponent::update(SceneNode&, F32, F32, Bool& updated)
 {
-	m_bits.disableBits(Flag::VISIBLE_ANY);
+	m_flags.unset(Flag::VISIBLE_ANY);
 
-	updated = m_bits.bitsEnabled(Flag::MARKED_FOR_UPDATE);
+	updated = m_flags.get(Flag::MARKED_FOR_UPDATE);
 	if(updated)
 	{
 		m_shape->computeAabb(m_aabb);
 		getSceneGraph().getSectorGroup().spatialUpdated(this);
-		m_bits.disableBits(Flag::MARKED_FOR_UPDATE);
+		m_flags.unset(Flag::MARKED_FOR_UPDATE);
 	}
 
 	return ErrorCode::NONE;

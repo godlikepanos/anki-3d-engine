@@ -9,7 +9,7 @@
 #include <anki/scene/SpatialComponent.h>
 #include <anki/scene/Common.h>
 #include <anki/scene/SceneComponent.h>
-#include <anki/util/Bitset.h>
+#include <anki/util/BitMask.h>
 
 namespace anki
 {
@@ -19,6 +19,24 @@ class VisibilityTestResults;
 
 /// @addtogroup scene
 /// @{
+
+/// Flags that affect visibility tests.
+enum class FrustumComponentVisibilityTestFlag : U8
+{
+	NONE = 0,
+	RENDER_COMPONENTS = 1 << 0,
+	LIGHT_COMPONENTS = 1 << 1,
+	LENS_FLARE_COMPONENTS = 1 << 2,
+	SHADOW_CASTERS = 1 << 3,
+	REFLECTION_PROBES = 1 << 4,
+	REFLECTION_PROXIES = 1 << 5,
+
+	ALL_TESTS = RENDER_COMPONENTS | LIGHT_COMPONENTS | LENS_FLARE_COMPONENTS
+		| SHADOW_CASTERS
+		| REFLECTION_PROBES
+		| REFLECTION_PROXIES
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(FrustumComponentVisibilityTestFlag, inline)
 
 /// Frustum component interface for scene nodes. Useful for nodes that are
 /// frustums like cameras and lights
@@ -30,25 +48,6 @@ public:
 		U32 m_renderablesCount = 0;
 		U32 m_lightsCount = 0;
 	};
-
-	/// Flags that affect visibility tests.
-	enum class VisibilityTestFlag : U8
-	{
-		TEST_NONE = 0,
-		TEST_RENDER_COMPONENTS = 1 << 0,
-		TEST_LIGHT_COMPONENTS = 1 << 1,
-		TEST_LENS_FLARE_COMPONENTS = 1 << 2,
-		TEST_SHADOW_CASTERS = 1 << 3,
-		TEST_REFLECTION_PROBES = 1 << 4,
-		TEST_REFLECTION_PROXIES = 1 << 5,
-
-		ALL_TESTS = TEST_RENDER_COMPONENTS | TEST_LIGHT_COMPONENTS
-			| TEST_LENS_FLARE_COMPONENTS
-			| TEST_SHADOW_CASTERS
-			| TEST_REFLECTION_PROBES
-			| TEST_REFLECTION_PROXIES
-	};
-	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VisibilityTestFlag, friend)
 
 	/// Pass the frustum here so we can avoid the virtuals
 	FrustumComponent(SceneNode* node, Frustum* frustum);
@@ -124,13 +123,13 @@ public:
 	/// Call when the shape of the frustum got changed.
 	void markShapeForUpdate()
 	{
-		m_flags.enableBits(SHAPE_MARKED_FOR_UPDATE);
+		m_flags.set(SHAPE_MARKED_FOR_UPDATE);
 	}
 
 	/// Call when the transformation of the frustum got changed.
 	void markTransformForUpdate()
 	{
-		m_flags.enableBits(TRANSFORM_MARKED_FOR_UPDATE);
+		m_flags.set(TRANSFORM_MARKED_FOR_UPDATE);
 	}
 
 	/// Is a spatial inside the frustum?
@@ -150,17 +149,19 @@ public:
 	ANKI_USE_RESULT Error update(SceneNode&, F32, F32, Bool& updated) override;
 	/// @}
 
-	void setEnabledVisibilityTests(VisibilityTestFlag bits)
+	void setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag bits)
 	{
-		m_flags.disableBits(VisibilityTestFlag::ALL_TESTS);
-		m_flags.enableBits(bits, true);
+		m_flags.unset(FrustumComponentVisibilityTestFlag::ALL_TESTS);
+		m_flags.set(bits, true);
 
 #if ANKI_ASSERTS_ENABLED
-		if(m_flags.bitsEnabled(VisibilityTestFlag::TEST_RENDER_COMPONENTS)
-			|| m_flags.bitsEnabled(VisibilityTestFlag::TEST_SHADOW_CASTERS))
+		if(m_flags.get(FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS)
+			|| m_flags.get(FrustumComponentVisibilityTestFlag::SHADOW_CASTERS))
 		{
-			if(m_flags.bitsEnabled(VisibilityTestFlag::TEST_RENDER_COMPONENTS)
-				== m_flags.bitsEnabled(VisibilityTestFlag::TEST_SHADOW_CASTERS))
+			if(m_flags.get(
+				   FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS)
+				== m_flags.get(
+					   FrustumComponentVisibilityTestFlag::SHADOW_CASTERS))
 			{
 				ANKI_ASSERT(0 && "Cannot have them both");
 			}
@@ -168,14 +169,14 @@ public:
 #endif
 	}
 
-	Bool visibilityTestsEnabled(VisibilityTestFlag bits) const
+	Bool visibilityTestsEnabled(FrustumComponentVisibilityTestFlag bits) const
 	{
-		return m_flags.bitsEnabled(bits);
+		return m_flags.get(bits);
 	}
 
 	Bool anyVisibilityTestEnabled() const
 	{
-		return m_flags.anyBitsEnabled(VisibilityTestFlag::ALL_TESTS);
+		return m_flags.getAny(FrustumComponentVisibilityTestFlag::ALL_TESTS);
 	}
 
 	static Bool classof(const SceneComponent& c)
@@ -203,7 +204,7 @@ private:
 	VisibilityTestResults* m_visible = nullptr;
 	VisibilityStats m_stats;
 
-	Bitset<U8> m_flags;
+	BitMask<U8> m_flags;
 
 	void computeProjectionParams();
 };

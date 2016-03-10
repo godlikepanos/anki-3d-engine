@@ -94,11 +94,11 @@ Error Camera::create(const CString& name, Frustum* frustum)
 	FrustumComponent* frc =
 		getSceneAllocator().newInstance<FrustumComponent>(this, frustum);
 	frc->setEnabledVisibilityTests(
-		FrustumComponent::VisibilityTestFlag::TEST_RENDER_COMPONENTS
-		| FrustumComponent::VisibilityTestFlag::TEST_LIGHT_COMPONENTS
-		| FrustumComponent::VisibilityTestFlag::TEST_LENS_FLARE_COMPONENTS
-		| FrustumComponent::VisibilityTestFlag::TEST_REFLECTION_PROBES
-		| FrustumComponent::VisibilityTestFlag::TEST_REFLECTION_PROXIES);
+		FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS
+		| FrustumComponentVisibilityTestFlag::LIGHT_COMPONENTS
+		| FrustumComponentVisibilityTestFlag::LENS_FLARE_COMPONENTS
+		| FrustumComponentVisibilityTestFlag::REFLECTION_PROBES
+		| FrustumComponentVisibilityTestFlag::REFLECTION_PROXIES);
 	addComponent(frc, true);
 
 	// Feedback component #2

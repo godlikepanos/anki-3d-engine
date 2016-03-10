@@ -8,7 +8,7 @@
 #include <anki/scene/Common.h>
 #include <anki/util/Hierarchy.h>
 #include <anki/util/Rtti.h>
-#include <anki/util/Bitset.h>
+#include <anki/util/BitMask.h>
 #include <anki/util/List.h>
 #include <anki/util/Enum.h>
 #include <anki/scene/SceneComponent.h>
@@ -57,7 +57,7 @@ public:
 
 	Bool getMarkedForDeletion() const
 	{
-		return m_flags.bitsEnabled(Flag::MARKED_FOR_DELETION);
+		return m_flags.get(Flag::MARKED_FOR_DELETION);
 	}
 
 	void setMarkedForDeletion();
@@ -90,13 +90,13 @@ public:
 	/// Inform if a sector has visited this node.
 	void setSectorVisited(Bool visited)
 	{
-		m_flags.enableBits(Flag::SECTOR_VISITED, visited);
+		m_flags.set(Flag::SECTOR_VISITED, visited);
 	}
 
 	/// Check if a sector has visited this node.
 	Bool getSectorVisited() const
 	{
-		return m_flags.bitsEnabled(Flag::SECTOR_VISITED);
+		return m_flags.get(Flag::SECTOR_VISITED);
 	}
 
 	/// Iterate all components
@@ -205,7 +205,7 @@ private:
 	U8 m_componentsCount = 0;
 
 	String m_name; ///< A unique name
-	Bitset<Flag> m_flags;
+	BitMask<Flag> m_flags;
 
 	void cacheImportantComponents();
 };

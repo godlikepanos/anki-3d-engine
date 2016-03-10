@@ -128,19 +128,15 @@ Error MyApp::userMainLoop(Bool& quit)
 	}
 	if(in.getKey(KeyCode::F2) == 1)
 	{
-		renderer.getDbg().switchBits(Dbg::Flag::SPATIAL);
+		renderer.getDbg().flipFlags(DbgFlag::SPATIAL_COMPONENT);
 	}
 	if(in.getKey(KeyCode::F3) == 1)
 	{
-		renderer.getDbg().switchBits(Dbg::Flag::PHYSICS);
+		renderer.getDbg().flipFlags(DbgFlag::PHYSICS);
 	}
 	if(in.getKey(KeyCode::F4) == 1)
 	{
-		renderer.getDbg().switchBits(Dbg::Flag::SECTOR);
-	}
-	if(in.getKey(KeyCode::F5) == 1)
-	{
-		renderer.getDbg().switchBits(Dbg::Flag::OCTREE);
+		renderer.getDbg().flipFlags(DbgFlag::SECTOR_COMPONENT);
 	}
 	if(in.getKey(KeyCode::F6) == 1)
 	{

@@ -21,7 +21,7 @@ FrustumComponent::FrustumComponent(SceneNode* node, Frustum* frustum)
 	markShapeForUpdate();
 	markTransformForUpdate();
 
-	setEnabledVisibilityTests(VisibilityTestFlag::TEST_NONE);
+	setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
 }
 
 //==============================================================================
@@ -43,14 +43,14 @@ Error FrustumComponent::update(SceneNode& node, F32, F32, Bool& updated)
 
 	updated = false;
 
-	if(m_flags.bitsEnabled(SHAPE_MARKED_FOR_UPDATE))
+	if(m_flags.get(SHAPE_MARKED_FOR_UPDATE))
 	{
 		updated = true;
 		m_pm = m_frustum->calculateProjectionMatrix();
 		computeProjectionParams();
 	}
 
-	if(m_flags.bitsEnabled(TRANSFORM_MARKED_FOR_UPDATE))
+	if(m_flags.get(TRANSFORM_MARKED_FOR_UPDATE))
 	{
 		updated = true;
 		m_vm = Mat4(m_frustum->getTransform().getInverse());
@@ -59,8 +59,7 @@ Error FrustumComponent::update(SceneNode& node, F32, F32, Bool& updated)
 	if(updated)
 	{
 		m_vpm = m_pm * m_vm;
-		m_flags.disableBits(
-			SHAPE_MARKED_FOR_UPDATE | TRANSFORM_MARKED_FOR_UPDATE);
+		m_flags.unset(SHAPE_MARKED_FOR_UPDATE | TRANSFORM_MARKED_FOR_UPDATE);
 	}
 
 	return ErrorCode::NONE;

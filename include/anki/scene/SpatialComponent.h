@@ -8,7 +8,7 @@
 #include <anki/scene/Common.h>
 #include <anki/scene/SceneComponent.h>
 #include <anki/Collision.h>
-#include <anki/util/Bitset.h>
+#include <anki/util/BitMask.h>
 #include <anki/util/Enum.h>
 #include <anki/util/List.h>
 
@@ -72,13 +72,13 @@ public:
 	/// Check if it's confined in a single sector.
 	Bool getSingleSector() const
 	{
-		return m_bits.bitsEnabled(Flag::SINGLE_SECTOR);
+		return m_flags.get(Flag::SINGLE_SECTOR);
 	}
 
 	/// Confine it or not in a single sector.
 	void setSingleSector(Bool yes)
 	{
-		m_bits.enableBits(Flag::SINGLE_SECTOR, yes);
+		m_flags.set(Flag::SINGLE_SECTOR, yes);
 	}
 
 	/// Used for sorting spatials. In most object the origin is the center of
@@ -98,19 +98,19 @@ public:
 	/// shape got updated
 	void markForUpdate()
 	{
-		m_bits.enableBits(Flag::MARKED_FOR_UPDATE);
+		m_flags.set(Flag::MARKED_FOR_UPDATE);
 	}
 
 	/// Set if visible by a camera
 	void setVisibleByCamera(Bool visible)
 	{
-		m_bits.enableBits(Flag::VISIBLE_CAMERA, visible);
+		m_flags.set(Flag::VISIBLE_CAMERA, visible);
 	}
 
 	/// Check if visible by camera
 	Bool getVisibleByCamera() const
 	{
-		return m_bits.bitsEnabled(Flag::VISIBLE_CAMERA);
+		return m_flags.get(Flag::VISIBLE_CAMERA);
 	}
 
 	/// @name SceneComponent overrides
@@ -132,7 +132,7 @@ private:
 	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Flag, friend)
 
 	const CollisionShape* m_shape;
-	Bitset<Flag> m_bits;
+	BitMask<Flag> m_flags;
 	Aabb m_aabb; ///< A faster shape
 	Vec4 m_origin = Vec4(MAX_F32, MAX_F32, MAX_F32, 0.0);
 	List<Sector*> m_sectorInfo;

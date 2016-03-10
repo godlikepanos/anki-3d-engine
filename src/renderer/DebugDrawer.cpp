@@ -526,46 +526,6 @@ void PhysicsDebugDrawer::drawLines(
 //==============================================================================
 
 //==============================================================================
-void SceneDebugDrawer::draw(SceneNode& node)
-{
-	MoveComponent* mv = node.tryGetComponent<MoveComponent>();
-	if(mv)
-	{
-		m_dbg->setModelMatrix(Mat4(mv->getWorldTransform()));
-	}
-	else
-	{
-		m_dbg->setModelMatrix(Mat4::getIdentity());
-	}
-
-	FrustumComponent* fr = node.tryGetComponent<FrustumComponent>();
-	if(fr)
-	{
-		draw(*fr);
-	}
-
-	Error err = node.iterateComponentsOfType<SpatialComponent>(
-		[&](SpatialComponent& sp) -> Error {
-			draw(sp);
-			return ErrorCode::NONE;
-		});
-	(void)err;
-
-	PortalSectorComponent* ps = node.tryGetComponent<PortalSectorComponent>();
-	if(ps)
-	{
-		draw(*ps);
-	}
-
-	ReflectionProxyComponent* proxy =
-		node.tryGetComponent<ReflectionProxyComponent>();
-	if(proxy)
-	{
-		draw(*proxy);
-	}
-}
-
-//==============================================================================
 void SceneDebugDrawer::draw(FrustumComponent& fr) const
 {
 	const Frustum& fs = fr.getFrustum();

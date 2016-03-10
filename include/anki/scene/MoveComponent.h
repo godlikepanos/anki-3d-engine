@@ -7,7 +7,7 @@
 
 #include <anki/scene/Common.h>
 #include <anki/scene/SceneComponent.h>
-#include <anki/util/Bitset.h>
+#include <anki/util/BitMask.h>
 #include <anki/util/Enum.h>
 #include <anki/Math.h>
 
@@ -33,11 +33,9 @@ enum class MoveComponentFlag : U8
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(MoveComponentFlag, inline)
 
 /// Interface for movable scene nodes
-class MoveComponent : public SceneComponent, public Bitset<MoveComponentFlag>
+class MoveComponent : public SceneComponent
 {
 public:
-	using Flag = MoveComponentFlag;
-
 	static Bool classof(const SceneComponent& c)
 	{
 		return c.getType() == Type::MOVE;
@@ -46,7 +44,8 @@ public:
 	/// The one and only constructor
 	/// @param node The scene node to steal it's allocators
 	/// @param flags The flags
-	MoveComponent(SceneNode* node, Flag flags = Flag::NONE);
+	MoveComponent(
+		SceneNode* node, MoveComponentFlag flags = MoveComponentFlag::NONE);
 
 	~MoveComponent();
 
@@ -181,9 +180,11 @@ private:
 	/// Keep the previous transformation for checking if it moved
 	Transform m_prevWTrf = Transform::getIdentity();
 
+	BitMask<MoveComponentFlag> m_flags;
+
 	void markForUpdate()
 	{
-		enableBits(Flag::MARKED_FOR_UPDATE);
+		m_flags.set(MoveComponentFlag::MARKED_FOR_UPDATE);
 	}
 
 	/// Called every frame. It updates the @a m_wtrf if @a shouldUpdateWTrf

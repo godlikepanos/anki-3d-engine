@@ -699,9 +699,9 @@ void Exporter::exportCamera(const aiCamera& cam)
 
 	file << "scene:setActiveCamera(node:getSceneNodeBase())\n";
 
-	file << "node:setAll(" << cam.mHorizontalFOV * cam.mAspect << ", "
-		 << cam.mHorizontalFOV << ", " << cam.mClipPlaneNear << ", "
-		 << cam.mClipPlaneFar << ")\n";
+	file << "node:setAll(" << cam.mHorizontalFOV << ", "
+		 << "1.0 / getMainRenderer():getAspectRatio() * " << cam.mHorizontalFOV
+		 << ", " << cam.mClipPlaneNear << ", " << cam.mClipPlaneFar << ")\n";
 
 	// Find the node
 	const aiNode* node =

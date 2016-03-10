@@ -44,7 +44,8 @@
 #include <anki/util/Array.h>
 #include <anki/util/Assert.h>
 #include <anki/util/Atomic.h>
-#include <anki/util/Bitset.h>
+#include <anki/util/BitSet.h>
+#include <anki/util/BitMask.h>
 #include <anki/util/DArray.h>
 #include <anki/util/Dictionary.h>
 #include <anki/util/Enum.h>

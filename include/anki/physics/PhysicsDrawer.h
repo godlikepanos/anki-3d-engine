@@ -6,7 +6,6 @@
 #pragma once
 
 #include <anki/physics/Common.h>
-#include <anki/util/Bitset.h>
 
 // Forward
 class NewtonBody;

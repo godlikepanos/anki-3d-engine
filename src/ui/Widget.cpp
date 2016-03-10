@@ -28,7 +28,7 @@ void Widget::markForDeletion()
 {
 	if(!isMarkedForDeletion())
 	{
-		m_flags.enableBits(MARKED_FOR_DELETION);
+		m_flags.set(MARKED_FOR_DELETION);
 		getCanvas().getMarkedForDeletionCount().fetchAdd(1);
 	}
 

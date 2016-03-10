@@ -31,6 +31,7 @@ class DownscaleBlur;
 class Volumetric;
 
 class RenderingContext;
+class DebugDrawer;
 
 /// @addtogroup renderer
 /// @{

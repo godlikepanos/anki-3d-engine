@@ -8,9 +8,11 @@
 #include <anki/renderer/Ms.h>
 #include <anki/renderer/Is.h>
 #include <anki/renderer/Pps.h>
+#include <anki/renderer/DebugDrawer.h>
 #include <anki/resource/ShaderResource.h>
 #include <anki/scene/SceneGraph.h>
 #include <anki/scene/FrustumComponent.h>
+#include <anki/scene/MoveComponent.h>
 #include <anki/scene/Sector.h>
 #include <anki/scene/Light.h>
 #include <anki/util/Logger.h>
@@ -36,18 +38,13 @@ Dbg::~Dbg()
 	{
 		getAllocator().deleteInstance(m_drawer);
 	}
-
-	if(m_sceneDrawer != nullptr)
-	{
-		getAllocator().deleteInstance(m_sceneDrawer);
-	}
 }
 
 //==============================================================================
 Error Dbg::init(const ConfigSet& initializer)
 {
 	m_enabled = initializer.getNumber("dbg.enabled");
-	enableBits(Flag::ALL);
+	m_flags.set(DbgFlag::ALL);
 
 	// Chose the correct color FAI
 	FramebufferInitInfo fbInit;
@@ -70,8 +67,6 @@ Error Dbg::init(const ConfigSet& initializer)
 
 	m_drawer = getAllocator().newInstance<DebugDrawer>();
 	ANKI_CHECK(m_drawer->create(m_r));
-
-	m_sceneDrawer = getAllocator().newInstance<SceneDebugDrawer>(m_drawer);
 
 	getGrManager().finish();
 	return ErrorCode::NONE;
@@ -96,31 +91,62 @@ Error Dbg::run(RenderingContext& ctx)
 
 	SceneGraph& scene = cam.getSceneGraph();
 
+	SceneDebugDrawer sceneDrawer(m_drawer);
 	err = scene.iterateSceneNodes([&](SceneNode& node) -> Error {
-		SpatialComponent* sp = node.tryGetComponent<SpatialComponent>();
-
-		if(&cam.getComponent<SpatialComponent>() == sp)
+		if(&node == &cam)
 		{
 			return ErrorCode::NONE;
 		}
 
-		if(bitsEnabled(Flag::SPATIAL) && sp)
+		// Set position
+		MoveComponent* mv = node.tryGetComponent<MoveComponent>();
+		if(mv)
 		{
-			m_sceneDrawer->draw(node);
+			m_drawer->setModelMatrix(Mat4(mv->getWorldTransform()));
+		}
+		else
+		{
+			m_drawer->setModelMatrix(Mat4::getIdentity());
 		}
 
-		if(bitsEnabled(Flag::SECTOR)
-			&& node.tryGetComponent<PortalSectorComponent>())
+		// Spatial
+		if(m_flags.get(DbgFlag::SPATIAL_COMPONENT))
 		{
-			m_sceneDrawer->draw(node);
+			Error err = node.iterateComponentsOfType<SpatialComponent>(
+				[&](SpatialComponent& sp) -> Error {
+					sceneDrawer.draw(sp);
+					return ErrorCode::NONE;
+				});
+			(void)err;
+		}
+
+		// Frustum
+		if(m_flags.get(DbgFlag::FRUSTUM_COMPONENT))
+		{
+			Error err = node.iterateComponentsOfType<FrustumComponent>(
+				[&](FrustumComponent& frc) -> Error {
+					sceneDrawer.draw(frc);
+					return ErrorCode::NONE;
+				});
+			(void)err;
+		}
+
+		// Sector/portal
+		if(m_flags.get(DbgFlag::SECTOR_COMPONENT))
+		{
+			Error err = node.iterateComponentsOfType<PortalSectorComponent>(
+				[&](PortalSectorComponent& psc) -> Error {
+					sceneDrawer.draw(psc);
+					return ErrorCode::NONE;
+				});
+			(void)err;
 		}
 
 		return ErrorCode::NONE;
 	});
-
 	(void)err;
 
-	if(0)
+	if(m_flags.get(DbgFlag::PHYSICS))
 	{
 		PhysicsDebugDrawer phyd(m_drawer);
 

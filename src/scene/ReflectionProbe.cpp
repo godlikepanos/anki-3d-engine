@@ -18,9 +18,9 @@ namespace anki
 // Misc                                                                        =
 //==============================================================================
 
-const FrustumComponent::VisibilityTestFlag FRUSTUM_TEST_FLAGS =
-	FrustumComponent::VisibilityTestFlag::TEST_RENDER_COMPONENTS
-	| FrustumComponent::VisibilityTestFlag::TEST_LIGHT_COMPONENTS;
+const FrustumComponentVisibilityTestFlag FRUSTUM_TEST_FLAGS =
+	FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS
+	| FrustumComponentVisibilityTestFlag::LIGHT_COMPONENTS;
 
 /// Feedback component
 class ReflectionProbeMoveFeedbackComponent : public SceneComponent
@@ -106,7 +106,7 @@ Error ReflectionProbe::create(const CString& name, F32 radius)
 				this, &m_cubeSides[i].m_frustum);
 
 		frc->setEnabledVisibilityTests(
-			FrustumComponent::VisibilityTestFlag::TEST_NONE);
+			FrustumComponentVisibilityTestFlag::NONE);
 
 		addComponent(frc, true);
 	}
@@ -166,10 +166,9 @@ Error ReflectionProbe::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 	const ReflectionProbeComponent& reflc =
 		getComponent<ReflectionProbeComponent>();
 
-	FrustumComponent::VisibilityTestFlag testFlags =
-		reflc.getMarkedForRendering()
+	FrustumComponentVisibilityTestFlag testFlags = reflc.getMarkedForRendering()
 		? FRUSTUM_TEST_FLAGS
-		: FrustumComponent::VisibilityTestFlag::TEST_NONE;
+		: FrustumComponentVisibilityTestFlag::NONE;
 
 	Error err = iterateComponentsOfType<FrustumComponent>(
 		[testFlags](FrustumComponent& frc) -> Error {

@@ -38,7 +38,7 @@ static SceneGraph* getSceneGraph(lua_State* l)
 	ScriptManager* scriptManager =
 		reinterpret_cast<ScriptManager*>(binder->getParent());
 
-	return &scriptManager->_getSceneGraph();
+	return &scriptManager->getSceneGraph();
 }
 
 //==============================================================================

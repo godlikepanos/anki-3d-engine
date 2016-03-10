@@ -102,12 +102,12 @@ void Light::frameUpdateCommon()
 			if(castsShadow)
 			{
 				frc.setEnabledVisibilityTests(
-					FrustumComponent::VisibilityTestFlag::TEST_SHADOW_CASTERS);
+					FrustumComponentVisibilityTestFlag::SHADOW_CASTERS);
 			}
 			else
 			{
 				frc.setEnabledVisibilityTests(
-					FrustumComponent::VisibilityTestFlag::TEST_NONE);
+					FrustumComponentVisibilityTestFlag::NONE);
 			}
 
 			return ErrorCode::NONE;
@@ -296,8 +296,7 @@ Error SpotLight::create(const CString& name)
 
 	FrustumComponent* fr =
 		getSceneAllocator().newInstance<FrustumComponent>(this, &m_frustum);
-	fr->setEnabledVisibilityTests(
-		FrustumComponent::VisibilityTestFlag::TEST_NONE);
+	fr->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
 
 	addComponent(fr, true);
 

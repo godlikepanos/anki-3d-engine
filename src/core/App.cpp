@@ -291,7 +291,7 @@ Error App::createInternal(const ConfigSet& config_,
 	//
 	m_script = m_heapAlloc.newInstance<ScriptManager>();
 
-	ANKI_CHECK(m_script->create(m_allocCb, m_allocCbData, m_scene));
+	ANKI_CHECK(m_script->init(m_allocCb, m_allocCbData, m_scene, m_renderer));
 
 	ANKI_LOGI("Application initialized");
 	return ErrorCode::NONE;

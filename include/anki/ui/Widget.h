@@ -7,7 +7,7 @@
 
 #include <anki/ui/UiObject.h>
 #include <anki/util/Hierarchy.h>
-#include <anki/util/Bitset.h>
+#include <anki/util/BitMask.h>
 
 namespace anki
 {
@@ -40,7 +40,7 @@ public:
 
 	Bool isMarkedForDeletion() const
 	{
-		return m_flags.bitsEnabled(MARKED_FOR_DELETION);
+		return m_flags.get(MARKED_FOR_DELETION);
 	}
 
 	virtual void paint()
@@ -91,12 +91,12 @@ public:
 #ifdef ANKI_BUILD
 	void markForRepaint()
 	{
-		m_flags.enableBits(NEEDS_REPAINT, true);
+		m_flags.set(NEEDS_REPAINT, true);
 	}
 
 	Bool isMarkedForRepaint() const
 	{
-		return m_flags.bitsEnabled(NEEDS_REPAINT);
+		return m_flags.get(NEEDS_REPAINT);
 	}
 #endif
 
@@ -114,7 +114,7 @@ private:
 	UVec2 m_posLocal = UVec2(0u); ///< Local space.
 	UVec2 m_posCanvas = UVec2(0u); ///< World space.
 
-	Bitset<U8> m_flags;
+	BitMask<U8> m_flags;
 };
 /// @}
 

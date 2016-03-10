@@ -22,7 +22,7 @@ static EventManager* getEventManager(lua_State* l)
 	ScriptManager* scriptManager =
 		reinterpret_cast<ScriptManager*>(binder->getParent());
 
-	return &scriptManager->_getSceneGraph().getEventManager();
+	return &scriptManager->getSceneGraph().getEventManager();
 }]]></head>
 
 	<classes>

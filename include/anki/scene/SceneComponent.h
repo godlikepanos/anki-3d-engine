@@ -8,7 +8,7 @@
 #include <anki/scene/Common.h>
 #include <anki/core/Timestamp.h>
 #include <anki/util/Functions.h>
-#include <anki/util/Bitset.h>
+#include <anki/util/BitMask.h>
 
 namespace anki
 {
@@ -86,12 +86,12 @@ public:
 
 	void setAutomaticCleanup(Bool enable)
 	{
-		m_flags.enableBits(AUTOMATIC_CLEANUP, enable);
+		m_flags.set(AUTOMATIC_CLEANUP, enable);
 	}
 
 	Bool getAutomaticCleanup() const
 	{
-		return m_flags.bitsEnabled(AUTOMATIC_CLEANUP);
+		return m_flags.get(AUTOMATIC_CLEANUP);
 	}
 
 	SceneNode& getSceneNode()
@@ -120,7 +120,7 @@ private:
 	};
 
 	Type m_type;
-	Bitset<U8> m_flags;
+	BitMask<U8> m_flags;
 };
 /// @}
 

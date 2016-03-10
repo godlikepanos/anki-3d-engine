@@ -4498,6 +4498,49 @@ static inline void wrapTransform(lua_State* l)
 }
 
 //==============================================================================
+/// Pre-wrap function toRad.
+static inline int pwraptoRad(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	PtrSize size;
+	(void)size;
+
+	LuaBinder::checkArgsCount(l, 1);
+
+	// Pop arguments
+	F32 arg0;
+	if(LuaBinder::checkNumber(l, 1, arg0))
+	{
+		return -1;
+	}
+
+	// Call the function
+	F32 ret = toRad(arg0);
+
+	// Push return value
+	lua_pushnumber(l, ret);
+
+	return 1;
+}
+
+//==============================================================================
+/// Wrap function toRad.
+static int wraptoRad(lua_State* l)
+{
+	int res = pwraptoRad(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
 /// Wrap the module.
 void wrapModuleMath(lua_State* l)
 {
@@ -4507,6 +4550,7 @@ void wrapModuleMath(lua_State* l)
 	wrapMat3(l);
 	wrapMat3x4(l);
 	wrapTransform(l);
+	LuaBinder::pushLuaCFunc(l, "toRad", wraptoRad);
 }
 
 } // end namespace anki

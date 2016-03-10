@@ -39,7 +39,7 @@ static SceneGraph* getSceneGraph(lua_State* l)
 	ScriptManager* scriptManager =
 		reinterpret_cast<ScriptManager*>(binder->getParent());
 
-	return &scriptManager->_getSceneGraph();
+	return &scriptManager->getSceneGraph();
 }]]></head>
 
 	<classes>
@@ -356,14 +356,12 @@ static SceneGraph* getSceneGraph(lua_State* l)
 			</methods>
 		</class>
 	</classes>
-
 	<functions>
 		<function name="getSceneGraph">
 			<overrideCall>SceneGraph* ret = getSceneGraph(l);</overrideCall>
 			<return>SceneGraph*</return>
 		</function>
 	</functions>
-
 	<tail><![CDATA[} // end namespace anki]]></tail>
 </glue>
 

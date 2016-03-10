@@ -465,7 +465,15 @@ namespace anki {]]></head>
 			</methods>
 		</class>
 	</classes>
-
+	<functions>
+		<function name="toRad">
+			<overrideCall>F32 ret = toRad(arg0);</overrideCall>
+			<args>
+				<arg>F32</arg>
+			</args>
+			<return>F32</return>
+		</function>
+	</functions>
 	<tail><![CDATA[} // end namespace anki]]></tail>
 </glue>
 
