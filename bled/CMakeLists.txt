@@ -1,0 +1,2 @@
+ADD_EXECUTABLE(bled Main.cpp)
+TARGET_LINK_LIBRARIES(bled anki)
