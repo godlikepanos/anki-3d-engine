@@ -531,9 +531,8 @@ void SectorGroup::spatialDeleted(SpatialComponent* sp)
 
 //==============================================================================
 void SectorGroup::findVisibleSectors(const FrustumComponent& frc,
-	List<Sector*>& visibleSectors,
-	U& spatialsCount,
-	const Renderer& r)
+	List<const Sector*>& visibleSectors,
+	U& spatialsCount) const
 {
 	// Find the sector the eye is in
 	Sphere eye(frc.getFrustumOrigin(), frc.getFrustum().getNear());
@@ -557,33 +556,31 @@ void SectorGroup::findVisibleSectors(const FrustumComponent& frc,
 
 	if(it == end)
 	{
-		// eye outside all sectors, find those it collides
+		// eye outside all sectors, find those the frustum collides
 
 		it = m_sectors.getBegin();
 		for(; it != end; ++it)
 		{
-			Sector& s = *(*it);
+			const Sector& s = *(*it);
 			if(frc.insideFrustum(s.getBoundingShape()))
 			{
 				findVisibleSectorsInternal(
-					frc, s, visibleSectors, spatialsCount, r);
+					frc, s, visibleSectors, spatialsCount);
 			}
 		}
 	}
 	else
 	{
 		// eye inside a sector
-		findVisibleSectorsInternal(
-			frc, *(*it), visibleSectors, spatialsCount, r);
+		findVisibleSectorsInternal(frc, *(*it), visibleSectors, spatialsCount);
 	}
 }
 
 //==============================================================================
 void SectorGroup::findVisibleSectorsInternal(const FrustumComponent& frc,
-	Sector& s,
-	List<Sector*>& visibleSectors,
-	U& spatialsCount,
-	const Renderer& r)
+	const Sector& s,
+	List<const Sector*>& visibleSectors,
+	U& spatialsCount) const
 {
 	auto alloc = m_scene->getFrameAllocator();
 
@@ -608,26 +605,21 @@ void SectorGroup::findVisibleSectorsInternal(const FrustumComponent& frc,
 	auto itend = s.m_portals.getEnd();
 	for(; itp != itend; ++itp)
 	{
-		Portal& p = *(*itp);
+		const Portal& p = *(*itp);
 
 		Aabb box;
 		p.getBoundingShape().computeAabb(box);
 
-		if(frc.insideFrustum(p.getBoundingShape())
-#if 0
-			&& r.doGpuVisibilityTest(p.getBoundingShape(), box))
-#else
-				)
-#endif
+		if(frc.insideFrustum(p.getBoundingShape()))
 		{
-			it = p.m_sectors.getBegin();
-			end = p.m_sectors.getEnd();
+			auto it = p.m_sectors.getBegin();
+			auto end = p.m_sectors.getEnd();
 			for(; it != end; ++it)
 			{
 				if(*it != &s)
 				{
 					findVisibleSectorsInternal(
-						frc, *(*it), visibleSectors, spatialsCount, r);
+						frc, *(*it), visibleSectors, spatialsCount);
 				}
 			}
 		}
@@ -635,39 +627,40 @@ void SectorGroup::findVisibleSectorsInternal(const FrustumComponent& frc,
 }
 
 //==============================================================================
-void SectorGroup::prepareForVisibilityTests(
-	const FrustumComponent& frc, const Renderer& r)
+void SectorGroup::prepareForVisibilityTests()
+{
+	// Bin spatials
+	auto it = m_spatialsDeferredBinning.getBegin();
+	auto end = m_spatialsDeferredBinning.getEnd();
+	for(; it != end; ++it)
+	{
+		binSpatial(*it);
+	}
+	m_spatialsDeferredBinning.destroy(m_scene->getFrameAllocator());
+}
+
+//==============================================================================
+void SectorGroup::findVisibleNodes(const FrustumComponent& frc,
+	U testId,
+	SectorGroupVisibilityTestsContext& ctx) const
 {
 	auto alloc = m_scene->getFrameAllocator();
 
-	// Bin spatials
-	{
-		auto it = m_spatialsDeferredBinning.getBegin();
-		auto end = m_spatialsDeferredBinning.getEnd();
-		for(; it != end; ++it)
-		{
-			binSpatial(*it);
-		}
-		m_spatialsDeferredBinning.destroy(alloc);
-	}
-
 	// Find visible sectors
-	ListAuto<Sector*> visSectors(m_scene->getFrameAllocator());
+	ListAuto<const Sector*> visSectors(alloc);
 	U spatialsCount = 0;
-	findVisibleSectors(frc, visSectors, spatialsCount, r);
+	findVisibleSectors(frc, visSectors, spatialsCount);
 
 	if(ANKI_UNLIKELY(spatialsCount == 0))
 	{
-		m_visibleNodes = nullptr;
-		m_visibleNodesCount = 0;
 		return;
 	}
 
 	// Initiate storage of nodes
-	m_visibleNodes = reinterpret_cast<SceneNode**>(
+	SceneNode** visibleNodesMem = reinterpret_cast<SceneNode**>(
 		alloc.allocate(spatialsCount * sizeof(void*)));
 
-	SArray<SceneNode*> visibleNodes(m_visibleNodes, spatialsCount);
+	SArray<SceneNode*> visibleNodes(visibleNodesMem, spatialsCount);
 
 	// Iterate visible sectors and get the scene nodes. The array will contain
 	// duplicates
@@ -676,22 +669,22 @@ void SectorGroup::prepareForVisibilityTests(
 	auto end = visSectors.getEnd();
 	for(; it != end; ++it)
 	{
-		Sector& s = *(*it);
+		const Sector& s = *(*it);
 		for(auto itsp : s.m_spatials)
 		{
-			SpatialComponent& spc = *itsp;
-			SceneNode& node = spc.getSceneNode();
+			const SpatialComponent& spc = *itsp;
+			SceneNode& node = const_cast<SceneNode&>(spc.getSceneNode());
 
-			// Check if visited
-			if(!node.getSectorVisited())
+			// Check if alrady visited
+			if(!node.fetchSetSectorVisited(testId, true))
 			{
 				visibleNodes[nodesCount++] = &node;
-				node.setSectorVisited(true);
 			}
 		}
 	}
-
-	m_visibleNodesCount = nodesCount;
+		
+	// Update the context
+	ctx.m_visibleNodes = SArray<SceneNode*>(visibleNodesMem, nodesCount);
 }
 
 } // end namespace anki

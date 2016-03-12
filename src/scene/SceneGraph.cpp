@@ -99,20 +99,18 @@ public:
 			return comp.updateReal(node, prevTime, crntTime, updated);
 		});
 
-		if(err)
-		{
-			return err;
-		}
-
 		// Update children
-		err = node.visitChildren([&](SceneNode& child) -> Error {
-			return updateInternal(child, prevTime, crntTime);
-		});
+		if(!err)
+		{
+			err = node.visitChildren([&](SceneNode& child) -> Error {
+				return updateInternal(child, prevTime, crntTime);
+			});
+		}
 
 		// Frame update
 		if(!err)
 		{
-			err = node.frameUpdate(prevTime, crntTime);
+			err = node.frameUpdateComplete(prevTime, crntTime);
 		}
 
 		return err;

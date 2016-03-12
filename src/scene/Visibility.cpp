@@ -48,33 +48,20 @@ public:
 };
 
 /// Contains all the info of a single visibility test on a FrustumComponent.
-class SingleVisTest
+class SingleVisTest : public NonCopyable
 {
 public:
 	FrustumComponent* m_frc;
 	Array<VisibilityTestResults*, ThreadPool::MAX_THREADS> m_threadResults;
 	Timestamp m_timestamp = 0;
 	SpinLock m_timestampLock;
+	SectorGroupVisibilityTestsContext m_sectorsCtx;
 
 	SingleVisTest(FrustumComponent* frc)
 		: m_frc(frc)
 	{
 		ANKI_ASSERT(m_frc);
 		memset(&m_threadResults[0], 0, sizeof(m_threadResults));
-	}
-
-	SingleVisTest(const SingleVisTest& b)
-	{
-		operator=(b);
-	}
-
-	/// Will not copy everything. There is no need.
-	SingleVisTest& operator=(const SingleVisTest& b)
-	{
-		m_frc = b.m_frc;
-		m_threadResults = b.m_threadResults;
-		m_timestamp = b.m_timestamp;
-		return *this;
 	}
 };
 
@@ -85,16 +72,20 @@ public:
 	SceneGraph* m_scene = nullptr;
 	const Renderer* m_r = nullptr;
 	Barrier m_barrier;
-	List<SingleVisTest> m_pendingTests; ///< Frustums to test
-	SpinLock m_lock;
-	List<SingleVisTest> m_completedTests;
-	U32 m_completedTestsCount = 0;
 
-	Atomic<U32> m_sectorPrepareRaceAtomic = {0};
+	ListAuto<SingleVisTest*> m_pendingTests; ///< Frustums to test
+	ListAuto<SingleVisTest*> m_completedTests;
+	U32 m_completedTestsCount = 0;
+	U32 m_testIdCounter = 1; ///< 1 because the main thread already added one
+	SpinLock m_lock;
+
 	Atomic<U32> m_listRaceAtomic = {0};
 
-	VisibilityContext(U threadCount)
-		: m_barrier(threadCount)
+	VisibilityContext(U threadCount, SceneGraph* scene)
+		: m_scene(scene)
+		, m_barrier(threadCount)
+		, m_pendingTests(m_scene->getFrameAllocator())
+		, m_completedTests(m_scene->getFrameAllocator())
 	{
 	}
 };
@@ -103,7 +94,7 @@ public:
 class VisibilityTestTask : public ThreadPool::Task
 {
 public:
-	VisibilityContext* m_ctx;
+	VisibilityContext* m_ctx = nullptr;
 
 	/// Test a frustum component
 	void test(SingleVisTest& testInfo, U32 threadId, PtrSize threadCount);
@@ -115,34 +106,45 @@ public:
 	{
 		auto alloc = m_ctx->m_scene->getFrameAllocator();
 
-		// Iterate the nodes to check against
-		while(!m_ctx->m_pendingTests.isEmpty())
+		ANKI_ASSERT(!m_ctx->m_pendingTests.isEmpty());
+		SingleVisTest* testInfo = m_ctx->m_pendingTests.getFront();
+		ANKI_ASSERT(testInfo);
+		do
 		{
-			// Try to find a test that hasn't completed
-			SingleVisTest& testInfo = m_ctx->m_pendingTests.getFront();
+			// Test
+			test(*testInfo, threadId, threadCount);
 
-			// The first who touches the race atomic will prepare the sectors
-			U count = m_ctx->m_sectorPrepareRaceAtomic.fetchAdd(1);
-			if((count % threadCount) == 0)
-			{
-				SectorGroup& sectors = m_ctx->m_scene->getSectorGroup();
-				sectors.prepareForVisibilityTests(*testInfo.m_frc, *m_ctx->m_r);
-			}
-
+			// Sync
 			m_ctx->m_barrier.wait();
-			test(testInfo, threadId, threadCount);
 
-			// The last who will finish its tests will update the lists
-			count = m_ctx->m_listRaceAtomic.fetchAdd(1);
-			if((count % threadCount) == threadCount - 1)
+			// Get something to test next
 			{
-				m_ctx->m_completedTests.pushBack(alloc, testInfo);
-				++m_ctx->m_completedTestsCount;
-				m_ctx->m_pendingTests.popFront(alloc);
-			}
+				LockGuard<SpinLock> lock(m_ctx->m_lock);
 
-			m_ctx->m_barrier.wait();
-		}
+				if(!m_ctx->m_pendingTests.isEmpty())
+				{
+					if(testInfo == m_ctx->m_pendingTests.getFront())
+					{
+						// Push it to the completed
+						m_ctx->m_completedTests.pushBack(testInfo);
+						++m_ctx->m_completedTestsCount;
+						m_ctx->m_pendingTests.popFront();
+
+						testInfo = (m_ctx->m_pendingTests.isEmpty())
+							? nullptr
+							: m_ctx->m_pendingTests.getFront();
+					}
+					else
+					{
+						testInfo = m_ctx->m_pendingTests.getFront();	
+					}
+				}
+				else
+				{
+					testInfo = nullptr;
+				}
+			}
+		} while(testInfo);
 
 		// Sort and combind the results
 		PtrSize start, end;
@@ -155,7 +157,7 @@ public:
 			{
 				ANKI_TRACE_START_EVENT(SCENE_VISIBILITY_COMBINE_RESULTS);
 
-				combineTestResults((*it), threadCount);
+				combineTestResults(*(*it), threadCount);
 				++it;
 
 				ANKI_TRACE_STOP_EVENT(SCENE_VISIBILITY_COMBINE_RESULTS);
@@ -233,247 +235,245 @@ void VisibilityTestTask::test(
 	Bool wantsReflectionProxies = testedFrc.visibilityTestsEnabled(
 		FrustumComponentVisibilityTestFlag::REFLECTION_PROXIES);
 
-#if 0
-	ANKI_LOGW("Running test code");
-
 	// Chose the test range and a few other things
 	PtrSize start, end;
-	U nodesCount = m_ctx->m_scene->getSceneNodesCount();
-	choseStartEnd(threadId, threadCount, nodesCount, start, end);
+	choseStartEnd(threadId,
+		threadCount,
+		testInfo.m_sectorsCtx.getVisibleSceneNodeCount(),
+		start,
+		end);
 
-	// Iterate range of nodes
-	Error err = m_ctx->m_scene->iterateSceneNodes(
-		start, end, [&](SceneNode& node) -> Error
-#else
-	SectorGroup& sectors = m_ctx->m_scene->getSectorGroup();
-	// Chose the test range and a few other things
-	PtrSize start, end;
-	U nodesCount = sectors.getVisibleNodesCount();
-	choseStartEnd(threadId, threadCount, nodesCount, start, end);
-
-	Error err = sectors.iterateVisibleSceneNodes(start,
-		end,
-		[&](SceneNode& node) -> Error
-#endif
-	{
-		// Skip if it is the same
-		if(ANKI_UNLIKELY(&testedNode == &node))
-		{
-			return ErrorCode::NONE;
-		}
-
-		// Check what components the frustum needs
-		Bool wantNode = false;
-
-		RenderComponent* rc = node.tryGetComponent<RenderComponent>();
-		if(rc && wantsRenderComponents)
-		{
-			wantNode = true;
-		}
-
-		if(rc && rc->getCastsShadow() && wantsShadowCasters)
-		{
-			wantNode = true;
-		}
-
-		LightComponent* lc = node.tryGetComponent<LightComponent>();
-		if(lc && wantsLightComponents)
-		{
-			wantNode = true;
-		}
-
-		LensFlareComponent* lfc = node.tryGetComponent<LensFlareComponent>();
-		if(lfc && wantsFlareComponents)
-		{
-			wantNode = true;
-		}
-
-		ReflectionProbeComponent* reflc =
-			node.tryGetComponent<ReflectionProbeComponent>();
-		if(reflc && wantsReflectionProbes)
-		{
-			wantNode = true;
-		}
-
-		ReflectionProxyComponent* proxyc =
-			node.tryGetComponent<ReflectionProxyComponent>();
-		if(proxyc && wantsReflectionProxies)
-		{
-			wantNode = true;
-		}
-
-		if(ANKI_UNLIKELY(!wantNode))
-		{
-			// Skip node
-			return ErrorCode::NONE;
-		}
-
-		// Test all spatial components of that node
-		struct SpatialTemp
-		{
-			SpatialComponent* m_sp;
-			U8 m_idx;
-			Vec4 m_origin;
-		};
-		Array<SpatialTemp, ANKI_GL_MAX_SUB_DRAWCALLS> sps;
-
-		U spIdx = 0;
-		U count = 0;
-		Error err = node.iterateComponentsOfType<SpatialComponent>(
-			[&](SpatialComponent& sp) {
-				if(testedFrc.insideFrustum(sp))
-				{
-					// Inside
-					ANKI_ASSERT(spIdx < MAX_U8);
-					sps[count++] = SpatialTemp{
-						&sp, static_cast<U8>(spIdx), sp.getSpatialOrigin()};
-
-					sp.setVisibleByCamera(true);
-				}
-
-				++spIdx;
-
-				return ErrorCode::NONE;
-			});
-		(void)err;
-
-		if(ANKI_UNLIKELY(count == 0))
-		{
-			return ErrorCode::NONE;
-		}
-
-		// Sort sub-spatials
-		Vec4 origin = testedFrc.getFrustumOrigin();
-		std::sort(sps.begin(),
-			sps.begin() + count,
-			[origin](const SpatialTemp& a, const SpatialTemp& b) -> Bool {
-				const Vec4& spa = a.m_origin;
-				const Vec4& spb = b.m_origin;
-
-				F32 dist0 = origin.getDistanceSquared(spa);
-				F32 dist1 = origin.getDistanceSquared(spb);
-
-				return dist0 < dist1;
-			});
-
-		// Update the visibleNode
-		VisibleNode visibleNode;
-		visibleNode.m_node = &node;
-
-		// Compute distance from the frustum
-		visibleNode.m_frustumDistanceSquared =
-			(sps[0].m_origin - testedFrc.getFrustumOrigin()).getLengthSquared();
-
-		ANKI_ASSERT(count < MAX_U8);
-		visibleNode.m_spatialsCount = count;
-		visibleNode.m_spatialIndices = alloc.newArray<U8>(count);
-
-		for(U i = 0; i < count; i++)
-		{
-			visibleNode.m_spatialIndices[i] = sps[i].m_idx;
-		}
-
-		if(rc)
-		{
-			if(wantsRenderComponents
-				|| (wantsShadowCasters && rc->getCastsShadow()))
+	testInfo.m_sectorsCtx.iterateVisibleSceneNodes(
+		start, end, [&](SceneNode& node) {
+			// Skip if it is the same
+			if(ANKI_UNLIKELY(&testedNode == &node))
 			{
-				visible->moveBack(alloc,
-					rc->getMaterial().getForwardShading()
-						? VisibilityGroupType::RENDERABLES_FS
-						: VisibilityGroupType::RENDERABLES_MS,
-					visibleNode);
-
-				if(wantsShadowCasters)
-				{
-					updateTimestamp(node, testInfo);
-				}
-			}
-		}
-
-		if(lc && wantsLightComponents)
-		{
-			VisibilityGroupType gt;
-			switch(lc->getLightType())
-			{
-			case LightComponent::LightType::POINT:
-				gt = VisibilityGroupType::LIGHTS_POINT;
-				break;
-			case LightComponent::LightType::SPOT:
-				gt = VisibilityGroupType::LIGHTS_SPOT;
-				break;
-			default:
-				ANKI_ASSERT(0);
-				gt = VisibilityGroupType::TYPE_COUNT;
+				return;
 			}
 
-			visible->moveBack(alloc, gt, visibleNode);
-		}
+			// Check what components the frustum needs
+			Bool wantNode = false;
 
-		if(lfc && wantsFlareComponents)
-		{
-			visible->moveBack(alloc, VisibilityGroupType::FLARES, visibleNode);
-		}
-
-		if(reflc && wantsReflectionProbes)
-		{
-			visible->moveBack(
-				alloc, VisibilityGroupType::REFLECTION_PROBES, visibleNode);
-		}
-
-		if(proxyc && wantsReflectionProxies)
-		{
-			visible->moveBack(
-				alloc, VisibilityGroupType::REFLECTION_PROXIES, visibleNode);
-		}
-
-		// Add more frustums to the list
-		err = node.iterateComponentsOfType<FrustumComponent>([&](
-			FrustumComponent& frc) {
-			// Check enabled and make sure that the results are null (this
-			// can
-			// happen on multiple on circular viewing)
-			if(frc.anyVisibilityTestEnabled()
-				&& !frc.hasVisibilityTestResults())
+			RenderComponent* rc = node.tryGetComponent<RenderComponent>();
+			if(rc && wantsRenderComponents)
 			{
-				LockGuard<SpinLock> l(m_ctx->m_lock);
+				wantNode = true;
+			}
 
-				// Check if already in the list
-				Bool alreadyThere = false;
-				for(const SingleVisTest& x : m_ctx->m_pendingTests)
-				{
-					if(x.m_frc == &frc)
+			if(rc && rc->getCastsShadow() && wantsShadowCasters)
+			{
+				wantNode = true;
+			}
+
+			LightComponent* lc = node.tryGetComponent<LightComponent>();
+			if(lc && wantsLightComponents)
+			{
+				wantNode = true;
+			}
+
+			LensFlareComponent* lfc =
+				node.tryGetComponent<LensFlareComponent>();
+			if(lfc && wantsFlareComponents)
+			{
+				wantNode = true;
+			}
+
+			ReflectionProbeComponent* reflc =
+				node.tryGetComponent<ReflectionProbeComponent>();
+			if(reflc && wantsReflectionProbes)
+			{
+				wantNode = true;
+			}
+
+			ReflectionProxyComponent* proxyc =
+				node.tryGetComponent<ReflectionProxyComponent>();
+			if(proxyc && wantsReflectionProxies)
+			{
+				wantNode = true;
+			}
+
+			if(ANKI_UNLIKELY(!wantNode))
+			{
+				// Skip node
+				return;
+			}
+
+			// Test all spatial components of that node
+			struct SpatialTemp
+			{
+				SpatialComponent* m_sp;
+				U8 m_idx;
+				Vec4 m_origin;
+			};
+			Array<SpatialTemp, ANKI_GL_MAX_SUB_DRAWCALLS> sps;
+
+			U spIdx = 0;
+			U count = 0;
+			Error err = node.iterateComponentsOfType<SpatialComponent>(
+				[&](SpatialComponent& sp) {
+					if(testedFrc.insideFrustum(sp))
 					{
-						alreadyThere = true;
-						break;
+						// Inside
+						ANKI_ASSERT(spIdx < MAX_U8);
+						sps[count++] = SpatialTemp{
+							&sp, static_cast<U8>(spIdx), sp.getSpatialOrigin()};
+
+						sp.setVisibleByCamera(true);
+					}
+
+					++spIdx;
+
+					return ErrorCode::NONE;
+				});
+			(void)err;
+
+			if(ANKI_UNLIKELY(count == 0))
+			{
+				return;
+			}
+
+			// Sort sub-spatials
+			Vec4 origin = testedFrc.getFrustumOrigin();
+			std::sort(sps.begin(),
+				sps.begin() + count,
+				[origin](const SpatialTemp& a, const SpatialTemp& b) -> Bool {
+					const Vec4& spa = a.m_origin;
+					const Vec4& spb = b.m_origin;
+
+					F32 dist0 = origin.getDistanceSquared(spa);
+					F32 dist1 = origin.getDistanceSquared(spb);
+
+					return dist0 < dist1;
+				});
+
+			// Update the visibleNode
+			VisibleNode visibleNode;
+			visibleNode.m_node = &node;
+
+			// Compute distance from the frustum
+			visibleNode.m_frustumDistanceSquared =
+				(sps[0].m_origin - testedFrc.getFrustumOrigin())
+					.getLengthSquared();
+
+			ANKI_ASSERT(count < MAX_U8);
+			visibleNode.m_spatialsCount = count;
+			visibleNode.m_spatialIndices = alloc.newArray<U8>(count);
+
+			for(U i = 0; i < count; i++)
+			{
+				visibleNode.m_spatialIndices[i] = sps[i].m_idx;
+			}
+
+			if(rc)
+			{
+				if(wantsRenderComponents
+					|| (wantsShadowCasters && rc->getCastsShadow()))
+				{
+					visible->moveBack(alloc,
+						rc->getMaterial().getForwardShading()
+							? VisibilityGroupType::RENDERABLES_FS
+							: VisibilityGroupType::RENDERABLES_MS,
+						visibleNode);
+
+					if(wantsShadowCasters)
+					{
+						updateTimestamp(node, testInfo);
 					}
 				}
+			}
 
-				if(!alreadyThere)
+			if(lc && wantsLightComponents)
+			{
+				VisibilityGroupType gt;
+				switch(lc->getLightType())
 				{
-					for(const SingleVisTest& x : m_ctx->m_completedTests)
+				case LightComponent::LightType::POINT:
+					gt = VisibilityGroupType::LIGHTS_POINT;
+					break;
+				case LightComponent::LightType::SPOT:
+					gt = VisibilityGroupType::LIGHTS_SPOT;
+					break;
+				default:
+					ANKI_ASSERT(0);
+					gt = VisibilityGroupType::TYPE_COUNT;
+				}
+
+				visible->moveBack(alloc, gt, visibleNode);
+			}
+
+			if(lfc && wantsFlareComponents)
+			{
+				visible->moveBack(
+					alloc, VisibilityGroupType::FLARES, visibleNode);
+			}
+
+			if(reflc && wantsReflectionProbes)
+			{
+				visible->moveBack(
+					alloc, VisibilityGroupType::REFLECTION_PROBES, visibleNode);
+			}
+
+			if(proxyc && wantsReflectionProxies)
+			{
+				visible->moveBack(alloc,
+					VisibilityGroupType::REFLECTION_PROXIES,
+					visibleNode);
+			}
+
+			// Add more frustums to the list
+			err = node.iterateComponentsOfType<FrustumComponent>([&](
+				FrustumComponent& frc) {
+				SingleVisTest* t = nullptr;
+				U testId = MAX_U;
+
+				// Check enabled and make sure that the results are null (this
+				// can happen on multiple on circular viewing)
+				if(frc.anyVisibilityTestEnabled())
+				{
+					LockGuard<SpinLock> l(m_ctx->m_lock);
+
+					// Check if already in the list
+					Bool alreadyThere = false;
+					for(const SingleVisTest* x : m_ctx->m_pendingTests)
 					{
-						if(x.m_frc == &frc)
+						if(x->m_frc == &frc)
 						{
 							alreadyThere = true;
 							break;
 						}
 					}
-				}
 
-				if(!alreadyThere)
+					if(!alreadyThere)
+					{
+						for(const SingleVisTest* x : m_ctx->m_completedTests)
+						{
+							if(x->m_frc == &frc)
+							{
+								alreadyThere = true;
+								break;
+							}
+						}
+					}
+
+					if(!alreadyThere)
+					{
+						testId = m_ctx->m_testIdCounter++;
+						t = alloc.newInstance<SingleVisTest>(&frc);
+						m_ctx->m_pendingTests.pushBack(t);
+					}
+				};
+
+				// Do that outside the lock
+				if(t)
 				{
-					m_ctx->m_pendingTests.pushBack(alloc, SingleVisTest(&frc));
+					m_ctx->m_scene->getSectorGroup().findVisibleNodes(frc,
+						testId,
+						t->m_sectorsCtx);
 				}
-			}
-
-			return ErrorCode::NONE;
-		});
-		(void)err;
-
-		return ErrorCode::NONE;
-	}); // end for
-	(void)err;
+				return ErrorCode::NONE;
+			});
+			(void)err;
+		}); // end for
 
 	ANKI_TRACE_STOP_EVENT(SCENE_VISIBILITY_TEST);
 }
@@ -612,11 +612,18 @@ Error doVisibilityTests(SceneNode& fsn, SceneGraph& scene, const Renderer& r)
 	// Do the tests in parallel
 	ThreadPool& threadPool = scene._getThreadPool();
 
-	VisibilityContext ctx(threadPool.getThreadsCount());
-	ctx.m_scene = &scene;
+	scene.getSectorGroup().prepareForVisibilityTests();
+
+	VisibilityContext ctx(threadPool.getThreadsCount(), &scene);
 	ctx.m_r = &r;
-	ctx.m_pendingTests.pushBack(scene.getFrameAllocator(),
-		SingleVisTest(&fsn.getComponent<FrustumComponent>()));
+
+	SingleVisTest* t = scene.getFrameAllocator().newInstance<SingleVisTest>(
+		&fsn.getComponent<FrustumComponent>());
+	ctx.m_pendingTests.pushBack(t);
+	scene.getSectorGroup().findVisibleNodes(
+		fsn.getComponent<FrustumComponent>(),
+		0,
+		t->m_sectorsCtx);
 
 	Array<VisibilityTestTask, ThreadPool::MAX_THREADS> tasks;
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
@@ -626,7 +633,7 @@ Error doVisibilityTests(SceneNode& fsn, SceneGraph& scene, const Renderer& r)
 	}
 
 	Error err = threadPool.waitForAllThreadsToFinish();
-	ctx.m_completedTests.destroy(scene.getFrameAllocator());
+	ANKI_ASSERT(ctx.m_pendingTests.isEmpty());
 	return err;
 }
 

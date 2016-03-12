@@ -150,6 +150,33 @@ private:
 		SpatialComponent* sp);
 };
 
+/// The context for visibility tests from a single FrustumComponent (not for
+/// all of them).
+class SectorGroupVisibilityTestsContext
+{
+	friend class SectorGroup;
+
+public:
+	U getVisibleSceneNodeCount() const
+	{
+		return m_visibleNodes.getSize();
+	}
+
+	template<typename Func>
+	void iterateVisibleSceneNodes(PtrSize begin, PtrSize end, Func func)
+	{
+		ANKI_ASSERT(begin <= end);
+
+		for(U i = begin; i < end; ++i)
+		{
+			func(*m_visibleNodes[i]);
+		}
+	}
+
+private:
+	SArray<SceneNode*> m_visibleNodes;
+};
+
 /// Sector group. This is supposed to represent the whole scene
 class SectorGroup
 {
@@ -169,63 +196,32 @@ public:
 	void spatialUpdated(SpatialComponent* sp);
 	void spatialDeleted(SpatialComponent* sp);
 
-	void prepareForVisibilityTests(
-		const FrustumComponent& frc, const Renderer& r);
+	void prepareForVisibilityTests();
 
-	PtrSize getVisibleNodesCount() const
-	{
-		return m_visibleNodesCount;
-	}
-
-	template<typename Func>
-	ANKI_USE_RESULT Error iterateVisibleSceneNodes(
-		PtrSize begin, PtrSize end, Func func);
+	void findVisibleNodes(const FrustumComponent& frc,
+		U threadId,
+		SectorGroupVisibilityTestsContext& ctx) const;
 
 private:
 	SceneGraph* m_scene; ///< Keep it here to access various allocators
 	List<Sector*> m_sectors;
 	List<Portal*> m_portals;
 
-	SceneNode** m_visibleNodes = nullptr;
-	U m_visibleNodesCount = 0;
-
 	List<SpatialComponent*> m_spatialsDeferredBinning;
 	SpinLock m_mtx;
 
 	void findVisibleSectors(const FrustumComponent& frc,
-		List<Sector*>& visibleSectors,
-		U& spatialsCount,
-		const Renderer& r);
+		List<const Sector*>& visibleSectors,
+		U& spatialsCount) const;
 
 	/// Recursive method
 	void findVisibleSectorsInternal(const FrustumComponent& frc,
-		Sector& s,
-		List<Sector*>& visibleSectors,
-		U& spatialsCount,
-		const Renderer& r);
+		const Sector& s,
+		List<const Sector*>& visibleSectors,
+		U& spatialsCount) const;
 
 	void binSpatial(SpatialComponent* sp);
 };
-
-//==============================================================================
-template<typename TFunc>
-inline Error SectorGroup::iterateVisibleSceneNodes(
-	PtrSize begin, PtrSize end, TFunc func)
-{
-	Error err = ErrorCode::NONE;
-
-	SceneNode** it = m_visibleNodes + begin;
-	SceneNode** itend = m_visibleNodes + end;
-	for(; it != itend && !err; ++it)
-	{
-		SceneNode* sn = *it;
-		ANKI_ASSERT(sn->getSectorVisited() == true);
-		sn->setSectorVisited(false);
-		err = func(*sn);
-	}
-
-	return err;
-}
 /// @}
 
 } // end namespace anki

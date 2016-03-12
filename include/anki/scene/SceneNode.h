@@ -9,8 +9,10 @@
 #include <anki/util/Hierarchy.h>
 #include <anki/util/Rtti.h>
 #include <anki/util/BitMask.h>
+#include <anki/util/BitSet.h>
 #include <anki/util/List.h>
 #include <anki/util/Enum.h>
+#include <anki/util/Thread.h>
 #include <anki/scene/SceneComponent.h>
 
 namespace anki
@@ -84,19 +86,23 @@ public:
 		return ErrorCode::NONE;
 	}
 
+	ANKI_USE_RESULT Error frameUpdateComplete(F32 prevUpdateTime, F32 crntTime)
+	{
+		m_sectorVisitedBitset.unsetAll();
+		return frameUpdate(prevUpdateTime, crntTime);
+	}
+
 	/// Return the last frame the node was updated. It checks all components
 	U32 getLastUpdateFrame() const;
 
 	/// Inform if a sector has visited this node.
-	void setSectorVisited(Bool visited)
+	/// @return The previous value.
+	Bool fetchSetSectorVisited(U testId, Bool visited)
 	{
-		m_flags.set(Flag::SECTOR_VISITED, visited);
-	}
-
-	/// Check if a sector has visited this node.
-	Bool getSectorVisited() const
-	{
-		return m_flags.get(Flag::SECTOR_VISITED);
+		LockGuard<SpinLock> lock(m_sectorVisitedBitsetLock);
+		Bool prevValue = m_sectorVisitedBitset.get(testId);
+		m_sectorVisitedBitset.set(testId, visited);
+		return prevValue;
 	}
 
 	/// Iterate all components
@@ -192,10 +198,9 @@ protected:
 	ResourceManager& getResourceManager();
 
 private:
-	enum class Flag
+	enum class Flag : U8
 	{
-		MARKED_FOR_DELETION = 1 << 0,
-		SECTOR_VISITED = 1 << 1
+		MARKED_FOR_DELETION = 1 << 0
 	};
 	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Flag, friend)
 
@@ -206,6 +211,11 @@ private:
 
 	String m_name; ///< A unique name
 	BitMask<Flag> m_flags;
+
+	/// A mask of bits for each test. If bit set then the node was visited by
+	/// a sector.
+	BitSet<256> m_sectorVisitedBitset = {false};
+	SpinLock m_sectorVisitedBitsetLock;
 
 	void cacheImportantComponents();
 };
