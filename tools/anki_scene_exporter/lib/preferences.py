@@ -1,5 +1,8 @@
+# Copyright (C) 2009-2016, Panagiotis Christopoulos Charitos and contributors.
+# All rights reserved.
 # Code licensed under the BSD License.
-# http://www.anki3d.org/LICENSEimport os
+# http://www.anki3d.org/LICENSE
+
 # keep methods in alphabetical order
 
 bl_info = {"author": "A. A. Kalugin Jr."}
