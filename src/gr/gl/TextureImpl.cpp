@@ -344,16 +344,20 @@ void TextureImpl::init(const TextureInitInfo& init)
 	case GL_TEXTURE_2D:
 	case GL_TEXTURE_2D_MULTISAMPLE:
 		m_surfaceCount = 1;
+		m_faceCount = 1;
 		break;
 	case GL_TEXTURE_CUBE_MAP:
 		m_surfaceCount = 6;
+		m_faceCount = 6;
 		break;
 	case GL_TEXTURE_CUBE_MAP_ARRAY:
 		m_surfaceCount = init.m_depth * 6;
+		m_faceCount = 6;
 		break;
 	case GL_TEXTURE_2D_ARRAY:
 	case GL_TEXTURE_3D:
 		m_surfaceCount = init.m_depth;
+		m_faceCount = 1;
 		break;
 	default:
 		ANKI_ASSERT(0);
@@ -582,6 +586,29 @@ void TextureImpl::copy(const TextureImpl& src,
 		width,
 		height,
 		1);
+}
+
+//==============================================================================
+void TextureImpl::clear(U level, U depth, U face, const ClearValue& clearValue)
+{
+	ANKI_ASSERT(isCreated());
+	ANKI_ASSERT(level < m_mipsCount);
+
+	U surfaceIdx = computeSurfaceIdx(depth, face);
+	U width = m_width >> level;
+	U height = m_height >> level;
+
+	glClearTexSubImage(m_glName,
+		level,
+		0,
+		0,
+		surfaceIdx,
+		width,
+		height,
+		1,
+		m_format,
+		m_type,
+		&clearValue.m_colorf[0]);
 }
 
 } // end namespace anki

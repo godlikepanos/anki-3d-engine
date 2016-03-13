@@ -27,17 +27,7 @@ public:
 	PixelFormat m_format;
 	AttachmentLoadOperation m_loadOperation = AttachmentLoadOperation::CLEAR;
 	AttachmentStoreOperation m_storeOperation = AttachmentStoreOperation::STORE;
-	union
-	{
-		Array<F32, 4> m_colorf = {{0.0, 0.0, 0.0, 0.0}};
-		Array<I32, 4> m_colori;
-		Array<U32, 4> m_coloru;
-		struct
-		{
-			F32 m_depth;
-			I32 m_stencil;
-		} m_depthStencil;
-	} m_clearValue;
+	ClearValue m_clearValue;
 
 	Attachment() = default;
 

@@ -682,7 +682,7 @@ void SectorGroup::findVisibleNodes(const FrustumComponent& frc,
 			}
 		}
 	}
-		
+
 	// Update the context
 	ctx.m_visibleNodes = SArray<SceneNode*>(visibleNodesMem, nodesCount);
 }

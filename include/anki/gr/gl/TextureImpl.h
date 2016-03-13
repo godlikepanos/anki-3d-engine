@@ -27,6 +27,7 @@ public:
 	U32 m_depth = 0;
 	U32 m_surfaceCount = 0;
 	U8 m_mipsCount = 0;
+	U8 m_faceCount = 0; ///< 6 for cubes and 1 for the rest
 	Bool8 m_compressed = false;
 	DArray<GLuint> m_texViews; ///< Temp views for gen mips.
 
@@ -55,6 +56,16 @@ public:
 		U destLevel);
 
 	void bind();
+
+	void clear(U level, U depth, U face, const ClearValue& clearValue);
+
+	U computeSurfaceIdx(U depth, U face) const
+	{
+		ANKI_ASSERT(m_target != GL_TEXTURE_3D && "TODO");
+		ANKI_ASSERT(face < m_faceCount);
+		ANKI_ASSERT(depth < m_depth);
+		return m_faceCount * depth + face;
+	}
 };
 /// @}
 

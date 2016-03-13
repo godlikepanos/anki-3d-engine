@@ -98,6 +98,29 @@ Error Ir::init(const ConfigSet& config)
 	// Create irradiance stuff
 	ANKI_CHECK(initIrradiance());
 
+	// Clear the textures
+	CommandBufferInitInfo cinf;
+	CommandBufferPtr cmdb = getGrManager().newInstance<CommandBuffer>(cinf);
+	U irrMipCount = computeMaxMipmapCount(IRRADIANCE_SIZE, IRRADIANCE_SIZE);
+	ClearValue clear;
+	for(U i = 0; i < m_cubemapArrSize; ++i)
+	{
+		for(U f = 0; f < 6; ++f)
+		{
+			for(U l = 0; l < m_cubemapArrMipCount; ++l)
+			{
+				// Do env
+				cmdb->clearTexture(m_envCubemapArr, l, i, f, clear);
+			}
+
+			for(U l = 0; l < irrMipCount; ++l)
+			{
+				cmdb->clearTexture(m_irradianceCubemapArr, l, i, f, clear);
+			}
+		}
+	}
+	cmdb->flush();
+
 	// Load split sum integration LUT
 	ANKI_CHECK(getResourceManager().loadResource(
 		"engine_data/SplitSumIntegration.ankitex", m_integrationLut));

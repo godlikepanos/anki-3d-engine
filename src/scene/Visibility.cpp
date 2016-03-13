@@ -136,7 +136,7 @@ public:
 					}
 					else
 					{
-						testInfo = m_ctx->m_pendingTests.getFront();	
+						testInfo = m_ctx->m_pendingTests.getFront();
 					}
 				}
 				else
@@ -466,9 +466,8 @@ void VisibilityTestTask::test(
 				// Do that outside the lock
 				if(t)
 				{
-					m_ctx->m_scene->getSectorGroup().findVisibleNodes(frc,
-						testId,
-						t->m_sectorsCtx);
+					m_ctx->m_scene->getSectorGroup().findVisibleNodes(
+						frc, testId, t->m_sectorsCtx);
 				}
 				return ErrorCode::NONE;
 			});
@@ -621,9 +620,7 @@ Error doVisibilityTests(SceneNode& fsn, SceneGraph& scene, const Renderer& r)
 		&fsn.getComponent<FrustumComponent>());
 	ctx.m_pendingTests.pushBack(t);
 	scene.getSectorGroup().findVisibleNodes(
-		fsn.getComponent<FrustumComponent>(),
-		0,
-		t->m_sectorsCtx);
+		fsn.getComponent<FrustumComponent>(), 0, t->m_sectorsCtx);
 
 	Array<VisibilityTestTask, ThreadPool::MAX_THREADS> tasks;
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)

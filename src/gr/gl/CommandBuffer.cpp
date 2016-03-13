@@ -732,4 +732,38 @@ void CommandBuffer::setBufferMemoryBarrier(
 	m_impl->pushBackNewCommand<SetBufferMemBarrierCommand>(d);
 }
 
+//==============================================================================
+class ClearTextCommand final : public GlCommand
+{
+public:
+	TexturePtr m_tex;
+	ClearValue m_val;
+	U16 m_level;
+	U16 m_depth;
+	U8 m_face;
+
+	ClearTextCommand(
+		TexturePtr tex, U level, U depth, U face, const ClearValue& val)
+		: m_tex(tex)
+		, m_val(val)
+		, m_level(level)
+		, m_depth(depth)
+		, m_face(face)
+	{
+	}
+
+	Error operator()(GlState&)
+	{
+		m_tex->getImplementation().clear(m_level, m_depth, m_face, m_val);
+		return ErrorCode::NONE;
+	}
+};
+
+void CommandBuffer::clearTexture(
+	TexturePtr tex, U level, U depth, U face, const ClearValue& clearValue)
+{
+	m_impl->pushBackNewCommand<ClearTextCommand>(
+		tex, level, depth, face, clearValue);
+}
+
 } // end namespace anki

@@ -174,6 +174,9 @@ public:
 		TexturePtr dest,
 		U destSlice,
 		U destLevel);
+
+	void clearTexture(
+		TexturePtr tex, U level, U depth, U face, const ClearValue& clearValue);
 	/// @}
 
 	/// @name Resource upload
