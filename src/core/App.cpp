@@ -119,11 +119,11 @@ void App::cleanup()
 }
 
 //==============================================================================
-Error App::create(const ConfigSet& config,
+Error App::init(const ConfigSet& config,
 	AllocAlignedCallback allocCb,
 	void* allocCbUserData)
 {
-	Error err = createInternal(config, allocCb, allocCbUserData);
+	Error err = initInternal(config, allocCb, allocCbUserData);
 	if(err)
 	{
 		cleanup();
@@ -134,7 +134,7 @@ Error App::create(const ConfigSet& config,
 }
 
 //==============================================================================
-Error App::createInternal(const ConfigSet& config_,
+Error App::initInternal(const ConfigSet& config_,
 	AllocAlignedCallback allocCb,
 	void* allocCbUserData)
 {

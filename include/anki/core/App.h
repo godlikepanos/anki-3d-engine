@@ -40,7 +40,7 @@ public:
 	App();
 	virtual ~App();
 
-	ANKI_USE_RESULT Error create(const ConfigSet& config,
+	ANKI_USE_RESULT Error init(const ConfigSet& config,
 		AllocAlignedCallback allocCb,
 		void* allocCbUserData);
 
@@ -158,7 +158,7 @@ private:
 	String m_cacheDir; ///< This is used as a cache
 	F32 m_timerTick;
 
-	ANKI_USE_RESULT Error createInternal(const ConfigSet& config,
+	ANKI_USE_RESULT Error initInternal(const ConfigSet& config,
 		AllocAlignedCallback allocCb,
 		void* allocCbUserData);
 
