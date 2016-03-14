@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <cerrno>
-#include <ftw.h> // For walkDirectoryTree
+#include <fts.h> // For walkDirectoryTree
 #include <cstdlib>
 
 // Define PATH_MAX if needed
@@ -51,61 +51,63 @@ Bool directoryExists(const CString& filename)
 }
 
 //==============================================================================
-static Mutex walkDirMtx;
-static WalkDirectoryTreeCallback walkDirCallback = nullptr;
-static void* walkDirUserData = nullptr;
-static Array<char, PATH_MAX> walkDirDir;
-
-static int ftwCallback(
-	const char* fpath, const struct stat* /*sb*/, int typeflag)
-{
-	Error err = ErrorCode::NONE;
-
-	if(typeflag == FTW_F || typeflag == FTW_D)
-	{
-		CString path(fpath);
-
-		// First item is the given directory
-		if(walkDirDir[0] == '\0')
-		{
-			strncpy(&walkDirDir[0], fpath, PATH_MAX);
-		}
-		else
-		{
-			// Remove the base dir from the fpath
-			ANKI_ASSERT(path.find(&walkDirDir[0]) == 0);
-			fpath += strlen(&walkDirDir[0]) + 1;
-
-			// Call the callback
-			err = walkDirCallback(fpath, walkDirUserData, typeflag != FTW_F);
-		}
-	}
-	else
-	{
-		ANKI_LOGW("Permission denied %s\n", fpath);
-	}
-
-	return err._getCodeInt();
-}
-
 Error walkDirectoryTree(
 	const CString& dir, void* userData, WalkDirectoryTreeCallback callback)
 {
 	ANKI_ASSERT(callback != nullptr);
+	ANKI_ASSERT(dir.getLength() > 0);
 
-	LockGuard<Mutex> lock(walkDirMtx);
+	char* const dirs[] = {const_cast<char*>(&dir[0]), nullptr};
 
-	walkDirCallback = callback;
-	walkDirUserData = userData;
-	walkDirDir[0] = '\0';
-	const int MAX_OPEN_FILE_DESCRS = 1;
-
-	int ierr = ftw(&dir[0], &ftwCallback, MAX_OPEN_FILE_DESCRS);
-	Error err = static_cast<ErrorCode>(ierr);
-
-	if(ierr < 0)
+	// Compute how long it will be the prefix fts_read will add
+	U prefixLen = dir.getLength();
+	if(dir[prefixLen - 1] != '/')
 	{
-		ANKI_LOGE("%s\n", strerror(errno));
+		++prefixLen;
+	}
+
+	// FTS_NOCHDIR and FTS_NOSTAT are opts. FTS_LOGICAL will follow symlics
+	FTS* tree =
+		fts_open(&dirs[0], FTS_NOCHDIR | FTS_LOGICAL | FTS_NOSTAT, nullptr);
+
+	if(!tree)
+	{
+		ANKI_LOGE("fts_open() failed");
+		return ErrorCode::FUNCTION_FAILED;
+	}
+
+	Error err = ErrorCode::NONE;
+	FTSENT* node;
+	while((node = fts_read(tree)) && !err)
+	{
+		if(node->fts_info & FTS_DP)
+		{
+			// Skip if already visited
+			continue;
+		}
+
+		const char* fname = node->fts_path;
+		U len = strlen(fname);
+		if(len <= prefixLen)
+		{
+			continue;
+		}
+
+		const char* newPath = fname + prefixLen;
+
+		Bool isFile = (node->fts_info & FTS_F) == FTS_F;
+		err = callback(newPath, userData, !isFile);
+	}
+
+	if(errno)
+	{
+		ANKI_LOGE("fts_read() failed: %s", strerror(errno));
+		err = ErrorCode::FUNCTION_FAILED;
+	}
+
+	if(fts_close(tree))
+	{
+		ANKI_LOGE("fts_close() failed");
 		err = ErrorCode::FUNCTION_FAILED;
 	}
 
