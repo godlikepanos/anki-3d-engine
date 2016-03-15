@@ -164,27 +164,25 @@ public:
 
 	void dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ);
 
-	void generateMipmaps(TexturePtr tex);
-
-	void generateMipmaps(TexturePtr tex, U surface);
+	void generateMipmaps(TexturePtr tex, U depth, U face);
 
 	void copyTextureToTexture(TexturePtr src,
-		U srcSlice,
-		U srcLevel,
+		const TextureSurfaceInfo& srcSurf,
 		TexturePtr dest,
-		U destSlice,
-		U destLevel);
+		const TextureSurfaceInfo& destSurf);
 
-	void clearTexture(
-		TexturePtr tex, U level, U depth, U face, const ClearValue& clearValue);
+	void clearTexture(TexturePtr tex,
+		const TextureSurfaceInfo& surf,
+		const ClearValue& clearValue);
 	/// @}
 
 	/// @name Resource upload
 	/// @{
 
 	/// Upload data to a texture.
-	void textureUpload(
-		TexturePtr tex, U32 mipmap, U32 slice, const DynamicBufferToken& token);
+	void textureUpload(TexturePtr tex,
+		const TextureSurfaceInfo& surf,
+		const DynamicBufferToken& token);
 
 	/// Write data to a buffer. It will copy the dynamic memory to the buffer
 	/// starting from offset to the range indicated by the allocation of the

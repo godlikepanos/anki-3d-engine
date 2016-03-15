@@ -21,16 +21,19 @@ public:
 	UniquePtr<ImageLoader> m_loader;
 	TexturePtr m_tex;
 	GrManager* m_gr ANKI_DBG_NULLIFY_PTR;
-	U32 m_layerCount = 0;
+	U32 m_depth = 0;
+	U8 m_faces = 0;
 
 	TexUploadTask(UniquePtr<ImageLoader>& loader,
 		TexturePtr tex,
 		GrManager* gr,
-		U32 layerCount)
+		U depth,
+		U faces)
 		: m_loader(std::move(loader))
 		, m_tex(tex)
 		, m_gr(gr)
-		, m_layerCount(layerCount)
+		, m_depth(depth)
+		, m_faces(faces)
 	{
 	}
 
@@ -44,18 +47,23 @@ Error TexUploadTask::operator()()
 		m_gr->newInstance<CommandBuffer>(CommandBufferInitInfo());
 
 	// Upload the data
-	for(U layer = 0; layer < m_layerCount; layer++)
+	for(U depth = 0; depth < m_depth; depth++)
 	{
-		for(U level = 0; level < m_loader->getMipLevelsCount(); level++)
+		for(U face = 0; face < m_faces; face++)
 		{
-			const auto& surf = m_loader->getSurface(level, layer);
+			for(U level = 0; level < m_loader->getMipLevelsCount(); level++)
+			{
+				U surfIdx = max(depth, face);
+				const auto& surf = m_loader->getSurface(level, surfIdx);
 
-			DynamicBufferToken token;
-			void* data = m_gr->allocateFrameHostVisibleMemory(
-				surf.m_data.getSize(), BufferUsage::TRANSFER, token);
-			memcpy(data, &surf.m_data[0], surf.m_data.getSize());
+				DynamicBufferToken token;
+				void* data = m_gr->allocateFrameHostVisibleMemory(
+					surf.m_data.getSize(), BufferUsage::TRANSFER, token);
+				memcpy(data, &surf.m_data[0], surf.m_data.getSize());
 
-			cmdb->textureUpload(m_tex, level, layer, token);
+				cmdb->textureUpload(
+					m_tex, TextureSurfaceInfo(level, depth, face), token);
+			}
 		}
 	}
 
@@ -84,7 +92,8 @@ Error TextureResource::load(const ResourceFilename& filename)
 		gr.newInstance<CommandBuffer>(CommandBufferInitInfo());
 
 	TextureInitInfo init;
-	U layers = 0;
+	U depth = 0;
+	U faces = 0;
 
 	// Load image
 	UniquePtr<ImageLoader> img;
@@ -108,7 +117,7 @@ Error TextureResource::load(const ResourceFilename& filename)
 	}
 	else
 	{
-		init.m_depth = 0;
+		init.m_depth = 1;
 	}
 
 	// target
@@ -116,19 +125,23 @@ Error TextureResource::load(const ResourceFilename& filename)
 	{
 	case ImageLoader::TextureType::_2D:
 		init.m_type = TextureType::_2D;
-		layers = 1;
+		depth = 1;
+		faces = 1;
 		break;
 	case ImageLoader::TextureType::CUBE:
 		init.m_type = TextureType::CUBE;
-		layers = 6;
+		depth = 1;
+		faces = 6;
 		break;
 	case ImageLoader::TextureType::_2D_ARRAY:
 		init.m_type = TextureType::_2D_ARRAY;
-		layers = init.m_depth;
+		depth = init.m_depth;
+		faces = 1;
 		break;
 	case ImageLoader::TextureType::_3D:
 		init.m_type = TextureType::_3D;
-		layers = init.m_depth;
+		depth = init.m_depth;
+		faces = 1;
 		break;
 	default:
 		ANKI_ASSERT(0);
@@ -201,7 +214,7 @@ Error TextureResource::load(const ResourceFilename& filename)
 
 	// Upload the data asynchronously
 	getManager().getAsyncLoader().newTask<TexUploadTask>(
-		img, m_tex, &gr, layers);
+		img, m_tex, &gr, depth, faces);
 
 	m_size = UVec3(init.m_width, init.m_height, init.m_depth);
 

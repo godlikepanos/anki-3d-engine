@@ -63,6 +63,43 @@ anki_internal:
 	}
 };
 
+/// Clear values for textures or attachments.
+class ClearValue
+{
+public:
+	union
+	{
+		Array<F32, 4> m_colorf = {{0.0, 0.0, 0.0, 0.0}};
+		Array<I32, 4> m_colori;
+		Array<U32, 4> m_coloru;
+		struct
+		{
+			F32 m_depth;
+			I32 m_stencil;
+		} m_depthStencil;
+	};
+};
+
+/// A way to identify a surface in a texture.
+class TextureSurfaceInfo
+{
+public:
+	TextureSurfaceInfo() = default;
+
+	TextureSurfaceInfo(const TextureSurfaceInfo&) = default;
+
+	TextureSurfaceInfo(U level, U depth, U face)
+		: m_level(level)
+		, m_depth(depth)
+		, m_face(face)
+	{
+	}
+
+	U32 m_level = 0;
+	U32 m_depth = 0;
+	U32 m_face = 0;
+};
+
 // Some constants
 // WARNING: If you change those update the shaders
 const U MAX_VERTEX_ATTRIBUTES = 8;
@@ -76,10 +113,25 @@ const U MAX_ATOMIC_BUFFER_BINDINGS = 1;
 const U MAX_FRAMES_IN_FLIGHT = 3;
 const U MAX_RESOURCE_GROUPS = 2;
 
-/// Compute max number of mipmaps for a 2D surface.
-inline U32 computeMaxMipmapCount(U32 w, U32 h)
+/// Compute max number of mipmaps for a 2D texture.
+inline U computeMaxMipmapCount(U w, U h)
 {
-	U32 s = (w < h) ? w : h;
+	U s = (w < h) ? w : h;
+	U count = 0;
+	while(s)
+	{
+		s /= 2;
+		++count;
+	}
+
+	return count;
+}
+
+/// Compute max number of mipmaps for a 3D texture.
+inline U computeMaxMipmapCount(U w, U h, U d)
+{
+	U s = (w < h) ? w : h;
+	s = (s < d) ? s : d;
 	U count = 0;
 	while(s)
 	{

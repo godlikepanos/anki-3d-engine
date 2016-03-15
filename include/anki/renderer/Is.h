@@ -60,7 +60,7 @@ anki_internal:
 
 	void generateMipmaps(CommandBufferPtr& cmdb)
 	{
-		cmdb->generateMipmaps(m_rt);
+		cmdb->generateMipmaps(m_rt, 0, 0);
 	}
 
 	DynamicBufferToken getCommonVarsToken() const

@@ -107,6 +107,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 	TextureInitInfo tinit;
 
 	tinit.m_width = tinit.m_height = NOISE_TEX_SIZE;
+	tinit.m_depth = 1;
 	tinit.m_type = TextureType::_2D;
 	tinit.m_format =
 		PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
@@ -127,7 +128,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 
 	genNoise(noise, noise + NOISE_TEX_SIZE * NOISE_TEX_SIZE);
 
-	cmdb->textureUpload(m_noiseTex, 0, 0, token);
+	cmdb->textureUpload(m_noiseTex, TextureSurfaceInfo(0, 0, 0), token);
 	cmdb->flush();
 
 	//

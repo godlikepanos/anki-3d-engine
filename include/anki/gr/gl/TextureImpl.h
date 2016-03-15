@@ -42,30 +42,22 @@ public:
 	void init(const TextureInitInfo& init);
 
 	/// Write texture data.
-	void write(U32 mipmap, U32 slice, void* data, PtrSize dataSize);
+	void write(const TextureSurfaceInfo& surf, void* data, PtrSize dataSize);
 
 	/// Generate mipmaps.
-	void generateMipmaps(U surface);
+	void generateMipmaps(U depth, U face);
 
-	/// Copy a single slice from one texture to another.
+	/// Copy a single surface from one texture to another.
 	static void copy(const TextureImpl& src,
-		U srcSlice,
-		U srcLevel,
+		const TextureSurfaceInfo& srcSurf,
 		const TextureImpl& dest,
-		U destSlice,
-		U destLevel);
+		const TextureSurfaceInfo& destSurf);
 
 	void bind();
 
-	void clear(U level, U depth, U face, const ClearValue& clearValue);
+	void clear(const TextureSurfaceInfo& surf, const ClearValue& clearValue);
 
-	U computeSurfaceIdx(U depth, U face) const
-	{
-		ANKI_ASSERT(m_target != GL_TEXTURE_3D && "TODO");
-		ANKI_ASSERT(face < m_faceCount);
-		ANKI_ASSERT(depth < m_depth);
-		return m_faceCount * depth + face;
-	}
+	U computeSurfaceIdx(const TextureSurfaceInfo& surf) const;
 };
 /// @}
 

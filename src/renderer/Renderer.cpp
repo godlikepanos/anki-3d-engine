@@ -262,8 +262,8 @@ Error Renderer::render(RenderingContext& ctx)
 
 	m_is->run(ctx);
 
-	cmdb->generateMipmaps(m_ms->getDepthRt());
-	cmdb->generateMipmaps(m_ms->getRt2());
+	cmdb->generateMipmaps(m_ms->getDepthRt(), 0, 0);
+	cmdb->generateMipmaps(m_ms->getRt2(), 0, 0);
 
 	m_fs->run(ctx);
 	m_lf->run(ctx);
@@ -354,7 +354,7 @@ void Renderer::createRenderTarget(U32 w,
 
 	init.m_width = w;
 	init.m_height = h;
-	init.m_depth = 0;
+	init.m_depth = 1;
 	init.m_type = TextureType::_2D;
 	init.m_format = format;
 	init.m_mipmapsCount = mipsCount;

@@ -289,6 +289,7 @@ void TextureImpl::init(const TextureInitInfo& init)
 	m_width = init.m_width;
 	m_height = init.m_height;
 	m_depth = init.m_depth;
+	ANKI_ASSERT(m_depth > 0);
 	m_target = convertTextureType(init.m_type);
 
 	convertTextureInformation(
@@ -415,8 +416,12 @@ void TextureImpl::init(const TextureInitInfo& init)
 }
 
 //==============================================================================
-void TextureImpl::write(U32 mipmap, U32 slice, void* data, PtrSize dataSize)
+void TextureImpl::write(
+	const TextureSurfaceInfo& surf, void* data, PtrSize dataSize)
 {
+	U mipmap = surf.m_level;
+	U surfIdx = computeSurfaceIdx(surf);
+
 	ANKI_ASSERT(data);
 	ANKI_ASSERT(dataSize > 0);
 	ANKI_ASSERT(mipmap < m_mipsCount);
@@ -446,7 +451,7 @@ void TextureImpl::write(U32 mipmap, U32 slice, void* data, PtrSize dataSize)
 	case GL_TEXTURE_CUBE_MAP:
 		if(!m_compressed)
 		{
-			glTexSubImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + slice,
+			glTexSubImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + surfIdx,
 				mipmap,
 				0,
 				0,
@@ -458,7 +463,7 @@ void TextureImpl::write(U32 mipmap, U32 slice, void* data, PtrSize dataSize)
 		}
 		else
 		{
-			glCompressedTexSubImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + slice,
+			glCompressedTexSubImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + surfIdx,
 				mipmap,
 				0,
 				0,
@@ -472,12 +477,20 @@ void TextureImpl::write(U32 mipmap, U32 slice, void* data, PtrSize dataSize)
 	case GL_TEXTURE_2D_ARRAY:
 	case GL_TEXTURE_3D:
 		ANKI_ASSERT(m_depth > 0);
-		ANKI_ASSERT(slice < m_depth);
 
 		if(!m_compressed)
 		{
-			glTexSubImage3D(
-				m_target, mipmap, 0, 0, slice, w, h, 1, m_format, m_type, data);
+			glTexSubImage3D(m_target,
+				mipmap,
+				0,
+				0,
+				surfIdx,
+				w,
+				h,
+				1,
+				m_format,
+				m_type,
+				data);
 		}
 		else
 		{
@@ -485,7 +498,7 @@ void TextureImpl::write(U32 mipmap, U32 slice, void* data, PtrSize dataSize)
 				mipmap,
 				0,
 				0,
-				slice,
+				surfIdx,
 				w,
 				h,
 				1,
@@ -502,8 +515,9 @@ void TextureImpl::write(U32 mipmap, U32 slice, void* data, PtrSize dataSize)
 }
 
 //==============================================================================
-void TextureImpl::generateMipmaps(U surface)
+void TextureImpl::generateMipmaps(U depth, U face)
 {
+	U surface = computeSurfaceIdx(TextureSurfaceInfo(0, depth, face));
 	ANKI_ASSERT(surface < m_surfaceCount);
 	ANKI_ASSERT(!m_compressed);
 
@@ -554,52 +568,54 @@ void TextureImpl::generateMipmaps(U surface)
 
 //==============================================================================
 void TextureImpl::copy(const TextureImpl& src,
-	U srcSlice,
-	U srcLevel,
+	const TextureSurfaceInfo& srcSurf,
 	const TextureImpl& dest,
-	U destSlice,
-	U destLevel)
+	const TextureSurfaceInfo& destSurf)
 {
 	ANKI_ASSERT(src.m_internalFormat == dest.m_internalFormat);
 	ANKI_ASSERT(src.m_format == dest.m_format);
 	ANKI_ASSERT(src.m_type == dest.m_type);
 
-	U width = src.m_width >> srcLevel;
-	U height = src.m_height >> srcLevel;
+	U width = src.m_width >> srcSurf.m_level;
+	U height = src.m_height >> srcSurf.m_level;
 
 	ANKI_ASSERT(width > 0 && height > 0);
-	ANKI_ASSERT(width == (dest.m_width >> destLevel)
-		&& height == (dest.m_height >> destLevel));
+	ANKI_ASSERT(width == (dest.m_width >> destSurf.m_level)
+		&& height == (dest.m_height >> destSurf.m_level));
+
+	U srcSurfaceIdx = src.computeSurfaceIdx(srcSurf);
+	U destSurfaceIdx = dest.computeSurfaceIdx(destSurf);
 
 	glCopyImageSubData(src.getGlName(),
 		src.m_target,
-		srcLevel,
+		srcSurf.m_level,
 		0,
 		0,
-		srcSlice,
+		srcSurfaceIdx,
 		dest.getGlName(),
 		dest.m_target,
-		destLevel,
+		destSurf.m_level,
 		0,
 		0,
-		destSlice,
+		destSurfaceIdx,
 		width,
 		height,
 		1);
 }
 
 //==============================================================================
-void TextureImpl::clear(U level, U depth, U face, const ClearValue& clearValue)
+void TextureImpl::clear(
+	const TextureSurfaceInfo& surf, const ClearValue& clearValue)
 {
 	ANKI_ASSERT(isCreated());
-	ANKI_ASSERT(level < m_mipsCount);
+	ANKI_ASSERT(surf.m_level < m_mipsCount);
 
-	U surfaceIdx = computeSurfaceIdx(depth, face);
-	U width = m_width >> level;
-	U height = m_height >> level;
+	U surfaceIdx = computeSurfaceIdx(surf);
+	U width = m_width >> surf.m_level;
+	U height = m_height >> surf.m_level;
 
 	glClearTexSubImage(m_glName,
-		level,
+		surf.m_level,
 		0,
 		0,
 		surfaceIdx,
@@ -609,6 +625,28 @@ void TextureImpl::clear(U level, U depth, U face, const ClearValue& clearValue)
 		m_format,
 		m_type,
 		&clearValue.m_colorf[0]);
+}
+
+//==============================================================================
+U TextureImpl::computeSurfaceIdx(const TextureSurfaceInfo& surf) const
+{
+	ANKI_ASSERT(surf.m_face < m_faceCount);
+	ANKI_ASSERT(surf.m_depth < m_depth);
+	ANKI_ASSERT(surf.m_level < m_mipsCount);
+
+	if(m_target == GL_TEXTURE_3D)
+	{
+		// Check depth for this level
+		U depth = m_depth >> surf.m_level;
+		ANKI_ASSERT(surf.m_depth < depth);
+		(void)depth;
+
+		return surf.m_depth;
+	}
+	else
+	{
+		return m_faceCount * surf.m_depth + surf.m_face;
+	}
 }
 
 } // end namespace anki

@@ -66,7 +66,7 @@ TraceManager::~TraceManager()
 	{
 		Error err = m_traceFile.writeText(
 			"{\"name\": \"dummy\", "
-			"\"cat\": \"PERF\", \"ph\": \"X\", \"pid\": 666, \"tid\": %llu, "
+			"\"cat\": \"PERF\", \"ph\": \"X\", \"pid\": 1, \"tid\": %llu, "
 			"\"ts\": 0, \"dur\": 1}]}",
 			Thread::getCurrentThreadId());
 
@@ -176,7 +176,7 @@ Error TraceManager::flushCounters()
 	F32 fps = 1.0 / time;
 	ANKI_CHECK(m_traceFile.writeText(
 		"{\"name\": \"FPS\", \"cat\": \"PERF\", \"ph\": \"C\", "
-		"\"pid\": 666, \"ts\": %llu, \"args\": {\"val\": %f}},\n",
+		"\"pid\": 1, \"ts\": %llu, \"args\": {\"val\": %f}},\n",
 		U64(m_startFrameTime * 1000000.0),
 		fps));
 
@@ -188,7 +188,7 @@ Error TraceManager::flushCounters()
 
 		ANKI_CHECK(m_traceFile.writeText(
 			"{\"name\": \"%s\", \"cat\": \"PERF\", \"ph\": \"C\", "
-			"\"pid\": 666, \"ts\": %llu, \"args\": {\"val\": %llu}},\n",
+			"\"pid\": 1, \"ts\": %llu, \"args\": {\"val\": %llu}},\n",
 			counterNames[i],
 			U64(m_startFrameTime * 1000000.0),
 			count));
@@ -217,7 +217,7 @@ Error TraceManager::flushEvents()
 
 		ANKI_CHECK(m_traceFile.writeText(
 			"{\"name\": \"%s\", \"cat\": \"PERF\", \"ph\": \"X\", "
-			"\"pid\": 666, \"tid\": %llu, \"ts\": %llu, \"dur\": %llu},\n",
+			"\"pid\": 1, \"tid\": %llu, \"ts\": %llu, \"dur\": %llu},\n",
 			eventNames[e.m_event],
 			e.m_tid,
 			U64(e.m_timestamp * 1000000.0),

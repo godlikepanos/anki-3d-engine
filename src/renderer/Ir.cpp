@@ -110,12 +110,14 @@ Error Ir::init(const ConfigSet& config)
 			for(U l = 0; l < m_cubemapArrMipCount; ++l)
 			{
 				// Do env
-				cmdb->clearTexture(m_envCubemapArr, l, i, f, clear);
+				cmdb->clearTexture(
+					m_envCubemapArr, TextureSurfaceInfo(l, i, f), clear);
 			}
 
 			for(U l = 0; l < irrMipCount; ++l)
 			{
-				cmdb->clearTexture(m_irradianceCubemapArr, l, i, f, clear);
+				cmdb->clearTexture(
+					m_irradianceCubemapArr, TextureSurfaceInfo(l, i, f), clear);
 			}
 		}
 	}
@@ -264,14 +266,12 @@ Error Ir::renderReflection(RenderingContext& ctx,
 
 		// Copy env texture
 		cmdb->copyTextureToTexture(m_nestedR.getIs().getRt(),
-			0,
-			0,
+			TextureSurfaceInfo(0, 0, 0),
 			m_envCubemapArr,
-			6 * cubemapIdx + i,
-			0);
+			TextureSurfaceInfo(0, cubemapIdx, i));
 
 		// Gen mips of env tex
-		cmdb->generateMipmaps(m_envCubemapArr, 6 * cubemapIdx + i);
+		cmdb->generateMipmaps(m_envCubemapArr, cubemapIdx, i);
 	}
 
 	// Compute irradiance
@@ -302,7 +302,7 @@ Error Ir::renderReflection(RenderingContext& ctx,
 		m_r->drawQuad(cmdb);
 		cmdb->endRenderPass();
 
-		cmdb->generateMipmaps(m_irradianceCubemapArr, 6 * cubemapIdx + i);
+		cmdb->generateMipmaps(m_irradianceCubemapArr, cubemapIdx, i);
 	}
 
 	return ErrorCode::NONE;

@@ -366,23 +366,6 @@ enum class ResourceAccessBit : U16
 	TRANSFER_WRITE = 1 << 9
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ResourceAccessBit, inline)
-
-/// Clear values for textures or attachments.
-class ClearValue
-{
-public:
-	union
-	{
-		Array<F32, 4> m_colorf = {{0.0, 0.0, 0.0, 0.0}};
-		Array<I32, 4> m_colori;
-		Array<U32, 4> m_coloru;
-		struct
-		{
-			F32 m_depth;
-			I32 m_stencil;
-		} m_depthStencil;
-	};
-};
 /// @}
 
 } // end namespace anki

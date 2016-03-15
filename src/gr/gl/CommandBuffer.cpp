@@ -462,17 +462,14 @@ class TexUploadCommand final : public GlCommand
 {
 public:
 	TexturePtr m_handle;
-	U32 m_mipmap;
-	U32 m_slice;
+	TextureSurfaceInfo m_surf;
 	DynamicBufferToken m_token;
 
 	TexUploadCommand(const TexturePtr& handle,
-		U32 mipmap,
-		U32 slice,
+		TextureSurfaceInfo surf,
 		const DynamicBufferToken& token)
 		: m_handle(handle)
-		, m_mipmap(mipmap)
-		, m_slice(slice)
+		, m_surf(surf)
 		, m_token(token)
 	{
 	}
@@ -482,20 +479,19 @@ public:
 		U8* data = state.m_dynamicBuffers[BufferUsage::TRANSFER].m_address
 			+ m_token.m_offset;
 
-		m_handle->getImplementation().write(
-			m_mipmap, m_slice, data, m_token.m_range);
-
+		m_handle->getImplementation().write(m_surf, data, m_token.m_range);
 		return ErrorCode::NONE;
 	}
 };
 
-void CommandBuffer::textureUpload(
-	TexturePtr tex, U32 mipmap, U32 slice, const DynamicBufferToken& token)
+void CommandBuffer::textureUpload(TexturePtr tex,
+	const TextureSurfaceInfo& surf,
+	const DynamicBufferToken& token)
 {
 	ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
 	ANKI_ASSERT(token.m_range > 0);
 
-	m_impl->pushBackNewCommand<TexUploadCommand>(tex, mipmap, slice, token);
+	m_impl->pushBackNewCommand<TexUploadCommand>(tex, surf, token);
 }
 
 //==============================================================================
@@ -538,49 +534,27 @@ class GenMipsCommand final : public GlCommand
 {
 public:
 	TexturePtr m_tex;
+	U32 m_depth;
+	U8 m_face;
 
-	GenMipsCommand(const TexturePtr& tex)
+	GenMipsCommand(const TexturePtr& tex, U depth, U face)
 		: m_tex(tex)
+		, m_depth(depth)
+		, m_face(face)
 	{
 	}
 
 	Error operator()(GlState&)
 	{
-		m_tex->getImplementation().generateMipmaps(0);
+		m_tex->getImplementation().generateMipmaps(m_depth, m_face);
 		return ErrorCode::NONE;
 	}
 };
 
-void CommandBuffer::generateMipmaps(TexturePtr tex)
+void CommandBuffer::generateMipmaps(TexturePtr tex, U depth, U face)
 {
 	ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
-	m_impl->pushBackNewCommand<GenMipsCommand>(tex);
-}
-
-//==============================================================================
-class GenMipsCommand1 final : public GlCommand
-{
-public:
-	TexturePtr m_tex;
-	U32 m_surface;
-
-	GenMipsCommand1(const TexturePtr& tex, U surface)
-		: m_tex(tex)
-		, m_surface(surface)
-	{
-	}
-
-	Error operator()(GlState&)
-	{
-		m_tex->getImplementation().generateMipmaps(m_surface);
-		return ErrorCode::NONE;
-	}
-};
-
-void CommandBuffer::generateMipmaps(TexturePtr tex, U surface)
-{
-	ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
-	m_impl->pushBackNewCommand<GenMipsCommand1>(tex, surface);
+	m_impl->pushBackNewCommand<GenMipsCommand>(tex, depth, face);
 }
 
 //==============================================================================
@@ -622,49 +596,38 @@ class CopyTexCommand final : public GlCommand
 {
 public:
 	TexturePtr m_src;
-	U16 m_srcSlice;
-	U16 m_srcLevel;
+	TextureSurfaceInfo m_srcSurf;
 	TexturePtr m_dest;
-	U16 m_destSlice;
-	U16 m_destLevel;
+	TextureSurfaceInfo m_destSurf;
 
 	CopyTexCommand(TexturePtr src,
-		U srcSlice,
-		U srcLevel,
+		const TextureSurfaceInfo& srcSurf,
 		TexturePtr dest,
-		U destSlice,
-		U destLevel)
+		const TextureSurfaceInfo& destSurf)
 		: m_src(src)
-		, m_srcSlice(srcSlice)
-		, m_srcLevel(srcLevel)
+		, m_srcSurf(srcSurf)
 		, m_dest(dest)
-		, m_destSlice(destSlice)
-		, m_destLevel(destLevel)
+		, m_destSurf(destSurf)
 	{
 	}
 
 	Error operator()(GlState&)
 	{
 		TextureImpl::copy(m_src->getImplementation(),
-			m_srcSlice,
-			m_srcLevel,
+			m_srcSurf,
 			m_dest->getImplementation(),
-			m_destSlice,
-			m_destLevel);
+			m_destSurf);
 		return ErrorCode::NONE;
 	}
 };
 
 void CommandBuffer::copyTextureToTexture(TexturePtr src,
-	U srcSlice,
-	U srcLevel,
+	const TextureSurfaceInfo& srcSurf,
 	TexturePtr dest,
-	U destSlice,
-	U destLevel)
+	const TextureSurfaceInfo& destSurf)
 {
 	ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
-	m_impl->pushBackNewCommand<CopyTexCommand>(
-		src, srcSlice, srcLevel, dest, destSlice, destLevel);
+	m_impl->pushBackNewCommand<CopyTexCommand>(src, srcSurf, dest, destSurf);
 }
 
 //==============================================================================
@@ -738,32 +701,28 @@ class ClearTextCommand final : public GlCommand
 public:
 	TexturePtr m_tex;
 	ClearValue m_val;
-	U16 m_level;
-	U16 m_depth;
-	U8 m_face;
+	TextureSurfaceInfo m_surf;
 
 	ClearTextCommand(
-		TexturePtr tex, U level, U depth, U face, const ClearValue& val)
+		TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& val)
 		: m_tex(tex)
 		, m_val(val)
-		, m_level(level)
-		, m_depth(depth)
-		, m_face(face)
+		, m_surf(surf)
 	{
 	}
 
 	Error operator()(GlState&)
 	{
-		m_tex->getImplementation().clear(m_level, m_depth, m_face, m_val);
+		m_tex->getImplementation().clear(m_surf, m_val);
 		return ErrorCode::NONE;
 	}
 };
 
-void CommandBuffer::clearTexture(
-	TexturePtr tex, U level, U depth, U face, const ClearValue& clearValue)
+void CommandBuffer::clearTexture(TexturePtr tex,
+	const TextureSurfaceInfo& surf,
+	const ClearValue& clearValue)
 {
-	m_impl->pushBackNewCommand<ClearTextCommand>(
-		tex, level, depth, face, clearValue);
+	m_impl->pushBackNewCommand<ClearTextCommand>(tex, surf, clearValue);
 }
 
 } // end namespace anki
