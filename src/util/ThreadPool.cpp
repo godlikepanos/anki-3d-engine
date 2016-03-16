@@ -3,13 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/util/Thread.h>
-#include <anki/util/Assert.h>
+#include <anki/util/ThreadPool.h>
 #include <anki/util/Logger.h>
-#include <anki/util/Functions.h>
 #include <cstdlib>
 #include <new>
-#include <cstdio>
 
 namespace anki
 {
@@ -18,18 +15,16 @@ namespace anki
 // ThreadPoolThread                                                            =
 //==============================================================================
 
-#if !ANKI_DISABLE_THREADPOOL_THREADING
-
 namespace detail
 {
 
-/// The thread that executes a ThreadPool::Task
+/// The thread that executes a ThreadPoolTask
 class ThreadPoolThread
 {
 public:
 	U32 m_id; ///< An ID
 	Thread m_thread; ///< Runs the workingFunc
-	ThreadPool::Task* m_task; ///< Its NULL if there is no pending task
+	ThreadPoolTask* m_task; ///< Its NULL if there is no pending task
 	ThreadPool* m_threadpool;
 	Bool8 m_quit = false;
 
@@ -77,8 +72,6 @@ private:
 
 } // end namespace detail
 
-#endif
-
 //==============================================================================
 // ThreadPool                                                                  =
 //==============================================================================
@@ -88,16 +81,11 @@ ThreadPool::DummyTask ThreadPool::m_dummyTask;
 
 //==============================================================================
 ThreadPool::ThreadPool(U32 threadsCount)
-#if !ANKI_DISABLE_THREADPOOL_THREADING
 	: m_barrier(threadsCount + 1)
-#endif
 {
 	m_threadsCount = threadsCount;
 	ANKI_ASSERT(m_threadsCount <= MAX_THREADS && m_threadsCount > 0);
 
-#if ANKI_DISABLE_THREADPOOL_THREADING
-	ANKI_LOGW("ThreadPool works in synchronous mode");
-#else
 	m_threads = reinterpret_cast<detail::ThreadPoolThread*>(
 		malloc(sizeof(detail::ThreadPoolThread) * m_threadsCount));
 
@@ -111,13 +99,11 @@ ThreadPool::ThreadPool(U32 threadsCount)
 		::new(&m_threads[threadsCount])
 			detail::ThreadPoolThread(threadsCount, this);
 	}
-#endif
 }
 
 //==============================================================================
 ThreadPool::~ThreadPool()
 {
-#if !ANKI_DISABLE_THREADPOOL_THREADING
 	// Terminate threads
 	U count = m_threadsCount;
 	while(count-- != 0)
@@ -145,11 +131,10 @@ ThreadPool::~ThreadPool()
 	{
 		free(m_threads);
 	}
-#endif
 }
 
 //==============================================================================
-void ThreadPool::assignNewTask(U32 slot, Task* task)
+void ThreadPool::assignNewTask(U32 slot, ThreadPoolTask* task)
 {
 	ANKI_ASSERT(slot < getThreadsCount());
 	if(task == nullptr)
@@ -157,7 +142,6 @@ void ThreadPool::assignNewTask(U32 slot, Task* task)
 		task = &m_dummyTask;
 	}
 
-#if !ANKI_DISABLE_THREADPOOL_THREADING
 	m_threads[slot].m_task = task;
 	++m_tasksAssigned;
 
@@ -166,14 +150,6 @@ void ThreadPool::assignNewTask(U32 slot, Task* task)
 		// Last task is assigned. Wake all threads
 		m_barrier.wait();
 	}
-#else
-	Error err = (*task)(slot, m_threadsCount);
-
-	if(err)
-	{
-		m_err = err;
-	}
-#endif
 }
 
 } // end namespace anki

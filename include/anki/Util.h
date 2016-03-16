@@ -66,4 +66,5 @@
 #include <anki/util/StringList.h>
 #include <anki/util/System.h>
 #include <anki/util/Thread.h>
+#include <anki/util/ThreadPool.h>
 #include <anki/util/Visitor.h>

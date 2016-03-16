@@ -14,6 +14,7 @@
 #include <anki/resource/Forward.h>
 #include <anki/resource/ShaderResource.h>
 #include <anki/core/Timestamp.h>
+#include <anki/util/ThreadPool.h>
 
 namespace anki
 {

@@ -15,7 +15,6 @@
 #include <anki/renderer/Renderer.h>
 #include <anki/core/Trace.h>
 #include <anki/util/Logger.h>
-#include <anki/util/Thread.h>
 
 namespace anki
 {

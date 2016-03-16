@@ -17,6 +17,7 @@ class ResourceManager;
 class ConfigSet;
 class SceneGraph;
 class SceneNode;
+class ThreadPool;
 
 /// @addtogroup renderer
 /// @{

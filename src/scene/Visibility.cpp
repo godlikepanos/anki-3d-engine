@@ -15,6 +15,7 @@
 #include <anki/renderer/MainRenderer.h>
 #include <anki/util/Logger.h>
 #include <anki/core/Trace.h>
+#include <anki/util/ThreadPool.h>
 
 namespace anki
 {
@@ -91,7 +92,7 @@ public:
 };
 
 /// Task.
-class VisibilityTestTask : public ThreadPool::Task
+class VisibilityTestTask : public ThreadPoolTask
 {
 public:
 	VisibilityContext* m_ctx = nullptr;

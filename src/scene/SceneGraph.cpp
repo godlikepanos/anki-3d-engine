@@ -13,6 +13,7 @@
 #include <anki/renderer/MainRenderer.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/misc/ConfigSet.h>
+#include <anki/util/ThreadPool.h>
 
 namespace anki
 {
@@ -25,7 +26,7 @@ namespace
 {
 
 //==============================================================================
-class UpdateSceneNodesTask : public ThreadPool::Task
+class UpdateSceneNodesTask : public ThreadPoolTask
 {
 public:
 	SceneGraph* m_scene = nullptr;

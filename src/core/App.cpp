@@ -9,6 +9,7 @@
 #include <anki/util/File.h>
 #include <anki/util/Filesystem.h>
 #include <anki/util/System.h>
+#include <anki/util/ThreadPool.h>
 #include <anki/core/Trace.h>
 
 #include <anki/core/NativeWindow.h>

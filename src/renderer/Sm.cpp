@@ -12,6 +12,7 @@
 #include <anki/scene/FrustumComponent.h>
 #include <anki/scene/MoveComponent.h>
 #include <anki/misc/ConfigSet.h>
+#include <anki/util/ThreadPool.h>
 
 namespace anki
 {
@@ -254,7 +255,7 @@ Error Sm::doSpotLight(SceneNode& light,
 	VisibilityTestResults& vis = frc.getVisibilityTestResults();
 	U problemSize = vis.getCount(VisibilityGroupType::RENDERABLES_MS);
 	PtrSize start, end;
-	ThreadPool::Task::choseStartEnd(
+	ThreadPoolTask::choseStartEnd(
 		threadId, threadCount, problemSize, start, end);
 
 	if(start == end)
@@ -292,7 +293,7 @@ Error Sm::doOmniLight(SceneNode& light,
 			VisibilityTestResults& vis = frc.getVisibilityTestResults();
 			U problemSize = vis.getCount(VisibilityGroupType::RENDERABLES_MS);
 			PtrSize start, end;
-			ThreadPool::Task::choseStartEnd(
+			ThreadPoolTask::choseStartEnd(
 				threadId, threadCount, problemSize, start, end);
 
 			if(start != end)

@@ -62,16 +62,8 @@ thread_local I g_traceEventsInFlight = 0;
 //==============================================================================
 TraceManager::~TraceManager()
 {
-	if(m_traceFile.isOpen())
-	{
-		Error err = m_traceFile.writeText(
-			"{\"name\": \"dummy\", "
-			"\"cat\": \"PERF\", \"ph\": \"X\", \"pid\": 1, \"tid\": %llu, "
-			"\"ts\": 0, \"dur\": 1}]}",
-			Thread::getCurrentThreadId());
-
-		ANKI_TRACE_FILE_ERROR();
-	}
+	// No need to close the json (no need to add ']'). Chrome will take care
+	// of that
 }
 
 //==============================================================================
@@ -89,9 +81,7 @@ Error TraceManager::create(HeapAllocator<U8> alloc, const CString& cacheDir)
 	fname.sprintf("%s/trace.json", &cacheDir[0]);
 
 	ANKI_CHECK(m_traceFile.open(fname.toCString(), File::OpenFlag::WRITE));
-	ANKI_CHECK(m_traceFile.writeText("{\n"
-									 "\"displayTimeUnit\": \"ms\",\n"
-									 "\"traceEvents\": [\n"));
+	ANKI_CHECK(m_traceFile.writeText("["));
 
 	// Create per frame file
 	StringAuto perFrameFname(alloc);
@@ -215,13 +205,21 @@ Error TraceManager::flushEvents()
 	{
 		const Entry& e = m_entries[i];
 
+		U64 startMicroSec = U64(e.m_timestamp * 1000000.0);
+		U64 durMicroSec = U64(e.m_duration * 1000000.0);
+
+		if(durMicroSec == 0)
+		{
+			continue;
+		}
+
 		ANKI_CHECK(m_traceFile.writeText(
 			"{\"name\": \"%s\", \"cat\": \"PERF\", \"ph\": \"X\", "
 			"\"pid\": 1, \"tid\": %llu, \"ts\": %llu, \"dur\": %llu},\n",
 			eventNames[e.m_event],
 			e.m_tid,
-			U64(e.m_timestamp * 1000000.0),
-			U64(e.m_duration * 1000000.0)));
+			startMicroSec,
+			durMicroSec));
 	}
 
 	for(U i = 0; i < U(TraceEventType::COUNT); ++i)

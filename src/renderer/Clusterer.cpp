@@ -8,6 +8,7 @@
 #include <anki/scene/MoveComponent.h>
 #include <anki/scene/SceneNode.h>
 #include <anki/util/Rtti.h>
+#include <anki/util/ThreadPool.h>
 
 namespace anki
 {
@@ -17,7 +18,7 @@ namespace anki
 //==============================================================================
 
 //==============================================================================
-class UpdatePlanesPerspectiveCameraTask : public ThreadPool::Task
+class UpdatePlanesPerspectiveCameraTask : public ThreadPoolTask
 {
 public:
 	Clusterer* m_clusterer = nullptr;
@@ -548,7 +549,7 @@ void Clusterer::update(U32 threadId, PtrSize threadsCount, Bool frustumChanged)
 		// Re-calculate the planes in local space
 
 		// First the top looking planes
-		ThreadPool::Task::choseStartEnd(
+		ThreadPoolTask::choseStartEnd(
 			threadId, threadsCount, m_planesYW.getSize(), start, end);
 
 		for(U i = start; i < end; i++)
@@ -559,7 +560,7 @@ void Clusterer::update(U32 threadId, PtrSize threadsCount, Bool frustumChanged)
 		}
 
 		// Then the right looking planes
-		ThreadPool::Task::choseStartEnd(
+		ThreadPoolTask::choseStartEnd(
 			threadId, threadsCount, m_planesXW.getSize(), start, end);
 
 		for(U j = start; j < end; j++)
@@ -574,7 +575,7 @@ void Clusterer::update(U32 threadId, PtrSize threadsCount, Bool frustumChanged)
 		// Only transform planes
 
 		// First the top looking planes
-		ThreadPool::Task::choseStartEnd(
+		ThreadPoolTask::choseStartEnd(
 			threadId, threadsCount, m_planesYW.getSize(), start, end);
 
 		for(U i = start; i < end; i++)
@@ -583,7 +584,7 @@ void Clusterer::update(U32 threadId, PtrSize threadsCount, Bool frustumChanged)
 		}
 
 		// Then the right looking planes
-		ThreadPool::Task::choseStartEnd(
+		ThreadPoolTask::choseStartEnd(
 			threadId, threadsCount, m_planesXW.getSize(), start, end);
 
 		for(U j = start; j < end; j++)

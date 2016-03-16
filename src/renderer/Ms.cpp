@@ -6,6 +6,7 @@
 #include <anki/renderer/Ms.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/util/Logger.h>
+#include <anki/util/ThreadPool.h>
 #include <anki/scene/SceneGraph.h>
 #include <anki/scene/FrustumComponent.h>
 #include <anki/misc/ConfigSet.h>
@@ -127,7 +128,7 @@ Error Ms::buildCommandBuffers(
 
 	U problemSize = vis.getCount(VisibilityGroupType::RENDERABLES_MS);
 	PtrSize start, end;
-	ThreadPool::Task::choseStartEnd(
+	ThreadPoolTask::choseStartEnd(
 		threadId, threadCount, problemSize, start, end);
 
 	if(start != end)

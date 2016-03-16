@@ -16,6 +16,7 @@ namespace anki
 // Forward
 class FrustumComponent;
 class SceneNode;
+class ThreadPool;
 
 /// @addtogroup renderer
 /// @{

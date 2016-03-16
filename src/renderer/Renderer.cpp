@@ -419,7 +419,7 @@ Error Renderer::buildCommandBuffers(RenderingContext& ctx)
 	m_fs->prepareBuildCommandBuffers(ctx);
 
 	// Build
-	class Task : public ThreadPool::Task
+	class Task : public ThreadPoolTask
 	{
 	public:
 		Renderer* m_r ANKI_DBG_NULLIFY_PTR;

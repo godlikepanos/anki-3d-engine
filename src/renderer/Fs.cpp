@@ -92,7 +92,7 @@ Error Fs::buildCommandBuffers(
 
 	U problemSize = vis.getCount(VisibilityGroupType::RENDERABLES_FS);
 	PtrSize start, end;
-	ThreadPool::Task::choseStartEnd(
+	ThreadPoolTask::choseStartEnd(
 		threadId, threadCount, problemSize, start, end);
 
 	if(start == end)

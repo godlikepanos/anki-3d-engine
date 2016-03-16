@@ -5,13 +5,17 @@
 
 #pragma once
 
-#include <anki/util/Thread.h>
-#include <anki/util/Singleton.h>
+#include <anki/util/ThreadPool.h>
 
 namespace anki
 {
 
-/// Singleton
-typedef Singleton<ThreadPool> ThreadPoolSingleton;
+/// @addtogroup util_thread
+/// @{
+
+class ThreadHive
+{
+};
+/// @}
 
 } // end namespace anki

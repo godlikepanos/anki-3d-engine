@@ -12,7 +12,6 @@
 #include <anki/util/BitSet.h>
 #include <anki/util/List.h>
 #include <anki/util/Enum.h>
-#include <anki/util/Thread.h>
 #include <anki/scene/SceneComponent.h>
 
 namespace anki

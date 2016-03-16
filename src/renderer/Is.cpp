@@ -304,7 +304,7 @@ public:
 };
 
 /// Write the lights to the GPU buffers.
-class WriteLightsTask : public ThreadPool::Task
+class WriteLightsTask : public ThreadPoolTask
 {
 public:
 	TaskCommonData* m_data = nullptr;
@@ -612,7 +612,7 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 	//
 	// Initialize the temp clusters
 	//
-	ThreadPool::Task::choseStartEnd(
+	ThreadPoolTask::choseStartEnd(
 		threadId, threadsCount, clusterCount, start, end);
 
 	for(U i = start; i < end; ++i)
