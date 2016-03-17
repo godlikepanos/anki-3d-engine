@@ -49,40 +49,40 @@ struct ReflectionProbe
 };
 
 layout(
-	std140, row_major, UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING)) uniform ubo0_
+	std140, row_major, UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING)) uniform u0_
 {
 	LightingUniforms u_lightingUniforms;
 };
 
 #ifdef FRAGMENT_SHADER
 
-layout(std140, SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 0)) readonly buffer _s1
+layout(std140, UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING + 1)) uniform u1_
 {
-	PointLight u_pointLights[];
+	PointLight u_pointLights[UBO_MAX_SIZE / (3 * 4 * 4)];
 };
 
-layout(SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 1),
+layout(UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING + 2),
 	std140,
-	row_major) readonly buffer _s2
+	row_major) uniform u2_
 {
-	SpotLight u_spotLights[];
-};
-
-layout(SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 2), std430) readonly buffer _s3
-{
-	uint u_clusters[];
-};
-
-layout(std430, SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 3)) readonly buffer _s4
-{
-	uint u_lightIndices[];
+	SpotLight u_spotLights[UBO_MAX_SIZE / (9 * 4 * 4)];
 };
 
 layout(std140,
 	row_major,
-	SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 4)) readonly buffer _s5
+	UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING + 3)) uniform u3_
 {
-	ReflectionProbe u_reflectionProbes[];
+	ReflectionProbe u_reflectionProbes[UBO_MAX_SIZE / (2 * 4 * 4)];
+};
+
+layout(SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 0), std430) readonly buffer s0_
+{
+	uint u_clusters[];
+};
+
+layout(std430, SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 1)) readonly buffer s1_
+{
+	uint u_lightIndices[];
 };
 
 layout(TEX_BINDING(LIGHT_SET,

@@ -455,12 +455,12 @@ Error Is::initInternal(const ConfigSet& config)
 		}
 
 		init.m_uniformBuffers[0].m_dynamic = true;
+		init.m_uniformBuffers[1].m_dynamic = true;
+		init.m_uniformBuffers[2].m_dynamic = true;
+		init.m_uniformBuffers[3].m_dynamic = true;
 
 		init.m_storageBuffers[0].m_dynamic = true;
 		init.m_storageBuffers[1].m_dynamic = true;
-		init.m_storageBuffers[2].m_dynamic = true;
-		init.m_storageBuffers[3].m_dynamic = true;
-		init.m_storageBuffers[4].m_dynamic = true;
 
 		m_rcGroup = getGrManager().newInstance<ResourceGroup>(init);
 	}
@@ -508,7 +508,7 @@ Error Is::populateBuffers(RenderingContext& ctx)
 		ShaderPointLight* data = static_cast<ShaderPointLight*>(
 			getGrManager().allocateFrameHostVisibleMemory(
 				sizeof(ShaderPointLight) * visiblePointLightsCount,
-				BufferUsage::STORAGE,
+				BufferUsage::UNIFORM,
 				m_pLightsToken));
 
 		taskData.m_pointLights =
@@ -528,7 +528,7 @@ Error Is::populateBuffers(RenderingContext& ctx)
 		ShaderSpotLight* data = static_cast<ShaderSpotLight*>(
 			getGrManager().allocateFrameHostVisibleMemory(
 				sizeof(ShaderSpotLight) * visibleSpotLightsCount,
-				BufferUsage::STORAGE,
+				BufferUsage::UNIFORM,
 				m_sLightsToken));
 
 		taskData.m_spotLights =
@@ -548,7 +548,7 @@ Error Is::populateBuffers(RenderingContext& ctx)
 		ShaderProbe* data = static_cast<ShaderProbe*>(
 			getGrManager().allocateFrameHostVisibleMemory(
 				sizeof(ShaderProbe) * visibleProbeCount,
-				BufferUsage::STORAGE,
+				BufferUsage::UNIFORM,
 				m_probesToken));
 
 		taskData.m_probes = SArray<ShaderProbe>(data, visibleProbeCount);
@@ -963,12 +963,12 @@ void Is::setState(CommandBufferPtr& cmdb)
 
 	DynamicBufferInfo dyn;
 	dyn.m_uniformBuffers[0] = m_commonVarsToken;
+	dyn.m_uniformBuffers[1] = m_pLightsToken;
+	dyn.m_uniformBuffers[2] = m_sLightsToken;
+	dyn.m_uniformBuffers[3] = m_probesToken;
 
-	dyn.m_storageBuffers[0] = m_pLightsToken;
-	dyn.m_storageBuffers[1] = m_sLightsToken;
-	dyn.m_storageBuffers[2] = m_clustersToken;
-	dyn.m_storageBuffers[3] = m_lightIdsToken;
-	dyn.m_storageBuffers[4] = m_probesToken;
+	dyn.m_storageBuffers[0] = m_clustersToken;
+	dyn.m_storageBuffers[1] = m_lightIdsToken;
 
 	cmdb->bindResourceGroup(m_rcGroup, 0, &dyn);
 }

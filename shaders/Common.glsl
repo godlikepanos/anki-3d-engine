@@ -23,14 +23,15 @@ precision DEFAULT_FLOAT_PRECISION int;
 
 const float EPSILON = 0.000001;
 const float PI = 3.14159265358979323846;
+const uint UBO_MAX_SIZE = 16384;
 
 // Read from a render target texture
 //#define textureRt(tex_, texc_) texture(tex_, texc_)
 #define textureRt(tex_, texc_) textureLod(tex_, texc_, 0.0)
 
 // Binding
-#define UBO_BINDING(slot_, binding_) binding = slot_ * 1 + binding_
-#define SS_BINDING(slot_, binding_) binding = slot_ * 8 + binding_
+#define UBO_BINDING(slot_, binding_) binding = slot_ * 4 + binding_
+#define SS_BINDING(slot_, binding_) binding = slot_ * 4 + binding_
 #define TEX_BINDING(slot_, binding_) binding = slot_ * 10 + binding_
 #define ATOMIC_BINDING(slot_, binding_) binding = slot_ * 1 + binding_
 
