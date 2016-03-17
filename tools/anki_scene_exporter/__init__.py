@@ -1,8 +1,5 @@
-# Copyright (C) 2009-2016, Panagiotis Christopoulos Charitos and contributors.
-# All rights reserved.
 # Code licensed under the BSD License.
-# http://www.anki3d.org/LICENSE
-
+# http://www.anki3d.org/LICENSE Panagiotis Christopoulos Charitos and contributors
 # keep methods in alphabetical order
 
 bl_info = {
@@ -47,7 +44,6 @@ class SCENE_anki_scene_exporter(AddonPreferences):
 	# when defining this in a submodule of a python package.
 	bl_idname = __name__
 
-
 	anki_environment = StringProperty(
 			name="Anki Environment",
 			default=ENV.ENVIRO,
@@ -56,9 +52,17 @@ class SCENE_anki_scene_exporter(AddonPreferences):
 		name="Project Path",
 		subtype='FILE_PATH',
 		)
-	export_path = StringProperty(
+	export_map_path = StringProperty(
+			name="Map Path",
+			default="Map Path",
+			)
+	export_source_path = StringProperty(
 			name="Source Path",
 			default="Source Path:",
+			)
+	export_texture_path = StringProperty(
+			name="Texture Path",
+			default="Texture Path",
 			)
 	im_convert = StringProperty(
 			name="ImageMagick Convert Path",
@@ -72,18 +76,13 @@ class SCENE_anki_scene_exporter(AddonPreferences):
 			)
 	tools_path = StringProperty(
 			name="Tools Path",
-			default="Tools Path:",
-			)
-	map_path = StringProperty(
-			name="Map Path",
-			default="Map Path:",
-			)
-	texture_path = StringProperty(
-			name="Texture Path",
-			default="Texture Path:{}",
+			default="Tools Path",
 			)
 	temp_dea = StringProperty(
 			name="Temp Dea Path",
+			)
+	tool_py_texture = StringProperty(
+			name="Texture Tool",
 			)
 	# Try to get/set the environment variables
 	path_list = os.getenv(ENV.ENVIRO)
@@ -94,7 +93,7 @@ class SCENE_anki_scene_exporter(AddonPreferences):
 		anki_project_path[1]['default'] = environment_root
 
 		env_dct, export_dct, tools_dct = ENV.get_environment()
-		# ENV.set_environment(env_dct, tools_dct)
+		ENV.set_environment(env_dct, tools_dct)
 
 		# check converter if does not exit remove default path
 		if not os.path.exists(im_convert[1]['default']):
@@ -107,10 +106,11 @@ class SCENE_anki_scene_exporter(AddonPreferences):
 
 		# Set the gui
 		tools_path[1]['default'] = tools_dct['tools_path']
-		export_path[1]['default'] = export_dct['export_src_data']
-		map_path[1]['default'] = export_dct['export_map_path']
-		texture_path[1]['default'] = export_dct['export_texture_path']
+		export_source_path[1]['default'] = export_dct['export_src_data']
+		export_map_path[1]['default'] = export_dct['export_map_path']
 		temp_dea[1]['default'] = export_dct['export_temp_dea']
+		export_texture_path[1]['default'] = export_dct['export_texture_path']
+		tool_py_texture[1]['default'] = "{0}/convert_image.py".format(tools_dct['tools_texture_path'])
 
 	def draw(self, context):
 		layout = self.layout
@@ -128,13 +128,12 @@ class SCENE_anki_scene_exporter(AddonPreferences):
 		col.label(text='Tools Path:')
 
 		col = split.column()
-		col.label(text=self.export_path)
-		col.label(text=self.map_path)
-		col.label(text=self.texture_path)
+		col.label(text=self.export_source_path)
+		col.label(text=self.export_map_path)
+		col.label(text=self.export_texture_path)
 		col.label(text=self.tools_path)
 
 		layout.operator("scene.anki_preference_set", text="Set Preferences")
-
 
 def register():
 	bpy.utils.register_module(__name__)

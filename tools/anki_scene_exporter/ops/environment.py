@@ -1,8 +1,5 @@
-# Copyright (C) 2009-2016, Panagiotis Christopoulos Charitos and contributors.
-# All rights reserved.
 # Code licensed under the BSD License.
-# http://www.anki3d.org/LICENSE
-
+# http://www.anki3d.org/LICENSE Panagiotis Christopoulos Charitos and contributors
 # keep methods in alphabetical order
 
 # blender imports
@@ -28,6 +25,7 @@ class OBJECT_OT_anki_preference_set(Operator):
 		addon_prefs = PREF.get_anki_exporter_preferences(context)
 		ENV.ENVIRO = addon_prefs.anki_environment
 		env_dct, export_dct, tools_dct = ENV.get_environment()
+		ENV.set_environment(env_dct, tools_dct)
 
 		# Set project paths
 		addon_prefs.tools_path = tools_dct['tools_path']

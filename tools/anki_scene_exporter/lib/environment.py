@@ -1,12 +1,10 @@
-# Copyright (C) 2009-2016, Panagiotis Christopoulos Charitos and contributors.
-# All rights reserved.
 # Code licensed under the BSD License.
-# http://www.anki3d.org/LICENSE
-
+# http://www.anki3d.org/LICENSE Panagiotis Christopoulos Charitos and contributors
 # keep methods in alphabetical order
 
 # system imports
 import os
+import sys
 
 bl_info = {"author": "A. A. Kalugin Jr."}
 
@@ -41,8 +39,8 @@ def get_environment():
 	# Tools Environment
 	tool_etcpack_path     = "{0}/thirdparty/bin".format(environment_root)
 	tools_path            = "{0}/tools".format(anki_build_path)
-	tools_scene_path      = "{0}/scene".format(tools_path)
-	tools_texture_path    = "{0}/texture".format(tools_path)
+	tools_scene_path      = "{0}/tools/scene".format(environment_root)
+	tools_texture_path    = "{0}/tools/texture".format(environment_root)
 
 	# Make the Export Paths
 	for _path in [export_src_data, export_map_path, export_texture_path]:
@@ -50,19 +48,15 @@ def get_environment():
 			print ("Making directory:", _path)
 			os.makedirs(_path)
 
+	# anki checked out path dictionary
 	env_dct = {
-					'environment_root':environment_root+'/',
+					'anki_root_path':environment_root+'/',
 					'anki_build_path':anki_build_path,
 					'anki_engine_data_path':anki_engine_data_path,
 					'anki_shaders_path':anki_shaders_path,
 					}
-	tools_dct = {
-					'tool_etcpack_path':tool_etcpack_path,
-					'tools_path':tools_path,
-					'tools_scene_path':tools_scene_path,
-					'tools_texture_path':tools_texture_path,
-					}
 
+	# export path dictionary
 	export_dct = {
 					'export_src_data':export_src_data,
 					'export_map_path':export_map_path,
@@ -70,14 +64,28 @@ def get_environment():
 					'export_temp_dea':export_temp_dea,
 					}
 
+	# tools path dictionary
+	tools_dct = {
+					'tool_etcpack_path':tool_etcpack_path,
+					'tools_path':tools_path,
+					'tools_scene_path':tools_scene_path,
+					'tools_texture_path':tools_texture_path,
+					}
 	return env_dct, export_dct, tools_dct
 
 def set_environment(anki_env_dct, tools_dct):
 	"""
 	Sets the environment variable.
 	"""
-	environment_path = ':'.join(anki_env_dct.values())
-	os.environ[ENVIRO]=environment_path
-	environment_path = ':'.join(tools_dct.values())
+	# Set the environment variable for anki
+	environment_path = os.pathsep.join(anki_env_dct.values())
 	os.environ[ENVIRO]=environment_path
 
+	# Append the tools path to the $PATH
+	tools_path = os.pathsep.join(tools_dct.values())
+
+	# Create a clean PATH environment varaible
+	os.environ["PATH"] += os.pathsep + tools_path
+	path_l = os.getenv("PATH").split(os.pathsep)
+	new_path = os.pathsep.join(set(path_l))
+	os.environ["PATH"] = new_path

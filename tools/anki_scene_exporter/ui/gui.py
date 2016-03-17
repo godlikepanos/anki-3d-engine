@@ -1,8 +1,5 @@
-# Copyright (C) 2009-2016, Panagiotis Christopoulos Charitos and contributors.
-# All rights reserved.
 # Code licensed under the BSD License.
-# http://www.anki3d.org/LICENSE
-
+# http://www.anki3d.org/LICENSE Panagiotis Christopoulos Charitos and contributors
 # keep methods in alphabetical order
 
 """
@@ -50,6 +47,13 @@ class VIEW3D_PT_tools_anki(AnkiPanel, Panel):
 
 		split = layout.split()
 		col = split.column()
-		col.prop(scn, 'UseViewport')
+		col.prop(scn, "UseViewport", text="Viewport")
 		col = split.column()
-		col.operator("scene.anki_export", icon='PLAY')
+		col.operator("scene.anki_export_scene", icon='PLAY')
+		col = layout.column(align=True)
+
+		col.separator()
+
+		col.label(text="Texture Export:")
+		row = col.row(align=True)
+		row.operator("scene.anki_export_textures", icon='IMAGE_COL')
