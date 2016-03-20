@@ -7,6 +7,7 @@
 #include "anki/util/Thread.h"
 #include "anki/util/StdTypes.h"
 #include "anki/util/HighRezTimer.h"
+#include "anki/util/ThreadPool.h"
 #include <cstring>
 
 namespace anki
@@ -103,7 +104,7 @@ ANKI_TEST(Util, Mutex)
 //==============================================================================
 
 /// Struct for our tests
-struct TestJobTP : ThreadPool::Task
+struct TestJobTP : ThreadPoolTask
 {
 	U32 in = 0;
 	U32 iterations = 0;

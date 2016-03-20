@@ -31,6 +31,10 @@ static Array<const char*, U(TraceEventType::COUNT)> eventNames = {
 		"RENDER_DRAWER",
 		"RENDERER_COMMAND_BUFFER_BUILDING",
 		"GL_THREAD",
+		"GL_2ND_LEVEL_CMD_BUFFER",
+		"GL_BIND_RESOURCES",
+		"GL_BIND_PPLINE",
+		"GL_CMD_BUFFER_DESTROY",
 		"SWAP_BUFFERS",
 		"BARRIER_WAIT"}};
 

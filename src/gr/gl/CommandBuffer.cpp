@@ -163,6 +163,8 @@ public:
 
 	Error operator()(GlState& state)
 	{
+		ANKI_TRACE_START_EVENT(GL_BIND_PPLINE);
+
 		PipelineImpl& impl = m_ppline->getImplementation();
 
 		auto name = impl.getGlName();
@@ -172,6 +174,7 @@ public:
 			state.m_crntPpline = name;
 		}
 
+		ANKI_TRACE_STOP_EVENT(GL_BIND_PPLINE);
 		return ErrorCode::NONE;
 	}
 };
@@ -239,7 +242,9 @@ public:
 
 	Error operator()(GlState& state)
 	{
+		ANKI_TRACE_START_EVENT(GL_BIND_RESOURCES);
 		m_rc->getImplementation().bind(m_slot, m_dynInfo, state);
+		ANKI_TRACE_STOP_EVENT(GL_BIND_RESOURCES);
 		return ErrorCode::NONE;
 	}
 };
@@ -576,7 +581,10 @@ public:
 
 	Error operator()(GlState&)
 	{
-		return m_cmdb->getImplementation().executeAllCommands();
+		ANKI_TRACE_START_EVENT(GL_2ND_LEVEL_CMD_BUFFER);
+		Error err = m_cmdb->getImplementation().executeAllCommands();
+		ANKI_TRACE_STOP_EVENT(GL_2ND_LEVEL_CMD_BUFFER);
+		return err;
 	}
 };
 

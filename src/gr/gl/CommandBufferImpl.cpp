@@ -9,6 +9,7 @@
 #include <anki/gr/gl/RenderingThread.h>
 #include <anki/gr/gl/Error.h>
 #include <anki/util/Logger.h>
+#include <anki/core/Trace.h>
 #include <cstring>
 
 namespace anki
@@ -30,6 +31,8 @@ void CommandBufferImpl::init(const InitHints& hints)
 //==============================================================================
 void CommandBufferImpl::destroy()
 {
+	ANKI_TRACE_START_EVENT(GL_CMD_BUFFER_DESTROY);
+
 #if ANKI_DEBUG
 	if(!m_executed && m_firstCommand)
 	{
@@ -50,6 +53,8 @@ void CommandBufferImpl::destroy()
 		&& "Someone is holding a reference to the command buffer's allocator");
 
 	m_alloc = CommandBufferAllocator<U8>();
+
+	ANKI_TRACE_STOP_EVENT(GL_CMD_BUFFER_DESTROY);
 }
 
 //==============================================================================

@@ -48,8 +48,7 @@ struct ReflectionProbe
 	vec4 cubemapIndexPad3;
 };
 
-layout(
-	std140, row_major, UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING)) uniform u0_
+layout(std140, row_major, UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING)) uniform u0_
 {
 	LightingUniforms u_lightingUniforms;
 };

@@ -360,6 +360,74 @@ private:
 		b.m_size = 0;
 	}
 };
+
+/// Same as SArray but copyable.
+template<typename T>
+class WArray : public DArray<T>
+{
+public:
+	using Base = DArray<T>;
+	using Value = T;
+
+	WArray()
+		: Base()
+	{
+	}
+
+	WArray(T* mem, PtrSize size)
+		: Base()
+	{
+		if(size)
+		{
+			ANKI_ASSERT(mem);
+		}
+
+		Base::m_data = mem;
+		Base::m_size = size;
+	}
+
+	/// Copy.
+	WArray(const WArray& b)
+		: Base::m_data(b.m_data)
+		, Base::m_size(b.m_size)
+	{
+	}
+
+	/// Move.
+	WArray(WArray&& b)
+		: Base::m_data(b.m_data)
+		, Base::m_size(b.m_size)
+	{
+		b.m_data = nullptr;
+		b.m_size = 0;
+	}
+
+	~WArray()
+	{
+#if ANKI_ASSERTIONS
+		Base::m_data = nullptr;
+		Base::m_size = 0;
+#endif
+	}
+
+	/// Copy.
+	WArray& operator=(const WArray& b)
+	{
+		Base::m_data = b.m_data;
+		Base::m_size = b.m_size;
+		return *this;
+	}
+
+	/// Move.
+	WArray& operator=(WArray&& b)
+	{
+		Base::m_data = b.m_data;
+		b.m_data = nullptr;
+		Base::m_size = b.m_size;
+		b.m_size = 0;
+		return *this;
+	}
+};
 /// @}
 
 } // end namespace anki

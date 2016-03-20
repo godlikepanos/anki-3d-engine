@@ -6,7 +6,7 @@
 #include "tests/framework/Framework.h"
 #include "tests/util/Foo.h"
 #include "anki/util/Memory.h"
-#include "anki/util/Thread.h"
+#include "anki/util/ThreadPool.h"
 #include <type_traits>
 #include <cstring>
 
@@ -97,7 +97,7 @@ ANKI_TEST(Util, StackMemoryPool)
 		const U ALLOC_SIZE = 25;
 		ThreadPool threadPool(THREAD_COUNT);
 
-		class AllocateTask : public ThreadPool::Task
+		class AllocateTask : public ThreadPoolTask
 		{
 		public:
 			StackMemoryPool* m_pool = nullptr;
