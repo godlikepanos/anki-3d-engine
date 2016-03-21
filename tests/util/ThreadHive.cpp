@@ -24,8 +24,8 @@ public:
 
 	union
 	{
-		Atomic<U32> m_countAtomic;
-		U32 m_count;
+		Atomic<I32> m_countAtomic;
+		I32 m_count;
 	};
 };
 
@@ -51,14 +51,15 @@ static void taskToWaitOn(void* arg, U32, ThreadHive& hive)
 	ThreadHiveTestContext* ctx = static_cast<ThreadHiveTestContext*>(arg);
 	std::this_thread::sleep_for(std::chrono::seconds(1));
 	ctx->m_count = 10;
-	std::this_thread::sleep_for(std::chrono::seconds(1));
+	std::this_thread::sleep_for(std::chrono::milliseconds(100));
 }
 
 //==============================================================================
-static void taskToWait(void* arg, U32, ThreadHive& hive)
+static void taskToWait(void* arg, U32 threadId, ThreadHive& hive)
 {
 	ThreadHiveTestContext* ctx = static_cast<ThreadHiveTestContext*>(arg);
-	ANKI_TEST_EXPECT_EQ(ctx->m_count, 10);
+	U prev = ctx->m_countAtomic.fetchAdd(1);
+	ANKI_TEST_EXPECT_GEQ(prev, 10);
 }
 
 //==============================================================================
@@ -69,10 +70,11 @@ ANKI_TEST(Util, ThreadHive)
 	ThreadHive hive(threadCount, alloc);
 
 	// Simple test
+	if(1)
 	{
 		ThreadHiveTestContext ctx;
 		ctx.m_countAtomic.set(0);
-		const U INITIAL_TASK_COUNT = 10;
+		const U INITIAL_TASK_COUNT = 100;
 
 		for(U i = 0; i < INITIAL_TASK_COUNT; ++i)
 		{
@@ -85,7 +87,7 @@ ANKI_TEST(Util, ThreadHive)
 	}
 
 	// Depedency tests
-	if(0)
+	if(1)
 	{
 		ThreadHiveTestContext ctx;
 		ctx.m_count = 0;
@@ -109,7 +111,65 @@ ANKI_TEST(Util, ThreadHive)
 
 		hive.submitTasks(&dtasks[0], DEP_TASKS);
 
+		// Again
+		ThreadHiveTask dtasks2[DEP_TASKS];
+		for(U i = 0; i < DEP_TASKS; ++i)
+		{
+			dtasks2[i].m_callback = taskToWait;
+			dtasks2[i].m_argument = &ctx;
+			dtasks2[i].m_inDependencies = WArray<ThreadHiveDependencyHandle>(
+				&dtasks[i].m_outDependency, 1);
+		}
+
+		hive.submitTasks(&dtasks2[0], DEP_TASKS);
+
 		hive.waitAllTasks();
+
+		ANKI_TEST_EXPECT_EQ(ctx.m_countAtomic.get(), DEP_TASKS * 2 + 10);
+	}
+
+	// Fuzzy test
+	if(1)
+	{
+		ThreadHiveTestContext ctx;
+		ctx.m_count = 0;
+
+		I number = 0;
+		ThreadHiveDependencyHandle dep = 0;
+
+		const U SUBMISSION_COUNT = 100;
+		const U TASK_COUNT = 100;
+		for(U i = 0; i < SUBMISSION_COUNT; ++i)
+		{
+			for(U j = 0; j < TASK_COUNT; ++j)
+			{
+				Bool cb = rand() % 2;
+
+				number = (cb) ? number + 2 : number - 2;
+
+				ThreadHiveTask task;
+				task.m_callback = (cb) ? incNumber : decNumber;
+				task.m_argument = &ctx;
+
+				if((rand() % 3) == 0 && j > 0)
+				{
+					task.m_inDependencies =
+						WArray<ThreadHiveDependencyHandle>(&dep, 1);
+				}
+
+				hive.submitTasks(&task, 1);
+
+				if((rand() % 7) == 0)
+				{
+					dep = task.m_outDependency;
+				}
+			}
+
+			dep = 0;
+			hive.waitAllTasks();
+		}
+
+		ANKI_TEST_EXPECT_EQ(ctx.m_countAtomic.get(), number);
 	}
 }
 

@@ -70,20 +70,20 @@ public:
 	void waitAllTasks();
 
 private:
-	static const U MAX_DEPS = 4;
+	static const U MAX_DEPS = 2;
 
 	/// Lightweight task.
 	class Task
 	{
 	public:
-		ThreadHiveTaskCallback m_cb;
-		void* m_arg;
+		Task* m_next; ///< Next in the list.
 
-		union
-		{
-			Array<ThreadHiveDependencyHandle, MAX_DEPS> m_deps;
-			U64 m_depsU64;
-		};
+		ThreadHiveTaskCallback m_cb; ///< Callback that defines the task.
+		void* m_arg; ///< Args for the callback.
+
+		U16 m_depCount;
+		Array<ThreadHiveDependencyHandle, MAX_DEPS> m_deps;
+		Bool8 m_othersDepend; ///< Other tasks depend on this one.
 
 		Bool done() const
 		{
@@ -91,30 +91,32 @@ private:
 		}
 	};
 
-	static_assert(sizeof(Task) == sizeof(void*) * 2 + 8, "Too big");
+	static_assert(sizeof(Task) == (sizeof(void*) * 3 + 8), "Wrong size");
 
 	GenericMemoryPoolAllocator<U8> m_alloc;
 	ThreadHiveThread* m_threads = nullptr;
 	U32 m_threadCount = 0;
 
-	DArray<Task> m_queue; ///< Task queue.
-	I32 m_head = 0; ///< Head of m_queue.
-	I32 m_tail = -1; ///< Tail of m_queue.
-	U64 m_workingThreadsMask = 0; ///< Mask with the threads that have work.
+	DArray<Task> m_storage; ///< Task storage.
+	Task* m_head = nullptr; ///< Head of the task list.
+	Task* m_tail = nullptr; ///< Tail of the task list.
 	Bool m_quit = false;
-	U64 m_waitingThreadsMask = 0;
+	U32 m_pendingTasks = 0;
+	U32 m_allocatedTasks = 0;
 
 	Mutex m_mtx; ///< Protect the queue
 	ConditionVariable m_cvar;
 
-	Bool m_mainThreadStopWaiting = false;
-	Mutex m_mainThreadMtx;
-	ConditionVariable m_mainThreadCvar;
-
 	void run(U threadId);
 
+	Bool waitForWork(
+		U threadId, Task*& task, ThreadHiveTaskCallback& cb, void*& arg);
+
 	/// Get new work from the queue.
-	ThreadHiveTaskCallback getNewWork(void*& arg);
+	Task* getNewTask(ThreadHiveTaskCallback& cb, void*& arg);
+
+	/// Complete a task.
+	void completeTask(U taskId);
 };
 /// @}
 

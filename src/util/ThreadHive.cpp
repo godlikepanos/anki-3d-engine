@@ -14,7 +14,7 @@ namespace anki
 // Misc                                                                        =
 //==============================================================================
 
-#define ANKI_ENABLE_HIVE_DEBUG_PRINT 1
+#define ANKI_ENABLE_HIVE_DEBUG_PRINT 0
 
 #if ANKI_ENABLE_HIVE_DEBUG_PRINT
 #define ANKI_HIVE_DEBUG_PRINT(...) printf(__VA_ARGS__)
@@ -67,13 +67,13 @@ ThreadHive::ThreadHive(U threadCount, GenericMemoryPoolAllocator<U8> alloc)
 		::new(&m_threads[i]) ThreadHiveThread(i, this);
 	}
 
-	m_queue.create(m_alloc, 1024);
+	m_storage.create(m_alloc, 1024);
 }
 
 //==============================================================================
 ThreadHive::~ThreadHive()
 {
-	m_queue.destroy(m_alloc);
+	m_storage.destroy(m_alloc);
 
 	if(m_threads)
 	{
@@ -104,35 +104,59 @@ void ThreadHive::submitTasks(ThreadHiveTask* tasks, U taskCount)
 {
 	ANKI_ASSERT(tasks && taskCount > 0);
 
-	// Create the tasks to temp memory to decrease thread contention
-	Array<Task, 64> tempTasks;
-	for(U i = 0; i < taskCount; ++i)
-	{
-		tempTasks[i].m_cb = tasks[i].m_callback;
-		tempTasks[i].m_arg = tasks[i].m_argument;
-		tempTasks[i].m_depsU64 = 0;
-
-		ANKI_ASSERT(tasks[i].m_inDependencies.getSize() <= MAX_DEPS
-			&& "For now only limited deps");
-		for(U j = 0; j < tasks[i].m_inDependencies.getSize(); ++j)
-		{
-			tempTasks[i].m_deps[j] = tasks[i].m_inDependencies[j];
-		}
-	}
+	U allocatedTasks;
 
 	// Push work
-	I firstTaskIdx;
-
 	{
 		LockGuard<Mutex> lock(m_mtx);
 
-		// "Allocate" storage for tasks
-		firstTaskIdx = m_tail + 1;
-		m_tail += taskCount;
+		for(U i = 0; i < taskCount; ++i)
+		{
+			const auto& inTask = tasks[i];
+			Task& outTask = m_storage[m_allocatedTasks];
 
-		// Store tasks
-		memcpy(&m_queue[firstTaskIdx], &tempTasks[0], sizeof(Task) * taskCount);
+			outTask.m_cb = inTask.m_callback;
+			outTask.m_arg = inTask.m_argument;
+			outTask.m_depCount = 0;
+			outTask.m_next = nullptr;
+			outTask.m_othersDepend = false;
 
+			// Set the dependencies
+			ANKI_ASSERT(inTask.m_inDependencies.getSize() <= MAX_DEPS
+				&& "For now only limited deps");
+			for(U j = 0; j < inTask.m_inDependencies.getSize(); ++j)
+			{
+				ThreadHiveDependencyHandle dep = inTask.m_inDependencies[j];
+				ANKI_ASSERT(dep < m_allocatedTasks);
+
+				if(!m_storage[dep].done())
+				{
+					outTask.m_deps[outTask.m_depCount++] = dep;
+					m_storage[dep].m_othersDepend = true;
+				}
+			}
+
+			// Push to the list
+			if(m_head == nullptr)
+			{
+				ANKI_ASSERT(m_tail == nullptr);
+				m_head = &m_storage[m_allocatedTasks];
+				m_tail = m_head;
+			}
+			else
+			{
+				ANKI_ASSERT(m_tail && m_head);
+				m_tail->m_next = &outTask;
+				m_tail = &outTask;
+			}
+
+			++m_allocatedTasks;
+		}
+
+		allocatedTasks = m_allocatedTasks;
+		m_pendingTasks += taskCount;
+
+		ANKI_HIVE_DEBUG_PRINT("submit tasks\n");
 		// Notify all threads
 		m_cvar.notifyAll();
 	}
@@ -140,141 +164,134 @@ void ThreadHive::submitTasks(ThreadHiveTask* tasks, U taskCount)
 	// Set the out dependencies
 	for(U i = 0; i < taskCount; ++i)
 	{
-		tasks[i].m_outDependency = firstTaskIdx + i;
+		tasks[i].m_outDependency = allocatedTasks - taskCount + i;
 	}
 }
 
 //==============================================================================
 void ThreadHive::run(U threadId)
 {
-	U64 threadMask = 1 << threadId;
+	Task* task = nullptr;
+	ThreadHiveTaskCallback cb = nullptr;
+	void* arg = nullptr;
 
-	while(1)
+	while(!waitForWork(threadId, task, cb, arg))
 	{
-		// Wait for something
-		ThreadHiveTaskCallback cb;
-		void* arg;
-		Bool quit;
-
-		{
-			LockGuard<Mutex> lock(m_mtx);
-
-			ANKI_HIVE_DEBUG_PRINT("tid: %lu locking\n", threadId);
-
-			while(!m_quit && (cb = getNewWork(arg)) == nullptr)
-			{
-				ANKI_HIVE_DEBUG_PRINT("tid: %lu waiting, cb %p\n", 
-					threadId, 
-					reinterpret_cast<void*>(cb));
-
-				m_waitingThreadsMask |= threadMask;
-
-				if(__builtin_popcount(m_waitingThreadsMask) == m_threadCount)
-				{
-					ANKI_HIVE_DEBUG_PRINT("tid: %lu all threads done. 0x%lu\n", 
-						threadId, 
-						m_waitingThreadsMask);
-					LockGuard<Mutex> lock2(m_mainThreadMtx);
-
-					m_mainThreadStopWaiting = true;
-
-					// Everyone is waiting. Wake the main thread
-					m_mainThreadCvar.notifyOne();
-				}
-
-				// Wait if there is no work.
-				m_cvar.wait(m_mtx);
-			}
-
-			m_waitingThreadsMask &= ~threadMask;
-			quit = m_quit;
-		}
-
-		if(quit)
-		{
-			break;
-		}
-
 		// Run the task
 		cb(arg, threadId, *this);
-		ANKI_HIVE_DEBUG_PRINT("dit: %lu executed\n", threadId);
+		ANKI_HIVE_DEBUG_PRINT("tid: %lu executed\n", threadId);
 	}
 
-	ANKI_HIVE_DEBUG_PRINT("dit: %lu thread quits!\n", threadId);
+	ANKI_HIVE_DEBUG_PRINT("tid: %lu thread quits!\n", threadId);
 }
 
 //==============================================================================
-ThreadHiveTaskCallback ThreadHive::getNewWork(void*& arg)
+Bool ThreadHive::waitForWork(
+	U threadId, Task*& task, ThreadHiveTaskCallback& cb, void*& arg)
 {
-	ThreadHiveTaskCallback cb = nullptr;
+	cb = nullptr;
+	arg = nullptr;
 
-	for(I i = m_head; cb == nullptr && i <= m_tail; ++i)
+	LockGuard<Mutex> lock(m_mtx);
+
+	ANKI_HIVE_DEBUG_PRINT("tid: %lu locking\n", threadId);
+
+	// Complete the previous task
+	if(task)
 	{
-		Task& task = m_queue[i];
-		if(!task.done())
+		task->m_cb = nullptr;
+		--m_pendingTasks;
+
+		if(task->m_othersDepend || m_pendingTasks == 0)
+		{
+			// A dependency got resolved or we are out of tasks. Wake them all
+			ANKI_HIVE_DEBUG_PRINT("tid: %lu wake all\n", threadId);
+			m_cvar.notifyAll();
+		}
+	}
+
+	while(!m_quit && (task = getNewTask(cb, arg)) == nullptr)
+	{
+		ANKI_HIVE_DEBUG_PRINT("tid: %lu waiting\n", threadId);
+
+		// Wait if there is no work.
+		m_cvar.wait(m_mtx);
+	}
+
+	return m_quit;
+}
+
+//==============================================================================
+ThreadHive::Task* ThreadHive::getNewTask(ThreadHiveTaskCallback& cb, void*& arg)
+{
+	cb = nullptr;
+
+	Task* prevTask = nullptr;
+	Task* task = m_head;
+	while(task)
+	{
+		if(!task->done())
 		{
 			// We may have a candiate
 
 			// Check if there are dependencies
 			Bool allDepsCompleted = true;
-			if(task.m_depsU64 != 0)
+			for(U j = 0; j < task->m_depCount; ++j)
 			{
-				for(U j = 0; j < MAX_DEPS; ++j)
-				{
-					I32 dep = task.m_deps[j];
+				U dep = task->m_deps[j];
 
-					if(dep < m_head || dep > m_tail || !m_queue[dep].done())
-					{
-						allDepsCompleted = false;
-						break;
-					}
+				if(!m_storage[dep].done())
+				{
+					allDepsCompleted = false;
+					break;
 				}
 			}
 
 			if(allDepsCompleted)
 			{
-				// Found something
-				cb = task.m_cb;
-				arg = task.m_arg;
+				// Found something, pop it
+				cb = task->m_cb;
+				arg = task->m_arg;
 
-				// "Complete" the task
-				task.m_cb = nullptr;
+				if(prevTask)
+				{
+					prevTask->m_next = task->m_next;
+				}
 
-				if(ANKI_UNLIKELY(m_head == m_tail))
+				if(m_head == task)
 				{
-					// Reset it
-					m_head = 0;
-					m_tail = -1;
+					m_head = task->m_next;
 				}
-				else if(i == m_head)
+
+				if(m_tail == task)
 				{
-					// Pop front
-					++m_head;
+					m_tail = prevTask;
 				}
-				else if(i == m_tail)
-				{
-					// Pop back
-					--m_tail;
-				}
+				break;
 			}
 		}
+
+		prevTask = task;
+		task = task->m_next;
 	}
 
-	return cb;
+	return task;
 }
 
 //==============================================================================
 void ThreadHive::waitAllTasks()
 {
 	ANKI_HIVE_DEBUG_PRINT("mt: waiting all\n");
-	LockGuard<Mutex> lock(m_mainThreadMtx);
 
-	while(!m_mainThreadStopWaiting)
+	LockGuard<Mutex> lock(m_mtx);
+	while(m_pendingTasks > 0)
 	{
-		m_mainThreadCvar.wait(m_mainThreadMtx);
+		m_cvar.wait(m_mtx);
 	}
 
-	m_mainThreadStopWaiting = false;
+	m_head = nullptr;
+	m_tail = nullptr;
+	m_allocatedTasks = 0;
 
 	ANKI_HIVE_DEBUG_PRINT("mt: done waiting all\n");
 }
