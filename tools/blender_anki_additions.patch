@@ -1,43 +1,5 @@
-diff --git a/source/blender/collada/DocumentExporter.cpp b/source/blender/collada/DocumentExporter.cpp
-index 1348d7e..7c1b09d 100644
---- a/source/blender/collada/DocumentExporter.cpp
-+++ b/source/blender/collada/DocumentExporter.cpp
-@@ -160,10 +160,10 @@ static COLLADABU::NativeString make_temp_filepath(const char *name, const char *
- 	const char *tempdir = BKE_tempdir_session();
- 
- 	if (name == NULL) {
--		name = tmpnam(NULL);
-+		name = tempnam(tempdir, NULL);
- 	}
- 
--	BLI_make_file_string(NULL, tempfile, tempdir, name);
-+	strcpy(tempfile, name);
- 
- 	if (extension) {
- 		BLI_ensure_extension(tempfile, FILE_MAX, extension);
-@@ -185,8 +185,7 @@ void DocumentExporter::exportCurrentScene(Scene *sce)
- 
- 	clear_global_id_map();
- 
--	COLLADABU::NativeString native_filename = make_temp_filepath(NULL, ".dae");
--	COLLADASW::StreamWriter *writer = new COLLADASW::StreamWriter(native_filename);
-+	COLLADASW::StreamWriter *writer = new COLLADASW::StreamWriter(COLLADABU::NativeString(this->export_settings->filepath));
- 
- 	fprintf(stdout, "Collada export: %s\n", this->export_settings->filepath);
- 
-@@ -328,10 +327,6 @@ void DocumentExporter::exportCurrentScene(Scene *sce)
- 	// close <Collada>
- 	writer->endDocument();
- 	delete writer;
--
--	// Finally move the created document into place
--	BLI_rename(native_filename.c_str(), this->export_settings->filepath);
--
- }
- 
- void DocumentExporter::exportScenes(const char *filename)
 diff --git a/source/blender/collada/EffectExporter.cpp b/source/blender/collada/EffectExporter.cpp
-index 13dc1ed..6ea357f 100644
+index 13dc1ed..77d6a6e 100644
 --- a/source/blender/collada/EffectExporter.cpp
 +++ b/source/blender/collada/EffectExporter.cpp
 @@ -46,7 +46,9 @@ extern "C" {
@@ -50,7 +12,7 @@ index 13dc1ed..6ea357f 100644
  
  // OB_MESH is assumed
  static std::string getActiveUVLayerName(Object *ob)
-@@ -169,6 +171,31 @@ void EffectsExporter::writeTextures(COLLADASW::EffectProfile &ep,
+@@ -169,6 +171,26 @@ void EffectsExporter::writeTextures(COLLADASW::EffectProfile &ep,
  		texture.setChildElementName("bump");
  		ep.addExtraTechniqueColorOrTexture(COLLADASW::ColorOrTexture(texture));
  	}
@@ -72,17 +34,12 @@ index 13dc1ed..6ea357f 100644
 +		ep.addExtraTechniqueColorOrTexture(COLLADASW::ColorOrTexture(texture));
 +	}
 +	if ((t->mapto & MAP_COLMIR) || (t->mapto & MAP_RAYMIRR)) {
-+		COLLADASW::Texture texture(key);
-+		texture.setTexcoord(uvname);
-+		texture.setSampler(*sampler);
-+		texture.setProfileName("blender");
-+		texture.setChildElementName("metallic");
-+		ep.addExtraTechniqueColorOrTexture(COLLADASW::ColorOrTexture(texture));
++		ep.setReflective(createTexture(ima, uvname, sampler));
 +	}
  }
  
  void EffectsExporter::operator()(Material *ma, Object *ob)
-@@ -397,6 +424,67 @@ void EffectsExporter::operator()(Material *ma, Object *ob)
+@@ -397,6 +419,67 @@ void EffectsExporter::operator()(Material *ma, Object *ob)
  		}
  	}
  
