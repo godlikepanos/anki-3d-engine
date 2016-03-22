@@ -22,14 +22,22 @@ if "bpy" in locals():
 
 	importlib.reload(ops.environment)
 	importlib.reload(ops.export)
+	importlib.reload(ops.gui)
+	importlib.reload(ops.material)
+	importlib.reload(ops.text)
 	importlib.reload(props.export_props)
 	importlib.reload(ui.gui)
+	importlib.reload(ui.panel_prop_dynamic)
 
 else:
 	from .ops import environment
 	from .ops import export
+	from .ops import gui
+	from .ops import material
+	from .ops import text
 	from .props import export_props
 	from .ui import gui
+	from .ui import panel_prop_dynamic
 
 import bpy, os
 from bpy.types import AddonPreferences
@@ -137,13 +145,15 @@ class SCENE_anki_scene_exporter(AddonPreferences):
 
 		layout.operator("scene.anki_preference_set", text="Set Preferences")
 
+from .props import material
+
 def register():
 	bpy.utils.register_module(__name__)
-
+	bpy.types.Material.ANKI = bpy.props.PointerProperty(type=material.ANKI_Properties)
 
 def unregister():
 	bpy.utils.unregister_module(__name__)
-
+	del bpy.types.Material.ANKI
 
 if __name__ == "__main__":
 	register()

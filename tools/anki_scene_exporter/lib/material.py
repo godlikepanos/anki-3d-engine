@@ -18,7 +18,17 @@ def get_texture_images_nodes():
 	for mat in mats:
 		for slot in mat.texture_slots:
 			if slot:
-				if (slot.texture.image != None):
-					bl_images.append(slot.texture.image)
+				if slot.texture.type == 'IMAGE':
+					if (slot.texture.image != None):
+						bl_images.append(slot.texture.image)
+
 	return bl_images
 
+	def check_material(self, material):
+		if material is not None:
+			if material.use_nodes:
+				if material.active_node_material is not None:
+					return True
+				return False
+			return True
+		return False

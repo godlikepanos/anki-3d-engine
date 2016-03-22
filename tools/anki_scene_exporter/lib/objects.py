@@ -23,3 +23,13 @@ def get_camera():
 	if cam == None:
 		bpy.ops.object.camera_add()
 	return getter()
+
+def get_objects_wuith_no_uvs():
+	no_uvs = []
+	obs = bpy.data.objects
+	for ob in obs:
+		if ob.type == 'MESH':
+			_id = (ob.data.uv_layers.active_index)
+			if _id == -1:
+				no_uvs.append(ob)
+	return no_uvs
