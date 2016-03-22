@@ -46,7 +46,7 @@ private:
 		ThreadHiveThread& self =
 			*reinterpret_cast<ThreadHiveThread*>(info.m_userData);
 
-		self.m_hive->run(self.m_id);
+		self.m_hive->threadRun(self.m_id);
 		return ErrorCode::NONE;
 	}
 };
@@ -169,16 +169,15 @@ void ThreadHive::submitTasks(ThreadHiveTask* tasks, U taskCount)
 }
 
 //==============================================================================
-void ThreadHive::run(U threadId)
+void ThreadHive::threadRun(U threadId)
 {
 	Task* task = nullptr;
-	ThreadHiveTaskCallback cb = nullptr;
-	void* arg = nullptr;
 
-	while(!waitForWork(threadId, task, cb, arg))
+	while(!waitForWork(threadId, task))
 	{
 		// Run the task
-		cb(arg, threadId, *this);
+		ANKI_ASSERT(task && task->m_cb);
+		task->m_cb(task->m_arg, threadId, *this);
 		ANKI_HIVE_DEBUG_PRINT("tid: %lu executed\n", threadId);
 	}
 
@@ -186,12 +185,8 @@ void ThreadHive::run(U threadId)
 }
 
 //==============================================================================
-Bool ThreadHive::waitForWork(
-	U threadId, Task*& task, ThreadHiveTaskCallback& cb, void*& arg)
+Bool ThreadHive::waitForWork(U threadId, Task*& task)
 {
-	cb = nullptr;
-	arg = nullptr;
-
 	LockGuard<Mutex> lock(m_mtx);
 
 	ANKI_HIVE_DEBUG_PRINT("tid: %lu locking\n", threadId);
@@ -210,7 +205,7 @@ Bool ThreadHive::waitForWork(
 		}
 	}
 
-	while(!m_quit && (task = getNewTask(cb, arg)) == nullptr)
+	while(!m_quit && (task = getNewTask()) == nullptr)
 	{
 		ANKI_HIVE_DEBUG_PRINT("tid: %lu waiting\n", threadId);
 
@@ -222,10 +217,8 @@ Bool ThreadHive::waitForWork(
 }
 
 //==============================================================================
-ThreadHive::Task* ThreadHive::getNewTask(ThreadHiveTaskCallback& cb, void*& arg)
+ThreadHive::Task* ThreadHive::getNewTask()
 {
-	cb = nullptr;
-
 	Task* prevTask = nullptr;
 	Task* task = m_head;
 	while(task)
@@ -250,9 +243,6 @@ ThreadHive::Task* ThreadHive::getNewTask(ThreadHiveTaskCallback& cb, void*& arg)
 			if(allDepsCompleted)
 			{
 				// Found something, pop it
-				cb = task->m_cb;
-				arg = task->m_arg;
-
 				if(prevTask)
 				{
 					prevTask->m_next = task->m_next;
@@ -267,6 +257,10 @@ ThreadHive::Task* ThreadHive::getNewTask(ThreadHiveTaskCallback& cb, void*& arg)
 				{
 					m_tail = prevTask;
 				}
+
+#if ANKI_DEBUG
+				task->m_next = nullptr;
+#endif
 				break;
 			}
 		}

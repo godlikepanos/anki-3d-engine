@@ -43,7 +43,7 @@ struct ExtractType<T*>
 };
 /// @}
 
-/// @addtogroup util_misc
+/// @addtogroup util_other
 /// @{
 
 /// Check if a class is of certain type.

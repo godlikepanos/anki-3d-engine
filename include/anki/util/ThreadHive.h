@@ -19,11 +19,16 @@ class ThreadHiveThread;
 /// @addtogroup util_thread
 /// @{
 
+/// Opaque handle that defines a ThreadHive depedency.
+/// @memberof ThreadHive
 using ThreadHiveDependencyHandle = U16;
 
+/// The callback that defines a ThreadHibe task.
+/// @memberof ThreadHive
 using ThreadHiveTaskCallback = void (*)(void*, U32 threadId, ThreadHive& hive);
 
 /// Task for the ThreadHive.
+/// @memberof ThreadHive
 class ThreadHiveTask
 {
 public:
@@ -41,8 +46,9 @@ public:
 	ThreadHiveDependencyHandle m_outDependency;
 };
 
-/// A scheduler of small tasks. It takes tasks to be executed and schedules them
-/// in one of the threads.
+/// A scheduler of small tasks. It takes a number of tasks and schedules them in 
+/// one of the threads. The tasks can depend on previously submitted tasks or be
+/// completely independent.
 class ThreadHive : public NonCopyable
 {
 	friend class ThreadHiveThread;
@@ -104,16 +110,16 @@ private:
 	U32 m_pendingTasks = 0;
 	U32 m_allocatedTasks = 0;
 
-	Mutex m_mtx; ///< Protect the queue
+	Mutex m_mtx;
 	ConditionVariable m_cvar;
 
-	void run(U threadId);
+	void threadRun(U threadId);
 
-	Bool waitForWork(
-		U threadId, Task*& task, ThreadHiveTaskCallback& cb, void*& arg);
+	/// Wait for more tasks.
+	Bool waitForWork(U threadId, Task*& task);
 
 	/// Get new work from the queue.
-	Task* getNewTask(ThreadHiveTaskCallback& cb, void*& arg);
+	Task* getNewTask();
 
 	/// Complete a task.
 	void completeTask(U taskId);

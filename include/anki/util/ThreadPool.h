@@ -20,6 +20,7 @@ class ThreadPoolThread;
 /// @{
 
 /// A task assignment for a ThreadPool
+/// @memberof ThreadPool
 class ThreadPoolTask
 {
 public:

@@ -79,7 +79,7 @@ private:
 #endif
 };
 
-/// Mutex
+/// Mutual exclusion primitive.
 class Mutex : public NonCopyable
 {
 	friend class ConditionVariable;
@@ -103,7 +103,7 @@ private:
 	void* m_impl = nullptr; ///< The system native type
 };
 
-/// Condition variable
+/// Condition variable.
 class ConditionVariable : public NonCopyable
 {
 public:
@@ -125,8 +125,8 @@ private:
 	void* m_impl = nullptr; ///< The system native type
 };
 
-/// Spin lock. Good if the critical section will be executed in a short period
-/// of time
+/// Mutual exclusion primitive. Like Mutex. It's better than Mutex only if the 
+/// critical section will be executed in a very short period of time.
 class SpinLock : public NonCopyable
 {
 public:
@@ -150,6 +150,7 @@ private:
 
 /// Lock guard. When constructed it locks a TMutex and unlocks it when it gets
 /// destroyed.
+/// @tparam TMutex Can be Mutex or SpinLock.
 template<typename TMutex>
 class LockGuard
 {
@@ -169,7 +170,7 @@ private:
 	TMutex* m_mtx;
 };
 
-/// A barrier for thread synchronization. It works almost like boost::barrier
+/// A barrier for thread synchronization. It works almost like boost::barrier.
 class Barrier : public NonCopyable
 {
 public:
