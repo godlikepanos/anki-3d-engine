@@ -46,12 +46,12 @@ public:
 
 	GLenum m_blendSfunc = GL_ONE;
 	GLenum m_blendDfunc = GL_ZERO;
-
-	GLuint m_crntPpline = 0;
 	/// @}
 
 	/// @name Pipeline state
 	/// @{
+	U64 m_lastPplineBoundUuid = MAX_U64;
+
 	Array<GLsizei, MAX_VERTEX_ATTRIBUTES> m_vertexBindingStrides;
 	GLenum m_topology = 0;
 	U8 m_indexSize = 4;

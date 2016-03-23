@@ -46,7 +46,7 @@ public:
 	ThreadHiveDependencyHandle m_outDependency;
 };
 
-/// A scheduler of small tasks. It takes a number of tasks and schedules them in 
+/// A scheduler of small tasks. It takes a number of tasks and schedules them in
 /// one of the threads. The tasks can depend on previously submitted tasks or be
 /// completely independent.
 class ThreadHive : public NonCopyable

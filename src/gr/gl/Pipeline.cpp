@@ -6,14 +6,16 @@
 #include <anki/gr/Pipeline.h>
 #include <anki/gr/gl/PipelineImpl.h>
 #include <anki/gr/gl/CommandBufferImpl.h>
+#include <anki/core/Trace.h>
 
 namespace anki
 {
 
 //==============================================================================
-Pipeline::Pipeline(GrManager* manager)
-	: GrObject(manager)
+Pipeline::Pipeline(GrManager* manager, U64 hash)
+	: GrObject(manager, CLASS_TYPE, hash)
 {
+	ANKI_TRACE_INC_COUNTER(GR_PIPELINES_CREATED, 1);
 }
 
 //==============================================================================

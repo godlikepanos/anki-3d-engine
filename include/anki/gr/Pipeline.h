@@ -7,6 +7,7 @@
 
 #include <anki/gr/GrObject.h>
 #include <anki/gr/Shader.h>
+#include <anki/util/Hash.h>
 
 namespace anki
 {
@@ -106,11 +107,11 @@ enum class PipelineSubStateBit : U16
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(PipelineSubStateBit, inline)
 
-/// Pipeline initializer.
-class PipelineInitInfo
+/// Only the state part of PipelineInitInfo. It's separate for easy hashing.
+class PipelineInitInfoState
 {
 public:
-	PipelineInitInfo()
+	PipelineInitInfoState()
 	{
 // Do a special construction. The state will be hashed and the padding
 // may contain garbage. With this trick zero the padding
@@ -136,16 +137,39 @@ public:
 	RasterizerStateInfo m_rasterizer;
 	DepthStencilStateInfo m_depthStencil;
 	ColorStateInfo m_color;
+};
 
+/// Pipeline initializer.
+class PipelineInitInfo : public PipelineInitInfoState
+{
+public:
 	Array<ShaderPtr, 6> m_shaders;
+
+	U64 computeHash() const
+	{
+		U64 h =
+			anki::computeHash(static_cast<const PipelineInitInfoState*>(this),
+				sizeof(PipelineInitInfoState));
+
+		Array<U64, m_shaders.getSize()> uuids;
+		for(U i = 0; i < m_shaders.getSize(); ++i)
+		{
+			U64 uuid = (m_shaders[i].isCreated()) ? m_shaders[i]->getUuid() : 0;
+			uuids[i] = uuid;
+		}
+
+		return appendHash(&uuids[0], sizeof(uuids), h);
+	}
 };
 
 /// Graphics and compute pipeline. Contains the static state.
 class Pipeline : public GrObject
 {
 public:
+	static const GrObjectType CLASS_TYPE = GrObjectType::PIPELINE;
+
 	/// Construct.
-	Pipeline(GrManager* manager);
+	Pipeline(GrManager* manager, U64 hash = 0);
 
 	/// Destroy.
 	~Pipeline();

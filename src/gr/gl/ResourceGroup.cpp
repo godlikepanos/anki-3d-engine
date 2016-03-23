@@ -14,8 +14,8 @@ namespace anki
 {
 
 //==============================================================================
-ResourceGroup::ResourceGroup(GrManager* manager)
-	: GrObject(manager)
+ResourceGroup::ResourceGroup(GrManager* manager, U64 hash)
+	: GrObject(manager, CLASS_TYPE, hash)
 {
 }
 

@@ -125,7 +125,7 @@ private:
 	void* m_impl = nullptr; ///< The system native type
 };
 
-/// Mutual exclusion primitive. Like Mutex. It's better than Mutex only if the 
+/// Mutual exclusion primitive. Like Mutex. It's better than Mutex only if the
 /// critical section will be executed in a very short period of time.
 class SpinLock : public NonCopyable
 {

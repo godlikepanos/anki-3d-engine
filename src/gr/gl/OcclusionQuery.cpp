@@ -11,8 +11,8 @@ namespace anki
 {
 
 //==============================================================================
-OcclusionQuery::OcclusionQuery(GrManager* manager)
-	: GrObject(manager)
+OcclusionQuery::OcclusionQuery(GrManager* manager, U64 hash)
+	: GrObject(manager, CLASS_TYPE, hash)
 {
 }
 

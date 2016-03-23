@@ -87,8 +87,10 @@ public:
 class Framebuffer : public GrObject
 {
 public:
+	static const GrObjectType CLASS_TYPE = GrObjectType::FRAMEBUFFER;
+
 	/// Construct.
-	Framebuffer(GrManager* manager);
+	Framebuffer(GrManager* manager, U64 hash = 0);
 
 	/// Destroy.
 	~Framebuffer();

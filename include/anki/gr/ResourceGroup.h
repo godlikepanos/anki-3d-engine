@@ -60,8 +60,10 @@ public:
 class ResourceGroup : public GrObject
 {
 public:
+	static const GrObjectType CLASS_TYPE = GrObjectType::RESOURCE_GROUP;
+
 	/// Construct.
-	ResourceGroup(GrManager* manager);
+	ResourceGroup(GrManager* manager, U64 hash = 0);
 
 	/// Destroy.
 	~ResourceGroup();

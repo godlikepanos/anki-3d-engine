@@ -163,8 +163,8 @@ PipelinePtr ModelPatch::getPipeline(const RenderingKey& key) const
 			variant.getShader(ShaderType::FRAGMENT);
 
 		// Create
-		ppline = m_model->getManager().getGrManager().newInstance<Pipeline>(
-			pplineInit);
+		GrManager& gr = m_model->getManager().getGrManager();
+		ppline = gr.newInstanceCached<Pipeline>(pplineInit);
 	}
 
 	return ppline;

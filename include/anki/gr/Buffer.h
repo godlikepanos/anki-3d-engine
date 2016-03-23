@@ -17,8 +17,10 @@ namespace anki
 class Buffer : public GrObject
 {
 public:
+	static const GrObjectType CLASS_TYPE = GrObjectType::BUFFER;
+
 	/// Construct.
-	Buffer(GrManager* manager);
+	Buffer(GrManager* manager, U64 hash = 0);
 
 	/// Destroy.
 	~Buffer();

@@ -45,8 +45,10 @@ public:
 class Texture : public GrObject
 {
 public:
+	static const GrObjectType CLASS_TYPE = GrObjectType::TEXTURE;
+
 	/// Construct.
-	Texture(GrManager* manager);
+	Texture(GrManager* manager, U64 hash = 0);
 
 	/// Destroy.
 	~Texture();

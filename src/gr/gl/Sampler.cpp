@@ -11,8 +11,8 @@ namespace anki
 {
 
 //==============================================================================
-Sampler::Sampler(GrManager* manager)
-	: GrObject(manager)
+Sampler::Sampler(GrManager* manager, U64 hash)
+	: GrObject(manager, CLASS_TYPE, hash)
 {
 }
 

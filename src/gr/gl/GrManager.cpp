@@ -29,6 +29,11 @@ Error GrManager::init(GrManagerInitInfo& init)
 	m_alloc =
 		HeapAllocator<U8>(init.m_allocCallback, init.m_allocCallbackUserData);
 
+	for(auto& c : m_caches)
+	{
+		c.init(m_alloc);
+	}
+
 	m_cacheDir.create(m_alloc, init.m_cacheDirectory);
 	m_impl.reset(m_alloc.newInstance<GrManagerImpl>(this));
 	ANKI_CHECK(m_impl->init(init));

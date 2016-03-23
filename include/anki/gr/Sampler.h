@@ -18,8 +18,10 @@ namespace anki
 class Sampler : public GrObject
 {
 public:
+	static const GrObjectType CLASS_TYPE = GrObjectType::SAMPLER;
+
 	/// Construct.
-	Sampler(GrManager* manager);
+	Sampler(GrManager* manager, U64 hash = 0);
 
 	/// Destroy.
 	~Sampler();

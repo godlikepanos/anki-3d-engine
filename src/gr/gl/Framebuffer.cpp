@@ -11,8 +11,8 @@ namespace anki
 {
 
 //==============================================================================
-Framebuffer::Framebuffer(GrManager* manager)
-	: GrObject(manager)
+Framebuffer::Framebuffer(GrManager* manager, U64 hash)
+	: GrObject(manager, CLASS_TYPE, hash)
 {
 }
 

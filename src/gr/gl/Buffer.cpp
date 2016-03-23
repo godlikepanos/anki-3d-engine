@@ -11,8 +11,8 @@ namespace anki
 {
 
 //==============================================================================
-Buffer::Buffer(GrManager* manager)
-	: GrObject(manager)
+Buffer::Buffer(GrManager* manager, U64 hash)
+	: GrObject(manager, CLASS_TYPE, hash)
 {
 }
 

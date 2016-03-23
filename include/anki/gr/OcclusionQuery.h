@@ -17,8 +17,10 @@ namespace anki
 class OcclusionQuery : public GrObject
 {
 public:
+	static const GrObjectType CLASS_TYPE = GrObjectType::OCCLUSION_QUERY;
+
 	/// Construct.
-	OcclusionQuery(GrManager* manager);
+	OcclusionQuery(GrManager* manager, U64 hash = 0);
 
 	/// Destroy.
 	~OcclusionQuery();

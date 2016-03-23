@@ -14,6 +14,8 @@ namespace anki
 {
 
 // Forward
+class GrObject;
+
 class GrManager;
 class GrManagerImpl;
 class TextureInitInfo;
@@ -25,10 +27,17 @@ class FramebufferInitInfo;
 class DynamicBufferToken;
 class DynamicBufferInfo;
 
+/// @addtogroup graphics
+/// @{
+
+/// Smart pointer for resources.
+template<typename T>
+using GrObjectPtr = IntrusivePtr<T, DefaultPtrDeleter<T>>;
+
 #define ANKI_GR_CLASS(x_)                                                      \
 	class x_##Impl;                                                            \
 	class x_;                                                                  \
-	using x_##Ptr = IntrusivePtr<x_>;
+	using x_##Ptr = GrObjectPtr<x_>;
 
 ANKI_GR_CLASS(Buffer)
 ANKI_GR_CLASS(Texture)
@@ -42,8 +51,20 @@ ANKI_GR_CLASS(ResourceGroup)
 
 #undef ANKI_GR_CLASS
 
-/// @addtogroup graphics
-/// @{
+/// Graphics object type.
+enum GrObjectType : U16
+{
+	BUFFER,
+	COMMAND_BUFFER,
+	FRAMEBUFFER,
+	OCCLUSION_QUERY,
+	PIPELINE,
+	RESOURCE_GROUP,
+	SAMPLER,
+	SHADER,
+	TEXTURE,
+	COUNT
+};
 
 /// The type of the allocator for heap allocations
 template<typename T>
@@ -110,8 +131,8 @@ const U MAX_TEXTURE_BINDINGS = 10;
 const U MAX_UNIFORM_BUFFER_BINDINGS = 4;
 const U MAX_STORAGE_BUFFER_BINDINGS = 4;
 const U MAX_ATOMIC_BUFFER_BINDINGS = 1;
-const U MAX_FRAMES_IN_FLIGHT = 3;
-const U MAX_RESOURCE_GROUPS = 2;
+const U MAX_FRAMES_IN_FLIGHT = 3; ///< Triple buffering.
+const U MAX_RESOURCE_GROUPS = 2; ///< Groups that can be bound at the same time.
 
 /// Compute max number of mipmaps for a 2D texture.
 inline U computeMaxMipmapCount(U w, U h)

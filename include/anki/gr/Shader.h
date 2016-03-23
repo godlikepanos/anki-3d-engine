@@ -63,8 +63,10 @@ void writeShaderBlockMemory(ShaderVariableDataType type,
 class Shader : public GrObject
 {
 public:
+	static const GrObjectType CLASS_TYPE = GrObjectType::SHADER;
+
 	/// Construct.
-	Shader(GrManager* manager);
+	Shader(GrManager* manager, U64 hash = 0);
 
 	/// Destroy.
 	~Shader();

@@ -91,8 +91,10 @@ public:
 class CommandBuffer : public GrObject
 {
 public:
+	static const GrObjectType CLASS_TYPE = GrObjectType::COMMAND_BUFFER;
+
 	/// Construct.
-	CommandBuffer(GrManager* manager);
+	CommandBuffer(GrManager* manager, U64 hash = 0);
 
 	/// Destroy.
 	~CommandBuffer();

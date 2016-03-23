@@ -67,7 +67,7 @@ private:
 
 	/// Holds the references to the resources. Used to release the references
 	/// gracefully
-	DArray<IntrusivePtr<GrObject>> m_refs;
+	DArray<GrObjectPtr<GrObject>> m_refs;
 
 	template<typename InBindings, typename OutBindings>
 	void initBuffers(const InBindings& in,

@@ -10,11 +10,19 @@ namespace anki
 {
 
 //==============================================================================
-GrObject::GrObject(GrManager* manager)
+GrObject::GrObject(GrManager* manager, GrObjectType type, U64 hash)
 	: m_refcount(0)
 	, m_manager(manager)
 	, m_uuid(m_manager->getUuidIndex()++)
+	, m_hash(hash)
+	, m_type(type)
 {
+}
+
+//==============================================================================
+GrObject::~GrObject()
+{
+	m_manager->unregisterCachedObject(this);
 }
 
 //==============================================================================

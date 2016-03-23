@@ -26,8 +26,8 @@ namespace anki
 {
 
 //==============================================================================
-CommandBuffer::CommandBuffer(GrManager* manager)
-	: GrObject(manager)
+CommandBuffer::CommandBuffer(GrManager* manager, U64 hash)
+	: GrObject(manager, CLASS_TYPE, hash)
 {
 }
 
@@ -163,18 +163,22 @@ public:
 
 	Error operator()(GlState& state)
 	{
-		ANKI_TRACE_START_EVENT(GL_BIND_PPLINE);
-
-		PipelineImpl& impl = m_ppline->getImplementation();
-
-		auto name = impl.getGlName();
-		if(state.m_crntPpline != name)
+		if(state.m_lastPplineBoundUuid != m_ppline->getUuid())
 		{
+			ANKI_TRACE_START_EVENT(GL_BIND_PPLINE);
+
+			PipelineImpl& impl = m_ppline->getImplementation();
 			impl.bind(state);
-			state.m_crntPpline = name;
+			state.m_lastPplineBoundUuid = m_ppline->getUuid();
+			ANKI_TRACE_INC_COUNTER(GR_PIPELINE_BINDS_HAPPENED, 1);
+
+			ANKI_TRACE_STOP_EVENT(GL_BIND_PPLINE);
+		}
+		else
+		{
+			ANKI_TRACE_INC_COUNTER(GR_PIPELINE_BINDS_SKIPPED, 1);
 		}
 
-		ANKI_TRACE_STOP_EVENT(GL_BIND_PPLINE);
 		return ErrorCode::NONE;
 	}
 };

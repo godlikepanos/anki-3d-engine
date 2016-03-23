@@ -19,10 +19,13 @@ namespace anki
 class GrObject : public NonCopyable
 {
 public:
-	GrObject(GrManager* manager);
+	GrObject(GrManager* manager, GrObjectType type, U64 hash);
 
-	virtual ~GrObject()
+	virtual ~GrObject();
+
+	GrObjectType getType() const
 	{
+		return m_type;
 	}
 
 	GrManager& getManager()
@@ -48,10 +51,18 @@ public:
 		return m_uuid;
 	}
 
+	/// Get a hash if it's part of a cache. If zero then it's not cached.
+	U64 getHash() const
+	{
+		return m_hash;
+	}
+
 private:
 	Atomic<I32> m_refcount;
 	GrManager* m_manager;
 	U64 m_uuid;
+	U64 m_hash;
+	GrObjectType m_type;
 };
 /// @}
 

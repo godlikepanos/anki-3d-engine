@@ -8,14 +8,12 @@
 namespace anki
 {
 
+const U64 HASH_M = 0xc6a4a7935bd1e995;
+const U64 HASH_R = 47;
+
 //==============================================================================
-U64 computeHash(const void* buffer, U32 bufferSize, U64 seed)
+U64 appendHash(const void* buffer, U32 bufferSize, U64 h)
 {
-	const U64 m = 0xc6a4a7935bd1e995;
-	const U64 r = 47;
-
-	U64 h = seed ^ (bufferSize * m);
-
 	const U64* data = static_cast<const U64*>(buffer);
 	const U64* end = data + (bufferSize / sizeof(U64));
 
@@ -23,12 +21,12 @@ U64 computeHash(const void* buffer, U32 bufferSize, U64 seed)
 	{
 		U64 k = *data++;
 
-		k *= m;
-		k ^= k >> r;
-		k *= m;
+		k *= HASH_M;
+		k ^= k >> HASH_R;
+		k *= HASH_M;
 
 		h ^= k;
-		h *= m;
+		h *= HASH_M;
 	}
 
 	const U8* data2 = reinterpret_cast<const U8*>(data);
@@ -49,14 +47,21 @@ U64 computeHash(const void* buffer, U32 bufferSize, U64 seed)
 		h ^= static_cast<U64>(data2[1]) << 8;
 	case 1:
 		h ^= static_cast<U64>(data2[0]);
-		h *= m;
+		h *= HASH_M;
 	};
 
-	h ^= h >> r;
-	h *= m;
-	h ^= h >> r;
+	h ^= h >> HASH_R;
+	h *= HASH_M;
+	h ^= h >> HASH_R;
 
 	return h;
+}
+
+//==============================================================================
+U64 computeHash(const void* buffer, U32 bufferSize, U64 seed)
+{
+	U64 h = seed ^ (bufferSize * HASH_M);
+	return appendHash(buffer, bufferSize, h);
 }
 
 } // end namespace anki
