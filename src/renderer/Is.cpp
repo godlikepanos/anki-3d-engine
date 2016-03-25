@@ -74,7 +74,7 @@ struct ShaderCommonUniforms
 };
 
 static const U MAX_TYPED_LIGHTS_PER_CLUSTER = 16;
-static const U MAX_PROBES_PER_CLUSTER = 8;
+static const U MAX_PROBES_PER_CLUSTER = 12;
 static const F32 INVALID_TEXTURE_INDEX = 128.0;
 
 class ClusterLightIndex
@@ -258,7 +258,7 @@ private:
 	{
 		U8 a = count.get();
 		count.set(a % maxCount);
-		if(a > maxCount)
+		if(ANKI_UNLIKELY(a >= maxCount))
 		{
 			ANKI_LOGW("Increase cluster limit: %s", &what[0]);
 		}
