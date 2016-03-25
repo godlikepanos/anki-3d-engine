@@ -89,8 +89,8 @@ Error Ir::init(const ConfigSet& config)
 
 	m_envCubemapArr = getGrManager().newInstance<Texture>(texinit);
 
-	texinit.m_width = IRRADIANCE_SIZE;
-	texinit.m_height = IRRADIANCE_SIZE;
+	texinit.m_width = IRRADIANCE_TEX_SIZE;
+	texinit.m_height = IRRADIANCE_TEX_SIZE;
 	m_irradianceCubemapArr = getGrManager().newInstance<Texture>(texinit);
 
 	m_cubemapArrMipCount = computeMaxMipmapCount(m_fbSize, m_fbSize);
@@ -101,7 +101,8 @@ Error Ir::init(const ConfigSet& config)
 	// Clear the textures
 	CommandBufferInitInfo cinf;
 	CommandBufferPtr cmdb = getGrManager().newInstance<CommandBuffer>(cinf);
-	U irrMipCount = computeMaxMipmapCount(IRRADIANCE_SIZE, IRRADIANCE_SIZE);
+	U irrMipCount =
+		computeMaxMipmapCount(IRRADIANCE_TEX_SIZE, IRRADIANCE_TEX_SIZE);
 	ClearValue clear;
 	for(U i = 0; i < m_cubemapArrSize; ++i)
 	{
@@ -143,7 +144,7 @@ Error Ir::initIrradiance()
 {
 	// Create the shader
 	StringAuto pps(getFrameAllocator());
-	pps.sprintf("#define CUBEMAP_SIZE %u\n", IRRADIANCE_SIZE);
+	pps.sprintf("#define CUBEMAP_SIZE %u\n", IRRADIANCE_TEX_SIZE);
 
 	ANKI_CHECK(getResourceManager().loadResourceToCache(m_computeIrradianceFrag,
 		"shaders/Irradiance.frag.glsl",
@@ -189,11 +190,12 @@ Error Ir::run(RenderingContext& rctx)
 	const VisibleNode* end =
 		visRez.getEnd(VisibilityGroupType::REFLECTION_PROBES);
 
+	U probesRendered = 0;
 	U probeIdx = 0;
 	while(it != end)
 	{
 		// Write and render probe
-		ANKI_CHECK(tryRender(rctx, *it->m_node));
+		ANKI_CHECK(tryRender(rctx, *it->m_node, probesRendered));
 
 		++it;
 		++probeIdx;
@@ -207,7 +209,7 @@ Error Ir::run(RenderingContext& rctx)
 }
 
 //==============================================================================
-Error Ir::tryRender(RenderingContext& ctx, SceneNode& node)
+Error Ir::tryRender(RenderingContext& ctx, SceneNode& node, U& probesRendered)
 {
 	ReflectionProbeComponent& reflc =
 		node.getComponent<ReflectionProbeComponent>();
@@ -219,8 +221,10 @@ Error Ir::tryRender(RenderingContext& ctx, SceneNode& node)
 	// Write shader var
 	reflc.setTextureArrayIndex(entry);
 
-	if(reflc.getMarkedForRendering())
+	if(reflc.getMarkedForRendering()
+		&& probesRendered < MAX_PROBE_RENDERS_PER_FRAME)
 	{
+		++probesRendered;
 		reflc.setMarkedForRendering(false);
 		ANKI_CHECK(renderReflection(ctx, node, reflc, entry));
 	}
@@ -275,7 +279,7 @@ Error Ir::renderReflection(RenderingContext& ctx,
 	}
 
 	// Compute irradiance
-	cmdb->setViewport(0, 0, IRRADIANCE_SIZE, IRRADIANCE_SIZE);
+	cmdb->setViewport(0, 0, IRRADIANCE_TEX_SIZE, IRRADIANCE_TEX_SIZE);
 	for(U i = 0; i < 6; ++i)
 	{
 		DynamicBufferInfo dinf;

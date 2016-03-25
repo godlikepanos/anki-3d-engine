@@ -69,7 +69,8 @@ private:
 		Timestamp m_timestamp = 0; ///< When last rendered.
 	};
 
-	static const U IRRADIANCE_SIZE = 32;
+	static const U IRRADIANCE_TEX_SIZE = 32;
+	static const U MAX_PROBE_RENDERS_PER_FRAME = 1;
 
 	Renderer m_nestedR;
 	TexturePtr m_envCubemapArr;
@@ -93,7 +94,8 @@ private:
 	/// Bin probes in clusters.
 	void binProbes(U32 threadId, PtrSize threadsCount, IrRunContext& ctx);
 
-	ANKI_USE_RESULT Error tryRender(RenderingContext& ctx, SceneNode& node);
+	ANKI_USE_RESULT Error tryRender(
+		RenderingContext& ctx, SceneNode& node, U& probesRendered);
 
 	void binProbe(U probeIdx, IrRunContext& ctx, IrTaskContext& task) const;
 
