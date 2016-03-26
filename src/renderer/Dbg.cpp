@@ -66,7 +66,7 @@ Error Dbg::init(const ConfigSet& initializer)
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 	m_drawer = getAllocator().newInstance<DebugDrawer>();
-	ANKI_CHECK(m_drawer->create(m_r));
+	ANKI_CHECK(m_drawer->init(m_r));
 
 	getGrManager().finish();
 	return ErrorCode::NONE;
@@ -84,7 +84,7 @@ Error Dbg::run(RenderingContext& ctx)
 
 	FrustumComponent& camFr = *ctx.m_frustumComponent;
 	SceneNode& cam = camFr.getSceneNode();
-	m_drawer->prepareDraw(cmdb);
+	m_drawer->prepareFrame(cmdb);
 	m_drawer->setViewProjectionMatrix(camFr.getViewProjectionMatrix());
 	m_drawer->setModelMatrix(Mat4::getIdentity());
 	// m_drawer->drawGrid();
@@ -242,8 +242,7 @@ Error Dbg::run(RenderingContext& ctx)
 	}
 #endif
 
-	ANKI_CHECK(m_drawer->flush());
-
+	m_drawer->finishFrame();
 	cmdb->endRenderPass();
 	return ErrorCode::NONE;
 }

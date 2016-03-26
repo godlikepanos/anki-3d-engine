@@ -352,11 +352,9 @@ void ResourceGroupImpl::bind(
 
 		if(!m_hasDynamicVertexBuff)
 		{
-			glBindVertexBuffers(0,
-				m_vertBindingsCount,
-				&m_vertBuffNames[0],
+			memcpy(&state.m_vertBuffOffsets[0],
 				&m_vertBuffOffsets[0],
-				&state.m_vertexBindingStrides[0]);
+				sizeof(m_vertBuffOffsets[0]) * m_vertBindingsCount);
 		}
 		else
 		{
@@ -376,13 +374,18 @@ void ResourceGroupImpl::bind(
 				}
 			}
 
-			// Bind
-			glBindVertexBuffers(0,
-				m_vertBindingsCount,
-				&m_vertBuffNames[0],
+			// Bind to state
+			memcpy(&state.m_vertBuffOffsets[0],
 				&offsets[0],
-				&state.m_vertexBindingStrides[0]);
+				sizeof(offsets[0]) * m_vertBindingsCount);
 		}
+
+		memcpy(&state.m_vertBuffNames[0],
+			&m_vertBuffNames[0],
+			sizeof(m_vertBuffNames[0]) * m_vertBindingsCount);
+
+		state.m_vertBindingCount = m_vertBindingsCount;
+		state.m_vertBindingsDirty = true;
 	}
 
 	// Index buffer

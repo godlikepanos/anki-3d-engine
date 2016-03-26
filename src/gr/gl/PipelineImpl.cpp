@@ -485,6 +485,12 @@ void PipelineImpl::setVertexState(GlState& state) const
 		ANKI_ASSERT(m_in.m_vertex.m_bindings[i].m_stride > 0);
 		state.m_vertexBindingStrides[i] = m_in.m_vertex.m_bindings[i].m_stride;
 	}
+
+	if(m_in.m_vertex.m_bindingCount)
+	{
+		state.m_vertBindingCount = m_in.m_vertex.m_bindingCount;
+		state.m_vertBindingsDirty = true;
+	}
 }
 
 //==============================================================================

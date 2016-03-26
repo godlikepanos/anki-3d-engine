@@ -33,11 +33,12 @@ DebugDrawer::~DebugDrawer()
 }
 
 //==============================================================================
-Error DebugDrawer::create(Renderer* r)
+Error DebugDrawer::init(Renderer* r)
 {
 	m_r = r;
 	GrManager& gr = r->getGrManager();
 
+	// Create the pipelines
 	ANKI_CHECK(
 		r->getResourceManager().loadResource("shaders/Dbg.vert.glsl", m_vert));
 	ANKI_CHECK(
@@ -63,27 +64,70 @@ Error DebugDrawer::create(Renderer* r)
 	init.m_shaders[U(ShaderType::VERTEX)] = m_vert->getGrShader();
 	init.m_shaders[U(ShaderType::FRAGMENT)] = m_frag->getGrShader();
 
-	m_pplineLinesDepth = gr.newInstance<Pipeline>(init);
+	getPpline(true, PrimitiveTopology::LINES) = gr.newInstance<Pipeline>(init);
+
+	init.m_inputAssembler.m_topology = PrimitiveTopology::TRIANGLES;
+	getPpline(true, PrimitiveTopology::TRIANGLES) =
+		gr.newInstance<Pipeline>(init);
 
 	init.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
-	m_pplineLinesNoDepth = gr.newInstance<Pipeline>(init);
+	getPpline(false, PrimitiveTopology::TRIANGLES) =
+		gr.newInstance<Pipeline>(init);
 
-	m_vertBuff = gr.newInstance<Buffer>(sizeof(m_clientLineVerts),
-		BufferUsageBit::VERTEX,
-		BufferAccessBit::CLIENT_WRITE);
+	init.m_inputAssembler.m_topology = PrimitiveTopology::LINES;
+	getPpline(false, PrimitiveTopology::LINES) = gr.newInstance<Pipeline>(init);
 
-	ResourceGroupInitInfo rcinit;
-	rcinit.m_vertexBuffers[0].m_buffer = m_vertBuff;
-	m_rcGroup = gr.newInstance<ResourceGroup>(rcinit);
+	// Create the vert buffs
+	for(BufferPtr& v : m_vertBuff)
+	{
+		v = gr.newInstance<Buffer>(sizeof(Vertex) * MAX_VERTS_PER_FRAME,
+			BufferUsageBit::VERTEX,
+			BufferAccessBit::CLIENT_MAP_WRITE);
+	}
 
-	m_lineVertCount = 0;
-	m_triVertCount = 0;
+	// Create the resouce groups
+	U c = 0;
+	for(ResourceGroupPtr& rc : m_rcGroup)
+	{
+		ResourceGroupInitInfo rcinit;
+		rcinit.m_vertexBuffers[0].m_buffer = m_vertBuff[c++];
+		rc = gr.newInstance<ResourceGroup>(rcinit);
+	}
+
 	m_mMat.setIdentity();
 	m_vpMat.setIdentity();
 	m_mvpMat.setIdentity();
-	m_crntCol = Vec3(1.0, 0.0, 0.0);
 
 	return ErrorCode::NONE;
+}
+
+//==============================================================================
+void DebugDrawer::prepareFrame(CommandBufferPtr& jobs)
+{
+	m_cmdb = jobs;
+
+	U frame = m_r->getFrameCount() % MAX_FRAMES_IN_FLIGHT;
+	void* mapped = m_vertBuff[frame]->map(0,
+		MAX_VERTS_PER_FRAME * sizeof(Vertex),
+		BufferAccessBit::CLIENT_MAP_WRITE);
+	m_clientVerts =
+		WArray<Vertex>(static_cast<Vertex*>(mapped), MAX_VERTS_PER_FRAME);
+
+	m_cmdb->bindResourceGroup(m_rcGroup[frame], 0, nullptr);
+
+	m_frameVertCount = 0;
+	m_crntDrawVertCount = 0;
+}
+
+//==============================================================================
+void DebugDrawer::finishFrame()
+{
+	U frame = m_r->getFrameCount() % MAX_FRAMES_IN_FLIGHT;
+	m_vertBuff[frame]->unmap();
+
+	flush();
+
+	m_cmdb = CommandBufferPtr(); // Release job chain
 }
 
 //==============================================================================
@@ -105,118 +149,56 @@ void DebugDrawer::begin(PrimitiveTopology topology)
 {
 	ANKI_ASSERT(topology == PrimitiveTopology::LINES
 		|| topology == PrimitiveTopology::TRIANGLES);
+
+	if(topology != m_primitive)
+	{
+		flush();
+	}
+
 	m_primitive = topology;
 }
 
 //==============================================================================
 void DebugDrawer::end()
 {
-	if(m_primitive == PrimitiveTopology::LINES)
-	{
-		if(m_lineVertCount % 2 != 0)
-		{
-			pushBackVertex(Vec3(0.0));
-			ANKI_LOGW("Forgot to close the line loop");
-		}
-	}
-	else
-	{
-		if(m_triVertCount % 3 != 0)
-		{
-			pushBackVertex(Vec3(0.0));
-			pushBackVertex(Vec3(0.0));
-			ANKI_LOGW("Forgot to close the line loop");
-		}
-	}
-}
-
-//==============================================================================
-Error DebugDrawer::flush()
-{
-	Error err = flushInternal(PrimitiveTopology::LINES);
-
-	if(!err)
-	{
-		err = flushInternal(PrimitiveTopology::TRIANGLES);
-	}
-
-	return err;
-}
-
-//==============================================================================
-Error DebugDrawer::flushInternal(PrimitiveTopology topology)
-{
-	if((m_primitive == PrimitiveTopology::LINES && m_lineVertCount == 0)
-		|| (m_primitive == PrimitiveTopology::TRIANGLES && m_triVertCount == 0))
-	{
-		// Early exit
-		return ErrorCode::NONE;
-	}
-
-	U clientVerts;
-	void* vertBuff;
-	if(m_primitive == PrimitiveTopology::LINES)
-	{
-		clientVerts = m_lineVertCount;
-		vertBuff = &m_clientLineVerts[0];
-		m_lineVertCount = 0;
-	}
-	else
-	{
-		clientVerts = m_triVertCount;
-		vertBuff = &m_clientTriVerts[0];
-		m_triVertCount = 0;
-	}
-
-	U size = sizeof(Vertex) * clientVerts;
-
-	DynamicBufferToken token;
-	void* data = m_r->getGrManager().allocateFrameHostVisibleMemory(
-		size, BufferUsage::TRANSFER, token);
-	memcpy(data, vertBuff, size);
-	m_cmdb->writeBuffer(m_vertBuff, 0, token);
-
-	if(m_depthTestEnabled)
-	{
-		m_cmdb->bindPipeline(m_pplineLinesDepth);
-	}
-	else
-	{
-		m_cmdb->bindPipeline(m_pplineLinesNoDepth);
-	}
-
-	m_cmdb->bindResourceGroup(m_rcGroup, 0, nullptr);
-	m_cmdb->drawArrays(clientVerts);
-
-	return ErrorCode::NONE;
 }
 
 //==============================================================================
 void DebugDrawer::pushBackVertex(const Vec3& pos)
 {
-	U32* vertCount;
-	Vertex* vertBuff;
-	if(m_primitive == PrimitiveTopology::LINES)
+	if(m_frameVertCount < MAX_VERTS_PER_FRAME)
 	{
-		vertCount = &m_lineVertCount;
-		vertBuff = &m_clientLineVerts[0];
+		m_clientVerts[m_frameVertCount].m_position = m_mvpMat * Vec4(pos, 1.0);
+		m_clientVerts[m_frameVertCount].m_color = Vec4(m_crntCol, 1.0);
+
+		++m_frameVertCount;
+		++m_crntDrawVertCount;
 	}
 	else
 	{
-		vertCount = &m_triVertCount;
-		vertBuff = &m_clientTriVerts[0];
+		ANKI_LOGW("Increase DebugDrawer::MAX_VERTS_PER_FRAME");
 	}
+}
 
-	vertBuff[*vertCount].m_position = m_mvpMat * Vec4(pos, 1.0);
-	vertBuff[*vertCount].m_color = Vec4(m_crntCol, 1.0);
-
-	++(*vertCount);
-
-	if(*vertCount == MAX_POINTS_PER_DRAW)
+//==============================================================================
+void DebugDrawer::flush()
+{
+	if(m_crntDrawVertCount > 0)
 	{
-		Error err = flush();
-		// TODO Don't ignore
-		(void)err;
+		if(m_primitive == PrimitiveTopology::LINES)
+		{
+			ANKI_ASSERT((m_crntDrawVertCount % 2) == 0);
+		}
+		else
+		{
+			ANKI_ASSERT((m_crntDrawVertCount % 3) == 0);
+		}
+
+		m_cmdb->bindPipeline(getPpline(m_depthTestEnabled, m_primitive));
+		U firstVert = m_frameVertCount - m_crntDrawVertCount;
+		m_cmdb->drawArrays(m_crntDrawVertCount, 1, firstVert);
+
+		m_crntDrawVertCount = 0;
 	}
 }
 

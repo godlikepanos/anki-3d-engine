@@ -48,11 +48,16 @@ public:
 	GLenum m_blendDfunc = GL_ZERO;
 	/// @}
 
-	/// @name Pipeline state
+	/// @name Pipeline/resource group state
 	/// @{
 	U64 m_lastPplineBoundUuid = MAX_U64;
 
+	Array<GLuint, MAX_VERTEX_ATTRIBUTES> m_vertBuffNames;
+	Array<GLintptr, MAX_VERTEX_ATTRIBUTES> m_vertBuffOffsets;
 	Array<GLsizei, MAX_VERTEX_ATTRIBUTES> m_vertexBindingStrides;
+	U8 m_vertBindingCount = 0;
+	Bool8 m_vertBindingsDirty = true;
+
 	GLenum m_topology = 0;
 	U8 m_indexSize = 4;
 
@@ -114,6 +119,8 @@ public:
 		PtrSize size, BufferUsage usage, DynamicBufferToken& token);
 
 	void checkDynamicMemoryConsumption();
+
+	void flushVertexState();
 
 private:
 	GrManager* m_manager;

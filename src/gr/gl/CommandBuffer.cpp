@@ -292,6 +292,8 @@ public:
 
 		if(!m_query.isCreated() || !m_query->getImplementation().skipDrawcall())
 		{
+			state.flushVertexState();
+
 			glDrawElementsInstancedBaseVertexBaseInstance(state.m_topology,
 				m_info.m_count,
 				indicesType,
@@ -341,6 +343,8 @@ public:
 	{
 		if(!m_query.isCreated() || !m_query->getImplementation().skipDrawcall())
 		{
+			state.flushVertexState();
+
 			glDrawArraysInstancedBaseInstance(state.m_topology,
 				m_info.m_first,
 				m_info.m_count,

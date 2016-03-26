@@ -31,22 +31,16 @@ public:
 	DebugDrawer();
 	~DebugDrawer();
 
-	ANKI_USE_RESULT Error create(Renderer* r);
+	ANKI_USE_RESULT Error init(Renderer* r);
 
 	void drawGrid();
 	void drawSphere(F32 radius, I complexity = 8);
 	void drawCube(F32 size = 1.0);
 	void drawLine(const Vec3& from, const Vec3& to, const Vec4& color);
 
-	void prepareDraw(CommandBufferPtr& jobs)
-	{
-		m_cmdb = jobs;
-	}
+	void prepareFrame(CommandBufferPtr& jobs);
 
-	void finishDraw()
-	{
-		m_cmdb = CommandBufferPtr(); // Release job chain
-	}
+	void finishFrame();
 
 	/// @name Render functions. Imitate the GL 1.1 immediate mode
 	/// @{
@@ -83,9 +77,6 @@ public:
 		return m_depthTestEnabled;
 	}
 
-	/// This is the function that actualy draws
-	ANKI_USE_RESULT Error flush();
-
 private:
 	class Vertex
 	{
@@ -94,33 +85,38 @@ private:
 		Vec4 m_color;
 	};
 
+	static const U MAX_VERTS_PER_FRAME = 1024 * 1024;
+
 	Renderer* m_r;
 	ShaderResourcePtr m_frag;
 	ShaderResourcePtr m_vert;
-	PipelinePtr m_pplineLinesDepth;
-	PipelinePtr m_pplineLinesNoDepth;
-	CommandBufferPtr m_cmdb;
-	ResourceGroupPtr m_rcGroup;
+	Array2d<PipelinePtr, 2, 2> m_pplines;
+	Array<ResourceGroupPtr, MAX_FRAMES_IN_FLIGHT> m_rcGroup;
+	Array<BufferPtr, MAX_FRAMES_IN_FLIGHT> m_vertBuff;
 
-	static const U MAX_POINTS_PER_DRAW = 256;
+	CommandBufferPtr m_cmdb;
+	WArray<Vertex> m_clientVerts;
+
 	Mat4 m_mMat;
 	Mat4 m_vpMat;
-	Mat4 m_mvpMat; ///< Optimization
-	U32 m_lineVertCount;
-	U32 m_triVertCount;
-	Vec3 m_crntCol;
-	PrimitiveTopology m_primitive;
-
-	BufferPtr m_vertBuff;
-
-	Array<Vertex, MAX_POINTS_PER_DRAW> m_clientLineVerts;
-	Array<Vertex, MAX_POINTS_PER_DRAW> m_clientTriVerts;
+	Mat4 m_mvpMat; ///< Optimization.
+	Vec3 m_crntCol = Vec3(1.0, 0.0, 0.0);
+	PrimitiveTopology m_primitive = PrimitiveTopology::LINES;
+	U32 m_frameVertCount = 0;
+	U32 m_crntDrawVertCount = 0;
 
 	DArray<Vec3> m_sphereVerts;
 
 	Bool8 m_depthTestEnabled = true;
 
-	ANKI_USE_RESULT Error flushInternal(PrimitiveTopology topology);
+	PipelinePtr& getPpline(Bool depth, PrimitiveTopology topology)
+	{
+		U i = (depth == false) ? 0 : 1;
+		U j = (topology == PrimitiveTopology::LINES) ? 0 : 1;
+		return m_pplines[i][j];
+	}
+
+	void flush();
 };
 
 /// Contains methods to render the collision shapes

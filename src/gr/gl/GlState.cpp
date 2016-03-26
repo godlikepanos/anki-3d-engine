@@ -263,4 +263,19 @@ void GlState::destroy()
 	m_transferBuffer.destroy(m_manager->getAllocator());
 }
 
+//==============================================================================
+void GlState::flushVertexState()
+{
+	if(m_vertBindingsDirty)
+	{
+		m_vertBindingsDirty = false;
+
+		glBindVertexBuffers(0,
+			m_vertBindingCount,
+			&m_vertBuffNames[0],
+			&m_vertBuffOffsets[0],
+			&m_vertexBindingStrides[0]);
+	}
+}
+
 } // end namespace anki
