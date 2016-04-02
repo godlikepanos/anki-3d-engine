@@ -5,8 +5,9 @@
 
 #pragma once
 
-#include <anki/collision/Plane.h>
+#include <anki/collision/Common.h>
 #include <anki/collision/Frustum.h>
+#include <anki/Math.h>
 
 namespace anki
 {
@@ -20,9 +21,7 @@ namespace anki
 /// @param[out] planes Pointers to the planes. Elements can be nullptr
 ///
 /// @note plane_count * 8 muls, plane_count sqrt
-extern void extractClipPlanes(
-	const Mat4& mvp, Plane* planes[(U)Frustum::PlaneType::COUNT]);
-
+void extractClipPlanes(const Mat4& mvp, Array<Plane*, 6>& planes);
 /// @}
 
 } // end namespace anki

@@ -4,75 +4,59 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/collision/Functions.h>
+#include <anki/collision/Plane.h>
 
 namespace anki
 {
 
 //==============================================================================
-void extractClipPlanes(
-	const Mat4& mvp, Plane* planes[(U)Frustum::PlaneType::COUNT])
+static void setPlane(const Vec4& abcd, Plane& p)
+{
+	Vec4 n = abcd.xyz0();
+	F32 len = n.getLength();
+	p = Plane(n / len, -abcd.w() / len);
+}
+
+//==============================================================================
+void extractClipPlanes(const Mat4& mvp, Array<Plane*, 6>& planes)
 {
 	// Plane equation coefficients
-	F32 a, b, c, d;
+	Vec4 abcd;
 
-	if(planes[(U)Frustum::PlaneType::NEAR])
+	if(planes[Frustum::PlaneType::NEAR])
 	{
-		a = mvp(3, 0) + mvp(2, 0);
-		b = mvp(3, 1) + mvp(2, 1);
-		c = mvp(3, 2) + mvp(2, 2);
-		d = mvp(3, 3) + mvp(2, 3);
-
-		*planes[(U)Frustum::PlaneType::NEAR] = Plane(a, b, c, d);
+		abcd = mvp.getRow(3) + mvp.getRow(2);
+		setPlane(abcd, *planes[Frustum::PlaneType::NEAR]);
 	}
 
-	if(planes[(U)Frustum::PlaneType::FAR])
+	if(planes[Frustum::PlaneType::FAR])
 	{
-		a = mvp(3, 0) - mvp(2, 0);
-		b = mvp(3, 1) - mvp(2, 1);
-		c = mvp(3, 2) - mvp(2, 2);
-		d = mvp(3, 3) - mvp(2, 3);
-
-		*planes[(U)Frustum::PlaneType::FAR] = Plane(a, b, c, d);
+		abcd = mvp.getRow(3) - mvp.getRow(2);
+		setPlane(abcd, *planes[Frustum::PlaneType::FAR]);
 	}
 
-	if(planes[(U)Frustum::PlaneType::LEFT])
+	if(planes[Frustum::PlaneType::LEFT])
 	{
-		a = mvp(3, 0) + mvp(0, 0);
-		b = mvp(3, 1) + mvp(0, 1);
-		c = mvp(3, 2) + mvp(0, 2);
-		d = mvp(3, 3) + mvp(0, 3);
-
-		*planes[(U)Frustum::PlaneType::LEFT] = Plane(a, b, c, d);
+		abcd = mvp.getRow(3) + mvp.getRow(0);
+		setPlane(abcd, *planes[Frustum::PlaneType::LEFT]);
 	}
 
-	if(planes[(U)Frustum::PlaneType::RIGHT])
+	if(planes[Frustum::PlaneType::RIGHT])
 	{
-		a = mvp(3, 0) - mvp(0, 0);
-		b = mvp(3, 1) - mvp(0, 1);
-		c = mvp(3, 2) - mvp(0, 2);
-		d = mvp(3, 3) - mvp(0, 3);
-
-		*planes[(U)Frustum::PlaneType::RIGHT] = Plane(a, b, c, d);
+		abcd = mvp.getRow(3) - mvp.getRow(0);
+		setPlane(abcd, *planes[Frustum::PlaneType::RIGHT]);
 	}
 
-	if(planes[(U)Frustum::PlaneType::TOP])
+	if(planes[Frustum::PlaneType::TOP])
 	{
-		a = mvp(3, 0) - mvp(1, 0);
-		b = mvp(3, 1) - mvp(1, 1);
-		c = mvp(3, 2) - mvp(1, 2);
-		d = mvp(3, 3) - mvp(1, 3);
-
-		*planes[(U)Frustum::PlaneType::TOP] = Plane(a, b, c, d);
+		abcd = mvp.getRow(3) - mvp.getRow(1);
+		setPlane(abcd, *planes[Frustum::PlaneType::TOP]);
 	}
 
-	if(planes[(U)Frustum::PlaneType::BOTTOM])
+	if(planes[Frustum::PlaneType::BOTTOM])
 	{
-		a = mvp(3, 0) + mvp(1, 0);
-		b = mvp(3, 1) + mvp(1, 1);
-		c = mvp(3, 2) + mvp(1, 2);
-		d = mvp(3, 3) + mvp(1, 3);
-
-		*planes[(U)Frustum::PlaneType::BOTTOM] = Plane(a, b, c, d);
+		abcd = mvp.getRow(3) + mvp.getRow(1);
+		setPlane(abcd, *planes[Frustum::PlaneType::BOTTOM]);
 	}
 }
 

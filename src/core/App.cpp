@@ -21,7 +21,6 @@
 #include <anki/script/ScriptManager.h>
 #include <anki/resource/ResourceFilesystem.h>
 
-#include <signal.h>
 #if ANKI_OS == ANKI_OS_ANDROID
 #include <android_native_app_glue.h>
 #endif

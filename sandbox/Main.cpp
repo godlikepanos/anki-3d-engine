@@ -107,8 +107,10 @@ Error MyApp::userMainLoop(Bool& quit)
 
 	if(in.getKey(KeyCode::L) == 1)
 	{
-		Vec3 origin = mover->getWorldTransform().getOrigin().xyz();
-		printf("%f %f %f\n", origin.x(), origin.y(), origin.z());
+		/*Vec3 origin = mover->getWorldTransform().getOrigin().xyz();
+		printf("%f %f %f\n", origin.x(), origin.y(), origin.z());*/
+		mover->setLocalOrigin(Vec4(0.0));
+		mover->setLocalRotation(Mat3x4::getIdentity());
 	}
 
 	if(in.getKey(KeyCode::F1) == 1)

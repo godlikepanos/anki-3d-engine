@@ -1,0 +1,71 @@
+// Copyright (C) 2009-2016, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#pragma once
+
+#include <anki/scene/Common.h>
+#include <anki/Math.h>
+#include <anki/collision/Plane.h>
+
+namespace anki
+{
+
+/// @addtogroup scene
+/// @{
+
+/// Software rasterizer for visibility tests.
+class SoftwareRasterizer
+{
+public:
+	SoftwareRasterizer()
+	{
+	}
+
+	~SoftwareRasterizer()
+	{
+		m_zbuffer.destroy(m_alloc);
+	}
+
+	/// Initialize.
+	void init(const GenericMemoryPoolAllocator<U8>& alloc)
+	{
+		m_alloc = alloc;
+	}
+
+	/// Prepare for rendering. Call it before every draw.
+	void prepare(const Mat4& mv, const Mat4& p, U width, U height);
+
+	/// Render some verts.
+	/// @param[in] verts Pointer to the first vertex to draw.
+	/// @param vertCount The number of verts to draw.
+	/// @param stride The stride (in bytes) of the next vertex.
+	void draw(const F32* verts, U vertCount, U stride);
+
+public: // XXX
+	GenericMemoryPoolAllocator<U8> m_alloc;
+	Mat4 m_mv; ///< ModelView.
+	Mat4 m_p; ///< Projection.
+	Array<Plane, 6> m_planes; ///< In view space.
+	U32 m_width;
+	U32 m_height;
+	DArray<Atomic<U32>> m_zbuffer;
+
+	/// @param tri In clip space.
+	void rasterizeTriangle(const Vec4* tri);
+
+	Bool computeBarycetrinc(const Vec2& a,
+		const Vec2& b,
+		const Vec2& c,
+		const Vec2& p,
+		Vec3& uvw) const;
+
+	/// Clip triangle in the near plane.
+	/// @note Triangles in view space.
+	void clipTriangle(
+		const Vec4* inTriangle, Vec4* outTriangles, U& outTriangleCount) const;
+};
+/// @}
+
+} // end namespace anki

@@ -235,22 +235,38 @@ void DebugDrawer::drawGrid()
 		// if the middle line then change color
 		if(x == 0)
 		{
-			setColor(col1);
-		}
+			setColor(col0 * 0.5 + col1 * 0.5);
+			pushBackVertex(Vec3(x, 0.0, -GRID_HALF_SIZE));
+			pushBackVertex(Vec3(x, 0.0, 0.0));
 
-		// line in z
-		pushBackVertex(Vec3(x, 0.0, -GRID_HALF_SIZE));
-		pushBackVertex(Vec3(x, 0.0, GRID_HALF_SIZE));
+			setColor(col1);
+			pushBackVertex(Vec3(x, 0.0, 0.0));
+			pushBackVertex(Vec3(x, 0.0, GRID_HALF_SIZE));
+		}
+		else
+		{
+			// line in z
+			pushBackVertex(Vec3(x, 0.0, -GRID_HALF_SIZE));
+			pushBackVertex(Vec3(x, 0.0, GRID_HALF_SIZE));
+		}
 
 		// if middle line change col so you can highlight the x-axis
 		if(x == 0)
 		{
-			setColor(col2);
-		}
+			setColor(col0 * 0.5 + col2 * 0.5);
+			pushBackVertex(Vec3(-GRID_HALF_SIZE, 0.0, x));
+			pushBackVertex(Vec3(0.0, 0.0, x));
 
-		// line in the x
-		pushBackVertex(Vec3(-GRID_HALF_SIZE, 0.0, x));
-		pushBackVertex(Vec3(GRID_HALF_SIZE, 0.0, x));
+			setColor(col2);
+			pushBackVertex(Vec3(0.0, 0.0, x));
+			pushBackVertex(Vec3(GRID_HALF_SIZE, 0.0, x));
+		}
+		else
+		{
+			// line in the x
+			pushBackVertex(Vec3(-GRID_HALF_SIZE, 0.0, x));
+			pushBackVertex(Vec3(GRID_HALF_SIZE, 0.0, x));
+		}
 	}
 
 	// render
