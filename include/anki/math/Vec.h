@@ -2165,6 +2165,46 @@ public:
 		return out;
 	}
 
+	/// Clamp between two values.
+	void clamp(const T& minv, const T& maxv)
+	{
+		for(U i = 0; i < N; ++i)
+		{
+			m_arr[i] = min<T>(max<T>(minv, m_arr[i]), maxv);
+		}
+	}
+
+	/// Get clamped between two values.
+	TV getClamped(const T& minv, const T& maxv) const
+	{
+		TV out;
+		for(U i = 0; i < N; ++i)
+		{
+			out[i] = min<T>(max<T>(minv, m_arr[i]), maxv);
+		}
+		return out;
+	}
+
+	/// Clamp between two vectors.
+	void clamp(const TV& minv, const TV& maxv)
+	{
+		for(U i = 0; i < N; ++i)
+		{
+			m_arr[i] = min<T>(max<T>(minv[i], m_arr[i]), maxv[i]);
+		}
+	}
+
+	/// Get clamped between two vectors.
+	TV getClamped(const TV& minv, const TV& maxv) const
+	{
+		TV out;
+		for(U i = 0; i < N; ++i)
+		{
+			out[i] = min<T>(max<T>(minv[i], m_arr[i]), maxv[i]);
+		}
+		return out;
+	}
+
 	template<typename TAlloc>
 	String toString(TAlloc alloc) const
 	{

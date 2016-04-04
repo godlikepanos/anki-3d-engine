@@ -109,20 +109,21 @@ public:
 	/// @{
 
 	/// It's like calculating the cross of a TVec3
-	TVec4 cross(const TVec4& b) const
+	ANKI_USE_RESULT TVec4 cross(const TVec4& b) const
 	{
 		ANKI_ASSERT(isZero<T>(Base::w()));
 		ANKI_ASSERT(isZero<T>(b.w()));
 		return TVec4(Base::xyz().cross(b.xyz()), static_cast<T>(0));
 	}
 
-	TVec4 projectTo(const TVec4& toThis) const
+	ANKI_USE_RESULT TVec4 projectTo(const TVec4& toThis) const
 	{
 		ANKI_ASSERT(w() == T(0));
 		return (toThis * ((*this).dot(toThis) / (toThis.dot(toThis)))).xyz0();
 	}
 
-	TVec4 projectTo(const TVec4& rayOrigin, const TVec4& rayDir) const
+	ANKI_USE_RESULT TVec4 projectTo(
+		const TVec4& rayOrigin, const TVec4& rayDir) const
 	{
 		const auto& a = *this;
 		return rayOrigin + rayDir * ((a - rayOrigin).dot(rayDir));
@@ -133,7 +134,7 @@ public:
 	/// @{
 
 	/// @note 16 muls 12 adds
-	TVec4 operator*(const TMat4<T>& m4) const
+	ANKI_USE_RESULT TVec4 operator*(const TMat4<T>& m4) const
 	{
 		return TVec4(
 			x() * m4(0, 0) + y() * m4(1, 0) + z() * m4(2, 0) + w() * m4(3, 0),
@@ -144,7 +145,7 @@ public:
 
 	/// Perspective divide. Divide the xyzw of this to the w of this. This
 	/// method will handle some edge cases.
-	TVec4 perspectiveDivide() const
+	ANKI_USE_RESULT TVec4 perspectiveDivide() const
 	{
 		auto invw = T(1) / w(); // This may become (+-)inf
 		invw = (invw > 1e+11) ? 1e+11 : invw; // Clamp

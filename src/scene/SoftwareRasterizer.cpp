@@ -15,14 +15,23 @@ void SoftwareRasterizer::prepare(
 {
 	m_mv = mv;
 	m_p = p;
+	m_mvp = p * mv;
 
-	Array<Plane*, 6> planes = {&m_planes[0],
-		&m_planes[1],
-		&m_planes[2],
-		&m_planes[3],
-		&m_planes[4],
-		&m_planes[5]};
+	Array<Plane*, 6> planes = {&m_planesL[0],
+		&m_planesL[1],
+		&m_planesL[2],
+		&m_planesL[3],
+		&m_planesL[4],
+		&m_planesL[5]};
 	extractClipPlanes(p, planes);
+
+	Array<Plane*, 6> planes2 = {&m_planesW[0],
+		&m_planesW[1],
+		&m_planesW[2],
+		&m_planesW[3],
+		&m_planesW[4],
+		&m_planesW[5]};
+	extractClipPlanes(m_mvp, planes2);
 
 	// Reset z buffer
 	ANKI_ASSERT(width > 0 && height > 0);
@@ -43,7 +52,7 @@ void SoftwareRasterizer::clipTriangle(
 {
 	ANKI_ASSERT(inVerts && outVerts);
 
-	const Plane& plane = m_planes[Frustum::PlaneType::NEAR];
+	const Plane& plane = m_planesL[Frustum::PlaneType::NEAR];
 	F32 clipZ = -plane.getOffset() - getEpsilon<F32>();
 	ANKI_ASSERT(clipZ < 0.0);
 
@@ -189,10 +198,10 @@ void SoftwareRasterizer::draw(const F32* verts, U vertCount, U stride)
 		// Cull if backfacing
 		Vec4 norm =
 			(triVspace[1] - triVspace[0]).cross(triVspace[2] - triVspace[1]);
-		ANKI_ASSERT(norm.w() == 0.0);
+		ANKI_ASSERT(norm.w() == 0.0f);
 
 		Vec4 eye = triVspace[0].xyz0();
-		if(norm.dot(eye) >= 0.0)
+		if(norm.dot(eye) >= 0.0f)
 		{
 			continue;
 		}
@@ -214,7 +223,7 @@ void SoftwareRasterizer::draw(const F32* verts, U vertCount, U stride)
 			for(U k = 0; k < 3; k++)
 			{
 				clip[k] = m_p * clippedTrisVspace[j + k].xyz1();
-				ANKI_ASSERT(clip[k].w() > 0.0);
+				ANKI_ASSERT(clip[k].w() > 0.0f);
 			}
 
 			rasterizeTriangle(&clip[0]);
@@ -240,7 +249,7 @@ Bool SoftwareRasterizer::computeBarycetrinc(
 	{
 		uvw = Vec3(1.0 - (k.x() + k.y()) / k.z(), k.y() / k.z(), k.x() / k.z());
 
-		if(uvw.x() < 0.0 || uvw.y() < 0.0 || uvw.z() < 0.0)
+		if(uvw.x() < 0.0f || uvw.y() < 0.0f || uvw.z() < 0.0f)
 		{
 			skip = true;
 		}
@@ -298,6 +307,70 @@ void SoftwareRasterizer::rasterizeTriangle(const Vec4* tri)
 			}
 		}
 	}
+}
+
+//==============================================================================
+Bool SoftwareRasterizer::visibilityTest(
+	const CollisionShape& cs, const Aabb& aabb) const
+{
+	// Set the AABB points
+	const Vec4& minv = aabb.getMin();
+	const Vec4& maxv = aabb.getMax();
+	Array<Vec4, 8> boxPoints;
+	boxPoints[0] = minv.xyz1();
+	boxPoints[1] = Vec4(minv.x(), maxv.y(), minv.z(), 1.0f);
+	boxPoints[2] = Vec4(minv.x(), maxv.y(), maxv.z(), 1.0f);
+	boxPoints[3] = Vec4(minv.x(), minv.y(), maxv.z(), 1.0f);
+	boxPoints[4] = maxv.xyz1();
+	boxPoints[5] = Vec4(maxv.x(), minv.y(), maxv.z(), 1.0f);
+	boxPoints[6] = Vec4(maxv.x(), minv.y(), minv.z(), 1.0f);
+	boxPoints[7] = Vec4(maxv.x(), maxv.y(), minv.z(), 1.0f);
+
+	// Compute bounding box
+	const Vec2 windowSize(m_width, m_height);
+
+	Vec2 bboxMin(MAX_F32), bboxMax(MIN_F32);
+	F32 minZ = MAX_F32;
+	for(Vec4& p : boxPoints)
+	{
+		p = m_mvp * p;
+		if(p.w() <= 0.0f)
+		{
+			// Don't bother clipping. Just mark it as visible.
+			return true;
+		}
+
+		p = p.perspectiveDivide();
+
+		for(U i = 0; i < 2; ++i)
+		{
+			F32 a = (p[i] / 2.0f + 0.5f) * windowSize[i];
+
+			bboxMin[i] = min(bboxMin[i], floorf(a));
+			bboxMin[i] = clamp(bboxMin[i], 0.0f, windowSize[i]);
+
+			bboxMax[i] = max(bboxMax[i], ceilf(a));
+			bboxMax[i] = clamp(bboxMax[i], 0.0f, windowSize[i]);
+		}
+
+		minZ = min(minZ, p.z() / 2.0f + 0.5f);
+	}
+
+	for(U y = bboxMin.y(); y < bboxMax.y(); y += 1.0f)
+	{
+		for(U x = bboxMin.x(); x < bboxMax.x(); x += 1.0f)
+		{
+			U idx = U(y) * m_width + U(x);
+			U32 depthi = m_zbuffer[idx].get();
+			F32 depthf = depthi / F32(MAX_U32);
+			if(minZ < depthf)
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 } // end namespace anki

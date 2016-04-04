@@ -221,7 +221,7 @@ Error Dbg::run(RenderingContext& ctx)
 			view, proj, m_r->getTileCountXY().x(), m_r->getTileCountXY().y());
 		r.draw(&ltriangle[0][0], 12, sizeof(Vec4));
 
-		m_drawer->begin(PrimitiveTopology::TRIANGLES);
+		/*m_drawer->begin(PrimitiveTopology::TRIANGLES);
 		U count = 0;
 		for(U y = 0; y < m_r->getTileCountXY().y(); ++y)
 		{
@@ -258,22 +258,32 @@ Error Dbg::run(RenderingContext& ctx)
 				}
 			}
 		}
-		m_drawer->end();
-		// printf("%u\n", count);
+		m_drawer->end();*/
 
 		m_drawer->setViewProjectionMatrix(camFrc.getViewProjectionMatrix());
 		Vec3 offset(0.0, 0.0, 0.0);
+		m_drawer->setColor(Vec4(0.5));
+		m_drawer->begin(PrimitiveTopology::TRIANGLES);
 		for(U i = 0; i < ltriangle.getSize() / 3; ++i)
 		{
-			m_drawer->drawLine(ltriangle[i * 3 + 0].xyz() + offset,
-				ltriangle[i * 3 + 1].xyz() + offset,
-				Vec4(0, 0.2, 0, 1));
-			m_drawer->drawLine(ltriangle[i * 3 + 1].xyz() + offset,
-				ltriangle[i * 3 + 2].xyz() + offset,
-				Vec4(0.0, 0.2, 0.0, 1.0));
-			m_drawer->drawLine(ltriangle[i * 3 + 2].xyz() + offset,
-				ltriangle[i * 3 + 0].xyz() + offset,
-				Vec4(0.0, 0.2, 0.0, 1.0));
+			m_drawer->pushBackVertex(ltriangle[i * 3 + 0].xyz());
+			m_drawer->pushBackVertex(ltriangle[i * 3 + 1].xyz());
+			m_drawer->pushBackVertex(ltriangle[i * 3 + 2].xyz());
+		}
+		m_drawer->end();
+
+		SceneNode& node = scene.findSceneNode("Lamp");
+		SpatialComponent& spc = node.getComponent<SpatialComponent>();
+		Aabb nodeAabb = spc.getAabb();
+
+		Bool inside =
+			r.visibilityTest(spc.getSpatialCollisionShape(), nodeAabb);
+
+		if(inside)
+		{
+			m_drawer->setColor(Vec4(1.0, 0.0, 0.0, 1.0));
+			CollisionDebugDrawer cd(m_drawer);
+			nodeAabb.accept(cd);
 		}
 	}
 #endif

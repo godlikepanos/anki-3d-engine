@@ -43,11 +43,19 @@ public:
 	/// @param stride The stride (in bytes) of the next vertex.
 	void draw(const F32* verts, U vertCount, U stride);
 
+	/// Perform visibility tests.
+	/// @param cs The collision shape in world space.
+	/// @param aabb The Aabb in of the cs in world space.
+	/// @return Return true if it's visible and false otherwise.
+	Bool visibilityTest(const CollisionShape& cs, const Aabb& aabb) const;
+
 public: // XXX
 	GenericMemoryPoolAllocator<U8> m_alloc;
 	Mat4 m_mv; ///< ModelView.
 	Mat4 m_p; ///< Projection.
-	Array<Plane, 6> m_planes; ///< In view space.
+	Mat4 m_mvp;
+	Array<Plane, 6> m_planesL; ///< In view space.
+	Array<Plane, 6> m_planesW; ///< In world space.
 	U32 m_width;
 	U32 m_height;
 	DArray<Atomic<U32>> m_zbuffer;
