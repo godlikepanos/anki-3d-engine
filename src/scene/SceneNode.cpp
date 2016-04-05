@@ -12,6 +12,7 @@ namespace anki
 //==============================================================================
 SceneNode::SceneNode(SceneGraph* scene)
 	: m_scene(scene)
+	, m_uuid(scene->getNewSceneNodeUuid())
 {
 }
 

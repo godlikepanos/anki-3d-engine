@@ -151,6 +151,7 @@ SceneGraph::~SceneGraph()
 Error SceneGraph::init(AllocAlignedCallback allocCb,
 	void* allocCbData,
 	ThreadPool* threadpool,
+	ThreadHive* threadHive,
 	ResourceManager* resources,
 	Input* input,
 	const Timestamp* globalTimestamp,
@@ -158,6 +159,7 @@ Error SceneGraph::init(AllocAlignedCallback allocCb,
 {
 	m_globalTimestamp = globalTimestamp;
 	m_threadpool = threadpool;
+	m_threadHive = threadHive;
 	m_resources = resources;
 	m_objectsMarkedForDeletionCount.store(0);
 	m_gr = &m_resources->getGrManager();
@@ -327,10 +329,7 @@ Error SceneGraph::update(
 
 	renderer.getOffscreenRenderer().prepareForVisibilityTests(*m_mainCam);
 
-	ANKI_TRACE_START_EVENT(SCENE_VISIBILITY_TESTS);
-	ANKI_CHECK(
-		doVisibilityTests(*m_mainCam, *this, renderer.getOffscreenRenderer()));
-	ANKI_TRACE_STOP_EVENT(SCENE_VISIBILITY_TESTS);
+	doVisibilityTests(*m_mainCam, *this, renderer.getOffscreenRenderer());
 
 	ANKI_TRACE_STOP_EVENT(SCENE_UPDATE);
 	return ErrorCode::NONE;

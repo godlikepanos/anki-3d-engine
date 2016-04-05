@@ -325,9 +325,10 @@ void Ir::findCacheEntry(SceneNode& node, U& entry, Bool& render)
 
 	while(it != end)
 	{
-		if(it->m_node == &node)
+		if(it->m_nodeUuid == node.getUuid())
 		{
 			// Already there
+			ANKI_ASSERT(it->m_node == &node);
 			canditate = it;
 			break;
 		}
@@ -357,22 +358,22 @@ void Ir::findCacheEntry(SceneNode& node, U& entry, Bool& render)
 	{
 		ANKI_ASSERT(empty->m_node == nullptr);
 		empty->m_node = &node;
+		empty->m_nodeUuid = node.getUuid();
 		empty->m_timestamp = m_r->getFrameCount();
 
 		it = empty;
 		render = true;
 	}
-	else if(kick)
+	else
 	{
+		ANKI_ASSERT(kick);
+
 		kick->m_node = &node;
+		kick->m_nodeUuid = node.getUuid();
 		kick->m_timestamp = m_r->getFrameCount();
 
 		it = kick;
 		render = true;
-	}
-	else
-	{
-		ANKI_ASSERT(0);
 	}
 
 	entry = it - m_cacheEntries.getBegin();

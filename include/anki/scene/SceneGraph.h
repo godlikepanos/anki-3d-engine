@@ -44,6 +44,7 @@ public:
 	ANKI_USE_RESULT Error init(AllocAlignedCallback allocCb,
 		void* allocCbData,
 		ThreadPool* threadpool,
+		ThreadHive* thraedHive,
 		ResourceManager* resources,
 		Input* input,
 		const Timestamp* globalTimestamp,
@@ -102,6 +103,11 @@ public:
 	ThreadPool& _getThreadPool()
 	{
 		return *m_threadpool;
+	}
+
+	ThreadHive& getThreadHive()
+	{
+		return *m_threadHive;
 	}
 
 	ANKI_USE_RESULT Error update(
@@ -181,12 +187,18 @@ anki_internal:
 		return m_maxReflectionProxyDistance;
 	}
 
+	U64 getNewSceneNodeUuid()
+	{
+		return m_nodesUuid++;
+	}
+
 private:
 	const Timestamp* m_globalTimestamp = nullptr;
 	Timestamp m_timestamp = 0; ///< Cached timestamp
 
 	// Sub-systems
 	ThreadPool* m_threadpool = nullptr;
+	ThreadHive* m_threadHive = nullptr;
 	ResourceManager* m_resources = nullptr;
 	GrManager* m_gr = nullptr;
 	PhysicsWorld* m_physics = nullptr;
@@ -209,6 +221,8 @@ private:
 	Atomic<U32> m_objectsMarkedForDeletionCount;
 
 	F32 m_maxReflectionProxyDistance = 0.0;
+
+	U64 m_nodesUuid = 0;
 
 	/// Put a node in the appropriate containers
 	ANKI_USE_RESULT Error registerNode(SceneNode* node);

@@ -51,6 +51,11 @@ public:
 		return (!m_name.isEmpty()) ? m_name.toCString() : CString();
 	}
 
+	U64 getUuid() const
+	{
+		return m_uuid;
+	}
+
 	U32 getComponentsCount() const
 	{
 		return m_componentsCount;
@@ -215,6 +220,8 @@ private:
 	/// a sector.
 	BitSet<256> m_sectorVisitedBitset = {false};
 	SpinLock m_sectorVisitedBitsetLock;
+
+	U64 m_uuid;
 
 	void cacheImportantComponents();
 };

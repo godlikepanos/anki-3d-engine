@@ -67,7 +67,7 @@ ThreadHive::ThreadHive(U threadCount, GenericMemoryPoolAllocator<U8> alloc)
 		::new(&m_threads[i]) ThreadHiveThread(i, this);
 	}
 
-	m_storage.create(m_alloc, 1024);
+	m_storage.create(m_alloc, 1024 * 2);
 }
 
 //==============================================================================

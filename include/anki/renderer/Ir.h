@@ -66,7 +66,8 @@ private:
 	{
 	public:
 		const SceneNode* m_node = nullptr;
-		Timestamp m_timestamp = 0; ///< When last rendered.
+		U64 m_nodeUuid;
+		Timestamp m_timestamp = 0; ///< When last accessed.
 	};
 
 	static const U IRRADIANCE_TEX_SIZE = 32;

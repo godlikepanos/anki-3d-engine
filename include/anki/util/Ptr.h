@@ -186,6 +186,18 @@ public:
 		return *this;
 	}
 
+	/// Cast to the pointer type.
+	operator T*()
+	{
+		return Base::m_ptr;
+	}
+
+	/// Cast to the pointer type.
+	operator const T*() const
+	{
+		return Base::m_ptr;
+	}
+
 	/// @name Arithmetic operators
 	/// @{
 	WeakPtr& operator++()

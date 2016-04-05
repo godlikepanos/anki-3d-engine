@@ -59,6 +59,11 @@ public:
 
 	~ThreadHive();
 
+	U getThreadCount() const
+	{
+		return m_threadCount;
+	}
+
 	/// Submit tasks. The ThreadHiveTaskCallback callbacks can also call this.
 	void submitTasks(ThreadHiveTask* tasks, U taskCount);
 
@@ -76,7 +81,7 @@ public:
 	void waitAllTasks();
 
 private:
-	static const U MAX_DEPS = 2;
+	static const U MAX_DEPS = 15;
 
 	/// Lightweight task.
 	class Task
@@ -87,9 +92,9 @@ private:
 		ThreadHiveTaskCallback m_cb; ///< Callback that defines the task.
 		void* m_arg; ///< Args for the callback.
 
-		U16 m_depCount;
-		Array<ThreadHiveDependencyHandle, MAX_DEPS> m_deps;
+		U8 m_depCount;
 		Bool8 m_othersDepend; ///< Other tasks depend on this one.
+		Array<ThreadHiveDependencyHandle, MAX_DEPS> m_deps;
 
 		Bool done() const
 		{
@@ -97,7 +102,7 @@ private:
 		}
 	};
 
-	static_assert(sizeof(Task) == (sizeof(void*) * 3 + 8), "Wrong size");
+	static_assert(sizeof(Task) == (sizeof(void*) * 3 + 32), "Wrong size");
 
 	GenericMemoryPoolAllocator<U8> m_alloc;
 	ThreadHiveThread* m_threads = nullptr;

@@ -151,8 +151,8 @@ private:
 	Timestamp m_shapeUpdateTimestamp = 0;
 };
 
-/// Do visibility tests bypassing portals
-ANKI_USE_RESULT Error doVisibilityTests(
+/// Do visibility tests.
+void doVisibilityTests(
 	SceneNode& frustumable, SceneGraph& scene, const Renderer& renderer);
 /// @}
 

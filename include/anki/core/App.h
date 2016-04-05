@@ -23,6 +23,7 @@ extern android_app* gAndroidApp;
 // Forward
 class ConfigSet;
 class ThreadPool;
+class ThreadHive;
 class NativeWindow;
 class Input;
 class GrManager;
@@ -77,6 +78,11 @@ public:
 	ThreadPool& getThreadPool()
 	{
 		return *m_threadpool;
+	}
+
+	ThreadHive& getThreadHive()
+	{
+		return *m_threadHive;
 	}
 
 	HeapAllocator<U8>& getAllocator()
@@ -154,6 +160,7 @@ private:
 	// Misc
 	Timestamp m_globalTimestamp = 0;
 	ThreadPool* m_threadpool = nullptr;
+	ThreadHive* m_threadHive = nullptr;
 	String m_settingsDir; ///< The path that holds the configuration
 	String m_cacheDir; ///< This is used as a cache
 	F32 m_timerTick;

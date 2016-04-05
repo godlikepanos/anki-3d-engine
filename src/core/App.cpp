@@ -10,6 +10,7 @@
 #include <anki/util/Filesystem.h>
 #include <anki/util/System.h>
 #include <anki/util/ThreadPool.h>
+#include <anki/util/ThreadHive.h>
 #include <anki/core/Trace.h>
 
 #include <anki/core/NativeWindow.h>
@@ -96,6 +97,12 @@ void App::cleanup()
 	{
 		m_heapAlloc.deleteInstance(m_threadpool);
 		m_threadpool = nullptr;
+	}
+
+	if(m_threadHive)
+	{
+		m_heapAlloc.deleteInstance(m_threadHive);
+		m_threadHive = nullptr;
 	}
 
 	if(m_input)
@@ -204,6 +211,8 @@ Error App::initInternal(const ConfigSet& config_,
 	// ThreadPool
 	//
 	m_threadpool = m_heapAlloc.newInstance<ThreadPool>(getCpuCoresCount());
+	m_threadHive =
+		m_heapAlloc.newInstance<ThreadHive>(getCpuCoresCount(), m_heapAlloc);
 
 	//
 	// Graphics API
@@ -281,6 +290,7 @@ Error App::initInternal(const ConfigSet& config_,
 	ANKI_CHECK(m_scene->init(m_allocCb,
 		m_allocCbData,
 		m_threadpool,
+		m_threadHive,
 		m_resources,
 		m_input,
 		&m_globalTimestamp,
