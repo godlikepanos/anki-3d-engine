@@ -22,15 +22,18 @@ namespace anki
 #define ANKI_HIVE_DEBUG_PRINT(...) ((void)0)
 #endif
 
-class ThreadHiveThread
+//==============================================================================
+// ThreadHive::Thread                                                          =
+//==============================================================================
+class ThreadHive::Thread
 {
 public:
 	U32 m_id; ///< An ID
-	Thread m_thread; ///< Runs the workingFunc
+	anki::Thread m_thread; ///< Runs the workingFunc
 	ThreadHive* m_hive;
 
 	/// Constructor
-	ThreadHiveThread(U32 id, ThreadHive* hive)
+	Thread(U32 id, ThreadHive* hive)
 		: m_id(id)
 		, m_thread("anki_threadhive")
 		, m_hive(hive)
@@ -41,13 +44,40 @@ public:
 
 private:
 	/// Thread callaback
-	static Error threadCallback(Thread::Info& info)
+	static Error threadCallback(anki::Thread::Info& info)
 	{
-		ThreadHiveThread& self =
-			*reinterpret_cast<ThreadHiveThread*>(info.m_userData);
+		Thread& self = *reinterpret_cast<Thread*>(info.m_userData);
 
 		self.m_hive->threadRun(self.m_id);
 		return ErrorCode::NONE;
+	}
+};
+
+//==============================================================================
+// ThreadHive::Task                                                            =
+//==============================================================================
+class ThreadHive::Task
+{
+public:
+	Task* m_next; ///< Next in the list.
+
+	ThreadHiveTaskCallback m_cb; ///< Callback that defines the task.
+	void* m_arg; ///< Args for the callback.
+
+	U16* m_deps;
+	U16 m_depCount;
+	Bool8 m_othersDepend; ///< Other tasks depend on this one.
+
+	Task()
+	{
+	}
+
+	Task(const Task& b) = delete;
+	Task& operator=(const Task& b) = delete;
+
+	Bool done() const
+	{
+		return m_cb == nullptr;
 	}
 };
 
@@ -60,20 +90,22 @@ ThreadHive::ThreadHive(U threadCount, GenericMemoryPoolAllocator<U8> alloc)
 	: m_alloc(alloc)
 	, m_threadCount(threadCount)
 {
-	m_threads = reinterpret_cast<ThreadHiveThread*>(
-		alloc.allocate(sizeof(ThreadHiveThread) * threadCount));
+	m_threads =
+		reinterpret_cast<Thread*>(alloc.allocate(sizeof(Thread) * threadCount));
 	for(U i = 0; i < threadCount; ++i)
 	{
-		::new(&m_threads[i]) ThreadHiveThread(i, this);
+		::new(&m_threads[i]) Thread(i, this);
 	}
 
-	m_storage.create(m_alloc, 1024 * 2);
+	m_storage.create(m_alloc, MAX_TASKS_PER_SESSION);
+	m_deps.create(m_alloc, MAX_TASKS_PER_SESSION * threadCount);
 }
 
 //==============================================================================
 ThreadHive::~ThreadHive()
 {
 	m_storage.destroy(m_alloc);
+	m_deps.destroy(m_alloc);
 
 	if(m_threads)
 	{
@@ -91,11 +123,11 @@ ThreadHive::~ThreadHive()
 		{
 			Error err = m_threads[threadCount].m_thread.join();
 			(void)err;
-			m_threads[threadCount].~ThreadHiveThread();
+			m_threads[threadCount].~Thread();
 		}
 
-		m_alloc.deallocate(static_cast<void*>(m_threads),
-			m_threadCount * sizeof(ThreadHiveThread));
+		m_alloc.deallocate(
+			static_cast<void*>(m_threads), m_threadCount * sizeof(Thread));
 	}
 }
 
@@ -113,6 +145,7 @@ void ThreadHive::submitTasks(ThreadHiveTask* tasks, U taskCount)
 		for(U i = 0; i < taskCount; ++i)
 		{
 			const auto& inTask = tasks[i];
+
 			Task& outTask = m_storage[m_allocatedTasks];
 
 			outTask.m_cb = inTask.m_callback;
@@ -122,8 +155,17 @@ void ThreadHive::submitTasks(ThreadHiveTask* tasks, U taskCount)
 			outTask.m_othersDepend = false;
 
 			// Set the dependencies
-			ANKI_ASSERT(inTask.m_inDependencies.getSize() <= MAX_DEPS
-				&& "For now only limited deps");
+			if(inTask.m_inDependencies.getSize() > 0)
+			{
+				outTask.m_deps = &m_deps[m_allocatedDeps];
+				m_allocatedDeps += inTask.m_inDependencies.getSize();
+				ANKI_ASSERT(m_allocatedDeps <= m_deps.getSize());
+			}
+			else
+			{
+				outTask.m_deps = nullptr;
+			}
+
 			for(U j = 0; j < inTask.m_inDependencies.getSize(); ++j)
 			{
 				ThreadHiveDependencyHandle dep = inTask.m_inDependencies[j];
@@ -286,6 +328,7 @@ void ThreadHive::waitAllTasks()
 	m_head = nullptr;
 	m_tail = nullptr;
 	m_allocatedTasks = 0;
+	m_allocatedDeps = 0;
 
 	ANKI_HIVE_DEBUG_PRINT("mt: done waiting all\n");
 }

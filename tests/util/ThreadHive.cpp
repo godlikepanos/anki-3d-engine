@@ -138,7 +138,7 @@ ANKI_TEST(Util, ThreadHive)
 		ThreadHiveDependencyHandle dep = 0;
 
 		const U SUBMISSION_COUNT = 100;
-		const U TASK_COUNT = 100;
+		const U TASK_COUNT = 1000;
 		for(U i = 0; i < SUBMISSION_COUNT; ++i)
 		{
 			for(U j = 0; j < TASK_COUNT; ++j)

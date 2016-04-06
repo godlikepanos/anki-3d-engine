@@ -14,7 +14,6 @@ namespace anki
 
 // Forward
 class ThreadHive;
-class ThreadHiveThread;
 
 /// @addtogroup util_thread
 /// @{
@@ -51,8 +50,6 @@ public:
 /// completely independent.
 class ThreadHive : public NonCopyable
 {
-	friend class ThreadHiveThread;
-
 public:
 	/// Create the hive.
 	ThreadHive(U threadCount, GenericMemoryPoolAllocator<U8> alloc);
@@ -81,39 +78,25 @@ public:
 	void waitAllTasks();
 
 private:
-	static const U MAX_DEPS = 15;
+	static const U MAX_TASKS_PER_SESSION = 1024 * 2;
+
+	class Thread;
 
 	/// Lightweight task.
-	class Task
-	{
-	public:
-		Task* m_next; ///< Next in the list.
-
-		ThreadHiveTaskCallback m_cb; ///< Callback that defines the task.
-		void* m_arg; ///< Args for the callback.
-
-		U8 m_depCount;
-		Bool8 m_othersDepend; ///< Other tasks depend on this one.
-		Array<ThreadHiveDependencyHandle, MAX_DEPS> m_deps;
-
-		Bool done() const
-		{
-			return m_cb == nullptr;
-		}
-	};
-
-	static_assert(sizeof(Task) == (sizeof(void*) * 3 + 32), "Wrong size");
+	class Task;
 
 	GenericMemoryPoolAllocator<U8> m_alloc;
-	ThreadHiveThread* m_threads = nullptr;
+	Thread* m_threads = nullptr;
 	U32 m_threadCount = 0;
 
 	DArray<Task> m_storage; ///< Task storage.
+	DArray<ThreadHiveDependencyHandle> m_deps; ///< Dependencies storage.
 	Task* m_head = nullptr; ///< Head of the task list.
 	Task* m_tail = nullptr; ///< Tail of the task list.
 	Bool m_quit = false;
 	U32 m_pendingTasks = 0;
 	U32 m_allocatedTasks = 0;
+	U32 m_allocatedDeps = 0;
 
 	Mutex m_mtx;
 	ConditionVariable m_cvar;
@@ -128,6 +111,8 @@ private:
 
 	/// Complete a task.
 	void completeTask(U taskId);
+
+	/// Inject dummy depedency tasks if there are
 };
 /// @}
 

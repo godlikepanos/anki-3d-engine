@@ -76,7 +76,7 @@ Error MyApp::init(int argc, char* argv[])
 //==============================================================================
 Error MyApp::userMainLoop(Bool& quit)
 {
-	F32 dist = 0.05;
+	F32 dist = 0.1;
 	F32 ang = toRad(2.5);
 	F32 scale = 0.01;
 	F32 mouseSensivity = 9.0;
