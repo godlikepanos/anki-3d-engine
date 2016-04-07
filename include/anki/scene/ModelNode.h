@@ -33,7 +33,7 @@ public:
 
 	~ModelPatchNode();
 
-	ANKI_USE_RESULT Error create(
+	ANKI_USE_RESULT Error init(
 		const CString& name, const ModelPatch* modelPatch);
 
 private:
@@ -54,7 +54,7 @@ public:
 
 	~ModelNode();
 
-	ANKI_USE_RESULT Error create(
+	ANKI_USE_RESULT Error init(
 		const CString& name, const CString& modelFname);
 
 	const Model& getModel() const
@@ -64,7 +64,7 @@ public:
 
 private:
 	ModelResourcePtr m_model; ///< The resource
-	DArray<ModelPatchNode*> m_modelPatches;
+	DynamicArray<ModelPatchNode*> m_modelPatches;
 
 	void onMoveComponentUpdate(MoveComponent& move);
 };

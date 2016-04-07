@@ -37,9 +37,9 @@ PortalSectorBase::~PortalSectorBase()
 }
 
 //==============================================================================
-Error PortalSectorBase::create(const CString& name, const CString& meshFname)
+Error PortalSectorBase::init(const CString& name, const CString& meshFname)
 {
-	ANKI_CHECK(SceneNode::create(name));
+	ANKI_CHECK(SceneNode::init(name));
 
 	// Create move component
 	SceneComponent* comp = getSceneAllocator().newInstance<MoveComponent>(this);
@@ -139,9 +139,9 @@ Portal::~Portal()
 }
 
 //==============================================================================
-Error Portal::create(const CString& name, const CString& meshFname)
+Error Portal::init(const CString& name, const CString& meshFname)
 {
-	ANKI_CHECK(Base::create(name, meshFname));
+	ANKI_CHECK(Base::init(name, meshFname));
 	getSectorGroup().m_portals.pushBack(getSceneAllocator(), this);
 	return ErrorCode::NONE;
 }
@@ -264,9 +264,9 @@ Sector::~Sector()
 }
 
 //==============================================================================
-Error Sector::create(const CString& name, const CString& meshFname)
+Error Sector::init(const CString& name, const CString& meshFname)
 {
-	ANKI_CHECK(PortalSectorBase::create(name, meshFname));
+	ANKI_CHECK(PortalSectorBase::init(name, meshFname));
 	getSectorGroup().m_sectors.pushBack(getSceneAllocator(), this);
 	return ErrorCode::NONE;
 }
@@ -660,7 +660,7 @@ void SectorGroup::findVisibleNodes(const FrustumComponent& frc,
 	SceneNode** visibleNodesMem = reinterpret_cast<SceneNode**>(
 		alloc.allocate(spatialsCount * sizeof(void*)));
 
-	SArray<SceneNode*> visibleNodes(visibleNodesMem, spatialsCount);
+	WeakArray<SceneNode*> visibleNodes(visibleNodesMem, spatialsCount);
 
 	// Iterate visible sectors and get the scene nodes. The array will contain
 	// duplicates
@@ -684,7 +684,7 @@ void SectorGroup::findVisibleNodes(const FrustumComponent& frc,
 	}
 
 	// Update the context
-	ctx.m_visibleNodes = SArray<SceneNode*>(visibleNodesMem, nodesCount);
+	ctx.m_visibleNodes = WeakArray<SceneNode*>(visibleNodesMem, nodesCount);
 }
 
 } // end namespace anki

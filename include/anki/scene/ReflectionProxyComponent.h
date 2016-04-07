@@ -46,7 +46,7 @@ public:
 	void setQuad(
 		U index, const Vec4& a, const Vec4& b, const Vec4& c, const Vec4& d);
 
-	const DArray<Face>& getFaces() const
+	const DynamicArray<Face>& getFaces() const
 	{
 		ANKI_ASSERT(m_faces.getSize() > 0);
 		return m_faces;
@@ -56,7 +56,7 @@ public:
 		SceneNode& node, F32 prevTime, F32 crntTime, Bool& updated) final;
 
 private:
-	DArray<Face> m_faces; ///< Quads.
+	DynamicArray<Face> m_faces; ///< Quads.
 	Bool8 m_dirty = true;
 };
 /// @}

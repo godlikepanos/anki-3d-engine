@@ -51,16 +51,16 @@ public:
 	class Sm
 	{
 	public:
-		DArrayAuto<FramebufferPtr> m_spotFramebuffers;
-		DArrayAuto<Array<FramebufferPtr, 6>> m_omniFramebuffers;
+		DynamicArrayAuto<FramebufferPtr> m_spotFramebuffers;
+		DynamicArrayAuto<Array<FramebufferPtr, 6>> m_omniFramebuffers;
 
 		/// [casterIdx][threadIdx]
-		DArrayAuto<CommandBufferPtr> m_spotCommandBuffers;
+		DynamicArrayAuto<CommandBufferPtr> m_spotCommandBuffers;
 		/// [casterIdx][threadIdx][faceIdx]
-		DArrayAuto<CommandBufferPtr> m_omniCommandBuffers;
+		DynamicArrayAuto<CommandBufferPtr> m_omniCommandBuffers;
 
-		DArrayAuto<SceneNode*> m_spots;
-		DArrayAuto<SceneNode*> m_omnis;
+		DynamicArrayAuto<SceneNode*> m_spots;
+		DynamicArrayAuto<SceneNode*> m_omnis;
 
 		Sm(const StackAllocator<U8>& alloc)
 			: m_spotFramebuffers(alloc)

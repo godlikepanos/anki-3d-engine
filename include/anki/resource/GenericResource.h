@@ -24,13 +24,13 @@ public:
 	/// Load a texture
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename);
 
-	const DArray<U8>& getData() const
+	const DynamicArray<U8>& getData() const
 	{
 		return m_data;
 	}
 
 private:
-	DArray<U8> m_data;
+	DynamicArray<U8> m_data;
 };
 /// @}
 

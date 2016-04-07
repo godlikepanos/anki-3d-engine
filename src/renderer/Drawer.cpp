@@ -46,7 +46,7 @@ class SetupRenderableVariableVisitor
 public:
 	DrawContext* m_ctx ANKI_DBG_NULLIFY_PTR;
 	const RenderableDrawer* m_drawer ANKI_DBG_NULLIFY_PTR;
-	SArray<U8> m_uniformBuffer;
+	WeakArray<U8> m_uniformBuffer;
 
 	/// Set a uniform in a client block
 	template<typename T>
@@ -89,7 +89,7 @@ Error SetupRenderableVariableVisitor::visit(
 	{
 		ANKI_ASSERT(cachedTrfs > 0);
 
-		DArrayAuto<Mat4> mvp(m_drawer->m_r->getFrameAllocator());
+		DynamicArrayAuto<Mat4> mvp(m_drawer->m_r->getFrameAllocator());
 		mvp.create(cachedTrfs);
 
 		for(U i = 0; i < cachedTrfs; i++)
@@ -104,7 +104,7 @@ Error SetupRenderableVariableVisitor::visit(
 	{
 		ANKI_ASSERT(cachedTrfs > 0);
 
-		DArrayAuto<Mat4> mv(m_drawer->m_r->getFrameAllocator());
+		DynamicArrayAuto<Mat4> mv(m_drawer->m_r->getFrameAllocator());
 		mv.create(cachedTrfs);
 
 		for(U i = 0; i < cachedTrfs; i++)
@@ -123,7 +123,7 @@ Error SetupRenderableVariableVisitor::visit(
 	{
 		ANKI_ASSERT(cachedTrfs > 0);
 
-		DArrayAuto<Mat3> normMats(m_drawer->m_r->getFrameAllocator());
+		DynamicArrayAuto<Mat3> normMats(m_drawer->m_r->getFrameAllocator());
 		normMats.create(cachedTrfs);
 
 		for(U i = 0; i < cachedTrfs; i++)
@@ -141,7 +141,7 @@ Error SetupRenderableVariableVisitor::visit(
 		// Calc the billboard rotation matrix
 		Mat3 rot = v.getRotationPart().getTransposed();
 
-		DArrayAuto<Mat4> bmvp(m_drawer->m_r->getFrameAllocator());
+		DynamicArrayAuto<Mat4> bmvp(m_drawer->m_r->getFrameAllocator());
 		bmvp.create(cachedTrfs);
 
 		for(U i = 0; i < cachedTrfs; i++)
@@ -224,7 +224,7 @@ void RenderableDrawer::setupUniforms(DrawContext& ctx,
 	visitor.m_ctx = &ctx;
 	visitor.m_drawer = this;
 	visitor.m_uniformBuffer =
-		SArray<U8>(uniforms, variant.getDefaultBlockSize());
+		WeakArray<U8>(uniforms, variant.getDefaultBlockSize());
 
 	for(auto it = renderable.getVariablesBegin();
 		it != renderable.getVariablesEnd();

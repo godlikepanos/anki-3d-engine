@@ -80,7 +80,7 @@ private:
 	/// Depth stencil
 	TexturePtr m_depthRt;
 
-	DArray<CommandBufferPtr> m_secondLevelCmdbs;
+	DynamicArray<CommandBufferPtr> m_secondLevelCmdbs;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 

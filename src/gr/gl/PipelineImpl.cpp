@@ -200,7 +200,7 @@ Error PipelineImpl::createGlPipeline()
 	{
 		GLint infoLen = 0;
 		GLint charsWritten = 0;
-		DArrayAuto<char> infoLogTxt(getAllocator());
+		DynamicArrayAuto<char> infoLogTxt(getAllocator());
 
 		glGetProgramiv(m_glName, GL_INFO_LOG_LENGTH, &infoLen);
 

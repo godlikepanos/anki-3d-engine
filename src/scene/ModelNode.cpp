@@ -67,10 +67,10 @@ ModelPatchNode::~ModelPatchNode()
 }
 
 //==============================================================================
-Error ModelPatchNode::create(const CString& name, const ModelPatch* modelPatch)
+Error ModelPatchNode::init(const CString& name, const ModelPatch* modelPatch)
 {
 	ANKI_ASSERT(modelPatch);
-	ANKI_CHECK(SceneNode::create(name));
+	ANKI_CHECK(SceneNode::init(name));
 
 	m_modelPatch = modelPatch;
 
@@ -86,7 +86,7 @@ Error ModelPatchNode::create(const CString& name, const ModelPatch* modelPatch)
 	comp = rcomp;
 
 	addComponent(comp, true);
-	ANKI_CHECK(rcomp->create());
+	ANKI_CHECK(rcomp->init());
 
 	return ErrorCode::NONE;
 }
@@ -106,7 +106,7 @@ Error ModelPatchNode::buildRendering(RenderingBuildInfo& data) const
 	ResourceGroupPtr grResources;
 
 	m_modelPatch->getRenderingDataSub(data.m_key,
-		SArray<U8>(),
+		WeakArray<U8>(),
 		grResources,
 		ppline,
 		indicesCountArray,
@@ -173,9 +173,9 @@ ModelNode::~ModelNode()
 }
 
 //==============================================================================
-Error ModelNode::create(const CString& name, const CString& modelFname)
+Error ModelNode::init(const CString& name, const CString& modelFname)
 {
-	ANKI_CHECK(SceneNode::create(name));
+	ANKI_CHECK(SceneNode::init(name));
 
 	SceneComponent* comp;
 

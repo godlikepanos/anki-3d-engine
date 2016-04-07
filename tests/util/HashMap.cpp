@@ -6,7 +6,7 @@
 #include "tests/framework/Framework.h"
 #include "tests/util/Foo.h"
 #include "anki/util/HashMap.h"
-#include "anki/util/DArray.h"
+#include "anki/util/DynamicArray.h"
 #include "anki/util/HighRezTimer.h"
 #include <unordered_map>
 
@@ -121,7 +121,7 @@ ANKI_TEST(Util, HashMap)
 
 		// Create a huge set
 		const U COUNT = 1024 * 100;
-		DArrayAuto<int> vals(alloc);
+		DynamicArrayAuto<int> vals(alloc);
 		vals.create(COUNT);
 
 		for(U i = 0; i < COUNT; ++i)

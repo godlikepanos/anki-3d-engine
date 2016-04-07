@@ -6,7 +6,7 @@
 #pragma once
 
 #include <anki/gr/gl/GlObject.h>
-#include <anki/util/DArray.h>
+#include <anki/util/DynamicArray.h>
 
 namespace anki
 {
@@ -29,7 +29,7 @@ public:
 	U8 m_mipsCount = 0;
 	U8 m_faceCount = 0; ///< 6 for cubes and 1 for the rest
 	Bool8 m_compressed = false;
-	DArray<GLuint> m_texViews; ///< Temp views for gen mips.
+	DynamicArray<GLuint> m_texViews; ///< Temp views for gen mips.
 
 	TextureImpl(GrManager* manager)
 		: GlObject(manager)

@@ -167,7 +167,7 @@ public:
 
 	~ParticleEmitter();
 
-	ANKI_USE_RESULT Error create(const CString& name, const CString& filename);
+	ANKI_USE_RESULT Error init(const CString& name, const CString& filename);
 
 	/// @name SceneNode virtuals
 	/// @{
@@ -184,7 +184,7 @@ private:
 	};
 
 	ParticleEmitterResourcePtr m_particleEmitterResource;
-	DArray<ParticleBase*> m_particles;
+	DynamicArray<ParticleBase*> m_particles;
 	F32 m_timeLeftForNextEmission = 0.0;
 	Obb m_obb;
 

@@ -6,7 +6,7 @@
 #pragma once
 
 #include <anki/gr/gl/Common.h>
-#include <anki/util/DArray.h>
+#include <anki/util/DynamicArray.h>
 
 namespace anki
 {
@@ -130,7 +130,7 @@ private:
 		U8 _m_val[16];
 	};
 
-	DArray<Aligned16Type> m_transferBuffer;
+	DynamicArray<Aligned16Type> m_transferBuffer;
 
 	void initDynamicBuffer(
 		GLenum target, U32 aligment, U32 maxAllocationSize, BufferUsage usage);

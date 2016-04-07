@@ -51,7 +51,7 @@ public:
 
 	~PortalSectorBase();
 
-	ANKI_USE_RESULT Error create(
+	ANKI_USE_RESULT Error init(
 		const CString& name, const CString& modelFname);
 
 	const CollisionShape& getBoundingShape() const
@@ -61,22 +61,22 @@ public:
 
 	SectorGroup& getSectorGroup();
 
-	const DArray<Vec4>& getVertices() const
+	const DynamicArray<Vec4>& getVertices() const
 	{
 		return m_shapeStorageLSpace;
 	}
 
-	const DArray<U16>& getVertexIndices() const
+	const DynamicArray<U16>& getVertexIndices() const
 	{
 		return m_vertIndices;
 	}
 
 protected:
-	DArray<Vec4> m_shapeStorageLSpace;
-	DArray<Vec4> m_shapeStorageWSpace;
+	DynamicArray<Vec4> m_shapeStorageLSpace;
+	DynamicArray<Vec4> m_shapeStorageWSpace;
 	CollisionShape* m_shape = nullptr;
 	Aabb m_aabb;
-	DArray<U16> m_vertIndices; ///< Used in debug draw
+	DynamicArray<U16> m_vertIndices; ///< Used in debug draw
 	SpinLock m_mtx;
 
 	void updateTransform(const Transform& trf);
@@ -97,7 +97,7 @@ public:
 
 	~Portal();
 
-	ANKI_USE_RESULT Error create(
+	ANKI_USE_RESULT Error init(
 		const CString& name, const CString& modelFname);
 
 	ANKI_USE_RESULT Error frameUpdate(
@@ -130,7 +130,7 @@ public:
 
 	~Sector();
 
-	ANKI_USE_RESULT Error create(
+	ANKI_USE_RESULT Error init(
 		const CString& name, const CString& modelFname);
 
 	void tryAddPortal(Portal* portal);
@@ -174,7 +174,7 @@ public:
 	}
 
 private:
-	SArray<SceneNode*> m_visibleNodes;
+	WeakArray<SceneNode*> m_visibleNodes;
 };
 
 /// Sector group. This is supposed to represent the whole scene

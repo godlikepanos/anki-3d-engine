@@ -35,7 +35,7 @@ public:
 
 	virtual ~Camera();
 
-	ANKI_USE_RESULT Error create(const CString& name, Frustum* frustum);
+	ANKI_USE_RESULT Error init(const CString& name, Frustum* frustum);
 
 	Type getCameraType() const
 	{
@@ -62,9 +62,9 @@ public:
 
 	~PerspectiveCamera();
 
-	ANKI_USE_RESULT Error create(const CString& name)
+	ANKI_USE_RESULT Error init(const CString& name)
 	{
-		return Camera::create(name, &m_frustum);
+		return Camera::init(name, &m_frustum);
 	}
 
 	void setAll(F32 fovX, F32 fovY, F32 near, F32 far);
@@ -81,9 +81,9 @@ public:
 
 	~OrthographicCamera();
 
-	ANKI_USE_RESULT Error create(const CString& name)
+	ANKI_USE_RESULT Error init(const CString& name)
 	{
-		return Camera::create(name, &m_frustum);
+		return Camera::init(name, &m_frustum);
 	}
 
 private:

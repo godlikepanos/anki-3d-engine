@@ -76,9 +76,9 @@ Camera::Camera(SceneGraph* scene, Type type)
 }
 
 //==============================================================================
-Error Camera::create(const CString& name, Frustum* frustum)
+Error Camera::init(const CString& name, Frustum* frustum)
 {
-	ANKI_CHECK(SceneNode::create(name));
+	ANKI_CHECK(SceneNode::init(name));
 
 	SceneComponent* comp;
 

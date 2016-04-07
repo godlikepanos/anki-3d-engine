@@ -30,6 +30,7 @@ enum class FrustumComponentVisibilityTestFlag : U8
 	SHADOW_CASTERS = 1 << 3,
 	REFLECTION_PROBES = 1 << 4,
 	REFLECTION_PROXIES = 1 << 5,
+	OCCLUDERS = 1 << 6,
 
 	ALL_TESTS = RENDER_COMPONENTS | LIGHT_COMPONENTS | LENS_FLARE_COMPONENTS
 		| SHADOW_CASTERS
@@ -187,8 +188,8 @@ public:
 private:
 	enum Flags
 	{
-		SHAPE_MARKED_FOR_UPDATE = 1 << 6,
-		TRANSFORM_MARKED_FOR_UPDATE = 1 << 7,
+		SHAPE_MARKED_FOR_UPDATE = 1 << 7,
+		TRANSFORM_MARKED_FOR_UPDATE = 1 << 8,
 	};
 	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Flags, friend)
 
@@ -204,7 +205,7 @@ private:
 	VisibilityTestResults* m_visible = nullptr;
 	VisibilityStats m_stats;
 
-	BitMask<U8> m_flags;
+	BitMask<U16> m_flags;
 
 	void computeProjectionParams();
 };

@@ -25,7 +25,7 @@ StaticCollisionNode::~StaticCollisionNode()
 }
 
 //==============================================================================
-Error StaticCollisionNode::create(const CString& name,
+Error StaticCollisionNode::init(const CString& name,
 	const CString& resourceFname,
 	const Transform& transform)
 {

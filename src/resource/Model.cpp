@@ -35,7 +35,7 @@ ModelPatch::~ModelPatch()
 
 //==============================================================================
 void ModelPatch::getRenderingDataSub(const RenderingKey& key,
-	SArray<U8> subMeshIndicesArray,
+	WeakArray<U8> subMeshIndicesArray,
 	ResourceGroupPtr& resourceGroup,
 	PipelinePtr& ppline,
 	Array<U32, ANKI_GL_MAX_SUB_DRAWCALLS>& indicesCountArray,
@@ -73,7 +73,7 @@ U ModelPatch::getLodCount() const
 }
 
 //==============================================================================
-Error ModelPatch::create(SArray<CString> meshFNames,
+Error ModelPatch::create(WeakArray<CString> meshFNames,
 	const CString& mtlFName,
 	ResourceManager* manager)
 {
@@ -364,7 +364,7 @@ Error Model::load(const ResourceFilename& filename)
 		}
 
 		ANKI_CHECK(
-			mpatch->create(SArray<CString>(&meshesFnames[0], meshesCount),
+			mpatch->create(WeakArray<CString>(&meshesFnames[0], meshesCount),
 				cstr,
 				&getManager()));
 

@@ -38,7 +38,7 @@ public:
 
 	/// @param name The unique name of the node. If it's nullptr the the node
 	///             is not searchable.
-	ANKI_USE_RESULT Error create(const CString& name);
+	ANKI_USE_RESULT Error init(const CString& name);
 
 	SceneGraph& getSceneGraph()
 	{
@@ -210,7 +210,7 @@ private:
 
 	SceneGraph* m_scene = nullptr;
 
-	DArray<SceneComponent*> m_components;
+	DynamicArray<SceneComponent*> m_components;
 	U8 m_componentsCount = 0;
 
 	String m_name; ///< A unique name

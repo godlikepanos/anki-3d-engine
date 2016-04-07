@@ -22,7 +22,7 @@ public:
 
 	~BodyNode();
 
-	ANKI_USE_RESULT Error create(
+	ANKI_USE_RESULT Error init(
 		const CString& name, const CString& resourceFname);
 
 private:

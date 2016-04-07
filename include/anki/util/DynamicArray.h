@@ -19,7 +19,7 @@ namespace anki
 /// that makes it compact. At the same time that requires manual destruction.
 /// Used in permanent classes.
 template<typename T>
-class DArray : public NonCopyable
+class DynamicArray : public NonCopyable
 {
 public:
 	using Value = T;
@@ -28,27 +28,27 @@ public:
 	using Reference = Value&;
 	using ConstReference = const Value&;
 
-	DArray()
+	DynamicArray()
 		: m_data(nullptr)
 		, m_size(0)
 	{
 	}
 
 	/// Move.
-	DArray(DArray&& b)
-		: DArray()
+	DynamicArray(DynamicArray&& b)
+		: DynamicArray()
 	{
 		move(b);
 	}
 
-	~DArray()
+	~DynamicArray()
 	{
 		ANKI_ASSERT(
 			m_data == nullptr && m_size == 0 && "Requires manual destruction");
 	}
 
 	/// Move.
-	DArray& operator=(DArray&& b)
+	DynamicArray& operator=(DynamicArray&& b)
 	{
 		move(b);
 		return *this;
@@ -196,7 +196,7 @@ public:
 	void resize(TAllocator alloc, PtrSize size)
 	{
 		ANKI_ASSERT(size > 0);
-		DArray newArr;
+		DynamicArray newArr;
 		newArr.create(alloc, size);
 
 		PtrSize minSize = min<PtrSize>(size, m_size);
@@ -229,7 +229,7 @@ protected:
 	Value* m_data;
 	U32 m_size;
 
-	void move(DArray& b)
+	void move(DynamicArray& b)
 	{
 		ANKI_ASSERT(m_data == nullptr && m_size == 0
 			&& "Cannot move before destroying");
@@ -240,37 +240,37 @@ protected:
 	}
 };
 
-/// Dynamic array with automatic destruction. It's the same as DArray but it
-/// holds the allocator in order to perform automatic destruction. Use it for
+/// Dynamic array with automatic destruction. It's the same as DynamicArray but
+/// it holds the allocator in order to perform automatic destruction. Use it for
 /// temp operations and on transient classes.
 template<typename T>
-class DArrayAuto : public DArray<T>
+class DynamicArrayAuto : public DynamicArray<T>
 {
 public:
-	using Base = DArray<T>;
+	using Base = DynamicArray<T>;
 	using Value = T;
 
 	template<typename TAllocator>
-	DArrayAuto(TAllocator alloc)
+	DynamicArrayAuto(TAllocator alloc)
 		: Base()
 		, m_alloc(alloc)
 	{
 	}
 
 	/// Move.
-	DArrayAuto(DArrayAuto&& b)
-		: DArrayAuto()
+	DynamicArrayAuto(DynamicArrayAuto&& b)
+		: DynamicArrayAuto()
 	{
 		move(b);
 	}
 
-	~DArrayAuto()
+	~DynamicArrayAuto()
 	{
 		Base::destroy(m_alloc);
 	}
 
 	/// Move.
-	DArrayAuto& operator=(DArrayAuto&& b)
+	DynamicArrayAuto& operator=(DynamicArrayAuto&& b)
 	{
 		move(b);
 		return *this;
@@ -297,7 +297,7 @@ public:
 private:
 	GenericMemoryPoolAllocator<T> m_alloc;
 
-	void move(DArrayAuto& b)
+	void move(DynamicArrayAuto& b)
 	{
 		Base::move(b);
 		m_alloc = b.m_alloc;
@@ -306,75 +306,18 @@ private:
 
 /// Array with preallocated memory.
 template<typename T>
-class SArray : public DArray<T>
+class WeakArray : public DynamicArray<T>
 {
 public:
-	using Base = DArray<T>;
+	using Base = DynamicArray<T>;
 	using Value = T;
 
-	SArray()
+	WeakArray()
 		: Base()
 	{
 	}
 
-	SArray(T* mem, PtrSize size)
-		: Base()
-	{
-		if(size)
-		{
-			ANKI_ASSERT(mem);
-		}
-
-		Base::m_data = mem;
-		Base::m_size = size;
-	}
-
-	/// Move.
-	SArray(SArray&& b)
-		: SArray()
-	{
-		move(b);
-	}
-
-	~SArray()
-	{
-#if ANKI_ASSERTIONS
-		Base::m_data = nullptr;
-		Base::m_size = 0;
-#endif
-	}
-
-	/// Move.
-	SArray& operator=(SArray&& b)
-	{
-		move(b);
-		return *this;
-	}
-
-private:
-	void move(SArray& b)
-	{
-		Base::m_data = b.m_data;
-		b.m_data = nullptr;
-		Base::m_size = b.m_size;
-		b.m_size = 0;
-	}
-};
-
-/// Same as SArray but copyable.
-template<typename T>
-class WArray : public DArray<T>
-{
-public:
-	using Base = DArray<T>;
-	using Value = T;
-
-	WArray()
-		: Base()
-	{
-	}
-
-	WArray(T* mem, PtrSize size)
+	WeakArray(T* mem, PtrSize size)
 		: Base()
 	{
 		if(size)
@@ -387,22 +330,19 @@ public:
 	}
 
 	/// Copy.
-	WArray(const WArray& b)
+	WeakArray(const WeakArray& b)
 		: Base::m_data(b.m_data)
 		, Base::m_size(b.m_size)
 	{
 	}
 
 	/// Move.
-	WArray(WArray&& b)
-		: Base::m_data(b.m_data)
-		, Base::m_size(b.m_size)
+	WeakArray(WeakArray&& b)
 	{
-		b.m_data = nullptr;
-		b.m_size = 0;
+		*this = std::move(b);
 	}
 
-	~WArray()
+	~WeakArray()
 	{
 #if ANKI_ASSERTIONS
 		Base::m_data = nullptr;
@@ -411,7 +351,7 @@ public:
 	}
 
 	/// Copy.
-	WArray& operator=(const WArray& b)
+	WeakArray& operator=(const WeakArray& b)
 	{
 		Base::m_data = b.m_data;
 		Base::m_size = b.m_size;
@@ -419,7 +359,7 @@ public:
 	}
 
 	/// Move.
-	WArray& operator=(WArray&& b)
+	WeakArray& operator=(WeakArray&& b)
 	{
 		Base::m_data = b.m_data;
 		b.m_data = nullptr;

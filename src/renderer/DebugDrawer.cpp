@@ -111,7 +111,7 @@ void DebugDrawer::prepareFrame(CommandBufferPtr& jobs)
 		MAX_VERTS_PER_FRAME * sizeof(Vertex),
 		BufferAccessBit::CLIENT_MAP_WRITE);
 	m_clientVerts =
-		WArray<Vertex>(static_cast<Vertex*>(mapped), MAX_VERTS_PER_FRAME);
+		WeakArray<Vertex>(static_cast<Vertex*>(mapped), MAX_VERTS_PER_FRAME);
 
 	m_cmdb->bindResourceGroup(m_rcGroup[frame], 0, nullptr);
 

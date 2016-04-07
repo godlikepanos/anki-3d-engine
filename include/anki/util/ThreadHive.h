@@ -6,7 +6,7 @@
 #pragma once
 
 #include <anki/util/Thread.h>
-#include <anki/util/DArray.h>
+#include <anki/util/DynamicArray.h>
 #include <anki/util/Allocator.h>
 
 namespace anki
@@ -38,7 +38,7 @@ public:
 	void* m_argument ANKI_DBG_NULLIFY_PTR;
 
 	/// The tasks that this task will depend on.
-	WArray<ThreadHiveDependencyHandle> m_inDependencies;
+	WeakArray<ThreadHiveDependencyHandle> m_inDependencies;
 
 	/// Will be filled after the submission of the task. Can be used to set
 	/// dependencies to future tasks.
@@ -89,8 +89,8 @@ private:
 	Thread* m_threads = nullptr;
 	U32 m_threadCount = 0;
 
-	DArray<Task> m_storage; ///< Task storage.
-	DArray<ThreadHiveDependencyHandle> m_deps; ///< Dependencies storage.
+	DynamicArray<Task> m_storage; ///< Task storage.
+	DynamicArray<ThreadHiveDependencyHandle> m_deps; ///< Dependencies storage.
 	Task* m_head = nullptr; ///< Head of the task list.
 	Task* m_tail = nullptr; ///< Tail of the task list.
 	Bool m_quit = false;

@@ -281,9 +281,9 @@ ParticleEmitter::~ParticleEmitter()
 }
 
 //==============================================================================
-Error ParticleEmitter::create(const CString& name, const CString& filename)
+Error ParticleEmitter::init(const CString& name, const CString& filename)
 {
-	ANKI_CHECK(SceneNode::create(name));
+	ANKI_CHECK(SceneNode::init(name));
 	SceneComponent* comp;
 
 	// Load resource
@@ -306,7 +306,7 @@ Error ParticleEmitter::create(const CString& name, const CString& filename)
 	ParticleEmitterRenderComponent* rcomp =
 		getSceneAllocator().newInstance<ParticleEmitterRenderComponent>(this);
 
-	ANKI_CHECK(rcomp->create());
+	ANKI_CHECK(rcomp->init());
 	comp = rcomp;
 	addComponent(comp, true);
 

@@ -46,7 +46,7 @@
 #include <anki/util/Atomic.h>
 #include <anki/util/BitSet.h>
 #include <anki/util/BitMask.h>
-#include <anki/util/DArray.h>
+#include <anki/util/DynamicArray.h>
 #include <anki/util/Dictionary.h>
 #include <anki/util/Enum.h>
 #include <anki/util/File.h>

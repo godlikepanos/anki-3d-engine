@@ -244,7 +244,7 @@ inline Error SceneGraph::newSceneNode(
 	node = al.template newInstance<Node>(this);
 	if(node)
 	{
-		err = node->create(name, std::forward<Args>(args)...);
+		err = node->init(name, std::forward<Args>(args)...);
 	}
 	else
 	{

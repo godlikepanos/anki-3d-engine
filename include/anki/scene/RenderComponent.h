@@ -121,7 +121,7 @@ public:
 class RenderComponent : public SceneComponent
 {
 public:
-	using Variables = DArray<RenderComponentVariable*>;
+	using Variables = DynamicArray<RenderComponentVariable*>;
 
 	static Bool classof(const SceneComponent& c)
 	{
@@ -132,7 +132,7 @@ public:
 
 	~RenderComponent();
 
-	ANKI_USE_RESULT Error create();
+	ANKI_USE_RESULT Error init();
 
 	Variables::Iterator getVariablesBegin()
 	{

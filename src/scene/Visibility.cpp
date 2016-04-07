@@ -71,9 +71,9 @@ void VisibilityContext::submitNewWork(FrustumComponent& frc, ThreadHive& hive)
 
 	// Test tasks
 	U testCount = hive.getThreadCount();
-	WArray<VisibilityTestTask> tests(
+	WeakArray<VisibilityTestTask> tests(
 		alloc.newArray<VisibilityTestTask>(testCount), testCount);
-	WArray<ThreadHiveTask> testTasks(
+	WeakArray<ThreadHiveTask> testTasks(
 		alloc.newArray<ThreadHiveTask>(testCount), testCount);
 
 	for(U i = 0; i < testCount; ++i)
@@ -89,7 +89,7 @@ void VisibilityContext::submitNewWork(FrustumComponent& frc, ThreadHive& hive)
 		task.m_callback = VisibilityTestTask::callback;
 		task.m_argument = &test;
 		task.m_inDependencies =
-			WArray<ThreadHiveDependencyHandle>(&gatherTask.m_outDependency, 1);
+			WeakArray<ThreadHiveDependencyHandle>(&gatherTask.m_outDependency, 1);
 	}
 
 	hive.submitTasks(&testTasks[0], testCount);
@@ -103,7 +103,7 @@ void VisibilityContext::submitNewWork(FrustumComponent& frc, ThreadHive& hive)
 	ThreadHiveTask combineTask;
 	combineTask.m_callback = CombineResultsTask::callback;
 	combineTask.m_argument = combine;
-	combineTask.m_inDependencies = WArray<ThreadHiveDependencyHandle>(
+	combineTask.m_inDependencies = WeakArray<ThreadHiveDependencyHandle>(
 		alloc.newArray<ThreadHiveDependencyHandle>(testCount), testCount);
 	for(U i = 0; i < testCount; ++i)
 	{
@@ -389,7 +389,7 @@ void CombineResultsTask::combine()
 		timestamp = max(timestamp, m_tests[i].m_timestamp);
 	}
 
-	SArray<VisibilityTestResults*> rez(&rezArr[0], m_tests.getSize());
+	WeakArray<VisibilityTestResults*> rez(&rezArr[0], m_tests.getSize());
 
 	// Create the new combined results
 	VisibilityTestResults* visible = alloc.newInstance<VisibilityTestResults>();
@@ -448,7 +448,7 @@ void VisibilityTestResults::moveBack(
 
 //==============================================================================
 void VisibilityTestResults::combineWith(
-	SceneFrameAllocator<U8> alloc, SArray<VisibilityTestResults*>& results)
+	SceneFrameAllocator<U8> alloc, WeakArray<VisibilityTestResults*>& results)
 {
 	ANKI_ASSERT(results.getSize() > 0);
 

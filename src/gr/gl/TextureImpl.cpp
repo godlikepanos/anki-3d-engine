@@ -202,11 +202,11 @@ class DeleteTextureCommand final : public GlCommand
 {
 public:
 	GLuint m_tex;
-	DArray<GLuint> m_views;
+	DynamicArray<GLuint> m_views;
 	GrAllocator<U8> m_alloc;
 
 	DeleteTextureCommand(
-		GLuint tex, DArray<GLuint>& views, GrAllocator<U8> alloc)
+		GLuint tex, DynamicArray<GLuint>& views, GrAllocator<U8> alloc)
 		: m_tex(tex)
 		, m_views(std::move(views))
 		, m_alloc(alloc)

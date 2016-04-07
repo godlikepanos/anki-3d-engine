@@ -47,7 +47,7 @@ Font::~Font()
 Error Font::init(const CString& filename, U32 fontHeight)
 {
 	// Load font
-	DArrayAuto<U8> fontData(getAllocator());
+	DynamicArrayAuto<U8> fontData(getAllocator());
 	ANKI_CHECK(m_interface->readFile(filename, fontData));
 
 	// Create impl
@@ -96,7 +96,7 @@ Error Font::init(const CString& filename, U32 fontHeight)
 	}
 
 	// Allocate bitmap for rasterization
-	DArrayAuto<U8> bitmap(getAllocator());
+	DynamicArrayAuto<U8> bitmap(getAllocator());
 	bitmap.create(imgSize.x() * imgSize.y());
 	memset(&bitmap[0], 0, bitmap.getSize());
 
@@ -114,7 +114,7 @@ Error Font::init(const CString& filename, U32 fontHeight)
 
 			const U w = ft.m_face->glyph->bitmap.width;
 			const U h = ft.m_face->glyph->bitmap.rows;
-			SArray<U8> srcBitmap(ft.m_face->glyph->bitmap.buffer, w * h);
+			WeakArray<U8> srcBitmap(ft.m_face->glyph->bitmap.buffer, w * h);
 
 			// Copy
 			for(U y = 0; y < h; ++y)
@@ -143,7 +143,7 @@ Error Font::init(const CString& filename, U32 fontHeight)
 
 	// Create image
 	ANKI_CHECK(m_interface->createR8Image(
-		SArray<U8>(&bitmap[0], bitmap.getSize()), imgSize, m_img));
+		WeakArray<U8>(&bitmap[0], bitmap.getSize()), imgSize, m_img));
 
 	return ErrorCode::NONE;
 }

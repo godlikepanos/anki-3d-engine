@@ -83,7 +83,7 @@ RenderComponent::~RenderComponent()
 }
 
 //==============================================================================
-Error RenderComponent::create()
+Error RenderComponent::init()
 {
 	const Material& mtl = getMaterial();
 	auto alloc = m_node->getSceneAllocator();

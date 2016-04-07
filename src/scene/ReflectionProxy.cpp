@@ -46,9 +46,9 @@ public:
 //==============================================================================
 
 //==============================================================================
-Error ReflectionProxy::create(const CString& name, const CString& proxyMesh)
+Error ReflectionProxy::init(const CString& name, const CString& proxyMesh)
 {
-	ANKI_CHECK(SceneNode::create(name));
+	ANKI_CHECK(SceneNode::init(name));
 
 	// Move component first
 	SceneComponent* comp = getSceneAllocator().newInstance<MoveComponent>(this);
@@ -77,7 +77,7 @@ Error ReflectionProxy::create(const CString& name, const CString& proxyMesh)
 
 	const U8* buff = loader.getVertexData();
 	const U8* buffEnd = loader.getVertexData() + loader.getVertexDataSize();
-	SArray<const U16> indices(
+	WeakArray<const U16> indices(
 		reinterpret_cast<const U16*>(loader.getIndexData()), indexCount);
 	for(U i = 0; i < quadCount; ++i)
 	{

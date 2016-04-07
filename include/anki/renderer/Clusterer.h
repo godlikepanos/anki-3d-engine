@@ -36,12 +36,12 @@ public:
 		m_clusterIds.destroy(m_alloc);
 	}
 
-	DArray<Array<U8, 3>>::ConstIterator getClustersBegin() const
+	DynamicArray<Array<U8, 3>>::ConstIterator getClustersBegin() const
 	{
 		return m_clusterIds.getBegin();
 	}
 
-	DArray<Array<U8, 3>>::ConstIterator getClustersEnd() const
+	DynamicArray<Array<U8, 3>>::ConstIterator getClustersEnd() const
 	{
 		return m_clusterIds.getBegin() + m_count;
 	}
@@ -52,7 +52,7 @@ public:
 	}
 
 private:
-	DArray<Array<U8, 3>> m_clusterIds;
+	DynamicArray<Array<U8, 3>> m_clusterIds;
 	U32 m_count = 0;
 	GenericMemoryPoolAllocator<U8> m_alloc;
 
@@ -126,11 +126,11 @@ private:
 	Array<U8, 3> m_counts;
 
 	/// Tile planes.
-	DArray<Plane> m_allPlanes; ///< Do one allocation.
-	SArray<Plane> m_planesY; ///< Local space.
-	SArray<Plane> m_planesX; ///< Local space.
-	SArray<Plane> m_planesYW;
-	SArray<Plane> m_planesXW;
+	DynamicArray<Plane> m_allPlanes; ///< Do one allocation.
+	WeakArray<Plane> m_planesY; ///< Local space.
+	WeakArray<Plane> m_planesX; ///< Local space.
+	WeakArray<Plane> m_planesYW;
+	WeakArray<Plane> m_planesXW;
 	Plane* m_nearPlane; ///< In world space
 	Plane* m_farPlane; ///< In world space
 

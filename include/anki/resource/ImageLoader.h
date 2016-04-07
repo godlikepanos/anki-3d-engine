@@ -54,7 +54,7 @@ public:
 		U32 m_width;
 		U32 m_height;
 		U32 m_mipLevel;
-		DArray<U8> m_data;
+		DynamicArray<U8> m_data;
 	};
 
 	ImageLoader(GenericMemoryPoolAllocator<U8> alloc)
@@ -118,7 +118,7 @@ private:
 	GenericMemoryPoolAllocator<U8> m_alloc;
 	Atomic<I32> m_refcount = {0};
 	/// [mip][depthFace]
-	DArray<Surface> m_surfaces;
+	DynamicArray<Surface> m_surfaces;
 	U8 m_mipLevels = 0;
 	U8 m_depth = 0;
 	DataCompression m_compression = DataCompression::NONE;

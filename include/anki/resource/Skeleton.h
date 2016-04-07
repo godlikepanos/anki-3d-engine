@@ -78,13 +78,13 @@ public:
 	/// Load file
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename);
 
-	const DArray<Bone>& getBones() const
+	const DynamicArray<Bone>& getBones() const
 	{
 		return m_bones;
 	}
 
 private:
-	DArray<Bone> m_bones;
+	DynamicArray<Bone> m_bones;
 };
 /// @}
 

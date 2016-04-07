@@ -26,7 +26,7 @@ public:
 
 	~StaticGeometryPatchNode();
 
-	ANKI_USE_RESULT Error create(
+	ANKI_USE_RESULT Error init(
 		const CString& name, const ModelPatch* modelPatch);
 
 private:
@@ -43,7 +43,7 @@ public:
 
 	~StaticGeometryNode();
 
-	ANKI_USE_RESULT Error create(const CString& name, const CString& filename);
+	ANKI_USE_RESULT Error init(const CString& name, const CString& filename);
 
 private:
 	ModelResourcePtr m_model;

@@ -261,7 +261,7 @@ void Lf::run(RenderingContext& ctx)
 					spritesCount * sizeof(Sprite),
 					BufferUsage::UNIFORM,
 					token));
-			SArray<Sprite> sprites(tmpSprites, spritesCount);
+			WeakArray<Sprite> sprites(tmpSprites, spritesCount);
 
 			// misc
 			Vec2 posNdc = posClip.xy() / posClip.w();

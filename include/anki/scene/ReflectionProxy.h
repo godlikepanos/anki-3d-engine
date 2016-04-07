@@ -33,10 +33,10 @@ public:
 
 	/// Create the proxy. The points form a quad and they should be in local
 	/// space.
-	ANKI_USE_RESULT Error create(const CString& name, const CString& proxyMesh);
+	ANKI_USE_RESULT Error init(const CString& name, const CString& proxyMesh);
 
 private:
-	DArray<Array<Vec4, 4>> m_quadsLSpace; ///< Quads in local space.
+	DynamicArray<Array<Vec4, 4>> m_quadsLSpace; ///< Quads in local space.
 	Obb m_boxLSpace;
 	Obb m_boxWSpace;
 

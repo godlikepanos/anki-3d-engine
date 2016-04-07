@@ -66,7 +66,7 @@ private:
 	WeakPtr<GrManager> m_manager;
 
 	static const U QUEUE_SIZE = 1024 * 2;
-	DArray<CommandBufferPtr> m_queue; ///< Command queue
+	DynamicArray<CommandBufferPtr> m_queue; ///< Command queue
 	U64 m_tail; ///< Tail of queue
 	U64 m_head; ///< Head of queue. Points to the end
 	U8 m_renderingThreadSignal; ///< Signal to the thread

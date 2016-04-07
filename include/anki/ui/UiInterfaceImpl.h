@@ -46,19 +46,19 @@ public:
 	ANKI_USE_RESULT Error loadImage(
 		const CString& filename, IntrusivePtr<UiImage>& img) override;
 
-	ANKI_USE_RESULT Error createR8Image(const SArray<U8>& data,
+	ANKI_USE_RESULT Error createR8Image(const WeakArray<U8>& data,
 		const UVec2& size,
 		IntrusivePtr<UiImage>& img) override;
 
 	ANKI_USE_RESULT Error readFile(
-		const CString& filename, DArrayAuto<U8>& data) override;
+		const CString& filename, DynamicArrayAuto<U8>& data) override;
 
 	void drawImage(UiImagePtr image,
 		const Rect& uvs,
 		const Rect& drawingRect,
 		const UVec2& canvasSize) override;
 
-	void drawLines(const SArray<UVec2>& positions,
+	void drawLines(const WeakArray<UVec2>& positions,
 		const Color& color,
 		const UVec2& canvasSize) override;
 

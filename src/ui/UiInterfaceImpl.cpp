@@ -137,7 +137,7 @@ void UiInterfaceImpl::endRendering()
 
 //==============================================================================
 void UiInterfaceImpl::drawLines(
-	const SArray<UVec2>& positions, const Color& color, const UVec2& canvasSize)
+	const WeakArray<UVec2>& positions, const Color& color, const UVec2& canvasSize)
 {
 	StageId stageId = StageId::LINES;
 
@@ -192,7 +192,7 @@ Error UiInterfaceImpl::loadImage(
 
 //==============================================================================
 Error UiInterfaceImpl::createR8Image(
-	const SArray<U8>& data, const UVec2& size, IntrusivePtr<UiImage>& img)
+	const WeakArray<U8>& data, const UVec2& size, IntrusivePtr<UiImage>& img)
 {
 	ANKI_ASSERT(data.getSize() == size.x() * size.y());
 
@@ -238,7 +238,8 @@ Error UiInterfaceImpl::createR8Image(
 }
 
 //==============================================================================
-Error UiInterfaceImpl::readFile(const CString& filename, DArrayAuto<U8>& data)
+Error UiInterfaceImpl::readFile(
+	const CString& filename, DynamicArrayAuto<U8>& data)
 {
 	GenericResourcePtr rsrc;
 	ANKI_CHECK(m_rc->loadResource(filename, rsrc));

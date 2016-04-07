@@ -95,7 +95,7 @@ private:
 	Array<BufferPtr, MAX_FRAMES_IN_FLIGHT> m_vertBuff;
 
 	CommandBufferPtr m_cmdb;
-	WArray<Vertex> m_clientVerts;
+	WeakArray<Vertex> m_clientVerts;
 
 	Mat4 m_mMat;
 	Mat4 m_vpMat;
@@ -105,7 +105,7 @@ private:
 	U32 m_frameVertCount = 0;
 	U32 m_crntDrawVertCount = 0;
 
-	DArray<Vec3> m_sphereVerts;
+	DynamicArray<Vec3> m_sphereVerts;
 
 	Bool8 m_depthTestEnabled = true;
 

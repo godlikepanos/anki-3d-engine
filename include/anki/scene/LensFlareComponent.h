@@ -23,7 +23,7 @@ public:
 
 	~LensFlareComponent();
 
-	ANKI_USE_RESULT Error create(const CString& textureFilename);
+	ANKI_USE_RESULT Error init(const CString& textureFilename);
 
 	void setWorldPosition(const Vec4& worldPosition)
 	{

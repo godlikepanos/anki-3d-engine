@@ -58,7 +58,7 @@ BodyNode::~BodyNode()
 }
 
 //==============================================================================
-Error BodyNode::create(const CString& name, const CString& resourceFname)
+Error BodyNode::init(const CString& name, const CString& resourceFname)
 {
 	SceneComponent* comp;
 

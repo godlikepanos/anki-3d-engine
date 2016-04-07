@@ -25,7 +25,7 @@ static ANKI_USE_RESULT Error loadUncompressedTga(ResourceFilePtr fs,
 	U32& width,
 	U32& height,
 	U32& bpp,
-	DArray<U8>& data,
+	DynamicArray<U8>& data,
 	GenericMemoryPoolAllocator<U8>& alloc)
 {
 	Array<U8, 6> header6;
@@ -66,7 +66,7 @@ static ANKI_USE_RESULT Error loadCompressedTga(ResourceFilePtr fs,
 	U32& width,
 	U32& height,
 	U32& bpp,
-	DArray<U8>& data,
+	DynamicArray<U8>& data,
 	GenericMemoryPoolAllocator<U8>& alloc)
 {
 	Array<U8, 6> header6;
@@ -160,7 +160,7 @@ static ANKI_USE_RESULT Error loadTga(ResourceFilePtr fs,
 	U32& width,
 	U32& height,
 	U32& bpp,
-	DArray<U8>& data,
+	DynamicArray<U8>& data,
 	GenericMemoryPoolAllocator<U8>& alloc)
 {
 	char myTgaHeader[12];
@@ -293,7 +293,7 @@ static PtrSize calcSizeOfSegment(
 static ANKI_USE_RESULT Error loadAnkiTexture(ResourceFilePtr file,
 	U32 maxTextureSize,
 	ImageLoader::DataCompression& preferredCompression,
-	DArray<ImageLoader::Surface>& surfaces,
+	DynamicArray<ImageLoader::Surface>& surfaces,
 	GenericMemoryPoolAllocator<U8>& alloc,
 	U8& depth,
 	U8& mipLevels,

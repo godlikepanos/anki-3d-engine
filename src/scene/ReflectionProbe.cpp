@@ -57,11 +57,11 @@ ReflectionProbe::~ReflectionProbe()
 }
 
 //==============================================================================
-Error ReflectionProbe::create(const CString& name, F32 radius)
+Error ReflectionProbe::init(const CString& name, F32 radius)
 {
 	SceneComponent* comp;
 
-	ANKI_CHECK(SceneNode::create(name));
+	ANKI_CHECK(SceneNode::init(name));
 
 	// Move component first
 	comp = getSceneAllocator().newInstance<MoveComponent>(this);

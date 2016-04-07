@@ -84,8 +84,8 @@ private:
 		Array<FramebufferPtr, 6> m_fb;
 	};
 
-	DArray<ShadowmapSpot> m_spots;
-	DArray<ShadowmapOmni> m_omnis;
+	DynamicArray<ShadowmapSpot> m_spots;
+	DynamicArray<ShadowmapOmni> m_omnis;
 
 	/// Enable Poisson for all the levels
 	Bool8 m_poissonEnabled = false;

@@ -63,7 +63,7 @@ public:
 		return m_meshes[0]->getSubMeshesCount();
 	}
 
-	ANKI_USE_RESULT Error create(SArray<CString> meshFNames,
+	ANKI_USE_RESULT Error create(WeakArray<CString> meshFNames,
 		const CString& mtlFName,
 		ResourceManager* resources);
 
@@ -71,7 +71,7 @@ public:
 	/// Given an array of submeshes that are visible return the correct indices
 	/// offsets and counts.
 	void getRenderingDataSub(const RenderingKey& key,
-		SArray<U8> subMeshIndicesArray,
+		WeakArray<U8> subMeshIndicesArray,
 		ResourceGroupPtr& resourceGroup,
 		PipelinePtr& ppline,
 		Array<U32, ANKI_GL_MAX_SUB_DRAWCALLS>& indicesCountArray,
@@ -139,7 +139,7 @@ public:
 
 	~Model();
 
-	const DArray<ModelPatch*>& getModelPatches() const
+	const DynamicArray<ModelPatch*>& getModelPatches() const
 	{
 		return m_modelPatches;
 	}
@@ -152,10 +152,10 @@ public:
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename);
 
 private:
-	DArray<ModelPatch*> m_modelPatches;
+	DynamicArray<ModelPatch*> m_modelPatches;
 	Obb m_visibilityShape;
 	SkeletonResourcePtr m_skeleton;
-	DArray<AnimationResourcePtr> m_animations;
+	DynamicArray<AnimationResourcePtr> m_animations;
 };
 /// @}
 

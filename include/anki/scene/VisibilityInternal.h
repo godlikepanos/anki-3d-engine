@@ -116,7 +116,7 @@ class CombineResultsTask
 public:
 	WeakPtr<VisibilityContext> m_visCtx;
 	WeakPtr<FrustumComponent> m_frc;
-	WArray<VisibilityTestTask> m_tests;
+	WeakArray<VisibilityTestTask> m_tests;
 
 	/// Thread hive task.
 	static void callback(void* ud, U32 threadId, ThreadHive& hive)

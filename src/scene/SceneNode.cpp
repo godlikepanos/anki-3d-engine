@@ -38,7 +38,7 @@ SceneNode::~SceneNode()
 }
 
 //==============================================================================
-Error SceneNode::create(const CString& name)
+Error SceneNode::init(const CString& name)
 {
 	m_name.create(getSceneAllocator(), name);
 	return ErrorCode::NONE;

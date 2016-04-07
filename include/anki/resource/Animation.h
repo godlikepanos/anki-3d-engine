@@ -48,10 +48,10 @@ public:
 
 	I32 m_boneIndex = -1; ///< For skeletal animations
 
-	DArray<Key<Vec3>> m_positions;
-	DArray<Key<Quat>> m_rotations;
-	DArray<Key<F32>> m_scales;
-	DArray<Key<F32>> m_cameraFovs;
+	DynamicArray<Key<Vec3>> m_positions;
+	DynamicArray<Key<Quat>> m_rotations;
+	DynamicArray<Key<F32>> m_scales;
+	DynamicArray<Key<F32>> m_cameraFovs;
 
 	void destroy(ResourceAllocator<U8> alloc)
 	{
@@ -74,7 +74,7 @@ public:
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename);
 
 	/// Get a vector of all animation channels
-	const DArray<AnimationChannel>& getChannels() const
+	const DynamicArray<AnimationChannel>& getChannels() const
 	{
 		return m_channels;
 	}
@@ -105,7 +105,7 @@ public:
 		F32& scale) const;
 
 private:
-	DArray<AnimationChannel> m_channels;
+	DynamicArray<AnimationChannel> m_channels;
 	F32 m_duration;
 	F32 m_startTime;
 	Bool8 m_repeat;

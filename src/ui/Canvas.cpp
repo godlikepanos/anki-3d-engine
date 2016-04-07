@@ -59,7 +59,7 @@ void Canvas::paint()
 			positions[c++] = lb;
 
 			m_interface->drawLines(
-				SArray<UVec2>(&positions[0], positions.getSize()),
+				WeakArray<UVec2>(&positions[0], positions.getSize()),
 				Vec4(1.0, 0.0, 0.0, 1.0),
 				m_size);
 		}

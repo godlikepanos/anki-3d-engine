@@ -158,14 +158,14 @@ public:
 
 private:
 	template<typename T>
-	using MDArray = DArray<T>;
+	using MDynamicArray = DynamicArray<T>;
 
 	ResourceManager* m_manager;
 	Header m_header;
 
-	MDArray<U8> m_verts;
-	MDArray<U8> m_indices;
-	MDArray<SubMesh> m_subMeshes;
+	MDynamicArray<U8> m_verts;
+	MDynamicArray<U8> m_indices;
+	MDynamicArray<SubMesh> m_subMeshes;
 	U8 m_vertSize = 0;
 
 	Bool isLoaded() const

@@ -23,7 +23,7 @@ LensFlareComponent::~LensFlareComponent()
 }
 
 //==============================================================================
-Error LensFlareComponent::create(const CString& textureFilename)
+Error LensFlareComponent::init(const CString& textureFilename)
 {
 	// Texture
 	ANKI_CHECK(getSceneGraph()._getResourceManager().loadResource(

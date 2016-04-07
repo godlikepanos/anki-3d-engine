@@ -25,7 +25,7 @@ public:
 
 	~PlayerNode();
 
-	ANKI_USE_RESULT Error create(const CString& name, const Vec4& position);
+	ANKI_USE_RESULT Error init(const CString& name, const Vec4& position);
 
 private:
 	PhysicsPlayerControllerPtr m_player;

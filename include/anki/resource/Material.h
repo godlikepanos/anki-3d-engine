@@ -194,8 +194,8 @@ private:
 	/// All shaders except compute and geometry.
 	Array<ShaderResourcePtr, 5> m_shaders;
 	U32 m_shaderBlockSize = 0;
-	DArray<ShaderVariableBlockInfo> m_blockInfo;
-	DArray<Bool8> m_varActive;
+	DynamicArray<ShaderVariableBlockInfo> m_blockInfo;
+	DynamicArray<Bool8> m_varActive;
 
 	ANKI_USE_RESULT Error init(
 		const RenderingKey& key, Material& mtl, MaterialLoader& loader);
@@ -314,7 +314,7 @@ public:
 
 	const MaterialVariant& getVariant(const RenderingKey& key) const;
 
-	const DArray<MaterialVariable*>& getVariables() const
+	const DynamicArray<MaterialVariable*>& getVariables() const
 	{
 		return m_vars;
 	}
@@ -333,14 +333,14 @@ private:
 	U8 m_lodCount = 1;
 	Bool8 m_instanced = false;
 
-	DArray<MaterialVariant> m_variants;
+	DynamicArray<MaterialVariant> m_variants;
 
 	/// This is a matrix of variants. It holds indices to m_variants. If the
 	/// idx is MAX_U16 then the variant is not present
 	Array4d<U16, U(Pass::COUNT), MAX_LODS, 2, MAX_INSTANCE_GROUPS>
 		m_variantMatrix;
 
-	DArray<MaterialVariable*> m_vars;
+	DynamicArray<MaterialVariable*> m_vars;
 
 	/// Populate the m_varNames.
 	ANKI_USE_RESULT Error createVars(const MaterialLoader& loader);

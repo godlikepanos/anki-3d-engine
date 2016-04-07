@@ -78,7 +78,7 @@ private:
 	U16 m_cubemapArrMipCount = 0;
 	U16 m_cubemapArrSize = 0;
 	U16 m_fbSize = 0;
-	DArray<CacheEntry> m_cacheEntries;
+	DynamicArray<CacheEntry> m_cacheEntries;
 
 	// Irradiance
 	TexturePtr m_irradianceCubemapArr;

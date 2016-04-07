@@ -7,7 +7,7 @@
 
 #include <anki/gr/gl/GlObject.h>
 #include <anki/gr/ResourceGroup.h>
-#include <anki/util/DArray.h>
+#include <anki/util/DynamicArray.h>
 
 namespace anki
 {
@@ -67,7 +67,7 @@ private:
 
 	/// Holds the references to the resources. Used to release the references
 	/// gracefully
-	DArray<GrObjectPtr<GrObject>> m_refs;
+	DynamicArray<GrObjectPtr<GrObject>> m_refs;
 
 	template<typename InBindings, typename OutBindings>
 	void initBuffers(const InBindings& in,

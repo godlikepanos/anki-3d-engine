@@ -112,7 +112,7 @@ void String::appendInternal(Allocator alloc, const Char* str, PtrSize strSize)
 		size = 1;
 	}
 
-	DArray<Char> newData;
+	DynamicArray<Char> newData;
 	newData.create(alloc, size + strSize - 1);
 
 	if(!m_data.isEmpty())

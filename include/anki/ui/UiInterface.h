@@ -38,13 +38,13 @@ public:
 
 	/// Create a 8bit image. Used for fonts.
 	virtual ANKI_USE_RESULT Error createR8Image(
-		const SArray<U8>& data, const UVec2& size, UiImagePtr& img) = 0;
+		const WeakArray<U8>& data, const UVec2& size, UiImagePtr& img) = 0;
 	/// @}
 
 	/// @name Misc methods.
 	/// @{
 	virtual ANKI_USE_RESULT Error readFile(
-		const CString& filename, DArrayAuto<U8>& data) = 0;
+		const CString& filename, DynamicArrayAuto<U8>& data) = 0;
 	/// @}
 
 	/// @name Painting related methods.
@@ -54,7 +54,7 @@ public:
 		const Rect& drawingRect,
 		const UVec2& canvasSize) = 0;
 
-	virtual void drawLines(const SArray<UVec2>& lines,
+	virtual void drawLines(const WeakArray<UVec2>& lines,
 		const Color& color,
 		const UVec2& canvasSize) = 0;
 	/// @}

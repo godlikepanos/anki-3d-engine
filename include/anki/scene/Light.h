@@ -27,7 +27,7 @@ public:
 
 	~Light();
 
-	ANKI_USE_RESULT Error create(const CString& name,
+	ANKI_USE_RESULT Error init(const CString& name,
 		LightComponent::LightType type,
 		CollisionShape* shape);
 
@@ -58,7 +58,7 @@ public:
 	PointLight(SceneGraph* scene);
 	~PointLight();
 
-	ANKI_USE_RESULT Error create(const CString& name);
+	ANKI_USE_RESULT Error init(const CString& name);
 
 	ANKI_USE_RESULT Error frameUpdate(
 		F32 prevUpdateTime, F32 crntTime) override;
@@ -72,7 +72,7 @@ public:
 	};
 
 	Sphere m_sphereW = Sphere(Vec4(0.0), 1.0);
-	DArray<ShadowCombo> m_shadowData;
+	DynamicArray<ShadowCombo> m_shadowData;
 
 	void onMoveUpdate(MoveComponent& move) override;
 	void onShapeUpdate(LightComponent& light) override;
@@ -84,7 +84,7 @@ class SpotLight : public Light
 public:
 	SpotLight(SceneGraph* scene);
 
-	ANKI_USE_RESULT Error create(const CString& name);
+	ANKI_USE_RESULT Error init(const CString& name);
 
 	ANKI_USE_RESULT Error frameUpdate(
 		F32 prevUpdateTime, F32 crntTime) override;

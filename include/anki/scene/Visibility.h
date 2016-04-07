@@ -134,10 +134,10 @@ public:
 	}
 
 	void combineWith(
-		SceneFrameAllocator<U8> alloc, SArray<VisibilityTestResults*>& results);
+		SceneFrameAllocator<U8> alloc, WeakArray<VisibilityTestResults*>& results);
 
 private:
-	using Container = DArray<VisibleNode>;
+	using Container = DynamicArray<VisibleNode>;
 
 	class Group
 	{

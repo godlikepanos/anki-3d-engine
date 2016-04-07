@@ -64,10 +64,10 @@ Light::~Light()
 }
 
 //==============================================================================
-Error Light::create(
+Error Light::init(
 	const CString& name, LightComponent::LightType type, CollisionShape* shape)
 {
-	ANKI_CHECK(SceneNode::create(name));
+	ANKI_CHECK(SceneNode::init(name));
 
 	SceneComponent* comp;
 
@@ -156,7 +156,7 @@ Error Light::loadLensFlare(const CString& filename)
 	LensFlareComponent* flareComp =
 		getSceneAllocator().newInstance<LensFlareComponent>(this);
 
-	Error err = flareComp->create(filename);
+	Error err = flareComp->init(filename);
 	if(err)
 	{
 		getSceneAllocator().deleteInstance(flareComp);
@@ -185,9 +185,9 @@ PointLight::~PointLight()
 }
 
 //==============================================================================
-Error PointLight::create(const CString& name)
+Error PointLight::init(const CString& name)
 {
-	return Light::create(name, LightComponent::LightType::POINT, &m_sphereW);
+	return Light::init(name, LightComponent::LightType::POINT, &m_sphereW);
 }
 
 //==============================================================================
@@ -289,10 +289,10 @@ SpotLight::SpotLight(SceneGraph* scene)
 }
 
 //==============================================================================
-Error SpotLight::create(const CString& name)
+Error SpotLight::init(const CString& name)
 {
 	ANKI_CHECK(
-		Light::create(name, LightComponent::LightType::SPOT, &m_frustum));
+		Light::init(name, LightComponent::LightType::SPOT, &m_frustum));
 
 	FrustumComponent* fr =
 		getSceneAllocator().newInstance<FrustumComponent>(this, &m_frustum);

@@ -106,7 +106,7 @@ ANKI_TEST(Util, ThreadHive)
 			dtasks[i].m_callback = taskToWait;
 			dtasks[i].m_argument = &ctx;
 			dtasks[i].m_inDependencies =
-				WArray<ThreadHiveDependencyHandle>(&task.m_outDependency, 1);
+				WeakArray<ThreadHiveDependencyHandle>(&task.m_outDependency, 1);
 		}
 
 		hive.submitTasks(&dtasks[0], DEP_TASKS);
@@ -117,7 +117,7 @@ ANKI_TEST(Util, ThreadHive)
 		{
 			dtasks2[i].m_callback = taskToWait;
 			dtasks2[i].m_argument = &ctx;
-			dtasks2[i].m_inDependencies = WArray<ThreadHiveDependencyHandle>(
+			dtasks2[i].m_inDependencies = WeakArray<ThreadHiveDependencyHandle>(
 				&dtasks[i].m_outDependency, 1);
 		}
 
@@ -154,7 +154,7 @@ ANKI_TEST(Util, ThreadHive)
 				if((rand() % 3) == 0 && j > 0)
 				{
 					task.m_inDependencies =
-						WArray<ThreadHiveDependencyHandle>(&dep, 1);
+						WeakArray<ThreadHiveDependencyHandle>(&dep, 1);
 				}
 
 				hive.submitTasks(&task, 1);

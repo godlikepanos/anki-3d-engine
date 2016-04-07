@@ -58,7 +58,7 @@ public: // XXX
 	Array<Plane, 6> m_planesW; ///< In world space.
 	U32 m_width;
 	U32 m_height;
-	DArray<Atomic<U32>> m_zbuffer;
+	DynamicArray<Atomic<U32>> m_zbuffer;
 
 	/// @param tri In clip space.
 	void rasterizeTriangle(const Vec4* tri);

@@ -48,13 +48,13 @@ StaticGeometryPatchNode::~StaticGeometryPatchNode()
 }
 
 //==============================================================================
-Error StaticGeometryPatchNode::create(
+Error StaticGeometryPatchNode::init(
 	const CString& name, const ModelPatch* modelPatch)
 {
 	ANKI_ASSERT(modelPatch);
 
 	m_modelPatch = modelPatch;
-	ANKI_CHECK(SceneNode::create(name));
+	ANKI_CHECK(SceneNode::init(name));
 
 	// Create spatial components
 	for(U i = 1; i < m_modelPatch->getSubMeshesCount(); i++)
@@ -88,7 +88,7 @@ Error StaticGeometryPatchNode::buildRendering(RenderingBuildInfo& data) const
 	PipelinePtr ppline;
 
 	m_modelPatch->getRenderingDataSub(data.m_key,
-		SArray<U8>(const_cast<U8*>(data.m_subMeshIndicesArray),
+		WeakArray<U8>(const_cast<U8*>(data.m_subMeshIndicesArray),
 										  data.m_subMeshIndicesCount),
 		grResources,
 		ppline,
@@ -135,9 +135,9 @@ StaticGeometryNode::~StaticGeometryNode()
 }
 
 //==============================================================================
-Error StaticGeometryNode::create(const CString& name, const CString& filename)
+Error StaticGeometryNode::init(const CString& name, const CString& filename)
 {
-	ANKI_CHECK(SceneNode::create(name));
+	ANKI_CHECK(SceneNode::init(name));
 
 	ANKI_CHECK(getResourceManager().loadResource(filename, m_model));
 

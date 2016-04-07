@@ -72,7 +72,7 @@ Error MaterialVariableTemplate<T>::init(
 		ANKI_ASSERT(m_builtin == BuiltinMaterialVariableId::NONE);
 
 		// Has values
-		DArrayAuto<F32> floats(mtl.getTempAllocator());
+		DynamicArrayAuto<F32> floats(mtl.getTempAllocator());
 
 		U floatsNeeded = sizeof(T) / sizeof(F32);
 

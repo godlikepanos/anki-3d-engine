@@ -98,7 +98,7 @@ protected:
 		Obb m_obb;
 	};
 
-	DArray<SubMesh> m_subMeshes;
+	DynamicArray<SubMesh> m_subMeshes;
 	U32 m_indicesCount;
 	U32 m_vertsCount;
 	Obb m_obb;

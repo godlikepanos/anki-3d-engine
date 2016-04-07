@@ -275,27 +275,27 @@ public:
 	}
 
 	// To fill the light buffers
-	SArray<ShaderPointLight> m_pointLights;
-	SArray<ShaderSpotLight> m_spotLights;
-	SArray<ShaderProbe> m_probes;
+	WeakArray<ShaderPointLight> m_pointLights;
+	WeakArray<ShaderSpotLight> m_spotLights;
+	WeakArray<ShaderProbe> m_probes;
 
-	SArray<U32> m_lightIds;
-	SArray<ShaderCluster> m_clusters;
+	WeakArray<U32> m_lightIds;
+	WeakArray<ShaderCluster> m_clusters;
 
 	Atomic<U32> m_pointLightsCount = {0};
 	Atomic<U32> m_spotLightsCount = {0};
 	Atomic<U32> m_probeCount = {0};
 
 	// To fill the tile buffers
-	DArrayAuto<ClusterData> m_tempClusters;
+	DynamicArrayAuto<ClusterData> m_tempClusters;
 
 	// To fill the light index buffer
 	Atomic<U32> m_lightIdsCount = {0};
 
 	// Misc
-	SArray<VisibleNode> m_vPointLights;
-	SArray<VisibleNode> m_vSpotLights;
-	SArray<VisibleNode> m_vProbes;
+	WeakArray<VisibleNode> m_vPointLights;
+	WeakArray<VisibleNode> m_vSpotLights;
+	WeakArray<VisibleNode> m_vProbes;
 
 	Atomic<U32> m_count = {0};
 	Atomic<U32> m_count2 = {0};
@@ -512,10 +512,10 @@ Error Is::populateBuffers(RenderingContext& ctx)
 				m_pLightsToken));
 
 		taskData.m_pointLights =
-			SArray<ShaderPointLight>(data, visiblePointLightsCount);
+			WeakArray<ShaderPointLight>(data, visiblePointLightsCount);
 
 		taskData.m_vPointLights =
-			SArray<VisibleNode>(vi.getBegin(VisibilityGroupType::LIGHTS_POINT),
+			WeakArray<VisibleNode>(vi.getBegin(VisibilityGroupType::LIGHTS_POINT),
 				visiblePointLightsCount);
 	}
 	else
@@ -532,10 +532,10 @@ Error Is::populateBuffers(RenderingContext& ctx)
 				m_sLightsToken));
 
 		taskData.m_spotLights =
-			SArray<ShaderSpotLight>(data, visibleSpotLightsCount);
+			WeakArray<ShaderSpotLight>(data, visibleSpotLightsCount);
 
 		taskData.m_vSpotLights =
-			SArray<VisibleNode>(vi.getBegin(VisibilityGroupType::LIGHTS_SPOT),
+			WeakArray<VisibleNode>(vi.getBegin(VisibilityGroupType::LIGHTS_SPOT),
 				visibleSpotLightsCount);
 	}
 	else
@@ -551,9 +551,9 @@ Error Is::populateBuffers(RenderingContext& ctx)
 				BufferUsage::UNIFORM,
 				m_probesToken));
 
-		taskData.m_probes = SArray<ShaderProbe>(data, visibleProbeCount);
+		taskData.m_probes = WeakArray<ShaderProbe>(data, visibleProbeCount);
 
-		taskData.m_vProbes = SArray<VisibleNode>(
+		taskData.m_vProbes = WeakArray<VisibleNode>(
 			vi.getBegin(VisibilityGroupType::REFLECTION_PROBES),
 			visibleProbeCount);
 	}
@@ -571,7 +571,7 @@ Error Is::populateBuffers(RenderingContext& ctx)
 			BufferUsage::STORAGE,
 			m_clustersToken));
 
-	taskData.m_clusters = SArray<ShaderCluster>(data, clusterCount);
+	taskData.m_clusters = WeakArray<ShaderCluster>(data, clusterCount);
 
 	// Allocate light IDs
 	U32* data2 =
@@ -580,7 +580,7 @@ Error Is::populateBuffers(RenderingContext& ctx)
 			BufferUsage::STORAGE,
 			m_lightIdsToken));
 
-	taskData.m_lightIds = SArray<U32>(data2, m_maxLightIds);
+	taskData.m_lightIds = WeakArray<U32>(data2, m_maxLightIds);
 
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{

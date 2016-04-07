@@ -45,7 +45,7 @@ private:
 	PipelinePtr m_ppline;
 
 	// Other
-	DArray<Vec2> m_currentMinMax;
+	DynamicArray<Vec2> m_currentMinMax;
 	Mat4 m_viewProjMat;
 	F32 m_near;
 	Plane m_nearPlaneWspace;

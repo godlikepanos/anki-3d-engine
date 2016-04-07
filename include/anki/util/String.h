@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/util/DArray.h>
+#include <anki/util/DynamicArray.h>
 #include <anki/util/Array.h>
 #include <anki/util/NonCopyable.h>
 #include <anki/util/Hash.h>
@@ -508,7 +508,7 @@ public:
 	}
 
 protected:
-	DArray<Char> m_data;
+	DynamicArray<Char> m_data;
 
 	void checkInit() const
 	{
