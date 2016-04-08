@@ -13,7 +13,7 @@ namespace anki
 
 //==============================================================================
 SpatialComponent::SpatialComponent(SceneNode* node, const CollisionShape* shape)
-	: SceneComponent(Type::SPATIAL, node)
+	: SceneComponent(CLASS_TYPE, node)
 	, m_shape(shape)
 {
 	ANKI_ASSERT(shape);

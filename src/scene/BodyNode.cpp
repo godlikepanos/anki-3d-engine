@@ -22,7 +22,7 @@ class BodyFeedbackComponent : public SceneComponent
 {
 public:
 	BodyFeedbackComponent(SceneNode* node)
-		: SceneComponent(SceneComponent::Type::NONE, node)
+		: SceneComponent(SceneComponentType::NONE, node)
 	{
 	}
 

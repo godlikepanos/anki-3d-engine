@@ -27,7 +27,7 @@ class ReflectionProbeMoveFeedbackComponent : public SceneComponent
 {
 public:
 	ReflectionProbeMoveFeedbackComponent(SceneNode* node)
-		: SceneComponent(SceneComponent::Type::NONE, node)
+		: SceneComponent(SceneComponentType::NONE, node)
 	{
 	}
 

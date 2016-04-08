@@ -54,8 +54,7 @@ public:
 
 	~ModelNode();
 
-	ANKI_USE_RESULT Error init(
-		const CString& name, const CString& modelFname);
+	ANKI_USE_RESULT Error init(const CString& name, const CString& modelFname);
 
 	const Model& getModel() const
 	{

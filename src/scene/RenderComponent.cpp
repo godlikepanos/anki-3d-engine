@@ -64,7 +64,7 @@ RenderComponentVariable::~RenderComponentVariable()
 
 //==============================================================================
 RenderComponent::RenderComponent(SceneNode* node, const Material* mtl, U64 hash)
-	: SceneComponent(Type::RENDER, node)
+	: SceneComponent(SceneComponentType::RENDER, node)
 	, m_mtl(mtl)
 	, m_hash(hash)
 {

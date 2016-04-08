@@ -73,6 +73,9 @@ public: // XXX
 	/// @note Triangles in view space.
 	void clipTriangle(
 		const Vec4* inTriangle, Vec4* outTriangles, U& outTriangleCount) const;
+
+	Bool visibilityTestInternal(
+		const CollisionShape& cs, const Aabb& aabb) const;
 };
 /// @}
 

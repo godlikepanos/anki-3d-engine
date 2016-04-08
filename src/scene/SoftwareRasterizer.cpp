@@ -5,6 +5,7 @@
 
 #include <anki/scene/SoftwareRasterizer.h>
 #include <anki/collision/Functions.h>
+#include <anki/core/Trace.h>
 
 namespace anki
 {
@@ -311,6 +312,17 @@ void SoftwareRasterizer::rasterizeTriangle(const Vec4* tri)
 
 //==============================================================================
 Bool SoftwareRasterizer::visibilityTest(
+	const CollisionShape& cs, const Aabb& aabb) const
+{
+	ANKI_TRACE_START_EVENT(SCENE_RASTERIZER_TEST);
+	Bool inside = visibilityTestInternal(cs, aabb);
+	ANKI_TRACE_STOP_EVENT(SCENE_RASTERIZER_TEST);
+
+	return inside;
+}
+
+//==============================================================================
+Bool SoftwareRasterizer::visibilityTestInternal(
 	const CollisionShape& cs, const Aabb& aabb) const
 {
 	// Set the AABB points

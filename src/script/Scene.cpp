@@ -2519,6 +2519,83 @@ static inline void wrapReflectionProxy(lua_State* l)
 }
 
 //==============================================================================
+// OccluderNode                                                                =
+//==============================================================================
+
+//==============================================================================
+static const char* classnameOccluderNode = "OccluderNode";
+
+template<>
+I64 LuaBinder::getWrappedTypeSignature<OccluderNode>()
+{
+	return -6885028590097645115;
+}
+
+template<>
+const char* LuaBinder::getWrappedTypeName<OccluderNode>()
+{
+	return classnameOccluderNode;
+}
+
+//==============================================================================
+/// Pre-wrap method OccluderNode::getSceneNodeBase.
+static inline int pwrapOccluderNodegetSceneNodeBase(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	PtrSize size;
+	(void)size;
+
+	LuaBinder::checkArgsCount(l, 1);
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameOccluderNode, -6885028590097645115, ud))
+	{
+		return -1;
+	}
+
+	OccluderNode* self = ud->getData<OccluderNode>();
+
+	// Call the method
+	SceneNode& ret = *self;
+
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(UserData));
+	ud = static_cast<UserData*>(voidp);
+	luaL_setmetatable(l, "SceneNode");
+	ud->initPointed(-2220074417980276571, const_cast<SceneNode*>(&ret));
+
+	return 1;
+}
+
+//==============================================================================
+/// Wrap method OccluderNode::getSceneNodeBase.
+static int wrapOccluderNodegetSceneNodeBase(lua_State* l)
+{
+	int res = pwrapOccluderNodegetSceneNodeBase(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
+/// Wrap class OccluderNode.
+static inline void wrapOccluderNode(lua_State* l)
+{
+	LuaBinder::createClass(l, classnameOccluderNode);
+	LuaBinder::pushLuaCFuncMethod(
+		l, "getSceneNodeBase", wrapOccluderNodegetSceneNodeBase);
+	lua_settop(l, 0);
+}
+
+//==============================================================================
 // SceneGraph                                                                  =
 //==============================================================================
 
@@ -3200,6 +3277,73 @@ static int wrapSceneGraphnewReflectionProxy(lua_State* l)
 }
 
 //==============================================================================
+/// Pre-wrap method SceneGraph::newOccluderNode.
+static inline int pwrapSceneGraphnewOccluderNode(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	PtrSize size;
+	(void)size;
+
+	LuaBinder::checkArgsCount(l, 3);
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(
+		   l, 1, classnameSceneGraph, -7754439619132389154, ud))
+	{
+		return -1;
+	}
+
+	SceneGraph* self = ud->getData<SceneGraph>();
+
+	// Pop arguments
+	const char* arg0;
+	if(LuaBinder::checkString(l, 2, arg0))
+	{
+		return -1;
+	}
+
+	const char* arg1;
+	if(LuaBinder::checkString(l, 3, arg1))
+	{
+		return -1;
+	}
+
+	// Call the method
+	OccluderNode* ret = newSceneNode<OccluderNode>(self, arg0, arg1);
+
+	// Push return value
+	if(ANKI_UNLIKELY(ret == nullptr))
+	{
+		lua_pushstring(l, "Glue code returned nullptr");
+		return -1;
+	}
+
+	voidp = lua_newuserdata(l, sizeof(UserData));
+	ud = static_cast<UserData*>(voidp);
+	luaL_setmetatable(l, "OccluderNode");
+	ud->initPointed(-6885028590097645115, const_cast<OccluderNode*>(ret));
+
+	return 1;
+}
+
+//==============================================================================
+/// Wrap method SceneGraph::newOccluderNode.
+static int wrapSceneGraphnewOccluderNode(lua_State* l)
+{
+	int res = pwrapSceneGraphnewOccluderNode(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
 /// Pre-wrap method SceneGraph::setActiveCamera.
 static inline int pwrapSceneGraphsetActiveCamera(lua_State* l)
 {
@@ -3274,6 +3418,8 @@ static inline void wrapSceneGraph(lua_State* l)
 	LuaBinder::pushLuaCFuncMethod(
 		l, "newReflectionProxy", wrapSceneGraphnewReflectionProxy);
 	LuaBinder::pushLuaCFuncMethod(
+		l, "newOccluderNode", wrapSceneGraphnewOccluderNode);
+	LuaBinder::pushLuaCFuncMethod(
 		l, "setActiveCamera", wrapSceneGraphsetActiveCamera);
 	lua_settop(l, 0);
 }
@@ -3341,6 +3487,7 @@ void wrapModuleScene(lua_State* l)
 	wrapParticleEmitter(l);
 	wrapReflectionProbe(l);
 	wrapReflectionProxy(l);
+	wrapOccluderNode(l);
 	wrapSceneGraph(l);
 	LuaBinder::pushLuaCFunc(l, "getSceneGraph", wrapgetSceneGraph);
 }

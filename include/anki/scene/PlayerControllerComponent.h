@@ -18,9 +18,12 @@ namespace anki
 class PlayerControllerComponent : public SceneComponent
 {
 public:
+	static const SceneComponentType CLASS_TYPE =
+		SceneComponentType::PLAYER_CONTROLLER;
+
 	PlayerControllerComponent(
 		SceneNode* node, PhysicsPlayerControllerPtr player)
-		: SceneComponent(Type::PLAYER_CONTROLLER, node)
+		: SceneComponent(CLASS_TYPE, node)
 		, m_player(player)
 	{
 	}
@@ -49,11 +52,6 @@ public:
 	{
 		m_trf = m_player->getTransform(updated);
 		return ErrorCode::NONE;
-	}
-
-	static Bool classof(const SceneComponent& c)
-	{
-		return c.getType() == Type::PLAYER_CONTROLLER;
 	}
 
 private:

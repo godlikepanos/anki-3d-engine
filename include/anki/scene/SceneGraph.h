@@ -192,6 +192,11 @@ anki_internal:
 		return m_nodesUuid++;
 	}
 
+	SceneComponentLists& getSceneComponentLists()
+	{
+		return m_componentLists;
+	}
+
 private:
 	const Timestamp* m_globalTimestamp = nullptr;
 	Timestamp m_timestamp = 0; ///< Cached timestamp
@@ -223,6 +228,8 @@ private:
 	F32 m_maxReflectionProxyDistance = 0.0;
 
 	U64 m_nodesUuid = 0;
+
+	SceneComponentLists m_componentLists;
 
 	/// Put a node in the appropriate containers
 	ANKI_USE_RESULT Error registerNode(SceneNode* node);

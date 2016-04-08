@@ -36,10 +36,7 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(MoveComponentFlag, inline)
 class MoveComponent : public SceneComponent
 {
 public:
-	static Bool classof(const SceneComponent& c)
-	{
-		return c.getType() == Type::MOVE;
-	}
+	static const SceneComponentType CLASS_TYPE = SceneComponentType::MOVE;
 
 	/// The one and only constructor
 	/// @param node The scene node to steal it's allocators

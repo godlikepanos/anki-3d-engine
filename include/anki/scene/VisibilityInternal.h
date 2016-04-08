@@ -8,6 +8,7 @@
 #include <anki/scene/Visibility.h>
 #include <anki/scene/Sector.h>
 #include <anki/scene/SceneGraph.h>
+#include <anki/scene/SoftwareRasterizer.h>
 #include <anki/util/Thread.h>
 #include <anki/core/Trace.h>
 
@@ -58,6 +59,56 @@ public:
 	void submitNewWork(FrustumComponent& frc, ThreadHive& hive);
 };
 
+/// ThreadHive task to gather all visible triangles from the OccluderComponent.
+class GatherVisibleTrianglesTask
+{
+public:
+	class TriangleBatch : public IntrusiveListEnabled<TriangleBatch>
+	{
+	public:
+		const Vec3* m_begin = nullptr;
+		U32 m_count = 0;
+		U32 m_stride = 0;
+	};
+
+	WeakPtr<VisibilityContext> m_visCtx;
+	WeakPtr<FrustumComponent> m_frc;
+	IntrusiveList<TriangleBatch> m_batches;
+	U32 m_batchCount;
+	SoftwareRasterizer m_r;
+
+	/// Thread hive task.
+	static void callback(void* ud, U32 threadId, ThreadHive& hive)
+	{
+		GatherVisibleTrianglesTask& self =
+			*static_cast<GatherVisibleTrianglesTask*>(ud);
+		self.gather();
+	}
+
+private:
+	void gather();
+};
+
+/// ThreadHive task to rasterize triangles.
+class RasterizeTrianglesTask
+{
+public:
+	WeakPtr<GatherVisibleTrianglesTask> m_gatherTask;
+	U32 m_taskIdx;
+	U32 m_taskCount;
+
+	/// Thread hive task.
+	static void callback(void* ud, U32 threadId, ThreadHive& hive)
+	{
+		RasterizeTrianglesTask& self =
+			*static_cast<RasterizeTrianglesTask*>(ud);
+		self.rasterize();
+	}
+
+private:
+	void rasterize();
+};
+
 /// ThreadHive task to get visible nodes from sectors.
 class GatherVisiblesFromSectorsTask
 {
@@ -65,6 +116,7 @@ public:
 	WeakPtr<VisibilityContext> m_visCtx;
 	SectorGroupVisibilityTestsContext m_sectorsCtx;
 	WeakPtr<FrustumComponent> m_frc; ///< What to test against.
+	SoftwareRasterizer* m_r;
 
 	/// Thread hive task.
 	static void callback(void* ud, U32 threadId, ThreadHive& hive)
@@ -81,7 +133,7 @@ private:
 		U testIdx = m_visCtx->m_testsCount.fetchAdd(1);
 
 		m_visCtx->m_scene->getSectorGroup().findVisibleNodes(
-			*m_frc, testIdx, m_sectorsCtx);
+			*m_frc, testIdx, m_r, m_sectorsCtx);
 		ANKI_TRACE_STOP_EVENT(SCENE_VISIBILITY_ITERATE_SECTORS);
 	}
 };

@@ -134,9 +134,9 @@ public:
 		for(; !err && it != end; ++it)
 		{
 			SceneComponent* comp = *it;
-			if(isa<Component>(comp))
+			if(comp->getType() == Component::CLASS_TYPE)
 			{
-				err = func(*dcast<Component*>(comp));
+				err = func(*static_cast<Component*>(comp));
 			}
 		}
 
@@ -150,9 +150,10 @@ public:
 		U count = m_componentsCount;
 		while(count-- != 0)
 		{
-			if(isa<Component>(m_components[count]))
+			SceneComponent* comp = m_components[count];
+			if(comp->getType() == Component::CLASS_TYPE)
 			{
-				return dcast<Component*>(m_components[count]);
+				return static_cast<Component*>(comp);
 			}
 		}
 		return nullptr;
@@ -165,9 +166,10 @@ public:
 		U count = m_componentsCount;
 		while(count-- != 0)
 		{
-			if(isa<Component>(m_components[count]))
+			const SceneComponent* comp = m_components[count];
+			if(comp->getType() == Component::CLASS_TYPE)
 			{
-				return dcast<const Component*>(m_components[count]);
+				return static_cast<const Component*>(comp);
 			}
 		}
 		return nullptr;

@@ -23,3 +23,5 @@
 #include <anki/scene/ReflectionProxy.h>
 #include <anki/scene/ReflectionProxyComponent.h>
 #include <anki/scene/PlayerNode.h>
+#include <anki/scene/OccluderNode.h>
+#include <anki/scene/OccluderComponent.h>

@@ -136,8 +136,9 @@ void UiInterfaceImpl::endRendering()
 }
 
 //==============================================================================
-void UiInterfaceImpl::drawLines(
-	const WeakArray<UVec2>& positions, const Color& color, const UVec2& canvasSize)
+void UiInterfaceImpl::drawLines(const WeakArray<UVec2>& positions,
+	const Color& color,
+	const UVec2& canvasSize)
 {
 	StageId stageId = StageId::LINES;
 

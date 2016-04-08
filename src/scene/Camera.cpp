@@ -17,7 +17,7 @@ class CameraMoveFeedbackComponent : public SceneComponent
 {
 public:
 	CameraMoveFeedbackComponent(Camera* node)
-		: SceneComponent(SceneComponent::Type::NONE, node)
+		: SceneComponent(SceneComponentType::NONE, node)
 	{
 	}
 
@@ -45,7 +45,7 @@ class CameraFrustumFeedbackComponent : public SceneComponent
 {
 public:
 	CameraFrustumFeedbackComponent(Camera* node)
-		: SceneComponent(SceneComponent::Type::NONE, node)
+		: SceneComponent(SceneComponentType::NONE, node)
 	{
 	}
 
@@ -98,7 +98,8 @@ Error Camera::init(const CString& name, Frustum* frustum)
 		| FrustumComponentVisibilityTestFlag::LIGHT_COMPONENTS
 		| FrustumComponentVisibilityTestFlag::LENS_FLARE_COMPONENTS
 		| FrustumComponentVisibilityTestFlag::REFLECTION_PROBES
-		| FrustumComponentVisibilityTestFlag::REFLECTION_PROXIES);
+		| FrustumComponentVisibilityTestFlag::REFLECTION_PROXIES
+		| FrustumComponentVisibilityTestFlag::OCCLUDERS);
 	addComponent(frc, true);
 
 	// Feedback component #2

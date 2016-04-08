@@ -1865,7 +1865,7 @@ public:
 		return m_arr[i];
 	}
 
-	T operator[](const U i) const
+	const T& operator[](const U i) const
 	{
 		return m_arr[i];
 	}

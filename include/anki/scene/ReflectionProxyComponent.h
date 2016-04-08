@@ -18,6 +18,9 @@ namespace anki
 class ReflectionProxyComponent : public SceneComponent
 {
 public:
+	static const SceneComponentType CLASS_TYPE =
+		SceneComponentType::REFLECTION_PROXY;
+
 	/// Reflection proxy face. One out of many
 	class Face
 	{
@@ -27,7 +30,7 @@ public:
 	};
 
 	ReflectionProxyComponent(SceneNode* node, U faceCount)
-		: SceneComponent(SceneComponent::Type::REFLECTION_PROXY, node)
+		: SceneComponent(CLASS_TYPE, node)
 	{
 		ANKI_ASSERT(faceCount > 0);
 		m_faces.create(getAllocator(), faceCount);
@@ -36,11 +39,6 @@ public:
 	~ReflectionProxyComponent()
 	{
 		m_faces.destroy(getAllocator());
-	}
-
-	static Bool classof(const SceneComponent& c)
-	{
-		return c.getType() == Type::REFLECTION_PROXY;
 	}
 
 	void setQuad(

@@ -44,6 +44,8 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(FrustumComponentVisibilityTestFlag, inline)
 class FrustumComponent : public SceneComponent
 {
 public:
+	static const SceneComponentType CLASS_TYPE = SceneComponentType::FRUSTUM;
+
 	struct VisibilityStats
 	{
 		U32 m_renderablesCount = 0;
@@ -178,11 +180,6 @@ public:
 	Bool anyVisibilityTestEnabled() const
 	{
 		return m_flags.getAny(FrustumComponentVisibilityTestFlag::ALL_TESTS);
-	}
-
-	static Bool classof(const SceneComponent& c)
-	{
-		return c.getType() == Type::FRUSTUM;
 	}
 
 private:

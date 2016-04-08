@@ -13,7 +13,7 @@ namespace anki
 
 //==============================================================================
 LensFlareComponent::LensFlareComponent(SceneNode* node)
-	: SceneComponent(Type::LENS_FLARE, node)
+	: SceneComponent(CLASS_TYPE, node)
 {
 }
 

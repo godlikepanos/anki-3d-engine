@@ -21,7 +21,7 @@ class LightFeedbackComponent : public SceneComponent
 {
 public:
 	LightFeedbackComponent(SceneNode* node)
-		: SceneComponent(SceneComponent::Type::NONE, node)
+		: SceneComponent(SceneComponentType::NONE, node)
 	{
 	}
 
@@ -291,8 +291,7 @@ SpotLight::SpotLight(SceneGraph* scene)
 //==============================================================================
 Error SpotLight::init(const CString& name)
 {
-	ANKI_CHECK(
-		Light::init(name, LightComponent::LightType::SPOT, &m_frustum));
+	ANKI_CHECK(Light::init(name, LightComponent::LightType::SPOT, &m_frustum));
 
 	FrustumComponent* fr =
 		getSceneAllocator().newInstance<FrustumComponent>(this, &m_frustum);

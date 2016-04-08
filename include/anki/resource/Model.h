@@ -91,7 +91,7 @@ private:
 		2,
 		MAX_INSTANCE_GROUPS>
 		m_pplines;
-	mutable SpinLock m_lock; ///< Protect m_pplines
+	mutable Mutex m_lock; ///< Protect m_pplines
 
 	Array<ResourceGroupPtr, MAX_LODS> m_grResources;
 

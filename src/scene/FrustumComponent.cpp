@@ -12,7 +12,7 @@ namespace anki
 
 //==============================================================================
 FrustumComponent::FrustumComponent(SceneNode* node, Frustum* frustum)
-	: SceneComponent(Type::FRUSTUM, node)
+	: SceneComponent(CLASS_TYPE, node)
 	, m_frustum(frustum)
 	, m_flags(0)
 {

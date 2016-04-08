@@ -17,14 +17,12 @@ namespace anki
 class ReflectionProbeComponent : public SceneComponent
 {
 public:
-	ReflectionProbeComponent(SceneNode* node)
-		: SceneComponent(SceneComponent::Type::REFLECTION_PROBE, node)
-	{
-	}
+	static const SceneComponentType CLASS_TYPE =
+		SceneComponentType::REFLECTION_PROBE;
 
-	static Bool classof(const SceneComponent& c)
+	ReflectionProbeComponent(SceneNode* node)
+		: SceneComponent(CLASS_TYPE, node)
 	{
-		return c.getType() == Type::REFLECTION_PROBE;
 	}
 
 	const Vec4& getPosition() const

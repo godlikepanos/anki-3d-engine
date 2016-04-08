@@ -514,9 +514,9 @@ Error Is::populateBuffers(RenderingContext& ctx)
 		taskData.m_pointLights =
 			WeakArray<ShaderPointLight>(data, visiblePointLightsCount);
 
-		taskData.m_vPointLights =
-			WeakArray<VisibleNode>(vi.getBegin(VisibilityGroupType::LIGHTS_POINT),
-				visiblePointLightsCount);
+		taskData.m_vPointLights = WeakArray<VisibleNode>(
+			vi.getBegin(VisibilityGroupType::LIGHTS_POINT),
+			visiblePointLightsCount);
 	}
 	else
 	{
@@ -534,9 +534,9 @@ Error Is::populateBuffers(RenderingContext& ctx)
 		taskData.m_spotLights =
 			WeakArray<ShaderSpotLight>(data, visibleSpotLightsCount);
 
-		taskData.m_vSpotLights =
-			WeakArray<VisibleNode>(vi.getBegin(VisibilityGroupType::LIGHTS_SPOT),
-				visibleSpotLightsCount);
+		taskData.m_vSpotLights = WeakArray<VisibleNode>(
+			vi.getBegin(VisibilityGroupType::LIGHTS_SPOT),
+			visibleSpotLightsCount);
 	}
 	else
 	{

@@ -18,6 +18,7 @@ class SectorGroup;
 class FrustumComponent;
 class SpatialComponent;
 class Renderer;
+class SoftwareRasterizer;
 
 /// @addtogroup scene
 /// @{
@@ -26,14 +27,12 @@ class Renderer;
 class PortalSectorComponent : public SceneComponent
 {
 public:
-	PortalSectorComponent(SceneNode* node)
-		: SceneComponent(Type::SECTOR_PORTAL, node)
-	{
-	}
+	static const SceneComponentType CLASS_TYPE =
+		SceneComponentType::SECTOR_PORTAL;
 
-	static Bool classof(const SceneComponent& c)
+	PortalSectorComponent(SceneNode* node)
+		: SceneComponent(CLASS_TYPE, node)
 	{
-		return c.getType() == Type::SECTOR_PORTAL;
 	}
 };
 
@@ -51,8 +50,7 @@ public:
 
 	~PortalSectorBase();
 
-	ANKI_USE_RESULT Error init(
-		const CString& name, const CString& modelFname);
+	ANKI_USE_RESULT Error init(const CString& name, const CString& modelFname);
 
 	const CollisionShape& getBoundingShape() const
 	{
@@ -97,8 +95,7 @@ public:
 
 	~Portal();
 
-	ANKI_USE_RESULT Error init(
-		const CString& name, const CString& modelFname);
+	ANKI_USE_RESULT Error init(const CString& name, const CString& modelFname);
 
 	ANKI_USE_RESULT Error frameUpdate(
 		F32 prevUpdateTime, F32 crntTime) override;
@@ -130,8 +127,7 @@ public:
 
 	~Sector();
 
-	ANKI_USE_RESULT Error init(
-		const CString& name, const CString& modelFname);
+	ANKI_USE_RESULT Error init(const CString& name, const CString& modelFname);
 
 	void tryAddPortal(Portal* portal);
 	void tryRemovePortal(Portal* portal);
@@ -200,6 +196,7 @@ public:
 
 	void findVisibleNodes(const FrustumComponent& frc,
 		U threadId,
+		const SoftwareRasterizer* r,
 		SectorGroupVisibilityTestsContext& ctx) const;
 
 private:
@@ -211,12 +208,14 @@ private:
 	SpinLock m_mtx;
 
 	void findVisibleSectors(const FrustumComponent& frc,
+		const SoftwareRasterizer* r,
 		List<const Sector*>& visibleSectors,
 		U& spatialsCount) const;
 
 	/// Recursive method
 	void findVisibleSectorsInternal(const FrustumComponent& frc,
 		const Sector& s,
+		const SoftwareRasterizer* r,
 		List<const Sector*>& visibleSectors,
 		U& spatialsCount) const;
 

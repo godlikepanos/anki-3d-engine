@@ -137,7 +137,7 @@ class ModelMoveFeedbackComponent : public SceneComponent
 {
 public:
 	ModelMoveFeedbackComponent(SceneNode* node)
-		: SceneComponent(SceneComponent::Type::NONE, node)
+		: SceneComponent(SceneComponentType::NONE, node)
 	{
 	}
 

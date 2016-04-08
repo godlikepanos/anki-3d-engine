@@ -83,6 +83,13 @@ public:
 	uint32_t m_meshIndex; ///< Points to the scene that is not triangulated.
 };
 
+class OccluderNode
+{
+public:
+	aiMatrix4x4 m_transform;
+	uint32_t m_meshIndex; ///< Points to the scene that is not triangulated.
+};
+
 /// AnKi exporter.
 class Exporter
 {
@@ -110,6 +117,7 @@ public:
 	std::vector<ParticleEmitter> m_particleEmitters;
 	std::vector<ReflectionProbe> m_reflectionProbes;
 	std::vector<ReflectionProxy> m_reflectionProxies;
+	std::vector<OccluderNode> m_occluders;
 
 	/// Load the scene.
 	void load();

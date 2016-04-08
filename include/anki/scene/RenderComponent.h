@@ -121,12 +121,9 @@ public:
 class RenderComponent : public SceneComponent
 {
 public:
-	using Variables = DynamicArray<RenderComponentVariable*>;
+	static const SceneComponentType CLASS_TYPE = SceneComponentType::RENDER;
 
-	static Bool classof(const SceneComponent& c)
-	{
-		return c.getType() == Type::RENDER;
-	}
+	using Variables = DynamicArray<RenderComponentVariable*>;
 
 	RenderComponent(SceneNode* node, const Material* mtl, U64 hash = 0);
 

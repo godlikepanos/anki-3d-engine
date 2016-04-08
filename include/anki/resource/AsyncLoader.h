@@ -84,10 +84,10 @@ void AsyncLoader::newTask(TArgs&&... args)
 			ANKI_ASSERT(m_head == nullptr);
 			m_head = m_tail = newTask;
 		}
-	}
 
-	// Wake up the thread
-	m_condVar.notifyOne();
+		// Wake up the thread
+		m_condVar.notifyOne();
+	}
 }
 
 /// @}

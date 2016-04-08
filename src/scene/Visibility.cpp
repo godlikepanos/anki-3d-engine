@@ -11,6 +11,7 @@
 #include <anki/scene/LensFlareComponent.h>
 #include <anki/scene/ReflectionProbeComponent.h>
 #include <anki/scene/ReflectionProxyComponent.h>
+#include <anki/scene/OccluderComponent.h>
 #include <anki/scene/Light.h>
 #include <anki/scene/MoveComponent.h>
 #include <anki/renderer/MainRenderer.h>
@@ -57,15 +58,70 @@ void VisibilityContext::submitNewWork(FrustumComponent& frc, ThreadHive& hive)
 	// Submit new work
 	//
 
+	// Software rasterizer tasks
+	SoftwareRasterizer* r = nullptr;
+	Array<ThreadHiveDependencyHandle, ThreadHive::MAX_THREADS> rasterizeDeps;
+	if(frc.visibilityTestsEnabled(
+		   FrustumComponentVisibilityTestFlag::OCCLUDERS))
+	{
+		// Gather triangles task
+		GatherVisibleTrianglesTask* gather =
+			alloc.newInstance<GatherVisibleTrianglesTask>();
+		gather->m_visCtx = this;
+		gather->m_frc = &frc;
+		gather->m_batchCount = 0;
+
+		r = &gather->m_r;
+
+		ThreadHiveTask gatherTask;
+		gatherTask.m_callback = GatherVisibleTrianglesTask::callback;
+		gatherTask.m_argument = gather;
+
+		hive.submitTasks(&gatherTask, 1);
+
+		// Rasterize triangles task
+		U count = hive.getThreadCount();
+		RasterizeTrianglesTask* rasterize =
+			alloc.newArray<RasterizeTrianglesTask>(count);
+
+		Array<ThreadHiveTask, ThreadHive::MAX_THREADS> rastTasks;
+		while(count--)
+		{
+			RasterizeTrianglesTask& rast = rasterize[count];
+			rast.m_gatherTask = gather;
+			rast.m_taskIdx = count;
+			rast.m_taskCount = hive.getThreadCount();
+
+			rastTasks[count].m_callback = RasterizeTrianglesTask::callback;
+			rastTasks[count].m_argument = &rast;
+			rastTasks[count].m_inDependencies =
+				WeakArray<ThreadHiveDependencyHandle>(
+					&gatherTask.m_outDependency, 1);
+		}
+
+		count = hive.getThreadCount();
+		hive.submitTasks(&rastTasks[0], count);
+		while(count--)
+		{
+			rasterizeDeps[count] = rastTasks[count].m_outDependency;
+		}
+	}
+
 	// Gather task
 	GatherVisiblesFromSectorsTask* gather =
 		alloc.newInstance<GatherVisiblesFromSectorsTask>();
 	gather->m_visCtx = this;
 	gather->m_frc = &frc;
+	gather->m_r = r;
 
 	ThreadHiveTask gatherTask;
 	gatherTask.m_callback = GatherVisiblesFromSectorsTask::callback;
 	gatherTask.m_argument = gather;
+	if(r)
+	{
+		gatherTask.m_inDependencies = WeakArray<ThreadHiveDependencyHandle>(
+			&rasterizeDeps[0], hive.getThreadCount());
+	}
 
 	hive.submitTasks(&gatherTask, 1);
 
@@ -88,8 +144,8 @@ void VisibilityContext::submitNewWork(FrustumComponent& frc, ThreadHive& hive)
 		auto& task = testTasks[i];
 		task.m_callback = VisibilityTestTask::callback;
 		task.m_argument = &test;
-		task.m_inDependencies =
-			WeakArray<ThreadHiveDependencyHandle>(&gatherTask.m_outDependency, 1);
+		task.m_inDependencies = WeakArray<ThreadHiveDependencyHandle>(
+			&gatherTask.m_outDependency, 1);
 	}
 
 	hive.submitTasks(&testTasks[0], testCount);
@@ -111,6 +167,60 @@ void VisibilityContext::submitNewWork(FrustumComponent& frc, ThreadHive& hive)
 	}
 
 	hive.submitTasks(&combineTask, 1);
+}
+
+//==============================================================================
+// GatherVisibleTrianglesTask                                                  =
+//==============================================================================
+
+//==============================================================================
+void GatherVisibleTrianglesTask::gather()
+{
+	ANKI_TRACE_START_EVENT(SCENE_VISIBILITY_GATHER_TRIANGLES);
+
+	auto alloc = m_visCtx->m_scene->getFrameAllocator();
+	SceneComponentLists& lists = m_visCtx->m_scene->getSceneComponentLists();
+
+	ANKI_ASSERT(m_batchCount == 0);
+	lists.iterateComponents<OccluderComponent>([&](OccluderComponent& comp) {
+		if(m_frc->insideFrustum(comp.getBoundingVolume()))
+		{
+			TriangleBatch* batch = alloc.newInstance<TriangleBatch>();
+			comp.getVertices(batch->m_begin, batch->m_count, batch->m_stride);
+			m_batches.pushBack(batch);
+			++m_batchCount;
+		}
+	});
+
+	m_r.init(alloc);
+	m_r.prepare(m_frc->getViewMatrix(), m_frc->getProjectionMatrix(), 80, 50);
+
+	ANKI_TRACE_STOP_EVENT(SCENE_VISIBILITY_GATHER_TRIANGLES);
+}
+
+//==============================================================================
+// RasterizeTrianglesTask                                                      =
+//==============================================================================
+
+//==============================================================================
+void RasterizeTrianglesTask::rasterize()
+{
+	ANKI_TRACE_START_EVENT(SCENE_VISIBILITY_RASTERIZE);
+
+	PtrSize start, endi;
+	ThreadPoolTask::choseStartEnd(
+		m_taskIdx, m_taskCount, m_gatherTask->m_batchCount, start, endi);
+
+	auto it = m_gatherTask->m_batches.getBegin() + start;
+	auto end = m_gatherTask->m_batches.getBegin() + endi;
+	while(it != end)
+	{
+		const F32* first = &it->m_begin[0][0];
+		m_gatherTask->m_r.draw(first, it->m_count, it->m_stride);
+		++it;
+	}
+
+	ANKI_TRACE_STOP_EVENT(SCENE_VISIBILITY_RASTERIZE);
 }
 
 //==============================================================================

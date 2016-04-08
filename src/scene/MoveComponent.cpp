@@ -11,7 +11,7 @@ namespace anki
 
 //==============================================================================
 MoveComponent::MoveComponent(SceneNode* node, MoveComponentFlag flags)
-	: SceneComponent(Type::MOVE, node)
+	: SceneComponent(CLASS_TYPE, node)
 	, m_flags(flags)
 {
 	markForUpdate();

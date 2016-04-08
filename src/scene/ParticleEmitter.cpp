@@ -236,7 +236,7 @@ class MoveFeedbackComponent : public SceneComponent
 {
 public:
 	MoveFeedbackComponent(ParticleEmitter* node)
-		: SceneComponent(SceneComponent::Type::NONE, node)
+		: SceneComponent(SceneComponentType::NONE, node)
 	{
 	}
 

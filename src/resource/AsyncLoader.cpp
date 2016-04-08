@@ -50,9 +50,10 @@ void AsyncLoader::stop()
 	{
 		LockGuard<Mutex> lock(m_mtx);
 		m_quit = true;
+
+		m_condVar.notifyOne();
 	}
 
-	m_condVar.notifyOne();
 	Error err = m_thread.join();
 	(void)err;
 }

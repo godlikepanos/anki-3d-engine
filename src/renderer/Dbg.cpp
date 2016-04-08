@@ -76,8 +76,6 @@ Error Dbg::init(const ConfigSet& initializer)
 //==============================================================================
 Error Dbg::run(RenderingContext& ctx)
 {
-	Error err = ErrorCode::NONE;
-
 	ANKI_ASSERT(m_enabled);
 
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
@@ -93,10 +91,10 @@ Error Dbg::run(RenderingContext& ctx)
 	SceneGraph& scene = cam.getSceneGraph();
 
 	SceneDebugDrawer sceneDrawer(m_drawer);
-	err = scene.iterateSceneNodes([&](SceneNode& node) -> Error {
+	camFrc.getVisibilityTestResults().iterateAll([&](SceneNode& node) {
 		if(&node == &cam)
 		{
-			return ErrorCode::NONE;
+			return;
 		}
 
 		// Set position
@@ -145,10 +143,7 @@ Error Dbg::run(RenderingContext& ctx)
 				});
 			(void)err;
 		}
-
-		return ErrorCode::NONE;
 	});
-	(void)err;
 
 	if(m_flags.get(DbgFlag::PHYSICS))
 	{
@@ -192,7 +187,7 @@ Error Dbg::run(RenderingContext& ctx)
 	}
 #endif
 
-#if 1
+#if 0
 	{
 		m_drawer->setViewProjectionMatrix(Mat4::getIdentity());
 		m_drawer->setModelMatrix(Mat4::getIdentity());

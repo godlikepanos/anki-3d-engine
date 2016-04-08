@@ -26,10 +26,7 @@ class Sector;
 class SpatialComponent : public SceneComponent
 {
 public:
-	static Bool classof(const SceneComponent& c)
-	{
-		return c.getType() == Type::SPATIAL;
-	}
+	static const SceneComponentType CLASS_TYPE = SceneComponentType::SPATIAL;
 
 	SpatialComponent(SceneNode* node, const CollisionShape* shape);
 

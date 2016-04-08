@@ -133,7 +133,7 @@ PipelinePtr ModelPatch::getPipeline(const RenderingKey& key) const
 		ANKI_ASSERT(0);
 	}
 
-	LockGuard<SpinLock> lock(m_lock);
+	LockGuard<Mutex> lock(m_lock);
 
 	PipelinePtr& ppline =
 		m_pplines[U(key.m_pass)][key.m_lod][key.m_tessellation]

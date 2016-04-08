@@ -18,10 +18,7 @@ namespace anki
 class LightComponent : public SceneComponent
 {
 public:
-	static Bool classof(const SceneComponent& c)
-	{
-		return c.getType() == Type::LIGHT;
-	}
+	static const SceneComponentType CLASS_TYPE = SceneComponentType::LIGHT;
 
 	enum class LightType : U8
 	{

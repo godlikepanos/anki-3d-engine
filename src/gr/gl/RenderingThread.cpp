@@ -111,9 +111,10 @@ void RenderingThread::flushCommandBuffer(CommandBufferPtr commands)
 		{
 			ANKI_LOGW("Rendering queue too small");
 		}
+
+		m_condVar.notifyOne(); // Wake the thread
 	}
 
-	m_condVar.notifyOne(); // Wake the thread
 #else
 	Error err = commands->getImplementation().executeAllCommands();
 	if(err)
@@ -308,9 +309,10 @@ void RenderingThread::swapBuffersInternal(GlState& state)
 	{
 		LockGuard<Mutex> lock(m_frameMtx);
 		m_frameWait = false;
+
+		m_frameCondVar.notifyOne();
 	}
 
-	m_frameCondVar.notifyOne();
 	state.checkDynamicMemoryConsumption();
 
 	ANKI_TRACE_STOP_EVENT(SWAP_BUFFERS);

@@ -23,7 +23,7 @@ class PlayerNodeFeedbackComponent final : public SceneComponent
 {
 public:
 	PlayerNodeFeedbackComponent(SceneNode* node)
-		: SceneComponent(SceneComponent::Type::NONE, node)
+		: SceneComponent(SceneComponentType::NONE, node)
 	{
 	}
 
@@ -75,7 +75,7 @@ class PlayerNodeFeedbackComponent2 final : public SceneComponent
 {
 public:
 	PlayerNodeFeedbackComponent2(SceneNode* node)
-		: SceneComponent(SceneComponent::Type::NONE, node)
+		: SceneComponent(SceneComponentType::NONE, node)
 	{
 	}
 

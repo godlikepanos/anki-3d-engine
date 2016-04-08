@@ -19,6 +19,8 @@ namespace anki
 class LensFlareComponent final : public SceneComponent
 {
 public:
+	static const SceneComponentType CLASS_TYPE = SceneComponentType::LENS_FLARE;
+
 	LensFlareComponent(SceneNode* node);
 
 	~LensFlareComponent();
@@ -92,11 +94,6 @@ public:
 		return ErrorCode::NONE;
 	}
 	/// @}
-
-	static Bool classof(const SceneComponent& c)
-	{
-		return c.getType() == Type::LENS_FLARE;
-	}
 
 private:
 	TextureResourcePtr m_tex; ///< Array of textures.

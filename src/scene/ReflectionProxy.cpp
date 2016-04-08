@@ -21,7 +21,7 @@ class ReflectionProxyMoveFeedbackComponent : public SceneComponent
 {
 public:
 	ReflectionProxyMoveFeedbackComponent(SceneNode* node)
-		: SceneComponent(SceneComponent::Type::NONE, node)
+		: SceneComponent(SceneComponentType::NONE, node)
 	{
 	}
 

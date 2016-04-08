@@ -10,7 +10,7 @@ namespace anki
 
 //==============================================================================
 LightComponent::LightComponent(SceneNode* node, LightType type)
-	: SceneComponent(Type::LIGHT, node)
+	: SceneComponent(CLASS_TYPE, node)
 	, m_type(type)
 {
 	setInnerAngle(toRad(45.0));

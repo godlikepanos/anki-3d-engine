@@ -133,8 +133,25 @@ public:
 		m_shapeUpdateTimestamp = t;
 	}
 
-	void combineWith(
-		SceneFrameAllocator<U8> alloc, WeakArray<VisibilityTestResults*>& results);
+	void combineWith(SceneFrameAllocator<U8> alloc,
+		WeakArray<VisibilityTestResults*>& results);
+
+	template<typename TFunc>
+	void iterateAll(TFunc f)
+	{
+		for(VisibilityGroupType i = VisibilityGroupType::FIRST;
+			i < VisibilityGroupType::TYPE_COUNT;
+			++i)
+		{
+			VisibleNode* it = getBegin(i);
+			VisibleNode* end = getEnd(i);
+			while(it != end)
+			{
+				f(*it->m_node);
+				++it;
+			}
+		}
+	}
 
 private:
 	using Container = DynamicArray<VisibleNode>;

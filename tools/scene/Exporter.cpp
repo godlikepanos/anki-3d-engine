@@ -855,6 +855,16 @@ void Exporter::visitNode(const aiNode* ainode)
 
 				special = true;
 			}
+			else if(prop.first == "occluder" && prop.second == "true")
+			{
+				OccluderNode occluder;
+
+				occluder.m_meshIndex = meshIndex;
+				occluder.m_transform = toAnkiMatrix(ainode->mTransformation);
+				m_occluders.push_back(occluder);
+
+				special = true;
+			}
 		}
 
 		if(special)
@@ -1020,6 +1030,23 @@ void Exporter::exportAll()
 			 << m_rpath << mesh.mName.C_Str() << ".ankimesh\")\n";
 
 		writeNodeTransform("node", proxy.m_transform);
+		++i;
+	}
+
+	//
+	// Export occluders
+	//
+	i = 0;
+	for(const OccluderNode& occluder : m_occluders)
+	{
+		const aiMesh& mesh = *m_scene->mMeshes[occluder.m_meshIndex];
+		exportMesh(mesh, nullptr, 3);
+
+		std::string name = "occluder" + std::to_string(i);
+		file << "\nnode = scene:newOccluderNode(\"" << name << "\", \""
+			 << m_rpath << mesh.mName.C_Str() << ".ankimesh\")\n";
+
+		writeNodeTransform("node", occluder.m_transform);
 		++i;
 	}
 

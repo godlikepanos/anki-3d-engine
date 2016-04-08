@@ -19,8 +19,10 @@ namespace anki
 class BodyComponent : public SceneComponent
 {
 public:
+	static const SceneComponentType CLASS_TYPE = SceneComponentType::BODY;
+
 	BodyComponent(SceneNode* node, PhysicsBodyPtr body)
-		: SceneComponent(Type::BODY, node)
+		: SceneComponent(CLASS_TYPE, node)
 		, m_body(body)
 	{
 	}
@@ -46,11 +48,6 @@ public:
 	{
 		m_trf = m_body->getTransform(updated);
 		return ErrorCode::NONE;
-	}
-
-	static Bool classof(const SceneComponent& c)
-	{
-		return c.getType() == Type::BODY;
 	}
 
 private:

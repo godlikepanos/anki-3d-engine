@@ -9,6 +9,7 @@
 #include <anki/core/Timestamp.h>
 #include <anki/util/Functions.h>
 #include <anki/util/BitMask.h>
+#include <anki/util/List.h>
 
 namespace anki
 {
@@ -16,41 +17,37 @@ namespace anki
 /// @addtogroup scene
 /// @{
 
+// The type of the components
+enum class SceneComponentType : U16
+{
+	NONE,
+	FRUSTUM,
+	MOVE,
+	RENDER,
+	SPATIAL,
+	LIGHT,
+	LENS_FLARE,
+	BODY,
+	SECTOR_PORTAL,
+	REFLECTION_PROBE,
+	REFLECTION_PROXY,
+	OCCLUDER,
+	PLAYER_CONTROLLER,
+
+	COUNT,
+	LAST_COMPONENT_ID = PLAYER_CONTROLLER
+};
+
 /// Scene node component
 class SceneComponent
 {
 public:
-	// The type of the components
-	enum class Type : U16
-	{
-		NONE,
-		FRUSTUM,
-		MOVE,
-		RENDER,
-		SPATIAL,
-		LIGHT,
-		LENS_FLARE,
-		BODY,
-		SECTOR_PORTAL,
-		REFLECTION_PROBE,
-		REFLECTION_PROXY,
-		OCCLUDER,
-		PLAYER_CONTROLLER,
-		LAST_COMPONENT_ID = PLAYER_CONTROLLER
-	};
-
 	/// Construct the scene component.
-	SceneComponent(Type type, SceneNode* node)
-		: m_node(node)
-		, m_type(type)
-	{
-	}
+	SceneComponent(SceneComponentType type, SceneNode* node);
 
-	virtual ~SceneComponent()
-	{
-	}
+	virtual ~SceneComponent();
 
-	Type getType() const
+	SceneComponentType getType() const
 	{
 		return m_type;
 	}
@@ -120,8 +117,49 @@ private:
 		AUTOMATIC_CLEANUP = 1 << 0
 	};
 
-	Type m_type;
+	SceneComponentType m_type;
 	BitMask<U8> m_flags;
+};
+
+/// Multiple lists of all types of components.
+class SceneComponentLists : public NonCopyable
+{
+anki_internal:
+	SceneComponentLists()
+	{
+	}
+
+	~SceneComponentLists()
+	{
+	}
+
+	void init(SceneAllocator<U8> alloc)
+	{
+		m_alloc = alloc;
+	}
+
+	void insertNew(SceneComponent* comp);
+
+	void remove(SceneComponent* comp);
+
+	template<typename TSceneComponentType, typename Func>
+	void iterateComponents(Func func)
+	{
+		auto it = m_lists[TSceneComponentType::CLASS_TYPE].getBegin();
+		auto end = m_lists[TSceneComponentType::CLASS_TYPE].getEnd();
+
+		while(it != end)
+		{
+			func(*static_cast<TSceneComponentType*>(*it));
+			++it;
+		}
+	}
+
+private:
+	SceneAllocator<U8> m_alloc;
+	Array<List<SceneComponent*>, U(SceneComponentType::COUNT)> m_lists;
+
+	List<SceneComponent*>::Iterator find(SceneComponent* comp);
 };
 /// @}
 
