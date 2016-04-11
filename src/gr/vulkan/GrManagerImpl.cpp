@@ -69,6 +69,96 @@ public:
 //==============================================================================
 
 //==============================================================================
+Error GrManagerImpl::init()
+{
+	initGlobalDsetLayout();
+	initGlobalPplineLayout();
+
+	return ErrorCode::NONE;
+}
+
+//==============================================================================
+void GrManagerImpl::initGlobalDsetLayout()
+{
+	VkDescriptorSetLayoutCreateInfo ci;
+	ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	ci.pNext = nullptr;
+	ci.flags = 0;
+
+	const U BINDING_COUNT = MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS 
+		+ MAX_STORAGE_BUFFER_BINDINGS;
+	ci.bindingCount = BINDING_COUNT;
+
+	Array<VkDescriptorSetLayoutBinding, BINDING_COUNT> bindings;
+	ci.pBindings = &bindings[0];
+
+	U count = 0;
+
+	// Combined image samplers
+	for(U i = 0; i < MAX_TEXTURE_BINDINGS; ++i)
+	{
+		VkDescriptorSetLayoutBinding& binding = bindings[count];
+		binding.binding = count;
+		binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		binding.descriptorCount = 1;
+		binding.stageFlags = VK_SHADER_STAGE_ALL;
+		binding.pImmutableSamplers = nullptr;
+
+		++count;
+	}
+
+	// Uniform buffers
+	for(U i = 0; i < MAX_UNIFORM_BUFFER_BINDINGS; ++i)
+	{
+		VkDescriptorSetLayoutBinding& binding = bindings[count];
+		binding.binding = count;
+		binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+		binding.descriptorCount = 1;
+		binding.stageFlags = VK_SHADER_STAGE_ALL;
+		binding.pImmutableSamplers = nullptr;
+
+		++count;
+	}
+
+	// Storage buffers
+	for(U i = 0; i < MAX_STORAGE_BUFFER_BINDINGS; ++i)
+	{
+		VkDescriptorSetLayoutBinding& binding = bindings[count];
+		binding.binding = count;
+		binding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
+		binding.descriptorCount = 1;
+		binding.stageFlags = VK_SHADER_STAGE_ALL;
+		binding.pImmutableSamplers = nullptr;
+
+		++count;
+	}
+
+	ANKI_ASSERT(count == BINDING_COUNT);
+
+	ANKI_VK_CHECK(vkCreateDescriptorSetLayout(
+		m_device, &ci, nullptr, &m_globalDescriptorSetLayout));
+}
+
+//==============================================================================
+void GrManagerImpl::initGlobalPplineLayout()
+{
+	Array<VkDescriptorSetLayout, MAX_RESOURCE_GROUPS> sets = {{
+		m_globalDescriptorSetLayout, m_globalDescriptorSetLayout}};
+
+	VkPipelineLayoutCreateInfo ci;
+	ci.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	ci.pNext = nullptr;
+	ci.flags = 0;
+	ci.setLayoutCount = MAX_RESOURCE_GROUPS;
+	ci.pSetLayouts = &sets[0];
+	ci.pushConstantRangeCount = 0;
+	ci.pPushConstantRanges = nullptr;
+
+	ANKI_VK_CHECK(vkCreatePipelineLayout(
+		m_device, &ci, nullptr, &m_globalPipelineLayout));
+}
+
+//==============================================================================
 VkRenderPass GrManagerImpl::getOrCreateCompatibleRenderPass(
 	const PipelineInitInfo& init)
 {

@@ -11,6 +11,9 @@
 namespace anki
 {
 
+// Forward
+class GrManagerImpl;
+
 /// @addtogroup vulkan
 /// @{
 

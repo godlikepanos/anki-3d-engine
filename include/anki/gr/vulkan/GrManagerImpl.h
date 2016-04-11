@@ -20,6 +20,8 @@ public:
 	VkInstance m_instance = VK_NULL_HANDLE;
 	VkDevice m_device = VK_NULL_HANDLE;
 	VkQueue m_queue = VK_NULL_HANDLE;
+	VkDescriptorSetLayout m_globalDescriptorSetLayout = VK_NULL_HANDLE;
+	VkPipelineLayout m_globalPipelineLayout = VK_NULL_HANDLE;
 
 	GrManagerImpl(GrManager* manager)
 		: m_manager(manager)
@@ -28,6 +30,8 @@ public:
 	}
 
 	~GrManagerImpl();
+
+	ANKI_USE_RESULT Error init();
 
 	/// Get or create a compatible render pass for a pipeline.
 	VkRenderPass getOrCreateCompatibleRenderPass(const PipelineInitInfo& init);
@@ -39,6 +43,9 @@ private:
 	/// Map for compatible render passes.
 	class CompatibleRenderPassHashMap;
 	CompatibleRenderPassHashMap* m_renderPasses = nullptr;
+
+	void initGlobalDsetLayout();
+	void initGlobalPplineLayout();
 };
 /// @}
 

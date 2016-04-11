@@ -31,6 +31,8 @@ public:
 
 	GrAllocator<U8> getAllocator() const;
 
+	GrManagerImpl& getGrManagerImpl();
+
 protected:
 	GrManager* m_manager = nullptr;
 };

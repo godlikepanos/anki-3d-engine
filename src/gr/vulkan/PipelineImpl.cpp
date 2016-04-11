@@ -6,6 +6,7 @@
 #include <anki/gr/vulkan/PipelineImpl.h>
 #include <anki/gr/Pipeline.h>
 #include <anki/gr/vulkan/ShaderImpl.h>
+#include <anki/gr/vulkan/GrManagerImpl.h>
 
 namespace anki
 {
@@ -83,8 +84,8 @@ Error PipelineImpl::initGraphics(const PipelineInitInfo& init)
 
 	ci.pVertexInputState = initVertexStage(init.m_vertex, ci.m_vertex);
 
-	ci.layout = 0; // XXX
-	ci.renderPass = 0; // XXX
+	ci.layout = getGrManagerImpl().m_globalPipelineLayout;
+	ci.renderPass = getGrManagerImpl().getOrCreateCompatibleRenderPass(init);
 	ci.basePipelineHandle = VK_NULL_HANDLE;
 
 	return ErrorCode::NONE;

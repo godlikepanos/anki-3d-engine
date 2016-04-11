@@ -16,4 +16,10 @@ VkDevice VulkanObject::getDevice() const
 	return m_manager->getImplementation().m_device;
 }
 
+//==============================================================================
+GrManagerImpl& VulkanObject::getGrManagerImpl()
+{
+	return m_manager->getImplementation();
+}
+
 } // end namespace anki
