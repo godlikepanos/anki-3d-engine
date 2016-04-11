@@ -29,6 +29,8 @@ public:
 	VkPipelineRasterizationStateCreateInfo m_rast;
 	VkPipelineMultisampleStateCreateInfo m_ms;
 	VkPipelineDepthStencilStateCreateInfo m_ds;
+	Array<VkPipelineColorBlendAttachmentState, MAX_COLOR_ATTACHMENTS> 
+		m_attachments;
 	VkPipelineColorBlendStateCreateInfo m_color;
 	VkPipelineDynamicStateCreateInfo m_dyn;
 
@@ -63,6 +65,7 @@ public:
 
 		m_color.sType =
 			VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+		m_color.pAttachments = &m_attachments[0];
 
 		m_dyn.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 	}
@@ -82,11 +85,26 @@ Error PipelineImpl::initGraphics(const PipelineInitInfo& init)
 	ci.pStages = &ci.m_stages[0];
 	initShaders(init, ci);
 
+	// Init sub-states
 	ci.pVertexInputState = initVertexStage(init.m_vertex, ci.m_vertex);
+	ci.pInputAssemblyState = initInputAssemblyState(
+		init.m_inputAssembler, ci.m_ia);
+	ci.pTessellationState = initTessellationState(
+		init.m_tessellation, ci.m_tess);
+	ci.pViewportState = initViewportState(ci.m_vp);
+	ci.pRasterizationState = initRasterizerState(init.m_rasterizer, ci.m_rast);
+	ci.pMultisampleState = initMsState(ci.m_ms);
+	ci.pDepthStencilState = initDsState(init.m_depthStencil, ci.m_ds);
+	ci.pColorBlendState = initColorState(init.m_color, ci.m_color);
+	ci.pDynamicState = nullptr; // No dynamic state as static at the moment
 
+	// Finalize
 	ci.layout = getGrManagerImpl().m_globalPipelineLayout;
 	ci.renderPass = getGrManagerImpl().getOrCreateCompatibleRenderPass(init);
 	ci.basePipelineHandle = VK_NULL_HANDLE;
+
+	ANKI_VK_CHECK(vkCreateGraphicsPipelines(
+		getDevice(), nullptr, 1, &ci, nullptr, &m_handle));
 
 	return ErrorCode::NONE;
 }
@@ -182,7 +200,90 @@ VkPipelineInputAssemblyStateCreateInfo* PipelineImpl::initInputAssemblyState(
 	const InputAssemblerStateInfo& ia,
 	VkPipelineInputAssemblyStateCreateInfo& ci)
 {
-	// TODO
+	ci.topology = convertTopology(ia.m_topology);
+	ci.primitiveRestartEnable = ia.m_primitiveRestartEnabled;
+
+	return &ci;
+}
+
+//==============================================================================
+VkPipelineTessellationStateCreateInfo* PipelineImpl::initTessellationState(
+	const TessellationStateInfo& t, VkPipelineTessellationStateCreateInfo& ci)
+{
+	ci.patchControlPoints = t.m_patchControlPointCount;
+	return &ci;
+}
+
+//==============================================================================
+VkPipelineViewportStateCreateInfo* PipelineImpl::initViewportState(
+	VkPipelineViewportStateCreateInfo& ci)
+{
+	// Viewport is dynamic
+	return nullptr;
+}
+
+//==============================================================================
+VkPipelineRasterizationStateCreateInfo* PipelineImpl::initRasterizerState(
+	const RasterizerStateInfo& r, VkPipelineRasterizationStateCreateInfo& ci)
+{
+	ci.depthClampEnable = VK_FALSE;
+	ci.rasterizerDiscardEnable = VK_FALSE;
+	ci.polygonMode = convertFillMode(r.m_fillMode);
+	ci.cullMode = convertCullMode(r.m_cullMode);
+	ci.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+	ci.depthBiasEnable = VK_FALSE; // Dynamic
+
+	return &ci;
+}
+
+//==============================================================================
+VkPipelineMultisampleStateCreateInfo* PipelineImpl::initMsState(
+	VkPipelineMultisampleStateCreateInfo& ci)
+{
+	// No MS for now
+	return nullptr;
+}
+
+//==============================================================================
+VkPipelineDepthStencilStateCreateInfo* PipelineImpl::initDsState(
+	const DepthStencilStateInfo& ds,
+	VkPipelineDepthStencilStateCreateInfo& ci)
+{
+	ci.depthTestEnable = ds.m_depthCompareFunction != CompareOperation::ALWAYS 
+		|| ds.m_depthWriteEnabled;
+	ci.depthWriteEnable = ds.m_depthWriteEnabled;
+	ci.depthCompareOp = convertCompareOp(ds.m_depthCompareFunction);
+	ci.depthBoundsTestEnable = VK_FALSE;
+	ci.stencilTestEnable = VK_FALSE; // For now no stencil
+
+	return &ci;
+}
+
+//==============================================================================
+VkPipelineColorBlendStateCreateInfo* PipelineImpl::initColorState(
+	const ColorStateInfo& c, VkPipelineColorBlendStateCreateInfo& ci)
+{
+	ci.logicOpEnable = VK_FALSE;
+	ci.attachmentCount = c.m_attachmentCount;
+
+	for(U i = 0; i < ci.attachmentCount; ++i)
+	{
+		VkPipelineColorBlendAttachmentState& out = 
+			const_cast<VkPipelineColorBlendAttachmentState&>(
+				ci.pAttachments[i]);
+		const ColorAttachmentStateInfo& in = c.m_attachments[i];
+		out.blendEnable = !(in.m_srcBlendMethod == BlendMethod::ONE 
+			&& in.m_dstBlendMethod == BlendMethod::ZERO);
+		out.srcColorBlendFactor = convertBlendMethod(in.m_srcBlendMethod);
+		out.dstColorBlendFactor = convertBlendMethod(in.m_dstBlendMethod);
+		out.colorBlendOp = convertBlendFunc(in.m_blendFunction);
+		out.srcAlphaBlendFactor = out.srcColorBlendFactor;
+		out.dstAlphaBlendFactor = out.dstColorBlendFactor;
+		out.alphaBlendOp = out.colorBlendOp;
+
+		out.colorWriteMask = convertColorWriteMask(in.m_channelWriteMask);
+	}
+
 	return &ci;
 }
 

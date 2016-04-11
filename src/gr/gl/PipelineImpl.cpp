@@ -527,7 +527,7 @@ void PipelineImpl::setTessellationState(GlState& state) const
 	state.m_stateHashes.m_tessellation = m_hashes.m_tessellation;
 
 	glPatchParameteri(
-		GL_PATCH_VERTICES, m_in.m_tessellation.m_patchControlPointsCount);
+		GL_PATCH_VERTICES, m_in.m_tessellation.m_patchControlPointCount);
 }
 
 //==============================================================================

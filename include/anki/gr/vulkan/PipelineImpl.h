@@ -13,6 +13,11 @@ namespace anki
 // Forward
 class VertexStateInfo;
 class InputAssemblerStateInfo;
+class TessellationStateInfo;
+class ViewportStateInfo;
+class RasterizerStateInfo;
+class DepthStencilStateInfo;
+class ColorStateInfo;
 
 /// @addtogroup vulkan
 /// @{
@@ -45,6 +50,27 @@ private:
 	ANKI_USE_RESULT VkPipelineInputAssemblyStateCreateInfo*
 	initInputAssemblyState(const InputAssemblerStateInfo& ia,
 		VkPipelineInputAssemblyStateCreateInfo& ci);
+
+	ANKI_USE_RESULT VkPipelineTessellationStateCreateInfo*
+	initTessellationState(const TessellationStateInfo& t,
+		VkPipelineTessellationStateCreateInfo& ci);
+
+	ANKI_USE_RESULT VkPipelineViewportStateCreateInfo*
+	initViewportState(VkPipelineViewportStateCreateInfo& ci);
+
+	ANKI_USE_RESULT VkPipelineRasterizationStateCreateInfo*
+	initRasterizerState(const RasterizerStateInfo& r, 
+		VkPipelineRasterizationStateCreateInfo& ci);
+
+	ANKI_USE_RESULT VkPipelineMultisampleStateCreateInfo* initMsState(
+		VkPipelineMultisampleStateCreateInfo& ci);
+
+	ANKI_USE_RESULT VkPipelineDepthStencilStateCreateInfo* initDsState(
+		const DepthStencilStateInfo& ds,
+		VkPipelineDepthStencilStateCreateInfo& ci);
+
+	ANKI_USE_RESULT VkPipelineColorBlendStateCreateInfo* initColorState(
+		const ColorStateInfo& c, VkPipelineColorBlendStateCreateInfo& ci);
 };
 /// @}
 

@@ -40,10 +40,31 @@ class GrManagerImpl;
 #endif
 
 /// Convert compare op.
-VkCompareOp convertCompareOp(CompareOperation ak);
+ANKI_USE_RESULT VkCompareOp convertCompareOp(CompareOperation ak);
 
 /// Convert format.
-VkFormat convertFormat(PixelFormat ak);
+ANKI_USE_RESULT VkFormat convertFormat(PixelFormat ak);
+
+/// Convert topology.
+ANKI_USE_RESULT VkPrimitiveTopology convertTopology(PrimitiveTopology ak);
+
+/// Convert fill mode.
+ANKI_USE_RESULT VkPolygonMode convertFillMode(FillMode ak);
+
+/// Convert cull mode.
+ANKI_USE_RESULT VkCullModeFlags convertCullMode(CullMode ak);
+
+/// Convert blend method.
+ANKI_USE_RESULT VkBlendFactor convertBlendMethod(BlendMethod ak);
+
+/// Convert blend function.
+ANKI_USE_RESULT VkBlendOp convertBlendFunc(BlendFunction ak);
+
+/// Convert color write mask.
+inline ANKI_USE_RESULT VkColorComponentFlags convertColorWriteMask(ColorBit ak)
+{
+	return static_cast<U>(ak);
+}
 /// @}
 
 } // end namespace anki

@@ -269,4 +269,178 @@ VkFormat convertFormat(PixelFormat ak)
 	return out;
 }
 
+//==============================================================================
+VkPrimitiveTopology convertTopology(PrimitiveTopology ak)
+{
+	VkPrimitiveTopology out = VK_PRIMITIVE_TOPOLOGY_MAX_ENUM;
+	switch(ak)
+	{
+	case POINTS:
+		out = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+		break;
+	case LINES:
+		out = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+		break;
+	case LINE_STIP:
+		out = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
+		break;
+	case TRIANGLES:
+		out = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+		break;
+	case TRIANGLE_STRIP:
+		out = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+		break;
+	case PATCHES:
+		out = VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+
+	return out;
+}
+
+//==============================================================================
+VkPolygonMode convertFillMode(FillMode ak)
+{
+	VkPolygonMode out = VK_POLYGON_MODE_FILL;
+	switch(ak)
+	{
+	case FillMode::POINTS:
+		out = VK_POLYGON_MODE_POINT;
+		break;
+	case FillMode::WIREFRAME:
+		out = VK_POLYGON_MODE_LINE;
+		break;
+	case FillMode::SOLID:
+		out = VK_POLYGON_MODE_FILL;
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+
+	return out;
+}
+
+//==============================================================================
+VkCullModeFlags convertCullMode(CullMode ak)
+{
+	VkCullModeFlags out = 0;
+	switch(ak)
+	{
+	case CullMode::FRONT:
+		out = VK_CULL_MODE_FRONT_BIT;
+		break;
+	case CullMode::BACK:
+		out = VK_CULL_MODE_BACK_BIT;
+		break;
+	case CullMode::FRONT_AND_BACK:
+		out = VK_CULL_MODE_FRONT_BIT | VK_CULL_MODE_BACK_BIT;
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+
+	return out;
+}
+
+//==============================================================================
+VkBlendFactor convertBlendMethod(BlendMethod ak)
+{
+	VkBlendFactor out = VK_BLEND_FACTOR_MAX_ENUM;
+	switch(ak)
+	{
+	case BlendMethod::ZERO:
+		out = VK_BLEND_FACTOR_ZERO;
+		break;
+	case BlendMethod::ONE:
+		out = VK_BLEND_FACTOR_ONE;
+		break;
+	case BlendMethod::SRC_COLOR:
+		out = VK_BLEND_FACTOR_SRC_COLOR;
+		break;
+	case BlendMethod::ONE_MINUS_SRC_COLOR:
+		out = VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR;
+		break;
+	case BlendMethod::DST_COLOR:
+		out = VK_BLEND_FACTOR_DST_COLOR;
+		break;
+	case BlendMethod::ONE_MINUS_DST_COLOR:
+		out = VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR;
+		break;
+	case BlendMethod::SRC_ALPHA:
+		out = VK_BLEND_FACTOR_SRC_ALPHA;
+		break;
+	case BlendMethod::ONE_MINUS_SRC_ALPHA:
+		out = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+		break;
+	case BlendMethod::DST_ALPHA:
+		out = VK_BLEND_FACTOR_DST_ALPHA;
+		break;
+	case BlendMethod::ONE_MINUS_DST_ALPHA:
+		out = VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA;
+		break;
+	case BlendMethod::CONSTANT_COLOR:
+		out = VK_BLEND_FACTOR_CONSTANT_COLOR;
+		break;
+	case BlendMethod::ONE_MINUS_CONSTANT_COLOR:
+		out = VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR;
+		break;
+	case BlendMethod::CONSTANT_ALPHA:
+		out = VK_BLEND_FACTOR_CONSTANT_ALPHA;
+		break;
+	case BlendMethod::ONE_MINUS_CONSTANT_ALPHA:
+		out = VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA;
+		break;
+	case BlendMethod::SRC_ALPHA_SATURATE:
+		out = VK_BLEND_FACTOR_SRC_ALPHA_SATURATE;
+		break;
+	case BlendMethod::SRC1_COLOR:
+		out = VK_BLEND_FACTOR_SRC1_COLOR;
+		break;
+	case BlendMethod::ONE_MINUS_SRC1_COLOR:
+		out = VK_BLEND_FACTOR_ONE_MINUS_SRC1_COLOR;
+		break;
+	case BlendMethod::SRC1_ALPHA:
+		out = VK_BLEND_FACTOR_SRC1_ALPHA;
+		break;
+	case BlendMethod::ONE_MINUS_SRC1_ALPHA:
+		out = VK_BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA;
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+
+	return out;
+}
+
+//==============================================================================
+VkBlendOp convertBlendFunc(BlendFunction ak)
+{
+	VkBlendOp out = VK_BLEND_OP_MAX_ENUM;
+
+	switch(ak)
+	{
+	case BlendFunction::ADD:
+		out = VK_BLEND_OP_ADD;
+		break;
+	case BlendFunction::SUBTRACT:
+		out = VK_BLEND_OP_SUBTRACT;
+		break;
+	case BlendFunction::REVERSE_SUBTRACT:
+		out = VK_BLEND_OP_REVERSE_SUBTRACT;
+		break;
+	case BlendFunction::MIN:
+		out = VK_BLEND_OP_MIN;
+		break;
+	case BlendFunction::MAX:
+		out = VK_BLEND_OP_MAX;
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+
+	return out;
+}
+
 } // end namespace anki

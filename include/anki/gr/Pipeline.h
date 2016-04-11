@@ -49,7 +49,7 @@ public:
 class TessellationStateInfo
 {
 public:
-	U32 m_patchControlPointsCount = 3;
+	U32 m_patchControlPointCount = 3;
 };
 
 class ViewportStateInfo
