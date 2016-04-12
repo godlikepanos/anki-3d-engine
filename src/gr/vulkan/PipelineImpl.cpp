@@ -78,7 +78,7 @@ static const FilledGraphicsPipelineCreateInfo FILLED;
 //==============================================================================
 
 //==============================================================================
-Error PipelineImpl::initGraphics(const PipelineInitInfo& init)
+void PipelineImpl::initGraphics(const PipelineInitInfo& init)
 {
 	FilledGraphicsPipelineCreateInfo ci = FILLED;
 
@@ -105,8 +105,29 @@ Error PipelineImpl::initGraphics(const PipelineInitInfo& init)
 
 	ANKI_VK_CHECK(vkCreateGraphicsPipelines(
 		getDevice(), nullptr, 1, &ci, nullptr, &m_handle));
+}
 
-	return ErrorCode::NONE;
+//==============================================================================
+void PipelineImpl::initCompute(const PipelineInitInfo& init)
+{
+	VkComputePipelineCreateInfo ci;
+	ci.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+	ci.pNext = nullptr;
+	ci.layout = getGrManagerImpl().m_globalPipelineLayout;
+	ci.basePipelineHandle = VK_NULL_HANDLE;
+
+	VkPipelineShaderStageCreateInfo& stage = ci.stage;
+	stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	stage.pNext = nullptr;
+	stage.flags = 0;
+	stage.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+	stage.module = 
+		init.m_shaders[ShaderType::COMPUTE]->getImplementation().m_handle;
+	stage.pName = "main";
+	stage.pSpecializationInfo = nullptr;
+
+	ANKI_VK_CHECK(vkCreateComputePipelines(
+		getDevice(), nullptr, 1, &ci, nullptr, &m_handle));
 }
 
 //==============================================================================
@@ -288,10 +309,16 @@ VkPipelineColorBlendStateCreateInfo* PipelineImpl::initColorState(
 }
 
 //==============================================================================
-Error PipelineImpl::init(const PipelineInitInfo& init)
+void PipelineImpl::init(const PipelineInitInfo& init)
 {
-
-	return ErrorCode::NONE;
+	if(init.m_shaders[ShaderType::COMPUTE].isCreated())
+	{
+		initCompute(init);
+	}
+	else
+	{
+		initGraphics(init);
+	}
 }
 
 } // end namespace anki

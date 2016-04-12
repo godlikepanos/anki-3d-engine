@@ -4,3 +4,29 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/gr/Pipeline.h>
+#include <anki/gr/vulkan/PipelineImpl.h>
+#include <anki/core/Trace.h>
+
+namespace anki
+{
+
+//==============================================================================
+Pipeline::Pipeline(GrManager* manager, U64 hash)
+	: GrObject(manager, CLASS_TYPE, hash)
+{
+	ANKI_TRACE_INC_COUNTER(GR_PIPELINES_CREATED, 1);
+}
+
+//==============================================================================
+Pipeline::~Pipeline()
+{
+}
+
+//==============================================================================
+void Pipeline::init(const PipelineInitInfo& init)
+{
+	m_impl.reset(getAllocator().newInstance<PipelineImpl>(&getManager()));
+	m_impl->init(init);
+}
+
+} // end namespace anki

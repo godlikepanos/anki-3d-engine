@@ -35,10 +35,12 @@ public:
 
 	~PipelineImpl();
 
-	ANKI_USE_RESULT Error init(const PipelineInitInfo& init);
+	void init(const PipelineInitInfo& init);
 
 private:
-	ANKI_USE_RESULT Error initGraphics(const PipelineInitInfo& init);
+	void initGraphics(const PipelineInitInfo& init);
+
+	void initCompute(const PipelineInitInfo& init);
 
 	void initShaders(
 		const PipelineInitInfo& init, VkGraphicsPipelineCreateInfo& ci);
