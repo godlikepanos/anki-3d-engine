@@ -47,7 +47,7 @@ Error DownscaleBlur::initSubpass(U idx, const UVec2& inputTexSize)
 
 	// FB
 	FramebufferInitInfo fbInit;
-	fbInit.m_colorAttachmentsCount = 1;
+	fbInit.m_colorAttachmentCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_r->getIs().getRt();
 	fbInit.m_colorAttachments[0].m_loadOperation =
 		AttachmentLoadOperation::DONT_CARE;

@@ -85,7 +85,7 @@ void GrManagerImpl::initGlobalDsetLayout()
 	ci.pNext = nullptr;
 	ci.flags = 0;
 
-	const U BINDING_COUNT = MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS 
+	const U BINDING_COUNT = MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS
 		+ MAX_STORAGE_BUFFER_BINDINGS;
 	ci.bindingCount = BINDING_COUNT;
 
@@ -142,8 +142,8 @@ void GrManagerImpl::initGlobalDsetLayout()
 //==============================================================================
 void GrManagerImpl::initGlobalPplineLayout()
 {
-	Array<VkDescriptorSetLayout, MAX_RESOURCE_GROUPS> sets = {{
-		m_globalDescriptorSetLayout, m_globalDescriptorSetLayout}};
+	Array<VkDescriptorSetLayout, MAX_RESOURCE_GROUPS> sets = {
+		{m_globalDescriptorSetLayout, m_globalDescriptorSetLayout}};
 
 	VkPipelineLayoutCreateInfo ci;
 	ci.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;

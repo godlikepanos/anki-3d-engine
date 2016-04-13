@@ -292,7 +292,7 @@ Error Ir::renderReflection(RenderingContext& ctx,
 		cmdb->bindResourceGroup(m_computeIrradianceResources, 0, &dinf);
 
 		FramebufferInitInfo fbinit;
-		fbinit.m_colorAttachmentsCount = 1;
+		fbinit.m_colorAttachmentCount = 1;
 		fbinit.m_colorAttachments[0].m_texture = m_irradianceCubemapArr;
 		fbinit.m_colorAttachments[0].m_arrayIndex = cubemapIdx;
 		fbinit.m_colorAttachments[0].m_faceIndex = i;

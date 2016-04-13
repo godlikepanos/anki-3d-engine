@@ -58,7 +58,7 @@ class FramebufferInitInfo
 {
 public:
 	Array<Attachment, MAX_COLOR_ATTACHMENTS> m_colorAttachments;
-	U32 m_colorAttachmentsCount = 0;
+	U32 m_colorAttachmentCount = 0;
 	Attachment m_depthStencilAttachment;
 
 	FramebufferInitInfo() = default;
@@ -72,12 +72,12 @@ public:
 
 	FramebufferInitInfo& operator=(const FramebufferInitInfo& b)
 	{
-		for(U i = 0; i < b.m_colorAttachmentsCount; i++)
+		for(U i = 0; i < b.m_colorAttachmentCount; i++)
 		{
 			m_colorAttachments[i] = b.m_colorAttachments[i];
 		}
 
-		m_colorAttachmentsCount = b.m_colorAttachmentsCount;
+		m_colorAttachmentCount = b.m_colorAttachmentCount;
 		m_depthStencilAttachment = b.m_depthStencilAttachment;
 		return *this;
 	}

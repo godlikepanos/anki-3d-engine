@@ -10,6 +10,9 @@
 namespace anki
 {
 
+// Forward
+class Attachment;
+
 /// @addtogroup vulkan
 /// @{
 
@@ -17,12 +20,25 @@ namespace anki
 class FramebufferImpl : public VulkanObject
 {
 public:
+	VkFramebuffer m_framebuffer = VK_NULL_HANDLE;
+	VkRenderPass m_renderPass = VK_NULL_HANDLE;
+
 	FramebufferImpl(GrManager* manager)
 		: VulkanObject(manager)
 	{
 	}
 
 	~FramebufferImpl();
+
+	void init(const FramebufferInitInfo& init);
+
+private:
+	void initRenderPass(const FramebufferInitInfo& init);
+
+	void setupAttachmentDescriptor(
+		const Attachment& in, VkAttachmentDescription& out, Bool depthStencil);
+
+	void initFramebuffer(const FramebufferInitInfo& init);
 };
 /// @}
 

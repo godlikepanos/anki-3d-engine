@@ -71,7 +71,7 @@ Error Ms::createRt(U32 samples)
 #endif
 
 	FramebufferInitInfo fbInit;
-	fbInit.m_colorAttachmentsCount = ATTACHMENT_COUNT;
+	fbInit.m_colorAttachmentCount = ATTACHMENT_COUNT;
 	fbInit.m_colorAttachments[0].m_texture = m_rt0;
 	fbInit.m_colorAttachments[0].m_loadOperation = loadop;
 	fbInit.m_colorAttachments[0].m_clearValue.m_colorf = {{1.0, 0.0, 0.0, 0.0}};

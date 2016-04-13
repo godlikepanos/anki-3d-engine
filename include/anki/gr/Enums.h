@@ -276,7 +276,6 @@ enum class AttachmentLoadOperation : U8
 enum class AttachmentStoreOperation : U8
 {
 	STORE,
-	RESOLVE_MSAA,
 	DONT_CARE
 };
 

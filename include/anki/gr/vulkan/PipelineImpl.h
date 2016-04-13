@@ -57,11 +57,11 @@ private:
 	initTessellationState(const TessellationStateInfo& t,
 		VkPipelineTessellationStateCreateInfo& ci);
 
-	ANKI_USE_RESULT VkPipelineViewportStateCreateInfo*
-	initViewportState(VkPipelineViewportStateCreateInfo& ci);
+	ANKI_USE_RESULT VkPipelineViewportStateCreateInfo* initViewportState(
+		VkPipelineViewportStateCreateInfo& ci);
 
-	ANKI_USE_RESULT VkPipelineRasterizationStateCreateInfo*
-	initRasterizerState(const RasterizerStateInfo& r, 
+	ANKI_USE_RESULT VkPipelineRasterizationStateCreateInfo* initRasterizerState(
+		const RasterizerStateInfo& r,
 		VkPipelineRasterizationStateCreateInfo& ci);
 
 	ANKI_USE_RESULT VkPipelineMultisampleStateCreateInfo* initMsState(

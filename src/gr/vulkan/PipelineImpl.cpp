@@ -29,7 +29,7 @@ public:
 	VkPipelineRasterizationStateCreateInfo m_rast;
 	VkPipelineMultisampleStateCreateInfo m_ms;
 	VkPipelineDepthStencilStateCreateInfo m_ds;
-	Array<VkPipelineColorBlendAttachmentState, MAX_COLOR_ATTACHMENTS> 
+	Array<VkPipelineColorBlendAttachmentState, MAX_COLOR_ATTACHMENTS>
 		m_attachments;
 	VkPipelineColorBlendStateCreateInfo m_color;
 	VkPipelineDynamicStateCreateInfo m_dyn;
@@ -78,6 +78,15 @@ static const FilledGraphicsPipelineCreateInfo FILLED;
 //==============================================================================
 
 //==============================================================================
+PipelineImpl::~PipelineImpl()
+{
+	if(m_handle)
+	{
+		vkDestroyPipeline(getDevice(), m_handle, nullptr);
+	}
+}
+
+//==============================================================================
 void PipelineImpl::initGraphics(const PipelineInitInfo& init)
 {
 	FilledGraphicsPipelineCreateInfo ci = FILLED;
@@ -87,10 +96,10 @@ void PipelineImpl::initGraphics(const PipelineInitInfo& init)
 
 	// Init sub-states
 	ci.pVertexInputState = initVertexStage(init.m_vertex, ci.m_vertex);
-	ci.pInputAssemblyState = initInputAssemblyState(
-		init.m_inputAssembler, ci.m_ia);
-	ci.pTessellationState = initTessellationState(
-		init.m_tessellation, ci.m_tess);
+	ci.pInputAssemblyState =
+		initInputAssemblyState(init.m_inputAssembler, ci.m_ia);
+	ci.pTessellationState =
+		initTessellationState(init.m_tessellation, ci.m_tess);
 	ci.pViewportState = initViewportState(ci.m_vp);
 	ci.pRasterizationState = initRasterizerState(init.m_rasterizer, ci.m_rast);
 	ci.pMultisampleState = initMsState(ci.m_ms);
@@ -121,7 +130,7 @@ void PipelineImpl::initCompute(const PipelineInitInfo& init)
 	stage.pNext = nullptr;
 	stage.flags = 0;
 	stage.stage = VK_SHADER_STAGE_COMPUTE_BIT;
-	stage.module = 
+	stage.module =
 		init.m_shaders[ShaderType::COMPUTE]->getImplementation().m_handle;
 	stage.pName = "main";
 	stage.pSpecializationInfo = nullptr;
@@ -267,10 +276,9 @@ VkPipelineMultisampleStateCreateInfo* PipelineImpl::initMsState(
 
 //==============================================================================
 VkPipelineDepthStencilStateCreateInfo* PipelineImpl::initDsState(
-	const DepthStencilStateInfo& ds,
-	VkPipelineDepthStencilStateCreateInfo& ci)
+	const DepthStencilStateInfo& ds, VkPipelineDepthStencilStateCreateInfo& ci)
 {
-	ci.depthTestEnable = ds.m_depthCompareFunction != CompareOperation::ALWAYS 
+	ci.depthTestEnable = ds.m_depthCompareFunction != CompareOperation::ALWAYS
 		|| ds.m_depthWriteEnabled;
 	ci.depthWriteEnable = ds.m_depthWriteEnabled;
 	ci.depthCompareOp = convertCompareOp(ds.m_depthCompareFunction);
@@ -289,11 +297,11 @@ VkPipelineColorBlendStateCreateInfo* PipelineImpl::initColorState(
 
 	for(U i = 0; i < ci.attachmentCount; ++i)
 	{
-		VkPipelineColorBlendAttachmentState& out = 
+		VkPipelineColorBlendAttachmentState& out =
 			const_cast<VkPipelineColorBlendAttachmentState&>(
 				ci.pAttachments[i]);
 		const ColorAttachmentStateInfo& in = c.m_attachments[i];
-		out.blendEnable = !(in.m_srcBlendMethod == BlendMethod::ONE 
+		out.blendEnable = !(in.m_srcBlendMethod == BlendMethod::ONE
 			&& in.m_dstBlendMethod == BlendMethod::ZERO);
 		out.srcColorBlendFactor = convertBlendMethod(in.m_srcBlendMethod);
 		out.dstColorBlendFactor = convertBlendMethod(in.m_dstBlendMethod);

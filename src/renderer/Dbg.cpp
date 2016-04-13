@@ -49,7 +49,7 @@ Error Dbg::init(const ConfigSet& initializer)
 
 	// Chose the correct color FAI
 	FramebufferInitInfo fbInit;
-	fbInit.m_colorAttachmentsCount = 1;
+	fbInit.m_colorAttachmentCount = 1;
 	fbInit.m_depthStencilAttachment.m_texture = m_r->getMs().getDepthRt();
 	fbInit.m_depthStencilAttachment.m_loadOperation =
 		AttachmentLoadOperation::LOAD;

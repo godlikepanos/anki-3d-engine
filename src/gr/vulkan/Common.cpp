@@ -443,4 +443,47 @@ VkBlendOp convertBlendFunc(BlendFunction ak)
 	return out;
 }
 
+//==============================================================================
+VkAttachmentLoadOp convertLoadOp(AttachmentLoadOperation ak)
+{
+	VkAttachmentLoadOp out = VK_ATTACHMENT_LOAD_OP_MAX_ENUM;
+
+	switch(ak)
+	{
+	case AttachmentLoadOperation::LOAD:
+		out = VK_ATTACHMENT_LOAD_OP_LOAD;
+		break;
+	case AttachmentLoadOperation::CLEAR:
+		out = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		break;
+	case AttachmentLoadOperation::DONT_CARE:
+		out = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+
+	return out;
+}
+
+//==============================================================================
+VkAttachmentStoreOp convertStoreOp(AttachmentStoreOperation ak)
+{
+	VkAttachmentStoreOp out = VK_ATTACHMENT_STORE_OP_MAX_ENUM;
+
+	switch(ak)
+	{
+	case AttachmentStoreOperation::STORE:
+		out = VK_ATTACHMENT_STORE_OP_STORE;
+		break;
+	case AttachmentStoreOperation::DONT_CARE:
+		out = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+
+	return out;
+}
+
 } // end namespace anki

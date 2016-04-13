@@ -422,7 +422,7 @@ Error Is::initInternal(const ConfigSet& config)
 		m_rt);
 
 	FramebufferInitInfo fbInit;
-	fbInit.m_colorAttachmentsCount = 1;
+	fbInit.m_colorAttachmentCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation =
 		AttachmentLoadOperation::DONT_CARE;

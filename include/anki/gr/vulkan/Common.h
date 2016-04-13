@@ -65,6 +65,12 @@ inline ANKI_USE_RESULT VkColorComponentFlags convertColorWriteMask(ColorBit ak)
 {
 	return static_cast<U>(ak);
 }
+
+/// Convert load op.
+ANKI_USE_RESULT VkAttachmentLoadOp convertLoadOp(AttachmentLoadOperation ak);
+
+/// Convert store op.
+ANKI_USE_RESULT VkAttachmentStoreOp convertStoreOp(AttachmentStoreOperation ak);
 /// @}
 
 } // end namespace anki
