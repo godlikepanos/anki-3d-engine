@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/gr/vulkan/Common.h>
+#include <anki/gr/vulkan/GpuMemoryAllocator.h>
 
 namespace anki
 {
@@ -18,6 +19,7 @@ class GrManagerImpl
 {
 public:
 	VkInstance m_instance = VK_NULL_HANDLE;
+	VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
 	VkDevice m_device = VK_NULL_HANDLE;
 	VkQueue m_queue = VK_NULL_HANDLE;
 	VkDescriptorSetLayout m_globalDescriptorSetLayout = VK_NULL_HANDLE;
@@ -44,8 +46,23 @@ private:
 	class CompatibleRenderPassHashMap;
 	CompatibleRenderPassHashMap* m_renderPasses = nullptr;
 
+	/// @name Memory
+	/// @{
+	VkPhysicalDeviceMemoryProperties m_memoryProperties;
+
+	/// One for each mem type.
+	DynamicArray<GpuMemoryAllocator> m_gpuMemAllocs;
+	/// @}
+
 	void initGlobalDsetLayout();
 	void initGlobalPplineLayout();
+
+	void initMemory();
+
+	/// Find a suitable memory type.
+	U findMemoryType(U resourceMemTypeBits,
+		VkMemoryPropertyFlags preferFlags,
+		VkMemoryPropertyFlags avoidFlags) const;
 };
 /// @}
 

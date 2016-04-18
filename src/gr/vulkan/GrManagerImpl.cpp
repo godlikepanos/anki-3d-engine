@@ -73,6 +73,7 @@ Error GrManagerImpl::init()
 {
 	initGlobalDsetLayout();
 	initGlobalPplineLayout();
+	initMemory();
 
 	return ErrorCode::NONE;
 }
@@ -266,6 +267,58 @@ VkRenderPass GrManagerImpl::getOrCreateCompatibleRenderPass(
 	}
 
 	return out;
+}
+
+//==============================================================================
+void GrManagerImpl::initMemory()
+{
+	vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &m_memoryProperties);
+
+	m_gpuMemAllocs.create(m_alloc, m_memoryProperties.memoryTypeCount);
+	U idx = 0;
+	for(GpuMemoryAllocator& alloc : m_gpuMemAllocs)
+	{
+		alloc.init(m_alloc, m_device, idx++, 50 * 1024 * 1024, 1.0, 0);
+	}
+}
+
+//==============================================================================
+U GrManagerImpl::findMemoryType(U resourceMemTypeBits,
+	VkMemoryPropertyFlags preferFlags,
+	VkMemoryPropertyFlags avoidFlags) const
+{
+	U preferedHigh = MAX_U32;
+	U preferedMed = MAX_U32;
+
+	// Iterate all mem types
+	for(U i = 0; i < m_memoryProperties.memoryTypeCount; i++)
+	{
+		if(resourceMemTypeBits & (1u << i))
+		{
+			VkMemoryPropertyFlags flags =
+				m_memoryProperties.memoryTypes[i].propertyFlags;
+
+			if((flags & preferFlags) == preferFlags)
+			{
+				preferedMed = i;
+
+				if((flags & avoidFlags) != avoidFlags)
+				{
+					preferedHigh = i;
+				}
+			}
+		}
+	}
+
+	if(preferedHigh < MAX_U32)
+	{
+		return preferedHigh;
+	}
+	else
+	{
+		ANKI_ASSERT(preferedMed < MAX_U32);
+		return preferedMed;
+	}
 }
 
 } // end namespace anki

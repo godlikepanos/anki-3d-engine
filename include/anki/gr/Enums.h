@@ -14,7 +14,6 @@ namespace anki
 
 /// @addtogroup graphics
 /// @{
-
 enum ColorBit : U8
 {
 	NONE = 0,
