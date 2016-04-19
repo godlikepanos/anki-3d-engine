@@ -151,7 +151,7 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 	std::string materialStr;
 	materialStr = R"(<?xml version="1.0" encoding="UTF-8" ?>)";
 	materialStr += "\n<material>\n\t<programs>\n";
-	if(dispTex.empty())
+	if(/*dispTex.empty()*/ 1)
 	{
 		materialStr += simpleVertTemplate;
 	}
@@ -430,6 +430,67 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 
 		materialStr =
 			replaceAllString(materialStr, "%metallicArg%", "metallic");
+	}
+
+	// Height to parallax
+	if(!dispTex.empty())
+	{
+		materialStr = replaceAllString(materialStr,
+			"%heightVertInput%",
+			"<input><type>mat4</type><name>anki_mv"
+			"</name><inShadow>0</inShadow></input>");
+
+		materialStr = replaceAllString(materialStr,
+			"%heightVertFunc%",
+			R"(<operation>
+					<id>2</id>
+					<returnType>void</returnType>
+					<function>writeVertPosViewSpace</function>
+					<arguments><argument>anki_mv</argument></arguments>
+				</operation>)");
+
+		materialStr = replaceAllString(materialStr,
+			"%heightInput%",
+			"<input><type>sampler2D</type><name>heightMap</name>"
+			"<value>"
+				+ m_texrpath
+				+ dispTex
+				+ "</value></input>\n"
+				  "\t\t\t\t<input><type>float</type><name>heightMapScale</name>"
+				  "<value>0.05</value><const>1</const></input>");
+
+		// At this point everyone will have to use out4 as tex coords
+		materialStr = replaceAllString(materialStr,
+			"<argument>out2</argument>",
+			"<argument>out4</argument>");
+
+		materialStr = replaceAllString(materialStr,
+			"%heightFunc%",
+			R"(<operation>
+					<id>3</id>
+					<returnType>vec3</returnType>
+					<function>getPositionViewSpace</function>
+				</operation>
+				<operation>
+					<id>4</id>
+					<returnType>vec2</returnType>
+					<function>computeTextureCoordParalax</function>
+					<arguments>
+						<argument>heightMap</argument>
+						<argument>out2</argument>
+						<argument>out3</argument>
+						<argument>out0</argument>
+						<argument>out1</argument>
+						<argument>heightMapScale</argument>
+					</arguments>
+				</operation>)");
+	}
+	else
+	{
+		materialStr = replaceAllString(materialStr, "%heightVertInput%", " ");
+		materialStr = replaceAllString(materialStr, "%heightVertFunc%", " ");
+		materialStr = replaceAllString(materialStr, "%heightInput%", " ");
+		materialStr = replaceAllString(materialStr, "%heightFunc%", " ");
 	}
 
 	// Continue

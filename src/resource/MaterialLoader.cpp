@@ -536,6 +536,7 @@ Error MaterialLoader::parseInputsTag(const XmlElement& programEl)
 
 		// Check if instanced
 		if(in.m_builtin == BuiltinMaterialVariableId::MVP_MATRIX
+			|| in.m_builtin == BuiltinMaterialVariableId::MV_MATRIX
 			|| in.m_builtin == BuiltinMaterialVariableId::NORMAL_MATRIX
 			|| in.m_builtin == BuiltinMaterialVariableId::BILLBOARD_MVP_MATRIX)
 		{

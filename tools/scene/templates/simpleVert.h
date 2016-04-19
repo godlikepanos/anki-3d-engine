@@ -7,6 +7,7 @@ R"(		<program>
 			<inputs>
 				<input><type>mat4</type><name>anki_mvp</name></input>
 				<input><type>mat3</type><name>anki_n</name><inShadow>0</inShadow></input>
+				%heightVertInput%
 			</inputs>
 
 			<operations>
@@ -22,5 +23,6 @@ R"(		<program>
 					<function>writeNormalAndTangent</function>
 					<arguments><argument>anki_n</argument></arguments>
 				</operation>
+				%heightVertFunc%
 			</operations>
 		</program>)"

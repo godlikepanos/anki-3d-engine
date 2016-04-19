@@ -13,6 +13,7 @@ R"(		<program>
 				%subsurfaceInput%
 				%emissionInput%
 				%metallicInput%
+				%heightInput%
 			</inputs>
 
 			<operations>
@@ -31,6 +32,7 @@ R"(		<program>
 					<returnType>vec2</returnType>
 					<function>getTextureCoord</function>
 				</operation>
+				%heightFunc%
 				%diffuseColorFunc%
 				%normalFunc%
 				%specularColorFunc%

@@ -209,6 +209,89 @@ float readRFromTexture(in sampler2D tex, in highp vec2 texCoords)
 }
 #endif
 
+#define computeTextureCoordParalax_DEFINED
+vec2 computeTextureCoordParalax(in sampler2D heightMap,
+	in vec2 uv,
+	in vec3 posView,
+	in vec3 normal,
+	in vec4 tangent,
+	in float heightMapScale)
+{
+#if PASS == COLOR && LOD == 0
+	const uint MAX_SAMPLES = 25;
+	const uint MIN_SAMPLES = 3;
+	const float MAX_EFFECTIVE_DISTANCE = 10.0;
+
+	// Get that because we are sampling inside a loop
+	vec2 dPdx = dFdx(uv);
+	vec2 dPdy = dFdy(uv);
+
+	vec3 n = normal; // Assume that getNormal() is called
+	vec3 t = normalize(tangent.xyz);
+	vec3 b = cross(n, t) * tangent.w;
+	mat3 invTbn = transpose(mat3(t, b, n));
+
+	vec3 eyeTangentSpace = invTbn * posView;
+	vec3 normTangentSpace = invTbn * n;
+
+	float parallaxLimit = -length(eyeTangentSpace.xy) / eyeTangentSpace.z;
+	parallaxLimit *= heightMapScale;
+
+	vec2 offsetDir = normalize(eyeTangentSpace.xy);
+	vec2 maxOffset = offsetDir * parallaxLimit;
+
+	vec3 E = normalize(eyeTangentSpace);
+
+	float sampleCountf =
+		mix(MAX_SAMPLES, MIN_SAMPLES, 
+		min(dot(E, normTangentSpace), posView.z / -MAX_EFFECTIVE_DISTANCE));
+
+	float stepSize = 1.0 / sampleCountf;
+
+	float crntRayHeight = 1.0;
+	vec2 crntOffset = vec2(0.0);
+	vec2 lastOffset = vec2(0.0);
+
+	float lastSampledHeight = 1.0;
+	float crntSampledHeight = 1.0;
+
+	uint crntSample = 0;
+
+	uint sampleCount = uint(sampleCountf);
+	while(crntSample < sampleCount)
+	{
+		crntSampledHeight =
+			textureGrad(heightMap, uv + crntOffset, dPdx, dPdy).r;
+
+		if(crntSampledHeight > crntRayHeight)
+		{
+			float delta1 = crntSampledHeight - crntRayHeight;
+			float delta2 = (crntRayHeight + stepSize) - lastSampledHeight;
+			float ratio = delta1 / (delta1 + delta2);
+
+			crntOffset = mix(crntOffset, lastOffset, ratio);
+
+			crntSample = sampleCount + 1;
+		}
+		else
+		{
+			crntSample++;
+
+			crntRayHeight -= stepSize;
+
+			lastOffset = crntOffset;
+			crntOffset += stepSize * maxOffset;
+
+			lastSampledHeight = crntSampledHeight;
+		}
+	}
+
+	return uv + crntOffset;
+#else
+	return uv;
+#endif
+}
+
 // Write the data to FAIs
 #if PASS == COLOR
 #define writeRts_DEFINED
