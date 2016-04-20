@@ -23,6 +23,7 @@ class ReflectionProbe : public SceneNode
 
 public:
 	const F32 FRUSTUM_NEAR_PLANE = 0.1 / 4.0;
+	const F32 EFFECTIVE_DISTANCE = 256.0;
 
 	ReflectionProbe(SceneGraph* scene)
 		: SceneNode(scene)

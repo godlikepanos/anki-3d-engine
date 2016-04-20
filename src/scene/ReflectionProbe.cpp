@@ -98,7 +98,7 @@ Error ReflectionProbe::init(const CString& name, F32 radius)
 		m_cubeSides[i].m_localTrf.setOrigin(Vec4(0.0));
 		m_cubeSides[i].m_localTrf.setScale(1.0);
 
-		m_cubeSides[i].m_frustum.setAll(ang, ang, zNear, radius);
+		m_cubeSides[i].m_frustum.setAll(ang, ang, zNear, EFFECTIVE_DISTANCE);
 		m_cubeSides[i].m_frustum.resetTransform(m_cubeSides[i].m_localTrf);
 
 		FrustumComponent* frc =

@@ -5,6 +5,8 @@
 AnKi 3D engine is a Linux and Windows opensource game engine that runs on
 OpenGL 4.4.
 
+[![Video](http://img.youtube.com/vi/va7nZ2EFR4c/0.jpg)](http://www.youtube.com/watch?v=va7nZ2EFR4c)
+
 License
 =======
 

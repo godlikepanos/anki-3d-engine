@@ -242,8 +242,8 @@ vec2 computeTextureCoordParalax(in sampler2D heightMap,
 
 	vec3 E = normalize(eyeTangentSpace);
 
-	float sampleCountf =
-		mix(MAX_SAMPLES, MIN_SAMPLES, 
+	float sampleCountf = mix(MAX_SAMPLES,
+		MIN_SAMPLES,
 		min(dot(E, normTangentSpace), posView.z / -MAX_EFFECTIVE_DISTANCE));
 
 	float stepSize = 1.0 / sampleCountf;

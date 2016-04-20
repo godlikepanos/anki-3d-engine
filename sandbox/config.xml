@@ -35,7 +35,7 @@
 	<tm.enabled>1</tm.enabled>
 	<width>1920</width>
 	<height>1088</height>
-	<renderingQuality>1</renderingQuality>
+	<renderingQuality>0.6</renderingQuality>
 	<lodDistance>20</lodDistance>
 	<samples>1</samples>
 	<tessellation>1</tessellation>

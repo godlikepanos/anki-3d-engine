@@ -6,11 +6,11 @@
 #include <cstdio>
 #include <iostream>
 #include <fstream>
-#include "anki/AnKi.h"
+#include <anki/AnKi.h>
 
 using namespace anki;
 
-#define PLAYER 0
+#define PLAYER 1
 #define MOUSE 1
 
 class MyApp : public App
@@ -69,6 +69,21 @@ Error MyApp::init(int argc, char* argv[])
 
 	ANKI_CHECK(renderer.getOffscreenRenderer().getPps().loadColorGradingTexture(
 		"textures/adis/dungeon.ankitex"));
+
+#if PLAYER
+	SceneNode& cam = scene.getActiveCamera();
+
+	PlayerNode* pnode;
+	ANKI_CHECK(scene.newSceneNode<PlayerNode>("player",
+		pnode,
+		cam.getComponent<MoveComponent>().getLocalOrigin()
+			- Vec4(0.0, 1.0, 0.0, 0.0)));
+
+	cam.getComponent<MoveComponent>().setLocalTransform(Transform(
+		Vec4(0.0), Mat3x4(Euler(toRad(0.0), toRad(180.0), toRad(0.0))), 1.0));
+
+	pnode->addChild(&cam);
+#endif
 
 	return ErrorCode::NONE;
 }
