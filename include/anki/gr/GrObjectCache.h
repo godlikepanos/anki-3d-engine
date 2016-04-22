@@ -40,6 +40,7 @@ public:
 	/// Register object in the cache.
 	void registerObject(GrObject* obj)
 	{
+		ANKI_ASSERT(obj && obj->getHash() != 0);
 		ANKI_ASSERT(obj->getHash() != 0);
 		ANKI_ASSERT(tryFind(obj->getHash()) == nullptr);
 		m_map.pushBack(m_alloc, obj->getHash(), obj);
@@ -48,6 +49,7 @@ public:
 	/// Unregister an object from the cache.
 	void unregisterObject(GrObject* obj)
 	{
+		ANKI_ASSERT(obj && obj->getHash() != 0);
 		ANKI_ASSERT(tryFind(obj->getHash()) != nullptr);
 		auto it = m_map.find(obj->getHash());
 		m_map.erase(m_alloc, it);

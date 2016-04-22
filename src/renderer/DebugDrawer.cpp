@@ -547,12 +547,41 @@ void SceneDebugDrawer::draw(SpatialComponent& x) const
 }
 
 //==============================================================================
-void SceneDebugDrawer::draw(const PortalSectorComponent& c) const
+void SceneDebugDrawer::draw(const SectorComponent& c) const
 {
 	const SceneNode& node = c.getSceneNode();
 	const PortalSectorBase& psnode = static_cast<const PortalSectorBase&>(node);
 
 	m_dbg->setColor(Vec3(0.0, 0.0, 1.0));
+
+	m_dbg->begin(PrimitiveTopology::LINES);
+	const auto& verts = psnode.getVertices();
+	ANKI_ASSERT((psnode.getVertexIndices().getSize() % 3) == 0);
+	for(U i = 0; i < psnode.getVertexIndices().getSize(); i += 3)
+	{
+		I id0 = psnode.getVertexIndices()[i];
+		I id1 = psnode.getVertexIndices()[i + 1];
+		I id2 = psnode.getVertexIndices()[i + 2];
+
+		m_dbg->pushBackVertex(verts[id0].xyz());
+		m_dbg->pushBackVertex(verts[id1].xyz());
+
+		m_dbg->pushBackVertex(verts[id1].xyz());
+		m_dbg->pushBackVertex(verts[id2].xyz());
+
+		m_dbg->pushBackVertex(verts[id2].xyz());
+		m_dbg->pushBackVertex(verts[id0].xyz());
+	}
+	m_dbg->end();
+}
+
+//==============================================================================
+void SceneDebugDrawer::draw(const PortalComponent& c) const
+{
+	const SceneNode& node = c.getSceneNode();
+	const PortalSectorBase& psnode = static_cast<const PortalSectorBase&>(node);
+
+	m_dbg->setColor(Vec3(0.0, 0.0, 0.5));
 
 	m_dbg->begin(PrimitiveTopology::LINES);
 	const auto& verts = psnode.getVertices();

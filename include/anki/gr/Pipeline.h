@@ -113,11 +113,11 @@ class PipelineInitInfoState
 public:
 	PipelineInitInfoState()
 	{
-// Do a special construction. The state will be hashed and the padding
-// may contain garbage. With this trick zero the padding
-#define ANKI_CONSTRUCT_AND_ZERO_PADDING(member_)                               \
-	memset(&member_, 0, sizeof(member_));                                      \
-	new(&member_) decltype(member_)()
+		// Do a special construction. The state will be hashed and the padding
+		// may contain garbage. With this trick zero the padding
+		memset(this, 0, sizeof(*this));
+
+#define ANKI_CONSTRUCT_AND_ZERO_PADDING(memb_) new(&memb_) decltype(memb_)()
 
 		ANKI_CONSTRUCT_AND_ZERO_PADDING(m_vertex);
 		ANKI_CONSTRUCT_AND_ZERO_PADDING(m_inputAssembler);

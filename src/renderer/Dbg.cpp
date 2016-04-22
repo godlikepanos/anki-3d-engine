@@ -136,8 +136,14 @@ Error Dbg::run(RenderingContext& ctx)
 		// Sector/portal
 		if(m_flags.get(DbgFlag::SECTOR_COMPONENT))
 		{
-			Error err = node.iterateComponentsOfType<PortalSectorComponent>(
-				[&](PortalSectorComponent& psc) -> Error {
+			Error err = node.iterateComponentsOfType<SectorComponent>(
+				[&](SectorComponent& psc) -> Error {
+					sceneDrawer.draw(psc);
+					return ErrorCode::NONE;
+				});
+
+			err = node.iterateComponentsOfType<PortalComponent>(
+				[&](PortalComponent& psc) -> Error {
 					sceneDrawer.draw(psc);
 					return ErrorCode::NONE;
 				});

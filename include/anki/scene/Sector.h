@@ -23,14 +23,25 @@ class SoftwareRasterizer;
 /// @addtogroup scene
 /// @{
 
-/// Dummy component to identify a portal or sector.
-class PortalSectorComponent : public SceneComponent
+/// Dummy component to identify a portal.
+class PortalComponent : public SceneComponent
 {
 public:
-	static const SceneComponentType CLASS_TYPE =
-		SceneComponentType::SECTOR_PORTAL;
+	static const SceneComponentType CLASS_TYPE = SceneComponentType::PORTAL;
 
-	PortalSectorComponent(SceneNode* node)
+	PortalComponent(SceneNode* node)
+		: SceneComponent(CLASS_TYPE, node)
+	{
+	}
+};
+
+/// Dummy component to identify a sector.
+class SectorComponent : public SceneComponent
+{
+public:
+	static const SceneComponentType CLASS_TYPE = SceneComponentType::SECTOR;
+
+	SectorComponent(SceneNode* node)
 		: SceneComponent(CLASS_TYPE, node)
 	{
 	}
@@ -50,7 +61,8 @@ public:
 
 	~PortalSectorBase();
 
-	ANKI_USE_RESULT Error init(const CString& name, const CString& modelFname);
+	ANKI_USE_RESULT Error init(
+		const CString& name, const CString& modelFname, Bool isSector);
 
 	const CollisionShape& getBoundingShape() const
 	{
@@ -75,7 +87,6 @@ protected:
 	CollisionShape* m_shape = nullptr;
 	Aabb m_aabb;
 	DynamicArray<U16> m_vertIndices; ///< Used in debug draw
-	SpinLock m_mtx;
 
 	void updateTransform(const Transform& trf);
 };
@@ -106,9 +117,10 @@ public:
 	/// Remove reference from sector.
 	void tryRemoveSector(Sector* sector);
 
+	void deferredUpdate();
+
 private:
 	List<Sector*> m_sectors;
-	Bool m_open = true;
 };
 
 /// A sector. It consists of an octree and some portals
@@ -137,6 +149,8 @@ public:
 
 	ANKI_USE_RESULT Error frameUpdate(
 		F32 prevUpdateTime, F32 crntTime) override;
+
+	void deferredUpdate();
 
 private:
 	List<Portal*> m_portals;
@@ -176,9 +190,6 @@ private:
 /// Sector group. This is supposed to represent the whole scene
 class SectorGroup
 {
-	friend class Sector;
-	friend class Portal;
-
 public:
 	/// Default constructor
 	SectorGroup(SceneGraph* scene)
@@ -192,6 +203,9 @@ public:
 	void spatialUpdated(SpatialComponent* sp);
 	void spatialDeleted(SpatialComponent* sp);
 
+	void portalUpdated(Portal* portal);
+	void sectorUpdated(Sector* sector);
+
 	void prepareForVisibilityTests();
 
 	void findVisibleNodes(const FrustumComponent& frc,
@@ -201,11 +215,14 @@ public:
 
 private:
 	SceneGraph* m_scene; ///< Keep it here to access various allocators
-	List<Sector*> m_sectors;
-	List<Portal*> m_portals;
 
 	List<SpatialComponent*> m_spatialsDeferredBinning;
 	SpinLock m_mtx;
+
+	List<Portal*> m_portalsUpdated;
+	SpinLock m_portalsUpdatedLock;
+	List<Sector*> m_sectorsUpdated;
+	SpinLock m_sectorsUpdatedLock;
 
 	void findVisibleSectors(const FrustumComponent& frc,
 		const SoftwareRasterizer* r,
