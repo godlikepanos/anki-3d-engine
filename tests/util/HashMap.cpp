@@ -9,7 +9,7 @@
 #include "anki/util/DynamicArray.h"
 #include "anki/util/HighRezTimer.h"
 #include <unordered_map>
-#include <algorithm> 
+#include <algorithm>
 
 using namespace anki;
 
@@ -107,10 +107,10 @@ ANKI_TEST(Util, HashMap)
 
 	// Fuzzy test
 	{
-		const U MAX = 1000;	
+		const U MAX = 1000;
 		HashMap<int, int, Hasher, Compare> akMap;
 		std::vector<int> numbers;
-		
+
 		// Inserd random
 		for(U i = 0; i < MAX; ++i)
 		{
@@ -118,7 +118,7 @@ ANKI_TEST(Util, HashMap)
 			while(1)
 			{
 				num = rand();
-				if(std::find(numbers.begin(), numbers.end(), int(num)) 
+				if(std::find(numbers.begin(), numbers.end(), int(num))
 					== numbers.end())
 				{
 					// Not found
@@ -134,19 +134,19 @@ ANKI_TEST(Util, HashMap)
 				}
 			}
 		}
-		
+
 		// Remove randomly
 		U count = MAX;
 		while(count--)
 		{
 			U idx = rand() % (count + 1);
-			int num	= numbers[idx];
+			int num = numbers[idx];
 			numbers.erase(numbers.begin() + idx);
-			
+
 			auto it = akMap.find(num);
 			akMap.erase(alloc, it);
 		}
-		
+
 		akMap.destroy(alloc);
 	}
 

@@ -219,8 +219,8 @@ vec2 computeTextureCoordParalax(in sampler2D heightMap,
 {
 #if PASS == COLOR && LOD == 0
 	const uint MAX_SAMPLES = 25;
-	const uint MIN_SAMPLES = 3;
-	const float MAX_EFFECTIVE_DISTANCE = 10.0;
+	const uint MIN_SAMPLES = 1;
+	const float MAX_EFFECTIVE_DISTANCE = 8.0;
 
 	// Get that because we are sampling inside a loop
 	vec2 dPdx = dFdx(uv);

@@ -69,7 +69,7 @@ void VisibilityContext::submitNewWork(FrustumComponent& frc, ThreadHive& hive)
 			alloc.newInstance<GatherVisibleTrianglesTask>();
 		gather->m_visCtx = this;
 		gather->m_frc = &frc;
-		gather->m_batchCount = 0;
+		gather->m_vertCount = 0;
 
 		r = &gather->m_r;
 
@@ -179,16 +179,29 @@ void GatherVisibleTrianglesTask::gather()
 	ANKI_TRACE_START_EVENT(SCENE_VISIBILITY_GATHER_TRIANGLES);
 
 	auto alloc = m_visCtx->m_scene->getFrameAllocator();
+	m_verts.create(alloc, TRIANGLES_INITIAL_SIZE);
 	SceneComponentLists& lists = m_visCtx->m_scene->getSceneComponentLists();
 
-	ANKI_ASSERT(m_batchCount == 0);
+	ANKI_ASSERT(m_vertCount == 0);
 	lists.iterateComponents<OccluderComponent>([&](OccluderComponent& comp) {
 		if(m_frc->insideFrustum(comp.getBoundingVolume()))
 		{
-			TriangleBatch* batch = alloc.newInstance<TriangleBatch>();
-			comp.getVertices(batch->m_begin, batch->m_count, batch->m_stride);
-			m_batches.pushBack(batch);
-			++m_batchCount;
+			U32 count, stride;
+			const Vec3* it;
+			comp.getVertices(it, count, stride);
+			while(count--)
+			{
+				// Grow the array
+				if(m_vertCount + 1 > m_verts.getSize())
+				{
+					m_verts.resize(alloc, m_verts.getSize() * 2);
+				}
+
+				m_verts[m_vertCount++] = *it;
+
+				it = reinterpret_cast<const Vec3*>(
+					reinterpret_cast<const U8*>(it) + stride);
+			}
 		}
 	});
 
@@ -207,17 +220,17 @@ void RasterizeTrianglesTask::rasterize()
 {
 	ANKI_TRACE_START_EVENT(SCENE_VISIBILITY_RASTERIZE);
 
-	PtrSize start, endi;
+	PtrSize start, end;
 	ThreadPoolTask::choseStartEnd(
-		m_taskIdx, m_taskCount, m_gatherTask->m_batchCount, start, endi);
+		m_taskIdx, m_taskCount, m_gatherTask->m_vertCount / 3, start, end);
 
-	auto it = m_gatherTask->m_batches.getBegin() + start;
-	auto end = m_gatherTask->m_batches.getBegin() + endi;
-	while(it != end)
+	if(start != end)
 	{
-		const F32* first = &it->m_begin[0][0];
-		m_gatherTask->m_r.draw(first, it->m_count, it->m_stride);
-		++it;
+		const Vec3* first = &m_gatherTask->m_verts[start * 3];
+		U count = (end - start) * 3;
+		ANKI_ASSERT(count <= m_gatherTask->m_vertCount);
+
+		m_gatherTask->m_r.draw(&first[0][0], count, sizeof(Vec3));
 	}
 
 	ANKI_TRACE_STOP_EVENT(SCENE_VISIBILITY_RASTERIZE);

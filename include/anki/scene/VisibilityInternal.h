@@ -63,18 +63,13 @@ public:
 class GatherVisibleTrianglesTask
 {
 public:
-	class TriangleBatch : public IntrusiveListEnabled<TriangleBatch>
-	{
-	public:
-		const Vec3* m_begin = nullptr;
-		U32 m_count = 0;
-		U32 m_stride = 0;
-	};
-
 	WeakPtr<VisibilityContext> m_visCtx;
 	WeakPtr<FrustumComponent> m_frc;
-	IntrusiveList<TriangleBatch> m_batches;
-	U32 m_batchCount;
+
+	static const U TRIANGLES_INITIAL_SIZE = 10 * 3;
+	DynamicArray<Vec3> m_verts;
+	U32 m_vertCount;
+
 	SoftwareRasterizer m_r;
 
 	/// Thread hive task.
