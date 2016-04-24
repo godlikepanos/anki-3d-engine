@@ -163,7 +163,7 @@ Error SceneGraph::init(AllocAlignedCallback allocCb,
 	m_resources = resources;
 	m_objectsMarkedForDeletionCount.store(0);
 	m_gr = &m_resources->getGrManager();
-	m_physics = &m_resources->_getPhysicsWorld();
+	m_physics = &m_resources->getPhysicsWorld();
 	m_input = input;
 
 	m_alloc = SceneAllocator<U8>(allocCb, allocCbData, 1024 * 10, 1.0, 0);

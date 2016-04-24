@@ -161,7 +161,7 @@ anki_internal:
 		return *m_gr;
 	}
 
-	PhysicsWorld& _getPhysicsWorld()
+	PhysicsWorld& getPhysicsWorld()
 	{
 		ANKI_ASSERT(m_physics);
 		return *m_physics;

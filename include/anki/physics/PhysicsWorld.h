@@ -40,7 +40,7 @@ public:
 	}
 
 #ifdef ANKI_BUILD
-	NewtonWorld* _getNewtonWorld() const
+	NewtonWorld* getNewtonWorld() const
 	{
 		ANKI_ASSERT(m_world);
 		return m_world;

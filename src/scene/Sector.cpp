@@ -91,7 +91,7 @@ Error PortalSectorBase::init(
 	addComponent(comp, true);
 
 	// Load mesh
-	MeshLoader loader(&getSceneGraph()._getResourceManager());
+	MeshLoader loader(&getSceneGraph().getResourceManager());
 	ANKI_CHECK(loader.load(meshFname));
 
 	// Convert Vec3 positions to Vec4

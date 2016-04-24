@@ -26,7 +26,7 @@ LensFlareComponent::~LensFlareComponent()
 Error LensFlareComponent::init(const CString& textureFilename)
 {
 	// Texture
-	ANKI_CHECK(getSceneGraph()._getResourceManager().loadResource(
+	ANKI_CHECK(getSceneGraph().getResourceManager().loadResource(
 		textureFilename, m_tex));
 
 	// Queries

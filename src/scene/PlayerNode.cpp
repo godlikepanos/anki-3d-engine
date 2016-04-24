@@ -145,7 +145,7 @@ Error PlayerNode::init(const CString& name, const Vec4& position)
 	PhysicsPlayerControllerInitInfo init;
 	init.m_position = position;
 	m_player =
-		getSceneGraph()._getPhysicsWorld().newInstance<PhysicsPlayerController>(
+		getSceneGraph().getPhysicsWorld().newInstance<PhysicsPlayerController>(
 			init);
 
 	SceneComponent* comp;

@@ -63,7 +63,7 @@ Error PhysicsBody::create(const PhysicsBodyInitInfo& init)
 	}
 	else
 	{
-		m_body = NewtonCreateDynamicBody(m_world->_getNewtonWorld(),
+		m_body = NewtonCreateDynamicBody(m_world->getNewtonWorld(),
 			init.m_shape->_getNewtonShape(),
 			&trf(0, 0));
 	}
@@ -76,7 +76,7 @@ Error PhysicsBody::create(const PhysicsBodyInitInfo& init)
 
 	// Material
 	NewtonBodySetMaterialGroupID(
-		m_body, NewtonMaterialGetDefaultGroupID(m_world->_getNewtonWorld()));
+		m_body, NewtonMaterialGetDefaultGroupID(m_world->getNewtonWorld()));
 
 	// User data & callbacks
 	NewtonBodySetUserData(m_body, this);

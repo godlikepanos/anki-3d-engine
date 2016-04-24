@@ -17,10 +17,12 @@ namespace anki
 /// Load a collision shape.
 ///
 /// XML file format:
+/// @code
 /// <collisionShape>
 /// 	<type>sphere | box | mesh</type>
 /// 	<value>radius | extend | path/to/mesh</value>
 /// </collisionShape>
+/// @endcode
 class CollisionResource : public ResourceObject
 {
 public:

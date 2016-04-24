@@ -34,8 +34,8 @@ Error PhysicsSphere::create(PhysicsCollisionShapeInitInfo& init, F32 radius)
 {
 	Error err = ErrorCode::NONE;
 
-	m_shape = NewtonCreateSphere(
-		m_world->_getNewtonWorld(), radius, m_gid++, nullptr);
+	m_shape =
+		NewtonCreateSphere(m_world->getNewtonWorld(), radius, m_gid++, nullptr);
 	if(!m_shape)
 	{
 		ANKI_LOGE("NewtonCreateSphere() failed");
@@ -55,7 +55,7 @@ Error PhysicsBox::create(
 {
 	Error err = ErrorCode::NONE;
 
-	m_shape = NewtonCreateBox(m_world->_getNewtonWorld(),
+	m_shape = NewtonCreateBox(m_world->getNewtonWorld(),
 		extend.x(),
 		extend.y(),
 		extend.z(),
@@ -81,7 +81,7 @@ Error PhysicsTriangleSoup::create(PhysicsCollisionShapeInitInfo& init,
 	const U16* indices,
 	U32 indicesCount)
 {
-	m_shape = NewtonCreateTreeCollision(m_world->_getNewtonWorld(), 0);
+	m_shape = NewtonCreateTreeCollision(m_world->getNewtonWorld(), 0);
 	if(!m_shape)
 	{
 		ANKI_LOGE("NewtonCreateBox() failed");

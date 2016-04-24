@@ -19,7 +19,7 @@ struct CallbackData
 //==============================================================================
 void PhysicsDrawer::drawWorld(const PhysicsWorld& world)
 {
-	NewtonWorld* nworld = world._getNewtonWorld();
+	NewtonWorld* nworld = world.getNewtonWorld();
 	for(NewtonBody* body = NewtonWorldGetFirstBody(nworld); body != nullptr;
 		body = NewtonWorldGetNextBody(nworld, body))
 	{

@@ -69,7 +69,7 @@ Error BodyNode::init(const CString& name, const CString& resourceFname)
 	PhysicsBodyInitInfo init;
 	init.m_mass = 1.0;
 	init.m_shape = m_rsrc->getShape();
-	m_body = getSceneGraph()._getPhysicsWorld().newInstance<PhysicsBody>(init);
+	m_body = getSceneGraph().getPhysicsWorld().newInstance<PhysicsBody>(init);
 
 	// Body component
 	comp = getSceneAllocator().newInstance<BodyComponent>(this, m_body);

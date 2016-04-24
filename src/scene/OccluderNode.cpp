@@ -58,7 +58,7 @@ Error OccluderNode::init(const CString& name, const CString& meshFname)
 	ANKI_CHECK(SceneNode::init(name));
 
 	// Load mesh
-	MeshLoader loader(&getSceneGraph()._getResourceManager());
+	MeshLoader loader(&getSceneGraph().getResourceManager());
 	ANKI_CHECK(loader.load(meshFname));
 
 	const U16* indices = reinterpret_cast<const U16*>(loader.getIndexData());

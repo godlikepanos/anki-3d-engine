@@ -154,7 +154,7 @@ public:
 	}
 
 anki_internal:
-	ResourceManager& _getResourceManager()
+	ResourceManager& getResourceManager()
 	{
 		return *m_resources;
 	}
@@ -164,7 +164,7 @@ anki_internal:
 		return *m_gr;
 	}
 
-	PhysicsWorld& _getPhysicsWorld()
+	PhysicsWorld& getPhysicsWorld()
 	{
 		return *m_physics;
 	}

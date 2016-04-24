@@ -131,7 +131,7 @@ void SceneNode::removeComponent(SceneComponent* comp)
 //==============================================================================
 ResourceManager& SceneNode::getResourceManager()
 {
-	return m_scene->_getResourceManager();
+	return m_scene->getResourceManager();
 }
 
 } // end namespace anki

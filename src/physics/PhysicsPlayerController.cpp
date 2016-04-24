@@ -147,7 +147,7 @@ PhysicsPlayerController::~PhysicsPlayerController()
 Error PhysicsPlayerController::create(
 	const PhysicsPlayerControllerInitInfo& init)
 {
-	NewtonWorld* world = m_world->_getNewtonWorld();
+	NewtonWorld* world = m_world->getNewtonWorld();
 
 	m_restrainingDistance = MIN_RESTRAINING_DISTANCE;
 	m_innerRadius = init.m_innerRadius;
@@ -248,7 +248,7 @@ Error PhysicsPlayerController::create(
 	NewtonBodySetUserData(m_body, this);
 	NewtonBodySetTransformCallback(m_body, onTransformCallback);
 	NewtonBodySetMaterialGroupID(
-		m_body, NewtonMaterialGetDefaultGroupID(m_world->_getNewtonWorld()));
+		m_body, NewtonMaterialGetDefaultGroupID(m_world->getNewtonWorld()));
 
 	// Players must have weight, otherwise they are infinitely strong when
 	// they collide
@@ -428,7 +428,7 @@ F32 PhysicsPlayerController::calculateContactKinematics(
 void PhysicsPlayerController::updateGroundPlane(
 	Mat4& matrix, const Mat4& castMatrix, const Vec4& dst, int threadIndex)
 {
-	NewtonWorld* world = m_world->_getNewtonWorld();
+	NewtonWorld* world = m_world->getNewtonWorld();
 
 	CustomControllerConvexRayFilter filter;
 	filter.m_me = m_body;
@@ -472,7 +472,7 @@ void PhysicsPlayerController::postUpdate(F32 dt, int threadIndex)
 	Vec4 veloc(0.0);
 	Vec4 omega(0.0);
 
-	NewtonWorld* world = m_world->_getNewtonWorld();
+	NewtonWorld* world = m_world->getNewtonWorld();
 
 	calculateVelocity(dt);
 

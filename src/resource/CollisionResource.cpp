@@ -29,7 +29,7 @@ Error CollisionResource::load(const ResourceFilename& filename)
 	XmlElement valEl;
 	ANKI_CHECK(collEl.getChildElement("value", valEl));
 
-	PhysicsWorld& physics = getManager()._getPhysicsWorld();
+	PhysicsWorld& physics = getManager().getPhysicsWorld();
 	PhysicsCollisionShapeInitInfo csInit;
 
 	if(type == "sphere")

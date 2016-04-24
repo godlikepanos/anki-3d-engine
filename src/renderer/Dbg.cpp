@@ -156,7 +156,7 @@ Error Dbg::run(RenderingContext& ctx)
 		PhysicsDebugDrawer phyd(m_drawer);
 
 		m_drawer->setModelMatrix(Mat4::getIdentity());
-		phyd.drawWorld(scene._getPhysicsWorld());
+		phyd.drawWorld(scene.getPhysicsWorld());
 	}
 
 #if 0
