@@ -34,6 +34,7 @@ struct Node
 	uint32_t m_modelIndex; ///< Index inside Exporter::m_models
 	aiMatrix4x4 m_transform;
 	std::string m_group;
+	std::string m_collisionMesh;
 };
 
 const uint32_t MAX_BONES_PER_VERTEX = 4;

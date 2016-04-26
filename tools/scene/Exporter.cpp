@@ -774,6 +774,7 @@ void Exporter::visitNode(const aiNode* ainode)
 
 		// Check properties
 		std::string lod1MeshName;
+		std::string collisionMesh;
 		bool special = false;
 		for(const auto& prop : m_scene->mMeshes[meshIndex]->mProperties)
 		{
@@ -865,6 +866,11 @@ void Exporter::visitNode(const aiNode* ainode)
 
 				special = true;
 			}
+			else if(prop.first == "collision_mesh")
+			{
+				collisionMesh = prop.second;
+				special = false;
+			}
 		}
 
 		if(special)
@@ -884,6 +890,7 @@ void Exporter::visitNode(const aiNode* ainode)
 		node.m_modelIndex = m_models.size() - 1;
 		node.m_transform = toAnkiMatrix(ainode->mTransformation);
 		node.m_group = ainode->mGroup.C_Str();
+		node.m_collisionMesh = collisionMesh;
 		m_nodes.push_back(node);
 	}
 
@@ -1072,6 +1079,36 @@ void Exporter::exportAll()
 			 << m_rpath << modelName << ".ankimdl"
 			 << "\")\n";
 		writeNodeTransform("node", node.m_transform);
+
+		// Write the collision node
+		if(!node.m_collisionMesh.empty())
+		{
+			bool found = false;
+			unsigned i = 0;
+			for(; i < m_scene->mNumMeshes; i++)
+			{
+				if(m_scene->mMeshes[i]->mName.C_Str() == node.m_collisionMesh)
+				{
+					found = true;
+					break;
+				}
+			}
+
+			if(found)
+			{
+				exportCollisionMesh(i);
+
+				std::string fname = m_rpath + node.m_collisionMesh + ".ankicl";
+				file << "node = scene:newStaticCollisionNode(\""
+					 << nodeName << "_cl" << "\", \"" << fname
+					 << "\", trf)\n";
+			}
+			else
+			{
+				ERROR("Couldn't find the collision_mesh %s",
+					node.m_collisionMesh.c_str());
+			}
+		}
 	}
 
 	//
