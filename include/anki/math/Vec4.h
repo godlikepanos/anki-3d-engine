@@ -17,7 +17,7 @@ namespace anki
 template<typename T>
 struct TVec4Simd
 {
-	typedef Array<T, 4> Type;
+	using Type = Array<T, 4>;
 };
 
 #if ANKI_SIMD == ANKI_SIMD_SSE
@@ -25,14 +25,14 @@ struct TVec4Simd
 template<>
 struct TVec4Simd<F32>
 {
-	typedef __m128 Type;
+	using Type = __m128;
 };
 #elif ANKI_SIMD == ANKI_SIMD_NEON
 // Specialize for F32
 template<>
 struct TVec4Simd<F32>
 {
-	typedef float32x4_t Type;
+	using Type = float32x4_t;
 };
 #endif
 
@@ -220,17 +220,17 @@ TVec4<F32> TVec4<F32>::Base::getAbs() const;
 #endif
 
 /// F32 4D vector
-typedef TVec4<F32> Vec4;
+using Vec4 = TVec4<F32>;
 static_assert(sizeof(Vec4) == sizeof(F32) * 4, "Incorrect size");
 
 /// Half float 4D vector
-typedef TVec4<F16> HVec4;
+using HVec4 = TVec4<F16>;
 
 /// 32bit signed integer 4D vector
-typedef TVec4<I32> IVec4;
+using IVec4 = TVec4<I32>;
 
 /// 32bit unsigned integer 4D vector
-typedef TVec4<U32> UVec4;
+using UVec4 = TVec4<U32>;
 /// @}
 
 } // end namespace anki

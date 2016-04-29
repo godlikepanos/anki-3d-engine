@@ -151,6 +151,25 @@ static void removeScale(aiMatrix4x4& m)
 }
 
 //==============================================================================
+static float getUniformScale(const aiMatrix4x4& m)
+{
+	const float SCALE_THRESHOLD = 0.01; // 1 cm
+
+	aiVector3D xAxis(m.a1, m.b1, m.c1);
+	aiVector3D yAxis(m.a2, m.b2, m.c2);
+	aiVector3D zAxis(m.a3, m.b3, m.c3);
+
+	float scale = xAxis.Length();
+	if(std::abs(scale - yAxis.Length()) > SCALE_THRESHOLD
+		|| std::abs(scale - zAxis.Length()) > SCALE_THRESHOLD)
+	{
+		ERROR("No uniform scale in the matrix");
+	}
+
+	return scale;
+}
+
+//==============================================================================
 // Exporter                                                                    =
 //==============================================================================
 
@@ -208,8 +227,9 @@ aiMatrix3x3 Exporter::toAnkiMatrix(const aiMatrix3x3& in) const
 }
 
 //==============================================================================
-void Exporter::writeTransform(const aiMatrix4x4& mat)
+void Exporter::writeTransform(const aiMatrix4x4& inmat)
 {
+	aiMatrix4x4 mat = inmat;
 	std::ofstream& file = m_sceneFile;
 
 	float pos[3];
@@ -221,6 +241,9 @@ void Exporter::writeTransform(const aiMatrix4x4& mat)
 
 	file << "trf:setOrigin(Vec4.new(" << pos[0] << ", " << pos[1] << ", "
 		 << pos[2] << ", 0))\n";
+
+	float scale = getUniformScale(mat);
+	removeScale(mat);
 
 	file << "rot = Mat3x4.new()\n";
 	file << "rot:setAll(";
@@ -246,7 +269,7 @@ void Exporter::writeTransform(const aiMatrix4x4& mat)
 	file << ")\n";
 
 	file << "trf:setRotation(rot)\n";
-	file << "trf:setScale(1.0)\n";
+	file << "trf:setScale(" << scale << ")\n";
 }
 
 //==============================================================================
@@ -1099,9 +1122,9 @@ void Exporter::exportAll()
 				exportCollisionMesh(i);
 
 				std::string fname = m_rpath + node.m_collisionMesh + ".ankicl";
-				file << "node = scene:newStaticCollisionNode(\""
-					 << nodeName << "_cl" << "\", \"" << fname
-					 << "\", trf)\n";
+				file << "node = scene:newStaticCollisionNode(\"" << nodeName
+					 << "_cl"
+					 << "\", \"" << fname << "\", trf)\n";
 			}
 			else
 			{

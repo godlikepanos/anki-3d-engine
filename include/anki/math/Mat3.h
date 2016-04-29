@@ -195,7 +195,7 @@ TMat3<T> operator/(T f, const TMat3<T>& m3)
 }
 
 /// F32 3x3 matrix
-typedef TMat3<F32> Mat3;
+using Mat3 = TMat3<F32>;
 static_assert(sizeof(Mat3) == sizeof(F32) * 3 * 3, "Incorrect size");
 /// @}
 

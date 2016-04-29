@@ -476,7 +476,7 @@ void TMat4<F32>::Base::transpose();
 #endif
 
 /// F32 4x4 matrix
-typedef TMat4<F32> Mat4;
+using Mat4 = TMat4<F32>;
 static_assert(sizeof(Mat4) == sizeof(F32) * 4 * 4, "Incorrect size");
 /// @}
 

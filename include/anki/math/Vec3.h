@@ -124,17 +124,17 @@ TVec3<T> operator/(const T f, const TVec3<T>& v)
 }
 
 /// F32 3D vector
-typedef TVec3<F32> Vec3;
+using Vec3 = TVec3<F32>;
 static_assert(sizeof(Vec3) == sizeof(F32) * 3, "Incorrect size");
 
 /// Half float 3D vector
-typedef TVec3<F16> HVec3;
+using HVec3 = TVec3<F16>;
 
 /// 32bit signed integer 3D vector
-typedef TVec3<I32> IVec3;
+using IVec3 = TVec3<I32>;
 
 /// 32bit unsigned integer 3D vector
-typedef TVec3<U32> UVec3;
+using UVec3 = TVec3<U32>;
 /// @}
 
 } // end namespace anki

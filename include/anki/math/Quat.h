@@ -286,7 +286,7 @@ public:
 };
 
 /// F32 quaternion
-typedef TQuat<F32> Quat;
+using Quat = TQuat<F32>;
 /// @}
 
 } // end namespace anki

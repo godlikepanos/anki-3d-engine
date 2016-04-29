@@ -91,17 +91,17 @@ TVec2<T> operator/(const T f, const TVec2<T>& b)
 }
 
 /// F32 2D vector
-typedef TVec2<F32> Vec2;
+using Vec2 = TVec2<F32>;
 static_assert(sizeof(Vec2) == sizeof(F32) * 2, "Incorrect size");
 
 /// Half float 2D vector
-typedef TVec2<F16> HVec2;
+using HVec2 = TVec2<F16>;
 
 /// 32bit signed integer 2D vector
-typedef TVec2<I32> IVec2;
+using IVec2 = TVec2<I32>;
 
 /// 32bit unsigned integer 2D vector
-typedef TVec2<U32> UVec2;
+using UVec2 = TVec2<U32>;
 /// @}
 
 } // end namespace anki

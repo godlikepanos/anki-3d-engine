@@ -160,7 +160,7 @@ public:
 		o.m_rotation = m_rotation;
 		o.m_rotation.transposeRotationPart();
 		o.m_scale = 1.0 / m_scale;
-		o.m_origin = -((o.m_rotation * o.m_scale) * m_origin).xyz0();
+		o.m_origin = -(o.m_rotation * (o.m_scale * m_origin)).xyz0();
 		return o;
 	}
 
@@ -168,7 +168,7 @@ public:
 	{
 		m_rotation.transposeRotationPart();
 		m_scale = 1.0 / m_scale;
-		m_origin = -((m_rotation * m_scale) * m_origin);
+		m_origin = -(m_rotation * (m_scale * m_origin));
 	}
 
 	/// Transform a TVec3
@@ -209,7 +209,7 @@ private:
 };
 
 /// F32 transformation
-typedef TTransform<F32> Transform;
+using Transform = TTransform<F32>;
 /// @}
 
 } // end namespace anki

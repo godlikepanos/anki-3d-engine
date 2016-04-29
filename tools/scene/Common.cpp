@@ -25,24 +25,24 @@ void log(const char* file, int line, unsigned type, const char* fmt, ...)
 	{
 	case 1:
 		fprintf(stdout,
-			TERMINAL_COL_INFO "(%s:%4d) Info: %s\n" TERMINAL_COL_RESET,
+			TERMINAL_COL_INFO "[I] %s (%s:%d)\n" TERMINAL_COL_RESET,
+			buffer,
 			file,
-			line,
-			buffer);
+			line);
 		break;
 	case 2:
 		fprintf(stderr,
-			TERMINAL_COL_ERROR "(%s:%4d) Error: %s\n" TERMINAL_COL_RESET,
+			TERMINAL_COL_ERROR "[E] %s (%s:%d)\n" TERMINAL_COL_RESET,
+			buffer,
 			file,
-			line,
-			buffer);
+			line);
 		break;
 	case 3:
 		fprintf(stderr,
-			TERMINAL_COL_WARNING "(%s:%4d) Warning: %s\n" TERMINAL_COL_RESET,
+			TERMINAL_COL_WARNING "[W] %s (%s:%d)\n" TERMINAL_COL_RESET,
+			buffer,
 			file,
-			line,
-			buffer);
+			line);
 		break;
 	};
 }

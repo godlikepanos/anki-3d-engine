@@ -183,7 +183,7 @@ private:
 };
 
 /// F32 Euler angles
-typedef TEuler<F32> Euler;
+using Euler = TEuler<F32>;
 /// @}
 
 } // end namespace anki

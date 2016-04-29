@@ -214,7 +214,7 @@ private:
 };
 
 /// F32 Axisang
-typedef TAxisang<F32> Axisang;
+using Axisang = TAxisang<F32>;
 /// @}
 
 } // end namespace anki

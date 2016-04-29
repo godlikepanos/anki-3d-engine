@@ -262,7 +262,7 @@ TMat3x4<F32> TMat3x4<F32>::combineTransformations(const TMat3x4<F32>& b) const;
 #endif
 
 /// F32 4x4 matrix
-typedef TMat3x4<F32> Mat3x4;
+using Mat3x4 = TMat3x4<F32>;
 static_assert(sizeof(Mat3x4) == sizeof(F32) * 3 * 4, "Incorrect size");
 /// @}
 
