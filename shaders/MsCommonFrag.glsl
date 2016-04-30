@@ -24,6 +24,8 @@ layout(location = 0) in highp vec2 in_uv;
 layout(location = 1) in mediump vec3 in_normal;
 layout(location = 2) in mediump vec4 in_tangent;
 layout(location = 3) in mediump vec3 in_vertPosViewSpace;
+layout(location = 4) in mediump vec3 in_eyeTangentSpace; // Parallax
+layout(location = 5) in mediump vec3 in_normalTangentSpace; // Parallax
 #endif
 
 //
@@ -209,13 +211,9 @@ float readRFromTexture(in sampler2D tex, in highp vec2 texCoords)
 }
 #endif
 
-#define computeTextureCoordParalax_DEFINED
-vec2 computeTextureCoordParalax(in sampler2D heightMap,
-	in vec2 uv,
-	in vec3 posView,
-	in vec3 normal,
-	in vec4 tangent,
-	in float heightMapScale)
+#define computeTextureCoordParallax_DEFINED
+vec2 computeTextureCoordParallax(
+	in sampler2D heightMap, in vec2 uv, in float heightMapScale)
 {
 #if PASS == COLOR && LOD == 0
 	const uint MAX_SAMPLES = 25;
@@ -226,13 +224,8 @@ vec2 computeTextureCoordParalax(in sampler2D heightMap,
 	vec2 dPdx = dFdx(uv);
 	vec2 dPdy = dFdy(uv);
 
-	vec3 n = normal; // Assume that getNormal() is called
-	vec3 t = normalize(tangent.xyz);
-	vec3 b = cross(n, t) * tangent.w;
-	mat3 invTbn = transpose(mat3(t, b, n));
-
-	vec3 eyeTangentSpace = invTbn * posView;
-	vec3 normTangentSpace = invTbn * n;
+	vec3 eyeTangentSpace = in_eyeTangentSpace;
+	vec3 normTangentSpace = in_normalTangentSpace;
 
 	float parallaxLimit = -length(eyeTangentSpace.xy) / eyeTangentSpace.z;
 	parallaxLimit *= heightMapScale;
@@ -242,9 +235,11 @@ vec2 computeTextureCoordParalax(in sampler2D heightMap,
 
 	vec3 E = normalize(eyeTangentSpace);
 
-	float sampleCountf = mix(MAX_SAMPLES,
-		MIN_SAMPLES,
-		min(dot(E, normTangentSpace), posView.z / -MAX_EFFECTIVE_DISTANCE));
+	float sampleCountf =
+		mix(MAX_SAMPLES,
+			MIN_SAMPLES,
+			min(dot(E, normTangentSpace),
+				in_vertPosViewSpace.z / -MAX_EFFECTIVE_DISTANCE));
 
 	float stepSize = 1.0 / sampleCountf;
 

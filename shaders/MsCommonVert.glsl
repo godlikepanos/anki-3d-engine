@@ -6,7 +6,7 @@
 #include "shaders/MsFsCommon.glsl"
 
 //
-// Attributes
+// Input
 //
 layout(location = POSITION_LOCATION) in highp vec3 in_position;
 layout(location = TEXTURE_COORDINATE_LOCATION) in highp vec2 in_uv;
@@ -20,7 +20,7 @@ layout(location = TANGENT_LOCATION) in mediump vec4 in_tangent;
 #endif
 
 //
-// Varyings
+// Output
 //
 out gl_PerVertex
 {
@@ -35,13 +35,9 @@ layout(location = 1) out mediump vec3 out_normal;
 
 #if PASS == COLOR
 layout(location = 2) out mediump vec4 out_tangent;
-
-// For env mapping. AKA view vector
 layout(location = 3) out mediump vec3 out_vertPosViewSpace;
-#endif
-
-#if INSTANCE_ID_FRAGMENT_SHADER
-layout(location = 4) flat out uint out_instanceId;
+layout(location = 4) out mediump vec3 out_eyeTangentSpace; // Parallax
+layout(location = 5) out mediump vec3 out_normalTangentSpace; // Parallax
 #endif
 
 //==============================================================================
@@ -93,5 +89,22 @@ void writeNormalAndTangent(in mat3 normalMat)
 void writeVertPosViewSpace(in mat4 modelViewMat)
 {
 	out_vertPosViewSpace = vec3(modelViewMat * vec4(in_position, 1.0));
+}
+#endif
+
+//==============================================================================
+#if PASS == COLOR
+#define writeParallax_DEFINED
+void writeParallax(in mat3 normalMat, in mat4 modelViewMat)
+{
+	vec3 n = normalMat * in_normal.xyz;
+	vec3 t = normalMat * in_tangent.xyz;
+	vec3 b = cross(n, t) * in_tangent.w;
+	mat3 invTbn = transpose(mat3(t, b, n));
+
+	writeVertPosViewSpace(modelViewMat);
+
+	out_eyeTangentSpace = invTbn * out_vertPosViewSpace;
+	out_normalTangentSpace = invTbn * n;
 }
 #endif

@@ -445,8 +445,11 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 			R"(<operation>
 					<id>2</id>
 					<returnType>void</returnType>
-					<function>writeVertPosViewSpace</function>
-					<arguments><argument>anki_mv</argument></arguments>
+					<function>writeParallax</function>
+					<arguments>
+						<argument>anki_n</argument>
+						<argument>anki_mv</argument>
+					</arguments>
 				</operation>)");
 
 		materialStr = replaceAllString(materialStr,
@@ -467,20 +470,12 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 		materialStr = replaceAllString(materialStr,
 			"%heightFunc%",
 			R"(<operation>
-					<id>3</id>
-					<returnType>vec3</returnType>
-					<function>getPositionViewSpace</function>
-				</operation>
-				<operation>
 					<id>4</id>
 					<returnType>vec2</returnType>
-					<function>computeTextureCoordParalax</function>
+					<function>computeTextureCoordParallax</function>
 					<arguments>
 						<argument>heightMap</argument>
 						<argument>out2</argument>
-						<argument>out3</argument>
-						<argument>out0</argument>
-						<argument>out1</argument>
 						<argument>heightMapScale</argument>
 					</arguments>
 				</operation>)");
