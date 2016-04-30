@@ -20,6 +20,10 @@ class LightComponent : public SceneComponent
 public:
 	static const SceneComponentType CLASS_TYPE = SceneComponentType::LIGHT;
 
+	/// The near plane on the shadow map frustums.
+	/// WARNING: If you change here update the shaders.
+	static constexpr F32 FRUSTUM_NEAR_PLANE = 0.1 / 4.0;
+
 	enum class LightType : U8
 	{
 		POINT,

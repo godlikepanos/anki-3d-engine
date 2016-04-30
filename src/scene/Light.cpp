@@ -237,7 +237,7 @@ Error PointLight::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 
 		const F32 ang = toRad(90.0);
 		const F32 dist = m_sphereW.getRadius();
-		const F32 zNear = FRUSTUM_NEAR_PLANE;
+		const F32 zNear = LightComponent::FRUSTUM_NEAR_PLANE;
 
 		Mat3 rot;
 		const F32 PI = getPi<F32>();
@@ -323,8 +323,10 @@ void SpotLight::onMoveUpdate(MoveComponent& move)
 void SpotLight::onShapeUpdate(LightComponent& light)
 {
 	onShapeUpdateCommon(light);
-	m_frustum.setAll(
-		light.getOuterAngle(), light.getOuterAngle(), 0.5, light.getDistance());
+	m_frustum.setAll(light.getOuterAngle(),
+		light.getOuterAngle(),
+		LightComponent::FRUSTUM_NEAR_PLANE,
+		light.getDistance());
 }
 
 //==============================================================================
