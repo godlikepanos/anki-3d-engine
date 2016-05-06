@@ -30,10 +30,6 @@ enum class GpuVendor : U8
 class GlState
 {
 public:
-	// Spec limits
-	static const U MAX_UNIFORM_BLOCK_SIZE = 16384;
-	static const U MAX_STORAGE_BLOCK_SIZE = 2 << 27;
-
 	I32 m_version = -1; ///< Minor major GL version. Something like 430
 	GpuVendor m_gpu = GpuVendor::UNKNOWN;
 	Bool8 m_registerMessages = false;

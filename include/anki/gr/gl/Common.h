@@ -31,6 +31,10 @@ class RenderingThread;
 /// @addtogroup opengl
 /// @{
 
+// Spec limits
+const U MAX_UNIFORM_BLOCK_SIZE = 16384;
+const U MAX_STORAGE_BLOCK_SIZE = 2 << 27;
+
 /// Converter.
 GLenum convertCompareOperation(CompareOperation in);
 

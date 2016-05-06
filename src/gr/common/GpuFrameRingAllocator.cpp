@@ -10,16 +10,15 @@ namespace anki
 
 //==============================================================================
 void GpuFrameRingAllocator::init(
-	void* cpuMappedMem, PtrSize size, U32 alignment, PtrSize maxAllocationSize)
+	PtrSize size, U32 alignment, PtrSize maxAllocationSize)
 {
-	ANKI_ASSERT(
-		cpuMappedMem && size > 0 && alignment > 0 && maxAllocationSize > 0);
+	ANKI_ASSERT(!isCreated());
+	ANKI_ASSERT(size > 0 && alignment > 0 && maxAllocationSize > 0);
 
 	PtrSize perFrameSize = size / MAX_FRAMES_IN_FLIGHT;
 	alignRoundDown(alignment, perFrameSize);
 	m_size = perFrameSize * MAX_FRAMES_IN_FLIGHT;
 
-	m_cpuAddress = static_cast<U8*>(cpuMappedMem);
 	m_alignment = alignment;
 	m_maxAllocationSize = maxAllocationSize;
 }
@@ -27,6 +26,8 @@ void GpuFrameRingAllocator::init(
 //==============================================================================
 PtrSize GpuFrameRingAllocator::endFrame()
 {
+	ANKI_ASSERT(isCreated());
+
 	PtrSize perFrameSize = m_size / MAX_FRAMES_IN_FLIGHT;
 
 	PtrSize crntFrameStartOffset =
@@ -47,11 +48,12 @@ PtrSize GpuFrameRingAllocator::endFrame()
 }
 
 //==============================================================================
-void* GpuFrameRingAllocator::allocate(
-	PtrSize originalSize, DynamicBufferToken& token)
+Error GpuFrameRingAllocator::allocate(
+	PtrSize originalSize, DynamicBufferToken& token, Bool handleOomError)
 {
+	ANKI_ASSERT(isCreated());
 	ANKI_ASSERT(originalSize > 0);
-	ANKI_ASSERT(m_cpuAddress);
+	Error err = ErrorCode::NONE;
 
 	// Align size
 	PtrSize size = getAlignedRoundUp(m_alignment, originalSize);
@@ -64,21 +66,23 @@ void* GpuFrameRingAllocator::allocate(
 
 	if(offset - crntFrameStartOffset + size <= perFrameSize)
 	{
-		ANKI_ASSERT(isAligned(m_alignment, m_cpuAddress + offset));
+		ANKI_ASSERT(isAligned(m_alignment, offset));
 		ANKI_ASSERT((offset + size) <= m_size);
 
 		// Encode token
 		token.m_offset = offset;
 		token.m_range = originalSize;
-
-		return static_cast<void*>(m_cpuAddress + offset);
 	}
-	else
+	else if(handleOomError)
 	{
 		ANKI_LOGF("Out of GPU dynamic memory");
 	}
+	else
+	{
+		err = ErrorCode::OUT_OF_MEMORY;
+	}
 
-	return nullptr;
+	return err;
 }
 
 } // end namespace anki

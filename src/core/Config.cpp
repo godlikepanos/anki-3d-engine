@@ -70,10 +70,9 @@ Config::Config()
 	//
 	// GR
 	//
-	newOption("gr.frameUniformsSize", 1024 * 1024 * 16);
-	newOption("gr.frameStorageSize", 1024 * 1024 * 16);
-	newOption("gr.frameVertexSize", 1024 * 1024 * 2);
-	newOption("gr.frameTransferSize", 1024 * 1024 * 32);
+	newOption("gr.uniformPerFrameMemorySize", 1024 * 1024 * 16);
+	newOption("gr.storagePerFrameMemorySize", 1024 * 1024 * 16);
+	newOption("gr.transferPersistentMemorySize", 1024 * 1024 * 32);
 
 	//
 	// Resource

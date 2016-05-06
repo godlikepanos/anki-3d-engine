@@ -36,19 +36,18 @@ GpuBlockAllocator::~GpuBlockAllocator()
 }
 
 //==============================================================================
-void GpuBlockAllocator::init(GenericMemoryPoolAllocator<U8> alloc,
-	void* cpuMappedMem,
-	PtrSize cpuMappedMemSize,
-	PtrSize blockSize)
+void GpuBlockAllocator::init(
+	GenericMemoryPoolAllocator<U8> alloc, PtrSize totalSize, PtrSize blockSize)
 {
-	ANKI_ASSERT(cpuMappedMem && cpuMappedMemSize > 0 && blockSize > 0);
-	ANKI_ASSERT((cpuMappedMemSize % blockSize) == 0);
+	ANKI_ASSERT(!isCreated());
+	ANKI_ASSERT(totalSize > 0 && blockSize > 0);
+	ANKI_ASSERT(totalSize > blockSize);
+	ANKI_ASSERT((totalSize % blockSize) == 0);
 
 	m_alloc = alloc;
-	m_mem = static_cast<U8*>(cpuMappedMem);
-	m_size = cpuMappedMemSize;
+	m_size = totalSize;
 	m_blockSize = blockSize;
-	m_blocks.create(alloc, cpuMappedMemSize / blockSize);
+	m_blocks.create(alloc, totalSize / blockSize);
 
 	m_freeBlocksStack.create(alloc, m_blocks.getSize());
 	m_freeBlockCount = m_blocks.getSize();
@@ -69,20 +68,21 @@ Bool GpuBlockAllocator::blockHasEnoughSpace(
 
 	const Block& block = m_blocks[blockIdx];
 
-	U8* allocEnd = getAlignedRoundUp(alignment, m_mem + block.m_offset) + size;
-	U8* blockEnd = m_mem + blockIdx * m_blockSize + m_blockSize;
+	PtrSize allocEnd = getAlignedRoundUp(alignment, block.m_offset) + size;
+	PtrSize blockEnd = (blockIdx + 1) * m_blockSize;
 
 	return allocEnd <= blockEnd;
 }
 
 //==============================================================================
-void* GpuBlockAllocator::allocate(
-	PtrSize size, U alignment, DynamicBufferToken& handle)
+Error GpuBlockAllocator::allocate(
+	PtrSize size, U alignment, DynamicBufferToken& handle, Bool handleOomError)
 {
+	ANKI_ASSERT(isCreated());
 	ANKI_ASSERT(size < m_blockSize);
 
 	Block* block = nullptr;
-	U8* ptr = nullptr;
+	Error err = ErrorCode::NONE;
 
 	LockGuard<Mutex> lock(m_mtx);
 
@@ -106,9 +106,7 @@ void* GpuBlockAllocator::allocate(
 
 	if(block)
 	{
-		ptr = getAlignedRoundUp(alignment, m_mem + block->m_offset);
-
-		PtrSize outOffset = ptr - m_mem;
+		PtrSize outOffset = getAlignedRoundUp(alignment, block->m_offset);
 		block->m_offset = outOffset + size;
 		ANKI_ASSERT(
 			block->m_offset <= (block - &m_blocks[0] + 1) * m_blockSize);
@@ -119,19 +117,26 @@ void* GpuBlockAllocator::allocate(
 		handle.m_offset = outOffset;
 		handle.m_range = size;
 	}
+	else if(handleOomError)
+	{
+		ANKI_LOGF("Out of memory");
+	}
+	else
+	{
+		err = ErrorCode::OUT_OF_MEMORY;
+	}
 
-	return static_cast<void*>(ptr);
+	return err;
 }
 
 //==============================================================================
-void GpuBlockAllocator::free(void* vptr)
+void GpuBlockAllocator::free(const DynamicBufferToken& handle)
 {
-	U8* ptr = static_cast<U8*>(vptr);
-	ANKI_ASSERT(ptr);
-	ANKI_ASSERT(ptr >= m_mem && ptr < m_mem + m_size);
+	ANKI_ASSERT(isCreated());
+	ANKI_ASSERT(handle.m_range > 0);
+	ANKI_ASSERT(handle.m_offset < m_size);
 
-	PtrSize offset = static_cast<PtrSize>(ptr - m_mem);
-	U blockIdx = offset / m_blockSize;
+	U blockIdx = handle.m_offset / m_blockSize;
 
 	LockGuard<Mutex> lock(m_mtx);
 

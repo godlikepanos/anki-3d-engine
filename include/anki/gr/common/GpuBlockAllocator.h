@@ -28,22 +28,22 @@ public:
 
 	/// Initialize the allocator using pre-allocated CPU mapped memory.
 	void init(GenericMemoryPoolAllocator<U8> alloc,
-		void* cpuMappedMem,
-		PtrSize cpuMappedMemSize,
+		PtrSize totalSize,
 		PtrSize blockSize);
 
 	/// Allocate GPU memory.
-	ANKI_USE_RESULT void* allocate(
-		PtrSize size, U alignment, DynamicBufferToken& handle);
+	ANKI_USE_RESULT Error allocate(PtrSize size,
+		U alignment,
+		DynamicBufferToken& handle,
+		Bool handleOomError = true);
 
 	/// Free GPU memory.
-	void free(void* ptr);
+	void free(const DynamicBufferToken& handle);
 
 private:
 	class Block;
 
 	GenericMemoryPoolAllocator<U8> m_alloc;
-	U8* m_mem = nullptr;
 	PtrSize m_size = 0;
 	PtrSize m_blockSize = 0;
 	DynamicArray<Block> m_blocks;
@@ -52,6 +52,11 @@ private:
 	U32 m_freeBlockCount = 0;
 	U32 m_currentBlock = MAX_U32;
 	Mutex m_mtx;
+
+	Bool isCreated() const
+	{
+		return m_size > 0;
+	}
 
 	Bool blockHasEnoughSpace(U blockIdx, PtrSize size, U alignment) const;
 };
