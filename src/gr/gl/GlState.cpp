@@ -89,16 +89,15 @@ __stdcall
 void GlState::init0(const ConfigSet& config)
 {
 	m_dynamicBuffers[BufferUsage::UNIFORM].m_size =
-		config.getNumber("gr.frameUniformsSize");
+		config.getNumber("gr.uniformPerFrameMemorySize");
 
 	m_dynamicBuffers[BufferUsage::STORAGE].m_size =
-		config.getNumber("gr.frameStorageSize");
+		config.getNumber("gr.storagePerFrameMemorySize");
 
-	m_dynamicBuffers[BufferUsage::VERTEX].m_size =
-		config.getNumber("gr.frameVertexSize");
+	m_dynamicBuffers[BufferUsage::VERTEX].m_size = 1024;
 
 	m_dynamicBuffers[BufferUsage::TRANSFER].m_size =
-		config.getNumber("gr.frameTransferSize");
+		config.getNumber("gr.transferPersistentMemorySize");
 }
 
 //==============================================================================

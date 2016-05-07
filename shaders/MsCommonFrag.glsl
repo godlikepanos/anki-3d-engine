@@ -19,7 +19,12 @@ layout(early_fragment_tests) in;
 //
 // Input
 //
+#if NVIDIA_LINK_ERROR_WORKAROUND
+layout(location = 0) in highp vec4 in_uv;
+#else
 layout(location = 0) in highp vec2 in_uv;
+#endif
+
 #if PASS == COLOR
 layout(location = 1) in mediump vec3 in_normal;
 layout(location = 2) in mediump vec4 in_tangent;
@@ -66,7 +71,11 @@ vec4 getTangent()
 #define getTextureCoord_DEFINED
 vec2 getTextureCoord()
 {
+#if NVIDIA_LINK_ERROR_WORKAROUND
+	return in_uv.xy;
+#else
 	return in_uv;
+#endif
 }
 
 // Getter

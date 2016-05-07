@@ -27,7 +27,11 @@ out gl_PerVertex
 	vec4 gl_Position;
 };
 
+#if NVIDIA_LINK_ERROR_WORKAROUND
+layout(location = 0) out highp vec4 out_uv;
+#else
 layout(location = 0) out highp vec2 out_uv;
+#endif
 
 #if PASS == COLOR || TESSELLATION
 layout(location = 1) out mediump vec3 out_normal;
@@ -47,7 +51,13 @@ void writePositionAndUv(in mat4 mvp)
 #if PASS == DEPTH && LOD > 0
 // No tex coords for you
 #else
+
+#if NVIDIA_LINK_ERROR_WORKAROUND
+	out_uv = vec4(in_uv, 0.0, 0.0);
+#else
 	out_uv = in_uv;
+#endif
+
 #endif
 
 #if TESSELLATION
