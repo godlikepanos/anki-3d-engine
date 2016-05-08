@@ -37,8 +37,6 @@ ResourceManager::~ResourceManager()
 //==============================================================================
 Error ResourceManager::create(ResourceManagerInitInfo& init)
 {
-	Error err = ErrorCode::NONE;
-
 	m_gr = init.m_gr;
 	m_physics = init.m_physics;
 	m_fs = init.m_resourceFs;
@@ -76,9 +74,9 @@ Error ResourceManager::create(ResourceManagerInitInfo& init)
 
 	// Init the thread
 	m_asyncLoader = m_alloc.newInstance<AsyncLoader>();
-	err = m_asyncLoader->create(m_alloc);
+	m_asyncLoader->init(m_alloc);
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

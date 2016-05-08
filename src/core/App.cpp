@@ -21,6 +21,7 @@
 #include <anki/renderer/MainRenderer.h>
 #include <anki/script/ScriptManager.h>
 #include <anki/resource/ResourceFilesystem.h>
+#include <anki/resource/AsyncLoader.h>
 
 #if ANKI_OS == ANKI_OS_ANDROID
 #include <android_native_app_glue.h>
@@ -384,7 +385,14 @@ Error App::mainLoop()
 
 		ANKI_CHECK(m_renderer->render(*m_scene));
 
+		// Pause and sync async loader. That will force all tasks before the
+		// pause to finish in this frame.
+		m_resources->getAsyncLoader().pause();
+		
 		m_gr->swapBuffers();
+		
+		// Now resume the loader
+		m_resources->getAsyncLoader().resume();
 
 		// Sleep
 		timer.stop();

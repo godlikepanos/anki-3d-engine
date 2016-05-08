@@ -7,27 +7,36 @@
 
 #include <anki/resource/Common.h>
 #include <anki/util/Thread.h>
+#include <anki/util/List.h>
 
 namespace anki
 {
 
+// Forward
+class AsyncLoader;
+
 /// @addtogroup resource
 /// @{
 
-/// Loader asynchronous task.
-class AsyncLoaderTask
+class AsyncLoaderTaskContext
 {
-	friend class AsyncLoader;
+public:
+	/// Pause the async loader.
+	Bool m_pause = false;
 
+	/// Resubmit the same task at the end of the queue.
+	Bool m_resubmitTask = false;
+};
+
+/// Interface for tasks for the AsyncLoader.
+class AsyncLoaderTask : public IntrusiveListEnabled<AsyncLoaderTask>
+{
 public:
 	virtual ~AsyncLoaderTask()
 	{
 	}
 
-	virtual ANKI_USE_RESULT Error operator()() = 0;
-
-private:
-	AsyncLoaderTask* m_next = nullptr;
+	virtual ANKI_USE_RESULT Error operator()(AsyncLoaderTaskContext& ctx) = 0;
 };
 
 /// Asynchronous resource loader.
@@ -38,20 +47,31 @@ public:
 
 	~AsyncLoader();
 
-	ANKI_USE_RESULT Error create(const HeapAllocator<U8>& alloc);
+	void init(const HeapAllocator<U8>& alloc);
 
 	/// Create a new asynchronous loading task.
 	template<typename TTask, typename... TArgs>
 	void newTask(TArgs&&... args);
 
+	/// Pause the loader. This method will block the main thread for the current
+	/// async task to finish. The rest of the tasks in the queue will not be
+	/// executed until resume is called.
+	void pause();
+
+	/// Resume the async loading.
+	void resume();
+
 private:
 	HeapAllocator<U8> m_alloc;
 	Thread m_thread;
+	Barrier m_barrier = {2};
+
 	Mutex m_mtx;
 	ConditionVariable m_condVar;
-	AsyncLoaderTask* m_head = nullptr;
-	AsyncLoaderTask* m_tail = nullptr;
+	IntrusiveList<AsyncLoaderTask> m_taskQueue;
 	Bool8 m_quit = false;
+	Bool8 m_paused = false;
+	Bool8 m_sync = false;
 
 	/// Thread callback
 	static ANKI_USE_RESULT Error threadCallback(Thread::Info& info);
@@ -63,7 +83,7 @@ private:
 
 //==============================================================================
 template<typename TTask, typename... TArgs>
-void AsyncLoader::newTask(TArgs&&... args)
+inline void AsyncLoader::newTask(TArgs&&... args)
 {
 	TTask* newTask =
 		m_alloc.template newInstance<TTask>(std::forward<TArgs>(args)...);
@@ -71,22 +91,13 @@ void AsyncLoader::newTask(TArgs&&... args)
 	// Append task to the list
 	{
 		LockGuard<Mutex> lock(m_mtx);
-		if(m_tail != nullptr)
-		{
-			ANKI_ASSERT(m_tail->m_next == nullptr);
-			ANKI_ASSERT(m_head != nullptr);
+		m_taskQueue.pushBack(newTask);
 
-			m_tail->m_next = newTask;
-			m_tail = newTask;
-		}
-		else
+		if(!m_paused)
 		{
-			ANKI_ASSERT(m_head == nullptr);
-			m_head = m_tail = newTask;
+			// Wake up the thread if it's not paused
+			m_condVar.notifyOne();
 		}
-
-		// Wake up the thread
-		m_condVar.notifyOne();
 	}
 }
 

@@ -37,11 +37,11 @@ public:
 	{
 	}
 
-	Error operator()() final;
+	Error operator()(AsyncLoaderTaskContext& ctx) final;
 };
 
 //==============================================================================
-Error TexUploadTask::operator()()
+Error TexUploadTask::operator()(AsyncLoaderTaskContext& ctx)
 {
 	CommandBufferPtr cmdb =
 		m_gr->newInstance<CommandBuffer>(CommandBufferInitInfo());
