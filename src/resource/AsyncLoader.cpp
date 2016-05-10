@@ -131,7 +131,11 @@ Error AsyncLoader::threadWorker()
 			ANKI_ASSERT(task);
 			AsyncLoaderTaskContext ctx;
 			err = (*task)(ctx);
-			if(err)
+			if(!err)
+			{
+				m_completedTaskCount.fetchAdd(1);
+			}
+			else
 			{
 				ANKI_LOGE("Async loader task failed");
 			}

@@ -199,7 +199,7 @@ Bool Sm::skip(SceneNode& light, ShadowmapBase& sm)
 		});
 	(void)err;
 
-	Bool shouldUpdate = lastUpdate >= sm.m_timestamp;
+	Bool shouldUpdate = lastUpdate >= sm.m_timestamp || m_r->resourcesLoaded();
 	if(shouldUpdate)
 	{
 		sm.m_timestamp = m_r->getGlobalTimestamp();

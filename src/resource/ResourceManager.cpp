@@ -79,4 +79,10 @@ Error ResourceManager::create(ResourceManagerInitInfo& init)
 	return ErrorCode::NONE;
 }
 
+//==============================================================================
+U64 ResourceManager::getAsyncTaskCompletedCount() const
+{
+	return m_asyncLoader->getCompletedTaskCount();
+}
+
 } // end namespace anki

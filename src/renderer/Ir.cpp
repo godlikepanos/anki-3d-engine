@@ -352,7 +352,7 @@ void Ir::findCacheEntry(SceneNode& node, U& entry, Bool& render)
 		// Update timestamp
 		canditate->m_timestamp = m_r->getFrameCount();
 		it = canditate;
-		render = false;
+		render = m_r->resourcesLoaded();
 	}
 	else if(empty)
 	{

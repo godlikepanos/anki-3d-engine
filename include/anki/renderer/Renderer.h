@@ -376,6 +376,13 @@ anki_internal:
 	{
 		return m_globTimestamp;
 	}
+	
+	/// Returns true if there were resources loaded or loading async tasks that
+	/// got completed.
+	Bool resourcesLoaded() const
+	{
+		return m_resourcesDirty;
+	}
 
 private:
 	ThreadPool* m_threadpool;
@@ -426,6 +433,10 @@ private:
 
 	FramebufferPtr m_outputFb;
 	UVec2 m_outputFbSize;
+	
+	U64 m_prevLoadRequestCount = 0;
+	U64 m_prevAsyncTasksCompleted = 0;
+	Bool m_resourcesDirty = true;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 

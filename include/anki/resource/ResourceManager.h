@@ -222,6 +222,14 @@ anki_internal:
 	{
 		return *m_asyncLoader;
 	}
+	
+	/// Get the number of times loadResource() was called.
+	U64 getLoadingRequestCount() const
+	{
+		return m_loadRequestCount;
+	}
+	
+	U64 getAsyncTaskCompletedCount() const;
 
 private:
 	GrManager* m_gr = nullptr;
@@ -236,6 +244,7 @@ private:
 	String m_shadersPrependedSource;
 	AsyncLoader* m_asyncLoader = nullptr; ///< Async loading thread
 	U64 m_uuid = 0;
+	U64 m_loadRequestCount = 0;
 };
 /// @}
 

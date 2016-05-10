@@ -16,6 +16,7 @@ Error ResourceManager::loadResource(
 	ANKI_ASSERT(!out.isCreated() && "Already loaded");
 
 	Error err = ErrorCode::NONE;
+	++m_loadRequestCount;
 
 	T* other = findLoadedResource<T>(filename);
 
