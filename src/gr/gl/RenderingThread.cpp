@@ -149,7 +149,7 @@ void RenderingThread::start(Bool registerMessages, const ConfigSet& config)
 	m_swapBuffersCommands->getImplementation()
 		.pushBackNewCommand<SwapBuffersCommand>(this);
 
-	m_state.init0(config);
+	m_state.initMainThread(config);
 	m_manager->getImplementation().pinContextToCurrentThread(false);
 
 #if !ANKI_DISABLE_GL_RENDERING_THREAD
@@ -203,7 +203,7 @@ void RenderingThread::prepare()
 	m_serverThreadId = Thread::getCurrentThreadId();
 
 	// Init state
-	m_state.init1();
+	m_state.initRenderThread();
 }
 
 //==============================================================================
@@ -313,8 +313,6 @@ void RenderingThread::swapBuffersInternal(GlState& state)
 		m_frameCondVar.notifyOne();
 	}
 
-	state.checkDynamicMemoryConsumption();
-
 	ANKI_TRACE_STOP_EVENT(SWAP_BUFFERS);
 }
 
@@ -334,6 +332,9 @@ void RenderingThread::swapBuffers()
 		m_frameWait = true;
 	}
 #endif
+
+	m_state.m_dynamicMemoryManager.endFrame();
+
 	// ...and then flush a new swap buffers
 	flushCommandBuffer(m_swapBuffersCommands);
 	ANKI_TRACE_STOP_EVENT(SWAP_BUFFERS);

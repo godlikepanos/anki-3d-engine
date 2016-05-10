@@ -6,11 +6,102 @@
 #include <anki/resource/Mesh.h>
 #include <anki/resource/ResourceManager.h>
 #include <anki/resource/MeshLoader.h>
+#include <anki/resource/AsyncLoader.h>
 #include <anki/util/Functions.h>
 #include <anki/misc/Xml.h>
 
 namespace anki
 {
+
+//==============================================================================
+// MeshLoadTask                                                                =
+//==============================================================================
+
+/// Mesh upload async task.
+class MeshLoadTask : public AsyncLoaderTask
+{
+public:
+	ResourceManager* m_manager ANKI_DBG_NULLIFY_PTR;
+	BufferPtr m_vertBuff;
+	BufferPtr m_indicesBuff;
+	MeshLoader m_loader;
+
+	MeshLoadTask(ResourceManager* manager)
+		: m_manager(manager)
+		, m_loader(manager, manager->getAsyncLoader().getAllocator())
+	{
+	}
+
+	Error operator()(AsyncLoaderTaskContext& ctx) final;
+};
+
+//==============================================================================
+Error MeshLoadTask::operator()(AsyncLoaderTaskContext& ctx)
+{
+	GrManager& gr = m_manager->getGrManager();
+	CommandBufferPtr cmdb;
+
+	// Write vert buff
+	if(m_vertBuff)
+	{
+		DynamicBufferToken token;
+		void* data = gr.allocateFrameHostVisibleMemory(
+			m_loader.getVertexDataSize(), BufferUsage::TRANSFER, token);
+
+		if(data)
+		{
+			memcpy(
+				data, m_loader.getVertexData(), m_loader.getVertexDataSize());
+			cmdb = gr.newInstance<CommandBuffer>(CommandBufferInitInfo());
+			cmdb->writeBuffer(m_vertBuff, 0, token);
+			m_vertBuff.reset(nullptr);
+		}
+		else
+		{
+			ctx.m_pause = true;
+			ctx.m_resubmitTask = true;
+			return ErrorCode::NONE;
+		}
+	}
+
+	// Create index buffer
+	{
+		DynamicBufferToken token;
+		void* data = gr.allocateFrameHostVisibleMemory(
+			m_loader.getIndexDataSize(), BufferUsage::TRANSFER, token);
+
+		if(data)
+		{
+			memcpy(data, m_loader.getIndexData(), m_loader.getIndexDataSize());
+
+			if(!cmdb)
+			{
+				cmdb = gr.newInstance<CommandBuffer>(CommandBufferInitInfo());
+			}
+
+			cmdb->writeBuffer(m_indicesBuff, 0, token);
+			cmdb->flush();
+		}
+		else
+		{
+			// Submit prev work
+			if(cmdb)
+			{
+				cmdb->flush();
+			}
+
+			ctx.m_pause = true;
+			ctx.m_resubmitTask = true;
+			return ErrorCode::NONE;
+		}
+	}
+
+	return ErrorCode::NONE;
+}
+
+//==============================================================================
+// Mesh                                                                        =
+//==============================================================================
 
 //==============================================================================
 Mesh::Mesh(ResourceManager* manager)
@@ -35,7 +126,10 @@ Bool Mesh::isCompatible(const Mesh& other) const
 //==============================================================================
 Error Mesh::load(const ResourceFilename& filename)
 {
-	MeshLoader loader(&getManager());
+	MeshLoadTask* task =
+		getManager().getAsyncLoader().newTask<MeshLoadTask>(&getManager());
+
+	MeshLoader& loader = task->m_loader;
 	ANKI_CHECK(loader.load(filename));
 
 	const MeshLoader::Header& header = loader.getHeader();
@@ -56,41 +150,23 @@ Error Mesh::load(const ResourceFilename& filename)
 	m_texChannelsCount = header.m_uvsChannelCount;
 	m_weights = loader.hasBoneInfo();
 
-	createBuffers(loader);
-
-	return ErrorCode::NONE;
-}
-
-//==============================================================================
-void Mesh::createBuffers(const MeshLoader& loader)
-{
+	// Allocate the buffers
 	GrManager& gr = getManager().getGrManager();
 
-	CommandBufferPtr cmdb =
-		gr.newInstance<CommandBuffer>(CommandBufferInitInfo());
-
-	// Create vertex buffer
 	m_vertBuff = gr.newInstance<Buffer>(loader.getVertexDataSize(),
 		BufferUsageBit::VERTEX,
 		BufferAccessBit::CLIENT_WRITE);
 
-	DynamicBufferToken token;
-	void* data = gr.allocateFrameHostVisibleMemory(
-		loader.getVertexDataSize(), BufferUsage::TRANSFER, token);
-	memcpy(data, loader.getVertexData(), loader.getVertexDataSize());
-	cmdb->writeBuffer(m_vertBuff, 0, token);
-
-	// Create index buffer
 	m_indicesBuff = gr.newInstance<Buffer>(loader.getIndexDataSize(),
 		BufferUsageBit::INDEX,
 		BufferAccessBit::CLIENT_WRITE);
 
-	data = gr.allocateFrameHostVisibleMemory(
-		loader.getIndexDataSize(), BufferUsage::TRANSFER, token);
-	memcpy(data, loader.getIndexData(), loader.getIndexDataSize());
-	cmdb->writeBuffer(m_indicesBuff, 0, token);
+	// Submit the loading task
+	task->m_indicesBuff = m_indicesBuff;
+	task->m_vertBuff = m_vertBuff;
+	getManager().getAsyncLoader().submitTask(task);
 
-	cmdb->flush();
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

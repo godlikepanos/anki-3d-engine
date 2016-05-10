@@ -23,8 +23,12 @@ public:
 	Bool m_pause;
 	Bool m_resubmit;
 
-	Task(F32 time, Barrier* barrier, Atomic<U32>* count, I32 id = -1, 
-		Bool pause = false, Bool resubmit = false)
+	Task(F32 time,
+		Barrier* barrier,
+		Atomic<U32>* count,
+		I32 id = -1,
+		Bool pause = false,
+		Bool resubmit = false)
 		: m_sleepTime(time)
 		, m_barrier(barrier)
 		, m_count(count)
@@ -59,7 +63,7 @@ public:
 		{
 			m_barrier->wait();
 		}
-		
+
 		ctx.m_pause = m_pause;
 		ctx.m_resubmitTask = m_resubmit;
 		m_resubmit = false;
@@ -117,7 +121,7 @@ ANKI_TEST(Resource, AsyncLoader)
 		a.init(alloc);
 		Barrier barrier(2);
 
-		a.newTask<Task>(0.0, &barrier, nullptr);
+		a.submitNewTask<Task>(0.0, &barrier, nullptr);
 		barrier.wait();
 	}
 
@@ -138,7 +142,7 @@ ANKI_TEST(Resource, AsyncLoader)
 				pbarrier = &barrier;
 			}
 
-			a.newTask<Task>(0.01, pbarrier, &counter);
+			a.submitNewTask<Task>(0.01, pbarrier, &counter);
 		}
 
 		barrier.wait();
@@ -153,7 +157,7 @@ ANKI_TEST(Resource, AsyncLoader)
 
 		for(U i = 0; i < 100; i++)
 		{
-			a.newTask<Task>(0.0, nullptr, nullptr);
+			a.submitNewTask<Task>(0.0, nullptr, nullptr);
 		}
 	}
 
@@ -172,7 +176,7 @@ ANKI_TEST(Resource, AsyncLoader)
 				pbarrier = &barrier;
 			}
 
-			a.newTask<MemTask>(alloc, pbarrier);
+			a.submitNewTask<MemTask>(alloc, pbarrier);
 		}
 
 		barrier.wait();
@@ -185,7 +189,7 @@ ANKI_TEST(Resource, AsyncLoader)
 
 		for(U i = 0; i < 10; i++)
 		{
-			a.newTask<MemTask>(alloc, nullptr);
+			a.submitNewTask<MemTask>(alloc, nullptr);
 		}
 	}
 
@@ -195,25 +199,25 @@ ANKI_TEST(Resource, AsyncLoader)
 		a.init(alloc);
 		Atomic<U32> counter(0);
 		Barrier barrier(2);
-		
+
 		// Check if the pause will sync
-		a.newTask<Task>(0.5, nullptr, &counter, 0);
+		a.submitNewTask<Task>(0.5, nullptr, &counter, 0);
 		HighRezTimer::sleep(0.25); // Wait for the thread to pick the task...
 		a.pause(); /// ...and then sync
 		ANKI_TEST_EXPECT_EQ(counter.load(), 1);
-		
+
 		// Test resume
-		a.newTask<Task>(0.1, nullptr, &counter, 1);
+		a.submitNewTask<Task>(0.1, nullptr, &counter, 1);
 		HighRezTimer::sleep(1.0);
 		ANKI_TEST_EXPECT_EQ(counter.load(), 1);
 		a.resume();
-		
+
 		// Sync
-		a.newTask<Task>(0.1, &barrier, &counter, 2);
+		a.submitNewTask<Task>(0.1, &barrier, &counter, 2);
 		barrier.wait();
-		
+
 		ANKI_TEST_EXPECT_EQ(counter.load(), 3);
-	}	
+	}
 
 	// Pause/resume
 	{
@@ -221,27 +225,27 @@ ANKI_TEST(Resource, AsyncLoader)
 		a.init(alloc);
 		Atomic<U32> counter(0);
 		Barrier barrier(2);
-		
+
 		// Check task resubmit
-		a.newTask<Task>(0.0, &barrier, &counter, -1, false, true);
+		a.submitNewTask<Task>(0.0, &barrier, &counter, -1, false, true);
 		barrier.wait();
 		barrier.wait();
 		ANKI_TEST_EXPECT_EQ(counter.load(), 2);
-		
+
 		// Check task pause
-		a.newTask<Task>(0.0, nullptr, &counter, -1, true, false);
-		a.newTask<Task>(0.0, nullptr, &counter, -1, false, false);
+		a.submitNewTask<Task>(0.0, nullptr, &counter, -1, true, false);
+		a.submitNewTask<Task>(0.0, nullptr, &counter, -1, false, false);
 		HighRezTimer::sleep(1.0);
 		ANKI_TEST_EXPECT_EQ(counter.load(), 3);
 		a.resume();
 		HighRezTimer::sleep(1.0);
 		ANKI_TEST_EXPECT_EQ(counter.load(), 4);
-		
+
 		// Check both
 		counter.set(0);
-		a.newTask<Task>(0.0, nullptr, &counter, 0, false, false);
-		a.newTask<Task>(0.0, nullptr, &counter, -1, true, true);
-		a.newTask<Task>(0.0, nullptr, &counter, 2, false, false);
+		a.submitNewTask<Task>(0.0, nullptr, &counter, 0, false, false);
+		a.submitNewTask<Task>(0.0, nullptr, &counter, -1, true, true);
+		a.submitNewTask<Task>(0.0, nullptr, &counter, 2, false, false);
 		HighRezTimer::sleep(1.0);
 		ANKI_TEST_EXPECT_EQ(counter.load(), 2);
 		a.resume();
@@ -265,7 +269,7 @@ ANKI_TEST(Resource, AsyncLoader)
 				pbarrier = &barrier;
 			}
 
-			a.newTask<Task>(randRange(0.0, 0.5), pbarrier, &counter, i);
+			a.submitNewTask<Task>(randRange(0.0, 0.5), pbarrier, &counter, i);
 		}
 
 		barrier.wait();

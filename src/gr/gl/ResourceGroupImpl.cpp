@@ -134,7 +134,7 @@ void ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 									   .getState();
 
 			m_vertBuffNames[i] =
-				state.m_dynamicBuffers[BufferUsage::VERTEX].m_name;
+				state.m_dynamicMemoryManager.getGlName(BufferUsage::VERTEX);
 			m_vertBuffOffsets[i] = MAX_U32;
 
 			++m_vertBindingsCount;
@@ -271,7 +271,8 @@ void ResourceGroupImpl::bind(
 			{
 				glBindBufferRange(GL_UNIFORM_BUFFER,
 					MAX_UNIFORM_BUFFER_BINDINGS * slot + i,
-					state.m_dynamicBuffers[BufferUsage::UNIFORM].m_name,
+					state.m_dynamicMemoryManager.getGlName(
+						BufferUsage::UNIFORM),
 					token.m_offset,
 					token.m_range);
 			}
@@ -305,7 +306,8 @@ void ResourceGroupImpl::bind(
 			{
 				glBindBufferRange(GL_SHADER_STORAGE_BUFFER,
 					MAX_STORAGE_BUFFER_BINDINGS * slot + i,
-					state.m_dynamicBuffers[BufferUsage::STORAGE].m_name,
+					state.m_dynamicMemoryManager.getGlName(
+						BufferUsage::STORAGE),
 					token.m_offset,
 					token.m_range);
 			}

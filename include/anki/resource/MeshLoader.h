@@ -104,8 +104,11 @@ public:
 		U32 m_indicesCount = 0;
 	};
 
-	MeshLoader(ResourceManager* manager)
+	MeshLoader(ResourceManager* manager);
+
+	MeshLoader(ResourceManager* manager, GenericMemoryPoolAllocator<U8> alloc)
 		: m_manager(manager)
+		, m_alloc(alloc)
 	{
 	}
 
@@ -161,6 +164,7 @@ private:
 	using MDynamicArray = DynamicArray<T>;
 
 	ResourceManager* m_manager;
+	GenericMemoryPoolAllocator<U8> m_alloc;
 	Header m_header;
 
 	MDynamicArray<U8> m_verts;

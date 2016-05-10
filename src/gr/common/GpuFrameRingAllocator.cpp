@@ -69,9 +69,15 @@ Error GpuFrameRingAllocator::allocate(
 		ANKI_ASSERT(isAligned(m_alignment, offset));
 		ANKI_ASSERT((offset + size) <= m_size);
 
+#if ANKI_ENABLE_TRACE
+		m_lastAllocatedSize.store(size);
+#endif
+
 		// Encode token
 		token.m_offset = offset;
 		token.m_range = originalSize;
+
+		ANKI_ASSERT(token.m_offset + token.m_range <= m_size);
 	}
 	else if(handleOomError)
 	{
@@ -84,5 +90,21 @@ Error GpuFrameRingAllocator::allocate(
 
 	return err;
 }
+
+//==============================================================================
+#if ANKI_ENABLE_TRACE
+PtrSize GpuFrameRingAllocator::getUnallocatedMemorySize() const
+{
+	PtrSize perFrameSize = m_size / MAX_FRAMES_IN_FLIGHT;
+	PtrSize crntFrameStartOffset =
+		perFrameSize * (m_frame % MAX_FRAMES_IN_FLIGHT);
+	PtrSize usedSize =
+		m_offset.get() - crntFrameStartOffset + m_lastAllocatedSize.get();
+
+	PtrSize remaining =
+		(perFrameSize >= usedSize) ? (perFrameSize - usedSize) : 0;
+	return remaining;
+}
+#endif
 
 } // end namespace anki

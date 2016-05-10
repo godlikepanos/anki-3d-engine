@@ -43,12 +43,20 @@ public:
 	/// @return The bytes that were not used. Used for statistics.
 	PtrSize endFrame();
 
+#if ANKI_ENABLE_TRACE
+	/// Call this before endFrame.
+	PtrSize getUnallocatedMemorySize() const;
+#endif
+
 private:
 	PtrSize m_size = 0; ///< The full size of the buffer.
 	U32 m_alignment = 0; ///< Always work in that alignment.
 	PtrSize m_maxAllocationSize = 0; ///< For debugging.
 
 	Atomic<PtrSize> m_offset = {0};
+#if ANKI_ENABLE_TRACE
+	Atomic<PtrSize> m_lastAllocatedSize = {0}; ///< For tracing.
+#endif
 	U64 m_frame = 0;
 
 	Bool isCreated() const

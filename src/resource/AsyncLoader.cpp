@@ -159,4 +159,20 @@ Error AsyncLoader::threadWorker()
 	return err;
 }
 
+//==============================================================================
+void AsyncLoader::submitTask(AsyncLoaderTask* task)
+{
+	ANKI_ASSERT(task);
+
+	// Append task to the list
+	LockGuard<Mutex> lock(m_mtx);
+	m_taskQueue.pushBack(task);
+
+	if(!m_paused)
+	{
+		// Wake up the thread if it's not paused
+		m_condVar.notifyOne();
+	}
+}
+
 } // end namespace anki

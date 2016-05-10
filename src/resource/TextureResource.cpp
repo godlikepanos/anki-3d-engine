@@ -12,28 +12,29 @@ namespace anki
 {
 
 //==============================================================================
-// Misc                                                                        =
+// TexUploadTask                                                               =
 //==============================================================================
 
+/// Texture upload async task.
 class TexUploadTask : public AsyncLoaderTask
 {
 public:
-	UniquePtr<ImageLoader> m_loader;
+	ImageLoader m_loader;
 	TexturePtr m_tex;
 	GrManager* m_gr ANKI_DBG_NULLIFY_PTR;
-	U32 m_depth = 0;
-	U8 m_faces = 0;
+	U m_depth = 0;
+	U m_faces = 0;
 
-	TexUploadTask(UniquePtr<ImageLoader>& loader,
-		TexturePtr tex,
-		GrManager* gr,
-		U depth,
-		U faces)
-		: m_loader(std::move(loader))
-		, m_tex(tex)
-		, m_gr(gr)
-		, m_depth(depth)
-		, m_faces(faces)
+	class
+	{
+	public:
+		U m_depth = 0;
+		U m_face = 0;
+		U m_mip = 0;
+	} m_ctx;
+
+	TexUploadTask(GenericMemoryPoolAllocator<U8> alloc)
+		: m_loader(alloc)
 	{
 	}
 
@@ -43,33 +44,64 @@ public:
 //==============================================================================
 Error TexUploadTask::operator()(AsyncLoaderTaskContext& ctx)
 {
-	CommandBufferPtr cmdb =
-		m_gr->newInstance<CommandBuffer>(CommandBufferInitInfo());
+	CommandBufferPtr cmdb;
 
 	// Upload the data
-	for(U depth = 0; depth < m_depth; depth++)
+	for(U depth = m_ctx.m_depth; depth < m_depth; ++depth)
 	{
-		for(U face = 0; face < m_faces; face++)
+		for(U face = m_ctx.m_face; face < m_faces; ++face)
 		{
-			for(U level = 0; level < m_loader->getMipLevelsCount(); level++)
+			for(U mip = m_ctx.m_mip; mip < m_loader.getMipLevelsCount(); ++mip)
 			{
 				U surfIdx = max(depth, face);
-				const auto& surf = m_loader->getSurface(level, surfIdx);
+				const auto& surf = m_loader.getSurface(mip, surfIdx);
 
 				DynamicBufferToken token;
 				void* data = m_gr->allocateFrameHostVisibleMemory(
 					surf.m_data.getSize(), BufferUsage::TRANSFER, token);
-				memcpy(data, &surf.m_data[0], surf.m_data.getSize());
 
-				cmdb->textureUpload(
-					m_tex, TextureSurfaceInfo(level, depth, face), token);
+				if(data)
+				{
+					// There is enough transfer memory
+
+					memcpy(data, &surf.m_data[0], surf.m_data.getSize());
+
+					if(!cmdb)
+					{
+						cmdb = m_gr->newInstance<CommandBuffer>(
+							CommandBufferInitInfo());
+					}
+
+					cmdb->textureUpload(
+						m_tex, TextureSurfaceInfo(mip, depth, face), token);
+				}
+				else
+				{
+					// Not enough transfer memory. Move the work to the future
+
+					if(cmdb)
+					{
+						cmdb->flush();
+					}
+
+					m_ctx.m_depth = depth;
+					m_ctx.m_mip = mip;
+					m_ctx.m_face = face;
+
+					ctx.m_pause = true;
+					ctx.m_resubmitTask = true;
+
+					return ErrorCode::NONE;
+				}
 			}
 		}
 	}
 
-	// Finaly enque the GL job chain
-	// TODO This is probably a bad idea
-	cmdb->finish();
+	// Finaly enque the command buffer
+	if(cmdb)
+	{
+		cmdb->flush();
+	}
 
 	return ErrorCode::NONE;
 }
@@ -86,34 +118,30 @@ TextureResource::~TextureResource()
 //==============================================================================
 Error TextureResource::load(const ResourceFilename& filename)
 {
-	GrManager& gr = getManager().getGrManager();
-	// Always first to avoid assertions (because of the check of the allocator)
-	CommandBufferPtr cmdb =
-		gr.newInstance<CommandBuffer>(CommandBufferInitInfo());
-
 	TextureInitInfo init;
 	U depth = 0;
 	U faces = 0;
 
 	// Load image
-	UniquePtr<ImageLoader> img;
-	img.reset(getAllocator().newInstance<ImageLoader>(getAllocator()));
+	TexUploadTask* task = getManager().getAsyncLoader().newTask<TexUploadTask>(
+		getManager().getAsyncLoader().getAllocator());
+	ImageLoader& loader = task->m_loader;
 
 	ResourceFilePtr file;
 	ANKI_CHECK(openFile(filename, file));
 
-	ANKI_CHECK(img->load(file, filename, getManager().getMaxTextureSize()));
+	ANKI_CHECK(loader.load(file, filename, getManager().getMaxTextureSize()));
 
 	// width + height
-	const auto& tmpSurf = img->getSurface(0, 0);
+	const auto& tmpSurf = loader.getSurface(0, 0);
 	init.m_width = tmpSurf.m_width;
 	init.m_height = tmpSurf.m_height;
 
 	// depth
-	if(img->getTextureType() == ImageLoader::TextureType::_2D_ARRAY
-		|| img->getTextureType() == ImageLoader::TextureType::_3D)
+	if(loader.getTextureType() == ImageLoader::TextureType::_2D_ARRAY
+		|| loader.getTextureType() == ImageLoader::TextureType::_3D)
 	{
-		init.m_depth = img->getDepth();
+		init.m_depth = loader.getDepth();
 	}
 	else
 	{
@@ -121,7 +149,7 @@ Error TextureResource::load(const ResourceFilename& filename)
 	}
 
 	// target
-	switch(img->getTextureType())
+	switch(loader.getTextureType())
 	{
 	case ImageLoader::TextureType::_2D:
 		init.m_type = TextureType::_2D;
@@ -151,9 +179,9 @@ Error TextureResource::load(const ResourceFilename& filename)
 	init.m_format.m_transform = TransformFormat::UNORM;
 	init.m_format.m_srgb = false;
 
-	if(img->getColorFormat() == ImageLoader::ColorFormat::RGB8)
+	if(loader.getColorFormat() == ImageLoader::ColorFormat::RGB8)
 	{
-		switch(img->getCompression())
+		switch(loader.getCompression())
 		{
 		case ImageLoader::DataCompression::RAW:
 			init.m_format.m_components = ComponentFormat::R8G8B8;
@@ -171,9 +199,9 @@ Error TextureResource::load(const ResourceFilename& filename)
 			ANKI_ASSERT(0);
 		}
 	}
-	else if(img->getColorFormat() == ImageLoader::ColorFormat::RGBA8)
+	else if(loader.getColorFormat() == ImageLoader::ColorFormat::RGBA8)
 	{
-		switch(img->getCompression())
+		switch(loader.getCompression())
 		{
 		case ImageLoader::DataCompression::RAW:
 			init.m_format.m_components = ComponentFormat::R8G8B8A8;
@@ -197,7 +225,7 @@ Error TextureResource::load(const ResourceFilename& filename)
 	}
 
 	// mipmapsCount
-	init.m_mipmapsCount = img->getMipLevelsCount();
+	init.m_mipmapsCount = loader.getMipLevelsCount();
 
 	// filteringType
 	init.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
@@ -210,14 +238,18 @@ Error TextureResource::load(const ResourceFilename& filename)
 	init.m_sampling.m_anisotropyLevel = getManager().getTextureAnisotropy();
 
 	// Create the texture
-	m_tex = gr.newInstance<Texture>(init);
+	m_tex = getManager().getGrManager().newInstance<Texture>(init);
 
 	// Upload the data asynchronously
-	getManager().getAsyncLoader().newTask<TexUploadTask>(
-		img, m_tex, &gr, depth, faces);
+	task->m_depth = depth;
+	task->m_faces = faces;
+	task->m_gr = &getManager().getGrManager();
+	task->m_tex = m_tex;
 
+	getManager().getAsyncLoader().submitTask(task);
+
+	// Done
 	m_size = UVec3(init.m_width, init.m_height, init.m_depth);
-
 	return ErrorCode::NONE;
 }
 

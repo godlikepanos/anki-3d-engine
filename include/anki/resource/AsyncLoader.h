@@ -49,9 +49,23 @@ public:
 
 	void init(const HeapAllocator<U8>& alloc);
 
+	/// Submit a task.
+	void submitTask(AsyncLoaderTask* task);
+
 	/// Create a new asynchronous loading task.
 	template<typename TTask, typename... TArgs>
-	void newTask(TArgs&&... args);
+	TTask* newTask(TArgs&&... args)
+	{
+		return m_alloc.template newInstance<TTask>(
+			std::forward<TArgs>(args)...);
+	}
+
+	/// Create and submit a new asynchronous loading task.
+	template<typename TTask, typename... TArgs>
+	void submitNewTask(TArgs&&... args)
+	{
+		submitTask(newTask<TTask>(std::forward<TArgs>(args)...));
+	}
 
 	/// Pause the loader. This method will block the main thread for the current
 	/// async task to finish. The rest of the tasks in the queue will not be
@@ -60,6 +74,11 @@ public:
 
 	/// Resume the async loading.
 	void resume();
+
+	HeapAllocator<U8> getAllocator() const
+	{
+		return m_alloc;
+	}
 
 private:
 	HeapAllocator<U8> m_alloc;
@@ -80,27 +99,6 @@ private:
 
 	void stop();
 };
-
-//==============================================================================
-template<typename TTask, typename... TArgs>
-inline void AsyncLoader::newTask(TArgs&&... args)
-{
-	TTask* newTask =
-		m_alloc.template newInstance<TTask>(std::forward<TArgs>(args)...);
-
-	// Append task to the list
-	{
-		LockGuard<Mutex> lock(m_mtx);
-		m_taskQueue.pushBack(newTask);
-
-		if(!m_paused)
-		{
-			// Wake up the thread if it's not paused
-			m_condVar.notifyOne();
-		}
-	}
-}
-
 /// @}
 
 } // end namespace anki

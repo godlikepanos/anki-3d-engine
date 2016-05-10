@@ -388,9 +388,9 @@ Error App::mainLoop()
 		// Pause and sync async loader. That will force all tasks before the
 		// pause to finish in this frame.
 		m_resources->getAsyncLoader().pause();
-		
+
 		m_gr->swapBuffers();
-		
+
 		// Now resume the loader
 		m_resources->getAsyncLoader().resume();
 

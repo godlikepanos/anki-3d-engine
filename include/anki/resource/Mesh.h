@@ -107,9 +107,6 @@ protected:
 
 	BufferPtr m_vertBuff;
 	BufferPtr m_indicesBuff;
-
-	/// Create the VBOs using the mesh data
-	void createBuffers(const MeshLoader& loader);
 };
 /// @}
 

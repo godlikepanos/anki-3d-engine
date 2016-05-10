@@ -489,7 +489,8 @@ public:
 
 	Error operator()(GlState& state)
 	{
-		U8* data = state.m_dynamicBuffers[BufferUsage::TRANSFER].m_address
+		U8* data = static_cast<U8*>(state.m_dynamicMemoryManager.getBaseAddress(
+					   BufferUsage::TRANSFER))
 			+ m_token.m_offset;
 
 		m_handle->getImplementation().write(m_surf, data, m_token.m_range);
@@ -526,7 +527,8 @@ public:
 
 	Error operator()(GlState& state)
 	{
-		U8* data = state.m_dynamicBuffers[BufferUsage::TRANSFER].m_address
+		U8* data = static_cast<U8*>(state.m_dynamicMemoryManager.getBaseAddress(
+					   BufferUsage::TRANSFER))
 			+ m_token.m_offset;
 
 		m_handle->getImplementation().write(data, m_offset, m_token.m_range);

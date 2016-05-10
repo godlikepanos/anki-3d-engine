@@ -11,21 +11,25 @@ namespace anki
 {
 
 //==============================================================================
+MeshLoader::MeshLoader(ResourceManager* manager)
+	: MeshLoader(manager, manager->getTempAllocator())
+{
+}
+
+//==============================================================================
 MeshLoader::~MeshLoader()
 {
-	auto alloc = m_manager->getTempAllocator();
-
 	// WARNING: Watch the order of deallocation. Reverse of the deallocation to
 	// have successful cleanups
-	m_verts.destroy(alloc);
-	m_indices.destroy(alloc);
-	m_subMeshes.destroy(alloc);
+	m_verts.destroy(m_alloc);
+	m_indices.destroy(m_alloc);
+	m_subMeshes.destroy(m_alloc);
 }
 
 //==============================================================================
 Error MeshLoader::load(const ResourceFilename& filename)
 {
-	auto alloc = m_manager->getTempAllocator();
+	auto& alloc = m_alloc;
 
 	// Load header
 	ResourceFilePtr file;
