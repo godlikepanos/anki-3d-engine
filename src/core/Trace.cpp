@@ -54,6 +54,7 @@ static Array<const char*, U(TraceCounterType::COUNT)> counterNames = {
 		"RENDERER_SHADOW_PASSES",
 		"RENDERER_MERGED_DRAWCALLS",
 		"RENDERER_REFLECTIONS",
+		"RESOURCE_ASYNC_TASKS",
 		"SCENE_NODES_UPDATED"}};
 
 #define ANKI_TRACE_FILE_ERROR()                                                \

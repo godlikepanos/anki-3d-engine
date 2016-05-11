@@ -34,7 +34,7 @@
 	<dbg.enabled>0</dbg.enabled>
 	<tm.enabled>1</tm.enabled>
 	<width>1920</width>
-	<height>1088</height>
+	<height>1080</height>
 	<renderingQuality>1</renderingQuality>
 	<lodDistance>20</lodDistance>
 	<samples>1</samples>

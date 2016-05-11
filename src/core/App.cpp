@@ -281,7 +281,6 @@ Error App::initInternal(const ConfigSet& config_,
 
 	m_resources->_setShadersPrependedSource(
 		m_renderer->getMaterialShaderSource().toCString());
-	m_resources->setRenderer(&m_renderer->getOffscreenRenderer());
 
 	//
 	// Scene
@@ -390,6 +389,13 @@ Error App::mainLoop()
 		m_resources->getAsyncLoader().pause();
 
 		m_gr->swapBuffers();
+
+		// Update the trace info with some async loader stats
+		U64 asyncTaskCount =
+			m_resources->getAsyncLoader().getCompletedTaskCount();
+		ANKI_TRACE_INC_COUNTER(RESOURCE_ASYNC_TASKS,
+			asyncTaskCount - m_resourceCompletedAsyncTaskCount);
+		m_resourceCompletedAsyncTaskCount = asyncTaskCount;
 
 		// Now resume the loader
 		m_resources->getAsyncLoader().resume();

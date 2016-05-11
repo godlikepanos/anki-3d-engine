@@ -79,7 +79,7 @@ public:
 	{
 		return m_alloc;
 	}
-	
+
 	/// Get the total number of completed tasks.
 	U64 getCompletedTaskCount() const
 	{
@@ -97,7 +97,7 @@ private:
 	Bool8 m_quit = false;
 	Bool8 m_paused = false;
 	Bool8 m_sync = false;
-	
+
 	Atomic<U64> m_completedTaskCount = {0};
 
 	/// Thread callback

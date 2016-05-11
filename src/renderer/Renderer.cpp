@@ -240,10 +240,11 @@ Error Renderer::render(RenderingContext& ctx)
 		commonUniforms->m_nearFarLinearizeDepth.w());
 
 	commonUniforms->m_projectionMatrix = frc.getProjectionMatrix();
-	
+
 	// Check if resources got loaded
 	if(m_prevLoadRequestCount != m_resources->getLoadingRequestCount()
-		|| m_prevAsyncTasksCompleted != m_resources->getAsyncTaskCompletedCount())
+		|| m_prevAsyncTasksCompleted
+			!= m_resources->getAsyncTaskCompletedCount())
 	{
 		m_prevLoadRequestCount = m_resources->getLoadingRequestCount();
 		m_prevAsyncTasksCompleted = m_resources->getAsyncTaskCompletedCount();

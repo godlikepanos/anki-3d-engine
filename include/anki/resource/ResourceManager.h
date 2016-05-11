@@ -184,17 +184,6 @@ anki_internal:
 		m_shadersPrependedSource.create(m_alloc, cstr);
 	}
 
-	void setRenderer(Renderer* r)
-	{
-		m_r = r;
-	}
-
-	const Renderer& getRenderer() const
-	{
-		ANKI_ASSERT(m_r);
-		return *m_r;
-	}
-
 	const String& _getShadersPrependedSource() const
 	{
 		return m_shadersPrependedSource;
@@ -222,20 +211,20 @@ anki_internal:
 	{
 		return *m_asyncLoader;
 	}
-	
+
 	/// Get the number of times loadResource() was called.
 	U64 getLoadingRequestCount() const
 	{
 		return m_loadRequestCount;
 	}
-	
+
+	/// Get the total number of completed async tasks.
 	U64 getAsyncTaskCompletedCount() const;
 
 private:
 	GrManager* m_gr = nullptr;
 	PhysicsWorld* m_physics = nullptr;
 	ResourceFilesystem* m_fs = nullptr;
-	Renderer* m_r = nullptr;
 	ResourceAllocator<U8> m_alloc;
 	TempResourceAllocator<U8> m_tmpAlloc;
 	String m_cacheDir;
