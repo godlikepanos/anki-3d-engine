@@ -128,7 +128,7 @@ void main()
 
 #if 0
 	{
-		out_color = textureLod(u_isRt, in_uv, 0.0).rgb;
+		out_color = bloom;
 	}
 #endif
 }

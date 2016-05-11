@@ -509,7 +509,7 @@ Error Is::populateBuffers(RenderingContext& ctx)
 			getGrManager().allocateFrameHostVisibleMemory(
 				sizeof(ShaderPointLight) * visiblePointLightsCount,
 				BufferUsage::UNIFORM,
-				m_pLightsToken));
+				ctx.m_is.m_dynBufferInfo.m_uniformBuffers[P_LIGHTS_LOCATION]));
 
 		taskData.m_pointLights =
 			WeakArray<ShaderPointLight>(data, visiblePointLightsCount);
@@ -520,7 +520,8 @@ Error Is::populateBuffers(RenderingContext& ctx)
 	}
 	else
 	{
-		m_pLightsToken.markUnused();
+		ctx.m_is.m_dynBufferInfo.m_uniformBuffers[P_LIGHTS_LOCATION]
+			.markUnused();
 	}
 
 	if(visibleSpotLightsCount)
@@ -529,7 +530,7 @@ Error Is::populateBuffers(RenderingContext& ctx)
 			getGrManager().allocateFrameHostVisibleMemory(
 				sizeof(ShaderSpotLight) * visibleSpotLightsCount,
 				BufferUsage::UNIFORM,
-				m_sLightsToken));
+				ctx.m_is.m_dynBufferInfo.m_uniformBuffers[S_LIGHTS_LOCATION]));
 
 		taskData.m_spotLights =
 			WeakArray<ShaderSpotLight>(data, visibleSpotLightsCount);
@@ -540,7 +541,8 @@ Error Is::populateBuffers(RenderingContext& ctx)
 	}
 	else
 	{
-		m_sLightsToken.markUnused();
+		ctx.m_is.m_dynBufferInfo.m_uniformBuffers[S_LIGHTS_LOCATION]
+			.markUnused();
 	}
 
 	if(m_r->getIrEnabled() && visibleProbeCount)
@@ -549,7 +551,7 @@ Error Is::populateBuffers(RenderingContext& ctx)
 			getGrManager().allocateFrameHostVisibleMemory(
 				sizeof(ShaderProbe) * visibleProbeCount,
 				BufferUsage::UNIFORM,
-				m_probesToken));
+				ctx.m_is.m_dynBufferInfo.m_uniformBuffers[PROBES_LOCATION]));
 
 		taskData.m_probes = WeakArray<ShaderProbe>(data, visibleProbeCount);
 
@@ -559,7 +561,7 @@ Error Is::populateBuffers(RenderingContext& ctx)
 	}
 	else
 	{
-		m_probesToken.markUnused();
+		ctx.m_is.m_dynBufferInfo.m_uniformBuffers[PROBES_LOCATION].markUnused();
 	}
 
 	taskData.m_is = this;
@@ -569,7 +571,7 @@ Error Is::populateBuffers(RenderingContext& ctx)
 		getGrManager().allocateFrameHostVisibleMemory(
 			sizeof(ShaderCluster) * clusterCount,
 			BufferUsage::STORAGE,
-			m_clustersToken));
+			ctx.m_is.m_dynBufferInfo.m_storageBuffers[CLUSTERS_LOCATION]));
 
 	taskData.m_clusters = WeakArray<ShaderCluster>(data, clusterCount);
 
@@ -578,7 +580,7 @@ Error Is::populateBuffers(RenderingContext& ctx)
 		static_cast<U32*>(getGrManager().allocateFrameHostVisibleMemory(
 			m_maxLightIds * sizeof(U32),
 			BufferUsage::STORAGE,
-			m_lightIdsToken));
+			ctx.m_is.m_dynBufferInfo.m_storageBuffers[LIGHT_IDS_LOCATION]));
 
 	taskData.m_lightIds = WeakArray<U32>(data2, m_maxLightIds);
 
@@ -590,7 +592,7 @@ Error Is::populateBuffers(RenderingContext& ctx)
 	}
 
 	// Update uniforms
-	updateCommonBlock(*m_frc);
+	updateCommonBlock(*m_frc, ctx);
 
 	// Sync
 	ANKI_CHECK(threadPool.waitForAllThreadsToFinish());
@@ -955,41 +957,31 @@ void Is::writeAndBinProbe(const FrustumComponent& camFrc,
 }
 
 //==============================================================================
-void Is::setState(CommandBufferPtr& cmdb)
+void Is::setState(const RenderingContext& ctx, CommandBufferPtr& cmdb)
 {
 	cmdb->beginRenderPass(m_fb);
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 	cmdb->bindPipeline(m_lightPpline);
-
-	DynamicBufferInfo dyn;
-	dyn.m_uniformBuffers[0] = m_commonVarsToken;
-	dyn.m_uniformBuffers[1] = m_pLightsToken;
-	dyn.m_uniformBuffers[2] = m_sLightsToken;
-	dyn.m_uniformBuffers[3] = m_probesToken;
-
-	dyn.m_storageBuffers[0] = m_clustersToken;
-	dyn.m_storageBuffers[1] = m_lightIdsToken;
-
-	cmdb->bindResourceGroup(m_rcGroup, 0, &dyn);
+	cmdb->bindResourceGroup(m_rcGroup, 0, &ctx.m_is.m_dynBufferInfo);
 }
 
 //==============================================================================
 void Is::run(RenderingContext& ctx)
 {
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
-	setState(cmdb);
+	setState(ctx, cmdb);
 	cmdb->drawArrays(4, m_r->getTileCount());
 	cmdb->endRenderPass();
 }
 
 //==============================================================================
-void Is::updateCommonBlock(const FrustumComponent& fr)
+void Is::updateCommonBlock(const FrustumComponent& fr, RenderingContext& ctx)
 {
 	ShaderCommonUniforms* blk = static_cast<ShaderCommonUniforms*>(
 		getGrManager().allocateFrameHostVisibleMemory(
 			sizeof(ShaderCommonUniforms),
 			BufferUsage::UNIFORM,
-			m_commonVarsToken));
+			ctx.m_is.m_dynBufferInfo.m_uniformBuffers[COMMON_VARS_LOCATION]));
 
 	// Start writing
 	blk->m_projectionParams = fr.getProjectionParameters();

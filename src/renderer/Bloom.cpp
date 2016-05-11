@@ -49,8 +49,6 @@ Error Bloom::initInternal(const ConfigSet& config)
 	m_threshold = config.getNumber("bloom.threshold");
 	m_scale = config.getNumber("bloom.scale");
 	m_blurringDist = config.getNumber("bloom.blurringDist");
-	m_blurringIterationsCount =
-		config.getNumber("bloom.blurringIterationsCount");
 
 	ANKI_CHECK(initFb(m_hblurFb, m_hblurRt));
 	ANKI_CHECK(initFb(m_vblurFb, m_vblurRt));
@@ -90,7 +88,7 @@ Error Bloom::initInternal(const ConfigSet& config)
 	pps.sprintf("#define HPASS\n"
 				"#define COL_RGB\n"
 				"#define TEXTURE_SIZE vec2(%f, %f)\n"
-				"#define KERNEL_SIZE 15\n",
+				"#define KERNEL_SIZE 19\n",
 		F32(m_width),
 		F32(m_height));
 

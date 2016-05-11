@@ -46,6 +46,15 @@ public:
 	} m_ms;
 	/// @}
 
+	/// @name IS
+	/// @{
+	class Is
+	{
+	public:
+		DynamicBufferInfo m_dynBufferInfo;
+	} m_is;
+	/// @}
+
 	/// @name Shadow mapping
 	/// @{
 	class Sm
@@ -79,7 +88,6 @@ public:
 	class Fs
 	{
 	public:
-		DynamicBufferInfo m_set1DynInfo;
 		Array<CommandBufferPtr, ThreadPool::MAX_THREADS> m_commandBuffers;
 	} m_fs;
 	/// @}

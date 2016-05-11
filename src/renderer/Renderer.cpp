@@ -430,7 +430,6 @@ Error Renderer::buildCommandBuffers(RenderingContext& ctx)
 	{
 		m_sm->prepareBuildCommandBuffers(ctx);
 	}
-	m_fs->prepareBuildCommandBuffers(ctx);
 
 	// Build
 	class Task : public ThreadPoolTask

@@ -63,44 +63,19 @@ anki_internal:
 		cmdb->generateMipmaps(m_rt, 0, 0);
 	}
 
-	DynamicBufferToken getCommonVarsToken() const
-	{
-		return m_commonVarsToken;
-	}
-
-	DynamicBufferToken getPointLightsToken() const
-	{
-		return m_pLightsToken;
-	}
-
-	DynamicBufferToken getSpotLightsToken() const
-	{
-		return m_sLightsToken;
-	}
-
-	DynamicBufferToken getClustersToken() const
-	{
-		return m_clustersToken;
-	}
-
-	DynamicBufferToken getLightIndicesToken() const
-	{
-		return m_lightIdsToken;
-	}
-
 private:
+	static const U COMMON_VARS_LOCATION = 0;
+	static const U P_LIGHTS_LOCATION = 1;
+	static const U S_LIGHTS_LOCATION = 2;
+	static const U PROBES_LOCATION = 3;
+	static const U CLUSTERS_LOCATION = 0;
+	static const U LIGHT_IDS_LOCATION = 1;
+
 	/// The IS render target
 	TexturePtr m_rt;
 
 	/// The IS FBO
 	FramebufferPtr m_fb;
-
-	DynamicBufferToken m_commonVarsToken;
-	DynamicBufferToken m_pLightsToken;
-	DynamicBufferToken m_sLightsToken;
-	DynamicBufferToken m_clustersToken;
-	DynamicBufferToken m_lightIdsToken;
-	DynamicBufferToken m_probesToken;
 
 	ResourceGroupPtr m_rcGroup;
 
@@ -128,9 +103,9 @@ private:
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 
 	/// Prepare GL for rendering
-	void setState(CommandBufferPtr& cmdBuff);
+	void setState(const RenderingContext& ctx, CommandBufferPtr& cmdBuff);
 
-	void updateCommonBlock(const FrustumComponent& frc);
+	void updateCommonBlock(const FrustumComponent& frc, RenderingContext& ctx);
 
 	// Binning
 	void binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& data);

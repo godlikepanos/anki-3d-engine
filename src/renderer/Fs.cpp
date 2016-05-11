@@ -71,18 +71,6 @@ Error Fs::init(const ConfigSet&)
 }
 
 //==============================================================================
-void Fs::prepareBuildCommandBuffers(RenderingContext& ctx)
-{
-	DynamicBufferInfo& dyn = ctx.m_fs.m_set1DynInfo;
-	dyn.m_uniformBuffers[0] = m_r->getIs().getCommonVarsToken();
-	dyn.m_uniformBuffers[1] = m_r->getIs().getPointLightsToken();
-	dyn.m_uniformBuffers[2] = m_r->getIs().getSpotLightsToken();
-
-	dyn.m_storageBuffers[0] = m_r->getIs().getClustersToken();
-	dyn.m_storageBuffers[1] = m_r->getIs().getLightIndicesToken();
-}
-
-//==============================================================================
 Error Fs::buildCommandBuffers(
 	RenderingContext& ctx, U threadId, U threadCount) const
 {
@@ -111,7 +99,7 @@ Error Fs::buildCommandBuffers(
 
 	cmdb->setViewport(0, 0, m_width, m_height);
 	cmdb->setPolygonOffset(0.0, 0.0);
-	cmdb->bindResourceGroup(m_globalResources, 1, &ctx.m_fs.m_set1DynInfo);
+	cmdb->bindResourceGroup(m_globalResources, 1, &ctx.m_is.m_dynBufferInfo);
 
 	// Start drawing
 	Error err = m_r->getSceneDrawer().drawRange(Pass::MS_FS,

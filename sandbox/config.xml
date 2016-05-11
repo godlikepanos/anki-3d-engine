@@ -17,8 +17,8 @@
 	<bloom.blurringDist>1</bloom.blurringDist>
 	<bloom.samples>17</bloom.samples>
 	<bloom.blurringIterationsCount>1</bloom.blurringIterationsCount>
-	<bloom.threshold>2</bloom.threshold>
-	<bloom.scale>2</bloom.scale>
+	<bloom.threshold>2.5</bloom.threshold>
+	<bloom.scale>2.5</bloom.scale>
 	<ssao.enabled>1</ssao.enabled>
 	<ssao.renderingQuality>0.250000</ssao.renderingQuality>
 	<ssao.blurringIterationsCount>1</ssao.blurringIterationsCount>

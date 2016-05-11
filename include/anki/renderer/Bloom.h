@@ -22,17 +22,6 @@ class ShaderProgram;
 /// Bloom pass.
 class Bloom : public RenderingPass
 {
-public:
-	U32 getBlurringIterationsCount() const
-	{
-		return m_blurringIterationsCount;
-	}
-
-	void setBlurringIterationsCount(const U32 x)
-	{
-		m_blurringIterationsCount = x;
-	}
-
 anki_internal:
 	static const PixelFormat RT_PIXEL_FORMAT;
 
@@ -70,7 +59,6 @@ private:
 	U32 m_width, m_height;
 	F32 m_threshold = 10.0; ///< How bright it is
 	F32 m_scale = 1.0;
-	U32 m_blurringIterationsCount = 2; ///< The blurring iterations
 	F32 m_blurringDist = 1.0; ///< Distance in blurring
 
 	FramebufferPtr m_hblurFb;
