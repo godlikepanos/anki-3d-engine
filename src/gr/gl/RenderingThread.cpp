@@ -7,6 +7,8 @@
 #include <anki/gr/gl/CommandBufferImpl.h>
 #include <anki/gr/GrManager.h>
 #include <anki/gr/gl/GrManagerImpl.h>
+#include <anki/gr/gl/GlState.h>
+#include <anki/gr/gl/DynamicMemoryManager.h>
 #include <anki/util/Logger.h>
 #include <anki/core/Trace.h>
 #include <cstdlib>
@@ -17,8 +19,6 @@ namespace anki
 //==============================================================================
 // Misc                                                                        =
 //==============================================================================
-
-#define ANKI_DISABLE_GL_RENDERING_THREAD 0
 
 /// Sync rendering thread command.
 class SyncCommand final : public GlCommand
@@ -49,9 +49,9 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error operator()(GlState& state)
+	ANKI_USE_RESULT Error operator()(GlState&)
 	{
-		m_renderingThread->swapBuffersInternal(state);
+		m_renderingThread->swapBuffersInternal();
 		return ErrorCode::NONE;
 	}
 };
@@ -77,7 +77,6 @@ RenderingThread::RenderingThread(GrManager* manager)
 	, m_head(0)
 	, m_renderingThreadSignal(0)
 	, m_thread("anki_gl")
-	, m_state(manager)
 {
 	ANKI_ASSERT(m_manager);
 }
@@ -89,11 +88,10 @@ RenderingThread::~RenderingThread()
 }
 
 //==============================================================================
-void RenderingThread::flushCommandBuffer(CommandBufferPtr commands)
+void RenderingThread::flushCommandBuffer(CommandBufferPtr cmdb)
 {
-	commands->getImplementation().makeImmutable();
+	cmdb->getImplementation().makeImmutable();
 
-#if !ANKI_DISABLE_GL_RENDERING_THREAD
 	{
 		LockGuard<Mutex> lock(m_mtx);
 
@@ -104,7 +102,7 @@ void RenderingThread::flushCommandBuffer(CommandBufferPtr commands)
 		{
 			U64 idx = m_tail % m_queue.getSize();
 
-			m_queue[idx] = commands;
+			m_queue[idx] = cmdb;
 			++m_tail;
 		}
 		else
@@ -114,33 +112,20 @@ void RenderingThread::flushCommandBuffer(CommandBufferPtr commands)
 
 		m_condVar.notifyOne(); // Wake the thread
 	}
-
-#else
-	Error err = commands->getImplementation().executeAllCommands();
-	if(err)
-	{
-		ANKI_LOGF("Error in command buffer execution");
-	}
-#endif
 }
 
 //==============================================================================
 void RenderingThread::finishCommandBuffer(CommandBufferPtr commands)
 {
-#if !ANKI_DISABLE_GL_RENDERING_THREAD
 	flushCommandBuffer(commands);
 
 	syncClientServer();
-#else
-	flushCommandBuffer(commands);
-#endif
 }
 
 //==============================================================================
-void RenderingThread::start(Bool registerMessages, const ConfigSet& config)
+void RenderingThread::start()
 {
 	ANKI_ASSERT(m_tail == 0 && m_head == 0);
-	m_state.m_registerMessages = registerMessages;
 	m_queue.create(m_manager->getAllocator(), QUEUE_SIZE);
 
 	// Swap buffers stuff
@@ -149,10 +134,8 @@ void RenderingThread::start(Bool registerMessages, const ConfigSet& config)
 	m_swapBuffersCommands->getImplementation()
 		.pushBackNewCommand<SwapBuffersCommand>(this);
 
-	m_state.initMainThread(config);
 	m_manager->getImplementation().pinContextToCurrentThread(false);
 
-#if !ANKI_DISABLE_GL_RENDERING_THREAD
 	// Start thread
 	m_thread.start(this, threadCallback);
 
@@ -164,26 +147,17 @@ void RenderingThread::start(Bool registerMessages, const ConfigSet& config)
 	m_emptyCmdb =
 		m_manager->newInstance<CommandBuffer>(CommandBufferInitInfo());
 	m_emptyCmdb->getImplementation().pushBackNewCommand<EmptyCommand>();
-#else
-	prepare();
-
-	ANKI_LOGW("GL queue works in synchronous mode");
-#endif
 }
 
 //==============================================================================
 void RenderingThread::stop()
 {
-#if !ANKI_DISABLE_GL_RENDERING_THREAD
 	syncClientServer();
 	m_renderingThreadSignal = 1;
 	flushCommandBuffer(m_emptyCmdb);
 
 	Error err = m_thread.join();
 	(void)err;
-#else
-	finish();
-#endif
 }
 
 //==============================================================================
@@ -203,7 +177,10 @@ void RenderingThread::prepare()
 	m_serverThreadId = Thread::getCurrentThreadId();
 
 	// Init state
-	m_state.initRenderThread();
+	m_manager->getImplementation().getState().initRenderThread();
+
+	// Init dyn mem
+	m_manager->getImplementation().getDynamicMemoryManager().initRenderThread();
 }
 
 //==============================================================================
@@ -222,8 +199,12 @@ void RenderingThread::finish()
 		}
 	}
 
+	m_manager->getImplementation()
+		.getDynamicMemoryManager()
+		.destroyRenderThread();
+
 	// Cleanup GL
-	m_state.destroy();
+	m_manager->getImplementation().getState().destroy();
 
 	// Cleanup
 	glFinish();
@@ -287,18 +268,16 @@ void RenderingThread::threadLoop()
 //==============================================================================
 void RenderingThread::syncClientServer()
 {
-#if !ANKI_DISABLE_GL_RENDERING_THREAD
 	// Lock because there is only one barrier. If multiple threads call
 	// syncClientServer all of them will hit the same barrier.
 	LockGuard<SpinLock> lock(m_syncLock);
 
 	flushCommandBuffer(m_syncCommands);
 	m_syncBarrier.wait();
-#endif
 }
 
 //==============================================================================
-void RenderingThread::swapBuffersInternal(GlState& state)
+void RenderingThread::swapBuffersInternal()
 {
 	ANKI_TRACE_START_EVENT(SWAP_BUFFERS);
 
@@ -320,7 +299,6 @@ void RenderingThread::swapBuffersInternal(GlState& state)
 void RenderingThread::swapBuffers()
 {
 	ANKI_TRACE_START_EVENT(SWAP_BUFFERS);
-#if !ANKI_DISABLE_GL_RENDERING_THREAD
 	// Wait for the rendering thread to finish swap buffers...
 	{
 		LockGuard<Mutex> lock(m_frameMtx);
@@ -331,9 +309,8 @@ void RenderingThread::swapBuffers()
 
 		m_frameWait = true;
 	}
-#endif
 
-	m_state.m_dynamicMemoryManager.endFrame();
+	m_manager->getImplementation().getDynamicMemoryManager().endFrame();
 
 	// ...and then flush a new swap buffers
 	flushCommandBuffer(m_swapBuffersCommands);

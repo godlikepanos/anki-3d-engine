@@ -56,12 +56,12 @@ Error Fs::init(const ConfigSet&)
 			init.m_textures[2].m_texture = m_r->getSm().getOmniTextureArray();
 		}
 
-		init.m_uniformBuffers[0].m_dynamic = true;
-		init.m_uniformBuffers[1].m_dynamic = true;
-		init.m_uniformBuffers[2].m_dynamic = true;
+		init.m_uniformBuffers[0].m_uploadedMemory = true;
+		init.m_uniformBuffers[1].m_uploadedMemory = true;
+		init.m_uniformBuffers[2].m_uploadedMemory = true;
 
-		init.m_storageBuffers[0].m_dynamic = true;
-		init.m_storageBuffers[1].m_dynamic = true;
+		init.m_storageBuffers[0].m_uploadedMemory = true;
+		init.m_storageBuffers[1].m_uploadedMemory = true;
 
 		m_globalResources = getGrManager().newInstance<ResourceGroup>(init);
 	}

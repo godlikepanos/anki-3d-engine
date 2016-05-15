@@ -116,7 +116,7 @@ Error Bloom::initInternal(const ConfigSet& config)
 	{
 		ResourceGroupInitInfo descInit;
 		descInit.m_textures[0].m_texture = m_r->getIs().getRt();
-		descInit.m_uniformBuffers[0].m_dynamic = true;
+		descInit.m_uniformBuffers[0].m_uploadedMemory = true;
 
 		descInit.m_storageBuffers[0].m_buffer =
 			m_r->getTm().getAverageLuminanceBuffer();
@@ -162,9 +162,9 @@ void Bloom::run(RenderingContext& ctx)
 	cmdb->setViewport(0, 0, m_width, m_height);
 	cmdb->bindPipeline(m_tonePpline);
 
-	DynamicBufferInfo dyn;
+	TransientMemoryInfo dyn;
 	Vec4* uniforms =
-		static_cast<Vec4*>(getGrManager().allocateFrameHostVisibleMemory(
+		static_cast<Vec4*>(getGrManager().allocateFrameTransientMemory(
 			sizeof(Vec4), BufferUsage::UNIFORM, dyn.m_uniformBuffers[0]));
 	*uniforms = Vec4(m_threshold, m_scale, 0.0, 0.0);
 

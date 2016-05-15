@@ -24,9 +24,6 @@ class GrManagerInitInfo;
 class PipelineInitInfo;
 class FramebufferInitInfo;
 
-class DynamicBufferToken;
-class DynamicBufferInfo;
-
 /// @addtogroup graphics
 /// @{
 
@@ -69,20 +66,6 @@ enum GrObjectType : U16
 /// The type of the allocator for heap allocations
 template<typename T>
 using GrAllocator = HeapAllocator<T>;
-
-/// Token that gets returned when requesting for memory to write to a dynamic
-/// buffer.
-class DynamicBufferToken
-{
-anki_internal:
-	U32 m_offset = 0;
-	U32 m_range = 0;
-
-	void markUnused()
-	{
-		m_offset = m_range = MAX_U32;
-	}
-};
 
 /// Clear values for textures or attachments.
 class ClearValue
@@ -133,6 +116,38 @@ const U MAX_STORAGE_BUFFER_BINDINGS = 4;
 const U MAX_ATOMIC_BUFFER_BINDINGS = 1;
 const U MAX_FRAMES_IN_FLIGHT = 3; ///< Triple buffering.
 const U MAX_RESOURCE_GROUPS = 2; ///< Groups that can be bound at the same time.
+
+/// The life expectancy of a TransientMemoryToken.
+enum class TransientMemoryTokenLifetime : U8
+{
+	PER_FRAME,
+	PERSISTENT
+};
+
+/// Token that gets returned when requesting for memory to write to a resource.
+class TransientMemoryToken
+{
+anki_internal:
+	PtrSize m_offset = 0;
+	PtrSize m_range = 0;
+	TransientMemoryTokenLifetime m_lifetime =
+		TransientMemoryTokenLifetime::PER_FRAME;
+	BufferUsage m_usage = BufferUsage::COUNT;
+
+	void markUnused()
+	{
+		m_offset = m_range = MAX_U32;
+	}
+};
+
+/// Struct to help update the offset of the dynamic buffers.
+class TransientMemoryInfo
+{
+public:
+	Array<TransientMemoryToken, MAX_UNIFORM_BUFFER_BINDINGS> m_uniformBuffers;
+	Array<TransientMemoryToken, MAX_STORAGE_BUFFER_BINDINGS> m_storageBuffers;
+	Array<TransientMemoryToken, MAX_VERTEX_ATTRIBUTES> m_vertexBuffers;
+};
 
 /// Compute max number of mipmaps for a 2D texture.
 inline U computeMaxMipmapCount(U w, U h)

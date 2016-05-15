@@ -135,8 +135,8 @@ Error Lf::initOcclusion(const ConfigSet& config)
 	// Init resource group
 	{
 		ResourceGroupInitInfo rcInit;
-		rcInit.m_vertexBuffers[0].m_dynamic = true;
-		rcInit.m_uniformBuffers[0].m_dynamic = true;
+		rcInit.m_vertexBuffers[0].m_uploadedMemory = true;
+		rcInit.m_uniformBuffers[0].m_uploadedMemory = true;
 		m_occlusionRcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);
 	}
 
@@ -171,22 +171,22 @@ void Lf::runOcclusionTests(RenderingContext& ctx)
 	if(totalCount > 0)
 	{
 		// Setup MVP UBO
-		DynamicBufferToken token;
+		TransientMemoryToken token;
 		Mat4* mvp =
-			static_cast<Mat4*>(getGrManager().allocateFrameHostVisibleMemory(
+			static_cast<Mat4*>(getGrManager().allocateFrameTransientMemory(
 				sizeof(Mat4), BufferUsage::UNIFORM, token));
 		*mvp = camFr.getViewProjectionMatrix();
 
 		// Alloc dyn mem
-		DynamicBufferToken token2;
+		TransientMemoryToken token2;
 		Vec3* positions =
-			static_cast<Vec3*>(getGrManager().allocateFrameHostVisibleMemory(
+			static_cast<Vec3*>(getGrManager().allocateFrameTransientMemory(
 				sizeof(Vec3) * totalCount, BufferUsage::VERTEX, token2));
 		const Vec3* initialPositions = positions;
 
 		// Setup state
 		cmdb->bindPipeline(m_occlusionPpline);
-		DynamicBufferInfo dyn;
+		TransientMemoryInfo dyn;
 		dyn.m_uniformBuffers[0] = token;
 		dyn.m_vertexBuffers[0] = token2;
 		cmdb->bindResourceGroup(m_occlusionRcGroup, 0, &dyn);
@@ -255,9 +255,9 @@ void Lf::run(RenderingContext& ctx)
 			U spritesCount = max<U>(1, m_maxSpritesPerFlare); // TODO
 
 			// Get uniform memory
-			DynamicBufferToken token;
+			TransientMemoryToken token;
 			Sprite* tmpSprites = static_cast<Sprite*>(
-				getGrManager().allocateFrameHostVisibleMemory(
+				getGrManager().allocateFrameTransientMemory(
 					spritesCount * sizeof(Sprite),
 					BufferUsage::UNIFORM,
 					token));
@@ -286,7 +286,7 @@ void Lf::run(RenderingContext& ctx)
 
 			if(!queryInvalid)
 			{
-				DynamicBufferInfo dyn;
+				TransientMemoryInfo dyn;
 				dyn.m_uniformBuffers[0] = token;
 				cmdb->bindResourceGroup(lf.getResourceGroup(), 0, &dyn);
 				cmdb->drawArraysConditional(query, 4);

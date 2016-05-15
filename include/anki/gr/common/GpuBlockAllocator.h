@@ -32,13 +32,11 @@ public:
 		PtrSize blockSize);
 
 	/// Allocate GPU memory.
-	ANKI_USE_RESULT Error allocate(PtrSize size,
-		U alignment,
-		DynamicBufferToken& handle,
-		Bool handleOomError = true);
+	ANKI_USE_RESULT Error allocate(
+		PtrSize size, U alignment, PtrSize& outOffset);
 
 	/// Free GPU memory.
-	void free(const DynamicBufferToken& handle);
+	void free(PtrSize offset);
 
 private:
 	class Block;

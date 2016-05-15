@@ -5,6 +5,7 @@
 
 #include <anki/gr/Pipeline.h>
 #include <anki/gr/gl/PipelineImpl.h>
+#include <anki/gr/GrManager.h>
 #include <anki/gr/gl/CommandBufferImpl.h>
 #include <anki/core/Trace.h>
 

@@ -31,7 +31,7 @@ public:
 	BufferPtr m_buffer;
 	PtrSize m_offset = 0;
 	PtrSize m_range = 0;
-	Bool m_dynamic = false;
+	Bool m_uploadedMemory = false;
 };
 
 /// Resource group initializer.
@@ -45,15 +45,6 @@ public:
 	Array<BufferBinding, MAX_VERTEX_ATTRIBUTES> m_vertexBuffers;
 	BufferBinding m_indexBuffer;
 	I8 m_indexSize = -1; ///< Index size in bytes. 2 or 4
-};
-
-/// Struct to help update the offset of the dynamic buffers.
-class DynamicBufferInfo
-{
-public:
-	Array<DynamicBufferToken, MAX_UNIFORM_BUFFER_BINDINGS> m_uniformBuffers;
-	Array<DynamicBufferToken, MAX_STORAGE_BUFFER_BINDINGS> m_storageBuffers;
-	Array<DynamicBufferToken, MAX_VERTEX_ATTRIBUTES> m_vertexBuffers;
 };
 
 /// Resource group.

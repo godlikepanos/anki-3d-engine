@@ -6,6 +6,7 @@
 #include <anki/gr/Framebuffer.h>
 #include <anki/gr/gl/FramebufferImpl.h>
 #include <anki/gr/gl/CommandBufferImpl.h>
+#include <anki/gr/GrManager.h>
 
 namespace anki
 {

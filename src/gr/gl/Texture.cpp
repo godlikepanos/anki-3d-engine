@@ -6,6 +6,7 @@
 #include <anki/gr/Texture.h>
 #include <anki/gr/gl/TextureImpl.h>
 #include <anki/gr/gl/CommandBufferImpl.h>
+#include <anki/gr/GrManager.h>
 
 namespace anki
 {

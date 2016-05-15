@@ -40,7 +40,6 @@ public:
 	/// Major OpenGL version. Used to create core profile context
 	U32 m_majorVersion = 0;
 	Bool8 m_useGles = false; ///< Use OpenGL ES
-	Bool8 m_debugContext = false; ///< Enables KHR_debug
 	/// @}
 };
 
@@ -78,8 +77,10 @@ public:
 
 	/// Allocate memory for dynamic buffers. The memory will be reclaimed at
 	/// the begining of the N-(MAX_FRAMES_IN_FLIGHT-1) frame.
-	void* allocateFrameHostVisibleMemory(
-		PtrSize size, BufferUsage usage, DynamicBufferToken& token);
+	void* allocateFrameTransientMemory(PtrSize size,
+		BufferUsage usage,
+		TransientMemoryToken& token,
+		Error* err = nullptr);
 
 anki_internal:
 	GrAllocator<U8>& getAllocator()

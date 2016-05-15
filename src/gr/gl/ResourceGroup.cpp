@@ -5,6 +5,7 @@
 
 #include <anki/gr/ResourceGroup.h>
 #include <anki/gr/gl/ResourceGroupImpl.h>
+#include <anki/gr/GrManager.h>
 #include <anki/gr/gl/CommandBufferImpl.h>
 #include <anki/gr/Texture.h>
 #include <anki/gr/Sampler.h>

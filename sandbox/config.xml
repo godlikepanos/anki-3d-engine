@@ -45,6 +45,7 @@
 	<gr.storagePerFrameMemorySize>16777216</gr.storagePerFrameMemorySize>
 	<gr.transferPerFrameMemorySize>67108864</gr.transferPerFrameMemorySize>
 	<gr.vertexPerFrameMemorySize>16777216</gr.vertexPerFrameMemorySize>
+	<gr.transferPersistentMemorySize>67108864</gr.transferPersistentMemorySize>
 	<maxTextureSize>1048576</maxTextureSize>
 	<textureAnisotropy>8</textureAnisotropy>
 	<dataPaths>assets:.</dataPaths>

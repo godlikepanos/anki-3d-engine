@@ -6,6 +6,7 @@
 #include <anki/gr/OcclusionQuery.h>
 #include <anki/gr/gl/OcclusionQueryImpl.h>
 #include <anki/gr/gl/CommandBufferImpl.h>
+#include <anki/gr/GrManager.h>
 
 namespace anki
 {

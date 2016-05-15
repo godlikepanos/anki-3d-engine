@@ -227,7 +227,6 @@ Error App::initInternal(const ConfigSet& config_,
 	grInit.m_config = &config;
 	grInit.m_majorVersion = config.getNumber("glmajor");
 	grInit.m_minorVersion = config.getNumber("glminor");
-	grInit.m_debugContext = config.getNumber("debugContext");
 	grInit.m_window = m_window;
 
 	ANKI_CHECK(m_gr->init(grInit));

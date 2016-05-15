@@ -88,7 +88,7 @@ __stdcall
 //==============================================================================
 void GlState::initMainThread(const ConfigSet& config)
 {
-	m_dynamicMemoryManager.initMainThread(m_manager->getAllocator(), config);
+	m_registerMessages = config.getNumber("debugContext");
 }
 
 //==============================================================================
@@ -151,15 +151,11 @@ void GlState::initRenderThread()
 
 	// Other
 	memset(&m_vertexBindingStrides[0], 0, sizeof(m_vertexBindingStrides));
-
-	// Init dynamic memory
-	m_dynamicMemoryManager.initRenderThread();
 }
 
 //==============================================================================
 void GlState::destroy()
 {
-	m_dynamicMemoryManager.destroyRenderThread();
 	glDeleteVertexArrays(1, &m_defaultVao);
 }
 

@@ -8,18 +8,21 @@
 #include <anki/gr/GrManager.h>
 #include <anki/gr/gl/GrManagerImpl.h>
 #include <anki/gr/gl/RenderingThread.h>
+#include <anki/gr/gl/GlState.h>
+
 #include <anki/gr/Pipeline.h>
 #include <anki/gr/gl/PipelineImpl.h>
-#include <anki/gr/Framebuffer.h>
-#include <anki/gr/gl/FramebufferImpl.h>
 #include <anki/gr/ResourceGroup.h>
 #include <anki/gr/gl/ResourceGroupImpl.h>
+#include <anki/gr/Framebuffer.h>
+#include <anki/gr/gl/FramebufferImpl.h>
 #include <anki/gr/OcclusionQuery.h>
 #include <anki/gr/gl/OcclusionQueryImpl.h>
 #include <anki/gr/Texture.h>
 #include <anki/gr/gl/TextureImpl.h>
 #include <anki/gr/Buffer.h>
 #include <anki/gr/gl/BufferImpl.h>
+
 #include <anki/core/Trace.h>
 
 namespace anki
@@ -40,7 +43,7 @@ CommandBuffer::~CommandBuffer()
 void CommandBuffer::init(CommandBufferInitInfo& inf)
 {
 	m_impl.reset(getAllocator().newInstance<CommandBufferImpl>(&getManager()));
-	m_impl->init(inf.m_hints);
+	m_impl->init(inf);
 
 #if ANKI_ASSERTS_ENABLED
 	if(inf.m_secondLevel)
@@ -61,6 +64,7 @@ void CommandBuffer::flush()
 		ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
 	}
 #endif
+
 	getManager().getImplementation().getRenderingThread().flushCommandBuffer(
 		CommandBufferPtr(this));
 }
@@ -226,146 +230,28 @@ void CommandBuffer::endRenderPass()
 }
 
 //==============================================================================
-class BindResourcesCommand final : public GlCommand
-{
-public:
-	ResourceGroupPtr m_rc;
-	U8 m_slot;
-	DynamicBufferInfo m_dynInfo;
-
-	BindResourcesCommand(
-		ResourceGroupPtr rc, U8 slot, const DynamicBufferInfo* dynInfo)
-		: m_rc(rc)
-		, m_slot(slot)
-	{
-		if(dynInfo)
-		{
-			m_dynInfo = *dynInfo;
-		}
-	}
-
-	Error operator()(GlState& state)
-	{
-		ANKI_TRACE_START_EVENT(GL_BIND_RESOURCES);
-		m_rc->getImplementation().bind(m_slot, m_dynInfo, state);
-		ANKI_TRACE_STOP_EVENT(GL_BIND_RESOURCES);
-		return ErrorCode::NONE;
-	}
-};
-
 void CommandBuffer::bindResourceGroup(
-	ResourceGroupPtr rc, U slot, const DynamicBufferInfo* dynInfo)
+	ResourceGroupPtr rc, U slot, const TransientMemoryInfo* info)
 {
-	ANKI_ASSERT(rc.isCreated());
-	m_impl->pushBackNewCommand<BindResourcesCommand>(rc, slot, dynInfo);
+	m_impl->bindResourceGroup(rc, slot, info);
 }
 
 //==============================================================================
-class DrawElementsCondCommand : public GlCommand
-{
-public:
-	DrawElementsIndirectInfo m_info;
-	OcclusionQueryPtr m_query;
-
-	DrawElementsCondCommand(const DrawElementsIndirectInfo& info,
-		OcclusionQueryPtr query = OcclusionQueryPtr())
-		: m_info(info)
-		, m_query(query)
-	{
-	}
-
-	Error operator()(GlState& state)
-	{
-		GLenum indicesType = 0;
-		switch(state.m_indexSize)
-		{
-		case 2:
-			indicesType = GL_UNSIGNED_SHORT;
-			break;
-		case 4:
-			indicesType = GL_UNSIGNED_INT;
-			break;
-		default:
-			ANKI_ASSERT(0);
-			break;
-		};
-
-		if(!m_query.isCreated() || !m_query->getImplementation().skipDrawcall())
-		{
-			state.flushVertexState();
-
-			glDrawElementsInstancedBaseVertexBaseInstance(state.m_topology,
-				m_info.m_count,
-				indicesType,
-				(const void*)(PtrSize)(m_info.m_firstIndex * state.m_indexSize),
-				m_info.m_instanceCount,
-				m_info.m_baseVertex,
-				m_info.m_baseInstance);
-
-			ANKI_TRACE_INC_COUNTER(GR_DRAWCALLS, 1);
-			ANKI_TRACE_INC_COUNTER(
-				GR_VERTICES, m_info.m_instanceCount * m_info.m_count);
-		}
-
-		return ErrorCode::NONE;
-	}
-};
-
 void CommandBuffer::drawElements(U32 count,
 	U32 instanceCount,
 	U32 firstIndex,
 	U32 baseVertex,
 	U32 baseInstance)
 {
-	ANKI_ASSERT(m_impl->m_dbg.m_insideRenderPass);
-	DrawElementsIndirectInfo info(
+	m_impl->drawElements(
 		count, instanceCount, firstIndex, baseVertex, baseInstance);
-
-	m_impl->checkDrawcall();
-	m_impl->pushBackNewCommand<DrawElementsCondCommand>(info);
 }
 
 //==============================================================================
-class DrawArraysCondCommand final : public GlCommand
-{
-public:
-	DrawArraysIndirectInfo m_info;
-	OcclusionQueryPtr m_query;
-
-	DrawArraysCondCommand(const DrawArraysIndirectInfo& info,
-		OcclusionQueryPtr query = OcclusionQueryPtr())
-		: m_info(info)
-		, m_query(query)
-	{
-	}
-
-	Error operator()(GlState& state)
-	{
-		if(!m_query.isCreated() || !m_query->getImplementation().skipDrawcall())
-		{
-			state.flushVertexState();
-
-			glDrawArraysInstancedBaseInstance(state.m_topology,
-				m_info.m_first,
-				m_info.m_count,
-				m_info.m_instanceCount,
-				m_info.m_baseInstance);
-
-			ANKI_TRACE_INC_COUNTER(GR_DRAWCALLS, 1);
-		}
-
-		return ErrorCode::NONE;
-	}
-};
-
 void CommandBuffer::drawArrays(
 	U32 count, U32 instanceCount, U32 first, U32 baseInstance)
 {
-	ANKI_ASSERT(m_impl->m_dbg.m_insideRenderPass);
-	DrawArraysIndirectInfo info(count, instanceCount, first, baseInstance);
-
-	m_impl->checkDrawcall();
-	m_impl->pushBackNewCommand<DrawArraysCondCommand>(info);
+	m_impl->drawArrays(count, instanceCount, first, baseInstance);
 }
 
 //==============================================================================
@@ -376,12 +262,8 @@ void CommandBuffer::drawElementsConditional(OcclusionQueryPtr query,
 	U32 baseVertex,
 	U32 baseInstance)
 {
-	ANKI_ASSERT(m_impl->m_dbg.m_insideRenderPass);
-	DrawElementsIndirectInfo info(
-		count, instanceCount, firstIndex, baseVertex, baseInstance);
-
-	m_impl->checkDrawcall();
-	m_impl->pushBackNewCommand<DrawElementsCondCommand>(info, query);
+	m_impl->drawElementsConditional(
+		query, count, instanceCount, firstIndex, baseVertex, baseInstance);
 }
 
 //==============================================================================
@@ -391,37 +273,15 @@ void CommandBuffer::drawArraysConditional(OcclusionQueryPtr query,
 	U32 first,
 	U32 baseInstance)
 {
-	ANKI_ASSERT(m_impl->m_dbg.m_insideRenderPass);
-	DrawArraysIndirectInfo info(count, instanceCount, first, baseInstance);
-
-	m_impl->checkDrawcall();
-	m_impl->pushBackNewCommand<DrawArraysCondCommand>(info, query);
+	m_impl->drawArraysConditional(
+		query, count, instanceCount, first, baseInstance);
 }
 
 //==============================================================================
-class DispatchCommand final : public GlCommand
-{
-public:
-	Array<U32, 3> m_size;
-
-	DispatchCommand(U32 x, U32 y, U32 z)
-		: m_size({{x, y, z}})
-	{
-	}
-
-	Error operator()(GlState&)
-	{
-		glDispatchCompute(m_size[0], m_size[1], m_size[2]);
-		return ErrorCode::NONE;
-	}
-};
-
 void CommandBuffer::dispatchCompute(
 	U32 groupCountX, U32 groupCountY, U32 groupCountZ)
 {
-	ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
-	m_impl->pushBackNewCommand<DispatchCommand>(
-		groupCountX, groupCountY, groupCountZ);
+	m_impl->dispatchCompute(groupCountX, groupCountY, groupCountZ);
 }
 
 //==============================================================================
@@ -476,11 +336,11 @@ class TexUploadCommand final : public GlCommand
 public:
 	TexturePtr m_handle;
 	TextureSurfaceInfo m_surf;
-	DynamicBufferToken m_token;
+	TransientMemoryToken m_token;
 
 	TexUploadCommand(const TexturePtr& handle,
 		TextureSurfaceInfo surf,
-		const DynamicBufferToken& token)
+		const TransientMemoryToken& token)
 		: m_handle(handle)
 		, m_surf(surf)
 		, m_token(token)
@@ -489,21 +349,30 @@ public:
 
 	Error operator()(GlState& state)
 	{
-		U8* data = static_cast<U8*>(state.m_dynamicMemoryManager.getBaseAddress(
-					   BufferUsage::TRANSFER))
-			+ m_token.m_offset;
+		void* data = state.m_manager->getImplementation()
+						 .getDynamicMemoryManager()
+						 .getBaseAddress(m_token);
+		data = static_cast<void*>(static_cast<U8*>(data) + m_token.m_offset);
 
 		m_handle->getImplementation().write(m_surf, data, m_token.m_range);
+
+		if(m_token.m_lifetime == TransientMemoryTokenLifetime::PERSISTENT)
+		{
+			state.m_manager->getImplementation().getDynamicMemoryManager().free(
+				m_token);
+		}
+
 		return ErrorCode::NONE;
 	}
 };
 
-void CommandBuffer::textureUpload(TexturePtr tex,
+void CommandBuffer::uploadTextureSurface(TexturePtr tex,
 	const TextureSurfaceInfo& surf,
-	const DynamicBufferToken& token)
+	const TransientMemoryToken& token)
 {
-	ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
+	ANKI_ASSERT(tex);
 	ANKI_ASSERT(token.m_range > 0);
+	ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
 
 	m_impl->pushBackNewCommand<TexUploadCommand>(tex, surf, token);
 }
@@ -514,11 +383,11 @@ class BuffWriteCommand final : public GlCommand
 public:
 	BufferPtr m_handle;
 	PtrSize m_offset;
-	DynamicBufferToken m_token;
+	TransientMemoryToken m_token;
 
 	BuffWriteCommand(const BufferPtr& handle,
 		PtrSize offset,
-		const DynamicBufferToken& token)
+		const TransientMemoryToken& token)
 		: m_handle(handle)
 		, m_offset(offset)
 		, m_token(token)
@@ -527,20 +396,30 @@ public:
 
 	Error operator()(GlState& state)
 	{
-		U8* data = static_cast<U8*>(state.m_dynamicMemoryManager.getBaseAddress(
-					   BufferUsage::TRANSFER))
-			+ m_token.m_offset;
+		void* data = state.m_manager->getImplementation()
+						 .getDynamicMemoryManager()
+						 .getBaseAddress(m_token);
+		data = static_cast<void*>(static_cast<U8*>(data) + m_token.m_offset);
 
 		m_handle->getImplementation().write(data, m_offset, m_token.m_range);
+
+		if(m_token.m_lifetime == TransientMemoryTokenLifetime::PERSISTENT)
+		{
+			state.m_manager->getImplementation().getDynamicMemoryManager().free(
+				m_token);
+		}
 
 		return ErrorCode::NONE;
 	}
 };
 
-void CommandBuffer::writeBuffer(
-	BufferPtr buff, PtrSize offset, const DynamicBufferToken& token)
+void CommandBuffer::uploadBuffer(
+	BufferPtr buff, PtrSize offset, const TransientMemoryToken& token)
 {
+	ANKI_ASSERT(token.m_range > 0);
+	ANKI_ASSERT(buff);
 	ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
+
 	m_impl->pushBackNewCommand<BuffWriteCommand>(buff, offset, token);
 }
 

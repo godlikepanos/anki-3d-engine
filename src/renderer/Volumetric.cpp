@@ -34,7 +34,7 @@ Error Volumetric::init(const ConfigSet& config)
 	// Create the resource group
 	ResourceGroupInitInfo rcInit;
 	rcInit.m_textures[0].m_texture = m_r->getMs().getDepthRt();
-	rcInit.m_uniformBuffers[0].m_dynamic = true;
+	rcInit.m_uniformBuffers[0].m_uploadedMemory = true;
 
 	m_rcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);
 
@@ -48,9 +48,9 @@ void Volumetric::run(RenderingContext& ctx)
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 	// Update uniforms
-	DynamicBufferInfo dyn;
+	TransientMemoryInfo dyn;
 	Vec4* uniforms =
-		static_cast<Vec4*>(getGrManager().allocateFrameHostVisibleMemory(
+		static_cast<Vec4*>(getGrManager().allocateFrameTransientMemory(
 			sizeof(Vec4) * 2, BufferUsage::UNIFORM, dyn.m_uniformBuffers[0]));
 
 	computeLinearizeDepthOptimal(

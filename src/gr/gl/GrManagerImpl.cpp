@@ -6,6 +6,7 @@
 #include <anki/gr/gl/GrManagerImpl.h>
 #include <anki/gr/GrManager.h>
 #include <anki/gr/gl/RenderingThread.h>
+#include <anki/gr/gl/GlState.h>
 
 namespace anki
 {
@@ -18,6 +19,11 @@ GrManagerImpl::~GrManagerImpl()
 		m_thread->stop();
 		m_manager->getAllocator().deleteInstance(m_thread);
 		m_thread = nullptr;
+	}
+
+	if(m_state)
+	{
+		m_manager->getAllocator().deleteInstance(m_state);
 	}
 
 	destroyBackend();
@@ -36,12 +42,21 @@ Error GrManagerImpl::init(GrManagerInitInfo& init)
 	// Init the backend of the backend
 	ANKI_CHECK(createBackend(init));
 
+	// First create the state
+	m_state = m_manager->getAllocator().newInstance<GlState>(m_manager);
+	m_state->initMainThread(*init.m_config);
+
+	// Dyn manager
+	m_dynManager =
+		m_manager->getAllocator().newInstance<DynamicMemoryManager>();
+	m_dynManager->initMainThread(m_manager->getAllocator(), *init.m_config);
+
 	// Create thread
 	m_thread =
 		m_manager->getAllocator().newInstance<RenderingThread>(m_manager);
 
 	// Start it
-	m_thread->start(init.m_debugContext, *init.m_config);
+	m_thread->start();
 	m_thread->syncClientServer();
 
 	return ErrorCode::NONE;

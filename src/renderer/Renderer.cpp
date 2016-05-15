@@ -226,8 +226,7 @@ Error Renderer::render(RenderingContext& ctx)
 	// Write the common uniforms
 	RendererCommonUniforms* commonUniforms =
 		static_cast<RendererCommonUniforms*>(
-			getGrManager().allocateFrameHostVisibleMemory(
-				sizeof(*commonUniforms),
+			getGrManager().allocateFrameTransientMemory(sizeof(*commonUniforms),
 				BufferUsage::UNIFORM,
 				m_commonUniformsToken));
 

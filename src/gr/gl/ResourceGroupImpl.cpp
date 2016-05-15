@@ -14,6 +14,7 @@
 #include <anki/gr/gl/GrManagerImpl.h>
 #include <anki/gr/GrManager.h>
 #include <anki/gr/gl/RenderingThread.h>
+#include <anki/gr/gl/CommandBufferImpl.h>
 
 namespace anki
 {
@@ -24,7 +25,7 @@ void ResourceGroupImpl::initBuffers(const InBindings& in,
 	OutBindings& out,
 	U8& count,
 	U& resourcesCount,
-	U& dynCount)
+	U& transCount)
 {
 	count = 0;
 
@@ -34,7 +35,7 @@ void ResourceGroupImpl::initBuffers(const InBindings& in,
 
 		if(binding.m_buffer.isCreated())
 		{
-			ANKI_ASSERT(binding.m_dynamic == false);
+			ANKI_ASSERT(binding.m_uploadedMemory == false);
 
 			const BufferImpl& buff = binding.m_buffer->getImplementation();
 			InternalBufferBinding& outBinding = out[count];
@@ -52,11 +53,11 @@ void ResourceGroupImpl::initBuffers(const InBindings& in,
 			++resourcesCount;
 			count = i + 1;
 		}
-		else if(binding.m_dynamic)
+		else if(binding.m_uploadedMemory)
 		{
 			InternalBufferBinding& outBinding = out[count];
 			outBinding.m_name = MAX_U32;
-			++dynCount;
+			++transCount;
 			count = i + 1;
 		}
 	}
@@ -66,7 +67,7 @@ void ResourceGroupImpl::initBuffers(const InBindings& in,
 void ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 {
 	U resourcesCount = 0;
-	U dynCount = 0;
+	U transCount = 0;
 
 	// Init textures & samplers
 	m_textureNamesCount = 0;
@@ -100,14 +101,14 @@ void ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 
 	// Init shader buffers
 	initBuffers(
-		init.m_uniformBuffers, m_ubos, m_ubosCount, resourcesCount, dynCount);
+		init.m_uniformBuffers, m_ubos, m_ubosCount, resourcesCount, transCount);
 	initBuffers(
-		init.m_storageBuffers, m_ssbos, m_ssbosCount, resourcesCount, dynCount);
+		init.m_storageBuffers, m_ssbos, m_ssbosCount, resourcesCount, transCount);
 	initBuffers(init.m_atomicBuffers,
 		m_atomics,
 		m_atomicsCount,
 		resourcesCount,
-		dynCount);
+		transCount);
 
 	// Init vert buffers
 	m_vertBindingsCount = 0;
@@ -116,7 +117,7 @@ void ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 		const BufferBinding& binding = init.m_vertexBuffers[i];
 		if(binding.m_buffer.isCreated())
 		{
-			ANKI_ASSERT(!binding.m_dynamic);
+			ANKI_ASSERT(!binding.m_uploadedMemory);
 
 			m_vertBuffNames[i] =
 				binding.m_buffer->getImplementation().getGlName();
@@ -125,20 +126,15 @@ void ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 			++m_vertBindingsCount;
 			++resourcesCount;
 		}
-		else if(binding.m_dynamic)
+		else if(binding.m_uploadedMemory)
 		{
-			++dynCount;
-			const GlState& state = getManager()
-									   .getImplementation()
-									   .getRenderingThread()
-									   .getState();
+			++transCount;
 
-			m_vertBuffNames[i] =
-				state.m_dynamicMemoryManager.getGlName(BufferUsage::VERTEX);
+			m_vertBuffNames[i] = 0;
 			m_vertBuffOffsets[i] = MAX_U32;
 
 			++m_vertBindingsCount;
-			m_hasDynamicVertexBuff = true;
+			m_hasTransientVertexBuff = true;
 		}
 		else
 		{
@@ -160,7 +156,7 @@ void ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 		++resourcesCount;
 	}
 
-	ANKI_ASSERT((resourcesCount > 0 || dynCount > 0) && "Resource group empty");
+	ANKI_ASSERT((resourcesCount > 0 || transCount > 0) && "Resource group empty");
 
 	// Hold references
 	initResourceReferences(init, resourcesCount);
@@ -233,7 +229,7 @@ void ResourceGroupImpl::initResourceReferences(
 
 //==============================================================================
 void ResourceGroupImpl::bind(
-	U slot, const DynamicBufferInfo& dynInfo, GlState& state)
+	U slot, const TransientMemoryInfo& transientInfo, GlState& state)
 {
 	ANKI_ASSERT(slot < MAX_RESOURCE_GROUPS);
 
@@ -263,16 +259,18 @@ void ResourceGroupImpl::bind(
 		const auto& binding = m_ubos[i];
 		if(binding.m_name == MAX_U32)
 		{
-			// Dynamic
-			DynamicBufferToken token = dynInfo.m_uniformBuffers[i];
+			// Transient
+			TransientMemoryToken token = transientInfo.m_uniformBuffers[i];
 			ANKI_ASSERT(token.m_range != 0);
 
 			if(token.m_range != MAX_U32)
 			{
 				glBindBufferRange(GL_UNIFORM_BUFFER,
 					MAX_UNIFORM_BUFFER_BINDINGS * slot + i,
-					state.m_dynamicMemoryManager.getGlName(
-						BufferUsage::UNIFORM),
+					getManager()
+						.getImplementation()
+						.getDynamicMemoryManager()
+						.getGlName(token),
 					token.m_offset,
 					token.m_range);
 			}
@@ -298,16 +296,18 @@ void ResourceGroupImpl::bind(
 		const auto& binding = m_ssbos[i];
 		if(binding.m_name == MAX_U32)
 		{
-			// Dynamic
-			DynamicBufferToken token = dynInfo.m_storageBuffers[i];
+			// Transient
+			TransientMemoryToken token = transientInfo.m_storageBuffers[i];
 			ANKI_ASSERT(token.m_range != 0);
 
 			if(token.m_range != MAX_U32)
 			{
 				glBindBufferRange(GL_SHADER_STORAGE_BUFFER,
 					MAX_STORAGE_BUFFER_BINDINGS * slot + i,
-					state.m_dynamicMemoryManager.getGlName(
-						BufferUsage::STORAGE),
+					getManager()
+						.getImplementation()
+						.getDynamicMemoryManager()
+						.getGlName(token),
 					token.m_offset,
 					token.m_range);
 			}
@@ -333,7 +333,7 @@ void ResourceGroupImpl::bind(
 		const auto& binding = m_atomics[i];
 		if(binding.m_name == MAX_U32)
 		{
-			// Dynamic
+			// Transient
 			ANKI_ASSERT(0);
 		}
 		else if(binding.m_name != 0)
@@ -352,27 +352,37 @@ void ResourceGroupImpl::bind(
 	{
 		ANKI_ASSERT(slot == 0 && "Only slot 0 can have vertex buffers");
 
-		if(!m_hasDynamicVertexBuff)
+		if(!m_hasTransientVertexBuff)
 		{
 			memcpy(&state.m_vertBuffOffsets[0],
 				&m_vertBuffOffsets[0],
 				sizeof(m_vertBuffOffsets[0]) * m_vertBindingsCount);
+
+			memcpy(&state.m_vertBuffNames[0],
+				&m_vertBuffNames[0],
+				sizeof(m_vertBuffNames[0]) * m_vertBindingsCount);
 		}
 		else
 		{
 			// Copy the offsets
 			Array<GLintptr, MAX_VERTEX_ATTRIBUTES> offsets = m_vertBuffOffsets;
+			Array<GLuint, MAX_VERTEX_ATTRIBUTES> names = m_vertBuffNames;
+
 			for(U i = 0; i < MAX_VERTEX_ATTRIBUTES; ++i)
 			{
 				if(offsets[i] == MAX_U32)
 				{
 					// It's dynamic
-					ANKI_ASSERT(dynInfo.m_vertexBuffers[i].m_range != 0);
-					offsets[i] = dynInfo.m_vertexBuffers[i].m_offset;
+					ANKI_ASSERT(transientInfo.m_vertexBuffers[i].m_range != 0);
+					offsets[i] = transientInfo.m_vertexBuffers[i].m_offset;
+					names[i] = getManager()
+								   .getImplementation()
+								   .getDynamicMemoryManager()
+								   .getGlName(transientInfo.m_vertexBuffers[i]);
 				}
 				else
 				{
-					ANKI_ASSERT(dynInfo.m_vertexBuffers[i].m_range == 0);
+					ANKI_ASSERT(transientInfo.m_vertexBuffers[i].m_range == 0);
 				}
 			}
 
@@ -380,11 +390,10 @@ void ResourceGroupImpl::bind(
 			memcpy(&state.m_vertBuffOffsets[0],
 				&offsets[0],
 				sizeof(offsets[0]) * m_vertBindingsCount);
-		}
 
-		memcpy(&state.m_vertBuffNames[0],
-			&m_vertBuffNames[0],
-			sizeof(m_vertBuffNames[0]) * m_vertBindingsCount);
+			memcpy(
+				&names[0], &names[0], sizeof(names[0]) * m_vertBindingsCount);
+		}
 
 		state.m_vertBindingCount = m_vertBindingsCount;
 		state.m_vertBindingsDirty = true;

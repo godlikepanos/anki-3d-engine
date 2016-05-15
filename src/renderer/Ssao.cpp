@@ -122,13 +122,13 @@ Error Ssao::initInternal(const ConfigSet& config)
 
 	PtrSize noiseSize = NOISE_TEX_SIZE * NOISE_TEX_SIZE * sizeof(Vec3);
 
-	DynamicBufferToken token;
-	Vec3* noise = static_cast<Vec3*>(gr.allocateFrameHostVisibleMemory(
+	TransientMemoryToken token;
+	Vec3* noise = static_cast<Vec3*>(gr.allocateFrameTransientMemory(
 		noiseSize, BufferUsage::TRANSFER, token));
 
 	genNoise(noise, noise + NOISE_TEX_SIZE * NOISE_TEX_SIZE);
 
-	cmdb->textureUpload(m_noiseTex, TextureSurfaceInfo(0, 0, 0), token);
+	cmdb->uploadTextureSurface(m_noiseTex, TextureSurfaceInfo(0, 0, 0), token);
 	cmdb->flush();
 
 	//
@@ -240,7 +240,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 
 	rcinit.m_textures[2].m_texture = m_noiseTex;
 
-	rcinit.m_uniformBuffers[0].m_dynamic = true;
+	rcinit.m_uniformBuffers[0].m_uploadedMemory = true;
 	m_rcFirst = gr.newInstance<ResourceGroup>(rcinit);
 
 	rcinit = ResourceGroupInitInfo();
@@ -279,9 +279,9 @@ void Ssao::run(RenderingContext& ctx)
 	cmdb->setViewport(0, 0, m_width, m_height);
 	cmdb->bindPipeline(m_ssaoPpline);
 
-	DynamicBufferInfo dyn;
-	dyn.m_uniformBuffers[0] = m_r->getCommonUniformsDynamicBufferToken();
-	cmdb->bindResourceGroup(m_rcFirst, 0, &dyn);
+	TransientMemoryInfo inf;
+	inf.m_uniformBuffers[0] = m_r->getCommonUniformsTransientMemoryToken();
+	cmdb->bindResourceGroup(m_rcFirst, 0, &inf);
 
 	// Draw
 	m_r->drawQuad(cmdb);

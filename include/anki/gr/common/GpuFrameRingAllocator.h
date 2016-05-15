@@ -36,8 +36,7 @@ public:
 		PtrSize size, U32 alignment, PtrSize maxAllocationSize = MAX_PTR_SIZE);
 
 	/// Allocate memory for a dynamic buffer.
-	ANKI_USE_RESULT Error allocate(
-		PtrSize size, DynamicBufferToken& token, Bool handleOomErrors = true);
+	ANKI_USE_RESULT Error allocate(PtrSize size, PtrSize& outOffset);
 
 	/// Call this at the end of the frame.
 	/// @return The bytes that were not used. Used for statistics.

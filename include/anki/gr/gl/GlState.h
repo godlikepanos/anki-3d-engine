@@ -31,6 +31,7 @@ enum class GpuVendor : U8
 class GlState
 {
 public:
+	GrManager* m_manager;
 	I32 m_version = -1; ///< Minor major GL version. Something like 430
 	GpuVendor m_gpu = GpuVendor::UNKNOWN;
 	Bool8 m_registerMessages = false;
@@ -78,8 +79,6 @@ public:
 	Bool m_depthWriteMask = true;
 	/// @}
 
-	DynamicMemoryManager m_dynamicMemoryManager;
-
 	GlState(GrManager* manager)
 		: m_manager(manager)
 	{
@@ -94,17 +93,7 @@ public:
 	/// Call this from the rendering thread.
 	void destroy();
 
-	/// Allocate memory for a dynamic buffer.
-	void* allocateDynamicMemory(
-		PtrSize size, BufferUsage usage, DynamicBufferToken& token)
-	{
-		return m_dynamicMemoryManager.allocatePerFrame(usage, size, token);
-	}
-
 	void flushVertexState();
-
-private:
-	GrManager* m_manager;
 };
 /// @}
 

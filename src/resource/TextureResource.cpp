@@ -56,11 +56,12 @@ Error TexUploadTask::operator()(AsyncLoaderTaskContext& ctx)
 				U surfIdx = max(depth, face);
 				const auto& surf = m_loader.getSurface(mip, surfIdx);
 
-				DynamicBufferToken token;
-				void* data = m_gr->allocateFrameHostVisibleMemory(
-					surf.m_data.getSize(), BufferUsage::TRANSFER, token);
+				TransientMemoryToken token;
+				Error err = ErrorCode::NONE;
+				void* data = m_gr->allocateFrameTransientMemory(
+					surf.m_data.getSize(), BufferUsage::TRANSFER, token, &err);
 
-				if(data)
+				if(!err)
 				{
 					// There is enough transfer memory
 
@@ -72,7 +73,7 @@ Error TexUploadTask::operator()(AsyncLoaderTaskContext& ctx)
 							CommandBufferInitInfo());
 					}
 
-					cmdb->textureUpload(
+					cmdb->uploadTextureSurface(
 						m_tex, TextureSurfaceInfo(mip, depth, face), token);
 				}
 				else

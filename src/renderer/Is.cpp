@@ -61,6 +61,12 @@ struct ShaderProbe
 	F32 m_radiusSq;
 	F32 m_cubemapIndex;
 	U32 _m_pading[3];
+
+	ShaderProbe()
+	{
+		// To avoid warnings
+		_m_pading[0] = _m_pading[1] = _m_pading[2] = 0;
+	}
 };
 
 struct ShaderCommonUniforms
@@ -454,13 +460,13 @@ Error Is::initInternal(const ConfigSet& config)
 				m_r->getIr().getIntegrationLutSampler();
 		}
 
-		init.m_uniformBuffers[0].m_dynamic = true;
-		init.m_uniformBuffers[1].m_dynamic = true;
-		init.m_uniformBuffers[2].m_dynamic = true;
-		init.m_uniformBuffers[3].m_dynamic = true;
+		init.m_uniformBuffers[0].m_uploadedMemory = true;
+		init.m_uniformBuffers[1].m_uploadedMemory = true;
+		init.m_uniformBuffers[2].m_uploadedMemory = true;
+		init.m_uniformBuffers[3].m_uploadedMemory = true;
 
-		init.m_storageBuffers[0].m_dynamic = true;
-		init.m_storageBuffers[1].m_dynamic = true;
+		init.m_storageBuffers[0].m_uploadedMemory = true;
+		init.m_storageBuffers[1].m_uploadedMemory = true;
 
 		m_rcGroup = getGrManager().newInstance<ResourceGroup>(init);
 	}
@@ -506,7 +512,7 @@ Error Is::populateBuffers(RenderingContext& ctx)
 	if(visiblePointLightsCount)
 	{
 		ShaderPointLight* data = static_cast<ShaderPointLight*>(
-			getGrManager().allocateFrameHostVisibleMemory(
+			getGrManager().allocateFrameTransientMemory(
 				sizeof(ShaderPointLight) * visiblePointLightsCount,
 				BufferUsage::UNIFORM,
 				ctx.m_is.m_dynBufferInfo.m_uniformBuffers[P_LIGHTS_LOCATION]));
@@ -527,7 +533,7 @@ Error Is::populateBuffers(RenderingContext& ctx)
 	if(visibleSpotLightsCount)
 	{
 		ShaderSpotLight* data = static_cast<ShaderSpotLight*>(
-			getGrManager().allocateFrameHostVisibleMemory(
+			getGrManager().allocateFrameTransientMemory(
 				sizeof(ShaderSpotLight) * visibleSpotLightsCount,
 				BufferUsage::UNIFORM,
 				ctx.m_is.m_dynBufferInfo.m_uniformBuffers[S_LIGHTS_LOCATION]));
@@ -548,7 +554,7 @@ Error Is::populateBuffers(RenderingContext& ctx)
 	if(m_r->getIrEnabled() && visibleProbeCount)
 	{
 		ShaderProbe* data = static_cast<ShaderProbe*>(
-			getGrManager().allocateFrameHostVisibleMemory(
+			getGrManager().allocateFrameTransientMemory(
 				sizeof(ShaderProbe) * visibleProbeCount,
 				BufferUsage::UNIFORM,
 				ctx.m_is.m_dynBufferInfo.m_uniformBuffers[PROBES_LOCATION]));
@@ -567,8 +573,8 @@ Error Is::populateBuffers(RenderingContext& ctx)
 	taskData.m_is = this;
 
 	// Get mem for clusters
-	ShaderCluster* data = static_cast<ShaderCluster*>(
-		getGrManager().allocateFrameHostVisibleMemory(
+	ShaderCluster* data =
+		static_cast<ShaderCluster*>(getGrManager().allocateFrameTransientMemory(
 			sizeof(ShaderCluster) * clusterCount,
 			BufferUsage::STORAGE,
 			ctx.m_is.m_dynBufferInfo.m_storageBuffers[CLUSTERS_LOCATION]));
@@ -576,9 +582,8 @@ Error Is::populateBuffers(RenderingContext& ctx)
 	taskData.m_clusters = WeakArray<ShaderCluster>(data, clusterCount);
 
 	// Allocate light IDs
-	U32* data2 =
-		static_cast<U32*>(getGrManager().allocateFrameHostVisibleMemory(
-			m_maxLightIds * sizeof(U32),
+	U32* data2 = static_cast<U32*>(
+		getGrManager().allocateFrameTransientMemory(m_maxLightIds * sizeof(U32),
 			BufferUsage::STORAGE,
 			ctx.m_is.m_dynBufferInfo.m_storageBuffers[LIGHT_IDS_LOCATION]));
 
@@ -978,7 +983,7 @@ void Is::run(RenderingContext& ctx)
 void Is::updateCommonBlock(const FrustumComponent& fr, RenderingContext& ctx)
 {
 	ShaderCommonUniforms* blk = static_cast<ShaderCommonUniforms*>(
-		getGrManager().allocateFrameHostVisibleMemory(
+		getGrManager().allocateFrameTransientMemory(
 			sizeof(ShaderCommonUniforms),
 			BufferUsage::UNIFORM,
 			ctx.m_is.m_dynBufferInfo.m_uniformBuffers[COMMON_VARS_LOCATION]));

@@ -41,11 +41,11 @@ Error Tm::create(const ConfigSet& initializer)
 
 	CommandBufferPtr cmdb =
 		getGrManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
-	DynamicBufferToken token;
-	void* data = getGrManager().allocateFrameHostVisibleMemory(
+	TransientMemoryToken token;
+	void* data = getGrManager().allocateFrameTransientMemory(
 		sizeof(Vec4), BufferUsage::TRANSFER, token);
 	*static_cast<Vec4*>(data) = Vec4(0.5);
-	cmdb->writeBuffer(m_luminanceBuff, 0, token);
+	cmdb->uploadBuffer(m_luminanceBuff, 0, token);
 	cmdb->flush();
 
 	// Create descriptors

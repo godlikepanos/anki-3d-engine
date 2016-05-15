@@ -220,11 +220,11 @@ Error UiInterfaceImpl::createR8Image(
 	// Load data
 	CommandBufferPtr cmdb =
 		m_gr->newInstance<CommandBuffer>(CommandBufferInitInfo());
-	DynamicBufferToken token;
-	void* loadData = m_gr->allocateFrameHostVisibleMemory(
+	TransientMemoryToken token;
+	void* loadData = m_gr->allocateFrameTransientMemory(
 		data.getSize(), BufferUsage::TRANSFER, token);
 	memcpy(loadData, &data[0], data.getSize());
-	cmdb->textureUpload(tex, TextureSurfaceInfo(0, 0, 0), token);
+	cmdb->uploadTextureSurface(tex, TextureSurfaceInfo(0, 0, 0), token);
 
 	// Gen mips
 	cmdb->generateMipmaps(tex, 0, 0);

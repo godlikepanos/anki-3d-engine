@@ -34,7 +34,7 @@ public:
 	Array<Mat4, MAX_INSTANCES> m_cachedTrfs;
 	U m_cachedTrfCount = 0;
 	const MaterialVariant* m_variant = nullptr;
-	DynamicBufferInfo m_dynBufferInfo;
+	TransientMemoryInfo m_dynBufferInfo;
 	F32 m_flod = 0.0;
 	VisibleNode* m_visibleNode = nullptr;
 	VisibleNode* m_nextVisibleNode = nullptr;
@@ -214,7 +214,7 @@ void RenderableDrawer::setupUniforms(DrawContext& ctx,
 
 	// Get some memory for uniforms
 	U8* uniforms =
-		static_cast<U8*>(m_r->getGrManager().allocateFrameHostVisibleMemory(
+		static_cast<U8*>(m_r->getGrManager().allocateFrameTransientMemory(
 			variant.getDefaultBlockSize(),
 			BufferUsage::UNIFORM,
 			ctx.m_dynBufferInfo.m_uniformBuffers[0]));

@@ -51,7 +51,7 @@ public:
 	class Is
 	{
 	public:
-		DynamicBufferInfo m_dynBufferInfo;
+		TransientMemoryInfo m_dynBufferInfo;
 	} m_is;
 	/// @}
 
@@ -370,7 +370,7 @@ anki_internal:
 		return *m_threadpool;
 	}
 
-	const DynamicBufferToken& getCommonUniformsDynamicBufferToken() const
+	const TransientMemoryToken& getCommonUniformsTransientMemoryToken() const
 	{
 		return m_commonUniformsToken;
 	}
@@ -402,7 +402,7 @@ private:
 
 	Clusterer m_clusterer;
 
-	DynamicBufferToken m_commonUniformsToken;
+	TransientMemoryToken m_commonUniformsToken;
 
 	/// @name Rendering stages
 	/// @{

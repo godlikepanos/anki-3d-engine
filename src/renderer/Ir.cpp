@@ -162,7 +162,7 @@ Error Ir::initIrradiance()
 
 	// Create the resources
 	ResourceGroupInitInfo rcInit;
-	rcInit.m_uniformBuffers[0].m_dynamic = true;
+	rcInit.m_uniformBuffers[0].m_uploadedMemory = true;
 	rcInit.m_textures[0].m_texture = m_envCubemapArr;
 
 	m_computeIrradianceResources =
@@ -282,9 +282,9 @@ Error Ir::renderReflection(RenderingContext& ctx,
 	cmdb->setViewport(0, 0, IRRADIANCE_TEX_SIZE, IRRADIANCE_TEX_SIZE);
 	for(U i = 0; i < 6; ++i)
 	{
-		DynamicBufferInfo dinf;
+		TransientMemoryInfo dinf;
 		UVec4* faceIdxArrayIdx =
-			static_cast<UVec4*>(getGrManager().allocateFrameHostVisibleMemory(
+			static_cast<UVec4*>(getGrManager().allocateFrameTransientMemory(
 				sizeof(UVec4), BufferUsage::UNIFORM, dinf.m_uniformBuffers[0]));
 		faceIdxArrayIdx->x() = i;
 		faceIdxArrayIdx->y() = cubemapIdx;

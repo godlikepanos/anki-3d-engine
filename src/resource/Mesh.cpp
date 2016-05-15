@@ -44,16 +44,17 @@ Error MeshLoadTask::operator()(AsyncLoaderTaskContext& ctx)
 	// Write vert buff
 	if(m_vertBuff)
 	{
-		DynamicBufferToken token;
-		void* data = gr.allocateFrameHostVisibleMemory(
-			m_loader.getVertexDataSize(), BufferUsage::TRANSFER, token);
+		TransientMemoryToken token;
+		Error err = ErrorCode::NONE;
+		void* data = gr.allocateFrameTransientMemory(
+			m_loader.getVertexDataSize(), BufferUsage::TRANSFER, token, &err);
 
-		if(data)
+		if(!err)
 		{
 			memcpy(
 				data, m_loader.getVertexData(), m_loader.getVertexDataSize());
 			cmdb = gr.newInstance<CommandBuffer>(CommandBufferInitInfo());
-			cmdb->writeBuffer(m_vertBuff, 0, token);
+			cmdb->uploadBuffer(m_vertBuff, 0, token);
 			m_vertBuff.reset(nullptr);
 		}
 		else
@@ -66,11 +67,12 @@ Error MeshLoadTask::operator()(AsyncLoaderTaskContext& ctx)
 
 	// Create index buffer
 	{
-		DynamicBufferToken token;
-		void* data = gr.allocateFrameHostVisibleMemory(
-			m_loader.getIndexDataSize(), BufferUsage::TRANSFER, token);
+		TransientMemoryToken token;
+		Error err = ErrorCode::NONE;
+		void* data = gr.allocateFrameTransientMemory(
+			m_loader.getIndexDataSize(), BufferUsage::TRANSFER, token, &err);
 
-		if(data)
+		if(!err)
 		{
 			memcpy(data, m_loader.getIndexData(), m_loader.getIndexDataSize());
 
@@ -79,7 +81,7 @@ Error MeshLoadTask::operator()(AsyncLoaderTaskContext& ctx)
 				cmdb = gr.newInstance<CommandBuffer>(CommandBufferInitInfo());
 			}
 
-			cmdb->writeBuffer(m_indicesBuff, 0, token);
+			cmdb->uploadBuffer(m_indicesBuff, 0, token);
 			cmdb->flush();
 		}
 		else

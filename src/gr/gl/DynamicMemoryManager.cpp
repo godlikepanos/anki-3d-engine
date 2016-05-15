@@ -14,16 +14,34 @@ namespace anki
 //==============================================================================
 DynamicMemoryManager::~DynamicMemoryManager()
 {
-	for(DynamicBuffer& buff : m_buffers)
+	for(PerFrameBuffer& buff : m_perFrameBuffers)
 	{
 		ANKI_ASSERT(buff.m_name == 0);
+		(void)buff;
+	}
+
+	for(PersistentBuffer& buff : m_persistentBuffers)
+	{
+		ANKI_ASSERT(buff.m_name == 0);
+		(void)buff;
 	}
 }
 
 //==============================================================================
 void DynamicMemoryManager::destroyRenderThread()
 {
-	for(DynamicBuffer& buff : m_buffers)
+	for(PerFrameBuffer& buff : m_perFrameBuffers)
+	{
+		if(buff.m_name != 0)
+		{
+			glDeleteBuffers(1, &buff.m_name);
+			buff.m_name = 0;
+		}
+
+		buff.m_cpuBuff.destroy(m_alloc);
+	}
+
+	for(PersistentBuffer& buff : m_persistentBuffers)
 	{
 		if(buff.m_name != 0)
 		{
@@ -41,17 +59,20 @@ void DynamicMemoryManager::initMainThread(
 {
 	m_alloc = alloc;
 
-	m_buffers[BufferUsage::UNIFORM].m_size =
+	m_perFrameBuffers[BufferUsage::UNIFORM].m_size =
 		cfg.getNumber("gr.uniformPerFrameMemorySize");
 
-	m_buffers[BufferUsage::STORAGE].m_size =
+	m_perFrameBuffers[BufferUsage::STORAGE].m_size =
 		cfg.getNumber("gr.storagePerFrameMemorySize");
 
-	m_buffers[BufferUsage::VERTEX].m_size =
+	m_perFrameBuffers[BufferUsage::VERTEX].m_size =
 		cfg.getNumber("gr.vertexPerFrameMemorySize");
 
-	m_buffers[BufferUsage::TRANSFER].m_size =
+	m_perFrameBuffers[BufferUsage::TRANSFER].m_size =
 		cfg.getNumber("gr.transferPerFrameMemorySize");
+
+	m_persistentBuffers[BufferUsage::TRANSFER].m_size =
+		cfg.getNumber("gr.transferPersistentMemorySize");
 }
 
 //==============================================================================
@@ -62,7 +83,7 @@ void DynamicMemoryManager::initRenderThread()
 	// Uniform
 	{
 		// Create buffer
-		DynamicBuffer& buff = m_buffers[BufferUsage::UNIFORM];
+		PerFrameBuffer& buff = m_perFrameBuffers[BufferUsage::UNIFORM];
 		PtrSize size = buff.m_size;
 		glGenBuffers(1, &buff.m_name);
 		glBindBuffer(GL_UNIFORM_BUFFER, buff.m_name);
@@ -76,13 +97,13 @@ void DynamicMemoryManager::initRenderThread()
 		// Create the allocator
 		GLint64 blockAlignment;
 		glGetInteger64v(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &blockAlignment);
-		buff.m_frameAlloc.init(size, blockAlignment, MAX_UNIFORM_BLOCK_SIZE);
+		buff.m_alloc.init(size, blockAlignment, MAX_UNIFORM_BLOCK_SIZE);
 	}
 
 	// Storage
 	{
 		// Create buffer
-		DynamicBuffer& buff = m_buffers[BufferUsage::STORAGE];
+		PerFrameBuffer& buff = m_perFrameBuffers[BufferUsage::STORAGE];
 		PtrSize size = buff.m_size;
 		glGenBuffers(1, &buff.m_name);
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, buff.m_name);
@@ -97,13 +118,13 @@ void DynamicMemoryManager::initRenderThread()
 		GLint64 blockAlignment;
 		glGetInteger64v(
 			GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT, &blockAlignment);
-		buff.m_frameAlloc.init(size, blockAlignment, MAX_STORAGE_BLOCK_SIZE);
+		buff.m_alloc.init(size, blockAlignment, MAX_STORAGE_BLOCK_SIZE);
 	}
 
 	// Vertex
 	{
 		// Create buffer
-		DynamicBuffer& buff = m_buffers[BufferUsage::VERTEX];
+		PerFrameBuffer& buff = m_perFrameBuffers[BufferUsage::VERTEX];
 		PtrSize size = buff.m_size;
 		glGenBuffers(1, &buff.m_name);
 		glBindBuffer(GL_ARRAY_BUFFER, buff.m_name);
@@ -115,35 +136,72 @@ void DynamicMemoryManager::initRenderThread()
 		ANKI_ASSERT(buff.m_mappedMem);
 
 		// Create the allocator
-		buff.m_frameAlloc.init(size, 16, MAX_U32);
+		buff.m_alloc.init(size, 16, MAX_U32);
 	}
 
 	// Transfer
 	{
-		DynamicBuffer& buff = m_buffers[BufferUsage::TRANSFER];
+		PerFrameBuffer& buff = m_perFrameBuffers[BufferUsage::TRANSFER];
 		PtrSize size = buff.m_size;
 		buff.m_cpuBuff.create(m_alloc, size);
 
 		buff.m_mappedMem = reinterpret_cast<U8*>(&buff.m_cpuBuff[0]);
-		buff.m_frameAlloc.init(size, 16, MAX_U32);
+		buff.m_alloc.init(size, 16, MAX_U32);
+	}
+
+	{
+		const U BLOCK_SIZE = (4096 * 4096) / 4 * 16;
+
+		PersistentBuffer& buff = m_persistentBuffers[BufferUsage::TRANSFER];
+		PtrSize size = getAlignedRoundUp(BLOCK_SIZE, buff.m_size);
+		size = max(size, 2 * BLOCK_SIZE);
+		buff.m_cpuBuff.create(m_alloc, size);
+
+		buff.m_mappedMem = reinterpret_cast<U8*>(&buff.m_cpuBuff[0]);
+		buff.m_alloc.init(m_alloc, size, BLOCK_SIZE);
+		buff.m_alignment = 16;
 	}
 }
 
 //==============================================================================
-void* DynamicMemoryManager::allocatePerFrame(
-	BufferUsage usage, PtrSize size, DynamicBufferToken& handle)
+void DynamicMemoryManager::allocate(PtrSize size,
+	BufferUsage usage,
+	TransientMemoryTokenLifetime lifespan,
+	TransientMemoryToken& token,
+	void*& ptr,
+	Error* outErr)
 {
-	DynamicBuffer& buff = m_buffers[usage];
-	Error err = buff.m_frameAlloc.allocate(size, handle, false);
-	if(!err)
+	Error err = ErrorCode::NONE;
+	ptr = nullptr;
+	U8* mappedMemBase;
+
+	if(lifespan == TransientMemoryTokenLifetime::PER_FRAME)
 	{
-		return buff.m_mappedMem + handle.m_offset;
+		PerFrameBuffer& buff = m_perFrameBuffers[usage];
+		err = buff.m_alloc.allocate(size, token.m_offset);
+		mappedMemBase = buff.m_mappedMem;
 	}
 	else
 	{
-		ANKI_LOGW(
-			"Out of per-frame GPU memory. Someone will have to handle this");
-		return nullptr;
+		PersistentBuffer& buff = m_persistentBuffers[usage];
+		err = buff.m_alloc.allocate(size, buff.m_alignment, token.m_offset);
+		mappedMemBase = buff.m_mappedMem;
+	}
+
+	if(!err)
+	{
+		token.m_usage = usage;
+		token.m_range = size;
+		token.m_lifetime = lifespan;
+		ptr = mappedMemBase + token.m_offset;
+	}
+	else if(outErr)
+	{
+		*outErr = err;
+	}
+	else
+	{
+		ANKI_LOGF("Out of dynamic GPU memory");
 	}
 }
 
@@ -153,7 +211,7 @@ void DynamicMemoryManager::endFrame()
 	for(BufferUsage usage = BufferUsage::FIRST; usage < BufferUsage::COUNT;
 		++usage)
 	{
-		DynamicBuffer& buff = m_buffers[usage];
+		PerFrameBuffer& buff = m_perFrameBuffers[usage];
 
 		if(buff.m_mappedMem)
 		{
@@ -162,17 +220,17 @@ void DynamicMemoryManager::endFrame()
 			{
 			case BufferUsage::UNIFORM:
 				ANKI_TRACE_INC_COUNTER(GR_DYNAMIC_UNIFORMS_SIZE,
-					buff.m_frameAlloc.getUnallocatedMemorySize());
+					buff.m_alloc.getUnallocatedMemorySize());
 				break;
 			case BufferUsage::STORAGE:
 				ANKI_TRACE_INC_COUNTER(GR_DYNAMIC_STORAGE_SIZE,
-					buff.m_frameAlloc.getUnallocatedMemorySize());
+					buff.m_alloc.getUnallocatedMemorySize());
 				break;
 			default:
 				break;
 			}
 
-			buff.m_frameAlloc.endFrame();
+			buff.m_alloc.endFrame();
 		}
 	}
 }

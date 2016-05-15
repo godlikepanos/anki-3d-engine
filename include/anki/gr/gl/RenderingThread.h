@@ -6,7 +6,6 @@
 #pragma once
 
 #include <anki/gr/CommandBuffer.h>
-#include <anki/gr/gl/GlState.h>
 #include <anki/util/Thread.h>
 
 namespace anki
@@ -27,19 +26,9 @@ public:
 
 	~RenderingThread();
 
-	GlState& getState()
-	{
-		return m_state;
-	}
-
-	const GlState& getState() const
-	{
-		return m_state;
-	}
-
 	/// Start the working thread
 	/// @note Don't free the context before calling #stop
-	void start(Bool registerMessages, const ConfigSet& config);
+	void start();
 
 	/// Stop the working thread
 	void stop();
@@ -74,14 +63,15 @@ private:
 	ConditionVariable m_condVar; ///< To wake up the thread
 	Thread m_thread;
 
+	/// @name Swap_buffers_vars
+	/// @{
 	CommandBufferPtr m_swapBuffersCommands;
 	ConditionVariable m_frameCondVar;
 	Mutex m_frameMtx;
 	Bool8 m_frameWait = false;
+	/// @}
 
 	Thread::Id m_serverThreadId;
-
-	GlState m_state;
 
 	/// A special command buffer that is called every time we want to wait for
 	/// the server
@@ -98,7 +88,7 @@ private:
 	void prepare();
 	void finish();
 
-	void swapBuffersInternal(GlState& state);
+	void swapBuffersInternal();
 };
 /// @}
 

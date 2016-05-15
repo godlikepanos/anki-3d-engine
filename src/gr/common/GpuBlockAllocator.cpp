@@ -75,8 +75,7 @@ Bool GpuBlockAllocator::blockHasEnoughSpace(
 }
 
 //==============================================================================
-Error GpuBlockAllocator::allocate(
-	PtrSize size, U alignment, DynamicBufferToken& handle, Bool handleOomError)
+Error GpuBlockAllocator::allocate(PtrSize size, U alignment, PtrSize& outOffset)
 {
 	ANKI_ASSERT(isCreated());
 	ANKI_ASSERT(size < m_blockSize);
@@ -114,29 +113,24 @@ Error GpuBlockAllocator::allocate(
 		++block->m_allocationCount;
 
 		// Update the handle
-		handle.m_offset = outOffset;
-		handle.m_range = size;
-	}
-	else if(handleOomError)
-	{
-		ANKI_LOGF("Out of memory");
+		outOffset = outOffset;
 	}
 	else
 	{
 		err = ErrorCode::OUT_OF_MEMORY;
+		outOffset = MAX_PTR_SIZE;
 	}
 
 	return err;
 }
 
 //==============================================================================
-void GpuBlockAllocator::free(const DynamicBufferToken& handle)
+void GpuBlockAllocator::free(PtrSize offset)
 {
 	ANKI_ASSERT(isCreated());
-	ANKI_ASSERT(handle.m_range > 0);
-	ANKI_ASSERT(handle.m_offset < m_size);
+	ANKI_ASSERT(offset < m_size);
 
-	U blockIdx = handle.m_offset / m_blockSize;
+	U blockIdx = offset / m_blockSize;
 
 	LockGuard<Mutex> lock(m_mtx);
 

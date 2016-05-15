@@ -32,13 +32,13 @@ public:
 	void init(const ResourceGroupInitInfo& init);
 
 	/// Set state.
-	void bind(U slot, const DynamicBufferInfo& dynInfo, GlState& state);
+	void bind(U slot, const TransientMemoryInfo& transientInfo, GlState& state);
 
 private:
 	class InternalBufferBinding
 	{
 	public:
-		GLuint m_name = 0; ///< If it's MAX_U32 then it's dynamic
+		GLuint m_name = 0; ///< If it's MAX_U32 then it's transient
 		U32 m_offset = 0;
 		U32 m_range = 0;
 	};
@@ -59,7 +59,7 @@ private:
 
 	Array<GLuint, MAX_VERTEX_ATTRIBUTES> m_vertBuffNames;
 	Array<GLintptr, MAX_VERTEX_ATTRIBUTES> m_vertBuffOffsets;
-	Bool8 m_hasDynamicVertexBuff = false;
+	Bool8 m_hasTransientVertexBuff = false;
 	U8 m_vertBindingsCount = 0;
 
 	GLuint m_indexBuffName = 0;
@@ -74,7 +74,7 @@ private:
 		OutBindings& out,
 		U8& count,
 		U& resourcesCount,
-		U& dynCount);
+		U& transCount);
 
 	void initResourceReferences(const ResourceGroupInitInfo& init, U count);
 };

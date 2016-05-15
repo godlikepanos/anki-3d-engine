@@ -48,8 +48,7 @@ PtrSize GpuFrameRingAllocator::endFrame()
 }
 
 //==============================================================================
-Error GpuFrameRingAllocator::allocate(
-	PtrSize originalSize, DynamicBufferToken& token, Bool handleOomError)
+Error GpuFrameRingAllocator::allocate(PtrSize originalSize, PtrSize& outOffset)
 {
 	ANKI_ASSERT(isCreated());
 	ANKI_ASSERT(originalSize > 0);
@@ -74,17 +73,13 @@ Error GpuFrameRingAllocator::allocate(
 #endif
 
 		// Encode token
-		token.m_offset = offset;
-		token.m_range = originalSize;
+		outOffset = offset;
 
-		ANKI_ASSERT(token.m_offset + token.m_range <= m_size);
-	}
-	else if(handleOomError)
-	{
-		ANKI_LOGF("Out of GPU dynamic memory");
+		ANKI_ASSERT(outOffset + originalSize <= m_size);
 	}
 	else
 	{
+		outOffset = MAX_PTR_SIZE;
 		err = ErrorCode::OUT_OF_MEMORY;
 	}
 

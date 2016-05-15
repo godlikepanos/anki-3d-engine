@@ -9,6 +9,7 @@
 #include <anki/gr/GrManager.h>
 #include <anki/core/NativeWindow.h>
 #include <anki/core/NativeWindowSdl.h>
+#include <anki/core/Config.h>
 #include <SDL.h>
 #include <GL/glew.h>
 
@@ -42,7 +43,7 @@ public:
 			init.m_majorVersion,
 			init.m_minorVersion);
 
-		if(init.m_debugContext)
+		if(init.m_config->getNumber("debugContext"))
 		{
 			if(SDL_GL_SetAttribute(
 				   SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG))

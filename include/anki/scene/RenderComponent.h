@@ -114,7 +114,7 @@ public:
 	const U8* m_subMeshIndicesArray; ///< @note indices != drawing indices
 	U32 m_subMeshIndicesCount;
 	CommandBufferPtr m_cmdb; ///< A command buffer to append to.
-	DynamicBufferInfo* m_dynamicBufferInfo ANKI_DBG_NULLIFY_PTR;
+	TransientMemoryInfo* m_dynamicBufferInfo ANKI_DBG_NULLIFY_PTR;
 };
 
 /// RenderComponent interface. Implemented by renderable scene nodes

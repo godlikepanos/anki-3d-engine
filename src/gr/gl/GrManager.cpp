@@ -6,6 +6,7 @@
 #include <anki/gr/GrManager.h>
 #include <anki/gr/gl/GrManagerImpl.h>
 #include <anki/gr/gl/RenderingThread.h>
+#include <anki/gr/gl/DynamicMemoryManager.h>
 #include <anki/core/Timestamp.h>
 #include <cstring>
 
@@ -48,19 +49,20 @@ void GrManager::swapBuffers()
 }
 
 //==============================================================================
-void* GrManager::allocateFrameHostVisibleMemory(
-	PtrSize size, BufferUsage usage, DynamicBufferToken& token)
-{
-	// Will be used in a thread safe way
-	GlState& state = m_impl->getRenderingThread().getState();
-	void* ptr = state.allocateDynamicMemory(size, usage, token);
-	return ptr;
-}
-
-//==============================================================================
 void GrManager::finish()
 {
 	m_impl->getRenderingThread().syncClientServer();
+}
+
+//==============================================================================
+void* GrManager::allocateFrameTransientMemory(
+	PtrSize size, BufferUsage usage, TransientMemoryToken& token, Error* err)
+{
+	void* data = nullptr;
+	m_impl->getDynamicMemoryManager().allocate(
+		size, usage, TransientMemoryTokenLifetime::PER_FRAME, token, data, err);
+
+	return data;
 }
 
 } // end namespace anki

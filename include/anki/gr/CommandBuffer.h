@@ -137,7 +137,7 @@ public:
 
 	/// Bind resources.
 	void bindResourceGroup(
-		ResourceGroupPtr rc, U slot, const DynamicBufferInfo* dynInfo);
+		ResourceGroupPtr rc, U slot, const TransientMemoryInfo* dynInfo);
 	/// @}
 
 	/// @name Jobs
@@ -182,15 +182,13 @@ public:
 	/// @{
 
 	/// Upload data to a texture.
-	void textureUpload(TexturePtr tex,
+	void uploadTextureSurface(TexturePtr tex,
 		const TextureSurfaceInfo& surf,
-		const DynamicBufferToken& token);
+		const TransientMemoryToken& token);
 
-	/// Write data to a buffer. It will copy the dynamic memory to the buffer
-	/// starting from offset to the range indicated by the allocation of the
-	/// token.
-	void writeBuffer(
-		BufferPtr buff, PtrSize offset, const DynamicBufferToken& token);
+	/// Upload data to a buffer.
+	void uploadBuffer(
+		BufferPtr buff, PtrSize offset, const TransientMemoryToken& token);
 	/// @}
 
 	/// @name Sync

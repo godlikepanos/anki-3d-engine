@@ -440,7 +440,7 @@ Error Material::createProgramSourceToCache(
 //==============================================================================
 void Material::fillResourceGroupInitInfo(ResourceGroupInitInfo& rcinit)
 {
-	rcinit.m_uniformBuffers[0].m_dynamic = true;
+	rcinit.m_uniformBuffers[0].m_uploadedMemory = true;
 
 	UpdateTexturesVisitor visitor;
 	visitor.m_init = &rcinit;

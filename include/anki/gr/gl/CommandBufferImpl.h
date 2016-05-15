@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include <anki/gr/GrManager.h>
 #include <anki/gr/CommandBuffer.h>
+#include <anki/gr/gl/DynamicMemoryManager.h>
 #include <anki/util/Assert.h>
 #include <anki/util/Allocator.h>
 
@@ -64,10 +64,8 @@ public:
 		destroy();
 	}
 
-	/// Default constructor
-	/// @param server The command buffers server
-	/// @param hints Hints to optimize the command's allocator
-	void init(const InitHints& hints);
+	/// Initialize.
+	void init(const CommandBufferInitInfo& init);
 
 	/// Get the internal allocator.
 	CommandBufferAllocator<U8> getInternalAllocator() const
@@ -96,12 +94,6 @@ public:
 #endif
 	}
 
-	void checkDrawcall() const
-	{
-		ANKI_ASSERT(m_dbg.m_viewport == true);
-		ANKI_ASSERT(m_dbg.m_polygonOffset == true);
-	}
-
 	/// Make immutable
 	void makeImmutable()
 	{
@@ -118,6 +110,33 @@ public:
 		return m_firstCommand == nullptr;
 	}
 
+	void bindResourceGroup(
+		ResourceGroupPtr rc, U slot, const TransientMemoryInfo* info);
+
+	void drawElements(U32 count,
+		U32 instanceCount = 1,
+		U32 firstIndex = 0,
+		U32 baseVertex = 0,
+		U32 baseInstance = 0);
+
+	void drawArrays(
+		U32 count, U32 instanceCount = 1, U32 first = 0, U32 baseInstance = 0);
+
+	void drawElementsConditional(OcclusionQueryPtr query,
+		U32 count,
+		U32 instanceCount = 1,
+		U32 firstIndex = 0,
+		U32 baseVertex = 0,
+		U32 baseInstance = 0);
+
+	void drawArraysConditional(OcclusionQueryPtr query,
+		U32 count,
+		U32 instanceCount = 1,
+		U32 first = 0,
+		U32 baseInstance = 0);
+
+	void dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ);
+
 private:
 	GrManager* m_manager = nullptr;
 	GlCommand* m_firstCommand = nullptr;
@@ -130,6 +149,12 @@ private:
 #endif
 
 	void destroy();
+
+	void checkDrawcall() const
+	{
+		ANKI_ASSERT(m_dbg.m_viewport == true);
+		ANKI_ASSERT(m_dbg.m_polygonOffset == true);
+	}
 };
 
 //==============================================================================

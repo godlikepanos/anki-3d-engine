@@ -255,7 +255,7 @@ TextureImpl::~TextureImpl()
 	else
 	{
 		DeleteTextureCommand cmd(m_glName, m_texViews, getAllocator());
-		cmd(thread.getState());
+		cmd(manager.getImplementation().getState());
 	}
 
 	m_glName = 0;

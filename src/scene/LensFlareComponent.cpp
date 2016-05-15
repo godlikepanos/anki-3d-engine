@@ -40,7 +40,7 @@ Error LensFlareComponent::init(const CString& textureFilename)
 	// Resource group
 	ResourceGroupInitInfo rcInit;
 	rcInit.m_textures[0].m_texture = m_tex->getGrTexture();
-	rcInit.m_uniformBuffers[0].m_dynamic = true;
+	rcInit.m_uniformBuffers[0].m_uploadedMemory = true;
 	m_rcGroup = gr.newInstance<ResourceGroup>(rcInit);
 
 	return ErrorCode::NONE;
