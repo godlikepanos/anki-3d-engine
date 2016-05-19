@@ -403,7 +403,7 @@ Error App::mainLoop()
 		timer.stop();
 		if(timer.getElapsedTime() < m_timerTick)
 		{
-			HighRezTimer::sleep(getTimerTick() - timer.getElapsedTime());
+			HighRezTimer::sleep(m_timerTick - timer.getElapsedTime());
 		}
 
 		++m_globalTimestamp;

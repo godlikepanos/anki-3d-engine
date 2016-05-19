@@ -143,7 +143,7 @@ public:
 class PipelineInitInfo : public PipelineInitInfoState
 {
 public:
-	Array<ShaderPtr, 6> m_shaders;
+	Array<ShaderPtr, U(ShaderType::COUNT)> m_shaders;
 
 	U64 computeHash() const
 	{
@@ -151,7 +151,7 @@ public:
 			anki::computeHash(static_cast<const PipelineInitInfoState*>(this),
 				sizeof(PipelineInitInfoState));
 
-		Array<U64, m_shaders.getSize()> uuids;
+		Array<U64, U(ShaderType::COUNT)> uuids;
 		for(U i = 0; i < m_shaders.getSize(); ++i)
 		{
 			U64 uuid = (m_shaders[i].isCreated()) ? m_shaders[i]->getUuid() : 0;
