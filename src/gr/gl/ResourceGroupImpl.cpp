@@ -102,8 +102,11 @@ void ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 	// Init shader buffers
 	initBuffers(
 		init.m_uniformBuffers, m_ubos, m_ubosCount, resourcesCount, transCount);
-	initBuffers(
-		init.m_storageBuffers, m_ssbos, m_ssbosCount, resourcesCount, transCount);
+	initBuffers(init.m_storageBuffers,
+		m_ssbos,
+		m_ssbosCount,
+		resourcesCount,
+		transCount);
 	initBuffers(init.m_atomicBuffers,
 		m_atomics,
 		m_atomicsCount,
@@ -156,7 +159,8 @@ void ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 		++resourcesCount;
 	}
 
-	ANKI_ASSERT((resourcesCount > 0 || transCount > 0) && "Resource group empty");
+	ANKI_ASSERT(
+		(resourcesCount > 0 || transCount > 0) && "Resource group empty");
 
 	// Hold references
 	initResourceReferences(init, resourcesCount);

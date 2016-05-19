@@ -70,17 +70,21 @@ using GrAllocator = HeapAllocator<T>;
 /// Clear values for textures or attachments.
 class ClearValue
 {
+private:
+	class Ds
+	{
+	public:
+		F32 m_depth;
+		I32 m_stencil;
+	};
+
 public:
 	union
 	{
 		Array<F32, 4> m_colorf = {{0.0, 0.0, 0.0, 0.0}};
 		Array<I32, 4> m_colori;
 		Array<U32, 4> m_coloru;
-		struct
-		{
-			F32 m_depth;
-			I32 m_stencil;
-		} m_depthStencil;
+		Ds m_depthStencil;
 	};
 };
 

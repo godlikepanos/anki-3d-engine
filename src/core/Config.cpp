@@ -58,8 +58,8 @@ Config::Config()
 	newOption("tm.enabled", true);
 
 	// Globals
-	newOption("width", 0);
-	newOption("height", 0);
+	newOption("width", 1280);
+	newOption("height", 768);
 	newOption("renderingQuality", 1.0); // Applies only to MainRenderer
 	newOption("lodDistance", 10.0); // Distance that used to calculate the LOD
 	newOption("samples", 1);
