@@ -228,4 +228,49 @@ Error ConfigSet::saveToFile(CString filename) const
 	return ErrorCode::NONE;
 }
 
+//==============================================================================
+Error ConfigSet::setFromCommandLineArguments(
+	U cmdLineArgsCount, char* cmdLineArgs[])
+{
+	for(U i = 0; i < cmdLineArgsCount; ++i)
+	{
+		const char* arg = cmdLineArgs[i];
+		ANKI_ASSERT(arg);
+		if(CString(arg) == "-cfg")
+		{
+			if(i + 2 >= cmdLineArgsCount)
+			{
+				ANKI_LOGE("Wrong number of arguments after -cfg");
+				return ErrorCode::USER_DATA;
+			}
+
+			// Get the option
+			arg = cmdLineArgs[i + 1];
+			ANKI_ASSERT(arg);
+			Option* option = tryFind(arg);
+			if(option == nullptr)
+			{
+				ANKI_LOGE("Option name following -cfg not found: %s", arg);
+				return ErrorCode::USER_DATA;
+			}
+
+			// Set the value
+			arg = cmdLineArgs[i + 2];
+			ANKI_ASSERT(arg);
+			if(option->m_type == 0)
+			{
+				option->m_strVal.destroy(m_alloc);
+				option->m_strVal.create(m_alloc, arg);
+			}
+			else
+			{
+				CString val(arg);
+				ANKI_CHECK(val.toF64(option->m_fVal));
+			}
+		}
+	}
+
+	return ErrorCode::NONE;
+}
+
 } // end namespace anki

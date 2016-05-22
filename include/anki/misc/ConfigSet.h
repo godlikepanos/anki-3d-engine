@@ -47,6 +47,9 @@ public:
 
 	ANKI_USE_RESULT Error saveToFile(CString filename) const;
 
+	ANKI_USE_RESULT Error setFromCommandLineArguments(
+		U cmdLineArgsCount, char* cmdLineArgs[]);
+
 protected:
 	void newOption(const CString& name, const CString& value);
 	void newOption(const CString& name, F64 value);

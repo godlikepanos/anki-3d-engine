@@ -27,7 +27,7 @@ MyApp* app = nullptr;
 //==============================================================================
 Error MyApp::init(int argc, char* argv[])
 {
-	if(argc != 3)
+	if(argc < 3)
 	{
 		ANKI_LOGE("usage: %s /path/to/config.xml relative/path/to/scene.lua",
 			argv[0]);
@@ -37,6 +37,7 @@ Error MyApp::init(int argc, char* argv[])
 	// Config
 	Config config;
 	ANKI_CHECK(config.loadFromFile(argv[1]));
+	ANKI_CHECK(config.setFromCommandLineArguments(argc, argv));
 
 	// Init super class
 	ANKI_CHECK(App::init(config, allocAligned, nullptr));
