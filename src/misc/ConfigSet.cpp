@@ -245,7 +245,8 @@ Error ConfigSet::setFromCommandLineArguments(
 			}
 
 			// Get the option
-			arg = cmdLineArgs[i + 1];
+			++i;
+			arg = cmdLineArgs[i];
 			ANKI_ASSERT(arg);
 			Option* option = tryFind(arg);
 			if(option == nullptr)
@@ -255,7 +256,8 @@ Error ConfigSet::setFromCommandLineArguments(
 			}
 
 			// Set the value
-			arg = cmdLineArgs[i + 2];
+			++i;
+			arg = cmdLineArgs[i];
 			ANKI_ASSERT(arg);
 			if(option->m_type == 0)
 			{

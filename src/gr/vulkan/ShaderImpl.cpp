@@ -204,7 +204,7 @@ Error ShaderImpl::init(ShaderType shaderType, const CString& source)
 		"FRAGMENT_SHADER",
 		"COMPUTE_SHADER"}};
 
-	fullSrc.sprintf("#version 450 core\n#define %s\n%s\n",
+	fullSrc.sprintf("#version 450 core\n#define ANKI_VK\n#define %s\n%s\n",
 		shaderName[shaderType],
 		&source[0]);
 

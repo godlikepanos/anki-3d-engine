@@ -31,11 +31,19 @@ const uint UBO_MAX_SIZE = 16384;
 //#define textureRt(tex_, texc_) texture(tex_, texc_)
 #define textureRt(tex_, texc_) textureLod(tex_, texc_, 0.0)
 
-// Binding
-#define UBO_BINDING(slot_, binding_) binding = slot_ * 4 + binding_
-#define SS_BINDING(slot_, binding_) binding = slot_ * 4 + binding_
-#define TEX_BINDING(slot_, binding_) binding = slot_ * 10 + binding_
-#define ATOMIC_BINDING(slot_, binding_) binding = slot_ * 1 + binding_
+// Binding macros
+#if defined(ANKI_GL)
+#define UBO_BINDING(set_, binding_) binding = set_ * 4 + binding_
+#define SS_BINDING(set_, binding_) binding = set_ * 4 + binding_
+#define TEX_BINDING(set_, binding_) binding = set_ * 10 + binding_
+#define ATOMIC_BINDING(set_, binding_) binding = set_ * 1 + binding_
+#elif defined(ANKI_VK)
+#define UBO_BINDING(set_, binding_) set = set_, binding = binding_
+#define SS_BINDING(set_, binding_) set = set_, binding = binding_
+#define TEX_BINDING(set_, binding_) set = set_, binding = binding_
+#else
+#error Missing define
+#endif
 
 // Common locations
 #define POSITION_LOCATION 0

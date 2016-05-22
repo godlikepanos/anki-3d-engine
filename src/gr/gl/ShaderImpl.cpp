@@ -81,7 +81,7 @@ Error ShaderImpl::init(ShaderType type, const CString& source)
 	static const char* versionType = "es";
 #endif
 
-	fullSrc.sprintf("#version %d %s\n#define %s\n%s\n",
+	fullSrc.sprintf("#version %d %s\n#define ANKI_GL\n#define %s\n%s\n",
 		version,
 		versionType,
 		shaderName[U(type)],
