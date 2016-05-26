@@ -5,7 +5,8 @@
 
 #pragma once
 
-#include "anki/util/Singleton.h"
+#include <anki/util/Singleton.h>
+#include <anki/Math.h>
 #include <stdexcept>
 #include <vector>
 #include <string>
@@ -20,7 +21,7 @@ class Test;
 class Tester;
 
 /// The actual test
-typedef void (*TestCallback)(Test&);
+using TestCallback = void (*)(Test&);
 
 /// Test suite
 class TestSuite

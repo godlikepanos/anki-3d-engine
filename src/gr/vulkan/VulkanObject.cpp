@@ -17,6 +17,12 @@ VkDevice VulkanObject::getDevice() const
 }
 
 //==============================================================================
+GrAllocator<U8> VulkanObject::getAllocator() const
+{
+	return m_manager->getAllocator();
+}
+
+//==============================================================================
 GrManagerImpl& VulkanObject::getGrManagerImpl()
 {
 	return m_manager->getImplementation();

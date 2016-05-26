@@ -4,3 +4,25 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/gr/Sampler.h>
+#include <anki/gr/vulkan/SamplerImpl.h>
+
+namespace anki
+{
+
+//==============================================================================
+Sampler::Sampler(GrManager* manager, U64 hash)
+    : GrObject(manager, CLASS_TYPE, hash)
+{
+}
+
+//==============================================================================
+Sampler::~Sampler()
+{
+}
+
+//==============================================================================
+void Sampler::init(const SamplerInitInfo& init)
+{
+}
+
+} // end namespace anki

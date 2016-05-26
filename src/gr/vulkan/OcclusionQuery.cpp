@@ -4,3 +4,25 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/gr/OcclusionQuery.h>
+#include <anki/gr/vulkan/OcclusionQueryImpl.h>
+
+namespace anki
+{
+
+//==============================================================================
+OcclusionQuery::OcclusionQuery(GrManager* manager, U64 hash)
+    : GrObject(manager, CLASS_TYPE, hash)
+{
+}
+
+//==============================================================================
+OcclusionQuery::~OcclusionQuery()
+{
+}
+
+//==============================================================================
+void OcclusionQuery::init(OcclusionQueryResultBit condRenderingBit)
+{
+}
+
+} // end namespace anki

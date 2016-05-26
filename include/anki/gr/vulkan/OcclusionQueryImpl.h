@@ -22,7 +22,9 @@ public:
 	{
 	}
 
-	~OcclusionQueryImpl();
+	~OcclusionQueryImpl()
+	{
+	}
 };
 /// @}
 

@@ -4,3 +4,25 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/gr/Texture.h>
+#include <anki/gr/vulkan/TextureImpl.h>
+
+namespace anki
+{
+
+//==============================================================================
+Texture::Texture(GrManager* manager, U64 hash)
+    : GrObject(manager, CLASS_TYPE, hash)
+{
+}
+
+//==============================================================================
+Texture::~Texture()
+{
+}
+
+//==============================================================================
+void Texture::init(const TextureInitInfo& init)
+{
+}
+
+} // end namespace anki

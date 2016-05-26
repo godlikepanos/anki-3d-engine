@@ -4,3 +4,25 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/gr/Framebuffer.h>
+#include <anki/gr/vulkan/FramebufferImpl.h>
+
+namespace anki
+{
+
+//==============================================================================
+Framebuffer::Framebuffer(GrManager* manager, U64 hash)
+    : GrObject(manager, CLASS_TYPE, hash)
+{
+}
+
+//==============================================================================
+Framebuffer::~Framebuffer()
+{
+}
+
+//==============================================================================
+void Framebuffer::init(const FramebufferInitInfo& init)
+{
+}
+
+} // end namespace anki

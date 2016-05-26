@@ -3,25 +3,25 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/gr/ResourceGroup.h>
-#include <anki/gr/vulkan/ResourceGroupImpl.h>
+#include <anki/gr/Shader.h>
+#include <anki/gr/vulkan/ShaderImpl.h>
 
 namespace anki
 {
 
 //==============================================================================
-ResourceGroup::ResourceGroup(GrManager* manager, U64 hash)
+Shader::Shader(GrManager* manager, U64 hash)
     : GrObject(manager, CLASS_TYPE, hash)
 {
 }
 
 //==============================================================================
-ResourceGroup::~ResourceGroup()
+Shader::~Shader()
 {
 }
 
 //==============================================================================
-void ResourceGroup::init(const ResourceGroupInitInfo& init)
+void Shader::init(ShaderType shaderType, const void* source, PtrSize sourceSize)
 {
 }
 

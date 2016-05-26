@@ -31,12 +31,19 @@ public:
 		ANKI_ASSERT(manager);
 	}
 
-	~GrManagerImpl();
+	~GrManagerImpl()
+	{
+	}
 
 	ANKI_USE_RESULT Error init();
 
 	/// Get or create a compatible render pass for a pipeline.
 	VkRenderPass getOrCreateCompatibleRenderPass(const PipelineInitInfo& init);
+
+	GrAllocator<U8> getAllocator() const
+	{
+		return m_alloc;
+	}
 
 private:
 	GrManager* m_manager = nullptr;

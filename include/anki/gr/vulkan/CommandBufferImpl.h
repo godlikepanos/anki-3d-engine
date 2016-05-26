@@ -23,7 +23,9 @@ public:
 	{
 	}
 
-	~CommandBufferImpl();
+	~CommandBufferImpl()
+	{
+	}
 };
 /// @}
 
