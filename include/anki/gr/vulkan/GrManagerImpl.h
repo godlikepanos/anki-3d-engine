@@ -104,18 +104,18 @@ private:
 	U findMemoryType(U resourceMemTypeBits,
 		VkMemoryPropertyFlags preferFlags,
 		VkMemoryPropertyFlags avoidFlags) const;
-		
+
 	static void* allocateCallback(void* userData,
 		size_t size,
 		size_t alignment,
 		VkSystemAllocationScope allocationScope);
-	
+
 	static void* reallocateCallback(void* userData,
-		void*                                       original,
-		size_t                                      size,
-		size_t                                      alignment,
-		VkSystemAllocationScope                     allocationScope);
-		
+		void* original,
+		size_t size,
+		size_t alignment,
+		VkSystemAllocationScope allocationScope);
+
 	static void freeCallback(void* userData, void* ptr);
 };
 /// @}

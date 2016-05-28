@@ -81,18 +81,18 @@ GrManagerImpl::~GrManagerImpl()
 		{
 			vkDestroyFramebuffer(m_device, x.m_fb, nullptr);
 		}
-	
+
 		if(x.m_imageView)
 		{
 			vkDestroyImageView(m_device, x.m_imageView, nullptr);
 		}
 	}
-	
+
 	if(m_renderPass)
 	{
 		vkDestroyRenderPass(m_device, m_renderPass, nullptr);
 	}
-	
+
 	if(m_swapchain)
 	{
 		vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
@@ -190,16 +190,16 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 
 	ci.enabledExtensionCount = EXTENSIONS.getSize();
 	ci.ppEnabledExtensionNames = &EXTENSIONS[0];
-	
+
 #if ANKI_GR_MANAGER_DEBUG_MEMMORY
 	VkAllocationCallbacks allocCbs = {};
 	VkAllocationCallbacks* pallocCbs = &allocCbs;
-    allocCbs.pUserData = this;
-    allocCbs.pfnAllocation = allocateCallback;
-    allocCbs.pfnReallocation = reallocateCallback;
-    allocCbs.pfnFree = freeCallback;
+	allocCbs.pUserData = this;
+	allocCbs.pfnAllocation = allocateCallback;
+	allocCbs.pfnReallocation = reallocateCallback;
+	allocCbs.pfnFree = freeCallback;
 #else
-    VkAllocationCallbacks* pallocCbs = nullptr;
+	VkAllocationCallbacks* pallocCbs = nullptr;
 #endif
 
 	ANKI_VK_CHECK(vkCreateInstance(&ci, pallocCbs, &m_instance));
@@ -354,12 +354,13 @@ Error GrManagerImpl::initSwapchain(const GrManagerInitInfo& init)
 	if(count != MAX_FRAMES_IN_FLIGHT)
 	{
 		ANKI_LOGE("Requested a swapchain with %u images but got one with %u",
-			MAX_FRAMES_IN_FLIGHT, count);
+			MAX_FRAMES_IN_FLIGHT,
+			count);
 		return ErrorCode::FUNCTION_FAILED;
 	}
-	
+
 	ANKI_LOGI("VK: Swapchain images count %u", count);
-	
+
 	Array<VkImage, MAX_FRAMES_IN_FLIGHT> images;
 	ANKI_VK_CHECK(
 		vkGetSwapchainImagesKHR(m_device, m_swapchain, &count, &images[0]));
@@ -406,7 +407,7 @@ Error GrManagerImpl::initFramebuffers(const GrManagerInitInfo& init)
 	for(U i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
 	{
 		PerFrame& perFrame = m_perFrame[i];
-		
+
 		// Create the image view
 		VkImageViewCreateInfo ci = {};
 		ci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -414,17 +415,19 @@ Error GrManagerImpl::initFramebuffers(const GrManagerInitInfo& init)
 		ci.image = perFrame.m_image;
 		ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
 		ci.format = m_surfaceFormat;
-		ci.components = {VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, 
-			VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A};
+		ci.components = {VK_COMPONENT_SWIZZLE_R,
+			VK_COMPONENT_SWIZZLE_G,
+			VK_COMPONENT_SWIZZLE_B,
+			VK_COMPONENT_SWIZZLE_A};
 		ci.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		ci.subresourceRange.baseMipLevel = 0;
 		ci.subresourceRange.levelCount = 1;
 		ci.subresourceRange.baseArrayLayer = 0;
 		ci.subresourceRange.layerCount = 1;
-		
+
 		ANKI_VK_CHECK(
 			vkCreateImageView(m_device, &ci, nullptr, &perFrame.m_imageView));
-		
+
 		// Create FB
 		VkFramebufferCreateInfo fbci = {};
 		fbci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -434,7 +437,7 @@ Error GrManagerImpl::initFramebuffers(const GrManagerInitInfo& init)
 		fbci.width = m_surfaceWidth;
 		fbci.height = m_surfaceHeight;
 		fbci.layers = 1;
-	
+
 		ANKI_VK_CHECK(
 			vkCreateFramebuffer(m_device, &fbci, nullptr, &perFrame.m_fb));
 	}
@@ -698,16 +701,16 @@ void* GrManagerImpl::allocateCallback(void* userData,
 
 //==============================================================================
 void* GrManagerImpl::reallocateCallback(void* userData,
-	void*                                       original,
-	size_t                                      size,
-	size_t                                      alignment,
-	VkSystemAllocationScope                     allocationScope)
+	void* original,
+	size_t size,
+	size_t alignment,
+	VkSystemAllocationScope allocationScope)
 {
 	ANKI_ASSERT(0 && "TODO");
 	return nullptr;
 }
 
-//==============================================================================	
+//==============================================================================
 void GrManagerImpl::freeCallback(void* userData, void* ptr)
 {
 	ANKI_ASSERT(userData);
