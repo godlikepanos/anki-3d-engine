@@ -46,7 +46,7 @@ public:
 		destroy();
 	}
 
-	ANKI_USE_RESULT Error create(
+	ANKI_USE_RESULT Error init(
 		NativeWindowInitInfo& initializer, HeapAllocator<U8>& alloc);
 
 	NativeWindowImpl& getNative()

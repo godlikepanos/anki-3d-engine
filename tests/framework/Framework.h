@@ -180,7 +180,7 @@ extern void deleteTesterSingleton();
 #define ANKI_TEST_EXPECT_NEAR_IMPL(file_, line_, func_, x, y, epsilon_)        \
 	do                                                                         \
 	{                                                                          \
-		if(abs((x) - (y)) > (epsilon_))                                        \
+		if(absolute((x) - (y)) > (epsilon_))                                   \
 		{                                                                      \
 			std::stringstream ss;                                              \
 			ss << "FAILURE: " << #x << " != " << #y << " (" << file_ << ":"    \

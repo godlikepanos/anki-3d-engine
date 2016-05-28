@@ -6,6 +6,10 @@
 #pragma once
 
 #include <anki/gr/Common.h>
+
+#if ANKI_OS == ANKI_OS_LINUX
+#define VK_USE_PLATFORM_XCB_KHR 1
+#endif
 #include <vulkan/vulkan.h>
 
 namespace anki
@@ -17,18 +21,26 @@ class GrManagerImpl;
 /// @addtogroup vulkan
 /// @{
 
+/// Check if a vulkan function failed. It will abort on failure.
+#define ANKI_VK_CHECKF(x)                                                      \
+	do                                                                         \
+	{                                                                          \
+		VkResult rez = x;                                                      \
+		if(VK_SUCCESS != rez)                                                  \
+		{                                                                      \
+			ANKI_LOGF("Vulkan function failed (%d): %s", rez, #x);             \
+		}                                                                      \
+	} while(0)
+
 /// Check if a vulkan function failed.
 #define ANKI_VK_CHECK(x)                                                       \
 	do                                                                         \
 	{                                                                          \
 		VkResult rez = x;                                                      \
-		if(rez != VK_SUCCESS)                                                  \
+		if(VK_SUCCESS != rez)                                                  \
 		{                                                                      \
-			ANKI_LOGF("Vulkan function failed: %s at (%s:%d %s)",              \
-				#x,                                                            \
-				ANKI_FILE,                                                     \
-				__LINE__,                                                      \
-				ANKI_FUNC);                                                    \
+			ANKI_LOGE("Vulkan function failed (%d): %s", rez, #x);             \
+			return ErrorCode::FUNCTION_FAILED;                                 \
 		}                                                                      \
 	} while(0)
 

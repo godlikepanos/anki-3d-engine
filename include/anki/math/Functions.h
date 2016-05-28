@@ -58,12 +58,6 @@ constexpr F64 getEpsilon<F64>()
 //==============================================================================
 
 template<typename T>
-inline T fabs(const T x)
-{
-	return std::fabs(x);
-}
-
-template<typename T>
 inline T sin(const T rad)
 {
 	return std::sin(rad);
@@ -130,15 +124,13 @@ inline T mod(const T x, const T y)
 // Other math functions                                                        =
 //==============================================================================
 
+/// The same as abs/fabs. For ints and floats.
 template<typename T>
-inline T abs(const T f)
-{
-	return std::fabs(f);
-}
+T absolute(const T f);
 
 #define ANKI_SPECIALIZE_ABS_INT(type_)                                         \
 	template<>                                                                 \
-	inline type_ abs(const type_ f)                                            \
+	inline type_ absolute(const type_ f)                                       \
 	{                                                                          \
 		return std::abs(f);                                                    \
 	}
@@ -150,10 +142,22 @@ ANKI_SPECIALIZE_ABS_INT(I64)
 
 #undef ANKI_SPECIALIZE_ABS_INT
 
+template<>
+inline F32 absolute(const F32 f)
+{
+	return std::fabs(f);
+}
+
+template<>
+inline F64 absolute(const F64 f)
+{
+	return std::fabs(f);
+}
+
 template<typename T>
 inline Bool isZero(const T f)
 {
-	return abs<T>(f) < getEpsilon<T>();
+	return absolute<T>(f) < getEpsilon<T>();
 }
 
 #define ANKI_SPECIALIZE_IS_ZERO_INT(type_)                                     \

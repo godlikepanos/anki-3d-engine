@@ -17,7 +17,7 @@ Aabb Aabb::getTransformed(const Transform& trf) const
 	Mat3x4 absM;
 	for(U i = 0; i < 12; ++i)
 	{
-		absM[i] = fabs(trf.getRotation()[i]);
+		absM[i] = absolute(trf.getRotation()[i]);
 	}
 
 	Vec4 center = (m_min + m_max) * 0.5;

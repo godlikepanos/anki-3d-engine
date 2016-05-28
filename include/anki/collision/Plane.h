@@ -127,7 +127,7 @@ public:
 	/// Get the distance from a point to this plane
 	F32 getDistance(const Vec4& point) const
 	{
-		return fabs(test(point));
+		return absolute(test(point));
 	}
 
 	/// Returns the perpedicular point of a given point in this plane.

@@ -13,7 +13,7 @@ const U32 INIT_SUBSYSTEMS = SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_EVENTS
 	| SDL_INIT_GAMECONTROLLER;
 
 //==============================================================================
-Error NativeWindow::create(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
+Error NativeWindow::init(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
 {
 	m_alloc = alloc;
 	m_impl = m_alloc.newInstance<NativeWindowImpl>();

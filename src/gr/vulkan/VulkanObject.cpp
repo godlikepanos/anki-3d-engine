@@ -13,7 +13,7 @@ namespace anki
 //==============================================================================
 VkDevice VulkanObject::getDevice() const
 {
-	return m_manager->getImplementation().m_device;
+	return m_manager->getImplementation().getDevice();
 }
 
 //==============================================================================

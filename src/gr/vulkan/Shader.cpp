@@ -11,7 +11,7 @@ namespace anki
 
 //==============================================================================
 Shader::Shader(GrManager* manager, U64 hash)
-    : GrObject(manager, CLASS_TYPE, hash)
+	: GrObject(manager, CLASS_TYPE, hash)
 {
 }
 

@@ -2160,7 +2160,7 @@ public:
 		TV out;
 		for(U i = 0; i < N; ++i)
 		{
-			out[i] = fabs<T>(m_arr[i]);
+			out[i] = absolute<T>(m_arr[i]);
 		}
 		return out;
 	}

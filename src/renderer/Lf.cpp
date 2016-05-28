@@ -273,8 +273,8 @@ void Lf::run(RenderingContext& ctx)
 			sprites[count].m_depth = 0.0;
 			// Fade the flare on the edges
 			F32 alpha = lf.getColorMultiplier().w()
-				* (1.0 - pow(abs(posNdc.x()), 6.0))
-				* (1.0 - pow(abs(posNdc.y()), 6.0));
+				* (1.0 - pow(absolute(posNdc.x()), 6.0))
+				* (1.0 - pow(absolute(posNdc.y()), 6.0));
 
 			sprites[count].m_color = Vec4(lf.getColorMultiplier().xyz(), alpha);
 			++count;

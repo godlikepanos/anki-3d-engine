@@ -31,16 +31,6 @@ public:
 
 	const ConfigSet* m_config = nullptr;
 	NativeWindow* m_window = nullptr;
-
-	/// @name GL context properties
-	/// @{
-
-	/// Minor OpenGL version. Used to create core profile context
-	U32 m_minorVersion = 0;
-	/// Major OpenGL version. Used to create core profile context
-	U32 m_majorVersion = 0;
-	Bool8 m_useGles = false; ///< Use OpenGL ES
-	/// @}
 };
 
 /// The graphics manager, owner of all graphics objects.

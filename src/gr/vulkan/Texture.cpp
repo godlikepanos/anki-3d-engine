@@ -11,7 +11,7 @@ namespace anki
 
 //==============================================================================
 Texture::Texture(GrManager* manager, U64 hash)
-    : GrObject(manager, CLASS_TYPE, hash)
+	: GrObject(manager, CLASS_TYPE, hash)
 {
 }
 

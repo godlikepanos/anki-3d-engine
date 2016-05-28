@@ -199,7 +199,7 @@ NativeWindow::~NativeWindow()
 }
 
 //==============================================================================
-void NativeWindow::create(NativeWindowInitInfo& initializer)
+void NativeWindow::init(NativeWindowInitInfo& initializer)
 {
 	impl.reset(new NativeWindowImpl);
 	impl->create(initializer);

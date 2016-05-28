@@ -49,8 +49,8 @@ Error ReflectionProxyComponent::update(
 			n1.normalize();
 			n2.normalize();
 
-			F32 dota = abs(n0.dot(n1) - n1.dot(n2));
-			F32 dotb = abs(n0.dot(n2) - n0.dot(n1));
+			F32 dota = absolute(n0.dot(n1) - n1.dot(n2));
+			F32 dotb = absolute(n0.dot(n2) - n0.dot(n1));
 			ANKI_ASSERT(dota < 0.001 && dotb < 0.001);
 #endif
 		}

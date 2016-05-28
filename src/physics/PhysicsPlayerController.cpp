@@ -621,9 +621,9 @@ void PhysicsPlayerController::postUpdate(F32 dt, int threadIndex)
 						x = 0.0;
 					}
 
-					if(abs(v) > residual)
+					if(absolute(v) > residual)
 					{
-						residual = abs(v);
+						residual = absolute(v);
 					}
 
 					auxBounceVeloc += normal * (x - speed[k]);
@@ -678,7 +678,7 @@ void PhysicsPlayerController::postUpdate(F32 dt, int threadIndex)
 	}
 	else
 	{
-		step = abs(updir.dot(veloc * dt));
+		step = absolute(updir.dot(veloc * dt));
 		F32 castDist =
 			(m_groundPlane.getLengthSquared() > 0.0) ? m_stepHeight : step;
 		Vec4 tmp = matrix.getTranslationPart() - updir * (castDist * 2.0);

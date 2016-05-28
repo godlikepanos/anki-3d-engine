@@ -229,7 +229,7 @@ public:
 			cosHalfTheta = -cosHalfTheta;
 		}
 
-		if(fabs<T>(cosHalfTheta) >= 1.0)
+		if(absolute<T>(cosHalfTheta) >= 1.0)
 		{
 			return TQuat(q0);
 		}
@@ -237,7 +237,7 @@ public:
 		T halfTheta = acos<T>(cosHalfTheta);
 		T sinHalfTheta = sqrt<T>(1.0 - cosHalfTheta * cosHalfTheta);
 
-		if(fabs<T>(sinHalfTheta) < 0.001)
+		if(absolute<T>(sinHalfTheta) < 0.001)
 		{
 			return TQuat((q0 + q1) * 0.5);
 		}

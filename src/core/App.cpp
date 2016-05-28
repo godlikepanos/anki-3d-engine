@@ -199,7 +199,7 @@ Error App::initInternal(const ConfigSet& config_,
 		config.getNumber("fullscreenDesktopResolution");
 	m_window = m_heapAlloc.newInstance<NativeWindow>();
 
-	ANKI_CHECK(m_window->create(nwinit, m_heapAlloc));
+	ANKI_CHECK(m_window->init(nwinit, m_heapAlloc));
 
 	//
 	// Input
@@ -225,8 +225,6 @@ Error App::initInternal(const ConfigSet& config_,
 	grInit.m_allocCallbackUserData = m_allocCbData;
 	grInit.m_cacheDirectory = m_cacheDir.toCString();
 	grInit.m_config = &config;
-	grInit.m_majorVersion = config.getNumber("glmajor");
-	grInit.m_minorVersion = config.getNumber("glminor");
 	grInit.m_window = m_window;
 
 	ANKI_CHECK(m_gr->init(grInit));

@@ -108,11 +108,11 @@ void PipelineImpl::initGraphics(const PipelineInitInfo& init)
 	ci.pDynamicState = nullptr; // No dynamic state as static at the moment
 
 	// Finalize
-	ci.layout = getGrManagerImpl().m_globalPipelineLayout;
+	ci.layout = getGrManagerImpl().getGlobalPipelineLayout();
 	ci.renderPass = getGrManagerImpl().getOrCreateCompatibleRenderPass(init);
 	ci.basePipelineHandle = VK_NULL_HANDLE;
 
-	ANKI_VK_CHECK(vkCreateGraphicsPipelines(
+	ANKI_VK_CHECKF(vkCreateGraphicsPipelines(
 		getDevice(), nullptr, 1, &ci, nullptr, &m_handle));
 }
 
@@ -122,7 +122,7 @@ void PipelineImpl::initCompute(const PipelineInitInfo& init)
 	VkComputePipelineCreateInfo ci;
 	ci.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
 	ci.pNext = nullptr;
-	ci.layout = getGrManagerImpl().m_globalPipelineLayout;
+	ci.layout = getGrManagerImpl().getGlobalPipelineLayout();
 	ci.basePipelineHandle = VK_NULL_HANDLE;
 
 	VkPipelineShaderStageCreateInfo& stage = ci.stage;
@@ -135,7 +135,7 @@ void PipelineImpl::initCompute(const PipelineInitInfo& init)
 	stage.pName = "main";
 	stage.pSpecializationInfo = nullptr;
 
-	ANKI_VK_CHECK(vkCreateComputePipelines(
+	ANKI_VK_CHECKF(vkCreateComputePipelines(
 		getDevice(), nullptr, 1, &ci, nullptr, &m_handle));
 }
 

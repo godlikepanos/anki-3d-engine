@@ -70,7 +70,7 @@ void SamplerImpl::init(const SamplerInitInfo& ii)
 	ci.unnormalizedCoordinates = VK_FALSE;
 
 	// Create
-	ANKI_VK_CHECK(vkCreateSampler(getDevice(), &ci, nullptr, &m_sampler));
+	ANKI_VK_CHECKF(vkCreateSampler(getDevice(), &ci, nullptr, &m_sampler));
 }
 
 } // end namespace anki

@@ -3,11 +3,11 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "tests/framework/Framework.h"
-#include "anki/resource/AsyncLoader.h"
-#include "anki/util/HighRezTimer.h"
-#include "anki/util/Atomic.h"
-#include "anki/util/Functions.h"
+#include <tests/framework/Framework.h>
+#include <anki/resource/AsyncLoader.h>
+#include <anki/util/HighRezTimer.h>
+#include <anki/util/Atomic.h>
+#include <anki/util/Functions.h>
 
 namespace anki
 {

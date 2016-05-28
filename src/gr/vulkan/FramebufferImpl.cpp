@@ -117,7 +117,8 @@ void FramebufferImpl::initRenderPass(const FramebufferInitInfo& init)
 	ci.dependencyCount = 0;
 	ci.pDependencies = nullptr;
 
-	ANKI_VK_CHECK(vkCreateRenderPass(getDevice(), &ci, nullptr, &m_renderPass));
+	ANKI_VK_CHECKF(
+		vkCreateRenderPass(getDevice(), &ci, nullptr, &m_renderPass));
 }
 
 //==============================================================================
@@ -137,7 +138,7 @@ void FramebufferImpl::initFramebuffer(const FramebufferInitInfo& init)
 	// TODO set views
 	// TODO set size and the rest
 
-	ANKI_VK_CHECK(
+	ANKI_VK_CHECKF(
 		vkCreateFramebuffer(getDevice(), &ci, nullptr, &m_framebuffer));
 }
 

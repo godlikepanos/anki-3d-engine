@@ -569,7 +569,7 @@ public:
 	{
 		TMat& m = *this;
 		// If length is > 1 + 0.002 or < 1 - 0.002 then not normalized quat
-		ANKI_ASSERT(fabs(1.0 - q.getLength()) <= 0.002);
+		ANKI_ASSERT(absolute(1.0 - q.getLength()) <= 0.002);
 
 		T xs, ys, zs, wx, wy, wz, xx, xy, xz, yy, yz, zz;
 

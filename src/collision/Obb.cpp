@@ -65,7 +65,7 @@ F32 Obb::testPlane(const Plane& p) const
 	F32 d = p.test(m_center);
 
 	// return signed distance
-	if(abs(d) < r)
+	if(absolute(d) < r)
 	{
 		return 0.0;
 	}
@@ -181,7 +181,7 @@ void Obb::computeAabb(Aabb& aabb) const
 	Mat3x4 absM;
 	for(U i = 0; i < 12; ++i)
 	{
-		absM[i] = fabs(m_rotation[i]);
+		absM[i] = absolute(m_rotation[i]);
 	}
 
 	Vec4 newE = Vec4(absM * m_extend, 0.0);
