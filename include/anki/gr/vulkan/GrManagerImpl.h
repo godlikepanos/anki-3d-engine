@@ -33,6 +33,10 @@ public:
 
 	GrAllocator<U8> getAllocator() const;
 
+	void beginFrame();
+
+	void endFrame();
+
 	VkDevice getDevice() const
 	{
 		ANKI_ASSERT(m_device);
@@ -64,6 +68,14 @@ private:
 		VkImage m_image = VK_NULL_HANDLE;
 		VkImageView m_imageView = VK_NULL_HANDLE;
 		VkFramebuffer m_fb = VK_NULL_HANDLE;
+
+		VkFence m_presentFence = VK_NULL_HANDLE;
+		VkSemaphore m_acquireSemaphore = VK_NULL_HANDLE;
+
+		/// The semaphores that of those submits that render to the default FB.
+		DynamicArray<VkSemaphore> m_renderSemaphores;
+
+		U32 m_renderSemaphoresCount = 0;
 	};
 
 	VkSurfaceKHR m_surface = VK_NULL_HANDLE;
@@ -97,7 +109,6 @@ private:
 	ANKI_USE_RESULT Error initFramebuffers(const GrManagerInitInfo& init);
 	void initGlobalDsetLayout();
 	void initGlobalPplineLayout();
-
 	void initMemory();
 
 	/// Find a suitable memory type.

@@ -40,8 +40,8 @@ public:
 		m_window = init.m_window->getNative().m_window;
 
 		ANKI_LOGI("Creating GL %u.%u context...",
-			init.m_majorVersion,
-			init.m_minorVersion);
+			init.m_config->getNumber("glmajor"),
+			init.m_config->getNumber("glminor"));
 
 		if(init.m_config->getNumber("debugContext"))
 		{
@@ -53,10 +53,10 @@ public:
 			}
 		}
 
-		if(SDL_GL_SetAttribute(
-			   SDL_GL_CONTEXT_MAJOR_VERSION, init.m_majorVersion)
-			|| SDL_GL_SetAttribute(
-				   SDL_GL_CONTEXT_MINOR_VERSION, init.m_minorVersion)
+		if(SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION,
+			   init.m_config->getNumber("glmajor"))
+			|| SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION,
+				   init.m_config->getNumber("glminor"))
 			|| SDL_GL_SetAttribute(
 				   SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE))
 		{

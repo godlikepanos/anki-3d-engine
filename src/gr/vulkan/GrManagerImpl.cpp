@@ -718,4 +718,67 @@ void GrManagerImpl::freeCallback(void* userData, void* ptr)
 	self->getAllocator().getMemoryPool().free(ptr);
 }
 
+//==============================================================================
+void GrManagerImpl::beginFrame()
+{
+	PerFrame& frame = m_perFrame[m_frame];
+
+	// Create a semaphore
+	VkSemaphoreCreateInfo semaphoreCi = {};
+	semaphoreCi.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+	ANKI_ASSERT(frame.m_acquireSemaphore == VK_NULL_HANDLE);
+
+	ANKI_VK_CHECKF(vkCreateSemaphore(
+		m_device, &semaphoreCi, nullptr, &frame.m_acquireSemaphore));
+
+	// Get new image
+	uint32_t imageIdx;
+	ANKI_VK_CHECKF(vkAcquireNextImageKHR(m_device,
+		m_swapchain,
+		UINT64_MAX,
+		frame.m_acquireSemaphore,
+		0,
+		&imageIdx));
+	ANKI_ASSERT(imageIdx == m_frame && "Wrong assumption");
+}
+
+//==============================================================================
+void GrManagerImpl::endFrame()
+{
+	PerFrame& frame = m_perFrame[m_frame];
+
+	// Wait for the fence of N-2 frame
+	U waitFrameIdx = (m_frame + 1) % MAX_FRAMES_IN_FLIGHT;
+	PerFrame& waitFrame = m_perFrame[waitFrameIdx];
+	VkFence& waitFence = waitFrame.m_presentFence;
+	if(waitFence)
+	{
+		// Wait
+		ANKI_VK_CHECKF(vkWaitForFences(m_device, 1, &waitFence, true, MAX_U64));
+
+		// Recycle fence
+		ANKI_VK_CHECKF(vkResetFences(m_device, 1, &waitFence));
+	}
+
+	// Cleanup various objects from the wait frame
+	if(waitFrame.m_acquireSemaphore)
+	{
+		vkDestroySemaphore(m_device, frame.m_acquireSemaphore, nullptr);
+	}
+
+	for(U i = 0; i < waitFrame.m_renderSemaphoresCount; ++i)
+	{
+		ANKI_ASSERT(waitFrame.m_renderSemaphores[i]);
+		vkDestroySemaphore(m_device, waitFrame.m_renderSemaphores[i], nullptr);
+		waitFrame.m_renderSemaphores[i] = VK_NULL_HANDLE;
+	}
+
+	if(frame.m_renderSemaphoresCount == 0)
+	{
+		ANKI_LOGW("Nobody draw to the default framebuffer");
+	}
+
+	++m_frame;
+}
+
 } // end namespace anki
