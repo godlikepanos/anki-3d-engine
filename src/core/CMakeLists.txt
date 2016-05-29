@@ -1,20 +1,15 @@
 set(ANKI_CORE_SOURCES App.cpp StdinListener.cpp Config.cpp Trace.cpp)
 
-if(${ANKI_WINDOW_BACKEND} STREQUAL "GLXX11")
-	set(ANKI_CORE_SOURCES ${ANKI_CORE_SOURCES} NativeWindowGlxX11.cpp)
-elseif(${ANKI_WINDOW_BACKEND} STREQUAL "EGLX11")
-	set(ANKI_CORE_SOURCES ${ANKI_CORE_SOURCES} NativeWindowEglX11.cpp)
-elseif(${ANKI_WINDOW_BACKEND} STREQUAL "EGLFBDEV")
-	set(ANKI_CORE_SOURCES ${ANKI_CORE_SOURCES} NativeWindowEglFbdev.cpp)
-elseif(${ANKI_WINDOW_BACKEND} STREQUAL "ANDROID")
-	set(ANKI_CORE_SOURCES ${ANKI_CORE_SOURCES} NativeWindowAndroid.cpp)
-elseif(${ANKI_WINDOW_BACKEND} STREQUAL "SDL")
+if(SDL)
 	set(ANKI_CORE_SOURCES ${ANKI_CORE_SOURCES} NativeWindowSdl.cpp)
-elseif(${ANKI_WINDOW_BACKEND} STREQUAL "DUMMY")
-	set(ANKI_CORE_SOURCES ${ANKI_CORE_SOURCES} NativeWindowDummy.cpp)
 else()
-	message(FATAL_ERROR "Unrecognized ANKI_WINDOW_BACKEND: ${ANKI_WINDOW_BACKEND}")
+	message(FATAL_ERROR "Not implemented")
 endif()
 
 add_library(ankicore ${ANKI_CORE_SOURCES})
+
 target_link_libraries(ankicore ankiscript ankirenderer ankiscene ankiresource ankiinput ankimisc ankiutil)
+
+if(SDL)
+	target_link_libraries(ankicore SDL2_LIB)
+endif()

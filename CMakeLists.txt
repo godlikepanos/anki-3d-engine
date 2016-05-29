@@ -71,17 +71,18 @@ endif()
 # Take a wild guess on the windowing system
 if(LINUX)
 	set(_WIN_BACKEND "SDL")
+	set(SDL TRUE)
 elseif(WINDOWS)
 	set(_WIN_BACKEND "SDL")
+	set(SDL TRUE)
 elseif(ANDROID)
 	set(_WIN_BACKEND "ANDROID")
 elseif(MACOS)
 	set(_WIN_BACKEND "SDL")
+	set(SDL TRUE)
 else()
 	message(FATAL_ERROR "Couldn't determine the window backend. You need to specify it manually")
 endif()
-
-set(ANKI_WINDOW_BACKEND "${_WIN_BACKEND}" CACHE STRING "The window backend (GLXX11 or EGLX11 or EGLFBDEV or ANDROID or SDL or DUMMY)")
 
 # Extra directories
 set(ANKI_EXTRA_INCLUDE_DIRS CACHE STRING "Some extra include paths (Needed for some weird builds)")
@@ -215,7 +216,7 @@ if(ANKI_BUILD_TOOLS)
 endif()
 
 # SDL
-if(${ANKI_WINDOW_BACKEND} STREQUAL "SDL")
+if(SDL)
 	ExternalProject_Add(
 		SDL2_PROJECT
 		DOWNLOAD_COMMAND ""
@@ -335,7 +336,7 @@ if(LINUX)
 		set(_SYS ${ANKI_GR_BACKEND} ankiglew)
 	else()
 		set(_SYS vulkan)
-		if(${ANKI_WINDOW_BACKEND} STREQUAL "SDL")
+		if(SDL)
 			set(_SYS ${_SYS} X11-xcb)	
 		else()
 			message(FATAL_ERROR "Unhandled case")
@@ -358,7 +359,7 @@ else()
 	message(FATAL_ERROR "Unhandled case")
 endif()
 
-if(${ANKI_WINDOW_BACKEND} STREQUAL "SDL")
+if(SDL)
 	link_directories(${SDL2_INSTALL_DIR}/lib)
 endif()
 
@@ -374,8 +375,16 @@ foreach(TMP ${ANKI_SUB_DIRS})
 endforeach()
 
 add_library(anki src/Dummy.cpp "${_SYS_SRC}")
-add_dependencies(anki SDL2_LIB FREETYPE_LIB GLSLANG_LIB)
+
 target_link_libraries(anki ${ANKI_LIBS} ankitinyxml2 ankilua ankiz ankinewton ${ANKI_GPERFTOOLS_LIBS} SDL2_LIB FREETYPE_LIB ${_SYS})
+
+if(VULKAN)
+	target_link_libraries(anki GLSLANG_LIB)
+endif()
+
+if(SDL)
+	target_link_libraries(anki SDL2_LIB)
+endif()
 
 ################################################################################
 # AnKi extra                                                                   #

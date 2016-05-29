@@ -14,7 +14,6 @@
 #include <anki/util/File.h>
 #include <anki/util/Filesystem.h>
 #include <anki/misc/Xml.h>
-#include <anki/renderer/Renderer.h>
 #include <anki/renderer/Ms.h>
 #include <algorithm>
 

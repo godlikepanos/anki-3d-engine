@@ -1,17 +1,10 @@
 file(GLOB ANKI_INPUT_SOURCES Input.cpp)
 
-if(${ANKI_WINDOW_BACKEND} STREQUAL "GLXX11" OR ${ANKI_WINDOW_BACKEND} STREQUAL "EGLX11")
-	set(ANKI_INPUT_SOURCES ${ANKI_INPUT_SOURCES} InputX11.cpp)
-elseif(${ANKI_WINDOW_BACKEND} STREQUAL "ANDROID")
-	set(ANKI_INPUT_SOURCES ${ANKI_INPUT_SOURCES} InputAndroid.cpp)
-elseif(${ANKI_WINDOW_BACKEND} STREQUAL "SDL")
+if(SDL)
 	set(ANKI_INPUT_SOURCES ${ANKI_INPUT_SOURCES} InputSdl.cpp)
 else()
 	set(ANKI_INPUT_SOURCES ${ANKI_INPUT_SOURCES} InputDummy.cpp)
 endif()
 
 add_library(ankiinput ${ANKI_INPUT_SOURCES})
-
-if(${ANKI_WINDOW_BACKEND} STREQUAL "SDL")
-	target_link_libraries(ankiinput SDL2_LIB)
-endif()
+target_link_libraries(ankiinput ankicore)
