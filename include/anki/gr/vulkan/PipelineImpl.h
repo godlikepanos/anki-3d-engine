@@ -35,12 +35,12 @@ public:
 
 	~PipelineImpl();
 
-	void init(const PipelineInitInfo& init);
+	ANKI_USE_RESULT Error init(const PipelineInitInfo& init);
 
 private:
-	void initGraphics(const PipelineInitInfo& init);
+	ANKI_USE_RESULT Error initGraphics(const PipelineInitInfo& init);
 
-	void initCompute(const PipelineInitInfo& init);
+	ANKI_USE_RESULT Error initCompute(const PipelineInitInfo& init);
 
 	void initShaders(
 		const PipelineInitInfo& init, VkGraphicsPipelineCreateInfo& ci);
@@ -73,6 +73,9 @@ private:
 
 	ANKI_USE_RESULT VkPipelineColorBlendStateCreateInfo* initColorState(
 		const ColorStateInfo& c, VkPipelineColorBlendStateCreateInfo& ci);
+
+	ANKI_USE_RESULT VkPipelineDynamicStateCreateInfo* initDynamicState(
+		VkPipelineDynamicStateCreateInfo& ci);
 };
 /// @}
 

@@ -90,13 +90,7 @@ Config::Config()
 	newOption("glmajor", 4);
 	newOption("glminor", 5);
 	newOption("fullscreenDesktopResolution", false);
-	newOption("debugContext",
-#if ANKI_DEBUG == 1
-		true
-#else
-		false
-#endif
-		);
+	newOption("debugContext", false);
 }
 
 //==============================================================================

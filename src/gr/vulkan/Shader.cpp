@@ -21,8 +21,16 @@ Shader::~Shader()
 }
 
 //==============================================================================
-void Shader::init(ShaderType shaderType, const void* source, PtrSize sourceSize)
+void Shader::init(ShaderType shaderType, const CString& source)
 {
+	ANKI_ASSERT(!source.isEmpty());
+
+	m_impl.reset(getAllocator().newInstance<ShaderImpl>(&getManager()));
+
+	if(m_impl->init(shaderType, source))
+	{
+		ANKI_LOGF("Cannot recover");
+	}
 }
 
 } // end namespace anki

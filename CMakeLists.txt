@@ -263,9 +263,26 @@ if(VULKAN)
 
 	ExternalProject_Get_Property(GLSLANG_PROJECT install_dir)
 	set(GLSLANG_INSTALL_DIR ${install_dir})
+	
 	add_library(GLSLANG_LIB STATIC IMPORTED)
 	set_property(TARGET GLSLANG_LIB PROPERTY IMPORTED_LOCATION ${GLSLANG_INSTALL_DIR}/lib/libglslang.a)
 	add_dependencies(GLSLANG_LIB GLSLANG_PROJECT)
+
+	add_library(SPIRV_LIB STATIC IMPORTED)
+	set_property(TARGET SPIRV_LIB PROPERTY IMPORTED_LOCATION ${GLSLANG_INSTALL_DIR}/lib/libSPIRV.a)
+	add_dependencies(SPIRV_LIB GLSLANG_PROJECT)
+
+	add_library(OSD_LIB STATIC IMPORTED)
+	set_property(TARGET OSD_LIB PROPERTY IMPORTED_LOCATION ${GLSLANG_INSTALL_DIR}/lib/libOSDependent.a)
+	add_dependencies(OSD_LIB GLSLANG_PROJECT)
+
+	add_library(GLC_LIB STATIC IMPORTED)
+	set_property(TARGET GLC_LIB PROPERTY IMPORTED_LOCATION ${GLSLANG_INSTALL_DIR}/lib/libOGLCompiler.a)
+	add_dependencies(GLC_LIB GLSLANG_PROJECT)
+
+	add_library(HLSL_LIB STATIC IMPORTED)
+	set_property(TARGET HLSL_LIB PROPERTY IMPORTED_LOCATION ${GLSLANG_INSTALL_DIR}/lib/libHLSL.a)
+	add_dependencies(HLSL_LIB GLSLANG_PROJECT)
 endif()
 
 ################################################################################
@@ -379,7 +396,7 @@ add_library(anki src/Dummy.cpp "${_SYS_SRC}")
 target_link_libraries(anki ${ANKI_LIBS} ankitinyxml2 ankilua ankiz ankinewton ${ANKI_GPERFTOOLS_LIBS} SDL2_LIB FREETYPE_LIB ${_SYS})
 
 if(VULKAN)
-	target_link_libraries(anki GLSLANG_LIB)
+#target_link_libraries(anki GLSLANG_LIB)
 endif()
 
 if(SDL)

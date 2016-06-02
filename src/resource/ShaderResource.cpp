@@ -55,7 +55,7 @@ Error ShaderResource::load(
 
 	// Create
 	m_shader = getManager().getGrManager().newInstance<Shader>(
-		pars.getShaderType(), &source[0], source.getLength() + 1);
+		pars.getShaderType(), source.toCString());
 
 	m_type = pars.getShaderType();
 

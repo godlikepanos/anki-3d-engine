@@ -9,6 +9,7 @@
 #include <anki/util/HashMap.h>
 #include <anki/util/Hash.h>
 #include <anki/core/Config.h>
+#include <glslang/Public/ShaderLang.h>
 
 namespace anki
 {
@@ -75,6 +76,32 @@ public:
 //==============================================================================
 GrManagerImpl::~GrManagerImpl()
 {
+	if(m_renderPasses)
+	{
+		auto it = m_renderPasses->m_hashmap.getBegin();
+		auto end = m_renderPasses->m_hashmap.getEnd();
+		while(it != end)
+		{
+			VkRenderPass pass = (*it);
+			vkDestroyRenderPass(m_device, pass, nullptr);
+			++it;
+		}
+
+		m_renderPasses->m_hashmap.destroy(getAllocator());
+		getAllocator().deleteInstance(m_renderPasses);
+	}
+
+	if(m_globalPipelineLayout)
+	{
+		vkDestroyPipelineLayout(m_device, m_globalPipelineLayout, nullptr);
+	}
+
+	if(m_globalDescriptorSetLayout)
+	{
+		vkDestroyDescriptorSetLayout(
+			m_device, m_globalDescriptorSetLayout, nullptr);
+	}
+
 	for(auto& x : m_perFrame)
 	{
 		if(x.m_fb)
@@ -144,9 +171,14 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	ANKI_CHECK(initSwapchain(init));
 	ANKI_CHECK(initFramebuffers(init));
 
-	/*initGlobalDsetLayout();
-	initGlobalPplineLayout();
-	initMemory();*/
+	ANKI_CHECK(initGlobalDsetLayout());
+	ANKI_CHECK(initGlobalPplineLayout());
+
+	m_renderPasses = getAllocator().newInstance<CompatibleRenderPassHashMap>();
+
+	// initMemory();
+
+	glslang::InitializeProcess();
 
 	return ErrorCode::NONE;
 }
@@ -310,7 +342,7 @@ Error GrManagerImpl::initSwapchain(const GrManagerInitInfo& init)
 	ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(
 		m_physicalDevice, m_surface, &formatCount, &formats[0]));
 
-	VkColorSpaceKHR colorspace;
+	VkColorSpaceKHR colorspace = VK_COLOR_SPACE_MAX_ENUM_KHR;
 	while(--formatCount)
 	{
 		if(formats[formatCount].format == VK_FORMAT_B8G8R8A8_SRGB)
@@ -446,18 +478,17 @@ Error GrManagerImpl::initFramebuffers(const GrManagerInitInfo& init)
 }
 
 //==============================================================================
-void GrManagerImpl::initGlobalDsetLayout()
+Error GrManagerImpl::initGlobalDsetLayout()
 {
-	VkDescriptorSetLayoutCreateInfo ci;
+	VkDescriptorSetLayoutCreateInfo ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	ci.pNext = nullptr;
-	ci.flags = 0;
 
 	const U BINDING_COUNT = MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS
 		+ MAX_STORAGE_BUFFER_BINDINGS;
 	ci.bindingCount = BINDING_COUNT;
 
 	Array<VkDescriptorSetLayoutBinding, BINDING_COUNT> bindings;
+	memset(&bindings[0], 0, sizeof(bindings));
 	ci.pBindings = &bindings[0];
 
 	U count = 0;
@@ -470,7 +501,6 @@ void GrManagerImpl::initGlobalDsetLayout()
 		binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		binding.descriptorCount = 1;
 		binding.stageFlags = VK_SHADER_STAGE_ALL;
-		binding.pImmutableSamplers = nullptr;
 
 		++count;
 	}
@@ -483,7 +513,6 @@ void GrManagerImpl::initGlobalDsetLayout()
 		binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 		binding.descriptorCount = 1;
 		binding.stageFlags = VK_SHADER_STAGE_ALL;
-		binding.pImmutableSamplers = nullptr;
 
 		++count;
 	}
@@ -496,19 +525,20 @@ void GrManagerImpl::initGlobalDsetLayout()
 		binding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
 		binding.descriptorCount = 1;
 		binding.stageFlags = VK_SHADER_STAGE_ALL;
-		binding.pImmutableSamplers = nullptr;
 
 		++count;
 	}
 
 	ANKI_ASSERT(count == BINDING_COUNT);
 
-	ANKI_VK_CHECKF(vkCreateDescriptorSetLayout(
+	ANKI_VK_CHECK(vkCreateDescriptorSetLayout(
 		m_device, &ci, nullptr, &m_globalDescriptorSetLayout));
+
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
-void GrManagerImpl::initGlobalPplineLayout()
+Error GrManagerImpl::initGlobalPplineLayout()
 {
 	Array<VkDescriptorSetLayout, MAX_RESOURCE_GROUPS> sets = {
 		{m_globalDescriptorSetLayout, m_globalDescriptorSetLayout}};
@@ -522,15 +552,18 @@ void GrManagerImpl::initGlobalPplineLayout()
 	ci.pushConstantRangeCount = 0;
 	ci.pPushConstantRanges = nullptr;
 
-	ANKI_VK_CHECKF(vkCreatePipelineLayout(
+	ANKI_VK_CHECK(vkCreatePipelineLayout(
 		m_device, &ci, nullptr, &m_globalPipelineLayout));
+
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
 VkRenderPass GrManagerImpl::getOrCreateCompatibleRenderPass(
 	const PipelineInitInfo& init)
 {
-	VkRenderPass out;
+	VkRenderPass out = VK_NULL_HANDLE;
+
 	// Create the key
 	RenderPassKey key;
 	for(U i = 0; i < init.m_color.m_attachmentCount; ++i)
@@ -551,21 +584,20 @@ VkRenderPass GrManagerImpl::getOrCreateCompatibleRenderPass(
 	else
 	{
 		// Not found, create one
-		VkRenderPassCreateInfo ci;
-		ANKI_VK_MEMSET_DBG(ci);
+		VkRenderPassCreateInfo ci = {};
 		ci.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		ci.pNext = nullptr;
-		ci.flags = 0;
 
 		Array<VkAttachmentDescription, MAX_COLOR_ATTACHMENTS + 1>
 			attachmentDescriptions;
+		memset(&attachmentDescriptions[0], 0, sizeof(attachmentDescriptions));
+
 		Array<VkAttachmentReference, MAX_COLOR_ATTACHMENTS> references;
+		memset(&references[0], 0, sizeof(references));
+
 		for(U i = 0; i < init.m_color.m_attachmentCount; ++i)
 		{
 			// We only care about samples and format
 			VkAttachmentDescription& desc = attachmentDescriptions[i];
-			ANKI_VK_MEMSET_DBG(desc);
-			desc.flags = 0;
 			desc.format = convertFormat(init.m_color.m_attachments[i].m_format);
 			desc.samples = VK_SAMPLE_COUNT_1_BIT;
 			desc.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -588,8 +620,6 @@ VkRenderPass GrManagerImpl::getOrCreateCompatibleRenderPass(
 		{
 			VkAttachmentDescription& desc =
 				attachmentDescriptions[ci.attachmentCount];
-			ANKI_VK_MEMSET_DBG(desc);
-			desc.flags = 0;
 			desc.format = convertFormat(init.m_depthStencil.m_format);
 			desc.samples = VK_SAMPLE_COUNT_1_BIT;
 			desc.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -605,27 +635,18 @@ VkRenderPass GrManagerImpl::getOrCreateCompatibleRenderPass(
 			++ci.attachmentCount;
 		}
 
-		VkSubpassDescription desc;
-		ANKI_VK_MEMSET_DBG(desc);
-		desc.flags = 0;
+		VkSubpassDescription desc = {};
 		desc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-		desc.inputAttachmentCount = 0;
-		desc.pInputAttachments = nullptr;
 		desc.colorAttachmentCount = init.m_color.m_attachmentCount;
 		desc.pColorAttachments =
 			(init.m_color.m_attachmentCount) ? &references[0] : nullptr;
-		desc.pResolveAttachments = nullptr;
 		desc.pDepthStencilAttachment =
 			(hasDepthStencil) ? &dsReference : nullptr;
-		desc.preserveAttachmentCount = 0;
-		desc.pPreserveAttachments = nullptr;
 
 		ANKI_ASSERT(ci.attachmentCount);
 		ci.pAttachments = &attachmentDescriptions[0];
 		ci.subpassCount = 1;
 		ci.pSubpasses = &desc;
-		ci.dependencyCount = 0;
-		ci.pDependencies = nullptr;
 
 		VkRenderPass rpass;
 		ANKI_VK_CHECKF(vkCreateRenderPass(m_device, &ci, nullptr, &rpass));
@@ -750,35 +771,113 @@ void GrManagerImpl::endFrame()
 	// Wait for the fence of N-2 frame
 	U waitFrameIdx = (m_frame + 1) % MAX_FRAMES_IN_FLIGHT;
 	PerFrame& waitFrame = m_perFrame[waitFrameIdx];
-	VkFence& waitFence = waitFrame.m_presentFence;
-	if(waitFence)
+	if(waitFrame.m_presentFence)
 	{
 		// Wait
-		ANKI_VK_CHECKF(vkWaitForFences(m_device, 1, &waitFence, true, MAX_U64));
-
-		// Recycle fence
-		ANKI_VK_CHECKF(vkResetFences(m_device, 1, &waitFence));
+		ANKI_VK_CHECKF(vkWaitForFences(
+			m_device, 1, &waitFrame.m_presentFence, true, MAX_U64));
 	}
 
-	// Cleanup various objects from the wait frame
-	if(waitFrame.m_acquireSemaphore)
-	{
-		vkDestroySemaphore(m_device, frame.m_acquireSemaphore, nullptr);
-	}
-
-	for(U i = 0; i < waitFrame.m_renderSemaphoresCount; ++i)
-	{
-		ANKI_ASSERT(waitFrame.m_renderSemaphores[i]);
-		vkDestroySemaphore(m_device, waitFrame.m_renderSemaphores[i], nullptr);
-		waitFrame.m_renderSemaphores[i] = VK_NULL_HANDLE;
-	}
+	resetFrame(waitFrame);
 
 	if(frame.m_renderSemaphoresCount == 0)
 	{
 		ANKI_LOGW("Nobody draw to the default framebuffer");
 	}
 
+	// TODO Transition image
+
+	// Present
+	uint32_t imageIdx = m_frame % MAX_FRAMES_IN_FLIGHT;
+	VkPresentInfoKHR present = {};
+	present.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+	present.waitSemaphoreCount = frame.m_renderSemaphoresCount;
+	present.pWaitSemaphores = (frame.m_renderSemaphoresCount > 0)
+		? &frame.m_renderSemaphores[0]
+		: nullptr;
+	present.swapchainCount = 1;
+	present.pSwapchains = &m_swapchain;
+	present.pImageIndices = &imageIdx;
+	ANKI_VK_CHECKF(vkQueuePresentKHR(m_queue, &present));
+
+	// Finalize
 	++m_frame;
+}
+
+//==============================================================================
+void GrManagerImpl::resetFrame(PerFrame& frame)
+{
+	if(frame.m_presentFence)
+	{
+		// Recycle fence
+		ANKI_VK_CHECKF(vkResetFences(m_device, 1, &frame.m_presentFence));
+	}
+
+	if(frame.m_acquireSemaphore)
+	{
+		vkDestroySemaphore(m_device, frame.m_acquireSemaphore, nullptr);
+	}
+
+	for(U i = 0; i < frame.m_renderSemaphoresCount; ++i)
+	{
+		ANKI_ASSERT(frame.m_renderSemaphores[i]);
+		vkDestroySemaphore(m_device, frame.m_renderSemaphores[i], nullptr);
+		frame.m_renderSemaphores[i] = VK_NULL_HANDLE;
+	}
+
+	frame.m_renderSemaphoresCount = 0;
+}
+
+//==============================================================================
+GrManagerImpl::PerThread& GrManagerImpl::getPerThreadCache(Thread::Id tid)
+{
+	PerThread* thread = nullptr;
+	LockGuard<SpinLock> lock(m_perThreadMtx);
+
+	// Find or create a record
+	auto it = m_perThread.find(tid);
+	if(it != m_perThread.getEnd())
+	{
+		thread = &(*it);
+	}
+	else
+	{
+		m_perThread.emplaceBack(getAllocator(), tid);
+		it = m_perThread.find(tid);
+		thread = &(*it);
+	}
+
+	return *thread;
+}
+
+//==============================================================================
+VkCommandBuffer GrManagerImpl::newCommandBuffer(
+	Thread::Id tid, Bool secondLevel)
+{
+	// Get the per thread cache
+	PerThread& thread = getPerThreadCache(tid);
+
+	// Try initialize the recycler
+	if(ANKI_UNLIKELY(!thread.m_cmdbs.isCreated()))
+	{
+		Error err = thread.m_cmdbs.init(getAllocator(), m_device, m_queueIdx);
+		if(err)
+		{
+			ANKI_LOGF("Cannot recover");
+		}
+	}
+
+	return thread.m_cmdbs.newCommandBuffer(secondLevel);
+}
+
+//==============================================================================
+void GrManagerImpl::deleteCommandBuffer(
+	VkCommandBuffer cmdb, Bool secondLevel, Thread::Id tid)
+{
+	// Get the per thread cache
+	PerThread& thread = getPerThreadCache(tid);
+
+	thread.m_cmdbs.deleteCommandBuffer(cmdb, secondLevel);
 }
 
 } // end namespace anki

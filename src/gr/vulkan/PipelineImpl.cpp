@@ -87,7 +87,7 @@ PipelineImpl::~PipelineImpl()
 }
 
 //==============================================================================
-void PipelineImpl::initGraphics(const PipelineInitInfo& init)
+Error PipelineImpl::initGraphics(const PipelineInitInfo& init)
 {
 	FilledGraphicsPipelineCreateInfo ci = FILLED;
 
@@ -105,38 +105,39 @@ void PipelineImpl::initGraphics(const PipelineInitInfo& init)
 	ci.pMultisampleState = initMsState(ci.m_ms);
 	ci.pDepthStencilState = initDsState(init.m_depthStencil, ci.m_ds);
 	ci.pColorBlendState = initColorState(init.m_color, ci.m_color);
-	ci.pDynamicState = nullptr; // No dynamic state as static at the moment
+	ci.pDynamicState = initDynamicState(ci.m_dyn);
 
 	// Finalize
 	ci.layout = getGrManagerImpl().getGlobalPipelineLayout();
 	ci.renderPass = getGrManagerImpl().getOrCreateCompatibleRenderPass(init);
 	ci.basePipelineHandle = VK_NULL_HANDLE;
 
-	ANKI_VK_CHECKF(vkCreateGraphicsPipelines(
+	ANKI_VK_CHECK(vkCreateGraphicsPipelines(
 		getDevice(), nullptr, 1, &ci, nullptr, &m_handle));
+
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
-void PipelineImpl::initCompute(const PipelineInitInfo& init)
+Error PipelineImpl::initCompute(const PipelineInitInfo& init)
 {
-	VkComputePipelineCreateInfo ci;
+	VkComputePipelineCreateInfo ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
-	ci.pNext = nullptr;
 	ci.layout = getGrManagerImpl().getGlobalPipelineLayout();
 	ci.basePipelineHandle = VK_NULL_HANDLE;
 
 	VkPipelineShaderStageCreateInfo& stage = ci.stage;
 	stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	stage.pNext = nullptr;
-	stage.flags = 0;
 	stage.stage = VK_SHADER_STAGE_COMPUTE_BIT;
 	stage.module =
 		init.m_shaders[ShaderType::COMPUTE]->getImplementation().m_handle;
 	stage.pName = "main";
 	stage.pSpecializationInfo = nullptr;
 
-	ANKI_VK_CHECKF(vkCreateComputePipelines(
+	ANKI_VK_CHECK(vkCreateComputePipelines(
 		getDevice(), nullptr, 1, &ci, nullptr, &m_handle));
+
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -161,14 +162,10 @@ void PipelineImpl::initShaders(
 		VkPipelineShaderStageCreateInfo& stage =
 			const_cast<VkPipelineShaderStageCreateInfo&>(
 				ci.pStages[ci.stageCount]);
-		ANKI_VK_MEMSET_DBG(stage);
-		stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		stage.pNext = nullptr;
-		stage.flags = 0;
+
 		stage.stage = VkShaderStageFlagBits(1u << U(type));
 		stage.module = init.m_shaders[type]->getImplementation().m_handle;
 		stage.pName = "main";
-		stage.pSpecializationInfo = nullptr;
 
 		++ci.stageCount;
 	}
@@ -216,7 +213,7 @@ VkPipelineVertexInputStateCreateInfo* PipelineImpl::initVertexStage(
 			const_cast<VkVertexInputAttributeDescription&>(
 				ci.pVertexAttributeDescriptions[i]);
 
-		vkAttrib.location = 0;
+		vkAttrib.location = i;
 		vkAttrib.binding = vertex.m_attributes[i].m_binding;
 		vkAttrib.format = convertFormat(vertex.m_attributes[i].m_format);
 		vkAttrib.offset = vertex.m_attributes[i].m_offset;
@@ -248,8 +245,11 @@ VkPipelineTessellationStateCreateInfo* PipelineImpl::initTessellationState(
 VkPipelineViewportStateCreateInfo* PipelineImpl::initViewportState(
 	VkPipelineViewportStateCreateInfo& ci)
 {
-	// Viewport is dynamic
-	return nullptr;
+	// Viewport an scissor is dynamic
+	ci.viewportCount = 1;
+	ci.scissorCount = 1;
+
+	return &ci;
 }
 
 //==============================================================================
@@ -261,7 +261,8 @@ VkPipelineRasterizationStateCreateInfo* PipelineImpl::initRasterizerState(
 	ci.polygonMode = convertFillMode(r.m_fillMode);
 	ci.cullMode = convertCullMode(r.m_cullMode);
 	ci.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-	ci.depthBiasEnable = VK_FALSE; // Dynamic
+	ci.depthBiasEnable = VK_FALSE; // TODO
+	ci.lineWidth = 1.0;
 
 	return &ci;
 }
@@ -270,15 +271,15 @@ VkPipelineRasterizationStateCreateInfo* PipelineImpl::initRasterizerState(
 VkPipelineMultisampleStateCreateInfo* PipelineImpl::initMsState(
 	VkPipelineMultisampleStateCreateInfo& ci)
 {
-	// No MS for now
-	return nullptr;
+	ci.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+	return &ci;
 }
 
 //==============================================================================
 VkPipelineDepthStencilStateCreateInfo* PipelineImpl::initDsState(
 	const DepthStencilStateInfo& ds, VkPipelineDepthStencilStateCreateInfo& ci)
 {
-	ci.depthTestEnable = ds.m_depthCompareFunction != CompareOperation::ALWAYS
+	ci.depthTestEnable = (ds.m_depthCompareFunction != CompareOperation::ALWAYS)
 		|| ds.m_depthWriteEnabled;
 	ci.depthWriteEnable = ds.m_depthWriteEnabled;
 	ci.depthCompareOp = convertCompareOp(ds.m_depthCompareFunction);
@@ -301,6 +302,7 @@ VkPipelineColorBlendStateCreateInfo* PipelineImpl::initColorState(
 			const_cast<VkPipelineColorBlendAttachmentState&>(
 				ci.pAttachments[i]);
 		const ColorAttachmentStateInfo& in = c.m_attachments[i];
+
 		out.blendEnable = !(in.m_srcBlendMethod == BlendMethod::ONE
 			&& in.m_dstBlendMethod == BlendMethod::ZERO);
 		out.srcColorBlendFactor = convertBlendMethod(in.m_srcBlendMethod);
@@ -317,16 +319,38 @@ VkPipelineColorBlendStateCreateInfo* PipelineImpl::initColorState(
 }
 
 //==============================================================================
-void PipelineImpl::init(const PipelineInitInfo& init)
+VkPipelineDynamicStateCreateInfo* PipelineImpl::initDynamicState(
+	VkPipelineDynamicStateCreateInfo& ci)
+{
+	// Almost all state is dynamic
+	static const Array<VkDynamicState, 8> DYN = {{VK_DYNAMIC_STATE_VIEWPORT,
+		VK_DYNAMIC_STATE_SCISSOR,
+		VK_DYNAMIC_STATE_DEPTH_BIAS,
+		VK_DYNAMIC_STATE_BLEND_CONSTANTS,
+		VK_DYNAMIC_STATE_DEPTH_BOUNDS,
+		VK_DYNAMIC_STATE_STENCIL_COMPARE_MASK,
+		VK_DYNAMIC_STATE_STENCIL_WRITE_MASK,
+		VK_DYNAMIC_STATE_STENCIL_REFERENCE}};
+
+	ci.dynamicStateCount = DYN.getSize();
+	ci.pDynamicStates = &DYN[0];
+
+	return &ci;
+}
+
+//==============================================================================
+Error PipelineImpl::init(const PipelineInitInfo& init)
 {
 	if(init.m_shaders[ShaderType::COMPUTE].isCreated())
 	{
-		initCompute(init);
+		return initCompute(init);
 	}
 	else
 	{
-		initGraphics(init);
+		return initGraphics(init);
 	}
+
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

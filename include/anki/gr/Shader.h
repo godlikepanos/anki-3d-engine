@@ -78,7 +78,9 @@ public:
 	}
 
 	/// Create shader.
-	void init(ShaderType shaderType, const void* source, PtrSize sourceSize);
+	/// @param shaderType The type of the shader.
+	/// @param source The GLSL code of the shader.
+	void init(ShaderType shaderType, const CString& source);
 
 private:
 	UniquePtr<ShaderImpl> m_impl;

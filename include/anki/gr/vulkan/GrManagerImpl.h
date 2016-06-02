@@ -7,6 +7,8 @@
 
 #include <anki/gr/vulkan/Common.h>
 #include <anki/gr/vulkan/GpuMemoryAllocator.h>
+#include <anki/gr/vulkan/ObjectRecycler.h>
+#include <anki/util/HashMap.h>
 
 namespace anki
 {
@@ -49,6 +51,11 @@ public:
 		return m_globalPipelineLayout;
 	}
 
+	VkCommandBuffer newCommandBuffer(Thread::Id tid, Bool secondLevel);
+
+	void deleteCommandBuffer(
+		VkCommandBuffer cmdb, Bool secondLevel, Thread::Id tid);
+
 private:
 	GrManager* m_manager = nullptr;
 
@@ -74,7 +81,6 @@ private:
 
 		/// The semaphores that of those submits that render to the default FB.
 		DynamicArray<VkSemaphore> m_renderSemaphores;
-
 		U32 m_renderSemaphoresCount = 0;
 	};
 
@@ -101,14 +107,47 @@ private:
 	DynamicArray<GpuMemoryAllocator> m_gpuMemAllocs;
 	/// @}
 
+	/// @name Per_thread_cache
+	/// @{
+
+	class PerThreadHasher
+	{
+	public:
+		U64 operator()(const Thread::Id& b) const
+		{
+			return b;
+		}
+	};
+
+	class PerThreadCompare
+	{
+	public:
+		Bool operator()(const Thread::Id& a, const Thread::Id& b) const
+		{
+			return a == b;
+		}
+	};
+
+	/// Per thread cache.
+	class PerThread
+	{
+	public:
+		CommandBufferObjectRecycler m_cmdbs;
+	};
+
+	HashMap<Thread::Id, PerThread, PerThreadHasher, PerThreadCompare>
+		m_perThread;
+	SpinLock m_perThreadMtx;
+	/// @}
+
 	ANKI_USE_RESULT Error initInternal(const GrManagerInitInfo& init);
 	ANKI_USE_RESULT Error initInstance(const GrManagerInitInfo& init);
 	ANKI_USE_RESULT Error initSurface(const GrManagerInitInfo& init);
 	ANKI_USE_RESULT Error initDevice(const GrManagerInitInfo& init);
 	ANKI_USE_RESULT Error initSwapchain(const GrManagerInitInfo& init);
 	ANKI_USE_RESULT Error initFramebuffers(const GrManagerInitInfo& init);
-	void initGlobalDsetLayout();
-	void initGlobalPplineLayout();
+	ANKI_USE_RESULT Error initGlobalDsetLayout();
+	ANKI_USE_RESULT Error initGlobalPplineLayout();
 	void initMemory();
 
 	/// Find a suitable memory type.
@@ -128,6 +167,10 @@ private:
 		VkSystemAllocationScope allocationScope);
 
 	static void freeCallback(void* userData, void* ptr);
+
+	void resetFrame(PerFrame& frame);
+
+	PerThread& getPerThreadCache(Thread::Id tid);
 };
 /// @}
 

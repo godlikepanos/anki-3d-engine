@@ -153,6 +153,15 @@ static const TBuiltInResource GLSLANG_LIMITS = setLimits();
 //==============================================================================
 
 //==============================================================================
+ShaderImpl::~ShaderImpl()
+{
+	if(m_handle)
+	{
+		vkDestroyShaderModule(getDevice(), m_handle, nullptr);
+	}
+}
+
+//==============================================================================
 Error ShaderImpl::genSpirv(
 	const CString& source, std::vector<unsigned int>& spirv)
 {
@@ -218,7 +227,7 @@ Error ShaderImpl::init(ShaderType shaderType, const CString& source)
 		spirv.size() * sizeof(unsigned int),
 		&spirv[0]};
 
-	ANKI_VK_CHECKF(vkCreateShaderModule(getDevice(), &ci, nullptr, &m_handle));
+	ANKI_VK_CHECK(vkCreateShaderModule(getDevice(), &ci, nullptr, &m_handle));
 
 	return ErrorCode::NONE;
 }

@@ -40,8 +40,8 @@ public:
 		m_window = init.m_window->getNative().m_window;
 
 		ANKI_LOGI("Creating GL %u.%u context...",
-			init.m_config->getNumber("glmajor"),
-			init.m_config->getNumber("glminor"));
+			U(init.m_config->getNumber("glmajor")),
+			U(init.m_config->getNumber("glminor")));
 
 		if(init.m_config->getNumber("debugContext"))
 		{

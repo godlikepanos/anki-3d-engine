@@ -60,11 +60,9 @@ public:
 	}
 };
 
-void Shader::init(ShaderType shaderType, const void* source, PtrSize sourceSize)
+void Shader::init(ShaderType shaderType, const CString& source)
 {
-	ANKI_ASSERT(source);
-	ANKI_ASSERT(sourceSize
-		== CString(static_cast<const char*>(source)).getLength() + 1);
+	ANKI_ASSERT(!source.isEmpty());
 
 	m_impl.reset(getAllocator().newInstance<ShaderImpl>(&getManager()));
 
@@ -74,8 +72,8 @@ void Shader::init(ShaderType shaderType, const void* source, PtrSize sourceSize)
 	// Copy source to the command buffer
 	CommandBufferAllocator<char> alloc =
 		cmdb->getImplementation().getInternalAllocator();
-	char* src = alloc.allocate(sourceSize);
-	memcpy(src, source, sourceSize);
+	char* src = alloc.allocate(source.getLength() + 1);
+	memcpy(src, &source[0], source.getLength() + 1);
 
 	cmdb->getImplementation().pushBackNewCommand<ShaderCreateCommand>(
 		this, shaderType, src, alloc);
