@@ -71,3 +71,12 @@ To build the release version:
 	- Invoke the mingw's make: mingw32-make
 
 > NOTE: If you have a better way to build on Windows please let us know.
+
+> NOTE 2: The Windows build tends to brake often since Windows is not the 
+> primary developement platform. Please report any bugs.
+
+Next steps
+==========
+
+Try to build with samples enabled (see the relevant option in your CMake GUI) 
+and try running the simple_scene executable. More samples will follow.

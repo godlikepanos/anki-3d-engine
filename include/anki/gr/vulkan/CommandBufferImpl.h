@@ -10,6 +10,9 @@
 namespace anki
 {
 
+// Forward
+class CommandBufferInitInfo;
+
 /// @addtogroup vulkan
 /// @{
 
@@ -18,14 +21,19 @@ class CommandBufferImpl : public VulkanObject
 {
 public:
 	/// Default constructor
-	CommandBufferImpl(GrManager* manager)
-		: VulkanObject(manager)
-	{
-	}
+	CommandBufferImpl(GrManager* manager);
 
-	~CommandBufferImpl()
-	{
-	}
+	~CommandBufferImpl();
+
+	ANKI_USE_RESULT Error init(const CommandBufferInitInfo& init);
+
+private:
+	VkCommandBuffer m_handle = VK_NULL_HANDLE;
+	Bool8 m_secondLevel = false;
+	Thread::Id m_tid = 0;
+
+	/// Some common checks that happen on every command.
+	void commandChecks();
 };
 /// @}
 

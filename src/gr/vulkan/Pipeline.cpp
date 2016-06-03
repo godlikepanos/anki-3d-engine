@@ -26,7 +26,10 @@ Pipeline::~Pipeline()
 void Pipeline::init(const PipelineInitInfo& init)
 {
 	m_impl.reset(getAllocator().newInstance<PipelineImpl>(&getManager()));
-	m_impl->init(init);
+	if(m_impl->init(init))
+	{
+		ANKI_LOGF("Cannot recover");
+	}
 }
 
 } // end namespace anki

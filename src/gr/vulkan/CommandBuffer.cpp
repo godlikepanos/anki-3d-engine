@@ -23,11 +23,20 @@ CommandBuffer::~CommandBuffer()
 //==============================================================================
 void CommandBuffer::init(CommandBufferInitInfo& inf)
 {
+	m_impl.reset(getAllocator().newInstance<CommandBufferImpl>(&getManager()));
+	
+	if(m_impl->init(inf))
+	{
+		ANKI_LOGF("Cannot recover");
+	}
 }
 
 //==============================================================================
 CommandBufferInitHints CommandBuffer::computeInitHints() const
 {
+	// TODO
+	CommandBufferInitHints hints;
+	return hints;
 }
 
 //==============================================================================
@@ -174,6 +183,8 @@ void CommandBuffer::pushSecondLevelCommandBuffer(CommandBufferPtr cmdb)
 //==============================================================================
 Bool CommandBuffer::isEmpty() const
 {
+	// TODO
+	return false;
 }
 
 } // end namespace anki

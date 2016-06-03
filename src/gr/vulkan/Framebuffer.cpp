@@ -23,6 +23,11 @@ Framebuffer::~Framebuffer()
 //==============================================================================
 void Framebuffer::init(const FramebufferInitInfo& init)
 {
+	m_impl.reset(getAllocator().newInstance<FramebufferImpl>(&getManager()));
+	if(m_impl->init(init))
+	{
+		ANKI_LOGF("Cannot recover");
+	}
 }
 
 } // end namespace anki

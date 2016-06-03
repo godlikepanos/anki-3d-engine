@@ -12,22 +12,33 @@ namespace anki
 //==============================================================================
 FramebufferImpl::~FramebufferImpl()
 {
-	if(m_framebuffer)
-	{
-		vkDestroyFramebuffer(getDevice(), m_framebuffer, nullptr);
-	}
-
 	if(m_renderPass)
 	{
 		vkDestroyRenderPass(getDevice(), m_renderPass, nullptr);
 	}
+
+	if(m_framebuffer)
+	{
+		vkDestroyFramebuffer(getDevice(), m_framebuffer, nullptr);
+	}
 }
 
 //==============================================================================
-void FramebufferImpl::init(const FramebufferInitInfo& init)
+Error FramebufferImpl::init(const FramebufferInitInfo& init)
 {
-	initRenderPass(init);
-	initFramebuffer(init);
+	if(init.m_colorAttachmentCount == 0
+		&& !init.m_depthStencilAttachment.m_texture.isCreated())
+	{
+		m_defaultFramebuffer = true;
+	}
+	else
+	{
+		m_defaultFramebuffer = false;
+		ANKI_CHECK(initRenderPass(init));
+		ANKI_CHECK(initFramebuffer(init));
+	}
+
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -55,12 +66,10 @@ void FramebufferImpl::setupAttachmentDescriptor(
 }
 
 //==============================================================================
-void FramebufferImpl::initRenderPass(const FramebufferInitInfo& init)
+Error FramebufferImpl::initRenderPass(const FramebufferInitInfo& init)
 {
-	VkRenderPassCreateInfo ci;
+	VkRenderPassCreateInfo ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	ci.pNext = nullptr;
-	ci.flags = 0;
 
 	// First setup the attachments
 	ci.attachmentCount = 0;
@@ -117,12 +126,13 @@ void FramebufferImpl::initRenderPass(const FramebufferInitInfo& init)
 	ci.dependencyCount = 0;
 	ci.pDependencies = nullptr;
 
-	ANKI_VK_CHECKF(
-		vkCreateRenderPass(getDevice(), &ci, nullptr, &m_renderPass));
+	ANKI_VK_CHECK(vkCreateRenderPass(getDevice(), &ci, nullptr, &m_renderPass));
+
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
-void FramebufferImpl::initFramebuffer(const FramebufferInitInfo& init)
+Error FramebufferImpl::initFramebuffer(const FramebufferInitInfo& init)
 {
 	Bool hasDepthStencil = init.m_depthStencilAttachment.m_format.m_components
 		!= ComponentFormat::NONE;
@@ -138,8 +148,10 @@ void FramebufferImpl::initFramebuffer(const FramebufferInitInfo& init)
 	// TODO set views
 	// TODO set size and the rest
 
-	ANKI_VK_CHECKF(
+	ANKI_VK_CHECK(
 		vkCreateFramebuffer(getDevice(), &ci, nullptr, &m_framebuffer));
+
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

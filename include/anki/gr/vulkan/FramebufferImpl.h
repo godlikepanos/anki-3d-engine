@@ -22,6 +22,7 @@ class FramebufferImpl : public VulkanObject
 public:
 	VkFramebuffer m_framebuffer = VK_NULL_HANDLE;
 	VkRenderPass m_renderPass = VK_NULL_HANDLE;
+	Bool8 m_defaultFramebuffer = false;
 
 	FramebufferImpl(GrManager* manager)
 		: VulkanObject(manager)
@@ -30,15 +31,15 @@ public:
 
 	~FramebufferImpl();
 
-	void init(const FramebufferInitInfo& init);
+	ANKI_USE_RESULT Error init(const FramebufferInitInfo& init);
 
 private:
-	void initRenderPass(const FramebufferInitInfo& init);
+	ANKI_USE_RESULT Error initRenderPass(const FramebufferInitInfo& init);
 
 	void setupAttachmentDescriptor(
 		const Attachment& in, VkAttachmentDescription& out, Bool depthStencil);
 
-	void initFramebuffer(const FramebufferInitInfo& init);
+	ANKI_USE_RESULT Error initFramebuffer(const FramebufferInitInfo& init);
 };
 /// @}
 
