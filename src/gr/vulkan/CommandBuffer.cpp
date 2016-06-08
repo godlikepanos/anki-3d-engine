@@ -6,6 +6,8 @@
 #include <anki/gr/CommandBuffer.h>
 #include <anki/gr/vulkan/CommandBufferImpl.h>
 
+#include <anki/gr/Pipeline.h>
+
 namespace anki
 {
 
@@ -24,7 +26,7 @@ CommandBuffer::~CommandBuffer()
 void CommandBuffer::init(CommandBufferInitInfo& inf)
 {
 	m_impl.reset(getAllocator().newInstance<CommandBufferImpl>(&getManager()));
-	
+
 	if(m_impl->init(inf))
 	{
 		ANKI_LOGF("Cannot recover");
@@ -42,6 +44,7 @@ CommandBufferInitHints CommandBuffer::computeInitHints() const
 //==============================================================================
 void CommandBuffer::flush()
 {
+	m_impl->flush(this);
 }
 
 //==============================================================================
@@ -52,6 +55,7 @@ void CommandBuffer::finish()
 //==============================================================================
 void CommandBuffer::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 {
+	m_impl->setViewport(minx, miny, maxx, maxy);
 }
 
 //==============================================================================
@@ -62,16 +66,19 @@ void CommandBuffer::setPolygonOffset(F32 offset, F32 units)
 //==============================================================================
 void CommandBuffer::bindPipeline(PipelinePtr ppline)
 {
+	m_impl->bindPipeline(ppline);
 }
 
 //==============================================================================
 void CommandBuffer::beginRenderPass(FramebufferPtr fb)
 {
+	m_impl->beginRenderPass(fb);
 }
 
 //==============================================================================
 void CommandBuffer::endRenderPass()
 {
+	m_impl->endRenderPass();
 }
 
 //==============================================================================
@@ -93,6 +100,7 @@ void CommandBuffer::drawElements(U32 count,
 void CommandBuffer::drawArrays(
 	U32 count, U32 instanceCount, U32 first, U32 baseInstance)
 {
+	m_impl->drawArrays(count, instanceCount, first, baseInstance);
 }
 
 //==============================================================================

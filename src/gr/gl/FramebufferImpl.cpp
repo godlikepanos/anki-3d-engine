@@ -21,8 +21,8 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 	ANKI_ASSERT(!isCreated());
 	m_in = init;
 
-	if(m_in.m_colorAttachmentCount == 0
-		&& !m_in.m_depthStencilAttachment.m_texture.isCreated())
+	if(m_in.m_colorAttachmentCount == 1
+		&& !m_in.m_colorAttachments[0].m_texture.isCreated())
 	{
 		m_bindDefault = true;
 		return ErrorCode::NONE;
@@ -150,6 +150,20 @@ void FramebufferImpl::bind(const GlState& state)
 	if(m_bindDefault)
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		const Attachment& att = m_in.m_colorAttachments[0];
+
+		if(att.m_loadOperation == AttachmentLoadOperation::CLEAR)
+		{
+			glClearBufferfv(GL_COLOR, 0, &att.m_clearValue.m_colorf[0]);
+		}
+		else
+		{
+			/* For some reason the driver reports error
+			ANKI_ASSERT(
+				att.m_loadOperation == AttachmentLoadOperation::DONT_CARE);
+			GLenum buff = GL_COLOR_ATTACHMENT0;
+			glInvalidateFramebuffer(GL_FRAMEBUFFER, 1, &buff);*/
+		}
 	}
 	else
 	{

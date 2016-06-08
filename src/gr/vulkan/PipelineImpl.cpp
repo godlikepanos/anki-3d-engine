@@ -175,12 +175,6 @@ void PipelineImpl::initShaders(
 VkPipelineVertexInputStateCreateInfo* PipelineImpl::initVertexStage(
 	const VertexStateInfo& vertex, VkPipelineVertexInputStateCreateInfo& ci)
 {
-	if(vertex.m_bindingCount == 0 && vertex.m_attributeCount == 0)
-	{
-		// Early out
-		return nullptr;
-	}
-
 	// First the bindings
 	ci.vertexBindingDescriptionCount = vertex.m_bindingCount;
 	for(U i = 0; i < ci.vertexBindingDescriptionCount; ++i)
@@ -279,14 +273,22 @@ VkPipelineMultisampleStateCreateInfo* PipelineImpl::initMsState(
 VkPipelineDepthStencilStateCreateInfo* PipelineImpl::initDsState(
 	const DepthStencilStateInfo& ds, VkPipelineDepthStencilStateCreateInfo& ci)
 {
-	ci.depthTestEnable = (ds.m_depthCompareFunction != CompareOperation::ALWAYS)
-		|| ds.m_depthWriteEnabled;
-	ci.depthWriteEnable = ds.m_depthWriteEnabled;
-	ci.depthCompareOp = convertCompareOp(ds.m_depthCompareFunction);
-	ci.depthBoundsTestEnable = VK_FALSE;
-	ci.stencilTestEnable = VK_FALSE; // For now no stencil
+	if(ds.isInUse())
+	{
+		ci.depthTestEnable =
+			(ds.m_depthCompareFunction != CompareOperation::ALWAYS)
+			|| ds.m_depthWriteEnabled;
+		ci.depthWriteEnable = ds.m_depthWriteEnabled;
+		ci.depthCompareOp = convertCompareOp(ds.m_depthCompareFunction);
+		ci.depthBoundsTestEnable = VK_FALSE;
+		ci.stencilTestEnable = VK_FALSE; // For now no stencil
 
-	return &ci;
+		return &ci;
+	}
+	else
+	{
+		return nullptr;
+	}
 }
 
 //==============================================================================
@@ -343,10 +345,12 @@ Error PipelineImpl::init(const PipelineInitInfo& init)
 {
 	if(init.m_shaders[ShaderType::COMPUTE].isCreated())
 	{
+		m_bindPoint = VK_PIPELINE_BIND_POINT_COMPUTE;
 		return initCompute(init);
 	}
 	else
 	{
+		m_bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 		return initGraphics(init);
 	}
 

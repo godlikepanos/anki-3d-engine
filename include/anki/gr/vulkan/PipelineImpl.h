@@ -26,8 +26,6 @@ class ColorStateInfo;
 class PipelineImpl : public VulkanObject
 {
 public:
-	VkPipeline m_handle = VK_NULL_HANDLE;
-
 	PipelineImpl(GrManager* manager)
 		: VulkanObject(manager)
 	{
@@ -37,7 +35,22 @@ public:
 
 	ANKI_USE_RESULT Error init(const PipelineInitInfo& init);
 
+	VkPipeline getHandle() const
+	{
+		ANKI_ASSERT(m_handle);
+		return m_handle;
+	}
+
+	VkPipelineBindPoint getBindPoint() const
+	{
+		ANKI_ASSERT(m_bindPoint != VK_PIPELINE_BIND_POINT_MAX_ENUM);
+		return m_bindPoint;
+	}
+
 private:
+	VkPipeline m_handle = VK_NULL_HANDLE;
+	VkPipelineBindPoint m_bindPoint = VK_PIPELINE_BIND_POINT_MAX_ENUM;
+
 	ANKI_USE_RESULT Error initGraphics(const PipelineInitInfo& init);
 
 	ANKI_USE_RESULT Error initCompute(const PipelineInitInfo& init);

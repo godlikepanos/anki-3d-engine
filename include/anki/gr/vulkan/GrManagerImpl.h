@@ -56,6 +56,42 @@ public:
 	void deleteCommandBuffer(
 		VkCommandBuffer cmdb, Bool secondLevel, Thread::Id tid);
 
+	VkFormat getDefaultSurfaceFormat() const
+	{
+		return m_surfaceFormat;
+	}
+
+	VkImageView getDefaultSurfaceImageView(U idx) const
+	{
+		ANKI_ASSERT(m_perFrame[idx].m_imageView);
+		return m_perFrame[idx].m_imageView;
+	}
+
+	VkImage getDefaultSurfaceImage(U idx) const
+	{
+		ANKI_ASSERT(m_perFrame[idx].m_image);
+		return m_perFrame[idx].m_image;
+	}
+
+	U getDefaultSurfaceWidth() const
+	{
+		ANKI_ASSERT(m_surfaceWidth);
+		return m_surfaceWidth;
+	}
+
+	U getDefaultSurfaceHeight() const
+	{
+		ANKI_ASSERT(m_surfaceHeight);
+		return m_surfaceHeight;
+	}
+
+	U64 getFrame() const
+	{
+		return m_frame;
+	}
+
+	void flushCommandBuffer(CommandBufferImpl& impl, CommandBufferPtr ptr);
+
 private:
 	GrManager* m_manager = nullptr;
 
@@ -66,6 +102,7 @@ private:
 	VkDevice m_device = VK_NULL_HANDLE;
 	U32 m_queueIdx = MAX_U32;
 	VkQueue m_queue = VK_NULL_HANDLE;
+	Mutex m_queueSubmitMtx;
 
 	/// @name Surface_related
 	/// @{
@@ -74,21 +111,21 @@ private:
 	public:
 		VkImage m_image = VK_NULL_HANDLE;
 		VkImageView m_imageView = VK_NULL_HANDLE;
-		VkFramebuffer m_fb = VK_NULL_HANDLE;
 
 		VkFence m_presentFence = VK_NULL_HANDLE;
 		VkSemaphore m_acquireSemaphore = VK_NULL_HANDLE;
 
-		/// The semaphores that of those submits that render to the default FB.
-		DynamicArray<VkSemaphore> m_renderSemaphores;
-		U32 m_renderSemaphoresCount = 0;
+		/// The semaphore that the submit that renders to the default FB.
+		VkSemaphore m_renderSemaphore = VK_NULL_HANDLE;
+
+		/// Keep it here for deferred cleanup.
+		List<CommandBufferPtr> m_cmdbsSubmitted;
 	};
 
 	VkSurfaceKHR m_surface = VK_NULL_HANDLE;
 	U32 m_surfaceWidth = 0, m_surfaceHeight = 0;
 	VkFormat m_surfaceFormat = VK_FORMAT_UNDEFINED;
 	VkSwapchainKHR m_swapchain = VK_NULL_HANDLE;
-	VkRenderPass m_renderPass = VK_NULL_HANDLE;
 	Array<PerFrame, MAX_FRAMES_IN_FLIGHT> m_perFrame;
 	/// @}
 
@@ -138,7 +175,12 @@ private:
 	HashMap<Thread::Id, PerThread, PerThreadHasher, PerThreadCompare>
 		m_perThread;
 	SpinLock m_perThreadMtx;
-	/// @}
+/// @}
+
+#if ANKI_ASSERTIONS
+	Bool8 m_cmdbWithIndicationThatIsFirstSubmitted = false;
+	Bool8 m_cmdbWithIndicationThatIsLastSubmitted = false;
+#endif
 
 	ANKI_USE_RESULT Error initInternal(const GrManagerInitInfo& init);
 	ANKI_USE_RESULT Error initInstance(const GrManagerInitInfo& init);

@@ -11,12 +11,20 @@ namespace anki
 //==============================================================================
 CommandBufferObjectRecycler::~CommandBufferObjectRecycler()
 {
+	for(CmdbType& type : m_types)
+	{
+		if(type.m_count)
+		{
+			vkFreeCommandBuffers(m_dev, m_pool, type.m_count, &type.m_cmdbs[0]);
+		}
+
+		type.m_cmdbs.destroy(m_alloc);
+	}
+
 	if(m_pool)
 	{
 		vkDestroyCommandPool(m_dev, m_pool, nullptr);
 	}
-
-	// TODO the rest
 }
 
 //==============================================================================

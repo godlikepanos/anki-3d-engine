@@ -85,6 +85,12 @@ public:
 	Bool m_secondLevel = false;
 	FramebufferPtr m_framebuffer; ///< For second level command buffers.
 	CommandBufferInitHints m_hints;
+
+	/// Set it to true if this command buffer is the frame's first.
+	Bool m_frameFirstCommandBuffer = false;
+
+	/// Set it to true if this command buffer is the frame's last.
+	Bool m_frameLastCommandBuffer = false;
 };
 
 /// Command buffer.

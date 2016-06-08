@@ -50,6 +50,9 @@ public:
 	/// Create.
 	ANKI_USE_RESULT Error init(GrManagerInitInfo& init);
 
+	/// Begin frame.
+	void beginFrame();
+
 	/// Swap buffers
 	void swapBuffers();
 

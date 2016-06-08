@@ -5,7 +5,11 @@
 
 #include <anki/gr/vulkan/GrManagerImpl.h>
 #include <anki/gr/GrManager.h>
+
 #include <anki/gr/Pipeline.h>
+#include <anki/gr/vulkan/CommandBufferImpl.h>
+#include <anki/gr/CommandBuffer.h>
+
 #include <anki/util/HashMap.h>
 #include <anki/util/Hash.h>
 #include <anki/core/Config.h>
@@ -76,6 +80,14 @@ public:
 //==============================================================================
 GrManagerImpl::~GrManagerImpl()
 {
+	// First thing: wait for the GPU
+	if(m_queue)
+	{
+		LockGuard<Mutex> lock(m_queueSubmitMtx);
+		vkQueueWaitIdle(m_queue);
+		m_queue = VK_NULL_HANDLE;
+	}
+
 	if(m_renderPasses)
 	{
 		auto it = m_renderPasses->m_hashmap.getBegin();
@@ -104,21 +116,34 @@ GrManagerImpl::~GrManagerImpl()
 
 	for(auto& x : m_perFrame)
 	{
-		if(x.m_fb)
-		{
-			vkDestroyFramebuffer(m_device, x.m_fb, nullptr);
-		}
-
 		if(x.m_imageView)
 		{
 			vkDestroyImageView(m_device, x.m_imageView, nullptr);
+			x.m_imageView = VK_NULL_HANDLE;
 		}
+
+		if(x.m_presentFence)
+		{
+			vkDestroyFence(m_device, x.m_presentFence, nullptr);
+			x.m_presentFence = VK_NULL_HANDLE;
+		}
+
+		if(x.m_acquireSemaphore)
+		{
+			vkDestroySemaphore(m_device, x.m_acquireSemaphore, nullptr);
+			x.m_acquireSemaphore = VK_NULL_HANDLE;
+		}
+
+		if(x.m_renderSemaphore)
+		{
+			vkDestroySemaphore(m_device, x.m_renderSemaphore, nullptr);
+			x.m_renderSemaphore = VK_NULL_HANDLE;
+		}
+
+		x.m_cmdbsSubmitted.destroy(getAllocator());
 	}
 
-	if(m_renderPass)
-	{
-		vkDestroyRenderPass(m_device, m_renderPass, nullptr);
-	}
+	m_perThread.destroy(getAllocator());
 
 	if(m_swapchain)
 	{
@@ -169,14 +194,16 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	ANKI_CHECK(initDevice(init));
 	vkGetDeviceQueue(m_device, m_queueIdx, 0, &m_queue);
 	ANKI_CHECK(initSwapchain(init));
-	ANKI_CHECK(initFramebuffers(init));
 
 	ANKI_CHECK(initGlobalDsetLayout());
 	ANKI_CHECK(initGlobalPplineLayout());
 
 	m_renderPasses = getAllocator().newInstance<CompatibleRenderPassHashMap>();
 
-	// initMemory();
+	for(PerFrame& f : m_perFrame)
+	{
+		resetFrame(f);
+	}
 
 	glslang::InitializeProcess();
 
@@ -272,7 +299,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	for(U i = 0; i < count; ++i)
 	{
 		if((queueInfos[i].queueFlags & (DESITED_QUEUE_FLAGS))
-			!= DESITED_QUEUE_FLAGS)
+			== DESITED_QUEUE_FLAGS)
 		{
 			VkBool32 supportsPresent = false;
 			ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(
@@ -347,7 +374,7 @@ Error GrManagerImpl::initSwapchain(const GrManagerInitInfo& init)
 	{
 		if(formats[formatCount].format == VK_FORMAT_B8G8R8A8_SRGB)
 		{
-			m_surfaceFormat = VK_FORMAT_B8G8R8A8_SRGB;
+			m_surfaceFormat = formats[formatCount].format;
 			colorspace = formats[formatCount].colorSpace;
 			break;
 		}
@@ -402,45 +429,11 @@ Error GrManagerImpl::initSwapchain(const GrManagerInitInfo& init)
 		ANKI_ASSERT(images[i]);
 	}
 
-	return ErrorCode::NONE;
-}
-
-//==============================================================================
-Error GrManagerImpl::initFramebuffers(const GrManagerInitInfo& init)
-{
-	VkAttachmentDescription attachment = {};
-	attachment.format = m_surfaceFormat;
-	attachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	attachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	attachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	attachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-	VkAttachmentReference colorRef = {};
-	colorRef.attachment = 0;
-	colorRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-	VkSubpassDescription subpass = {};
-	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpass.colorAttachmentCount = 1;
-	subpass.pColorAttachments = &colorRef;
-
-	VkRenderPassCreateInfo ci = {};
-	ci.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	ci.attachmentCount = 1;
-	ci.pAttachments = &attachment;
-	ci.subpassCount = 1;
-	ci.pSubpasses = &subpass;
-
-	ANKI_VK_CHECK(vkCreateRenderPass(m_device, &ci, nullptr, &m_renderPass));
-
+	// Create img views
 	for(U i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
 	{
 		PerFrame& perFrame = m_perFrame[i];
 
-		// Create the image view
 		VkImageViewCreateInfo ci = {};
 		ci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		ci.flags = 0;
@@ -459,19 +452,6 @@ Error GrManagerImpl::initFramebuffers(const GrManagerInitInfo& init)
 
 		ANKI_VK_CHECK(
 			vkCreateImageView(m_device, &ci, nullptr, &perFrame.m_imageView));
-
-		// Create FB
-		VkFramebufferCreateInfo fbci = {};
-		fbci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		fbci.renderPass = m_renderPass;
-		fbci.attachmentCount = 1;
-		fbci.pAttachments = &perFrame.m_imageView;
-		fbci.width = m_surfaceWidth;
-		fbci.height = m_surfaceHeight;
-		fbci.layers = 1;
-
-		ANKI_VK_CHECK(
-			vkCreateFramebuffer(m_device, &fbci, nullptr, &perFrame.m_fb));
 	}
 
 	return ErrorCode::NONE;
@@ -598,24 +578,26 @@ VkRenderPass GrManagerImpl::getOrCreateCompatibleRenderPass(
 		{
 			// We only care about samples and format
 			VkAttachmentDescription& desc = attachmentDescriptions[i];
-			desc.format = convertFormat(init.m_color.m_attachments[i].m_format);
+			desc.format = (!init.m_color.m_drawsToDefaultFramebuffer)
+				? convertFormat(init.m_color.m_attachments[i].m_format)
+				: m_surfaceFormat;
 			desc.samples = VK_SAMPLE_COUNT_1_BIT;
 			desc.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 			desc.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 			desc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 			desc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-			desc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			desc.finalLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			desc.initialLayout = VK_IMAGE_LAYOUT_GENERAL;
+			desc.finalLayout = VK_IMAGE_LAYOUT_GENERAL;
 
 			references[i].attachment = i;
-			references[i].layout = VK_IMAGE_LAYOUT_UNDEFINED;
+			references[i].layout = VK_IMAGE_LAYOUT_GENERAL;
 		}
 
 		ci.attachmentCount = init.m_color.m_attachmentCount;
 
 		Bool hasDepthStencil =
 			init.m_depthStencil.m_format.m_components != ComponentFormat::NONE;
-		VkAttachmentReference dsReference = {0, VK_IMAGE_LAYOUT_UNDEFINED};
+		VkAttachmentReference dsReference = {0, VK_IMAGE_LAYOUT_GENERAL};
 		if(hasDepthStencil)
 		{
 			VkAttachmentDescription& desc =
@@ -626,11 +608,11 @@ VkRenderPass GrManagerImpl::getOrCreateCompatibleRenderPass(
 			desc.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 			desc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 			desc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-			desc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			desc.finalLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			desc.initialLayout = VK_IMAGE_LAYOUT_GENERAL;
+			desc.finalLayout = VK_IMAGE_LAYOUT_GENERAL;
 
 			dsReference.attachment = ci.attachmentCount;
-			dsReference.layout = VK_IMAGE_LAYOUT_UNDEFINED;
+			dsReference.layout = VK_IMAGE_LAYOUT_GENERAL;
 
 			++ci.attachmentCount;
 		}
@@ -652,8 +634,10 @@ VkRenderPass GrManagerImpl::getOrCreateCompatibleRenderPass(
 		ANKI_VK_CHECKF(vkCreateRenderPass(m_device, &ci, nullptr, &rpass));
 
 		m_renderPasses->m_hashmap.pushBack(getAllocator(), key, rpass);
+		out = rpass;
 	}
 
+	ANKI_ASSERT(out);
 	return out;
 }
 
@@ -742,7 +726,7 @@ void GrManagerImpl::freeCallback(void* userData, void* ptr)
 //==============================================================================
 void GrManagerImpl::beginFrame()
 {
-	PerFrame& frame = m_perFrame[m_frame];
+	PerFrame& frame = m_perFrame[m_frame % MAX_FRAMES_IN_FLIGHT];
 
 	// Create a semaphore
 	VkSemaphoreCreateInfo semaphoreCi = {};
@@ -760,13 +744,14 @@ void GrManagerImpl::beginFrame()
 		frame.m_acquireSemaphore,
 		0,
 		&imageIdx));
-	ANKI_ASSERT(imageIdx == m_frame && "Wrong assumption");
+	ANKI_ASSERT(
+		imageIdx == (m_frame % MAX_FRAMES_IN_FLIGHT) && "Wrong assumption");
 }
 
 //==============================================================================
 void GrManagerImpl::endFrame()
 {
-	PerFrame& frame = m_perFrame[m_frame];
+	PerFrame& frame = m_perFrame[m_frame % MAX_FRAMES_IN_FLIGHT];
 
 	// Wait for the fence of N-2 frame
 	U waitFrameIdx = (m_frame + 1) % MAX_FRAMES_IN_FLIGHT;
@@ -780,28 +765,37 @@ void GrManagerImpl::endFrame()
 
 	resetFrame(waitFrame);
 
-	if(frame.m_renderSemaphoresCount == 0)
+	if(frame.m_renderSemaphore == VK_NULL_HANDLE)
 	{
 		ANKI_LOGW("Nobody draw to the default framebuffer");
 	}
-
-	// TODO Transition image
 
 	// Present
 	uint32_t imageIdx = m_frame % MAX_FRAMES_IN_FLIGHT;
 	VkPresentInfoKHR present = {};
 	present.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-	present.waitSemaphoreCount = frame.m_renderSemaphoresCount;
-	present.pWaitSemaphores = (frame.m_renderSemaphoresCount > 0)
-		? &frame.m_renderSemaphores[0]
-		: nullptr;
+	present.waitSemaphoreCount = (frame.m_renderSemaphore) ? 1 : 0;
+	present.pWaitSemaphores =
+		(frame.m_renderSemaphore) ? &frame.m_renderSemaphore : nullptr;
 	present.swapchainCount = 1;
 	present.pSwapchains = &m_swapchain;
 	present.pImageIndices = &imageIdx;
-	ANKI_VK_CHECKF(vkQueuePresentKHR(m_queue, &present));
+
+	{
+		LockGuard<Mutex> lock(m_queueSubmitMtx);
+		ANKI_VK_CHECKF(vkQueuePresentKHR(m_queue, &present));
+	}
 
 	// Finalize
 	++m_frame;
+
+#if ANKI_ASSERTIONS
+	ANKI_ASSERT(m_cmdbWithIndicationThatIsFirstSubmitted
+		&& m_cmdbWithIndicationThatIsLastSubmitted
+		&& "Forgot to set some command buffer flags");
+	m_cmdbWithIndicationThatIsFirstSubmitted = false;
+	m_cmdbWithIndicationThatIsLastSubmitted = false;
+#endif
 }
 
 //==============================================================================
@@ -812,20 +806,26 @@ void GrManagerImpl::resetFrame(PerFrame& frame)
 		// Recycle fence
 		ANKI_VK_CHECKF(vkResetFences(m_device, 1, &frame.m_presentFence));
 	}
+	else
+	{
+		VkFenceCreateInfo ci = {};
+		ci.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+		vkCreateFence(m_device, &ci, nullptr, &frame.m_presentFence);
+	}
 
 	if(frame.m_acquireSemaphore)
 	{
 		vkDestroySemaphore(m_device, frame.m_acquireSemaphore, nullptr);
+		frame.m_acquireSemaphore = VK_NULL_HANDLE;
 	}
 
-	for(U i = 0; i < frame.m_renderSemaphoresCount; ++i)
+	if(frame.m_renderSemaphore)
 	{
-		ANKI_ASSERT(frame.m_renderSemaphores[i]);
-		vkDestroySemaphore(m_device, frame.m_renderSemaphores[i], nullptr);
-		frame.m_renderSemaphores[i] = VK_NULL_HANDLE;
+		vkDestroySemaphore(m_device, frame.m_renderSemaphore, nullptr);
+		frame.m_renderSemaphore = VK_NULL_HANDLE;
 	}
 
-	frame.m_renderSemaphoresCount = 0;
+	frame.m_cmdbsSubmitted.destroy(getAllocator());
 }
 
 //==============================================================================
@@ -878,6 +878,68 @@ void GrManagerImpl::deleteCommandBuffer(
 	PerThread& thread = getPerThreadCache(tid);
 
 	thread.m_cmdbs.deleteCommandBuffer(cmdb, secondLevel);
+}
+
+//==============================================================================
+void GrManagerImpl::flushCommandBuffer(
+	CommandBufferImpl& impl, CommandBufferPtr ptr)
+{
+	VkPipelineStageFlags waitStage =
+		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+
+	VkCommandBuffer handle = impl.getHandle();
+
+	VkSubmitInfo submit = {};
+	submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+	VkFence fenceToTrigger = VK_NULL_HANDLE;
+	PerFrame& frame = m_perFrame[m_frame % MAX_FRAMES_IN_FLIGHT];
+
+	// Do some special stuff for the last command buffer
+	if(impl.renderedToDefaultFramebuffer())
+	{
+		submit.waitSemaphoreCount = 1;
+		submit.pWaitDstStageMask = &waitStage;
+		submit.pWaitSemaphores = &frame.m_acquireSemaphore;
+
+		// Create the semaphore to signal
+		ANKI_ASSERT(frame.m_renderSemaphore == VK_NULL_HANDLE
+			&& "Only one begin/end render pass is allowed with the default fb");
+		VkSemaphoreCreateInfo ci = {};
+		ci.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+		ANKI_VK_CHECKF(vkCreateSemaphore(
+			m_device, &ci, nullptr, &frame.m_renderSemaphore));
+
+		submit.signalSemaphoreCount = 1;
+		submit.pSignalSemaphores = &frame.m_renderSemaphore;
+
+		fenceToTrigger = frame.m_presentFence;
+		ANKI_ASSERT(fenceToTrigger);
+	}
+
+	submit.commandBufferCount = 1;
+	submit.pCommandBuffers = &handle;
+
+	// Lock to submit
+	LockGuard<Mutex> lock(m_queueSubmitMtx);
+
+	frame.m_cmdbsSubmitted.pushBack(getAllocator(), ptr);
+
+#if ANKI_ASSERTIONS
+	if(impl.isTheFirstFramebufferOfTheFrame())
+	{
+		ANKI_ASSERT(m_cmdbWithIndicationThatIsFirstSubmitted == false);
+		m_cmdbWithIndicationThatIsFirstSubmitted = true;
+	}
+
+	if(impl.isTheLastFramebufferOfTheFrame())
+	{
+		ANKI_ASSERT(m_cmdbWithIndicationThatIsLastSubmitted == false);
+		m_cmdbWithIndicationThatIsLastSubmitted = true;
+	}
+#endif
+
+	ANKI_VK_CHECKF(vkQueueSubmit(m_queue, 1, &submit, fenceToTrigger));
 }
 
 } // end namespace anki

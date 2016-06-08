@@ -43,6 +43,12 @@ Error GrManager::init(GrManagerInitInfo& init)
 }
 
 //==============================================================================
+void GrManager::beginFrame()
+{
+	// Nothing for GL
+}
+
+//==============================================================================
 void GrManager::swapBuffers()
 {
 	m_impl->getRenderingThread().swapBuffers();

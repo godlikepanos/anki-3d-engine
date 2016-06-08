@@ -40,6 +40,7 @@ endif()
 option(ANKI_OPTIMIZE "Optimize" ON)
 option(ANKI_DEBUG_SYMBOLS "Debug symbols" OFF)
 option(ANKI_DEBUG "Debugging checks" OFF)
+option(ANKI_LTO "LTO compilation" OFF)
 
 option(ANKI_BUILD_TOOLS "Build tools" OFF)
 option(ANKI_BUILD_TESTS "Build unit tests" OFF)
@@ -150,7 +151,6 @@ endif()
 
 # Add optimization flags
 if(ANKI_OPTIMIZE)
-	# -flto ?
 	set(COMPILER_FLAGS "${COMPILER_FLAGS} -ffast-math -O3 ")
 
 	# Add this because Android compiler complains
@@ -159,6 +159,12 @@ if(ANKI_OPTIMIZE)
 	endif()
 else()
 	set(COMPILER_FLAGS "${COMPILER_FLAGS} -O0 ")
+endif()
+
+# LTO
+if(ANKI_LTO)
+	set(COMPILER_FLAGS "${COMPILER_FLAGS} -flto ")
+	set(LINKER_FLAGS "${LINKER_FLAGS} -flto ")
 endif()
 
 # Valgrind hacks

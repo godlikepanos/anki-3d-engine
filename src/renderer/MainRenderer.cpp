@@ -53,6 +53,9 @@ Error MainRenderer::create(ThreadPool* threadpool,
 	m_width = config.getNumber("width");
 	m_height = config.getNumber("height");
 	FramebufferInitInfo fbInit;
+	fbInit.m_colorAttachmentCount = 1;
+	fbInit.m_colorAttachments[0].m_loadOperation =
+		AttachmentLoadOperation::DONT_CARE;
 	m_defaultFb = gr->newInstance<Framebuffer>(fbInit);
 
 	// Init renderer and manipulate the width/height
