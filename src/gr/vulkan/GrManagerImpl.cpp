@@ -145,6 +145,8 @@ GrManagerImpl::~GrManagerImpl()
 
 	m_perThread.destroy(getAllocator());
 
+	m_gpuMemAllocs.destroy(getAllocator());
+
 	if(m_swapchain)
 	{
 		vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
@@ -195,6 +197,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	vkGetDeviceQueue(m_device, m_queueIdx, 0, &m_queue);
 	ANKI_CHECK(initSwapchain(init));
 
+	initMemory();
 	ANKI_CHECK(initGlobalDsetLayout());
 	ANKI_CHECK(initGlobalPplineLayout());
 
@@ -277,6 +280,8 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 	count = 1;
 	ANKI_VK_CHECK(
 		vkEnumeratePhysicalDevices(m_instance, &count, &m_physicalDevice));
+
+	vkGetPhysicalDeviceProperties(m_physicalDevice, &m_devProps);
 
 	return ErrorCode::NONE;
 }
@@ -650,7 +655,7 @@ void GrManagerImpl::initMemory()
 	U idx = 0;
 	for(GpuMemoryAllocator& alloc : m_gpuMemAllocs)
 	{
-		alloc.init(getAllocator(), m_device, idx++, 50 * 1024 * 1024, 1.0, 0);
+		alloc.init(getAllocator(), m_device, idx++);
 	}
 }
 
@@ -688,7 +693,6 @@ U GrManagerImpl::findMemoryType(U resourceMemTypeBits,
 	}
 	else
 	{
-		ANKI_ASSERT(preferedMed < MAX_U32);
 		return preferedMed;
 	}
 }

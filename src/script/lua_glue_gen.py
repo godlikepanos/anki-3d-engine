@@ -482,7 +482,7 @@ def constructor(constr_el, class_name):
 	wglue("")
 
 def destructor(class_name):
-	""" Create a destroctor """
+	""" Create a destructor """
 
 	global separator
 

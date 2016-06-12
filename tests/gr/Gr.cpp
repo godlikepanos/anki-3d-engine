@@ -48,6 +48,15 @@ void main()
 	out_color = vec4(0.5);
 })";
 
+#define COMMON_BEGIN()                                                         \
+	NativeWindow* win = nullptr;                                               \
+	GrManager* gr = nullptr;                                                   \
+	createGrManager(win, gr)
+
+#define COMMON_END()                                                           \
+	delete gr;                                                                 \
+	delete win
+
 //==============================================================================
 static NativeWindow* createWindow()
 {
@@ -82,36 +91,27 @@ static void createGrManager(NativeWindow*& win, GrManager*& gr)
 //==============================================================================
 ANKI_TEST(Gr, GrManager)
 {
-	NativeWindow* win = nullptr;
-	GrManager* gr = nullptr;
-	createGrManager(win, gr);
-
-	delete gr;
-	delete win;
+	COMMON_BEGIN();
+	COMMON_END();
 }
 
 //==============================================================================
 ANKI_TEST(Gr, Shader)
 {
-	NativeWindow* win = nullptr;
-	GrManager* gr = nullptr;
-	createGrManager(win, gr);
+	COMMON_BEGIN();
 
 	{
 		ShaderPtr shader =
 			gr->newInstance<Shader>(ShaderType::VERTEX, VERT_SRC);
 	}
 
-	delete gr;
-	delete win;
+	COMMON_END();
 }
 
 //==============================================================================
 ANKI_TEST(Gr, Pipeline)
 {
-	NativeWindow* win = nullptr;
-	GrManager* gr = nullptr;
-	createGrManager(win, gr);
+	COMMON_BEGIN();
 
 	{
 		ShaderPtr vert = gr->newInstance<Shader>(ShaderType::VERTEX, VERT_SRC);
@@ -129,16 +129,13 @@ ANKI_TEST(Gr, Pipeline)
 		PipelinePtr ppline = gr->newInstance<Pipeline>(init);
 	}
 
-	delete gr;
-	delete win;
+	COMMON_END();
 }
 
 //==============================================================================
 ANKI_TEST(Gr, SimpleDrawcall)
 {
-	NativeWindow* win = nullptr;
-	GrManager* gr = nullptr;
-	createGrManager(win, gr);
+	COMMON_BEGIN();
 
 	{
 		ShaderPtr vert = gr->newInstance<Shader>(ShaderType::VERTEX, VERT_SRC);
@@ -192,8 +189,27 @@ ANKI_TEST(Gr, SimpleDrawcall)
 		}
 	}
 
-	delete gr;
-	delete win;
+	COMMON_END();
+}
+
+//==============================================================================
+ANKI_TEST(Gr, Buffer)
+{
+	COMMON_BEGIN();
+
+	{
+		BufferPtr a = gr->newInstance<Buffer>(
+			512, BufferUsageBit::UNIFORM, BufferAccessBit::NONE);
+
+		BufferPtr b = gr->newInstance<Buffer>(
+			64, BufferUsageBit::STORAGE, BufferAccessBit::CLIENT_MAP_WRITE);
+
+		void* ptr = b->map(0, 64, BufferAccessBit::CLIENT_MAP_WRITE);
+		ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
+		b->unmap();
+	}
+
+	COMMON_END();
 }
 
 } // end namespace anki

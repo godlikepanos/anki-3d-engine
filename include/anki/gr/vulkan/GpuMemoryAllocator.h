@@ -13,6 +13,7 @@ namespace anki
 
 // Forward
 class GpuMemoryAllocatorChunk;
+class GpuMemoryAllocatorClass;
 
 /// @addtorgoup vulkan
 /// @{
@@ -23,14 +24,19 @@ class GpuMemoryAllocationHandle
 	friend class GpuMemoryAllocator;
 
 public:
-	VkDeviceMemory m_memory;
-	PtrSize m_offset;
+	VkDeviceMemory m_memory = VK_NULL_HANDLE;
+	PtrSize m_offset = MAX_PTR_SIZE;
+
+	Bool isEmpty() const
+	{
+		return m_memory == VK_NULL_HANDLE;
+	}
 
 private:
-	GpuMemoryAllocatorChunk* m_chunk;
+	GpuMemoryAllocatorChunk* m_chunk = nullptr;
 };
 
-/// GPU memory allocator.
+/// Dynamic GPU memory allocator.
 class GpuMemoryAllocator
 {
 public:
@@ -40,20 +46,20 @@ public:
 
 	~GpuMemoryAllocator();
 
-	void init(GenericMemoryPoolAllocator<U8> alloc,
-		VkDevice dev,
-		U memoryTypeIdx,
-		PtrSize chunkInitialSize,
-		F32 nextChunkScale,
-		PtrSize nextChunkBias);
+	void init(
+		GenericMemoryPoolAllocator<U8> alloc, VkDevice dev, U memoryTypeIdx);
 
 	/// Allocate GPU memory.
 	void allocate(PtrSize size, U alignment, GpuMemoryAllocationHandle& handle);
 
 	/// Free allocated memory.
-	void free(const GpuMemoryAllocationHandle& handle);
+	void free(GpuMemoryAllocationHandle& handle);
+
+	/// Get CPU visible address.
+	void* getMappedAddress(GpuMemoryAllocationHandle& handle);
 
 private:
+	using Class = GpuMemoryAllocatorClass;
 	using Chunk = GpuMemoryAllocatorChunk;
 
 	GenericMemoryPoolAllocator<U8> m_alloc;
@@ -61,24 +67,18 @@ private:
 	VkDevice m_dev = VK_NULL_HANDLE;
 	U32 m_memIdx;
 
-	IntrusiveList<Chunk> m_activeChunks;
-	Mutex m_mtx;
+	/// The memory classes.
+	DynamicArray<Class> m_classes;
 
-	/// Size of the first chunk.
-	PtrSize m_initSize = 0;
+	Class* findClass(PtrSize size, U32 alignment);
 
-	/// Chunk scale.
-	F32 m_scale = 2.0;
+	Chunk* findChunkWithUnusedSlot(Class& cl);
 
-	/// Chunk bias.
-	PtrSize m_bias = 0;
+	/// Create or recycle chunk.
+	Chunk& createChunk(Class& cl);
 
-	void createNewChunk();
-
-	Bool allocateFromChunk(PtrSize size,
-		U alignment,
-		Chunk& ch,
-		GpuMemoryAllocationHandle& handle);
+	/// Park the chunk.
+	void destroyChunk(Class& cl, Chunk& chunk);
 };
 /// @}
 

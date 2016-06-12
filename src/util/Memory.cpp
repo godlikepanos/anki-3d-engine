@@ -222,9 +222,12 @@ HeapMemoryPool::HeapMemoryPool()
 //==============================================================================
 HeapMemoryPool::~HeapMemoryPool()
 {
-	if(m_allocationsCount.load() != 0)
+	U count = m_allocationsCount.load();
+	if(count != 0)
 	{
-		ANKI_LOGW("Memory pool destroyed before all memory being released");
+		ANKI_LOGW("Memory pool destroyed before all memory being released "
+				  "(%u deallocations missed)",
+			count);
 	}
 }
 

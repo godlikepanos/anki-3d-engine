@@ -486,4 +486,39 @@ VkAttachmentStoreOp convertStoreOp(AttachmentStoreOperation ak)
 	return out;
 }
 
+//==============================================================================
+VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask)
+{
+	VkBufferUsageFlags out = 0;
+
+	if((usageMask & BufferUsageBit::UNIFORM) != BufferUsageBit::NONE)
+	{
+		out |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+	}
+
+	if((usageMask & BufferUsageBit::STORAGE) != BufferUsageBit::NONE)
+	{
+		out |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+	}
+
+	if((usageMask & BufferUsageBit::INDEX) != BufferUsageBit::NONE)
+	{
+		out |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+	}
+
+	if((usageMask & BufferUsageBit::VERTEX) != BufferUsageBit::NONE)
+	{
+		out |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+	}
+
+	if((usageMask & BufferUsageBit::INDIRECT) != BufferUsageBit::NONE)
+	{
+		out |= VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT;
+	}
+
+	ANKI_ASSERT(out);
+
+	return out;
+}
+
 } // end namespace anki

@@ -35,6 +35,16 @@ public:
 
 	GrAllocator<U8> getAllocator() const;
 
+	U32 getGraphicsQueueFamily() const
+	{
+		return m_queueIdx;
+	}
+
+	const VkPhysicalDeviceProperties& getPhysicalDeviceProperties() const
+	{
+		return m_devProps;
+	}
+
 	void beginFrame();
 
 	void endFrame();
@@ -92,6 +102,33 @@ public:
 
 	void flushCommandBuffer(CommandBufferImpl& impl, CommandBufferPtr ptr);
 
+	/// @name Memory
+	/// @{
+	void allocateMemory(U memTypeIdx,
+		PtrSize size,
+		U alignment,
+		GpuMemoryAllocationHandle& handle)
+	{
+		m_gpuMemAllocs[memTypeIdx].allocate(size, alignment, handle);
+	}
+
+	void freeMemory(U memTypeIdx, GpuMemoryAllocationHandle& handle)
+	{
+		m_gpuMemAllocs[memTypeIdx].free(handle);
+	}
+
+	ANKI_USE_RESULT void* getMappedAddress(
+		U memTypeIdx, GpuMemoryAllocationHandle& handle)
+	{
+		return m_gpuMemAllocs[memTypeIdx].getMappedAddress(handle);
+	}
+
+	/// Find a suitable memory type.
+	U findMemoryType(U resourceMemTypeBits,
+		VkMemoryPropertyFlags preferFlags,
+		VkMemoryPropertyFlags avoidFlags) const;
+	/// @}
+
 private:
 	GrManager* m_manager = nullptr;
 
@@ -103,6 +140,8 @@ private:
 	U32 m_queueIdx = MAX_U32;
 	VkQueue m_queue = VK_NULL_HANDLE;
 	Mutex m_queueSubmitMtx;
+
+	VkPhysicalDeviceProperties m_devProps = {};
 
 	/// @name Surface_related
 	/// @{
@@ -191,11 +230,6 @@ private:
 	ANKI_USE_RESULT Error initGlobalDsetLayout();
 	ANKI_USE_RESULT Error initGlobalPplineLayout();
 	void initMemory();
-
-	/// Find a suitable memory type.
-	U findMemoryType(U resourceMemTypeBits,
-		VkMemoryPropertyFlags preferFlags,
-		VkMemoryPropertyFlags avoidFlags) const;
 
 	static void* allocateCallback(void* userData,
 		size_t size,

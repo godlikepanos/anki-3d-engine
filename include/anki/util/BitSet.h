@@ -121,7 +121,7 @@ protected:
 	static const U CHUNK_COUNT = (N + (CHUNK_BIT_COUNT - 1)) / CHUNK_BIT_COUNT;
 
 	/// A mask for some stuff.
-	static const U MASK = 1 << (CHUNK_BIT_COUNT - 1);
+	static const ChunkType MASK = 1 << (CHUNK_BIT_COUNT - 1);
 
 	ChunkType m_chunks[CHUNK_COUNT];
 

@@ -23,16 +23,24 @@ Buffer::~Buffer()
 //==============================================================================
 void Buffer::init(PtrSize size, BufferUsageBit usage, BufferAccessBit access)
 {
+	m_impl.reset(getAllocator().newInstance<BufferImpl>(&getManager()));
+
+	if(m_impl->init(size, usage, access))
+	{
+		ANKI_LOGF("Cannot recover");
+	}
 }
 
 //==============================================================================
 void* Buffer::map(PtrSize offset, PtrSize range, BufferAccessBit access)
 {
+	return m_impl->map(offset, range, access);
 }
 
 //==============================================================================
 void Buffer::unmap()
 {
+	m_impl->unmap();
 }
 
 } // end namespace anki

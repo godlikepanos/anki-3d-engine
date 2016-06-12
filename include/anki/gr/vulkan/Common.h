@@ -83,6 +83,10 @@ ANKI_USE_RESULT VkAttachmentLoadOp convertLoadOp(AttachmentLoadOperation ak);
 
 /// Convert store op.
 ANKI_USE_RESULT VkAttachmentStoreOp convertStoreOp(AttachmentStoreOperation ak);
+
+/// Convert buffer usage bitmask.
+ANKI_USE_RESULT VkBufferUsageFlags convertBufferUsageBit(
+	BufferUsageBit usageMask);
 /// @}
 
 } // end namespace anki
