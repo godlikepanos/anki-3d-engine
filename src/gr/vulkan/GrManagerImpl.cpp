@@ -108,6 +108,11 @@ GrManagerImpl::~GrManagerImpl()
 		vkDestroyPipelineLayout(m_device, m_globalPipelineLayout, nullptr);
 	}
 
+	if(m_globalDescriptorPool)
+	{
+		vkDestroyDescriptorPool(m_device, m_globalDescriptorPool, nullptr);
+	}
+
 	if(m_globalDescriptorSetLayout)
 	{
 		vkDestroyDescriptorSetLayout(
@@ -199,6 +204,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 
 	initMemory();
 	ANKI_CHECK(initGlobalDsetLayout());
+	ANKI_CHECK(initGlobalDsetPool());
 	ANKI_CHECK(initGlobalPplineLayout());
 
 	m_renderPasses = getAllocator().newInstance<CompatibleRenderPassHashMap>();
@@ -523,16 +529,40 @@ Error GrManagerImpl::initGlobalDsetLayout()
 }
 
 //==============================================================================
+Error GrManagerImpl::initGlobalDsetPool()
+{
+	Array<VkDescriptorPoolSize, 3> pools = {{}};
+	pools[0] = VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+		MAX_TEXTURE_BINDINGS * MAX_RESOURCE_GROUPS};
+	pools[1] = VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,
+		MAX_UNIFORM_BUFFER_BINDINGS * MAX_RESOURCE_GROUPS};
+	pools[2] = VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC,
+		MAX_STORAGE_BUFFER_BINDINGS * MAX_RESOURCE_GROUPS};
+
+	VkDescriptorPoolCreateInfo ci = {};
+	ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	ci.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+	ci.maxSets = MAX_RESOURCE_GROUPS;
+	ci.poolSizeCount = pools.getSize();
+	ci.pPoolSizes = &pools[0];
+
+	ANKI_VK_CHECK(vkCreateDescriptorPool(
+		m_device, &ci, nullptr, &m_globalDescriptorPool));
+
+	return ErrorCode::NONE;
+}
+
+//==============================================================================
 Error GrManagerImpl::initGlobalPplineLayout()
 {
-	Array<VkDescriptorSetLayout, MAX_RESOURCE_GROUPS> sets = {
+	Array<VkDescriptorSetLayout, MAX_BOUND_RESOURCE_GROUPS> sets = {
 		{m_globalDescriptorSetLayout, m_globalDescriptorSetLayout}};
 
 	VkPipelineLayoutCreateInfo ci;
 	ci.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	ci.pNext = nullptr;
 	ci.flags = 0;
-	ci.setLayoutCount = MAX_RESOURCE_GROUPS;
+	ci.setLayoutCount = MAX_BOUND_RESOURCE_GROUPS;
 	ci.pSetLayouts = &sets[0];
 	ci.pushConstantRangeCount = 0;
 	ci.pPushConstantRanges = nullptr;

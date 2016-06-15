@@ -11,6 +11,8 @@
 #include <anki/gr/vulkan/PipelineImpl.h>
 #include <anki/gr/Framebuffer.h>
 #include <anki/gr/vulkan/FramebufferImpl.h>
+#include <anki/gr/ResourceGroup.h>
+#include <anki/gr/vulkan/ResourceGroupImpl.h>
 
 namespace anki
 {
@@ -41,6 +43,7 @@ CommandBufferImpl::~CommandBufferImpl()
 
 	m_pplineList.destroy(m_alloc);
 	m_fbList.destroy(m_alloc);
+	m_rcList.destroy(m_alloc);
 }
 
 //==============================================================================
@@ -223,6 +226,28 @@ void CommandBufferImpl::flush(CommandBuffer* cmdb)
 	ANKI_VK_CHECKF(vkEndCommandBuffer(m_handle));
 	getGrManagerImpl().flushCommandBuffer(*this, CommandBufferPtr(cmdb));
 	m_flushed = true;
+}
+
+//==============================================================================
+void CommandBufferImpl::bindResourceGroup(
+	ResourceGroupPtr rc, U slot, const TransientMemoryInfo* dynInfo)
+{
+	commandCommon();
+	// TODO set the correct binding point
+	Array<U32, MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS>
+		dynOffsets = {{}};
+
+	VkDescriptorSet dset = rc->getImplementation().getHandle();
+	vkCmdBindDescriptorSets(m_handle,
+		VK_PIPELINE_BIND_POINT_GRAPHICS,
+		getGrManagerImpl().getGlobalPipelineLayout(),
+		slot,
+		1,
+		&dset,
+		dynOffsets.getSize(),
+		&dynOffsets[0]);
+
+	m_rcList.pushBack(m_alloc, rc);
 }
 
 } // end namespace anki

@@ -148,6 +148,16 @@ static TBuiltInResource setLimits()
 
 static const TBuiltInResource GLSLANG_LIMITS = setLimits();
 
+static const char* SHADER_HEADER = R"(#version 450 core
+#define ANKI_VK 1
+#define %s
+#define gl_VertexID gl_VertexIndex
+#define ANKI_UBO_BINDING(set_, binding_) set = set_, binding = %u + binding_
+#define ANKI_SS_BINDING(set_, binding_) set = set_, binding = %u + binding_
+#define ANKI_TEX_BINDING(set_, binding_) set = set_, binding = %u + binding_
+
+%s)";
+
 //==============================================================================
 // ShaderImpl                                                                  =
 //==============================================================================
@@ -213,8 +223,11 @@ Error ShaderImpl::init(ShaderType shaderType, const CString& source)
 		"FRAGMENT_SHADER",
 		"COMPUTE_SHADER"}};
 
-	fullSrc.sprintf("#version 450 core\n#define ANKI_VK\n#define %s\n%s\n",
+	fullSrc.sprintf(SHADER_HEADER,
 		shaderName[shaderType],
+		MAX_TEXTURE_BINDINGS,
+		MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS,
+		0,
 		&source[0]);
 
 	std::vector<unsigned int> spirv;

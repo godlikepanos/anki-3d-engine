@@ -22,9 +22,24 @@ public:
 	{
 	}
 
-	~ResourceGroupImpl()
+	~ResourceGroupImpl();
+
+	ANKI_USE_RESULT Error init(const ResourceGroupInitInfo& init);
+
+	VkDescriptorSet getHandle() const
 	{
+		ANKI_ASSERT(m_handle);
+		return m_handle;
 	}
+
+private:
+	VkDescriptorSet m_handle = VK_NULL_HANDLE;
+
+	/// Holds the references to the resources. Used to release the references
+	/// gracefully
+	DynamicArray<GrObjectPtr<GrObject>> m_refs;
+
+	static U calcRefCount(const ResourceGroupInitInfo& init, Bool& hasUploaded);
 };
 /// @}
 

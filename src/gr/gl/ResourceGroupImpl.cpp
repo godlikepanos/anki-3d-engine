@@ -235,7 +235,7 @@ void ResourceGroupImpl::initResourceReferences(
 void ResourceGroupImpl::bind(
 	U slot, const TransientMemoryInfo& transientInfo, GlState& state)
 {
-	ANKI_ASSERT(slot < MAX_RESOURCE_GROUPS);
+	ANKI_ASSERT(slot < MAX_BOUND_RESOURCE_GROUPS);
 
 	// Bind textures
 	if(m_textureNamesCount)

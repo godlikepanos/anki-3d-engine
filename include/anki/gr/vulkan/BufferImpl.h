@@ -41,6 +41,12 @@ public:
 #endif
 	}
 
+	VkBuffer getHandle() const
+	{
+		ANKI_ASSERT(isCreated());
+		return m_handle;
+	}
+
 private:
 	VkBuffer m_handle = VK_NULL_HANDLE;
 	GpuMemoryAllocationHandle m_memHandle;

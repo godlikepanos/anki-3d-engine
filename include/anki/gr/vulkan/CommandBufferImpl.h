@@ -74,6 +74,9 @@ public:
 
 	void endRenderPass();
 
+	void bindResourceGroup(
+		ResourceGroupPtr rc, U slot, const TransientMemoryInfo* dynInfo);
+
 	void drawArrays(U32 count, U32 instanceCount, U32 first, U32 baseInstance)
 	{
 		drawcallCommon();
@@ -97,10 +100,11 @@ private:
 	Bool m_firstRpassDrawcall = true; ///< First drawcall in a renderpass.
 	FramebufferPtr m_activeFb;
 
-	/// @name cleanup_lists
+	/// @name cleanup_references
 	/// @{
 	List<PipelinePtr> m_pplineList;
 	List<FramebufferPtr> m_fbList;
+	List<ResourceGroupPtr> m_rcList;
 /// @}
 
 #if ANKI_ASSERTIONS

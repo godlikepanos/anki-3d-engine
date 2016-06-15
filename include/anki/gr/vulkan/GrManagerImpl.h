@@ -61,6 +61,34 @@ public:
 		return m_globalPipelineLayout;
 	}
 
+	ANKI_USE_RESULT Error allocateDescriptorSet(VkDescriptorSet& out)
+	{
+		out = VK_NULL_HANDLE;
+		VkDescriptorSetAllocateInfo ci = {};
+		ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		ci.descriptorPool = m_globalDescriptorPool;
+		ci.descriptorSetCount = 1;
+		ci.pSetLayouts = &m_globalDescriptorSetLayout;
+
+		LockGuard<Mutex> lock(m_globalDescriptorPoolMtx);
+		if(++m_descriptorSetAllocationCount > MAX_RESOURCE_GROUPS)
+		{
+			ANKI_LOGE("Exceeded the MAX_RESOURCE_GROUPS");
+			return ErrorCode::OUT_OF_MEMORY;
+		}
+		ANKI_VK_CHECK(vkAllocateDescriptorSets(m_device, &ci, &out));
+		return ErrorCode::NONE;
+	}
+
+	void freeDescriptorSet(VkDescriptorSet ds)
+	{
+		ANKI_ASSERT(ds);
+		LockGuard<Mutex> lock(m_globalDescriptorPoolMtx);
+		--m_descriptorSetAllocationCount;
+		ANKI_VK_CHECKF(
+			vkFreeDescriptorSets(m_device, m_globalDescriptorPool, 1, &ds));
+	}
+
 	VkCommandBuffer newCommandBuffer(Thread::Id tid, Bool secondLevel);
 
 	void deleteCommandBuffer(
@@ -169,6 +197,9 @@ private:
 	/// @}
 
 	VkDescriptorSetLayout m_globalDescriptorSetLayout = VK_NULL_HANDLE;
+	VkDescriptorPool m_globalDescriptorPool = VK_NULL_HANDLE;
+	Mutex m_globalDescriptorPoolMtx;
+	U32 m_descriptorSetAllocationCount = 0;
 	VkPipelineLayout m_globalPipelineLayout = VK_NULL_HANDLE;
 
 	/// Map for compatible render passes.
@@ -228,6 +259,7 @@ private:
 	ANKI_USE_RESULT Error initSwapchain(const GrManagerInitInfo& init);
 	ANKI_USE_RESULT Error initFramebuffers(const GrManagerInitInfo& init);
 	ANKI_USE_RESULT Error initGlobalDsetLayout();
+	ANKI_USE_RESULT Error initGlobalDsetPool();
 	ANKI_USE_RESULT Error initGlobalPplineLayout();
 	void initMemory();
 

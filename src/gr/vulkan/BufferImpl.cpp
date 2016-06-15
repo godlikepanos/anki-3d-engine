@@ -60,9 +60,8 @@ Error BufferImpl::init(
 		// Fallback
 		if(m_memIdx == MAX_U32)
 		{
-			m_memIdx = getGrManagerImpl().findMemoryType(req.memoryTypeBits,
-				VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-				0);
+			m_memIdx = getGrManagerImpl().findMemoryType(
+				req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 0);
 		}
 	}
 	else

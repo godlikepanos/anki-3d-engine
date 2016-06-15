@@ -7,6 +7,7 @@
 #include <anki/gr/vulkan/CommandBufferImpl.h>
 
 #include <anki/gr/Pipeline.h>
+#include <anki/gr/ResourceGroup.h>
 
 namespace anki
 {
@@ -85,6 +86,7 @@ void CommandBuffer::endRenderPass()
 void CommandBuffer::bindResourceGroup(
 	ResourceGroupPtr rc, U slot, const TransientMemoryInfo* dynInfo)
 {
+	m_impl->bindResourceGroup(rc, slot, dynInfo);
 }
 
 //==============================================================================

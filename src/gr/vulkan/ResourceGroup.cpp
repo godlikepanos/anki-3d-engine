@@ -23,6 +23,12 @@ ResourceGroup::~ResourceGroup()
 //==============================================================================
 void ResourceGroup::init(const ResourceGroupInitInfo& init)
 {
+	m_impl.reset(getAllocator().newInstance<ResourceGroupImpl>(&getManager()));
+
+	if(m_impl->init(init))
+	{
+		ANKI_LOGF("Cannot recover");
+	}
 }
 
 } // end namespace anki
