@@ -26,14 +26,31 @@ public:
 
 	ANKI_USE_RESULT Error init(const ResourceGroupInitInfo& init);
 
+	Bool hasDescriptorSet() const
+	{
+		return m_handle != VK_NULL_HANDLE;
+	}
+
 	VkDescriptorSet getHandle() const
 	{
 		ANKI_ASSERT(m_handle);
 		return m_handle;
 	}
 
+	void getVertexBindingInfo(const VkBuffer*& buffers,
+		const VkDeviceSize*& offsets,
+		U& bindingCount) const
+	{
+		buffers = &m_vertBuffs[0];
+		offsets = &m_offsets[0];
+		bindingCount = m_bindingCount;
+	}
+
 private:
 	VkDescriptorSet m_handle = VK_NULL_HANDLE;
+	Array<VkBuffer, MAX_VERTEX_ATTRIBUTES> m_vertBuffs = {{}};
+	Array<VkDeviceSize, MAX_VERTEX_ATTRIBUTES> m_offsets = {{}};
+	U32 m_bindingCount = 0;
 
 	/// Holds the references to the resources. Used to release the references
 	/// gracefully

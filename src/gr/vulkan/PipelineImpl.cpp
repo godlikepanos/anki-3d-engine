@@ -47,6 +47,8 @@ public:
 
 		m_vertex.sType =
 			VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+		m_vertex.pVertexBindingDescriptions = &m_bindings[0];
+		m_vertex.pVertexAttributeDescriptions = &m_attribs[0];
 
 		m_ia.sType =
 			VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;

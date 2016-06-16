@@ -41,6 +41,18 @@ U ResourceGroupImpl::calcRefCount(
 		}
 	}
 
+	for(U i = 0; i < MAX_VERTEX_ATTRIBUTES; ++i)
+	{
+		if(init.m_vertexBuffers[i].m_buffer)
+		{
+			++count;
+		}
+		else if(init.m_vertexBuffers[i].m_uploadedMemory)
+		{
+			hasUploaded = true;
+		}
+	}
+
 	// TODO: The rest of the resources
 
 	return count;
@@ -49,10 +61,6 @@ U ResourceGroupImpl::calcRefCount(
 //==============================================================================
 Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 {
-	// Create
-	//
-	ANKI_CHECK(getGrManagerImpl().allocateDescriptorSet(m_handle));
-
 	// Store the references
 	//
 	Bool hasUploaded = false;
@@ -96,6 +104,11 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 
 	if(uniCount)
 	{
+		if(m_handle == VK_NULL_HANDLE)
+		{
+			ANKI_CHECK(getGrManagerImpl().allocateDescriptorSet(m_handle));
+		}
+
 		VkWriteDescriptorSet& w = write[writeCount++];
 		w.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		w.descriptorCount = uniCount;
@@ -105,8 +118,37 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 		w.dstSet = m_handle;
 	}
 
-	ANKI_ASSERT(writeCount > 0);
-	vkUpdateDescriptorSets(getDevice(), writeCount, &write[0], 0, nullptr);
+	// Check if it was created. It's not created only if the rc group contains
+	// only vertex info.
+	if(m_handle)
+	{
+		vkUpdateDescriptorSets(getDevice(), writeCount, &write[0], 0, nullptr);
+	}
+
+	// Vertex stuff
+	//
+	for(U i = 0; i < init.m_vertexBuffers.getSize(); ++i)
+	{
+		if(init.m_vertexBuffers[i].m_buffer)
+		{
+			m_vertBuffs[i] = init.m_vertexBuffers[i]
+								 .m_buffer->getImplementation()
+								 .getHandle();
+			m_offsets[i] = init.m_vertexBuffers[i].m_offset;
+			++m_bindingCount;
+
+			m_refs[refCount++] = init.m_vertexBuffers[i].m_buffer;
+		}
+		else if(init.m_vertexBuffers[i].m_uploadedMemory)
+		{
+			ANKI_ASSERT(0 && "TODO");
+			++m_bindingCount;
+		}
+		else
+		{
+			break;
+		}
+	}
 
 	return ErrorCode::NONE;
 }

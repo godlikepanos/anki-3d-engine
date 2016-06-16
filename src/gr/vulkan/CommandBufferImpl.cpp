@@ -232,21 +232,41 @@ void CommandBufferImpl::flush(CommandBuffer* cmdb)
 void CommandBufferImpl::bindResourceGroup(
 	ResourceGroupPtr rc, U slot, const TransientMemoryInfo* dynInfo)
 {
-	commandCommon();
 	// TODO set the correct binding point
-	Array<U32, MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS>
-		dynOffsets = {{}};
 
-	VkDescriptorSet dset = rc->getImplementation().getHandle();
-	vkCmdBindDescriptorSets(m_handle,
-		VK_PIPELINE_BIND_POINT_GRAPHICS,
-		getGrManagerImpl().getGlobalPipelineLayout(),
-		slot,
-		1,
-		&dset,
-		dynOffsets.getSize(),
-		&dynOffsets[0]);
+	commandCommon();
+	const ResourceGroupImpl& impl = rc->getImplementation();
 
+	if(impl.hasDescriptorSet())
+	{
+		Array<U32, MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS>
+			dynOffsets = {{}};
+
+		VkDescriptorSet dset = impl.getHandle();
+		vkCmdBindDescriptorSets(m_handle,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			getGrManagerImpl().getGlobalPipelineLayout(),
+			slot,
+			1,
+			&dset,
+			dynOffsets.getSize(),
+			&dynOffsets[0]);
+	}
+
+	// Bind vertex buffers only in the first set
+	if(slot == 0)
+	{
+		const VkBuffer* buffers = nullptr;
+		const VkDeviceSize* offsets = nullptr;
+		U bindingCount = 0;
+		impl.getVertexBindingInfo(buffers, offsets, bindingCount);
+		if(bindingCount)
+		{
+			vkCmdBindVertexBuffers(m_handle, 0, bindingCount, buffers, offsets);
+		}
+	}
+
+	// Hold the reference
 	m_rcList.pushBack(m_alloc, rc);
 }
 
