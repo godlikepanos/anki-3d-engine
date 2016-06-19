@@ -521,4 +521,60 @@ VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask)
 	return out;
 }
 
+//==============================================================================
+VkImageType convertTextureType(TextureType ak)
+{
+	VkImageType out = VK_IMAGE_TYPE_MAX_ENUM;
+	switch(ak)
+	{
+	case TextureType::CUBE:
+	case TextureType::CUBE_ARRAY:
+	case TextureType::_2D:
+	case TextureType::_2D_ARRAY:
+		out = VK_IMAGE_TYPE_2D;
+		break;
+	case TextureType::_3D:
+		out = VK_IMAGE_TYPE_3D;
+		break;
+	case TextureType::_1D:
+		out = VK_IMAGE_TYPE_1D;
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+
+	return out;
+}
+
+//==============================================================================
+VkImageViewType convertTextureViewType(TextureType ak)
+{
+	VkImageViewType out = VK_IMAGE_VIEW_TYPE_MAX_ENUM;
+	switch(ak)
+	{
+	case TextureType::_1D:
+		out = VK_IMAGE_VIEW_TYPE_1D;
+		break;
+	case TextureType::_2D:
+		out = VK_IMAGE_VIEW_TYPE_2D;
+		break;
+	case TextureType::_2D_ARRAY:
+		out = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+		break;
+	case TextureType::_3D:
+		out = VK_IMAGE_VIEW_TYPE_3D;
+		break;
+	case TextureType::CUBE:
+		out = VK_IMAGE_VIEW_TYPE_CUBE;
+		break;
+	case TextureType::CUBE_ARRAY:
+		out = VK_IMAGE_VIEW_TYPE_CUBE_ARRAY;
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+
+	return out;
+}
+
 } // end namespace anki

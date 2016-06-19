@@ -33,6 +33,12 @@ public:
 
 	GrManagerImpl& getGrManagerImpl();
 
+	GrManager& getGrManager()
+	{
+		ANKI_ASSERT(m_manager);
+		return *m_manager;
+	}
+
 protected:
 	GrManager* m_manager = nullptr;
 };

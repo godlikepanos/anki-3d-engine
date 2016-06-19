@@ -17,14 +17,23 @@ namespace anki
 class SamplerInitInfo
 {
 public:
+	F32 m_minLod = -1000.0;
+	F32 m_maxLod = 1000.0;
 	SamplingFilter m_minMagFilter = SamplingFilter::NEAREST;
 	SamplingFilter m_mipmapFilter = SamplingFilter::BASE;
 	CompareOperation m_compareOperation = CompareOperation::ALWAYS;
-	F32 m_minLod = -1000.0;
-	F32 m_maxLod = 1000.0;
 	I8 m_anisotropyLevel = 0;
 	Bool8 m_repeat = true; ///< Repeat or clamp.
+
+	U64 computeHash() const
+	{
+		return anki::computeHash(
+			this, offsetof(SamplerInitInfo, m_repeat) + sizeof(m_repeat));
+	}
 };
+
+static_assert(offsetof(SamplerInitInfo, m_repeat) == 12,
+	"Class needs to be tightly packed since we hash it");
 
 /// Texture initializer.
 class TextureInitInfo
@@ -33,11 +42,15 @@ public:
 	TextureType m_type = TextureType::_2D;
 	U32 m_width = 0;
 	U32 m_height = 0;
-	U32 m_depth =
-		0; ///< Relevant only for 3D, 2DynamicArray and CubeArray textures
+
+	/// Relevant only for 3D, 2DynamicArray and CubeArray textures.
+	U32 m_depth = 0;
+
 	PixelFormat m_format;
 	U8 m_mipmapsCount = 0;
 	U8 m_samples = 1;
+
+	Bool8 m_framebufferAttachment = false;
 
 	SamplerInitInfo m_sampling;
 };

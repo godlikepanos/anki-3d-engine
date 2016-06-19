@@ -55,6 +55,12 @@ public:
 		return m_device;
 	}
 
+	VkPhysicalDevice getPhysicalDevice() const
+	{
+		ANKI_ASSERT(m_physicalDevice);
+		return m_physicalDevice;
+	}
+
 	VkPipelineLayout getGlobalPipelineLayout() const
 	{
 		ANKI_ASSERT(m_globalPipelineLayout);

@@ -51,6 +51,20 @@ class GrManagerImpl;
 #define ANKI_VK_MEMSET_DBG(struct_) ((void)0)
 #endif
 
+ANKI_USE_RESULT inline Bool formatIsDepthStencil(PixelFormat fmt)
+{
+	if(fmt.m_components == ComponentFormat::D16
+		|| fmt.m_components == ComponentFormat::D24
+		|| fmt.m_components == ComponentFormat::D32)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
 /// Convert compare op.
 ANKI_USE_RESULT VkCompareOp convertCompareOp(CompareOperation ak);
 
@@ -87,6 +101,10 @@ ANKI_USE_RESULT VkAttachmentStoreOp convertStoreOp(AttachmentStoreOperation ak);
 /// Convert buffer usage bitmask.
 ANKI_USE_RESULT VkBufferUsageFlags convertBufferUsageBit(
 	BufferUsageBit usageMask);
+
+ANKI_USE_RESULT VkImageType convertTextureType(TextureType ak);
+
+ANKI_USE_RESULT VkImageViewType convertTextureViewType(TextureType ak);
 /// @}
 
 } // end namespace anki

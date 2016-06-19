@@ -32,6 +32,11 @@ public:
 		return m_memory == VK_NULL_HANDLE;
 	}
 
+	operator bool() const
+	{
+		return m_memory != VK_NULL_HANDLE;
+	}
+
 private:
 	GpuMemoryAllocatorChunk* m_chunk = nullptr;
 };
