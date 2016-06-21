@@ -243,7 +243,7 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 	app.applicationVersion = 1;
 	app.pEngineName = "AnKi 3D Engine";
 	app.engineVersion = (ANKI_VERSION_MAJOR << 1) | ANKI_VERSION_MINOR;
-	app.apiVersion = VK_MAKE_VERSION(1, 0, 8);
+	app.apiVersion = VK_MAKE_VERSION(1, 0, 3);
 
 	VkInstanceCreateInfo ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -381,7 +381,7 @@ Error GrManagerImpl::initSwapchain(const GrManagerInitInfo& init)
 		m_physicalDevice, m_surface, &formatCount, &formats[0]));
 
 	VkColorSpaceKHR colorspace = VK_COLOR_SPACE_MAX_ENUM_KHR;
-	while(--formatCount)
+	while(formatCount--)
 	{
 		if(formats[formatCount].format == VK_FORMAT_B8G8R8A8_SRGB)
 		{
@@ -752,9 +752,12 @@ void* GrManagerImpl::reallocateCallback(void* userData,
 //==============================================================================
 void GrManagerImpl::freeCallback(void* userData, void* ptr)
 {
-	ANKI_ASSERT(userData);
-	GrManagerImpl* self = static_cast<GrManagerImpl*>(userData);
-	self->getAllocator().getMemoryPool().free(ptr);
+	if(ptr)
+	{
+		ANKI_ASSERT(userData);
+		GrManagerImpl* self = static_cast<GrManagerImpl*>(userData);
+		self->getAllocator().getMemoryPool().free(ptr);
+	}
 }
 
 //==============================================================================

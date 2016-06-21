@@ -29,6 +29,7 @@ Error NativeWindow::init(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
 	//
 	ANKI_LOGI("Creating SDL window");
 
+#if ANKI_GR_BACKEND == ANKI_GR_BACKEND_GL
 	if(SDL_GL_SetAttribute(SDL_GL_RED_SIZE, init.m_rgbaBits[0])
 		|| SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, init.m_rgbaBits[1])
 		|| SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, init.m_rgbaBits[2])
@@ -39,11 +40,16 @@ Error NativeWindow::init(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
 		ANKI_LOGE("SDL_GL_SetAttribute() failed");
 		return ErrorCode::FUNCTION_FAILED;
 	}
+#endif
 
 	//
 	// Create window
 	//
-	U32 flags = SDL_WINDOW_OPENGL;
+	U32 flags = 0;
+
+#if ANKI_GR_BACKEND == ANKI_GR_BACKEND_GL
+	flags |= SDL_WINDOW_OPENGL;
+#endif
 
 	if(init.m_fullscreenDesktopRez)
 	{
