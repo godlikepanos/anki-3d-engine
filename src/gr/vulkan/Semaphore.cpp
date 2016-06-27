@@ -50,15 +50,15 @@ SemaphorePtr SemaphoreFactory::newInstance()
 			if(!m_sems[count]->m_fence)
 			{
 				out = m_sems[count];
-		
-				// Pop it		
+
+				// Pop it
 				for(U i = count; i < m_semCount - 1; ++i)
 				{
 					m_sems[i] = m_sems[i + 1];
 				}
-				
+
 				--m_semCount;
-				
+
 				break;
 			}
 		}
@@ -90,7 +90,7 @@ void SemaphoreFactory::destroySemaphore(Semaphore* s)
 
 	m_sems[m_semCount] = s;
 	++m_semCount;
-	
+
 	releaseFences();
 }
 

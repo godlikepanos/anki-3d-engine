@@ -25,28 +25,28 @@ Fence* FenceFactory::newFence()
 	LockGuard<Mutex> lock(m_mtx);
 
 	Fence* out = nullptr;
-	
+
 	if(m_fenceCount > 0)
 	{
 		U count = m_fenceCount;
 		while(count--)
 		{
-			VkResult status = 
+			VkResult status =
 				vkGetFenceStatus(m_dev, m_fences[count]->getHandle());
 			if(status == VK_SUCCESS)
 			{
 				out = m_fences[count];
 				ANKI_VK_CHECKF(
 					vkResetFences(m_dev, 1, &m_fences[count]->getHandle()));
-			
-				// Pop it	
+
+				// Pop it
 				for(U i = count; i < m_fenceCount - 1; ++i)
 				{
 					m_fences[i] = m_fences[i + 1];
 				}
-		
+
 				--m_fenceCount;
-				
+
 				break;
 			}
 			else if(status != VK_NOT_READY)
@@ -55,7 +55,7 @@ Fence* FenceFactory::newFence()
 			}
 		}
 	}
-	
+
 	if(out == nullptr)
 	{
 		// Create a new one

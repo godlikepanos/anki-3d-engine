@@ -822,7 +822,7 @@ void GrManagerImpl::endFrame()
 
 //==============================================================================
 void GrManagerImpl::resetFrame(PerFrame& frame)
-{	
+{
 	frame.m_presentFence.reset(nullptr);
 	frame.m_acquireSemaphore.reset(nullptr);
 	frame.m_renderSemaphore.reset(nullptr);
