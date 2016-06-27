@@ -7,6 +7,7 @@
 
 #include <anki/gr/vulkan/VulkanObject.h>
 #include <anki/gr/vulkan/GpuMemoryAllocator.h>
+#include <anki/gr/vulkan/Semaphore.h>
 
 namespace anki
 {
@@ -43,9 +44,11 @@ private:
 	SamplerPtr m_sampler;
 	U32 m_memIdx = MAX_U32;
 	GpuMemoryAllocationHandle m_memHandle;
+	SemaphorePtr m_initLayoutSem;
 
-	U8 m_mipCount = 0;
 	TextureType m_type = TextureType::CUBE;
+	U8 m_mipCount = 0;
+	U32 m_layerCount = 0;
 	VkImageAspectFlags m_aspect = 0;
 
 	ANKI_USE_RESULT static VkFormatFeatureFlags calcFeatures(

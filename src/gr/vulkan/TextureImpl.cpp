@@ -7,6 +7,8 @@
 #include <anki/gr/Sampler.h>
 #include <anki/gr/GrManager.h>
 #include <anki/gr/vulkan/GrManagerImpl.h>
+#include <anki/gr/CommandBuffer.h>
+#include <anki/gr/vulkan/CommandBufferImpl.h>
 
 namespace anki
 {
@@ -35,6 +37,11 @@ TextureImpl::TextureImpl(GrManager* manager)
 //==============================================================================
 TextureImpl::~TextureImpl()
 {
+	if(m_viewHandle)
+	{
+		vkDestroyImageView(getDevice(), m_viewHandle, nullptr);
+	}
+
 	if(m_imageHandle)
 	{
 		vkDestroyImage(getDevice(), m_imageHandle, nullptr);
@@ -151,6 +158,41 @@ Error TextureImpl::init(const TextureInitInfo& init)
 	ANKI_CHECK(initImage(ctx));
 	ANKI_CHECK(initView(ctx));
 
+	// Change the image layout
+	VkImageLayout newLayout;
+	CommandBufferInitInfo cmdbinit;
+	CommandBufferPtr cmdb = getGrManager().newInstance<CommandBuffer>(cmdbinit);
+	if(init.m_framebufferAttachment)
+	{
+		if(formatIsDepthStencil(init.m_format))
+		{
+			newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		}
+		else
+		{
+			newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		}
+	}
+	else
+	{
+		newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	}
+
+	VkImageSubresourceRange range;
+	range.aspectMask = m_aspect;
+	range.baseArrayLayer = 0;
+	range.baseMipLevel = 0;
+	range.layerCount = m_layerCount;
+	range.levelCount = m_mipCount;
+
+	cmdb->getImplementation().setImageBarrier(
+		0, 0, VK_IMAGE_LAYOUT_UNDEFINED, 0, 0, newLayout, m_imageHandle, range);
+
+	m_initLayoutSem = getGrManagerImpl().newSemaphore();
+
+	cmdb->getImplementation().endRecording();
+	getGrManagerImpl().flushCommandBuffer(cmdb, m_initLayoutSem);
+
 	return ErrorCode::NONE;
 }
 
@@ -227,6 +269,8 @@ Error TextureImpl::initImage(CreateContext& ctx)
 	default:
 		ANKI_ASSERT(0);
 	}
+
+	m_layerCount = ci.arrayLayers;
 
 	ci.mipLevels = init.m_mipmapsCount;
 	ANKI_ASSERT(ci.mipLevels > 0);

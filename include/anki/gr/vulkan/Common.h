@@ -44,12 +44,98 @@ class GrManagerImpl;
 		}                                                                      \
 	} while(0)
 
-/// Debug initialize a vulkan structure
-#if ANKI_DEBUG
-#define ANKI_VK_MEMSET_DBG(struct_) memset(&struct_, 0xCC, sizeof(struct_))
-#else
-#define ANKI_VK_MEMSET_DBG(struct_) ((void)0)
-#endif
+/// A smart wrapper over some internal vulkan objects.
+template<typename TVkHandle, typename TControlBlock>
+class VulkanSmartWrapper
+{
+public:
+	VulkanSmartWrapper()
+	{
+	}
+
+	VulkanSmartWrapper(const VulkanSmartWrapper& b)
+	{
+		if(b.m_cb)
+		{
+			m_handle = b.m_handle;
+			m_cb = b.m_cb;
+			m_cb->m_refcount.fetchAdd(1);
+		}
+	}
+
+	VulkanSmartWrapper(TVkHandle handle, TControlBlock* cb)
+		: m_handle(handle)
+		, m_cb(cb)
+	{
+	}
+
+	~VulkanSmartWrapper()
+	{
+		destroy();
+	}
+
+	VulkanSmartWrapper& operator=(const VulkanSmartWrapper& b)
+	{
+		destroy();
+
+		if(b.m_cb)
+		{
+			m_handle = b.m_handle;
+			m_cb = b.m_cb;
+			m_cb->m_refcount.fetchAdd(1);
+		}
+
+		return *this;
+	}
+
+	const TVkHandle& get() const
+	{
+		ANKI_ASSERT(m_handle);
+		return m_handle;
+	}
+
+	operator const TVkHandle&() const
+	{
+		return get();
+	}
+
+	const TVkHandle* operator&() const
+	{
+		return &get();
+	}
+
+	operator Bool() const
+	{
+		return m_cb != nullptr;
+	}
+
+	void reset()
+	{
+		destroy();
+	}
+
+protected:
+	TVkHandle m_handle = VK_NULL_HANDLE;
+	TControlBlock* m_cb = nullptr;
+
+	void destroy()
+	{
+		if(m_cb)
+		{
+			U count = m_cb->m_refcount.fetchSub(1);
+			if(count == 1)
+			{
+				ANKI_ASSERT(m_handle);
+				m_cb->deleteHandle(m_handle);
+				auto alloc = m_cb->getAllocator();
+				alloc.deleteInstance(m_cb);
+
+				m_handle = VK_NULL_HANDLE;
+				m_cb = nullptr;
+			}
+		}
+	}
+};
 
 ANKI_USE_RESULT inline Bool formatIsDepthStencil(PixelFormat fmt)
 {

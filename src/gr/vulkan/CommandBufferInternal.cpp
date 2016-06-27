@@ -3,13 +3,13 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/gr/vulkan/ObjectRecycler.h>
+#include <anki/gr/vulkan/CommandBufferInternal.h>
 
 namespace anki
 {
 
 //==============================================================================
-CommandBufferObjectRecycler::~CommandBufferObjectRecycler()
+CommandBufferFactory::~CommandBufferFactory()
 {
 	for(CmdbType& type : m_types)
 	{
@@ -28,7 +28,7 @@ CommandBufferObjectRecycler::~CommandBufferObjectRecycler()
 }
 
 //==============================================================================
-Error CommandBufferObjectRecycler::init(
+Error CommandBufferFactory::init(
 	GenericMemoryPoolAllocator<U8> alloc, VkDevice dev, uint32_t queueFamily)
 {
 	m_alloc = alloc;
@@ -45,7 +45,7 @@ Error CommandBufferObjectRecycler::init(
 }
 
 //==============================================================================
-VkCommandBuffer CommandBufferObjectRecycler::newCommandBuffer(Bool secondLevel)
+VkCommandBuffer CommandBufferFactory::newCommandBuffer(Bool secondLevel)
 {
 	ANKI_ASSERT(isCreated());
 
@@ -80,7 +80,7 @@ VkCommandBuffer CommandBufferObjectRecycler::newCommandBuffer(Bool secondLevel)
 }
 
 //==============================================================================
-void CommandBufferObjectRecycler::deleteCommandBuffer(
+void CommandBufferFactory::deleteCommandBuffer(
 	VkCommandBuffer cmdb, Bool secondLevel)
 {
 	ANKI_ASSERT(isCreated());

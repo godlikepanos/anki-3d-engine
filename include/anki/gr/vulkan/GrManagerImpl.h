@@ -7,7 +7,9 @@
 
 #include <anki/gr/vulkan/Common.h>
 #include <anki/gr/vulkan/GpuMemoryAllocator.h>
-#include <anki/gr/vulkan/ObjectRecycler.h>
+#include <anki/gr/vulkan/CommandBufferInternal.h>
+#include <anki/gr/vulkan/Semaphore.h>
+#include <anki/gr/vulkan/Fence.h>
 #include <anki/util/HashMap.h>
 
 namespace anki
@@ -67,6 +69,9 @@ public:
 		return m_globalPipelineLayout;
 	}
 
+	/// @name object_creation
+	/// @{
+
 	ANKI_USE_RESULT Error allocateDescriptorSet(VkDescriptorSet& out)
 	{
 		out = VK_NULL_HANDLE;
@@ -99,6 +104,17 @@ public:
 
 	void deleteCommandBuffer(
 		VkCommandBuffer cmdb, Bool secondLevel, Thread::Id tid);
+
+	SemaphorePtr newSemaphore()
+	{
+		return m_semaphores.newInstance();
+	}
+
+	FencePtr newFence()
+	{
+		return m_fences.newInstance();
+	}
+	/// @}
 
 	VkFormat getDefaultSurfaceFormat() const
 	{
@@ -134,7 +150,10 @@ public:
 		return m_frame;
 	}
 
-	void flushCommandBuffer(CommandBufferImpl& impl, CommandBufferPtr ptr);
+	void flushCommandBuffer(CommandBufferPtr ptr,
+		SemaphorePtr signalSemaphore = {},
+		WeakArray<SemaphorePtr> waitSemaphores = {},
+		WeakArray<VkPipelineStageFlags> waitPplineStages = {});
 
 	/// @name Memory
 	/// @{
@@ -185,11 +204,11 @@ private:
 		VkImage m_image = VK_NULL_HANDLE;
 		VkImageView m_imageView = VK_NULL_HANDLE;
 
-		VkFence m_presentFence = VK_NULL_HANDLE;
-		VkSemaphore m_acquireSemaphore = VK_NULL_HANDLE;
+		FencePtr m_presentFence;
+		SemaphorePtr m_acquireSemaphore;
 
 		/// The semaphore that the submit that renders to the default FB.
-		VkSemaphore m_renderSemaphore = VK_NULL_HANDLE;
+		SemaphorePtr m_renderSemaphore;
 
 		/// Keep it here for deferred cleanup.
 		List<CommandBufferPtr> m_cmdbsSubmitted;
@@ -245,12 +264,15 @@ private:
 	class PerThread
 	{
 	public:
-		CommandBufferObjectRecycler m_cmdbs;
+		CommandBufferFactory m_cmdbs;
 	};
 
 	HashMap<Thread::Id, PerThread, PerThreadHasher, PerThreadCompare>
 		m_perThread;
 	SpinLock m_perThreadMtx;
+
+	FenceFactory m_fences;
+	SemaphoreFactory m_semaphores;
 /// @}
 
 #if ANKI_ASSERTIONS

@@ -13,14 +13,15 @@ namespace anki
 /// @addtogroup vulkan
 /// @{
 
-class CommandBufferObjectRecycler
+/// Command bufffer object recycler.
+class CommandBufferFactory
 {
 public:
-	CommandBufferObjectRecycler()
+	CommandBufferFactory()
 	{
 	}
 
-	~CommandBufferObjectRecycler();
+	~CommandBufferFactory();
 
 	ANKI_USE_RESULT Error init(GenericMemoryPoolAllocator<U8> alloc,
 		VkDevice dev,
@@ -32,7 +33,7 @@ public:
 	/// Free a command buffer.
 	void deleteCommandBuffer(VkCommandBuffer cmdb, Bool secondLevel);
 
-	void collectGarbage();
+	void collect();
 
 	Bool isCreated() const
 	{

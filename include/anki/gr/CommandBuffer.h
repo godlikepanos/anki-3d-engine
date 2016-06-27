@@ -78,6 +78,22 @@ private:
 	PtrSize m_chunkSize = 1024 * 64;
 };
 
+/// Command buffer initialization flags.
+enum class CommandBufferFlag
+{
+	SECOND_LEVEL = 1 << 0,
+
+	/// The command buffer is the frame's first. Or one of the first.
+	FRAME_FIRST = 1 << 1,
+
+	/// The command buffer is the frame's last. Or one of the last.
+	FRAME_LAST = 1 << 2,
+
+	/// It will contain a handfull of commands.
+	SMALL_BATCH = 1 << 3
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(CommandBufferFlag, inline)
+
 /// Command buffer init info.
 class CommandBufferInitInfo
 {

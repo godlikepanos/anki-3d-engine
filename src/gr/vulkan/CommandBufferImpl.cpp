@@ -31,7 +31,7 @@ CommandBufferImpl::~CommandBufferImpl()
 		ANKI_LOGW("Command buffer was empty");
 	}
 
-	if(!m_flushed)
+	if(!m_finalized)
 	{
 		ANKI_LOGW("Command buffer was not flushed");
 	}
@@ -109,7 +109,7 @@ void CommandBufferImpl::commandCommon()
 		&& "Commands must be recorder by the thread this command buffer was "
 		   "created");
 
-	ANKI_ASSERT(!m_flushed);
+	ANKI_ASSERT(!m_finalized);
 	ANKI_ASSERT(m_handle);
 }
 
@@ -201,10 +201,9 @@ void CommandBufferImpl::drawcallCommon()
 }
 
 //==============================================================================
-void CommandBufferImpl::flush(CommandBuffer* cmdb)
+void CommandBufferImpl::endRecording()
 {
-	ANKI_ASSERT(cmdb);
-	ANKI_ASSERT(!m_flushed);
+	ANKI_ASSERT(!m_finalized);
 	ANKI_ASSERT(!m_empty);
 
 	if(m_frameLast)
@@ -224,8 +223,7 @@ void CommandBufferImpl::flush(CommandBuffer* cmdb)
 	}
 
 	ANKI_VK_CHECKF(vkEndCommandBuffer(m_handle));
-	getGrManagerImpl().flushCommandBuffer(*this, CommandBufferPtr(cmdb));
-	m_flushed = true;
+	m_finalized = true;
 }
 
 //==============================================================================

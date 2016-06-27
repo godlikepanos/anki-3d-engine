@@ -5,6 +5,7 @@
 
 #include <anki/gr/CommandBuffer.h>
 #include <anki/gr/vulkan/CommandBufferImpl.h>
+#include <anki/gr/vulkan/GrManagerImpl.h>
 
 #include <anki/gr/Pipeline.h>
 #include <anki/gr/ResourceGroup.h>
@@ -45,7 +46,11 @@ CommandBufferInitHints CommandBuffer::computeInitHints() const
 //==============================================================================
 void CommandBuffer::flush()
 {
-	m_impl->flush(this);
+	m_impl->endRecording();
+	m_impl->getGrManagerImpl().flushCommandBuffer(CommandBufferPtr(this),
+		SemaphorePtr(),
+		WeakArray<SemaphorePtr>(),
+		WeakArray<VkPipelineStageFlags>());
 }
 
 //==============================================================================

@@ -83,45 +83,7 @@ public:
 		vkCmdDraw(m_handle, count, instanceCount, first, baseInstance);
 	}
 
-	void flush(CommandBuffer* cmdb);
-
-private:
-	StackAllocator<U8> m_alloc;
-
-	VkCommandBuffer m_handle = VK_NULL_HANDLE;
-	Bool8 m_secondLevel = false;
-	Bool8 m_frameFirst = false;
-	Bool8 m_frameLast = false;
-	Bool8 m_renderedToDefaultFb = false;
-	Bool8 m_flushed = false;
-	Bool8 m_empty = true;
-	Thread::Id m_tid = 0;
-
-	Bool m_firstRpassDrawcall = true; ///< First drawcall in a renderpass.
-	FramebufferPtr m_activeFb;
-
-	/// @name cleanup_references
-	/// @{
-	List<PipelinePtr> m_pplineList;
-	List<FramebufferPtr> m_fbList;
-	List<ResourceGroupPtr> m_rcList;
-/// @}
-
-#if ANKI_ASSERTIONS
-	// Debug stuff
-	Bool8 m_insideRenderPass = false;
-	VkSubpassContents m_subpassContents = VK_SUBPASS_CONTENTS_MAX_ENUM;
-#endif
-
-	/// Some common operations per command.
-	void commandCommon();
-
-	void drawcallCommon();
-
-	Bool insideRenderPass() const
-	{
-		return m_activeFb.isCreated();
-	}
+	void endRecording();
 
 	void setImageBarrier(VkPipelineStageFlags srcStage,
 		VkAccessFlags srcAccess,
@@ -161,6 +123,69 @@ private:
 
 		vkCmdPipelineBarrier(
 			m_handle, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &inf);
+	}
+
+	void setImageBarrier(VkPipelineStageFlags srcStage,
+		VkAccessFlags srcAccess,
+		VkImageLayout prevLayout,
+		VkPipelineStageFlags dstStage,
+		VkAccessFlags dstAccess,
+		VkImageLayout newLayout,
+		VkImage img,
+		const VkImageSubresourceRange& range)
+	{
+		ANKI_ASSERT(img);
+		VkImageMemoryBarrier inf = {};
+		inf.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		inf.srcAccessMask = srcAccess;
+		inf.dstAccessMask = dstAccess;
+		inf.oldLayout = prevLayout;
+		inf.newLayout = newLayout;
+		inf.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		inf.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		inf.image = img;
+		inf.subresourceRange = range;
+
+		vkCmdPipelineBarrier(
+			m_handle, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &inf);
+	}
+
+private:
+	StackAllocator<U8> m_alloc;
+
+	VkCommandBuffer m_handle = VK_NULL_HANDLE;
+	Bool8 m_secondLevel = false;
+	Bool8 m_frameFirst = false;
+	Bool8 m_frameLast = false;
+	Bool8 m_renderedToDefaultFb = false;
+	Bool8 m_finalized = false;
+	Bool8 m_empty = true;
+	Thread::Id m_tid = 0;
+
+	Bool m_firstRpassDrawcall = true; ///< First drawcall in a renderpass.
+	FramebufferPtr m_activeFb;
+
+	/// @name cleanup_references
+	/// @{
+	List<PipelinePtr> m_pplineList;
+	List<FramebufferPtr> m_fbList;
+	List<ResourceGroupPtr> m_rcList;
+/// @}
+
+#if ANKI_ASSERTIONS
+	// Debug stuff
+	Bool8 m_insideRenderPass = false;
+	VkSubpassContents m_subpassContents = VK_SUBPASS_CONTENTS_MAX_ENUM;
+#endif
+
+	/// Some common operations per command.
+	void commandCommon();
+
+	void drawcallCommon();
+
+	Bool insideRenderPass() const
+	{
+		return m_activeFb.isCreated();
 	}
 };
 /// @}
