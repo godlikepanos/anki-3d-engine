@@ -6,6 +6,10 @@
 #pragma once
 
 #include <anki/gr/vulkan/VulkanObject.h>
+#include <anki/gr/CommandBuffer.h>
+
+#include <anki/gr/vulkan/TextureImpl.h>
+
 #include <anki/util/List.h>
 
 namespace anki
@@ -41,12 +45,14 @@ public:
 
 	Bool isTheFirstFramebufferOfTheFrame() const
 	{
-		return m_frameFirst;
+		return (m_flags & CommandBufferFlag::FRAME_FIRST)
+			== CommandBufferFlag::FRAME_FIRST;
 	}
 
 	Bool isTheLastFramebufferOfTheFrame() const
 	{
-		return m_frameLast;
+		return (m_flags & CommandBufferFlag::FRAME_LAST)
+			== CommandBufferFlag::FRAME_LAST;
 	}
 
 	void setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
@@ -92,46 +98,6 @@ public:
 		VkAccessFlags dstAccess,
 		VkImageLayout newLayout,
 		VkImage img,
-		VkImageAspectFlagBits aspect,
-		TextureType type,
-		const TextureSurfaceInfo& surface)
-	{
-		ANKI_ASSERT(img);
-		VkImageMemoryBarrier inf = {};
-		inf.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		inf.srcAccessMask = srcAccess;
-		inf.dstAccessMask = dstAccess;
-		inf.oldLayout = prevLayout;
-		inf.newLayout = newLayout;
-		inf.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		inf.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		inf.image = img;
-		inf.subresourceRange.aspectMask = aspect;
-		inf.subresourceRange.baseMipLevel = surface.m_level;
-		inf.subresourceRange.levelCount = 1;
-
-		switch(type)
-		{
-		case TextureType::_2D:
-			inf.subresourceRange.baseArrayLayer = 0;
-			inf.subresourceRange.layerCount = 1;
-			break;
-		default:
-			ANKI_ASSERT(0 && "TODO");
-			break;
-		}
-
-		vkCmdPipelineBarrier(
-			m_handle, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &inf);
-	}
-
-	void setImageBarrier(VkPipelineStageFlags srcStage,
-		VkAccessFlags srcAccess,
-		VkImageLayout prevLayout,
-		VkPipelineStageFlags dstStage,
-		VkAccessFlags dstAccess,
-		VkImageLayout newLayout,
-		VkImage img,
 		const VkImageSubresourceRange& range)
 	{
 		ANKI_ASSERT(img);
@@ -150,13 +116,32 @@ public:
 			m_handle, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &inf);
 	}
 
+	void setImageBarrier(VkPipelineStageFlags srcStage,
+		VkAccessFlags srcAccess,
+		VkImageLayout prevLayout,
+		VkPipelineStageFlags dstStage,
+		VkAccessFlags dstAccess,
+		VkImageLayout newLayout,
+		TexturePtr tex,
+		const VkImageSubresourceRange& range)
+	{
+		setImageBarrier(srcStage,
+			srcAccess,
+			prevLayout,
+			dstStage,
+			dstAccess,
+			newLayout,
+			tex->getImplementation().getImageHandle(),
+			range);
+
+		m_texList.pushBack(m_alloc, tex);
+	}
+
 private:
 	StackAllocator<U8> m_alloc;
 
 	VkCommandBuffer m_handle = VK_NULL_HANDLE;
-	Bool8 m_secondLevel = false;
-	Bool8 m_frameFirst = false;
-	Bool8 m_frameLast = false;
+	CommandBufferFlag m_flags = CommandBufferFlag::NONE;
 	Bool8 m_renderedToDefaultFb = false;
 	Bool8 m_finalized = false;
 	Bool8 m_empty = true;
@@ -170,6 +155,7 @@ private:
 	List<PipelinePtr> m_pplineList;
 	List<FramebufferPtr> m_fbList;
 	List<ResourceGroupPtr> m_rcList;
+	List<TexturePtr> m_texList;
 /// @}
 
 #if ANKI_ASSERTIONS

@@ -44,6 +44,7 @@ private:
 	SamplerPtr m_sampler;
 	U32 m_memIdx = MAX_U32;
 	GpuMemoryAllocationHandle m_memHandle;
+
 	SemaphorePtr m_initLayoutSem;
 
 	TextureType m_type = TextureType::CUBE;

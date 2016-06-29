@@ -135,7 +135,7 @@ Error Ms::buildCommandBuffers(
 	{
 		// Create the command buffer and set some state
 		CommandBufferInitInfo cinf;
-		cinf.m_secondLevel = true;
+		cinf.m_flags = CommandBufferFlag::SECOND_LEVEL;
 		cinf.m_framebuffer = m_fb;
 		CommandBufferPtr cmdb =
 			m_r->getGrManager().newInstance<CommandBuffer>(cinf);

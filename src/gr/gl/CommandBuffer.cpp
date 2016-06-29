@@ -46,7 +46,8 @@ void CommandBuffer::init(CommandBufferInitInfo& inf)
 	m_impl->init(inf);
 
 #if ANKI_ASSERTS_ENABLED
-	if(inf.m_secondLevel)
+	if((inf.m_flags & CommandBufferFlag::SECOND_LEVEL)
+		== CommandBufferFlag::SECOND_LEVEL)
 	{
 		ANKI_ASSERT(inf.m_framebuffer.isCreated());
 		m_impl->m_dbg.m_insideRenderPass = true;

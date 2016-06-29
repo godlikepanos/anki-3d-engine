@@ -226,8 +226,8 @@ ANKI_TEST(Gr, SimpleDrawcall)
 			gr->beginFrame();
 
 			CommandBufferInitInfo cinit;
-			cinit.m_frameFirstCommandBuffer = true;
-			cinit.m_frameLastCommandBuffer = true;
+			cinit.m_flags =
+				CommandBufferFlag::FRAME_FIRST | CommandBufferFlag::FRAME_LAST;
 			CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
 
 			cmdb->setViewport(0, 0, WIDTH, HEIGHT);
@@ -356,8 +356,8 @@ ANKI_TEST(Gr, DrawWithUniforms)
 			gr->beginFrame();
 
 			CommandBufferInitInfo cinit;
-			cinit.m_frameFirstCommandBuffer = true;
-			cinit.m_frameLastCommandBuffer = true;
+			cinit.m_flags =
+				CommandBufferFlag::FRAME_FIRST | CommandBufferFlag::FRAME_LAST;
 			CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
 
 			cmdb->setViewport(0, 0, WIDTH, HEIGHT);
@@ -478,8 +478,8 @@ ANKI_TEST(Gr, DrawWithVertex)
 			gr->beginFrame();
 
 			CommandBufferInitInfo cinit;
-			cinit.m_frameFirstCommandBuffer = true;
-			cinit.m_frameLastCommandBuffer = true;
+			cinit.m_flags =
+				CommandBufferFlag::FRAME_FIRST | CommandBufferFlag::FRAME_LAST;
 			CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
 
 			cmdb->setViewport(0, 0, WIDTH, HEIGHT);

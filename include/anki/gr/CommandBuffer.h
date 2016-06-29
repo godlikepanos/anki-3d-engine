@@ -79,8 +79,10 @@ private:
 };
 
 /// Command buffer initialization flags.
-enum class CommandBufferFlag
+enum class CommandBufferFlag : U8
 {
+	NONE = 0,
+
 	SECOND_LEVEL = 1 << 0,
 
 	/// The command buffer is the frame's first. Or one of the first.
@@ -90,7 +92,16 @@ enum class CommandBufferFlag
 	FRAME_LAST = 1 << 2,
 
 	/// It will contain a handfull of commands.
-	SMALL_BATCH = 1 << 3
+	SMALL_BATCH = 1 << 3,
+
+	/// Will contain graphics work.
+	GRAPHICS_WORK = 1 << 4,
+
+	/// Will contain transfer commands.
+	TRANSFER_WORK = 1 << 5,
+
+	/// Will contain compute work.
+	COMPUTE_WORK = 1 << 6,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(CommandBufferFlag, inline)
 
@@ -98,15 +109,10 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(CommandBufferFlag, inline)
 class CommandBufferInitInfo
 {
 public:
-	Bool m_secondLevel = false;
 	FramebufferPtr m_framebuffer; ///< For second level command buffers.
 	CommandBufferInitHints m_hints;
 
-	/// Set it to true if this command buffer is the frame's first.
-	Bool m_frameFirstCommandBuffer = false;
-
-	/// Set it to true if this command buffer is the frame's last.
-	Bool m_frameLastCommandBuffer = false;
+	CommandBufferFlag m_flags = CommandBufferFlag::NONE;
 };
 
 /// Command buffer.

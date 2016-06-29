@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/gr/vulkan/CommandBufferImpl.h>
-#include <anki/gr/CommandBuffer.h>
 #include <anki/gr/vulkan/GrManagerImpl.h>
 
 #include <anki/gr/Pipeline.h>
@@ -38,12 +37,15 @@ CommandBufferImpl::~CommandBufferImpl()
 
 	if(m_handle)
 	{
-		getGrManagerImpl().deleteCommandBuffer(m_handle, m_secondLevel, m_tid);
+		Bool secondLevel = (m_flags & CommandBufferFlag::SECOND_LEVEL)
+			== CommandBufferFlag::SECOND_LEVEL;
+		getGrManagerImpl().deleteCommandBuffer(m_handle, secondLevel, m_tid);
 	}
 
 	m_pplineList.destroy(m_alloc);
 	m_fbList.destroy(m_alloc);
 	m_rcList.destroy(m_alloc);
+	m_texList.destroy(m_alloc);
 }
 
 //==============================================================================
@@ -57,19 +59,19 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 		0,
 		false);
 
-	m_secondLevel = init.m_secondLevel;
-	m_frameLast = init.m_frameLastCommandBuffer;
-	m_frameFirst = init.m_frameFirstCommandBuffer;
+	m_flags = init.m_flags;
 	m_tid = Thread::getCurrentThreadId();
 
-	m_handle = getGrManagerImpl().newCommandBuffer(m_tid, m_secondLevel);
+	Bool secondLevel = (m_flags & CommandBufferFlag::SECOND_LEVEL)
+		== CommandBufferFlag::SECOND_LEVEL;
+	m_handle = getGrManagerImpl().newCommandBuffer(m_tid, secondLevel);
 	ANKI_ASSERT(m_handle);
 
 	// Begin recording
 	VkCommandBufferInheritanceInfo inheritance = {};
 	inheritance.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
 
-	if(init.m_secondLevel)
+	if(secondLevel)
 	{
 		ANKI_ASSERT(0 && "TODO");
 	}
@@ -83,7 +85,8 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 
 	// If it's the frame's first command buffer then do the default fb image
 	// transition
-	if(init.m_frameFirstCommandBuffer)
+	if((m_flags & CommandBufferFlag::FRAME_FIRST)
+		== CommandBufferFlag::FRAME_FIRST)
 	{
 		// Default FB barrier/transition
 		setImageBarrier(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
@@ -94,9 +97,7 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 			getGrManagerImpl().getDefaultSurfaceImage(
 				getGrManagerImpl().getFrame() % MAX_FRAMES_IN_FLIGHT),
-			VK_IMAGE_ASPECT_COLOR_BIT,
-			TextureType::_2D,
-			TextureSurfaceInfo(0, 0, 0));
+			VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 	}
 
 	return ErrorCode::NONE;
@@ -106,8 +107,8 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 void CommandBufferImpl::commandCommon()
 {
 	ANKI_ASSERT(Thread::getCurrentThreadId() == m_tid
-		&& "Commands must be recorder by the thread this command buffer was "
-		   "created");
+		&& "Commands must be recorder and flushed by the thread this command "
+		   "buffer was created");
 
 	ANKI_ASSERT(!m_finalized);
 	ANKI_ASSERT(m_handle);
@@ -203,10 +204,12 @@ void CommandBufferImpl::drawcallCommon()
 //==============================================================================
 void CommandBufferImpl::endRecording()
 {
+	commandCommon();
 	ANKI_ASSERT(!m_finalized);
 	ANKI_ASSERT(!m_empty);
 
-	if(m_frameLast)
+	if((m_flags & CommandBufferFlag::FRAME_LAST)
+		== CommandBufferFlag::FRAME_LAST)
 	{
 		// Default FB barrier/transition
 		setImageBarrier(VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
@@ -217,9 +220,7 @@ void CommandBufferImpl::endRecording()
 			VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
 			getGrManagerImpl().getDefaultSurfaceImage(
 				getGrManagerImpl().getFrame() % MAX_FRAMES_IN_FLIGHT),
-			VK_IMAGE_ASPECT_COLOR_BIT,
-			TextureType::_2D,
-			TextureSurfaceInfo(0, 0, 0));
+			VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 	}
 
 	ANKI_VK_CHECKF(vkEndCommandBuffer(m_handle));

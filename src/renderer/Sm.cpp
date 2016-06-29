@@ -264,7 +264,7 @@ Error Sm::doSpotLight(SceneNode& light,
 	}
 
 	CommandBufferInitInfo cinf;
-	cinf.m_secondLevel = true;
+	cinf.m_flags = CommandBufferFlag::SECOND_LEVEL;
 	cinf.m_framebuffer = fb;
 	cmdb = m_r->getGrManager().newInstance<CommandBuffer>(cinf);
 	cmdb->setViewport(0, 0, m_resolution, m_resolution);
@@ -299,7 +299,7 @@ Error Sm::doOmniLight(SceneNode& light,
 			if(start != end)
 			{
 				CommandBufferInitInfo cinf;
-				cinf.m_secondLevel = true;
+				cinf.m_flags = CommandBufferFlag::SECOND_LEVEL;
 				cinf.m_framebuffer = fbs[frCount];
 				cmdbs[frCount] =
 					m_r->getGrManager().newInstance<CommandBuffer>(cinf);
