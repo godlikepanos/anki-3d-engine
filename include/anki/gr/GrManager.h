@@ -114,10 +114,10 @@ anki_internal:
 
 private:
 	GrAllocator<U8> m_alloc; ///< Keep it first to get deleted last
+	Array<GrObjectCache, U(GrObjectType::COUNT)> m_caches;
 	UniquePtr<GrManagerImpl> m_impl;
 	String m_cacheDir;
 	U64 m_uuidIndex = 1;
-	Array<GrObjectCache, U(GrObjectType::COUNT)> m_caches;
 };
 
 //==============================================================================

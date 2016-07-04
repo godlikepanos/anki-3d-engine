@@ -149,18 +149,21 @@ Bool TextureImpl::imageSupported(const TextureInitInfo& init)
 }
 
 //==============================================================================
-Error TextureImpl::init(const TextureInitInfo& init)
+Error TextureImpl::init(const TextureInitInfo& init, Texture* tex)
 {
 	m_sampler = getGrManager().newInstanceCached<Sampler>(init.m_sampling);
+	m_width = init.m_width;
+	m_height = init.m_height;
 
 	CreateContext ctx;
 	ctx.m_init = init;
 	ANKI_CHECK(initImage(ctx));
 	ANKI_CHECK(initView(ctx));
 
-	// Change the image layout
+	// Transition the image layout from undefined to something relevant
 	VkImageLayout newLayout;
 	CommandBufferInitInfo cmdbinit;
+	cmdbinit.m_flags = CommandBufferFlag::GRAPHICS_WORK;
 	CommandBufferPtr cmdb = getGrManager().newInstance<CommandBuffer>(cmdbinit);
 	if(init.m_framebufferAttachment)
 	{
@@ -177,6 +180,7 @@ Error TextureImpl::init(const TextureInitInfo& init)
 	{
 		newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	}
+	m_optimalLayout = newLayout;
 
 	VkImageSubresourceRange range;
 	range.aspectMask = m_aspect;
@@ -186,12 +190,17 @@ Error TextureImpl::init(const TextureInitInfo& init)
 	range.levelCount = m_mipCount;
 
 	cmdb->getImplementation().setImageBarrier(
-		0, 0, VK_IMAGE_LAYOUT_UNDEFINED, 0, 0, newLayout, m_imageHandle, range);
-
-	m_initLayoutSem = getGrManagerImpl().newSemaphore();
+		VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+		VK_ACCESS_MEMORY_WRITE_BIT,
+		VK_IMAGE_LAYOUT_UNDEFINED,
+		VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+		VK_ACCESS_MEMORY_READ_BIT,
+		newLayout,
+		TexturePtr(tex),
+		range);
 
 	cmdb->getImplementation().endRecording();
-	getGrManagerImpl().flushCommandBuffer(cmdb, m_initLayoutSem);
+	getGrManagerImpl().flushCommandBuffer(cmdb);
 
 	return ErrorCode::NONE;
 }

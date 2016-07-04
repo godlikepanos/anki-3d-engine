@@ -505,4 +505,101 @@ ANKI_TEST(Gr, DrawWithVertex)
 	COMMON_END();
 }
 
+//==============================================================================
+ANKI_TEST(Gr, Sampler)
+{
+	COMMON_BEGIN();
+
+	{
+		SamplerInitInfo init;
+
+		SamplerPtr b = gr->newInstance<Sampler>(init);
+	}
+
+	COMMON_END();
+}
+
+//==============================================================================
+ANKI_TEST(Gr, Texture)
+{
+	COMMON_BEGIN();
+
+	{
+		TextureInitInfo init;
+		init.m_depth = 1;
+		init.m_format =
+			PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM);
+		init.m_framebufferAttachment = false;
+		init.m_height = 4;
+		init.m_width = 4;
+		init.m_mipmapsCount = 2;
+		init.m_samples = 1;
+		init.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
+		init.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
+		init.m_type = TextureType::_2D;
+
+		TexturePtr b = gr->newInstance<Texture>(init);
+	}
+
+	COMMON_END();
+}
+
+//==============================================================================
+ANKI_TEST(Gr, DrawWithTexture)
+{
+	COMMON_BEGIN();
+
+	{
+		TextureInitInfo init;
+		init.m_depth = 1;
+		init.m_format =
+			PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM);
+		init.m_framebufferAttachment = false;
+		init.m_height = 2;
+		init.m_width = 2;
+		init.m_mipmapsCount = 2;
+		init.m_samples = 1;
+		init.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
+		init.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
+		init.m_type = TextureType::_2D;
+
+		TexturePtr b = gr->newInstance<Texture>(init);
+
+		// Upload
+		Array2d<U8, 2 * 2, 3> mip0 = {
+			{255, 0, 0, 0, 255, 0, 0, 0, 255, 255, 0, 255}};
+
+		Array<U8, 3> mip1 = {{128, 128, 128}};
+
+		CommandBufferInitInfo cmdbinit;
+		cmdbinit.m_flags = CommandBufferFlag::TRANSFER_WORK;
+		CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cmdbinit);
+
+		Error err = ErrorCode::NONE;
+		TransientMemoryToken token;
+		void* ptr = gr->allocateFrameTransientMemory(
+			sizeof(mip0), BufferUsage::TRANSFER, token, &err);
+		ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
+		ANKI_TEST_EXPECT_NO_ERR(err);
+		memcpy(ptr, &mip0[0], sizeof(mip0));
+
+		cmdb->uploadTextureSurface(b, TextureSurfaceInfo(0, 0, 0), token);
+
+		ptr = gr->allocateFrameTransientMemory(
+			sizeof(mip1), BufferUsage::TRANSFER, token, &err);
+		ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
+		ANKI_TEST_EXPECT_NO_ERR(err);
+		memcpy(ptr, &mip1[0], sizeof(mip1));
+
+		cmdb->uploadTextureSurface(b, TextureSurfaceInfo(1, 0, 0), token);
+
+		cmdb->flush();
+
+		// Draw
+		// TODO
+	}
+
+	COMMON_END();
+}
+
 } // end namespace anki

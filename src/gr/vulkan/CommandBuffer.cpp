@@ -160,6 +160,7 @@ void CommandBuffer::uploadTextureSurface(TexturePtr tex,
 	const TextureSurfaceInfo& surf,
 	const TransientMemoryToken& token)
 {
+	m_impl->uploadTextureSurface(tex, surf, token);
 }
 
 //==============================================================================

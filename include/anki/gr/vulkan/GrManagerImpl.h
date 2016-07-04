@@ -10,6 +10,7 @@
 #include <anki/gr/vulkan/CommandBufferInternal.h>
 #include <anki/gr/vulkan/Semaphore.h>
 #include <anki/gr/vulkan/Fence.h>
+#include <anki/gr/vulkan/TransientMemoryManager.h>
 #include <anki/util/HashMap.h>
 
 namespace anki
@@ -24,6 +25,7 @@ class GrManagerImpl
 public:
 	GrManagerImpl(GrManager* manager)
 		: m_manager(manager)
+		, m_transientMem(manager)
 	{
 		ANKI_ASSERT(manager);
 	}
@@ -180,6 +182,11 @@ public:
 	U findMemoryType(U resourceMemTypeBits,
 		VkMemoryPropertyFlags preferFlags,
 		VkMemoryPropertyFlags avoidFlags) const;
+
+	TransientMemoryManager& getTransientMemoryManager()
+	{
+		return m_transientMem;
+	}
 	/// @}
 
 private:
@@ -237,6 +244,8 @@ private:
 
 	/// One for each mem type.
 	DynamicArray<GpuMemoryAllocator> m_gpuMemAllocs;
+
+	TransientMemoryManager m_transientMem;
 	/// @}
 
 	/// @name Per_thread_cache
@@ -289,7 +298,7 @@ private:
 	ANKI_USE_RESULT Error initGlobalDsetLayout();
 	ANKI_USE_RESULT Error initGlobalDsetPool();
 	ANKI_USE_RESULT Error initGlobalPplineLayout();
-	void initMemory();
+	ANKI_USE_RESULT Error initMemory(const ConfigSet& cfg);
 
 	static void* allocateCallback(void* userData,
 		size_t size,

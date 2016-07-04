@@ -136,6 +136,7 @@ GrManagerImpl::~GrManagerImpl()
 
 	m_perThread.destroy(getAllocator());
 
+	m_transientMem.destroy();
 	m_gpuMemAllocs.destroy(getAllocator());
 
 	m_semaphores.destroy(); // Destroy before fences
@@ -191,7 +192,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	vkGetDeviceQueue(m_device, m_queueIdx, 0, &m_queue);
 	ANKI_CHECK(initSwapchain(init));
 
-	initMemory();
+	ANKI_CHECK(initMemory(*init.m_config));
 	ANKI_CHECK(initGlobalDsetLayout());
 	ANKI_CHECK(initGlobalDsetPool());
 	ANKI_CHECK(initGlobalPplineLayout());
@@ -668,16 +669,22 @@ VkRenderPass GrManagerImpl::getOrCreateCompatibleRenderPass(
 }
 
 //==============================================================================
-void GrManagerImpl::initMemory()
+Error GrManagerImpl::initMemory(const ConfigSet& cfg)
 {
 	vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &m_memoryProperties);
 
+	// Create the high level allocators
 	m_gpuMemAllocs.create(getAllocator(), m_memoryProperties.memoryTypeCount);
 	U idx = 0;
 	for(GpuMemoryAllocator& alloc : m_gpuMemAllocs)
 	{
 		alloc.init(getAllocator(), m_device, idx++);
 	}
+
+	// Transient mem
+	ANKI_CHECK(m_transientMem.init(cfg));
+
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

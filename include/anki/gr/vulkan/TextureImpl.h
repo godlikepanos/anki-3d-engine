@@ -19,38 +19,28 @@ namespace anki
 class TextureImpl : public VulkanObject
 {
 public:
-	TextureImpl(GrManager* manager);
-
-	~TextureImpl();
-
-	ANKI_USE_RESULT Error init(const TextureInitInfo& init);
-
-	const SamplerPtr& getSampler() const
-	{
-		return m_sampler;
-	}
-
-	VkImage getImageHandle() const
-	{
-		ANKI_ASSERT(m_imageHandle);
-		return m_imageHandle;
-	}
-
-private:
-	class CreateContext;
-
 	VkImage m_imageHandle = VK_NULL_HANDLE;
 	VkImageView m_viewHandle = VK_NULL_HANDLE;
 	SamplerPtr m_sampler;
 	U32 m_memIdx = MAX_U32;
 	GpuMemoryAllocationHandle m_memHandle;
 
-	SemaphorePtr m_initLayoutSem;
-
+	U32 m_width = 0;
+	U32 m_height = 0;
 	TextureType m_type = TextureType::CUBE;
 	U8 m_mipCount = 0;
 	U32 m_layerCount = 0;
 	VkImageAspectFlags m_aspect = 0;
+	VkImageLayout m_optimalLayout = VK_IMAGE_LAYOUT_MAX_ENUM;
+
+	TextureImpl(GrManager* manager);
+
+	~TextureImpl();
+
+	ANKI_USE_RESULT Error init(const TextureInitInfo& init, Texture* tex);
+
+private:
+	class CreateContext;
 
 	ANKI_USE_RESULT static VkFormatFeatureFlags calcFeatures(
 		const TextureInitInfo& init);

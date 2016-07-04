@@ -17,7 +17,7 @@ namespace anki
 class SamplerImpl : public VulkanObject
 {
 public:
-	VkSampler m_sampler = VK_NULL_HANDLE;
+	VkSampler m_handle = VK_NULL_HANDLE;
 
 	SamplerImpl(GrManager* manager)
 		: VulkanObject(manager)
@@ -26,7 +26,7 @@ public:
 
 	~SamplerImpl();
 
-	void init(const SamplerInitInfo& init);
+	ANKI_USE_RESULT Error init(const SamplerInitInfo& init);
 };
 /// @}
 

@@ -89,6 +89,10 @@ public:
 		vkCmdDraw(m_handle, count, instanceCount, first, baseInstance);
 	}
 
+	void uploadTextureSurface(TexturePtr tex,
+		const TextureSurfaceInfo& surf,
+		const TransientMemoryToken& token);
+
 	void endRecording();
 
 	void setImageBarrier(VkPipelineStageFlags srcStage,
@@ -101,6 +105,8 @@ public:
 		const VkImageSubresourceRange& range)
 	{
 		ANKI_ASSERT(img);
+		commandCommon();
+
 		VkImageMemoryBarrier inf = {};
 		inf.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 		inf.srcAccessMask = srcAccess;
@@ -131,7 +137,7 @@ public:
 			dstStage,
 			dstAccess,
 			newLayout,
-			tex->getImplementation().getImageHandle(),
+			tex->getImplementation().m_imageHandle,
 			range);
 
 		m_texList.pushBack(m_alloc, tex);

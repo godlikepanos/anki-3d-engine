@@ -279,6 +279,21 @@ enum class AttachmentStoreOperation : U8
 };
 
 /// Buffer usage modes.
+enum class BufferUsage : U8
+{
+	UNIFORM,
+	STORAGE,
+	INDEX,
+	VERTEX,
+	INDIRECT,
+	TRANSFER, ///< For texture upload and buffer write.
+
+	COUNT,
+	FIRST = UNIFORM
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferUsage, inline)
+
+/// Buffer usage modes.
 enum class BufferUsageBit : U8
 {
 	NONE = 0,
@@ -287,25 +302,9 @@ enum class BufferUsageBit : U8
 	INDEX = 1 << 2,
 	VERTEX = 1 << 3,
 	INDIRECT = 1 << 4,
-	ATOMIC = 1 << 5
+	TRANSFER = 1 << 5
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferUsageBit, inline)
-
-/// Buffer usage modes.
-enum class BufferUsage : U8
-{
-	UNIFORM,
-	STORAGE,
-	INDEX,
-	VERTEX,
-	INDIRECT,
-	ATOMIC,
-	TRANSFER, ///< For texture upload and buffer write.
-
-	COUNT,
-	FIRST = UNIFORM
-};
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferUsage, inline)
 
 /// Buffer access from client modes.
 enum class BufferAccessBit : U8

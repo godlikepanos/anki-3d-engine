@@ -23,6 +23,12 @@ Sampler::~Sampler()
 //==============================================================================
 void Sampler::init(const SamplerInitInfo& init)
 {
+	m_impl.reset(getAllocator().newInstance<SamplerImpl>(&getManager()));
+
+	if(m_impl->init(init))
+	{
+		ANKI_LOGF("Cannot recover");
+	}
 }
 
 } // end namespace anki

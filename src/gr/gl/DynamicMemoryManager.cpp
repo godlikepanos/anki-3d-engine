@@ -201,7 +201,7 @@ void DynamicMemoryManager::allocate(PtrSize size,
 	}
 	else
 	{
-		ANKI_LOGF("Out of dynamic GPU memory");
+		ANKI_LOGF("Out of transient GPU memory");
 	}
 }
 
