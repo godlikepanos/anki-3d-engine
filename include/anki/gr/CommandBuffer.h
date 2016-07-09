@@ -194,7 +194,7 @@ public:
 
 	void dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ);
 
-	void generateMipmaps(TexturePtr tex, U depth, U face);
+	void generateMipmaps(TexturePtr tex, U depth, U face, U layer);
 
 	void copyTextureToTexture(TexturePtr src,
 		const TextureSurfaceInfo& srcSurf,

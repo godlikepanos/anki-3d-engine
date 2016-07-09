@@ -42,17 +42,58 @@ public:
 	TextureType m_type = TextureType::_2D;
 	U32 m_width = 0;
 	U32 m_height = 0;
-
-	/// Relevant only for 3D, 2DynamicArray and CubeArray textures.
-	U32 m_depth = 0;
+	U32 m_depth = 0; //< Relevant only for 3D textures.
+	U32 m_layerCount = 0; ///< Relevant only for texture arrays.
+	U8 m_mipmapsCount = 0;
 
 	PixelFormat m_format;
-	U8 m_mipmapsCount = 0;
 	U8 m_samples = 1;
 
 	Bool8 m_framebufferAttachment = false;
 
 	SamplerInitInfo m_sampling;
+
+	/// Check the validity of the structure.
+	Bool isValid() const
+	{
+#define ANKI_CHECK_VAL_VALIDITY(x)                                             \
+	do                                                                         \
+	{                                                                          \
+		if(!(x))                                                               \
+		{                                                                      \
+			return false;                                                      \
+		}                                                                      \
+	} while(0)
+
+		ANKI_CHECK_VAL_VALIDITY(m_mipmapsCount > 0);
+		ANKI_CHECK_VAL_VALIDITY(m_width > 0);
+		ANKI_CHECK_VAL_VALIDITY(m_height > 0);
+		switch(m_type)
+		{
+		case TextureType::_2D:
+			ANKI_CHECK_VAL_VALIDITY(m_depth == 1);
+			ANKI_CHECK_VAL_VALIDITY(m_layerCount == 1);
+			break;
+		case TextureType::CUBE:
+			ANKI_CHECK_VAL_VALIDITY(m_depth == 1);
+			ANKI_CHECK_VAL_VALIDITY(m_layerCount == 1);
+			break;
+		case TextureType::_3D:
+			ANKI_CHECK_VAL_VALIDITY(m_depth > 0);
+			ANKI_CHECK_VAL_VALIDITY(m_layerCount == 1);
+			break;
+		case TextureType::_2D_ARRAY:
+		case TextureType::CUBE_ARRAY:
+			ANKI_CHECK_VAL_VALIDITY(m_depth == 1);
+			ANKI_CHECK_VAL_VALIDITY(m_layerCount > 0);
+			break;
+		default:
+			ANKI_CHECK_VAL_VALIDITY(0);
+		};
+
+		return true;
+#undef ANKI_CHECK_VAL_VALIDITY
+	}
 };
 
 /// GPU texture

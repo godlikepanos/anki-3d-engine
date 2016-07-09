@@ -37,7 +37,8 @@ Error Sm::init(const ConfigSet& config)
 	sminit.m_type = TextureType::_2D_ARRAY;
 	sminit.m_width = m_resolution;
 	sminit.m_height = m_resolution;
-	sminit.m_depth = config.getNumber("sm.maxLights");
+	sminit.m_layerCount = config.getNumber("sm.maxLights");
+	sminit.m_depth = 1;
 	sminit.m_format = DEPTH_RT_PIXEL_FORMAT;
 	sminit.m_mipmapsCount = 1;
 	sminit.m_sampling.m_minMagFilter =
@@ -63,7 +64,7 @@ Error Sm::init(const ConfigSet& config)
 	{
 		sm.m_layerId = layer;
 
-		fbInit.m_depthStencilAttachment.m_arrayIndex = layer;
+		fbInit.m_depthStencilAttachment.m_surface.m_layer = layer;
 		sm.m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 		++layer;
@@ -81,8 +82,8 @@ Error Sm::init(const ConfigSet& config)
 
 		for(U i = 0; i < 6; ++i)
 		{
-			fbInit.m_depthStencilAttachment.m_arrayIndex = layer;
-			fbInit.m_depthStencilAttachment.m_faceIndex = i;
+			fbInit.m_depthStencilAttachment.m_surface.m_layer = layer;
+			fbInit.m_depthStencilAttachment.m_surface.m_face = i;
 			sm.m_fb[i] = getGrManager().newInstance<Framebuffer>(fbInit);
 		}
 

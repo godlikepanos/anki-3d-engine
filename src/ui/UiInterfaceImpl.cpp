@@ -224,10 +224,10 @@ Error UiInterfaceImpl::createR8Image(
 	void* loadData = m_gr->allocateFrameTransientMemory(
 		data.getSize(), BufferUsage::TRANSFER, token);
 	memcpy(loadData, &data[0], data.getSize());
-	cmdb->uploadTextureSurface(tex, TextureSurfaceInfo(0, 0, 0), token);
+	cmdb->uploadTextureSurface(tex, TextureSurfaceInfo(0, 0, 0, 0), token);
 
 	// Gen mips
-	cmdb->generateMipmaps(tex, 0, 0);
+	cmdb->generateMipmaps(tex, 0, 0, 0);
 	cmdb->flush();
 
 	// Create the UiImage

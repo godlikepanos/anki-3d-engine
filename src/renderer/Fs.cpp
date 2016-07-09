@@ -42,7 +42,7 @@ Error Fs::init(const ConfigSet&)
 	fbInit.m_depthStencilAttachment.m_texture = m_r->getMs().getDepthRt();
 	fbInit.m_depthStencilAttachment.m_loadOperation =
 		AttachmentLoadOperation::LOAD;
-	fbInit.m_depthStencilAttachment.m_mipmap = 1;
+	fbInit.m_depthStencilAttachment.m_surface.m_level = 1;
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 	// Init the global resources

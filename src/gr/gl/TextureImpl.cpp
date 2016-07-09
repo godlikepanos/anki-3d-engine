@@ -277,9 +277,7 @@ void TextureImpl::init(const TextureInitInfo& init)
 	// Sanity checks
 	//
 	ANKI_ASSERT(!isCreated());
-	ANKI_ASSERT(init.m_width > 0 && init.m_height > 0);
-	ANKI_ASSERT(init.m_mipmapsCount > 0);
-	ANKI_ASSERT(init.m_samples > 0);
+	ANKI_ASSERT(init.isValid());
 
 	// Create
 	//
@@ -290,13 +288,24 @@ void TextureImpl::init(const TextureInitInfo& init)
 	m_height = init.m_height;
 	m_depth = init.m_depth;
 	ANKI_ASSERT(m_depth > 0);
+	m_layerCount = init.m_layerCount;
+	ANKI_ASSERT(m_layerCount > 0);
 	m_target = convertTextureType(init.m_type);
+	m_texType = init.m_type;
 
 	convertTextureInformation(
 		init.m_format, m_compressed, m_format, m_internalFormat, m_type);
 
-	m_mipsCount =
-		min<U>(init.m_mipmapsCount, computeMaxMipmapCount(m_width, m_height));
+	if(m_target != GL_TEXTURE_3D)
+	{
+		m_mipsCount = min<U>(
+			init.m_mipmapsCount, computeMaxMipmapCount(m_width, m_height));
+	}
+	else
+	{
+		m_mipsCount = min<U>(init.m_mipmapsCount,
+			computeMaxMipmapCount(m_width, m_height, m_depth));
+	}
 
 	// Bind
 	bind();
@@ -315,16 +324,23 @@ void TextureImpl::init(const TextureInitInfo& init)
 			m_internalFormat,
 			m_width,
 			m_height,
-			init.m_depth * 6);
+			m_layerCount * 6);
 		break;
 	case GL_TEXTURE_2D_ARRAY:
+		glTexStorage3D(m_target,
+			m_mipsCount,
+			m_internalFormat,
+			m_width,
+			m_height,
+			m_layerCount);
+		break;
 	case GL_TEXTURE_3D:
 		glTexStorage3D(m_target,
 			m_mipsCount,
 			m_internalFormat,
 			m_width,
 			m_height,
-			init.m_depth);
+			m_depth);
 		break;
 	case GL_TEXTURE_2D_MULTISAMPLE:
 		glTexStorage2DMultisample(m_target,
@@ -344,20 +360,23 @@ void TextureImpl::init(const TextureInitInfo& init)
 	case GL_TEXTURE_1D:
 	case GL_TEXTURE_2D:
 	case GL_TEXTURE_2D_MULTISAMPLE:
-		m_surfaceCount = 1;
+		m_surfaceCountPerLevel = 1;
 		m_faceCount = 1;
 		break;
 	case GL_TEXTURE_CUBE_MAP:
-		m_surfaceCount = 6;
+		m_surfaceCountPerLevel = 6;
 		m_faceCount = 6;
 		break;
 	case GL_TEXTURE_CUBE_MAP_ARRAY:
-		m_surfaceCount = init.m_depth * 6;
+		m_surfaceCountPerLevel = m_layerCount * 6;
 		m_faceCount = 6;
 		break;
 	case GL_TEXTURE_2D_ARRAY:
+		m_surfaceCountPerLevel = m_layerCount;
+		m_faceCount = 1;
+		break;
 	case GL_TEXTURE_3D:
-		m_surfaceCount = init.m_depth;
+		m_surfaceCountPerLevel = m_depth;
 		m_faceCount = 1;
 		break;
 	default:
@@ -419,16 +438,14 @@ void TextureImpl::init(const TextureInitInfo& init)
 void TextureImpl::write(
 	const TextureSurfaceInfo& surf, void* data, PtrSize dataSize)
 {
-	U mipmap = surf.m_level;
-	U surfIdx = computeSurfaceIdx(surf);
-
+	checkSurface(surf);
 	ANKI_ASSERT(data);
 	ANKI_ASSERT(dataSize > 0);
-	ANKI_ASSERT(mipmap < m_mipsCount);
 
+	U mipmap = surf.m_level;
+	U surfIdx = computeSurfaceIdx(surf);
 	U w = m_width >> mipmap;
 	U h = m_height >> mipmap;
-
 	ANKI_ASSERT(w > 0);
 	ANKI_ASSERT(h > 0);
 
@@ -476,8 +493,6 @@ void TextureImpl::write(
 		break;
 	case GL_TEXTURE_2D_ARRAY:
 	case GL_TEXTURE_3D:
-		ANKI_ASSERT(m_depth > 0);
-
 		if(!m_compressed)
 		{
 			glTexSubImage3D(m_target,
@@ -515,22 +530,21 @@ void TextureImpl::write(
 }
 
 //==============================================================================
-void TextureImpl::generateMipmaps(U depth, U face)
+void TextureImpl::generateMipmaps(U depth, U face, U layer)
 {
-	U surface = computeSurfaceIdx(TextureSurfaceInfo(0, depth, face));
-	ANKI_ASSERT(surface < m_surfaceCount);
+	U surface = computeSurfaceIdx(TextureSurfaceInfo(0, depth, face, layer));
 	ANKI_ASSERT(!m_compressed);
 
-	if(m_surfaceCount > 1)
+	if(m_surfaceCountPerLevel > 1)
 	{
-		// Create the view array
+		// Lazily create the view array
 		if(m_texViews.getSize() == 0)
 		{
-			m_texViews.create(getAllocator(), m_surfaceCount);
+			m_texViews.create(getAllocator(), m_surfaceCountPerLevel);
 			memset(&m_texViews[0], 0, m_texViews.getSize() * sizeof(GLuint));
 		}
 
-		// Create the view
+		// Lazily create the view
 		if(m_texViews[surface] == 0)
 		{
 			glGenTextures(1, &m_texViews[surface]);
@@ -630,23 +644,22 @@ void TextureImpl::clear(
 //==============================================================================
 U TextureImpl::computeSurfaceIdx(const TextureSurfaceInfo& surf) const
 {
-	ANKI_ASSERT(surf.m_face < m_faceCount);
-	ANKI_ASSERT(surf.m_depth < m_depth);
-	ANKI_ASSERT(surf.m_level < m_mipsCount);
+	checkSurface(surf);
+	U out;
 
 	if(m_target == GL_TEXTURE_3D)
 	{
 		// Check depth for this level
-		U depth = m_depth >> surf.m_level;
-		ANKI_ASSERT(surf.m_depth < depth);
-		(void)depth;
-
-		return surf.m_depth;
+		ANKI_ASSERT(surf.m_depth < (m_depth >> surf.m_level));
+		out = surf.m_depth;
 	}
 	else
 	{
-		return m_faceCount * surf.m_depth + surf.m_face;
+		out = m_faceCount * surf.m_layer + surf.m_face;
 	}
+
+	ANKI_ASSERT(out < m_surfaceCountPerLevel);
+	return out;
 }
 
 } // end namespace anki

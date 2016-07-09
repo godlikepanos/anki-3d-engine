@@ -79,7 +79,8 @@ Error Ir::init(const ConfigSet& config)
 
 	texinit.m_width = m_fbSize;
 	texinit.m_height = m_fbSize;
-	texinit.m_depth = m_cubemapArrSize;
+	texinit.m_layerCount = m_cubemapArrSize;
+	texinit.m_depth = 1;
 	texinit.m_type = TextureType::CUBE_ARRAY;
 	texinit.m_format = Is::RT_PIXEL_FORMAT;
 	texinit.m_mipmapsCount = MAX_U8;
@@ -112,13 +113,14 @@ Error Ir::init(const ConfigSet& config)
 			{
 				// Do env
 				cmdb->clearTexture(
-					m_envCubemapArr, TextureSurfaceInfo(l, i, f), clear);
+					m_envCubemapArr, TextureSurfaceInfo(l, 0, f, i), clear);
 			}
 
 			for(U l = 0; l < irrMipCount; ++l)
 			{
-				cmdb->clearTexture(
-					m_irradianceCubemapArr, TextureSurfaceInfo(l, i, f), clear);
+				cmdb->clearTexture(m_irradianceCubemapArr,
+					TextureSurfaceInfo(l, 0, f, i),
+					clear);
 			}
 		}
 	}
@@ -270,12 +272,12 @@ Error Ir::renderReflection(RenderingContext& ctx,
 
 		// Copy env texture
 		cmdb->copyTextureToTexture(m_nestedR.getIs().getRt(),
-			TextureSurfaceInfo(0, 0, 0),
+			TextureSurfaceInfo(0, 0, 0, 0),
 			m_envCubemapArr,
-			TextureSurfaceInfo(0, cubemapIdx, i));
+			TextureSurfaceInfo(0, 0, i, cubemapIdx));
 
 		// Gen mips of env tex
-		cmdb->generateMipmaps(m_envCubemapArr, cubemapIdx, i);
+		cmdb->generateMipmaps(m_envCubemapArr, 0, i, cubemapIdx);
 	}
 
 	// Compute irradiance
@@ -294,8 +296,8 @@ Error Ir::renderReflection(RenderingContext& ctx,
 		FramebufferInitInfo fbinit;
 		fbinit.m_colorAttachmentCount = 1;
 		fbinit.m_colorAttachments[0].m_texture = m_irradianceCubemapArr;
-		fbinit.m_colorAttachments[0].m_arrayIndex = cubemapIdx;
-		fbinit.m_colorAttachments[0].m_faceIndex = i;
+		fbinit.m_colorAttachments[0].m_surface.m_layer = cubemapIdx;
+		fbinit.m_colorAttachments[0].m_surface.m_face = i;
 		fbinit.m_colorAttachments[0].m_format = Is::RT_PIXEL_FORMAT;
 		fbinit.m_colorAttachments[0].m_loadOperation =
 			AttachmentLoadOperation::DONT_CARE;
@@ -306,7 +308,7 @@ Error Ir::renderReflection(RenderingContext& ctx,
 		m_r->drawQuad(cmdb);
 		cmdb->endRenderPass();
 
-		cmdb->generateMipmaps(m_irradianceCubemapArr, cubemapIdx, i);
+		cmdb->generateMipmaps(m_irradianceCubemapArr, 0, i, cubemapIdx);
 	}
 
 	return ErrorCode::NONE;

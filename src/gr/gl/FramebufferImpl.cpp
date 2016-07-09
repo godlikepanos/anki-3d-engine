@@ -81,7 +81,7 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 void FramebufferImpl::attachTextureInternal(
 	GLenum attachment, const TextureImpl& tex, const Attachment& info)
 {
-	ANKI_ASSERT(info.m_mipmap < tex.m_mipsCount);
+	tex.checkSurface(info.m_surface);
 
 	const GLenum target = GL_FRAMEBUFFER;
 	switch(tex.m_target)
@@ -90,53 +90,39 @@ void FramebufferImpl::attachTextureInternal(
 #if ANKI_GL == ANKI_GL_DESKTOP
 	case GL_TEXTURE_2D_MULTISAMPLE:
 #endif
-		ANKI_ASSERT(info.m_arrayIndex == 0);
-		ANKI_ASSERT(info.m_depth == 0);
-		ANKI_ASSERT(info.m_faceIndex == 0);
-
-		glFramebufferTexture2D(
-			target, attachment, tex.m_target, tex.getGlName(), info.m_mipmap);
-		break;
-	case GL_TEXTURE_CUBE_MAP:
-		ANKI_ASSERT(info.m_arrayIndex == 0);
-		ANKI_ASSERT(info.m_depth == 0);
-		ANKI_ASSERT(info.m_faceIndex < 6);
-
 		glFramebufferTexture2D(target,
 			attachment,
-			GL_TEXTURE_CUBE_MAP_POSITIVE_X + info.m_faceIndex,
+			tex.m_target,
 			tex.getGlName(),
-			info.m_mipmap);
+			info.m_surface.m_level);
+		break;
+	case GL_TEXTURE_CUBE_MAP:
+		glFramebufferTexture2D(target,
+			attachment,
+			GL_TEXTURE_CUBE_MAP_POSITIVE_X + info.m_surface.m_face,
+			tex.getGlName(),
+			info.m_surface.m_level);
 		break;
 	case GL_TEXTURE_2D_ARRAY:
-		ANKI_ASSERT(info.m_arrayIndex < tex.m_depth);
-		ANKI_ASSERT(info.m_depth == 0);
-		ANKI_ASSERT(info.m_faceIndex == 0);
-
 		glFramebufferTextureLayer(target,
 			attachment,
 			tex.getGlName(),
-			info.m_mipmap,
-			info.m_arrayIndex);
+			info.m_surface.m_level,
+			info.m_surface.m_layer);
 		break;
 	case GL_TEXTURE_3D:
-		ANKI_ASSERT(info.m_arrayIndex == 0);
-		ANKI_ASSERT(info.m_depth < tex.m_depth);
-		ANKI_ASSERT(info.m_faceIndex == 0);
-
-		glFramebufferTextureLayer(
-			target, attachment, tex.getGlName(), info.m_mipmap, info.m_depth);
-		break;
-	case GL_TEXTURE_CUBE_MAP_ARRAY:
-		ANKI_ASSERT(info.m_arrayIndex < tex.m_depth);
-		ANKI_ASSERT(info.m_depth == 0);
-		ANKI_ASSERT(info.m_faceIndex < 6);
-
 		glFramebufferTextureLayer(target,
 			attachment,
 			tex.getGlName(),
-			info.m_mipmap,
-			info.m_arrayIndex * 6 + info.m_faceIndex);
+			info.m_surface.m_level,
+			info.m_surface.m_depth);
+		break;
+	case GL_TEXTURE_CUBE_MAP_ARRAY:
+		glFramebufferTextureLayer(target,
+			attachment,
+			tex.getGlName(),
+			info.m_surface.m_level,
+			info.m_surface.m_layer * 6 + info.m_surface.m_face);
 		break;
 	default:
 		ANKI_ASSERT(0);

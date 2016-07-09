@@ -22,10 +22,12 @@ public:
 	GLenum m_internalFormat = GL_NONE; ///< GL_COMPRESSED_RED, GL_RGB16 etc
 	GLenum m_format = GL_NONE;
 	GLenum m_type = GL_NONE;
+	TextureType m_texType = TextureType::_1D;
 	U32 m_width = 0;
 	U32 m_height = 0;
 	U32 m_depth = 0;
-	U32 m_surfaceCount = 0;
+	U32 m_layerCount = 0;
+	U32 m_surfaceCountPerLevel = 0;
 	U8 m_mipsCount = 0;
 	U8 m_faceCount = 0; ///< 6 for cubes and 1 for the rest
 	Bool8 m_compressed = false;
@@ -38,6 +40,12 @@ public:
 
 	~TextureImpl();
 
+	void checkSurface(const TextureSurfaceInfo& surf) const
+	{
+		checkTextureSurface(
+			m_texType, m_depth, m_mipsCount, m_layerCount, surf);
+	}
+
 	/// Create the texture storage.
 	void init(const TextureInitInfo& init);
 
@@ -45,7 +53,7 @@ public:
 	void write(const TextureSurfaceInfo& surf, void* data, PtrSize dataSize);
 
 	/// Generate mipmaps.
-	void generateMipmaps(U depth, U face);
+	void generateMipmaps(U depth, U face, U layer);
 
 	/// Copy a single surface from one texture to another.
 	static void copy(const TextureImpl& src,

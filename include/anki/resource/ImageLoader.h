@@ -14,7 +14,6 @@ namespace anki
 {
 
 /// Image loader.
-/// Used in Texture::load. Supported types: TGA and an AnKi specific format.
 class ImageLoader
 {
 public:
@@ -87,8 +86,16 @@ public:
 
 	U getDepth() const
 	{
-		ANKI_ASSERT(m_depth != 0);
-		return m_depth;
+		ANKI_ASSERT(
+			m_depthOrLayerCount != 0 && m_textureType == TextureType::_3D);
+		return m_depthOrLayerCount;
+	}
+
+	U getLayerCount() const
+	{
+		ANKI_ASSERT(m_depthOrLayerCount != 0
+			&& m_textureType == TextureType::_2D_ARRAY);
+		return m_depthOrLayerCount;
 	}
 
 	TextureType getTextureType() const
@@ -97,7 +104,7 @@ public:
 		return m_textureType;
 	}
 
-	const Surface& getSurface(U mipLevel, U layer) const;
+	const Surface& getSurface(U level, U depth, U face, U layer) const;
 
 	GenericMemoryPoolAllocator<U8> getAllocator() const
 	{
@@ -117,10 +124,13 @@ public:
 private:
 	GenericMemoryPoolAllocator<U8> m_alloc;
 	Atomic<I32> m_refcount = {0};
-	/// [mip][depthFace]
+
+	/// [mip][depth or face or layer]. Loader doesn't support cube arrays ATM
+	/// so face and layer won't be used at the same time.
 	DynamicArray<Surface> m_surfaces;
+
 	U8 m_mipLevels = 0;
-	U8 m_depth = 0;
+	U8 m_depthOrLayerCount = 0;
 	DataCompression m_compression = DataCompression::NONE;
 	ColorFormat m_colorFormat = ColorFormat::NONE;
 	TextureType m_textureType = TextureType::NONE;

@@ -43,24 +43,34 @@ public:
 		return m_tex;
 	}
 
-	U32 getWidth() const
+	U getWidth() const
 	{
+		ANKI_ASSERT(m_size.x());
 		return m_size.x();
 	}
 
-	U32 getHeight() const
+	U getHeight() const
 	{
+		ANKI_ASSERT(m_size.y());
 		return m_size.y();
 	}
 
-	U32 getDepth() const
+	U getDepth() const
 	{
+		ANKI_ASSERT(m_size.z());
 		return m_size.z();
+	}
+
+	U getLayerCount() const
+	{
+		ANKI_ASSERT(m_layerCount);
+		return m_layerCount;
 	}
 
 private:
 	TexturePtr m_tex;
-	UVec3 m_size;
+	UVec3 m_size = UVec3(0u);
+	U32 m_layerCount = 0;
 };
 /// @}
 

@@ -60,7 +60,7 @@ anki_internal:
 
 	void generateMipmaps(CommandBufferPtr& cmdb)
 	{
-		cmdb->generateMipmaps(m_rt, 0, 0);
+		cmdb->generateMipmaps(m_rt, 0, 0, 0);
 	}
 
 private:

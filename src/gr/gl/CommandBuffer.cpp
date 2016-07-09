@@ -431,25 +431,27 @@ public:
 	TexturePtr m_tex;
 	U32 m_depth;
 	U8 m_face;
+	U32 m_layer;
 
-	GenMipsCommand(const TexturePtr& tex, U depth, U face)
+	GenMipsCommand(const TexturePtr& tex, U depth, U face, U layer)
 		: m_tex(tex)
 		, m_depth(depth)
 		, m_face(face)
+		, m_layer(layer)
 	{
 	}
 
 	Error operator()(GlState&)
 	{
-		m_tex->getImplementation().generateMipmaps(m_depth, m_face);
+		m_tex->getImplementation().generateMipmaps(m_depth, m_face, m_layer);
 		return ErrorCode::NONE;
 	}
 };
 
-void CommandBuffer::generateMipmaps(TexturePtr tex, U depth, U face)
+void CommandBuffer::generateMipmaps(TexturePtr tex, U depth, U face, U layer)
 {
 	ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
-	m_impl->pushBackNewCommand<GenMipsCommand>(tex, depth, face);
+	m_impl->pushBackNewCommand<GenMipsCommand>(tex, depth, face, layer);
 }
 
 //==============================================================================

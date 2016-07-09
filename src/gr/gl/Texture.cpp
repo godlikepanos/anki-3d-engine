@@ -52,6 +52,7 @@ public:
 
 void Texture::init(const TextureInitInfo& init)
 {
+	ANKI_ASSERT(init.isValid());
 	m_impl.reset(getAllocator().newInstance<TextureImpl>(&getManager()));
 
 	CommandBufferPtr cmdb =

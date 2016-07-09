@@ -295,7 +295,7 @@ void CommandBufferImpl::uploadTextureSurface(TexturePtr tex,
 		range.baseArrayLayer = surf.m_depth;
 		break;
 	case TextureType::_3D:
-		range.baseArrayLayer = surf.m_depth;
+		range.baseArrayLayer = 0;
 		break;
 	default:
 		ANKI_ASSERT(0);
