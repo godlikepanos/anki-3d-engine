@@ -87,11 +87,6 @@ private:
 	/// Opt because many ask for it
 	FrustumComponent* m_frc = nullptr;
 
-	/// If enabled the ground emmits a light
-	Bool8 m_groundLightEnabled;
-	/// Keep the prev light dir to avoid uniform block updates
-	Vec3 m_prevGroundLightDir = Vec3(0.0);
-
 	/// @name Limits
 	/// @{
 	U32 m_maxLightIds;

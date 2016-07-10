@@ -34,6 +34,7 @@ static Array<const char*, U(TraceEventType::COUNT)> eventNames = {
 		"RENDER_IR",
 		"RENDER_DRAWER",
 		"RENDERER_COMMAND_BUFFER_BUILDING",
+		"RENDERER_LIGHT_BINNING",
 		"GL_THREAD",
 		"GL_2ND_LEVEL_CMD_BUFFER",
 		"GL_BIND_RESOURCES",

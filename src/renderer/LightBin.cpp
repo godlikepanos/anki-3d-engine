@@ -3,20 +3,14 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/renderer/Is.h>
-#include <anki/renderer/Renderer.h>
-#include <anki/renderer/Ms.h>
-#include <anki/renderer/Sm.h>
-#include <anki/renderer/Pps.h>
-#include <anki/renderer/Ir.h>
-#include <anki/scene/Light.h>
+#include <anki/renderer/LightBin.h>
 #include <anki/scene/FrustumComponent.h>
-#include <anki/scene/MoveComponent.h>
-#include <anki/scene/ReflectionProbeComponent.h>
 #include <anki/scene/Visibility.h>
+#include <anki/scene/MoveComponent.h>
+#include <anki/scene/LightComponent.h>
+#include <anki/scene/ReflectionProbeComponent.h>
 #include <anki/core/Trace.h>
-#include <anki/util/Logger.h>
-#include <anki/misc/ConfigSet.h>
+#include <anki/util/ThreadPool.h>
 
 namespace anki
 {
@@ -67,16 +61,6 @@ struct ShaderProbe
 		// To avoid warnings
 		_m_pading[0] = _m_pading[1] = _m_pading[2] = 0;
 	}
-};
-
-struct ShaderCommonUniforms
-{
-	Vec4 m_projectionParams;
-	Vec4 m_rendererSizeTimePad1;
-	Vec4 m_nearFarClustererMagicPad1;
-	Mat4 m_viewMat;
-	Mat3x4 m_invViewRotation;
-	UVec4 m_tileCount;
 };
 
 static const U MAX_TYPED_LIGHTS_PER_CLUSTER = 16;
@@ -272,13 +256,19 @@ private:
 };
 
 /// Common data for all tasks.
-class TaskCommonData
+class LightBinContext
 {
 public:
-	TaskCommonData(StackAllocator<U8> alloc)
-		: m_tempClusters(alloc)
+	LightBinContext(StackAllocator<U8> alloc)
+		: m_alloc(alloc)
+		, m_tempClusters(alloc)
 	{
 	}
+
+	FrustumComponent* m_frc = nullptr;
+	U32 m_maxLightIndices = 0;
+	Bool m_shadowsEnabled = false;
+	StackAllocator<U8> m_alloc;
 
 	// To fill the light buffers
 	WeakArray<ShaderPointLight> m_pointLights;
@@ -306,187 +296,64 @@ public:
 	Atomic<U32> m_count = {0};
 	Atomic<U32> m_count2 = {0};
 
-	Is* m_is = nullptr;
+	LightBin* m_bin = nullptr;
 };
 
 /// Write the lights to the GPU buffers.
 class WriteLightsTask : public ThreadPoolTask
 {
 public:
-	TaskCommonData* m_data = nullptr;
+	LightBinContext* m_ctx = nullptr;
 
 	Error operator()(U32 threadId, PtrSize threadsCount)
 	{
-		m_data->m_is->binLights(threadId, threadsCount, *m_data);
+		m_ctx->m_bin->binLights(threadId, threadsCount, *m_ctx);
 		return ErrorCode::NONE;
 	}
 };
 
 //==============================================================================
-// Is                                                                          =
+// LightBin                                                                    =
 //==============================================================================
 
-const PixelFormat Is::RT_PIXEL_FORMAT(
-	ComponentFormat::R11G11B10, TransformFormat::FLOAT);
+//==============================================================================
+LightBin::LightBin(const GenericMemoryPoolAllocator<U8>& alloc,
+	U clusterCountX,
+	U clusterCountY,
+	U clusterCountZ,
+	ThreadPool* threadPool,
+	GrManager* gr)
+	: m_alloc(alloc)
+	, m_clusterCount(clusterCountX * clusterCountY * clusterCountZ)
+	, m_threadPool(threadPool)
+	, m_gr(gr)
+	, m_barrier(threadPool->getThreadsCount())
+{
+	m_clusterer.init(alloc, clusterCountX, clusterCountY, clusterCountZ);
+}
 
 //==============================================================================
-Is::Is(Renderer* r)
-	: RenderingPass(r)
+LightBin::~LightBin()
 {
 }
 
 //==============================================================================
-Is::~Is()
+Error LightBin::bin(FrustumComponent& frc,
+	StackAllocator<U8>& frameAlloc,
+	U maxLightIndices,
+	Bool shadowsEnabled,
+	TransientMemoryToken& pointLightsToken,
+	TransientMemoryToken& spotLightsToken,
+	TransientMemoryToken* probesToken,
+	TransientMemoryToken& clustersToken,
+	TransientMemoryToken& lightIndicesToken)
 {
-	if(m_barrier)
-	{
-		getAllocator().deleteInstance(m_barrier.get());
-	}
-}
+	ANKI_TRACE_START_EVENT(RENDER_LIGHT_BINNING);
 
-//==============================================================================
-Error Is::init(const ConfigSet& config)
-{
-	Error err = initInternal(config);
+	// Prepare the clusterer
+	m_clusterer.prepare(*m_threadPool, frc);
 
-	if(err)
-	{
-		ANKI_LOGE("Failed to init IS");
-	}
-
-	return err;
-}
-
-//==============================================================================
-Error Is::initInternal(const ConfigSet& config)
-{
-	m_maxLightIds = config.getNumber("is.maxLightsPerCluster");
-
-	if(m_maxLightIds == 0)
-	{
-		ANKI_LOGE("Incorrect number of max light indices");
-		return ErrorCode::USER_DATA;
-	}
-
-	m_maxLightIds *= m_r->getClusterCount();
-
-	//
-	// Load the programs
-	//
-	StringAuto pps(getAllocator());
-
-	pps.sprintf("\n#define TILE_COUNT_X %u\n"
-				"#define TILE_COUNT_Y %u\n"
-				"#define CLUSTER_COUNT %u\n"
-				"#define RENDERER_WIDTH %u\n"
-				"#define RENDERER_HEIGHT %u\n"
-				"#define MAX_LIGHT_INDICES %u\n"
-				"#define POISSON %u\n"
-				"#define INDIRECT_ENABLED %u\n"
-				"#define IR_MIPMAP_COUNT %u\n",
-		m_r->getTileCountXY().x(),
-		m_r->getTileCountXY().y(),
-		m_r->getClusterCount(),
-		m_r->getWidth(),
-		m_r->getHeight(),
-		m_maxLightIds,
-		m_r->getSmEnabled() ? m_r->getSm().getPoissonEnabled() : 0,
-		m_r->getIrEnabled(),
-		(m_r->getIrEnabled()) ? m_r->getIr().getCubemapArrayMipmapCount() : 0);
-
-	// point light
-	ANKI_CHECK(getResourceManager().loadResourceToCache(
-		m_lightVert, "shaders/Is.vert.glsl", pps.toCString(), "r_"));
-
-	ANKI_CHECK(getResourceManager().loadResourceToCache(
-		m_lightFrag, "shaders/Is.frag.glsl", pps.toCString(), "r_"));
-
-	PipelineInitInfo init;
-
-	init.m_inputAssembler.m_topology = PrimitiveTopology::TRIANGLE_STRIP;
-	init.m_depthStencil.m_depthWriteEnabled = false;
-	init.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
-	init.m_color.m_attachmentCount = 1;
-	init.m_color.m_attachments[0].m_format = RT_PIXEL_FORMAT;
-	init.m_shaders[U(ShaderType::VERTEX)] = m_lightVert->getGrShader();
-	init.m_shaders[U(ShaderType::FRAGMENT)] = m_lightFrag->getGrShader();
-	m_lightPpline = getGrManager().newInstance<Pipeline>(init);
-
-	//
-	// Create framebuffer
-	//
-	m_r->createRenderTarget(m_r->getWidth(),
-		m_r->getHeight(),
-		RT_PIXEL_FORMAT,
-		1,
-		SamplingFilter::LINEAR,
-		IS_MIPMAP_COUNT,
-		m_rt);
-
-	FramebufferInitInfo fbInit;
-	fbInit.m_colorAttachmentCount = 1;
-	fbInit.m_colorAttachments[0].m_texture = m_rt;
-	fbInit.m_colorAttachments[0].m_loadOperation =
-		AttachmentLoadOperation::DONT_CARE;
-	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
-
-	//
-	// Create resource group
-	//
-	{
-		ResourceGroupInitInfo init;
-		init.m_textures[0].m_texture = m_r->getMs().getRt0();
-		init.m_textures[1].m_texture = m_r->getMs().getRt1();
-		init.m_textures[2].m_texture = m_r->getMs().getRt2();
-		init.m_textures[3].m_texture = m_r->getMs().getDepthRt();
-
-		if(m_r->getSmEnabled())
-		{
-			init.m_textures[4].m_texture = m_r->getSm().getSpotTextureArray();
-			init.m_textures[5].m_texture = m_r->getSm().getOmniTextureArray();
-		}
-
-		if(m_r->getIrEnabled())
-		{
-			init.m_textures[6].m_texture = m_r->getIr().getReflectionTexture();
-			init.m_textures[7].m_texture = m_r->getIr().getIrradianceTexture();
-
-			init.m_textures[8].m_texture = m_r->getIr().getIntegrationLut();
-			init.m_textures[8].m_sampler =
-				m_r->getIr().getIntegrationLutSampler();
-		}
-
-		init.m_uniformBuffers[0].m_uploadedMemory = true;
-		init.m_uniformBuffers[1].m_uploadedMemory = true;
-		init.m_uniformBuffers[2].m_uploadedMemory = true;
-		init.m_uniformBuffers[3].m_uploadedMemory = true;
-
-		init.m_storageBuffers[0].m_uploadedMemory = true;
-		init.m_storageBuffers[1].m_uploadedMemory = true;
-
-		m_rcGroup = getGrManager().newInstance<ResourceGroup>(init);
-	}
-
-	//
-	// Misc
-	//
-	ThreadPool& threadPool = m_r->getThreadPool();
-	m_barrier =
-		getAllocator().newInstance<Barrier>(threadPool.getThreadsCount());
-
-	getGrManager().finish();
-	return ErrorCode::NONE;
-}
-
-//==============================================================================
-Error Is::populateBuffers(RenderingContext& ctx)
-{
-	ANKI_TRACE_START_EVENT(RENDER_IS);
-	ThreadPool& threadPool = m_r->getThreadPool();
-	m_frc = ctx.m_frustumComponent;
-	VisibilityTestResults& vi = m_frc->getVisibilityTestResults();
-
-	U clusterCount = m_r->getClusterCount();
+	VisibilityTestResults& vi = frc.getVisibilityTestResults();
 
 	//
 	// Quickly get the lights
@@ -502,114 +369,114 @@ Error Is::populateBuffers(RenderingContext& ctx)
 	// Write the lights and tiles UBOs
 	//
 	Array<WriteLightsTask, ThreadPool::MAX_THREADS> tasks;
-	TaskCommonData taskData(getFrameAllocator());
-	taskData.m_tempClusters.create(m_r->getClusterCount());
+	LightBinContext ctx(frameAlloc);
+	ctx.m_frc = &frc;
+	ctx.m_maxLightIndices = maxLightIndices;
+	ctx.m_shadowsEnabled = shadowsEnabled;
+	ctx.m_tempClusters.create(m_clusterCount);
 
 	if(visiblePointLightsCount)
 	{
-		ShaderPointLight* data = static_cast<ShaderPointLight*>(
-			getGrManager().allocateFrameTransientMemory(
+		ShaderPointLight* data =
+			static_cast<ShaderPointLight*>(m_gr->allocateFrameTransientMemory(
 				sizeof(ShaderPointLight) * visiblePointLightsCount,
 				BufferUsage::UNIFORM,
-				ctx.m_is.m_dynBufferInfo.m_uniformBuffers[P_LIGHTS_LOCATION]));
+				pointLightsToken));
 
-		taskData.m_pointLights =
+		ctx.m_pointLights =
 			WeakArray<ShaderPointLight>(data, visiblePointLightsCount);
 
-		taskData.m_vPointLights = WeakArray<VisibleNode>(
+		ctx.m_vPointLights = WeakArray<VisibleNode>(
 			vi.getBegin(VisibilityGroupType::LIGHTS_POINT),
 			visiblePointLightsCount);
 	}
 	else
 	{
-		ctx.m_is.m_dynBufferInfo.m_uniformBuffers[P_LIGHTS_LOCATION]
-			.markUnused();
+		pointLightsToken.markUnused();
 	}
 
 	if(visibleSpotLightsCount)
 	{
-		ShaderSpotLight* data = static_cast<ShaderSpotLight*>(
-			getGrManager().allocateFrameTransientMemory(
+		ShaderSpotLight* data =
+			static_cast<ShaderSpotLight*>(m_gr->allocateFrameTransientMemory(
 				sizeof(ShaderSpotLight) * visibleSpotLightsCount,
 				BufferUsage::UNIFORM,
-				ctx.m_is.m_dynBufferInfo.m_uniformBuffers[S_LIGHTS_LOCATION]));
+				spotLightsToken));
 
-		taskData.m_spotLights =
+		ctx.m_spotLights =
 			WeakArray<ShaderSpotLight>(data, visibleSpotLightsCount);
 
-		taskData.m_vSpotLights = WeakArray<VisibleNode>(
+		ctx.m_vSpotLights = WeakArray<VisibleNode>(
 			vi.getBegin(VisibilityGroupType::LIGHTS_SPOT),
 			visibleSpotLightsCount);
 	}
 	else
 	{
-		ctx.m_is.m_dynBufferInfo.m_uniformBuffers[S_LIGHTS_LOCATION]
-			.markUnused();
+		spotLightsToken.markUnused();
 	}
 
-	if(m_r->getIrEnabled() && visibleProbeCount)
+	if(probesToken && visibleProbeCount)
 	{
-		ShaderProbe* data = static_cast<ShaderProbe*>(
-			getGrManager().allocateFrameTransientMemory(
+		ShaderProbe* data =
+			static_cast<ShaderProbe*>(m_gr->allocateFrameTransientMemory(
 				sizeof(ShaderProbe) * visibleProbeCount,
 				BufferUsage::UNIFORM,
-				ctx.m_is.m_dynBufferInfo.m_uniformBuffers[PROBES_LOCATION]));
+				*probesToken));
 
-		taskData.m_probes = WeakArray<ShaderProbe>(data, visibleProbeCount);
+		ctx.m_probes = WeakArray<ShaderProbe>(data, visibleProbeCount);
 
-		taskData.m_vProbes = WeakArray<VisibleNode>(
+		ctx.m_vProbes = WeakArray<VisibleNode>(
 			vi.getBegin(VisibilityGroupType::REFLECTION_PROBES),
 			visibleProbeCount);
 	}
 	else
 	{
-		ctx.m_is.m_dynBufferInfo.m_uniformBuffers[PROBES_LOCATION].markUnused();
+		probesToken->markUnused();
 	}
 
-	taskData.m_is = this;
+	ctx.m_bin = this;
 
 	// Get mem for clusters
 	ShaderCluster* data =
-		static_cast<ShaderCluster*>(getGrManager().allocateFrameTransientMemory(
-			sizeof(ShaderCluster) * clusterCount,
+		static_cast<ShaderCluster*>(m_gr->allocateFrameTransientMemory(
+			sizeof(ShaderCluster) * m_clusterCount,
 			BufferUsage::STORAGE,
-			ctx.m_is.m_dynBufferInfo.m_storageBuffers[CLUSTERS_LOCATION]));
+			clustersToken));
 
-	taskData.m_clusters = WeakArray<ShaderCluster>(data, clusterCount);
+	ctx.m_clusters = WeakArray<ShaderCluster>(data, m_clusterCount);
 
 	// Allocate light IDs
 	U32* data2 = static_cast<U32*>(
-		getGrManager().allocateFrameTransientMemory(m_maxLightIds * sizeof(U32),
+		m_gr->allocateFrameTransientMemory(maxLightIndices * sizeof(U32),
 			BufferUsage::STORAGE,
-			ctx.m_is.m_dynBufferInfo.m_storageBuffers[LIGHT_IDS_LOCATION]));
+			lightIndicesToken));
 
-	taskData.m_lightIds = WeakArray<U32>(data2, m_maxLightIds);
+	ctx.m_lightIds = WeakArray<U32>(data2, maxLightIndices);
 
-	for(U i = 0; i < threadPool.getThreadsCount(); i++)
+	// Fire the async job
+	for(U i = 0; i < m_threadPool->getThreadsCount(); i++)
 	{
-		tasks[i].m_data = &taskData;
+		tasks[i].m_ctx = &ctx;
 
-		threadPool.assignNewTask(i, &tasks[i]);
+		m_threadPool->assignNewTask(i, &tasks[i]);
 	}
 
-	// Update uniforms
-	updateCommonBlock(*m_frc, ctx);
-
 	// Sync
-	ANKI_CHECK(threadPool.waitForAllThreadsToFinish());
+	ANKI_CHECK(m_threadPool->waitForAllThreadsToFinish());
 
-	ANKI_TRACE_STOP_EVENT(RENDER_IS);
+	ANKI_TRACE_STOP_EVENT(RENDER_LIGHT_BINNING);
 	return ErrorCode::NONE;
 }
 
 //==============================================================================
-void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
+void LightBin::binLights(
+	U32 threadId, PtrSize threadsCount, LightBinContext& ctx)
 {
-	ANKI_TRACE_START_EVENT(RENDER_IS);
-	const FrustumComponent& camfrc = *m_frc;
+	ANKI_TRACE_START_EVENT(RENDER_LIGHT_BINNING);
+	const FrustumComponent& camfrc = *ctx.m_frc;
 	const MoveComponent& cammove =
-		m_frc->getSceneNode().getComponent<MoveComponent>();
-	U clusterCount = m_r->getClusterCount();
+		camfrc.getSceneNode().getComponent<MoveComponent>();
+	U clusterCount = m_clusterCount;
 	PtrSize start, end;
 
 	//
@@ -620,23 +487,23 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 
 	for(U i = start; i < end; ++i)
 	{
-		task.m_tempClusters[i].reset();
+		ctx.m_tempClusters[i].reset();
 	}
 
-	ANKI_TRACE_STOP_EVENT(RENDER_IS);
-	m_barrier->wait();
-	ANKI_TRACE_START_EVENT(RENDER_IS);
+	ANKI_TRACE_STOP_EVENT(RENDER_LIGHT_BINNING);
+	m_barrier.wait();
+	ANKI_TRACE_START_EVENT(RENDER_LIGHT_BINNING);
 
 	//
 	// Iterate lights and probes and bin them
 	//
 	ClustererTestResult testResult;
-	m_r->getClusterer().initTestResults(getFrameAllocator(), testResult);
-	U lightCount = task.m_vPointLights.getSize() + task.m_vSpotLights.getSize();
-	U totalCount = lightCount + task.m_vProbes.getSize();
+	m_clusterer.initTestResults(ctx.m_alloc, testResult);
+	U lightCount = ctx.m_vPointLights.getSize() + ctx.m_vSpotLights.getSize();
+	U totalCount = lightCount + ctx.m_vProbes.getSize();
 
 	const U TO_BIN_COUNT = 1;
-	while((start = task.m_count2.fetchAdd(TO_BIN_COUNT)) < totalCount)
+	while((start = ctx.m_count2.fetchAdd(TO_BIN_COUNT)) < totalCount)
 	{
 		end = min<U>(start + TO_BIN_COUNT, totalCount);
 
@@ -645,34 +512,34 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 			if(j >= lightCount)
 			{
 				U i = j - lightCount;
-				SceneNode& snode = *task.m_vProbes[i].m_node;
-				writeAndBinProbe(camfrc, snode, task, testResult);
+				SceneNode& snode = *ctx.m_vProbes[i].m_node;
+				writeAndBinProbe(camfrc, snode, ctx, testResult);
 			}
-			else if(j >= task.m_vPointLights.getSize())
+			else if(j >= ctx.m_vPointLights.getSize())
 			{
-				U i = j - task.m_vPointLights.getSize();
+				U i = j - ctx.m_vPointLights.getSize();
 
-				SceneNode& snode = *task.m_vSpotLights[i].m_node;
+				SceneNode& snode = *ctx.m_vSpotLights[i].m_node;
 				MoveComponent& move = snode.getComponent<MoveComponent>();
 				LightComponent& light = snode.getComponent<LightComponent>();
 				SpatialComponent& sp = snode.getComponent<SpatialComponent>();
 				const FrustumComponent* frc =
 					snode.tryGetComponent<FrustumComponent>();
 
-				I pos = writeSpotLight(light, move, frc, cammove, camfrc, task);
-				binLight(sp, pos, 1, task, testResult);
+				I pos = writeSpotLight(light, move, frc, cammove, camfrc, ctx);
+				binLight(sp, pos, 1, ctx, testResult);
 			}
 			else
 			{
 				U i = j;
 
-				SceneNode& snode = *task.m_vPointLights[i].m_node;
+				SceneNode& snode = *ctx.m_vPointLights[i].m_node;
 				MoveComponent& move = snode.getComponent<MoveComponent>();
 				LightComponent& light = snode.getComponent<LightComponent>();
 				SpatialComponent& sp = snode.getComponent<SpatialComponent>();
 
-				I pos = writePointLight(light, move, camfrc, task);
-				binLight(sp, pos, 0, task, testResult);
+				I pos = writePointLight(light, move, camfrc, ctx);
+				binLight(sp, pos, 0, ctx, testResult);
 			}
 		}
 	}
@@ -680,19 +547,19 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 	//
 	// Last thing, update the real clusters
 	//
-	ANKI_TRACE_STOP_EVENT(RENDER_IS);
-	m_barrier->wait();
-	ANKI_TRACE_START_EVENT(RENDER_IS);
+	ANKI_TRACE_STOP_EVENT(RENDER_LIGHT_BINNING);
+	m_barrier.wait();
+	ANKI_TRACE_START_EVENT(RENDER_LIGHT_BINNING);
 
 	// Run per cluster
 	const U CLUSTER_GROUP = 16;
-	while((start = task.m_count.fetchAdd(CLUSTER_GROUP)) < clusterCount)
+	while((start = ctx.m_count.fetchAdd(CLUSTER_GROUP)) < clusterCount)
 	{
 		end = min<U>(start + CLUSTER_GROUP, clusterCount);
 
 		for(U i = start; i < end; ++i)
 		{
-			auto& cluster = task.m_tempClusters[i];
+			auto& cluster = ctx.m_tempClusters[i];
 			cluster.normalizeCounts();
 
 			const U countP = cluster.m_pointCount.get();
@@ -700,7 +567,7 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 			const U countProbe = cluster.m_probeCount.get();
 			const U count = countP + countS + countProbe;
 
-			auto& c = task.m_clusters[i];
+			auto& c = ctx.m_clusters[i];
 			c.m_combo = 0;
 
 			// Early exit
@@ -715,18 +582,18 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 			cluster.sortLightIds();
 			if(i != start)
 			{
-				const auto& clusterB = task.m_tempClusters[i - 1];
+				const auto& clusterB = ctx.m_tempClusters[i - 1];
 
 				if(cluster == clusterB)
 				{
-					c.m_combo = task.m_clusters[i - 1].m_combo;
+					c.m_combo = ctx.m_clusters[i - 1].m_combo;
 					continue;
 				}
 			}
 
-			U offset = task.m_lightIdsCount.fetchAdd(count);
+			U offset = ctx.m_lightIdsCount.fetchAdd(count);
 
-			if(offset + count <= m_maxLightIds)
+			if(offset + count <= ctx.m_maxLightIndices)
 			{
 				ANKI_ASSERT(offset <= 0xFFFF);
 				c.m_combo = offset << 16;
@@ -738,7 +605,7 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 
 					for(U i = 0; i < countP; ++i)
 					{
-						task.m_lightIds[offset++] =
+						ctx.m_lightIds[offset++] =
 							cluster.m_pointIds[i].getIndex();
 					}
 				}
@@ -750,7 +617,7 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 
 					for(U i = 0; i < countS; ++i)
 					{
-						task.m_lightIds[offset++] =
+						ctx.m_lightIds[offset++] =
 							cluster.m_spotIds[i].getIndex();
 					}
 				}
@@ -762,7 +629,7 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 
 					for(U i = 0; i < countProbe; ++i)
 					{
-						task.m_lightIds[offset++] =
+						ctx.m_lightIds[offset++] =
 							cluster.m_probeIds[i].getIndex();
 					}
 				}
@@ -774,19 +641,19 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 		} // end for
 	} // end while
 
-	ANKI_TRACE_STOP_EVENT(RENDER_IS);
+	ANKI_TRACE_STOP_EVENT(RENDER_LIGHT_BINNING);
 }
 
 //==============================================================================
-I Is::writePointLight(const LightComponent& lightc,
+I LightBin::writePointLight(const LightComponent& lightc,
 	const MoveComponent& lightMove,
 	const FrustumComponent& camFrc,
-	TaskCommonData& task)
+	LightBinContext& ctx)
 {
 	// Get GPU light
-	I i = task.m_pointLightsCount.fetchAdd(1);
+	I i = ctx.m_pointLightsCount.fetchAdd(1);
 
-	ShaderPointLight& slight = task.m_pointLights[i];
+	ShaderPointLight& slight = ctx.m_pointLights[i];
 
 	Vec4 pos = camFrc.getViewMatrix()
 		* lightMove.getWorldTransform().getOrigin().xyz1();
@@ -795,7 +662,7 @@ I Is::writePointLight(const LightComponent& lightc,
 		Vec4(pos.xyz(), 1.0 / (lightc.getRadius() * lightc.getRadius()));
 	slight.m_diffuseColorShadowmapId = lightc.getDiffuseColor();
 
-	if(!lightc.getShadowEnabled() || !m_r->getSmEnabled())
+	if(!lightc.getShadowEnabled() || !ctx.m_shadowsEnabled)
 	{
 		slight.m_diffuseColorShadowmapId.w() = INVALID_TEXTURE_INDEX;
 	}
@@ -810,19 +677,19 @@ I Is::writePointLight(const LightComponent& lightc,
 }
 
 //==============================================================================
-I Is::writeSpotLight(const LightComponent& lightc,
+I LightBin::writeSpotLight(const LightComponent& lightc,
 	const MoveComponent& lightMove,
 	const FrustumComponent* lightFrc,
 	const MoveComponent& camMove,
 	const FrustumComponent& camFrc,
-	TaskCommonData& task)
+	LightBinContext& ctx)
 {
-	I i = task.m_spotLightsCount.fetchAdd(1);
+	I i = ctx.m_spotLightsCount.fetchAdd(1);
 
-	ShaderSpotLight& light = task.m_spotLights[i];
+	ShaderSpotLight& light = ctx.m_spotLights[i];
 	F32 shadowmapIndex = INVALID_TEXTURE_INDEX;
 
-	if(lightc.getShadowEnabled() && m_r->getSmEnabled())
+	if(lightc.getShadowEnabled() && ctx.m_shadowsEnabled)
 	{
 		// Write matrix
 		static const Mat4 biasMat4(0.5,
@@ -875,14 +742,13 @@ I Is::writeSpotLight(const LightComponent& lightc,
 }
 
 //==============================================================================
-void Is::binLight(SpatialComponent& sp,
+void LightBin::binLight(SpatialComponent& sp,
 	U pos,
 	U lightType,
-	TaskCommonData& task,
+	LightBinContext& ctx,
 	ClustererTestResult& testResult)
 {
-	m_r->getClusterer().bin(
-		sp.getSpatialCollisionShape(), sp.getAabb(), testResult);
+	m_clusterer.bin(sp.getSpatialCollisionShape(), sp.getAabb(), testResult);
 
 	// Bin to the correct tiles
 	auto it = testResult.getClustersBegin();
@@ -893,10 +759,11 @@ void Is::binLight(SpatialComponent& sp,
 		U y = (*it)[1];
 		U z = (*it)[2];
 
-		U i =
-			m_r->getTileCountXY().x() * (z * m_r->getTileCountXY().y() + y) + x;
+		U i = m_clusterer.getClusterCountX()
+				* (z * m_clusterer.getClusterCountY() + y)
+			+ x;
 
-		auto& cluster = task.m_tempClusters[i];
+		auto& cluster = ctx.m_tempClusters[i];
 
 		switch(lightType)
 		{
@@ -915,9 +782,9 @@ void Is::binLight(SpatialComponent& sp,
 }
 
 //==============================================================================
-void Is::writeAndBinProbe(const FrustumComponent& camFrc,
+void LightBin::writeAndBinProbe(const FrustumComponent& camFrc,
 	const SceneNode& node,
-	TaskCommonData& task,
+	LightBinContext& ctx,
 	ClustererTestResult& testResult)
 {
 	const ReflectionProbeComponent& reflc =
@@ -930,12 +797,11 @@ void Is::writeAndBinProbe(const FrustumComponent& camFrc,
 	probe.m_radiusSq = reflc.getRadius() * reflc.getRadius();
 	probe.m_cubemapIndex = reflc.getTextureArrayIndex();
 
-	U idx = task.m_probeCount.fetchAdd(1);
-	task.m_probes[idx] = probe;
+	U idx = ctx.m_probeCount.fetchAdd(1);
+	ctx.m_probes[idx] = probe;
 
 	// Bin it
-	m_r->getClusterer().bin(
-		sp.getSpatialCollisionShape(), sp.getAabb(), testResult);
+	m_clusterer.bin(sp.getSpatialCollisionShape(), sp.getAabb(), testResult);
 
 	auto it = testResult.getClustersBegin();
 	auto end = testResult.getClustersEnd();
@@ -945,60 +811,16 @@ void Is::writeAndBinProbe(const FrustumComponent& camFrc,
 		U y = (*it)[1];
 		U z = (*it)[2];
 
-		U i = m_r->getClusterer().getClusterCountX()
-				* (z * m_r->getClusterer().getClusterCountY() + y)
+		U i = m_clusterer.getClusterCountX()
+				* (z * m_clusterer.getClusterCountY() + y)
 			+ x;
 
-		auto& cluster = task.m_tempClusters[i];
+		auto& cluster = ctx.m_tempClusters[i];
 
 		i = cluster.m_probeCount.fetchAdd(1) % MAX_PROBES_PER_CLUSTER;
 		cluster.m_probeIds[i].setIndex(idx);
 		cluster.m_probeIds[i].setProbeRadius(reflc.getRadius());
 	}
-}
-
-//==============================================================================
-void Is::setState(const RenderingContext& ctx, CommandBufferPtr& cmdb)
-{
-	cmdb->beginRenderPass(m_fb);
-	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
-	cmdb->bindPipeline(m_lightPpline);
-	cmdb->bindResourceGroup(m_rcGroup, 0, &ctx.m_is.m_dynBufferInfo);
-}
-
-//==============================================================================
-void Is::run(RenderingContext& ctx)
-{
-	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
-	setState(ctx, cmdb);
-	cmdb->drawArrays(4, m_r->getTileCount());
-	cmdb->endRenderPass();
-}
-
-//==============================================================================
-void Is::updateCommonBlock(const FrustumComponent& fr, RenderingContext& ctx)
-{
-	ShaderCommonUniforms* blk = static_cast<ShaderCommonUniforms*>(
-		getGrManager().allocateFrameTransientMemory(
-			sizeof(ShaderCommonUniforms),
-			BufferUsage::UNIFORM,
-			ctx.m_is.m_dynBufferInfo.m_uniformBuffers[COMMON_VARS_LOCATION]));
-
-	// Start writing
-	blk->m_projectionParams = fr.getProjectionParameters();
-	blk->m_viewMat = fr.getViewMatrix().getTransposed();
-	blk->m_nearFarClustererMagicPad1 = Vec4(fr.getFrustum().getNear(),
-		fr.getFrustum().getFar(),
-		m_r->getClusterer().getShaderMagicValue(),
-		0.0);
-
-	blk->m_invViewRotation =
-		Mat3x4(fr.getViewMatrix().getInverse().getRotationPart());
-
-	blk->m_rendererSizeTimePad1 = Vec4(
-		m_r->getWidth(), m_r->getHeight(), HighRezTimer::getCurrentTime(), 0.0);
-
-	blk->m_tileCount = UVec4(m_r->getTileCountXY(), m_r->getTileCount(), 0);
 }
 
 } // end namespace anki

@@ -21,7 +21,6 @@ Config::Config()
 	newOption("sm.resolution", 512);
 	newOption("sm.maxLights", 4);
 
-	newOption("is.groundLightEnabled", true);
 	newOption("is.maxPointLights", 384);
 	newOption("is.maxSpotLights", 16);
 	newOption("is.maxSpotTexLights", 8);

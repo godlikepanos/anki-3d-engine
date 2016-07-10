@@ -5,7 +5,6 @@
 	<sm.bilinearEnabled>1</sm.bilinearEnabled>
 	<sm.resolution>512</sm.resolution>
 	<sm.maxLights>16</sm.maxLights>
-	<is.groundLightEnabled>0</is.groundLightEnabled>
 	<is.maxPointLights>384</is.maxPointLights>
 	<is.maxSpotLights>16</is.maxSpotLights>
 	<is.maxSpotTexLights>8</is.maxSpotTexLights>

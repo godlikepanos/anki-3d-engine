@@ -53,7 +53,6 @@ Error Ir::init(const ConfigSet& config)
 	// Init the renderer
 	Config nestedRConfig;
 	nestedRConfig.set("dbg.enabled", false);
-	nestedRConfig.set("is.groundLightEnabled", false);
 	nestedRConfig.set("sm.enabled", false);
 	nestedRConfig.set("lf.maxFlares", 8);
 	nestedRConfig.set("pps.enabled", false);
