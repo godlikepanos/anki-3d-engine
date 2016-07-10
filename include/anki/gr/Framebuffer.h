@@ -16,7 +16,7 @@ namespace anki
 /// @{
 
 /// Framebuffer attachment info.
-class Attachment
+class FramebufferAttachmentInfo
 {
 public:
 	TexturePtr m_texture;
@@ -26,16 +26,16 @@ public:
 	AttachmentStoreOperation m_storeOperation = AttachmentStoreOperation::STORE;
 	ClearValue m_clearValue;
 
-	Attachment() = default;
+	FramebufferAttachmentInfo() = default;
 
-	Attachment(const Attachment& b)
+	FramebufferAttachmentInfo(const FramebufferAttachmentInfo& b)
 	{
 		operator=(b);
 	}
 
-	~Attachment() = default;
+	~FramebufferAttachmentInfo() = default;
 
-	Attachment& operator=(const Attachment& b)
+	FramebufferAttachmentInfo& operator=(const FramebufferAttachmentInfo& b)
 	{
 		m_texture = b.m_texture;
 		m_surface = b.m_surface;
@@ -52,9 +52,9 @@ public:
 class FramebufferInitInfo
 {
 public:
-	Array<Attachment, MAX_COLOR_ATTACHMENTS> m_colorAttachments;
+	Array<FramebufferAttachmentInfo, MAX_COLOR_ATTACHMENTS> m_colorAttachments;
 	U32 m_colorAttachmentCount = 0;
-	Attachment m_depthStencilAttachment;
+	FramebufferAttachmentInfo m_depthStencilAttachment;
 
 	FramebufferInitInfo() = default;
 

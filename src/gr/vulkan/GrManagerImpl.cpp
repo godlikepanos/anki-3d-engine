@@ -216,8 +216,7 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 {
 	// Create the instance
 	//
-	static Array<const char*, 9> LAYERS = {{"VK_LAYER_LUNARG_core_validation",
-		"VK_LAYER_LUNARG_device_limits",
+	static Array<const char*, 8> LAYERS = {{"VK_LAYER_LUNARG_core_validation",
 		"VK_LAYER_LUNARG_swapchain",
 		"VK_LAYER_LUNARG_image",
 		"VK_LAYER_GOOGLE_threading",

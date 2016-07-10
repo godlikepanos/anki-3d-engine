@@ -27,11 +27,12 @@ public:
 
 	U32 m_width = 0;
 	U32 m_height = 0;
+	U32 m_depth = 0;
 	TextureType m_type = TextureType::CUBE;
 	U8 m_mipCount = 0;
 	U32 m_layerCount = 0;
 	VkImageAspectFlags m_aspect = 0;
-	VkImageLayout m_optimalLayout = VK_IMAGE_LAYOUT_MAX_ENUM;
+	TextureUsageBit m_usage = TextureUsageBit::NONE;
 
 	TextureImpl(GrManager* manager);
 
@@ -39,13 +40,15 @@ public:
 
 	ANKI_USE_RESULT Error init(const TextureInitInfo& init, Texture* tex);
 
+	void checkSurface(const TextureSurfaceInfo& surf)
+	{
+		checkTextureSurface(m_type, m_depth, m_mipCount, m_layerCount, surf);
+	}
+
 private:
 	class CreateContext;
 
 	ANKI_USE_RESULT static VkFormatFeatureFlags calcFeatures(
-		const TextureInitInfo& init);
-
-	ANKI_USE_RESULT static VkImageUsageFlags calcUsage(
 		const TextureInitInfo& init);
 
 	ANKI_USE_RESULT static VkImageCreateFlags calcCreateFlags(

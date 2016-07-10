@@ -529,10 +529,12 @@ ANKI_TEST(Gr, Texture)
 		init.m_depth = 1;
 		init.m_format =
 			PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM);
-		init.m_framebufferAttachment = false;
+		init.m_usage = TextureUsageBit::ANY_SHADER_SAMPLED;
 		init.m_height = 4;
 		init.m_width = 4;
 		init.m_mipmapsCount = 2;
+		init.m_depth = 1;
+		init.m_layerCount = 1;
 		init.m_samples = 1;
 		init.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
 		init.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
@@ -554,11 +556,14 @@ ANKI_TEST(Gr, DrawWithTexture)
 		init.m_depth = 1;
 		init.m_format =
 			PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM);
-		init.m_framebufferAttachment = false;
+		init.m_usage = TextureUsageBit::ANY_SHADER_SAMPLED
+			| TextureUsageBit::TRANSFER_DESTINATION;
 		init.m_height = 2;
 		init.m_width = 2;
 		init.m_mipmapsCount = 2;
 		init.m_samples = 1;
+		init.m_depth = 1;
+		init.m_layerCount = 1;
 		init.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
 		init.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
 		init.m_type = TextureType::_2D;
@@ -583,7 +588,7 @@ ANKI_TEST(Gr, DrawWithTexture)
 		ANKI_TEST_EXPECT_NO_ERR(err);
 		memcpy(ptr, &mip0[0], sizeof(mip0));
 
-		cmdb->uploadTextureSurface(b, TextureSurfaceInfo(0, 0, 0), token);
+		cmdb->uploadTextureSurface(b, TextureSurfaceInfo(0, 0, 0, 0), token);
 
 		ptr = gr->allocateFrameTransientMemory(
 			sizeof(mip1), BufferUsage::TRANSFER, token, &err);
@@ -591,7 +596,7 @@ ANKI_TEST(Gr, DrawWithTexture)
 		ANKI_TEST_EXPECT_NO_ERR(err);
 		memcpy(ptr, &mip1[0], sizeof(mip1));
 
-		cmdb->uploadTextureSurface(b, TextureSurfaceInfo(1, 0, 0), token);
+		cmdb->uploadTextureSurface(b, TextureSurfaceInfo(1, 0, 0, 0), token);
 
 		cmdb->flush();
 

@@ -79,7 +79,9 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 
 //==============================================================================
 void FramebufferImpl::setupAttachmentDescriptor(
-	const Attachment& att, VkAttachmentDescription& desc, Bool depthStencil)
+	const FramebufferAttachmentInfo& att,
+	VkAttachmentDescription& desc,
+	Bool depthStencil)
 {
 	VkImageLayout layout = (depthStencil)
 		? VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL

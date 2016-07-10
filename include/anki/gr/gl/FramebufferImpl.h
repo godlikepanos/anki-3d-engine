@@ -44,8 +44,9 @@ private:
 	Bool8 m_bindDefault = false;
 
 	/// Attach a texture
-	static void attachTextureInternal(
-		GLenum attachment, const TextureImpl& tex, const Attachment& info);
+	static void attachTextureInternal(GLenum attachment,
+		const TextureImpl& tex,
+		const FramebufferAttachmentInfo& info);
 
 	/// Create the FBO
 	ANKI_USE_RESULT Error createFbo(

@@ -40,6 +40,7 @@ class TextureInitInfo
 {
 public:
 	TextureType m_type = TextureType::_2D;
+	TextureUsageBit m_usage = TextureUsageBit::NONE;
 	U32 m_width = 0;
 	U32 m_height = 0;
 	U32 m_depth = 0; //< Relevant only for 3D textures.
@@ -48,8 +49,6 @@ public:
 
 	PixelFormat m_format;
 	U8 m_samples = 1;
-
-	Bool8 m_framebufferAttachment = false;
 
 	SamplerInitInfo m_sampling;
 
@@ -65,6 +64,7 @@ public:
 		}                                                                      \
 	} while(0)
 
+		ANKI_CHECK_VAL_VALIDITY(m_usage != TextureUsageBit::NONE);
 		ANKI_CHECK_VAL_VALIDITY(m_mipmapsCount > 0);
 		ANKI_CHECK_VAL_VALIDITY(m_width > 0);
 		ANKI_CHECK_VAL_VALIDITY(m_height > 0);

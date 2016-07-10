@@ -306,7 +306,7 @@ void CommandBufferImpl::uploadTextureSurface(TexturePtr tex,
 
 	setImageBarrier(VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
 		VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT,
-		impl.m_optimalLayout,
+		VK_IMAGE_LAYOUT_UNDEFINED,
 		VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
 		VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT,
 		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
@@ -322,10 +322,10 @@ void CommandBufferImpl::uploadTextureSurface(TexturePtr tex,
 	region.imageOffset = {0, 0, 0};
 	region.imageExtent.width = impl.m_width;
 	region.imageExtent.height = impl.m_height;
-	region.imageExtent.depth = 0; // XXX
+	region.imageExtent.depth = 1;
 	region.bufferOffset = token.m_offset;
-	region.bufferImageHeight = 0; // XXX
-	region.bufferRowLength = 0; // XXX
+	region.bufferImageHeight = 0;
+	region.bufferRowLength = 0;
 
 	vkCmdCopyBufferToImage(m_handle,
 		getGrManagerImpl().getTransientMemoryManager().getBufferHandle(token),
@@ -336,12 +336,13 @@ void CommandBufferImpl::uploadTextureSurface(TexturePtr tex,
 
 	// Transition back. Use the "impl.m_imageHandle" since we already hold a
 	// reference
+	// TOOD: Use the correct layout
 	setImageBarrier(VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
 		VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT,
 		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 		VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
 		VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT,
-		impl.m_optimalLayout,
+		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 		impl.m_imageHandle,
 		range);
 }

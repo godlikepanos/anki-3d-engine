@@ -583,4 +583,43 @@ VkImageViewType convertTextureViewType(TextureType ak)
 	return out;
 }
 
+//==============================================================================
+VkImageUsageFlags convertTextureUsage(TextureUsageBit ak)
+{
+	VkImageUsageFlags out = 0;
+
+	if((ak & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE)
+		!= TextureUsageBit::NONE)
+	{
+		out |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
+			| VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+	}
+
+	if((ak & TextureUsageBit::COMPUTE_SHADER_IMAGE_READ_WRITE)
+		!= TextureUsageBit::NONE)
+	{
+		out |= VK_IMAGE_USAGE_STORAGE_BIT;
+	}
+
+	if((ak & TextureUsageBit::ANY_SHADER_SAMPLED) != TextureUsageBit::NONE)
+	{
+		out |= VK_IMAGE_USAGE_SAMPLED_BIT;
+	}
+
+	if((ak & TextureUsageBit::TRANSFER_DESTINATION)
+		== TextureUsageBit::TRANSFER_DESTINATION)
+	{
+		out |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+	}
+
+	if((ak & TextureUsageBit::TRANSFER_SOURCE)
+		== TextureUsageBit::TRANSFER_SOURCE)
+	{
+		out |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+	}
+
+	ANKI_ASSERT(out);
+	return out;
+}
+
 } // end namespace anki

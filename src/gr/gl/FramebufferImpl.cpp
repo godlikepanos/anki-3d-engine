@@ -38,7 +38,7 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 	// Attach color
 	for(U i = 0; i < m_in.m_colorAttachmentCount; i++)
 	{
-		const Attachment& att = m_in.m_colorAttachments[i];
+		const FramebufferAttachmentInfo& att = m_in.m_colorAttachments[i];
 		const GLenum binding = GL_COLOR_ATTACHMENT0 + i;
 
 		attachTextureInternal(binding, att.m_texture->getImplementation(), att);
@@ -54,7 +54,7 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 	// Attach depth/stencil
 	if(m_in.m_depthStencilAttachment.m_texture.isCreated())
 	{
-		const Attachment& att = m_in.m_depthStencilAttachment;
+		const FramebufferAttachmentInfo& att = m_in.m_depthStencilAttachment;
 		const GLenum binding = GL_DEPTH_ATTACHMENT;
 
 		attachTextureInternal(binding, att.m_texture->getImplementation(), att);
@@ -78,8 +78,9 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 }
 
 //==============================================================================
-void FramebufferImpl::attachTextureInternal(
-	GLenum attachment, const TextureImpl& tex, const Attachment& info)
+void FramebufferImpl::attachTextureInternal(GLenum attachment,
+	const TextureImpl& tex,
+	const FramebufferAttachmentInfo& info)
 {
 	tex.checkSurface(info.m_surface);
 
@@ -136,7 +137,7 @@ void FramebufferImpl::bind(const GlState& state)
 	if(m_bindDefault)
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		const Attachment& att = m_in.m_colorAttachments[0];
+		const FramebufferAttachmentInfo& att = m_in.m_colorAttachments[0];
 
 		if(att.m_loadOperation == AttachmentLoadOperation::CLEAR)
 		{
@@ -173,7 +174,7 @@ void FramebufferImpl::bind(const GlState& state)
 		// Clear buffers
 		for(U i = 0; i < m_in.m_colorAttachmentCount; i++)
 		{
-			const Attachment& att = m_in.m_colorAttachments[i];
+			const FramebufferAttachmentInfo& att = m_in.m_colorAttachments[i];
 
 			if(att.m_loadOperation == AttachmentLoadOperation::CLEAR)
 			{

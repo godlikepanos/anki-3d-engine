@@ -157,6 +157,45 @@ enum class TextureType : U8
 	CUBE_ARRAY
 };
 
+/// Texture usage hints. They are very important.
+enum class TextureUsageBit : U16
+{
+	NONE,
+
+	/// @name Sampled
+	/// @{
+	FRAGMENT_SHADER_SAMPLED = 1 << 0,
+	VERTEX_OR_TESSELLATION_SHADER_SAMPLED = 1 << 1,
+	COMPUTE_SHADER_SAMPLED = 1 << 2,
+	ANY_SHADER_SAMPLED = FRAGMENT_SHADER_SAMPLED
+		| VERTEX_OR_TESSELLATION_SHADER_SAMPLED
+		| COMPUTE_SHADER_SAMPLED,
+	/// @}
+
+	/// @name Image_load_store
+	/// @{
+	COMPUTE_SHADER_IMAGE_READ = 1 << 3,
+	COMPUTE_SHADER_IMAGE_WRITE = 1 << 4,
+	COMPUTE_SHADER_IMAGE_READ_WRITE =
+		COMPUTE_SHADER_IMAGE_READ | COMPUTE_SHADER_IMAGE_WRITE,
+	/// @}
+
+	/// @name Attachment
+	/// @{
+	FRAMEBUFFER_ATTACHMENT_READ = 1 << 5,
+	FRAMEBUFFER_ATTACHMENT_WRITE = 1 << 6,
+	FRAMEBUFFER_ATTACHMENT_READ_WRITE =
+		FRAMEBUFFER_ATTACHMENT_READ | FRAMEBUFFER_ATTACHMENT_WRITE,
+	/// @}
+
+	/// @name Transfer
+	/// @{
+	TRANSFER_SOURCE = 1 << 7,
+	TRANSFER_DESTINATION = 1 << 8
+	/// @}
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(TextureUsageBit, inline)
+
 enum class SamplingFilter : U8
 {
 	NEAREST,

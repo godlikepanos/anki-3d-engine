@@ -48,8 +48,7 @@ public:
 	{
 		ANKI_ASSERT(
 			token.m_lifetime == TransientMemoryTokenLifetime::PER_FRAME);
-		const PerFrameBuffer& frame =
-			m_perFrameBuffers[TransientMemoryTokenLifetime::PER_FRAME];
+		const PerFrameBuffer& frame = m_perFrameBuffers[token.m_usage];
 		void* addr = frame.m_mappedMem;
 		ANKI_ASSERT(addr);
 		return addr;
@@ -59,8 +58,7 @@ public:
 	{
 		ANKI_ASSERT(
 			token.m_lifetime == TransientMemoryTokenLifetime::PER_FRAME);
-		const PerFrameBuffer& frame =
-			m_perFrameBuffers[TransientMemoryTokenLifetime::PER_FRAME];
+		const PerFrameBuffer& frame = m_perFrameBuffers[token.m_usage];
 		ANKI_ASSERT(frame.m_bufferHandle);
 		return frame.m_bufferHandle;
 	}

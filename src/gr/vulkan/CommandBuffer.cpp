@@ -136,7 +136,7 @@ void CommandBuffer::dispatchCompute(
 }
 
 //==============================================================================
-void CommandBuffer::generateMipmaps(TexturePtr tex, U depth, U face)
+void CommandBuffer::generateMipmaps(TexturePtr tex, U depth, U face, U layer)
 {
 }
 

@@ -65,7 +65,8 @@ VkFormatFeatureFlags TextureImpl::calcFeatures(const TextureInitInfo& init)
 			VK_FORMAT_FEATURE_BLIT_DST_BIT | VK_FORMAT_FEATURE_BLIT_SRC_BIT;
 	}
 
-	if(init.m_framebufferAttachment)
+	if((init.m_usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE)
+		!= TextureUsageBit::NONE)
 	{
 		if(formatIsDepthStencil(init.m_format))
 		{
@@ -82,32 +83,6 @@ VkFormatFeatureFlags TextureImpl::calcFeatures(const TextureInitInfo& init)
 	flags |= VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT;
 
 	return flags;
-}
-
-//==============================================================================
-VkImageUsageFlags TextureImpl::calcUsage(const TextureInitInfo& init)
-{
-	VkImageUsageFlags usage = 0;
-
-	if(init.m_framebufferAttachment)
-	{
-		if(formatIsDepthStencil(init.m_format))
-		{
-			usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-		}
-		else
-		{
-			usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-		}
-	}
-	else
-	{
-		usage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-	}
-
-	usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
-
-	return usage;
 }
 
 //==============================================================================
@@ -133,7 +108,7 @@ Bool TextureImpl::imageSupported(const TextureInitInfo& init)
 		convertFormat(init.m_format),
 		convertTextureType(init.m_type),
 		VK_IMAGE_TILING_OPTIMAL,
-		calcUsage(init),
+		convertTextureUsage(init.m_usage),
 		calcCreateFlags(init),
 		&props);
 
@@ -151,6 +126,7 @@ Bool TextureImpl::imageSupported(const TextureInitInfo& init)
 //==============================================================================
 Error TextureImpl::init(const TextureInitInfo& init, Texture* tex)
 {
+	ANKI_ASSERT(init.isValid());
 	m_sampler = getGrManager().newInstanceCached<Sampler>(init.m_sampling);
 	m_width = init.m_width;
 	m_height = init.m_height;
@@ -161,26 +137,32 @@ Error TextureImpl::init(const TextureInitInfo& init, Texture* tex)
 	ANKI_CHECK(initView(ctx));
 
 	// Transition the image layout from undefined to something relevant
-	VkImageLayout newLayout;
+	VkImageLayout initialLayout;
 	CommandBufferInitInfo cmdbinit;
 	cmdbinit.m_flags = CommandBufferFlag::GRAPHICS_WORK;
 	CommandBufferPtr cmdb = getGrManager().newInstance<CommandBuffer>(cmdbinit);
-	if(init.m_framebufferAttachment)
+	m_usage = init.m_usage;
+	if((m_usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE)
+		!= TextureUsageBit::NONE)
 	{
 		if(formatIsDepthStencil(init.m_format))
 		{
-			newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+			initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 		}
 		else
 		{
-			newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		}
+	}
+	else if((m_usage & TextureUsageBit::ANY_SHADER_SAMPLED)
+		!= TextureUsageBit::NONE)
+	{
+		initialLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	}
 	else
 	{
-		newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		ANKI_ASSERT(0 && "TODO");
 	}
-	m_optimalLayout = newLayout;
 
 	VkImageSubresourceRange range;
 	range.aspectMask = m_aspect;
@@ -195,7 +177,7 @@ Error TextureImpl::init(const TextureInitInfo& init, Texture* tex)
 		VK_IMAGE_LAYOUT_UNDEFINED,
 		VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
 		VK_ACCESS_MEMORY_READ_BIT,
-		newLayout,
+		initialLayout,
 		TexturePtr(tex),
 		range);
 
@@ -287,7 +269,7 @@ Error TextureImpl::initImage(CreateContext& ctx)
 
 	ci.samples = VK_SAMPLE_COUNT_1_BIT;
 	ci.tiling = VK_IMAGE_TILING_OPTIMAL;
-	ci.usage = VK_IMAGE_USAGE_SAMPLED_BIT;
+	ci.usage = convertTextureUsage(init.m_usage);
 	ci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	ci.queueFamilyIndexCount = 1;
 	U32 queueIdx = getGrManagerImpl().getGraphicsQueueFamily();
