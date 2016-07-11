@@ -35,7 +35,7 @@ public:
 	~LightBin();
 
 	ANKI_USE_RESULT Error bin(FrustumComponent& frc,
-		StackAllocator<U8>& frameAlloc,
+		StackAllocator<U8> frameAlloc,
 		U maxLightIndices,
 		Bool shadowsEnabled,
 		TransientMemoryToken& pointLightsToken,
@@ -43,6 +43,11 @@ public:
 		TransientMemoryToken* probesToken,
 		TransientMemoryToken& clustersToken,
 		TransientMemoryToken& lightIndicesToken);
+
+	const Clusterer& getClusterer() const
+	{
+		return m_clusterer;
+	}
 
 private:
 	GenericMemoryPoolAllocator<U8> m_alloc;

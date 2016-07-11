@@ -99,11 +99,6 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_tileCountXY.y() = m_height / TILE_SIZE;
 	m_tileCount = m_tileCountXY.x() * m_tileCountXY.y();
 
-	m_clusterer.init(getAllocator(),
-		m_tileCountXY.x(),
-		m_tileCountXY.y(),
-		config.getNumber("clusterSizeZ"));
-
 	m_tessellation = config.getNumber("tessellation");
 
 	// A few sanity checks
@@ -221,7 +216,6 @@ Error Renderer::render(RenderingContext& ctx)
 
 	// Misc
 	ANKI_ASSERT(frc.getFrustum().getType() == Frustum::Type::PERSPECTIVE);
-	m_clusterer.prepare(getThreadPool(), frc);
 
 	// Write the common uniforms
 	RendererCommonUniforms* commonUniforms =
@@ -260,8 +254,6 @@ Error Renderer::render(RenderingContext& ctx)
 		ANKI_CHECK(m_ir->run(ctx));
 	}
 
-	ANKI_CHECK(m_is->populateBuffers(ctx));
-
 	ANKI_CHECK(buildCommandBuffers(ctx));
 
 	if(m_sm)
@@ -273,7 +265,7 @@ Error Renderer::render(RenderingContext& ctx)
 	m_lf->runOcclusionTests(ctx);
 	cmdb->endRenderPass();
 
-	m_is->run(ctx);
+	ANKI_CHECK(m_is->run(ctx));
 
 	cmdb->generateMipmaps(m_ms->getDepthRt(), 0, 0, 0);
 	cmdb->generateMipmaps(m_ms->getRt2(), 0, 0, 0);

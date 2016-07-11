@@ -339,7 +339,7 @@ LightBin::~LightBin()
 
 //==============================================================================
 Error LightBin::bin(FrustumComponent& frc,
-	StackAllocator<U8>& frameAlloc,
+	StackAllocator<U8> frameAlloc,
 	U maxLightIndices,
 	Bool shadowsEnabled,
 	TransientMemoryToken& pointLightsToken,

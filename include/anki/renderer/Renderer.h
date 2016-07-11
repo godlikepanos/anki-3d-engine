@@ -278,16 +278,6 @@ anki_internal:
 		return m_tileCountXY;
 	}
 
-	U getClusterCount() const
-	{
-		return m_clusterer.getClusterCount();
-	}
-
-	const Clusterer& getClusterer() const
-	{
-		return m_clusterer;
-	}
-
 	const ShaderPtr& getDrawQuadVertexShader() const
 	{
 		return m_drawQuadVert->getGrShader();
@@ -399,8 +389,6 @@ private:
 	Timestamp* m_globTimestamp;
 	HeapAllocator<U8> m_alloc;
 	StackAllocator<U8> m_frameAlloc;
-
-	Clusterer m_clusterer;
 
 	TransientMemoryToken m_commonUniformsToken;
 

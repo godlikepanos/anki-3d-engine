@@ -8,28 +8,13 @@
 #include <anki/renderer/RenderingPass.h>
 #include <anki/resource/TextureResource.h>
 #include <anki/resource/ShaderResource.h>
-#include <anki/Gr.h>
-#include <anki/Math.h>
-#include <anki/util/StdTypes.h>
-#include <anki/util/Array.h>
-#include <anki/core/Timestamp.h>
-#include <anki/collision/Plane.h>
 
 namespace anki
 {
 
 // Forward
-class Camera;
-class PerspectiveCamera;
-class PointLight;
-class SpotLight;
-class LightComponent;
-class MoveComponent;
-class SpatialComponent;
 class FrustumComponent;
-class TaskCommonData;
-class ClustererTestResult;
-class SceneNode;
+class LightBin;
 
 /// @addtogroup renderer
 /// @{
@@ -37,8 +22,6 @@ class SceneNode;
 /// Illumination stage
 class Is : public RenderingPass
 {
-	friend class WriteLightsTask;
-
 anki_internal:
 	static const PixelFormat RT_PIXEL_FORMAT;
 
@@ -48,10 +31,7 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 
-	/// Populate light buffers.
-	ANKI_USE_RESULT Error populateBuffers(RenderingContext& ctx);
-
-	void run(RenderingContext& ctx);
+	ANKI_USE_RESULT Error run(RenderingContext& ctx);
 
 	TexturePtr getRt() const
 	{
@@ -84,51 +64,18 @@ private:
 	ShaderResourcePtr m_lightFrag;
 	PipelinePtr m_lightPpline;
 
-	/// Opt because many ask for it
-	FrustumComponent* m_frc = nullptr;
+	LightBin* m_lightBin = nullptr;
 
 	/// @name Limits
 	/// @{
 	U32 m_maxLightIds;
 	/// @}
 
-	WeakPtr<Barrier> m_barrier;
-
 	/// Called by init
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 
-	/// Prepare GL for rendering
-	void setState(const RenderingContext& ctx, CommandBufferPtr& cmdBuff);
-
-	void updateCommonBlock(const FrustumComponent& frc, RenderingContext& ctx);
-
-	// Binning
-	void binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& data);
-
-	I writePointLight(const LightComponent& light,
-		const MoveComponent& move,
-		const FrustumComponent& camfrc,
-		TaskCommonData& task);
-
-	I writeSpotLight(const LightComponent& lightc,
-		const MoveComponent& lightMove,
-		const FrustumComponent* lightFrc,
-		const MoveComponent& camMove,
-		const FrustumComponent& camFrc,
-		TaskCommonData& task);
-
-	void binLight(SpatialComponent& sp,
-		U pos,
-		U lightType,
-		TaskCommonData& task,
-		ClustererTestResult& testResult);
-
-	void writeAndBinProbe(const FrustumComponent& camFrc,
-		const SceneNode& node,
-		TaskCommonData& task,
-		ClustererTestResult& testResult);
+	void updateCommonBlock(RenderingContext& ctx);
 };
-
 /// @}
 
 } // end namespace anki
