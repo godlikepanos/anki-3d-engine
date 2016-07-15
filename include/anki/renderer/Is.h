@@ -31,7 +31,9 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 
-	ANKI_USE_RESULT Error run(RenderingContext& ctx);
+	ANKI_USE_RESULT Error binLights(RenderingContext& ctx);
+
+	void run(RenderingContext& ctx);
 
 	TexturePtr getRt() const
 	{

@@ -64,7 +64,7 @@ public:
 		}                                                                      \
 	} while(0)
 
-		ANKI_CHECK_VAL_VALIDITY(m_usage != TextureUsageBit::NONE);
+		// TODO: ANKI_CHECK_VAL_VALIDITY(m_usage != TextureUsageBit::NONE);
 		ANKI_CHECK_VAL_VALIDITY(m_mipmapsCount > 0);
 		ANKI_CHECK_VAL_VALIDITY(m_width > 0);
 		ANKI_CHECK_VAL_VALIDITY(m_height > 0);

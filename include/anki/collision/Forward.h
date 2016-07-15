@@ -19,6 +19,4 @@ class Aabb;
 class CompoundShape;
 class ConvexHullShape;
 
-class ContactPoint;
-
 } // end namespace anki

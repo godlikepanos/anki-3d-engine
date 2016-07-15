@@ -78,13 +78,13 @@ Error Is::initInternal(const ConfigSet& config)
 	}
 
 	U clusterCount = m_r->getTileCountXY().x() * m_r->getTileCountXY().y()
-		* config.getNumber("clusterCountZ");
+		* config.getNumber("clusterSizeZ");
 	m_maxLightIds *= clusterCount;
 
 	m_lightBin = getAllocator().newInstance<LightBin>(getAllocator(),
 		m_r->getTileCountXY().x(),
 		m_r->getTileCountXY().y(),
-		config.getNumber("clusterCountZ"),
+		config.getNumber("clusterSizeZ"),
 		&m_r->getThreadPool(),
 		&getGrManager());
 
@@ -177,7 +177,10 @@ Error Is::initInternal(const ConfigSet& config)
 		init.m_uniformBuffers[0].m_uploadedMemory = true;
 		init.m_uniformBuffers[1].m_uploadedMemory = true;
 		init.m_uniformBuffers[2].m_uploadedMemory = true;
-		init.m_uniformBuffers[3].m_uploadedMemory = true;
+		if(m_r->getIrEnabled())
+		{
+			init.m_uniformBuffers[3].m_uploadedMemory = true;
+		}
 
 		init.m_storageBuffers[0].m_uploadedMemory = true;
 		init.m_storageBuffers[1].m_uploadedMemory = true;
@@ -190,7 +193,7 @@ Error Is::initInternal(const ConfigSet& config)
 }
 
 //==============================================================================
-Error Is::run(RenderingContext& ctx)
+Error Is::binLights(RenderingContext& ctx)
 {
 	updateCommonBlock(ctx);
 
@@ -205,7 +208,13 @@ Error Is::run(RenderingContext& ctx)
 			: nullptr,
 		ctx.m_is.m_dynBufferInfo.m_storageBuffers[CLUSTERS_LOCATION],
 		ctx.m_is.m_dynBufferInfo.m_storageBuffers[LIGHT_IDS_LOCATION]));
+		
+	return ErrorCode::NONE;
+}
 
+//==============================================================================
+void Is::run(RenderingContext& ctx)
+{
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 	cmdb->beginRenderPass(m_fb);
@@ -214,8 +223,6 @@ Error Is::run(RenderingContext& ctx)
 	cmdb->bindResourceGroup(m_rcGroup, 0, &ctx.m_is.m_dynBufferInfo);
 	cmdb->drawArrays(4, m_r->getTileCount());
 	cmdb->endRenderPass();
-
-	return ErrorCode::NONE;
 }
 
 //==============================================================================

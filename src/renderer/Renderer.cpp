@@ -254,6 +254,7 @@ Error Renderer::render(RenderingContext& ctx)
 		ANKI_CHECK(m_ir->run(ctx));
 	}
 
+	ANKI_CHECK(m_is->binLights(ctx));
 	ANKI_CHECK(buildCommandBuffers(ctx));
 
 	if(m_sm)
@@ -265,7 +266,7 @@ Error Renderer::render(RenderingContext& ctx)
 	m_lf->runOcclusionTests(ctx);
 	cmdb->endRenderPass();
 
-	ANKI_CHECK(m_is->run(ctx));
+	m_is->run(ctx);
 
 	cmdb->generateMipmaps(m_ms->getDepthRt(), 0, 0, 0);
 	cmdb->generateMipmaps(m_ms->getRt2(), 0, 0, 0);

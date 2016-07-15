@@ -7,7 +7,6 @@
 
 #include <anki/renderer/Common.h>
 #include <anki/renderer/Drawer.h>
-#include <anki/renderer/Clusterer.h>
 #include <anki/Math.h>
 #include <anki/Gr.h>
 #include <anki/scene/Forward.h>
@@ -15,6 +14,7 @@
 #include <anki/resource/ShaderResource.h>
 #include <anki/core/Timestamp.h>
 #include <anki/util/ThreadPool.h>
+#include <anki/collision/Forward.h>
 
 namespace anki
 {

@@ -415,23 +415,26 @@ Error LightBin::bin(FrustumComponent& frc,
 		spotLightsToken.markUnused();
 	}
 
-	if(probesToken && visibleProbeCount)
+	if(probesToken)
 	{
-		ShaderProbe* data =
-			static_cast<ShaderProbe*>(m_gr->allocateFrameTransientMemory(
-				sizeof(ShaderProbe) * visibleProbeCount,
-				BufferUsage::UNIFORM,
-				*probesToken));
-
-		ctx.m_probes = WeakArray<ShaderProbe>(data, visibleProbeCount);
-
-		ctx.m_vProbes = WeakArray<VisibleNode>(
-			vi.getBegin(VisibilityGroupType::REFLECTION_PROBES),
-			visibleProbeCount);
-	}
-	else
-	{
-		probesToken->markUnused();
+		if(visibleProbeCount)
+		{
+			ShaderProbe* data =
+				static_cast<ShaderProbe*>(m_gr->allocateFrameTransientMemory(
+					sizeof(ShaderProbe) * visibleProbeCount,
+					BufferUsage::UNIFORM,
+					*probesToken));
+	
+			ctx.m_probes = WeakArray<ShaderProbe>(data, visibleProbeCount);
+	
+			ctx.m_vProbes = WeakArray<VisibleNode>(
+				vi.getBegin(VisibilityGroupType::REFLECTION_PROBES),
+				visibleProbeCount);
+		}
+		else
+		{
+			probesToken->markUnused();
+		}
 	}
 
 	ctx.m_bin = this;
