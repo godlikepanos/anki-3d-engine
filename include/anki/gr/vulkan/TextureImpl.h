@@ -33,6 +33,7 @@ public:
 	U32 m_layerCount = 0;
 	VkImageAspectFlags m_aspect = 0;
 	TextureUsageBit m_usage = TextureUsageBit::NONE;
+	PixelFormat m_format;
 
 	TextureImpl(GrManager* manager);
 
@@ -40,10 +41,13 @@ public:
 
 	ANKI_USE_RESULT Error init(const TextureInitInfo& init, Texture* tex);
 
-	void checkSurface(const TextureSurfaceInfo& surf)
+	void checkSurface(const TextureSurfaceInfo& surf) const
 	{
 		checkTextureSurface(m_type, m_depth, m_mipCount, m_layerCount, surf);
 	}
+
+	void computeSubResourceRange(
+		const TextureSurfaceInfo& surf, VkImageSubresourceRange& range) const;
 
 private:
 	class CreateContext;
@@ -59,6 +63,37 @@ private:
 	ANKI_USE_RESULT Error initImage(CreateContext& ctx);
 	ANKI_USE_RESULT Error initView(CreateContext& ctx);
 };
+
+//==============================================================================
+inline void TextureImpl::computeSubResourceRange(
+	const TextureSurfaceInfo& surf, VkImageSubresourceRange& range) const
+{
+	checkSurface(surf);
+	range.aspectMask = m_aspect;
+	range.baseMipLevel = surf.m_level;
+	range.levelCount = 1;
+	switch(m_type)
+	{
+	case TextureType::_2D:
+		range.baseArrayLayer = 0;
+		break;
+	case TextureType::_3D:
+		range.baseArrayLayer = surf.m_depth;
+		break;
+	case TextureType::CUBE:
+		range.baseArrayLayer = surf.m_face;
+		break;
+	case TextureType::_2D_ARRAY:
+		range.baseArrayLayer = surf.m_layer;
+		break;
+	case TextureType::CUBE_ARRAY:
+		range.baseArrayLayer = surf.m_layer * 6 + surf.m_face;
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+	range.layerCount = 1;
+}
 /// @}
 
 } // end namespace anki

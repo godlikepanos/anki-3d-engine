@@ -208,7 +208,7 @@ Error Is::binLights(RenderingContext& ctx)
 			: nullptr,
 		ctx.m_is.m_dynBufferInfo.m_storageBuffers[CLUSTERS_LOCATION],
 		ctx.m_is.m_dynBufferInfo.m_storageBuffers[LIGHT_IDS_LOCATION]));
-		
+
 	return ErrorCode::NONE;
 }
 

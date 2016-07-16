@@ -108,7 +108,7 @@ Bool TextureImpl::imageSupported(const TextureInitInfo& init)
 		convertFormat(init.m_format),
 		convertTextureType(init.m_type),
 		VK_IMAGE_TILING_OPTIMAL,
-		convertTextureUsage(init.m_usage),
+		convertTextureUsage(init.m_usage, init.m_format),
 		calcCreateFlags(init),
 		&props);
 
@@ -130,6 +130,7 @@ Error TextureImpl::init(const TextureInitInfo& init, Texture* tex)
 	m_sampler = getGrManager().newInstanceCached<Sampler>(init.m_sampling);
 	m_width = init.m_width;
 	m_height = init.m_height;
+	m_format = init.m_format;
 
 	CreateContext ctx;
 	ctx.m_init = init;
@@ -137,52 +138,37 @@ Error TextureImpl::init(const TextureInitInfo& init, Texture* tex)
 	ANKI_CHECK(initView(ctx));
 
 	// Transition the image layout from undefined to something relevant
-	VkImageLayout initialLayout;
-	CommandBufferInitInfo cmdbinit;
-	cmdbinit.m_flags = CommandBufferFlag::GRAPHICS_WORK;
-	CommandBufferPtr cmdb = getGrManager().newInstance<CommandBuffer>(cmdbinit);
 	m_usage = init.m_usage;
-	if((m_usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE)
-		!= TextureUsageBit::NONE)
-	{
-		if(formatIsDepthStencil(init.m_format))
-		{
-			initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-		}
-		else
-		{
-			initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		}
-	}
-	else if((m_usage & TextureUsageBit::ANY_SHADER_SAMPLED)
-		!= TextureUsageBit::NONE)
-	{
-		initialLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	}
-	else
-	{
-		ANKI_ASSERT(0 && "TODO");
-	}
+	VkImageLayout initialLayout = computeLayout(
+		init.m_initialUsage, formatIsDepthStencil(init.m_format), 0);
 
-	VkImageSubresourceRange range;
-	range.aspectMask = m_aspect;
-	range.baseArrayLayer = 0;
-	range.baseMipLevel = 0;
-	range.layerCount = m_layerCount;
-	range.levelCount = m_mipCount;
+	if(initialLayout != VK_IMAGE_LAYOUT_UNDEFINED)
+	{
+		CommandBufferInitInfo cmdbinit;
+		cmdbinit.m_flags = CommandBufferFlag::GRAPHICS_WORK;
+		CommandBufferPtr cmdb =
+			getGrManager().newInstance<CommandBuffer>(cmdbinit);
 
-	cmdb->getImplementation().setImageBarrier(
-		VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-		VK_ACCESS_MEMORY_WRITE_BIT,
-		VK_IMAGE_LAYOUT_UNDEFINED,
-		VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-		VK_ACCESS_MEMORY_READ_BIT,
-		initialLayout,
-		TexturePtr(tex),
-		range);
+		VkImageSubresourceRange range;
+		range.aspectMask = m_aspect;
+		range.baseArrayLayer = 0;
+		range.baseMipLevel = 0;
+		range.layerCount = m_layerCount;
+		range.levelCount = m_mipCount;
 
-	cmdb->getImplementation().endRecording();
-	getGrManagerImpl().flushCommandBuffer(cmdb);
+		cmdb->getImplementation().setImageBarrier(
+			VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+			VK_ACCESS_MEMORY_WRITE_BIT,
+			VK_IMAGE_LAYOUT_UNDEFINED,
+			VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+			VK_ACCESS_MEMORY_READ_BIT,
+			initialLayout,
+			TexturePtr(tex),
+			range);
+
+		cmdb->getImplementation().endRecording();
+		getGrManagerImpl().flushCommandBuffer(cmdb);
+	}
 
 	return ErrorCode::NONE;
 }
@@ -269,7 +255,7 @@ Error TextureImpl::initImage(CreateContext& ctx)
 
 	ci.samples = VK_SAMPLE_COUNT_1_BIT;
 	ci.tiling = VK_IMAGE_TILING_OPTIMAL;
-	ci.usage = convertTextureUsage(init.m_usage);
+	ci.usage = convertTextureUsage(init.m_usage, init.m_format);
 	ci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	ci.queueFamilyIndexCount = 1;
 	U32 queueIdx = getGrManagerImpl().getGraphicsQueueFamily();

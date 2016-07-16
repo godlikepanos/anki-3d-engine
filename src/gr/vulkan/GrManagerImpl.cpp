@@ -87,7 +87,26 @@ GrManagerImpl::~GrManagerImpl()
 		vkQueueWaitIdle(m_queue);
 		m_queue = VK_NULL_HANDLE;
 	}
+	
+	// SECOND THING: The destroy everything that has a reference to GrObjects.
+	for(auto& x : m_perFrame)
+	{
+		if(x.m_imageView)
+		{
+			vkDestroyImageView(m_device, x.m_imageView, nullptr);
+			x.m_imageView = VK_NULL_HANDLE;
+		}
 
+		x.m_presentFence.reset(nullptr);
+		x.m_acquireSemaphore.reset(nullptr);
+		x.m_renderSemaphore.reset(nullptr);
+
+		x.m_cmdbsSubmitted.destroy(getAllocator());
+	}
+
+	m_perThread.destroy(getAllocator());
+
+	// THIRD THING: Continue with the rest
 	if(m_renderPasses)
 	{
 		auto it = m_renderPasses->m_hashmap.getBegin();
@@ -118,23 +137,6 @@ GrManagerImpl::~GrManagerImpl()
 		vkDestroyDescriptorSetLayout(
 			m_device, m_globalDescriptorSetLayout, nullptr);
 	}
-
-	for(auto& x : m_perFrame)
-	{
-		if(x.m_imageView)
-		{
-			vkDestroyImageView(m_device, x.m_imageView, nullptr);
-			x.m_imageView = VK_NULL_HANDLE;
-		}
-
-		x.m_presentFence.reset(nullptr);
-		x.m_acquireSemaphore.reset(nullptr);
-		x.m_renderSemaphore.reset(nullptr);
-
-		x.m_cmdbsSubmitted.destroy(getAllocator());
-	}
-
-	m_perThread.destroy(getAllocator());
 
 	m_transientMem.destroy();
 	m_gpuMemAllocs.destroy(getAllocator());

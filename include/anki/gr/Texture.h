@@ -41,6 +41,7 @@ class TextureInitInfo
 public:
 	TextureType m_type = TextureType::_2D;
 	TextureUsageBit m_usage = TextureUsageBit::NONE;
+	TextureUsageBit m_initialUsage = TextureUsageBit::NONE;
 	U32 m_width = 0;
 	U32 m_height = 0;
 	U32 m_depth = 0; //< Relevant only for 3D textures.

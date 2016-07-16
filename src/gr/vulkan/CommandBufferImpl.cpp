@@ -181,7 +181,7 @@ void CommandBufferImpl::drawcallCommon()
 			bi.framebuffer = impl.getFramebufferHandle(0);
 
 			ANKI_ASSERT(0);
-			// TODO Get the render arrea from one of the attachments
+			// TODO Get the render area from one of the attachments
 		}
 		else
 		{
@@ -267,84 +267,6 @@ void CommandBufferImpl::bindResourceGroup(
 
 	// Hold the reference
 	m_rcList.pushBack(m_alloc, rc);
-}
-
-//==============================================================================
-void CommandBufferImpl::uploadTextureSurface(TexturePtr tex,
-	const TextureSurfaceInfo& surf,
-	const TransientMemoryToken& token)
-{
-	commandCommon();
-	TextureImpl& impl = tex->getImplementation();
-
-	// First transition to transfer layout
-	VkImageSubresourceRange range;
-	range.aspectMask = impl.m_aspect;
-	switch(impl.m_type)
-	{
-	case TextureType::CUBE:
-		range.baseArrayLayer = surf.m_face;
-		break;
-	case TextureType::CUBE_ARRAY:
-		range.baseArrayLayer = surf.m_depth * impl.m_layerCount + surf.m_face;
-		break;
-	case TextureType::_2D:
-		range.baseArrayLayer = 0;
-		break;
-	case TextureType::_2D_ARRAY:
-		range.baseArrayLayer = surf.m_depth;
-		break;
-	case TextureType::_3D:
-		range.baseArrayLayer = 0;
-		break;
-	default:
-		ANKI_ASSERT(0);
-	}
-	range.baseMipLevel = surf.m_level;
-	range.layerCount = 1;
-	range.levelCount = 1;
-
-	setImageBarrier(VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-		VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT,
-		VK_IMAGE_LAYOUT_UNDEFINED,
-		VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-		VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT,
-		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-		tex,
-		range);
-
-	// Copy
-	VkBufferImageCopy region;
-	region.imageSubresource.aspectMask = impl.m_aspect;
-	region.imageSubresource.baseArrayLayer = range.baseArrayLayer;
-	region.imageSubresource.layerCount = 1;
-	region.imageSubresource.mipLevel = range.baseMipLevel;
-	region.imageOffset = {0, 0, 0};
-	region.imageExtent.width = impl.m_width;
-	region.imageExtent.height = impl.m_height;
-	region.imageExtent.depth = 1;
-	region.bufferOffset = token.m_offset;
-	region.bufferImageHeight = 0;
-	region.bufferRowLength = 0;
-
-	vkCmdCopyBufferToImage(m_handle,
-		getGrManagerImpl().getTransientMemoryManager().getBufferHandle(token),
-		impl.m_imageHandle,
-		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-		1,
-		&region);
-
-	// Transition back. Use the "impl.m_imageHandle" since we already hold a
-	// reference
-	// TOOD: Use the correct layout
-	setImageBarrier(VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-		VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT,
-		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-		VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-		VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT,
-		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-		impl.m_imageHandle,
-		range);
 }
 
 } // end namespace anki

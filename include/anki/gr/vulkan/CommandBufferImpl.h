@@ -55,24 +55,7 @@ public:
 			== CommandBufferFlag::FRAME_LAST;
 	}
 
-	void setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
-	{
-		commandCommon();
-		ANKI_ASSERT(minx < maxx && miny < maxy);
-		VkViewport s;
-		s.x = minx;
-		s.y = miny;
-		s.width = maxx - minx;
-		s.height = maxy - miny;
-		vkCmdSetViewport(m_handle, 0, 1, &s);
-
-		VkRect2D scissor = {};
-		scissor.extent.width = maxx - minx;
-		scissor.extent.height = maxy - miny;
-		scissor.offset.x = minx;
-		scissor.offset.y = miny;
-		vkCmdSetScissor(m_handle, 0, 1, &scissor);
-	}
+	void setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy);
 
 	void bindPipeline(PipelinePtr ppline);
 
@@ -102,25 +85,7 @@ public:
 		VkAccessFlags dstAccess,
 		VkImageLayout newLayout,
 		VkImage img,
-		const VkImageSubresourceRange& range)
-	{
-		ANKI_ASSERT(img);
-		commandCommon();
-
-		VkImageMemoryBarrier inf = {};
-		inf.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		inf.srcAccessMask = srcAccess;
-		inf.dstAccessMask = dstAccess;
-		inf.oldLayout = prevLayout;
-		inf.newLayout = newLayout;
-		inf.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		inf.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		inf.image = img;
-		inf.subresourceRange = range;
-
-		vkCmdPipelineBarrier(
-			m_handle, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &inf);
-	}
+		const VkImageSubresourceRange& range);
 
 	void setImageBarrier(VkPipelineStageFlags srcStage,
 		VkAccessFlags srcAccess,
@@ -129,19 +94,12 @@ public:
 		VkAccessFlags dstAccess,
 		VkImageLayout newLayout,
 		TexturePtr tex,
-		const VkImageSubresourceRange& range)
-	{
-		setImageBarrier(srcStage,
-			srcAccess,
-			prevLayout,
-			dstStage,
-			dstAccess,
-			newLayout,
-			tex->getImplementation().m_imageHandle,
-			range);
+		const VkImageSubresourceRange& range);
 
-		m_texList.pushBack(m_alloc, tex);
-	}
+	void setImageBarrier(TexturePtr tex,
+		TextureUsageBit prevUsage,
+		TextureUsageBit nextUsage,
+		const TextureSurfaceInfo& surf);
 
 private:
 	StackAllocator<U8> m_alloc;
@@ -183,3 +141,5 @@ private:
 /// @}
 
 } // end namespace anki
+
+#include <anki/gr/vulkan/CommandBufferImpl.inl.h>

@@ -30,6 +30,15 @@ static void deleteShaders(GLsizei n, const GLuint* names)
 	glDeleteShader(*names);
 }
 
+static const char* SHADER_HEADER = R"(#version %u %s
+#define ANKI_GL 1
+#define %s
+#define ANKI_UBO_BINDING(set_, binding_) binding = set_ * %u + binding_
+#define ANKI_SS_BINDING(set_, binding_) binding = set_ * %u + binding_
+#define ANKI_TEX_BINDING(set_, binding_) binding = set_ * %u + binding_
+
+%s)";
+
 //==============================================================================
 // ShaderImpl                                                                  =
 //==============================================================================
@@ -81,10 +90,13 @@ Error ShaderImpl::init(ShaderType type, const CString& source)
 	static const char* versionType = "es";
 #endif
 
-	fullSrc.sprintf("#version %d %s\n#define ANKI_GL\n#define %s\n%s\n",
+	fullSrc.sprintf(SHADER_HEADER,
 		version,
 		versionType,
 		shaderName[U(type)],
+		MAX_UNIFORM_BUFFER_BINDINGS,
+		MAX_STORAGE_BUFFER_BINDINGS,
+		MAX_TEXTURE_BINDINGS,
 		&source[0]);
 
 	// 2) Gen name, create, compile and link

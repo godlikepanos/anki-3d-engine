@@ -424,9 +424,9 @@ Error LightBin::bin(FrustumComponent& frc,
 					sizeof(ShaderProbe) * visibleProbeCount,
 					BufferUsage::UNIFORM,
 					*probesToken));
-	
+
 			ctx.m_probes = WeakArray<ShaderProbe>(data, visibleProbeCount);
-	
+
 			ctx.m_vProbes = WeakArray<VisibleNode>(
 				vi.getBegin(VisibilityGroupType::REFLECTION_PROBES),
 				visibleProbeCount);

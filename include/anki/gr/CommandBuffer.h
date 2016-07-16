@@ -221,6 +221,10 @@ public:
 
 	/// @name Sync
 	/// @{
+	void setTextureBarrier(TexturePtr tex,
+		TextureUsageBit prevUsage,
+		TextureUsageBit nextUsage,
+		const TextureSurfaceInfo& surf);
 
 	void setPipelineBarrier(PipelineStageBit src, PipelineStageBit dst);
 

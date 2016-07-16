@@ -170,6 +170,15 @@ void CommandBuffer::uploadBuffer(
 }
 
 //==============================================================================
+void CommandBuffer::setTextureBarrier(TexturePtr tex,
+	TextureUsageBit prevUsage,
+	TextureUsageBit nextUsage,
+	const TextureSurfaceInfo& surf)
+{
+	m_impl->setImageBarrier(tex, prevUsage, nextUsage, surf);
+}
+
+//==============================================================================
 void CommandBuffer::setPipelineBarrier(
 	PipelineStageBit src, PipelineStageBit dst)
 {

@@ -82,6 +82,27 @@ void main()
 	out_color1 = in_color1;
 })";
 
+static const char* VERT_QUAD_SRC = R"(
+out gl_PerVertex
+{
+	vec4 gl_Position;
+};
+
+layout(location = 0) out vec2 out_uv;
+
+void main()
+{
+	const vec2 POSITIONS[6] =
+		vec2[](vec2(-1.0, 1.0), vec2(-1.0, -1.0), vec2(1.0, -1.0),
+		vec2(1.0, -1.0), vec2(1.0, 1.0), vec2(-1.0, 1.0));
+
+	gl_Position = vec4(POSITIONS[gl_VertexID], 0.0, 1.0);
+#if defined(ANKI_VK)
+	gl_Position.y = -gl_Position.y;
+#endif
+	out_uv = POSITIONS[gl_VertexID] / 2.0 + 0.5;
+})";
+
 static const char* FRAG_SRC = R"(layout (location = 0) out vec4 out_color;
 
 void main()
@@ -106,6 +127,18 @@ layout(location = 1) in vec3 in_color1;
 void main()
 {
 	out_color = vec4(in_color0 + in_color1, 1.0);
+})";
+
+static const char* FRAG_TEX_SRC = R"(layout (location = 0) out vec4 out_color;
+
+layout(location = 0) in vec2 in_uv;
+
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_tex;
+
+void main()
+{
+	float factor = in_uv.x;
+	out_color = vec4(textureLod(u_tex, in_uv, factor).rgb, 1.0);
 })";
 
 #define COMMON_BEGIN()                                                         \
@@ -149,6 +182,33 @@ static void createGrManager(NativeWindow*& win, GrManager*& gr)
 }
 
 //==============================================================================
+static PipelinePtr createSimplePpline(
+	CString vertSrc, CString fragSrc, GrManager& gr)
+{
+	ShaderPtr vert = gr.newInstance<Shader>(ShaderType::VERTEX, vertSrc);
+	ShaderPtr frag = gr.newInstance<Shader>(ShaderType::FRAGMENT, fragSrc);
+
+	PipelineInitInfo init;
+	init.m_shaders[ShaderType::VERTEX] = vert;
+	init.m_shaders[ShaderType::FRAGMENT] = frag;
+	init.m_color.m_drawsToDefaultFramebuffer = true;
+	init.m_color.m_attachmentCount = 1;
+	init.m_depthStencil.m_depthWriteEnabled = false;
+
+	return gr.newInstance<Pipeline>(init);
+}
+
+//==============================================================================
+static FramebufferPtr createDefaultFb(GrManager& gr)
+{
+	FramebufferInitInfo fbinit;
+	fbinit.m_colorAttachmentCount = 1;
+	fbinit.m_colorAttachments[0].m_clearValue.m_colorf = {1.0, 0.0, 1.0, 1.0};
+
+	return gr.newInstance<Framebuffer>(fbinit);
+}
+
+//==============================================================================
 ANKI_TEST(Gr, GrManager)
 {
 	COMMON_BEGIN();
@@ -174,19 +234,7 @@ ANKI_TEST(Gr, Pipeline)
 	COMMON_BEGIN();
 
 	{
-		ShaderPtr vert = gr->newInstance<Shader>(ShaderType::VERTEX, VERT_SRC);
-		ShaderPtr frag =
-			gr->newInstance<Shader>(ShaderType::FRAGMENT, FRAG_SRC);
-
-		PipelineInitInfo init;
-		init.m_shaders[ShaderType::VERTEX] = vert;
-		init.m_shaders[ShaderType::FRAGMENT] = frag;
-		init.m_color.m_attachments[0].m_format =
-			PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
-		init.m_color.m_attachmentCount = 1;
-		init.m_depthStencil.m_depthWriteEnabled = false;
-
-		PipelinePtr ppline = gr->newInstance<Pipeline>(init);
+		PipelinePtr ppline = createSimplePpline(VERT_SRC, FRAG_SRC, *gr);
 	}
 
 	COMMON_END();
@@ -198,24 +246,8 @@ ANKI_TEST(Gr, SimpleDrawcall)
 	COMMON_BEGIN();
 
 	{
-		ShaderPtr vert = gr->newInstance<Shader>(ShaderType::VERTEX, VERT_SRC);
-		ShaderPtr frag =
-			gr->newInstance<Shader>(ShaderType::FRAGMENT, FRAG_SRC);
-
-		PipelineInitInfo init;
-		init.m_shaders[ShaderType::VERTEX] = vert;
-		init.m_shaders[ShaderType::FRAGMENT] = frag;
-		init.m_color.m_drawsToDefaultFramebuffer = true;
-		init.m_color.m_attachmentCount = 1;
-		init.m_depthStencil.m_depthWriteEnabled = false;
-
-		PipelinePtr ppline = gr->newInstance<Pipeline>(init);
-
-		FramebufferInitInfo fbinit;
-		fbinit.m_colorAttachmentCount = 1;
-		fbinit.m_colorAttachments[0].m_clearValue.m_colorf = {
-			1.0, 0.0, 1.0, 1.0};
-		FramebufferPtr fb = gr->newInstance<Framebuffer>(fbinit);
+		PipelinePtr ppline = createSimplePpline(VERT_SRC, FRAG_SRC, *gr);
+		FramebufferPtr fb = createDefaultFb(*gr);
 
 		U iterations = 100;
 		while(--iterations)
@@ -324,28 +356,12 @@ ANKI_TEST(Gr, DrawWithUniforms)
 		rcinit.m_uniformBuffers[0].m_buffer = b;
 		ResourceGroupPtr rc = gr->newInstance<ResourceGroup>(rcinit);
 
-		// Shaders
-		ShaderPtr vert =
-			gr->newInstance<Shader>(ShaderType::VERTEX, VERT_UBO_SRC);
-		ShaderPtr frag =
-			gr->newInstance<Shader>(ShaderType::FRAGMENT, FRAG_UBO_SRC);
-
 		// Ppline
-		PipelineInitInfo init;
-		init.m_shaders[ShaderType::VERTEX] = vert;
-		init.m_shaders[ShaderType::FRAGMENT] = frag;
-		init.m_color.m_drawsToDefaultFramebuffer = true;
-		init.m_color.m_attachmentCount = 1;
-		init.m_depthStencil.m_depthWriteEnabled = false;
-
-		PipelinePtr ppline = gr->newInstance<Pipeline>(init);
+		PipelinePtr ppline =
+			createSimplePpline(VERT_UBO_SRC, FRAG_UBO_SRC, *gr);
 
 		// FB
-		FramebufferInitInfo fbinit;
-		fbinit.m_colorAttachmentCount = 1;
-		fbinit.m_colorAttachments[0].m_clearValue.m_colorf = {
-			1.0, 0.0, 1.0, 1.0};
-		FramebufferPtr fb = gr->newInstance<Framebuffer>(fbinit);
+		FramebufferPtr fb = createDefaultFb(*gr);
 
 		U iterations = 100;
 		while(--iterations)
@@ -463,11 +479,7 @@ ANKI_TEST(Gr, DrawWithVertex)
 		PipelinePtr ppline = gr->newInstance<Pipeline>(init);
 
 		// FB
-		FramebufferInitInfo fbinit;
-		fbinit.m_colorAttachmentCount = 1;
-		fbinit.m_colorAttachments[0].m_clearValue.m_colorf = {
-			1.0, 0.0, 1.0, 1.0};
-		FramebufferPtr fb = gr->newInstance<Framebuffer>(fbinit);
+		FramebufferPtr fb = createDefaultFb(*gr);
 
 		U iterations = 100;
 		while(--iterations)
@@ -529,7 +541,7 @@ ANKI_TEST(Gr, Texture)
 		init.m_depth = 1;
 		init.m_format =
 			PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM);
-		init.m_usage = TextureUsageBit::ANY_SHADER_SAMPLED;
+		init.m_usage = TextureUsageBit::FRAGMENT_SHADER_SAMPLED;
 		init.m_height = 4;
 		init.m_width = 4;
 		init.m_mipmapsCount = 2;
@@ -552,33 +564,51 @@ ANKI_TEST(Gr, DrawWithTexture)
 	COMMON_BEGIN();
 
 	{
+		//
+		// Create the texture
+		//
 		TextureInitInfo init;
 		init.m_depth = 1;
 		init.m_format =
-			PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM);
-		init.m_usage = TextureUsageBit::ANY_SHADER_SAMPLED
-			| TextureUsageBit::TRANSFER_DESTINATION;
+			PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
+		init.m_usage =
+			TextureUsageBit::FRAGMENT_SHADER_SAMPLED | TextureUsageBit::UPLOAD;
+		init.m_initialUsage = TextureUsageBit::FRAGMENT_SHADER_SAMPLED;
 		init.m_height = 2;
 		init.m_width = 2;
 		init.m_mipmapsCount = 2;
 		init.m_samples = 1;
 		init.m_depth = 1;
 		init.m_layerCount = 1;
+		init.m_sampling.m_repeat = false;
 		init.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
 		init.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
 		init.m_type = TextureType::_2D;
 
 		TexturePtr b = gr->newInstance<Texture>(init);
 
+		//
 		// Upload
-		Array2d<U8, 2 * 2, 3> mip0 = {
-			{255, 0, 0, 0, 255, 0, 0, 0, 255, 255, 0, 255}};
+		//
+		Array<U8, 2 * 2 * 4> mip0 = {
+			{255, 0, 0, 0, 0, 255, 0, 0, 0, 0, 255, 0, 255, 0, 255, 0}};
 
-		Array<U8, 3> mip1 = {{128, 128, 128}};
+		Array<U8, 4> mip1 = {{128, 128, 128, 0}};
 
 		CommandBufferInitInfo cmdbinit;
 		cmdbinit.m_flags = CommandBufferFlag::TRANSFER_WORK;
 		CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cmdbinit);
+
+		// Set barriers
+		cmdb->setTextureBarrier(b,
+			TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+			TextureUsageBit::UPLOAD,
+			TextureSurfaceInfo(0, 0, 0, 0));
+
+		cmdb->setTextureBarrier(b,
+			TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+			TextureUsageBit::UPLOAD,
+			TextureSurfaceInfo(1, 0, 0, 0));
 
 		Error err = ErrorCode::NONE;
 		TransientMemoryToken token;
@@ -598,10 +628,71 @@ ANKI_TEST(Gr, DrawWithTexture)
 
 		cmdb->uploadTextureSurface(b, TextureSurfaceInfo(1, 0, 0, 0), token);
 
+		// Set barriers
+		cmdb->setTextureBarrier(b,
+			TextureUsageBit::UPLOAD,
+			TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+			TextureSurfaceInfo(0, 0, 0, 0));
+
+		cmdb->setTextureBarrier(b,
+			TextureUsageBit::UPLOAD,
+			TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+			TextureSurfaceInfo(1, 0, 0, 0));
+
 		cmdb->flush();
 
+		//
+		// Create resource group
+		//
+		ResourceGroupInitInfo rcinit;
+		rcinit.m_textures[0].m_texture = b;
+		ResourceGroupPtr rc = gr->newInstance<ResourceGroup>(rcinit);
+
+		//
+		// Create ppline
+		//
+		PipelinePtr ppline =
+			createSimplePpline(VERT_QUAD_SRC, FRAG_TEX_SRC, *gr);
+
+		//
+		// Create FB
+		//
+		FramebufferPtr fb = createDefaultFb(*gr);
+
+		//
 		// Draw
-		// TODO
+		//
+		U iterations = 100;
+		while(--iterations)
+		{
+			HighRezTimer timer;
+			timer.start();
+
+			gr->beginFrame();
+
+			CommandBufferInitInfo cinit;
+			cinit.m_flags =
+				CommandBufferFlag::FRAME_FIRST | CommandBufferFlag::FRAME_LAST;
+			CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
+
+			cmdb->setViewport(0, 0, WIDTH, HEIGHT);
+			cmdb->setPolygonOffset(0.0, 0.0);
+			cmdb->bindPipeline(ppline);
+			cmdb->beginRenderPass(fb);
+			cmdb->bindResourceGroup(rc, 0, nullptr);
+			cmdb->drawArrays(6);
+			cmdb->endRenderPass();
+			cmdb->flush();
+
+			gr->swapBuffers();
+
+			timer.stop();
+			const F32 TICK = 1.0 / 30.0;
+			if(timer.getElapsedTime() < TICK)
+			{
+				HighRezTimer::sleep(TICK - timer.getElapsedTime());
+			}
+		}
 	}
 
 	COMMON_END();

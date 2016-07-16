@@ -113,8 +113,6 @@ private:
 
 	/// Complete a task.
 	void completeTask(U taskId);
-
-	/// Inject dummy depedency tasks if there are
 };
 /// @}
 

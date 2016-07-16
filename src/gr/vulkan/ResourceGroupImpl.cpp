@@ -6,6 +6,8 @@
 #include <anki/gr/vulkan/ResourceGroupImpl.h>
 #include <anki/gr/ResourceGroup.h>
 #include <anki/gr/vulkan/GrManagerImpl.h>
+#include <anki/gr/vulkan/TextureImpl.h>
+#include <anki/gr/vulkan/SamplerImpl.h>
 #include <anki/gr/vulkan/BufferImpl.h>
 
 namespace anki
@@ -28,6 +30,19 @@ U ResourceGroupImpl::calcRefCount(
 {
 	U count = 0;
 	hasUploaded = false;
+
+	for(U i = 0; i < MAX_TEXTURE_BINDINGS; ++i)
+	{
+		if(init.m_textures[i].m_texture)
+		{
+			++count;
+		}
+
+		if(init.m_textures[i].m_sampler)
+		{
+			++count;
+		}
+	}
 
 	for(U i = 0; i < MAX_UNIFORM_BUFFER_BINDINGS; ++i)
 	{
@@ -73,14 +88,62 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 
 	// Update
 	//
+	Array<VkDescriptorImageInfo, MAX_TEXTURE_BINDINGS> texes = {{}};
+	U texAndSamplerCount = 0;
 	Array<VkDescriptorBufferInfo, MAX_UNIFORM_BUFFER_BINDINGS> unis = {{}};
 	U uniCount = 0;
-	Array<VkWriteDescriptorSet, 1> write = {{}};
+	Array<VkWriteDescriptorSet, 2> write = {{}};
 	U writeCount = 0;
 	refCount = 0;
 
 	// 1st the textures
-	// TODO
+	for(U i = 0; i < MAX_TEXTURE_BINDINGS; ++i)
+	{
+		if(init.m_textures[i].m_texture)
+		{
+			TextureImpl& teximpl =
+				init.m_textures[i].m_texture->getImplementation();
+
+			VkDescriptorImageInfo& inf = texes[i];
+			inf.imageView = teximpl.m_viewHandle;
+
+			m_refs[refCount++] = init.m_textures[i].m_texture;
+
+			if(init.m_textures[i].m_sampler)
+			{
+				inf.sampler =
+					init.m_textures[i].m_sampler->getImplementation().m_handle;
+
+				m_refs[refCount++] = init.m_textures[i].m_sampler;
+			}
+			else
+			{
+				inf.sampler = teximpl.m_sampler->getImplementation().m_handle;
+				// No need for ref
+			}
+
+			// TODO need another layout
+			inf.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+			++texAndSamplerCount;
+		}
+	}
+
+	if(texAndSamplerCount)
+	{
+		if(m_handle == VK_NULL_HANDLE)
+		{
+			ANKI_CHECK(getGrManagerImpl().allocateDescriptorSet(m_handle));
+		}
+
+		VkWriteDescriptorSet& w = write[writeCount++];
+		w.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		w.descriptorCount = texAndSamplerCount;
+		w.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		w.dstBinding = 0;
+		w.pImageInfo = &texes[0];
+		w.dstSet = m_handle;
+	}
 
 	// 2nd the uniform buffers
 	for(U i = 0; i < MAX_UNIFORM_BUFFER_BINDINGS; ++i)

@@ -58,6 +58,21 @@ ANKI_USE_RESULT inline Bool formatIsDepthStencil(PixelFormat fmt)
 	}
 }
 
+/// By knowing the previous and new texture usage calculate the relavant info
+/// for a ppline barrier.
+void computeBarrierInfo(TextureUsageBit before,
+	TextureUsageBit after,
+	Bool isDepthStencil,
+	U level,
+	VkPipelineStageFlags& srcStages,
+	VkAccessFlags& srcAccesses,
+	VkPipelineStageFlags& dstStages,
+	VkAccessFlags& dstAccesses);
+
+/// Predict the image layout.
+ANKI_USE_RESULT VkImageLayout computeLayout(
+	TextureUsageBit usage, Bool isDepthStencil, U level);
+
 /// Convert compare op.
 ANKI_USE_RESULT VkCompareOp convertCompareOp(CompareOperation ak);
 
@@ -99,7 +114,8 @@ ANKI_USE_RESULT VkImageType convertTextureType(TextureType ak);
 
 ANKI_USE_RESULT VkImageViewType convertTextureViewType(TextureType ak);
 
-ANKI_USE_RESULT VkImageUsageFlags convertTextureUsage(TextureUsageBit ak);
+ANKI_USE_RESULT VkImageUsageFlags convertTextureUsage(
+	TextureUsageBit ak, const PixelFormat& format);
 /// @}
 
 } // end namespace anki

@@ -596,6 +596,15 @@ void CommandBuffer::setBufferMemoryBarrier(
 }
 
 //==============================================================================
+void CommandBuffer::setTextureBarrier(TexturePtr tex,
+	TextureUsageBit prevUsage,
+	TextureUsageBit nextUsage,
+	const TextureSurfaceInfo& surf)
+{
+	// Do nothing
+}
+
+//==============================================================================
 class ClearTextCommand final : public GlCommand
 {
 public:
