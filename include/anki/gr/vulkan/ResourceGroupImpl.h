@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/gr/vulkan/VulkanObject.h>
+#include <anki/util/BitSet.h>
 
 namespace anki
 {
@@ -46,11 +47,19 @@ public:
 		bindingCount = m_bindingCount;
 	}
 
+	void setupDynamicOffsets(
+		const TransientMemoryInfo* dynInfo, U32 dynOffsets[]) const;
+
 private:
 	VkDescriptorSet m_handle = VK_NULL_HANDLE;
 	Array<VkBuffer, MAX_VERTEX_ATTRIBUTES> m_vertBuffs = {{}};
 	Array<VkDeviceSize, MAX_VERTEX_ATTRIBUTES> m_offsets = {{}};
 	U32 m_bindingCount = 0;
+
+	// For dynamic binding
+	U8 m_uniBindingCount = 0;
+	BitSet<MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS>
+		m_dynamicBuffersMask = {false};
 
 	/// Holds the references to the resources. Used to release the references
 	/// gracefully

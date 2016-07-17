@@ -241,6 +241,8 @@ void CommandBufferImpl::bindResourceGroup(
 		Array<U32, MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS>
 			dynOffsets = {{}};
 
+		impl.setupDynamicOffsets(dynInfo, &dynOffsets[0]);
+
 		VkDescriptorSet dset = impl.getHandle();
 		vkCmdBindDescriptorSets(m_handle,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,

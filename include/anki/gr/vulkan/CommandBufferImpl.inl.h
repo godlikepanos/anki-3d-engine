@@ -150,7 +150,8 @@ inline void CommandBufferImpl::uploadTextureSurface(TexturePtr tex,
 	region.bufferRowLength = 0;
 
 	vkCmdCopyBufferToImage(m_handle,
-		getGrManagerImpl().getTransientMemoryManager().getBufferHandle(token),
+		getGrManagerImpl().getTransientMemoryManager().getBufferHandle(
+			token.m_usage),
 		impl.m_imageHandle,
 		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 		1,

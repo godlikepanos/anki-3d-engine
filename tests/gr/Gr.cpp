@@ -43,16 +43,25 @@ layout(ANKI_UBO_BINDING(0, 0)) uniform u0_
 	vec4 u_color[3];
 };
 
-out vec3 out_color;
+layout(ANKI_UBO_BINDING(0, 1)) uniform u1_
+{
+	vec4 u_rotation2d;
+};
+
+layout(location = 0) out vec3 out_color;
 
 void main()
 {
+	out_color = u_color[gl_VertexID].rgb;
+
 	const vec2 POSITIONS[3] =
 		vec2[](vec2(-1.0, 1.0), vec2(0.0, -1.0), vec2(1.0, 1.0));
 		
-	out_color = u_color[gl_VertexID].rgb;
+	mat2 rot = mat2(
+		u_rotation2d.x, u_rotation2d.y, u_rotation2d.z, u_rotation2d.w);
+	vec2 pos = rot * POSITIONS[gl_VertexID % 3];
 
-	gl_Position = vec4(POSITIONS[gl_VertexID % 3], 0.0, 1.0);
+	gl_Position = vec4(pos, 0.0, 1.0);
 #if defined(ANKI_VK)
 	gl_Position.y = -gl_Position.y;
 #endif
@@ -250,7 +259,7 @@ ANKI_TEST(Gr, SimpleDrawcall)
 		FramebufferPtr fb = createDefaultFb(*gr);
 
 		U iterations = 100;
-		while(--iterations)
+		while(iterations--)
 		{
 			HighRezTimer timer;
 			timer.start();
@@ -338,7 +347,7 @@ ANKI_TEST(Gr, DrawWithUniforms)
 	COMMON_BEGIN();
 
 	{
-		// The buffer
+		// A non-uploaded buffer
 		BufferPtr b = gr->newInstance<Buffer>(sizeof(Vec4) * 3,
 			BufferUsageBit::UNIFORM,
 			BufferAccessBit::CLIENT_MAP_WRITE);
@@ -354,6 +363,7 @@ ANKI_TEST(Gr, DrawWithUniforms)
 		// Resource group
 		ResourceGroupInitInfo rcinit;
 		rcinit.m_uniformBuffers[0].m_buffer = b;
+		rcinit.m_uniformBuffers[1].m_uploadedMemory = true;
 		ResourceGroupPtr rc = gr->newInstance<ResourceGroup>(rcinit);
 
 		// Ppline
@@ -363,12 +373,29 @@ ANKI_TEST(Gr, DrawWithUniforms)
 		// FB
 		FramebufferPtr fb = createDefaultFb(*gr);
 
-		U iterations = 100;
-		while(--iterations)
+		const U ITERATION_COUNT = 100;
+		U iterations = ITERATION_COUNT;
+		while(iterations--)
 		{
 			HighRezTimer timer;
 			timer.start();
 
+			// Uploaded buffer
+			TransientMemoryInfo transientInfo;
+			Error err = ErrorCode::NONE;
+			Vec4* rotMat = static_cast<Vec4*>(
+				gr->allocateFrameTransientMemory(sizeof(Vec4),
+					BufferUsage::UNIFORM,
+					transientInfo.m_uniformBuffers[1],
+					&err));
+			ANKI_TEST_EXPECT_NO_ERR(err);
+			F32 angle = toRad(360.0f / ITERATION_COUNT * iterations);
+			(*rotMat)[0] = cos(angle);
+			(*rotMat)[1] = -sin(angle);
+			(*rotMat)[2] = sin(angle);
+			(*rotMat)[3] = cos(angle);
+
+			// Start drawing
 			gr->beginFrame();
 
 			CommandBufferInitInfo cinit;
@@ -380,7 +407,7 @@ ANKI_TEST(Gr, DrawWithUniforms)
 			cmdb->setPolygonOffset(0.0, 0.0);
 			cmdb->bindPipeline(ppline);
 			cmdb->beginRenderPass(fb);
-			cmdb->bindResourceGroup(rc, 0, nullptr);
+			cmdb->bindResourceGroup(rc, 0, &transientInfo);
 			cmdb->drawArrays(3);
 			cmdb->endRenderPass();
 			cmdb->flush();
@@ -482,7 +509,7 @@ ANKI_TEST(Gr, DrawWithVertex)
 		FramebufferPtr fb = createDefaultFb(*gr);
 
 		U iterations = 100;
-		while(--iterations)
+		while(iterations--)
 		{
 			HighRezTimer timer;
 			timer.start();
@@ -663,7 +690,7 @@ ANKI_TEST(Gr, DrawWithTexture)
 		// Draw
 		//
 		U iterations = 100;
-		while(--iterations)
+		while(iterations--)
 		{
 			HighRezTimer timer;
 			timer.start();

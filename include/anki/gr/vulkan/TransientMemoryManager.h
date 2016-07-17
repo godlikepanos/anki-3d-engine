@@ -54,11 +54,9 @@ public:
 		return addr;
 	}
 
-	VkBuffer getBufferHandle(const TransientMemoryToken& token) const
+	VkBuffer getBufferHandle(BufferUsage usage) const
 	{
-		ANKI_ASSERT(
-			token.m_lifetime == TransientMemoryTokenLifetime::PER_FRAME);
-		const PerFrameBuffer& frame = m_perFrameBuffers[token.m_usage];
+		const PerFrameBuffer& frame = m_perFrameBuffers[usage];
 		ANKI_ASSERT(frame.m_bufferHandle);
 		return frame.m_bufferHandle;
 	}

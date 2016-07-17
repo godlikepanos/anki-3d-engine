@@ -30,7 +30,7 @@ class BufferBinding
 public:
 	BufferPtr m_buffer;
 	PtrSize m_offset = 0;
-	PtrSize m_range = 0;
+	PtrSize m_range = 0; ///< If zero it means the whole buffer.
 	Bool m_uploadedMemory = false;
 };
 

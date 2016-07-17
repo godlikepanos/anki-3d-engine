@@ -87,7 +87,7 @@ GrManagerImpl::~GrManagerImpl()
 		vkQueueWaitIdle(m_queue);
 		m_queue = VK_NULL_HANDLE;
 	}
-	
+
 	// SECOND THING: The destroy everything that has a reference to GrObjects.
 	for(auto& x : m_perFrame)
 	{

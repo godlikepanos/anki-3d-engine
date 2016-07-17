@@ -156,12 +156,26 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 							 .getHandle();
 			inf.offset = init.m_uniformBuffers[i].m_offset;
 			inf.range = init.m_uniformBuffers[i].m_range;
+			if(inf.range == 0)
+			{
+				inf.range = VK_WHOLE_SIZE;
+			}
 
 			m_refs[refCount++] = init.m_uniformBuffers[i].m_buffer;
+
+			m_uniBindingCount = i + 1;
 		}
 		else if(init.m_uniformBuffers[i].m_uploadedMemory)
 		{
-			ANKI_ASSERT(0 && "TODO");
+			VkDescriptorBufferInfo& inf = unis[uniCount++];
+			inf.buffer =
+				getGrManagerImpl().getTransientMemoryManager().getBufferHandle(
+					BufferUsage::UNIFORM);
+			inf.range = VK_WHOLE_SIZE;
+
+			m_dynamicBuffersMask.set(i);
+
+			m_uniBindingCount = i + 1;
 		}
 	}
 
@@ -180,6 +194,8 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 		w.pBufferInfo = &unis[0];
 		w.dstSet = m_handle;
 	}
+
+	// TODO Storage buffers
 
 	// Check if it was created. It's not created only if the rc group contains
 	// only vertex info.
@@ -214,6 +230,33 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 	}
 
 	return ErrorCode::NONE;
+}
+
+//==============================================================================
+void ResourceGroupImpl::setupDynamicOffsets(
+	const TransientMemoryInfo* dynInfo, U32 dynOffsets[]) const
+{
+	if(m_dynamicBuffersMask.getAny())
+	{
+		// Has at least one uploaded buffer
+
+		ANKI_ASSERT(
+			dynInfo && "Need to provide dynInfo if there are uploaded buffers");
+
+		for(U i = 0; i < m_uniBindingCount; ++i)
+		{
+			if(m_dynamicBuffersMask.get(i))
+			{
+				// Uploaded
+				const TransientMemoryToken& token =
+					dynInfo->m_uniformBuffers[i];
+
+				ANKI_ASSERT(token.m_range);
+				ANKI_ASSERT(token.m_usage == BufferUsage::UNIFORM);
+				dynOffsets[i] = token.m_offset;
+			}
+		}
+	}
 }
 
 } // end namespace anki
