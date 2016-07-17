@@ -76,6 +76,8 @@ public:
 		const TextureSurfaceInfo& surf,
 		const TransientMemoryToken& token);
 
+	void generateMipmaps(TexturePtr tex, U depth, U face, U layer);
+
 	void endRecording();
 
 	void setImageBarrier(VkPipelineStageFlags srcStage,

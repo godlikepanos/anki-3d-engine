@@ -271,4 +271,88 @@ void CommandBufferImpl::bindResourceGroup(
 	m_rcList.pushBack(m_alloc, rc);
 }
 
+//==============================================================================
+void CommandBufferImpl::generateMipmaps(
+	TexturePtr tex, U depth, U face, U layer)
+{
+	commandCommon();
+	const TextureImpl& impl = tex->getImplementation();
+	ANKI_ASSERT(impl.m_type != TextureType::_3D && "Not design for that ATM");
+
+	U mipCount = computeMaxMipmapCount(impl.m_width, impl.m_height);
+
+	for(U i = 0; i < mipCount - 1; ++i)
+	{
+		// Transition source
+		if(i > 0)
+		{
+			VkImageSubresourceRange range;
+			impl.computeSubResourceRange(
+				TextureSurfaceInfo(i, depth, face, layer), range);
+
+			setImageBarrier(impl.m_imageHandle,
+				VK_PIPELINE_STAGE_TRANSFER_BIT,
+				VK_ACCESS_TRANSFER_WRITE_BIT,
+				VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+				VK_PIPELINE_STAGE_TRANSFER_BIT,
+				VK_ACCESS_TRANSFER_READ_BIT,
+				VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+				range);
+		}
+
+		// Transition destination
+		{
+			VkImageSubresourceRange range;
+			impl.computeSubResourceRange(
+				TextureSurfaceInfo(i + 1, depth, face, layer), range);
+
+			setImageBarrier(impl.m_imageHandle,
+				0,
+				0,
+				VK_IMAGE_LAYOUT_UNDEFINED,
+				VK_PIPELINE_STAGE_TRANSFER_BIT,
+				VK_ACCESS_TRANSFER_WRITE_BIT,
+				VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+				range);
+		}
+
+		// Setup the blit struct
+		U srcWidth = impl.m_width >> i;
+		U srcHeight = impl.m_height >> i;
+
+		U dstWidth = impl.m_width >> i;
+		U dstHeight = impl.m_height >> i;
+
+		ANKI_ASSERT(
+			srcWidth > 0 && srcHeight > 0 && dstWidth > 0 && dstHeight > 0);
+
+		VkImageBlit blit;
+		blit.srcSubresource.aspectMask = impl.m_aspect;
+		blit.srcSubresource.baseArrayLayer = layer;
+		blit.srcSubresource.layerCount = 1;
+		blit.srcSubresource.mipLevel = i;
+		blit.srcOffsets[0] = {0, 0, 0};
+		blit.srcOffsets[1] = {srcWidth, srcHeight, 1};
+
+		blit.dstSubresource.aspectMask = impl.m_aspect;
+		blit.dstSubresource.baseArrayLayer = layer;
+		blit.dstSubresource.layerCount = 1;
+		blit.dstSubresource.mipLevel = i + 1;
+		blit.dstOffsets[0] = {0, 0, 0};
+		blit.dstOffsets[1] = {dstWidth, dstHeight, 1};
+
+		vkCmdBlitImage(m_handle,
+			impl.m_imageHandle,
+			VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+			impl.m_imageHandle,
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			1,
+			&blit,
+			VK_FILTER_LINEAR);
+	}
+
+	// Hold the reference
+	m_texList.pushBack(m_alloc, tex);
+}
+
 } // end namespace anki

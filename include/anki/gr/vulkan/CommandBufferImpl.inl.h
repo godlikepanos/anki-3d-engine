@@ -86,6 +86,14 @@ inline void CommandBufferImpl::setImageBarrier(TexturePtr tex,
 	TextureUsageBit nextUsage,
 	const TextureSurfaceInfo& surf)
 {
+	if(surf.m_level > 0)
+	{
+		ANKI_ASSERT((nextUsage & TextureUsageBit::GENERATE_MIPMAPS)
+				== TextureUsageBit::NONE
+			&& "This transition happens inside "
+			   "CommandBufferImpl::generateMipmaps");
+	}
+
 	const TextureImpl& impl = tex->getImplementation();
 	tex->getImplementation().checkSurface(surf);
 	Bool isDepthStencil = formatIsDepthStencil(impl.m_format);

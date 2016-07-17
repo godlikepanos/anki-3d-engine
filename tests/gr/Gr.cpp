@@ -142,12 +142,21 @@ static const char* FRAG_TEX_SRC = R"(layout (location = 0) out vec4 out_color;
 
 layout(location = 0) in vec2 in_uv;
 
-layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_tex;
+layout(ANKI_UBO_BINDING(0, 0)) uniform u0_
+{
+	vec4 u_factor;
+};
+
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_tex0;
+layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_tex1;
 
 void main()
 {
 	float factor = in_uv.x;
-	out_color = vec4(textureLod(u_tex, in_uv, factor).rgb, 1.0);
+	vec3 col0 = textureLod(u_tex0, in_uv, factor).rgb;
+	vec3 col1 = textureLod(u_tex1, in_uv, factor * 2.0).rgb;
+	
+	out_color = vec4((col1 + col1) * 0.5, 1.0);
 })";
 
 #define COMMON_BEGIN()                                                         \
@@ -592,7 +601,7 @@ ANKI_TEST(Gr, DrawWithTexture)
 
 	{
 		//
-		// Create the texture
+		// Create texture A
 		//
 		TextureInitInfo init;
 		init.m_depth = 1;
@@ -608,34 +617,116 @@ ANKI_TEST(Gr, DrawWithTexture)
 		init.m_depth = 1;
 		init.m_layerCount = 1;
 		init.m_sampling.m_repeat = false;
-		init.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
+		init.m_sampling.m_minMagFilter = SamplingFilter::NEAREST;
 		init.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
 		init.m_type = TextureType::_2D;
+
+		TexturePtr a = gr->newInstance<Texture>(init);
+
+		//
+		// Create texture B
+		//
+		init.m_width = 4;
+		init.m_height = 4;
+		init.m_mipmapsCount = 3;
+		init.m_usage = TextureUsageBit::FRAGMENT_SHADER_SAMPLED
+			| TextureUsageBit::UPLOAD | TextureUsageBit::GENERATE_MIPMAPS;
+		init.m_initialUsage = TextureUsageBit::NONE;
 
 		TexturePtr b = gr->newInstance<Texture>(init);
 
 		//
-		// Upload
+		// Upload all textures
 		//
 		Array<U8, 2 * 2 * 4> mip0 = {
 			{255, 0, 0, 0, 0, 255, 0, 0, 0, 0, 255, 0, 255, 0, 255, 0}};
 
 		Array<U8, 4> mip1 = {{128, 128, 128, 0}};
 
+		Array<U8, 4 * 4 * 4> bmip0 = {{255,
+			0,
+			0,
+			0,
+			0,
+			255,
+			0,
+			0,
+			0,
+			0,
+			255,
+			0,
+			255,
+			255,
+			0,
+			0,
+			255,
+			0,
+			255,
+			0,
+			0,
+			255,
+			255,
+			0,
+			255,
+			255,
+			255,
+			0,
+			128,
+			0,
+			0,
+			0,
+			0,
+			128,
+			0,
+			0,
+			0,
+			0,
+			128,
+			0,
+			128,
+			128,
+			0,
+			0,
+			128,
+			0,
+			128,
+			0,
+			0,
+			128,
+			128,
+			0,
+			128,
+			128,
+			128,
+			0,
+			255,
+			128,
+			0,
+			0,
+			0,
+			128,
+			255,
+			0}};
+
 		CommandBufferInitInfo cmdbinit;
 		cmdbinit.m_flags = CommandBufferFlag::TRANSFER_WORK;
 		CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cmdbinit);
 
 		// Set barriers
-		cmdb->setTextureBarrier(b,
+		cmdb->setTextureBarrier(a,
 			TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
 			TextureUsageBit::UPLOAD,
 			TextureSurfaceInfo(0, 0, 0, 0));
 
-		cmdb->setTextureBarrier(b,
+		cmdb->setTextureBarrier(a,
 			TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
 			TextureUsageBit::UPLOAD,
 			TextureSurfaceInfo(1, 0, 0, 0));
+
+		cmdb->setTextureBarrier(b,
+			TextureUsageBit::NONE,
+			TextureUsageBit::UPLOAD,
+			TextureSurfaceInfo(0, 0, 0, 0));
 
 		Error err = ErrorCode::NONE;
 		TransientMemoryToken token;
@@ -645,7 +736,7 @@ ANKI_TEST(Gr, DrawWithTexture)
 		ANKI_TEST_EXPECT_NO_ERR(err);
 		memcpy(ptr, &mip0[0], sizeof(mip0));
 
-		cmdb->uploadTextureSurface(b, TextureSurfaceInfo(0, 0, 0, 0), token);
+		cmdb->uploadTextureSurface(a, TextureSurfaceInfo(0, 0, 0, 0), token);
 
 		ptr = gr->allocateFrameTransientMemory(
 			sizeof(mip1), BufferUsage::TRANSFER, token, &err);
@@ -653,18 +744,42 @@ ANKI_TEST(Gr, DrawWithTexture)
 		ANKI_TEST_EXPECT_NO_ERR(err);
 		memcpy(ptr, &mip1[0], sizeof(mip1));
 
-		cmdb->uploadTextureSurface(b, TextureSurfaceInfo(1, 0, 0, 0), token);
+		cmdb->uploadTextureSurface(a, TextureSurfaceInfo(1, 0, 0, 0), token);
+
+		ptr = gr->allocateFrameTransientMemory(
+			sizeof(bmip0), BufferUsage::TRANSFER, token, &err);
+		ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
+		ANKI_TEST_EXPECT_NO_ERR(err);
+		memcpy(ptr, &bmip0[0], sizeof(bmip0));
+
+		cmdb->uploadTextureSurface(b, TextureSurfaceInfo(0, 0, 0, 0), token);
+
+		// Gen mips
+		cmdb->setTextureBarrier(b,
+			TextureUsageBit::UPLOAD,
+			TextureUsageBit::GENERATE_MIPMAPS,
+			TextureSurfaceInfo(0, 0, 0, 0));
+
+		cmdb->generateMipmaps(b, 0, 0, 0);
 
 		// Set barriers
-		cmdb->setTextureBarrier(b,
+		cmdb->setTextureBarrier(a,
 			TextureUsageBit::UPLOAD,
 			TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
 			TextureSurfaceInfo(0, 0, 0, 0));
 
-		cmdb->setTextureBarrier(b,
+		cmdb->setTextureBarrier(a,
 			TextureUsageBit::UPLOAD,
 			TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
 			TextureSurfaceInfo(1, 0, 0, 0));
+
+		for(U i = 0; i < 3; ++i)
+		{
+			cmdb->setTextureBarrier(b,
+				TextureUsageBit::GENERATE_MIPMAPS,
+				TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+				TextureSurfaceInfo(i, 0, 0, 0));
+		}
 
 		cmdb->flush();
 
@@ -672,7 +787,8 @@ ANKI_TEST(Gr, DrawWithTexture)
 		// Create resource group
 		//
 		ResourceGroupInitInfo rcinit;
-		rcinit.m_textures[0].m_texture = b;
+		rcinit.m_textures[0].m_texture = a;
+		rcinit.m_textures[1].m_texture = b;
 		ResourceGroupPtr rc = gr->newInstance<ResourceGroup>(rcinit);
 
 		//
@@ -689,7 +805,8 @@ ANKI_TEST(Gr, DrawWithTexture)
 		//
 		// Draw
 		//
-		U iterations = 100;
+		const U ITERATION_COUNT = 200;
+		U iterations = ITERATION_COUNT;
 		while(iterations--)
 		{
 			HighRezTimer timer;
