@@ -13,15 +13,18 @@ void computeBarrierInfo(TextureUsageBit before,
 	TextureUsageBit after,
 	Bool isDepthStencil,
 	U level,
+	U levelCount,
 	VkPipelineStageFlags& srcStages,
 	VkAccessFlags& srcAccesses,
 	VkPipelineStageFlags& dstStages,
 	VkAccessFlags& dstAccesses)
 {
+	ANKI_ASSERT(level < levelCount && levelCount > 0);
 	srcStages = 0;
 	srcAccesses = 0;
 	dstStages = 0;
 	dstAccesses = 0;
+	Bool lastLevel = level == levelCount - 1;
 
 	//
 	// Before
@@ -75,7 +78,7 @@ void computeBarrierInfo(TextureUsageBit before,
 	{
 		srcStages |= VK_PIPELINE_STAGE_TRANSFER_BIT;
 
-		if(level == 0)
+		if(!lastLevel)
 		{
 			srcAccesses |= VK_ACCESS_TRANSFER_READ_BIT;
 		}
@@ -89,6 +92,11 @@ void computeBarrierInfo(TextureUsageBit before,
 	{
 		srcStages |= VK_PIPELINE_STAGE_TRANSFER_BIT;
 		srcAccesses |= VK_ACCESS_TRANSFER_WRITE_BIT;
+	}
+
+	if(srcStages == 0)
+	{
+		srcStages = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 	}
 
 	//
@@ -150,7 +158,7 @@ void computeBarrierInfo(TextureUsageBit before,
 		}
 		else
 		{
-			dstAccesses |= VK_ACCESS_TRANSFER_WRITE_BIT;
+			ANKI_ASSERT(0 && "This will happen in generateMipmaps");
 		}
 	}
 
@@ -159,12 +167,18 @@ void computeBarrierInfo(TextureUsageBit before,
 		dstStages |= VK_PIPELINE_STAGE_TRANSFER_BIT;
 		dstAccesses |= VK_ACCESS_TRANSFER_WRITE_BIT;
 	}
+
+	ANKI_ASSERT(dstStages);
 }
 
 //==============================================================================
-VkImageLayout computeLayout(TextureUsageBit usage, Bool isDepthStencil, U level)
+VkImageLayout computeLayout(
+	TextureUsageBit usage, Bool isDepthStencil, U level, U levelCount)
 {
+	ANKI_ASSERT(level < levelCount && levelCount > 0);
+
 	VkImageLayout out = VK_IMAGE_LAYOUT_MAX_ENUM;
+	Bool lastLevel = level == levelCount - 1;
 
 	if(usage == TextureUsageBit::NONE)
 	{
@@ -189,7 +203,7 @@ VkImageLayout computeLayout(TextureUsageBit usage, Bool isDepthStencil, U level)
 		}
 		else if(usage == TextureUsageBit::GENERATE_MIPMAPS)
 		{
-			if(level == 0)
+			if(!lastLevel)
 			{
 				out = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
 			}
@@ -213,7 +227,7 @@ VkImageLayout computeLayout(TextureUsageBit usage, Bool isDepthStencil, U level)
 		}
 		else if(usage == TextureUsageBit::GENERATE_MIPMAPS)
 		{
-			if(level == 0)
+			if(!lastLevel)
 			{
 				out = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
 			}

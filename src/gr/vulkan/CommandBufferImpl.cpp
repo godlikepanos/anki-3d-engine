@@ -290,13 +290,13 @@ void CommandBufferImpl::generateMipmaps(
 			impl.computeSubResourceRange(
 				TextureSurfaceInfo(i, depth, face, layer), range);
 
-			setImageBarrier(impl.m_imageHandle,
-				VK_PIPELINE_STAGE_TRANSFER_BIT,
+			setImageBarrier(VK_PIPELINE_STAGE_TRANSFER_BIT,
 				VK_ACCESS_TRANSFER_WRITE_BIT,
 				VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 				VK_PIPELINE_STAGE_TRANSFER_BIT,
 				VK_ACCESS_TRANSFER_READ_BIT,
 				VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+				impl.m_imageHandle,
 				range);
 		}
 
@@ -306,22 +306,22 @@ void CommandBufferImpl::generateMipmaps(
 			impl.computeSubResourceRange(
 				TextureSurfaceInfo(i + 1, depth, face, layer), range);
 
-			setImageBarrier(impl.m_imageHandle,
-				0,
+			setImageBarrier(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
 				0,
 				VK_IMAGE_LAYOUT_UNDEFINED,
 				VK_PIPELINE_STAGE_TRANSFER_BIT,
 				VK_ACCESS_TRANSFER_WRITE_BIT,
 				VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+				impl.m_imageHandle,
 				range);
 		}
 
 		// Setup the blit struct
-		U srcWidth = impl.m_width >> i;
-		U srcHeight = impl.m_height >> i;
+		I32 srcWidth = impl.m_width >> i;
+		I32 srcHeight = impl.m_height >> i;
 
-		U dstWidth = impl.m_width >> i;
-		U dstHeight = impl.m_height >> i;
+		I32 dstWidth = impl.m_width >> i;
+		I32 dstHeight = impl.m_height >> i;
 
 		ANKI_ASSERT(
 			srcWidth > 0 && srcHeight > 0 && dstWidth > 0 && dstHeight > 0);

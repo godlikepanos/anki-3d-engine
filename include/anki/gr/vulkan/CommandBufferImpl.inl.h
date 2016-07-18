@@ -108,12 +108,15 @@ inline void CommandBufferImpl::setImageBarrier(TexturePtr tex,
 		nextUsage,
 		isDepthStencil,
 		surf.m_level,
+		impl.m_mipCount,
 		srcStage,
 		srcAccess,
 		dstStage,
 		dstAccess);
-	oldLayout = computeLayout(prevUsage, isDepthStencil, surf.m_level);
-	newLayout = computeLayout(nextUsage, isDepthStencil, surf.m_level);
+	oldLayout =
+		computeLayout(prevUsage, isDepthStencil, surf.m_level, impl.m_mipCount);
+	newLayout =
+		computeLayout(nextUsage, isDepthStencil, surf.m_level, impl.m_mipCount);
 
 	VkImageSubresourceRange range;
 	impl.computeSubResourceRange(surf, range);

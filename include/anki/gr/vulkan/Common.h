@@ -64,6 +64,7 @@ void computeBarrierInfo(TextureUsageBit before,
 	TextureUsageBit after,
 	Bool isDepthStencil,
 	U level,
+	U levelCount,
 	VkPipelineStageFlags& srcStages,
 	VkAccessFlags& srcAccesses,
 	VkPipelineStageFlags& dstStages,
@@ -71,7 +72,7 @@ void computeBarrierInfo(TextureUsageBit before,
 
 /// Predict the image layout.
 ANKI_USE_RESULT VkImageLayout computeLayout(
-	TextureUsageBit usage, Bool isDepthStencil, U level);
+	TextureUsageBit usage, Bool isDepthStencil, U level, U levelCount);
 
 /// Convert compare op.
 ANKI_USE_RESULT VkCompareOp convertCompareOp(CompareOperation ak);

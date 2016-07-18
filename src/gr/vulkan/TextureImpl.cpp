@@ -139,8 +139,13 @@ Error TextureImpl::init(const TextureInitInfo& init, Texture* tex)
 
 	// Transition the image layout from undefined to something relevant
 	m_usage = init.m_usage;
-	VkImageLayout initialLayout = computeLayout(
-		init.m_initialUsage, formatIsDepthStencil(init.m_format), 0);
+	ANKI_ASSERT((init.m_initialUsage & TextureUsageBit::GENERATE_MIPMAPS)
+			== TextureUsageBit::NONE
+		&& "Can't handle that as initial");
+	VkImageLayout initialLayout = computeLayout(init.m_initialUsage,
+		formatIsDepthStencil(init.m_format),
+		0,
+		m_mipCount);
 
 	if(initialLayout != VK_IMAGE_LAYOUT_UNDEFINED)
 	{
@@ -157,8 +162,8 @@ Error TextureImpl::init(const TextureInitInfo& init, Texture* tex)
 		range.levelCount = m_mipCount;
 
 		cmdb->getImplementation().setImageBarrier(
-			VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-			VK_ACCESS_MEMORY_WRITE_BIT,
+			VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+			0,
 			VK_IMAGE_LAYOUT_UNDEFINED,
 			VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
 			VK_ACCESS_MEMORY_READ_BIT,
