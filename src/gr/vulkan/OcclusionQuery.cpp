@@ -23,6 +23,12 @@ OcclusionQuery::~OcclusionQuery()
 //==============================================================================
 void OcclusionQuery::init(OcclusionQueryResultBit condRenderingBit)
 {
+	m_impl.reset(getAllocator().newInstance<OcclusionQueryImpl>(&getManager()));
+
+	if(m_impl->init(condRenderingBit))
+	{
+		ANKI_LOGF("Cannot recover");
+	}
 }
 
 } // end namespace anki

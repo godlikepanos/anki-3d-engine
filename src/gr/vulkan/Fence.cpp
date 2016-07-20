@@ -31,8 +31,9 @@ Fence* FenceFactory::newFence()
 		U count = m_fenceCount;
 		while(count--)
 		{
-			VkResult status =
-				vkGetFenceStatus(m_dev, m_fences[count]->getHandle());
+			VkResult status;
+			ANKI_VK_CHECKF(
+				status = vkGetFenceStatus(m_dev, m_fences[count]->getHandle()));
 			if(status == VK_SUCCESS)
 			{
 				out = m_fences[count];
@@ -51,7 +52,7 @@ Fence* FenceFactory::newFence()
 			}
 			else if(status != VK_NOT_READY)
 			{
-				ANKI_LOGF("vkGetFenceStatus() failed");
+				ANKI_ASSERT(0);
 			}
 		}
 	}

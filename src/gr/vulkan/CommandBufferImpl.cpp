@@ -46,6 +46,7 @@ CommandBufferImpl::~CommandBufferImpl()
 	m_fbList.destroy(m_alloc);
 	m_rcList.destroy(m_alloc);
 	m_texList.destroy(m_alloc);
+	m_queryList.destroy(m_alloc);
 }
 
 //==============================================================================

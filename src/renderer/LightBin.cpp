@@ -348,7 +348,7 @@ Error LightBin::bin(FrustumComponent& frc,
 	TransientMemoryToken& clustersToken,
 	TransientMemoryToken& lightIndicesToken)
 {
-	ANKI_TRACE_START_EVENT(RENDER_LIGHT_BINNING);
+	ANKI_TRACE_START_EVENT(RENDERER_LIGHT_BINNING);
 
 	// Prepare the clusterer
 	m_clusterer.prepare(*m_threadPool, frc);
@@ -467,7 +467,7 @@ Error LightBin::bin(FrustumComponent& frc,
 	// Sync
 	ANKI_CHECK(m_threadPool->waitForAllThreadsToFinish());
 
-	ANKI_TRACE_STOP_EVENT(RENDER_LIGHT_BINNING);
+	ANKI_TRACE_STOP_EVENT(RENDERER_LIGHT_BINNING);
 	return ErrorCode::NONE;
 }
 
@@ -475,7 +475,7 @@ Error LightBin::bin(FrustumComponent& frc,
 void LightBin::binLights(
 	U32 threadId, PtrSize threadsCount, LightBinContext& ctx)
 {
-	ANKI_TRACE_START_EVENT(RENDER_LIGHT_BINNING);
+	ANKI_TRACE_START_EVENT(RENDERER_LIGHT_BINNING);
 	const FrustumComponent& camfrc = *ctx.m_frc;
 	const MoveComponent& cammove =
 		camfrc.getSceneNode().getComponent<MoveComponent>();
@@ -493,9 +493,9 @@ void LightBin::binLights(
 		ctx.m_tempClusters[i].reset();
 	}
 
-	ANKI_TRACE_STOP_EVENT(RENDER_LIGHT_BINNING);
+	ANKI_TRACE_STOP_EVENT(RENDERER_LIGHT_BINNING);
 	m_barrier.wait();
-	ANKI_TRACE_START_EVENT(RENDER_LIGHT_BINNING);
+	ANKI_TRACE_START_EVENT(RENDERER_LIGHT_BINNING);
 
 	//
 	// Iterate lights and probes and bin them
@@ -550,9 +550,9 @@ void LightBin::binLights(
 	//
 	// Last thing, update the real clusters
 	//
-	ANKI_TRACE_STOP_EVENT(RENDER_LIGHT_BINNING);
+	ANKI_TRACE_STOP_EVENT(RENDERER_LIGHT_BINNING);
 	m_barrier.wait();
-	ANKI_TRACE_START_EVENT(RENDER_LIGHT_BINNING);
+	ANKI_TRACE_START_EVENT(RENDERER_LIGHT_BINNING);
 
 	// Run per cluster
 	const U CLUSTER_GROUP = 16;
@@ -644,7 +644,7 @@ void LightBin::binLights(
 		} // end for
 	} // end while
 
-	ANKI_TRACE_STOP_EVENT(RENDER_LIGHT_BINNING);
+	ANKI_TRACE_STOP_EVENT(RENDERER_LIGHT_BINNING);
 }
 
 //==============================================================================

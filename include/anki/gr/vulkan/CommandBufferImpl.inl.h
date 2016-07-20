@@ -5,6 +5,9 @@
 
 #include <anki/gr/vulkan/CommandBufferImpl.h>
 #include <anki/gr/vulkan/GrManagerImpl.h>
+#include <anki/gr/vulkan/TextureImpl.h>
+#include <anki/gr/OcclusionQuery.h>
+#include <anki/gr/vulkan/OcclusionQueryImpl.h>
 
 namespace anki
 {
@@ -169,6 +172,43 @@ inline void CommandBufferImpl::uploadTextureSurface(TexturePtr tex,
 		&region);
 
 	m_texList.pushBack(m_alloc, tex);
+}
+
+//==============================================================================
+inline void CommandBufferImpl::drawElements(U32 count,
+	U32 instanceCount,
+	U32 firstIndex,
+	U32 baseVertex,
+	U32 baseInstance)
+{
+	drawcallCommon();
+	vkCmdDrawIndexed(
+		m_handle, count, instanceCount, firstIndex, baseVertex, baseInstance);
+}
+
+//==============================================================================
+inline void CommandBufferImpl::beginOcclusionQuery(OcclusionQueryPtr query)
+{
+	commandCommon();
+	VkQueryPool handle = query->getImplementation().m_handle;
+	ANKI_ASSERT(handle);
+
+	vkCmdResetQueryPool(m_handle, handle, 0, 0);
+	vkCmdBeginQuery(m_handle, handle, 0, 0);
+
+	m_queryList.pushBack(m_alloc, query);
+}
+
+//==============================================================================
+inline void CommandBufferImpl::endOcclusionQuery(OcclusionQueryPtr query)
+{
+	commandCommon();
+	VkQueryPool handle = query->getImplementation().m_handle;
+	ANKI_ASSERT(handle);
+
+	vkCmdEndQuery(m_handle, handle, 0);
+
+	m_queryList.pushBack(m_alloc, query);
 }
 
 } // end namespace anki

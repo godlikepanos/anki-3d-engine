@@ -21,7 +21,6 @@ class FramebufferAttachmentInfo
 public:
 	TexturePtr m_texture;
 	TextureSurfaceInfo m_surface;
-	PixelFormat m_format;
 	AttachmentLoadOperation m_loadOperation = AttachmentLoadOperation::CLEAR;
 	AttachmentStoreOperation m_storeOperation = AttachmentStoreOperation::STORE;
 	ClearValue m_clearValue;
@@ -39,7 +38,6 @@ public:
 	{
 		m_texture = b.m_texture;
 		m_surface = b.m_surface;
-		m_format = b.m_format;
 		m_loadOperation = b.m_loadOperation;
 		m_storeOperation = b.m_storeOperation;
 		memcpy(&m_clearValue, &b.m_clearValue, sizeof(m_clearValue));

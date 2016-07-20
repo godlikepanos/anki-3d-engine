@@ -297,7 +297,6 @@ Error Ir::renderReflection(RenderingContext& ctx,
 		fbinit.m_colorAttachments[0].m_texture = m_irradianceCubemapArr;
 		fbinit.m_colorAttachments[0].m_surface.m_layer = cubemapIdx;
 		fbinit.m_colorAttachments[0].m_surface.m_face = i;
-		fbinit.m_colorAttachments[0].m_format = Is::RT_PIXEL_FORMAT;
 		fbinit.m_colorAttachments[0].m_loadOperation =
 			AttachmentLoadOperation::DONT_CARE;
 		FramebufferPtr fb = getGrManager().newInstance<Framebuffer>(fbinit);

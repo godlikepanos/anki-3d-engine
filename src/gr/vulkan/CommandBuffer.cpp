@@ -101,6 +101,8 @@ void CommandBuffer::drawElements(U32 count,
 	U32 baseVertex,
 	U32 baseInstance)
 {
+	m_impl->drawElements(
+		count, instanceCount, firstIndex, baseVertex, baseInstance);
 }
 
 //==============================================================================
@@ -194,11 +196,13 @@ void CommandBuffer::setBufferMemoryBarrier(
 //==============================================================================
 void CommandBuffer::beginOcclusionQuery(OcclusionQueryPtr query)
 {
+	m_impl->beginOcclusionQuery(query);
 }
 
 //==============================================================================
 void CommandBuffer::endOcclusionQuery(OcclusionQueryPtr query)
 {
+	m_impl->endOcclusionQuery(query);
 }
 
 //==============================================================================

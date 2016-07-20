@@ -25,8 +25,8 @@ class GrManagerImpl;
 #define ANKI_VK_CHECKF(x)                                                      \
 	do                                                                         \
 	{                                                                          \
-		VkResult rez = x;                                                      \
-		if(VK_SUCCESS != rez)                                                  \
+		VkResult rez;                                                          \
+		if((rez = (x)) < 0)                                                    \
 		{                                                                      \
 			ANKI_LOGF("Vulkan function failed (%d): %s", rez, #x);             \
 		}                                                                      \
@@ -36,8 +36,8 @@ class GrManagerImpl;
 #define ANKI_VK_CHECK(x)                                                       \
 	do                                                                         \
 	{                                                                          \
-		VkResult rez = x;                                                      \
-		if(VK_SUCCESS != rez)                                                  \
+		VkResult rez;                                                          \
+		if((rez = (x)) < 0)                                                    \
 		{                                                                      \
 			ANKI_LOGE("Vulkan function failed (%d): %s", rez, #x);             \
 			return ErrorCode::FUNCTION_FAILED;                                 \

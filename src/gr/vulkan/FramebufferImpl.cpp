@@ -6,6 +6,7 @@
 #include <anki/gr/vulkan/FramebufferImpl.h>
 #include <anki/gr/Framebuffer.h>
 #include <anki/gr/vulkan/GrManagerImpl.h>
+#include <anki/gr/vulkan/TextureImpl.h>
 
 namespace anki
 {
@@ -90,7 +91,7 @@ void FramebufferImpl::setupAttachmentDescriptor(
 	desc = {};
 	desc.format = (m_defaultFramebuffer)
 		? getGrManagerImpl().getDefaultSurfaceFormat()
-		: convertFormat(att.m_format);
+		: convertFormat(att.m_texture->getImplementation().m_format);
 	desc.samples = VK_SAMPLE_COUNT_1_BIT;
 	desc.loadOp = convertLoadOp(att.m_loadOperation);
 	desc.storeOp = convertStoreOp(att.m_storeOperation);
@@ -111,8 +112,7 @@ Error FramebufferImpl::initRenderPass(const FramebufferInitInfo& init)
 	Array<VkAttachmentDescription, MAX_COLOR_ATTACHMENTS + 1>
 		attachmentDescriptions;
 	Array<VkAttachmentReference, MAX_COLOR_ATTACHMENTS> references;
-	Bool hasDepthStencil = init.m_depthStencilAttachment.m_format.m_components
-		!= ComponentFormat::NONE;
+	Bool hasDepthStencil = init.m_depthStencilAttachment.m_texture == true;
 
 	for(U i = 0; i < init.m_colorAttachmentCount; ++i)
 	{
@@ -161,8 +161,7 @@ Error FramebufferImpl::initRenderPass(const FramebufferInitInfo& init)
 //==============================================================================
 Error FramebufferImpl::initFramebuffer(const FramebufferInitInfo& init)
 {
-	Bool hasDepthStencil = init.m_depthStencilAttachment.m_format.m_components
-		!= ComponentFormat::NONE;
+	Bool hasDepthStencil = init.m_depthStencilAttachment.m_texture == true;
 
 	VkFramebufferCreateInfo ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;

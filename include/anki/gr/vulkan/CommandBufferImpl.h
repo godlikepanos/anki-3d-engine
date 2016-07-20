@@ -7,9 +7,6 @@
 
 #include <anki/gr/vulkan/VulkanObject.h>
 #include <anki/gr/CommandBuffer.h>
-
-#include <anki/gr/vulkan/TextureImpl.h>
-
 #include <anki/util/List.h>
 
 namespace anki
@@ -72,6 +69,16 @@ public:
 		vkCmdDraw(m_handle, count, instanceCount, first, baseInstance);
 	}
 
+	void drawElements(U32 count,
+		U32 instanceCount,
+		U32 firstIndex,
+		U32 baseVertex,
+		U32 baseInstance);
+
+	void beginOcclusionQuery(OcclusionQueryPtr query);
+
+	void endOcclusionQuery(OcclusionQueryPtr query);
+
 	void uploadTextureSurface(TexturePtr tex,
 		const TextureSurfaceInfo& surf,
 		const TransientMemoryToken& token);
@@ -122,6 +129,7 @@ private:
 	List<FramebufferPtr> m_fbList;
 	List<ResourceGroupPtr> m_rcList;
 	List<TexturePtr> m_texList;
+	List<OcclusionQueryPtr> m_queryList;
 /// @}
 
 #if ANKI_ASSERTIONS

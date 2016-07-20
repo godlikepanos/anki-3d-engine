@@ -8,6 +8,7 @@
 #include <anki/core/NativeWindow.h>
 #include <anki/core/Config.h>
 #include <anki/util/HighRezTimer.h>
+#include <anki/collision/Frustum.h>
 
 namespace anki
 {
@@ -112,6 +113,27 @@ void main()
 	out_uv = POSITIONS[gl_VertexID] / 2.0 + 0.5;
 })";
 
+static const char* VERT_MRT_SRC = R"(
+out gl_PerVertex
+{
+	vec4 gl_Position;
+};
+
+layout(location = 0) in vec3 in_pos;
+
+layout(ANKI_UBO_BINDING(0, 0)) uniform u0_
+{
+	mat4 u_mvp;
+};
+
+void main()
+{
+	gl_Position = u_mvp * vec4(in_pos, 1.0);
+#if defined(ANKI_VK)
+	gl_Position.y = -gl_Position.y;
+#endif	
+})";
+
 static const char* FRAG_SRC = R"(layout (location = 0) out vec4 out_color;
 
 void main()
@@ -157,6 +179,37 @@ void main()
 	vec3 col1 = textureLod(u_tex1, in_uv, factor * 2.0).rgb;
 	
 	out_color = vec4((col1 + col1) * 0.5, 1.0);
+})";
+
+static const char* FRAG_MRT_SRC = R"(layout (location = 0) out vec4 out_color0;
+layout (location = 1) out vec4 out_color1;
+
+layout(ANKI_UBO_BINDING(0, 1)) uniform u1_
+{
+	vec4 u_color0;
+	vec4 u_color1;
+};
+
+void main()
+{
+	out_color0 = u_color0;
+	out_color1 = u_color1;
+})";
+
+static const char* FRAG_MRT2_SRC = R"(layout (location = 0) out vec4 out_color;
+
+layout(location = 0) in vec2 in_uv;
+
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_tex0;
+layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_tex1;
+
+void main()
+{
+	float factor = in_uv.x;
+	vec3 col0 = texture(u_tex0, in_uv).rgb;
+	vec3 col1 = texture(u_tex1, in_uv).rgb;
+	
+	out_color = vec4(col1 + col1, 1.0);
 })";
 
 #define COMMON_BEGIN()                                                         \
@@ -224,6 +277,86 @@ static FramebufferPtr createDefaultFb(GrManager& gr)
 	fbinit.m_colorAttachments[0].m_clearValue.m_colorf = {1.0, 0.0, 1.0, 1.0};
 
 	return gr.newInstance<Framebuffer>(fbinit);
+}
+
+//==============================================================================
+static void createCube(GrManager& gr, BufferPtr& verts, BufferPtr& indices)
+{
+	static const Array<F32, 8 * 3> pos = {{1,
+		1,
+		1,
+		-1,
+		1,
+		1,
+		-1,
+		-1,
+		1,
+		1,
+		-2,
+		1,
+		1,
+		1,
+		-1,
+		-1,
+		1,
+		-1,
+		-1,
+		-1,
+		-1,
+		1,
+		-2,
+		-1}};
+
+	static const Array<U16, 6 * 2 * 3> idx = {{0,
+		1,
+		3,
+		3,
+		1,
+		2,
+		1,
+		5,
+		6,
+		1,
+		6,
+		2,
+		7,
+		4,
+		0,
+		7,
+		0,
+		3,
+		6,
+		5,
+		7,
+		7,
+		5,
+		4,
+		0,
+		4,
+		5,
+		0,
+		5,
+		1,
+		3,
+		2,
+		6,
+		3,
+		6,
+		7}};
+
+	verts = gr.newInstance<Buffer>(
+		sizeof(pos), BufferUsageBit::VERTEX, BufferAccessBit::CLIENT_MAP_WRITE);
+
+	void* mapped =
+		verts->map(0, sizeof(pos), BufferAccessBit::CLIENT_MAP_WRITE);
+	memcpy(mapped, &pos[0], sizeof(pos));
+	verts->unmap();
+
+	indices = gr.newInstance<Buffer>(
+		sizeof(idx), BufferUsageBit::INDEX, BufferAccessBit::CLIENT_MAP_WRITE);
+	mapped = indices->map(0, sizeof(idx), BufferAccessBit::CLIENT_MAP_WRITE);
+	memcpy(mapped, &idx[0], sizeof(idx));
+	indices->unmap();
 }
 
 //==============================================================================
@@ -388,6 +521,7 @@ ANKI_TEST(Gr, DrawWithUniforms)
 		{
 			HighRezTimer timer;
 			timer.start();
+			gr->beginFrame();
 
 			// Uploaded buffer
 			TransientMemoryInfo transientInfo;
@@ -403,9 +537,6 @@ ANKI_TEST(Gr, DrawWithUniforms)
 			(*rotMat)[1] = -sin(angle);
 			(*rotMat)[2] = sin(angle);
 			(*rotMat)[3] = cos(angle);
-
-			// Start drawing
-			gr->beginFrame();
 
 			CommandBufferInitInfo cinit;
 			cinit.m_flags =
@@ -839,6 +970,241 @@ ANKI_TEST(Gr, DrawWithTexture)
 		}
 	}
 
+	COMMON_END();
+}
+
+//==============================================================================
+ANKI_TEST(Gr, DrawOffscreen)
+{
+	COMMON_BEGIN();
+	{
+		//
+		// Create textures
+		//
+		const PixelFormat COL_FORMAT =
+			PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
+		const PixelFormat DS_FORMAT =
+			PixelFormat(ComponentFormat::D24, TransformFormat::FLOAT);
+		const U TEX_SIZE = 256;
+
+		TextureInitInfo init;
+		init.m_depth = 1;
+		init.m_format = COL_FORMAT;
+		init.m_usage = TextureUsageBit::FRAGMENT_SHADER_SAMPLED
+			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
+		init.m_height = TEX_SIZE;
+		init.m_width = TEX_SIZE;
+		init.m_mipmapsCount = 1;
+		init.m_depth = 1;
+		init.m_layerCount = 1;
+		init.m_samples = 1;
+		init.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
+		init.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
+		init.m_type = TextureType::_2D;
+
+		TexturePtr col0 = gr->newInstance<Texture>(init);
+		TexturePtr col1 = gr->newInstance<Texture>(init);
+
+		init.m_format = DS_FORMAT;
+		TexturePtr dp = gr->newInstance<Texture>(init);
+
+		//
+		// Create FB
+		//
+		FramebufferInitInfo fbinit;
+		fbinit.m_colorAttachmentCount = 2;
+		fbinit.m_colorAttachments[0].m_texture = col0;
+		fbinit.m_colorAttachments[0].m_clearValue.m_colorf = {
+			0.1, 0.0, 0.0, 0.0};
+		fbinit.m_colorAttachments[1].m_texture = col1;
+		fbinit.m_colorAttachments[1].m_clearValue.m_colorf = {
+			0.0, 0.1, 0.0, 0.0};
+		fbinit.m_depthStencilAttachment.m_texture = dp;
+		fbinit.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth =
+			1.0;
+
+		FramebufferPtr fb = gr->newInstance<Framebuffer>(fbinit);
+
+		//
+		// Create default FB
+		//
+		FramebufferPtr dfb = createDefaultFb(*gr);
+
+		//
+		// Create buffs and rc groups
+		//
+		BufferPtr verts, indices;
+		createCube(*gr, verts, indices);
+
+		ResourceGroupInitInfo rcinit;
+		rcinit.m_uniformBuffers[0].m_uploadedMemory = true;
+		rcinit.m_uniformBuffers[1].m_uploadedMemory = true;
+		rcinit.m_vertexBuffers[0].m_buffer = verts;
+		rcinit.m_indexBuffer.m_buffer = indices;
+		rcinit.m_indexSize = 2;
+
+		ResourceGroupPtr rc0 = gr->newInstance<ResourceGroup>(rcinit);
+
+		rcinit = {};
+		rcinit.m_textures[0].m_texture = col0;
+		rcinit.m_textures[1].m_texture = col1;
+		ResourceGroupPtr rc1 = gr->newInstance<ResourceGroup>(rcinit);
+
+		//
+		// Create pplines
+		//
+		ShaderPtr vert =
+			gr->newInstance<Shader>(ShaderType::VERTEX, VERT_MRT_SRC);
+		ShaderPtr frag =
+			gr->newInstance<Shader>(ShaderType::FRAGMENT, FRAG_MRT_SRC);
+
+		PipelineInitInfo pinit;
+		pinit.m_shaders[ShaderType::VERTEX] = vert;
+		pinit.m_shaders[ShaderType::FRAGMENT] = frag;
+		pinit.m_color.m_drawsToDefaultFramebuffer = false;
+		pinit.m_color.m_attachmentCount = 2;
+		pinit.m_color.m_attachments[0].m_format = COL_FORMAT;
+		pinit.m_color.m_attachments[1].m_format = COL_FORMAT;
+		pinit.m_depthStencil.m_depthWriteEnabled = true;
+		pinit.m_depthStencil.m_format = DS_FORMAT;
+
+		pinit.m_vertex.m_attributeCount = 1;
+		pinit.m_vertex.m_attributes[0].m_format =
+			PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
+
+		pinit.m_vertex.m_bindingCount = 1;
+		pinit.m_vertex.m_bindings[0].m_stride = sizeof(Vec3);
+
+		PipelinePtr ppline = gr->newInstance<Pipeline>(pinit);
+
+		PipelinePtr pplineResolve =
+			createSimplePpline(VERT_QUAD_SRC, FRAG_MRT2_SRC, *gr);
+
+		//
+		// Draw
+		//
+		Mat4 viewMat(Vec4(0.0, 0.0, 5.0, 1.0), Mat3::getIdentity(), 1.0f);
+		viewMat.invert();
+
+		Mat4 projMat;
+		PerspectiveFrustum::calculateProjectionMatrix(
+			toRad(70.0), toRad(70.0), 0.1f, 100.0f, projMat);
+
+		const U ITERATION_COUNT = 200;
+		U iterations = ITERATION_COUNT;
+		F32 ang = 0.0;
+		while(iterations--)
+		{
+			HighRezTimer timer;
+			timer.start();
+			gr->beginFrame();
+
+			TransientMemoryInfo transientInfo;
+
+			CommandBufferInitInfo cinit;
+			cinit.m_flags =
+				CommandBufferFlag::FRAME_FIRST | CommandBufferFlag::FRAME_LAST;
+			CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
+
+			cmdb->setTextureBarrier(col0,
+				TextureUsageBit::NONE,
+				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+				TextureSurfaceInfo(0, 0, 0, 0));
+			cmdb->setTextureBarrier(col1,
+				TextureUsageBit::NONE,
+				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+				TextureSurfaceInfo(0, 0, 0, 0));
+			cmdb->setTextureBarrier(dp,
+				TextureUsageBit::NONE,
+				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
+				TextureSurfaceInfo(0, 0, 0, 0));
+			cmdb->beginRenderPass(fb);
+
+			// First draw
+			Mat4 modelMat(Vec4(0.0, 0.0, 0.0, 1.0),
+				Mat3(Euler(ang, ang / 2.0f, ang / 3.0f)),
+				1.0f);
+
+			Mat4* mvp = static_cast<Mat4*>(
+				gr->allocateFrameTransientMemory(sizeof(*mvp),
+					BufferUsage::UNIFORM,
+					transientInfo.m_uniformBuffers[0],
+					nullptr));
+			*mvp = projMat * viewMat * modelMat;
+
+			Vec4* color = static_cast<Vec4*>(
+				gr->allocateFrameTransientMemory(sizeof(*color) * 2,
+					BufferUsage::UNIFORM,
+					transientInfo.m_uniformBuffers[1],
+					nullptr));
+			*color++ = Vec4(1.0, 0.0, 0.0, 0.0);
+			*color = Vec4(0.0, 1.0, 0.0, 0.0);
+
+			cmdb->bindPipeline(ppline);
+			cmdb->setViewport(0, 0, TEX_SIZE, TEX_SIZE);
+			cmdb->setPolygonOffset(0.0, 0.0);
+			cmdb->bindResourceGroup(rc0, 0, &transientInfo);
+			cmdb->drawElements(6 * 2 * 3);
+
+			// 2nd draw
+			modelMat = Mat4(Vec4(0.0, 0.0, 0.0, 1.0),
+				Mat3(Euler(ang * 2.0, ang, ang / 3.0f * 2.0)),
+				1.0f);
+
+			static_cast<Mat4*>(gr->allocateFrameTransientMemory(sizeof(*mvp),
+				BufferUsage::UNIFORM,
+				transientInfo.m_uniformBuffers[0],
+				nullptr));
+			*mvp = projMat * viewMat * modelMat;
+
+			color = static_cast<Vec4*>(
+				gr->allocateFrameTransientMemory(sizeof(*color) * 2,
+					BufferUsage::UNIFORM,
+					transientInfo.m_uniformBuffers[1],
+					nullptr));
+			*color++ = Vec4(1.0, 0.0, 1.0, 0.0);
+			*color = Vec4(0.0, 1.0, 1.0, 0.0);
+
+			cmdb->bindResourceGroup(rc0, 0, &transientInfo);
+			cmdb->drawElements(6 * 2 * 3);
+
+			cmdb->endRenderPass();
+
+			cmdb->setTextureBarrier(col0,
+				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+				TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+				TextureSurfaceInfo(0, 0, 0, 0));
+			cmdb->setTextureBarrier(col1,
+				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+				TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+				TextureSurfaceInfo(0, 0, 0, 0));
+			cmdb->setTextureBarrier(dp,
+				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
+				TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+				TextureSurfaceInfo(0, 0, 0, 0));
+
+			// Draw quad
+			cmdb->beginRenderPass(dfb);
+			cmdb->bindPipeline(pplineResolve);
+			cmdb->setViewport(0, 0, WIDTH, HEIGHT);
+			cmdb->bindResourceGroup(rc1, 0, nullptr);
+			cmdb->drawArrays(6);
+			cmdb->endRenderPass();
+
+			cmdb->flush();
+
+			// End
+			ang += toRad(10.0f);
+			gr->swapBuffers();
+
+			timer.stop();
+			const F32 TICK = 1.0 / 30.0;
+			if(timer.getElapsedTime() < TICK)
+			{
+				HighRezTimer::sleep(TICK - timer.getElapsedTime());
+			}
+		}
+	}
 	COMMON_END();
 }
 
