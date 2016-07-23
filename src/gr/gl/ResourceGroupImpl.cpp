@@ -15,6 +15,7 @@
 #include <anki/gr/GrManager.h>
 #include <anki/gr/gl/RenderingThread.h>
 #include <anki/gr/gl/CommandBufferImpl.h>
+#include <anki/gr/gl/TransientMemoryManager.h>
 
 namespace anki
 {
@@ -273,7 +274,7 @@ void ResourceGroupImpl::bind(
 					MAX_UNIFORM_BUFFER_BINDINGS * slot + i,
 					getManager()
 						.getImplementation()
-						.getDynamicMemoryManager()
+						.getTransientMemoryManager()
 						.getGlName(token),
 					token.m_offset,
 					token.m_range);
@@ -310,7 +311,7 @@ void ResourceGroupImpl::bind(
 					MAX_STORAGE_BUFFER_BINDINGS * slot + i,
 					getManager()
 						.getImplementation()
-						.getDynamicMemoryManager()
+						.getTransientMemoryManager()
 						.getGlName(token),
 					token.m_offset,
 					token.m_range);
@@ -381,7 +382,7 @@ void ResourceGroupImpl::bind(
 					offsets[i] = transientInfo.m_vertexBuffers[i].m_offset;
 					names[i] = getManager()
 								   .getImplementation()
-								   .getDynamicMemoryManager()
+								   .getTransientMemoryManager()
 								   .getGlName(transientInfo.m_vertexBuffers[i]);
 				}
 				else

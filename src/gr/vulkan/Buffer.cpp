@@ -21,7 +21,7 @@ Buffer::~Buffer()
 }
 
 //==============================================================================
-void Buffer::init(PtrSize size, BufferUsageBit usage, BufferAccessBit access)
+void Buffer::init(PtrSize size, BufferUsageBit usage, BufferMapAccessBit access)
 {
 	m_impl.reset(getAllocator().newInstance<BufferImpl>(&getManager()));
 
@@ -32,7 +32,7 @@ void Buffer::init(PtrSize size, BufferUsageBit usage, BufferAccessBit access)
 }
 
 //==============================================================================
-void* Buffer::map(PtrSize offset, PtrSize range, BufferAccessBit access)
+void* Buffer::map(PtrSize offset, PtrSize range, BufferMapAccessBit access)
 {
 	return m_impl->map(offset, range, access);
 }

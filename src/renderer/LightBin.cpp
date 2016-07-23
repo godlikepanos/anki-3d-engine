@@ -380,7 +380,7 @@ Error LightBin::bin(FrustumComponent& frc,
 		ShaderPointLight* data =
 			static_cast<ShaderPointLight*>(m_gr->allocateFrameTransientMemory(
 				sizeof(ShaderPointLight) * visiblePointLightsCount,
-				BufferUsage::UNIFORM,
+				BufferUsageBit::UNIFORM_ANY_SHADER,
 				pointLightsToken));
 
 		ctx.m_pointLights =
@@ -400,7 +400,7 @@ Error LightBin::bin(FrustumComponent& frc,
 		ShaderSpotLight* data =
 			static_cast<ShaderSpotLight*>(m_gr->allocateFrameTransientMemory(
 				sizeof(ShaderSpotLight) * visibleSpotLightsCount,
-				BufferUsage::UNIFORM,
+				BufferUsageBit::UNIFORM_ANY_SHADER,
 				spotLightsToken));
 
 		ctx.m_spotLights =
@@ -422,7 +422,7 @@ Error LightBin::bin(FrustumComponent& frc,
 			ShaderProbe* data =
 				static_cast<ShaderProbe*>(m_gr->allocateFrameTransientMemory(
 					sizeof(ShaderProbe) * visibleProbeCount,
-					BufferUsage::UNIFORM,
+					BufferUsageBit::UNIFORM_ANY_SHADER,
 					*probesToken));
 
 			ctx.m_probes = WeakArray<ShaderProbe>(data, visibleProbeCount);
@@ -443,7 +443,7 @@ Error LightBin::bin(FrustumComponent& frc,
 	ShaderCluster* data =
 		static_cast<ShaderCluster*>(m_gr->allocateFrameTransientMemory(
 			sizeof(ShaderCluster) * m_clusterCount,
-			BufferUsage::STORAGE,
+			BufferUsageBit::UNIFORM_ANY_SHADER,
 			clustersToken));
 
 	ctx.m_clusters = WeakArray<ShaderCluster>(data, m_clusterCount);
@@ -451,7 +451,7 @@ Error LightBin::bin(FrustumComponent& frc,
 	// Allocate light IDs
 	U32* data2 = static_cast<U32*>(
 		m_gr->allocateFrameTransientMemory(maxLightIndices * sizeof(U32),
-			BufferUsage::STORAGE,
+			BufferUsageBit::UNIFORM_ANY_SHADER,
 			lightIndicesToken));
 
 	ctx.m_lightIds = WeakArray<U32>(data2, maxLightIndices);

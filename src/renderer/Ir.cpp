@@ -284,9 +284,10 @@ Error Ir::renderReflection(RenderingContext& ctx,
 	for(U i = 0; i < 6; ++i)
 	{
 		TransientMemoryInfo dinf;
-		UVec4* faceIdxArrayIdx =
-			static_cast<UVec4*>(getGrManager().allocateFrameTransientMemory(
-				sizeof(UVec4), BufferUsage::UNIFORM, dinf.m_uniformBuffers[0]));
+		UVec4* faceIdxArrayIdx = static_cast<UVec4*>(
+			getGrManager().allocateFrameTransientMemory(sizeof(UVec4),
+				BufferUsageBit::UNIFORM_ANY_SHADER,
+				dinf.m_uniformBuffers[0]));
 		faceIdxArrayIdx->x() = i;
 		faceIdxArrayIdx->y() = cubemapIdx;
 

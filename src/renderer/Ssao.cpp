@@ -125,7 +125,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 
 	TransientMemoryToken token;
 	Vec3* noise = static_cast<Vec3*>(gr.allocateFrameTransientMemory(
-		noiseSize, BufferUsage::TRANSFER, token));
+		noiseSize, BufferUsageBit::TRANSFER_SOURCE, token));
 
 	genNoise(noise, noise + NOISE_TEX_SIZE * NOISE_TEX_SIZE);
 

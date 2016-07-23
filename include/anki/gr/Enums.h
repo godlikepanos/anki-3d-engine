@@ -322,90 +322,55 @@ enum class AttachmentStoreOperation : U8
 };
 
 /// Buffer usage modes.
-enum class BufferUsage : U8
-{
-	UNIFORM,
-	STORAGE,
-	INDEX,
-	VERTEX,
-	INDIRECT,
-	TRANSFER, ///< For texture upload and buffer write.
-
-	COUNT,
-	FIRST = UNIFORM
-};
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferUsage, inline)
-
-/// Buffer usage modes.
-enum class BufferUsageBit : U8
+enum class BufferUsageBit : U32
 {
 	NONE = 0,
-	UNIFORM = 1 << 0,
-	STORAGE = 1 << 1,
-	INDEX = 1 << 2,
-	VERTEX = 1 << 3,
-	INDIRECT = 1 << 4,
-	TRANSFER = 1 << 5
+
+	UNIFORM_VERTEX_SHADER = 1 << 0,
+	UNIFORM_TESSELLATION_EVALUATION_SHADER = 1 << 1,
+	UNIFORM_TESSELLATION_CONTROL_SHADER = 1 << 2,
+	UNIFORM_GEOMETRY_SHADER = 1 << 3,
+	UNIFORM_FRAGMENT_SHADER = 1 << 4,
+	UNIFORM_COMPUTE_SHADER = 1 << 5,
+	UNIFORM_ANY_SHADER = UNIFORM_VERTEX_SHADER
+		| UNIFORM_TESSELLATION_EVALUATION_SHADER
+		| UNIFORM_TESSELLATION_CONTROL_SHADER
+		| UNIFORM_GEOMETRY_SHADER
+		| UNIFORM_FRAGMENT_SHADER
+		| UNIFORM_COMPUTE_SHADER,
+
+	STORAGE_VERTEX_SHADER = 1 << 6,
+	STORAGE_TESSELLATION_EVALUATION_SHADER = 1 << 7,
+	STORAGE_TESSELLATION_CONTROL_SHADER = 1 << 8,
+	STORAGE_GEOMETRY_SHADER = 1 << 9,
+	STORAGE_FRAGMENT_SHADER = 1 << 10,
+	STORAGE_COMPUTE_SHADER_READ = 1 << 11,
+	STORAGE_COMPUTE_SHADER_WRITE = 1 << 12,
+	STORAGE_ANY = STORAGE_VERTEX_SHADER | STORAGE_TESSELLATION_EVALUATION_SHADER
+		| STORAGE_TESSELLATION_CONTROL_SHADER
+		| STORAGE_GEOMETRY_SHADER
+		| STORAGE_FRAGMENT_SHADER
+		| STORAGE_COMPUTE_SHADER_READ
+		| STORAGE_COMPUTE_SHADER_WRITE,
+
+	INDEX = 1 << 13,
+	VERTEX = 1 << 14,
+	INDIRECT = 1 << 15,
+
+	TRANSFER_SOURCE = 1 << 16,
+	TRANSFER_DESTINATION = 1 << 17,
+	TRANSFER_ANY = TRANSFER_SOURCE | TRANSFER_DESTINATION
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferUsageBit, inline)
 
-/// Buffer access from client modes.
-enum class BufferAccessBit : U8
+/// Buffer access when mapped.
+enum class BufferMapAccessBit : U8
 {
 	NONE = 0,
-	CLIENT_MAP_READ = 1 << 0,
-	CLIENT_MAP_WRITE = 1 << 1,
-	CLIENT_WRITE = 1 << 2,
+	READ = 1 << 0,
+	WRITE = 1 << 1
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferAccessBit, inline)
-
-/// GPU pipeline stages.
-enum class PipelineStageBit : U8
-{
-	NONE = 0,
-	VERTEX = 1 << 0,
-	FRAGMENT = 1 << 1,
-	COMPUTE = 1 << 2,
-	TRANSFER = 1 << 3,
-	CLIENT = 1 << 4
-};
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(PipelineStageBit, inline)
-
-enum class ResourceAccessBit : U16
-{
-	NONE = 0,
-
-	/// Read from any of the bellow.
-	INDIRECT_OR_INDEX_OR_VERTEX_READ = 1 << 0,
-
-	/// Read from a uniform buffer.
-	UNIFORM_READ = 1 << 1,
-
-	/// Read an attachment (eg blending).
-	ATTACHMENT_READ = 1 << 2,
-
-	/// Write to an attachment.
-	ATTACHMENT_WRITE = 1 << 3,
-
-	/// Any resource is read from any shader.
-	SHADER_READ = 1 << 4,
-
-	/// Any resource is written from any shader.
-	SHADER_WRITE = 1 << 5,
-
-	/// Client read.
-	CLIENT_READ = 1 << 6,
-
-	/// Client write.
-	CLIENT_WRITE = 1 << 7,
-
-	/// Read as part of texture upload or buffer write commands.
-	TRANSFER_READ = 1 << 8,
-
-	/// Written as part of texture upload or buffer write commands.
-	TRANSFER_WRITE = 1 << 9
-};
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ResourceAccessBit, inline)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferMapAccessBit, inline)
 /// @}
 
 } // end namespace anki

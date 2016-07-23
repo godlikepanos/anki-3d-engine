@@ -216,7 +216,7 @@ void RenderableDrawer::setupUniforms(DrawContext& ctx,
 	U8* uniforms =
 		static_cast<U8*>(m_r->getGrManager().allocateFrameTransientMemory(
 			variant.getDefaultBlockSize(),
-			BufferUsage::UNIFORM,
+			BufferUsageBit::UNIFORM_ANY_SHADER,
 			ctx.m_dynBufferInfo.m_uniformBuffers[0]));
 
 	// Call the visitor

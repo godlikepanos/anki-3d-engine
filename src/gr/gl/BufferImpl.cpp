@@ -12,7 +12,7 @@ namespace anki
 
 //==============================================================================
 void BufferImpl::init(
-	PtrSize size, BufferUsageBit usage, BufferAccessBit access)
+	PtrSize size, BufferUsageBit usage, BufferMapAccessBit access)
 {
 	ANKI_ASSERT(!isCreated());
 	m_usage = usage;
@@ -28,7 +28,7 @@ void BufferImpl::init(
 	// creation
 	m_target = GL_ARRAY_BUFFER;
 
-	if((usage & BufferUsageBit::UNIFORM) != BufferUsageBit::NONE)
+	if((usage & BufferUsageBit::UNIFORM_ANY_SHADER) != BufferUsageBit::NONE)
 	{
 		GLint64 maxBufferSize;
 		glGetInteger64v(GL_MAX_UNIFORM_BLOCK_SIZE, &maxBufferSize);
@@ -50,7 +50,7 @@ void BufferImpl::init(
 		m_target = GL_UNIFORM_BUFFER;
 	}
 
-	if((usage & BufferUsageBit::STORAGE) != BufferUsageBit::NONE)
+	if((usage & BufferUsageBit::STORAGE_ANY) != BufferUsageBit::NONE)
 	{
 		GLint64 maxBufferSize;
 		glGetInteger64v(GL_MAX_SHADER_STORAGE_BLOCK_SIZE, &maxBufferSize);
@@ -79,12 +79,12 @@ void BufferImpl::init(
 	//
 	GLbitfield flags = 0;
 	Bool shouldMap = false;
-	if((access & BufferAccessBit::CLIENT_WRITE) != BufferAccessBit::NONE)
+	if((usage & BufferUsageBit::TRANSFER_ANY) != BufferUsageBit::NONE)
 	{
 		flags |= GL_DYNAMIC_STORAGE_BIT;
 	}
 
-	if((access & BufferAccessBit::CLIENT_MAP_WRITE) != BufferAccessBit::NONE)
+	if((access & BufferMapAccessBit::WRITE) != BufferMapAccessBit::NONE)
 	{
 		flags |= GL_MAP_WRITE_BIT;
 		flags |= GL_MAP_PERSISTENT_BIT;
@@ -93,7 +93,7 @@ void BufferImpl::init(
 		shouldMap = true;
 	}
 
-	if((access & BufferAccessBit::CLIENT_MAP_READ) != BufferAccessBit::NONE)
+	if((access & BufferMapAccessBit::READ) != BufferMapAccessBit::NONE)
 	{
 		flags |= GL_MAP_READ_BIT;
 		flags |= GL_MAP_PERSISTENT_BIT;

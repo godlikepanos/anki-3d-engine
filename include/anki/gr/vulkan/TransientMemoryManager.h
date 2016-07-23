@@ -7,6 +7,7 @@
 
 #include <anki/gr/vulkan/GpuMemoryAllocator.h>
 #include <anki/gr/common/GpuFrameRingAllocator.h>
+#include <anki/gr/common/Misc.h>
 
 namespace anki
 {
@@ -39,7 +40,7 @@ public:
 	void endFrame();
 
 	void allocate(PtrSize size,
-		BufferUsage usage,
+		BufferUsageBit usage,
 		TransientMemoryToken& token,
 		void*& ptr,
 		Error* outErr);
@@ -48,15 +49,17 @@ public:
 	{
 		ANKI_ASSERT(
 			token.m_lifetime == TransientMemoryTokenLifetime::PER_FRAME);
-		const PerFrameBuffer& frame = m_perFrameBuffers[token.m_usage];
+		const PerFrameBuffer& frame =
+			m_perFrameBuffers[bufferUsageToTransient(token.m_usage)];
 		void* addr = frame.m_mappedMem;
 		ANKI_ASSERT(addr);
 		return addr;
 	}
 
-	VkBuffer getBufferHandle(BufferUsage usage) const
+	VkBuffer getBufferHandle(BufferUsageBit usage) const
 	{
-		const PerFrameBuffer& frame = m_perFrameBuffers[usage];
+		const PerFrameBuffer& frame =
+			m_perFrameBuffers[bufferUsageToTransient(usage)];
 		ANKI_ASSERT(frame.m_bufferHandle);
 		return frame.m_bufferHandle;
 	}
@@ -75,7 +78,7 @@ private:
 
 	GrManager* m_manager = nullptr;
 
-	Array<PerFrameBuffer, U(BufferUsage::COUNT)> m_perFrameBuffers;
+	Array<PerFrameBuffer, U(TransientBufferType::COUNT)> m_perFrameBuffers;
 };
 /// @}
 

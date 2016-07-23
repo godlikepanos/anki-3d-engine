@@ -6,7 +6,6 @@
 #pragma once
 
 #include <anki/gr/CommandBuffer.h>
-#include <anki/gr/gl/DynamicMemoryManager.h>
 #include <anki/util/Assert.h>
 #include <anki/util/Allocator.h>
 

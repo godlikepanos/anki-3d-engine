@@ -170,7 +170,7 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 			VkDescriptorBufferInfo& inf = unis[uniCount++];
 			inf.buffer =
 				getGrManagerImpl().getTransientMemoryManager().getBufferHandle(
-					BufferUsage::UNIFORM);
+					BufferUsageBit::UNIFORM_ANY_SHADER);
 			inf.range = VK_WHOLE_SIZE;
 
 			m_dynamicBuffersMask.set(i);
@@ -252,7 +252,8 @@ void ResourceGroupImpl::setupDynamicOffsets(
 					dynInfo->m_uniformBuffers[i];
 
 				ANKI_ASSERT(token.m_range);
-				ANKI_ASSERT(token.m_usage == BufferUsage::UNIFORM);
+				ANKI_ASSERT((token.m_usage & BufferUsageBit::UNIFORM_ANY_SHADER)
+					!= BufferUsageBit::NONE);
 				dynOffsets[i] = token.m_offset;
 			}
 		}

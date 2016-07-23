@@ -8,7 +8,7 @@
 #include <anki/gr/GrManager.h>
 #include <anki/gr/gl/GrManagerImpl.h>
 #include <anki/gr/gl/GlState.h>
-#include <anki/gr/gl/DynamicMemoryManager.h>
+#include <anki/gr/gl/TransientMemoryManager.h>
 #include <anki/util/Logger.h>
 #include <anki/core/Trace.h>
 #include <cstdlib>
@@ -180,7 +180,9 @@ void RenderingThread::prepare()
 	m_manager->getImplementation().getState().initRenderThread();
 
 	// Init dyn mem
-	m_manager->getImplementation().getDynamicMemoryManager().initRenderThread();
+	m_manager->getImplementation()
+		.getTransientMemoryManager()
+		.initRenderThread();
 }
 
 //==============================================================================
@@ -200,7 +202,7 @@ void RenderingThread::finish()
 	}
 
 	m_manager->getImplementation()
-		.getDynamicMemoryManager()
+		.getTransientMemoryManager()
 		.destroyRenderThread();
 
 	// Cleanup GL
@@ -310,7 +312,7 @@ void RenderingThread::swapBuffers()
 		m_frameWait = true;
 	}
 
-	m_manager->getImplementation().getDynamicMemoryManager().endFrame();
+	m_manager->getImplementation().getTransientMemoryManager().endFrame();
 
 	// ...and then flush a new swap buffers
 	flushCommandBuffer(m_swapBuffersCommands);

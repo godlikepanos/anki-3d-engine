@@ -80,7 +80,7 @@ Error UiInterfaceImpl::init(GrManager* gr, ResourceManager* rc)
 			m_stages[s].m_vertBuffs[i] =
 				gr->newInstance<Buffer>(MAX_VERTS * sizeof(Vertex),
 					BufferUsageBit::VERTEX,
-					BufferAccessBit::CLIENT_MAP_WRITE);
+					BufferMapAccessBit::WRITE);
 		}
 	}
 
@@ -115,7 +115,7 @@ void UiInterfaceImpl::beginRendering(CommandBufferPtr cmdb)
 		BufferPtr buff = m_stages[s].m_vertBuffs[m_timestamp];
 
 		m_vertMappings[s] = static_cast<Vertex*>(buff->map(
-			0, sizeof(Vertex) * MAX_VERTS, BufferAccessBit::CLIENT_MAP_WRITE));
+			0, sizeof(Vertex) * MAX_VERTS, BufferMapAccessBit::WRITE));
 
 		m_vertCounts[s] = 0;
 	}
@@ -222,7 +222,7 @@ Error UiInterfaceImpl::createR8Image(
 		m_gr->newInstance<CommandBuffer>(CommandBufferInitInfo());
 	TransientMemoryToken token;
 	void* loadData = m_gr->allocateFrameTransientMemory(
-		data.getSize(), BufferUsage::TRANSFER, token);
+		data.getSize(), BufferUsageBit::TRANSFER_SOURCE, token);
 	memcpy(loadData, &data[0], data.getSize());
 	cmdb->uploadTextureSurface(tex, TextureSurfaceInfo(0, 0, 0, 0), token);
 

@@ -7,6 +7,7 @@
 #include <anki/gr/GrManager.h>
 #include <anki/gr/gl/RenderingThread.h>
 #include <anki/gr/gl/GlState.h>
+#include <anki/gr/gl/TransientMemoryManager.h>
 
 namespace anki
 {
@@ -47,9 +48,9 @@ Error GrManagerImpl::init(GrManagerInitInfo& init)
 	m_state->initMainThread(*init.m_config);
 
 	// Dyn manager
-	m_dynManager =
-		m_manager->getAllocator().newInstance<DynamicMemoryManager>();
-	m_dynManager->initMainThread(m_manager->getAllocator(), *init.m_config);
+	m_transManager =
+		m_manager->getAllocator().newInstance<TransientMemoryManager>();
+	m_transManager->initMainThread(m_manager->getAllocator(), *init.m_config);
 
 	// Create thread
 	m_thread =

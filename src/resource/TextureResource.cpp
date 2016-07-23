@@ -65,7 +65,7 @@ Error TexUploadTask::operator()(AsyncLoaderTaskContext& ctx)
 					Error err = ErrorCode::NONE;
 					void* data = m_gr->allocateFrameTransientMemory(
 						surf.m_data.getSize(),
-						BufferUsage::TRANSFER,
+						BufferUsageBit::TRANSFER_SOURCE,
 						token,
 						&err);
 

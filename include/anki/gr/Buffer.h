@@ -32,10 +32,10 @@ public:
 	}
 
 	/// Allocate the buffer.
-	void init(PtrSize size, BufferUsageBit usage, BufferAccessBit access);
+	void init(PtrSize size, BufferUsageBit usage, BufferMapAccessBit access);
 
 	/// Map the buffer.
-	void* map(PtrSize offset, PtrSize range, BufferAccessBit access);
+	void* map(PtrSize offset, PtrSize range, BufferMapAccessBit access);
 
 	/// Unmap the buffer.
 	void unmap();

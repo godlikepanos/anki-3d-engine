@@ -342,9 +342,8 @@ Error ParticleEmitter::init(const CString& name, const CString& filename)
 
 	for(U i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
 	{
-		m_vertBuffs[i] = gr.newInstance<Buffer>(m_vertBuffSize,
-			BufferUsageBit::VERTEX,
-			BufferAccessBit::CLIENT_MAP_WRITE);
+		m_vertBuffs[i] = gr.newInstance<Buffer>(
+			m_vertBuffSize, BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE);
 
 		rcinit.m_vertexBuffers[0].m_buffer = m_vertBuffs[i];
 
@@ -448,8 +447,8 @@ Error ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 	m_aliveParticlesCount = 0;
 
 	U frame = getGlobalTimestamp() % 3;
-	F32* verts = static_cast<F32*>(m_vertBuffs[frame]->map(
-		0, m_vertBuffSize, BufferAccessBit::CLIENT_MAP_WRITE));
+	F32* verts = static_cast<F32*>(
+		m_vertBuffs[frame]->map(0, m_vertBuffSize, BufferMapAccessBit::WRITE));
 	const F32* verts_base = verts;
 	(void)verts_base;
 

@@ -36,14 +36,15 @@ Error Tm::create(const ConfigSet& initializer)
 	m_luminancePpline = getGrManager().newInstance<Pipeline>(pplineInit);
 
 	// Create buffer
-	m_luminanceBuff = getGrManager().newInstance<Buffer>(
-		sizeof(Vec4), BufferUsageBit::STORAGE, BufferAccessBit::CLIENT_WRITE);
+	m_luminanceBuff = getGrManager().newInstance<Buffer>(sizeof(Vec4),
+		BufferUsageBit::STORAGE_ANY | BufferUsageBit::UNIFORM_ANY_SHADER,
+		BufferMapAccessBit::NONE);
 
 	CommandBufferPtr cmdb =
 		getGrManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
 	TransientMemoryToken token;
 	void* data = getGrManager().allocateFrameTransientMemory(
-		sizeof(Vec4), BufferUsage::TRANSFER, token);
+		sizeof(Vec4), BufferUsageBit::TRANSFER_SOURCE, token);
 	*static_cast<Vec4*>(data) = Vec4(0.5);
 	cmdb->uploadBuffer(m_luminanceBuff, 0, token);
 	cmdb->flush();
@@ -68,9 +69,9 @@ void Tm::run(RenderingContext& ctx)
 	cmdb->bindResourceGroup(m_rcGroup, 0, nullptr);
 
 	cmdb->dispatchCompute(1, 1, 1);
-	cmdb->setBufferMemoryBarrier(m_luminanceBuff,
-		ResourceAccessBit::SHADER_WRITE,
-		ResourceAccessBit::SHADER_READ | ResourceAccessBit::UNIFORM_READ);
+	cmdb->setBufferBarrier(m_luminanceBuff,
+		BufferUsageBit::STORAGE_COMPUTE_SHADER_WRITE,
+		BufferUsageBit::UNIFORM_FRAGMENT_SHADER);
 }
 
 } // end namespace anki

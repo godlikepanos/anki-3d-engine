@@ -14,7 +14,7 @@ namespace anki
 class RenderingThread;
 class WindowingBackend;
 class GlState;
-class DynamicMemoryManager;
+class TransientMemoryManager;
 
 /// @addtogroup opengl
 /// @{
@@ -57,16 +57,16 @@ public:
 		return *m_state;
 	}
 
-	DynamicMemoryManager& getDynamicMemoryManager()
+	TransientMemoryManager& getTransientMemoryManager()
 	{
-		ANKI_ASSERT(m_dynManager);
-		return *m_dynManager;
+		ANKI_ASSERT(m_transManager);
+		return *m_transManager;
 	}
 
-	const DynamicMemoryManager& getDynamicMemoryManager() const
+	const TransientMemoryManager& getTransientMemoryManager() const
 	{
-		ANKI_ASSERT(m_dynManager);
-		return *m_dynManager;
+		ANKI_ASSERT(m_transManager);
+		return *m_transManager;
 	}
 
 	GrAllocator<U8> getAllocator() const;
@@ -80,7 +80,7 @@ private:
 	GlState* m_state = nullptr;
 	RenderingThread* m_thread = nullptr;
 	WindowingBackend* m_backend = nullptr; ///< The backend of the backend.
-	DynamicMemoryManager* m_dynManager = nullptr;
+	TransientMemoryManager* m_transManager = nullptr;
 
 	ANKI_USE_RESULT Error createBackend(GrManagerInitInfo& init);
 	void destroyBackend();

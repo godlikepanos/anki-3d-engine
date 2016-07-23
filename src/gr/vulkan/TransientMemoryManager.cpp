@@ -15,47 +15,45 @@ namespace anki
 //==============================================================================
 Error TransientMemoryManager::init(const ConfigSet& cfg)
 {
-	Array<const char*, U(BufferUsage::COUNT)> configVars = {
+	Array<const char*, U(TransientBufferType::COUNT)> configVars = {
 		{"gr.uniformPerFrameMemorySize",
 			"gr.storagePerFrameMemorySize",
-			nullptr,
 			"gr.vertexPerFrameMemorySize",
-			nullptr,
 			"gr.transferPerFrameMemorySize"}};
 
 	const VkPhysicalDeviceLimits& limits =
 		m_manager->getImplementation().getPhysicalDeviceProperties().limits;
-	Array<U32, U(BufferUsage::COUNT)> alignments = {
+	Array<U32, U(TransientBufferType::COUNT)> alignments = {
 		{U32(limits.minUniformBufferOffsetAlignment),
 			U32(limits.minStorageBufferOffsetAlignment),
-			0,
 			sizeof(F32) * 4,
-			0,
 			sizeof(F32) * 4}};
 
-	auto alloc = m_manager->getAllocator();
-	for(U i = 0; i < U(BufferUsage::COUNT); ++i)
-	{
-		if(configVars[i] == nullptr)
-		{
-			continue;
-		}
+	Array<BufferUsageBit, U(TransientBufferType::COUNT)> usages = {
+		{BufferUsageBit::UNIFORM_ANY_SHADER,
+			BufferUsageBit::STORAGE_ANY,
+			BufferUsageBit::VERTEX,
+			BufferUsageBit::TRANSFER_SOURCE}};
 
+	auto alloc = m_manager->getAllocator();
+	for(TransientBufferType i = TransientBufferType::UNIFORM;
+		i < TransientBufferType::COUNT;
+		++i)
+	{
 		PerFrameBuffer& frame = m_perFrameBuffers[i];
 		frame.m_size = cfg.getNumber(configVars[i]);
 		ANKI_ASSERT(frame.m_size);
 
 		// Create buffer
-		BufferUsageBit usage = BufferUsageBit(1 << i);
 		frame.m_buff = alloc.newInstance<BufferImpl>(m_manager);
 		ANKI_CHECK(frame.m_buff->init(
-			frame.m_size, usage, BufferAccessBit::CLIENT_MAP_WRITE));
+			frame.m_size, usages[i], BufferMapAccessBit::WRITE));
 
 		frame.m_bufferHandle = frame.m_buff->getHandle();
 
 		// Map once
-		frame.m_mappedMem = static_cast<U8*>(frame.m_buff->map(
-			0, frame.m_size, BufferAccessBit::CLIENT_MAP_WRITE));
+		frame.m_mappedMem = static_cast<U8*>(
+			frame.m_buff->map(0, frame.m_size, BufferMapAccessBit::WRITE));
 		ANKI_ASSERT(frame.m_mappedMem);
 
 		// Init the allocator
@@ -80,7 +78,7 @@ void TransientMemoryManager::destroy()
 
 //==============================================================================
 void TransientMemoryManager::allocate(PtrSize size,
-	BufferUsage usage,
+	BufferUsageBit usage,
 	TransientMemoryToken& token,
 	void*& ptr,
 	Error* outErr)
@@ -88,7 +86,7 @@ void TransientMemoryManager::allocate(PtrSize size,
 	Error err = ErrorCode::NONE;
 	ptr = nullptr;
 
-	PerFrameBuffer& buff = m_perFrameBuffers[usage];
+	PerFrameBuffer& buff = m_perFrameBuffers[bufferUsageToTransient(usage)];
 	err = buff.m_alloc.allocate(size, token.m_offset);
 
 	if(!err)

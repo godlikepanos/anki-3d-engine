@@ -163,9 +163,10 @@ void Bloom::run(RenderingContext& ctx)
 	cmdb->bindPipeline(m_tonePpline);
 
 	TransientMemoryInfo dyn;
-	Vec4* uniforms =
-		static_cast<Vec4*>(getGrManager().allocateFrameTransientMemory(
-			sizeof(Vec4), BufferUsage::UNIFORM, dyn.m_uniformBuffers[0]));
+	Vec4* uniforms = static_cast<Vec4*>(
+		getGrManager().allocateFrameTransientMemory(sizeof(Vec4),
+			BufferUsageBit::UNIFORM_ANY_SHADER,
+			dyn.m_uniformBuffers[0]));
 	*uniforms = Vec4(m_threshold, m_scale, 0.0, 0.0);
 
 	cmdb->bindResourceGroup(m_firstDescrGroup, 0, &dyn);

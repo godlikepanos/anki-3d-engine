@@ -221,7 +221,7 @@ Error Renderer::render(RenderingContext& ctx)
 	RendererCommonUniforms* commonUniforms =
 		static_cast<RendererCommonUniforms*>(
 			getGrManager().allocateFrameTransientMemory(sizeof(*commonUniforms),
-				BufferUsage::UNIFORM,
+				BufferUsageBit::UNIFORM_ANY_SHADER,
 				m_commonUniformsToken));
 
 	commonUniforms->m_projectionParams = frc.getProjectionParameters();

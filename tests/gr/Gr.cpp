@@ -172,13 +172,36 @@ layout(ANKI_UBO_BINDING(0, 0)) uniform u0_
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_tex0;
 layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_tex1;
 
+ANKI_USING_FRAG_COORD(768)
+
 void main()
 {
-	float factor = in_uv.x;
-	vec3 col0 = textureLod(u_tex0, in_uv, factor).rgb;
-	vec3 col1 = textureLod(u_tex1, in_uv, factor * 2.0).rgb;
-	
-	out_color = vec4((col1 + col1) * 0.5, 1.0);
+	if(anki_fragCoord.x < 1024 / 2)
+	{
+		if(anki_fragCoord.y < 768 / 2)
+		{
+			vec2 uv = in_uv * 2.0;
+			out_color = textureLod(u_tex0, uv, 0.0);
+		}
+		else
+		{
+			vec2 uv = in_uv * 2.0 - vec2(0.0, 1.0);
+			out_color = textureLod(u_tex0, uv, 1.0);
+		}
+	}
+	else
+	{
+		if(anki_fragCoord.y < 768 / 2)
+		{
+			vec2 uv = in_uv * 2.0 - vec2(1.0, 0.0);
+			out_color = textureLod(u_tex1, uv, 0.0);
+		}
+		else
+		{
+			vec2 uv = in_uv * 2.0 - vec2(1.0, 1.0);
+			out_color = textureLod(u_tex1, uv, 1.0);
+		}
+	}
 })";
 
 static const char* FRAG_MRT_SRC = R"(layout (location = 0) out vec4 out_color0;
@@ -346,16 +369,15 @@ static void createCube(GrManager& gr, BufferPtr& verts, BufferPtr& indices)
 		7}};
 
 	verts = gr.newInstance<Buffer>(
-		sizeof(pos), BufferUsageBit::VERTEX, BufferMapAccessBit::CLIENT_MAP_WRITE);
+		sizeof(pos), BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE);
 
-	void* mapped =
-		verts->map(0, sizeof(pos), BufferMapAccessBit::CLIENT_MAP_WRITE);
+	void* mapped = verts->map(0, sizeof(pos), BufferMapAccessBit::WRITE);
 	memcpy(mapped, &pos[0], sizeof(pos));
 	verts->unmap();
 
 	indices = gr.newInstance<Buffer>(
-		sizeof(idx), BufferUsageBit::INDEX, BufferMapAccessBit::CLIENT_MAP_WRITE);
-	mapped = indices->map(0, sizeof(idx), BufferMapAccessBit::CLIENT_MAP_WRITE);
+		sizeof(idx), BufferUsageBit::INDEX, BufferMapAccessBit::WRITE);
+	mapped = indices->map(0, sizeof(idx), BufferMapAccessBit::WRITE);
 	memcpy(mapped, &idx[0], sizeof(idx));
 	indices->unmap();
 }
@@ -443,21 +465,20 @@ ANKI_TEST(Gr, Buffer)
 
 	{
 		BufferPtr a = gr->newInstance<Buffer>(
-			512, BufferUsageBit::UNIFORM, BufferMapAccessBit::NONE);
+			512, BufferUsageBit::UNIFORM_ANY_SHADER, BufferMapAccessBit::NONE);
 
 		BufferPtr b = gr->newInstance<Buffer>(64,
-			BufferUsageBit::STORAGE,
-			BufferMapAccessBit::CLIENT_MAP_WRITE
-				| BufferMapAccessBit::CLIENT_MAP_READ);
+			BufferUsageBit::STORAGE_ANY,
+			BufferMapAccessBit::WRITE | BufferMapAccessBit::READ);
 
-		void* ptr = b->map(0, 64, BufferMapAccessBit::CLIENT_MAP_WRITE);
+		void* ptr = b->map(0, 64, BufferMapAccessBit::WRITE);
 		ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
 		U8 ptr2[64];
 		memset(ptr, 0xCC, 64);
 		memset(ptr2, 0xCC, 64);
 		b->unmap();
 
-		ptr = b->map(0, 64, BufferMapAccessBit::CLIENT_MAP_READ);
+		ptr = b->map(0, 64, BufferMapAccessBit::READ);
 		ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
 		ANKI_TEST_EXPECT_EQ(memcmp(ptr, ptr2, 64), 0);
 		b->unmap();
@@ -473,8 +494,8 @@ ANKI_TEST(Gr, ResourceGroup)
 
 	{
 		BufferPtr b = gr->newInstance<Buffer>(sizeof(F32) * 4,
-			BufferUsageBit::UNIFORM,
-			BufferMapAccessBit::CLIENT_MAP_WRITE);
+			BufferUsageBit::UNIFORM_ANY_SHADER,
+			BufferMapAccessBit::WRITE);
 
 		ResourceGroupInitInfo rcinit;
 		rcinit.m_uniformBuffers[0].m_buffer = b;
@@ -492,11 +513,11 @@ ANKI_TEST(Gr, DrawWithUniforms)
 	{
 		// A non-uploaded buffer
 		BufferPtr b = gr->newInstance<Buffer>(sizeof(Vec4) * 3,
-			BufferUsageBit::UNIFORM,
-			BufferMapAccessBit::CLIENT_MAP_WRITE);
+			BufferUsageBit::UNIFORM_ANY_SHADER,
+			BufferMapAccessBit::WRITE);
 
 		Vec4* ptr = static_cast<Vec4*>(
-			b->map(0, sizeof(Vec4) * 3, BufferMapAccessBit::CLIENT_MAP_WRITE));
+			b->map(0, sizeof(Vec4) * 3, BufferMapAccessBit::WRITE));
 		ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
 		ptr[0] = Vec4(1.0, 0.0, 0.0, 0.0);
 		ptr[1] = Vec4(0.0, 1.0, 0.0, 0.0);
@@ -529,7 +550,7 @@ ANKI_TEST(Gr, DrawWithUniforms)
 			Error err = ErrorCode::NONE;
 			Vec4* rotMat = static_cast<Vec4*>(
 				gr->allocateFrameTransientMemory(sizeof(Vec4),
-					BufferUsage::UNIFORM,
+					BufferUsageBit::UNIFORM_ANY_SHADER,
 					transientInfo.m_uniformBuffers[1],
 					&err));
 			ANKI_TEST_EXPECT_NO_ERR(err);
@@ -583,10 +604,10 @@ ANKI_TEST(Gr, DrawWithVertex)
 
 		BufferPtr b = gr->newInstance<Buffer>(sizeof(Vert) * 3,
 			BufferUsageBit::VERTEX,
-			BufferMapAccessBit::CLIENT_MAP_WRITE);
+			BufferMapAccessBit::WRITE);
 
 		Vert* ptr = static_cast<Vert*>(
-			b->map(0, sizeof(Vert) * 3, BufferMapAccessBit::CLIENT_MAP_WRITE));
+			b->map(0, sizeof(Vert) * 3, BufferMapAccessBit::WRITE));
 		ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
 
 		ptr[0].m_pos = Vec3(-1.0, 1.0, 0.0);
@@ -600,10 +621,10 @@ ANKI_TEST(Gr, DrawWithVertex)
 
 		BufferPtr c = gr->newInstance<Buffer>(sizeof(Vec3) * 3,
 			BufferUsageBit::VERTEX,
-			BufferMapAccessBit::CLIENT_MAP_WRITE);
+			BufferMapAccessBit::WRITE);
 
 		Vec3* otherColor = static_cast<Vec3*>(
-			c->map(0, sizeof(Vec3) * 3, BufferMapAccessBit::CLIENT_MAP_WRITE));
+			c->map(0, sizeof(Vec3) * 3, BufferMapAccessBit::WRITE));
 
 		otherColor[0] = Vec3(0.0, 1.0, 1.0);
 		otherColor[1] = Vec3(1.0, 0.0, 1.0);
@@ -863,7 +884,7 @@ ANKI_TEST(Gr, DrawWithTexture)
 		Error err = ErrorCode::NONE;
 		TransientMemoryToken token;
 		void* ptr = gr->allocateFrameTransientMemory(
-			sizeof(mip0), BufferUsage::TRANSFER, token, &err);
+			sizeof(mip0), BufferUsageBit::TRANSFER_SOURCE, token, &err);
 		ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
 		ANKI_TEST_EXPECT_NO_ERR(err);
 		memcpy(ptr, &mip0[0], sizeof(mip0));
@@ -871,7 +892,7 @@ ANKI_TEST(Gr, DrawWithTexture)
 		cmdb->uploadTextureSurface(a, TextureSurfaceInfo(0, 0, 0, 0), token);
 
 		ptr = gr->allocateFrameTransientMemory(
-			sizeof(mip1), BufferUsage::TRANSFER, token, &err);
+			sizeof(mip1), BufferUsageBit::TRANSFER_SOURCE, token, &err);
 		ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
 		ANKI_TEST_EXPECT_NO_ERR(err);
 		memcpy(ptr, &mip1[0], sizeof(mip1));
@@ -879,7 +900,7 @@ ANKI_TEST(Gr, DrawWithTexture)
 		cmdb->uploadTextureSurface(a, TextureSurfaceInfo(1, 0, 0, 0), token);
 
 		ptr = gr->allocateFrameTransientMemory(
-			sizeof(bmip0), BufferUsage::TRANSFER, token, &err);
+			sizeof(bmip0), BufferUsageBit::TRANSFER_SOURCE, token, &err);
 		ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
 		ANKI_TEST_EXPECT_NO_ERR(err);
 		memcpy(ptr, &bmip0[0], sizeof(bmip0));
@@ -1130,14 +1151,14 @@ ANKI_TEST(Gr, DrawOffscreen)
 
 			Mat4* mvp = static_cast<Mat4*>(
 				gr->allocateFrameTransientMemory(sizeof(*mvp),
-					BufferUsage::UNIFORM,
+					BufferUsageBit::UNIFORM_ANY_SHADER,
 					transientInfo.m_uniformBuffers[0],
 					nullptr));
 			*mvp = projMat * viewMat * modelMat;
 
 			Vec4* color = static_cast<Vec4*>(
 				gr->allocateFrameTransientMemory(sizeof(*color) * 2,
-					BufferUsage::UNIFORM,
+					BufferUsageBit::UNIFORM_ANY_SHADER,
 					transientInfo.m_uniformBuffers[1],
 					nullptr));
 			*color++ = Vec4(1.0, 0.0, 0.0, 0.0);
@@ -1155,14 +1176,14 @@ ANKI_TEST(Gr, DrawOffscreen)
 
 			mvp = static_cast<Mat4*>(
 				gr->allocateFrameTransientMemory(sizeof(*mvp),
-					BufferUsage::UNIFORM,
+					BufferUsageBit::UNIFORM_ANY_SHADER,
 					transientInfo.m_uniformBuffers[0],
 					nullptr));
 			*mvp = projMat * viewMat * modelMat;
 
 			color = static_cast<Vec4*>(
 				gr->allocateFrameTransientMemory(sizeof(*color) * 2,
-					BufferUsage::UNIFORM,
+					BufferUsageBit::UNIFORM_ANY_SHADER,
 					transientInfo.m_uniformBuffers[1],
 					nullptr));
 			*color++ = Vec4(0.0, 0.0, 1.0, 0.0);

@@ -46,8 +46,11 @@ Error MeshLoadTask::operator()(AsyncLoaderTaskContext& ctx)
 	{
 		TransientMemoryToken token;
 		Error err = ErrorCode::NONE;
-		void* data = gr.allocateFrameTransientMemory(
-			m_loader.getVertexDataSize(), BufferUsage::TRANSFER, token, &err);
+		void* data =
+			gr.allocateFrameTransientMemory(m_loader.getVertexDataSize(),
+				BufferUsageBit::TRANSFER_SOURCE,
+				token,
+				&err);
 
 		if(!err)
 		{
@@ -69,8 +72,11 @@ Error MeshLoadTask::operator()(AsyncLoaderTaskContext& ctx)
 	{
 		TransientMemoryToken token;
 		Error err = ErrorCode::NONE;
-		void* data = gr.allocateFrameTransientMemory(
-			m_loader.getIndexDataSize(), BufferUsage::TRANSFER, token, &err);
+		void* data =
+			gr.allocateFrameTransientMemory(m_loader.getIndexDataSize(),
+				BufferUsageBit::TRANSFER_SOURCE,
+				token,
+				&err);
 
 		if(!err)
 		{
@@ -156,12 +162,12 @@ Error Mesh::load(const ResourceFilename& filename)
 	GrManager& gr = getManager().getGrManager();
 
 	m_vertBuff = gr.newInstance<Buffer>(loader.getVertexDataSize(),
-		BufferUsageBit::VERTEX,
-		BufferAccessBit::CLIENT_WRITE);
+		BufferUsageBit::VERTEX | BufferUsageBit::TRANSFER_DESTINATION,
+		BufferMapAccessBit::NONE);
 
 	m_indicesBuff = gr.newInstance<Buffer>(loader.getIndexDataSize(),
-		BufferUsageBit::INDEX,
-		BufferAccessBit::CLIENT_WRITE);
+		BufferUsageBit::INDEX | BufferUsageBit::TRANSFER_DESTINATION,
+		BufferMapAccessBit::NONE);
 
 	// Submit the loading task
 	task->m_indicesBuff = m_indicesBuff;

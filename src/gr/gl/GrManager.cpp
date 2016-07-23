@@ -6,7 +6,7 @@
 #include <anki/gr/GrManager.h>
 #include <anki/gr/gl/GrManagerImpl.h>
 #include <anki/gr/gl/RenderingThread.h>
-#include <anki/gr/gl/DynamicMemoryManager.h>
+#include <anki/gr/gl/TransientMemoryManager.h>
 #include <anki/core/Timestamp.h>
 #include <cstring>
 
@@ -62,10 +62,10 @@ void GrManager::finish()
 
 //==============================================================================
 void* GrManager::allocateFrameTransientMemory(
-	PtrSize size, BufferUsage usage, TransientMemoryToken& token, Error* err)
+	PtrSize size, BufferUsageBit usage, TransientMemoryToken& token, Error* err)
 {
 	void* data = nullptr;
-	m_impl->getDynamicMemoryManager().allocate(
+	m_impl->getTransientMemoryManager().allocate(
 		size, usage, TransientMemoryTokenLifetime::PER_FRAME, token, data, err);
 
 	return data;

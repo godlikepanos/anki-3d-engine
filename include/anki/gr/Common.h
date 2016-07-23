@@ -142,7 +142,7 @@ anki_internal:
 	PtrSize m_range = 0;
 	TransientMemoryTokenLifetime m_lifetime =
 		TransientMemoryTokenLifetime::PER_FRAME;
-	BufferUsage m_usage = BufferUsage::COUNT;
+	BufferUsageBit m_usage = BufferUsageBit::NONE;
 
 	void markUnused()
 	{

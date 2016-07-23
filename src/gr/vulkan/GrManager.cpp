@@ -55,7 +55,7 @@ void GrManager::finish()
 
 //==============================================================================
 void* GrManager::allocateFrameTransientMemory(
-	PtrSize size, BufferUsage usage, TransientMemoryToken& token, Error* err)
+	PtrSize size, BufferUsageBit usage, TransientMemoryToken& token, Error* err)
 {
 	void* ptr = nullptr;
 	m_impl->getTransientMemoryManager().allocate(size, usage, token, ptr, err);

@@ -156,6 +156,11 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #define ANKI_SS_BINDING(set_, binding_) set = set_, binding = %u + binding_
 #define ANKI_TEX_BINDING(set_, binding_) set = set_, binding = %u + binding_
 
+#if defined(FRAGMENT_SHADER)
+#define ANKI_USING_FRAG_COORD(h_) vec4 anki_fragCoord = \
+	vec4(gl_FragCoord.x, h_ - gl_FragCoord.y, gl_FragCoord.z, gl_FragCoord.w);
+#endif
+
 %s)";
 
 //==============================================================================

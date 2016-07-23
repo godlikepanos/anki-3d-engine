@@ -8,6 +8,7 @@
 #include <anki/gr/gl/Common.h>
 #include <anki/gr/common/GpuFrameRingAllocator.h>
 #include <anki/gr/common/GpuBlockAllocator.h>
+#include <anki/gr/common/Misc.h>
 
 namespace anki
 {
@@ -19,14 +20,14 @@ class ConfigSet;
 /// @{
 
 /// Manages all dynamic memory.
-class DynamicMemoryManager : public NonCopyable
+class TransientMemoryManager : public NonCopyable
 {
 public:
-	DynamicMemoryManager()
+	TransientMemoryManager()
 	{
 	}
 
-	~DynamicMemoryManager();
+	~TransientMemoryManager();
 
 	void initMainThread(
 		GenericMemoryPoolAllocator<U8> alloc, const ConfigSet& cfg);
@@ -38,7 +39,7 @@ public:
 	void endFrame();
 
 	void allocate(PtrSize size,
-		BufferUsage usage,
+		BufferUsageBit usage,
 		TransientMemoryTokenLifetime lifespan,
 		TransientMemoryToken& token,
 		void*& ptr,
@@ -48,7 +49,6 @@ public:
 	{
 		ANKI_ASSERT(
 			token.m_lifetime == TransientMemoryTokenLifetime::PERSISTENT);
-		m_persistentBuffers[token.m_usage].m_alloc.free(token.m_offset);
 	}
 
 	void* getBaseAddress(const TransientMemoryToken& token) const
@@ -56,11 +56,12 @@ public:
 		void* addr;
 		if(token.m_lifetime == TransientMemoryTokenLifetime::PER_FRAME)
 		{
-			addr = m_perFrameBuffers[token.m_usage].m_mappedMem;
+			addr = m_perFrameBuffers[bufferUsageToTransient(token.m_usage)]
+					   .m_mappedMem;
 		}
 		else
 		{
-			addr = m_persistentBuffers[token.m_usage].m_mappedMem;
+			ANKI_ASSERT(0);
 		}
 		ANKI_ASSERT(addr);
 		return addr;
@@ -71,11 +72,12 @@ public:
 		GLuint name;
 		if(token.m_lifetime == TransientMemoryTokenLifetime::PER_FRAME)
 		{
-			name = m_perFrameBuffers[token.m_usage].m_name;
+			name =
+				m_perFrameBuffers[bufferUsageToTransient(token.m_usage)].m_name;
 		}
 		else
 		{
-			name = m_persistentBuffers[token.m_usage].m_name;
+			ANKI_ASSERT(0);
 		}
 		ANKI_ASSERT(name);
 		return name;
@@ -98,20 +100,8 @@ private:
 		GpuFrameRingAllocator m_alloc;
 	};
 
-	class PersistentBuffer
-	{
-	public:
-		PtrSize m_size = 0;
-		GLuint m_name = 0;
-		U32 m_alignment = 0;
-		DynamicArray<Aligned16Type> m_cpuBuff;
-		U8* m_mappedMem = nullptr;
-		GpuBlockAllocator m_alloc;
-	};
-
 	GenericMemoryPoolAllocator<U8> m_alloc;
-	Array<PerFrameBuffer, U(BufferUsage::COUNT)> m_perFrameBuffers;
-	Array<PersistentBuffer, U(BufferUsage::COUNT)> m_persistentBuffers;
+	Array<PerFrameBuffer, U(TransientBufferType::COUNT)> m_perFrameBuffers;
 };
 /// @}
 

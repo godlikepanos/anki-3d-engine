@@ -232,7 +232,7 @@ void Is::updateCommonBlock(RenderingContext& ctx)
 	ShaderCommonUniforms* blk = static_cast<ShaderCommonUniforms*>(
 		getGrManager().allocateFrameTransientMemory(
 			sizeof(ShaderCommonUniforms),
-			BufferUsage::UNIFORM,
+			BufferUsageBit::UNIFORM_ANY_SHADER,
 			ctx.m_is.m_dynBufferInfo.m_uniformBuffers[COMMON_VARS_LOCATION]));
 
 	// Start writing

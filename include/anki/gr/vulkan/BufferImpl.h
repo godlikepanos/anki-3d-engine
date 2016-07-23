@@ -26,10 +26,10 @@ public:
 	~BufferImpl();
 
 	ANKI_USE_RESULT Error init(
-		PtrSize size, BufferUsageBit usage, BufferAccessBit access);
+		PtrSize size, BufferUsageBit usage, BufferMapAccessBit access);
 
 	ANKI_USE_RESULT void* map(
-		PtrSize offset, PtrSize range, BufferAccessBit access);
+		PtrSize offset, PtrSize range, BufferMapAccessBit access);
 
 	void unmap()
 	{
@@ -51,7 +51,7 @@ private:
 	VkBuffer m_handle = VK_NULL_HANDLE;
 	GpuMemoryAllocationHandle m_memHandle;
 	U32 m_memIdx = 0;
-	BufferAccessBit m_access = BufferAccessBit::NONE;
+	BufferMapAccessBit m_access = BufferMapAccessBit::NONE;
 	U32 m_size = 0;
 
 #if ANKI_ASSERTIONS

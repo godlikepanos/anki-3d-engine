@@ -68,10 +68,10 @@ public:
 	template<typename T, typename TArg>
 	GrObjectPtr<T> newInstanceCached(const TArg& arg);
 
-	/// Allocate memory for dynamic buffers. The memory will be reclaimed at
-	/// the begining of the N-(MAX_FRAMES_IN_FLIGHT-1) frame.
+	/// Allocate transient memory for various operations. The memory will be
+	/// reclaimed at the begining of the N-(MAX_FRAMES_IN_FLIGHT-1) frame.
 	void* allocateFrameTransientMemory(PtrSize size,
-		BufferUsage usage,
+		BufferUsageBit usage,
 		TransientMemoryToken& token,
 		Error* err = nullptr);
 

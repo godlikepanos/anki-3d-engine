@@ -174,14 +174,14 @@ void Lf::runOcclusionTests(RenderingContext& ctx)
 		TransientMemoryToken token;
 		Mat4* mvp =
 			static_cast<Mat4*>(getGrManager().allocateFrameTransientMemory(
-				sizeof(Mat4), BufferUsage::UNIFORM, token));
+				sizeof(Mat4), BufferUsageBit::UNIFORM_ANY_SHADER, token));
 		*mvp = camFr.getViewProjectionMatrix();
 
 		// Alloc dyn mem
 		TransientMemoryToken token2;
 		Vec3* positions =
 			static_cast<Vec3*>(getGrManager().allocateFrameTransientMemory(
-				sizeof(Vec3) * totalCount, BufferUsage::VERTEX, token2));
+				sizeof(Vec3) * totalCount, BufferUsageBit::VERTEX, token2));
 		const Vec3* initialPositions = positions;
 
 		// Setup state
@@ -259,7 +259,7 @@ void Lf::run(RenderingContext& ctx)
 			Sprite* tmpSprites = static_cast<Sprite*>(
 				getGrManager().allocateFrameTransientMemory(
 					spritesCount * sizeof(Sprite),
-					BufferUsage::UNIFORM,
+					BufferUsageBit::UNIFORM_ANY_SHADER,
 					token));
 			WeakArray<Sprite> sprites(tmpSprites, spritesCount);
 

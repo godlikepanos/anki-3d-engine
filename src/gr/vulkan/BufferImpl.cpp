@@ -27,7 +27,7 @@ BufferImpl::~BufferImpl()
 
 //==============================================================================
 Error BufferImpl::init(
-	PtrSize size, BufferUsageBit usage, BufferAccessBit access)
+	PtrSize size, BufferUsageBit usage, BufferMapAccessBit access)
 {
 	ANKI_ASSERT(!isCreated());
 	ANKI_ASSERT(size > 0);
@@ -47,30 +47,62 @@ Error BufferImpl::init(
 	VkMemoryRequirements req;
 	vkGetBufferMemoryRequirements(getDevice(), m_handle, &req);
 
-	if((access & (BufferAccessBit::CLIENT_MAP_READ
-					 | BufferAccessBit::CLIENT_MAP_WRITE))
-		!= BufferAccessBit::NONE)
+	if(access == BufferMapAccessBit::WRITE)
 	{
+		// Only write
+
+		// Device & host
 		m_memIdx = getGrManagerImpl().findMemoryType(req.memoryTypeBits,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-				| VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
-				| VK_MEMORY_PROPERTY_HOST_CACHED_BIT,
+				| VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 			0);
 
-		// Fallback
+		// Fallback: host and not coherent
+		if(m_memIdx == MAX_U32)
+		{
+			m_memIdx = getGrManagerImpl().findMemoryType(req.memoryTypeBits,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+				VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		}
+
+		// Fallback: just host
 		if(m_memIdx == MAX_U32)
 		{
 			m_memIdx = getGrManagerImpl().findMemoryType(
-				req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 0);
+				req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, 0);
+		}
+	}
+	else if((access & BufferMapAccessBit::READ) != BufferMapAccessBit::NONE)
+	{
+		// Read or read/write
+
+		// Cached
+		m_memIdx = getGrManagerImpl().findMemoryType(req.memoryTypeBits,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+				| VK_MEMORY_PROPERTY_HOST_CACHED_BIT,
+			0);
+
+		// Fallback: Just coherent
+		if(m_memIdx == MAX_U32)
+		{
+			m_memIdx = getGrManagerImpl().findMemoryType(req.memoryTypeBits,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+					| VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+				0);
 		}
 	}
 	else
 	{
+		// Not mapped
+
+		ANKI_ASSERT(access == BufferMapAccessBit::NONE);
+
+		// Device only
 		m_memIdx = getGrManagerImpl().findMemoryType(req.memoryTypeBits,
 			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
-		// Fallback
+		// Fallback: Device with anything else
 		if(m_memIdx == MAX_U32)
 		{
 			m_memIdx = getGrManagerImpl().findMemoryType(
@@ -94,10 +126,10 @@ Error BufferImpl::init(
 }
 
 //==============================================================================
-void* BufferImpl::map(PtrSize offset, PtrSize range, BufferAccessBit access)
+void* BufferImpl::map(PtrSize offset, PtrSize range, BufferMapAccessBit access)
 {
 	ANKI_ASSERT(isCreated());
-	ANKI_ASSERT((access & m_access) != BufferAccessBit::NONE);
+	ANKI_ASSERT((access & m_access) != BufferMapAccessBit::NONE);
 	ANKI_ASSERT(!m_mapped);
 	ANKI_ASSERT(offset + range <= m_size);
 

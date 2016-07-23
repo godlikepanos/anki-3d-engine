@@ -29,12 +29,12 @@ public:
 	BufferPtr m_buff;
 	PtrSize m_size;
 	BufferUsageBit m_usage;
-	BufferAccessBit m_access;
+	BufferMapAccessBit m_access;
 
 	BufferCreateCommand(Buffer* buff,
 		PtrSize size,
 		BufferUsageBit usage,
-		BufferAccessBit access)
+		BufferMapAccessBit access)
 		: m_buff(buff)
 		, m_size(size)
 		, m_usage(usage)
@@ -58,7 +58,7 @@ public:
 	}
 };
 
-void Buffer::init(PtrSize size, BufferUsageBit usage, BufferAccessBit access)
+void Buffer::init(PtrSize size, BufferUsageBit usage, BufferMapAccessBit access)
 {
 	m_impl.reset(getAllocator().newInstance<BufferImpl>(&getManager()));
 
@@ -71,7 +71,7 @@ void Buffer::init(PtrSize size, BufferUsageBit usage, BufferAccessBit access)
 }
 
 //==============================================================================
-void* Buffer::map(PtrSize offset, PtrSize range, BufferAccessBit access)
+void* Buffer::map(PtrSize offset, PtrSize range, BufferMapAccessBit access)
 {
 	// Wait for its creation
 	if(m_impl->serializeRenderingThread())

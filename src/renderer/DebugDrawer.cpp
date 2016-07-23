@@ -82,7 +82,7 @@ Error DebugDrawer::init(Renderer* r)
 	{
 		v = gr.newInstance<Buffer>(sizeof(Vertex) * MAX_VERTS_PER_FRAME,
 			BufferUsageBit::VERTEX,
-			BufferAccessBit::CLIENT_MAP_WRITE);
+			BufferMapAccessBit::WRITE);
 	}
 
 	// Create the resouce groups
@@ -107,9 +107,8 @@ void DebugDrawer::prepareFrame(CommandBufferPtr& jobs)
 	m_cmdb = jobs;
 
 	U frame = m_r->getFrameCount() % MAX_FRAMES_IN_FLIGHT;
-	void* mapped = m_vertBuff[frame]->map(0,
-		MAX_VERTS_PER_FRAME * sizeof(Vertex),
-		BufferAccessBit::CLIENT_MAP_WRITE);
+	void* mapped = m_vertBuff[frame]->map(
+		0, MAX_VERTS_PER_FRAME * sizeof(Vertex), BufferMapAccessBit::WRITE);
 	m_clientVerts =
 		WeakArray<Vertex>(static_cast<Vertex*>(mapped), MAX_VERTS_PER_FRAME);
 

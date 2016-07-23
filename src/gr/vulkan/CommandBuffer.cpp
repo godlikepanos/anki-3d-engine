@@ -182,14 +182,8 @@ void CommandBuffer::setTextureBarrier(TexturePtr tex,
 }
 
 //==============================================================================
-void CommandBuffer::setPipelineBarrier(
-	PipelineStageBit src, PipelineStageBit dst)
-{
-}
-
-//==============================================================================
-void CommandBuffer::setBufferMemoryBarrier(
-	BufferPtr buff, ResourceAccessBit src, ResourceAccessBit dst)
+void CommandBuffer::setBufferBarrier(
+	BufferPtr buff, BufferUsageBit before, BufferUsageBit after)
 {
 }
 

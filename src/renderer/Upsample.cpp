@@ -95,9 +95,10 @@ void Upsample::run(RenderingContext& ctx)
 	CommandBufferPtr cmdb = ctx.m_commandBuffer;
 	TransientMemoryInfo dyn;
 
-	Vec4* linearDepth =
-		static_cast<Vec4*>(getGrManager().allocateFrameTransientMemory(
-			sizeof(Vec4), BufferUsage::UNIFORM, dyn.m_uniformBuffers[0]));
+	Vec4* linearDepth = static_cast<Vec4*>(
+		getGrManager().allocateFrameTransientMemory(sizeof(Vec4),
+			BufferUsageBit::UNIFORM_ANY_SHADER,
+			dyn.m_uniformBuffers[0]));
 	const Frustum& fr = ctx.m_frustumComponent->getFrustum();
 	computeLinearizeDepthOptimal(
 		fr.getNear(), fr.getFar(), linearDepth->x(), linearDepth->y());

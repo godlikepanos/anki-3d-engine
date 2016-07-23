@@ -226,10 +226,8 @@ public:
 		TextureUsageBit nextUsage,
 		const TextureSurfaceInfo& surf);
 
-	void setPipelineBarrier(PipelineStageBit src, PipelineStageBit dst);
-
-	void setBufferMemoryBarrier(
-		BufferPtr buff, ResourceAccessBit src, ResourceAccessBit dst);
+	void setBufferBarrier(
+		BufferPtr buff, BufferUsageBit prevUsage, BufferUsageBit nextUsage);
 	/// @}
 
 	/// @name Other

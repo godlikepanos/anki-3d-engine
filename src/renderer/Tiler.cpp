@@ -68,7 +68,7 @@ Error Tiler::initInternal()
 	{
 		// Create the buffer
 		m_outBuffers[i] = getGrManager().newInstance<Buffer>(
-			pboSize, BufferUsageBit::STORAGE, BufferAccessBit::CLIENT_MAP_READ);
+			pboSize, BufferUsageBit::STORAGE_ANY, BufferMapAccessBit::READ);
 
 		// Create graphics resources
 		ResourceGroupInitInfo rcinit;
@@ -104,7 +104,7 @@ void Tiler::prepareForVisibilityTests(const SceneNode& node)
 
 	U buffIdx = max<U>(m_r->getFrameCount() % m_outBuffers.getSize(), 2u) - 2;
 	BufferPtr& buff = m_outBuffers[buffIdx];
-	void* mappedMem = buff->map(0, size, BufferAccessBit::CLIENT_MAP_READ);
+	void* mappedMem = buff->map(0, size, BufferMapAccessBit::READ);
 
 	ANKI_ASSERT(mappedMem);
 	memcpy(&m_currentMinMax[0], mappedMem, size);

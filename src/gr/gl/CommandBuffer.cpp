@@ -9,6 +9,7 @@
 #include <anki/gr/gl/GrManagerImpl.h>
 #include <anki/gr/gl/RenderingThread.h>
 #include <anki/gr/gl/GlState.h>
+#include <anki/gr/gl/TransientMemoryManager.h>
 
 #include <anki/gr/Pipeline.h>
 #include <anki/gr/gl/PipelineImpl.h>
@@ -351,7 +352,7 @@ public:
 	Error operator()(GlState& state)
 	{
 		void* data = state.m_manager->getImplementation()
-						 .getDynamicMemoryManager()
+						 .getTransientMemoryManager()
 						 .getBaseAddress(m_token);
 		data = static_cast<void*>(static_cast<U8*>(data) + m_token.m_offset);
 
@@ -359,8 +360,9 @@ public:
 
 		if(m_token.m_lifetime == TransientMemoryTokenLifetime::PERSISTENT)
 		{
-			state.m_manager->getImplementation().getDynamicMemoryManager().free(
-				m_token);
+			state.m_manager->getImplementation()
+				.getTransientMemoryManager()
+				.free(m_token);
 		}
 
 		return ErrorCode::NONE;
@@ -398,7 +400,7 @@ public:
 	Error operator()(GlState& state)
 	{
 		void* data = state.m_manager->getImplementation()
-						 .getDynamicMemoryManager()
+						 .getTransientMemoryManager()
 						 .getBaseAddress(m_token);
 		data = static_cast<void*>(static_cast<U8*>(data) + m_token.m_offset);
 
@@ -406,8 +408,9 @@ public:
 
 		if(m_token.m_lifetime == TransientMemoryTokenLifetime::PERSISTENT)
 		{
-			state.m_manager->getImplementation().getDynamicMemoryManager().free(
-				m_token);
+			state.m_manager->getImplementation()
+				.getTransientMemoryManager()
+				.free(m_token);
 		}
 
 		return ErrorCode::NONE;
@@ -548,12 +551,12 @@ public:
 	}
 };
 
-void CommandBuffer::setBufferMemoryBarrier(
-	BufferPtr buff, ResourceAccessBit src, ResourceAccessBit dst)
+void CommandBuffer::setBufferBarrier(
+	BufferPtr buff, BufferUsageBit prevUsage, BufferUsageBit nextUsage)
 {
-	const ResourceAccessBit c = dst;
 	GLenum d = GL_NONE;
 
+#if 0
 	if((c & ResourceAccessBit::INDIRECT_OR_INDEX_OR_VERTEX_READ)
 		!= ResourceAccessBit::NONE)
 	{
@@ -590,6 +593,7 @@ void CommandBuffer::setBufferMemoryBarrier(
 	{
 		d |= GL_BUFFER_UPDATE_BARRIER_BIT | GL_TEXTURE_UPDATE_BARRIER_BIT;
 	}
+#endif
 
 	ANKI_ASSERT(d != GL_NONE);
 	m_impl->pushBackNewCommand<SetBufferMemBarrierCommand>(d);

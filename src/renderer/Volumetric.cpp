@@ -49,9 +49,10 @@ void Volumetric::run(RenderingContext& ctx)
 
 	// Update uniforms
 	TransientMemoryInfo dyn;
-	Vec4* uniforms =
-		static_cast<Vec4*>(getGrManager().allocateFrameTransientMemory(
-			sizeof(Vec4) * 2, BufferUsage::UNIFORM, dyn.m_uniformBuffers[0]));
+	Vec4* uniforms = static_cast<Vec4*>(
+		getGrManager().allocateFrameTransientMemory(sizeof(Vec4) * 2,
+			BufferUsageBit::UNIFORM_ANY_SHADER,
+			dyn.m_uniformBuffers[0]));
 
 	computeLinearizeDepthOptimal(
 		frc.getNear(), frc.getFar(), uniforms[0].x(), uniforms[0].y());
