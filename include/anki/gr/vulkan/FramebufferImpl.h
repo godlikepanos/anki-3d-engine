@@ -57,6 +57,12 @@ public:
 		return &m_clearVals[0];
 	}
 
+	void getAttachmentsSize(U32& width, U32& height) const
+	{
+		width = m_width;
+		height = m_height;
+	}
+
 private:
 	Array<VkFramebuffer, MAX_FRAMES_IN_FLIGHT> m_framebuffers = {{
 		0,
@@ -65,6 +71,8 @@ private:
 	Array<VkClearValue, MAX_COLOR_ATTACHMENTS + 1> m_clearVals;
 	Bool8 m_defaultFramebuffer = false;
 	U8 m_attachmentCount = 0;
+	Array<TexturePtr, MAX_COLOR_ATTACHMENTS + 1> m_refs;
+	U32 m_width = 0, m_height = 0;
 
 	ANKI_USE_RESULT Error initRenderPass(const FramebufferInitInfo& init);
 

@@ -133,7 +133,7 @@ void CommandBufferImpl::beginRenderPass(FramebufferPtr fb)
 	commandCommon();
 	ANKI_ASSERT(!insideRenderPass());
 
-	m_firstRpassDrawcall = true;
+	m_rpDrawcallCount = 0;
 	m_activeFb = fb;
 
 	m_fbList.pushBack(m_alloc, fb);
@@ -148,9 +148,46 @@ void CommandBufferImpl::endRenderPass()
 {
 	commandCommon();
 	ANKI_ASSERT(insideRenderPass());
+	ANKI_ASSERT(m_rpDrawcallCount > 0);
 
 	vkCmdEndRenderPass(m_handle);
 	m_activeFb.reset(nullptr);
+}
+
+//==============================================================================
+void CommandBufferImpl::beginRenderPassInternal()
+{
+	VkRenderPassBeginInfo bi = {};
+	bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	FramebufferImpl& impl = m_activeFb->getImplementation();
+	bi.renderPass = impl.getRenderPassHandle();
+	bi.clearValueCount = impl.getAttachmentCount();
+	bi.pClearValues = impl.getClearValues();
+
+	if(!impl.isDefaultFramebuffer())
+	{
+		// Bind a non-default FB
+
+		bi.framebuffer = impl.getFramebufferHandle(0);
+
+		impl.getAttachmentsSize(
+			bi.renderArea.extent.width, bi.renderArea.extent.height);
+	}
+	else
+	{
+		// Bind the default FB
+		m_renderedToDefaultFb = true;
+
+		bi.framebuffer = impl.getFramebufferHandle(
+			getGrManagerImpl().getFrame() % MAX_FRAMES_IN_FLIGHT);
+
+		bi.renderArea.extent.width =
+			getGrManagerImpl().getDefaultSurfaceWidth();
+		bi.renderArea.extent.height =
+			getGrManagerImpl().getDefaultSurfaceHeight();
+	}
+
+	vkCmdBeginRenderPass(m_handle, &bi, VK_SUBPASS_CONTENTS_INLINE);
 }
 
 //==============================================================================
@@ -165,41 +202,12 @@ void CommandBufferImpl::drawcallCommon()
 	m_subpassContents = VK_SUBPASS_CONTENTS_INLINE;
 #endif
 
-	if(ANKI_UNLIKELY(m_firstRpassDrawcall))
+	if(ANKI_UNLIKELY(m_rpDrawcallCount == 0))
 	{
-		m_firstRpassDrawcall = false;
-
-		// Bind the framebuffer
-		VkRenderPassBeginInfo bi = {};
-		bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		FramebufferImpl& impl = m_activeFb->getImplementation();
-		bi.renderPass = impl.getRenderPassHandle();
-		bi.clearValueCount = impl.getAttachmentCount();
-		bi.pClearValues = impl.getClearValues();
-
-		if(!impl.isDefaultFramebuffer())
-		{
-			bi.framebuffer = impl.getFramebufferHandle(0);
-
-			ANKI_ASSERT(0);
-			// TODO Get the render area from one of the attachments
-		}
-		else
-		{
-			// Bind the default FB
-			m_renderedToDefaultFb = true;
-
-			bi.framebuffer = impl.getFramebufferHandle(
-				getGrManagerImpl().getFrame() % MAX_FRAMES_IN_FLIGHT);
-
-			bi.renderArea.extent.width =
-				getGrManagerImpl().getDefaultSurfaceWidth();
-			bi.renderArea.extent.height =
-				getGrManagerImpl().getDefaultSurfaceHeight();
-		}
-
-		vkCmdBeginRenderPass(m_handle, &bi, VK_SUBPASS_CONTENTS_INLINE);
+		beginRenderPassInternal();
 	}
+
+	++m_rpDrawcallCount;
 }
 
 //==============================================================================

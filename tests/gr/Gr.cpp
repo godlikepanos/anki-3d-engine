@@ -1006,7 +1006,7 @@ ANKI_TEST(Gr, DrawOffscreen)
 		const PixelFormat COL_FORMAT =
 			PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
 		const PixelFormat DS_FORMAT =
-			PixelFormat(ComponentFormat::D24, TransformFormat::FLOAT);
+			PixelFormat(ComponentFormat::D24, TransformFormat::UNORM);
 		const U TEX_SIZE = 256;
 
 		TextureInitInfo init;

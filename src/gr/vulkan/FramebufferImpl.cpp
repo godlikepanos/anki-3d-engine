@@ -178,8 +178,10 @@ Error FramebufferImpl::initFramebuffer(const FramebufferInitInfo& init)
 			VkImageView view = getGrManagerImpl().getDefaultSurfaceImageView(i);
 			ci.pAttachments = &view;
 
-			ci.width = getGrManagerImpl().getDefaultSurfaceWidth();
-			ci.height = getGrManagerImpl().getDefaultSurfaceHeight();
+			m_width = getGrManagerImpl().getDefaultSurfaceWidth();
+			m_height = getGrManagerImpl().getDefaultSurfaceHeight();
+			ci.width = m_width;
+			ci.height = m_height;
 
 			ANKI_VK_CHECK(vkCreateFramebuffer(
 				getDevice(), &ci, nullptr, &m_framebuffers[i]));
@@ -187,7 +189,37 @@ Error FramebufferImpl::initFramebuffer(const FramebufferInitInfo& init)
 	}
 	else
 	{
-		ANKI_ASSERT(0 && "TODO");
+		Array<VkImageView, MAX_COLOR_ATTACHMENTS + 1> attachments;
+		U count = 0;
+
+		for(U i = 0; i < init.m_colorAttachmentCount; ++i)
+		{
+			attachments[count] = init.m_colorAttachments[i]
+									 .m_texture->getImplementation()
+									 .m_viewHandle;
+
+			m_refs[count++] = init.m_colorAttachments[i].m_texture;
+		}
+
+		if(hasDepthStencil)
+		{
+			attachments[count] =
+				init.m_depthStencilAttachment.m_texture->getImplementation()
+					.m_viewHandle;
+
+			m_refs[count++] = init.m_depthStencilAttachment.m_texture;
+		}
+
+		m_width = m_refs[0]->getImplementation().m_width;
+		m_height = m_refs[0]->getImplementation().m_height;
+		ci.width = m_width;
+		ci.height = m_height;
+
+		ci.pAttachments = &attachments[0];
+		ANKI_ASSERT(count == ci.attachmentCount);
+
+		ANKI_VK_CHECK(
+			vkCreateFramebuffer(getDevice(), &ci, nullptr, &m_framebuffers[0]));
 	}
 
 	return ErrorCode::NONE;

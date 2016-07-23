@@ -152,7 +152,7 @@ public:
 	void setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy);
 
 	/// Set depth offset and units.
-	void setPolygonOffset(F32 offset, F32 units);
+	void setPolygonOffset(F32 factor, F32 units);
 
 	/// Bind pipeline.
 	void bindPipeline(PipelinePtr ppline);

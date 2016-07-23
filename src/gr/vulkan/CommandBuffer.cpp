@@ -65,8 +65,9 @@ void CommandBuffer::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 }
 
 //==============================================================================
-void CommandBuffer::setPolygonOffset(F32 offset, F32 units)
+void CommandBuffer::setPolygonOffset(F32 factor, F32 units)
 {
+	m_impl->setPolygonOffset(factor, units);
 }
 
 //==============================================================================

@@ -54,6 +54,8 @@ public:
 
 	void setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy);
 
+	void setPolygonOffset(F32 factor, F32 units);
+
 	void bindPipeline(PipelinePtr ppline);
 
 	void beginRenderPass(FramebufferPtr fb);
@@ -120,7 +122,7 @@ private:
 	Bool8 m_empty = true;
 	Thread::Id m_tid = 0;
 
-	Bool m_firstRpassDrawcall = true; ///< First drawcall in a renderpass.
+	U m_rpDrawcallCount = 0; ///< Number of drawcalls in renderpass.
 	FramebufferPtr m_activeFb;
 
 	/// @name cleanup_references
@@ -147,6 +149,8 @@ private:
 	{
 		return m_activeFb.isCreated();
 	}
+
+	void beginRenderPassInternal();
 };
 /// @}
 

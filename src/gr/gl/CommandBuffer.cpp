@@ -123,37 +123,37 @@ void CommandBuffer::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 class SetPolygonOffsetCommand final : public GlCommand
 {
 public:
-	F32 m_offset;
+	F32 m_factor;
 	F32 m_units;
 
-	SetPolygonOffsetCommand(F32 offset, F32 units)
-		: m_offset(offset)
+	SetPolygonOffsetCommand(F32 factor, F32 units)
+		: m_factor(factor)
 		, m_units(units)
 	{
 	}
 
 	Error operator()(GlState& state)
 	{
-		if(m_offset == 0.0 && m_units == 0.0)
+		if(m_factor == 0.0 && m_units == 0.0)
 		{
 			glDisable(GL_POLYGON_OFFSET_FILL);
 		}
 		else
 		{
 			glEnable(GL_POLYGON_OFFSET_FILL);
-			glPolygonOffset(m_offset, m_units);
+			glPolygonOffset(m_factor, m_units);
 		}
 
 		return ErrorCode::NONE;
 	}
 };
 
-void CommandBuffer::setPolygonOffset(F32 offset, F32 units)
+void CommandBuffer::setPolygonOffset(F32 factor, F32 units)
 {
 #if ANKI_ASSERTS_ENABLED
 	m_impl->m_dbg.m_polygonOffset = true;
 #endif
-	m_impl->pushBackNewCommand<SetPolygonOffsetCommand>(offset, units);
+	m_impl->pushBackNewCommand<SetPolygonOffsetCommand>(factor, units);
 }
 
 //==============================================================================

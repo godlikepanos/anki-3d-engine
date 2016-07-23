@@ -34,6 +34,13 @@ inline void CommandBufferImpl::setViewport(
 }
 
 //==============================================================================
+inline void CommandBufferImpl::setPolygonOffset(F32 factor, F32 units)
+{
+	commandCommon();
+	vkCmdSetDepthBias(m_handle, units, 0.0, factor);
+}
+
+//==============================================================================
 inline void CommandBufferImpl::setImageBarrier(VkPipelineStageFlags srcStage,
 	VkAccessFlags srcAccess,
 	VkImageLayout prevLayout,
