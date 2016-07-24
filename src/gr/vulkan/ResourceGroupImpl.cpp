@@ -68,6 +68,11 @@ U ResourceGroupImpl::calcRefCount(
 		}
 	}
 
+	if(init.m_indexBuffer.m_buffer)
+	{
+		++count;
+	}
+
 	// TODO: The rest of the resources
 
 	return count;
@@ -228,6 +233,27 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 			break;
 		}
 	}
+
+	if(init.m_indexBuffer.m_buffer)
+	{
+		m_indexBuffHandle =
+			init.m_indexBuffer.m_buffer->getImplementation().getHandle();
+		m_indexBufferOffset = init.m_indexBuffer.m_offset;
+
+		if(init.m_indexSize == 2)
+		{
+			m_indexType = VK_INDEX_TYPE_UINT16;
+		}
+		else
+		{
+			ANKI_ASSERT(init.m_indexSize == 4);
+			m_indexType = VK_INDEX_TYPE_UINT32;
+		}
+
+		m_refs[refCount++] = init.m_indexBuffer.m_buffer;
+	}
+
+	ANKI_ASSERT(refCount == m_refs.getSize());
 
 	return ErrorCode::NONE;
 }

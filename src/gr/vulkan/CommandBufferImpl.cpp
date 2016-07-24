@@ -263,7 +263,7 @@ void CommandBufferImpl::bindResourceGroup(
 			&dynOffsets[0]);
 	}
 
-	// Bind vertex buffers only in the first set
+	// Bind vertex and index buffer only in the first set
 	if(slot == 0)
 	{
 		const VkBuffer* buffers = nullptr;
@@ -273,6 +273,14 @@ void CommandBufferImpl::bindResourceGroup(
 		if(bindingCount)
 		{
 			vkCmdBindVertexBuffers(m_handle, 0, bindingCount, buffers, offsets);
+		}
+
+		VkBuffer idxBuff;
+		VkDeviceSize idxBuffOffset;
+		VkIndexType idxType;
+		if(impl.getIndexBufferInfo(idxBuff, idxBuffOffset, idxType))
+		{
+			vkCmdBindIndexBuffer(m_handle, idxBuff, idxBuffOffset, idxType);
 		}
 	}
 

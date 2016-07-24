@@ -50,6 +50,22 @@ public:
 	void setupDynamicOffsets(
 		const TransientMemoryInfo* dynInfo, U32 dynOffsets[]) const;
 
+	/// Get index buffer info.
+	/// @return false if there is no index buffer.
+	Bool getIndexBufferInfo(
+		VkBuffer& buff, VkDeviceSize& offset, VkIndexType& idxType) const
+	{
+		if(m_indexBuffHandle)
+		{
+			buff = m_indexBuffHandle;
+			offset = m_indexBufferOffset;
+			idxType = m_indexType;
+			return true;
+		}
+
+		return false;
+	}
+
 private:
 	VkDescriptorSet m_handle = VK_NULL_HANDLE;
 	Array<VkBuffer, MAX_VERTEX_ATTRIBUTES> m_vertBuffs = {{}};
@@ -60,6 +76,11 @@ private:
 	U8 m_uniBindingCount = 0;
 	BitSet<MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS>
 		m_dynamicBuffersMask = {false};
+
+	// Index info
+	VkBuffer m_indexBuffHandle = VK_NULL_HANDLE;
+	U32 m_indexBufferOffset = MAX_U32;
+	VkIndexType m_indexType = VK_INDEX_TYPE_MAX_ENUM;
 
 	/// Holds the references to the resources. Used to release the references
 	/// gracefully
