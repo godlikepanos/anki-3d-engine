@@ -23,6 +23,8 @@ inline void CommandBufferImpl::setViewport(
 	s.y = miny;
 	s.width = maxx - minx;
 	s.height = maxy - miny;
+	s.minDepth = 0.0;
+	s.maxDepth = 1.0;
 	vkCmdSetViewport(m_handle, 0, 1, &s);
 
 	VkRect2D scissor = {};
