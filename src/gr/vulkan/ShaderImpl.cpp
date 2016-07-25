@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/gr/vulkan/ShaderImpl.h>
+#include <anki/gr/common/Misc.h>
 #include <glslang/Public/ShaderLang.h>
 #include <SPIRV/GlslangToSpv.h>
 

@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/gr/gl/GlObject.h>
+#include <anki/gr/common/Misc.h>
 #include <anki/util/DynamicArray.h>
 
 namespace anki

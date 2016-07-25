@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/gr/Common.h>
+#include <anki/gr/common/Misc.h>
 #include <anki/util/StringList.h>
 
 namespace anki

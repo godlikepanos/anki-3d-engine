@@ -37,7 +37,8 @@ Error Tm::create(const ConfigSet& initializer)
 
 	// Create buffer
 	m_luminanceBuff = getGrManager().newInstance<Buffer>(sizeof(Vec4),
-		BufferUsageBit::STORAGE_ANY | BufferUsageBit::UNIFORM_ANY_SHADER,
+		BufferUsageBit::STORAGE_ANY | BufferUsageBit::UNIFORM_ANY_SHADER
+			| BufferUsageBit::TRANSFER_DESTINATION,
 		BufferMapAccessBit::NONE);
 
 	CommandBufferPtr cmdb =

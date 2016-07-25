@@ -5,6 +5,7 @@
 
 #include <anki/gr/gl/ShaderImpl.h>
 #include <anki/gr/GrManager.h>
+#include <anki/gr/common/Misc.h>
 #include <anki/util/StringList.h>
 #include <anki/util/Logger.h>
 

@@ -554,9 +554,9 @@ public:
 void CommandBuffer::setBufferBarrier(
 	BufferPtr buff, BufferUsageBit prevUsage, BufferUsageBit nextUsage)
 {
+#if 0
 	GLenum d = GL_NONE;
 
-#if 0
 	if((c & ResourceAccessBit::INDIRECT_OR_INDEX_OR_VERTEX_READ)
 		!= ResourceAccessBit::NONE)
 	{
@@ -593,10 +593,10 @@ void CommandBuffer::setBufferBarrier(
 	{
 		d |= GL_BUFFER_UPDATE_BARRIER_BIT | GL_TEXTURE_UPDATE_BARRIER_BIT;
 	}
-#endif
 
 	ANKI_ASSERT(d != GL_NONE);
 	m_impl->pushBackNewCommand<SetBufferMemBarrierCommand>(d);
+#endif
 }
 
 //==============================================================================

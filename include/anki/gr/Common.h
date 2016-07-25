@@ -187,43 +187,6 @@ inline U computeMaxMipmapCount(U w, U h, U d)
 
 	return count;
 }
-
-/// Internal function that logs a shader error.
-void logShaderErrorCode(const CString& error,
-	const CString& source,
-	GenericMemoryPoolAllocator<U8> alloc);
-
-inline void checkTextureSurface(TextureType type,
-	U depth,
-	U mipCount,
-	U layerCount,
-	const TextureSurfaceInfo& surf)
-{
-	ANKI_ASSERT(surf.m_level < mipCount);
-	switch(type)
-	{
-	case TextureType::_2D:
-		ANKI_ASSERT(surf.m_depth == 0 && surf.m_face == 0 && surf.m_layer == 0);
-		break;
-	case TextureType::CUBE:
-		ANKI_ASSERT(surf.m_depth == 0 && surf.m_face < 6 && surf.m_layer == 0);
-		break;
-	case TextureType::_3D:
-		ANKI_ASSERT(
-			surf.m_depth < depth && surf.m_face == 0 && surf.m_layer == 0);
-		break;
-	case TextureType::_2D_ARRAY:
-		ANKI_ASSERT(
-			surf.m_depth == 0 && surf.m_face == 0 && surf.m_layer < layerCount);
-		break;
-	case TextureType::CUBE_ARRAY:
-		ANKI_ASSERT(
-			surf.m_depth == 0 && surf.m_face < 6 && surf.m_layer < layerCount);
-		break;
-	default:
-		ANKI_ASSERT(0);
-	};
-}
 /// @}
 
 } // end namespace anki

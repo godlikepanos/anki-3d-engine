@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/gr/Enums.h>
+#include <anki/gr/Common.h>
 
 namespace anki
 {
@@ -41,6 +41,43 @@ inline TransientBufferType bufferUsageToTransient(BufferUsageBit bit)
 			(bit & BufferUsageBit::TRANSFER_SOURCE) != BufferUsageBit::NONE);
 		return TransientBufferType::TRANSFER;
 	}
+}
+
+/// Internal function that logs a shader error.
+void logShaderErrorCode(const CString& error,
+	const CString& source,
+	GenericMemoryPoolAllocator<U8> alloc);
+
+inline void checkTextureSurface(TextureType type,
+	U depth,
+	U mipCount,
+	U layerCount,
+	const TextureSurfaceInfo& surf)
+{
+	ANKI_ASSERT(surf.m_level < mipCount);
+	switch(type)
+	{
+	case TextureType::_2D:
+		ANKI_ASSERT(surf.m_depth == 0 && surf.m_face == 0 && surf.m_layer == 0);
+		break;
+	case TextureType::CUBE:
+		ANKI_ASSERT(surf.m_depth == 0 && surf.m_face < 6 && surf.m_layer == 0);
+		break;
+	case TextureType::_3D:
+		ANKI_ASSERT(
+			surf.m_depth < depth && surf.m_face == 0 && surf.m_layer == 0);
+		break;
+	case TextureType::_2D_ARRAY:
+		ANKI_ASSERT(
+			surf.m_depth == 0 && surf.m_face == 0 && surf.m_layer < layerCount);
+		break;
+	case TextureType::CUBE_ARRAY:
+		ANKI_ASSERT(
+			surf.m_depth == 0 && surf.m_face < 6 && surf.m_layer < layerCount);
+		break;
+	default:
+		ANKI_ASSERT(0);
+	};
 }
 
 } // end namespace anki

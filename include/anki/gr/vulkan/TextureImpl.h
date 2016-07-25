@@ -8,6 +8,7 @@
 #include <anki/gr/vulkan/VulkanObject.h>
 #include <anki/gr/vulkan/GpuMemoryAllocator.h>
 #include <anki/gr/vulkan/Semaphore.h>
+#include <anki/gr/common/Misc.h>
 
 namespace anki
 {

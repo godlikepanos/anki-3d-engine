@@ -443,7 +443,7 @@ Error LightBin::bin(FrustumComponent& frc,
 	ShaderCluster* data =
 		static_cast<ShaderCluster*>(m_gr->allocateFrameTransientMemory(
 			sizeof(ShaderCluster) * m_clusterCount,
-			BufferUsageBit::UNIFORM_ANY_SHADER,
+			BufferUsageBit::STORAGE_ANY,
 			clustersToken));
 
 	ctx.m_clusters = WeakArray<ShaderCluster>(data, m_clusterCount);
@@ -451,7 +451,7 @@ Error LightBin::bin(FrustumComponent& frc,
 	// Allocate light IDs
 	U32* data2 = static_cast<U32*>(
 		m_gr->allocateFrameTransientMemory(maxLightIndices * sizeof(U32),
-			BufferUsageBit::UNIFORM_ANY_SHADER,
+			BufferUsageBit::STORAGE_ANY,
 			lightIndicesToken));
 
 	ctx.m_lightIds = WeakArray<U32>(data2, maxLightIndices);
