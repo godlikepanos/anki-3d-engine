@@ -16,21 +16,6 @@ const float OMNI_LIGHT_FRUSTUM_NEAR_PLANE = 0.1 / 4.0;
 const uint SHADOW_SAMPLE_COUNT = 16;
 
 //==============================================================================
-// Get element count attached in a cluster
-void getClusterInfo(in uint clusterIdx,
-	out uint indexOffset,
-	out uint pointLightCount,
-	out uint spotLightCount,
-	out uint probeCount)
-{
-	uint cluster = u_clusters[clusterIdx];
-	indexOffset = cluster >> 16u;
-	probeCount = (cluster >> 8u) & 0xFu;
-	pointLightCount = (cluster >> 4u) & 0xFu;
-	spotLightCount = cluster & 0xFu;
-}
-
-//==============================================================================
 float computeAttenuationFactor(float lightRadius, vec3 frag2Light)
 {
 	float fragLightDist = dot(frag2Light, frag2Light);
@@ -115,8 +100,11 @@ uint computeShadowSampleCount(const uint COUNT, float zVSpace)
 }
 
 //==============================================================================
-float computeShadowFactorSpot(
-	mat4 lightProjectionMat, vec3 fragPos, float layer, uint sampleCount)
+float computeShadowFactorSpot(mat4 lightProjectionMat,
+	vec3 fragPos,
+	float layer,
+	uint sampleCount,
+	sampler2DArrayShadow spotMapArr)
 {
 	vec4 texCoords4 = lightProjectionMat * vec4(fragPos, 1.0);
 	vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
@@ -149,22 +137,26 @@ float computeShadowFactorSpot(
 		vec2 cordpart1 = texCoords3.xy + poissonDisk[i] / 512.0;
 		vec4 tcoord = vec4(cordpart1, cordpart0);
 
-		shadowFactor += texture(u_spotMapArr, tcoord);
+		shadowFactor += texture(spotMapArr, tcoord);
 	}
 
 	return shadowFactor / float(sampleCount);
 #else
 	vec4 tcoord = vec4(texCoords3.x, texCoords3.y, layer, texCoords3.z);
-	float shadowFactor = texture(u_spotMapArr, tcoord);
+	float shadowFactor = texture(spotMapArr, tcoord);
 
 	return shadowFactor;
 #endif
 }
 
 //==============================================================================
-float computeShadowFactorOmni(vec3 frag2Light, float layer, float radius)
+float computeShadowFactorOmni(in vec3 frag2Light,
+	in float layer,
+	in float radius,
+	in mat4 viewMat,
+	in samplerCubeArrayShadow omniMapArr)
 {
-	vec3 dir = (u_lightingUniforms.viewMat * vec4(-frag2Light, 1.0)).xyz;
+	vec3 dir = (viewMat * vec4(-frag2Light, 1.0)).xyz;
 	vec3 dirabs = abs(dir);
 	float dist = -max(dirabs.x, max(dirabs.y, dirabs.z));
 	dir = normalize(dir);
@@ -181,14 +173,15 @@ float computeShadowFactorOmni(vec3 frag2Light, float layer, float radius)
 	// Optimized:
 	float z = (far * (dist + near)) / (dist * (far - near));
 
-	float shadowFactor = texture(u_omniMapArr, vec4(dir, layer), z).r;
+	float shadowFactor = texture(omniMapArr, vec4(dir, layer), z).r;
 	return shadowFactor;
 }
 
 //==============================================================================
 // Compute the cubemap texture lookup vector given the reflection vector (r)
 // the radius squared of the probe (R2) and the frag pos in sphere space (f)
-vec3 computeCubemapVecAccurate(in vec3 r, in float R2, in vec3 f)
+vec3 computeCubemapVecAccurate(
+	in vec3 r, in float R2, in vec3 f, in mat3 invViewRotation)
 {
 	// Compute the collision of the r to the inner part of the sphere
 	// From now on we work on the sphere's space
@@ -207,62 +200,17 @@ vec3 computeCubemapVecAccurate(in vec3 r, in float R2, in vec3 f)
 	vec3 x = p + sq * r;
 
 	// Rotate UV to move it to world space
-	vec3 uv = u_lightingUniforms.invViewRotation * x;
+	vec3 uv = invViewRotation * x;
 
 	return uv;
 }
 
 //==============================================================================
 // Cheap version of computeCubemapVecAccurate
-vec3 computeCubemapVecCheap(in vec3 r, in float R2, in vec3 f)
+vec3 computeCubemapVecCheap(
+	in vec3 r, in float R2, in vec3 f, in mat3 invViewRotation)
 {
-	return u_lightingUniforms.invViewRotation * r;
-}
-
-//==============================================================================
-void readIndirect(in uint indexOffset,
-	in uint probeCount,
-	in vec3 posVSpace,
-	in vec3 r,
-	in vec3 n,
-	in float lod,
-	out vec3 specIndirect,
-	out vec3 diffIndirect)
-{
-	specIndirect = vec3(0.0);
-	diffIndirect = vec3(0.0);
-
-	// Check proxy
-	for(uint i = 0; i < probeCount; ++i)
-	{
-		uint probeIndex = u_lightIndices[indexOffset++];
-		ReflectionProbe probe = u_reflectionProbes[probeIndex];
-
-		float R2 = probe.positionRadiusSq.w;
-		vec3 center = probe.positionRadiusSq.xyz;
-
-		// Get distance from the center of the probe
-		vec3 f = posVSpace - center;
-
-		// Cubemap UV in view space
-		vec3 uv = computeCubemapVecAccurate(r, R2, f);
-
-		// Read!
-		float cubemapIndex = probe.cubemapIndexPad3.x;
-		vec3 c = textureLod(u_reflectionsTex, vec4(uv, cubemapIndex), lod).rgb;
-
-		// Combine (lerp) with previous color
-		float d = dot(f, f);
-		float factor = d / R2;
-		factor = min(factor, 1.0);
-		specIndirect = mix(c, specIndirect, factor);
-		// Same as: specIndirect = c * (1.0 - factor) + specIndirect * factor
-
-		// Do the same for diffuse
-		uv = computeCubemapVecCheap(n, R2, f);
-		vec3 id = texture(u_irradianceTex, vec4(uv, cubemapIndex)).rgb;
-		diffIndirect = mix(id, diffIndirect, factor);
-	}
+	return invViewRotation * r;
 }
 
 #endif

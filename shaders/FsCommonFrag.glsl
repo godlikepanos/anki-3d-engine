@@ -14,7 +14,7 @@ layout(TEX_BINDING(1, 0)) uniform sampler2D anki_msDepthRt;
 #define LIGHT_UBO_BINDING 0
 #define LIGHT_SS_BINDING 0
 #define LIGHT_TEX_BINDING 1
-#include "shaders/LightResources.glsl"
+#include "shaders/IsFsCommon.glsl"
 
 #define anki_u_time u_lightingUniforms.rendererSizeTimePad1.z
 #define RENDERER_SIZE (u_lightingUniforms.rendererSizeTimePad1.xy * 0.5)
@@ -23,8 +23,6 @@ layout(location = 0) in vec3 in_vertPosViewSpace;
 layout(location = 1) flat in float in_alpha;
 
 layout(location = 0) out vec4 out_color;
-
-#include "shaders/LightFunctions.glsl"
 
 //==============================================================================
 #if PASS == COLOR
@@ -179,8 +177,11 @@ vec3 computeLightColor(vec3 diffCol)
 		float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
 		if(light.diffuseColorShadowmapId.w < 128.0)
 		{
-			shadow = computeShadowFactorOmni(
-				frag2Light, shadowmapLayerIdx, -1.0 / light.posRadius.w);
+			shadow = computeShadowFactorOmni(frag2Light,
+				shadowmapLayerIdx,
+				-1.0 / light.posRadius.w,
+				u_lightingUniforms.viewMat,
+				u_omniMapArr);
 		}
 #endif
 
@@ -213,8 +214,11 @@ vec3 computeLightColor(vec3 diffCol)
 		float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
 		if(shadowmapLayerIdx < 128.0)
 		{
-			shadow = computeShadowFactorSpot(
-				light.texProjectionMat, fragPos, shadowmapLayerIdx, 1);
+			shadow = computeShadowFactorSpot(light.texProjectionMat,
+				fragPos,
+				shadowmapLayerIdx,
+				1,
+				u_spotMapArr);
 		}
 #endif
 

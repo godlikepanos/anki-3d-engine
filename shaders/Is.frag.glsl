@@ -11,7 +11,7 @@
 #define LIGHT_SS_BINDING 0
 #define LIGHT_UBO_BINDING 0
 #define LIGHT_TEX_BINDING 4
-#include "shaders/LightResources.glsl"
+#include "shaders/IsFsCommon.glsl"
 #undef LIGHT_SET
 #undef LIGHT_SS_BINDING
 #undef LIGHT_TEX_BINDING
@@ -27,8 +27,6 @@ layout(location = 1) flat in int in_instanceId;
 layout(location = 2) in vec2 in_projectionParams;
 
 layout(location = 0) out vec3 out_color;
-
-#include "shaders/LightFunctions.glsl"
 
 const uint TILE_COUNT = TILE_COUNT_X * TILE_COUNT_Y;
 
@@ -67,6 +65,54 @@ void debugIncorrectColor(inout vec3 c)
 		|| isinf(c.z))
 	{
 		c = vec3(1.0, 0.0, 1.0);
+	}
+}
+
+//==============================================================================
+void readIndirect(in uint indexOffset,
+	in uint probeCount,
+	in vec3 posVSpace,
+	in vec3 r,
+	in vec3 n,
+	in float lod,
+	out vec3 specIndirect,
+	out vec3 diffIndirect)
+{
+	specIndirect = vec3(0.0);
+	diffIndirect = vec3(0.0);
+
+	// Check proxy
+	for(uint i = 0; i < probeCount; ++i)
+	{
+		uint probeIndex = u_lightIndices[indexOffset++];
+		ReflectionProbe probe = u_reflectionProbes[probeIndex];
+
+		float R2 = probe.positionRadiusSq.w;
+		vec3 center = probe.positionRadiusSq.xyz;
+
+		// Get distance from the center of the probe
+		vec3 f = posVSpace - center;
+
+		// Cubemap UV in view space
+		vec3 uv = computeCubemapVecAccurate(
+			r, R2, f, u_lightingUniforms.invViewRotation);
+
+		// Read!
+		float cubemapIndex = probe.cubemapIndexPad3.x;
+		vec3 c = textureLod(u_reflectionsTex, vec4(uv, cubemapIndex), lod).rgb;
+
+		// Combine (lerp) with previous color
+		float d = dot(f, f);
+		float factor = d / R2;
+		factor = min(factor, 1.0);
+		specIndirect = mix(c, specIndirect, factor);
+		// Same as: specIndirect = c * (1.0 - factor) + specIndirect * factor
+
+		// Do the same for diffuse
+		uv = computeCubemapVecCheap(
+			n, R2, f, u_lightingUniforms.invViewRotation);
+		vec3 id = texture(u_irradianceTex, vec4(uv, cubemapIndex)).rgb;
+		diffIndirect = mix(id, diffIndirect, factor);
 	}
 }
 
@@ -133,8 +179,11 @@ void main()
 		float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
 		if(light.diffuseColorShadowmapId.w < 128.0)
 		{
-			shadow = computeShadowFactorOmni(
-				frag2Light, shadowmapLayerIdx, 1.0 / sqrt(light.posRadius.w));
+			shadow = computeShadowFactorOmni(frag2Light,
+				shadowmapLayerIdx,
+				1.0 / sqrt(light.posRadius.w),
+				u_lightingUniforms.viewMat,
+				u_omniMapArr);
 
 			shadow = dither(shadow, 64.0);
 		}
@@ -163,7 +212,8 @@ void main()
 			shadow = computeShadowFactorSpot(light.texProjectionMat,
 				fragPos,
 				shadowmapLayerIdx,
-				shadowSampleCount);
+				shadowSampleCount,
+				u_spotMapArr);
 
 			shadow = dither(shadow, 64.0);
 		}

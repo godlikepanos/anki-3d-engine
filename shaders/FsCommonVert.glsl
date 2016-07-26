@@ -11,7 +11,7 @@
 #define LIGHT_SS_BINDING 0
 #define LIGHT_TEX_BINDING 1
 #define LIGHT_UBO_BINDING 0
-#include "shaders/LightResources.glsl"
+#include "shaders/IsFsCommon.glsl"
 #undef LIGHT_SET
 #undef LIGHT_SS_BINDING
 #undef LIGHT_TEX_BINDING

@@ -3,10 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SHADERS_LIGHT_RESOURCES_GLSL
-#define ANKI_SHADERS_LIGHT_RESOURCES_GLSL
+#ifndef ANKI_SHADERS_IS_FS_COMMON_GLSL
+#define ANKI_SHADERS_IS_FS_COMMON_GLSL
 
-#include "shaders/Common.glsl"
+#include "shaders/LightFunctions.glsl"
 
 // Common uniforms between lights
 struct LightingUniforms
@@ -97,6 +97,21 @@ layout(TEX_BINDING(
 
 layout(TEX_BINDING(
 	LIGHT_SET, LIGHT_TEX_BINDING + 4)) uniform sampler2D u_integrationLut;
+
+//==============================================================================
+// Get element count attached in a cluster
+void getClusterInfo(in uint clusterIdx,
+	out uint indexOffset,
+	out uint pointLightCount,
+	out uint spotLightCount,
+	out uint probeCount)
+{
+	uint cluster = u_clusters[clusterIdx];
+	indexOffset = cluster >> 16u;
+	probeCount = (cluster >> 8u) & 0xFu;
+	pointLightCount = (cluster >> 4u) & 0xFu;
+	spotLightCount = cluster & 0xFu;
+}
 
 #endif // FRAGMENT_SHADER
 
