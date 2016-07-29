@@ -4,8 +4,8 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/renderer/DownscaleBlur.h>
-#include <anki/renderer/Is.h>
 #include <anki/renderer/Renderer.h>
+#include <anki/renderer/Is.h>
 
 namespace anki
 {
@@ -17,7 +17,7 @@ Error DownscaleBlur::initSubpass(U idx, const UVec2& inputTexSize)
 
 	PipelineInitInfo ppinit;
 	ppinit.m_color.m_attachmentCount = 1;
-	ppinit.m_color.m_attachments[0].m_format = Is::RT_PIXEL_FORMAT;
+	ppinit.m_color.m_attachments[0].m_format = IS_COLOR_ATTACHMENT_PIXEL_FORMAT;
 	ppinit.m_depthStencil.m_depthWriteEnabled = false;
 	ppinit.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
 

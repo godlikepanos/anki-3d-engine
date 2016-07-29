@@ -108,7 +108,7 @@ index 13dc1ed..77d6a6e 100644
  	ep.addProfileElements();
  	bool twoSided = false;
 diff --git a/source/blender/collada/GeometryExporter.cpp b/source/blender/collada/GeometryExporter.cpp
-index 7c7c57f..d4c2df0 100644
+index 7c7c57f..00c909d 100644
 --- a/source/blender/collada/GeometryExporter.cpp
 +++ b/source/blender/collada/GeometryExporter.cpp
 @@ -47,6 +47,7 @@ extern "C" {
@@ -119,7 +119,7 @@ index 7c7c57f..d4c2df0 100644
  }
  
  #include "collada_internal.h"
-@@ -143,13 +144,125 @@ void GeometryExporter::operator()(Object *ob)
+@@ -143,13 +144,127 @@ void GeometryExporter::operator()(Object *ob)
  			createPolylist(0, has_uvs, has_color, ob, me, geom_id, norind);
  		}
  	}
@@ -136,6 +136,8 @@ index 7c7c57f..d4c2df0 100644
 +			"skip",
 +			"reflection_probe",
 +			"reflection_proxy",
++			"occluder",
++			"collision_mesh",
 +			NULL};
 +
 +		ID *mesh_id = (ID*)ob->data;

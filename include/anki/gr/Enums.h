@@ -196,6 +196,7 @@ enum class TextureUsageBit : U16
 	/// @{
 	GENERATE_MIPMAPS = 1 << 10,
 	UPLOAD = 1 << 11,
+	CLEAR = 1 << 12 ///< Will be used in CommandBuffer::clearImage.
 	/// @}
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(TextureUsageBit, inline)

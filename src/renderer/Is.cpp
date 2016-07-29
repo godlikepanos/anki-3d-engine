@@ -35,9 +35,6 @@ struct ShaderCommonUniforms
 // Is                                                                          =
 //==============================================================================
 
-const PixelFormat Is::RT_PIXEL_FORMAT(
-	ComponentFormat::R11G11B10, TransformFormat::FLOAT);
-
 //==============================================================================
 Is::Is(Renderer* r)
 	: RenderingPass(r)
@@ -110,7 +107,8 @@ Error Is::initInternal(const ConfigSet& config)
 		m_maxLightIds,
 		m_r->getSmEnabled() ? m_r->getSm().getPoissonEnabled() : 0,
 		m_r->getIrEnabled(),
-		(m_r->getIrEnabled()) ? m_r->getIr().getCubemapArrayMipmapCount() : 0);
+		(m_r->getIrEnabled()) ? m_r->getIr().getReflectionTextureMipmapCount()
+							  : 0);
 
 	// point light
 	ANKI_CHECK(getResourceManager().loadResourceToCache(
@@ -125,7 +123,7 @@ Error Is::initInternal(const ConfigSet& config)
 	init.m_depthStencil.m_depthWriteEnabled = false;
 	init.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
 	init.m_color.m_attachmentCount = 1;
-	init.m_color.m_attachments[0].m_format = RT_PIXEL_FORMAT;
+	init.m_color.m_attachments[0].m_format = IS_COLOR_ATTACHMENT_PIXEL_FORMAT;
 	init.m_shaders[U(ShaderType::VERTEX)] = m_lightVert->getGrShader();
 	init.m_shaders[U(ShaderType::FRAGMENT)] = m_lightFrag->getGrShader();
 	m_lightPpline = getGrManager().newInstance<Pipeline>(init);
@@ -135,7 +133,7 @@ Error Is::initInternal(const ConfigSet& config)
 	//
 	m_r->createRenderTarget(m_r->getWidth(),
 		m_r->getHeight(),
-		RT_PIXEL_FORMAT,
+		IS_COLOR_ATTACHMENT_PIXEL_FORMAT,
 		1,
 		SamplingFilter::LINEAR,
 		IS_MIPMAP_COUNT,

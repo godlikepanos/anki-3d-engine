@@ -160,11 +160,11 @@ public:
 };
 
 /// Compute max number of mipmaps for a 2D texture.
-inline U computeMaxMipmapCount(U w, U h)
+inline U computeMaxMipmapCount2d(U w, U h, U minSizeOfLastMip = 1)
 {
 	U s = (w < h) ? w : h;
 	U count = 0;
-	while(s)
+	while(s >= minSizeOfLastMip)
 	{
 		s /= 2;
 		++count;
@@ -174,7 +174,7 @@ inline U computeMaxMipmapCount(U w, U h)
 }
 
 /// Compute max number of mipmaps for a 3D texture.
-inline U computeMaxMipmapCount(U w, U h, U d)
+inline U computeMaxMipmapCount3d(U w, U h, U d)
 {
 	U s = (w < h) ? w : h;
 	s = (s < d) ? s : d;

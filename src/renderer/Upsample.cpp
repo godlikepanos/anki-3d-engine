@@ -70,7 +70,7 @@ Error Upsample::init(const ConfigSet& config)
 	ppinit.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
 
 	ppinit.m_color.m_attachmentCount = 1;
-	ppinit.m_color.m_attachments[0].m_format = Is::RT_PIXEL_FORMAT;
+	ppinit.m_color.m_attachments[0].m_format = IS_COLOR_ATTACHMENT_PIXEL_FORMAT;
 	ppinit.m_color.m_attachments[0].m_srcBlendMethod = BlendMethod::ONE;
 	ppinit.m_color.m_attachments[0].m_dstBlendMethod = BlendMethod::SRC_ALPHA;
 

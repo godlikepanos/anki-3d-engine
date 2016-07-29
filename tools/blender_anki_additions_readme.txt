@@ -4,4 +4,4 @@ Follow the blender build instuctions. Use the following to build the external:
 
 The command above will give CMAKE options. Add this as well -DOPENCOLLADA_ROOT_DIR
 
-Commit the patch is based upon: 2683dd8b93d6c14bb8b3bfa03650cd619d9dbb30
+Commit the patch is based upon: c05363e8895a8cd6daa2241706d357c47ed4a83e

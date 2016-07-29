@@ -5,7 +5,6 @@
 
 #include <anki/renderer/Lf.h>
 #include <anki/renderer/Bloom.h>
-#include <anki/renderer/Is.h>
 #include <anki/renderer/Ms.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/scene/SceneGraph.h>
@@ -85,7 +84,7 @@ Error Lf::initSprite(const ConfigSet& config)
 	init.m_depthStencil.m_depthWriteEnabled = false;
 	init.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
 	init.m_color.m_attachmentCount = 1;
-	init.m_color.m_attachments[0].m_format = Is::RT_PIXEL_FORMAT;
+	init.m_color.m_attachments[0].m_format = IS_COLOR_ATTACHMENT_PIXEL_FORMAT;
 	init.m_color.m_attachments[0].m_srcBlendMethod = BlendMethod::ONE;
 	init.m_color.m_attachments[0].m_dstBlendMethod = BlendMethod::ONE;
 	init.m_shaders[U(ShaderType::VERTEX)] = m_realVert->getGrShader();

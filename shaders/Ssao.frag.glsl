@@ -64,8 +64,6 @@ float readZ(in vec2 uv)
 // Read position in view space
 vec3 readPosition(in vec2 uv)
 {
-	float depth = texture(u_mMsDepthRt, uv).r;
-
 	vec3 fragPosVspace;
 	fragPosVspace.z = readZ(uv);
 

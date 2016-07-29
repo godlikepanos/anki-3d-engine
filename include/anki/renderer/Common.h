@@ -51,6 +51,14 @@ const U BLOOM_FRACTION = 4;
 /// IS mimap count is: log2(BLOOM_FRACTION)+2 extra mips for bloom+1
 const U IS_MIPMAP_COUNT = __builtin_popcount(BLOOM_FRACTION - 1) + 1 + 2;
 
+/// Get the number of mips for IS's render target.
+inline U getIsMipmapCount(U width, U height)
+{
+	U count = computeMaxMipmapCount2d(width, height, 512);
+	ANKI_ASSERT(count > 1);
+	return count;
+}
+
 /// Computes the 'a' and 'b' numbers for linearizeDepthOptimal
 inline void computeLinearizeDepthOptimal(F32 near, F32 far, F32& a, F32& b)
 {
@@ -60,16 +68,16 @@ inline void computeLinearizeDepthOptimal(F32 near, F32 far, F32& a, F32& b)
 
 const U MS_COLOR_ATTACHMENT_COUNT = 3;
 
-static const Array<PixelFormat, MS_COLOR_ATTACHMENT_COUNT>
+const Array<PixelFormat, MS_COLOR_ATTACHMENT_COUNT>
 	MS_COLOR_ATTACHMENT_PIXEL_FORMATS = {
 		{PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM),
 			PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM),
 			PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM)}};
 
-static const PixelFormat MS_DEPTH_ATTACHMENT_PIXEL_FORMAT(
+const PixelFormat MS_DEPTH_ATTACHMENT_PIXEL_FORMAT(
 	ComponentFormat::D24, TransformFormat::UNORM);
 
-static const PixelFormat IS_COLOR_ATTACHMENT_PIXEL_FORMAT(
+const PixelFormat IS_COLOR_ATTACHMENT_PIXEL_FORMAT(
 	ComponentFormat::R11G11B10, TransformFormat::FLOAT);
 /// @}
 

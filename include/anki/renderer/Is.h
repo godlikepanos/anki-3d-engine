@@ -23,8 +23,6 @@ class LightBin;
 class Is : public RenderingPass
 {
 anki_internal:
-	static const PixelFormat RT_PIXEL_FORMAT;
-
 	Is(Renderer* r);
 
 	~Is();

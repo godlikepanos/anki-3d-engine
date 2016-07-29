@@ -9,7 +9,6 @@
 #include <anki/util/StringList.h>
 #include <anki/misc/Xml.h>
 #include <anki/renderer/Ms.h>
-#include <anki/renderer/Is.h>
 #include <cstring>
 
 namespace anki
@@ -249,7 +248,7 @@ Error ParticleEmitterResource::load(const ResourceFilename& filename)
 	pinit.m_depthStencil.m_format = Ms::DEPTH_RT_PIXEL_FORMAT;
 
 	pinit.m_color.m_attachmentCount = 1;
-	pinit.m_color.m_attachments[0].m_format = Is::RT_PIXEL_FORMAT;
+	pinit.m_color.m_attachments[0].m_format = IS_COLOR_ATTACHMENT_PIXEL_FORMAT;
 	pinit.m_color.m_attachments[0].m_srcBlendMethod = BlendMethod::SRC_ALPHA;
 	pinit.m_color.m_attachments[0].m_dstBlendMethod =
 		BlendMethod::ONE_MINUS_SRC_ALPHA;

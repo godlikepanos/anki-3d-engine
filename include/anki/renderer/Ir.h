@@ -36,19 +36,19 @@ anki_internal:
 
 	ANKI_USE_RESULT Error run(RenderingContext& ctx);
 
-	U getCubemapArrayMipmapCount() const
+	U getReflectionTextureMipmapCount() const
 	{
-		return m_cubemapArrMipCount;
+		return m_is.m_lightRtMipCount;
 	}
 
 	TexturePtr getIrradianceTexture() const
 	{
-		return m_irradianceCubemapArr;
+		return m_irradiance.m_cubeArr;
 	}
 
 	TexturePtr getReflectionTexture() const
 	{
-		return m_envCubemapArr;
+		return m_is.m_lightRt;
 	}
 
 	TexturePtr getIntegrationLut() const
@@ -62,51 +62,102 @@ anki_internal:
 	}
 
 private:
+	class FaceInfo
+	{
+	public:
+		// MS
+		Array<TexturePtr, MS_COLOR_ATTACHMENT_COUNT> m_gbufferColorRts;
+		TexturePtr m_gbufferDepthRt;
+		FramebufferPtr m_msFb;
+
+		// IS
+		FramebufferPtr m_isFb;
+		ResourceGroupPtr m_plightRsrc;
+		ResourceGroupPtr m_slightRsrc;
+
+		// Irradiance
+		FramebufferPtr m_irradianceFb;
+
+		Bool created() const
+		{
+			return m_isFb.isCreated();
+		}
+	};
+
 	class CacheEntry
 	{
 	public:
 		const SceneNode* m_node = nullptr;
 		U64 m_nodeUuid;
 		Timestamp m_timestamp = 0; ///< When last accessed.
+
+		Array<FaceInfo, 6> m_faces;
 	};
 
 	static const U IRRADIANCE_TEX_SIZE = 32;
 	static const U MAX_PROBE_RENDERS_PER_FRAME = 1;
 
-	Renderer m_nestedR;
-	TexturePtr m_envCubemapArr;
-	U16 m_cubemapArrMipCount = 0;
 	U16 m_cubemapArrSize = 0;
 	U16 m_fbSize = 0;
-	DynamicArray<CacheEntry> m_cacheEntries;
+
+	// IS
+	class
+	{
+	public:
+		TexturePtr m_lightRt; ///< Cube array.
+		U32 m_lightRtMipCount = 0;
+
+		ShaderResourcePtr m_lightVert;
+		ShaderResourcePtr m_plightFrag;
+		ShaderResourcePtr m_slightFrag;
+		PipelinePtr m_plightPpline;
+		PipelinePtr m_slightPpline;
+
+		BufferPtr m_plightPositions;
+		BufferPtr m_plightIndices;
+		U32 m_plightIdxCount;
+		BufferPtr m_slightPositions;
+		BufferPtr m_slightIndices;
+		U32 m_slightIdxCount;
+	} m_is;
 
 	// Irradiance
-	TexturePtr m_irradianceCubemapArr;
-	ShaderResourcePtr m_computeIrradianceFrag;
-	PipelinePtr m_computeIrradiancePpline;
-	ResourceGroupPtr m_computeIrradianceResources;
+	class
+	{
+	public:
+		TexturePtr m_cubeArr;
+		U32 m_cubeArrMipCount = 0;
+
+		ShaderResourcePtr m_frag;
+		PipelinePtr m_ppline;
+		ResourceGroupPtr m_rsrc;
+	} m_irradiance;
+
+	DynamicArray<CacheEntry> m_cacheEntries;
 
 	// Other
 	TextureResourcePtr m_integrationLut;
 	SamplerPtr m_integrationLutSampler;
 
+	// Init
+	ANKI_USE_RESULT Error initIs();
 	ANKI_USE_RESULT Error initIrradiance();
+	void initFaceInfo(U cacheEntryIdx, U faceIdx);
+	ANKI_USE_RESULT Error loadMesh(
+		CString fname, BufferPtr& vert, BufferPtr& idx, U32& idxCount);
 
-	/// Bin probes in clusters.
-	void binProbes(U32 threadId, PtrSize threadsCount, IrRunContext& ctx);
-
+	// Rendering
 	ANKI_USE_RESULT Error tryRender(
 		RenderingContext& ctx, SceneNode& node, U& probesRendered);
 
-	void binProbe(U probeIdx, IrRunContext& ctx, IrTaskContext& task) const;
+	ANKI_USE_RESULT Error runMs(
+		RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx);
+	void runIs(
+		RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx);
+	void computeIrradiance(RenderingContext& rctx, U layer, U faceIdx);
 
-	ANKI_USE_RESULT Error renderReflection(RenderingContext& ctx,
-		SceneNode& node,
-		ReflectionProbeComponent& reflc,
-		U cubemapIdx);
-
-	static void writeIndicesAndCluster(
-		U clusterIdx, Bool hasPrevCluster, IrRunContext& ctx);
+	ANKI_USE_RESULT Error renderReflection(
+		RenderingContext& ctx, SceneNode& node, U cubemapIdx);
 
 	/// Find a cache entry to store the reflection.
 	void findCacheEntry(SceneNode& node, U& entry, Bool& render);

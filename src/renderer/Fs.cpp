@@ -28,7 +28,7 @@ Error Fs::init(const ConfigSet&)
 	// Create RT
 	m_r->createRenderTarget(m_width,
 		m_height,
-		Is::RT_PIXEL_FORMAT,
+		IS_COLOR_ATTACHMENT_PIXEL_FORMAT,
 		1,
 		SamplingFilter::NEAREST,
 		1,
