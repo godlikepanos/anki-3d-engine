@@ -394,6 +394,13 @@ void Sm::prepareBuildCommandBuffers(RenderingContext& ctx)
 		ctx.m_sm.m_spotCommandBuffers.create(
 			spotCastersCount * m_r->getThreadPool().getThreadsCount());
 
+		ctx.m_sm.m_spotCacheIndices.create(spotCastersCount);
+#if ANKI_ASSERTIONS
+		memset(&ctx.m_sm.m_spotCacheIndices[0],
+			0xFF,
+			sizeof(ctx.m_sm.m_spotCacheIndices[0]) * spotCastersCount);
+#endif
+
 		ctx.m_sm.m_spotFramebuffers.create(spotCastersCount);
 		for(U i = 0; i < spotCastersCount; ++i)
 		{
@@ -402,6 +409,7 @@ void Sm::prepareBuildCommandBuffers(RenderingContext& ctx)
 			U idx = lightc.getShadowMapIndex();
 
 			ctx.m_sm.m_spotFramebuffers[i] = m_spots[idx].m_fb;
+			ctx.m_sm.m_spotCacheIndices[i] = idx;
 		}
 	}
 
@@ -415,6 +423,13 @@ void Sm::prepareBuildCommandBuffers(RenderingContext& ctx)
 		ctx.m_sm.m_omniCommandBuffers.create(
 			omniCastersCount * 6 * m_r->getThreadPool().getThreadsCount());
 
+		ctx.m_sm.m_omniCacheIndices.create(omniCastersCount);
+#if ANKI_ASSERTIONS
+		memset(&ctx.m_sm.m_omniCacheIndices[0],
+			0xFF,
+			sizeof(ctx.m_sm.m_omniCacheIndices[0]) * omniCastersCount);
+#endif
+
 		ctx.m_sm.m_omniFramebuffers.create(omniCastersCount);
 		for(U i = 0; i < omniCastersCount; ++i)
 		{
@@ -426,6 +441,76 @@ void Sm::prepareBuildCommandBuffers(RenderingContext& ctx)
 			{
 				ctx.m_sm.m_omniFramebuffers[i][j] = m_omnis[idx].m_fb[j];
 			}
+
+			ctx.m_sm.m_omniCacheIndices[i] = idx;
+		}
+	}
+
+	ANKI_TRACE_STOP_EVENT(RENDER_SM);
+}
+
+//==============================================================================
+void Sm::setPreRunBarriers(RenderingContext& ctx)
+{
+	ANKI_TRACE_START_EVENT(RENDER_SM);
+	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
+
+	// Spot lights
+	for(U i = 0; i < ctx.m_sm.m_spotCacheIndices.getSize(); ++i)
+	{
+		U layer = ctx.m_sm.m_spotCacheIndices[i];
+
+		cmdb->setTextureBarrier(m_spotTexArray,
+			TextureUsageBit::NONE,
+			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
+			TextureSurfaceInfo(0, 0, 0, layer));
+	}
+
+	// Omni lights
+	for(U i = 0; i < ctx.m_sm.m_omniCacheIndices.getSize(); ++i)
+	{
+		for(U j = 0; j < 6; ++j)
+		{
+			U layer = ctx.m_sm.m_omniCacheIndices[i];
+
+			cmdb->setTextureBarrier(m_omniTexArray,
+				TextureUsageBit::NONE,
+				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
+				TextureSurfaceInfo(0, 0, j, layer));
+		}
+	}
+
+	ANKI_TRACE_STOP_EVENT(RENDER_SM);
+}
+
+//==============================================================================
+void Sm::setPostRunBarriers(RenderingContext& ctx)
+{
+	ANKI_TRACE_START_EVENT(RENDER_SM);
+	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
+
+	// Spot lights
+	for(U i = 0; i < ctx.m_sm.m_spotCacheIndices.getSize(); ++i)
+	{
+		U layer = ctx.m_sm.m_spotCacheIndices[i];
+
+		cmdb->setTextureBarrier(m_spotTexArray,
+			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
+			TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+			TextureSurfaceInfo(0, 0, 0, layer));
+	}
+
+	// Omni lights
+	for(U i = 0; i < ctx.m_sm.m_omniCacheIndices.getSize(); ++i)
+	{
+		for(U j = 0; j < 6; ++j)
+		{
+			U layer = ctx.m_sm.m_omniCacheIndices[i];
+
+			cmdb->setTextureBarrier(m_omniTexArray,
+				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
+				TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+				TextureSurfaceInfo(0, 0, j, layer));
 		}
 	}
 

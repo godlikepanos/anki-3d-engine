@@ -38,7 +38,11 @@ anki_internal:
 	ANKI_USE_RESULT Error buildCommandBuffers(
 		RenderingContext& ctx, U threadId, U threadCount) const;
 
+	void setPreRunBarriers(RenderingContext& ctx);
+
 	void run(RenderingContext& ctx);
+
+	void setPostRunBarriers(RenderingContext& ctx);
 
 	TexturePtr& getRt0()
 	{

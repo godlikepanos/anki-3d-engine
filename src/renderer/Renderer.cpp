@@ -257,6 +257,13 @@ Error Renderer::render(RenderingContext& ctx)
 	ANKI_CHECK(m_is->binLights(ctx));
 	ANKI_CHECK(buildCommandBuffers(ctx));
 
+	// Set barriers for SM and MS
+	if(m_sm)
+	{
+		m_sm->setPreRunBarriers(ctx);
+	}
+	m_ms->setPreRunBarriers(ctx);
+
 	if(m_sm)
 	{
 		m_sm->run(ctx);
@@ -266,10 +273,55 @@ Error Renderer::render(RenderingContext& ctx)
 	m_lf->runOcclusionTests(ctx);
 	cmdb->endRenderPass();
 
+	m_ms->setPostRunBarriers(ctx);
+	m_sm->setPostRunBarriers(ctx);
+
+	cmdb->setTextureBarrier(m_is->getRt(),
+		TextureUsageBit::NONE,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+		TextureSurfaceInfo(0, 0, 0, 0));
+
 	m_is->run(ctx);
+
+	cmdb->setTextureBarrier(m_ms->getDepthRt(),
+		TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+		TextureUsageBit::GENERATE_MIPMAPS,
+		TextureSurfaceInfo(0, 0, 0, 0));
+
+	cmdb->setTextureBarrier(m_ms->getRt2(),
+		TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+		TextureUsageBit::GENERATE_MIPMAPS,
+		TextureSurfaceInfo(0, 0, 0, 0));
 
 	cmdb->generateMipmaps(m_ms->getDepthRt(), 0, 0, 0);
 	cmdb->generateMipmaps(m_ms->getRt2(), 0, 0, 0);
+
+	for(U i = 0; i < getMsDepthRtMipmapCount(); ++i)
+	{
+		cmdb->setTextureBarrier(m_ms->getDepthRt(),
+			TextureUsageBit::GENERATE_MIPMAPS,
+			TextureUsageBit::FRAGMENT_SHADER_SAMPLED
+				| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ,
+			TextureSurfaceInfo(i, 0, 0, 0));
+
+		cmdb->setTextureBarrier(m_ms->getRt2(),
+			TextureUsageBit::GENERATE_MIPMAPS,
+			TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+			TextureSurfaceInfo(i, 0, 0, 0));
+	}
+
+	cmdb->setTextureBarrier(m_fs->getRt(),
+		TextureUsageBit::NONE,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
+		TextureSurfaceInfo(0, 0, 0, 0));
+
+	if(m_ssao)
+	{
+		cmdb->setTextureBarrier(m_ssao->getRt(),
+			TextureUsageBit::NONE,
+			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+			TextureSurfaceInfo(0, 0, 0, 0));
+	}
 
 	m_fs->run(ctx);
 	m_lf->run(ctx);

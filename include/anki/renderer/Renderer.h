@@ -63,6 +63,9 @@ public:
 		DynamicArrayAuto<FramebufferPtr> m_spotFramebuffers;
 		DynamicArrayAuto<Array<FramebufferPtr, 6>> m_omniFramebuffers;
 
+		DynamicArrayAuto<U> m_spotCacheIndices;
+		DynamicArrayAuto<U> m_omniCacheIndices;
+
 		/// [casterIdx][threadIdx]
 		DynamicArrayAuto<CommandBufferPtr> m_spotCommandBuffers;
 		/// [casterIdx][threadIdx][faceIdx]
@@ -74,6 +77,8 @@ public:
 		Sm(const StackAllocator<U8>& alloc)
 			: m_spotFramebuffers(alloc)
 			, m_omniFramebuffers(alloc)
+			, m_spotCacheIndices(alloc)
+			, m_omniCacheIndices(alloc)
 			, m_spotCommandBuffers(alloc)
 			, m_omniCommandBuffers(alloc)
 			, m_spots(alloc)

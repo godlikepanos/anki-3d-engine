@@ -59,6 +59,11 @@ inline U getIsMipmapCount(U width, U height)
 	return count;
 }
 
+inline U getMsDepthRtMipmapCount()
+{
+	return log2(SSAO_FRACTION) + 1;
+}
+
 /// Computes the 'a' and 'b' numbers for linearizeDepthOptimal
 inline void computeLinearizeDepthOptimal(F32 near, F32 far, F32& a, F32& b)
 {

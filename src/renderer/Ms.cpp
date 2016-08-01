@@ -38,7 +38,7 @@ Error Ms::createRt(U32 samples)
 		DEPTH_RT_PIXEL_FORMAT,
 		samples,
 		SamplingFilter::NEAREST,
-		log2(SSAO_FRACTION) + 1,
+		getMsDepthRtMipmapCount(),
 		m_depthRt);
 
 	m_r->createRenderTarget(m_r->getWidth(),
@@ -62,7 +62,7 @@ Error Ms::createRt(U32 samples)
 		RT_PIXEL_FORMATS[2],
 		samples,
 		SamplingFilter::NEAREST,
-		log2(SSAO_FRACTION) + 1,
+		getMsDepthRtMipmapCount(),
 		m_rt2);
 
 	AttachmentLoadOperation loadop = AttachmentLoadOperation::DONT_CARE;
@@ -174,6 +174,68 @@ void Ms::run(RenderingContext& ctx)
 			cmdb->pushSecondLevelCommandBuffer(ctx.m_ms.m_commandBuffers[i]);
 		}
 	}
+
+	ANKI_TRACE_STOP_EVENT(RENDER_MS);
+}
+
+//==============================================================================
+void Ms::setPreRunBarriers(RenderingContext& ctx)
+{
+	ANKI_TRACE_START_EVENT(RENDER_MS);
+
+	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
+	TextureSurfaceInfo surf(0, 0, 0, 0);
+
+	cmdb->setTextureBarrier(m_rt0,
+		TextureUsageBit::NONE,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+		surf);
+
+	cmdb->setTextureBarrier(m_rt1,
+		TextureUsageBit::NONE,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+		surf);
+
+	cmdb->setTextureBarrier(m_rt2,
+		TextureUsageBit::NONE,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+		surf);
+
+	cmdb->setTextureBarrier(m_depthRt,
+		TextureUsageBit::NONE,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
+		surf);
+
+	ANKI_TRACE_STOP_EVENT(RENDER_MS);
+}
+
+//==============================================================================
+void Ms::setPostRunBarriers(RenderingContext& ctx)
+{
+	ANKI_TRACE_START_EVENT(RENDER_MS);
+
+	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
+	TextureSurfaceInfo surf(0, 0, 0, 0);
+
+	cmdb->setTextureBarrier(m_rt0,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+		TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+		surf);
+
+	cmdb->setTextureBarrier(m_rt1,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+		TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+		surf);
+
+	cmdb->setTextureBarrier(m_rt2,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+		TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+		surf);
+
+	cmdb->setTextureBarrier(m_depthRt,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
+		TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+		surf);
 
 	ANKI_TRACE_STOP_EVENT(RENDER_MS);
 }
