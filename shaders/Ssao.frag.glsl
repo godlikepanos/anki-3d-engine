@@ -24,14 +24,14 @@ layout(location = 0) in vec2 in_texCoords;
 
 layout(location = 0) out float out_color;
 
-layout(UBO_BINDING(0, 0), std140, row_major) uniform _blk
+layout(ANKI_UBO_BINDING(0, 0), std140, row_major) uniform _blk
 {
 	RendererCommonUniforms u_uniforms;
 };
 
-layout(TEX_BINDING(0, 0)) uniform sampler2D u_mMsDepthRt;
-layout(TEX_BINDING(0, 1)) uniform sampler2D u_msRt;
-layout(TEX_BINDING(0, 2)) uniform sampler2D u_noiseMap;
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_mMsDepthRt;
+layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_msRt;
+layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_noiseMap;
 
 // Get normal
 vec3 readNormal(in vec2 uv)

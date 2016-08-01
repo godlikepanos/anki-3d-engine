@@ -48,19 +48,21 @@ struct ReflectionProbe
 	vec4 cubemapIndexPad3;
 };
 
-layout(std140, row_major, UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING)) uniform u0_
+layout(ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING),
+	std140,
+	row_major) uniform u0_
 {
 	LightingUniforms u_lightingUniforms;
 };
 
 #ifdef FRAGMENT_SHADER
 
-layout(std140, UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING + 1)) uniform u1_
+layout(ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING + 1), std140) uniform u1_
 {
 	PointLight u_pointLights[UBO_MAX_SIZE / (3 * 4 * 4)];
 };
 
-layout(UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING + 2),
+layout(ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING + 2),
 	std140,
 	row_major) uniform u2_
 {
@@ -69,33 +71,35 @@ layout(UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING + 2),
 
 layout(std140,
 	row_major,
-	UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING + 3)) uniform u3_
+	ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING + 3)) uniform u3_
 {
 	ReflectionProbe u_reflectionProbes[UBO_MAX_SIZE / (2 * 4 * 4)];
 };
 
-layout(SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 0), std430) readonly buffer s0_
+layout(ANKI_SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 0),
+	std430) readonly buffer s0_
 {
 	uint u_clusters[];
 };
 
-layout(std430, SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 1)) readonly buffer s1_
+layout(std430,
+	ANKI_SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 1)) readonly buffer s1_
 {
 	uint u_lightIndices[];
 };
 
-layout(TEX_BINDING(LIGHT_SET,
+layout(ANKI_TEX_BINDING(LIGHT_SET,
 	LIGHT_TEX_BINDING)) uniform highp sampler2DArrayShadow u_spotMapArr;
-layout(TEX_BINDING(LIGHT_SET,
+layout(ANKI_TEX_BINDING(LIGHT_SET,
 	LIGHT_TEX_BINDING + 1)) uniform highp samplerCubeArrayShadow u_omniMapArr;
 
-layout(TEX_BINDING(LIGHT_SET,
+layout(ANKI_TEX_BINDING(LIGHT_SET,
 	LIGHT_TEX_BINDING + 2)) uniform samplerCubeArray u_reflectionsTex;
 
-layout(TEX_BINDING(
+layout(ANKI_TEX_BINDING(
 	LIGHT_SET, LIGHT_TEX_BINDING + 3)) uniform samplerCubeArray u_irradianceTex;
 
-layout(TEX_BINDING(
+layout(ANKI_TEX_BINDING(
 	LIGHT_SET, LIGHT_TEX_BINDING + 4)) uniform sampler2D u_integrationLut;
 
 //==============================================================================

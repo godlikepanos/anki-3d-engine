@@ -10,15 +10,15 @@ layout(location = 0) in vec2 in_uv;
 
 layout(location = 0) out vec4 out_color;
 
-layout(TEX_BINDING(0, 0)) uniform sampler2D u_depthFullTex;
-layout(TEX_BINDING(0, 1)) uniform sampler2D u_depthHalfTex;
-layout(TEX_BINDING(0, 2)) uniform sampler2D u_colorTexNearest;
-layout(TEX_BINDING(0, 3)) uniform sampler2D u_colorTexLinear;
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_depthFullTex;
+layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_depthHalfTex;
+layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_colorTexNearest;
+layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2D u_colorTexLinear;
 #if SSAO_ENABLED
-layout(TEX_BINDING(0, 4)) uniform sampler2D u_ssaoTex;
+layout(ANKI_TEX_BINDING(0, 4)) uniform sampler2D u_ssaoTex;
 #endif
 
-layout(UBO_BINDING(0, 0)) uniform _u0
+layout(ANKI_UBO_BINDING(0, 0)) uniform _u0
 {
 	vec4 u_linearizePad2;
 };

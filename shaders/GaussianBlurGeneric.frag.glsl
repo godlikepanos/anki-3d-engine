@@ -23,7 +23,7 @@
 #error See file
 #endif
 
-layout(TEX_BINDING(0, 0)) uniform sampler2D u_tex; ///< Input FAI
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_tex; ///< Input FAI
 
 layout(location = 0) in vec2 in_uv;
 

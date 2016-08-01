@@ -10,7 +10,7 @@ layout(location = 0) in vec2 in_uv;
 
 layout(binding = 0) uniform sampler2D u_msDepthRt;
 
-layout(std140, UBO_BINDING(0, 0)) uniform ubo0_
+layout(std140, ANKI_UBO_BINDING(0, 0)) uniform ubo0_
 {
 	vec4 u_linearizePad2;
 	vec4 u_fogColorFogFactor;

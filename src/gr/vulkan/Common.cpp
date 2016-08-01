@@ -94,6 +94,12 @@ void computeBarrierInfo(TextureUsageBit before,
 		srcAccesses |= VK_ACCESS_TRANSFER_WRITE_BIT;
 	}
 
+	if((before & TextureUsageBit::CLEAR) != TextureUsageBit::NONE)
+	{
+		srcStages |= VK_PIPELINE_STAGE_TRANSFER_BIT;
+		srcAccesses |= VK_ACCESS_TRANSFER_WRITE_BIT;
+	}
+
 	if(srcStages == 0)
 	{
 		srcStages = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
@@ -168,6 +174,12 @@ void computeBarrierInfo(TextureUsageBit before,
 		dstAccesses |= VK_ACCESS_TRANSFER_WRITE_BIT;
 	}
 
+	if((after & TextureUsageBit::CLEAR) != TextureUsageBit::NONE)
+	{
+		dstStages |= VK_PIPELINE_STAGE_TRANSFER_BIT;
+		dstAccesses |= VK_ACCESS_TRANSFER_WRITE_BIT;
+	}
+
 	ANKI_ASSERT(dstStages);
 }
 
@@ -212,6 +224,10 @@ VkImageLayout computeLayout(
 				out = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 			}
 		}
+		else if(usage == TextureUsageBit::CLEAR)
+		{
+			out = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		}
 	}
 	else
 	{
@@ -237,6 +253,10 @@ VkImageLayout computeLayout(
 			}
 		}
 		else if(usage == TextureUsageBit::UPLOAD)
+		{
+			out = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		}
+		else if(usage == TextureUsageBit::CLEAR)
 		{
 			out = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 		}

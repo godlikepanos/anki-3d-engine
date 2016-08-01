@@ -6,6 +6,8 @@
 #include <anki/gr/vulkan/CommandBufferImpl.h>
 #include <anki/gr/vulkan/GrManagerImpl.h>
 #include <anki/gr/vulkan/TextureImpl.h>
+#include <anki/gr/Buffer.h>
+#include <anki/gr/vulkan/BufferImpl.h>
 #include <anki/gr/OcclusionQuery.h>
 #include <anki/gr/vulkan/OcclusionQueryImpl.h>
 
@@ -218,6 +220,83 @@ inline void CommandBufferImpl::endOcclusionQuery(OcclusionQueryPtr query)
 	vkCmdEndQuery(m_handle, handle, 0);
 
 	m_queryList.pushBack(m_alloc, query);
+}
+
+//==============================================================================
+inline void CommandBufferImpl::clearTexture(TexturePtr tex,
+	const TextureSurfaceInfo& surf,
+	const ClearValue& clearValue)
+{
+	commandCommon();
+	const TextureImpl& impl = tex->getImplementation();
+
+	VkClearColorValue vclear;
+	static_assert(sizeof(vclear) == sizeof(clearValue), "See file");
+	memcpy(&vclear, &clearValue, sizeof(clearValue));
+
+	VkImageSubresourceRange range;
+	impl.computeSubResourceRange(surf, range);
+
+	if(impl.m_aspect == VK_IMAGE_ASPECT_COLOR_BIT)
+	{
+		vkCmdClearColorImage(m_handle,
+			impl.m_imageHandle,
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			&vclear,
+			1,
+			&range);
+	}
+	else
+	{
+		ANKI_ASSERT(0 && "TODO");
+	}
+}
+
+//==============================================================================
+inline void CommandBufferImpl::uploadBuffer(
+	BufferPtr buff, PtrSize offset, const TransientMemoryToken& token)
+{
+	commandCommon();
+	BufferImpl& impl = buff->getImplementation();
+
+	VkBufferCopy region;
+	region.srcOffset = token.m_offset;
+	region.dstOffset = offset;
+	region.size = token.m_range;
+
+	vkCmdCopyBuffer(m_handle,
+		impl.getHandle(),
+		getGrManagerImpl().getTransientMemoryManager().getBufferHandle(
+			token.m_usage),
+		1,
+		&region);
+
+	m_bufferList.pushBack(m_alloc, buff);
+}
+
+//==============================================================================
+inline void CommandBufferImpl::pushSecondLevelCommandBuffer(
+	CommandBufferPtr cmdb)
+{
+	commandCommon();
+	ANKI_ASSERT(insideRenderPass());
+	ANKI_ASSERT(m_subpassContents == VK_SUBPASS_CONTENTS_MAX_ENUM
+		|| m_subpassContents == VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
+#if ANKI_ASSERTIONS
+	m_subpassContents = VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS;
+#endif
+
+	if(ANKI_UNLIKELY(m_rpCommandCount == 0))
+	{
+		beginRenderPassInternal();
+	}
+
+	cmdb->getImplementation().endRecordingInternal();
+
+	vkCmdExecuteCommands(m_handle, 1, &cmdb->getImplementation().m_handle);
+
+	++m_rpCommandCount;
+	m_cmdbList.pushBack(m_alloc, cmdb);
 }
 
 } // end namespace anki

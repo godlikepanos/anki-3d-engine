@@ -121,6 +121,7 @@ void CommandBuffer::drawElementsConditional(OcclusionQueryPtr query,
 	U32 baseVertex,
 	U32 baseInstance)
 {
+	ANKI_ASSERT(0);
 }
 
 //==============================================================================
@@ -130,12 +131,14 @@ void CommandBuffer::drawArraysConditional(OcclusionQueryPtr query,
 	U32 first,
 	U32 baseInstance)
 {
+	ANKI_ASSERT(0);
 }
 
 //==============================================================================
 void CommandBuffer::dispatchCompute(
 	U32 groupCountX, U32 groupCountY, U32 groupCountZ)
 {
+	m_impl->dispatchCompute(groupCountX, groupCountY, groupCountZ);
 }
 
 //==============================================================================
@@ -150,6 +153,7 @@ void CommandBuffer::copyTextureToTexture(TexturePtr src,
 	TexturePtr dest,
 	const TextureSurfaceInfo& destSurf)
 {
+	ANKI_ASSERT(0);
 }
 
 //==============================================================================
@@ -157,6 +161,7 @@ void CommandBuffer::clearTexture(TexturePtr tex,
 	const TextureSurfaceInfo& surf,
 	const ClearValue& clearValue)
 {
+	m_impl->clearTexture(tex, surf, clearValue);
 }
 
 //==============================================================================
@@ -171,6 +176,7 @@ void CommandBuffer::uploadTextureSurface(TexturePtr tex,
 void CommandBuffer::uploadBuffer(
 	BufferPtr buff, PtrSize offset, const TransientMemoryToken& token)
 {
+	m_impl->uploadBuffer(buff, offset, token);
 }
 
 //==============================================================================
@@ -203,6 +209,7 @@ void CommandBuffer::endOcclusionQuery(OcclusionQueryPtr query)
 //==============================================================================
 void CommandBuffer::pushSecondLevelCommandBuffer(CommandBufferPtr cmdb)
 {
+	m_impl->pushSecondLevelCommandBuffer(cmdb);
 }
 
 //==============================================================================

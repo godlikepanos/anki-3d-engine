@@ -10,9 +10,9 @@
 layout(location = 0) in vec2 in_uv;
 layout(location = 0) out vec3 out_color;
 
-layout(TEX_BINDING(0, 0)) uniform samplerCubeArray u_envTex;
+layout(ANKI_TEX_BINDING(0, 0)) uniform samplerCubeArray u_envTex;
 
-layout(UBO_BINDING(0, 0)) uniform u0_
+layout(ANKI_UBO_BINDING(0, 0)) uniform u0_
 {
 	// x: The face index to render to
 	// y: The array index to read from the u_envTex

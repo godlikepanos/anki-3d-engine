@@ -444,7 +444,7 @@ Error MaterialLoader::parseProgramTag(const XmlElement& programEl)
 	if((m_uniformBlockReferencedMask & glshaderbit) != ShaderTypeBit::NONE)
 	{
 		lines.pushBackSprintf(m_alloc,
-			"\nlayout(UBO_BINDING(0, 0), std140, row_major) "
+			"\nlayout(ANKI_UBO_BINDING(0, 0), std140, row_major) "
 			"uniform u00_\n{");
 
 		for(Input& in : m_inputs)
@@ -707,7 +707,7 @@ void MaterialLoader::processInputs()
 					in.m_binding = m_texBinding++;
 
 					in.m_line.sprintf(m_alloc,
-						"layout(TEX_BINDING(0, %u)) uniform %s tex%u;",
+						"layout(ANKI_TEX_BINDING(0, %u)) uniform %s tex%u;",
 						in.m_binding,
 						&in.typeStr()[0],
 						in.m_binding);

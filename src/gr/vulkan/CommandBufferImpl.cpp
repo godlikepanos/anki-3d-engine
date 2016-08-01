@@ -47,6 +47,8 @@ CommandBufferImpl::~CommandBufferImpl()
 	m_rcList.destroy(m_alloc);
 	m_texList.destroy(m_alloc);
 	m_queryList.destroy(m_alloc);
+	m_bufferList.destroy(m_alloc);
+	m_cmdbList.destroy(m_alloc);
 }
 
 //==============================================================================
@@ -72,15 +74,30 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 	VkCommandBufferInheritanceInfo inheritance = {};
 	inheritance.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
 
-	if(secondLevel)
-	{
-		ANKI_ASSERT(0 && "TODO");
-	}
-
 	VkCommandBufferBeginInfo begin = {};
 	begin.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	begin.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 	begin.pInheritanceInfo = &inheritance;
+
+	if(secondLevel)
+	{
+		const FramebufferImpl& impl = init.m_framebuffer->getImplementation();
+
+		inheritance.renderPass = impl.getRenderPassHandle();
+		inheritance.subpass = 0;
+
+		if(!impl.isDefaultFramebuffer())
+		{
+			inheritance.framebuffer = impl.getFramebufferHandle(0);
+		}
+		else
+		{
+			inheritance.framebuffer = impl.getFramebufferHandle(
+				getGrManagerImpl().getFrame() % MAX_FRAMES_IN_FLIGHT);
+		}
+
+		begin.flags |= VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
+	}
 
 	vkBeginCommandBuffer(m_handle, &begin);
 
@@ -133,7 +150,7 @@ void CommandBufferImpl::beginRenderPass(FramebufferPtr fb)
 	commandCommon();
 	ANKI_ASSERT(!insideRenderPass());
 
-	m_rpDrawcallCount = 0;
+	m_rpCommandCount = 0;
 	m_activeFb = fb;
 
 	m_fbList.pushBack(m_alloc, fb);
@@ -148,7 +165,7 @@ void CommandBufferImpl::endRenderPass()
 {
 	commandCommon();
 	ANKI_ASSERT(insideRenderPass());
-	ANKI_ASSERT(m_rpDrawcallCount > 0);
+	ANKI_ASSERT(m_rpCommandCount > 0);
 
 	vkCmdEndRenderPass(m_handle);
 	m_activeFb.reset(nullptr);
@@ -187,7 +204,7 @@ void CommandBufferImpl::beginRenderPassInternal()
 			getGrManagerImpl().getDefaultSurfaceHeight();
 	}
 
-	vkCmdBeginRenderPass(m_handle, &bi, VK_SUBPASS_CONTENTS_INLINE);
+	vkCmdBeginRenderPass(m_handle, &bi, m_subpassContents);
 }
 
 //==============================================================================
@@ -195,25 +212,24 @@ void CommandBufferImpl::drawcallCommon()
 {
 	// Preconditions
 	commandCommon();
-	ANKI_ASSERT(insideRenderPass());
+	ANKI_ASSERT(insideRenderPass() || secondLevel());
 	ANKI_ASSERT(m_subpassContents == VK_SUBPASS_CONTENTS_MAX_ENUM
 		|| m_subpassContents == VK_SUBPASS_CONTENTS_INLINE);
 #if ANKI_ASSERTIONS
 	m_subpassContents = VK_SUBPASS_CONTENTS_INLINE;
 #endif
 
-	if(ANKI_UNLIKELY(m_rpDrawcallCount == 0))
+	if(ANKI_UNLIKELY(m_rpCommandCount == 0) && !secondLevel())
 	{
 		beginRenderPassInternal();
 	}
 
-	++m_rpDrawcallCount;
+	++m_rpCommandCount;
 }
 
 //==============================================================================
-void CommandBufferImpl::endRecording()
+void CommandBufferImpl::endRecordingInternal()
 {
-	commandCommon();
 	ANKI_ASSERT(!m_finalized);
 	ANKI_ASSERT(!m_empty);
 
@@ -234,6 +250,13 @@ void CommandBufferImpl::endRecording()
 
 	ANKI_VK_CHECKF(vkEndCommandBuffer(m_handle));
 	m_finalized = true;
+}
+
+//==============================================================================
+void CommandBufferImpl::endRecording()
+{
+	commandCommon();
+	endRecordingInternal();
 }
 
 //==============================================================================
@@ -296,7 +319,7 @@ void CommandBufferImpl::generateMipmaps(
 	const TextureImpl& impl = tex->getImplementation();
 	ANKI_ASSERT(impl.m_type != TextureType::_3D && "Not design for that ATM");
 
-	U mipCount = computeMaxMipmapCount(impl.m_width, impl.m_height);
+	U mipCount = computeMaxMipmapCount2d(impl.m_width, impl.m_height);
 
 	for(U i = 0; i < mipCount - 1; ++i)
 	{

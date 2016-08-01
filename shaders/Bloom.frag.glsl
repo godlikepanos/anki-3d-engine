@@ -11,14 +11,14 @@
 #endif
 
 // Vars
-layout(TEX_BINDING(0, 0)) uniform lowp sampler2D u_tex; ///< Its the IS RT
+layout(ANKI_TEX_BINDING(0, 0)) uniform lowp sampler2D u_tex; ///< Its the IS RT
 
-layout(UBO_BINDING(0, 0), std140) uniform u0_
+layout(ANKI_UBO_BINDING(0, 0), std140) uniform u0_
 {
 	vec4 u_thresholdScalePad2;
 };
 
-layout(SS_BINDING(0, 0), std140) readonly buffer ss0_
+layout(ANKI_SS_BINDING(0, 0), std140) readonly buffer ss0_
 {
 	vec4 u_averageLuminancePad3;
 };

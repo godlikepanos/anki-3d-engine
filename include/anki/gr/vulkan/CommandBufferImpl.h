@@ -77,6 +77,12 @@ public:
 		U32 baseVertex,
 		U32 baseInstance);
 
+	void dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ)
+	{
+		commandCommon();
+		vkCmdDispatch(m_handle, groupCountX, groupCountY, groupCountZ);
+	}
+
 	void beginOcclusionQuery(OcclusionQueryPtr query);
 
 	void endOcclusionQuery(OcclusionQueryPtr query);
@@ -86,6 +92,15 @@ public:
 		const TransientMemoryToken& token);
 
 	void generateMipmaps(TexturePtr tex, U depth, U face, U layer);
+
+	void clearTexture(TexturePtr tex,
+		const TextureSurfaceInfo& surf,
+		const ClearValue& clearValue);
+
+	void uploadBuffer(
+		BufferPtr buff, PtrSize offset, const TransientMemoryToken& token);
+
+	void pushSecondLevelCommandBuffer(CommandBufferPtr cmdb);
 
 	void endRecording();
 
@@ -122,7 +137,7 @@ private:
 	Bool8 m_empty = true;
 	Thread::Id m_tid = 0;
 
-	U m_rpDrawcallCount = 0; ///< Number of drawcalls in renderpass.
+	U m_rpCommandCount = 0; ///< Number of drawcalls or pushed cmdbs in rp.
 	FramebufferPtr m_activeFb;
 
 	/// @name cleanup_references
@@ -132,6 +147,8 @@ private:
 	List<ResourceGroupPtr> m_rcList;
 	List<TexturePtr> m_texList;
 	List<OcclusionQueryPtr> m_queryList;
+	List<BufferPtr> m_bufferList;
+	List<CommandBufferPtr> m_cmdbList;
 /// @}
 
 #if ANKI_ASSERTIONS
@@ -151,6 +168,14 @@ private:
 	}
 
 	void beginRenderPassInternal();
+
+	void endRecordingInternal();
+
+	Bool secondLevel() const
+	{
+		return (m_flags & CommandBufferFlag::SECOND_LEVEL)
+			!= CommandBufferFlag::NONE;
+	}
 };
 /// @}
 

@@ -7,7 +7,7 @@
 
 #include "shaders/Common.glsl"
 
-layout(TEX_BINDING(0, 0)) uniform sampler2DArray u_tex;
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2DArray u_tex;
 
 layout(location = 0) in vec3 in_uv;
 layout(location = 1) flat in vec4 in_color;

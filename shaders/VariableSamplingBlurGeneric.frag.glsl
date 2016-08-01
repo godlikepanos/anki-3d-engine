@@ -29,7 +29,7 @@
 #endif
 
 // Input RT with different binding for less GL API calls
-layout(TEX_BINDING(0, 0)) uniform sampler2D uTex;
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D uTex;
 
 layout(location = 0) in vec2 in_texCoord;
 

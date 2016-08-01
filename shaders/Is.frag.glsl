@@ -17,10 +17,10 @@
 #undef LIGHT_TEX_BINDING
 #undef LIGHT_UBO_BINDING
 
-layout(TEX_BINDING(0, 0)) uniform sampler2D u_msRt0;
-layout(TEX_BINDING(0, 1)) uniform sampler2D u_msRt1;
-layout(TEX_BINDING(0, 2)) uniform sampler2D u_msRt2;
-layout(TEX_BINDING(0, 3)) uniform sampler2D u_msDepthRt;
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_msRt0;
+layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_msRt1;
+layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_msRt2;
+layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2D u_msDepthRt;
 
 layout(location = 0) in vec2 in_texCoord;
 layout(location = 1) flat in int in_instanceId;

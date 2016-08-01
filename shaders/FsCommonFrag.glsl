@@ -9,7 +9,7 @@
 #include "shaders/Clusterer.glsl"
 
 // Global resources
-layout(TEX_BINDING(1, 0)) uniform sampler2D anki_msDepthRt;
+layout(ANKI_TEX_BINDING(1, 0)) uniform sampler2D anki_msDepthRt;
 #define LIGHT_SET 1
 #define LIGHT_UBO_BINDING 0
 #define LIGHT_SS_BINDING 0

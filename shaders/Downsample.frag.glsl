@@ -5,11 +5,11 @@
 
 #include "shaders/Common.glsl"
 
-layout(TEX_BINDING(0, 0)) uniform sampler2D u_rt0;
-layout(TEX_BINDING(0, 1)) uniform sampler2D u_rt1;
-layout(TEX_BINDING(0, 2)) uniform sampler2D u_rt2;
-layout(TEX_BINDING(0, 3)) uniform sampler2D u_depth;
-layout(TEX_BINDING(0, 4)) uniform sampler2D u_isRt;
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_rt0;
+layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_rt1;
+layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_rt2;
+layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2D u_depth;
+layout(ANKI_TEX_BINDING(0, 4)) uniform sampler2D u_isRt;
 
 layout(location = 0) in vec2 in_uv;
 

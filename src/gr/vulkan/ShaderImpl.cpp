@@ -162,6 +162,10 @@ static const char* SHADER_HEADER = R"(#version 450 core
 	vec4(gl_FragCoord.x, h_ - gl_FragCoord.y, gl_FragCoord.z, gl_FragCoord.w);
 #endif
 
+#if defined(VERTEX_SHADER)
+#define ANKI_WRITE_POSITION(x_) gl_Position = x_; gl_Position.y = -gl_Position.y
+#endif
+
 %s)";
 
 //==============================================================================

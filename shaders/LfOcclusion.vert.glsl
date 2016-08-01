@@ -7,7 +7,7 @@
 
 #include "shaders/Common.glsl"
 
-layout(UBO_BINDING(0, 0), std140, row_major) uniform _block
+layout(ANKI_UBO_BINDING(0, 0), std140, row_major) uniform _block
 {
 	mat4 u_mvp;
 };

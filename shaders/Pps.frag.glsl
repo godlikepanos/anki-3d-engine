@@ -7,16 +7,16 @@
 #include "shaders/Tonemapping.glsl"
 #include "shaders/Functions.glsl"
 
-layout(binding = 0) uniform sampler2D u_isRt;
-layout(binding = 1) uniform sampler2D u_ppsBloomLfRt;
-layout(binding = 2) uniform sampler3D u_lut;
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_isRt;
+layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_ppsBloomLfRt;
+layout(ANKI_TEX_BINDING(0, 2)) uniform sampler3D u_lut;
 
 struct Luminance
 {
 	vec4 averageLuminancePad3;
 };
 
-layout(std140, SS_BINDING(0, 0)) readonly buffer s0_
+layout(std140, ANKI_SS_BINDING(0, 0)) readonly buffer s0_
 {
 	Luminance u_luminance;
 };
