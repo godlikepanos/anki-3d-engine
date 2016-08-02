@@ -30,8 +30,8 @@ Error Sslf::initInternal(const ConfigSet& config)
 	StringAuto pps(getAllocator());
 
 	pps.sprintf("#define TEX_DIMENSIONS vec2(%u.0, %u.0)\n",
-		m_r->getBloom().getWidth(),
-		m_r->getBloom().getHeight());
+		m_r->getBloom().getMaxExposureRtWidth(),
+		m_r->getBloom().getMaxExposureRtHeight());
 
 	ANKI_CHECK(getResourceManager().loadResourceToCache(
 		m_frag, "shaders/Sslf.frag.glsl", pps.toCString(), "r_"));
@@ -49,7 +49,7 @@ Error Sslf::initInternal(const ConfigSet& config)
 
 	// Create the resource group
 	ResourceGroupInitInfo rcInit;
-	rcInit.m_textures[0].m_texture = m_r->getBloom().getRt1();
+	rcInit.m_textures[0].m_texture = m_r->getBloom().getMaxExposureRt();
 	rcInit.m_textures[1].m_texture = m_lensDirtTex->getGrTexture();
 
 	m_rcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);

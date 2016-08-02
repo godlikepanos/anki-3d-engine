@@ -74,6 +74,10 @@ Error Is::initInternal(const ConfigSet& config)
 		return ErrorCode::USER_DATA;
 	}
 
+	m_rtMipCount =
+		computeMaxMipmapCount2d(m_r->getWidth(), m_r->getHeight(), 32);
+	ANKI_ASSERT(m_rtMipCount);
+
 	U clusterCount = m_r->getTileCountXY().x() * m_r->getTileCountXY().y()
 		* config.getNumber("clusterSizeZ");
 	m_maxLightIds *= clusterCount;
@@ -136,7 +140,7 @@ Error Is::initInternal(const ConfigSet& config)
 		IS_COLOR_ATTACHMENT_PIXEL_FORMAT,
 		1,
 		SamplingFilter::LINEAR,
-		IS_MIPMAP_COUNT,
+		m_rtMipCount,
 		m_rt);
 
 	FramebufferInitInfo fbInit;

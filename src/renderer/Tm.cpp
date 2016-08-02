@@ -16,11 +16,11 @@ Error Tm::create(const ConfigSet& initializer)
 	// Create shader
 	StringAuto pps(getAllocator());
 
-	ANKI_ASSERT(IS_MIPMAP_COUNT > 1);
+	ANKI_ASSERT(m_r->getIs().getRtMipmapCount() > 1);
 	pps.sprintf("#define IS_RT_MIPMAP %u\n"
 				"#define ANKI_RENDERER_WIDTH %u\n"
 				"#define ANKI_RENDERER_HEIGHT %u\n",
-		IS_MIPMAP_COUNT - 1,
+		m_r->getIs().getRtMipmapCount() - 1,
 		m_r->getWidth(),
 		m_r->getHeight());
 

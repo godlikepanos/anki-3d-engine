@@ -13,6 +13,7 @@ layout(location = 0) out vec3 out_color;
 void main()
 {
 	const vec2 TEXEL_SIZE = 1.0 / TEXTURE_SIZE;
+	const vec2 TEXEL_SIZE2 = 2.0 * TEXEL_SIZE;
 
 	out_color = textureLod(u_tex, in_uv, TEXTURE_MIPMAP).rgb;
 	out_color += textureLod(u_tex, in_uv + TEXEL_SIZE, TEXTURE_MIPMAP).rgb;
@@ -26,5 +27,28 @@ void main()
 			u_tex, in_uv + vec2(-TEXEL_SIZE.x, TEXEL_SIZE.y), TEXTURE_MIPMAP)
 			.rgb;
 
+#if 0
+	out_color +=
+		textureLod(
+			u_tex, in_uv + TEXEL_SIZE2, TEXTURE_MIPMAP)
+			.rgb;
+
+	out_color +=
+		textureLod(
+			u_tex, in_uv - TEXEL_SIZE2, TEXTURE_MIPMAP)
+			.rgb;
+
+	out_color +=
+		textureLod(
+			u_tex, in_uv + vec2(-TEXEL_SIZE2.x, TEXEL_SIZE2.y), TEXTURE_MIPMAP)
+			.rgb;
+
+	out_color +=
+		textureLod(
+			u_tex, in_uv + vec2(TEXEL_SIZE2.x, -TEXEL_SIZE2.y), TEXTURE_MIPMAP)
+			.rgb;
+
+	out_color /= 9.0;
+#endif
 	out_color /= 5.0;
 }

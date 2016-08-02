@@ -86,7 +86,7 @@ Error Pps::initInternal(const ConfigSet& config)
 
 	if(m_r->getBloomEnabled())
 	{
-		rcInit.m_textures[1].m_texture = m_r->getBloom().getRt();
+		rcInit.m_textures[1].m_texture = m_r->getBloom().getFinalRt();
 	}
 
 	rcInit.m_textures[2].m_texture = m_lut->getGrTexture();

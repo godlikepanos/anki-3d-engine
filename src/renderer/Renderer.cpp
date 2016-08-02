@@ -296,7 +296,7 @@ Error Renderer::render(RenderingContext& ctx)
 	cmdb->generateMipmaps(m_ms->getDepthRt(), 0, 0, 0);
 	cmdb->generateMipmaps(m_ms->getRt2(), 0, 0, 0);
 
-	for(U i = 0; i < getMsDepthRtMipmapCount(); ++i)
+	for(U i = 0; i < m_ms->getDepthRtMipmapCount(); ++i)
 	{
 		cmdb->setTextureBarrier(m_ms->getDepthRt(),
 			TextureUsageBit::GENERATE_MIPMAPS,

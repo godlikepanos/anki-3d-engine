@@ -69,6 +69,11 @@ anki_internal:
 		return m_fb;
 	}
 
+	static U getDepthRtMipmapCount()
+	{
+		return log2(SSAO_FRACTION) + 1;
+	}
+
 private:
 	FramebufferPtr m_fb;
 

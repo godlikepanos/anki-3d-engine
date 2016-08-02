@@ -43,6 +43,12 @@ anki_internal:
 		cmdb->generateMipmaps(m_rt, 0, 0, 0);
 	}
 
+	/// Get the number of mips for IS's render target.
+	U getRtMipmapCount() const
+	{
+		return m_rtMipCount;
+	}
+
 private:
 	static const U COMMON_VARS_LOCATION = 0;
 	static const U P_LIGHTS_LOCATION = 1;
@@ -53,6 +59,7 @@ private:
 
 	/// The IS render target
 	TexturePtr m_rt;
+	U8 m_rtMipCount = 0;
 
 	/// The IS FBO
 	FramebufferPtr m_fb;

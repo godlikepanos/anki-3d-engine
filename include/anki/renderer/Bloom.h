@@ -35,52 +35,46 @@ anki_internal:
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 	void run(RenderingContext& ctx);
 
-	TexturePtr& getRt()
+	TexturePtr& getMaxExposureRt()
 	{
-		return m_vblurRt;
+		return m_extractExposure.m_rt;
 	}
 
-	TexturePtr& getRt1()
+	TexturePtr& getFinalRt()
 	{
-		return m_hblurRt;
+		return m_upscale.m_rt;
 	}
 
-	U32 getWidth() const
+	U getMaxExposureRtWidth() const
 	{
-		return m_width;
+		return m_extractExposure.m_width;
 	}
 
-	U32 getHeight() const
+	U getMaxExposureRtHeight() const
 	{
-		return m_height;
+		return m_extractExposure.m_height;
 	}
 
 private:
-	U32 m_width, m_height;
+	class SubPass
+	{
+	public:
+		U32 m_width, m_height;
+
+		TexturePtr m_rt;
+		FramebufferPtr m_fb;
+
+		ShaderResourcePtr m_frag;
+		PipelinePtr m_ppline;
+		ResourceGroupPtr m_rsrc;
+	};
+
 	F32 m_threshold = 10.0; ///< How bright it is
 	F32 m_scale = 1.0;
-	F32 m_blurringDist = 1.0; ///< Distance in blurring
 
-	FramebufferPtr m_hblurFb;
-	FramebufferPtr m_vblurFb;
+	SubPass m_extractExposure;
+	SubPass m_upscale;
 
-	ShaderResourcePtr m_quadVert;
-	ShaderResourcePtr m_toneFrag;
-	ShaderResourcePtr m_hblurFrag;
-	ShaderResourcePtr m_vblurFrag;
-
-	PipelinePtr m_tonePpline;
-	PipelinePtr m_hblurPpline;
-	PipelinePtr m_vblurPpline;
-
-	TexturePtr m_hblurRt; ///< pass0Fai with the horizontal blur FAI
-	TexturePtr m_vblurRt; ///< The final FAI
-
-	ResourceGroupPtr m_firstDescrGroup;
-	ResourceGroupPtr m_hDescrGroup;
-	ResourceGroupPtr m_vDescrGroup;
-
-	ANKI_USE_RESULT Error initFb(FramebufferPtr& fb, TexturePtr& rt);
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 };
 

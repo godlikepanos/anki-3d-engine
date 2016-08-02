@@ -11,6 +11,12 @@ namespace anki
 {
 
 //==============================================================================
+DownscaleBlur::~DownscaleBlur()
+{
+	m_passes.destroy(getAllocator());
+}
+
+//==============================================================================
 Error DownscaleBlur::initSubpass(U idx, const UVec2& inputTexSize)
 {
 	Subpass& pass = m_passes[idx];
@@ -65,6 +71,8 @@ Error DownscaleBlur::initSubpass(U idx, const UVec2& inputTexSize)
 //==============================================================================
 Error DownscaleBlur::init(const ConfigSet& initializer)
 {
+	m_passes.create(getAllocator(), m_r->getIs().getRtMipmapCount() - 1);
+
 	UVec2 size(m_r->getWidth(), m_r->getHeight());
 	for(U i = 0; i < m_passes.getSize(); ++i)
 	{
