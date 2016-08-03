@@ -8,7 +8,7 @@
 #include "shaders/Common.glsl"
 #include "shaders/Pack.glsl"
 
-layout(binding = 0) uniform sampler2D u_tex;
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_tex;
 
 layout(location = 0) in highp vec2 in_texCoord;
 layout(location = 0) out vec3 out_color;

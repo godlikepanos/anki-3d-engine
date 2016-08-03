@@ -49,12 +49,8 @@ Error Fs::init(const ConfigSet&)
 	{
 		ResourceGroupInitInfo init;
 		init.m_textures[0].m_texture = m_r->getMs().getDepthRt();
-
-		if(m_r->getSmEnabled())
-		{
-			init.m_textures[1].m_texture = m_r->getSm().getSpotTextureArray();
-			init.m_textures[2].m_texture = m_r->getSm().getOmniTextureArray();
-		}
+		init.m_textures[1].m_texture = m_r->getSm().getSpotTextureArray();
+		init.m_textures[2].m_texture = m_r->getSm().getOmniTextureArray();
 
 		init.m_uniformBuffers[0].m_uploadedMemory = true;
 		init.m_uniformBuffers[1].m_uploadedMemory = true;
@@ -109,6 +105,24 @@ Error Fs::buildCommandBuffers(
 		vis.getBegin(VisibilityGroupType::RENDERABLES_FS) + end);
 
 	return err;
+}
+
+//==============================================================================
+void Fs::setPreRunBarriers(RenderingContext& ctx)
+{
+	ctx.m_commandBuffer->setTextureBarrier(m_rt,
+		TextureUsageBit::NONE,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
+		TextureSurfaceInfo(0, 0, 0, 0));
+}
+
+//==============================================================================
+void Fs::setPostRunBarriers(RenderingContext& ctx)
+{
+	ctx.m_commandBuffer->setTextureBarrier(m_rt,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
+		TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+		TextureSurfaceInfo(0, 0, 0, 0));
 }
 
 //==============================================================================

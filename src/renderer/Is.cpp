@@ -109,10 +109,9 @@ Error Is::initInternal(const ConfigSet& config)
 		m_r->getWidth(),
 		m_r->getHeight(),
 		m_maxLightIds,
-		m_r->getSmEnabled() ? m_r->getSm().getPoissonEnabled() : 0,
-		m_r->getIrEnabled(),
-		(m_r->getIrEnabled()) ? m_r->getIr().getReflectionTextureMipmapCount()
-							  : 0);
+		m_r->getSm().getPoissonEnabled(),
+		1,
+		m_r->getIr().getReflectionTextureMipmapCount());
 
 	// point light
 	ANKI_CHECK(getResourceManager().loadResourceToCache(
@@ -159,30 +158,19 @@ Error Is::initInternal(const ConfigSet& config)
 		init.m_textures[1].m_texture = m_r->getMs().getRt1();
 		init.m_textures[2].m_texture = m_r->getMs().getRt2();
 		init.m_textures[3].m_texture = m_r->getMs().getDepthRt();
+		init.m_textures[4].m_texture = m_r->getSm().getSpotTextureArray();
+		init.m_textures[5].m_texture = m_r->getSm().getOmniTextureArray();
 
-		if(m_r->getSmEnabled())
-		{
-			init.m_textures[4].m_texture = m_r->getSm().getSpotTextureArray();
-			init.m_textures[5].m_texture = m_r->getSm().getOmniTextureArray();
-		}
+		init.m_textures[6].m_texture = m_r->getIr().getReflectionTexture();
+		init.m_textures[7].m_texture = m_r->getIr().getIrradianceTexture();
 
-		if(m_r->getIrEnabled())
-		{
-			init.m_textures[6].m_texture = m_r->getIr().getReflectionTexture();
-			init.m_textures[7].m_texture = m_r->getIr().getIrradianceTexture();
-
-			init.m_textures[8].m_texture = m_r->getIr().getIntegrationLut();
-			init.m_textures[8].m_sampler =
-				m_r->getIr().getIntegrationLutSampler();
-		}
+		init.m_textures[8].m_texture = m_r->getIr().getIntegrationLut();
+		init.m_textures[8].m_sampler = m_r->getIr().getIntegrationLutSampler();
 
 		init.m_uniformBuffers[0].m_uploadedMemory = true;
 		init.m_uniformBuffers[1].m_uploadedMemory = true;
 		init.m_uniformBuffers[2].m_uploadedMemory = true;
-		if(m_r->getIrEnabled())
-		{
-			init.m_uniformBuffers[3].m_uploadedMemory = true;
-		}
+		init.m_uniformBuffers[3].m_uploadedMemory = true;
 
 		init.m_storageBuffers[0].m_uploadedMemory = true;
 		init.m_storageBuffers[1].m_uploadedMemory = true;
@@ -202,12 +190,10 @@ Error Is::binLights(RenderingContext& ctx)
 	ANKI_CHECK(m_lightBin->bin(*ctx.m_frustumComponent,
 		getFrameAllocator(),
 		m_maxLightIds,
-		m_r->getSmEnabled(),
+		true,
 		ctx.m_is.m_dynBufferInfo.m_uniformBuffers[P_LIGHTS_LOCATION],
 		ctx.m_is.m_dynBufferInfo.m_uniformBuffers[S_LIGHTS_LOCATION],
-		m_r->getIrEnabled()
-			? &ctx.m_is.m_dynBufferInfo.m_uniformBuffers[PROBES_LOCATION]
-			: nullptr,
+		&ctx.m_is.m_dynBufferInfo.m_uniformBuffers[PROBES_LOCATION],
 		ctx.m_is.m_dynBufferInfo.m_storageBuffers[CLUSTERS_LOCATION],
 		ctx.m_is.m_dynBufferInfo.m_storageBuffers[LIGHT_IDS_LOCATION]));
 
@@ -252,6 +238,15 @@ void Is::updateCommonBlock(RenderingContext& ctx)
 		m_r->getWidth(), m_r->getHeight(), HighRezTimer::getCurrentTime(), 0.0);
 
 	blk->m_tileCount = UVec4(m_r->getTileCountXY(), m_r->getTileCount(), 0);
+}
+
+//==============================================================================
+void Is::setPreRunBarriers(RenderingContext& ctx)
+{
+	ctx.m_commandBuffer->setTextureBarrier(m_rt,
+		TextureUsageBit::NONE,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
+		TextureSurfaceInfo(0, 0, 0, 0));
 }
 
 } // end namespace anki

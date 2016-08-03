@@ -132,23 +132,14 @@ Error Renderer::initInternal(const ConfigSet& config)
 		m_resources->loadResource("shaders/Quad.vert.glsl", m_drawQuadVert));
 
 	// Init the stages. Careful with the order!!!!!!!!!!
-	if(config.getNumber("ir.enabled"))
-	{
-		m_ir.reset(m_alloc.newInstance<Ir>(this));
-		ANKI_CHECK(m_ir->init(config));
-	}
+	m_ir.reset(m_alloc.newInstance<Ir>(this));
+	ANKI_CHECK(m_ir->init(config));
 
 	m_ms.reset(m_alloc.newInstance<Ms>(this));
 	ANKI_CHECK(m_ms->init(config));
 
-	if(config.getNumber("sm.enabled"))
-	{
-		m_sm.reset(m_alloc.newInstance<Sm>(this));
-		ANKI_CHECK(m_sm->init(config));
-	}
-
-	m_tiler.reset(m_alloc.newInstance<Tiler>(this));
-	ANKI_CHECK(m_tiler->init());
+	m_sm.reset(m_alloc.newInstance<Sm>(this));
+	ANKI_CHECK(m_sm->init(config));
 
 	m_is.reset(m_alloc.newInstance<Is>(this));
 	ANKI_CHECK(m_is->init(config));
@@ -162,45 +153,26 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_lf.reset(m_alloc.newInstance<Lf>(this));
 	ANKI_CHECK(m_lf->init(config));
 
-	if(config.getNumber("ssao.enabled") && config.getNumber("pps.enabled"))
-	{
-		m_ssao.reset(m_alloc.newInstance<Ssao>(this));
-		ANKI_CHECK(m_ssao->init(config));
-	}
+	m_ssao.reset(m_alloc.newInstance<Ssao>(this));
+	ANKI_CHECK(m_ssao->init(config));
 
 	m_upsample.reset(m_alloc.newInstance<Upsample>(this));
 	ANKI_CHECK(m_upsample->init(config));
 
-	if(config.getNumber("tm.enabled") && config.getNumber("pps.enabled"))
-	{
-		m_tm.reset(getAllocator().newInstance<Tm>(this));
-		ANKI_CHECK(m_tm->create(config));
-	}
+	m_tm.reset(getAllocator().newInstance<Tm>(this));
+	ANKI_CHECK(m_tm->create(config));
 
-	if(config.getNumber("tm.enabled") && config.getNumber("pps.enabled"))
-	{
-		m_downscale.reset(getAllocator().newInstance<DownscaleBlur>(this));
-		ANKI_CHECK(m_downscale->init(config));
-	}
+	m_downscale.reset(getAllocator().newInstance<DownscaleBlur>(this));
+	ANKI_CHECK(m_downscale->init(config));
 
-	if(config.getNumber("bloom.enabled") && config.getNumber("pps.enabled"))
-	{
-		m_bloom.reset(m_alloc.newInstance<Bloom>(this));
-		ANKI_CHECK(m_bloom->init(config));
-	}
+	m_bloom.reset(m_alloc.newInstance<Bloom>(this));
+	ANKI_CHECK(m_bloom->init(config));
 
-	if(config.getNumber("sslf.enabled") && m_bloom
-		&& config.getNumber("pps.enabled"))
-	{
-		m_sslf.reset(m_alloc.newInstance<Sslf>(this));
-		ANKI_CHECK(m_sslf->init(config));
-	}
+	m_sslf.reset(m_alloc.newInstance<Sslf>(this));
+	ANKI_CHECK(m_sslf->init(config));
 
-	if(config.getNumber("pps.enabled"))
-	{
-		m_pps.reset(m_alloc.newInstance<Pps>(this));
-		ANKI_CHECK(m_pps->init(config));
-	}
+	m_pps.reset(m_alloc.newInstance<Pps>(this));
+	ANKI_CHECK(m_pps->init(config));
 
 	m_dbg.reset(m_alloc.newInstance<Dbg>(this));
 	ANKI_CHECK(m_dbg->init(config));
@@ -249,25 +221,20 @@ Error Renderer::render(RenderingContext& ctx)
 	}
 
 	// Run stages
-	if(m_ir)
-	{
-		ANKI_CHECK(m_ir->run(ctx));
-	}
+	ANKI_CHECK(m_ir->run(ctx));
 
 	ANKI_CHECK(m_is->binLights(ctx));
 	ANKI_CHECK(buildCommandBuffers(ctx));
 
-	// Set barriers for SM and MS
-	if(m_sm)
-	{
-		m_sm->setPreRunBarriers(ctx);
-	}
+	// Perform image transitions
+	m_sm->setPreRunBarriers(ctx);
 	m_ms->setPreRunBarriers(ctx);
+	m_is->setPreRunBarriers(ctx);
+	m_fs->setPreRunBarriers(ctx);
+	m_ssao->setPreRunBarriers(ctx);
+	m_bloom->setPreRunBarriers(ctx);
 
-	if(m_sm)
-	{
-		m_sm->run(ctx);
-	}
+	m_sm->run(ctx);
 
 	m_ms->run(ctx);
 	m_lf->runOcclusionTests(ctx);
@@ -275,11 +242,6 @@ Error Renderer::render(RenderingContext& ctx)
 
 	m_ms->setPostRunBarriers(ctx);
 	m_sm->setPostRunBarriers(ctx);
-
-	cmdb->setTextureBarrier(m_is->getRt(),
-		TextureUsageBit::NONE,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		TextureSurfaceInfo(0, 0, 0, 0));
 
 	m_is->run(ctx);
 
@@ -310,55 +272,39 @@ Error Renderer::render(RenderingContext& ctx)
 			TextureSurfaceInfo(i, 0, 0, 0));
 	}
 
-	cmdb->setTextureBarrier(m_fs->getRt(),
-		TextureUsageBit::NONE,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-		TextureSurfaceInfo(0, 0, 0, 0));
-
-	if(m_ssao)
-	{
-		cmdb->setTextureBarrier(m_ssao->getRt(),
-			TextureUsageBit::NONE,
-			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-			TextureSurfaceInfo(0, 0, 0, 0));
-	}
-
 	m_fs->run(ctx);
 	m_lf->run(ctx);
 	m_vol->run(ctx);
 	cmdb->endRenderPass();
 
-	if(m_ssao)
-	{
-		m_ssao->run(ctx);
-	}
+	m_ssao->run(ctx);
+
+	m_ssao->setPostRunBarriers(ctx);
+	m_fs->setPostRunBarriers(ctx);
 
 	m_upsample->run(ctx);
 
-	if(m_downscale)
-	{
-		m_downscale->run(ctx);
-	}
+	cmdb->setTextureBarrier(m_is->getRt(),
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
+		TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+		TextureSurfaceInfo(0, 0, 0, 0));
 
-	if(m_tm)
-	{
-		m_tm->run(ctx);
-	}
+	m_downscale->run(ctx);
 
-	if(m_bloom)
-	{
-		m_bloom->run(ctx);
-	}
+	cmdb->setTextureBarrier(m_is->getRt(),
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+		TextureUsageBit::FRAGMENT_SHADER_SAMPLED
+			| TextureUsageBit::COMPUTE_SHADER_SAMPLED,
+		TextureSurfaceInfo(m_is->getRtMipmapCount() - 1, 0, 0, 0));
 
-	if(m_sslf)
-	{
-		m_sslf->run(ctx);
-	}
+	m_tm->run(ctx);
 
-	if(m_pps)
-	{
-		m_pps->run(ctx);
-	}
+	m_bloom->run(ctx);
+	m_sslf->run(ctx);
+	cmdb->endRenderPass();
+	m_bloom->setPostRunBarriers(ctx);
+
+	m_pps->run(ctx);
 
 	if(m_dbg->getEnabled())
 	{
@@ -452,19 +398,6 @@ void Renderer::createDrawQuadPipeline(
 }
 
 //==============================================================================
-void Renderer::prepareForVisibilityTests(const SceneNode& cam)
-{
-	m_tiler->prepareForVisibilityTests(cam);
-}
-
-//==============================================================================
-Bool Renderer::doGpuVisibilityTest(
-	const CollisionShape& cs, const Aabb& aabb) const
-{
-	return m_tiler->test(cs, aabb);
-}
-
-//==============================================================================
 Error Renderer::buildCommandBuffers(RenderingContext& ctx)
 {
 	ANKI_TRACE_START_EVENT(RENDERER_COMMAND_BUFFER_BUILDING);
@@ -488,11 +421,8 @@ Error Renderer::buildCommandBuffers(RenderingContext& ctx)
 			ANKI_CHECK(m_r->getMs().buildCommandBuffers(
 				*m_ctx, threadId, threadsCount));
 
-			if(m_r->getSmEnabled())
-			{
-				ANKI_CHECK(m_r->getSm().buildCommandBuffers(
-					*m_ctx, threadId, threadsCount));
-			}
+			ANKI_CHECK(m_r->getSm().buildCommandBuffers(
+				*m_ctx, threadId, threadsCount));
 
 			ANKI_CHECK(m_r->getFs().buildCommandBuffers(
 				*m_ctx, threadId, threadsCount));

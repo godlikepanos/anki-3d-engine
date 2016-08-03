@@ -160,16 +160,39 @@ void Bloom::run(RenderingContext& ctx)
 	cmdb->endRenderPass();
 
 	// pass 1
+	cmdb->setTextureBarrier(m_extractExposure.m_rt,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+		TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+		TextureSurfaceInfo(0, 0, 0, 0));
+
+	cmdb->setTextureBarrier(m_upscale.m_rt,
+		TextureUsageBit::NONE,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
+		TextureSurfaceInfo(0, 0, 0, 0));
+
 	cmdb->setViewport(0, 0, m_upscale.m_width, m_upscale.m_height);
 	cmdb->beginRenderPass(m_upscale.m_fb);
 	cmdb->bindPipeline(m_upscale.m_ppline);
 	cmdb->bindResourceGroup(m_upscale.m_rsrc, 0, nullptr);
 	m_r->drawQuad(cmdb);
+}
 
-	if(!m_r->getSslfEnabled())
-	{
-		cmdb->endRenderPass();
-	}
+//==============================================================================
+void Bloom::setPreRunBarriers(RenderingContext& ctx)
+{
+	ctx.m_commandBuffer->setTextureBarrier(m_extractExposure.m_rt,
+		TextureUsageBit::NONE,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+		TextureSurfaceInfo(0, 0, 0, 0));
+}
+
+//==============================================================================
+void Bloom::setPostRunBarriers(RenderingContext& ctx)
+{
+	ctx.m_commandBuffer->setTextureBarrier(m_upscale.m_rt,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+		TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+		TextureSurfaceInfo(0, 0, 0, 0));
 }
 
 } // end namespace anki

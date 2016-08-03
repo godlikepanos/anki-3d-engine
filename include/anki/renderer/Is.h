@@ -31,16 +31,13 @@ anki_internal:
 
 	ANKI_USE_RESULT Error binLights(RenderingContext& ctx);
 
+	void setPreRunBarriers(RenderingContext& ctx);
+
 	void run(RenderingContext& ctx);
 
 	TexturePtr getRt() const
 	{
 		return m_rt;
-	}
-
-	void generateMipmaps(CommandBufferPtr& cmdb)
-	{
-		cmdb->generateMipmaps(m_rt, 0, 0, 0);
 	}
 
 	/// Get the number of mips for IS's render target.

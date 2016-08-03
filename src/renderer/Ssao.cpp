@@ -271,6 +271,24 @@ Error Ssao::init(const ConfigSet& config)
 }
 
 //==============================================================================
+void Ssao::setPreRunBarriers(RenderingContext& ctx)
+{
+	ctx.m_commandBuffer->setTextureBarrier(m_vblurRt,
+		TextureUsageBit::NONE,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+		TextureSurfaceInfo(0, 0, 0, 0));
+}
+
+//==============================================================================
+void Ssao::setPostRunBarriers(RenderingContext& ctx)
+{
+	ctx.m_commandBuffer->setTextureBarrier(m_vblurRt,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+		TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+		TextureSurfaceInfo(0, 0, 0, 0));
+}
+
+//==============================================================================
 void Ssao::run(RenderingContext& ctx)
 {
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
@@ -294,6 +312,14 @@ void Ssao::run(RenderingContext& ctx)
 	for(U i = 0; i < m_blurringIterationsCount; i++)
 	{
 		// hpass
+		cmdb->setTextureBarrier(m_vblurRt,
+			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+			TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+			TextureSurfaceInfo(0, 0, 0, 0));
+		cmdb->setTextureBarrier(m_hblurRt,
+			TextureUsageBit::NONE,
+			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+			TextureSurfaceInfo(0, 0, 0, 0));
 		cmdb->beginRenderPass(m_hblurFb);
 		cmdb->bindPipeline(m_hblurPpline);
 		cmdb->bindResourceGroup(m_hblurRc, 0, nullptr);
@@ -301,6 +327,14 @@ void Ssao::run(RenderingContext& ctx)
 		cmdb->endRenderPass();
 
 		// vpass
+		cmdb->setTextureBarrier(m_hblurRt,
+			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+			TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+			TextureSurfaceInfo(0, 0, 0, 0));
+		cmdb->setTextureBarrier(m_vblurRt,
+			TextureUsageBit::NONE,
+			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+			TextureSurfaceInfo(0, 0, 0, 0));
 		cmdb->beginRenderPass(m_vblurFb);
 		cmdb->bindPipeline(m_vblurPpline);
 		cmdb->bindResourceGroup(m_vblurRc, 0, nullptr);

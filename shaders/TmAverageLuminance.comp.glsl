@@ -24,9 +24,9 @@ const uint MIPMAP_HEIGHT = ANKI_RENDERER_HEIGHT / (2u << (IS_RT_MIPMAP - 1u));
 const uint PIXEL_READ_X = MIPMAP_WIDTH / WORKGROUP_SIZE_X;
 const uint PIXEL_READ_Y = MIPMAP_HEIGHT / WORKGROUP_SIZE_Y;
 
-layout(binding = 0) uniform sampler2D u_isRt;
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_isRt;
 
-layout(std140, binding = 0) buffer _blk
+layout(std140, ANKI_SS_BINDING(0, 0)) buffer _blk
 {
 	vec4 u_averageLuminancePad3;
 };

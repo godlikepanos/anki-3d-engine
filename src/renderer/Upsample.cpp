@@ -39,10 +39,7 @@ Error Upsample::init(const ConfigSet& config)
 	rcInit.m_textures[3].m_texture = m_r->getFs().getRt();
 	rcInit.m_textures[3].m_sampler = gr.newInstance<Sampler>(sinit);
 
-	if(m_r->getSsaoEnabled())
-	{
-		rcInit.m_textures[4].m_texture = m_r->getSsao().getRt();
-	}
+	rcInit.m_textures[4].m_texture = m_r->getSsao().getRt();
 
 	rcInit.m_uniformBuffers[0].m_uploadedMemory = true;
 
@@ -55,7 +52,7 @@ Error Upsample::init(const ConfigSet& config)
 				"#define SSAO_ENABLED %u\n",
 		m_r->getWidth() / FS_FRACTION,
 		m_r->getHeight() / FS_FRACTION,
-		m_r->getSsaoEnabled());
+		1);
 
 	ANKI_CHECK(getResourceManager().loadResourceToCache(
 		m_frag, "shaders/NearDepthUpscale.frag.glsl", pps.toCString(), "r_"));

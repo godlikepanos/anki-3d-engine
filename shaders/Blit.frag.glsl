@@ -5,7 +5,7 @@
 
 #include "shaders/Common.glsl"
 
-layout(binding = 0) uniform lowp sampler2D uTex;
+layout(ANKI_TEX_BINDING(0, 0)) uniform lowp sampler2D uTex;
 
 layout(location = 0) in vec2 inTexCoords;
 

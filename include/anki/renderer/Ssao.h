@@ -29,7 +29,10 @@ anki_internal:
 	}
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
+
+	void setPreRunBarriers(RenderingContext& ctx);
 	void run(RenderingContext& ctx);
+	void setPostRunBarriers(RenderingContext& ctx);
 
 	TexturePtr& getRt()
 	{

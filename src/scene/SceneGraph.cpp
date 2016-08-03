@@ -329,8 +329,6 @@ Error SceneGraph::update(
 	ANKI_CHECK(threadPool.waitForAllThreadsToFinish());
 	ANKI_TRACE_STOP_EVENT(SCENE_NODES_UPDATE);
 
-	renderer.getOffscreenRenderer().prepareForVisibilityTests(*m_mainCam);
-
 	doVisibilityTests(*m_mainCam, *this, renderer.getOffscreenRenderer());
 
 	ANKI_TRACE_STOP_EVENT(SCENE_UPDATE);

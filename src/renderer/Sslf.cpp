@@ -68,7 +68,6 @@ void Sslf::run(RenderingContext& ctx)
 	cmdb->bindResourceGroup(m_rcGroup, 0, nullptr);
 
 	m_r->drawQuad(cmdb);
-	cmdb->endRenderPass();
 }
 
 } // end namespace anki

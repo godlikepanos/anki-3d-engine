@@ -93,6 +93,19 @@ void DownscaleBlur::run(RenderingContext& ctx)
 		size /= 2;
 		Subpass& pass = m_passes[i];
 
+		if(i > 0)
+		{
+			cmdb->setTextureBarrier(m_r->getIs().getRt(),
+				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+				TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+				TextureSurfaceInfo(i, 0, 0, 0));
+		}
+
+		cmdb->setTextureBarrier(m_r->getIs().getRt(),
+			TextureUsageBit::NONE,
+			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+			TextureSurfaceInfo(i + 1, 0, 0, 0));
+
 		cmdb->beginRenderPass(pass.m_fb);
 		cmdb->setViewport(0, 0, size.x(), size.y());
 		cmdb->bindPipeline(pass.m_ppline);

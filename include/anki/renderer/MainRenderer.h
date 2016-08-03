@@ -40,8 +40,6 @@ public:
 
 	ANKI_USE_RESULT Error render(SceneGraph& scene);
 
-	void prepareForVisibilityTests(SceneNode& cam);
-
 	const String& getMaterialShaderSource() const
 	{
 		return m_materialShaderSource;

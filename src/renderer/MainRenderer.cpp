@@ -103,15 +103,7 @@ Error MainRenderer::create(ThreadPool* threadpool,
 
 	// Init RC group
 	ResourceGroupInitInfo rcinit;
-	if(m_r->getPpsEnabled())
-	{
-		rcinit.m_textures[0].m_texture = m_r->getPps().getRt();
-	}
-	else
-	{
-		rcinit.m_textures[0].m_texture = m_r->getIs().getRt();
-	}
-
+	rcinit.m_textures[0].m_texture = m_r->getPps().getRt();
 	m_rcGroup = m_r->getGrManager().newInstance<ResourceGroup>(rcinit);
 
 	return ErrorCode::NONE;
@@ -135,8 +127,7 @@ Error MainRenderer::render(SceneGraph& scene)
 
 	// Find where the m_r should draw
 	Bool rDrawToDefault;
-	if(m_renderingQuality == 1.0 && !m_r->getDbg().getEnabled()
-		&& m_r->getPpsEnabled())
+	if(m_renderingQuality == 1.0 && !m_r->getDbg().getEnabled())
 	{
 		rDrawToDefault = true;
 	}
@@ -194,12 +185,6 @@ Dbg& MainRenderer::getDbg()
 F32 MainRenderer::getAspectRatio() const
 {
 	return m_r->getAspectRatio();
-}
-
-//==============================================================================
-void MainRenderer::prepareForVisibilityTests(SceneNode& cam)
-{
-	m_r->prepareForVisibilityTests(cam);
 }
 
 } // end namespace anki

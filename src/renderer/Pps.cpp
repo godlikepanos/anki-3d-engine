@@ -63,7 +63,7 @@ Error Pps::initInternal(const ConfigSet& config)
 				"#define GAMMA_CORRECTION_ENABLED %u\n"
 				"#define FBO_WIDTH %u\n"
 				"#define FBO_HEIGHT %u\n",
-		m_r->getBloomEnabled(),
+		true,
 		U(config.getNumber("pps.sharpen")),
 		U(config.getNumber("pps.gammaCorrection")),
 		m_r->getWidth(),
@@ -83,11 +83,7 @@ Error Pps::initInternal(const ConfigSet& config)
 	// RC goup
 	ResourceGroupInitInfo rcInit;
 	rcInit.m_textures[0].m_texture = m_r->getIs().getRt();
-
-	if(m_r->getBloomEnabled())
-	{
-		rcInit.m_textures[1].m_texture = m_r->getBloom().getFinalRt();
-	}
+	rcInit.m_textures[1].m_texture = m_r->getBloom().getFinalRt();
 
 	rcInit.m_textures[2].m_texture = m_lut->getGrTexture();
 

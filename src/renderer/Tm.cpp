@@ -25,7 +25,7 @@ Error Tm::create(const ConfigSet& initializer)
 		m_r->getHeight());
 
 	ANKI_CHECK(getResourceManager().loadResourceToCache(m_luminanceShader,
-		"shaders/PpsTmAverageLuminance.comp.glsl",
+		"shaders/TmAverageLuminance.comp.glsl",
 		pps.toCString(),
 		"r_"));
 

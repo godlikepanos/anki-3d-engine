@@ -113,11 +113,6 @@ public:
 
 	~Renderer();
 
-	Bool getIrEnabled() const
-	{
-		return m_ir.isCreated();
-	}
-
 	Ir& getIr()
 	{
 		return *m_ir;
@@ -126,11 +121,6 @@ public:
 	Sm& getSm()
 	{
 		return *m_sm;
-	}
-
-	Bool getSmEnabled() const
-	{
-		return m_sm.isCreated();
 	}
 
 	Ms& getMs()
@@ -158,19 +148,9 @@ public:
 		return *m_tm;
 	}
 
-	Bool getSsaoEnabled() const
-	{
-		return m_ssao.isCreated();
-	}
-
 	Ssao& getSsao()
 	{
 		return *m_ssao;
-	}
-
-	Bool getBloomEnabled() const
-	{
-		return m_bloom.isCreated();
 	}
 
 	Bloom& getBloom()
@@ -178,19 +158,9 @@ public:
 		return *m_bloom;
 	}
 
-	Bool getSslfEnabled() const
-	{
-		return m_sslf.isCreated();
-	}
-
 	Sslf& getSslf()
 	{
 		return *m_sslf;
-	}
-
-	Bool getPpsEnabled() const
-	{
-		return m_pps.isCreated();
 	}
 
 	Pps& getPps()
@@ -336,10 +306,6 @@ anki_internal:
 		U mipsCount,
 		TexturePtr& rt);
 
-	Bool doGpuVisibilityTest(const CollisionShape& cs, const Aabb& aabb) const;
-
-	void prepareForVisibilityTests(const SceneNode& cam);
-
 	GrManager& getGrManager()
 	{
 		return *m_gr;
@@ -407,7 +373,6 @@ private:
 	UniquePtr<Volumetric> m_vol; ///< Volumetric effects.
 	UniquePtr<Lf> m_lf; ///< Forward shading lens flares.
 	UniquePtr<Upsample> m_upsample;
-	UniquePtr<Tiler> m_tiler;
 	UniquePtr<DownscaleBlur> m_downscale;
 	UniquePtr<Tm> m_tm;
 	UniquePtr<Ssao> m_ssao;

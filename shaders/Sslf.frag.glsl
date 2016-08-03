@@ -11,15 +11,15 @@
 #define MAX_GHOSTS 4
 #define GHOST_DISPERSAL (0.7)
 #define HALO_WIDTH 0.4
-#define CHROMATIC_DISTORTION 6.0
+#define CHROMATIC_DISTORTION 3.0
 #define ENABLE_CHROMATIC_DISTORTION 1
 #define ENABLE_HALO 1
 #define HALO_OPACITY 0.5
 
 layout(location = 0) in vec2 in_texCoord;
 
-layout(binding = 0) uniform sampler2D u_rt;
-layout(binding = 1) uniform sampler2D u_lensDirtTex;
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_rt;
+layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_lensDirtTex;
 
 layout(location = 0) out vec3 out_color;
 
