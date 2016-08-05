@@ -21,6 +21,7 @@ class StringList : public List<String>
 public:
 	using Char = char; ///< Char type
 	using Base = List<String>; ///< Base
+	using Allocator = GenericMemoryPoolAllocator<Char>;
 
 	/// Sort method for sortAll().
 	enum class Sort
@@ -32,13 +33,11 @@ public:
 	// Use the base constructors
 	using Base::Base;
 
-	template<typename TAllocator>
-	void destroy(TAllocator alloc);
+	void destroy(Allocator alloc);
 
 	/// Join all the elements into a single big string using a the
 	/// seperator @a separator
-	template<typename TAllocator>
-	void join(TAllocator alloc, const CString& separator, String& out) const;
+	void join(Allocator alloc, const CString& separator, String& out) const;
 
 	/// Returns the index position of the last occurrence of @a value in
 	/// the list
@@ -48,14 +47,23 @@ public:
 	/// Sort the string list
 	void sortAll(const Sort method = Sort::ASCENDING);
 
-	/// Push at the end of the list a formated string
-	template<typename TAllocator, typename... TArgs>
-	void pushBackSprintf(TAllocator alloc, const TArgs&... args);
+	/// Push at the end of the list a formated string.
+	template<typename... TArgs>
+	void pushBackSprintf(Allocator alloc, const TArgs&... args)
+	{
+		String str;
+		str.sprintf(alloc, args...);
+
+		Base::emplaceBack(alloc);
+		Base::getBack() = std::move(str);
+	}
 
 	/// Split a string using a separator (@a separator) and return these
 	/// strings in a string list
-	template<typename TAllocator>
-	void splitString(TAllocator alloc, const CString& s, const Char separator);
+	void splitString(Allocator alloc,
+		const CString& s,
+		const Char separator,
+		Bool keepEmpty = false);
 };
 
 /// String list with automatic destruction.
@@ -63,10 +71,10 @@ class StringListAuto : public StringList
 {
 public:
 	using Base = StringList;
+	using Allocator = typename Base::Allocator;
 
 	/// Create using an allocator.
-	template<typename TAllocator>
-	StringListAuto(TAllocator alloc)
+	StringListAuto(Allocator alloc)
 		: Base()
 		, m_alloc(alloc)
 	{
@@ -91,6 +99,12 @@ public:
 		return *this;
 	}
 
+	/// Destroy.
+	void destroy()
+	{
+		Base::destroy(m_alloc);
+	}
+
 	/// Push at the end of the list a formated string
 	template<typename... TArgs>
 	void pushBackSprintf(const TArgs&... args)
@@ -100,13 +114,14 @@ public:
 
 	/// Split a string using a separator (@a separator) and return these
 	/// strings in a string list
-	void splitString(const CString& s, const Base::Char separator)
+	void splitString(
+		const CString& s, const Base::Char separator, Bool keepEmpty = false)
 	{
-		Base::splitString(m_alloc, s, separator);
+		Base::splitString(m_alloc, s, separator, keepEmpty);
 	}
 
 private:
-	GenericMemoryPoolAllocator<Char> m_alloc;
+	Allocator m_alloc;
 
 	void move(StringListAuto& b)
 	{
@@ -117,5 +132,3 @@ private:
 /// @}
 
 } // end namespace anki
-
-#include <anki/util/StringList.inl.h>

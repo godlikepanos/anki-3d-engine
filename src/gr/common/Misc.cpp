@@ -22,14 +22,23 @@ void logShaderErrorCode(const CString& error,
 	static const char* padding = "======================================="
 								 "=======================================";
 
-	lines.splitString(source, '\n');
+	lines.splitString(source, '\n', true);
 
 	I lineno = 0;
 	for(auto it = lines.getBegin(); it != lines.getEnd(); ++it)
 	{
+		++lineno;
 		StringAuto tmp(alloc);
 
-		tmp.sprintf("%4d: %s\n", ++lineno, &(*it)[0]);
+		if(!it->isEmpty())
+		{
+			tmp.sprintf("%4d: %s\n", lineno, &(*it)[0]);
+		}
+		else
+		{
+			tmp.sprintf("%4d:\n", lineno);
+		}
+
 		prettySrc.append(tmp);
 	}
 
