@@ -341,7 +341,7 @@ Vec3 Renderer::unproject(const Vec3& windowCoords,
 void Renderer::createRenderTarget(U32 w,
 	U32 h,
 	const PixelFormat& format,
-	U32 samples,
+	TextureUsageBit usage,
 	SamplingFilter filter,
 	U mipsCount,
 	TexturePtr& rt)
@@ -363,7 +363,8 @@ void Renderer::createRenderTarget(U32 w,
 	init.m_type = TextureType::_2D;
 	init.m_format = format;
 	init.m_mipmapsCount = mipsCount;
-	init.m_samples = samples;
+	init.m_samples = 1;
+	init.m_usage = usage;
 	init.m_sampling.m_minMagFilter = filter;
 	if(mipsCount > 1)
 	{

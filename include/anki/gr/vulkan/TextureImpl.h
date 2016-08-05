@@ -50,6 +50,11 @@ public:
 	void computeSubResourceRange(
 		const TextureSurfaceInfo& surf, VkImageSubresourceRange& range) const;
 
+	Bool usageValid(TextureUsageBit usage) const
+	{
+		return (usage & m_usage) == usage;
+	}
+
 private:
 	class CreateContext;
 

@@ -65,8 +65,14 @@ const PixelFormat Ssao::RT_PIXEL_FORMAT(
 Error Ssao::createFb(FramebufferPtr& fb, TexturePtr& rt)
 {
 	// Set to bilinear because the blurring techniques take advantage of that
-	m_r->createRenderTarget(
-		m_width, m_height, RT_PIXEL_FORMAT, 1, SamplingFilter::LINEAR, 1, rt);
+	m_r->createRenderTarget(m_width,
+		m_height,
+		RT_PIXEL_FORMAT,
+		TextureUsageBit::FRAGMENT_SHADER_SAMPLED
+			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+		SamplingFilter::LINEAR,
+		1,
+		rt);
 
 	// Create FB
 	FramebufferInitInfo fbInit;
@@ -74,6 +80,8 @@ Error Ssao::createFb(FramebufferPtr& fb, TexturePtr& rt)
 	fbInit.m_colorAttachments[0].m_texture = rt;
 	fbInit.m_colorAttachments[0].m_loadOperation =
 		AttachmentLoadOperation::DONT_CARE;
+	fbInit.m_colorAttachments[0].m_usageInsideRenderPass =
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 	fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 	return ErrorCode::NONE;
@@ -106,6 +114,8 @@ Error Ssao::initInternal(const ConfigSet& config)
 	//
 	TextureInitInfo tinit;
 
+	tinit.m_usage =
+		TextureUsageBit::FRAGMENT_SHADER_SAMPLED | TextureUsageBit::UPLOAD;
 	tinit.m_width = tinit.m_height = NOISE_TEX_SIZE;
 	tinit.m_depth = 1;
 	tinit.m_layerCount = 1;

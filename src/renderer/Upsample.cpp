@@ -81,6 +81,8 @@ Error Upsample::init(const ConfigSet& config)
 	fbInit.m_colorAttachments[0].m_texture = m_r->getIs().getRt();
 	fbInit.m_colorAttachments[0].m_loadOperation =
 		AttachmentLoadOperation::LOAD;
+	fbInit.m_colorAttachments[0].m_usageInsideRenderPass =
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 	return ErrorCode::NONE;

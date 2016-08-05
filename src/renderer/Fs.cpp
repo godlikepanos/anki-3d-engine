@@ -29,7 +29,8 @@ Error Fs::init(const ConfigSet&)
 	m_r->createRenderTarget(m_width,
 		m_height,
 		IS_COLOR_ATTACHMENT_PIXEL_FORMAT,
-		1,
+		TextureUsageBit::FRAGMENT_SHADER_SAMPLED
+			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 		SamplingFilter::NEAREST,
 		1,
 		m_rt);
@@ -39,6 +40,8 @@ Error Fs::init(const ConfigSet&)
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation =
 		AttachmentLoadOperation::CLEAR;
+	fbInit.m_colorAttachments[0].m_usageInsideRenderPass =
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
 	fbInit.m_depthStencilAttachment.m_texture = m_r->getMs().getDepthRt();
 	fbInit.m_depthStencilAttachment.m_loadOperation =
 		AttachmentLoadOperation::LOAD;

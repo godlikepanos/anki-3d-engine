@@ -9,6 +9,7 @@
 #include <anki/gr/vulkan/GrManagerImpl.h>
 #include <anki/gr/CommandBuffer.h>
 #include <anki/gr/vulkan/CommandBufferImpl.h>
+#include <anki/gr/common/Misc.h>
 
 namespace anki
 {
@@ -58,15 +59,15 @@ VkFormatFeatureFlags TextureImpl::calcFeatures(const TextureInitInfo& init)
 {
 	VkFormatFeatureFlags flags = 0;
 
-	if(init.m_mipmapsCount > 1)
+	if(init.m_mipmapsCount > 1
+		&& !!(init.m_usage & TextureUsageBit::GENERATE_MIPMAPS))
 	{
 		// May be used for mip gen.
 		flags |=
 			VK_FORMAT_FEATURE_BLIT_DST_BIT | VK_FORMAT_FEATURE_BLIT_SRC_BIT;
 	}
 
-	if((init.m_usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE)
-		!= TextureUsageBit::NONE)
+	if(!!(init.m_usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE))
 	{
 		if(formatIsDepthStencil(init.m_format))
 		{
@@ -79,9 +80,12 @@ VkFormatFeatureFlags TextureImpl::calcFeatures(const TextureInitInfo& init)
 		}
 	}
 
-	// This is quite common
-	flags |= VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT;
+	if(!!(init.m_usage & TextureUsageBit::ANY_SHADER_SAMPLED))
+	{
+		flags |= VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT;
+	}
 
+	ANKI_ASSERT(flags);
 	return flags;
 }
 
@@ -124,12 +128,42 @@ Bool TextureImpl::imageSupported(const TextureInitInfo& init)
 }
 
 //==============================================================================
-Error TextureImpl::init(const TextureInitInfo& init, Texture* tex)
+Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 {
-	ANKI_ASSERT(init.isValid());
+	TextureInitInfo init = init_;
+	ANKI_ASSERT(textureInitInfoValid(init));
 	m_sampler = getGrManager().newInstanceCached<Sampler>(init.m_sampling);
+
+	// Set some stuff
 	m_width = init.m_width;
 	m_height = init.m_height;
+	m_depth = init.m_depth;
+	m_type = init.m_type;
+
+	if(m_type == TextureType::_3D)
+	{
+		m_mipCount = min<U>(init.m_mipmapsCount,
+			computeMaxMipmapCount3d(m_width, m_height, m_depth));
+	}
+	else
+	{
+		m_mipCount = min<U>(
+			init.m_mipmapsCount, computeMaxMipmapCount2d(m_width, m_height));
+	}
+	init.m_mipmapsCount = m_mipCount;
+
+	m_layerCount = init.m_layerCount;
+
+	if(formatIsDepthStencil(init.m_format))
+	{
+		m_aspect = VK_IMAGE_ASPECT_DEPTH_BIT;
+	}
+	else
+	{
+		m_aspect = VK_IMAGE_ASPECT_COLOR_BIT;
+	}
+
+	m_usage = init.m_usage;
 	m_format = init.m_format;
 
 	CreateContext ctx;
@@ -138,19 +172,20 @@ Error TextureImpl::init(const TextureInitInfo& init, Texture* tex)
 	ANKI_CHECK(initView(ctx));
 
 	// Transition the image layout from undefined to something relevant
-	m_usage = init.m_usage;
-	ANKI_ASSERT((init.m_initialUsage & TextureUsageBit::GENERATE_MIPMAPS)
-			== TextureUsageBit::NONE
-		&& "Can't handle that as initial");
-	VkImageLayout initialLayout = computeLayout(init.m_initialUsage,
-		formatIsDepthStencil(init.m_format),
-		0,
-		m_mipCount);
-
-	if(initialLayout != VK_IMAGE_LAYOUT_UNDEFINED)
+	if(!!init.m_initialUsage)
 	{
+		ANKI_ASSERT(usageValid(init.m_initialUsage));
+		ANKI_ASSERT(!(init.m_initialUsage & TextureUsageBit::GENERATE_MIPMAPS)
+			&& "That doesn't make any sense");
+
+		VkImageLayout initialLayout = computeLayout(init.m_initialUsage,
+			formatIsDepthStencil(init.m_format),
+			0,
+			m_mipCount);
+
 		CommandBufferInitInfo cmdbinit;
-		cmdbinit.m_flags = CommandBufferFlag::GRAPHICS_WORK;
+		cmdbinit.m_flags =
+			CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
 		CommandBufferPtr cmdb =
 			getGrManager().newInstance<CommandBuffer>(cmdbinit);
 
@@ -190,7 +225,11 @@ Error TextureImpl::initImage(CreateContext& ctx)
 		// Try to find a fallback
 		if(init.m_format.m_components == ComponentFormat::R8G8B8)
 		{
+			ANKI_ASSERT((init.m_usage & TextureUsageBit::UPLOAD)
+					== TextureUsageBit::NONE
+				&& "Can't do that ATM");
 			init.m_format.m_components = ComponentFormat::R8G8B8A8;
+			m_format = init.m_format;
 		}
 		else
 		{
@@ -208,16 +247,9 @@ Error TextureImpl::initImage(CreateContext& ctx)
 	// Contunue with the creation
 	m_type = init.m_type;
 
-	VkImageCreateFlags flags = 0;
-	if(init.m_type == TextureType::CUBE
-		|| init.m_type == TextureType::CUBE_ARRAY)
-	{
-		flags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
-	}
-
 	VkImageCreateInfo& ci = ctx.m_imgCi;
 	ci.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-	ci.flags = flags;
+	ci.flags = calcCreateFlags(init);
 	ci.imageType = convertTextureType(init.m_type);
 	ci.format = convertFormat(init.m_format);
 	ci.extent.width = init.m_width;
@@ -229,20 +261,18 @@ Error TextureImpl::initImage(CreateContext& ctx)
 	case TextureType::_2D:
 		ci.extent.depth = 1;
 		ci.arrayLayers = 1;
-		ANKI_ASSERT(init.m_depth == 1);
 		break;
 	case TextureType::_2D_ARRAY:
 		ci.extent.depth = 1;
-		ci.arrayLayers = init.m_depth;
+		ci.arrayLayers = init.m_layerCount;
 		break;
 	case TextureType::CUBE:
 		ci.extent.depth = 1;
 		ci.arrayLayers = 6;
-		ANKI_ASSERT(init.m_depth == 1);
 		break;
 	case TextureType::CUBE_ARRAY:
 		ci.extent.depth = 1;
-		ci.arrayLayers = 6 * init.m_depth;
+		ci.arrayLayers = 6 * init.m_layerCount;
 		break;
 	case TextureType::_3D:
 		ci.extent.depth = init.m_depth;
@@ -252,11 +282,7 @@ Error TextureImpl::initImage(CreateContext& ctx)
 		ANKI_ASSERT(0);
 	}
 
-	m_layerCount = ci.arrayLayers;
-
-	ci.mipLevels = init.m_mipmapsCount;
-	ANKI_ASSERT(ci.mipLevels > 0);
-	m_mipCount = init.m_mipmapsCount;
+	ci.mipLevels = m_mipCount;
 
 	ci.samples = VK_SAMPLE_COUNT_1_BIT;
 	ci.tiling = VK_IMAGE_TILING_OPTIMAL;
@@ -304,15 +330,6 @@ Error TextureImpl::initImage(CreateContext& ctx)
 Error TextureImpl::initView(CreateContext& ctx)
 {
 	const TextureInitInfo& init = ctx.m_init;
-
-	if(formatIsDepthStencil(init.m_format))
-	{
-		m_aspect = VK_IMAGE_ASPECT_DEPTH_BIT;
-	}
-	else
-	{
-		m_aspect = VK_IMAGE_ASPECT_COLOR_BIT;
-	}
 
 	VkImageViewCreateInfo ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;

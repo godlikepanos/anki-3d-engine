@@ -71,6 +71,13 @@ constexpr inline typename EnumUnderlyingType<TEnum>::Type enumToType(TEnum e)
 		a = static_cast<enum_>(static_cast<Int>(a) - 1);                       \
 		return a;                                                              \
 	}
+
+#define _ANKI_ENUM_NEGATIVE_OPERATOR(enum_, qualifier_)                        \
+	qualifier_ bool operator!(const enum_& a)                                  \
+	{                                                                          \
+		using Int = EnumUnderlyingType<enum_>::Type;                           \
+		return static_cast<Int>(a) == 0;                                       \
+	}                                                                          \
 /// @}
 
 /// @addtogroup util_other
@@ -89,7 +96,8 @@ constexpr inline typename EnumUnderlyingType<TEnum>::Type enumToType(TEnum e)
 	_ANKI_ENUM_OPERATOR(enum_, qualifier_, <<, <<=)                            \
 	_ANKI_ENUM_OPERATOR(enum_, qualifier_, >>, >>=)                            \
 	_ANKI_ENUM_UNARAY_OPERATOR(enum_, qualifier_, ~)                           \
-	_ANKI_ENUM_INCREMENT_DECREMENT(enum_, qualifier_)
+	_ANKI_ENUM_INCREMENT_DECREMENT(enum_, qualifier_)                          \
+	_ANKI_ENUM_NEGATIVE_OPERATOR(enum_, qualifier_)
 
 /// Convert enum to the underlying type.
 template<typename TEnum>

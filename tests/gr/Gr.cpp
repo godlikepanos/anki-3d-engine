@@ -429,8 +429,6 @@ ANKI_TEST(Gr, SimpleDrawcall)
 			gr->beginFrame();
 
 			CommandBufferInitInfo cinit;
-			cinit.m_flags =
-				CommandBufferFlag::FRAME_FIRST | CommandBufferFlag::FRAME_LAST;
 			CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
 
 			cmdb->setViewport(0, 0, WIDTH, HEIGHT);
@@ -558,8 +556,6 @@ ANKI_TEST(Gr, DrawWithUniforms)
 			(*rotMat)[3] = cos(angle);
 
 			CommandBufferInitInfo cinit;
-			cinit.m_flags =
-				CommandBufferFlag::FRAME_FIRST | CommandBufferFlag::FRAME_LAST;
 			CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
 
 			cmdb->setViewport(0, 0, WIDTH, HEIGHT);
@@ -676,8 +672,6 @@ ANKI_TEST(Gr, DrawWithVertex)
 			gr->beginFrame();
 
 			CommandBufferInitInfo cinit;
-			cinit.m_flags =
-				CommandBufferFlag::FRAME_FIRST | CommandBufferFlag::FRAME_LAST;
 			CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
 
 			cmdb->setViewport(0, 0, WIDTH, HEIGHT);
@@ -965,8 +959,6 @@ ANKI_TEST(Gr, DrawWithTexture)
 			gr->beginFrame();
 
 			CommandBufferInitInfo cinit;
-			cinit.m_flags =
-				CommandBufferFlag::FRAME_FIRST | CommandBufferFlag::FRAME_LAST;
 			CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
 
 			cmdb->setViewport(0, 0, WIDTH, HEIGHT);
@@ -1167,8 +1159,6 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 		gr.beginFrame();
 
 		CommandBufferInitInfo cinit;
-		cinit.m_flags =
-			CommandBufferFlag::FRAME_FIRST | CommandBufferFlag::FRAME_LAST;
 		CommandBufferPtr cmdb = gr.newInstance<CommandBuffer>(cinit);
 
 		cmdb->setPolygonOffset(0.0, 0.0);
@@ -1197,6 +1187,8 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 			cinit.m_flags = CommandBufferFlag::SECOND_LEVEL;
 			cinit.m_framebuffer = fb;
 			CommandBufferPtr cmdb2 = gr.newInstance<CommandBuffer>(cinit);
+
+			cmdb2->setPolygonOffset(0.0, 0.0);
 
 			drawOffscreenDrawcalls(gr, ppline, rc0, cmdb2, TEX_SIZE);
 

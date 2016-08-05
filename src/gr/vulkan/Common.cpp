@@ -881,6 +881,11 @@ VkImageUsageFlags convertTextureUsage(
 		out |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 	}
 
+	if((ak & TextureUsageBit::CLEAR) != TextureUsageBit::NONE)
+	{
+		out |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+	}
+
 	ANKI_ASSERT(out);
 	return out;
 }

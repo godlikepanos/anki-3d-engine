@@ -52,49 +52,6 @@ public:
 	U8 m_samples = 1;
 
 	SamplerInitInfo m_sampling;
-
-	/// Check the validity of the structure.
-	Bool isValid() const
-	{
-#define ANKI_CHECK_VAL_VALIDITY(x)                                             \
-	do                                                                         \
-	{                                                                          \
-		if(!(x))                                                               \
-		{                                                                      \
-			return false;                                                      \
-		}                                                                      \
-	} while(0)
-
-		// TODO: ANKI_CHECK_VAL_VALIDITY(m_usage != TextureUsageBit::NONE);
-		ANKI_CHECK_VAL_VALIDITY(m_mipmapsCount > 0);
-		ANKI_CHECK_VAL_VALIDITY(m_width > 0);
-		ANKI_CHECK_VAL_VALIDITY(m_height > 0);
-		switch(m_type)
-		{
-		case TextureType::_2D:
-			ANKI_CHECK_VAL_VALIDITY(m_depth == 1);
-			ANKI_CHECK_VAL_VALIDITY(m_layerCount == 1);
-			break;
-		case TextureType::CUBE:
-			ANKI_CHECK_VAL_VALIDITY(m_depth == 1);
-			ANKI_CHECK_VAL_VALIDITY(m_layerCount == 1);
-			break;
-		case TextureType::_3D:
-			ANKI_CHECK_VAL_VALIDITY(m_depth > 0);
-			ANKI_CHECK_VAL_VALIDITY(m_layerCount == 1);
-			break;
-		case TextureType::_2D_ARRAY:
-		case TextureType::CUBE_ARRAY:
-			ANKI_CHECK_VAL_VALIDITY(m_depth == 1);
-			ANKI_CHECK_VAL_VALIDITY(m_layerCount > 0);
-			break;
-		default:
-			ANKI_CHECK_VAL_VALIDITY(0);
-		};
-
-		return true;
-#undef ANKI_CHECK_VAL_VALIDITY
-	}
 };
 
 /// GPU texture

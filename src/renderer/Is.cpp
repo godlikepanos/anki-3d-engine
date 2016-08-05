@@ -137,7 +137,9 @@ Error Is::initInternal(const ConfigSet& config)
 	m_r->createRenderTarget(m_r->getWidth(),
 		m_r->getHeight(),
 		IS_COLOR_ATTACHMENT_PIXEL_FORMAT,
-		1,
+		TextureUsageBit::FRAGMENT_SHADER_SAMPLED
+			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE
+			| TextureUsageBit::COMPUTE_SHADER_SAMPLED,
 		SamplingFilter::LINEAR,
 		m_rtMipCount,
 		m_rt);
@@ -147,6 +149,8 @@ Error Is::initInternal(const ConfigSet& config)
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation =
 		AttachmentLoadOperation::DONT_CARE;
+	fbInit.m_colorAttachments[0].m_usageInsideRenderPass =
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 	//

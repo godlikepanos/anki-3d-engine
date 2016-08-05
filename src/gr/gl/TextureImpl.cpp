@@ -271,13 +271,11 @@ void TextureImpl::bind()
 //==============================================================================
 void TextureImpl::init(const TextureInitInfo& init)
 {
+	ANKI_ASSERT(!isCreated());
+	ANKI_ASSERT(textureInitInfoValid(init));
+
 	GrAllocator<U8> alloc = getAllocator();
 	const SamplerInitInfo& sinit = init.m_sampling;
-
-	// Sanity checks
-	//
-	ANKI_ASSERT(!isCreated());
-	ANKI_ASSERT(init.isValid());
 
 	// Create
 	//

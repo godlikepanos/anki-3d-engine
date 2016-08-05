@@ -36,7 +36,9 @@ Error Ms::createRt(U32 samples)
 	m_r->createRenderTarget(m_r->getWidth(),
 		m_r->getHeight(),
 		DEPTH_RT_PIXEL_FORMAT,
-		samples,
+		TextureUsageBit::FRAGMENT_SHADER_SAMPLED
+			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE
+			| TextureUsageBit::GENERATE_MIPMAPS,
 		SamplingFilter::NEAREST,
 		getDepthRtMipmapCount(),
 		m_depthRt);
@@ -44,7 +46,8 @@ Error Ms::createRt(U32 samples)
 	m_r->createRenderTarget(m_r->getWidth(),
 		m_r->getHeight(),
 		RT_PIXEL_FORMATS[0],
-		samples,
+		TextureUsageBit::FRAGMENT_SHADER_SAMPLED
+			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		SamplingFilter::NEAREST,
 		1,
 		m_rt0);
@@ -52,7 +55,8 @@ Error Ms::createRt(U32 samples)
 	m_r->createRenderTarget(m_r->getWidth(),
 		m_r->getHeight(),
 		RT_PIXEL_FORMATS[1],
-		samples,
+		TextureUsageBit::FRAGMENT_SHADER_SAMPLED
+			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		SamplingFilter::NEAREST,
 		1,
 		m_rt1);
@@ -60,7 +64,9 @@ Error Ms::createRt(U32 samples)
 	m_r->createRenderTarget(m_r->getWidth(),
 		m_r->getHeight(),
 		RT_PIXEL_FORMATS[2],
-		samples,
+		TextureUsageBit::FRAGMENT_SHADER_SAMPLED
+			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
+			| TextureUsageBit::GENERATE_MIPMAPS,
 		SamplingFilter::NEAREST,
 		getDepthRtMipmapCount(),
 		m_rt2);
@@ -75,16 +81,24 @@ Error Ms::createRt(U32 samples)
 	fbInit.m_colorAttachments[0].m_texture = m_rt0;
 	fbInit.m_colorAttachments[0].m_loadOperation = loadop;
 	fbInit.m_colorAttachments[0].m_clearValue.m_colorf = {{1.0, 0.0, 0.0, 0.0}};
+	fbInit.m_colorAttachments[0].m_usageInsideRenderPass =
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 	fbInit.m_colorAttachments[1].m_texture = m_rt1;
 	fbInit.m_colorAttachments[1].m_loadOperation = loadop;
 	fbInit.m_colorAttachments[1].m_clearValue.m_colorf = {{0.0, 1.0, 0.0, 0.0}};
+	fbInit.m_colorAttachments[1].m_usageInsideRenderPass =
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 	fbInit.m_colorAttachments[2].m_texture = m_rt2;
 	fbInit.m_colorAttachments[2].m_loadOperation = loadop;
 	fbInit.m_colorAttachments[2].m_clearValue.m_colorf = {{0.0, 0.0, 1.0, 0.0}};
+	fbInit.m_colorAttachments[2].m_usageInsideRenderPass =
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 	fbInit.m_depthStencilAttachment.m_texture = m_depthRt;
 	fbInit.m_depthStencilAttachment.m_loadOperation =
 		AttachmentLoadOperation::CLEAR;
 	fbInit.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0;
+	fbInit.m_depthStencilAttachment.m_usageInsideRenderPass =
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
 
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 

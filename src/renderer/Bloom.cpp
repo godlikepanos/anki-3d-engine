@@ -42,7 +42,8 @@ Error Bloom::initInternal(const ConfigSet& config)
 	m_r->createRenderTarget(m_extractExposure.m_width,
 		m_extractExposure.m_height,
 		RT_PIXEL_FORMAT,
-		1,
+		TextureUsageBit::FRAGMENT_SHADER_SAMPLED
+			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		SamplingFilter::LINEAR,
 		1,
 		m_extractExposure.m_rt);
@@ -50,7 +51,8 @@ Error Bloom::initInternal(const ConfigSet& config)
 	m_r->createRenderTarget(m_upscale.m_width,
 		m_upscale.m_height,
 		RT_PIXEL_FORMAT,
-		1,
+		TextureUsageBit::FRAGMENT_SHADER_SAMPLED
+			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 		SamplingFilter::LINEAR,
 		1,
 		m_upscale.m_rt);
@@ -61,9 +63,13 @@ Error Bloom::initInternal(const ConfigSet& config)
 	fbInit.m_colorAttachments[0].m_texture = m_extractExposure.m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation =
 		AttachmentLoadOperation::DONT_CARE;
+	fbInit.m_colorAttachments[0].m_usageInsideRenderPass =
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 	m_extractExposure.m_fb = gr.newInstance<Framebuffer>(fbInit);
 
 	fbInit.m_colorAttachments[0].m_texture = m_upscale.m_rt;
+	fbInit.m_colorAttachments[0].m_usageInsideRenderPass =
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
 	m_upscale.m_fb = gr.newInstance<Framebuffer>(fbInit);
 
 	// init shaders

@@ -309,6 +309,13 @@ void PipelineImpl::initVertexState()
 			cache.m_type = GL_UNSIGNED_BYTE;
 			cache.m_normalized = true;
 		}
+		else if(binding.m_format
+			== PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM))
+		{
+			cache.m_compCount = 3;
+			cache.m_type = GL_UNSIGNED_BYTE;
+			cache.m_normalized = true;
+		}
 		else
 		{
 			ANKI_ASSERT(0 && "TODO");

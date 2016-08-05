@@ -20,4 +20,4 @@ layout(ANKI_UBO_BINDING(0, 0), row_major) uniform u0_
 void main()
 {
 	gl_Position = u_mvp * vec4(in_position, 1.0);
-};
+}

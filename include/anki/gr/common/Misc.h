@@ -80,4 +80,9 @@ inline void checkTextureSurface(TextureType type,
 	};
 }
 
+/// Check the validity of the structure.
+Bool textureInitInfoValid(const TextureInitInfo& inf);
+
+Bool framebufferInitInfoValid(const FramebufferInitInfo& inf);
+
 } // end namespace anki

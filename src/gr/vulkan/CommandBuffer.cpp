@@ -215,8 +215,7 @@ void CommandBuffer::pushSecondLevelCommandBuffer(CommandBufferPtr cmdb)
 //==============================================================================
 Bool CommandBuffer::isEmpty() const
 {
-	// TODO
-	return false;
+	return m_impl->isEmpty();
 }
 
 } // end namespace anki

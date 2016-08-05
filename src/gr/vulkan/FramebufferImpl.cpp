@@ -31,7 +31,7 @@ FramebufferImpl::~FramebufferImpl()
 //==============================================================================
 Error FramebufferImpl::init(const FramebufferInitInfo& init)
 {
-	ANKI_ASSERT(init.isValid());
+	ANKI_ASSERT(framebufferInitInfoValid(init));
 	m_defaultFramebuffer = init.refersToDefaultFramebuffer();
 
 	ANKI_CHECK(initRenderPass(init));
@@ -84,9 +84,8 @@ void FramebufferImpl::setupAttachmentDescriptor(
 	VkAttachmentDescription& desc,
 	Bool depthStencil)
 {
-	VkImageLayout layout = (depthStencil)
-		? VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
-		: VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	VkImageLayout layout =
+		computeLayout(att.m_usageInsideRenderPass, depthStencil, 0, 1);
 
 	desc = {};
 	desc.format = (m_defaultFramebuffer)
@@ -125,8 +124,7 @@ Error FramebufferImpl::initRenderPass(const FramebufferInitInfo& init)
 		++ci.attachmentCount;
 	}
 
-	VkAttachmentReference dsReference = {
-		0, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL};
+	VkAttachmentReference dsReference = {};
 	if(hasDepthStencil)
 	{
 		setupAttachmentDescriptor(init.m_depthStencilAttachment,
@@ -134,7 +132,8 @@ Error FramebufferImpl::initRenderPass(const FramebufferInitInfo& init)
 			true);
 
 		dsReference.attachment = ci.attachmentCount;
-		dsReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		dsReference.layout = computeLayout(
+			init.m_depthStencilAttachment.m_usageInsideRenderPass, true, 0, 1);
 
 		++ci.attachmentCount;
 	}

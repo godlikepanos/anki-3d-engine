@@ -65,7 +65,7 @@ public:
 
 private:
 	Array<VkFramebuffer, MAX_FRAMES_IN_FLIGHT> m_framebuffers = {{
-		0,
+		VK_NULL_HANDLE,
 	}};
 	VkRenderPass m_renderPass = VK_NULL_HANDLE;
 	Array<VkClearValue, MAX_COLOR_ATTACHMENTS + 1> m_clearVals;

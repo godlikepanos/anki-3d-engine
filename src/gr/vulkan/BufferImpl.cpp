@@ -38,6 +38,7 @@ Error BufferImpl::init(
 	ci.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	ci.size = size;
 	ci.usage = convertBufferUsageBit(usage);
+	ci.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	ci.queueFamilyIndexCount = 1;
 	U32 queueIdx = getGrManagerImpl().getGraphicsQueueFamily();
 	ci.pQueueFamilyIndices = &queueIdx;
@@ -51,11 +52,11 @@ Error BufferImpl::init(
 	{
 		// Only write
 
-		// Device & host
+		// Device & host but not coherent
 		m_memIdx = getGrManagerImpl().findMemoryType(req.memoryTypeBits,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
 				| VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-			0);
+			VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
 		// Fallback: host and not coherent
 		if(m_memIdx == MAX_U32)
@@ -65,9 +66,10 @@ Error BufferImpl::init(
 				VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 		}
 
-		// Fallback: just host
+		// Fallback: any host
 		if(m_memIdx == MAX_U32)
 		{
+			ANKI_LOGW("Vulkan: Using a fallback mode for write-only buffer");
 			m_memIdx = getGrManagerImpl().findMemoryType(
 				req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, 0);
 		}
@@ -76,19 +78,28 @@ Error BufferImpl::init(
 	{
 		// Read or read/write
 
-		// Cached
+		// Cached & coherent
 		m_memIdx = getGrManagerImpl().findMemoryType(req.memoryTypeBits,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-				| VK_MEMORY_PROPERTY_HOST_CACHED_BIT,
+				| VK_MEMORY_PROPERTY_HOST_CACHED_BIT
+				| VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 			0);
 
-		// Fallback: Just coherent
+		// Fallback: Just cached
 		if(m_memIdx == MAX_U32)
 		{
 			m_memIdx = getGrManagerImpl().findMemoryType(req.memoryTypeBits,
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-					| VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+					| VK_MEMORY_PROPERTY_HOST_CACHED_BIT,
 				0);
+		}
+
+		// Fallback: Just host
+		if(m_memIdx == MAX_U32)
+		{
+			ANKI_LOGW("Vulkan: Using a fallback mode for read/write buffer");
+			m_memIdx = getGrManagerImpl().findMemoryType(
+				req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, 0);
 		}
 	}
 	else
@@ -112,6 +123,10 @@ Error BufferImpl::init(
 
 	ANKI_ASSERT(m_memIdx != MAX_U32);
 
+	const VkPhysicalDeviceMemoryProperties& props =
+		getGrManagerImpl().getMemoryProperties();
+	m_memoryFlags = props.memoryTypes[m_memIdx].propertyFlags;
+
 	// Allocate
 	getGrManagerImpl().allocateMemory(
 		m_memIdx, req.size, req.alignment, m_memHandle);
@@ -129,6 +144,7 @@ Error BufferImpl::init(
 void* BufferImpl::map(PtrSize offset, PtrSize range, BufferMapAccessBit access)
 {
 	ANKI_ASSERT(isCreated());
+	ANKI_ASSERT(access != BufferMapAccessBit::NONE);
 	ANKI_ASSERT((access & m_access) != BufferMapAccessBit::NONE);
 	ANKI_ASSERT(!m_mapped);
 	ANKI_ASSERT(offset + range <= m_size);
@@ -139,6 +155,8 @@ void* BufferImpl::map(PtrSize offset, PtrSize range, BufferMapAccessBit access)
 #if ANKI_ASSERTIONS
 	m_mapped = true;
 #endif
+
+	// TODO Flush or invalidate caches
 
 	return static_cast<void*>(static_cast<U8*>(ptr) + offset);
 }

@@ -101,36 +101,7 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 
 	vkBeginCommandBuffer(m_handle, &begin);
 
-	// If it's the frame's first command buffer then do the default fb image
-	// transition
-	if((m_flags & CommandBufferFlag::FRAME_FIRST)
-		== CommandBufferFlag::FRAME_FIRST)
-	{
-		// Default FB barrier/transition
-		setImageBarrier(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			VK_ACCESS_MEMORY_READ_BIT,
-			VK_IMAGE_LAYOUT_UNDEFINED,
-			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-			getGrManagerImpl().getDefaultSurfaceImage(
-				getGrManagerImpl().getFrame() % MAX_FRAMES_IN_FLIGHT),
-			VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
-	}
-
 	return ErrorCode::NONE;
-}
-
-//==============================================================================
-void CommandBufferImpl::commandCommon()
-{
-	ANKI_ASSERT(Thread::getCurrentThreadId() == m_tid
-		&& "Commands must be recorder and flushed by the thread this command "
-		   "buffer was created");
-
-	ANKI_ASSERT(!m_finalized);
-	ANKI_ASSERT(m_handle);
-	m_empty = false;
 }
 
 //==============================================================================
@@ -161,19 +132,10 @@ void CommandBufferImpl::beginRenderPass(FramebufferPtr fb)
 }
 
 //==============================================================================
-void CommandBufferImpl::endRenderPass()
-{
-	commandCommon();
-	ANKI_ASSERT(insideRenderPass());
-	ANKI_ASSERT(m_rpCommandCount > 0);
-
-	vkCmdEndRenderPass(m_handle);
-	m_activeFb.reset(nullptr);
-}
-
-//==============================================================================
 void CommandBufferImpl::beginRenderPassInternal()
 {
+	flushBarriers();
+
 	VkRenderPassBeginInfo bi = {};
 	bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	FramebufferImpl& impl = m_activeFb->getImplementation();
@@ -202,41 +164,34 @@ void CommandBufferImpl::beginRenderPassInternal()
 			getGrManagerImpl().getDefaultSurfaceWidth();
 		bi.renderArea.extent.height =
 			getGrManagerImpl().getDefaultSurfaceHeight();
+
+		// Perform the transition
+		setImageBarrier(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+			0,
+			VK_IMAGE_LAYOUT_UNDEFINED,
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+			getGrManagerImpl().getDefaultSurfaceImage(
+				getGrManagerImpl().getFrame() % MAX_FRAMES_IN_FLIGHT),
+			VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 	}
 
 	vkCmdBeginRenderPass(m_handle, &bi, m_subpassContents);
 }
 
 //==============================================================================
-void CommandBufferImpl::drawcallCommon()
+void CommandBufferImpl::endRenderPass()
 {
-	// Preconditions
 	commandCommon();
-	ANKI_ASSERT(insideRenderPass() || secondLevel());
-	ANKI_ASSERT(m_subpassContents == VK_SUBPASS_CONTENTS_MAX_ENUM
-		|| m_subpassContents == VK_SUBPASS_CONTENTS_INLINE);
-#if ANKI_ASSERTIONS
-	m_subpassContents = VK_SUBPASS_CONTENTS_INLINE;
-#endif
+	ANKI_ASSERT(insideRenderPass());
+	ANKI_ASSERT(m_rpCommandCount > 0);
 
-	if(ANKI_UNLIKELY(m_rpCommandCount == 0) && !secondLevel())
+	vkCmdEndRenderPass(m_handle);
+
+	// Default FB barrier/transition
+	if(m_activeFb->getImplementation().isDefaultFramebuffer())
 	{
-		beginRenderPassInternal();
-	}
-
-	++m_rpCommandCount;
-}
-
-//==============================================================================
-void CommandBufferImpl::endRecordingInternal()
-{
-	ANKI_ASSERT(!m_finalized);
-	ANKI_ASSERT(!m_empty);
-
-	if((m_flags & CommandBufferFlag::FRAME_LAST)
-		== CommandBufferFlag::FRAME_LAST)
-	{
-		// Default FB barrier/transition
 		setImageBarrier(VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
 			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
@@ -247,6 +202,17 @@ void CommandBufferImpl::endRecordingInternal()
 				getGrManagerImpl().getFrame() % MAX_FRAMES_IN_FLIGHT),
 			VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 	}
+
+	m_activeFb.reset(nullptr);
+}
+
+//==============================================================================
+void CommandBufferImpl::endRecordingInternal()
+{
+	flushBarriers();
+
+	ANKI_ASSERT(!m_finalized);
+	ANKI_ASSERT(!m_empty);
 
 	ANKI_VK_CHECKF(vkEndCommandBuffer(m_handle));
 	m_finalized = true;
@@ -316,6 +282,8 @@ void CommandBufferImpl::generateMipmaps(
 	TexturePtr tex, U depth, U face, U layer)
 {
 	commandCommon();
+	flushBarriers();
+
 	const TextureImpl& impl = tex->getImplementation();
 	ANKI_ASSERT(impl.m_type != TextureType::_3D && "Not design for that ATM");
 
@@ -380,6 +348,8 @@ void CommandBufferImpl::generateMipmaps(
 		blit.dstSubresource.mipLevel = i + 1;
 		blit.dstOffsets[0] = {0, 0, 0};
 		blit.dstOffsets[1] = {dstWidth, dstHeight, 1};
+
+		flushBarriers();
 
 		vkCmdBlitImage(m_handle,
 			impl.m_imageHandle,

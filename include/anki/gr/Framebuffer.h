@@ -24,6 +24,8 @@ public:
 	AttachmentLoadOperation m_loadOperation = AttachmentLoadOperation::CLEAR;
 	AttachmentStoreOperation m_storeOperation = AttachmentStoreOperation::STORE;
 	ClearValue m_clearValue;
+	TextureUsageBit m_usageInsideRenderPass =
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
 
 	FramebufferAttachmentInfo() = default;
 
@@ -79,12 +81,6 @@ public:
 	{
 		return m_colorAttachmentCount == 1
 			&& !m_colorAttachments[0].m_texture.isCreated();
-	}
-
-	Bool isValid() const
-	{
-		return m_colorAttachmentCount != 0
-			|| m_depthStencilAttachment.m_texture.isCreated();
 	}
 };
 

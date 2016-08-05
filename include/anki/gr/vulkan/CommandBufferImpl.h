@@ -40,16 +40,9 @@ public:
 		return m_renderedToDefaultFb;
 	}
 
-	Bool isTheFirstFramebufferOfTheFrame() const
+	Bool isEmpty() const
 	{
-		return (m_flags & CommandBufferFlag::FRAME_FIRST)
-			== CommandBufferFlag::FRAME_FIRST;
-	}
-
-	Bool isTheLastFramebufferOfTheFrame() const
-	{
-		return (m_flags & CommandBufferFlag::FRAME_LAST)
-			== CommandBufferFlag::FRAME_LAST;
+		return m_empty;
 	}
 
 	void setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy);
@@ -80,6 +73,7 @@ public:
 	void dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ)
 	{
 		commandCommon();
+		flushBarriers();
 		vkCmdDispatch(m_handle, groupCountX, groupCountY, groupCountZ);
 	}
 
@@ -175,6 +169,10 @@ private:
 	{
 		return (m_flags & CommandBufferFlag::SECOND_LEVEL)
 			!= CommandBufferFlag::NONE;
+	}
+
+	void flushBarriers()
+	{
 	}
 };
 /// @}

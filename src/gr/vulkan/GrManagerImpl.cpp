@@ -818,14 +818,6 @@ void GrManagerImpl::endFrame()
 
 	// Finalize
 	++m_frame;
-
-#if ANKI_ASSERTIONS
-	ANKI_ASSERT(m_cmdbWithIndicationThatIsFirstSubmitted
-		&& m_cmdbWithIndicationThatIsLastSubmitted
-		&& "Forgot to set some command buffer flags");
-	m_cmdbWithIndicationThatIsFirstSubmitted = false;
-	m_cmdbWithIndicationThatIsLastSubmitted = false;
-#endif
 }
 
 //==============================================================================
@@ -953,20 +945,6 @@ void GrManagerImpl::flushCommandBuffer(CommandBufferPtr cmdb,
 	LockGuard<Mutex> lock(m_queueSubmitMtx);
 
 	frame.m_cmdbsSubmitted.pushBack(getAllocator(), cmdb);
-
-#if ANKI_ASSERTIONS
-	if(impl.isTheFirstFramebufferOfTheFrame())
-	{
-		ANKI_ASSERT(m_cmdbWithIndicationThatIsFirstSubmitted == false);
-		m_cmdbWithIndicationThatIsFirstSubmitted = true;
-	}
-
-	if(impl.isTheLastFramebufferOfTheFrame())
-	{
-		ANKI_ASSERT(m_cmdbWithIndicationThatIsLastSubmitted == false);
-		m_cmdbWithIndicationThatIsLastSubmitted = true;
-	}
-#endif
 
 	ANKI_VK_CHECKF(vkQueueSubmit(m_queue, 1, &submit, fence->getHandle()));
 }

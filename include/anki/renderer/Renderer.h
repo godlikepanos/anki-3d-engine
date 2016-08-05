@@ -301,7 +301,7 @@ anki_internal:
 	void createRenderTarget(U32 w,
 		U32 h,
 		const PixelFormat& format,
-		U32 samples,
+		TextureUsageBit usage,
 		SamplingFilter filter,
 		U mipsCount,
 		TexturePtr& rt);

@@ -43,7 +43,8 @@ Error Pps::initInternal(const ConfigSet& config)
 	m_r->createRenderTarget(m_r->getWidth(),
 		m_r->getHeight(),
 		RT_PIXEL_FORMAT,
-		1,
+		TextureUsageBit::FRAGMENT_SHADER_SAMPLED
+			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		SamplingFilter::LINEAR,
 		1,
 		m_rt);
@@ -53,6 +54,8 @@ Error Pps::initInternal(const ConfigSet& config)
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation =
 		AttachmentLoadOperation::DONT_CARE;
+	fbInit.m_colorAttachments[0].m_usageInsideRenderPass =
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 	// SProg

@@ -102,14 +102,16 @@ inline void CommandBufferImpl::setImageBarrier(TexturePtr tex,
 {
 	if(surf.m_level > 0)
 	{
-		ANKI_ASSERT((nextUsage & TextureUsageBit::GENERATE_MIPMAPS)
-				== TextureUsageBit::NONE
+		ANKI_ASSERT(!(nextUsage & TextureUsageBit::GENERATE_MIPMAPS)
 			&& "This transition happens inside "
 			   "CommandBufferImpl::generateMipmaps");
 	}
 
 	const TextureImpl& impl = tex->getImplementation();
-	tex->getImplementation().checkSurface(surf);
+	ANKI_ASSERT(impl.usageValid(prevUsage));
+	ANKI_ASSERT(impl.usageValid(nextUsage));
+
+	impl.checkSurface(surf);
 	Bool isDepthStencil = formatIsDepthStencil(impl.m_format);
 
 	VkPipelineStageFlags srcStage;
@@ -151,6 +153,8 @@ inline void CommandBufferImpl::uploadTextureSurface(TexturePtr tex,
 	const TransientMemoryToken& token)
 {
 	commandCommon();
+	flushBarriers();
+
 	TextureImpl& impl = tex->getImplementation();
 	impl.checkSurface(surf);
 
@@ -201,6 +205,8 @@ inline void CommandBufferImpl::drawElements(U32 count,
 inline void CommandBufferImpl::beginOcclusionQuery(OcclusionQueryPtr query)
 {
 	commandCommon();
+	flushBarriers();
+
 	VkQueryPool handle = query->getImplementation().m_handle;
 	ANKI_ASSERT(handle);
 
@@ -214,6 +220,7 @@ inline void CommandBufferImpl::beginOcclusionQuery(OcclusionQueryPtr query)
 inline void CommandBufferImpl::endOcclusionQuery(OcclusionQueryPtr query)
 {
 	commandCommon();
+
 	VkQueryPool handle = query->getImplementation().m_handle;
 	ANKI_ASSERT(handle);
 
@@ -228,6 +235,7 @@ inline void CommandBufferImpl::clearTexture(TexturePtr tex,
 	const ClearValue& clearValue)
 {
 	commandCommon();
+	flushBarriers();
 	const TextureImpl& impl = tex->getImplementation();
 
 	VkClearColorValue vclear;
@@ -250,6 +258,8 @@ inline void CommandBufferImpl::clearTexture(TexturePtr tex,
 	{
 		ANKI_ASSERT(0 && "TODO");
 	}
+
+	m_texList.pushBack(m_alloc, tex);
 }
 
 //==============================================================================
@@ -257,12 +267,15 @@ inline void CommandBufferImpl::uploadBuffer(
 	BufferPtr buff, PtrSize offset, const TransientMemoryToken& token)
 {
 	commandCommon();
+	flushBarriers();
 	BufferImpl& impl = buff->getImplementation();
 
 	VkBufferCopy region;
 	region.srcOffset = token.m_offset;
 	region.dstOffset = offset;
 	region.size = token.m_range;
+
+	ANKI_ASSERT(offset + token.m_range <= impl.getSize());
 
 	vkCmdCopyBuffer(m_handle,
 		impl.getHandle(),
@@ -297,6 +310,38 @@ inline void CommandBufferImpl::pushSecondLevelCommandBuffer(
 
 	++m_rpCommandCount;
 	m_cmdbList.pushBack(m_alloc, cmdb);
+}
+
+//==============================================================================
+inline void CommandBufferImpl::drawcallCommon()
+{
+	// Preconditions
+	commandCommon();
+	ANKI_ASSERT(insideRenderPass() || secondLevel());
+	ANKI_ASSERT(m_subpassContents == VK_SUBPASS_CONTENTS_MAX_ENUM
+		|| m_subpassContents == VK_SUBPASS_CONTENTS_INLINE);
+#if ANKI_ASSERTIONS
+	m_subpassContents = VK_SUBPASS_CONTENTS_INLINE;
+#endif
+
+	if(ANKI_UNLIKELY(m_rpCommandCount == 0) && !secondLevel())
+	{
+		beginRenderPassInternal();
+	}
+
+	++m_rpCommandCount;
+}
+
+//==============================================================================
+inline void CommandBufferImpl::commandCommon()
+{
+	ANKI_ASSERT(Thread::getCurrentThreadId() == m_tid
+		&& "Commands must be recorder and flushed by the thread this command "
+		   "buffer was created");
+
+	ANKI_ASSERT(!m_finalized);
+	ANKI_ASSERT(m_handle);
+	m_empty = false;
 }
 
 } // end namespace anki

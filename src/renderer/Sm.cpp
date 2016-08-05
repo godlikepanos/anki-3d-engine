@@ -34,6 +34,8 @@ Error Sm::init(const ConfigSet& config)
 
 	// Create shadowmaps array
 	TextureInitInfo sminit;
+	sminit.m_usage = TextureUsageBit::FRAGMENT_SHADER_SAMPLED
+		| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
 	sminit.m_type = TextureType::_2D_ARRAY;
 	sminit.m_width = m_resolution;
 	sminit.m_height = m_resolution;
@@ -57,6 +59,8 @@ Error Sm::init(const ConfigSet& config)
 	fbInit.m_depthStencilAttachment.m_texture = m_spotTexArray;
 	fbInit.m_depthStencilAttachment.m_loadOperation =
 		AttachmentLoadOperation::CLEAR;
+	fbInit.m_depthStencilAttachment.m_usageInsideRenderPass =
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
 	fbInit.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0;
 
 	U layer = 0;

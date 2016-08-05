@@ -85,12 +85,6 @@ enum class CommandBufferFlag : U8
 
 	SECOND_LEVEL = 1 << 0,
 
-	/// The command buffer is the frame's first. Or one of the first.
-	FRAME_FIRST = 1 << 1,
-
-	/// The command buffer is the frame's last. Or one of the last.
-	FRAME_LAST = 1 << 2,
-
 	/// It will contain a handfull of commands.
 	SMALL_BATCH = 1 << 3,
 

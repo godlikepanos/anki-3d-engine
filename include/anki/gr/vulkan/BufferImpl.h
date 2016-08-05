@@ -39,6 +39,7 @@ public:
 #if ANKI_ASSERTIONS
 		m_mapped = false;
 #endif
+		// TODO Flush or invalidate caches
 	}
 
 	VkBuffer getHandle() const
@@ -47,12 +48,19 @@ public:
 		return m_handle;
 	}
 
+	PtrSize getSize() const
+	{
+		ANKI_ASSERT(m_size);
+		return m_size;
+	}
+
 private:
 	VkBuffer m_handle = VK_NULL_HANDLE;
 	GpuMemoryAllocationHandle m_memHandle;
 	U32 m_memIdx = 0;
 	BufferMapAccessBit m_access = BufferMapAccessBit::NONE;
 	U32 m_size = 0;
+	VkMemoryPropertyFlags m_memoryFlags = 0;
 
 #if ANKI_ASSERTIONS
 	Bool8 m_mapped = false;

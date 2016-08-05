@@ -187,6 +187,11 @@ public:
 	{
 		return m_transientMem;
 	}
+
+	const VkPhysicalDeviceMemoryProperties& getMemoryProperties() const
+	{
+		return m_memoryProperties;
+	}
 	/// @}
 
 private:
@@ -282,12 +287,7 @@ private:
 
 	FenceFactory m_fences;
 	SemaphoreFactory m_semaphores;
-/// @}
-
-#if ANKI_ASSERTIONS
-	Bool8 m_cmdbWithIndicationThatIsFirstSubmitted = false;
-	Bool8 m_cmdbWithIndicationThatIsLastSubmitted = false;
-#endif
+	/// @}
 
 	ANKI_USE_RESULT Error initInternal(const GrManagerInitInfo& init);
 	ANKI_USE_RESULT Error initInstance(const GrManagerInitInfo& init);

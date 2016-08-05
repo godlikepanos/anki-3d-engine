@@ -197,12 +197,16 @@ void Ir::initFaceInfo(U cacheEntryIdx, U faceIdx)
 		fbInit.m_colorAttachments[j].m_texture = face.m_gbufferColorRts[j];
 		fbInit.m_colorAttachments[j].m_loadOperation =
 			AttachmentLoadOperation::DONT_CARE;
+		fbInit.m_colorAttachments[j].m_usageInsideRenderPass =
+			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 	}
 
 	fbInit.m_depthStencilAttachment.m_texture = face.m_gbufferDepthRt;
 	fbInit.m_depthStencilAttachment.m_loadOperation =
 		AttachmentLoadOperation::CLEAR;
 	fbInit.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0;
+	fbInit.m_depthStencilAttachment.m_usageInsideRenderPass =
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
 
 	face.m_msFb = getGrManager().newInstance<Framebuffer>(fbInit);
 
@@ -215,9 +219,14 @@ void Ir::initFaceInfo(U cacheEntryIdx, U faceIdx)
 	fbInit.m_colorAttachments[0].m_surface.m_face = faceIdx;
 	fbInit.m_colorAttachments[0].m_loadOperation =
 		AttachmentLoadOperation::CLEAR;
+	fbInit.m_colorAttachments[0].m_usageInsideRenderPass =
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
 	fbInit.m_depthStencilAttachment.m_loadOperation =
 		AttachmentLoadOperation::LOAD;
 	fbInit.m_depthStencilAttachment.m_texture = face.m_gbufferDepthRt;
+	fbInit.m_depthStencilAttachment.m_usageInsideRenderPass =
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ
+		| TextureUsageBit::FRAGMENT_SHADER_SAMPLED;
 
 	face.m_isFb = getGrManager().newInstance<Framebuffer>(fbInit);
 
@@ -249,6 +258,8 @@ void Ir::initFaceInfo(U cacheEntryIdx, U faceIdx)
 	fbInit.m_colorAttachments[0].m_surface.m_face = faceIdx;
 	fbInit.m_colorAttachments[0].m_loadOperation =
 		AttachmentLoadOperation::DONT_CARE;
+	fbInit.m_colorAttachments[0].m_usageInsideRenderPass =
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 
 	face.m_irradianceFb = getGrManager().newInstance<Framebuffer>(fbInit);
 }
