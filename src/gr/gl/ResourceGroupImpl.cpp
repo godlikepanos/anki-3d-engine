@@ -108,11 +108,26 @@ void ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 		m_ssbosCount,
 		resourcesCount,
 		transCount);
-	initBuffers(init.m_atomicBuffers,
-		m_atomics,
-		m_atomicsCount,
-		resourcesCount,
-		transCount);
+
+	// Init images
+	for(U i = 0; i < MAX_IMAGE_BINDINGS; ++i)
+	{
+		const auto& in = init.m_images[i];
+		if(in.m_texture)
+		{
+			TextureImpl& impl = in.m_texture->getImplementation();
+			impl.checkSurface(TextureSurfaceInfo(in.m_level, 0, 0, 0));
+
+			ImageBinding& out = m_images[i];
+
+			out.m_name = in.m_texture->getImplementation().getGlName();
+			out.m_level = in.m_level;
+			out.m_format = impl.m_internalFormat;
+
+			++m_imageCount;
+			++resourcesCount;
+		}
+	}
 
 	// Init vert buffers
 	m_vertBindingsCount = 0;
@@ -206,12 +221,12 @@ void ResourceGroupImpl::initResourceReferences(
 		}
 	}
 
-	for(U i = 0; i < init.m_atomicBuffers.getSize(); ++i)
+	for(U i = 0; i < MAX_IMAGE_BINDINGS; ++i)
 	{
-		const BufferBinding& binding = init.m_atomicBuffers[i];
-		if(binding.m_buffer.isCreated())
+		const auto& binding = init.m_images[i];
+		if(binding.m_texture)
 		{
-			m_refs[count++] = binding.m_buffer;
+			m_refs[count++] = binding.m_texture;
 		}
 	}
 
@@ -332,23 +347,19 @@ void ResourceGroupImpl::bind(
 		}
 	}
 
-	// Atomic
-	for(U i = 0; i < m_atomicsCount; ++i)
+	// Images
+	for(U i = 0; i < m_imageCount; ++i)
 	{
-		const auto& binding = m_atomics[i];
-		if(binding.m_name == MAX_U32)
+		const ImageBinding& binding = m_images[i];
+		if(binding.m_name)
 		{
-			// Transient
-			ANKI_ASSERT(0);
-		}
-		else if(binding.m_name != 0)
-		{
-			// Static
-			glBindBufferRange(GL_ATOMIC_COUNTER_BUFFER,
-				MAX_ATOMIC_BUFFER_BINDINGS * slot + i,
+			glBindImageTexture(MAX_IMAGE_BINDINGS * slot + i,
 				binding.m_name,
-				binding.m_offset,
-				binding.m_range);
+				binding.m_level,
+				GL_TRUE,
+				0,
+				GL_READ_WRITE,
+				binding.m_format);
 		}
 	}
 

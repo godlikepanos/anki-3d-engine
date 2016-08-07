@@ -16,6 +16,9 @@
 namespace anki
 {
 
+// Forward
+class TextureFallbackUploader;
+
 /// @addtogroup vulkan
 /// @{
 
@@ -194,6 +197,12 @@ public:
 	}
 	/// @}
 
+	TextureFallbackUploader& getTextureFallbackUploader()
+	{
+		ANKI_ASSERT(m_texUploader);
+		return *m_texUploader;
+	}
+
 private:
 	GrManager* m_manager = nullptr;
 
@@ -288,6 +297,8 @@ private:
 	FenceFactory m_fences;
 	SemaphoreFactory m_semaphores;
 	/// @}
+
+	TextureFallbackUploader* m_texUploader = nullptr;
 
 	ANKI_USE_RESULT Error initInternal(const GrManagerInitInfo& init);
 	ANKI_USE_RESULT Error initInstance(const GrManagerInitInfo& init);

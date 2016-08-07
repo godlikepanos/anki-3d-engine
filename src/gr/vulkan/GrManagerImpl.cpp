@@ -9,6 +9,7 @@
 #include <anki/gr/Pipeline.h>
 #include <anki/gr/vulkan/CommandBufferImpl.h>
 #include <anki/gr/CommandBuffer.h>
+#include <anki/gr/vulkan/TextureMisc.h>
 
 #include <anki/util/HashMap.h>
 #include <anki/util/Hash.h>
@@ -107,6 +108,11 @@ GrManagerImpl::~GrManagerImpl()
 	m_perThread.destroy(getAllocator());
 
 	// THIRD THING: Continue with the rest
+	if(m_texUploader)
+	{
+		getAllocator().deleteInstance(m_texUploader);
+	}
+
 	if(m_renderPasses)
 	{
 		auto it = m_renderPasses->m_hashmap.getBegin();
@@ -209,6 +215,9 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	glslang::InitializeProcess();
 	m_fences.init(getAllocator(), m_device);
 	m_semaphores.init(getAllocator(), m_device);
+
+	m_texUploader = getAllocator().newInstance<TextureFallbackUploader>(this);
+	ANKI_CHECK(m_texUploader->init());
 
 	return ErrorCode::NONE;
 }

@@ -34,6 +34,14 @@ public:
 	Bool m_uploadedMemory = false;
 };
 
+/// Image binding info.
+class ImageBinding
+{
+public:
+	TexturePtr m_texture;
+	U8 m_level = 0;
+};
+
 /// Resource group initializer.
 class ResourceGroupInitInfo
 {
@@ -41,7 +49,7 @@ public:
 	Array<TextureBinding, MAX_TEXTURE_BINDINGS> m_textures;
 	Array<BufferBinding, MAX_UNIFORM_BUFFER_BINDINGS> m_uniformBuffers;
 	Array<BufferBinding, MAX_STORAGE_BUFFER_BINDINGS> m_storageBuffers;
-	Array<BufferBinding, MAX_ATOMIC_BUFFER_BINDINGS> m_atomicBuffers;
+	Array<ImageBinding, MAX_IMAGE_BINDINGS> m_images;
 	Array<BufferBinding, MAX_VERTEX_ATTRIBUTES> m_vertexBuffers;
 	BufferBinding m_indexBuffer;
 	I8 m_indexSize = -1; ///< Index size in bytes. 2 or 4

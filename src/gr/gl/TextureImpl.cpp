@@ -635,7 +635,7 @@ void TextureImpl::clear(
 		height,
 		1,
 		m_format,
-		m_type,
+		GL_FLOAT,
 		&clearValue.m_colorf[0]);
 }
 

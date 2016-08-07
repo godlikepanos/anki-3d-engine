@@ -133,6 +133,8 @@ void RenderingThread::start()
 		m_manager->newInstance<CommandBuffer>(CommandBufferInitInfo());
 	m_swapBuffersCommands->getImplementation()
 		.pushBackNewCommand<SwapBuffersCommand>(this);
+	// Just in case noone swaps
+	m_swapBuffersCommands->getImplementation().makeExecuted();
 
 	m_manager->getImplementation().pinContextToCurrentThread(false);
 

@@ -43,7 +43,6 @@ Error MyApp::init(int argc, char* argv[])
 	ANKI_CHECK(App::init(config, allocAligned, nullptr));
 
 	// Other init
-	SceneGraph& scene = getSceneGraph();
 	MainRenderer& renderer = getMainRenderer();
 	ResourceManager& resources = getResourceManager();
 
@@ -72,6 +71,7 @@ Error MyApp::init(int argc, char* argv[])
 		"textures/adis/dungeon.ankitex"));
 
 #if PLAYER
+	SceneGraph& scene = getSceneGraph();
 	SceneNode& cam = scene.getActiveCamera();
 
 	PlayerNode* pnode;

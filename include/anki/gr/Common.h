@@ -112,7 +112,6 @@ public:
 };
 
 // Some constants
-// WARNING: If you change those you may need to update the shaders.
 const U MAX_VERTEX_ATTRIBUTES = 8;
 const U MAX_COLOR_ATTACHMENTS = 4;
 const U MAX_MIPMAPS = 16;
@@ -121,6 +120,7 @@ const U MAX_TEXTURE_BINDINGS = 10;
 const U MAX_UNIFORM_BUFFER_BINDINGS = 4;
 const U MAX_STORAGE_BUFFER_BINDINGS = 4;
 const U MAX_ATOMIC_BUFFER_BINDINGS = 1;
+const U MAX_IMAGE_BINDINGS = 4;
 const U MAX_FRAMES_IN_FLIGHT = 3; ///< Triple buffering.
 /// Groups that can be bound at the same time.
 const U MAX_BOUND_RESOURCE_GROUPS = 2;

@@ -43,6 +43,14 @@ private:
 		U32 m_range = 0;
 	};
 
+	class ImageBinding
+	{
+	public:
+		GLuint m_name = 0;
+		U16 m_level = 0;
+		GLenum m_format = GL_NONE;
+	};
+
 	Array<GLuint, MAX_TEXTURE_BINDINGS> m_textureNames;
 	Array<GLuint, MAX_TEXTURE_BINDINGS> m_samplerNames;
 	U8 m_textureNamesCount = 0;
@@ -54,8 +62,8 @@ private:
 	Array<InternalBufferBinding, MAX_STORAGE_BUFFER_BINDINGS> m_ssbos;
 	U8 m_ssbosCount = 0;
 
-	Array<InternalBufferBinding, MAX_ATOMIC_BUFFER_BINDINGS> m_atomics;
-	U8 m_atomicsCount = 0;
+	Array<ImageBinding, MAX_IMAGE_BINDINGS> m_images;
+	U8 m_imageCount = 0;
 
 	Array<GLuint, MAX_VERTEX_ATTRIBUTES> m_vertBuffNames;
 	Array<GLintptr, MAX_VERTEX_ATTRIBUTES> m_vertBuffOffsets;

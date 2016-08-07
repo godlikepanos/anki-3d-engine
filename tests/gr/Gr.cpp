@@ -229,6 +229,29 @@ void main()
 	out_color = vec4(col1 + col0, 1.0);
 })";
 
+static const char* FRAG_SIMPLE_TEX_SRC = R"(
+layout (location = 0) out vec4 out_color;
+layout(location = 0) in vec2 in_uv;
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_tex0;
+
+void main()
+{
+	out_color = textureLod(u_tex0, in_uv, 1.0);
+})";
+
+static const char* COMP_WRITE_IMAGE_SRC = R"(
+layout(ANKI_IMAGE_BINDING(0, 0), rgba8) writeonly uniform image2D u_img;
+
+layout(local_size_x = 1,
+	local_size_y = 1,
+	local_size_z = 1) in;
+	
+void main()
+{
+	vec4 col = vec4(1.0, 0.0, 0.0, 0.0);
+	imageStore(u_img, ivec2(gl_WorkGroupID.x, gl_WorkGroupID.y), col);
+})";
+
 #define COMMON_BEGIN()                                                         \
 	NativeWindow* win = nullptr;                                               \
 	GrManager* gr = nullptr;                                                   \
@@ -1248,6 +1271,128 @@ ANKI_TEST(Gr, DrawWithSecondLevel)
 	COMMON_BEGIN();
 	{
 		drawOffscreen(*gr, true);
+	}
+	COMMON_END();
+}
+
+//==============================================================================
+ANKI_TEST(Gr, ImageLoadStore)
+{
+	COMMON_BEGIN();
+	{
+		TextureInitInfo init;
+		init.m_width = init.m_height = 4;
+		init.m_mipmapsCount = 2;
+		init.m_usage = TextureUsageBit::CLEAR
+			| TextureUsageBit::ANY_SHADER_SAMPLED
+			| TextureUsageBit::COMPUTE_SHADER_IMAGE_WRITE;
+		init.m_type = TextureType::_2D;
+		init.m_format =
+			PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
+		init.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
+
+		TexturePtr tex = gr->newInstance<Texture>(init);
+
+		// Ppline
+		PipelinePtr ppline =
+			createSimplePpline(VERT_QUAD_SRC, FRAG_SIMPLE_TEX_SRC, *gr);
+
+		// Create shader & compute ppline
+		ShaderPtr shader =
+			gr->newInstance<Shader>(ShaderType::COMPUTE, COMP_WRITE_IMAGE_SRC);
+
+		PipelineInitInfo ppinit;
+		ppinit.m_shaders[ShaderType::COMPUTE] = shader;
+		PipelinePtr compPpline = gr->newInstance<Pipeline>(ppinit);
+
+		// RC group
+		ResourceGroupInitInfo rcinit;
+		rcinit.m_textures[0].m_texture = tex;
+		ResourceGroupPtr rc0 = gr->newInstance<ResourceGroup>(rcinit);
+
+		rcinit = ResourceGroupInitInfo();
+		rcinit.m_images[0].m_texture = tex;
+		rcinit.m_images[0].m_level = 1;
+		ResourceGroupPtr rc1 = gr->newInstance<ResourceGroup>(rcinit);
+
+		// FB
+		FramebufferPtr dfb = createDefaultFb(*gr);
+
+		// Write texture data
+		CommandBufferInitInfo cmdbinit;
+		CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cmdbinit);
+
+		cmdb->setTextureBarrier(tex,
+			TextureUsageBit::NONE,
+			TextureUsageBit::CLEAR,
+			TextureSurfaceInfo(0, 0, 0, 0));
+
+		ClearValue clear;
+		clear.m_colorf = {{0.0, 1.0, 0.0, 1.0}};
+		cmdb->clearTexture(tex, TextureSurfaceInfo(0, 0, 0, 0), clear);
+
+		cmdb->setTextureBarrier(tex,
+			TextureUsageBit::CLEAR,
+			TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+			TextureSurfaceInfo(0, 0, 0, 0));
+
+		cmdb->setTextureBarrier(tex,
+			TextureUsageBit::NONE,
+			TextureUsageBit::CLEAR,
+			TextureSurfaceInfo(1, 0, 0, 0));
+
+		clear.m_colorf = {{0.0, 0.0, 1.0, 1.0}};
+		cmdb->clearTexture(tex, TextureSurfaceInfo(1, 0, 0, 0), clear);
+
+		cmdb->setTextureBarrier(tex,
+			TextureUsageBit::CLEAR,
+			TextureUsageBit::COMPUTE_SHADER_IMAGE_WRITE,
+			TextureSurfaceInfo(1, 0, 0, 0));
+
+		cmdb->flush();
+
+		const U ITERATION_COUNT = 100;
+		U iterations = ITERATION_COUNT;
+		while(iterations--)
+		{
+			HighRezTimer timer;
+			timer.start();
+			gr->beginFrame();
+
+			CommandBufferInitInfo cinit;
+			CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
+
+			// Write iamge
+			cmdb->bindPipeline(compPpline);
+			cmdb->bindResourceGroup(rc1, 0, nullptr);
+			cmdb->dispatchCompute(WIDTH / 2, HEIGHT / 2, 1);
+			cmdb->setTextureBarrier(tex,
+				TextureUsageBit::COMPUTE_SHADER_IMAGE_WRITE,
+				TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+				TextureSurfaceInfo(1, 0, 0, 0));
+
+			// Present image
+			cmdb->setPolygonOffset(0.0, 0.0);
+			cmdb->setViewport(0, 0, WIDTH, HEIGHT);
+
+			cmdb->bindPipeline(ppline);
+			cmdb->beginRenderPass(dfb);
+			cmdb->bindResourceGroup(rc0, 0, nullptr);
+			cmdb->drawArrays(6);
+			cmdb->endRenderPass();
+
+			cmdb->flush();
+
+			// End
+			gr->swapBuffers();
+
+			timer.stop();
+			const F32 TICK = 1.0 / 30.0;
+			if(timer.getElapsedTime() < TICK)
+			{
+				HighRezTimer::sleep(TICK - timer.getElapsedTime());
+			}
+		}
 	}
 	COMMON_END();
 }

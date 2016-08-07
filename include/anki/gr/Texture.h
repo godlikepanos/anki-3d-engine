@@ -44,9 +44,9 @@ public:
 	TextureUsageBit m_initialUsage = TextureUsageBit::NONE;
 	U32 m_width = 0;
 	U32 m_height = 0;
-	U32 m_depth = 0; //< Relevant only for 3D textures.
-	U32 m_layerCount = 0; ///< Relevant only for texture arrays.
-	U8 m_mipmapsCount = 0;
+	U32 m_depth = 1; //< Relevant only for 3D textures.
+	U32 m_layerCount = 1; ///< Relevant only for texture arrays.
+	U8 m_mipmapsCount = 1;
 
 	PixelFormat m_format;
 	U8 m_samples = 1;
