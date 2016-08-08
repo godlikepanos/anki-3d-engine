@@ -112,7 +112,6 @@ inline void CommandBufferImpl::setImageBarrier(TexturePtr tex,
 	ANKI_ASSERT(impl.usageValid(nextUsage));
 
 	impl.checkSurface(surf);
-	Bool isDepthStencil = formatIsDepthStencil(impl.m_format);
 
 	VkPipelineStageFlags srcStage;
 	VkAccessFlags srcAccess;
@@ -120,19 +119,15 @@ inline void CommandBufferImpl::setImageBarrier(TexturePtr tex,
 	VkPipelineStageFlags dstStage;
 	VkAccessFlags dstAccess;
 	VkImageLayout newLayout;
-	computeBarrierInfo(prevUsage,
+	impl.computeBarrierInfo(prevUsage,
 		nextUsage,
-		isDepthStencil,
 		surf.m_level,
-		impl.m_mipCount,
 		srcStage,
 		srcAccess,
 		dstStage,
 		dstAccess);
-	oldLayout =
-		computeLayout(prevUsage, isDepthStencil, surf.m_level, impl.m_mipCount);
-	newLayout =
-		computeLayout(nextUsage, isDepthStencil, surf.m_level, impl.m_mipCount);
+	oldLayout = impl.computeLayout(prevUsage, surf.m_level);
+	newLayout = impl.computeLayout(nextUsage, surf.m_level);
 
 	VkImageSubresourceRange range;
 	impl.computeSubResourceRange(surf, range);

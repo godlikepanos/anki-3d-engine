@@ -43,6 +43,13 @@ TextureImpl::~TextureImpl()
 		vkDestroyImageView(getDevice(), m_viewHandle, nullptr);
 	}
 
+	for(VkImageView view : m_viewsEveryLevel)
+	{
+		vkDestroyImageView(getDevice(), view, nullptr);
+	}
+
+	m_viewsEveryLevel.destroy(getAllocator());
+
 	if(m_imageHandle)
 	{
 		vkDestroyImage(getDevice(), m_imageHandle, nullptr);
@@ -154,7 +161,9 @@ Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 
 	m_layerCount = init.m_layerCount;
 
-	if(formatIsDepthStencil(init.m_format))
+	m_format = init.m_format;
+	m_depthStencil = formatIsDepthStencil(m_format);
+	if(m_depthStencil)
 	{
 		m_aspect = VK_IMAGE_ASPECT_DEPTH_BIT;
 	}
@@ -164,7 +173,6 @@ Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 	}
 
 	m_usage = init.m_usage;
-	m_format = init.m_format;
 
 	CreateContext ctx;
 	ctx.m_init = init;
@@ -178,10 +186,7 @@ Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 		ANKI_ASSERT(!(init.m_initialUsage & TextureUsageBit::GENERATE_MIPMAPS)
 			&& "That doesn't make any sense");
 
-		VkImageLayout initialLayout = computeLayout(init.m_initialUsage,
-			formatIsDepthStencil(init.m_format),
-			0,
-			m_mipCount);
+		VkImageLayout initialLayout = computeLayout(init.m_initialUsage, 0);
 
 		CommandBufferInitInfo cmdbinit;
 		cmdbinit.m_flags =
@@ -348,7 +353,256 @@ Error TextureImpl::initView(CreateContext& ctx)
 
 	ANKI_VK_CHECK(vkCreateImageView(getDevice(), &ci, nullptr, &m_viewHandle));
 
+	// Create the rest of the views
+	if(!!(m_usage & TextureUsageBit::COMPUTE_SHADER_IMAGE_READ_WRITE))
+	{
+		ci.subresourceRange.levelCount = 1;
+
+		m_viewsEveryLevel.create(getAllocator(), m_mipCount - 1);
+
+		for(U i = 0; i < m_viewsEveryLevel.getSize(); ++i)
+		{
+			ci.subresourceRange.baseArrayLayer = i + 1;
+			ANKI_VK_CHECK(vkCreateImageView(
+				getDevice(), &ci, nullptr, &m_viewsEveryLevel[i]));
+		}
+	}
+
 	return ErrorCode::NONE;
+}
+
+//==============================================================================
+void TextureImpl::computeBarrierInfo(TextureUsageBit before,
+	TextureUsageBit after,
+	U level,
+	VkPipelineStageFlags& srcStages,
+	VkAccessFlags& srcAccesses,
+	VkPipelineStageFlags& dstStages,
+	VkAccessFlags& dstAccesses) const
+{
+	ANKI_ASSERT(level < m_mipCount);
+	ANKI_ASSERT(usageValid(before) && usageValid(after));
+	srcStages = 0;
+	srcAccesses = 0;
+	dstStages = 0;
+	dstAccesses = 0;
+	Bool lastLevel = level == m_mipCount - 1u;
+
+	//
+	// Before
+	//
+	if(!!(before & TextureUsageBit::FRAGMENT_SHADER_SAMPLED))
+	{
+		srcStages |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		srcAccesses |= VK_ACCESS_SHADER_READ_BIT;
+	}
+
+	if(!!(before & TextureUsageBit::COMPUTE_SHADER_SAMPLED))
+	{
+		srcStages |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+		srcAccesses |= VK_ACCESS_SHADER_READ_BIT;
+	}
+
+	if(!!(before & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ))
+	{
+		if(m_depthStencil)
+		{
+			srcStages |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT
+				| VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+			srcAccesses |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+		}
+		else
+		{
+			srcStages |= VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
+			srcAccesses |= VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+		}
+	}
+
+	if(!!(before & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE))
+	{
+		srcStages |= VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
+
+		if(m_depthStencil)
+		{
+			srcAccesses |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+		}
+		else
+		{
+			srcAccesses |= VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		}
+	}
+
+	if(!!(before & TextureUsageBit::GENERATE_MIPMAPS))
+	{
+		srcStages |= VK_PIPELINE_STAGE_TRANSFER_BIT;
+
+		if(!lastLevel)
+		{
+			srcAccesses |= VK_ACCESS_TRANSFER_READ_BIT;
+		}
+		else
+		{
+			srcAccesses |= VK_ACCESS_TRANSFER_WRITE_BIT;
+		}
+	}
+
+	if(!!(before & TextureUsageBit::UPLOAD))
+	{
+		srcStages |= VK_PIPELINE_STAGE_TRANSFER_BIT;
+		srcAccesses |= VK_ACCESS_TRANSFER_WRITE_BIT;
+	}
+
+	if(!!(before & TextureUsageBit::CLEAR))
+	{
+		srcStages |= VK_PIPELINE_STAGE_TRANSFER_BIT;
+		srcAccesses |= VK_ACCESS_TRANSFER_WRITE_BIT;
+	}
+
+	if(srcStages == 0)
+	{
+		srcStages = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+	}
+
+	//
+	// After
+	//
+	if(!!(after & TextureUsageBit::FRAGMENT_SHADER_SAMPLED))
+	{
+		dstStages |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		dstAccesses |= VK_ACCESS_SHADER_READ_BIT;
+	}
+
+	if(!!(after & TextureUsageBit::COMPUTE_SHADER_SAMPLED))
+	{
+		dstStages |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+		dstAccesses |= VK_ACCESS_SHADER_READ_BIT;
+	}
+
+	if(!!(after & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ))
+	{
+		if(m_depthStencil)
+		{
+			dstStages |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT
+				| VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+			dstAccesses |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+		}
+		else
+		{
+			dstStages |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			dstAccesses |= VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+		}
+	}
+
+	if(!!(after & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE))
+	{
+		if(m_depthStencil)
+		{
+			dstStages |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT
+				| VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+			dstAccesses |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+		}
+		else
+		{
+			dstStages |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			dstAccesses |= VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		}
+	}
+
+	if(!!(after & TextureUsageBit::GENERATE_MIPMAPS))
+	{
+		dstStages |= VK_PIPELINE_STAGE_TRANSFER_BIT;
+
+		if(level == 0)
+		{
+			dstAccesses |= VK_ACCESS_TRANSFER_READ_BIT;
+		}
+		else
+		{
+			ANKI_ASSERT(0 && "This will happen in generateMipmaps");
+		}
+	}
+
+	if(!!(after & TextureUsageBit::UPLOAD))
+	{
+		dstStages |= VK_PIPELINE_STAGE_TRANSFER_BIT;
+		dstAccesses |= VK_ACCESS_TRANSFER_WRITE_BIT;
+	}
+
+	if(!!(after & TextureUsageBit::CLEAR))
+	{
+		dstStages |= VK_PIPELINE_STAGE_TRANSFER_BIT;
+		dstAccesses |= VK_ACCESS_TRANSFER_WRITE_BIT;
+	}
+
+	ANKI_ASSERT(dstStages);
+}
+
+//==============================================================================
+VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
+{
+	ANKI_ASSERT(level < m_mipCount);
+	ANKI_ASSERT(usageValid(usage));
+
+	VkImageLayout out = VK_IMAGE_LAYOUT_MAX_ENUM;
+	Bool lastLevel = level == m_mipCount - 1u;
+
+	if(usage == TextureUsageBit::NONE)
+	{
+		out = VK_IMAGE_LAYOUT_UNDEFINED;
+	}
+	else if(!!(usage & TextureUsageBit::ANY_SHADER_SAMPLED)
+		&& !(usage & ~TextureUsageBit::ANY_SHADER_SAMPLED))
+	{
+		out = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	}
+	else if(!!(usage & TextureUsageBit::COMPUTE_SHADER_IMAGE_READ_WRITE)
+		&& !(usage & ~TextureUsageBit::COMPUTE_SHADER_IMAGE_READ_WRITE))
+	{
+		out = VK_IMAGE_LAYOUT_GENERAL;
+	}
+	else if(usage == TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
+		|| usage == TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE)
+	{
+		if(m_depthStencil)
+		{
+			out = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		}
+		else
+		{
+			out = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		}
+	}
+	else if(m_depthStencil
+		&& !!(usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ)
+		&& !!(usage & TextureUsageBit::ANY_GRAPHICS_SHADER_SAMPLED)
+		&& !(usage
+				& ~(TextureUsageBit::ANY_GRAPHICS_SHADER_SAMPLED
+					  | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ)))
+	{
+		out = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+	}
+	else if(usage == TextureUsageBit::GENERATE_MIPMAPS)
+	{
+		if(!lastLevel)
+		{
+			out = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+		}
+		else
+		{
+			out = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		}
+	}
+	else if(usage == TextureUsageBit::CLEAR)
+	{
+		out = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	}
+	else if(!m_depthStencil && usage == TextureUsageBit::UPLOAD)
+	{
+		out = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	}
+
+	ANKI_ASSERT(out != VK_IMAGE_LAYOUT_MAX_ENUM);
+	return out;
 }
 
 } // end namespace anki

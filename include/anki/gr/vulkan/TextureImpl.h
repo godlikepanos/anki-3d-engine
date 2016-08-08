@@ -20,9 +20,14 @@ namespace anki
 class TextureImpl : public VulkanObject
 {
 public:
+	SamplerPtr m_sampler;
+
 	VkImage m_imageHandle = VK_NULL_HANDLE;
 	VkImageView m_viewHandle = VK_NULL_HANDLE;
-	SamplerPtr m_sampler;
+
+	/// A number of views, one for each level. Used in image load/store.
+	DynamicArray<VkImageView> m_viewsEveryLevel;
+
 	U32 m_memIdx = MAX_U32;
 	GpuMemoryAllocationHandle m_memHandle;
 
@@ -35,6 +40,8 @@ public:
 	VkImageAspectFlags m_aspect = 0;
 	TextureUsageBit m_usage = TextureUsageBit::NONE;
 	PixelFormat m_format;
+
+	Bool m_depthStencil = false;
 
 	TextureImpl(GrManager* manager);
 
@@ -54,6 +61,19 @@ public:
 	{
 		return (usage & m_usage) == usage;
 	}
+
+	/// By knowing the previous and new texture usage calculate the relavant
+	/// info for a ppline barrier.
+	void computeBarrierInfo(TextureUsageBit before,
+		TextureUsageBit after,
+		U level,
+		VkPipelineStageFlags& srcStages,
+		VkAccessFlags& srcAccesses,
+		VkPipelineStageFlags& dstStages,
+		VkAccessFlags& dstAccesses) const;
+
+	/// Predict the image layout.
+	VkImageLayout computeLayout(TextureUsageBit usage, U level) const;
 
 private:
 	class CreateContext;

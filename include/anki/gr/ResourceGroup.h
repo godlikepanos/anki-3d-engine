@@ -22,6 +22,7 @@ class TextureBinding
 public:
 	TexturePtr m_texture;
 	SamplerPtr m_sampler; ///< Use it to override texture's sampler.
+	TextureUsageBit m_usage = TextureUsageBit::FRAGMENT_SHADER_SAMPLED;
 };
 
 /// Buffer binding info.
@@ -40,6 +41,7 @@ class ImageBinding
 public:
 	TexturePtr m_texture;
 	U8 m_level = 0;
+	TextureUsageBit m_usage = TextureUsageBit::COMPUTE_SHADER_IMAGE_READ_WRITE;
 };
 
 /// Resource group initializer.

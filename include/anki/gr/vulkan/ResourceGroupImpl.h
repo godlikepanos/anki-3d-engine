@@ -74,6 +74,7 @@ private:
 
 	// For dynamic binding
 	U8 m_uniBindingCount = 0;
+	U8 m_storageBindingCount = 0;
 	BitSet<MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS>
 		m_dynamicBuffersMask = {false};
 
@@ -86,7 +87,8 @@ private:
 	/// gracefully
 	DynamicArray<GrObjectPtr<GrObject>> m_refs;
 
-	static U calcRefCount(const ResourceGroupInitInfo& init, Bool& hasUploaded);
+	static U calcRefCount(
+		const ResourceGroupInitInfo& init, Bool& hasUploaded, Bool& needsDSet);
 };
 /// @}
 

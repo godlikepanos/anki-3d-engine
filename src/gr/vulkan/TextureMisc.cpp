@@ -8,7 +8,7 @@
 namespace anki
 {
 
-static_assert(MAX_RESOURCE_GROUPS == 2, "Code bellow assumes that");
+static_assert(MAX_BOUND_RESOURCE_GROUPS == 2, "Code bellow assumes that");
 
 static const CString UPLOAD_R8G8B8_COMPUTE_SHADER = R"(
 const uint WORKGROUP_SIZE_X = 4u;

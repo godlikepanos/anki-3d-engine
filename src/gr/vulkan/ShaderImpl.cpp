@@ -153,9 +153,10 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #define ANKI_VK 1
 #define %s
 #define gl_VertexID gl_VertexIndex
+#define ANKI_TEX_BINDING(set_, binding_) set = set_, binding = %u + binding_
 #define ANKI_UBO_BINDING(set_, binding_) set = set_, binding = %u + binding_
 #define ANKI_SS_BINDING(set_, binding_) set = set_, binding = %u + binding_
-#define ANKI_TEX_BINDING(set_, binding_) set = set_, binding = %u + binding_
+#define ANKI_IMAGE_BINDING(set_, binding_) set = set_, binding = %u + binding_
 
 #if defined(FRAGMENT_SHADER)
 #define ANKI_USING_FRAG_COORD(h_) vec4 anki_fragCoord = \
@@ -235,9 +236,11 @@ Error ShaderImpl::init(ShaderType shaderType, const CString& source)
 
 	fullSrc.sprintf(SHADER_HEADER,
 		shaderName[shaderType],
+		0,
 		MAX_TEXTURE_BINDINGS,
 		MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS,
-		0,
+		MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS
+			+ MAX_STORAGE_BUFFER_BINDINGS,
 		&source[0]);
 
 	std::vector<unsigned int> spirv;

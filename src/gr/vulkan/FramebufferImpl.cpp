@@ -80,12 +80,20 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 
 //==============================================================================
 void FramebufferImpl::setupAttachmentDescriptor(
-	const FramebufferAttachmentInfo& att,
-	VkAttachmentDescription& desc,
-	Bool depthStencil)
+	const FramebufferAttachmentInfo& att, VkAttachmentDescription& desc)
 {
-	VkImageLayout layout =
-		computeLayout(att.m_usageInsideRenderPass, depthStencil, 0, 1);
+	// TODO This func won't work if it's default but this is a depth attachment
+
+	VkImageLayout layout;
+	if(m_defaultFramebuffer)
+	{
+		layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	}
+	else
+	{
+		layout = att.m_texture->getImplementation().computeLayout(
+			att.m_usageInsideRenderPass, 0);
+	}
 
 	desc = {};
 	desc.format = (m_defaultFramebuffer)
@@ -115,11 +123,15 @@ Error FramebufferImpl::initRenderPass(const FramebufferInitInfo& init)
 
 	for(U i = 0; i < init.m_colorAttachmentCount; ++i)
 	{
-		setupAttachmentDescriptor(
-			init.m_colorAttachments[i], attachmentDescriptions[i], false);
+		const FramebufferAttachmentInfo& att = init.m_colorAttachments[i];
+
+		setupAttachmentDescriptor(att, attachmentDescriptions[i]);
 
 		references[i].attachment = i;
-		references[i].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		references[i].layout = (att.m_texture)
+			? att.m_texture->getImplementation().computeLayout(
+				  att.m_usageInsideRenderPass, 0)
+			: VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 		++ci.attachmentCount;
 	}
@@ -128,12 +140,13 @@ Error FramebufferImpl::initRenderPass(const FramebufferInitInfo& init)
 	if(hasDepthStencil)
 	{
 		setupAttachmentDescriptor(init.m_depthStencilAttachment,
-			attachmentDescriptions[ci.attachmentCount],
-			true);
+			attachmentDescriptions[ci.attachmentCount]);
 
 		dsReference.attachment = ci.attachmentCount;
-		dsReference.layout = computeLayout(
-			init.m_depthStencilAttachment.m_usageInsideRenderPass, true, 0, 1);
+		dsReference.layout =
+			init.m_depthStencilAttachment.m_texture->getImplementation()
+				.computeLayout(
+					init.m_depthStencilAttachment.m_usageInsideRenderPass, 0);
 
 		++ci.attachmentCount;
 	}

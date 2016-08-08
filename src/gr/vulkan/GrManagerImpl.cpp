@@ -477,7 +477,7 @@ Error GrManagerImpl::initGlobalDsetLayout()
 	ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 
 	const U BINDING_COUNT = MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS
-		+ MAX_STORAGE_BUFFER_BINDINGS;
+		+ MAX_STORAGE_BUFFER_BINDINGS + MAX_IMAGE_BINDINGS;
 	ci.bindingCount = BINDING_COUNT;
 
 	Array<VkDescriptorSetLayoutBinding, BINDING_COUNT> bindings;
@@ -522,6 +522,18 @@ Error GrManagerImpl::initGlobalDsetLayout()
 		++count;
 	}
 
+	// Images
+	for(U i = 0; i < MAX_IMAGE_BINDINGS; ++i)
+	{
+		VkDescriptorSetLayoutBinding& binding = bindings[count];
+		binding.binding = count;
+		binding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+		binding.descriptorCount = 1;
+		binding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
+		++count;
+	}
+
 	ANKI_ASSERT(count == BINDING_COUNT);
 
 	ANKI_VK_CHECK(vkCreateDescriptorSetLayout(
@@ -533,13 +545,15 @@ Error GrManagerImpl::initGlobalDsetLayout()
 //==============================================================================
 Error GrManagerImpl::initGlobalDsetPool()
 {
-	Array<VkDescriptorPoolSize, 3> pools = {{}};
+	Array<VkDescriptorPoolSize, 4> pools = {{}};
 	pools[0] = VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
 		MAX_TEXTURE_BINDINGS * MAX_RESOURCE_GROUPS};
 	pools[1] = VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,
 		MAX_UNIFORM_BUFFER_BINDINGS * MAX_RESOURCE_GROUPS};
 	pools[2] = VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC,
 		MAX_STORAGE_BUFFER_BINDINGS * MAX_RESOURCE_GROUPS};
+	pools[3] = VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+		MAX_IMAGE_BINDINGS * MAX_RESOURCE_GROUPS};
 
 	VkDescriptorPoolCreateInfo ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;

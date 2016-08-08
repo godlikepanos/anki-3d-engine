@@ -26,21 +26,24 @@ ResourceGroupImpl::~ResourceGroupImpl()
 
 //==============================================================================
 U ResourceGroupImpl::calcRefCount(
-	const ResourceGroupInitInfo& init, Bool& hasUploaded)
+	const ResourceGroupInitInfo& init, Bool& hasUploaded, Bool& needsDSet)
 {
 	U count = 0;
 	hasUploaded = false;
+	needsDSet = false;
 
 	for(U i = 0; i < MAX_TEXTURE_BINDINGS; ++i)
 	{
 		if(init.m_textures[i].m_texture)
 		{
 			++count;
+			needsDSet = true;
 		}
 
 		if(init.m_textures[i].m_sampler)
 		{
 			++count;
+			needsDSet = true;
 		}
 	}
 
@@ -49,10 +52,35 @@ U ResourceGroupImpl::calcRefCount(
 		if(init.m_uniformBuffers[i].m_buffer)
 		{
 			++count;
+			needsDSet = true;
 		}
 		else if(init.m_uniformBuffers[i].m_uploadedMemory)
 		{
 			hasUploaded = true;
+			needsDSet = true;
+		}
+	}
+
+	for(U i = 0; i < MAX_STORAGE_BUFFER_BINDINGS; ++i)
+	{
+		if(init.m_storageBuffers[i].m_buffer)
+		{
+			++count;
+			needsDSet = true;
+		}
+		else if(init.m_storageBuffers[i].m_uploadedMemory)
+		{
+			hasUploaded = true;
+			needsDSet = true;
+		}
+	}
+
+	for(U i = 0; i < MAX_IMAGE_BINDINGS; ++i)
+	{
+		if(init.m_images[i].m_texture)
+		{
+			++count;
+			needsDSet = true;
 		}
 	}
 
@@ -73,8 +101,6 @@ U ResourceGroupImpl::calcRefCount(
 		++count;
 	}
 
-	// TODO: The rest of the resources
-
 	return count;
 }
 
@@ -84,11 +110,19 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 	// Store the references
 	//
 	Bool hasUploaded = false;
-	U refCount = calcRefCount(init, hasUploaded);
+	Bool needsDSet = false;
+	U refCount = calcRefCount(init, hasUploaded, needsDSet);
 	ANKI_ASSERT(refCount > 0 || hasUploaded);
 	if(refCount)
 	{
 		m_refs.create(getAllocator(), refCount);
+	}
+
+	// Create DSet
+	//
+	if(needsDSet)
+	{
+		ANKI_CHECK(getGrManagerImpl().allocateDescriptorSet(m_handle));
 	}
 
 	// Update
@@ -97,7 +131,11 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 	U texAndSamplerCount = 0;
 	Array<VkDescriptorBufferInfo, MAX_UNIFORM_BUFFER_BINDINGS> unis = {{}};
 	U uniCount = 0;
-	Array<VkWriteDescriptorSet, 2> write = {{}};
+	Array<VkDescriptorBufferInfo, MAX_STORAGE_BUFFER_BINDINGS> storages = {{}};
+	U storageCount = 0;
+	Array<VkDescriptorImageInfo, MAX_IMAGE_BINDINGS> images = {{}};
+	U imageCount = 0;
+	Array<VkWriteDescriptorSet, 4> write = {{}};
 	U writeCount = 0;
 	refCount = 0;
 
@@ -124,11 +162,11 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 			else
 			{
 				inf.sampler = teximpl.m_sampler->getImplementation().m_handle;
-				// No need for ref
+				// No need to ref
 			}
 
-			// TODO need another layout
-			inf.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			inf.imageLayout =
+				teximpl.computeLayout(init.m_textures[i].m_usage, 0);
 
 			++texAndSamplerCount;
 		}
@@ -136,11 +174,6 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 
 	if(texAndSamplerCount)
 	{
-		if(m_handle == VK_NULL_HANDLE)
-		{
-			ANKI_CHECK(getGrManagerImpl().allocateDescriptorSet(m_handle));
-		}
-
 		VkWriteDescriptorSet& w = write[writeCount++];
 		w.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		w.descriptorCount = texAndSamplerCount;
@@ -186,11 +219,6 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 
 	if(uniCount)
 	{
-		if(m_handle == VK_NULL_HANDLE)
-		{
-			ANKI_CHECK(getGrManagerImpl().allocateDescriptorSet(m_handle));
-		}
-
 		VkWriteDescriptorSet& w = write[writeCount++];
 		w.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		w.descriptorCount = uniCount;
@@ -200,7 +228,85 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 		w.dstSet = m_handle;
 	}
 
-	// TODO Storage buffers
+	// 3nd the storage buffers
+	for(U i = 0; i < MAX_STORAGE_BUFFER_BINDINGS; ++i)
+	{
+		if(init.m_storageBuffers[i].m_buffer)
+		{
+			VkDescriptorBufferInfo& inf = storages[storageCount++];
+			inf.buffer = init.m_storageBuffers[i]
+							 .m_buffer->getImplementation()
+							 .getHandle();
+			inf.offset = init.m_storageBuffers[i].m_offset;
+			inf.range = init.m_storageBuffers[i].m_range;
+			if(inf.range == 0)
+			{
+				inf.range = VK_WHOLE_SIZE;
+			}
+
+			m_refs[refCount++] = init.m_storageBuffers[i].m_buffer;
+
+			m_storageBindingCount = i + 1;
+		}
+		else if(init.m_storageBuffers[i].m_uploadedMemory)
+		{
+			VkDescriptorBufferInfo& inf = storages[storageCount++];
+			inf.buffer =
+				getGrManagerImpl().getTransientMemoryManager().getBufferHandle(
+					BufferUsageBit::STORAGE_ANY);
+			inf.range = VK_WHOLE_SIZE;
+
+			m_dynamicBuffersMask.set(MAX_UNIFORM_BUFFER_BINDINGS + i);
+
+			m_storageBindingCount = i + 1;
+		}
+	}
+
+	if(storageCount)
+	{
+		VkWriteDescriptorSet& w = write[writeCount++];
+		w.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		w.descriptorCount = storageCount;
+		w.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
+		w.dstBinding = MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS;
+		w.pBufferInfo = &storages[0];
+		w.dstSet = m_handle;
+	}
+
+	// 4th images
+	for(U i = 0; i < MAX_IMAGE_BINDINGS; ++i)
+	{
+		const ImageBinding& binding = init.m_images[i];
+		if(binding.m_texture)
+		{
+			VkDescriptorImageInfo& inf = images[imageCount++];
+			const TextureImpl& tex = binding.m_texture->getImplementation();
+
+			if(binding.m_level == 0)
+			{
+				inf.imageView = tex.m_viewHandle;
+			}
+			else
+			{
+				inf.imageView = tex.m_viewsEveryLevel[binding.m_level - 1];
+			}
+			inf.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+
+			m_refs[refCount++] = binding.m_texture;
+		}
+	}
+
+	if(imageCount)
+	{
+		VkWriteDescriptorSet& w = write[writeCount++];
+		w.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		w.descriptorCount = imageCount;
+		w.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+		w.dstBinding = MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS
+			+ MAX_STORAGE_BUFFER_BINDINGS;
+		w.pImageInfo = &images[0];
+		w.dstSet = m_handle;
+	}
 
 	// Check if it was created. It's not created only if the rc group contains
 	// only vertex info.
@@ -278,9 +384,23 @@ void ResourceGroupImpl::setupDynamicOffsets(
 					dynInfo->m_uniformBuffers[i];
 
 				ANKI_ASSERT(token.m_range);
-				ANKI_ASSERT((token.m_usage & BufferUsageBit::UNIFORM_ANY_SHADER)
-					!= BufferUsageBit::NONE);
+				ANKI_ASSERT(
+					!!(token.m_usage & BufferUsageBit::UNIFORM_ANY_SHADER));
 				dynOffsets[i] = token.m_offset;
+			}
+		}
+
+		for(U i = 0; i < m_storageBindingCount; ++i)
+		{
+			if(m_dynamicBuffersMask.get(MAX_UNIFORM_BUFFER_BINDINGS + i))
+			{
+				// Uploaded
+				const TransientMemoryToken& token =
+					dynInfo->m_storageBuffers[i];
+
+				ANKI_ASSERT(token.m_range);
+				ANKI_ASSERT(!!(token.m_usage & BufferUsageBit::STORAGE_ANY));
+				dynOffsets[MAX_UNIFORM_BUFFER_BINDINGS + i] = token.m_offset;
 			}
 		}
 	}
