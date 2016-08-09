@@ -68,7 +68,7 @@ Error Tiler::initInternal()
 	{
 		// Create the buffer
 		m_outBuffers[i] = getGrManager().newInstance<Buffer>(
-			pboSize, BufferUsageBit::STORAGE_ANY, BufferMapAccessBit::READ);
+			pboSize, BufferUsageBit::STORAGE_ALL, BufferMapAccessBit::READ);
 
 		// Create graphics resources
 		ResourceGroupInitInfo rcinit;

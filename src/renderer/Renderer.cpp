@@ -193,7 +193,7 @@ Error Renderer::render(RenderingContext& ctx)
 	RendererCommonUniforms* commonUniforms =
 		static_cast<RendererCommonUniforms*>(
 			getGrManager().allocateFrameTransientMemory(sizeof(*commonUniforms),
-				BufferUsageBit::UNIFORM_ANY_SHADER,
+				BufferUsageBit::UNIFORM_ALL,
 				m_commonUniformsToken));
 
 	commonUniforms->m_projectionParams = frc.getProjectionParameters();
@@ -246,12 +246,12 @@ Error Renderer::render(RenderingContext& ctx)
 	m_is->run(ctx);
 
 	cmdb->setTextureBarrier(m_ms->getDepthRt(),
-		TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+		TextureUsageBit::SAMPLED_FRAGMENT,
 		TextureUsageBit::GENERATE_MIPMAPS,
 		TextureSurfaceInfo(0, 0, 0, 0));
 
 	cmdb->setTextureBarrier(m_ms->getRt2(),
-		TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+		TextureUsageBit::SAMPLED_FRAGMENT,
 		TextureUsageBit::GENERATE_MIPMAPS,
 		TextureSurfaceInfo(0, 0, 0, 0));
 
@@ -262,13 +262,13 @@ Error Renderer::render(RenderingContext& ctx)
 	{
 		cmdb->setTextureBarrier(m_ms->getDepthRt(),
 			TextureUsageBit::GENERATE_MIPMAPS,
-			TextureUsageBit::FRAGMENT_SHADER_SAMPLED
+			TextureUsageBit::SAMPLED_FRAGMENT
 				| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ,
 			TextureSurfaceInfo(i, 0, 0, 0));
 
 		cmdb->setTextureBarrier(m_ms->getRt2(),
 			TextureUsageBit::GENERATE_MIPMAPS,
-			TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+			TextureUsageBit::SAMPLED_FRAGMENT,
 			TextureSurfaceInfo(i, 0, 0, 0));
 	}
 
@@ -286,18 +286,22 @@ Error Renderer::render(RenderingContext& ctx)
 
 	cmdb->setTextureBarrier(m_is->getRt(),
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-		TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+		TextureUsageBit::SAMPLED_FRAGMENT,
 		TextureSurfaceInfo(0, 0, 0, 0));
 
 	m_downscale->run(ctx);
 
 	cmdb->setTextureBarrier(m_is->getRt(),
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		TextureUsageBit::FRAGMENT_SHADER_SAMPLED
-			| TextureUsageBit::COMPUTE_SHADER_SAMPLED,
+		TextureUsageBit::SAMPLED_COMPUTE,
 		TextureSurfaceInfo(m_is->getRtMipmapCount() - 1, 0, 0, 0));
 
 	m_tm->run(ctx);
+
+	cmdb->setTextureBarrier(m_is->getRt(),
+		TextureUsageBit::SAMPLED_COMPUTE,
+		TextureUsageBit::SAMPLED_FRAGMENT,
+		TextureSurfaceInfo(m_is->getRtMipmapCount() - 1, 0, 0, 0));
 
 	m_bloom->run(ctx);
 	m_sslf->run(ctx);

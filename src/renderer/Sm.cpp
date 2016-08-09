@@ -34,7 +34,7 @@ Error Sm::init(const ConfigSet& config)
 
 	// Create shadowmaps array
 	TextureInitInfo sminit;
-	sminit.m_usage = TextureUsageBit::FRAGMENT_SHADER_SAMPLED
+	sminit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT
 		| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
 	sminit.m_type = TextureType::_2D_ARRAY;
 	sminit.m_width = m_resolution;
@@ -500,7 +500,7 @@ void Sm::setPostRunBarriers(RenderingContext& ctx)
 
 		cmdb->setTextureBarrier(m_spotTexArray,
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-			TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+			TextureUsageBit::SAMPLED_FRAGMENT,
 			TextureSurfaceInfo(0, 0, 0, layer));
 	}
 
@@ -513,7 +513,7 @@ void Sm::setPostRunBarriers(RenderingContext& ctx)
 
 			cmdb->setTextureBarrier(m_omniTexArray,
 				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-				TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+				TextureUsageBit::SAMPLED_FRAGMENT,
 				TextureSurfaceInfo(0, 0, j, layer));
 		}
 	}

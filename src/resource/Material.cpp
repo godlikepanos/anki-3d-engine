@@ -47,6 +47,9 @@ Error UpdateTexturesVisitor::
 {
 	m_init->m_textures[var.getTextureUnit()].m_texture =
 		var.getValue()->getGrTexture();
+	m_init->m_textures[var.getTextureUnit()].m_usage =
+		TextureUsageBit::SAMPLED_FRAGMENT
+		| TextureUsageBit::SAMPLED_TESSELLATION_EVALUATION;
 	return ErrorCode::NONE;
 }
 
@@ -440,6 +443,8 @@ Error Material::createProgramSourceToCache(
 void Material::fillResourceGroupInitInfo(ResourceGroupInitInfo& rcinit)
 {
 	rcinit.m_uniformBuffers[0].m_uploadedMemory = true;
+	rcinit.m_uniformBuffers[0].m_usage =
+		BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
 
 	UpdateTexturesVisitor visitor;
 	visitor.m_init = &rcinit;

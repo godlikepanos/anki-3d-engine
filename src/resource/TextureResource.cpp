@@ -132,8 +132,8 @@ TextureResource::~TextureResource()
 Error TextureResource::load(const ResourceFilename& filename)
 {
 	TextureInitInfo init;
-	init.m_usage = TextureUsageBit::FRAGMENT_SHADER_SAMPLED
-		| TextureUsageBit::TESSELLATION_EVALUATION_SHADER_SAMPLED
+	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT
+		| TextureUsageBit::SAMPLED_TESSELLATION_EVALUATION
 		| TextureUsageBit::UPLOAD;
 	U faces = 0;
 

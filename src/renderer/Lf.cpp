@@ -136,6 +136,8 @@ Error Lf::initOcclusion(const ConfigSet& config)
 		ResourceGroupInitInfo rcInit;
 		rcInit.m_vertexBuffers[0].m_uploadedMemory = true;
 		rcInit.m_uniformBuffers[0].m_uploadedMemory = true;
+		rcInit.m_uniformBuffers[0].m_usage =
+			BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
 		m_occlusionRcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);
 	}
 
@@ -173,7 +175,7 @@ void Lf::runOcclusionTests(RenderingContext& ctx)
 		TransientMemoryToken token;
 		Mat4* mvp =
 			static_cast<Mat4*>(getGrManager().allocateFrameTransientMemory(
-				sizeof(Mat4), BufferUsageBit::UNIFORM_ANY_SHADER, token));
+				sizeof(Mat4), BufferUsageBit::UNIFORM_ALL, token));
 		*mvp = camFr.getViewProjectionMatrix();
 
 		// Alloc dyn mem
@@ -258,7 +260,7 @@ void Lf::run(RenderingContext& ctx)
 			Sprite* tmpSprites = static_cast<Sprite*>(
 				getGrManager().allocateFrameTransientMemory(
 					spritesCount * sizeof(Sprite),
-					BufferUsageBit::UNIFORM_ANY_SHADER,
+					BufferUsageBit::UNIFORM_ALL,
 					token));
 			WeakArray<Sprite> sprites(tmpSprites, spritesCount);
 

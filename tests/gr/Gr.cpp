@@ -483,10 +483,10 @@ ANKI_TEST(Gr, Buffer)
 
 	{
 		BufferPtr a = gr->newInstance<Buffer>(
-			512, BufferUsageBit::UNIFORM_ANY_SHADER, BufferMapAccessBit::NONE);
+			512, BufferUsageBit::UNIFORM_ALL, BufferMapAccessBit::NONE);
 
 		BufferPtr b = gr->newInstance<Buffer>(64,
-			BufferUsageBit::STORAGE_ANY,
+			BufferUsageBit::STORAGE_ALL,
 			BufferMapAccessBit::WRITE | BufferMapAccessBit::READ);
 
 		void* ptr = b->map(0, 64, BufferMapAccessBit::WRITE);
@@ -512,11 +512,13 @@ ANKI_TEST(Gr, ResourceGroup)
 
 	{
 		BufferPtr b = gr->newInstance<Buffer>(sizeof(F32) * 4,
-			BufferUsageBit::UNIFORM_ANY_SHADER,
+			BufferUsageBit::UNIFORM_ALL,
 			BufferMapAccessBit::WRITE);
 
 		ResourceGroupInitInfo rcinit;
 		rcinit.m_uniformBuffers[0].m_buffer = b;
+		rcinit.m_uniformBuffers[0].m_usage =
+			BufferUsageBit::UNIFORM_ALL_GRAPHICS;
 		ResourceGroupPtr rc = gr->newInstance<ResourceGroup>(rcinit);
 	}
 
@@ -531,7 +533,7 @@ ANKI_TEST(Gr, DrawWithUniforms)
 	{
 		// A non-uploaded buffer
 		BufferPtr b = gr->newInstance<Buffer>(sizeof(Vec4) * 3,
-			BufferUsageBit::UNIFORM_ANY_SHADER,
+			BufferUsageBit::UNIFORM_ALL,
 			BufferMapAccessBit::WRITE);
 
 		Vec4* ptr = static_cast<Vec4*>(
@@ -545,7 +547,11 @@ ANKI_TEST(Gr, DrawWithUniforms)
 		// Resource group
 		ResourceGroupInitInfo rcinit;
 		rcinit.m_uniformBuffers[0].m_buffer = b;
+		rcinit.m_uniformBuffers[0].m_usage =
+			BufferUsageBit::UNIFORM_ALL_GRAPHICS;
 		rcinit.m_uniformBuffers[1].m_uploadedMemory = true;
+		rcinit.m_uniformBuffers[1].m_usage =
+			BufferUsageBit::UNIFORM_ALL_GRAPHICS;
 		ResourceGroupPtr rc = gr->newInstance<ResourceGroup>(rcinit);
 
 		// Ppline
@@ -568,7 +574,7 @@ ANKI_TEST(Gr, DrawWithUniforms)
 			Error err = ErrorCode::NONE;
 			Vec4* rotMat = static_cast<Vec4*>(
 				gr->allocateFrameTransientMemory(sizeof(Vec4),
-					BufferUsageBit::UNIFORM_ANY_SHADER,
+					BufferUsageBit::UNIFORM_ALL,
 					transientInfo.m_uniformBuffers[1],
 					&err));
 			ANKI_TEST_EXPECT_NO_ERR(err);
@@ -744,7 +750,7 @@ ANKI_TEST(Gr, Texture)
 		init.m_depth = 1;
 		init.m_format =
 			PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM);
-		init.m_usage = TextureUsageBit::FRAGMENT_SHADER_SAMPLED;
+		init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT;
 		init.m_height = 4;
 		init.m_width = 4;
 		init.m_mipmapsCount = 2;
@@ -775,8 +781,8 @@ ANKI_TEST(Gr, DrawWithTexture)
 		init.m_format =
 			PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
 		init.m_usage =
-			TextureUsageBit::FRAGMENT_SHADER_SAMPLED | TextureUsageBit::UPLOAD;
-		init.m_initialUsage = TextureUsageBit::FRAGMENT_SHADER_SAMPLED;
+			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::UPLOAD;
+		init.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 		init.m_height = 2;
 		init.m_width = 2;
 		init.m_mipmapsCount = 2;
@@ -796,7 +802,7 @@ ANKI_TEST(Gr, DrawWithTexture)
 		init.m_width = 4;
 		init.m_height = 4;
 		init.m_mipmapsCount = 3;
-		init.m_usage = TextureUsageBit::FRAGMENT_SHADER_SAMPLED
+		init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT
 			| TextureUsageBit::UPLOAD | TextureUsageBit::GENERATE_MIPMAPS;
 		init.m_initialUsage = TextureUsageBit::NONE;
 
@@ -881,12 +887,12 @@ ANKI_TEST(Gr, DrawWithTexture)
 
 		// Set barriers
 		cmdb->setTextureBarrier(a,
-			TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+			TextureUsageBit::SAMPLED_FRAGMENT,
 			TextureUsageBit::UPLOAD,
 			TextureSurfaceInfo(0, 0, 0, 0));
 
 		cmdb->setTextureBarrier(a,
-			TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+			TextureUsageBit::SAMPLED_FRAGMENT,
 			TextureUsageBit::UPLOAD,
 			TextureSurfaceInfo(1, 0, 0, 0));
 
@@ -932,19 +938,19 @@ ANKI_TEST(Gr, DrawWithTexture)
 		// Set barriers
 		cmdb->setTextureBarrier(a,
 			TextureUsageBit::UPLOAD,
-			TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+			TextureUsageBit::SAMPLED_FRAGMENT,
 			TextureSurfaceInfo(0, 0, 0, 0));
 
 		cmdb->setTextureBarrier(a,
 			TextureUsageBit::UPLOAD,
-			TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+			TextureUsageBit::SAMPLED_FRAGMENT,
 			TextureSurfaceInfo(1, 0, 0, 0));
 
 		for(U i = 0; i < 3; ++i)
 		{
 			cmdb->setTextureBarrier(b,
 				TextureUsageBit::GENERATE_MIPMAPS,
-				TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+				TextureUsageBit::SAMPLED_FRAGMENT,
 				TextureSurfaceInfo(i, 0, 0, 0));
 		}
 
@@ -1031,14 +1037,14 @@ static void drawOffscreenDrawcalls(GrManager& gr,
 		1.0f);
 
 	Mat4* mvp = static_cast<Mat4*>(gr.allocateFrameTransientMemory(sizeof(*mvp),
-		BufferUsageBit::UNIFORM_ANY_SHADER,
+		BufferUsageBit::UNIFORM_ALL,
 		transientInfo.m_uniformBuffers[0],
 		nullptr));
 	*mvp = projMat * viewMat * modelMat;
 
 	Vec4* color =
 		static_cast<Vec4*>(gr.allocateFrameTransientMemory(sizeof(*color) * 2,
-			BufferUsageBit::UNIFORM_ANY_SHADER,
+			BufferUsageBit::UNIFORM_ALL,
 			transientInfo.m_uniformBuffers[1],
 			nullptr));
 	*color++ = Vec4(1.0, 0.0, 0.0, 0.0);
@@ -1055,14 +1061,14 @@ static void drawOffscreenDrawcalls(GrManager& gr,
 		1.0f);
 
 	mvp = static_cast<Mat4*>(gr.allocateFrameTransientMemory(sizeof(*mvp),
-		BufferUsageBit::UNIFORM_ANY_SHADER,
+		BufferUsageBit::UNIFORM_ALL,
 		transientInfo.m_uniformBuffers[0],
 		nullptr));
 	*mvp = projMat * viewMat * modelMat;
 
 	color =
 		static_cast<Vec4*>(gr.allocateFrameTransientMemory(sizeof(*color) * 2,
-			BufferUsageBit::UNIFORM_ANY_SHADER,
+			BufferUsageBit::UNIFORM_ALL,
 			transientInfo.m_uniformBuffers[1],
 			nullptr));
 	*color++ = Vec4(0.0, 0.0, 1.0, 0.0);
@@ -1085,7 +1091,7 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 	TextureInitInfo init;
 	init.m_depth = 1;
 	init.m_format = COL_FORMAT;
-	init.m_usage = TextureUsageBit::FRAGMENT_SHADER_SAMPLED
+	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT
 		| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
 	init.m_height = TEX_SIZE;
 	init.m_width = TEX_SIZE;
@@ -1130,7 +1136,11 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 
 	ResourceGroupInitInfo rcinit;
 	rcinit.m_uniformBuffers[0].m_uploadedMemory = true;
+	rcinit.m_uniformBuffers[0].m_usage =
+		BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
 	rcinit.m_uniformBuffers[1].m_uploadedMemory = true;
+	rcinit.m_uniformBuffers[1].m_usage =
+		BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
 	rcinit.m_vertexBuffers[0].m_buffer = verts;
 	rcinit.m_indexBuffer.m_buffer = indices;
 	rcinit.m_indexSize = 2;
@@ -1222,15 +1232,15 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 
 		cmdb->setTextureBarrier(col0,
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-			TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+			TextureUsageBit::SAMPLED_FRAGMENT,
 			TextureSurfaceInfo(0, 0, 0, 0));
 		cmdb->setTextureBarrier(col1,
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-			TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+			TextureUsageBit::SAMPLED_FRAGMENT,
 			TextureSurfaceInfo(0, 0, 0, 0));
 		cmdb->setTextureBarrier(dp,
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-			TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+			TextureUsageBit::SAMPLED_FRAGMENT,
 			TextureSurfaceInfo(0, 0, 0, 0));
 
 		// Draw quad
@@ -1283,9 +1293,8 @@ ANKI_TEST(Gr, ImageLoadStore)
 		TextureInitInfo init;
 		init.m_width = init.m_height = 4;
 		init.m_mipmapsCount = 2;
-		init.m_usage = TextureUsageBit::CLEAR
-			| TextureUsageBit::ANY_SHADER_SAMPLED
-			| TextureUsageBit::COMPUTE_SHADER_IMAGE_WRITE;
+		init.m_usage = TextureUsageBit::CLEAR | TextureUsageBit::SAMPLED_ALL
+			| TextureUsageBit::IMAGE_COMPUTE_WRITE;
 		init.m_type = TextureType::_2D;
 		init.m_format =
 			PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
@@ -1312,6 +1321,7 @@ ANKI_TEST(Gr, ImageLoadStore)
 
 		rcinit = ResourceGroupInitInfo();
 		rcinit.m_images[0].m_texture = tex;
+		rcinit.m_images[0].m_usage = TextureUsageBit::IMAGE_COMPUTE_WRITE;
 		rcinit.m_images[0].m_level = 1;
 		ResourceGroupPtr rc1 = gr->newInstance<ResourceGroup>(rcinit);
 
@@ -1333,7 +1343,7 @@ ANKI_TEST(Gr, ImageLoadStore)
 
 		cmdb->setTextureBarrier(tex,
 			TextureUsageBit::CLEAR,
-			TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+			TextureUsageBit::SAMPLED_FRAGMENT,
 			TextureSurfaceInfo(0, 0, 0, 0));
 
 		cmdb->setTextureBarrier(tex,
@@ -1346,7 +1356,7 @@ ANKI_TEST(Gr, ImageLoadStore)
 
 		cmdb->setTextureBarrier(tex,
 			TextureUsageBit::CLEAR,
-			TextureUsageBit::COMPUTE_SHADER_IMAGE_WRITE,
+			TextureUsageBit::IMAGE_COMPUTE_WRITE,
 			TextureSurfaceInfo(1, 0, 0, 0));
 
 		cmdb->flush();
@@ -1363,12 +1373,16 @@ ANKI_TEST(Gr, ImageLoadStore)
 			CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
 
 			// Write iamge
+			cmdb->setTextureBarrier(tex,
+				TextureUsageBit::NONE,
+				TextureUsageBit::IMAGE_COMPUTE_WRITE,
+				TextureSurfaceInfo(1, 0, 0, 0));
 			cmdb->bindPipeline(compPpline);
 			cmdb->bindResourceGroup(rc1, 0, nullptr);
 			cmdb->dispatchCompute(WIDTH / 2, HEIGHT / 2, 1);
 			cmdb->setTextureBarrier(tex,
-				TextureUsageBit::COMPUTE_SHADER_IMAGE_WRITE,
-				TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+				TextureUsageBit::IMAGE_COMPUTE_WRITE,
+				TextureUsageBit::SAMPLED_FRAGMENT,
 				TextureSurfaceInfo(1, 0, 0, 0));
 
 			// Present image

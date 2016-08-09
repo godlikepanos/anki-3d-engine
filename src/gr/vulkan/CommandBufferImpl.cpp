@@ -229,8 +229,6 @@ void CommandBufferImpl::endRecording()
 void CommandBufferImpl::bindResourceGroup(
 	ResourceGroupPtr rc, U slot, const TransientMemoryInfo* dynInfo)
 {
-	// TODO set the correct binding point
-
 	commandCommon();
 	const ResourceGroupImpl& impl = rc->getImplementation();
 
@@ -243,7 +241,7 @@ void CommandBufferImpl::bindResourceGroup(
 
 		VkDescriptorSet dset = impl.getHandle();
 		vkCmdBindDescriptorSets(m_handle,
-			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			impl.getPipelineBindPoint(),
 			getGrManagerImpl().getGlobalPipelineLayout(),
 			slot,
 			1,

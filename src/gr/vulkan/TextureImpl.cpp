@@ -87,7 +87,7 @@ VkFormatFeatureFlags TextureImpl::calcFeatures(const TextureInitInfo& init)
 		}
 	}
 
-	if(!!(init.m_usage & TextureUsageBit::ANY_SHADER_SAMPLED))
+	if(!!(init.m_usage & TextureUsageBit::SAMPLED_ALL))
 	{
 		flags |= VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT;
 	}
@@ -354,7 +354,7 @@ Error TextureImpl::initView(CreateContext& ctx)
 	ANKI_VK_CHECK(vkCreateImageView(getDevice(), &ci, nullptr, &m_viewHandle));
 
 	// Create the rest of the views
-	if(!!(m_usage & TextureUsageBit::COMPUTE_SHADER_IMAGE_READ_WRITE))
+	if(!!(m_usage & TextureUsageBit::IMAGE_COMPUTE_READ_WRITE))
 	{
 		ci.subresourceRange.levelCount = 1;
 
@@ -362,7 +362,7 @@ Error TextureImpl::initView(CreateContext& ctx)
 
 		for(U i = 0; i < m_viewsEveryLevel.getSize(); ++i)
 		{
-			ci.subresourceRange.baseArrayLayer = i + 1;
+			ci.subresourceRange.baseMipLevel = i + 1;
 			ANKI_VK_CHECK(vkCreateImageView(
 				getDevice(), &ci, nullptr, &m_viewsEveryLevel[i]));
 		}
@@ -391,16 +391,47 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit before,
 	//
 	// Before
 	//
-	if(!!(before & TextureUsageBit::FRAGMENT_SHADER_SAMPLED))
+	if(!!(before & TextureUsageBit::SAMPLED_VERTEX))
+	{
+		srcStages |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
+		srcAccesses |= VK_ACCESS_SHADER_READ_BIT;
+	}
+
+	if(!!(before & TextureUsageBit::SAMPLED_TESSELLATION_CONTROL))
+	{
+		srcStages |= VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT;
+		srcAccesses |= VK_ACCESS_SHADER_READ_BIT;
+	}
+
+	if(!!(before & TextureUsageBit::SAMPLED_TESSELLATION_EVALUATION))
+	{
+		srcStages |= VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT;
+		srcAccesses |= VK_ACCESS_SHADER_READ_BIT;
+	}
+
+	if(!!(before & TextureUsageBit::SAMPLED_GEOMETRY))
+	{
+		srcStages |= VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
+		srcAccesses |= VK_ACCESS_SHADER_READ_BIT;
+	}
+
+	if(!!(before & TextureUsageBit::SAMPLED_FRAGMENT))
 	{
 		srcStages |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		srcAccesses |= VK_ACCESS_SHADER_READ_BIT;
 	}
 
-	if(!!(before & TextureUsageBit::COMPUTE_SHADER_SAMPLED))
+	if(!!(before & TextureUsageBit::SAMPLED_COMPUTE)
+		|| !!(before & TextureUsageBit::IMAGE_COMPUTE_READ))
 	{
 		srcStages |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 		srcAccesses |= VK_ACCESS_SHADER_READ_BIT;
+	}
+
+	if(!!(before & TextureUsageBit::IMAGE_COMPUTE_WRITE))
+	{
+		srcStages |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+		srcAccesses |= VK_ACCESS_SHADER_WRITE_BIT;
 	}
 
 	if(!!(before & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ))
@@ -466,16 +497,47 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit before,
 	//
 	// After
 	//
-	if(!!(after & TextureUsageBit::FRAGMENT_SHADER_SAMPLED))
+	if(!!(after & TextureUsageBit::SAMPLED_VERTEX))
+	{
+		dstStages |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
+		dstAccesses |= VK_ACCESS_SHADER_READ_BIT;
+	}
+
+	if(!!(after & TextureUsageBit::SAMPLED_TESSELLATION_CONTROL))
+	{
+		dstStages |= VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT;
+		dstAccesses |= VK_ACCESS_SHADER_READ_BIT;
+	}
+
+	if(!!(after & TextureUsageBit::SAMPLED_TESSELLATION_EVALUATION))
+	{
+		dstStages |= VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT;
+		dstAccesses |= VK_ACCESS_SHADER_READ_BIT;
+	}
+
+	if(!!(after & TextureUsageBit::SAMPLED_GEOMETRY))
+	{
+		dstStages |= VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
+		dstAccesses |= VK_ACCESS_SHADER_READ_BIT;
+	}
+
+	if(!!(after & TextureUsageBit::SAMPLED_FRAGMENT))
 	{
 		dstStages |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		dstAccesses |= VK_ACCESS_SHADER_READ_BIT;
 	}
 
-	if(!!(after & TextureUsageBit::COMPUTE_SHADER_SAMPLED))
+	if(!!(after & TextureUsageBit::SAMPLED_COMPUTE)
+		|| !!(after & TextureUsageBit::IMAGE_COMPUTE_READ))
 	{
 		dstStages |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 		dstAccesses |= VK_ACCESS_SHADER_READ_BIT;
+	}
+
+	if(!!(after & TextureUsageBit::IMAGE_COMPUTE_WRITE))
+	{
+		dstStages |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+		dstAccesses |= VK_ACCESS_SHADER_WRITE_BIT;
 	}
 
 	if(!!(after & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ))
@@ -550,13 +612,13 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 	{
 		out = VK_IMAGE_LAYOUT_UNDEFINED;
 	}
-	else if(!!(usage & TextureUsageBit::ANY_SHADER_SAMPLED)
-		&& !(usage & ~TextureUsageBit::ANY_SHADER_SAMPLED))
+	else if(!!(usage & TextureUsageBit::SAMPLED_ALL)
+		&& !(usage & ~TextureUsageBit::SAMPLED_ALL))
 	{
 		out = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	}
-	else if(!!(usage & TextureUsageBit::COMPUTE_SHADER_IMAGE_READ_WRITE)
-		&& !(usage & ~TextureUsageBit::COMPUTE_SHADER_IMAGE_READ_WRITE))
+	else if(!!(usage & TextureUsageBit::IMAGE_COMPUTE_READ_WRITE)
+		&& !(usage & ~TextureUsageBit::IMAGE_COMPUTE_READ_WRITE))
 	{
 		out = VK_IMAGE_LAYOUT_GENERAL;
 	}
@@ -574,9 +636,9 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 	}
 	else if(m_depthStencil
 		&& !!(usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ)
-		&& !!(usage & TextureUsageBit::ANY_GRAPHICS_SHADER_SAMPLED)
+		&& !!(usage & TextureUsageBit::SAMPLED_ALL_GRAPHICS)
 		&& !(usage
-				& ~(TextureUsageBit::ANY_GRAPHICS_SHADER_SAMPLED
+				& ~(TextureUsageBit::SAMPLED_ALL_GRAPHICS
 					  | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ)))
 	{
 		out = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;

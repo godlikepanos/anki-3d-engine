@@ -171,7 +171,7 @@ void Ir::initFaceInfo(U cacheEntryIdx, U faceIdx)
 	texinit.m_samples = 1;
 	texinit.m_sampling.m_minMagFilter = SamplingFilter::NEAREST;
 	texinit.m_sampling.m_mipmapFilter = SamplingFilter::NEAREST;
-	texinit.m_usage = TextureUsageBit::FRAGMENT_SHADER_SAMPLED
+	texinit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT
 		| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 
 	// Create color attachments
@@ -226,7 +226,7 @@ void Ir::initFaceInfo(U cacheEntryIdx, U faceIdx)
 	fbInit.m_depthStencilAttachment.m_texture = face.m_gbufferDepthRt;
 	fbInit.m_depthStencilAttachment.m_usageInsideRenderPass =
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ
-		| TextureUsageBit::FRAGMENT_SHADER_SAMPLED;
+		| TextureUsageBit::SAMPLED_FRAGMENT;
 
 	face.m_isFb = getGrManager().newInstance<Framebuffer>(fbInit);
 
@@ -236,9 +236,15 @@ void Ir::initFaceInfo(U cacheEntryIdx, U faceIdx)
 	rcinit.m_textures[1].m_texture = face.m_gbufferColorRts[1];
 	rcinit.m_textures[2].m_texture = face.m_gbufferColorRts[2];
 	rcinit.m_textures[3].m_texture = face.m_gbufferDepthRt;
+	rcinit.m_textures[3].m_usage = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ
+		| TextureUsageBit::SAMPLED_FRAGMENT;
 
 	rcinit.m_uniformBuffers[0].m_uploadedMemory = true;
+	rcinit.m_uniformBuffers[0].m_usage =
+		BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
 	rcinit.m_uniformBuffers[1].m_uploadedMemory = true;
+	rcinit.m_uniformBuffers[1].m_usage =
+		BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
 
 	rcinit.m_vertexBuffers[0].m_buffer = m_is.m_plightPositions;
 	rcinit.m_indexBuffer.m_buffer = m_is.m_plightIndices;
@@ -280,7 +286,7 @@ Error Ir::initIs()
 	texinit.m_samples = 1;
 	texinit.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
 	texinit.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
-	texinit.m_usage = TextureUsageBit::FRAGMENT_SHADER_SAMPLED
+	texinit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT
 		| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
 		| TextureUsageBit::CLEAR;
 	texinit.m_format = IS_COLOR_ATTACHMENT_PIXEL_FORMAT;
@@ -308,7 +314,7 @@ Error Ir::initIs()
 
 				cmdb->setTextureBarrier(m_is.m_lightRt,
 					TextureUsageBit::CLEAR,
-					TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+					TextureUsageBit::SAMPLED_FRAGMENT,
 					surf);
 			}
 		}
@@ -398,7 +404,7 @@ Error Ir::initIrradiance()
 	texinit.m_samples = 1;
 	texinit.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
 	texinit.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
-	texinit.m_usage = TextureUsageBit::FRAGMENT_SHADER_SAMPLED
+	texinit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT
 		| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
 		| TextureUsageBit::CLEAR;
 	texinit.m_format = IS_COLOR_ATTACHMENT_PIXEL_FORMAT;
@@ -425,6 +431,8 @@ Error Ir::initIrradiance()
 	// Create the resources
 	ResourceGroupInitInfo rcInit;
 	rcInit.m_uniformBuffers[0].m_uploadedMemory = true;
+	rcInit.m_uniformBuffers[0].m_usage =
+		BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
 	rcInit.m_textures[0].m_texture = m_is.m_lightRt;
 
 	m_irradiance.m_rsrc = getGrManager().newInstance<ResourceGroup>(rcInit);
@@ -451,7 +459,7 @@ Error Ir::initIrradiance()
 
 				cmdb->setTextureBarrier(m_is.m_lightRt,
 					TextureUsageBit::CLEAR,
-					TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+					TextureUsageBit::SAMPLED_FRAGMENT,
 					surf);
 			}
 		}
@@ -508,13 +516,13 @@ Error Ir::runMs(
 	{
 		cmdb->setTextureBarrier(face.m_gbufferColorRts[i],
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-			TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+			TextureUsageBit::SAMPLED_FRAGMENT,
 			TextureSurfaceInfo(0, 0, 0, 0));
 	}
 
 	cmdb->setTextureBarrier(face.m_gbufferDepthRt,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-		TextureUsageBit::FRAGMENT_SHADER_SAMPLED
+		TextureUsageBit::SAMPLED_FRAGMENT
 			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ,
 		TextureSurfaceInfo(0, 0, 0, 0));
 
@@ -556,7 +564,7 @@ void Ir::runIs(
 		// Update uniforms
 		IrVertex* vert = static_cast<IrVertex*>(
 			getGrManager().allocateFrameTransientMemory(sizeof(IrVertex),
-				BufferUsageBit::UNIFORM_ANY_SHADER,
+				BufferUsageBit::UNIFORM_ALL,
 				transient.m_uniformBuffers[0]));
 
 		Mat4 modelM(movec.getWorldTransform().getOrigin().xyz1(),
@@ -567,7 +575,7 @@ void Ir::runIs(
 
 		IrPointLight* light = static_cast<IrPointLight*>(
 			getGrManager().allocateFrameTransientMemory(sizeof(IrPointLight),
-				BufferUsageBit::UNIFORM_ANY_SHADER,
+				BufferUsageBit::UNIFORM_ALL,
 				transient.m_uniformBuffers[1]));
 
 		Vec4 pos = vMat * movec.getWorldTransform().getOrigin().xyz1();
@@ -616,7 +624,7 @@ void Ir::runIs(
 		// Update vertex uniforms
 		IrVertex* vert = static_cast<IrVertex*>(
 			getGrManager().allocateFrameTransientMemory(sizeof(IrVertex),
-				BufferUsageBit::UNIFORM_ANY_SHADER,
+				BufferUsageBit::UNIFORM_ALL,
 				transient.m_uniformBuffers[0]));
 
 		vert->m_mvp = vpMat * modelM;
@@ -624,7 +632,7 @@ void Ir::runIs(
 		// Update fragment uniforms
 		IrSpotLight* light = static_cast<IrSpotLight*>(
 			getGrManager().allocateFrameTransientMemory(sizeof(IrSpotLight),
-				BufferUsageBit::UNIFORM_ANY_SHADER,
+				BufferUsageBit::UNIFORM_ALL,
 				transient.m_uniformBuffers[1]));
 
 		light->m_projectionParams = frc.getProjectionParameters();
@@ -664,7 +672,7 @@ void Ir::runIs(
 
 	cmdb->setTextureBarrier(m_is.m_lightRt,
 		TextureUsageBit::GENERATE_MIPMAPS,
-		TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+		TextureUsageBit::SAMPLED_FRAGMENT,
 		TextureSurfaceInfo(0, 0, faceIdx, layer));
 }
 
@@ -686,7 +694,7 @@ void Ir::computeIrradiance(RenderingContext& rctx, U layer, U faceIdx)
 	TransientMemoryInfo dinf;
 	UVec4* faceIdxArrayIdx = static_cast<UVec4*>(
 		getGrManager().allocateFrameTransientMemory(sizeof(UVec4),
-			BufferUsageBit::UNIFORM_ANY_SHADER,
+			BufferUsageBit::UNIFORM_ALL,
 			dinf.m_uniformBuffers[0]));
 	faceIdxArrayIdx->x() = faceIdx;
 	faceIdxArrayIdx->y() = layer;
@@ -708,7 +716,7 @@ void Ir::computeIrradiance(RenderingContext& rctx, U layer, U faceIdx)
 
 	cmdb->setTextureBarrier(m_irradiance.m_cubeArr,
 		TextureUsageBit::GENERATE_MIPMAPS,
-		TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+		TextureUsageBit::SAMPLED_FRAGMENT,
 		TextureSurfaceInfo(0, 0, faceIdx, layer));
 }
 

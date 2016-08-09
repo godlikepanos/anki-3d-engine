@@ -23,11 +23,11 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(TransientBufferType, inline)
 /// Convert buff usage to TransientBufferType.
 inline TransientBufferType bufferUsageToTransient(BufferUsageBit bit)
 {
-	if((bit & BufferUsageBit::UNIFORM_ANY_SHADER) != BufferUsageBit::NONE)
+	if(!!(bit & BufferUsageBit::UNIFORM_ALL))
 	{
 		return TransientBufferType::UNIFORM;
 	}
-	else if((bit & BufferUsageBit::STORAGE_ANY) != BufferUsageBit::NONE)
+	else if(!!(bit & BufferUsageBit::STORAGE_ALL))
 	{
 		return TransientBufferType::STORAGE;
 	}

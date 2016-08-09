@@ -491,12 +491,12 @@ VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask)
 {
 	VkBufferUsageFlags out = 0;
 
-	if((usageMask & BufferUsageBit::UNIFORM_ANY_SHADER) != BufferUsageBit::NONE)
+	if((usageMask & BufferUsageBit::UNIFORM_ALL) != BufferUsageBit::NONE)
 	{
 		out |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 	}
 
-	if((usageMask & BufferUsageBit::STORAGE_ANY) != BufferUsageBit::NONE)
+	if((usageMask & BufferUsageBit::STORAGE_ALL) != BufferUsageBit::NONE)
 	{
 		out |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
 	}
@@ -594,13 +594,17 @@ VkImageUsageFlags convertTextureUsage(
 {
 	VkImageUsageFlags out = 0;
 
-	if((ak & TextureUsageBit::ANY_SHADER_SAMPLED) != TextureUsageBit::NONE)
+	if(!!(ak & TextureUsageBit::SAMPLED_ALL))
 	{
 		out |= VK_IMAGE_USAGE_SAMPLED_BIT;
 	}
 
-	if((ak & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE)
-		!= TextureUsageBit::NONE)
+	if(!!(ak & TextureUsageBit::IMAGE_ALL))
+	{
+		out |= VK_IMAGE_USAGE_STORAGE_BIT;
+	}
+
+	if(!!(ak & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE))
 	{
 		if(formatIsDepthStencil(format))
 		{
@@ -612,18 +616,18 @@ VkImageUsageFlags convertTextureUsage(
 		}
 	}
 
-	if((ak & TextureUsageBit::GENERATE_MIPMAPS) != TextureUsageBit::NONE)
+	if(!!(ak & TextureUsageBit::GENERATE_MIPMAPS))
 	{
 		out |=
 			VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 	}
 
-	if((ak & TextureUsageBit::UPLOAD) != TextureUsageBit::NONE)
+	if(!!(ak & TextureUsageBit::UPLOAD))
 	{
 		out |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 	}
 
-	if((ak & TextureUsageBit::CLEAR) != TextureUsageBit::NONE)
+	if(!!(ak & TextureUsageBit::CLEAR))
 	{
 		out |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 	}

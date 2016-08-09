@@ -36,7 +36,7 @@ Error Ms::createRt(U32 samples)
 	m_r->createRenderTarget(m_r->getWidth(),
 		m_r->getHeight(),
 		DEPTH_RT_PIXEL_FORMAT,
-		TextureUsageBit::FRAGMENT_SHADER_SAMPLED
+		TextureUsageBit::SAMPLED_FRAGMENT
 			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE
 			| TextureUsageBit::GENERATE_MIPMAPS,
 		SamplingFilter::NEAREST,
@@ -46,7 +46,7 @@ Error Ms::createRt(U32 samples)
 	m_r->createRenderTarget(m_r->getWidth(),
 		m_r->getHeight(),
 		RT_PIXEL_FORMATS[0],
-		TextureUsageBit::FRAGMENT_SHADER_SAMPLED
+		TextureUsageBit::SAMPLED_FRAGMENT
 			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		SamplingFilter::NEAREST,
 		1,
@@ -55,7 +55,7 @@ Error Ms::createRt(U32 samples)
 	m_r->createRenderTarget(m_r->getWidth(),
 		m_r->getHeight(),
 		RT_PIXEL_FORMATS[1],
-		TextureUsageBit::FRAGMENT_SHADER_SAMPLED
+		TextureUsageBit::SAMPLED_FRAGMENT
 			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		SamplingFilter::NEAREST,
 		1,
@@ -64,7 +64,7 @@ Error Ms::createRt(U32 samples)
 	m_r->createRenderTarget(m_r->getWidth(),
 		m_r->getHeight(),
 		RT_PIXEL_FORMATS[2],
-		TextureUsageBit::FRAGMENT_SHADER_SAMPLED
+		TextureUsageBit::SAMPLED_FRAGMENT
 			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
 			| TextureUsageBit::GENERATE_MIPMAPS,
 		SamplingFilter::NEAREST,
@@ -233,22 +233,22 @@ void Ms::setPostRunBarriers(RenderingContext& ctx)
 
 	cmdb->setTextureBarrier(m_rt0,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+		TextureUsageBit::SAMPLED_FRAGMENT,
 		surf);
 
 	cmdb->setTextureBarrier(m_rt1,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+		TextureUsageBit::SAMPLED_FRAGMENT,
 		surf);
 
 	cmdb->setTextureBarrier(m_rt2,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+		TextureUsageBit::SAMPLED_FRAGMENT,
 		surf);
 
 	cmdb->setTextureBarrier(m_depthRt,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-		TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+		TextureUsageBit::SAMPLED_FRAGMENT,
 		surf);
 
 	ANKI_TRACE_STOP_EVENT(RENDER_MS);

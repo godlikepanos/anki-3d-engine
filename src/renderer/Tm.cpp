@@ -37,7 +37,7 @@ Error Tm::create(const ConfigSet& initializer)
 
 	// Create buffer
 	m_luminanceBuff = getGrManager().newInstance<Buffer>(sizeof(Vec4),
-		BufferUsageBit::STORAGE_ANY | BufferUsageBit::UNIFORM_ANY_SHADER
+		BufferUsageBit::STORAGE_ALL | BufferUsageBit::UNIFORM_ALL
 			| BufferUsageBit::TRANSFER_DESTINATION,
 		BufferMapAccessBit::NONE);
 
@@ -54,7 +54,10 @@ Error Tm::create(const ConfigSet& initializer)
 	ResourceGroupInitInfo rcinit;
 	rcinit.m_storageBuffers[0].m_buffer = m_luminanceBuff;
 	rcinit.m_storageBuffers[0].m_range = sizeof(Vec4);
+	rcinit.m_storageBuffers[0].m_usage =
+		BufferUsageBit::STORAGE_COMPUTE_READ_WRITE;
 	rcinit.m_textures[0].m_texture = m_r->getIs().getRt();
+	rcinit.m_textures[0].m_usage = TextureUsageBit::SAMPLED_COMPUTE;
 
 	m_rcGroup = getGrManager().newInstance<ResourceGroup>(rcinit);
 
@@ -70,9 +73,6 @@ void Tm::run(RenderingContext& ctx)
 	cmdb->bindResourceGroup(m_rcGroup, 0, nullptr);
 
 	cmdb->dispatchCompute(1, 1, 1);
-	cmdb->setBufferBarrier(m_luminanceBuff,
-		BufferUsageBit::STORAGE_COMPUTE_SHADER_WRITE,
-		BufferUsageBit::UNIFORM_FRAGMENT_SHADER);
 }
 
 } // end namespace anki

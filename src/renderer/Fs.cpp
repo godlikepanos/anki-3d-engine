@@ -29,7 +29,7 @@ Error Fs::init(const ConfigSet&)
 	m_r->createRenderTarget(m_width,
 		m_height,
 		IS_COLOR_ATTACHMENT_PIXEL_FORMAT,
-		TextureUsageBit::FRAGMENT_SHADER_SAMPLED
+		TextureUsageBit::SAMPLED_FRAGMENT
 			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 		SamplingFilter::NEAREST,
 		1,
@@ -45,6 +45,9 @@ Error Fs::init(const ConfigSet&)
 	fbInit.m_depthStencilAttachment.m_texture = m_r->getMs().getDepthRt();
 	fbInit.m_depthStencilAttachment.m_loadOperation =
 		AttachmentLoadOperation::LOAD;
+	fbInit.m_depthStencilAttachment.m_usageInsideRenderPass =
+		TextureUsageBit::SAMPLED_FRAGMENT
+		| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
 	fbInit.m_depthStencilAttachment.m_surface.m_level = 1;
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
@@ -52,15 +55,27 @@ Error Fs::init(const ConfigSet&)
 	{
 		ResourceGroupInitInfo init;
 		init.m_textures[0].m_texture = m_r->getMs().getDepthRt();
+		init.m_textures[0].m_usage = TextureUsageBit::SAMPLED_FRAGMENT
+			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
 		init.m_textures[1].m_texture = m_r->getSm().getSpotTextureArray();
 		init.m_textures[2].m_texture = m_r->getSm().getOmniTextureArray();
 
 		init.m_uniformBuffers[0].m_uploadedMemory = true;
+		init.m_uniformBuffers[0].m_usage =
+			BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
 		init.m_uniformBuffers[1].m_uploadedMemory = true;
+		init.m_uniformBuffers[1].m_usage =
+			BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
 		init.m_uniformBuffers[2].m_uploadedMemory = true;
+		init.m_uniformBuffers[1].m_usage =
+			BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
 
 		init.m_storageBuffers[0].m_uploadedMemory = true;
+		init.m_storageBuffers[0].m_usage =
+			BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
 		init.m_storageBuffers[1].m_uploadedMemory = true;
+		init.m_storageBuffers[1].m_usage =
+			BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
 
 		m_globalResources = getGrManager().newInstance<ResourceGroup>(init);
 	}
@@ -124,7 +139,7 @@ void Fs::setPostRunBarriers(RenderingContext& ctx)
 {
 	ctx.m_commandBuffer->setTextureBarrier(m_rt,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-		TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+		TextureUsageBit::SAMPLED_FRAGMENT,
 		TextureSurfaceInfo(0, 0, 0, 0));
 }
 

@@ -42,7 +42,7 @@ Error Bloom::initInternal(const ConfigSet& config)
 	m_r->createRenderTarget(m_extractExposure.m_width,
 		m_extractExposure.m_height,
 		RT_PIXEL_FORMAT,
-		TextureUsageBit::FRAGMENT_SHADER_SAMPLED
+		TextureUsageBit::SAMPLED_FRAGMENT
 			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		SamplingFilter::LINEAR,
 		1,
@@ -51,7 +51,7 @@ Error Bloom::initInternal(const ConfigSet& config)
 	m_r->createRenderTarget(m_upscale.m_width,
 		m_upscale.m_height,
 		RT_PIXEL_FORMAT,
-		TextureUsageBit::FRAGMENT_SHADER_SAMPLED
+		TextureUsageBit::SAMPLED_FRAGMENT
 			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 		SamplingFilter::LINEAR,
 		1,
@@ -114,9 +114,11 @@ Error Bloom::initInternal(const ConfigSet& config)
 		ResourceGroupInitInfo descInit;
 		descInit.m_textures[0].m_texture = m_r->getIs().getRt();
 		descInit.m_uniformBuffers[0].m_uploadedMemory = true;
+		descInit.m_uniformBuffers[0].m_usage = BufferUsageBit::UNIFORM_FRAGMENT;
 
 		descInit.m_storageBuffers[0].m_buffer =
 			m_r->getTm().getAverageLuminanceBuffer();
+		descInit.m_storageBuffers[0].m_usage = BufferUsageBit::STORAGE_FRAGMENT;
 
 		m_extractExposure.m_rsrc = gr.newInstance<ResourceGroup>(descInit);
 	}
@@ -156,7 +158,7 @@ void Bloom::run(RenderingContext& ctx)
 	TransientMemoryInfo dyn;
 	Vec4* uniforms = static_cast<Vec4*>(
 		getGrManager().allocateFrameTransientMemory(sizeof(Vec4),
-			BufferUsageBit::UNIFORM_ANY_SHADER,
+			BufferUsageBit::UNIFORM_ALL,
 			dyn.m_uniformBuffers[0]));
 	*uniforms = Vec4(m_threshold, m_scale, 0.0, 0.0);
 
@@ -168,7 +170,7 @@ void Bloom::run(RenderingContext& ctx)
 	// pass 1
 	cmdb->setTextureBarrier(m_extractExposure.m_rt,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+		TextureUsageBit::SAMPLED_FRAGMENT,
 		TextureSurfaceInfo(0, 0, 0, 0));
 
 	cmdb->setTextureBarrier(m_upscale.m_rt,
@@ -197,7 +199,7 @@ void Bloom::setPostRunBarriers(RenderingContext& ctx)
 {
 	ctx.m_commandBuffer->setTextureBarrier(m_upscale.m_rt,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+		TextureUsageBit::SAMPLED_FRAGMENT,
 		TextureSurfaceInfo(0, 0, 0, 0));
 }
 

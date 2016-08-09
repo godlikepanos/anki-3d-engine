@@ -43,7 +43,7 @@ Error Pps::initInternal(const ConfigSet& config)
 	m_r->createRenderTarget(m_r->getWidth(),
 		m_r->getHeight(),
 		RT_PIXEL_FORMAT,
-		TextureUsageBit::FRAGMENT_SHADER_SAMPLED
+		TextureUsageBit::SAMPLED_FRAGMENT
 			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		SamplingFilter::LINEAR,
 		1,
@@ -92,6 +92,7 @@ Error Pps::initInternal(const ConfigSet& config)
 
 	rcInit.m_storageBuffers[0].m_buffer =
 		m_r->getTm().getAverageLuminanceBuffer();
+	rcInit.m_storageBuffers[0].m_usage = BufferUsageBit::STORAGE_FRAGMENT;
 
 	m_rcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);
 

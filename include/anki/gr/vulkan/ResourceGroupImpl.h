@@ -66,11 +66,18 @@ public:
 		return false;
 	}
 
+	VkPipelineBindPoint getPipelineBindPoint() const
+	{
+		ANKI_ASSERT(m_bindPoint != VK_PIPELINE_BIND_POINT_MAX_ENUM);
+		return m_bindPoint;
+	}
+
 private:
 	VkDescriptorSet m_handle = VK_NULL_HANDLE;
 	Array<VkBuffer, MAX_VERTEX_ATTRIBUTES> m_vertBuffs = {{}};
 	Array<VkDeviceSize, MAX_VERTEX_ATTRIBUTES> m_offsets = {{}};
 	U32 m_bindingCount = 0;
+	VkPipelineBindPoint m_bindPoint = VK_PIPELINE_BIND_POINT_MAX_ENUM;
 
 	// For dynamic binding
 	U8 m_uniBindingCount = 0;
@@ -87,8 +94,11 @@ private:
 	/// gracefully
 	DynamicArray<GrObjectPtr<GrObject>> m_refs;
 
-	static U calcRefCount(
+	U calcRefCount(
 		const ResourceGroupInitInfo& init, Bool& hasUploaded, Bool& needsDSet);
+
+	void updateBindPoint(TextureUsageBit usage);
+	void updateBindPoint(BufferUsageBit usage);
 };
 /// @}
 

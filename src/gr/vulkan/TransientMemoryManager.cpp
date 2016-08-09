@@ -30,8 +30,8 @@ Error TransientMemoryManager::init(const ConfigSet& cfg)
 			sizeof(F32) * 4}};
 
 	Array<BufferUsageBit, U(TransientBufferType::COUNT)> usages = {
-		{BufferUsageBit::UNIFORM_ANY_SHADER,
-			BufferUsageBit::STORAGE_ANY,
+		{BufferUsageBit::UNIFORM_ALL,
+			BufferUsageBit::STORAGE_ALL,
 			BufferUsageBit::VERTEX,
 			BufferUsageBit::TRANSFER_SOURCE}};
 

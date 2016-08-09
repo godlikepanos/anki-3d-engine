@@ -25,6 +25,64 @@ ResourceGroupImpl::~ResourceGroupImpl()
 }
 
 //==============================================================================
+void ResourceGroupImpl::updateBindPoint(TextureUsageBit usage)
+{
+	ANKI_ASSERT(!!usage);
+
+	VkPipelineBindPoint bindPoint = VK_PIPELINE_BIND_POINT_MAX_ENUM;
+	const TextureUsageBit allCompute = TextureUsageBit::IMAGE_COMPUTE_READ_WRITE
+		| TextureUsageBit::SAMPLED_COMPUTE;
+
+	if(!!(usage & allCompute))
+	{
+		ANKI_ASSERT(
+			!(usage & ~allCompute) && "Can't have compute with something else");
+		bindPoint = VK_PIPELINE_BIND_POINT_COMPUTE;
+	}
+	else
+	{
+		ANKI_ASSERT(!!(usage & ~allCompute));
+		bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	}
+
+	if(m_bindPoint != VK_PIPELINE_BIND_POINT_MAX_ENUM)
+	{
+		ANKI_ASSERT(m_bindPoint == bindPoint);
+	}
+
+	m_bindPoint = bindPoint;
+}
+
+//==============================================================================
+void ResourceGroupImpl::updateBindPoint(BufferUsageBit usage)
+{
+	ANKI_ASSERT(!!usage);
+
+	VkPipelineBindPoint bindPoint = VK_PIPELINE_BIND_POINT_MAX_ENUM;
+	const BufferUsageBit allCompute = BufferUsageBit::UNIFORM_COMPUTE
+		| BufferUsageBit::STORAGE_COMPUTE_READ_WRITE;
+
+	if(!!(usage & allCompute))
+	{
+		ANKI_ASSERT(
+			!(usage & ~allCompute) && "Can't have compute with something else");
+		bindPoint = VK_PIPELINE_BIND_POINT_COMPUTE;
+	}
+	else
+	{
+		ANKI_ASSERT(!!(usage & ~allCompute));
+		bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	}
+
+	if(m_bindPoint != VK_PIPELINE_BIND_POINT_MAX_ENUM)
+	{
+		ANKI_ASSERT(m_bindPoint == bindPoint);
+	}
+
+	m_bindPoint = bindPoint;
+}
+
+//==============================================================================
 U ResourceGroupImpl::calcRefCount(
 	const ResourceGroupInitInfo& init, Bool& hasUploaded, Bool& needsDSet)
 {
@@ -38,6 +96,10 @@ U ResourceGroupImpl::calcRefCount(
 		{
 			++count;
 			needsDSet = true;
+			updateBindPoint(init.m_textures[i].m_usage);
+			ANKI_ASSERT(
+				init.m_textures[i].m_texture->getImplementation().usageValid(
+					init.m_textures[i].m_usage));
 		}
 
 		if(init.m_textures[i].m_sampler)
@@ -53,11 +115,21 @@ U ResourceGroupImpl::calcRefCount(
 		{
 			++count;
 			needsDSet = true;
+			updateBindPoint(init.m_uniformBuffers[i].m_usage);
+			ANKI_ASSERT(!!(init.m_uniformBuffers[i].m_usage
+							& BufferUsageBit::UNIFORM_ALL)
+				&& !(init.m_uniformBuffers[i].m_usage
+					   & ~BufferUsageBit::UNIFORM_ALL));
 		}
 		else if(init.m_uniformBuffers[i].m_uploadedMemory)
 		{
 			hasUploaded = true;
 			needsDSet = true;
+			updateBindPoint(init.m_uniformBuffers[i].m_usage);
+			ANKI_ASSERT(!!(init.m_uniformBuffers[i].m_usage
+							& BufferUsageBit::UNIFORM_ALL)
+				&& !(init.m_uniformBuffers[i].m_usage
+					   & ~BufferUsageBit::UNIFORM_ALL));
 		}
 	}
 
@@ -67,11 +139,21 @@ U ResourceGroupImpl::calcRefCount(
 		{
 			++count;
 			needsDSet = true;
+			updateBindPoint(init.m_storageBuffers[i].m_usage);
+			ANKI_ASSERT(!!(init.m_uniformBuffers[i].m_usage
+							& BufferUsageBit::STORAGE_ALL)
+				&& !(init.m_uniformBuffers[i].m_usage
+					   & ~BufferUsageBit::STORAGE_ALL));
 		}
 		else if(init.m_storageBuffers[i].m_uploadedMemory)
 		{
 			hasUploaded = true;
 			needsDSet = true;
+			updateBindPoint(init.m_storageBuffers[i].m_usage);
+			ANKI_ASSERT(!!(init.m_uniformBuffers[i].m_usage
+							& BufferUsageBit::STORAGE_ALL)
+				&& !(init.m_uniformBuffers[i].m_usage
+					   & ~BufferUsageBit::STORAGE_ALL));
 		}
 	}
 
@@ -81,6 +163,10 @@ U ResourceGroupImpl::calcRefCount(
 		{
 			++count;
 			needsDSet = true;
+			updateBindPoint(init.m_images[i].m_usage);
+			ANKI_ASSERT(
+				init.m_images[i].m_texture->getImplementation().usageValid(
+					init.m_textures[i].m_usage));
 		}
 	}
 
@@ -123,6 +209,7 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 	if(needsDSet)
 	{
 		ANKI_CHECK(getGrManagerImpl().allocateDescriptorSet(m_handle));
+		ANKI_ASSERT(m_bindPoint != VK_PIPELINE_BIND_POINT_MAX_ENUM);
 	}
 
 	// Update
@@ -208,7 +295,7 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 			VkDescriptorBufferInfo& inf = unis[uniCount++];
 			inf.buffer =
 				getGrManagerImpl().getTransientMemoryManager().getBufferHandle(
-					BufferUsageBit::UNIFORM_ANY_SHADER);
+					BufferUsageBit::UNIFORM_ALL);
 			inf.range = VK_WHOLE_SIZE;
 
 			m_dynamicBuffersMask.set(i);
@@ -253,7 +340,7 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 			VkDescriptorBufferInfo& inf = storages[storageCount++];
 			inf.buffer =
 				getGrManagerImpl().getTransientMemoryManager().getBufferHandle(
-					BufferUsageBit::STORAGE_ANY);
+					BufferUsageBit::STORAGE_ALL);
 			inf.range = VK_WHOLE_SIZE;
 
 			m_dynamicBuffersMask.set(MAX_UNIFORM_BUFFER_BINDINGS + i);
@@ -384,8 +471,7 @@ void ResourceGroupImpl::setupDynamicOffsets(
 					dynInfo->m_uniformBuffers[i];
 
 				ANKI_ASSERT(token.m_range);
-				ANKI_ASSERT(
-					!!(token.m_usage & BufferUsageBit::UNIFORM_ANY_SHADER));
+				ANKI_ASSERT(!!(token.m_usage & BufferUsageBit::UNIFORM_ALL));
 				dynOffsets[i] = token.m_offset;
 			}
 		}
@@ -399,7 +485,7 @@ void ResourceGroupImpl::setupDynamicOffsets(
 					dynInfo->m_storageBuffers[i];
 
 				ANKI_ASSERT(token.m_range);
-				ANKI_ASSERT(!!(token.m_usage & BufferUsageBit::STORAGE_ANY));
+				ANKI_ASSERT(!!(token.m_usage & BufferUsageBit::STORAGE_ALL));
 				dynOffsets[MAX_UNIFORM_BUFFER_BINDINGS + i] = token.m_offset;
 			}
 		}

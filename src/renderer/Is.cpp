@@ -137,9 +137,9 @@ Error Is::initInternal(const ConfigSet& config)
 	m_r->createRenderTarget(m_r->getWidth(),
 		m_r->getHeight(),
 		IS_COLOR_ATTACHMENT_PIXEL_FORMAT,
-		TextureUsageBit::FRAGMENT_SHADER_SAMPLED
+		TextureUsageBit::SAMPLED_FRAGMENT
 			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE
-			| TextureUsageBit::COMPUTE_SHADER_SAMPLED,
+			| TextureUsageBit::SAMPLED_COMPUTE,
 		SamplingFilter::LINEAR,
 		m_rtMipCount,
 		m_rt);
@@ -172,12 +172,24 @@ Error Is::initInternal(const ConfigSet& config)
 		init.m_textures[8].m_sampler = m_r->getIr().getIntegrationLutSampler();
 
 		init.m_uniformBuffers[0].m_uploadedMemory = true;
+		init.m_uniformBuffers[0].m_usage =
+			BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
 		init.m_uniformBuffers[1].m_uploadedMemory = true;
+		init.m_uniformBuffers[1].m_usage =
+			BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
 		init.m_uniformBuffers[2].m_uploadedMemory = true;
+		init.m_uniformBuffers[2].m_usage =
+			BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
 		init.m_uniformBuffers[3].m_uploadedMemory = true;
+		init.m_uniformBuffers[3].m_usage =
+			BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
 
 		init.m_storageBuffers[0].m_uploadedMemory = true;
+		init.m_storageBuffers[0].m_usage =
+			BufferUsageBit::STORAGE_FRAGMENT | BufferUsageBit::STORAGE_VERTEX;
 		init.m_storageBuffers[1].m_uploadedMemory = true;
+		init.m_storageBuffers[1].m_usage =
+			BufferUsageBit::STORAGE_FRAGMENT | BufferUsageBit::STORAGE_VERTEX;
 
 		m_rcGroup = getGrManager().newInstance<ResourceGroup>(init);
 	}
@@ -224,7 +236,7 @@ void Is::updateCommonBlock(RenderingContext& ctx)
 	ShaderCommonUniforms* blk = static_cast<ShaderCommonUniforms*>(
 		getGrManager().allocateFrameTransientMemory(
 			sizeof(ShaderCommonUniforms),
-			BufferUsageBit::UNIFORM_ANY_SHADER,
+			BufferUsageBit::UNIFORM_ALL,
 			ctx.m_is.m_dynBufferInfo.m_uniformBuffers[COMMON_VARS_LOCATION]));
 
 	// Start writing

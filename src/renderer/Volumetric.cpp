@@ -34,7 +34,10 @@ Error Volumetric::init(const ConfigSet& config)
 	// Create the resource group
 	ResourceGroupInitInfo rcInit;
 	rcInit.m_textures[0].m_texture = m_r->getMs().getDepthRt();
+	rcInit.m_textures[0].m_usage = TextureUsageBit::SAMPLED_FRAGMENT
+		| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
 	rcInit.m_uniformBuffers[0].m_uploadedMemory = true;
+	rcInit.m_uniformBuffers[0].m_usage = BufferUsageBit::UNIFORM_FRAGMENT;
 
 	m_rcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);
 
@@ -51,7 +54,7 @@ void Volumetric::run(RenderingContext& ctx)
 	TransientMemoryInfo dyn;
 	Vec4* uniforms = static_cast<Vec4*>(
 		getGrManager().allocateFrameTransientMemory(sizeof(Vec4) * 2,
-			BufferUsageBit::UNIFORM_ANY_SHADER,
+			BufferUsageBit::UNIFORM_ALL,
 			dyn.m_uniformBuffers[0]));
 
 	computeLinearizeDepthOptimal(

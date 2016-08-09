@@ -68,7 +68,7 @@ Error Ssao::createFb(FramebufferPtr& fb, TexturePtr& rt)
 	m_r->createRenderTarget(m_width,
 		m_height,
 		RT_PIXEL_FORMAT,
-		TextureUsageBit::FRAGMENT_SHADER_SAMPLED
+		TextureUsageBit::SAMPLED_FRAGMENT
 			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		SamplingFilter::LINEAR,
 		1,
@@ -114,8 +114,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 	//
 	TextureInitInfo tinit;
 
-	tinit.m_usage =
-		TextureUsageBit::FRAGMENT_SHADER_SAMPLED | TextureUsageBit::UPLOAD;
+	tinit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::UPLOAD;
 	tinit.m_width = tinit.m_height = NOISE_TEX_SIZE;
 	tinit.m_depth = 1;
 	tinit.m_layerCount = 1;
@@ -246,6 +245,8 @@ Error Ssao::initInternal(const ConfigSet& config)
 
 	rcinit.m_textures[0].m_texture = m_r->getMs().getDepthRt();
 	rcinit.m_textures[0].m_sampler = gr.newInstance<Sampler>(sinit);
+	rcinit.m_textures[0].m_usage = TextureUsageBit::SAMPLED_FRAGMENT
+		| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
 
 	rcinit.m_textures[1].m_texture = m_r->getMs().getRt2();
 	rcinit.m_textures[1].m_sampler = rcinit.m_textures[0].m_sampler;
@@ -253,6 +254,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 	rcinit.m_textures[2].m_texture = m_noiseTex;
 
 	rcinit.m_uniformBuffers[0].m_uploadedMemory = true;
+	rcinit.m_uniformBuffers[0].m_usage = BufferUsageBit::UNIFORM_FRAGMENT;
 	m_rcFirst = gr.newInstance<ResourceGroup>(rcinit);
 
 	rcinit = ResourceGroupInitInfo();
@@ -294,7 +296,7 @@ void Ssao::setPostRunBarriers(RenderingContext& ctx)
 {
 	ctx.m_commandBuffer->setTextureBarrier(m_vblurRt,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+		TextureUsageBit::SAMPLED_FRAGMENT,
 		TextureSurfaceInfo(0, 0, 0, 0));
 }
 
@@ -324,7 +326,7 @@ void Ssao::run(RenderingContext& ctx)
 		// hpass
 		cmdb->setTextureBarrier(m_vblurRt,
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-			TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+			TextureUsageBit::SAMPLED_FRAGMENT,
 			TextureSurfaceInfo(0, 0, 0, 0));
 		cmdb->setTextureBarrier(m_hblurRt,
 			TextureUsageBit::NONE,
@@ -339,7 +341,7 @@ void Ssao::run(RenderingContext& ctx)
 		// vpass
 		cmdb->setTextureBarrier(m_hblurRt,
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-			TextureUsageBit::FRAGMENT_SHADER_SAMPLED,
+			TextureUsageBit::SAMPLED_FRAGMENT,
 			TextureSurfaceInfo(0, 0, 0, 0));
 		cmdb->setTextureBarrier(m_vblurRt,
 			TextureUsageBit::NONE,

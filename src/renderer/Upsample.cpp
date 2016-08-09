@@ -25,11 +25,15 @@ Error Upsample::init(const ConfigSet& config)
 	sinit.m_repeat = false;
 
 	rcInit.m_textures[0].m_texture = m_r->getMs().getDepthRt();
+	rcInit.m_textures[0].m_usage = TextureUsageBit::SAMPLED_FRAGMENT
+		| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
 
 	sinit.m_minLod = 1.0;
 	sinit.m_mipmapFilter = SamplingFilter::NEAREST;
 	rcInit.m_textures[1].m_texture = m_r->getMs().getDepthRt();
 	rcInit.m_textures[1].m_sampler = gr.newInstance<Sampler>(sinit);
+	rcInit.m_textures[1].m_usage = TextureUsageBit::SAMPLED_FRAGMENT
+		| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
 
 	sinit.m_minLod = 0.0;
 	rcInit.m_textures[2].m_texture = m_r->getFs().getRt();
@@ -42,6 +46,7 @@ Error Upsample::init(const ConfigSet& config)
 	rcInit.m_textures[4].m_texture = m_r->getSsao().getRt();
 
 	rcInit.m_uniformBuffers[0].m_uploadedMemory = true;
+	rcInit.m_uniformBuffers[0].m_usage = BufferUsageBit::UNIFORM_FRAGMENT;
 
 	m_rcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);
 
@@ -96,7 +101,7 @@ void Upsample::run(RenderingContext& ctx)
 
 	Vec4* linearDepth = static_cast<Vec4*>(
 		getGrManager().allocateFrameTransientMemory(sizeof(Vec4),
-			BufferUsageBit::UNIFORM_ANY_SHADER,
+			BufferUsageBit::UNIFORM_ALL,
 			dyn.m_uniformBuffers[0]));
 	const Frustum& fr = ctx.m_frustumComponent->getFrustum();
 	computeLinearizeDepthOptimal(
