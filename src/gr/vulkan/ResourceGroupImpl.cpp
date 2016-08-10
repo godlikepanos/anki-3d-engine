@@ -92,17 +92,16 @@ U ResourceGroupImpl::calcRefCount(
 
 	for(U i = 0; i < MAX_TEXTURE_BINDINGS; ++i)
 	{
-		if(init.m_textures[i].m_texture)
+		const TextureBinding& b = init.m_textures[i];
+		if(b.m_texture)
 		{
 			++count;
 			needsDSet = true;
-			updateBindPoint(init.m_textures[i].m_usage);
-			ANKI_ASSERT(
-				init.m_textures[i].m_texture->getImplementation().usageValid(
-					init.m_textures[i].m_usage));
+			updateBindPoint(b.m_usage);
+			ANKI_ASSERT(b.m_texture->getImplementation().usageValid(b.m_usage));
 		}
 
-		if(init.m_textures[i].m_sampler)
+		if(b.m_sampler)
 		{
 			++count;
 			needsDSet = true;
@@ -111,72 +110,70 @@ U ResourceGroupImpl::calcRefCount(
 
 	for(U i = 0; i < MAX_UNIFORM_BUFFER_BINDINGS; ++i)
 	{
-		if(init.m_uniformBuffers[i].m_buffer)
+		const BufferBinding& b = init.m_uniformBuffers[i];
+		if(b.m_buffer)
 		{
 			++count;
 			needsDSet = true;
-			updateBindPoint(init.m_uniformBuffers[i].m_usage);
-			ANKI_ASSERT(!!(init.m_uniformBuffers[i].m_usage
-							& BufferUsageBit::UNIFORM_ALL)
-				&& !(init.m_uniformBuffers[i].m_usage
-					   & ~BufferUsageBit::UNIFORM_ALL));
+			updateBindPoint(b.m_usage);
+			ANKI_ASSERT(!!(b.m_usage & BufferUsageBit::UNIFORM_ALL)
+				&& !(b.m_usage & ~BufferUsageBit::UNIFORM_ALL));
+			ANKI_ASSERT(b.m_buffer->getImplementation().usageValid(b.m_usage));
 		}
-		else if(init.m_uniformBuffers[i].m_uploadedMemory)
+		else if(b.m_uploadedMemory)
 		{
 			hasUploaded = true;
 			needsDSet = true;
-			updateBindPoint(init.m_uniformBuffers[i].m_usage);
-			ANKI_ASSERT(!!(init.m_uniformBuffers[i].m_usage
-							& BufferUsageBit::UNIFORM_ALL)
-				&& !(init.m_uniformBuffers[i].m_usage
-					   & ~BufferUsageBit::UNIFORM_ALL));
+			updateBindPoint(b.m_usage);
+			ANKI_ASSERT(!!(b.m_usage & BufferUsageBit::UNIFORM_ALL)
+				&& !(b.m_usage & ~BufferUsageBit::UNIFORM_ALL));
 		}
 	}
 
 	for(U i = 0; i < MAX_STORAGE_BUFFER_BINDINGS; ++i)
 	{
-		if(init.m_storageBuffers[i].m_buffer)
+		const BufferBinding& b = init.m_storageBuffers[i];
+		if(b.m_buffer)
 		{
 			++count;
 			needsDSet = true;
-			updateBindPoint(init.m_storageBuffers[i].m_usage);
-			ANKI_ASSERT(!!(init.m_uniformBuffers[i].m_usage
-							& BufferUsageBit::STORAGE_ALL)
-				&& !(init.m_uniformBuffers[i].m_usage
-					   & ~BufferUsageBit::STORAGE_ALL));
+			updateBindPoint(b.m_usage);
+			ANKI_ASSERT(!!(b.m_usage & BufferUsageBit::STORAGE_ALL)
+				&& !(b.m_usage & ~BufferUsageBit::STORAGE_ALL));
+			ANKI_ASSERT(b.m_buffer->getImplementation().usageValid(b.m_usage));
 		}
-		else if(init.m_storageBuffers[i].m_uploadedMemory)
+		else if(b.m_uploadedMemory)
 		{
 			hasUploaded = true;
 			needsDSet = true;
-			updateBindPoint(init.m_storageBuffers[i].m_usage);
-			ANKI_ASSERT(!!(init.m_uniformBuffers[i].m_usage
-							& BufferUsageBit::STORAGE_ALL)
-				&& !(init.m_uniformBuffers[i].m_usage
-					   & ~BufferUsageBit::STORAGE_ALL));
+			updateBindPoint(b.m_usage);
+			ANKI_ASSERT(!!(b.m_usage & BufferUsageBit::STORAGE_ALL)
+				&& !(b.m_usage & ~BufferUsageBit::STORAGE_ALL));
 		}
 	}
 
 	for(U i = 0; i < MAX_IMAGE_BINDINGS; ++i)
 	{
-		if(init.m_images[i].m_texture)
+		const ImageBinding& b = init.m_images[i];
+		if(b.m_texture)
 		{
 			++count;
 			needsDSet = true;
-			updateBindPoint(init.m_images[i].m_usage);
-			ANKI_ASSERT(
-				init.m_images[i].m_texture->getImplementation().usageValid(
-					init.m_textures[i].m_usage));
+			updateBindPoint(b.m_usage);
+			ANKI_ASSERT(b.m_texture->getImplementation().usageValid(b.m_usage));
 		}
 	}
 
 	for(U i = 0; i < MAX_VERTEX_ATTRIBUTES; ++i)
 	{
-		if(init.m_vertexBuffers[i].m_buffer)
+		const BufferBinding& b = init.m_vertexBuffers[i];
+		if(b.m_buffer)
 		{
 			++count;
+			ANKI_ASSERT(b.m_buffer->getImplementation().usageValid(
+				BufferUsageBit::VERTEX));
 		}
-		else if(init.m_vertexBuffers[i].m_uploadedMemory)
+		else if(b.m_uploadedMemory)
 		{
 			hasUploaded = true;
 		}
@@ -184,6 +181,8 @@ U ResourceGroupImpl::calcRefCount(
 
 	if(init.m_indexBuffer.m_buffer)
 	{
+		ANKI_ASSERT(init.m_indexBuffer.m_buffer->getImplementation().usageValid(
+			BufferUsageBit::INDEX));
 		++count;
 	}
 
@@ -215,22 +214,21 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 	// Update
 	//
 	Array<VkDescriptorImageInfo, MAX_TEXTURE_BINDINGS> texes = {{}};
-	U texAndSamplerCount = 0;
 	Array<VkDescriptorBufferInfo, MAX_UNIFORM_BUFFER_BINDINGS> unis = {{}};
-	U uniCount = 0;
 	Array<VkDescriptorBufferInfo, MAX_STORAGE_BUFFER_BINDINGS> storages = {{}};
-	U storageCount = 0;
 	Array<VkDescriptorImageInfo, MAX_IMAGE_BINDINGS> images = {{}};
-	U imageCount = 0;
 	Array<VkWriteDescriptorSet, 4> write = {{}};
 	U writeCount = 0;
 	refCount = 0;
+	Bool hole = false;
+	U count = 0;
 
 	// 1st the textures
 	for(U i = 0; i < MAX_TEXTURE_BINDINGS; ++i)
 	{
 		if(init.m_textures[i].m_texture)
 		{
+			ANKI_ASSERT(!hole);
 			TextureImpl& teximpl =
 				init.m_textures[i].m_texture->getImplementation();
 
@@ -255,15 +253,19 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 			inf.imageLayout =
 				teximpl.computeLayout(init.m_textures[i].m_usage, 0);
 
-			++texAndSamplerCount;
+			++count;
+		}
+		else
+		{
+			hole = true;
 		}
 	}
 
-	if(texAndSamplerCount)
+	if(count)
 	{
 		VkWriteDescriptorSet& w = write[writeCount++];
 		w.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		w.descriptorCount = texAndSamplerCount;
+		w.descriptorCount = count;
 		w.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		w.dstBinding = 0;
 		w.pImageInfo = &texes[0];
@@ -271,11 +273,14 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 	}
 
 	// 2nd the uniform buffers
+	count = 0;
+	hole = false;
 	for(U i = 0; i < MAX_UNIFORM_BUFFER_BINDINGS; ++i)
 	{
 		if(init.m_uniformBuffers[i].m_buffer)
 		{
-			VkDescriptorBufferInfo& inf = unis[uniCount++];
+			ANKI_ASSERT(!hole);
+			VkDescriptorBufferInfo& inf = unis[i];
 			inf.buffer = init.m_uniformBuffers[i]
 							 .m_buffer->getImplementation()
 							 .getHandle();
@@ -288,11 +293,12 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 
 			m_refs[refCount++] = init.m_uniformBuffers[i].m_buffer;
 
-			m_uniBindingCount = i + 1;
+			++count;
 		}
 		else if(init.m_uniformBuffers[i].m_uploadedMemory)
 		{
-			VkDescriptorBufferInfo& inf = unis[uniCount++];
+			ANKI_ASSERT(!hole);
+			VkDescriptorBufferInfo& inf = unis[i];
 			inf.buffer =
 				getGrManagerImpl().getTransientMemoryManager().getBufferHandle(
 					BufferUsageBit::UNIFORM_ALL);
@@ -300,27 +306,36 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 
 			m_dynamicBuffersMask.set(i);
 
-			m_uniBindingCount = i + 1;
+			++count;
+		}
+		else
+		{
+			hole = true;
 		}
 	}
 
-	if(uniCount)
+	if(count)
 	{
 		VkWriteDescriptorSet& w = write[writeCount++];
 		w.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		w.descriptorCount = uniCount;
+		w.descriptorCount = count;
 		w.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 		w.dstBinding = MAX_TEXTURE_BINDINGS;
 		w.pBufferInfo = &unis[0];
 		w.dstSet = m_handle;
 	}
 
+	m_uniBindingCount = count;
+
 	// 3nd the storage buffers
+	count = 0;
+	hole = false;
 	for(U i = 0; i < MAX_STORAGE_BUFFER_BINDINGS; ++i)
 	{
 		if(init.m_storageBuffers[i].m_buffer)
 		{
-			VkDescriptorBufferInfo& inf = storages[storageCount++];
+			ANKI_ASSERT(!hole);
+			VkDescriptorBufferInfo& inf = storages[i];
 			inf.buffer = init.m_storageBuffers[i]
 							 .m_buffer->getImplementation()
 							 .getHandle();
@@ -332,41 +347,49 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 			}
 
 			m_refs[refCount++] = init.m_storageBuffers[i].m_buffer;
-
-			m_storageBindingCount = i + 1;
+			++count;
 		}
 		else if(init.m_storageBuffers[i].m_uploadedMemory)
 		{
-			VkDescriptorBufferInfo& inf = storages[storageCount++];
+			ANKI_ASSERT(!hole);
+			VkDescriptorBufferInfo& inf = storages[i];
 			inf.buffer =
 				getGrManagerImpl().getTransientMemoryManager().getBufferHandle(
 					BufferUsageBit::STORAGE_ALL);
 			inf.range = VK_WHOLE_SIZE;
 
 			m_dynamicBuffersMask.set(MAX_UNIFORM_BUFFER_BINDINGS + i);
-
-			m_storageBindingCount = i + 1;
+			++count;
+		}
+		else
+		{
+			hole = true;
 		}
 	}
 
-	if(storageCount)
+	if(count)
 	{
 		VkWriteDescriptorSet& w = write[writeCount++];
 		w.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		w.descriptorCount = storageCount;
+		w.descriptorCount = count;
 		w.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
 		w.dstBinding = MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS;
 		w.pBufferInfo = &storages[0];
 		w.dstSet = m_handle;
 	}
 
+	m_storageBindingCount = count;
+
 	// 4th images
+	count = 0;
+	hole = false;
 	for(U i = 0; i < MAX_IMAGE_BINDINGS; ++i)
 	{
 		const ImageBinding& binding = init.m_images[i];
 		if(binding.m_texture)
 		{
-			VkDescriptorImageInfo& inf = images[imageCount++];
+			ANKI_ASSERT(!hole);
+			VkDescriptorImageInfo& inf = images[i];
 			const TextureImpl& tex = binding.m_texture->getImplementation();
 
 			if(binding.m_level == 0)
@@ -380,14 +403,19 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 			inf.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 
 			m_refs[refCount++] = binding.m_texture;
+			++count;
+		}
+		else
+		{
+			hole = true;
 		}
 	}
 
-	if(imageCount)
+	if(count)
 	{
 		VkWriteDescriptorSet& w = write[writeCount++];
 		w.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		w.descriptorCount = imageCount;
+		w.descriptorCount = count;
 		w.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 		w.dstBinding = MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS
 			+ MAX_STORAGE_BUFFER_BINDINGS;

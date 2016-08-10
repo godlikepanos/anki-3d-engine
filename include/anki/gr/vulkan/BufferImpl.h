@@ -54,6 +54,11 @@ public:
 		return m_size;
 	}
 
+	Bool usageValid(BufferUsageBit usage) const
+	{
+		return (m_usage & usage) == usage;
+	}
+
 private:
 	VkBuffer m_handle = VK_NULL_HANDLE;
 	GpuMemoryAllocationHandle m_memHandle;
@@ -61,6 +66,7 @@ private:
 	BufferMapAccessBit m_access = BufferMapAccessBit::NONE;
 	U32 m_size = 0;
 	VkMemoryPropertyFlags m_memoryFlags = 0;
+	BufferUsageBit m_usage = BufferUsageBit::NONE;
 
 #if ANKI_ASSERTIONS
 	Bool8 m_mapped = false;

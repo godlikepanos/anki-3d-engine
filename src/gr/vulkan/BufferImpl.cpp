@@ -137,6 +137,7 @@ Error BufferImpl::init(
 
 	m_access = access;
 	m_size = size;
+	m_usage = usage;
 	return ErrorCode::NONE;
 }
 

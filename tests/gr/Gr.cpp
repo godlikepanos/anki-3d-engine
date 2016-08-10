@@ -246,10 +246,14 @@ layout(local_size_x = 1,
 	local_size_y = 1,
 	local_size_z = 1) in;
 	
+layout(ANKI_SS_BINDING(1, 0)) buffer ss1_
+{
+	vec4 u_color;
+};
+	
 void main()
 {
-	vec4 col = vec4(1.0, 0.0, 0.0, 0.0);
-	imageStore(u_img, ivec2(gl_WorkGroupID.x, gl_WorkGroupID.y), col);
+	imageStore(u_img, ivec2(gl_WorkGroupID.x, gl_WorkGroupID.y), u_color);
 })";
 
 #define COMMON_BEGIN()                                                         \
@@ -1325,6 +1329,12 @@ ANKI_TEST(Gr, ImageLoadStore)
 		rcinit.m_images[0].m_level = 1;
 		ResourceGroupPtr rc1 = gr->newInstance<ResourceGroup>(rcinit);
 
+		rcinit = ResourceGroupInitInfo();
+		rcinit.m_storageBuffers[0].m_uploadedMemory = true;
+		rcinit.m_storageBuffers[0].m_usage =
+			BufferUsageBit::STORAGE_COMPUTE_READ;
+		ResourceGroupPtr rc2 = gr->newInstance<ResourceGroup>(rcinit);
+
 		// FB
 		FramebufferPtr dfb = createDefaultFb(*gr);
 
@@ -1372,13 +1382,22 @@ ANKI_TEST(Gr, ImageLoadStore)
 			CommandBufferInitInfo cinit;
 			CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
 
-			// Write iamge
+			// Write image
+			TransientMemoryInfo trans;
+			Vec4* col = static_cast<Vec4*>(
+				gr->allocateFrameTransientMemory(sizeof(*col),
+					BufferUsageBit::STORAGE_ALL,
+					trans.m_storageBuffers[0],
+					nullptr));
+			*col = Vec4(iterations / F32(ITERATION_COUNT));
+
 			cmdb->setTextureBarrier(tex,
 				TextureUsageBit::NONE,
 				TextureUsageBit::IMAGE_COMPUTE_WRITE,
 				TextureSurfaceInfo(1, 0, 0, 0));
 			cmdb->bindPipeline(compPpline);
 			cmdb->bindResourceGroup(rc1, 0, nullptr);
+			cmdb->bindResourceGroup(rc2, 1, &trans);
 			cmdb->dispatchCompute(WIDTH / 2, HEIGHT / 2, 1);
 			cmdb->setTextureBarrier(tex,
 				TextureUsageBit::IMAGE_COMPUTE_WRITE,
