@@ -67,7 +67,7 @@ Error Fs::init(const ConfigSet&)
 		init.m_uniformBuffers[1].m_usage =
 			BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
 		init.m_uniformBuffers[2].m_uploadedMemory = true;
-		init.m_uniformBuffers[1].m_usage =
+		init.m_uniformBuffers[2].m_usage =
 			BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
 
 		init.m_storageBuffers[0].m_uploadedMemory = true;

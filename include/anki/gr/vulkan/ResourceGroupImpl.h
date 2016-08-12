@@ -38,14 +38,10 @@ public:
 		return m_handle;
 	}
 
-	void getVertexBindingInfo(const VkBuffer*& buffers,
-		const VkDeviceSize*& offsets,
-		U& bindingCount) const
-	{
-		buffers = &m_vertBuffs[0];
-		offsets = &m_offsets[0];
-		bindingCount = m_bindingCount;
-	}
+	void getVertexBindingInfo(const TransientMemoryInfo* trans,
+		VkBuffer buffers[],
+		VkDeviceSize offsets[],
+		U& bindingCount) const;
 
 	void setupDynamicOffsets(
 		const TransientMemoryInfo* dynInfo, U32 dynOffsets[]) const;
@@ -74,10 +70,15 @@ public:
 
 private:
 	VkDescriptorSet m_handle = VK_NULL_HANDLE;
-	Array<VkBuffer, MAX_VERTEX_ATTRIBUTES> m_vertBuffs = {{}};
-	Array<VkDeviceSize, MAX_VERTEX_ATTRIBUTES> m_offsets = {{}};
-	U32 m_bindingCount = 0;
 	VkPipelineBindPoint m_bindPoint = VK_PIPELINE_BIND_POINT_MAX_ENUM;
+
+	class
+	{
+	public:
+		Array<VkBuffer, MAX_VERTEX_ATTRIBUTES> m_buffs = {{}};
+		Array<VkDeviceSize, MAX_VERTEX_ATTRIBUTES> m_offsets = {{}};
+		U32 m_bindingCount = 0;
+	} m_vert;
 
 	// For dynamic binding
 	U8 m_uniBindingCount = 0;

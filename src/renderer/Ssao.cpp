@@ -127,19 +127,13 @@ Error Ssao::initInternal(const ConfigSet& config)
 
 	m_noiseTex = gr.newInstance<Texture>(tinit);
 
+	Array<Vec3, NOISE_TEX_SIZE * NOISE_TEX_SIZE> noise;
+	genNoise(&noise[0], &noise[0] + noise.getSize());
+
 	CommandBufferPtr cmdb =
 		gr.newInstance<CommandBuffer>(CommandBufferInitInfo());
-
-	PtrSize noiseSize = NOISE_TEX_SIZE * NOISE_TEX_SIZE * sizeof(Vec3);
-
-	TransientMemoryToken token;
-	Vec3* noise = static_cast<Vec3*>(gr.allocateFrameTransientMemory(
-		noiseSize, BufferUsageBit::TRANSFER_SOURCE, token));
-
-	genNoise(noise, noise + NOISE_TEX_SIZE * NOISE_TEX_SIZE);
-
-	cmdb->uploadTextureSurface(
-		m_noiseTex, TextureSurfaceInfo(0, 0, 0, 0), token);
+	cmdb->uploadTextureSurfaceCopyData(
+		m_noiseTex, TextureSurfaceInfo(0, 0, 0, 0), &noise[0], sizeof(noise));
 	cmdb->flush();
 
 	//

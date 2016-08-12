@@ -575,13 +575,10 @@ ANKI_TEST(Gr, DrawWithUniforms)
 
 			// Uploaded buffer
 			TransientMemoryInfo transientInfo;
-			Error err = ErrorCode::NONE;
 			Vec4* rotMat = static_cast<Vec4*>(
 				gr->allocateFrameTransientMemory(sizeof(Vec4),
 					BufferUsageBit::UNIFORM_ALL,
-					transientInfo.m_uniformBuffers[1],
-					&err));
-			ANKI_TEST_EXPECT_NO_ERR(err);
+					transientInfo.m_uniformBuffers[1]));
 			F32 angle = toRad(360.0f / ITERATION_COUNT * iterations);
 			(*rotMat)[0] = cos(angle);
 			(*rotMat)[1] = -sin(angle);
@@ -676,6 +673,7 @@ ANKI_TEST(Gr, DrawWithVertex)
 		init.m_color.m_drawsToDefaultFramebuffer = true;
 		init.m_color.m_attachmentCount = 1;
 		init.m_depthStencil.m_depthWriteEnabled = false;
+		init.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
 
 		init.m_vertex.m_attributeCount = 3;
 		init.m_vertex.m_attributes[0].m_format =
@@ -783,7 +781,7 @@ ANKI_TEST(Gr, DrawWithTexture)
 		TextureInitInfo init;
 		init.m_depth = 1;
 		init.m_format =
-			PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
+			PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM);
 		init.m_usage =
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::UPLOAD;
 		init.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
@@ -815,75 +813,59 @@ ANKI_TEST(Gr, DrawWithTexture)
 		//
 		// Upload all textures
 		//
-		Array<U8, 2 * 2 * 4> mip0 = {
-			{255, 0, 0, 0, 0, 255, 0, 0, 0, 0, 255, 0, 255, 0, 255, 0}};
+		Array<U8, 2 * 2 * 3> mip0 = {
+			{255, 0, 0, 0, 255, 0, 0, 0, 255, 255, 0, 255}};
 
-		Array<U8, 4> mip1 = {{128, 128, 128, 0}};
+		Array<U8, 3> mip1 = {{128, 128, 128}};
 
-		Array<U8, 4 * 4 * 4> bmip0 = {{255,
-			0,
-			0,
-			0,
-			0,
-			255,
-			0,
+		Array<U8, 4 * 4 * 3> bmip0 = {{255,
 			0,
 			0,
 			0,
 			255,
 			0,
-			255,
-			255,
 			0,
-			0,
-			255,
-			0,
-			255,
-			0,
-			0,
-			255,
-			255,
 			0,
 			255,
 			255,
 			255,
 			0,
-			128,
+			255,
 			0,
+			255,
 			0,
-			0,
-			0,
-			128,
-			0,
-			0,
-			0,
-			0,
-			128,
-			0,
-			128,
-			128,
-			0,
-			0,
-			128,
-			0,
-			128,
-			0,
-			0,
-			128,
-			128,
-			0,
-			128,
-			128,
-			128,
-			0,
+			255,
+			255,
+			255,
+			255,
 			255,
 			128,
 			0,
 			0,
 			0,
 			128,
+			0,
+			0,
+			0,
+			128,
+			128,
+			128,
+			0,
+			128,
+			0,
+			128,
+			0,
+			128,
+			128,
+			128,
+			128,
+			128,
 			255,
-			0}};
+			128,
+			0,
+			0,
+			128,
+			255}};
 
 		CommandBufferInitInfo cmdbinit;
 		cmdbinit.m_flags = CommandBufferFlag::TRANSFER_WORK;
@@ -904,32 +886,16 @@ ANKI_TEST(Gr, DrawWithTexture)
 			TextureUsageBit::NONE,
 			TextureUsageBit::UPLOAD,
 			TextureSurfaceInfo(0, 0, 0, 0));
+		;
 
-		Error err = ErrorCode::NONE;
-		TransientMemoryToken token;
-		void* ptr = gr->allocateFrameTransientMemory(
-			sizeof(mip0), BufferUsageBit::TRANSFER_SOURCE, token, &err);
-		ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
-		ANKI_TEST_EXPECT_NO_ERR(err);
-		memcpy(ptr, &mip0[0], sizeof(mip0));
+		cmdb->uploadTextureSurfaceCopyData(
+			a, TextureSurfaceInfo(0, 0, 0, 0), &mip0[0], sizeof(mip0));
 
-		cmdb->uploadTextureSurface(a, TextureSurfaceInfo(0, 0, 0, 0), token);
+		cmdb->uploadTextureSurfaceCopyData(
+			a, TextureSurfaceInfo(1, 0, 0, 0), &mip1[0], sizeof(mip1));
 
-		ptr = gr->allocateFrameTransientMemory(
-			sizeof(mip1), BufferUsageBit::TRANSFER_SOURCE, token, &err);
-		ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
-		ANKI_TEST_EXPECT_NO_ERR(err);
-		memcpy(ptr, &mip1[0], sizeof(mip1));
-
-		cmdb->uploadTextureSurface(a, TextureSurfaceInfo(1, 0, 0, 0), token);
-
-		ptr = gr->allocateFrameTransientMemory(
-			sizeof(bmip0), BufferUsageBit::TRANSFER_SOURCE, token, &err);
-		ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
-		ANKI_TEST_EXPECT_NO_ERR(err);
-		memcpy(ptr, &bmip0[0], sizeof(bmip0));
-
-		cmdb->uploadTextureSurface(b, TextureSurfaceInfo(0, 0, 0, 0), token);
+		cmdb->uploadTextureSurfaceCopyData(
+			b, TextureSurfaceInfo(0, 0, 0, 0), &bmip0[0], sizeof(bmip0));
 
 		// Gen mips
 		cmdb->setTextureBarrier(b,
@@ -1042,15 +1008,13 @@ static void drawOffscreenDrawcalls(GrManager& gr,
 
 	Mat4* mvp = static_cast<Mat4*>(gr.allocateFrameTransientMemory(sizeof(*mvp),
 		BufferUsageBit::UNIFORM_ALL,
-		transientInfo.m_uniformBuffers[0],
-		nullptr));
+		transientInfo.m_uniformBuffers[0]));
 	*mvp = projMat * viewMat * modelMat;
 
 	Vec4* color =
 		static_cast<Vec4*>(gr.allocateFrameTransientMemory(sizeof(*color) * 2,
 			BufferUsageBit::UNIFORM_ALL,
-			transientInfo.m_uniformBuffers[1],
-			nullptr));
+			transientInfo.m_uniformBuffers[1]));
 	*color++ = Vec4(1.0, 0.0, 0.0, 0.0);
 	*color = Vec4(0.0, 1.0, 0.0, 0.0);
 
@@ -1066,15 +1030,13 @@ static void drawOffscreenDrawcalls(GrManager& gr,
 
 	mvp = static_cast<Mat4*>(gr.allocateFrameTransientMemory(sizeof(*mvp),
 		BufferUsageBit::UNIFORM_ALL,
-		transientInfo.m_uniformBuffers[0],
-		nullptr));
+		transientInfo.m_uniformBuffers[0]));
 	*mvp = projMat * viewMat * modelMat;
 
 	color =
 		static_cast<Vec4*>(gr.allocateFrameTransientMemory(sizeof(*color) * 2,
 			BufferUsageBit::UNIFORM_ALL,
-			transientInfo.m_uniformBuffers[1],
-			nullptr));
+			transientInfo.m_uniformBuffers[1]));
 	*color++ = Vec4(0.0, 0.0, 1.0, 0.0);
 	*color = Vec4(0.0, 1.0, 1.0, 0.0);
 
@@ -1387,8 +1349,7 @@ ANKI_TEST(Gr, ImageLoadStore)
 			Vec4* col = static_cast<Vec4*>(
 				gr->allocateFrameTransientMemory(sizeof(*col),
 					BufferUsageBit::STORAGE_ALL,
-					trans.m_storageBuffers[0],
-					nullptr));
+					trans.m_storageBuffers[0]));
 			*col = Vec4(iterations / F32(ITERATION_COUNT));
 
 			cmdb->setTextureBarrier(tex,

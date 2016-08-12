@@ -7,6 +7,7 @@
 #include <anki/gr/gl/GrManagerImpl.h>
 #include <anki/gr/gl/RenderingThread.h>
 #include <anki/gr/gl/TransientMemoryManager.h>
+#include <anki/gr/gl/TextureImpl.h>
 #include <anki/core/Timestamp.h>
 #include <cstring>
 
@@ -65,13 +66,49 @@ void GrManager::finish()
 
 //==============================================================================
 void* GrManager::allocateFrameTransientMemory(
-	PtrSize size, BufferUsageBit usage, TransientMemoryToken& token, Error* err)
+	PtrSize size, BufferUsageBit usage, TransientMemoryToken& token)
 {
 	void* data = nullptr;
-	m_impl->getTransientMemoryManager().allocate(
-		size, usage, TransientMemoryTokenLifetime::PER_FRAME, token, data, err);
+	m_impl->getTransientMemoryManager().allocate(size,
+		usage,
+		TransientMemoryTokenLifetime::PER_FRAME,
+		token,
+		data,
+		nullptr);
 
 	return data;
+}
+
+//==============================================================================
+void* GrManager::tryAllocateFrameTransientMemory(
+	PtrSize size, BufferUsageBit usage, TransientMemoryToken& token)
+{
+	void* data = nullptr;
+	Error err = ErrorCode::NONE;
+	m_impl->getTransientMemoryManager().allocate(size,
+		usage,
+		TransientMemoryTokenLifetime::PER_FRAME,
+		token,
+		data,
+		&err);
+
+	return (!err) ? data : nullptr;
+}
+
+//==============================================================================
+void GrManager::getTextureUploadInfo(TexturePtr tex,
+	const TextureSurfaceInfo& surf,
+	PtrSize& allocationSize,
+	BufferUsageBit& usage)
+{
+	const TextureImpl& impl = tex->getImplementation();
+	impl.checkSurface(surf);
+
+	U width = impl.m_width >> surf.m_level;
+	U height = impl.m_height >> surf.m_level;
+	allocationSize = computeSurfaceSize(width, height, impl.m_pformat);
+
+	usage = BufferUsageBit::TRANSFER_SOURCE;
 }
 
 } // end namespace anki

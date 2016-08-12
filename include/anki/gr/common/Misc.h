@@ -85,4 +85,14 @@ Bool textureInitInfoValid(const TextureInitInfo& inf);
 
 Bool framebufferInitInfoValid(const FramebufferInitInfo& inf);
 
+/// Compute the size of a single surface.
+void getFormatInfo(const PixelFormat& fmt,
+	U& texelComponents,
+	U& texelBytes,
+	U& blockSize,
+	U& blockBytes);
+
+/// Compute the size of the surface.
+PtrSize computeSurfaceSize(U width, U height, const PixelFormat& fmt);
+
 } // end namespace anki

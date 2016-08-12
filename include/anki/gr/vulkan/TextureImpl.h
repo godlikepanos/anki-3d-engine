@@ -16,6 +16,13 @@ namespace anki
 /// @addtogroup vulkan
 /// @{
 
+enum class TextureImplWorkaround : U8
+{
+	NONE,
+	R8G8B8_TO_R8G8B8A8 = 1 << 0,
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(TextureImplWorkaround, inline)
+
 /// Texture container.
 class TextureImpl : public VulkanObject
 {
@@ -42,6 +49,7 @@ public:
 	PixelFormat m_format;
 
 	Bool m_depthStencil = false;
+	TextureImplWorkaround m_workarounds = TextureImplWorkaround::NONE;
 
 	TextureImpl(GrManager* manager);
 

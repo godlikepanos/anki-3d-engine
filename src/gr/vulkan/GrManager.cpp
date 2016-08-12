@@ -5,6 +5,8 @@
 
 #include <anki/gr/GrManager.h>
 #include <anki/gr/vulkan/GrManagerImpl.h>
+#include <anki/gr/vulkan/TextureImpl.h>
+#include <anki/gr/Texture.h>
 
 namespace anki
 {
@@ -60,11 +62,50 @@ void GrManager::finish()
 
 //==============================================================================
 void* GrManager::allocateFrameTransientMemory(
-	PtrSize size, BufferUsageBit usage, TransientMemoryToken& token, Error* err)
+	PtrSize size, BufferUsageBit usage, TransientMemoryToken& token)
 {
 	void* ptr = nullptr;
-	m_impl->getTransientMemoryManager().allocate(size, usage, token, ptr, err);
+	m_impl->getTransientMemoryManager().allocate(
+		size, usage, token, ptr, nullptr);
 	return ptr;
+}
+
+//==============================================================================
+void* GrManager::tryAllocateFrameTransientMemory(
+	PtrSize size, BufferUsageBit usage, TransientMemoryToken& token)
+{
+	void* ptr = nullptr;
+	Error err = ErrorCode::NONE;
+	m_impl->getTransientMemoryManager().allocate(size, usage, token, ptr, &err);
+	return (!err) ? ptr : nullptr;
+}
+
+//==============================================================================
+void GrManager::getTextureUploadInfo(TexturePtr tex,
+	const TextureSurfaceInfo& surf,
+	PtrSize& allocationSize,
+	BufferUsageBit& usage)
+{
+	const TextureImpl& impl = tex->getImplementation();
+	impl.checkSurface(surf);
+
+	U width = impl.m_width >> surf.m_level;
+	U height = impl.m_height >> surf.m_level;
+
+	allocationSize = computeSurfaceSize(width,
+		height,
+		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM));
+
+	if(!!(impl.m_workarounds & TextureImplWorkaround::R8G8B8_TO_R8G8B8A8))
+	{
+		// Extra size for staging buffer
+		alignRoundUp(16, allocationSize);
+		allocationSize += computeSurfaceSize(width,
+			height,
+			PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM));
+	}
+
+	usage = BufferUsageBit::TRANSFER_SOURCE;
 }
 
 } // end namespace anki

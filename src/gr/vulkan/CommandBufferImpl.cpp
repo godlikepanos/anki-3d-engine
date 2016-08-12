@@ -253,13 +253,15 @@ void CommandBufferImpl::bindResourceGroup(
 	// Bind vertex and index buffer only in the first set
 	if(slot == 0)
 	{
-		const VkBuffer* buffers = nullptr;
-		const VkDeviceSize* offsets = nullptr;
+		Array<VkBuffer, MAX_VERTEX_ATTRIBUTES> buffers = {{}};
+		Array<VkDeviceSize, MAX_VERTEX_ATTRIBUTES> offsets = {{}};
 		U bindingCount = 0;
-		impl.getVertexBindingInfo(buffers, offsets, bindingCount);
+		impl.getVertexBindingInfo(
+			dynInfo, &buffers[0], &offsets[0], bindingCount);
 		if(bindingCount)
 		{
-			vkCmdBindVertexBuffers(m_handle, 0, bindingCount, buffers, offsets);
+			vkCmdBindVertexBuffers(
+				m_handle, 0, bindingCount, &buffers[0], &offsets[0]);
 		}
 
 		VkBuffer idxBuff;
@@ -360,6 +362,128 @@ void CommandBufferImpl::generateMipmaps(
 	}
 
 	// Hold the reference
+	m_texList.pushBack(m_alloc, tex);
+}
+
+//==============================================================================
+void CommandBufferImpl::uploadTextureSurface(TexturePtr tex,
+	const TextureSurfaceInfo& surf,
+	const TransientMemoryToken& token)
+{
+	commandCommon();
+	flushBarriers();
+
+	TextureImpl& impl = tex->getImplementation();
+	impl.checkSurface(surf);
+	ANKI_ASSERT(impl.usageValid(TextureUsageBit::UPLOAD));
+
+	if(!impl.m_workarounds)
+	{
+		VkImageSubresourceRange range;
+		impl.computeSubResourceRange(surf, range);
+
+		U width = impl.m_width >> surf.m_level;
+		U height = impl.m_height >> surf.m_level;
+
+		// Copy
+		VkBufferImageCopy region;
+		region.imageSubresource.aspectMask = impl.m_aspect;
+		region.imageSubresource.baseArrayLayer = range.baseArrayLayer;
+		region.imageSubresource.layerCount = 1;
+		region.imageSubresource.mipLevel = surf.m_level;
+		region.imageOffset = {0, 0, 0};
+		region.imageExtent.width = width;
+		region.imageExtent.height = height;
+		region.imageExtent.depth = 1;
+		region.bufferOffset = token.m_offset;
+		region.bufferImageHeight = 0;
+		region.bufferRowLength = 0;
+
+		vkCmdCopyBufferToImage(m_handle,
+			getGrManagerImpl().getTransientMemoryManager().getBufferHandle(
+				token.m_usage),
+			impl.m_imageHandle,
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			1,
+			&region);
+	}
+	else if(!!(impl.m_workarounds & TextureImplWorkaround::R8G8B8_TO_R8G8B8A8))
+	{
+		// Find the offset to the RGBA staging buff
+		U width = impl.m_width >> surf.m_level;
+		U height = impl.m_height >> surf.m_level;
+		PtrSize dstOffset = computeSurfaceSize(width,
+			height,
+			PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM));
+		alignRoundUp(16, dstOffset);
+		ANKI_ASSERT(token.m_range
+			== dstOffset + computeSurfaceSize(width,
+							   height,
+							   PixelFormat(ComponentFormat::R8G8B8A8,
+												  TransformFormat::UNORM)));
+		dstOffset += token.m_offset;
+
+		// Create the copy regions
+		DynamicArrayAuto<VkBufferCopy> copies(m_alloc);
+		copies.create(width * height);
+		U count = 0;
+		for(U x = 0; x < width; ++x)
+		{
+			for(U y = 0; y < height; ++y)
+			{
+				VkBufferCopy& c = copies[count++];
+				c.srcOffset = (y * width + x) * 3 + token.m_offset;
+				c.dstOffset = (y * width + x) * 4 + dstOffset;
+				c.size = 3;
+			}
+		}
+
+		// Copy buffer to buffer
+		VkBuffer buffHandle =
+			getGrManagerImpl().getTransientMemoryManager().getBufferHandle(
+				token.m_usage);
+		vkCmdCopyBuffer(
+			m_handle, buffHandle, buffHandle, copies.getSize(), &copies[0]);
+
+		// Set barrier
+		setBufferBarrier(VK_PIPELINE_STAGE_TRANSFER_BIT,
+			VK_ACCESS_TRANSFER_WRITE_BIT,
+			VK_PIPELINE_STAGE_TRANSFER_BIT,
+			VK_ACCESS_TRANSFER_READ_BIT,
+			dstOffset,
+			token.m_range - (dstOffset - token.m_offset),
+			buffHandle);
+		flushBarriers();
+
+		// Do the copy to the image
+		VkImageSubresourceRange range;
+		impl.computeSubResourceRange(surf, range);
+
+		VkBufferImageCopy region;
+		region.imageSubresource.aspectMask = impl.m_aspect;
+		region.imageSubresource.baseArrayLayer = range.baseArrayLayer;
+		region.imageSubresource.layerCount = 1;
+		region.imageSubresource.mipLevel = surf.m_level;
+		region.imageOffset = {0, 0, 0};
+		region.imageExtent.width = width;
+		region.imageExtent.height = height;
+		region.imageExtent.depth = 1;
+		region.bufferOffset = dstOffset;
+		region.bufferImageHeight = 0;
+		region.bufferRowLength = 0;
+
+		vkCmdCopyBufferToImage(m_handle,
+			buffHandle,
+			impl.m_imageHandle,
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			1,
+			&region);
+	}
+	else
+	{
+		ANKI_ASSERT(0);
+	}
+
 	m_texList.pushBack(m_alloc, tex);
 }
 

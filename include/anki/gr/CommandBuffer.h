@@ -203,10 +203,33 @@ public:
 	/// @name Resource upload
 	/// @{
 
-	/// Upload data to a texture.
+	/// Upload data to a texture. It's the base of all texture upload methods.
 	void uploadTextureSurface(TexturePtr tex,
 		const TextureSurfaceInfo& surf,
 		const TransientMemoryToken& token);
+
+	/// Same as uploadTextureSurface but it will perform the transient
+	/// allocation as well. If that allocation fails expect the defaul OOM
+	/// behaviour (crash).
+	void uploadTextureSurfaceData(TexturePtr tex,
+		const TextureSurfaceInfo& surf,
+		void*& data,
+		PtrSize& dataSize);
+
+	/// Same as uploadTextureSurfaceData but it will return a nullptr in @a data
+	/// if there is a OOM condition.
+	void tryUploadTextureSurfaceData(TexturePtr tex,
+		const TextureSurfaceInfo& surf,
+		void*& data,
+		PtrSize& dataSize);
+
+	/// Same as uploadTextureSurface but it will perform the transient
+	/// allocation and copy to it the @a data. If that allocation fails expect
+	/// the defaul OOM behaviour (crash).
+	void uploadTextureSurfaceCopyData(TexturePtr tex,
+		const TextureSurfaceInfo& surf,
+		void* data,
+		PtrSize dataSize);
 
 	/// Upload data to a buffer.
 	void uploadBuffer(
@@ -245,3 +268,5 @@ private:
 /// @}
 
 } // end namespace anki
+
+#include <anki/gr/CommandBuffer.inl.h>

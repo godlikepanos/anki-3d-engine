@@ -61,15 +61,19 @@ Error TexUploadTask::operator()(AsyncLoaderTaskContext& ctx)
 					const auto& surf =
 						m_loader.getSurface(mip, depth, face, layer);
 
-					TransientMemoryToken token;
-					Error err = ErrorCode::NONE;
-					void* data = m_gr->allocateFrameTransientMemory(
-						surf.m_data.getSize(),
-						BufferUsageBit::TRANSFER_SOURCE,
-						token,
-						&err);
+					PtrSize allocationSize;
+					BufferUsageBit uploadBuffUsage;
+					m_gr->getTextureUploadInfo(m_tex,
+						TextureSurfaceInfo(mip, depth, face, layer),
+						allocationSize,
+						uploadBuffUsage);
+					ANKI_ASSERT(allocationSize >= surf.m_data.getSize());
 
-					if(!err)
+					TransientMemoryToken token;
+					void* data = m_gr->tryAllocateFrameTransientMemory(
+						allocationSize, uploadBuffUsage, token);
+
+					if(data)
 					{
 						// There is enough transfer memory
 

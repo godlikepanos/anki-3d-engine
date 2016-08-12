@@ -121,6 +121,14 @@ public:
 		TextureUsageBit nextUsage,
 		const TextureSurfaceInfo& surf);
 
+	void setBufferBarrier(VkPipelineStageFlags srcStage,
+		VkAccessFlags srcAccess,
+		VkPipelineStageFlags dstStage,
+		VkAccessFlags dstAccess,
+		PtrSize offset,
+		PtrSize size,
+		VkBuffer buff);
+
 private:
 	StackAllocator<U8> m_alloc;
 

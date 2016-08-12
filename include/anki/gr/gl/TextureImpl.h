@@ -32,6 +32,7 @@ public:
 	U8 m_mipsCount = 0;
 	U8 m_faceCount = 0; ///< 6 for cubes and 1 for the rest
 	Bool8 m_compressed = false;
+	PixelFormat m_pformat;
 	DynamicArray<GLuint> m_texViews; ///< Temp views for gen mips.
 
 	TextureImpl(GrManager* manager)
@@ -46,6 +47,9 @@ public:
 		checkTextureSurface(
 			m_texType, m_depth, m_mipsCount, m_layerCount, surf);
 	}
+
+	/// Init some stuff.
+	void preInit(const TextureInitInfo& init);
 
 	/// Create the texture storage.
 	void init(const TextureInitInfo& init);

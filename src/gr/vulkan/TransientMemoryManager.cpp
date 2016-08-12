@@ -33,7 +33,8 @@ Error TransientMemoryManager::init(const ConfigSet& cfg)
 		{BufferUsageBit::UNIFORM_ALL,
 			BufferUsageBit::STORAGE_ALL,
 			BufferUsageBit::VERTEX,
-			BufferUsageBit::TRANSFER_SOURCE}};
+			BufferUsageBit::TRANSFER_SOURCE
+				| BufferUsageBit::TRANSFER_DESTINATION}};
 
 	auto alloc = m_manager->getAllocator();
 	for(TransientBufferType i = TransientBufferType::UNIFORM;

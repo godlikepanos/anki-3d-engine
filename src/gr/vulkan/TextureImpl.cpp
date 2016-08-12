@@ -165,7 +165,7 @@ Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 	m_depthStencil = formatIsDepthStencil(m_format);
 	if(m_depthStencil)
 	{
-		m_aspect = VK_IMAGE_ASPECT_DEPTH_BIT;
+		m_aspect = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
 	}
 	else
 	{
@@ -230,11 +230,11 @@ Error TextureImpl::initImage(CreateContext& ctx)
 		// Try to find a fallback
 		if(init.m_format.m_components == ComponentFormat::R8G8B8)
 		{
-			ANKI_ASSERT((init.m_usage & TextureUsageBit::UPLOAD)
-					== TextureUsageBit::NONE
+			ANKI_ASSERT(!(init.m_usage & TextureUsageBit::IMAGE_ALL)
 				&& "Can't do that ATM");
 			init.m_format.m_components = ComponentFormat::R8G8B8A8;
 			m_format = init.m_format;
+			m_workarounds = TextureImplWorkaround::R8G8B8_TO_R8G8B8A8;
 		}
 		else
 		{

@@ -55,6 +55,10 @@ void Texture::init(const TextureInitInfo& init)
 	ANKI_ASSERT(textureInitInfoValid(init));
 	m_impl.reset(getAllocator().newInstance<TextureImpl>(&getManager()));
 
+	// Need to pre-init because some funcs ask for members and we don't want
+	// to serialize
+	m_impl->preInit(init);
+
 	CommandBufferPtr cmdb =
 		getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
 

@@ -491,38 +491,37 @@ VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask)
 {
 	VkBufferUsageFlags out = 0;
 
-	if((usageMask & BufferUsageBit::UNIFORM_ALL) != BufferUsageBit::NONE)
+	if(!!(usageMask & BufferUsageBit::UNIFORM_ALL))
 	{
 		out |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 	}
 
-	if((usageMask & BufferUsageBit::STORAGE_ALL) != BufferUsageBit::NONE)
+	if(!!(usageMask & BufferUsageBit::STORAGE_ALL))
 	{
 		out |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
 	}
 
-	if((usageMask & BufferUsageBit::INDEX) != BufferUsageBit::NONE)
+	if(!!(usageMask & BufferUsageBit::INDEX))
 	{
 		out |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
 	}
 
-	if((usageMask & BufferUsageBit::VERTEX) != BufferUsageBit::NONE)
+	if(!!(usageMask & BufferUsageBit::VERTEX))
 	{
 		out |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
 	}
 
-	if((usageMask & BufferUsageBit::INDIRECT) != BufferUsageBit::NONE)
+	if(!!(usageMask & BufferUsageBit::INDIRECT))
 	{
 		out |= VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT;
 	}
 
-	if((usageMask & BufferUsageBit::TRANSFER_DESTINATION)
-		!= BufferUsageBit::NONE)
+	if(!!(usageMask & BufferUsageBit::TRANSFER_DESTINATION))
 	{
 		out |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 	}
 
-	if((usageMask & BufferUsageBit::TRANSFER_SOURCE) != BufferUsageBit::NONE)
+	if(!!(usageMask & BufferUsageBit::TRANSFER_SOURCE))
 	{
 		out |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 	}

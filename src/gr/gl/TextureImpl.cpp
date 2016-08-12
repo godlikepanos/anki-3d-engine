@@ -269,27 +269,17 @@ void TextureImpl::bind()
 }
 
 //==============================================================================
-void TextureImpl::init(const TextureInitInfo& init)
+void TextureImpl::preInit(const TextureInitInfo& init)
 {
-	ANKI_ASSERT(!isCreated());
 	ANKI_ASSERT(textureInitInfoValid(init));
-
-	GrAllocator<U8> alloc = getAllocator();
-	const SamplerInitInfo& sinit = init.m_sampling;
-
-	// Create
-	//
-	glGenTextures(1, &m_glName);
-	ANKI_ASSERT(m_glName != 0);
 
 	m_width = init.m_width;
 	m_height = init.m_height;
 	m_depth = init.m_depth;
-	ANKI_ASSERT(m_depth > 0);
 	m_layerCount = init.m_layerCount;
-	ANKI_ASSERT(m_layerCount > 0);
 	m_target = convertTextureType(init.m_type);
 	m_texType = init.m_type;
+	m_pformat = init.m_format;
 
 	convertTextureInformation(
 		init.m_format, m_compressed, m_format, m_internalFormat, m_type);
@@ -305,7 +295,49 @@ void TextureImpl::init(const TextureInitInfo& init)
 			computeMaxMipmapCount3d(m_width, m_height, m_depth));
 	}
 
-	// Bind
+	// Surface count
+	switch(m_target)
+	{
+	case GL_TEXTURE_1D:
+	case GL_TEXTURE_2D:
+	case GL_TEXTURE_2D_MULTISAMPLE:
+		m_surfaceCountPerLevel = 1;
+		m_faceCount = 1;
+		break;
+	case GL_TEXTURE_CUBE_MAP:
+		m_surfaceCountPerLevel = 6;
+		m_faceCount = 6;
+		break;
+	case GL_TEXTURE_CUBE_MAP_ARRAY:
+		m_surfaceCountPerLevel = m_layerCount * 6;
+		m_faceCount = 6;
+		break;
+	case GL_TEXTURE_2D_ARRAY:
+		m_surfaceCountPerLevel = m_layerCount;
+		m_faceCount = 1;
+		break;
+	case GL_TEXTURE_3D:
+		m_surfaceCountPerLevel = m_depth;
+		m_faceCount = 1;
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+}
+
+//==============================================================================
+void TextureImpl::init(const TextureInitInfo& init)
+{
+	ANKI_ASSERT(!isCreated());
+
+	GrAllocator<U8> alloc = getAllocator();
+	const SamplerInitInfo& sinit = init.m_sampling;
+
+	// Create
+	//
+	glGenTextures(1, &m_glName);
+	ANKI_ASSERT(m_glName != 0);
+
 	bind();
 
 	// Create storage
@@ -347,35 +379,6 @@ void TextureImpl::init(const TextureInitInfo& init)
 			m_width,
 			m_height,
 			GL_FALSE);
-		break;
-	default:
-		ANKI_ASSERT(0);
-	}
-
-	// Surface count
-	switch(m_target)
-	{
-	case GL_TEXTURE_1D:
-	case GL_TEXTURE_2D:
-	case GL_TEXTURE_2D_MULTISAMPLE:
-		m_surfaceCountPerLevel = 1;
-		m_faceCount = 1;
-		break;
-	case GL_TEXTURE_CUBE_MAP:
-		m_surfaceCountPerLevel = 6;
-		m_faceCount = 6;
-		break;
-	case GL_TEXTURE_CUBE_MAP_ARRAY:
-		m_surfaceCountPerLevel = m_layerCount * 6;
-		m_faceCount = 6;
-		break;
-	case GL_TEXTURE_2D_ARRAY:
-		m_surfaceCountPerLevel = m_layerCount;
-		m_faceCount = 1;
-		break;
-	case GL_TEXTURE_3D:
-		m_surfaceCountPerLevel = m_depth;
-		m_faceCount = 1;
 		break;
 	default:
 		ANKI_ASSERT(0);

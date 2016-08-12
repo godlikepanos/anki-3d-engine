@@ -45,14 +45,12 @@ Error MeshLoadTask::operator()(AsyncLoaderTaskContext& ctx)
 	if(m_vertBuff)
 	{
 		TransientMemoryToken token;
-		Error err = ErrorCode::NONE;
 		void* data =
-			gr.allocateFrameTransientMemory(m_loader.getVertexDataSize(),
+			gr.tryAllocateFrameTransientMemory(m_loader.getVertexDataSize(),
 				BufferUsageBit::TRANSFER_SOURCE,
-				token,
-				&err);
+				token);
 
-		if(!err)
+		if(data)
 		{
 			memcpy(
 				data, m_loader.getVertexData(), m_loader.getVertexDataSize());
@@ -71,14 +69,12 @@ Error MeshLoadTask::operator()(AsyncLoaderTaskContext& ctx)
 	// Create index buffer
 	{
 		TransientMemoryToken token;
-		Error err = ErrorCode::NONE;
 		void* data =
-			gr.allocateFrameTransientMemory(m_loader.getIndexDataSize(),
+			gr.tryAllocateFrameTransientMemory(m_loader.getIndexDataSize(),
 				BufferUsageBit::TRANSFER_SOURCE,
-				token,
-				&err);
+				token);
 
-		if(!err)
+		if(data)
 		{
 			memcpy(data, m_loader.getIndexData(), m_loader.getIndexDataSize());
 

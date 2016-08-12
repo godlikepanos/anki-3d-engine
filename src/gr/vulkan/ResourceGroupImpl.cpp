@@ -432,28 +432,40 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 
 	// Vertex stuff
 	//
+	count = 0;
+	hole = false;
 	for(U i = 0; i < init.m_vertexBuffers.getSize(); ++i)
 	{
 		if(init.m_vertexBuffers[i].m_buffer)
 		{
-			m_vertBuffs[i] = init.m_vertexBuffers[i]
-								 .m_buffer->getImplementation()
-								 .getHandle();
-			m_offsets[i] = init.m_vertexBuffers[i].m_offset;
-			++m_bindingCount;
+			ANKI_ASSERT(!hole);
+			m_vert.m_buffs[i] = init.m_vertexBuffers[i]
+									.m_buffer->getImplementation()
+									.getHandle();
+			m_vert.m_offsets[i] = init.m_vertexBuffers[i].m_offset;
+			ANKI_ASSERT(m_vert.m_offsets[i] != MAX_PTR_SIZE);
 
+			++count;
 			m_refs[refCount++] = init.m_vertexBuffers[i].m_buffer;
 		}
 		else if(init.m_vertexBuffers[i].m_uploadedMemory)
 		{
-			ANKI_ASSERT(0 && "TODO");
-			++m_bindingCount;
+			ANKI_ASSERT(!hole);
+			m_vert.m_buffs[i] =
+				getGrManagerImpl().getTransientMemoryManager().getBufferHandle(
+					BufferUsageBit::VERTEX);
+
+			// Don't care about the offset
+			m_vert.m_offsets[i] = MAX_PTR_SIZE;
+
+			++count;
 		}
 		else
 		{
-			break;
+			hole = true;
 		}
 	}
+	m_vert.m_bindingCount = count;
 
 	if(init.m_indexBuffer.m_buffer)
 	{
@@ -472,6 +484,10 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 		}
 
 		m_refs[refCount++] = init.m_indexBuffer.m_buffer;
+	}
+	else if(init.m_indexBuffer.m_uploadedMemory)
+	{
+		ANKI_ASSERT(0 && "TODO");
 	}
 
 	ANKI_ASSERT(refCount == m_refs.getSize());
@@ -517,6 +533,34 @@ void ResourceGroupImpl::setupDynamicOffsets(
 				dynOffsets[MAX_UNIFORM_BUFFER_BINDINGS + i] = token.m_offset;
 			}
 		}
+	}
+}
+
+//==============================================================================
+void ResourceGroupImpl::getVertexBindingInfo(const TransientMemoryInfo* trans,
+	VkBuffer buffers[],
+	VkDeviceSize offsets[],
+	U& bindingCount) const
+{
+	ANKI_ASSERT(buffers && offsets);
+	bindingCount = m_vert.m_bindingCount;
+
+	for(U i = 0; i < m_vert.m_bindingCount; ++i)
+	{
+		buffers[i] = m_vert.m_buffs[i];
+
+		if(m_vert.m_offsets[i] != MAX_PTR_SIZE)
+		{
+			offsets[i] = m_vert.m_offsets[i];
+		}
+		else
+		{
+			// Transient
+			ANKI_ASSERT(trans);
+			offsets[i] = trans->m_vertexBuffers[i].m_offset;
+		}
+
+		ANKI_ASSERT(buffers[i] != VK_NULL_HANDLE);
 	}
 }
 

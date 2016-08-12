@@ -143,45 +143,27 @@ inline void CommandBufferImpl::setImageBarrier(TexturePtr tex,
 }
 
 //==============================================================================
-inline void CommandBufferImpl::uploadTextureSurface(TexturePtr tex,
-	const TextureSurfaceInfo& surf,
-	const TransientMemoryToken& token)
+inline void CommandBufferImpl::setBufferBarrier(VkPipelineStageFlags srcStage,
+	VkAccessFlags srcAccess,
+	VkPipelineStageFlags dstStage,
+	VkAccessFlags dstAccess,
+	PtrSize offset,
+	PtrSize size,
+	VkBuffer buff)
 {
-	commandCommon();
-	flushBarriers();
+	ANKI_ASSERT(buff);
+	VkBufferMemoryBarrier b = {};
+	b.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+	b.srcAccessMask = srcAccess;
+	b.dstAccessMask = dstAccess;
+	b.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	b.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	b.buffer = buff;
+	b.offset = offset;
+	b.size = size;
 
-	TextureImpl& impl = tex->getImplementation();
-	impl.checkSurface(surf);
-
-	VkImageSubresourceRange range;
-	impl.computeSubResourceRange(surf, range);
-
-	U width = impl.m_width >> surf.m_level;
-	U height = impl.m_height >> surf.m_level;
-
-	// Copy
-	VkBufferImageCopy region;
-	region.imageSubresource.aspectMask = impl.m_aspect;
-	region.imageSubresource.baseArrayLayer = range.baseArrayLayer;
-	region.imageSubresource.layerCount = 1;
-	region.imageSubresource.mipLevel = surf.m_level;
-	region.imageOffset = {0, 0, 0};
-	region.imageExtent.width = width;
-	region.imageExtent.height = height;
-	region.imageExtent.depth = 1;
-	region.bufferOffset = token.m_offset;
-	region.bufferImageHeight = 0;
-	region.bufferRowLength = 0;
-
-	vkCmdCopyBufferToImage(m_handle,
-		getGrManagerImpl().getTransientMemoryManager().getBufferHandle(
-			token.m_usage),
-		impl.m_imageHandle,
-		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-		1,
-		&region);
-
-	m_texList.pushBack(m_alloc, tex);
+	vkCmdPipelineBarrier(
+		m_handle, srcStage, dstStage, 0, 0, nullptr, 1, &b, 0, nullptr);
 }
 
 //==============================================================================
