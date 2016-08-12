@@ -16,15 +16,6 @@ namespace anki
 {
 
 //==============================================================================
-const Array<PixelFormat, Ms::ATTACHMENT_COUNT> Ms::RT_PIXEL_FORMATS = {
-	{PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM),
-		PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM),
-		PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM)}};
-
-const PixelFormat Ms::DEPTH_RT_PIXEL_FORMAT(
-	ComponentFormat::D24, TransformFormat::FLOAT);
-
-//==============================================================================
 Ms::~Ms()
 {
 	m_secondLevelCmdbs.destroy(getAllocator());
@@ -35,7 +26,7 @@ Error Ms::createRt(U32 samples)
 {
 	m_r->createRenderTarget(m_r->getWidth(),
 		m_r->getHeight(),
-		DEPTH_RT_PIXEL_FORMAT,
+		MS_DEPTH_ATTACHMENT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT
 			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE
 			| TextureUsageBit::GENERATE_MIPMAPS,
@@ -45,7 +36,7 @@ Error Ms::createRt(U32 samples)
 
 	m_r->createRenderTarget(m_r->getWidth(),
 		m_r->getHeight(),
-		RT_PIXEL_FORMATS[0],
+		MS_COLOR_ATTACHMENT_PIXEL_FORMATS[0],
 		TextureUsageBit::SAMPLED_FRAGMENT
 			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		SamplingFilter::NEAREST,
@@ -54,7 +45,7 @@ Error Ms::createRt(U32 samples)
 
 	m_r->createRenderTarget(m_r->getWidth(),
 		m_r->getHeight(),
-		RT_PIXEL_FORMATS[1],
+		MS_COLOR_ATTACHMENT_PIXEL_FORMATS[1],
 		TextureUsageBit::SAMPLED_FRAGMENT
 			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		SamplingFilter::NEAREST,
@@ -63,7 +54,7 @@ Error Ms::createRt(U32 samples)
 
 	m_r->createRenderTarget(m_r->getWidth(),
 		m_r->getHeight(),
-		RT_PIXEL_FORMATS[2],
+		MS_COLOR_ATTACHMENT_PIXEL_FORMATS[2],
 		TextureUsageBit::SAMPLED_FRAGMENT
 			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
 			| TextureUsageBit::GENERATE_MIPMAPS,
@@ -77,7 +68,7 @@ Error Ms::createRt(U32 samples)
 #endif
 
 	FramebufferInitInfo fbInit;
-	fbInit.m_colorAttachmentCount = ATTACHMENT_COUNT;
+	fbInit.m_colorAttachmentCount = MS_COLOR_ATTACHMENT_COUNT;
 	fbInit.m_colorAttachments[0].m_texture = m_rt0;
 	fbInit.m_colorAttachments[0].m_loadOperation = loadop;
 	fbInit.m_colorAttachments[0].m_clearValue.m_colorf = {{1.0, 0.0, 0.0, 0.0}};

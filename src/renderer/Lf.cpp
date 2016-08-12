@@ -118,14 +118,17 @@ Error Lf::initOcclusion(const ConfigSet& config)
 		PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
 	init.m_inputAssembler.m_topology = PrimitiveTopology::POINTS;
 	init.m_depthStencil.m_depthWriteEnabled = false;
-	init.m_depthStencil.m_format = Ms::DEPTH_RT_PIXEL_FORMAT;
-	ANKI_ASSERT(Ms::ATTACHMENT_COUNT == 3);
-	init.m_color.m_attachmentCount = Ms::ATTACHMENT_COUNT;
-	init.m_color.m_attachments[0].m_format = Ms::RT_PIXEL_FORMATS[0];
+	init.m_depthStencil.m_format = MS_DEPTH_ATTACHMENT_PIXEL_FORMAT;
+	ANKI_ASSERT(MS_COLOR_ATTACHMENT_COUNT == 3);
+	init.m_color.m_attachmentCount = MS_COLOR_ATTACHMENT_COUNT;
+	init.m_color.m_attachments[0].m_format =
+		MS_COLOR_ATTACHMENT_PIXEL_FORMATS[0];
 	init.m_color.m_attachments[0].m_channelWriteMask = ColorBit::NONE;
-	init.m_color.m_attachments[1].m_format = Ms::RT_PIXEL_FORMATS[1];
+	init.m_color.m_attachments[1].m_format =
+		MS_COLOR_ATTACHMENT_PIXEL_FORMATS[1];
 	init.m_color.m_attachments[1].m_channelWriteMask = ColorBit::NONE;
-	init.m_color.m_attachments[2].m_format = Ms::RT_PIXEL_FORMATS[2];
+	init.m_color.m_attachments[2].m_format =
+		MS_COLOR_ATTACHMENT_PIXEL_FORMATS[2];
 	init.m_color.m_attachments[2].m_channelWriteMask = ColorBit::NONE;
 	init.m_shaders[U(ShaderType::VERTEX)] = m_occlusionVert->getGrShader();
 	init.m_shaders[U(ShaderType::FRAGMENT)] = m_occlusionFrag->getGrShader();

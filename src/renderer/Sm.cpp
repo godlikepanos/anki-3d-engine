@@ -19,7 +19,7 @@ namespace anki
 
 //==============================================================================
 const PixelFormat Sm::DEPTH_RT_PIXEL_FORMAT(
-	ComponentFormat::D16, TransformFormat::FLOAT);
+	ComponentFormat::D16, TransformFormat::UNORM);
 
 //==============================================================================
 Error Sm::init(const ConfigSet& config)

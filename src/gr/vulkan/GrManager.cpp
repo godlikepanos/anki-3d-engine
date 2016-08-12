@@ -92,17 +92,24 @@ void GrManager::getTextureUploadInfo(TexturePtr tex,
 	U width = impl.m_width >> surf.m_level;
 	U height = impl.m_height >> surf.m_level;
 
-	allocationSize = computeSurfaceSize(width,
-		height,
-		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM));
-
-	if(!!(impl.m_workarounds & TextureImplWorkaround::R8G8B8_TO_R8G8B8A8))
+	if(!impl.m_workarounds)
+	{
+		allocationSize = computeSurfaceSize(width, height, impl.m_format);
+	}
+	else if(!!(impl.m_workarounds & TextureImplWorkaround::R8G8B8_TO_R8G8B8A8))
 	{
 		// Extra size for staging buffer
+		allocationSize = computeSurfaceSize(width,
+			height,
+			PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM));
 		alignRoundUp(16, allocationSize);
 		allocationSize += computeSurfaceSize(width,
 			height,
 			PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM));
+	}
+	else
+	{
+		ANKI_ASSERT(0);
 	}
 
 	usage = BufferUsageBit::TRANSFER_SOURCE;

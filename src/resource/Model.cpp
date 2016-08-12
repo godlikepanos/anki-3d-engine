@@ -223,12 +223,12 @@ void ModelPatch::computePipelineInitInfo(
 	}
 	else if(m_mtl->getForwardShading())
 	{
-		ds.m_format = Ms::DEPTH_RT_PIXEL_FORMAT;
+		ds.m_format = MS_DEPTH_ATTACHMENT_PIXEL_FORMAT;
 		ds.m_depthWriteEnabled = false;
 	}
 	else
 	{
-		ds.m_format = Ms::DEPTH_RT_PIXEL_FORMAT;
+		ds.m_format = MS_DEPTH_ATTACHMENT_PIXEL_FORMAT;
 	}
 
 	//
@@ -249,11 +249,11 @@ void ModelPatch::computePipelineInitInfo(
 	}
 	else
 	{
-		color.m_attachmentCount = Ms::ATTACHMENT_COUNT;
-		ANKI_ASSERT(Ms::ATTACHMENT_COUNT == 3);
-		color.m_attachments[0].m_format = Ms::RT_PIXEL_FORMATS[0];
-		color.m_attachments[1].m_format = Ms::RT_PIXEL_FORMATS[1];
-		color.m_attachments[2].m_format = Ms::RT_PIXEL_FORMATS[2];
+		color.m_attachmentCount = MS_COLOR_ATTACHMENT_COUNT;
+		ANKI_ASSERT(MS_COLOR_ATTACHMENT_COUNT == 3);
+		color.m_attachments[0].m_format = MS_COLOR_ATTACHMENT_PIXEL_FORMATS[0];
+		color.m_attachments[1].m_format = MS_COLOR_ATTACHMENT_PIXEL_FORMATS[1];
+		color.m_attachments[2].m_format = MS_COLOR_ATTACHMENT_PIXEL_FORMATS[2];
 	}
 }
 

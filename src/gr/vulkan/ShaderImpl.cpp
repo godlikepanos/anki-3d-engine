@@ -153,6 +153,7 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #define ANKI_VK 1
 #define %s
 #define gl_VertexID gl_VertexIndex
+#define gl_InstanceID gl_InstanceIndex
 #define ANKI_TEX_BINDING(set_, binding_) set = set_, binding = %u + binding_
 #define ANKI_UBO_BINDING(set_, binding_) set = set_, binding = %u + binding_
 #define ANKI_SS_BINDING(set_, binding_) set = set_, binding = %u + binding_

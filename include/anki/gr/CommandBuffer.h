@@ -75,7 +75,7 @@ class CommandBufferInitHints
 	friend class CommandBufferImpl;
 
 private:
-	PtrSize m_chunkSize = 1024 * 64;
+	PtrSize m_chunkSize = 1024 * 1024;
 };
 
 /// Command buffer initialization flags.

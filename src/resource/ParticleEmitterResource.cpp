@@ -245,7 +245,7 @@ Error ParticleEmitterResource::load(const ResourceFilename& filename)
 	pinit.m_vertex.m_attributes[2].m_binding = 0;
 
 	pinit.m_depthStencil.m_depthWriteEnabled = false;
-	pinit.m_depthStencil.m_format = Ms::DEPTH_RT_PIXEL_FORMAT;
+	pinit.m_depthStencil.m_format = MS_DEPTH_ATTACHMENT_PIXEL_FORMAT;
 
 	pinit.m_color.m_attachmentCount = 1;
 	pinit.m_color.m_attachments[0].m_format = IS_COLOR_ATTACHMENT_PIXEL_FORMAT;

@@ -18,10 +18,6 @@ namespace anki
 class Ms : public RenderingPass
 {
 anki_internal:
-	static const U ATTACHMENT_COUNT = 3;
-	static const Array<PixelFormat, ATTACHMENT_COUNT> RT_PIXEL_FORMATS;
-	static const PixelFormat DEPTH_RT_PIXEL_FORMAT;
-
 	Ms(Renderer* r)
 		: RenderingPass(r)
 	{
