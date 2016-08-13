@@ -203,6 +203,11 @@ public:
 		return *m_texUploader;
 	}
 
+	GpuVendor getGpuVendor() const
+	{
+		return m_vendor;
+	}
+
 private:
 	GrManager* m_manager = nullptr;
 
@@ -210,6 +215,7 @@ private:
 
 	VkInstance m_instance = VK_NULL_HANDLE;
 	VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
+	GpuVendor m_vendor = GpuVendor::UNKNOWN;
 	VkDevice m_device = VK_NULL_HANDLE;
 	U32 m_queueIdx = MAX_U32;
 	VkQueue m_queue = VK_NULL_HANDLE;

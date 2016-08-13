@@ -291,6 +291,22 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 
 	vkGetPhysicalDeviceProperties(m_physicalDevice, &m_devProps);
 
+	// Find vendor
+	switch(m_devProps.vendorID)
+	{
+	case 0x13B5:
+		m_vendor = GpuVendor::ARM;
+		break;
+	case 0x10DE:
+		m_vendor = GpuVendor::NVIDIA;
+		break;
+	case 0x1002:
+	case 0x1022:
+		m_vendor = GpuVendor::AMD;
+		break;
+	}
+	ANKI_LOGI("GPU vendor is %s", &GPU_VENDOR_STR[m_vendor][0]);
+
 	return ErrorCode::NONE;
 }
 

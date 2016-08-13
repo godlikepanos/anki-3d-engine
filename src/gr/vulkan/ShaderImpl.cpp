@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/gr/vulkan/ShaderImpl.h>
+#include <anki/gr/vulkan/GrManagerImpl.h>
 #include <anki/gr/common/Misc.h>
 #include <glslang/Public/ShaderLang.h>
 #include <SPIRV/GlslangToSpv.h>
@@ -151,6 +152,7 @@ static const TBuiltInResource GLSLANG_LIMITS = setLimits();
 
 static const char* SHADER_HEADER = R"(#version 450 core
 #define ANKI_VK 1
+#define ANKI_VENDOR_%s
 #define %s
 #define gl_VertexID gl_VertexIndex
 #define gl_InstanceID gl_InstanceIndex
@@ -236,6 +238,7 @@ Error ShaderImpl::init(ShaderType shaderType, const CString& source)
 		"COMPUTE_SHADER"}};
 
 	fullSrc.sprintf(SHADER_HEADER,
+		&GPU_VENDOR_STR[getGrManagerImpl().getGpuVendor()][0],
 		shaderName[shaderType],
 		0,
 		MAX_TEXTURE_BINDINGS,

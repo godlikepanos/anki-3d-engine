@@ -111,6 +111,7 @@ void GlState::initRenderThread()
 	{
 		m_gpu = GpuVendor::NVIDIA;
 	}
+	ANKI_LOGI("GPU vendor is %s", &GPU_VENDOR_STR[m_gpu][0]);
 
 // Enable debug messages
 #if ANKI_GL == ANKI_GL_DESKTOP

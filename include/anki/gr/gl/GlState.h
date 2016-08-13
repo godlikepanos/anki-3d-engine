@@ -17,14 +17,6 @@ class ConfigSet;
 /// @addtogroup opengl
 /// @{
 
-/// Knowing the ventor allows some optimizations
-enum class GpuVendor : U8
-{
-	UNKNOWN,
-	ARM,
-	NVIDIA
-};
-
 /// Part of the global state. It's essentialy a cache of the state mainly used
 /// for optimizations and other stuff
 class GlState

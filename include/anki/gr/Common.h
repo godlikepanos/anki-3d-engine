@@ -64,6 +64,19 @@ enum GrObjectType : U16
 	COUNT
 };
 
+/// Knowing the ventor allows some optimizations
+enum class GpuVendor : U8
+{
+	UNKNOWN,
+	ARM,
+	NVIDIA,
+	AMD,
+	INTEL,
+	COUNT
+};
+
+extern Array<CString, U(GpuVendor::COUNT)> GPU_VENDOR_STR;
+
 /// The type of the allocator for heap allocations
 template<typename T>
 using GrAllocator = HeapAllocator<T>;

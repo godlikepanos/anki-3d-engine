@@ -5,6 +5,8 @@
 
 #include <anki/gr/gl/ShaderImpl.h>
 #include <anki/gr/GrManager.h>
+#include <anki/gr/gl/GrManagerImpl.h>
+#include <anki/gr/gl/GlState.h>
 #include <anki/gr/common/Misc.h>
 #include <anki/util/StringList.h>
 #include <anki/util/Logger.h>
@@ -33,6 +35,7 @@ static void deleteShaders(GLsizei n, const GLuint* names)
 
 static const char* SHADER_HEADER = R"(#version %u %s
 #define ANKI_GL 1
+#define ANKI_VENDOR_%s
 #define %s
 #define ANKI_UBO_BINDING(set_, binding_) binding = set_ * %u + binding_
 #define ANKI_SS_BINDING(set_, binding_) binding = set_ * %u + binding_
@@ -103,6 +106,7 @@ Error ShaderImpl::init(ShaderType type, const CString& source)
 	fullSrc.sprintf(SHADER_HEADER,
 		version,
 		versionType,
+		&GPU_VENDOR_STR[getManager().getImplementation().getState().m_gpu][0],
 		shaderName[U(type)],
 		MAX_UNIFORM_BUFFER_BINDINGS,
 		MAX_STORAGE_BUFFER_BINDINGS,
