@@ -114,6 +114,17 @@ public:
 								: nullptr;
 	}
 
+	const VisibleNode* getBegin(VisibilityGroupType type) const
+	{
+		return (getCount(type)) ? &m_groups[type].m_nodes[0] : nullptr;
+	}
+
+	const VisibleNode* getEnd(VisibilityGroupType type) const
+	{
+		return (getCount(type)) ? (&m_groups[type].m_nodes[0] + getCount(type))
+								: nullptr;
+	}
+
 	void moveBack(SceneFrameAllocator<U8> alloc,
 		VisibilityGroupType type,
 		VisibleNode& x);

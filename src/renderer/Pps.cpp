@@ -44,7 +44,7 @@ Error Pps::initInternal(const ConfigSet& config)
 		m_r->getHeight(),
 		RT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT
-			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 		SamplingFilter::LINEAR,
 		1,
 		m_rt);

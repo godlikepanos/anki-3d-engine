@@ -158,12 +158,11 @@ Error Lf::initInternal(const ConfigSet& config)
 }
 
 //==============================================================================
-void Lf::runOcclusionTests(RenderingContext& ctx)
+void Lf::runOcclusionTests(RenderingContext& ctx, CommandBufferPtr cmdb)
 {
 	// Retrieve some things
-	FrustumComponent& camFr = *ctx.m_frustumComponent;
-	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
-	VisibilityTestResults& vi = camFr.getVisibilityTestResults();
+	const FrustumComponent& camFr = *ctx.m_frustumComponent;
+	const VisibilityTestResults& vi = camFr.getVisibilityTestResults();
 
 	if(vi.getCount(VisibilityGroupType::FLARES) > m_maxFlares)
 	{

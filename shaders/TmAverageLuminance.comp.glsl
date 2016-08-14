@@ -43,10 +43,16 @@ void main()
 	{
 		for(uint x = 0; x < PIXEL_READ_X; ++x)
 		{
-			vec3 color =
-				texelFetch(
-					u_isRt, ivec2(xStart, yStart) + ivec2(x, y), IS_RT_MIPMAP)
-					.rgb;
+			ivec2 uv = ivec2(xStart, yStart) + ivec2(x, y);
+// WORKAROUND
+#if defined(ANKI_VK) && defined(ANKI_VENDOR_NVIDIA)
+			vec3 color = textureLod(u_isRt,
+							 vec2(uv) / vec2(MIPMAP_WIDTH, MIPMAP_HEIGHT),
+							 IS_RT_MIPMAP)
+							 .rgb;
+#else
+			vec3 color = texelFetch(u_isRt, uv, IS_RT_MIPMAP).rgb;
+#endif
 			float lum = computeLuminance(color);
 			// avgLum += log(lum);
 			avgLum += lum / float(MIPMAP_WIDTH * MIPMAP_HEIGHT);

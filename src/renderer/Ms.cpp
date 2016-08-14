@@ -180,6 +180,8 @@ void Ms::run(RenderingContext& ctx)
 		}
 	}
 
+	cmdb->endRenderPass();
+
 	ANKI_TRACE_STOP_EVENT(RENDER_MS);
 }
 

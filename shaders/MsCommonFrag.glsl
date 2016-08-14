@@ -245,8 +245,8 @@ vec2 computeTextureCoordParallax(
 	vec3 E = normalize(eyeTangentSpace);
 
 	float sampleCountf =
-		mix(MAX_SAMPLES,
-			MIN_SAMPLES,
+		mix(float(MAX_SAMPLES),
+			float(MIN_SAMPLES),
 			min(dot(E, normTangentSpace),
 				in_vertPosViewSpace.z / -MAX_EFFECTIVE_DISTANCE));
 

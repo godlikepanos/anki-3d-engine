@@ -237,8 +237,6 @@ Error Renderer::render(RenderingContext& ctx)
 	m_sm->run(ctx);
 
 	m_ms->run(ctx);
-	m_lf->runOcclusionTests(ctx);
-	cmdb->endRenderPass();
 
 	m_ms->setPostRunBarriers(ctx);
 	m_sm->setPostRunBarriers(ctx);
@@ -425,6 +423,12 @@ Error Renderer::buildCommandBuffers(RenderingContext& ctx)
 		{
 			ANKI_CHECK(m_r->getMs().buildCommandBuffers(
 				*m_ctx, threadId, threadsCount));
+
+			if(threadId == threadsCount - 1)
+			{
+				m_r->m_lf->runOcclusionTests(
+					*m_ctx, m_ctx->m_ms.m_commandBuffers[threadId]);
+			}
 
 			ANKI_CHECK(m_r->getSm().buildCommandBuffers(
 				*m_ctx, threadId, threadsCount));

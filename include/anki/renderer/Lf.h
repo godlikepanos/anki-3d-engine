@@ -29,7 +29,7 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& config);
 
-	void runOcclusionTests(RenderingContext& ctx);
+	void runOcclusionTests(RenderingContext& ctx, CommandBufferPtr cmdb);
 
 	void run(RenderingContext& ctx);
 
