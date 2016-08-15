@@ -380,9 +380,10 @@ void ResourceGroupImpl::bind(
 		}
 		else
 		{
-			// Copy the offsets
 			Array<GLintptr, MAX_VERTEX_ATTRIBUTES> offsets = m_vertBuffOffsets;
 			Array<GLuint, MAX_VERTEX_ATTRIBUTES> names = m_vertBuffNames;
+			const TransientMemoryManager& transManager =
+				getManager().getImplementation().getTransientMemoryManager();
 
 			for(U i = 0; i < MAX_VERTEX_ATTRIBUTES; ++i)
 			{
@@ -391,10 +392,8 @@ void ResourceGroupImpl::bind(
 					// It's dynamic
 					ANKI_ASSERT(transientInfo.m_vertexBuffers[i].m_range != 0);
 					offsets[i] = transientInfo.m_vertexBuffers[i].m_offset;
-					names[i] = getManager()
-								   .getImplementation()
-								   .getTransientMemoryManager()
-								   .getGlName(transientInfo.m_vertexBuffers[i]);
+					names[i] = transManager.getGlName(
+						transientInfo.m_vertexBuffers[i]);
 				}
 				else
 				{
@@ -407,8 +406,9 @@ void ResourceGroupImpl::bind(
 				&offsets[0],
 				sizeof(offsets[0]) * m_vertBindingsCount);
 
-			memcpy(
-				&names[0], &names[0], sizeof(names[0]) * m_vertBindingsCount);
+			memcpy(&state.m_vertBuffNames[0],
+				&names[0],
+				sizeof(names[0]) * m_vertBindingsCount);
 		}
 
 		state.m_vertBindingCount = m_vertBindingsCount;

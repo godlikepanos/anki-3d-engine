@@ -43,6 +43,7 @@ public:
 	{
 	public:
 		Array<CommandBufferPtr, ThreadPool::MAX_THREADS> m_commandBuffers;
+		U32 m_lastThreadWithWork = 0;
 	} m_ms;
 	/// @}
 
@@ -94,6 +95,7 @@ public:
 	{
 	public:
 		Array<CommandBufferPtr, ThreadPool::MAX_THREADS> m_commandBuffers;
+		U32 m_lastThreadWithWork = 0;
 	} m_fs;
 	/// @}
 
@@ -407,6 +409,8 @@ private:
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 
 	ANKI_USE_RESULT Error buildCommandBuffers(RenderingContext& ctx);
+	ANKI_USE_RESULT Error buildCommandBuffersInternal(
+		RenderingContext& ctx, U32 threadId, PtrSize threadCount);
 };
 /// @}
 

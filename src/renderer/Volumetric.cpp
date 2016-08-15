@@ -45,10 +45,9 @@ Error Volumetric::init(const ConfigSet& config)
 }
 
 //==============================================================================
-void Volumetric::run(RenderingContext& ctx)
+void Volumetric::run(RenderingContext& ctx, CommandBufferPtr cmdb)
 {
 	const Frustum& frc = ctx.m_frustumComponent->getFrustum();
-	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 	// Update uniforms
 	TransientMemoryInfo dyn;

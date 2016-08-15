@@ -26,8 +26,6 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 
-	void prepareBuildCommandBuffers(RenderingContext& ctx);
-
 	ANKI_USE_RESULT Error buildCommandBuffers(
 		RenderingContext& ctx, U threadId, U threadCount) const;
 
@@ -40,6 +38,21 @@ anki_internal:
 	TexturePtr getRt() const
 	{
 		return m_rt;
+	}
+
+	U getWidth() const
+	{
+		return m_width;
+	}
+
+	U getHeight() const
+	{
+		return m_height;
+	}
+
+	FramebufferPtr getFramebuffer() const
+	{
+		return m_fb;
 	}
 
 private:

@@ -83,7 +83,8 @@ public:
 	/// @param[out] q The returned query.
 	/// @param[out] queryInvalid It's true if the query has an old result that
 	///             cannot be used.
-	void getOcclusionQueryToCheck(OcclusionQueryPtr& q, Bool& queryInvalid);
+	void getOcclusionQueryToCheck(
+		OcclusionQueryPtr& q, Bool& queryInvalid) const;
 
 	/// @name SceneComponent virtuals
 	/// @{

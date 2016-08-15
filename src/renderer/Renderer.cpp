@@ -43,6 +43,23 @@ public:
 };
 
 //==============================================================================
+static Bool threadWillDoWork(const RenderingContext& ctx,
+	VisibilityGroupType typeOfWork,
+	U32 threadId,
+	PtrSize threadCount)
+{
+	const VisibilityTestResults& vis =
+		ctx.m_frustumComponent->getVisibilityTestResults();
+
+	U problemSize = vis.getCount(typeOfWork);
+	PtrSize start, end;
+	ThreadPoolTask::choseStartEnd(
+		threadId, threadCount, problemSize, start, end);
+
+	return start != end;
+}
+
+//==============================================================================
 // Renderer                                                                    =
 //==============================================================================
 
@@ -271,9 +288,6 @@ Error Renderer::render(RenderingContext& ctx)
 	}
 
 	m_fs->run(ctx);
-	m_lf->run(ctx);
-	m_vol->run(ctx);
-	cmdb->endRenderPass();
 
 	m_ssao->run(ctx);
 
@@ -401,16 +415,84 @@ void Renderer::createDrawQuadPipeline(
 }
 
 //==============================================================================
+Error Renderer::buildCommandBuffersInternal(
+	RenderingContext& ctx, U32 threadId, PtrSize threadCount)
+{
+	ANKI_CHECK(m_ms->buildCommandBuffers(ctx, threadId, threadCount));
+
+	// Append to the last MS's cmdb the occlusion tests
+	if(ctx.m_ms.m_lastThreadWithWork == threadId)
+	{
+		m_lf->runOcclusionTests(ctx, ctx.m_ms.m_commandBuffers[threadId]);
+	}
+
+	ANKI_CHECK(m_sm->buildCommandBuffers(ctx, threadId, threadCount));
+
+	ANKI_CHECK(m_fs->buildCommandBuffers(ctx, threadId, threadCount));
+
+	// Append to the last FB's cmdb the other passes
+	if(ctx.m_fs.m_lastThreadWithWork == threadId)
+	{
+		m_lf->run(ctx, ctx.m_fs.m_commandBuffers[threadId]);
+		m_vol->run(ctx, ctx.m_fs.m_commandBuffers[threadId]);
+	}
+	else if(threadId == threadCount - 1
+		&& ctx.m_fs.m_lastThreadWithWork == MAX_U32)
+	{
+		// There is no FS work. Create a cmdb just for LF & VOL
+
+		CommandBufferInitInfo init;
+		init.m_flags = CommandBufferFlag::GRAPHICS_WORK
+			| CommandBufferFlag::SECOND_LEVEL | CommandBufferFlag::SMALL_BATCH;
+		init.m_framebuffer = m_fs->getFramebuffer();
+		CommandBufferPtr cmdb = getGrManager().newInstance<CommandBuffer>(init);
+		cmdb->setViewport(0, 0, m_fs->getWidth(), m_fs->getHeight());
+		cmdb->setPolygonOffset(0.0, 0.0);
+
+		m_lf->run(ctx, cmdb);
+		m_vol->run(ctx, cmdb);
+
+		ctx.m_fs.m_commandBuffers[threadId] = cmdb;
+	}
+
+	return ErrorCode::NONE;
+}
+
+//==============================================================================
 Error Renderer::buildCommandBuffers(RenderingContext& ctx)
 {
 	ANKI_TRACE_START_EVENT(RENDERER_COMMAND_BUFFER_BUILDING);
+	ThreadPool& threadPool = getThreadPool();
 
 	// Prepare
-	m_ms->prepareBuildCommandBuffers(ctx);
 	if(m_sm)
 	{
 		m_sm->prepareBuildCommandBuffers(ctx);
 	}
+
+	// Find the last jobs for MS and FS
+	U32 lastMsJob = MAX_U32;
+	U32 lastFsJob = MAX_U32;
+	U threadCount = threadPool.getThreadsCount();
+	for(U i = threadCount - 1; i != 0; --i)
+	{
+		if(threadWillDoWork(
+			   ctx, VisibilityGroupType::RENDERABLES_MS, i, threadCount)
+			&& lastMsJob == MAX_U32)
+		{
+			lastMsJob = i;
+		}
+
+		if(threadWillDoWork(
+			   ctx, VisibilityGroupType::RENDERABLES_FS, i, threadCount)
+			&& lastFsJob == MAX_U32)
+		{
+			lastFsJob = i;
+		}
+	}
+
+	ctx.m_ms.m_lastThreadWithWork = lastMsJob;
+	ctx.m_fs.m_lastThreadWithWork = lastFsJob;
 
 	// Build
 	class Task : public ThreadPoolTask
@@ -419,28 +501,13 @@ Error Renderer::buildCommandBuffers(RenderingContext& ctx)
 		Renderer* m_r ANKI_DBG_NULLIFY_PTR;
 		RenderingContext* m_ctx ANKI_DBG_NULLIFY_PTR;
 
-		Error operator()(U32 threadId, PtrSize threadsCount)
+		Error operator()(U32 threadId, PtrSize threadCount)
 		{
-			ANKI_CHECK(m_r->getMs().buildCommandBuffers(
-				*m_ctx, threadId, threadsCount));
-
-			if(threadId == threadsCount - 1)
-			{
-				m_r->m_lf->runOcclusionTests(
-					*m_ctx, m_ctx->m_ms.m_commandBuffers[threadId]);
-			}
-
-			ANKI_CHECK(m_r->getSm().buildCommandBuffers(
-				*m_ctx, threadId, threadsCount));
-
-			ANKI_CHECK(m_r->getFs().buildCommandBuffers(
-				*m_ctx, threadId, threadsCount));
-
-			return ErrorCode::NONE;
+			return m_r->buildCommandBuffersInternal(
+				*m_ctx, threadId, threadCount);
 		}
 	};
 
-	ThreadPool& threadPool = getThreadPool();
 	Task task;
 	task.m_r = this;
 	task.m_ctx = &ctx;

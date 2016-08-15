@@ -220,11 +220,10 @@ void Lf::runOcclusionTests(RenderingContext& ctx, CommandBufferPtr cmdb)
 }
 
 //==============================================================================
-void Lf::run(RenderingContext& ctx)
+void Lf::run(RenderingContext& ctx, CommandBufferPtr cmdb)
 {
 	// Retrieve some things
 	FrustumComponent& camFr = *ctx.m_frustumComponent;
-	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 	VisibilityTestResults& vi = camFr.getVisibilityTestResults();
 
 	U totalCount =
@@ -239,7 +238,7 @@ void Lf::run(RenderingContext& ctx)
 		auto end = vi.getBegin(VisibilityGroupType::FLARES) + totalCount;
 		for(; it != end; ++it)
 		{
-			LensFlareComponent& lf =
+			const LensFlareComponent& lf =
 				(it->m_node)->getComponent<LensFlareComponent>();
 
 			// Compute position

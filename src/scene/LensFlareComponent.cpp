@@ -63,7 +63,7 @@ OcclusionQueryPtr& LensFlareComponent::getOcclusionQueryToTest()
 
 //==============================================================================
 void LensFlareComponent::getOcclusionQueryToCheck(
-	OcclusionQueryPtr& q, Bool& queryInvalid)
+	OcclusionQueryPtr& q, Bool& queryInvalid) const
 {
 	U idx = (m_crntQueryIndex + 1) % m_queries.getSize();
 

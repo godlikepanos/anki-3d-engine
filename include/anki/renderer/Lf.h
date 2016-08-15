@@ -31,7 +31,7 @@ anki_internal:
 
 	void runOcclusionTests(RenderingContext& ctx, CommandBufferPtr cmdb);
 
-	void run(RenderingContext& ctx);
+	void run(RenderingContext& ctx, CommandBufferPtr cmdb);
 
 private:
 	// Occlusion query

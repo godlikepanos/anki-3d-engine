@@ -158,6 +158,8 @@ void Fs::run(RenderingContext& ctx)
 			cmdb->pushSecondLevelCommandBuffer(ctx.m_fs.m_commandBuffers[i]);
 		}
 	}
+
+	cmdb->endRenderPass();
 }
 
 } // end namespace anki

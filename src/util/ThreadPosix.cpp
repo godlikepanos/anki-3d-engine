@@ -141,7 +141,7 @@ Thread::Id Thread::getCurrentThreadId()
 Mutex::Mutex()
 {
 	pthread_mutex_t* mtx =
-		reinterpret_cast<pthread_mutex_t*>(malloc(sizeof(pthread_mutex_t)));
+		static_cast<pthread_mutex_t*>(malloc(sizeof(pthread_mutex_t)));
 	if(mtx == nullptr)
 	{
 		ANKI_LOGF("Out of memory");
@@ -211,7 +211,7 @@ void Mutex::unlock()
 ConditionVariable::ConditionVariable()
 {
 	pthread_cond_t* cond =
-		reinterpret_cast<pthread_cond_t*>(malloc(sizeof(pthread_cond_t)));
+		static_cast<pthread_cond_t*>(malloc(sizeof(pthread_cond_t)));
 	if(cond == nullptr)
 	{
 		ANKI_LOGF("Out of memory");
