@@ -287,8 +287,8 @@ Error Ir::initIs()
 	texinit.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
 	texinit.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
 	texinit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT
-		| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
-		| TextureUsageBit::CLEAR;
+		| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE
+		| TextureUsageBit::CLEAR | TextureUsageBit::GENERATE_MIPMAPS;
 	texinit.m_format = IS_COLOR_ATTACHMENT_PIXEL_FORMAT;
 
 	m_is.m_lightRt = getGrManager().newInstance<Texture>(texinit);
@@ -405,8 +405,8 @@ Error Ir::initIrradiance()
 	texinit.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
 	texinit.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
 	texinit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT
-		| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
-		| TextureUsageBit::CLEAR;
+		| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::CLEAR
+		| TextureUsageBit::GENERATE_MIPMAPS;
 	texinit.m_format = IS_COLOR_ATTACHMENT_PIXEL_FORMAT;
 
 	m_irradiance.m_cubeArr = getGrManager().newInstance<Texture>(texinit);

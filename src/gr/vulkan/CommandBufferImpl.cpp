@@ -287,9 +287,7 @@ void CommandBufferImpl::generateMipmaps(
 	const TextureImpl& impl = tex->getImplementation();
 	ANKI_ASSERT(impl.m_type != TextureType::_3D && "Not design for that ATM");
 
-	U mipCount = computeMaxMipmapCount2d(impl.m_width, impl.m_height);
-
-	for(U i = 0; i < mipCount - 1; ++i)
+	for(U i = 0; i < impl.m_mipCount - 1u; ++i)
 	{
 		// Transition source
 		if(i > 0)

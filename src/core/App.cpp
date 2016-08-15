@@ -371,6 +371,8 @@ Error App::mainLoop()
 		prevUpdateTime = crntTime;
 		crntTime = HighRezTimer::getCurrentTime();
 
+		m_gr->beginFrame();
+
 		// Update
 		ANKI_CHECK(m_input->handleEvents());
 
