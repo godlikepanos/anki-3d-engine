@@ -30,7 +30,9 @@ precision DEFAULT_FLOAT_PRECISION int;
 
 const float EPSILON = 0.000001;
 const float PI = 3.14159265358979323846;
-const uint UBO_MAX_SIZE = 16384;
+const uint UBO_MAX_SIZE = 16384u;
+
+const uint MAX_U32 = 0xFFFFFFFFu;
 
 // Read from a render target texture
 //#define textureRt(tex_, texc_) texture(tex_, texc_)

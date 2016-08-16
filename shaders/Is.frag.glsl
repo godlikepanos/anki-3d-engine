@@ -69,8 +69,7 @@ void debugIncorrectColor(inout vec3 c)
 }
 
 //==============================================================================
-void readIndirect(in uint indexOffset,
-	in uint probeCount,
+void readIndirect(in uint idxOffset,
 	in vec3 posVSpace,
 	in vec3 r,
 	in vec3 n,
@@ -82,10 +81,10 @@ void readIndirect(in uint indexOffset,
 	diffIndirect = vec3(0.0);
 
 	// Check proxy
-	for(uint i = 0; i < probeCount; ++i)
+	uint count = u_lightIndices[idxOffset++];
+	while(count-- != 0)
 	{
-		uint probeIndex = u_lightIndices[indexOffset++];
-		ReflectionProbe probe = u_reflectionProbes[probeIndex];
+		ReflectionProbe probe = u_reflectionProbes[u_lightIndices[idxOffset++]];
 
 		float R2 = probe.positionRadiusSq.w;
 		vec3 center = probe.positionRadiusSq.xyz;
@@ -114,6 +113,13 @@ void readIndirect(in uint indexOffset,
 		vec3 id = texture(u_irradianceTex, vec4(uv, cubemapIndex)).rgb;
 		diffIndirect = mix(id, diffIndirect, factor);
 	}
+}
+
+bool getNewIndex(inout uint idxOffset, out uint idx)
+{
+	idx = u_lightIndices[idxOffset];
+	++idxOffset;
+	return idx != MAX_U32;
 }
 
 //==============================================================================
@@ -156,22 +162,18 @@ void main()
 		TILE_COUNT_X,
 		TILE_COUNT_Y);
 
-	uint lightOffset;
-	uint pointLightCount;
-	uint spotLightCount;
-	uint probeCount;
-	getClusterInfo(
-		clusterIdx, lightOffset, pointLightCount, spotLightCount, probeCount);
+	uint idxOffset = u_clusters[clusterIdx];
+	uint idx;
 
 	// Shadowpass sample count
 	uint shadowSampleCount =
 		computeShadowSampleCount(SHADOW_SAMPLE_COUNT, fragPos.z);
 
 	// Point lights
-	for(uint i = 0U; i < pointLightCount; ++i)
+	uint count = u_lightIndices[idxOffset++];
+	while(count-- != 0)
 	{
-		uint lightId = u_lightIndices[lightOffset++];
-		PointLight light = u_pointLights[lightId];
+		PointLight light = u_pointLights[u_lightIndices[idxOffset++]];
 
 		LIGHTING_COMMON_BRDF();
 
@@ -193,10 +195,10 @@ void main()
 	}
 
 	// Spot lights
-	for(uint i = 0U; i < spotLightCount; ++i)
+	count = u_lightIndices[idxOffset++];
+	while(count-- != 0)
 	{
-		uint lightId = u_lightIndices[lightOffset++];
-		SpotLight light = u_spotLights[lightId];
+		SpotLight light = u_spotLights[u_lightIndices[idxOffset++]];
 
 		LIGHTING_COMMON_BRDF();
 
@@ -228,14 +230,8 @@ void main()
 	float reflLod = float(IR_MIPMAP_COUNT) * gbuffer.roughness;
 
 	vec3 specIndirect, diffIndirect;
-	readIndirect(lightOffset,
-		probeCount,
-		fragPos,
-		r,
-		normal,
-		reflLod,
-		specIndirect,
-		diffIndirect);
+	readIndirect(
+		idxOffset, fragPos, r, normal, reflLod, specIndirect, diffIndirect);
 
 	diffIndirect *= gbuffer.diffuse;
 
@@ -247,8 +243,8 @@ void main()
 	out_color += specIndirect + diffIndirect;
 #endif
 
-#if 0 && INDIRECT_ENABLED
-	uint count = probeCount;
+#if 0
+	uint count = scount;
 	if(count == 0)
 	{
 		out_color = vec3(1.0, 0.0, 0.0);

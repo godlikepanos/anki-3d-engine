@@ -19,16 +19,17 @@ namespace anki
 // Misc                                                                        =
 //==============================================================================
 
+/// This should be the number of light types. For now it's spots & points & 
+/// probes.
+const U SIZE_IDX_COUNT = 3;
+
 // Shader structs and block representations. All positions and directions in
 // viewspace
 // For documentation see the shaders
 
 struct ShaderCluster
 {
-	/// If m_combo = 0xFFFF?CAB then FFFF is the light index offset, A the
-	/// number of point lights and B the number of spot lights, C the number
-	/// of probes
-	U32 m_combo;
+	U32 m_firstIdx;
 };
 
 struct ShaderLight
@@ -456,6 +457,14 @@ Error LightBin::bin(FrustumComponent& frc,
 
 	ctx.m_lightIds = WeakArray<U32>(data2, maxLightIndices);
 
+	// Fill the first part of light ids with invalid indices. Will be used
+	// for empty clusters
+	for(U i = 0; i < SIZE_IDX_COUNT; ++i)
+	{
+		ctx.m_lightIds[i] = 0;
+	}
+	ctx.m_lightIdsCount.set(SIZE_IDX_COUNT);
+
 	// Fire the async job
 	for(U i = 0; i < m_threadPool->getThreadsCount(); i++)
 	{
@@ -571,7 +580,7 @@ void LightBin::binLights(
 			const U count = countP + countS + countProbe;
 
 			auto& c = ctx.m_clusters[i];
-			c.m_combo = 0;
+			c.m_firstIdx = 0; // Point to the first empty indices
 
 			// Early exit
 			if(ANKI_UNLIKELY(count == 0))
@@ -589,53 +598,38 @@ void LightBin::binLights(
 
 				if(cluster == clusterB)
 				{
-					c.m_combo = ctx.m_clusters[i - 1].m_combo;
+					c.m_firstIdx = ctx.m_clusters[i - 1].m_firstIdx;
 					continue;
 				}
 			}
 
-			U offset = ctx.m_lightIdsCount.fetchAdd(count);
+			U offset = ctx.m_lightIdsCount.fetchAdd(count + SIZE_IDX_COUNT);
+			U initialOffset = offset;
+			(void)initialOffset;
 
-			if(offset + count <= ctx.m_maxLightIndices)
+			if(offset + count + SIZE_IDX_COUNT <= ctx.m_maxLightIndices)
 			{
-				ANKI_ASSERT(offset <= 0xFFFF);
-				c.m_combo = offset << 16;
+				c.m_firstIdx = offset;
 
-				if(countP > 0)
+				ctx.m_lightIds[offset++] = countP;
+				for(U i = 0; i < countP; ++i)
 				{
-					ANKI_ASSERT(countP <= 0xF);
-					c.m_combo |= countP << 4;
-
-					for(U i = 0; i < countP; ++i)
-					{
-						ctx.m_lightIds[offset++] =
-							cluster.m_pointIds[i].getIndex();
-					}
+					ctx.m_lightIds[offset++] = cluster.m_pointIds[i].getIndex();
 				}
 
-				if(countS > 0)
+				ctx.m_lightIds[offset++] = countS;
+				for(U i = 0; i < countS; ++i)
 				{
-					ANKI_ASSERT(countS <= 0xF);
-					c.m_combo |= countS;
-
-					for(U i = 0; i < countS; ++i)
-					{
-						ctx.m_lightIds[offset++] =
-							cluster.m_spotIds[i].getIndex();
-					}
+					ctx.m_lightIds[offset++] = cluster.m_spotIds[i].getIndex();
 				}
 
-				if(countProbe > 0)
+				ctx.m_lightIds[offset++] = countProbe;
+				for(U i = 0; i < countProbe; ++i)
 				{
-					ANKI_ASSERT(countProbe <= 0xF);
-					c.m_combo |= countProbe << 8;
-
-					for(U i = 0; i < countProbe; ++i)
-					{
-						ctx.m_lightIds[offset++] =
-							cluster.m_probeIds[i].getIndex();
-					}
+					ctx.m_lightIds[offset++] = cluster.m_probeIds[i].getIndex();
 				}
+
+				ANKI_ASSERT(offset - initialOffset == count + SIZE_IDX_COUNT);
 			}
 			else
 			{
@@ -716,7 +710,7 @@ I LightBin::writeSpotLight(const LightComponent& lightc,
 			* lightFrc->getViewProjectionMatrix()
 			* Mat4(camMove.getWorldTransform());
 
-		shadowmapIndex = (F32)lightc.getShadowMapIndex();
+		shadowmapIndex = F32(lightc.getShadowMapIndex());
 	}
 
 	// Pos & dist

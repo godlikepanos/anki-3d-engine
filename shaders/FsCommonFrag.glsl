@@ -138,9 +138,8 @@ vec3 computeLightColor(vec3 diffCol)
 	}
 
 	// Find the cluster and then the light counts
-	uint lightOffset;
-	uint pointLightCount;
-	uint spotLightCount;
+	uint idxOffset;
+	uint idx;
 	{
 		uint clusterIdx = computeClusterIndexUsingCustomFragCoord(
 			u_lightingUniforms.nearFarClustererMagicPad1.x,
@@ -150,19 +149,14 @@ vec3 computeLightColor(vec3 diffCol)
 			u_lightingUniforms.tileCountPad1.y,
 			gl_FragCoord.xy * 2.0);
 
-		uint probeCount;
-		getClusterInfo(clusterIdx,
-			lightOffset,
-			pointLightCount,
-			spotLightCount,
-			probeCount);
+		idxOffset = u_clusters[clusterIdx];
 	}
 
 	// Point lights
-	for(uint i = 0U; i < pointLightCount; ++i)
+	uint count = u_lightIndices[idxOffset++];
+	while(count-- != 0)
 	{
-		uint lightId = u_lightIndices[lightOffset++];
-		PointLight light = u_pointLights[lightId];
+		PointLight light = u_pointLights[u_lightIndices[idxOffset++]];
 
 		vec3 diffC =
 			computeDiffuseColor(diffCol, light.diffuseColorShadowmapId.rgb);
@@ -189,10 +183,10 @@ vec3 computeLightColor(vec3 diffCol)
 	}
 
 	// Spot lights
-	for(uint i = 0U; i < spotLightCount; ++i)
+	count = u_lightIndices[idxOffset++];
+	while(count-- != 0)
 	{
-		uint lightId = u_lightIndices[lightOffset++];
-		SpotLight light = u_spotLights[lightId];
+		SpotLight light = u_spotLights[u_lightIndices[idxOffset++]];
 
 		vec3 diffC =
 			computeDiffuseColor(diffCol, light.diffuseColorShadowmapId.rgb);
