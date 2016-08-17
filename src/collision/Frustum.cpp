@@ -202,38 +202,10 @@ void PerspectiveFrustum::recalculate()
 }
 
 //==============================================================================
-void PerspectiveFrustum::calculateProjectionMatrix(
-	F32 fovX, F32 fovY, F32 near, F32 far, Mat4& proj)
-{
-	ANKI_ASSERT(fovX > 0.0 && fovY > 0.0 && near > 0.0 && far > 0.0);
-	F32 g = near - far;
-
-	F32 f = 1.0 / tan(fovY / 2.0); // f = cot(m_fovY/2)
-
-	proj(0, 0) = f * (fovY / fovX); // = f/aspectRatio;
-	proj(0, 1) = 0.0;
-	proj(0, 2) = 0.0;
-	proj(0, 3) = 0.0;
-	proj(1, 0) = 0.0;
-	proj(1, 1) = f;
-	proj(1, 2) = 0.0;
-	proj(1, 3) = 0.0;
-	proj(2, 0) = 0.0;
-	proj(2, 1) = 0.0;
-	proj(2, 2) = (far + near) / g;
-	proj(2, 3) = (2.0 * far * near) / g;
-	proj(3, 0) = 0.0;
-	proj(3, 1) = 0.0;
-	proj(3, 2) = -1.0;
-	proj(3, 3) = 0.0;
-}
-
-//==============================================================================
 Mat4 PerspectiveFrustum::calculateProjectionMatrix() const
 {
-	Mat4 projectionMat;
-	calculateProjectionMatrix(m_fovX, m_fovY, m_near, m_far, projectionMat);
-	return projectionMat;
+	return Mat4::calculatePerspectiveProjectionMatrix(
+		m_fovX, m_fovY, m_near, m_far);
 }
 
 //==============================================================================
@@ -264,36 +236,8 @@ OrthographicFrustum& OrthographicFrustum::operator=(
 //==============================================================================
 Mat4 OrthographicFrustum::calculateProjectionMatrix() const
 {
-	ANKI_ASSERT(m_right != 0.0 && m_left != 0.0 && m_top != 0.0
-		&& m_bottom != 0.0
-		&& m_near != 0.0
-		&& m_far != 0.0);
-	F32 difx = m_right - m_left;
-	F32 dify = m_top - m_bottom;
-	F32 difz = m_far - m_near;
-	F32 tx = -(m_right + m_left) / difx;
-	F32 ty = -(m_top + m_bottom) / dify;
-	F32 tz = -(m_far + m_near) / difz;
-	Mat4 m;
-
-	m(0, 0) = 2.0 / difx;
-	m(0, 1) = 0.0;
-	m(0, 2) = 0.0;
-	m(0, 3) = tx;
-	m(1, 0) = 0.0;
-	m(1, 1) = 2.0 / dify;
-	m(1, 2) = 0.0;
-	m(1, 3) = ty;
-	m(2, 0) = 0.0;
-	m(2, 1) = 0.0;
-	m(2, 2) = -2.0 / difz;
-	m(2, 3) = tz;
-	m(3, 0) = 0.0;
-	m(3, 1) = 0.0;
-	m(3, 2) = 0.0;
-	m(3, 3) = 1.0;
-
-	return m;
+	return Mat4::calculateOrthographicProjectionMatrix(
+		m_right, m_left, m_top, m_bottom, m_near, m_far);
 }
 
 //==============================================================================

@@ -423,6 +423,70 @@ public:
 			m(1, 0) * v.x() + m(1, 1) * v.y() + m(1, 2) * v.z() + m(1, 3),
 			m(2, 0) * v.x() + m(2, 1) * v.y() + m(2, 2) * v.z() + m(2, 3));
 	}
+
+	static TMat4 calculatePerspectiveProjectionMatrix(
+		T fovX, T fovY, T near, T far)
+	{
+		ANKI_ASSERT(fovX > T(0) && fovY > T(0) && near > T(0) && far > T(0));
+		T g = near - far;
+
+		T f = T(1) / tan(fovY / T(2)); // f = cot(fovY/2)
+
+		TMat4 proj;
+		proj(0, 0) = f * (fovY / fovX); // = f/aspectRatio;
+		proj(0, 1) = T(0);
+		proj(0, 2) = T(0);
+		proj(0, 3) = T(0);
+		proj(1, 0) = T(0);
+		proj(1, 1) = f;
+		proj(1, 2) = T(0);
+		proj(1, 3) = T(0);
+		proj(2, 0) = T(0);
+		proj(2, 1) = T(0);
+		proj(2, 2) = (far + near) / g;
+		proj(2, 3) = (T(2) * far * near) / g;
+		proj(3, 0) = T(0);
+		proj(3, 1) = T(0);
+		proj(3, 2) = T(-1);
+		proj(3, 3) = T(0);
+
+		return proj;
+	}
+
+	static TMat4 calculateOrthographicProjectionMatrix(
+		T right, T left, T top, T bottom, T near, T far)
+	{
+		ANKI_ASSERT(right != T(0) && left != T(0) && top != T(0)
+			&& bottom != T(0)
+			&& near != T(0)
+			&& far != T(0));
+		T difx = right - left;
+		T dify = top - bottom;
+		T difz = far - near;
+		T tx = -(right + left) / difx;
+		T ty = -(top + bottom) / dify;
+		T tz = -(far + near) / difz;
+		TMat4 m;
+
+		m(0, 0) = T(2) / difx;
+		m(0, 1) = T(0);
+		m(0, 2) = T(0);
+		m(0, 3) = tx;
+		m(1, 0) = T(0);
+		m(1, 1) = T(2) / dify;
+		m(1, 2) = T(0);
+		m(1, 3) = ty;
+		m(2, 0) = T(0);
+		m(2, 1) = T(0);
+		m(2, 2) = T(-2) / difz;
+		m(2, 3) = tz;
+		m(3, 0) = T(0);
+		m(3, 1) = T(0);
+		m(3, 2) = T(0);
+		m(3, 3) = T(1);
+
+		return m;
+	}
 	/// @}
 };
 

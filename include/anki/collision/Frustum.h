@@ -222,9 +222,6 @@ public:
 	/// Implements Frustum::calculateProjectionMatrix
 	Mat4 calculateProjectionMatrix() const override;
 
-	static void calculateProjectionMatrix(
-		F32 fovX, F32 fovY, F32 near, F32 far, Mat4& proj);
-
 private:
 	/// @name Viewing variables
 	/// @{

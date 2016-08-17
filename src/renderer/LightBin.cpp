@@ -19,7 +19,7 @@ namespace anki
 // Misc                                                                        =
 //==============================================================================
 
-/// This should be the number of light types. For now it's spots & points & 
+/// This should be the number of light types. For now it's spots & points &
 /// probes.
 const U SIZE_IDX_COUNT = 3;
 

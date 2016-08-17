@@ -15,6 +15,7 @@
 #include <anki/resource/ParticleEmitterResource.h>
 #include <anki/resource/TextureResource.h>
 #include <anki/resource/GenericResource.h>
+#include <anki/resource/TextureAtlas.h>
 #include <anki/util/Logger.h>
 #include <anki/misc/ConfigSet.h>
 
@@ -69,6 +70,7 @@ Error ResourceManager::create(ResourceManagerInitInfo& init)
 	ANKI_RESOURCE(DummyRsrc)
 	ANKI_RESOURCE(CollisionResource)
 	ANKI_RESOURCE(GenericResource)
+	ANKI_RESOURCE(TextureAtlas)
 
 #undef ANKI_RESOURCE
 

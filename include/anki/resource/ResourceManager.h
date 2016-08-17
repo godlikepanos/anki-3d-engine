@@ -112,7 +112,8 @@ class ResourceManager : public TypeResourceManager<Animation>,
 						public TypeResourceManager<Script>,
 						public TypeResourceManager<DummyRsrc>,
 						public TypeResourceManager<CollisionResource>,
-						public TypeResourceManager<GenericResource>
+						public TypeResourceManager<GenericResource>,
+						public TypeResourceManager<TextureAtlas>
 {
 	template<typename T>
 	friend class ResourcePtrDeleter;

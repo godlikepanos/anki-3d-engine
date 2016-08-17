@@ -70,6 +70,7 @@ ANKI_FORWARD(Script, ScriptResourcePtr)
 ANKI_FORWARD(DummyRsrc, DummyResourcePtr)
 ANKI_FORWARD(CollisionResource, CollisionResourcePtr)
 ANKI_FORWARD(GenericResource, GenericResourcePtr)
+ANKI_FORWARD(TextureAtlas, TextureAtlasResourcePtr)
 
 #undef ANKI_FORWARD
 

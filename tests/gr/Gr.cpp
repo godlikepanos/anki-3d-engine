@@ -8,7 +8,6 @@
 #include <anki/core/NativeWindow.h>
 #include <anki/core/Config.h>
 #include <anki/util/HighRezTimer.h>
-#include <anki/collision/Frustum.h>
 
 namespace anki
 {
@@ -997,7 +996,7 @@ static void drawOffscreenDrawcalls(GrManager& gr,
 	viewMat.invert();
 
 	Mat4 projMat;
-	PerspectiveFrustum::calculateProjectionMatrix(
+	Mat4::calculatePerspectiveProjectionMatrix(
 		toRad(60.0), toRad(60.0), 0.1f, 100.0f, projMat);
 
 	TransientMemoryInfo transientInfo;
