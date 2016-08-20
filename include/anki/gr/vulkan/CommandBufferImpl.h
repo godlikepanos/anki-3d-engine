@@ -85,10 +85,20 @@ public:
 		const TextureSurfaceInfo& surf,
 		const TransientMemoryToken& token);
 
-	void generateMipmaps(TexturePtr tex, U depth, U face, U layer);
+	void uploadTextureVolume(TexturePtr tex,
+		const TextureVolumeInfo& vol,
+		const TransientMemoryToken& token);
 
-	void clearTexture(TexturePtr tex,
+	void generateMipmaps2d(TexturePtr tex, U face, U layer);
+
+	void clearTexture(TexturePtr tex, const ClearValue& clearValue);
+
+	void clearTextureSurface(TexturePtr tex,
 		const TextureSurfaceInfo& surf,
+		const ClearValue& clearValue);
+
+	void clearTextureVolume(TexturePtr tex,
+		const TextureVolumeInfo& volume,
 		const ClearValue& clearValue);
 
 	void uploadBuffer(
@@ -116,10 +126,15 @@ public:
 		TexturePtr tex,
 		const VkImageSubresourceRange& range);
 
-	void setImageBarrier(TexturePtr tex,
+	void setTextureSurfaceBarrier(TexturePtr tex,
 		TextureUsageBit prevUsage,
 		TextureUsageBit nextUsage,
 		const TextureSurfaceInfo& surf);
+
+	void setTextureVolumeBarrier(TexturePtr tex,
+		TextureUsageBit prevUsage,
+		TextureUsageBit nextUsage,
+		const TextureVolumeInfo& vol);
 
 	void setBufferBarrier(VkPipelineStageFlags srcStage,
 		VkAccessFlags srcAccess,
@@ -182,6 +197,15 @@ private:
 	void flushBarriers()
 	{
 	}
+
+	void clearTextureInternal(TexturePtr tex,
+		const ClearValue& clearValue,
+		const VkImageSubresourceRange& range);
+
+	void setTextureBarrierInternal(TexturePtr tex,
+		TextureUsageBit prevUsage,
+		TextureUsageBit nextUsage,
+		const VkImageSubresourceRange& range);
 };
 /// @}
 

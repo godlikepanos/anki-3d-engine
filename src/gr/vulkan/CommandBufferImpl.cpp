@@ -278,14 +278,13 @@ void CommandBufferImpl::bindResourceGroup(
 }
 
 //==============================================================================
-void CommandBufferImpl::generateMipmaps(
-	TexturePtr tex, U depth, U face, U layer)
+void CommandBufferImpl::generateMipmaps2d(TexturePtr tex, U face, U layer)
 {
 	commandCommon();
 	flushBarriers();
 
 	const TextureImpl& impl = tex->getImplementation();
-	ANKI_ASSERT(impl.m_type != TextureType::_3D && "Not design for that ATM");
+	ANKI_ASSERT(impl.m_type != TextureType::_3D && "Not for 3D");
 
 	for(U i = 0; i < impl.m_mipCount - 1u; ++i)
 	{
@@ -294,7 +293,7 @@ void CommandBufferImpl::generateMipmaps(
 		{
 			VkImageSubresourceRange range;
 			impl.computeSubResourceRange(
-				TextureSurfaceInfo(i, depth, face, layer), range);
+				TextureSurfaceInfo(i, 0, face, layer), range);
 
 			setImageBarrier(VK_PIPELINE_STAGE_TRANSFER_BIT,
 				VK_ACCESS_TRANSFER_WRITE_BIT,
@@ -310,7 +309,7 @@ void CommandBufferImpl::generateMipmaps(
 		{
 			VkImageSubresourceRange range;
 			impl.computeSubResourceRange(
-				TextureSurfaceInfo(i + 1, depth, face, layer), range);
+				TextureSurfaceInfo(i + 1, 0, face, layer), range);
 
 			setImageBarrier(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
 				0,
@@ -377,19 +376,18 @@ void CommandBufferImpl::uploadTextureSurface(TexturePtr tex,
 
 	if(!impl.m_workarounds)
 	{
-		VkImageSubresourceRange range;
-		impl.computeSubResourceRange(surf, range);
-
 		U width = impl.m_width >> surf.m_level;
 		U height = impl.m_height >> surf.m_level;
+		ANKI_ASSERT(
+			token.m_range == computeSurfaceSize(width, height, impl.m_format));
 
 		// Copy
 		VkBufferImageCopy region;
 		region.imageSubresource.aspectMask = impl.m_aspect;
-		region.imageSubresource.baseArrayLayer = range.baseArrayLayer;
+		region.imageSubresource.baseArrayLayer = impl.computeVkArrayLayer(surf);
 		region.imageSubresource.layerCount = 1;
 		region.imageSubresource.mipLevel = surf.m_level;
-		region.imageOffset = {0, 0, 0};
+		region.imageOffset = {0, 0, I32(surf.m_depth)};
 		region.imageExtent.width = width;
 		region.imageExtent.height = height;
 		region.imageExtent.depth = 1;
@@ -454,18 +452,142 @@ void CommandBufferImpl::uploadTextureSurface(TexturePtr tex,
 		flushBarriers();
 
 		// Do the copy to the image
-		VkImageSubresourceRange range;
-		impl.computeSubResourceRange(surf, range);
-
 		VkBufferImageCopy region;
 		region.imageSubresource.aspectMask = impl.m_aspect;
-		region.imageSubresource.baseArrayLayer = range.baseArrayLayer;
+		region.imageSubresource.baseArrayLayer = impl.computeVkArrayLayer(surf);
 		region.imageSubresource.layerCount = 1;
 		region.imageSubresource.mipLevel = surf.m_level;
-		region.imageOffset = {0, 0, 0};
+		region.imageOffset = {0, 0, I32(surf.m_depth)};
 		region.imageExtent.width = width;
 		region.imageExtent.height = height;
 		region.imageExtent.depth = 1;
+		region.bufferOffset = dstOffset;
+		region.bufferImageHeight = 0;
+		region.bufferRowLength = 0;
+
+		vkCmdCopyBufferToImage(m_handle,
+			buffHandle,
+			impl.m_imageHandle,
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			1,
+			&region);
+	}
+	else
+	{
+		ANKI_ASSERT(0);
+	}
+
+	m_texList.pushBack(m_alloc, tex);
+}
+
+//==============================================================================
+void CommandBufferImpl::uploadTextureVolume(TexturePtr tex,
+	const TextureVolumeInfo& vol,
+	const TransientMemoryToken& token)
+{
+	commandCommon();
+	flushBarriers();
+
+	TextureImpl& impl = tex->getImplementation();
+	impl.checkVolume(vol);
+	ANKI_ASSERT(impl.usageValid(TextureUsageBit::UPLOAD));
+
+	if(!impl.m_workarounds)
+	{
+		U width = impl.m_width >> vol.m_level;
+		U height = impl.m_height >> vol.m_level;
+		U depth = impl.m_depth >> vol.m_level;
+		ANKI_ASSERT(token.m_range
+			== computeVolumeSize(width, height, depth, impl.m_format));
+
+		// Copy
+		VkBufferImageCopy region;
+		region.imageSubresource.aspectMask = impl.m_aspect;
+		region.imageSubresource.baseArrayLayer = impl.computeVkArrayLayer(vol);
+		region.imageSubresource.layerCount = 1;
+		region.imageSubresource.mipLevel = vol.m_level;
+		region.imageOffset = {0, 0, 0};
+		region.imageExtent.width = width;
+		region.imageExtent.height = height;
+		region.imageExtent.depth = impl.m_depth;
+		region.bufferOffset = token.m_offset;
+		region.bufferImageHeight = 0;
+		region.bufferRowLength = 0;
+
+		vkCmdCopyBufferToImage(m_handle,
+			getGrManagerImpl().getTransientMemoryManager().getBufferHandle(
+				token.m_usage),
+			impl.m_imageHandle,
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			1,
+			&region);
+	}
+	else if(!!(impl.m_workarounds & TextureImplWorkaround::R8G8B8_TO_R8G8B8A8))
+	{
+		// Find the offset to the RGBA staging buff
+		U width = impl.m_width >> vol.m_level;
+		U height = impl.m_height >> vol.m_level;
+		U depth = impl.m_depth >> vol.m_level;
+		PtrSize dstOffset = computeVolumeSize(width,
+			height,
+			depth,
+			PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM));
+		alignRoundUp(16, dstOffset);
+		ANKI_ASSERT(token.m_range
+			== dstOffset + computeVolumeSize(width,
+							   height,
+							   depth,
+							   PixelFormat(ComponentFormat::R8G8B8A8,
+												 TransformFormat::UNORM)));
+		dstOffset += token.m_offset;
+
+		// Create the copy regions
+		DynamicArrayAuto<VkBufferCopy> copies(m_alloc);
+		copies.create(width * height * depth);
+		U count = 0;
+		for(U x = 0; x < width; ++x)
+		{
+			for(U y = 0; y < height; ++y)
+			{
+				for(U d = 0; d < depth; ++d)
+				{
+					VkBufferCopy& c = copies[count++];
+					c.srcOffset = (d * height * width + y * width + x) * 3
+						+ token.m_offset;
+					c.dstOffset =
+						(d * height * width + y * width + x) * 4 + dstOffset;
+					c.size = 3;
+				}
+			}
+		}
+
+		// Copy buffer to buffer
+		VkBuffer buffHandle =
+			getGrManagerImpl().getTransientMemoryManager().getBufferHandle(
+				token.m_usage);
+		vkCmdCopyBuffer(
+			m_handle, buffHandle, buffHandle, copies.getSize(), &copies[0]);
+
+		// Set barrier
+		setBufferBarrier(VK_PIPELINE_STAGE_TRANSFER_BIT,
+			VK_ACCESS_TRANSFER_WRITE_BIT,
+			VK_PIPELINE_STAGE_TRANSFER_BIT,
+			VK_ACCESS_TRANSFER_READ_BIT,
+			dstOffset,
+			token.m_range - (dstOffset - token.m_offset),
+			buffHandle);
+		flushBarriers();
+
+		// Do the copy to the image
+		VkBufferImageCopy region;
+		region.imageSubresource.aspectMask = impl.m_aspect;
+		region.imageSubresource.baseArrayLayer = impl.computeVkArrayLayer(vol);
+		region.imageSubresource.layerCount = 1;
+		region.imageSubresource.mipLevel = vol.m_level;
+		region.imageOffset = {0, 0, 0};
+		region.imageExtent.width = width;
+		region.imageExtent.height = height;
+		region.imageExtent.depth = depth;
 		region.bufferOffset = dstOffset;
 		region.bufferImageHeight = 0;
 		region.bufferRowLength = 0;

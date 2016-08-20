@@ -32,9 +32,6 @@ public:
 	VkImage m_imageHandle = VK_NULL_HANDLE;
 	VkImageView m_viewHandle = VK_NULL_HANDLE;
 
-	/// A number of views, one for each level. Used in image load/store.
-	DynamicArray<VkImageView> m_viewsEveryLevel;
-
 	U32 m_memIdx = MAX_U32;
 	GpuMemoryAllocationHandle m_memHandle;
 
@@ -62,13 +59,34 @@ public:
 		checkTextureSurface(m_type, m_depth, m_mipCount, m_layerCount, surf);
 	}
 
+	void checkVolume(const TextureVolumeInfo& vol) const
+	{
+		ANKI_ASSERT(m_type == TextureType::_3D);
+		ANKI_ASSERT(vol.m_level < m_mipCount);
+	}
+
 	void computeSubResourceRange(
 		const TextureSurfaceInfo& surf, VkImageSubresourceRange& range) const;
+
+	void computeSubResourceRange(
+		const TextureVolumeInfo& vol, VkImageSubresourceRange& range) const;
+
+	/// Compute the layer as defined by Vulkan.
+	U computeVkArrayLayer(const TextureSurfaceInfo& surf) const;
+
+	U computeVkArrayLayer(const TextureVolumeInfo& vol) const
+	{
+		return 0;
+	}
 
 	Bool usageValid(TextureUsageBit usage) const
 	{
 		return (usage & m_usage) == usage;
 	}
+
+	VkImageView getOrCreateSingleSurfaceView(const TextureSurfaceInfo& surf);
+
+	VkImageView getOrCreateSingleLevelView(U level);
 
 	/// By knowing the previous and new texture usage calculate the relavant
 	/// info for a ppline barrier.
@@ -85,6 +103,14 @@ public:
 
 private:
 	class CreateContext;
+
+	/// A number of views, one for each surface. Used in image load/store.
+	DynamicArray<VkImageView> m_singleSurfaceViews;
+	Mutex m_singleSurfaceViewsMtx;
+
+	/// A number of views, one for each level. Used in image load/store.
+	DynamicArray<VkImageView> m_singleLevelViews;
+	Mutex m_singleLevelViewsMtx;
 
 	ANKI_USE_RESULT static VkFormatFeatureFlags calcFeatures(
 		const TextureInitInfo& init);
@@ -112,7 +138,7 @@ inline void TextureImpl::computeSubResourceRange(
 		range.baseArrayLayer = 0;
 		break;
 	case TextureType::_3D:
-		range.baseArrayLayer = surf.m_depth;
+		range.baseArrayLayer = 0;
 		break;
 	case TextureType::CUBE:
 		range.baseArrayLayer = surf.m_face;
@@ -127,6 +153,47 @@ inline void TextureImpl::computeSubResourceRange(
 		ANKI_ASSERT(0);
 	}
 	range.layerCount = 1;
+}
+
+//==============================================================================
+inline void TextureImpl::computeSubResourceRange(
+	const TextureVolumeInfo& vol, VkImageSubresourceRange& range) const
+{
+	checkVolume(vol);
+	range.aspectMask = m_aspect;
+	range.baseMipLevel = vol.m_level;
+	range.levelCount = 1;
+	range.baseArrayLayer = 0;
+	range.layerCount = 1;
+}
+
+//==============================================================================
+inline U TextureImpl::computeVkArrayLayer(const TextureSurfaceInfo& surf) const
+{
+	checkSurface(surf);
+	U layer = 0;
+	switch(m_type)
+	{
+	case TextureType::_2D:
+		layer = 0;
+		break;
+	case TextureType::_3D:
+		layer = 0;
+		break;
+	case TextureType::CUBE:
+		layer = surf.m_face;
+		break;
+	case TextureType::_2D_ARRAY:
+		layer = surf.m_layer;
+		break;
+	case TextureType::CUBE_ARRAY:
+		layer = surf.m_layer * 6 + surf.m_face;
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+
+	return layer;
 }
 /// @}
 

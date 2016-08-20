@@ -81,7 +81,7 @@ void* GrManager::tryAllocateFrameTransientMemory(
 }
 
 //==============================================================================
-void GrManager::getTextureUploadInfo(TexturePtr tex,
+void GrManager::getTextureSurfaceUploadInfo(TexturePtr tex,
 	const TextureSurfaceInfo& surf,
 	PtrSize& allocationSize,
 	BufferUsageBit& usage)
@@ -105,6 +105,44 @@ void GrManager::getTextureUploadInfo(TexturePtr tex,
 		alignRoundUp(16, allocationSize);
 		allocationSize += computeSurfaceSize(width,
 			height,
+			PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM));
+	}
+	else
+	{
+		ANKI_ASSERT(0);
+	}
+
+	usage = BufferUsageBit::TRANSFER_SOURCE;
+}
+
+//==============================================================================
+void GrManager::getTextureVolumeUploadInfo(TexturePtr tex,
+	const TextureVolumeInfo& vol,
+	PtrSize& allocationSize,
+	BufferUsageBit& usage)
+{
+	const TextureImpl& impl = tex->getImplementation();
+	impl.checkVolume(vol);
+
+	U width = impl.m_width >> vol.m_level;
+	U height = impl.m_height >> vol.m_level;
+	U depth = impl.m_depth >> vol.m_level;
+
+	if(!impl.m_workarounds)
+	{
+		allocationSize = computeVolumeSize(width, height, depth, impl.m_format);
+	}
+	else if(!!(impl.m_workarounds & TextureImplWorkaround::R8G8B8_TO_R8G8B8A8))
+	{
+		// Extra size for staging buffer
+		allocationSize = computeVolumeSize(width,
+			height,
+			depth,
+			PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM));
+		alignRoundUp(16, allocationSize);
+		allocationSize += computeVolumeSize(width,
+			height,
+			depth,
 			PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM));
 	}
 	else

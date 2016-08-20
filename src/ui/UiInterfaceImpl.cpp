@@ -227,7 +227,7 @@ Error UiInterfaceImpl::createR8Image(
 	cmdb->uploadTextureSurface(tex, TextureSurfaceInfo(0, 0, 0, 0), token);
 
 	// Gen mips
-	cmdb->generateMipmaps(tex, 0, 0, 0);
+	cmdb->generateMipmaps2d(tex, 0, 0);
 	cmdb->flush();
 
 	// Create the UiImage

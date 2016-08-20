@@ -248,6 +248,33 @@ static PtrSize calcSurfaceSize(const U width,
 }
 
 //==============================================================================
+/// Get the size in bytes of a single volume
+static PtrSize calcVolumeSize(const U width,
+	const U height,
+	const U depth,
+	const ImageLoader::DataCompression comp,
+	const ImageLoader::ColorFormat cf)
+{
+	PtrSize out = 0;
+
+	ANKI_ASSERT(width >= 4 || height >= 4 || depth >= 4);
+
+	switch(comp)
+	{
+	case ImageLoader::DataCompression::RAW:
+		out = width * height * depth
+			* ((cf == ImageLoader::ColorFormat::RGB8) ? 3 : 4);
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+
+	ANKI_ASSERT(out > 0);
+
+	return out;
+}
+
+//==============================================================================
 /// Calculate the size of a compressed or uncomressed color data
 static PtrSize calcSizeOfSegment(
 	const AnkiTextureHeader& header, ImageLoader::DataCompression comp)
@@ -256,34 +283,50 @@ static PtrSize calcSizeOfSegment(
 	U width = header.m_width;
 	U height = header.m_height;
 	U mips = header.m_mipLevels;
-	U surfCountPerMip = 0;
-
 	ANKI_ASSERT(mips > 0);
 
-	switch(header.m_type)
+	if(header.m_type != ImageLoader::TextureType::_3D)
 	{
-	case ImageLoader::TextureType::_2D:
-		surfCountPerMip = 1;
-		break;
-	case ImageLoader::TextureType::CUBE:
-		surfCountPerMip = 6;
-		break;
-	case ImageLoader::TextureType::_2D_ARRAY:
-	case ImageLoader::TextureType::_3D:
-		surfCountPerMip = header.m_depthOrLayerCount;
-		break;
-	default:
-		ANKI_ASSERT(0);
-		break;
+		U surfCountPerMip = 0;
+
+		switch(header.m_type)
+		{
+		case ImageLoader::TextureType::_2D:
+			surfCountPerMip = 1;
+			break;
+		case ImageLoader::TextureType::CUBE:
+			surfCountPerMip = 6;
+			break;
+		case ImageLoader::TextureType::_2D_ARRAY:
+			surfCountPerMip = header.m_depthOrLayerCount;
+			break;
+		default:
+			ANKI_ASSERT(0);
+			break;
+		}
+
+		while(mips-- != 0)
+		{
+			out += calcSurfaceSize(width, height, comp, header.m_colorFormat)
+				* surfCountPerMip;
+
+			width /= 2;
+			height /= 2;
+		}
 	}
-
-	while(mips-- != 0)
+	else
 	{
-		out += calcSurfaceSize(width, height, comp, header.m_colorFormat)
-			* surfCountPerMip;
+		U depth = header.m_depthOrLayerCount;
 
-		width /= 2;
-		height /= 2;
+		while(mips-- != 0)
+		{
+			out += calcVolumeSize(
+				width, height, depth, comp, header.m_colorFormat);
+
+			width /= 2;
+			height /= 2;
+			depth /= 2;
+		}
 	}
 
 	return out;
@@ -294,9 +337,12 @@ static ANKI_USE_RESULT Error loadAnkiTexture(ResourceFilePtr file,
 	U32 maxTextureSize,
 	ImageLoader::DataCompression& preferredCompression,
 	DynamicArray<ImageLoader::Surface>& surfaces,
+	DynamicArray<ImageLoader::Volume>& volumes,
 	GenericMemoryPoolAllocator<U8>& alloc,
+	U32& width,
+	U32& height,
 	U8& depthOrLayerCount,
-	U8& mipLevels,
+	U8& loadedMips,
 	ImageLoader::TextureType& textureType,
 	ImageLoader::ColorFormat& colorFormat)
 {
@@ -322,7 +368,7 @@ static ANKI_USE_RESULT Error loadAnkiTexture(ResourceFilePtr file,
 		return ErrorCode::USER_DATA;
 	}
 
-	if(header.m_depthOrLayerCount < 1 || header.m_depthOrLayerCount > 128)
+	if(header.m_depthOrLayerCount < 1 || header.m_depthOrLayerCount > 4096)
 	{
 		ANKI_LOGE("Zero or too big depth or layerCount");
 		return ErrorCode::USER_DATA;
@@ -364,22 +410,30 @@ static ANKI_USE_RESULT Error loadAnkiTexture(ResourceFilePtr file,
 		return ErrorCode::USER_DATA;
 	}
 
+	width = header.m_width;
+	height = header.m_height;
+
 	// Check mip levels
 	U size = min(header.m_width, header.m_height);
-	U maxsize = max(header.m_width, header.m_height);
-	mipLevels = 0;
+	U maxSize = max(header.m_width, header.m_height);
+	if(header.m_type == ImageLoader::TextureType::_3D)
+	{
+		maxSize = max<U>(maxSize, header.m_depthOrLayerCount);
+		size = min<U>(size, header.m_depthOrLayerCount);
+	}
+	loadedMips = 0;
 	U tmpMipLevels = 0;
 	while(size >= 4) // The minimum size is 4x4
 	{
 		++tmpMipLevels;
 
-		if(maxsize <= maxTextureSize)
+		if(maxSize <= maxTextureSize)
 		{
-			++mipLevels;
+			++loadedMips;
 		}
 
 		size /= 2;
-		maxsize /= 2;
+		maxSize /= 2;
 	}
 
 	if(header.m_mipLevels > tmpMipLevels)
@@ -388,7 +442,7 @@ static ANKI_USE_RESULT Error loadAnkiTexture(ResourceFilePtr file,
 		return ErrorCode::USER_DATA;
 	}
 
-	mipLevels = min<U>(mipLevels, header.m_mipLevels);
+	loadedMips = min<U>(loadedMips, header.m_mipLevels);
 
 	colorFormat = header.m_colorFormat;
 
@@ -455,41 +509,82 @@ static ANKI_USE_RESULT Error loadAnkiTexture(ResourceFilePtr file,
 	//
 
 	// Allocate the surfaces
-	surfaces.create(alloc, mipLevels * depthOrLayerCount);
-
-	// Read all surfaces
-	U mipWidth = header.m_width;
-	U mipHeight = header.m_height;
-	U index = 0;
-	for(U mip = 0; mip < header.m_mipLevels; mip++)
+	if(header.m_type != ImageLoader::TextureType::_3D)
 	{
-		for(U d = 0; d < depthOrLayerCount; d++)
+		surfaces.create(alloc, loadedMips * depthOrLayerCount);
+
+		// Read all surfaces
+		U mipWidth = header.m_width;
+		U mipHeight = header.m_height;
+		U index = 0;
+		for(U mip = 0; mip < header.m_mipLevels; mip++)
 		{
-			U dataSize = calcSurfaceSize(mipWidth,
+			for(U d = 0; d < depthOrLayerCount; d++)
+			{
+				U dataSize = calcSurfaceSize(mipWidth,
+					mipHeight,
+					preferredCompression,
+					header.m_colorFormat);
+
+				// Check if this mipmap can be skipped because of size
+				if(maxSize <= maxTextureSize)
+				{
+					ImageLoader::Surface& surf = surfaces[index++];
+					surf.m_width = mipWidth;
+					surf.m_height = mipHeight;
+
+					surf.m_data.create(alloc, dataSize);
+
+					ANKI_CHECK(file->read(&surf.m_data[0], dataSize));
+				}
+				else
+				{
+					ANKI_CHECK(file->seek(
+						dataSize, ResourceFile::SeekOrigin::CURRENT));
+				}
+			}
+
+			mipWidth /= 2;
+			mipHeight /= 2;
+		}
+	}
+	else
+	{
+		volumes.create(alloc, loadedMips);
+
+		U mipWidth = header.m_width;
+		U mipHeight = header.m_height;
+		U mipDepth = header.m_depthOrLayerCount;
+		for(U mip = 0; mip < header.m_mipLevels; mip++)
+		{
+			U dataSize = calcVolumeSize(mipWidth,
 				mipHeight,
+				mipDepth,
 				preferredCompression,
 				header.m_colorFormat);
 
 			// Check if this mipmap can be skipped because of size
-			if(max(mipWidth, mipHeight) <= maxTextureSize)
+			if(maxSize <= maxTextureSize)
 			{
-				ImageLoader::Surface& surf = surfaces[index++];
-				surf.m_width = mipWidth;
-				surf.m_height = mipHeight;
+				ImageLoader::Volume& vol = volumes[mip];
+				vol.m_width = mipWidth;
+				vol.m_height = mipHeight;
+				vol.m_depth = mipDepth;
 
-				surf.m_data.create(alloc, dataSize);
+				vol.m_data.create(alloc, dataSize);
 
-				ANKI_CHECK(file->read(&surf.m_data[0], dataSize));
+				ANKI_CHECK(file->read(&vol.m_data[0], dataSize));
 			}
 			else
 			{
 				ANKI_CHECK(
 					file->seek(dataSize, ResourceFile::SeekOrigin::CURRENT));
 			}
-		}
 
-		mipWidth /= 2;
-		mipHeight /= 2;
+			mipWidth /= 2;
+			mipHeight /= 2;
+			mipDepth /= 2;
+		}
 	}
 
 	return ErrorCode::NONE;
@@ -531,6 +626,9 @@ Error ImageLoader::load(
 			m_surfaces[0].m_data,
 			m_alloc));
 
+		m_width = m_surfaces[0].m_width;
+		m_height = m_surfaces[0].m_height;
+
 		if(bpp == 32)
 		{
 			m_colorFormat = ColorFormat::RGBA8;
@@ -558,7 +656,10 @@ Error ImageLoader::load(
 			maxTextureSize,
 			m_compression,
 			m_surfaces,
+			m_volumes,
 			m_alloc,
+			m_width,
+			m_height,
 			m_depthOrLayerCount,
 			m_mipLevels,
 			m_textureType,
@@ -575,7 +676,7 @@ Error ImageLoader::load(
 
 //==============================================================================
 const ImageLoader::Surface& ImageLoader::getSurface(
-	U level, U depth, U face, U layer) const
+	U level, U face, U layer) const
 {
 	ANKI_ASSERT(level < m_mipLevels);
 
@@ -591,7 +692,7 @@ const ImageLoader::Surface& ImageLoader::getSurface(
 		idx = level * 6 + face;
 		break;
 	case TextureType::_3D:
-		idx = level * m_depthOrLayerCount + depth;
+		ANKI_ASSERT(0 && "Can't use that for 3D textures");
 		break;
 	case TextureType::_2D_ARRAY:
 		idx = level * m_depthOrLayerCount + layer;
@@ -604,14 +705,28 @@ const ImageLoader::Surface& ImageLoader::getSurface(
 }
 
 //==============================================================================
+const ImageLoader::Volume& ImageLoader::getVolume(U level) const
+{
+	ANKI_ASSERT(m_textureType == TextureType::_3D);
+	return m_volumes[level];
+}
+
+//==============================================================================
 void ImageLoader::destroy()
 {
-	for(ImageLoader::Surface& surf : m_surfaces)
+	for(Surface& surf : m_surfaces)
 	{
 		surf.m_data.destroy(m_alloc);
 	}
 
 	m_surfaces.destroy(m_alloc);
+
+	for(Volume& v : m_volumes)
+	{
+		v.m_data.destroy(m_alloc);
+	}
+
+	m_volumes.destroy(m_alloc);
 }
 
 } // end namespace anki

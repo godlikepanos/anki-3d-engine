@@ -222,6 +222,7 @@ private:
 	Mutex m_queueSubmitMtx;
 
 	VkPhysicalDeviceProperties m_devProps = {};
+	VkPhysicalDeviceFeatures m_devFeatures = {};
 
 	/// @name Surface_related
 	/// @{

@@ -188,22 +188,38 @@ public:
 
 	void dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ);
 
-	void generateMipmaps(TexturePtr tex, U depth, U face, U layer);
+	/// Generate mipmaps for non-3D textures.
+	void generateMipmaps2d(TexturePtr tex, U face, U layer);
 
-	void copyTextureToTexture(TexturePtr src,
+	/// Generate mipmaps only for 3D textures.
+	void generateMipmaps3d(TexturePtr tex);
+
+	void copyTextureSurfaceToTextureSurface(TexturePtr src,
 		const TextureSurfaceInfo& srcSurf,
 		TexturePtr dest,
 		const TextureSurfaceInfo& destSurf);
 
-	void clearTexture(TexturePtr tex,
+	void copyTextureVolumeToTextureVolume(TexturePtr src,
+		const TextureVolumeInfo& srcVol,
+		TexturePtr dest,
+		const TextureVolumeInfo& destVol);
+
+	void clearTexture(TexturePtr tex, const ClearValue& clearValue);
+
+	void clearTextureSurface(TexturePtr tex,
 		const TextureSurfaceInfo& surf,
+		const ClearValue& clearValue);
+
+	void clearTextureVolume(TexturePtr tex,
+		const TextureVolumeInfo& vol,
 		const ClearValue& clearValue);
 	/// @}
 
 	/// @name Resource upload
 	/// @{
 
-	/// Upload data to a texture. It's the base of all texture upload methods.
+	/// Upload data to a texture surface. It's the base of all texture surface
+	/// upload methods.
 	void uploadTextureSurface(TexturePtr tex,
 		const TextureSurfaceInfo& surf,
 		const TransientMemoryToken& token);
@@ -231,6 +247,20 @@ public:
 		void* data,
 		PtrSize dataSize);
 
+	/// Upload data to a texture volume. It's the base of all texture volume
+	/// upload methods.
+	void uploadTextureVolume(TexturePtr tex,
+		const TextureVolumeInfo& vol,
+		const TransientMemoryToken& token);
+
+	/// Same as uploadTextureVolume but it will perform the transient
+	/// allocation and copy to it the @a data. If that allocation fails expect
+	/// the defaul OOM behaviour (crash).
+	void uploadTextureVolumeCopyData(TexturePtr tex,
+		const TextureVolumeInfo& surf,
+		void* data,
+		PtrSize dataSize);
+
 	/// Upload data to a buffer.
 	void uploadBuffer(
 		BufferPtr buff, PtrSize offset, const TransientMemoryToken& token);
@@ -238,10 +268,15 @@ public:
 
 	/// @name Sync
 	/// @{
-	void setTextureBarrier(TexturePtr tex,
+	void setTextureSurfaceBarrier(TexturePtr tex,
 		TextureUsageBit prevUsage,
 		TextureUsageBit nextUsage,
 		const TextureSurfaceInfo& surf);
+
+	void setTextureVolumeBarrier(TexturePtr tex,
+		TextureUsageBit prevUsage,
+		TextureUsageBit nextUsage,
+		const TextureVolumeInfo& vol);
 
 	void setBufferBarrier(
 		BufferPtr buff, BufferUsageBit prevUsage, BufferUsageBit nextUsage);

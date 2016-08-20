@@ -390,16 +390,9 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 		{
 			ANKI_ASSERT(!hole);
 			VkDescriptorImageInfo& inf = images[i];
-			const TextureImpl& tex = binding.m_texture->getImplementation();
+			TextureImpl& tex = binding.m_texture->getImplementation();
 
-			if(binding.m_level == 0)
-			{
-				inf.imageView = tex.m_viewHandle;
-			}
-			else
-			{
-				inf.imageView = tex.m_viewsEveryLevel[binding.m_level - 1];
-			}
+			inf.imageView = tex.getOrCreateSingleLevelView(binding.m_level);
 			inf.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 
 			m_refs[refCount++] = binding.m_texture;

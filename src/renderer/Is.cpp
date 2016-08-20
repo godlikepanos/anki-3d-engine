@@ -259,7 +259,7 @@ void Is::updateCommonBlock(RenderingContext& ctx)
 //==============================================================================
 void Is::setPreRunBarriers(RenderingContext& ctx)
 {
-	ctx.m_commandBuffer->setTextureBarrier(m_rt,
+	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_rt,
 		TextureUsageBit::NONE,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 		TextureSurfaceInfo(0, 0, 0, 0));

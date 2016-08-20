@@ -333,14 +333,14 @@ void CommandBuffer::endOcclusionQuery(OcclusionQueryPtr query)
 }
 
 //==============================================================================
-class TexUploadCommand final : public GlCommand
+class TexSurfUploadCommand final : public GlCommand
 {
 public:
 	TexturePtr m_handle;
 	TextureSurfaceInfo m_surf;
 	TransientMemoryToken m_token;
 
-	TexUploadCommand(const TexturePtr& handle,
+	TexSurfUploadCommand(const TexturePtr& handle,
 		TextureSurfaceInfo surf,
 		const TransientMemoryToken& token)
 		: m_handle(handle)
@@ -356,7 +356,8 @@ public:
 						 .getBaseAddress(m_token);
 		data = static_cast<void*>(static_cast<U8*>(data) + m_token.m_offset);
 
-		m_handle->getImplementation().write(m_surf, data, m_token.m_range);
+		m_handle->getImplementation().writeSurface(
+			m_surf, data, m_token.m_range);
 
 		if(m_token.m_lifetime == TransientMemoryTokenLifetime::PERSISTENT)
 		{
@@ -377,7 +378,55 @@ void CommandBuffer::uploadTextureSurface(TexturePtr tex,
 	ANKI_ASSERT(token.m_range > 0);
 	ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
 
-	m_impl->pushBackNewCommand<TexUploadCommand>(tex, surf, token);
+	m_impl->pushBackNewCommand<TexSurfUploadCommand>(tex, surf, token);
+}
+
+//==============================================================================
+class TexVolUploadCommand final : public GlCommand
+{
+public:
+	TexturePtr m_handle;
+	TextureVolumeInfo m_vol;
+	TransientMemoryToken m_token;
+
+	TexVolUploadCommand(const TexturePtr& handle,
+		TextureVolumeInfo vol,
+		const TransientMemoryToken& token)
+		: m_handle(handle)
+		, m_vol(vol)
+		, m_token(token)
+	{
+	}
+
+	Error operator()(GlState& state)
+	{
+		void* data = state.m_manager->getImplementation()
+						 .getTransientMemoryManager()
+						 .getBaseAddress(m_token);
+		data = static_cast<void*>(static_cast<U8*>(data) + m_token.m_offset);
+
+		m_handle->getImplementation().writeVolume(m_vol, data, m_token.m_range);
+
+		if(m_token.m_lifetime == TransientMemoryTokenLifetime::PERSISTENT)
+		{
+			state.m_manager->getImplementation()
+				.getTransientMemoryManager()
+				.free(m_token);
+		}
+
+		return ErrorCode::NONE;
+	}
+};
+
+void CommandBuffer::uploadTextureVolume(TexturePtr tex,
+	const TextureVolumeInfo& vol,
+	const TransientMemoryToken& token)
+{
+	ANKI_ASSERT(tex);
+	ANKI_ASSERT(token.m_range > 0);
+	ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
+
+	m_impl->pushBackNewCommand<TexVolUploadCommand>(tex, vol, token);
 }
 
 //==============================================================================
@@ -432,13 +481,11 @@ class GenMipsCommand final : public GlCommand
 {
 public:
 	TexturePtr m_tex;
-	U32 m_depth;
 	U8 m_face;
 	U32 m_layer;
 
-	GenMipsCommand(const TexturePtr& tex, U depth, U face, U layer)
+	GenMipsCommand(const TexturePtr& tex, U face, U layer)
 		: m_tex(tex)
-		, m_depth(depth)
 		, m_face(face)
 		, m_layer(layer)
 	{
@@ -446,15 +493,15 @@ public:
 
 	Error operator()(GlState&)
 	{
-		m_tex->getImplementation().generateMipmaps(m_depth, m_face, m_layer);
+		m_tex->getImplementation().generateMipmaps2d(m_face, m_layer);
 		return ErrorCode::NONE;
 	}
 };
 
-void CommandBuffer::generateMipmaps(TexturePtr tex, U depth, U face, U layer)
+void CommandBuffer::generateMipmaps2d(TexturePtr tex, U face, U layer)
 {
 	ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
-	m_impl->pushBackNewCommand<GenMipsCommand>(tex, depth, face, layer);
+	m_impl->pushBackNewCommand<GenMipsCommand>(tex, face, layer);
 }
 
 //==============================================================================
@@ -524,7 +571,7 @@ public:
 	}
 };
 
-void CommandBuffer::copyTextureToTexture(TexturePtr src,
+void CommandBuffer::copyTextureSurfaceToTextureSurface(TexturePtr src,
 	const TextureSurfaceInfo& srcSurf,
 	TexturePtr dest,
 	const TextureSurfaceInfo& destSurf)
@@ -600,10 +647,19 @@ void CommandBuffer::setBufferBarrier(
 }
 
 //==============================================================================
-void CommandBuffer::setTextureBarrier(TexturePtr tex,
+void CommandBuffer::setTextureSurfaceBarrier(TexturePtr tex,
 	TextureUsageBit prevUsage,
 	TextureUsageBit nextUsage,
 	const TextureSurfaceInfo& surf)
+{
+	// Do nothing
+}
+
+//==============================================================================
+void CommandBuffer::setTextureVolumeBarrier(TexturePtr tex,
+	TextureUsageBit prevUsage,
+	TextureUsageBit nextUsage,
+	const TextureVolumeInfo& vol)
 {
 	// Do nothing
 }
@@ -631,7 +687,7 @@ public:
 	}
 };
 
-void CommandBuffer::clearTexture(TexturePtr tex,
+void CommandBuffer::clearTextureSurface(TexturePtr tex,
 	const TextureSurfaceInfo& surf,
 	const ClearValue& clearValue)
 {

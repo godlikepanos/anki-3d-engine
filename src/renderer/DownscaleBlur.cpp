@@ -97,13 +97,13 @@ void DownscaleBlur::run(RenderingContext& ctx)
 
 		if(i > 0)
 		{
-			cmdb->setTextureBarrier(m_r->getIs().getRt(),
+			cmdb->setTextureSurfaceBarrier(m_r->getIs().getRt(),
 				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 				TextureUsageBit::SAMPLED_FRAGMENT,
 				TextureSurfaceInfo(i, 0, 0, 0));
 		}
 
-		cmdb->setTextureBarrier(m_r->getIs().getRt(),
+		cmdb->setTextureSurfaceBarrier(m_r->getIs().getRt(),
 			TextureUsageBit::NONE,
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 			TextureSurfaceInfo(i + 1, 0, 0, 0));

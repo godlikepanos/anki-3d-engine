@@ -206,20 +206,25 @@ Error FramebufferImpl::initFramebuffer(const FramebufferInitInfo& init)
 
 		for(U i = 0; i < init.m_colorAttachmentCount; ++i)
 		{
-			attachments[count] = init.m_colorAttachments[i]
-									 .m_texture->getImplementation()
-									 .m_viewHandle;
+			const FramebufferAttachmentInfo& att = init.m_colorAttachments[i];
+			TextureImpl& tex = att.m_texture->getImplementation();
 
-			m_refs[count++] = init.m_colorAttachments[i].m_texture;
+			attachments[count] =
+				tex.getOrCreateSingleSurfaceView(att.m_surface);
+
+			m_refs[count++] = att.m_texture;
 		}
 
 		if(hasDepthStencil)
 		{
-			attachments[count] =
-				init.m_depthStencilAttachment.m_texture->getImplementation()
-					.m_viewHandle;
+			const FramebufferAttachmentInfo& att =
+				init.m_depthStencilAttachment;
+			TextureImpl& tex = att.m_texture->getImplementation();
 
-			m_refs[count++] = init.m_depthStencilAttachment.m_texture;
+			attachments[count] =
+				tex.getOrCreateSingleSurfaceView(att.m_surface);
+
+			m_refs[count++] = att.m_texture;
 		}
 
 		m_width = m_refs[0]->getImplementation().m_width;

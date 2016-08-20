@@ -436,7 +436,7 @@ void TextureImpl::init(const TextureInitInfo& init)
 }
 
 //==============================================================================
-void TextureImpl::write(
+void TextureImpl::writeSurface(
 	const TextureSurfaceInfo& surf, void* data, PtrSize dataSize)
 {
 	checkSurface(surf);
@@ -531,9 +531,42 @@ void TextureImpl::write(
 }
 
 //==============================================================================
-void TextureImpl::generateMipmaps(U depth, U face, U layer)
+void TextureImpl::writeVolume(
+	const TextureVolumeInfo& vol, void* data, PtrSize dataSize)
 {
-	U surface = computeSurfaceIdx(TextureSurfaceInfo(0, depth, face, layer));
+	checkVolume(vol);
+	ANKI_ASSERT(data);
+	ANKI_ASSERT(dataSize > 0);
+	ANKI_ASSERT(m_texType == TextureType::_3D);
+
+	U mipmap = vol.m_level;
+	U w = m_width >> mipmap;
+	U h = m_height >> mipmap;
+	U d = m_depth >> mipmap;
+	ANKI_ASSERT(w > 0);
+	ANKI_ASSERT(h > 0);
+	ANKI_ASSERT(d > 0);
+
+	bind();
+
+	if(!m_compressed)
+	{
+		glTexSubImage3D(
+			m_target, mipmap, 0, 0, 0, w, h, d, m_format, m_type, data);
+	}
+	else
+	{
+		glCompressedTexSubImage3D(
+			m_target, mipmap, 0, 0, 0, w, h, d, m_format, dataSize, data);
+	}
+
+	ANKI_CHECK_GL_ERROR();
+}
+
+//==============================================================================
+void TextureImpl::generateMipmaps2d(U face, U layer)
+{
+	U surface = computeSurfaceIdx(TextureSurfaceInfo(0, 0, face, layer));
 	ANKI_ASSERT(!m_compressed);
 
 	if(m_surfaceCountPerLevel > 1)

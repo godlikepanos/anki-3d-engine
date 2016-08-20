@@ -124,6 +124,22 @@ public:
 	U32 m_layer = 0;
 };
 
+/// A way to identify a volume in 3D textures.
+class TextureVolumeInfo
+{
+public:
+	TextureVolumeInfo() = default;
+
+	TextureVolumeInfo(const TextureVolumeInfo&) = default;
+
+	TextureVolumeInfo(U level)
+		: m_level(level)
+	{
+	}
+
+	U32 m_level = 0;
+};
+
 // Some constants
 const U MAX_VERTEX_ATTRIBUTES = 8;
 const U MAX_COLOR_ATTACHMENTS = 4;

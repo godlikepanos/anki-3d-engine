@@ -168,12 +168,12 @@ void Bloom::run(RenderingContext& ctx)
 	cmdb->endRenderPass();
 
 	// pass 1
-	cmdb->setTextureBarrier(m_extractExposure.m_rt,
+	cmdb->setTextureSurfaceBarrier(m_extractExposure.m_rt,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		TextureUsageBit::SAMPLED_FRAGMENT,
 		TextureSurfaceInfo(0, 0, 0, 0));
 
-	cmdb->setTextureBarrier(m_upscale.m_rt,
+	cmdb->setTextureSurfaceBarrier(m_upscale.m_rt,
 		TextureUsageBit::NONE,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 		TextureSurfaceInfo(0, 0, 0, 0));
@@ -188,7 +188,7 @@ void Bloom::run(RenderingContext& ctx)
 //==============================================================================
 void Bloom::setPreRunBarriers(RenderingContext& ctx)
 {
-	ctx.m_commandBuffer->setTextureBarrier(m_extractExposure.m_rt,
+	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_extractExposure.m_rt,
 		TextureUsageBit::NONE,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		TextureSurfaceInfo(0, 0, 0, 0));
@@ -197,7 +197,7 @@ void Bloom::setPreRunBarriers(RenderingContext& ctx)
 //==============================================================================
 void Bloom::setPostRunBarriers(RenderingContext& ctx)
 {
-	ctx.m_commandBuffer->setTextureBarrier(m_upscale.m_rt,
+	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_upscale.m_rt,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		TextureUsageBit::SAMPLED_FRAGMENT,
 		TextureSurfaceInfo(0, 0, 0, 0));

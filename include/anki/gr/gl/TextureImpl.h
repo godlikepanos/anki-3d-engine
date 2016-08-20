@@ -48,6 +48,12 @@ public:
 			m_texType, m_depth, m_mipsCount, m_layerCount, surf);
 	}
 
+	void checkVolume(const TextureVolumeInfo& vol) const
+	{
+		ANKI_ASSERT(m_texType == TextureType::_3D);
+		ANKI_ASSERT(vol.m_level < m_mipsCount);
+	}
+
 	/// Init some stuff.
 	void preInit(const TextureInitInfo& init);
 
@@ -55,10 +61,15 @@ public:
 	void init(const TextureInitInfo& init);
 
 	/// Write texture data.
-	void write(const TextureSurfaceInfo& surf, void* data, PtrSize dataSize);
+	void writeSurface(
+		const TextureSurfaceInfo& surf, void* data, PtrSize dataSize);
+
+	/// Write texture data.
+	void writeVolume(
+		const TextureVolumeInfo& vol, void* data, PtrSize dataSize);
 
 	/// Generate mipmaps.
-	void generateMipmaps(U depth, U face, U layer);
+	void generateMipmaps2d(U face, U layer);
 
 	/// Copy a single surface from one texture to another.
 	static void copy(const TextureImpl& src,

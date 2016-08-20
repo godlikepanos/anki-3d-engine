@@ -95,4 +95,7 @@ void getFormatInfo(const PixelFormat& fmt,
 /// Compute the size of the surface.
 PtrSize computeSurfaceSize(U width, U height, const PixelFormat& fmt);
 
+/// Compute the size of the volume.
+PtrSize computeVolumeSize(U width, U height, U depth, const PixelFormat& fmt);
+
 } // end namespace anki

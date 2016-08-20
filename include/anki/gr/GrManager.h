@@ -86,8 +86,14 @@ public:
 	/// are required to allocate that amount and write your pixels to be
 	/// uploaded to the first part of the memory as before and leave the rest of
 	/// the memory for internal use.
-	void getTextureUploadInfo(TexturePtr tex,
+	void getTextureSurfaceUploadInfo(TexturePtr tex,
 		const TextureSurfaceInfo& surf,
+		PtrSize& expectedTransientAllocationSize,
+		BufferUsageBit& usage);
+
+	/// Same as getTextureSurfaceUploadInfo but for volumes.
+	void getTextureVolumeUploadInfo(TexturePtr tex,
+		const TextureVolumeInfo& vol,
 		PtrSize& expectedTransientAllocationSize,
 		BufferUsageBit& usage);
 

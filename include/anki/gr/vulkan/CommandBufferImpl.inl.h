@@ -95,23 +95,14 @@ inline void CommandBufferImpl::setImageBarrier(VkPipelineStageFlags srcStage,
 }
 
 //==============================================================================
-inline void CommandBufferImpl::setImageBarrier(TexturePtr tex,
+inline void CommandBufferImpl::setTextureBarrierInternal(TexturePtr tex,
 	TextureUsageBit prevUsage,
 	TextureUsageBit nextUsage,
-	const TextureSurfaceInfo& surf)
+	const VkImageSubresourceRange& range)
 {
-	if(surf.m_level > 0)
-	{
-		ANKI_ASSERT(!(nextUsage & TextureUsageBit::GENERATE_MIPMAPS)
-			&& "This transition happens inside "
-			   "CommandBufferImpl::generateMipmaps");
-	}
-
 	const TextureImpl& impl = tex->getImplementation();
 	ANKI_ASSERT(impl.usageValid(prevUsage));
 	ANKI_ASSERT(impl.usageValid(nextUsage));
-
-	impl.checkSurface(surf);
 
 	VkPipelineStageFlags srcStage;
 	VkAccessFlags srcAccess;
@@ -121,16 +112,13 @@ inline void CommandBufferImpl::setImageBarrier(TexturePtr tex,
 	VkImageLayout newLayout;
 	impl.computeBarrierInfo(prevUsage,
 		nextUsage,
-		surf.m_level,
+		range.baseMipLevel,
 		srcStage,
 		srcAccess,
 		dstStage,
 		dstAccess);
-	oldLayout = impl.computeLayout(prevUsage, surf.m_level);
-	newLayout = impl.computeLayout(nextUsage, surf.m_level);
-
-	VkImageSubresourceRange range;
-	impl.computeSubResourceRange(surf, range);
+	oldLayout = impl.computeLayout(prevUsage, range.baseMipLevel);
+	newLayout = impl.computeLayout(nextUsage, range.baseMipLevel);
 
 	setImageBarrier(srcStage,
 		srcAccess,
@@ -140,6 +128,48 @@ inline void CommandBufferImpl::setImageBarrier(TexturePtr tex,
 		newLayout,
 		tex,
 		range);
+}
+
+//==============================================================================
+inline void CommandBufferImpl::setTextureSurfaceBarrier(TexturePtr tex,
+	TextureUsageBit prevUsage,
+	TextureUsageBit nextUsage,
+	const TextureSurfaceInfo& surf)
+{
+	if(surf.m_level > 0)
+	{
+		ANKI_ASSERT(!(nextUsage & TextureUsageBit::GENERATE_MIPMAPS)
+			&& "This transition happens inside "
+			   "CommandBufferImpl::generateMipmapsX");
+	}
+
+	const TextureImpl& impl = tex->getImplementation();
+	impl.checkSurface(surf);
+
+	VkImageSubresourceRange range;
+	impl.computeSubResourceRange(surf, range);
+	setTextureBarrierInternal(tex, prevUsage, nextUsage, range);
+}
+
+//==============================================================================
+inline void CommandBufferImpl::setTextureVolumeBarrier(TexturePtr tex,
+	TextureUsageBit prevUsage,
+	TextureUsageBit nextUsage,
+	const TextureVolumeInfo& vol)
+{
+	if(vol.m_level > 0)
+	{
+		ANKI_ASSERT(!(nextUsage & TextureUsageBit::GENERATE_MIPMAPS)
+			&& "This transition happens inside "
+			   "CommandBufferImpl::generateMipmaps");
+	}
+
+	const TextureImpl& impl = tex->getImplementation();
+	impl.checkVolume(vol);
+
+	VkImageSubresourceRange range;
+	impl.computeSubResourceRange(vol, range);
+	setTextureBarrierInternal(tex, prevUsage, nextUsage, range);
 }
 
 //==============================================================================
@@ -207,21 +237,18 @@ inline void CommandBufferImpl::endOcclusionQuery(OcclusionQueryPtr query)
 }
 
 //==============================================================================
-inline void CommandBufferImpl::clearTexture(TexturePtr tex,
-	const TextureSurfaceInfo& surf,
-	const ClearValue& clearValue)
+inline void CommandBufferImpl::clearTextureInternal(TexturePtr tex,
+	const ClearValue& clearValue,
+	const VkImageSubresourceRange& range)
 {
 	commandCommon();
 	flushBarriers();
-	const TextureImpl& impl = tex->getImplementation();
 
 	VkClearColorValue vclear;
 	static_assert(sizeof(vclear) == sizeof(clearValue), "See file");
 	memcpy(&vclear, &clearValue, sizeof(clearValue));
 
-	VkImageSubresourceRange range;
-	impl.computeSubResourceRange(surf, range);
-
+	const TextureImpl& impl = tex->getImplementation();
 	if(impl.m_aspect == VK_IMAGE_ASPECT_COLOR_BIT)
 	{
 		vkCmdClearColorImage(m_handle,
@@ -240,6 +267,45 @@ inline void CommandBufferImpl::clearTexture(TexturePtr tex,
 }
 
 //==============================================================================
+inline void CommandBufferImpl::clearTexture(
+	TexturePtr tex, const ClearValue& clearValue)
+{
+	VkImageSubresourceRange range;
+	range.aspectMask = tex->getImplementation().m_aspect;
+	range.baseMipLevel = 0;
+	range.levelCount = VK_REMAINING_MIP_LEVELS;
+	range.baseArrayLayer = 0;
+	range.layerCount = VK_REMAINING_ARRAY_LAYERS;
+
+	clearTextureInternal(tex, clearValue, range);
+}
+
+//==============================================================================
+inline void CommandBufferImpl::clearTextureSurface(TexturePtr tex,
+	const TextureSurfaceInfo& surf,
+	const ClearValue& clearValue)
+{
+	const TextureImpl& impl = tex->getImplementation();
+	ANKI_ASSERT(impl.m_type != TextureType::_3D && "Not for 3D");
+
+	VkImageSubresourceRange range;
+	impl.computeSubResourceRange(surf, range);
+	clearTextureInternal(tex, clearValue, range);
+}
+
+//==============================================================================
+inline void CommandBufferImpl::clearTextureVolume(
+	TexturePtr tex, const TextureVolumeInfo& vol, const ClearValue& clearValue)
+{
+	const TextureImpl& impl = tex->getImplementation();
+	ANKI_ASSERT(impl.m_type == TextureType::_3D && "Only for 3D");
+
+	VkImageSubresourceRange range;
+	impl.computeSubResourceRange(vol, range);
+	clearTextureInternal(tex, clearValue, range);
+}
+
+//==============================================================================
 inline void CommandBufferImpl::uploadBuffer(
 	BufferPtr buff, PtrSize offset, const TransientMemoryToken& token)
 {
@@ -255,9 +321,9 @@ inline void CommandBufferImpl::uploadBuffer(
 	ANKI_ASSERT(offset + token.m_range <= impl.getSize());
 
 	vkCmdCopyBuffer(m_handle,
-		impl.getHandle(),
 		getGrManagerImpl().getTransientMemoryManager().getBufferHandle(
 			token.m_usage),
+		impl.getHandle(),
 		1,
 		&region);
 

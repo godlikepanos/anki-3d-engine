@@ -56,6 +56,16 @@ public:
 		DynamicArray<U8> m_data;
 	};
 
+	class Volume
+	{
+	public:
+		U32 m_width;
+		U32 m_height;
+		U32 m_depth;
+		U32 m_mipLevel;
+		DynamicArray<U8> m_data;
+	};
+
 	ImageLoader(GenericMemoryPoolAllocator<U8> alloc)
 		: m_alloc(alloc)
 	{
@@ -84,6 +94,16 @@ public:
 		return m_mipLevels;
 	}
 
+	U getWidth() const
+	{
+		return m_width;
+	}
+
+	U getHeight() const
+	{
+		return m_height;
+	}
+
 	U getDepth() const
 	{
 		ANKI_ASSERT(
@@ -104,7 +124,9 @@ public:
 		return m_textureType;
 	}
 
-	const Surface& getSurface(U level, U depth, U face, U layer) const;
+	const Surface& getSurface(U level, U face, U layer) const;
+
+	const Volume& getVolume(U level) const;
 
 	GenericMemoryPoolAllocator<U8> getAllocator() const
 	{
@@ -129,7 +151,11 @@ private:
 	/// so face and layer won't be used at the same time.
 	DynamicArray<Surface> m_surfaces;
 
+	DynamicArray<Volume> m_volumes;
+
 	U8 m_mipLevels = 0;
+	U32 m_width = 0;
+	U32 m_height = 0;
 	U8 m_depthOrLayerCount = 0;
 	DataCompression m_compression = DataCompression::NONE;
 	ColorFormat m_colorFormat = ColorFormat::NONE;

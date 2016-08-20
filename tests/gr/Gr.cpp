@@ -157,11 +157,6 @@ static const char* FRAG_TEX_SRC = R"(layout (location = 0) out vec4 out_color;
 
 layout(location = 0) in vec2 in_uv;
 
-layout(ANKI_UBO_BINDING(0, 0)) uniform u0_
-{
-	vec4 u_factor;
-};
-
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_tex0;
 layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_tex1;
 
@@ -195,6 +190,20 @@ void main()
 			out_color = textureLod(u_tex1, uv, 1.0);
 		}
 	}
+})";
+
+static const char* FRAG_TEX3D_SRC = R"(layout (location = 0) out vec4 out_color;
+
+layout(ANKI_UBO_BINDING(0, 0)) uniform u0_
+{
+	vec4 u_uv;
+};
+
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler3D u_tex;
+
+void main()
+{
+	out_color = textureLod(u_tex, u_uv.xyz, u_uv.w);
 })";
 
 static const char* FRAG_MRT_SRC = R"(layout (location = 0) out vec4 out_color0;
@@ -258,11 +267,13 @@ void main()
 #define COMMON_BEGIN()                                                         \
 	NativeWindow* win = nullptr;                                               \
 	GrManager* gr = nullptr;                                                   \
-	createGrManager(win, gr)
+	createGrManager(win, gr);                                                  \
+	{
 
 #define COMMON_END()                                                           \
+	}                                                                          \
 	delete gr;                                                                 \
-	delete win
+	delete win;
 
 const PixelFormat DS_FORMAT =
 	PixelFormat(ComponentFormat::D24, TransformFormat::UNORM);
@@ -408,578 +419,548 @@ static void createCube(GrManager& gr, BufferPtr& verts, BufferPtr& indices)
 //==============================================================================
 ANKI_TEST(Gr, GrManager)
 {
-	COMMON_BEGIN();
-	COMMON_END();
+	COMMON_BEGIN()
+	COMMON_END()
 }
 
 //==============================================================================
 ANKI_TEST(Gr, Shader)
 {
-	COMMON_BEGIN();
+	COMMON_BEGIN()
 
-	{
-		ShaderPtr shader =
-			gr->newInstance<Shader>(ShaderType::VERTEX, VERT_SRC);
-	}
+	ShaderPtr shader = gr->newInstance<Shader>(ShaderType::VERTEX, VERT_SRC);
 
-	COMMON_END();
+	COMMON_END()
 }
 
 //==============================================================================
 ANKI_TEST(Gr, Pipeline)
 {
-	COMMON_BEGIN();
+	COMMON_BEGIN()
 
-	{
-		PipelinePtr ppline = createSimplePpline(VERT_SRC, FRAG_SRC, *gr);
-	}
+	PipelinePtr ppline = createSimplePpline(VERT_SRC, FRAG_SRC, *gr);
 
-	COMMON_END();
+	COMMON_END()
 }
 
 //==============================================================================
 ANKI_TEST(Gr, SimpleDrawcall)
 {
-	COMMON_BEGIN();
+	COMMON_BEGIN()
 
+	PipelinePtr ppline = createSimplePpline(VERT_SRC, FRAG_SRC, *gr);
+	FramebufferPtr fb = createDefaultFb(*gr);
+
+	U iterations = 100;
+	while(iterations--)
 	{
-		PipelinePtr ppline = createSimplePpline(VERT_SRC, FRAG_SRC, *gr);
-		FramebufferPtr fb = createDefaultFb(*gr);
+		HighRezTimer timer;
+		timer.start();
 
-		U iterations = 100;
-		while(iterations--)
+		gr->beginFrame();
+
+		CommandBufferInitInfo cinit;
+		CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
+
+		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
+		cmdb->setPolygonOffset(0.0, 0.0);
+		cmdb->bindPipeline(ppline);
+		cmdb->beginRenderPass(fb);
+		cmdb->drawArrays(3);
+		cmdb->endRenderPass();
+		cmdb->flush();
+
+		gr->swapBuffers();
+
+		timer.stop();
+		const F32 TICK = 1.0 / 30.0;
+		if(timer.getElapsedTime() < TICK)
 		{
-			HighRezTimer timer;
-			timer.start();
-
-			gr->beginFrame();
-
-			CommandBufferInitInfo cinit;
-			CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
-
-			cmdb->setViewport(0, 0, WIDTH, HEIGHT);
-			cmdb->setPolygonOffset(0.0, 0.0);
-			cmdb->bindPipeline(ppline);
-			cmdb->beginRenderPass(fb);
-			cmdb->drawArrays(3);
-			cmdb->endRenderPass();
-			cmdb->flush();
-
-			gr->swapBuffers();
-
-			timer.stop();
-			const F32 TICK = 1.0 / 30.0;
-			if(timer.getElapsedTime() < TICK)
-			{
-				HighRezTimer::sleep(TICK - timer.getElapsedTime());
-			}
+			HighRezTimer::sleep(TICK - timer.getElapsedTime());
 		}
 	}
 
-	COMMON_END();
+	COMMON_END()
 }
 
 //==============================================================================
 ANKI_TEST(Gr, Buffer)
 {
-	COMMON_BEGIN();
+	COMMON_BEGIN()
 
-	{
-		BufferPtr a = gr->newInstance<Buffer>(
-			512, BufferUsageBit::UNIFORM_ALL, BufferMapAccessBit::NONE);
+	BufferPtr a = gr->newInstance<Buffer>(
+		512, BufferUsageBit::UNIFORM_ALL, BufferMapAccessBit::NONE);
 
-		BufferPtr b = gr->newInstance<Buffer>(64,
-			BufferUsageBit::STORAGE_ALL,
-			BufferMapAccessBit::WRITE | BufferMapAccessBit::READ);
+	BufferPtr b = gr->newInstance<Buffer>(64,
+		BufferUsageBit::STORAGE_ALL,
+		BufferMapAccessBit::WRITE | BufferMapAccessBit::READ);
 
-		void* ptr = b->map(0, 64, BufferMapAccessBit::WRITE);
-		ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
-		U8 ptr2[64];
-		memset(ptr, 0xCC, 64);
-		memset(ptr2, 0xCC, 64);
-		b->unmap();
+	void* ptr = b->map(0, 64, BufferMapAccessBit::WRITE);
+	ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
+	U8 ptr2[64];
+	memset(ptr, 0xCC, 64);
+	memset(ptr2, 0xCC, 64);
+	b->unmap();
 
-		ptr = b->map(0, 64, BufferMapAccessBit::READ);
-		ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
-		ANKI_TEST_EXPECT_EQ(memcmp(ptr, ptr2, 64), 0);
-		b->unmap();
-	}
+	ptr = b->map(0, 64, BufferMapAccessBit::READ);
+	ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
+	ANKI_TEST_EXPECT_EQ(memcmp(ptr, ptr2, 64), 0);
+	b->unmap();
 
-	COMMON_END();
+	COMMON_END()
 }
 
 //==============================================================================
 ANKI_TEST(Gr, ResourceGroup)
 {
-	COMMON_BEGIN();
+	COMMON_BEGIN()
 
-	{
-		BufferPtr b = gr->newInstance<Buffer>(sizeof(F32) * 4,
-			BufferUsageBit::UNIFORM_ALL,
-			BufferMapAccessBit::WRITE);
+	BufferPtr b = gr->newInstance<Buffer>(sizeof(F32) * 4,
+		BufferUsageBit::UNIFORM_ALL,
+		BufferMapAccessBit::WRITE);
 
-		ResourceGroupInitInfo rcinit;
-		rcinit.m_uniformBuffers[0].m_buffer = b;
-		rcinit.m_uniformBuffers[0].m_usage =
-			BufferUsageBit::UNIFORM_ALL_GRAPHICS;
-		ResourceGroupPtr rc = gr->newInstance<ResourceGroup>(rcinit);
-	}
+	ResourceGroupInitInfo rcinit;
+	rcinit.m_uniformBuffers[0].m_buffer = b;
+	rcinit.m_uniformBuffers[0].m_usage = BufferUsageBit::UNIFORM_ALL_GRAPHICS;
+	ResourceGroupPtr rc = gr->newInstance<ResourceGroup>(rcinit);
 
-	COMMON_END();
+	COMMON_END()
 }
 
 //==============================================================================
 ANKI_TEST(Gr, DrawWithUniforms)
 {
-	COMMON_BEGIN();
+	COMMON_BEGIN()
 
+	// A non-uploaded buffer
+	BufferPtr b = gr->newInstance<Buffer>(sizeof(Vec4) * 3,
+		BufferUsageBit::UNIFORM_ALL,
+		BufferMapAccessBit::WRITE);
+
+	Vec4* ptr = static_cast<Vec4*>(
+		b->map(0, sizeof(Vec4) * 3, BufferMapAccessBit::WRITE));
+	ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
+	ptr[0] = Vec4(1.0, 0.0, 0.0, 0.0);
+	ptr[1] = Vec4(0.0, 1.0, 0.0, 0.0);
+	ptr[2] = Vec4(0.0, 0.0, 1.0, 0.0);
+	b->unmap();
+
+	// Resource group
+	ResourceGroupInitInfo rcinit;
+	rcinit.m_uniformBuffers[0].m_buffer = b;
+	rcinit.m_uniformBuffers[0].m_usage = BufferUsageBit::UNIFORM_ALL_GRAPHICS;
+	rcinit.m_uniformBuffers[1].m_uploadedMemory = true;
+	rcinit.m_uniformBuffers[1].m_usage = BufferUsageBit::UNIFORM_ALL_GRAPHICS;
+	ResourceGroupPtr rc = gr->newInstance<ResourceGroup>(rcinit);
+
+	// Ppline
+	PipelinePtr ppline = createSimplePpline(VERT_UBO_SRC, FRAG_UBO_SRC, *gr);
+
+	// FB
+	FramebufferPtr fb = createDefaultFb(*gr);
+
+	const U ITERATION_COUNT = 100;
+	U iterations = ITERATION_COUNT;
+	while(iterations--)
 	{
-		// A non-uploaded buffer
-		BufferPtr b = gr->newInstance<Buffer>(sizeof(Vec4) * 3,
-			BufferUsageBit::UNIFORM_ALL,
-			BufferMapAccessBit::WRITE);
+		HighRezTimer timer;
+		timer.start();
+		gr->beginFrame();
 
-		Vec4* ptr = static_cast<Vec4*>(
-			b->map(0, sizeof(Vec4) * 3, BufferMapAccessBit::WRITE));
-		ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
-		ptr[0] = Vec4(1.0, 0.0, 0.0, 0.0);
-		ptr[1] = Vec4(0.0, 1.0, 0.0, 0.0);
-		ptr[2] = Vec4(0.0, 0.0, 1.0, 0.0);
-		b->unmap();
+		// Uploaded buffer
+		TransientMemoryInfo transientInfo;
+		Vec4* rotMat =
+			static_cast<Vec4*>(gr->allocateFrameTransientMemory(sizeof(Vec4),
+				BufferUsageBit::UNIFORM_ALL,
+				transientInfo.m_uniformBuffers[1]));
+		F32 angle = toRad(360.0f / ITERATION_COUNT * iterations);
+		(*rotMat)[0] = cos(angle);
+		(*rotMat)[1] = -sin(angle);
+		(*rotMat)[2] = sin(angle);
+		(*rotMat)[3] = cos(angle);
 
-		// Resource group
-		ResourceGroupInitInfo rcinit;
-		rcinit.m_uniformBuffers[0].m_buffer = b;
-		rcinit.m_uniformBuffers[0].m_usage =
-			BufferUsageBit::UNIFORM_ALL_GRAPHICS;
-		rcinit.m_uniformBuffers[1].m_uploadedMemory = true;
-		rcinit.m_uniformBuffers[1].m_usage =
-			BufferUsageBit::UNIFORM_ALL_GRAPHICS;
-		ResourceGroupPtr rc = gr->newInstance<ResourceGroup>(rcinit);
+		CommandBufferInitInfo cinit;
+		CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
 
-		// Ppline
-		PipelinePtr ppline =
-			createSimplePpline(VERT_UBO_SRC, FRAG_UBO_SRC, *gr);
+		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
+		cmdb->setPolygonOffset(0.0, 0.0);
+		cmdb->bindPipeline(ppline);
+		cmdb->beginRenderPass(fb);
+		cmdb->bindResourceGroup(rc, 0, &transientInfo);
+		cmdb->drawArrays(3);
+		cmdb->endRenderPass();
+		cmdb->flush();
 
-		// FB
-		FramebufferPtr fb = createDefaultFb(*gr);
+		gr->swapBuffers();
 
-		const U ITERATION_COUNT = 100;
-		U iterations = ITERATION_COUNT;
-		while(iterations--)
+		timer.stop();
+		const F32 TICK = 1.0 / 30.0;
+		if(timer.getElapsedTime() < TICK)
 		{
-			HighRezTimer timer;
-			timer.start();
-			gr->beginFrame();
-
-			// Uploaded buffer
-			TransientMemoryInfo transientInfo;
-			Vec4* rotMat = static_cast<Vec4*>(
-				gr->allocateFrameTransientMemory(sizeof(Vec4),
-					BufferUsageBit::UNIFORM_ALL,
-					transientInfo.m_uniformBuffers[1]));
-			F32 angle = toRad(360.0f / ITERATION_COUNT * iterations);
-			(*rotMat)[0] = cos(angle);
-			(*rotMat)[1] = -sin(angle);
-			(*rotMat)[2] = sin(angle);
-			(*rotMat)[3] = cos(angle);
-
-			CommandBufferInitInfo cinit;
-			CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
-
-			cmdb->setViewport(0, 0, WIDTH, HEIGHT);
-			cmdb->setPolygonOffset(0.0, 0.0);
-			cmdb->bindPipeline(ppline);
-			cmdb->beginRenderPass(fb);
-			cmdb->bindResourceGroup(rc, 0, &transientInfo);
-			cmdb->drawArrays(3);
-			cmdb->endRenderPass();
-			cmdb->flush();
-
-			gr->swapBuffers();
-
-			timer.stop();
-			const F32 TICK = 1.0 / 30.0;
-			if(timer.getElapsedTime() < TICK)
-			{
-				HighRezTimer::sleep(TICK - timer.getElapsedTime());
-			}
+			HighRezTimer::sleep(TICK - timer.getElapsedTime());
 		}
 	}
 
-	COMMON_END();
+	COMMON_END()
 }
 
 //==============================================================================
 ANKI_TEST(Gr, DrawWithVertex)
 {
-	COMMON_BEGIN();
+	COMMON_BEGIN()
 
+	// The buffers
+	struct Vert
 	{
-		// The buffers
-		struct Vert
+		Vec3 m_pos;
+		Array<U8, 4> m_color;
+	};
+	static_assert(sizeof(Vert) == sizeof(Vec4), "See file");
+
+	BufferPtr b = gr->newInstance<Buffer>(
+		sizeof(Vert) * 3, BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE);
+
+	Vert* ptr = static_cast<Vert*>(
+		b->map(0, sizeof(Vert) * 3, BufferMapAccessBit::WRITE));
+	ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
+
+	ptr[0].m_pos = Vec3(-1.0, 1.0, 0.0);
+	ptr[1].m_pos = Vec3(0.0, -1.0, 0.0);
+	ptr[2].m_pos = Vec3(1.0, 1.0, 0.0);
+
+	ptr[0].m_color = {255, 0, 0};
+	ptr[1].m_color = {0, 255, 0};
+	ptr[2].m_color = {0, 0, 255};
+	b->unmap();
+
+	BufferPtr c = gr->newInstance<Buffer>(
+		sizeof(Vec3) * 3, BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE);
+
+	Vec3* otherColor = static_cast<Vec3*>(
+		c->map(0, sizeof(Vec3) * 3, BufferMapAccessBit::WRITE));
+
+	otherColor[0] = Vec3(0.0, 1.0, 1.0);
+	otherColor[1] = Vec3(1.0, 0.0, 1.0);
+	otherColor[2] = Vec3(1.0, 1.0, 0.0);
+	c->unmap();
+
+	// Resource group
+	ResourceGroupInitInfo rcinit;
+	rcinit.m_vertexBuffers[0].m_buffer = b;
+	rcinit.m_vertexBuffers[1].m_buffer = c;
+	ResourceGroupPtr rc = gr->newInstance<ResourceGroup>(rcinit);
+
+	// Shaders
+	ShaderPtr vert = gr->newInstance<Shader>(ShaderType::VERTEX, VERT_INP_SRC);
+	ShaderPtr frag =
+		gr->newInstance<Shader>(ShaderType::FRAGMENT, FRAG_INP_SRC);
+
+	// Ppline
+	PipelineInitInfo init;
+	init.m_shaders[ShaderType::VERTEX] = vert;
+	init.m_shaders[ShaderType::FRAGMENT] = frag;
+	init.m_color.m_drawsToDefaultFramebuffer = true;
+	init.m_color.m_attachmentCount = 1;
+	init.m_depthStencil.m_depthWriteEnabled = false;
+	init.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
+
+	init.m_vertex.m_attributeCount = 3;
+	init.m_vertex.m_attributes[0].m_format =
+		PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
+	init.m_vertex.m_attributes[1].m_format =
+		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM);
+	init.m_vertex.m_attributes[1].m_offset = sizeof(Vec3);
+	init.m_vertex.m_attributes[2].m_format =
+		PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
+	init.m_vertex.m_attributes[2].m_binding = 1;
+
+	init.m_vertex.m_bindingCount = 2;
+	init.m_vertex.m_bindings[0].m_stride = sizeof(Vert);
+	init.m_vertex.m_bindings[1].m_stride = sizeof(Vec3);
+
+	PipelinePtr ppline = gr->newInstance<Pipeline>(init);
+
+	// FB
+	FramebufferPtr fb = createDefaultFb(*gr);
+
+	U iterations = 100;
+	while(iterations--)
+	{
+		HighRezTimer timer;
+		timer.start();
+
+		gr->beginFrame();
+
+		CommandBufferInitInfo cinit;
+		CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
+
+		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
+		cmdb->setPolygonOffset(0.0, 0.0);
+		cmdb->bindPipeline(ppline);
+		cmdb->beginRenderPass(fb);
+		cmdb->bindResourceGroup(rc, 0, nullptr);
+		cmdb->drawArrays(3);
+		cmdb->endRenderPass();
+		cmdb->flush();
+
+		gr->swapBuffers();
+
+		timer.stop();
+		const F32 TICK = 1.0 / 30.0;
+		if(timer.getElapsedTime() < TICK)
 		{
-			Vec3 m_pos;
-			Array<U8, 4> m_color;
-		};
-		static_assert(sizeof(Vert) == sizeof(Vec4), "See file");
-
-		BufferPtr b = gr->newInstance<Buffer>(sizeof(Vert) * 3,
-			BufferUsageBit::VERTEX,
-			BufferMapAccessBit::WRITE);
-
-		Vert* ptr = static_cast<Vert*>(
-			b->map(0, sizeof(Vert) * 3, BufferMapAccessBit::WRITE));
-		ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
-
-		ptr[0].m_pos = Vec3(-1.0, 1.0, 0.0);
-		ptr[1].m_pos = Vec3(0.0, -1.0, 0.0);
-		ptr[2].m_pos = Vec3(1.0, 1.0, 0.0);
-
-		ptr[0].m_color = {255, 0, 0};
-		ptr[1].m_color = {0, 255, 0};
-		ptr[2].m_color = {0, 0, 255};
-		b->unmap();
-
-		BufferPtr c = gr->newInstance<Buffer>(sizeof(Vec3) * 3,
-			BufferUsageBit::VERTEX,
-			BufferMapAccessBit::WRITE);
-
-		Vec3* otherColor = static_cast<Vec3*>(
-			c->map(0, sizeof(Vec3) * 3, BufferMapAccessBit::WRITE));
-
-		otherColor[0] = Vec3(0.0, 1.0, 1.0);
-		otherColor[1] = Vec3(1.0, 0.0, 1.0);
-		otherColor[2] = Vec3(1.0, 1.0, 0.0);
-		c->unmap();
-
-		// Resource group
-		ResourceGroupInitInfo rcinit;
-		rcinit.m_vertexBuffers[0].m_buffer = b;
-		rcinit.m_vertexBuffers[1].m_buffer = c;
-		ResourceGroupPtr rc = gr->newInstance<ResourceGroup>(rcinit);
-
-		// Shaders
-		ShaderPtr vert =
-			gr->newInstance<Shader>(ShaderType::VERTEX, VERT_INP_SRC);
-		ShaderPtr frag =
-			gr->newInstance<Shader>(ShaderType::FRAGMENT, FRAG_INP_SRC);
-
-		// Ppline
-		PipelineInitInfo init;
-		init.m_shaders[ShaderType::VERTEX] = vert;
-		init.m_shaders[ShaderType::FRAGMENT] = frag;
-		init.m_color.m_drawsToDefaultFramebuffer = true;
-		init.m_color.m_attachmentCount = 1;
-		init.m_depthStencil.m_depthWriteEnabled = false;
-		init.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
-
-		init.m_vertex.m_attributeCount = 3;
-		init.m_vertex.m_attributes[0].m_format =
-			PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
-		init.m_vertex.m_attributes[1].m_format =
-			PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM);
-		init.m_vertex.m_attributes[1].m_offset = sizeof(Vec3);
-		init.m_vertex.m_attributes[2].m_format =
-			PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
-		init.m_vertex.m_attributes[2].m_binding = 1;
-
-		init.m_vertex.m_bindingCount = 2;
-		init.m_vertex.m_bindings[0].m_stride = sizeof(Vert);
-		init.m_vertex.m_bindings[1].m_stride = sizeof(Vec3);
-
-		PipelinePtr ppline = gr->newInstance<Pipeline>(init);
-
-		// FB
-		FramebufferPtr fb = createDefaultFb(*gr);
-
-		U iterations = 100;
-		while(iterations--)
-		{
-			HighRezTimer timer;
-			timer.start();
-
-			gr->beginFrame();
-
-			CommandBufferInitInfo cinit;
-			CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
-
-			cmdb->setViewport(0, 0, WIDTH, HEIGHT);
-			cmdb->setPolygonOffset(0.0, 0.0);
-			cmdb->bindPipeline(ppline);
-			cmdb->beginRenderPass(fb);
-			cmdb->bindResourceGroup(rc, 0, nullptr);
-			cmdb->drawArrays(3);
-			cmdb->endRenderPass();
-			cmdb->flush();
-
-			gr->swapBuffers();
-
-			timer.stop();
-			const F32 TICK = 1.0 / 30.0;
-			if(timer.getElapsedTime() < TICK)
-			{
-				HighRezTimer::sleep(TICK - timer.getElapsedTime());
-			}
+			HighRezTimer::sleep(TICK - timer.getElapsedTime());
 		}
 	}
 
-	COMMON_END();
+	COMMON_END()
 }
 
 //==============================================================================
 ANKI_TEST(Gr, Sampler)
 {
-	COMMON_BEGIN();
+	COMMON_BEGIN()
 
-	{
-		SamplerInitInfo init;
+	SamplerInitInfo init;
 
-		SamplerPtr b = gr->newInstance<Sampler>(init);
-	}
+	SamplerPtr b = gr->newInstance<Sampler>(init);
 
-	COMMON_END();
+	COMMON_END()
 }
 
 //==============================================================================
 ANKI_TEST(Gr, Texture)
 {
-	COMMON_BEGIN();
+	COMMON_BEGIN()
 
-	{
-		TextureInitInfo init;
-		init.m_depth = 1;
-		init.m_format =
-			PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM);
-		init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT;
-		init.m_height = 4;
-		init.m_width = 4;
-		init.m_mipmapsCount = 2;
-		init.m_depth = 1;
-		init.m_layerCount = 1;
-		init.m_samples = 1;
-		init.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
-		init.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
-		init.m_type = TextureType::_2D;
+	TextureInitInfo init;
+	init.m_depth = 1;
+	init.m_format =
+		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM);
+	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT;
+	init.m_height = 4;
+	init.m_width = 4;
+	init.m_mipmapsCount = 2;
+	init.m_depth = 1;
+	init.m_layerCount = 1;
+	init.m_samples = 1;
+	init.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
+	init.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
+	init.m_type = TextureType::_2D;
 
-		TexturePtr b = gr->newInstance<Texture>(init);
-	}
+	TexturePtr b = gr->newInstance<Texture>(init);
 
-	COMMON_END();
+	COMMON_END()
 }
 
 //==============================================================================
 ANKI_TEST(Gr, DrawWithTexture)
 {
-	COMMON_BEGIN();
+	COMMON_BEGIN()
 
+	//
+	// Create texture A
+	//
+	TextureInitInfo init;
+	init.m_depth = 1;
+	init.m_format =
+		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM);
+	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::UPLOAD;
+	init.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
+	init.m_height = 2;
+	init.m_width = 2;
+	init.m_mipmapsCount = 2;
+	init.m_samples = 1;
+	init.m_depth = 1;
+	init.m_layerCount = 1;
+	init.m_sampling.m_repeat = false;
+	init.m_sampling.m_minMagFilter = SamplingFilter::NEAREST;
+	init.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
+	init.m_type = TextureType::_2D;
+
+	TexturePtr a = gr->newInstance<Texture>(init);
+
+	//
+	// Create texture B
+	//
+	init.m_width = 4;
+	init.m_height = 4;
+	init.m_mipmapsCount = 3;
+	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::UPLOAD
+		| TextureUsageBit::GENERATE_MIPMAPS;
+	init.m_initialUsage = TextureUsageBit::NONE;
+
+	TexturePtr b = gr->newInstance<Texture>(init);
+
+	//
+	// Upload all textures
+	//
+	Array<U8, 2 * 2 * 3> mip0 = {
+		{255, 0, 0, 0, 255, 0, 0, 0, 255, 255, 0, 255}};
+
+	Array<U8, 3> mip1 = {{128, 128, 128}};
+
+	Array<U8, 4 * 4 * 3> bmip0 = {{255,
+		0,
+		0,
+		0,
+		255,
+		0,
+		0,
+		0,
+		255,
+		255,
+		255,
+		0,
+		255,
+		0,
+		255,
+		0,
+		255,
+		255,
+		255,
+		255,
+		255,
+		128,
+		0,
+		0,
+		0,
+		128,
+		0,
+		0,
+		0,
+		128,
+		128,
+		128,
+		0,
+		128,
+		0,
+		128,
+		0,
+		128,
+		128,
+		128,
+		128,
+		128,
+		255,
+		128,
+		0,
+		0,
+		128,
+		255}};
+
+	CommandBufferInitInfo cmdbinit;
+	cmdbinit.m_flags = CommandBufferFlag::TRANSFER_WORK;
+	CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cmdbinit);
+
+	// Set barriers
+	cmdb->setTextureSurfaceBarrier(a,
+		TextureUsageBit::SAMPLED_FRAGMENT,
+		TextureUsageBit::UPLOAD,
+		TextureSurfaceInfo(0, 0, 0, 0));
+
+	cmdb->setTextureSurfaceBarrier(a,
+		TextureUsageBit::SAMPLED_FRAGMENT,
+		TextureUsageBit::UPLOAD,
+		TextureSurfaceInfo(1, 0, 0, 0));
+
+	cmdb->setTextureSurfaceBarrier(b,
+		TextureUsageBit::NONE,
+		TextureUsageBit::UPLOAD,
+		TextureSurfaceInfo(0, 0, 0, 0));
+	;
+
+	cmdb->uploadTextureSurfaceCopyData(
+		a, TextureSurfaceInfo(0, 0, 0, 0), &mip0[0], sizeof(mip0));
+
+	cmdb->uploadTextureSurfaceCopyData(
+		a, TextureSurfaceInfo(1, 0, 0, 0), &mip1[0], sizeof(mip1));
+
+	cmdb->uploadTextureSurfaceCopyData(
+		b, TextureSurfaceInfo(0, 0, 0, 0), &bmip0[0], sizeof(bmip0));
+
+	// Gen mips
+	cmdb->setTextureSurfaceBarrier(b,
+		TextureUsageBit::UPLOAD,
+		TextureUsageBit::GENERATE_MIPMAPS,
+		TextureSurfaceInfo(0, 0, 0, 0));
+
+	cmdb->generateMipmaps2d(b, 0, 0);
+
+	// Set barriers
+	cmdb->setTextureSurfaceBarrier(a,
+		TextureUsageBit::UPLOAD,
+		TextureUsageBit::SAMPLED_FRAGMENT,
+		TextureSurfaceInfo(0, 0, 0, 0));
+
+	cmdb->setTextureSurfaceBarrier(a,
+		TextureUsageBit::UPLOAD,
+		TextureUsageBit::SAMPLED_FRAGMENT,
+		TextureSurfaceInfo(1, 0, 0, 0));
+
+	for(U i = 0; i < 3; ++i)
 	{
-		//
-		// Create texture A
-		//
-		TextureInitInfo init;
-		init.m_depth = 1;
-		init.m_format =
-			PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM);
-		init.m_usage =
-			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::UPLOAD;
-		init.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
-		init.m_height = 2;
-		init.m_width = 2;
-		init.m_mipmapsCount = 2;
-		init.m_samples = 1;
-		init.m_depth = 1;
-		init.m_layerCount = 1;
-		init.m_sampling.m_repeat = false;
-		init.m_sampling.m_minMagFilter = SamplingFilter::NEAREST;
-		init.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
-		init.m_type = TextureType::_2D;
-
-		TexturePtr a = gr->newInstance<Texture>(init);
-
-		//
-		// Create texture B
-		//
-		init.m_width = 4;
-		init.m_height = 4;
-		init.m_mipmapsCount = 3;
-		init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT
-			| TextureUsageBit::UPLOAD | TextureUsageBit::GENERATE_MIPMAPS;
-		init.m_initialUsage = TextureUsageBit::NONE;
-
-		TexturePtr b = gr->newInstance<Texture>(init);
-
-		//
-		// Upload all textures
-		//
-		Array<U8, 2 * 2 * 3> mip0 = {
-			{255, 0, 0, 0, 255, 0, 0, 0, 255, 255, 0, 255}};
-
-		Array<U8, 3> mip1 = {{128, 128, 128}};
-
-		Array<U8, 4 * 4 * 3> bmip0 = {{255,
-			0,
-			0,
-			0,
-			255,
-			0,
-			0,
-			0,
-			255,
-			255,
-			255,
-			0,
-			255,
-			0,
-			255,
-			0,
-			255,
-			255,
-			255,
-			255,
-			255,
-			128,
-			0,
-			0,
-			0,
-			128,
-			0,
-			0,
-			0,
-			128,
-			128,
-			128,
-			0,
-			128,
-			0,
-			128,
-			0,
-			128,
-			128,
-			128,
-			128,
-			128,
-			255,
-			128,
-			0,
-			0,
-			128,
-			255}};
-
-		CommandBufferInitInfo cmdbinit;
-		cmdbinit.m_flags = CommandBufferFlag::TRANSFER_WORK;
-		CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cmdbinit);
-
-		// Set barriers
-		cmdb->setTextureBarrier(a,
-			TextureUsageBit::SAMPLED_FRAGMENT,
-			TextureUsageBit::UPLOAD,
-			TextureSurfaceInfo(0, 0, 0, 0));
-
-		cmdb->setTextureBarrier(a,
-			TextureUsageBit::SAMPLED_FRAGMENT,
-			TextureUsageBit::UPLOAD,
-			TextureSurfaceInfo(1, 0, 0, 0));
-
-		cmdb->setTextureBarrier(b,
-			TextureUsageBit::NONE,
-			TextureUsageBit::UPLOAD,
-			TextureSurfaceInfo(0, 0, 0, 0));
-		;
-
-		cmdb->uploadTextureSurfaceCopyData(
-			a, TextureSurfaceInfo(0, 0, 0, 0), &mip0[0], sizeof(mip0));
-
-		cmdb->uploadTextureSurfaceCopyData(
-			a, TextureSurfaceInfo(1, 0, 0, 0), &mip1[0], sizeof(mip1));
-
-		cmdb->uploadTextureSurfaceCopyData(
-			b, TextureSurfaceInfo(0, 0, 0, 0), &bmip0[0], sizeof(bmip0));
-
-		// Gen mips
-		cmdb->setTextureBarrier(b,
-			TextureUsageBit::UPLOAD,
+		cmdb->setTextureSurfaceBarrier(b,
 			TextureUsageBit::GENERATE_MIPMAPS,
-			TextureSurfaceInfo(0, 0, 0, 0));
-
-		cmdb->generateMipmaps(b, 0, 0, 0);
-
-		// Set barriers
-		cmdb->setTextureBarrier(a,
-			TextureUsageBit::UPLOAD,
 			TextureUsageBit::SAMPLED_FRAGMENT,
-			TextureSurfaceInfo(0, 0, 0, 0));
+			TextureSurfaceInfo(i, 0, 0, 0));
+	}
 
-		cmdb->setTextureBarrier(a,
-			TextureUsageBit::UPLOAD,
-			TextureUsageBit::SAMPLED_FRAGMENT,
-			TextureSurfaceInfo(1, 0, 0, 0));
+	cmdb->flush();
 
-		for(U i = 0; i < 3; ++i)
-		{
-			cmdb->setTextureBarrier(b,
-				TextureUsageBit::GENERATE_MIPMAPS,
-				TextureUsageBit::SAMPLED_FRAGMENT,
-				TextureSurfaceInfo(i, 0, 0, 0));
-		}
+	//
+	// Create resource group
+	//
+	ResourceGroupInitInfo rcinit;
+	rcinit.m_textures[0].m_texture = a;
+	rcinit.m_textures[1].m_texture = b;
+	ResourceGroupPtr rc = gr->newInstance<ResourceGroup>(rcinit);
 
+	//
+	// Create ppline
+	//
+	PipelinePtr ppline = createSimplePpline(VERT_QUAD_SRC, FRAG_TEX_SRC, *gr);
+
+	//
+	// Create FB
+	//
+	FramebufferPtr fb = createDefaultFb(*gr);
+
+	//
+	// Draw
+	//
+	const U ITERATION_COUNT = 200;
+	U iterations = ITERATION_COUNT;
+	while(iterations--)
+	{
+		HighRezTimer timer;
+		timer.start();
+
+		gr->beginFrame();
+
+		CommandBufferInitInfo cinit;
+		CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
+
+		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
+		cmdb->setPolygonOffset(0.0, 0.0);
+		cmdb->bindPipeline(ppline);
+		cmdb->beginRenderPass(fb);
+		cmdb->bindResourceGroup(rc, 0, nullptr);
+		cmdb->drawArrays(6);
+		cmdb->endRenderPass();
 		cmdb->flush();
 
-		//
-		// Create resource group
-		//
-		ResourceGroupInitInfo rcinit;
-		rcinit.m_textures[0].m_texture = a;
-		rcinit.m_textures[1].m_texture = b;
-		ResourceGroupPtr rc = gr->newInstance<ResourceGroup>(rcinit);
+		gr->swapBuffers();
 
-		//
-		// Create ppline
-		//
-		PipelinePtr ppline =
-			createSimplePpline(VERT_QUAD_SRC, FRAG_TEX_SRC, *gr);
-
-		//
-		// Create FB
-		//
-		FramebufferPtr fb = createDefaultFb(*gr);
-
-		//
-		// Draw
-		//
-		const U ITERATION_COUNT = 200;
-		U iterations = ITERATION_COUNT;
-		while(iterations--)
+		timer.stop();
+		const F32 TICK = 1.0 / 30.0;
+		if(timer.getElapsedTime() < TICK)
 		{
-			HighRezTimer timer;
-			timer.start();
-
-			gr->beginFrame();
-
-			CommandBufferInitInfo cinit;
-			CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
-
-			cmdb->setViewport(0, 0, WIDTH, HEIGHT);
-			cmdb->setPolygonOffset(0.0, 0.0);
-			cmdb->bindPipeline(ppline);
-			cmdb->beginRenderPass(fb);
-			cmdb->bindResourceGroup(rc, 0, nullptr);
-			cmdb->drawArrays(6);
-			cmdb->endRenderPass();
-			cmdb->flush();
-
-			gr->swapBuffers();
-
-			timer.stop();
-			const F32 TICK = 1.0 / 30.0;
-			if(timer.getElapsedTime() < TICK)
-			{
-				HighRezTimer::sleep(TICK - timer.getElapsedTime());
-			}
+			HighRezTimer::sleep(TICK - timer.getElapsedTime());
 		}
 	}
 
-	COMMON_END();
+	COMMON_END()
 }
 
 //==============================================================================
@@ -995,9 +976,8 @@ static void drawOffscreenDrawcalls(GrManager& gr,
 	Mat4 viewMat(Vec4(0.0, 0.0, 5.0, 1.0), Mat3::getIdentity(), 1.0f);
 	viewMat.invert();
 
-	Mat4 projMat;
-	Mat4::calculatePerspectiveProjectionMatrix(
-		toRad(60.0), toRad(60.0), 0.1f, 100.0f, projMat);
+	Mat4 projMat = Mat4::calculatePerspectiveProjectionMatrix(
+		toRad(60.0), toRad(60.0), 0.1f, 100.0f);
 
 	TransientMemoryInfo transientInfo;
 
@@ -1161,15 +1141,15 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 
 		cmdb->setPolygonOffset(0.0, 0.0);
 
-		cmdb->setTextureBarrier(col0,
+		cmdb->setTextureSurfaceBarrier(col0,
 			TextureUsageBit::NONE,
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 			TextureSurfaceInfo(0, 0, 0, 0));
-		cmdb->setTextureBarrier(col1,
+		cmdb->setTextureSurfaceBarrier(col1,
 			TextureUsageBit::NONE,
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 			TextureSurfaceInfo(0, 0, 0, 0));
-		cmdb->setTextureBarrier(dp,
+		cmdb->setTextureSurfaceBarrier(dp,
 			TextureUsageBit::NONE,
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 			TextureSurfaceInfo(0, 0, 0, 0));
@@ -1195,15 +1175,15 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 
 		cmdb->endRenderPass();
 
-		cmdb->setTextureBarrier(col0,
+		cmdb->setTextureSurfaceBarrier(col0,
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 			TextureUsageBit::SAMPLED_FRAGMENT,
 			TextureSurfaceInfo(0, 0, 0, 0));
-		cmdb->setTextureBarrier(col1,
+		cmdb->setTextureSurfaceBarrier(col1,
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 			TextureUsageBit::SAMPLED_FRAGMENT,
 			TextureSurfaceInfo(0, 0, 0, 0));
-		cmdb->setTextureBarrier(dp,
+		cmdb->setTextureSurfaceBarrier(dp,
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 			TextureUsageBit::SAMPLED_FRAGMENT,
 			TextureSurfaceInfo(0, 0, 0, 0));
@@ -1233,161 +1213,321 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 //==============================================================================
 ANKI_TEST(Gr, DrawOffscreen)
 {
-	COMMON_BEGIN();
-	{
-		drawOffscreen(*gr, false);
-	}
-	COMMON_END();
+	COMMON_BEGIN()
+
+	drawOffscreen(*gr, false);
+
+	COMMON_END()
 }
 
 //==============================================================================
 ANKI_TEST(Gr, DrawWithSecondLevel)
 {
-	COMMON_BEGIN();
-	{
-		drawOffscreen(*gr, true);
-	}
-	COMMON_END();
+	COMMON_BEGIN()
+
+	drawOffscreen(*gr, true);
+
+	COMMON_END()
 }
 
 //==============================================================================
 ANKI_TEST(Gr, ImageLoadStore)
 {
-	COMMON_BEGIN();
+	COMMON_BEGIN()
+
+	TextureInitInfo init;
+	init.m_width = init.m_height = 4;
+	init.m_mipmapsCount = 2;
+	init.m_usage = TextureUsageBit::CLEAR | TextureUsageBit::SAMPLED_ALL
+		| TextureUsageBit::IMAGE_COMPUTE_WRITE;
+	init.m_type = TextureType::_2D;
+	init.m_format =
+		PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
+	init.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
+
+	TexturePtr tex = gr->newInstance<Texture>(init);
+
+	// Ppline
+	PipelinePtr ppline =
+		createSimplePpline(VERT_QUAD_SRC, FRAG_SIMPLE_TEX_SRC, *gr);
+
+	// Create shader & compute ppline
+	ShaderPtr shader =
+		gr->newInstance<Shader>(ShaderType::COMPUTE, COMP_WRITE_IMAGE_SRC);
+
+	PipelineInitInfo ppinit;
+	ppinit.m_shaders[ShaderType::COMPUTE] = shader;
+	PipelinePtr compPpline = gr->newInstance<Pipeline>(ppinit);
+
+	// RC group
+	ResourceGroupInitInfo rcinit;
+	rcinit.m_textures[0].m_texture = tex;
+	ResourceGroupPtr rc0 = gr->newInstance<ResourceGroup>(rcinit);
+
+	rcinit = ResourceGroupInitInfo();
+	rcinit.m_images[0].m_texture = tex;
+	rcinit.m_images[0].m_usage = TextureUsageBit::IMAGE_COMPUTE_WRITE;
+	rcinit.m_images[0].m_level = 1;
+	ResourceGroupPtr rc1 = gr->newInstance<ResourceGroup>(rcinit);
+
+	rcinit = ResourceGroupInitInfo();
+	rcinit.m_storageBuffers[0].m_uploadedMemory = true;
+	rcinit.m_storageBuffers[0].m_usage = BufferUsageBit::STORAGE_COMPUTE_READ;
+	ResourceGroupPtr rc2 = gr->newInstance<ResourceGroup>(rcinit);
+
+	// FB
+	FramebufferPtr dfb = createDefaultFb(*gr);
+
+	// Write texture data
+	CommandBufferInitInfo cmdbinit;
+	CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cmdbinit);
+
+	cmdb->setTextureSurfaceBarrier(tex,
+		TextureUsageBit::NONE,
+		TextureUsageBit::CLEAR,
+		TextureSurfaceInfo(0, 0, 0, 0));
+
+	ClearValue clear;
+	clear.m_colorf = {{0.0, 1.0, 0.0, 1.0}};
+	cmdb->clearTextureSurface(tex, TextureSurfaceInfo(0, 0, 0, 0), clear);
+
+	cmdb->setTextureSurfaceBarrier(tex,
+		TextureUsageBit::CLEAR,
+		TextureUsageBit::SAMPLED_FRAGMENT,
+		TextureSurfaceInfo(0, 0, 0, 0));
+
+	cmdb->setTextureSurfaceBarrier(tex,
+		TextureUsageBit::NONE,
+		TextureUsageBit::CLEAR,
+		TextureSurfaceInfo(1, 0, 0, 0));
+
+	clear.m_colorf = {{0.0, 0.0, 1.0, 1.0}};
+	cmdb->clearTextureSurface(tex, TextureSurfaceInfo(1, 0, 0, 0), clear);
+
+	cmdb->setTextureSurfaceBarrier(tex,
+		TextureUsageBit::CLEAR,
+		TextureUsageBit::IMAGE_COMPUTE_WRITE,
+		TextureSurfaceInfo(1, 0, 0, 0));
+
+	cmdb->flush();
+
+	const U ITERATION_COUNT = 100;
+	U iterations = ITERATION_COUNT;
+	while(iterations--)
 	{
-		TextureInitInfo init;
-		init.m_width = init.m_height = 4;
-		init.m_mipmapsCount = 2;
-		init.m_usage = TextureUsageBit::CLEAR | TextureUsageBit::SAMPLED_ALL
-			| TextureUsageBit::IMAGE_COMPUTE_WRITE;
-		init.m_type = TextureType::_2D;
-		init.m_format =
-			PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
-		init.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
+		HighRezTimer timer;
+		timer.start();
+		gr->beginFrame();
 
-		TexturePtr tex = gr->newInstance<Texture>(init);
+		CommandBufferInitInfo cinit;
+		CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
 
-		// Ppline
-		PipelinePtr ppline =
-			createSimplePpline(VERT_QUAD_SRC, FRAG_SIMPLE_TEX_SRC, *gr);
+		// Write image
+		TransientMemoryInfo trans;
+		Vec4* col =
+			static_cast<Vec4*>(gr->allocateFrameTransientMemory(sizeof(*col),
+				BufferUsageBit::STORAGE_ALL,
+				trans.m_storageBuffers[0]));
+		*col = Vec4(iterations / F32(ITERATION_COUNT));
 
-		// Create shader & compute ppline
-		ShaderPtr shader =
-			gr->newInstance<Shader>(ShaderType::COMPUTE, COMP_WRITE_IMAGE_SRC);
-
-		PipelineInitInfo ppinit;
-		ppinit.m_shaders[ShaderType::COMPUTE] = shader;
-		PipelinePtr compPpline = gr->newInstance<Pipeline>(ppinit);
-
-		// RC group
-		ResourceGroupInitInfo rcinit;
-		rcinit.m_textures[0].m_texture = tex;
-		ResourceGroupPtr rc0 = gr->newInstance<ResourceGroup>(rcinit);
-
-		rcinit = ResourceGroupInitInfo();
-		rcinit.m_images[0].m_texture = tex;
-		rcinit.m_images[0].m_usage = TextureUsageBit::IMAGE_COMPUTE_WRITE;
-		rcinit.m_images[0].m_level = 1;
-		ResourceGroupPtr rc1 = gr->newInstance<ResourceGroup>(rcinit);
-
-		rcinit = ResourceGroupInitInfo();
-		rcinit.m_storageBuffers[0].m_uploadedMemory = true;
-		rcinit.m_storageBuffers[0].m_usage =
-			BufferUsageBit::STORAGE_COMPUTE_READ;
-		ResourceGroupPtr rc2 = gr->newInstance<ResourceGroup>(rcinit);
-
-		// FB
-		FramebufferPtr dfb = createDefaultFb(*gr);
-
-		// Write texture data
-		CommandBufferInitInfo cmdbinit;
-		CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cmdbinit);
-
-		cmdb->setTextureBarrier(tex,
+		cmdb->setTextureSurfaceBarrier(tex,
 			TextureUsageBit::NONE,
-			TextureUsageBit::CLEAR,
-			TextureSurfaceInfo(0, 0, 0, 0));
-
-		ClearValue clear;
-		clear.m_colorf = {{0.0, 1.0, 0.0, 1.0}};
-		cmdb->clearTexture(tex, TextureSurfaceInfo(0, 0, 0, 0), clear);
-
-		cmdb->setTextureBarrier(tex,
-			TextureUsageBit::CLEAR,
-			TextureUsageBit::SAMPLED_FRAGMENT,
-			TextureSurfaceInfo(0, 0, 0, 0));
-
-		cmdb->setTextureBarrier(tex,
-			TextureUsageBit::NONE,
-			TextureUsageBit::CLEAR,
-			TextureSurfaceInfo(1, 0, 0, 0));
-
-		clear.m_colorf = {{0.0, 0.0, 1.0, 1.0}};
-		cmdb->clearTexture(tex, TextureSurfaceInfo(1, 0, 0, 0), clear);
-
-		cmdb->setTextureBarrier(tex,
-			TextureUsageBit::CLEAR,
 			TextureUsageBit::IMAGE_COMPUTE_WRITE,
 			TextureSurfaceInfo(1, 0, 0, 0));
+		cmdb->bindPipeline(compPpline);
+		cmdb->bindResourceGroup(rc1, 0, nullptr);
+		cmdb->bindResourceGroup(rc2, 1, &trans);
+		cmdb->dispatchCompute(WIDTH / 2, HEIGHT / 2, 1);
+		cmdb->setTextureSurfaceBarrier(tex,
+			TextureUsageBit::IMAGE_COMPUTE_WRITE,
+			TextureUsageBit::SAMPLED_FRAGMENT,
+			TextureSurfaceInfo(1, 0, 0, 0));
+
+		// Present image
+		cmdb->setPolygonOffset(0.0, 0.0);
+		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
+
+		cmdb->bindPipeline(ppline);
+		cmdb->beginRenderPass(dfb);
+		cmdb->bindResourceGroup(rc0, 0, nullptr);
+		cmdb->drawArrays(6);
+		cmdb->endRenderPass();
 
 		cmdb->flush();
 
-		const U ITERATION_COUNT = 100;
-		U iterations = ITERATION_COUNT;
-		while(iterations--)
+		// End
+		gr->swapBuffers();
+
+		timer.stop();
+		const F32 TICK = 1.0 / 30.0;
+		if(timer.getElapsedTime() < TICK)
 		{
-			HighRezTimer timer;
-			timer.start();
-			gr->beginFrame();
-
-			CommandBufferInitInfo cinit;
-			CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
-
-			// Write image
-			TransientMemoryInfo trans;
-			Vec4* col = static_cast<Vec4*>(
-				gr->allocateFrameTransientMemory(sizeof(*col),
-					BufferUsageBit::STORAGE_ALL,
-					trans.m_storageBuffers[0]));
-			*col = Vec4(iterations / F32(ITERATION_COUNT));
-
-			cmdb->setTextureBarrier(tex,
-				TextureUsageBit::NONE,
-				TextureUsageBit::IMAGE_COMPUTE_WRITE,
-				TextureSurfaceInfo(1, 0, 0, 0));
-			cmdb->bindPipeline(compPpline);
-			cmdb->bindResourceGroup(rc1, 0, nullptr);
-			cmdb->bindResourceGroup(rc2, 1, &trans);
-			cmdb->dispatchCompute(WIDTH / 2, HEIGHT / 2, 1);
-			cmdb->setTextureBarrier(tex,
-				TextureUsageBit::IMAGE_COMPUTE_WRITE,
-				TextureUsageBit::SAMPLED_FRAGMENT,
-				TextureSurfaceInfo(1, 0, 0, 0));
-
-			// Present image
-			cmdb->setPolygonOffset(0.0, 0.0);
-			cmdb->setViewport(0, 0, WIDTH, HEIGHT);
-
-			cmdb->bindPipeline(ppline);
-			cmdb->beginRenderPass(dfb);
-			cmdb->bindResourceGroup(rc0, 0, nullptr);
-			cmdb->drawArrays(6);
-			cmdb->endRenderPass();
-
-			cmdb->flush();
-
-			// End
-			gr->swapBuffers();
-
-			timer.stop();
-			const F32 TICK = 1.0 / 30.0;
-			if(timer.getElapsedTime() < TICK)
-			{
-				HighRezTimer::sleep(TICK - timer.getElapsedTime());
-			}
+			HighRezTimer::sleep(TICK - timer.getElapsedTime());
 		}
 	}
-	COMMON_END();
+
+	COMMON_END()
+}
+
+//==============================================================================
+ANKI_TEST(Gr, 3DTextures)
+{
+	COMMON_BEGIN()
+
+	//
+	// Create texture A
+	//
+	TextureInitInfo init;
+	init.m_depth = 1;
+	init.m_format =
+		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM);
+	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::UPLOAD;
+	init.m_initialUsage = TextureUsageBit::UPLOAD;
+	init.m_height = 2;
+	init.m_width = 2;
+	init.m_mipmapsCount = 2;
+	init.m_samples = 1;
+	init.m_depth = 2;
+	init.m_layerCount = 1;
+	init.m_sampling.m_repeat = false;
+	init.m_sampling.m_minMagFilter = SamplingFilter::NEAREST;
+	init.m_sampling.m_mipmapFilter = SamplingFilter::NEAREST;
+	init.m_type = TextureType::_3D;
+
+	TexturePtr a = gr->newInstance<Texture>(init);
+
+	//
+	// Upload all textures
+	//
+	Array<U8, 2 * 2 * 2 * 3> mip0 = {{255,
+		0,
+		0,
+		0,
+		255,
+		0,
+		0,
+		0,
+		255,
+		255,
+		255,
+		0,
+		255,
+		0,
+		255,
+		0,
+		255,
+		255,
+		255,
+		255,
+		255,
+		0,
+		0,
+		0}};
+
+	Array<U8, 3> mip1 = {{128, 128, 128}};
+
+	CommandBufferInitInfo cmdbinit;
+	cmdbinit.m_flags = CommandBufferFlag::TRANSFER_WORK;
+	CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cmdbinit);
+
+	cmdb->setTextureVolumeBarrier(a,
+		TextureUsageBit::NONE,
+		TextureUsageBit::UPLOAD,
+		TextureVolumeInfo(0));
+
+	cmdb->setTextureVolumeBarrier(a,
+		TextureUsageBit::NONE,
+		TextureUsageBit::UPLOAD,
+		TextureVolumeInfo(1));
+
+	cmdb->uploadTextureVolumeCopyData(
+		a, TextureVolumeInfo(0), &mip0[0], sizeof(mip0));
+
+	cmdb->uploadTextureVolumeCopyData(
+		a, TextureVolumeInfo(1), &mip1[0], sizeof(mip1));
+
+	cmdb->setTextureVolumeBarrier(a,
+		TextureUsageBit::UPLOAD,
+		TextureUsageBit::SAMPLED_FRAGMENT,
+		TextureVolumeInfo(0));
+
+	cmdb->setTextureVolumeBarrier(a,
+		TextureUsageBit::UPLOAD,
+		TextureUsageBit::SAMPLED_FRAGMENT,
+		TextureVolumeInfo(1));
+
+	cmdb->flush();
+
+	//
+	// Rest
+	//
+	PipelinePtr ppline = createSimplePpline(VERT_QUAD_SRC, FRAG_TEX3D_SRC, *gr);
+
+	ResourceGroupInitInfo rcinit;
+	rcinit.m_uniformBuffers[0].m_uploadedMemory = true;
+	rcinit.m_uniformBuffers[0].m_usage = BufferUsageBit::UNIFORM_FRAGMENT;
+	rcinit.m_textures[0].m_texture = a;
+	rcinit.m_textures[0].m_usage = TextureUsageBit::SAMPLED_FRAGMENT;
+	ResourceGroupPtr rc = gr->newInstance<ResourceGroup>(rcinit);
+
+	FramebufferPtr dfb = createDefaultFb(*gr);
+
+	static Array<Vec4, 9> TEX_COORDS_LOD = {{Vec4(0, 0, 0, 0),
+		Vec4(1, 0, 0, 0),
+		Vec4(0, 1, 0, 0),
+		Vec4(1, 1, 0, 0),
+		Vec4(0, 0, 1, 0),
+		Vec4(1, 0, 1, 0),
+		Vec4(0, 1, 1, 0),
+		Vec4(1, 1, 1, 0),
+		Vec4(0, 0, 0, 1)}};
+
+	const U ITERATION_COUNT = 100;
+	U iterations = ITERATION_COUNT;
+	while(iterations--)
+	{
+		HighRezTimer timer;
+		timer.start();
+		gr->beginFrame();
+
+		CommandBufferInitInfo cinit;
+		CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
+
+		cmdb->setPolygonOffset(0.0, 0.0);
+		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
+		cmdb->beginRenderPass(dfb);
+
+		cmdb->bindPipeline(ppline);
+
+		TransientMemoryInfo transientInfo;
+		Vec4* uv =
+			static_cast<Vec4*>(gr->allocateFrameTransientMemory(sizeof(Vec4),
+				BufferUsageBit::UNIFORM_ALL,
+				transientInfo.m_uniformBuffers[0]));
+
+		U idx = (F32(ITERATION_COUNT - iterations - 1) / ITERATION_COUNT)
+			* TEX_COORDS_LOD.getSize();
+		*uv = TEX_COORDS_LOD[idx];
+
+		cmdb->bindResourceGroup(rc, 0, &transientInfo);
+		cmdb->drawArrays(6);
+
+		cmdb->endRenderPass();
+
+		cmdb->flush();
+
+		// End
+		gr->swapBuffers();
+
+		timer.stop();
+		const F32 TICK = 1.0 / 15.0;
+		if(timer.getElapsedTime() < TICK)
+		{
+			HighRezTimer::sleep(TICK - timer.getElapsedTime());
+		}
+	}
+
+	COMMON_END()
 }
 
 } // end namespace anki

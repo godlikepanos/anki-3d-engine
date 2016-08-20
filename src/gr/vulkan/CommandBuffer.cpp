@@ -142,26 +142,54 @@ void CommandBuffer::dispatchCompute(
 }
 
 //==============================================================================
-void CommandBuffer::generateMipmaps(TexturePtr tex, U depth, U face, U layer)
+void CommandBuffer::generateMipmaps2d(TexturePtr tex, U face, U layer)
 {
-	m_impl->generateMipmaps(tex, depth, face, layer);
+	m_impl->generateMipmaps2d(tex, face, layer);
 }
 
 //==============================================================================
-void CommandBuffer::copyTextureToTexture(TexturePtr src,
+void CommandBuffer::generateMipmaps3d(TexturePtr tex)
+{
+	ANKI_ASSERT(0 && "TODO");
+}
+
+//==============================================================================
+void CommandBuffer::copyTextureSurfaceToTextureSurface(TexturePtr src,
 	const TextureSurfaceInfo& srcSurf,
 	TexturePtr dest,
 	const TextureSurfaceInfo& destSurf)
 {
-	ANKI_ASSERT(0);
+	ANKI_ASSERT(0 && "TODO");
 }
 
 //==============================================================================
-void CommandBuffer::clearTexture(TexturePtr tex,
+void CommandBuffer::copyTextureVolumeToTextureVolume(TexturePtr src,
+	const TextureVolumeInfo& srcVol,
+	TexturePtr dest,
+	const TextureVolumeInfo& destVol)
+{
+	ANKI_ASSERT(0 && "TODO");
+}
+
+//==============================================================================
+void CommandBuffer::clearTexture(TexturePtr tex, const ClearValue& clearValue)
+{
+	m_impl->clearTexture(tex, clearValue);
+}
+
+//==============================================================================
+void CommandBuffer::clearTextureSurface(TexturePtr tex,
 	const TextureSurfaceInfo& surf,
 	const ClearValue& clearValue)
 {
-	m_impl->clearTexture(tex, surf, clearValue);
+	m_impl->clearTextureSurface(tex, surf, clearValue);
+}
+
+//==============================================================================
+void CommandBuffer::clearTextureVolume(
+	TexturePtr tex, const TextureVolumeInfo& vol, const ClearValue& clearValue)
+{
+	m_impl->clearTextureVolume(tex, vol, clearValue);
 }
 
 //==============================================================================
@@ -173,6 +201,14 @@ void CommandBuffer::uploadTextureSurface(TexturePtr tex,
 }
 
 //==============================================================================
+void CommandBuffer::uploadTextureVolume(TexturePtr tex,
+	const TextureVolumeInfo& vol,
+	const TransientMemoryToken& token)
+{
+	m_impl->uploadTextureVolume(tex, vol, token);
+}
+
+//==============================================================================
 void CommandBuffer::uploadBuffer(
 	BufferPtr buff, PtrSize offset, const TransientMemoryToken& token)
 {
@@ -180,12 +216,21 @@ void CommandBuffer::uploadBuffer(
 }
 
 //==============================================================================
-void CommandBuffer::setTextureBarrier(TexturePtr tex,
+void CommandBuffer::setTextureSurfaceBarrier(TexturePtr tex,
 	TextureUsageBit prevUsage,
 	TextureUsageBit nextUsage,
 	const TextureSurfaceInfo& surf)
 {
-	m_impl->setImageBarrier(tex, prevUsage, nextUsage, surf);
+	m_impl->setTextureSurfaceBarrier(tex, prevUsage, nextUsage, surf);
+}
+
+//==============================================================================
+void CommandBuffer::setTextureVolumeBarrier(TexturePtr tex,
+	TextureUsageBit prevUsage,
+	TextureUsageBit nextUsage,
+	const TextureVolumeInfo& vol)
+{
+	m_impl->setTextureVolumeBarrier(tex, prevUsage, nextUsage, vol);
 }
 
 //==============================================================================

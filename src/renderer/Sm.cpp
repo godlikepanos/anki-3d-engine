@@ -464,7 +464,7 @@ void Sm::setPreRunBarriers(RenderingContext& ctx)
 	{
 		U layer = ctx.m_sm.m_spotCacheIndices[i];
 
-		cmdb->setTextureBarrier(m_spotTexArray,
+		cmdb->setTextureSurfaceBarrier(m_spotTexArray,
 			TextureUsageBit::NONE,
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 			TextureSurfaceInfo(0, 0, 0, layer));
@@ -477,7 +477,7 @@ void Sm::setPreRunBarriers(RenderingContext& ctx)
 		{
 			U layer = ctx.m_sm.m_omniCacheIndices[i];
 
-			cmdb->setTextureBarrier(m_omniTexArray,
+			cmdb->setTextureSurfaceBarrier(m_omniTexArray,
 				TextureUsageBit::NONE,
 				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 				TextureSurfaceInfo(0, 0, j, layer));
@@ -498,7 +498,7 @@ void Sm::setPostRunBarriers(RenderingContext& ctx)
 	{
 		U layer = ctx.m_sm.m_spotCacheIndices[i];
 
-		cmdb->setTextureBarrier(m_spotTexArray,
+		cmdb->setTextureSurfaceBarrier(m_spotTexArray,
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 			TextureUsageBit::SAMPLED_FRAGMENT,
 			TextureSurfaceInfo(0, 0, 0, layer));
@@ -511,7 +511,7 @@ void Sm::setPostRunBarriers(RenderingContext& ctx)
 		{
 			U layer = ctx.m_sm.m_omniCacheIndices[i];
 
-			cmdb->setTextureBarrier(m_omniTexArray,
+			cmdb->setTextureSurfaceBarrier(m_omniTexArray,
 				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 				TextureUsageBit::SAMPLED_FRAGMENT,
 				TextureSurfaceInfo(0, 0, j, layer));

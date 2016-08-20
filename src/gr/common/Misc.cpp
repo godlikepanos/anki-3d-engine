@@ -228,4 +228,27 @@ PtrSize computeSurfaceSize(U width, U height, const PixelFormat& fmt)
 	}
 }
 
+//==============================================================================
+PtrSize computeVolumeSize(U width, U height, U depth, const PixelFormat& fmt)
+{
+	ANKI_ASSERT(width > 0 && height > 0 && depth > 0);
+	U texelComponents;
+	U texelBytes;
+	U blockSize;
+	U blockBytes;
+	getFormatInfo(fmt, texelComponents, texelBytes, blockSize, blockBytes);
+
+	if(blockSize > 0)
+	{
+		// Compressed
+		ANKI_ASSERT((width % blockSize) == 0);
+		ANKI_ASSERT((height % blockSize) == 0);
+		return (width / blockSize) * (height / blockSize) * blockBytes * depth;
+	}
+	else
+	{
+		return width * height * depth * texelBytes;
+	}
+}
+
 } // end namespace anki

@@ -22,14 +22,13 @@ public:
 	ImageLoader m_loader;
 	TexturePtr m_tex;
 	GrManager* m_gr ANKI_DBG_NULLIFY_PTR;
-	U m_depth = 0;
 	U m_layers = 0;
 	U m_faces = 0;
+	TextureType m_texType;
 
 	class
 	{
 	public:
-		U m_depth = 0;
 		U m_face = 0;
 		U m_mip = 0;
 		U m_layer = 0;
@@ -51,64 +50,114 @@ Error TexUploadTask::operator()(AsyncLoaderTaskContext& ctx)
 	// Upload the data
 	for(U layer = m_ctx.m_layer; layer < m_layers; ++layer)
 	{
-		for(U depth = m_ctx.m_depth; depth < m_depth; ++depth)
+		for(U face = m_ctx.m_face; face < m_faces; ++face)
 		{
-			for(U face = m_ctx.m_face; face < m_faces; ++face)
+			for(U mip = m_ctx.m_mip; mip < m_loader.getMipLevelsCount(); ++mip)
 			{
-				for(U mip = m_ctx.m_mip; mip < m_loader.getMipLevelsCount();
-					++mip)
-				{
-					const auto& surf =
-						m_loader.getSurface(mip, depth, face, layer);
+				PtrSize surfOrVolSize;
+				const void* surfOrVolData;
+				PtrSize allocationSize;
+				BufferUsageBit uploadBuffUsage;
 
-					PtrSize allocationSize;
-					BufferUsageBit uploadBuffUsage;
-					m_gr->getTextureUploadInfo(m_tex,
-						TextureSurfaceInfo(mip, depth, face, layer),
+				if(m_texType == TextureType::_3D)
+				{
+					const auto& vol = m_loader.getVolume(mip);
+					surfOrVolSize = vol.m_data.getSize();
+					surfOrVolData = &vol.m_data[0];
+
+					m_gr->getTextureVolumeUploadInfo(m_tex,
+						TextureVolumeInfo(mip),
 						allocationSize,
 						uploadBuffUsage);
-					ANKI_ASSERT(allocationSize >= surf.m_data.getSize());
+				}
+				else
+				{
+					const auto& surf = m_loader.getSurface(mip, face, layer);
+					surfOrVolSize = surf.m_data.getSize();
+					surfOrVolData = &surf.m_data[0];
 
-					TransientMemoryToken token;
-					void* data = m_gr->tryAllocateFrameTransientMemory(
-						allocationSize, uploadBuffUsage, token);
+					m_gr->getTextureSurfaceUploadInfo(m_tex,
+						TextureSurfaceInfo(mip, 0, face, layer),
+						allocationSize,
+						uploadBuffUsage);
+				}
 
-					if(data)
+				ANKI_ASSERT(allocationSize >= surfOrVolSize);
+
+				TransientMemoryToken token;
+				void* data = m_gr->tryAllocateFrameTransientMemory(
+					allocationSize, uploadBuffUsage, token);
+
+				if(data)
+				{
+					// There is enough transfer memory
+
+					memcpy(data, surfOrVolData, surfOrVolSize);
+
+					if(!cmdb)
 					{
-						// There is enough transfer memory
+						CommandBufferInitInfo ci;
+						ci.m_flags = CommandBufferFlag::TRANSFER_WORK
+							| CommandBufferFlag::SMALL_BATCH;
 
-						memcpy(data, &surf.m_data[0], surf.m_data.getSize());
+						cmdb = m_gr->newInstance<CommandBuffer>(ci);
+					}
 
-						if(!cmdb)
-						{
-							cmdb = m_gr->newInstance<CommandBuffer>(
-								CommandBufferInitInfo());
-						}
+					if(m_texType == TextureType::_3D)
+					{
+						TextureVolumeInfo vol(mip);
 
-						cmdb->uploadTextureSurface(m_tex,
-							TextureSurfaceInfo(mip, depth, face, layer),
-							token);
+						cmdb->setTextureVolumeBarrier(m_tex,
+							TextureUsageBit::NONE,
+							TextureUsageBit::UPLOAD,
+							vol);
+
+						cmdb->uploadTextureVolume(m_tex, vol, token);
+
+						cmdb->setTextureVolumeBarrier(m_tex,
+							TextureUsageBit::UPLOAD,
+							TextureUsageBit::SAMPLED_FRAGMENT
+								| TextureUsageBit::
+									  SAMPLED_TESSELLATION_EVALUATION,
+							vol);
 					}
 					else
 					{
-						// Not enough transfer memory. Move the work to the
-						// future
+						TextureSurfaceInfo surf(mip, 0, face, layer);
 
-						if(cmdb)
-						{
-							cmdb->flush();
-						}
+						cmdb->setTextureSurfaceBarrier(m_tex,
+							TextureUsageBit::NONE,
+							TextureUsageBit::UPLOAD,
+							surf);
 
-						m_ctx.m_depth = depth;
-						m_ctx.m_mip = mip;
-						m_ctx.m_face = face;
-						m_ctx.m_layer = layer;
+						cmdb->uploadTextureSurface(m_tex, surf, token);
 
-						ctx.m_pause = true;
-						ctx.m_resubmitTask = true;
-
-						return ErrorCode::NONE;
+						cmdb->setTextureSurfaceBarrier(m_tex,
+							TextureUsageBit::UPLOAD,
+							TextureUsageBit::SAMPLED_FRAGMENT
+								| TextureUsageBit::
+									  SAMPLED_TESSELLATION_EVALUATION,
+							surf);
 					}
+				}
+				else
+				{
+					// Not enough transfer memory. Move the work to the
+					// future
+
+					if(cmdb)
+					{
+						cmdb->flush();
+					}
+
+					m_ctx.m_mip = mip;
+					m_ctx.m_face = face;
+					m_ctx.m_layer = layer;
+
+					ctx.m_pause = true;
+					ctx.m_resubmitTask = true;
+
+					return ErrorCode::NONE;
 				}
 			}
 		}
@@ -152,9 +201,8 @@ Error TextureResource::load(const ResourceFilename& filename)
 	ANKI_CHECK(loader.load(file, filename, getManager().getMaxTextureSize()));
 
 	// Various sizes
-	const auto& tmpSurf = loader.getSurface(0, 0, 0, 0);
-	init.m_width = tmpSurf.m_width;
-	init.m_height = tmpSurf.m_height;
+	init.m_width = loader.getWidth();
+	init.m_height = loader.getHeight();
 
 	switch(loader.getTextureType())
 	{
@@ -252,11 +300,11 @@ Error TextureResource::load(const ResourceFilename& filename)
 	m_tex = getManager().getGrManager().newInstance<Texture>(init);
 
 	// Upload the data asynchronously
-	task->m_depth = init.m_depth;
 	task->m_layers = init.m_layerCount;
 	task->m_faces = faces;
 	task->m_gr = &getManager().getGrManager();
 	task->m_tex = m_tex;
+	task->m_texType = init.m_type;
 
 	getManager().getAsyncLoader().submitTask(task);
 

@@ -128,7 +128,7 @@ Error Fs::buildCommandBuffers(
 //==============================================================================
 void Fs::setPreRunBarriers(RenderingContext& ctx)
 {
-	ctx.m_commandBuffer->setTextureBarrier(m_rt,
+	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_rt,
 		TextureUsageBit::NONE,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 		TextureSurfaceInfo(0, 0, 0, 0));
@@ -137,7 +137,7 @@ void Fs::setPreRunBarriers(RenderingContext& ctx)
 //==============================================================================
 void Fs::setPostRunBarriers(RenderingContext& ctx)
 {
-	ctx.m_commandBuffer->setTextureBarrier(m_rt,
+	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_rt,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 		TextureUsageBit::SAMPLED_FRAGMENT,
 		TextureSurfaceInfo(0, 0, 0, 0));

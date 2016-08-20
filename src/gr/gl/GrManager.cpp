@@ -96,7 +96,7 @@ void* GrManager::tryAllocateFrameTransientMemory(
 }
 
 //==============================================================================
-void GrManager::getTextureUploadInfo(TexturePtr tex,
+void GrManager::getTextureSurfaceUploadInfo(TexturePtr tex,
 	const TextureSurfaceInfo& surf,
 	PtrSize& allocationSize,
 	BufferUsageBit& usage)
@@ -107,6 +107,23 @@ void GrManager::getTextureUploadInfo(TexturePtr tex,
 	U width = impl.m_width >> surf.m_level;
 	U height = impl.m_height >> surf.m_level;
 	allocationSize = computeSurfaceSize(width, height, impl.m_pformat);
+
+	usage = BufferUsageBit::TRANSFER_SOURCE;
+}
+
+//==============================================================================
+void GrManager::getTextureVolumeUploadInfo(TexturePtr tex,
+	const TextureVolumeInfo& vol,
+	PtrSize& allocationSize,
+	BufferUsageBit& usage)
+{
+	const TextureImpl& impl = tex->getImplementation();
+	impl.checkVolume(vol);
+
+	U width = impl.m_width >> vol.m_level;
+	U height = impl.m_height >> vol.m_level;
+	U depth = impl.m_depth >> vol.m_level;
+	allocationSize = computeVolumeSize(width, height, depth, impl.m_pformat);
 
 	usage = BufferUsageBit::TRANSFER_SOURCE;
 }

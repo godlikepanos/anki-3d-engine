@@ -193,22 +193,22 @@ void Ms::setPreRunBarriers(RenderingContext& ctx)
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 	TextureSurfaceInfo surf(0, 0, 0, 0);
 
-	cmdb->setTextureBarrier(m_rt0,
+	cmdb->setTextureSurfaceBarrier(m_rt0,
 		TextureUsageBit::NONE,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		surf);
 
-	cmdb->setTextureBarrier(m_rt1,
+	cmdb->setTextureSurfaceBarrier(m_rt1,
 		TextureUsageBit::NONE,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		surf);
 
-	cmdb->setTextureBarrier(m_rt2,
+	cmdb->setTextureSurfaceBarrier(m_rt2,
 		TextureUsageBit::NONE,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		surf);
 
-	cmdb->setTextureBarrier(m_depthRt,
+	cmdb->setTextureSurfaceBarrier(m_depthRt,
 		TextureUsageBit::NONE,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 		surf);
@@ -224,22 +224,22 @@ void Ms::setPostRunBarriers(RenderingContext& ctx)
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 	TextureSurfaceInfo surf(0, 0, 0, 0);
 
-	cmdb->setTextureBarrier(m_rt0,
+	cmdb->setTextureSurfaceBarrier(m_rt0,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		TextureUsageBit::SAMPLED_FRAGMENT,
 		surf);
 
-	cmdb->setTextureBarrier(m_rt1,
+	cmdb->setTextureSurfaceBarrier(m_rt1,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		TextureUsageBit::SAMPLED_FRAGMENT,
 		surf);
 
-	cmdb->setTextureBarrier(m_rt2,
+	cmdb->setTextureSurfaceBarrier(m_rt2,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		TextureUsageBit::SAMPLED_FRAGMENT,
 		surf);
 
-	cmdb->setTextureBarrier(m_depthRt,
+	cmdb->setTextureSurfaceBarrier(m_depthRt,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 		TextureUsageBit::SAMPLED_FRAGMENT,
 		surf);

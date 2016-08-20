@@ -305,14 +305,14 @@ Error Ir::initIs()
 			{
 				TextureSurfaceInfo surf(l, 0, f, i);
 
-				cmdb->setTextureBarrier(m_is.m_lightRt,
+				cmdb->setTextureSurfaceBarrier(m_is.m_lightRt,
 					TextureUsageBit::NONE,
 					TextureUsageBit::CLEAR,
 					surf);
 
-				cmdb->clearTexture(m_is.m_lightRt, surf, clear);
+				cmdb->clearTextureSurface(m_is.m_lightRt, surf, clear);
 
-				cmdb->setTextureBarrier(m_is.m_lightRt,
+				cmdb->setTextureSurfaceBarrier(m_is.m_lightRt,
 					TextureUsageBit::CLEAR,
 					TextureUsageBit::SAMPLED_FRAGMENT,
 					surf);
@@ -450,14 +450,14 @@ Error Ir::initIrradiance()
 			{
 				TextureSurfaceInfo surf(l, 0, f, i);
 
-				cmdb->setTextureBarrier(m_is.m_lightRt,
+				cmdb->setTextureSurfaceBarrier(m_is.m_lightRt,
 					TextureUsageBit::NONE,
 					TextureUsageBit::CLEAR,
 					surf);
 
-				cmdb->clearTexture(m_irradiance.m_cubeArr, surf, clear);
+				cmdb->clearTextureSurface(m_irradiance.m_cubeArr, surf, clear);
 
-				cmdb->setTextureBarrier(m_is.m_lightRt,
+				cmdb->setTextureSurfaceBarrier(m_is.m_lightRt,
 					TextureUsageBit::CLEAR,
 					TextureUsageBit::SAMPLED_FRAGMENT,
 					surf);
@@ -486,13 +486,13 @@ Error Ir::runMs(
 	// Set barriers
 	for(U i = 0; i < MS_COLOR_ATTACHMENT_COUNT; ++i)
 	{
-		cmdb->setTextureBarrier(face.m_gbufferColorRts[i],
+		cmdb->setTextureSurfaceBarrier(face.m_gbufferColorRts[i],
 			TextureUsageBit::NONE,
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 			TextureSurfaceInfo(0, 0, 0, 0));
 	}
 
-	cmdb->setTextureBarrier(face.m_gbufferDepthRt,
+	cmdb->setTextureSurfaceBarrier(face.m_gbufferDepthRt,
 		TextureUsageBit::NONE,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 		TextureSurfaceInfo(0, 0, 0, 0));
@@ -514,13 +514,13 @@ Error Ir::runMs(
 
 	for(U i = 0; i < MS_COLOR_ATTACHMENT_COUNT; ++i)
 	{
-		cmdb->setTextureBarrier(face.m_gbufferColorRts[i],
+		cmdb->setTextureSurfaceBarrier(face.m_gbufferColorRts[i],
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 			TextureUsageBit::SAMPLED_FRAGMENT,
 			TextureSurfaceInfo(0, 0, 0, 0));
 	}
 
-	cmdb->setTextureBarrier(face.m_gbufferDepthRt,
+	cmdb->setTextureSurfaceBarrier(face.m_gbufferDepthRt,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 		TextureUsageBit::SAMPLED_FRAGMENT
 			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ,
@@ -538,7 +538,7 @@ void Ir::runIs(
 	FaceInfo& face = m_cacheEntries[layer].m_faces[faceIdx];
 
 	// Set barriers
-	cmdb->setTextureBarrier(m_is.m_lightRt,
+	cmdb->setTextureSurfaceBarrier(m_is.m_lightRt,
 		TextureUsageBit::NONE,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		TextureSurfaceInfo(0, 0, faceIdx, layer));
@@ -663,14 +663,14 @@ void Ir::runIs(
 	// Generate mips
 	cmdb->endRenderPass();
 
-	cmdb->setTextureBarrier(m_is.m_lightRt,
+	cmdb->setTextureSurfaceBarrier(m_is.m_lightRt,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		TextureUsageBit::GENERATE_MIPMAPS,
 		TextureSurfaceInfo(0, 0, faceIdx, layer));
 
-	cmdb->generateMipmaps(m_is.m_lightRt, 0, faceIdx, layer);
+	cmdb->generateMipmaps2d(m_is.m_lightRt, faceIdx, layer);
 
-	cmdb->setTextureBarrier(m_is.m_lightRt,
+	cmdb->setTextureSurfaceBarrier(m_is.m_lightRt,
 		TextureUsageBit::GENERATE_MIPMAPS,
 		TextureUsageBit::SAMPLED_FRAGMENT,
 		TextureSurfaceInfo(0, 0, faceIdx, layer));
@@ -683,7 +683,7 @@ void Ir::computeIrradiance(RenderingContext& rctx, U layer, U faceIdx)
 	FaceInfo& face = m_cacheEntries[layer].m_faces[faceIdx];
 
 	// Set barrier
-	cmdb->setTextureBarrier(m_irradiance.m_cubeArr,
+	cmdb->setTextureSurfaceBarrier(m_irradiance.m_cubeArr,
 		TextureUsageBit::NONE,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		TextureSurfaceInfo(0, 0, faceIdx, layer));
@@ -707,14 +707,14 @@ void Ir::computeIrradiance(RenderingContext& rctx, U layer, U faceIdx)
 	cmdb->endRenderPass();
 
 	// Gen mips
-	cmdb->setTextureBarrier(m_irradiance.m_cubeArr,
+	cmdb->setTextureSurfaceBarrier(m_irradiance.m_cubeArr,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		TextureUsageBit::GENERATE_MIPMAPS,
 		TextureSurfaceInfo(0, 0, faceIdx, layer));
 
-	cmdb->generateMipmaps(m_irradiance.m_cubeArr, 0, faceIdx, layer);
+	cmdb->generateMipmaps2d(m_irradiance.m_cubeArr, faceIdx, layer);
 
-	cmdb->setTextureBarrier(m_irradiance.m_cubeArr,
+	cmdb->setTextureSurfaceBarrier(m_irradiance.m_cubeArr,
 		TextureUsageBit::GENERATE_MIPMAPS,
 		TextureUsageBit::SAMPLED_FRAGMENT,
 		TextureSurfaceInfo(0, 0, faceIdx, layer));

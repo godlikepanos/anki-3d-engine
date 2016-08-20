@@ -43,12 +43,15 @@ TextureImpl::~TextureImpl()
 		vkDestroyImageView(getDevice(), m_viewHandle, nullptr);
 	}
 
-	for(VkImageView view : m_viewsEveryLevel)
+	for(VkImageView view : m_singleSurfaceViews)
 	{
-		vkDestroyImageView(getDevice(), view, nullptr);
+		if(view)
+		{
+			vkDestroyImageView(getDevice(), view, nullptr);
+		}
 	}
 
-	m_viewsEveryLevel.destroy(getAllocator());
+	m_singleSurfaceViews.destroy(getAllocator());
 
 	if(m_imageHandle)
 	{
@@ -353,21 +356,6 @@ Error TextureImpl::initView(CreateContext& ctx)
 
 	ANKI_VK_CHECK(vkCreateImageView(getDevice(), &ci, nullptr, &m_viewHandle));
 
-	// Create the rest of the views
-	if(!!(m_usage & TextureUsageBit::IMAGE_COMPUTE_READ_WRITE))
-	{
-		ci.subresourceRange.levelCount = 1;
-
-		m_viewsEveryLevel.create(getAllocator(), m_mipCount - 1);
-
-		for(U i = 0; i < m_viewsEveryLevel.getSize(); ++i)
-		{
-			ci.subresourceRange.baseMipLevel = i + 1;
-			ANKI_VK_CHECK(vkCreateImageView(
-				getDevice(), &ci, nullptr, &m_viewsEveryLevel[i]));
-		}
-	}
-
 	return ErrorCode::NONE;
 }
 
@@ -665,6 +653,114 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 
 	ANKI_ASSERT(out != VK_IMAGE_LAYOUT_MAX_ENUM);
 	return out;
+}
+
+//==============================================================================
+VkImageView TextureImpl::getOrCreateSingleSurfaceView(
+	const TextureSurfaceInfo& surf)
+{
+	checkSurface(surf);
+
+	// If it's single surface return the single view
+	if(m_mipCount == 1 && m_depth == 1 && m_layerCount == 1
+		&& m_type != TextureType::CUBE
+		&& m_type != TextureType::CUBE_ARRAY)
+	{
+		return m_viewHandle;
+	}
+
+	Bool isCube =
+		m_type == TextureType::CUBE || m_type == TextureType::CUBE_ARRAY;
+	U faceCount = (isCube) ? 6 : 1;
+
+	LockGuard<Mutex> lock(m_singleSurfaceViewsMtx);
+
+	// Create the array
+	if(m_singleSurfaceViews.isEmpty())
+	{
+		U surfCount = m_mipCount * m_depth * faceCount * m_layerCount;
+
+		m_singleSurfaceViews.create(getAllocator(), surfCount);
+		memset(&m_singleSurfaceViews[0],
+			0,
+			sizeof(m_singleSurfaceViews[0]) * surfCount);
+	}
+
+	// [level][depth][face][layer]
+	U surfIdx = surf.m_level * m_depth * faceCount * m_layerCount
+		+ surf.m_depth * faceCount * m_layerCount + surf.m_face * m_layerCount
+		+ surf.m_layer;
+
+	VkImageView& view = m_singleSurfaceViews[surfIdx];
+	if(ANKI_UNLIKELY(view == VK_NULL_HANDLE))
+	{
+		VkImageViewCreateInfo ci = {};
+		ci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		ci.image = m_imageHandle;
+		ci.viewType = convertTextureViewType(m_type);
+		ci.format = convertFormat(m_format);
+		ci.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+		ci.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+		ci.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+		ci.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+
+		computeSubResourceRange(surf, ci.subresourceRange);
+
+		ANKI_VK_CHECKF(vkCreateImageView(getDevice(), &ci, nullptr, &view));
+	}
+
+	ANKI_ASSERT(view);
+	return view;
+}
+
+//==============================================================================
+VkImageView TextureImpl::getOrCreateSingleLevelView(U level)
+{
+	ANKI_ASSERT(level < m_mipCount);
+
+	// If it's single level return the single view
+	if(m_mipCount == 1)
+	{
+		return m_viewHandle;
+	}
+
+	LockGuard<Mutex> lock(m_singleLevelViewsMtx);
+
+	// Create the array
+	if(m_singleLevelViews.isEmpty())
+	{
+		m_singleLevelViews.create(getAllocator(), m_mipCount);
+		memset(&m_singleLevelViews[0],
+			0,
+			sizeof(m_singleLevelViews[0]) * m_mipCount);
+	}
+
+	VkImageView& view = m_singleLevelViews[level];
+	if(ANKI_UNLIKELY(view == VK_NULL_HANDLE))
+	{
+		VkImageSubresourceRange range;
+		range.aspectMask = m_aspect;
+		range.baseMipLevel = level;
+		range.levelCount = 1;
+		range.baseArrayLayer = 0;
+		range.layerCount = VK_REMAINING_ARRAY_LAYERS;
+
+		VkImageViewCreateInfo ci = {};
+		ci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		ci.image = m_imageHandle;
+		ci.viewType = convertTextureViewType(m_type);
+		ci.format = convertFormat(m_format);
+		ci.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+		ci.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+		ci.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+		ci.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+		ci.subresourceRange = range;
+
+		ANKI_VK_CHECKF(vkCreateImageView(getDevice(), &ci, nullptr, &view));
+	}
+
+	ANKI_ASSERT(view);
+	return view;
 }
 
 } // end namespace anki

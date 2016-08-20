@@ -307,6 +307,8 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 	}
 	ANKI_LOGI("GPU vendor is %s", &GPU_VENDOR_STR[m_vendor][0]);
 
+	vkGetPhysicalDeviceFeatures(m_physicalDevice, &m_devFeatures);
+
 	return ErrorCode::NONE;
 }
 
@@ -367,6 +369,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	ci.pQueueCreateInfos = &q;
 	ci.enabledExtensionCount = DEV_EXTENSIONS.getSize();
 	ci.ppEnabledExtensionNames = &DEV_EXTENSIONS[0];
+	ci.pEnabledFeatures = &m_devFeatures;
 
 	ANKI_VK_CHECK(vkCreateDevice(m_physicalDevice, &ci, nullptr, &m_device));
 
