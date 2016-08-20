@@ -106,16 +106,14 @@ public:
 
 	U getDepth() const
 	{
-		ANKI_ASSERT(
-			m_depthOrLayerCount != 0 && m_textureType == TextureType::_3D);
-		return m_depthOrLayerCount;
+		ANKI_ASSERT(m_textureType == TextureType::_3D);
+		return m_depth;
 	}
 
 	U getLayerCount() const
 	{
-		ANKI_ASSERT(m_depthOrLayerCount != 0
-			&& m_textureType == TextureType::_2D_ARRAY);
-		return m_depthOrLayerCount;
+		ANKI_ASSERT(m_textureType == TextureType::_2D_ARRAY);
+		return m_layerCount;
 	}
 
 	TextureType getTextureType() const
@@ -156,7 +154,8 @@ private:
 	U8 m_mipLevels = 0;
 	U32 m_width = 0;
 	U32 m_height = 0;
-	U8 m_depthOrLayerCount = 0;
+	U32 m_depth = 0;
+	U32 m_layerCount = 0;
 	DataCompression m_compression = DataCompression::NONE;
 	ColorFormat m_colorFormat = ColorFormat::NONE;
 	TextureType m_textureType = TextureType::NONE;

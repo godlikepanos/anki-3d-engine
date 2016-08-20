@@ -341,8 +341,9 @@ static ANKI_USE_RESULT Error loadAnkiTexture(ResourceFilePtr file,
 	GenericMemoryPoolAllocator<U8>& alloc,
 	U32& width,
 	U32& height,
-	U8& depthOrLayerCount,
-	U8& loadedMips,
+	U32& depth,
+	U32& layerCount,
+	U8& toLoadMipCount,
 	ImageLoader::TextureType& textureType,
 	ImageLoader::ColorFormat& colorFormat)
 {
@@ -421,7 +422,7 @@ static ANKI_USE_RESULT Error loadAnkiTexture(ResourceFilePtr file,
 		maxSize = max<U>(maxSize, header.m_depthOrLayerCount);
 		size = min<U>(size, header.m_depthOrLayerCount);
 	}
-	loadedMips = 0;
+	toLoadMipCount = 0;
 	U tmpMipLevels = 0;
 	while(size >= 4) // The minimum size is 4x4
 	{
@@ -429,7 +430,7 @@ static ANKI_USE_RESULT Error loadAnkiTexture(ResourceFilePtr file,
 
 		if(maxSize <= maxTextureSize)
 		{
-			++loadedMips;
+			++toLoadMipCount;
 		}
 
 		size /= 2;
@@ -442,21 +443,29 @@ static ANKI_USE_RESULT Error loadAnkiTexture(ResourceFilePtr file,
 		return ErrorCode::USER_DATA;
 	}
 
-	loadedMips = min<U>(loadedMips, header.m_mipLevels);
+	toLoadMipCount = min<U>(toLoadMipCount, header.m_mipLevels);
 
 	colorFormat = header.m_colorFormat;
 
+	U faceCount = 1;
 	switch(header.m_type)
 	{
 	case ImageLoader::TextureType::_2D:
-		depthOrLayerCount = 1;
+		depth = 1;
+		layerCount = 1;
 		break;
 	case ImageLoader::TextureType::CUBE:
-		depthOrLayerCount = 6;
+		depth = 1;
+		layerCount = 1;
+		faceCount = 6;
 		break;
 	case ImageLoader::TextureType::_3D:
+		depth = header.m_depthOrLayerCount;
+		layerCount = 1;
+		break;
 	case ImageLoader::TextureType::_2D_ARRAY:
-		depthOrLayerCount = header.m_depthOrLayerCount;
+		depth = 1;
+		layerCount = header.m_depthOrLayerCount;
 		break;
 	default:
 		ANKI_ASSERT(0);
@@ -511,7 +520,7 @@ static ANKI_USE_RESULT Error loadAnkiTexture(ResourceFilePtr file,
 	// Allocate the surfaces
 	if(header.m_type != ImageLoader::TextureType::_3D)
 	{
-		surfaces.create(alloc, loadedMips * depthOrLayerCount);
+		surfaces.create(alloc, toLoadMipCount * layerCount * faceCount);
 
 		// Read all surfaces
 		U mipWidth = header.m_width;
@@ -519,28 +528,32 @@ static ANKI_USE_RESULT Error loadAnkiTexture(ResourceFilePtr file,
 		U index = 0;
 		for(U mip = 0; mip < header.m_mipLevels; mip++)
 		{
-			for(U d = 0; d < depthOrLayerCount; d++)
+			for(U l = 0; l < layerCount; l++)
 			{
-				U dataSize = calcSurfaceSize(mipWidth,
-					mipHeight,
-					preferredCompression,
-					header.m_colorFormat);
 
-				// Check if this mipmap can be skipped because of size
-				if(maxSize <= maxTextureSize)
+				for(U f = 0; f < faceCount; ++f)
 				{
-					ImageLoader::Surface& surf = surfaces[index++];
-					surf.m_width = mipWidth;
-					surf.m_height = mipHeight;
+					U dataSize = calcSurfaceSize(mipWidth,
+						mipHeight,
+						preferredCompression,
+						header.m_colorFormat);
 
-					surf.m_data.create(alloc, dataSize);
+					// Check if this mipmap can be skipped because of size
+					if(maxSize <= maxTextureSize)
+					{
+						ImageLoader::Surface& surf = surfaces[index++];
+						surf.m_width = mipWidth;
+						surf.m_height = mipHeight;
 
-					ANKI_CHECK(file->read(&surf.m_data[0], dataSize));
-				}
-				else
-				{
-					ANKI_CHECK(file->seek(
-						dataSize, ResourceFile::SeekOrigin::CURRENT));
+						surf.m_data.create(alloc, dataSize);
+
+						ANKI_CHECK(file->read(&surf.m_data[0], dataSize));
+					}
+					else
+					{
+						ANKI_CHECK(file->seek(
+							dataSize, ResourceFile::SeekOrigin::CURRENT));
+					}
 				}
 			}
 
@@ -550,7 +563,7 @@ static ANKI_USE_RESULT Error loadAnkiTexture(ResourceFilePtr file,
 	}
 	else
 	{
-		volumes.create(alloc, loadedMips);
+		volumes.create(alloc, toLoadMipCount);
 
 		U mipWidth = header.m_width;
 		U mipHeight = header.m_height;
@@ -618,7 +631,8 @@ Error ImageLoader::load(
 		m_surfaces.create(m_alloc, 1);
 
 		m_mipLevels = 1;
-		m_depthOrLayerCount = 1;
+		m_depth = 1;
+		m_layerCount = 1;
 		ANKI_CHECK(loadTga(file,
 			m_surfaces[0].m_width,
 			m_surfaces[0].m_height,
@@ -660,7 +674,8 @@ Error ImageLoader::load(
 			m_alloc,
 			m_width,
 			m_height,
-			m_depthOrLayerCount,
+			m_depth,
+			m_layerCount,
 			m_mipLevels,
 			m_textureType,
 			m_colorFormat));
@@ -695,7 +710,7 @@ const ImageLoader::Surface& ImageLoader::getSurface(
 		ANKI_ASSERT(0 && "Can't use that for 3D textures");
 		break;
 	case TextureType::_2D_ARRAY:
-		idx = level * m_depthOrLayerCount + layer;
+		idx = level * m_layerCount + layer;
 		break;
 	default:
 		ANKI_ASSERT(0);

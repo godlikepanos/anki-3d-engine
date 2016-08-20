@@ -35,8 +35,6 @@ const vec2 KERNEL[8] = vec2[](vec2(TEX_OFFSET.x, TEX_OFFSET.y),
 	vec2(TEX_OFFSET.x, -TEX_OFFSET.y),
 	vec2(TEX_OFFSET.x, 0.0));
 
-const float LUT_SIZE = 16.0;
-
 //==============================================================================
 vec3 grayScale(in vec3 col)
 {

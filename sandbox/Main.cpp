@@ -68,7 +68,7 @@ Error MyApp::init(int argc, char* argv[])
 	ANKI_CHECK(getScriptManager().evalString(script->getSource()));
 
 	ANKI_CHECK(renderer.getOffscreenRenderer().getPps().loadColorGradingTexture(
-		"textures/adis/dungeon.ankitex"));
+		"textures/color_gradient_luts/forge_lut.ankitex"));
 
 #if PLAYER
 	SceneGraph& scene = getSceneGraph();

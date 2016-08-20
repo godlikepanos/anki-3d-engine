@@ -65,12 +65,14 @@ Error Pps::initInternal(const ConfigSet& config)
 				"#define SHARPEN_ENABLED %u\n"
 				"#define GAMMA_CORRECTION_ENABLED %u\n"
 				"#define FBO_WIDTH %u\n"
-				"#define FBO_HEIGHT %u\n",
+				"#define FBO_HEIGHT %u\n"
+				"#define LUT_SIZE %u.0\n",
 		true,
 		U(config.getNumber("pps.sharpen")),
 		U(config.getNumber("pps.gammaCorrection")),
 		m_r->getWidth(),
-		m_r->getHeight());
+		m_r->getHeight(),
+		LUT_SIZE);
 
 	ANKI_CHECK(getResourceManager().loadResourceToCache(
 		m_frag, "shaders/Pps.frag.glsl", pps.toCString(), "r_"));
@@ -84,19 +86,8 @@ Error Pps::initInternal(const ConfigSet& config)
 	ANKI_CHECK(loadColorGradingTexture("engine_data/DefaultLut.ankitex"));
 
 	// RC goup
-	ResourceGroupInitInfo rcInit;
-	rcInit.m_textures[0].m_texture = m_r->getIs().getRt();
-	rcInit.m_textures[1].m_texture = m_r->getBloom().getFinalRt();
+	rebuildResourceGroup();
 
-	rcInit.m_textures[2].m_texture = m_lut->getGrTexture();
-
-	rcInit.m_storageBuffers[0].m_buffer =
-		m_r->getTm().getAverageLuminanceBuffer();
-	rcInit.m_storageBuffers[0].m_usage = BufferUsageBit::STORAGE_FRAGMENT;
-
-	m_rcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);
-
-	getGrManager().finish();
 	return ErrorCode::NONE;
 }
 
@@ -116,7 +107,28 @@ Error Pps::loadColorGradingTexture(CString filename)
 {
 	m_lut.reset(nullptr);
 	ANKI_CHECK(getResourceManager().loadResource(filename, m_lut));
+	ANKI_ASSERT(m_lut->getWidth() == LUT_SIZE);
+	ANKI_ASSERT(m_lut->getHeight() == LUT_SIZE);
+	ANKI_ASSERT(m_lut->getDepth() == LUT_SIZE);
+
+	rebuildResourceGroup();
 	return ErrorCode::NONE;
+}
+
+//==============================================================================
+void Pps::rebuildResourceGroup()
+{
+	ResourceGroupInitInfo rcInit;
+	rcInit.m_textures[0].m_texture = m_r->getIs().getRt();
+	rcInit.m_textures[1].m_texture = m_r->getBloom().getFinalRt();
+
+	rcInit.m_textures[2].m_texture = m_lut->getGrTexture();
+
+	rcInit.m_storageBuffers[0].m_buffer =
+		m_r->getTm().getAverageLuminanceBuffer();
+	rcInit.m_storageBuffers[0].m_usage = BufferUsageBit::STORAGE_FRAGMENT;
+
+	m_rcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);
 }
 
 //==============================================================================

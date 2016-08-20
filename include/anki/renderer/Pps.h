@@ -41,6 +41,8 @@ anki_internal:
 	}
 
 private:
+	static const U LUT_SIZE = 16;
+
 	FramebufferPtr m_fb;
 	ShaderResourcePtr m_frag;
 	PipelinePtr m_ppline;
@@ -50,6 +52,8 @@ private:
 	TextureResourcePtr m_lut; ///< Color grading lookup texture.
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& config);
+
+	void rebuildResourceGroup();
 };
 /// @}
 
