@@ -181,14 +181,6 @@ if(ANKI_STRIP)
 	set(COMPILER_FLAGS "${COMPILER_FLAGS} -s ")
 endif()
 
-# gperftools
-if(ANKI_WITH_GPERFTOOLS_PROF)
-	LINK_DIRECTORIES("/home/godlike/src/more/gperftools/install/lib")
-	set(ANKI_GPERFTOOLS_LIBS "profiler")
-else()
-	set(ANKI_GPERFTOOLS_LIBS "")
-endif()
-
 include_directories(${ANKI_EXTRA_INCLUDE_DIRS})
 link_directories(${ANKI_EXTRA_LIB_DIRS})
 
@@ -200,7 +192,7 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINKER_FLAGS}")
 ################################################################################
 # Install                                                                      #
 ################################################################################
-set(INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/include/" CACHE PATH "The subdirectory to the header prefix")
+set(INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/src/" CACHE PATH "The subdirectory to the header prefix")
 set(LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lib" CACHE PATH "Library install path")
 
 message("++ Include install dir: ${INCLUDE_INSTALL_DIR}")
@@ -333,12 +325,12 @@ else()
 	set(ANKI_DEBUG 0)
 endif()
 
-CONFIGURE_FILE("include/anki/Config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h")
+CONFIGURE_FILE("src/anki/Config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h")
 INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h" DESTINATION "${INCLUDE_INSTALL_DIR}/anki")
 
 # Include & lib directories
-include_directories("thirdparty/tinyxml2/include" "thirdparty/lua" "thirdparty/z"
-	"${SDL2_INSTALL_DIR}/include/SDL2/" "${FREETYPE_INSTALL_DIR}/include/freetype2/" "include" "thirdparty/newton/newton" "${CMAKE_CURRENT_BINARY_DIR}" ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glslang)
+include_directories("src" "thirdparty/tinyxml2/include" "thirdparty/lua" "thirdparty/z"
+	"${SDL2_INSTALL_DIR}/include/SDL2/" "${FREETYPE_INSTALL_DIR}/include/freetype2/" "thirdparty/newton/newton" "${CMAKE_CURRENT_BINARY_DIR}" ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glslang)
 
 if(LINUX OR MACOS OR WINDOWS)
 	include_directories("thirdparty/GLEW/include")
@@ -393,11 +385,11 @@ set(ANKI_SUB_DIRS core script renderer scene ui event input physics resource mis
 set(ANKI_LIBS "")
 
 foreach(TMP ${ANKI_SUB_DIRS})
-	add_subdirectory(src/${TMP})
+	add_subdirectory(src/anki/${TMP})
 	set(ANKI_LIBS ${ANKI_LIBS} anki${TMP})
 endforeach()
 
-add_library(anki src/Dummy.cpp "${_SYS_SRC}")
+add_library(anki src/anki/Dummy.cpp "${_SYS_SRC}")
 
 target_link_libraries(anki ${ANKI_LIBS} ankitinyxml2 ankilua ankiz ankinewton ${ANKI_GPERFTOOLS_LIBS} SDL2_LIB FREETYPE_LIB ${_SYS})
 
