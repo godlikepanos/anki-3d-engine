@@ -391,11 +391,13 @@ void TextureImpl::init(const TextureInitInfo& init)
 		{
 			glTexParameteri(m_target, GL_TEXTURE_WRAP_S, GL_REPEAT);
 			glTexParameteri(m_target, GL_TEXTURE_WRAP_T, GL_REPEAT);
+			glTexParameteri(m_target, GL_TEXTURE_WRAP_R, GL_REPEAT);
 		}
 		else
 		{
 			glTexParameteri(m_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 			glTexParameteri(m_target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glTexParameteri(m_target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 		}
 
 		// Make sure that the texture is complete

@@ -1380,7 +1380,7 @@ ANKI_TEST(Gr, 3DTextures)
 	TextureInitInfo init;
 	init.m_depth = 1;
 	init.m_format =
-		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM);
+		PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
 	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::UPLOAD;
 	init.m_initialUsage = TextureUsageBit::UPLOAD;
 	init.m_height = 2;
@@ -1399,32 +1399,40 @@ ANKI_TEST(Gr, 3DTextures)
 	//
 	// Upload all textures
 	//
-	Array<U8, 2 * 2 * 2 * 3> mip0 = {{255,
+	Array<U8, 2 * 2 * 2 * 4> mip0 = {{255,
+		0,
+		0,
+		0,
+		0,
+		255,
+		0,
 		0,
 		0,
 		0,
 		255,
 		0,
+		255,
+		255,
 		0,
-		0,
-		255,
-		255,
-		255,
 		0,
 		255,
 		0,
 		255,
 		0,
+		0,
+		255,
+		255,
+		0,
 		255,
 		255,
 		255,
-		255,
-		255,
+		0,
+		0,
 		0,
 		0,
 		0}};
 
-	Array<U8, 3> mip1 = {{128, 128, 128}};
+	Array<U8, 4> mip1 = {{128, 128, 128, 0}};
 
 	CommandBufferInitInfo cmdbinit;
 	cmdbinit.m_flags = CommandBufferFlag::TRANSFER_WORK;
