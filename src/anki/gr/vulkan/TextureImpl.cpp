@@ -119,7 +119,7 @@ Bool TextureImpl::imageSupported(const TextureInitInfo& init)
 
 	VkResult res = vkGetPhysicalDeviceImageFormatProperties(
 		getGrManagerImpl().getPhysicalDevice(),
-		convertFormat(init.m_format),
+		m_vkFormat,
 		convertTextureType(init.m_type),
 		VK_IMAGE_TILING_OPTIMAL,
 		convertTextureUsage(init.m_usage, init.m_format),
@@ -165,16 +165,9 @@ Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 	m_layerCount = init.m_layerCount;
 
 	m_format = init.m_format;
+	m_vkFormat = convertFormat(m_format);
 	m_depthStencil = formatIsDepthStencil(m_format);
-	if(m_depthStencil)
-	{
-		m_aspect = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
-	}
-	else
-	{
-		m_aspect = VK_IMAGE_ASPECT_COLOR_BIT;
-	}
-
+	m_aspect = convertImageAspect(m_format);
 	m_usage = init.m_usage;
 
 	CreateContext ctx;
@@ -237,6 +230,7 @@ Error TextureImpl::initImage(CreateContext& ctx)
 				&& "Can't do that ATM");
 			init.m_format.m_components = ComponentFormat::R8G8B8A8;
 			m_format = init.m_format;
+			m_vkFormat = convertFormat(m_format);
 			m_workarounds = TextureImplWorkaround::R8G8B8_TO_R8G8B8A8;
 		}
 		else
@@ -259,7 +253,7 @@ Error TextureImpl::initImage(CreateContext& ctx)
 	ci.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	ci.flags = calcCreateFlags(init);
 	ci.imageType = convertTextureType(init.m_type);
-	ci.format = convertFormat(init.m_format);
+	ci.format = m_vkFormat;
 	ci.extent.width = init.m_width;
 	ci.extent.height = init.m_height;
 
@@ -697,8 +691,8 @@ VkImageView TextureImpl::getOrCreateSingleSurfaceView(
 		VkImageViewCreateInfo ci = {};
 		ci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		ci.image = m_imageHandle;
-		ci.viewType = convertTextureViewType(m_type);
-		ci.format = convertFormat(m_format);
+		ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		ci.format = m_vkFormat;
 		ci.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
 		ci.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
 		ci.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -749,7 +743,7 @@ VkImageView TextureImpl::getOrCreateSingleLevelView(U level)
 		ci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		ci.image = m_imageHandle;
 		ci.viewType = convertTextureViewType(m_type);
-		ci.format = convertFormat(m_format);
+		ci.format = m_vkFormat;
 		ci.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
 		ci.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
 		ci.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;

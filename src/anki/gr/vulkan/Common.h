@@ -64,6 +64,9 @@ ANKI_USE_RESULT VkCompareOp convertCompareOp(CompareOperation ak);
 /// Convert format.
 ANKI_USE_RESULT VkFormat convertFormat(PixelFormat ak);
 
+/// Get format aspect mask.
+ANKI_USE_RESULT VkImageAspectFlags convertImageAspect(PixelFormat ak);
+
 /// Convert topology.
 ANKI_USE_RESULT VkPrimitiveTopology convertTopology(PrimitiveTopology ak);
 

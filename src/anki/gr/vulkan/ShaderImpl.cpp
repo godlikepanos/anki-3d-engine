@@ -9,6 +9,13 @@
 #include <glslang/Public/ShaderLang.h>
 #include <SPIRV/GlslangToSpv.h>
 
+#define ANKI_DUMP_SHADERS ANKI_DEBUG
+
+#if ANKI_DUMP_SHADERS
+#include <anki/util/File.h>
+#include <anki/gr/GrManager.h>
+#endif
+
 namespace anki
 {
 
@@ -250,6 +257,62 @@ Error ShaderImpl::init(ShaderType shaderType, const CString& source)
 	std::vector<unsigned int> spirv;
 	ANKI_CHECK(genSpirv(fullSrc.toCString(), spirv));
 	ANKI_ASSERT(!spirv.empty());
+
+#if ANKI_DUMP_SHADERS
+	{
+		static U32 name = 0;
+		SpinLock m_nameLock;
+		const char* ext;
+
+		U32 newName;
+		{
+			LockGuard<SpinLock> lock(m_nameLock);
+			newName = name++;
+		}
+
+		switch(shaderType)
+		{
+		case ShaderType::VERTEX:
+			ext = "vert";
+			break;
+		case ShaderType::TESSELLATION_CONTROL:
+			ext = "tesc";
+			break;
+		case ShaderType::TESSELLATION_EVALUATION:
+			ext = "tese";
+			break;
+		case ShaderType::GEOMETRY:
+			ext = "geom";
+			break;
+		case ShaderType::FRAGMENT:
+			ext = "frag";
+			break;
+		case ShaderType::COMPUTE:
+			ext = "comp";
+			break;
+		default:
+			ext = nullptr;
+			ANKI_ASSERT(0);
+		}
+
+		StringAuto fname(alloc);
+		CString cacheDir = getGrManager().getCacheDirectory();
+		fname.sprintf("%s/%05u.%s", &cacheDir[0], newName, ext);
+
+		File file;
+		ANKI_CHECK(file.open(fname.toCString(), File::OpenFlag::WRITE));
+		ANKI_CHECK(file.writeText("%s", &fullSrc[0]));
+
+		StringAuto fnameSpirv(alloc);
+		fnameSpirv.sprintf("%s/%05u.%s.spv", &cacheDir[0], newName, ext);
+
+		File fileSpirv;
+		ANKI_CHECK(fileSpirv.open(fnameSpirv.toCString(),
+			File::OpenFlag::BINARY | File::OpenFlag::WRITE));
+		ANKI_CHECK(
+			fileSpirv.write(&spirv[0], spirv.size() * sizeof(unsigned int)));
+	}
+#endif
 
 	VkShaderModuleCreateInfo ci = {VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
 		nullptr,
