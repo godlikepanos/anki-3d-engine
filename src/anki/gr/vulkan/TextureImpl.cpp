@@ -15,21 +15,6 @@ namespace anki
 {
 
 //==============================================================================
-// TextureImpl::CreateContext                                                  =
-//==============================================================================
-
-class TextureImpl::CreateContext
-{
-public:
-	TextureInitInfo m_init;
-	VkImageCreateInfo m_imgCi = {};
-};
-
-//==============================================================================
-// TextureImpl                                                                 =
-//==============================================================================
-
-//==============================================================================
 TextureImpl::TextureImpl(GrManager* manager)
 	: VulkanObject(manager)
 {
@@ -38,20 +23,15 @@ TextureImpl::TextureImpl(GrManager* manager)
 //==============================================================================
 TextureImpl::~TextureImpl()
 {
-	if(m_viewHandle)
+	for(auto it : m_viewsMap)
 	{
-		vkDestroyImageView(getDevice(), m_viewHandle, nullptr);
-	}
-
-	for(VkImageView view : m_singleSurfaceViews)
-	{
-		if(view)
+		if(it != VK_NULL_HANDLE)
 		{
-			vkDestroyImageView(getDevice(), view, nullptr);
+			vkDestroyImageView(getDevice(), it, nullptr);
 		}
 	}
 
-	m_singleSurfaceViews.destroy(getAllocator());
+	m_viewsMap.destroy(getAllocator());
 
 	if(m_imageHandle)
 	{
@@ -60,7 +40,7 @@ TextureImpl::~TextureImpl()
 
 	if(m_memHandle)
 	{
-		getGrManagerImpl().freeMemory(m_memIdx, m_memHandle);
+		getGrManagerImpl().getGpuMemoryAllocator().freeMemory(m_memHandle);
 	}
 }
 
@@ -170,10 +150,25 @@ Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 	m_aspect = convertImageAspect(m_format);
 	m_usage = init.m_usage;
 
-	CreateContext ctx;
-	ctx.m_init = init;
-	ANKI_CHECK(initImage(ctx));
-	ANKI_CHECK(initView(ctx));
+	ANKI_CHECK(initImage(init));
+
+	// Init the template
+	m_viewCreateInfoTemplate = {};
+	m_viewCreateInfoTemplate.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	m_viewCreateInfoTemplate.image = m_imageHandle;
+	m_viewCreateInfoTemplate.viewType = convertTextureViewType(init.m_type);
+	m_viewCreateInfoTemplate.format = m_vkFormat;
+	m_viewCreateInfoTemplate.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+	m_viewCreateInfoTemplate.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+	m_viewCreateInfoTemplate.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+	m_viewCreateInfoTemplate.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+	m_viewCreateInfoTemplate.subresourceRange.aspectMask = m_aspect;
+	m_viewCreateInfoTemplate.subresourceRange.baseArrayLayer = 0;
+	m_viewCreateInfoTemplate.subresourceRange.baseMipLevel = 0;
+	m_viewCreateInfoTemplate.subresourceRange.layerCount =
+		VK_REMAINING_ARRAY_LAYERS;
+	m_viewCreateInfoTemplate.subresourceRange.levelCount =
+		VK_REMAINING_MIP_LEVELS;
 
 	// Transition the image layout from undefined to something relevant
 	if(!!init.m_initialUsage)
@@ -215,9 +210,9 @@ Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 }
 
 //==============================================================================
-Error TextureImpl::initImage(CreateContext& ctx)
+Error TextureImpl::initImage(const TextureInitInfo& init_)
 {
-	TextureInitInfo& init = ctx.m_init;
+	TextureInitInfo init = init_;
 
 	// Check if format is supported
 	Bool supported;
@@ -247,17 +242,15 @@ Error TextureImpl::initImage(CreateContext& ctx)
 	}
 
 	// Contunue with the creation
-	m_type = init.m_type;
-
-	VkImageCreateInfo& ci = ctx.m_imgCi;
+	VkImageCreateInfo ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	ci.flags = calcCreateFlags(init);
-	ci.imageType = convertTextureType(init.m_type);
+	ci.imageType = convertTextureType(m_type);
 	ci.format = m_vkFormat;
 	ci.extent.width = init.m_width;
 	ci.extent.height = init.m_height;
 
-	switch(init.m_type)
+	switch(m_type)
 	{
 	case TextureType::_1D:
 	case TextureType::_2D:
@@ -302,53 +295,29 @@ Error TextureImpl::initImage(CreateContext& ctx)
 	VkMemoryRequirements req = {};
 	vkGetImageMemoryRequirements(getDevice(), m_imageHandle, &req);
 
-	m_memIdx = getGrManagerImpl().findMemoryType(req.memoryTypeBits,
+	U memIdx = getGrManagerImpl().getGpuMemoryAllocator().findMemoryType(
+		req.memoryTypeBits,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
 	// Fallback
-	if(m_memIdx == MAX_U32)
+	if(memIdx == MAX_U32)
 	{
-		m_memIdx = getGrManagerImpl().findMemoryType(
+		memIdx = getGrManagerImpl().getGpuMemoryAllocator().findMemoryType(
 			req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0);
 	}
 
-	ANKI_ASSERT(m_memIdx != MAX_U32);
+	ANKI_ASSERT(memIdx != MAX_U32);
 
 	// Allocate
-	getGrManagerImpl().allocateMemory(
-		m_memIdx, req.size, req.alignment, m_memHandle);
+	getGrManagerImpl().getGpuMemoryAllocator().allocateMemory(
+		memIdx, req.size, req.alignment, false, m_memHandle);
 
 	// Bind mem to image
 	ANKI_VK_CHECK(vkBindImageMemory(getDevice(),
 		m_imageHandle,
 		m_memHandle.m_memory,
 		m_memHandle.m_offset));
-
-	return ErrorCode::NONE;
-}
-
-//==============================================================================
-Error TextureImpl::initView(CreateContext& ctx)
-{
-	const TextureInitInfo& init = ctx.m_init;
-
-	VkImageViewCreateInfo ci = {};
-	ci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-	ci.image = m_imageHandle;
-	ci.viewType = convertTextureViewType(init.m_type);
-	ci.format = ctx.m_imgCi.format;
-	ci.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-	ci.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-	ci.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-	ci.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-	ci.subresourceRange.aspectMask = m_aspect;
-	ci.subresourceRange.baseArrayLayer = 0;
-	ci.subresourceRange.baseMipLevel = 0;
-	ci.subresourceRange.layerCount = ctx.m_imgCi.arrayLayers;
-	ci.subresourceRange.levelCount = ctx.m_imgCi.mipLevels;
-
-	ANKI_VK_CHECK(vkCreateImageView(getDevice(), &ci, nullptr, &m_viewHandle));
 
 	return ErrorCode::NONE;
 }
@@ -655,56 +624,11 @@ VkImageView TextureImpl::getOrCreateSingleSurfaceView(
 {
 	checkSurface(surf);
 
-	// If it's single surface return the single view
-	if(m_mipCount == 1 && m_depth == 1 && m_layerCount == 1
-		&& m_type != TextureType::CUBE
-		&& m_type != TextureType::CUBE_ARRAY)
-	{
-		return m_viewHandle;
-	}
+	VkImageViewCreateInfo ci = m_viewCreateInfoTemplate;
+	ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	computeSubResourceRange(surf, ci.subresourceRange);
 
-	Bool isCube =
-		m_type == TextureType::CUBE || m_type == TextureType::CUBE_ARRAY;
-	U faceCount = (isCube) ? 6 : 1;
-
-	LockGuard<Mutex> lock(m_singleSurfaceViewsMtx);
-
-	// Create the array
-	if(m_singleSurfaceViews.isEmpty())
-	{
-		U surfCount = m_mipCount * m_depth * faceCount * m_layerCount;
-
-		m_singleSurfaceViews.create(getAllocator(), surfCount);
-		memset(&m_singleSurfaceViews[0],
-			0,
-			sizeof(m_singleSurfaceViews[0]) * surfCount);
-	}
-
-	// [level][depth][face][layer]
-	U surfIdx = surf.m_level * m_depth * faceCount * m_layerCount
-		+ surf.m_depth * faceCount * m_layerCount + surf.m_face * m_layerCount
-		+ surf.m_layer;
-
-	VkImageView& view = m_singleSurfaceViews[surfIdx];
-	if(ANKI_UNLIKELY(view == VK_NULL_HANDLE))
-	{
-		VkImageViewCreateInfo ci = {};
-		ci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		ci.image = m_imageHandle;
-		ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		ci.format = m_vkFormat;
-		ci.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-		ci.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-		ci.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-		ci.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-
-		computeSubResourceRange(surf, ci.subresourceRange);
-
-		ANKI_VK_CHECKF(vkCreateImageView(getDevice(), &ci, nullptr, &view));
-	}
-
-	ANKI_ASSERT(view);
-	return view;
+	return getOrCreateView(ci);
 }
 
 //==============================================================================
@@ -712,49 +636,40 @@ VkImageView TextureImpl::getOrCreateSingleLevelView(U level)
 {
 	ANKI_ASSERT(level < m_mipCount);
 
-	// If it's single level return the single view
-	if(m_mipCount == 1)
+	VkImageViewCreateInfo ci = m_viewCreateInfoTemplate;
+	ci.subresourceRange.baseMipLevel = level;
+	ci.subresourceRange.levelCount = 1;
+
+	return getOrCreateView(ci);
+}
+
+//==============================================================================
+VkImageView TextureImpl::getOrCreateResourceGroupView()
+{
+	VkImageViewCreateInfo ci = m_viewCreateInfoTemplate;
+	ci.subresourceRange.aspectMask = m_aspect & (~VK_IMAGE_ASPECT_STENCIL_BIT);
+
+	return getOrCreateView(ci);
+}
+
+//==============================================================================
+VkImageView TextureImpl::getOrCreateView(const VkImageViewCreateInfo& ci)
+{
+	LockGuard<Mutex> lock(m_viewsMapMtx);
+	auto it = m_viewsMap.find(ci);
+
+	if(it != m_viewsMap.getEnd())
 	{
-		return m_viewHandle;
+		return *it;
 	}
-
-	LockGuard<Mutex> lock(m_singleLevelViewsMtx);
-
-	// Create the array
-	if(m_singleLevelViews.isEmpty())
+	else
 	{
-		m_singleLevelViews.create(getAllocator(), m_mipCount);
-		memset(&m_singleLevelViews[0],
-			0,
-			sizeof(m_singleLevelViews[0]) * m_mipCount);
-	}
-
-	VkImageView& view = m_singleLevelViews[level];
-	if(ANKI_UNLIKELY(view == VK_NULL_HANDLE))
-	{
-		VkImageSubresourceRange range;
-		range.aspectMask = m_aspect;
-		range.baseMipLevel = level;
-		range.levelCount = 1;
-		range.baseArrayLayer = 0;
-		range.layerCount = VK_REMAINING_ARRAY_LAYERS;
-
-		VkImageViewCreateInfo ci = {};
-		ci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		ci.image = m_imageHandle;
-		ci.viewType = convertTextureViewType(m_type);
-		ci.format = m_vkFormat;
-		ci.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-		ci.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-		ci.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-		ci.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-		ci.subresourceRange = range;
-
+		VkImageView view = VK_NULL_HANDLE;
 		ANKI_VK_CHECKF(vkCreateImageView(getDevice(), &ci, nullptr, &view));
-	}
+		m_viewsMap.pushBack(getAllocator(), ci, view);
 
-	ANKI_ASSERT(view);
-	return view;
+		return view;
+	}
 }
 
 } // end namespace anki

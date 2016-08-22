@@ -233,7 +233,7 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 				init.m_textures[i].m_texture->getImplementation();
 
 			VkDescriptorImageInfo& inf = texes[i];
-			inf.imageView = teximpl.m_viewHandle;
+			inf.imageView = teximpl.getOrCreateResourceGroupView();
 
 			m_refs[refCount++] = init.m_textures[i].m_texture;
 

@@ -162,29 +162,10 @@ public:
 
 	/// @name Memory
 	/// @{
-	void allocateMemory(U memTypeIdx,
-		PtrSize size,
-		U alignment,
-		GpuMemoryAllocationHandle& handle)
+	GpuMemoryAllocator& getGpuMemoryAllocator()
 	{
-		m_gpuMemAllocs[memTypeIdx].allocate(size, alignment, handle);
+		return m_gpuAlloc;
 	}
-
-	void freeMemory(U memTypeIdx, GpuMemoryAllocationHandle& handle)
-	{
-		m_gpuMemAllocs[memTypeIdx].free(handle);
-	}
-
-	ANKI_USE_RESULT void* getMappedAddress(
-		U memTypeIdx, GpuMemoryAllocationHandle& handle)
-	{
-		return m_gpuMemAllocs[memTypeIdx].getMappedAddress(handle);
-	}
-
-	/// Find a suitable memory type.
-	U findMemoryType(U resourceMemTypeBits,
-		VkMemoryPropertyFlags preferFlags,
-		VkMemoryPropertyFlags avoidFlags) const;
 
 	TransientMemoryManager& getTransientMemoryManager()
 	{
@@ -263,8 +244,8 @@ private:
 	/// @{
 	VkPhysicalDeviceMemoryProperties m_memoryProperties;
 
-	/// One for each mem type.
-	DynamicArray<GpuMemoryAllocator> m_gpuMemAllocs;
+	/// The main allocator.
+	GpuMemoryAllocator m_gpuAlloc;
 
 	TransientMemoryManager m_transientMem;
 	/// @}

@@ -9,6 +9,7 @@
 #include <anki/gr/vulkan/GpuMemoryAllocator.h>
 #include <anki/gr/vulkan/Semaphore.h>
 #include <anki/gr/common/Misc.h>
+#include <anki/util/HashMap.h>
 
 namespace anki
 {
@@ -30,9 +31,7 @@ public:
 	SamplerPtr m_sampler;
 
 	VkImage m_imageHandle = VK_NULL_HANDLE;
-	VkImageView m_viewHandle = VK_NULL_HANDLE;
 
-	U32 m_memIdx = MAX_U32;
 	GpuMemoryAllocationHandle m_memHandle;
 
 	U32 m_width = 0;
@@ -89,6 +88,9 @@ public:
 
 	VkImageView getOrCreateSingleLevelView(U level);
 
+	/// That view will be used in descriptor sets.
+	VkImageView getOrCreateResourceGroupView();
+
 	/// By knowing the previous and new texture usage calculate the relavant
 	/// info for a ppline barrier.
 	void computeBarrierInfo(TextureUsageBit before,
@@ -103,15 +105,29 @@ public:
 	VkImageLayout computeLayout(TextureUsageBit usage, U level) const;
 
 private:
-	class CreateContext;
+	class ViewHasher
+	{
+	public:
+		U64 operator()(const VkImageViewCreateInfo& b) const
+		{
+			return computeHash(&b, sizeof(b));
+		}
+	};
 
-	/// A number of views, one for each surface. Used in image load/store.
-	DynamicArray<VkImageView> m_singleSurfaceViews;
-	Mutex m_singleSurfaceViewsMtx;
+	class ViewCompare
+	{
+	public:
+		Bool operator()(const VkImageViewCreateInfo& a,
+			const VkImageViewCreateInfo& b) const
+		{
+			return memcmp(&a, &b, sizeof(a)) == 0;
+		}
+	};
 
-	/// A number of views, one for each level. Used in image load/store.
-	DynamicArray<VkImageView> m_singleLevelViews;
-	Mutex m_singleLevelViewsMtx;
+	HashMap<VkImageViewCreateInfo, VkImageView, ViewHasher, ViewCompare>
+		m_viewsMap;
+	Mutex m_viewsMapMtx;
+	VkImageViewCreateInfo m_viewCreateInfoTemplate;
 
 	ANKI_USE_RESULT static VkFormatFeatureFlags calcFeatures(
 		const TextureInitInfo& init);
@@ -121,8 +137,9 @@ private:
 
 	ANKI_USE_RESULT Bool imageSupported(const TextureInitInfo& init);
 
-	ANKI_USE_RESULT Error initImage(CreateContext& ctx);
-	ANKI_USE_RESULT Error initView(CreateContext& ctx);
+	ANKI_USE_RESULT Error initImage(const TextureInitInfo& init);
+
+	VkImageView getOrCreateView(const VkImageViewCreateInfo& ci);
 };
 
 //==============================================================================

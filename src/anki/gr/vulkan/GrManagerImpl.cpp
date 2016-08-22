@@ -145,7 +145,7 @@ GrManagerImpl::~GrManagerImpl()
 	}
 
 	m_transientMem.destroy();
-	m_gpuMemAllocs.destroy(getAllocator());
+	m_gpuAlloc.destroy();
 
 	m_semaphores.destroy(); // Destroy before fences
 	m_fences.destroy();
@@ -716,56 +716,12 @@ Error GrManagerImpl::initMemory(const ConfigSet& cfg)
 {
 	vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &m_memoryProperties);
 
-	// Create the high level allocators
-	m_gpuMemAllocs.create(getAllocator(), m_memoryProperties.memoryTypeCount);
-	U idx = 0;
-	for(GpuMemoryAllocator& alloc : m_gpuMemAllocs)
-	{
-		alloc.init(getAllocator(), m_device, idx++);
-	}
+	m_gpuAlloc.init(m_physicalDevice, m_device, getAllocator());
 
 	// Transient mem
 	ANKI_CHECK(m_transientMem.init(cfg));
 
 	return ErrorCode::NONE;
-}
-
-//==============================================================================
-U GrManagerImpl::findMemoryType(U resourceMemTypeBits,
-	VkMemoryPropertyFlags preferFlags,
-	VkMemoryPropertyFlags avoidFlags) const
-{
-	U preferedHigh = MAX_U32;
-	U preferedMed = MAX_U32;
-
-	// Iterate all mem types
-	for(U i = 0; i < m_memoryProperties.memoryTypeCount; i++)
-	{
-		if(resourceMemTypeBits & (1u << i))
-		{
-			VkMemoryPropertyFlags flags =
-				m_memoryProperties.memoryTypes[i].propertyFlags;
-
-			if((flags & preferFlags) == preferFlags)
-			{
-				preferedMed = i;
-
-				if((flags & avoidFlags) != avoidFlags)
-				{
-					preferedHigh = i;
-				}
-			}
-		}
-	}
-
-	if(preferedHigh < MAX_U32)
-	{
-		return preferedHigh;
-	}
-	else
-	{
-		return preferedMed;
-	}
 }
 
 //==============================================================================

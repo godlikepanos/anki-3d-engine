@@ -19,9 +19,9 @@ BufferImpl::~BufferImpl()
 		vkDestroyBuffer(getDevice(), m_handle, nullptr);
 	}
 
-	if(!m_memHandle.isEmpty())
+	if(m_memHandle)
 	{
-		getGrManagerImpl().freeMemory(m_memIdx, m_memHandle);
+		getGrManagerImpl().getGpuMemoryAllocator().freeMemory(m_memHandle);
 	}
 }
 
@@ -47,30 +47,33 @@ Error BufferImpl::init(
 	// Get mem requirements
 	VkMemoryRequirements req;
 	vkGetBufferMemoryRequirements(getDevice(), m_handle, &req);
+	U memIdx = MAX_U32;
 
 	if(access == BufferMapAccessBit::WRITE)
 	{
 		// Only write
 
 		// Device & host but not coherent
-		m_memIdx = getGrManagerImpl().findMemoryType(req.memoryTypeBits,
+		memIdx = getGrManagerImpl().getGpuMemoryAllocator().findMemoryType(
+			req.memoryTypeBits,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
 				| VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 			VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
 		// Fallback: host and not coherent
-		if(m_memIdx == MAX_U32)
+		if(memIdx == MAX_U32)
 		{
-			m_memIdx = getGrManagerImpl().findMemoryType(req.memoryTypeBits,
+			memIdx = getGrManagerImpl().getGpuMemoryAllocator().findMemoryType(
+				req.memoryTypeBits,
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
 				VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 		}
 
 		// Fallback: any host
-		if(m_memIdx == MAX_U32)
+		if(memIdx == MAX_U32)
 		{
 			ANKI_LOGW("Vulkan: Using a fallback mode for write-only buffer");
-			m_memIdx = getGrManagerImpl().findMemoryType(
+			memIdx = getGrManagerImpl().getGpuMemoryAllocator().findMemoryType(
 				req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, 0);
 		}
 	}
@@ -79,26 +82,28 @@ Error BufferImpl::init(
 		// Read or read/write
 
 		// Cached & coherent
-		m_memIdx = getGrManagerImpl().findMemoryType(req.memoryTypeBits,
+		memIdx = getGrManagerImpl().getGpuMemoryAllocator().findMemoryType(
+			req.memoryTypeBits,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
 				| VK_MEMORY_PROPERTY_HOST_CACHED_BIT
 				| VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 			0);
 
 		// Fallback: Just cached
-		if(m_memIdx == MAX_U32)
+		if(memIdx == MAX_U32)
 		{
-			m_memIdx = getGrManagerImpl().findMemoryType(req.memoryTypeBits,
+			memIdx = getGrManagerImpl().getGpuMemoryAllocator().findMemoryType(
+				req.memoryTypeBits,
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
 					| VK_MEMORY_PROPERTY_HOST_CACHED_BIT,
 				0);
 		}
 
 		// Fallback: Just host
-		if(m_memIdx == MAX_U32)
+		if(memIdx == MAX_U32)
 		{
 			ANKI_LOGW("Vulkan: Using a fallback mode for read/write buffer");
-			m_memIdx = getGrManagerImpl().findMemoryType(
+			memIdx = getGrManagerImpl().getGpuMemoryAllocator().findMemoryType(
 				req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, 0);
 		}
 	}
@@ -109,27 +114,28 @@ Error BufferImpl::init(
 		ANKI_ASSERT(access == BufferMapAccessBit::NONE);
 
 		// Device only
-		m_memIdx = getGrManagerImpl().findMemoryType(req.memoryTypeBits,
+		memIdx = getGrManagerImpl().getGpuMemoryAllocator().findMemoryType(
+			req.memoryTypeBits,
 			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
 		// Fallback: Device with anything else
-		if(m_memIdx == MAX_U32)
+		if(memIdx == MAX_U32)
 		{
-			m_memIdx = getGrManagerImpl().findMemoryType(
+			memIdx = getGrManagerImpl().getGpuMemoryAllocator().findMemoryType(
 				req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0);
 		}
 	}
 
-	ANKI_ASSERT(m_memIdx != MAX_U32);
+	ANKI_ASSERT(memIdx != MAX_U32);
 
 	const VkPhysicalDeviceMemoryProperties& props =
 		getGrManagerImpl().getMemoryProperties();
-	m_memoryFlags = props.memoryTypes[m_memIdx].propertyFlags;
+	m_memoryFlags = props.memoryTypes[memIdx].propertyFlags;
 
 	// Allocate
-	getGrManagerImpl().allocateMemory(
-		m_memIdx, req.size, req.alignment, m_memHandle);
+	getGrManagerImpl().getGpuMemoryAllocator().allocateMemory(
+		memIdx, req.size, req.alignment, true, m_memHandle);
 
 	// Bind mem to buffer
 	ANKI_VK_CHECK(vkBindBufferMemory(
@@ -150,7 +156,8 @@ void* BufferImpl::map(PtrSize offset, PtrSize range, BufferMapAccessBit access)
 	ANKI_ASSERT(!m_mapped);
 	ANKI_ASSERT(offset + range <= m_size);
 
-	void* ptr = getGrManagerImpl().getMappedAddress(m_memIdx, m_memHandle);
+	void* ptr = getGrManagerImpl().getGpuMemoryAllocator().getMappedAddress(
+		m_memHandle);
 	ANKI_ASSERT(ptr);
 
 #if ANKI_ASSERTIONS

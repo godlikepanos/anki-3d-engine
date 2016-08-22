@@ -130,10 +130,24 @@ Error Ssao::initInternal(const ConfigSet& config)
 	Array<Vec3, NOISE_TEX_SIZE * NOISE_TEX_SIZE> noise;
 	genNoise(&noise[0], &noise[0] + noise.getSize());
 
-	CommandBufferPtr cmdb =
-		gr.newInstance<CommandBuffer>(CommandBufferInitInfo());
+	CommandBufferInitInfo cmdbInit;
+	cmdbInit.m_flags = CommandBufferFlag::SMALL_BATCH;
+
+	CommandBufferPtr cmdb = gr.newInstance<CommandBuffer>(cmdbInit);
+
+	TextureSurfaceInfo surf(0, 0, 0, 0);
+
+	cmdb->setTextureSurfaceBarrier(
+		m_noiseTex, TextureUsageBit::NONE, TextureUsageBit::UPLOAD, surf);
+
 	cmdb->uploadTextureSurfaceCopyData(
-		m_noiseTex, TextureSurfaceInfo(0, 0, 0, 0), &noise[0], sizeof(noise));
+		m_noiseTex, surf, &noise[0], sizeof(noise));
+
+	cmdb->setTextureSurfaceBarrier(m_noiseTex,
+		TextureUsageBit::UPLOAD,
+		TextureUsageBit::SAMPLED_FRAGMENT,
+		surf);
+
 	cmdb->flush();
 
 	//

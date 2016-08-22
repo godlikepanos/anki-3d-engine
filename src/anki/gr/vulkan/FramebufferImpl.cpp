@@ -212,6 +212,12 @@ Error FramebufferImpl::initFramebuffer(const FramebufferInitInfo& init)
 			attachments[count] =
 				tex.getOrCreateSingleSurfaceView(att.m_surface);
 
+			if(m_width == 0)
+			{
+				m_width = tex.m_width >> att.m_surface.m_level;
+				m_height = tex.m_height >> att.m_surface.m_level;
+			}
+
 			m_refs[count++] = att.m_texture;
 		}
 
@@ -224,11 +230,15 @@ Error FramebufferImpl::initFramebuffer(const FramebufferInitInfo& init)
 			attachments[count] =
 				tex.getOrCreateSingleSurfaceView(att.m_surface);
 
+			if(m_width == 0)
+			{
+				m_width = tex.m_width >> att.m_surface.m_level;
+				m_height = tex.m_height >> att.m_surface.m_level;
+			}
+
 			m_refs[count++] = att.m_texture;
 		}
 
-		m_width = m_refs[0]->getImplementation().m_width;
-		m_height = m_refs[0]->getImplementation().m_height;
 		ci.width = m_width;
 		ci.height = m_height;
 

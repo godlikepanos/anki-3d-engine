@@ -16,7 +16,7 @@ struct Sprite
 };
 
 // The block contains data for all flares
-layout(std140) uniform _blk
+layout(std140, ANKI_UBO_BINDING(0, 0)) uniform _blk
 {
 	Sprite u_sprites[MAX_SPRITES];
 };
