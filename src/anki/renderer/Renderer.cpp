@@ -241,6 +241,8 @@ Error Renderer::render(RenderingContext& ctx)
 	ANKI_CHECK(m_ir->run(ctx));
 
 	ANKI_CHECK(m_is->binLights(ctx));
+
+	m_lf->resetOcclusionQueries(ctx, cmdb);
 	ANKI_CHECK(buildCommandBuffers(ctx));
 
 	// Perform image transitions

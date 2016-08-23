@@ -332,14 +332,16 @@ void CommandBufferImpl::generateMipmaps2d(TexturePtr tex, U face, U layer)
 			srcWidth > 0 && srcHeight > 0 && dstWidth > 0 && dstHeight > 0);
 
 		VkImageBlit blit;
-		blit.srcSubresource.aspectMask = impl.m_aspect;
+		blit.srcSubresource.aspectMask =
+			impl.m_aspect & (~VK_IMAGE_ASPECT_STENCIL_BIT);
 		blit.srcSubresource.baseArrayLayer = layer;
 		blit.srcSubresource.layerCount = 1;
 		blit.srcSubresource.mipLevel = i;
 		blit.srcOffsets[0] = {0, 0, 0};
 		blit.srcOffsets[1] = {srcWidth, srcHeight, 1};
 
-		blit.dstSubresource.aspectMask = impl.m_aspect;
+		blit.dstSubresource.aspectMask =
+			impl.m_aspect & (~VK_IMAGE_ASPECT_STENCIL_BIT);
 		blit.dstSubresource.baseArrayLayer = layer;
 		blit.dstSubresource.layerCount = 1;
 		blit.dstSubresource.mipLevel = i + 1;
@@ -355,7 +357,7 @@ void CommandBufferImpl::generateMipmaps2d(TexturePtr tex, U face, U layer)
 			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 			1,
 			&blit,
-			VK_FILTER_LINEAR);
+			(impl.m_depthStencil) ? VK_FILTER_NEAREST : VK_FILTER_LINEAR);
 	}
 
 	// Hold the reference

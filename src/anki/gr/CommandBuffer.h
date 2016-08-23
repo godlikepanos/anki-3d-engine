@@ -285,6 +285,9 @@ public:
 	/// @name Other
 	/// @{
 
+	/// Reset query before beginOcclusionQuery.
+	void resetOcclusionQuery(OcclusionQueryPtr query);
+
 	/// Begin query.
 	void beginOcclusionQuery(OcclusionQueryPtr query);
 

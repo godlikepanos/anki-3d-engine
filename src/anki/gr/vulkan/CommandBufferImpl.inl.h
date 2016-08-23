@@ -209,16 +209,31 @@ inline void CommandBufferImpl::drawElements(U32 count,
 }
 
 //==============================================================================
+inline void CommandBufferImpl::resetOcclusionQuery(OcclusionQueryPtr query)
+{
+	commandCommon();
+	flushBarriers();
+
+	VkQueryPool handle = query->getImplementation().m_handle.m_pool;
+	U32 idx = query->getImplementation().m_handle.m_queryIndex;
+	ANKI_ASSERT(handle);
+
+	vkCmdResetQueryPool(m_handle, handle, idx, 0);
+
+	m_queryList.pushBack(m_alloc, query);
+}
+
+//==============================================================================
 inline void CommandBufferImpl::beginOcclusionQuery(OcclusionQueryPtr query)
 {
 	commandCommon();
 	flushBarriers();
 
-	VkQueryPool handle = query->getImplementation().m_handle;
+	VkQueryPool handle = query->getImplementation().m_handle.m_pool;
+	U32 idx = query->getImplementation().m_handle.m_queryIndex;
 	ANKI_ASSERT(handle);
 
-	vkCmdResetQueryPool(m_handle, handle, 0, 0);
-	vkCmdBeginQuery(m_handle, handle, 0, 0);
+	vkCmdBeginQuery(m_handle, handle, idx, 0);
 
 	m_queryList.pushBack(m_alloc, query);
 }
@@ -228,10 +243,11 @@ inline void CommandBufferImpl::endOcclusionQuery(OcclusionQueryPtr query)
 {
 	commandCommon();
 
-	VkQueryPool handle = query->getImplementation().m_handle;
+	VkQueryPool handle = query->getImplementation().m_handle.m_pool;
+	U32 idx = query->getImplementation().m_handle.m_queryIndex;
 	ANKI_ASSERT(handle);
 
-	vkCmdEndQuery(m_handle, handle, 0);
+	vkCmdEndQuery(m_handle, handle, idx);
 
 	m_queryList.pushBack(m_alloc, query);
 }

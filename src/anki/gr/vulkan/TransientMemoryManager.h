@@ -69,7 +69,6 @@ private:
 	{
 	public:
 		PtrSize m_size = 0;
-		GpuMemoryAllocationHandle m_handle;
 		BufferImpl* m_buff = nullptr;
 		U8* m_mappedMem = nullptr;
 		VkBuffer m_bufferHandle = VK_NULL_HANDLE; ///< Cache it.

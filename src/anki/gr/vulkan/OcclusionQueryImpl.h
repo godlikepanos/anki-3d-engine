@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/gr/vulkan/VulkanObject.h>
+#include <anki/gr/vulkan/QueryAllocator.h>
 
 namespace anki
 {
@@ -17,7 +18,7 @@ namespace anki
 class OcclusionQueryImpl : public VulkanObject
 {
 public:
-	VkQueryPool m_handle = VK_NULL_HANDLE;
+	QueryAllocationHandle m_handle;
 
 	OcclusionQueryImpl(GrManager* manager)
 		: VulkanObject(manager)

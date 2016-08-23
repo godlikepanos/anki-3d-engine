@@ -24,12 +24,19 @@ Error Volumetric::init(const ConfigSet& config)
 		"shaders/Volumetric.frag.glsl", m_frag));
 
 	// Create ppline
-	ColorStateInfo colorState;
-	colorState.m_attachmentCount = 1;
-	colorState.m_attachments[0].m_srcBlendMethod = BlendMethod::ONE;
-	colorState.m_attachments[0].m_dstBlendMethod = BlendMethod::ONE;
+	PipelineInitInfo init;
+	init.m_inputAssembler.m_topology = PrimitiveTopology::TRIANGLE_STRIP;
+	init.m_depthStencil.m_depthWriteEnabled = false;
+	init.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
+	init.m_depthStencil.m_format = MS_DEPTH_ATTACHMENT_PIXEL_FORMAT;
+	init.m_color.m_attachmentCount = 1;
+	init.m_color.m_attachments[0].m_format = IS_COLOR_ATTACHMENT_PIXEL_FORMAT;
+	init.m_color.m_attachments[0].m_srcBlendMethod = BlendMethod::ONE;
+	init.m_color.m_attachments[0].m_dstBlendMethod = BlendMethod::ONE;
+	init.m_shaders[ShaderType::VERTEX] = m_r->getDrawQuadVertexShader();
+	init.m_shaders[ShaderType::FRAGMENT] = m_frag->getGrShader();
 
-	m_r->createDrawQuadPipeline(m_frag->getGrShader(), colorState, m_ppline);
+	m_ppline = getGrManager().newInstance<Pipeline>(init);
 
 	// Create the resource group
 	ResourceGroupInitInfo rcInit;

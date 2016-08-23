@@ -15,23 +15,26 @@ namespace anki
 
 /// Template struct that gives the type of the TVec4 SIMD
 template<typename T>
-struct TVec4Simd
+class TVec4Simd
 {
+public:
 	using Type = Array<T, 4>;
 };
 
 #if ANKI_SIMD == ANKI_SIMD_SSE
 // Specialize for F32
 template<>
-struct TVec4Simd<F32>
+class TVec4Simd<F32>
 {
+public:
 	using Type = __m128;
 };
 #elif ANKI_SIMD == ANKI_SIMD_NEON
 // Specialize for F32
 template<>
-struct TVec4Simd<F32>
+class TVec4Simd<F32>
 {
+public:
 	using Type = float32x4_t;
 };
 #endif

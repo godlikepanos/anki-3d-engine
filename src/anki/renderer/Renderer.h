@@ -47,6 +47,20 @@ public:
 	} m_ms;
 	/// @}
 
+	/// @name LF
+	/// @{
+	class Lf
+	{
+	public:
+		DynamicArrayAuto<OcclusionQueryPtr> m_queriesToTest;
+
+		Lf(const StackAllocator<U8>& alloc)
+			: m_queriesToTest(alloc)
+		{
+		}
+	} m_lf;
+	/// @}
+
 	/// @name IS
 	/// @{
 	class Is
@@ -101,6 +115,7 @@ public:
 
 	RenderingContext(const StackAllocator<U8>& alloc)
 		: m_tempAllocator(alloc)
+		, m_lf(alloc)
 		, m_sm(alloc)
 	{
 	}

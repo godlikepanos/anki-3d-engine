@@ -29,6 +29,8 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& config);
 
+	void resetOcclusionQueries(RenderingContext& ctx, CommandBufferPtr cmdb);
+
 	void runOcclusionTests(RenderingContext& ctx, CommandBufferPtr cmdb);
 
 	void run(RenderingContext& ctx, CommandBufferPtr cmdb);

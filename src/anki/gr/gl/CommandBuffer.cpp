@@ -287,6 +287,12 @@ void CommandBuffer::dispatchCompute(
 }
 
 //==============================================================================
+void CommandBuffer::resetOcclusionQuery(OcclusionQueryPtr query)
+{
+	// Nothing for GL
+}
+
+//==============================================================================
 class OqBeginCommand final : public GlCommand
 {
 public:

@@ -83,6 +83,7 @@ Error Lf::initSprite(const ConfigSet& config)
 	init.m_inputAssembler.m_topology = PrimitiveTopology::TRIANGLE_STRIP;
 	init.m_depthStencil.m_depthWriteEnabled = false;
 	init.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
+	init.m_depthStencil.m_format = MS_DEPTH_ATTACHMENT_PIXEL_FORMAT;
 	init.m_color.m_attachmentCount = 1;
 	init.m_color.m_attachments[0].m_format = IS_COLOR_ATTACHMENT_PIXEL_FORMAT;
 	init.m_color.m_attachments[0].m_srcBlendMethod = BlendMethod::ONE;
@@ -158,6 +159,41 @@ Error Lf::initInternal(const ConfigSet& config)
 }
 
 //==============================================================================
+void Lf::resetOcclusionQueries(RenderingContext& ctx, CommandBufferPtr cmdb)
+{
+	const FrustumComponent& camFr = *ctx.m_frustumComponent;
+	const VisibilityTestResults& vi = camFr.getVisibilityTestResults();
+
+	if(vi.getCount(VisibilityGroupType::FLARES) > m_maxFlares)
+	{
+		ANKI_LOGW("Visible flares exceed the limit. Increase lf.maxFlares");
+	}
+
+	U totalCount =
+		min<U>(vi.getCount(VisibilityGroupType::FLARES), m_maxFlares);
+	U count = 0;
+	if(totalCount > 0)
+	{
+		ctx.m_lf.m_queriesToTest.create(totalCount);
+
+		auto it = vi.getBegin(VisibilityGroupType::FLARES);
+		auto end = vi.getBegin(VisibilityGroupType::FLARES) + totalCount;
+		for(; it != end; ++it)
+		{
+			LensFlareComponent& lf =
+				(it->m_node)->getComponent<LensFlareComponent>();
+
+			OcclusionQueryPtr query = lf.getOcclusionQueryToTest();
+			ctx.m_lf.m_queriesToTest[count++] = query;
+
+			cmdb->resetOcclusionQuery(query);
+		}
+	}
+
+	ANKI_ASSERT(count == totalCount);
+}
+
+//==============================================================================
 void Lf::runOcclusionTests(RenderingContext& ctx, CommandBufferPtr cmdb)
 {
 	// Retrieve some things
@@ -171,6 +207,7 @@ void Lf::runOcclusionTests(RenderingContext& ctx, CommandBufferPtr cmdb)
 
 	U totalCount =
 		min<U>(vi.getCount(VisibilityGroupType::FLARES), m_maxFlares);
+	U count = 0;
 	if(totalCount > 0)
 	{
 		// Setup MVP UBO
@@ -205,7 +242,7 @@ void Lf::runOcclusionTests(RenderingContext& ctx, CommandBufferPtr cmdb)
 			*positions = lf.getWorldPosition().xyz();
 
 			// Draw and query
-			OcclusionQueryPtr& query = lf.getOcclusionQueryToTest();
+			OcclusionQueryPtr query = ctx.m_lf.m_queriesToTest[count++];
 			cmdb->beginOcclusionQuery(query);
 
 			cmdb->drawArrays(1, 1, positions - initialPositions);

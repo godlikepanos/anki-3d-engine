@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/gr/vulkan/OcclusionQueryImpl.h>
+#include <anki/gr/vulkan/GrManagerImpl.h>
 
 namespace anki
 {
@@ -13,7 +14,7 @@ OcclusionQueryImpl::~OcclusionQueryImpl()
 {
 	if(m_handle)
 	{
-		vkDestroyQueryPool(getDevice(), m_handle, nullptr);
+		getGrManagerImpl().getQueryAllocator().deleteQuery(m_handle);
 	}
 }
 
@@ -22,12 +23,7 @@ Error OcclusionQueryImpl::init(OcclusionQueryResultBit condRenderingBit)
 {
 	m_condRenderingBit = condRenderingBit;
 
-	VkQueryPoolCreateInfo ci = {};
-	ci.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
-	ci.queryType = VK_QUERY_TYPE_OCCLUSION;
-	ci.queryCount = 1;
-
-	ANKI_VK_CHECK(vkCreateQueryPool(getDevice(), &ci, nullptr, &m_handle));
+	ANKI_CHECK(getGrManagerImpl().getQueryAllocator().newQuery(m_handle));
 
 	return ErrorCode::NONE;
 }
@@ -41,8 +37,8 @@ OcclusionQueryResult OcclusionQueryImpl::getResult() const
 	VkResult res;
 	ANKI_VK_CHECKF(
 		res = vkGetQueryPoolResults(getDevice(),
-			m_handle,
-			0,
+			m_handle.m_pool,
+			m_handle.m_queryIndex,
 			1,
 			sizeof(out),
 			&out,

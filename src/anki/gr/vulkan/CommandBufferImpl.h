@@ -77,6 +77,8 @@ public:
 		vkCmdDispatch(m_handle, groupCountX, groupCountY, groupCountZ);
 	}
 
+	void resetOcclusionQuery(OcclusionQueryPtr query);
+
 	void beginOcclusionQuery(OcclusionQueryPtr query);
 
 	void endOcclusionQuery(OcclusionQueryPtr query);

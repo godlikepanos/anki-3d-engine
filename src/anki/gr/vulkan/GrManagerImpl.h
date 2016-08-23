@@ -11,6 +11,7 @@
 #include <anki/gr/vulkan/Semaphore.h>
 #include <anki/gr/vulkan/Fence.h>
 #include <anki/gr/vulkan/TransientMemoryManager.h>
+#include <anki/gr/vulkan/QueryAllocator.h>
 #include <anki/util/HashMap.h>
 
 namespace anki
@@ -189,6 +190,16 @@ public:
 		return m_vendor;
 	}
 
+	QueryAllocator& getQueryAllocator()
+	{
+		return m_queryAlloc;
+	}
+
+	Bool r8g8b8ImagesSupported() const
+	{
+		return m_r8g8b8ImagesSupported;
+	}
+
 private:
 	GrManager* m_manager = nullptr;
 
@@ -287,6 +298,10 @@ private:
 	/// @}
 
 	TextureFallbackUploader* m_texUploader = nullptr;
+
+	QueryAllocator m_queryAlloc;
+
+	Bool8 m_r8g8b8ImagesSupported = false;
 
 	ANKI_USE_RESULT Error initInternal(const GrManagerInitInfo& init);
 	ANKI_USE_RESULT Error initInstance(const GrManagerInitInfo& init);

@@ -6,8 +6,7 @@
 #include "shaders/Common.glsl"
 
 layout(location = 0) in vec4 in_color;
-
-out vec4 out_color;
+layout(location = 0) out vec4 out_color;
 
 void main()
 {

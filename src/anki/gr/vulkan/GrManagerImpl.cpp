@@ -219,6 +219,33 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	m_texUploader = getAllocator().newInstance<TextureFallbackUploader>(this);
 	ANKI_CHECK(m_texUploader->init());
 
+	m_queryAlloc.init(getAllocator(), m_device);
+
+	// Set m_r8g8b8ImagesSupported
+	{
+		VkImageFormatProperties props = {};
+		VkResult res = vkGetPhysicalDeviceImageFormatProperties(
+			m_physicalDevice,
+			VK_FORMAT_R8G8B8_UNORM,
+			VK_IMAGE_TYPE_2D,
+			VK_IMAGE_TILING_OPTIMAL,
+			VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+			0,
+			&props);
+
+		if(res == VK_ERROR_FORMAT_NOT_SUPPORTED)
+		{
+			ANKI_LOGI("R8G8B8 Images are not supported. Will workaround this");
+			m_r8g8b8ImagesSupported = false;
+		}
+		else
+		{
+			ANKI_ASSERT(res == VK_SUCCESS);
+			ANKI_LOGI("R8G8B8 Images are supported");
+			m_r8g8b8ImagesSupported = true;
+		}
+	}
+
 	return ErrorCode::NONE;
 }
 
@@ -647,9 +674,25 @@ VkRenderPass GrManagerImpl::getOrCreateCompatibleRenderPass(
 		for(U i = 0; i < init.m_color.m_attachmentCount; ++i)
 		{
 			// We only care about samples and format
+
+			// Workaround unsupported formats
+			VkFormat fmt;
+			if(init.m_color.m_attachments[i].m_format.m_components
+					== ComponentFormat::R8G8B8
+				&& !m_r8g8b8ImagesSupported)
+			{
+				PixelFormat newFmt = init.m_color.m_attachments[i].m_format;
+				newFmt.m_components = ComponentFormat::R8G8B8A8;
+				fmt = convertFormat(newFmt);
+			}
+			else
+			{
+				fmt = convertFormat(init.m_color.m_attachments[i].m_format);
+			}
+
 			VkAttachmentDescription& desc = attachmentDescriptions[i];
 			desc.format = (!init.m_color.m_drawsToDefaultFramebuffer)
-				? convertFormat(init.m_color.m_attachments[i].m_format)
+				? fmt
 				: m_surfaceFormat;
 			desc.samples = VK_SAMPLE_COUNT_1_BIT;
 			desc.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;

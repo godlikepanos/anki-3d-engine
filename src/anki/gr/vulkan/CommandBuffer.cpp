@@ -240,6 +240,12 @@ void CommandBuffer::setBufferBarrier(
 }
 
 //==============================================================================
+void CommandBuffer::resetOcclusionQuery(OcclusionQueryPtr query)
+{
+	m_impl->resetOcclusionQuery(query);
+}
+
+//==============================================================================
 void CommandBuffer::beginOcclusionQuery(OcclusionQueryPtr query)
 {
 	m_impl->beginOcclusionQuery(query);

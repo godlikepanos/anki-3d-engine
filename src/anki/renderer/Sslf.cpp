@@ -38,6 +38,7 @@ Error Sslf::initInternal(const ConfigSet& config)
 
 	ColorStateInfo colorState;
 	colorState.m_attachmentCount = 1;
+	colorState.m_attachments[0].m_format = Bloom::RT_PIXEL_FORMAT;
 	colorState.m_attachments[0].m_srcBlendMethod = BlendMethod::ONE;
 	colorState.m_attachments[0].m_dstBlendMethod = BlendMethod::ONE;
 
