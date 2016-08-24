@@ -46,15 +46,32 @@ Error Dbg::init(const ConfigSet& initializer)
 {
 	m_enabled = initializer.getNumber("dbg.enabled");
 	m_flags.set(DbgFlag::ALL);
+	return ErrorCode::NONE;
+}
 
-	// Chose the correct color FAI
+//==============================================================================
+Error Dbg::lazyInit()
+{
+	ANKI_ASSERT(!m_initialized);
+
+	// RT
+	m_r->createRenderTarget(m_r->getWidth(),
+		m_r->getHeight(),
+		DBG_COLOR_ATTACHMENT_PIXEL_FORMAT,
+		TextureUsageBit::SAMPLED_FRAGMENT
+			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
+		SamplingFilter::LINEAR,
+		1,
+		m_rt);
+
+	// Create FB
 	FramebufferInitInfo fbInit;
 	fbInit.m_colorAttachmentCount = 1;
+	fbInit.m_colorAttachments[0].m_texture = m_rt;
+	fbInit.m_colorAttachments[0].m_loadOperation =
+		AttachmentLoadOperation::CLEAR;
 	fbInit.m_depthStencilAttachment.m_texture = m_r->getMs().getDepthRt();
 	fbInit.m_depthStencilAttachment.m_loadOperation =
-		AttachmentLoadOperation::LOAD;
-	fbInit.m_colorAttachments[0].m_texture = m_r->getPps().getRt();
-	fbInit.m_colorAttachments[0].m_loadOperation =
 		AttachmentLoadOperation::LOAD;
 
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
@@ -62,7 +79,6 @@ Error Dbg::init(const ConfigSet& initializer)
 	m_drawer = getAllocator().newInstance<DebugDrawer>();
 	ANKI_CHECK(m_drawer->init(m_r));
 
-	getGrManager().finish();
 	return ErrorCode::NONE;
 }
 
@@ -71,8 +87,15 @@ Error Dbg::run(RenderingContext& ctx)
 {
 	ANKI_ASSERT(m_enabled);
 
+	if(!m_initialized)
+	{
+		ANKI_CHECK(lazyInit());
+		m_initialized = true;
+	}
+
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 	cmdb->beginRenderPass(m_fb);
+	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 
 	FrustumComponent& camFrc = *ctx.m_frustumComponent;
 	SceneNode& cam = camFrc.getSceneNode();

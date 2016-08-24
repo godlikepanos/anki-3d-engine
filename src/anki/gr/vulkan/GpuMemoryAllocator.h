@@ -91,7 +91,7 @@ private:
 };
 
 /// Dynamic GPU memory allocator for all types.
-class GpuMemoryAllocator
+class GpuMemoryAllocator : public NonCopyable
 {
 public:
 	GpuMemoryAllocator()

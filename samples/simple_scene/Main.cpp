@@ -18,6 +18,7 @@ Error MyApp::init()
 	// Init the super class
 	Config config;
 	config.set("fullscreenDesktopResolution", true);
+	config.set("dataPaths", ".:..");
 	ANKI_CHECK(App::init(config, allocAligned, nullptr));
 
 	// Load the scene.lua

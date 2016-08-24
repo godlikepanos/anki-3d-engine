@@ -61,6 +61,11 @@ public:
 		m_flags.flip(flags);
 	}
 
+	TexturePtr getRt() const
+	{
+		return m_rt;
+	}
+
 anki_internal:
 	Dbg(Renderer* r);
 
@@ -71,10 +76,14 @@ anki_internal:
 	ANKI_USE_RESULT Error run(RenderingContext& ctx);
 
 private:
-	Bool m_enabled = false;
+	Bool8 m_enabled = false;
+	Bool8 m_initialized = false; ///< Lazily initialize.
+	TexturePtr m_rt;
 	FramebufferPtr m_fb;
 	DebugDrawer* m_drawer = nullptr;
 	BitMask<DbgFlag> m_flags;
+
+	ANKI_USE_RESULT Error lazyInit();
 };
 /// @}
 

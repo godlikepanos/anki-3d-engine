@@ -12,6 +12,7 @@
 #include <anki/gr/vulkan/Fence.h>
 #include <anki/gr/vulkan/TransientMemoryManager.h>
 #include <anki/gr/vulkan/QueryAllocator.h>
+#include <anki/gr/vulkan/CompatibleRenderPassCreator.h>
 #include <anki/util/HashMap.h>
 
 namespace anki
@@ -29,6 +30,7 @@ class GrManagerImpl
 public:
 	GrManagerImpl(GrManager* manager)
 		: m_manager(manager)
+		, m_rpCreator(this)
 		, m_transientMem(manager)
 	{
 		ANKI_ASSERT(manager);
@@ -37,9 +39,6 @@ public:
 	~GrManagerImpl();
 
 	ANKI_USE_RESULT Error init(const GrManagerInitInfo& cfg);
-
-	/// Get or create a compatible render pass for a pipeline.
-	VkRenderPass getOrCreateCompatibleRenderPass(const PipelineInitInfo& init);
 
 	GrAllocator<U8> getAllocator() const;
 
@@ -122,7 +121,7 @@ public:
 	}
 	/// @}
 
-	VkFormat getDefaultSurfaceFormat() const
+	VkFormat getDefaultFramebufferSurfaceFormat() const
 	{
 		return m_surfaceFormat;
 	}
@@ -195,9 +194,14 @@ public:
 		return m_queryAlloc;
 	}
 
-	Bool r8g8b8ImagesSupported() const
+	Bool getR8g8b8ImagesSupported() const
 	{
 		return m_r8g8b8ImagesSupported;
+	}
+
+	CompatibleRenderPassCreator& getCompatibleRenderPassCreator()
+	{
+		return m_rpCreator;
 	}
 
 private:
@@ -248,8 +252,7 @@ private:
 	VkPipelineLayout m_globalPipelineLayout = VK_NULL_HANDLE;
 
 	/// Map for compatible render passes.
-	class CompatibleRenderPassHashMap;
-	CompatibleRenderPassHashMap* m_renderPasses = nullptr;
+	CompatibleRenderPassCreator m_rpCreator;
 
 	/// @name Memory
 	/// @{

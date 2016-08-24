@@ -10,6 +10,9 @@
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_isRt;
 layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_ppsBloomLfRt;
 layout(ANKI_TEX_BINDING(0, 2)) uniform sampler3D u_lut;
+#if DBG_ENABLED
+layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2D u_dbgRt;
+#endif
 
 struct Luminance
 {
@@ -123,6 +126,10 @@ void main()
 #endif
 
 	out_color = colorGrading(out_color);
+
+#if DBG_ENABLED
+	out_color += textureLod(u_dbgRt, in_uv, 0.0).rgb;
+#endif
 
 #if 0
 	{

@@ -97,7 +97,7 @@ void FramebufferImpl::setupAttachmentDescriptor(
 
 	desc = {};
 	desc.format = (m_defaultFramebuffer)
-		? getGrManagerImpl().getDefaultSurfaceFormat()
+		? getGrManagerImpl().getDefaultFramebufferSurfaceFormat()
 		: convertFormat(att.m_texture->getImplementation().m_format);
 	desc.samples = VK_SAMPLE_COUNT_1_BIT;
 	desc.loadOp = convertLoadOp(att.m_loadOperation);

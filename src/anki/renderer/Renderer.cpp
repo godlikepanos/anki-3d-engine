@@ -81,7 +81,8 @@ Error Renderer::init(ThreadPool* threadpool,
 	HeapAllocator<U8> alloc,
 	StackAllocator<U8> frameAlloc,
 	const ConfigSet& config,
-	Timestamp* globTimestamp)
+	Timestamp* globTimestamp,
+	Bool willDrawToDefaultFbo)
 {
 	m_globTimestamp = globTimestamp;
 	m_threadpool = threadpool;
@@ -89,6 +90,7 @@ Error Renderer::init(ThreadPool* threadpool,
 	m_gr = gl;
 	m_alloc = alloc;
 	m_frameAlloc = frameAlloc;
+	m_willDrawToDefaultFbo = willDrawToDefaultFbo;
 
 	Error err = initInternal(config);
 	if(err)
@@ -322,12 +324,12 @@ Error Renderer::render(RenderingContext& ctx)
 	cmdb->endRenderPass();
 	m_bloom->setPostRunBarriers(ctx);
 
-	m_pps->run(ctx);
-
 	if(m_dbg->getEnabled())
 	{
 		ANKI_CHECK(m_dbg->run(ctx));
 	}
+
+	ANKI_CHECK(m_pps->run(ctx));
 
 	++m_frameCount;
 

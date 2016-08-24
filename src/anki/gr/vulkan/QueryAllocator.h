@@ -50,7 +50,7 @@ private:
 };
 
 /// Batch allocator of queries.
-class QueryAllocator
+class QueryAllocator : public NonCopyable
 {
 public:
 	QueryAllocator()

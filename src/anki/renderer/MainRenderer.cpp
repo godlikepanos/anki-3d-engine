@@ -69,6 +69,8 @@ Error MainRenderer::create(ThreadPool* threadpool,
 	config2.set("width", size.x());
 	config2.set("height", size.y());
 
+	m_rDrawToDefaultFb = m_renderingQuality == 1.0;
+
 	m_r.reset(m_alloc.newInstance<Renderer>());
 	ANKI_CHECK(m_r->init(threadpool,
 		resources,
@@ -76,7 +78,8 @@ Error MainRenderer::create(ThreadPool* threadpool,
 		m_alloc,
 		m_frameAlloc,
 		config2,
-		globTimestamp));
+		globTimestamp,
+		m_rDrawToDefaultFb));
 
 	// Set the default preprocessor string
 	m_materialShaderSource.sprintf(m_alloc,
@@ -88,23 +91,26 @@ Error MainRenderer::create(ThreadPool* threadpool,
 		TILE_SIZE);
 
 	// Init other
-	ANKI_CHECK(m_r->getResourceManager().loadResource(
-		"shaders/Final.frag.glsl", m_blitFrag));
+	if(!m_rDrawToDefaultFb)
+	{
+		ANKI_CHECK(m_r->getResourceManager().loadResource(
+			"shaders/Final.frag.glsl", m_blitFrag));
 
-	ColorStateInfo colorState;
-	colorState.m_attachmentCount = 1;
-	colorState.m_attachments[0].m_format =
-		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM);
-	m_r->createDrawQuadPipeline(
-		m_blitFrag->getGrShader(), colorState, m_blitPpline);
+		ColorStateInfo colorState;
+		colorState.m_attachmentCount = 1;
+		m_r->createDrawQuadPipeline(
+			m_blitFrag->getGrShader(), colorState, m_blitPpline);
+
+		// Init RC group
+		ResourceGroupInitInfo rcinit;
+		rcinit.m_textures[0].m_texture = m_r->getPps().getRt();
+		m_rcGroup = m_r->getGrManager().newInstance<ResourceGroup>(rcinit);
+		ANKI_LOGI("The main renderer will have to blit the offscreen "
+				  "renderer's result");
+	}
 
 	ANKI_LOGI(
-		"Main renderer initialized. Rendering size %dx%d", m_width, m_height);
-
-	// Init RC group
-	ResourceGroupInitInfo rcinit;
-	rcinit.m_textures[0].m_texture = m_r->getPps().getRt();
-	m_rcGroup = m_r->getGrManager().newInstance<ResourceGroup>(rcinit);
+		"Main renderer initialized. Rendering size %ux%u", m_width, m_height);
 
 	return ErrorCode::NONE;
 }
@@ -125,34 +131,23 @@ Error MainRenderer::render(SceneGraph& scene)
 	// Set some of the dynamic state
 	cmdb->setPolygonOffset(0.0, 0.0);
 
-	// Find where the m_r should draw
-	Bool rDrawToDefault;
-	if(m_renderingQuality == 1.0 && !m_r->getDbg().getEnabled())
-	{
-		rDrawToDefault = true;
-	}
-	else
-	{
-		rDrawToDefault = false;
-	}
-
-	if(rDrawToDefault)
-	{
-		m_r->setOutputFramebuffer(m_defaultFb, m_width, m_height);
-	}
-	else
-	{
-		m_r->setOutputFramebuffer(FramebufferPtr(), 0, 0);
-	}
-
 	// Run renderer
 	RenderingContext ctx(m_frameAlloc);
+
+	if(m_rDrawToDefaultFb)
+	{
+		ctx.m_outFb = m_defaultFb;
+		ctx.m_outFbWidth = m_width;
+		ctx.m_outFbHeight = m_height;
+	}
+
 	ctx.m_commandBuffer = cmdb;
 	ctx.m_frustumComponent =
 		&scene.getActiveCamera().getComponent<FrustumComponent>();
 	ANKI_CHECK(m_r->render(ctx));
 
-	if(!rDrawToDefault)
+	// Blit renderer's result to default FB if needed
+	if(!m_rDrawToDefaultFb)
 	{
 		cmdb->beginRenderPass(m_defaultFb);
 		cmdb->setViewport(0, 0, m_width, m_height);

@@ -362,7 +362,7 @@ private:
 	PtrSize m_bias = 0;
 
 	/// Cache a value.
-	PtrSize m_headerSize;
+	PtrSize m_headerSize = 0;
 
 	/// Compute the size for the next chunk.
 	/// @param size The current allocation size.

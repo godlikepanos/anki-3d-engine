@@ -60,7 +60,7 @@ Error DebugDrawer::init(Renderer* r)
 	init.m_depthStencil.m_depthWriteEnabled = false;
 	init.m_depthStencil.m_format = MS_DEPTH_ATTACHMENT_PIXEL_FORMAT;
 	init.m_color.m_attachmentCount = 1;
-	init.m_color.m_attachments[0].m_format = Pps::RT_PIXEL_FORMAT;
+	init.m_color.m_attachments[0].m_format = DBG_COLOR_ATTACHMENT_PIXEL_FORMAT;
 	init.m_shaders[U(ShaderType::VERTEX)] = m_vert->getGrShader();
 	init.m_shaders[U(ShaderType::FRAGMENT)] = m_frag->getGrShader();
 

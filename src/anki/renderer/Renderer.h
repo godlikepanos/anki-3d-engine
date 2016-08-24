@@ -113,6 +113,10 @@ public:
 	} m_fs;
 	/// @}
 
+	FramebufferPtr m_outFb;
+	U32 m_outFbWidth = 0;
+	U32 m_outFbHeight = 0;
+
 	RenderingContext(const StackAllocator<U8>& alloc)
 		: m_tempAllocator(alloc)
 		, m_lf(alloc)
@@ -212,29 +216,13 @@ public:
 		HeapAllocator<U8> alloc,
 		StackAllocator<U8> frameAlloc,
 		const ConfigSet& config,
-		Timestamp* globTimestamp);
-
-	/// Set the output of the renderer before calling #render.
-	void setOutputFramebuffer(FramebufferPtr outputFb, U32 width, U32 height)
-	{
-		m_outputFb = outputFb;
-		m_outputFbSize = UVec2(width, height);
-	}
+		Timestamp* globTimestamp,
+		Bool willDrawToDefaultFbo);
 
 	/// This function does all the rendering stages and produces a final result.
 	ANKI_USE_RESULT Error render(RenderingContext& ctx);
 
 anki_internal:
-	void getOutputFramebuffer(FramebufferPtr& outputFb, U32& width, U32& height)
-	{
-		if(m_outputFb.isCreated())
-		{
-			outputFb = m_outputFb;
-			width = m_outputFbSize.x();
-			height = m_outputFbSize.y();
-		}
-	}
-
 	U64 getFrameCount() const
 	{
 		return m_frameCount;
@@ -370,6 +358,11 @@ anki_internal:
 		return m_resourcesDirty;
 	}
 
+	Bool getDrawToDefaultFramebuffer() const
+	{
+		return m_willDrawToDefaultFbo;
+	}
+
 private:
 	ThreadPool* m_threadpool;
 	ResourceManager* m_resources;
@@ -414,12 +407,11 @@ private:
 
 	U64 m_frameCount; ///< Frame number
 
-	FramebufferPtr m_outputFb;
-	UVec2 m_outputFbSize;
-
 	U64 m_prevLoadRequestCount = 0;
 	U64 m_prevAsyncTasksCompleted = 0;
 	Bool m_resourcesDirty = true;
+
+	Bool8 m_willDrawToDefaultFbo = false;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 

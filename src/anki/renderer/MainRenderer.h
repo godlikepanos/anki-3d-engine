@@ -64,6 +64,7 @@ private:
 	StackAllocator<U8> m_frameAlloc;
 
 	UniquePtr<Renderer> m_r;
+	Bool8 m_rDrawToDefaultFb = false;
 
 	ShaderResourcePtr m_blitFrag;
 	PipelinePtr m_blitPpline;

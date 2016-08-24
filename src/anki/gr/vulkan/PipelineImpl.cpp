@@ -111,7 +111,9 @@ Error PipelineImpl::initGraphics(const PipelineInitInfo& init)
 
 	// Finalize
 	ci.layout = getGrManagerImpl().getGlobalPipelineLayout();
-	ci.renderPass = getGrManagerImpl().getOrCreateCompatibleRenderPass(init);
+	ci.renderPass = getGrManagerImpl()
+						.getCompatibleRenderPassCreator()
+						.getOrCreateCompatibleRenderPass(init);
 	ci.basePipelineHandle = VK_NULL_HANDLE;
 
 	ANKI_VK_CHECK(vkCreateGraphicsPipelines(

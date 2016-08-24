@@ -28,7 +28,7 @@ anki_internal:
 	~Pps();
 
 	ANKI_USE_RESULT Error init(const ConfigSet& config);
-	void run(RenderingContext& ctx);
+	ANKI_USE_RESULT Error run(RenderingContext& ctx);
 
 	const TexturePtr& getRt() const
 	{
@@ -44,16 +44,17 @@ private:
 	static const U LUT_SIZE = 16;
 
 	FramebufferPtr m_fb;
-	ShaderResourcePtr m_frag;
-	PipelinePtr m_ppline;
+	Array<ShaderResourcePtr, 2> m_frag; ///< One with Dbg and one without
+	Array2d<PipelinePtr, 2, 2> m_ppline; ///< With Dbg, Default FB or not
 	TexturePtr m_rt;
-	ResourceGroupPtr m_rcGroup;
+	Array<ResourceGroupPtr, 2> m_rcGroup; ///< One with Dbg and one without
 
 	TextureResourcePtr m_lut; ///< Color grading lookup texture.
+	Bool8 m_lutDirty = true;
+
+	Bool8 m_sharpenEnabled = false;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& config);
-
-	void rebuildResourceGroup();
 };
 /// @}
 
