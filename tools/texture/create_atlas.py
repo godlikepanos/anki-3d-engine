@@ -1,0 +1,301 @@
+#!/usr/bin/python3
+
+# Copyright (C) 2009-2016, Panagiotis Christopoulos Charitos and contributors.
+# All rights reserved.
+# Code licensed under the BSD License.
+# http://www.anki3d.org/LICENSE
+
+import optparse
+from PIL import Image, ImageDraw
+from math import *
+import os
+
+class SubImage:
+	image = None
+	image_name = ""
+	width = 0
+	height = 0
+
+	mwidth = 0
+	mheight = 0
+
+	atlas_x = 0xFFFFFFFF
+	atlas_y = 0xFFFFFFFF
+
+class Frame:
+	x = 0
+	y = 0
+	w = 0
+	h = 0
+
+	@classmethod
+	def diagonal(self):
+		return sqrt(self.w * self.w + self.h * self.h)
+	
+	@classmethod
+	def area(self):
+		return self.w * self.h
+
+class Context:
+	in_files = []
+	out_file = ""
+	margin = 0
+	bg_color = 0
+
+	sub_images = []
+	atlas_width = 0
+	atlas_height = 0
+	mode = None
+
+def next_power_of_two(x):
+	return pow(2.0, ceil(log(x) / log(2)))
+
+def printi(msg):
+	print("[I] %s" % msg)
+
+def parse_commandline():
+	""" Parse the command line arguments """
+
+	parser = optparse.OptionParser(usage = "usage: %prog [options]", \
+			description = "This program a texture atlas ")
+
+	parser.add_option("-i", "--input", dest = "inp",
+			type = "string", help = "specify the image(s) to convert. " \
+			"Seperate with space")
+
+	parser.add_option("-o", "--output", dest = "out",
+			type = "string", help = "specify output PNG image.")
+
+	parser.add_option("-m", "--margin", dest = "margin",
+			type = "int", action = "store", default = 0,
+			help = "specify the margin.")
+
+	parser.add_option("-b", "--background-color", dest = "bg",
+			type = "string", help = "specify background of empty areas",
+			default = "ff00ff00")
+
+	# Add the default value on each option when printing help
+	for option in parser.option_list:
+		if option.default != ("NO", "DEFAULT"):
+			option.help += (" " if option.help else "") + "[default: %default]"
+
+	(options, args) = parser.parse_args()
+
+	if not options.inp or not options.out:
+		parser.error("argument is missing")
+
+	ctx = Context()
+	ctx.in_files = options.inp.split(":")
+	ctx.out_file = options.out
+	ctx.margin = options.margin
+	ctx.bg_color = int(options.bg, 16)
+
+	if len(ctx.in_files) < 2:
+		parser.error("Not enough images")
+
+	return ctx
+
+def load_images(ctx):
+	""" Load the images """
+
+	for i in ctx.in_files:
+		img = SubImage()
+		img.image = Image.open(i)
+		img.image_name = i
+
+		if ctx.mode == None:
+			ctx.mode = img.image.mode
+		else:
+			if ctx.mode != img.image.mode:
+				raise Exception("Image \"%s\" has a different mode: \"%s\"" \
+						% (i, img.image.mode))
+
+		img.width = img.image.size[0]
+		img.height = img.image.size[1]
+
+		img.mwidth = img.width + ctx.margin
+		img.mheight = img.height + ctx.margin
+
+		printi("Image \"%s\" loaded. Mode \"%s\"" % (i, img.image.mode))
+		ctx.sub_images.append(img)
+
+def compute_atlas_rough_size(ctx):
+	for i in ctx.sub_images:
+		ctx.atlas_width += i.mwidth
+		ctx.atlas_height += i.mheight
+
+	ctx.atlas_width = next_power_of_two(ctx.atlas_width)
+	ctx.atlas_height = next_power_of_two(ctx.atlas_height)
+
+def sort_image_key_diagonal(img):
+	return img.width * img.width + img.height * img.height
+
+def sort_image_key_biggest_side(img):
+	return max(img.width, img.height)
+
+def best_fit(img, crnt_frame, frame):
+	if img.mwidth > frame.w or img.mheight > frame.h:
+		return False
+
+	if frame.area() < crnt_frame.area():
+		return True
+	else:
+		return False
+
+def worst_fit(img, crnt_frame, new_frame):
+	if img.mwidth > new_frame.w or img.mheight > new_frame.h:
+		return False
+
+	if new_frame.area() > crnt_frame.area():
+		return True
+	else:
+		return False
+
+def closer_to_00(img, crnt_frame, new_frame):
+	if img.mwidth > new_frame.w or img.mheight > new_frame.h:
+		return False
+
+	new_dist = new_frame.x * new_frame.x + new_frame.y * new_frame.y
+	crnt_dist = crnt_frame.x * crnt_frame.x + crnt_frame.y * crnt_frame.y
+
+	if new_dist < crnt_dist:
+		return True
+	else:
+		return False
+
+def place_sub_images(ctx):
+	""" Place the sub images in the atlas """
+
+	# Sort the images
+	ctx.sub_images.sort(key = sort_image_key_diagonal, reverse = True)
+
+	frame = Frame()
+	frame.w = ctx.atlas_width
+	frame.h = ctx.atlas_height
+	frames = []
+	frames.append(frame)
+
+	unplaced_imgs = []
+	for i in range(0, len(ctx.sub_images)):
+		unplaced_imgs.append(i)
+
+	while len(unplaced_imgs) > 0:
+		sub_image = ctx.sub_images[unplaced_imgs[0]]
+		unplaced_imgs.pop(0)
+
+		printi("Will try to place image \"%s\" of size %ux%d" % \
+				(sub_image.image_name, sub_image.width, sub_image.height))
+
+		# Find best frame
+		best_frame = None
+		best_frame_idx = 0
+		idx = 0
+		for frame in frames:
+			if not best_frame or closer_to_00(sub_image, best_frame, frame):
+				best_frame = frame
+				best_frame_idx = idx
+			idx += 1
+
+		assert best_frame != None, "See file"
+
+		# Update the sub_image
+		sub_image.atlas_x = best_frame.x + ctx.margin
+		sub_image.atlas_y =	best_frame.y + ctx.margin
+		printi("Image placed in %dx%d" % (sub_image.atlas_x, sub_image.atlas_y))
+
+		# Split frame
+		frame_top = Frame()
+		frame_top.x = best_frame.x + sub_image.mwidth
+		frame_top.y = best_frame.y
+		frame_top.w = best_frame.w - sub_image.mwidth
+		frame_top.h = sub_image.mheight
+
+		frame_bottom = Frame()
+		frame_bottom.x = best_frame.x
+		frame_bottom.y = best_frame.y + sub_image.mheight
+		frame_bottom.w = best_frame.w
+		frame_bottom.h = best_frame.h - sub_image.mheight
+
+		frames.pop(best_frame_idx)
+		frames.append(frame_top)
+		frames.append(frame_bottom)
+
+def shrink_atlas(ctx):
+	""" Compute the new atlas size """
+
+	width = 0
+	height = 0
+	for sub_image in ctx.sub_images:
+		width = max(width, sub_image.atlas_x + sub_image.width + ctx.margin)
+		height = max(height, sub_image.atlas_y + sub_image.height + ctx.margin)
+
+	ctx.atlas_width = width
+	ctx.atlas_height = height
+
+def create_atlas(ctx):
+	""" Create and populate the atlas """
+
+	bg_color = 0
+	if ctx.mode == "RGB":
+		color_space = (255, 255, 255)
+		bg_color = (ctx.bg_color >> 24) | (ctx.bg_color >> 16) \
+			| (ctx.bg_color >> 0)
+	else:
+		color_space = (255, 255, 255, 255)
+
+	atlas_img = Image.new('RGB', \
+			(int(ctx.atlas_width), int(ctx.atlas_height)), color_space)
+
+	draw = ImageDraw.Draw(atlas_img)
+	draw.rectangle((0, 0, ctx.atlas_width, ctx.atlas_height), ctx.bg_color)
+
+	for sub_image in ctx.sub_images:
+		assert sub_image.atlas_x != 0xFFFFFFFF and \
+				sub_image.atlas_y != 0xFFFFFFFF, "See file"
+
+		atlas_img.paste(sub_image.image, \
+				(int(sub_image.atlas_x), int(sub_image.atlas_y)))
+
+	printi("Saving atlas \"%s\"" % ctx.out_file)
+	atlas_img.save(ctx.out_file)
+
+def write_xml(ctx):
+	""" Write the schema """
+
+	fname = os.path.splitext(ctx.out_file)[0] + ".ankiatex"
+	printi("Writing XML \"%s\"" % fname)
+	f = open(fname, "w")
+	f.write("<atlasTexture>\n")
+	f.write("\t<texture>%s</texture>\n" % ctx.out_file)
+	f.write("\t<subImages>\n")
+
+	for sub_image in ctx.sub_images:
+		f.write("\t\t<subImage>\n")
+		f.write("\t\t\t<name>%s</name>\n" % sub_image.image_name)
+
+		# Now change coordinate system
+		left = sub_image.atlas_x / ctx.atlas_width
+		right = left + (sub_image.width / ctx.atlas_width)
+		top = (ctx.atlas_height - sub_image.atlas_y) / ctx.atlas_height
+		bottom = top - (sub_image.height / ctx.atlas_height)
+
+		f.write("\t\t\t<uv>%f %f %f %f</uv>\n" % (left, bottom, right, top))
+		f.write("\t\t</subImage>\n")
+
+	f.write("\t</subImages>\n")
+	f.write("</atlasTexture>\n")
+
+def main():
+	""" The main """
+
+	ctx = parse_commandline();
+	load_images(ctx)
+	compute_atlas_rough_size(ctx)
+	place_sub_images(ctx)
+	shrink_atlas(ctx)
+	create_atlas(ctx)
+	write_xml(ctx)
+
+if __name__ == "__main__":
+	main()
+
