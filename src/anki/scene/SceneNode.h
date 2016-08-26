@@ -30,15 +30,14 @@ class SceneNode : public Hierarchy<SceneNode>,
 public:
 	using Base = Hierarchy<SceneNode>;
 
-	/// The one and only constructor
-	SceneNode(SceneGraph* scene);
+	/// The one and only constructor.
+	/// @param scene The owner scene.
+	/// @param name The unique name of the node. If it's empty the the node
+	///             is not searchable.
+	SceneNode(SceneGraph* scene, CString name);
 
 	/// Unregister node
 	virtual ~SceneNode();
-
-	/// @param name The unique name of the node. If it's nullptr the the node
-	///             is not searchable.
-	ANKI_USE_RESULT Error init(const CString& name);
 
 	SceneGraph& getSceneGraph()
 	{

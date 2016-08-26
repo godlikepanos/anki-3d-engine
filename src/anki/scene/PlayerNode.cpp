@@ -126,8 +126,8 @@ public:
 //==============================================================================
 
 //==============================================================================
-PlayerNode::PlayerNode(SceneGraph* scene)
-	: SceneNode(scene)
+PlayerNode::PlayerNode(SceneGraph* scene, CString name)
+	: SceneNode(scene, name)
 {
 }
 
@@ -137,10 +137,8 @@ PlayerNode::~PlayerNode()
 }
 
 //==============================================================================
-Error PlayerNode::init(const CString& name, const Vec4& position)
+Error PlayerNode::init(const Vec4& position)
 {
-	ANKI_CHECK(SceneNode::init(name));
-
 	// Create physics object
 	PhysicsPlayerControllerInitInfo init;
 	init.m_position = position;

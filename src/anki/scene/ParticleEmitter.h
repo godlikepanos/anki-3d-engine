@@ -163,11 +163,11 @@ class ParticleEmitter : public SceneNode, private ParticleEmitterProperties
 	friend class MoveFeedbackComponent;
 
 public:
-	ParticleEmitter(SceneGraph* scene);
+	ParticleEmitter(SceneGraph* scene, CString name);
 
 	~ParticleEmitter();
 
-	ANKI_USE_RESULT Error init(const CString& name, const CString& filename);
+	ANKI_USE_RESULT Error init(const CString& filename);
 
 	/// @name SceneNode virtuals
 	/// @{

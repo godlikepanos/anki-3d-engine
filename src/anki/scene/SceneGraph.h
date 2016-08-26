@@ -244,14 +244,13 @@ template<typename Node, typename... Args>
 inline Error SceneGraph::newSceneNode(
 	const CString& name, Node*& node, Args&&... args)
 {
-	ANKI_ASSERT(!name.isEmpty());
 	Error err = ErrorCode::NONE;
 	SceneAllocator<Node> al = m_alloc;
 
-	node = al.template newInstance<Node>(this);
+	node = al.template newInstance<Node>(this, name);
 	if(node)
 	{
-		err = node->init(name, std::forward<Args>(args)...);
+		err = node->init(std::forward<Args>(args)...);
 	}
 	else
 	{

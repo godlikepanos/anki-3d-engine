@@ -70,14 +70,12 @@ public:
 	CString(const Char* ptr)
 		: m_ptr(ptr)
 	{
-		checkInit();
 	}
 
 	/// Copy constructor.
 	CString(const CString& b)
 		: m_ptr(b.m_ptr)
 	{
-		checkInit();
 	}
 
 	/// Copy.

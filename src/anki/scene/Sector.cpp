@@ -70,11 +70,8 @@ PortalSectorBase::~PortalSectorBase()
 }
 
 //==============================================================================
-Error PortalSectorBase::init(
-	const CString& name, const CString& meshFname, Bool isSector)
+Error PortalSectorBase::init(const CString& meshFname, Bool isSector)
 {
-	ANKI_CHECK(SceneNode::init(name));
-
 	// Create move component
 	SceneComponent* comp = getSceneAllocator().newInstance<MoveComponent>(this);
 	addComponent(comp, true);
@@ -161,9 +158,9 @@ Portal::~Portal()
 }
 
 //==============================================================================
-Error Portal::init(const CString& name, const CString& meshFname)
+Error Portal::init(const CString& meshFname)
 {
-	ANKI_CHECK(Base::init(name, meshFname, false));
+	ANKI_CHECK(Base::init(meshFname, false));
 	return ErrorCode::NONE;
 }
 
@@ -272,9 +269,9 @@ Sector::~Sector()
 }
 
 //==============================================================================
-Error Sector::init(const CString& name, const CString& meshFname)
+Error Sector::init(const CString& meshFname)
 {
-	ANKI_CHECK(PortalSectorBase::init(name, meshFname, true));
+	ANKI_CHECK(PortalSectorBase::init(meshFname, true));
 	return ErrorCode::NONE;
 }
 

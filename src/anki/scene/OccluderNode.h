@@ -20,14 +20,14 @@ class OccluderNode : public SceneNode
 	friend class OccluderMoveFeedbackComponent;
 
 public:
-	OccluderNode(SceneGraph* scene)
-		: SceneNode(scene)
+	OccluderNode(SceneGraph* scene, CString name)
+		: SceneNode(scene, name)
 	{
 	}
 
 	~OccluderNode();
 
-	ANKI_USE_RESULT Error init(const CString& name, const CString& meshFname);
+	ANKI_USE_RESULT Error init(const CString& meshFname);
 
 private:
 	DynamicArray<Vec3> m_vertsL; ///< Verts in local space.

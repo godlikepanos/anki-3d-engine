@@ -23,13 +23,12 @@ class Light : public SceneNode
 	friend class LightFeedbackComponent;
 
 public:
-	Light(SceneGraph* scene);
+	Light(SceneGraph* scene, CString name);
 
 	~Light();
 
-	ANKI_USE_RESULT Error init(const CString& name,
-		LightComponent::LightType type,
-		CollisionShape* shape);
+	ANKI_USE_RESULT Error init(
+		LightComponent::LightType type, CollisionShape* shape);
 
 	ANKI_USE_RESULT Error loadLensFlare(const CString& filename);
 
@@ -51,10 +50,10 @@ protected:
 class PointLight : public Light
 {
 public:
-	PointLight(SceneGraph* scene);
+	PointLight(SceneGraph* scene, CString name);
 	~PointLight();
 
-	ANKI_USE_RESULT Error init(const CString& name);
+	ANKI_USE_RESULT Error init();
 
 	ANKI_USE_RESULT Error frameUpdate(
 		F32 prevUpdateTime, F32 crntTime) override;
@@ -78,9 +77,9 @@ public:
 class SpotLight : public Light
 {
 public:
-	SpotLight(SceneGraph* scene);
+	SpotLight(SceneGraph* scene, CString name);
 
-	ANKI_USE_RESULT Error init(const CString& name);
+	ANKI_USE_RESULT Error init();
 
 	ANKI_USE_RESULT Error frameUpdate(
 		F32 prevUpdateTime, F32 crntTime) override;

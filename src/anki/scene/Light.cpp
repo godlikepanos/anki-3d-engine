@@ -53,8 +53,8 @@ public:
 //==============================================================================
 
 //==============================================================================
-Light::Light(SceneGraph* scene)
-	: SceneNode(scene)
+Light::Light(SceneGraph* scene, CString name)
+	: SceneNode(scene, name)
 {
 }
 
@@ -64,11 +64,8 @@ Light::~Light()
 }
 
 //==============================================================================
-Error Light::init(
-	const CString& name, LightComponent::LightType type, CollisionShape* shape)
+Error Light::init(LightComponent::LightType type, CollisionShape* shape)
 {
-	ANKI_CHECK(SceneNode::init(name));
-
 	SceneComponent* comp;
 
 	// Move component
@@ -173,8 +170,8 @@ Error Light::loadLensFlare(const CString& filename)
 //==============================================================================
 
 //==============================================================================
-PointLight::PointLight(SceneGraph* scene)
-	: Light(scene)
+PointLight::PointLight(SceneGraph* scene, CString name)
+	: Light(scene, name)
 {
 }
 
@@ -185,9 +182,9 @@ PointLight::~PointLight()
 }
 
 //==============================================================================
-Error PointLight::init(const CString& name)
+Error PointLight::init()
 {
-	return Light::init(name, LightComponent::LightType::POINT, &m_sphereW);
+	return Light::init(LightComponent::LightType::POINT, &m_sphereW);
 }
 
 //==============================================================================
@@ -283,15 +280,15 @@ Error PointLight::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 //==============================================================================
 
 //==============================================================================
-SpotLight::SpotLight(SceneGraph* scene)
-	: Light(scene)
+SpotLight::SpotLight(SceneGraph* scene, CString name)
+	: Light(scene, name)
 {
 }
 
 //==============================================================================
-Error SpotLight::init(const CString& name)
+Error SpotLight::init()
 {
-	ANKI_CHECK(Light::init(name, LightComponent::LightType::SPOT, &m_frustum));
+	ANKI_CHECK(Light::init(LightComponent::LightType::SPOT, &m_frustum));
 
 	FrustumComponent* fr =
 		getSceneAllocator().newInstance<FrustumComponent>(this, &m_frustum);

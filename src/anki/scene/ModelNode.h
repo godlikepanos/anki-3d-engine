@@ -29,12 +29,11 @@ class ModelPatchNode : public SceneNode
 	friend class ModelPatchRenderComponent;
 
 public:
-	ModelPatchNode(SceneGraph* scene);
+	ModelPatchNode(SceneGraph* scene, CString name);
 
 	~ModelPatchNode();
 
-	ANKI_USE_RESULT Error init(
-		const CString& name, const ModelPatch* modelPatch);
+	ANKI_USE_RESULT Error init(const ModelPatch* modelPatch);
 
 private:
 	Obb m_obb; ///< In world space. ModelNode will update it.
@@ -50,11 +49,11 @@ class ModelNode : public SceneNode
 	friend class ModelMoveFeedbackComponent;
 
 public:
-	ModelNode(SceneGraph* scene);
+	ModelNode(SceneGraph* scene, CString name);
 
 	~ModelNode();
 
-	ANKI_USE_RESULT Error init(const CString& name, const CString& modelFname);
+	ANKI_USE_RESULT Error init(const CString& modelFname);
 
 	const Model& getModel() const
 	{

@@ -69,17 +69,15 @@ public:
 //==============================================================================
 
 //==============================================================================
-Camera::Camera(SceneGraph* scene, Type type)
-	: SceneNode(scene)
+Camera::Camera(SceneGraph* scene, Type type, CString name)
+	: SceneNode(scene, name)
 	, m_type(type)
 {
 }
 
 //==============================================================================
-Error Camera::init(const CString& name, Frustum* frustum)
+Error Camera::init(Frustum* frustum)
 {
-	ANKI_CHECK(SceneNode::init(name));
-
 	SceneComponent* comp;
 
 	// Move component
@@ -162,8 +160,8 @@ void Camera::onMoveComponentUpdate(MoveComponent& move)
 //==============================================================================
 
 //==============================================================================
-PerspectiveCamera::PerspectiveCamera(SceneGraph* scene)
-	: Camera(scene, Type::PERSPECTIVE)
+PerspectiveCamera::PerspectiveCamera(SceneGraph* scene, CString name)
+	: Camera(scene, Type::PERSPECTIVE, name)
 {
 }
 
@@ -184,8 +182,8 @@ void PerspectiveCamera::setAll(F32 fovX, F32 fovY, F32 near, F32 far)
 //==============================================================================
 
 //==============================================================================
-OrthographicCamera::OrthographicCamera(SceneGraph* scene)
-	: Camera(scene, Type::ORTHOGRAPHIC)
+OrthographicCamera::OrthographicCamera(SceneGraph* scene, CString name)
+	: Camera(scene, Type::ORTHOGRAPHIC, name)
 {
 }
 

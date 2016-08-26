@@ -31,11 +31,11 @@ public:
 		COUNT
 	};
 
-	Camera(SceneGraph* scene, Type type);
+	Camera(SceneGraph* scene, Type type, CString name);
 
 	virtual ~Camera();
 
-	ANKI_USE_RESULT Error init(const CString& name, Frustum* frustum);
+	ANKI_USE_RESULT Error init(Frustum* frustum);
 
 	Type getCameraType() const
 	{
@@ -58,13 +58,13 @@ private:
 class PerspectiveCamera : public Camera
 {
 public:
-	PerspectiveCamera(SceneGraph* scene);
+	PerspectiveCamera(SceneGraph* scene, CString name);
 
 	~PerspectiveCamera();
 
-	ANKI_USE_RESULT Error init(const CString& name)
+	ANKI_USE_RESULT Error init()
 	{
-		return Camera::init(name, &m_frustum);
+		return Camera::init(&m_frustum);
 	}
 
 	void setAll(F32 fovX, F32 fovY, F32 near, F32 far);
@@ -77,13 +77,13 @@ private:
 class OrthographicCamera : public Camera
 {
 public:
-	OrthographicCamera(SceneGraph* scene);
+	OrthographicCamera(SceneGraph* scene, CString name);
 
 	~OrthographicCamera();
 
-	ANKI_USE_RESULT Error init(const CString& name)
+	ANKI_USE_RESULT Error init()
 	{
-		return Camera::init(name, &m_frustum);
+		return Camera::init(&m_frustum);
 	}
 
 private:

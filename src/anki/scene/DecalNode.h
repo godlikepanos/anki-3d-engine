@@ -5,7 +5,8 @@
 
 #pragma once
 
-#include <anki/scene/Common.h>
+#include <anki/scene/SceneNode.h>
+#include <anki/collision/Obb.h>
 
 namespace anki
 {
@@ -16,14 +17,25 @@ namespace anki
 /// Node that has a decal component.
 class DecalNode : public SceneNode
 {
+	friend class DecalMoveFeedbackComponent;
+	friend class DecalShapeFeedbackComponent;
+
 public:
-	DecalNode(SceneGraph* scene);
+	DecalNode(SceneGraph* scene, CString name)
+		: SceneNode(scene, name)
+	{
+	}
 
 	~DecalNode();
 
-	ANKI_USE_RESULT Error init(const CString& name);
+	ANKI_USE_RESULT Error init();
 
 private:
+	Obb m_obbW; ///< OBB in world space.
+
+	void onMove(MoveComponent& movec);
+	void onDecalUpdated(DecalComponent& decalc);
+	void updateObb(const Transform& trf, const DecalComponent& decalc);
 };
 /// @}
 

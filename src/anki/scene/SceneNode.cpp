@@ -10,10 +10,14 @@ namespace anki
 {
 
 //==============================================================================
-SceneNode::SceneNode(SceneGraph* scene)
+SceneNode::SceneNode(SceneGraph* scene, CString name)
 	: m_scene(scene)
 	, m_uuid(scene->getNewSceneNodeUuid())
 {
+	if(name)
+	{
+		m_name.create(getSceneAllocator(), name);
+	}
 }
 
 //==============================================================================
@@ -35,13 +39,6 @@ SceneNode::~SceneNode()
 	Base::destroy(alloc);
 	m_name.destroy(alloc);
 	m_components.destroy(alloc);
-}
-
-//==============================================================================
-Error SceneNode::init(const CString& name)
-{
-	m_name.create(getSceneAllocator(), name);
-	return ErrorCode::NONE;
 }
 
 //==============================================================================

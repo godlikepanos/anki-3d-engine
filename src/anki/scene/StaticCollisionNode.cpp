@@ -14,8 +14,8 @@ namespace anki
 {
 
 //==============================================================================
-StaticCollisionNode::StaticCollisionNode(SceneGraph* scene)
-	: SceneNode(scene)
+StaticCollisionNode::StaticCollisionNode(SceneGraph* scene, CString name)
+	: SceneNode(scene, name)
 {
 }
 
@@ -25,9 +25,8 @@ StaticCollisionNode::~StaticCollisionNode()
 }
 
 //==============================================================================
-Error StaticCollisionNode::init(const CString& name,
-	const CString& resourceFname,
-	const Transform& transform)
+Error StaticCollisionNode::init(
+	const CString& resourceFname, const Transform& transform)
 {
 	// Load resource
 	ANKI_CHECK(getResourceManager().loadResource(resourceFname, m_rsrc));

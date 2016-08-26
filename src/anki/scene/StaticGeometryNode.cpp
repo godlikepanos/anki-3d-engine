@@ -37,8 +37,9 @@ public:
 //==============================================================================
 
 //==============================================================================
-StaticGeometryPatchNode::StaticGeometryPatchNode(SceneGraph* scene)
-	: SceneNode(scene)
+StaticGeometryPatchNode::StaticGeometryPatchNode(
+	SceneGraph* scene, CString name)
+	: SceneNode(scene, name)
 {
 }
 
@@ -48,13 +49,11 @@ StaticGeometryPatchNode::~StaticGeometryPatchNode()
 }
 
 //==============================================================================
-Error StaticGeometryPatchNode::init(
-	const CString& name, const ModelPatch* modelPatch)
+Error StaticGeometryPatchNode::init(const ModelPatch* modelPatch)
 {
 	ANKI_ASSERT(modelPatch);
 
 	m_modelPatch = modelPatch;
-	ANKI_CHECK(SceneNode::init(name));
 
 	// Create spatial components
 	for(U i = 1; i < m_modelPatch->getSubMeshesCount(); i++)
@@ -124,8 +123,8 @@ Error StaticGeometryPatchNode::buildRendering(RenderingBuildInfo& data) const
 //==============================================================================
 
 //==============================================================================
-StaticGeometryNode::StaticGeometryNode(SceneGraph* scene)
-	: SceneNode(scene)
+StaticGeometryNode::StaticGeometryNode(SceneGraph* scene, CString name)
+	: SceneNode(scene, name)
 {
 }
 
@@ -135,22 +134,16 @@ StaticGeometryNode::~StaticGeometryNode()
 }
 
 //==============================================================================
-Error StaticGeometryNode::init(const CString& name, const CString& filename)
+Error StaticGeometryNode::init(const CString& filename)
 {
-	ANKI_CHECK(SceneNode::init(name));
-
 	ANKI_CHECK(getResourceManager().loadResource(filename, m_model));
 
 	U i = 0;
 	for(const ModelPatch* patch : m_model->getModelPatches())
 	{
-		StringAuto newname(getFrameAllocator());
-
-		newname.sprintf("%s_%u", &name[0], i);
-
 		StaticGeometryPatchNode* node;
 		ANKI_CHECK(getSceneGraph().newSceneNode<StaticGeometryPatchNode>(
-			newname.toCString(), node, patch));
+			CString(), node, patch));
 
 		++i;
 	}

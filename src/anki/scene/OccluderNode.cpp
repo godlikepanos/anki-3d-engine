@@ -53,10 +53,8 @@ OccluderNode::~OccluderNode()
 }
 
 //==============================================================================
-Error OccluderNode::init(const CString& name, const CString& meshFname)
+Error OccluderNode::init(const CString& meshFname)
 {
-	ANKI_CHECK(SceneNode::init(name));
-
 	// Load mesh
 	MeshLoader loader(&getSceneGraph().getResourceManager());
 	ANKI_CHECK(loader.load(meshFname));

@@ -47,8 +47,8 @@ public:
 //==============================================================================
 
 //==============================================================================
-BodyNode::BodyNode(SceneGraph* scene)
-	: SceneNode(scene)
+BodyNode::BodyNode(SceneGraph* scene, CString name)
+	: SceneNode(scene, name)
 {
 }
 
@@ -58,7 +58,7 @@ BodyNode::~BodyNode()
 }
 
 //==============================================================================
-Error BodyNode::init(const CString& name, const CString& resourceFname)
+Error BodyNode::init(const CString& resourceFname)
 {
 	SceneComponent* comp;
 

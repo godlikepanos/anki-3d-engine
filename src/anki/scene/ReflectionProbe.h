@@ -25,14 +25,14 @@ public:
 	const F32 FRUSTUM_NEAR_PLANE = 0.1 / 4.0;
 	const F32 EFFECTIVE_DISTANCE = 256.0;
 
-	ReflectionProbe(SceneGraph* scene)
-		: SceneNode(scene)
+	ReflectionProbe(SceneGraph* scene, CString name)
+		: SceneNode(scene, name)
 	{
 	}
 
 	~ReflectionProbe();
 
-	ANKI_USE_RESULT Error init(const CString& name, F32 radius);
+	ANKI_USE_RESULT Error init(F32 radius);
 
 	U getCubemapArrayIndex() const
 	{

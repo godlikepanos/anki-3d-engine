@@ -18,12 +18,11 @@ namespace anki
 class BodyNode : public SceneNode
 {
 public:
-	BodyNode(SceneGraph* scene);
+	BodyNode(SceneGraph* scene, CString name);
 
 	~BodyNode();
 
-	ANKI_USE_RESULT Error init(
-		const CString& name, const CString& resourceFname);
+	ANKI_USE_RESULT Error init(const CString& resourceFname);
 
 private:
 	CollisionResourcePtr m_rsrc;

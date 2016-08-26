@@ -5,7 +5,7 @@
 # Code licensed under the BSD License.
 # http://www.anki3d.org/LICENSE
 
-import optparse
+import argparse
 from PIL import Image, ImageDraw
 from math import *
 import os
@@ -56,39 +56,30 @@ def printi(msg):
 def parse_commandline():
 	""" Parse the command line arguments """
 
-	parser = optparse.OptionParser(usage = "usage: %prog [options]", \
-			description = "This program a texture atlas ")
+	parser = argparse.ArgumentParser(
+			description = "This program creates a texture atlas",
+			formatter_class = argparse.ArgumentDefaultsHelpFormatter)
 
-	parser.add_option("-i", "--input", dest = "inp",
-			type = "string", help = "specify the image(s) to convert. " \
-			"Seperate with space")
+	parser.add_argument("-i", "--input", nargs = "+", required = True,
+			help = "specify the image(s) to convert. Seperate with space")
 
-	parser.add_option("-o", "--output", dest = "out",
-			type = "string", help = "specify output PNG image.")
+	parser.add_argument("-o", "--output", default = "atlas.png",
+			help = "specify output PNG image.")
 
-	parser.add_option("-m", "--margin", dest = "margin",
-			type = "int", action = "store", default = 0,
+	parser.add_argument("-m", "--margin", type = int, default = 0,
 			help = "specify the margin.")
 
-	parser.add_option("-b", "--background-color", dest = "bg",
-			type = "string", help = "specify background of empty areas",
+	parser.add_argument("-b", "--background-color", 
+			help = "specify background of empty areas",
 			default = "ff00ff00")
 
-	# Add the default value on each option when printing help
-	for option in parser.option_list:
-		if option.default != ("NO", "DEFAULT"):
-			option.help += (" " if option.help else "") + "[default: %default]"
-
-	(options, args) = parser.parse_args()
-
-	if not options.inp or not options.out:
-		parser.error("argument is missing")
+	args = parser.parse_args()
 
 	ctx = Context()
-	ctx.in_files = options.inp.split(":")
-	ctx.out_file = options.out
-	ctx.margin = options.margin
-	ctx.bg_color = int(options.bg, 16)
+	ctx.in_files = args.input
+	ctx.out_file = args.output
+	ctx.margin = args.margin
+	ctx.bg_color = int(args.background_color, 16)
 
 	if len(ctx.in_files) < 2:
 		parser.error("Not enough images")
@@ -229,25 +220,30 @@ def shrink_atlas(ctx):
 		width = max(width, sub_image.atlas_x + sub_image.width + ctx.margin)
 		height = max(height, sub_image.atlas_y + sub_image.height + ctx.margin)
 
-	ctx.atlas_width = width
-	ctx.atlas_height = height
+	ctx.atlas_width = next_power_of_two(width)
+	ctx.atlas_height = next_power_of_two(height)
 
 def create_atlas(ctx):
 	""" Create and populate the atlas """
 
-	bg_color = 0
+	# Change the color to something PIL can understand
+	bg_color = (ctx.bg_color >> 24)
+	bg_color |= (ctx.bg_color >> 8) & 0xFF00
+	bg_color |= (ctx.bg_color << 8) & 0xFF0000
+	bg_color |= (ctx.bg_color << 24) & 0xFF000000
+
+	mode = "RGB"
 	if ctx.mode == "RGB":
 		color_space = (255, 255, 255)
-		bg_color = (ctx.bg_color >> 24) | (ctx.bg_color >> 16) \
-			| (ctx.bg_color >> 0)
 	else:
+		mode = "RGBA"
 		color_space = (255, 255, 255, 255)
 
-	atlas_img = Image.new('RGB', \
+	atlas_img = Image.new(mode, \
 			(int(ctx.atlas_width), int(ctx.atlas_height)), color_space)
 
 	draw = ImageDraw.Draw(atlas_img)
-	draw.rectangle((0, 0, ctx.atlas_width, ctx.atlas_height), ctx.bg_color)
+	draw.rectangle((0, 0, ctx.atlas_width, ctx.atlas_height), bg_color)
 
 	for sub_image in ctx.sub_images:
 		assert sub_image.atlas_x != 0xFFFFFFFF and \

@@ -260,8 +260,8 @@ public:
 //==============================================================================
 
 //==============================================================================
-ParticleEmitter::ParticleEmitter(SceneGraph* scene)
-	: SceneNode(scene)
+ParticleEmitter::ParticleEmitter(SceneGraph* scene, CString name)
+	: SceneNode(scene, name)
 {
 }
 
@@ -281,9 +281,8 @@ ParticleEmitter::~ParticleEmitter()
 }
 
 //==============================================================================
-Error ParticleEmitter::init(const CString& name, const CString& filename)
+Error ParticleEmitter::init(const CString& filename)
 {
-	ANKI_CHECK(SceneNode::init(name));
 	SceneComponent* comp;
 
 	// Load resource

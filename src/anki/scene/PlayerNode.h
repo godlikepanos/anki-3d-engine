@@ -21,11 +21,11 @@ class PlayerNode : public SceneNode
 	friend class PlayerNodeFeedbackComponent;
 
 public:
-	PlayerNode(SceneGraph* scene);
+	PlayerNode(SceneGraph* scene, CString name);
 
 	~PlayerNode();
 
-	ANKI_USE_RESULT Error init(const CString& name, const Vec4& position);
+	ANKI_USE_RESULT Error init(const Vec4& position);
 
 private:
 	PhysicsPlayerControllerPtr m_player;

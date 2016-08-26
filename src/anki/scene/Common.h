@@ -16,6 +16,7 @@ namespace anki
 class SceneGraph;
 class SceneNode;
 class MoveComponent;
+class DecalComponent;
 
 /// @addtogroup Scene
 /// @{

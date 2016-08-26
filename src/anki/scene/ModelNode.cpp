@@ -56,8 +56,8 @@ public:
 //==============================================================================
 
 //==============================================================================
-ModelPatchNode::ModelPatchNode(SceneGraph* scene)
-	: SceneNode(scene)
+ModelPatchNode::ModelPatchNode(SceneGraph* scene, CString name)
+	: SceneNode(scene, name)
 {
 }
 
@@ -67,10 +67,9 @@ ModelPatchNode::~ModelPatchNode()
 }
 
 //==============================================================================
-Error ModelPatchNode::init(const CString& name, const ModelPatch* modelPatch)
+Error ModelPatchNode::init(const ModelPatch* modelPatch)
 {
 	ANKI_ASSERT(modelPatch);
-	ANKI_CHECK(SceneNode::init(name));
 
 	m_modelPatch = modelPatch;
 
@@ -161,8 +160,8 @@ public:
 //==============================================================================
 
 //==============================================================================
-ModelNode::ModelNode(SceneGraph* scene)
-	: SceneNode(scene)
+ModelNode::ModelNode(SceneGraph* scene, CString name)
+	: SceneNode(scene, name)
 {
 }
 
@@ -173,10 +172,8 @@ ModelNode::~ModelNode()
 }
 
 //==============================================================================
-Error ModelNode::init(const CString& name, const CString& modelFname)
+Error ModelNode::init(const CString& modelFname)
 {
-	ANKI_CHECK(SceneNode::init(name));
-
 	SceneComponent* comp;
 
 	ANKI_CHECK(getResourceManager().loadResource(modelFname, m_model));
@@ -191,8 +188,7 @@ Error ModelNode::init(const CString& name, const CString& modelFname)
 	{
 		ModelPatchNode* mpn;
 		StringAuto nname(getFrameAllocator());
-		nname.sprintf("%s_%d", &name[0], count);
-		ANKI_CHECK(getSceneGraph().newSceneNode(nname.toCString(), mpn, *it));
+		ANKI_CHECK(getSceneGraph().newSceneNode(CString(), mpn, *it));
 
 		m_modelPatches[count++] = mpn;
 		addChild(mpn);

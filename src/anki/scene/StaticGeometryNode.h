@@ -22,12 +22,11 @@ class StaticGeometryPatchNode : public SceneNode
 	friend class StaticGeometryRenderComponent;
 
 public:
-	StaticGeometryPatchNode(SceneGraph* scene);
+	StaticGeometryPatchNode(SceneGraph* scene, CString name);
 
 	~StaticGeometryPatchNode();
 
-	ANKI_USE_RESULT Error init(
-		const CString& name, const ModelPatch* modelPatch);
+	ANKI_USE_RESULT Error init(const ModelPatch* modelPatch);
 
 private:
 	const ModelPatch* m_modelPatch;
@@ -39,11 +38,11 @@ private:
 class StaticGeometryNode : public SceneNode
 {
 public:
-	StaticGeometryNode(SceneGraph* scene);
+	StaticGeometryNode(SceneGraph* scene, CString name);
 
 	~StaticGeometryNode();
 
-	ANKI_USE_RESULT Error init(const CString& name, const CString& filename);
+	ANKI_USE_RESULT Error init(const CString& filename);
 
 private:
 	ModelResourcePtr m_model;

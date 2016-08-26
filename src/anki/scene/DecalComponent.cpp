@@ -11,6 +11,12 @@ namespace anki
 {
 
 //==============================================================================
+DecalComponent::DecalComponent(SceneNode* node)
+	: SceneComponent(CLASS_TYPE, node)
+{
+}
+
+//==============================================================================
 DecalComponent::~DecalComponent()
 {
 }
@@ -33,20 +39,19 @@ Error DecalComponent::setLayer(CString texAtlasFname,
 }
 
 //==============================================================================
-void DecalComponent::updateMatrices(const Obb& box)
+void DecalComponent::updateInternal()
 {
-	Mat4 worldTransform(
-		box.getCenter().xyz1(), box.getRotation().getRotationPart(), 1.0f);
+	Mat4 worldTransform(m_trf);
 
 	Mat4 viewMat = worldTransform.getInverse();
 
-	const Vec4& extend = box.getExtend();
-	Mat4 projMat = Mat4::calculateOrthographicProjectionMatrix(extend.x(),
-		-extend.x(),
-		extend.y(),
-		-extend.y(),
-		FRUSTUM_NEAR_PLANE,
-		extend.z() * 2.0);
+	Mat4 projMat =
+		Mat4::calculateOrthographicProjectionMatrix(m_sizes.x() / 2.0f,
+			-m_sizes.x() / 2.0f,
+			m_sizes.y() / 2.0f,
+			-m_sizes.y() / 2.0f,
+			FRUSTUM_NEAR_PLANE,
+			m_sizes.z());
 
 	static const Mat4 biasMat4(0.5,
 		0.0,

@@ -54,15 +54,14 @@ class PortalSectorBase : public SceneNode
 	friend class Sector;
 
 public:
-	PortalSectorBase(SceneGraph* scene)
-		: SceneNode(scene)
+	PortalSectorBase(SceneGraph* scene, CString name)
+		: SceneNode(scene, name)
 	{
 	}
 
 	~PortalSectorBase();
 
-	ANKI_USE_RESULT Error init(
-		const CString& name, const CString& modelFname, Bool isSector);
+	ANKI_USE_RESULT Error init(const CString& modelFname, Bool isSector);
 
 	const CollisionShape& getBoundingShape() const
 	{
@@ -99,14 +98,14 @@ class Portal : public PortalSectorBase
 public:
 	using Base = PortalSectorBase;
 
-	Portal(SceneGraph* scene)
-		: PortalSectorBase(scene)
+	Portal(SceneGraph* scene, CString name)
+		: PortalSectorBase(scene, name)
 	{
 	}
 
 	~Portal();
 
-	ANKI_USE_RESULT Error init(const CString& name, const CString& modelFname);
+	ANKI_USE_RESULT Error init(const CString& modelFname);
 
 	ANKI_USE_RESULT Error frameUpdate(
 		F32 prevUpdateTime, F32 crntTime) override;
@@ -132,14 +131,14 @@ public:
 	using Base = PortalSectorBase;
 
 	/// Default constructor
-	Sector(SceneGraph* scene)
-		: PortalSectorBase(scene)
+	Sector(SceneGraph* scene, CString name)
+		: PortalSectorBase(scene, name)
 	{
 	}
 
 	~Sector();
 
-	ANKI_USE_RESULT Error init(const CString& name, const CString& modelFname);
+	ANKI_USE_RESULT Error init(const CString& modelFname);
 
 	void tryAddPortal(Portal* portal);
 	void tryRemovePortal(Portal* portal);

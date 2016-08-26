@@ -21,8 +21,8 @@ class ReflectionProxy : public SceneNode
 	friend class ReflectionProxyMoveFeedbackComponent;
 
 public:
-	ReflectionProxy(SceneGraph* scene)
-		: SceneNode(scene)
+	ReflectionProxy(SceneGraph* scene, CString name)
+		: SceneNode(scene, name)
 	{
 	}
 
@@ -33,7 +33,7 @@ public:
 
 	/// Create the proxy. The points form a quad and they should be in local
 	/// space.
-	ANKI_USE_RESULT Error init(const CString& name, const CString& proxyMesh);
+	ANKI_USE_RESULT Error init(const CString& proxyMesh);
 
 private:
 	DynamicArray<Array<Vec4, 4>> m_quadsLSpace; ///< Quads in local space.

@@ -23,10 +23,7 @@ public:
 
 	static constexpr F32 FRUSTUM_NEAR_PLANE = 0.1 / 4.0;
 
-	DecalComponent(SceneNode* node)
-		: SceneComponent(CLASS_TYPE, node)
-	{
-	}
+	DecalComponent(SceneNode* node);
 
 	~DecalComponent();
 
@@ -37,10 +34,32 @@ public:
 			texAtlasFname, texAtlasSubtexName, blendFactor, LayerType::DIFFUSE);
 	}
 
-	/// Update the internal structures using a world space Obb.
-	void updateShape(const Obb& box)
+	/// Update the internal structures.
+	void updateShape(F32 width, F32 height, F32 depth)
 	{
-		m_obb = box;
+		m_sizes = Vec3(width, height, depth);
+		m_markedForUpdate = true;
+	}
+
+	F32 getWidth() const
+	{
+		return m_sizes.x();
+	}
+
+	F32 getHeight() const
+	{
+		return m_sizes.y();
+	}
+
+	F32 getDepth() const
+	{
+		return m_sizes.z();
+	}
+
+	void updateTransform(const Transform& trf)
+	{
+		ANKI_ASSERT(trf.getScale() == 1.0f);
+		m_trf = trf;
 		m_markedForUpdate = true;
 	}
 
@@ -52,7 +71,7 @@ public:
 		if(m_markedForUpdate)
 		{
 			m_markedForUpdate = false;
-			updateMatrices(m_obb);
+			updateInternal();
 		}
 
 		return ErrorCode::NONE;
@@ -75,8 +94,8 @@ private:
 
 	Array<Layer, U(LayerType::COUNT)> m_layers;
 	Mat4 m_biasProjViewMat;
-	Obb m_obb =
-		Obb(Vec4(0.0f), Mat3x4::getIdentity(), Vec4(1.0f, 1.0f, 1.0f, 0.0f));
+	Vec3 m_sizes = Vec3(1.0);
+	Transform m_trf = Transform::getIdentity();
 	Bool8 m_markedForUpdate = true;
 
 	ANKI_USE_RESULT Error setLayer(CString texAtlasFname,
@@ -84,7 +103,7 @@ private:
 		F32 blendFactor,
 		LayerType type);
 
-	void updateMatrices(const Obb& box);
+	void updateInternal();
 };
 /// @}
 

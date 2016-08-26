@@ -46,10 +46,8 @@ public:
 //==============================================================================
 
 //==============================================================================
-Error ReflectionProxy::init(const CString& name, const CString& proxyMesh)
+Error ReflectionProxy::init(const CString& proxyMesh)
 {
-	ANKI_CHECK(SceneNode::init(name));
-
 	// Move component first
 	SceneComponent* comp = getSceneAllocator().newInstance<MoveComponent>(this);
 	addComponent(comp, true);
