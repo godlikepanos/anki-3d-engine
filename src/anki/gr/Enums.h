@@ -120,7 +120,7 @@ enum class ComponentFormat : U8
 	// Special
 	R10G10B10A2,
 	R11G11B10,
-	DEFAULT_FRAMEBUFFER,
+	DEFAULT_FRAMEBUFFER, ///< Implicit format.
 
 	// Compressed
 	R8G8B8_S3TC, ///< DXT1

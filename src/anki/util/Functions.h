@@ -70,16 +70,16 @@ inline Int nextPowerOfTwo(Int x)
 	return pow(2, ceil(log(x) / log(2)));
 }
 
-/// Get align number
+/// Get the aligned number rounded up.
 /// @param alignment The bytes of alignment
 /// @param value The value to align
 template<typename Type>
 inline Type getAlignedRoundUp(PtrSize alignment, Type value)
 {
-	ANKI_ASSERT(isPowerOfTwo(alignment));
-	PtrSize v = (PtrSize)value;
-	v = (v + alignment - 1) & ~(alignment - 1);
-	return (Type)v;
+	ANKI_ASSERT(alignment > 0);
+	PtrSize v = PtrSize(value);
+	v = ((v + alignment - 1) / alignment) * alignment;
+	return Type(v);
 }
 
 /// Align number
@@ -91,16 +91,16 @@ inline void alignRoundUp(PtrSize alignment, Type& value)
 	value = getAlignedRoundUp(alignment, value);
 }
 
-/// Get align number
+/// Get the aligned number rounded down.
 /// @param alignment The bytes of alignment
 /// @param value The value to align
 template<typename Type>
 inline Type getAlignedRoundDown(PtrSize alignment, Type value)
 {
-	ANKI_ASSERT(isPowerOfTwo(alignment));
-	PtrSize v = (PtrSize)value;
-	v &= ~(alignment - 1);
-	return (Type)v;
+	ANKI_ASSERT(alignment > 0);
+	PtrSize v = PtrSize(value);
+	v = (v / alignment) * alignment;
+	return Type(v);
 }
 
 /// Align number

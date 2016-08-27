@@ -21,13 +21,19 @@ Error TransientMemoryManager::init(const ConfigSet& cfg)
 			"gr.vertexPerFrameMemorySize",
 			"gr.transferPerFrameMemorySize"}};
 
+	// This alignment satisfies the spec's condition for buffer to image
+	// copies: "bufferOffset must be a multiple of the calling command’s
+	// VkImage parameter’s texel size". This alignment works for all supported
+	// formats
+	const U TRANSFER_ALIGNMENT = 96;
+
 	const VkPhysicalDeviceLimits& limits =
 		m_manager->getImplementation().getPhysicalDeviceProperties().limits;
 	Array<U32, U(TransientBufferType::COUNT)> alignments = {
 		{U32(limits.minUniformBufferOffsetAlignment),
 			U32(limits.minStorageBufferOffsetAlignment),
 			sizeof(F32) * 4,
-			sizeof(F32) * 4}};
+			TRANSFER_ALIGNMENT}};
 
 	Array<BufferUsageBit, U(TransientBufferType::COUNT)> usages = {
 		{BufferUsageBit::UNIFORM_ALL,

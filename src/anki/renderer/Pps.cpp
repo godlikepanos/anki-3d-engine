@@ -131,7 +131,12 @@ Error Pps::run(RenderingContext& ctx)
 
 		ColorStateInfo colorState;
 		colorState.m_attachmentCount = 1;
-		if(!drawToDefaultFb)
+		if(drawToDefaultFb)
+		{
+			colorState.m_attachments[0].m_format.m_components =
+				ComponentFormat::DEFAULT_FRAMEBUFFER;
+		}
+		else
 		{
 			colorState.m_attachments[0].m_format = RT_PIXEL_FORMAT;
 		}
