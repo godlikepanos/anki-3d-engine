@@ -249,7 +249,6 @@ void PipelineImpl::initVertexState()
 	for(U i = 0; i < m_in.m_vertex.m_attributeCount; ++i)
 	{
 		const VertexAttributeBinding& binding = m_in.m_vertex.m_attributes[i];
-		ANKI_ASSERT(binding.m_format.m_srgb == false);
 		Attribute& cache = m_cache.m_attribs[i];
 
 		// Component count

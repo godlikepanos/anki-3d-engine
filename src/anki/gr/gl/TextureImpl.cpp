@@ -63,8 +63,7 @@ static void convertTextureInformation(const PixelFormat& pf,
 	{
 #if ANKI_GL == ANKI_GL_DESKTOP
 	case ComponentFormat::R8G8B8_S3TC:
-		format = pf.m_srgb ? GL_COMPRESSED_SRGB_S3TC_DXT1_EXT
-						   : GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+		format = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
 		internalFormat = format;
 		type = GL_UNSIGNED_BYTE;
 		break;

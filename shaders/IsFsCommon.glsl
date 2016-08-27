@@ -27,6 +27,12 @@ struct PointLight
 	vec4 specularColorTexId; // xyz: spec color, w: diffuse tex ID
 };
 
+// WORKAROUND: See glslang issue 304
+#define COPY_POINT_LIGHT(src_, dst_)                                           \
+	dst_.posRadius = src_.posRadius;                                           \
+	dst_.diffuseColorShadowmapId = src_.diffuseColorShadowmapId;               \
+	dst_.specularColorTexId = src_.specularColorTexId
+
 // Spot light
 struct SpotLight
 {
@@ -38,6 +44,15 @@ struct SpotLight
 	mat4 texProjectionMat;
 };
 
+// WORKAROUND: See glslang issue 304
+#define COPY_SPOT_LIGHT(src_, dst_)                                            \
+	dst_.posRadius = src_.posRadius;                                           \
+	dst_.diffuseColorShadowmapId = src_.diffuseColorShadowmapId;               \
+	dst_.specularColorTexId = src_.specularColorTexId;                         \
+	dst_.lightDir = src_.lightDir;                                             \
+	dst_.outerCosInnerCos = src_.outerCosInnerCos;                             \
+	dst_.texProjectionMat = src_.texProjectionMat
+
 // Representation of a reflection probe
 struct ReflectionProbe
 {
@@ -47,6 +62,11 @@ struct ReflectionProbe
 	// Slice in u_reflectionsTex vector.
 	vec4 cubemapIndexPad3;
 };
+
+// WORKAROUND: See glslang issue 304
+#define COPY_REFLECTION_PROBE(src_, dst_)                                      \
+	dst_.positionRadiusSq = src_.positionRadiusSq;                             \
+	dst_.cubemapIndexPad3.x = src_.cubemapIndexPad3.x
 
 layout(ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING),
 	std140,

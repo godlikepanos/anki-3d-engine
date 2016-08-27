@@ -120,6 +120,7 @@ enum class ComponentFormat : U8
 	// Special
 	R10G10B10A2,
 	R11G11B10,
+	DEFAULT_FRAMEBUFFER,
 
 	// Compressed
 	R8G8B8_S3TC, ///< DXT1
@@ -264,16 +265,14 @@ class PixelFormat
 public:
 	ComponentFormat m_components = ComponentFormat::NONE;
 	TransformFormat m_transform = TransformFormat::NONE;
-	Bool8 m_srgb = false;
 
 	PixelFormat() = default;
 
 	PixelFormat(const PixelFormat&) = default;
 
-	PixelFormat(ComponentFormat cf, TransformFormat tf, Bool srgb = false)
+	PixelFormat(ComponentFormat cf, TransformFormat tf)
 		: m_components(cf)
 		, m_transform(tf)
-		, m_srgb(srgb)
 	{
 	}
 
@@ -281,8 +280,7 @@ public:
 
 	Bool operator==(const PixelFormat& b) const
 	{
-		return m_components == b.m_components && m_transform == b.m_transform
-			&& m_srgb == b.m_srgb;
+		return m_components == b.m_components && m_transform == b.m_transform;
 	}
 
 	Bool operator!=(const PixelFormat& b) const

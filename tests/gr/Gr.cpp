@@ -319,7 +319,8 @@ static PipelinePtr createSimplePpline(
 	PipelineInitInfo init;
 	init.m_shaders[ShaderType::VERTEX] = vert;
 	init.m_shaders[ShaderType::FRAGMENT] = frag;
-	init.m_color.m_drawsToDefaultFramebuffer = true;
+	init.m_color.m_attachments[0].m_format.m_components =
+		ComponentFormat::DEFAULT_FRAMEBUFFER;
 	init.m_color.m_attachmentCount = 1;
 	init.m_depthStencil.m_depthWriteEnabled = false;
 	init.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
@@ -659,7 +660,8 @@ ANKI_TEST(Gr, DrawWithVertex)
 	PipelineInitInfo init;
 	init.m_shaders[ShaderType::VERTEX] = vert;
 	init.m_shaders[ShaderType::FRAGMENT] = frag;
-	init.m_color.m_drawsToDefaultFramebuffer = true;
+	init.m_color.m_attachments[0].m_format.m_components =
+		ComponentFormat::DEFAULT_FRAMEBUFFER;
 	init.m_color.m_attachmentCount = 1;
 	init.m_depthStencil.m_depthWriteEnabled = false;
 	init.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
@@ -1106,7 +1108,6 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 	PipelineInitInfo pinit;
 	pinit.m_shaders[ShaderType::VERTEX] = vert;
 	pinit.m_shaders[ShaderType::FRAGMENT] = frag;
-	pinit.m_color.m_drawsToDefaultFramebuffer = false;
 	pinit.m_color.m_attachmentCount = 2;
 	pinit.m_color.m_attachments[0].m_format = COL_FORMAT;
 	pinit.m_color.m_attachments[1].m_format = COL_FORMAT;

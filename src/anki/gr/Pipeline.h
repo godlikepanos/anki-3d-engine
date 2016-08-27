@@ -81,7 +81,6 @@ public:
 class ColorAttachmentStateInfo
 {
 public:
-	/// Ignored if ColorStateInfo::m_drawsToDefaultFramebuffer is true.
 	PixelFormat m_format;
 
 	BlendMethod m_srcBlendMethod = BlendMethod::ONE;
@@ -96,8 +95,6 @@ public:
 	Bool8 m_alphaToCoverageEnabled = false;
 	U8 m_attachmentCount = 0;
 	Array<ColorAttachmentStateInfo, MAX_COLOR_ATTACHMENTS> m_attachments;
-
-	Bool8 m_drawsToDefaultFramebuffer = false;
 };
 
 enum class PipelineSubStateBit : U16

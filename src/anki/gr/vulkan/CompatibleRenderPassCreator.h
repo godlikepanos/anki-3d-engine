@@ -81,6 +81,8 @@ private:
 	Mutex m_mtx;
 	HashMap<RenderPassKey, VkRenderPass, RenderPassHasher, RenderPassCompare>
 		m_hashmap;
+
+	VkRenderPass createNewRenderPass(const PipelineInitInfo& init);
 };
 /// @}
 

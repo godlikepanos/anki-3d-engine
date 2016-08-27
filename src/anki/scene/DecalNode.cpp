@@ -95,6 +95,8 @@ Error DecalNode::init()
 
 	comp = getSceneAllocator().newInstance<SpatialComponent>(this, &m_obbW);
 	addComponent(comp, true);
+
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

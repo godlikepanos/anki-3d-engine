@@ -236,7 +236,6 @@ Error TextureResource::load(const ResourceFilename& filename)
 
 	// Internal format
 	init.m_format.m_transform = TransformFormat::UNORM;
-	init.m_format.m_srgb = false;
 
 	if(loader.getColorFormat() == ImageLoader::ColorFormat::RGB8)
 	{

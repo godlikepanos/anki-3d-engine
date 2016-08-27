@@ -268,6 +268,8 @@ const U CONVERT_FORMAT_TABLE_SIZE =
 
 VkFormat convertFormat(PixelFormat ak)
 {
+	ANKI_ASSERT(ak != PixelFormat());
+
 	VkFormat out = VK_FORMAT_UNDEFINED;
 	for(U i = 0; i < CONVERT_FORMAT_TABLE_SIZE; ++i)
 	{
@@ -275,6 +277,7 @@ VkFormat convertFormat(PixelFormat ak)
 		if(ak == entry.m_ak)
 		{
 			out = entry.m_vk;
+			break;
 		}
 	}
 
