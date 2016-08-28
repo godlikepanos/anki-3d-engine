@@ -234,8 +234,11 @@ void CommandBuffer::setTextureVolumeBarrier(TexturePtr tex,
 }
 
 //==============================================================================
-void CommandBuffer::setBufferBarrier(
-	BufferPtr buff, BufferUsageBit before, BufferUsageBit after)
+void CommandBuffer::setBufferBarrier(BufferPtr buff,
+	BufferUsageBit before,
+	BufferUsageBit after,
+	PtrSize offset,
+	PtrSize size)
 {
 }
 
@@ -267,6 +270,13 @@ void CommandBuffer::pushSecondLevelCommandBuffer(CommandBufferPtr cmdb)
 Bool CommandBuffer::isEmpty() const
 {
 	return m_impl->isEmpty();
+}
+
+//==============================================================================
+void CommandBuffer::fillBuffer(
+	BufferPtr buff, PtrSize offset, PtrSize size, U32 value)
+{
+	m_impl->fillBuffer(buff, offset, size, value);
 }
 
 } // end namespace anki

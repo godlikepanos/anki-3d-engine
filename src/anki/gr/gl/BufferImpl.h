@@ -50,10 +50,27 @@ public:
 	{
 		ANKI_ASSERT(isCreated());
 		ANKI_ASSERT(offset + size <= m_size);
-		ANKI_ASSERT((m_usage & BufferUsageBit::TRANSFER_DESTINATION)
-			!= BufferUsageBit::NONE);
 		glBindBuffer(m_target, m_glName);
 		glBufferSubData(m_target, offset, size, buff);
+	}
+
+	void fill(PtrSize offset, PtrSize size, U32 value)
+	{
+		ANKI_ASSERT(isCreated());
+		ANKI_ASSERT(offset < m_size);
+		ANKI_ASSERT((offset % 4) == 0 && "Should be multiple of 4");
+
+		size = (size == MAX_PTR_SIZE) ? (m_size - offset) : size;
+		ANKI_ASSERT(offset + size <= m_size);
+		ANKI_ASSERT((size % 4) == 0 && "Should be multiple of 4");
+
+		glClearNamedBufferSubData(m_glName,
+			GL_R32UI,
+			offset,
+			size,
+			GL_RED_INTEGER,
+			GL_UNSIGNED_INT,
+			&value);
 	}
 };
 /// @}

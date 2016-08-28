@@ -549,7 +549,8 @@ VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask)
 		out |= VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT;
 	}
 
-	if(!!(usageMask & BufferUsageBit::TRANSFER_DESTINATION))
+	if(!!(usageMask
+		   & (BufferUsageBit::TRANSFER_DESTINATION | BufferUsageBit::FILL)))
 	{
 		out |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 	}

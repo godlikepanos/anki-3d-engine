@@ -24,6 +24,9 @@ void BufferImpl::init(
 
 	ANKI_ASSERT(size > 0 && "Unacceptable size");
 
+	// Align size to satisfy BufferImpl::fill
+	alignRoundUp(4, size);
+
 	// This is a guess, not very important since DSA doesn't care about it on
 	// creation
 	m_target = GL_ARRAY_BUFFER;
@@ -107,6 +110,7 @@ void BufferImpl::init(
 	//
 	glGenBuffers(1, &m_glName);
 	glBindBuffer(m_target, m_glName);
+	// Align the size to satisfy BufferImpl::fill
 	glBufferStorage(m_target, size, nullptr, flags);
 
 	//

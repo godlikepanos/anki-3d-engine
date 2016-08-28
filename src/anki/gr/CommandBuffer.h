@@ -213,6 +213,14 @@ public:
 	void clearTextureVolume(TexturePtr tex,
 		const TextureVolumeInfo& vol,
 		const ClearValue& clearValue);
+
+	/// Fill a buffer with some value.
+	/// @param[in,out] buff The buffer to fill.
+	/// @param offset From where to start filling. Must be multiple of 4.
+	/// @param size The bytes to fill. Must be multiple of 4 or MAX_PTR_SIZE to
+	///             indicate the whole buffer.
+	/// @param value The value to fill the buffer with.
+	void fillBuffer(BufferPtr buff, PtrSize offset, PtrSize size, U32 value);
 	/// @}
 
 	/// @name Resource upload
@@ -278,8 +286,11 @@ public:
 		TextureUsageBit nextUsage,
 		const TextureVolumeInfo& vol);
 
-	void setBufferBarrier(
-		BufferPtr buff, BufferUsageBit prevUsage, BufferUsageBit nextUsage);
+	void setBufferBarrier(BufferPtr buff,
+		BufferUsageBit prevUsage,
+		BufferUsageBit nextUsage,
+		PtrSize offset,
+		PtrSize size);
 	/// @}
 
 	/// @name Other

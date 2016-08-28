@@ -55,7 +55,21 @@ Error MeshLoadTask::operator()(AsyncLoaderTaskContext& ctx)
 			memcpy(
 				data, m_loader.getVertexData(), m_loader.getVertexDataSize());
 			cmdb = gr.newInstance<CommandBuffer>(CommandBufferInitInfo());
+
+			cmdb->setBufferBarrier(m_vertBuff,
+				BufferUsageBit::VERTEX,
+				BufferUsageBit::UPLOAD_DESTINATION,
+				0,
+				MAX_PTR_SIZE);
+
 			cmdb->uploadBuffer(m_vertBuff, 0, token);
+
+			cmdb->setBufferBarrier(m_vertBuff,
+				BufferUsageBit::UPLOAD_DESTINATION,
+				BufferUsageBit::VERTEX,
+				0,
+				MAX_PTR_SIZE);
+
 			m_vertBuff.reset(nullptr);
 		}
 		else
@@ -83,7 +97,20 @@ Error MeshLoadTask::operator()(AsyncLoaderTaskContext& ctx)
 				cmdb = gr.newInstance<CommandBuffer>(CommandBufferInitInfo());
 			}
 
+			cmdb->setBufferBarrier(m_indicesBuff,
+				BufferUsageBit::INDEX,
+				BufferUsageBit::UPLOAD_DESTINATION,
+				0,
+				MAX_PTR_SIZE);
+
 			cmdb->uploadBuffer(m_indicesBuff, 0, token);
+
+			cmdb->setBufferBarrier(m_indicesBuff,
+				BufferUsageBit::UPLOAD_DESTINATION,
+				BufferUsageBit::INDEX,
+				0,
+				MAX_PTR_SIZE);
+
 			cmdb->flush();
 		}
 		else
@@ -164,6 +191,27 @@ Error Mesh::load(const ResourceFilename& filename)
 	m_indicesBuff = gr.newInstance<Buffer>(loader.getIndexDataSize(),
 		BufferUsageBit::INDEX | BufferUsageBit::TRANSFER_DESTINATION,
 		BufferMapAccessBit::NONE);
+
+	// Clear them
+	CommandBufferInitInfo cmdbinit;
+	cmdbinit.m_flags = CommandBufferFlag::SMALL_BATCH;
+	CommandBufferPtr cmdb = gr.newInstance<CommandBuffer>(cmdbinit);
+
+	cmdb->fillBuffer(m_vertBuff, 0, MAX_PTR_SIZE, 0);
+	cmdb->fillBuffer(m_indicesBuff, 0, MAX_PTR_SIZE, 0);
+
+	cmdb->setBufferBarrier(m_vertBuff,
+		BufferUsageBit::FILL,
+		BufferUsageBit::VERTEX,
+		0,
+		MAX_PTR_SIZE);
+	cmdb->setBufferBarrier(m_indicesBuff,
+		BufferUsageBit::FILL,
+		BufferUsageBit::INDEX,
+		0,
+		MAX_PTR_SIZE);
+
+	cmdb->flush();
 
 	// Submit the loading task
 	task->m_indicesBuff = m_indicesBuff;

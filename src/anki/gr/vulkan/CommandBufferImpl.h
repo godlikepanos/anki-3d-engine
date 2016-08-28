@@ -146,6 +146,8 @@ public:
 		PtrSize size,
 		VkBuffer buff);
 
+	void fillBuffer(BufferPtr buff, PtrSize offset, PtrSize size, U32 value);
+
 private:
 	StackAllocator<U8> m_alloc;
 

@@ -604,8 +604,11 @@ public:
 	}
 };
 
-void CommandBuffer::setBufferBarrier(
-	BufferPtr buff, BufferUsageBit prevUsage, BufferUsageBit nextUsage)
+void CommandBuffer::setBufferBarrier(BufferPtr buff,
+	BufferUsageBit prevUsage,
+	BufferUsageBit nextUsage,
+	PtrSize offset,
+	PtrSize size)
 {
 #if 0
 	GLenum d = GL_NONE;
@@ -698,6 +701,36 @@ void CommandBuffer::clearTextureSurface(TexturePtr tex,
 	const ClearValue& clearValue)
 {
 	m_impl->pushBackNewCommand<ClearTextCommand>(tex, surf, clearValue);
+}
+
+//==============================================================================
+class FillBufferCommand final : public GlCommand
+{
+public:
+	BufferPtr m_buff;
+	PtrSize m_offset;
+	PtrSize m_size;
+	U32 m_value;
+
+	FillBufferCommand(BufferPtr buff, PtrSize offset, PtrSize size, U32 value)
+		: m_buff(buff)
+		, m_offset(offset)
+		, m_size(size)
+		, m_value(value)
+	{
+	}
+
+	Error operator()(GlState&)
+	{
+		m_buff->getImplementation().fill(m_offset, m_size, m_value);
+		return ErrorCode::NONE;
+	}
+};
+
+void CommandBuffer::fillBuffer(
+	BufferPtr buff, PtrSize offset, PtrSize size, U32 value)
+{
+	m_impl->pushBackNewCommand<FillBufferCommand>(buff, offset, size, value);
 }
 
 } // end namespace anki

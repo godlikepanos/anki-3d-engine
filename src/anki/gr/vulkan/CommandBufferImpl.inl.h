@@ -403,4 +403,23 @@ inline void CommandBufferImpl::commandCommon()
 	m_empty = false;
 }
 
+//==============================================================================
+inline void CommandBufferImpl::fillBuffer(
+	BufferPtr buff, PtrSize offset, PtrSize size, U32 value)
+{
+	commandCommon();
+	ANKI_ASSERT(!insideRenderPass());
+	BufferImpl& impl = buff->getImplementation();
+	ANKI_ASSERT(impl.usageValid(BufferUsageBit::FILL));
+
+	ANKI_ASSERT(offset < impl.getSize());
+	ANKI_ASSERT((offset % 4) == 0 && "Should be multiple of 4");
+
+	size = (size == MAX_PTR_SIZE) ? (impl.getSize() - offset) : size;
+	ANKI_ASSERT(offset + size <= impl.getSize());
+	ANKI_ASSERT((size % 4) == 0 && "Should be multiple of 4");
+
+	vkCmdFillBuffer(m_handle, impl.getHandle(), offset, size, value);
+}
+
 } // end namespace anki
