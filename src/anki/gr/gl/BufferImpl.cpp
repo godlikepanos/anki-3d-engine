@@ -82,7 +82,7 @@ void BufferImpl::init(
 	//
 	GLbitfield flags = 0;
 	Bool shouldMap = false;
-	if((usage & BufferUsageBit::TRANSFER_ANY) != BufferUsageBit::NONE)
+	if((usage & BufferUsageBit::TRANSFER_ALL) != BufferUsageBit::NONE)
 	{
 		flags |= GL_DYNAMIC_STORAGE_BIT;
 	}

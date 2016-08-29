@@ -158,7 +158,8 @@ Error Pps::run(RenderingContext& ctx)
 
 		rcInit.m_storageBuffers[0].m_buffer =
 			m_r->getTm().getAverageLuminanceBuffer();
-		rcInit.m_storageBuffers[0].m_usage = BufferUsageBit::STORAGE_FRAGMENT;
+		rcInit.m_storageBuffers[0].m_usage =
+			BufferUsageBit::STORAGE_FRAGMENT_READ;
 
 		rsrc = getGrManager().newInstance<ResourceGroup>(rcInit);
 

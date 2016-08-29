@@ -146,6 +146,12 @@ public:
 		PtrSize size,
 		VkBuffer buff);
 
+	void setBufferBarrier(BufferPtr buff,
+		BufferUsageBit before,
+		BufferUsageBit after,
+		PtrSize offset,
+		PtrSize size);
+
 	void fillBuffer(BufferPtr buff, PtrSize offset, PtrSize size, U32 value);
 
 private:

@@ -59,6 +59,13 @@ public:
 		return (m_usage & usage) == usage;
 	}
 
+	void computeBarrierInfo(BufferUsageBit before,
+		BufferUsageBit after,
+		VkPipelineStageFlags& srcStages,
+		VkAccessFlags& srcAccesses,
+		VkPipelineStageFlags& dstStages,
+		VkAccessFlags& dstAccesses) const;
+
 private:
 	VkBuffer m_handle = VK_NULL_HANDLE;
 	GpuMemoryAllocationHandle m_memHandle;
@@ -75,6 +82,9 @@ private:
 	{
 		return m_handle != VK_NULL_HANDLE;
 	}
+
+	static VkPipelineStageFlags computePplineStage(BufferUsageBit usage);
+	static VkAccessFlags computeAccessMask(BufferUsageBit usage);
 };
 /// @}
 

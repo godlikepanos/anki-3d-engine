@@ -118,7 +118,8 @@ Error Bloom::initInternal(const ConfigSet& config)
 
 		descInit.m_storageBuffers[0].m_buffer =
 			m_r->getTm().getAverageLuminanceBuffer();
-		descInit.m_storageBuffers[0].m_usage = BufferUsageBit::STORAGE_FRAGMENT;
+		descInit.m_storageBuffers[0].m_usage =
+			BufferUsageBit::STORAGE_FRAGMENT_READ;
 
 		m_extractExposure.m_rsrc = gr.newInstance<ResourceGroup>(descInit);
 	}

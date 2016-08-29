@@ -169,4 +169,150 @@ void* BufferImpl::map(PtrSize offset, PtrSize range, BufferMapAccessBit access)
 	return static_cast<void*>(static_cast<U8*>(ptr) + offset);
 }
 
+//==============================================================================
+VkPipelineStageFlags BufferImpl::computePplineStage(BufferUsageBit usage)
+{
+	VkPipelineStageFlags stageMask = 0;
+
+	if(!!(usage & (BufferUsageBit::UNIFORM_VERTEX
+					  | BufferUsageBit::STORAGE_VERTEX_READ_WRITE)))
+	{
+		stageMask |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
+	}
+
+	if(!!(usage
+		   & (BufferUsageBit::UNIFORM_TESSELLATION_EVALUATION
+				 | BufferUsageBit::STORAGE_TESSELLATION_EVALUATION_READ_WRITE)))
+	{
+		stageMask |= VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT;
+	}
+
+	if(!!(usage
+		   & (BufferUsageBit::UNIFORM_TESSELLATION_CONTROL
+				 | BufferUsageBit::STORAGE_TESSELLATION_CONTROL_READ_WRITE)))
+	{
+		stageMask |= VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT;
+	}
+
+	if(!!(usage & (BufferUsageBit::UNIFORM_GEOMETRY
+					  | BufferUsageBit::STORAGE_GEOMETRY_READ_WRITE)))
+	{
+		stageMask |= VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
+	}
+
+	if(!!(usage & (BufferUsageBit::UNIFORM_FRAGMENT
+					  | BufferUsageBit::STORAGE_FRAGMENT_READ_WRITE)))
+	{
+		stageMask |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	}
+
+	if(!!(usage & (BufferUsageBit::UNIFORM_COMPUTE
+					  | BufferUsageBit::STORAGE_COMPUTE_READ_WRITE)))
+	{
+		stageMask |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+	}
+
+	if(!!(usage & (BufferUsageBit::INDEX | BufferUsageBit::VERTEX)))
+	{
+		stageMask |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT
+			| VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT
+			| VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT
+			| VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
+	}
+
+	if(!!(usage & BufferUsageBit::INDIRECT))
+	{
+		stageMask |= VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT;
+	}
+
+	if(!!(usage & (BufferUsageBit::TRANSFER_ALL)))
+	{
+		stageMask |= VK_PIPELINE_STAGE_TRANSFER_BIT;
+	}
+
+	ANKI_ASSERT(stageMask);
+	return stageMask;
+}
+
+//==============================================================================
+VkAccessFlags BufferImpl::computeAccessMask(BufferUsageBit usage)
+{
+	VkAccessFlags mask = 0;
+
+	const BufferUsageBit SHADER_READ = BufferUsageBit::STORAGE_VERTEX_READ
+		| BufferUsageBit::STORAGE_TESSELLATION_CONTROL_READ
+		| BufferUsageBit::STORAGE_TESSELLATION_EVALUATION_READ
+		| BufferUsageBit::STORAGE_GEOMETRY_READ
+		| BufferUsageBit::STORAGE_FRAGMENT_READ
+		| BufferUsageBit::STORAGE_COMPUTE_READ;
+
+	const BufferUsageBit SHADER_WRITE = BufferUsageBit::STORAGE_VERTEX_WRITE
+		| BufferUsageBit::STORAGE_TESSELLATION_CONTROL_WRITE
+		| BufferUsageBit::STORAGE_TESSELLATION_EVALUATION_WRITE
+		| BufferUsageBit::STORAGE_GEOMETRY_WRITE
+		| BufferUsageBit::STORAGE_FRAGMENT_WRITE
+		| BufferUsageBit::STORAGE_COMPUTE_WRITE;
+
+	if(!!(usage & BufferUsageBit::UNIFORM_ALL))
+	{
+		mask |= VK_ACCESS_UNIFORM_READ_BIT;
+	}
+
+	if(!!(usage & SHADER_READ))
+	{
+		mask |= VK_ACCESS_SHADER_READ_BIT;
+	}
+
+	if(!!(usage & SHADER_WRITE))
+	{
+		mask |= VK_ACCESS_SHADER_WRITE_BIT;
+	}
+
+	if(!!(usage & BufferUsageBit::INDEX))
+	{
+		mask |= VK_ACCESS_INDEX_READ_BIT;
+	}
+
+	if(!!(usage & BufferUsageBit::VERTEX))
+	{
+		mask |= VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+	}
+
+	if(!!(usage & BufferUsageBit::INDIRECT))
+	{
+		mask |= VK_ACCESS_INDIRECT_COMMAND_READ_BIT;
+	}
+
+	if(!!(usage & (BufferUsageBit::FILL
+					  | BufferUsageBit::BUFFER_UPLOAD_DESTINATION)))
+	{
+		mask |= VK_ACCESS_TRANSFER_WRITE_BIT;
+	}
+
+	if(!!(usage & (BufferUsageBit::BUFFER_UPLOAD_SOURCE
+					  | BufferUsageBit::TEXTURE_UPLOAD_SOURCE)))
+	{
+		mask |= VK_ACCESS_TRANSFER_READ_BIT;
+	}
+
+	ANKI_ASSERT(mask);
+	return mask;
+}
+
+//==============================================================================
+void BufferImpl::computeBarrierInfo(BufferUsageBit before,
+	BufferUsageBit after,
+	VkPipelineStageFlags& srcStages,
+	VkAccessFlags& srcAccesses,
+	VkPipelineStageFlags& dstStages,
+	VkAccessFlags& dstAccesses) const
+{
+	ANKI_ASSERT(usageValid(before) && usageValid(after));
+
+	srcStages = computePplineStage(before);
+	dstStages = computePplineStage(after);
+	srcAccesses = computeAccessMask(before);
+	dstAccesses = computeAccessMask(after);
+}
+
 } // end namespace anki

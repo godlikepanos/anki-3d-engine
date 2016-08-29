@@ -22,8 +22,8 @@ Error TransientMemoryManager::init(const ConfigSet& cfg)
 			"gr.transferPerFrameMemorySize"}};
 
 	// This alignment satisfies the spec's condition for buffer to image
-	// copies: "bufferOffset must be a multiple of the calling command’s
-	// VkImage parameter’s texel size". This alignment works for all supported
+	// copies: "bufferOffset must be a multiple of the calling command's
+	// VkImage parameter's texel size". This alignment works for all supported
 	// formats
 	const U TRANSFER_ALIGNMENT = 96;
 
@@ -39,8 +39,9 @@ Error TransientMemoryManager::init(const ConfigSet& cfg)
 		{BufferUsageBit::UNIFORM_ALL,
 			BufferUsageBit::STORAGE_ALL,
 			BufferUsageBit::VERTEX,
-			BufferUsageBit::TRANSFER_SOURCE
-				| BufferUsageBit::TRANSFER_DESTINATION}};
+			BufferUsageBit::BUFFER_UPLOAD_SOURCE
+				| BufferUsageBit::BUFFER_UPLOAD_DESTINATION
+				| BufferUsageBit::TEXTURE_UPLOAD_SOURCE}};
 
 	auto alloc = m_manager->getAllocator();
 	for(TransientBufferType i = TransientBufferType::UNIFORM;

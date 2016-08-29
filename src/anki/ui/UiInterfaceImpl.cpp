@@ -222,7 +222,7 @@ Error UiInterfaceImpl::createR8Image(
 		m_gr->newInstance<CommandBuffer>(CommandBufferInitInfo());
 	TransientMemoryToken token;
 	void* loadData = m_gr->allocateFrameTransientMemory(
-		data.getSize(), BufferUsageBit::TRANSFER_SOURCE, token);
+		data.getSize(), BufferUsageBit::TEXTURE_UPLOAD_SOURCE, token);
 	memcpy(loadData, &data[0], data.getSize());
 	cmdb->uploadTextureSurface(tex, TextureSurfaceInfo(0, 0, 0, 0), token);
 

@@ -182,6 +182,8 @@ inline void CommandBufferImpl::setBufferBarrier(VkPipelineStageFlags srcStage,
 	VkBuffer buff)
 {
 	ANKI_ASSERT(buff);
+	commandCommon();
+
 	VkBufferMemoryBarrier b = {};
 	b.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
 	b.srcAccessMask = srcAccess;
@@ -194,6 +196,33 @@ inline void CommandBufferImpl::setBufferBarrier(VkPipelineStageFlags srcStage,
 
 	vkCmdPipelineBarrier(
 		m_handle, srcStage, dstStage, 0, 0, nullptr, 1, &b, 0, nullptr);
+}
+
+//==============================================================================
+inline void CommandBufferImpl::setBufferBarrier(BufferPtr buff,
+	BufferUsageBit before,
+	BufferUsageBit after,
+	PtrSize offset,
+	PtrSize size)
+{
+	const BufferImpl& impl = buff->getImplementation();
+
+	VkPipelineStageFlags srcStage;
+	VkAccessFlags srcAccess;
+	VkPipelineStageFlags dstStage;
+	VkAccessFlags dstAccess;
+	impl.computeBarrierInfo(
+		before, after, srcStage, srcAccess, dstStage, dstAccess);
+
+	setBufferBarrier(srcStage,
+		srcAccess,
+		dstStage,
+		dstAccess,
+		offset,
+		size,
+		impl.getHandle());
+
+	m_bufferList.pushBack(m_alloc, buff);
 }
 
 //==============================================================================

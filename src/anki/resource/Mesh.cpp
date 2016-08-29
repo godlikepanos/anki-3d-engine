@@ -47,7 +47,7 @@ Error MeshLoadTask::operator()(AsyncLoaderTaskContext& ctx)
 		TransientMemoryToken token;
 		void* data =
 			gr.tryAllocateFrameTransientMemory(m_loader.getVertexDataSize(),
-				BufferUsageBit::TRANSFER_SOURCE,
+				BufferUsageBit::BUFFER_UPLOAD_SOURCE,
 				token);
 
 		if(data)
@@ -58,14 +58,14 @@ Error MeshLoadTask::operator()(AsyncLoaderTaskContext& ctx)
 
 			cmdb->setBufferBarrier(m_vertBuff,
 				BufferUsageBit::VERTEX,
-				BufferUsageBit::UPLOAD_DESTINATION,
+				BufferUsageBit::BUFFER_UPLOAD_DESTINATION,
 				0,
 				MAX_PTR_SIZE);
 
 			cmdb->uploadBuffer(m_vertBuff, 0, token);
 
 			cmdb->setBufferBarrier(m_vertBuff,
-				BufferUsageBit::UPLOAD_DESTINATION,
+				BufferUsageBit::BUFFER_UPLOAD_DESTINATION,
 				BufferUsageBit::VERTEX,
 				0,
 				MAX_PTR_SIZE);
@@ -85,7 +85,7 @@ Error MeshLoadTask::operator()(AsyncLoaderTaskContext& ctx)
 		TransientMemoryToken token;
 		void* data =
 			gr.tryAllocateFrameTransientMemory(m_loader.getIndexDataSize(),
-				BufferUsageBit::TRANSFER_SOURCE,
+				BufferUsageBit::BUFFER_UPLOAD_SOURCE,
 				token);
 
 		if(data)
@@ -99,14 +99,14 @@ Error MeshLoadTask::operator()(AsyncLoaderTaskContext& ctx)
 
 			cmdb->setBufferBarrier(m_indicesBuff,
 				BufferUsageBit::INDEX,
-				BufferUsageBit::UPLOAD_DESTINATION,
+				BufferUsageBit::BUFFER_UPLOAD_DESTINATION,
 				0,
 				MAX_PTR_SIZE);
 
 			cmdb->uploadBuffer(m_indicesBuff, 0, token);
 
 			cmdb->setBufferBarrier(m_indicesBuff,
-				BufferUsageBit::UPLOAD_DESTINATION,
+				BufferUsageBit::BUFFER_UPLOAD_DESTINATION,
 				BufferUsageBit::INDEX,
 				0,
 				MAX_PTR_SIZE);
@@ -185,11 +185,11 @@ Error Mesh::load(const ResourceFilename& filename)
 	GrManager& gr = getManager().getGrManager();
 
 	m_vertBuff = gr.newInstance<Buffer>(loader.getVertexDataSize(),
-		BufferUsageBit::VERTEX | BufferUsageBit::TRANSFER_DESTINATION,
+		BufferUsageBit::VERTEX | BufferUsageBit::BUFFER_UPLOAD_DESTINATION,
 		BufferMapAccessBit::NONE);
 
 	m_indicesBuff = gr.newInstance<Buffer>(loader.getIndexDataSize(),
-		BufferUsageBit::INDEX | BufferUsageBit::TRANSFER_DESTINATION,
+		BufferUsageBit::INDEX | BufferUsageBit::BUFFER_UPLOAD_DESTINATION,
 		BufferMapAccessBit::NONE);
 
 	// Clear them

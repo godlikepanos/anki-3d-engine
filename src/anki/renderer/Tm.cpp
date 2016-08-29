@@ -38,14 +38,14 @@ Error Tm::create(const ConfigSet& initializer)
 	// Create buffer
 	m_luminanceBuff = getGrManager().newInstance<Buffer>(sizeof(Vec4),
 		BufferUsageBit::STORAGE_ALL | BufferUsageBit::UNIFORM_ALL
-			| BufferUsageBit::TRANSFER_DESTINATION,
+			| BufferUsageBit::BUFFER_UPLOAD_DESTINATION,
 		BufferMapAccessBit::NONE);
 
 	CommandBufferPtr cmdb =
 		getGrManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
 	TransientMemoryToken token;
 	void* data = getGrManager().allocateFrameTransientMemory(
-		sizeof(Vec4), BufferUsageBit::TRANSFER_SOURCE, token);
+		sizeof(Vec4), BufferUsageBit::BUFFER_UPLOAD_SOURCE, token);
 	*static_cast<Vec4*>(data) = Vec4(0.5);
 	cmdb->uploadBuffer(m_luminanceBuff, 0, token);
 	cmdb->flush();

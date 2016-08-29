@@ -37,8 +37,8 @@ inline TransientBufferType bufferUsageToTransient(BufferUsageBit bit)
 	}
 	else
 	{
-		ANKI_ASSERT(
-			(bit & BufferUsageBit::TRANSFER_SOURCE) != BufferUsageBit::NONE);
+		ANKI_ASSERT(!!(bit & (BufferUsageBit::BUFFER_UPLOAD_SOURCE
+								 | BufferUsageBit::TEXTURE_UPLOAD_SOURCE)));
 		return TransientBufferType::TRANSFER;
 	}
 }

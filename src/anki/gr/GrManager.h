@@ -88,14 +88,12 @@ public:
 	/// the memory for internal use.
 	void getTextureSurfaceUploadInfo(TexturePtr tex,
 		const TextureSurfaceInfo& surf,
-		PtrSize& expectedTransientAllocationSize,
-		BufferUsageBit& usage);
+		PtrSize& expectedTransientAllocationSize);
 
 	/// Same as getTextureSurfaceUploadInfo but for volumes.
 	void getTextureVolumeUploadInfo(TexturePtr tex,
 		const TextureVolumeInfo& vol,
-		PtrSize& expectedTransientAllocationSize,
-		BufferUsageBit& usage);
+		PtrSize& expectedTransientAllocationSize);
 
 anki_internal:
 	GrAllocator<U8>& getAllocator()

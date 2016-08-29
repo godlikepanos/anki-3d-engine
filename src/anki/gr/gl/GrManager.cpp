@@ -96,10 +96,8 @@ void* GrManager::tryAllocateFrameTransientMemory(
 }
 
 //==============================================================================
-void GrManager::getTextureSurfaceUploadInfo(TexturePtr tex,
-	const TextureSurfaceInfo& surf,
-	PtrSize& allocationSize,
-	BufferUsageBit& usage)
+void GrManager::getTextureSurfaceUploadInfo(
+	TexturePtr tex, const TextureSurfaceInfo& surf, PtrSize& allocationSize)
 {
 	const TextureImpl& impl = tex->getImplementation();
 	impl.checkSurface(surf);
@@ -107,15 +105,11 @@ void GrManager::getTextureSurfaceUploadInfo(TexturePtr tex,
 	U width = impl.m_width >> surf.m_level;
 	U height = impl.m_height >> surf.m_level;
 	allocationSize = computeSurfaceSize(width, height, impl.m_pformat);
-
-	usage = BufferUsageBit::TRANSFER_SOURCE;
 }
 
 //==============================================================================
-void GrManager::getTextureVolumeUploadInfo(TexturePtr tex,
-	const TextureVolumeInfo& vol,
-	PtrSize& allocationSize,
-	BufferUsageBit& usage)
+void GrManager::getTextureVolumeUploadInfo(
+	TexturePtr tex, const TextureVolumeInfo& vol, PtrSize& allocationSize)
 {
 	const TextureImpl& impl = tex->getImplementation();
 	impl.checkVolume(vol);
@@ -124,8 +118,6 @@ void GrManager::getTextureVolumeUploadInfo(TexturePtr tex,
 	U height = impl.m_height >> vol.m_level;
 	U depth = impl.m_depth >> vol.m_level;
 	allocationSize = computeVolumeSize(width, height, depth, impl.m_pformat);
-
-	usage = BufferUsageBit::TRANSFER_SOURCE;
 }
 
 } // end namespace anki

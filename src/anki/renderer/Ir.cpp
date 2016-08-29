@@ -114,11 +114,11 @@ Error Ir::loadMesh(
 	PtrSize vertBuffSize =
 		loader.getHeader().m_totalVerticesCount * sizeof(Vec3);
 	vert = getGrManager().newInstance<Buffer>(vertBuffSize,
-		BufferUsageBit::VERTEX | BufferUsageBit::TRANSFER_DESTINATION,
+		BufferUsageBit::VERTEX | BufferUsageBit::BUFFER_UPLOAD_DESTINATION,
 		BufferMapAccessBit::NONE);
 
 	idx = getGrManager().newInstance<Buffer>(loader.getIndexDataSize(),
-		BufferUsageBit::INDEX | BufferUsageBit::TRANSFER_DESTINATION,
+		BufferUsageBit::INDEX | BufferUsageBit::BUFFER_UPLOAD_DESTINATION,
 		BufferMapAccessBit::NONE);
 
 	// Upload data
@@ -129,7 +129,7 @@ Error Ir::loadMesh(
 	TransientMemoryToken token;
 	Vec3* verts =
 		static_cast<Vec3*>(getGrManager().allocateFrameTransientMemory(
-			vertBuffSize, BufferUsageBit::TRANSFER_SOURCE, token));
+			vertBuffSize, BufferUsageBit::BUFFER_UPLOAD_SOURCE, token));
 
 	const U8* ptr = loader.getVertexData();
 	for(U i = 0; i < loader.getHeader().m_totalVerticesCount; ++i)
@@ -142,7 +142,7 @@ Error Ir::loadMesh(
 	cmdb->uploadBuffer(vert, 0, token);
 
 	void* cpuIds = getGrManager().allocateFrameTransientMemory(
-		loader.getIndexDataSize(), BufferUsageBit::TRANSFER_SOURCE, token);
+		loader.getIndexDataSize(), BufferUsageBit::BUFFER_UPLOAD_SOURCE, token);
 
 	memcpy(cpuIds, loader.getIndexData(), loader.getIndexDataSize());
 

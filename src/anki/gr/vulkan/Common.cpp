@@ -549,13 +549,14 @@ VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask)
 		out |= VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT;
 	}
 
-	if(!!(usageMask
-		   & (BufferUsageBit::TRANSFER_DESTINATION | BufferUsageBit::FILL)))
+	if(!!(usageMask & (BufferUsageBit::BUFFER_UPLOAD_DESTINATION
+						  | BufferUsageBit::FILL)))
 	{
 		out |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 	}
 
-	if(!!(usageMask & BufferUsageBit::TRANSFER_SOURCE))
+	if(!!(usageMask & (BufferUsageBit::BUFFER_UPLOAD_SOURCE
+						  | BufferUsageBit::TEXTURE_UPLOAD_SOURCE)))
 	{
 		out |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 	}

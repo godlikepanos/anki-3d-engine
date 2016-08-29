@@ -57,7 +57,8 @@ Error TexUploadTask::operator()(AsyncLoaderTaskContext& ctx)
 				PtrSize surfOrVolSize;
 				const void* surfOrVolData;
 				PtrSize allocationSize;
-				BufferUsageBit uploadBuffUsage;
+				const BufferUsageBit uploadBuffUsage =
+					BufferUsageBit::TEXTURE_UPLOAD_SOURCE;
 
 				if(m_texType == TextureType::_3D)
 				{
@@ -65,10 +66,8 @@ Error TexUploadTask::operator()(AsyncLoaderTaskContext& ctx)
 					surfOrVolSize = vol.m_data.getSize();
 					surfOrVolData = &vol.m_data[0];
 
-					m_gr->getTextureVolumeUploadInfo(m_tex,
-						TextureVolumeInfo(mip),
-						allocationSize,
-						uploadBuffUsage);
+					m_gr->getTextureVolumeUploadInfo(
+						m_tex, TextureVolumeInfo(mip), allocationSize);
 				}
 				else
 				{
@@ -78,8 +77,7 @@ Error TexUploadTask::operator()(AsyncLoaderTaskContext& ctx)
 
 					m_gr->getTextureSurfaceUploadInfo(m_tex,
 						TextureSurfaceInfo(mip, 0, face, layer),
-						allocationSize,
-						uploadBuffUsage);
+						allocationSize);
 				}
 
 				ANKI_ASSERT(allocationSize >= surfOrVolSize);

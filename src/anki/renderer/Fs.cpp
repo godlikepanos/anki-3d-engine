@@ -71,11 +71,11 @@ Error Fs::init(const ConfigSet&)
 			BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
 
 		init.m_storageBuffers[0].m_uploadedMemory = true;
-		init.m_storageBuffers[0].m_usage =
-			BufferUsageBit::STORAGE_FRAGMENT | BufferUsageBit::STORAGE_VERTEX;
+		init.m_storageBuffers[0].m_usage = BufferUsageBit::STORAGE_FRAGMENT_READ
+			| BufferUsageBit::STORAGE_VERTEX_READ;
 		init.m_storageBuffers[1].m_uploadedMemory = true;
-		init.m_storageBuffers[1].m_usage =
-			BufferUsageBit::STORAGE_FRAGMENT | BufferUsageBit::STORAGE_VERTEX;
+		init.m_storageBuffers[1].m_usage = BufferUsageBit::STORAGE_FRAGMENT_READ
+			| BufferUsageBit::STORAGE_VERTEX_READ;
 
 		m_globalResources = getGrManager().newInstance<ResourceGroup>(init);
 	}

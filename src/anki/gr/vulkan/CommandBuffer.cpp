@@ -240,6 +240,7 @@ void CommandBuffer::setBufferBarrier(BufferPtr buff,
 	PtrSize offset,
 	PtrSize size)
 {
+	m_impl->setBufferBarrier(buff, before, after, offset, size);
 }
 
 //==============================================================================
