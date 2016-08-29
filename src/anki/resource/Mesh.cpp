@@ -185,11 +185,13 @@ Error Mesh::load(const ResourceFilename& filename)
 	GrManager& gr = getManager().getGrManager();
 
 	m_vertBuff = gr.newInstance<Buffer>(loader.getVertexDataSize(),
-		BufferUsageBit::VERTEX | BufferUsageBit::BUFFER_UPLOAD_DESTINATION,
+		BufferUsageBit::VERTEX | BufferUsageBit::BUFFER_UPLOAD_DESTINATION
+			| BufferUsageBit::FILL,
 		BufferMapAccessBit::NONE);
 
 	m_indicesBuff = gr.newInstance<Buffer>(loader.getIndexDataSize(),
-		BufferUsageBit::INDEX | BufferUsageBit::BUFFER_UPLOAD_DESTINATION,
+		BufferUsageBit::INDEX | BufferUsageBit::BUFFER_UPLOAD_DESTINATION
+			| BufferUsageBit::FILL,
 		BufferMapAccessBit::NONE);
 
 	// Clear them

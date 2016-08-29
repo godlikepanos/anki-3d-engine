@@ -33,6 +33,9 @@ Error BufferImpl::init(
 	ANKI_ASSERT(size > 0);
 	ANKI_ASSERT(usage != BufferUsageBit::NONE);
 
+	// Align the size to satisfy fill buffer
+	alignRoundUp(4, size);
+
 	// Create the buffer
 	VkBufferCreateInfo ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
