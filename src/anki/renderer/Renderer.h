@@ -125,8 +125,8 @@ public:
 	}
 };
 
-/// Offscreen renderer. It is a class and not a namespace because we may need
-/// external renderers for security cameras for example
+/// Offscreen renderer. It is a class and not a namespace because we may need external renderers for security cameras
+/// for example
 class Renderer
 {
 public:
@@ -269,13 +269,10 @@ anki_internal:
 	/// @param projectionMat The projection matrix
 	/// @param view The view vector
 	/// @return The unprojected coords
-	static Vec3 unproject(const Vec3& windowCoords,
-		const Mat4& modelViewMat,
-		const Mat4& projectionMat,
-		const int view[4]);
+	static Vec3 unproject(
+		const Vec3& windowCoords, const Mat4& modelViewMat, const Mat4& projectionMat, const int view[4]);
 
-	/// Draws a quad. Actually it draws 2 triangles because OpenGL will no
-	/// longer support quads
+	/// Draws a quad. Actually it draws 2 triangles because OpenGL will no longer support quads
 	void drawQuad(CommandBufferPtr& cmdb)
 	{
 		drawQuadInstanced(cmdb, 1);
@@ -297,10 +294,8 @@ anki_internal:
 		return distance / m_lodDistance;
 	}
 
-	/// Create a pipeline object that has as a vertex shader the m_drawQuadVert
-	/// and the given fragment progam
-	void createDrawQuadPipeline(
-		ShaderPtr frag, const ColorStateInfo& colorState, PipelinePtr& ppline);
+	/// Create a pipeline object that has as a vertex shader the m_drawQuadVert and the given fragment progam
+	void createDrawQuadPipeline(ShaderPtr frag, const ColorStateInfo& colorState, PipelinePtr& ppline);
 
 	/// Create a framebuffer attachment texture
 	void createRenderTarget(U32 w,
@@ -351,8 +346,7 @@ anki_internal:
 		return m_globTimestamp;
 	}
 
-	/// Returns true if there were resources loaded or loading async tasks that
-	/// got completed.
+	/// Returns true if there were resources loaded or loading async tasks that got completed.
 	Bool resourcesLoaded() const
 	{
 		return m_resourcesDirty;
@@ -416,8 +410,7 @@ private:
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 
 	ANKI_USE_RESULT Error buildCommandBuffers(RenderingContext& ctx);
-	ANKI_USE_RESULT Error buildCommandBuffersInternal(
-		RenderingContext& ctx, U32 threadId, PtrSize threadCount);
+	ANKI_USE_RESULT Error buildCommandBuffersInternal(RenderingContext& ctx, U32 threadId, PtrSize threadCount);
 };
 /// @}
 

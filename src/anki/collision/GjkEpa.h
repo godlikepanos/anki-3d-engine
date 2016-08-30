@@ -34,8 +34,8 @@ public:
 /// @addtogroup collision
 /// @{
 
-/// The implementation of the GJK algorithm. This algorithm is being used for
-/// checking the intersection between convex shapes.
+/// The implementation of the GJK algorithm. This algorithm is being used for checking the intersection between convex
+/// shapes.
 class Gjk
 {
 	friend class GjkEpa;
@@ -52,10 +52,7 @@ private:
 	Vec4 m_dir;
 
 	/// Compute the support
-	static void support(const ConvexShape& shape0,
-		const ConvexShape& shape1,
-		const Vec4& dir,
-		Support& support);
+	static void support(const ConvexShape& shape0, const ConvexShape& shape1, const Vec4& dir, Support& support);
 
 	/// Update simplex
 	Bool update(const Support& a);

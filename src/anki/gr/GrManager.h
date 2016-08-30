@@ -63,37 +63,31 @@ public:
 	template<typename T, typename... Args>
 	GrObjectPtr<T> newInstance(Args&&... args);
 
-	/// Create a new graphics object and use the cache to avoid duplication.
-	/// It's thread safe.
+	/// Create a new graphics object and use the cache to avoid duplication. It's thread safe.
 	template<typename T, typename TArg>
 	GrObjectPtr<T> newInstanceCached(const TArg& arg);
 
-	/// Allocate transient memory for various operations. The memory will be
-	/// reclaimed at the begining of the N-(MAX_FRAMES_IN_FLIGHT-1) frame.
-	ANKI_USE_RESULT void* allocateFrameTransientMemory(
-		PtrSize size, BufferUsageBit usage, TransientMemoryToken& token);
+	/// Allocate transient memory for various operations. The memory will be reclaimed at the begining of the
+	/// N-(MAX_FRAMES_IN_FLIGHT-1) frame.
+	ANKI_USE_RESULT void* allocateFrameTransientMemory(PtrSize size, BufferUsageBit usage, TransientMemoryToken& token);
 
-	/// Allocate transient memory for various operations. The memory will be
-	/// reclaimed at the begining of the N-(MAX_FRAMES_IN_FLIGHT-1) frame.
+	/// Allocate transient memory for various operations. The memory will be reclaimed at the begining of the
+	/// N-(MAX_FRAMES_IN_FLIGHT-1) frame.
 	ANKI_USE_RESULT void* tryAllocateFrameTransientMemory(
 		PtrSize size, BufferUsageBit usage, TransientMemoryToken& token);
 
-	/// Call this before calling allocateFrameTransientMemory or
-	/// tryAllocateFrameTransientMemory to get the exact memory that will be
-	/// required for the CommandBuffer::uploadTextureSurface.
+	/// Call this before calling allocateFrameTransientMemory or tryAllocateFrameTransientMemory to get the exact memory
+	/// that will be required for the CommandBuffer::uploadTextureSurface.
 	///
-	/// If the expectedTransientAllocationSize is greater than the expected you
-	/// are required to allocate that amount and write your pixels to be
-	/// uploaded to the first part of the memory as before and leave the rest of
-	/// the memory for internal use.
-	void getTextureSurfaceUploadInfo(TexturePtr tex,
-		const TextureSurfaceInfo& surf,
-		PtrSize& expectedTransientAllocationSize);
+	/// If the expectedTransientAllocationSize is greater than the expected you are required to allocate that amount and
+	/// write your pixels to be uploaded to the first part of the memory as before and leave the rest of the memory for
+	/// internal use.
+	void getTextureSurfaceUploadInfo(
+		TexturePtr tex, const TextureSurfaceInfo& surf, PtrSize& expectedTransientAllocationSize);
 
 	/// Same as getTextureSurfaceUploadInfo but for volumes.
-	void getTextureVolumeUploadInfo(TexturePtr tex,
-		const TextureVolumeInfo& vol,
-		PtrSize& expectedTransientAllocationSize);
+	void getTextureVolumeUploadInfo(
+		TexturePtr tex, const TextureVolumeInfo& vol, PtrSize& expectedTransientAllocationSize);
 
 anki_internal:
 	GrAllocator<U8>& getAllocator()
@@ -140,7 +134,6 @@ private:
 	U64 m_uuidIndex = 1;
 };
 
-//==============================================================================
 template<typename T, typename... Args>
 GrObjectPtr<T> GrManager::newInstance(Args&&... args)
 {
@@ -150,7 +143,6 @@ GrObjectPtr<T> GrManager::newInstance(Args&&... args)
 	return ptr;
 }
 
-//==============================================================================
 template<typename T, typename TArg>
 GrObjectPtr<T> GrManager::newInstanceCached(const TArg& arg)
 {

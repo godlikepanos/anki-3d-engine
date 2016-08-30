@@ -64,13 +64,7 @@ public:
 		ANKI_ASSERT(offset + size <= m_size);
 		ANKI_ASSERT((size % 4) == 0 && "Should be multiple of 4");
 
-		glClearNamedBufferSubData(m_glName,
-			GL_R32UI,
-			offset,
-			size,
-			GL_RED_INTEGER,
-			GL_UNSIGNED_INT,
-			&value);
+		glClearNamedBufferSubData(m_glName, GL_R32UI, offset, size, GL_RED_INTEGER, GL_UNSIGNED_INT, &value);
 	}
 };
 /// @}

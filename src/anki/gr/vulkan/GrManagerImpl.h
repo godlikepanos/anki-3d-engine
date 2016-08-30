@@ -101,14 +101,12 @@ public:
 		ANKI_ASSERT(ds);
 		LockGuard<Mutex> lock(m_globalDescriptorPoolMtx);
 		--m_descriptorSetAllocationCount;
-		ANKI_VK_CHECKF(
-			vkFreeDescriptorSets(m_device, m_globalDescriptorPool, 1, &ds));
+		ANKI_VK_CHECKF(vkFreeDescriptorSets(m_device, m_globalDescriptorPool, 1, &ds));
 	}
 
-	VkCommandBuffer newCommandBuffer(Thread::Id tid, Bool secondLevel);
+	VkCommandBuffer newCommandBuffer(ThreadId tid, Bool secondLevel);
 
-	void deleteCommandBuffer(
-		VkCommandBuffer cmdb, Bool secondLevel, Thread::Id tid);
+	void deleteCommandBuffer(VkCommandBuffer cmdb, Bool secondLevel, ThreadId tid);
 
 	SemaphorePtr newSemaphore()
 	{
@@ -270,7 +268,7 @@ private:
 	class PerThreadHasher
 	{
 	public:
-		U64 operator()(const Thread::Id& b) const
+		U64 operator()(const ThreadId& b) const
 		{
 			return b;
 		}
@@ -279,7 +277,7 @@ private:
 	class PerThreadCompare
 	{
 	public:
-		Bool operator()(const Thread::Id& a, const Thread::Id& b) const
+		Bool operator()(const ThreadId& a, const ThreadId& b) const
 		{
 			return a == b;
 		}
@@ -292,8 +290,7 @@ private:
 		CommandBufferFactory m_cmdbs;
 	};
 
-	HashMap<Thread::Id, PerThread, PerThreadHasher, PerThreadCompare>
-		m_perThread;
+	HashMap<ThreadId, PerThread, PerThreadHasher, PerThreadCompare> m_perThread;
 	SpinLock m_perThreadMtx;
 
 	FenceFactory m_fences;
@@ -317,22 +314,17 @@ private:
 	ANKI_USE_RESULT Error initGlobalPplineLayout();
 	ANKI_USE_RESULT Error initMemory(const ConfigSet& cfg);
 
-	static void* allocateCallback(void* userData,
-		size_t size,
-		size_t alignment,
-		VkSystemAllocationScope allocationScope);
+	static void* allocateCallback(
+		void* userData, size_t size, size_t alignment, VkSystemAllocationScope allocationScope);
 
-	static void* reallocateCallback(void* userData,
-		void* original,
-		size_t size,
-		size_t alignment,
-		VkSystemAllocationScope allocationScope);
+	static void* reallocateCallback(
+		void* userData, void* original, size_t size, size_t alignment, VkSystemAllocationScope allocationScope);
 
 	static void freeCallback(void* userData, void* ptr);
 
 	void resetFrame(PerFrame& frame);
 
-	PerThread& getPerThreadCache(Thread::Id tid);
+	PerThread& getPerThreadCache(ThreadId tid);
 };
 /// @}
 

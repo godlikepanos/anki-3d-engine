@@ -18,11 +18,9 @@ namespace anki
 class PlayerControllerComponent : public SceneComponent
 {
 public:
-	static const SceneComponentType CLASS_TYPE =
-		SceneComponentType::PLAYER_CONTROLLER;
+	static const SceneComponentType CLASS_TYPE = SceneComponentType::PLAYER_CONTROLLER;
 
-	PlayerControllerComponent(
-		SceneNode* node, PhysicsPlayerControllerPtr player)
+	PlayerControllerComponent(SceneNode* node, PhysicsPlayerControllerPtr player)
 		: SceneComponent(CLASS_TYPE, node)
 		, m_player(player)
 	{
@@ -40,10 +38,7 @@ public:
 		m_player->moveToPosition(trf.getOrigin());
 	}
 
-	void setVelocity(F32 forwardSpeed,
-		F32 strafeSpeed,
-		F32 jumpSpeed,
-		const Vec4& forwardDir)
+	void setVelocity(F32 forwardSpeed, F32 strafeSpeed, F32 jumpSpeed, const Vec4& forwardDir)
 	{
 		m_player->setVelocity(forwardSpeed, strafeSpeed, jumpSpeed, forwardDir);
 	}

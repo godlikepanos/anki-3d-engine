@@ -12,10 +12,6 @@
 namespace anki
 {
 
-//==============================================================================
-// OccluderMoveFeedbackComponent                                               =
-//==============================================================================
-
 /// Feedback component.
 class OccluderMoveFeedbackComponent : public SceneComponent
 {
@@ -25,8 +21,7 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error update(
-		SceneNode& node, F32, F32, Bool& updated) override
+	ANKI_USE_RESULT Error update(SceneNode& node, F32, F32, Bool& updated) override
 	{
 		updated = false;
 
@@ -41,18 +36,12 @@ public:
 	}
 };
 
-//==============================================================================
-// OccluderNode                                                                =
-//==============================================================================
-
-//==============================================================================
 OccluderNode::~OccluderNode()
 {
 	m_vertsL.destroy(getSceneAllocator());
 	m_vertsW.destroy(getSceneAllocator());
 }
 
-//==============================================================================
 Error OccluderNode::init(const CString& meshFname)
 {
 	// Load mesh
@@ -69,8 +58,7 @@ Error OccluderNode::init(const CString& meshFname)
 	for(U i = 0; i < indexCount; ++i)
 	{
 		U idx = indices[i];
-		const Vec3* vert = reinterpret_cast<const Vec3*>(
-			loader.getVertexData() + idx * vertSize);
+		const Vec3* vert = reinterpret_cast<const Vec3*>(loader.getVertexData() + idx * vertSize);
 		m_vertsL[i] = *vert;
 	}
 
@@ -87,7 +75,6 @@ Error OccluderNode::init(const CString& meshFname)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void OccluderNode::onMoveComponentUpdate(MoveComponent& movec)
 {
 	const Transform& trf(movec.getWorldTransform());
@@ -98,8 +85,7 @@ void OccluderNode::onMoveComponentUpdate(MoveComponent& movec)
 		m_vertsW[count] = trf.transform(m_vertsL[count]);
 	}
 
-	getComponent<OccluderComponent>().setVertices(
-		&m_vertsW[0], m_vertsW.getSize(), sizeof(m_vertsW[0]));
+	getComponent<OccluderComponent>().setVertices(&m_vertsW[0], m_vertsW.getSize(), sizeof(m_vertsW[0]));
 }
 
 } // end namespace anki

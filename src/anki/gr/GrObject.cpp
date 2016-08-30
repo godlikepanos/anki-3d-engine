@@ -9,7 +9,6 @@
 namespace anki
 {
 
-//==============================================================================
 GrObject::GrObject(GrManager* manager, GrObjectType type, U64 hash)
 	: m_refcount(0)
 	, m_manager(manager)
@@ -19,13 +18,11 @@ GrObject::GrObject(GrManager* manager, GrObjectType type, U64 hash)
 {
 }
 
-//==============================================================================
 GrObject::~GrObject()
 {
 	m_manager->unregisterCachedObject(this);
 }
 
-//==============================================================================
 GrAllocator<U8> GrObject::getAllocator() const
 {
 	return m_manager->getAllocator();

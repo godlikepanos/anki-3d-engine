@@ -59,10 +59,8 @@ private:
 
 	void binLights(U32 threadId, PtrSize threadsCount, LightBinContext& ctx);
 
-	I writePointLight(const LightComponent& light,
-		const MoveComponent& move,
-		const FrustumComponent& camfrc,
-		LightBinContext& ctx);
+	I writePointLight(
+		const LightComponent& light, const MoveComponent& move, const FrustumComponent& camfrc, LightBinContext& ctx);
 
 	I writeSpotLight(const LightComponent& lightc,
 		const MoveComponent& lightMove,
@@ -71,16 +69,10 @@ private:
 		const FrustumComponent& camFrc,
 		LightBinContext& ctx);
 
-	void binLight(SpatialComponent& sp,
-		U pos,
-		U lightType,
-		LightBinContext& ctx,
-		ClustererTestResult& testResult);
+	void binLight(SpatialComponent& sp, U pos, U lightType, LightBinContext& ctx, ClustererTestResult& testResult);
 
-	void writeAndBinProbe(const FrustumComponent& camFrc,
-		const SceneNode& node,
-		LightBinContext& ctx,
-		ClustererTestResult& testResult);
+	void writeAndBinProbe(
+		const FrustumComponent& camFrc, const SceneNode& node, LightBinContext& ctx, ClustererTestResult& testResult);
 };
 /// @}
 

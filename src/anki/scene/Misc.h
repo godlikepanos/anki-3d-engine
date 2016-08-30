@@ -13,8 +13,8 @@ namespace anki
 /// @addtogroup scene
 /// @{
 
-/// A class that holds spatial information and implements the SpatialComponent
-/// virtuals. You just need to update the OBB manually
+/// A class that holds spatial information and implements the SpatialComponent virtuals. You just need to update the
+/// OBB manually
 class ObbSpatialComponent : public SpatialComponent
 {
 public:

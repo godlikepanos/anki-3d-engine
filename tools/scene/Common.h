@@ -13,18 +13,17 @@ void log(const char* file, int line, unsigned type, const char* fmt, ...);
 // Log and errors
 #define LOGI(...) log(__FILE__, __LINE__, 1, __VA_ARGS__)
 
-#define ERROR(...)                                                             \
-	do                                                                         \
-	{                                                                          \
-		log(__FILE__, __LINE__, 2, __VA_ARGS__);                               \
-		exit(0);                                                               \
+#define ERROR(...)                                                                                                     \
+	do                                                                                                                 \
+	{                                                                                                                  \
+		log(__FILE__, __LINE__, 2, __VA_ARGS__);                                                                       \
+		exit(0);                                                                                                       \
 	} while(0)
 
 #define LOGW(...) log(__FILE__, __LINE__, 3, __VA_ARGS__)
 
 /// Replace all @a from substrings in @a str to @a to
-std::string replaceAllString(
-	const std::string& str, const std::string& from, const std::string& to);
+std::string replaceAllString(const std::string& str, const std::string& from, const std::string& to);
 
 /// From a path return only the filename
 std::string getFilename(const std::string& path);

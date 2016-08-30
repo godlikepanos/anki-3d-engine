@@ -15,9 +15,8 @@ namespace anki
 /// @addtogroup util_containers
 /// @{
 
-/// Dynamic array with manual destruction. It doesn't hold the allocator and
-/// that makes it compact. At the same time that requires manual destruction.
-/// Used in permanent classes.
+/// Dynamic array with manual destruction. It doesn't hold the allocator and that makes it compact. At the same time
+/// that requires manual destruction. Used in permanent classes.
 template<typename T>
 class DynamicArray : public NonCopyable
 {
@@ -43,8 +42,7 @@ public:
 
 	~DynamicArray()
 	{
-		ANKI_ASSERT(
-			m_data == nullptr && m_size == 0 && "Requires manual destruction");
+		ANKI_ASSERT(m_data == nullptr && m_size == 0 && "Requires manual destruction");
 	}
 
 	/// Move.
@@ -231,8 +229,7 @@ protected:
 
 	void move(DynamicArray& b)
 	{
-		ANKI_ASSERT(m_data == nullptr && m_size == 0
-			&& "Cannot move before destroying");
+		ANKI_ASSERT(m_data == nullptr && m_size == 0 && "Cannot move before destroying");
 		m_data = b.m_data;
 		b.m_data = nullptr;
 		m_size = b.m_size;
@@ -240,9 +237,8 @@ protected:
 	}
 };
 
-/// Dynamic array with automatic destruction. It's the same as DynamicArray but
-/// it holds the allocator in order to perform automatic destruction. Use it for
-/// temp operations and on transient classes.
+/// Dynamic array with automatic destruction. It's the same as DynamicArray but it holds the allocator in order to
+/// perform automatic destruction. Use it for temp operations and on transient classes.
 template<typename T>
 class DynamicArrayAuto : public DynamicArray<T>
 {

@@ -22,14 +22,11 @@ layout(std430, binding = 0) writeonly buffer _blk
 	vec2 u_depthLimits[];
 };
 
-layout(local_size_x = WORKGROUP_SIZE_X,
-	local_size_y = WORKGROUP_SIZE_Y,
-	local_size_z = 1) in;
+layout(local_size_x = WORKGROUP_SIZE_X, local_size_y = WORKGROUP_SIZE_Y, local_size_z = 1) in;
 
 shared uint g_minDepth;
 shared uint g_maxDepth;
 
-//==============================================================================
 void main()
 {
 	// Init
@@ -40,8 +37,7 @@ void main()
 	barrier();
 
 	// Get max/min depth
-	ivec2 coord =
-		ivec2(gl_GlobalInvocationID.xy) * ivec2(PIXEL_READ_X, PIXEL_READ_Y);
+	ivec2 coord = ivec2(gl_GlobalInvocationID.xy) * ivec2(PIXEL_READ_X, PIXEL_READ_Y);
 
 	float mind = 10.0;
 	float maxd = -10.0;

@@ -56,9 +56,7 @@ layout(location = 0) in vec2 in_texCoord;
 #endif
 
 // Calc the kernel. Use offsets of 3 to take advantage of bilinear filtering
-#define BLURRING(val, sign_)                                                   \
-	((float(val) * (float(BLURRING_DIST) + 1.0) / float(IMG_DIMENSION))        \
-		* float(sign_))
+#define BLURRING(val, sign_) ((float(val) * (float(BLURRING_DIST) + 1.0) / float(IMG_DIMENSION)) * float(sign_))
 
 #if defined(HPASS)
 #define BLURRING_OFFSET_X(val, sign_) BLURRING(val, sign_)
@@ -68,8 +66,7 @@ layout(location = 0) in vec2 in_texCoord;
 #define BLURRING_OFFSET_Y(val, sign_) BLURRING(val, sign_)
 #endif
 
-#define BLURRING_OFFSET(v, s)                                                  \
-	vec2(BLURRING_OFFSET_X(v, s), BLURRING_OFFSET_Y(v, s))
+#define BLURRING_OFFSET(v, s) vec2(BLURRING_OFFSET_X(v, s), BLURRING_OFFSET_Y(v, s))
 
 const vec2 KERNEL[SAMPLES - 1] = vec2[](BLURRING_OFFSET(1, -1),
 	BLURRING_OFFSET(1, 1)

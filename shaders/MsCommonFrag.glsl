@@ -12,10 +12,6 @@ layout(early_fragment_tests) in;
 #include "shaders/Pack.glsl"
 #include "shaders/MsFsCommon.glsl"
 
-//==============================================================================
-// Variables                                                                   =
-//==============================================================================
-
 //
 // Input
 //
@@ -44,10 +40,6 @@ layout(location = 2) out vec4 out_msRt2;
 #define out_msRt1_DEFINED
 #define out_msRt2_DEFINED
 #endif
-
-//==============================================================================
-// Functions                                                                   =
-//==============================================================================
 
 // Getter
 #if PASS == COLOR
@@ -94,8 +86,7 @@ vec3 getPositionViewSpace()
 // Do normal mapping
 #if PASS == COLOR
 #define readNormalFromTexture_DEFINED
-vec3 readNormalFromTexture(
-	in vec3 normal, in vec4 tangent, in sampler2D map, in highp vec2 texCoords)
+vec3 readNormalFromTexture(in vec3 normal, in vec4 tangent, in sampler2D map, in highp vec2 texCoords)
 {
 #if LOD > 0
 	return normalize(normal);
@@ -128,10 +119,8 @@ vec3 combineNormalFromTextures(in vec3 normal,
 	return normalize(normal);
 #else
 	// First read the textures
-	vec3 nAtTangentspace0 =
-		normalize((texture(map, texCoords).rgb - 0.5) * 2.0);
-	vec3 nAtTangentspace1 =
-		normalize((texture(map2, texCoords * texCoords2Scale).rgb - 0.5) * 2.0);
+	vec3 nAtTangentspace0 = normalize((texture(map, texCoords).rgb - 0.5) * 2.0);
+	vec3 nAtTangentspace1 = normalize((texture(map2, texCoords * texCoords2Scale).rgb - 0.5) * 2.0);
 
 	vec3 nAtTangentspace = (nAtTangentspace0 + nAtTangentspace1) / 2.0;
 
@@ -149,11 +138,10 @@ vec3 combineNormalFromTextures(in vec3 normal,
 // Do environment mapping
 #if PASS == COLOR
 #define readEnvironmentColor_DEFINED
-vec3 readEnvironmentColor(
-	in vec3 vertPosViewSpace, in vec3 normal, in sampler2D map)
+vec3 readEnvironmentColor(in vec3 vertPosViewSpace, in vec3 normal, in sampler2D map)
 {
-	// In case of normal mapping I could play with vertex's normal but this
-	// gives better results and its allready computed
+	// In case of normal mapping I could play with vertex's normal but this gives better results and its allready
+	// computed
 
 	vec3 u = normalize(vertPosViewSpace);
 	vec3 r = reflect(u, normal);
@@ -166,11 +154,9 @@ vec3 readEnvironmentColor(
 }
 #endif
 
-// Using a 4-channel texture and a tolerance discard the fragment if the
-// texture's alpha is less than the tolerance
+// Using a 4-channel texture and a tolerance discard the fragment if the texture's alpha is less than the tolerance
 #define readTextureRgbAlphaTesting_DEFINED
-vec3 readTextureRgbAlphaTesting(
-	in sampler2D map, in highp vec2 texCoords, in float tolerance)
+vec3 readTextureRgbAlphaTesting(in sampler2D map, in highp vec2 texCoords, in float tolerance)
 {
 #if PASS == COLOR
 	vec4 col = vec4(texture(map, texCoords));
@@ -221,8 +207,7 @@ float readRFromTexture(in sampler2D tex, in highp vec2 texCoords)
 #endif
 
 #define computeTextureCoordParallax_DEFINED
-vec2 computeTextureCoordParallax(
-	in sampler2D heightMap, in vec2 uv, in float heightMapScale)
+vec2 computeTextureCoordParallax(in sampler2D heightMap, in vec2 uv, in float heightMapScale)
 {
 #if PASS == COLOR && LOD == 0
 	const uint MAX_SAMPLES = 25;
@@ -244,11 +229,9 @@ vec2 computeTextureCoordParallax(
 
 	vec3 E = normalize(eyeTangentSpace);
 
-	float sampleCountf =
-		mix(float(MAX_SAMPLES),
-			float(MIN_SAMPLES),
-			min(dot(E, normTangentSpace),
-				in_vertPosViewSpace.z / -MAX_EFFECTIVE_DISTANCE));
+	float sampleCountf = mix(float(MAX_SAMPLES),
+		float(MIN_SAMPLES),
+		min(dot(E, normTangentSpace), in_vertPosViewSpace.z / -MAX_EFFECTIVE_DISTANCE));
 
 	float stepSize = 1.0 / sampleCountf;
 
@@ -264,8 +247,7 @@ vec2 computeTextureCoordParallax(
 	uint sampleCount = uint(sampleCountf);
 	while(crntSample < sampleCount)
 	{
-		crntSampledHeight =
-			textureGrad(heightMap, uv + crntOffset, dPdx, dPdy).r;
+		crntSampledHeight = textureGrad(heightMap, uv + crntOffset, dPdx, dPdy).r;
 
 		if(crntSampledHeight > crntRayHeight)
 		{

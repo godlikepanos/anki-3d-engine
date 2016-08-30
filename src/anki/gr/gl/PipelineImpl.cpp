@@ -12,11 +12,6 @@
 namespace anki
 {
 
-//==============================================================================
-// Misc                                                                        =
-//==============================================================================
-
-//==============================================================================
 static GLenum convertBlendMethod(BlendMethod in)
 {
 	GLenum out = 0;
@@ -87,7 +82,6 @@ static GLenum convertBlendMethod(BlendMethod in)
 	return out;
 }
 
-//==============================================================================
 static void deletePrograms(GLsizei n, const GLuint* names)
 {
 	ANKI_ASSERT(n == 1);
@@ -95,17 +89,11 @@ static void deletePrograms(GLsizei n, const GLuint* names)
 	glDeleteProgram(*names);
 }
 
-//==============================================================================
-// PipelineImpl                                                                =
-//==============================================================================
-
-//==============================================================================
 PipelineImpl::~PipelineImpl()
 {
 	destroyDeferred(deletePrograms);
 }
 
-//==============================================================================
 Error PipelineImpl::init(const PipelineInitInfo& init)
 {
 	m_in = init;
@@ -124,7 +112,6 @@ Error PipelineImpl::init(const PipelineInitInfo& init)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error PipelineImpl::createGlPipeline()
 {
 	Error err = ErrorCode::NONE;
@@ -137,8 +124,7 @@ Error PipelineImpl::createGlPipeline()
 		const ShaderPtr& shader = m_in.m_shaders[count];
 		if(shader.isCreated())
 		{
-			ANKI_ASSERT(
-				count == enumToType(shader->getImplementation().m_type));
+			ANKI_ASSERT(count == enumToType(shader->getImplementation().m_type));
 			mask |= 1 << count;
 		}
 	}
@@ -149,8 +135,7 @@ Error PipelineImpl::createGlPipeline()
 
 		m_compute = true;
 
-		ANKI_ASSERT((mask & (1 << 5)) == (1 << 5)
-			&& "Compute should be alone in the pipeline");
+		ANKI_ASSERT((mask & (1 << 5)) == (1 << 5) && "Compute should be alone in the pipeline");
 	}
 	else
 	{
@@ -163,8 +148,7 @@ Error PipelineImpl::createGlPipeline()
 		const U tess = (1 << 1) | (1 << 2);
 		if((mask & tess) != 0)
 		{
-			ANKI_ASSERT(((mask & tess) == 0x6)
-				&& "Should set both the tessellation shaders");
+			ANKI_ASSERT(((mask & tess) == 0x6) && "Should set both the tessellation shaders");
 		}
 	}
 
@@ -180,8 +164,7 @@ Error PipelineImpl::createGlPipeline()
 		{
 			glAttachShader(m_glName, shader->getImplementation().getGlName());
 
-			if(i == U(ShaderType::TESSELLATION_CONTROL)
-				|| i == U(ShaderType::TESSELLATION_EVALUATION))
+			if(i == U(ShaderType::TESSELLATION_CONTROL) || i == U(ShaderType::TESSELLATION_EVALUATION))
 			{
 				m_tessellation = true;
 			}
@@ -207,14 +190,10 @@ Error PipelineImpl::createGlPipeline()
 
 		ANKI_LOGE("Ppline error log follows (vs:%u, fs:%u):\n%s",
 			m_in.m_shaders[ShaderType::VERTEX].isCreated()
-				? m_in.m_shaders[ShaderType::VERTEX]
-					  ->getImplementation()
-					  .getGlName()
+				? m_in.m_shaders[ShaderType::VERTEX]->getImplementation().getGlName()
 				: -1,
 			m_in.m_shaders[ShaderType::FRAGMENT].isCreated()
-				? m_in.m_shaders[ShaderType::FRAGMENT]
-					  ->getImplementation()
-					  .getGlName()
+				? m_in.m_shaders[ShaderType::FRAGMENT]->getImplementation().getGlName()
 				: -1,
 			&infoLogTxt[0]);
 		err = ErrorCode::USER_DATA;
@@ -223,7 +202,6 @@ Error PipelineImpl::createGlPipeline()
 	return err;
 }
 
-//==============================================================================
 void PipelineImpl::bind(GlState& state)
 {
 	glUseProgram(m_glName);
@@ -243,7 +221,6 @@ void PipelineImpl::bind(GlState& state)
 	setColorState(state);
 }
 
-//==============================================================================
 void PipelineImpl::initVertexState()
 {
 	for(U i = 0; i < m_in.m_vertex.m_attributeCount; ++i)
@@ -252,64 +229,55 @@ void PipelineImpl::initVertexState()
 		Attribute& cache = m_cache.m_attribs[i];
 
 		// Component count
-		if(binding.m_format
-			== PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT))
+		if(binding.m_format == PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT))
 		{
 			cache.m_compCount = 1;
 			cache.m_type = GL_FLOAT;
 			cache.m_normalized = false;
 		}
-		else if(binding.m_format
-			== PixelFormat(ComponentFormat::R32G32, TransformFormat::FLOAT))
+		else if(binding.m_format == PixelFormat(ComponentFormat::R32G32, TransformFormat::FLOAT))
 		{
 			cache.m_compCount = 2;
 			cache.m_type = GL_FLOAT;
 			cache.m_normalized = false;
 		}
-		else if(binding.m_format
-			== PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT))
+		else if(binding.m_format == PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT))
 		{
 			cache.m_compCount = 3;
 			cache.m_type = GL_FLOAT;
 			cache.m_normalized = false;
 		}
-		else if(binding.m_format == PixelFormat(ComponentFormat::R32G32B32A32,
-										TransformFormat::FLOAT))
+		else if(binding.m_format == PixelFormat(ComponentFormat::R32G32B32A32, TransformFormat::FLOAT))
 		{
 			cache.m_compCount = 4;
 			cache.m_type = GL_FLOAT;
 			cache.m_normalized = false;
 		}
-		else if(binding.m_format
-			== PixelFormat(ComponentFormat::R16G16, TransformFormat::FLOAT))
+		else if(binding.m_format == PixelFormat(ComponentFormat::R16G16, TransformFormat::FLOAT))
 		{
 			cache.m_compCount = 2;
 			cache.m_type = GL_HALF_FLOAT;
 			cache.m_normalized = false;
 		}
-		else if(binding.m_format
-			== PixelFormat(ComponentFormat::R16G16, TransformFormat::UNORM))
+		else if(binding.m_format == PixelFormat(ComponentFormat::R16G16, TransformFormat::UNORM))
 		{
 			cache.m_compCount = 2;
 			cache.m_type = GL_UNSIGNED_SHORT;
 			cache.m_normalized = true;
 		}
-		else if(binding.m_format == PixelFormat(ComponentFormat::R10G10B10A2,
-										TransformFormat::SNORM))
+		else if(binding.m_format == PixelFormat(ComponentFormat::R10G10B10A2, TransformFormat::SNORM))
 		{
 			cache.m_compCount = 4;
 			cache.m_type = GL_INT_2_10_10_10_REV;
 			cache.m_normalized = true;
 		}
-		else if(binding.m_format
-			== PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM))
+		else if(binding.m_format == PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM))
 		{
 			cache.m_compCount = 4;
 			cache.m_type = GL_UNSIGNED_BYTE;
 			cache.m_normalized = true;
 		}
-		else if(binding.m_format
-			== PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM))
+		else if(binding.m_format == PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM))
 		{
 			cache.m_compCount = 3;
 			cache.m_type = GL_UNSIGNED_BYTE;
@@ -324,7 +292,6 @@ void PipelineImpl::initVertexState()
 	m_hashes.m_vertex = computeHash(&m_in.m_vertex, sizeof(m_in.m_vertex));
 }
 
-//==============================================================================
 void PipelineImpl::initInputAssemblerState()
 {
 	switch(m_in.m_inputAssembler.m_topology)
@@ -351,18 +318,14 @@ void PipelineImpl::initInputAssemblerState()
 		ANKI_ASSERT(0);
 	}
 
-	m_hashes.m_inputAssembler =
-		computeHash(&m_in.m_inputAssembler, sizeof(m_in.m_inputAssembler));
+	m_hashes.m_inputAssembler = computeHash(&m_in.m_inputAssembler, sizeof(m_in.m_inputAssembler));
 }
 
-//==============================================================================
 void PipelineImpl::initTessellationState()
 {
-	m_hashes.m_tessellation =
-		computeHash(&m_in.m_tessellation, sizeof(m_in.m_tessellation));
+	m_hashes.m_tessellation = computeHash(&m_in.m_tessellation, sizeof(m_in.m_tessellation));
 }
 
-//==============================================================================
 void PipelineImpl::initRasterizerState()
 {
 	switch(m_in.m_rasterizer.m_fillMode)
@@ -395,21 +358,16 @@ void PipelineImpl::initRasterizerState()
 		ANKI_ASSERT(0);
 	}
 
-	m_hashes.m_rasterizer =
-		computeHash(&m_in.m_rasterizer, sizeof(m_in.m_rasterizer));
+	m_hashes.m_rasterizer = computeHash(&m_in.m_rasterizer, sizeof(m_in.m_rasterizer));
 }
 
-//==============================================================================
 void PipelineImpl::initDepthStencilState()
 {
-	m_cache.m_depthCompareFunction =
-		convertCompareOperation(m_in.m_depthStencil.m_depthCompareFunction);
+	m_cache.m_depthCompareFunction = convertCompareOperation(m_in.m_depthStencil.m_depthCompareFunction);
 
-	m_hashes.m_depthStencil =
-		computeHash(&m_in.m_depthStencil, sizeof(m_in.m_depthStencil));
+	m_hashes.m_depthStencil = computeHash(&m_in.m_depthStencil, sizeof(m_in.m_depthStencil));
 }
 
-//==============================================================================
 void PipelineImpl::initColorState()
 {
 	for(U i = 0; i < m_in.m_color.m_attachmentCount; ++i)
@@ -441,14 +399,10 @@ void PipelineImpl::initColorState()
 			ANKI_ASSERT(0);
 		}
 
-		out.m_channelWriteMask[0] =
-			(in.m_channelWriteMask & ColorBit::RED) != 0;
-		out.m_channelWriteMask[1] =
-			(in.m_channelWriteMask & ColorBit::GREEN) != 0;
-		out.m_channelWriteMask[2] =
-			(in.m_channelWriteMask & ColorBit::BLUE) != 0;
-		out.m_channelWriteMask[3] =
-			(in.m_channelWriteMask & ColorBit::ALPHA) != 0;
+		out.m_channelWriteMask[0] = (in.m_channelWriteMask & ColorBit::RED) != 0;
+		out.m_channelWriteMask[1] = (in.m_channelWriteMask & ColorBit::GREEN) != 0;
+		out.m_channelWriteMask[2] = (in.m_channelWriteMask & ColorBit::BLUE) != 0;
+		out.m_channelWriteMask[3] = (in.m_channelWriteMask & ColorBit::ALPHA) != 0;
 
 		if(!(out.m_srcBlendMethod == GL_ONE && out.m_dstBlendMethod == GL_ZERO))
 		{
@@ -459,7 +413,6 @@ void PipelineImpl::initColorState()
 	m_hashes.m_color = computeHash(&m_in.m_color, sizeof(m_in.m_color));
 }
 
-//==============================================================================
 void PipelineImpl::setVertexState(GlState& state) const
 {
 	if(state.m_stateHashes.m_vertex == m_hashes.m_vertex)
@@ -474,11 +427,8 @@ void PipelineImpl::setVertexState(GlState& state) const
 		const Attribute& attrib = m_cache.m_attribs[i];
 		ANKI_ASSERT(attrib.m_type);
 
-		glVertexAttribFormat(i,
-			attrib.m_compCount,
-			attrib.m_type,
-			attrib.m_normalized,
-			m_in.m_vertex.m_attributes[i].m_offset);
+		glVertexAttribFormat(
+			i, attrib.m_compCount, attrib.m_type, attrib.m_normalized, m_in.m_vertex.m_attributes[i].m_offset);
 
 		glVertexAttribBinding(i, m_in.m_vertex.m_attributes[i].m_binding);
 	}
@@ -496,7 +446,6 @@ void PipelineImpl::setVertexState(GlState& state) const
 	}
 }
 
-//==============================================================================
 void PipelineImpl::setInputAssemblerState(GlState& state) const
 {
 	if(state.m_stateHashes.m_inputAssembler == m_hashes.m_inputAssembler)
@@ -518,22 +467,18 @@ void PipelineImpl::setInputAssemblerState(GlState& state) const
 	}
 }
 
-//==============================================================================
 void PipelineImpl::setTessellationState(GlState& state) const
 {
-	if(!m_tessellation
-		|| state.m_stateHashes.m_tessellation == m_hashes.m_tessellation)
+	if(!m_tessellation || state.m_stateHashes.m_tessellation == m_hashes.m_tessellation)
 	{
 		return;
 	}
 
 	state.m_stateHashes.m_tessellation = m_hashes.m_tessellation;
 
-	glPatchParameteri(
-		GL_PATCH_VERTICES, m_in.m_tessellation.m_patchControlPointCount);
+	glPatchParameteri(GL_PATCH_VERTICES, m_in.m_tessellation.m_patchControlPointCount);
 }
 
-//==============================================================================
 void PipelineImpl::setRasterizerState(GlState& state) const
 {
 	if(state.m_stateHashes.m_rasterizer == m_hashes.m_rasterizer)
@@ -548,7 +493,6 @@ void PipelineImpl::setRasterizerState(GlState& state) const
 	glEnable(GL_CULL_FACE);
 }
 
-//==============================================================================
 void PipelineImpl::setDepthStencilState(GlState& state) const
 {
 	if(state.m_stateHashes.m_depthStencil == m_hashes.m_depthStencil)
@@ -561,8 +505,7 @@ void PipelineImpl::setDepthStencilState(GlState& state) const
 	glDepthMask(m_in.m_depthStencil.m_depthWriteEnabled);
 	state.m_depthWriteMask = m_in.m_depthStencil.m_depthWriteEnabled;
 
-	if(m_cache.m_depthCompareFunction == GL_ALWAYS
-		&& !m_in.m_depthStencil.m_depthWriteEnabled)
+	if(m_cache.m_depthCompareFunction == GL_ALWAYS && !m_in.m_depthStencil.m_depthWriteEnabled)
 	{
 		glDisable(GL_DEPTH_TEST);
 	}
@@ -574,7 +517,6 @@ void PipelineImpl::setDepthStencilState(GlState& state) const
 	glDepthFunc(m_cache.m_depthCompareFunction);
 }
 
-//==============================================================================
 void PipelineImpl::setColorState(GlState& state) const
 {
 	if(state.m_stateHashes.m_color == m_hashes.m_color)

@@ -20,18 +20,13 @@ class Aabb : public ConvexShape
 public:
 	using Base = ConvexShape;
 
-	static Bool classof(const CollisionShape& c)
-	{
-		return c.getType() == Type::AABB;
-	}
-
 	Aabb()
-		: Base(Type::AABB)
+		: Base(CollisionShapeType::AABB)
 	{
 	}
 
 	Aabb(const Vec4& min, const Vec4& max)
-		: Base(Type::AABB)
+		: Base(CollisionShapeType::AABB)
 		, m_min(min)
 		, m_max(max)
 	{
@@ -39,7 +34,7 @@ public:
 	}
 
 	Aabb(const Aabb& b)
-		: Base(Type::AABB)
+		: Base(CollisionShapeType::AABB)
 	{
 		operator=(b);
 	}
@@ -111,13 +106,11 @@ public:
 	/// It uses a nice trick to avoid unwanted calculations
 	Aabb getTransformed(const Transform& transform) const;
 
-	/// Get a collision shape that includes this and the given. Its not
-	/// very accurate
+	/// Get a collision shape that includes this and the given. Its not very accurate
 	Aabb getCompoundShape(const Aabb& b) const;
 
 	/// Calculate from a set of points
-	void setFromPointCloud(
-		const void* buff, U count, PtrSize stride, PtrSize buffSize);
+	void setFromPointCloud(const void* buff, U count, PtrSize stride, PtrSize buffSize);
 
 private:
 	Vec4 m_min;

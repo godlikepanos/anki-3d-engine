@@ -8,19 +8,16 @@
 namespace anki
 {
 
-//==============================================================================
 GenericResource::GenericResource(ResourceManager* manager)
 	: ResourceObject(manager)
 {
 }
 
-//==============================================================================
 GenericResource::~GenericResource()
 {
 	m_data.destroy(getAllocator());
 }
 
-//==============================================================================
 Error GenericResource::load(const ResourceFilename& filename)
 {
 	ResourceFilePtr file;

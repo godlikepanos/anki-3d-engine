@@ -10,28 +10,18 @@
 namespace anki
 {
 
-//==============================================================================
-void SoftwareRasterizer::prepare(
-	const Mat4& mv, const Mat4& p, U width, U height)
+void SoftwareRasterizer::prepare(const Mat4& mv, const Mat4& p, U width, U height)
 {
 	m_mv = mv;
 	m_p = p;
 	m_mvp = p * mv;
 
-	Array<Plane*, 6> planes = {&m_planesL[0],
-		&m_planesL[1],
-		&m_planesL[2],
-		&m_planesL[3],
-		&m_planesL[4],
-		&m_planesL[5]};
+	Array<Plane*, 6> planes = {
+		&m_planesL[0], &m_planesL[1], &m_planesL[2], &m_planesL[3], &m_planesL[4], &m_planesL[5]};
 	extractClipPlanes(p, planes);
 
-	Array<Plane*, 6> planes2 = {&m_planesW[0],
-		&m_planesW[1],
-		&m_planesW[2],
-		&m_planesW[3],
-		&m_planesW[4],
-		&m_planesW[5]};
+	Array<Plane*, 6> planes2 = {
+		&m_planesW[0], &m_planesW[1], &m_planesW[2], &m_planesW[3], &m_planesW[4], &m_planesW[5]};
 	extractClipPlanes(m_mvp, planes2);
 
 	// Reset z buffer
@@ -47,9 +37,7 @@ void SoftwareRasterizer::prepare(
 	memset(&m_zbuffer[0], 0xFF, sizeof(m_zbuffer[0]) * size);
 }
 
-//==============================================================================
-void SoftwareRasterizer::clipTriangle(
-	const Vec4* inVerts, Vec4* outVerts, U& outVertCount) const
+void SoftwareRasterizer::clipTriangle(const Vec4* inVerts, Vec4* outVerts, U& outVertCount) const
 {
 	ANKI_ASSERT(inVerts && outVerts);
 
@@ -178,7 +166,6 @@ void SoftwareRasterizer::clipTriangle(
 	}
 }
 
-//==============================================================================
 void SoftwareRasterizer::draw(const F32* verts, U vertCount, U stride)
 {
 	ANKI_ASSERT(verts && vertCount > 0 && (vertCount % 3) == 0);
@@ -197,8 +184,7 @@ void SoftwareRasterizer::draw(const F32* verts, U vertCount, U stride)
 		}
 
 		// Cull if backfacing
-		Vec4 norm =
-			(triVspace[1] - triVspace[0]).cross(triVspace[2] - triVspace[1]);
+		Vec4 norm = (triVspace[1] - triVspace[0]).cross(triVspace[2] - triVspace[1]);
 		ANKI_ASSERT(norm.w() == 0.0f);
 
 		Vec4 eye = triVspace[0].xyz0();
@@ -232,9 +218,7 @@ void SoftwareRasterizer::draw(const F32* verts, U vertCount, U stride)
 	}
 }
 
-//==============================================================================
-Bool SoftwareRasterizer::computeBarycetrinc(
-	const Vec2& a, const Vec2& b, const Vec2& c, const Vec2& p, Vec3& uvw) const
+Bool SoftwareRasterizer::computeBarycetrinc(const Vec2& a, const Vec2& b, const Vec2& c, const Vec2& p, Vec3& uvw) const
 {
 	Vec2 dca = c - a;
 	Vec2 dba = b - a;
@@ -263,7 +247,6 @@ Bool SoftwareRasterizer::computeBarycetrinc(
 	return skip;
 }
 
-//==============================================================================
 void SoftwareRasterizer::rasterizeTriangle(const Vec4* tri)
 {
 	ANKI_ASSERT(tri);
@@ -310,9 +293,7 @@ void SoftwareRasterizer::rasterizeTriangle(const Vec4* tri)
 	}
 }
 
-//==============================================================================
-Bool SoftwareRasterizer::visibilityTest(
-	const CollisionShape& cs, const Aabb& aabb) const
+Bool SoftwareRasterizer::visibilityTest(const CollisionShape& cs, const Aabb& aabb) const
 {
 	ANKI_TRACE_START_EVENT(SCENE_RASTERIZER_TEST);
 	Bool inside = visibilityTestInternal(cs, aabb);
@@ -321,9 +302,7 @@ Bool SoftwareRasterizer::visibilityTest(
 	return inside;
 }
 
-//==============================================================================
-Bool SoftwareRasterizer::visibilityTestInternal(
-	const CollisionShape& cs, const Aabb& aabb) const
+Bool SoftwareRasterizer::visibilityTestInternal(const CollisionShape& cs, const Aabb& aabb) const
 {
 	// Set the AABB points
 	const Vec4& minv = aabb.getMin();

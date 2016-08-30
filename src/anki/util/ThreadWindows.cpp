@@ -16,11 +16,6 @@
 namespace anki
 {
 
-//==============================================================================
-// Thread                                                                      =
-//==============================================================================
-
-//==============================================================================
 static DWORD WINAPI threadCallback(LPVOID ud)
 {
 	ANKI_ASSERT(ud != nullptr);
@@ -42,7 +37,6 @@ static DWORD WINAPI threadCallback(LPVOID ud)
 	return err._getCodeInt();
 }
 
-//==============================================================================
 Thread::Thread(const char* name)
 {
 	// Init the name
@@ -59,7 +53,6 @@ Thread::Thread(const char* name)
 	}
 }
 
-//==============================================================================
 Thread::~Thread()
 {
 	ANKI_ASSERT(!m_started && "Thread probably not joined");
@@ -67,7 +60,6 @@ Thread::~Thread()
 	m_impl = nullptr;
 }
 
-//==============================================================================
 void Thread::start(void* userData, Callback callback, I pinToCore)
 {
 	ANKI_ASSERT(!m_started);
@@ -89,7 +81,6 @@ void Thread::start(void* userData, Callback callback, I pinToCore)
 	}
 }
 
-//==============================================================================
 Error Thread::join()
 {
 	ANKI_ASSERT(m_started);
@@ -121,22 +112,15 @@ Error Thread::join()
 	return static_cast<ErrorCode>(exitCode);
 }
 
-//==============================================================================
 Thread::Id Thread::getCurrentThreadId()
 {
 	HANDLE x = GetCurrentThread();
 	return reinterpret_cast<PtrSize>(x);
 }
 
-//==============================================================================
-// Mutex                                                                       =
-//==============================================================================
-
-//==============================================================================
 Mutex::Mutex()
 {
-	CRITICAL_SECTION* mtx =
-		reinterpret_cast<CRITICAL_SECTION*>(malloc(sizeof(CRITICAL_SECTION)));
+	CRITICAL_SECTION* mtx = reinterpret_cast<CRITICAL_SECTION*>(malloc(sizeof(CRITICAL_SECTION)));
 	if(mtx == nullptr)
 	{
 		ANKI_LOGF("Out of memory");
@@ -147,7 +131,6 @@ Mutex::Mutex()
 	InitializeCriticalSection(mtx);
 }
 
-//==============================================================================
 Mutex::~Mutex()
 {
 	CRITICAL_SECTION* mtx = reinterpret_cast<CRITICAL_SECTION*>(m_impl);
@@ -157,14 +140,12 @@ Mutex::~Mutex()
 	m_impl = nullptr;
 }
 
-//==============================================================================
 void Mutex::lock()
 {
 	CRITICAL_SECTION* mtx = reinterpret_cast<CRITICAL_SECTION*>(m_impl);
 	EnterCriticalSection(mtx);
 }
 
-//==============================================================================
 Bool Mutex::tryLock()
 {
 	CRITICAL_SECTION* mtx = reinterpret_cast<CRITICAL_SECTION*>(m_impl);
@@ -172,22 +153,15 @@ Bool Mutex::tryLock()
 	return enter;
 }
 
-//==============================================================================
 void Mutex::unlock()
 {
 	CRITICAL_SECTION* mtx = reinterpret_cast<CRITICAL_SECTION*>(m_impl);
 	LeaveCriticalSection(mtx);
 }
 
-//==============================================================================
-// ConditionVariable                                                           =
-//==============================================================================
-
-//==============================================================================
 ConditionVariable::ConditionVariable()
 {
-	CONDITION_VARIABLE* cond = reinterpret_cast<CONDITION_VARIABLE*>(
-		malloc(sizeof(CONDITION_VARIABLE)));
+	CONDITION_VARIABLE* cond = reinterpret_cast<CONDITION_VARIABLE*>(malloc(sizeof(CONDITION_VARIABLE)));
 	if(cond == nullptr)
 	{
 		ANKI_LOGF("Out of memory");
@@ -198,28 +172,24 @@ ConditionVariable::ConditionVariable()
 	InitializeConditionVariable(cond);
 }
 
-//==============================================================================
 ConditionVariable::~ConditionVariable()
 {
 	free(m_impl);
 	m_impl = nullptr;
 }
 
-//==============================================================================
 void ConditionVariable::notifyOne()
 {
 	CONDITION_VARIABLE* cond = reinterpret_cast<CONDITION_VARIABLE*>(m_impl);
 	WakeConditionVariable(cond);
 }
 
-//==============================================================================
 void ConditionVariable::notifyAll()
 {
 	CONDITION_VARIABLE* cond = reinterpret_cast<CONDITION_VARIABLE*>(m_impl);
 	WakeAllConditionVariable(cond);
 }
 
-//==============================================================================
 void ConditionVariable::wait(Mutex& amtx)
 {
 	CONDITION_VARIABLE* cond = reinterpret_cast<CONDITION_VARIABLE*>(m_impl);
@@ -228,11 +198,6 @@ void ConditionVariable::wait(Mutex& amtx)
 	SleepConditionVariableCS(cond, mtx, INFINITE);
 }
 
-//==============================================================================
-// Barrier                                                                     =
-//==============================================================================
-
-//==============================================================================
 struct BarrierImpl
 {
 	CONDITION_VARIABLE m_cvar;
@@ -242,13 +207,11 @@ struct BarrierImpl
 	U32 m_generation;
 };
 
-//==============================================================================
 Barrier::Barrier(U32 count)
 {
 	ANKI_ASSERT(count > 1);
 
-	BarrierImpl* barrier =
-		reinterpret_cast<BarrierImpl*>(malloc(sizeof(BarrierImpl)));
+	BarrierImpl* barrier = reinterpret_cast<BarrierImpl*>(malloc(sizeof(BarrierImpl)));
 	if(barrier == nullptr)
 	{
 		ANKI_LOGF("Out of memory");
@@ -264,7 +227,6 @@ Barrier::Barrier(U32 count)
 	m_impl = barrier;
 }
 
-//==============================================================================
 Barrier::~Barrier()
 {
 	ANKI_ASSERT(m_impl);
@@ -275,7 +237,6 @@ Barrier::~Barrier()
 	m_impl = nullptr;
 }
 
-//==============================================================================
 Bool Barrier::wait()
 {
 	ANKI_ASSERT(m_impl);

@@ -10,7 +10,6 @@
 namespace anki
 {
 
-//==============================================================================
 F32 Sphere::testPlane(const Plane& p) const
 {
 	F32 dist = p.test(m_center);
@@ -36,7 +35,6 @@ F32 Sphere::testPlane(const Plane& p) const
 	return out;
 }
 
-//==============================================================================
 Sphere Sphere::getTransformed(const Transform& trf) const
 {
 	Sphere newSphere;
@@ -46,7 +44,6 @@ Sphere Sphere::getTransformed(const Transform& trf) const
 	return newSphere;
 }
 
-//==============================================================================
 Sphere Sphere::getCompoundShape(const Sphere& b) const
 {
 	const Sphere& a = *this;
@@ -99,16 +96,13 @@ Sphere Sphere::getCompoundShape(const Sphere& b) const
 	return Sphere((ca + cb) / 2.0, (ca - cb).getLength() / 2.0);
 }
 
-//==============================================================================
 void Sphere::computeAabb(Aabb& aabb) const
 {
 	aabb.setMin(m_center - m_radius);
 	aabb.setMax(m_center + m_radius);
 }
 
-//==============================================================================
-void Sphere::setFromPointCloud(
-	const void* buff, U count, PtrSize stride, PtrSize buffSize)
+void Sphere::setFromPointCloud(const void* buff, U count, PtrSize stride, PtrSize buffSize)
 {
 	// Calc min/max
 	Vec4 min(Vec3(MAX_F32), 0.0);
@@ -144,7 +138,6 @@ void Sphere::setFromPointCloud(
 	m_radius = sqrt(maxDist);
 }
 
-//==============================================================================
 Vec4 Sphere::computeSupport(const Vec4& dir) const
 {
 	return m_center + dir.getNormalized() * m_radius;

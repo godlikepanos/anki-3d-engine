@@ -12,11 +12,6 @@
 namespace anki
 {
 
-//==============================================================================
-// Thread                                                                      =
-//==============================================================================
-
-//==============================================================================
 static void* pthreadCallback(void* ud)
 {
 	ANKI_ASSERT(ud != nullptr);
@@ -29,7 +24,7 @@ static void* pthreadCallback(void* ud)
 	}
 
 	// Call the callback
-	Thread::Info info;
+	ThreadCallbackInfo info;
 	info.m_userData = thread->getUserData();
 	info.m_threadName = thread->getName();
 
@@ -38,7 +33,6 @@ static void* pthreadCallback(void* ud)
 	return reinterpret_cast<void*>(static_cast<PtrSize>(err._getCode()));
 }
 
-//==============================================================================
 Thread::Thread(const char* name)
 {
 	m_impl = malloc(sizeof(pthread_t));
@@ -61,7 +55,6 @@ Thread::Thread(const char* name)
 	}
 }
 
-//==============================================================================
 Thread::~Thread()
 {
 	ANKI_ASSERT(!m_started && "Thread probably not joined");
@@ -69,8 +62,7 @@ Thread::~Thread()
 	m_impl = nullptr;
 }
 
-//==============================================================================
-void Thread::start(void* userData, Callback callback, I pinToCore)
+void Thread::start(void* userData, ThreadCallback callback, I pinToCore)
 {
 	ANKI_ASSERT(!m_started);
 	ANKI_ASSERT(callback != nullptr);
@@ -104,7 +96,6 @@ void Thread::start(void* userData, Callback callback, I pinToCore)
 	}
 }
 
-//==============================================================================
 Error Thread::join()
 {
 	ANKI_ASSERT(m_started);
@@ -126,22 +117,15 @@ Error Thread::join()
 	return code;
 }
 
-//==============================================================================
-Thread::Id Thread::getCurrentThreadId()
+ThreadId Thread::getCurrentThreadId()
 {
 	pthread_t pid = pthread_self();
 	return pid;
 }
 
-//==============================================================================
-// Mutex                                                                       =
-//==============================================================================
-
-//==============================================================================
 Mutex::Mutex()
 {
-	pthread_mutex_t* mtx =
-		static_cast<pthread_mutex_t*>(malloc(sizeof(pthread_mutex_t)));
+	pthread_mutex_t* mtx = static_cast<pthread_mutex_t*>(malloc(sizeof(pthread_mutex_t)));
 	if(mtx == nullptr)
 	{
 		ANKI_LOGF("Out of memory");
@@ -157,7 +141,6 @@ Mutex::Mutex()
 	m_impl = mtx;
 }
 
-//==============================================================================
 Mutex::~Mutex()
 {
 	pthread_mutex_t* mtx = reinterpret_cast<pthread_mutex_t*>(m_impl);
@@ -167,7 +150,6 @@ Mutex::~Mutex()
 	m_impl = nullptr;
 }
 
-//==============================================================================
 void Mutex::lock()
 {
 	ANKI_ASSERT(m_impl);
@@ -180,7 +162,6 @@ void Mutex::lock()
 	}
 }
 
-//==============================================================================
 Bool Mutex::tryLock()
 {
 	ANKI_ASSERT(m_impl);
@@ -190,7 +171,6 @@ Bool Mutex::tryLock()
 	return err == 0;
 }
 
-//==============================================================================
 void Mutex::unlock()
 {
 	ANKI_ASSERT(m_impl);
@@ -203,15 +183,9 @@ void Mutex::unlock()
 	}
 }
 
-//==============================================================================
-// ConditionVariable                                                           =
-//==============================================================================
-
-//==============================================================================
 ConditionVariable::ConditionVariable()
 {
-	pthread_cond_t* cond =
-		static_cast<pthread_cond_t*>(malloc(sizeof(pthread_cond_t)));
+	pthread_cond_t* cond = static_cast<pthread_cond_t*>(malloc(sizeof(pthread_cond_t)));
 	if(cond == nullptr)
 	{
 		ANKI_LOGF("Out of memory");
@@ -227,7 +201,6 @@ ConditionVariable::ConditionVariable()
 	m_impl = cond;
 }
 
-//==============================================================================
 ConditionVariable::~ConditionVariable()
 {
 	pthread_cond_t* cond = reinterpret_cast<pthread_cond_t*>(m_impl);
@@ -237,7 +210,6 @@ ConditionVariable::~ConditionVariable()
 	m_impl = nullptr;
 }
 
-//==============================================================================
 void ConditionVariable::notifyOne()
 {
 	ANKI_ASSERT(m_impl);
@@ -245,7 +217,6 @@ void ConditionVariable::notifyOne()
 	pthread_cond_signal(cond);
 }
 
-//==============================================================================
 void ConditionVariable::notifyAll()
 {
 	ANKI_ASSERT(m_impl);
@@ -253,7 +224,6 @@ void ConditionVariable::notifyAll()
 	pthread_cond_broadcast(cond);
 }
 
-//==============================================================================
 void ConditionVariable::wait(Mutex& amtx)
 {
 	ANKI_ASSERT(m_impl);
@@ -268,13 +238,8 @@ void ConditionVariable::wait(Mutex& amtx)
 	}
 }
 
-//==============================================================================
-// Barrier                                                                     =
-//==============================================================================
-
 #define ANKI_BARR_GET() (*static_cast<pthread_barrier_t*>(this->m_impl))
 
-//==============================================================================
 Barrier::Barrier(U32 count)
 {
 	ANKI_ASSERT(count > 1);
@@ -309,7 +274,6 @@ Barrier::Barrier(U32 count)
 	pthread_barrierattr_destroy(&attr);
 }
 
-//==============================================================================
 Barrier::~Barrier()
 {
 	if(m_impl)
@@ -325,7 +289,6 @@ Barrier::~Barrier()
 	}
 }
 
-//==============================================================================
 Bool Barrier::wait()
 {
 	I err = pthread_barrier_wait(&ANKI_BARR_GET());

@@ -19,25 +19,20 @@ static const U MAX_PATH = 1024 * 4;
 #endif
 static const U MAX_PATH_LEN = MAX_PATH - 1;
 
-//==============================================================================
 Bool fileExists(const CString& filename)
 {
 	DWORD dwAttrib = GetFileAttributes(&filename[0]);
 
-	return dwAttrib != INVALID_FILE_ATTRIBUTES
-		&& !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY);
+	return dwAttrib != INVALID_FILE_ATTRIBUTES && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY);
 }
 
-//==============================================================================
 Bool directoryExists(const CString& filename)
 {
 	DWORD dwAttrib = GetFileAttributes(filename.get());
 
-	return dwAttrib != INVALID_FILE_ATTRIBUTES
-		&& (dwAttrib & FILE_ATTRIBUTE_DIRECTORY);
+	return dwAttrib != INVALID_FILE_ATTRIBUTES && (dwAttrib & FILE_ATTRIBUTE_DIRECTORY);
 }
 
-//==============================================================================
 Error removeDirectory(const CString& dirname)
 {
 	// For some reason dirname should be double null terminated
@@ -52,14 +47,8 @@ Error removeDirectory(const CString& dirname)
 	dirname2[dirname.getLength() + 1] = '\0';
 
 	Error err = ErrorCode::NONE;
-	SHFILEOPSTRUCTA fileOperation = {NULL,
-		FO_DELETE,
-		&dirname2[0],
-		"",
-		FOF_NOCONFIRMATION | FOF_NOERRORUI | FOF_SILENT,
-		false,
-		0,
-		""};
+	SHFILEOPSTRUCTA fileOperation = {
+		NULL, FO_DELETE, &dirname2[0], "", FOF_NOCONFIRMATION | FOF_NOERRORUI | FOF_SILENT, false, 0, ""};
 
 	I result = SHFileOperationA(&fileOperation);
 	if(result != 0)
@@ -71,7 +60,6 @@ Error removeDirectory(const CString& dirname)
 	return err;
 }
 
-//==============================================================================
 Error createDirectory(const CString& dir)
 {
 	Error err = ErrorCode::NONE;
@@ -84,7 +72,6 @@ Error createDirectory(const CString& dir)
 	return err;
 }
 
-//==============================================================================
 Error getHomeDirectory(GenericMemoryPoolAllocator<U8> alloc, String& out)
 {
 	const char* homed = getenv("HOMEDRIVE");
@@ -110,11 +97,8 @@ Error getHomeDirectory(GenericMemoryPoolAllocator<U8> alloc, String& out)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
-static Error walkDirectoryTreeInternal(const CString& dir,
-	void* userData,
-	WalkDirectoryTreeCallback callback,
-	U baseDirLen)
+static Error walkDirectoryTreeInternal(
+	const CString& dir, void* userData, WalkDirectoryTreeCallback callback, U baseDirLen)
 {
 	// Append something to the path
 	if(dir.getLength() > MAX_PATH_LEN - 2)
@@ -178,8 +162,7 @@ static Error walkDirectoryTreeInternal(const CString& dir,
 			// Move to next dir
 			if(isDir)
 			{
-				Error err = walkDirectoryTreeInternal(
-					&dir2[0], userData, callback, baseDirLen);
+				Error err = walkDirectoryTreeInternal(&dir2[0], userData, callback, baseDirLen);
 				if(err)
 				{
 					FindClose(handle);
@@ -202,8 +185,7 @@ static Error walkDirectoryTreeInternal(const CString& dir,
 	return ErrorCode::NONE;
 }
 
-Error walkDirectoryTree(
-	const CString& dir, void* userData, WalkDirectoryTreeCallback callback)
+Error walkDirectoryTree(const CString& dir, void* userData, WalkDirectoryTreeCallback callback)
 {
 	U baseDirLen = 0;
 	U len = dir.getLength();

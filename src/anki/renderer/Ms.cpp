@@ -15,20 +15,17 @@
 namespace anki
 {
 
-//==============================================================================
 Ms::~Ms()
 {
 	m_secondLevelCmdbs.destroy(getAllocator());
 }
 
-//==============================================================================
 Error Ms::createRt(U32 samples)
 {
 	m_r->createRenderTarget(m_r->getWidth(),
 		m_r->getHeight(),
 		MS_DEPTH_ATTACHMENT_PIXEL_FORMAT,
-		TextureUsageBit::SAMPLED_FRAGMENT
-			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE
+		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE
 			| TextureUsageBit::GENERATE_MIPMAPS,
 		SamplingFilter::NEAREST,
 		getDepthRtMipmapCount(),
@@ -37,8 +34,7 @@ Error Ms::createRt(U32 samples)
 	m_r->createRenderTarget(m_r->getWidth(),
 		m_r->getHeight(),
 		MS_COLOR_ATTACHMENT_PIXEL_FORMATS[0],
-		TextureUsageBit::SAMPLED_FRAGMENT
-			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		SamplingFilter::NEAREST,
 		1,
 		m_rt0);
@@ -46,8 +42,7 @@ Error Ms::createRt(U32 samples)
 	m_r->createRenderTarget(m_r->getWidth(),
 		m_r->getHeight(),
 		MS_COLOR_ATTACHMENT_PIXEL_FORMATS[1],
-		TextureUsageBit::SAMPLED_FRAGMENT
-			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		SamplingFilter::NEAREST,
 		1,
 		m_rt1);
@@ -55,8 +50,7 @@ Error Ms::createRt(U32 samples)
 	m_r->createRenderTarget(m_r->getWidth(),
 		m_r->getHeight(),
 		MS_COLOR_ATTACHMENT_PIXEL_FORMATS[2],
-		TextureUsageBit::SAMPLED_FRAGMENT
-			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
+		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
 			| TextureUsageBit::GENERATE_MIPMAPS,
 		SamplingFilter::NEAREST,
 		getDepthRtMipmapCount(),
@@ -72,31 +66,25 @@ Error Ms::createRt(U32 samples)
 	fbInit.m_colorAttachments[0].m_texture = m_rt0;
 	fbInit.m_colorAttachments[0].m_loadOperation = loadop;
 	fbInit.m_colorAttachments[0].m_clearValue.m_colorf = {{1.0, 0.0, 0.0, 0.0}};
-	fbInit.m_colorAttachments[0].m_usageInsideRenderPass =
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
+	fbInit.m_colorAttachments[0].m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 	fbInit.m_colorAttachments[1].m_texture = m_rt1;
 	fbInit.m_colorAttachments[1].m_loadOperation = loadop;
 	fbInit.m_colorAttachments[1].m_clearValue.m_colorf = {{0.0, 1.0, 0.0, 0.0}};
-	fbInit.m_colorAttachments[1].m_usageInsideRenderPass =
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
+	fbInit.m_colorAttachments[1].m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 	fbInit.m_colorAttachments[2].m_texture = m_rt2;
 	fbInit.m_colorAttachments[2].m_loadOperation = loadop;
 	fbInit.m_colorAttachments[2].m_clearValue.m_colorf = {{0.0, 0.0, 1.0, 0.0}};
-	fbInit.m_colorAttachments[2].m_usageInsideRenderPass =
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
+	fbInit.m_colorAttachments[2].m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 	fbInit.m_depthStencilAttachment.m_texture = m_depthRt;
-	fbInit.m_depthStencilAttachment.m_loadOperation =
-		AttachmentLoadOperation::CLEAR;
+	fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
 	fbInit.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0;
-	fbInit.m_depthStencilAttachment.m_usageInsideRenderPass =
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
+	fbInit.m_depthStencilAttachment.m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
 
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error Ms::init(const ConfigSet& initializer)
 {
 	Error err = initInternal(initializer);
@@ -108,33 +96,27 @@ Error Ms::init(const ConfigSet& initializer)
 	return err;
 }
 
-//==============================================================================
 Error Ms::initInternal(const ConfigSet& initializer)
 {
 	ANKI_CHECK(createRt(initializer.getNumber("samples")));
 
-	m_secondLevelCmdbs.create(
-		getAllocator(), m_r->getThreadPool().getThreadsCount());
+	m_secondLevelCmdbs.create(getAllocator(), m_r->getThreadPool().getThreadsCount());
 
 	getGrManager().finish();
 
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
-Error Ms::buildCommandBuffers(
-	RenderingContext& ctx, U threadId, U threadCount) const
+Error Ms::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) const
 {
 	ANKI_TRACE_START_EVENT(RENDER_MS);
 
 	// Get some stuff
-	VisibilityTestResults& vis =
-		ctx.m_frustumComponent->getVisibilityTestResults();
+	VisibilityTestResults& vis = ctx.m_frustumComponent->getVisibilityTestResults();
 
 	U problemSize = vis.getCount(VisibilityGroupType::RENDERABLES_MS);
 	PtrSize start, end;
-	ThreadPoolTask::choseStartEnd(
-		threadId, threadCount, problemSize, start, end);
+	ThreadPoolTask::choseStartEnd(threadId, threadCount, problemSize, start, end);
 
 	if(start != end)
 	{
@@ -142,8 +124,7 @@ Error Ms::buildCommandBuffers(
 		CommandBufferInitInfo cinf;
 		cinf.m_flags = CommandBufferFlag::SECOND_LEVEL;
 		cinf.m_framebuffer = m_fb;
-		CommandBufferPtr cmdb =
-			m_r->getGrManager().newInstance<CommandBuffer>(cinf);
+		CommandBufferPtr cmdb = m_r->getGrManager().newInstance<CommandBuffer>(cinf);
 		ctx.m_ms.m_commandBuffers[threadId] = cmdb;
 		cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 		cmdb->setPolygonOffset(0.0, 0.0);
@@ -160,7 +141,6 @@ Error Ms::buildCommandBuffers(
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void Ms::run(RenderingContext& ctx)
 {
 	ANKI_TRACE_START_EVENT(RENDER_MS);
@@ -185,7 +165,6 @@ void Ms::run(RenderingContext& ctx)
 	ANKI_TRACE_STOP_EVENT(RENDER_MS);
 }
 
-//==============================================================================
 void Ms::setPreRunBarriers(RenderingContext& ctx)
 {
 	ANKI_TRACE_START_EVENT(RENDER_MS);
@@ -193,30 +172,18 @@ void Ms::setPreRunBarriers(RenderingContext& ctx)
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 	TextureSurfaceInfo surf(0, 0, 0, 0);
 
-	cmdb->setTextureSurfaceBarrier(m_rt0,
-		TextureUsageBit::NONE,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		surf);
+	cmdb->setTextureSurfaceBarrier(m_rt0, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, surf);
 
-	cmdb->setTextureSurfaceBarrier(m_rt1,
-		TextureUsageBit::NONE,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		surf);
+	cmdb->setTextureSurfaceBarrier(m_rt1, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, surf);
 
-	cmdb->setTextureSurfaceBarrier(m_rt2,
-		TextureUsageBit::NONE,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		surf);
+	cmdb->setTextureSurfaceBarrier(m_rt2, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, surf);
 
-	cmdb->setTextureSurfaceBarrier(m_depthRt,
-		TextureUsageBit::NONE,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-		surf);
+	cmdb->setTextureSurfaceBarrier(
+		m_depthRt, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, surf);
 
 	ANKI_TRACE_STOP_EVENT(RENDER_MS);
 }
 
-//==============================================================================
 void Ms::setPostRunBarriers(RenderingContext& ctx)
 {
 	ANKI_TRACE_START_EVENT(RENDER_MS);
@@ -224,25 +191,17 @@ void Ms::setPostRunBarriers(RenderingContext& ctx)
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 	TextureSurfaceInfo surf(0, 0, 0, 0);
 
-	cmdb->setTextureSurfaceBarrier(m_rt0,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		TextureUsageBit::SAMPLED_FRAGMENT,
-		surf);
+	cmdb->setTextureSurfaceBarrier(
+		m_rt0, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureUsageBit::SAMPLED_FRAGMENT, surf);
 
-	cmdb->setTextureSurfaceBarrier(m_rt1,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		TextureUsageBit::SAMPLED_FRAGMENT,
-		surf);
+	cmdb->setTextureSurfaceBarrier(
+		m_rt1, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureUsageBit::SAMPLED_FRAGMENT, surf);
 
-	cmdb->setTextureSurfaceBarrier(m_rt2,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		TextureUsageBit::SAMPLED_FRAGMENT,
-		surf);
+	cmdb->setTextureSurfaceBarrier(
+		m_rt2, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureUsageBit::SAMPLED_FRAGMENT, surf);
 
-	cmdb->setTextureSurfaceBarrier(m_depthRt,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-		TextureUsageBit::SAMPLED_FRAGMENT,
-		surf);
+	cmdb->setTextureSurfaceBarrier(
+		m_depthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, TextureUsageBit::SAMPLED_FRAGMENT, surf);
 
 	ANKI_TRACE_STOP_EVENT(RENDER_MS);
 }

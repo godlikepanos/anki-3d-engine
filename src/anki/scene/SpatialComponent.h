@@ -21,8 +21,8 @@ class Sector;
 /// @addtogroup scene
 /// @{
 
-/// Spatial component for scene nodes. It indicates scene nodes that need to
-/// be placed in the a sector and they participate in the visibility tests
+/// Spatial component for scene nodes. It indicates scene nodes that need to be placed in the a sector and they
+/// participate in the visibility tests.
 class SpatialComponent : public SceneComponent
 {
 public:
@@ -56,7 +56,7 @@ public:
 	const CollisionShape& getVisibilityCollisionShape()
 	{
 		const CollisionShape& cs = getSpatialCollisionShape();
-		if(cs.getType() == CollisionShape::Type::SPHERE)
+		if(cs.getType() == CollisionShapeType::SPHERE)
 		{
 			return cs;
 		}
@@ -78,8 +78,8 @@ public:
 		m_flags.set(Flag::SINGLE_SECTOR, yes);
 	}
 
-	/// Used for sorting spatials. In most object the origin is the center of
-	/// mess but for cameras the origin is the eye point
+	/// Used for sorting spatials. In most object the origin is the center of mass but for cameras the origin is the
+	/// eye point.
 	const Vec4& getSpatialOrigin() const
 	{
 		ANKI_ASSERT(m_origin.x() != MAX_F32);
@@ -91,8 +91,7 @@ public:
 		m_origin = origin;
 	}
 
-	/// The derived class has to manually call this method when the collision
-	/// shape got updated
+	/// The derived class has to manually call this method when the collision shape got updated.
 	void markForUpdate()
 	{
 		m_flags.set(Flag::MARKED_FOR_UPDATE);

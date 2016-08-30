@@ -9,18 +9,15 @@
 namespace anki
 {
 
-//==============================================================================
 OcclusionQuery::OcclusionQuery(GrManager* manager, U64 hash)
 	: GrObject(manager, CLASS_TYPE, hash)
 {
 }
 
-//==============================================================================
 OcclusionQuery::~OcclusionQuery()
 {
 }
 
-//==============================================================================
 void OcclusionQuery::init(OcclusionQueryResultBit condRenderingBit)
 {
 	m_impl.reset(getAllocator().newInstance<OcclusionQueryImpl>(&getManager()));

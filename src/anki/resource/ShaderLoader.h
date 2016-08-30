@@ -13,8 +13,7 @@
 namespace anki
 {
 
-/// Helper class used for shader program loading. The class adds the include
-/// preprocessor directive.
+/// Helper class used for shader program loading. The class adds the include preprocessor directive.
 class ShaderLoader
 {
 public:
@@ -32,9 +31,7 @@ public:
 		m_sourceLines.destroy(m_alloc);
 	}
 
-	/// Parse a PrePreprocessor formated GLSL file. Use the accessors to get
-	/// the output
-	///
+	/// Parse a PrePreprocessor formated GLSL file. Use the accessors to get the output
 	/// @param filename The file to parse
 	ANKI_USE_RESULT Error parseFile(const ResourceFilename& filename);
 
@@ -65,14 +62,11 @@ protected:
 	/// Keep the manager for some path conversions.
 	ResourceManager* m_manager;
 
-	/// A recursive function that parses a file for #include and updates the
-	/// output
-	///
+	/// A recursive function that parses a file for #include and updates the output.
 	/// @param filename The file to parse
-	/// @param depth The #line in GLSL does not support filename so an
-	///              depth it being used. It also tracks the includance depth
-	ANKI_USE_RESULT Error parseFileIncludes(
-		ResourceFilename filename, U32 depth);
+	/// @param depth The #line in GLSL does not support filename so an depth it being used. It also tracks the
+	///        includance depth
+	ANKI_USE_RESULT Error parseFileIncludes(ResourceFilename filename, U32 depth);
 
 	void printSourceLines() const; ///< For debugging
 };

@@ -21,13 +21,7 @@ namespace anki
 /// @tparam TM The type of the derived class. Eg TMat3.
 /// @tparam TVJ The vector type of the row.
 /// @tparam TVI The vector type of the column.
-template<typename T,
-	U J,
-	U I,
-	typename TSimd,
-	typename TM,
-	typename TVJ,
-	typename TVI>
+template<typename T, U J, U I, typename TSimd, typename TM, typename TVJ, typename TVI>
 class TMat
 {
 public:
@@ -475,10 +469,9 @@ public:
 	void rotateXAxis(const T rad)
 	{
 		TMat& m = *this;
-		// If we analize the mat3 we can extract the 3 unit vectors rotated by
-		// the mat3. The 3 rotated vectors are in mat's columns. This means
-		// that: mat3.colomn[0] == i * mat3. rotateXAxis() rotates rad angle
-		// not from i vector (aka x axis) but from the vector from colomn 0
+		// If we analize the mat3 we can extract the 3 unit vectors rotated by the mat3. The 3 rotated vectors are in
+		// mat's columns. This means that: mat3.colomn[0] == i * mat3. rotateXAxis() rotates rad angle not from i
+		// vector (aka x axis) but from the vector from colomn 0
 		// NOTE: See the clean code from < r664
 
 		T sina, cosa;
@@ -679,8 +672,8 @@ public:
 
 	void reorthogonalize()
 	{
-		// There are 2 methods, the standard and the Gram-Schmidt method with a
-		// twist for zAxis. This uses the 2nd. For the first see < r664
+		// There are 2 methods, the standard and the Gram-Schmidt method with a twist for zAxis. This uses the 2nd. For
+		// the first see < r664
 		TVI xAxis, yAxis, zAxis;
 		getColumns(xAxis, yAxis, zAxis);
 

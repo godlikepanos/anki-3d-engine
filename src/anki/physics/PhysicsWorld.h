@@ -7,7 +7,6 @@
 
 #include <anki/physics/Common.h>
 #include <anki/util/List.h>
-#include <anki/util/Rtti.h>
 
 namespace anki
 {
@@ -22,8 +21,7 @@ public:
 	PhysicsWorld();
 	~PhysicsWorld();
 
-	ANKI_USE_RESULT Error create(
-		AllocAlignedCallback allocCb, void* allocCbData);
+	ANKI_USE_RESULT Error create(AllocAlignedCallback allocCb, void* allocCbData);
 
 	template<typename T, typename... TArgs>
 	PhysicsPtr<T> newInstance(TArgs&&... args);
@@ -83,16 +81,14 @@ private:
 	void cleanupMarkedForDeletion();
 
 	/// Custom update
-	static void postUpdateCallback(
-		const NewtonWorld* const world, void* const listenerUserData, F32 dt)
+	static void postUpdateCallback(const NewtonWorld* const world, void* const listenerUserData, F32 dt)
 	{
 		static_cast<PhysicsWorld*>(listenerUserData)->postUpdate(dt);
 	}
 
 	void postUpdate(F32 dt);
 
-	static void destroyCallback(
-		const NewtonWorld* const world, void* const listenerUserData)
+	static void destroyCallback(const NewtonWorld* const world, void* const listenerUserData)
 	{
 	}
 
@@ -110,11 +106,9 @@ private:
 		return 1;
 	}
 
-	static void onContactCallback(
-		const NewtonJoint* contactJoint, F32 timestep, int threadIndex);
+	static void onContactCallback(const NewtonJoint* contactJoint, F32 timestep, int threadIndex);
 };
 
-//==============================================================================
 template<typename T, typename... TArgs>
 inline PhysicsPtr<T> PhysicsWorld::newInstance(TArgs&&... args)
 {

@@ -8,7 +8,6 @@
 namespace anki
 {
 
-//==============================================================================
 void OccluderComponent::setVertices(const Vec3* begin, U count, U stride)
 {
 	ANKI_ASSERT(begin);
@@ -22,8 +21,7 @@ void OccluderComponent::setVertices(const Vec3* begin, U count, U stride)
 	Vec3 minv(MAX_F32), maxv(MIN_F32);
 	while(count--)
 	{
-		const Vec3& v = *reinterpret_cast<const Vec3*>(
-			reinterpret_cast<const U8*>(begin) + stride * count);
+		const Vec3& v = *reinterpret_cast<const Vec3*>(reinterpret_cast<const U8*>(begin) + stride * count);
 		for(U i = 0; i < 3; ++i)
 		{
 			minv[i] = min(minv[i], v[i]);

@@ -8,10 +8,6 @@
 namespace anki
 {
 
-//==============================================================================
-// CameraMoveFeedbackComponent                                                 =
-//==============================================================================
-
 /// Feedback component.
 class CameraMoveFeedbackComponent : public SceneComponent
 {
@@ -35,10 +31,6 @@ public:
 		return ErrorCode::NONE;
 	}
 };
-
-//==============================================================================
-// CameraFrustumFeedbackComponent                                              =
-//==============================================================================
 
 /// Feedback component.
 class CameraFrustumFeedbackComponent : public SceneComponent
@@ -64,18 +56,12 @@ public:
 	}
 };
 
-//==============================================================================
-// Camera                                                                      =
-//==============================================================================
-
-//==============================================================================
 Camera::Camera(SceneGraph* scene, Type type, CString name)
 	: SceneNode(scene, name)
 	, m_type(type)
 {
 }
 
-//==============================================================================
 Error Camera::init(Frustum* frustum)
 {
 	SceneComponent* comp;
@@ -89,10 +75,8 @@ Error Camera::init(Frustum* frustum)
 	addComponent(comp, true);
 
 	// Frustum component
-	FrustumComponent* frc =
-		getSceneAllocator().newInstance<FrustumComponent>(this, frustum);
-	frc->setEnabledVisibilityTests(
-		FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS
+	FrustumComponent* frc = getSceneAllocator().newInstance<FrustumComponent>(this, frustum);
+	frc->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS
 		| FrustumComponentVisibilityTestFlag::LIGHT_COMPONENTS
 		| FrustumComponentVisibilityTestFlag::LENS_FLARE_COMPONENTS
 		| FrustumComponentVisibilityTestFlag::REFLECTION_PROBES
@@ -101,8 +85,7 @@ Error Camera::init(Frustum* frustum)
 	addComponent(frc, true);
 
 	// Feedback component #2
-	comp =
-		getSceneAllocator().newInstance<CameraFrustumFeedbackComponent>(this);
+	comp = getSceneAllocator().newInstance<CameraFrustumFeedbackComponent>(this);
 	addComponent(comp, true);
 
 	// Spatial component
@@ -112,19 +95,16 @@ Error Camera::init(Frustum* frustum)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Camera::~Camera()
 {
 }
 
-//==============================================================================
 void Camera::lookAtPoint(const Vec3& point)
 {
 	MoveComponent& move = getComponent<MoveComponent>();
 
 	Vec4 j = Vec4(0.0, 1.0, 0.0, 0.0);
-	Vec4 vdir =
-		(point.xyz0() - move.getLocalTransform().getOrigin()).getNormalized();
+	Vec4 vdir = (point.xyz0() - move.getLocalTransform().getOrigin()).getNormalized();
 	Vec4 vup = j - vdir * j.dot(vdir);
 	Vec4 vside = vdir.cross(vup);
 
@@ -133,7 +113,6 @@ void Camera::lookAtPoint(const Vec3& point)
 	move.setLocalRotation(rot);
 }
 
-//==============================================================================
 void Camera::onFrustumComponentUpdate(FrustumComponent& fr)
 {
 	// Spatial
@@ -141,7 +120,6 @@ void Camera::onFrustumComponentUpdate(FrustumComponent& fr)
 	sp.markForUpdate();
 }
 
-//==============================================================================
 void Camera::onMoveComponentUpdate(MoveComponent& move)
 {
 	// Frustum
@@ -155,39 +133,26 @@ void Camera::onMoveComponentUpdate(MoveComponent& move)
 	sp.setSpatialOrigin(move.getWorldTransform().getOrigin());
 }
 
-//==============================================================================
-// PerspectiveCamera                                                           =
-//==============================================================================
-
-//==============================================================================
 PerspectiveCamera::PerspectiveCamera(SceneGraph* scene, CString name)
 	: Camera(scene, Type::PERSPECTIVE, name)
 {
 }
 
-//==============================================================================
 PerspectiveCamera::~PerspectiveCamera()
 {
 }
 
-//==============================================================================
 void PerspectiveCamera::setAll(F32 fovX, F32 fovY, F32 near, F32 far)
 {
 	m_frustum.setAll(fovX, fovY, near, far);
 	getComponent<FrustumComponent>().markShapeForUpdate();
 }
 
-//==============================================================================
-// OrthographicCamera                                                          =
-//==============================================================================
-
-//==============================================================================
 OrthographicCamera::OrthographicCamera(SceneGraph* scene, CString name)
 	: Camera(scene, Type::ORTHOGRAPHIC, name)
 {
 }
 
-//==============================================================================
 OrthographicCamera::~OrthographicCamera()
 {
 }

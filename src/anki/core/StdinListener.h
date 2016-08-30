@@ -15,9 +15,7 @@ namespace anki
 /// @addtogroup core
 /// @{
 
-/// The listener of the stdin.
-/// It initiates a thread that constantly reads the stdin and puts the results
-/// in a queue
+/// The listener of the stdin. It initiates a thread that constantly reads the stdin and puts the results in a queue
 class StdinListener
 {
 public:
@@ -40,7 +38,7 @@ private:
 	Thread m_thrd; ///< The thread
 	Bool8 m_quit = false;
 
-	static Error workingFunc(Thread::Info& info); ///< The thread function
+	static Error workingFunc(ThreadCallbackInfo& info); ///< The thread function
 };
 
 /// @}

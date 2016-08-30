@@ -11,17 +11,14 @@
 namespace anki
 {
 
-//==============================================================================
 Volumetric::~Volumetric()
 {
 }
 
-//==============================================================================
 Error Volumetric::init(const ConfigSet& config)
 {
 	// Create frag shader
-	ANKI_CHECK(getResourceManager().loadResource(
-		"shaders/Volumetric.frag.glsl", m_frag));
+	ANKI_CHECK(getResourceManager().loadResource("shaders/Volumetric.frag.glsl", m_frag));
 
 	// Create ppline
 	PipelineInitInfo init;
@@ -41,8 +38,7 @@ Error Volumetric::init(const ConfigSet& config)
 	// Create the resource group
 	ResourceGroupInitInfo rcInit;
 	rcInit.m_textures[0].m_texture = m_r->getMs().getDepthRt();
-	rcInit.m_textures[0].m_usage = TextureUsageBit::SAMPLED_FRAGMENT
-		| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
+	rcInit.m_textures[0].m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
 	rcInit.m_uniformBuffers[0].m_uploadedMemory = true;
 	rcInit.m_uniformBuffers[0].m_usage = BufferUsageBit::UNIFORM_FRAGMENT;
 
@@ -51,20 +47,16 @@ Error Volumetric::init(const ConfigSet& config)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void Volumetric::run(RenderingContext& ctx, CommandBufferPtr cmdb)
 {
 	const Frustum& frc = ctx.m_frustumComponent->getFrustum();
 
 	// Update uniforms
 	TransientMemoryInfo dyn;
-	Vec4* uniforms = static_cast<Vec4*>(
-		getGrManager().allocateFrameTransientMemory(sizeof(Vec4) * 2,
-			BufferUsageBit::UNIFORM_ALL,
-			dyn.m_uniformBuffers[0]));
+	Vec4* uniforms = static_cast<Vec4*>(getGrManager().allocateFrameTransientMemory(
+		sizeof(Vec4) * 2, BufferUsageBit::UNIFORM_ALL, dyn.m_uniformBuffers[0]));
 
-	computeLinearizeDepthOptimal(
-		frc.getNear(), frc.getFar(), uniforms[0].x(), uniforms[0].y());
+	computeLinearizeDepthOptimal(frc.getNear(), frc.getFar(), uniforms[0].x(), uniforms[0].y());
 
 	uniforms[1] = Vec4(m_fogColor, m_fogFactor);
 

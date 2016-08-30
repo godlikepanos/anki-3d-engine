@@ -28,8 +28,8 @@ public:
 		destroyDeferred(glDeleteFramebuffers);
 	}
 
-	/// Set all the attachments. It will overwrite the previous state. If the
-	/// initalizer list is empty the it will bind the default framebuffer
+	/// Set all the attachments. It will overwrite the previous state. If the initalizer list is empty the it will bind
+	/// the default framebuffer
 	ANKI_USE_RESULT Error init(const FramebufferInitInfo& init);
 
 	/// Bind it to the state. Call it in rendering thread
@@ -44,14 +44,10 @@ private:
 	Bool8 m_bindDefault = false;
 
 	/// Attach a texture
-	static void attachTextureInternal(GLenum attachment,
-		const TextureImpl& tex,
-		const FramebufferAttachmentInfo& info);
+	static void attachTextureInternal(GLenum attachment, const TextureImpl& tex, const FramebufferAttachmentInfo& info);
 
 	/// Create the FBO
-	ANKI_USE_RESULT Error createFbo(
-		const Array<U, MAX_COLOR_ATTACHMENTS + 1>& layers,
-		GLenum depthStencilBindingPoint);
+	ANKI_USE_RESULT Error createFbo(const Array<U, MAX_COLOR_ATTACHMENTS + 1>& layers, GLenum depthStencilBindingPoint);
 };
 /// @}
 

@@ -22,15 +22,9 @@
 namespace anki
 {
 
-//==============================================================================
-// VisibilityContext                                                           =
-//==============================================================================
-
-//==============================================================================
 void VisibilityContext::submitNewWork(FrustumComponent& frc, ThreadHive& hive)
 {
-	// Check enabled and make sure that the results are null (this
-	// can happen on multiple on circular viewing)
+	// Check enabled and make sure that the results are null (this can happen on multiple on circular viewing)
 	if(ANKI_UNLIKELY(!frc.anyVisibilityTestEnabled()))
 	{
 		return;
@@ -61,12 +55,10 @@ void VisibilityContext::submitNewWork(FrustumComponent& frc, ThreadHive& hive)
 	// Software rasterizer tasks
 	SoftwareRasterizer* r = nullptr;
 	Array<ThreadHiveDependencyHandle, ThreadHive::MAX_THREADS> rasterizeDeps;
-	if(frc.visibilityTestsEnabled(
-		   FrustumComponentVisibilityTestFlag::OCCLUDERS))
+	if(frc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::OCCLUDERS))
 	{
 		// Gather triangles task
-		GatherVisibleTrianglesTask* gather =
-			alloc.newInstance<GatherVisibleTrianglesTask>();
+		GatherVisibleTrianglesTask* gather = alloc.newInstance<GatherVisibleTrianglesTask>();
 		gather->m_visCtx = this;
 		gather->m_frc = &frc;
 		gather->m_vertCount = 0;
@@ -81,8 +73,7 @@ void VisibilityContext::submitNewWork(FrustumComponent& frc, ThreadHive& hive)
 
 		// Rasterize triangles task
 		U count = hive.getThreadCount();
-		RasterizeTrianglesTask* rasterize =
-			alloc.newArray<RasterizeTrianglesTask>(count);
+		RasterizeTrianglesTask* rasterize = alloc.newArray<RasterizeTrianglesTask>(count);
 
 		Array<ThreadHiveTask, ThreadHive::MAX_THREADS> rastTasks;
 		while(count--)
@@ -94,9 +85,7 @@ void VisibilityContext::submitNewWork(FrustumComponent& frc, ThreadHive& hive)
 
 			rastTasks[count].m_callback = RasterizeTrianglesTask::callback;
 			rastTasks[count].m_argument = &rast;
-			rastTasks[count].m_inDependencies =
-				WeakArray<ThreadHiveDependencyHandle>(
-					&gatherTask.m_outDependency, 1);
+			rastTasks[count].m_inDependencies = WeakArray<ThreadHiveDependencyHandle>(&gatherTask.m_outDependency, 1);
 		}
 
 		count = hive.getThreadCount();
@@ -108,8 +97,7 @@ void VisibilityContext::submitNewWork(FrustumComponent& frc, ThreadHive& hive)
 	}
 
 	// Gather task
-	GatherVisiblesFromSectorsTask* gather =
-		alloc.newInstance<GatherVisiblesFromSectorsTask>();
+	GatherVisiblesFromSectorsTask* gather = alloc.newInstance<GatherVisiblesFromSectorsTask>();
 	gather->m_visCtx = this;
 	gather->m_frc = &frc;
 	gather->m_r = r;
@@ -119,18 +107,15 @@ void VisibilityContext::submitNewWork(FrustumComponent& frc, ThreadHive& hive)
 	gatherTask.m_argument = gather;
 	if(r)
 	{
-		gatherTask.m_inDependencies = WeakArray<ThreadHiveDependencyHandle>(
-			&rasterizeDeps[0], hive.getThreadCount());
+		gatherTask.m_inDependencies = WeakArray<ThreadHiveDependencyHandle>(&rasterizeDeps[0], hive.getThreadCount());
 	}
 
 	hive.submitTasks(&gatherTask, 1);
 
 	// Test tasks
 	U testCount = hive.getThreadCount();
-	WeakArray<VisibilityTestTask> tests(
-		alloc.newArray<VisibilityTestTask>(testCount), testCount);
-	WeakArray<ThreadHiveTask> testTasks(
-		alloc.newArray<ThreadHiveTask>(testCount), testCount);
+	WeakArray<VisibilityTestTask> tests(alloc.newArray<VisibilityTestTask>(testCount), testCount);
+	WeakArray<ThreadHiveTask> testTasks(alloc.newArray<ThreadHiveTask>(testCount), testCount);
 
 	for(U i = 0; i < testCount; ++i)
 	{
@@ -144,8 +129,7 @@ void VisibilityContext::submitNewWork(FrustumComponent& frc, ThreadHive& hive)
 		auto& task = testTasks[i];
 		task.m_callback = VisibilityTestTask::callback;
 		task.m_argument = &test;
-		task.m_inDependencies = WeakArray<ThreadHiveDependencyHandle>(
-			&gatherTask.m_outDependency, 1);
+		task.m_inDependencies = WeakArray<ThreadHiveDependencyHandle>(&gatherTask.m_outDependency, 1);
 	}
 
 	hive.submitTasks(&testTasks[0], testCount);
@@ -159,8 +143,8 @@ void VisibilityContext::submitNewWork(FrustumComponent& frc, ThreadHive& hive)
 	ThreadHiveTask combineTask;
 	combineTask.m_callback = CombineResultsTask::callback;
 	combineTask.m_argument = combine;
-	combineTask.m_inDependencies = WeakArray<ThreadHiveDependencyHandle>(
-		alloc.newArray<ThreadHiveDependencyHandle>(testCount), testCount);
+	combineTask.m_inDependencies =
+		WeakArray<ThreadHiveDependencyHandle>(alloc.newArray<ThreadHiveDependencyHandle>(testCount), testCount);
 	for(U i = 0; i < testCount; ++i)
 	{
 		combineTask.m_inDependencies[i] = testTasks[i].m_outDependency;
@@ -169,11 +153,6 @@ void VisibilityContext::submitNewWork(FrustumComponent& frc, ThreadHive& hive)
 	hive.submitTasks(&combineTask, 1);
 }
 
-//==============================================================================
-// GatherVisibleTrianglesTask                                                  =
-//==============================================================================
-
-//==============================================================================
 void GatherVisibleTrianglesTask::gather()
 {
 	ANKI_TRACE_START_EVENT(SCENE_VISIBILITY_GATHER_TRIANGLES);
@@ -199,8 +178,7 @@ void GatherVisibleTrianglesTask::gather()
 
 				m_verts[m_vertCount++] = *it;
 
-				it = reinterpret_cast<const Vec3*>(
-					reinterpret_cast<const U8*>(it) + stride);
+				it = reinterpret_cast<const Vec3*>(reinterpret_cast<const U8*>(it) + stride);
 			}
 		}
 	});
@@ -211,18 +189,12 @@ void GatherVisibleTrianglesTask::gather()
 	ANKI_TRACE_STOP_EVENT(SCENE_VISIBILITY_GATHER_TRIANGLES);
 }
 
-//==============================================================================
-// RasterizeTrianglesTask                                                      =
-//==============================================================================
-
-//==============================================================================
 void RasterizeTrianglesTask::rasterize()
 {
 	ANKI_TRACE_START_EVENT(SCENE_VISIBILITY_RASTERIZE);
 
 	PtrSize start, end;
-	ThreadPoolTask::choseStartEnd(
-		m_taskIdx, m_taskCount, m_gatherTask->m_vertCount / 3, start, end);
+	ThreadPoolTask::choseStartEnd(m_taskIdx, m_taskCount, m_gatherTask->m_vertCount / 3, start, end);
 
 	if(start != end)
 	{
@@ -236,11 +208,6 @@ void RasterizeTrianglesTask::rasterize()
 	ANKI_TRACE_STOP_EVENT(SCENE_VISIBILITY_RASTERIZE);
 }
 
-//==============================================================================
-// VisibilityTestTask                                                          =
-//==============================================================================
-
-//==============================================================================
 void VisibilityTestTask::test(ThreadHive& hive)
 {
 	ANKI_TRACE_START_EVENT(SCENE_VISIBILITY_TEST);
@@ -256,31 +223,25 @@ void VisibilityTestTask::test(ThreadHive& hive)
 	visible->create(alloc);
 	m_result = visible;
 
-	Bool wantsRenderComponents = testedFrc.visibilityTestsEnabled(
-		FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS);
+	Bool wantsRenderComponents =
+		testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS);
 
-	Bool wantsLightComponents = testedFrc.visibilityTestsEnabled(
-		FrustumComponentVisibilityTestFlag::LIGHT_COMPONENTS);
+	Bool wantsLightComponents = testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::LIGHT_COMPONENTS);
 
-	Bool wantsFlareComponents = testedFrc.visibilityTestsEnabled(
-		FrustumComponentVisibilityTestFlag::LENS_FLARE_COMPONENTS);
+	Bool wantsFlareComponents =
+		testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::LENS_FLARE_COMPONENTS);
 
-	Bool wantsShadowCasters = testedFrc.visibilityTestsEnabled(
-		FrustumComponentVisibilityTestFlag::SHADOW_CASTERS);
+	Bool wantsShadowCasters = testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::SHADOW_CASTERS);
 
-	Bool wantsReflectionProbes = testedFrc.visibilityTestsEnabled(
-		FrustumComponentVisibilityTestFlag::REFLECTION_PROBES);
+	Bool wantsReflectionProbes =
+		testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::REFLECTION_PROBES);
 
-	Bool wantsReflectionProxies = testedFrc.visibilityTestsEnabled(
-		FrustumComponentVisibilityTestFlag::REFLECTION_PROXIES);
+	Bool wantsReflectionProxies =
+		testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::REFLECTION_PROXIES);
 
 	// Chose the test range and a few other things
 	PtrSize start, end;
-	ThreadPoolTask::choseStartEnd(m_taskIdx,
-		m_taskCount,
-		m_sectorsCtx->getVisibleSceneNodeCount(),
-		start,
-		end);
+	ThreadPoolTask::choseStartEnd(m_taskIdx, m_taskCount, m_sectorsCtx->getVisibleSceneNodeCount(), start, end);
 
 	m_sectorsCtx->iterateVisibleSceneNodes(start, end, [&](SceneNode& node) {
 		// Skip if it is the same
@@ -315,15 +276,13 @@ void VisibilityTestTask::test(ThreadHive& hive)
 			wantNode = true;
 		}
 
-		ReflectionProbeComponent* reflc =
-			node.tryGetComponent<ReflectionProbeComponent>();
+		ReflectionProbeComponent* reflc = node.tryGetComponent<ReflectionProbeComponent>();
 		if(reflc && wantsReflectionProbes)
 		{
 			wantNode = true;
 		}
 
-		ReflectionProxyComponent* proxyc =
-			node.tryGetComponent<ReflectionProxyComponent>();
+		ReflectionProxyComponent* proxyc = node.tryGetComponent<ReflectionProxyComponent>();
 		if(proxyc && wantsReflectionProxies)
 		{
 			wantNode = true;
@@ -346,22 +305,20 @@ void VisibilityTestTask::test(ThreadHive& hive)
 
 		U spIdx = 0;
 		U count = 0;
-		Error err = node.iterateComponentsOfType<SpatialComponent>(
-			[&](SpatialComponent& sp) {
-				if(testedFrc.insideFrustum(sp))
-				{
-					// Inside
-					ANKI_ASSERT(spIdx < MAX_U8);
-					sps[count++] = SpatialTemp{
-						&sp, static_cast<U8>(spIdx), sp.getSpatialOrigin()};
+		Error err = node.iterateComponentsOfType<SpatialComponent>([&](SpatialComponent& sp) {
+			if(testedFrc.insideFrustum(sp))
+			{
+				// Inside
+				ANKI_ASSERT(spIdx < MAX_U8);
+				sps[count++] = SpatialTemp{&sp, static_cast<U8>(spIdx), sp.getSpatialOrigin()};
 
-					sp.setVisibleByCamera(true);
-				}
+				sp.setVisibleByCamera(true);
+			}
 
-				++spIdx;
+			++spIdx;
 
-				return ErrorCode::NONE;
-			});
+			return ErrorCode::NONE;
+		});
 		(void)err;
 
 		if(ANKI_UNLIKELY(count == 0))
@@ -371,25 +328,22 @@ void VisibilityTestTask::test(ThreadHive& hive)
 
 		// Sort sub-spatials
 		Vec4 origin = testedFrc.getFrustumOrigin();
-		std::sort(sps.begin(),
-			sps.begin() + count,
-			[origin](const SpatialTemp& a, const SpatialTemp& b) -> Bool {
-				const Vec4& spa = a.m_origin;
-				const Vec4& spb = b.m_origin;
+		std::sort(sps.begin(), sps.begin() + count, [origin](const SpatialTemp& a, const SpatialTemp& b) -> Bool {
+			const Vec4& spa = a.m_origin;
+			const Vec4& spb = b.m_origin;
 
-				F32 dist0 = origin.getDistanceSquared(spa);
-				F32 dist1 = origin.getDistanceSquared(spb);
+			F32 dist0 = origin.getDistanceSquared(spa);
+			F32 dist1 = origin.getDistanceSquared(spb);
 
-				return dist0 < dist1;
-			});
+			return dist0 < dist1;
+		});
 
 		// Update the visibleNode
 		VisibleNode visibleNode;
 		visibleNode.m_node = &node;
 
 		// Compute distance from the frustum
-		visibleNode.m_frustumDistanceSquared =
-			(sps[0].m_origin - testedFrc.getFrustumOrigin()).getLengthSquared();
+		visibleNode.m_frustumDistanceSquared = (sps[0].m_origin - testedFrc.getFrustumOrigin()).getLengthSquared();
 
 		ANKI_ASSERT(count < MAX_U8);
 		visibleNode.m_spatialsCount = count;
@@ -402,13 +356,11 @@ void VisibilityTestTask::test(ThreadHive& hive)
 
 		if(rc)
 		{
-			if(wantsRenderComponents
-				|| (wantsShadowCasters && rc->getCastsShadow()))
+			if(wantsRenderComponents || (wantsShadowCasters && rc->getCastsShadow()))
 			{
 				visible->moveBack(alloc,
-					rc->getMaterial().getForwardShading()
-						? VisibilityGroupType::RENDERABLES_FS
-						: VisibilityGroupType::RENDERABLES_MS,
+					rc->getMaterial().getForwardShading() ? VisibilityGroupType::RENDERABLES_FS
+														  : VisibilityGroupType::RENDERABLES_MS,
 					visibleNode);
 
 				if(wantsShadowCasters)
@@ -444,29 +396,25 @@ void VisibilityTestTask::test(ThreadHive& hive)
 
 		if(reflc && wantsReflectionProbes)
 		{
-			visible->moveBack(
-				alloc, VisibilityGroupType::REFLECTION_PROBES, visibleNode);
+			visible->moveBack(alloc, VisibilityGroupType::REFLECTION_PROBES, visibleNode);
 		}
 
 		if(proxyc && wantsReflectionProxies)
 		{
-			visible->moveBack(
-				alloc, VisibilityGroupType::REFLECTION_PROXIES, visibleNode);
+			visible->moveBack(alloc, VisibilityGroupType::REFLECTION_PROXIES, visibleNode);
 		}
 
 		// Add more frustums to the list
-		err = node.iterateComponentsOfType<FrustumComponent>(
-			[&](FrustumComponent& frc) {
-				m_visCtx->submitNewWork(frc, hive);
-				return ErrorCode::NONE;
-			});
+		err = node.iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) {
+			m_visCtx->submitNewWork(frc, hive);
+			return ErrorCode::NONE;
+		});
 		(void)err;
 	}); // end for
 
 	ANKI_TRACE_STOP_EVENT(SCENE_VISIBILITY_TEST);
 }
 
-//==============================================================================
 void VisibilityTestTask::updateTimestamp(const SceneNode& node)
 {
 	Timestamp lastUpdate = 0;
@@ -492,11 +440,6 @@ void VisibilityTestTask::updateTimestamp(const SceneNode& node)
 	m_timestamp = max(m_timestamp, lastUpdate);
 }
 
-//==============================================================================
-// CombineResultsTask                                                          =
-//==============================================================================
-
-//==============================================================================
 void CombineResultsTask::combine()
 {
 	ANKI_TRACE_START_EVENT(SCENE_VISIBILITY_COMBINE_RESULTS);
@@ -540,11 +483,6 @@ void CombineResultsTask::combine()
 	ANKI_TRACE_STOP_EVENT(SCENE_VISIBILITY_COMBINE_RESULTS);
 }
 
-//==============================================================================
-// VisibilityTestResults                                                       =
-//==============================================================================
-
-//==============================================================================
 void VisibilityTestResults::create(SceneFrameAllocator<U8> alloc)
 {
 	m_groups[VisibilityGroupType::RENDERABLES_MS].m_nodes.create(alloc, 64);
@@ -553,25 +491,20 @@ void VisibilityTestResults::create(SceneFrameAllocator<U8> alloc)
 	m_groups[VisibilityGroupType::LIGHTS_SPOT].m_nodes.create(alloc, 4);
 }
 
-//==============================================================================
-void VisibilityTestResults::moveBack(
-	SceneFrameAllocator<U8> alloc, VisibilityGroupType type, VisibleNode& x)
+void VisibilityTestResults::moveBack(SceneFrameAllocator<U8> alloc, VisibilityGroupType type, VisibleNode& x)
 {
 	Group& group = m_groups[type];
 	if(group.m_count + 1 > group.m_nodes.getSize())
 	{
 		// Need to grow
-		U newSize =
-			(group.m_nodes.getSize() != 0) ? group.m_nodes.getSize() * 2 : 2;
+		U newSize = (group.m_nodes.getSize() != 0) ? group.m_nodes.getSize() * 2 : 2;
 		group.m_nodes.resize(alloc, newSize);
 	}
 
 	group.m_nodes[group.m_count++] = x;
 }
 
-//==============================================================================
-void VisibilityTestResults::combineWith(
-	SceneFrameAllocator<U8> alloc, WeakArray<VisibilityTestResults*>& results)
+void VisibilityTestResults::combineWith(SceneFrameAllocator<U8> alloc, WeakArray<VisibilityTestResults*>& results)
 {
 	ANKI_ASSERT(results.getSize() > 0);
 
@@ -583,18 +516,14 @@ void VisibilityTestResults::combineWith(
 	{
 		VisibilityTestResults& rez = *results[i];
 
-		for(VisibilityGroupType t = VisibilityGroupType::FIRST;
-			t < VisibilityGroupType::TYPE_COUNT;
-			++t)
+		for(VisibilityGroupType t = VisibilityGroupType::FIRST; t < VisibilityGroupType::TYPE_COUNT; ++t)
 		{
 			counts[t] += rez.m_groups[t].m_count;
 		}
 	}
 
 	// Allocate
-	for(VisibilityGroupType t = VisibilityGroupType::FIRST;
-		t < VisibilityGroupType::TYPE_COUNT;
-		++t)
+	for(VisibilityGroupType t = VisibilityGroupType::FIRST; t < VisibilityGroupType::TYPE_COUNT; ++t)
 	{
 		if(counts[t] > 0)
 		{
@@ -609,16 +538,13 @@ void VisibilityTestResults::combineWith(
 	{
 		VisibilityTestResults& rez = *results[i];
 
-		for(VisibilityGroupType t = VisibilityGroupType::FIRST;
-			t < VisibilityGroupType::TYPE_COUNT;
-			++t)
+		for(VisibilityGroupType t = VisibilityGroupType::FIRST; t < VisibilityGroupType::TYPE_COUNT; ++t)
 		{
 			U copyCount = rez.m_groups[t].m_count;
 			if(copyCount > 0)
 			{
-				memcpy(&m_groups[t].m_nodes[0] + counts[t],
-					&rez.m_groups[t].m_nodes[0],
-					sizeof(VisibleNode) * copyCount);
+				memcpy(
+					&m_groups[t].m_nodes[0] + counts[t], &rez.m_groups[t].m_nodes[0], sizeof(VisibleNode) * copyCount);
 
 				counts[t] += copyCount;
 			}
@@ -626,11 +552,6 @@ void VisibilityTestResults::combineWith(
 	}
 }
 
-//==============================================================================
-// doVisibilityTests                                                           =
-//==============================================================================
-
-//==============================================================================
 void doVisibilityTests(SceneNode& fsn, SceneGraph& scene, const Renderer& r)
 {
 	ANKI_TRACE_START_EVENT(SCENE_VISIBILITY_TESTS);

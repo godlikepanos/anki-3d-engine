@@ -43,24 +43,16 @@ public:
 
 	ANKI_USE_RESULT Error init(GrManager* gr, ResourceManager* rc);
 
-	ANKI_USE_RESULT Error loadImage(
-		const CString& filename, IntrusivePtr<UiImage>& img) override;
+	ANKI_USE_RESULT Error loadImage(const CString& filename, IntrusivePtr<UiImage>& img) override;
 
-	ANKI_USE_RESULT Error createR8Image(const WeakArray<U8>& data,
-		const UVec2& size,
-		IntrusivePtr<UiImage>& img) override;
+	ANKI_USE_RESULT Error createR8Image(
+		const WeakArray<U8>& data, const UVec2& size, IntrusivePtr<UiImage>& img) override;
 
-	ANKI_USE_RESULT Error readFile(
-		const CString& filename, DynamicArrayAuto<U8>& data) override;
+	ANKI_USE_RESULT Error readFile(const CString& filename, DynamicArrayAuto<U8>& data) override;
 
-	void drawImage(UiImagePtr image,
-		const Rect& uvs,
-		const Rect& drawingRect,
-		const UVec2& canvasSize) override;
+	void drawImage(UiImagePtr image, const Rect& uvs, const Rect& drawingRect, const UVec2& canvasSize) override;
 
-	void drawLines(const WeakArray<UVec2>& positions,
-		const Color& color,
-		const UVec2& canvasSize) override;
+	void drawLines(const WeakArray<UVec2>& positions, const Color& color, const UVec2& canvasSize) override;
 
 	void beginRendering(CommandBufferPtr cmdb);
 

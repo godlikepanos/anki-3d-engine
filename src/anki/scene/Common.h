@@ -31,8 +31,7 @@ using SceneFrameAllocator = StackAllocator<T>;
 
 /// Scene dictionary
 template<typename T>
-using SceneDictionary =
-	Dictionary<T, SceneAllocator<std::pair<const char*, T>>>;
+using SceneDictionary = Dictionary<T, SceneAllocator<std::pair<const char*, T>>>;
 /// @}
 
 } // end namespace anki

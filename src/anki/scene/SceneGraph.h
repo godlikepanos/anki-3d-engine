@@ -110,8 +110,7 @@ public:
 		return *m_threadHive;
 	}
 
-	ANKI_USE_RESULT Error update(
-		F32 prevUpdateTime, F32 crntTime, MainRenderer& renderer);
+	ANKI_USE_RESULT Error update(F32 prevUpdateTime, F32 crntTime, MainRenderer& renderer);
 
 	SceneNode& findSceneNode(const CString& name);
 	SceneNode* tryFindSceneNode(const CString& name);
@@ -134,13 +133,11 @@ public:
 
 	/// Iterate a range of scene nodes using a lambda
 	template<typename Func>
-	ANKI_USE_RESULT Error iterateSceneNodes(
-		PtrSize begin, PtrSize end, Func func);
+	ANKI_USE_RESULT Error iterateSceneNodes(PtrSize begin, PtrSize end, Func func);
 
 	/// Create a new SceneNode
 	template<typename Node, typename... Args>
-	ANKI_USE_RESULT Error newSceneNode(
-		const CString& name, Node*& node, Args&&... args);
+	ANKI_USE_RESULT Error newSceneNode(const CString& name, Node*& node, Args&&... args);
 
 	/// Delete a scene node. It actualy marks it for deletion
 	void deleteSceneNode(SceneNode* node)
@@ -239,10 +236,8 @@ private:
 	void deleteNodesMarkedForDeletion();
 };
 
-//==============================================================================
 template<typename Node, typename... Args>
-inline Error SceneGraph::newSceneNode(
-	const CString& name, Node*& node, Args&&... args)
+inline Error SceneGraph::newSceneNode(const CString& name, Node*& node, Args&&... args)
 {
 	Error err = ErrorCode::NONE;
 	SceneAllocator<Node> al = m_alloc;
@@ -264,8 +259,7 @@ inline Error SceneGraph::newSceneNode(
 
 	if(err)
 	{
-		ANKI_LOGE("Failed to create scene node: %s",
-			(name.isEmpty()) ? "unnamed" : &name[0]);
+		ANKI_LOGE("Failed to create scene node: %s", (name.isEmpty()) ? "unnamed" : &name[0]);
 
 		if(node)
 		{
@@ -277,7 +271,6 @@ inline Error SceneGraph::newSceneNode(
 	return err;
 }
 
-//==============================================================================
 template<typename Func>
 Error SceneGraph::iterateSceneNodes(PtrSize begin, PtrSize end, Func func)
 {

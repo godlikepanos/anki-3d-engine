@@ -16,8 +16,7 @@ namespace anki
 // Forward
 class XmlElement;
 
-/// Material loader variable. It's the information on whatever is inside
-/// \<input\>
+/// Material loader variable. It's the information on whatever is inside \<input\>
 class MaterialLoaderInputVariable : public NonCopyable
 {
 public:
@@ -81,19 +80,17 @@ public:
 
 	Bool duplicate(const MaterialLoaderInputVariable& b) const
 	{
-		return b.m_name == m_name && b.m_value == m_value && b.m_type == m_type
-			&& b.m_builtin == m_builtin && b.m_flags == m_flags;
+		return b.m_name == m_name && b.m_value == m_value && b.m_type == m_type && b.m_builtin == m_builtin
+			&& b.m_flags == m_flags;
 	}
 
 	CString typeStr() const;
 };
 
 /// Creator of shader programs. This class parses between
-/// @code <material></material> @endcode and creates the source of a custom
-/// program.
+/// @code <material></material> @endcode and creates the source of a custom program.
 ///
-/// @note Be carefull when you change the methods. Some change may create more
-///       unique shaders and this is never good.
+/// @note Be carefull when you change the methods. Some change may create more unique shaders and this is never good.
 class MaterialLoader
 {
 public:
@@ -190,10 +187,8 @@ private:
 	void processInputs();
 
 	/// Parse what is within the @code <operation></operation> @endcode
-	ANKI_USE_RESULT Error parseOperationTag(const XmlElement& el,
-		ShaderType glshader,
-		ShaderTypeBit glshaderbit,
-		String& out);
+	ANKI_USE_RESULT Error parseOperationTag(
+		const XmlElement& el, ShaderType glshader, ShaderTypeBit glshaderbit, String& out);
 };
 
 } // end namespace anki

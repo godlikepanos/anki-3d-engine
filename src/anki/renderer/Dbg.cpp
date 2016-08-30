@@ -19,20 +19,17 @@
 #include <anki/util/Enum.h>
 #include <anki/misc/ConfigSet.h>
 #include <anki/collision/ConvexHullShape.h>
-#include <anki/util/Rtti.h>
 #include <anki/Ui.h> /// XXX
 #include <anki/scene/SoftwareRasterizer.h> /// XXX
 
 namespace anki
 {
 
-//==============================================================================
 Dbg::Dbg(Renderer* r)
 	: RenderingPass(r)
 {
 }
 
-//==============================================================================
 Dbg::~Dbg()
 {
 	if(m_drawer != nullptr)
@@ -41,7 +38,6 @@ Dbg::~Dbg()
 	}
 }
 
-//==============================================================================
 Error Dbg::init(const ConfigSet& initializer)
 {
 	m_enabled = initializer.getNumber("dbg.enabled");
@@ -49,7 +45,6 @@ Error Dbg::init(const ConfigSet& initializer)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error Dbg::lazyInit()
 {
 	ANKI_ASSERT(!m_initialized);
@@ -58,8 +53,7 @@ Error Dbg::lazyInit()
 	m_r->createRenderTarget(m_r->getWidth(),
 		m_r->getHeight(),
 		DBG_COLOR_ATTACHMENT_PIXEL_FORMAT,
-		TextureUsageBit::SAMPLED_FRAGMENT
-			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
+		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 		SamplingFilter::LINEAR,
 		1,
 		m_rt);
@@ -68,11 +62,9 @@ Error Dbg::lazyInit()
 	FramebufferInitInfo fbInit;
 	fbInit.m_colorAttachmentCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
-	fbInit.m_colorAttachments[0].m_loadOperation =
-		AttachmentLoadOperation::CLEAR;
+	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
 	fbInit.m_depthStencilAttachment.m_texture = m_r->getMs().getDepthRt();
-	fbInit.m_depthStencilAttachment.m_loadOperation =
-		AttachmentLoadOperation::LOAD;
+	fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::LOAD;
 
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
@@ -82,7 +74,6 @@ Error Dbg::lazyInit()
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error Dbg::run(RenderingContext& ctx)
 {
 	ANKI_ASSERT(m_enabled);
@@ -127,42 +118,38 @@ Error Dbg::run(RenderingContext& ctx)
 		// Spatial
 		if(m_flags.get(DbgFlag::SPATIAL_COMPONENT))
 		{
-			Error err = node.iterateComponentsOfType<SpatialComponent>(
-				[&](SpatialComponent& sp) -> Error {
-					sceneDrawer.draw(sp);
-					return ErrorCode::NONE;
-				});
+			Error err = node.iterateComponentsOfType<SpatialComponent>([&](SpatialComponent& sp) -> Error {
+				sceneDrawer.draw(sp);
+				return ErrorCode::NONE;
+			});
 			(void)err;
 		}
 
 		// Frustum
 		if(m_flags.get(DbgFlag::FRUSTUM_COMPONENT))
 		{
-			Error err = node.iterateComponentsOfType<FrustumComponent>(
-				[&](FrustumComponent& frc) -> Error {
-					if(&frc != &camFrc)
-					{
-						sceneDrawer.draw(frc);
-					}
-					return ErrorCode::NONE;
-				});
+			Error err = node.iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) -> Error {
+				if(&frc != &camFrc)
+				{
+					sceneDrawer.draw(frc);
+				}
+				return ErrorCode::NONE;
+			});
 			(void)err;
 		}
 
 		// Sector/portal
 		if(m_flags.get(DbgFlag::SECTOR_COMPONENT))
 		{
-			Error err = node.iterateComponentsOfType<SectorComponent>(
-				[&](SectorComponent& psc) -> Error {
-					sceneDrawer.draw(psc);
-					return ErrorCode::NONE;
-				});
+			Error err = node.iterateComponentsOfType<SectorComponent>([&](SectorComponent& psc) -> Error {
+				sceneDrawer.draw(psc);
+				return ErrorCode::NONE;
+			});
 
-			err = node.iterateComponentsOfType<PortalComponent>(
-				[&](PortalComponent& psc) -> Error {
-					sceneDrawer.draw(psc);
-					return ErrorCode::NONE;
-				});
+			err = node.iterateComponentsOfType<PortalComponent>([&](PortalComponent& psc) -> Error {
+				sceneDrawer.draw(psc);
+				return ErrorCode::NONE;
+			});
 			(void)err;
 		}
 	});
@@ -371,19 +358,16 @@ Error Dbg::run(RenderingContext& ctx)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Bool Dbg::getDepthTestEnabled() const
 {
 	return m_drawer->getDepthTestEnabled();
 }
 
-//==============================================================================
 void Dbg::setDepthTestEnabled(Bool enable)
 {
 	m_drawer->setDepthTestEnabled(enable);
 }
 
-//==============================================================================
 void Dbg::switchDepthTestEnabled()
 {
 	Bool enabled = m_drawer->getDepthTestEnabled();

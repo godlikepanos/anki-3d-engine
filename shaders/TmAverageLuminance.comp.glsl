@@ -14,9 +14,7 @@ const uint WORKGROUP_SIZE_X = 16u;
 const uint WORKGROUP_SIZE_Y = 16u;
 const uint WORKGROUP_SIZE = WORKGROUP_SIZE_X * WORKGROUP_SIZE_Y;
 
-layout(local_size_x = WORKGROUP_SIZE_X,
-	local_size_y = WORKGROUP_SIZE_Y,
-	local_size_z = 1) in;
+layout(local_size_x = WORKGROUP_SIZE_X, local_size_y = WORKGROUP_SIZE_Y, local_size_z = 1) in;
 
 const uint MIPMAP_WIDTH = ANKI_RENDERER_WIDTH / (2u << (IS_RT_MIPMAP - 1u));
 const uint MIPMAP_HEIGHT = ANKI_RENDERER_HEIGHT / (2u << (IS_RT_MIPMAP - 1u));
@@ -46,10 +44,7 @@ void main()
 			ivec2 uv = ivec2(xStart, yStart) + ivec2(x, y);
 // WORKAROUND
 #if defined(ANKI_VK) && defined(ANKI_VENDOR_NVIDIA)
-			vec3 color = textureLod(u_isRt,
-							 vec2(uv) / vec2(MIPMAP_WIDTH, MIPMAP_HEIGHT),
-							 IS_RT_MIPMAP)
-							 .rgb;
+			vec3 color = textureLod(u_isRt, vec2(uv) / vec2(MIPMAP_WIDTH, MIPMAP_HEIGHT), IS_RT_MIPMAP).rgb;
 #else
 			vec3 color = texelFetch(u_isRt, uv, IS_RT_MIPMAP).rgb;
 #endif
@@ -70,8 +65,7 @@ void main()
 	{
 		if(gl_LocalInvocationIndex < s)
 		{
-			g_avgLum[gl_LocalInvocationIndex] +=
-				g_avgLum[gl_LocalInvocationIndex + s];
+			g_avgLum[gl_LocalInvocationIndex] += g_avgLum[gl_LocalInvocationIndex + s];
 		}
 
 		memoryBarrierShared();
@@ -90,8 +84,7 @@ void main()
 
 		// Lerp between previous and new L value
 		const float INTERPOLATION_FACTOR = 0.05;
-		u_averageLuminancePad3.x = prevLum * (1.0 - INTERPOLATION_FACTOR)
-			+ crntLum * INTERPOLATION_FACTOR;
+		u_averageLuminancePad3.x = prevLum * (1.0 - INTERPOLATION_FACTOR) + crntLum * INTERPOLATION_FACTOR;
 #else
 		u_averageLuminancePad3.x = crntLum;
 #endif

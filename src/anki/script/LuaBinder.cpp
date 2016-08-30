@@ -11,28 +11,23 @@
 namespace anki
 {
 
-//==============================================================================
 static int luaPanic(lua_State* l)
 {
 	ANKI_LOGE("Lua panic attack: %s", lua_tostring(l, -1));
 	abort();
 }
 
-//==============================================================================
 LuaBinder::LuaBinder()
 {
 }
 
-//==============================================================================
 LuaBinder::~LuaBinder()
 {
 	lua_close(m_l);
 
-	ANKI_ASSERT(
-		m_alloc.getMemoryPool().getAllocationsCount() == 0 && "Leaking memory");
+	ANKI_ASSERT(m_alloc.getMemoryPool().getAllocationsCount() == 0 && "Leaking memory");
 }
 
-//==============================================================================
 Error LuaBinder::create(Allocator<U8>& alloc, void* parent)
 {
 	m_parent = parent;
@@ -45,9 +40,7 @@ Error LuaBinder::create(Allocator<U8>& alloc, void* parent)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
-void* LuaBinder::luaAllocCallback(
-	void* userData, void* ptr, PtrSize osize, PtrSize nsize)
+void* LuaBinder::luaAllocCallback(void* userData, void* ptr, PtrSize osize, PtrSize nsize)
 {
 	ANKI_ASSERT(userData);
 
@@ -98,7 +91,6 @@ void* LuaBinder::luaAllocCallback(
 	return out;
 }
 
-//==============================================================================
 Error LuaBinder::evalString(const CString& str)
 {
 	Error err = ErrorCode::NONE;
@@ -115,18 +107,15 @@ Error LuaBinder::evalString(const CString& str)
 	return err;
 }
 
-//==============================================================================
 void LuaBinder::checkArgsCount(lua_State* l, I argsCount)
 {
 	I actualArgsCount = lua_gettop(l);
 	if(argsCount != actualArgsCount)
 	{
-		luaL_error(
-			l, "Expecting %d arguments, got %d", argsCount, actualArgsCount);
+		luaL_error(l, "Expecting %d arguments, got %d", argsCount, actualArgsCount);
 	}
 }
 
-//==============================================================================
 void LuaBinder::createClass(lua_State* l, const char* className)
 {
 	lua_newtable(l); // push new table
@@ -139,20 +128,14 @@ void LuaBinder::createClass(lua_State* l, const char* className)
 	// After all these the metatable is in the top of tha stack
 }
 
-//==============================================================================
-void LuaBinder::pushLuaCFuncMethod(
-	lua_State* l, const char* name, lua_CFunction luafunc)
+void LuaBinder::pushLuaCFuncMethod(lua_State* l, const char* name, lua_CFunction luafunc)
 {
 	lua_pushstring(l, name);
 	lua_pushcfunction(l, luafunc);
 	lua_settable(l, -3);
 }
 
-//==============================================================================
-void LuaBinder::pushLuaCFuncStaticMethod(lua_State* l,
-	const char* className,
-	const char* name,
-	lua_CFunction luafunc)
+void LuaBinder::pushLuaCFuncStaticMethod(lua_State* l, const char* className, const char* name, lua_CFunction luafunc)
 {
 	lua_getglobal(l, className); // push
 	lua_pushcfunction(l, luafunc); // push
@@ -160,16 +143,12 @@ void LuaBinder::pushLuaCFuncStaticMethod(lua_State* l,
 	lua_pop(l, 1); // pop cfunc
 }
 
-//==============================================================================
-void LuaBinder::pushLuaCFunc(
-	lua_State* l, const char* name, lua_CFunction luafunc)
+void LuaBinder::pushLuaCFunc(lua_State* l, const char* name, lua_CFunction luafunc)
 {
 	lua_register(l, name, luafunc);
 }
 
-//==============================================================================
-Error LuaBinder::checkNumberInternal(
-	lua_State* l, I32 stackIdx, lua_Number& number)
+Error LuaBinder::checkNumberInternal(lua_State* l, I32 stackIdx, lua_Number& number)
 {
 	Error err = ErrorCode::NONE;
 	lua_Number lnum;
@@ -183,14 +162,12 @@ Error LuaBinder::checkNumberInternal(
 	else
 	{
 		err = ErrorCode::USER_DATA;
-		lua_pushfstring(
-			l, "Number expected. Got %s", luaL_typename(l, stackIdx));
+		lua_pushfstring(l, "Number expected. Got %s", luaL_typename(l, stackIdx));
 	}
 
 	return err;
 }
 
-//==============================================================================
 Error LuaBinder::checkString(lua_State* l, I32 stackIdx, const char*& out)
 {
 	Error err = ErrorCode::NONE;
@@ -202,19 +179,13 @@ Error LuaBinder::checkString(lua_State* l, I32 stackIdx, const char*& out)
 	else
 	{
 		err = ErrorCode::USER_DATA;
-		lua_pushfstring(
-			l, "String expected. Got %s", luaL_typename(l, stackIdx));
+		lua_pushfstring(l, "String expected. Got %s", luaL_typename(l, stackIdx));
 	}
 
 	return err;
 }
 
-//==============================================================================
-Error LuaBinder::checkUserData(lua_State* l,
-	I32 stackIdx,
-	const char* typeName,
-	I64 typeSignature,
-	UserData*& out)
+Error LuaBinder::checkUserData(lua_State* l, I32 stackIdx, const char* typeName, I64 typeSignature, UserData*& out)
 {
 	Error err = ErrorCode::NONE;
 
@@ -242,16 +213,12 @@ Error LuaBinder::checkUserData(lua_State* l,
 
 	if(err)
 	{
-		lua_pushfstring(l,
-			"Userdata of %s expected. Got %s",
-			typeName,
-			luaL_typename(l, stackIdx));
+		lua_pushfstring(l, "Userdata of %s expected. Got %s", typeName, luaL_typename(l, stackIdx));
 	}
 
 	return err;
 }
 
-//==============================================================================
 void* LuaBinder::luaAlloc(lua_State* l, size_t size, U32 alignment)
 {
 	void* ud;
@@ -262,7 +229,6 @@ void* LuaBinder::luaAlloc(lua_State* l, size_t size, U32 alignment)
 	return binder->m_alloc.getMemoryPool().allocate(size, alignment);
 }
 
-//==============================================================================
 void LuaBinder::luaFree(lua_State* l, void* ptr)
 {
 	void* ud;

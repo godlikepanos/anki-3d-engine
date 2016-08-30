@@ -66,23 +66,20 @@ public:
 	/// @param prevTime Previous update time.
 	/// @param crntTime Current update time.
 	/// @param[out] updated true if an update happened.
-	virtual ANKI_USE_RESULT Error update(
-		SceneNode& node, F32 prevTime, F32 crntTime, Bool& updated)
+	virtual ANKI_USE_RESULT Error update(SceneNode& node, F32 prevTime, F32 crntTime, Bool& updated)
 	{
 		updated = false;
 		return ErrorCode::NONE;
 	}
 
 	/// Called if SceneComponent::update returned true.
-	virtual ANKI_USE_RESULT Error onUpdate(
-		SceneNode& node, F32 prevTime, F32 crntTime)
+	virtual ANKI_USE_RESULT Error onUpdate(SceneNode& node, F32 prevTime, F32 crntTime)
 	{
 		return ErrorCode::NONE;
 	}
 
 	/// Called only by the SceneGraph
-	ANKI_USE_RESULT Error updateReal(
-		SceneNode& node, F32 prevTime, F32 crntTime, Bool& updated);
+	ANKI_USE_RESULT Error updateReal(SceneNode& node, F32 prevTime, F32 crntTime, Bool& updated);
 
 	void setAutomaticCleanup(Bool enable)
 	{

@@ -37,8 +37,7 @@ public:
 
 	Bool operator==(const Edge& b) const
 	{
-		return (m_idx[0] == b.m_idx[1] && m_idx[1] == b.m_idx[0])
-			|| (m_idx[0] == b.m_idx[0] && m_idx[1] == b.m_idx[1]);
+		return (m_idx[0] == b.m_idx[1] && m_idx[1] == b.m_idx[0]) || (m_idx[0] == b.m_idx[0] && m_idx[1] == b.m_idx[1]);
 	}
 };
 
@@ -140,8 +139,7 @@ class Polytope
 	friend class Face;
 
 public:
-	Polytope(
-		CollisionTempAllocator<U8>& alloc, U32 maxSimplexSize, U32 maxFaceCount)
+	Polytope(CollisionTempAllocator<U8>& alloc, U32 maxSimplexSize, U32 maxFaceCount)
 		: m_maxSimplexSize(maxSimplexSize)
 		, m_maxFaceCount(maxFaceCount)
 		, m_simplex(alloc)

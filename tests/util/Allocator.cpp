@@ -16,9 +16,7 @@ ANKI_TEST(Util, StackAllocator)
 	// With simple string
 	{
 		StackAllocator<char> alloc(allocAligned, nullptr, 128);
-		using Str = std::basic_string<char,
-			std::char_traits<char>,
-			StackAllocator<char>>;
+		using Str = std::basic_string<char, std::char_traits<char>, StackAllocator<char>>;
 
 		Str str(alloc);
 

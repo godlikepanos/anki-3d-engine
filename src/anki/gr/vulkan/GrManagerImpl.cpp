@@ -19,7 +19,6 @@ namespace anki
 
 #define ANKI_GR_MANAGER_DEBUG_MEMMORY ANKI_DEBUG
 
-//==============================================================================
 GrManagerImpl::~GrManagerImpl()
 {
 	// FIRST THING: wait for the GPU
@@ -68,8 +67,7 @@ GrManagerImpl::~GrManagerImpl()
 
 	if(m_globalDescriptorSetLayout)
 	{
-		vkDestroyDescriptorSetLayout(
-			m_device, m_globalDescriptorSetLayout, nullptr);
+		vkDestroyDescriptorSetLayout(m_device, m_globalDescriptorSetLayout, nullptr);
 	}
 
 	m_transientMem.destroy();
@@ -99,13 +97,11 @@ GrManagerImpl::~GrManagerImpl()
 	}
 }
 
-//==============================================================================
 GrAllocator<U8> GrManagerImpl::getAllocator() const
 {
 	return m_manager->getAllocator();
 }
 
-//==============================================================================
 Error GrManagerImpl::init(const GrManagerInitInfo& init)
 {
 	Error err = initInternal(init);
@@ -118,7 +114,6 @@ Error GrManagerImpl::init(const GrManagerInitInfo& init)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 {
 	ANKI_LOGI("Initializing Vulkan backend");
@@ -150,8 +145,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	// Set m_r8g8b8ImagesSupported
 	{
 		VkImageFormatProperties props = {};
-		VkResult res = vkGetPhysicalDeviceImageFormatProperties(
-			m_physicalDevice,
+		VkResult res = vkGetPhysicalDeviceImageFormatProperties(m_physicalDevice,
 			VK_FORMAT_R8G8B8_UNORM,
 			VK_IMAGE_TYPE_2D,
 			VK_IMAGE_TILING_OPTIMAL,
@@ -175,7 +169,6 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 {
 	// Create the instance
@@ -189,8 +182,7 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 		"VK_LAYER_LUNARG_object_tracker",
 		"VK_LAYER_LUNARG_standard_validation"}};
 
-	static Array<const char*, 2> EXTENSIONS = {
-		{VK_KHR_SURFACE_EXTENSION_NAME, VK_KHR_XCB_SURFACE_EXTENSION_NAME}};
+	static Array<const char*, 2> EXTENSIONS = {{VK_KHR_SURFACE_EXTENSION_NAME, VK_KHR_XCB_SURFACE_EXTENSION_NAME}};
 
 	VkApplicationInfo app = {};
 	app.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -239,8 +231,7 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 	}
 
 	count = 1;
-	ANKI_VK_CHECK(
-		vkEnumeratePhysicalDevices(m_instance, &count, &m_physicalDevice));
+	ANKI_VK_CHECK(vkEnumeratePhysicalDevices(m_instance, &count, &m_physicalDevice));
 
 	vkGetPhysicalDeviceProperties(m_physicalDevice, &m_devProps);
 
@@ -265,7 +256,6 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 {
 	uint32_t count = 0;
@@ -274,20 +264,16 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 
 	DynamicArrayAuto<VkQueueFamilyProperties> queueInfos(getAllocator());
 	queueInfos.create(count);
-	vkGetPhysicalDeviceQueueFamilyProperties(
-		m_physicalDevice, &count, &queueInfos[0]);
+	vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &count, &queueInfos[0]);
 
 	uint32_t desiredFamilyIdx = MAX_U32;
-	const VkQueueFlags DESITED_QUEUE_FLAGS =
-		VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT;
+	const VkQueueFlags DESITED_QUEUE_FLAGS = VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT;
 	for(U i = 0; i < count; ++i)
 	{
-		if((queueInfos[i].queueFlags & (DESITED_QUEUE_FLAGS))
-			== DESITED_QUEUE_FLAGS)
+		if((queueInfos[i].queueFlags & (DESITED_QUEUE_FLAGS)) == DESITED_QUEUE_FLAGS)
 		{
 			VkBool32 supportsPresent = false;
-			ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(
-				m_physicalDevice, i, m_surface, &supportsPresent));
+			ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(m_physicalDevice, i, m_surface, &supportsPresent));
 
 			if(supportsPresent)
 			{
@@ -313,8 +299,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	q.queueCount = 1;
 	q.pQueuePriorities = &priority;
 
-	static Array<const char*, 1> DEV_EXTENSIONS = {
-		{VK_KHR_SWAPCHAIN_EXTENSION_NAME}};
+	static Array<const char*, 1> DEV_EXTENSIONS = {{VK_KHR_SWAPCHAIN_EXTENSION_NAME}};
 
 	VkDeviceCreateInfo ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -329,15 +314,12 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error GrManagerImpl::initSwapchain(const GrManagerInitInfo& init)
 {
 	VkSurfaceCapabilitiesKHR surfaceProperties;
-	ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
-		m_physicalDevice, m_surface, &surfaceProperties));
+	ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physicalDevice, m_surface, &surfaceProperties));
 
-	if(surfaceProperties.currentExtent.width == MAX_U32
-		|| surfaceProperties.currentExtent.height == MAX_U32)
+	if(surfaceProperties.currentExtent.width == MAX_U32 || surfaceProperties.currentExtent.height == MAX_U32)
 	{
 		ANKI_LOGE("Wrong surface size");
 		return ErrorCode::FUNCTION_FAILED;
@@ -346,13 +328,11 @@ Error GrManagerImpl::initSwapchain(const GrManagerInitInfo& init)
 	m_surfaceHeight = surfaceProperties.currentExtent.height;
 
 	uint32_t formatCount;
-	ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(
-		m_physicalDevice, m_surface, &formatCount, nullptr));
+	ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(m_physicalDevice, m_surface, &formatCount, nullptr));
 
 	DynamicArrayAuto<VkSurfaceFormatKHR> formats(getAllocator());
 	formats.create(formatCount);
-	ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(
-		m_physicalDevice, m_surface, &formatCount, &formats[0]));
+	ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(m_physicalDevice, m_surface, &formatCount, &formats[0]));
 
 	VkColorSpaceKHR colorspace = VK_COLOR_SPACE_MAX_ENUM_KHR;
 	while(formatCount--)
@@ -393,21 +373,17 @@ Error GrManagerImpl::initSwapchain(const GrManagerInitInfo& init)
 
 	// Get images
 	uint32_t count = 0;
-	ANKI_VK_CHECK(
-		vkGetSwapchainImagesKHR(m_device, m_swapchain, &count, nullptr));
+	ANKI_VK_CHECK(vkGetSwapchainImagesKHR(m_device, m_swapchain, &count, nullptr));
 	if(count != MAX_FRAMES_IN_FLIGHT)
 	{
-		ANKI_LOGE("Requested a swapchain with %u images but got one with %u",
-			MAX_FRAMES_IN_FLIGHT,
-			count);
+		ANKI_LOGE("Requested a swapchain with %u images but got one with %u", MAX_FRAMES_IN_FLIGHT, count);
 		return ErrorCode::FUNCTION_FAILED;
 	}
 
 	ANKI_LOGI("VK: Swapchain images count %u", count);
 
 	Array<VkImage, MAX_FRAMES_IN_FLIGHT> images;
-	ANKI_VK_CHECK(
-		vkGetSwapchainImagesKHR(m_device, m_swapchain, &count, &images[0]));
+	ANKI_VK_CHECK(vkGetSwapchainImagesKHR(m_device, m_swapchain, &count, &images[0]));
 	for(U i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
 	{
 		m_perFrame[i].m_image = images[i];
@@ -425,31 +401,27 @@ Error GrManagerImpl::initSwapchain(const GrManagerInitInfo& init)
 		ci.image = perFrame.m_image;
 		ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
 		ci.format = m_surfaceFormat;
-		ci.components = {VK_COMPONENT_SWIZZLE_R,
-			VK_COMPONENT_SWIZZLE_G,
-			VK_COMPONENT_SWIZZLE_B,
-			VK_COMPONENT_SWIZZLE_A};
+		ci.components = {
+			VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A};
 		ci.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		ci.subresourceRange.baseMipLevel = 0;
 		ci.subresourceRange.levelCount = 1;
 		ci.subresourceRange.baseArrayLayer = 0;
 		ci.subresourceRange.layerCount = 1;
 
-		ANKI_VK_CHECK(
-			vkCreateImageView(m_device, &ci, nullptr, &perFrame.m_imageView));
+		ANKI_VK_CHECK(vkCreateImageView(m_device, &ci, nullptr, &perFrame.m_imageView));
 	}
 
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error GrManagerImpl::initGlobalDsetLayout()
 {
 	VkDescriptorSetLayoutCreateInfo ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 
-	const U BINDING_COUNT = MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS
-		+ MAX_STORAGE_BUFFER_BINDINGS + MAX_IMAGE_BINDINGS;
+	const U BINDING_COUNT =
+		MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS + MAX_IMAGE_BINDINGS;
 	ci.bindingCount = BINDING_COUNT;
 
 	Array<VkDescriptorSetLayoutBinding, BINDING_COUNT> bindings;
@@ -508,24 +480,21 @@ Error GrManagerImpl::initGlobalDsetLayout()
 
 	ANKI_ASSERT(count == BINDING_COUNT);
 
-	ANKI_VK_CHECK(vkCreateDescriptorSetLayout(
-		m_device, &ci, nullptr, &m_globalDescriptorSetLayout));
+	ANKI_VK_CHECK(vkCreateDescriptorSetLayout(m_device, &ci, nullptr, &m_globalDescriptorSetLayout));
 
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error GrManagerImpl::initGlobalDsetPool()
 {
 	Array<VkDescriptorPoolSize, 4> pools = {{}};
-	pools[0] = VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-		MAX_TEXTURE_BINDINGS * MAX_RESOURCE_GROUPS};
-	pools[1] = VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,
-		MAX_UNIFORM_BUFFER_BINDINGS * MAX_RESOURCE_GROUPS};
-	pools[2] = VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC,
-		MAX_STORAGE_BUFFER_BINDINGS * MAX_RESOURCE_GROUPS};
-	pools[3] = VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-		MAX_IMAGE_BINDINGS * MAX_RESOURCE_GROUPS};
+	pools[0] =
+		VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, MAX_TEXTURE_BINDINGS * MAX_RESOURCE_GROUPS};
+	pools[1] = VkDescriptorPoolSize{
+		VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, MAX_UNIFORM_BUFFER_BINDINGS * MAX_RESOURCE_GROUPS};
+	pools[2] = VkDescriptorPoolSize{
+		VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, MAX_STORAGE_BUFFER_BINDINGS * MAX_RESOURCE_GROUPS};
+	pools[3] = VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, MAX_IMAGE_BINDINGS * MAX_RESOURCE_GROUPS};
 
 	VkDescriptorPoolCreateInfo ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -534,13 +503,11 @@ Error GrManagerImpl::initGlobalDsetPool()
 	ci.poolSizeCount = pools.getSize();
 	ci.pPoolSizes = &pools[0];
 
-	ANKI_VK_CHECK(vkCreateDescriptorPool(
-		m_device, &ci, nullptr, &m_globalDescriptorPool));
+	ANKI_VK_CHECK(vkCreateDescriptorPool(m_device, &ci, nullptr, &m_globalDescriptorPool));
 
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error GrManagerImpl::initGlobalPplineLayout()
 {
 	Array<VkDescriptorSetLayout, MAX_BOUND_RESOURCE_GROUPS> sets = {
@@ -555,13 +522,11 @@ Error GrManagerImpl::initGlobalPplineLayout()
 	ci.pushConstantRangeCount = 0;
 	ci.pPushConstantRanges = nullptr;
 
-	ANKI_VK_CHECK(vkCreatePipelineLayout(
-		m_device, &ci, nullptr, &m_globalPipelineLayout));
+	ANKI_VK_CHECK(vkCreatePipelineLayout(m_device, &ci, nullptr, &m_globalPipelineLayout));
 
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error GrManagerImpl::initMemory(const ConfigSet& cfg)
 {
 	vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &m_memoryProperties);
@@ -574,29 +539,21 @@ Error GrManagerImpl::initMemory(const ConfigSet& cfg)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
-void* GrManagerImpl::allocateCallback(void* userData,
-	size_t size,
-	size_t alignment,
-	VkSystemAllocationScope allocationScope)
+void* GrManagerImpl::allocateCallback(
+	void* userData, size_t size, size_t alignment, VkSystemAllocationScope allocationScope)
 {
 	ANKI_ASSERT(userData);
 	GrManagerImpl* self = static_cast<GrManagerImpl*>(userData);
 	return self->getAllocator().getMemoryPool().allocate(size, alignment);
 }
 
-//==============================================================================
-void* GrManagerImpl::reallocateCallback(void* userData,
-	void* original,
-	size_t size,
-	size_t alignment,
-	VkSystemAllocationScope allocationScope)
+void* GrManagerImpl::reallocateCallback(
+	void* userData, void* original, size_t size, size_t alignment, VkSystemAllocationScope allocationScope)
 {
 	ANKI_ASSERT(0 && "TODO");
 	return nullptr;
 }
 
-//==============================================================================
 void GrManagerImpl::freeCallback(void* userData, void* ptr)
 {
 	if(ptr)
@@ -607,7 +564,6 @@ void GrManagerImpl::freeCallback(void* userData, void* ptr)
 	}
 }
 
-//==============================================================================
 void GrManagerImpl::beginFrame()
 {
 	PerFrame& frame = m_perFrame[m_frame % MAX_FRAMES_IN_FLIGHT];
@@ -617,17 +573,11 @@ void GrManagerImpl::beginFrame()
 
 	// Get new image
 	uint32_t imageIdx;
-	ANKI_VK_CHECKF(vkAcquireNextImageKHR(m_device,
-		m_swapchain,
-		UINT64_MAX,
-		frame.m_acquireSemaphore->getHandle(),
-		0,
-		&imageIdx));
-	ANKI_ASSERT(
-		imageIdx == (m_frame % MAX_FRAMES_IN_FLIGHT) && "Wrong assumption");
+	ANKI_VK_CHECKF(
+		vkAcquireNextImageKHR(m_device, m_swapchain, UINT64_MAX, frame.m_acquireSemaphore->getHandle(), 0, &imageIdx));
+	ANKI_ASSERT(imageIdx == (m_frame % MAX_FRAMES_IN_FLIGHT) && "Wrong assumption");
 }
 
-//==============================================================================
 void GrManagerImpl::endFrame()
 {
 	PerFrame& frame = m_perFrame[m_frame % MAX_FRAMES_IN_FLIGHT];
@@ -652,9 +602,7 @@ void GrManagerImpl::endFrame()
 	VkPresentInfoKHR present = {};
 	present.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 	present.waitSemaphoreCount = (frame.m_renderSemaphore) ? 1 : 0;
-	present.pWaitSemaphores = (frame.m_renderSemaphore)
-		? &frame.m_renderSemaphore->getHandle()
-		: nullptr;
+	present.pWaitSemaphores = (frame.m_renderSemaphore) ? &frame.m_renderSemaphore->getHandle() : nullptr;
 	present.swapchainCount = 1;
 	present.pSwapchains = &m_swapchain;
 	present.pImageIndices = &imageIdx;
@@ -668,7 +616,6 @@ void GrManagerImpl::endFrame()
 	++m_frame;
 }
 
-//==============================================================================
 void GrManagerImpl::resetFrame(PerFrame& frame)
 {
 	frame.m_presentFence.reset(nullptr);
@@ -678,8 +625,7 @@ void GrManagerImpl::resetFrame(PerFrame& frame)
 	frame.m_cmdbsSubmitted.destroy(getAllocator());
 }
 
-//==============================================================================
-GrManagerImpl::PerThread& GrManagerImpl::getPerThreadCache(Thread::Id tid)
+GrManagerImpl::PerThread& GrManagerImpl::getPerThreadCache(ThreadId tid)
 {
 	PerThread* thread = nullptr;
 	LockGuard<SpinLock> lock(m_perThreadMtx);
@@ -700,9 +646,7 @@ GrManagerImpl::PerThread& GrManagerImpl::getPerThreadCache(Thread::Id tid)
 	return *thread;
 }
 
-//==============================================================================
-VkCommandBuffer GrManagerImpl::newCommandBuffer(
-	Thread::Id tid, Bool secondLevel)
+VkCommandBuffer GrManagerImpl::newCommandBuffer(ThreadId tid, Bool secondLevel)
 {
 	// Get the per thread cache
 	PerThread& thread = getPerThreadCache(tid);
@@ -720,9 +664,7 @@ VkCommandBuffer GrManagerImpl::newCommandBuffer(
 	return thread.m_cmdbs.newCommandBuffer(secondLevel);
 }
 
-//==============================================================================
-void GrManagerImpl::deleteCommandBuffer(
-	VkCommandBuffer cmdb, Bool secondLevel, Thread::Id tid)
+void GrManagerImpl::deleteCommandBuffer(VkCommandBuffer cmdb, Bool secondLevel, ThreadId tid)
 {
 	// Get the per thread cache
 	PerThread& thread = getPerThreadCache(tid);
@@ -730,7 +672,6 @@ void GrManagerImpl::deleteCommandBuffer(
 	thread.m_cmdbs.deleteCommandBuffer(cmdb, secondLevel);
 }
 
-//==============================================================================
 void GrManagerImpl::flushCommandBuffer(CommandBufferPtr cmdb,
 	SemaphorePtr signalSemaphore,
 	WeakArray<SemaphorePtr> waitSemaphores,
@@ -757,8 +698,7 @@ void GrManagerImpl::flushCommandBuffer(CommandBufferPtr cmdb,
 	for(U i = 0; i < waitSemaphores.getSize(); ++i)
 	{
 		ANKI_ASSERT(waitSemaphores[i]);
-		allWaitSemaphores[submit.waitSemaphoreCount] =
-			waitSemaphores[i]->getHandle();
+		allWaitSemaphores[submit.waitSemaphoreCount] = waitSemaphores[i]->getHandle();
 		allWaitPplineStages[submit.waitSemaphoreCount] = waitPplineStages[i];
 		++submit.waitSemaphoreCount;
 	}
@@ -766,15 +706,12 @@ void GrManagerImpl::flushCommandBuffer(CommandBufferPtr cmdb,
 	// Do some special stuff for the last command buffer
 	if(impl.renderedToDefaultFramebuffer())
 	{
-		allWaitSemaphores[submit.waitSemaphoreCount] =
-			frame.m_acquireSemaphore->getHandle();
-		allWaitPplineStages[submit.waitSemaphoreCount] =
-			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		allWaitSemaphores[submit.waitSemaphoreCount] = frame.m_acquireSemaphore->getHandle();
+		allWaitPplineStages[submit.waitSemaphoreCount] = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		++submit.waitSemaphoreCount;
 
 		// Create the semaphore to signal
-		ANKI_ASSERT(!frame.m_renderSemaphore
-			&& "Only one begin/end render pass is allowed with the default fb");
+		ANKI_ASSERT(!frame.m_renderSemaphore && "Only one begin/end render pass is allowed with the default fb");
 		frame.m_renderSemaphore = newSemaphore();
 
 		submit.signalSemaphoreCount = 1;

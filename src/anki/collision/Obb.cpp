@@ -10,9 +10,8 @@
 namespace anki
 {
 
-//==============================================================================
 Obb::Obb()
-	: Base(Type::OBB)
+	: Base(CollisionShapeType::OBB)
 	, m_center(Vec4(0.0))
 	, m_rotation(Mat3x4::getIdentity())
 	, m_transposedRotation(Mat3x4::getIdentity())
@@ -20,16 +19,14 @@ Obb::Obb()
 {
 }
 
-//==============================================================================
 Obb::Obb(const Obb& b)
-	: Base(Type::OBB)
+	: Base(CollisionShapeType::OBB)
 {
 	operator=(b);
 }
 
-//==============================================================================
 Obb::Obb(const Vec4& center, const Mat3x4& rotation, const Vec4& extend)
-	: Base(Type::OBB)
+	: Base(CollisionShapeType::OBB)
 	, m_center(center)
 	, m_rotation(rotation)
 	, m_transposedRotation(rotation)
@@ -38,7 +35,6 @@ Obb::Obb(const Vec4& center, const Mat3x4& rotation, const Vec4& extend)
 	m_transposedRotation.transposeRotationPart();
 }
 
-//==============================================================================
 Obb& Obb::operator=(const Obb& b)
 {
 	m_center = b.m_center;
@@ -51,7 +47,6 @@ Obb& Obb::operator=(const Obb& b)
 	return *this;
 }
 
-//==============================================================================
 F32 Obb::testPlane(const Plane& p) const
 {
 	Vec4 xNormal = (m_transposedRotation * p.getNormal()).xyz0();
@@ -79,7 +74,6 @@ F32 Obb::testPlane(const Plane& p) const
 	}
 }
 
-//==============================================================================
 Obb Obb::getTransformed(const Transform& trf) const
 {
 	Obb out;
@@ -91,7 +85,6 @@ Obb Obb::getTransformed(const Transform& trf) const
 	return out;
 }
 
-//==============================================================================
 Obb Obb::getCompoundShape(const Obb& b) const
 {
 	Obb out;
@@ -109,12 +102,10 @@ Obb Obb::getCompoundShape(const Obb& b) const
 		points[i + 8] = points1[i];
 	}
 
-	out.setFromPointCloud(
-		&points[0], points.size(), sizeof(Vec4), sizeof(Vec4) * points.size());
+	out.setFromPointCloud(&points[0], points.size(), sizeof(Vec4), sizeof(Vec4) * points.size());
 	return out;
 }
 
-//==============================================================================
 void Obb::getExtremePoints(Array<Vec4, 8>& points) const
 {
 	if(!m_cache.m_dirtyExtremePoints)
@@ -167,7 +158,6 @@ void Obb::getExtremePoints(Array<Vec4, 8>& points) const
 	m_cache.m_extremePoints = points;
 }
 
-//==============================================================================
 void Obb::computeAabb(Aabb& aabb) const
 {
 	// Check cache
@@ -194,9 +184,7 @@ void Obb::computeAabb(Aabb& aabb) const
 	m_cache.m_aabb = aabb;
 }
 
-//==============================================================================
-void Obb::setFromPointCloud(
-	const void* buff, U count, PtrSize stride, PtrSize buffSize)
+void Obb::setFromPointCloud(const void* buff, U count, PtrSize stride, PtrSize buffSize)
 {
 	Vec4 min = Vec4(Vec3(MAX_F32), 0.0);
 	Vec4 max = Vec4(Vec3(MIN_F32), 0.0);
@@ -225,7 +213,6 @@ void Obb::setFromPointCloud(
 	makeDirty();
 }
 
-//==============================================================================
 Vec4 Obb::computeSupport(const Vec4& dir) const
 {
 	Array<Vec4, 8> points;

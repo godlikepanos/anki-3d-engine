@@ -24,8 +24,7 @@ public:
 		m_sdlToAnki;
 
 	InputImpl(HeapAllocator<std::pair<const SDL_Keycode, KeyCode>>& alloc)
-		: m_sdlToAnki(
-			  10, std::hash<SDL_Keycode>(), std::equal_to<SDL_Keycode>(), alloc)
+		: m_sdlToAnki(10, std::hash<SDL_Keycode>(), std::equal_to<SDL_Keycode>(), alloc)
 	{
 	}
 };

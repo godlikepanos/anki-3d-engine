@@ -15,7 +15,6 @@
 namespace anki
 {
 
-//==============================================================================
 #if ANKI_GL == ANKI_GL_DESKTOP
 struct GlDbg
 {
@@ -23,8 +22,7 @@ struct GlDbg
 	const char* str;
 };
 
-static const GlDbg gldbgsource[] = {
-	{GL_DEBUG_SOURCE_API, "GL_DEBUG_SOURCE_API"},
+static const GlDbg gldbgsource[] = {{GL_DEBUG_SOURCE_API, "GL_DEBUG_SOURCE_API"},
 	{GL_DEBUG_SOURCE_WINDOW_SYSTEM, "GL_DEBUG_SOURCE_WINDOW_SYSTEM"},
 	{GL_DEBUG_SOURCE_SHADER_COMPILER, "GL_DEBUG_SOURCE_SHADER_COMPILER"},
 	{GL_DEBUG_SOURCE_THIRD_PARTY, "GL_DEBUG_SOURCE_THIRD_PARTY"},
@@ -38,12 +36,10 @@ static const GlDbg gldbgtype[] = {{GL_DEBUG_TYPE_ERROR, "GL_DEBUG_TYPE_ERROR"},
 	{GL_DEBUG_TYPE_PERFORMANCE, "GL_DEBUG_TYPE_PERFORMANCE"},
 	{GL_DEBUG_TYPE_OTHER, "GL_DEBUG_TYPE_OTHER"}};
 
-static const GlDbg gldbgseverity[] = {
-	{GL_DEBUG_SEVERITY_LOW, "GL_DEBUG_SEVERITY_LOW"},
+static const GlDbg gldbgseverity[] = {{GL_DEBUG_SEVERITY_LOW, "GL_DEBUG_SEVERITY_LOW"},
 	{GL_DEBUG_SEVERITY_MEDIUM, "GL_DEBUG_SEVERITY_MEDIUM"},
 	{GL_DEBUG_SEVERITY_HIGH, "GL_DEBUG_SEVERITY_HIGH"}};
 
-//==============================================================================
 #if ANKI_OS == ANKI_OS_WINDOWS
 __stdcall
 #endif
@@ -85,13 +81,11 @@ __stdcall
 }
 #endif
 
-//==============================================================================
 void GlState::initMainThread(const ConfigSet& config)
 {
 	m_registerMessages = config.getNumber("debugContext");
 }
 
-//==============================================================================
 void GlState::initRenderThread()
 {
 	// GL version
@@ -125,12 +119,8 @@ void GlState::initRenderThread()
 			{
 				for(U sv = 0; sv < sizeof(gldbgseverity) / sizeof(GlDbg); sv++)
 				{
-					glDebugMessageControl(gldbgsource[s].token,
-						gldbgtype[t].token,
-						gldbgseverity[sv].token,
-						0,
-						nullptr,
-						GL_TRUE);
+					glDebugMessageControl(
+						gldbgsource[s].token, gldbgtype[t].token, gldbgseverity[sv].token, 0, nullptr, GL_TRUE);
 				}
 			}
 		}
@@ -154,24 +144,19 @@ void GlState::initRenderThread()
 	memset(&m_vertexBindingStrides[0], 0, sizeof(m_vertexBindingStrides));
 }
 
-//==============================================================================
 void GlState::destroy()
 {
 	glDeleteVertexArrays(1, &m_defaultVao);
 }
 
-//==============================================================================
 void GlState::flushVertexState()
 {
 	if(m_vertBindingsDirty)
 	{
 		m_vertBindingsDirty = false;
 
-		glBindVertexBuffers(0,
-			m_vertBindingCount,
-			&m_vertBuffNames[0],
-			&m_vertBuffOffsets[0],
-			&m_vertexBindingStrides[0]);
+		glBindVertexBuffers(
+			0, m_vertBindingCount, &m_vertBuffNames[0], &m_vertBuffOffsets[0], &m_vertexBindingStrides[0]);
 	}
 }
 

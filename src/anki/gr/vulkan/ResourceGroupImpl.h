@@ -38,18 +38,14 @@ public:
 		return m_handle;
 	}
 
-	void getVertexBindingInfo(const TransientMemoryInfo* trans,
-		VkBuffer buffers[],
-		VkDeviceSize offsets[],
-		U& bindingCount) const;
+	void getVertexBindingInfo(
+		const TransientMemoryInfo* trans, VkBuffer buffers[], VkDeviceSize offsets[], U& bindingCount) const;
 
-	void setupDynamicOffsets(
-		const TransientMemoryInfo* dynInfo, U32 dynOffsets[]) const;
+	void setupDynamicOffsets(const TransientMemoryInfo* dynInfo, U32 dynOffsets[]) const;
 
 	/// Get index buffer info.
 	/// @return false if there is no index buffer.
-	Bool getIndexBufferInfo(
-		VkBuffer& buff, VkDeviceSize& offset, VkIndexType& idxType) const
+	Bool getIndexBufferInfo(VkBuffer& buff, VkDeviceSize& offset, VkIndexType& idxType) const
 	{
 		if(m_indexBuffHandle)
 		{
@@ -83,20 +79,17 @@ private:
 	// For dynamic binding
 	U8 m_uniBindingCount = 0;
 	U8 m_storageBindingCount = 0;
-	BitSet<MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS>
-		m_dynamicBuffersMask = {false};
+	BitSet<MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS> m_dynamicBuffersMask = {false};
 
 	// Index info
 	VkBuffer m_indexBuffHandle = VK_NULL_HANDLE;
 	U32 m_indexBufferOffset = MAX_U32;
 	VkIndexType m_indexType = VK_INDEX_TYPE_MAX_ENUM;
 
-	/// Holds the references to the resources. Used to release the references
-	/// gracefully
+	/// Holds the references to the resources. Used to release the references gracefully.
 	DynamicArray<GrObjectPtr<GrObject>> m_refs;
 
-	U calcRefCount(
-		const ResourceGroupInitInfo& init, Bool& hasUploaded, Bool& needsDSet);
+	U calcRefCount(const ResourceGroupInitInfo& init, Bool& hasUploaded, Bool& needsDSet);
 
 	void updateBindPoint(TextureUsageBit usage);
 	void updateBindPoint(BufferUsageBit usage);

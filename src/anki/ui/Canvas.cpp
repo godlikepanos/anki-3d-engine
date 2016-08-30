@@ -9,7 +9,6 @@
 namespace anki
 {
 
-//==============================================================================
 Canvas::Canvas(UiInterface* interface)
 	: m_interface(interface)
 {
@@ -18,7 +17,6 @@ Canvas::Canvas(UiInterface* interface)
 	setSize(UVec2(128u));
 }
 
-//==============================================================================
 Canvas::~Canvas()
 {
 	if(m_rootWidget)
@@ -27,13 +25,11 @@ Canvas::~Canvas()
 	}
 }
 
-//==============================================================================
 void Canvas::update(F64 dt)
 {
 	// TODO
 }
 
-//==============================================================================
 void Canvas::paint()
 {
 	Error err = m_rootWidget->visitTree([&](Widget& w) -> Error {
@@ -59,9 +55,7 @@ void Canvas::paint()
 			positions[c++] = lb;
 
 			m_interface->drawLines(
-				WeakArray<UVec2>(&positions[0], positions.getSize()),
-				Vec4(1.0, 0.0, 0.0, 1.0),
-				m_size);
+				WeakArray<UVec2>(&positions[0], positions.getSize()), Vec4(1.0, 0.0, 0.0, 1.0), m_size);
 		}
 
 		return ErrorCode::NONE;
@@ -71,7 +65,6 @@ void Canvas::paint()
 	// m_interface->
 }
 
-//==============================================================================
 void Canvas::setSize(const UVec2& size)
 {
 	m_size = size;

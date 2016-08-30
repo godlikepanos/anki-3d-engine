@@ -16,9 +16,9 @@ struct Sprite
 };
 
 // WORKAROUND: See glslang issue 304
-#define COPY_SPRITE(src_, dst_)                                                \
-	dst_.posScale = src_.posScale;                                             \
-	dst_.color = src_.color;                                                   \
+#define COPY_SPRITE(src_, dst_)                                                                                        \
+	dst_.posScale = src_.posScale;                                                                                     \
+	dst_.color = src_.color;                                                                                           \
 	dst_.depthPad3.x = src_.depthPad3.x
 
 // The block contains data for all flares
@@ -37,8 +37,7 @@ out gl_PerVertex
 
 void main()
 {
-	const vec2 POSITIONS[4] = vec2[](
-		vec2(-1.0, -1.0), vec2(1.0, -1.0), vec2(-1.0, 1.0), vec2(1.0, 1.0));
+	const vec2 POSITIONS[4] = vec2[](vec2(-1.0, -1.0), vec2(1.0, -1.0), vec2(-1.0, 1.0), vec2(1.0, 1.0));
 
 	vec2 position = POSITIONS[gl_VertexID];
 

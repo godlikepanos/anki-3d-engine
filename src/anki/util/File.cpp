@@ -9,13 +9,9 @@
 #include <anki/util/Assert.h>
 #include <cstring>
 #include <cstdarg>
-#include <contrib/minizip/unzip.h>
 
 namespace anki
 {
-
-//==============================================================================
-// Misc
 
 #if ANKI_OS == ANKI_OS_ANDROID
 extern android_app* gAndroidApp;
@@ -24,9 +20,7 @@ extern android_app* gAndroidApp;
 #endif
 
 #define ANKI_CFILE reinterpret_cast<FILE*>(m_file)
-#define ANKI_ZFILE reinterpret_cast<void*>(m_file)
 
-//==============================================================================
 File& File::operator=(File&& b)
 {
 	close();
@@ -44,27 +38,23 @@ File& File::operator=(File&& b)
 	return *this;
 }
 
-//==============================================================================
 File::~File()
 {
 	close();
 }
 
-//==============================================================================
-Error File::open(const CString& filename, OpenFlag flags)
+Error File::open(const CString& filename, FileOpenFlag flags)
 {
-	ANKI_ASSERT(
-		m_file == nullptr && m_flags == OpenFlag::NONE && m_type == Type::NONE);
+	ANKI_ASSERT(m_file == nullptr && m_flags == FileOpenFlag::NONE && m_type == Type::NONE);
 
 	// Only these flags are accepted
-	ANKI_ASSERT((flags & (OpenFlag::READ | OpenFlag::WRITE | OpenFlag::APPEND
-							 | OpenFlag::BINARY
-							 | OpenFlag::ENDIAN_LITTLE
-							 | OpenFlag::ENDIAN_BIG))
-		!= OpenFlag::NONE);
+	ANKI_ASSERT((flags & (FileOpenFlag::READ | FileOpenFlag::WRITE | FileOpenFlag::APPEND | FileOpenFlag::BINARY
+							 | FileOpenFlag::ENDIAN_LITTLE
+							 | FileOpenFlag::ENDIAN_BIG))
+		!= FileOpenFlag::NONE);
 
 	// Cannot be both
-	ANKI_ASSERT((flags & OpenFlag::READ) != (flags & OpenFlag::WRITE));
+	ANKI_ASSERT((flags & FileOpenFlag::READ) != (flags & FileOpenFlag::WRITE));
 
 	//
 	// Determine the file type and open it
@@ -73,8 +63,7 @@ Error File::open(const CString& filename, OpenFlag flags)
 	Array<char, 512> archive;
 	CString filenameInArchive;
 	Type ft;
-	Error err = identifyFile(
-		filename, &archive[0], archive.getSize(), filenameInArchive, ft);
+	Error err = identifyFile(filename, &archive[0], archive.getSize(), filenameInArchive, ft);
 
 	if(!err)
 	{
@@ -88,9 +77,6 @@ Error File::open(const CString& filename, OpenFlag flags)
 		case Type::C:
 			err = openCFile(filename, flags);
 			break;
-		case Type::ZIP:
-			err = openZipFile(CString(&archive[0]), filenameInArchive, flags);
-			break;
 		default:
 			ANKI_ASSERT(0);
 		}
@@ -102,8 +88,7 @@ Error File::open(const CString& filename, OpenFlag flags)
 	if(!err)
 	{
 		// If the open() DIDN'T provided us the file endianess
-		if((flags & (OpenFlag::ENDIAN_BIG | OpenFlag::ENDIAN_LITTLE))
-			== OpenFlag::NONE)
+		if((flags & (FileOpenFlag::ENDIAN_BIG | FileOpenFlag::ENDIAN_LITTLE)) == FileOpenFlag::NONE)
 		{
 			// Set the machine's endianness
 			m_flags = m_flags | getMachineEndianness();
@@ -111,29 +96,27 @@ Error File::open(const CString& filename, OpenFlag flags)
 		else
 		{
 			// Else just make sure that only one of the flags is set
-			ANKI_ASSERT((flags & OpenFlag::ENDIAN_BIG)
-				!= (flags & OpenFlag::ENDIAN_LITTLE));
+			ANKI_ASSERT((flags & FileOpenFlag::ENDIAN_BIG) != (flags & FileOpenFlag::ENDIAN_LITTLE));
 		}
 	}
 
 	return err;
 }
 
-//==============================================================================
-Error File::openCFile(const CString& filename, OpenFlag flags)
+Error File::openCFile(const CString& filename, FileOpenFlag flags)
 {
 	Error err = ErrorCode::NONE;
 	const char* openMode;
 
-	if((flags & OpenFlag::READ) != OpenFlag::NONE)
+	if((flags & FileOpenFlag::READ) != FileOpenFlag::NONE)
 	{
 		openMode = "rb";
 	}
-	else if((flags & OpenFlag::APPEND) == OpenFlag::APPEND)
+	else if((flags & FileOpenFlag::APPEND) == FileOpenFlag::APPEND)
 	{
 		openMode = "a+b";
 	}
-	else if((flags & OpenFlag::WRITE) != OpenFlag::NONE)
+	else if((flags & FileOpenFlag::WRITE) != FileOpenFlag::NONE)
 	{
 		openMode = "wb";
 	}
@@ -157,7 +140,7 @@ Error File::openCFile(const CString& filename, OpenFlag flags)
 	}
 
 	// Get file size
-	if(((flags & OpenFlag::READ) != OpenFlag::NONE) && !err)
+	if(((flags & FileOpenFlag::READ) != FileOpenFlag::NONE) && !err)
 	{
 		fseek(ANKI_CFILE, 0, SEEK_END);
 		I64 size = ftell(ANKI_CFILE);
@@ -176,85 +159,25 @@ Error File::openCFile(const CString& filename, OpenFlag flags)
 	return err;
 }
 
-//==============================================================================
-Error File::openZipFile(
-	const CString& archive, const CString& archived, OpenFlag flags)
-{
-	if((flags & OpenFlag::WRITE) != OpenFlag::NONE)
-	{
-		ANKI_LOGE("Cannot write inside archives");
-		return ErrorCode::FILE_ACCESS;
-	}
-
-	if((flags & OpenFlag::READ) == OpenFlag::NONE)
-	{
-		ANKI_LOGE("Missing OpenFlag::READ flag");
-		return ErrorCode::FILE_ACCESS;
-	}
-
-	// Open archive
-	unzFile zfile = unzOpen(&archive[0]);
-	if(zfile == nullptr)
-	{
-		ANKI_LOGE("Failed to open archive");
-		return ErrorCode::FILE_ACCESS;
-	}
-
-	// Locate archived
-	const int caseSensitive = 1;
-	if(unzLocateFile(zfile, &archived[0], caseSensitive) != UNZ_OK)
-	{
-		unzClose(zfile);
-		ANKI_LOGE("Failed to locate file in archive");
-		return ErrorCode::FILE_ACCESS;
-	}
-
-	// Open file
-	if(unzOpenCurrentFile(zfile) != UNZ_OK)
-	{
-		unzClose(zfile);
-		ANKI_LOGE("unzOpenCurrentFile() failed");
-		return ErrorCode::FILE_ACCESS;
-	}
-
-	static_assert(sizeof(m_file) == sizeof(zfile), "See file");
-	m_file = reinterpret_cast<void*>(zfile);
-	m_flags = flags;
-	m_type = Type::ZIP;
-
-	// Get size just in case
-	unz_file_info zinfo;
-	zinfo.uncompressed_size = 0;
-	unzGetCurrentFileInfo(zfile, &zinfo, nullptr, 0, nullptr, 0, nullptr, 0);
-	m_size = zinfo.uncompressed_size;
-	ANKI_ASSERT(m_size != 0);
-
-	return ErrorCode::NONE;
-}
-
-//==============================================================================
 #if ANKI_OS == ANKI_OS_ANDROID
-Error File::openAndroidFile(const CString& filename, OpenFlag flags)
+Error File::openAndroidFile(const CString& filename, FileOpenFlag flags)
 {
-	if((flags & OpenFlag::WRITE) != OpenFlag::NONE)
+	if((flags & FileOpenFlag::WRITE) != FileOpenFlag::NONE)
 	{
 		ANKI_LOGE("Cannot write inside archives");
 		return ErrorCode::FILE_ACCESS;
 	}
 
-	if((flags & OpenFlag::READ) != OpenFlag::NONE)
+	if((flags & FileOpenFlag::READ) != FileOpenFlag::NONE)
 	{
-		ANKI_LOGE("Missing OpenFlag::READ flag");
+		ANKI_LOGE("Missing FileOpenFlag::READ flag");
 		return ErrorCode::FILE_ACCESS;
 	}
 
 	// Open file
-	ANKI_ASSERT(gAndroidApp != nullptr && gAndroidApp->activity
-		&& gAndroidApp->activity->assetManager);
+	ANKI_ASSERT(gAndroidApp != nullptr && gAndroidApp->activity && gAndroidApp->activity->assetManager);
 
-	m_file = AAssetManager_open(gAndroidApp->activity->assetManager,
-		&filename[0] + 1,
-		AASSET_MODE_STREAMING);
+	m_file = AAssetManager_open(gAndroidApp->activity->assetManager, &filename[0] + 1, AASSET_MODE_STREAMING);
 
 	if(m_file == nullptr)
 	{
@@ -269,7 +192,6 @@ Error File::openAndroidFile(const CString& filename, OpenFlag flags)
 }
 #endif
 
-//==============================================================================
 void File::close()
 {
 	if(m_file)
@@ -277,10 +199,6 @@ void File::close()
 		if(m_type == Type::C)
 		{
 			fclose(ANKI_CFILE);
-		}
-		else if(m_type == Type::ZIP)
-		{
-			unzClose(ANKI_ZFILE);
 		}
 #if ANKI_OS == ANKI_OS_ANDROID
 		else if(m_type == Type::SPECIAL)
@@ -297,13 +215,12 @@ void File::close()
 	zero();
 }
 
-//==============================================================================
 Error File::flush()
 {
 	ANKI_ASSERT(m_file);
 	Error err = ErrorCode::NONE;
 
-	if((m_flags & OpenFlag::WRITE) != OpenFlag::NONE)
+	if((m_flags & FileOpenFlag::WRITE) != FileOpenFlag::NONE)
 	{
 		if(m_type == Type::C)
 		{
@@ -314,14 +231,12 @@ Error File::flush()
 				err = ErrorCode::FUNCTION_FAILED;
 			}
 		}
-		else if(m_type == Type::ZIP
 #if ANKI_OS == ANKI_OS_ANDROID
-			|| m_type == Type::SPECIAL
-#endif
-			)
+		else if(m_type == Type::SPECIAL)
 		{
 			ANKI_ASSERT(0 && "Cannot have write these file types");
 		}
+#endif
 		else
 		{
 			ANKI_ASSERT(0);
@@ -331,23 +246,18 @@ Error File::flush()
 	return err;
 }
 
-//==============================================================================
 Error File::read(void* buff, PtrSize size)
 {
 	ANKI_ASSERT(buff);
 	ANKI_ASSERT(size > 0);
 	ANKI_ASSERT(m_file);
-	ANKI_ASSERT((m_flags & OpenFlag::READ) != OpenFlag::NONE);
+	ANKI_ASSERT((m_flags & FileOpenFlag::READ) != FileOpenFlag::NONE);
 
 	I64 readSize = 0;
 
 	if(m_type == Type::C)
 	{
 		readSize = fread(buff, 1, size, ANKI_CFILE);
-	}
-	else if(m_type == Type::ZIP)
-	{
-		readSize = unzReadCurrentFile(m_file, buff, size);
 	}
 #if ANKI_OS == ANKI_OS_ANDROID
 	else if(m_type == Type::SPECIAL)
@@ -370,14 +280,13 @@ Error File::read(void* buff, PtrSize size)
 	return err;
 }
 
-//==============================================================================
 PtrSize File::getSize() const
 {
 	ANKI_ASSERT(m_file);
-	ANKI_ASSERT(m_flags != OpenFlag::NONE);
+	ANKI_ASSERT(m_flags != FileOpenFlag::NONE);
 	PtrSize out = 0;
 
-	if(m_type == Type::C || m_type == Type::ZIP)
+	if(m_type == Type::C)
 	{
 		ANKI_ASSERT(m_size != 0);
 		out = m_size;
@@ -396,34 +305,29 @@ PtrSize File::getSize() const
 	return out;
 }
 
-//==============================================================================
 Error File::readU32(U32& out)
 {
 	ANKI_ASSERT(m_file);
-	ANKI_ASSERT(m_flags != OpenFlag::NONE);
-	ANKI_ASSERT((m_flags & OpenFlag::READ) != OpenFlag::NONE);
-	ANKI_ASSERT((m_flags & OpenFlag::BINARY) != OpenFlag::NONE
-		&& "Should be binary file");
-	ANKI_ASSERT(
-		(m_flags & OpenFlag::ENDIAN_BIG) != (m_flags & OpenFlag::ENDIAN_LITTLE)
+	ANKI_ASSERT(m_flags != FileOpenFlag::NONE);
+	ANKI_ASSERT((m_flags & FileOpenFlag::READ) != FileOpenFlag::NONE);
+	ANKI_ASSERT((m_flags & FileOpenFlag::BINARY) != FileOpenFlag::NONE && "Should be binary file");
+	ANKI_ASSERT((m_flags & FileOpenFlag::ENDIAN_BIG) != (m_flags & FileOpenFlag::ENDIAN_LITTLE)
 		&& "One of those 2 should be active");
 
 	Error err = read(&out, sizeof(out));
 	if(!err)
 	{
 		// Copy it
-		OpenFlag machineEndianness = getMachineEndianness();
-		OpenFlag fileEndianness =
-			((m_flags & OpenFlag::ENDIAN_BIG) != OpenFlag::NONE)
-			? OpenFlag::ENDIAN_BIG
-			: OpenFlag::ENDIAN_LITTLE;
+		FileOpenFlag machineEndianness = getMachineEndianness();
+		FileOpenFlag fileEndianness = ((m_flags & FileOpenFlag::ENDIAN_BIG) != FileOpenFlag::NONE)
+			? FileOpenFlag::ENDIAN_BIG
+			: FileOpenFlag::ENDIAN_LITTLE;
 
 		if(machineEndianness == fileEndianness)
 		{
 			// Same endianness between the file and the machine. Do nothing
 		}
-		else if(machineEndianness == OpenFlag::ENDIAN_BIG
-			&& fileEndianness == OpenFlag::ENDIAN_LITTLE)
+		else if(machineEndianness == FileOpenFlag::ENDIAN_BIG && fileEndianness == FileOpenFlag::ENDIAN_LITTLE)
 		{
 			U8* c = reinterpret_cast<U8*>(&out);
 			out = (c[0] | (c[1] << 8) | (c[2] << 16) | (c[3] << 24));
@@ -438,7 +342,6 @@ Error File::readU32(U32& out)
 	return err;
 }
 
-//==============================================================================
 Error File::readF32(F32& out)
 {
 	U32 integer = MAX_U32;
@@ -451,13 +354,12 @@ Error File::readF32(F32& out)
 	return err;
 }
 
-//==============================================================================
 Error File::write(void* buff, PtrSize size)
 {
 	ANKI_ASSERT(buff);
 	ANKI_ASSERT(size > 0);
 	ANKI_ASSERT(m_file);
-	ANKI_ASSERT((m_flags & OpenFlag::WRITE) != OpenFlag::NONE);
+	ANKI_ASSERT((m_flags & FileOpenFlag::WRITE) != FileOpenFlag::NONE);
 
 	Error err = ErrorCode::NONE;
 
@@ -468,19 +370,17 @@ Error File::write(void* buff, PtrSize size)
 
 		if(writeSize != size)
 		{
-			// Failed to write on file
+			ANKI_LOGE("std::fwrite() failed");
 			err = ErrorCode::FILE_ACCESS;
 		}
 	}
-	else if(m_type == Type::ZIP
 #if ANKI_OS == ANKI_OS_ANDROID
-		|| m_type == Type::SPECIAL
-#endif
-		)
+	else if(m_type == Type::SPECIAL)
 	{
-		ANKI_LOGE("Writting to archives is not supported");
+		ANKI_LOGE("Writting to special files is not supported");
 		err = ErrorCode::FILE_ACCESS;
 	}
+#endif
 	else
 	{
 		ANKI_ASSERT(0);
@@ -489,13 +389,12 @@ Error File::write(void* buff, PtrSize size)
 	return err;
 }
 
-//==============================================================================
 Error File::writeText(CString format, ...)
 {
 	ANKI_ASSERT(m_file);
-	ANKI_ASSERT(m_flags != OpenFlag::NONE);
-	ANKI_ASSERT((m_flags & OpenFlag::WRITE) != OpenFlag::NONE);
-	ANKI_ASSERT((m_flags & OpenFlag::BINARY) == OpenFlag::NONE);
+	ANKI_ASSERT(m_flags != FileOpenFlag::NONE);
+	ANKI_ASSERT((m_flags & FileOpenFlag::WRITE) != FileOpenFlag::NONE);
+	ANKI_ASSERT((m_flags & FileOpenFlag::BINARY) == FileOpenFlag::NONE);
 
 	Error err = ErrorCode::NONE;
 	va_list args;
@@ -505,15 +404,13 @@ Error File::writeText(CString format, ...)
 	{
 		std::vfprintf(ANKI_CFILE, &format[0], args);
 	}
-	else if(m_type == Type::ZIP
 #if ANKI_OS == ANKI_OS_ANDROID
-		|| m_type == Type::SPECIAL
-#endif
-		)
+	else if(m_type == Type::SPECIAL)
 	{
-		ANKI_LOGE("Writting to archives is not supported");
+		ANKI_LOGE("Writting to special files is not supported");
 		err = ErrorCode::FILE_ACCESS;
 	}
+#endif
 	else
 	{
 		ANKI_ASSERT(0);
@@ -523,11 +420,10 @@ Error File::writeText(CString format, ...)
 	return err;
 }
 
-//==============================================================================
 Error File::seek(PtrSize offset, SeekOrigin origin)
 {
 	ANKI_ASSERT(m_file);
-	ANKI_ASSERT(m_flags != OpenFlag::NONE);
+	ANKI_ASSERT(m_flags != FileOpenFlag::NONE);
 	Error err = ErrorCode::NONE;
 
 	if(m_type == Type::C)
@@ -536,30 +432,6 @@ Error File::seek(PtrSize offset, SeekOrigin origin)
 		{
 			ANKI_LOGE("fseek() failed");
 			err = ErrorCode::FUNCTION_FAILED;
-		}
-	}
-	else if(m_type == Type::ZIP)
-	{
-		// Rewind if needed
-		if(origin == SeekOrigin::BEGINNING)
-		{
-			if(unzCloseCurrentFile(m_file) || unzOpenCurrentFile(m_file))
-			{
-				ANKI_LOGE("Rewind failed");
-				err = ErrorCode::FUNCTION_FAILED;
-			}
-		}
-
-		if(!err)
-		{
-			// Move forward by reading dummy data
-			Array<char, 128> buff;
-			while(!err && offset != 0)
-			{
-				PtrSize toRead = min(offset, sizeof(buff));
-				err = read(&buff[0], toRead);
-				offset -= toRead;
-			}
 		}
 	}
 #if ANKI_OS == ANKI_OS_ANDROID
@@ -580,7 +452,6 @@ Error File::seek(PtrSize offset, SeekOrigin origin)
 	return err;
 }
 
-//==============================================================================
 Error File::identifyFile(const CString& filename,
 	char* archiveFilename,
 	PtrSize archiveFilenameLength,
@@ -597,74 +468,26 @@ Error File::identifyFile(const CString& filename,
 	else
 #endif
 	{
-		static const char aext[] = {".ankizip"};
-		const PtrSize aextLen = sizeof(aext) - 1;
-		const char* ptrToArchiveExt = std::strstr(&filename[0], aext);
-
-		if(ptrToArchiveExt == nullptr)
-		{
-			// It's a C file
-			type = Type::C;
-		}
-		else
-		{
-			// Maybe it's a file in a zipped archive
-
-			auto fnameLen = filename.getLength();
-			auto archLen = (ptrToArchiveExt - filename.get()) + aextLen;
-
-			if(archLen + 1 >= fnameLen)
-			{
-				ANKI_LOGE("Too sort archived filename");
-				err = ErrorCode::FILE_NOT_FOUND;
-			}
-
-			if(archiveFilenameLength > archLen)
-			{
-				ANKI_LOGE("Using too long paths");
-				err = ErrorCode::FILE_NOT_FOUND;
-			}
-
-			if(!err)
-			{
-				std::memcpy(archiveFilename, &filename[0], archLen);
-				archiveFilename[archLen] = '\0';
-
-				if(directoryExists(CString(archiveFilename)))
-				{
-					// It's a directory so failback to C file
-					type = Type::C;
-				}
-				else
-				{
-					// It's a ziped file
-
-					filenameInArchive = CString(&filename[0] + archLen + 1);
-
-					type = Type::ZIP;
-				}
-			}
-		}
+		// It's a C file
+		type = Type::C;
 	}
 
 	return err;
 }
 
-//==============================================================================
-File::OpenFlag File::getMachineEndianness()
+FileOpenFlag File::getMachineEndianness()
 {
 	I32 num = 1;
 	if(*(char*)&num == 1)
 	{
-		return OpenFlag::ENDIAN_LITTLE;
+		return FileOpenFlag::ENDIAN_LITTLE;
 	}
 	else
 	{
-		return OpenFlag::ENDIAN_BIG;
+		return FileOpenFlag::ENDIAN_BIG;
 	}
 }
 
-//==============================================================================
 Error File::readAllText(GenericMemoryPoolAllocator<U8> alloc, String& out)
 {
 	Error err = ErrorCode::NONE;
@@ -683,7 +506,6 @@ Error File::readAllText(GenericMemoryPoolAllocator<U8> alloc, String& out)
 	return err;
 }
 
-//==============================================================================
 Error File::readAllText(StringAuto& out)
 {
 	Error err = ErrorCode::NONE;

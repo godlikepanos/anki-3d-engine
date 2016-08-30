@@ -11,12 +11,10 @@
 namespace anki
 {
 
-//==============================================================================
 GrManager::GrManager()
 {
 }
 
-//==============================================================================
 GrManager::~GrManager()
 {
 	// Destroy in reverse order
@@ -24,11 +22,9 @@ GrManager::~GrManager()
 	m_cacheDir.destroy(m_alloc);
 }
 
-//==============================================================================
 Error GrManager::init(GrManagerInitInfo& init)
 {
-	m_alloc =
-		HeapAllocator<U8>(init.m_allocCallback, init.m_allocCallbackUserData);
+	m_alloc = HeapAllocator<U8>(init.m_allocCallback, init.m_allocCallbackUserData);
 
 	m_cacheDir.create(m_alloc, init.m_cacheDirectory);
 
@@ -43,36 +39,28 @@ Error GrManager::init(GrManagerInitInfo& init)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void GrManager::beginFrame()
 {
 	m_impl->beginFrame();
 }
 
-//==============================================================================
 void GrManager::swapBuffers()
 {
 	m_impl->endFrame();
 }
 
-//==============================================================================
 void GrManager::finish()
 {
 }
 
-//==============================================================================
-void* GrManager::allocateFrameTransientMemory(
-	PtrSize size, BufferUsageBit usage, TransientMemoryToken& token)
+void* GrManager::allocateFrameTransientMemory(PtrSize size, BufferUsageBit usage, TransientMemoryToken& token)
 {
 	void* ptr = nullptr;
-	m_impl->getTransientMemoryManager().allocate(
-		size, usage, token, ptr, nullptr);
+	m_impl->getTransientMemoryManager().allocate(size, usage, token, ptr, nullptr);
 	return ptr;
 }
 
-//==============================================================================
-void* GrManager::tryAllocateFrameTransientMemory(
-	PtrSize size, BufferUsageBit usage, TransientMemoryToken& token)
+void* GrManager::tryAllocateFrameTransientMemory(PtrSize size, BufferUsageBit usage, TransientMemoryToken& token)
 {
 	void* ptr = nullptr;
 	Error err = ErrorCode::NONE;
@@ -80,9 +68,7 @@ void* GrManager::tryAllocateFrameTransientMemory(
 	return (!err) ? ptr : nullptr;
 }
 
-//==============================================================================
-void GrManager::getTextureSurfaceUploadInfo(
-	TexturePtr tex, const TextureSurfaceInfo& surf, PtrSize& allocationSize)
+void GrManager::getTextureSurfaceUploadInfo(TexturePtr tex, const TextureSurfaceInfo& surf, PtrSize& allocationSize)
 {
 	const TextureImpl& impl = tex->getImplementation();
 	impl.checkSurface(surf);
@@ -97,13 +83,11 @@ void GrManager::getTextureSurfaceUploadInfo(
 	else if(!!(impl.m_workarounds & TextureImplWorkaround::R8G8B8_TO_R8G8B8A8))
 	{
 		// Extra size for staging buffer
-		allocationSize = computeSurfaceSize(width,
-			height,
-			PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM));
+		allocationSize =
+			computeSurfaceSize(width, height, PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM));
 		alignRoundUp(16, allocationSize);
-		allocationSize += computeSurfaceSize(width,
-			height,
-			PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM));
+		allocationSize +=
+			computeSurfaceSize(width, height, PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM));
 	}
 	else
 	{
@@ -111,9 +95,7 @@ void GrManager::getTextureSurfaceUploadInfo(
 	}
 }
 
-//==============================================================================
-void GrManager::getTextureVolumeUploadInfo(
-	TexturePtr tex, const TextureVolumeInfo& vol, PtrSize& allocationSize)
+void GrManager::getTextureVolumeUploadInfo(TexturePtr tex, const TextureVolumeInfo& vol, PtrSize& allocationSize)
 {
 	const TextureImpl& impl = tex->getImplementation();
 	impl.checkVolume(vol);
@@ -129,15 +111,11 @@ void GrManager::getTextureVolumeUploadInfo(
 	else if(!!(impl.m_workarounds & TextureImplWorkaround::R8G8B8_TO_R8G8B8A8))
 	{
 		// Extra size for staging buffer
-		allocationSize = computeVolumeSize(width,
-			height,
-			depth,
-			PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM));
+		allocationSize =
+			computeVolumeSize(width, height, depth, PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM));
 		alignRoundUp(16, allocationSize);
-		allocationSize += computeVolumeSize(width,
-			height,
-			depth,
-			PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM));
+		allocationSize +=
+			computeVolumeSize(width, height, depth, PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM));
 	}
 	else
 	{

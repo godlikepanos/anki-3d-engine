@@ -9,11 +9,8 @@
 namespace anki
 {
 
-//==============================================================================
-inline void CommandBuffer::uploadTextureSurfaceData(TexturePtr tex,
-	const TextureSurfaceInfo& surf,
-	void*& data,
-	PtrSize& dataSize)
+inline void CommandBuffer::uploadTextureSurfaceData(
+	TexturePtr tex, const TextureSurfaceInfo& surf, void*& data, PtrSize& dataSize)
 {
 	PtrSize allocationSize;
 	const BufferUsageBit usage = BufferUsageBit::TEXTURE_UPLOAD_SOURCE;
@@ -21,17 +18,13 @@ inline void CommandBuffer::uploadTextureSurfaceData(TexturePtr tex,
 	ANKI_ASSERT(dataSize <= allocationSize);
 
 	TransientMemoryToken token;
-	data =
-		getManager().allocateFrameTransientMemory(allocationSize, usage, token);
+	data = getManager().allocateFrameTransientMemory(allocationSize, usage, token);
 
 	uploadTextureSurface(tex, surf, token);
 }
 
-//==============================================================================
-inline void CommandBuffer::tryUploadTextureSurfaceData(TexturePtr tex,
-	const TextureSurfaceInfo& surf,
-	void*& data,
-	PtrSize& dataSize)
+inline void CommandBuffer::tryUploadTextureSurfaceData(
+	TexturePtr tex, const TextureSurfaceInfo& surf, void*& data, PtrSize& dataSize)
 {
 	PtrSize allocationSize;
 	const BufferUsageBit usage = BufferUsageBit::TEXTURE_UPLOAD_SOURCE;
@@ -39,8 +32,7 @@ inline void CommandBuffer::tryUploadTextureSurfaceData(TexturePtr tex,
 	ANKI_ASSERT(dataSize <= allocationSize);
 
 	TransientMemoryToken token;
-	data = getManager().tryAllocateFrameTransientMemory(
-		allocationSize, usage, token);
+	data = getManager().tryAllocateFrameTransientMemory(allocationSize, usage, token);
 
 	if(data)
 	{
@@ -48,11 +40,8 @@ inline void CommandBuffer::tryUploadTextureSurfaceData(TexturePtr tex,
 	}
 }
 
-//==============================================================================
-inline void CommandBuffer::uploadTextureSurfaceCopyData(TexturePtr tex,
-	const TextureSurfaceInfo& surf,
-	void* data,
-	PtrSize dataSize)
+inline void CommandBuffer::uploadTextureSurfaceCopyData(
+	TexturePtr tex, const TextureSurfaceInfo& surf, void* data, PtrSize dataSize)
 {
 	PtrSize allocationSize;
 	const BufferUsageBit usage = BufferUsageBit::TEXTURE_UPLOAD_SOURCE;
@@ -60,14 +49,12 @@ inline void CommandBuffer::uploadTextureSurfaceCopyData(TexturePtr tex,
 	ANKI_ASSERT(dataSize <= allocationSize);
 
 	TransientMemoryToken token;
-	void* ptr =
-		getManager().allocateFrameTransientMemory(allocationSize, usage, token);
+	void* ptr = getManager().allocateFrameTransientMemory(allocationSize, usage, token);
 	memcpy(ptr, data, dataSize);
 
 	uploadTextureSurface(tex, surf, token);
 }
 
-//==============================================================================
 inline void CommandBuffer::uploadTextureVolumeCopyData(
 	TexturePtr tex, const TextureVolumeInfo& vol, void* data, PtrSize dataSize)
 {
@@ -77,8 +64,7 @@ inline void CommandBuffer::uploadTextureVolumeCopyData(
 	ANKI_ASSERT(dataSize <= allocationSize);
 
 	TransientMemoryToken token;
-	void* ptr =
-		getManager().allocateFrameTransientMemory(allocationSize, usage, token);
+	void* ptr = getManager().allocateFrameTransientMemory(allocationSize, usage, token);
 	memcpy(ptr, data, dataSize);
 
 	uploadTextureVolume(tex, vol, token);

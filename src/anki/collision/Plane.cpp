@@ -9,22 +9,12 @@
 namespace anki
 {
 
-//==============================================================================
-Plane::Plane(const Vec4& normal, F32 offset)
-	: CollisionShape(Type::PLANE)
-	, m_normal(normal)
-	, m_offset(offset)
-{
-}
-
-//==============================================================================
 F32 Plane::testPlane(const Plane& /*p*/) const
 {
 	ANKI_ASSERT(0 && "Ambiguous call");
 	return 0.0;
 }
 
-//==============================================================================
 void Plane::setFrom3Points(const Vec4& p0, const Vec4& p1, const Vec4& p2)
 {
 	ANKI_ASSERT(p0.w() == 0.0 && p1.w() == 0.0 && p2.w() == 0.0);
@@ -42,7 +32,6 @@ void Plane::setFrom3Points(const Vec4& p0, const Vec4& p1, const Vec4& p2)
 	m_offset = m_normal.dot(p0);
 }
 
-//==============================================================================
 void Plane::setFromPlaneEquation(F32 a, F32 b, F32 c, F32 d)
 {
 	m_normal = Vec4(a, b, c, 0.0);
@@ -53,7 +42,6 @@ void Plane::setFromPlaneEquation(F32 a, F32 b, F32 c, F32 d)
 	m_offset = d;
 }
 
-//==============================================================================
 Plane Plane::getTransformed(const Transform& trf) const
 {
 	Plane plane;
@@ -70,13 +58,11 @@ Plane Plane::getTransformed(const Transform& trf) const
 	return plane;
 }
 
-//==============================================================================
 void Plane::computeAabb(Aabb&) const
 {
 	ANKI_ASSERT(0 && "Can't do that");
 }
 
-//==============================================================================
 Bool Plane::intersectVector(const Vec4& p, Vec4& intersection) const
 {
 	ANKI_ASSERT(p.w() == 0.0);
@@ -95,9 +81,7 @@ Bool Plane::intersectVector(const Vec4& p, Vec4& intersection) const
 	}
 }
 
-//==============================================================================
-Bool Plane::intersectRay(
-	const Vec4& rayOrigin, const Vec4& rayDir, Vec4& intersection) const
+Bool Plane::intersectRay(const Vec4& rayOrigin, const Vec4& rayDir, Vec4& intersection) const
 {
 	ANKI_ASSERT(rayOrigin.w() == 0.0 && rayDir.w() == 0.0);
 	Bool intersects = false;
@@ -107,8 +91,8 @@ Bool Plane::intersectRay(
 
 	if(d > 0.0 && a < 0.0)
 	{
-		// To have intersection the d should be positive and the s as well. So
-		// the 'a' must be negative and not zero because of the division.
+		// To have intersection the d should be positive and the s as well. So the 'a' must be negative and not zero
+		// because of the division.
 		F32 s = -d / a;
 		ANKI_ASSERT(s > 0.0);
 

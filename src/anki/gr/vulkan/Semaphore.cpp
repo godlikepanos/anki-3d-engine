@@ -8,7 +8,6 @@
 namespace anki
 {
 
-//==============================================================================
 void SemaphoreFactory::destroy()
 {
 	for(U i = 0; i < m_semCount; ++i)
@@ -19,7 +18,6 @@ void SemaphoreFactory::destroy()
 	m_sems.destroy(m_alloc);
 }
 
-//==============================================================================
 void SemaphoreFactory::releaseFences()
 {
 	U count = m_semCount;
@@ -33,7 +31,6 @@ void SemaphoreFactory::releaseFences()
 	}
 }
 
-//==============================================================================
 SemaphorePtr SemaphoreFactory::newInstance()
 {
 	LockGuard<Mutex> lock(m_mtx);
@@ -74,7 +71,6 @@ SemaphorePtr SemaphoreFactory::newInstance()
 	return SemaphorePtr(out);
 }
 
-//==============================================================================
 void SemaphoreFactory::destroySemaphore(Semaphore* s)
 {
 	ANKI_ASSERT(s);

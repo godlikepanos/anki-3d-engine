@@ -9,7 +9,6 @@
 namespace anki
 {
 
-//==============================================================================
 UiAllocator UiObject::getAllocator() const
 {
 	return m_canvas->getAllocator();

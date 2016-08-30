@@ -18,14 +18,8 @@ void main()
 	out_color = textureLod(u_tex, in_texCoord, MIPMAP).rgb;
 	out_color += textureLod(u_tex, in_texCoord + TEXEL_SIZE, MIPMAP).rgb;
 	out_color += textureLod(u_tex, in_texCoord - TEXEL_SIZE, MIPMAP).rgb;
-	out_color +=
-		textureLod(
-			u_tex, in_texCoord + vec2(TEXEL_SIZE.x, -TEXEL_SIZE.y), MIPMAP)
-			.rgb;
-	out_color +=
-		textureLod(
-			u_tex, in_texCoord + vec2(-TEXEL_SIZE.x, TEXEL_SIZE.y), MIPMAP)
-			.rgb;
+	out_color += textureLod(u_tex, in_texCoord + vec2(TEXEL_SIZE.x, -TEXEL_SIZE.y), MIPMAP).rgb;
+	out_color += textureLod(u_tex, in_texCoord + vec2(-TEXEL_SIZE.x, TEXEL_SIZE.y), MIPMAP).rgb;
 
 	out_color /= 5.0;
 }

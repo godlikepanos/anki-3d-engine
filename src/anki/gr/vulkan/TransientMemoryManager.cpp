@@ -12,41 +12,31 @@
 namespace anki
 {
 
-//==============================================================================
 Error TransientMemoryManager::init(const ConfigSet& cfg)
 {
-	Array<const char*, U(TransientBufferType::COUNT)> configVars = {
-		{"gr.uniformPerFrameMemorySize",
-			"gr.storagePerFrameMemorySize",
-			"gr.vertexPerFrameMemorySize",
-			"gr.transferPerFrameMemorySize"}};
+	Array<const char*, U(TransientBufferType::COUNT)> configVars = {{"gr.uniformPerFrameMemorySize",
+		"gr.storagePerFrameMemorySize",
+		"gr.vertexPerFrameMemorySize",
+		"gr.transferPerFrameMemorySize"}};
 
-	// This alignment satisfies the spec's condition for buffer to image
-	// copies: "bufferOffset must be a multiple of the calling command's
-	// VkImage parameter's texel size". This alignment works for all supported
-	// formats
+	// This alignment satisfies the spec's condition for buffer to image copies: "bufferOffset must be a multiple of the
+	// calling command's VkImage parameter's texel size". This alignment works for all supported formats
 	const U TRANSFER_ALIGNMENT = 96;
 
-	const VkPhysicalDeviceLimits& limits =
-		m_manager->getImplementation().getPhysicalDeviceProperties().limits;
-	Array<U32, U(TransientBufferType::COUNT)> alignments = {
-		{U32(limits.minUniformBufferOffsetAlignment),
-			U32(limits.minStorageBufferOffsetAlignment),
-			sizeof(F32) * 4,
-			TRANSFER_ALIGNMENT}};
+	const VkPhysicalDeviceLimits& limits = m_manager->getImplementation().getPhysicalDeviceProperties().limits;
+	Array<U32, U(TransientBufferType::COUNT)> alignments = {{U32(limits.minUniformBufferOffsetAlignment),
+		U32(limits.minStorageBufferOffsetAlignment),
+		sizeof(F32) * 4,
+		TRANSFER_ALIGNMENT}};
 
-	Array<BufferUsageBit, U(TransientBufferType::COUNT)> usages = {
-		{BufferUsageBit::UNIFORM_ALL,
-			BufferUsageBit::STORAGE_ALL,
-			BufferUsageBit::VERTEX,
-			BufferUsageBit::BUFFER_UPLOAD_SOURCE
-				| BufferUsageBit::BUFFER_UPLOAD_DESTINATION
-				| BufferUsageBit::TEXTURE_UPLOAD_SOURCE}};
+	Array<BufferUsageBit, U(TransientBufferType::COUNT)> usages = {{BufferUsageBit::UNIFORM_ALL,
+		BufferUsageBit::STORAGE_ALL,
+		BufferUsageBit::VERTEX,
+		BufferUsageBit::BUFFER_UPLOAD_SOURCE | BufferUsageBit::BUFFER_UPLOAD_DESTINATION
+			| BufferUsageBit::TEXTURE_UPLOAD_SOURCE}};
 
 	auto alloc = m_manager->getAllocator();
-	for(TransientBufferType i = TransientBufferType::UNIFORM;
-		i < TransientBufferType::COUNT;
-		++i)
+	for(TransientBufferType i = TransientBufferType::UNIFORM; i < TransientBufferType::COUNT; ++i)
 	{
 		PerFrameBuffer& frame = m_perFrameBuffers[i];
 		frame.m_size = cfg.getNumber(configVars[i]);
@@ -54,14 +44,12 @@ Error TransientMemoryManager::init(const ConfigSet& cfg)
 
 		// Create buffer
 		frame.m_buff = alloc.newInstance<BufferImpl>(m_manager);
-		ANKI_CHECK(frame.m_buff->init(
-			frame.m_size, usages[i], BufferMapAccessBit::WRITE));
+		ANKI_CHECK(frame.m_buff->init(frame.m_size, usages[i], BufferMapAccessBit::WRITE));
 
 		frame.m_bufferHandle = frame.m_buff->getHandle();
 
 		// Map once
-		frame.m_mappedMem = static_cast<U8*>(
-			frame.m_buff->map(0, frame.m_size, BufferMapAccessBit::WRITE));
+		frame.m_mappedMem = static_cast<U8*>(frame.m_buff->map(0, frame.m_size, BufferMapAccessBit::WRITE));
 		ANKI_ASSERT(frame.m_mappedMem);
 
 		// Init the allocator
@@ -71,7 +59,6 @@ Error TransientMemoryManager::init(const ConfigSet& cfg)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void TransientMemoryManager::destroy()
 {
 	for(PerFrameBuffer& frame : m_perFrameBuffers)
@@ -84,12 +71,8 @@ void TransientMemoryManager::destroy()
 	}
 }
 
-//==============================================================================
-void TransientMemoryManager::allocate(PtrSize size,
-	BufferUsageBit usage,
-	TransientMemoryToken& token,
-	void*& ptr,
-	Error* outErr)
+void TransientMemoryManager::allocate(
+	PtrSize size, BufferUsageBit usage, TransientMemoryToken& token, void*& ptr, Error* outErr)
 {
 	Error err = ErrorCode::NONE;
 	ptr = nullptr;

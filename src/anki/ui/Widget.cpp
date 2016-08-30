@@ -9,21 +9,18 @@
 namespace anki
 {
 
-//==============================================================================
 Widget::Widget(Canvas* canvas)
 	: UiObject(canvas)
 {
 	markForRepaint();
 }
 
-//==============================================================================
 Widget::~Widget()
 {
 	ANKI_ASSERT(isMarkedForDeletion());
 	Hierarchy<Widget>::destroy(getAllocator());
 }
 
-//==============================================================================
 void Widget::markForDeletion()
 {
 	if(!isMarkedForDeletion())
@@ -40,14 +37,12 @@ void Widget::markForDeletion()
 	(void)err;
 }
 
-//==============================================================================
 void Widget::setRelativePosition(const UVec2& pos)
 {
 	m_posLocal = pos;
 	markForRepaint();
 }
 
-//==============================================================================
 void Widget::setSizeLimits(const UVec2& min, const UVec2& max)
 {
 	m_minSize = min;
@@ -55,7 +50,6 @@ void Widget::setSizeLimits(const UVec2& min, const UVec2& max)
 	markForRepaint();
 }
 
-//==============================================================================
 void Widget::setSize(const UVec2& size)
 {
 	m_size.x() = clamp(size.x(), m_minSize.x(), m_maxSize.x());

@@ -24,8 +24,7 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error init(
-		F32 startTime, F32 duration, SceneNode* movableSceneNode);
+	ANKI_USE_RESULT Error init(F32 startTime, F32 duration, SceneNode* movableSceneNode);
 
 	/// Implements Event::update
 	ANKI_USE_RESULT Error update(F32 prevUpdateTime, F32 crntTime);

@@ -9,13 +9,11 @@
 namespace anki
 {
 
-//==============================================================================
 Script::~Script()
 {
 	m_source.destroy(getAllocator());
 }
 
-//==============================================================================
 Error Script::load(const ResourceFilename& filename)
 {
 	ResourceFilePtr file;

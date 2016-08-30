@@ -3,6 +3,9 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#ifndef ANKI_SHADERS_FS_COMMON_VERT_GLSL
+#define ANKI_SHADERS_FS_COMMON_VERT_GLSL
+
 // Common code for all vertex shaders of FS
 #include "shaders/MsFsCommon.glsl"
 
@@ -30,47 +33,42 @@ out gl_PerVertex
 	float gl_PointSize;
 };
 
-//==============================================================================
 #define setPositionVec3_DEFINED
 void setPositionVec3(in vec3 pos)
 {
 	gl_Position = vec4(pos, 1.0);
 }
 
-//==============================================================================
 #define setPositionVec4_DEFINED
 void setPositionVec4(in vec4 pos)
 {
 	gl_Position = pos;
 }
 
-//==============================================================================
 #define writePositionMvp_DEFINED
 void writePositionMvp(in mat4 mvp)
 {
 	gl_Position = mvp * vec4(in_position, 1.0);
 }
 
-//==============================================================================
 #define particle_DEFINED
 void particle(in mat4 mvp)
 {
 	gl_Position = mvp * vec4(in_position, 1);
 	out_alpha = in_alpha;
-	gl_PointSize = in_scale * u_lightingUniforms.rendererSizeTimePad1.x * 0.5
-		/ gl_Position.w;
+	gl_PointSize = in_scale * u_lightingUniforms.rendererSizeTimePad1.x * 0.5 / gl_Position.w;
 }
 
-//==============================================================================
 #define writeAlpha_DEFINED
 void writeAlpha(in float alpha)
 {
 	out_alpha = alpha;
 }
 
-//==============================================================================
 #define writeVertPosViewSpace_DEFINED
 void writeVertPosViewSpace(in mat4 modelViewMat)
 {
 	out_vertPosViewSpace = vec3(modelViewMat * vec4(in_position, 1.0));
 }
+
+#endif

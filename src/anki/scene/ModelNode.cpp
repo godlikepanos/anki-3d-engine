@@ -15,10 +15,6 @@
 namespace anki
 {
 
-//==============================================================================
-// ModelPatchRenderComponent                                                   =
-//==============================================================================
-
 /// Render component implementation.
 class ModelPatchRenderComponent : public RenderComponent
 {
@@ -29,20 +25,16 @@ public:
 	}
 
 	ModelPatchRenderComponent(ModelPatchNode* node)
-		: RenderComponent(node,
-			  &node->m_modelPatch->getMaterial(),
-			  node->m_modelPatch->getModel().getUuid())
+		: RenderComponent(node, &node->m_modelPatch->getMaterial(), node->m_modelPatch->getModel().getUuid())
 	{
 	}
 
-	ANKI_USE_RESULT Error buildRendering(
-		RenderingBuildInfo& data) const override
+	ANKI_USE_RESULT Error buildRendering(RenderingBuildInfo& data) const override
 	{
 		return getNode().buildRendering(data);
 	}
 
-	void getRenderWorldTransform(
-		Bool& hasTransform, Transform& trf) const override
+	void getRenderWorldTransform(Bool& hasTransform, Transform& trf) const override
 	{
 		hasTransform = true;
 		const SceneNode* node = getNode().getParent();
@@ -51,22 +43,15 @@ public:
 	}
 };
 
-//==============================================================================
-// ModelPatchNode                                                              =
-//==============================================================================
-
-//==============================================================================
 ModelPatchNode::ModelPatchNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
 {
 }
 
-//==============================================================================
 ModelPatchNode::~ModelPatchNode()
 {
 }
 
-//==============================================================================
 Error ModelPatchNode::init(const ModelPatch* modelPatch)
 {
 	ANKI_ASSERT(modelPatch);
@@ -74,14 +59,12 @@ Error ModelPatchNode::init(const ModelPatch* modelPatch)
 	m_modelPatch = modelPatch;
 
 	// Spatial component
-	SceneComponent* comp =
-		getSceneAllocator().newInstance<SpatialComponent>(this, &m_obb);
+	SceneComponent* comp = getSceneAllocator().newInstance<SpatialComponent>(this, &m_obb);
 
 	addComponent(comp, true);
 
 	// Render component
-	RenderComponent* rcomp =
-		getSceneAllocator().newInstance<ModelPatchRenderComponent>(this);
+	RenderComponent* rcomp = getSceneAllocator().newInstance<ModelPatchRenderComponent>(this);
 	comp = rcomp;
 
 	addComponent(comp, true);
@@ -90,11 +73,9 @@ Error ModelPatchNode::init(const ModelPatch* modelPatch)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error ModelPatchNode::buildRendering(RenderingBuildInfo& data) const
 {
-	// That will not work on multi-draw and instanced at the same time. Make
-	// sure that there is no multi-draw anywhere
+	// That will not work on multi-draw and instanced at the same time. Make sure that there is no multi-draw anywhere
 	ANKI_ASSERT(m_modelPatch->getSubMeshesCount() == 0);
 
 	Array<U32, ANKI_GL_MAX_SUB_DRAWCALLS> indicesCountArray;
@@ -104,13 +85,8 @@ Error ModelPatchNode::buildRendering(RenderingBuildInfo& data) const
 	PipelinePtr ppline;
 	ResourceGroupPtr grResources;
 
-	m_modelPatch->getRenderingDataSub(data.m_key,
-		WeakArray<U8>(),
-		grResources,
-		ppline,
-		indicesCountArray,
-		indicesOffsetArray,
-		drawcallCount);
+	m_modelPatch->getRenderingDataSub(
+		data.m_key, WeakArray<U8>(), grResources, ppline, indicesCountArray, indicesOffsetArray, drawcallCount);
 
 	// Cannot accept multi-draw
 	ANKI_ASSERT(drawcallCount == 1);
@@ -121,15 +97,10 @@ Error ModelPatchNode::buildRendering(RenderingBuildInfo& data) const
 
 	// Drawcall
 	U32 offset = indicesOffsetArray[0] / sizeof(U16);
-	data.m_cmdb->drawElements(
-		indicesCountArray[0], data.m_key.m_instanceCount, offset);
+	data.m_cmdb->drawElements(indicesCountArray[0], data.m_key.m_instanceCount, offset);
 
 	return ErrorCode::NONE;
 }
-
-//==============================================================================
-// ModelMoveFeedbackComponent                                                  =
-//==============================================================================
 
 /// Feedback component.
 class ModelMoveFeedbackComponent : public SceneComponent
@@ -155,31 +126,23 @@ public:
 	}
 };
 
-//==============================================================================
-// ModelNode                                                                   =
-//==============================================================================
-
-//==============================================================================
 ModelNode::ModelNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
 {
 }
 
-//==============================================================================
 ModelNode::~ModelNode()
 {
 	m_modelPatches.destroy(getSceneAllocator());
 }
 
-//==============================================================================
 Error ModelNode::init(const CString& modelFname)
 {
 	SceneComponent* comp;
 
 	ANKI_CHECK(getResourceManager().loadResource(modelFname, m_model));
 
-	m_modelPatches.create(
-		getSceneAllocator(), m_model->getModelPatches().getSize(), nullptr);
+	m_modelPatches.create(getSceneAllocator(), m_model->getModelPatches().getSize(), nullptr);
 
 	U count = 0;
 	auto it = m_model->getModelPatches().getBegin();
@@ -205,14 +168,12 @@ Error ModelNode::init(const CString& modelFname)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void ModelNode::onMoveComponentUpdate(MoveComponent& move)
 {
 	// Inform the children about the moves
 	for(ModelPatchNode* child : m_modelPatches)
 	{
-		child->m_obb = child->m_modelPatch->getBoundingShape().getTransformed(
-			move.getWorldTransform());
+		child->m_obb = child->m_modelPatch->getBoundingShape().getTransformed(move.getWorldTransform());
 
 		SpatialComponent& sp = child->getComponent<SpatialComponent>();
 		sp.markForUpdate();

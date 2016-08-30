@@ -16,8 +16,8 @@ namespace anki
 
 /// Texture resource class.
 ///
-/// It loads or creates an image and then loads it in the GPU. It supports
-/// compressed and uncompressed TGAs and AnKi's texture format.
+/// It loads or creates an image and then loads it in the GPU. It supports compressed and uncompressed TGAs and AnKi's
+/// texture format.
 class TextureResource : public ResourceObject
 {
 public:

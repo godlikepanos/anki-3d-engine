@@ -9,12 +9,10 @@
 namespace anki
 {
 
-//==============================================================================
 EventManager::EventManager()
 {
 }
 
-//==============================================================================
 EventManager::~EventManager()
 {
 	Error err = iterateEvents([&](Event& event) -> Error {
@@ -26,7 +24,6 @@ EventManager::~EventManager()
 	deleteEventsMarkedForDeletion();
 }
 
-//==============================================================================
 Error EventManager::create(SceneGraph* scene)
 {
 	ANKI_ASSERT(scene);
@@ -34,33 +31,28 @@ Error EventManager::create(SceneGraph* scene)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 SceneAllocator<U8> EventManager::getSceneAllocator() const
 {
 	return m_scene->getAllocator();
 }
 
-//==============================================================================
 SceneFrameAllocator<U8> EventManager::getFrameAllocator() const
 {
 	return m_scene->getFrameAllocator();
 }
 
-//==============================================================================
 void EventManager::registerEvent(Event* event)
 {
 	ANKI_ASSERT(event);
 	m_events.pushBack(getSceneAllocator(), event);
 }
 
-//==============================================================================
 void EventManager::unregisterEvent(List<Event*>::Iterator it)
 {
 	ANKI_ASSERT(it != m_events.getEnd());
 	m_events.erase(getSceneAllocator(), it);
 }
 
-//==============================================================================
 Error EventManager::updateAllEvents(F32 prevUpdateTime, F32 crntTime)
 {
 	Error err = ErrorCode::NONE;
@@ -73,15 +65,13 @@ Error EventManager::updateAllEvents(F32 prevUpdateTime, F32 crntTime)
 	{
 		Event* event = *it;
 
-		// If event or the node's event is marked for deletion then dont
-		// do anything else for that event
+		// If event or the node's event is marked for deletion then dont do anything else for that event
 		if(event->getMarkedForDeletion())
 		{
 			continue;
 		}
 
-		if(event->getSceneNode() != nullptr
-			&& event->getSceneNode()->getMarkedForDeletion())
+		if(event->getSceneNode() != nullptr && event->getSceneNode()->getMarkedForDeletion())
 		{
 			event->setMarkedForDeletion();
 			continue;
@@ -127,7 +117,6 @@ Error EventManager::updateAllEvents(F32 prevUpdateTime, F32 crntTime)
 	return err;
 }
 
-//==============================================================================
 void EventManager::deleteEventsMarkedForDeletion()
 {
 	SceneAllocator<U8> alloc = getSceneAllocator();

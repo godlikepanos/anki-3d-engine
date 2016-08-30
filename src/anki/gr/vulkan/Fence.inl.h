@@ -8,11 +8,6 @@
 namespace anki
 {
 
-//==============================================================================
-// Fence                                                                       =
-//==============================================================================
-
-//==============================================================================
 inline Fence::Fence(FenceFactory* f)
 	: m_factory(f)
 {
@@ -23,7 +18,6 @@ inline Fence::Fence(FenceFactory* f)
 	ANKI_VK_CHECKF(vkCreateFence(m_factory->m_dev, &ci, nullptr, &m_handle));
 }
 
-//==============================================================================
 inline Fence::~Fence()
 {
 	if(m_handle)
@@ -32,20 +26,17 @@ inline Fence::~Fence()
 	}
 }
 
-//==============================================================================
 inline GrAllocator<U8> Fence::getAllocator() const
 {
 	return m_factory->m_alloc;
 }
 
-//==============================================================================
 inline void Fence::wait()
 {
 	ANKI_ASSERT(m_handle);
 	ANKI_VK_CHECKF(vkWaitForFences(m_factory->m_dev, 1, &m_handle, true, ~0U));
 }
 
-//==============================================================================
 inline Bool Fence::done() const
 {
 	ANKI_ASSERT(m_handle);
@@ -62,11 +53,6 @@ inline Bool Fence::done() const
 	return false;
 }
 
-//==============================================================================
-// FencePtrDeleter                                                             =
-//==============================================================================
-
-//==============================================================================
 inline void FencePtrDeleter::operator()(Fence* f)
 {
 	ANKI_ASSERT(f);

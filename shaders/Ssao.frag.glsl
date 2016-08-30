@@ -44,8 +44,7 @@ vec3 readNormal(in vec2 uv)
 // Read the noise tex
 vec3 readRandom(in vec2 uv)
 {
-	const vec2 tmp = vec2(float(WIDTH) / float(NOISE_MAP_SIZE),
-		float(HEIGHT) / float(NOISE_MAP_SIZE));
+	const vec2 tmp = vec2(float(WIDTH) / float(NOISE_MAP_SIZE), float(HEIGHT) / float(NOISE_MAP_SIZE));
 
 	vec3 noise = texture(u_noiseMap, tmp * uv).xyz;
 	// return normalize(noise * 2.0 - 1.0);
@@ -56,8 +55,7 @@ vec3 readRandom(in vec2 uv)
 float readZ(in vec2 uv)
 {
 	float depth = texture(u_mMsDepthRt, uv).r;
-	float z =
-		u_uniforms.projectionParams.z / (u_uniforms.projectionParams.w + depth);
+	float z = u_uniforms.projectionParams.z / (u_uniforms.projectionParams.w + depth);
 	return z;
 }
 
@@ -67,8 +65,7 @@ vec3 readPosition(in vec2 uv)
 	vec3 fragPosVspace;
 	fragPosVspace.z = readZ(uv);
 
-	fragPosVspace.xy =
-		(2.0 * uv - 1.0) * u_uniforms.projectionParams.xy * fragPosVspace.z;
+	fragPosVspace.xy = (2.0 * uv - 1.0) * u_uniforms.projectionParams.xy * fragPosVspace.z;
 
 	return fragPosVspace;
 }
@@ -78,8 +75,7 @@ void main(void)
 	vec3 origin = readPosition(in_texCoords);
 
 	// Chose the number of samples dynamicaly
-	float sampleCountf =
-		max(1.0 + origin.z / MAX_DISTANCE, 0.0) * float(KERNEL_SIZE);
+	float sampleCountf = max(1.0 + origin.z / MAX_DISTANCE, 0.0) * float(KERNEL_SIZE);
 	uint sampleCount = uint(sampleCountf);
 
 	vec3 normal = readNormal(in_texCoords);

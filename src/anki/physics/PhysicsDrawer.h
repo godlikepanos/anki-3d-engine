@@ -21,8 +21,7 @@ class PhysicsDrawer
 {
 public:
 	/// Draw a line.
-	virtual void drawLines(
-		const Vec3* lines, const U32 linesCount, const Vec4& color) = 0;
+	virtual void drawLines(const Vec3* lines, const U32 linesCount, const Vec4& color) = 0;
 
 	void drawWorld(const PhysicsWorld& world);
 
@@ -53,10 +52,7 @@ private:
 	void drawAabb(const NewtonBody* body);
 	void drawCollision(const NewtonBody* body);
 
-	static void drawGeometryCallback(void* userData,
-		int vertexCount,
-		const dFloat* const faceVertec,
-		int id);
+	static void drawGeometryCallback(void* userData, int vertexCount, const dFloat* const faceVertec, int id);
 };
 /// @}
 

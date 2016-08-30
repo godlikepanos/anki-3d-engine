@@ -132,9 +132,7 @@ public:
 	}
 
 	/// Load an image file.
-	ANKI_USE_RESULT Error load(ResourceFilePtr file,
-		const CString& filename,
-		U32 maxTextureSize = MAX_U32);
+	ANKI_USE_RESULT Error load(ResourceFilePtr file, const CString& filename, U32 maxTextureSize = MAX_U32);
 
 	Atomic<I32>& getRefcount()
 	{
@@ -145,8 +143,8 @@ private:
 	GenericMemoryPoolAllocator<U8> m_alloc;
 	Atomic<I32> m_refcount = {0};
 
-	/// [mip][depth or face or layer]. Loader doesn't support cube arrays ATM
-	/// so face and layer won't be used at the same time.
+	/// [mip][depth or face or layer]. Loader doesn't support cube arrays ATM so face and layer won't be used at the
+	/// same time.
 	DynamicArray<Surface> m_surfaces;
 
 	DynamicArray<Volume> m_volumes;

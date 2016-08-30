@@ -147,18 +147,15 @@ public:
 	}
 };
 
-/// 2D Array. @code Array2d<X, 10, 2> a; @endcode is equivelent to
-/// @code X a[10][2]; @endcode
+/// 2D Array. @code Array2d<X, 10, 2> a; @endcode is equivelent to @code X a[10][2]; @endcode
 template<typename T, PtrSize I, PtrSize J>
 using Array2d = Array<Array<T, J>, I>;
 
-/// 3D Array. @code Array3d<X, 10, 2, 3> a; @endcode is equivelent to
-/// @code X a[10][2][3]; @endcode
+/// 3D Array. @code Array3d<X, 10, 2, 3> a; @endcode is equivelent to @code X a[10][2][3]; @endcode
 template<typename T, PtrSize I, PtrSize J, PtrSize K>
 using Array3d = Array<Array<Array<T, K>, J>, I>;
 
-/// 4D Array. @code Array4d<X, 10, 2, 3, 4> a; @endcode is equivelent to
-/// @code X a[10][2][3][4]; @endcode
+/// 4D Array. @code Array4d<X, 10, 2, 3, 4> a; @endcode is equivelent to @code X a[10][2][3][4]; @endcode
 template<typename T, PtrSize I, PtrSize J, PtrSize K, PtrSize L>
 using Array4d = Array<Array<Array<Array<T, L>, K>, J>, I>;
 /// @}

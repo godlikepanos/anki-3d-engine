@@ -11,16 +11,12 @@
 namespace anki
 {
 
-//==============================================================================
-void logShaderErrorCode(const CString& error,
-	const CString& source,
-	GenericMemoryPoolAllocator<U8> alloc)
+void logShaderErrorCode(const CString& error, const CString& source, GenericMemoryPoolAllocator<U8> alloc)
 {
 	StringAuto prettySrc(alloc);
 	StringListAuto lines(alloc);
 
-	static const char* padding = "======================================="
-								 "=======================================";
+	static const char* padding = "==============================================================================";
 
 	lines.splitString(source, '\n', true);
 
@@ -42,23 +38,18 @@ void logShaderErrorCode(const CString& error,
 		prettySrc.append(tmp);
 	}
 
-	ANKI_LOGE("Shader compilation failed:\n%s\n%s\n%s\n%s",
-		padding,
-		&error[0],
-		padding,
-		&prettySrc[0]);
+	ANKI_LOGE("Shader compilation failed:\n%s\n%s\n%s\n%s", padding, &error[0], padding, &prettySrc[0]);
 }
 
-//==============================================================================
 Bool textureInitInfoValid(const TextureInitInfo& inf)
 {
-#define ANKI_CHECK_VAL_VALIDITY(x)                                             \
-	do                                                                         \
-	{                                                                          \
-		if(!(x))                                                               \
-		{                                                                      \
-			return false;                                                      \
-		}                                                                      \
+#define ANKI_CHECK_VAL_VALIDITY(x)                                                                                     \
+	do                                                                                                                 \
+	{                                                                                                                  \
+		if(!(x))                                                                                                       \
+		{                                                                                                              \
+			return false;                                                                                              \
+		}                                                                                                              \
 	} while(0)
 
 	ANKI_CHECK_VAL_VALIDITY(inf.m_usage != TextureUsageBit::NONE);
@@ -92,19 +83,12 @@ Bool textureInitInfoValid(const TextureInitInfo& inf)
 #undef ANKI_CHECK_VAL_VALIDITY
 }
 
-//==============================================================================
 Bool framebufferInitInfoValid(const FramebufferInitInfo& inf)
 {
-	return inf.m_colorAttachmentCount != 0
-		|| inf.m_depthStencilAttachment.m_texture.isCreated();
+	return inf.m_colorAttachmentCount != 0 || inf.m_depthStencilAttachment.m_texture.isCreated();
 }
 
-//==============================================================================
-void getFormatInfo(const PixelFormat& fmt,
-	U& texelComponents,
-	U& texelBytes,
-	U& blockSize,
-	U& blockBytes)
+void getFormatInfo(const PixelFormat& fmt, U& texelComponents, U& texelBytes, U& blockSize, U& blockBytes)
 {
 	blockSize = 0;
 	blockBytes = 0;
@@ -205,7 +189,6 @@ void getFormatInfo(const PixelFormat& fmt,
 	}
 }
 
-//==============================================================================
 PtrSize computeSurfaceSize(U width, U height, const PixelFormat& fmt)
 {
 	ANKI_ASSERT(width > 0 && height > 0);
@@ -228,7 +211,6 @@ PtrSize computeSurfaceSize(U width, U height, const PixelFormat& fmt)
 	}
 }
 
-//==============================================================================
 PtrSize computeVolumeSize(U width, U height, U depth, const PixelFormat& fmt)
 {
 	ANKI_ASSERT(width > 0 && height > 0 && depth > 0);

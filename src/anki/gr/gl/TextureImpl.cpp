@@ -16,11 +16,6 @@
 namespace anki
 {
 
-//==============================================================================
-// Misc                                                                        =
-//==============================================================================
-
-//==============================================================================
 static GLenum convertTextureType(TextureType type)
 {
 	GLenum out = GL_NONE;
@@ -49,15 +44,11 @@ static GLenum convertTextureType(TextureType type)
 	return out;
 }
 
-//==============================================================================
-static void convertTextureInformation(const PixelFormat& pf,
-	Bool8& compressed,
-	GLenum& format,
-	GLenum& internalFormat,
-	GLenum& type)
+static void convertTextureInformation(
+	const PixelFormat& pf, Bool8& compressed, GLenum& format, GLenum& internalFormat, GLenum& type)
 {
-	compressed = pf.m_components >= ComponentFormat::FIRST_COMPRESSED
-		&& pf.m_components <= ComponentFormat::LAST_COMPRESSED;
+	compressed =
+		pf.m_components >= ComponentFormat::FIRST_COMPRESSED && pf.m_components <= ComponentFormat::LAST_COMPRESSED;
 
 	switch(pf.m_components)
 	{
@@ -192,11 +183,6 @@ static void convertTextureInformation(const PixelFormat& pf,
 	}
 }
 
-//==============================================================================
-// TextureImpl                                                                 =
-//==============================================================================
-
-//==============================================================================
 class DeleteTextureCommand final : public GlCommand
 {
 public:
@@ -204,8 +190,7 @@ public:
 	DynamicArray<GLuint> m_views;
 	GrAllocator<U8> m_alloc;
 
-	DeleteTextureCommand(
-		GLuint tex, DynamicArray<GLuint>& views, GrAllocator<U8> alloc)
+	DeleteTextureCommand(GLuint tex, DynamicArray<GLuint>& views, GrAllocator<U8> alloc)
 		: m_tex(tex)
 		, m_views(std::move(views))
 		, m_alloc(alloc)
@@ -247,8 +232,7 @@ TextureImpl::~TextureImpl()
 		CommandBufferPtr commands;
 
 		commands = manager.newInstance<CommandBuffer>(CommandBufferInitInfo());
-		commands->getImplementation().pushBackNewCommand<DeleteTextureCommand>(
-			m_glName, m_texViews, getAllocator());
+		commands->getImplementation().pushBackNewCommand<DeleteTextureCommand>(m_glName, m_texViews, getAllocator());
 		commands->flush();
 	}
 	else
@@ -260,14 +244,12 @@ TextureImpl::~TextureImpl()
 	m_glName = 0;
 }
 
-//==============================================================================
 void TextureImpl::bind()
 {
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(m_target, m_glName);
 }
 
-//==============================================================================
 void TextureImpl::preInit(const TextureInitInfo& init)
 {
 	ANKI_ASSERT(textureInitInfoValid(init));
@@ -280,18 +262,15 @@ void TextureImpl::preInit(const TextureInitInfo& init)
 	m_texType = init.m_type;
 	m_pformat = init.m_format;
 
-	convertTextureInformation(
-		init.m_format, m_compressed, m_format, m_internalFormat, m_type);
+	convertTextureInformation(init.m_format, m_compressed, m_format, m_internalFormat, m_type);
 
 	if(m_target != GL_TEXTURE_3D)
 	{
-		m_mipsCount = min<U>(
-			init.m_mipmapsCount, computeMaxMipmapCount2d(m_width, m_height));
+		m_mipsCount = min<U>(init.m_mipmapsCount, computeMaxMipmapCount2d(m_width, m_height));
 	}
 	else
 	{
-		m_mipsCount = min<U>(init.m_mipmapsCount,
-			computeMaxMipmapCount3d(m_width, m_height, m_depth));
+		m_mipsCount = min<U>(init.m_mipmapsCount, computeMaxMipmapCount3d(m_width, m_height, m_depth));
 	}
 
 	// Surface count
@@ -324,7 +303,6 @@ void TextureImpl::preInit(const TextureInitInfo& init)
 	}
 }
 
-//==============================================================================
 void TextureImpl::init(const TextureInitInfo& init)
 {
 	ANKI_ASSERT(!isCreated());
@@ -344,40 +322,19 @@ void TextureImpl::init(const TextureInitInfo& init)
 	{
 	case GL_TEXTURE_2D:
 	case GL_TEXTURE_CUBE_MAP:
-		glTexStorage2D(
-			m_target, m_mipsCount, m_internalFormat, m_width, m_height);
+		glTexStorage2D(m_target, m_mipsCount, m_internalFormat, m_width, m_height);
 		break;
 	case GL_TEXTURE_CUBE_MAP_ARRAY:
-		glTexStorage3D(m_target,
-			m_mipsCount,
-			m_internalFormat,
-			m_width,
-			m_height,
-			m_layerCount * 6);
+		glTexStorage3D(m_target, m_mipsCount, m_internalFormat, m_width, m_height, m_layerCount * 6);
 		break;
 	case GL_TEXTURE_2D_ARRAY:
-		glTexStorage3D(m_target,
-			m_mipsCount,
-			m_internalFormat,
-			m_width,
-			m_height,
-			m_layerCount);
+		glTexStorage3D(m_target, m_mipsCount, m_internalFormat, m_width, m_height, m_layerCount);
 		break;
 	case GL_TEXTURE_3D:
-		glTexStorage3D(m_target,
-			m_mipsCount,
-			m_internalFormat,
-			m_width,
-			m_height,
-			m_depth);
+		glTexStorage3D(m_target, m_mipsCount, m_internalFormat, m_width, m_height, m_depth);
 		break;
 	case GL_TEXTURE_2D_MULTISAMPLE:
-		glTexStorage2DMultisample(m_target,
-			init.m_samples,
-			m_internalFormat,
-			m_width,
-			m_height,
-			GL_FALSE);
+		glTexStorage2DMultisample(m_target, init.m_samples, m_internalFormat, m_width, m_height, GL_FALSE);
 		break;
 	default:
 		ANKI_ASSERT(0);
@@ -405,8 +362,7 @@ void TextureImpl::init(const TextureInitInfo& init)
 		// Set filtering type
 		GLenum minFilter = GL_NONE;
 		GLenum magFilter = GL_NONE;
-		convertFilter(
-			sinit.m_minMagFilter, sinit.m_mipmapFilter, minFilter, magFilter);
+		convertFilter(sinit.m_minMagFilter, sinit.m_mipmapFilter, minFilter, magFilter);
 
 		glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, minFilter);
 		glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, magFilter);
@@ -414,19 +370,14 @@ void TextureImpl::init(const TextureInitInfo& init)
 #if ANKI_GL == ANKI_GL_DESKTOP
 		if(sinit.m_anisotropyLevel > 1)
 		{
-			glTexParameteri(m_target,
-				GL_TEXTURE_MAX_ANISOTROPY_EXT,
-				GLint(sinit.m_anisotropyLevel));
+			glTexParameteri(m_target, GL_TEXTURE_MAX_ANISOTROPY_EXT, GLint(sinit.m_anisotropyLevel));
 		}
 #endif
 
 		if(sinit.m_compareOperation != CompareOperation::ALWAYS)
 		{
-			glTexParameteri(
-				m_target, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
-			glTexParameteri(m_target,
-				GL_TEXTURE_COMPARE_FUNC,
-				convertCompareOperation(sinit.m_compareOperation));
+			glTexParameteri(m_target, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+			glTexParameteri(m_target, GL_TEXTURE_COMPARE_FUNC, convertCompareOperation(sinit.m_compareOperation));
 		}
 
 		glTexParameteri(m_target, GL_TEXTURE_MIN_LOD, sinit.m_minLod);
@@ -436,9 +387,7 @@ void TextureImpl::init(const TextureInitInfo& init)
 	ANKI_CHECK_GL_ERROR();
 }
 
-//==============================================================================
-void TextureImpl::writeSurface(
-	const TextureSurfaceInfo& surf, void* data, PtrSize dataSize)
+void TextureImpl::writeSurface(const TextureSurfaceInfo& surf, void* data, PtrSize dataSize)
 {
 	checkSurface(surf);
 	ANKI_ASSERT(data);
@@ -458,70 +407,33 @@ void TextureImpl::writeSurface(
 	case GL_TEXTURE_2D:
 		if(!m_compressed)
 		{
-			glTexSubImage2D(
-				m_target, mipmap, 0, 0, w, h, m_format, m_type, data);
+			glTexSubImage2D(m_target, mipmap, 0, 0, w, h, m_format, m_type, data);
 		}
 		else
 		{
-			glCompressedTexSubImage2D(
-				m_target, mipmap, 0, 0, w, h, m_format, dataSize, data);
+			glCompressedTexSubImage2D(m_target, mipmap, 0, 0, w, h, m_format, dataSize, data);
 		}
 		break;
 	case GL_TEXTURE_CUBE_MAP:
 		if(!m_compressed)
 		{
-			glTexSubImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + surfIdx,
-				mipmap,
-				0,
-				0,
-				w,
-				h,
-				m_format,
-				m_type,
-				data);
+			glTexSubImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + surfIdx, mipmap, 0, 0, w, h, m_format, m_type, data);
 		}
 		else
 		{
-			glCompressedTexSubImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + surfIdx,
-				mipmap,
-				0,
-				0,
-				w,
-				h,
-				m_format,
-				dataSize,
-				data);
+			glCompressedTexSubImage2D(
+				GL_TEXTURE_CUBE_MAP_POSITIVE_X + surfIdx, mipmap, 0, 0, w, h, m_format, dataSize, data);
 		}
 		break;
 	case GL_TEXTURE_2D_ARRAY:
 	case GL_TEXTURE_3D:
 		if(!m_compressed)
 		{
-			glTexSubImage3D(m_target,
-				mipmap,
-				0,
-				0,
-				surfIdx,
-				w,
-				h,
-				1,
-				m_format,
-				m_type,
-				data);
+			glTexSubImage3D(m_target, mipmap, 0, 0, surfIdx, w, h, 1, m_format, m_type, data);
 		}
 		else
 		{
-			glCompressedTexSubImage3D(m_target,
-				mipmap,
-				0,
-				0,
-				surfIdx,
-				w,
-				h,
-				1,
-				m_format,
-				dataSize,
-				data);
+			glCompressedTexSubImage3D(m_target, mipmap, 0, 0, surfIdx, w, h, 1, m_format, dataSize, data);
 		}
 		break;
 	default:
@@ -531,9 +443,7 @@ void TextureImpl::writeSurface(
 	ANKI_CHECK_GL_ERROR();
 }
 
-//==============================================================================
-void TextureImpl::writeVolume(
-	const TextureVolumeInfo& vol, void* data, PtrSize dataSize)
+void TextureImpl::writeVolume(const TextureVolumeInfo& vol, void* data, PtrSize dataSize)
 {
 	checkVolume(vol);
 	ANKI_ASSERT(data);
@@ -552,19 +462,16 @@ void TextureImpl::writeVolume(
 
 	if(!m_compressed)
 	{
-		glTexSubImage3D(
-			m_target, mipmap, 0, 0, 0, w, h, d, m_format, m_type, data);
+		glTexSubImage3D(m_target, mipmap, 0, 0, 0, w, h, d, m_format, m_type, data);
 	}
 	else
 	{
-		glCompressedTexSubImage3D(
-			m_target, mipmap, 0, 0, 0, w, h, d, m_format, dataSize, data);
+		glCompressedTexSubImage3D(m_target, mipmap, 0, 0, 0, w, h, d, m_format, dataSize, data);
 	}
 
 	ANKI_CHECK_GL_ERROR();
 }
 
-//==============================================================================
 void TextureImpl::generateMipmaps2d(U face, U layer)
 {
 	U surface = computeSurfaceIdx(TextureSurfaceInfo(0, 0, face, layer));
@@ -597,14 +504,7 @@ void TextureImpl::generateMipmaps2d(U face, U layer)
 				ANKI_ASSERT(0);
 			}
 
-			glTextureView(m_texViews[surface],
-				target,
-				m_glName,
-				m_internalFormat,
-				0,
-				m_mipsCount,
-				surface,
-				1);
+			glTextureView(m_texViews[surface], target, m_glName, m_internalFormat, 0, m_mipsCount, surface, 1);
 		}
 
 		glGenerateTextureMipmap(m_texViews[surface]);
@@ -615,7 +515,6 @@ void TextureImpl::generateMipmaps2d(U face, U layer)
 	}
 }
 
-//==============================================================================
 void TextureImpl::copy(const TextureImpl& src,
 	const TextureSurfaceInfo& srcSurf,
 	const TextureImpl& dest,
@@ -629,8 +528,7 @@ void TextureImpl::copy(const TextureImpl& src,
 	U height = src.m_height >> srcSurf.m_level;
 
 	ANKI_ASSERT(width > 0 && height > 0);
-	ANKI_ASSERT(width == (dest.m_width >> destSurf.m_level)
-		&& height == (dest.m_height >> destSurf.m_level));
+	ANKI_ASSERT(width == (dest.m_width >> destSurf.m_level) && height == (dest.m_height >> destSurf.m_level));
 
 	U srcSurfaceIdx = src.computeSurfaceIdx(srcSurf);
 	U destSurfaceIdx = dest.computeSurfaceIdx(destSurf);
@@ -652,9 +550,7 @@ void TextureImpl::copy(const TextureImpl& src,
 		1);
 }
 
-//==============================================================================
-void TextureImpl::clear(
-	const TextureSurfaceInfo& surf, const ClearValue& clearValue)
+void TextureImpl::clear(const TextureSurfaceInfo& surf, const ClearValue& clearValue)
 {
 	ANKI_ASSERT(isCreated());
 	ANKI_ASSERT(surf.m_level < m_mipsCount);
@@ -663,20 +559,10 @@ void TextureImpl::clear(
 	U width = m_width >> surf.m_level;
 	U height = m_height >> surf.m_level;
 
-	glClearTexSubImage(m_glName,
-		surf.m_level,
-		0,
-		0,
-		surfaceIdx,
-		width,
-		height,
-		1,
-		m_format,
-		GL_FLOAT,
-		&clearValue.m_colorf[0]);
+	glClearTexSubImage(
+		m_glName, surf.m_level, 0, 0, surfaceIdx, width, height, 1, m_format, GL_FLOAT, &clearValue.m_colorf[0]);
 }
 
-//==============================================================================
 U TextureImpl::computeSurfaceIdx(const TextureSurfaceInfo& surf) const
 {
 	checkSurface(surf);

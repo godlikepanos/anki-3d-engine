@@ -24,7 +24,6 @@
 namespace anki
 {
 
-//==============================================================================
 U32 getCpuCoresCount()
 {
 #if ANKI_POSIX
@@ -38,7 +37,6 @@ U32 getCpuCoresCount()
 #endif
 }
 
-//==============================================================================
 void printBacktrace()
 {
 #if ANKI_POSIX && ANKI_OS != ANKI_OS_ANDROID

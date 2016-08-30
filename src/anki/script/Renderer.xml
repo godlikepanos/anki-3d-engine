@@ -12,7 +12,6 @@
 
 namespace anki {
 	
-//==============================================================================
 static MainRenderer* getMainRenderer(lua_State* l)
 {
 	LuaBinder* binder = nullptr;

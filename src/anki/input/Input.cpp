@@ -9,7 +9,6 @@
 namespace anki
 {
 
-//==============================================================================
 void Input::reset()
 {
 	std::memset(&m_keys[0], 0, sizeof(m_keys));

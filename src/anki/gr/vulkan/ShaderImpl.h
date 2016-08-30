@@ -33,8 +33,7 @@ public:
 
 private:
 	/// Generate SPIRV from GLSL.
-	ANKI_USE_RESULT Error genSpirv(
-		const CString& source, std::vector<unsigned int>& spirv);
+	ANKI_USE_RESULT Error genSpirv(const CString& source, std::vector<unsigned int>& spirv);
 };
 /// @}
 

@@ -11,18 +11,15 @@
 namespace anki
 {
 
-//==============================================================================
 OcclusionQuery::OcclusionQuery(GrManager* manager, U64 hash)
 	: GrObject(manager, CLASS_TYPE, hash)
 {
 }
 
-//==============================================================================
 OcclusionQuery::~OcclusionQuery()
 {
 }
 
-//==============================================================================
 class CreateOqCommand final : public GlCommand
 {
 public:
@@ -41,8 +38,7 @@ public:
 
 		impl.init(m_condRenderingBit);
 
-		GlObject::State oldState =
-			impl.setStateAtomically(GlObject::State::CREATED);
+		GlObject::State oldState = impl.setStateAtomically(GlObject::State::CREATED);
 
 		(void)oldState;
 		ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
@@ -55,11 +51,9 @@ void OcclusionQuery::init(OcclusionQueryResultBit condRenderingBit)
 {
 	m_impl.reset(getAllocator().newInstance<OcclusionQueryImpl>(&getManager()));
 
-	CommandBufferPtr cmdb =
-		getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
+	CommandBufferPtr cmdb = getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
 
-	cmdb->getImplementation().pushBackNewCommand<CreateOqCommand>(
-		this, condRenderingBit);
+	cmdb->getImplementation().pushBackNewCommand<CreateOqCommand>(this, condRenderingBit);
 	cmdb->flush();
 }
 

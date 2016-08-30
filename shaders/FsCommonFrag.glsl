@@ -1,6 +1,10 @@
+// Copyright (C) 2009-2016, Panagiotis Christopoulos Charitos and contributors.
 // All rights reserved.
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
+
+#ifndef ANKI_SHADERS_FS_COMMON_FRAG_GLSL
+#define ANKI_SHADERS_FS_COMMON_FRAG_GLSL
 
 // Common code for all fragment shaders of BS
 #include "shaders/Common.glsl"
@@ -24,23 +28,19 @@ layout(location = 1) flat in float in_alpha;
 
 layout(location = 0) out vec4 out_color;
 
-//==============================================================================
 #if PASS == COLOR
 #define texture_DEFINED
 #endif
 
-//==============================================================================
 #define getAlpha_DEFINED
 float getAlpha()
 {
 	return in_alpha;
 }
 
-//==============================================================================
 #define getPointCoord_DEFINED
 #define getPointCoord() gl_PointCoord
 
-//==============================================================================
 #if PASS == COLOR
 #define writeGBuffer_DEFINED
 void writeGBuffer(in vec4 color)
@@ -49,7 +49,6 @@ void writeGBuffer(in vec4 color)
 }
 #endif
 
-//==============================================================================
 #if PASS == COLOR
 #define particleAlpha_DEFINED
 void particleAlpha(in sampler2D tex, in float alpha)
@@ -60,11 +59,9 @@ void particleAlpha(in sampler2D tex, in float alpha)
 }
 #endif
 
-//==============================================================================
 #if PASS == COLOR
 #define particleSoftTextureAlpha_DEFINED
-void particleSoftTextureAlpha(
-	in sampler2D depthMap, in sampler2D tex, in float alpha)
+void particleSoftTextureAlpha(in sampler2D depthMap, in sampler2D tex, in float alpha)
 {
 	vec2 screenSize = 1.0 / RENDERER_SIZE;
 
@@ -81,7 +78,6 @@ void particleSoftTextureAlpha(
 }
 #endif
 
-//==============================================================================
 #if PASS == COLOR
 #define particleTextureAlpha_DEFINED
 void particleTextureAlpha(in sampler2D tex, in float alpha)
@@ -93,11 +89,9 @@ void particleTextureAlpha(in sampler2D tex, in float alpha)
 }
 #endif
 
-//==============================================================================
 #if PASS == COLOR
 #define particleSoftColorAlpha_DEFINED
-void particleSoftColorAlpha(
-	in sampler2D depthMap, in vec3 icolor, in float alpha)
+void particleSoftColorAlpha(in sampler2D depthMap, in vec3 icolor, in float alpha)
 {
 	vec2 screenSize = 1.0 / RENDERER_SIZE;
 
@@ -116,7 +110,6 @@ void particleSoftColorAlpha(
 }
 #endif
 
-//==============================================================================
 #if PASS == COLOR
 #define computeLightColor_DEFINED
 vec3 computeLightColor(vec3 diffCol)
@@ -127,8 +120,7 @@ vec3 computeLightColor(vec3 diffCol)
 	vec3 fragPos;
 	{
 		float depth = gl_FragCoord.z;
-		fragPos.z = u_lightingUniforms.projectionParams.z
-			/ (u_lightingUniforms.projectionParams.w + depth);
+		fragPos.z = u_lightingUniforms.projectionParams.z / (u_lightingUniforms.projectionParams.w + depth);
 
 		vec2 screenSize = 1.0 / RENDERER_SIZE;
 
@@ -141,8 +133,7 @@ vec3 computeLightColor(vec3 diffCol)
 	uint idxOffset;
 	uint idx;
 	{
-		uint clusterIdx = computeClusterIndexUsingCustomFragCoord(
-			u_lightingUniforms.nearFarClustererMagicPad1.x,
+		uint clusterIdx = computeClusterIndexUsingCustomFragCoord(u_lightingUniforms.nearFarClustererMagicPad1.x,
 			u_lightingUniforms.nearFarClustererMagicPad1.z,
 			fragPos.z,
 			u_lightingUniforms.tileCountPad1.x,
@@ -160,8 +151,7 @@ vec3 computeLightColor(vec3 diffCol)
 		COPY_POINT_LIGHT(u_pointLights[u_lightIndices[idxOffset]], light);
 		++idxOffset;
 
-		vec3 diffC =
-			computeDiffuseColor(diffCol, light.diffuseColorShadowmapId.rgb);
+		vec3 diffC = computeDiffuseColor(diffCol, light.diffuseColorShadowmapId.rgb);
 
 		vec3 frag2Light = light.posRadius.xyz - fragPos;
 		float att = computeAttenuationFactor(light.posRadius.w, frag2Light);
@@ -173,11 +163,8 @@ vec3 computeLightColor(vec3 diffCol)
 		float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
 		if(light.diffuseColorShadowmapId.w < 128.0)
 		{
-			shadow = computeShadowFactorOmni(frag2Light,
-				shadowmapLayerIdx,
-				-1.0 / light.posRadius.w,
-				u_lightingUniforms.viewMat,
-				u_omniMapArr);
+			shadow = computeShadowFactorOmni(
+				frag2Light, shadowmapLayerIdx, -1.0 / light.posRadius.w, u_lightingUniforms.viewMat, u_omniMapArr);
 		}
 #endif
 
@@ -192,18 +179,14 @@ vec3 computeLightColor(vec3 diffCol)
 		COPY_SPOT_LIGHT(u_spotLights[u_lightIndices[idxOffset]], light);
 		++idxOffset;
 
-		vec3 diffC =
-			computeDiffuseColor(diffCol, light.diffuseColorShadowmapId.rgb);
+		vec3 diffC = computeDiffuseColor(diffCol, light.diffuseColorShadowmapId.rgb);
 
 		vec3 frag2Light = light.posRadius.xyz - fragPos;
 		float att = computeAttenuationFactor(light.posRadius.w, frag2Light);
 
 		vec3 l = normalize(frag2Light);
 
-		float spot = computeSpotFactor(l,
-			light.outerCosInnerCos.x,
-			light.outerCosInnerCos.y,
-			light.lightDir.xyz);
+		float spot = computeSpotFactor(l, light.outerCosInnerCos.x, light.outerCosInnerCos.y, light.lightDir.xyz);
 
 #if LOD > 1
 		const float shadow = 1.0;
@@ -212,11 +195,7 @@ vec3 computeLightColor(vec3 diffCol)
 		float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
 		if(shadowmapLayerIdx < 128.0)
 		{
-			shadow = computeShadowFactorSpot(light.texProjectionMat,
-				fragPos,
-				shadowmapLayerIdx,
-				1,
-				u_spotMapArr);
+			shadow = computeShadowFactorSpot(light.texProjectionMat, fragPos, shadowmapLayerIdx, 1, u_spotMapArr);
 		}
 #endif
 
@@ -227,7 +206,6 @@ vec3 computeLightColor(vec3 diffCol)
 }
 #endif
 
-//==============================================================================
 #if PASS == COLOR
 #define particleTextureAlphaLight_DEFINED
 void particleTextureAlphaLight(in sampler2D tex, in float alpha)
@@ -241,14 +219,11 @@ void particleTextureAlphaLight(in sampler2D tex, in float alpha)
 }
 #endif
 
-//==============================================================================
 #if PASS == COLOR
 #define particleAnimatedTextureAlphaLight_DEFINED
-void particleAnimatedTextureAlphaLight(
-	sampler2DArray tex, float alpha, float layerCount, float period)
+void particleAnimatedTextureAlphaLight(sampler2DArray tex, float alpha, float layerCount, float period)
 {
-	vec4 color = readAnimatedTextureRgba(
-		tex, layerCount, period, gl_PointCoord, anki_u_time);
+	vec4 color = readAnimatedTextureRgba(tex, layerCount, period, gl_PointCoord, anki_u_time);
 	color.a *= alpha;
 
 	color.rgb = computeLightColor(color.rgb);
@@ -257,7 +232,6 @@ void particleAnimatedTextureAlphaLight(
 }
 #endif
 
-//==============================================================================
 #if PASS == COLOR
 #define fog_DEFINED
 void fog(in sampler2D depthMap, in vec3 color, in float fogScale)
@@ -272,8 +246,7 @@ void fog(in sampler2D depthMap, in vec3 color, in float fogScale)
 	{
 		float zNear = u_lightingUniforms.nearFarClustererMagicPad1.x;
 		float zFar = u_lightingUniforms.nearFarClustererMagicPad1.y;
-		vec2 linearDepths = (2.0 * zNear)
-			/ (zFar + zNear - vec2(depth, gl_FragCoord.z) * (zFar - zNear));
+		vec2 linearDepths = (2.0 * zNear) / (zFar + zNear - vec2(depth, gl_FragCoord.z) * (zFar - zNear));
 
 		diff = linearDepths.x - linearDepths.y;
 	}
@@ -286,4 +259,6 @@ void fog(in sampler2D depthMap, in vec3 color, in float fogScale)
 
 	writeGBuffer(vec4(color, diff * fogScale));
 }
+#endif
+
 #endif

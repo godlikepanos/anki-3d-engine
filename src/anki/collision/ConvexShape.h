@@ -19,7 +19,7 @@ class ConvexShape : public CollisionShape
 public:
 	using Base = CollisionShape;
 
-	ConvexShape(Type cid)
+	ConvexShape(CollisionShapeType cid)
 		: Base(cid)
 	{
 	}
@@ -39,11 +39,6 @@ public:
 
 	/// Get a support vector for the GJK algorithm
 	virtual Vec4 computeSupport(const Vec4& dir) const = 0;
-
-	static Bool classof(const CollisionShape& c)
-	{
-		return c.getType() >= Type::AABB && c.getType() <= Type::LAST_CONVEX;
-	}
 };
 /// @}
 

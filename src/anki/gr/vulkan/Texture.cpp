@@ -9,18 +9,15 @@
 namespace anki
 {
 
-//==============================================================================
 Texture::Texture(GrManager* manager, U64 hash)
 	: GrObject(manager, CLASS_TYPE, hash)
 {
 }
 
-//==============================================================================
 Texture::~Texture()
 {
 }
 
-//==============================================================================
 void Texture::init(const TextureInitInfo& init)
 {
 	m_impl.reset(getAllocator().newInstance<TextureImpl>(&getManager()));

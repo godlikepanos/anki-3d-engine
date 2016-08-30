@@ -8,7 +8,6 @@
 namespace anki
 {
 
-//==============================================================================
 GLenum convertCompareOperation(CompareOperation in)
 {
 	GLenum out = GL_NONE;
@@ -43,11 +42,7 @@ GLenum convertCompareOperation(CompareOperation in)
 	return out;
 }
 
-//==============================================================================
-void convertFilter(SamplingFilter minMagFilter,
-	SamplingFilter mipFilter,
-	GLenum& minFilter,
-	GLenum& magFilter)
+void convertFilter(SamplingFilter minMagFilter, SamplingFilter mipFilter, GLenum& minFilter, GLenum& magFilter)
 {
 	switch(minMagFilter)
 	{

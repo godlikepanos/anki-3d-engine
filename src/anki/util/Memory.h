@@ -30,28 +30,26 @@ void* mallocAligned(PtrSize size, PtrSize alignmentBytes);
 /// Free aligned memory
 void freeAligned(void* ptr);
 
-/// The function signature of a memory allocation/deallocation.
-/// See allocAligned function for the explanation of arguments
+/// The function signature of a memory allocation/deallocation. See allocAligned function for the explanation of
+/// arguments
 using AllocAlignedCallback = void* (*)(void*, void*, PtrSize, PtrSize);
 
 /// An internal type.
 using AllocationSignature = U32;
 
-/// This is a function that allocates and deallocates heap memory.
-/// If the @a ptr is nullptr then it allocates using the @a size and
-/// @a alignment. If the @a ptr is not nullptr it deallocates the memory and
-/// the @a size and @a alignment is ignored.
+/// This is a function that allocates and deallocates heap memory. If the @a ptr is nullptr then it allocates using the
+/// @a size and @a alignment. If the @a ptr is not nullptr it deallocates the memory and the @a size and @a alignment is
+/// ignored.
 ///
 /// @param userData Used defined data
 /// @param ptr The pointer to deallocate or nullptr
 /// @param size The size to allocate or 0
 /// @param alignment The allocation alignment or 0
-/// @return On allocation mode it will return the newelly allocated block or
-///         nullptr on error. On deallocation mode returns nullptr
+/// @return On allocation mode it will return the newelly allocated block or nullptr on error. On deallocation mode
+///         returns nullptr
 void* allocAligned(void* userData, void* ptr, PtrSize size, PtrSize alignment);
 
-/// Generic memory pool. The base of HeapMemoryPool or StackMemoryPool or
-/// ChainMemoryPool.
+/// Generic memory pool. The base of HeapMemoryPool or StackMemoryPool or ChainMemoryPool.
 class BaseMemoryPool : public NonCopyable
 {
 public:
@@ -132,8 +130,8 @@ private:
 	Atomic<U32> m_refcount = {0};
 };
 
-/// A dummy interface to match the StackMemoryPool and ChainMemoryPool
-/// interfaces in order to be used by the same allocator template
+/// A dummy interface to match the StackMemoryPool and ChainMemoryPool interfaces in order to be used by the same
+/// allocator template.
 class HeapMemoryPool : public BaseMemoryPool
 {
 public:
@@ -163,9 +161,8 @@ private:
 #endif
 };
 
-/// Thread safe memory pool. It's a preallocated memory pool that is used for
-/// memory allocations on top of that preallocated memory. It is mainly used by
-/// fast stack allocators
+/// Thread safe memory pool. It's a preallocated memory pool that is used for memory allocations on top of that
+/// preallocated memory. It is mainly used by fast stack allocators
 class StackMemoryPool : public BaseMemoryPool
 {
 public:
@@ -184,11 +181,9 @@ public:
 	/// @param initialChunkSize The size of the first chunk.
 	/// @param nextChunkScale Value that controls the next chunk.
 	/// @param nextChunkBias Value that controls the next chunk.
-	/// @param ignoreDeallocationErrors Method free() may fail if the ptr is
-	///        not in the top of the stack. Set that to true to suppress such
-	///        errors
-	/// @param alignmentBytes The maximum supported alignment for returned
-	///        memory
+	/// @param ignoreDeallocationErrors Method free() may fail if the ptr is not in the top of the stack. Set that to
+	///        true to suppress such errors
+	/// @param alignmentBytes The maximum supported alignment for returned memory
 	void create(AllocAlignedCallback allocCb,
 		void* allocCbUserData,
 		PtrSize initialChunkSize,
@@ -273,8 +268,7 @@ private:
 	Mutex m_lock;
 };
 
-/// Chain memory pool. Almost similar to StackMemoryPool but more flexible and
-/// at the same time a bit slower.
+/// Chain memory pool. Almost similar to StackMemoryPool but more flexible and at the same time a bit slower.
 class ChainMemoryPool : public BaseMemoryPool
 {
 public:
@@ -290,8 +284,7 @@ public:
 	/// @param initialChunkSize The size of the first chunk.
 	/// @param nextChunkScale Value that controls the next chunk.
 	/// @param nextChunkBias Value that controls the next chunk.
-	/// @param alignmentBytes The maximum supported alignment for returned
-	///                       memory.
+	/// @param alignmentBytes The maximum supported alignment for returned memory.
 	void create(AllocAlignedCallback allocCb,
 		void* allocCbUserData,
 		PtrSize initialChunkSize,
@@ -305,8 +298,8 @@ public:
 	/// @return The allocated memory or nullptr on failure
 	void* allocate(PtrSize size, PtrSize alignmentBytes);
 
-	/// Free memory. If the ptr is not the last allocation of the chunk
-	/// then nothing happens and the method returns false
+	/// Free memory. If the ptr is not the last allocation of the chunk then nothing happens and the method returns
+	/// false.
 	/// @param[in, out] ptr Memory block to deallocate
 	void free(void* ptr);
 

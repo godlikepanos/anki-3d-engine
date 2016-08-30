@@ -16,13 +16,11 @@
 namespace anki
 {
 
-//==============================================================================
 CommandBufferImpl::CommandBufferImpl(GrManager* manager)
 	: VulkanObject(manager)
 {
 }
 
-//==============================================================================
 CommandBufferImpl::~CommandBufferImpl()
 {
 	if(m_empty)
@@ -37,8 +35,7 @@ CommandBufferImpl::~CommandBufferImpl()
 
 	if(m_handle)
 	{
-		Bool secondLevel = (m_flags & CommandBufferFlag::SECOND_LEVEL)
-			== CommandBufferFlag::SECOND_LEVEL;
+		Bool secondLevel = (m_flags & CommandBufferFlag::SECOND_LEVEL) == CommandBufferFlag::SECOND_LEVEL;
 		getGrManagerImpl().deleteCommandBuffer(m_handle, secondLevel, m_tid);
 	}
 
@@ -51,22 +48,16 @@ CommandBufferImpl::~CommandBufferImpl()
 	m_cmdbList.destroy(m_alloc);
 }
 
-//==============================================================================
 Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 {
 	auto& pool = getGrManagerImpl().getAllocator().getMemoryPool();
-	m_alloc = StackAllocator<U8>(pool.getAllocationCallback(),
-		pool.getAllocationCallbackUserData(),
-		init.m_hints.m_chunkSize,
-		1.0,
-		0,
-		false);
+	m_alloc = StackAllocator<U8>(
+		pool.getAllocationCallback(), pool.getAllocationCallbackUserData(), init.m_hints.m_chunkSize, 1.0, 0, false);
 
 	m_flags = init.m_flags;
 	m_tid = Thread::getCurrentThreadId();
 
-	Bool secondLevel = (m_flags & CommandBufferFlag::SECOND_LEVEL)
-		== CommandBufferFlag::SECOND_LEVEL;
+	Bool secondLevel = (m_flags & CommandBufferFlag::SECOND_LEVEL) == CommandBufferFlag::SECOND_LEVEL;
 	m_handle = getGrManagerImpl().newCommandBuffer(m_tid, secondLevel);
 	ANKI_ASSERT(m_handle);
 
@@ -92,8 +83,7 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 		}
 		else
 		{
-			inheritance.framebuffer = impl.getFramebufferHandle(
-				getGrManagerImpl().getFrame() % MAX_FRAMES_IN_FLIGHT);
+			inheritance.framebuffer = impl.getFramebufferHandle(getGrManagerImpl().getFrame() % MAX_FRAMES_IN_FLIGHT);
 		}
 
 		begin.flags |= VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
@@ -104,18 +94,14 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void CommandBufferImpl::bindPipeline(PipelinePtr ppline)
 {
 	commandCommon();
-	vkCmdBindPipeline(m_handle,
-		ppline->getImplementation().getBindPoint(),
-		ppline->getImplementation().getHandle());
+	vkCmdBindPipeline(m_handle, ppline->getImplementation().getBindPoint(), ppline->getImplementation().getHandle());
 
 	m_pplineList.pushBack(m_alloc, ppline);
 }
 
-//==============================================================================
 void CommandBufferImpl::beginRenderPass(FramebufferPtr fb)
 {
 	commandCommon();
@@ -131,7 +117,6 @@ void CommandBufferImpl::beginRenderPass(FramebufferPtr fb)
 #endif
 }
 
-//==============================================================================
 void CommandBufferImpl::beginRenderPassInternal()
 {
 	flushBarriers();
@@ -149,21 +134,17 @@ void CommandBufferImpl::beginRenderPassInternal()
 
 		bi.framebuffer = impl.getFramebufferHandle(0);
 
-		impl.getAttachmentsSize(
-			bi.renderArea.extent.width, bi.renderArea.extent.height);
+		impl.getAttachmentsSize(bi.renderArea.extent.width, bi.renderArea.extent.height);
 	}
 	else
 	{
 		// Bind the default FB
 		m_renderedToDefaultFb = true;
 
-		bi.framebuffer = impl.getFramebufferHandle(
-			getGrManagerImpl().getFrame() % MAX_FRAMES_IN_FLIGHT);
+		bi.framebuffer = impl.getFramebufferHandle(getGrManagerImpl().getFrame() % MAX_FRAMES_IN_FLIGHT);
 
-		bi.renderArea.extent.width =
-			getGrManagerImpl().getDefaultSurfaceWidth();
-		bi.renderArea.extent.height =
-			getGrManagerImpl().getDefaultSurfaceHeight();
+		bi.renderArea.extent.width = getGrManagerImpl().getDefaultSurfaceWidth();
+		bi.renderArea.extent.height = getGrManagerImpl().getDefaultSurfaceHeight();
 
 		// Perform the transition
 		setImageBarrier(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
@@ -172,15 +153,13 @@ void CommandBufferImpl::beginRenderPassInternal()
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-			getGrManagerImpl().getDefaultSurfaceImage(
-				getGrManagerImpl().getFrame() % MAX_FRAMES_IN_FLIGHT),
+			getGrManagerImpl().getDefaultSurfaceImage(getGrManagerImpl().getFrame() % MAX_FRAMES_IN_FLIGHT),
 			VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 	}
 
 	vkCmdBeginRenderPass(m_handle, &bi, m_subpassContents);
 }
 
-//==============================================================================
 void CommandBufferImpl::endRenderPass()
 {
 	commandCommon();
@@ -198,15 +177,13 @@ void CommandBufferImpl::endRenderPass()
 			VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
 			VK_ACCESS_MEMORY_READ_BIT,
 			VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-			getGrManagerImpl().getDefaultSurfaceImage(
-				getGrManagerImpl().getFrame() % MAX_FRAMES_IN_FLIGHT),
+			getGrManagerImpl().getDefaultSurfaceImage(getGrManagerImpl().getFrame() % MAX_FRAMES_IN_FLIGHT),
 			VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 	}
 
 	m_activeFb.reset(nullptr);
 }
 
-//==============================================================================
 void CommandBufferImpl::endRecordingInternal()
 {
 	flushBarriers();
@@ -218,24 +195,20 @@ void CommandBufferImpl::endRecordingInternal()
 	m_finalized = true;
 }
 
-//==============================================================================
 void CommandBufferImpl::endRecording()
 {
 	commandCommon();
 	endRecordingInternal();
 }
 
-//==============================================================================
-void CommandBufferImpl::bindResourceGroup(
-	ResourceGroupPtr rc, U slot, const TransientMemoryInfo* dynInfo)
+void CommandBufferImpl::bindResourceGroup(ResourceGroupPtr rc, U slot, const TransientMemoryInfo* dynInfo)
 {
 	commandCommon();
 	const ResourceGroupImpl& impl = rc->getImplementation();
 
 	if(impl.hasDescriptorSet())
 	{
-		Array<U32, MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS>
-			dynOffsets = {{}};
+		Array<U32, MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS> dynOffsets = {{}};
 
 		impl.setupDynamicOffsets(dynInfo, &dynOffsets[0]);
 
@@ -256,12 +229,10 @@ void CommandBufferImpl::bindResourceGroup(
 		Array<VkBuffer, MAX_VERTEX_ATTRIBUTES> buffers = {{}};
 		Array<VkDeviceSize, MAX_VERTEX_ATTRIBUTES> offsets = {{}};
 		U bindingCount = 0;
-		impl.getVertexBindingInfo(
-			dynInfo, &buffers[0], &offsets[0], bindingCount);
+		impl.getVertexBindingInfo(dynInfo, &buffers[0], &offsets[0], bindingCount);
 		if(bindingCount)
 		{
-			vkCmdBindVertexBuffers(
-				m_handle, 0, bindingCount, &buffers[0], &offsets[0]);
+			vkCmdBindVertexBuffers(m_handle, 0, bindingCount, &buffers[0], &offsets[0]);
 		}
 
 		VkBuffer idxBuff;
@@ -277,7 +248,6 @@ void CommandBufferImpl::bindResourceGroup(
 	m_rcList.pushBack(m_alloc, rc);
 }
 
-//==============================================================================
 void CommandBufferImpl::generateMipmaps2d(TexturePtr tex, U face, U layer)
 {
 	commandCommon();
@@ -292,8 +262,7 @@ void CommandBufferImpl::generateMipmaps2d(TexturePtr tex, U face, U layer)
 		if(i > 0)
 		{
 			VkImageSubresourceRange range;
-			impl.computeSubResourceRange(
-				TextureSurfaceInfo(i, 0, face, layer), range);
+			impl.computeSubResourceRange(TextureSurfaceInfo(i, 0, face, layer), range);
 
 			setImageBarrier(VK_PIPELINE_STAGE_TRANSFER_BIT,
 				VK_ACCESS_TRANSFER_WRITE_BIT,
@@ -308,8 +277,7 @@ void CommandBufferImpl::generateMipmaps2d(TexturePtr tex, U face, U layer)
 		// Transition destination
 		{
 			VkImageSubresourceRange range;
-			impl.computeSubResourceRange(
-				TextureSurfaceInfo(i + 1, 0, face, layer), range);
+			impl.computeSubResourceRange(TextureSurfaceInfo(i + 1, 0, face, layer), range);
 
 			setImageBarrier(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
 				0,
@@ -328,20 +296,17 @@ void CommandBufferImpl::generateMipmaps2d(TexturePtr tex, U face, U layer)
 		I32 dstWidth = impl.m_width >> i;
 		I32 dstHeight = impl.m_height >> i;
 
-		ANKI_ASSERT(
-			srcWidth > 0 && srcHeight > 0 && dstWidth > 0 && dstHeight > 0);
+		ANKI_ASSERT(srcWidth > 0 && srcHeight > 0 && dstWidth > 0 && dstHeight > 0);
 
 		VkImageBlit blit;
-		blit.srcSubresource.aspectMask =
-			impl.m_aspect & (~VK_IMAGE_ASPECT_STENCIL_BIT);
+		blit.srcSubresource.aspectMask = impl.m_aspect & (~VK_IMAGE_ASPECT_STENCIL_BIT);
 		blit.srcSubresource.baseArrayLayer = layer;
 		blit.srcSubresource.layerCount = 1;
 		blit.srcSubresource.mipLevel = i;
 		blit.srcOffsets[0] = {0, 0, 0};
 		blit.srcOffsets[1] = {srcWidth, srcHeight, 1};
 
-		blit.dstSubresource.aspectMask =
-			impl.m_aspect & (~VK_IMAGE_ASPECT_STENCIL_BIT);
+		blit.dstSubresource.aspectMask = impl.m_aspect & (~VK_IMAGE_ASPECT_STENCIL_BIT);
 		blit.dstSubresource.baseArrayLayer = layer;
 		blit.dstSubresource.layerCount = 1;
 		blit.dstSubresource.mipLevel = i + 1;
@@ -364,10 +329,8 @@ void CommandBufferImpl::generateMipmaps2d(TexturePtr tex, U face, U layer)
 	m_texList.pushBack(m_alloc, tex);
 }
 
-//==============================================================================
-void CommandBufferImpl::uploadTextureSurface(TexturePtr tex,
-	const TextureSurfaceInfo& surf,
-	const TransientMemoryToken& token)
+void CommandBufferImpl::uploadTextureSurface(
+	TexturePtr tex, const TextureSurfaceInfo& surf, const TransientMemoryToken& token)
 {
 	commandCommon();
 	flushBarriers();
@@ -380,8 +343,7 @@ void CommandBufferImpl::uploadTextureSurface(TexturePtr tex,
 	{
 		U width = impl.m_width >> surf.m_level;
 		U height = impl.m_height >> surf.m_level;
-		ANKI_ASSERT(
-			token.m_range == computeSurfaceSize(width, height, impl.m_format));
+		ANKI_ASSERT(token.m_range == computeSurfaceSize(width, height, impl.m_format));
 
 		// Copy
 		VkBufferImageCopy region;
@@ -398,8 +360,7 @@ void CommandBufferImpl::uploadTextureSurface(TexturePtr tex,
 		region.bufferRowLength = 0;
 
 		vkCmdCopyBufferToImage(m_handle,
-			getGrManagerImpl().getTransientMemoryManager().getBufferHandle(
-				token.m_usage),
+			getGrManagerImpl().getTransientMemoryManager().getBufferHandle(token.m_usage),
 			impl.m_imageHandle,
 			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 			1,
@@ -410,15 +371,12 @@ void CommandBufferImpl::uploadTextureSurface(TexturePtr tex,
 		// Find the offset to the RGBA staging buff
 		U width = impl.m_width >> surf.m_level;
 		U height = impl.m_height >> surf.m_level;
-		PtrSize dstOffset = computeSurfaceSize(width,
-			height,
-			PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM));
+		PtrSize dstOffset =
+			computeSurfaceSize(width, height, PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM));
 		alignRoundUp(16, dstOffset);
 		ANKI_ASSERT(token.m_range
-			== dstOffset + computeSurfaceSize(width,
-							   height,
-							   PixelFormat(ComponentFormat::R8G8B8A8,
-												  TransformFormat::UNORM)));
+			== dstOffset
+				+ computeSurfaceSize(width, height, PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM)));
 		dstOffset += token.m_offset;
 
 		// Create the copy regions
@@ -437,11 +395,8 @@ void CommandBufferImpl::uploadTextureSurface(TexturePtr tex,
 		}
 
 		// Copy buffer to buffer
-		VkBuffer buffHandle =
-			getGrManagerImpl().getTransientMemoryManager().getBufferHandle(
-				token.m_usage);
-		vkCmdCopyBuffer(
-			m_handle, buffHandle, buffHandle, copies.getSize(), &copies[0]);
+		VkBuffer buffHandle = getGrManagerImpl().getTransientMemoryManager().getBufferHandle(token.m_usage);
+		vkCmdCopyBuffer(m_handle, buffHandle, buffHandle, copies.getSize(), &copies[0]);
 
 		// Set barrier
 		setBufferBarrier(VK_PIPELINE_STAGE_TRANSFER_BIT,
@@ -467,12 +422,8 @@ void CommandBufferImpl::uploadTextureSurface(TexturePtr tex,
 		region.bufferImageHeight = 0;
 		region.bufferRowLength = 0;
 
-		vkCmdCopyBufferToImage(m_handle,
-			buffHandle,
-			impl.m_imageHandle,
-			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-			1,
-			&region);
+		vkCmdCopyBufferToImage(
+			m_handle, buffHandle, impl.m_imageHandle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 	}
 	else
 	{
@@ -482,10 +433,8 @@ void CommandBufferImpl::uploadTextureSurface(TexturePtr tex,
 	m_texList.pushBack(m_alloc, tex);
 }
 
-//==============================================================================
-void CommandBufferImpl::uploadTextureVolume(TexturePtr tex,
-	const TextureVolumeInfo& vol,
-	const TransientMemoryToken& token)
+void CommandBufferImpl::uploadTextureVolume(
+	TexturePtr tex, const TextureVolumeInfo& vol, const TransientMemoryToken& token)
 {
 	commandCommon();
 	flushBarriers();
@@ -499,8 +448,7 @@ void CommandBufferImpl::uploadTextureVolume(TexturePtr tex,
 		U width = impl.m_width >> vol.m_level;
 		U height = impl.m_height >> vol.m_level;
 		U depth = impl.m_depth >> vol.m_level;
-		ANKI_ASSERT(token.m_range
-			== computeVolumeSize(width, height, depth, impl.m_format));
+		ANKI_ASSERT(token.m_range == computeVolumeSize(width, height, depth, impl.m_format));
 
 		// Copy
 		VkBufferImageCopy region;
@@ -517,8 +465,7 @@ void CommandBufferImpl::uploadTextureVolume(TexturePtr tex,
 		region.bufferRowLength = 0;
 
 		vkCmdCopyBufferToImage(m_handle,
-			getGrManagerImpl().getTransientMemoryManager().getBufferHandle(
-				token.m_usage),
+			getGrManagerImpl().getTransientMemoryManager().getBufferHandle(token.m_usage),
 			impl.m_imageHandle,
 			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 			1,
@@ -530,17 +477,12 @@ void CommandBufferImpl::uploadTextureVolume(TexturePtr tex,
 		U width = impl.m_width >> vol.m_level;
 		U height = impl.m_height >> vol.m_level;
 		U depth = impl.m_depth >> vol.m_level;
-		PtrSize dstOffset = computeVolumeSize(width,
-			height,
-			depth,
-			PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM));
+		PtrSize dstOffset =
+			computeVolumeSize(width, height, depth, PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM));
 		alignRoundUp(16, dstOffset);
 		ANKI_ASSERT(token.m_range
-			== dstOffset + computeVolumeSize(width,
-							   height,
-							   depth,
-							   PixelFormat(ComponentFormat::R8G8B8A8,
-												 TransformFormat::UNORM)));
+			== dstOffset + computeVolumeSize(
+							   width, height, depth, PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM)));
 		dstOffset += token.m_offset;
 
 		// Create the copy regions
@@ -554,21 +496,16 @@ void CommandBufferImpl::uploadTextureVolume(TexturePtr tex,
 				for(U d = 0; d < depth; ++d)
 				{
 					VkBufferCopy& c = copies[count++];
-					c.srcOffset = (d * height * width + y * width + x) * 3
-						+ token.m_offset;
-					c.dstOffset =
-						(d * height * width + y * width + x) * 4 + dstOffset;
+					c.srcOffset = (d * height * width + y * width + x) * 3 + token.m_offset;
+					c.dstOffset = (d * height * width + y * width + x) * 4 + dstOffset;
 					c.size = 3;
 				}
 			}
 		}
 
 		// Copy buffer to buffer
-		VkBuffer buffHandle =
-			getGrManagerImpl().getTransientMemoryManager().getBufferHandle(
-				token.m_usage);
-		vkCmdCopyBuffer(
-			m_handle, buffHandle, buffHandle, copies.getSize(), &copies[0]);
+		VkBuffer buffHandle = getGrManagerImpl().getTransientMemoryManager().getBufferHandle(token.m_usage);
+		vkCmdCopyBuffer(m_handle, buffHandle, buffHandle, copies.getSize(), &copies[0]);
 
 		// Set barrier
 		setBufferBarrier(VK_PIPELINE_STAGE_TRANSFER_BIT,
@@ -594,12 +531,8 @@ void CommandBufferImpl::uploadTextureVolume(TexturePtr tex,
 		region.bufferImageHeight = 0;
 		region.bufferRowLength = 0;
 
-		vkCmdCopyBufferToImage(m_handle,
-			buffHandle,
-			impl.m_imageHandle,
-			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-			1,
-			&region);
+		vkCmdCopyBufferToImage(
+			m_handle, buffHandle, impl.m_imageHandle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 	}
 	else
 	{

@@ -31,11 +31,7 @@ public:
 	virtual Error operator()(U32 taskId, PtrSize threadsCount) = 0;
 
 	/// Chose a starting and end index
-	static void choseStartEnd(U32 taskId,
-		PtrSize threadsCount,
-		PtrSize elementsCount,
-		PtrSize& start,
-		PtrSize& end)
+	static void choseStartEnd(U32 taskId, PtrSize threadsCount, PtrSize elementsCount, PtrSize& start, PtrSize& end)
 	{
 		F32 tid = taskId;
 		F32 div = F32(elementsCount) / threadsCount;
@@ -44,8 +40,8 @@ public:
 	}
 };
 
-/// Parallel task dispatcher. You feed it with tasks and sends them for
-/// execution in parallel and then waits for all to finish
+/// Parallel task dispatcher. You feed it with tasks and sends them for execution in parallel and then waits for all to
+/// finish.
 class ThreadPool : public NonCopyable
 {
 	friend class detail::ThreadPoolThread;

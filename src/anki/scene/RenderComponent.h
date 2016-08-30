@@ -23,15 +23,14 @@ template<typename T>
 class RenderComponentVariableTemplate;
 
 /// RenderComponent variable base. It's a visitable.
-using RenderComponentVariableVisitable =
-	VisitableCommonBase<RenderComponentVariable, // The base
-		RenderComponentVariableTemplate<F32>,
-		RenderComponentVariableTemplate<Vec2>,
-		RenderComponentVariableTemplate<Vec3>,
-		RenderComponentVariableTemplate<Vec4>,
-		RenderComponentVariableTemplate<Mat3>,
-		RenderComponentVariableTemplate<Mat4>,
-		RenderComponentVariableTemplate<TextureResourcePtr>>;
+using RenderComponentVariableVisitable = VisitableCommonBase<RenderComponentVariable, // The base
+	RenderComponentVariableTemplate<F32>,
+	RenderComponentVariableTemplate<Vec2>,
+	RenderComponentVariableTemplate<Vec3>,
+	RenderComponentVariableTemplate<Vec4>,
+	RenderComponentVariableTemplate<Mat3>,
+	RenderComponentVariableTemplate<Mat4>,
+	RenderComponentVariableTemplate<TextureResourcePtr>>;
 
 /// A wrapper on top of MaterialVariable
 class RenderComponentVariable : public RenderComponentVariableVisitable
@@ -55,8 +54,7 @@ public:
 	const T& getValue() const
 	{
 		ANKI_ASSERT(Base::isTypeOf<RenderComponentVariableTemplate<T>>());
-		auto derived =
-			static_cast<const RenderComponentVariableTemplate<T>*>(this);
+		auto derived = static_cast<const RenderComponentVariableTemplate<T>*>(this);
 		return derived->getValue();
 	}
 
@@ -69,8 +67,7 @@ protected:
 	const MaterialVariable* m_mvar = nullptr;
 };
 
-/// RenderComponent variable. This class should not be visible to other
-/// interfaces except render component
+/// RenderComponent variable. This class should not be visible to other interfaces except render component.
 template<typename T>
 class RenderComponentVariableTemplate : public RenderComponentVariable
 {
@@ -91,8 +88,7 @@ public:
 	void setValue(const T& value)
 	{
 		ANKI_ASSERT(isTypeOf<RenderComponentVariableTemplate<T>>());
-		ANKI_ASSERT(Base::getMaterialVariable().getBuiltin()
-			== BuiltinMaterialVariableId::NONE);
+		ANKI_ASSERT(Base::getMaterialVariable().getBuiltin() == BuiltinMaterialVariableId::NONE);
 		m_copy = value;
 	}
 
@@ -105,8 +101,8 @@ private:
 	T m_copy; ///< Copy of the data
 };
 
-/// Rendering data input and output. This is a structure because we don't want
-/// to change what buildRendering accepts all the time
+/// Rendering data input and output. This is a structure because we don't want to change what buildRendering accepts
+/// all the time.
 class RenderingBuildInfo
 {
 public:
@@ -151,11 +147,8 @@ public:
 		return m_vars.end();
 	}
 
-	/// Build up the rendering.
-	/// Given an array of submeshes that are visible append jobs to the GL
-	/// job chain
-	virtual ANKI_USE_RESULT Error buildRendering(
-		RenderingBuildInfo& data) const = 0;
+	/// Build up the rendering. Given an array of submeshes that are visible append jobs to the GL job chain.
+	virtual ANKI_USE_RESULT Error buildRendering(RenderingBuildInfo& data) const = 0;
 
 	/// Access the material
 	const Material& getMaterial() const
@@ -165,8 +158,7 @@ public:
 	}
 
 	/// Information for movables. It's actualy an array of transformations.
-	virtual void getRenderWorldTransform(
-		Bool& hasWorldTransforms, Transform& trf) const
+	virtual void getRenderWorldTransform(Bool& hasWorldTransforms, Transform& trf) const
 	{
 		hasWorldTransforms = false;
 		(void)trf;
@@ -201,8 +193,7 @@ private:
 	Variables m_vars;
 	const Material* m_mtl;
 
-	/// If 2 components have the same hash the renderer may potentially try
-	/// to merge them.
+	/// If 2 components have the same hash the renderer may potentially try to merge them.
 	U64 m_hash = 0;
 };
 /// @}

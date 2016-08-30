@@ -18,8 +18,8 @@ class File;
 /// @addtogroup util_private
 /// @{
 
-/// The logger singleton class. The logger cannot print errors or throw
-/// exceptions, it has to recover somehow. Its thread safe
+/// The logger singleton class. The logger cannot print errors or throw exceptions, it has to recover somehow. Its
+/// thread safe.
 /// To add a new signal:
 /// @code logger.addMessageHandler((void*)obj, &function) @endcode
 class Logger
@@ -61,19 +61,10 @@ public:
 	void addFileMessageHandler(File* file);
 
 	/// Send a message
-	void write(const char* file,
-		int line,
-		const char* func,
-		MessageType type,
-		const char* msg);
+	void write(const char* file, int line, const char* func, MessageType type, const char* msg);
 
 	/// Send a formated message
-	void writeFormated(const char* file,
-		int line,
-		const char* func,
-		MessageType type,
-		const char* fmt,
-		...);
+	void writeFormated(const char* file, int line, const char* func, MessageType type, const char* fmt, ...);
 
 private:
 	class Handler
@@ -103,11 +94,10 @@ private:
 
 typedef Singleton<Logger> LoggerSingleton;
 
-#define ANKI_LOGGER_MESSAGE(t, ...)                                            \
-	do                                                                         \
-	{                                                                          \
-		LoggerSingleton::get().writeFormated(                                  \
-			ANKI_FILE, __LINE__, ANKI_FUNC, t, __VA_ARGS__);                   \
+#define ANKI_LOGGER_MESSAGE(t, ...)                                                                                    \
+	do                                                                                                                 \
+	{                                                                                                                  \
+		LoggerSingleton::get().writeFormated(ANKI_FILE, __LINE__, ANKI_FUNC, t, __VA_ARGS__);                          \
 	} while(false);
 /// @}
 
@@ -115,20 +105,16 @@ typedef Singleton<Logger> LoggerSingleton;
 /// @{
 
 /// Log information message.
-#define ANKI_LOGI(...)                                                         \
-	ANKI_LOGGER_MESSAGE(Logger::MessageType::NORMAL, __VA_ARGS__)
+#define ANKI_LOGI(...) ANKI_LOGGER_MESSAGE(Logger::MessageType::NORMAL, __VA_ARGS__)
 
 /// Log warning message.
-#define ANKI_LOGW(...)                                                         \
-	ANKI_LOGGER_MESSAGE(Logger::MessageType::WARNING, __VA_ARGS__)
+#define ANKI_LOGW(...) ANKI_LOGGER_MESSAGE(Logger::MessageType::WARNING, __VA_ARGS__)
 
 /// Log error message.
-#define ANKI_LOGE(...)                                                         \
-	ANKI_LOGGER_MESSAGE(Logger::MessageType::ERROR, __VA_ARGS__)
+#define ANKI_LOGE(...) ANKI_LOGGER_MESSAGE(Logger::MessageType::ERROR, __VA_ARGS__)
 
 /// Log fatal message. It will will abort.
-#define ANKI_LOGF(...)                                                         \
-	ANKI_LOGGER_MESSAGE(Logger::MessageType::FATAL, __VA_ARGS__)
+#define ANKI_LOGF(...) ANKI_LOGGER_MESSAGE(Logger::MessageType::FATAL, __VA_ARGS__)
 /// @}
 
 } // end namespace anki

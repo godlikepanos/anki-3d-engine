@@ -13,14 +13,8 @@
 namespace anki
 {
 
-//==============================================================================
-// Misc                                                                        =
-//==============================================================================
-
-//==============================================================================
 /// Given a string return info about the shader
-static ANKI_USE_RESULT Error getShaderInfo(
-	const CString& str, ShaderType& type, ShaderTypeBit& bit, U& idx)
+static ANKI_USE_RESULT Error getShaderInfo(const CString& str, ShaderType& type, ShaderTypeBit& bit, U& idx)
 {
 	Error err = ErrorCode::NONE;
 
@@ -63,9 +57,7 @@ static ANKI_USE_RESULT Error getShaderInfo(
 	return err;
 }
 
-//==============================================================================
-static ANKI_USE_RESULT Error computeShaderVariableDataType(
-	const CString& str, ShaderVariableDataType& out)
+static ANKI_USE_RESULT Error computeShaderVariableDataType(const CString& str, ShaderVariableDataType& out)
 {
 	Error err = ErrorCode::NONE;
 
@@ -114,7 +106,6 @@ static ANKI_USE_RESULT Error computeShaderVariableDataType(
 	return err;
 }
 
-//==============================================================================
 static CString toString(ShaderVariableDataType in)
 {
 	CString out;
@@ -155,9 +146,7 @@ static CString toString(ShaderVariableDataType in)
 	return out;
 }
 
-//==============================================================================
-static ANKI_USE_RESULT Error computeBuiltin(
-	const CString& name, BuiltinMaterialVariableId& out)
+static ANKI_USE_RESULT Error computeBuiltin(const CString& name, BuiltinMaterialVariableId& out)
 {
 	if(name == "anki_mvp")
 	{
@@ -200,7 +189,6 @@ static ANKI_USE_RESULT Error computeBuiltin(
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 static ShaderVariableDataType getBuiltinType(BuiltinMaterialVariableId in)
 {
 	ShaderVariableDataType out = ShaderVariableDataType::SAMPLER_2D;
@@ -236,11 +224,6 @@ static ShaderVariableDataType getBuiltinType(BuiltinMaterialVariableId in)
 	return out;
 }
 
-//==============================================================================
-// MaterialLoaderInputVariable                                                 =
-//==============================================================================
-
-//==============================================================================
 void MaterialLoaderInputVariable::move(MaterialLoaderInputVariable& b)
 {
 	m_alloc = std::move(b.m_alloc);
@@ -260,23 +243,16 @@ void MaterialLoaderInputVariable::move(MaterialLoaderInputVariable& b)
 	m_shaderReferencedMask = b.m_shaderReferencedMask;
 }
 
-//==============================================================================
 CString MaterialLoaderInputVariable::typeStr() const
 {
 	return toString(m_type);
 }
 
-//==============================================================================
-// MaterialLoader                                                              =
-//==============================================================================
-
-//==============================================================================
 MaterialLoader::MaterialLoader(GenericMemoryPoolAllocator<U8> alloc)
 	: m_alloc(alloc)
 {
 }
 
-//==============================================================================
 MaterialLoader::~MaterialLoader()
 {
 	for(auto& it : m_source)
@@ -292,7 +268,6 @@ MaterialLoader::~MaterialLoader()
 	m_inputs.destroy(m_alloc);
 }
 
-//==============================================================================
 Error MaterialLoader::parseXmlDocument(const XmlDocument& doc)
 {
 	XmlElement materialEl, el;
@@ -344,7 +319,6 @@ Error MaterialLoader::parseXmlDocument(const XmlDocument& doc)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error MaterialLoader::parseProgramsTag(const XmlElement& el)
 {
 	//
@@ -381,8 +355,7 @@ Error MaterialLoader::parseProgramsTag(const XmlElement& el)
 	{
 		if(in.m_shaderDefinedMask != in.m_shaderReferencedMask)
 		{
-			ANKI_LOGE(
-				"Variable not referenced or not defined %s", &in.m_name[0]);
+			ANKI_LOGE("Variable not referenced or not defined %s", &in.m_name[0]);
 			return ErrorCode::USER_DATA;
 		}
 	}
@@ -390,7 +363,6 @@ Error MaterialLoader::parseProgramsTag(const XmlElement& el)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error MaterialLoader::parseProgramTag(const XmlElement& programEl)
 {
 	XmlElement el;
@@ -406,8 +378,7 @@ Error MaterialLoader::parseProgramTag(const XmlElement& programEl)
 
 	auto& lines = m_source[shaderidx];
 
-	if(glshader == ShaderType::TESSELLATION_CONTROL
-		|| glshader == ShaderType::TESSELLATION_EVALUATION)
+	if(glshader == ShaderType::TESSELLATION_CONTROL || glshader == ShaderType::TESSELLATION_EVALUATION)
 	{
 		m_tessellation = true;
 	}
@@ -461,8 +432,7 @@ Error MaterialLoader::parseProgramTag(const XmlElement& programEl)
 	// Other variables
 	for(Input& in : m_inputs)
 	{
-		if(!in.m_flags.m_inBlock
-			&& (in.m_shaderDefinedMask & glshaderbit) != ShaderTypeBit::NONE
+		if(!in.m_flags.m_inBlock && (in.m_shaderDefinedMask & glshaderbit) != ShaderTypeBit::NONE
 			&& !in.m_flags.m_specialBuiltin)
 		{
 			lines.pushBackSprintf(m_alloc, &in.m_line[0]);
@@ -491,7 +461,6 @@ Error MaterialLoader::parseProgramTag(const XmlElement& programEl)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error MaterialLoader::parseInputsTag(const XmlElement& programEl)
 {
 	XmlElement el;
@@ -535,8 +504,7 @@ Error MaterialLoader::parseInputsTag(const XmlElement& programEl)
 		}
 
 		// Check if instanced
-		if(in.m_builtin == BuiltinMaterialVariableId::MVP_MATRIX
-			|| in.m_builtin == BuiltinMaterialVariableId::MV_MATRIX
+		if(in.m_builtin == BuiltinMaterialVariableId::MVP_MATRIX || in.m_builtin == BuiltinMaterialVariableId::MV_MATRIX
 			|| in.m_builtin == BuiltinMaterialVariableId::NORMAL_MATRIX
 			|| in.m_builtin == BuiltinMaterialVariableId::BILLBOARD_MVP_MATRIX)
 		{
@@ -553,9 +521,7 @@ Error MaterialLoader::parseInputsTag(const XmlElement& programEl)
 		{
 			if(getBuiltinType(in.m_builtin) != in.m_type)
 			{
-				ANKI_LOGE("Builtin variable %s cannot be of type %s",
-					&in.m_name[0],
-					&cstr[0]);
+				ANKI_LOGE("Builtin variable %s cannot be of type %s", &in.m_name[0], &cstr[0]);
 				return ErrorCode::USER_DATA;
 			}
 		}
@@ -599,8 +565,7 @@ Error MaterialLoader::parseInputsTag(const XmlElement& programEl)
 		{
 			if(!in.m_flags.m_builtin)
 			{
-				ANKI_LOGE(
-					"Non-builtins should have a value: %s", &in.m_name[0]);
+				ANKI_LOGE("Non-builtins should have a value: %s", &in.m_name[0]);
 				return ErrorCode::USER_DATA;
 			}
 
@@ -625,8 +590,7 @@ Error MaterialLoader::parseInputsTag(const XmlElement& programEl)
 		}
 
 		// Set some stuff
-		if(in.m_type >= ShaderVariableDataType::SAMPLERS_FIRST
-			&& in.m_type <= ShaderVariableDataType::SAMPLERS_LAST)
+		if(in.m_type >= ShaderVariableDataType::SAMPLERS_FIRST && in.m_type <= ShaderVariableDataType::SAMPLERS_LAST)
 		{
 			in.m_flags.m_texture = true;
 		}
@@ -638,16 +602,15 @@ Error MaterialLoader::parseInputsTag(const XmlElement& programEl)
 
 		// Now you have the info to check if duplicate
 		Input* duplicateInp = nullptr;
-		Error err =
-			m_inputs.iterateForward([&duplicateInp, &in](Input& inp) -> Error {
-				if(in.m_name == inp.m_name)
-				{
-					duplicateInp = &in;
-					return ErrorCode::NONE;
-				}
-
+		Error err = m_inputs.iterateForward([&duplicateInp, &in](Input& inp) -> Error {
+			if(in.m_name == inp.m_name)
+			{
+				duplicateInp = &in;
 				return ErrorCode::NONE;
-			});
+			}
+
+			return ErrorCode::NONE;
+		});
 		(void)err;
 
 		if(duplicateInp != nullptr)
@@ -685,12 +648,10 @@ Error MaterialLoader::parseInputsTag(const XmlElement& programEl)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void MaterialLoader::processInputs()
 {
 	// Sort the variables to decrease the change of creating unique shaders
-	m_inputs.sort(
-		[](const Input& a, const Input& b) { return a.m_name < b.m_name; });
+	m_inputs.sort([](const Input& a, const Input& b) { return a.m_name < b.m_name; });
 
 	for(auto& in : m_inputs)
 	{
@@ -742,23 +703,16 @@ void MaterialLoader::processInputs()
 			String initList;
 			in.m_value.join(m_alloc, ", ", initList);
 
-			in.m_line.sprintf(m_alloc,
-				"const %s var%u = %s(%s);",
-				&in.typeStr()[0],
-				in.m_index,
-				&in.typeStr()[0],
-				&initList[0]);
+			in.m_line.sprintf(
+				m_alloc, "const %s var%u = %s(%s);", &in.typeStr()[0], in.m_index, &in.typeStr()[0], &initList[0]);
 
 			initList.destroy(m_alloc);
 		}
 	}
 }
 
-//==============================================================================
-Error MaterialLoader::parseOperationTag(const XmlElement& operationTag,
-	ShaderType glshader,
-	ShaderTypeBit glshaderbit,
-	String& out)
+Error MaterialLoader::parseOperationTag(
+	const XmlElement& operationTag, ShaderType glshader, ShaderTypeBit glshaderbit, String& out)
 {
 	CString cstr;
 	XmlElement el;
@@ -801,8 +755,7 @@ Error MaterialLoader::parseOperationTag(const XmlElement& operationTag,
 			Input* input = nullptr;
 			for(Input& in : m_inputs)
 			{
-				// Check that the first part of the string is equal to the
-				// variable and the following char is '['
+				// Check that the first part of the string is equal to the variable and the following char is '['
 				if(in.m_name == arg)
 				{
 					input = &in;
@@ -828,8 +781,7 @@ Error MaterialLoader::parseOperationTag(const XmlElement& operationTag,
 				{
 					argsList.pushBackSprintf("%s%d%s",
 						input->m_flags.m_texture ? "tex" : "var",
-						!input->m_flags.m_texture ? input->m_index
-												  : input->m_binding,
+						!input->m_flags.m_texture ? input->m_index : input->m_binding,
 						input->m_flags.m_instanced ? " INSTANCE_ID" : "");
 				}
 				else
@@ -883,9 +835,7 @@ Error MaterialLoader::parseOperationTag(const XmlElement& operationTag,
 		argsList.join(m_alloc, ", ", argsStr);
 	}
 
-	lines.pushBackSprintf("%s(%s);\n#endif",
-		&funcName[0],
-		(argsStr.isEmpty()) ? "" : &argsStr[0]);
+	lines.pushBackSprintf("%s(%s);\n#endif", &funcName[0], (argsStr.isEmpty()) ? "" : &argsStr[0]);
 
 	// Bake final string
 	lines.join(m_alloc, "", out);
@@ -893,7 +843,6 @@ Error MaterialLoader::parseOperationTag(const XmlElement& operationTag,
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void MaterialLoader::mutate(const RenderingKey& key)
 {
 	U instanceCount = key.m_instanceCount;
@@ -960,8 +909,7 @@ void MaterialLoader::mutate(const RenderingKey& key)
 			else
 			{
 				alignRoundUp(sizeof(Vec4), in.m_blockInfo.m_offset);
-				m_blockSize = in.m_blockInfo.m_offset
-					+ sizeof(Vec4) * in.m_blockInfo.m_arraySize;
+				m_blockSize = in.m_blockInfo.m_offset + sizeof(Vec4) * in.m_blockInfo.m_arraySize;
 			}
 		}
 		else if(in.m_type == ShaderVariableDataType::VEC3)
@@ -975,31 +923,27 @@ void MaterialLoader::mutate(const RenderingKey& key)
 			}
 			else
 			{
-				m_blockSize = in.m_blockInfo.m_offset
-					+ sizeof(Vec4) * in.m_blockInfo.m_arraySize;
+				m_blockSize = in.m_blockInfo.m_offset + sizeof(Vec4) * in.m_blockInfo.m_arraySize;
 			}
 		}
 		else if(in.m_type == ShaderVariableDataType::VEC4)
 		{
 			in.m_blockInfo.m_arrayStride = sizeof(Vec4);
 			alignRoundUp(sizeof(Vec4), in.m_blockInfo.m_offset);
-			m_blockSize = in.m_blockInfo.m_offset
-				+ sizeof(Vec4) * in.m_blockInfo.m_arraySize;
+			m_blockSize = in.m_blockInfo.m_offset + sizeof(Vec4) * in.m_blockInfo.m_arraySize;
 		}
 		else if(in.m_type == ShaderVariableDataType::MAT3)
 		{
 			alignRoundUp(sizeof(Vec4), in.m_blockInfo.m_offset);
 			in.m_blockInfo.m_arrayStride = sizeof(Vec4) * 3;
-			m_blockSize = in.m_blockInfo.m_offset
-				+ sizeof(Vec4) * 3 * in.m_blockInfo.m_arraySize;
+			m_blockSize = in.m_blockInfo.m_offset + sizeof(Vec4) * 3 * in.m_blockInfo.m_arraySize;
 			in.m_blockInfo.m_matrixStride = sizeof(Vec4);
 		}
 		else if(in.m_type == ShaderVariableDataType::MAT4)
 		{
 			alignRoundUp(sizeof(Vec4), in.m_blockInfo.m_offset);
 			in.m_blockInfo.m_arrayStride = sizeof(Mat4);
-			m_blockSize = in.m_blockInfo.m_offset
-				+ sizeof(Mat4) * in.m_blockInfo.m_arraySize;
+			m_blockSize = in.m_blockInfo.m_offset + sizeof(Mat4) * in.m_blockInfo.m_arraySize;
 			in.m_blockInfo.m_matrixStride = sizeof(Vec4);
 		}
 		else

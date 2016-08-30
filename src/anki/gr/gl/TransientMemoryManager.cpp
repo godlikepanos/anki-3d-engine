@@ -11,7 +11,6 @@
 namespace anki
 {
 
-//==============================================================================
 TransientMemoryManager::~TransientMemoryManager()
 {
 	for(PerFrameBuffer& buff : m_perFrameBuffers)
@@ -21,7 +20,6 @@ TransientMemoryManager::~TransientMemoryManager()
 	}
 }
 
-//==============================================================================
 void TransientMemoryManager::destroyRenderThread()
 {
 	for(PerFrameBuffer& buff : m_perFrameBuffers)
@@ -36,26 +34,19 @@ void TransientMemoryManager::destroyRenderThread()
 	}
 }
 
-//==============================================================================
-void TransientMemoryManager::initMainThread(
-	GenericMemoryPoolAllocator<U8> alloc, const ConfigSet& cfg)
+void TransientMemoryManager::initMainThread(GenericMemoryPoolAllocator<U8> alloc, const ConfigSet& cfg)
 {
 	m_alloc = alloc;
 
-	m_perFrameBuffers[TransientBufferType::UNIFORM].m_size =
-		cfg.getNumber("gr.uniformPerFrameMemorySize");
+	m_perFrameBuffers[TransientBufferType::UNIFORM].m_size = cfg.getNumber("gr.uniformPerFrameMemorySize");
 
-	m_perFrameBuffers[TransientBufferType::STORAGE].m_size =
-		cfg.getNumber("gr.storagePerFrameMemorySize");
+	m_perFrameBuffers[TransientBufferType::STORAGE].m_size = cfg.getNumber("gr.storagePerFrameMemorySize");
 
-	m_perFrameBuffers[TransientBufferType::VERTEX].m_size =
-		cfg.getNumber("gr.vertexPerFrameMemorySize");
+	m_perFrameBuffers[TransientBufferType::VERTEX].m_size = cfg.getNumber("gr.vertexPerFrameMemorySize");
 
-	m_perFrameBuffers[TransientBufferType::TRANSFER].m_size =
-		cfg.getNumber("gr.transferPerFrameMemorySize");
+	m_perFrameBuffers[TransientBufferType::TRANSFER].m_size = cfg.getNumber("gr.transferPerFrameMemorySize");
 }
 
-//==============================================================================
 void TransientMemoryManager::initRenderThread()
 {
 	const U BUFF_FLAGS = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT;
@@ -70,8 +61,7 @@ void TransientMemoryManager::initRenderThread()
 
 		// Map it
 		glBufferStorage(GL_UNIFORM_BUFFER, size, nullptr, BUFF_FLAGS);
-		buff.m_mappedMem = static_cast<U8*>(
-			glMapBufferRange(GL_UNIFORM_BUFFER, 0, size, BUFF_FLAGS));
+		buff.m_mappedMem = static_cast<U8*>(glMapBufferRange(GL_UNIFORM_BUFFER, 0, size, BUFF_FLAGS));
 		ANKI_ASSERT(buff.m_mappedMem);
 
 		// Create the allocator
@@ -90,14 +80,12 @@ void TransientMemoryManager::initRenderThread()
 
 		// Map it
 		glBufferStorage(GL_SHADER_STORAGE_BUFFER, size, nullptr, BUFF_FLAGS);
-		buff.m_mappedMem = static_cast<U8*>(
-			glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, size, BUFF_FLAGS));
+		buff.m_mappedMem = static_cast<U8*>(glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, size, BUFF_FLAGS));
 		ANKI_ASSERT(buff.m_mappedMem);
 
 		// Create the allocator
 		GLint64 blockAlignment;
-		glGetInteger64v(
-			GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT, &blockAlignment);
+		glGetInteger64v(GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT, &blockAlignment);
 		buff.m_alloc.init(size, blockAlignment, MAX_STORAGE_BLOCK_SIZE);
 	}
 
@@ -111,8 +99,7 @@ void TransientMemoryManager::initRenderThread()
 
 		// Map it
 		glBufferStorage(GL_ARRAY_BUFFER, size, nullptr, BUFF_FLAGS);
-		buff.m_mappedMem = static_cast<U8*>(
-			glMapBufferRange(GL_ARRAY_BUFFER, 0, size, BUFF_FLAGS));
+		buff.m_mappedMem = static_cast<U8*>(glMapBufferRange(GL_ARRAY_BUFFER, 0, size, BUFF_FLAGS));
 		ANKI_ASSERT(buff.m_mappedMem);
 
 		// Create the allocator
@@ -130,7 +117,6 @@ void TransientMemoryManager::initRenderThread()
 	}
 }
 
-//==============================================================================
 void TransientMemoryManager::allocate(PtrSize size,
 	BufferUsageBit usage,
 	TransientMemoryTokenLifetime lifespan,
@@ -170,12 +156,9 @@ void TransientMemoryManager::allocate(PtrSize size,
 	}
 }
 
-//==============================================================================
 void TransientMemoryManager::endFrame()
 {
-	for(TransientBufferType usage = TransientBufferType::UNIFORM;
-		usage < TransientBufferType::COUNT;
-		++usage)
+	for(TransientBufferType usage = TransientBufferType::UNIFORM; usage < TransientBufferType::COUNT; ++usage)
 	{
 		PerFrameBuffer& buff = m_perFrameBuffers[usage];
 
@@ -185,12 +168,10 @@ void TransientMemoryManager::endFrame()
 			switch(usage)
 			{
 			case TransientBufferType::UNIFORM:
-				ANKI_TRACE_INC_COUNTER(GR_DYNAMIC_UNIFORMS_SIZE,
-					buff.m_alloc.getUnallocatedMemorySize());
+				ANKI_TRACE_INC_COUNTER(GR_DYNAMIC_UNIFORMS_SIZE, buff.m_alloc.getUnallocatedMemorySize());
 				break;
 			case TransientBufferType::STORAGE:
-				ANKI_TRACE_INC_COUNTER(GR_DYNAMIC_STORAGE_SIZE,
-					buff.m_alloc.getUnallocatedMemorySize());
+				ANKI_TRACE_INC_COUNTER(GR_DYNAMIC_STORAGE_SIZE, buff.m_alloc.getUnallocatedMemorySize());
 				break;
 			default:
 				break;

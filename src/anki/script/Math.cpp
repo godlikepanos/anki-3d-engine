@@ -11,11 +11,6 @@
 namespace anki
 {
 
-//==============================================================================
-// Vec2                                                                        =
-//==============================================================================
-
-//==============================================================================
 static const char* classnameVec2 = "Vec2";
 
 template<>
@@ -30,7 +25,6 @@ const char* LuaBinder::getWrappedTypeName<Vec2>()
 	return classnameVec2;
 }
 
-//==============================================================================
 /// Pre-wrap constructor for Vec2.
 static inline int pwrapVec2Ctor(lua_State* l)
 {
@@ -67,7 +61,6 @@ static inline int pwrapVec2Ctor(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap constructor for Vec2.
 static int wrapVec2Ctor(lua_State* l)
 {
@@ -81,7 +74,6 @@ static int wrapVec2Ctor(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap destructor for Vec2.
 static int wrapVec2Dtor(lua_State* l)
 {
@@ -107,7 +99,6 @@ static int wrapVec2Dtor(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec2::getX.
 static inline int pwrapVec2getX(lua_State* l)
 {
@@ -137,7 +128,6 @@ static inline int pwrapVec2getX(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Vec2::getX.
 static int wrapVec2getX(lua_State* l)
 {
@@ -151,7 +141,6 @@ static int wrapVec2getX(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec2::getY.
 static inline int pwrapVec2getY(lua_State* l)
 {
@@ -181,7 +170,6 @@ static inline int pwrapVec2getY(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Vec2::getY.
 static int wrapVec2getY(lua_State* l)
 {
@@ -195,7 +183,6 @@ static int wrapVec2getY(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec2::setX.
 static inline int pwrapVec2setX(lua_State* l)
 {
@@ -229,7 +216,6 @@ static inline int pwrapVec2setX(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap method Vec2::setX.
 static int wrapVec2setX(lua_State* l)
 {
@@ -243,7 +229,6 @@ static int wrapVec2setX(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec2::setY.
 static inline int pwrapVec2setY(lua_State* l)
 {
@@ -277,7 +262,6 @@ static inline int pwrapVec2setY(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap method Vec2::setY.
 static int wrapVec2setY(lua_State* l)
 {
@@ -291,7 +275,6 @@ static int wrapVec2setY(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec2::setAll.
 static inline int pwrapVec2setAll(lua_State* l)
 {
@@ -331,7 +314,6 @@ static inline int pwrapVec2setAll(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap method Vec2::setAll.
 static int wrapVec2setAll(lua_State* l)
 {
@@ -345,7 +327,6 @@ static int wrapVec2setAll(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec2::getAt.
 static inline int pwrapVec2getAt(lua_State* l)
 {
@@ -382,7 +363,6 @@ static inline int pwrapVec2getAt(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Vec2::getAt.
 static int wrapVec2getAt(lua_State* l)
 {
@@ -396,7 +376,6 @@ static int wrapVec2getAt(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec2::setAt.
 static inline int pwrapVec2setAt(lua_State* l)
 {
@@ -436,7 +415,6 @@ static inline int pwrapVec2setAt(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap method Vec2::setAt.
 static int wrapVec2setAt(lua_State* l)
 {
@@ -450,7 +428,6 @@ static int wrapVec2setAt(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec2::operator=.
 static inline int pwrapVec2copy(lua_State* l)
 {
@@ -486,7 +463,6 @@ static inline int pwrapVec2copy(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap method Vec2::operator=.
 static int wrapVec2copy(lua_State* l)
 {
@@ -500,7 +476,6 @@ static int wrapVec2copy(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec2::operator+.
 static inline int pwrapVec2__add(lua_State* l)
 {
@@ -544,7 +519,6 @@ static inline int pwrapVec2__add(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Vec2::operator+.
 static int wrapVec2__add(lua_State* l)
 {
@@ -558,7 +532,6 @@ static int wrapVec2__add(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec2::operator-.
 static inline int pwrapVec2__sub(lua_State* l)
 {
@@ -602,7 +575,6 @@ static inline int pwrapVec2__sub(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Vec2::operator-.
 static int wrapVec2__sub(lua_State* l)
 {
@@ -616,7 +588,6 @@ static int wrapVec2__sub(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec2::operator*.
 static inline int pwrapVec2__mul(lua_State* l)
 {
@@ -660,7 +631,6 @@ static inline int pwrapVec2__mul(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Vec2::operator*.
 static int wrapVec2__mul(lua_State* l)
 {
@@ -674,7 +644,6 @@ static int wrapVec2__mul(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec2::operator/.
 static inline int pwrapVec2__div(lua_State* l)
 {
@@ -718,7 +687,6 @@ static inline int pwrapVec2__div(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Vec2::operator/.
 static int wrapVec2__div(lua_State* l)
 {
@@ -732,7 +700,6 @@ static int wrapVec2__div(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec2::operator==.
 static inline int pwrapVec2__eq(lua_State* l)
 {
@@ -771,7 +738,6 @@ static inline int pwrapVec2__eq(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Vec2::operator==.
 static int wrapVec2__eq(lua_State* l)
 {
@@ -785,7 +751,6 @@ static int wrapVec2__eq(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec2::getLength.
 static inline int pwrapVec2getLength(lua_State* l)
 {
@@ -815,7 +780,6 @@ static inline int pwrapVec2getLength(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Vec2::getLength.
 static int wrapVec2getLength(lua_State* l)
 {
@@ -829,7 +793,6 @@ static int wrapVec2getLength(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec2::getNormalized.
 static inline int pwrapVec2getNormalized(lua_State* l)
 {
@@ -864,7 +827,6 @@ static inline int pwrapVec2getNormalized(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Vec2::getNormalized.
 static int wrapVec2getNormalized(lua_State* l)
 {
@@ -878,7 +840,6 @@ static int wrapVec2getNormalized(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec2::normalize.
 static inline int pwrapVec2normalize(lua_State* l)
 {
@@ -905,7 +866,6 @@ static inline int pwrapVec2normalize(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap method Vec2::normalize.
 static int wrapVec2normalize(lua_State* l)
 {
@@ -919,7 +879,6 @@ static int wrapVec2normalize(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec2::dot.
 static inline int pwrapVec2dot(lua_State* l)
 {
@@ -958,7 +917,6 @@ static inline int pwrapVec2dot(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Vec2::dot.
 static int wrapVec2dot(lua_State* l)
 {
@@ -972,7 +930,6 @@ static int wrapVec2dot(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap class Vec2.
 static inline void wrapVec2(lua_State* l)
 {
@@ -999,11 +956,6 @@ static inline void wrapVec2(lua_State* l)
 	lua_settop(l, 0);
 }
 
-//==============================================================================
-// Vec3                                                                        =
-//==============================================================================
-
-//==============================================================================
 static const char* classnameVec3 = "Vec3";
 
 template<>
@@ -1018,7 +970,6 @@ const char* LuaBinder::getWrappedTypeName<Vec3>()
 	return classnameVec3;
 }
 
-//==============================================================================
 /// Pre-wrap constructor for Vec3.
 static inline int pwrapVec3Ctor(lua_State* l)
 {
@@ -1061,7 +1012,6 @@ static inline int pwrapVec3Ctor(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap constructor for Vec3.
 static int wrapVec3Ctor(lua_State* l)
 {
@@ -1075,7 +1025,6 @@ static int wrapVec3Ctor(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap destructor for Vec3.
 static int wrapVec3Dtor(lua_State* l)
 {
@@ -1101,7 +1050,6 @@ static int wrapVec3Dtor(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec3::getX.
 static inline int pwrapVec3getX(lua_State* l)
 {
@@ -1131,7 +1079,6 @@ static inline int pwrapVec3getX(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Vec3::getX.
 static int wrapVec3getX(lua_State* l)
 {
@@ -1145,7 +1092,6 @@ static int wrapVec3getX(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec3::getY.
 static inline int pwrapVec3getY(lua_State* l)
 {
@@ -1175,7 +1121,6 @@ static inline int pwrapVec3getY(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Vec3::getY.
 static int wrapVec3getY(lua_State* l)
 {
@@ -1189,7 +1134,6 @@ static int wrapVec3getY(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec3::getZ.
 static inline int pwrapVec3getZ(lua_State* l)
 {
@@ -1219,7 +1163,6 @@ static inline int pwrapVec3getZ(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Vec3::getZ.
 static int wrapVec3getZ(lua_State* l)
 {
@@ -1233,7 +1176,6 @@ static int wrapVec3getZ(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec3::setX.
 static inline int pwrapVec3setX(lua_State* l)
 {
@@ -1267,7 +1209,6 @@ static inline int pwrapVec3setX(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap method Vec3::setX.
 static int wrapVec3setX(lua_State* l)
 {
@@ -1281,7 +1222,6 @@ static int wrapVec3setX(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec3::setY.
 static inline int pwrapVec3setY(lua_State* l)
 {
@@ -1315,7 +1255,6 @@ static inline int pwrapVec3setY(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap method Vec3::setY.
 static int wrapVec3setY(lua_State* l)
 {
@@ -1329,7 +1268,6 @@ static int wrapVec3setY(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec3::setZ.
 static inline int pwrapVec3setZ(lua_State* l)
 {
@@ -1363,7 +1301,6 @@ static inline int pwrapVec3setZ(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap method Vec3::setZ.
 static int wrapVec3setZ(lua_State* l)
 {
@@ -1377,7 +1314,6 @@ static int wrapVec3setZ(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec3::setAll.
 static inline int pwrapVec3setAll(lua_State* l)
 {
@@ -1423,7 +1359,6 @@ static inline int pwrapVec3setAll(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap method Vec3::setAll.
 static int wrapVec3setAll(lua_State* l)
 {
@@ -1437,7 +1372,6 @@ static int wrapVec3setAll(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec3::getAt.
 static inline int pwrapVec3getAt(lua_State* l)
 {
@@ -1474,7 +1408,6 @@ static inline int pwrapVec3getAt(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Vec3::getAt.
 static int wrapVec3getAt(lua_State* l)
 {
@@ -1488,7 +1421,6 @@ static int wrapVec3getAt(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec3::setAt.
 static inline int pwrapVec3setAt(lua_State* l)
 {
@@ -1528,7 +1460,6 @@ static inline int pwrapVec3setAt(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap method Vec3::setAt.
 static int wrapVec3setAt(lua_State* l)
 {
@@ -1542,7 +1473,6 @@ static int wrapVec3setAt(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec3::operator=.
 static inline int pwrapVec3copy(lua_State* l)
 {
@@ -1578,7 +1508,6 @@ static inline int pwrapVec3copy(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap method Vec3::operator=.
 static int wrapVec3copy(lua_State* l)
 {
@@ -1592,7 +1521,6 @@ static int wrapVec3copy(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec3::operator+.
 static inline int pwrapVec3__add(lua_State* l)
 {
@@ -1636,7 +1564,6 @@ static inline int pwrapVec3__add(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Vec3::operator+.
 static int wrapVec3__add(lua_State* l)
 {
@@ -1650,7 +1577,6 @@ static int wrapVec3__add(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec3::operator-.
 static inline int pwrapVec3__sub(lua_State* l)
 {
@@ -1694,7 +1620,6 @@ static inline int pwrapVec3__sub(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Vec3::operator-.
 static int wrapVec3__sub(lua_State* l)
 {
@@ -1708,7 +1633,6 @@ static int wrapVec3__sub(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec3::operator*.
 static inline int pwrapVec3__mul(lua_State* l)
 {
@@ -1752,7 +1676,6 @@ static inline int pwrapVec3__mul(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Vec3::operator*.
 static int wrapVec3__mul(lua_State* l)
 {
@@ -1766,7 +1689,6 @@ static int wrapVec3__mul(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec3::operator/.
 static inline int pwrapVec3__div(lua_State* l)
 {
@@ -1810,7 +1732,6 @@ static inline int pwrapVec3__div(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Vec3::operator/.
 static int wrapVec3__div(lua_State* l)
 {
@@ -1824,7 +1745,6 @@ static int wrapVec3__div(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec3::operator==.
 static inline int pwrapVec3__eq(lua_State* l)
 {
@@ -1863,7 +1783,6 @@ static inline int pwrapVec3__eq(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Vec3::operator==.
 static int wrapVec3__eq(lua_State* l)
 {
@@ -1877,7 +1796,6 @@ static int wrapVec3__eq(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec3::getLength.
 static inline int pwrapVec3getLength(lua_State* l)
 {
@@ -1907,7 +1825,6 @@ static inline int pwrapVec3getLength(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Vec3::getLength.
 static int wrapVec3getLength(lua_State* l)
 {
@@ -1921,7 +1838,6 @@ static int wrapVec3getLength(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec3::getNormalized.
 static inline int pwrapVec3getNormalized(lua_State* l)
 {
@@ -1956,7 +1872,6 @@ static inline int pwrapVec3getNormalized(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Vec3::getNormalized.
 static int wrapVec3getNormalized(lua_State* l)
 {
@@ -1970,7 +1885,6 @@ static int wrapVec3getNormalized(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec3::normalize.
 static inline int pwrapVec3normalize(lua_State* l)
 {
@@ -1997,7 +1911,6 @@ static inline int pwrapVec3normalize(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap method Vec3::normalize.
 static int wrapVec3normalize(lua_State* l)
 {
@@ -2011,7 +1924,6 @@ static int wrapVec3normalize(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec3::dot.
 static inline int pwrapVec3dot(lua_State* l)
 {
@@ -2050,7 +1962,6 @@ static inline int pwrapVec3dot(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Vec3::dot.
 static int wrapVec3dot(lua_State* l)
 {
@@ -2064,7 +1975,6 @@ static int wrapVec3dot(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap class Vec3.
 static inline void wrapVec3(lua_State* l)
 {
@@ -2093,11 +2003,6 @@ static inline void wrapVec3(lua_State* l)
 	lua_settop(l, 0);
 }
 
-//==============================================================================
-// Vec4                                                                        =
-//==============================================================================
-
-//==============================================================================
 static const char* classnameVec4 = "Vec4";
 
 template<>
@@ -2112,7 +2017,6 @@ const char* LuaBinder::getWrappedTypeName<Vec4>()
 	return classnameVec4;
 }
 
-//==============================================================================
 /// Pre-wrap constructor for Vec4.
 static inline int pwrapVec4Ctor(lua_State* l)
 {
@@ -2161,7 +2065,6 @@ static inline int pwrapVec4Ctor(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap constructor for Vec4.
 static int wrapVec4Ctor(lua_State* l)
 {
@@ -2175,7 +2078,6 @@ static int wrapVec4Ctor(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap destructor for Vec4.
 static int wrapVec4Dtor(lua_State* l)
 {
@@ -2201,7 +2103,6 @@ static int wrapVec4Dtor(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec4::getX.
 static inline int pwrapVec4getX(lua_State* l)
 {
@@ -2231,7 +2132,6 @@ static inline int pwrapVec4getX(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Vec4::getX.
 static int wrapVec4getX(lua_State* l)
 {
@@ -2245,7 +2145,6 @@ static int wrapVec4getX(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec4::getY.
 static inline int pwrapVec4getY(lua_State* l)
 {
@@ -2275,7 +2174,6 @@ static inline int pwrapVec4getY(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Vec4::getY.
 static int wrapVec4getY(lua_State* l)
 {
@@ -2289,7 +2187,6 @@ static int wrapVec4getY(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec4::getZ.
 static inline int pwrapVec4getZ(lua_State* l)
 {
@@ -2319,7 +2216,6 @@ static inline int pwrapVec4getZ(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Vec4::getZ.
 static int wrapVec4getZ(lua_State* l)
 {
@@ -2333,7 +2229,6 @@ static int wrapVec4getZ(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec4::getW.
 static inline int pwrapVec4getW(lua_State* l)
 {
@@ -2363,7 +2258,6 @@ static inline int pwrapVec4getW(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Vec4::getW.
 static int wrapVec4getW(lua_State* l)
 {
@@ -2377,7 +2271,6 @@ static int wrapVec4getW(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec4::setX.
 static inline int pwrapVec4setX(lua_State* l)
 {
@@ -2411,7 +2304,6 @@ static inline int pwrapVec4setX(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap method Vec4::setX.
 static int wrapVec4setX(lua_State* l)
 {
@@ -2425,7 +2317,6 @@ static int wrapVec4setX(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec4::setY.
 static inline int pwrapVec4setY(lua_State* l)
 {
@@ -2459,7 +2350,6 @@ static inline int pwrapVec4setY(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap method Vec4::setY.
 static int wrapVec4setY(lua_State* l)
 {
@@ -2473,7 +2363,6 @@ static int wrapVec4setY(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec4::setZ.
 static inline int pwrapVec4setZ(lua_State* l)
 {
@@ -2507,7 +2396,6 @@ static inline int pwrapVec4setZ(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap method Vec4::setZ.
 static int wrapVec4setZ(lua_State* l)
 {
@@ -2521,7 +2409,6 @@ static int wrapVec4setZ(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec4::setW.
 static inline int pwrapVec4setW(lua_State* l)
 {
@@ -2555,7 +2442,6 @@ static inline int pwrapVec4setW(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap method Vec4::setW.
 static int wrapVec4setW(lua_State* l)
 {
@@ -2569,7 +2455,6 @@ static int wrapVec4setW(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec4::setAll.
 static inline int pwrapVec4setAll(lua_State* l)
 {
@@ -2621,7 +2506,6 @@ static inline int pwrapVec4setAll(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap method Vec4::setAll.
 static int wrapVec4setAll(lua_State* l)
 {
@@ -2635,7 +2519,6 @@ static int wrapVec4setAll(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec4::getAt.
 static inline int pwrapVec4getAt(lua_State* l)
 {
@@ -2672,7 +2555,6 @@ static inline int pwrapVec4getAt(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Vec4::getAt.
 static int wrapVec4getAt(lua_State* l)
 {
@@ -2686,7 +2568,6 @@ static int wrapVec4getAt(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec4::setAt.
 static inline int pwrapVec4setAt(lua_State* l)
 {
@@ -2726,7 +2607,6 @@ static inline int pwrapVec4setAt(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap method Vec4::setAt.
 static int wrapVec4setAt(lua_State* l)
 {
@@ -2740,7 +2620,6 @@ static int wrapVec4setAt(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec4::operator=.
 static inline int pwrapVec4copy(lua_State* l)
 {
@@ -2776,7 +2655,6 @@ static inline int pwrapVec4copy(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap method Vec4::operator=.
 static int wrapVec4copy(lua_State* l)
 {
@@ -2790,7 +2668,6 @@ static int wrapVec4copy(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec4::operator+.
 static inline int pwrapVec4__add(lua_State* l)
 {
@@ -2834,7 +2711,6 @@ static inline int pwrapVec4__add(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Vec4::operator+.
 static int wrapVec4__add(lua_State* l)
 {
@@ -2848,7 +2724,6 @@ static int wrapVec4__add(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec4::operator-.
 static inline int pwrapVec4__sub(lua_State* l)
 {
@@ -2892,7 +2767,6 @@ static inline int pwrapVec4__sub(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Vec4::operator-.
 static int wrapVec4__sub(lua_State* l)
 {
@@ -2906,7 +2780,6 @@ static int wrapVec4__sub(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec4::operator*.
 static inline int pwrapVec4__mul(lua_State* l)
 {
@@ -2950,7 +2823,6 @@ static inline int pwrapVec4__mul(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Vec4::operator*.
 static int wrapVec4__mul(lua_State* l)
 {
@@ -2964,7 +2836,6 @@ static int wrapVec4__mul(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec4::operator/.
 static inline int pwrapVec4__div(lua_State* l)
 {
@@ -3008,7 +2879,6 @@ static inline int pwrapVec4__div(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Vec4::operator/.
 static int wrapVec4__div(lua_State* l)
 {
@@ -3022,7 +2892,6 @@ static int wrapVec4__div(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec4::operator==.
 static inline int pwrapVec4__eq(lua_State* l)
 {
@@ -3061,7 +2930,6 @@ static inline int pwrapVec4__eq(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Vec4::operator==.
 static int wrapVec4__eq(lua_State* l)
 {
@@ -3075,7 +2943,6 @@ static int wrapVec4__eq(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec4::getLength.
 static inline int pwrapVec4getLength(lua_State* l)
 {
@@ -3105,7 +2972,6 @@ static inline int pwrapVec4getLength(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Vec4::getLength.
 static int wrapVec4getLength(lua_State* l)
 {
@@ -3119,7 +2985,6 @@ static int wrapVec4getLength(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec4::getNormalized.
 static inline int pwrapVec4getNormalized(lua_State* l)
 {
@@ -3154,7 +3019,6 @@ static inline int pwrapVec4getNormalized(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Vec4::getNormalized.
 static int wrapVec4getNormalized(lua_State* l)
 {
@@ -3168,7 +3032,6 @@ static int wrapVec4getNormalized(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec4::normalize.
 static inline int pwrapVec4normalize(lua_State* l)
 {
@@ -3195,7 +3058,6 @@ static inline int pwrapVec4normalize(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap method Vec4::normalize.
 static int wrapVec4normalize(lua_State* l)
 {
@@ -3209,7 +3071,6 @@ static int wrapVec4normalize(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Vec4::dot.
 static inline int pwrapVec4dot(lua_State* l)
 {
@@ -3248,7 +3109,6 @@ static inline int pwrapVec4dot(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Vec4::dot.
 static int wrapVec4dot(lua_State* l)
 {
@@ -3262,7 +3122,6 @@ static int wrapVec4dot(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap class Vec4.
 static inline void wrapVec4(lua_State* l)
 {
@@ -3293,11 +3152,6 @@ static inline void wrapVec4(lua_State* l)
 	lua_settop(l, 0);
 }
 
-//==============================================================================
-// Mat3                                                                        =
-//==============================================================================
-
-//==============================================================================
 static const char* classnameMat3 = "Mat3";
 
 template<>
@@ -3312,7 +3166,6 @@ const char* LuaBinder::getWrappedTypeName<Mat3>()
 	return classnameMat3;
 }
 
-//==============================================================================
 /// Pre-wrap constructor for Mat3.
 static inline int pwrapMat3Ctor(lua_State* l)
 {
@@ -3336,7 +3189,6 @@ static inline int pwrapMat3Ctor(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap constructor for Mat3.
 static int wrapMat3Ctor(lua_State* l)
 {
@@ -3350,7 +3202,6 @@ static int wrapMat3Ctor(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap destructor for Mat3.
 static int wrapMat3Dtor(lua_State* l)
 {
@@ -3376,7 +3227,6 @@ static int wrapMat3Dtor(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Mat3::operator=.
 static inline int pwrapMat3copy(lua_State* l)
 {
@@ -3412,7 +3262,6 @@ static inline int pwrapMat3copy(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap method Mat3::operator=.
 static int wrapMat3copy(lua_State* l)
 {
@@ -3426,7 +3275,6 @@ static int wrapMat3copy(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Mat3::getAt.
 static inline int pwrapMat3getAt(lua_State* l)
 {
@@ -3469,7 +3317,6 @@ static inline int pwrapMat3getAt(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Mat3::getAt.
 static int wrapMat3getAt(lua_State* l)
 {
@@ -3483,7 +3330,6 @@ static int wrapMat3getAt(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Mat3::setAt.
 static inline int pwrapMat3setAt(lua_State* l)
 {
@@ -3529,7 +3375,6 @@ static inline int pwrapMat3setAt(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap method Mat3::setAt.
 static int wrapMat3setAt(lua_State* l)
 {
@@ -3543,7 +3388,6 @@ static int wrapMat3setAt(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Mat3::setAll.
 static inline int pwrapMat3setAll(lua_State* l)
 {
@@ -3625,7 +3469,6 @@ static inline int pwrapMat3setAll(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap method Mat3::setAll.
 static int wrapMat3setAll(lua_State* l)
 {
@@ -3639,7 +3482,6 @@ static int wrapMat3setAll(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap class Mat3.
 static inline void wrapMat3(lua_State* l)
 {
@@ -3653,11 +3495,6 @@ static inline void wrapMat3(lua_State* l)
 	lua_settop(l, 0);
 }
 
-//==============================================================================
-// Mat3x4                                                                      =
-//==============================================================================
-
-//==============================================================================
 static const char* classnameMat3x4 = "Mat3x4";
 
 template<>
@@ -3672,7 +3509,6 @@ const char* LuaBinder::getWrappedTypeName<Mat3x4>()
 	return classnameMat3x4;
 }
 
-//==============================================================================
 /// Pre-wrap constructor for Mat3x4.
 static inline int pwrapMat3x4Ctor(lua_State* l)
 {
@@ -3696,7 +3532,6 @@ static inline int pwrapMat3x4Ctor(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap constructor for Mat3x4.
 static int wrapMat3x4Ctor(lua_State* l)
 {
@@ -3710,7 +3545,6 @@ static int wrapMat3x4Ctor(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap destructor for Mat3x4.
 static int wrapMat3x4Dtor(lua_State* l)
 {
@@ -3722,8 +3556,7 @@ static int wrapMat3x4Dtor(lua_State* l)
 	(void)size;
 
 	LuaBinder::checkArgsCount(l, 1);
-	if(LuaBinder::checkUserData(
-		   l, 1, classnameMat3x4, -2654194732934255869, ud))
+	if(LuaBinder::checkUserData(l, 1, classnameMat3x4, -2654194732934255869, ud))
 	{
 		return -1;
 	}
@@ -3737,7 +3570,6 @@ static int wrapMat3x4Dtor(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Mat3x4::operator=.
 static inline int pwrapMat3x4copy(lua_State* l)
 {
@@ -3751,8 +3583,7 @@ static inline int pwrapMat3x4copy(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(
-		   l, 1, classnameMat3x4, -2654194732934255869, ud))
+	if(LuaBinder::checkUserData(l, 1, classnameMat3x4, -2654194732934255869, ud))
 	{
 		return -1;
 	}
@@ -3774,7 +3605,6 @@ static inline int pwrapMat3x4copy(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap method Mat3x4::operator=.
 static int wrapMat3x4copy(lua_State* l)
 {
@@ -3788,7 +3618,6 @@ static int wrapMat3x4copy(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Mat3x4::getAt.
 static inline int pwrapMat3x4getAt(lua_State* l)
 {
@@ -3802,8 +3631,7 @@ static inline int pwrapMat3x4getAt(lua_State* l)
 	LuaBinder::checkArgsCount(l, 3);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(
-		   l, 1, classnameMat3x4, -2654194732934255869, ud))
+	if(LuaBinder::checkUserData(l, 1, classnameMat3x4, -2654194732934255869, ud))
 	{
 		return -1;
 	}
@@ -3832,7 +3660,6 @@ static inline int pwrapMat3x4getAt(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Mat3x4::getAt.
 static int wrapMat3x4getAt(lua_State* l)
 {
@@ -3846,7 +3673,6 @@ static int wrapMat3x4getAt(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Mat3x4::setAt.
 static inline int pwrapMat3x4setAt(lua_State* l)
 {
@@ -3860,8 +3686,7 @@ static inline int pwrapMat3x4setAt(lua_State* l)
 	LuaBinder::checkArgsCount(l, 4);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(
-		   l, 1, classnameMat3x4, -2654194732934255869, ud))
+	if(LuaBinder::checkUserData(l, 1, classnameMat3x4, -2654194732934255869, ud))
 	{
 		return -1;
 	}
@@ -3893,7 +3718,6 @@ static inline int pwrapMat3x4setAt(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap method Mat3x4::setAt.
 static int wrapMat3x4setAt(lua_State* l)
 {
@@ -3907,7 +3731,6 @@ static int wrapMat3x4setAt(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Mat3x4::setAll.
 static inline int pwrapMat3x4setAll(lua_State* l)
 {
@@ -3921,8 +3744,7 @@ static inline int pwrapMat3x4setAll(lua_State* l)
 	LuaBinder::checkArgsCount(l, 13);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(
-		   l, 1, classnameMat3x4, -2654194732934255869, ud))
+	if(LuaBinder::checkUserData(l, 1, classnameMat3x4, -2654194732934255869, ud))
 	{
 		return -1;
 	}
@@ -4003,23 +3825,11 @@ static inline int pwrapMat3x4setAll(lua_State* l)
 	}
 
 	// Call the method
-	(*self) = Mat3x4(arg0,
-		arg1,
-		arg2,
-		arg3,
-		arg4,
-		arg5,
-		arg6,
-		arg7,
-		arg8,
-		arg9,
-		arg10,
-		arg11);
+	(*self) = Mat3x4(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11);
 
 	return 0;
 }
 
-//==============================================================================
 /// Wrap method Mat3x4::setAll.
 static int wrapMat3x4setAll(lua_State* l)
 {
@@ -4033,13 +3843,11 @@ static int wrapMat3x4setAll(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap class Mat3x4.
 static inline void wrapMat3x4(lua_State* l)
 {
 	LuaBinder::createClass(l, classnameMat3x4);
-	LuaBinder::pushLuaCFuncStaticMethod(
-		l, classnameMat3x4, "new", wrapMat3x4Ctor);
+	LuaBinder::pushLuaCFuncStaticMethod(l, classnameMat3x4, "new", wrapMat3x4Ctor);
 	LuaBinder::pushLuaCFuncMethod(l, "__gc", wrapMat3x4Dtor);
 	LuaBinder::pushLuaCFuncMethod(l, "copy", wrapMat3x4copy);
 	LuaBinder::pushLuaCFuncMethod(l, "getAt", wrapMat3x4getAt);
@@ -4048,11 +3856,6 @@ static inline void wrapMat3x4(lua_State* l)
 	lua_settop(l, 0);
 }
 
-//==============================================================================
-// Transform                                                                   =
-//==============================================================================
-
-//==============================================================================
 static const char* classnameTransform = "Transform";
 
 template<>
@@ -4067,7 +3870,6 @@ const char* LuaBinder::getWrappedTypeName<Transform>()
 	return classnameTransform;
 }
 
-//==============================================================================
 /// Pre-wrap constructor for Transform.
 static inline int pwrapTransformCtor(lua_State* l)
 {
@@ -4091,7 +3893,6 @@ static inline int pwrapTransformCtor(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap constructor for Transform.
 static int wrapTransformCtor(lua_State* l)
 {
@@ -4105,7 +3906,6 @@ static int wrapTransformCtor(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap destructor for Transform.
 static int wrapTransformDtor(lua_State* l)
 {
@@ -4117,8 +3917,7 @@ static int wrapTransformDtor(lua_State* l)
 	(void)size;
 
 	LuaBinder::checkArgsCount(l, 1);
-	if(LuaBinder::checkUserData(
-		   l, 1, classnameTransform, 7048620195620777229, ud))
+	if(LuaBinder::checkUserData(l, 1, classnameTransform, 7048620195620777229, ud))
 	{
 		return -1;
 	}
@@ -4132,7 +3931,6 @@ static int wrapTransformDtor(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Transform::operator=.
 static inline int pwrapTransformcopy(lua_State* l)
 {
@@ -4146,8 +3944,7 @@ static inline int pwrapTransformcopy(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(
-		   l, 1, classnameTransform, 7048620195620777229, ud))
+	if(LuaBinder::checkUserData(l, 1, classnameTransform, 7048620195620777229, ud))
 	{
 		return -1;
 	}
@@ -4169,7 +3966,6 @@ static inline int pwrapTransformcopy(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap method Transform::operator=.
 static int wrapTransformcopy(lua_State* l)
 {
@@ -4183,7 +3979,6 @@ static int wrapTransformcopy(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Transform::getOrigin.
 static inline int pwrapTransformgetOrigin(lua_State* l)
 {
@@ -4197,8 +3992,7 @@ static inline int pwrapTransformgetOrigin(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(
-		   l, 1, classnameTransform, 7048620195620777229, ud))
+	if(LuaBinder::checkUserData(l, 1, classnameTransform, 7048620195620777229, ud))
 	{
 		return -1;
 	}
@@ -4219,7 +4013,6 @@ static inline int pwrapTransformgetOrigin(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Transform::getOrigin.
 static int wrapTransformgetOrigin(lua_State* l)
 {
@@ -4233,7 +4026,6 @@ static int wrapTransformgetOrigin(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Transform::setOrigin.
 static inline int pwrapTransformsetOrigin(lua_State* l)
 {
@@ -4247,8 +4039,7 @@ static inline int pwrapTransformsetOrigin(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(
-		   l, 1, classnameTransform, 7048620195620777229, ud))
+	if(LuaBinder::checkUserData(l, 1, classnameTransform, 7048620195620777229, ud))
 	{
 		return -1;
 	}
@@ -4270,7 +4061,6 @@ static inline int pwrapTransformsetOrigin(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap method Transform::setOrigin.
 static int wrapTransformsetOrigin(lua_State* l)
 {
@@ -4284,7 +4074,6 @@ static int wrapTransformsetOrigin(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Transform::getRotation.
 static inline int pwrapTransformgetRotation(lua_State* l)
 {
@@ -4298,8 +4087,7 @@ static inline int pwrapTransformgetRotation(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(
-		   l, 1, classnameTransform, 7048620195620777229, ud))
+	if(LuaBinder::checkUserData(l, 1, classnameTransform, 7048620195620777229, ud))
 	{
 		return -1;
 	}
@@ -4320,7 +4108,6 @@ static inline int pwrapTransformgetRotation(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Transform::getRotation.
 static int wrapTransformgetRotation(lua_State* l)
 {
@@ -4334,7 +4121,6 @@ static int wrapTransformgetRotation(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Transform::setRotation.
 static inline int pwrapTransformsetRotation(lua_State* l)
 {
@@ -4348,8 +4134,7 @@ static inline int pwrapTransformsetRotation(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(
-		   l, 1, classnameTransform, 7048620195620777229, ud))
+	if(LuaBinder::checkUserData(l, 1, classnameTransform, 7048620195620777229, ud))
 	{
 		return -1;
 	}
@@ -4371,7 +4156,6 @@ static inline int pwrapTransformsetRotation(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap method Transform::setRotation.
 static int wrapTransformsetRotation(lua_State* l)
 {
@@ -4385,7 +4169,6 @@ static int wrapTransformsetRotation(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Transform::getScale.
 static inline int pwrapTransformgetScale(lua_State* l)
 {
@@ -4399,8 +4182,7 @@ static inline int pwrapTransformgetScale(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(
-		   l, 1, classnameTransform, 7048620195620777229, ud))
+	if(LuaBinder::checkUserData(l, 1, classnameTransform, 7048620195620777229, ud))
 	{
 		return -1;
 	}
@@ -4416,7 +4198,6 @@ static inline int pwrapTransformgetScale(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Transform::getScale.
 static int wrapTransformgetScale(lua_State* l)
 {
@@ -4430,7 +4211,6 @@ static int wrapTransformgetScale(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Transform::setScale.
 static inline int pwrapTransformsetScale(lua_State* l)
 {
@@ -4444,8 +4224,7 @@ static inline int pwrapTransformsetScale(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(
-		   l, 1, classnameTransform, 7048620195620777229, ud))
+	if(LuaBinder::checkUserData(l, 1, classnameTransform, 7048620195620777229, ud))
 	{
 		return -1;
 	}
@@ -4465,7 +4244,6 @@ static inline int pwrapTransformsetScale(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap method Transform::setScale.
 static int wrapTransformsetScale(lua_State* l)
 {
@@ -4479,13 +4257,11 @@ static int wrapTransformsetScale(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap class Transform.
 static inline void wrapTransform(lua_State* l)
 {
 	LuaBinder::createClass(l, classnameTransform);
-	LuaBinder::pushLuaCFuncStaticMethod(
-		l, classnameTransform, "new", wrapTransformCtor);
+	LuaBinder::pushLuaCFuncStaticMethod(l, classnameTransform, "new", wrapTransformCtor);
 	LuaBinder::pushLuaCFuncMethod(l, "__gc", wrapTransformDtor);
 	LuaBinder::pushLuaCFuncMethod(l, "copy", wrapTransformcopy);
 	LuaBinder::pushLuaCFuncMethod(l, "getOrigin", wrapTransformgetOrigin);
@@ -4497,7 +4273,6 @@ static inline void wrapTransform(lua_State* l)
 	lua_settop(l, 0);
 }
 
-//==============================================================================
 /// Pre-wrap function toRad.
 static inline int pwraptoRad(lua_State* l)
 {
@@ -4526,7 +4301,6 @@ static inline int pwraptoRad(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap function toRad.
 static int wraptoRad(lua_State* l)
 {
@@ -4540,7 +4314,6 @@ static int wraptoRad(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap the module.
 void wrapModuleMath(lua_State* l)
 {

@@ -9,15 +9,12 @@
 namespace anki
 {
 
-//==============================================================================
 template<typename Scalar>
 static Scalar polynomialSinQuadrant(const Scalar a)
 {
-	return a
-		* (1.0 + a * a * (-0.16666 + a * a * (0.0083143 - a * a * 0.00018542)));
+	return a * (1.0 + a * a * (-0.16666 + a * a * (0.0083143 - a * a * 0.00018542)));
 }
 
-//==============================================================================
 template<typename Scalar>
 static void sinCosInternal(const Scalar a_, Scalar& sina, Scalar& cosa)
 {
@@ -70,13 +67,11 @@ static void sinCosInternal(const Scalar a_, Scalar& sina, Scalar& cosa)
 #endif
 }
 
-//==============================================================================
 void sinCos(const F32 a, F32& sina, F32& cosa)
 {
 	sinCosInternal(a, sina, cosa);
 }
 
-//==============================================================================
 void sinCos(const F64 a, F64& sina, F64& cosa)
 {
 	sinCosInternal(a, sina, cosa);

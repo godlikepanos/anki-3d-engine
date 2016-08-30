@@ -12,11 +12,6 @@
 namespace anki
 {
 
-//==============================================================================
-// CString                                                                     =
-//==============================================================================
-
-//==============================================================================
 Error CString::toF64(F64& out) const
 {
 	checkInit();
@@ -32,7 +27,6 @@ Error CString::toF64(F64& out) const
 	return err;
 }
 
-//==============================================================================
 Error CString::toF32(F32& out) const
 {
 	F64 d;
@@ -45,7 +39,6 @@ Error CString::toF32(F32& out) const
 	return err;
 }
 
-//==============================================================================
 Error CString::toI64(I64& out) const
 {
 	checkInit();
@@ -61,11 +54,6 @@ Error CString::toI64(I64& out) const
 	return err;
 }
 
-//==============================================================================
-// String                                                                      =
-//==============================================================================
-
-//==============================================================================
 void String::create(Allocator alloc, const CStringType& cstr)
 {
 	auto len = cstr.getLength();
@@ -77,7 +65,6 @@ void String::create(Allocator alloc, const CStringType& cstr)
 	}
 }
 
-//==============================================================================
 void String::create(Allocator alloc, ConstIterator first, ConstIterator last)
 {
 	ANKI_ASSERT(first != 0 && last != 0);
@@ -88,7 +75,6 @@ void String::create(Allocator alloc, ConstIterator first, ConstIterator last)
 	m_data[length] = '\0';
 }
 
-//==============================================================================
 void String::create(Allocator alloc, Char c, PtrSize length)
 {
 	ANKI_ASSERT(c != '\0');
@@ -98,7 +84,6 @@ void String::create(Allocator alloc, Char c, PtrSize length)
 	m_data[length] = '\0';
 }
 
-//==============================================================================
 void String::appendInternal(Allocator alloc, const Char* str, PtrSize strSize)
 {
 	ANKI_ASSERT(str != nullptr);
@@ -126,7 +111,6 @@ void String::appendInternal(Allocator alloc, const Char* str, PtrSize strSize)
 	m_data = std::move(newData);
 }
 
-//==============================================================================
 void String::sprintf(Allocator alloc, CString fmt, ...)
 {
 	Array<Char, 512> buffer;

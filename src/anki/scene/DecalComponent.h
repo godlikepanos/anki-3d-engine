@@ -27,11 +27,9 @@ public:
 
 	~DecalComponent();
 
-	ANKI_USE_RESULT Error setDiffuseDecal(
-		CString texAtlasFname, CString texAtlasSubtexName, F32 blendFactor)
+	ANKI_USE_RESULT Error setDiffuseDecal(CString texAtlasFname, CString texAtlasSubtexName, F32 blendFactor)
 	{
-		return setLayer(
-			texAtlasFname, texAtlasSubtexName, blendFactor, LayerType::DIFFUSE);
+		return setLayer(texAtlasFname, texAtlasSubtexName, blendFactor, LayerType::DIFFUSE);
 	}
 
 	/// Update the internal structures.
@@ -98,10 +96,7 @@ private:
 	Transform m_trf = Transform::getIdentity();
 	Bool8 m_markedForUpdate = true;
 
-	ANKI_USE_RESULT Error setLayer(CString texAtlasFname,
-		CString texAtlasSubtexName,
-		F32 blendFactor,
-		LayerType type);
+	ANKI_USE_RESULT Error setLayer(CString texAtlasFname, CString texAtlasSubtexName, F32 blendFactor, LayerType type);
 
 	void updateInternal();
 };

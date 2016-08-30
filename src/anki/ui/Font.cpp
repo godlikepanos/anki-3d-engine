@@ -10,10 +10,6 @@
 namespace anki
 {
 
-//==============================================================================
-// Misc                                                                        =
-//==============================================================================
-
 class FtFont
 {
 public:
@@ -34,16 +30,10 @@ public:
 	}
 };
 
-//==============================================================================
-// Font                                                                        =
-//==============================================================================
-
-//==============================================================================
 Font::~Font()
 {
 }
 
-//==============================================================================
 Error Font::init(const CString& filename, U32 fontHeight)
 {
 	// Load font
@@ -61,8 +51,7 @@ Error Font::init(const CString& filename, U32 fontHeight)
 	}
 
 	// Create face and set glyph size
-	if(FT_New_Memory_Face(
-		   ft.m_lib, &fontData[0], fontData.getSize(), 0, &ft.m_face))
+	if(FT_New_Memory_Face(ft.m_lib, &fontData[0], fontData.getSize(), 0, &ft.m_face))
 	{
 		ANKI_LOGE("FT_New_Face() failed");
 		return ErrorCode::FUNCTION_FAILED;
@@ -130,11 +119,9 @@ Error Font::init(const CString& filename, U32 fontHeight)
 			inf.m_imageRect.m_min = UVec2(xOffset, 0);
 			inf.m_imageRect.m_max = inf.m_imageRect.m_min + UVec2(w, h);
 
-			inf.m_advance = UVec2(ft.m_face->glyph->advance.x >> 6,
-				ft.m_face->glyph->advance.y >> 6);
+			inf.m_advance = UVec2(ft.m_face->glyph->advance.x >> 6, ft.m_face->glyph->advance.y >> 6);
 
-			inf.m_offset = IVec2(ft.m_face->glyph->bitmap_left,
-				ft.m_face->glyph->bitmap_top - I(h));
+			inf.m_offset = IVec2(ft.m_face->glyph->bitmap_left, ft.m_face->glyph->bitmap_top - I(h));
 
 			// Advance
 			xOffset += w;
@@ -142,8 +129,7 @@ Error Font::init(const CString& filename, U32 fontHeight)
 	}
 
 	// Create image
-	ANKI_CHECK(m_interface->createR8Image(
-		WeakArray<U8>(&bitmap[0], bitmap.getSize()), imgSize, m_img));
+	ANKI_CHECK(m_interface->createR8Image(WeakArray<U8>(&bitmap[0], bitmap.getSize()), imgSize, m_img));
 
 	return ErrorCode::NONE;
 }

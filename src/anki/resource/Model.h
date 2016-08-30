@@ -23,8 +23,7 @@ class PhysicsCollisionShape;
 /// @addtogroup resource
 /// @{
 
-/// Model patch interface class. Its very important class and it binds the
-/// material with the mesh
+/// Model patch interface class. Its very important class and it binds the material with the mesh
 class ModelPatch
 {
 public:
@@ -63,12 +62,9 @@ public:
 		return m_meshes[0]->getSubMeshesCount();
 	}
 
-	ANKI_USE_RESULT Error create(WeakArray<CString> meshFNames,
-		const CString& mtlFName,
-		ResourceManager* resources);
+	ANKI_USE_RESULT Error create(WeakArray<CString> meshFNames, const CString& mtlFName, ResourceManager* resources);
 
-	/// Get information for multiDraw rendering.
-	/// Given an array of submeshes that are visible return the correct indices
+	/// Get information for multiDraw rendering. Given an array of submeshes that are visible return the correct indices
 	/// offsets and counts.
 	void getRenderingDataSub(const RenderingKey& key,
 		WeakArray<U8> subMeshIndicesArray,
@@ -85,12 +81,7 @@ private:
 	U8 m_meshCount = 0;
 	MaterialResourcePtr m_mtl;
 
-	mutable Array4d<PipelinePtr,
-		U(Pass::COUNT),
-		MAX_LODS,
-		2,
-		MAX_INSTANCE_GROUPS>
-		m_pplines;
+	mutable Array4d<PipelinePtr, U(Pass::COUNT), MAX_LODS, 2, MAX_INSTANCE_GROUPS> m_pplines;
 	mutable Mutex m_lock; ///< Protect m_pplines
 
 	Array<ResourceGroupPtr, MAX_LODS> m_grResources;
@@ -100,12 +91,10 @@ private:
 
 	PipelinePtr getPipeline(const RenderingKey& key) const;
 
-	void computePipelineInitInfo(
-		const RenderingKey& key, PipelineInitInfo& pinit) const;
+	void computePipelineInitInfo(const RenderingKey& key, PipelineInitInfo& pinit) const;
 };
 
-/// Model is an entity that acts as a container for other resources. Models are
-/// all the non static objects in a map.
+/// Model is an entity that acts as a container for other resources. Models are all the non static objects in a map.
 ///
 /// XML file format:
 /// @code

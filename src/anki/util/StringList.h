@@ -35,12 +35,10 @@ public:
 
 	void destroy(Allocator alloc);
 
-	/// Join all the elements into a single big string using a the
-	/// seperator @a separator
+	/// Join all the elements into a single big string using a the seperator @a separator
 	void join(Allocator alloc, const CString& separator, String& out) const;
 
-	/// Returns the index position of the last occurrence of @a value in
-	/// the list
+	/// Returns the index position of the last occurrence of @a value in the list.
 	/// @return -1 of not found
 	I getIndexOf(const CString& value) const;
 
@@ -58,12 +56,8 @@ public:
 		Base::getBack() = std::move(str);
 	}
 
-	/// Split a string using a separator (@a separator) and return these
-	/// strings in a string list
-	void splitString(Allocator alloc,
-		const CString& s,
-		const Char separator,
-		Bool keepEmpty = false);
+	/// Split a string using a separator (@a separator) and return these strings in a string list.
+	void splitString(Allocator alloc, const CString& s, const Char separator, Bool keepEmpty = false);
 };
 
 /// String list with automatic destruction.
@@ -112,10 +106,8 @@ public:
 		Base::pushBackSprintf(m_alloc, args...);
 	}
 
-	/// Split a string using a separator (@a separator) and return these
-	/// strings in a string list
-	void splitString(
-		const CString& s, const Base::Char separator, Bool keepEmpty = false)
+	/// Split a string using a separator (@a separator) and return these strings in a string list.
+	void splitString(const CString& s, const Base::Char separator, Bool keepEmpty = false)
 	{
 		Base::splitString(m_alloc, s, separator, keepEmpty);
 	}

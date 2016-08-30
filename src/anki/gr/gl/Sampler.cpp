@@ -11,18 +11,15 @@
 namespace anki
 {
 
-//==============================================================================
 Sampler::Sampler(GrManager* manager, U64 hash)
 	: GrObject(manager, CLASS_TYPE, hash)
 {
 }
 
-//==============================================================================
 Sampler::~Sampler()
 {
 }
 
-//==============================================================================
 class CreateSamplerCommand : public GlCommand
 {
 public:
@@ -41,8 +38,7 @@ public:
 
 		impl.init(m_init);
 
-		GlObject::State oldState =
-			impl.setStateAtomically(GlObject::State::CREATED);
+		GlObject::State oldState = impl.setStateAtomically(GlObject::State::CREATED);
 
 		(void)oldState;
 		ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
@@ -55,11 +51,9 @@ void Sampler::init(const SamplerInitInfo& init)
 {
 	m_impl.reset(getAllocator().newInstance<SamplerImpl>(&getManager()));
 
-	CommandBufferPtr cmdb =
-		getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
+	CommandBufferPtr cmdb = getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
 
-	cmdb->getImplementation().pushBackNewCommand<CreateSamplerCommand>(
-		this, init);
+	cmdb->getImplementation().pushBackNewCommand<CreateSamplerCommand>(this, init);
 	cmdb->flush();
 }
 

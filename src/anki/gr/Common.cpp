@@ -8,8 +8,6 @@
 namespace anki
 {
 
-//==============================================================================
-Array<CString, U(GpuVendor::COUNT)> GPU_VENDOR_STR = {
-	{"UNKNOWN", "ARM", "NVIDIA", "AMD", "INTEL"}};
+Array<CString, U(GpuVendor::COUNT)> GPU_VENDOR_STR = {{"UNKNOWN", "ARM", "NVIDIA", "AMD", "INTEL"}};
 
 } // end namespace anki

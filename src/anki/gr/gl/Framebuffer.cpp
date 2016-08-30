@@ -11,26 +11,22 @@
 namespace anki
 {
 
-//==============================================================================
 Framebuffer::Framebuffer(GrManager* manager, U64 hash)
 	: GrObject(manager, CLASS_TYPE, hash)
 {
 }
 
-//==============================================================================
 Framebuffer::~Framebuffer()
 {
 }
 
-//==============================================================================
 class CreateFramebufferCommand final : public GlCommand
 {
 public:
 	FramebufferPtr m_fb;
 	FramebufferInitInfo m_init;
 
-	CreateFramebufferCommand(
-		Framebuffer* handle, const FramebufferInitInfo& init)
+	CreateFramebufferCommand(Framebuffer* handle, const FramebufferInitInfo& init)
 		: m_fb(handle)
 		, m_init(init)
 	{
@@ -41,8 +37,7 @@ public:
 		FramebufferImpl& impl = m_fb->getImplementation();
 		Error err = impl.init(m_init);
 
-		GlObject::State oldState = impl.setStateAtomically(
-			(err) ? GlObject::State::ERROR : GlObject::State::CREATED);
+		GlObject::State oldState = impl.setStateAtomically((err) ? GlObject::State::ERROR : GlObject::State::CREATED);
 		ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
 		(void)oldState;
 
@@ -54,11 +49,9 @@ void Framebuffer::init(const FramebufferInitInfo& init)
 {
 	m_impl.reset(getAllocator().newInstance<FramebufferImpl>(&getManager()));
 
-	CommandBufferPtr cmdb =
-		getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
+	CommandBufferPtr cmdb = getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
 
-	cmdb->getImplementation().pushBackNewCommand<CreateFramebufferCommand>(
-		this, init);
+	cmdb->getImplementation().pushBackNewCommand<CreateFramebufferCommand>(this, init);
 	cmdb->flush();
 }
 

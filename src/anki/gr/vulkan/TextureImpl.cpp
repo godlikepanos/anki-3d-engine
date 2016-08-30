@@ -14,13 +14,11 @@
 namespace anki
 {
 
-//==============================================================================
 TextureImpl::TextureImpl(GrManager* manager)
 	: VulkanObject(manager)
 {
 }
 
-//==============================================================================
 TextureImpl::~TextureImpl()
 {
 	for(auto it : m_viewsMap)
@@ -44,17 +42,14 @@ TextureImpl::~TextureImpl()
 	}
 }
 
-//==============================================================================
 VkFormatFeatureFlags TextureImpl::calcFeatures(const TextureInitInfo& init)
 {
 	VkFormatFeatureFlags flags = 0;
 
-	if(init.m_mipmapsCount > 1
-		&& !!(init.m_usage & TextureUsageBit::GENERATE_MIPMAPS))
+	if(init.m_mipmapsCount > 1 && !!(init.m_usage & TextureUsageBit::GENERATE_MIPMAPS))
 	{
 		// May be used for mip gen.
-		flags |=
-			VK_FORMAT_FEATURE_BLIT_DST_BIT | VK_FORMAT_FEATURE_BLIT_SRC_BIT;
+		flags |= VK_FORMAT_FEATURE_BLIT_DST_BIT | VK_FORMAT_FEATURE_BLIT_SRC_BIT;
 	}
 
 	if(!!(init.m_usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE))
@@ -65,8 +60,7 @@ VkFormatFeatureFlags TextureImpl::calcFeatures(const TextureInitInfo& init)
 		}
 		else
 		{
-			flags |= VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT
-				| VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BLEND_BIT;
+			flags |= VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT | VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BLEND_BIT;
 		}
 	}
 
@@ -79,12 +73,10 @@ VkFormatFeatureFlags TextureImpl::calcFeatures(const TextureInitInfo& init)
 	return flags;
 }
 
-//==============================================================================
 VkImageCreateFlags TextureImpl::calcCreateFlags(const TextureInitInfo& init)
 {
 	VkImageCreateFlags flags = 0;
-	if(init.m_type == TextureType::CUBE
-		|| init.m_type == TextureType::CUBE_ARRAY)
+	if(init.m_type == TextureType::CUBE || init.m_type == TextureType::CUBE_ARRAY)
 	{
 		flags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
 	}
@@ -92,13 +84,11 @@ VkImageCreateFlags TextureImpl::calcCreateFlags(const TextureInitInfo& init)
 	return flags;
 }
 
-//==============================================================================
 Bool TextureImpl::imageSupported(const TextureInitInfo& init)
 {
 	VkImageFormatProperties props = {};
 
-	VkResult res = vkGetPhysicalDeviceImageFormatProperties(
-		getGrManagerImpl().getPhysicalDevice(),
+	VkResult res = vkGetPhysicalDeviceImageFormatProperties(getGrManagerImpl().getPhysicalDevice(),
 		m_vkFormat,
 		convertTextureType(init.m_type),
 		VK_IMAGE_TILING_OPTIMAL,
@@ -117,7 +107,6 @@ Bool TextureImpl::imageSupported(const TextureInitInfo& init)
 	}
 }
 
-//==============================================================================
 Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 {
 	TextureInitInfo init = init_;
@@ -132,13 +121,11 @@ Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 
 	if(m_type == TextureType::_3D)
 	{
-		m_mipCount = min<U>(init.m_mipmapsCount,
-			computeMaxMipmapCount3d(m_width, m_height, m_depth));
+		m_mipCount = min<U>(init.m_mipmapsCount, computeMaxMipmapCount3d(m_width, m_height, m_depth));
 	}
 	else
 	{
-		m_mipCount = min<U>(
-			init.m_mipmapsCount, computeMaxMipmapCount2d(m_width, m_height));
+		m_mipCount = min<U>(init.m_mipmapsCount, computeMaxMipmapCount2d(m_width, m_height));
 	}
 	init.m_mipmapsCount = m_mipCount;
 
@@ -165,25 +152,20 @@ Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 	m_viewCreateInfoTemplate.subresourceRange.aspectMask = m_aspect;
 	m_viewCreateInfoTemplate.subresourceRange.baseArrayLayer = 0;
 	m_viewCreateInfoTemplate.subresourceRange.baseMipLevel = 0;
-	m_viewCreateInfoTemplate.subresourceRange.layerCount =
-		VK_REMAINING_ARRAY_LAYERS;
-	m_viewCreateInfoTemplate.subresourceRange.levelCount =
-		VK_REMAINING_MIP_LEVELS;
+	m_viewCreateInfoTemplate.subresourceRange.layerCount = VK_REMAINING_ARRAY_LAYERS;
+	m_viewCreateInfoTemplate.subresourceRange.levelCount = VK_REMAINING_MIP_LEVELS;
 
 	// Transition the image layout from undefined to something relevant
 	if(!!init.m_initialUsage)
 	{
 		ANKI_ASSERT(usageValid(init.m_initialUsage));
-		ANKI_ASSERT(!(init.m_initialUsage & TextureUsageBit::GENERATE_MIPMAPS)
-			&& "That doesn't make any sense");
+		ANKI_ASSERT(!(init.m_initialUsage & TextureUsageBit::GENERATE_MIPMAPS) && "That doesn't make any sense");
 
 		VkImageLayout initialLayout = computeLayout(init.m_initialUsage, 0);
 
 		CommandBufferInitInfo cmdbinit;
-		cmdbinit.m_flags =
-			CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
-		CommandBufferPtr cmdb =
-			getGrManager().newInstance<CommandBuffer>(cmdbinit);
+		cmdbinit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
+		CommandBufferPtr cmdb = getGrManager().newInstance<CommandBuffer>(cmdbinit);
 
 		VkImageSubresourceRange range;
 		range.aspectMask = m_aspect;
@@ -192,8 +174,7 @@ Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 		range.layerCount = m_layerCount;
 		range.levelCount = m_mipCount;
 
-		cmdb->getImplementation().setImageBarrier(
-			VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+		cmdb->getImplementation().setImageBarrier(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
 			0,
 			VK_IMAGE_LAYOUT_UNDEFINED,
 			VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
@@ -209,7 +190,6 @@ Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error TextureImpl::initImage(const TextureInitInfo& init_)
 {
 	TextureInitInfo init = init_;
@@ -221,8 +201,7 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 		// Try to find a fallback
 		if(init.m_format.m_components == ComponentFormat::R8G8B8)
 		{
-			ANKI_ASSERT(!(init.m_usage & TextureUsageBit::IMAGE_ALL)
-				&& "Can't do that ATM");
+			ANKI_ASSERT(!(init.m_usage & TextureUsageBit::IMAGE_ALL) && "Can't do that ATM");
 			init.m_format.m_components = ComponentFormat::R8G8B8A8;
 			m_format = init.m_format;
 			m_vkFormat = convertFormat(m_format);
@@ -236,9 +215,7 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 
 	if(!supported)
 	{
-		ANKI_LOGE("Unsupported texture format: %u %u",
-			U(init.m_format.m_components),
-			U(init.m_format.m_transform));
+		ANKI_LOGE("Unsupported texture format: %u %u", U(init.m_format.m_components), U(init.m_format.m_transform));
 	}
 
 	// Contunue with the creation
@@ -296,9 +273,7 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 	vkGetImageMemoryRequirements(getDevice(), m_imageHandle, &req);
 
 	U memIdx = getGrManagerImpl().getGpuMemoryAllocator().findMemoryType(
-		req.memoryTypeBits,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+		req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
 	// Fallback
 	if(memIdx == MAX_U32)
@@ -310,19 +285,14 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 	ANKI_ASSERT(memIdx != MAX_U32);
 
 	// Allocate
-	getGrManagerImpl().getGpuMemoryAllocator().allocateMemory(
-		memIdx, req.size, req.alignment, false, m_memHandle);
+	getGrManagerImpl().getGpuMemoryAllocator().allocateMemory(memIdx, req.size, req.alignment, false, m_memHandle);
 
 	// Bind mem to image
-	ANKI_VK_CHECK(vkBindImageMemory(getDevice(),
-		m_imageHandle,
-		m_memHandle.m_memory,
-		m_memHandle.m_offset));
+	ANKI_VK_CHECK(vkBindImageMemory(getDevice(), m_imageHandle, m_memHandle.m_memory, m_memHandle.m_offset));
 
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void TextureImpl::computeBarrierInfo(TextureUsageBit before,
 	TextureUsageBit after,
 	U level,
@@ -372,8 +342,7 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit before,
 		srcAccesses |= VK_ACCESS_SHADER_READ_BIT;
 	}
 
-	if(!!(before & TextureUsageBit::SAMPLED_COMPUTE)
-		|| !!(before & TextureUsageBit::IMAGE_COMPUTE_READ))
+	if(!!(before & TextureUsageBit::SAMPLED_COMPUTE) || !!(before & TextureUsageBit::IMAGE_COMPUTE_READ))
 	{
 		srcStages |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 		srcAccesses |= VK_ACCESS_SHADER_READ_BIT;
@@ -389,8 +358,7 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit before,
 	{
 		if(m_depthStencil)
 		{
-			srcStages |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT
-				| VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+			srcStages |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 			srcAccesses |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
 		}
 		else
@@ -478,8 +446,7 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit before,
 		dstAccesses |= VK_ACCESS_SHADER_READ_BIT;
 	}
 
-	if(!!(after & TextureUsageBit::SAMPLED_COMPUTE)
-		|| !!(after & TextureUsageBit::IMAGE_COMPUTE_READ))
+	if(!!(after & TextureUsageBit::SAMPLED_COMPUTE) || !!(after & TextureUsageBit::IMAGE_COMPUTE_READ))
 	{
 		dstStages |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 		dstAccesses |= VK_ACCESS_SHADER_READ_BIT;
@@ -495,8 +462,7 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit before,
 	{
 		if(m_depthStencil)
 		{
-			dstStages |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT
-				| VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+			dstStages |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 			dstAccesses |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
 		}
 		else
@@ -510,8 +476,7 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit before,
 	{
 		if(m_depthStencil)
 		{
-			dstStages |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT
-				| VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+			dstStages |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 			dstAccesses |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 		}
 		else
@@ -550,7 +515,6 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit before,
 	ANKI_ASSERT(dstStages);
 }
 
-//==============================================================================
 VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 {
 	ANKI_ASSERT(level < m_mipCount);
@@ -563,8 +527,7 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 	{
 		out = VK_IMAGE_LAYOUT_UNDEFINED;
 	}
-	else if(!!(usage & TextureUsageBit::SAMPLED_ALL)
-		&& !(usage & ~TextureUsageBit::SAMPLED_ALL))
+	else if(!!(usage & TextureUsageBit::SAMPLED_ALL) && !(usage & ~TextureUsageBit::SAMPLED_ALL))
 	{
 		out = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	}
@@ -585,12 +548,9 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 			out = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		}
 	}
-	else if(m_depthStencil
-		&& !!(usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ)
+	else if(m_depthStencil && !!(usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ)
 		&& !!(usage & TextureUsageBit::SAMPLED_ALL_GRAPHICS)
-		&& !(usage
-				& ~(TextureUsageBit::SAMPLED_ALL_GRAPHICS
-					  | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ)))
+		&& !(usage & ~(TextureUsageBit::SAMPLED_ALL_GRAPHICS | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ)))
 	{
 		out = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 	}
@@ -618,9 +578,7 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 	return out;
 }
 
-//==============================================================================
-VkImageView TextureImpl::getOrCreateSingleSurfaceView(
-	const TextureSurfaceInfo& surf)
+VkImageView TextureImpl::getOrCreateSingleSurfaceView(const TextureSurfaceInfo& surf)
 {
 	checkSurface(surf);
 
@@ -631,7 +589,6 @@ VkImageView TextureImpl::getOrCreateSingleSurfaceView(
 	return getOrCreateView(ci);
 }
 
-//==============================================================================
 VkImageView TextureImpl::getOrCreateSingleLevelView(U level)
 {
 	ANKI_ASSERT(level < m_mipCount);
@@ -643,7 +600,6 @@ VkImageView TextureImpl::getOrCreateSingleLevelView(U level)
 	return getOrCreateView(ci);
 }
 
-//==============================================================================
 VkImageView TextureImpl::getOrCreateResourceGroupView()
 {
 	VkImageViewCreateInfo ci = m_viewCreateInfoTemplate;
@@ -652,7 +608,6 @@ VkImageView TextureImpl::getOrCreateResourceGroupView()
 	return getOrCreateView(ci);
 }
 
-//==============================================================================
 VkImageView TextureImpl::getOrCreateView(const VkImageViewCreateInfo& ci)
 {
 	LockGuard<Mutex> lock(m_viewsMapMtx);

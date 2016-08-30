@@ -14,13 +14,7 @@
 namespace anki
 {
 
-//==============================================================================
-// Misc                                                                        =
-//==============================================================================
-
-//==============================================================================
-static ANKI_USE_RESULT Error xmlVec3(
-	const XmlElement& el_, const CString& str, Vec3& out)
+static ANKI_USE_RESULT Error xmlVec3(const XmlElement& el_, const CString& str, Vec3& out)
 {
 	Error err = ErrorCode::NONE;
 	XmlElement el;
@@ -35,9 +29,7 @@ static ANKI_USE_RESULT Error xmlVec3(
 	return err;
 }
 
-//==============================================================================
-static ANKI_USE_RESULT Error xmlF32(
-	const XmlElement& el_, const CString& str, F32& out)
+static ANKI_USE_RESULT Error xmlF32(const XmlElement& el_, const CString& str, F32& out)
 {
 	Error err = ErrorCode::NONE;
 	XmlElement el;
@@ -58,9 +50,7 @@ static ANKI_USE_RESULT Error xmlF32(
 	return err;
 }
 
-//==============================================================================
-static ANKI_USE_RESULT Error xmlU32(
-	const XmlElement& el_, const CString& str, U32& out)
+static ANKI_USE_RESULT Error xmlU32(const XmlElement& el_, const CString& str, U32& out)
 {
 	Error err = ErrorCode::NONE;
 	XmlElement el;
@@ -81,47 +71,31 @@ static ANKI_USE_RESULT Error xmlU32(
 	return err;
 }
 
-//==============================================================================
-// ParticleEmitterProperties                                                   =
-//==============================================================================
-
-//==============================================================================
-ParticleEmitterProperties& ParticleEmitterProperties::operator=(
-	const ParticleEmitterProperties& b)
+ParticleEmitterProperties& ParticleEmitterProperties::operator=(const ParticleEmitterProperties& b)
 {
 	std::memcpy(this, &b, sizeof(ParticleEmitterProperties));
 	return *this;
 }
 
-//==============================================================================
 void ParticleEmitterProperties::updateFlags()
 {
 	m_forceEnabled = !isZero(m_particle.m_forceDirection.getLengthSquared());
-	m_forceEnabled = m_forceEnabled
-		|| !isZero(m_particle.m_forceDirectionDeviation.getLengthSquared());
+	m_forceEnabled = m_forceEnabled || !isZero(m_particle.m_forceDirectionDeviation.getLengthSquared());
 	m_forceEnabled =
-		m_forceEnabled && (m_particle.m_forceMagnitude != 0.0
-							  || m_particle.m_forceMagnitudeDeviation != 0.0);
+		m_forceEnabled && (m_particle.m_forceMagnitude != 0.0 || m_particle.m_forceMagnitudeDeviation != 0.0);
 
 	m_wordGravityEnabled = isZero(m_particle.m_gravity.getLengthSquared());
 }
 
-//==============================================================================
-// ParticleEmitterResource                                                     =
-//==============================================================================
-
-//==============================================================================
 ParticleEmitterResource::ParticleEmitterResource(ResourceManager* manager)
 	: ResourceObject(manager)
 {
 }
 
-//==============================================================================
 ParticleEmitterResource::~ParticleEmitterResource()
 {
 }
 
-//==============================================================================
 Error ParticleEmitterResource::load(const ResourceFilename& filename)
 {
 	U32 tmp;
@@ -151,18 +125,15 @@ Error ParticleEmitterResource::load(const ResourceFilename& filename)
 	m_particle.m_alphaAnimation = tmp;
 
 	ANKI_CHECK(xmlVec3(rel, "forceDirection", m_particle.m_forceDirection));
-	ANKI_CHECK(xmlVec3(
-		rel, "forceDirectionDeviation", m_particle.m_forceDirectionDeviation));
+	ANKI_CHECK(xmlVec3(rel, "forceDirectionDeviation", m_particle.m_forceDirectionDeviation));
 	ANKI_CHECK(xmlF32(rel, "forceMagnitude", m_particle.m_forceMagnitude));
-	ANKI_CHECK(xmlF32(
-		rel, "forceMagnitudeDeviation", m_particle.m_forceMagnitudeDeviation));
+	ANKI_CHECK(xmlF32(rel, "forceMagnitudeDeviation", m_particle.m_forceMagnitudeDeviation));
 
 	ANKI_CHECK(xmlVec3(rel, "gravity", m_particle.m_gravity));
 	ANKI_CHECK(xmlVec3(rel, "gravityDeviation", m_particle.m_gravityDeviation));
 
 	ANKI_CHECK(xmlVec3(rel, "startingPosition", m_particle.m_startingPos));
-	ANKI_CHECK(xmlVec3(
-		rel, "startingPositionDeviation", m_particle.m_startingPosDeviation));
+	ANKI_CHECK(xmlVec3(rel, "startingPositionDeviation", m_particle.m_startingPosDeviation));
 
 	ANKI_CHECK(xmlU32(rel, "maxNumberOfParticles", m_maxNumOfParticles));
 
@@ -231,16 +202,13 @@ Error ParticleEmitterResource::load(const ResourceFilename& filename)
 	pinit.m_vertex.m_bindingCount = 1;
 	pinit.m_vertex.m_bindings[0].m_stride = VERTEX_SIZE;
 	pinit.m_vertex.m_attributeCount = 3;
-	pinit.m_vertex.m_attributes[0].m_format =
-		PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
+	pinit.m_vertex.m_attributes[0].m_format = PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
 	pinit.m_vertex.m_attributes[0].m_offset = 0;
 	pinit.m_vertex.m_attributes[0].m_binding = 0;
-	pinit.m_vertex.m_attributes[1].m_format =
-		PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT);
+	pinit.m_vertex.m_attributes[1].m_format = PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT);
 	pinit.m_vertex.m_attributes[1].m_offset = sizeof(Vec3);
 	pinit.m_vertex.m_attributes[1].m_binding = 0;
-	pinit.m_vertex.m_attributes[2].m_format =
-		PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT);
+	pinit.m_vertex.m_attributes[2].m_format = PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT);
 	pinit.m_vertex.m_attributes[2].m_offset = sizeof(Vec3) + sizeof(F32);
 	pinit.m_vertex.m_attributes[2].m_binding = 0;
 
@@ -250,8 +218,7 @@ Error ParticleEmitterResource::load(const ResourceFilename& filename)
 	pinit.m_color.m_attachmentCount = 1;
 	pinit.m_color.m_attachments[0].m_format = IS_COLOR_ATTACHMENT_PIXEL_FORMAT;
 	pinit.m_color.m_attachments[0].m_srcBlendMethod = BlendMethod::SRC_ALPHA;
-	pinit.m_color.m_attachments[0].m_dstBlendMethod =
-		BlendMethod::ONE_MINUS_SRC_ALPHA;
+	pinit.m_color.m_attachments[0].m_dstBlendMethod = BlendMethod::ONE_MINUS_SRC_ALPHA;
 
 	pinit.m_inputAssembler.m_topology = PrimitiveTopology::POINTS;
 
@@ -261,11 +228,9 @@ Error ParticleEmitterResource::load(const ResourceFilename& filename)
 		RenderingKey key(Pass::MS_FS, i, false, 1);
 		const MaterialVariant& variant = m_material->getVariant(key);
 
-		pinit.m_shaders[U(ShaderType::VERTEX)] =
-			variant.getShader(ShaderType::VERTEX);
+		pinit.m_shaders[U(ShaderType::VERTEX)] = variant.getShader(ShaderType::VERTEX);
 
-		pinit.m_shaders[U(ShaderType::FRAGMENT)] =
-			variant.getShader(ShaderType::FRAGMENT);
+		pinit.m_shaders[U(ShaderType::FRAGMENT)] = variant.getShader(ShaderType::FRAGMENT);
 
 		m_pplines[i] = getManager().getGrManager().newInstance<Pipeline>(pinit);
 	}

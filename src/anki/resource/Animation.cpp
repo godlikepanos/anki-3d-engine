@@ -9,13 +9,11 @@
 namespace anki
 {
 
-//==============================================================================
 Animation::Animation(ResourceManager* manager)
 	: ResourceObject(manager)
 {
 }
 
-//==============================================================================
 Animation::~Animation()
 {
 	for(AnimationChannel& ch : m_channels)
@@ -26,7 +24,6 @@ Animation::~Animation()
 	m_channels.destroy(getAllocator());
 }
 
-//==============================================================================
 Error Animation::load(const ResourceFilename& filename)
 {
 	XmlElement el;
@@ -42,8 +39,7 @@ Error Animation::load(const ResourceFilename& filename)
 	XmlElement rootel;
 	ANKI_CHECK(doc.getChildElement("animation", rootel));
 
-	// Count the number of identity keys. If all of the keys are identities
-	// drop a vector
+	// Count the number of identity keys. If all of the keys are identities drop a vector
 	U identPosCount = 0;
 	U identRotCount = 0;
 	U identScaleCount = 0;
@@ -230,9 +226,7 @@ Error Animation::load(const ResourceFilename& filename)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
-void Animation::interpolate(
-	U channelIndex, F32 time, Vec3& pos, Quat& rot, F32& scale) const
+void Animation::interpolate(U channelIndex, F32 time, Vec3& pos, Quat& rot, F32& scale) const
 {
 	// Audjust time
 	if(m_repeat && time > m_startTime + m_duration)

@@ -32,15 +32,12 @@ enum class FrustumComponentVisibilityTestFlag : U8
 	REFLECTION_PROXIES = 1 << 5,
 	OCCLUDERS = 1 << 6,
 
-	ALL_TESTS = RENDER_COMPONENTS | LIGHT_COMPONENTS | LENS_FLARE_COMPONENTS
-		| SHADOW_CASTERS
-		| REFLECTION_PROBES
+	ALL_TESTS = RENDER_COMPONENTS | LIGHT_COMPONENTS | LENS_FLARE_COMPONENTS | SHADOW_CASTERS | REFLECTION_PROBES
 		| REFLECTION_PROXIES
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(FrustumComponentVisibilityTestFlag, inline)
 
-/// Frustum component interface for scene nodes. Useful for nodes that are
-/// frustums like cameras and lights
+/// Frustum component interface for scene nodes. Useful for nodes that are frustums like cameras and lights.
 class FrustumComponent : public SceneComponent
 {
 public:
@@ -80,8 +77,7 @@ public:
 		return m_vpm;
 	}
 
-	/// Parameters used to get the view space position using the depth value
-	/// and the NDC xy coordinates.
+	/// Parameters used to get the view space position using the depth value and the NDC xy coordinates.
 	/// @code
 	/// vec3 fragPos;
 	/// fragPos.z = projectionParams.z / (projectionParams.w + depth);
@@ -161,10 +157,8 @@ public:
 		if(m_flags.get(FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS)
 			|| m_flags.get(FrustumComponentVisibilityTestFlag::SHADOW_CASTERS))
 		{
-			if(m_flags.get(
-				   FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS)
-				== m_flags.get(
-					   FrustumComponentVisibilityTestFlag::SHADOW_CASTERS))
+			if(m_flags.get(FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS)
+				== m_flags.get(FrustumComponentVisibilityTestFlag::SHADOW_CASTERS))
 			{
 				ANKI_ASSERT(0 && "Cannot have them both");
 			}
@@ -197,8 +191,8 @@ private:
 
 	Vec4 m_projParams = Vec4(0.0);
 
-	/// Visibility stuff. It's per frame so the pointer is invalid on the next
-	/// frame and before any visibility tests are run
+	/// Visibility stuff. It's per frame so the pointer is invalid on the next frame and before any visibility tests
+	/// are run.
 	VisibilityTestResults* m_visible = nullptr;
 	VisibilityStats m_stats;
 

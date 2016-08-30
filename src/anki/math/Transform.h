@@ -40,8 +40,7 @@ public:
 		checkW();
 	}
 
-	TTransform(
-		const TVec4<T>& origin, const TMat3x4<T>& rotation, const T scale)
+	TTransform(const TVec4<T>& origin, const TMat3x4<T>& rotation, const T scale)
 		: m_origin(origin)
 		, m_rotation(rotation)
 		, m_scale(scale)
@@ -112,8 +111,7 @@ public:
 
 	Bool operator==(const TTransform& b) const
 	{
-		return m_origin == b.m_origin && m_rotation == b.m_rotation
-			&& m_scale == b.m_scale;
+		return m_origin == b.m_origin && m_rotation == b.m_rotation && m_scale == b.m_scale;
 	}
 
 	Bool operator!=(const TTransform& b) const
@@ -131,8 +129,7 @@ public:
 
 	static const TTransform& getIdentity()
 	{
-		static const TTransform ident(
-			TVec4<T>(0.0), TMat3x4<T>::getIdentity(), 1.0);
+		static const TTransform ident(TVec4<T>(0.0), TMat3x4<T>::getIdentity(), 1.0);
 		return ident;
 	}
 
@@ -143,8 +140,7 @@ public:
 		const TTransform& a = *this;
 		TTransform out;
 
-		out.m_origin =
-			TVec4<T>(a.m_rotation * (b.m_origin * a.m_scale), 0.0) + a.m_origin;
+		out.m_origin = TVec4<T>(a.m_rotation * (b.m_origin * a.m_scale), 0.0) + a.m_origin;
 
 		out.m_rotation = a.m_rotation.combineTransformations(b.m_rotation);
 		out.m_scale = a.m_scale * b.m_scale;

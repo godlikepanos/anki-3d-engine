@@ -15,10 +15,6 @@ namespace anki
 /// @addtogroup math
 /// @{
 
-//==============================================================================
-// Math constants                                                              =
-//==============================================================================
-
 template<typename Scalar>
 constexpr Scalar getPi();
 
@@ -52,10 +48,6 @@ constexpr F64 getEpsilon<F64>()
 {
 	return 1.0e-6;
 }
-
-//==============================================================================
-// Math functions                                                              =
-//==============================================================================
 
 template<typename T>
 inline T sin(const T rad)
@@ -120,19 +112,15 @@ inline T mod(const T x, const T y)
 	return x - y * std::floor(x / y);
 }
 
-//==============================================================================
-// Other math functions                                                        =
-//==============================================================================
-
 /// The same as abs/fabs. For ints and floats.
 template<typename T>
 T absolute(const T f);
 
-#define ANKI_SPECIALIZE_ABS_INT(type_)                                         \
-	template<>                                                                 \
-	inline type_ absolute(const type_ f)                                       \
-	{                                                                          \
-		return std::abs(f);                                                    \
+#define ANKI_SPECIALIZE_ABS_INT(type_)                                                                                 \
+	template<>                                                                                                         \
+	inline type_ absolute(const type_ f)                                                                               \
+	{                                                                                                                  \
+		return std::abs(f);                                                                                            \
 	}
 
 ANKI_SPECIALIZE_ABS_INT(I8)
@@ -160,11 +148,11 @@ inline Bool isZero(const T f)
 	return absolute<T>(f) < getEpsilon<T>();
 }
 
-#define ANKI_SPECIALIZE_IS_ZERO_INT(type_)                                     \
-	template<>                                                                 \
-	inline Bool isZero(const type_ x)                                          \
-	{                                                                          \
-		return x == type_(0);                                                  \
+#define ANKI_SPECIALIZE_IS_ZERO_INT(type_)                                                                             \
+	template<>                                                                                                         \
+	inline Bool isZero(const type_ x)                                                                                  \
+	{                                                                                                                  \
+		return x == type_(0);                                                                                          \
 	}
 
 ANKI_SPECIALIZE_IS_ZERO_INT(I8)
@@ -190,15 +178,10 @@ inline T toDegrees(const T rad)
 	return rad * (T(180) / getPi<T>());
 }
 
-//==============================================================================
-// Interpolation                                                               =
-//==============================================================================
-
 /// Linear interpolation between values
 /// @param[in] from Starting value
 /// @param[in] to Ending value
-/// @param[in] u The percentage from the from "from" value. Values
-///              from [0.0, 1.0]
+/// @param[in] u The percentage from the from "from" value. Values from [0.0, 1.0]
 template<typename Type>
 static Type linearInterpolate(const Type& from, const Type& to, F32 u)
 {
@@ -208,8 +191,7 @@ static Type linearInterpolate(const Type& from, const Type& to, F32 u)
 /// Cosine interpolation
 /// @param[in] from Starting value
 /// @param[in] to Ending value
-/// @param[in] u The percentage from the from "from" value. Values
-///              from [0.0, 1.0]
+/// @param[in] u The percentage from the from "from" value. Values from [0.0, 1.0]
 template<typename Type>
 static Type cosInterpolate(const Type& from, const Type& to, F32 u)
 {
@@ -222,11 +204,9 @@ static Type cosInterpolate(const Type& from, const Type& to, F32 u)
 /// @param[in] b Point b
 /// @param[in] c Point c
 /// @param[in] d Point d
-/// @param[in] u The percentage from the from b point to d point. Value
-///              from [0.0, 1.0]
+/// @param[in] u The percentage from the from b point to d point. Value from [0.0, 1.0]
 template<typename Type>
-static Type cubicInterpolate(
-	const Type& a, const Type& b, const Type& c, const Type& d, F32 u)
+static Type cubicInterpolate(const Type& a, const Type& b, const Type& c, const Type& d, F32 u)
 {
 	F32 u2 = u * u;
 	Type a0 = d - c - a + b;

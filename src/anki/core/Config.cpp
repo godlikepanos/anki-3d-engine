@@ -8,7 +8,6 @@
 namespace anki
 {
 
-//==============================================================================
 Config::Config()
 {
 	//
@@ -73,8 +72,7 @@ Config::Config()
 	newOption("gr.storagePerFrameMemorySize", 1024 * 1024 * 16);
 	newOption("gr.vertexPerFrameMemorySize", 1024 * 1024 * 10);
 	newOption("gr.transferPerFrameMemorySize", 1024 * 1024 * 1);
-	newOption(
-		"gr.transferPersistentMemorySize", (4096 / 4) * (4096 / 4) * 16 * 4);
+	newOption("gr.transferPersistentMemorySize", (4096 / 4) * (4096 / 4) * 16 * 4);
 
 	//
 	// Resource
@@ -92,7 +90,6 @@ Config::Config()
 	newOption("debugContext", false);
 }
 
-//==============================================================================
 Config::~Config()
 {
 }

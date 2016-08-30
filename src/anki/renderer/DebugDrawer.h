@@ -159,8 +159,7 @@ public:
 	{
 	}
 
-	void drawLines(
-		const Vec3* lines, const U32 linesCount, const Vec4& color) final;
+	void drawLines(const Vec3* lines, const U32 linesCount, const Vec4& color) final;
 
 private:
 	DebugDrawer* m_dbg; ///< The debug drawer

@@ -8,10 +8,8 @@
 namespace anki
 {
 
-//==============================================================================
 template<typename T>
-static void writeShaderBlockMemorySanityChecks(
-	const ShaderVariableBlockInfo& varBlkInfo,
+static void writeShaderBlockMemorySanityChecks(const ShaderVariableBlockInfo& varBlkInfo,
 	const void* elements,
 	U32 elementsCount,
 	void* buffBegin,
@@ -37,17 +35,14 @@ static void writeShaderBlockMemorySanityChecks(
 	ANKI_ASSERT(static_cast<I16>(elementsCount) <= varBlkInfo.m_arraySize);
 }
 
-//==============================================================================
 template<typename T>
-static void writeShaderBlockMemorySimple(
-	const ShaderVariableBlockInfo& varBlkInfo,
+static void writeShaderBlockMemorySimple(const ShaderVariableBlockInfo& varBlkInfo,
 	const void* elements,
 	U32 elementsCount,
 	void* buffBegin,
 	const void* buffEnd)
 {
-	writeShaderBlockMemorySanityChecks<T>(
-		varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
+	writeShaderBlockMemorySanityChecks<T>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
 
 	U8* buff = static_cast<U8*>(buffBegin) + varBlkInfo.m_offset;
 	for(U i = 0; i < elementsCount; i++)
@@ -62,17 +57,14 @@ static void writeShaderBlockMemorySimple(
 	}
 }
 
-//==============================================================================
 template<typename T, typename Vec>
-static void writeShaderBlockMemoryMatrix(
-	const ShaderVariableBlockInfo& varBlkInfo,
+static void writeShaderBlockMemoryMatrix(const ShaderVariableBlockInfo& varBlkInfo,
 	const void* elements,
 	U32 elementsCount,
 	void* buffBegin,
 	const void* buffEnd)
 {
-	writeShaderBlockMemorySanityChecks<T>(
-		varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
+	writeShaderBlockMemorySanityChecks<T>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
 	ANKI_ASSERT(varBlkInfo.m_matrixStride > 0);
 	ANKI_ASSERT(varBlkInfo.m_matrixStride >= static_cast<I16>(sizeof(Vec)));
 
@@ -83,8 +75,7 @@ static void writeShaderBlockMemoryMatrix(
 		const T& matrix = static_cast<const T*>(elements)[i];
 		for(U j = 0; j < sizeof(T) / sizeof(Vec); j++)
 		{
-			ANKI_ASSERT(
-				(subbuff + sizeof(Vec)) <= static_cast<const U8*>(buffEnd));
+			ANKI_ASSERT((subbuff + sizeof(Vec)) <= static_cast<const U8*>(buffEnd));
 
 			Vec* out = reinterpret_cast<Vec*>(subbuff);
 			*out = matrix.getRow(j);
@@ -94,7 +85,6 @@ static void writeShaderBlockMemoryMatrix(
 	}
 }
 
-//==============================================================================
 void writeShaderBlockMemory(ShaderVariableDataType type,
 	const ShaderVariableBlockInfo& varBlkInfo,
 	const void* elements,
@@ -105,28 +95,22 @@ void writeShaderBlockMemory(ShaderVariableDataType type,
 	switch(type)
 	{
 	case ShaderVariableDataType::FLOAT:
-		writeShaderBlockMemorySimple<F32>(
-			varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
+		writeShaderBlockMemorySimple<F32>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
 		break;
 	case ShaderVariableDataType::VEC2:
-		writeShaderBlockMemorySimple<Vec2>(
-			varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
+		writeShaderBlockMemorySimple<Vec2>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
 		break;
 	case ShaderVariableDataType::VEC3:
-		writeShaderBlockMemorySimple<Vec3>(
-			varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
+		writeShaderBlockMemorySimple<Vec3>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
 		break;
 	case ShaderVariableDataType::VEC4:
-		writeShaderBlockMemorySimple<Vec4>(
-			varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
+		writeShaderBlockMemorySimple<Vec4>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
 		break;
 	case ShaderVariableDataType::MAT3:
-		writeShaderBlockMemoryMatrix<Mat3, Vec3>(
-			varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
+		writeShaderBlockMemoryMatrix<Mat3, Vec3>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
 		break;
 	case ShaderVariableDataType::MAT4:
-		writeShaderBlockMemoryMatrix<Mat4, Vec4>(
-			varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
+		writeShaderBlockMemoryMatrix<Mat4, Vec4>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
 		break;
 	default:
 		ANKI_ASSERT(0);

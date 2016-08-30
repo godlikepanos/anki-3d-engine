@@ -10,7 +10,6 @@
 namespace anki
 {
 
-//==============================================================================
 struct Vertex
 {
 	Vec2 m_pos;
@@ -18,40 +17,32 @@ struct Vertex
 	Array<U8, 4> m_color;
 };
 
-//==============================================================================
 UiInterfaceImpl::UiInterfaceImpl(UiAllocator alloc)
 	: UiInterface(alloc)
 {
 }
 
-//==============================================================================
 UiInterfaceImpl::~UiInterfaceImpl()
 {
 }
 
-//==============================================================================
 Error UiInterfaceImpl::init(GrManager* gr, ResourceManager* rc)
 {
 	// Load shaders
-	ANKI_CHECK(rc->loadResource(
-		"shaders/UiLines.vert.glsl", m_stages[StageId::LINES].m_vShader));
+	ANKI_CHECK(rc->loadResource("shaders/UiLines.vert.glsl", m_stages[StageId::LINES].m_vShader));
 
-	ANKI_CHECK(rc->loadResource(
-		"shaders/UiLines.frag.glsl", m_stages[StageId::LINES].m_fShader));
+	ANKI_CHECK(rc->loadResource("shaders/UiLines.frag.glsl", m_stages[StageId::LINES].m_fShader));
 
 	// Init pplines
 	PipelineInitInfo ppinit;
 	ppinit.m_vertex.m_bindingCount = 1;
 	ppinit.m_vertex.m_bindings[0].m_stride = sizeof(Vertex);
 	ppinit.m_vertex.m_attributeCount = 3;
-	ppinit.m_vertex.m_attributes[0].m_format =
-		PixelFormat(ComponentFormat::R32G32, TransformFormat::FLOAT);
+	ppinit.m_vertex.m_attributes[0].m_format = PixelFormat(ComponentFormat::R32G32, TransformFormat::FLOAT);
 	ppinit.m_vertex.m_attributes[0].m_offset = 0;
-	ppinit.m_vertex.m_attributes[1].m_format =
-		PixelFormat(ComponentFormat::R32G32, TransformFormat::FLOAT);
+	ppinit.m_vertex.m_attributes[1].m_format = PixelFormat(ComponentFormat::R32G32, TransformFormat::FLOAT);
 	ppinit.m_vertex.m_attributes[1].m_offset = sizeof(Vec2);
-	ppinit.m_vertex.m_attributes[2].m_format =
-		PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
+	ppinit.m_vertex.m_attributes[2].m_format = PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
 	ppinit.m_vertex.m_attributes[2].m_offset = sizeof(Vec2) * 2;
 
 	ppinit.m_inputAssembler.m_topology = PrimitiveTopology::LINES;
@@ -60,16 +51,12 @@ Error UiInterfaceImpl::init(GrManager* gr, ResourceManager* rc)
 	ppinit.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
 
 	ppinit.m_color.m_attachmentCount = 1;
-	ppinit.m_color.m_attachments[0].m_format =
-		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM);
+	ppinit.m_color.m_attachments[0].m_format = PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM);
 	ppinit.m_color.m_attachments[0].m_srcBlendMethod = BlendMethod::SRC_ALPHA;
-	ppinit.m_color.m_attachments[0].m_dstBlendMethod =
-		BlendMethod::ONE_MINUS_SRC_ALPHA;
+	ppinit.m_color.m_attachments[0].m_dstBlendMethod = BlendMethod::ONE_MINUS_SRC_ALPHA;
 
-	ppinit.m_shaders[U(ShaderType::VERTEX)] =
-		m_stages[StageId::LINES].m_vShader->getGrShader();
-	ppinit.m_shaders[U(ShaderType::FRAGMENT)] =
-		m_stages[StageId::LINES].m_fShader->getGrShader();
+	ppinit.m_shaders[U(ShaderType::VERTEX)] = m_stages[StageId::LINES].m_vShader->getGrShader();
+	ppinit.m_shaders[U(ShaderType::FRAGMENT)] = m_stages[StageId::LINES].m_fShader->getGrShader();
 	m_stages[StageId::LINES].m_ppline = gr->newInstance<Pipeline>(ppinit);
 
 	// Init buffers
@@ -78,9 +65,7 @@ Error UiInterfaceImpl::init(GrManager* gr, ResourceManager* rc)
 		for(U i = 0; i < m_stages[s].m_vertBuffs.getSize(); ++i)
 		{
 			m_stages[s].m_vertBuffs[i] =
-				gr->newInstance<Buffer>(MAX_VERTS * sizeof(Vertex),
-					BufferUsageBit::VERTEX,
-					BufferMapAccessBit::WRITE);
+				gr->newInstance<Buffer>(MAX_VERTS * sizeof(Vertex), BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE);
 		}
 	}
 
@@ -104,7 +89,6 @@ Error UiInterfaceImpl::init(GrManager* gr, ResourceManager* rc)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void UiInterfaceImpl::beginRendering(CommandBufferPtr cmdb)
 {
 	m_cmdb = cmdb;
@@ -114,14 +98,12 @@ void UiInterfaceImpl::beginRendering(CommandBufferPtr cmdb)
 	{
 		BufferPtr buff = m_stages[s].m_vertBuffs[m_timestamp];
 
-		m_vertMappings[s] = static_cast<Vertex*>(buff->map(
-			0, sizeof(Vertex) * MAX_VERTS, BufferMapAccessBit::WRITE));
+		m_vertMappings[s] = static_cast<Vertex*>(buff->map(0, sizeof(Vertex) * MAX_VERTS, BufferMapAccessBit::WRITE));
 
 		m_vertCounts[s] = 0;
 	}
 }
 
-//==============================================================================
 void UiInterfaceImpl::endRendering()
 {
 	m_cmdb.reset(nullptr);
@@ -135,26 +117,20 @@ void UiInterfaceImpl::endRendering()
 	m_timestamp = (m_timestamp + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
-//==============================================================================
-void UiInterfaceImpl::drawLines(const WeakArray<UVec2>& positions,
-	const Color& color,
-	const UVec2& canvasSize)
+void UiInterfaceImpl::drawLines(const WeakArray<UVec2>& positions, const Color& color, const UVec2& canvasSize)
 {
 	StageId stageId = StageId::LINES;
 
 	ANKI_ASSERT(m_vertCounts[stageId] + positions.getSize() <= MAX_VERTS);
 
 	m_cmdb->bindPipeline(m_stages[StageId::LINES].m_ppline);
-	m_cmdb->bindResourceGroup(
-		m_stages[StageId::LINES].m_rcGroups[m_timestamp], 0, nullptr);
+	m_cmdb->bindResourceGroup(m_stages[StageId::LINES].m_rcGroups[m_timestamp], 0, nullptr);
 	m_cmdb->drawArrays(positions.getSize(), 1, m_vertCounts[stageId]);
 
 	for(const UVec2& pos : positions)
 	{
 		Vertex v;
-		v.m_pos =
-			Vec2(pos.x(), pos.y()) / Vec2(canvasSize.x(), canvasSize.y()) * 2.0
-			- 1.0;
+		v.m_pos = Vec2(pos.x(), pos.y()) / Vec2(canvasSize.x(), canvasSize.y()) * 2.0 - 1.0;
 		v.m_uv = Vec2(0.0);
 		Color c = color * 255.0;
 		v.m_color = {{U8(c[0]), U8(c[1]), U8(c[2]), U8(c[3])}};
@@ -165,20 +141,14 @@ void UiInterfaceImpl::drawLines(const WeakArray<UVec2>& positions,
 	}
 }
 
-//==============================================================================
-void UiInterfaceImpl::drawImage(UiImagePtr image,
-	const Rect& uvs,
-	const Rect& drawingRect,
-	const UVec2& canvasSize)
+void UiInterfaceImpl::drawImage(UiImagePtr image, const Rect& uvs, const Rect& drawingRect, const UVec2& canvasSize)
 {
 	StageId stageId = StageId::TEXTURED_TRIANGLES;
 
 	ANKI_ASSERT(m_vertCounts[stageId] + 4 <= MAX_VERTS);
 }
 
-//==============================================================================
-Error UiInterfaceImpl::loadImage(
-	const CString& filename, IntrusivePtr<UiImage>& img)
+Error UiInterfaceImpl::loadImage(const CString& filename, IntrusivePtr<UiImage>& img)
 {
 	TextureResourcePtr texture;
 	ANKI_CHECK(m_rc->loadResource(filename, texture));
@@ -191,9 +161,7 @@ Error UiInterfaceImpl::loadImage(
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
-Error UiInterfaceImpl::createR8Image(
-	const WeakArray<U8>& data, const UVec2& size, IntrusivePtr<UiImage>& img)
+Error UiInterfaceImpl::createR8Image(const WeakArray<U8>& data, const UVec2& size, IntrusivePtr<UiImage>& img)
 {
 	ANKI_ASSERT(data.getSize() == size.x() * size.y());
 
@@ -218,11 +186,9 @@ Error UiInterfaceImpl::createR8Image(
 	TexturePtr tex = m_gr->newInstance<Texture>(tinit);
 
 	// Load data
-	CommandBufferPtr cmdb =
-		m_gr->newInstance<CommandBuffer>(CommandBufferInitInfo());
+	CommandBufferPtr cmdb = m_gr->newInstance<CommandBuffer>(CommandBufferInitInfo());
 	TransientMemoryToken token;
-	void* loadData = m_gr->allocateFrameTransientMemory(
-		data.getSize(), BufferUsageBit::TEXTURE_UPLOAD_SOURCE, token);
+	void* loadData = m_gr->allocateFrameTransientMemory(data.getSize(), BufferUsageBit::TEXTURE_UPLOAD_SOURCE, token);
 	memcpy(loadData, &data[0], data.getSize());
 	cmdb->uploadTextureSurface(tex, TextureSurfaceInfo(0, 0, 0, 0), token);
 
@@ -238,9 +204,7 @@ Error UiInterfaceImpl::createR8Image(
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
-Error UiInterfaceImpl::readFile(
-	const CString& filename, DynamicArrayAuto<U8>& data)
+Error UiInterfaceImpl::readFile(const CString& filename, DynamicArrayAuto<U8>& data)
 {
 	GenericResourcePtr rsrc;
 	ANKI_CHECK(m_rc->loadResource(filename, rsrc));

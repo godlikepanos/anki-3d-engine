@@ -151,9 +151,7 @@ private:
 
 	/// Export a mesh.
 	/// @param transform If not nullptr then transform the vertices using that.
-	void exportMesh(const aiMesh& mesh,
-		const aiMatrix4x4* transform,
-		unsigned vertCountPerFace) const;
+	void exportMesh(const aiMesh& mesh, const aiMatrix4x4* transform, unsigned vertCountPerFace) const;
 
 	/// Export a skeleton.
 	void exportSkeleton(const aiMesh& mesh) const;

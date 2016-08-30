@@ -41,8 +41,7 @@ public:
 
 /// 4D vector. SIMD optimized
 template<typename T>
-class alignas(16) TVec4
-	: public TVec<T, 4, typename TVec4Simd<T>::Type, TVec4<T>>
+class alignas(16) TVec4 : public TVec<T, 4, typename TVec4Simd<T>::Type, TVec4<T>>
 {
 	/// @name Friends
 	/// @{
@@ -125,8 +124,7 @@ public:
 		return (toThis * ((*this).dot(toThis) / (toThis.dot(toThis)))).xyz0();
 	}
 
-	ANKI_USE_RESULT TVec4 projectTo(
-		const TVec4& rayOrigin, const TVec4& rayDir) const
+	ANKI_USE_RESULT TVec4 projectTo(const TVec4& rayOrigin, const TVec4& rayDir) const
 	{
 		const auto& a = *this;
 		return rayOrigin + rayDir * ((a - rayOrigin).dot(rayDir));
@@ -139,15 +137,13 @@ public:
 	/// @note 16 muls 12 adds
 	ANKI_USE_RESULT TVec4 operator*(const TMat4<T>& m4) const
 	{
-		return TVec4(
-			x() * m4(0, 0) + y() * m4(1, 0) + z() * m4(2, 0) + w() * m4(3, 0),
+		return TVec4(x() * m4(0, 0) + y() * m4(1, 0) + z() * m4(2, 0) + w() * m4(3, 0),
 			x() * m4(0, 1) + y() * m4(1, 1) + z() * m4(2, 1) + w() * m4(3, 1),
 			x() * m4(0, 2) + y() * m4(1, 2) + z() * m4(2, 2) + w() * m4(3, 2),
 			x() * m4(0, 3) + y() * m4(1, 3) + z() * m4(2, 3) + w() * m4(3, 3));
 	}
 
-	/// Perspective divide. Divide the xyzw of this to the w of this. This
-	/// method will handle some edge cases.
+	/// Perspective divide. Divide the xyzw of this to the w of this. This method will handle some edge cases.
 	ANKI_USE_RESULT TVec4 perspectiveDivide() const
 	{
 		auto invw = T(1) / w(); // This may become (+-)inf

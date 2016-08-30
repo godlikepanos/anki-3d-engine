@@ -10,40 +10,33 @@
 namespace anki
 {
 
-//==============================================================================
 ResourceObject::ResourceObject(ResourceManager* manager)
 	: m_manager(manager)
 	, m_refcount(0)
 {
 }
 
-//==============================================================================
 ResourceObject::~ResourceObject()
 {
 	m_fname.destroy(getAllocator());
 }
 
-//==============================================================================
 ResourceAllocator<U8> ResourceObject::getAllocator() const
 {
 	return m_manager->getAllocator();
 }
 
-//==============================================================================
 TempResourceAllocator<U8> ResourceObject::getTempAllocator() const
 {
 	return m_manager->getTempAllocator();
 }
 
-//==============================================================================
 Error ResourceObject::openFile(const CString& filename, ResourceFilePtr& file)
 {
 	return m_manager->getFilesystem().openFile(filename, file);
 }
 
-//==============================================================================
-Error ResourceObject::openFileReadAllText(
-	const CString& filename, StringAuto& text)
+Error ResourceObject::openFileReadAllText(const CString& filename, StringAuto& text)
 {
 	// Load file
 	ResourceFilePtr file;
@@ -56,9 +49,7 @@ Error ResourceObject::openFileReadAllText(
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
-Error ResourceObject::openFileParseXml(
-	const CString& filename, XmlDocument& xml)
+Error ResourceObject::openFileParseXml(const CString& filename, XmlDocument& xml)
 {
 	StringAuto txt(getTempAllocator());
 	ANKI_CHECK(openFileReadAllText(filename, txt));

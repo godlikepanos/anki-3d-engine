@@ -9,7 +9,6 @@
 namespace anki
 {
 
-//==============================================================================
 ANKI_TEST(Util, StringList)
 {
 	HeapAllocator<U8> alloc(allocAligned, nullptr);

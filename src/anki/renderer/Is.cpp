@@ -17,10 +17,6 @@
 namespace anki
 {
 
-//==============================================================================
-// Misc                                                                        =
-//==============================================================================
-
 struct ShaderCommonUniforms
 {
 	Vec4 m_projectionParams;
@@ -31,17 +27,11 @@ struct ShaderCommonUniforms
 	UVec4 m_tileCount;
 };
 
-//==============================================================================
-// Is                                                                          =
-//==============================================================================
-
-//==============================================================================
 Is::Is(Renderer* r)
 	: RenderingPass(r)
 {
 }
 
-//==============================================================================
 Is::~Is()
 {
 	if(m_lightBin)
@@ -50,7 +40,6 @@ Is::~Is()
 	}
 }
 
-//==============================================================================
 Error Is::init(const ConfigSet& config)
 {
 	Error err = initInternal(config);
@@ -63,7 +52,6 @@ Error Is::init(const ConfigSet& config)
 	return err;
 }
 
-//==============================================================================
 Error Is::initInternal(const ConfigSet& config)
 {
 	m_maxLightIds = config.getNumber("is.maxLightsPerCluster");
@@ -74,12 +62,10 @@ Error Is::initInternal(const ConfigSet& config)
 		return ErrorCode::USER_DATA;
 	}
 
-	m_rtMipCount =
-		computeMaxMipmapCount2d(m_r->getWidth(), m_r->getHeight(), 32);
+	m_rtMipCount = computeMaxMipmapCount2d(m_r->getWidth(), m_r->getHeight(), 32);
 	ANKI_ASSERT(m_rtMipCount);
 
-	U clusterCount = m_r->getTileCountXY().x() * m_r->getTileCountXY().y()
-		* config.getNumber("clusterSizeZ");
+	U clusterCount = m_r->getTileCountXY().x() * m_r->getTileCountXY().y() * config.getNumber("clusterSizeZ");
 	m_maxLightIds *= clusterCount;
 
 	m_lightBin = getAllocator().newInstance<LightBin>(getAllocator(),
@@ -114,11 +100,9 @@ Error Is::initInternal(const ConfigSet& config)
 		m_r->getIr().getReflectionTextureMipmapCount());
 
 	// point light
-	ANKI_CHECK(getResourceManager().loadResourceToCache(
-		m_lightVert, "shaders/Is.vert.glsl", pps.toCString(), "r_"));
+	ANKI_CHECK(getResourceManager().loadResourceToCache(m_lightVert, "shaders/Is.vert.glsl", pps.toCString(), "r_"));
 
-	ANKI_CHECK(getResourceManager().loadResourceToCache(
-		m_lightFrag, "shaders/Is.frag.glsl", pps.toCString(), "r_"));
+	ANKI_CHECK(getResourceManager().loadResourceToCache(m_lightFrag, "shaders/Is.frag.glsl", pps.toCString(), "r_"));
 
 	PipelineInitInfo init;
 
@@ -137,8 +121,7 @@ Error Is::initInternal(const ConfigSet& config)
 	m_r->createRenderTarget(m_r->getWidth(),
 		m_r->getHeight(),
 		IS_COLOR_ATTACHMENT_PIXEL_FORMAT,
-		TextureUsageBit::SAMPLED_FRAGMENT
-			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE
+		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE
 			| TextureUsageBit::SAMPLED_COMPUTE,
 		SamplingFilter::LINEAR,
 		m_rtMipCount,
@@ -147,10 +130,8 @@ Error Is::initInternal(const ConfigSet& config)
 	FramebufferInitInfo fbInit;
 	fbInit.m_colorAttachmentCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
-	fbInit.m_colorAttachments[0].m_loadOperation =
-		AttachmentLoadOperation::DONT_CARE;
-	fbInit.m_colorAttachments[0].m_usageInsideRenderPass =
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
+	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
+	fbInit.m_colorAttachments[0].m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 	//
@@ -172,24 +153,18 @@ Error Is::initInternal(const ConfigSet& config)
 		init.m_textures[8].m_sampler = m_r->getIr().getIntegrationLutSampler();
 
 		init.m_uniformBuffers[0].m_uploadedMemory = true;
-		init.m_uniformBuffers[0].m_usage =
-			BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
+		init.m_uniformBuffers[0].m_usage = BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
 		init.m_uniformBuffers[1].m_uploadedMemory = true;
-		init.m_uniformBuffers[1].m_usage =
-			BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
+		init.m_uniformBuffers[1].m_usage = BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
 		init.m_uniformBuffers[2].m_uploadedMemory = true;
-		init.m_uniformBuffers[2].m_usage =
-			BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
+		init.m_uniformBuffers[2].m_usage = BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
 		init.m_uniformBuffers[3].m_uploadedMemory = true;
-		init.m_uniformBuffers[3].m_usage =
-			BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
+		init.m_uniformBuffers[3].m_usage = BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
 
 		init.m_storageBuffers[0].m_uploadedMemory = true;
-		init.m_storageBuffers[0].m_usage = BufferUsageBit::STORAGE_FRAGMENT_READ
-			| BufferUsageBit::STORAGE_VERTEX_READ;
+		init.m_storageBuffers[0].m_usage = BufferUsageBit::STORAGE_FRAGMENT_READ | BufferUsageBit::STORAGE_VERTEX_READ;
 		init.m_storageBuffers[1].m_uploadedMemory = true;
-		init.m_storageBuffers[1].m_usage = BufferUsageBit::STORAGE_FRAGMENT_READ
-			| BufferUsageBit::STORAGE_VERTEX_READ;
+		init.m_storageBuffers[1].m_usage = BufferUsageBit::STORAGE_FRAGMENT_READ | BufferUsageBit::STORAGE_VERTEX_READ;
 
 		m_rcGroup = getGrManager().newInstance<ResourceGroup>(init);
 	}
@@ -198,7 +173,6 @@ Error Is::initInternal(const ConfigSet& config)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error Is::binLights(RenderingContext& ctx)
 {
 	updateCommonBlock(ctx);
@@ -216,7 +190,6 @@ Error Is::binLights(RenderingContext& ctx)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void Is::run(RenderingContext& ctx)
 {
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
@@ -229,34 +202,27 @@ void Is::run(RenderingContext& ctx)
 	cmdb->endRenderPass();
 }
 
-//==============================================================================
 void Is::updateCommonBlock(RenderingContext& ctx)
 {
 	const FrustumComponent& fr = *ctx.m_frustumComponent;
-	ShaderCommonUniforms* blk = static_cast<ShaderCommonUniforms*>(
-		getGrManager().allocateFrameTransientMemory(
-			sizeof(ShaderCommonUniforms),
+	ShaderCommonUniforms* blk =
+		static_cast<ShaderCommonUniforms*>(getGrManager().allocateFrameTransientMemory(sizeof(ShaderCommonUniforms),
 			BufferUsageBit::UNIFORM_ALL,
 			ctx.m_is.m_dynBufferInfo.m_uniformBuffers[COMMON_VARS_LOCATION]));
 
 	// Start writing
 	blk->m_projectionParams = fr.getProjectionParameters();
 	blk->m_viewMat = fr.getViewMatrix().getTransposed();
-	blk->m_nearFarClustererMagicPad1 = Vec4(fr.getFrustum().getNear(),
-		fr.getFrustum().getFar(),
-		m_lightBin->getClusterer().getShaderMagicValue(),
-		0.0);
+	blk->m_nearFarClustererMagicPad1 = Vec4(
+		fr.getFrustum().getNear(), fr.getFrustum().getFar(), m_lightBin->getClusterer().getShaderMagicValue(), 0.0);
 
-	blk->m_invViewRotation =
-		Mat3x4(fr.getViewMatrix().getInverse().getRotationPart());
+	blk->m_invViewRotation = Mat3x4(fr.getViewMatrix().getInverse().getRotationPart());
 
-	blk->m_rendererSizeTimePad1 = Vec4(
-		m_r->getWidth(), m_r->getHeight(), HighRezTimer::getCurrentTime(), 0.0);
+	blk->m_rendererSizeTimePad1 = Vec4(m_r->getWidth(), m_r->getHeight(), HighRezTimer::getCurrentTime(), 0.0);
 
 	blk->m_tileCount = UVec4(m_r->getTileCountXY(), m_r->getTileCount(), 0);
 }
 
-//==============================================================================
 void Is::setPreRunBarriers(RenderingContext& ctx)
 {
 	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_rt,

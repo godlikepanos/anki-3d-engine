@@ -73,16 +73,11 @@ private:
 	GLuint m_indexBuffName = 0;
 	U8 m_indexSize = 0;
 
-	/// Holds the references to the resources. Used to release the references
-	/// gracefully
+	/// Holds the references to the resources. Used to release the references gracefully.
 	DynamicArray<GrObjectPtr<GrObject>> m_refs;
 
 	template<typename InBindings, typename OutBindings>
-	void initBuffers(const InBindings& in,
-		OutBindings& out,
-		U8& count,
-		U& resourcesCount,
-		U& transCount);
+	void initBuffers(const InBindings& in, OutBindings& out, U8& count, U& resourcesCount, U& transCount);
 
 	void initResourceReferences(const ResourceGroupInitInfo& init, U count);
 };

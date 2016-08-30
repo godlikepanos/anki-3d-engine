@@ -14,9 +14,8 @@ namespace anki
 /// @addtogroup math
 /// @{
 
-/// 3x3 Matrix. Mainly used for rotations. It includes many helpful member
-/// functions. Its row major. The columns are the x,y,z axis
-/// @note TMat3*TMat3: 27 muls 18 adds
+/// 3x3 Matrix. Mainly used for rotations. It includes many helpful member functions. Its row major. The columns are
+/// the x,y,z axis @note TMat3*TMat3: 27 muls 18 adds
 template<typename T>
 class TMat3 : public TMat<T, 3, 3, Array<T, 9>, TMat3<T>, TVec3<T>, TVec3<T>>
 {
@@ -95,8 +94,7 @@ public:
 	{
 		const TMat3& m = *this;
 		// For the accurate method see < r664
-		return m(0, 0) * (m(1, 1) * m(2, 2) - m(1, 2) * m(2, 1))
-			- m(0, 1) * (m(1, 0) * m(2, 2) - m(1, 2) * m(2, 0))
+		return m(0, 0) * (m(1, 1) * m(2, 2) - m(1, 2) * m(2, 1)) - m(0, 1) * (m(1, 0) * m(2, 2) - m(1, 2) * m(2, 0))
 			+ m(0, 2) * (m(0, 1) * m(2, 1) - m(1, 1) * m(2, 0));
 	}
 

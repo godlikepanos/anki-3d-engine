@@ -6,13 +6,8 @@
 #include "Exporter.h"
 #include <iostream>
 
-//==============================================================================
-// Statics                                                                     =
-//==============================================================================
-
 static const char* XML_HEADER = R"(<?xml version="1.0" encoding="UTF-8" ?>)";
 
-//==============================================================================
 static aiColor3D srgbToLinear(aiColor3D in)
 {
 	const float p = 1.0 / 2.4;
@@ -24,7 +19,6 @@ static aiColor3D srgbToLinear(aiColor3D in)
 	return out;
 }
 
-//==============================================================================
 /// Convert from sRGB to linear and preserve energy
 static aiColor3D computeLightColor(aiColor3D in)
 {
@@ -50,16 +44,13 @@ static aiColor3D computeLightColor(aiColor3D in)
 	return in;
 }
 
-//==============================================================================
 static std::string getMeshName(const aiMesh& mesh)
 {
 	return std::string(mesh.mName.C_Str());
 }
 
-//==============================================================================
 /// Walk the node hierarchy and find the node.
-static const aiNode* findNodeWithName(
-	const std::string& name, const aiNode* node)
+static const aiNode* findNodeWithName(const std::string& name, const aiNode* node)
 {
 	if(node == nullptr || node->mName.C_Str() == name)
 	{
@@ -81,7 +72,6 @@ static const aiNode* findNodeWithName(
 	return out;
 }
 
-//==============================================================================
 static std::vector<std::string> tokenize(const std::string& source)
 {
 	const char* delimiter = " ";
@@ -109,7 +99,6 @@ static std::vector<std::string> tokenize(const std::string& source)
 	return results;
 }
 
-//==============================================================================
 template<int N, typename Arr>
 static void stringToFloatArray(const std::string& in, Arr& out)
 {
@@ -127,7 +116,6 @@ static void stringToFloatArray(const std::string& in, Arr& out)
 	}
 }
 
-//==============================================================================
 static void removeScale(aiMatrix4x4& m)
 {
 	aiVector3D xAxis(m.a1, m.b1, m.c1);
@@ -150,7 +138,6 @@ static void removeScale(aiMatrix4x4& m)
 	m.c3 /= scale;
 }
 
-//==============================================================================
 static float getUniformScale(const aiMatrix4x4& m)
 {
 	const float SCALE_THRESHOLD = 0.01; // 1 cm
@@ -160,8 +147,7 @@ static float getUniformScale(const aiMatrix4x4& m)
 	aiVector3D zAxis(m.a3, m.b3, m.c3);
 
 	float scale = xAxis.Length();
-	if(std::abs(scale - yAxis.Length()) > SCALE_THRESHOLD
-		|| std::abs(scale - zAxis.Length()) > SCALE_THRESHOLD)
+	if(std::abs(scale - yAxis.Length()) > SCALE_THRESHOLD || std::abs(scale - zAxis.Length()) > SCALE_THRESHOLD)
 	{
 		ERROR("No uniform scale in the matrix");
 	}
@@ -169,11 +155,6 @@ static float getUniformScale(const aiMatrix4x4& m)
 	return scale;
 }
 
-//==============================================================================
-// Exporter                                                                    =
-//==============================================================================
-
-//==============================================================================
 std::string Exporter::getMaterialName(const aiMaterial& mtl)
 {
 	aiString ainame;
@@ -190,14 +171,11 @@ std::string Exporter::getMaterialName(const aiMaterial& mtl)
 	return name;
 }
 
-//==============================================================================
 aiMatrix4x4 Exporter::toAnkiMatrix(const aiMatrix4x4& in) const
 {
-	static const aiMatrix4x4 toLeftHanded(
-		1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1);
+	static const aiMatrix4x4 toLeftHanded(1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1);
 
-	static const aiMatrix4x4 toLeftHandedInv(
-		1, 0, 0, 0, 0, 0, -1, 0, 0, 1, 0, 0, 0, 0, 0, 1);
+	static const aiMatrix4x4 toLeftHandedInv(1, 0, 0, 0, 0, 0, -1, 0, 0, 1, 0, 0, 0, 0, 0, 1);
 
 	if(m_flipyz)
 	{
@@ -209,7 +187,6 @@ aiMatrix4x4 Exporter::toAnkiMatrix(const aiMatrix4x4& in) const
 	}
 }
 
-//==============================================================================
 aiMatrix3x3 Exporter::toAnkiMatrix(const aiMatrix3x3& in) const
 {
 	static const aiMatrix3x3 toLeftHanded(1, 0, 0, 0, 0, 1, 0, -1, 0);
@@ -226,7 +203,6 @@ aiMatrix3x3 Exporter::toAnkiMatrix(const aiMatrix3x3& in) const
 	}
 }
 
-//==============================================================================
 void Exporter::writeTransform(const aiMatrix4x4& inmat)
 {
 	aiMatrix4x4 mat = inmat;
@@ -239,8 +215,7 @@ void Exporter::writeTransform(const aiMatrix4x4& inmat)
 
 	file << "trf = Transform.new()\n";
 
-	file << "trf:setOrigin(Vec4.new(" << pos[0] << ", " << pos[1] << ", "
-		 << pos[2] << ", 0))\n";
+	file << "trf:setOrigin(Vec4.new(" << pos[0] << ", " << pos[1] << ", " << pos[2] << ", 0))\n";
 
 	float scale = getUniformScale(mat);
 	removeScale(mat);
@@ -272,33 +247,27 @@ void Exporter::writeTransform(const aiMatrix4x4& inmat)
 	file << "trf:setScale(" << scale << ")\n";
 }
 
-//==============================================================================
-void Exporter::writeNodeTransform(
-	const std::string& node, const aiMatrix4x4& mat)
+void Exporter::writeNodeTransform(const std::string& node, const aiMatrix4x4& mat)
 {
 	std::ofstream& file = m_sceneFile;
 
 	writeTransform(mat);
 
-	file << node
-		 << ":getSceneNodeBase():getMoveComponent():setLocalTransform(trf)\n";
+	file << node << ":getSceneNodeBase():getMoveComponent():setLocalTransform(trf)\n";
 }
 
-//==============================================================================
 const aiMesh& Exporter::getMeshAt(unsigned index) const
 {
 	assert(index < m_scene->mNumMeshes);
 	return *m_scene->mMeshes[index];
 }
 
-//==============================================================================
 const aiMaterial& Exporter::getMaterialAt(unsigned index) const
 {
 	assert(index < m_scene->mNumMaterials);
 	return *m_scene->mMaterials[index];
 }
 
-//==============================================================================
 std::string Exporter::getModelName(const Model& model) const
 {
 	std::string name = getMeshName(getMeshAt(model.m_meshIndex));
@@ -308,7 +277,6 @@ std::string Exporter::getModelName(const Model& model) const
 	return name;
 }
 
-//==============================================================================
 void Exporter::exportSkeleton(const aiMesh& mesh) const
 {
 	assert(mesh.HasBones());
@@ -359,7 +327,6 @@ void Exporter::exportSkeleton(const aiMesh& mesh) const
 	file << "</skeleton>\n";
 }
 
-//==============================================================================
 void Exporter::exportModel(const Model& model) const
 {
 	std::string name = getModelName(model);
@@ -376,8 +343,7 @@ void Exporter::exportModel(const Model& model) const
 	file << "\t\t<modelPatch>\n";
 
 	// Write mesh
-	file << "\t\t\t<mesh>" << m_rpath
-		 << getMeshName(getMeshAt(model.m_meshIndex)) << ".ankimesh</mesh>\n";
+	file << "\t\t\t<mesh>" << m_rpath << getMeshName(getMeshAt(model.m_meshIndex)) << ".ankimesh</mesh>\n";
 
 	// Write mesh1
 	if(!model.m_lod1MeshName.empty())
@@ -387,8 +353,7 @@ void Exporter::exportModel(const Model& model) const
 		{
 			if(m_scene->mMeshes[i]->mName.C_Str() == model.m_lod1MeshName)
 			{
-				file << "\t\t\t<mesh1>" << m_rpath << getMeshName(getMeshAt(i))
-					 << ".ankimesh</mesh1>\n";
+				file << "\t\t\t<mesh1>" << m_rpath << getMeshName(getMeshAt(i)) << ".ankimesh</mesh1>\n";
 				found = true;
 				break;
 			}
@@ -402,17 +367,14 @@ void Exporter::exportModel(const Model& model) const
 
 	// Write material
 	const aiMaterial& mtl = *m_scene->mMaterials[model.m_materialIndex];
-	if(mtl.mAnKiProperties.find("material_override")
-		== mtl.mAnKiProperties.end())
+	if(mtl.mAnKiProperties.find("material_override") == mtl.mAnKiProperties.end())
 	{
-		file << "\t\t\t<material>" << m_rpath
-			 << getMaterialName(getMaterialAt(model.m_materialIndex))
+		file << "\t\t\t<material>" << m_rpath << getMaterialName(getMaterialAt(model.m_materialIndex))
 			 << ".ankimtl</material>\n";
 	}
 	else
 	{
-		file << "\t\t\t<material>"
-			 << mtl.mAnKiProperties.at("material_override") << "</material>\n";
+		file << "\t\t\t<material>" << mtl.mAnKiProperties.at("material_override") << "</material>\n";
 	}
 
 	// End patches
@@ -422,7 +384,6 @@ void Exporter::exportModel(const Model& model) const
 	file << "</model>\n";
 }
 
-//==============================================================================
 void Exporter::exportLight(const aiLight& light)
 {
 	std::ofstream& file = m_sceneFile;
@@ -431,31 +392,25 @@ void Exporter::exportLight(const aiLight& light)
 
 	if(light.mType != aiLightSource_POINT && light.mType != aiLightSource_SPOT)
 	{
-		LOGW("Skipping light %s. Unsupported type (0x%x)",
-			light.mName.C_Str(),
-			light.mType);
+		LOGW("Skipping light %s. Unsupported type (0x%x)", light.mName.C_Str(), light.mType);
 		return;
 	}
 
 	if(light.mAttenuationLinear != 0.0)
 	{
-		LOGW("Skipping light %s. Linear attenuation is not 0.0",
-			light.mName.C_Str());
+		LOGW("Skipping light %s. Linear attenuation is not 0.0", light.mName.C_Str());
 		return;
 	}
 
-	file << "\nnode = scene:new"
-		 << ((light.mType == aiLightSource_POINT) ? "Point" : "Spot")
-		 << "Light(\"" << light.mName.C_Str() << "\")\n";
+	file << "\nnode = scene:new" << ((light.mType == aiLightSource_POINT) ? "Point" : "Spot") << "Light(\""
+		 << light.mName.C_Str() << "\")\n";
 
 	file << "lcomp = node:getSceneNodeBase():getLightComponent()\n";
 
 	// Colors
 	// aiColor3D linear = computeLightColor(light.mColorDiffuse);
-	aiVector3D linear(
-		light.mColorDiffuse[0], light.mColorDiffuse[1], light.mColorDiffuse[2]);
-	file << "lcomp:setDiffuseColor(Vec4.new(" << linear[0] << ", " << linear[1]
-		 << ", " << linear[2] << ", "
+	aiVector3D linear(light.mColorDiffuse[0], light.mColorDiffuse[1], light.mColorDiffuse[2]);
+	file << "lcomp:setDiffuseColor(Vec4.new(" << linear[0] << ", " << linear[1] << ", " << linear[2] << ", "
 		 << "1))\n";
 
 	// linear = computeLightColor(light.mColorSpecular);
@@ -464,8 +419,7 @@ void Exporter::exportLight(const aiLight& light)
 		stringToFloatArray<3>(light.mProperties.at("specular_color"), linear);
 	}
 
-	file << "lcomp:setSpecularColor(Vec4.new(" << linear[0] << ", " << linear[1]
-		 << ", " << linear[2] << ", "
+	file << "lcomp:setSpecularColor(Vec4.new(" << linear[0] << ", " << linear[1] << ", " << linear[2] << ", "
 		 << "1))\n";
 
 	// Geometry
@@ -479,15 +433,13 @@ void Exporter::exportLight(const aiLight& light)
 		// att = Ac + Al*d + Aq*d^2. When d = r then att = 0.0. Also if we
 		// assume that Al is 0 then:
 		// 0 = Ac + Aq*r^2. Solving by r is easy
-		float r =
-			sqrt(light.mAttenuationConstant / light.mAttenuationQuadratic);
+		float r = sqrt(light.mAttenuationConstant / light.mAttenuationQuadratic);
 		file << "lcomp:setRadius(" << r << ")\n";
 	}
 	break;
 	case aiLightSource_SPOT:
 	{
-		float dist =
-			sqrt(light.mAttenuationConstant / light.mAttenuationQuadratic);
+		float dist = sqrt(light.mAttenuationConstant / light.mAttenuationQuadratic);
 
 		float outer = light.mAngleOuterCone;
 		float inner = light.mAngleInnerCone;
@@ -509,8 +461,7 @@ void Exporter::exportLight(const aiLight& light)
 	}
 
 	// Transform
-	const aiNode* node =
-		findNodeWithName(light.mName.C_Str(), m_scene->mRootNode);
+	const aiNode* node = findNodeWithName(light.mName.C_Str(), m_scene->mRootNode);
 
 	if(node == nullptr)
 	{
@@ -536,14 +487,12 @@ void Exporter::exportLight(const aiLight& light)
 
 	if(light.mProperties.find("lens_flare") != light.mProperties.end())
 	{
-		file << "node:loadLensFlare(\"" << light.mProperties.at("lens_flare")
-			 << "\")\n";
+		file << "node:loadLensFlare(\"" << light.mProperties.at("lens_flare") << "\")\n";
 	}
 
 	bool lfCompRetrieved = false;
 
-	if(light.mProperties.find("lens_flare_first_sprite_size")
-		!= light.mProperties.end())
+	if(light.mProperties.find("lens_flare_first_sprite_size") != light.mProperties.end())
 	{
 		if(!lfCompRetrieved)
 		{
@@ -553,10 +502,8 @@ void Exporter::exportLight(const aiLight& light)
 		}
 
 		aiVector3D vec;
-		stringToFloatArray<2>(
-			light.mProperties.at("lens_flare_first_sprite_size"), vec);
-		file << "lfcomp:setFirstFlareSize(Vec2.new(" << vec[0] << ", " << vec[1]
-			 << "))\n";
+		stringToFloatArray<2>(light.mProperties.at("lens_flare_first_sprite_size"), vec);
+		file << "lfcomp:setFirstFlareSize(Vec2.new(" << vec[0] << ", " << vec[1] << "))\n";
 	}
 
 	if(light.mProperties.find("lens_flare_color") != light.mProperties.end())
@@ -570,13 +517,12 @@ void Exporter::exportLight(const aiLight& light)
 
 		aiVector3D vec;
 		stringToFloatArray<4>(light.mProperties.at("lens_flare_color"), vec);
-		file << "lfcomp:setColorMultiplier(Vec4.new(" << vec[0] << ", "
-			 << vec[1] << ", " << vec[2] << ", " << vec[3] << "))\n";
+		file << "lfcomp:setColorMultiplier(Vec4.new(" << vec[0] << ", " << vec[1] << ", " << vec[2] << ", " << vec[3]
+			 << "))\n";
 	}
 
 	bool eventCreated = false;
-	if(light.mProperties.find("light_event_intensity")
-		!= light.mProperties.end())
+	if(light.mProperties.find("light_event_intensity") != light.mProperties.end())
 	{
 		if(!eventCreated)
 		{
@@ -586,15 +532,13 @@ void Exporter::exportLight(const aiLight& light)
 		}
 
 		aiVector3D vec;
-		stringToFloatArray<4>(
-			light.mProperties.at("light_event_intensity"), vec);
+		stringToFloatArray<4>(light.mProperties.at("light_event_intensity"), vec);
 
-		file << "event:setIntensityMultiplier(Vec4.new(" << vec[0] << ", "
-			 << vec[1] << ", " << vec[2] << ", " << vec[3] << "))\n";
+		file << "event:setIntensityMultiplier(Vec4.new(" << vec[0] << ", " << vec[1] << ", " << vec[2] << ", " << vec[3]
+			 << "))\n";
 	}
 
-	if(light.mProperties.find("light_event_frequency")
-		!= light.mProperties.end())
+	if(light.mProperties.find("light_event_frequency") != light.mProperties.end())
 	{
 		if(!eventCreated)
 		{
@@ -604,14 +548,12 @@ void Exporter::exportLight(const aiLight& light)
 		}
 
 		float vec[2];
-		stringToFloatArray<2>(
-			light.mProperties.at("light_event_frequency"), vec);
+		stringToFloatArray<2>(light.mProperties.at("light_event_frequency"), vec);
 
 		file << "event:setFrequency(" << vec[0] << ", " << vec[1] << ")\n";
 	}
 }
 
-//==============================================================================
 void Exporter::exportAnimation(const aiAnimation& anim, unsigned index)
 {
 	// Get name
@@ -660,14 +602,14 @@ void Exporter::exportAnimation(const aiAnimation& anim, unsigned index)
 			if(m_flipyz)
 			{
 				file << "\t\t\t\t<key><time>" << key.mTime << "</time>"
-					 << "<value>" << key.mValue[0] << " " << key.mValue[2]
-					 << " " << -key.mValue[1] << "</value></key>\n";
+					 << "<value>" << key.mValue[0] << " " << key.mValue[2] << " " << -key.mValue[1]
+					 << "</value></key>\n";
 			}
 			else
 			{
 				file << "\t\t\t\t<key><time>" << key.mTime << "</time>"
-					 << "<value>" << key.mValue[0] << " " << key.mValue[1]
-					 << " " << key.mValue[2] << "</value></key>\n";
+					 << "<value>" << key.mValue[0] << " " << key.mValue[1] << " " << key.mValue[2]
+					 << "</value></key>\n";
 			}
 		}
 		file << "\t\t\t</positionKeys>\n";
@@ -683,8 +625,7 @@ void Exporter::exportAnimation(const aiAnimation& anim, unsigned index)
 			// aiQuaternion quat(key.mValue);
 
 			file << "\t\t\t\t<key><time>" << key.mTime << "</time>"
-				 << "<value>" << quat.x << " " << quat.y << " " << quat.z << " "
-				 << quat.w << "</value></key>\n";
+				 << "<value>" << quat.x << " " << quat.y << " " << quat.z << " " << quat.w << "</value></key>\n";
 		}
 		file << "\t\t\t</rotationKeys>\n";
 
@@ -696,9 +637,7 @@ void Exporter::exportAnimation(const aiAnimation& anim, unsigned index)
 
 			// Note: only uniform scale
 			file << "\t\t\t\t<key><time>" << key.mTime << "</time>"
-				 << "<value>"
-				 << ((key.mValue[0] + key.mValue[1] + key.mValue[2]) / 3.0)
-				 << "</value></key>\n";
+				 << "<value>" << ((key.mValue[0] + key.mValue[1] + key.mValue[2]) / 3.0) << "</value></key>\n";
 		}
 		file << "\t\t\t</scalingKeys>\n";
 
@@ -709,7 +648,6 @@ void Exporter::exportAnimation(const aiAnimation& anim, unsigned index)
 	file << "</animation>\n";
 }
 
-//==============================================================================
 void Exporter::exportCamera(const aiCamera& cam)
 {
 	std::ofstream& file = m_sceneFile;
@@ -717,18 +655,16 @@ void Exporter::exportCamera(const aiCamera& cam)
 	LOGI("Exporting camera %s", cam.mName.C_Str());
 
 	// Write the main node
-	file << "\nnode = scene:newPerspectiveCamera(\"" << cam.mName.C_Str()
-		 << "\")\n";
+	file << "\nnode = scene:newPerspectiveCamera(\"" << cam.mName.C_Str() << "\")\n";
 
 	file << "scene:setActiveCamera(node:getSceneNodeBase())\n";
 
 	file << "node:setAll(" << cam.mHorizontalFOV << ", "
-		 << "1.0 / getMainRenderer():getAspectRatio() * " << cam.mHorizontalFOV
-		 << ", " << cam.mClipPlaneNear << ", " << cam.mClipPlaneFar << ")\n";
+		 << "1.0 / getMainRenderer():getAspectRatio() * " << cam.mHorizontalFOV << ", " << cam.mClipPlaneNear << ", "
+		 << cam.mClipPlaneFar << ")\n";
 
 	// Find the node
-	const aiNode* node =
-		findNodeWithName(cam.mName.C_Str(), m_scene->mRootNode);
+	const aiNode* node = findNodeWithName(cam.mName.C_Str(), m_scene->mRootNode);
 	if(node == nullptr)
 	{
 		ERROR("Couldn't find node for camera %s", cam.mName.C_Str());
@@ -739,26 +675,22 @@ void Exporter::exportCamera(const aiCamera& cam)
 	writeNodeTransform("node", toAnkiMatrix(node->mTransformation * rot));
 }
 
-//==============================================================================
 void Exporter::load()
 {
 	LOGI("Loading file %s", &m_inputFilename[0]);
 
 	const int smoothAngle = 170;
 
-	m_importer.SetPropertyFloat(
-		AI_CONFIG_PP_CT_MAX_SMOOTHING_ANGLE, smoothAngle);
+	m_importer.SetPropertyFloat(AI_CONFIG_PP_CT_MAX_SMOOTHING_ANGLE, smoothAngle);
 
 	unsigned flags = 0
 		//| aiProcess_FindInstances
 		| aiProcess_JoinIdenticalVertices
 		//| aiProcess_SortByPType
-		| aiProcess_ImproveCacheLocality | aiProcess_OptimizeMeshes
-		| aiProcess_RemoveRedundantMaterials | aiProcess_CalcTangentSpace
-		| aiProcess_GenSmoothNormals;
+		| aiProcess_ImproveCacheLocality | aiProcess_OptimizeMeshes | aiProcess_RemoveRedundantMaterials
+		| aiProcess_CalcTangentSpace | aiProcess_GenSmoothNormals;
 
-	const aiScene* scene =
-		m_importer.ReadFile(m_inputFilename, flags | aiProcess_Triangulate);
+	const aiScene* scene = m_importer.ReadFile(m_inputFilename, flags | aiProcess_Triangulate);
 
 	if(!scene)
 	{
@@ -768,8 +700,7 @@ void Exporter::load()
 	m_scene = scene;
 
 	// Load without triangulation
-	m_importerNoTriangles.SetPropertyFloat(
-		AI_CONFIG_PP_CT_MAX_SMOOTHING_ANGLE, smoothAngle);
+	m_importerNoTriangles.SetPropertyFloat(AI_CONFIG_PP_CT_MAX_SMOOTHING_ANGLE, smoothAngle);
 
 	scene = m_importerNoTriangles.ReadFile(m_inputFilename, flags);
 
@@ -781,7 +712,6 @@ void Exporter::load()
 	m_sceneNoTriangles = scene;
 }
 
-//==============================================================================
 void Exporter::visitNode(const aiNode* ainode)
 {
 	if(ainode == nullptr)
@@ -860,8 +790,7 @@ void Exporter::visitNode(const aiNode* ainode)
 				proxy.m_meshIndex = 0xFFFFFFFF;
 				for(unsigned i = 0; i < m_sceneNoTriangles->mNumMeshes; ++i)
 				{
-					if(m_sceneNoTriangles->mMeshes[i]->mName
-						== m_scene->mMeshes[meshIndex]->mName)
+					if(m_sceneNoTriangles->mMeshes[i]->mName == m_scene->mMeshes[meshIndex]->mName)
 					{
 						// Found
 						proxy.m_meshIndex = i;
@@ -924,7 +853,6 @@ void Exporter::visitNode(const aiNode* ainode)
 	}
 }
 
-//==============================================================================
 void Exporter::exportCollisionMesh(uint32_t meshIdx)
 {
 	std::string name = getMeshName(getMeshAt(meshIdx));
@@ -935,11 +863,10 @@ void Exporter::exportCollisionMesh(uint32_t meshIdx)
 	file << XML_HEADER << '\n';
 
 	// Write collision mesh
-	file << "<collisionShape>\n\t<type>staticMesh</type>\n\t<value>" << m_rpath
-		 << name << ".ankimesh</value>\n</collisionShape>\n";
+	file << "<collisionShape>\n\t<type>staticMesh</type>\n\t<value>" << m_rpath << name
+		 << ".ankimesh</value>\n</collisionShape>\n";
 }
 
-//==============================================================================
 void Exporter::exportAll()
 {
 	LOGI("Exporting scene to %s", &m_outputDirectory[0]);
@@ -975,8 +902,7 @@ void Exporter::exportAll()
 
 		std::string name = getMeshName(getMeshAt(n.m_meshIndex));
 		std::string fname = m_rpath + name + ".ankicl";
-		file << "node = scene:newStaticCollisionNode(\"" << name << "\", \""
-			 << fname << "\", trf)\n";
+		file << "node = scene:newStaticCollisionNode(\"" << name << "\", \"" << fname << "\", trf)\n";
 	}
 
 	//
@@ -990,8 +916,7 @@ void Exporter::exportAll()
 
 		std::string name = getMeshName(getMeshAt(meshIndex));
 		std::string fname = m_rpath + name + ".ankimesh";
-		file << "\nnode = scene:newPortal(\"" << name << i << "\", \"" << fname
-			 << "\")\n";
+		file << "\nnode = scene:newPortal(\"" << name << i << "\", \"" << fname << "\")\n";
 
 		writeNodeTransform("node", portal.m_transform);
 		++i;
@@ -1008,8 +933,7 @@ void Exporter::exportAll()
 
 		std::string name = getMeshName(getMeshAt(meshIndex));
 		std::string fname = m_rpath + name + ".ankimesh";
-		file << "\nnode = scene:newSector(\"" << name << i << "\", \"" << fname
-			 << "\")\n";
+		file << "\nnode = scene:newSector(\"" << name << i << "\", \"" << fname << "\")\n";
 
 		writeNodeTransform("node", sector.m_transform);
 		++i;
@@ -1022,8 +946,7 @@ void Exporter::exportAll()
 	for(const ParticleEmitter& p : m_particleEmitters)
 	{
 		std::string name = "particles" + std::to_string(i);
-		file << "\nnode = scene:newParticleEmitter(\"" << name << "\", \""
-			 << p.m_filename << "\")\n";
+		file << "\nnode = scene:newParticleEmitter(\"" << name << "\", \"" << p.m_filename << "\")\n";
 
 		writeNodeTransform("node", p.m_transform);
 		++i;
@@ -1036,8 +959,7 @@ void Exporter::exportAll()
 	for(const ReflectionProbe& probe : m_reflectionProbes)
 	{
 		std::string name = "reflprobe" + std::to_string(i);
-		file << "\nnode = scene:newReflectionProbe(\"" << name << "\", "
-			 << probe.m_radius << ")\n";
+		file << "\nnode = scene:newReflectionProbe(\"" << name << "\", " << probe.m_radius << ")\n";
 
 		aiMatrix4x4 trf;
 		aiMatrix4x4::Translation(probe.m_position, trf);
@@ -1056,8 +978,8 @@ void Exporter::exportAll()
 		exportMesh(mesh, nullptr, 4);
 
 		std::string name = "reflproxy" + std::to_string(i);
-		file << "\nnode = scene:newReflectionProxy(\"" << name << "\", \""
-			 << m_rpath << mesh.mName.C_Str() << ".ankimesh\")\n";
+		file << "\nnode = scene:newReflectionProxy(\"" << name << "\", \"" << m_rpath << mesh.mName.C_Str()
+			 << ".ankimesh\")\n";
 
 		writeNodeTransform("node", proxy.m_transform);
 		++i;
@@ -1073,8 +995,8 @@ void Exporter::exportAll()
 		exportMesh(mesh, nullptr, 3);
 
 		std::string name = "occluder" + std::to_string(i);
-		file << "\nnode = scene:newOccluderNode(\"" << name << "\", \""
-			 << m_rpath << mesh.mName.C_Str() << ".ankimesh\")\n";
+		file << "\nnode = scene:newOccluderNode(\"" << name << "\", \"" << m_rpath << mesh.mName.C_Str()
+			 << ".ankimesh\")\n";
 
 		writeNodeTransform("node", occluder.m_transform);
 		++i;
@@ -1098,8 +1020,7 @@ void Exporter::exportAll()
 		std::string nodeName = modelName + node.m_group + std::to_string(i);
 
 		// Write the main node
-		file << "\nnode = scene:newModelNode(\"" << nodeName << "\", \""
-			 << m_rpath << modelName << ".ankimdl"
+		file << "\nnode = scene:newModelNode(\"" << nodeName << "\", \"" << m_rpath << modelName << ".ankimdl"
 			 << "\")\n";
 		writeNodeTransform("node", node.m_transform);
 
@@ -1122,14 +1043,12 @@ void Exporter::exportAll()
 				exportCollisionMesh(i);
 
 				std::string fname = m_rpath + node.m_collisionMesh + ".ankicl";
-				file << "node = scene:newStaticCollisionNode(\"" << nodeName
-					 << "_cl"
+				file << "node = scene:newStaticCollisionNode(\"" << nodeName << "_cl"
 					 << "\", \"" << fname << "\", trf)\n";
 			}
 			else
 			{
-				ERROR("Couldn't find the collision_mesh %s",
-					node.m_collisionMesh.c_str());
+				ERROR("Couldn't find the collision_mesh %s", node.m_collisionMesh.c_str());
 			}
 		}
 	}

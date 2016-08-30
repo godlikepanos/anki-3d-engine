@@ -18,8 +18,7 @@ class XmlElement;
 /// @addtogroup resource
 /// @{
 
-/// The particle emitter properties. Different class from
-/// ParticleEmitterResource so it can be inherited
+/// The particle emitter properties. Different class from ParticleEmitterResource so it can be inherited
 class ParticleEmitterProperties
 {
 public:
@@ -95,8 +94,7 @@ public:
 };
 
 /// This is the properties of the particle emitter resource
-class ParticleEmitterResource : public ResourceObject,
-								private ParticleEmitterProperties
+class ParticleEmitterResource : public ResourceObject, private ParticleEmitterProperties
 {
 public:
 	/// Size of a single vertex.

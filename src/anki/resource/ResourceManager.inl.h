@@ -8,10 +8,8 @@
 namespace anki
 {
 
-//==============================================================================
 template<typename T>
-Error ResourceManager::loadResource(
-	const CString& filename, ResourcePtr<T>& out)
+Error ResourceManager::loadResource(const CString& filename, ResourcePtr<T>& out)
 {
 	ANKI_ASSERT(!out.isCreated() && "Already loaded");
 
@@ -46,8 +44,7 @@ Error ResourceManager::loadResource(
 				return err;
 			}
 
-			ANKI_ASSERT(pool.getAllocationsCount() == allocsCountBefore
-				&& "Forgot to deallocate");
+			ANKI_ASSERT(pool.getAllocationsCount() == allocsCountBefore && "Forgot to deallocate");
 		}
 
 		ptr->setFilename(filename);
@@ -68,7 +65,6 @@ Error ResourceManager::loadResource(
 	return err;
 }
 
-//==============================================================================
 template<typename T, typename... TArgs>
 Error ResourceManager::loadResourceToCache(ResourcePtr<T>& out, TArgs&&... args)
 {

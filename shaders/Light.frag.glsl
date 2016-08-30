@@ -56,11 +56,9 @@ vec3 readPosition(in vec2 uv)
 	vec3 fragPosVspace;
 
 	float depth = texture(u_msDepthRt, uv).r;
-	fragPosVspace.z =
-		u_light.projectionParams.z / (u_light.projectionParams.w + depth);
+	fragPosVspace.z = u_light.projectionParams.z / (u_light.projectionParams.w + depth);
 
-	fragPosVspace.xy =
-		(2.0 * uv - 1.0) * u_light.projectionParams.xy * fragPosVspace.z;
+	fragPosVspace.xy = (2.0 * uv - 1.0) * u_light.projectionParams.xy * fragPosVspace.z;
 
 	return fragPosVspace;
 }
@@ -80,8 +78,7 @@ void main()
 	vec3 l = normalize(frag2Light);
 	float nol = max(0.0, dot(gbuffer.normal, l));
 
-	vec3 specC = computeSpecularColorBrdf(
-		viewDir, l, gbuffer.normal, gbuffer.specular, u_lspec, a2, nol);
+	vec3 specC = computeSpecularColorBrdf(viewDir, l, gbuffer.normal, gbuffer.specular, u_lspec, a2, nol);
 
 	vec3 diffC = computeDiffuseColor(gbuffer.diffuse, u_ldiff);
 
@@ -91,10 +88,8 @@ void main()
 #if defined(POINT_LIGHT)
 	out_color = (specC + diffC) * (att * lambert);
 #else
-	float spot = computeSpotFactor(l,
-		u_light.diffuseColorOuterCos.w,
-		u_light.specularColorInnerCos.w,
-		u_light.lightDirPad1.xyz);
+	float spot =
+		computeSpotFactor(l, u_light.diffuseColorOuterCos.w, u_light.specularColorInnerCos.w, u_light.lightDirPad1.xyz);
 
 	out_color = (diffC + specC) * (att * spot * lambert);
 #endif

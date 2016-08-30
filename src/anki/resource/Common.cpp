@@ -8,20 +8,14 @@
 namespace anki
 {
 
-//==============================================================================
 const CString& shaderTypeToFileExtension(ShaderType type)
 {
-	static const Array<CString, U(ShaderType::COUNT)> mapping = {{".vert.glsl",
-		".tc.glsl",
-		".te.glsl",
-		".geom.glsl",
-		".frag.glsl",
-		".comp.glsl"}};
+	static const Array<CString, U(ShaderType::COUNT)> mapping = {
+		{".vert.glsl", ".tc.glsl", ".te.glsl", ".geom.glsl", ".frag.glsl", ".comp.glsl"}};
 
 	return mapping[type];
 }
 
-//==============================================================================
 Error fileExtensionToShaderType(const CString& filename, ShaderType& type)
 {
 	type = ShaderType::COUNT;

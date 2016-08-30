@@ -20,13 +20,8 @@
 namespace anki
 {
 
-//==============================================================================
 template<typename InBindings, typename OutBindings>
-void ResourceGroupImpl::initBuffers(const InBindings& in,
-	OutBindings& out,
-	U8& count,
-	U& resourcesCount,
-	U& transCount)
+void ResourceGroupImpl::initBuffers(const InBindings& in, OutBindings& out, U8& count, U& resourcesCount, U& transCount)
 {
 	count = 0;
 
@@ -43,12 +38,9 @@ void ResourceGroupImpl::initBuffers(const InBindings& in,
 
 			outBinding.m_name = buff.getGlName();
 			outBinding.m_offset = binding.m_offset;
-			outBinding.m_range = (binding.m_range != 0)
-				? binding.m_range
-				: (buff.m_size - binding.m_offset);
+			outBinding.m_range = (binding.m_range != 0) ? binding.m_range : (buff.m_size - binding.m_offset);
 
-			ANKI_ASSERT(
-				outBinding.m_offset + outBinding.m_range <= buff.m_size);
+			ANKI_ASSERT(outBinding.m_offset + outBinding.m_range <= buff.m_size);
 			ANKI_ASSERT(outBinding.m_range > 0);
 
 			++resourcesCount;
@@ -64,7 +56,6 @@ void ResourceGroupImpl::initBuffers(const InBindings& in,
 	}
 }
 
-//==============================================================================
 void ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 {
 	U resourcesCount = 0;
@@ -77,8 +68,7 @@ void ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 	{
 		if(init.m_textures[i].m_texture.isCreated())
 		{
-			m_textureNames[i] =
-				init.m_textures[i].m_texture->getImplementation().getGlName();
+			m_textureNames[i] = init.m_textures[i].m_texture->getImplementation().getGlName();
 			m_textureNamesCount = i + 1;
 			++resourcesCount;
 		}
@@ -89,8 +79,7 @@ void ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 
 		if(init.m_textures[i].m_sampler.isCreated())
 		{
-			m_samplerNames[i] =
-				init.m_textures[i].m_sampler->getImplementation().getGlName();
+			m_samplerNames[i] = init.m_textures[i].m_sampler->getImplementation().getGlName();
 			m_allSamplersZero = false;
 			++resourcesCount;
 		}
@@ -101,13 +90,8 @@ void ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 	}
 
 	// Init shader buffers
-	initBuffers(
-		init.m_uniformBuffers, m_ubos, m_ubosCount, resourcesCount, transCount);
-	initBuffers(init.m_storageBuffers,
-		m_ssbos,
-		m_ssbosCount,
-		resourcesCount,
-		transCount);
+	initBuffers(init.m_uniformBuffers, m_ubos, m_ubosCount, resourcesCount, transCount);
+	initBuffers(init.m_storageBuffers, m_ssbos, m_ssbosCount, resourcesCount, transCount);
 
 	// Init images
 	for(U i = 0; i < MAX_IMAGE_BINDINGS; ++i)
@@ -138,8 +122,7 @@ void ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 		{
 			ANKI_ASSERT(!binding.m_uploadedMemory);
 
-			m_vertBuffNames[i] =
-				binding.m_buffer->getImplementation().getGlName();
+			m_vertBuffNames[i] = binding.m_buffer->getImplementation().getGlName();
 			m_vertBuffOffsets[i] = binding.m_offset;
 
 			++m_vertBindingsCount;
@@ -165,8 +148,7 @@ void ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 	// Init index buffer
 	if(init.m_indexBuffer.m_buffer.isCreated())
 	{
-		const BufferImpl& buff =
-			init.m_indexBuffer.m_buffer->getImplementation();
+		const BufferImpl& buff = init.m_indexBuffer.m_buffer->getImplementation();
 
 		ANKI_ASSERT(init.m_indexSize == 2 || init.m_indexSize == 4);
 
@@ -175,16 +157,13 @@ void ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 		++resourcesCount;
 	}
 
-	ANKI_ASSERT(
-		(resourcesCount > 0 || transCount > 0) && "Resource group empty");
+	ANKI_ASSERT((resourcesCount > 0 || transCount > 0) && "Resource group empty");
 
 	// Hold references
 	initResourceReferences(init, resourcesCount);
 }
 
-//==============================================================================
-void ResourceGroupImpl::initResourceReferences(
-	const ResourceGroupInitInfo& init, U refCount)
+void ResourceGroupImpl::initResourceReferences(const ResourceGroupInitInfo& init, U refCount)
 {
 	m_refs.create(getAllocator(), refCount);
 
@@ -247,29 +226,22 @@ void ResourceGroupImpl::initResourceReferences(
 	ANKI_ASSERT(refCount == count);
 }
 
-//==============================================================================
-void ResourceGroupImpl::bind(
-	U slot, const TransientMemoryInfo& transientInfo, GlState& state)
+void ResourceGroupImpl::bind(U slot, const TransientMemoryInfo& transientInfo, GlState& state)
 {
 	ANKI_ASSERT(slot < MAX_BOUND_RESOURCE_GROUPS);
 
 	// Bind textures
 	if(m_textureNamesCount)
 	{
-		glBindTextures(MAX_TEXTURE_BINDINGS * slot,
-			m_textureNamesCount,
-			&m_textureNames[0]);
+		glBindTextures(MAX_TEXTURE_BINDINGS * slot, m_textureNamesCount, &m_textureNames[0]);
 
 		if(m_allSamplersZero)
 		{
-			glBindSamplers(
-				MAX_TEXTURE_BINDINGS * slot, m_textureNamesCount, nullptr);
+			glBindSamplers(MAX_TEXTURE_BINDINGS * slot, m_textureNamesCount, nullptr);
 		}
 		else
 		{
-			glBindSamplers(MAX_TEXTURE_BINDINGS * slot,
-				m_textureNamesCount,
-				&m_samplerNames[0]);
+			glBindSamplers(MAX_TEXTURE_BINDINGS * slot, m_textureNamesCount, &m_samplerNames[0]);
 		}
 	}
 
@@ -283,20 +255,17 @@ void ResourceGroupImpl::bind(
 			TransientMemoryToken token = transientInfo.m_uniformBuffers[i];
 			ANKI_ASSERT(token.m_range != 0);
 
-			if(token.m_range != MAX_U32)
+			if(!token.isUnused())
 			{
 				glBindBufferRange(GL_UNIFORM_BUFFER,
 					MAX_UNIFORM_BUFFER_BINDINGS * slot + i,
-					getManager()
-						.getImplementation()
-						.getTransientMemoryManager()
-						.getGlName(token),
+					getManager().getImplementation().getTransientMemoryManager().getGlName(token),
 					token.m_offset,
 					token.m_range);
 			}
 			else
 			{
-				// It's invalid
+				// It's unused
 			}
 		}
 		else if(binding.m_name != 0)
@@ -320,20 +289,17 @@ void ResourceGroupImpl::bind(
 			TransientMemoryToken token = transientInfo.m_storageBuffers[i];
 			ANKI_ASSERT(token.m_range != 0);
 
-			if(token.m_range != MAX_U32)
+			if(!token.isUnused())
 			{
 				glBindBufferRange(GL_SHADER_STORAGE_BUFFER,
 					MAX_STORAGE_BUFFER_BINDINGS * slot + i,
-					getManager()
-						.getImplementation()
-						.getTransientMemoryManager()
-						.getGlName(token),
+					getManager().getImplementation().getTransientMemoryManager().getGlName(token),
 					token.m_offset,
 					token.m_range);
 			}
 			else
 			{
-				// It's invalid
+				// It's unused
 			}
 		}
 		else if(binding.m_name != 0)
@@ -370,20 +336,16 @@ void ResourceGroupImpl::bind(
 
 		if(!m_hasTransientVertexBuff)
 		{
-			memcpy(&state.m_vertBuffOffsets[0],
-				&m_vertBuffOffsets[0],
-				sizeof(m_vertBuffOffsets[0]) * m_vertBindingsCount);
+			memcpy(
+				&state.m_vertBuffOffsets[0], &m_vertBuffOffsets[0], sizeof(m_vertBuffOffsets[0]) * m_vertBindingsCount);
 
-			memcpy(&state.m_vertBuffNames[0],
-				&m_vertBuffNames[0],
-				sizeof(m_vertBuffNames[0]) * m_vertBindingsCount);
+			memcpy(&state.m_vertBuffNames[0], &m_vertBuffNames[0], sizeof(m_vertBuffNames[0]) * m_vertBindingsCount);
 		}
 		else
 		{
 			Array<GLintptr, MAX_VERTEX_ATTRIBUTES> offsets = m_vertBuffOffsets;
 			Array<GLuint, MAX_VERTEX_ATTRIBUTES> names = m_vertBuffNames;
-			const TransientMemoryManager& transManager =
-				getManager().getImplementation().getTransientMemoryManager();
+			const TransientMemoryManager& transManager = getManager().getImplementation().getTransientMemoryManager();
 
 			for(U i = 0; i < MAX_VERTEX_ATTRIBUTES; ++i)
 			{
@@ -392,8 +354,7 @@ void ResourceGroupImpl::bind(
 					// It's dynamic
 					ANKI_ASSERT(transientInfo.m_vertexBuffers[i].m_range != 0);
 					offsets[i] = transientInfo.m_vertexBuffers[i].m_offset;
-					names[i] = transManager.getGlName(
-						transientInfo.m_vertexBuffers[i]);
+					names[i] = transManager.getGlName(transientInfo.m_vertexBuffers[i]);
 				}
 				else
 				{
@@ -402,13 +363,9 @@ void ResourceGroupImpl::bind(
 			}
 
 			// Bind to state
-			memcpy(&state.m_vertBuffOffsets[0],
-				&offsets[0],
-				sizeof(offsets[0]) * m_vertBindingsCount);
+			memcpy(&state.m_vertBuffOffsets[0], &offsets[0], sizeof(offsets[0]) * m_vertBindingsCount);
 
-			memcpy(&state.m_vertBuffNames[0],
-				&names[0],
-				sizeof(names[0]) * m_vertBindingsCount);
+			memcpy(&state.m_vertBuffNames[0], &names[0], sizeof(names[0]) * m_vertBindingsCount);
 		}
 
 		state.m_vertBindingCount = m_vertBindingsCount;

@@ -20,11 +20,6 @@
 namespace anki
 {
 
-//==============================================================================
-// Misc                                                                        =
-//==============================================================================
-
-//==============================================================================
 /// Fake glDeleteShaders because some jenius created a conflicting interface
 static void deleteShaders(GLsizei n, const GLuint* names)
 {
@@ -52,17 +47,11 @@ static const char* SHADER_HEADER = R"(#version %u %s
 
 %s)";
 
-//==============================================================================
-// ShaderImpl                                                                  =
-//==============================================================================
-
-//==============================================================================
 ShaderImpl::~ShaderImpl()
 {
 	destroyDeferred(deleteShaders);
 }
 
-//==============================================================================
 Error ShaderImpl::init(ShaderType type, const CString& source)
 {
 	ANKI_ASSERT(source);
@@ -153,11 +142,10 @@ Error ShaderImpl::init(ShaderType type, const CString& source)
 
 		StringAuto fname(alloc);
 		CString cacheDir = m_manager->getCacheDirectory();
-		fname.sprintf(
-			"%s/%05u.%s", &cacheDir[0], static_cast<U32>(m_glName), ext);
+		fname.sprintf("%s/%05u.%s", &cacheDir[0], static_cast<U32>(m_glName), ext);
 
 		File file;
-		ANKI_CHECK(file.open(fname.toCString(), File::OpenFlag::WRITE));
+		ANKI_CHECK(file.open(fname.toCString(), FileOpenFlag::WRITE));
 		ANKI_CHECK(file.writeText("%s", &fullSrc[0]));
 	}
 #endif
@@ -174,8 +162,7 @@ Error ShaderImpl::init(ShaderType type, const CString& source)
 		glGetShaderiv(m_glName, GL_INFO_LOG_LENGTH, &compilerLogLen);
 		compilerLog.create(' ', compilerLogLen + 1);
 
-		glGetShaderInfoLog(
-			m_glName, compilerLogLen, &charsWritten, &compilerLog[0]);
+		glGetShaderInfoLog(m_glName, compilerLogLen, &charsWritten, &compilerLog[0]);
 
 		logShaderErrorCode(compilerLog.toCString(), fullSrc.toCString(), alloc);
 

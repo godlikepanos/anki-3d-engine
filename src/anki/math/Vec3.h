@@ -77,9 +77,7 @@ public:
 	/// 6 muls, 3 adds
 	TVec3 cross(const TVec3& b) const
 	{
-		return TVec3(y() * b.z() - z() * b.y(),
-			z() * b.x() - x() * b.z(),
-			x() * b.y() - y() * b.x());
+		return TVec3(y() * b.z() - z() * b.y(), z() * b.x() - x() * b.z(), x() * b.y() - y() * b.x());
 	}
 
 	TVec3 projectTo(const TVec3& toThis) const

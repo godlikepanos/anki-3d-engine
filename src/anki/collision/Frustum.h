@@ -18,8 +18,8 @@ namespace anki
 /// @addtogroup Collision
 /// @{
 
-/// Frustum collision shape. This shape consists from 6 planes. The planes are
-/// being used to find shapes that are inside the frustum
+/// Frustum collision shape. This shape consists from 6 planes. The planes are being used to find shapes that are
+/// inside the frustum
 class Frustum : public CompoundShape
 {
 public:
@@ -122,8 +122,7 @@ protected:
 	/// It's true when the frustum changed
 	Bool8 m_frustumDirty = true;
 
-	/// Called when a viewing variable changes. It recalculates the planes and
-	/// the other variables.
+	/// Called when a viewing variable changes. It recalculates the planes and the other variables.
 	virtual void recalculate() = 0;
 
 	/// Called when there is a change in the transformation.
@@ -144,11 +143,6 @@ private:
 class PerspectiveFrustum : public Frustum
 {
 public:
-	static Bool classof(const Frustum& c)
-	{
-		return c.getType() == Type::PERSPECTIVE;
-	}
-
 	/// Default
 	PerspectiveFrustum();
 
@@ -248,11 +242,6 @@ private:
 class OrthographicFrustum : public Frustum
 {
 public:
-	static Bool classof(const Frustum& c)
-	{
-		return c.getType() == Type::ORTHOGRAPHIC;
-	}
-
 	/// Default
 	OrthographicFrustum();
 
@@ -264,8 +253,7 @@ public:
 	}
 
 	/// Set all
-	OrthographicFrustum(
-		F32 left, F32 right, F32 near, F32 far, F32 top, F32 bottom)
+	OrthographicFrustum(F32 left, F32 right, F32 near, F32 far, F32 top, F32 bottom)
 		: OrthographicFrustum()
 	{
 		setAll(left, right, near, far, top, bottom);

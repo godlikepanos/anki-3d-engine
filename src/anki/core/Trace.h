@@ -83,8 +83,7 @@ public:
 
 	~TraceManager();
 
-	ANKI_USE_RESULT Error create(
-		HeapAllocator<U8> alloc, const CString& cacheDir);
+	ANKI_USE_RESULT Error create(HeapAllocator<U8> alloc, const CString& cacheDir);
 
 	void startEvent();
 
@@ -109,7 +108,7 @@ private:
 		TraceEventType m_event;
 		HighRezTimer::Scalar m_timestamp; ///< When it started.
 		HighRezTimer::Scalar m_duration;
-		Thread::Id m_tid;
+		ThreadId m_tid;
 	};
 
 	static const U BUFFERED_ENTRIES = 1024 * 20;
@@ -120,10 +119,8 @@ private:
 	File m_perRunFile;
 	HighRezTimer::Scalar m_startFrameTime;
 
-	Array<Atomic<U64>, U(TraceEventType::COUNT) + U(TraceCounterType::COUNT)>
-		m_perFrameCounters = {{}};
-	Array<Atomic<U64>, U(TraceEventType::COUNT) + U(TraceCounterType::COUNT)>
-		m_perRunCounters = {{}};
+	Array<Atomic<U64>, U(TraceEventType::COUNT) + U(TraceCounterType::COUNT)> m_perFrameCounters = {{}};
+	Array<Atomic<U64>, U(TraceEventType::COUNT) + U(TraceCounterType::COUNT)> m_perRunCounters = {{}};
 
 	Bool m_disabled = false;
 
@@ -140,11 +137,9 @@ using TraceManagerSingleton = Singleton<TraceManager>;
 
 #define ANKI_TRACE_START_EVENT(name_) TraceManagerSingleton::get().startEvent()
 
-#define ANKI_TRACE_STOP_EVENT(name_)                                           \
-	TraceManagerSingleton::get().stopEvent(TraceEventType::name_)
+#define ANKI_TRACE_STOP_EVENT(name_) TraceManagerSingleton::get().stopEvent(TraceEventType::name_)
 
-#define ANKI_TRACE_INC_COUNTER(name_, val_)                                    \
-	TraceManagerSingleton::get().incCounter(TraceCounterType::name_, val_)
+#define ANKI_TRACE_INC_COUNTER(name_, val_) TraceManagerSingleton::get().incCounter(TraceCounterType::name_, val_)
 
 #define ANKI_TRACE_START_FRAME() TraceManagerSingleton::get().startFrame()
 
@@ -160,12 +155,12 @@ using TraceManagerSingleton = Singleton<TraceManager>;
 
 #endif
 
-#define ANKI_TRACE_START_STOP_EVENT(execute, event)                            \
-	do                                                                         \
-	{                                                                          \
-		ANKI_TRACE_START_EVENT(event);                                         \
-		execute;                                                               \
-		ANKI_TRACE_STOP_EVENT(event);                                          \
+#define ANKI_TRACE_START_STOP_EVENT(execute, event)                                                                    \
+	do                                                                                                                 \
+	{                                                                                                                  \
+		ANKI_TRACE_START_EVENT(event);                                                                                 \
+		execute;                                                                                                       \
+		ANKI_TRACE_STOP_EVENT(event);                                                                                  \
 	} while(0)
 /// @}
 

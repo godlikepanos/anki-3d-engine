@@ -23,8 +23,7 @@ out gl_PerVertex
 
 void main()
 {
-	const vec2 POSITIONS[3] =
-		vec2[](vec2(-1.0, 1.0), vec2(0.0, -1.0), vec2(1.0, 1.0));
+	const vec2 POSITIONS[3] = vec2[](vec2(-1.0, 1.0), vec2(0.0, -1.0), vec2(1.0, 1.0));
 
 	ANKI_WRITE_POSITION(vec4(POSITIONS[gl_VertexID % 3], 0.0, 1.0));
 })";
@@ -51,8 +50,7 @@ void main()
 {
 	out_color = u_color[gl_VertexID].rgb;
 
-	const vec2 POSITIONS[3] =
-		vec2[](vec2(-1.0, 1.0), vec2(0.0, -1.0), vec2(1.0, 1.0));
+	const vec2 POSITIONS[3] = vec2[](vec2(-1.0, 1.0), vec2(0.0, -1.0), vec2(1.0, 1.0));
 		
 	mat2 rot = mat2(
 		u_rotation2d.x, u_rotation2d.y, u_rotation2d.z, u_rotation2d.w);
@@ -250,9 +248,7 @@ void main()
 static const char* COMP_WRITE_IMAGE_SRC = R"(
 layout(ANKI_IMAGE_BINDING(0, 0), rgba8) writeonly uniform image2D u_img;
 
-layout(local_size_x = 1,
-	local_size_y = 1,
-	local_size_z = 1) in;
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 	
 layout(ANKI_SS_BINDING(1, 0)) buffer ss1_
 {
@@ -264,21 +260,19 @@ void main()
 	imageStore(u_img, ivec2(gl_WorkGroupID.x, gl_WorkGroupID.y), u_color);
 })";
 
-#define COMMON_BEGIN()                                                         \
-	NativeWindow* win = nullptr;                                               \
-	GrManager* gr = nullptr;                                                   \
-	createGrManager(win, gr);                                                  \
+#define COMMON_BEGIN()                                                                                                 \
+	NativeWindow* win = nullptr;                                                                                       \
+	GrManager* gr = nullptr;                                                                                           \
+	createGrManager(win, gr);                                                                                          \
 	{
 
-#define COMMON_END()                                                           \
-	}                                                                          \
-	delete gr;                                                                 \
+#define COMMON_END()                                                                                                   \
+	}                                                                                                                  \
+	delete gr;                                                                                                         \
 	delete win;
 
-const PixelFormat DS_FORMAT =
-	PixelFormat(ComponentFormat::D24, TransformFormat::UNORM);
+const PixelFormat DS_FORMAT = PixelFormat(ComponentFormat::D24, TransformFormat::UNORM);
 
-//==============================================================================
 static NativeWindow* createWindow()
 {
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
@@ -293,7 +287,6 @@ static NativeWindow* createWindow()
 	return win;
 }
 
-//==============================================================================
 static void createGrManager(NativeWindow*& win, GrManager*& gr)
 {
 	win = createWindow();
@@ -309,9 +302,7 @@ static void createGrManager(NativeWindow*& win, GrManager*& gr)
 	ANKI_TEST_EXPECT_NO_ERR(gr->init(inf));
 }
 
-//==============================================================================
-static PipelinePtr createSimplePpline(
-	CString vertSrc, CString fragSrc, GrManager& gr)
+static PipelinePtr createSimplePpline(CString vertSrc, CString fragSrc, GrManager& gr)
 {
 	ShaderPtr vert = gr.newInstance<Shader>(ShaderType::VERTEX, vertSrc);
 	ShaderPtr frag = gr.newInstance<Shader>(ShaderType::FRAGMENT, fragSrc);
@@ -319,8 +310,7 @@ static PipelinePtr createSimplePpline(
 	PipelineInitInfo init;
 	init.m_shaders[ShaderType::VERTEX] = vert;
 	init.m_shaders[ShaderType::FRAGMENT] = frag;
-	init.m_color.m_attachments[0].m_format.m_components =
-		ComponentFormat::DEFAULT_FRAMEBUFFER;
+	init.m_color.m_attachments[0].m_format.m_components = ComponentFormat::DEFAULT_FRAMEBUFFER;
 	init.m_color.m_attachmentCount = 1;
 	init.m_depthStencil.m_depthWriteEnabled = false;
 	init.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
@@ -328,7 +318,6 @@ static PipelinePtr createSimplePpline(
 	return gr.newInstance<Pipeline>(init);
 }
 
-//==============================================================================
 static FramebufferPtr createDefaultFb(GrManager& gr)
 {
 	FramebufferInitInfo fbinit;
@@ -338,93 +327,32 @@ static FramebufferPtr createDefaultFb(GrManager& gr)
 	return gr.newInstance<Framebuffer>(fbinit);
 }
 
-//==============================================================================
 static void createCube(GrManager& gr, BufferPtr& verts, BufferPtr& indices)
 {
-	static const Array<F32, 8 * 3> pos = {{1,
-		1,
-		1,
-		-1,
-		1,
-		1,
-		-1,
-		-1,
-		1,
-		1,
-		-1,
-		1,
-		1,
-		1,
-		-1,
-		-1,
-		1,
-		-1,
-		-1,
-		-1,
-		-1,
-		1,
-		-1,
-		-1}};
+	static const Array<F32, 8 * 3> pos = {
+		{1, 1, 1, -1, 1, 1, -1, -1, 1, 1, -1, 1, 1, 1, -1, -1, 1, -1, -1, -1, -1, 1, -1, -1}};
 
-	static const Array<U16, 6 * 2 * 3> idx = {{0,
-		1,
-		3,
-		3,
-		1,
-		2,
-		1,
-		5,
-		6,
-		1,
-		6,
-		2,
-		7,
-		4,
-		0,
-		7,
-		0,
-		3,
-		6,
-		5,
-		7,
-		7,
-		5,
-		4,
-		0,
-		4,
-		5,
-		0,
-		5,
-		1,
-		3,
-		2,
-		6,
-		3,
-		6,
-		7}};
+	static const Array<U16, 6 * 2 * 3> idx = {
+		{0, 1, 3, 3, 1, 2, 1, 5, 6, 1, 6, 2, 7, 4, 0, 7, 0, 3, 6, 5, 7, 7, 5, 4, 0, 4, 5, 0, 5, 1, 3, 2, 6, 3, 6, 7}};
 
-	verts = gr.newInstance<Buffer>(
-		sizeof(pos), BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE);
+	verts = gr.newInstance<Buffer>(sizeof(pos), BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE);
 
 	void* mapped = verts->map(0, sizeof(pos), BufferMapAccessBit::WRITE);
 	memcpy(mapped, &pos[0], sizeof(pos));
 	verts->unmap();
 
-	indices = gr.newInstance<Buffer>(
-		sizeof(idx), BufferUsageBit::INDEX, BufferMapAccessBit::WRITE);
+	indices = gr.newInstance<Buffer>(sizeof(idx), BufferUsageBit::INDEX, BufferMapAccessBit::WRITE);
 	mapped = indices->map(0, sizeof(idx), BufferMapAccessBit::WRITE);
 	memcpy(mapped, &idx[0], sizeof(idx));
 	indices->unmap();
 }
 
-//==============================================================================
 ANKI_TEST(Gr, GrManager)
 {
 	COMMON_BEGIN()
 	COMMON_END()
 }
 
-//==============================================================================
 ANKI_TEST(Gr, Shader)
 {
 	COMMON_BEGIN()
@@ -434,7 +362,6 @@ ANKI_TEST(Gr, Shader)
 	COMMON_END()
 }
 
-//==============================================================================
 ANKI_TEST(Gr, Pipeline)
 {
 	COMMON_BEGIN()
@@ -444,7 +371,6 @@ ANKI_TEST(Gr, Pipeline)
 	COMMON_END()
 }
 
-//==============================================================================
 ANKI_TEST(Gr, SimpleDrawcall)
 {
 	COMMON_BEGIN()
@@ -484,17 +410,14 @@ ANKI_TEST(Gr, SimpleDrawcall)
 	COMMON_END()
 }
 
-//==============================================================================
 ANKI_TEST(Gr, Buffer)
 {
 	COMMON_BEGIN()
 
-	BufferPtr a = gr->newInstance<Buffer>(
-		512, BufferUsageBit::UNIFORM_ALL, BufferMapAccessBit::NONE);
+	BufferPtr a = gr->newInstance<Buffer>(512, BufferUsageBit::UNIFORM_ALL, BufferMapAccessBit::NONE);
 
-	BufferPtr b = gr->newInstance<Buffer>(64,
-		BufferUsageBit::STORAGE_ALL,
-		BufferMapAccessBit::WRITE | BufferMapAccessBit::READ);
+	BufferPtr b =
+		gr->newInstance<Buffer>(64, BufferUsageBit::STORAGE_ALL, BufferMapAccessBit::WRITE | BufferMapAccessBit::READ);
 
 	void* ptr = b->map(0, 64, BufferMapAccessBit::WRITE);
 	ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
@@ -511,14 +434,11 @@ ANKI_TEST(Gr, Buffer)
 	COMMON_END()
 }
 
-//==============================================================================
 ANKI_TEST(Gr, ResourceGroup)
 {
 	COMMON_BEGIN()
 
-	BufferPtr b = gr->newInstance<Buffer>(sizeof(F32) * 4,
-		BufferUsageBit::UNIFORM_ALL,
-		BufferMapAccessBit::WRITE);
+	BufferPtr b = gr->newInstance<Buffer>(sizeof(F32) * 4, BufferUsageBit::UNIFORM_ALL, BufferMapAccessBit::WRITE);
 
 	ResourceGroupInitInfo rcinit;
 	rcinit.m_uniformBuffers[0].m_buffer = b;
@@ -528,18 +448,14 @@ ANKI_TEST(Gr, ResourceGroup)
 	COMMON_END()
 }
 
-//==============================================================================
 ANKI_TEST(Gr, DrawWithUniforms)
 {
 	COMMON_BEGIN()
 
 	// A non-uploaded buffer
-	BufferPtr b = gr->newInstance<Buffer>(sizeof(Vec4) * 3,
-		BufferUsageBit::UNIFORM_ALL,
-		BufferMapAccessBit::WRITE);
+	BufferPtr b = gr->newInstance<Buffer>(sizeof(Vec4) * 3, BufferUsageBit::UNIFORM_ALL, BufferMapAccessBit::WRITE);
 
-	Vec4* ptr = static_cast<Vec4*>(
-		b->map(0, sizeof(Vec4) * 3, BufferMapAccessBit::WRITE));
+	Vec4* ptr = static_cast<Vec4*>(b->map(0, sizeof(Vec4) * 3, BufferMapAccessBit::WRITE));
 	ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
 	ptr[0] = Vec4(1.0, 0.0, 0.0, 0.0);
 	ptr[1] = Vec4(0.0, 1.0, 0.0, 0.0);
@@ -570,10 +486,8 @@ ANKI_TEST(Gr, DrawWithUniforms)
 
 		// Uploaded buffer
 		TransientMemoryInfo transientInfo;
-		Vec4* rotMat =
-			static_cast<Vec4*>(gr->allocateFrameTransientMemory(sizeof(Vec4),
-				BufferUsageBit::UNIFORM_ALL,
-				transientInfo.m_uniformBuffers[1]));
+		Vec4* rotMat = static_cast<Vec4*>(gr->allocateFrameTransientMemory(
+			sizeof(Vec4), BufferUsageBit::UNIFORM_ALL, transientInfo.m_uniformBuffers[1]));
 		F32 angle = toRad(360.0f / ITERATION_COUNT * iterations);
 		(*rotMat)[0] = cos(angle);
 		(*rotMat)[1] = -sin(angle);
@@ -605,7 +519,6 @@ ANKI_TEST(Gr, DrawWithUniforms)
 	COMMON_END()
 }
 
-//==============================================================================
 ANKI_TEST(Gr, DrawWithVertex)
 {
 	COMMON_BEGIN()
@@ -618,11 +531,9 @@ ANKI_TEST(Gr, DrawWithVertex)
 	};
 	static_assert(sizeof(Vert) == sizeof(Vec4), "See file");
 
-	BufferPtr b = gr->newInstance<Buffer>(
-		sizeof(Vert) * 3, BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE);
+	BufferPtr b = gr->newInstance<Buffer>(sizeof(Vert) * 3, BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE);
 
-	Vert* ptr = static_cast<Vert*>(
-		b->map(0, sizeof(Vert) * 3, BufferMapAccessBit::WRITE));
+	Vert* ptr = static_cast<Vert*>(b->map(0, sizeof(Vert) * 3, BufferMapAccessBit::WRITE));
 	ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
 
 	ptr[0].m_pos = Vec3(-1.0, 1.0, 0.0);
@@ -634,11 +545,9 @@ ANKI_TEST(Gr, DrawWithVertex)
 	ptr[2].m_color = {0, 0, 255};
 	b->unmap();
 
-	BufferPtr c = gr->newInstance<Buffer>(
-		sizeof(Vec3) * 3, BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE);
+	BufferPtr c = gr->newInstance<Buffer>(sizeof(Vec3) * 3, BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE);
 
-	Vec3* otherColor = static_cast<Vec3*>(
-		c->map(0, sizeof(Vec3) * 3, BufferMapAccessBit::WRITE));
+	Vec3* otherColor = static_cast<Vec3*>(c->map(0, sizeof(Vec3) * 3, BufferMapAccessBit::WRITE));
 
 	otherColor[0] = Vec3(0.0, 1.0, 1.0);
 	otherColor[1] = Vec3(1.0, 0.0, 1.0);
@@ -653,27 +562,22 @@ ANKI_TEST(Gr, DrawWithVertex)
 
 	// Shaders
 	ShaderPtr vert = gr->newInstance<Shader>(ShaderType::VERTEX, VERT_INP_SRC);
-	ShaderPtr frag =
-		gr->newInstance<Shader>(ShaderType::FRAGMENT, FRAG_INP_SRC);
+	ShaderPtr frag = gr->newInstance<Shader>(ShaderType::FRAGMENT, FRAG_INP_SRC);
 
 	// Ppline
 	PipelineInitInfo init;
 	init.m_shaders[ShaderType::VERTEX] = vert;
 	init.m_shaders[ShaderType::FRAGMENT] = frag;
-	init.m_color.m_attachments[0].m_format.m_components =
-		ComponentFormat::DEFAULT_FRAMEBUFFER;
+	init.m_color.m_attachments[0].m_format.m_components = ComponentFormat::DEFAULT_FRAMEBUFFER;
 	init.m_color.m_attachmentCount = 1;
 	init.m_depthStencil.m_depthWriteEnabled = false;
 	init.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
 
 	init.m_vertex.m_attributeCount = 3;
-	init.m_vertex.m_attributes[0].m_format =
-		PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
-	init.m_vertex.m_attributes[1].m_format =
-		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM);
+	init.m_vertex.m_attributes[0].m_format = PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
+	init.m_vertex.m_attributes[1].m_format = PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM);
 	init.m_vertex.m_attributes[1].m_offset = sizeof(Vec3);
-	init.m_vertex.m_attributes[2].m_format =
-		PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
+	init.m_vertex.m_attributes[2].m_format = PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
 	init.m_vertex.m_attributes[2].m_binding = 1;
 
 	init.m_vertex.m_bindingCount = 2;
@@ -718,7 +622,6 @@ ANKI_TEST(Gr, DrawWithVertex)
 	COMMON_END()
 }
 
-//==============================================================================
 ANKI_TEST(Gr, Sampler)
 {
 	COMMON_BEGIN()
@@ -730,15 +633,13 @@ ANKI_TEST(Gr, Sampler)
 	COMMON_END()
 }
 
-//==============================================================================
 ANKI_TEST(Gr, Texture)
 {
 	COMMON_BEGIN()
 
 	TextureInitInfo init;
 	init.m_depth = 1;
-	init.m_format =
-		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM);
+	init.m_format = PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM);
 	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT;
 	init.m_height = 4;
 	init.m_width = 4;
@@ -755,7 +656,6 @@ ANKI_TEST(Gr, Texture)
 	COMMON_END()
 }
 
-//==============================================================================
 ANKI_TEST(Gr, DrawWithTexture)
 {
 	COMMON_BEGIN()
@@ -765,8 +665,7 @@ ANKI_TEST(Gr, DrawWithTexture)
 	//
 	TextureInitInfo init;
 	init.m_depth = 1;
-	init.m_format =
-		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM);
+	init.m_format = PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM);
 	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::UPLOAD;
 	init.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 	init.m_height = 2;
@@ -788,8 +687,7 @@ ANKI_TEST(Gr, DrawWithTexture)
 	init.m_width = 4;
 	init.m_height = 4;
 	init.m_mipmapsCount = 3;
-	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::UPLOAD
-		| TextureUsageBit::GENERATE_MIPMAPS;
+	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::UPLOAD | TextureUsageBit::GENERATE_MIPMAPS;
 	init.m_initialUsage = TextureUsageBit::NONE;
 
 	TexturePtr b = gr->newInstance<Texture>(init);
@@ -797,8 +695,7 @@ ANKI_TEST(Gr, DrawWithTexture)
 	//
 	// Upload all textures
 	//
-	Array<U8, 2 * 2 * 3> mip0 = {
-		{255, 0, 0, 0, 255, 0, 0, 0, 255, 255, 0, 255}};
+	Array<U8, 2 * 2 * 3> mip0 = {{255, 0, 0, 0, 255, 0, 0, 0, 255, 255, 0, 255}};
 
 	Array<U8, 3> mip1 = {{128, 128, 128}};
 
@@ -856,56 +753,38 @@ ANKI_TEST(Gr, DrawWithTexture)
 	CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cmdbinit);
 
 	// Set barriers
-	cmdb->setTextureSurfaceBarrier(a,
-		TextureUsageBit::SAMPLED_FRAGMENT,
-		TextureUsageBit::UPLOAD,
-		TextureSurfaceInfo(0, 0, 0, 0));
+	cmdb->setTextureSurfaceBarrier(
+		a, TextureUsageBit::SAMPLED_FRAGMENT, TextureUsageBit::UPLOAD, TextureSurfaceInfo(0, 0, 0, 0));
 
-	cmdb->setTextureSurfaceBarrier(a,
-		TextureUsageBit::SAMPLED_FRAGMENT,
-		TextureUsageBit::UPLOAD,
-		TextureSurfaceInfo(1, 0, 0, 0));
+	cmdb->setTextureSurfaceBarrier(
+		a, TextureUsageBit::SAMPLED_FRAGMENT, TextureUsageBit::UPLOAD, TextureSurfaceInfo(1, 0, 0, 0));
 
-	cmdb->setTextureSurfaceBarrier(b,
-		TextureUsageBit::NONE,
-		TextureUsageBit::UPLOAD,
-		TextureSurfaceInfo(0, 0, 0, 0));
+	cmdb->setTextureSurfaceBarrier(b, TextureUsageBit::NONE, TextureUsageBit::UPLOAD, TextureSurfaceInfo(0, 0, 0, 0));
 	;
 
-	cmdb->uploadTextureSurfaceCopyData(
-		a, TextureSurfaceInfo(0, 0, 0, 0), &mip0[0], sizeof(mip0));
+	cmdb->uploadTextureSurfaceCopyData(a, TextureSurfaceInfo(0, 0, 0, 0), &mip0[0], sizeof(mip0));
 
-	cmdb->uploadTextureSurfaceCopyData(
-		a, TextureSurfaceInfo(1, 0, 0, 0), &mip1[0], sizeof(mip1));
+	cmdb->uploadTextureSurfaceCopyData(a, TextureSurfaceInfo(1, 0, 0, 0), &mip1[0], sizeof(mip1));
 
-	cmdb->uploadTextureSurfaceCopyData(
-		b, TextureSurfaceInfo(0, 0, 0, 0), &bmip0[0], sizeof(bmip0));
+	cmdb->uploadTextureSurfaceCopyData(b, TextureSurfaceInfo(0, 0, 0, 0), &bmip0[0], sizeof(bmip0));
 
 	// Gen mips
-	cmdb->setTextureSurfaceBarrier(b,
-		TextureUsageBit::UPLOAD,
-		TextureUsageBit::GENERATE_MIPMAPS,
-		TextureSurfaceInfo(0, 0, 0, 0));
+	cmdb->setTextureSurfaceBarrier(
+		b, TextureUsageBit::UPLOAD, TextureUsageBit::GENERATE_MIPMAPS, TextureSurfaceInfo(0, 0, 0, 0));
 
 	cmdb->generateMipmaps2d(b, 0, 0);
 
 	// Set barriers
-	cmdb->setTextureSurfaceBarrier(a,
-		TextureUsageBit::UPLOAD,
-		TextureUsageBit::SAMPLED_FRAGMENT,
-		TextureSurfaceInfo(0, 0, 0, 0));
+	cmdb->setTextureSurfaceBarrier(
+		a, TextureUsageBit::UPLOAD, TextureUsageBit::SAMPLED_FRAGMENT, TextureSurfaceInfo(0, 0, 0, 0));
 
-	cmdb->setTextureSurfaceBarrier(a,
-		TextureUsageBit::UPLOAD,
-		TextureUsageBit::SAMPLED_FRAGMENT,
-		TextureSurfaceInfo(1, 0, 0, 0));
+	cmdb->setTextureSurfaceBarrier(
+		a, TextureUsageBit::UPLOAD, TextureUsageBit::SAMPLED_FRAGMENT, TextureSurfaceInfo(1, 0, 0, 0));
 
 	for(U i = 0; i < 3; ++i)
 	{
-		cmdb->setTextureSurfaceBarrier(b,
-			TextureUsageBit::GENERATE_MIPMAPS,
-			TextureUsageBit::SAMPLED_FRAGMENT,
-			TextureSurfaceInfo(i, 0, 0, 0));
+		cmdb->setTextureSurfaceBarrier(
+			b, TextureUsageBit::GENERATE_MIPMAPS, TextureUsageBit::SAMPLED_FRAGMENT, TextureSurfaceInfo(i, 0, 0, 0));
 	}
 
 	cmdb->flush();
@@ -965,12 +844,8 @@ ANKI_TEST(Gr, DrawWithTexture)
 	COMMON_END()
 }
 
-//==============================================================================
-static void drawOffscreenDrawcalls(GrManager& gr,
-	PipelinePtr ppline,
-	ResourceGroupPtr rc0,
-	CommandBufferPtr cmdb,
-	U viewPortSize)
+static void drawOffscreenDrawcalls(
+	GrManager& gr, PipelinePtr ppline, ResourceGroupPtr rc0, CommandBufferPtr cmdb, U viewPortSize)
 {
 	static F32 ang = -2.5f;
 	ang += toRad(2.5f);
@@ -978,24 +853,18 @@ static void drawOffscreenDrawcalls(GrManager& gr,
 	Mat4 viewMat(Vec4(0.0, 0.0, 5.0, 1.0), Mat3::getIdentity(), 1.0f);
 	viewMat.invert();
 
-	Mat4 projMat = Mat4::calculatePerspectiveProjectionMatrix(
-		toRad(60.0), toRad(60.0), 0.1f, 100.0f);
+	Mat4 projMat = Mat4::calculatePerspectiveProjectionMatrix(toRad(60.0), toRad(60.0), 0.1f, 100.0f);
 
 	TransientMemoryInfo transientInfo;
 
-	Mat4 modelMat(Vec4(0.0, 0.0, 0.0, 1.0),
-		Mat3(Euler(ang, ang / 2.0f, ang / 3.0f)),
-		1.0f);
+	Mat4 modelMat(Vec4(0.0, 0.0, 0.0, 1.0), Mat3(Euler(ang, ang / 2.0f, ang / 3.0f)), 1.0f);
 
-	Mat4* mvp = static_cast<Mat4*>(gr.allocateFrameTransientMemory(sizeof(*mvp),
-		BufferUsageBit::UNIFORM_ALL,
-		transientInfo.m_uniformBuffers[0]));
+	Mat4* mvp = static_cast<Mat4*>(
+		gr.allocateFrameTransientMemory(sizeof(*mvp), BufferUsageBit::UNIFORM_ALL, transientInfo.m_uniformBuffers[0]));
 	*mvp = projMat * viewMat * modelMat;
 
-	Vec4* color =
-		static_cast<Vec4*>(gr.allocateFrameTransientMemory(sizeof(*color) * 2,
-			BufferUsageBit::UNIFORM_ALL,
-			transientInfo.m_uniformBuffers[1]));
+	Vec4* color = static_cast<Vec4*>(gr.allocateFrameTransientMemory(
+		sizeof(*color) * 2, BufferUsageBit::UNIFORM_ALL, transientInfo.m_uniformBuffers[1]));
 	*color++ = Vec4(1.0, 0.0, 0.0, 0.0);
 	*color = Vec4(0.0, 1.0, 0.0, 0.0);
 
@@ -1005,19 +874,14 @@ static void drawOffscreenDrawcalls(GrManager& gr,
 	cmdb->drawElements(6 * 2 * 3);
 
 	// 2nd draw
-	modelMat = Mat4(Vec4(0.0, 0.0, 0.0, 1.0),
-		Mat3(Euler(ang * 2.0, ang, ang / 3.0f * 2.0)),
-		1.0f);
+	modelMat = Mat4(Vec4(0.0, 0.0, 0.0, 1.0), Mat3(Euler(ang * 2.0, ang, ang / 3.0f * 2.0)), 1.0f);
 
-	mvp = static_cast<Mat4*>(gr.allocateFrameTransientMemory(sizeof(*mvp),
-		BufferUsageBit::UNIFORM_ALL,
-		transientInfo.m_uniformBuffers[0]));
+	mvp = static_cast<Mat4*>(
+		gr.allocateFrameTransientMemory(sizeof(*mvp), BufferUsageBit::UNIFORM_ALL, transientInfo.m_uniformBuffers[0]));
 	*mvp = projMat * viewMat * modelMat;
 
-	color =
-		static_cast<Vec4*>(gr.allocateFrameTransientMemory(sizeof(*color) * 2,
-			BufferUsageBit::UNIFORM_ALL,
-			transientInfo.m_uniformBuffers[1]));
+	color = static_cast<Vec4*>(gr.allocateFrameTransientMemory(
+		sizeof(*color) * 2, BufferUsageBit::UNIFORM_ALL, transientInfo.m_uniformBuffers[1]));
 	*color++ = Vec4(0.0, 0.0, 1.0, 0.0);
 	*color = Vec4(0.0, 1.0, 1.0, 0.0);
 
@@ -1025,21 +889,18 @@ static void drawOffscreenDrawcalls(GrManager& gr,
 	cmdb->drawElements(6 * 2 * 3);
 }
 
-//==============================================================================
 static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 {
 	//
 	// Create textures
 	//
-	const PixelFormat COL_FORMAT =
-		PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
+	const PixelFormat COL_FORMAT = PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
 	const U TEX_SIZE = 256;
 
 	TextureInitInfo init;
 	init.m_depth = 1;
 	init.m_format = COL_FORMAT;
-	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT
-		| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
+	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
 	init.m_height = TEX_SIZE;
 	init.m_width = TEX_SIZE;
 	init.m_mipmapsCount = 1;
@@ -1083,11 +944,9 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 
 	ResourceGroupInitInfo rcinit;
 	rcinit.m_uniformBuffers[0].m_uploadedMemory = true;
-	rcinit.m_uniformBuffers[0].m_usage =
-		BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
+	rcinit.m_uniformBuffers[0].m_usage = BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
 	rcinit.m_uniformBuffers[1].m_uploadedMemory = true;
-	rcinit.m_uniformBuffers[1].m_usage =
-		BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
+	rcinit.m_uniformBuffers[1].m_usage = BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
 	rcinit.m_vertexBuffers[0].m_buffer = verts;
 	rcinit.m_indexBuffer.m_buffer = indices;
 	rcinit.m_indexSize = 2;
@@ -1115,16 +974,14 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 	pinit.m_depthStencil.m_format = DS_FORMAT;
 
 	pinit.m_vertex.m_attributeCount = 1;
-	pinit.m_vertex.m_attributes[0].m_format =
-		PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
+	pinit.m_vertex.m_attributes[0].m_format = PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
 
 	pinit.m_vertex.m_bindingCount = 1;
 	pinit.m_vertex.m_bindings[0].m_stride = sizeof(Vec3);
 
 	PipelinePtr ppline = gr.newInstance<Pipeline>(pinit);
 
-	PipelinePtr pplineResolve =
-		createSimplePpline(VERT_QUAD_SRC, FRAG_MRT2_SRC, gr);
+	PipelinePtr pplineResolve = createSimplePpline(VERT_QUAD_SRC, FRAG_MRT2_SRC, gr);
 
 	//
 	// Draw
@@ -1142,14 +999,10 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 
 		cmdb->setPolygonOffset(0.0, 0.0);
 
-		cmdb->setTextureSurfaceBarrier(col0,
-			TextureUsageBit::NONE,
-			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-			TextureSurfaceInfo(0, 0, 0, 0));
-		cmdb->setTextureSurfaceBarrier(col1,
-			TextureUsageBit::NONE,
-			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-			TextureSurfaceInfo(0, 0, 0, 0));
+		cmdb->setTextureSurfaceBarrier(
+			col0, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureSurfaceInfo(0, 0, 0, 0));
+		cmdb->setTextureSurfaceBarrier(
+			col1, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureSurfaceInfo(0, 0, 0, 0));
 		cmdb->setTextureSurfaceBarrier(dp,
 			TextureUsageBit::NONE,
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
@@ -1211,7 +1064,6 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 	}
 }
 
-//==============================================================================
 ANKI_TEST(Gr, DrawOffscreen)
 {
 	COMMON_BEGIN()
@@ -1221,7 +1073,6 @@ ANKI_TEST(Gr, DrawOffscreen)
 	COMMON_END()
 }
 
-//==============================================================================
 ANKI_TEST(Gr, DrawWithSecondLevel)
 {
 	COMMON_BEGIN()
@@ -1231,7 +1082,6 @@ ANKI_TEST(Gr, DrawWithSecondLevel)
 	COMMON_END()
 }
 
-//==============================================================================
 ANKI_TEST(Gr, ImageLoadStore)
 {
 	COMMON_BEGIN()
@@ -1239,22 +1089,18 @@ ANKI_TEST(Gr, ImageLoadStore)
 	TextureInitInfo init;
 	init.m_width = init.m_height = 4;
 	init.m_mipmapsCount = 2;
-	init.m_usage = TextureUsageBit::CLEAR | TextureUsageBit::SAMPLED_ALL
-		| TextureUsageBit::IMAGE_COMPUTE_WRITE;
+	init.m_usage = TextureUsageBit::CLEAR | TextureUsageBit::SAMPLED_ALL | TextureUsageBit::IMAGE_COMPUTE_WRITE;
 	init.m_type = TextureType::_2D;
-	init.m_format =
-		PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
+	init.m_format = PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
 	init.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
 
 	TexturePtr tex = gr->newInstance<Texture>(init);
 
 	// Ppline
-	PipelinePtr ppline =
-		createSimplePpline(VERT_QUAD_SRC, FRAG_SIMPLE_TEX_SRC, *gr);
+	PipelinePtr ppline = createSimplePpline(VERT_QUAD_SRC, FRAG_SIMPLE_TEX_SRC, *gr);
 
 	// Create shader & compute ppline
-	ShaderPtr shader =
-		gr->newInstance<Shader>(ShaderType::COMPUTE, COMP_WRITE_IMAGE_SRC);
+	ShaderPtr shader = gr->newInstance<Shader>(ShaderType::COMPUTE, COMP_WRITE_IMAGE_SRC);
 
 	PipelineInitInfo ppinit;
 	ppinit.m_shaders[ShaderType::COMPUTE] = shader;
@@ -1283,32 +1129,22 @@ ANKI_TEST(Gr, ImageLoadStore)
 	CommandBufferInitInfo cmdbinit;
 	CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cmdbinit);
 
-	cmdb->setTextureSurfaceBarrier(tex,
-		TextureUsageBit::NONE,
-		TextureUsageBit::CLEAR,
-		TextureSurfaceInfo(0, 0, 0, 0));
+	cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::NONE, TextureUsageBit::CLEAR, TextureSurfaceInfo(0, 0, 0, 0));
 
 	ClearValue clear;
 	clear.m_colorf = {{0.0, 1.0, 0.0, 1.0}};
 	cmdb->clearTextureSurface(tex, TextureSurfaceInfo(0, 0, 0, 0), clear);
 
-	cmdb->setTextureSurfaceBarrier(tex,
-		TextureUsageBit::CLEAR,
-		TextureUsageBit::SAMPLED_FRAGMENT,
-		TextureSurfaceInfo(0, 0, 0, 0));
+	cmdb->setTextureSurfaceBarrier(
+		tex, TextureUsageBit::CLEAR, TextureUsageBit::SAMPLED_FRAGMENT, TextureSurfaceInfo(0, 0, 0, 0));
 
-	cmdb->setTextureSurfaceBarrier(tex,
-		TextureUsageBit::NONE,
-		TextureUsageBit::CLEAR,
-		TextureSurfaceInfo(1, 0, 0, 0));
+	cmdb->setTextureSurfaceBarrier(tex, TextureUsageBit::NONE, TextureUsageBit::CLEAR, TextureSurfaceInfo(1, 0, 0, 0));
 
 	clear.m_colorf = {{0.0, 0.0, 1.0, 1.0}};
 	cmdb->clearTextureSurface(tex, TextureSurfaceInfo(1, 0, 0, 0), clear);
 
-	cmdb->setTextureSurfaceBarrier(tex,
-		TextureUsageBit::CLEAR,
-		TextureUsageBit::IMAGE_COMPUTE_WRITE,
-		TextureSurfaceInfo(1, 0, 0, 0));
+	cmdb->setTextureSurfaceBarrier(
+		tex, TextureUsageBit::CLEAR, TextureUsageBit::IMAGE_COMPUTE_WRITE, TextureSurfaceInfo(1, 0, 0, 0));
 
 	cmdb->flush();
 
@@ -1325,16 +1161,12 @@ ANKI_TEST(Gr, ImageLoadStore)
 
 		// Write image
 		TransientMemoryInfo trans;
-		Vec4* col =
-			static_cast<Vec4*>(gr->allocateFrameTransientMemory(sizeof(*col),
-				BufferUsageBit::STORAGE_ALL,
-				trans.m_storageBuffers[0]));
+		Vec4* col = static_cast<Vec4*>(
+			gr->allocateFrameTransientMemory(sizeof(*col), BufferUsageBit::STORAGE_ALL, trans.m_storageBuffers[0]));
 		*col = Vec4(iterations / F32(ITERATION_COUNT));
 
-		cmdb->setTextureSurfaceBarrier(tex,
-			TextureUsageBit::NONE,
-			TextureUsageBit::IMAGE_COMPUTE_WRITE,
-			TextureSurfaceInfo(1, 0, 0, 0));
+		cmdb->setTextureSurfaceBarrier(
+			tex, TextureUsageBit::NONE, TextureUsageBit::IMAGE_COMPUTE_WRITE, TextureSurfaceInfo(1, 0, 0, 0));
 		cmdb->bindPipeline(compPpline);
 		cmdb->bindResourceGroup(rc1, 0, nullptr);
 		cmdb->bindResourceGroup(rc2, 1, &trans);
@@ -1370,7 +1202,6 @@ ANKI_TEST(Gr, ImageLoadStore)
 	COMMON_END()
 }
 
-//==============================================================================
 ANKI_TEST(Gr, 3DTextures)
 {
 	COMMON_BEGIN()
@@ -1380,8 +1211,7 @@ ANKI_TEST(Gr, 3DTextures)
 	//
 	TextureInitInfo init;
 	init.m_depth = 1;
-	init.m_format =
-		PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
+	init.m_format = PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
 	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::UPLOAD;
 	init.m_initialUsage = TextureUsageBit::UPLOAD;
 	init.m_height = 2;
@@ -1439,31 +1269,17 @@ ANKI_TEST(Gr, 3DTextures)
 	cmdbinit.m_flags = CommandBufferFlag::TRANSFER_WORK;
 	CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cmdbinit);
 
-	cmdb->setTextureVolumeBarrier(a,
-		TextureUsageBit::NONE,
-		TextureUsageBit::UPLOAD,
-		TextureVolumeInfo(0));
+	cmdb->setTextureVolumeBarrier(a, TextureUsageBit::NONE, TextureUsageBit::UPLOAD, TextureVolumeInfo(0));
 
-	cmdb->setTextureVolumeBarrier(a,
-		TextureUsageBit::NONE,
-		TextureUsageBit::UPLOAD,
-		TextureVolumeInfo(1));
+	cmdb->setTextureVolumeBarrier(a, TextureUsageBit::NONE, TextureUsageBit::UPLOAD, TextureVolumeInfo(1));
 
-	cmdb->uploadTextureVolumeCopyData(
-		a, TextureVolumeInfo(0), &mip0[0], sizeof(mip0));
+	cmdb->uploadTextureVolumeCopyData(a, TextureVolumeInfo(0), &mip0[0], sizeof(mip0));
 
-	cmdb->uploadTextureVolumeCopyData(
-		a, TextureVolumeInfo(1), &mip1[0], sizeof(mip1));
+	cmdb->uploadTextureVolumeCopyData(a, TextureVolumeInfo(1), &mip1[0], sizeof(mip1));
 
-	cmdb->setTextureVolumeBarrier(a,
-		TextureUsageBit::UPLOAD,
-		TextureUsageBit::SAMPLED_FRAGMENT,
-		TextureVolumeInfo(0));
+	cmdb->setTextureVolumeBarrier(a, TextureUsageBit::UPLOAD, TextureUsageBit::SAMPLED_FRAGMENT, TextureVolumeInfo(0));
 
-	cmdb->setTextureVolumeBarrier(a,
-		TextureUsageBit::UPLOAD,
-		TextureUsageBit::SAMPLED_FRAGMENT,
-		TextureVolumeInfo(1));
+	cmdb->setTextureVolumeBarrier(a, TextureUsageBit::UPLOAD, TextureUsageBit::SAMPLED_FRAGMENT, TextureVolumeInfo(1));
 
 	cmdb->flush();
 
@@ -1509,13 +1325,10 @@ ANKI_TEST(Gr, 3DTextures)
 		cmdb->bindPipeline(ppline);
 
 		TransientMemoryInfo transientInfo;
-		Vec4* uv =
-			static_cast<Vec4*>(gr->allocateFrameTransientMemory(sizeof(Vec4),
-				BufferUsageBit::UNIFORM_ALL,
-				transientInfo.m_uniformBuffers[0]));
+		Vec4* uv = static_cast<Vec4*>(gr->allocateFrameTransientMemory(
+			sizeof(Vec4), BufferUsageBit::UNIFORM_ALL, transientInfo.m_uniformBuffers[0]));
 
-		U idx = (F32(ITERATION_COUNT - iterations - 1) / ITERATION_COUNT)
-			* TEX_COORDS_LOD.getSize();
+		U idx = (F32(ITERATION_COUNT - iterations - 1) / ITERATION_COUNT) * TEX_COORDS_LOD.getSize();
 		*uv = TEX_COORDS_LOD[idx];
 
 		cmdb->bindResourceGroup(rc, 0, &transientInfo);

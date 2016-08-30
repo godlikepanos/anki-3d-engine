@@ -19,10 +19,6 @@
 namespace anki
 {
 
-//==============================================================================
-// Misc                                                                        =
-//==============================================================================
-
 static EShLanguage ankiToGlslangShaderType(ShaderType shaderType)
 {
 	EShLanguage gslangShader;
@@ -179,11 +175,6 @@ static const char* SHADER_HEADER = R"(#version 450 core
 
 %s)";
 
-//==============================================================================
-// ShaderImpl                                                                  =
-//==============================================================================
-
-//==============================================================================
 ShaderImpl::~ShaderImpl()
 {
 	if(m_handle)
@@ -192,13 +183,10 @@ ShaderImpl::~ShaderImpl()
 	}
 }
 
-//==============================================================================
-Error ShaderImpl::genSpirv(
-	const CString& source, std::vector<unsigned int>& spirv)
+Error ShaderImpl::genSpirv(const CString& source, std::vector<unsigned int>& spirv)
 {
 	const EShLanguage stage = ankiToGlslangShaderType(m_shaderType);
-	const EShMessages messages =
-		static_cast<EShMessages>(EShMsgSpvRules | EShMsgVulkanRules);
+	const EShMessages messages = static_cast<EShMessages>(EShMsgSpvRules | EShMsgVulkanRules);
 
 	// Setup the shader
 	glslang::TShader shader(stage);
@@ -226,7 +214,6 @@ Error ShaderImpl::genSpirv(
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error ShaderImpl::init(ShaderType shaderType, const CString& source)
 {
 	ANKI_ASSERT(source);
@@ -250,8 +237,7 @@ Error ShaderImpl::init(ShaderType shaderType, const CString& source)
 		0,
 		MAX_TEXTURE_BINDINGS,
 		MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS,
-		MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS
-			+ MAX_STORAGE_BUFFER_BINDINGS,
+		MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS,
 		&source[0]);
 
 	std::vector<unsigned int> spirv;
@@ -300,25 +286,20 @@ Error ShaderImpl::init(ShaderType shaderType, const CString& source)
 		fname.sprintf("%s/%05u.%s", &cacheDir[0], newName, ext);
 
 		File file;
-		ANKI_CHECK(file.open(fname.toCString(), File::OpenFlag::WRITE));
+		ANKI_CHECK(file.open(fname.toCString(), FileOpenFlag::WRITE));
 		ANKI_CHECK(file.writeText("%s", &fullSrc[0]));
 
 		StringAuto fnameSpirv(alloc);
 		fnameSpirv.sprintf("%s/%05u.%s.spv", &cacheDir[0], newName, ext);
 
 		File fileSpirv;
-		ANKI_CHECK(fileSpirv.open(fnameSpirv.toCString(),
-			File::OpenFlag::BINARY | File::OpenFlag::WRITE));
-		ANKI_CHECK(
-			fileSpirv.write(&spirv[0], spirv.size() * sizeof(unsigned int)));
+		ANKI_CHECK(fileSpirv.open(fnameSpirv.toCString(), FileOpenFlag::BINARY | FileOpenFlag::WRITE));
+		ANKI_CHECK(fileSpirv.write(&spirv[0], spirv.size() * sizeof(unsigned int)));
 	}
 #endif
 
-	VkShaderModuleCreateInfo ci = {VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-		nullptr,
-		0,
-		spirv.size() * sizeof(unsigned int),
-		&spirv[0]};
+	VkShaderModuleCreateInfo ci = {
+		VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO, nullptr, 0, spirv.size() * sizeof(unsigned int), &spirv[0]};
 
 	ANKI_VK_CHECK(vkCreateShaderModule(getDevice(), &ci, nullptr, &m_handle));
 

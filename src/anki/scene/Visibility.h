@@ -110,8 +110,7 @@ public:
 
 	VisibleNode* getEnd(VisibilityGroupType type)
 	{
-		return (getCount(type)) ? (&m_groups[type].m_nodes[0] + getCount(type))
-								: nullptr;
+		return (getCount(type)) ? (&m_groups[type].m_nodes[0] + getCount(type)) : nullptr;
 	}
 
 	const VisibleNode* getBegin(VisibilityGroupType type) const
@@ -121,13 +120,10 @@ public:
 
 	const VisibleNode* getEnd(VisibilityGroupType type) const
 	{
-		return (getCount(type)) ? (&m_groups[type].m_nodes[0] + getCount(type))
-								: nullptr;
+		return (getCount(type)) ? (&m_groups[type].m_nodes[0] + getCount(type)) : nullptr;
 	}
 
-	void moveBack(SceneFrameAllocator<U8> alloc,
-		VisibilityGroupType type,
-		VisibleNode& x);
+	void moveBack(SceneFrameAllocator<U8> alloc, VisibilityGroupType type, VisibleNode& x);
 
 	U32 getCount(VisibilityGroupType type) const
 	{
@@ -144,15 +140,12 @@ public:
 		m_shapeUpdateTimestamp = t;
 	}
 
-	void combineWith(SceneFrameAllocator<U8> alloc,
-		WeakArray<VisibilityTestResults*>& results);
+	void combineWith(SceneFrameAllocator<U8> alloc, WeakArray<VisibilityTestResults*>& results);
 
 	template<typename TFunc>
 	void iterateAll(TFunc f)
 	{
-		for(VisibilityGroupType i = VisibilityGroupType::FIRST;
-			i < VisibilityGroupType::TYPE_COUNT;
-			++i)
+		for(VisibilityGroupType i = VisibilityGroupType::FIRST; i < VisibilityGroupType::TYPE_COUNT; ++i)
 		{
 			VisibleNode* it = getBegin(i);
 			VisibleNode* end = getEnd(i);
@@ -180,8 +173,7 @@ private:
 };
 
 /// Do visibility tests.
-void doVisibilityTests(
-	SceneNode& frustumable, SceneGraph& scene, const Renderer& renderer);
+void doVisibilityTests(SceneNode& frustumable, SceneGraph& scene, const Renderer& renderer);
 /// @}
 
 } // end namespace anki

@@ -76,14 +76,10 @@ public:
 	}
 
 	/// Revive the particle
-	virtual void revive(const ParticleEmitter& pe,
-		const Transform& trf,
-		F32 prevUpdateTime,
-		F32 crntTime);
+	virtual void revive(const ParticleEmitter& pe, const Transform& trf, F32 prevUpdateTime, F32 crntTime);
 
 	/// Only relevant for non-bullet simulations
-	virtual void simulate(
-		const ParticleEmitter& pe, F32 prevUpdateTime, F32 crntTime)
+	virtual void simulate(const ParticleEmitter& pe, F32 prevUpdateTime, F32 crntTime)
 	{
 		(void)pe;
 		(void)prevUpdateTime;
@@ -107,13 +103,9 @@ public:
 	{
 	}
 
-	void revive(const ParticleEmitter& pe,
-		const Transform& trf,
-		F32 prevUpdateTime,
-		F32 crntTime) override;
+	void revive(const ParticleEmitter& pe, const Transform& trf, F32 prevUpdateTime, F32 crntTime) override;
 
-	void simulate(
-		const ParticleEmitter& pe, F32 prevUpdateTime, F32 crntTime) override;
+	void simulate(const ParticleEmitter& pe, F32 prevUpdateTime, F32 crntTime) override;
 
 	const Vec4& getPosition() const override
 	{
@@ -171,8 +163,7 @@ public:
 
 	/// @name SceneNode virtuals
 	/// @{
-	ANKI_USE_RESULT Error frameUpdate(
-		F32 prevUpdateTime, F32 crntTime) override;
+	ANKI_USE_RESULT Error frameUpdate(F32 prevUpdateTime, F32 crntTime) override;
 	/// @}
 
 private:
@@ -188,8 +179,7 @@ private:
 	F32 m_timeLeftForNextEmission = 0.0;
 	Obb m_obb;
 
-	// Opt: We dont have to make extra calculations if the ParticleEmitter's
-	// rotation is the identity
+	// Opt: We dont have to make extra calculations if the ParticleEmitter's rotation is the identity
 	Bool8 m_identityRotation = true;
 
 	U32 m_aliveParticlesCount = 0;

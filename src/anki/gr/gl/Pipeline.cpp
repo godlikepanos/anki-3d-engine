@@ -12,19 +12,16 @@
 namespace anki
 {
 
-//==============================================================================
 Pipeline::Pipeline(GrManager* manager, U64 hash)
 	: GrObject(manager, CLASS_TYPE, hash)
 {
 	ANKI_TRACE_INC_COUNTER(GR_PIPELINES_CREATED, 1);
 }
 
-//==============================================================================
 Pipeline::~Pipeline()
 {
 }
 
-//==============================================================================
 class CreatePipelineCommand final : public GlCommand
 {
 public:
@@ -43,8 +40,7 @@ public:
 
 		Error err = impl.init(m_init);
 
-		GlObject::State oldState = impl.setStateAtomically(
-			err ? GlObject::State::ERROR : GlObject::State::CREATED);
+		GlObject::State oldState = impl.setStateAtomically(err ? GlObject::State::ERROR : GlObject::State::CREATED);
 		ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
 		(void)oldState;
 
@@ -59,8 +55,7 @@ void Pipeline::init(const PipelineInitInfo& init)
 	CommandBufferInitInfo inf;
 	CommandBufferPtr cmdb = getManager().newInstance<CommandBuffer>(inf);
 
-	cmdb->getImplementation().pushBackNewCommand<CreatePipelineCommand>(
-		this, init);
+	cmdb->getImplementation().pushBackNewCommand<CreatePipelineCommand>(this, init);
 	cmdb->flush();
 }
 

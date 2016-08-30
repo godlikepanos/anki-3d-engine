@@ -8,7 +8,7 @@
 
 namespace anki {
 
-//==============================================================================
+
 void SkelAnim::load(const char* filename)
 {
 	scanner::Scanner scanner(filename);

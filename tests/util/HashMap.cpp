@@ -118,8 +118,7 @@ ANKI_TEST(Util, HashMap)
 			while(1)
 			{
 				num = rand();
-				if(std::find(numbers.begin(), numbers.end(), int(num))
-					== numbers.end())
+				if(std::find(numbers.begin(), numbers.end(), int(num)) == numbers.end())
 				{
 					// Not found
 					ANKI_TEST_EXPECT_EQ(akMap.find(num), akMap.getEnd());
@@ -153,12 +152,8 @@ ANKI_TEST(Util, HashMap)
 	// Bench it
 	{
 		HashMap<int, int, Hasher, Compare> akMap;
-		std::unordered_map<int,
-			int,
-			std::hash<int>,
-			std::equal_to<int>,
-			HeapAllocator<std::pair<int, int>>>
-			stdMap(10, std::hash<int>(), std::equal_to<int>(), alloc);
+		std::unordered_map<int, int, std::hash<int>, std::equal_to<int>, HeapAllocator<std::pair<int, int>>> stdMap(
+			10, std::hash<int>(), std::equal_to<int>(), alloc);
 
 		std::unordered_map<int, int> tmpMap;
 
@@ -201,10 +196,7 @@ ANKI_TEST(Util, HashMap)
 		timer.stop();
 		HighRezTimer::Scalar stlTime = timer.getElapsedTime();
 
-		printf("Inserting bench: STL %f AnKi %f | %f%%\n",
-			stlTime,
-			akTime,
-			stlTime / akTime * 100.0);
+		printf("Inserting bench: STL %f AnKi %f | %f%%\n", stlTime, akTime, stlTime / akTime * 100.0);
 
 		// Find values AnKi
 		timer.start();
@@ -225,10 +217,7 @@ ANKI_TEST(Util, HashMap)
 		timer.stop();
 		stlTime = timer.getElapsedTime();
 
-		printf("Find bench: STL %f AnKi %f | %f%%\n",
-			stlTime,
-			akTime,
-			stlTime / akTime * 100.0);
+		printf("Find bench: STL %f AnKi %f | %f%%\n", stlTime, akTime, stlTime / akTime * 100.0);
 
 		akMap.destroy(alloc);
 	}

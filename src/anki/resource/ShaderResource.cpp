@@ -15,26 +15,21 @@
 namespace anki
 {
 
-//==============================================================================
 ShaderResource::ShaderResource(ResourceManager* manager)
 	: ResourceObject(manager)
 {
 }
 
-//==============================================================================
 ShaderResource::~ShaderResource()
 {
 }
 
-//==============================================================================
 Error ShaderResource::load(const ResourceFilename& filename)
 {
 	return load(filename, " ");
 }
 
-//==============================================================================
-Error ShaderResource::load(
-	const ResourceFilename& filename, const CString& extraSrc)
+Error ShaderResource::load(const ResourceFilename& filename, const CString& extraSrc)
 {
 	auto alloc = getTempAllocator();
 
@@ -54,15 +49,13 @@ Error ShaderResource::load(
 	source.append(pars.getShaderSource());
 
 	// Create
-	m_shader = getManager().getGrManager().newInstance<Shader>(
-		pars.getShaderType(), source.toCString());
+	m_shader = getManager().getGrManager().newInstance<Shader>(pars.getShaderType(), source.toCString());
 
 	m_type = pars.getShaderType();
 
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error ShaderResource::createToCache(const ResourceFilename& filename,
 	const CString& preAppendedSrcCode,
 	const CString& filenamePrefix,
@@ -93,10 +86,7 @@ Error ShaderResource::createToCache(const ResourceFilename& filename,
 	out = StringAuto(alloc);
 	ShaderType inShaderType;
 	ANKI_CHECK(fileExtensionToShaderType(filename, inShaderType));
-	out.sprintf("%s%s%s",
-		&filenamePrefix[0],
-		&suffix[0],
-		&shaderTypeToFileExtension(inShaderType)[0]);
+	out.sprintf("%s%s%s", &filenamePrefix[0], &suffix[0], &shaderTypeToFileExtension(inShaderType)[0]);
 
 	// Compose cached filename
 	StringAuto newFilename(alloc);
@@ -120,7 +110,7 @@ Error ShaderResource::createToCache(const ResourceFilename& filename,
 
 	// Write cached file
 	File f;
-	ANKI_CHECK(f.open(newFilename.toCString(), File::OpenFlag::WRITE));
+	ANKI_CHECK(f.open(newFilename.toCString(), FileOpenFlag::WRITE));
 	ANKI_CHECK(f.writeText("%s\n", &srcfull[0]));
 
 	return ErrorCode::NONE;

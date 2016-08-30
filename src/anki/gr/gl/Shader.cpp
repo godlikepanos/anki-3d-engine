@@ -11,18 +11,15 @@
 namespace anki
 {
 
-//==============================================================================
 Shader::Shader(GrManager* manager, U64 hash)
 	: GrObject(manager, CLASS_TYPE, hash)
 {
 }
 
-//==============================================================================
 Shader::~Shader()
 {
 }
 
-//==============================================================================
 class ShaderCreateCommand final : public GlCommand
 {
 public:
@@ -31,10 +28,7 @@ public:
 	char* m_source;
 	CommandBufferAllocator<char> m_alloc;
 
-	ShaderCreateCommand(Shader* shader,
-		ShaderType type,
-		char* source,
-		const CommandBufferAllocator<char>& alloc)
+	ShaderCreateCommand(Shader* shader, ShaderType type, char* source, const CommandBufferAllocator<char>& alloc)
 		: m_shader(shader)
 		, m_type(type)
 		, m_source(source)
@@ -48,8 +42,7 @@ public:
 
 		Error err = impl.init(m_type, m_source);
 
-		GlObject::State oldState = impl.setStateAtomically(
-			(err) ? GlObject::State::ERROR : GlObject::State::CREATED);
+		GlObject::State oldState = impl.setStateAtomically((err) ? GlObject::State::ERROR : GlObject::State::CREATED);
 		ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
 		(void)oldState;
 
@@ -66,17 +59,14 @@ void Shader::init(ShaderType shaderType, const CString& source)
 
 	m_impl.reset(getAllocator().newInstance<ShaderImpl>(&getManager()));
 
-	CommandBufferPtr cmdb =
-		getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
+	CommandBufferPtr cmdb = getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
 
 	// Copy source to the command buffer
-	CommandBufferAllocator<char> alloc =
-		cmdb->getImplementation().getInternalAllocator();
+	CommandBufferAllocator<char> alloc = cmdb->getImplementation().getInternalAllocator();
 	char* src = alloc.allocate(source.getLength() + 1);
 	memcpy(src, &source[0], source.getLength() + 1);
 
-	cmdb->getImplementation().pushBackNewCommand<ShaderCreateCommand>(
-		this, shaderType, src, alloc);
+	cmdb->getImplementation().pushBackNewCommand<ShaderCreateCommand>(this, shaderType, src, alloc);
 	cmdb->flush();
 }
 

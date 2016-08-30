@@ -8,18 +8,9 @@ namespace anki
 namespace detail
 {
 
-//==============================================================================
-// ListIterator                                                                =
-//==============================================================================
-
-//==============================================================================
-template<typename TNodePointer,
-	typename TValuePointer,
-	typename TValueReference,
-	typename TList>
+template<typename TNodePointer, typename TValuePointer, typename TValueReference, typename TList>
 ListIterator<TNodePointer, TValuePointer, TValueReference, TList>&
-	ListIterator<TNodePointer, TValuePointer, TValueReference, TList>::
-	operator--()
+	ListIterator<TNodePointer, TValuePointer, TValueReference, TList>::operator--()
 {
 	ANKI_ASSERT(m_list);
 
@@ -35,11 +26,6 @@ ListIterator<TNodePointer, TValuePointer, TValueReference, TList>&
 	return *this;
 }
 
-//==============================================================================
-// ListBase                                                                    =
-//==============================================================================
-
-//==============================================================================
 template<typename T, typename TNode>
 Bool ListBase<T, TNode>::operator==(const ListBase& b) const
 {
@@ -62,7 +48,6 @@ Bool ListBase<T, TNode>::operator==(const ListBase& b) const
 	return same;
 }
 
-//==============================================================================
 template<typename T, typename TNode>
 void ListBase<T, TNode>::pushBackNode(TNode* node)
 {
@@ -82,7 +67,6 @@ void ListBase<T, TNode>::pushBackNode(TNode* node)
 	}
 }
 
-//==============================================================================
 template<typename T, typename TNode>
 void ListBase<T, TNode>::pushFrontNode(TNode* node)
 {
@@ -102,7 +86,6 @@ void ListBase<T, TNode>::pushFrontNode(TNode* node)
 	}
 }
 
-//==============================================================================
 template<typename T, typename TNode>
 void ListBase<T, TNode>::insertNode(TNode* pos, TNode* node)
 {
@@ -139,7 +122,6 @@ void ListBase<T, TNode>::insertNode(TNode* pos, TNode* node)
 	}
 }
 
-//==============================================================================
 template<typename T, typename TNode>
 template<typename TFunc>
 Error ListBase<T, TNode>::iterateForward(TFunc func)
@@ -155,7 +137,6 @@ Error ListBase<T, TNode>::iterateForward(TFunc func)
 	return err;
 }
 
-//==============================================================================
 template<typename T, typename TNode>
 template<typename TFunc>
 Error ListBase<T, TNode>::iterateBackward(TFunc func)
@@ -171,7 +152,6 @@ Error ListBase<T, TNode>::iterateBackward(TFunc func)
 	return err;
 }
 
-//==============================================================================
 template<typename T, typename TNode>
 template<typename TCompFunc>
 void ListBase<T, TNode>::sort(TCompFunc compFunc)
@@ -218,7 +198,6 @@ void ListBase<T, TNode>::sort(TCompFunc compFunc)
 	}
 }
 
-//==============================================================================
 template<typename T, typename TNode>
 TNode* ListBase<T, TNode>::swap(TNode* one, TNode* two)
 {
@@ -250,7 +229,6 @@ TNode* ListBase<T, TNode>::swap(TNode* one, TNode* two)
 	return one;
 }
 
-//==============================================================================
 template<typename T, typename TNode>
 void ListBase<T, TNode>::removeNode(TNode* node)
 {
@@ -285,7 +263,6 @@ void ListBase<T, TNode>::removeNode(TNode* node)
 	node->m_next = node->m_prev = nullptr;
 }
 
-//==============================================================================
 template<typename T, typename TNode>
 typename ListBase<T, TNode>::Iterator ListBase<T, TNode>::find(const Value& a)
 {
@@ -304,7 +281,6 @@ typename ListBase<T, TNode>::Iterator ListBase<T, TNode>::find(const Value& a)
 	return it;
 }
 
-//==============================================================================
 template<typename T, typename TNode>
 PtrSize ListBase<T, TNode>::getSize() const
 {
@@ -319,7 +295,6 @@ PtrSize ListBase<T, TNode>::getSize() const
 	return size;
 }
 
-//==============================================================================
 template<typename T, typename TNode>
 void ListBase<T, TNode>::popBack()
 {
@@ -327,7 +302,6 @@ void ListBase<T, TNode>::popBack()
 	removeNode(m_tail);
 }
 
-//==============================================================================
 template<typename T, typename TNode>
 void ListBase<T, TNode>::popFront()
 {
@@ -337,11 +311,6 @@ void ListBase<T, TNode>::popFront()
 
 } // end namespace detail
 
-//==============================================================================
-// List                                                                        =
-//==============================================================================
-
-//==============================================================================
 template<typename T>
 template<typename TAllocator>
 void List<T>::destroy(TAllocator alloc)

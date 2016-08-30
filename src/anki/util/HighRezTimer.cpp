@@ -9,14 +9,12 @@
 namespace anki
 {
 
-//==============================================================================
 void HighRezTimer::start()
 {
 	m_startTime = getCurrentTime();
 	m_stopTime = 0.0;
 }
 
-//==============================================================================
 void HighRezTimer::stop()
 {
 	ANKI_ASSERT(m_startTime != 0.0);
@@ -24,7 +22,6 @@ void HighRezTimer::stop()
 	m_stopTime = getCurrentTime();
 }
 
-//==============================================================================
 HighRezTimer::Scalar HighRezTimer::getElapsedTime() const
 {
 	if(m_stopTime == 0.0)

@@ -17,8 +17,7 @@ class ConfigSet;
 /// @addtogroup opengl
 /// @{
 
-/// Part of the global state. It's essentialy a cache of the state mainly used
-/// for optimizations and other stuff
+/// Part of the global state. It's essentialy a cache of the state mainly used for optimizations and other stuff
 class GlState
 {
 public:
@@ -62,11 +61,10 @@ public:
 		U64 m_color = 0;
 	} m_stateHashes;
 
-	Array2d<Bool, MAX_COLOR_ATTACHMENTS, 4> m_colorWriteMasks = {
-		{{{true, true, true, true}},
-			{{true, true, true, true}},
-			{{true, true, true, true}},
-			{{true, true, true, true}}}};
+	Array2d<Bool, MAX_COLOR_ATTACHMENTS, 4> m_colorWriteMasks = {{{{true, true, true, true}},
+		{{true, true, true, true}},
+		{{true, true, true, true}},
+		{{true, true, true, true}}}};
 	Bool m_depthWriteMask = true;
 	/// @}
 

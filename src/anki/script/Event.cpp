@@ -13,23 +13,16 @@
 namespace anki
 {
 
-//==============================================================================
 static EventManager* getEventManager(lua_State* l)
 {
 	LuaBinder* binder = nullptr;
 	lua_getallocf(l, reinterpret_cast<void**>(&binder));
 
-	ScriptManager* scriptManager =
-		reinterpret_cast<ScriptManager*>(binder->getParent());
+	ScriptManager* scriptManager = reinterpret_cast<ScriptManager*>(binder->getParent());
 
 	return &scriptManager->getSceneGraph().getEventManager();
 }
 
-//==============================================================================
-// LightEvent                                                                  =
-//==============================================================================
-
-//==============================================================================
 static const char* classnameLightEvent = "LightEvent";
 
 template<>
@@ -44,7 +37,6 @@ const char* LuaBinder::getWrappedTypeName<LightEvent>()
 	return classnameLightEvent;
 }
 
-//==============================================================================
 /// Pre-wrap method LightEvent::setIntensityMultiplier.
 static inline int pwrapLightEventsetIntensityMultiplier(lua_State* l)
 {
@@ -58,8 +50,7 @@ static inline int pwrapLightEventsetIntensityMultiplier(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(
-		   l, 1, classnameLightEvent, 840634010629725278, ud))
+	if(LuaBinder::checkUserData(l, 1, classnameLightEvent, 840634010629725278, ud))
 	{
 		return -1;
 	}
@@ -81,7 +72,6 @@ static inline int pwrapLightEventsetIntensityMultiplier(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap method LightEvent::setIntensityMultiplier.
 static int wrapLightEventsetIntensityMultiplier(lua_State* l)
 {
@@ -95,7 +85,6 @@ static int wrapLightEventsetIntensityMultiplier(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method LightEvent::setFrequency.
 static inline int pwrapLightEventsetFrequency(lua_State* l)
 {
@@ -109,8 +98,7 @@ static inline int pwrapLightEventsetFrequency(lua_State* l)
 	LuaBinder::checkArgsCount(l, 3);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(
-		   l, 1, classnameLightEvent, 840634010629725278, ud))
+	if(LuaBinder::checkUserData(l, 1, classnameLightEvent, 840634010629725278, ud))
 	{
 		return -1;
 	}
@@ -136,7 +124,6 @@ static inline int pwrapLightEventsetFrequency(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap method LightEvent::setFrequency.
 static int wrapLightEventsetFrequency(lua_State* l)
 {
@@ -150,23 +137,15 @@ static int wrapLightEventsetFrequency(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap class LightEvent.
 static inline void wrapLightEvent(lua_State* l)
 {
 	LuaBinder::createClass(l, classnameLightEvent);
-	LuaBinder::pushLuaCFuncMethod(
-		l, "setIntensityMultiplier", wrapLightEventsetIntensityMultiplier);
-	LuaBinder::pushLuaCFuncMethod(
-		l, "setFrequency", wrapLightEventsetFrequency);
+	LuaBinder::pushLuaCFuncMethod(l, "setIntensityMultiplier", wrapLightEventsetIntensityMultiplier);
+	LuaBinder::pushLuaCFuncMethod(l, "setFrequency", wrapLightEventsetFrequency);
 	lua_settop(l, 0);
 }
 
-//==============================================================================
-// EventManager                                                                =
-//==============================================================================
-
-//==============================================================================
 static const char* classnameEventManager = "EventManager";
 
 template<>
@@ -181,7 +160,6 @@ const char* LuaBinder::getWrappedTypeName<EventManager>()
 	return classnameEventManager;
 }
 
-//==============================================================================
 /// Pre-wrap method EventManager::newLightEvent.
 static inline int pwrapEventManagernewLightEvent(lua_State* l)
 {
@@ -195,8 +173,7 @@ static inline int pwrapEventManagernewLightEvent(lua_State* l)
 	LuaBinder::checkArgsCount(l, 4);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(
-		   l, 1, classnameEventManager, -6959305329499243407, ud))
+	if(LuaBinder::checkUserData(l, 1, classnameEventManager, -6959305329499243407, ud))
 	{
 		return -1;
 	}
@@ -242,7 +219,6 @@ static inline int pwrapEventManagernewLightEvent(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method EventManager::newLightEvent.
 static int wrapEventManagernewLightEvent(lua_State* l)
 {
@@ -256,17 +232,14 @@ static int wrapEventManagernewLightEvent(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap class EventManager.
 static inline void wrapEventManager(lua_State* l)
 {
 	LuaBinder::createClass(l, classnameEventManager);
-	LuaBinder::pushLuaCFuncMethod(
-		l, "newLightEvent", wrapEventManagernewLightEvent);
+	LuaBinder::pushLuaCFuncMethod(l, "newLightEvent", wrapEventManagernewLightEvent);
 	lua_settop(l, 0);
 }
 
-//==============================================================================
 /// Pre-wrap function getEventManager.
 static inline int pwrapgetEventManager(lua_State* l)
 {
@@ -297,7 +270,6 @@ static inline int pwrapgetEventManager(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap function getEventManager.
 static int wrapgetEventManager(lua_State* l)
 {
@@ -311,7 +283,6 @@ static int wrapgetEventManager(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap the module.
 void wrapModuleEvent(lua_State* l)
 {

@@ -11,7 +11,6 @@
 namespace anki
 {
 
-//==============================================================================
 void ConvexHullShape::destroy()
 {
 	if(m_ownsTheStorage)
@@ -30,7 +29,6 @@ void ConvexHullShape::destroy()
 	m_trfIdentity = true;
 }
 
-//==============================================================================
 void ConvexHullShape::move(ConvexHullShape& b)
 {
 	destroy();
@@ -58,20 +56,17 @@ void ConvexHullShape::move(ConvexHullShape& b)
 	b.m_trfIdentity = true;
 }
 
-//==============================================================================
 void ConvexHullShape::initStorage(CollisionAllocator<U8>& alloc, U pointCount)
 {
 	destroy();
 
-	m_points =
-		reinterpret_cast<Vec4*>(alloc.allocate(pointCount * sizeof(Vec4)));
+	m_points = reinterpret_cast<Vec4*>(alloc.allocate(pointCount * sizeof(Vec4)));
 
 	m_alloc = alloc;
 	m_ownsTheStorage = true;
 	m_pointsCount = pointCount;
 }
 
-//==============================================================================
 void ConvexHullShape::initStorage(void* buffer, U pointCount)
 {
 	ANKI_ASSERT(buffer);
@@ -83,7 +78,6 @@ void ConvexHullShape::initStorage(void* buffer, U pointCount)
 	ANKI_ASSERT(m_ownsTheStorage == false);
 }
 
-//==============================================================================
 F32 ConvexHullShape::testPlane(const Plane& p) const
 {
 	// Compute the invert transformation of the plane instead
@@ -121,7 +115,6 @@ F32 ConvexHullShape::testPlane(const Plane& p) const
 	}
 }
 
-//==============================================================================
 void ConvexHullShape::transform(const Transform& trf)
 {
 	m_trf = m_trf.combineTransformations(trf);
@@ -129,7 +122,6 @@ void ConvexHullShape::transform(const Transform& trf)
 	m_trfIdentity = false;
 }
 
-//==============================================================================
 void ConvexHullShape::computeAabb(Aabb& aabb) const
 {
 	ANKI_ASSERT(m_points);
@@ -151,7 +143,6 @@ void ConvexHullShape::computeAabb(Aabb& aabb) const
 	aabb = Aabb(mina.xyz0(), maxa.xyz0());
 }
 
-//==============================================================================
 Vec4 ConvexHullShape::computeSupport(const Vec4& dir) const
 {
 	F32 m = MIN_F32;

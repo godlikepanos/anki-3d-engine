@@ -9,22 +9,16 @@
 namespace anki
 {
 
-//==============================================================================
 ScriptManager::ScriptManager()
 {
 }
 
-//==============================================================================
 ScriptManager::~ScriptManager()
 {
 	ANKI_LOGI("Destroying scripting engine...");
 }
 
-//==============================================================================
-Error ScriptManager::init(AllocAlignedCallback allocCb,
-	void* allocCbData,
-	SceneGraph* scene,
-	MainRenderer* renderer)
+Error ScriptManager::init(AllocAlignedCallback allocCb, void* allocCbData, SceneGraph* scene, MainRenderer* renderer)
 {
 	ANKI_LOGI("Initializing scripting engine...");
 
@@ -37,8 +31,8 @@ Error ScriptManager::init(AllocAlignedCallback allocCb,
 	// Wrap stuff
 	lua_State* l = m_lua.getLuaState();
 
-#define ANKI_SCRIPT_CALL_WRAP(x_)                                              \
-	extern void wrapModule##x_(lua_State*);                                    \
+#define ANKI_SCRIPT_CALL_WRAP(x_)                                                                                      \
+	extern void wrapModule##x_(lua_State*);                                                                            \
 	wrapModule##x_(l);
 
 	ANKI_SCRIPT_CALL_WRAP(Math);

@@ -12,7 +12,6 @@
 namespace anki
 {
 
-//==============================================================================
 class Task : public AsyncLoaderTask
 {
 public:
@@ -23,12 +22,7 @@ public:
 	Bool m_pause;
 	Bool m_resubmit;
 
-	Task(F32 time,
-		Barrier* barrier,
-		Atomic<U32>* count,
-		I32 id = -1,
-		Bool pause = false,
-		Bool resubmit = false)
+	Task(F32 time, Barrier* barrier, Atomic<U32>* count, I32 id = -1, Bool pause = false, Bool resubmit = false)
 		: m_sleepTime(time)
 		, m_barrier(barrier)
 		, m_count(count)
@@ -72,7 +66,6 @@ public:
 	}
 };
 
-//==============================================================================
 class MemTask : public AsyncLoaderTask
 {
 public:
@@ -104,7 +97,6 @@ public:
 	}
 };
 
-//==============================================================================
 ANKI_TEST(Resource, AsyncLoader)
 {
 	HeapAllocator<U8> alloc(allocAligned, nullptr);

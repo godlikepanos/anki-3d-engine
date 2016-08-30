@@ -9,10 +9,6 @@
 namespace anki
 {
 
-//==============================================================================
-// Misc                                                                        =
-//==============================================================================
-
 /// Define this type just to show what is what.
 using Page = U32;
 
@@ -22,14 +18,9 @@ const U PAGE_SIZE = 8 * 1024;
 /// Max number of sub allocations (aka slots) per chunk.
 const U MAX_SLOTS_PER_CHUNK = 128;
 
-#define ANKI_CHECK_HANDLE(handle_)                                             \
-	ANKI_ASSERT(handle_.m_memory&& handle_.m_chunk&& handle_.m_chunk->m_class)
+#define ANKI_CHECK_HANDLE(handle_) ANKI_ASSERT(handle_.m_memory&& handle_.m_chunk&& handle_.m_chunk->m_class)
 
-//==============================================================================
-// GpuMemoryAllocatorChunk                                                     =
-//==============================================================================
-class GpuMemoryAllocatorChunk
-	: public IntrusiveListEnabled<GpuMemoryAllocatorChunk>
+class GpuMemoryAllocatorChunk : public IntrusiveListEnabled<GpuMemoryAllocatorChunk>
 {
 public:
 	/// GPU mem.
@@ -55,9 +46,6 @@ public:
 	Bool8 m_linearResources = false;
 };
 
-//==============================================================================
-// GpuMemoryAllocatorClass                                                     =
-//==============================================================================
 class GpuMemoryAllocatorClass
 {
 public:
@@ -79,11 +67,6 @@ public:
 	Mutex m_mtx;
 };
 
-//==============================================================================
-// GpuMemoryAllocatorMemType                                                   =
-//==============================================================================
-
-//==============================================================================
 GpuMemoryAllocatorMemType::~GpuMemoryAllocatorMemType()
 {
 	for(Class& cl : m_classes)
@@ -127,9 +110,7 @@ GpuMemoryAllocatorMemType::~GpuMemoryAllocatorMemType()
 	m_classes.destroy(m_alloc);
 }
 
-//==============================================================================
-void GpuMemoryAllocatorMemType::init(
-	GenericMemoryPoolAllocator<U8> alloc, VkDevice dev, U memoryTypeIdx)
+void GpuMemoryAllocatorMemType::init(GenericMemoryPoolAllocator<U8> alloc, VkDevice dev, U memoryTypeIdx)
 {
 	m_alloc = alloc;
 	m_dev = dev;
@@ -140,17 +121,14 @@ void GpuMemoryAllocatorMemType::init(
 	//
 	const U CLASS_COUNT = 6;
 	m_classes.create(m_alloc, CLASS_COUNT);
-	static const CString MESSAGE =
-		"VK: Creating memory class. "
-		"Chunk size: %u, maxSlotSize: %u, allocsPerChunk: %u";
+	static const CString MESSAGE = "VK: Creating memory class. "
+								   "Chunk size: %u, maxSlotSize: %u, allocsPerChunk: %u";
 
-#define ANKI_PRINT_MSG()                                                       \
-	if(memoryTypeIdx == 0)                                                     \
-	{                                                                          \
-		ANKI_LOGI(&MESSAGE[0],                                                 \
-			c.m_chunkPages* PAGE_SIZE,                                         \
-			c.m_maxSlotSize,                                                   \
-			c.m_chunkPages* PAGE_SIZE / c.m_maxSlotSize)                       \
+#define ANKI_PRINT_MSG()                                                                                               \
+	if(memoryTypeIdx == 0)                                                                                             \
+	{                                                                                                                  \
+		ANKI_LOGI(                                                                                                     \
+			&MESSAGE[0], c.m_chunkPages* PAGE_SIZE, c.m_maxSlotSize, c.m_chunkPages* PAGE_SIZE / c.m_maxSlotSize)      \
 	}
 
 	// 1st class. From (0, 256] bytes
@@ -209,9 +187,7 @@ void GpuMemoryAllocatorMemType::init(
 	}
 }
 
-//==============================================================================
-GpuMemoryAllocatorMemType::Class* GpuMemoryAllocatorMemType::findClass(
-	PtrSize size, U32 alignment)
+GpuMemoryAllocatorMemType::Class* GpuMemoryAllocatorMemType::findClass(PtrSize size, U32 alignment)
 {
 	ANKI_ASSERT(size > 0 && alignment > 0);
 
@@ -253,17 +229,13 @@ GpuMemoryAllocatorMemType::Class* GpuMemoryAllocatorMemType::findClass(
 	return nullptr;
 }
 
-//==============================================================================
-GpuMemoryAllocatorMemType::Chunk*
-GpuMemoryAllocatorMemType::findChunkWithUnusedSlot(
-	Class& cl, Bool linearResource)
+GpuMemoryAllocatorMemType::Chunk* GpuMemoryAllocatorMemType::findChunkWithUnusedSlot(Class& cl, Bool linearResource)
 {
 	auto it = cl.m_inUseChunks.getBegin();
 	const auto end = cl.m_inUseChunks.getEnd();
 	while(it != end)
 	{
-		if(it->m_inUseSlotCount < cl.m_slotsPerChunkCount
-			&& it->m_linearResources == linearResource)
+		if(it->m_inUseSlotCount < cl.m_slotsPerChunkCount && it->m_linearResources == linearResource)
 		{
 			return &(*it);
 		}
@@ -274,9 +246,7 @@ GpuMemoryAllocatorMemType::findChunkWithUnusedSlot(
 	return nullptr;
 }
 
-//==============================================================================
-GpuMemoryAllocatorMemType::Chunk& GpuMemoryAllocatorMemType::createChunk(
-	Class& cl, Bool linearResources)
+GpuMemoryAllocatorMemType::Chunk& GpuMemoryAllocatorMemType::createChunk(Class& cl, Bool linearResources)
 {
 	Chunk* chunk = nullptr;
 
@@ -304,18 +274,13 @@ GpuMemoryAllocatorMemType::Chunk& GpuMemoryAllocatorMemType::createChunk(
 	chunk->m_linearResources = linearResources;
 	cl.m_inUseChunks.pushBack(chunk);
 
-	ANKI_ASSERT(chunk->m_mem && chunk->m_class == &cl
-		&& chunk->m_inUseSlotCount == 0
-		&& !chunk->m_inUseSlots.getAny());
+	ANKI_ASSERT(chunk->m_mem && chunk->m_class == &cl && chunk->m_inUseSlotCount == 0 && !chunk->m_inUseSlots.getAny());
 
 	return *chunk;
 }
 
-//==============================================================================
-void GpuMemoryAllocatorMemType::allocate(PtrSize size,
-	U alignment,
-	Bool linearResource,
-	GpuMemoryAllocationHandle& handle)
+void GpuMemoryAllocatorMemType::allocate(
+	PtrSize size, U alignment, Bool linearResource, GpuMemoryAllocationHandle& handle)
 {
 	handle.m_memory = VK_NULL_HANDLE;
 
@@ -354,7 +319,6 @@ void GpuMemoryAllocatorMemType::allocate(PtrSize size,
 	ANKI_ASSERT(isAligned(alignment, handle.m_offset));
 }
 
-//==============================================================================
 void GpuMemoryAllocatorMemType::destroyChunk(Class& cl, Chunk& chunk)
 {
 	// Push the chunk to unused area
@@ -369,7 +333,6 @@ void GpuMemoryAllocatorMemType::destroyChunk(Class& cl, Chunk& chunk)
 	}
 }
 
-//==============================================================================
 void GpuMemoryAllocatorMemType::free(GpuMemoryAllocationHandle& handle)
 {
 	ANKI_CHECK_HANDLE(handle);
@@ -393,9 +356,7 @@ void GpuMemoryAllocatorMemType::free(GpuMemoryAllocationHandle& handle)
 	handle = {};
 }
 
-//==============================================================================
-void* GpuMemoryAllocatorMemType::getMappedAddress(
-	GpuMemoryAllocationHandle& handle)
+void* GpuMemoryAllocatorMemType::getMappedAddress(GpuMemoryAllocationHandle& handle)
 {
 	ANKI_CHECK_HANDLE(handle);
 
@@ -410,12 +371,8 @@ void* GpuMemoryAllocatorMemType::getMappedAddress(
 		}
 		else
 		{
-			ANKI_VK_CHECKF(vkMapMemory(m_dev,
-				chunk.m_mem,
-				0,
-				chunk.m_class->m_chunkPages * PAGE_SIZE,
-				0,
-				reinterpret_cast<void**>(&out)));
+			ANKI_VK_CHECKF(vkMapMemory(
+				m_dev, chunk.m_mem, 0, chunk.m_class->m_chunkPages * PAGE_SIZE, 0, reinterpret_cast<void**>(&out)));
 
 			chunk.m_mappedAddress = out;
 		}
@@ -425,18 +382,11 @@ void* GpuMemoryAllocatorMemType::getMappedAddress(
 	return static_cast<void*>(out + handle.m_offset);
 }
 
-//==============================================================================
-// GpuMemoryAllocator                                                          =
-//==============================================================================
-
-//==============================================================================
 GpuMemoryAllocator::~GpuMemoryAllocator()
 {
 }
 
-//==============================================================================
-void GpuMemoryAllocator::init(
-	VkPhysicalDevice pdev, VkDevice dev, GrAllocator<U8> alloc)
+void GpuMemoryAllocator::init(VkPhysicalDevice pdev, VkDevice dev, GrAllocator<U8> alloc)
 {
 	vkGetPhysicalDeviceMemoryProperties(pdev, &m_memoryProperties);
 
@@ -452,16 +402,13 @@ void GpuMemoryAllocator::init(
 	m_alloc = alloc;
 }
 
-//==============================================================================
 void GpuMemoryAllocator::destroy()
 {
 	m_gpuAllocs.destroy(m_alloc);
 }
 
-//==============================================================================
-U GpuMemoryAllocator::findMemoryType(U resourceMemTypeBits,
-	VkMemoryPropertyFlags preferFlags,
-	VkMemoryPropertyFlags avoidFlags) const
+U GpuMemoryAllocator::findMemoryType(
+	U resourceMemTypeBits, VkMemoryPropertyFlags preferFlags, VkMemoryPropertyFlags avoidFlags) const
 {
 	U preferedHigh = MAX_U32;
 	U preferedMed = MAX_U32;
@@ -471,8 +418,7 @@ U GpuMemoryAllocator::findMemoryType(U resourceMemTypeBits,
 	{
 		if(resourceMemTypeBits & (1u << i))
 		{
-			VkMemoryPropertyFlags flags =
-				m_memoryProperties.memoryTypes[i].propertyFlags;
+			VkMemoryPropertyFlags flags = m_memoryProperties.memoryTypes[i].propertyFlags;
 
 			if((flags & preferFlags) == preferFlags)
 			{

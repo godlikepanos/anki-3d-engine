@@ -11,7 +11,7 @@ ANKI_TEST(Util, FileExists)
 {
 	// Create file
 	File file;
-	ANKI_TEST_EXPECT_NO_ERR(file.open("./tmp", File::OpenFlag::WRITE));
+	ANKI_TEST_EXPECT_NO_ERR(file.open("./tmp", FileOpenFlag::WRITE));
 	file.close();
 
 	// Check
@@ -29,7 +29,7 @@ ANKI_TEST(Util, Directory)
 	// Create simple directory
 	ANKI_TEST_EXPECT_NO_ERR(createDirectory("./dir"));
 	File file;
-	ANKI_TEST_EXPECT_NO_ERR(file.open("./dir/tmp", File::OpenFlag::WRITE));
+	ANKI_TEST_EXPECT_NO_ERR(file.open("./dir/tmp", FileOpenFlag::WRITE));
 	file.close();
 	ANKI_TEST_EXPECT_EQ(fileExists("./dir/tmp"), true);
 
@@ -40,7 +40,7 @@ ANKI_TEST(Util, Directory)
 	// A bit more complex
 	ANKI_TEST_EXPECT_NO_ERR(createDirectory("./dir"));
 	ANKI_TEST_EXPECT_NO_ERR(createDirectory("./dir/rid"));
-	ANKI_TEST_EXPECT_NO_ERR(file.open("./dir/rid/tmp", File::OpenFlag::WRITE));
+	ANKI_TEST_EXPECT_NO_ERR(file.open("./dir/rid/tmp", FileOpenFlag::WRITE));
 	file.close();
 	ANKI_TEST_EXPECT_EQ(fileExists("./dir/rid/tmp"), true);
 
@@ -66,9 +66,8 @@ ANKI_TEST(Util, WalkDir)
 
 	// Walk crnt dir
 	U32 count = 0;
-	ANKI_TEST_EXPECT_NO_ERR(walkDirectoryTree("./data/dir",
-		&count,
-		[](const CString& fname, void* pCount, Bool isDir) -> Error {
+	ANKI_TEST_EXPECT_NO_ERR(
+		walkDirectoryTree("./data/dir", &count, [](const CString& fname, void* pCount, Bool isDir) -> Error {
 			if(isDir)
 			{
 				printf("-- %s\n", &fname[0]);
@@ -82,9 +81,8 @@ ANKI_TEST(Util, WalkDir)
 
 	// Walk again
 	count = 0;
-	ANKI_TEST_EXPECT_NO_ERR(walkDirectoryTree("./data/dir///////",
-		&count,
-		[](const CString& fname, void* pCount, Bool isDir) -> Error {
+	ANKI_TEST_EXPECT_NO_ERR(
+		walkDirectoryTree("./data/dir///////", &count, [](const CString& fname, void* pCount, Bool isDir) -> Error {
 			printf("-- %s\n", &fname[0]);
 			++(*static_cast<U32*>(pCount));
 
@@ -95,14 +93,13 @@ ANKI_TEST(Util, WalkDir)
 
 	// Test error
 	count = 0;
-	ANKI_TEST_EXPECT_ERR(
-		walkDirectoryTree("./data///dir////",
-			&count,
-			[](const CString& fname, void* pCount, Bool isDir) -> Error {
-				printf("-- %s\n", &fname[0]);
-				++(*static_cast<U32*>(pCount));
-				return ErrorCode::FUNCTION_FAILED;
-			}),
+	ANKI_TEST_EXPECT_ERR(walkDirectoryTree("./data///dir////",
+							 &count,
+							 [](const CString& fname, void* pCount, Bool isDir) -> Error {
+								 printf("-- %s\n", &fname[0]);
+								 ++(*static_cast<U32*>(pCount));
+								 return ErrorCode::FUNCTION_FAILED;
+							 }),
 		ErrorCode::FUNCTION_FAILED);
 
 	ANKI_TEST_EXPECT_EQ(count, 1);

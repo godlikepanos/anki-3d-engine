@@ -11,6 +11,7 @@
 #include <anki/util/Hash.h>
 #include <cstring>
 #include <cstdio>
+#include <cinttypes> // For PRId8 etc
 
 namespace anki
 {
@@ -30,21 +31,21 @@ constexpr const char* toStringFormat()
 	return nullptr;
 }
 
-#define ANKI_DEPLOY_TO_STRING(type_, string_)                                  \
-	template<>                                                                 \
-	constexpr const char* toStringFormat<type_>()                              \
-	{                                                                          \
-		return string_;                                                        \
+#define ANKI_DEPLOY_TO_STRING(type_, string_)                                                                          \
+	template<>                                                                                                         \
+	constexpr const char* toStringFormat<type_>()                                                                      \
+	{                                                                                                                  \
+		return string_;                                                                                                \
 	}
 
-ANKI_DEPLOY_TO_STRING(I8, "%d")
-ANKI_DEPLOY_TO_STRING(I16, "%d")
-ANKI_DEPLOY_TO_STRING(I32, "%d")
-ANKI_DEPLOY_TO_STRING(I64, "%lld")
-ANKI_DEPLOY_TO_STRING(U8, "%u")
-ANKI_DEPLOY_TO_STRING(U16, "%u")
-ANKI_DEPLOY_TO_STRING(U32, "%u")
-ANKI_DEPLOY_TO_STRING(U64, "%llu")
+ANKI_DEPLOY_TO_STRING(I8, "%" PRId8)
+ANKI_DEPLOY_TO_STRING(I16, "%" PRId16)
+ANKI_DEPLOY_TO_STRING(I32, "%" PRId32)
+ANKI_DEPLOY_TO_STRING(I64, "%" PRId64)
+ANKI_DEPLOY_TO_STRING(U8, "%" PRIu8)
+ANKI_DEPLOY_TO_STRING(U16, "%" PRIu16)
+ANKI_DEPLOY_TO_STRING(U32, "%" PRIu32)
+ANKI_DEPLOY_TO_STRING(U64, "%" PRIu64)
 ANKI_DEPLOY_TO_STRING(F32, "%f")
 ANKI_DEPLOY_TO_STRING(F64, "%f")
 
@@ -469,8 +470,7 @@ public:
 
 	/// Find a substring of this string.
 	/// @param[in] cstr The substring to search.
-	/// @param position Position of the first character in the string to be
-	///                 considered in the search.
+	/// @param position Position of the first character in the string to be considered in the search.
 	/// @return A valid position if the string is found or NPOS if not found.
 	PtrSize find(const CStringType& cstr, PtrSize position = 0) const
 	{
@@ -480,8 +480,7 @@ public:
 
 	/// Find a substring of this string.
 	/// @param[in] str The substring to search.
-	/// @param position Position of the first character in the string to be
-	///                 considered in the search.
+	/// @param position Position of the first character in the string to be considered in the search.
 	/// @return A valid position if the string is found or NPOS if not found.
 	PtrSize find(const String& str, PtrSize position) const
 	{
@@ -523,15 +522,13 @@ protected:
 	}
 };
 
-//==============================================================================
 template<typename TNumber>
 inline void String::toString(Allocator alloc, TNumber number)
 {
 	destroy(alloc);
 
 	Array<Char, 512> buff;
-	I ret = std::snprintf(
-		&buff[0], buff.size(), detail::toStringFormat<TNumber>(), number);
+	I ret = std::snprintf(&buff[0], buff.size(), detail::toStringFormat<TNumber>(), number);
 
 	if(ret < 0 || ret > static_cast<I>(buff.getSize()))
 	{

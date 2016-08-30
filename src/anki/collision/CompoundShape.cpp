@@ -10,14 +10,12 @@
 namespace anki
 {
 
-//==============================================================================
 CompoundShape::CompoundShape()
-	: CollisionShape(Type::COMPOUND)
+	: CollisionShape(CollisionShapeType::COMPOUND)
 {
 	memset(&m_dflt, 0, sizeof(m_dflt));
 }
 
-//==============================================================================
 F32 CompoundShape::testPlane(const Plane& p) const
 {
 	F32 minv = MAX_F32;
@@ -43,7 +41,6 @@ F32 CompoundShape::testPlane(const Plane& p) const
 	return 0.0;
 }
 
-//==============================================================================
 void CompoundShape::accept(MutableVisitor& v)
 {
 	Error err = iterateShapes([&](CollisionShape& cs) -> Error {
@@ -53,7 +50,6 @@ void CompoundShape::accept(MutableVisitor& v)
 	(void)err;
 }
 
-//==============================================================================
 void CompoundShape::accept(ConstVisitor& v) const
 {
 	Error err = iterateShapes([&](const CollisionShape& cs) -> Error {
@@ -63,7 +59,6 @@ void CompoundShape::accept(ConstVisitor& v) const
 	(void)err;
 }
 
-//==============================================================================
 void CompoundShape::transform(const Transform& trf)
 {
 	Error err = iterateShapes([&](CollisionShape& cs) -> Error {
@@ -73,7 +68,6 @@ void CompoundShape::transform(const Transform& trf)
 	(void)err;
 }
 
-//==============================================================================
 void CompoundShape::computeAabb(Aabb& out) const
 {
 	Vec4 minv(Vec3(MAX_F32), 0.0), maxv(Vec3(MIN_F32), 0.0);
@@ -95,7 +89,6 @@ void CompoundShape::computeAabb(Aabb& out) const
 	out.setMax(maxv);
 }
 
-//==============================================================================
 void CompoundShape::addShape(CollisionShape* shape)
 {
 	Chunk* chunk = &m_dflt;

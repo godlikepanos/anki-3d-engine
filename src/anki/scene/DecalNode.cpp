@@ -11,10 +11,6 @@
 namespace anki
 {
 
-//==============================================================================
-// DecalMoveFeedbackComponent                                                  =
-//==============================================================================
-
 /// Decal feedback component.
 class DecalMoveFeedbackComponent : public SceneComponent
 {
@@ -38,10 +34,6 @@ public:
 		return ErrorCode::NONE;
 	}
 };
-
-//==============================================================================
-// DecalShapeFeedbackComponent                                                 =
-//==============================================================================
 
 /// Decal feedback component.
 class DecalShapeFeedbackComponent : public SceneComponent
@@ -67,16 +59,10 @@ public:
 	}
 };
 
-//==============================================================================
-// DecalNode                                                                   =
-//==============================================================================
-
-//==============================================================================
 DecalNode::~DecalNode()
 {
 }
 
-//==============================================================================
 Error DecalNode::init()
 {
 	SceneComponent* comp;
@@ -99,7 +85,6 @@ Error DecalNode::init()
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void DecalNode::onMove(MoveComponent& movec)
 {
 	SpatialComponent& sc = getComponent<SpatialComponent>();
@@ -112,7 +97,6 @@ void DecalNode::onMove(MoveComponent& movec)
 	updateObb(movec.getWorldTransform(), decalc);
 }
 
-//==============================================================================
 void DecalNode::onDecalUpdated(DecalComponent& decalc)
 {
 	SpatialComponent& sc = getComponent<SpatialComponent>();
@@ -122,14 +106,10 @@ void DecalNode::onDecalUpdated(DecalComponent& decalc)
 	updateObb(movec.getWorldTransform(), decalc);
 }
 
-//==============================================================================
 void DecalNode::updateObb(const Transform& trf, const DecalComponent& decalc)
 {
 	Vec4 center(0.0f, 0.0f, -decalc.getDepth() / 2.0f, 0.0f);
-	Vec4 extend(decalc.getWidth() / 2.0f,
-		decalc.getHeight() / 2.0f,
-		decalc.getDepth() / 2.0f,
-		0.0f);
+	Vec4 extend(decalc.getWidth() / 2.0f, decalc.getHeight() / 2.0f, decalc.getDepth() / 2.0f, 0.0f);
 
 	Obb obbL(center, Mat3x4::getIdentity(), extend);
 

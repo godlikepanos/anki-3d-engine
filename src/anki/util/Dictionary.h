@@ -41,13 +41,10 @@ public:
 	}
 };
 
-/// The hash map that has as key an old school C string. When inserting the
-/// char MUST NOT point to a temporary or the evaluation function will fail.
-/// Its template struct because C++ does not offer template typedefs
+/// The hash map that has as key an old school C string. When inserting the char MUST NOT point to a temporary or the
+/// evaluation function will fail. Its template struct because C++ does not offer template typedefs
 template<typename T, typename TAlloc = HeapAllocator<std::pair<CString, T>>>
-using Dictionary =
-	std::unordered_map<CString, T, DictionaryHasher, DictionaryEqual, TAlloc>;
-
+using Dictionary = std::unordered_map<CString, T, DictionaryHasher, DictionaryEqual, TAlloc>;
 /// @}
 
 } // end namespace anki

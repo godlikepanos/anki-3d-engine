@@ -9,11 +9,6 @@
 namespace anki
 {
 
-//==============================================================================
-// Static                                                                      =
-//==============================================================================
-
-//==============================================================================
 class CustomControllerConvexRayFilter
 {
 public:
@@ -33,8 +28,7 @@ public:
 		void* const userData,
 		dFloat intersectParam)
 	{
-		CustomControllerConvexRayFilter* filter =
-			static_cast<CustomControllerConvexRayFilter*>(userData);
+		CustomControllerConvexRayFilter* filter = static_cast<CustomControllerConvexRayFilter*>(userData);
 
 		ANKI_ASSERT(body != filter->m_me);
 
@@ -44,27 +38,22 @@ public:
 			filter->m_shapeHit = shapeHit;
 			filter->m_collisionId = collisionId;
 			filter->m_intersectParam = intersectParam;
-			filter->m_hitContact =
-				Vec4(hitContact[0], hitContact[1], hitContact[2], 0.0);
-			filter->m_hitNormal =
-				Vec4(hitNormal[0], hitNormal[1], hitNormal[2], 0.0);
+			filter->m_hitContact = Vec4(hitContact[0], hitContact[1], hitContact[2], 0.0);
+			filter->m_hitNormal = Vec4(hitNormal[0], hitNormal[1], hitNormal[2], 0.0);
 		}
 
 		return intersectParam;
 	}
 
-	static unsigned prefilterCallback(const NewtonBody* const body,
-		const NewtonCollision* const myCollision,
-		void* const userData)
+	static unsigned prefilterCallback(
+		const NewtonBody* const body, const NewtonCollision* const myCollision, void* const userData)
 	{
-		CustomControllerConvexRayFilter* filter =
-			static_cast<CustomControllerConvexRayFilter*>(userData);
+		CustomControllerConvexRayFilter* filter = static_cast<CustomControllerConvexRayFilter*>(userData);
 
 		return (body != filter->m_me) ? 1 : 0;
 	}
 };
 
-//==============================================================================
 struct CustomControllerConvexCastPreFilter
 {
 	const NewtonBody* m_me = nullptr;
@@ -75,18 +64,15 @@ struct CustomControllerConvexCastPreFilter
 		ANKI_ASSERT(m_me != nullptr);
 	}
 
-	static unsigned prefilterCallback(const NewtonBody* const body,
-		const NewtonCollision* const myCollision,
-		void* const userData)
+	static unsigned prefilterCallback(
+		const NewtonBody* const body, const NewtonCollision* const myCollision, void* const userData)
 	{
-		CustomControllerConvexCastPreFilter* filter =
-			static_cast<CustomControllerConvexCastPreFilter*>(userData);
+		CustomControllerConvexCastPreFilter* filter = static_cast<CustomControllerConvexCastPreFilter*>(userData);
 
 		return (body != filter->m_me) ? 1 : 0;
 	}
 };
 
-//==============================================================================
 static Vec4 calcAverageOmega(Quat q0, const Quat& q1, F32 invdt)
 {
 	if(q0.dot(q1) < 0.0)
@@ -110,7 +96,6 @@ static Vec4 calcAverageOmega(Quat q0, const Quat& q1, F32 invdt)
 	return omegaDir * (dirMagInv * omegaMag);
 }
 
-//==============================================================================
 static Quat integrateOmega(const Quat& rot, const Vec4& omega, F32 dt)
 {
 	ANKI_ASSERT(omega.w() == 0.0);
@@ -130,11 +115,6 @@ static Quat integrateOmega(const Quat& rot, const Vec4& omega, F32 dt)
 	return rotation;
 }
 
-//==============================================================================
-// PhysicsPlayerController                                                     =
-//==============================================================================
-
-//==============================================================================
 PhysicsPlayerController::~PhysicsPlayerController()
 {
 	NewtonDestroyCollision(m_upperBodyShape);
@@ -143,9 +123,7 @@ PhysicsPlayerController::~PhysicsPlayerController()
 	NewtonDestroyBody(m_body);
 }
 
-//==============================================================================
-Error PhysicsPlayerController::create(
-	const PhysicsPlayerControllerInitInfo& init)
+Error PhysicsPlayerController::create(const PhysicsPlayerControllerInitInfo& init)
 {
 	NewtonWorld* world = m_world->getNewtonWorld();
 
@@ -185,13 +163,8 @@ Error PhysicsPlayerController::create(
 		convexPoints[1][i] = localAxis * (rotation * p1);
 	}
 
-	NewtonCollision* supportShape = NewtonCreateConvexHull(world,
-		steps * 2,
-		&convexPoints[0][0][0],
-		sizeof(Vec4),
-		0.0,
-		0,
-		nullptr);
+	NewtonCollision* supportShape =
+		NewtonCreateConvexHull(world, steps * 2, &convexPoints[0][0][0], sizeof(Vec4), 0.0, 0, nullptr);
 	if(supportShape == nullptr)
 	{
 		ANKI_LOGE("NewtonCreateConvexHull() failed");
@@ -210,16 +183,14 @@ Error PhysicsPlayerController::create(
 	outerShapeMatrix.setTranslationPart(transl);
 	outerShapeMatrix.transpose();
 
-	NewtonCollision* bodyCapsule =
-		NewtonCreateCapsule(world, 0.25, 0.5, 0, &outerShapeMatrix[0]);
+	NewtonCollision* bodyCapsule = NewtonCreateCapsule(world, 0.25, 0.5, 0, &outerShapeMatrix[0]);
 	if(bodyCapsule == nullptr)
 	{
 		ANKI_LOGE("NewtonCreateCapsule() failed");
 		return ErrorCode::FUNCTION_FAILED;
 	}
 
-	NewtonCollisionSetScale(
-		bodyCapsule, capsuleHeight, m_outerRadius * 4.0, m_outerRadius * 4.0);
+	NewtonCollisionSetScale(bodyCapsule, capsuleHeight, m_outerRadius * 4.0, m_outerRadius * 4.0);
 
 	// Compound collision player controller
 	NewtonCollision* playerShape = NewtonCreateCompoundCollision(world, 0);
@@ -237,8 +208,7 @@ Error PhysicsPlayerController::create(
 	// Create the kinematic body
 	Mat4 locationMatrix(Mat4::getIdentity());
 	locationMatrix.setTranslationPart(init.m_position.xyz1());
-	m_body = NewtonCreateKinematicBody(
-		world, playerShape, &toNewton(locationMatrix)[0]);
+	m_body = NewtonCreateKinematicBody(world, playerShape, &toNewton(locationMatrix)[0]);
 	if(m_body == nullptr)
 	{
 		ANKI_LOGE("NewtonCreateKinematicBody() failed");
@@ -247,8 +217,7 @@ Error PhysicsPlayerController::create(
 
 	NewtonBodySetUserData(m_body, this);
 	NewtonBodySetTransformCallback(m_body, onTransformCallback);
-	NewtonBodySetMaterialGroupID(
-		m_body, NewtonMaterialGetDefaultGroupID(m_world->getNewtonWorld()));
+	NewtonBodySetMaterialGroupID(m_body, NewtonMaterialGetDefaultGroupID(m_world->getNewtonWorld()));
 
 	// Players must have weight, otherwise they are infinitely strong when
 	// they collide
@@ -275,13 +244,7 @@ Error PhysicsPlayerController::create(
 		convexPoints[0][i] = localAxis * (rotation * q0);
 		convexPoints[1][i] = localAxis * (rotation * q1);
 	}
-	m_castingShape = NewtonCreateConvexHull(world,
-		steps * 2,
-		&convexPoints[0][0][0],
-		sizeof(Vec4),
-		0.0,
-		0,
-		nullptr);
+	m_castingShape = NewtonCreateConvexHull(world, steps * 2, &convexPoints[0][0][0], sizeof(Vec4), 0.0, 0, nullptr);
 	if(m_castingShape == nullptr)
 	{
 		ANKI_LOGE("NewtonCreateConvexHull() failed");
@@ -289,10 +252,10 @@ Error PhysicsPlayerController::create(
 	}
 
 	// Finish
-	m_supportShape = NewtonCompoundCollisionGetCollisionFromNode(
-		shape, NewtonCompoundCollisionGetNodeByIndex(shape, 0));
-	m_upperBodyShape = NewtonCompoundCollisionGetCollisionFromNode(
-		shape, NewtonCompoundCollisionGetNodeByIndex(shape, 1));
+	m_supportShape =
+		NewtonCompoundCollisionGetCollisionFromNode(shape, NewtonCompoundCollisionGetNodeByIndex(shape, 0));
+	m_upperBodyShape =
+		NewtonCompoundCollisionGetCollisionFromNode(shape, NewtonCompoundCollisionGetNodeByIndex(shape, 1));
 
 	NewtonDestroyCollision(bodyCapsule);
 	NewtonDestroyCollision(supportShape);
@@ -301,9 +264,7 @@ Error PhysicsPlayerController::create(
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
-Vec4 PhysicsPlayerController::calculateDesiredOmega(
-	const Vec4& frontDir, F32 dt) const
+Vec4 PhysicsPlayerController::calculateDesiredOmega(const Vec4& frontDir, F32 dt) const
 {
 	Quat playerRotation;
 	NewtonBodyGetRotation(m_body, &playerRotation[0]);
@@ -314,12 +275,8 @@ Vec4 PhysicsPlayerController::calculateDesiredOmega(
 	return calcAverageOmega(playerRotation, targetRotation, 0.5 / dt);
 }
 
-//==============================================================================
-Vec4 PhysicsPlayerController::calculateDesiredVelocity(F32 forwardSpeed,
-	F32 strafeSpeed,
-	F32 verticalSpeed,
-	const Vec4& gravity,
-	F32 dt) const
+Vec4 PhysicsPlayerController::calculateDesiredVelocity(
+	F32 forwardSpeed, F32 strafeSpeed, F32 verticalSpeed, const Vec4& gravity, F32 dt) const
 {
 	Mat4 matrix;
 	NewtonBodyGetMatrix(m_body, &matrix[0]);
@@ -340,14 +297,12 @@ Vec4 PhysicsPlayerController::calculateDesiredVelocity(F32 forwardSpeed,
 			// Player is in a legal slope, he is in full control of his movement
 			Vec4 bodyVeloc(0.0);
 			NewtonBodyGetVelocity(m_body, &bodyVeloc[0]);
-			veloc = updir * bodyVeloc.dot(updir) + gravity * dt
-				+ frontDir * forwardSpeed + rightDir * strafeSpeed
+			veloc = updir * bodyVeloc.dot(updir) + gravity * dt + frontDir * forwardSpeed + rightDir * strafeSpeed
 				+ updir * verticalSpeed;
 
 			veloc += m_groundVelocity - updir * updir.dot(m_groundVelocity);
 
-			F32 speedLimitMag2 = forwardSpeed * forwardSpeed
-				+ strafeSpeed * strafeSpeed + verticalSpeed * verticalSpeed
+			F32 speedLimitMag2 = forwardSpeed * forwardSpeed + strafeSpeed * strafeSpeed + verticalSpeed * verticalSpeed
 				+ m_groundVelocity.dot(m_groundVelocity) + 0.1;
 
 			F32 speedMag2 = veloc.getLengthSquared();
@@ -387,12 +342,10 @@ Vec4 PhysicsPlayerController::calculateDesiredVelocity(F32 forwardSpeed,
 	return veloc;
 }
 
-//==============================================================================
 void PhysicsPlayerController::calculateVelocity(F32 dt)
 {
 	Vec4 omega(calculateDesiredOmega(m_forwardDir, dt));
-	Vec4 veloc(calculateDesiredVelocity(
-		m_forwardSpeed, m_strafeSpeed, m_jumpSpeed, m_gravity, dt));
+	Vec4 veloc(calculateDesiredVelocity(m_forwardSpeed, m_strafeSpeed, m_jumpSpeed, m_gravity, dt));
 
 	NewtonBodySetOmega(m_body, &omega[0]);
 	NewtonBodySetVelocity(m_body, &veloc[0]);
@@ -403,30 +356,22 @@ void PhysicsPlayerController::calculateVelocity(F32 dt)
 	}
 }
 
-//==============================================================================
 F32 PhysicsPlayerController::calculateContactKinematics(
 	const Vec4& veloc, const NewtonWorldConvexCastReturnInfo* contactInfo) const
 {
 	Vec4 contactVeloc(0.0);
 	if(contactInfo->m_hitBody)
 	{
-		NewtonBodyGetPointVelocity(
-			contactInfo->m_hitBody, contactInfo->m_point, &contactVeloc[0]);
+		NewtonBodyGetPointVelocity(contactInfo->m_hitBody, contactInfo->m_point, &contactVeloc[0]);
 	}
 
 	const F32 restitution = 0.0;
-	Vec4 normal(contactInfo->m_normal[0],
-		contactInfo->m_normal[1],
-		contactInfo->m_normal[2],
-		0.0);
-	F32 reboundVelocMag =
-		-((veloc - contactVeloc).dot(normal)) * (1.0 + restitution);
+	Vec4 normal(contactInfo->m_normal[0], contactInfo->m_normal[1], contactInfo->m_normal[2], 0.0);
+	F32 reboundVelocMag = -((veloc - contactVeloc).dot(normal)) * (1.0 + restitution);
 	return max(reboundVelocMag, 0.0f);
 }
 
-//==============================================================================
-void PhysicsPlayerController::updateGroundPlane(
-	Mat4& matrix, const Mat4& castMatrix, const Vec4& dst, int threadIndex)
+void PhysicsPlayerController::updateGroundPlane(Mat4& matrix, const Mat4& castMatrix, const Vec4& dst, int threadIndex)
 {
 	NewtonWorld* world = m_world->getNewtonWorld();
 
@@ -451,20 +396,17 @@ void PhysicsPlayerController::updateGroundPlane(
 
 		Vec4 castMatrixTransl = castMatrix.getTranslationPart().xyz0();
 
-		Vec4 supportPoint(castMatrixTransl
-			+ (dst - castMatrixTransl) * filter.m_intersectParam);
+		Vec4 supportPoint(castMatrixTransl + (dst - castMatrixTransl) * filter.m_intersectParam);
 
 		m_groundPlane = filter.m_hitNormal;
 		m_groundPlane.w() = -supportPoint.dot(filter.m_hitNormal);
 
-		NewtonBodyGetPointVelocity(
-			filter.m_hitBody, &supportPoint[0], &m_groundVelocity[0]);
+		NewtonBodyGetPointVelocity(filter.m_hitBody, &supportPoint[0], &m_groundVelocity[0]);
 
 		matrix.setTranslationPart(supportPoint.xyz1());
 	}
 }
 
-//==============================================================================
 void PhysicsPlayerController::postUpdate(F32 dt, int threadIndex)
 {
 	Mat4 matrix;
@@ -499,11 +441,9 @@ void PhysicsPlayerController::postUpdate(F32 dt, int threadIndex)
 	Vec4 updir(matrix.getRotationPart() * m_upDir.xyz(), 0.0);
 
 	Vec4 scale(0.0);
-	NewtonCollisionGetScale(
-		m_upperBodyShape, &scale.x(), &scale.y(), &scale.z());
+	NewtonCollisionGetScale(m_upperBodyShape, &scale.x(), &scale.y(), &scale.z());
 	F32 radio = (m_outerRadius + m_restrainingDistance) * 4.0;
-	NewtonCollisionSetScale(
-		m_upperBodyShape, m_height - m_stepHeight, radio, radio);
+	NewtonCollisionSetScale(m_upperBodyShape, m_height - m_stepHeight, radio, radio);
 
 	NewtonWorldConvexCastReturnInfo upConstraint;
 	memset(&upConstraint, 0, sizeof(upConstraint));
@@ -512,8 +452,7 @@ void PhysicsPlayerController::postUpdate(F32 dt, int threadIndex)
 	upConstraint.m_normal[2] = m_upDir.z();
 	upConstraint.m_normal[3] = m_upDir.w();
 
-	for(U j = 0; (j < MAX_INTERGRATION_STEPS) && (normalizedTimeLeft > 1.0e-5f);
-		++j)
+	for(U j = 0; (j < MAX_INTERGRATION_STEPS) && (normalizedTimeLeft > 1.0e-5f); ++j)
 	{
 		if((veloc.getLengthSquared()) < 1.0e-6)
 		{
@@ -537,13 +476,11 @@ void PhysicsPlayerController::postUpdate(F32 dt, int threadIndex)
 
 		if(contactCount > 0)
 		{
-			matrix.setTranslationPart(
-				matrix.getTranslationPart() + veloc * (timetoImpact * dt));
+			matrix.setTranslationPart(matrix.getTranslationPart() + veloc * (timetoImpact * dt));
 
 			if(timetoImpact > 0.0)
 			{
-				Vec4 tmp = matrix.getTranslationPart()
-					- veloc * (CONTACT_SKIN_THICKNESS / veloc.getLength());
+				Vec4 tmp = matrix.getTranslationPart() - veloc * (CONTACT_SKIN_THICKNESS / veloc.getLength());
 				matrix.setTranslationPart(tmp.xyz1());
 			}
 
@@ -581,8 +518,7 @@ void PhysicsPlayerController::postUpdate(F32 dt, int threadIndex)
 
 				speed[count] = 0.0;
 				bounceNormal[count] = Vec4(upConstraint.m_normal);
-				bounceSpeed[count] =
-					calculateContactKinematics(veloc, &upConstraint);
+				bounceSpeed[count] = calculateContactKinematics(veloc, &upConstraint);
 				++count;
 			}
 
@@ -590,8 +526,7 @@ void PhysicsPlayerController::postUpdate(F32 dt, int threadIndex)
 			{
 				speed[count] = 0.0;
 				bounceNormal[count] = Vec4(info[i].m_normal);
-				bounceSpeed[count] =
-					calculateContactKinematics(veloc, &info[i]);
+				bounceSpeed[count] = calculateContactKinematics(veloc, &info[i]);
 				++count;
 			}
 
@@ -599,15 +534,13 @@ void PhysicsPlayerController::postUpdate(F32 dt, int threadIndex)
 			{
 				speed[count] = 0.0;
 				bounceNormal[count] = Vec4(prevInfo[i].m_normal);
-				bounceSpeed[count] =
-					calculateContactKinematics(veloc, &prevInfo[i]);
+				bounceSpeed[count] = calculateContactKinematics(veloc, &prevInfo[i]);
 				++count;
 			}
 
 			F32 residual = 10.0;
 			Vec4 auxBounceVeloc(0.0);
-			for(U i = 0; (i < MAX_SOLVER_ITERATIONS) && (residual > 1.0e-3);
-				++i)
+			for(U i = 0; (i < MAX_SOLVER_ITERATIONS) && (residual > 1.0e-3); ++i)
 			{
 				residual = 0.0;
 				for(U k = 0; k < count; ++k)
@@ -643,8 +576,7 @@ void PhysicsPlayerController::postUpdate(F32 dt, int threadIndex)
 			F32 velocMag2 = velocStep.getLengthSquared();
 			if(velocMag2 < 1.0e-6)
 			{
-				F32 advanceTime =
-					min(descreteTimeStep, normalizedTimeLeft * dt);
+				F32 advanceTime = min(descreteTimeStep, normalizedTimeLeft * dt);
 
 				Vec4 tmp = matrix.getTranslationPart() + veloc * advanceTime;
 				matrix.setTranslationPart(tmp.xyz1());
@@ -653,9 +585,7 @@ void PhysicsPlayerController::postUpdate(F32 dt, int threadIndex)
 			}
 
 			prevContactCount = contactCount;
-			memcpy(&prevInfo[0],
-				&info[0],
-				prevContactCount * sizeof(NewtonWorldConvexCastReturnInfo));
+			memcpy(&prevInfo[0], &info[0], prevContactCount * sizeof(NewtonWorldConvexCastReturnInfo));
 		}
 		else
 		{
@@ -679,8 +609,7 @@ void PhysicsPlayerController::postUpdate(F32 dt, int threadIndex)
 	else
 	{
 		step = absolute(updir.dot(veloc * dt));
-		F32 castDist =
-			(m_groundPlane.getLengthSquared() > 0.0) ? m_stepHeight : step;
+		F32 castDist = (m_groundPlane.getLengthSquared() > 0.0) ? m_stepHeight : step;
 		Vec4 tmp = matrix.getTranslationPart() - updir * (castDist * 2.0);
 		Vec4 dst = tmp.xyz0();
 
@@ -692,15 +621,12 @@ void PhysicsPlayerController::postUpdate(F32 dt, int threadIndex)
 	NewtonBodySetMatrix(m_body, &toNewton(matrix)[0]);
 }
 
-//==============================================================================
-void PhysicsPlayerController::postUpdateKernelCallback(
-	NewtonWorld* const world, void* const context, int threadIndex)
+void PhysicsPlayerController::postUpdateKernelCallback(NewtonWorld* const world, void* const context, int threadIndex)
 {
 	PhysicsPlayerController* x = static_cast<PhysicsPlayerController*>(context);
 	x->postUpdate(x->m_world->getDeltaTime(), threadIndex);
 }
 
-//==============================================================================
 void PhysicsPlayerController::moveToPosition(const Vec4& position)
 {
 	Mat4 trf;
@@ -710,10 +636,8 @@ void PhysicsPlayerController::moveToPosition(const Vec4& position)
 	NewtonBodySetMatrix(m_body, &trf[0]);
 }
 
-//==============================================================================
-void PhysicsPlayerController::onTransformCallback(const NewtonBody* const body,
-	const dFloat* const matrix,
-	int /*threadIndex*/)
+void PhysicsPlayerController::onTransformCallback(
+	const NewtonBody* const body, const dFloat* const matrix, int /*threadIndex*/)
 {
 	ANKI_ASSERT(body);
 	ANKI_ASSERT(matrix);
@@ -727,7 +651,6 @@ void PhysicsPlayerController::onTransformCallback(const NewtonBody* const body,
 	self->onTransform(trf);
 }
 
-//==============================================================================
 void PhysicsPlayerController::onTransform(Mat4 trf)
 {
 	if(trf != m_prevTrf)

@@ -20,37 +20,37 @@ class Plane : public CollisionShape
 public:
 	using Base = CollisionShape;
 
-	static Bool classof(const CollisionShape& c)
-	{
-		return c.getType() == Type::PLANE;
-	}
-
 	/// Default constructor
 	Plane()
-		: CollisionShape(Type::PLANE)
+		: CollisionShape(CollisionShapeType::PLANE)
 	{
 	}
 
 	/// Copy constructor
 	Plane(const Plane& b)
-		: CollisionShape(Type::PLANE)
+		: CollisionShape(CollisionShapeType::PLANE)
 	{
 		operator=(b);
 	}
 
 	/// Constructor
-	Plane(const Vec4& normal, F32 offset);
+	Plane(const Vec4& normal, F32 offset)
+		: CollisionShape(CollisionShapeType::PLANE)
+		, m_normal(normal)
+		, m_offset(offset)
+	{
+	}
 
 	/// @see setFrom3Points
 	Plane(const Vec4& p0, const Vec4& p1, const Vec4& p2)
-		: CollisionShape(Type::PLANE)
+		: CollisionShape(CollisionShapeType::PLANE)
 	{
 		setFrom3Points(p0, p1, p2);
 	}
 
 	/// @see setFromPlaneEquation
 	Plane(F32 a, F32 b, F32 c, F32 d)
-		: CollisionShape(Type::PLANE)
+		: CollisionShape(CollisionShapeType::PLANE)
 	{
 		setFromPlaneEquation(a, b, c, d);
 	}
@@ -115,9 +115,8 @@ public:
 	/// Return the transformed
 	Plane getTransformed(const Transform& trf) const;
 
-	/// It gives the distance between a point and a plane. It returns >0 if the
-	/// point lies in front of the plane, <0 if it's behind and ==0 when it's
-	/// co-planar.
+	/// It gives the distance between a point and a plane. It returns >0 if the point lies in front of the plane, <0
+	/// if it's behind and ==0 when it's co-planar.
 	F32 test(const Vec4& point) const
 	{
 		ANKI_ASSERT(isZero<F32>(point.w()));
@@ -130,8 +129,8 @@ public:
 		return absolute(test(point));
 	}
 
-	/// Returns the perpedicular point of a given point in this plane.
-	/// Plane's normal and returned-point are perpedicular
+	/// Returns the perpedicular point of a given point in this plane. Plane's normal and returned-point are
+	/// perpedicular
 	Vec4 getClosestPoint(const Vec4& point) const
 	{
 		return point - m_normal * test(point);
@@ -140,10 +139,9 @@ public:
 	/// Find intersection with a vector.
 	Bool intersectVector(const Vec4& p, Vec4& intersection) const;
 
-	/// Find the intersection point of this plane and a ray. If the ray hits
-	/// the back of the plane then there is no intersection.
-	Bool intersectRay(
-		const Vec4& rayOrigin, const Vec4& rayDir, Vec4& intersection) const;
+	/// Find the intersection point of this plane and a ray. If the ray hits the back of the plane then there is no
+	/// intersection.
+	Bool intersectRay(const Vec4& rayOrigin, const Vec4& rayDir, Vec4& intersection) const;
 
 	/// Test a CollisionShape
 	template<typename T>

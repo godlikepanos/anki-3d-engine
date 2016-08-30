@@ -32,24 +32,20 @@
 namespace anki
 {
 
-//==============================================================================
 #if ANKI_OS == ANKI_OS_ANDROID
 /// The one and only android hack
 android_app* gAndroidApp = nullptr;
 #endif
 
-//==============================================================================
 App::App()
 {
 }
 
-//==============================================================================
 App::~App()
 {
 	cleanup();
 }
 
-//==============================================================================
 void App::cleanup()
 {
 	if(m_script)
@@ -126,10 +122,7 @@ void App::cleanup()
 #endif
 }
 
-//==============================================================================
-Error App::init(const ConfigSet& config,
-	AllocAlignedCallback allocCb,
-	void* allocCbUserData)
+Error App::init(const ConfigSet& config, AllocAlignedCallback allocCb, void* allocCbUserData)
 {
 	Error err = initInternal(config, allocCb, allocCbUserData);
 	if(err)
@@ -141,10 +134,7 @@ Error App::init(const ConfigSet& config,
 	return err;
 }
 
-//==============================================================================
-Error App::initInternal(const ConfigSet& config_,
-	AllocAlignedCallback allocCb,
-	void* allocCbUserData)
+Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, void* allocCbUserData)
 {
 	m_allocCb = allocCb;
 	m_allocCbData = allocCbUserData;
@@ -183,8 +173,7 @@ Error App::initInternal(const ConfigSet& config_,
 #endif
 
 #if ANKI_ENABLE_TRACE
-	ANKI_CHECK(TraceManagerSingleton::get().create(
-		m_heapAlloc, m_settingsDir.toCString()));
+	ANKI_CHECK(TraceManagerSingleton::get().create(m_heapAlloc, m_settingsDir.toCString()));
 #endif
 
 	//
@@ -195,8 +184,7 @@ Error App::initInternal(const ConfigSet& config_,
 	nwinit.m_height = config.getNumber("height");
 	nwinit.m_depthBits = 0;
 	nwinit.m_stencilBits = 0;
-	nwinit.m_fullscreenDesktopRez =
-		config.getNumber("fullscreenDesktopResolution");
+	nwinit.m_fullscreenDesktopRez = config.getNumber("fullscreenDesktopResolution");
 	m_window = m_heapAlloc.newInstance<NativeWindow>();
 
 	ANKI_CHECK(m_window->init(nwinit, m_heapAlloc));
@@ -212,8 +200,7 @@ Error App::initInternal(const ConfigSet& config_,
 	// ThreadPool
 	//
 	m_threadpool = m_heapAlloc.newInstance<ThreadPool>(getCpuCoresCount());
-	m_threadHive =
-		m_heapAlloc.newInstance<ThreadHive>(getCpuCoresCount(), m_heapAlloc);
+	m_threadHive = m_heapAlloc.newInstance<ThreadHive>(getCpuCoresCount(), m_heapAlloc);
 
 	//
 	// Graphics API
@@ -268,30 +255,18 @@ Error App::initInternal(const ConfigSet& config_,
 
 	m_renderer = m_heapAlloc.newInstance<MainRenderer>();
 
-	ANKI_CHECK(m_renderer->create(m_threadpool,
-		m_resources,
-		m_gr,
-		m_allocCb,
-		m_allocCbData,
-		config,
-		&m_globalTimestamp));
+	ANKI_CHECK(
+		m_renderer->create(m_threadpool, m_resources, m_gr, m_allocCb, m_allocCbData, config, &m_globalTimestamp));
 
-	m_resources->_setShadersPrependedSource(
-		m_renderer->getMaterialShaderSource().toCString());
+	m_resources->_setShadersPrependedSource(m_renderer->getMaterialShaderSource().toCString());
 
 	//
 	// Scene
 	//
 	m_scene = m_heapAlloc.newInstance<SceneGraph>();
 
-	ANKI_CHECK(m_scene->init(m_allocCb,
-		m_allocCbData,
-		m_threadpool,
-		m_threadHive,
-		m_resources,
-		m_input,
-		&m_globalTimestamp,
-		config));
+	ANKI_CHECK(m_scene->init(
+		m_allocCb, m_allocCbData, m_threadpool, m_threadHive, m_resources, m_input, &m_globalTimestamp, config));
 
 	//
 	// Script
@@ -304,7 +279,6 @@ Error App::initInternal(const ConfigSet& config_,
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error App::initDirs()
 {
 #if ANKI_OS != ANKI_OS_ANDROID
@@ -353,7 +327,6 @@ Error App::initDirs()
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error App::mainLoop()
 {
 	ANKI_LOGI("Entering main loop");
@@ -390,10 +363,8 @@ Error App::mainLoop()
 		m_gr->swapBuffers();
 
 		// Update the trace info with some async loader stats
-		U64 asyncTaskCount =
-			m_resources->getAsyncLoader().getCompletedTaskCount();
-		ANKI_TRACE_INC_COUNTER(RESOURCE_ASYNC_TASKS,
-			asyncTaskCount - m_resourceCompletedAsyncTaskCount);
+		U64 asyncTaskCount = m_resources->getAsyncLoader().getCompletedTaskCount();
+		ANKI_TRACE_INC_COUNTER(RESOURCE_ASYNC_TASKS, asyncTaskCount - m_resourceCompletedAsyncTaskCount);
 		m_resourceCompletedAsyncTaskCount = asyncTaskCount;
 
 		// Now resume the loader

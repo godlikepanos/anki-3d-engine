@@ -10,7 +10,6 @@
 namespace anki
 {
 
-//==============================================================================
 void CompatibleRenderPassCreator::destroy()
 {
 	for(VkRenderPass pass : m_hashmap)
@@ -22,9 +21,7 @@ void CompatibleRenderPassCreator::destroy()
 	m_hashmap.destroy(m_manager->getAllocator());
 }
 
-//==============================================================================
-VkRenderPass CompatibleRenderPassCreator::getOrCreateCompatibleRenderPass(
-	const PipelineInitInfo& init)
+VkRenderPass CompatibleRenderPassCreator::getOrCreateCompatibleRenderPass(const PipelineInitInfo& init)
 {
 	VkRenderPass out = VK_NULL_HANDLE;
 
@@ -58,15 +55,12 @@ VkRenderPass CompatibleRenderPassCreator::getOrCreateCompatibleRenderPass(
 	return out;
 }
 
-//==============================================================================
-VkRenderPass CompatibleRenderPassCreator::createNewRenderPass(
-	const PipelineInitInfo& init)
+VkRenderPass CompatibleRenderPassCreator::createNewRenderPass(const PipelineInitInfo& init)
 {
 	VkRenderPassCreateInfo ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 
-	Array<VkAttachmentDescription, MAX_COLOR_ATTACHMENTS + 1>
-		attachmentDescriptions;
+	Array<VkAttachmentDescription, MAX_COLOR_ATTACHMENTS + 1> attachmentDescriptions;
 	memset(&attachmentDescriptions[0], 0, sizeof(attachmentDescriptions));
 
 	Array<VkAttachmentReference, MAX_COLOR_ATTACHMENTS> references;
@@ -78,16 +72,14 @@ VkRenderPass CompatibleRenderPassCreator::createNewRenderPass(
 
 		// Workaround unsupported formats
 		VkFormat fmt;
-		if(init.m_color.m_attachments[i].m_format.m_components
-				== ComponentFormat::R8G8B8
+		if(init.m_color.m_attachments[i].m_format.m_components == ComponentFormat::R8G8B8
 			&& !m_manager->getR8g8b8ImagesSupported())
 		{
 			PixelFormat newFmt = init.m_color.m_attachments[i].m_format;
 			newFmt.m_components = ComponentFormat::R8G8B8A8;
 			fmt = convertFormat(newFmt);
 		}
-		else if(init.m_color.m_attachments[i].m_format.m_components
-			== ComponentFormat::DEFAULT_FRAMEBUFFER)
+		else if(init.m_color.m_attachments[i].m_format.m_components == ComponentFormat::DEFAULT_FRAMEBUFFER)
 		{
 			// Default FB
 			fmt = m_manager->getDefaultFramebufferSurfaceFormat();
@@ -113,13 +105,11 @@ VkRenderPass CompatibleRenderPassCreator::createNewRenderPass(
 
 	ci.attachmentCount = init.m_color.m_attachmentCount;
 
-	Bool hasDepthStencil =
-		init.m_depthStencil.m_format.m_components != ComponentFormat::NONE;
+	Bool hasDepthStencil = init.m_depthStencil.m_format.m_components != ComponentFormat::NONE;
 	VkAttachmentReference dsReference = {0, VK_IMAGE_LAYOUT_GENERAL};
 	if(hasDepthStencil)
 	{
-		VkAttachmentDescription& desc =
-			attachmentDescriptions[ci.attachmentCount];
+		VkAttachmentDescription& desc = attachmentDescriptions[ci.attachmentCount];
 		desc.format = convertFormat(init.m_depthStencil.m_format);
 		desc.samples = VK_SAMPLE_COUNT_1_BIT;
 		desc.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -138,8 +128,7 @@ VkRenderPass CompatibleRenderPassCreator::createNewRenderPass(
 	VkSubpassDescription desc = {};
 	desc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 	desc.colorAttachmentCount = init.m_color.m_attachmentCount;
-	desc.pColorAttachments =
-		(init.m_color.m_attachmentCount) ? &references[0] : nullptr;
+	desc.pColorAttachments = (init.m_color.m_attachmentCount) ? &references[0] : nullptr;
 	desc.pDepthStencilAttachment = (hasDepthStencil) ? &dsReference : nullptr;
 
 	ANKI_ASSERT(ci.attachmentCount);
@@ -148,8 +137,7 @@ VkRenderPass CompatibleRenderPassCreator::createNewRenderPass(
 	ci.pSubpasses = &desc;
 
 	VkRenderPass rpass;
-	ANKI_VK_CHECKF(
-		vkCreateRenderPass(m_manager->getDevice(), &ci, nullptr, &rpass));
+	ANKI_VK_CHECKF(vkCreateRenderPass(m_manager->getDevice(), &ci, nullptr, &rpass));
 
 	return rpass;
 }

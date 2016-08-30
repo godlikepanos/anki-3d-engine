@@ -41,9 +41,7 @@ public:
 	App();
 	virtual ~App();
 
-	ANKI_USE_RESULT Error init(const ConfigSet& config,
-		AllocAlignedCallback allocCb,
-		void* allocCbUserData);
+	ANKI_USE_RESULT Error init(const ConfigSet& config, AllocAlignedCallback allocCb, void* allocCbUserData);
 
 	F32 getTimerTick() const
 	{
@@ -166,9 +164,7 @@ private:
 	F32 m_timerTick;
 	U64 m_resourceCompletedAsyncTaskCount = 0;
 
-	ANKI_USE_RESULT Error initInternal(const ConfigSet& config,
-		AllocAlignedCallback allocCb,
-		void* allocCbUserData);
+	ANKI_USE_RESULT Error initInternal(const ConfigSet& config, AllocAlignedCallback allocCb, void* allocCbUserData);
 
 	ANKI_USE_RESULT Error initDirs();
 	void cleanup();

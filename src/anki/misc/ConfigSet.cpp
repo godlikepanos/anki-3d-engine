@@ -11,13 +11,11 @@
 namespace anki
 {
 
-//==============================================================================
 ConfigSet::ConfigSet()
 {
 	m_alloc = HeapAllocator<U8>(allocAligned, nullptr);
 }
 
-//==============================================================================
 ConfigSet::~ConfigSet()
 {
 	for(Option& o : m_options)
@@ -29,7 +27,6 @@ ConfigSet::~ConfigSet()
 	m_options.destroy(m_alloc);
 }
 
-//==============================================================================
 ConfigSet& ConfigSet::operator=(const ConfigSet& b)
 {
 	m_alloc = b.m_alloc; // Not a copy but we are fine
@@ -51,7 +48,6 @@ ConfigSet& ConfigSet::operator=(const ConfigSet& b)
 	return *this;
 }
 
-//==============================================================================
 ConfigSet::Option* ConfigSet::tryFind(const CString& name)
 {
 	List<Option>::Iterator it = m_options.getBegin();
@@ -66,7 +62,6 @@ ConfigSet::Option* ConfigSet::tryFind(const CString& name)
 	return nullptr;
 }
 
-//==============================================================================
 const ConfigSet::Option* ConfigSet::tryFind(const CString& name) const
 {
 	List<Option>::ConstIterator it = m_options.getBegin();
@@ -81,7 +76,6 @@ const ConfigSet::Option* ConfigSet::tryFind(const CString& name) const
 	return nullptr;
 }
 
-//==============================================================================
 void ConfigSet::newOption(const CString& name, const CString& value)
 {
 	ANKI_ASSERT(!tryFind(name));
@@ -94,7 +88,6 @@ void ConfigSet::newOption(const CString& name, const CString& value)
 	m_options.emplaceBack(m_alloc, std::move(o));
 }
 
-//==============================================================================
 void ConfigSet::newOption(const CString& name, F64 value)
 {
 	ANKI_ASSERT(!tryFind(name));
@@ -107,7 +100,6 @@ void ConfigSet::newOption(const CString& name, F64 value)
 	m_options.emplaceBack(m_alloc, std::move(o));
 }
 
-//==============================================================================
 void ConfigSet::set(const CString& name, F64 value)
 {
 	Option* o = tryFind(name);
@@ -116,7 +108,6 @@ void ConfigSet::set(const CString& name, F64 value)
 	o->m_fVal = value;
 }
 
-//==============================================================================
 void ConfigSet::set(const CString& name, const CString& value)
 {
 	Option* o = tryFind(name);
@@ -126,7 +117,6 @@ void ConfigSet::set(const CString& name, const CString& value)
 	o->m_strVal.create(m_alloc, value);
 }
 
-//==============================================================================
 F64 ConfigSet::getNumber(const CString& name) const
 {
 	const Option* o = tryFind(name);
@@ -135,7 +125,6 @@ F64 ConfigSet::getNumber(const CString& name) const
 	return o->m_fVal;
 }
 
-//==============================================================================
 CString ConfigSet::getString(const CString& name) const
 {
 	const Option* o = tryFind(name);
@@ -144,7 +133,6 @@ CString ConfigSet::getString(const CString& name) const
 	return o->m_strVal.toCString();
 }
 
-//==============================================================================
 Error ConfigSet::loadFromFile(CString filename)
 {
 	ANKI_LOGI("Loading config file %s", &filename[0]);
@@ -157,8 +145,7 @@ Error ConfigSet::loadFromFile(CString filename)
 	for(Option& option : m_options)
 	{
 		XmlElement el;
-		ANKI_CHECK(
-			rootel.getChildElementOptional(option.m_name.toCString(), el));
+		ANKI_CHECK(rootel.getChildElementOptional(option.m_name.toCString(), el));
 
 		if(el)
 		{
@@ -176,21 +163,19 @@ Error ConfigSet::loadFromFile(CString filename)
 		}
 		else
 		{
-			ANKI_LOGW("Missing option for \"%s\". Will use the default value",
-				&option.m_name[0]);
+			ANKI_LOGW("Missing option for \"%s\". Will use the default value", &option.m_name[0]);
 		}
 	}
 
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error ConfigSet::saveToFile(CString filename) const
 {
 	ANKI_LOGI("Saving config file %s", &filename[0]);
 
 	File file;
-	ANKI_CHECK(file.open(filename, File::OpenFlag::WRITE));
+	ANKI_CHECK(file.open(filename, FileOpenFlag::WRITE));
 
 	ANKI_CHECK(file.writeText("%s\n<config>\n", &XmlDocument::XML_HEADER[0]));
 
@@ -202,25 +187,16 @@ Error ConfigSet::saveToFile(CString filename) const
 			// as floats in the file
 			if(option.m_fVal == round(option.m_fVal) && option.m_fVal >= 0.0)
 			{
-				ANKI_CHECK(file.writeText("\t<%s>%u</%s>\n",
-					&option.m_name[0],
-					U(option.m_fVal),
-					&option.m_name[0]));
+				ANKI_CHECK(file.writeText("\t<%s>%u</%s>\n", &option.m_name[0], U(option.m_fVal), &option.m_name[0]));
 			}
 			else
 			{
-				ANKI_CHECK(file.writeText("\t<%s>%f</%s>\n",
-					&option.m_name[0],
-					option.m_fVal,
-					&option.m_name[0]));
+				ANKI_CHECK(file.writeText("\t<%s>%f</%s>\n", &option.m_name[0], option.m_fVal, &option.m_name[0]));
 			}
 		}
 		else
 		{
-			ANKI_CHECK(file.writeText("\t<%s>%s</%s>\n",
-				&option.m_name[0],
-				&option.m_strVal[0],
-				&option.m_name[0]));
+			ANKI_CHECK(file.writeText("\t<%s>%s</%s>\n", &option.m_name[0], &option.m_strVal[0], &option.m_name[0]));
 		}
 	}
 
@@ -228,9 +204,7 @@ Error ConfigSet::saveToFile(CString filename) const
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
-Error ConfigSet::setFromCommandLineArguments(
-	U cmdLineArgsCount, char* cmdLineArgs[])
+Error ConfigSet::setFromCommandLineArguments(U cmdLineArgsCount, char* cmdLineArgs[])
 {
 	for(U i = 0; i < cmdLineArgsCount; ++i)
 	{

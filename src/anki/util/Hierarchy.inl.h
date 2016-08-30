@@ -6,7 +6,6 @@
 namespace anki
 {
 
-//==============================================================================
 template<typename T>
 template<typename TAllocator>
 void Hierarchy<T>::destroy(TAllocator alloc)
@@ -29,7 +28,6 @@ void Hierarchy<T>::destroy(TAllocator alloc)
 	m_children.destroy(alloc);
 }
 
-//==============================================================================
 template<typename T>
 template<typename TAllocator>
 void Hierarchy<T>::addChild(TAllocator alloc, Value* child)
@@ -37,16 +35,13 @@ void Hierarchy<T>::addChild(TAllocator alloc, Value* child)
 	ANKI_ASSERT(child != nullptr && "Null arg");
 	ANKI_ASSERT(child != getSelf() && "Cannot put itself");
 	ANKI_ASSERT(child->m_parent == nullptr && "Child already has parent");
-	ANKI_ASSERT(child->findChild(getSelf()) == child->m_children.getEnd()
-		&& "Cyclic add");
-	ANKI_ASSERT(
-		findChild(child) == m_children.getEnd() && "Already has that child");
+	ANKI_ASSERT(child->findChild(getSelf()) == child->m_children.getEnd() && "Cyclic add");
+	ANKI_ASSERT(findChild(child) == m_children.getEnd() && "Already has that child");
 
 	child->m_parent = getSelf();
 	m_children.emplaceBack(alloc, child);
 }
 
-//==============================================================================
 template<typename T>
 template<typename TAllocator>
 void Hierarchy<T>::removeChild(TAllocator alloc, Value* child)
@@ -62,7 +57,6 @@ void Hierarchy<T>::removeChild(TAllocator alloc, Value* child)
 	child->m_parent = nullptr;
 }
 
-//==============================================================================
 template<typename T>
 template<typename VisitorFunc>
 Error Hierarchy<T>::visitChildren(VisitorFunc vis)
@@ -82,7 +76,6 @@ Error Hierarchy<T>::visitChildren(VisitorFunc vis)
 	return err;
 }
 
-//==============================================================================
 template<typename T>
 template<typename VisitorFunc>
 Error Hierarchy<T>::visitThisAndChildren(VisitorFunc vis)
@@ -97,7 +90,6 @@ Error Hierarchy<T>::visitThisAndChildren(VisitorFunc vis)
 	return err;
 }
 
-//==============================================================================
 template<typename T>
 template<typename VisitorFunc>
 Error Hierarchy<T>::visitTree(VisitorFunc vis)
@@ -112,7 +104,6 @@ Error Hierarchy<T>::visitTree(VisitorFunc vis)
 	return root->visitThisAndChildren(vis);
 }
 
-//==============================================================================
 template<typename T>
 template<typename VisitorFunc>
 Error Hierarchy<T>::visitChildrenMaxDepth(I maxDepth, VisitorFunc vis)

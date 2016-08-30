@@ -10,7 +10,6 @@
 namespace anki
 {
 
-//==============================================================================
 namespace
 {
 
@@ -30,21 +29,18 @@ DummyInitTimer init;
 
 } // end namespace anonymous
 
-//==============================================================================
 static U32 getMs()
 {
 	DWORD now = GetTickCount();
 	return now - init.m_start;
 }
 
-//==============================================================================
 void HighRezTimer::sleep(Scalar sec)
 {
 	U32 ms = static_cast<U32>(sec * 1000.0);
 	Sleep(ms);
 }
 
-//==============================================================================
 HighRezTimer::Scalar HighRezTimer::getCurrentTime()
 {
 	// Scalar(ticks) / 1000.0

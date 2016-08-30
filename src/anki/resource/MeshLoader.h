@@ -15,8 +15,7 @@ namespace anki
 /// @addtogroup resource
 /// @{
 
-/// Mesh data. This class loads the mesh file and the Mesh class loads it to
-/// the GPU.
+/// Mesh data. This class loads the mesh file and the Mesh class loads it to the CPU.
 class MeshLoader
 {
 public:
@@ -87,8 +86,7 @@ public:
 
 		U32 m_totalIndicesCount;
 		U32 m_totalVerticesCount;
-		/// Number of UV sets. Eg one for normal diffuse and another for
-		/// lightmaps.
+		/// Number of UV sets. Eg one for normal diffuse and another for lightmaps.
 		U32 m_uvsChannelCount;
 		U32 m_subMeshCount;
 
@@ -155,8 +153,7 @@ public:
 	Bool hasBoneInfo() const
 	{
 		ANKI_ASSERT(isLoaded());
-		return m_header.m_boneWeightsFormat.m_components
-			!= ComponentFormat::NONE;
+		return m_header.m_boneWeightsFormat.m_components != ComponentFormat::NONE;
 	}
 
 private:
@@ -177,8 +174,7 @@ private:
 		return m_verts.getSize() > 0;
 	}
 
-	static ANKI_USE_RESULT Error checkFormat(
-		const Format& fmt, const CString& attrib, Bool cannotBeEmpty);
+	static ANKI_USE_RESULT Error checkFormat(const Format& fmt, const CString& attrib, Bool cannotBeEmpty);
 };
 /// @}
 

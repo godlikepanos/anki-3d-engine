@@ -14,7 +14,6 @@
 namespace anki
 {
 
-//==============================================================================
 Error Upsample::init(const ConfigSet& config)
 {
 	GrManager& gr = getGrManager();
@@ -25,15 +24,13 @@ Error Upsample::init(const ConfigSet& config)
 	sinit.m_repeat = false;
 
 	rcInit.m_textures[0].m_texture = m_r->getMs().getDepthRt();
-	rcInit.m_textures[0].m_usage = TextureUsageBit::SAMPLED_FRAGMENT
-		| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
+	rcInit.m_textures[0].m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
 
 	sinit.m_minLod = 1.0;
 	sinit.m_mipmapFilter = SamplingFilter::NEAREST;
 	rcInit.m_textures[1].m_texture = m_r->getMs().getDepthRt();
 	rcInit.m_textures[1].m_sampler = gr.newInstance<Sampler>(sinit);
-	rcInit.m_textures[1].m_usage = TextureUsageBit::SAMPLED_FRAGMENT
-		| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
+	rcInit.m_textures[1].m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
 
 	sinit.m_minLod = 0.0;
 	rcInit.m_textures[2].m_texture = m_r->getFs().getRt();
@@ -59,11 +56,11 @@ Error Upsample::init(const ConfigSet& config)
 		m_r->getHeight() / FS_FRACTION,
 		1);
 
-	ANKI_CHECK(getResourceManager().loadResourceToCache(
-		m_frag, "shaders/NearDepthUpscale.frag.glsl", pps.toCString(), "r_"));
+	ANKI_CHECK(
+		getResourceManager().loadResourceToCache(m_frag, "shaders/NearDepthUpscale.frag.glsl", pps.toCString(), "r_"));
 
-	ANKI_CHECK(getResourceManager().loadResourceToCache(
-		m_vert, "shaders/NearDepthUpscale.vert.glsl", pps.toCString(), "r_"));
+	ANKI_CHECK(
+		getResourceManager().loadResourceToCache(m_vert, "shaders/NearDepthUpscale.vert.glsl", pps.toCString(), "r_"));
 
 	// Ppline
 	PipelineInitInfo ppinit;
@@ -84,28 +81,22 @@ Error Upsample::init(const ConfigSet& config)
 	FramebufferInitInfo fbInit;
 	fbInit.m_colorAttachmentCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_r->getIs().getRt();
-	fbInit.m_colorAttachments[0].m_loadOperation =
-		AttachmentLoadOperation::LOAD;
-	fbInit.m_colorAttachments[0].m_usageInsideRenderPass =
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
+	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::LOAD;
+	fbInit.m_colorAttachments[0].m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void Upsample::run(RenderingContext& ctx)
 {
 	CommandBufferPtr cmdb = ctx.m_commandBuffer;
 	TransientMemoryInfo dyn;
 
-	Vec4* linearDepth = static_cast<Vec4*>(
-		getGrManager().allocateFrameTransientMemory(sizeof(Vec4),
-			BufferUsageBit::UNIFORM_ALL,
-			dyn.m_uniformBuffers[0]));
+	Vec4* linearDepth = static_cast<Vec4*>(getGrManager().allocateFrameTransientMemory(
+		sizeof(Vec4), BufferUsageBit::UNIFORM_ALL, dyn.m_uniformBuffers[0]));
 	const Frustum& fr = ctx.m_frustumComponent->getFrustum();
-	computeLinearizeDepthOptimal(
-		fr.getNear(), fr.getFar(), linearDepth->x(), linearDepth->y());
+	computeLinearizeDepthOptimal(fr.getNear(), fr.getFar(), linearDepth->x(), linearDepth->y());
 
 	cmdb->beginRenderPass(m_fb);
 	cmdb->bindPipeline(m_ppline);

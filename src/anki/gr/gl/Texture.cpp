@@ -11,18 +11,15 @@
 namespace anki
 {
 
-//==============================================================================
 Texture::Texture(GrManager* manager, U64 hash)
 	: GrObject(manager, CLASS_TYPE, hash)
 {
 }
 
-//==============================================================================
 Texture::~Texture()
 {
 }
 
-//==============================================================================
 class CreateTextureCommand final : public GlCommand
 {
 public:
@@ -41,8 +38,7 @@ public:
 
 		impl.init(m_init);
 
-		GlObject::State oldState =
-			impl.setStateAtomically(GlObject::State::CREATED);
+		GlObject::State oldState = impl.setStateAtomically(GlObject::State::CREATED);
 		ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
 		(void)oldState;
 
@@ -59,11 +55,9 @@ void Texture::init(const TextureInitInfo& init)
 	// to serialize
 	m_impl->preInit(init);
 
-	CommandBufferPtr cmdb =
-		getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
+	CommandBufferPtr cmdb = getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
 
-	cmdb->getImplementation().pushBackNewCommand<CreateTextureCommand>(
-		this, init);
+	cmdb->getImplementation().pushBackNewCommand<CreateTextureCommand>(this, init);
 	cmdb->flush();
 }
 

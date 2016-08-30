@@ -11,10 +11,6 @@
 namespace anki
 {
 
-//==============================================================================
-// File classes                                                                =
-//==============================================================================
-
 /// C resource file
 class CResourceFile final : public ResourceFile
 {
@@ -31,8 +27,7 @@ public:
 		return m_file.read(buff, size);
 	}
 
-	ANKI_USE_RESULT Error readAllText(
-		GenericMemoryPoolAllocator<U8> alloc, String& out) override
+	ANKI_USE_RESULT Error readAllText(GenericMemoryPoolAllocator<U8> alloc, String& out) override
 	{
 		return m_file.readAllText(alloc, out);
 	}
@@ -81,8 +76,7 @@ public:
 		}
 	}
 
-	ANKI_USE_RESULT Error open(
-		const CString& archive, const CString& archivedFname)
+	ANKI_USE_RESULT Error open(const CString& archive, const CString& archivedFname)
 	{
 		// Open archive
 		m_archive = unzOpen(&archive[0]);
@@ -110,8 +104,7 @@ public:
 		// Get size just in case
 		unz_file_info zinfo;
 		zinfo.uncompressed_size = 0;
-		unzGetCurrentFileInfo(
-			m_archive, &zinfo, nullptr, 0, nullptr, 0, nullptr, 0);
+		unzGetCurrentFileInfo(m_archive, &zinfo, nullptr, 0, nullptr, 0, nullptr, 0);
 		m_size = zinfo.uncompressed_size;
 		ANKI_ASSERT(m_size != 0);
 
@@ -141,8 +134,7 @@ public:
 		return ErrorCode::NONE;
 	}
 
-	ANKI_USE_RESULT Error readAllText(
-		GenericMemoryPoolAllocator<U8> alloc, String& out) override
+	ANKI_USE_RESULT Error readAllText(GenericMemoryPoolAllocator<U8> alloc, String& out) override
 	{
 		ANKI_ASSERT(m_size);
 		out.create(alloc, '?', m_size);
@@ -194,11 +186,6 @@ public:
 	}
 };
 
-//==============================================================================
-// ResourceFilesystem                                                          =
-//==============================================================================
-
-//==============================================================================
 ResourceFilesystem::~ResourceFilesystem()
 {
 	for(Path& p : m_paths)
@@ -211,7 +198,6 @@ ResourceFilesystem::~ResourceFilesystem()
 	m_cacheDir.destroy(m_alloc);
 }
 
-//==============================================================================
 Error ResourceFilesystem::init(const ConfigSet& config, const CString& cacheDir)
 {
 	StringListAuto paths(m_alloc);
@@ -234,7 +220,6 @@ Error ResourceFilesystem::init(const ConfigSet& config, const CString& cacheDir)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void ResourceFilesystem::addCachePath(const CString& path)
 {
 	Path p;
@@ -244,7 +229,6 @@ void ResourceFilesystem::addCachePath(const CString& path)
 	m_paths.emplaceBack(m_alloc, std::move(p));
 }
 
-//==============================================================================
 Error ResourceFilesystem::addNewPath(const CString& path)
 {
 	static const CString extension(".ankizip");
@@ -279,15 +263,7 @@ Error ResourceFilesystem::addNewPath(const CString& path)
 			Array<char, 1024> filename;
 
 			unz_file_info info;
-			if(unzGetCurrentFileInfo(zfile,
-				   &info,
-				   &filename[0],
-				   filename.getSize(),
-				   nullptr,
-				   0,
-				   nullptr,
-				   0)
-				!= UNZ_OK)
+			if(unzGetCurrentFileInfo(zfile, &info, &filename[0], filename.getSize(), nullptr, 0, nullptr, 0) != UNZ_OK)
 			{
 				unzClose(zfile);
 				ANKI_LOGE("unzGetCurrentFileInfo() failed");
@@ -313,20 +289,18 @@ Error ResourceFilesystem::addNewPath(const CString& path)
 		p.m_path.sprintf(m_alloc, "%s", &path[0]);
 		p.m_isArchive = false;
 
-		ANKI_CHECK(walkDirectoryTree(path,
-			this,
-			[](const CString& fname, void* ud, Bool isDir) -> Error {
-				if(isDir)
-				{
-					return ErrorCode::NONE;
-				}
-
-				ResourceFilesystem* self = static_cast<ResourceFilesystem*>(ud);
-
-				Path& p = self->m_paths.getFront();
-				p.m_files.pushBackSprintf(self->m_alloc, "%s", &fname[0]);
+		ANKI_CHECK(walkDirectoryTree(path, this, [](const CString& fname, void* ud, Bool isDir) -> Error {
+			if(isDir)
+			{
 				return ErrorCode::NONE;
-			}));
+			}
+
+			ResourceFilesystem* self = static_cast<ResourceFilesystem*>(ud);
+
+			Path& p = self->m_paths.getFront();
+			p.m_files.pushBackSprintf(self->m_alloc, "%s", &fname[0]);
+			return ErrorCode::NONE;
+		}));
 
 		if(p.m_files.getSize() < 1)
 		{
@@ -338,9 +312,7 @@ Error ResourceFilesystem::addNewPath(const CString& path)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
-Error ResourceFilesystem::openFile(
-	const ResourceFilename& filename, ResourceFilePtr& filePtr)
+Error ResourceFilesystem::openFile(const ResourceFilename& filename, ResourceFilePtr& filePtr)
 {
 	ResourceFile* rfile = nullptr;
 	Error err = ErrorCode::NONE;
@@ -358,11 +330,10 @@ Error ResourceFilesystem::openFile(
 			{
 				// In cache
 
-				CResourceFile* file =
-					m_alloc.newInstance<CResourceFile>(m_alloc);
+				CResourceFile* file = m_alloc.newInstance<CResourceFile>(m_alloc);
 				rfile = file;
 
-				err = file->m_file.open(&newFname[0], File::OpenFlag::READ);
+				err = file->m_file.open(&newFname[0], FileOpenFlag::READ);
 			}
 		}
 		else
@@ -379,8 +350,7 @@ Error ResourceFilesystem::openFile(
 				// Found
 				if(p.m_isArchive)
 				{
-					ZipResourceFile* file =
-						m_alloc.newInstance<ZipResourceFile>(m_alloc);
+					ZipResourceFile* file = m_alloc.newInstance<ZipResourceFile>(m_alloc);
 					rfile = file;
 
 					err = file->open(p.m_path.toCString(), filename);
@@ -390,11 +360,10 @@ Error ResourceFilesystem::openFile(
 					StringAuto newFname(m_alloc);
 					newFname.sprintf("%s/%s", &p.m_path[0], &filename[0]);
 
-					CResourceFile* file =
-						m_alloc.newInstance<CResourceFile>(m_alloc);
+					CResourceFile* file = m_alloc.newInstance<CResourceFile>(m_alloc);
 					rfile = file;
 
-					err = file->m_file.open(&newFname[0], File::OpenFlag::READ);
+					err = file->m_file.open(&newFname[0], FileOpenFlag::READ);
 
 #if 0
 					printf("Opening asset %s\n", &newFname[0]);

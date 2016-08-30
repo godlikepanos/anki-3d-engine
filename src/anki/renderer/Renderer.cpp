@@ -29,10 +29,6 @@
 namespace anki
 {
 
-//==============================================================================
-// Misc                                                                        =
-//==============================================================================
-
 /// See shader for documentation
 class RendererCommonUniforms
 {
@@ -42,39 +38,27 @@ public:
 	Mat4 m_projectionMatrix;
 };
 
-//==============================================================================
-static Bool threadWillDoWork(const RenderingContext& ctx,
-	VisibilityGroupType typeOfWork,
-	U32 threadId,
-	PtrSize threadCount)
+static Bool threadWillDoWork(
+	const RenderingContext& ctx, VisibilityGroupType typeOfWork, U32 threadId, PtrSize threadCount)
 {
-	const VisibilityTestResults& vis =
-		ctx.m_frustumComponent->getVisibilityTestResults();
+	const VisibilityTestResults& vis = ctx.m_frustumComponent->getVisibilityTestResults();
 
 	U problemSize = vis.getCount(typeOfWork);
 	PtrSize start, end;
-	ThreadPoolTask::choseStartEnd(
-		threadId, threadCount, problemSize, start, end);
+	ThreadPoolTask::choseStartEnd(threadId, threadCount, problemSize, start, end);
 
 	return start != end;
 }
 
-//==============================================================================
-// Renderer                                                                    =
-//==============================================================================
-
-//==============================================================================
 Renderer::Renderer()
 	: m_sceneDrawer(this)
 {
 }
 
-//==============================================================================
 Renderer::~Renderer()
 {
 }
 
-//==============================================================================
 Error Renderer::init(ThreadPool* threadpool,
 	ResourceManager* resources,
 	GrManager* gl,
@@ -101,14 +85,12 @@ Error Renderer::init(ThreadPool* threadpool,
 	return err;
 }
 
-//==============================================================================
 Error Renderer::initInternal(const ConfigSet& config)
 {
 	// Set from the config
 	m_width = config.getNumber("width");
 	m_height = config.getNumber("height");
-	ANKI_ASSERT(
-		isAligned(TILE_SIZE, m_width) && isAligned(TILE_SIZE, m_height));
+	ANKI_ASSERT(isAligned(TILE_SIZE, m_width) && isAligned(TILE_SIZE, m_height));
 	ANKI_LOGI("Initializing offscreen renderer. Size %ux%u", m_width, m_height);
 
 	m_lodDistance = config.getNumber("lodDistance");
@@ -121,8 +103,7 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_tessellation = config.getNumber("tessellation");
 
 	// A few sanity checks
-	if(m_samples != 1 && m_samples != 4 && m_samples != 8 && m_samples != 16
-		&& m_samples != 32)
+	if(m_samples != 1 && m_samples != 4 && m_samples != 8 && m_samples != 16 && m_samples != 32)
 	{
 		ANKI_LOGE("Incorrect samples");
 		return ErrorCode::USER_DATA;
@@ -147,8 +128,7 @@ Error Renderer::initInternal(const ConfigSet& config)
 	}
 
 	// quad setup
-	ANKI_CHECK(
-		m_resources->loadResource("shaders/Quad.vert.glsl", m_drawQuadVert));
+	ANKI_CHECK(m_resources->loadResource("shaders/Quad.vert.glsl", m_drawQuadVert));
 
 	// Init the stages. Careful with the order!!!!!!!!!!
 	m_ir.reset(m_alloc.newInstance<Ir>(this));
@@ -199,7 +179,6 @@ Error Renderer::initInternal(const ConfigSet& config)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error Renderer::render(RenderingContext& ctx)
 {
 	FrustumComponent& frc = *ctx.m_frustumComponent;
@@ -210,10 +189,8 @@ Error Renderer::render(RenderingContext& ctx)
 
 	// Write the common uniforms
 	RendererCommonUniforms* commonUniforms =
-		static_cast<RendererCommonUniforms*>(
-			getGrManager().allocateFrameTransientMemory(sizeof(*commonUniforms),
-				BufferUsageBit::UNIFORM_ALL,
-				m_commonUniformsToken));
+		static_cast<RendererCommonUniforms*>(getGrManager().allocateFrameTransientMemory(
+			sizeof(*commonUniforms), BufferUsageBit::UNIFORM_ALL, m_commonUniformsToken));
 
 	commonUniforms->m_projectionParams = frc.getProjectionParameters();
 	commonUniforms->m_nearFarLinearizeDepth.x() = frc.getFrustum().getNear();
@@ -227,8 +204,7 @@ Error Renderer::render(RenderingContext& ctx)
 
 	// Check if resources got loaded
 	if(m_prevLoadRequestCount != m_resources->getLoadingRequestCount()
-		|| m_prevAsyncTasksCompleted
-			!= m_resources->getAsyncTaskCompletedCount())
+		|| m_prevAsyncTasksCompleted != m_resources->getAsyncTaskCompletedCount())
 	{
 		m_prevLoadRequestCount = m_resources->getLoadingRequestCount();
 		m_prevAsyncTasksCompleted = m_resources->getAsyncTaskCompletedCount();
@@ -281,8 +257,7 @@ Error Renderer::render(RenderingContext& ctx)
 	{
 		cmdb->setTextureSurfaceBarrier(m_ms->getDepthRt(),
 			TextureUsageBit::GENERATE_MIPMAPS,
-			TextureUsageBit::SAMPLED_FRAGMENT
-				| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ,
+			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ,
 			TextureSurfaceInfo(i, 0, 0, 0));
 
 		cmdb->setTextureSurfaceBarrier(m_ms->getRt2(),
@@ -336,11 +311,8 @@ Error Renderer::render(RenderingContext& ctx)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
-Vec3 Renderer::unproject(const Vec3& windowCoords,
-	const Mat4& modelViewMat,
-	const Mat4& projectionMat,
-	const int view[4])
+Vec3 Renderer::unproject(
+	const Vec3& windowCoords, const Mat4& modelViewMat, const Mat4& projectionMat, const int view[4])
 {
 	Mat4 invPm = projectionMat * modelViewMat;
 	invPm.invert();
@@ -357,14 +329,8 @@ Vec3 Renderer::unproject(const Vec3& windowCoords,
 	return out.xyz();
 }
 
-//==============================================================================
-void Renderer::createRenderTarget(U32 w,
-	U32 h,
-	const PixelFormat& format,
-	TextureUsageBit usage,
-	SamplingFilter filter,
-	U mipsCount,
-	TexturePtr& rt)
+void Renderer::createRenderTarget(
+	U32 w, U32 h, const PixelFormat& format, TextureUsageBit usage, SamplingFilter filter, U mipsCount, TexturePtr& rt)
 {
 	// Not very important but keep the resolution of render targets aligned to
 	// 16
@@ -400,9 +366,7 @@ void Renderer::createRenderTarget(U32 w,
 	rt = m_gr->newInstance<Texture>(init);
 }
 
-//==============================================================================
-void Renderer::createDrawQuadPipeline(
-	ShaderPtr frag, const ColorStateInfo& colorState, PipelinePtr& ppline)
+void Renderer::createDrawQuadPipeline(ShaderPtr frag, const ColorStateInfo& colorState, PipelinePtr& ppline)
 {
 	PipelineInitInfo init;
 
@@ -418,9 +382,7 @@ void Renderer::createDrawQuadPipeline(
 	ppline = m_gr->newInstance<Pipeline>(init);
 }
 
-//==============================================================================
-Error Renderer::buildCommandBuffersInternal(
-	RenderingContext& ctx, U32 threadId, PtrSize threadCount)
+Error Renderer::buildCommandBuffersInternal(RenderingContext& ctx, U32 threadId, PtrSize threadCount)
 {
 	ANKI_CHECK(m_ms->buildCommandBuffers(ctx, threadId, threadCount));
 
@@ -440,14 +402,13 @@ Error Renderer::buildCommandBuffersInternal(
 		m_lf->run(ctx, ctx.m_fs.m_commandBuffers[threadId]);
 		m_vol->run(ctx, ctx.m_fs.m_commandBuffers[threadId]);
 	}
-	else if(threadId == threadCount - 1
-		&& ctx.m_fs.m_lastThreadWithWork == MAX_U32)
+	else if(threadId == threadCount - 1 && ctx.m_fs.m_lastThreadWithWork == MAX_U32)
 	{
 		// There is no FS work. Create a cmdb just for LF & VOL
 
 		CommandBufferInitInfo init;
-		init.m_flags = CommandBufferFlag::GRAPHICS_WORK
-			| CommandBufferFlag::SECOND_LEVEL | CommandBufferFlag::SMALL_BATCH;
+		init.m_flags =
+			CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SECOND_LEVEL | CommandBufferFlag::SMALL_BATCH;
 		init.m_framebuffer = m_fs->getFramebuffer();
 		CommandBufferPtr cmdb = getGrManager().newInstance<CommandBuffer>(init);
 		cmdb->setViewport(0, 0, m_fs->getWidth(), m_fs->getHeight());
@@ -462,7 +423,6 @@ Error Renderer::buildCommandBuffersInternal(
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error Renderer::buildCommandBuffers(RenderingContext& ctx)
 {
 	ANKI_TRACE_START_EVENT(RENDERER_COMMAND_BUFFER_BUILDING);
@@ -480,16 +440,12 @@ Error Renderer::buildCommandBuffers(RenderingContext& ctx)
 	U threadCount = threadPool.getThreadsCount();
 	for(U i = threadCount - 1; i != 0; --i)
 	{
-		if(threadWillDoWork(
-			   ctx, VisibilityGroupType::RENDERABLES_MS, i, threadCount)
-			&& lastMsJob == MAX_U32)
+		if(threadWillDoWork(ctx, VisibilityGroupType::RENDERABLES_MS, i, threadCount) && lastMsJob == MAX_U32)
 		{
 			lastMsJob = i;
 		}
 
-		if(threadWillDoWork(
-			   ctx, VisibilityGroupType::RENDERABLES_FS, i, threadCount)
-			&& lastFsJob == MAX_U32)
+		if(threadWillDoWork(ctx, VisibilityGroupType::RENDERABLES_FS, i, threadCount) && lastFsJob == MAX_U32)
 		{
 			lastFsJob = i;
 		}
@@ -507,8 +463,7 @@ Error Renderer::buildCommandBuffers(RenderingContext& ctx)
 
 		Error operator()(U32 threadId, PtrSize threadCount)
 		{
-			return m_r->buildCommandBuffersInternal(
-				*m_ctx, threadId, threadCount);
+			return m_r->buildCommandBuffersInternal(*m_ctx, threadId, threadCount);
 		}
 	};
 

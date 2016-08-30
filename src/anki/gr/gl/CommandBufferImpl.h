@@ -109,17 +109,11 @@ public:
 		return m_firstCommand == nullptr;
 	}
 
-	void bindResourceGroup(
-		ResourceGroupPtr rc, U slot, const TransientMemoryInfo* info);
+	void bindResourceGroup(ResourceGroupPtr rc, U slot, const TransientMemoryInfo* info);
 
-	void drawElements(U32 count,
-		U32 instanceCount = 1,
-		U32 firstIndex = 0,
-		U32 baseVertex = 0,
-		U32 baseInstance = 0);
+	void drawElements(U32 count, U32 instanceCount = 1, U32 firstIndex = 0, U32 baseVertex = 0, U32 baseInstance = 0);
 
-	void drawArrays(
-		U32 count, U32 instanceCount = 1, U32 first = 0, U32 baseInstance = 0);
+	void drawArrays(U32 count, U32 instanceCount = 1, U32 first = 0, U32 baseInstance = 0);
 
 	void drawElementsConditional(OcclusionQueryPtr query,
 		U32 count,
@@ -128,11 +122,8 @@ public:
 		U32 baseVertex = 0,
 		U32 baseInstance = 0);
 
-	void drawArraysConditional(OcclusionQueryPtr query,
-		U32 count,
-		U32 instanceCount = 1,
-		U32 first = 0,
-		U32 baseInstance = 0);
+	void drawArraysConditional(
+		OcclusionQueryPtr query, U32 count, U32 instanceCount = 1, U32 first = 0, U32 baseInstance = 0);
 
 	void dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ);
 
@@ -156,13 +147,11 @@ private:
 	}
 };
 
-//==============================================================================
 template<typename TCommand, typename... TArgs>
 inline void CommandBufferImpl::pushBackNewCommand(TArgs&&... args)
 {
 	ANKI_ASSERT(!m_immutable);
-	TCommand* newCommand =
-		m_alloc.template newInstance<TCommand>(std::forward<TArgs>(args)...);
+	TCommand* newCommand = m_alloc.template newInstance<TCommand>(std::forward<TArgs>(args)...);
 
 	if(m_firstCommand != nullptr)
 	{

@@ -11,10 +11,6 @@
 namespace anki
 {
 
-//==============================================================================
-// TexUploadTask                                                               =
-//==============================================================================
-
 /// Texture upload async task.
 class TexUploadTask : public AsyncLoaderTask
 {
@@ -42,7 +38,6 @@ public:
 	Error operator()(AsyncLoaderTaskContext& ctx) final;
 };
 
-//==============================================================================
 Error TexUploadTask::operator()(AsyncLoaderTaskContext& ctx)
 {
 	CommandBufferPtr cmdb;
@@ -57,8 +52,7 @@ Error TexUploadTask::operator()(AsyncLoaderTaskContext& ctx)
 				PtrSize surfOrVolSize;
 				const void* surfOrVolData;
 				PtrSize allocationSize;
-				const BufferUsageBit uploadBuffUsage =
-					BufferUsageBit::TEXTURE_UPLOAD_SOURCE;
+				const BufferUsageBit uploadBuffUsage = BufferUsageBit::TEXTURE_UPLOAD_SOURCE;
 
 				if(m_texType == TextureType::_3D)
 				{
@@ -66,8 +60,7 @@ Error TexUploadTask::operator()(AsyncLoaderTaskContext& ctx)
 					surfOrVolSize = vol.m_data.getSize();
 					surfOrVolData = &vol.m_data[0];
 
-					m_gr->getTextureVolumeUploadInfo(
-						m_tex, TextureVolumeInfo(mip), allocationSize);
+					m_gr->getTextureVolumeUploadInfo(m_tex, TextureVolumeInfo(mip), allocationSize);
 				}
 				else
 				{
@@ -75,16 +68,13 @@ Error TexUploadTask::operator()(AsyncLoaderTaskContext& ctx)
 					surfOrVolSize = surf.m_data.getSize();
 					surfOrVolData = &surf.m_data[0];
 
-					m_gr->getTextureSurfaceUploadInfo(m_tex,
-						TextureSurfaceInfo(mip, 0, face, layer),
-						allocationSize);
+					m_gr->getTextureSurfaceUploadInfo(m_tex, TextureSurfaceInfo(mip, 0, face, layer), allocationSize);
 				}
 
 				ANKI_ASSERT(allocationSize >= surfOrVolSize);
 
 				TransientMemoryToken token;
-				void* data = m_gr->tryAllocateFrameTransientMemory(
-					allocationSize, uploadBuffUsage, token);
+				void* data = m_gr->tryAllocateFrameTransientMemory(allocationSize, uploadBuffUsage, token);
 
 				if(data)
 				{
@@ -95,8 +85,7 @@ Error TexUploadTask::operator()(AsyncLoaderTaskContext& ctx)
 					if(!cmdb)
 					{
 						CommandBufferInitInfo ci;
-						ci.m_flags = CommandBufferFlag::TRANSFER_WORK
-							| CommandBufferFlag::SMALL_BATCH;
+						ci.m_flags = CommandBufferFlag::TRANSFER_WORK | CommandBufferFlag::SMALL_BATCH;
 
 						cmdb = m_gr->newInstance<CommandBuffer>(ci);
 					}
@@ -105,43 +94,32 @@ Error TexUploadTask::operator()(AsyncLoaderTaskContext& ctx)
 					{
 						TextureVolumeInfo vol(mip);
 
-						cmdb->setTextureVolumeBarrier(m_tex,
-							TextureUsageBit::NONE,
-							TextureUsageBit::UPLOAD,
-							vol);
+						cmdb->setTextureVolumeBarrier(m_tex, TextureUsageBit::NONE, TextureUsageBit::UPLOAD, vol);
 
 						cmdb->uploadTextureVolume(m_tex, vol, token);
 
 						cmdb->setTextureVolumeBarrier(m_tex,
 							TextureUsageBit::UPLOAD,
-							TextureUsageBit::SAMPLED_FRAGMENT
-								| TextureUsageBit::
-									  SAMPLED_TESSELLATION_EVALUATION,
+							TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_TESSELLATION_EVALUATION,
 							vol);
 					}
 					else
 					{
 						TextureSurfaceInfo surf(mip, 0, face, layer);
 
-						cmdb->setTextureSurfaceBarrier(m_tex,
-							TextureUsageBit::NONE,
-							TextureUsageBit::UPLOAD,
-							surf);
+						cmdb->setTextureSurfaceBarrier(m_tex, TextureUsageBit::NONE, TextureUsageBit::UPLOAD, surf);
 
 						cmdb->uploadTextureSurface(m_tex, surf, token);
 
 						cmdb->setTextureSurfaceBarrier(m_tex,
 							TextureUsageBit::UPLOAD,
-							TextureUsageBit::SAMPLED_FRAGMENT
-								| TextureUsageBit::
-									  SAMPLED_TESSELLATION_EVALUATION,
+							TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_TESSELLATION_EVALUATION,
 							surf);
 					}
 				}
 				else
 				{
-					// Not enough transfer memory. Move the work to the
-					// future
+					// Not enough transfer memory. Move the work to the future
 
 					if(cmdb)
 					{
@@ -170,27 +148,20 @@ Error TexUploadTask::operator()(AsyncLoaderTaskContext& ctx)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
-// TextureResource                                                             =
-//==============================================================================
-
-//==============================================================================
 TextureResource::~TextureResource()
 {
 }
 
-//==============================================================================
 Error TextureResource::load(const ResourceFilename& filename)
 {
 	TextureInitInfo init;
-	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT
-		| TextureUsageBit::SAMPLED_TESSELLATION_EVALUATION
-		| TextureUsageBit::UPLOAD;
+	init.m_usage =
+		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_TESSELLATION_EVALUATION | TextureUsageBit::UPLOAD;
 	U faces = 0;
 
 	// Load image
-	TexUploadTask* task = getManager().getAsyncLoader().newTask<TexUploadTask>(
-		getManager().getAsyncLoader().getAllocator());
+	TexUploadTask* task =
+		getManager().getAsyncLoader().newTask<TexUploadTask>(getManager().getAsyncLoader().getAllocator());
 	ImageLoader& loader = task->m_loader;
 
 	ResourceFilePtr file;

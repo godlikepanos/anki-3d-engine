@@ -14,34 +14,28 @@ namespace anki
 /// @addtogroup Collision
 /// @{
 
-/// Line segment. Line from a point to a point. P0 = origin and
-/// P1 = direction + origin
+/// Line segment. Line from a point to a point. P0 = origin and P1 = direction + origin
 class LineSegment : public CollisionShape
 {
 public:
 	using Base = CollisionShape;
 
-	static Bool classof(const CollisionShape& c)
-	{
-		return c.getType() == Type::LINE_SEG;
-	}
-
 	LineSegment()
-		: Base(Type::LINE_SEG)
+		: Base(CollisionShapeType::LINE_SEG)
 		, m_origin(0.0)
 		, m_dir(0.0)
 	{
 	}
 
 	LineSegment(const Vec4& origin, const Vec4& direction)
-		: Base(Type::LINE_SEG)
+		: Base(CollisionShapeType::LINE_SEG)
 		, m_origin(origin)
 		, m_dir(direction)
 	{
 	}
 
 	LineSegment(const LineSegment& b)
-		: Base(Type::LINE_SEG)
+		: Base(CollisionShapeType::LINE_SEG)
 	{
 		operator=(b);
 	}

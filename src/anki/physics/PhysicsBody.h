@@ -14,8 +14,9 @@ namespace anki
 /// @{
 
 /// Init info for PhysicsBody.
-struct PhysicsBodyInitInfo
+class PhysicsBodyInitInfo
 {
+public:
 	PhysicsCollisionShapePtr m_shape;
 	F32 m_mass = 0.0;
 	Transform m_startTrf = Transform::getIdentity();
@@ -68,11 +69,6 @@ public:
 		m_materialBits = bits;
 	}
 
-	static Bool classof(const PhysicsObject& c)
-	{
-		return c.getType() == Type::BODY;
-	}
-
 private:
 	NewtonBody* m_body = nullptr;
 	void* m_sceneCollisionProxy = nullptr;
@@ -83,13 +79,10 @@ private:
 	Bool8 m_updated = true;
 
 	/// Newton callback.
-	static void onTransformCallback(const NewtonBody* const body,
-		const dFloat* const matrix,
-		int threadIndex);
+	static void onTransformCallback(const NewtonBody* const body, const dFloat* const matrix, int threadIndex);
 
 	/// Newton callback
-	static void applyGravityForce(
-		const NewtonBody* body, dFloat timestep, int threadIndex);
+	static void applyGravityForce(const NewtonBody* body, dFloat timestep, int threadIndex);
 };
 /// @}
 

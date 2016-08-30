@@ -11,7 +11,6 @@
 namespace anki
 {
 
-//==============================================================================
 // Ugly but there is no other way
 static HeapAllocator<U8>* gAlloc = nullptr;
 
@@ -25,12 +24,10 @@ static void newtonFree(void* const ptr, int size)
 	gAlloc->deallocate(ptr, size + 16);
 }
 
-//==============================================================================
 PhysicsWorld::PhysicsWorld()
 {
 }
 
-//==============================================================================
 PhysicsWorld::~PhysicsWorld()
 {
 	cleanupMarkedForDeletion();
@@ -56,7 +53,6 @@ PhysicsWorld::~PhysicsWorld()
 	gAlloc = nullptr;
 }
 
-//==============================================================================
 Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
 {
 	Error err = ErrorCode::NONE;
@@ -82,15 +78,13 @@ Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
 	m_sceneCollision = NewtonCreateSceneCollision(m_world, 0);
 	Mat4 trf = Mat4::getIdentity();
 	m_sceneBody = NewtonCreateDynamicBody(m_world, m_sceneCollision, &trf[0]);
-	NewtonBodySetMaterialGroupID(
-		m_sceneBody, NewtonMaterialGetDefaultGroupID(m_world));
+	NewtonBodySetMaterialGroupID(m_sceneBody, NewtonMaterialGetDefaultGroupID(m_world));
 
 	NewtonDestroyCollision(m_sceneCollision); // destroy old scene
 	m_sceneCollision = NewtonBodyGetCollision(m_sceneBody);
 
 	// Set the post update listener
-	NewtonWorldAddPostListener(
-		m_world, "world", this, postUpdateCallback, destroyCallback);
+	NewtonWorldAddPostListener(m_world, "world", this, postUpdateCallback, destroyCallback);
 
 	// Set callbacks
 	NewtonMaterialSetCollisionCallback(m_world,
@@ -103,7 +97,6 @@ Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
 	return err;
 }
 
-//==============================================================================
 Error PhysicsWorld::updateAsync(F32 dt)
 {
 	m_dt = dt;
@@ -117,13 +110,11 @@ Error PhysicsWorld::updateAsync(F32 dt)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void PhysicsWorld::waitUpdate()
 {
 	NewtonWaitForUpdateToFinish(m_world);
 }
 
-//==============================================================================
 void PhysicsWorld::cleanupMarkedForDeletion()
 {
 	LockGuard<Mutex> lock(m_mtx);
@@ -137,7 +128,7 @@ void PhysicsWorld::cleanupMarkedForDeletion()
 		m_forDeletion.erase(m_alloc, it);
 
 		// Remove from player controllers
-		if(obj->getType() == PhysicsObject::Type::PLAYER_CONTROLLER)
+		if(obj->getType() == PhysicsObjectType::PLAYER_CONTROLLER)
 		{
 			auto it2 = m_playerControllers.getBegin();
 			for(; it2 != m_playerControllers.getEnd(); ++it2)
@@ -158,30 +149,24 @@ void PhysicsWorld::cleanupMarkedForDeletion()
 	}
 }
 
-//==============================================================================
 void PhysicsWorld::postUpdate(F32 dt)
 {
 	for(PhysicsPlayerController* player : m_playerControllers)
 	{
-		NewtonDispachThreadJob(
-			m_world, PhysicsPlayerController::postUpdateKernelCallback, player);
+		NewtonDispachThreadJob(m_world, PhysicsPlayerController::postUpdateKernelCallback, player);
 	}
 }
 
-//==============================================================================
 void PhysicsWorld::registerObject(PhysicsObject* ptr)
 {
-	if(isa<PhysicsPlayerController>(ptr))
+	if(ptr->getType() == PhysicsObjectType::PLAYER_CONTROLLER)
 	{
 		LockGuard<Mutex> lock(m_mtx);
-		m_playerControllers.pushBack(
-			m_alloc, dcast<PhysicsPlayerController*>(ptr));
+		m_playerControllers.pushBack(m_alloc, static_cast<PhysicsPlayerController*>(ptr));
 	}
 }
 
-//==============================================================================
-void PhysicsWorld::onContactCallback(
-	const NewtonJoint* contactJoint, F32 timestep, int threadIndex)
+void PhysicsWorld::onContactCallback(const NewtonJoint* contactJoint, F32 timestep, int threadIndex)
 {
 	const NewtonBody* body0 = NewtonJointGetBody0(contactJoint);
 	const NewtonBody* body1 = NewtonJointGetBody1(contactJoint);
@@ -213,10 +198,8 @@ void PhysicsWorld::onContactCallback(
 	{
 		NewtonMaterial* material = NewtonContactGetMaterial(contact);
 
-		NewtonMaterialSetContactFrictionCoef(
-			material, friction + 0.1, friction, 0);
-		NewtonMaterialSetContactFrictionCoef(
-			material, friction + 0.1, friction, 1);
+		NewtonMaterialSetContactFrictionCoef(material, friction + 0.1, friction, 0);
+		NewtonMaterialSetContactFrictionCoef(material, friction + 0.1, friction, 1);
 
 		NewtonMaterialSetContactElasticity(material, elasticity);
 

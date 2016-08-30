@@ -51,10 +51,7 @@ public:
 
 /// List bidirectional iterator.
 /// @internal
-template<typename TNodePointer,
-	typename TValuePointer,
-	typename TValueReference,
-	typename TListPointer>
+template<typename TNodePointer, typename TValuePointer, typename TValueReference, typename TListPointer>
 class ListIterator
 {
 	template<typename, typename>
@@ -76,13 +73,8 @@ public:
 	}
 
 	/// Allow conversion from iterator to const iterator.
-	template<typename YNodePointer,
-		typename YValuePointer,
-		typename YValueReference,
-		typename YList>
-	ListIterator(
-		const ListIterator<YNodePointer, YValuePointer, YValueReference, YList>&
-			b)
+	template<typename YNodePointer, typename YValuePointer, typename YValueReference, typename YList>
+	ListIterator(const ListIterator<YNodePointer, YValuePointer, YValueReference, YList>& b)
 		: m_node(b.m_node)
 		, m_list(b.m_list)
 	{
@@ -172,8 +164,7 @@ public:
 
 	Bool operator==(const ListIterator& b) const
 	{
-		ANKI_ASSERT(
-			m_list == b.m_list && "Comparing iterators from different lists");
+		ANKI_ASSERT(m_list == b.m_list && "Comparing iterators from different lists");
 		return m_node == b.m_node;
 	}
 
@@ -202,10 +193,7 @@ public:
 	using Pointer = Value*;
 	using ConstPointer = const Value*;
 	using Iterator = ListIterator<TNode*, Pointer, Reference, ListBase*>;
-	using ConstIterator = ListIterator<const TNode*,
-		ConstPointer,
-		ConstReference,
-		const ListBase*>;
+	using ConstIterator = ListIterator<const TNode*, ConstPointer, ConstReference, const ListBase*>;
 
 	ListBase() = default;
 
@@ -306,8 +294,7 @@ public:
 	Iterator find(const Value& a);
 
 	/// Sort the list.
-	/// @note It's almost 300 slower than std::list::sort, at some point replace
-	///       the algorithm.
+	/// @note It's almost 300 slower than std::list::sort, at some point replace the algorithm.
 	template<typename TCompFunc = std::less<Value>>
 	void sort(TCompFunc compFunc = TCompFunc());
 
@@ -362,8 +349,7 @@ public:
 		move(b);
 	}
 
-	/// You need to manually destroy the list.
-	/// @see List::destroy
+	/// You need to manually destroy the list. @see List::destroy
 	~List()
 	{
 		ANKI_ASSERT(Base::isEmpty() && "Requires manual destruction");
@@ -392,8 +378,7 @@ public:
 	template<typename TAllocator, typename... TArgs>
 	void emplaceBack(TAllocator alloc, TArgs&&... args)
 	{
-		Node* node =
-			alloc.template newInstance<Node>(std::forward<TArgs>(args)...);
+		Node* node = alloc.template newInstance<Node>(std::forward<TArgs>(args)...);
 		Base::pushBackNode(node);
 	}
 
@@ -409,8 +394,7 @@ public:
 	template<typename TAllocator, typename... TArgs>
 	void emplaceFront(TAllocator alloc, TArgs&&... args)
 	{
-		Node* node =
-			alloc.template newInstance<Node>(std::forward<TArgs>(args)...);
+		Node* node = alloc.template newInstance<Node>(std::forward<TArgs>(args)...);
 		Base::pushFrontNode(node);
 	}
 
@@ -426,8 +410,7 @@ public:
 	template<typename TAllocator, typename... TArgs>
 	void emplace(TAllocator alloc, typename Base::Iterator pos, TArgs&&... args)
 	{
-		Node* node =
-			alloc.template newInstance<Node>(std::forward<TArgs>(args)...);
+		Node* node = alloc.template newInstance<Node>(std::forward<TArgs>(args)...);
 		Base::insertNode(pos.m_node, node);
 	}
 
@@ -560,8 +543,7 @@ private:
 	}
 };
 
-/// The classes that will use the IntrusiveList need to inherit from this
-/// one.
+/// The classes that will use the IntrusiveList need to inherit from this one.
 template<typename TClass>
 class IntrusiveListEnabled
 {
@@ -600,8 +582,7 @@ private:
 	}
 };
 
-/// List that doesn't perform any allocations. To work the T nodes will
-/// have to inherit from IntrusiveListEnabled.
+/// List that doesn't perform any allocations. To work the T nodes will have to inherit from IntrusiveListEnabled.
 template<typename T>
 class IntrusiveList : public detail::ListBase<T, T>
 {

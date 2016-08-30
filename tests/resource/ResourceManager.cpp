@@ -11,7 +11,6 @@
 namespace anki
 {
 
-//==============================================================================
 ANKI_TEST(Resource, ResourceManager)
 {
 	// Create
@@ -75,14 +74,12 @@ ANKI_TEST(Resource, ResourceManager)
 	{
 		{
 			DummyResourcePtr a;
-			ANKI_TEST_EXPECT_EQ(
-				resources->loadResource("error", a), ErrorCode::USER_DATA);
+			ANKI_TEST_EXPECT_EQ(resources->loadResource("error", a), ErrorCode::USER_DATA);
 		}
 
 		{
 			DummyResourcePtr a;
-			ANKI_TEST_EXPECT_EQ(
-				resources->loadResource("error", a), ErrorCode::USER_DATA);
+			ANKI_TEST_EXPECT_EQ(resources->loadResource("error", a), ErrorCode::USER_DATA);
 		}
 	}
 

@@ -9,7 +9,6 @@
 namespace anki
 {
 
-//==============================================================================
 OcclusionQueryImpl::~OcclusionQueryImpl()
 {
 	if(m_handle)
@@ -18,7 +17,6 @@ OcclusionQueryImpl::~OcclusionQueryImpl()
 	}
 }
 
-//==============================================================================
 Error OcclusionQueryImpl::init(OcclusionQueryResultBit condRenderingBit)
 {
 	m_condRenderingBit = condRenderingBit;
@@ -28,29 +26,25 @@ Error OcclusionQueryImpl::init(OcclusionQueryResultBit condRenderingBit)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 OcclusionQueryResult OcclusionQueryImpl::getResult() const
 {
 	ANKI_ASSERT(m_handle);
 	U64 out = 0;
 
 	VkResult res;
-	ANKI_VK_CHECKF(
-		res = vkGetQueryPoolResults(getDevice(),
-			m_handle.m_pool,
-			m_handle.m_queryIndex,
-			1,
-			sizeof(out),
-			&out,
-			sizeof(out),
-			VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WITH_AVAILABILITY_BIT
-				| VK_QUERY_RESULT_PARTIAL_BIT));
+	ANKI_VK_CHECKF(res = vkGetQueryPoolResults(getDevice(),
+					   m_handle.m_pool,
+					   m_handle.m_queryIndex,
+					   1,
+					   sizeof(out),
+					   &out,
+					   sizeof(out),
+					   VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WITH_AVAILABILITY_BIT | VK_QUERY_RESULT_PARTIAL_BIT));
 
 	OcclusionQueryResult qout = OcclusionQueryResult::NOT_AVAILABLE;
 	if(res == VK_SUCCESS)
 	{
-		qout = (out) ? OcclusionQueryResult::VISIBLE
-					 : OcclusionQueryResult::NOT_VISIBLE;
+		qout = (out) ? OcclusionQueryResult::VISIBLE : OcclusionQueryResult::NOT_VISIBLE;
 	}
 	else if(res == VK_NOT_READY)
 	{

@@ -27,8 +27,7 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 
-	ANKI_USE_RESULT Error buildCommandBuffers(
-		RenderingContext& ctx, U threadId, U threadCount) const;
+	ANKI_USE_RESULT Error buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) const;
 
 	void setPreRunBarriers(RenderingContext& ctx);
 

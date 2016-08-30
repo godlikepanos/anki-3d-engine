@@ -8,11 +8,9 @@
 namespace anki
 {
 
-//==============================================================================
-const Array<PixelFormat, MS_COLOR_ATTACHMENT_COUNT>
-	MS_COLOR_ATTACHMENT_PIXEL_FORMATS = {
-		{PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM),
-			PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM),
-			PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM)}};
+const Array<PixelFormat, MS_COLOR_ATTACHMENT_COUNT> MS_COLOR_ATTACHMENT_PIXEL_FORMATS = {
+	{PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM),
+		PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM),
+		PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM)}};
 
 } // end namespace anki

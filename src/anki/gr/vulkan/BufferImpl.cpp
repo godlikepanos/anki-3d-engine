@@ -9,7 +9,6 @@
 namespace anki
 {
 
-//==============================================================================
 BufferImpl::~BufferImpl()
 {
 	ANKI_ASSERT(!m_mapped);
@@ -25,9 +24,7 @@ BufferImpl::~BufferImpl()
 	}
 }
 
-//==============================================================================
-Error BufferImpl::init(
-	PtrSize size, BufferUsageBit usage, BufferMapAccessBit access)
+Error BufferImpl::init(PtrSize size, BufferUsageBit usage, BufferMapAccessBit access)
 {
 	ANKI_ASSERT(!isCreated());
 	ANKI_ASSERT(size > 0);
@@ -57,19 +54,15 @@ Error BufferImpl::init(
 		// Only write
 
 		// Device & host but not coherent
-		memIdx = getGrManagerImpl().getGpuMemoryAllocator().findMemoryType(
-			req.memoryTypeBits,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-				| VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		memIdx = getGrManagerImpl().getGpuMemoryAllocator().findMemoryType(req.memoryTypeBits,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 			VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
 		// Fallback: host and not coherent
 		if(memIdx == MAX_U32)
 		{
 			memIdx = getGrManagerImpl().getGpuMemoryAllocator().findMemoryType(
-				req.memoryTypeBits,
-				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
-				VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+				req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 		}
 
 		// Fallback: any host
@@ -85,10 +78,8 @@ Error BufferImpl::init(
 		// Read or read/write
 
 		// Cached & coherent
-		memIdx = getGrManagerImpl().getGpuMemoryAllocator().findMemoryType(
-			req.memoryTypeBits,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-				| VK_MEMORY_PROPERTY_HOST_CACHED_BIT
+		memIdx = getGrManagerImpl().getGpuMemoryAllocator().findMemoryType(req.memoryTypeBits,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT
 				| VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 			0);
 
@@ -96,10 +87,7 @@ Error BufferImpl::init(
 		if(memIdx == MAX_U32)
 		{
 			memIdx = getGrManagerImpl().getGpuMemoryAllocator().findMemoryType(
-				req.memoryTypeBits,
-				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-					| VK_MEMORY_PROPERTY_HOST_CACHED_BIT,
-				0);
+				req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT, 0);
 		}
 
 		// Fallback: Just host
@@ -118,9 +106,7 @@ Error BufferImpl::init(
 
 		// Device only
 		memIdx = getGrManagerImpl().getGpuMemoryAllocator().findMemoryType(
-			req.memoryTypeBits,
-			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+			req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
 		// Fallback: Device with anything else
 		if(memIdx == MAX_U32)
@@ -132,17 +118,14 @@ Error BufferImpl::init(
 
 	ANKI_ASSERT(memIdx != MAX_U32);
 
-	const VkPhysicalDeviceMemoryProperties& props =
-		getGrManagerImpl().getMemoryProperties();
+	const VkPhysicalDeviceMemoryProperties& props = getGrManagerImpl().getMemoryProperties();
 	m_memoryFlags = props.memoryTypes[memIdx].propertyFlags;
 
 	// Allocate
-	getGrManagerImpl().getGpuMemoryAllocator().allocateMemory(
-		memIdx, req.size, req.alignment, true, m_memHandle);
+	getGrManagerImpl().getGpuMemoryAllocator().allocateMemory(memIdx, req.size, req.alignment, true, m_memHandle);
 
 	// Bind mem to buffer
-	ANKI_VK_CHECK(vkBindBufferMemory(
-		getDevice(), m_handle, m_memHandle.m_memory, m_memHandle.m_offset));
+	ANKI_VK_CHECK(vkBindBufferMemory(getDevice(), m_handle, m_memHandle.m_memory, m_memHandle.m_offset));
 
 	m_access = access;
 	m_size = size;
@@ -150,7 +133,6 @@ Error BufferImpl::init(
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void* BufferImpl::map(PtrSize offset, PtrSize range, BufferMapAccessBit access)
 {
 	ANKI_ASSERT(isCreated());
@@ -159,8 +141,7 @@ void* BufferImpl::map(PtrSize offset, PtrSize range, BufferMapAccessBit access)
 	ANKI_ASSERT(!m_mapped);
 	ANKI_ASSERT(offset + range <= m_size);
 
-	void* ptr = getGrManagerImpl().getGpuMemoryAllocator().getMappedAddress(
-		m_memHandle);
+	void* ptr = getGrManagerImpl().getGpuMemoryAllocator().getMappedAddress(m_memHandle);
 	ANKI_ASSERT(ptr);
 
 #if ANKI_ASSERTIONS
@@ -172,55 +153,46 @@ void* BufferImpl::map(PtrSize offset, PtrSize range, BufferMapAccessBit access)
 	return static_cast<void*>(static_cast<U8*>(ptr) + offset);
 }
 
-//==============================================================================
 VkPipelineStageFlags BufferImpl::computePplineStage(BufferUsageBit usage)
 {
 	VkPipelineStageFlags stageMask = 0;
 
-	if(!!(usage & (BufferUsageBit::UNIFORM_VERTEX
-					  | BufferUsageBit::STORAGE_VERTEX_READ_WRITE)))
+	if(!!(usage & (BufferUsageBit::UNIFORM_VERTEX | BufferUsageBit::STORAGE_VERTEX_READ_WRITE)))
 	{
 		stageMask |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
 	}
 
-	if(!!(usage
-		   & (BufferUsageBit::UNIFORM_TESSELLATION_EVALUATION
-				 | BufferUsageBit::STORAGE_TESSELLATION_EVALUATION_READ_WRITE)))
+	if(!!(usage & (BufferUsageBit::UNIFORM_TESSELLATION_EVALUATION
+					  | BufferUsageBit::STORAGE_TESSELLATION_EVALUATION_READ_WRITE)))
 	{
 		stageMask |= VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT;
 	}
 
 	if(!!(usage
-		   & (BufferUsageBit::UNIFORM_TESSELLATION_CONTROL
-				 | BufferUsageBit::STORAGE_TESSELLATION_CONTROL_READ_WRITE)))
+		   & (BufferUsageBit::UNIFORM_TESSELLATION_CONTROL | BufferUsageBit::STORAGE_TESSELLATION_CONTROL_READ_WRITE)))
 	{
 		stageMask |= VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT;
 	}
 
-	if(!!(usage & (BufferUsageBit::UNIFORM_GEOMETRY
-					  | BufferUsageBit::STORAGE_GEOMETRY_READ_WRITE)))
+	if(!!(usage & (BufferUsageBit::UNIFORM_GEOMETRY | BufferUsageBit::STORAGE_GEOMETRY_READ_WRITE)))
 	{
 		stageMask |= VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
 	}
 
-	if(!!(usage & (BufferUsageBit::UNIFORM_FRAGMENT
-					  | BufferUsageBit::STORAGE_FRAGMENT_READ_WRITE)))
+	if(!!(usage & (BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::STORAGE_FRAGMENT_READ_WRITE)))
 	{
 		stageMask |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 	}
 
-	if(!!(usage & (BufferUsageBit::UNIFORM_COMPUTE
-					  | BufferUsageBit::STORAGE_COMPUTE_READ_WRITE)))
+	if(!!(usage & (BufferUsageBit::UNIFORM_COMPUTE | BufferUsageBit::STORAGE_COMPUTE_READ_WRITE)))
 	{
 		stageMask |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 	}
 
 	if(!!(usage & (BufferUsageBit::INDEX | BufferUsageBit::VERTEX)))
 	{
-		stageMask |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT
-			| VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT
-			| VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT
-			| VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
+		stageMask |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT
+			| VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT | VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
 	}
 
 	if(!!(usage & BufferUsageBit::INDIRECT))
@@ -237,23 +209,18 @@ VkPipelineStageFlags BufferImpl::computePplineStage(BufferUsageBit usage)
 	return stageMask;
 }
 
-//==============================================================================
 VkAccessFlags BufferImpl::computeAccessMask(BufferUsageBit usage)
 {
 	VkAccessFlags mask = 0;
 
 	const BufferUsageBit SHADER_READ = BufferUsageBit::STORAGE_VERTEX_READ
-		| BufferUsageBit::STORAGE_TESSELLATION_CONTROL_READ
-		| BufferUsageBit::STORAGE_TESSELLATION_EVALUATION_READ
-		| BufferUsageBit::STORAGE_GEOMETRY_READ
-		| BufferUsageBit::STORAGE_FRAGMENT_READ
+		| BufferUsageBit::STORAGE_TESSELLATION_CONTROL_READ | BufferUsageBit::STORAGE_TESSELLATION_EVALUATION_READ
+		| BufferUsageBit::STORAGE_GEOMETRY_READ | BufferUsageBit::STORAGE_FRAGMENT_READ
 		| BufferUsageBit::STORAGE_COMPUTE_READ;
 
 	const BufferUsageBit SHADER_WRITE = BufferUsageBit::STORAGE_VERTEX_WRITE
-		| BufferUsageBit::STORAGE_TESSELLATION_CONTROL_WRITE
-		| BufferUsageBit::STORAGE_TESSELLATION_EVALUATION_WRITE
-		| BufferUsageBit::STORAGE_GEOMETRY_WRITE
-		| BufferUsageBit::STORAGE_FRAGMENT_WRITE
+		| BufferUsageBit::STORAGE_TESSELLATION_CONTROL_WRITE | BufferUsageBit::STORAGE_TESSELLATION_EVALUATION_WRITE
+		| BufferUsageBit::STORAGE_GEOMETRY_WRITE | BufferUsageBit::STORAGE_FRAGMENT_WRITE
 		| BufferUsageBit::STORAGE_COMPUTE_WRITE;
 
 	if(!!(usage & BufferUsageBit::UNIFORM_ALL))
@@ -286,14 +253,12 @@ VkAccessFlags BufferImpl::computeAccessMask(BufferUsageBit usage)
 		mask |= VK_ACCESS_INDIRECT_COMMAND_READ_BIT;
 	}
 
-	if(!!(usage & (BufferUsageBit::FILL
-					  | BufferUsageBit::BUFFER_UPLOAD_DESTINATION)))
+	if(!!(usage & (BufferUsageBit::FILL | BufferUsageBit::BUFFER_UPLOAD_DESTINATION)))
 	{
 		mask |= VK_ACCESS_TRANSFER_WRITE_BIT;
 	}
 
-	if(!!(usage & (BufferUsageBit::BUFFER_UPLOAD_SOURCE
-					  | BufferUsageBit::TEXTURE_UPLOAD_SOURCE)))
+	if(!!(usage & (BufferUsageBit::BUFFER_UPLOAD_SOURCE | BufferUsageBit::TEXTURE_UPLOAD_SOURCE)))
 	{
 		mask |= VK_ACCESS_TRANSFER_READ_BIT;
 	}
@@ -302,7 +267,6 @@ VkAccessFlags BufferImpl::computeAccessMask(BufferUsageBit usage)
 	return mask;
 }
 
-//==============================================================================
 void BufferImpl::computeBarrierInfo(BufferUsageBit before,
 	BufferUsageBit after,
 	VkPipelineStageFlags& srcStages,

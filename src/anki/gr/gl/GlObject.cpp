@@ -13,7 +13,6 @@
 namespace anki
 {
 
-//==============================================================================
 GlObject::GlObject(GrManager* manager)
 	: m_manager(manager)
 	, m_glName(0)
@@ -21,7 +20,6 @@ GlObject::GlObject(GrManager* manager)
 {
 }
 
-//==============================================================================
 Error GlObject::serializeRenderingThread()
 {
 	Error err = ErrorCode::NONE;
@@ -30,8 +28,7 @@ Error GlObject::serializeRenderingThread()
 
 	if(state == State::TO_BE_CREATED)
 	{
-		RenderingThread& thread =
-			m_manager->getImplementation().getRenderingThread();
+		RenderingThread& thread = m_manager->getImplementation().getRenderingThread();
 		thread.syncClientServer();
 
 		state = State(m_state.load());
@@ -47,7 +44,6 @@ Error GlObject::serializeRenderingThread()
 	return err;
 }
 
-//==============================================================================
 class DeleteGlObjectCommand final : public GlCommand
 {
 public:
@@ -82,8 +78,7 @@ void GlObject::destroyDeferred(GlDeleteFunction deleteCallback)
 		CommandBufferPtr commands;
 
 		commands = manager.newInstance<CommandBuffer>(CommandBufferInitInfo());
-		commands->getImplementation().pushBackNewCommand<DeleteGlObjectCommand>(
-			deleteCallback, m_glName);
+		commands->getImplementation().pushBackNewCommand<DeleteGlObjectCommand>(deleteCallback, m_glName);
 		commands->flush();
 	}
 	else
@@ -94,7 +89,6 @@ void GlObject::destroyDeferred(GlDeleteFunction deleteCallback)
 	m_glName = 0;
 }
 
-//==============================================================================
 GrAllocator<U8> GlObject::getAllocator() const
 {
 	return m_manager->getAllocator();

@@ -40,10 +40,7 @@ public:
 
 	virtual ~Event();
 
-	void init(F32 startTime,
-		F32 duration,
-		SceneNode* snode = nullptr,
-		Flag flags = Flag::NONE);
+	void init(F32 startTime, F32 duration, SceneNode* snode = nullptr, Flag flags = Flag::NONE);
 
 	F32 getStartTime() const
 	{
@@ -89,8 +86,7 @@ public:
 
 	void setReanimate(Bool reanimate)
 	{
-		m_flags = (reanimate) ? (m_flags | Flag::REANIMATE)
-							  : (m_flags & ~Flag::REANIMATE);
+		m_flags = (reanimate) ? (m_flags | Flag::REANIMATE) : (m_flags & ~Flag::REANIMATE);
 	}
 
 	Bool getReanimate() const
@@ -111,8 +107,7 @@ public:
 	/// @param prevUpdateTime The time of the previous update (sec)
 	/// @param crntTime The current time (sec)
 	/// @param[out] Return false if you don't want to be killed
-	virtual ANKI_USE_RESULT Error onKilled(
-		F32 prevUpdateTime, F32 crntTime, Bool& kill)
+	virtual ANKI_USE_RESULT Error onKilled(F32 prevUpdateTime, F32 crntTime, Bool& kill)
 	{
 		(void)prevUpdateTime;
 		(void)crntTime;

@@ -9,18 +9,15 @@
 namespace anki
 {
 
-//==============================================================================
 Framebuffer::Framebuffer(GrManager* manager, U64 hash)
 	: GrObject(manager, CLASS_TYPE, hash)
 {
 }
 
-//==============================================================================
 Framebuffer::~Framebuffer()
 {
 }
 
-//==============================================================================
 void Framebuffer::init(const FramebufferInitInfo& init)
 {
 	m_impl.reset(getAllocator().newInstance<FramebufferImpl>(&getManager()));

@@ -27,15 +27,14 @@ const float DEPTH_THRESHOLD = 1.0 / 1000.0;
 
 const vec2 COLOR_TEX_TEXEL_SIZE = 1.0 / vec2(TEXTURE_WIDTH, TEXTURE_HEIGHT);
 
-const vec2 OFFSETS[8] =
-	vec2[](vec2(-COLOR_TEX_TEXEL_SIZE.x, -COLOR_TEX_TEXEL_SIZE.y),
-		vec2(0.0, -COLOR_TEX_TEXEL_SIZE.y),
-		vec2(COLOR_TEX_TEXEL_SIZE.x, -COLOR_TEX_TEXEL_SIZE.y),
-		vec2(COLOR_TEX_TEXEL_SIZE.x, 0.0),
-		vec2(COLOR_TEX_TEXEL_SIZE.x, COLOR_TEX_TEXEL_SIZE.y),
-		vec2(0.0, COLOR_TEX_TEXEL_SIZE.y),
-		vec2(-COLOR_TEX_TEXEL_SIZE.x, COLOR_TEX_TEXEL_SIZE.y),
-		vec2(-COLOR_TEX_TEXEL_SIZE.x, 0.0));
+const vec2 OFFSETS[8] = vec2[](vec2(-COLOR_TEX_TEXEL_SIZE.x, -COLOR_TEX_TEXEL_SIZE.y),
+	vec2(0.0, -COLOR_TEX_TEXEL_SIZE.y),
+	vec2(COLOR_TEX_TEXEL_SIZE.x, -COLOR_TEX_TEXEL_SIZE.y),
+	vec2(COLOR_TEX_TEXEL_SIZE.x, 0.0),
+	vec2(COLOR_TEX_TEXEL_SIZE.x, COLOR_TEX_TEXEL_SIZE.y),
+	vec2(0.0, COLOR_TEX_TEXEL_SIZE.y),
+	vec2(-COLOR_TEX_TEXEL_SIZE.x, COLOR_TEX_TEXEL_SIZE.y),
+	vec2(-COLOR_TEX_TEXEL_SIZE.x, 0.0));
 
 void main()
 {
@@ -67,9 +66,8 @@ void main()
 		}
 	}
 
-// Check for depth discontinuites. Use textureLod because it's undefined
-// if you are sampling mipmaped in a conditional branch. See
-// http://teknicool.tumblr.com/post/77263472964/glsl-dynamic-branching-and-texture-samplers
+// Check for depth discontinuites. Use textureLod because it's undefined if you are sampling mipmaped in a conditional
+// branch. See http://teknicool.tumblr.com/post/77263472964/glsl-dynamic-branching-and-texture-samplers
 #if 0
 	float a = u_linearizePad2.x;
 	float b = u_linearizePad2.y;

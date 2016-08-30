@@ -30,6 +30,7 @@ vec3 unpackNormal(in vec2 enc)
 }
 
 #if GL_ES || __VERSION__ < 400
+
 // Vectorized version. See clean one at <= r1048
 uint packUnorm4x8(in vec4 v)
 {
@@ -113,27 +114,26 @@ struct GbufferInfo
 // Populate the G buffer
 void writeGBuffer(in GbufferInfo g, out vec4 rt0, out vec4 rt1, out vec4 rt2)
 {
-	float comp =
-		packUnorm2ToUnorm1(vec2(g.subsurface, g.emission / MAX_EMISSION));
+	float comp = packUnorm2ToUnorm1(vec2(g.subsurface, g.emission / MAX_EMISSION));
 	rt0 = vec4(g.diffuse, comp);
 	rt1 = vec4(g.specular, g.roughness);
 	rt2 = vec4(g.normal * 0.5 + 0.5, g.metallic);
 }
 
 // Read from G-buffer
-#define readSpecularRoughnessFromGBuffer(rt1_, uv_, lod_, g_)                  \
-	{                                                                          \
-		vec4 comp = textureLod(rt1_, uv_, lod_);                               \
-		g_.specular = comp.xyz;                                                \
-		g_.roughness = max(EPSILON, comp.w);                                   \
+#define readSpecularRoughnessFromGBuffer(rt1_, uv_, lod_, g_)                                                          \
+	{                                                                                                                  \
+		vec4 comp = textureLod(rt1_, uv_, lod_);                                                                       \
+		g_.specular = comp.xyz;                                                                                        \
+		g_.roughness = max(EPSILON, comp.w);                                                                           \
 	}
 
 // Read from G-buffer
-#define readNormalMetallicFromGBuffer(rt2_, uv_, lod_, g_)                     \
-	{                                                                          \
-		vec4 comp = textureLod(rt2_, uv_, lod_);                               \
-		g_.normal = comp.xyz * 2.0 - 1.0;                                      \
-		g_.metallic = comp.w;                                                  \
+#define readNormalMetallicFromGBuffer(rt2_, uv_, lod_, g_)                                                             \
+	{                                                                                                                  \
+		vec4 comp = textureLod(rt2_, uv_, lod_);                                                                       \
+		g_.normal = comp.xyz * 2.0 - 1.0;                                                                              \
+		g_.metallic = comp.w;                                                                                          \
 	}
 
 // Read from G-buffer
@@ -143,12 +143,7 @@ void readNormalFromGBuffer(in sampler2D rt2, in vec2 uv, out vec3 normal)
 }
 
 // Read from the G buffer
-void readGBuffer(in sampler2D rt0,
-	in sampler2D rt1,
-	in sampler2D rt2,
-	in vec2 uv,
-	in float lod,
-	out GbufferInfo g)
+void readGBuffer(in sampler2D rt0, in sampler2D rt1, in sampler2D rt2, in vec2 uv, in float lod, out GbufferInfo g)
 {
 	vec4 comp = textureLod(rt0, uv, lod);
 	g.diffuse = comp.xyz;

@@ -30,10 +30,8 @@ public:
 	/// Initialize with pre-allocated always mapped memory.
 	/// @param size The size of the GPU buffer.
 	/// @param alignment The working alignment.
-	/// @param maxAllocationSize The size in @a allocate cannot exceed
-	///        maxAllocationSize.
-	void init(
-		PtrSize size, U32 alignment, PtrSize maxAllocationSize = MAX_PTR_SIZE);
+	/// @param maxAllocationSize The size in @a allocate cannot exceed maxAllocationSize.
+	void init(PtrSize size, U32 alignment, PtrSize maxAllocationSize = MAX_PTR_SIZE);
 
 	/// Allocate memory for a dynamic buffer.
 	ANKI_USE_RESULT Error allocate(PtrSize size, PtrSize& outOffset);

@@ -38,14 +38,12 @@ const vec2 KERNEL[8] = vec2[](vec2(TEX_OFFSET.x, TEX_OFFSET.y),
 	vec2(TEX_OFFSET.x, -TEX_OFFSET.y),
 	vec2(TEX_OFFSET.x, 0.0));
 
-//==============================================================================
 vec3 grayScale(in vec3 col)
 {
 	float grey = (col.r + col.g + col.b) * 0.333333333; // aka: / 3.0
 	return vec3(grey);
 }
 
-//==============================================================================
 vec3 saturation(in vec3 col, in float factor)
 {
 	const vec3 lumCoeff = vec3(0.2125, 0.7154, 0.0721);
@@ -54,19 +52,16 @@ vec3 saturation(in vec3 col, in float factor)
 	return mix(intensity, col, factor);
 }
 
-//==============================================================================
 vec3 gammaCorrection(in float gamma, in vec3 col)
 {
 	return pow(col, vec3(1.0 / gamma));
 }
 
-//==============================================================================
 vec3 gammaCorrectionRgb(in vec3 gamma, in vec3 col)
 {
 	return pow(col, 1.0 / gamma);
 }
 
-//==============================================================================
 vec3 sharpen(in sampler2D tex, in vec2 texCoords)
 {
 	const float sharpenFactor = 0.25;
@@ -84,7 +79,6 @@ vec3 sharpen(in sampler2D tex, in vec2 texCoords)
 	return max(col, vec3(EPSILON));
 }
 
-//==============================================================================
 vec3 erosion(in sampler2D tex, in vec2 texCoords)
 {
 	vec3 minValue = textureRt(tex, texCoords).rgb;
@@ -98,7 +92,6 @@ vec3 erosion(in sampler2D tex, in vec2 texCoords)
 	return minValue;
 }
 
-//==============================================================================
 vec3 colorGrading(in vec3 color)
 {
 	const vec3 LUT_SCALE = vec3((LUT_SIZE - 1.0) / LUT_SIZE);
@@ -109,7 +102,6 @@ vec3 colorGrading(in vec3 color)
 	return textureLod(u_lut, lutCoords, 0.0).rgb;
 }
 
-//==============================================================================
 void main()
 {
 #if SHARPEN_ENABLED

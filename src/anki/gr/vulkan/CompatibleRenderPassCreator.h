@@ -31,8 +31,7 @@ public:
 
 	void destroy();
 
-	ANKI_USE_RESULT VkRenderPass getOrCreateCompatibleRenderPass(
-		const PipelineInitInfo& init);
+	ANKI_USE_RESULT VkRenderPass getOrCreateCompatibleRenderPass(const PipelineInitInfo& init);
 
 private:
 	class RenderPassKey
@@ -79,8 +78,7 @@ private:
 	GrManagerImpl* m_manager = nullptr;
 
 	Mutex m_mtx;
-	HashMap<RenderPassKey, VkRenderPass, RenderPassHasher, RenderPassCompare>
-		m_hashmap;
+	HashMap<RenderPassKey, VkRenderPass, RenderPassHasher, RenderPassCompare> m_hashmap;
 
 	VkRenderPass createNewRenderPass(const PipelineInitInfo& init);
 };

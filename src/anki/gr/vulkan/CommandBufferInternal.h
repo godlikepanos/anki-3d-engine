@@ -23,9 +23,7 @@ public:
 
 	~CommandBufferFactory();
 
-	ANKI_USE_RESULT Error init(GenericMemoryPoolAllocator<U8> alloc,
-		VkDevice dev,
-		uint32_t queueFamily);
+	ANKI_USE_RESULT Error init(GenericMemoryPoolAllocator<U8> alloc, VkDevice dev, uint32_t queueFamily);
 
 	/// Request a new command buffer.
 	VkCommandBuffer newCommandBuffer(Bool secondLevel);

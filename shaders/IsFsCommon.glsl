@@ -28,9 +28,9 @@ struct PointLight
 };
 
 // WORKAROUND: See glslang issue 304
-#define COPY_POINT_LIGHT(src_, dst_)                                           \
-	dst_.posRadius = src_.posRadius;                                           \
-	dst_.diffuseColorShadowmapId = src_.diffuseColorShadowmapId;               \
+#define COPY_POINT_LIGHT(src_, dst_)                                                                                   \
+	dst_.posRadius = src_.posRadius;                                                                                   \
+	dst_.diffuseColorShadowmapId = src_.diffuseColorShadowmapId;                                                       \
 	dst_.specularColorTexId = src_.specularColorTexId
 
 // Spot light
@@ -45,12 +45,12 @@ struct SpotLight
 };
 
 // WORKAROUND: See glslang issue 304
-#define COPY_SPOT_LIGHT(src_, dst_)                                            \
-	dst_.posRadius = src_.posRadius;                                           \
-	dst_.diffuseColorShadowmapId = src_.diffuseColorShadowmapId;               \
-	dst_.specularColorTexId = src_.specularColorTexId;                         \
-	dst_.lightDir = src_.lightDir;                                             \
-	dst_.outerCosInnerCos = src_.outerCosInnerCos;                             \
+#define COPY_SPOT_LIGHT(src_, dst_)                                                                                    \
+	dst_.posRadius = src_.posRadius;                                                                                   \
+	dst_.diffuseColorShadowmapId = src_.diffuseColorShadowmapId;                                                       \
+	dst_.specularColorTexId = src_.specularColorTexId;                                                                 \
+	dst_.lightDir = src_.lightDir;                                                                                     \
+	dst_.outerCosInnerCos = src_.outerCosInnerCos;                                                                     \
 	dst_.texProjectionMat = src_.texProjectionMat
 
 // Representation of a reflection probe
@@ -64,13 +64,11 @@ struct ReflectionProbe
 };
 
 // WORKAROUND: See glslang issue 304
-#define COPY_REFLECTION_PROBE(src_, dst_)                                      \
-	dst_.positionRadiusSq = src_.positionRadiusSq;                             \
+#define COPY_REFLECTION_PROBE(src_, dst_)                                                                              \
+	dst_.positionRadiusSq = src_.positionRadiusSq;                                                                     \
 	dst_.cubemapIndexPad3.x = src_.cubemapIndexPad3.x
 
-layout(ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING),
-	std140,
-	row_major) uniform u0_
+layout(ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING), std140, row_major) uniform u0_
 {
 	LightingUniforms u_lightingUniforms;
 };
@@ -82,45 +80,34 @@ layout(ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING + 1), std140) uniform u1_
 	PointLight u_pointLights[UBO_MAX_SIZE / (3 * 4 * 4)];
 };
 
-layout(ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING + 2),
-	std140,
-	row_major) uniform u2_
+layout(ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING + 2), std140, row_major) uniform u2_
 {
 	SpotLight u_spotLights[UBO_MAX_SIZE / (9 * 4 * 4)];
 };
 
-layout(std140,
-	row_major,
-	ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING + 3)) uniform u3_
+layout(std140, row_major, ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING + 3)) uniform u3_
 {
 	ReflectionProbe u_reflectionProbes[UBO_MAX_SIZE / (2 * 4 * 4)];
 };
 
-layout(ANKI_SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 0),
-	std430) readonly buffer s0_
+layout(ANKI_SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 0), std430) readonly buffer s0_
 {
 	uint u_clusters[];
 };
 
-layout(std430,
-	ANKI_SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 1)) readonly buffer s1_
+layout(std430, ANKI_SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 1)) readonly buffer s1_
 {
 	uint u_lightIndices[];
 };
 
-layout(ANKI_TEX_BINDING(LIGHT_SET,
-	LIGHT_TEX_BINDING)) uniform highp sampler2DArrayShadow u_spotMapArr;
-layout(ANKI_TEX_BINDING(LIGHT_SET,
-	LIGHT_TEX_BINDING + 1)) uniform highp samplerCubeArrayShadow u_omniMapArr;
+layout(ANKI_TEX_BINDING(LIGHT_SET, LIGHT_TEX_BINDING)) uniform highp sampler2DArrayShadow u_spotMapArr;
+layout(ANKI_TEX_BINDING(LIGHT_SET, LIGHT_TEX_BINDING + 1)) uniform highp samplerCubeArrayShadow u_omniMapArr;
 
-layout(ANKI_TEX_BINDING(LIGHT_SET,
-	LIGHT_TEX_BINDING + 2)) uniform samplerCubeArray u_reflectionsTex;
+layout(ANKI_TEX_BINDING(LIGHT_SET, LIGHT_TEX_BINDING + 2)) uniform samplerCubeArray u_reflectionsTex;
 
-layout(ANKI_TEX_BINDING(
-	LIGHT_SET, LIGHT_TEX_BINDING + 3)) uniform samplerCubeArray u_irradianceTex;
+layout(ANKI_TEX_BINDING(LIGHT_SET, LIGHT_TEX_BINDING + 3)) uniform samplerCubeArray u_irradianceTex;
 
-layout(ANKI_TEX_BINDING(
-	LIGHT_SET, LIGHT_TEX_BINDING + 4)) uniform sampler2D u_integrationLut;
+layout(ANKI_TEX_BINDING(LIGHT_SET, LIGHT_TEX_BINDING + 4)) uniform sampler2D u_integrationLut;
 
 #endif // FRAGMENT_SHADER
 

@@ -16,41 +16,42 @@ namespace anki
 /// @addtogroup util_thread
 /// @{
 
+/// The thread ID.
+using ThreadId = U64;
+
+/// It holds some information to be passed to the thread's callback
+class ThreadCallbackInfo
+{
+public:
+	void* m_userData;
+	const char* m_threadName;
+};
+
+/// The type of the tread callback
+using ThreadCallback = Error (*)(ThreadCallbackInfo&);
+
 /// Thread implementation
 class Thread : public NonCopyable
 {
 public:
-	using Id = U64;
-
-	/// It holds some information to be passed to the thread's callback
-	class Info
-	{
-	public:
-		void* m_userData;
-		const char* m_threadName;
-	};
-
-	/// The type of the tread callback
-	using Callback = Error (*)(Info&);
-
 	/// Create a thread with or without a name
 	/// @param[in] name The name of the new thread. Can be nullptr.
 	Thread(const char* name);
 
 	~Thread();
 
-	/// Start the thread
+	/// Start the thread.
 	/// @param userData The user data of the thread callback
 	/// @param callback The thread callback that will be executed
 	/// @param pinToCore Pin the thread to a core.
-	void start(void* userData, Callback callback, I pinToCore = -1);
+	void start(void* userData, ThreadCallback callback, I pinToCore = -1);
 
 	/// Wait for the thread to finish
 	/// @return The error code of the thread's callback
 	ANKI_USE_RESULT Error join();
 
 	/// Identify the current thread
-	static Id getCurrentThreadId();
+	static ThreadId getCurrentThreadId();
 
 anki_internal:
 	const char* getName() const
@@ -63,7 +64,7 @@ anki_internal:
 		return m_userData;
 	}
 
-	Callback getCallback() const
+	ThreadCallback getCallback() const
 	{
 		return m_callback;
 	}
@@ -71,7 +72,7 @@ anki_internal:
 private:
 	void* m_impl = nullptr; ///< The system native type
 	Array<char, 32> m_name; ///< The name of the thread
-	Callback m_callback = nullptr; ///< The callback
+	ThreadCallback m_callback = nullptr; ///< The callback
 	void* m_userData = nullptr; ///< The user date to pass to the callback
 
 #if ANKI_ASSERTIONS
@@ -125,8 +126,8 @@ private:
 	void* m_impl = nullptr; ///< The system native type
 };
 
-/// Mutual exclusion primitive. Like Mutex. It's better than Mutex only if the
-/// critical section will be executed in a very short period of time.
+/// Mutual exclusion primitive. Like Mutex. It's better than Mutex only if the critical section will be executed in a
+/// very short period of time.
 class SpinLock : public NonCopyable
 {
 public:
@@ -148,8 +149,7 @@ private:
 	std::atomic_flag m_lock = ATOMIC_FLAG_INIT;
 };
 
-/// Lock guard. When constructed it locks a TMutex and unlocks it when it gets
-/// destroyed.
+/// Lock guard. When constructed it locks a TMutex and unlocks it when it gets destroyed.
 /// @tparam TMutex Can be Mutex or SpinLock.
 template<typename TMutex>
 class LockGuard

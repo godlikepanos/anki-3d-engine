@@ -9,7 +9,6 @@
 namespace anki
 {
 
-//==============================================================================
 static void setPlane(const Vec4& abcd, Plane& p)
 {
 	Vec4 n = abcd.xyz0();
@@ -17,7 +16,6 @@ static void setPlane(const Vec4& abcd, Plane& p)
 	p = Plane(n / len, -abcd.w() / len);
 }
 
-//==============================================================================
 void extractClipPlanes(const Mat4& mvp, Array<Plane*, 6>& planes)
 {
 	// Plane equation coefficients

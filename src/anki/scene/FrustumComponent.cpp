@@ -5,12 +5,10 @@
 
 #include <anki/scene/FrustumComponent.h>
 #include <anki/scene/Visibility.h>
-#include <anki/util/Rtti.h>
 
 namespace anki
 {
 
-//==============================================================================
 FrustumComponent::FrustumComponent(SceneNode* node, Frustum* frustum)
 	: SceneComponent(CLASS_TYPE, node)
 	, m_frustum(frustum)
@@ -24,19 +22,15 @@ FrustumComponent::FrustumComponent(SceneNode* node, Frustum* frustum)
 	setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
 }
 
-//==============================================================================
 void FrustumComponent::setVisibilityTestResults(VisibilityTestResults* visible)
 {
 	ANKI_ASSERT(m_visible == nullptr);
 	m_visible = visible;
 
-	m_stats.m_renderablesCount =
-		visible->getCount(VisibilityGroupType::RENDERABLES_MS);
-	m_stats.m_lightsCount =
-		visible->getCount(VisibilityGroupType::LIGHTS_POINT);
+	m_stats.m_renderablesCount = visible->getCount(VisibilityGroupType::RENDERABLES_MS);
+	m_stats.m_lightsCount = visible->getCount(VisibilityGroupType::LIGHTS_POINT);
 }
 
-//==============================================================================
 Error FrustumComponent::update(SceneNode& node, F32, F32, Bool& updated)
 {
 	m_visible = nullptr;
@@ -65,12 +59,11 @@ Error FrustumComponent::update(SceneNode& node, F32, F32, Bool& updated)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void FrustumComponent::computeProjectionParams()
 {
 	const Mat4& m = m_pm;
 
-	if(isa<PerspectiveFrustum>(m_frustum))
+	if(m_frustum->getType() == Frustum::Type::PERSPECTIVE)
 	{
 		// First, z' = (m * Pv) / 2 + 0.5 where Pv is the view space position.
 		// Solving that for Pv.z we get

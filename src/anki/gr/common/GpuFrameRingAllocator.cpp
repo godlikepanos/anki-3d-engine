@@ -8,9 +8,7 @@
 namespace anki
 {
 
-//==============================================================================
-void GpuFrameRingAllocator::init(
-	PtrSize size, U32 alignment, PtrSize maxAllocationSize)
+void GpuFrameRingAllocator::init(PtrSize size, U32 alignment, PtrSize maxAllocationSize)
 {
 	ANKI_ASSERT(!isCreated());
 	ANKI_ASSERT(size > 0 && alignment > 0 && maxAllocationSize > 0);
@@ -23,31 +21,26 @@ void GpuFrameRingAllocator::init(
 	m_maxAllocationSize = maxAllocationSize;
 }
 
-//==============================================================================
 PtrSize GpuFrameRingAllocator::endFrame()
 {
 	ANKI_ASSERT(isCreated());
 
 	PtrSize perFrameSize = m_size / MAX_FRAMES_IN_FLIGHT;
 
-	PtrSize crntFrameStartOffset =
-		perFrameSize * (m_frame % MAX_FRAMES_IN_FLIGHT);
+	PtrSize crntFrameStartOffset = perFrameSize * (m_frame % MAX_FRAMES_IN_FLIGHT);
 
-	PtrSize nextFrameStartOffset =
-		perFrameSize * ((m_frame + 1) % MAX_FRAMES_IN_FLIGHT);
+	PtrSize nextFrameStartOffset = perFrameSize * ((m_frame + 1) % MAX_FRAMES_IN_FLIGHT);
 
 	PtrSize crntOffset = m_offset.exchange(nextFrameStartOffset);
 	ANKI_ASSERT(crntOffset >= crntFrameStartOffset);
 
 	PtrSize bytesUsed = crntOffset - crntFrameStartOffset;
-	PtrSize bytesNotUsed =
-		(bytesUsed > perFrameSize) ? 0 : perFrameSize - bytesUsed;
+	PtrSize bytesNotUsed = (bytesUsed > perFrameSize) ? 0 : perFrameSize - bytesUsed;
 
 	++m_frame;
 	return bytesNotUsed;
 }
 
-//==============================================================================
 Error GpuFrameRingAllocator::allocate(PtrSize originalSize, PtrSize& outOffset)
 {
 	ANKI_ASSERT(isCreated());
@@ -60,8 +53,7 @@ Error GpuFrameRingAllocator::allocate(PtrSize originalSize, PtrSize& outOffset)
 
 	PtrSize offset = m_offset.fetchAdd(size);
 	PtrSize perFrameSize = m_size / MAX_FRAMES_IN_FLIGHT;
-	PtrSize crntFrameStartOffset =
-		perFrameSize * (m_frame % MAX_FRAMES_IN_FLIGHT);
+	PtrSize crntFrameStartOffset = perFrameSize * (m_frame % MAX_FRAMES_IN_FLIGHT);
 
 	if(offset - crntFrameStartOffset + size <= perFrameSize)
 	{
@@ -86,18 +78,14 @@ Error GpuFrameRingAllocator::allocate(PtrSize originalSize, PtrSize& outOffset)
 	return err;
 }
 
-//==============================================================================
 #if ANKI_ENABLE_TRACE
 PtrSize GpuFrameRingAllocator::getUnallocatedMemorySize() const
 {
 	PtrSize perFrameSize = m_size / MAX_FRAMES_IN_FLIGHT;
-	PtrSize crntFrameStartOffset =
-		perFrameSize * (m_frame % MAX_FRAMES_IN_FLIGHT);
-	PtrSize usedSize =
-		m_offset.get() - crntFrameStartOffset + m_lastAllocatedSize.get();
+	PtrSize crntFrameStartOffset = perFrameSize * (m_frame % MAX_FRAMES_IN_FLIGHT);
+	PtrSize usedSize = m_offset.get() - crntFrameStartOffset + m_lastAllocatedSize.get();
 
-	PtrSize remaining =
-		(perFrameSize >= usedSize) ? (perFrameSize - usedSize) : 0;
+	PtrSize remaining = (perFrameSize >= usedSize) ? (perFrameSize - usedSize) : 0;
 	return remaining;
 }
 #endif

@@ -24,13 +24,11 @@ public:
 
 MyApp* app = nullptr;
 
-//==============================================================================
 Error MyApp::init(int argc, char* argv[])
 {
 	if(argc < 3)
 	{
-		ANKI_LOGE("usage: %s /path/to/config.xml relative/path/to/scene.lua",
-			argv[0]);
+		ANKI_LOGE("usage: %s /path/to/config.xml relative/path/to/scene.lua", argv[0]);
 		return ErrorCode::USER_DATA;
 	}
 
@@ -46,8 +44,7 @@ Error MyApp::init(int argc, char* argv[])
 	MainRenderer& renderer = getMainRenderer();
 	ResourceManager& resources = getResourceManager();
 
-	renderer.getOffscreenRenderer().getVolumetric().setFog(
-		Vec3(1.0, 0.9, 0.9), 0.7);
+	renderer.getOffscreenRenderer().getVolumetric().setFog(Vec3(1.0, 0.9, 0.9), 0.7);
 
 	if(getenv("PROFILE"))
 	{
@@ -75,13 +72,11 @@ Error MyApp::init(int argc, char* argv[])
 	SceneNode& cam = scene.getActiveCamera();
 
 	PlayerNode* pnode;
-	ANKI_CHECK(scene.newSceneNode<PlayerNode>("player",
-		pnode,
-		cam.getComponent<MoveComponent>().getLocalOrigin()
-			- Vec4(0.0, 1.0, 0.0, 0.0)));
+	ANKI_CHECK(scene.newSceneNode<PlayerNode>(
+		"player", pnode, cam.getComponent<MoveComponent>().getLocalOrigin() - Vec4(0.0, 1.0, 0.0, 0.0)));
 
-	cam.getComponent<MoveComponent>().setLocalTransform(Transform(
-		Vec4(0.0), Mat3x4(Euler(toRad(0.0), toRad(180.0), toRad(0.0))), 1.0));
+	cam.getComponent<MoveComponent>().setLocalTransform(
+		Transform(Vec4(0.0), Mat3x4(Euler(toRad(0.0), toRad(180.0), toRad(0.0))), 1.0));
 
 	pnode->addChild(&cam);
 #endif
@@ -89,7 +84,6 @@ Error MyApp::init(int argc, char* argv[])
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error MyApp::userMainLoop(Bool& quit)
 {
 	F32 dist = 0.1;
@@ -109,8 +103,7 @@ Error MyApp::userMainLoop(Bool& quit)
 	}
 
 	// move the camera
-	static MoveComponent* mover =
-		&scene.getActiveCamera().getComponent<MoveComponent>();
+	static MoveComponent* mover = &scene.getActiveCamera().getComponent<MoveComponent>();
 
 	if(in.getKey(KeyCode::_1))
 	{
@@ -191,8 +184,7 @@ Error MyApp::userMainLoop(Bool& quit)
 #if !PLAYER && MOUSE
 	if(in.getMousePosition() != Vec2(0.0) && !m_profile)
 	{
-		F32 angY = -ang * in.getMousePosition().x() * mouseSensivity
-			* renderer.getAspectRatio();
+		F32 angY = -ang * in.getMousePosition().x() * mouseSensivity * renderer.getAspectRatio();
 
 		mover->rotateLocalY(angY);
 		mover->rotateLocalX(ang * in.getMousePosition().y() * mouseSensivity);
@@ -208,7 +200,6 @@ Error MyApp::userMainLoop(Bool& quit)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 int main(int argc, char* argv[])
 {
 	Error err = ErrorCode::NONE;

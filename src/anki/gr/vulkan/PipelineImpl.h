@@ -55,40 +55,31 @@ private:
 
 	ANKI_USE_RESULT Error initCompute(const PipelineInitInfo& init);
 
-	void initShaders(
-		const PipelineInitInfo& init, VkGraphicsPipelineCreateInfo& ci);
+	void initShaders(const PipelineInitInfo& init, VkGraphicsPipelineCreateInfo& ci);
 
 	ANKI_USE_RESULT VkPipelineVertexInputStateCreateInfo* initVertexStage(
-		const VertexStateInfo& vertex,
-		VkPipelineVertexInputStateCreateInfo& ci);
+		const VertexStateInfo& vertex, VkPipelineVertexInputStateCreateInfo& ci);
 
-	ANKI_USE_RESULT VkPipelineInputAssemblyStateCreateInfo*
-	initInputAssemblyState(const InputAssemblerStateInfo& ia,
-		VkPipelineInputAssemblyStateCreateInfo& ci);
+	ANKI_USE_RESULT VkPipelineInputAssemblyStateCreateInfo* initInputAssemblyState(
+		const InputAssemblerStateInfo& ia, VkPipelineInputAssemblyStateCreateInfo& ci);
 
-	ANKI_USE_RESULT VkPipelineTessellationStateCreateInfo*
-	initTessellationState(const TessellationStateInfo& t,
-		VkPipelineTessellationStateCreateInfo& ci);
+	ANKI_USE_RESULT VkPipelineTessellationStateCreateInfo* initTessellationState(
+		const TessellationStateInfo& t, VkPipelineTessellationStateCreateInfo& ci);
 
-	ANKI_USE_RESULT VkPipelineViewportStateCreateInfo* initViewportState(
-		VkPipelineViewportStateCreateInfo& ci);
+	ANKI_USE_RESULT VkPipelineViewportStateCreateInfo* initViewportState(VkPipelineViewportStateCreateInfo& ci);
 
 	ANKI_USE_RESULT VkPipelineRasterizationStateCreateInfo* initRasterizerState(
-		const RasterizerStateInfo& r,
-		VkPipelineRasterizationStateCreateInfo& ci);
+		const RasterizerStateInfo& r, VkPipelineRasterizationStateCreateInfo& ci);
 
-	ANKI_USE_RESULT VkPipelineMultisampleStateCreateInfo* initMsState(
-		VkPipelineMultisampleStateCreateInfo& ci);
+	ANKI_USE_RESULT VkPipelineMultisampleStateCreateInfo* initMsState(VkPipelineMultisampleStateCreateInfo& ci);
 
 	ANKI_USE_RESULT VkPipelineDepthStencilStateCreateInfo* initDsState(
-		const DepthStencilStateInfo& ds,
-		VkPipelineDepthStencilStateCreateInfo& ci);
+		const DepthStencilStateInfo& ds, VkPipelineDepthStencilStateCreateInfo& ci);
 
 	ANKI_USE_RESULT VkPipelineColorBlendStateCreateInfo* initColorState(
 		const ColorStateInfo& c, VkPipelineColorBlendStateCreateInfo& ci);
 
-	ANKI_USE_RESULT VkPipelineDynamicStateCreateInfo* initDynamicState(
-		VkPipelineDynamicStateCreateInfo& ci);
+	ANKI_USE_RESULT VkPipelineDynamicStateCreateInfo* initDynamicState(VkPipelineDynamicStateCreateInfo& ci);
 };
 /// @}
 

@@ -13,18 +13,13 @@ import xml.etree.ElementTree as et
 identation_level = 0
 out_file = None
 
-separator = "//=============================================================" \
-	"================="
-
 def parse_commandline():
 	""" Parse the command line arguments """
 
-	parser = optparse.OptionParser(usage = "usage: %prog [options]", \
-		description = "Create LUA bindings using XML")
+	parser = optparse.OptionParser(usage = "usage: %prog [options]", description = "Create LUA bindings using XML")
 
-	parser.add_option("-i", "--input", dest = "inp",
-		type = "string", help = "specify the XML files to parse. " \
-		"Seperate with :")
+	parser.add_option("-i", "--input", dest = "inp", type = "string", 
+		help = "specify the XML files to parse. Seperate with :")
 
 	(options, args) = parser.parse_args()
 
@@ -60,10 +55,8 @@ def type_is_bool(type):
 def type_is_number(type):
 	""" Check if a type is number """
 
-	numbers = ["U8", "U16", "U32", "U64", "I8", "I16", "I32", "I64", \
-		"U", "I", "PtrSize", "F32", "F64", \
-		"int", "unsigned", "unsigned int", "short", "unsigned short", "uint", \
-		"float", "double"]
+	numbers = ["U8", "U16", "U32", "U64", "I8", "I16", "I32", "I64", "U", "I", "PtrSize", "F32", "F64", \
+		"int", "unsigned", "unsigned int", "short", "unsigned short", "uint", "float", "double"]
 
 	it_is = False
 	for num in numbers:
@@ -142,14 +135,11 @@ def ret(ret_el):
 			wglue("luaL_setmetatable(l, \"%s\");" % type)
 
 			if is_ptr:
-				wglue("ud->initPointed(%d, const_cast<%s*>(ret));"
-						% (type_sig(type), type))
+				wglue("ud->initPointed(%d, const_cast<%s*>(ret));" % (type_sig(type), type))
 			elif is_ref:
-				wglue("ud->initPointed(%d, const_cast<%s*>(&ret));"
-						% (type_sig(type), type))
+				wglue("ud->initPointed(%d, const_cast<%s*>(&ret));" % (type_sig(type), type))
 		else:
-			wglue("size = UserData::computeSizeForGarbageCollected<%s>();" \
-					% type)
+			wglue("size = UserData::computeSizeForGarbageCollected<%s>();" % type)
 			wglue("voidp = lua_newuserdata(l, size);")
 			wglue("luaL_setmetatable(l, \"%s\");" % type)
 
@@ -168,8 +158,7 @@ def arg(arg_txt, stack_index, index):
 
 	if type_is_bool(type) or type_is_number(type):
 		wglue("%s arg%d;" % (type, index))
-		wglue("if(LuaBinder::checkNumber(l, %d, arg%d))" \
-			% (stack_index, index))
+		wglue("if(LuaBinder::checkNumber(l, %d, arg%d))" % (stack_index, index))
 		wglue("{")
 		ident(1)
 		wglue("return -1;")
@@ -177,16 +166,14 @@ def arg(arg_txt, stack_index, index):
 		wglue("}")
 	elif type == "char" or type == "CString":
 		wglue("const char* arg%d;" % index)
-		wglue("if(LuaBinder::checkString(l, %d, arg%d))" \
-			% (stack_index, index))
+		wglue("if(LuaBinder::checkString(l, %d, arg%d))" % (stack_index, index))
 		wglue("{")
 		ident(1)
 		wglue("return -1;")
 		ident(-1)
 		wglue("}")
 	else:
-		wglue("if(LuaBinder::checkUserData(l, %d, \"%s\", %d, ud))" \
-			% (stack_index, type, type_sig(type)))
+		wglue("if(LuaBinder::checkUserData(l, %d, \"%s\", %d, ud))" % (stack_index, type, type_sig(type)))
 		wglue("{")
 		ident(1)
 		wglue("return -1;")
@@ -194,8 +181,7 @@ def arg(arg_txt, stack_index, index):
 		wglue("}")
 		wglue("")
 
-		wglue("%s* iarg%d = ud->getData<%s>();" \
-			% (type, index, type))
+		wglue("%s* iarg%d = ud->getData<%s>();" % (type, index, type))
 
 		if is_ptr:
 			wglue("%s arg%d(iarg%d);" % (arg_txt, index, index))
@@ -290,12 +276,8 @@ def method(class_name, meth_el):
 	meth_name = meth_el.get("name")
 	meth_alias = get_meth_alias(meth_el)
 
-	global separator
-
-	wglue(separator)
 	wglue("/// Pre-wrap method %s::%s." % (class_name, meth_name))
-	wglue("static inline int pwrap%s%s(lua_State* l)" \
-		% (class_name, meth_alias))
+	wglue("static inline int pwrap%s%s(lua_State* l)" % (class_name, meth_alias))
 	wglue("{")
 	ident(1)
 	write_local_vars()
@@ -304,8 +286,7 @@ def method(class_name, meth_el):
 
 	# Get this pointer
 	wglue("// Get \"this\" as \"self\"")
-	wglue("if(LuaBinder::checkUserData(l, 1, classname%s, %d, ud))" \
-		% (class_name, type_sig(class_name)))
+	wglue("if(LuaBinder::checkUserData(l, 1, classname%s, %d, ud))" % (class_name, type_sig(class_name)))
 	wglue("{")
 	ident(1)
 	wglue("return -1;")
@@ -345,7 +326,6 @@ def method(class_name, meth_el):
 	wglue("")
 
 	# Write the actual function
-	wglue(separator)
 	wglue("/// Wrap method %s::%s." % (class_name, meth_name))
 	wglue("static int wrap%s%s(lua_State* l)" % (class_name, meth_alias))
 	wglue("{")
@@ -370,12 +350,8 @@ def static_method(class_name, meth_el):
 	meth_name = meth_el.get("name")
 	meth_alias = get_meth_alias(meth_el)
 
-	global separator
-
-	wglue(separator)
 	wglue("/// Pre-wrap static method %s::%s." % (class_name, meth_name))
-	wglue("static inline int pwrap%s%s(lua_State* l)" \
-		% (class_name, meth_alias))
+	wglue("static inline int pwrap%s%s(lua_State* l)" % (class_name, meth_alias))
 	wglue("{")
 	ident(1)
 	write_local_vars()
@@ -396,8 +372,7 @@ def static_method(class_name, meth_el):
 	if ret_txt is None:
 		wglue("%s::%s(%s);" % (class_name, meth_name, args_str))
 	else:
-		wglue("%s ret = %s::%s(%s);" \
-			% (ret_txt, class_name, meth_name, args_str))
+		wglue("%s ret = %s::%s(%s);" % (ret_txt, class_name, meth_name, args_str))
 
 	wglue("")
 	ret(ret_el)
@@ -407,7 +382,6 @@ def static_method(class_name, meth_el):
 	wglue("")
 
 	# Write the actual function
-	wglue(separator)
 	wglue("/// Wrap static method %s::%s." % (class_name, meth_name))
 	wglue("static int wrap%s%s(lua_State* l)" % (class_name, meth_alias))
 	wglue("{")
@@ -429,9 +403,6 @@ def static_method(class_name, meth_el):
 def constructor(constr_el, class_name):
 	""" Handle constructor """
 
-	global separator
-
-	wglue(separator)
 	wglue("/// Pre-wrap constructor for %s." % (class_name))
 	wglue("static inline int pwrap%sCtor(lua_State* l)" % class_name)
 	wglue("{")
@@ -451,8 +422,7 @@ def constructor(constr_el, class_name):
 	wglue("luaL_setmetatable(l, classname%s);" % class_name)
 	wglue("ud = static_cast<UserData*>(voidp);")
 	wglue("ud->initGarbageCollected(%d);" % type_sig(class_name))
-	wglue("::new(ud->getData<%s>()) %s(%s);" \
-			% (class_name, class_name, args_str))
+	wglue("::new(ud->getData<%s>()) %s(%s);" % (class_name, class_name, args_str))
 	wglue("")
 
 	wglue("return 1;")
@@ -462,7 +432,6 @@ def constructor(constr_el, class_name):
 	wglue("")
 
 	# Write the actual function
-	wglue(separator)
 	wglue("/// Wrap constructor for %s." % class_name)
 	wglue("static int wrap%sCtor(lua_State* l)" % class_name)
 	wglue("{")
@@ -484,9 +453,6 @@ def constructor(constr_el, class_name):
 def destructor(class_name):
 	""" Create a destructor """
 
-	global separator
-
-	wglue(separator)
 	wglue("/// Wrap destructor for %s." % (class_name))
 	wglue("static int wrap%sDtor(lua_State* l)" % class_name)
 	wglue("{")
@@ -494,8 +460,7 @@ def destructor(class_name):
 	write_local_vars();
 
 	wglue("LuaBinder::checkArgsCount(l, 1);")
-	wglue("if(LuaBinder::checkUserData(l, 1, classname%s, %d, ud))" \
-		% (class_name, type_sig(class_name)))
+	wglue("if(LuaBinder::checkUserData(l, 1, classname%s, %d, ud))" % (class_name, type_sig(class_name)))
 	wglue("{")
 	ident(1)
 	wglue("return -1;")
@@ -506,8 +471,7 @@ def destructor(class_name):
 	wglue("if(ud->isGarbageCollected())")
 	wglue("{")
 	ident(1)
-	wglue("%s* inst = ud->getData<%s>();" \
-		% (class_name, class_name))
+	wglue("%s* inst = ud->getData<%s>();" % (class_name, class_name))
 	wglue("inst->~%s();" % class_name)
 	ident(-1)
 	wglue("}")
@@ -522,21 +486,10 @@ def destructor(class_name):
 def class_(class_el):
 	""" Create a class """
 
-	global separator
 	class_name = class_el.get("name")
 
 	# Write class decoration and stuff
-	wglue(separator)
-	cmnt = "// %s" % class_name
-	cmnt += (79 - len(cmnt)) * " "
-	cmnt += "="
-	wglue(cmnt)
-	wglue(separator)
-	wglue("")
-
-	wglue(separator)
-	wglue("static const char* classname%s = \"%s\";" \
-		% (class_name, class_name))
+	wglue("static const char* classname%s = \"%s\";" % (class_name, class_name))
 	wglue("")
 	wglue("template<>")
 	wglue("I64 LuaBinder::getWrappedTypeSignature<%s>()" % class_name)
@@ -584,7 +537,6 @@ def class_(class_el):
 			meth_names_aliases.append([meth_name, meth_alias, is_static])
 
 	# Start class declaration
-	wglue(separator)
 	wglue("/// Wrap class %s." % class_name)
 	wglue("static inline void wrap%s(lua_State* l)" % class_name)
 	wglue("{")
@@ -593,13 +545,11 @@ def class_(class_el):
 
 	# Register constructor
 	if has_constructor:
-		wglue("LuaBinder::pushLuaCFuncStaticMethod(l, classname%s, \"new\", " \
-			"wrap%sCtor);" % (class_name, class_name))
+		wglue("LuaBinder::pushLuaCFuncStaticMethod(l, classname%s, \"new\", wrap%sCtor);" % (class_name, class_name))
 
 	# Register destructor
 	if has_constructor:
-		wglue("LuaBinder::pushLuaCFuncMethod(l, \"__gc\", wrap%sDtor);" \
-			% class_name)
+		wglue("LuaBinder::pushLuaCFuncMethod(l, \"__gc\", wrap%sDtor);" % class_name)
 
 	# Register methods
 	if len(meth_names_aliases) > 0:
@@ -607,12 +557,10 @@ def class_(class_el):
 			meth_alias = meth_name_alias[1]
 			is_static = meth_name_alias[2]
 			if is_static:
-				wglue("LuaBinder::pushLuaCFuncStaticMethod(l, classname%s, " \
-					"\"%s\", wrap%s%s);" \
+				wglue("LuaBinder::pushLuaCFuncStaticMethod(l, classname%s, \"%s\", wrap%s%s);" \
 					% (class_name, meth_alias, class_name, meth_alias))
 			else:
-				wglue("LuaBinder::pushLuaCFuncMethod(l, \"%s\", wrap%s%s);" \
-					% (meth_alias, class_name, meth_alias))
+				wglue("LuaBinder::pushLuaCFuncMethod(l, \"%s\", wrap%s%s);" % (meth_alias, class_name, meth_alias))
 
 	wglue("lua_settop(l, 0);")
 
@@ -626,9 +574,6 @@ def function(func_el):
 	func_name = func_el.get("name")
 	func_alias = get_meth_alias(func_el)
 
-	global separator
-
-	wglue(separator)
 	wglue("/// Pre-wrap function %s." % func_name)
 	wglue("static inline int pwrap%s(lua_State* l)" % func_alias)
 	wglue("{")
@@ -668,7 +613,6 @@ def function(func_el):
 	wglue("")
 
 	# Write the actual function
-	wglue(separator)
 	wglue("/// Wrap function %s." % func_name)
 	wglue("static int wrap%s(lua_State* l)" % func_alias)
 	wglue("{")
@@ -691,7 +635,6 @@ def main():
 	""" Main function """
 
 	global out_file
-	global separator
 	filenames = parse_commandline()
 
 	for filename in filenames:
@@ -722,7 +665,6 @@ def main():
 				func_names.append(f.get("name"))
 
 		# Wrap function
-		wglue(separator)
 		wglue("/// Wrap the module.")
 		wglue("void wrapModule%s(lua_State* l)" % get_base_fname(filename))
 		wglue("{")
@@ -730,8 +672,7 @@ def main():
 		for class_name in class_names:
 			wglue("wrap%s(l);" % class_name)
 		for func_name in func_names:
-			wglue("LuaBinder::pushLuaCFunc(l, \"%s\", wrap%s);" \
-				% (func_name, func_name))
+			wglue("LuaBinder::pushLuaCFunc(l, \"%s\", wrap%s);" % (func_name, func_name))
 		ident(-1)
 		wglue("}")
 		wglue("")

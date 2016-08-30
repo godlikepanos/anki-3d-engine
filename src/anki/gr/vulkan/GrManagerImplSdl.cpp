@@ -17,7 +17,6 @@
 namespace anki
 {
 
-//==============================================================================
 Error GrManagerImpl::initSurface(const GrManagerInitInfo& init)
 {
 	SDL_SysWMinfo wminfo;

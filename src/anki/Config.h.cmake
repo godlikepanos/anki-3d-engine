@@ -113,10 +113,6 @@
 // Enable performance counters
 #define ANKI_ENABLE_TRACE ${_ANKI_ENABLE_TRACE}
 
-//==============================================================================
-// Other                                                                       =
-//==============================================================================
-
 #define ANKI_FILE __FILE__
 #define ANKI_FUNC __func__
 
@@ -142,10 +138,6 @@
 #else
 #	define anki_internal protected
 #endif
-
-//==============================================================================
-// Engine config                                                               =
-//==============================================================================
 
 // General config
 #define ANKI_SAFE_ALIGNMENT 16

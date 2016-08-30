@@ -8,7 +8,6 @@
 namespace anki
 {
 
-//==============================================================================
 LightComponent::LightComponent(SceneNode* node, LightType type)
 	: SceneComponent(CLASS_TYPE, node)
 	, m_type(type)
@@ -18,7 +17,6 @@ LightComponent::LightComponent(SceneNode* node, LightType type)
 	m_radius = 1.0;
 }
 
-//==============================================================================
 Error LightComponent::update(SceneNode&, F32, F32, Bool& updated)
 {
 	if(m_dirty)

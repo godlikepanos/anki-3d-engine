@@ -10,13 +10,11 @@
 namespace anki
 {
 
-//==============================================================================
 /// Helper of (axb)xa
 static Vec4 crossAba(const Vec4& a, const Vec4& b)
 {
-	// We need to calculate the (axb)xa but we can use the triple product
-	// property ax(bxc) = b(a.c) - c(a.b) to make it faster
-	// Vec4 out = b * (a.dot(a)) - a * (a.dot(b));
+	// We need to calculate the (axb)xa but we can use the triple product property ax(bxc) = b(a.c) - c(a.b) to make it
+	// faster Vec4 out = b * (a.dot(a)) - a * (a.dot(b));
 	Vec4 out = a.cross(b.cross(a));
 	// printf("+%f %f %f %f\n", out.x(), out.y(), out.z(), out.w());
 	// out = b * (a.dot(a)) - a * (a.dot(b));
@@ -25,18 +23,13 @@ static Vec4 crossAba(const Vec4& a, const Vec4& b)
 	return out;
 }
 
-//==============================================================================
-void Gjk::support(const ConvexShape& shape0,
-	const ConvexShape& shape1,
-	const Vec4& dir,
-	Support& support)
+void Gjk::support(const ConvexShape& shape0, const ConvexShape& shape1, const Vec4& dir, Support& support)
 {
 	support.m_v0 = shape0.computeSupport(dir);
 	support.m_v1 = shape1.computeSupport(-dir);
 	support.m_v = support.m_v0 - support.m_v1;
 }
 
-//==============================================================================
 Bool Gjk::update(const Support& a)
 {
 	if(m_count == 2)
@@ -50,8 +43,7 @@ Bool Gjk::update(const Support& a)
 		// Compute the triangle's normal
 		Vec4 abc = ab.cross(ac);
 
-		// Compute a vector within the plane of the triangle,
-		// Pointing away from the edge ab
+		// Compute a vector within the plane of the triangle, Pointing away from the edge ab
 		Vec4 abp = ab.cross(abc);
 
 		if(abp.dot(ao) > 0.0)
@@ -76,8 +68,8 @@ Bool Gjk::update(const Support& a)
 			return false;
 		}
 
-		// If we get here, then the origin must be within the triangle,
-		// but we care whether it is above or below it, so test
+		// If we get here, then the origin must be within the triangle, but we care whether it is above or below it, so
+		// test
 		if(abc.dot(ao) > 0.0)
 		{
 			m_simplex[3] = m_simplex[2];
@@ -155,8 +147,7 @@ Bool Gjk::update(const Support& a)
 
 	check_face:
 
-		// We have a CCW wound triangle ABC
-		// the point is in front of this triangle
+		// We have a CCW wound triangle ABC the point is in front of this triangle
 		// it is NOT "below" edge BC
 		// it is NOT "above" the plane through A that's parallel to BC
 		Vec4 abp = ab.cross(abc);
@@ -198,7 +189,6 @@ Bool Gjk::update(const Support& a)
 	return true;
 }
 
-//==============================================================================
 Bool Gjk::intersect(const ConvexShape& shape0, const ConvexShape& shape1)
 {
 	// Chose random direction

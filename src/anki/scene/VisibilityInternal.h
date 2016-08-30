@@ -75,8 +75,7 @@ public:
 	/// Thread hive task.
 	static void callback(void* ud, U32 threadId, ThreadHive& hive)
 	{
-		GatherVisibleTrianglesTask& self =
-			*static_cast<GatherVisibleTrianglesTask*>(ud);
+		GatherVisibleTrianglesTask& self = *static_cast<GatherVisibleTrianglesTask*>(ud);
 		self.gather();
 	}
 
@@ -95,8 +94,7 @@ public:
 	/// Thread hive task.
 	static void callback(void* ud, U32 threadId, ThreadHive& hive)
 	{
-		RasterizeTrianglesTask& self =
-			*static_cast<RasterizeTrianglesTask*>(ud);
+		RasterizeTrianglesTask& self = *static_cast<RasterizeTrianglesTask*>(ud);
 		self.rasterize();
 	}
 
@@ -116,8 +114,7 @@ public:
 	/// Thread hive task.
 	static void callback(void* ud, U32 threadId, ThreadHive& hive)
 	{
-		GatherVisiblesFromSectorsTask& self =
-			*static_cast<GatherVisiblesFromSectorsTask*>(ud);
+		GatherVisiblesFromSectorsTask& self = *static_cast<GatherVisiblesFromSectorsTask*>(ud);
 		self.gather();
 	}
 
@@ -127,8 +124,7 @@ private:
 		ANKI_TRACE_START_EVENT(SCENE_VISIBILITY_ITERATE_SECTORS);
 		U testIdx = m_visCtx->m_testsCount.fetchAdd(1);
 
-		m_visCtx->m_scene->getSectorGroup().findVisibleNodes(
-			*m_frc, testIdx, m_r, m_sectorsCtx);
+		m_visCtx->m_scene->getSectorGroup().findVisibleNodes(*m_frc, testIdx, m_r, m_sectorsCtx);
 		ANKI_TRACE_STOP_EVENT(SCENE_VISIBILITY_ITERATE_SECTORS);
 	}
 };

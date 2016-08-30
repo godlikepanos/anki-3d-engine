@@ -39,18 +39,12 @@ public:
 	/// @note Not thread-safe.
 	void endFrame();
 
-	void allocate(PtrSize size,
-		BufferUsageBit usage,
-		TransientMemoryToken& token,
-		void*& ptr,
-		Error* outErr);
+	void allocate(PtrSize size, BufferUsageBit usage, TransientMemoryToken& token, void*& ptr, Error* outErr);
 
 	void* getBaseAddress(const TransientMemoryToken& token) const
 	{
-		ANKI_ASSERT(
-			token.m_lifetime == TransientMemoryTokenLifetime::PER_FRAME);
-		const PerFrameBuffer& frame =
-			m_perFrameBuffers[bufferUsageToTransient(token.m_usage)];
+		ANKI_ASSERT(token.m_lifetime == TransientMemoryTokenLifetime::PER_FRAME);
+		const PerFrameBuffer& frame = m_perFrameBuffers[bufferUsageToTransient(token.m_usage)];
 		void* addr = frame.m_mappedMem;
 		ANKI_ASSERT(addr);
 		return addr;
@@ -58,8 +52,7 @@ public:
 
 	VkBuffer getBufferHandle(BufferUsageBit usage) const
 	{
-		const PerFrameBuffer& frame =
-			m_perFrameBuffers[bufferUsageToTransient(usage)];
+		const PerFrameBuffer& frame = m_perFrameBuffers[bufferUsageToTransient(usage)];
 		ANKI_ASSERT(frame.m_bufferHandle);
 		return frame.m_bufferHandle;
 	}

@@ -8,9 +8,7 @@
 namespace anki
 {
 
-//==============================================================================
-void getFileExtension(
-	const CString& filename, GenericMemoryPoolAllocator<U8> alloc, String& out)
+void getFileExtension(const CString& filename, GenericMemoryPoolAllocator<U8> alloc, String& out)
 {
 	const char* pc = std::strrchr(&filename[0], '.');
 

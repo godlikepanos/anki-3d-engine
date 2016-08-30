@@ -78,21 +78,15 @@ public:
 
 	~Clusterer();
 
-	void init(const GenericMemoryPoolAllocator<U8>& alloc,
-		U clusterCountX,
-		U clusterCountY,
-		U clusterCountZ);
+	void init(const GenericMemoryPoolAllocator<U8>& alloc, U clusterCountX, U clusterCountY, U clusterCountZ);
 
 	/// Prepare for visibility tests.
 	void prepare(ThreadPool& threadpool, const FrustumComponent& frc);
 
-	void initTestResults(const GenericMemoryPoolAllocator<U8>& alloc,
-		ClustererTestResult& rez) const;
+	void initTestResults(const GenericMemoryPoolAllocator<U8>& alloc, ClustererTestResult& rez) const;
 
 	/// Bin collision shape.
-	void bin(const CollisionShape& cs,
-		const Aabb& csBox,
-		ClustererTestResult& rez) const;
+	void bin(const CollisionShape& cs, const Aabb& csBox, ClustererTestResult& rez) const;
 
 	/// A value that will be used in shaders to calculate the cluster index.
 	F32 getShaderMagicValue() const
@@ -152,18 +146,11 @@ private:
 
 	U calcZ(F32 zVspace) const;
 
-	void binGeneric(const CollisionShape& cs,
-		U xBegin,
-		U xEnd,
-		U yBegin,
-		U yEnd,
-		U zBegin,
-		U zEnd,
-		ClustererTestResult& rez) const;
+	void binGeneric(
+		const CollisionShape& cs, U xBegin, U xEnd, U yBegin, U yEnd, U zBegin, U zEnd, ClustererTestResult& rez) const;
 
 	/// Special fast path for binning spheres.
-	void binSphere(
-		const Sphere& s, const Aabb& aabb, ClustererTestResult& rez) const;
+	void binSphere(const Sphere& s, const Aabb& aabb, ClustererTestResult& rez) const;
 
 	void computeSplitRange(const CollisionShape& cs, U& zBegin, U& zEnd) const;
 
@@ -176,8 +163,7 @@ private:
 	void calcPlaneX(U j, const Vec4& projParams);
 
 	/// Call this when a shape is visible by all tiles.
-	void totallyInsideAllTiles(
-		U zBegin, U zEnd, ClustererTestResult& rez) const;
+	void totallyInsideAllTiles(U zBegin, U zEnd, ClustererTestResult& rez) const;
 };
 /// @}
 

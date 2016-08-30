@@ -16,8 +16,7 @@ namespace anki
 
 /// Quaternion. Used in rotations
 template<typename T>
-class alignas(16) TQuat
-	: public TVec<T, 4, typename TVec4Simd<T>::Type, TQuat<T>>
+class alignas(16) TQuat : public TVec<T, 4, typename TVec4Simd<T>::Type, TQuat<T>>
 {
 public:
 	using Base = TVec<T, 4, typename TVec4Simd<T>::Type, TQuat<T>>;
@@ -119,8 +118,7 @@ public:
 	explicit TQuat(const TMat3x4<T>& m)
 		: TQuat(m.getRotationPart())
 	{
-		ANKI_ASSERT(
-			isZero<T>(m(0, 3)) && isZero<T>(m(1, 3)) && isZero<T>(m(2, 3)));
+		ANKI_ASSERT(isZero<T>(m(0, 3)) && isZero<T>(m(1, 3)) && isZero<T>(m(2, 3)));
 	}
 
 	explicit TQuat(const TEuler<T>& eu)
@@ -264,8 +262,7 @@ public:
 		return out;
 	}
 
-	/// Returns q * this * q.Conjucated() aka returns a rotated this.
-	/// 18 muls, 12 adds
+	/// Returns q * this * q.Conjucated() aka returns a rotated this. 18 muls, 12 adds
 	TVec3<T> rotate(const TVec3<T>& v) const
 	{
 		ANKI_ASSERT(isZero<T>(1.0 - Base::getLength())); // Not normalized quat

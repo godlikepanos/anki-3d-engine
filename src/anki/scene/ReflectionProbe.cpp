@@ -14,13 +14,8 @@
 namespace anki
 {
 
-//==============================================================================
-// Misc                                                                        =
-//==============================================================================
-
 const FrustumComponentVisibilityTestFlag FRUSTUM_TEST_FLAGS =
-	FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS
-	| FrustumComponentVisibilityTestFlag::LIGHT_COMPONENTS;
+	FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS | FrustumComponentVisibilityTestFlag::LIGHT_COMPONENTS;
 
 /// Feedback component
 class ReflectionProbeMoveFeedbackComponent : public SceneComponent
@@ -47,16 +42,10 @@ public:
 	}
 };
 
-//==============================================================================
-// ReflectionProbe                                                             =
-//==============================================================================
-
-//==============================================================================
 ReflectionProbe::~ReflectionProbe()
 {
 }
 
-//==============================================================================
 Error ReflectionProbe::init(F32 radius)
 {
 	SceneComponent* comp;
@@ -66,9 +55,7 @@ Error ReflectionProbe::init(F32 radius)
 	addComponent(comp, true);
 
 	// Feedback component
-	comp =
-		getSceneAllocator().newInstance<ReflectionProbeMoveFeedbackComponent>(
-			this);
+	comp = getSceneAllocator().newInstance<ReflectionProbeMoveFeedbackComponent>(this);
 	addComponent(comp, true);
 
 	// The frustum components
@@ -99,12 +86,9 @@ Error ReflectionProbe::init(F32 radius)
 		m_cubeSides[i].m_frustum.setAll(ang, ang, zNear, EFFECTIVE_DISTANCE);
 		m_cubeSides[i].m_frustum.resetTransform(m_cubeSides[i].m_localTrf);
 
-		FrustumComponent* frc =
-			getSceneAllocator().newInstance<FrustumComponent>(
-				this, &m_cubeSides[i].m_frustum);
+		FrustumComponent* frc = getSceneAllocator().newInstance<FrustumComponent>(this, &m_cubeSides[i].m_frustum);
 
-		frc->setEnabledVisibilityTests(
-			FrustumComponentVisibilityTestFlag::NONE);
+		frc->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
 
 		addComponent(frc, true);
 	}
@@ -112,35 +96,31 @@ Error ReflectionProbe::init(F32 radius)
 	// Spatial component
 	m_spatialSphere.setCenter(Vec4(0.0));
 	m_spatialSphere.setRadius(radius);
-	comp = getSceneAllocator().newInstance<SpatialComponent>(
-		this, &m_spatialSphere);
+	comp = getSceneAllocator().newInstance<SpatialComponent>(this, &m_spatialSphere);
 	addComponent(comp, true);
 
 	// Reflection probe comp
-	ReflectionProbeComponent* reflc =
-		getSceneAllocator().newInstance<ReflectionProbeComponent>(this);
+	ReflectionProbeComponent* reflc = getSceneAllocator().newInstance<ReflectionProbeComponent>(this);
 	reflc->setRadius(radius);
 	addComponent(reflc, true);
 
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void ReflectionProbe::onMoveUpdate(MoveComponent& move)
 {
 	// Update frustum components
 	U count = 0;
-	Error err = iterateComponentsOfType<FrustumComponent>(
-		[&](FrustumComponent& frc) -> Error {
-			Transform trf = m_cubeSides[count].m_localTrf;
-			trf.setOrigin(move.getWorldTransform().getOrigin());
+	Error err = iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) -> Error {
+		Transform trf = m_cubeSides[count].m_localTrf;
+		trf.setOrigin(move.getWorldTransform().getOrigin());
 
-			frc.getFrustum().resetTransform(trf);
-			frc.markTransformForUpdate();
-			++count;
+		frc.getFrustum().resetTransform(trf);
+		frc.markTransformForUpdate();
+		++count;
 
-			return ErrorCode::NONE;
-		});
+		return ErrorCode::NONE;
+	});
 
 	ANKI_ASSERT(count == 6);
 	(void)err;
@@ -156,23 +136,18 @@ void ReflectionProbe::onMoveUpdate(MoveComponent& move)
 	reflc.setPosition(move.getWorldTransform().getOrigin());
 }
 
-//==============================================================================
 Error ReflectionProbe::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 {
-	// Check the reflection probe component and if it's marked for rendering
-	// enable the frustum components
-	const ReflectionProbeComponent& reflc =
-		getComponent<ReflectionProbeComponent>();
+	// Check the reflection probe component and if it's marked for rendering enable the frustum components
+	const ReflectionProbeComponent& reflc = getComponent<ReflectionProbeComponent>();
 
-	FrustumComponentVisibilityTestFlag testFlags = reflc.getMarkedForRendering()
-		? FRUSTUM_TEST_FLAGS
-		: FrustumComponentVisibilityTestFlag::NONE;
+	FrustumComponentVisibilityTestFlag testFlags =
+		reflc.getMarkedForRendering() ? FRUSTUM_TEST_FLAGS : FrustumComponentVisibilityTestFlag::NONE;
 
-	Error err = iterateComponentsOfType<FrustumComponent>(
-		[testFlags](FrustumComponent& frc) -> Error {
-			frc.setEnabledVisibilityTests(testFlags);
-			return ErrorCode::NONE;
-		});
+	Error err = iterateComponentsOfType<FrustumComponent>([testFlags](FrustumComponent& frc) -> Error {
+		frc.setEnabledVisibilityTests(testFlags);
+		return ErrorCode::NONE;
+	});
 	(void)err;
 
 	return ErrorCode::NONE;

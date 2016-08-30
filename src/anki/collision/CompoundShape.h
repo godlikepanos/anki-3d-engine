@@ -18,11 +18,6 @@ namespace anki
 class CompoundShape : public CollisionShape, public NonCopyable
 {
 public:
-	static Bool classof(const CollisionShape& c)
-	{
-		return c.getType() == Type::COMPOUND;
-	}
-
 	CompoundShape();
 
 	/// Implements CollisionShape::testPlane
@@ -59,7 +54,6 @@ private:
 	Chunk m_dflt;
 };
 
-//==============================================================================
 template<typename TFunc>
 Error CompoundShape::iterateShapes(TFunc f) const
 {

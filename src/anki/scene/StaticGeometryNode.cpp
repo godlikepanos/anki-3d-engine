@@ -10,10 +10,6 @@
 namespace anki
 {
 
-//==============================================================================
-// StaticGeometryRenderComponent                                               =
-//==============================================================================
-
 /// The implementation of static geometry node renderable component.
 class StaticGeometryRenderComponent : public RenderComponent
 {
@@ -32,23 +28,15 @@ public:
 	}
 };
 
-//==============================================================================
-// StaticGeometryPatchNode                                                     =
-//==============================================================================
-
-//==============================================================================
-StaticGeometryPatchNode::StaticGeometryPatchNode(
-	SceneGraph* scene, CString name)
+StaticGeometryPatchNode::StaticGeometryPatchNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
 {
 }
 
-//==============================================================================
 StaticGeometryPatchNode::~StaticGeometryPatchNode()
 {
 }
 
-//==============================================================================
 Error StaticGeometryPatchNode::init(const ModelPatch* modelPatch)
 {
 	ANKI_ASSERT(modelPatch);
@@ -59,25 +47,21 @@ Error StaticGeometryPatchNode::init(const ModelPatch* modelPatch)
 	for(U i = 1; i < m_modelPatch->getSubMeshesCount(); i++)
 	{
 		SpatialComponent* spatial =
-			getSceneAllocator().newInstance<SpatialComponent>(
-				this, &m_modelPatch->getBoundingShapeSub(i));
+			getSceneAllocator().newInstance<SpatialComponent>(this, &m_modelPatch->getBoundingShapeSub(i));
 
 		addComponent(spatial, true);
 
-		spatial->setSpatialOrigin(
-			m_modelPatch->getBoundingShapeSub(i).getCenter());
+		spatial->setSpatialOrigin(m_modelPatch->getBoundingShapeSub(i).getCenter());
 		spatial->setAutomaticCleanup(true);
 	}
 
 	// Create render component
-	RenderComponent* rcomp =
-		getSceneAllocator().newInstance<StaticGeometryRenderComponent>(this);
+	RenderComponent* rcomp = getSceneAllocator().newInstance<StaticGeometryRenderComponent>(this);
 	addComponent(rcomp, true);
 
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error StaticGeometryPatchNode::buildRendering(RenderingBuildInfo& data) const
 {
 	Array<U32, ANKI_GL_MAX_SUB_DRAWCALLS> indicesCountArray;
@@ -87,8 +71,7 @@ Error StaticGeometryPatchNode::buildRendering(RenderingBuildInfo& data) const
 	PipelinePtr ppline;
 
 	m_modelPatch->getRenderingDataSub(data.m_key,
-		WeakArray<U8>(const_cast<U8*>(data.m_subMeshIndicesArray),
-										  data.m_subMeshIndicesCount),
+		WeakArray<U8>(const_cast<U8*>(data.m_subMeshIndicesArray), data.m_subMeshIndicesCount),
 		grResources,
 		ppline,
 		indicesCountArray,
@@ -99,11 +82,9 @@ Error StaticGeometryPatchNode::buildRendering(RenderingBuildInfo& data) const
 
 	if(drawCount == 1)
 	{
-		data.m_cmdb->bindResourceGroup(
-			grResources, 0, data.m_dynamicBufferInfo);
+		data.m_cmdb->bindResourceGroup(grResources, 0, data.m_dynamicBufferInfo);
 
-		data.m_cmdb->drawElements(
-			indicesCountArray[0], 1, indicesOffsetArray[0] / sizeof(U16));
+		data.m_cmdb->drawElements(indicesCountArray[0], 1, indicesOffsetArray[0] / sizeof(U16));
 	}
 	else if(drawCount == 0)
 	{
@@ -118,22 +99,15 @@ Error StaticGeometryPatchNode::buildRendering(RenderingBuildInfo& data) const
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
-// StaticGeometryNode                                                          =
-//==============================================================================
-
-//==============================================================================
 StaticGeometryNode::StaticGeometryNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
 {
 }
 
-//==============================================================================
 StaticGeometryNode::~StaticGeometryNode()
 {
 }
 
-//==============================================================================
 Error StaticGeometryNode::init(const CString& filename)
 {
 	ANKI_CHECK(getResourceManager().loadResource(filename, m_model));
@@ -142,8 +116,7 @@ Error StaticGeometryNode::init(const CString& filename)
 	for(const ModelPatch* patch : m_model->getModelPatches())
 	{
 		StaticGeometryPatchNode* node;
-		ANKI_CHECK(getSceneGraph().newSceneNode<StaticGeometryPatchNode>(
-			CString(), node, patch));
+		ANKI_CHECK(getSceneGraph().newSceneNode<StaticGeometryPatchNode>(CString(), node, patch));
 
 		++i;
 	}

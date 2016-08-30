@@ -16,32 +16,27 @@ namespace anki
 /// @addtogroup util_file
 /// @{
 
-/// An abstraction over typical files and files in ziped archives. This class
-/// can read from regular C files, zip files and on Android from the packed
-/// asset files.
+/// Open mode
+enum class FileOpenFlag : U8
+{
+	NONE = 0,
+	READ = 1 << 0,
+	WRITE = 1 << 1,
+	APPEND = WRITE | (1 << 3),
+	BINARY = 1 << 4,
+	ENDIAN_LITTLE = 1 << 5, ///< The default
+	ENDIAN_BIG = 1 << 6
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(FileOpenFlag, inline)
+
+/// An abstraction over typical files and files in ziped archives. This class can read from regular C files, zip files
+/// and on Android from the packed asset files.
 /// To identify the file:
-/// - If the path contains ".ankizip" (eg /path/to/arch.ankizip/path/file.ext)
-///   it tries to open the archive and read the file from there.
-/// - If the filename starts with '$' it will try to load a system specific
-///   file. For Android this is a file in the .apk
+/// - If the filename starts with '$' it will try to load a system specific file. For Android this is a file in the .apk
 /// - If the above are false then try to load a regular C file
 class File : public NonCopyable
 {
 public:
-	/// Open mode
-	enum class OpenFlag : U8
-	{
-		NONE = 0,
-		READ = 1 << 0,
-		WRITE = 1 << 1,
-		APPEND = WRITE | (1 << 3),
-		BINARY = 1 << 4,
-		ENDIAN_LITTLE = 1 << 5, ///< The default
-		ENDIAN_BIG = 1 << 6
-	};
-
-	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(OpenFlag, friend);
-
 	/// Passed to seek function
 	enum class SeekOrigin
 	{
@@ -67,8 +62,8 @@ public:
 
 	/// Open a file.
 	/// @param[in] filename The file to open
-	/// @param[in] openMask The open flags. It's a combination of OpenFlag enum
-	ANKI_USE_RESULT Error open(const CString& filename, OpenFlag openMask);
+	/// @param[in] openMask The open flags. It's a combination of FileOpenFlag enum
+	ANKI_USE_RESULT Error open(const CString& filename, FileOpenFlag openMask);
 
 	/// Return true if the file is oppen
 	Bool isOpen() const
@@ -87,19 +82,15 @@ public:
 
 	/// Read all the contents of a text file
 	/// If the file is not rewined it will probably fail
-	ANKI_USE_RESULT Error readAllText(
-		GenericMemoryPoolAllocator<U8> alloc, String& out);
+	ANKI_USE_RESULT Error readAllText(GenericMemoryPoolAllocator<U8> alloc, String& out);
 
-	/// Read all the contents of a text file
-	/// If the file is not rewined it will probably fail
+	/// Read all the contents of a text file. If the file is not rewined it will probably fail.
 	ANKI_USE_RESULT Error readAllText(StringAuto& out);
 
-	/// Read 32bit unsigned integer. Set the endianness if the file's
-	/// endianness is different from the machine's
+	/// Read 32bit unsigned integer. Set the endianness if the file's endianness is different from the machine's.
 	ANKI_USE_RESULT Error readU32(U32& u);
 
-	/// Read 32bit float. Set the endianness if the file's endianness is
-	/// different from the machine's
+	/// Read 32bit float. Set the endianness if the file's endianness is different from the machine's.
 	ANKI_USE_RESULT Error readF32(F32& f);
 
 	/// Write data to the file
@@ -108,7 +99,7 @@ public:
 	/// Write formated text
 	ANKI_USE_RESULT Error writeText(CString format, ...);
 
-	/// Set the position indicator to a new position
+	/// Set the position indicator to a new position.
 	/// @param offset Number of bytes to offset from origin
 	/// @param origin Position used as reference for the offset
 	ANKI_USE_RESULT Error seek(PtrSize offset, SeekOrigin origin);
@@ -122,17 +113,16 @@ private:
 	{
 		NONE = 0,
 		C, ///< C file
-		ZIP, ///< Ziped file
 		SPECIAL ///< For example file is located in the android apk
 	};
 
 	void* m_file = nullptr; ///< A native file type
 	Type m_type = Type::NONE;
-	OpenFlag m_flags = OpenFlag::NONE; ///< All the flags. Set on open
+	FileOpenFlag m_flags = FileOpenFlag::NONE; ///< All the flags. Set on open
 	U32 m_size = 0;
 
 	/// Get the current machine's endianness
-	static OpenFlag getMachineEndianness();
+	static FileOpenFlag getMachineEndianness();
 
 	/// Get the type of the file
 	ANKI_USE_RESULT Error identifyFile(const CString& filename,
@@ -142,25 +132,18 @@ private:
 		Type& type);
 
 	/// Open a C file
-	ANKI_USE_RESULT Error openCFile(const CString& filename, OpenFlag flags);
-
-	/// Open an archive and the file inside
-	/// @param[in] archive The filename of the archive
-	/// @param[in] archived The filename of the file inside the archive
-	ANKI_USE_RESULT Error openZipFile(
-		const CString& archive, const CString& archived, OpenFlag flags);
+	ANKI_USE_RESULT Error openCFile(const CString& filename, FileOpenFlag flags);
 
 #if ANKI_OS == ANKI_OS_ANDROID
 	/// Open an Android file
-	ANKI_USE_RESULT Error openAndroidFile(
-		const CString& filename, OpenFlag flags);
+	ANKI_USE_RESULT Error openAndroidFile(const CString& filename, FileOpenFlag flags);
 #endif
 
 	void zero()
 	{
 		m_file = nullptr;
 		m_type = Type::NONE;
-		m_flags = OpenFlag::NONE;
+		m_flags = FileOpenFlag::NONE;
 		m_size = 0;
 	}
 };

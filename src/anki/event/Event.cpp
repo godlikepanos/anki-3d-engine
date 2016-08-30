@@ -11,18 +11,15 @@
 namespace anki
 {
 
-//==============================================================================
 Event::Event(EventManager* manager)
 	: m_manager(manager)
 {
 }
 
-//==============================================================================
 Event::~Event()
 {
 }
 
-//==============================================================================
 void Event::init(F32 startTime, F32 duration, SceneNode* snode, Flag flags)
 {
 	m_startTime = startTime;
@@ -37,7 +34,6 @@ void Event::init(F32 startTime, F32 duration, SceneNode* snode, Flag flags)
 	}
 }
 
-//==============================================================================
 void Event::setMarkedForDeletion()
 {
 	if(!getMarkedForDeletion())
@@ -47,7 +43,6 @@ void Event::setMarkedForDeletion()
 	}
 }
 
-//==============================================================================
 F32 Event::getDelta(F32 crntTime) const
 {
 	F32 d = crntTime - m_startTime; // delta
@@ -55,13 +50,11 @@ F32 Event::getDelta(F32 crntTime) const
 	return dp;
 }
 
-//==============================================================================
 SceneGraph& Event::getSceneGraph()
 {
 	return m_manager->getSceneGraph();
 }
 
-//==============================================================================
 const SceneGraph& Event::getSceneGraph() const
 {
 	return m_manager->getSceneGraph();

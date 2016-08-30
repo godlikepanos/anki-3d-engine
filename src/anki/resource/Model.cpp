@@ -18,22 +18,15 @@
 namespace anki
 {
 
-//==============================================================================
-// ModelPatch                                                                  =
-//==============================================================================
-
-//==============================================================================
 ModelPatch::ModelPatch(Model* model)
 	: m_model(model)
 {
 }
 
-//==============================================================================
 ModelPatch::~ModelPatch()
 {
 }
 
-//==============================================================================
 void ModelPatch::getRenderingDataSub(const RenderingKey& key,
 	WeakArray<U8> subMeshIndicesArray,
 	ResourceGroupPtr& resourceGroup,
@@ -66,16 +59,12 @@ void ModelPatch::getRenderingDataSub(const RenderingKey& key,
 	}
 }
 
-//==============================================================================
 U ModelPatch::getLodCount() const
 {
 	return max<U>(m_meshCount, getMaterial().getLodCount());
 }
 
-//==============================================================================
-Error ModelPatch::create(WeakArray<CString> meshFNames,
-	const CString& mtlFName,
-	ResourceManager* manager)
+Error ModelPatch::create(WeakArray<CString> meshFNames, const CString& mtlFName, ResourceManager* manager)
 {
 	ANKI_ASSERT(meshFNames.getSize() > 0);
 
@@ -103,8 +92,7 @@ Error ModelPatch::create(WeakArray<CString> meshFNames,
 		rcinit.m_indexBuffer.m_buffer = m_meshes[i]->getIndexBuffer();
 		rcinit.m_indexSize = 2;
 
-		m_grResources[i] =
-			manager->getGrManager().newInstance<ResourceGroup>(rcinit);
+		m_grResources[i] = manager->getGrManager().newInstance<ResourceGroup>(rcinit);
 
 		++m_meshCount;
 	}
@@ -112,7 +100,6 @@ Error ModelPatch::create(WeakArray<CString> meshFNames,
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 PipelinePtr ModelPatch::getPipeline(const RenderingKey& key) const
 {
 	// Preconditions
@@ -136,8 +123,7 @@ PipelinePtr ModelPatch::getPipeline(const RenderingKey& key) const
 	LockGuard<Mutex> lock(m_lock);
 
 	PipelinePtr& ppline =
-		m_pplines[U(key.m_pass)][key.m_lod][key.m_tessellation]
-				 [Material::getInstanceGroupIdx(key.m_instanceCount)];
+		m_pplines[U(key.m_pass)][key.m_lod][key.m_tessellation][Material::getInstanceGroupIdx(key.m_instanceCount)];
 
 	// Lazily create it
 	if(ANKI_UNLIKELY(!ppline.isCreated()))
@@ -147,8 +133,7 @@ PipelinePtr ModelPatch::getPipeline(const RenderingKey& key) const
 		PipelineInitInfo pplineInit;
 		computePipelineInitInfo(key, pplineInit);
 
-		pplineInit.m_shaders[U(ShaderType::VERTEX)] =
-			variant.getShader(ShaderType::VERTEX);
+		pplineInit.m_shaders[U(ShaderType::VERTEX)] = variant.getShader(ShaderType::VERTEX);
 
 		if(key.m_tessellation)
 		{
@@ -159,8 +144,7 @@ PipelinePtr ModelPatch::getPipeline(const RenderingKey& key) const
 				variant.getShader(ShaderType::TESSELLATION_EVALUATION);
 		}
 
-		pplineInit.m_shaders[U(ShaderType::FRAGMENT)] =
-			variant.getShader(ShaderType::FRAGMENT);
+		pplineInit.m_shaders[U(ShaderType::FRAGMENT)] = variant.getShader(ShaderType::FRAGMENT);
 
 		// Create
 		GrManager& gr = m_model->getManager().getGrManager();
@@ -170,9 +154,7 @@ PipelinePtr ModelPatch::getPipeline(const RenderingKey& key) const
 	return ppline;
 }
 
-//==============================================================================
-void ModelPatch::computePipelineInitInfo(
-	const RenderingKey& key, PipelineInitInfo& pinit) const
+void ModelPatch::computePipelineInitInfo(const RenderingKey& key, PipelineInitInfo& pinit) const
 {
 	//
 	// Vertex state
@@ -186,25 +168,20 @@ void ModelPatch::computePipelineInitInfo(
 	{
 		vert.m_bindingCount = 1;
 		vert.m_attributeCount = 4;
-		vert.m_bindings[0].m_stride =
-			sizeof(Vec3) + sizeof(HVec2) + 2 * sizeof(U32);
+		vert.m_bindings[0].m_stride = sizeof(Vec3) + sizeof(HVec2) + 2 * sizeof(U32);
 
-		vert.m_attributes[0].m_format =
-			PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
+		vert.m_attributes[0].m_format = PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
 		vert.m_attributes[0].m_offset = 0;
 
-		vert.m_attributes[1].m_format =
-			PixelFormat(ComponentFormat::R16G16, TransformFormat::FLOAT);
+		vert.m_attributes[1].m_format = PixelFormat(ComponentFormat::R16G16, TransformFormat::FLOAT);
 		vert.m_attributes[1].m_offset = sizeof(Vec3);
 
 		if(key.m_pass == Pass::MS_FS)
 		{
-			vert.m_attributes[2].m_format = PixelFormat(
-				ComponentFormat::R10G10B10A2, TransformFormat::SNORM);
+			vert.m_attributes[2].m_format = PixelFormat(ComponentFormat::R10G10B10A2, TransformFormat::SNORM);
 			vert.m_attributes[2].m_offset = sizeof(Vec3) + sizeof(U32);
 
-			vert.m_attributes[3].m_format = PixelFormat(
-				ComponentFormat::R10G10B10A2, TransformFormat::SNORM);
+			vert.m_attributes[3].m_format = PixelFormat(ComponentFormat::R10G10B10A2, TransformFormat::SNORM);
 			vert.m_attributes[3].m_offset = sizeof(Vec3) + sizeof(U32) * 2;
 		}
 		else
@@ -244,8 +221,7 @@ void ModelPatch::computePipelineInitInfo(
 		color.m_attachmentCount = 1;
 		color.m_attachments[0].m_format = IS_COLOR_ATTACHMENT_PIXEL_FORMAT;
 		color.m_attachments[0].m_srcBlendMethod = BlendMethod::SRC_ALPHA;
-		color.m_attachments[0].m_dstBlendMethod =
-			BlendMethod::ONE_MINUS_SRC_ALPHA;
+		color.m_attachments[0].m_dstBlendMethod = BlendMethod::ONE_MINUS_SRC_ALPHA;
 	}
 	else
 	{
@@ -257,17 +233,11 @@ void ModelPatch::computePipelineInitInfo(
 	}
 }
 
-//==============================================================================
-// Model                                                                       =
-//==============================================================================
-
-//==============================================================================
 Model::Model(ResourceManager* manager)
 	: ResourceObject(manager)
 {
 }
 
-//==============================================================================
 Model::~Model()
 {
 	auto alloc = getAllocator();
@@ -280,7 +250,6 @@ Model::~Model()
 	m_modelPatches.destroy(alloc);
 }
 
-//==============================================================================
 Error Model::load(const ResourceFilename& filename)
 {
 	auto alloc = getAllocator();
@@ -307,8 +276,7 @@ Error Model::load(const ResourceFilename& filename)
 	{
 		++count;
 		// Move to next
-		ANKI_CHECK(
-			modelPatchEl.getNextSiblingElement("modelPatch", modelPatchEl));
+		ANKI_CHECK(modelPatchEl.getNextSiblingElement("modelPatch", modelPatchEl));
 	} while(modelPatchEl);
 
 	// Check number of model patches
@@ -363,16 +331,12 @@ Error Model::load(const ResourceFilename& filename)
 			return ErrorCode::OUT_OF_MEMORY;
 		}
 
-		ANKI_CHECK(
-			mpatch->create(WeakArray<CString>(&meshesFnames[0], meshesCount),
-				cstr,
-				&getManager()));
+		ANKI_CHECK(mpatch->create(WeakArray<CString>(&meshesFnames[0], meshesCount), cstr, &getManager()));
 
 		m_modelPatches[count++] = mpatch;
 
 		// Move to next
-		ANKI_CHECK(
-			modelPatchEl.getNextSiblingElement("modelPatch", modelPatchEl));
+		ANKI_CHECK(modelPatchEl.getNextSiblingElement("modelPatch", modelPatchEl));
 	} while(modelPatchEl);
 
 	// Calculate compound bounding volume
@@ -382,8 +346,7 @@ Error Model::load(const ResourceFilename& filename)
 
 	for(auto it = m_modelPatches.begin() + 1; it != m_modelPatches.end(); ++it)
 	{
-		m_visibilityShape = m_visibilityShape.getCompoundShape(
-			(*it)->getMesh(key).getBoundingShape());
+		m_visibilityShape = m_visibilityShape.getCompoundShape((*it)->getMesh(key).getBoundingShape());
 	}
 
 	return ErrorCode::NONE;

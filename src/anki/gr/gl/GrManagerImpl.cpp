@@ -12,7 +12,6 @@
 namespace anki
 {
 
-//==============================================================================
 GrManagerImpl::~GrManagerImpl()
 {
 	if(m_thread)
@@ -31,13 +30,11 @@ GrManagerImpl::~GrManagerImpl()
 	m_manager = nullptr;
 }
 
-//==============================================================================
 GrAllocator<U8> GrManagerImpl::getAllocator() const
 {
 	return m_manager->getAllocator();
 }
 
-//==============================================================================
 Error GrManagerImpl::init(GrManagerInitInfo& init)
 {
 	// Init the backend of the backend
@@ -48,13 +45,11 @@ Error GrManagerImpl::init(GrManagerInitInfo& init)
 	m_state->initMainThread(*init.m_config);
 
 	// Dyn manager
-	m_transManager =
-		m_manager->getAllocator().newInstance<TransientMemoryManager>();
+	m_transManager = m_manager->getAllocator().newInstance<TransientMemoryManager>();
 	m_transManager->initMainThread(m_manager->getAllocator(), *init.m_config);
 
 	// Create thread
-	m_thread =
-		m_manager->getAllocator().newInstance<RenderingThread>(m_manager);
+	m_thread = m_manager->getAllocator().newInstance<RenderingThread>(m_manager);
 
 	// Start it
 	m_thread->start();

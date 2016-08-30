@@ -109,17 +109,11 @@ public:
 	/// 	return false;
 	/// }
 	/// @endcode
-	Bool compareExchange(Value& expected,
-		const Value& desired,
-		AtomicMemoryOrder memOrd = MEMORY_ORDER)
+	Bool compareExchange(Value& expected, const Value& desired, AtomicMemoryOrder memOrd = MEMORY_ORDER)
 	{
 #if defined(__GNUC__)
-		return __atomic_compare_exchange_n(&m_val,
-			&expected,
-			desired,
-			false,
-			static_cast<int>(memOrd),
-			__ATOMIC_RELAXED);
+		return __atomic_compare_exchange_n(
+			&m_val, &expected, desired, false, static_cast<int>(memOrd), __ATOMIC_RELAXED);
 #else
 #error "TODO"
 #endif

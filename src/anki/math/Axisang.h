@@ -55,12 +55,10 @@ public:
 
 	explicit TAxisang(const TMat3<T>& m3)
 	{
-		if(isZero<T>(m3(0, 1) - m3(1, 0)) && isZero<T>(m3(0, 2) - m3(2, 0))
-			&& isZero<T>(m3(1, 2) - m3(2, 1)))
+		if(isZero<T>(m3(0, 1) - m3(1, 0)) && isZero<T>(m3(0, 2) - m3(2, 0)) && isZero<T>(m3(1, 2) - m3(2, 1)))
 		{
 
-			if((absolute<T>(m3(0, 1) + m3(1, 0)) < 0.1)
-				&& (absolute<T>(m3(0, 2) + m3(2, 0)) < 0.1)
+			if((absolute<T>(m3(0, 1) + m3(1, 0)) < 0.1) && (absolute<T>(m3(0, 2) + m3(2, 0)) < 0.1)
 				&& (absolute<T>(m3(1, 2) + m3(2, 1)) < 0.1)
 				&& (absolute<T>(m3(0, 0) + m3(1, 1) + m3(2, 2)) - 3) < 0.1)
 			{
@@ -130,8 +128,7 @@ public:
 			return;
 		}
 
-		T s = sqrt((m3(2, 1) - m3(1, 2)) * (m3(2, 1) - m3(1, 2))
-			+ (m3(0, 2) - m3(2, 0)) * (m3(0, 2) - m3(2, 0))
+		T s = sqrt((m3(2, 1) - m3(1, 2)) * (m3(2, 1) - m3(1, 2)) + (m3(0, 2) - m3(2, 0)) * (m3(0, 2) - m3(2, 0))
 			+ (m3(1, 0) - m3(0, 1)) * (m3(1, 0) - m3(0, 1)));
 
 		if(absolute(s) < 0.001)
@@ -195,11 +192,7 @@ public:
 	String toString(TAlloc alloc) const
 	{
 		String s;
-		Error err = s.sprintf("axis: %f %f %f, angle: %f",
-			m_axis[0],
-			m_axis[1],
-			m_axis[2],
-			m_ang);
+		Error err = s.sprintf("axis: %f %f %f, angle: %f", m_axis[0], m_axis[1], m_axis[2], m_ang);
 		(void)err;
 		return s;
 	}

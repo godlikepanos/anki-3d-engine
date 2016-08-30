@@ -10,7 +10,6 @@
 namespace anki
 {
 
-//==============================================================================
 SamplerImpl::~SamplerImpl()
 {
 	if(m_handle)
@@ -19,7 +18,6 @@ SamplerImpl::~SamplerImpl()
 	}
 }
 
-//==============================================================================
 Error SamplerImpl::init(const SamplerInitInfo& ii)
 {
 	// Fill the create cio
@@ -38,8 +36,7 @@ Error SamplerImpl::init(const SamplerInitInfo& ii)
 		ci.magFilter = ci.minFilter = VK_FILTER_LINEAR;
 	}
 
-	if(ii.m_mipmapFilter == SamplingFilter::BASE
-		|| ii.m_mipmapFilter == SamplingFilter::NEAREST)
+	if(ii.m_mipmapFilter == SamplingFilter::BASE || ii.m_mipmapFilter == SamplingFilter::NEAREST)
 	{
 		ci.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
 	}
@@ -50,13 +47,11 @@ Error SamplerImpl::init(const SamplerInitInfo& ii)
 
 	if(ii.m_repeat)
 	{
-		ci.addressModeU = ci.addressModeV = ci.addressModeW =
-			VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		ci.addressModeU = ci.addressModeV = ci.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	}
 	else
 	{
-		ci.addressModeU = ci.addressModeV = ci.addressModeW =
-			VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		ci.addressModeU = ci.addressModeV = ci.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	}
 
 	ci.mipLodBias = 0.0;

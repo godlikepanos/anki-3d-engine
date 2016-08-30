@@ -11,79 +11,66 @@
 namespace anki
 {
 
-//==============================================================================
-// Misc                                                                        =
-//==============================================================================
+static Array<const char*, U(TraceEventType::COUNT)> eventNames = {{"SCENE_UPDATE",
+	"SCENE_DELETE_STUFF",
+	"SCENE_PHYSICS_UPDATE",
+	"SCENE_NODES_UPDATE",
+	"SCENE_VISIBILITY_TESTS",
+	"VIS_TEST",
+	"VIS_COMBINE_RESULTS",
+	"VIS_ITERATE_SECTORS",
+	"VIS_GATHER_TRIANGLES",
+	"VIS_RASTERIZE",
+	"VIS_RASTERIZER_TEST",
+	"RENDER",
+	"RENDER_MS",
+	"RENDER_IS",
+	"RENDER_SM",
+	"RENDER_IR",
+	"RENDER_DRAWER",
+	"RENDERER_COMMAND_BUFFER_BUILDING",
+	"RENDERER_LIGHT_BINNING",
+	"GL_THREAD",
+	"GL_2ND_LEVEL_CMD_BUFFER",
+	"GL_BIND_RESOURCES",
+	"GL_BIND_PPLINE",
+	"GL_CMD_BUFFER_DESTROY",
+	"SWAP_BUFFERS",
+	"BARRIER_WAIT"}};
 
-static Array<const char*, U(TraceEventType::COUNT)> eventNames = {
-	{"SCENE_UPDATE",
-		"SCENE_DELETE_STUFF",
-		"SCENE_PHYSICS_UPDATE",
-		"SCENE_NODES_UPDATE",
-		"SCENE_VISIBILITY_TESTS",
-		"VIS_TEST",
-		"VIS_COMBINE_RESULTS",
-		"VIS_ITERATE_SECTORS",
-		"VIS_GATHER_TRIANGLES",
-		"VIS_RASTERIZE",
-		"VIS_RASTERIZER_TEST",
-		"RENDER",
-		"RENDER_MS",
-		"RENDER_IS",
-		"RENDER_SM",
-		"RENDER_IR",
-		"RENDER_DRAWER",
-		"RENDERER_COMMAND_BUFFER_BUILDING",
-		"RENDERER_LIGHT_BINNING",
-		"GL_THREAD",
-		"GL_2ND_LEVEL_CMD_BUFFER",
-		"GL_BIND_RESOURCES",
-		"GL_BIND_PPLINE",
-		"GL_CMD_BUFFER_DESTROY",
-		"SWAP_BUFFERS",
-		"BARRIER_WAIT"}};
+static Array<const char*, U(TraceCounterType::COUNT)> counterNames = {{"GR_DRAWCALLS",
+	"GR_DYNAMIC_UNIFORMS_SIZE",
+	"GR_DYNAMIC_STORAGE_SIZE",
+	"GR_VERTICES",
+	"GR_PIPELINES_CREATED",
+	"GR_PIPELINE_BINDS_SKIPPED",
+	"GR_PIPELINE_BINDS_HAPPENED",
+	"RENDERER_LIGHTS",
+	"RENDERER_SHADOW_PASSES",
+	"RENDERER_MERGED_DRAWCALLS",
+	"RENDERER_REFLECTIONS",
+	"RESOURCE_ASYNC_TASKS",
+	"SCENE_NODES_UPDATED"}};
 
-static Array<const char*, U(TraceCounterType::COUNT)> counterNames = {
-	{"GR_DRAWCALLS",
-		"GR_DYNAMIC_UNIFORMS_SIZE",
-		"GR_DYNAMIC_STORAGE_SIZE",
-		"GR_VERTICES",
-		"GR_PIPELINES_CREATED",
-		"GR_PIPELINE_BINDS_SKIPPED",
-		"GR_PIPELINE_BINDS_HAPPENED",
-		"RENDERER_LIGHTS",
-		"RENDERER_SHADOW_PASSES",
-		"RENDERER_MERGED_DRAWCALLS",
-		"RENDERER_REFLECTIONS",
-		"RESOURCE_ASYNC_TASKS",
-		"SCENE_NODES_UPDATED"}};
-
-#define ANKI_TRACE_FILE_ERROR()                                                \
-	if(err)                                                                    \
-	{                                                                          \
-		ANKI_LOGE("Error writing the trace file");                             \
+#define ANKI_TRACE_FILE_ERROR()                                                                                        \
+	if(err)                                                                                                            \
+	{                                                                                                                  \
+		ANKI_LOGE("Error writing the trace file");                                                                     \
 	}
 
 const U MAX_EVENTS_DEPTH = 20;
 thread_local HighRezTimer::Scalar g_traceEventStartTime[MAX_EVENTS_DEPTH];
 thread_local I g_traceEventsInFlight = 0;
 
-//==============================================================================
-// TraceManager                                                                =
-//==============================================================================
-
-//==============================================================================
 TraceManager::~TraceManager()
 {
 	// No need to close the json (no need to add ']'). Chrome will take care
 	// of that
 }
 
-//==============================================================================
 Error TraceManager::create(HeapAllocator<U8> alloc, const CString& cacheDir)
 {
-	if(getenv("ANKI_DISABLE_TRACE")
-		&& CString(getenv("ANKI_DISABLE_TRACE")) == "1")
+	if(getenv("ANKI_DISABLE_TRACE") && CString(getenv("ANKI_DISABLE_TRACE")) == "1")
 	{
 		m_disabled = true;
 		return ErrorCode::NONE;
@@ -99,8 +86,7 @@ Error TraceManager::create(HeapAllocator<U8> alloc, const CString& cacheDir)
 	// Create per frame file
 	StringAuto perFrameFname(alloc);
 	perFrameFname.sprintf("%s/per_frame.csv", &cacheDir[0]);
-	ANKI_CHECK(
-		m_perFrameFile.open(perFrameFname.toCString(), File::OpenFlag::WRITE));
+	ANKI_CHECK(m_perFrameFile.open(perFrameFname.toCString(), File::OpenFlag::WRITE));
 
 	ANKI_CHECK(m_perFrameFile.writeText("FPS, "));
 	for(U i = 0; i < U(TraceCounterType::COUNT); ++i)
@@ -117,7 +103,6 @@ Error TraceManager::create(HeapAllocator<U8> alloc, const CString& cacheDir)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void TraceManager::startEvent()
 {
 	if(ANKI_UNLIKELY(m_disabled))
@@ -132,7 +117,6 @@ void TraceManager::startEvent()
 	g_traceEventStartTime[i] = HighRezTimer::getCurrentTime();
 }
 
-//==============================================================================
 void TraceManager::stopEvent(TraceEventType type)
 {
 	if(ANKI_UNLIKELY(m_disabled))
@@ -140,8 +124,7 @@ void TraceManager::stopEvent(TraceEventType type)
 		return;
 	}
 
-	ANKI_ASSERT(g_traceEventsInFlight > 0
-		&& g_traceEventsInFlight < I(MAX_EVENTS_DEPTH));
+	ANKI_ASSERT(g_traceEventsInFlight > 0 && g_traceEventsInFlight < I(MAX_EVENTS_DEPTH));
 	I i = --g_traceEventsInFlight;
 	ANKI_ASSERT(i >= 0 && i < I(MAX_EVENTS_DEPTH));
 	auto startedTime = g_traceEventStartTime[i];
@@ -152,11 +135,9 @@ void TraceManager::stopEvent(TraceEventType type)
 		auto now = HighRezTimer::getCurrentTime();
 		auto dur = now - startedTime;
 
-		m_entries[id] =
-			Entry{type, startedTime, dur, Thread::getCurrentThreadId()};
+		m_entries[id] = Entry{type, startedTime, dur, Thread::getCurrentThreadId()};
 
-		m_perFrameCounters[U(TraceCounterType::COUNT) + U(type)].fetchAdd(
-			U64(dur * 1000000000.0));
+		m_perFrameCounters[U(TraceCounterType::COUNT) + U(type)].fetchAdd(U64(dur * 1000000000.0));
 	}
 	else
 	{
@@ -165,7 +146,6 @@ void TraceManager::stopEvent(TraceEventType type)
 	}
 }
 
-//==============================================================================
 Error TraceManager::flushCounters()
 {
 	if(ANKI_UNLIKELY(m_disabled))
@@ -177,9 +157,8 @@ Error TraceManager::flushCounters()
 	HighRezTimer::Scalar now = HighRezTimer::getCurrentTime();
 	HighRezTimer::Scalar time = now - m_startFrameTime;
 	F32 fps = 1.0 / time;
-	ANKI_CHECK(m_traceFile.writeText(
-		"{\"name\": \"FPS\", \"cat\": \"PERF\", \"ph\": \"C\", "
-		"\"pid\": 1, \"ts\": %llu, \"args\": {\"val\": %f}},\n",
+	ANKI_CHECK(m_traceFile.writeText("{\"name\": \"FPS\", \"cat\": \"PERF\", \"ph\": \"C\", "
+									 "\"pid\": 1, \"ts\": %llu, \"args\": {\"val\": %f}},\n",
 		U64(m_startFrameTime * 1000000.0),
 		fps));
 
@@ -189,9 +168,8 @@ Error TraceManager::flushCounters()
 	{
 		auto count = m_perFrameCounters[i].exchange(0);
 
-		ANKI_CHECK(m_traceFile.writeText(
-			"{\"name\": \"%s\", \"cat\": \"PERF\", \"ph\": \"C\", "
-			"\"pid\": 1, \"ts\": %llu, \"args\": {\"val\": %llu}},\n",
+		ANKI_CHECK(m_traceFile.writeText("{\"name\": \"%s\", \"cat\": \"PERF\", \"ph\": \"C\", "
+										 "\"pid\": 1, \"ts\": %llu, \"args\": {\"val\": %llu}},\n",
 			counterNames[i],
 			U64(m_startFrameTime * 1000000.0),
 			count));
@@ -202,7 +180,6 @@ Error TraceManager::flushCounters()
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error TraceManager::flushEvents()
 {
 	if(ANKI_UNLIKELY(m_disabled))
@@ -226,9 +203,8 @@ Error TraceManager::flushEvents()
 			continue;
 		}
 
-		ANKI_CHECK(m_traceFile.writeText(
-			"{\"name\": \"%s\", \"cat\": \"PERF\", \"ph\": \"X\", "
-			"\"pid\": 1, \"tid\": %llu, \"ts\": %llu, \"dur\": %llu},\n",
+		ANKI_CHECK(m_traceFile.writeText("{\"name\": \"%s\", \"cat\": \"PERF\", \"ph\": \"X\", "
+										 "\"pid\": 1, \"tid\": %llu, \"ts\": %llu, \"dur\": %llu},\n",
 			eventNames[e.m_event],
 			e.m_tid,
 			startMicroSec,
@@ -245,7 +221,6 @@ Error TraceManager::flushEvents()
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void TraceManager::startFrame()
 {
 	if(ANKI_UNLIKELY(m_disabled))
@@ -256,7 +231,6 @@ void TraceManager::startFrame()
 	m_startFrameTime = HighRezTimer::getCurrentTime();
 }
 
-//==============================================================================
 void TraceManager::stopFrame()
 {
 	if(ANKI_UNLIKELY(m_disabled))

@@ -11,7 +11,7 @@ namespace anki
 
 #if 0
 
-//==============================================================================
+
 MainRendererPpsHdrEvent::MainRendererPpsHdrEvent(float startTime,
 	float duration,
 	float exposure_,
@@ -30,7 +30,7 @@ MainRendererPpsHdrEvent::MainRendererPpsHdrEvent(float startTime,
 	//originalData.blurringDist = hdr.getBlurringDistance();
 }
 
-//==============================================================================
+
 MainRendererPpsHdrEvent::MainRendererPpsHdrEvent(
 	const MainRendererPpsHdrEvent& b)
 	: Event(ET_MAIN_RENDERER_PPS_HDR, 0.0, 0.0)
@@ -38,7 +38,7 @@ MainRendererPpsHdrEvent::MainRendererPpsHdrEvent(
 	*this = b;
 }
 
-//==============================================================================
+
 MainRendererPpsHdrEvent& MainRendererPpsHdrEvent::operator=(
 	const MainRendererPpsHdrEvent& b)
 {
@@ -48,7 +48,7 @@ MainRendererPpsHdrEvent& MainRendererPpsHdrEvent::operator=(
 	return *this;
 }
 
-//==============================================================================
+
 void MainRendererPpsHdrEvent::updateSp(float /*prevUpdateTime*/, float crntTime)
 {
 	float d = crntTime - getStartTime(); // delta

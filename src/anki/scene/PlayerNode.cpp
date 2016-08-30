@@ -14,10 +14,6 @@
 namespace anki
 {
 
-//==============================================================================
-// PlayerNodeFeedbackComponent                                                 =
-//==============================================================================
-
 /// Feedback component.
 class PlayerNodeFeedbackComponent final : public SceneComponent
 {
@@ -31,15 +27,13 @@ public:
 	{
 		updated = false;
 
-		PlayerControllerComponent& playerc =
-			node.getComponent<PlayerControllerComponent>();
+		PlayerControllerComponent& playerc = node.getComponent<PlayerControllerComponent>();
 		const Input& in = node.getSceneGraph().getInput();
 		const F32 ang = toRad(7.0);
 
 		F32 y = in.getMousePosition().y();
 		F32 x = in.getMousePosition().x();
-		if(playerc.getTimestamp() == node.getGlobalTimestamp() || y != 0.0
-			|| x != 0.0)
+		if(playerc.getTimestamp() == node.getGlobalTimestamp() || y != 0.0 || x != 0.0)
 		{
 			MoveComponent& move = node.getComponent<MoveComponent>();
 
@@ -66,10 +60,6 @@ public:
 	}
 };
 
-//==============================================================================
-// PlayerNodeFeedbackComponent2                                                =
-//==============================================================================
-
 /// Feedback component.
 class PlayerNodeFeedbackComponent2 final : public SceneComponent
 {
@@ -83,8 +73,7 @@ public:
 	{
 		updated = false;
 
-		PlayerControllerComponent& playerc =
-			node.getComponent<PlayerControllerComponent>();
+		PlayerControllerComponent& playerc = node.getComponent<PlayerControllerComponent>();
 		MoveComponent& move = node.getComponent<MoveComponent>();
 		const Input& in = node.getSceneGraph().getInput();
 
@@ -121,36 +110,26 @@ public:
 	}
 };
 
-//==============================================================================
-// PlayerNode                                                                  =
-//==============================================================================
-
-//==============================================================================
 PlayerNode::PlayerNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
 {
 }
 
-//==============================================================================
 PlayerNode::~PlayerNode()
 {
 }
 
-//==============================================================================
 Error PlayerNode::init(const Vec4& position)
 {
 	// Create physics object
 	PhysicsPlayerControllerInitInfo init;
 	init.m_position = position;
-	m_player =
-		getSceneGraph().getPhysicsWorld().newInstance<PhysicsPlayerController>(
-			init);
+	m_player = getSceneGraph().getPhysicsWorld().newInstance<PhysicsPlayerController>(init);
 
 	SceneComponent* comp;
 
 	// Player controller component
-	comp = getSceneAllocator().newInstance<PlayerControllerComponent>(
-		this, m_player);
+	comp = getSceneAllocator().newInstance<PlayerControllerComponent>(this, m_player);
 	addComponent(comp, true);
 
 	// Feedback component

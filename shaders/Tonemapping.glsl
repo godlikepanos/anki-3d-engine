@@ -47,9 +47,7 @@ vec3 tonemapUncharted2(in vec3 color)
 	const float E = 0.02;
 	const float F = 0.30;
 
-	return ((color * (A * color + C * B) + D * E)
-			   / (color * (A * color + B) + D * F))
-		- E / F;
+	return ((color * (A * color + C * B) + D * E) / (color * (A * color + B) + D * F)) - E / F;
 }
 
 vec3 tonemap(in vec3 color, in float avgLum, in float threshold)

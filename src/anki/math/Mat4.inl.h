@@ -8,11 +8,6 @@
 namespace anki
 {
 
-//==============================================================================
-// Friends                                                                     =
-//==============================================================================
-
-//==============================================================================
 /// @memberof TMat4
 template<typename T>
 TMat4<T> operator+(const T f, const TMat4<T>& m4)
@@ -20,7 +15,6 @@ TMat4<T> operator+(const T f, const TMat4<T>& m4)
 	return m4 + f;
 }
 
-//==============================================================================
 /// @memberof TMat4
 template<typename T>
 TMat4<T> operator-(const T f, const TMat4<T>& m4)
@@ -33,7 +27,6 @@ TMat4<T> operator-(const T f, const TMat4<T>& m4)
 	return out;
 }
 
-//==============================================================================
 /// @memberof TMat4
 template<typename T>
 TMat4<T> operator*(const T f, const TMat4<T>& m4)
@@ -41,7 +34,6 @@ TMat4<T> operator*(const T f, const TMat4<T>& m4)
 	return m4 * f;
 }
 
-//==============================================================================
 /// @memberof TMat4
 template<typename T>
 TMat4<T> operator/(const T f, const TMat4<T>& m4)
@@ -56,15 +48,6 @@ TMat4<T> operator/(const T f, const TMat4<T>& m4)
 
 #if ANKI_SIMD == ANKI_SIMD_SSE
 
-//==============================================================================
-// SSE specializations                                                         =
-//==============================================================================
-
-//==============================================================================
-// Constructors                                                                =
-//==============================================================================
-
-//==============================================================================
 template<>
 inline TMat4<F32>::Base::TMat(const TMat4<F32>::Base& b)
 {
@@ -74,7 +57,6 @@ inline TMat4<F32>::Base::TMat(const TMat4<F32>::Base& b)
 	}
 }
 
-//==============================================================================
 template<>
 inline TMat4<F32>::Base::TMat(const F32 f)
 {
@@ -84,11 +66,6 @@ inline TMat4<F32>::Base::TMat(const F32 f)
 	}
 }
 
-//==============================================================================
-// Operators with same                                                         =
-//==============================================================================
-
-//==============================================================================
 template<>
 inline TMat4<F32>& TMat4<F32>::Base::operator=(const TMat4<F32>& b)
 {
@@ -99,7 +76,6 @@ inline TMat4<F32>& TMat4<F32>::Base::operator=(const TMat4<F32>& b)
 	return static_cast<TMat4<F32>&>(*this);
 }
 
-//==============================================================================
 template<>
 inline TMat4<F32> TMat4<F32>::Base::operator+(const TMat4<F32>& b) const
 {
@@ -111,7 +87,6 @@ inline TMat4<F32> TMat4<F32>::Base::operator+(const TMat4<F32>& b) const
 	return c;
 }
 
-//==============================================================================
 template<>
 inline TMat4<F32>& TMat4<F32>::Base::operator+=(const TMat4<F32>& b)
 {
@@ -122,7 +97,6 @@ inline TMat4<F32>& TMat4<F32>::Base::operator+=(const TMat4<F32>& b)
 	return static_cast<TMat4<F32>&>(*this);
 }
 
-//==============================================================================
 template<>
 inline TMat4<F32> TMat4<F32>::Base::operator-(const TMat4<F32>& b) const
 {
@@ -134,7 +108,6 @@ inline TMat4<F32> TMat4<F32>::Base::operator-(const TMat4<F32>& b) const
 	return c;
 }
 
-//==============================================================================
 template<>
 inline TMat4<F32>& TMat4<F32>::Base::operator-=(const TMat4<F32>& b)
 {
@@ -145,7 +118,6 @@ inline TMat4<F32>& TMat4<F32>::Base::operator-=(const TMat4<F32>& b)
 	return static_cast<TMat4<F32>&>(*this);
 }
 
-//==============================================================================
 template<>
 inline TMat4<F32> TMat4<F32>::Base::operator*(const TMat4<F32>& b) const
 {
@@ -171,11 +143,6 @@ inline TMat4<F32> TMat4<F32>::Base::operator*(const TMat4<F32>& b) const
 	return out;
 }
 
-//==============================================================================
-// Operators with other                                                        =
-//==============================================================================
-
-//==============================================================================
 template<>
 inline TVec4<F32> TMat4<F32>::Base::operator*(const TVec4<F32>& b) const
 {
@@ -189,16 +156,9 @@ inline TVec4<F32> TMat4<F32>::Base::operator*(const TVec4<F32>& b) const
 	return v;
 }
 
-//==============================================================================
-// Other                                                                       =
-//==============================================================================
-
-//==============================================================================
 template<>
-inline void TMat4<F32>::Base::setRows(const TVec4<F32>& a,
-	const TVec4<F32>& b,
-	const TVec4<F32>& c,
-	const TVec4<F32>& d)
+inline void TMat4<F32>::Base::setRows(
+	const TVec4<F32>& a, const TVec4<F32>& b, const TVec4<F32>& c, const TVec4<F32>& d)
 {
 	m_simd[0] = a.getSimd();
 	m_simd[1] = b.getSimd();
@@ -206,14 +166,12 @@ inline void TMat4<F32>::Base::setRows(const TVec4<F32>& a,
 	m_simd[3] = d.getSimd();
 }
 
-//==============================================================================
 template<>
 inline void TMat4<F32>::Base::setRow(const U i, const TVec4<F32>& v)
 {
 	m_simd[i] = v.getSimd();
 }
 
-//==============================================================================
 template<>
 inline void TMat4<F32>::Base::transpose()
 {

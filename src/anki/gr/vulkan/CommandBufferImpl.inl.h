@@ -14,9 +14,7 @@
 namespace anki
 {
 
-//==============================================================================
-inline void CommandBufferImpl::setViewport(
-	U16 minx, U16 miny, U16 maxx, U16 maxy)
+inline void CommandBufferImpl::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 {
 	commandCommon();
 	ANKI_ASSERT(minx < maxx && miny < maxy);
@@ -37,14 +35,12 @@ inline void CommandBufferImpl::setViewport(
 	vkCmdSetScissor(m_handle, 0, 1, &scissor);
 }
 
-//==============================================================================
 inline void CommandBufferImpl::setPolygonOffset(F32 factor, F32 units)
 {
 	commandCommon();
 	vkCmdSetDepthBias(m_handle, units, 0.0, factor);
 }
 
-//==============================================================================
 inline void CommandBufferImpl::setImageBarrier(VkPipelineStageFlags srcStage,
 	VkAccessFlags srcAccess,
 	VkImageLayout prevLayout,
@@ -68,11 +64,9 @@ inline void CommandBufferImpl::setImageBarrier(VkPipelineStageFlags srcStage,
 	inf.image = img;
 	inf.subresourceRange = range;
 
-	vkCmdPipelineBarrier(
-		m_handle, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &inf);
+	vkCmdPipelineBarrier(m_handle, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &inf);
 }
 
-//==============================================================================
 inline void CommandBufferImpl::setImageBarrier(VkPipelineStageFlags srcStage,
 	VkAccessFlags srcAccess,
 	VkImageLayout prevLayout,
@@ -82,23 +76,14 @@ inline void CommandBufferImpl::setImageBarrier(VkPipelineStageFlags srcStage,
 	TexturePtr tex,
 	const VkImageSubresourceRange& range)
 {
-	setImageBarrier(srcStage,
-		srcAccess,
-		prevLayout,
-		dstStage,
-		dstAccess,
-		newLayout,
-		tex->getImplementation().m_imageHandle,
-		range);
+	setImageBarrier(
+		srcStage, srcAccess, prevLayout, dstStage, dstAccess, newLayout, tex->getImplementation().m_imageHandle, range);
 
 	m_texList.pushBack(m_alloc, tex);
 }
 
-//==============================================================================
-inline void CommandBufferImpl::setTextureBarrierInternal(TexturePtr tex,
-	TextureUsageBit prevUsage,
-	TextureUsageBit nextUsage,
-	const VkImageSubresourceRange& range)
+inline void CommandBufferImpl::setTextureBarrierInternal(
+	TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const VkImageSubresourceRange& range)
 {
 	const TextureImpl& impl = tex->getImplementation();
 	ANKI_ASSERT(impl.usageValid(prevUsage));
@@ -110,37 +95,20 @@ inline void CommandBufferImpl::setTextureBarrierInternal(TexturePtr tex,
 	VkPipelineStageFlags dstStage;
 	VkAccessFlags dstAccess;
 	VkImageLayout newLayout;
-	impl.computeBarrierInfo(prevUsage,
-		nextUsage,
-		range.baseMipLevel,
-		srcStage,
-		srcAccess,
-		dstStage,
-		dstAccess);
+	impl.computeBarrierInfo(prevUsage, nextUsage, range.baseMipLevel, srcStage, srcAccess, dstStage, dstAccess);
 	oldLayout = impl.computeLayout(prevUsage, range.baseMipLevel);
 	newLayout = impl.computeLayout(nextUsage, range.baseMipLevel);
 
-	setImageBarrier(srcStage,
-		srcAccess,
-		oldLayout,
-		dstStage,
-		dstAccess,
-		newLayout,
-		tex,
-		range);
+	setImageBarrier(srcStage, srcAccess, oldLayout, dstStage, dstAccess, newLayout, tex, range);
 }
 
-//==============================================================================
-inline void CommandBufferImpl::setTextureSurfaceBarrier(TexturePtr tex,
-	TextureUsageBit prevUsage,
-	TextureUsageBit nextUsage,
-	const TextureSurfaceInfo& surf)
+inline void CommandBufferImpl::setTextureSurfaceBarrier(
+	TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureSurfaceInfo& surf)
 {
 	if(surf.m_level > 0)
 	{
 		ANKI_ASSERT(!(nextUsage & TextureUsageBit::GENERATE_MIPMAPS)
-			&& "This transition happens inside "
-			   "CommandBufferImpl::generateMipmapsX");
+			&& "This transition happens inside CommandBufferImpl::generateMipmapsX");
 	}
 
 	const TextureImpl& impl = tex->getImplementation();
@@ -151,17 +119,13 @@ inline void CommandBufferImpl::setTextureSurfaceBarrier(TexturePtr tex,
 	setTextureBarrierInternal(tex, prevUsage, nextUsage, range);
 }
 
-//==============================================================================
-inline void CommandBufferImpl::setTextureVolumeBarrier(TexturePtr tex,
-	TextureUsageBit prevUsage,
-	TextureUsageBit nextUsage,
-	const TextureVolumeInfo& vol)
+inline void CommandBufferImpl::setTextureVolumeBarrier(
+	TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureVolumeInfo& vol)
 {
 	if(vol.m_level > 0)
 	{
 		ANKI_ASSERT(!(nextUsage & TextureUsageBit::GENERATE_MIPMAPS)
-			&& "This transition happens inside "
-			   "CommandBufferImpl::generateMipmaps");
+			&& "This transition happens inside CommandBufferImpl::generateMipmaps");
 	}
 
 	const TextureImpl& impl = tex->getImplementation();
@@ -172,7 +136,6 @@ inline void CommandBufferImpl::setTextureVolumeBarrier(TexturePtr tex,
 	setTextureBarrierInternal(tex, prevUsage, nextUsage, range);
 }
 
-//==============================================================================
 inline void CommandBufferImpl::setBufferBarrier(VkPipelineStageFlags srcStage,
 	VkAccessFlags srcAccess,
 	VkPipelineStageFlags dstStage,
@@ -194,16 +157,11 @@ inline void CommandBufferImpl::setBufferBarrier(VkPipelineStageFlags srcStage,
 	b.offset = offset;
 	b.size = size;
 
-	vkCmdPipelineBarrier(
-		m_handle, srcStage, dstStage, 0, 0, nullptr, 1, &b, 0, nullptr);
+	vkCmdPipelineBarrier(m_handle, srcStage, dstStage, 0, 0, nullptr, 1, &b, 0, nullptr);
 }
 
-//==============================================================================
-inline void CommandBufferImpl::setBufferBarrier(BufferPtr buff,
-	BufferUsageBit before,
-	BufferUsageBit after,
-	PtrSize offset,
-	PtrSize size)
+inline void CommandBufferImpl::setBufferBarrier(
+	BufferPtr buff, BufferUsageBit before, BufferUsageBit after, PtrSize offset, PtrSize size)
 {
 	const BufferImpl& impl = buff->getImplementation();
 
@@ -211,33 +169,20 @@ inline void CommandBufferImpl::setBufferBarrier(BufferPtr buff,
 	VkAccessFlags srcAccess;
 	VkPipelineStageFlags dstStage;
 	VkAccessFlags dstAccess;
-	impl.computeBarrierInfo(
-		before, after, srcStage, srcAccess, dstStage, dstAccess);
+	impl.computeBarrierInfo(before, after, srcStage, srcAccess, dstStage, dstAccess);
 
-	setBufferBarrier(srcStage,
-		srcAccess,
-		dstStage,
-		dstAccess,
-		offset,
-		size,
-		impl.getHandle());
+	setBufferBarrier(srcStage, srcAccess, dstStage, dstAccess, offset, size, impl.getHandle());
 
 	m_bufferList.pushBack(m_alloc, buff);
 }
 
-//==============================================================================
-inline void CommandBufferImpl::drawElements(U32 count,
-	U32 instanceCount,
-	U32 firstIndex,
-	U32 baseVertex,
-	U32 baseInstance)
+inline void CommandBufferImpl::drawElements(
+	U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance)
 {
 	drawcallCommon();
-	vkCmdDrawIndexed(
-		m_handle, count, instanceCount, firstIndex, baseVertex, baseInstance);
+	vkCmdDrawIndexed(m_handle, count, instanceCount, firstIndex, baseVertex, baseInstance);
 }
 
-//==============================================================================
 inline void CommandBufferImpl::resetOcclusionQuery(OcclusionQueryPtr query)
 {
 	commandCommon();
@@ -252,7 +197,6 @@ inline void CommandBufferImpl::resetOcclusionQuery(OcclusionQueryPtr query)
 	m_queryList.pushBack(m_alloc, query);
 }
 
-//==============================================================================
 inline void CommandBufferImpl::beginOcclusionQuery(OcclusionQueryPtr query)
 {
 	commandCommon();
@@ -267,7 +211,6 @@ inline void CommandBufferImpl::beginOcclusionQuery(OcclusionQueryPtr query)
 	m_queryList.pushBack(m_alloc, query);
 }
 
-//==============================================================================
 inline void CommandBufferImpl::endOcclusionQuery(OcclusionQueryPtr query)
 {
 	commandCommon();
@@ -281,10 +224,8 @@ inline void CommandBufferImpl::endOcclusionQuery(OcclusionQueryPtr query)
 	m_queryList.pushBack(m_alloc, query);
 }
 
-//==============================================================================
-inline void CommandBufferImpl::clearTextureInternal(TexturePtr tex,
-	const ClearValue& clearValue,
-	const VkImageSubresourceRange& range)
+inline void CommandBufferImpl::clearTextureInternal(
+	TexturePtr tex, const ClearValue& clearValue, const VkImageSubresourceRange& range)
 {
 	commandCommon();
 	flushBarriers();
@@ -296,12 +237,7 @@ inline void CommandBufferImpl::clearTextureInternal(TexturePtr tex,
 	const TextureImpl& impl = tex->getImplementation();
 	if(impl.m_aspect == VK_IMAGE_ASPECT_COLOR_BIT)
 	{
-		vkCmdClearColorImage(m_handle,
-			impl.m_imageHandle,
-			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-			&vclear,
-			1,
-			&range);
+		vkCmdClearColorImage(m_handle, impl.m_imageHandle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &vclear, 1, &range);
 	}
 	else
 	{
@@ -311,9 +247,7 @@ inline void CommandBufferImpl::clearTextureInternal(TexturePtr tex,
 	m_texList.pushBack(m_alloc, tex);
 }
 
-//==============================================================================
-inline void CommandBufferImpl::clearTexture(
-	TexturePtr tex, const ClearValue& clearValue)
+inline void CommandBufferImpl::clearTexture(TexturePtr tex, const ClearValue& clearValue)
 {
 	VkImageSubresourceRange range;
 	range.aspectMask = tex->getImplementation().m_aspect;
@@ -325,10 +259,8 @@ inline void CommandBufferImpl::clearTexture(
 	clearTextureInternal(tex, clearValue, range);
 }
 
-//==============================================================================
-inline void CommandBufferImpl::clearTextureSurface(TexturePtr tex,
-	const TextureSurfaceInfo& surf,
-	const ClearValue& clearValue)
+inline void CommandBufferImpl::clearTextureSurface(
+	TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& clearValue)
 {
 	const TextureImpl& impl = tex->getImplementation();
 	ANKI_ASSERT(impl.m_type != TextureType::_3D && "Not for 3D");
@@ -338,7 +270,6 @@ inline void CommandBufferImpl::clearTextureSurface(TexturePtr tex,
 	clearTextureInternal(tex, clearValue, range);
 }
 
-//==============================================================================
 inline void CommandBufferImpl::clearTextureVolume(
 	TexturePtr tex, const TextureVolumeInfo& vol, const ClearValue& clearValue)
 {
@@ -350,9 +281,7 @@ inline void CommandBufferImpl::clearTextureVolume(
 	clearTextureInternal(tex, clearValue, range);
 }
 
-//==============================================================================
-inline void CommandBufferImpl::uploadBuffer(
-	BufferPtr buff, PtrSize offset, const TransientMemoryToken& token)
+inline void CommandBufferImpl::uploadBuffer(BufferPtr buff, PtrSize offset, const TransientMemoryToken& token)
 {
 	commandCommon();
 	flushBarriers();
@@ -366,8 +295,7 @@ inline void CommandBufferImpl::uploadBuffer(
 	ANKI_ASSERT(offset + token.m_range <= impl.getSize());
 
 	vkCmdCopyBuffer(m_handle,
-		getGrManagerImpl().getTransientMemoryManager().getBufferHandle(
-			token.m_usage),
+		getGrManagerImpl().getTransientMemoryManager().getBufferHandle(token.m_usage),
 		impl.getHandle(),
 		1,
 		&region);
@@ -375,9 +303,7 @@ inline void CommandBufferImpl::uploadBuffer(
 	m_bufferList.pushBack(m_alloc, buff);
 }
 
-//==============================================================================
-inline void CommandBufferImpl::pushSecondLevelCommandBuffer(
-	CommandBufferPtr cmdb)
+inline void CommandBufferImpl::pushSecondLevelCommandBuffer(CommandBufferPtr cmdb)
 {
 	commandCommon();
 	ANKI_ASSERT(insideRenderPass());
@@ -400,14 +326,12 @@ inline void CommandBufferImpl::pushSecondLevelCommandBuffer(
 	m_cmdbList.pushBack(m_alloc, cmdb);
 }
 
-//==============================================================================
 inline void CommandBufferImpl::drawcallCommon()
 {
 	// Preconditions
 	commandCommon();
 	ANKI_ASSERT(insideRenderPass() || secondLevel());
-	ANKI_ASSERT(m_subpassContents == VK_SUBPASS_CONTENTS_MAX_ENUM
-		|| m_subpassContents == VK_SUBPASS_CONTENTS_INLINE);
+	ANKI_ASSERT(m_subpassContents == VK_SUBPASS_CONTENTS_MAX_ENUM || m_subpassContents == VK_SUBPASS_CONTENTS_INLINE);
 #if ANKI_ASSERTIONS
 	m_subpassContents = VK_SUBPASS_CONTENTS_INLINE;
 #endif
@@ -420,21 +344,17 @@ inline void CommandBufferImpl::drawcallCommon()
 	++m_rpCommandCount;
 }
 
-//==============================================================================
 inline void CommandBufferImpl::commandCommon()
 {
 	ANKI_ASSERT(Thread::getCurrentThreadId() == m_tid
-		&& "Commands must be recorder and flushed by the thread this command "
-		   "buffer was created");
+		&& "Commands must be recorder and flushed by the thread this command buffer was created");
 
 	ANKI_ASSERT(!m_finalized);
 	ANKI_ASSERT(m_handle);
 	m_empty = false;
 }
 
-//==============================================================================
-inline void CommandBufferImpl::fillBuffer(
-	BufferPtr buff, PtrSize offset, PtrSize size, U32 value)
+inline void CommandBufferImpl::fillBuffer(BufferPtr buff, PtrSize offset, PtrSize size, U32 value)
 {
 	commandCommon();
 	ANKI_ASSERT(!insideRenderPass());

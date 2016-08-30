@@ -12,10 +12,6 @@
 namespace anki
 {
 
-//==============================================================================
-// ReflectionProxyMoveFeedbackComponent                                        =
-//==============================================================================
-
 /// Feedback component
 class ReflectionProxyMoveFeedbackComponent : public SceneComponent
 {
@@ -41,11 +37,6 @@ public:
 	}
 };
 
-//==============================================================================
-// ReflectionProxy                                                             =
-//==============================================================================
-
-//==============================================================================
 Error ReflectionProxy::init(const CString& proxyMesh)
 {
 	// Move component first
@@ -53,17 +44,14 @@ Error ReflectionProxy::init(const CString& proxyMesh)
 	addComponent(comp, true);
 
 	// Feedback component
-	comp =
-		getSceneAllocator().newInstance<ReflectionProxyMoveFeedbackComponent>(
-			this);
+	comp = getSceneAllocator().newInstance<ReflectionProxyMoveFeedbackComponent>(this);
 	addComponent(comp, true);
 
 	// Load vertices
 	MeshLoader loader(&getResourceManager());
 	ANKI_CHECK(loader.load(proxyMesh));
 
-	if((loader.getHeader().m_flags & MeshLoader::Flag::QUADS)
-		== MeshLoader::Flag::NONE)
+	if((loader.getHeader().m_flags & MeshLoader::Flag::QUADS) == MeshLoader::Flag::NONE)
 	{
 		ANKI_LOGE("Expecting quad mesh");
 		return ErrorCode::USER_DATA;
@@ -75,8 +63,7 @@ Error ReflectionProxy::init(const CString& proxyMesh)
 
 	const U8* buff = loader.getVertexData();
 	const U8* buffEnd = loader.getVertexData() + loader.getVertexDataSize();
-	WeakArray<const U16> indices(
-		reinterpret_cast<const U16*>(loader.getIndexData()), indexCount);
+	WeakArray<const U16> indices(reinterpret_cast<const U16*>(loader.getIndexData()), indexCount);
 	for(U i = 0; i < quadCount; ++i)
 	{
 		Array<Vec4, 4>& quad = m_quadsLSpace[i];
@@ -85,8 +72,7 @@ Error ReflectionProxy::init(const CString& proxyMesh)
 		{
 			U index = indices[i * 4 + j];
 
-			const Vec3* vert = reinterpret_cast<const Vec3*>(
-				buff + loader.getVertexSize() * index);
+			const Vec3* vert = reinterpret_cast<const Vec3*>(buff + loader.getVertexSize() * index);
 			ANKI_ASSERT(vert + 1 < reinterpret_cast<const Vec3*>(buffEnd));
 			(void)buffEnd;
 
@@ -95,8 +81,7 @@ Error ReflectionProxy::init(const CString& proxyMesh)
 	}
 
 	// Proxy component
-	comp = getSceneAllocator().newInstance<ReflectionProxyComponent>(
-		this, quadCount);
+	comp = getSceneAllocator().newInstance<ReflectionProxyComponent>(this, quadCount);
 	addComponent(comp, true);
 
 	// Spatial component
@@ -107,14 +92,12 @@ Error ReflectionProxy::init(const CString& proxyMesh)
 
 	m_boxWSpace = m_boxLSpace;
 
-	comp =
-		getSceneAllocator().newInstance<SpatialComponent>(this, &m_boxWSpace);
+	comp = getSceneAllocator().newInstance<SpatialComponent>(this, &m_boxWSpace);
 	addComponent(comp, true);
 
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void ReflectionProxy::onMoveUpdate(const MoveComponent& move)
 {
 	const Transform& trf = move.getWorldTransform();
@@ -129,8 +112,7 @@ void ReflectionProxy::onMoveUpdate(const MoveComponent& move)
 			quadWSpace[j] = trf.transform(m_quadsLSpace[i][j]);
 		}
 
-		proxyc.setQuad(
-			i, quadWSpace[0], quadWSpace[1], quadWSpace[2], quadWSpace[3]);
+		proxyc.setQuad(i, quadWSpace[0], quadWSpace[1], quadWSpace[2], quadWSpace[3]);
 	}
 
 	// Update spatial

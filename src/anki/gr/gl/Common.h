@@ -38,10 +38,7 @@ const U MAX_STORAGE_BLOCK_SIZE = 2 << 27;
 /// Converter.
 GLenum convertCompareOperation(CompareOperation in);
 
-void convertFilter(SamplingFilter minMagFilter,
-	SamplingFilter mipFilter,
-	GLenum& minFilter,
-	GLenum& magFilter);
+void convertFilter(SamplingFilter minMagFilter, SamplingFilter mipFilter, GLenum& minFilter, GLenum& magFilter);
 /// @}
 
 } // end namespace anki

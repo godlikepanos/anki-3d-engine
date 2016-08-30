@@ -5,6 +5,6 @@
 
 #pragma once
 
-/// @defgroup physics Physics subsystem
-
 #include <anki/physics/PhysicsWorld.h>
+
+/// @defgroup physics Physics subsystem

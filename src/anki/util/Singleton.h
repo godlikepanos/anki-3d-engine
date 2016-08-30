@@ -132,10 +132,7 @@ private:
 };
 
 template<typename T>
-thread_local
-	typename SingletonThreadSafe<T>::Value* SingletonThreadSafe<T>::m_instance =
-		nullptr;
-
+thread_local typename SingletonThreadSafe<T>::Value* SingletonThreadSafe<T>::m_instance = nullptr;
 /// @}
 
 } // end namespace anki

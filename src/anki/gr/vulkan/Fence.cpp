@@ -8,7 +8,6 @@
 namespace anki
 {
 
-//==============================================================================
 void FenceFactory::destroy()
 {
 	for(U i = 0; i < m_fenceCount; ++i)
@@ -19,7 +18,6 @@ void FenceFactory::destroy()
 	m_fences.destroy(m_alloc);
 }
 
-//==============================================================================
 Fence* FenceFactory::newFence()
 {
 	LockGuard<Mutex> lock(m_mtx);
@@ -32,13 +30,11 @@ Fence* FenceFactory::newFence()
 		while(count--)
 		{
 			VkResult status;
-			ANKI_VK_CHECKF(
-				status = vkGetFenceStatus(m_dev, m_fences[count]->getHandle()));
+			ANKI_VK_CHECKF(status = vkGetFenceStatus(m_dev, m_fences[count]->getHandle()));
 			if(status == VK_SUCCESS)
 			{
 				out = m_fences[count];
-				ANKI_VK_CHECKF(
-					vkResetFences(m_dev, 1, &m_fences[count]->getHandle()));
+				ANKI_VK_CHECKF(vkResetFences(m_dev, 1, &m_fences[count]->getHandle()));
 
 				// Pop it
 				for(U i = count; i < m_fenceCount - 1; ++i)
@@ -67,7 +63,6 @@ Fence* FenceFactory::newFence()
 	return out;
 }
 
-//==============================================================================
 void FenceFactory::deleteFence(Fence* fence)
 {
 	ANKI_ASSERT(fence);

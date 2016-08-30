@@ -17,8 +17,7 @@ namespace anki
 
 /// Easy bit manipulation.
 /// @tparam N The number of bits.
-/// @tparam TChunkType The type of the chunks that the bitset consists. By
-///         default it's U8.
+/// @tparam TChunkType The type of the chunks that the bitset consists. By default it's U8.
 template<U N, typename TChunkType = U8>
 class BitSet
 {
@@ -36,8 +35,7 @@ public:
 		U high, low;
 		position(static_cast<U>(pos), high, low);
 		ChunkType mask = MASK >> low;
-		m_chunks[high] =
-			(setBits) ? (m_chunks[high] | mask) : (m_chunks[high] & ~mask);
+		m_chunks[high] = (setBits) ? (m_chunks[high] | mask) : (m_chunks[high] & ~mask);
 	}
 
 	/// Set multiple bits.

@@ -12,15 +12,9 @@
 namespace anki
 {
 
-//==============================================================================
-// TGA                                                                         =
-//==============================================================================
-
-//==============================================================================
 static U8 tgaHeaderUncompressed[12] = {0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 static U8 tgaHeaderCompressed[12] = {0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-//==============================================================================
 static ANKI_USE_RESULT Error loadUncompressedTga(ResourceFilePtr fs,
 	U32& width,
 	U32& height,
@@ -61,7 +55,6 @@ static ANKI_USE_RESULT Error loadUncompressedTga(ResourceFilePtr fs,
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 static ANKI_USE_RESULT Error loadCompressedTga(ResourceFilePtr fs,
 	U32& width,
 	U32& height,
@@ -155,7 +148,6 @@ static ANKI_USE_RESULT Error loadCompressedTga(ResourceFilePtr fs,
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 static ANKI_USE_RESULT Error loadTga(ResourceFilePtr fs,
 	U32& width,
 	U32& height,
@@ -171,9 +163,7 @@ static ANKI_USE_RESULT Error loadTga(ResourceFilePtr fs,
 	{
 		ANKI_CHECK(loadUncompressedTga(fs, width, height, bpp, data, alloc));
 	}
-	else if(std::memcmp(
-				tgaHeaderCompressed, &myTgaHeader[0], sizeof(myTgaHeader))
-		== 0)
+	else if(std::memcmp(tgaHeaderCompressed, &myTgaHeader[0], sizeof(myTgaHeader)) == 0)
 	{
 		ANKI_CHECK(loadCompressedTga(fs, width, height, bpp, data, alloc));
 	}
@@ -192,11 +182,6 @@ static ANKI_USE_RESULT Error loadTga(ResourceFilePtr fs,
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
-// ANKI                                                                        =
-//==============================================================================
-
-//==============================================================================
 class AnkiTextureHeader
 {
 public:
@@ -212,15 +197,11 @@ public:
 	U8 m_padding[88];
 };
 
-static_assert(
-	sizeof(AnkiTextureHeader) == 128, "Check sizeof AnkiTextureHeader");
+static_assert(sizeof(AnkiTextureHeader) == 128, "Check sizeof AnkiTextureHeader");
 
-//==============================================================================
 /// Get the size in bytes of a single surface
-static PtrSize calcSurfaceSize(const U width,
-	const U height,
-	const ImageLoader::DataCompression comp,
-	const ImageLoader::ColorFormat cf)
+static PtrSize calcSurfaceSize(
+	const U width, const U height, const ImageLoader::DataCompression comp, const ImageLoader::ColorFormat cf)
 {
 	PtrSize out = 0;
 
@@ -232,8 +213,7 @@ static PtrSize calcSurfaceSize(const U width,
 		out = width * height * ((cf == ImageLoader::ColorFormat::RGB8) ? 3 : 4);
 		break;
 	case ImageLoader::DataCompression::S3TC:
-		out = (width / 4) * (height / 4)
-			* ((cf == ImageLoader::ColorFormat::RGB8) ? 8 : 16); // block size
+		out = (width / 4) * (height / 4) * ((cf == ImageLoader::ColorFormat::RGB8) ? 8 : 16); // block size
 		break;
 	case ImageLoader::DataCompression::ETC:
 		out = (width / 4) * (height / 4) * 8;
@@ -247,7 +227,6 @@ static PtrSize calcSurfaceSize(const U width,
 	return out;
 }
 
-//==============================================================================
 /// Get the size in bytes of a single volume
 static PtrSize calcVolumeSize(const U width,
 	const U height,
@@ -262,8 +241,7 @@ static PtrSize calcVolumeSize(const U width,
 	switch(comp)
 	{
 	case ImageLoader::DataCompression::RAW:
-		out = width * height * depth
-			* ((cf == ImageLoader::ColorFormat::RGB8) ? 3 : 4);
+		out = width * height * depth * ((cf == ImageLoader::ColorFormat::RGB8) ? 3 : 4);
 		break;
 	default:
 		ANKI_ASSERT(0);
@@ -274,10 +252,8 @@ static PtrSize calcVolumeSize(const U width,
 	return out;
 }
 
-//==============================================================================
 /// Calculate the size of a compressed or uncomressed color data
-static PtrSize calcSizeOfSegment(
-	const AnkiTextureHeader& header, ImageLoader::DataCompression comp)
+static PtrSize calcSizeOfSegment(const AnkiTextureHeader& header, ImageLoader::DataCompression comp)
 {
 	PtrSize out = 0;
 	U width = header.m_width;
@@ -307,8 +283,7 @@ static PtrSize calcSizeOfSegment(
 
 		while(mips-- != 0)
 		{
-			out += calcSurfaceSize(width, height, comp, header.m_colorFormat)
-				* surfCountPerMip;
+			out += calcSurfaceSize(width, height, comp, header.m_colorFormat) * surfCountPerMip;
 
 			width /= 2;
 			height /= 2;
@@ -320,8 +295,7 @@ static PtrSize calcSizeOfSegment(
 
 		while(mips-- != 0)
 		{
-			out += calcVolumeSize(
-				width, height, depth, comp, header.m_colorFormat);
+			out += calcVolumeSize(width, height, depth, comp, header.m_colorFormat);
 
 			width /= 2;
 			height /= 2;
@@ -332,7 +306,6 @@ static PtrSize calcSizeOfSegment(
 	return out;
 }
 
-//==============================================================================
 static ANKI_USE_RESULT Error loadAnkiTexture(ResourceFilePtr file,
 	U32 maxTextureSize,
 	ImageLoader::DataCompression& preferredCompression,
@@ -359,9 +332,7 @@ static ANKI_USE_RESULT Error loadAnkiTexture(ResourceFilePtr file,
 		return ErrorCode::USER_DATA;
 	}
 
-	if(header.m_width == 0 || !isPowerOfTwo(header.m_width)
-		|| header.m_width > 4096
-		|| header.m_height == 0
+	if(header.m_width == 0 || !isPowerOfTwo(header.m_width) || header.m_width > 4096 || header.m_height == 0
 		|| !isPowerOfTwo(header.m_height)
 		|| header.m_height > 4096)
 	{
@@ -375,30 +346,26 @@ static ANKI_USE_RESULT Error loadAnkiTexture(ResourceFilePtr file,
 		return ErrorCode::USER_DATA;
 	}
 
-	if(header.m_type < ImageLoader::TextureType::_2D
-		|| header.m_type > ImageLoader::TextureType::_2D_ARRAY)
+	if(header.m_type < ImageLoader::TextureType::_2D || header.m_type > ImageLoader::TextureType::_2D_ARRAY)
 	{
 		ANKI_LOGE("Incorrect header: texture type");
 		return ErrorCode::USER_DATA;
 	}
 
-	if(header.m_colorFormat < ImageLoader::ColorFormat::RGB8
-		|| header.m_colorFormat > ImageLoader::ColorFormat::RGBA8)
+	if(header.m_colorFormat < ImageLoader::ColorFormat::RGB8 || header.m_colorFormat > ImageLoader::ColorFormat::RGBA8)
 	{
 		ANKI_LOGE("Incorrect header: color format");
 		return ErrorCode::USER_DATA;
 	}
 
-	if((header.m_compressionFormats & preferredCompression)
-		== ImageLoader::DataCompression::NONE)
+	if((header.m_compressionFormats & preferredCompression) == ImageLoader::DataCompression::NONE)
 	{
 		ANKI_LOGW("File does not contain the requested compression");
 
 		// Fallback
 		preferredCompression = ImageLoader::DataCompression::RAW;
 
-		if((header.m_compressionFormats & preferredCompression)
-			== ImageLoader::DataCompression::NONE)
+		if((header.m_compressionFormats & preferredCompression) == ImageLoader::DataCompression::NONE)
 		{
 			ANKI_LOGE("File does not contain raw compression");
 			return ErrorCode::USER_DATA;
@@ -483,33 +450,27 @@ static ANKI_USE_RESULT Error loadAnkiTexture(ResourceFilePtr file,
 	}
 	else if(preferredCompression == ImageLoader::DataCompression::S3TC)
 	{
-		if((header.m_compressionFormats & ImageLoader::DataCompression::RAW)
-			!= ImageLoader::DataCompression::NONE)
+		if((header.m_compressionFormats & ImageLoader::DataCompression::RAW) != ImageLoader::DataCompression::NONE)
 		{
 			// If raw compression is present then skip it
 			ANKI_CHECK(file->seek(
-				calcSizeOfSegment(header, ImageLoader::DataCompression::RAW),
-				ResourceFile::SeekOrigin::CURRENT));
+				calcSizeOfSegment(header, ImageLoader::DataCompression::RAW), ResourceFile::SeekOrigin::CURRENT));
 		}
 	}
 	else if(preferredCompression == ImageLoader::DataCompression::ETC)
 	{
-		if((header.m_compressionFormats & ImageLoader::DataCompression::RAW)
-			!= ImageLoader::DataCompression::NONE)
+		if((header.m_compressionFormats & ImageLoader::DataCompression::RAW) != ImageLoader::DataCompression::NONE)
 		{
 			// If raw compression is present then skip it
 			ANKI_CHECK(file->seek(
-				calcSizeOfSegment(header, ImageLoader::DataCompression::RAW),
-				ResourceFile::SeekOrigin::CURRENT));
+				calcSizeOfSegment(header, ImageLoader::DataCompression::RAW), ResourceFile::SeekOrigin::CURRENT));
 		}
 
-		if((header.m_compressionFormats & ImageLoader::DataCompression::S3TC)
-			!= ImageLoader::DataCompression::NONE)
+		if((header.m_compressionFormats & ImageLoader::DataCompression::S3TC) != ImageLoader::DataCompression::NONE)
 		{
 			// If s3tc compression is present then skip it
 			ANKI_CHECK(file->seek(
-				calcSizeOfSegment(header, ImageLoader::DataCompression::S3TC),
-				ResourceFile::SeekOrigin::CURRENT));
+				calcSizeOfSegment(header, ImageLoader::DataCompression::S3TC), ResourceFile::SeekOrigin::CURRENT));
 		}
 	}
 
@@ -533,10 +494,7 @@ static ANKI_USE_RESULT Error loadAnkiTexture(ResourceFilePtr file,
 
 				for(U f = 0; f < faceCount; ++f)
 				{
-					U dataSize = calcSurfaceSize(mipWidth,
-						mipHeight,
-						preferredCompression,
-						header.m_colorFormat);
+					U dataSize = calcSurfaceSize(mipWidth, mipHeight, preferredCompression, header.m_colorFormat);
 
 					// Check if this mipmap can be skipped because of size
 					if(maxSize <= maxTextureSize)
@@ -551,8 +509,7 @@ static ANKI_USE_RESULT Error loadAnkiTexture(ResourceFilePtr file,
 					}
 					else
 					{
-						ANKI_CHECK(file->seek(
-							dataSize, ResourceFile::SeekOrigin::CURRENT));
+						ANKI_CHECK(file->seek(dataSize, ResourceFile::SeekOrigin::CURRENT));
 					}
 				}
 			}
@@ -570,11 +527,7 @@ static ANKI_USE_RESULT Error loadAnkiTexture(ResourceFilePtr file,
 		U mipDepth = header.m_depthOrLayerCount;
 		for(U mip = 0; mip < header.m_mipLevels; mip++)
 		{
-			U dataSize = calcVolumeSize(mipWidth,
-				mipHeight,
-				mipDepth,
-				preferredCompression,
-				header.m_colorFormat);
+			U dataSize = calcVolumeSize(mipWidth, mipHeight, mipDepth, preferredCompression, header.m_colorFormat);
 
 			// Check if this mipmap can be skipped because of size
 			if(maxSize <= maxTextureSize)
@@ -590,8 +543,7 @@ static ANKI_USE_RESULT Error loadAnkiTexture(ResourceFilePtr file,
 			}
 			else
 			{
-				ANKI_CHECK(
-					file->seek(dataSize, ResourceFile::SeekOrigin::CURRENT));
+				ANKI_CHECK(file->seek(dataSize, ResourceFile::SeekOrigin::CURRENT));
 			}
 
 			mipWidth /= 2;
@@ -603,13 +555,7 @@ static ANKI_USE_RESULT Error loadAnkiTexture(ResourceFilePtr file,
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
-// ImageLoader                                                                 =
-//==============================================================================
-
-//==============================================================================
-Error ImageLoader::load(
-	ResourceFilePtr file, const CString& filename, U32 maxTextureSize)
+Error ImageLoader::load(ResourceFilePtr file, const CString& filename, U32 maxTextureSize)
 {
 	// get the extension
 	StringAuto ext(m_alloc);
@@ -633,12 +579,7 @@ Error ImageLoader::load(
 		m_mipLevels = 1;
 		m_depth = 1;
 		m_layerCount = 1;
-		ANKI_CHECK(loadTga(file,
-			m_surfaces[0].m_width,
-			m_surfaces[0].m_height,
-			bpp,
-			m_surfaces[0].m_data,
-			m_alloc));
+		ANKI_CHECK(loadTga(file, m_surfaces[0].m_width, m_surfaces[0].m_height, bpp, m_surfaces[0].m_data, m_alloc));
 
 		m_width = m_surfaces[0].m_width;
 		m_height = m_surfaces[0].m_height;
@@ -689,9 +630,7 @@ Error ImageLoader::load(
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
-const ImageLoader::Surface& ImageLoader::getSurface(
-	U level, U face, U layer) const
+const ImageLoader::Surface& ImageLoader::getSurface(U level, U face, U layer) const
 {
 	ANKI_ASSERT(level < m_mipLevels);
 
@@ -719,14 +658,12 @@ const ImageLoader::Surface& ImageLoader::getSurface(
 	return m_surfaces[idx];
 }
 
-//==============================================================================
 const ImageLoader::Volume& ImageLoader::getVolume(U level) const
 {
 	ANKI_ASSERT(m_textureType == TextureType::_3D);
 	return m_volumes[level];
 }
 
-//==============================================================================
 void ImageLoader::destroy()
 {
 	for(Surface& surf : m_surfaces)

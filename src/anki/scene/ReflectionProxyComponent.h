@@ -18,8 +18,7 @@ namespace anki
 class ReflectionProxyComponent : public SceneComponent
 {
 public:
-	static const SceneComponentType CLASS_TYPE =
-		SceneComponentType::REFLECTION_PROXY;
+	static const SceneComponentType CLASS_TYPE = SceneComponentType::REFLECTION_PROXY;
 
 	/// Reflection proxy face. One out of many
 	class Face
@@ -41,8 +40,7 @@ public:
 		m_faces.destroy(getAllocator());
 	}
 
-	void setQuad(
-		U index, const Vec4& a, const Vec4& b, const Vec4& c, const Vec4& d);
+	void setQuad(U index, const Vec4& a, const Vec4& b, const Vec4& c, const Vec4& d);
 
 	const DynamicArray<Face>& getFaces() const
 	{
@@ -50,8 +48,7 @@ public:
 		return m_faces;
 	}
 
-	ANKI_USE_RESULT Error update(
-		SceneNode& node, F32 prevTime, F32 crntTime, Bool& updated) final;
+	ANKI_USE_RESULT Error update(SceneNode& node, F32 prevTime, F32 crntTime, Bool& updated) final;
 
 private:
 	DynamicArray<Face> m_faces; ///< Quads.

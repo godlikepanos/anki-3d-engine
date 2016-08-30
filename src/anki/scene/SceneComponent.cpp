@@ -10,11 +10,6 @@
 namespace anki
 {
 
-//==============================================================================
-// SceneComponent                                                              =
-//==============================================================================
-
-//==============================================================================
 SceneComponent::SceneComponent(SceneComponentType type, SceneNode* node)
 	: m_node(node)
 	, m_type(type)
@@ -22,21 +17,17 @@ SceneComponent::SceneComponent(SceneComponentType type, SceneNode* node)
 	m_node->getSceneGraph().getSceneComponentLists().insertNew(this);
 }
 
-//==============================================================================
 SceneComponent::~SceneComponent()
 {
 	m_node->getSceneGraph().getSceneComponentLists().remove(this);
 }
 
-//==============================================================================
 Timestamp SceneComponent::getGlobalTimestamp() const
 {
 	return m_node->getGlobalTimestamp();
 }
 
-//==============================================================================
-Error SceneComponent::updateReal(
-	SceneNode& node, F32 prevTime, F32 crntTime, Bool& updated)
+Error SceneComponent::updateReal(SceneNode& node, F32 prevTime, F32 crntTime, Bool& updated)
 {
 	Error err = update(node, prevTime, crntTime, updated);
 	if(!err && updated)
@@ -52,29 +43,21 @@ Error SceneComponent::updateReal(
 	return err;
 }
 
-//==============================================================================
 SceneGraph& SceneComponent::getSceneGraph()
 {
 	return m_node->getSceneGraph();
 }
 
-//==============================================================================
 const SceneGraph& SceneComponent::getSceneGraph() const
 {
 	return m_node->getSceneGraph();
 }
 
-//==============================================================================
 SceneAllocator<U8> SceneComponent::getAllocator() const
 {
 	return m_node->getSceneAllocator();
 }
 
-//==============================================================================
-// SceneComponentLists                                                         =
-//==============================================================================
-
-//==============================================================================
 void SceneComponentLists::insertNew(SceneComponent* comp)
 {
 	ANKI_ASSERT(comp);
@@ -83,7 +66,6 @@ void SceneComponentLists::insertNew(SceneComponent* comp)
 	m_lists[comp->getType()].pushBack(m_alloc, comp);
 }
 
-//==============================================================================
 void SceneComponentLists::remove(SceneComponent* comp)
 {
 	ANKI_ASSERT(comp);
@@ -93,7 +75,6 @@ void SceneComponentLists::remove(SceneComponent* comp)
 	m_lists[comp->getType()].erase(m_alloc, it);
 }
 
-//==============================================================================
 List<SceneComponent*>::Iterator SceneComponentLists::find(SceneComponent* comp)
 {
 	ANKI_ASSERT(comp);

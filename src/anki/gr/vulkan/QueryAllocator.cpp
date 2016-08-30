@@ -8,7 +8,6 @@
 namespace anki
 {
 
-//==============================================================================
 QueryAllocator::~QueryAllocator()
 {
 	if(!m_chunks.isEmpty())
@@ -17,7 +16,6 @@ QueryAllocator::~QueryAllocator()
 	}
 }
 
-//==============================================================================
 Error QueryAllocator::newQuery(QueryAllocationHandle& handle)
 {
 	ANKI_ASSERT(!handle);
@@ -79,11 +77,9 @@ Error QueryAllocator::newQuery(QueryAllocationHandle& handle)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void QueryAllocator::deleteQuery(QueryAllocationHandle& handle)
 {
-	ANKI_ASSERT(
-		handle.m_pool && handle.m_queryIndex != MAX_U32 && handle.m_chunk);
+	ANKI_ASSERT(handle.m_pool && handle.m_queryIndex != MAX_U32 && handle.m_chunk);
 
 	LockGuard<Mutex> lock(m_mtx);
 

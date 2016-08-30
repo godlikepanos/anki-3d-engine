@@ -17,43 +17,30 @@
 namespace anki
 {
 
-//==============================================================================
-// Misc                                                                        =
-//==============================================================================
-
-//==============================================================================
 template<typename TFunc>
 static void iterateSceneSectors(SceneGraph& scene, TFunc func)
 {
-	scene.getSceneComponentLists().iterateComponents<SectorComponent>(
-		[&](SectorComponent& comp) {
-			Sector& s = static_cast<Sector&>(comp.getSceneNode());
-			if(func(s))
-			{
-				return;
-			}
-		});
+	scene.getSceneComponentLists().iterateComponents<SectorComponent>([&](SectorComponent& comp) {
+		Sector& s = static_cast<Sector&>(comp.getSceneNode());
+		if(func(s))
+		{
+			return;
+		}
+	});
 }
 
-//==============================================================================
 template<typename TFunc>
 static void iterateScenePortals(SceneGraph& scene, TFunc func)
 {
-	scene.getSceneComponentLists().iterateComponents<PortalComponent>(
-		[&](PortalComponent& comp) {
-			Portal& s = static_cast<Portal&>(comp.getSceneNode());
-			if(func(s))
-			{
-				return;
-			}
-		});
+	scene.getSceneComponentLists().iterateComponents<PortalComponent>([&](PortalComponent& comp) {
+		Portal& s = static_cast<Portal&>(comp.getSceneNode());
+		if(func(s))
+		{
+			return;
+		}
+	});
 }
 
-//==============================================================================
-// PortalSectorBase                                                            =
-//==============================================================================
-
-//==============================================================================
 PortalSectorBase::~PortalSectorBase()
 {
 	auto alloc = getSceneAllocator();
@@ -69,7 +56,6 @@ PortalSectorBase::~PortalSectorBase()
 	m_vertIndices.destroy(alloc);
 }
 
-//==============================================================================
 Error PortalSectorBase::init(const CString& meshFname, Bool isSector)
 {
 	// Create move component
@@ -102,8 +88,7 @@ Error PortalSectorBase::init(const CString& meshFname, Bool isSector)
 
 	for(U i = 0; i < vertsCount; ++i)
 	{
-		const Vec3& pos = *reinterpret_cast<const Vec3*>(
-			loader.getVertexData() + vertSize * i);
+		const Vec3& pos = *reinterpret_cast<const Vec3*>(loader.getVertexData() + vertSize * i);
 
 		m_shapeStorageLSpace[i] = Vec4(pos, 0.0);
 	}
@@ -115,8 +100,7 @@ Error PortalSectorBase::init(const CString& meshFname, Bool isSector)
 	updateTransform(Transform::getIdentity());
 
 	// Store indices
-	ANKI_ASSERT(
-		header.m_totalIndicesCount * sizeof(U16) == loader.getIndexDataSize());
+	ANKI_ASSERT(header.m_totalIndicesCount * sizeof(U16) == loader.getIndexDataSize());
 	m_vertIndices.create(alloc, header.m_totalIndicesCount);
 	const U16* indicesIn = reinterpret_cast<const U16*>(loader.getIndexData());
 	for(U i = 0; i < header.m_totalIndicesCount; ++i)
@@ -127,7 +111,6 @@ Error PortalSectorBase::init(const CString& meshFname, Bool isSector)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void PortalSectorBase::updateTransform(const Transform& trf)
 {
 	const U count = m_shapeStorageWSpace.getSize();
@@ -139,11 +122,6 @@ void PortalSectorBase::updateTransform(const Transform& trf)
 	m_shape->computeAabb(m_aabb);
 }
 
-//==============================================================================
-// Portal                                                                      =
-//==============================================================================
-
-//==============================================================================
 Portal::~Portal()
 {
 	auto alloc = getSceneAllocator();
@@ -157,14 +135,12 @@ Portal::~Portal()
 	m_sectors.destroy(getSceneAllocator());
 }
 
-//==============================================================================
 Error Portal::init(const CString& meshFname)
 {
 	ANKI_CHECK(Base::init(meshFname, false));
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error Portal::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 {
 	MoveComponent& move = getComponent<MoveComponent>();
@@ -178,7 +154,6 @@ Error Portal::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void Portal::deferredUpdate()
 {
 	// Gather the sectors it collides
@@ -207,7 +182,6 @@ void Portal::deferredUpdate()
 	});
 }
 
-//==============================================================================
 void Portal::tryAddSector(Sector* sector)
 {
 	ANKI_ASSERT(sector);
@@ -226,7 +200,6 @@ void Portal::tryAddSector(Sector* sector)
 	m_sectors.pushBack(getSceneAllocator(), sector);
 }
 
-//==============================================================================
 void Portal::tryRemoveSector(Sector* sector)
 {
 	ANKI_ASSERT(sector);
@@ -243,11 +216,6 @@ void Portal::tryRemoveSector(Sector* sector)
 	}
 }
 
-//==============================================================================
-// Sector                                                                      =
-//==============================================================================
-
-//==============================================================================
 Sector::~Sector()
 {
 	auto alloc = getSceneAllocator();
@@ -268,14 +236,12 @@ Sector::~Sector()
 	}
 }
 
-//==============================================================================
 Error Sector::init(const CString& meshFname)
 {
 	ANKI_CHECK(PortalSectorBase::init(meshFname, true));
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void Sector::tryAddPortal(Portal* portal)
 {
 	ANKI_ASSERT(portal);
@@ -294,7 +260,6 @@ void Sector::tryAddPortal(Portal* portal)
 	m_portals.pushBack(getSceneAllocator(), portal);
 }
 
-//==============================================================================
 void Sector::tryRemovePortal(Portal* portal)
 {
 	ANKI_ASSERT(portal);
@@ -311,7 +276,6 @@ void Sector::tryRemovePortal(Portal* portal)
 	}
 }
 
-//==============================================================================
 void Sector::tryAddSpatialComponent(SpatialComponent* sp)
 {
 	ANKI_ASSERT(sp);
@@ -324,8 +288,8 @@ void Sector::tryAddSpatialComponent(SpatialComponent* sp)
 		if(*itsp == this)
 		{
 			// Found, return
-			ANKI_ASSERT(findSpatialComponent(sp) != m_spatials.getEnd()
-				&& "Spatial has reference to sector but sector not");
+			ANKI_ASSERT(
+				findSpatialComponent(sp) != m_spatials.getEnd() && "Spatial has reference to sector but sector not");
 			return;
 		}
 	}
@@ -336,7 +300,6 @@ void Sector::tryAddSpatialComponent(SpatialComponent* sp)
 	sp->getSectorInfo().pushBack(getSceneAllocator(), this);
 }
 
-//==============================================================================
 void Sector::tryRemoveSpatialComponent(SpatialComponent* sp)
 {
 	ANKI_ASSERT(sp);
@@ -370,9 +333,7 @@ void Sector::tryRemoveSpatialComponent(SpatialComponent* sp)
 	}
 }
 
-//==============================================================================
-List<SpatialComponent*>::Iterator Sector::findSpatialComponent(
-	SpatialComponent* sp)
+List<SpatialComponent*>::Iterator Sector::findSpatialComponent(SpatialComponent* sp)
 {
 	ANKI_ASSERT(sp);
 	auto it = m_spatials.getBegin();
@@ -388,7 +349,6 @@ List<SpatialComponent*>::Iterator Sector::findSpatialComponent(
 	return it;
 }
 
-//==============================================================================
 Error Sector::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 {
 	MoveComponent& move = getComponent<MoveComponent>();
@@ -402,7 +362,6 @@ Error Sector::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void Sector::deferredUpdate()
 {
 	// Spatials should get updated
@@ -434,16 +393,10 @@ void Sector::deferredUpdate()
 	});
 }
 
-//==============================================================================
-// SectorGroup                                                                 =
-//==============================================================================
-
-//==============================================================================
 SectorGroup::~SectorGroup()
 {
 }
 
-//==============================================================================
 void SectorGroup::spatialUpdated(SpatialComponent* sp)
 {
 	ANKI_ASSERT(sp);
@@ -451,7 +404,6 @@ void SectorGroup::spatialUpdated(SpatialComponent* sp)
 	m_spatialsDeferredBinning.pushBack(m_scene->getFrameAllocator(), sp);
 }
 
-//==============================================================================
 void SectorGroup::portalUpdated(Portal* portal)
 {
 	ANKI_ASSERT(portal);
@@ -459,7 +411,6 @@ void SectorGroup::portalUpdated(Portal* portal)
 	m_portalsUpdated.pushBack(m_scene->getFrameAllocator(), portal);
 }
 
-//==============================================================================
 void SectorGroup::sectorUpdated(Sector* sector)
 {
 	ANKI_ASSERT(sector);
@@ -467,7 +418,6 @@ void SectorGroup::sectorUpdated(Sector* sector)
 	m_sectorsUpdated.pushBack(m_scene->getFrameAllocator(), sector);
 }
 
-//==============================================================================
 void SectorGroup::binSpatial(SpatialComponent* sp)
 {
 	ANKI_ASSERT(sp);
@@ -485,8 +435,7 @@ void SectorGroup::binSpatial(SpatialComponent* sp)
 			// Detailed test
 			if(collide)
 			{
-				collide = testCollisionShapes(
-					sector.getBoundingShape(), sp->getSpatialCollisionShape());
+				collide = testCollisionShapes(sector.getBoundingShape(), sp->getSpatialCollisionShape());
 			}
 		}
 		else
@@ -496,8 +445,7 @@ void SectorGroup::binSpatial(SpatialComponent* sp)
 			// Make sure the origin of the spatial is inside the sector
 			const Vec4& center = sp->getSpatialOrigin();
 
-			if(center >= sector.m_aabb.getMin()
-				&& center <= sector.m_aabb.getMax())
+			if(center >= sector.m_aabb.getMin() && center <= sector.m_aabb.getMax())
 			{
 				collide = true;
 			}
@@ -507,8 +455,7 @@ void SectorGroup::binSpatial(SpatialComponent* sp)
 			Aabb smallBox(center, center + Vec4(smallf, smallf, smallf, 0.0));
 			if(collide)
 			{
-				collide =
-					testCollisionShapes(sector.getBoundingShape(), smallBox);
+				collide = testCollisionShapes(sector.getBoundingShape(), smallBox);
 			}
 		}
 
@@ -525,7 +472,6 @@ void SectorGroup::binSpatial(SpatialComponent* sp)
 	});
 }
 
-//==============================================================================
 void SectorGroup::spatialDeleted(SpatialComponent* sp)
 {
 	auto it = sp->getSectorInfo().getBegin();
@@ -537,7 +483,6 @@ void SectorGroup::spatialDeleted(SpatialComponent* sp)
 	}
 }
 
-//==============================================================================
 void SectorGroup::findVisibleSectors(const FrustumComponent& frc,
 	const SoftwareRasterizer* r,
 	List<const Sector*>& visibleSectors,
@@ -573,8 +518,7 @@ void SectorGroup::findVisibleSectors(const FrustumComponent& frc,
 		iterateSceneSectors(*m_scene, [&](Sector& sector) -> Bool {
 			if(frc.insideFrustum(sector.getBoundingShape()))
 			{
-				findVisibleSectorsInternal(
-					frc, sector, r, visibleSectors, spatialsCount);
+				findVisibleSectorsInternal(frc, sector, r, visibleSectors, spatialsCount);
 			}
 
 			return false;
@@ -583,12 +527,10 @@ void SectorGroup::findVisibleSectors(const FrustumComponent& frc,
 	else
 	{
 		// eye inside a sector
-		findVisibleSectorsInternal(
-			frc, *sectorEyeIsInside, r, visibleSectors, spatialsCount);
+		findVisibleSectorsInternal(frc, *sectorEyeIsInside, r, visibleSectors, spatialsCount);
 	}
 }
 
-//==============================================================================
 void SectorGroup::findVisibleSectorsInternal(const FrustumComponent& frc,
 	const Sector& s,
 	const SoftwareRasterizer* r,
@@ -621,8 +563,7 @@ void SectorGroup::findVisibleSectorsInternal(const FrustumComponent& frc,
 		const Portal& p = *(*itp);
 
 		if(frc.insideFrustum(p.getBoundingShape())
-			&& (r == nullptr
-				   || r->visibilityTest(p.getBoundingShape(), p.m_aabb)))
+			&& (r == nullptr || r->visibilityTest(p.getBoundingShape(), p.m_aabb)))
 		{
 			auto it = p.m_sectors.getBegin();
 			auto end = p.m_sectors.getEnd();
@@ -630,15 +571,13 @@ void SectorGroup::findVisibleSectorsInternal(const FrustumComponent& frc,
 			{
 				if(*it != &s)
 				{
-					findVisibleSectorsInternal(
-						frc, *(*it), r, visibleSectors, spatialsCount);
+					findVisibleSectorsInternal(frc, *(*it), r, visibleSectors, spatialsCount);
 				}
 			}
 		}
 	}
 }
 
-//==============================================================================
 void SectorGroup::prepareForVisibilityTests()
 {
 	// Update portals
@@ -658,20 +597,16 @@ void SectorGroup::prepareForVisibilityTests()
 	m_sectorsUpdated.destroy(m_scene->getFrameAllocator());
 
 	// Bin spatials
-	err =
-		m_spatialsDeferredBinning.iterateForward([this](SpatialComponent* spc) {
-			binSpatial(spc);
-			return ErrorCode::NONE;
-		});
+	err = m_spatialsDeferredBinning.iterateForward([this](SpatialComponent* spc) {
+		binSpatial(spc);
+		return ErrorCode::NONE;
+	});
 	(void)err;
 	m_spatialsDeferredBinning.destroy(m_scene->getFrameAllocator());
 }
 
-//==============================================================================
-void SectorGroup::findVisibleNodes(const FrustumComponent& frc,
-	U testId,
-	const SoftwareRasterizer* r,
-	SectorGroupVisibilityTestsContext& ctx) const
+void SectorGroup::findVisibleNodes(
+	const FrustumComponent& frc, U testId, const SoftwareRasterizer* r, SectorGroupVisibilityTestsContext& ctx) const
 {
 	auto alloc = m_scene->getFrameAllocator();
 
@@ -686,8 +621,7 @@ void SectorGroup::findVisibleNodes(const FrustumComponent& frc,
 	}
 
 	// Initiate storage of nodes
-	SceneNode** visibleNodesMem = reinterpret_cast<SceneNode**>(
-		alloc.allocate(spatialsCount * sizeof(void*)));
+	SceneNode** visibleNodesMem = reinterpret_cast<SceneNode**>(alloc.allocate(spatialsCount * sizeof(void*)));
 
 	WeakArray<SceneNode*> visibleNodes(visibleNodesMem, spatialsCount);
 

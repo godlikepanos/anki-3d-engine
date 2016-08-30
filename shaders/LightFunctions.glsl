@@ -15,7 +15,6 @@ const float OMNI_LIGHT_FRUSTUM_NEAR_PLANE = 0.1 / 4.0;
 
 const uint SHADOW_SAMPLE_COUNT = 16;
 
-//==============================================================================
 float computeAttenuationFactor(float lightRadius, vec3 frag2Light)
 {
 	float fragLightDist = dot(frag2Light, frag2Light);
@@ -24,7 +23,6 @@ float computeAttenuationFactor(float lightRadius, vec3 frag2Light)
 	return att * att;
 }
 
-//==============================================================================
 // Performs BRDF specular lighting
 vec3 computeSpecularColorBrdf(vec3 v, // view dir
 	vec3 l, // light dir
@@ -43,8 +41,7 @@ vec3 computeSpecularColorBrdf(vec3 v, // view dir
 	vec3 F = specCol + (1.0 - specCol) * pow((1.0 + EPSILON - loh), 5.0);
 #else
 	// Unreal
-	vec3 F =
-		specCol + (1.0 - specCol) * pow(2.0, (-5.55473 * voh - 6.98316) * voh);
+	vec3 F = specCol + (1.0 - specCol) * pow(2.0, (-5.55473 * voh - 6.98316) * voh);
 #endif
 
 	// D(n,h) aka NDF: GGX Trowbridge-Reitz
@@ -72,13 +69,11 @@ vec3 computeSpecularColorBrdf(vec3 v, // view dir
 	return F * (V * D) * lightSpecCol;
 }
 
-//==============================================================================
 vec3 computeDiffuseColor(vec3 diffCol, vec3 lightDiffCol)
 {
 	return diffCol * lightDiffCol;
 }
 
-//==============================================================================
 float computeSpotFactor(vec3 l, float outerCos, float innerCos, vec3 spotDir)
 {
 	float costheta = -dot(l, spotDir);
@@ -86,7 +81,6 @@ float computeSpotFactor(vec3 l, float outerCos, float innerCos, vec3 spotDir)
 	return spotFactor;
 }
 
-//==============================================================================
 uint computeShadowSampleCount(const uint COUNT, float zVSpace)
 {
 	const float MAX_DISTANCE = 5.0;
@@ -99,34 +93,29 @@ uint computeShadowSampleCount(const uint COUNT, float zVSpace)
 	return sampleCount;
 }
 
-//==============================================================================
-float computeShadowFactorSpot(mat4 lightProjectionMat,
-	vec3 fragPos,
-	float layer,
-	uint sampleCount,
-	sampler2DArrayShadow spotMapArr)
+float computeShadowFactorSpot(
+	mat4 lightProjectionMat, vec3 fragPos, float layer, uint sampleCount, sampler2DArrayShadow spotMapArr)
 {
 	vec4 texCoords4 = lightProjectionMat * vec4(fragPos, 1.0);
 	vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
 
 #if POISSON == 1
-	const vec2 poissonDisk[SHADOW_SAMPLE_COUNT] =
-		vec2[](vec2(0.751688, 0.619709) * 2.0 - 1.0,
-			vec2(0.604741, 0.778485) * 2.0 - 1.0,
-			vec2(0.936216, 0.463094) * 2.0 - 1.0,
-			vec2(0.808758, 0.284966) * 2.0 - 1.0,
-			vec2(0.812927, 0.786332) * 2.0 - 1.0,
-			vec2(0.608651, 0.303919) * 2.0 - 1.0,
-			vec2(0.482117, 0.573285) * 2.0 - 1.0,
-			vec2(0.55819, 0.988451) * 2.0 - 1.0,
-			vec2(0.340001, 0.728732) * 2.0 - 1.0,
-			vec2(0.681775, 0.119789) * 2.0 - 1.0,
-			vec2(0.217429, 0.522558) * 2.0 - 1.0,
-			vec2(0.384257, 0.352163) * 2.0 - 1.0,
-			vec2(0.143769, 0.738606) * 2.0 - 1.0,
-			vec2(0.383474, 0.910019) * 2.0 - 1.0,
-			vec2(0.409305, 0.177022) * 2.0 - 1.0,
-			vec2(0.158647, 0.239097) * 2.0 - 1.0);
+	const vec2 poissonDisk[SHADOW_SAMPLE_COUNT] = vec2[](vec2(0.751688, 0.619709) * 2.0 - 1.0,
+		vec2(0.604741, 0.778485) * 2.0 - 1.0,
+		vec2(0.936216, 0.463094) * 2.0 - 1.0,
+		vec2(0.808758, 0.284966) * 2.0 - 1.0,
+		vec2(0.812927, 0.786332) * 2.0 - 1.0,
+		vec2(0.608651, 0.303919) * 2.0 - 1.0,
+		vec2(0.482117, 0.573285) * 2.0 - 1.0,
+		vec2(0.55819, 0.988451) * 2.0 - 1.0,
+		vec2(0.340001, 0.728732) * 2.0 - 1.0,
+		vec2(0.681775, 0.119789) * 2.0 - 1.0,
+		vec2(0.217429, 0.522558) * 2.0 - 1.0,
+		vec2(0.384257, 0.352163) * 2.0 - 1.0,
+		vec2(0.143769, 0.738606) * 2.0 - 1.0,
+		vec2(0.383474, 0.910019) * 2.0 - 1.0,
+		vec2(0.409305, 0.177022) * 2.0 - 1.0,
+		vec2(0.158647, 0.239097) * 2.0 - 1.0);
 
 	float shadowFactor = 0.0;
 
@@ -149,12 +138,8 @@ float computeShadowFactorSpot(mat4 lightProjectionMat,
 #endif
 }
 
-//==============================================================================
-float computeShadowFactorOmni(in vec3 frag2Light,
-	in float layer,
-	in float radius,
-	in mat4 viewMat,
-	in samplerCubeArrayShadow omniMapArr)
+float computeShadowFactorOmni(
+	in vec3 frag2Light, in float layer, in float radius, in mat4 viewMat, in samplerCubeArrayShadow omniMapArr)
 {
 	vec3 dir = (viewMat * vec4(-frag2Light, 1.0)).xyz;
 	vec3 dirabs = abs(dir);
@@ -177,11 +162,9 @@ float computeShadowFactorOmni(in vec3 frag2Light,
 	return shadowFactor;
 }
 
-//==============================================================================
-// Compute the cubemap texture lookup vector given the reflection vector (r)
-// the radius squared of the probe (R2) and the frag pos in sphere space (f)
-vec3 computeCubemapVecAccurate(
-	in vec3 r, in float R2, in vec3 f, in mat3 invViewRotation)
+// Compute the cubemap texture lookup vector given the reflection vector (r) the radius squared of the probe (R2) and
+// the frag pos in sphere space (f)
+vec3 computeCubemapVecAccurate(in vec3 r, in float R2, in vec3 f, in mat3 invViewRotation)
 {
 	// Compute the collision of the r to the inner part of the sphere
 	// From now on we work on the sphere's space
@@ -205,10 +188,8 @@ vec3 computeCubemapVecAccurate(
 	return uv;
 }
 
-//==============================================================================
 // Cheap version of computeCubemapVecAccurate
-vec3 computeCubemapVecCheap(
-	in vec3 r, in float R2, in vec3 f, in mat3 invViewRotation)
+vec3 computeCubemapVecCheap(in vec3 r, in float R2, in vec3 f, in mat3 invViewRotation)
 {
 	return invViewRotation * r;
 }

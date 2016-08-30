@@ -7,7 +7,6 @@
 
 #include <anki/scene/Common.h>
 #include <anki/util/Hierarchy.h>
-#include <anki/util/Rtti.h>
 #include <anki/util/BitMask.h>
 #include <anki/util/BitSet.h>
 #include <anki/util/List.h>
@@ -24,16 +23,14 @@ class ResourceManager;
 /// @{
 
 /// Interface class backbone of scene
-class SceneNode : public Hierarchy<SceneNode>,
-				  public IntrusiveListEnabled<SceneNode>
+class SceneNode : public Hierarchy<SceneNode>, public IntrusiveListEnabled<SceneNode>
 {
 public:
 	using Base = Hierarchy<SceneNode>;
 
 	/// The one and only constructor.
 	/// @param scene The owner scene.
-	/// @param name The unique name of the node. If it's empty the the node
-	///             is not searchable.
+	/// @param name The unique name of the node. If it's empty the the node is not searchable.
 	SceneNode(SceneGraph* scene, CString name);
 
 	/// Unregister node
@@ -78,8 +75,7 @@ public:
 		Base::addChild(getSceneAllocator(), obj);
 	}
 
-	/// This is called by the scene every frame after logic and before
-	/// rendering. By default it does nothing
+	/// This is called by the scene every frame after logic and before rendering. By default it does nothing.
 	/// @param prevUpdateTime Timestamp of the previous update
 	/// @param crntTime Timestamp of this update
 	virtual ANKI_USE_RESULT Error frameUpdate(F32 prevUpdateTime, F32 crntTime)
@@ -193,8 +189,7 @@ public:
 	}
 
 protected:
-	/// Append a component to the components container. The SceneNode will not
-	/// take ownership
+	/// Append a component to the components container. The SceneNode will not take ownership.
 	void addComponent(SceneComponent* comp, Bool transferOwnership = false);
 
 	/// Remove a component from the container
@@ -217,8 +212,7 @@ private:
 	String m_name; ///< A unique name
 	BitMask<Flag> m_flags;
 
-	/// A mask of bits for each test. If bit set then the node was visited by
-	/// a sector.
+	/// A mask of bits for each test. If bit set then the node was visited by a sector.
 	BitSet<256> m_sectorVisitedBitset = {false};
 	SpinLock m_sectorVisitedBitsetLock;
 

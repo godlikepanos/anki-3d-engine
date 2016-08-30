@@ -56,8 +56,7 @@ public:
 	template<typename TTask, typename... TArgs>
 	TTask* newTask(TArgs&&... args)
 	{
-		return m_alloc.template newInstance<TTask>(
-			std::forward<TArgs>(args)...);
+		return m_alloc.template newInstance<TTask>(std::forward<TArgs>(args)...);
 	}
 
 	/// Create and submit a new asynchronous loading task.
@@ -67,9 +66,8 @@ public:
 		submitTask(newTask<TTask>(std::forward<TArgs>(args)...));
 	}
 
-	/// Pause the loader. This method will block the main thread for the current
-	/// async task to finish. The rest of the tasks in the queue will not be
-	/// executed until resume is called.
+	/// Pause the loader. This method will block the main thread for the current async task to finish. The rest of the
+	/// tasks in the queue will not be executed until resume is called.
 	void pause();
 
 	/// Resume the async loading.
@@ -101,7 +99,7 @@ private:
 	Atomic<U64> m_completedTaskCount = {0};
 
 	/// Thread callback
-	static ANKI_USE_RESULT Error threadCallback(Thread::Info& info);
+	static ANKI_USE_RESULT Error threadCallback(ThreadCallbackInfo& info);
 
 	Error threadWorker();
 

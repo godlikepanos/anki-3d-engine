@@ -9,14 +9,8 @@
 namespace anki
 {
 
-//==============================================================================
-// PhysicsCollisionShape                                                       =
-//==============================================================================
-
-//==============================================================================
 I32 PhysicsCollisionShape::m_gid = 1;
 
-//==============================================================================
 PhysicsCollisionShape::~PhysicsCollisionShape()
 {
 	if(m_shape)
@@ -25,17 +19,11 @@ PhysicsCollisionShape::~PhysicsCollisionShape()
 	}
 }
 
-//==============================================================================
-// PhysicsSphere                                                               =
-//==============================================================================
-
-//==============================================================================
 Error PhysicsSphere::create(PhysicsCollisionShapeInitInfo& init, F32 radius)
 {
 	Error err = ErrorCode::NONE;
 
-	m_shape =
-		NewtonCreateSphere(m_world->getNewtonWorld(), radius, m_gid++, nullptr);
+	m_shape = NewtonCreateSphere(m_world->getNewtonWorld(), radius, m_gid++, nullptr);
 	if(!m_shape)
 	{
 		ANKI_LOGE("NewtonCreateSphere() failed");
@@ -45,22 +33,11 @@ Error PhysicsSphere::create(PhysicsCollisionShapeInitInfo& init, F32 radius)
 	return err;
 }
 
-//==============================================================================
-// PhysicsBox                                                                  =
-//==============================================================================
-
-//==============================================================================
-Error PhysicsBox::create(
-	PhysicsCollisionShapeInitInfo& init, const Vec3& extend)
+Error PhysicsBox::create(PhysicsCollisionShapeInitInfo& init, const Vec3& extend)
 {
 	Error err = ErrorCode::NONE;
 
-	m_shape = NewtonCreateBox(m_world->getNewtonWorld(),
-		extend.x(),
-		extend.y(),
-		extend.z(),
-		m_gid++,
-		nullptr);
+	m_shape = NewtonCreateBox(m_world->getNewtonWorld(), extend.x(), extend.y(), extend.z(), m_gid++, nullptr);
 	if(!m_shape)
 	{
 		ANKI_LOGE("NewtonCreateBox() failed");
@@ -70,11 +47,6 @@ Error PhysicsBox::create(
 	return err;
 }
 
-//==============================================================================
-// PhysicsTriangleSoup                                                         =
-//==============================================================================
-
-//==============================================================================
 Error PhysicsTriangleSoup::create(PhysicsCollisionShapeInitInfo& init,
 	const Vec3* positions,
 	U32 positionsStride,
@@ -99,8 +71,7 @@ Error PhysicsTriangleSoup::create(PhysicsCollisionShapeInitInfo& init,
 		for(U i = 0; i < 3; ++i)
 		{
 			U idx = indices[i];
-			const U8* ptr =
-				reinterpret_cast<const U8*>(positions) + positionsStride * idx;
+			const U8* ptr = reinterpret_cast<const U8*>(positions) + positionsStride * idx;
 
 			facePos[i] = *reinterpret_cast<const Vec3*>(ptr);
 		}

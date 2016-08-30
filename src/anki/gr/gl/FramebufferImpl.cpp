@@ -15,14 +15,12 @@
 namespace anki
 {
 
-//==============================================================================
 Error FramebufferImpl::init(const FramebufferInitInfo& init)
 {
 	ANKI_ASSERT(!isCreated());
 	m_in = init;
 
-	if(m_in.m_colorAttachmentCount == 1
-		&& !m_in.m_colorAttachments[0].m_texture.isCreated())
+	if(m_in.m_colorAttachmentCount == 1 && !m_in.m_colorAttachments[0].m_texture.isCreated())
 	{
 		m_bindDefault = true;
 		return ErrorCode::NONE;
@@ -77,10 +75,8 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
-void FramebufferImpl::attachTextureInternal(GLenum attachment,
-	const TextureImpl& tex,
-	const FramebufferAttachmentInfo& info)
+void FramebufferImpl::attachTextureInternal(
+	GLenum attachment, const TextureImpl& tex, const FramebufferAttachmentInfo& info)
 {
 	tex.checkSurface(info.m_surface);
 
@@ -91,11 +87,7 @@ void FramebufferImpl::attachTextureInternal(GLenum attachment,
 #if ANKI_GL == ANKI_GL_DESKTOP
 	case GL_TEXTURE_2D_MULTISAMPLE:
 #endif
-		glFramebufferTexture2D(target,
-			attachment,
-			tex.m_target,
-			tex.getGlName(),
-			info.m_surface.m_level);
+		glFramebufferTexture2D(target, attachment, tex.m_target, tex.getGlName(), info.m_surface.m_level);
 		break;
 	case GL_TEXTURE_CUBE_MAP:
 		glFramebufferTexture2D(target,
@@ -105,18 +97,10 @@ void FramebufferImpl::attachTextureInternal(GLenum attachment,
 			info.m_surface.m_level);
 		break;
 	case GL_TEXTURE_2D_ARRAY:
-		glFramebufferTextureLayer(target,
-			attachment,
-			tex.getGlName(),
-			info.m_surface.m_level,
-			info.m_surface.m_layer);
+		glFramebufferTextureLayer(target, attachment, tex.getGlName(), info.m_surface.m_level, info.m_surface.m_layer);
 		break;
 	case GL_TEXTURE_3D:
-		glFramebufferTextureLayer(target,
-			attachment,
-			tex.getGlName(),
-			info.m_surface.m_level,
-			info.m_surface.m_depth);
+		glFramebufferTextureLayer(target, attachment, tex.getGlName(), info.m_surface.m_level, info.m_surface.m_depth);
 		break;
 	case GL_TEXTURE_CUBE_MAP_ARRAY:
 		glFramebufferTextureLayer(target,
@@ -131,7 +115,6 @@ void FramebufferImpl::attachTextureInternal(GLenum attachment,
 	}
 }
 
-//==============================================================================
 void FramebufferImpl::bind(const GlState& state)
 {
 	if(m_bindDefault)
@@ -166,9 +149,7 @@ void FramebufferImpl::bind(const GlState& state)
 		// Invalidate
 		if(m_invalidateBuffersCount)
 		{
-			glInvalidateFramebuffer(GL_FRAMEBUFFER,
-				m_invalidateBuffersCount,
-				&m_invalidateBuffers[0]);
+			glInvalidateFramebuffer(GL_FRAMEBUFFER, m_invalidateBuffersCount, &m_invalidateBuffers[0]);
 		}
 
 		// Clear buffers
@@ -181,8 +162,7 @@ void FramebufferImpl::bind(const GlState& state)
 				// Enable write mask in case a pipeline changed it (else no
 				// clear will happen) and then restore state
 				Bool restore = false;
-				if(state.m_colorWriteMasks[i][0] != true
-					|| state.m_colorWriteMasks[i][1] != true
+				if(state.m_colorWriteMasks[i][0] != true || state.m_colorWriteMasks[i][1] != true
 					|| state.m_colorWriteMasks[i][2] != true
 					|| state.m_colorWriteMasks[i][3] != true)
 				{
@@ -204,8 +184,7 @@ void FramebufferImpl::bind(const GlState& state)
 		}
 
 		if(m_in.m_depthStencilAttachment.m_texture.isCreated()
-			&& m_in.m_depthStencilAttachment.m_loadOperation
-				== AttachmentLoadOperation::CLEAR)
+			&& m_in.m_depthStencilAttachment.m_loadOperation == AttachmentLoadOperation::CLEAR)
 		{
 			// Enable write mask in case a pipeline changed it (else no
 			// clear will happen) and then restore state
@@ -214,10 +193,7 @@ void FramebufferImpl::bind(const GlState& state)
 				glDepthMask(true);
 			}
 
-			glClearBufferfv(GL_DEPTH,
-				0,
-				&m_in.m_depthStencilAttachment.m_clearValue.m_depthStencil
-					 .m_depth);
+			glClearBufferfv(GL_DEPTH, 0, &m_in.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth);
 
 			if(state.m_depthWriteMask == false)
 			{

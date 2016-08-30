@@ -6,7 +6,6 @@
 #include "Exporter.h"
 #include <iostream>
 
-//==============================================================================
 void Exporter::exportMaterial(const aiMaterial& mtl) const
 {
 	std::string diffTex;
@@ -169,8 +168,7 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 	// Replace strings
 	if(!dispTex.empty())
 	{
-		materialStr =
-			replaceAllString(materialStr, "%dispMap%", m_texrpath + dispTex);
+		materialStr = replaceAllString(materialStr, "%dispMap%", m_texrpath + dispTex);
 	}
 
 	// Diffuse
@@ -178,20 +176,16 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 	{
 		materialStr = replaceAllString(materialStr,
 			"%diffuseColorInput%",
-			R"(<input><type>sampler2D</type><name>uDiffuseColor</name><value>)"
-				+ m_texrpath
-				+ diffTex
+			R"(<input><type>sampler2D</type><name>uDiffuseColor</name><value>)" + m_texrpath + diffTex
 				+ R"(</value></input>)");
 
-		materialStr = replaceAllString(
-			materialStr, "%diffuseColorFunc%", readRgbFromTextureTemplate);
+		materialStr = replaceAllString(materialStr, "%diffuseColorFunc%", readRgbFromTextureTemplate);
 
 		materialStr = replaceAllString(materialStr, "%id%", "10");
 
 		materialStr = replaceAllString(materialStr, "%map%", "uDiffuseColor");
 
-		materialStr =
-			replaceAllString(materialStr, "%diffuseColorArg%", "out10");
+		materialStr = replaceAllString(materialStr, "%diffuseColorArg%", "out10");
 	}
 	else
 	{
@@ -200,9 +194,7 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 
 		materialStr = replaceAllString(materialStr,
 			"%diffuseColorInput%",
-			R"(<input><type>vec3</type><name>uDiffuseColor</name><value>)"
-				+ std::to_string(diffCol[0])
-				+ " "
+			R"(<input><type>vec3</type><name>uDiffuseColor</name><value>)" + std::to_string(diffCol[0]) + " "
 				+ std::to_string(diffCol[1])
 				+ " "
 				+ std::to_string(diffCol[2])
@@ -210,8 +202,7 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 
 		materialStr = replaceAllString(materialStr, "%diffuseColorFunc%", "");
 
-		materialStr =
-			replaceAllString(materialStr, "%diffuseColorArg%", "uDiffuseColor");
+		materialStr = replaceAllString(materialStr, "%diffuseColorArg%", "uDiffuseColor");
 	}
 
 	// Normal
@@ -219,9 +210,7 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 	{
 		materialStr = replaceAllString(materialStr,
 			"%normalInput%",
-			R"(<input><type>sampler2D</type><name>uNormal</name><value>)"
-				+ m_texrpath
-				+ normTex
+			R"(<input><type>sampler2D</type><name>uNormal</name><value>)" + m_texrpath + normTex
 				+ R"(</value></input>)");
 
 		materialStr = replaceAllString(materialStr,
@@ -255,20 +244,16 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 	{
 		materialStr = replaceAllString(materialStr,
 			"%specularColorInput%",
-			R"(<input><type>sampler2D</type><name>uSpecularColor</name><value>)"
-				+ m_texrpath
-				+ specColTex
+			R"(<input><type>sampler2D</type><name>uSpecularColor</name><value>)" + m_texrpath + specColTex
 				+ R"(</value></input>)");
 
-		materialStr = replaceAllString(
-			materialStr, "%specularColorFunc%", readRgbFromTextureTemplate);
+		materialStr = replaceAllString(materialStr, "%specularColorFunc%", readRgbFromTextureTemplate);
 
 		materialStr = replaceAllString(materialStr, "%id%", "50");
 
 		materialStr = replaceAllString(materialStr, "%map%", "uSpecularColor");
 
-		materialStr =
-			replaceAllString(materialStr, "%specularColorArg%", "out50");
+		materialStr = replaceAllString(materialStr, "%specularColorArg%", "out50");
 	}
 	else
 	{
@@ -277,9 +262,7 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 
 		materialStr = replaceAllString(materialStr,
 			"%specularColorInput%",
-			R"(<input><type>vec3</type><name>uSpecularColor</name><value>)"
-				+ std::to_string(specCol[0])
-				+ " "
+			R"(<input><type>vec3</type><name>uSpecularColor</name><value>)" + std::to_string(specCol[0]) + " "
 				+ std::to_string(specCol[1])
 				+ " "
 				+ std::to_string(specCol[2])
@@ -287,31 +270,25 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 
 		materialStr = replaceAllString(materialStr, "%specularColorFunc%", "");
 
-		materialStr = replaceAllString(
-			materialStr, "%specularColorArg%", "uSpecularColor");
+		materialStr = replaceAllString(materialStr, "%specularColorArg%", "uSpecularColor");
 	}
 
 	if(!shininessTex.empty())
 	{
 		materialStr = replaceAllString(materialStr,
 			"%specularPowerInput%",
-			R"(<input><type>sampler2D</type><name>uSpecularPower</name><value>)"
-				+ m_texrpath
-				+ shininessTex
+			R"(<input><type>sampler2D</type><name>uSpecularPower</name><value>)" + m_texrpath + shininessTex
 				+ R"(</value></input>)");
 
-		materialStr = replaceAllString(
-			materialStr, "%specularPowerValue%", m_texrpath + shininessTex);
+		materialStr = replaceAllString(materialStr, "%specularPowerValue%", m_texrpath + shininessTex);
 
-		materialStr = replaceAllString(
-			materialStr, "%specularPowerFunc%", readRFromTextureTemplate);
+		materialStr = replaceAllString(materialStr, "%specularPowerFunc%", readRFromTextureTemplate);
 
 		materialStr = replaceAllString(materialStr, "%id%", "60");
 
 		materialStr = replaceAllString(materialStr, "%map%", "uSpecularPower");
 
-		materialStr =
-			replaceAllString(materialStr, "%specularPowerArg%", "out60");
+		materialStr = replaceAllString(materialStr, "%specularPowerArg%", "out60");
 	}
 	else
 	{
@@ -328,14 +305,12 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 
 		materialStr = replaceAllString(materialStr,
 			"%specularPowerInput%",
-			R"(<input><type>float</type><name>uSpecularPower</name><value>)"
-				+ std::to_string(shininess)
+			R"(<input><type>float</type><name>uSpecularPower</name><value>)" + std::to_string(shininess)
 				+ R"(</value></input>)");
 
 		materialStr = replaceAllString(materialStr, "%specularPowerFunc%", "");
 
-		materialStr = replaceAllString(
-			materialStr, "%specularPowerArg%", "uSpecularPower");
+		materialStr = replaceAllString(materialStr, "%specularPowerArg%", "uSpecularPower");
 	}
 
 	materialStr = replaceAllString(materialStr, "%maxSpecularPower%", " ");
@@ -349,9 +324,7 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 	{
 		materialStr = replaceAllString(materialStr,
 			"%emissionInput%",
-			"<input><type>sampler2D</type><name>emissionTex</name><value>"
-				+ m_texrpath
-				+ emissiveTex
+			"<input><type>sampler2D</type><name>emissionTex</name><value>" + m_texrpath + emissiveTex
 				+ "</value></input>)\n"
 				+ "\t\t\t\t<input><type>float</type><name>emission</"
 				  "name><value>"
@@ -382,14 +355,12 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 	{
 		materialStr = replaceAllString(materialStr,
 			"%emissionInput%",
-			R"(<input><type>float</type><name>emission</name><value>)"
-				+ std::to_string(emission)
+			R"(<input><type>float</type><name>emission</name><value>)" + std::to_string(emission)
 				+ R"(</value><const>1</const></input>)");
 
 		materialStr = replaceAllString(materialStr, "%emissionFunc%", "");
 
-		materialStr =
-			replaceAllString(materialStr, "%emissionArg%", "emission");
+		materialStr = replaceAllString(materialStr, "%emissionArg%", "emission");
 	}
 
 	// Metallic
@@ -397,9 +368,7 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 	{
 		materialStr = replaceAllString(materialStr,
 			"%metallicInput%",
-			"<input><type>sampler2D</type><name>metallicTex</name><value>"
-				+ m_texrpath
-				+ metallicTex
+			"<input><type>sampler2D</type><name>metallicTex</name><value>" + m_texrpath + metallicTex
 				+ "</value></input>");
 
 		std::string func = readRFromTextureTemplate;
@@ -422,14 +391,12 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 
 		materialStr = replaceAllString(materialStr,
 			"%metallicInput%",
-			R"(<input><type>float</type><name>metallic</name><value>)"
-				+ std::to_string(metallic)
+			R"(<input><type>float</type><name>metallic</name><value>)" + std::to_string(metallic)
 				+ R"(</value><const>1</const></input>)");
 
 		materialStr = replaceAllString(materialStr, "%metallicFunc%", "");
 
-		materialStr =
-			replaceAllString(materialStr, "%metallicArg%", "metallic");
+		materialStr = replaceAllString(materialStr, "%metallicArg%", "metallic");
 	}
 
 	// Height to parallax
@@ -463,9 +430,7 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 				  "<value>0.05</value><const>1</const></input>");
 
 		// At this point everyone will have to use out4 as tex coords
-		materialStr = replaceAllString(materialStr,
-			"<argument>out2</argument>",
-			"<argument>out4</argument>");
+		materialStr = replaceAllString(materialStr, "<argument>out2</argument>", "<argument>out4</argument>");
 
 		materialStr = replaceAllString(materialStr,
 			"%heightFunc%",
@@ -489,16 +454,14 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 	}
 
 	// Continue
-	materialStr =
-		replaceAllString(materialStr, "%diffuseMap%", m_texrpath + diffTex);
+	materialStr = replaceAllString(materialStr, "%diffuseMap%", m_texrpath + diffTex);
 
 	// Subsurface
 	materialStr = replaceAllString(materialStr,
 		"%subsurfaceInput%",
 		"<input><type>float</type><name>subsurface</name>"
 		"<const>1</const><value>0.0</value></input>");
-	materialStr =
-		replaceAllString(materialStr, "%subsurfaceArg%", "subsurface");
+	materialStr = replaceAllString(materialStr, "%subsurfaceArg%", "subsurface");
 
 	// Replace texture extensions with .anki
 	materialStr = replaceAllString(materialStr, ".tga", ".ankitex");

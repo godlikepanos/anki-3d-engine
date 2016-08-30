@@ -65,11 +65,9 @@ public:
 		ANKI_ASSERT(vol.m_level < m_mipCount);
 	}
 
-	void computeSubResourceRange(
-		const TextureSurfaceInfo& surf, VkImageSubresourceRange& range) const;
+	void computeSubResourceRange(const TextureSurfaceInfo& surf, VkImageSubresourceRange& range) const;
 
-	void computeSubResourceRange(
-		const TextureVolumeInfo& vol, VkImageSubresourceRange& range) const;
+	void computeSubResourceRange(const TextureVolumeInfo& vol, VkImageSubresourceRange& range) const;
 
 	/// Compute the layer as defined by Vulkan.
 	U computeVkArrayLayer(const TextureSurfaceInfo& surf) const;
@@ -91,8 +89,7 @@ public:
 	/// That view will be used in descriptor sets.
 	VkImageView getOrCreateResourceGroupView();
 
-	/// By knowing the previous and new texture usage calculate the relavant
-	/// info for a ppline barrier.
+	/// By knowing the previous and new texture usage calculate the relavant info for a ppline barrier.
 	void computeBarrierInfo(TextureUsageBit before,
 		TextureUsageBit after,
 		U level,
@@ -117,23 +114,19 @@ private:
 	class ViewCompare
 	{
 	public:
-		Bool operator()(const VkImageViewCreateInfo& a,
-			const VkImageViewCreateInfo& b) const
+		Bool operator()(const VkImageViewCreateInfo& a, const VkImageViewCreateInfo& b) const
 		{
 			return memcmp(&a, &b, sizeof(a)) == 0;
 		}
 	};
 
-	HashMap<VkImageViewCreateInfo, VkImageView, ViewHasher, ViewCompare>
-		m_viewsMap;
+	HashMap<VkImageViewCreateInfo, VkImageView, ViewHasher, ViewCompare> m_viewsMap;
 	Mutex m_viewsMapMtx;
 	VkImageViewCreateInfo m_viewCreateInfoTemplate;
 
-	ANKI_USE_RESULT static VkFormatFeatureFlags calcFeatures(
-		const TextureInitInfo& init);
+	ANKI_USE_RESULT static VkFormatFeatureFlags calcFeatures(const TextureInitInfo& init);
 
-	ANKI_USE_RESULT static VkImageCreateFlags calcCreateFlags(
-		const TextureInitInfo& init);
+	ANKI_USE_RESULT static VkImageCreateFlags calcCreateFlags(const TextureInitInfo& init);
 
 	ANKI_USE_RESULT Bool imageSupported(const TextureInitInfo& init);
 
@@ -142,9 +135,7 @@ private:
 	VkImageView getOrCreateView(const VkImageViewCreateInfo& ci);
 };
 
-//==============================================================================
-inline void TextureImpl::computeSubResourceRange(
-	const TextureSurfaceInfo& surf, VkImageSubresourceRange& range) const
+inline void TextureImpl::computeSubResourceRange(const TextureSurfaceInfo& surf, VkImageSubresourceRange& range) const
 {
 	checkSurface(surf);
 	range.aspectMask = m_aspect;
@@ -173,9 +164,7 @@ inline void TextureImpl::computeSubResourceRange(
 	range.layerCount = 1;
 }
 
-//==============================================================================
-inline void TextureImpl::computeSubResourceRange(
-	const TextureVolumeInfo& vol, VkImageSubresourceRange& range) const
+inline void TextureImpl::computeSubResourceRange(const TextureVolumeInfo& vol, VkImageSubresourceRange& range) const
 {
 	checkVolume(vol);
 	range.aspectMask = m_aspect;
@@ -185,7 +174,6 @@ inline void TextureImpl::computeSubResourceRange(
 	range.layerCount = 1;
 }
 
-//==============================================================================
 inline U TextureImpl::computeVkArrayLayer(const TextureSurfaceInfo& surf) const
 {
 	checkSurface(surf);

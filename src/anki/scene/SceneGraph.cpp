@@ -18,14 +18,9 @@
 namespace anki
 {
 
-//==============================================================================
-// Misc                                                                        =
-//==============================================================================
-
 namespace
 {
 
-//==============================================================================
 class UpdateSceneNodesTask : public ThreadPoolTask
 {
 public:
@@ -71,8 +66,7 @@ public:
 				{
 					if(nodes[i]->getParent() == nullptr)
 					{
-						err = updateInternal(
-							*nodes[i], m_prevUpdateTime, m_crntTime);
+						err = updateInternal(*nodes[i], m_prevUpdateTime, m_crntTime);
 						ANKI_TRACE_INC_COUNTER(SCENE_NODES_UPDATED, 1);
 					}
 					++count;
@@ -89,8 +83,7 @@ public:
 		return err;
 	}
 
-	ANKI_USE_RESULT Error updateInternal(
-		SceneNode& node, F32 prevTime, F32 crntTime)
+	ANKI_USE_RESULT Error updateInternal(SceneNode& node, F32 prevTime, F32 crntTime)
 	{
 		Error err = ErrorCode::NONE;
 
@@ -103,9 +96,8 @@ public:
 		// Update children
 		if(!err)
 		{
-			err = node.visitChildren([&](SceneNode& child) -> Error {
-				return updateInternal(child, prevTime, crntTime);
-			});
+			err = node.visitChildren(
+				[&](SceneNode& child) -> Error { return updateInternal(child, prevTime, crntTime); });
 		}
 
 		// Frame update
@@ -120,16 +112,10 @@ public:
 
 } // end namespace anonymous
 
-//==============================================================================
-// Scene                                                                       =
-//==============================================================================
-
-//==============================================================================
 SceneGraph::SceneGraph()
 {
 }
 
-//==============================================================================
 SceneGraph::~SceneGraph()
 {
 	Error err = iterateSceneNodes([&](SceneNode& s) -> Error {
@@ -147,7 +133,6 @@ SceneGraph::~SceneGraph()
 	}
 }
 
-//==============================================================================
 Error SceneGraph::init(AllocAlignedCallback allocCb,
 	void* allocCbData,
 	ThreadPool* threadpool,
@@ -167,15 +152,13 @@ Error SceneGraph::init(AllocAlignedCallback allocCb,
 	m_input = input;
 
 	m_alloc = SceneAllocator<U8>(allocCb, allocCbData, 1024 * 10, 1.0, 0);
-	m_frameAlloc =
-		SceneFrameAllocator<U8>(allocCb, allocCbData, 1 * 1024 * 1024);
+	m_frameAlloc = SceneFrameAllocator<U8>(allocCb, allocCbData, 1 * 1024 * 1024);
 
 	ANKI_CHECK(m_events.create(this));
 
 	m_sectors = m_alloc.newInstance<SectorGroup>(this);
 
-	m_maxReflectionProxyDistance =
-		config.getNumber("imageReflectionMaxDistance");
+	m_maxReflectionProxyDistance = config.getNumber("imageReflectionMaxDistance");
 
 	m_componentLists.init(m_alloc);
 
@@ -187,7 +170,6 @@ Error SceneGraph::init(AllocAlignedCallback allocCb,
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error SceneGraph::registerNode(SceneNode* node)
 {
 	ANKI_ASSERT(node);
@@ -211,7 +193,6 @@ Error SceneGraph::registerNode(SceneNode* node)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void SceneGraph::unregisterNode(SceneNode* node)
 {
 	// Remove from the graph
@@ -232,7 +213,6 @@ void SceneGraph::unregisterNode(SceneNode* node)
 	}
 }
 
-//==============================================================================
 SceneNode& SceneGraph::findSceneNode(const CString& name)
 {
 	SceneNode* node = tryFindSceneNode(name);
@@ -240,14 +220,12 @@ SceneNode& SceneGraph::findSceneNode(const CString& name)
 	return *node;
 }
 
-//==============================================================================
 SceneNode* SceneGraph::tryFindSceneNode(const CString& name)
 {
 	auto it = m_nodesDict.find(name);
 	return (it == m_nodesDict.getEnd()) ? nullptr : (*it);
 }
 
-//==============================================================================
 void SceneGraph::deleteNodesMarkedForDeletion()
 {
 	/// Delete all nodes pending deletion. At this point all scene threads
@@ -277,9 +255,7 @@ void SceneGraph::deleteNodesMarkedForDeletion()
 	}
 }
 
-//==============================================================================
-Error SceneGraph::update(
-	F32 prevUpdateTime, F32 crntTime, MainRenderer& renderer)
+Error SceneGraph::update(F32 prevUpdateTime, F32 crntTime, MainRenderer& renderer)
 {
 	ANKI_ASSERT(m_mainCam);
 	ANKI_TRACE_START_EVENT(SCENE_UPDATE);

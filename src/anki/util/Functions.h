@@ -62,8 +62,7 @@ inline Bool isPowerOfTwo(Int x)
 	return !(x == 0) && !(x & (x - 1));
 }
 
-/// Get the next power of two number. For example if x is 130 this will return
-/// 256
+/// Get the next power of two number. For example if x is 130 this will return 256.
 template<typename Int>
 inline Int nextPowerOfTwo(Int x)
 {

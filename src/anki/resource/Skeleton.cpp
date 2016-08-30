@@ -10,7 +10,6 @@
 namespace anki
 {
 
-//==============================================================================
 Skeleton::~Skeleton()
 {
 	for(Bone& b : m_bones)
@@ -21,7 +20,6 @@ Skeleton::~Skeleton()
 	m_bones.destroy(getAllocator());
 }
 
-//==============================================================================
 Error Skeleton::load(const ResourceFilename& filename)
 {
 	XmlDocument doc;

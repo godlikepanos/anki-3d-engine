@@ -18,16 +18,14 @@ class ThreadHive;
 /// @addtogroup util_thread
 /// @{
 
-/// Opaque handle that defines a ThreadHive depedency.
-/// @memberof ThreadHive
+/// Opaque handle that defines a ThreadHive depedency. @memberof ThreadHive
 using ThreadHiveDependencyHandle = U16;
 
 /// The callback that defines a ThreadHibe task.
 /// @memberof ThreadHive
 using ThreadHiveTaskCallback = void (*)(void*, U32 threadId, ThreadHive& hive);
 
-/// Task for the ThreadHive.
-/// @memberof ThreadHive
+/// Task for the ThreadHive. @memberof ThreadHive
 class ThreadHiveTask
 {
 public:
@@ -40,14 +38,12 @@ public:
 	/// The tasks that this task will depend on.
 	WeakArray<ThreadHiveDependencyHandle> m_inDependencies;
 
-	/// Will be filled after the submission of the task. Can be used to set
-	/// dependencies to future tasks.
+	/// Will be filled after the submission of the task. Can be used to set dependencies to future tasks.
 	ThreadHiveDependencyHandle m_outDependency;
 };
 
-/// A scheduler of small tasks. It takes a number of tasks and schedules them in
-/// one of the threads. The tasks can depend on previously submitted tasks or be
-/// completely independent.
+/// A scheduler of small tasks. It takes a number of tasks and schedules them in one of the threads. The tasks can
+/// depend on previously submitted tasks or be completely independent.
 class ThreadHive : public NonCopyable
 {
 public:
@@ -66,8 +62,7 @@ public:
 	/// Submit tasks. The ThreadHiveTaskCallback callbacks can also call this.
 	void submitTasks(ThreadHiveTask* tasks, U taskCount);
 
-	/// Submit a single task without dependencies. The ThreadHiveTaskCallback
-	/// callbacks can also call this.
+	/// Submit a single task without dependencies. The ThreadHiveTaskCallback callbacks can also call this.
 	void submitTask(ThreadHiveTaskCallback callback, void* arg)
 	{
 		ThreadHiveTask task;

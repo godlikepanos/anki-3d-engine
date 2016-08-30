@@ -54,8 +54,7 @@ class RenderingKeyHasher
 public:
 	PtrSize operator()(const RenderingKey& key) const
 	{
-		return U8(key.m_pass) | (key.m_lod << 8) | (key.m_tessellation << 16)
-			| (key.m_instanceCount << 24);
+		return U8(key.m_pass) | (key.m_lod << 8) | (key.m_tessellation << 16) | (key.m_instanceCount << 24);
 	}
 };
 
@@ -65,8 +64,7 @@ class RenderingKeyEqual
 public:
 	Bool operator()(const RenderingKey& a, const RenderingKey& b) const
 	{
-		return a.m_pass == b.m_pass && a.m_lod == b.m_lod
-			&& a.m_tessellation == b.m_tessellation
+		return a.m_pass == b.m_pass && a.m_lod == b.m_lod && a.m_tessellation == b.m_tessellation
 			&& a.m_instanceCount == b.m_instanceCount;
 	}
 };

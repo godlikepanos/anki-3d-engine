@@ -16,10 +16,6 @@
 namespace anki
 {
 
-//==============================================================================
-// Misc                                                                        =
-//==============================================================================
-
 /// Sync rendering thread command.
 class SyncCommand final : public GlCommand
 {
@@ -66,11 +62,6 @@ public:
 	}
 };
 
-//==============================================================================
-// RenderingThread                                                             =
-//==============================================================================
-
-//==============================================================================
 RenderingThread::RenderingThread(GrManager* manager)
 	: m_manager(manager)
 	, m_tail(0)
@@ -81,13 +72,11 @@ RenderingThread::RenderingThread(GrManager* manager)
 	ANKI_ASSERT(m_manager);
 }
 
-//==============================================================================
 RenderingThread::~RenderingThread()
 {
 	m_queue.destroy(m_manager->getAllocator());
 }
 
-//==============================================================================
 void RenderingThread::flushCommandBuffer(CommandBufferPtr cmdb)
 {
 	cmdb->getImplementation().makeImmutable();
@@ -114,7 +103,6 @@ void RenderingThread::flushCommandBuffer(CommandBufferPtr cmdb)
 	}
 }
 
-//==============================================================================
 void RenderingThread::finishCommandBuffer(CommandBufferPtr commands)
 {
 	flushCommandBuffer(commands);
@@ -122,17 +110,14 @@ void RenderingThread::finishCommandBuffer(CommandBufferPtr commands)
 	syncClientServer();
 }
 
-//==============================================================================
 void RenderingThread::start()
 {
 	ANKI_ASSERT(m_tail == 0 && m_head == 0);
 	m_queue.create(m_manager->getAllocator(), QUEUE_SIZE);
 
 	// Swap buffers stuff
-	m_swapBuffersCommands =
-		m_manager->newInstance<CommandBuffer>(CommandBufferInitInfo());
-	m_swapBuffersCommands->getImplementation()
-		.pushBackNewCommand<SwapBuffersCommand>(this);
+	m_swapBuffersCommands = m_manager->newInstance<CommandBuffer>(CommandBufferInitInfo());
+	m_swapBuffersCommands->getImplementation().pushBackNewCommand<SwapBuffersCommand>(this);
 	// Just in case noone swaps
 	m_swapBuffersCommands->getImplementation().makeExecuted();
 
@@ -142,16 +127,13 @@ void RenderingThread::start()
 	m_thread.start(this, threadCallback);
 
 	// Create sync command buffer
-	m_syncCommands =
-		m_manager->newInstance<CommandBuffer>(CommandBufferInitInfo());
+	m_syncCommands = m_manager->newInstance<CommandBuffer>(CommandBufferInitInfo());
 	m_syncCommands->getImplementation().pushBackNewCommand<SyncCommand>(this);
 
-	m_emptyCmdb =
-		m_manager->newInstance<CommandBuffer>(CommandBufferInitInfo());
+	m_emptyCmdb = m_manager->newInstance<CommandBuffer>(CommandBufferInitInfo());
 	m_emptyCmdb->getImplementation().pushBackNewCommand<EmptyCommand>();
 }
 
-//==============================================================================
 void RenderingThread::stop()
 {
 	syncClientServer();
@@ -162,7 +144,6 @@ void RenderingThread::stop()
 	(void)err;
 }
 
-//==============================================================================
 void RenderingThread::prepare()
 {
 	m_manager->getImplementation().pinContextToCurrentThread(true);
@@ -172,8 +153,7 @@ void RenderingThread::prepare()
 
 	ANKI_LOGI("OpenGL async thread started: OpenGL version %s, GLSL version %s",
 		reinterpret_cast<const char*>(glGetString(GL_VERSION)),
-		reinterpret_cast<const char*>(
-				  glGetString(GL_SHADING_LANGUAGE_VERSION)));
+		reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION)));
 
 	// Get thread id
 	m_serverThreadId = Thread::getCurrentThreadId();
@@ -182,12 +162,9 @@ void RenderingThread::prepare()
 	m_manager->getImplementation().getState().initRenderThread();
 
 	// Init dyn mem
-	m_manager->getImplementation()
-		.getTransientMemoryManager()
-		.initRenderThread();
+	m_manager->getImplementation().getTransientMemoryManager().initRenderThread();
 }
 
-//==============================================================================
 void RenderingThread::finish()
 {
 	// Iterate the queue and release the refcounts
@@ -203,9 +180,7 @@ void RenderingThread::finish()
 		}
 	}
 
-	m_manager->getImplementation()
-		.getTransientMemoryManager()
-		.destroyRenderThread();
+	m_manager->getImplementation().getTransientMemoryManager().destroyRenderThread();
 
 	// Cleanup GL
 	m_manager->getImplementation().getState().destroy();
@@ -215,15 +190,13 @@ void RenderingThread::finish()
 	m_manager->getImplementation().pinContextToCurrentThread(false);
 }
 
-//==============================================================================
-Error RenderingThread::threadCallback(Thread::Info& info)
+Error RenderingThread::threadCallback(ThreadCallbackInfo& info)
 {
 	RenderingThread* thread = static_cast<RenderingThread*>(info.m_userData);
 	thread->threadLoop();
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void RenderingThread::threadLoop()
 {
 	prepare();
@@ -269,7 +242,6 @@ void RenderingThread::threadLoop()
 	finish();
 }
 
-//==============================================================================
 void RenderingThread::syncClientServer()
 {
 	// Lock because there is only one barrier. If multiple threads call
@@ -280,7 +252,6 @@ void RenderingThread::syncClientServer()
 	m_syncBarrier.wait();
 }
 
-//==============================================================================
 void RenderingThread::swapBuffersInternal()
 {
 	ANKI_TRACE_START_EVENT(SWAP_BUFFERS);
@@ -299,7 +270,6 @@ void RenderingThread::swapBuffersInternal()
 	ANKI_TRACE_STOP_EVENT(SWAP_BUFFERS);
 }
 
-//==============================================================================
 void RenderingThread::swapBuffers()
 {
 	ANKI_TRACE_START_EVENT(SWAP_BUFFERS);

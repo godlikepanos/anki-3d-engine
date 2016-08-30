@@ -29,14 +29,12 @@ public:
 	};
 };
 
-//==============================================================================
 static void decNumber(void* arg, U32, ThreadHive& hive)
 {
 	ThreadHiveTestContext* ctx = static_cast<ThreadHiveTestContext*>(arg);
 	ctx->m_countAtomic.fetchSub(2);
 }
 
-//==============================================================================
 static void incNumber(void* arg, U32, ThreadHive& hive)
 {
 	ThreadHiveTestContext* ctx = static_cast<ThreadHiveTestContext*>(arg);
@@ -45,7 +43,6 @@ static void incNumber(void* arg, U32, ThreadHive& hive)
 	hive.submitTask(decNumber, arg);
 }
 
-//==============================================================================
 static void taskToWaitOn(void* arg, U32, ThreadHive& hive)
 {
 	ThreadHiveTestContext* ctx = static_cast<ThreadHiveTestContext*>(arg);
@@ -54,7 +51,6 @@ static void taskToWaitOn(void* arg, U32, ThreadHive& hive)
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
 }
 
-//==============================================================================
 static void taskToWait(void* arg, U32 threadId, ThreadHive& hive)
 {
 	ThreadHiveTestContext* ctx = static_cast<ThreadHiveTestContext*>(arg);
@@ -62,7 +58,6 @@ static void taskToWait(void* arg, U32 threadId, ThreadHive& hive)
 	ANKI_TEST_EXPECT_GEQ(prev, 10);
 }
 
-//==============================================================================
 ANKI_TEST(Util, ThreadHive)
 {
 	const U32 threadCount = 4;
@@ -105,8 +100,7 @@ ANKI_TEST(Util, ThreadHive)
 		{
 			dtasks[i].m_callback = taskToWait;
 			dtasks[i].m_argument = &ctx;
-			dtasks[i].m_inDependencies =
-				WeakArray<ThreadHiveDependencyHandle>(&task.m_outDependency, 1);
+			dtasks[i].m_inDependencies = WeakArray<ThreadHiveDependencyHandle>(&task.m_outDependency, 1);
 		}
 
 		hive.submitTasks(&dtasks[0], DEP_TASKS);
@@ -117,8 +111,7 @@ ANKI_TEST(Util, ThreadHive)
 		{
 			dtasks2[i].m_callback = taskToWait;
 			dtasks2[i].m_argument = &ctx;
-			dtasks2[i].m_inDependencies = WeakArray<ThreadHiveDependencyHandle>(
-				&dtasks[i].m_outDependency, 1);
+			dtasks2[i].m_inDependencies = WeakArray<ThreadHiveDependencyHandle>(&dtasks[i].m_outDependency, 1);
 		}
 
 		hive.submitTasks(&dtasks2[0], DEP_TASKS);
@@ -153,8 +146,7 @@ ANKI_TEST(Util, ThreadHive)
 
 				if((rand() % 3) == 0 && j > 0)
 				{
-					task.m_inDependencies =
-						WeakArray<ThreadHiveDependencyHandle>(&dep, 1);
+					task.m_inDependencies = WeakArray<ThreadHiveDependencyHandle>(&dep, 1);
 				}
 
 				hive.submitTasks(&task, 1);

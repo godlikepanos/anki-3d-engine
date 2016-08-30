@@ -20,27 +20,22 @@ class Sphere : public ConvexShape
 public:
 	using Base = ConvexShape;
 
-	static Bool classof(const CollisionShape& c)
-	{
-		return c.getType() == Type::SPHERE;
-	}
-
 	/// Default constructor
 	Sphere()
-		: Base(Type::SPHERE)
+		: Base(CollisionShapeType::SPHERE)
 	{
 	}
 
 	/// Copy constructor
 	Sphere(const Sphere& b)
-		: Base(Type::SPHERE)
+		: Base(CollisionShapeType::SPHERE)
 	{
 		operator=(b);
 	}
 
 	/// Constructor
 	Sphere(const Vec4& center, F32 radius)
-		: Base(Type::SPHERE)
+		: Base(CollisionShapeType::SPHERE)
 		, m_center(center)
 		, m_radius(radius)
 	{
@@ -109,13 +104,12 @@ public:
 
 	Sphere getTransformed(const Transform& transform) const;
 
-	/// Get the sphere that includes this sphere and the given. See a
-	/// drawing in the docs dir for more info about the algorithm
+	/// Get the sphere that includes this sphere and the given. See a drawing in the docs dir for more info about the
+	/// algorithm
 	Sphere getCompoundShape(const Sphere& b) const;
 
 	/// Calculate from a set of points
-	void setFromPointCloud(
-		const void* buff, U count, PtrSize stride, PtrSize buffSize);
+	void setFromPointCloud(const void* buff, U count, PtrSize stride, PtrSize buffSize);
 
 	/// Implements CompoundShape::computeSupport
 	Vec4 computeSupport(const Vec4& dir) const;

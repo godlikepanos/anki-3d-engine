@@ -9,18 +9,15 @@
 namespace anki
 {
 
-//==============================================================================
 ResourceGroup::ResourceGroup(GrManager* manager, U64 hash)
 	: GrObject(manager, CLASS_TYPE, hash)
 {
 }
 
-//==============================================================================
 ResourceGroup::~ResourceGroup()
 {
 }
 
-//==============================================================================
 void ResourceGroup::init(const ResourceGroupInitInfo& init)
 {
 	m_impl.reset(getAllocator().newInstance<ResourceGroupImpl>(&getManager()));

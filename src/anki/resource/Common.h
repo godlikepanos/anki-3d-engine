@@ -29,10 +29,9 @@ class ResourcePointer;
 const U MAX_LODS = 3;
 const U MAX_INSTANCES = 64;
 
-/// The number of instance groups. Eg First group is 1 instance, 2nd group 2
-/// instances, 3rd is 4 instances. The expression is:
-/// @code log2(MAX_INSTANCES) + 1 @endcode but since Clang doesn't like log2 in
-/// constant expressions use an alternative way.
+/// The number of instance groups. Eg First group is 1 instance, 2nd group 2 instances, 3rd is 4 instances. The
+/// expression is: @code log2(MAX_INSTANCES) + 1 @endcode but since Clang doesn't like log2 in constant expressions use
+/// an alternative way.
 const U MAX_INSTANCE_GROUPS = __builtin_popcount(MAX_INSTANCES - 1) + 1;
 /// @}
 
@@ -54,8 +53,8 @@ template<typename T>
 using ResourcePtr = IntrusivePtr<T, ResourcePtrDeleter<T>>;
 
 // NOTE: Add resources in 3 places
-#define ANKI_FORWARD(rsrc_, name_)                                             \
-	class rsrc_;                                                               \
+#define ANKI_FORWARD(rsrc_, name_)                                                                                     \
+	class rsrc_;                                                                                                       \
 	using name_ = ResourcePtr<rsrc_>;
 
 ANKI_FORWARD(Animation, AnimationResourcePtr)
@@ -87,8 +86,7 @@ using ResourceFilename = CString;
 ANKI_USE_RESULT const CString& shaderTypeToFileExtension(ShaderType type);
 
 /// Given a filename return the shader type.
-ANKI_USE_RESULT Error fileExtensionToShaderType(
-	const CString& filename, ShaderType& type);
+ANKI_USE_RESULT Error fileExtensionToShaderType(const CString& filename, ShaderType& type);
 /// @}
 
 } // end namespace anki

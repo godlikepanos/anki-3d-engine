@@ -10,12 +10,10 @@
 #include <anki/scene/BodyComponent.h>
 #include <anki/scene/Sector.h>
 #include <anki/scene/ModelNode.h>
-#include <anki/scene/SkinNode.h>
 #include <anki/scene/StaticGeometryNode.h>
 #include <anki/scene/ParticleEmitter.h>
 #include <anki/scene/Camera.h>
 #include <anki/scene/Light.h>
-#include <anki/scene/Path.h>
 #include <anki/scene/StaticCollisionNode.h>
 #include <anki/scene/BodyNode.h>
 #include <anki/scene/ReflectionProbe.h>

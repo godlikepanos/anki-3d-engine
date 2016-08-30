@@ -22,11 +22,6 @@ class Obb : public ConvexShape
 public:
 	using Base = ConvexShape;
 
-	static Bool classof(const CollisionShape& c)
-	{
-		return c.getType() == Type::OBB;
-	}
-
 	Obb();
 
 	Obb(const Obb& b);
@@ -95,13 +90,11 @@ public:
 
 	Obb getTransformed(const Transform& transform) const;
 
-	/// Get a collision shape that includes this and the given. Its not
-	/// very accurate
+	/// Get a collision shape that includes this and the given. Its not very accurate
 	Obb getCompoundShape(const Obb& b) const;
 
 	/// Calculate from a set of points
-	void setFromPointCloud(
-		const void* buff, U count, PtrSize stride, PtrSize buffSize);
+	void setFromPointCloud(const void* buff, U count, PtrSize stride, PtrSize buffSize);
 
 	/// Get extreme points in 3D space
 	void getExtremePoints(Array<Vec4, 8>& points) const;
@@ -113,9 +106,7 @@ public:
 	Vec4 m_center;
 	Mat3x4 m_rotation;
 	Mat3x4 m_transposedRotation; ///< Used for visibility tests
-	/// With identity rotation this points to max (front, right, top in
-	/// our case)
-	Vec4 m_extend;
+	Vec4 m_extend; ///< With identity rotation this points to max (front, right, top in our case)
 
 	struct
 	{

@@ -5,7 +5,6 @@
 
 #include "Exporter.h"
 
-//==============================================================================
 static void parseCommandLineArgs(int argc, char** argv, Exporter& exporter)
 {
 	static const char* usage = R"(Usage: %s in_file out_dir [options]
@@ -79,7 +78,6 @@ error:
 	exit(1);
 }
 
-//==============================================================================
 int main(int argc, char** argv)
 {
 	try

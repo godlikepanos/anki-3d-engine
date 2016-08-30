@@ -45,9 +45,7 @@ void main()
 
 	const vec2 texelSize = 1.0 / vec2(TEX_DIMENSIONS);
 
-	const vec3 distortion = vec3(-texelSize.x * CHROMATIC_DISTORTION,
-		0.0,
-		texelSize.x * CHROMATIC_DISTORTION);
+	const vec3 distortion = vec3(-texelSize.x * CHROMATIC_DISTORTION, 0.0, texelSize.x * CHROMATIC_DISTORTION);
 
 	const float lenOfHalf = length(vec2(0.5));
 
@@ -63,8 +61,7 @@ void main()
 		float weight = length(vec2(0.5) - offset) / lenOfHalf;
 		weight = pow(1.0 - weight, 10.0);
 
-		result +=
-			textureDistorted(u_rt, offset, direction, distortion) * weight;
+		result += textureDistorted(u_rt, offset, direction, distortion) * weight;
 	}
 
 // sample halo
@@ -72,8 +69,7 @@ void main()
 	vec2 haloVec = normalize(ghostVec) * HALO_WIDTH;
 	float weight = length(vec2(0.5) - fract(texcoord + haloVec)) / lenOfHalf;
 	weight = pow(1.0 - weight, 20.0);
-	result += textureDistorted(u_rt, texcoord + haloVec, direction, distortion)
-		* (weight * HALO_OPACITY);
+	result += textureDistorted(u_rt, texcoord + haloVec, direction, distortion) * (weight * HALO_OPACITY);
 #endif
 
 	// lens dirt

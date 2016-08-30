@@ -39,10 +39,8 @@ anki_internal:
 	~ScriptManager();
 
 	/// Create the script manager.
-	ANKI_USE_RESULT Error init(AllocAlignedCallback allocCb,
-		void* allocCbData,
-		SceneGraph* scene,
-		MainRenderer* renderer);
+	ANKI_USE_RESULT Error init(
+		AllocAlignedCallback allocCb, void* allocCbData, SceneGraph* scene, MainRenderer* renderer);
 
 	SceneGraph& getSceneGraph()
 	{

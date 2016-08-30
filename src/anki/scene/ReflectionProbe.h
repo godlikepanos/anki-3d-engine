@@ -46,8 +46,7 @@ public:
 		m_cubemapArrayIdx = cubemapArrayIdx;
 	}
 
-	ANKI_USE_RESULT Error frameUpdate(
-		F32 prevUpdateTime, F32 crntTime) override;
+	ANKI_USE_RESULT Error frameUpdate(F32 prevUpdateTime, F32 crntTime) override;
 
 private:
 	class CubeSide

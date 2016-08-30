@@ -55,8 +55,7 @@ public:
 
 	void endRenderPass();
 
-	void bindResourceGroup(
-		ResourceGroupPtr rc, U slot, const TransientMemoryInfo* dynInfo);
+	void bindResourceGroup(ResourceGroupPtr rc, U slot, const TransientMemoryInfo* dynInfo);
 
 	void drawArrays(U32 count, U32 instanceCount, U32 first, U32 baseInstance)
 	{
@@ -64,11 +63,7 @@ public:
 		vkCmdDraw(m_handle, count, instanceCount, first, baseInstance);
 	}
 
-	void drawElements(U32 count,
-		U32 instanceCount,
-		U32 firstIndex,
-		U32 baseVertex,
-		U32 baseInstance);
+	void drawElements(U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance);
 
 	void dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ)
 	{
@@ -83,28 +78,19 @@ public:
 
 	void endOcclusionQuery(OcclusionQueryPtr query);
 
-	void uploadTextureSurface(TexturePtr tex,
-		const TextureSurfaceInfo& surf,
-		const TransientMemoryToken& token);
+	void uploadTextureSurface(TexturePtr tex, const TextureSurfaceInfo& surf, const TransientMemoryToken& token);
 
-	void uploadTextureVolume(TexturePtr tex,
-		const TextureVolumeInfo& vol,
-		const TransientMemoryToken& token);
+	void uploadTextureVolume(TexturePtr tex, const TextureVolumeInfo& vol, const TransientMemoryToken& token);
 
 	void generateMipmaps2d(TexturePtr tex, U face, U layer);
 
 	void clearTexture(TexturePtr tex, const ClearValue& clearValue);
 
-	void clearTextureSurface(TexturePtr tex,
-		const TextureSurfaceInfo& surf,
-		const ClearValue& clearValue);
+	void clearTextureSurface(TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& clearValue);
 
-	void clearTextureVolume(TexturePtr tex,
-		const TextureVolumeInfo& volume,
-		const ClearValue& clearValue);
+	void clearTextureVolume(TexturePtr tex, const TextureVolumeInfo& volume, const ClearValue& clearValue);
 
-	void uploadBuffer(
-		BufferPtr buff, PtrSize offset, const TransientMemoryToken& token);
+	void uploadBuffer(BufferPtr buff, PtrSize offset, const TransientMemoryToken& token);
 
 	void pushSecondLevelCommandBuffer(CommandBufferPtr cmdb);
 
@@ -128,15 +114,11 @@ public:
 		TexturePtr tex,
 		const VkImageSubresourceRange& range);
 
-	void setTextureSurfaceBarrier(TexturePtr tex,
-		TextureUsageBit prevUsage,
-		TextureUsageBit nextUsage,
-		const TextureSurfaceInfo& surf);
+	void setTextureSurfaceBarrier(
+		TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureSurfaceInfo& surf);
 
-	void setTextureVolumeBarrier(TexturePtr tex,
-		TextureUsageBit prevUsage,
-		TextureUsageBit nextUsage,
-		const TextureVolumeInfo& vol);
+	void setTextureVolumeBarrier(
+		TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureVolumeInfo& vol);
 
 	void setBufferBarrier(VkPipelineStageFlags srcStage,
 		VkAccessFlags srcAccess,
@@ -146,11 +128,7 @@ public:
 		PtrSize size,
 		VkBuffer buff);
 
-	void setBufferBarrier(BufferPtr buff,
-		BufferUsageBit before,
-		BufferUsageBit after,
-		PtrSize offset,
-		PtrSize size);
+	void setBufferBarrier(BufferPtr buff, BufferUsageBit before, BufferUsageBit after, PtrSize offset, PtrSize size);
 
 	void fillBuffer(BufferPtr buff, PtrSize offset, PtrSize size, U32 value);
 
@@ -162,7 +140,7 @@ private:
 	Bool8 m_renderedToDefaultFb = false;
 	Bool8 m_finalized = false;
 	Bool8 m_empty = true;
-	Thread::Id m_tid = 0;
+	ThreadId m_tid = 0;
 
 	U m_rpCommandCount = 0; ///< Number of drawcalls or pushed cmdbs in rp.
 	FramebufferPtr m_activeFb;
@@ -200,22 +178,17 @@ private:
 
 	Bool secondLevel() const
 	{
-		return (m_flags & CommandBufferFlag::SECOND_LEVEL)
-			!= CommandBufferFlag::NONE;
+		return (m_flags & CommandBufferFlag::SECOND_LEVEL) != CommandBufferFlag::NONE;
 	}
 
 	void flushBarriers()
 	{
 	}
 
-	void clearTextureInternal(TexturePtr tex,
-		const ClearValue& clearValue,
-		const VkImageSubresourceRange& range);
+	void clearTextureInternal(TexturePtr tex, const ClearValue& clearValue, const VkImageSubresourceRange& range);
 
-	void setTextureBarrierInternal(TexturePtr tex,
-		TextureUsageBit prevUsage,
-		TextureUsageBit nextUsage,
-		const VkImageSubresourceRange& range);
+	void setTextureBarrierInternal(
+		TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const VkImageSubresourceRange& range);
 };
 /// @}
 

@@ -38,17 +38,13 @@ public:
 	/// Read data from the file
 	virtual ANKI_USE_RESULT Error read(void* buff, PtrSize size) = 0;
 
-	/// Read all the contents of a text file
-	/// If the file is not rewined it will probably fail
-	virtual ANKI_USE_RESULT Error readAllText(
-		GenericMemoryPoolAllocator<U8> alloc, String& out) = 0;
+	/// Read all the contents of a text file. If the file is not rewined it will probably fail
+	virtual ANKI_USE_RESULT Error readAllText(GenericMemoryPoolAllocator<U8> alloc, String& out) = 0;
 
-	/// Read 32bit unsigned integer. Set the endianness if the file's
-	/// endianness is different from the machine's
+	/// Read 32bit unsigned integer. Set the endianness if the file's endianness is different from the machine's
 	virtual ANKI_USE_RESULT Error readU32(U32& u) = 0;
 
-	/// Read 32bit float. Set the endianness if the file's endianness is
-	/// different from the machine's
+	/// Read 32bit float. Set the endianness if the file's endianness is different from the machine's
 	virtual ANKI_USE_RESULT Error readF32(F32& f) = 0;
 
 	/// Set the position indicator to a new position
@@ -88,12 +84,10 @@ public:
 
 	~ResourceFilesystem();
 
-	ANKI_USE_RESULT Error init(
-		const ConfigSet& config, const CString& cacheDir);
+	ANKI_USE_RESULT Error init(const ConfigSet& config, const CString& cacheDir);
 
 	/// Search the path list to find the file. Then open the file for reading.
-	ANKI_USE_RESULT Error openFile(
-		const ResourceFilename& filename, ResourceFilePtr& file);
+	ANKI_USE_RESULT Error openFile(const ResourceFilename& filename, ResourceFilePtr& file);
 
 private:
 	class Path : public NonCopyable

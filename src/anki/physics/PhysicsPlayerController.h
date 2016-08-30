@@ -30,7 +30,7 @@ class PhysicsPlayerController final : public PhysicsObject
 {
 public:
 	PhysicsPlayerController(PhysicsWorld* world)
-		: PhysicsObject(Type::PLAYER_CONTROLLER, world)
+		: PhysicsObject(PhysicsObjectType::PLAYER_CONTROLLER, world)
 	{
 	}
 
@@ -39,10 +39,7 @@ public:
 	ANKI_USE_RESULT Error create(const PhysicsPlayerControllerInitInfo& init);
 
 	// Update the state machine
-	void setVelocity(F32 forwardSpeed,
-		F32 strafeSpeed,
-		F32 jumpSpeed,
-		const Vec4& forwardDir)
+	void setVelocity(F32 forwardSpeed, F32 strafeSpeed, F32 jumpSpeed, const Vec4& forwardDir)
 	{
 		m_forwardSpeed = forwardSpeed;
 		m_strafeSpeed = strafeSpeed;
@@ -59,18 +56,9 @@ public:
 		return m_trf;
 	}
 
-	static Bool classof(const PhysicsObject& c)
-	{
-		return c.getType() == Type::PLAYER_CONTROLLER;
-	}
-
-	/// @privatesection
-	/// @{
-
+anki_internal:
 	/// Called by Newton thread to update the controller.
-	static void postUpdateKernelCallback(
-		NewtonWorld* const world, void* const context, int threadIndex);
-	/// @}
+	static void postUpdateKernelCallback(NewtonWorld* const world, void* const context, int threadIndex);
 
 private:
 	Vec4 m_upDir;
@@ -117,25 +105,18 @@ private:
 
 	Vec4 calculateDesiredOmega(const Vec4& headingAngle, F32 dt) const;
 
-	Vec4 calculateDesiredVelocity(F32 forwardSpeed,
-		F32 strafeSpeed,
-		F32 verticalSpeed,
-		const Vec4& gravity,
-		F32 dt) const;
+	Vec4 calculateDesiredVelocity(
+		F32 forwardSpeed, F32 strafeSpeed, F32 verticalSpeed, const Vec4& gravity, F32 dt) const;
 
 	void calculateVelocity(F32 dt);
 
-	F32 calculateContactKinematics(const Vec4& veloc,
-		const NewtonWorldConvexCastReturnInfo* contactInfo) const;
+	F32 calculateContactKinematics(const Vec4& veloc, const NewtonWorldConvexCastReturnInfo* contactInfo) const;
 
-	void updateGroundPlane(
-		Mat4& matrix, const Mat4& castMatrix, const Vec4& dst, int threadIndex);
+	void updateGroundPlane(Mat4& matrix, const Mat4& castMatrix, const Vec4& dst, int threadIndex);
 
 	void postUpdate(F32 dt, int threadIndex);
 
-	static void onTransformCallback(const NewtonBody* const body,
-		const dFloat* const matrix,
-		int threadIndex);
+	static void onTransformCallback(const NewtonBody* const body, const dFloat* const matrix, int threadIndex);
 
 	void onTransform(Mat4 matrix);
 };

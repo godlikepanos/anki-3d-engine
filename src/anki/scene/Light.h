@@ -27,8 +27,7 @@ public:
 
 	~Light();
 
-	ANKI_USE_RESULT Error init(
-		LightComponent::LightType type, CollisionShape* shape);
+	ANKI_USE_RESULT Error init(LightComponent::LightType type, CollisionShape* shape);
 
 	ANKI_USE_RESULT Error loadLensFlare(const CString& filename);
 
@@ -55,8 +54,7 @@ public:
 
 	ANKI_USE_RESULT Error init();
 
-	ANKI_USE_RESULT Error frameUpdate(
-		F32 prevUpdateTime, F32 crntTime) override;
+	ANKI_USE_RESULT Error frameUpdate(F32 prevUpdateTime, F32 crntTime) override;
 
 public:
 	class ShadowCombo
@@ -81,8 +79,7 @@ public:
 
 	ANKI_USE_RESULT Error init();
 
-	ANKI_USE_RESULT Error frameUpdate(
-		F32 prevUpdateTime, F32 crntTime) override;
+	ANKI_USE_RESULT Error frameUpdate(F32 prevUpdateTime, F32 crntTime) override;
 
 private:
 	PerspectiveFrustum m_frustum;

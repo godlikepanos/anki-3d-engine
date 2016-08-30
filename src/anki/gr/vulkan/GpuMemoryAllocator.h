@@ -52,14 +52,10 @@ public:
 
 	~GpuMemoryAllocatorMemType();
 
-	void init(
-		GenericMemoryPoolAllocator<U8> alloc, VkDevice dev, U memoryTypeIdx);
+	void init(GenericMemoryPoolAllocator<U8> alloc, VkDevice dev, U memoryTypeIdx);
 
 	/// Allocate GPU memory.
-	void allocate(PtrSize size,
-		U alignment,
-		Bool linearResource,
-		GpuMemoryAllocationHandle& handle);
+	void allocate(PtrSize size, U alignment, Bool linearResource, GpuMemoryAllocationHandle& handle);
 
 	/// Free allocated memory.
 	void free(GpuMemoryAllocationHandle& handle);
@@ -105,14 +101,9 @@ public:
 	void destroy();
 
 	/// Allocate memory.
-	void allocateMemory(U memTypeIdx,
-		PtrSize size,
-		U alignment,
-		Bool linearResource,
-		GpuMemoryAllocationHandle& handle)
+	void allocateMemory(U memTypeIdx, PtrSize size, U alignment, Bool linearResource, GpuMemoryAllocationHandle& handle)
 	{
-		m_gpuAllocs[memTypeIdx].allocate(
-			size, alignment, linearResource, handle);
+		m_gpuAllocs[memTypeIdx].allocate(size, alignment, linearResource, handle);
 		handle.m_memoryTypeIndex = memTypeIdx;
 	}
 
@@ -129,9 +120,7 @@ public:
 	}
 
 	/// Find a suitable memory type.
-	U findMemoryType(U resourceMemTypeBits,
-		VkMemoryPropertyFlags preferFlags,
-		VkMemoryPropertyFlags avoidFlags) const;
+	U findMemoryType(U resourceMemTypeBits, VkMemoryPropertyFlags preferFlags, VkMemoryPropertyFlags avoidFlags) const;
 
 private:
 	/// One for each mem type.

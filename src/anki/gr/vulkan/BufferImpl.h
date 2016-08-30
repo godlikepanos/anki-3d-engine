@@ -25,11 +25,9 @@ public:
 
 	~BufferImpl();
 
-	ANKI_USE_RESULT Error init(
-		PtrSize size, BufferUsageBit usage, BufferMapAccessBit access);
+	ANKI_USE_RESULT Error init(PtrSize size, BufferUsageBit usage, BufferMapAccessBit access);
 
-	ANKI_USE_RESULT void* map(
-		PtrSize offset, PtrSize range, BufferMapAccessBit access);
+	ANKI_USE_RESULT void* map(PtrSize offset, PtrSize range, BufferMapAccessBit access);
 
 	void unmap()
 	{

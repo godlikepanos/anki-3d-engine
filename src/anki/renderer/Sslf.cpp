@@ -11,7 +11,6 @@
 namespace anki
 {
 
-//==============================================================================
 Error Sslf::init(const ConfigSet& config)
 {
 	Error err = initInternal(config);
@@ -23,7 +22,6 @@ Error Sslf::init(const ConfigSet& config)
 	return err;
 }
 
-//==============================================================================
 Error Sslf::initInternal(const ConfigSet& config)
 {
 	// Load program 1
@@ -33,8 +31,7 @@ Error Sslf::initInternal(const ConfigSet& config)
 		m_r->getBloom().getMaxExposureRtWidth(),
 		m_r->getBloom().getMaxExposureRtHeight());
 
-	ANKI_CHECK(getResourceManager().loadResourceToCache(
-		m_frag, "shaders/Sslf.frag.glsl", pps.toCString(), "r_"));
+	ANKI_CHECK(getResourceManager().loadResourceToCache(m_frag, "shaders/Sslf.frag.glsl", pps.toCString(), "r_"));
 
 	ColorStateInfo colorState;
 	colorState.m_attachmentCount = 1;
@@ -45,8 +42,7 @@ Error Sslf::initInternal(const ConfigSet& config)
 	m_r->createDrawQuadPipeline(m_frag->getGrShader(), colorState, m_ppline);
 
 	// Textures
-	ANKI_CHECK(getResourceManager().loadResource(
-		"engine_data/LensDirt.ankitex", m_lensDirtTex));
+	ANKI_CHECK(getResourceManager().loadResource("engine_data/LensDirt.ankitex", m_lensDirtTex));
 
 	// Create the resource group
 	ResourceGroupInitInfo rcInit;
@@ -59,7 +55,6 @@ Error Sslf::initInternal(const ConfigSet& config)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void Sslf::run(RenderingContext& ctx)
 {
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;

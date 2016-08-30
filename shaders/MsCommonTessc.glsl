@@ -120,10 +120,7 @@ void calcPositions()
 	// Handle the center
 	vec3 center = (pos003 + pos030 + pos300) / 3.0;
 	pnPatch.pos111 =
-		(pnPatch.pos021 + pnPatch.pos012 + pnPatch.pos102 + pnPatch.pos201
-			+ pnPatch.pos210
-			+ pnPatch.pos120)
-		/ 6.0;
+		(pnPatch.pos021 + pnPatch.pos012 + pnPatch.pos102 + pnPatch.pos201 + pnPatch.pos210 + pnPatch.pos120) / 6.0;
 	pnPatch.pos111 += (pnPatch.pos111 - center) / 2.0;
 }
 
@@ -165,9 +162,7 @@ bool posOutsideClipSpace(in vec2 posNdc)
 // Check if a face in NDC is outside the clip space
 bool isFaceOutsideClipSpace(in vec2 posNdc[3])
 {
-	return any(bvec3(posOutsideClipSpace(posNdc[0]),
-		posOutsideClipSpace(posNdc[1]),
-		posOutsideClipSpace(posNdc[2])));
+	return any(bvec3(posOutsideClipSpace(posNdc[0]), posOutsideClipSpace(posNdc[1]), posOutsideClipSpace(posNdc[2])));
 }
 
 // Check if a face is visible
@@ -197,9 +192,7 @@ void setSilhouetteTessLevels(in mat3 normalMat, in float maxTessLevel)
 	gl_TessLevelOuter[0] = calcEdgeTessLevel(nv[1], nv[2], maxTessLevel);
 	gl_TessLevelOuter[1] = calcEdgeTessLevel(nv[2], nv[0], maxTessLevel);
 	gl_TessLevelOuter[2] = calcEdgeTessLevel(nv[0], nv[1], maxTessLevel);
-	gl_TessLevelInner[0] =
-		(gl_TessLevelOuter[0] + gl_TessLevelOuter[1] + gl_TessLevelOuter[2])
-		/ 3.0;
+	gl_TessLevelInner[0] = (gl_TessLevelOuter[0] + gl_TessLevelOuter[1] + gl_TessLevelOuter[2]) / 3.0;
 }
 
 void setConstantTessLevels(in float maxTessLevel)
@@ -227,8 +220,7 @@ float calcPhongTerm(int ivId, int i, vec3 q)
 
 // This function is part of the point-normal tessellation method
 #define tessellatePNPositionNormalTangentTexCoord_DEFINED
-void tessellatePNPositionNormalTangentTexCoord(
-	in float maxTessLevel, in mat4 mvp, in mat3 normalMat)
+void tessellatePNPositionNormalTangentTexCoord(in float maxTessLevel, in mat4 mvp, in mat3 normalMat)
 {
 	float tessLevel = 0.0;
 
@@ -264,8 +256,7 @@ void tessellatePNPositionNormalTangentTexCoord(
 }
 
 #define tessellatePhongPositionNormalTangentTexCoord_DEFINED
-void tessellatePhongPositionNormalTangentTexCoord(
-	in float maxTessLevel, in mat4 mvp, in mat3 normalMat)
+void tessellatePhongPositionNormalTangentTexCoord(in float maxTessLevel, in mat4 mvp, in mat3 normalMat)
 {
 	if(IID == 0)
 	{
@@ -291,18 +282,14 @@ void tessellatePhongPositionNormalTangentTexCoord(
 		outTangent[IID] = inTangent[IID];
 #endif
 
-		phongPatch.terms[IID][0] = calcPhongTerm(IID, 0, IN_POS3(1))
-			+ calcPhongTerm(IID, 1, IN_POS3(0));
-		phongPatch.terms[IID][1] = calcPhongTerm(IID, 1, IN_POS3(2))
-			+ calcPhongTerm(IID, 2, IN_POS3(1));
-		phongPatch.terms[IID][2] = calcPhongTerm(IID, 2, IN_POS3(0))
-			+ calcPhongTerm(IID, 0, IN_POS3(2));
+		phongPatch.terms[IID][0] = calcPhongTerm(IID, 0, IN_POS3(1)) + calcPhongTerm(IID, 1, IN_POS3(0));
+		phongPatch.terms[IID][1] = calcPhongTerm(IID, 1, IN_POS3(2)) + calcPhongTerm(IID, 2, IN_POS3(1));
+		phongPatch.terms[IID][2] = calcPhongTerm(IID, 2, IN_POS3(0)) + calcPhongTerm(IID, 0, IN_POS3(2));
 	}
 }
 
 #define tessellateDispMapPositionNormalTangentTexCoord_DEFINED
-void tessellateDispMapPositionNormalTangentTexCoord(
-	in float maxTessLevel, in mat4 mvp, in mat3 normalMat)
+void tessellateDispMapPositionNormalTangentTexCoord(in float maxTessLevel, in mat4 mvp, in mat3 normalMat)
 {
 	if(IID == 0)
 	{

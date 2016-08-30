@@ -12,10 +12,6 @@
 namespace anki
 {
 
-//==============================================================================
-// Misc                                                                        =
-//==============================================================================
-
 /// Create a new RenderComponentVariable given a MaterialVariable
 struct CreateNewRenderComponentVariableVisitor
 {
@@ -42,27 +38,16 @@ struct CreateNewRenderComponentVariableVisitor
 	}
 };
 
-//==============================================================================
-// RenderComponentVariable                                                     =
-//==============================================================================
-
-//==============================================================================
 RenderComponentVariable::RenderComponentVariable(const MaterialVariable* mvar)
 	: m_mvar(mvar)
 {
 	ANKI_ASSERT(m_mvar);
 }
 
-//==============================================================================
 RenderComponentVariable::~RenderComponentVariable()
 {
 }
 
-//==============================================================================
-// RenderComponent                                                             =
-//==============================================================================
-
-//==============================================================================
 RenderComponent::RenderComponent(SceneNode* node, const Material* mtl, U64 hash)
 	: SceneComponent(SceneComponentType::RENDER, node)
 	, m_mtl(mtl)
@@ -70,7 +55,6 @@ RenderComponent::RenderComponent(SceneNode* node, const Material* mtl, U64 hash)
 {
 }
 
-//==============================================================================
 RenderComponent::~RenderComponent()
 {
 	auto alloc = m_node->getSceneAllocator();
@@ -82,7 +66,6 @@ RenderComponent::~RenderComponent()
 	m_vars.destroy(alloc);
 }
 
-//==============================================================================
 Error RenderComponent::init()
 {
 	const Material& mtl = getMaterial();

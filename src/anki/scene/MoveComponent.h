@@ -41,8 +41,7 @@ public:
 	/// The one and only constructor
 	/// @param node The scene node to steal it's allocators
 	/// @param flags The flags
-	MoveComponent(
-		SceneNode* node, MoveComponentFlag flags = MoveComponentFlag::NONE);
+	MoveComponent(SceneNode* node, MoveComponentFlag flags = MoveComponentFlag::NONE);
 
 	~MoveComponent();
 
@@ -101,8 +100,7 @@ public:
 	}
 
 	/// Called when there is an update in the world transformation.
-	virtual ANKI_USE_RESULT Error onMoveComponentUpdate(
-		SceneNode& node, F32 prevTime, F32 crntTime)
+	virtual ANKI_USE_RESULT Error onMoveComponentUpdate(SceneNode& node, F32 prevTime, F32 crntTime)
 	{
 		return ErrorCode::NONE;
 	}
@@ -110,15 +108,12 @@ public:
 	/// @name SceneComponent overrides
 	/// @{
 
-	/// Update self and children world transform recursively, if root node.
-	/// Need to call this at every frame.
-	/// @note Don't update if child because we start from roots and go to
-	///       children and we don't want a child to be updated before the
-	///       parent
+	/// Update self and children world transform recursively, if root node. Need to call this at every frame.
+	/// @note Don't update if child because we start from roots and go to children and we don't want a child to be
+	///       updated before the parent
 	ANKI_USE_RESULT Error update(SceneNode&, F32, F32, Bool& updated) override;
 
-	ANKI_USE_RESULT Error onUpdate(
-		SceneNode& node, F32 prevTime, F32 crntTime) final
+	ANKI_USE_RESULT Error onUpdate(SceneNode& node, F32 prevTime, F32 crntTime) final
 	{
 		return onMoveComponentUpdate(node, prevTime, crntTime);
 	}
@@ -170,8 +165,7 @@ private:
 	/// The transformation in local space
 	Transform m_ltrf = Transform::getIdentity();
 
-	/// The transformation in world space (local combined with parent's
-	/// transformation)
+	/// The transformation in world space (local combined with parent's transformation)
 	Transform m_wtrf = Transform::getIdentity();
 
 	/// Keep the previous transformation for checking if it moved
@@ -184,8 +178,7 @@ private:
 		m_flags.set(MoveComponentFlag::MARKED_FOR_UPDATE);
 	}
 
-	/// Called every frame. It updates the @a m_wtrf if @a shouldUpdateWTrf
-	/// is true. Then it moves to the children.
+	/// Called every frame. It updates the @a m_wtrf if @a shouldUpdateWTrf is true. Then it moves to the children.
 	Bool updateWorldTransform(SceneNode& node);
 };
 /// @}

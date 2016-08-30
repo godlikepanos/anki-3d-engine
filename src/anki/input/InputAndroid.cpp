@@ -11,11 +11,6 @@
 namespace anki
 {
 
-//==============================================================================
-// Other                                                                       =
-//==============================================================================
-
-//==============================================================================
 static void handleAndroidEvents(android_app* app, int32_t cmd)
 {
 	Input* input = (Input*)app->userData;
@@ -31,16 +26,10 @@ static void handleAndroidEvents(android_app* app, int32_t cmd)
 	}
 }
 
-//==============================================================================
-// Input                                                                       =
-//==============================================================================
-
-//==============================================================================
 Input::~Input()
 {
 }
 
-//==============================================================================
 void Input::handleEvents()
 {
 	int ident;
@@ -58,7 +47,6 @@ void Input::handleEvents()
 	}
 }
 
-//==============================================================================
 void Input::init(NativeWindow* /*nativeWindow*/)
 {
 	ANKI_ASSERT(gAndroidApp);
@@ -66,13 +54,11 @@ void Input::init(NativeWindow* /*nativeWindow*/)
 	gAndroidApp->onAppCmd = handleAndroidEvents;
 }
 
-//==============================================================================
 void Input::moveCursor(const Vec2& posNdc)
 {
 	// do nothing
 }
 
-//==============================================================================
 void Input::hideCursor(Bool hide)
 {
 	// do nothing

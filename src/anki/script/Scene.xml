@@ -12,7 +12,6 @@
 
 namespace anki {
 
-//==============================================================================
 template<typename T, typename... TArgs>
 static T* newSceneNode(SceneGraph* scene, CString name, TArgs... args)
 {
@@ -30,7 +29,6 @@ static T* newSceneNode(SceneGraph* scene, CString name, TArgs... args)
 	}
 }
 
-//==============================================================================
 static SceneGraph* getSceneGraph(lua_State* l)
 {
 	LuaBinder* binder = nullptr;

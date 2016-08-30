@@ -11,7 +11,6 @@
 namespace anki
 {
 
-//==============================================================================
 Error JitterMoveEvent::init(F32 startTime, F32 duration, SceneNode* node)
 {
 	ANKI_ASSERT(node);
@@ -24,7 +23,6 @@ Error JitterMoveEvent::init(F32 startTime, F32 duration, SceneNode* node)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void JitterMoveEvent::setPositionLimits(const Vec4& posMin, const Vec4& posMax)
 {
 	for(U i = 0; i < 3; i++)
@@ -36,7 +34,6 @@ void JitterMoveEvent::setPositionLimits(const Vec4& posMin, const Vec4& posMax)
 	m_newPos += m_originalPos;
 }
 
-//==============================================================================
 Error JitterMoveEvent::update(F32 prevUpdateTime, F32 crntTime)
 {
 	SceneNode* node = getSceneNode();

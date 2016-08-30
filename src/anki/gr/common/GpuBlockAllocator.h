@@ -27,13 +27,10 @@ public:
 	~GpuBlockAllocator();
 
 	/// Initialize the allocator using pre-allocated CPU mapped memory.
-	void init(GenericMemoryPoolAllocator<U8> alloc,
-		PtrSize totalSize,
-		PtrSize blockSize);
+	void init(GenericMemoryPoolAllocator<U8> alloc, PtrSize totalSize, PtrSize blockSize);
 
 	/// Allocate GPU memory.
-	ANKI_USE_RESULT Error allocate(
-		PtrSize size, U alignment, PtrSize& outOffset);
+	ANKI_USE_RESULT Error allocate(PtrSize size, U alignment, PtrSize& outOffset);
 
 	/// Free GPU memory.
 	void free(PtrSize offset);

@@ -9,7 +9,6 @@
 namespace anki
 {
 
-//==============================================================================
 void SamplerImpl::init(const SamplerInitInfo& sinit)
 {
 	glGenSamplers(1, &m_glName);
@@ -29,17 +28,14 @@ void SamplerImpl::init(const SamplerInitInfo& sinit)
 	// Set filtering type
 	GLenum minFilter = GL_NONE;
 	GLenum magFilter = GL_NONE;
-	convertFilter(
-		sinit.m_minMagFilter, sinit.m_mipmapFilter, minFilter, magFilter);
+	convertFilter(sinit.m_minMagFilter, sinit.m_mipmapFilter, minFilter, magFilter);
 	glSamplerParameteri(m_glName, GL_TEXTURE_MIN_FILTER, minFilter);
 	glSamplerParameteri(m_glName, GL_TEXTURE_MAG_FILTER, magFilter);
 
 #if ANKI_GL == ANKI_GL_DESKTOP
 	if(sinit.m_anisotropyLevel > 1)
 	{
-		glSamplerParameteri(m_glName,
-			GL_TEXTURE_MAX_ANISOTROPY_EXT,
-			GLint(sinit.m_anisotropyLevel));
+		glSamplerParameteri(m_glName, GL_TEXTURE_MAX_ANISOTROPY_EXT, GLint(sinit.m_anisotropyLevel));
 	}
 #endif
 

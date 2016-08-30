@@ -14,12 +14,10 @@
 namespace anki
 {
 
-//==============================================================================
 GrManager::GrManager()
 {
 }
 
-//==============================================================================
 GrManager::~GrManager()
 {
 	// Destroy in reverse order
@@ -27,11 +25,9 @@ GrManager::~GrManager()
 	m_cacheDir.destroy(m_alloc);
 }
 
-//==============================================================================
 Error GrManager::init(GrManagerInitInfo& init)
 {
-	m_alloc =
-		HeapAllocator<U8>(init.m_allocCallback, init.m_allocCallbackUserData);
+	m_alloc = HeapAllocator<U8>(init.m_allocCallback, init.m_allocCallbackUserData);
 
 	m_cacheDir.create(m_alloc, init.m_cacheDirectory);
 
@@ -46,58 +42,41 @@ Error GrManager::init(GrManagerInitInfo& init)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void GrManager::beginFrame()
 {
 	// Nothing for GL
 }
 
-//==============================================================================
 void GrManager::swapBuffers()
 {
 	m_impl->getRenderingThread().swapBuffers();
 }
 
-//==============================================================================
 void GrManager::finish()
 {
 	m_impl->getRenderingThread().syncClientServer();
 }
 
-//==============================================================================
-void* GrManager::allocateFrameTransientMemory(
-	PtrSize size, BufferUsageBit usage, TransientMemoryToken& token)
+void* GrManager::allocateFrameTransientMemory(PtrSize size, BufferUsageBit usage, TransientMemoryToken& token)
 {
 	void* data = nullptr;
-	m_impl->getTransientMemoryManager().allocate(size,
-		usage,
-		TransientMemoryTokenLifetime::PER_FRAME,
-		token,
-		data,
-		nullptr);
+	m_impl->getTransientMemoryManager().allocate(
+		size, usage, TransientMemoryTokenLifetime::PER_FRAME, token, data, nullptr);
 
 	return data;
 }
 
-//==============================================================================
-void* GrManager::tryAllocateFrameTransientMemory(
-	PtrSize size, BufferUsageBit usage, TransientMemoryToken& token)
+void* GrManager::tryAllocateFrameTransientMemory(PtrSize size, BufferUsageBit usage, TransientMemoryToken& token)
 {
 	void* data = nullptr;
 	Error err = ErrorCode::NONE;
-	m_impl->getTransientMemoryManager().allocate(size,
-		usage,
-		TransientMemoryTokenLifetime::PER_FRAME,
-		token,
-		data,
-		&err);
+	m_impl->getTransientMemoryManager().allocate(
+		size, usage, TransientMemoryTokenLifetime::PER_FRAME, token, data, &err);
 
 	return (!err) ? data : nullptr;
 }
 
-//==============================================================================
-void GrManager::getTextureSurfaceUploadInfo(
-	TexturePtr tex, const TextureSurfaceInfo& surf, PtrSize& allocationSize)
+void GrManager::getTextureSurfaceUploadInfo(TexturePtr tex, const TextureSurfaceInfo& surf, PtrSize& allocationSize)
 {
 	const TextureImpl& impl = tex->getImplementation();
 	impl.checkSurface(surf);
@@ -107,9 +86,7 @@ void GrManager::getTextureSurfaceUploadInfo(
 	allocationSize = computeSurfaceSize(width, height, impl.m_pformat);
 }
 
-//==============================================================================
-void GrManager::getTextureVolumeUploadInfo(
-	TexturePtr tex, const TextureVolumeInfo& vol, PtrSize& allocationSize)
+void GrManager::getTextureVolumeUploadInfo(TexturePtr tex, const TextureVolumeInfo& vol, PtrSize& allocationSize)
 {
 	const TextureImpl& impl = tex->getImplementation();
 	impl.checkVolume(vol);

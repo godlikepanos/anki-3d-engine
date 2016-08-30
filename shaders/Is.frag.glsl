@@ -30,45 +30,37 @@ layout(location = 0) out vec3 out_color;
 
 const uint TILE_COUNT = TILE_COUNT_X * TILE_COUNT_Y;
 
-//==============================================================================
 // Return frag pos in view space
 vec3 getFragPosVSpace()
 {
 	float depth = textureRt(u_msDepthRt, in_texCoord).r;
 
 	vec3 fragPos;
-	fragPos.z = u_lightingUniforms.projectionParams.z
-		/ (u_lightingUniforms.projectionParams.w + depth);
+	fragPos.z = u_lightingUniforms.projectionParams.z / (u_lightingUniforms.projectionParams.w + depth);
 	fragPos.xy = in_projectionParams * fragPos.z;
 
 	return fragPos;
 }
 
-//==============================================================================
 // Common code for lighting
 
-#define LIGHTING_COMMON_BRDF()                                                 \
-	vec3 frag2Light = light.posRadius.xyz - fragPos;                           \
-	vec3 l = normalize(frag2Light);                                            \
-	float nol = max(0.0, dot(normal, l));                                      \
-	vec3 specC = computeSpecularColorBrdf(                                     \
-		viewDir, l, normal, specCol, light.specularColorTexId.rgb, a2, nol);   \
-	vec3 diffC =                                                               \
-		computeDiffuseColor(diffCol, light.diffuseColorShadowmapId.rgb);       \
-	float att = computeAttenuationFactor(light.posRadius.w, frag2Light);       \
+#define LIGHTING_COMMON_BRDF()                                                                                         \
+	vec3 frag2Light = light.posRadius.xyz - fragPos;                                                                   \
+	vec3 l = normalize(frag2Light);                                                                                    \
+	float nol = max(0.0, dot(normal, l));                                                                              \
+	vec3 specC = computeSpecularColorBrdf(viewDir, l, normal, specCol, light.specularColorTexId.rgb, a2, nol);         \
+	vec3 diffC = computeDiffuseColor(diffCol, light.diffuseColorShadowmapId.rgb);                                      \
+	float att = computeAttenuationFactor(light.posRadius.w, frag2Light);                                               \
 	float lambert = nol;
 
-//==============================================================================
 void debugIncorrectColor(inout vec3 c)
 {
-	if(isnan(c.x) || isnan(c.y) || isnan(c.z) || isinf(c.x) || isinf(c.y)
-		|| isinf(c.z))
+	if(isnan(c.x) || isnan(c.y) || isnan(c.z) || isinf(c.x) || isinf(c.y) || isinf(c.z))
 	{
 		c = vec3(1.0, 0.0, 1.0);
 	}
 }
 
-//==============================================================================
 void readIndirect(in uint idxOffset,
 	in vec3 posVSpace,
 	in vec3 r,
@@ -85,8 +77,7 @@ void readIndirect(in uint idxOffset,
 	while(count-- != 0)
 	{
 		ReflectionProbe probe;
-		COPY_REFLECTION_PROBE(
-			u_reflectionProbes[u_lightIndices[idxOffset]], probe);
+		COPY_REFLECTION_PROBE(u_reflectionProbes[u_lightIndices[idxOffset]], probe);
 		++idxOffset;
 
 		float R2 = probe.positionRadiusSq.w;
@@ -96,8 +87,7 @@ void readIndirect(in uint idxOffset,
 		vec3 f = posVSpace - center;
 
 		// Cubemap UV in view space
-		vec3 uv = computeCubemapVecAccurate(
-			r, R2, f, u_lightingUniforms.invViewRotation);
+		vec3 uv = computeCubemapVecAccurate(r, R2, f, u_lightingUniforms.invViewRotation);
 
 		// Read!
 		float cubemapIndex = probe.cubemapIndexPad3.x;
@@ -111,21 +101,12 @@ void readIndirect(in uint idxOffset,
 		// Same as: specIndirect = c * (1.0 - factor) + specIndirect * factor
 
 		// Do the same for diffuse
-		uv = computeCubemapVecCheap(
-			n, R2, f, u_lightingUniforms.invViewRotation);
+		uv = computeCubemapVecCheap(n, R2, f, u_lightingUniforms.invViewRotation);
 		vec3 id = texture(u_irradianceTex, vec4(uv, cubemapIndex)).rgb;
 		diffIndirect = mix(id, diffIndirect, factor);
 	}
 }
 
-bool getNewIndex(inout uint idxOffset, out uint idx)
-{
-	idx = u_lightIndices[idxOffset];
-	++idxOffset;
-	return idx != MAX_U32;
-}
-
-//==============================================================================
 void main()
 {
 	// Get frag pos in view space
@@ -157,8 +138,7 @@ void main()
 	out_color = diffCol * emission;
 
 	// Get counts and offsets
-	uint clusterIdx = computeClusterIndexUsingTileIdx(
-		u_lightingUniforms.nearFarClustererMagicPad1.x,
+	uint clusterIdx = computeClusterIndexUsingTileIdx(u_lightingUniforms.nearFarClustererMagicPad1.x,
 		u_lightingUniforms.nearFarClustererMagicPad1.z,
 		fragPos.z,
 		in_instanceId,
@@ -169,8 +149,7 @@ void main()
 	uint idx;
 
 	// Shadowpass sample count
-	uint shadowSampleCount =
-		computeShadowSampleCount(SHADOW_SAMPLE_COUNT, fragPos.z);
+	uint shadowSampleCount = computeShadowSampleCount(SHADOW_SAMPLE_COUNT, fragPos.z);
 
 	// Point lights
 	uint count = u_lightIndices[idxOffset++];
@@ -186,17 +165,13 @@ void main()
 		float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
 		if(light.diffuseColorShadowmapId.w < 128.0)
 		{
-			shadow = computeShadowFactorOmni(frag2Light,
-				shadowmapLayerIdx,
-				1.0 / sqrt(light.posRadius.w),
-				u_lightingUniforms.viewMat,
-				u_omniMapArr);
+			shadow = computeShadowFactorOmni(
+				frag2Light, shadowmapLayerIdx, 1.0 / sqrt(light.posRadius.w), u_lightingUniforms.viewMat, u_omniMapArr);
 
 			shadow = dither(shadow, 64.0);
 		}
 
-		out_color +=
-			(specC + diffC) * (att * max(subsurface, lambert * shadow));
+		out_color += (specC + diffC) * (att * max(subsurface, lambert * shadow));
 	}
 
 	// Spot lights
@@ -209,26 +184,19 @@ void main()
 
 		LIGHTING_COMMON_BRDF();
 
-		float spot = computeSpotFactor(l,
-			light.outerCosInnerCos.x,
-			light.outerCosInnerCos.y,
-			light.lightDir.xyz);
+		float spot = computeSpotFactor(l, light.outerCosInnerCos.x, light.outerCosInnerCos.y, light.lightDir.xyz);
 
 		float shadow = 1.0;
 		float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
 		if(shadowmapLayerIdx < 128.0)
 		{
-			shadow = computeShadowFactorSpot(light.texProjectionMat,
-				fragPos,
-				shadowmapLayerIdx,
-				shadowSampleCount,
-				u_spotMapArr);
+			shadow = computeShadowFactorSpot(
+				light.texProjectionMat, fragPos, shadowmapLayerIdx, shadowSampleCount, u_spotMapArr);
 
 			shadow = dither(shadow, 64.0);
 		}
 
-		out_color +=
-			(diffC + specC) * (att * spot * max(subsurface, lambert * shadow));
+		out_color += (diffC + specC) * (att * spot * max(subsurface, lambert * shadow));
 	}
 
 #if INDIRECT_ENABLED
@@ -237,8 +205,7 @@ void main()
 	float reflLod = float(IR_MIPMAP_COUNT) * gbuffer.roughness;
 
 	vec3 specIndirect, diffIndirect;
-	readIndirect(
-		idxOffset, fragPos, r, normal, reflLod, specIndirect, diffIndirect);
+	readIndirect(idxOffset, fragPos, r, normal, reflLod, specIndirect, diffIndirect);
 
 	diffIndirect *= gbuffer.diffuse;
 

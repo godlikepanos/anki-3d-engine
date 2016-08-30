@@ -6,7 +6,6 @@
 #include "Exporter.h"
 #include <cmath>
 
-//==============================================================================
 enum class ComponentFormat : uint32_t
 {
 	NONE,
@@ -88,7 +87,6 @@ struct Vertex
 	uint32_t m_tangent;
 };
 
-//==============================================================================
 static uint16_t toF16(float f)
 {
 	union Val32
@@ -163,7 +161,6 @@ static uint16_t toF16(float f)
 	return out;
 }
 
-//==============================================================================
 union SignedR10G10B10A10
 {
 	struct
@@ -176,7 +173,6 @@ union SignedR10G10B10A10
 	uint32_t m_packed;
 };
 
-//==============================================================================
 uint32_t toR10G10B10A2Sint(float r, float g, float b, float a)
 {
 	SignedR10G10B10A10 out;
@@ -188,18 +184,14 @@ uint32_t toR10G10B10A2Sint(float r, float g, float b, float a)
 	return out.m_packed;
 }
 
-//==============================================================================
-void Exporter::exportMesh(const aiMesh& mesh,
-	const aiMatrix4x4* transform,
-	unsigned vertCountPerFace) const
+void Exporter::exportMesh(const aiMesh& mesh, const aiMatrix4x4* transform, unsigned vertCountPerFace) const
 {
 	std::string name = mesh.mName.C_Str();
 	std::fstream file;
 	LOGI("Exporting mesh %s", name.c_str());
 
 	// Open file
-	file.open(m_outputDirectory + name + ".ankimesh",
-		std::ios::out | std::ios::binary);
+	file.open(m_outputDirectory + name + ".ankimesh", std::ios::out | std::ios::binary);
 
 	Header header;
 	memset(&header, 0, sizeof(header));
@@ -323,8 +315,7 @@ void Exporter::exportMesh(const aiMesh& mesh,
 
 		if(m_flipyz)
 		{
-			static const aiMatrix4x4 toLefthanded(
-				1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1);
+			static const aiMatrix4x4 toLefthanded(1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1);
 
 			pos = toLefthanded * pos;
 			n = toLefthanded * n;

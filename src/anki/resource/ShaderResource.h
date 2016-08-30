@@ -31,18 +31,13 @@ public:
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename);
 
 	/// Load and add extra code on top of the file
-	ANKI_USE_RESULT Error load(
-		const CString& ResourceFilename, const CString& extraSrc);
+	ANKI_USE_RESULT Error load(const CString& ResourceFilename, const CString& extraSrc);
 
-	/// Used by @ref Material and @ref Renderer to create custom shaders in
-	/// the cache
+	/// Used by @ref Material and @ref Renderer to create custom shaders in the cache
 	/// @param filename The file pathname of the shader prog
-	/// @param preAppendedSrcCode The source code we want to write on top
-	///        of the shader prog
-	/// @param filenamePrefix Add that at the base filename for additional
-	///        ways to identify the file in the cache
-	/// @param out The file pathname of the new shader prog. It's
-	///        filenamePrefix + hash + .glsl
+	/// @param preAppendedSrcCode The source code we want to write on top of the shader prog
+	/// @param filenamePrefix Add that at the base filename for additional ways to identify the file in the cache
+	/// @param out The file pathname of the new shader prog. It's filenamePrefix + hash + .glsl
 	static ANKI_USE_RESULT Error createToCache(const ResourceFilename& filename,
 		const CString& preAppendedSrcCode,
 		const CString& filenamePrefix,

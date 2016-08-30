@@ -75,9 +75,8 @@ public:
 	/// Populate the key and button with the new state
 	ANKI_USE_RESULT Error handleEvents();
 
-	/// Move the mouse cursor to a position inside the window. Useful for
-	/// locking the cursor into a fixed location (eg in the center of the
-	/// screen)
+	/// Move the mouse cursor to a position inside the window. Useful for locking the cursor into a fixed location (eg
+	/// in the center of the screen)
 	void moveCursor(const Vec2& posNdc);
 
 	/// Hide the mouse cursor

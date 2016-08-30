@@ -18,8 +18,7 @@ class String;
 /// @addtogroup opengl
 /// @{
 
-/// Shader program. It only contains a single shader and it can be combined
-/// with other programs in a program pipiline.
+/// Shader program. It only contains a single shader and it can be combined with other programs in a program pipiline.
 class ShaderImpl : public GlObject
 {
 public:

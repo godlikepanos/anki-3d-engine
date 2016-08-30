@@ -57,17 +57,13 @@ inline void computeLinearizeDepthOptimal(F32 near, F32 far, F32& a, F32& b)
 
 const U MS_COLOR_ATTACHMENT_COUNT = 3;
 
-extern const Array<PixelFormat, MS_COLOR_ATTACHMENT_COUNT>
-	MS_COLOR_ATTACHMENT_PIXEL_FORMATS;
+extern const Array<PixelFormat, MS_COLOR_ATTACHMENT_COUNT> MS_COLOR_ATTACHMENT_PIXEL_FORMATS;
 
-const PixelFormat MS_DEPTH_ATTACHMENT_PIXEL_FORMAT(
-	ComponentFormat::D24, TransformFormat::UNORM);
+const PixelFormat MS_DEPTH_ATTACHMENT_PIXEL_FORMAT(ComponentFormat::D24, TransformFormat::UNORM);
 
-const PixelFormat IS_COLOR_ATTACHMENT_PIXEL_FORMAT(
-	ComponentFormat::R11G11B10, TransformFormat::FLOAT);
+const PixelFormat IS_COLOR_ATTACHMENT_PIXEL_FORMAT(ComponentFormat::R11G11B10, TransformFormat::FLOAT);
 
-const PixelFormat DBG_COLOR_ATTACHMENT_PIXEL_FORMAT(
-	ComponentFormat::R8G8B8, TransformFormat::UNORM);
+const PixelFormat DBG_COLOR_ATTACHMENT_PIXEL_FORMAT(ComponentFormat::R8G8B8, TransformFormat::UNORM);
 /// @}
 
 } // end namespace anki

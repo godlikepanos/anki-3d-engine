@@ -26,8 +26,8 @@ namespace anki
 namespace visitor_detail
 {
 
-/// A smart struct that given a type and a list of types finds a const integer
-/// indicating the type's position from the back of the list.
+/// A smart struct that given a type and a list of types finds a const integer indicating the type's position from the
+/// back of the list.
 ///
 /// Example of usage:
 /// @code
@@ -63,8 +63,7 @@ struct GetVariadicTypeId
 	}
 };
 
-/// A struct that from a variadic arguments list it returnes the type using an
-/// ID.
+/// A struct that from a variadic arguments list it returnes the type using an ID.
 /// Example of usage:
 /// @code
 /// GetTypeUsingId<std::string, int, float>::DataType<0> x = "a string";
@@ -170,10 +169,7 @@ private:
 		}
 	}
 
-	template<typename TVisitor,
-		typename TFirst,
-		typename TSecond,
-		typename... Types_>
+	template<typename TVisitor, typename TFirst, typename TSecond, typename... Types_>
 	void acceptVisitorInternal(TVisitor& v)
 	{
 		constexpr I i = sizeof...(Types) - sizeof...(Types_)-1;
@@ -203,10 +199,7 @@ private:
 		}
 	}
 
-	template<typename TVisitor,
-		typename TFirst,
-		typename TSecond,
-		typename... Types_>
+	template<typename TVisitor, typename TFirst, typename TSecond, typename... Types_>
 	void acceptVisitorInternalConst(TVisitor& v) const
 	{
 		constexpr I i = sizeof...(Types) - sizeof...(Types_)-1;
@@ -226,8 +219,7 @@ private:
 
 /// Visitable for types with common base
 /// @tparam TBase The base class
-/// @tparam Types The types that compose the visitable. They are derived from
-///               TBase
+/// @tparam Types The types that compose the visitable. They are derived from TBase
 ///
 /// @note In debug mode it uses dynamic cast as an extra protection reason
 template<typename TBase, typename... Types>
@@ -315,10 +307,7 @@ private:
 		return err;
 	}
 
-	template<typename TVisitor,
-		typename TFirst,
-		typename TSecond,
-		typename... Types_>
+	template<typename TVisitor, typename TFirst, typename TSecond, typename... Types_>
 	ANKI_USE_RESULT Error acceptVisitorInternal(TVisitor& v)
 	{
 		Error err = ErrorCode::NONE;
@@ -371,10 +360,7 @@ private:
 		return err;
 	}
 
-	template<typename TVisitor,
-		typename TFirst,
-		typename TSecond,
-		typename... Types_>
+	template<typename TVisitor, typename TFirst, typename TSecond, typename... Types_>
 	ANKI_USE_RESULT Error acceptVisitorInternalConst(TVisitor& v) const
 	{
 		Error err = ErrorCode::NONE;

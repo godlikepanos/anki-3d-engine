@@ -14,8 +14,7 @@ namespace anki
 /// @addtogroup opengl
 /// @{
 
-/// Command queue. It's essentialy a queue of command buffers waiting for
-/// execution and a server
+/// Command queue. It's essentialy a queue of command buffers waiting for execution and a server
 class RenderingThread
 {
 	friend class SyncCommand;
@@ -71,10 +70,9 @@ private:
 	Bool8 m_frameWait = false;
 	/// @}
 
-	Thread::Id m_serverThreadId;
+	ThreadId m_serverThreadId;
 
-	/// A special command buffer that is called every time we want to wait for
-	/// the server
+	/// A special command buffer that is called every time we want to wait for the server
 	CommandBufferPtr m_syncCommands;
 	Barrier m_syncBarrier{2};
 	SpinLock m_syncLock;
@@ -83,7 +81,7 @@ private:
 	CommandBufferPtr m_emptyCmdb;
 
 	/// The function that the thread runs
-	static ANKI_USE_RESULT Error threadCallback(Thread::Info&);
+	static ANKI_USE_RESULT Error threadCallback(ThreadCallbackInfo&);
 	void threadLoop();
 	void prepare();
 	void finish();

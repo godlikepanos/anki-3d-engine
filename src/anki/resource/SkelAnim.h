@@ -68,8 +68,7 @@ public:
 	/// @}
 
 private:
-	/// The poses for every keyframe. Its empty if the bone doesnt have
-	/// any animation
+	/// The poses for every keyframe. Its empty if the bone doesnt have any animation
 	Vector<BonePose> bonePoses;
 };
 

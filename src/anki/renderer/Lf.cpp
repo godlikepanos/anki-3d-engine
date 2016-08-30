@@ -17,11 +17,6 @@
 namespace anki
 {
 
-//==============================================================================
-// Misc                                                                        =
-//==============================================================================
-
-//==============================================================================
 struct Sprite
 {
 	Vec2 m_pos; ///< Position in NDC
@@ -31,16 +26,10 @@ struct Sprite
 	U32 m_padding[3];
 };
 
-//==============================================================================
-// Lf                                                                          =
-//==============================================================================
-
-//==============================================================================
 Lf::~Lf()
 {
 }
 
-//==============================================================================
 Error Lf::init(const ConfigSet& config)
 {
 	Error err = initInternal(config);
@@ -52,7 +41,6 @@ Error Lf::init(const ConfigSet& config)
 	return err;
 }
 
-//==============================================================================
 Error Lf::initSprite(const ConfigSet& config)
 {
 	m_maxSpritesPerFlare = config.getNumber("lf.maxSpritesPerFlare");
@@ -71,11 +59,11 @@ Error Lf::initSprite(const ConfigSet& config)
 
 	pps.sprintf("#define MAX_SPRITES %u\n", m_maxSprites);
 
-	ANKI_CHECK(getResourceManager().loadResourceToCache(
-		m_realVert, "shaders/LfSpritePass.vert.glsl", pps.toCString(), "r_"));
+	ANKI_CHECK(
+		getResourceManager().loadResourceToCache(m_realVert, "shaders/LfSpritePass.vert.glsl", pps.toCString(), "r_"));
 
-	ANKI_CHECK(getResourceManager().loadResourceToCache(
-		m_realFrag, "shaders/LfSpritePass.frag.glsl", pps.toCString(), "r_"));
+	ANKI_CHECK(
+		getResourceManager().loadResourceToCache(m_realFrag, "shaders/LfSpritePass.frag.glsl", pps.toCString(), "r_"));
 
 	// Create ppline.
 	// Writes to IS with blending
@@ -95,15 +83,12 @@ Error Lf::initSprite(const ConfigSet& config)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error Lf::initOcclusion(const ConfigSet& config)
 {
 	// Shaders
-	ANKI_CHECK(getResourceManager().loadResource(
-		"shaders/LfOcclusion.vert.glsl", m_occlusionVert));
+	ANKI_CHECK(getResourceManager().loadResource("shaders/LfOcclusion.vert.glsl", m_occlusionVert));
 
-	ANKI_CHECK(getResourceManager().loadResource(
-		"shaders/LfOcclusion.frag.glsl", m_occlusionFrag));
+	ANKI_CHECK(getResourceManager().loadResource("shaders/LfOcclusion.frag.glsl", m_occlusionFrag));
 
 	// Create ppline
 	// - only position attribute
@@ -115,21 +100,17 @@ Error Lf::initOcclusion(const ConfigSet& config)
 	init.m_vertex.m_bindingCount = 1;
 	init.m_vertex.m_bindings[0].m_stride = sizeof(Vec3);
 	init.m_vertex.m_attributeCount = 1;
-	init.m_vertex.m_attributes[0].m_format =
-		PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
+	init.m_vertex.m_attributes[0].m_format = PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
 	init.m_inputAssembler.m_topology = PrimitiveTopology::POINTS;
 	init.m_depthStencil.m_depthWriteEnabled = false;
 	init.m_depthStencil.m_format = MS_DEPTH_ATTACHMENT_PIXEL_FORMAT;
 	ANKI_ASSERT(MS_COLOR_ATTACHMENT_COUNT == 3);
 	init.m_color.m_attachmentCount = MS_COLOR_ATTACHMENT_COUNT;
-	init.m_color.m_attachments[0].m_format =
-		MS_COLOR_ATTACHMENT_PIXEL_FORMATS[0];
+	init.m_color.m_attachments[0].m_format = MS_COLOR_ATTACHMENT_PIXEL_FORMATS[0];
 	init.m_color.m_attachments[0].m_channelWriteMask = ColorBit::NONE;
-	init.m_color.m_attachments[1].m_format =
-		MS_COLOR_ATTACHMENT_PIXEL_FORMATS[1];
+	init.m_color.m_attachments[1].m_format = MS_COLOR_ATTACHMENT_PIXEL_FORMATS[1];
 	init.m_color.m_attachments[1].m_channelWriteMask = ColorBit::NONE;
-	init.m_color.m_attachments[2].m_format =
-		MS_COLOR_ATTACHMENT_PIXEL_FORMATS[2];
+	init.m_color.m_attachments[2].m_format = MS_COLOR_ATTACHMENT_PIXEL_FORMATS[2];
 	init.m_color.m_attachments[2].m_channelWriteMask = ColorBit::NONE;
 	init.m_shaders[U(ShaderType::VERTEX)] = m_occlusionVert->getGrShader();
 	init.m_shaders[U(ShaderType::FRAGMENT)] = m_occlusionFrag->getGrShader();
@@ -140,15 +121,13 @@ Error Lf::initOcclusion(const ConfigSet& config)
 		ResourceGroupInitInfo rcInit;
 		rcInit.m_vertexBuffers[0].m_uploadedMemory = true;
 		rcInit.m_uniformBuffers[0].m_uploadedMemory = true;
-		rcInit.m_uniformBuffers[0].m_usage =
-			BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
+		rcInit.m_uniformBuffers[0].m_usage = BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
 		m_occlusionRcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);
 	}
 
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error Lf::initInternal(const ConfigSet& config)
 {
 	ANKI_CHECK(initSprite(config));
@@ -158,7 +137,6 @@ Error Lf::initInternal(const ConfigSet& config)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void Lf::resetOcclusionQueries(RenderingContext& ctx, CommandBufferPtr cmdb)
 {
 	const FrustumComponent& camFr = *ctx.m_frustumComponent;
@@ -169,8 +147,7 @@ void Lf::resetOcclusionQueries(RenderingContext& ctx, CommandBufferPtr cmdb)
 		ANKI_LOGW("Visible flares exceed the limit. Increase lf.maxFlares");
 	}
 
-	U totalCount =
-		min<U>(vi.getCount(VisibilityGroupType::FLARES), m_maxFlares);
+	U totalCount = min<U>(vi.getCount(VisibilityGroupType::FLARES), m_maxFlares);
 	U count = 0;
 	if(totalCount > 0)
 	{
@@ -180,8 +157,7 @@ void Lf::resetOcclusionQueries(RenderingContext& ctx, CommandBufferPtr cmdb)
 		auto end = vi.getBegin(VisibilityGroupType::FLARES) + totalCount;
 		for(; it != end; ++it)
 		{
-			LensFlareComponent& lf =
-				(it->m_node)->getComponent<LensFlareComponent>();
+			LensFlareComponent& lf = (it->m_node)->getComponent<LensFlareComponent>();
 
 			OcclusionQueryPtr query = lf.getOcclusionQueryToTest();
 			ctx.m_lf.m_queriesToTest[count++] = query;
@@ -193,7 +169,6 @@ void Lf::resetOcclusionQueries(RenderingContext& ctx, CommandBufferPtr cmdb)
 	ANKI_ASSERT(count == totalCount);
 }
 
-//==============================================================================
 void Lf::runOcclusionTests(RenderingContext& ctx, CommandBufferPtr cmdb)
 {
 	// Retrieve some things
@@ -205,23 +180,20 @@ void Lf::runOcclusionTests(RenderingContext& ctx, CommandBufferPtr cmdb)
 		ANKI_LOGW("Visible flares exceed the limit. Increase lf.maxFlares");
 	}
 
-	U totalCount =
-		min<U>(vi.getCount(VisibilityGroupType::FLARES), m_maxFlares);
+	U totalCount = min<U>(vi.getCount(VisibilityGroupType::FLARES), m_maxFlares);
 	U count = 0;
 	if(totalCount > 0)
 	{
 		// Setup MVP UBO
 		TransientMemoryToken token;
-		Mat4* mvp =
-			static_cast<Mat4*>(getGrManager().allocateFrameTransientMemory(
-				sizeof(Mat4), BufferUsageBit::UNIFORM_ALL, token));
+		Mat4* mvp = static_cast<Mat4*>(
+			getGrManager().allocateFrameTransientMemory(sizeof(Mat4), BufferUsageBit::UNIFORM_ALL, token));
 		*mvp = camFr.getViewProjectionMatrix();
 
 		// Alloc dyn mem
 		TransientMemoryToken token2;
-		Vec3* positions =
-			static_cast<Vec3*>(getGrManager().allocateFrameTransientMemory(
-				sizeof(Vec3) * totalCount, BufferUsageBit::VERTEX, token2));
+		Vec3* positions = static_cast<Vec3*>(
+			getGrManager().allocateFrameTransientMemory(sizeof(Vec3) * totalCount, BufferUsageBit::VERTEX, token2));
 		const Vec3* initialPositions = positions;
 
 		// Setup state
@@ -236,8 +208,7 @@ void Lf::runOcclusionTests(RenderingContext& ctx, CommandBufferPtr cmdb)
 		auto end = vi.getBegin(VisibilityGroupType::FLARES) + totalCount;
 		for(; it != end; ++it)
 		{
-			LensFlareComponent& lf =
-				(it->m_node)->getComponent<LensFlareComponent>();
+			LensFlareComponent& lf = (it->m_node)->getComponent<LensFlareComponent>();
 
 			*positions = lf.getWorldPosition().xyz();
 
@@ -256,15 +227,13 @@ void Lf::runOcclusionTests(RenderingContext& ctx, CommandBufferPtr cmdb)
 	}
 }
 
-//==============================================================================
 void Lf::run(RenderingContext& ctx, CommandBufferPtr cmdb)
 {
 	// Retrieve some things
 	FrustumComponent& camFr = *ctx.m_frustumComponent;
 	VisibilityTestResults& vi = camFr.getVisibilityTestResults();
 
-	U totalCount =
-		min<U>(vi.getCount(VisibilityGroupType::FLARES), m_maxFlares);
+	U totalCount = min<U>(vi.getCount(VisibilityGroupType::FLARES), m_maxFlares);
 	if(totalCount > 0)
 	{
 		// Set common rendering state
@@ -275,15 +244,13 @@ void Lf::run(RenderingContext& ctx, CommandBufferPtr cmdb)
 		auto end = vi.getBegin(VisibilityGroupType::FLARES) + totalCount;
 		for(; it != end; ++it)
 		{
-			const LensFlareComponent& lf =
-				(it->m_node)->getComponent<LensFlareComponent>();
+			const LensFlareComponent& lf = (it->m_node)->getComponent<LensFlareComponent>();
 
 			// Compute position
 			Vec4 lfPos = Vec4(lf.getWorldPosition().xyz(), 1.0);
 			Vec4 posClip = camFr.getViewProjectionMatrix() * lfPos;
 
-			if(posClip.x() > posClip.w() || posClip.x() < -posClip.w()
-				|| posClip.y() > posClip.w()
+			if(posClip.x() > posClip.w() || posClip.x() < -posClip.w() || posClip.y() > posClip.w()
 				|| posClip.y() < -posClip.w())
 			{
 				// Outside clip
@@ -295,11 +262,8 @@ void Lf::run(RenderingContext& ctx, CommandBufferPtr cmdb)
 
 			// Get uniform memory
 			TransientMemoryToken token;
-			Sprite* tmpSprites = static_cast<Sprite*>(
-				getGrManager().allocateFrameTransientMemory(
-					spritesCount * sizeof(Sprite),
-					BufferUsageBit::UNIFORM_ALL,
-					token));
+			Sprite* tmpSprites = static_cast<Sprite*>(getGrManager().allocateFrameTransientMemory(
+				spritesCount * sizeof(Sprite), BufferUsageBit::UNIFORM_ALL, token));
 			WeakArray<Sprite> sprites(tmpSprites, spritesCount);
 
 			// misc
@@ -307,12 +271,10 @@ void Lf::run(RenderingContext& ctx, CommandBufferPtr cmdb)
 
 			// First flare
 			sprites[count].m_pos = posNdc;
-			sprites[count].m_scale =
-				lf.getFirstFlareSize() * Vec2(1.0, m_r->getAspectRatio());
+			sprites[count].m_scale = lf.getFirstFlareSize() * Vec2(1.0, m_r->getAspectRatio());
 			sprites[count].m_depth = 0.0;
 			// Fade the flare on the edges
-			F32 alpha = lf.getColorMultiplier().w()
-				* (1.0 - pow(absolute(posNdc.x()), 6.0))
+			F32 alpha = lf.getColorMultiplier().w() * (1.0 - pow(absolute(posNdc.x()), 6.0))
 				* (1.0 - pow(absolute(posNdc.y()), 6.0));
 
 			sprites[count].m_color = Vec4(lf.getColorMultiplier().xyz(), alpha);
@@ -332,8 +294,7 @@ void Lf::run(RenderingContext& ctx, CommandBufferPtr cmdb)
 			}
 			else
 			{
-				// Skip the drawcall. If the flare appeared suddenly inside the
-				// view we don't want to draw it.
+				// Skip the drawcall. If the flare appeared suddenly inside the view we don't want to draw it.
 			}
 		}
 	}

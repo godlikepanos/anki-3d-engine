@@ -17,8 +17,7 @@ namespace anki
 class ReflectionProbeComponent : public SceneComponent
 {
 public:
-	static const SceneComponentType CLASS_TYPE =
-		SceneComponentType::REFLECTION_PROBE;
+	static const SceneComponentType CLASS_TYPE = SceneComponentType::REFLECTION_PROBE;
 
 	ReflectionProbeComponent(SceneNode* node)
 		: SceneComponent(CLASS_TYPE, node)

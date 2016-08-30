@@ -10,7 +10,6 @@
 
 const float ONE = 0.9;
 
-//==============================================================================
 // Returns the Z of the position in view space
 float readZ(in vec2 uv)
 {
@@ -19,14 +18,12 @@ float readZ(in vec2 uv)
 	return z;
 }
 
-//==============================================================================
 vec2 projectXy(in vec3 p)
 {
 	vec4 a = u_projectionMat * vec4(p, 1.0);
 	return a.xy / a.w;
 }
 
-//==============================================================================
 vec3 doSslr(in vec3 r, in vec3 posVSpace, in vec2 uv, out float contribution)
 {
 	contribution = 0.5;
@@ -81,8 +78,8 @@ vec3 doSslr(in vec3 r, in vec3 posVSpace, in vec2 uv, out float contribution)
 		a.xy = ndc * u_projectionParams.xy * a.z; // Unproject
 		a = normalize(a);
 
-		// Compute the intersection between 'a' (before normalization) and r
-		// 'k' is the value to multiply to 'a' to get the intersection
+		// Compute the intersection between 'a' (before normalization) and r 'k' is the value to multiply to 'a' to get 
+		// the intersection
 		// c0 = cross(a, r);
 		// c1 = cross(p0, r);
 		// k = c1.x / c0.x; and the optimized:

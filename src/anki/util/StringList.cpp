@@ -8,7 +8,6 @@
 namespace anki
 {
 
-//==============================================================================
 void StringList::destroy(Allocator alloc)
 {
 	auto it = Base::getBegin();
@@ -21,9 +20,7 @@ void StringList::destroy(Allocator alloc)
 	Base::destroy(alloc);
 }
 
-//==============================================================================
-void StringList::join(
-	Allocator alloc, const CString& separator, String& out) const
+void StringList::join(Allocator alloc, const CString& separator, String& out) const
 {
 	if(Base::isEmpty())
 	{
@@ -61,9 +58,7 @@ void StringList::join(
 	}
 }
 
-//==============================================================================
-void StringList::splitString(
-	Allocator alloc, const CString& s, const Char separator, Bool keepEmpty)
+void StringList::splitString(Allocator alloc, const CString& s, const Char separator, Bool keepEmpty)
 {
 	ANKI_ASSERT(Base::isEmpty());
 
@@ -112,7 +107,6 @@ void StringList::splitString(
 	}
 }
 
-//==============================================================================
 void StringList::sortAll(const Sort method)
 {
 	if(method == Sort::ASCENDING)
@@ -126,7 +120,6 @@ void StringList::sortAll(const Sort method)
 	}
 }
 
-//==============================================================================
 I StringList::getIndexOf(const CString& value) const
 {
 	U pos = 0;

@@ -3,6 +3,9 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#ifndef ANKI_SHADERS_MS_COMMON_VERT_GLSL
+#define ANKI_SHADERS_MS_COMMON_VERT_GLSL
+
 #include "shaders/MsFsCommon.glsl"
 
 //
@@ -44,7 +47,6 @@ layout(location = 4) out mediump vec3 out_eyeTangentSpace; // Parallax
 layout(location = 5) out mediump vec3 out_normalTangentSpace; // Parallax
 #endif
 
-//==============================================================================
 #define writePositionAndUv_DEFINED
 void writePositionAndUv(in mat4 mvp)
 {
@@ -67,7 +69,6 @@ void writePositionAndUv(in mat4 mvp)
 #endif
 }
 
-//==============================================================================
 #if PASS == COLOR
 #define writeNormalAndTangent_DEFINED
 void writeNormalAndTangent(in mat3 normalMat)
@@ -93,7 +94,6 @@ void writeNormalAndTangent(in mat3 normalMat)
 }
 #endif
 
-//==============================================================================
 #if PASS == COLOR
 #define writeVertPosViewSpace_DEFINED
 void writeVertPosViewSpace(in mat4 modelViewMat)
@@ -102,7 +102,6 @@ void writeVertPosViewSpace(in mat4 modelViewMat)
 }
 #endif
 
-//==============================================================================
 #if PASS == COLOR
 #define writeParallax_DEFINED
 void writeParallax(in mat3 normalMat, in mat4 modelViewMat)
@@ -117,4 +116,6 @@ void writeParallax(in mat3 normalMat, in mat4 modelViewMat)
 	out_eyeTangentSpace = invTbn * out_vertPosViewSpace;
 	out_normalTangentSpace = invTbn * n;
 }
+#endif
+
 #endif

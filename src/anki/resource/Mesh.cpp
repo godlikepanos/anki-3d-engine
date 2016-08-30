@@ -13,10 +13,6 @@
 namespace anki
 {
 
-//==============================================================================
-// MeshLoadTask                                                                =
-//==============================================================================
-
 /// Mesh upload async task.
 class MeshLoadTask : public AsyncLoaderTask
 {
@@ -35,7 +31,6 @@ public:
 	Error operator()(AsyncLoaderTaskContext& ctx) final;
 };
 
-//==============================================================================
 Error MeshLoadTask::operator()(AsyncLoaderTaskContext& ctx)
 {
 	GrManager& gr = m_manager->getGrManager();
@@ -45,30 +40,21 @@ Error MeshLoadTask::operator()(AsyncLoaderTaskContext& ctx)
 	if(m_vertBuff)
 	{
 		TransientMemoryToken token;
-		void* data =
-			gr.tryAllocateFrameTransientMemory(m_loader.getVertexDataSize(),
-				BufferUsageBit::BUFFER_UPLOAD_SOURCE,
-				token);
+		void* data = gr.tryAllocateFrameTransientMemory(
+			m_loader.getVertexDataSize(), BufferUsageBit::BUFFER_UPLOAD_SOURCE, token);
 
 		if(data)
 		{
-			memcpy(
-				data, m_loader.getVertexData(), m_loader.getVertexDataSize());
+			memcpy(data, m_loader.getVertexData(), m_loader.getVertexDataSize());
 			cmdb = gr.newInstance<CommandBuffer>(CommandBufferInitInfo());
 
-			cmdb->setBufferBarrier(m_vertBuff,
-				BufferUsageBit::VERTEX,
-				BufferUsageBit::BUFFER_UPLOAD_DESTINATION,
-				0,
-				MAX_PTR_SIZE);
+			cmdb->setBufferBarrier(
+				m_vertBuff, BufferUsageBit::VERTEX, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, 0, MAX_PTR_SIZE);
 
 			cmdb->uploadBuffer(m_vertBuff, 0, token);
 
-			cmdb->setBufferBarrier(m_vertBuff,
-				BufferUsageBit::BUFFER_UPLOAD_DESTINATION,
-				BufferUsageBit::VERTEX,
-				0,
-				MAX_PTR_SIZE);
+			cmdb->setBufferBarrier(
+				m_vertBuff, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, BufferUsageBit::VERTEX, 0, MAX_PTR_SIZE);
 
 			m_vertBuff.reset(nullptr);
 		}
@@ -83,10 +69,8 @@ Error MeshLoadTask::operator()(AsyncLoaderTaskContext& ctx)
 	// Create index buffer
 	{
 		TransientMemoryToken token;
-		void* data =
-			gr.tryAllocateFrameTransientMemory(m_loader.getIndexDataSize(),
-				BufferUsageBit::BUFFER_UPLOAD_SOURCE,
-				token);
+		void* data = gr.tryAllocateFrameTransientMemory(
+			m_loader.getIndexDataSize(), BufferUsageBit::BUFFER_UPLOAD_SOURCE, token);
 
 		if(data)
 		{
@@ -97,19 +81,13 @@ Error MeshLoadTask::operator()(AsyncLoaderTaskContext& ctx)
 				cmdb = gr.newInstance<CommandBuffer>(CommandBufferInitInfo());
 			}
 
-			cmdb->setBufferBarrier(m_indicesBuff,
-				BufferUsageBit::INDEX,
-				BufferUsageBit::BUFFER_UPLOAD_DESTINATION,
-				0,
-				MAX_PTR_SIZE);
+			cmdb->setBufferBarrier(
+				m_indicesBuff, BufferUsageBit::INDEX, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, 0, MAX_PTR_SIZE);
 
 			cmdb->uploadBuffer(m_indicesBuff, 0, token);
 
-			cmdb->setBufferBarrier(m_indicesBuff,
-				BufferUsageBit::BUFFER_UPLOAD_DESTINATION,
-				BufferUsageBit::INDEX,
-				0,
-				MAX_PTR_SIZE);
+			cmdb->setBufferBarrier(
+				m_indicesBuff, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, BufferUsageBit::INDEX, 0, MAX_PTR_SIZE);
 
 			cmdb->flush();
 		}
@@ -130,35 +108,25 @@ Error MeshLoadTask::operator()(AsyncLoaderTaskContext& ctx)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
-// Mesh                                                                        =
-//==============================================================================
-
-//==============================================================================
 Mesh::Mesh(ResourceManager* manager)
 	: ResourceObject(manager)
 {
 }
 
-//==============================================================================
 Mesh::~Mesh()
 {
 	m_subMeshes.destroy(getAllocator());
 }
 
-//==============================================================================
 Bool Mesh::isCompatible(const Mesh& other) const
 {
-	return hasBoneWeights() == other.hasBoneWeights()
-		&& getSubMeshesCount() == other.getSubMeshesCount()
+	return hasBoneWeights() == other.hasBoneWeights() && getSubMeshesCount() == other.getSubMeshesCount()
 		&& m_texChannelsCount == other.m_texChannelsCount;
 }
 
-//==============================================================================
 Error Mesh::load(const ResourceFilename& filename)
 {
-	MeshLoadTask* task =
-		getManager().getAsyncLoader().newTask<MeshLoadTask>(&getManager());
+	MeshLoadTask* task = getManager().getAsyncLoader().newTask<MeshLoadTask>(&getManager());
 
 	MeshLoader& loader = task->m_loader;
 	ANKI_CHECK(loader.load(filename));
@@ -167,10 +135,8 @@ Error Mesh::load(const ResourceFilename& filename)
 	m_indicesCount = header.m_totalIndicesCount;
 
 	PtrSize vertexSize = loader.getVertexSize();
-	m_obb.setFromPointCloud(loader.getVertexData(),
-		header.m_totalVerticesCount,
-		vertexSize,
-		loader.getVertexDataSize());
+	m_obb.setFromPointCloud(
+		loader.getVertexData(), header.m_totalVerticesCount, vertexSize, loader.getVertexDataSize());
 	ANKI_ASSERT(m_indicesCount > 0);
 	ANKI_ASSERT(m_indicesCount % 3 == 0 && "Expecting triangles");
 
@@ -185,13 +151,11 @@ Error Mesh::load(const ResourceFilename& filename)
 	GrManager& gr = getManager().getGrManager();
 
 	m_vertBuff = gr.newInstance<Buffer>(loader.getVertexDataSize(),
-		BufferUsageBit::VERTEX | BufferUsageBit::BUFFER_UPLOAD_DESTINATION
-			| BufferUsageBit::FILL,
+		BufferUsageBit::VERTEX | BufferUsageBit::BUFFER_UPLOAD_DESTINATION | BufferUsageBit::FILL,
 		BufferMapAccessBit::NONE);
 
 	m_indicesBuff = gr.newInstance<Buffer>(loader.getIndexDataSize(),
-		BufferUsageBit::INDEX | BufferUsageBit::BUFFER_UPLOAD_DESTINATION
-			| BufferUsageBit::FILL,
+		BufferUsageBit::INDEX | BufferUsageBit::BUFFER_UPLOAD_DESTINATION | BufferUsageBit::FILL,
 		BufferMapAccessBit::NONE);
 
 	// Clear them
@@ -202,16 +166,8 @@ Error Mesh::load(const ResourceFilename& filename)
 	cmdb->fillBuffer(m_vertBuff, 0, MAX_PTR_SIZE, 0);
 	cmdb->fillBuffer(m_indicesBuff, 0, MAX_PTR_SIZE, 0);
 
-	cmdb->setBufferBarrier(m_vertBuff,
-		BufferUsageBit::FILL,
-		BufferUsageBit::VERTEX,
-		0,
-		MAX_PTR_SIZE);
-	cmdb->setBufferBarrier(m_indicesBuff,
-		BufferUsageBit::FILL,
-		BufferUsageBit::INDEX,
-		0,
-		MAX_PTR_SIZE);
+	cmdb->setBufferBarrier(m_vertBuff, BufferUsageBit::FILL, BufferUsageBit::VERTEX, 0, MAX_PTR_SIZE);
+	cmdb->setBufferBarrier(m_indicesBuff, BufferUsageBit::FILL, BufferUsageBit::INDEX, 0, MAX_PTR_SIZE);
 
 	cmdb->flush();
 

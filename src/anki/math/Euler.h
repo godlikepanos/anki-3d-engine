@@ -13,8 +13,7 @@ namespace anki
 /// @addtogroup math
 /// @{
 
-/// Euler angles. Used for rotations. It cannot describe a rotation
-/// accurately though
+/// Euler angles. Used for rotations. It cannot describe a rotation accurately though
 template<typename T>
 class TEuler
 {
@@ -61,11 +60,9 @@ public:
 		T sqx = q.x() * q.x();
 		T sqy = q.y() * q.y();
 		T sqz = q.z() * q.z();
-		y() = atan2<T>(2.0 * q.y() * q.w() - 2.0 * q.x() * q.z(),
-			1.0 - 2.0 * sqy - 2.0 * sqz);
+		y() = atan2<T>(2.0 * q.y() * q.w() - 2.0 * q.x() * q.z(), 1.0 - 2.0 * sqy - 2.0 * sqz);
 		z() = asin<T>(2.0 * test);
-		x() = atan2<T>(2.0 * q.x() * q.w() - 2.0 * q.y() * q.z(),
-			1.0 - 2.0 * sqx - 2.0 * sqz);
+		x() = atan2<T>(2.0 * q.x() * q.w() - 2.0 * q.y() * q.z(), 1.0 - 2.0 * sqx - 2.0 * sqz);
 	}
 
 	explicit TEuler(const TMat3<T>& m3)

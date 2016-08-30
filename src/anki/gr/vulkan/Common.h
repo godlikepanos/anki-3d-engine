@@ -22,32 +22,31 @@ class GrManagerImpl;
 /// @{
 
 /// Check if a vulkan function failed. It will abort on failure.
-#define ANKI_VK_CHECKF(x)                                                      \
-	do                                                                         \
-	{                                                                          \
-		VkResult rez;                                                          \
-		if((rez = (x)) < 0)                                                    \
-		{                                                                      \
-			ANKI_LOGF("Vulkan function failed (%d): %s", rez, #x);             \
-		}                                                                      \
+#define ANKI_VK_CHECKF(x)                                                                                              \
+	do                                                                                                                 \
+	{                                                                                                                  \
+		VkResult rez;                                                                                                  \
+		if((rez = (x)) < 0)                                                                                            \
+		{                                                                                                              \
+			ANKI_LOGF("Vulkan function failed (%d): %s", rez, #x);                                                     \
+		}                                                                                                              \
 	} while(0)
 
 /// Check if a vulkan function failed.
-#define ANKI_VK_CHECK(x)                                                       \
-	do                                                                         \
-	{                                                                          \
-		VkResult rez;                                                          \
-		if((rez = (x)) < 0)                                                    \
-		{                                                                      \
-			ANKI_LOGE("Vulkan function failed (%d): %s", rez, #x);             \
-			return ErrorCode::FUNCTION_FAILED;                                 \
-		}                                                                      \
+#define ANKI_VK_CHECK(x)                                                                                               \
+	do                                                                                                                 \
+	{                                                                                                                  \
+		VkResult rez;                                                                                                  \
+		if((rez = (x)) < 0)                                                                                            \
+		{                                                                                                              \
+			ANKI_LOGE("Vulkan function failed (%d): %s", rez, #x);                                                     \
+			return ErrorCode::FUNCTION_FAILED;                                                                         \
+		}                                                                                                              \
 	} while(0)
 
 ANKI_USE_RESULT inline Bool formatIsDepthStencil(PixelFormat fmt)
 {
-	if(fmt.m_components == ComponentFormat::D16
-		|| fmt.m_components == ComponentFormat::D24
+	if(fmt.m_components == ComponentFormat::D16 || fmt.m_components == ComponentFormat::D24
 		|| fmt.m_components == ComponentFormat::D32)
 	{
 		return true;
@@ -95,15 +94,13 @@ ANKI_USE_RESULT VkAttachmentLoadOp convertLoadOp(AttachmentLoadOperation ak);
 ANKI_USE_RESULT VkAttachmentStoreOp convertStoreOp(AttachmentStoreOperation ak);
 
 /// Convert buffer usage bitmask.
-ANKI_USE_RESULT VkBufferUsageFlags convertBufferUsageBit(
-	BufferUsageBit usageMask);
+ANKI_USE_RESULT VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask);
 
 ANKI_USE_RESULT VkImageType convertTextureType(TextureType ak);
 
 ANKI_USE_RESULT VkImageViewType convertTextureViewType(TextureType ak);
 
-ANKI_USE_RESULT VkImageUsageFlags convertTextureUsage(
-	TextureUsageBit ak, const PixelFormat& format);
+ANKI_USE_RESULT VkImageUsageFlags convertTextureUsage(TextureUsageBit ak, const PixelFormat& format);
 /// @}
 
 } // end namespace anki

@@ -34,8 +34,7 @@ public:
 	/// Delete children from the last entered to the first and update parent
 	virtual ~Hierarchy()
 	{
-		ANKI_ASSERT(m_parent == nullptr && m_children.isEmpty()
-			&& "Requires manual desruction");
+		ANKI_ASSERT(m_parent == nullptr && m_children.isEmpty() && "Requires manual desruction");
 	}
 
 	template<typename TAllocator>

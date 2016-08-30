@@ -8,7 +8,6 @@
 namespace anki
 {
 
-//==============================================================================
 VkCompareOp convertCompareOp(CompareOperation ak)
 {
 	VkCompareOp out = VK_COMPARE_OP_NEVER;
@@ -45,7 +44,6 @@ VkCompareOp convertCompareOp(CompareOperation ak)
 	return out;
 }
 
-//==============================================================================
 enum class Aspect
 {
 	C = VK_IMAGE_ASPECT_COLOR_BIT,
@@ -70,13 +68,10 @@ public:
 	}
 };
 
-#define ANKI_FMT(fmt, trf, vk, as)                                             \
-	ConvertFormat(PixelFormat(ComponentFormat::fmt, TransformFormat::trf),     \
-		vk,                                                                    \
-		Aspect::as)
+#define ANKI_FMT(fmt, trf, vk, as)                                                                                     \
+	ConvertFormat(PixelFormat(ComponentFormat::fmt, TransformFormat::trf), vk, Aspect::as)
 
-static const ConvertFormat CONVERT_FORMAT_TABLE[] = {
-	ANKI_FMT(NONE, NONE, VK_FORMAT_R4G4_UNORM_PACK8, C),
+static const ConvertFormat CONVERT_FORMAT_TABLE[] = {ANKI_FMT(NONE, NONE, VK_FORMAT_R4G4_UNORM_PACK8, C),
 	ANKI_FMT(NONE, NONE, VK_FORMAT_R4G4B4A4_UNORM_PACK16, C),
 	ANKI_FMT(NONE, NONE, VK_FORMAT_B4G4R4A4_UNORM_PACK16, C),
 	ANKI_FMT(NONE, NONE, VK_FORMAT_R5G6B5_UNORM_PACK16, C),
@@ -263,8 +258,7 @@ static const ConvertFormat CONVERT_FORMAT_TABLE[] = {
 
 #undef ANKI_FMT
 
-const U CONVERT_FORMAT_TABLE_SIZE =
-	sizeof(CONVERT_FORMAT_TABLE) / sizeof(CONVERT_FORMAT_TABLE[0]);
+const U CONVERT_FORMAT_TABLE_SIZE = sizeof(CONVERT_FORMAT_TABLE) / sizeof(CONVERT_FORMAT_TABLE[0]);
 
 VkFormat convertFormat(PixelFormat ak)
 {
@@ -285,7 +279,6 @@ VkFormat convertFormat(PixelFormat ak)
 	return out;
 }
 
-//==============================================================================
 VkImageAspectFlags convertImageAspect(PixelFormat ak)
 {
 	VkImageAspectFlags out = 0;
@@ -302,7 +295,6 @@ VkImageAspectFlags convertImageAspect(PixelFormat ak)
 	return out;
 }
 
-//==============================================================================
 VkPrimitiveTopology convertTopology(PrimitiveTopology ak)
 {
 	VkPrimitiveTopology out = VK_PRIMITIVE_TOPOLOGY_MAX_ENUM;
@@ -333,7 +325,6 @@ VkPrimitiveTopology convertTopology(PrimitiveTopology ak)
 	return out;
 }
 
-//==============================================================================
 VkPolygonMode convertFillMode(FillMode ak)
 {
 	VkPolygonMode out = VK_POLYGON_MODE_FILL;
@@ -355,7 +346,6 @@ VkPolygonMode convertFillMode(FillMode ak)
 	return out;
 }
 
-//==============================================================================
 VkCullModeFlags convertCullMode(CullMode ak)
 {
 	VkCullModeFlags out = 0;
@@ -377,7 +367,6 @@ VkCullModeFlags convertCullMode(CullMode ak)
 	return out;
 }
 
-//==============================================================================
 VkBlendFactor convertBlendMethod(BlendMethod ak)
 {
 	VkBlendFactor out = VK_BLEND_FACTOR_MAX_ENUM;
@@ -447,7 +436,6 @@ VkBlendFactor convertBlendMethod(BlendMethod ak)
 	return out;
 }
 
-//==============================================================================
 VkBlendOp convertBlendFunc(BlendFunction ak)
 {
 	VkBlendOp out = VK_BLEND_OP_MAX_ENUM;
@@ -476,7 +464,6 @@ VkBlendOp convertBlendFunc(BlendFunction ak)
 	return out;
 }
 
-//==============================================================================
 VkAttachmentLoadOp convertLoadOp(AttachmentLoadOperation ak)
 {
 	VkAttachmentLoadOp out = VK_ATTACHMENT_LOAD_OP_MAX_ENUM;
@@ -499,7 +486,6 @@ VkAttachmentLoadOp convertLoadOp(AttachmentLoadOperation ak)
 	return out;
 }
 
-//==============================================================================
 VkAttachmentStoreOp convertStoreOp(AttachmentStoreOperation ak)
 {
 	VkAttachmentStoreOp out = VK_ATTACHMENT_STORE_OP_MAX_ENUM;
@@ -519,7 +505,6 @@ VkAttachmentStoreOp convertStoreOp(AttachmentStoreOperation ak)
 	return out;
 }
 
-//==============================================================================
 VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask)
 {
 	VkBufferUsageFlags out = 0;
@@ -549,14 +534,12 @@ VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask)
 		out |= VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT;
 	}
 
-	if(!!(usageMask & (BufferUsageBit::BUFFER_UPLOAD_DESTINATION
-						  | BufferUsageBit::FILL)))
+	if(!!(usageMask & (BufferUsageBit::BUFFER_UPLOAD_DESTINATION | BufferUsageBit::FILL)))
 	{
 		out |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 	}
 
-	if(!!(usageMask & (BufferUsageBit::BUFFER_UPLOAD_SOURCE
-						  | BufferUsageBit::TEXTURE_UPLOAD_SOURCE)))
+	if(!!(usageMask & (BufferUsageBit::BUFFER_UPLOAD_SOURCE | BufferUsageBit::TEXTURE_UPLOAD_SOURCE)))
 	{
 		out |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 	}
@@ -566,7 +549,6 @@ VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask)
 	return out;
 }
 
-//==============================================================================
 VkImageType convertTextureType(TextureType ak)
 {
 	VkImageType out = VK_IMAGE_TYPE_MAX_ENUM;
@@ -591,7 +573,6 @@ VkImageType convertTextureType(TextureType ak)
 	return out;
 }
 
-//==============================================================================
 VkImageViewType convertTextureViewType(TextureType ak)
 {
 	VkImageViewType out = VK_IMAGE_VIEW_TYPE_MAX_ENUM;
@@ -622,9 +603,7 @@ VkImageViewType convertTextureViewType(TextureType ak)
 	return out;
 }
 
-//==============================================================================
-VkImageUsageFlags convertTextureUsage(
-	TextureUsageBit ak, const PixelFormat& format)
+VkImageUsageFlags convertTextureUsage(TextureUsageBit ak, const PixelFormat& format)
 {
 	VkImageUsageFlags out = 0;
 
@@ -652,8 +631,7 @@ VkImageUsageFlags convertTextureUsage(
 
 	if(!!(ak & TextureUsageBit::GENERATE_MIPMAPS))
 	{
-		out |=
-			VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+		out |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 	}
 
 	if(!!(ak & TextureUsageBit::UPLOAD))

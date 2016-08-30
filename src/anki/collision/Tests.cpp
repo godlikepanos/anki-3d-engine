@@ -12,24 +12,16 @@
 #include <anki/collision/Obb.h>
 #include <anki/collision/ConvexHullShape.h>
 #include <anki/collision/GjkEpa.h>
-#include <anki/util/Rtti.h>
 
 namespace anki
 {
 
-//==============================================================================
-// Misc                                                                        =
-//==============================================================================
-
-//==============================================================================
 static Bool gjk(const CollisionShape& a, const CollisionShape& b)
 {
 	Gjk gjk;
-	return gjk.intersect(
-		dcast<const ConvexShape&>(a), dcast<const ConvexShape&>(b));
+	return gjk.intersect(static_cast<const ConvexShape&>(a), static_cast<const ConvexShape&>(b));
 }
 
-//==============================================================================
 static Bool test(const Aabb& a, const Aabb& b)
 {
 	// if separated in x direction
@@ -54,7 +46,6 @@ static Bool test(const Aabb& a, const Aabb& b)
 	return true;
 }
 
-//==============================================================================
 Bool test(const Aabb& aabb, const LineSegment& ls)
 {
 	F32 maxS = MIN_F32;
@@ -67,8 +58,7 @@ Bool test(const Aabb& aabb, const LineSegment& ls)
 		if(isZero(ls.getDirection()[i]))
 		{
 			// segment passes by box
-			if(ls.getOrigin()[i] < aabb.getMin()[i]
-				|| ls.getOrigin()[i] > aabb.getMax()[i])
+			if(ls.getOrigin()[i] < aabb.getMin()[i] || ls.getOrigin()[i] > aabb.getMax()[i])
 			{
 				return false;
 			}
@@ -76,10 +66,8 @@ Bool test(const Aabb& aabb, const LineSegment& ls)
 		else
 		{
 			// compute intersection parameters and sort
-			F32 s =
-				(aabb.getMin()[i] - ls.getOrigin()[i]) / ls.getDirection()[i];
-			F32 t =
-				(aabb.getMax()[i] - ls.getOrigin()[i]) / ls.getDirection()[i];
+			F32 s = (aabb.getMin()[i] - ls.getOrigin()[i]) / ls.getDirection()[i];
+			F32 t = (aabb.getMax()[i] - ls.getOrigin()[i]) / ls.getDirection()[i];
 			if(s > t)
 			{
 				F32 temp = s;
@@ -109,7 +97,6 @@ Bool test(const Aabb& aabb, const LineSegment& ls)
 	return true;
 }
 
-//==============================================================================
 static Bool test(const Aabb& aabb, const Sphere& s)
 {
 	const Vec4& c = s.getCenter();
@@ -118,8 +105,7 @@ static Bool test(const Aabb& aabb, const Sphere& s)
 	Vec4 cp(0.0); // Closest Point
 	for(U i = 0; i < 3; i++)
 	{
-		// if the center is greater than the max then the closest
-		// point is the max
+		// if the center is greater than the max then the closest point is the max
 		if(c[i] > aabb.getMax()[i])
 		{
 			cp[i] = aabb.getMax()[i];
@@ -137,9 +123,8 @@ static Bool test(const Aabb& aabb, const Sphere& s)
 
 	F32 rsq = s.getRadius() * s.getRadius();
 
-	// if the c lies totally inside the box then the sub is the zero,
-	// this means that the length is also zero and thus its always smaller
-	// than rsq
+	// if the c lies totally inside the box then the sub is the zero, this means that the length is also zero and thus
+	// it's always smaller than rsq
 	Vec4 sub = c - cp;
 
 	if(sub.getLengthSquared() <= rsq)
@@ -150,7 +135,6 @@ static Bool test(const Aabb& aabb, const Sphere& s)
 	return false;
 }
 
-//==============================================================================
 static Bool test(const LineSegment& ls, const Obb& obb)
 {
 	F32 maxS = MIN_F32;
@@ -212,7 +196,6 @@ static Bool test(const LineSegment& ls, const Obb& obb)
 	return true;
 }
 
-//==============================================================================
 Bool test(const LineSegment& ls, const Sphere& s)
 {
 	const Vec4& v = ls.getDirection();
@@ -238,34 +221,29 @@ Bool test(const LineSegment& ls, const Sphere& s)
 	return tmp.getLengthSquared() <= rsq;
 }
 
-//==============================================================================
 static Bool test(const Sphere& a, const Sphere& b)
 {
 	F32 tmp = a.getRadius() + b.getRadius();
 	return (a.getCenter() - b.getCenter()).getLengthSquared() <= tmp * tmp;
 }
 
-//==============================================================================
-// Matrix                                                                      =
-//==============================================================================
-
 template<typename A, typename B>
 static Bool t(const CollisionShape& a, const CollisionShape& b)
 {
-	return test(dcast<const A&>(a), dcast<const B&>(b));
+	return test(static_cast<const A&>(a), static_cast<const B&>(b));
 }
 
 template<typename A, typename B>
 static Bool tr(const CollisionShape& a, const CollisionShape& b)
 {
-	return test(dcast<const B&>(b), dcast<const A&>(a));
+	return test(static_cast<const B&>(b), static_cast<const A&>(a));
 }
 
 /// Test plane.
 template<typename A>
 static Bool txp(const CollisionShape& a, const CollisionShape& b)
 {
-	return dcast<const A&>(a).testPlane(dcast<const Plane&>(b));
+	return static_cast<const A&>(a).testPlane(static_cast<const Plane&>(b));
 }
 
 /// Test plane.
@@ -279,7 +257,8 @@ static Bool tpx(const CollisionShape& a, const CollisionShape& b)
 static Bool tcx(const CollisionShape& a, const CollisionShape& b)
 {
 	Bool inside = false;
-	const CompoundShape& c = dcast<const CompoundShape&>(a);
+	ANKI_ASSERT(a.getType() == CollisionShapeType::COMPOUND);
+	const CompoundShape& c = static_cast<const CompoundShape&>(a);
 
 	// Use the error to stop the loop
 	Error err = c.iterateShapes([&](const CollisionShape& cs) {
@@ -304,7 +283,7 @@ static Bool txc(const CollisionShape& a, const CollisionShape& b)
 
 using Callback = Bool (*)(const CollisionShape& a, const CollisionShape& b);
 
-static const U COUNT = U(CollisionShape::Type::COUNT);
+static const U COUNT = U(CollisionShapeType::COUNT);
 
 // clang-format off
 static const Callback matrix[COUNT][COUNT] = {

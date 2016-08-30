@@ -107,9 +107,7 @@ enum class PipelineSubStateBit : U16
 	RASTERIZER = 1 << 4,
 	DEPTH_STENCIL = 1 << 5,
 	COLOR = 1 << 6,
-	ALL = VERTEX | INPUT_ASSEMBLER | TESSELLATION | VIEWPORT | RASTERIZER
-		| DEPTH_STENCIL
-		| COLOR
+	ALL = VERTEX | INPUT_ASSEMBLER | TESSELLATION | VIEWPORT | RASTERIZER | DEPTH_STENCIL | COLOR
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(PipelineSubStateBit, inline)
 
@@ -119,8 +117,8 @@ class PipelineInitInfoState
 public:
 	PipelineInitInfoState()
 	{
-		// Do a special construction. The state will be hashed and the padding
-		// may contain garbage. With this trick zero the padding
+		// Do a special construction. The state will be hashed and the padding may contain garbage. With this trick
+		// zero the padding
 		memset(this, 0, sizeof(*this));
 
 #define ANKI_CONSTRUCT_AND_ZERO_PADDING(memb_) new(&memb_) decltype(memb_)()
@@ -153,9 +151,7 @@ public:
 
 	U64 computeHash() const
 	{
-		U64 h =
-			anki::computeHash(static_cast<const PipelineInitInfoState*>(this),
-				sizeof(PipelineInitInfoState));
+		U64 h = anki::computeHash(static_cast<const PipelineInitInfoState*>(this), sizeof(PipelineInitInfoState));
 
 		Array<U64, U(ShaderType::COUNT)> uuids;
 		for(U i = 0; i < m_shaders.getSize(); ++i)

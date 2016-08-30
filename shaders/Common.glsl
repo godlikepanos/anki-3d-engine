@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-// This file contains common code for all shaders. It's optional but it's
-// recomended to include it
+// This file contains common code for all shaders. It's optional but it's recomended to include it
 
 #ifndef ANKI_SHADERS_COMMON_GLSL
 #define ANKI_SHADERS_COMMON_GLSL

@@ -11,7 +11,6 @@
 namespace anki
 {
 
-//==============================================================================
 SpatialComponent::SpatialComponent(SceneNode* node, const CollisionShape* shape)
 	: SceneComponent(CLASS_TYPE, node)
 	, m_shape(shape)
@@ -20,13 +19,11 @@ SpatialComponent::SpatialComponent(SceneNode* node, const CollisionShape* shape)
 	markForUpdate();
 }
 
-//==============================================================================
 SpatialComponent::~SpatialComponent()
 {
 	getSceneGraph().getSectorGroup().spatialDeleted(this);
 }
 
-//==============================================================================
 Error SpatialComponent::update(SceneNode&, F32, F32, Bool& updated)
 {
 	m_flags.unset(Flag::VISIBLE_ANY);

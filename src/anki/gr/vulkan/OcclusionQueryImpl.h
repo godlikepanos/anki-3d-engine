@@ -28,9 +28,8 @@ public:
 	~OcclusionQueryImpl();
 
 	/// Create the query.
-	/// @param condRenderingBit If the query is used in conditional rendering
-	///        the result will be checked against this mask. If the result
-	///        contains any of the bits then the dracall will not be skipped.
+	/// @param condRenderingBit If the query is used in conditional rendering the result will be checked against this
+	///        mask. If the result contains any of the bits then the dracall will not be skipped.
 	ANKI_USE_RESULT Error init(OcclusionQueryResultBit condRenderingBit);
 
 	/// Get query result.

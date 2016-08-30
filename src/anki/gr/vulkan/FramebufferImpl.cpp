@@ -11,7 +11,6 @@
 namespace anki
 {
 
-//==============================================================================
 FramebufferImpl::~FramebufferImpl()
 {
 	if(m_renderPass)
@@ -28,7 +27,6 @@ FramebufferImpl::~FramebufferImpl()
 	}
 }
 
-//==============================================================================
 Error FramebufferImpl::init(const FramebufferInitInfo& init)
 {
 	ANKI_ASSERT(framebufferInitInfoValid(init));
@@ -41,8 +39,7 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 	m_attachmentCount = 0;
 	for(U i = 0; i < init.m_colorAttachmentCount; ++i)
 	{
-		if(init.m_colorAttachments[i].m_loadOperation
-			== AttachmentLoadOperation::CLEAR)
+		if(init.m_colorAttachments[i].m_loadOperation == AttachmentLoadOperation::CLEAR)
 		{
 			F32* col = &m_clearVals[i].color.float32[0];
 			col[0] = init.m_colorAttachments[i].m_clearValue.m_colorf[0];
@@ -60,12 +57,10 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 
 	if(init.m_depthStencilAttachment.m_texture.isCreated())
 	{
-		if(init.m_depthStencilAttachment.m_loadOperation
-			== AttachmentLoadOperation::CLEAR)
+		if(init.m_depthStencilAttachment.m_loadOperation == AttachmentLoadOperation::CLEAR)
 		{
 			m_clearVals[m_attachmentCount].depthStencil.depth =
-				init.m_depthStencilAttachment.m_clearValue.m_depthStencil
-					.m_depth;
+				init.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth;
 		}
 		else
 		{
@@ -78,9 +73,7 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
-void FramebufferImpl::setupAttachmentDescriptor(
-	const FramebufferAttachmentInfo& att, VkAttachmentDescription& desc)
+void FramebufferImpl::setupAttachmentDescriptor(const FramebufferAttachmentInfo& att, VkAttachmentDescription& desc)
 {
 	// TODO This func won't work if it's default but this is a depth attachment
 
@@ -91,14 +84,12 @@ void FramebufferImpl::setupAttachmentDescriptor(
 	}
 	else
 	{
-		layout = att.m_texture->getImplementation().computeLayout(
-			att.m_usageInsideRenderPass, 0);
+		layout = att.m_texture->getImplementation().computeLayout(att.m_usageInsideRenderPass, 0);
 	}
 
 	desc = {};
-	desc.format = (m_defaultFramebuffer)
-		? getGrManagerImpl().getDefaultFramebufferSurfaceFormat()
-		: convertFormat(att.m_texture->getImplementation().m_format);
+	desc.format = (m_defaultFramebuffer) ? getGrManagerImpl().getDefaultFramebufferSurfaceFormat()
+										 : convertFormat(att.m_texture->getImplementation().m_format);
 	desc.samples = VK_SAMPLE_COUNT_1_BIT;
 	desc.loadOp = convertLoadOp(att.m_loadOperation);
 	desc.storeOp = convertStoreOp(att.m_storeOperation);
@@ -108,7 +99,6 @@ void FramebufferImpl::setupAttachmentDescriptor(
 	desc.finalLayout = layout;
 }
 
-//==============================================================================
 Error FramebufferImpl::initRenderPass(const FramebufferInitInfo& init)
 {
 	VkRenderPassCreateInfo ci = {};
@@ -116,8 +106,7 @@ Error FramebufferImpl::initRenderPass(const FramebufferInitInfo& init)
 
 	// First setup the attachments
 	ci.attachmentCount = 0;
-	Array<VkAttachmentDescription, MAX_COLOR_ATTACHMENTS + 1>
-		attachmentDescriptions;
+	Array<VkAttachmentDescription, MAX_COLOR_ATTACHMENTS + 1> attachmentDescriptions;
 	Array<VkAttachmentReference, MAX_COLOR_ATTACHMENTS> references;
 	Bool hasDepthStencil = init.m_depthStencilAttachment.m_texture == true;
 
@@ -129,8 +118,7 @@ Error FramebufferImpl::initRenderPass(const FramebufferInitInfo& init)
 
 		references[i].attachment = i;
 		references[i].layout = (att.m_texture)
-			? att.m_texture->getImplementation().computeLayout(
-				  att.m_usageInsideRenderPass, 0)
+			? att.m_texture->getImplementation().computeLayout(att.m_usageInsideRenderPass, 0)
 			: VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 		++ci.attachmentCount;
@@ -139,14 +127,11 @@ Error FramebufferImpl::initRenderPass(const FramebufferInitInfo& init)
 	VkAttachmentReference dsReference = {};
 	if(hasDepthStencil)
 	{
-		setupAttachmentDescriptor(init.m_depthStencilAttachment,
-			attachmentDescriptions[ci.attachmentCount]);
+		setupAttachmentDescriptor(init.m_depthStencilAttachment, attachmentDescriptions[ci.attachmentCount]);
 
 		dsReference.attachment = ci.attachmentCount;
-		dsReference.layout =
-			init.m_depthStencilAttachment.m_texture->getImplementation()
-				.computeLayout(
-					init.m_depthStencilAttachment.m_usageInsideRenderPass, 0);
+		dsReference.layout = init.m_depthStencilAttachment.m_texture->getImplementation().computeLayout(
+			init.m_depthStencilAttachment.m_usageInsideRenderPass, 0);
 
 		++ci.attachmentCount;
 	}
@@ -158,8 +143,7 @@ Error FramebufferImpl::initRenderPass(const FramebufferInitInfo& init)
 	VkSubpassDescription spass = {};
 	spass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 	spass.colorAttachmentCount = init.m_colorAttachmentCount;
-	spass.pColorAttachments =
-		(init.m_colorAttachmentCount) ? &references[0] : nullptr;
+	spass.pColorAttachments = (init.m_colorAttachmentCount) ? &references[0] : nullptr;
 	spass.pDepthStencilAttachment = (hasDepthStencil) ? &dsReference : nullptr;
 
 	ci.subpassCount = 1;
@@ -170,7 +154,6 @@ Error FramebufferImpl::initRenderPass(const FramebufferInitInfo& init)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error FramebufferImpl::initFramebuffer(const FramebufferInitInfo& init)
 {
 	Bool hasDepthStencil = init.m_depthStencilAttachment.m_texture == true;
@@ -178,8 +161,7 @@ Error FramebufferImpl::initFramebuffer(const FramebufferInitInfo& init)
 	VkFramebufferCreateInfo ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 	ci.renderPass = m_renderPass;
-	ci.attachmentCount =
-		init.m_colorAttachmentCount + ((hasDepthStencil) ? 1 : 0);
+	ci.attachmentCount = init.m_colorAttachmentCount + ((hasDepthStencil) ? 1 : 0);
 
 	ci.layers = 1;
 
@@ -195,8 +177,7 @@ Error FramebufferImpl::initFramebuffer(const FramebufferInitInfo& init)
 			ci.width = m_width;
 			ci.height = m_height;
 
-			ANKI_VK_CHECK(vkCreateFramebuffer(
-				getDevice(), &ci, nullptr, &m_framebuffers[i]));
+			ANKI_VK_CHECK(vkCreateFramebuffer(getDevice(), &ci, nullptr, &m_framebuffers[i]));
 		}
 	}
 	else
@@ -209,8 +190,7 @@ Error FramebufferImpl::initFramebuffer(const FramebufferInitInfo& init)
 			const FramebufferAttachmentInfo& att = init.m_colorAttachments[i];
 			TextureImpl& tex = att.m_texture->getImplementation();
 
-			attachments[count] =
-				tex.getOrCreateSingleSurfaceView(att.m_surface);
+			attachments[count] = tex.getOrCreateSingleSurfaceView(att.m_surface);
 
 			if(m_width == 0)
 			{
@@ -223,12 +203,10 @@ Error FramebufferImpl::initFramebuffer(const FramebufferInitInfo& init)
 
 		if(hasDepthStencil)
 		{
-			const FramebufferAttachmentInfo& att =
-				init.m_depthStencilAttachment;
+			const FramebufferAttachmentInfo& att = init.m_depthStencilAttachment;
 			TextureImpl& tex = att.m_texture->getImplementation();
 
-			attachments[count] =
-				tex.getOrCreateSingleSurfaceView(att.m_surface);
+			attachments[count] = tex.getOrCreateSingleSurfaceView(att.m_surface);
 
 			if(m_width == 0)
 			{
@@ -245,8 +223,7 @@ Error FramebufferImpl::initFramebuffer(const FramebufferInitInfo& init)
 		ci.pAttachments = &attachments[0];
 		ANKI_ASSERT(count == ci.attachmentCount);
 
-		ANKI_VK_CHECK(
-			vkCreateFramebuffer(getDevice(), &ci, nullptr, &m_framebuffers[0]));
+		ANKI_VK_CHECK(vkCreateFramebuffer(getDevice(), &ci, nullptr, &m_framebuffers[0]));
 	}
 
 	return ErrorCode::NONE;

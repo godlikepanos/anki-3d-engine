@@ -12,15 +12,12 @@
 namespace anki
 {
 
-//==============================================================================
 AnimationEvent::AnimationEvent(EventManager* manager)
 	: Event(manager)
 {
 }
 
-//==============================================================================
-Error AnimationEvent::init(
-	const AnimationResourcePtr& anim, SceneNode* movableSceneNode)
+Error AnimationEvent::init(const AnimationResourcePtr& anim, SceneNode* movableSceneNode)
 {
 	ANKI_ASSERT(movableSceneNode);
 	m_anim = anim;
@@ -33,7 +30,6 @@ Error AnimationEvent::init(
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error AnimationEvent::update(F32 prevUpdateTime, F32 crntTime)
 {
 	ANKI_ASSERT(getSceneNode());

@@ -27,13 +27,11 @@ public:
 
 	U64 computeHash() const
 	{
-		return anki::computeHash(
-			this, offsetof(SamplerInitInfo, m_repeat) + sizeof(m_repeat));
+		return anki::computeHash(this, offsetof(SamplerInitInfo, m_repeat) + sizeof(m_repeat));
 	}
 };
 
-static_assert(offsetof(SamplerInitInfo, m_repeat) == 12,
-	"Class needs to be tightly packed since we hash it");
+static_assert(offsetof(SamplerInitInfo, m_repeat) == 12, "Class needs to be tightly packed since we hash it");
 
 /// Texture initializer.
 class TextureInitInfo

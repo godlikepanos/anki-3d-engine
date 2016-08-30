@@ -15,10 +15,6 @@
 namespace anki
 {
 
-//==============================================================================
-// Misc                                                                        =
-//==============================================================================
-
 /// This should be the number of light types. For now it's spots & points &
 /// probes.
 const U SIZE_IDX_COUNT = 3;
@@ -133,8 +129,7 @@ private:
 	U16 m_index;
 	U16 m_probeRadius;
 };
-static_assert(
-	sizeof(ClusterProbeIndex) == sizeof(U16) * 2, "Because we memcmp");
+static_assert(sizeof(ClusterProbeIndex) == sizeof(U16) * 2, "Because we memcmp");
 
 /// WARNING: Keep it as small as possible. The number of clusters is huge
 class alignas(U32) ClusterData
@@ -186,8 +181,7 @@ public:
 			std::sort(m_probeIds.getBegin(),
 				m_probeIds.getBegin() + probeCount,
 				[](const ClusterProbeIndex& a, const ClusterProbeIndex& b) {
-					ANKI_ASSERT(
-						a.getProbeRadius() > 0.0 && b.getProbeRadius() > 0.0);
+					ANKI_ASSERT(a.getProbeRadius() > 0.0 && b.getProbeRadius() > 0.0);
 					return a.getProbeRadius() < b.getProbeRadius();
 				});
 		}
@@ -202,18 +196,14 @@ public:
 		const U spotCount2 = b.m_spotCount.get();
 		const U probeCount2 = b.m_probeCount.get();
 
-		if(pointCount != pointCount2 || spotCount != spotCount2
-			|| probeCount != probeCount2)
+		if(pointCount != pointCount2 || spotCount != spotCount2 || probeCount != probeCount2)
 		{
 			return false;
 		}
 
 		if(pointCount > 0)
 		{
-			if(memcmp(&m_pointIds[0],
-				   &b.m_pointIds[0],
-				   sizeof(m_pointIds[0]) * pointCount)
-				!= 0)
+			if(memcmp(&m_pointIds[0], &b.m_pointIds[0], sizeof(m_pointIds[0]) * pointCount) != 0)
 			{
 				return false;
 			}
@@ -221,10 +211,7 @@ public:
 
 		if(spotCount > 0)
 		{
-			if(memcmp(&m_spotIds[0],
-				   &b.m_spotIds[0],
-				   sizeof(m_spotIds[0]) * spotCount)
-				!= 0)
+			if(memcmp(&m_spotIds[0], &b.m_spotIds[0], sizeof(m_spotIds[0]) * spotCount) != 0)
 			{
 				return false;
 			}
@@ -232,10 +219,7 @@ public:
 
 		if(probeCount > 0)
 		{
-			if(memcmp(&m_probeIds[0],
-				   &b.m_probeIds[0],
-				   sizeof(b.m_probeIds[0]) * probeCount)
-				!= 0)
+			if(memcmp(&m_probeIds[0], &b.m_probeIds[0], sizeof(b.m_probeIds[0]) * probeCount) != 0)
 			{
 				return false;
 			}
@@ -313,11 +297,6 @@ public:
 	}
 };
 
-//==============================================================================
-// LightBin                                                                    =
-//==============================================================================
-
-//==============================================================================
 LightBin::LightBin(const GenericMemoryPoolAllocator<U8>& alloc,
 	U clusterCountX,
 	U clusterCountY,
@@ -333,12 +312,10 @@ LightBin::LightBin(const GenericMemoryPoolAllocator<U8>& alloc,
 	m_clusterer.init(alloc, clusterCountX, clusterCountY, clusterCountZ);
 }
 
-//==============================================================================
 LightBin::~LightBin()
 {
 }
 
-//==============================================================================
 Error LightBin::bin(FrustumComponent& frc,
 	StackAllocator<U8> frameAlloc,
 	U maxLightIndices,
@@ -363,8 +340,7 @@ Error LightBin::bin(FrustumComponent& frc,
 	U visibleSpotLightsCount = vi.getCount(VisibilityGroupType::LIGHTS_SPOT);
 	U visibleProbeCount = vi.getCount(VisibilityGroupType::REFLECTION_PROBES);
 
-	ANKI_TRACE_INC_COUNTER(
-		RENDERER_LIGHTS, visiblePointLightsCount + visibleSpotLightsCount);
+	ANKI_TRACE_INC_COUNTER(RENDERER_LIGHTS, visiblePointLightsCount + visibleSpotLightsCount);
 
 	//
 	// Write the lights and tiles UBOs
@@ -378,18 +354,13 @@ Error LightBin::bin(FrustumComponent& frc,
 
 	if(visiblePointLightsCount)
 	{
-		ShaderPointLight* data =
-			static_cast<ShaderPointLight*>(m_gr->allocateFrameTransientMemory(
-				sizeof(ShaderPointLight) * visiblePointLightsCount,
-				BufferUsageBit::UNIFORM_ALL,
-				pointLightsToken));
+		ShaderPointLight* data = static_cast<ShaderPointLight*>(m_gr->allocateFrameTransientMemory(
+			sizeof(ShaderPointLight) * visiblePointLightsCount, BufferUsageBit::UNIFORM_ALL, pointLightsToken));
 
-		ctx.m_pointLights =
-			WeakArray<ShaderPointLight>(data, visiblePointLightsCount);
+		ctx.m_pointLights = WeakArray<ShaderPointLight>(data, visiblePointLightsCount);
 
-		ctx.m_vPointLights = WeakArray<VisibleNode>(
-			vi.getBegin(VisibilityGroupType::LIGHTS_POINT),
-			visiblePointLightsCount);
+		ctx.m_vPointLights =
+			WeakArray<VisibleNode>(vi.getBegin(VisibilityGroupType::LIGHTS_POINT), visiblePointLightsCount);
 	}
 	else
 	{
@@ -398,18 +369,13 @@ Error LightBin::bin(FrustumComponent& frc,
 
 	if(visibleSpotLightsCount)
 	{
-		ShaderSpotLight* data =
-			static_cast<ShaderSpotLight*>(m_gr->allocateFrameTransientMemory(
-				sizeof(ShaderSpotLight) * visibleSpotLightsCount,
-				BufferUsageBit::UNIFORM_ALL,
-				spotLightsToken));
+		ShaderSpotLight* data = static_cast<ShaderSpotLight*>(m_gr->allocateFrameTransientMemory(
+			sizeof(ShaderSpotLight) * visibleSpotLightsCount, BufferUsageBit::UNIFORM_ALL, spotLightsToken));
 
-		ctx.m_spotLights =
-			WeakArray<ShaderSpotLight>(data, visibleSpotLightsCount);
+		ctx.m_spotLights = WeakArray<ShaderSpotLight>(data, visibleSpotLightsCount);
 
-		ctx.m_vSpotLights = WeakArray<VisibleNode>(
-			vi.getBegin(VisibilityGroupType::LIGHTS_SPOT),
-			visibleSpotLightsCount);
+		ctx.m_vSpotLights =
+			WeakArray<VisibleNode>(vi.getBegin(VisibilityGroupType::LIGHTS_SPOT), visibleSpotLightsCount);
 	}
 	else
 	{
@@ -420,17 +386,13 @@ Error LightBin::bin(FrustumComponent& frc,
 	{
 		if(visibleProbeCount)
 		{
-			ShaderProbe* data =
-				static_cast<ShaderProbe*>(m_gr->allocateFrameTransientMemory(
-					sizeof(ShaderProbe) * visibleProbeCount,
-					BufferUsageBit::UNIFORM_ALL,
-					*probesToken));
+			ShaderProbe* data = static_cast<ShaderProbe*>(m_gr->allocateFrameTransientMemory(
+				sizeof(ShaderProbe) * visibleProbeCount, BufferUsageBit::UNIFORM_ALL, *probesToken));
 
 			ctx.m_probes = WeakArray<ShaderProbe>(data, visibleProbeCount);
 
-			ctx.m_vProbes = WeakArray<VisibleNode>(
-				vi.getBegin(VisibilityGroupType::REFLECTION_PROBES),
-				visibleProbeCount);
+			ctx.m_vProbes =
+				WeakArray<VisibleNode>(vi.getBegin(VisibilityGroupType::REFLECTION_PROBES), visibleProbeCount);
 		}
 		else
 		{
@@ -441,19 +403,14 @@ Error LightBin::bin(FrustumComponent& frc,
 	ctx.m_bin = this;
 
 	// Get mem for clusters
-	ShaderCluster* data =
-		static_cast<ShaderCluster*>(m_gr->allocateFrameTransientMemory(
-			sizeof(ShaderCluster) * m_clusterCount,
-			BufferUsageBit::STORAGE_ALL,
-			clustersToken));
+	ShaderCluster* data = static_cast<ShaderCluster*>(m_gr->allocateFrameTransientMemory(
+		sizeof(ShaderCluster) * m_clusterCount, BufferUsageBit::STORAGE_ALL, clustersToken));
 
 	ctx.m_clusters = WeakArray<ShaderCluster>(data, m_clusterCount);
 
 	// Allocate light IDs
-	U32* data2 = static_cast<U32*>(
-		m_gr->allocateFrameTransientMemory(maxLightIndices * sizeof(U32),
-			BufferUsageBit::STORAGE_ALL,
-			lightIndicesToken));
+	U32* data2 = static_cast<U32*>(m_gr->allocateFrameTransientMemory(
+		maxLightIndices * sizeof(U32), BufferUsageBit::STORAGE_ALL, lightIndicesToken));
 
 	ctx.m_lightIds = WeakArray<U32>(data2, maxLightIndices);
 
@@ -480,22 +437,18 @@ Error LightBin::bin(FrustumComponent& frc,
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
-void LightBin::binLights(
-	U32 threadId, PtrSize threadsCount, LightBinContext& ctx)
+void LightBin::binLights(U32 threadId, PtrSize threadsCount, LightBinContext& ctx)
 {
 	ANKI_TRACE_START_EVENT(RENDERER_LIGHT_BINNING);
 	const FrustumComponent& camfrc = *ctx.m_frc;
-	const MoveComponent& cammove =
-		camfrc.getSceneNode().getComponent<MoveComponent>();
+	const MoveComponent& cammove = camfrc.getSceneNode().getComponent<MoveComponent>();
 	U clusterCount = m_clusterCount;
 	PtrSize start, end;
 
 	//
 	// Initialize the temp clusters
 	//
-	ThreadPoolTask::choseStartEnd(
-		threadId, threadsCount, clusterCount, start, end);
+	ThreadPoolTask::choseStartEnd(threadId, threadsCount, clusterCount, start, end);
 
 	for(U i = start; i < end; ++i)
 	{
@@ -535,8 +488,7 @@ void LightBin::binLights(
 				MoveComponent& move = snode.getComponent<MoveComponent>();
 				LightComponent& light = snode.getComponent<LightComponent>();
 				SpatialComponent& sp = snode.getComponent<SpatialComponent>();
-				const FrustumComponent* frc =
-					snode.tryGetComponent<FrustumComponent>();
+				const FrustumComponent* frc = snode.tryGetComponent<FrustumComponent>();
 
 				I pos = writeSpotLight(light, move, frc, cammove, camfrc, ctx);
 				binLight(sp, pos, 1, ctx, testResult);
@@ -588,9 +540,8 @@ void LightBin::binLights(
 				continue;
 			}
 
-			// Check if the previous cluster contains the same lights as this
-			// one and if yes then merge them. This will avoid allocating new
-			// IDs (and thrashing GPU caches).
+			// Check if the previous cluster contains the same lights as this one and if yes then merge them. This will
+			/// avoid allocating new IDs (and thrashing GPU caches).
 			cluster.sortLightIds();
 			if(i != start)
 			{
@@ -641,22 +592,17 @@ void LightBin::binLights(
 	ANKI_TRACE_STOP_EVENT(RENDERER_LIGHT_BINNING);
 }
 
-//==============================================================================
-I LightBin::writePointLight(const LightComponent& lightc,
-	const MoveComponent& lightMove,
-	const FrustumComponent& camFrc,
-	LightBinContext& ctx)
+I LightBin::writePointLight(
+	const LightComponent& lightc, const MoveComponent& lightMove, const FrustumComponent& camFrc, LightBinContext& ctx)
 {
 	// Get GPU light
 	I i = ctx.m_pointLightsCount.fetchAdd(1);
 
 	ShaderPointLight& slight = ctx.m_pointLights[i];
 
-	Vec4 pos = camFrc.getViewMatrix()
-		* lightMove.getWorldTransform().getOrigin().xyz1();
+	Vec4 pos = camFrc.getViewMatrix() * lightMove.getWorldTransform().getOrigin().xyz1();
 
-	slight.m_posRadius =
-		Vec4(pos.xyz(), 1.0 / (lightc.getRadius() * lightc.getRadius()));
+	slight.m_posRadius = Vec4(pos.xyz(), 1.0 / (lightc.getRadius() * lightc.getRadius()));
 	slight.m_diffuseColorShadowmapId = lightc.getDiffuseColor();
 
 	if(!lightc.getShadowEnabled() || !ctx.m_shadowsEnabled)
@@ -673,7 +619,6 @@ I LightBin::writePointLight(const LightComponent& lightc,
 	return i;
 }
 
-//==============================================================================
 I LightBin::writeSpotLight(const LightComponent& lightc,
 	const MoveComponent& lightMove,
 	const FrustumComponent* lightFrc,
@@ -689,39 +634,19 @@ I LightBin::writeSpotLight(const LightComponent& lightc,
 	if(lightc.getShadowEnabled() && ctx.m_shadowsEnabled)
 	{
 		// Write matrix
-		static const Mat4 biasMat4(0.5,
-			0.0,
-			0.0,
-			0.5,
-			0.0,
-			0.5,
-			0.0,
-			0.5,
-			0.0,
-			0.0,
-			0.5,
-			0.5,
-			0.0,
-			0.0,
-			0.0,
-			1.0);
+		static const Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0);
 		// bias * proj_l * view_l * world_c
-		light.m_texProjectionMat = biasMat4
-			* lightFrc->getViewProjectionMatrix()
-			* Mat4(camMove.getWorldTransform());
+		light.m_texProjectionMat = biasMat4 * lightFrc->getViewProjectionMatrix() * Mat4(camMove.getWorldTransform());
 
 		shadowmapIndex = F32(lightc.getShadowMapIndex());
 	}
 
 	// Pos & dist
-	Vec4 pos = camFrc.getViewMatrix()
-		* lightMove.getWorldTransform().getOrigin().xyz1();
-	light.m_posRadius =
-		Vec4(pos.xyz(), 1.0 / (lightc.getDistance() * lightc.getDistance()));
+	Vec4 pos = camFrc.getViewMatrix() * lightMove.getWorldTransform().getOrigin().xyz1();
+	light.m_posRadius = Vec4(pos.xyz(), 1.0 / (lightc.getDistance() * lightc.getDistance()));
 
 	// Diff color and shadowmap ID now
-	light.m_diffuseColorShadowmapId =
-		Vec4(lightc.getDiffuseColor().xyz(), shadowmapIndex);
+	light.m_diffuseColorShadowmapId = Vec4(lightc.getDiffuseColor().xyz(), shadowmapIndex);
 
 	// Spec color
 	light.m_specularColorTexId = lightc.getSpecularColor();
@@ -732,18 +657,12 @@ I LightBin::writeSpotLight(const LightComponent& lightc,
 	light.m_lightDir = Vec4(lightDir, 0.0);
 
 	// Angles
-	light.m_outerCosInnerCos =
-		Vec4(lightc.getOuterAngleCos(), lightc.getInnerAngleCos(), 1.0, 1.0);
+	light.m_outerCosInnerCos = Vec4(lightc.getOuterAngleCos(), lightc.getInnerAngleCos(), 1.0, 1.0);
 
 	return i;
 }
 
-//==============================================================================
-void LightBin::binLight(SpatialComponent& sp,
-	U pos,
-	U lightType,
-	LightBinContext& ctx,
-	ClustererTestResult& testResult)
+void LightBin::binLight(SpatialComponent& sp, U pos, U lightType, LightBinContext& ctx, ClustererTestResult& testResult)
 {
 	m_clusterer.bin(sp.getSpatialCollisionShape(), sp.getAabb(), testResult);
 
@@ -756,9 +675,7 @@ void LightBin::binLight(SpatialComponent& sp,
 		U y = (*it)[1];
 		U z = (*it)[2];
 
-		U i = m_clusterer.getClusterCountX()
-				* (z * m_clusterer.getClusterCountY() + y)
-			+ x;
+		U i = m_clusterer.getClusterCountX() * (z * m_clusterer.getClusterCountY() + y) + x;
 
 		auto& cluster = ctx.m_tempClusters[i];
 
@@ -778,14 +695,10 @@ void LightBin::binLight(SpatialComponent& sp,
 	}
 }
 
-//==============================================================================
-void LightBin::writeAndBinProbe(const FrustumComponent& camFrc,
-	const SceneNode& node,
-	LightBinContext& ctx,
-	ClustererTestResult& testResult)
+void LightBin::writeAndBinProbe(
+	const FrustumComponent& camFrc, const SceneNode& node, LightBinContext& ctx, ClustererTestResult& testResult)
 {
-	const ReflectionProbeComponent& reflc =
-		node.getComponent<ReflectionProbeComponent>();
+	const ReflectionProbeComponent& reflc = node.getComponent<ReflectionProbeComponent>();
 	const SpatialComponent& sp = node.getComponent<SpatialComponent>();
 
 	// Write it
@@ -808,9 +721,7 @@ void LightBin::writeAndBinProbe(const FrustumComponent& camFrc,
 		U y = (*it)[1];
 		U z = (*it)[2];
 
-		U i = m_clusterer.getClusterCountX()
-				* (z * m_clusterer.getClusterCountY() + y)
-			+ x;
+		U i = m_clusterer.getClusterCountX() * (z * m_clusterer.getClusterCountY() + y) + x;
 
 		auto& cluster = ctx.m_tempClusters[i];
 

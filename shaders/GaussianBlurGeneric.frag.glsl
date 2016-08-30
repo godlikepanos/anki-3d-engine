@@ -70,16 +70,12 @@ const float WEIGHTS[STEP_COUNT] = {0.19955, 0.18945, 0.08376, 0.02321, 0.00403};
 const float OFFSETS[STEP_COUNT] = {0.65319, 2.42547, 4.36803, 6.31412, 8.26479};
 #elif KERNEL_SIZE == 23
 const uint STEP_COUNT = 6u;
-const float WEIGHTS[STEP_COUNT] = {
-	0.16501, 0.17507, 0.10112, 0.04268, 0.01316, 0.00296};
-const float OFFSETS[STEP_COUNT] = {
-	0.65772, 2.45017, 4.41096, 6.37285, 8.33626, 10.30153};
+const float WEIGHTS[STEP_COUNT] = {0.16501, 0.17507, 0.10112, 0.04268, 0.01316, 0.00296};
+const float OFFSETS[STEP_COUNT] = {0.65772, 2.45017, 4.41096, 6.37285, 8.33626, 10.30153};
 #elif KERNEL_SIZE == 27
 const int STEP_COUNT = 7;
-const float WEIGHTS[STEP_COUNT] = {
-	0.14090, 0.15927, 0.10715, 0.05747, 0.02457, 0.00837, 0.00228};
-const float OFFSETS[STEP_COUNT] = {
-	0.66025, 2.46415, 4.43572, 6.40771, 8.38028, 10.35359, 12.32779};
+const float WEIGHTS[STEP_COUNT] = {0.14090, 0.15927, 0.10715, 0.05747, 0.02457, 0.00837, 0.00228};
+const float OFFSETS[STEP_COUNT] = {0.66025, 2.46415, 4.43572, 6.40771, 8.38028, 10.35359, 12.32779};
 #else
 #error See file
 #endif
@@ -96,8 +92,8 @@ void main()
 	for(uint i = 0; i < STEP_COUNT; ++i)
 	{
 		vec2 texCoordOffset = OFFSETS[i] * TEXEL_SIZE;
-		COL_TYPE col = texture(u_tex, in_uv + texCoordOffset).TEX_FETCH
-			+ texture(u_tex, in_uv - texCoordOffset).TEX_FETCH;
+		COL_TYPE col =
+			texture(u_tex, in_uv + texCoordOffset).TEX_FETCH + texture(u_tex, in_uv - texCoordOffset).TEX_FETCH;
 		out_color += WEIGHTS[i] * col;
 	}
 }

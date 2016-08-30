@@ -15,18 +15,11 @@
 namespace anki
 {
 
-//==============================================================================
-// Misc                                                                        =
-//==============================================================================
-
-//==============================================================================
 static F32 getRandom(F32 initial, F32 deviation)
 {
-	return (deviation == 0.0) ? initial : initial + randFloat(deviation) * 2.0
-			- deviation;
+	return (deviation == 0.0) ? initial : initial + randFloat(deviation) * 2.0 - deviation;
 }
 
-//==============================================================================
 static Vec3 getRandom(const Vec3& initial, const Vec3& deviation)
 {
 	if(deviation == Vec3(0.0))
@@ -44,32 +37,17 @@ static Vec3 getRandom(const Vec3& initial, const Vec3& deviation)
 	}
 }
 
-//==============================================================================
-// ParticleBase                                                                =
-//==============================================================================
-
-//==============================================================================
-void ParticleBase::revive(const ParticleEmitter& pe,
-	const Transform& trf,
-	F32 /*prevUpdateTime*/,
-	F32 crntTime)
+void ParticleBase::revive(const ParticleEmitter& pe, const Transform& trf, F32 /*prevUpdateTime*/, F32 crntTime)
 {
 	ANKI_ASSERT(isDead());
 	const ParticleEmitterProperties& props = pe;
 
 	// life
-	m_timeOfDeath = getRandom(
-		crntTime + props.m_particle.m_life, props.m_particle.m_lifeDeviation);
+	m_timeOfDeath = getRandom(crntTime + props.m_particle.m_life, props.m_particle.m_lifeDeviation);
 	m_timeOfBirth = crntTime;
 }
 
-//==============================================================================
-// ParticleSimple                                                              =
-//==============================================================================
-
-//==============================================================================
-void ParticleSimple::simulate(
-	const ParticleEmitter& pe, F32 prevUpdateTime, F32 crntTime)
+void ParticleSimple::simulate(const ParticleEmitter& pe, F32 prevUpdateTime, F32 crntTime)
 {
 	F32 dt = crntTime - prevUpdateTime;
 
@@ -81,36 +59,24 @@ void ParticleSimple::simulate(
 	m_velocity += m_acceleration * dt;
 }
 
-//==============================================================================
-void ParticleSimple::revive(const ParticleEmitter& pe,
-	const Transform& trf,
-	F32 prevUpdateTime,
-	F32 crntTime)
+void ParticleSimple::revive(const ParticleEmitter& pe, const Transform& trf, F32 prevUpdateTime, F32 crntTime)
 {
 	ParticleBase::revive(pe, trf, prevUpdateTime, crntTime);
 	m_velocity = Vec4(0.0);
 
 	const ParticleEmitterProperties& props = pe;
 
-	m_acceleration = getRandom(props.m_particle.m_gravity,
-						 props.m_particle.m_gravityDeviation)
-						 .xyz0();
+	m_acceleration = getRandom(props.m_particle.m_gravity, props.m_particle.m_gravityDeviation).xyz0();
 
 	// Set the initial position
-	m_position = getRandom(props.m_particle.m_startingPos,
-					 props.m_particle.m_startingPosDeviation)
-					 .xyz0();
+	m_position = getRandom(props.m_particle.m_startingPos, props.m_particle.m_startingPosDeviation).xyz0();
 
 	m_position += trf.getOrigin();
 }
 
-//==============================================================================
-// Particle                                                                    =
-//==============================================================================
-
 #if 0
 
-//==============================================================================
+
 Particle::Particle(
 	const char* name, SceneGraph* scene, // SceneNode
 	// RigidBody
@@ -124,13 +90,13 @@ Particle::Particle(
 	sceneNodeProtected.rigidBodyC = body;
 }
 
-//==============================================================================
+
 Particle::~Particle()
 {
 	getSceneGraph().getPhysics().deletePhysicsObject(body);
 }
 
-//==============================================================================
+
 void Particle::revive(const ParticleEmitter& pe,
 	F32 prevUpdateTime, F32 crntTime)
 {
@@ -194,10 +160,6 @@ void Particle::revive(const ParticleEmitter& pe,
 }
 #endif
 
-//==============================================================================
-// ParticleEmitterRenderComponent                                              =
-//==============================================================================
-
 /// The derived render component for particle emitters.
 class ParticleEmitterRenderComponent : public RenderComponent
 {
@@ -212,24 +174,18 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error buildRendering(
-		RenderingBuildInfo& data) const override
+	ANKI_USE_RESULT Error buildRendering(RenderingBuildInfo& data) const override
 	{
 		return getNode().buildRendering(data);
 	}
 
-	void getRenderWorldTransform(
-		Bool& hasTransform, Transform& trf) const override
+	void getRenderWorldTransform(Bool& hasTransform, Transform& trf) const override
 	{
 		hasTransform = true;
 		// The particles are already in world position
 		trf = Transform::getIdentity();
 	}
 };
-
-//==============================================================================
-// MoveFeedbackComponent                                                       =
-//==============================================================================
 
 /// Feedback component
 class MoveFeedbackComponent : public SceneComponent
@@ -240,8 +196,7 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error update(
-		SceneNode& node, F32, F32, Bool& updated) override
+	ANKI_USE_RESULT Error update(SceneNode& node, F32, F32, Bool& updated) override
 	{
 		updated = false; // Don't care about updates for this component
 
@@ -255,17 +210,11 @@ public:
 	}
 };
 
-//==============================================================================
-// ParticleEmitter                                                             =
-//==============================================================================
-
-//==============================================================================
 ParticleEmitter::ParticleEmitter(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
 {
 }
 
-//==============================================================================
 ParticleEmitter::~ParticleEmitter()
 {
 	// Delete simple particles
@@ -280,14 +229,12 @@ ParticleEmitter::~ParticleEmitter()
 	m_particles.destroy(getSceneAllocator());
 }
 
-//==============================================================================
 Error ParticleEmitter::init(const CString& filename)
 {
 	SceneComponent* comp;
 
 	// Load resource
-	ANKI_CHECK(
-		getResourceManager().loadResource(filename, m_particleEmitterResource));
+	ANKI_CHECK(getResourceManager().loadResource(filename, m_particleEmitterResource));
 
 	// Move component
 	comp = getSceneAllocator().newInstance<MoveComponent>(this);
@@ -302,8 +249,7 @@ Error ParticleEmitter::init(const CString& filename)
 	addComponent(comp, true);
 
 	// Render component
-	ParticleEmitterRenderComponent* rcomp =
-		getSceneAllocator().newInstance<ParticleEmitterRenderComponent>(this);
+	ParticleEmitterRenderComponent* rcomp = getSceneAllocator().newInstance<ParticleEmitterRenderComponent>(this);
 
 	ANKI_CHECK(rcomp->init());
 	comp = rcomp;
@@ -316,8 +262,7 @@ Error ParticleEmitter::init(const CString& filename)
 
 	// copy the resource to me
 	ParticleEmitterProperties& me = *this;
-	const ParticleEmitterProperties& other =
-		m_particleEmitterResource->getProperties();
+	const ParticleEmitterProperties& other = m_particleEmitterResource->getProperties();
 	me = other;
 
 	if(m_usePhysicsEngine)
@@ -341,8 +286,7 @@ Error ParticleEmitter::init(const CString& filename)
 
 	for(U i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
 	{
-		m_vertBuffs[i] = gr.newInstance<Buffer>(
-			m_vertBuffSize, BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE);
+		m_vertBuffs[i] = gr.newInstance<Buffer>(m_vertBuffSize, BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE);
 
 		rcinit.m_vertexBuffers[0].m_buffer = m_vertBuffs[i];
 
@@ -352,7 +296,6 @@ Error ParticleEmitter::init(const CString& filename)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error ParticleEmitter::buildRendering(RenderingBuildInfo& data) const
 {
 	ANKI_ASSERT(data.m_subMeshIndicesCount == 1);
@@ -362,32 +305,27 @@ Error ParticleEmitter::buildRendering(RenderingBuildInfo& data) const
 		return ErrorCode::NONE;
 	}
 
-	PipelinePtr ppline =
-		m_particleEmitterResource->getPipeline(data.m_key.m_lod);
+	PipelinePtr ppline = m_particleEmitterResource->getPipeline(data.m_key.m_lod);
 	data.m_cmdb->bindPipeline(ppline);
 
 	U frame = (getGlobalTimestamp() % 3);
 
-	data.m_cmdb->bindResourceGroup(
-		m_grGroups[frame], 0, data.m_dynamicBufferInfo);
+	data.m_cmdb->bindResourceGroup(m_grGroups[frame], 0, data.m_dynamicBufferInfo);
 
 	data.m_cmdb->drawArrays(m_aliveParticlesCount, data.m_subMeshIndicesCount);
 
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void ParticleEmitter::onMoveComponentUpdate(MoveComponent& move)
 {
-	m_identityRotation =
-		move.getWorldTransform().getRotation() == Mat3x4::getIdentity();
+	m_identityRotation = move.getWorldTransform().getRotation() == Mat3x4::getIdentity();
 
 	SpatialComponent& sp = getComponent<SpatialComponent>();
 	sp.setSpatialOrigin(move.getWorldTransform().getOrigin());
 	sp.markForUpdate();
 }
 
-//==============================================================================
 void ParticleEmitter::createParticlesSimulation(SceneGraph* scene)
 {
 #if 0
@@ -416,25 +354,21 @@ void ParticleEmitter::createParticlesSimulation(SceneGraph* scene)
 #endif
 }
 
-//==============================================================================
 void ParticleEmitter::createParticlesSimpleSimulation()
 {
 	m_particles.create(getSceneAllocator(), m_maxNumOfParticles);
 
 	for(U i = 0; i < m_maxNumOfParticles; i++)
 	{
-		ParticleSimple* part =
-			getSceneAllocator().newInstance<ParticleSimple>();
+		ParticleSimple* part = getSceneAllocator().newInstance<ParticleSimple>();
 
 		part->m_size = getRandom(m_particle.m_size, m_particle.m_sizeDeviation);
-		part->m_alpha =
-			getRandom(m_particle.m_alpha, m_particle.m_alphaDeviation);
+		part->m_alpha = getRandom(m_particle.m_alpha, m_particle.m_alphaDeviation);
 
 		m_particles[i] = part;
 	}
 }
 
-//==============================================================================
 Error ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 {
 	// - Deactivate the dead particles
@@ -446,8 +380,7 @@ Error ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 	m_aliveParticlesCount = 0;
 
 	U frame = getGlobalTimestamp() % 3;
-	F32* verts = static_cast<F32*>(
-		m_vertBuffs[frame]->map(0, m_vertBuffSize, BufferMapAccessBit::WRITE));
+	F32* verts = static_cast<F32*>(m_vertBuffs[frame]->map(0, m_vertBuffSize, BufferMapAccessBit::WRITE));
 	const F32* verts_base = verts;
 	(void)verts_base;
 
@@ -469,9 +402,8 @@ Error ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 			// It's alive
 
 			// Do checks
-			ANKI_ASSERT((PtrSize(verts) + ParticleEmitterResource::VERTEX_SIZE
-							- PtrSize(verts_base))
-				<= m_vertBuffSize);
+			ANKI_ASSERT(
+				(PtrSize(verts) + ParticleEmitterResource::VERTEX_SIZE - PtrSize(verts_base)) <= m_vertBuffSize);
 
 			// This will calculate a new world transformation
 			p->simulate(*this, prevUpdateTime, crntTime);
@@ -484,8 +416,7 @@ Error ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 				aabbmax[i] = std::max(aabbmax[i], origin[i]);
 			}
 
-			F32 lifePercent = (crntTime - p->getTimeOfBirth())
-				/ (p->getTimeOfDeath() - p->getTimeOfBirth());
+			F32 lifePercent = (crntTime - p->getTimeOfBirth()) / (p->getTimeOfDeath() - p->getTimeOfBirth());
 
 			verts[0] = origin.x();
 			verts[1] = origin.y();

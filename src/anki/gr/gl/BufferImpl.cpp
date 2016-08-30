@@ -10,9 +10,7 @@
 namespace anki
 {
 
-//==============================================================================
-void BufferImpl::init(
-	PtrSize size, BufferUsageBit usage, BufferMapAccessBit access)
+void BufferImpl::init(PtrSize size, BufferUsageBit usage, BufferMapAccessBit access)
 {
 	ANKI_ASSERT(!isCreated());
 	m_usage = usage;
@@ -27,8 +25,7 @@ void BufferImpl::init(
 	// Align size to satisfy BufferImpl::fill
 	alignRoundUp(4, size);
 
-	// This is a guess, not very important since DSA doesn't care about it on
-	// creation
+	// This is a guess, not very important since DSA doesn't care about it on creation
 	m_target = GL_ARRAY_BUFFER;
 
 	if((usage & BufferUsageBit::UNIFORM_ALL) != BufferUsageBit::NONE)
@@ -118,11 +115,9 @@ void BufferImpl::init(
 	//
 	if(shouldMap)
 	{
-		const GLbitfield MAP_BITS = GL_MAP_READ_BIT | GL_MAP_WRITE_BIT
-			| GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
+		const GLbitfield MAP_BITS = GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
 
-		m_persistentMapping =
-			glMapBufferRange(m_target, 0, size, flags & MAP_BITS);
+		m_persistentMapping = glMapBufferRange(m_target, 0, size, flags & MAP_BITS);
 		ANKI_ASSERT(m_persistentMapping != nullptr);
 	}
 }

@@ -13,16 +13,12 @@
 namespace anki
 {
 
-//==============================================================================
-const PixelFormat Bloom::RT_PIXEL_FORMAT(
-	ComponentFormat::R8G8B8, TransformFormat::UNORM);
+const PixelFormat Bloom::RT_PIXEL_FORMAT(ComponentFormat::R8G8B8, TransformFormat::UNORM);
 
-//==============================================================================
 Bloom::~Bloom()
 {
 }
 
-//==============================================================================
 Error Bloom::initInternal(const ConfigSet& config)
 {
 	GrManager& gr = getGrManager();
@@ -30,10 +26,8 @@ Error Bloom::initInternal(const ConfigSet& config)
 	m_upscale.m_width = m_r->getWidth() / BLOOM_FRACTION;
 	m_upscale.m_height = m_r->getHeight() / BLOOM_FRACTION;
 
-	m_extractExposure.m_width =
-		m_r->getWidth() >> (m_r->getIs().getRtMipmapCount() - 2);
-	m_extractExposure.m_height =
-		m_r->getHeight() >> (m_r->getIs().getRtMipmapCount() - 2);
+	m_extractExposure.m_width = m_r->getWidth() >> (m_r->getIs().getRtMipmapCount() - 2);
+	m_extractExposure.m_height = m_r->getHeight() >> (m_r->getIs().getRtMipmapCount() - 2);
 
 	m_threshold = config.getNumber("bloom.threshold");
 	m_scale = config.getNumber("bloom.scale");
@@ -42,8 +36,7 @@ Error Bloom::initInternal(const ConfigSet& config)
 	m_r->createRenderTarget(m_extractExposure.m_width,
 		m_extractExposure.m_height,
 		RT_PIXEL_FORMAT,
-		TextureUsageBit::SAMPLED_FRAGMENT
-			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		SamplingFilter::LINEAR,
 		1,
 		m_extractExposure.m_rt);
@@ -51,8 +44,7 @@ Error Bloom::initInternal(const ConfigSet& config)
 	m_r->createRenderTarget(m_upscale.m_width,
 		m_upscale.m_height,
 		RT_PIXEL_FORMAT,
-		TextureUsageBit::SAMPLED_FRAGMENT
-			| TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
+		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 		SamplingFilter::LINEAR,
 		1,
 		m_upscale.m_rt);
@@ -61,15 +53,12 @@ Error Bloom::initInternal(const ConfigSet& config)
 	FramebufferInitInfo fbInit;
 	fbInit.m_colorAttachmentCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_extractExposure.m_rt;
-	fbInit.m_colorAttachments[0].m_loadOperation =
-		AttachmentLoadOperation::DONT_CARE;
-	fbInit.m_colorAttachments[0].m_usageInsideRenderPass =
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
+	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
+	fbInit.m_colorAttachments[0].m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 	m_extractExposure.m_fb = gr.newInstance<Framebuffer>(fbInit);
 
 	fbInit.m_colorAttachments[0].m_texture = m_upscale.m_rt;
-	fbInit.m_colorAttachments[0].m_usageInsideRenderPass =
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
+	fbInit.m_colorAttachments[0].m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
 	m_upscale.m_fb = gr.newInstance<Framebuffer>(fbInit);
 
 	// init shaders
@@ -81,11 +70,8 @@ Error Bloom::initInternal(const ConfigSet& config)
 		m_r->getHeight() >> (m_r->getIs().getRtMipmapCount() - 1),
 		m_r->getIs().getRtMipmapCount() - 1);
 
-	ANKI_CHECK(
-		getResourceManager().loadResourceToCache(m_extractExposure.m_frag,
-			"shaders/Bloom.frag.glsl",
-			pps.toCString(),
-			"r_"));
+	ANKI_CHECK(getResourceManager().loadResourceToCache(
+		m_extractExposure.m_frag, "shaders/Bloom.frag.glsl", pps.toCString(), "r_"));
 
 	pps.destroy();
 	pps.sprintf("#define WIDTH %u\n"
@@ -93,21 +79,16 @@ Error Bloom::initInternal(const ConfigSet& config)
 		m_extractExposure.m_width,
 		m_extractExposure.m_height);
 
-	ANKI_CHECK(getResourceManager().loadResourceToCache(m_upscale.m_frag,
-		"shaders/BloomUpscale.frag.glsl",
-		pps.toCString(),
-		"r_"));
+	ANKI_CHECK(getResourceManager().loadResourceToCache(
+		m_upscale.m_frag, "shaders/BloomUpscale.frag.glsl", pps.toCString(), "r_"));
 
 	// Init pplines
 	ColorStateInfo colorInf;
 	colorInf.m_attachmentCount = 1;
 	colorInf.m_attachments[0].m_format = RT_PIXEL_FORMAT;
 
-	m_r->createDrawQuadPipeline(m_extractExposure.m_frag->getGrShader(),
-		colorInf,
-		m_extractExposure.m_ppline);
-	m_r->createDrawQuadPipeline(
-		m_upscale.m_frag->getGrShader(), colorInf, m_upscale.m_ppline);
+	m_r->createDrawQuadPipeline(m_extractExposure.m_frag->getGrShader(), colorInf, m_extractExposure.m_ppline);
+	m_r->createDrawQuadPipeline(m_upscale.m_frag->getGrShader(), colorInf, m_upscale.m_ppline);
 
 	// Set descriptors
 	{
@@ -116,10 +97,8 @@ Error Bloom::initInternal(const ConfigSet& config)
 		descInit.m_uniformBuffers[0].m_uploadedMemory = true;
 		descInit.m_uniformBuffers[0].m_usage = BufferUsageBit::UNIFORM_FRAGMENT;
 
-		descInit.m_storageBuffers[0].m_buffer =
-			m_r->getTm().getAverageLuminanceBuffer();
-		descInit.m_storageBuffers[0].m_usage =
-			BufferUsageBit::STORAGE_FRAGMENT_READ;
+		descInit.m_storageBuffers[0].m_buffer = m_r->getTm().getAverageLuminanceBuffer();
+		descInit.m_storageBuffers[0].m_usage = BufferUsageBit::STORAGE_FRAGMENT_READ;
 
 		m_extractExposure.m_rsrc = gr.newInstance<ResourceGroup>(descInit);
 	}
@@ -133,7 +112,6 @@ Error Bloom::initInternal(const ConfigSet& config)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error Bloom::init(const ConfigSet& config)
 {
 	Error err = initInternal(config);
@@ -145,22 +123,18 @@ Error Bloom::init(const ConfigSet& config)
 	return err;
 }
 
-//==============================================================================
 void Bloom::run(RenderingContext& ctx)
 {
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 	// pass 0
 	cmdb->beginRenderPass(m_extractExposure.m_fb);
-	cmdb->setViewport(
-		0, 0, m_extractExposure.m_width, m_extractExposure.m_height);
+	cmdb->setViewport(0, 0, m_extractExposure.m_width, m_extractExposure.m_height);
 	cmdb->bindPipeline(m_extractExposure.m_ppline);
 
 	TransientMemoryInfo dyn;
-	Vec4* uniforms = static_cast<Vec4*>(
-		getGrManager().allocateFrameTransientMemory(sizeof(Vec4),
-			BufferUsageBit::UNIFORM_ALL,
-			dyn.m_uniformBuffers[0]));
+	Vec4* uniforms = static_cast<Vec4*>(getGrManager().allocateFrameTransientMemory(
+		sizeof(Vec4), BufferUsageBit::UNIFORM_ALL, dyn.m_uniformBuffers[0]));
 	*uniforms = Vec4(m_threshold, m_scale, 0.0, 0.0);
 
 	cmdb->bindResourceGroup(m_extractExposure.m_rsrc, 0, &dyn);
@@ -186,7 +160,6 @@ void Bloom::run(RenderingContext& ctx)
 	m_r->drawQuad(cmdb);
 }
 
-//==============================================================================
 void Bloom::setPreRunBarriers(RenderingContext& ctx)
 {
 	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_extractExposure.m_rt,
@@ -195,7 +168,6 @@ void Bloom::setPreRunBarriers(RenderingContext& ctx)
 		TextureSurfaceInfo(0, 0, 0, 0));
 }
 
-//==============================================================================
 void Bloom::setPostRunBarriers(RenderingContext& ctx)
 {
 	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_upscale.m_rt,

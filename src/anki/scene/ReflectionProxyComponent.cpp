@@ -8,9 +8,7 @@
 namespace anki
 {
 
-//==============================================================================
-void ReflectionProxyComponent::setQuad(
-	U index, const Vec4& a, const Vec4& b, const Vec4& c, const Vec4& d)
+void ReflectionProxyComponent::setQuad(U index, const Vec4& a, const Vec4& b, const Vec4& c, const Vec4& d)
 {
 	m_dirty = true;
 
@@ -20,9 +18,7 @@ void ReflectionProxyComponent::setQuad(
 	m_faces[index].m_vertices[3] = d;
 }
 
-//==============================================================================
-Error ReflectionProxyComponent::update(
-	SceneNode& node, F32 prevTime, F32 crntTime, Bool& updated)
+Error ReflectionProxyComponent::update(SceneNode& node, F32 prevTime, F32 crntTime, Bool& updated)
 {
 	if(m_dirty)
 	{

@@ -10,19 +10,16 @@
 namespace anki
 {
 
-//==============================================================================
 VkDevice VulkanObject::getDevice() const
 {
 	return m_manager->getImplementation().getDevice();
 }
 
-//==============================================================================
 GrAllocator<U8> VulkanObject::getAllocator() const
 {
 	return m_manager->getAllocator();
 }
 
-//==============================================================================
 GrManagerImpl& VulkanObject::getGrManagerImpl()
 {
 	return m_manager->getImplementation();

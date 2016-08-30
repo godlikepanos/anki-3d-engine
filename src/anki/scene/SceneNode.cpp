@@ -9,7 +9,6 @@
 namespace anki
 {
 
-//==============================================================================
 SceneNode::SceneNode(SceneGraph* scene, CString name)
 	: m_scene(scene)
 	, m_uuid(scene->getNewSceneNodeUuid())
@@ -20,7 +19,6 @@ SceneNode::SceneNode(SceneGraph* scene, CString name)
 	}
 }
 
-//==============================================================================
 SceneNode::~SceneNode()
 {
 	auto alloc = getSceneAllocator();
@@ -41,11 +39,9 @@ SceneNode::~SceneNode()
 	m_components.destroy(alloc);
 }
 
-//==============================================================================
 void SceneNode::setMarkedForDeletion()
 {
-	// Mark for deletion only when it's not already marked because we don't
-	// want to increase the counter again
+	// Mark for deletion only when it's not already marked because we don't want to increase the counter again
 	if(!getMarkedForDeletion())
 	{
 		m_flags.set(Flag::MARKED_FOR_DELETION);
@@ -60,27 +56,23 @@ void SceneNode::setMarkedForDeletion()
 	(void)err;
 }
 
-//==============================================================================
 Timestamp SceneNode::getGlobalTimestamp() const
 {
 	return m_scene->getGlobalTimestamp();
 }
 
-//==============================================================================
 SceneAllocator<U8> SceneNode::getSceneAllocator() const
 {
 	ANKI_ASSERT(m_scene);
 	return m_scene->getAllocator();
 }
 
-//==============================================================================
 SceneFrameAllocator<U8> SceneNode::getFrameAllocator() const
 {
 	ANKI_ASSERT(m_scene);
 	return m_scene->getFrameAllocator();
 }
 
-//==============================================================================
 U32 SceneNode::getLastUpdateFrame() const
 {
 	U32 max = 0;
@@ -95,7 +87,6 @@ U32 SceneNode::getLastUpdateFrame() const
 	return max;
 }
 
-//==============================================================================
 void SceneNode::addComponent(SceneComponent* comp, Bool transferOwnership)
 {
 	ANKI_ASSERT(comp);
@@ -119,13 +110,11 @@ void SceneNode::addComponent(SceneComponent* comp, Bool transferOwnership)
 	comp->setAutomaticCleanup(transferOwnership);
 }
 
-//==============================================================================
 void SceneNode::removeComponent(SceneComponent* comp)
 {
 	ANKI_ASSERT(0 && "TODO");
 }
 
-//==============================================================================
 ResourceManager& SceneNode::getResourceManager()
 {
 	return m_scene->getResourceManager();

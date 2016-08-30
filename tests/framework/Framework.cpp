@@ -11,7 +11,6 @@
 namespace anki
 {
 
-//==============================================================================
 TestSuite::~TestSuite()
 {
 	for(Test* t : tests)
@@ -20,11 +19,9 @@ TestSuite::~TestSuite()
 	}
 }
 
-//==============================================================================
 void Test::run()
 {
-	std::cout << "========\nRunning " << suite->name << " " << name
-			  << "\n========" << std::endl;
+	std::cout << "========\nRunning " << suite->name << " " << name << "\n========" << std::endl;
 
 #if ANKI_OS == ANKI_OS_LINUX
 	struct mallinfo a = mallinfo();
@@ -45,9 +42,7 @@ void Test::run()
 	std::cout << std::endl;
 }
 
-//==============================================================================
-void Tester::addTest(
-	const char* name, const char* suiteName, TestCallback callback)
+void Tester::addTest(const char* name, const char* suiteName, TestCallback callback)
 {
 	std::vector<TestSuite*>::iterator it;
 	for(it = suites.begin(); it != suites.end(); it++)
@@ -90,7 +85,6 @@ void Tester::addTest(
 	test->callback = callback;
 }
 
-//==============================================================================
 int Tester::run(int argc, char** argv)
 {
 	// Parse args
@@ -186,8 +180,7 @@ Options:
 	}
 
 	int failed = run - passed;
-	std::cout << "========\nRun " << run << " tests, failed " << failed
-			  << std::endl;
+	std::cout << "========\nRun " << run << " tests, failed " << failed << std::endl;
 
 	if(failed == 0)
 	{
@@ -201,22 +194,20 @@ Options:
 	return run - passed;
 }
 
-//==============================================================================
 int Tester::listTests()
 {
 	for(TestSuite* suite : suites)
 	{
 		for(Test* test : suite->tests)
 		{
-			std::cout << programName << " --suite \"" << suite->name
-					  << "\" --test \"" << test->name << "\"" << std::endl;
+			std::cout << programName << " --suite \"" << suite->name << "\" --test \"" << test->name << "\""
+					  << std::endl;
 		}
 	}
 
 	return 0;
 }
 
-//==============================================================================
 static Tester* testerInstance = nullptr;
 
 Tester& getTesterSingleton()

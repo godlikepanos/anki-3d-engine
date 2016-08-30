@@ -40,8 +40,7 @@ public:
 	{
 		m_sig = sig;
 		U64 addr = ptrToNumber(ptrToObject);
-		ANKI_ASSERT(
-			(addr & GC_MASK) == 0 && "Address too high, cannot encode a flag");
+		ANKI_ASSERT((addr & GC_MASK) == 0 && "Address too high, cannot encode a flag");
 		m_addressAndGarbageCollect = addr;
 	}
 
@@ -133,36 +132,26 @@ public:
 	static void createClass(lua_State* l, const char* className);
 
 	/// Add new function in a class that it's already in the stack
-	static void pushLuaCFuncMethod(
-		lua_State* l, const char* name, lua_CFunction luafunc);
+	static void pushLuaCFuncMethod(lua_State* l, const char* name, lua_CFunction luafunc);
 
 	/// Add a new static function in the class.
-	static void pushLuaCFuncStaticMethod(lua_State* l,
-		const char* className,
-		const char* name,
-		lua_CFunction luafunc);
+	static void pushLuaCFuncStaticMethod(lua_State* l, const char* className, const char* name, lua_CFunction luafunc);
 
 	/// Add a new function.
-	static void pushLuaCFunc(
-		lua_State* l, const char* name, lua_CFunction luafunc);
+	static void pushLuaCFunc(lua_State* l, const char* name, lua_CFunction luafunc);
 
 	/// Get a number from the stack.
 	template<typename TNumber>
-	static ANKI_USE_RESULT Error checkNumber(
-		lua_State* l, I stackIdx, TNumber& number);
+	static ANKI_USE_RESULT Error checkNumber(lua_State* l, I stackIdx, TNumber& number);
 
 	/// Get a string from the stack.
-	static ANKI_USE_RESULT Error checkString(
-		lua_State* l, I32 stackIdx, const char*& out);
+	static ANKI_USE_RESULT Error checkString(lua_State* l, I32 stackIdx, const char*& out);
 
 	/// Get some user data from the stack.
 	/// The function uses the type signature to validate the type and not the
 	/// typeName. That is supposed to be faster.
-	static ANKI_USE_RESULT Error checkUserData(lua_State* l,
-		I32 stackIdx,
-		const char* typeName,
-		I64 typeSignature,
-		UserData*& out);
+	static ANKI_USE_RESULT Error checkUserData(
+		lua_State* l, I32 stackIdx, const char* typeName, I64 typeSignature, UserData*& out);
 
 	/// Allocate memory.
 	static void* luaAlloc(lua_State* l, size_t size, U32 alignment);
@@ -181,14 +170,11 @@ private:
 	lua_State* m_l = nullptr;
 	void* m_parent = nullptr; ///< Point to the ScriptManager
 
-	static void* luaAllocCallback(
-		void* userData, void* ptr, PtrSize osize, PtrSize nsize);
+	static void* luaAllocCallback(void* userData, void* ptr, PtrSize osize, PtrSize nsize);
 
-	static ANKI_USE_RESULT Error checkNumberInternal(
-		lua_State* l, I32 stackIdx, lua_Number& number);
+	static ANKI_USE_RESULT Error checkNumberInternal(lua_State* l, I32 stackIdx, lua_Number& number);
 };
 
-//==============================================================================
 template<typename TNumber>
 inline Error LuaBinder::checkNumber(lua_State* l, I stackIdx, TNumber& number)
 {
@@ -202,7 +188,6 @@ inline Error LuaBinder::checkNumber(lua_State* l, I stackIdx, TNumber& number)
 	return err;
 }
 
-//==============================================================================
 template<typename T>
 inline void LuaBinder::exposeVariable(const char* name, T* y)
 {

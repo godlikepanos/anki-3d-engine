@@ -11,7 +11,6 @@
 namespace anki
 {
 
-//==============================================================================
 StdinListener::~StdinListener()
 {
 	m_quit = true;
@@ -29,7 +28,6 @@ StdinListener::~StdinListener()
 	m_q.destroy(m_alloc);
 }
 
-//==============================================================================
 Error StdinListener::create(HeapAllocator<String>& alloc)
 {
 	m_alloc = alloc;
@@ -38,8 +36,7 @@ Error StdinListener::create(HeapAllocator<String>& alloc)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
-Error StdinListener::workingFunc(Thread::Info& info)
+Error StdinListener::workingFunc(ThreadCallbackInfo& info)
 {
 	StdinListener& self = *reinterpret_cast<StdinListener*>(info.m_userData);
 	Array<char, 512> buff;
@@ -59,7 +56,6 @@ Error StdinListener::workingFunc(Thread::Info& info)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 String StdinListener::getLine()
 {
 	String ret;

@@ -10,13 +10,11 @@
 namespace anki
 {
 
-//==============================================================================
 DownscaleBlur::~DownscaleBlur()
 {
 	m_passes.destroy(getAllocator());
 }
 
-//==============================================================================
 Error DownscaleBlur::initSubpass(U idx, const UVec2& inputTexSize)
 {
 	Subpass& pass = m_passes[idx];
@@ -30,8 +28,7 @@ Error DownscaleBlur::initSubpass(U idx, const UVec2& inputTexSize)
 	StringAuto pps(getAllocator());
 
 	// vert shader
-	ANKI_CHECK(getResourceManager().loadResource(
-		"shaders/Quad.vert.glsl", pass.m_vert));
+	ANKI_CHECK(getResourceManager().loadResource("shaders/Quad.vert.glsl", pass.m_vert));
 
 	ppinit.m_shaders[ShaderType::VERTEX] = pass.m_vert->getGrShader();
 
@@ -55,11 +52,9 @@ Error DownscaleBlur::initSubpass(U idx, const UVec2& inputTexSize)
 	FramebufferInitInfo fbInit;
 	fbInit.m_colorAttachmentCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_r->getIs().getRt();
-	fbInit.m_colorAttachments[0].m_loadOperation =
-		AttachmentLoadOperation::DONT_CARE;
+	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
 	fbInit.m_colorAttachments[0].m_surface.m_level = idx + 1;
-	fbInit.m_colorAttachments[0].m_usageInsideRenderPass =
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
+	fbInit.m_colorAttachments[0].m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 	pass.m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 	// Resources
@@ -70,7 +65,6 @@ Error DownscaleBlur::initSubpass(U idx, const UVec2& inputTexSize)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error DownscaleBlur::init(const ConfigSet& initializer)
 {
 	m_passes.create(getAllocator(), m_r->getIs().getRtMipmapCount() - 1);
@@ -85,7 +79,6 @@ Error DownscaleBlur::init(const ConfigSet& initializer)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void DownscaleBlur::run(RenderingContext& ctx)
 {
 	CommandBufferPtr cmdb = ctx.m_commandBuffer;

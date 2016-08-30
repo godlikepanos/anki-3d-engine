@@ -10,10 +10,6 @@
 namespace anki
 {
 
-//==============================================================================
-// Misc                                                                        =
-//==============================================================================
-
 #define ANKI_ENABLE_HIVE_DEBUG_PRINT 0
 
 #if ANKI_ENABLE_HIVE_DEBUG_PRINT
@@ -22,9 +18,6 @@ namespace anki
 #define ANKI_HIVE_DEBUG_PRINT(...) ((void)0)
 #endif
 
-//==============================================================================
-// ThreadHive::Thread                                                          =
-//==============================================================================
 class ThreadHive::Thread
 {
 public:
@@ -44,7 +37,7 @@ public:
 
 private:
 	/// Thread callaback
-	static Error threadCallback(anki::Thread::Info& info)
+	static Error threadCallback(anki::ThreadCallbackInfo& info)
 	{
 		Thread& self = *reinterpret_cast<Thread*>(info.m_userData);
 
@@ -53,9 +46,6 @@ private:
 	}
 };
 
-//==============================================================================
-// ThreadHive::Task                                                            =
-//==============================================================================
 class ThreadHive::Task
 {
 public:
@@ -81,17 +71,11 @@ public:
 	}
 };
 
-//==============================================================================
-// ThreadHive                                                                  =
-//==============================================================================
-
-//==============================================================================
 ThreadHive::ThreadHive(U threadCount, GenericMemoryPoolAllocator<U8> alloc)
 	: m_alloc(alloc)
 	, m_threadCount(threadCount)
 {
-	m_threads =
-		reinterpret_cast<Thread*>(alloc.allocate(sizeof(Thread) * threadCount));
+	m_threads = reinterpret_cast<Thread*>(alloc.allocate(sizeof(Thread) * threadCount));
 	for(U i = 0; i < threadCount; ++i)
 	{
 		::new(&m_threads[i]) Thread(i, this);
@@ -101,7 +85,6 @@ ThreadHive::ThreadHive(U threadCount, GenericMemoryPoolAllocator<U8> alloc)
 	m_deps.create(m_alloc, MAX_TASKS_PER_SESSION * threadCount);
 }
 
-//==============================================================================
 ThreadHive::~ThreadHive()
 {
 	m_storage.destroy(m_alloc);
@@ -126,12 +109,10 @@ ThreadHive::~ThreadHive()
 			m_threads[threadCount].~Thread();
 		}
 
-		m_alloc.deallocate(
-			static_cast<void*>(m_threads), m_threadCount * sizeof(Thread));
+		m_alloc.deallocate(static_cast<void*>(m_threads), m_threadCount * sizeof(Thread));
 	}
 }
 
-//==============================================================================
 void ThreadHive::submitTasks(ThreadHiveTask* tasks, U taskCount)
 {
 	ANKI_ASSERT(tasks && taskCount > 0);
@@ -210,7 +191,6 @@ void ThreadHive::submitTasks(ThreadHiveTask* tasks, U taskCount)
 	}
 }
 
-//==============================================================================
 void ThreadHive::threadRun(U threadId)
 {
 	Task* task = nullptr;
@@ -226,7 +206,6 @@ void ThreadHive::threadRun(U threadId)
 	ANKI_HIVE_DEBUG_PRINT("tid: %lu thread quits!\n", threadId);
 }
 
-//==============================================================================
 Bool ThreadHive::waitForWork(U threadId, Task*& task)
 {
 	LockGuard<Mutex> lock(m_mtx);
@@ -258,7 +237,6 @@ Bool ThreadHive::waitForWork(U threadId, Task*& task)
 	return m_quit;
 }
 
-//==============================================================================
 ThreadHive::Task* ThreadHive::getNewTask()
 {
 	Task* prevTask = nullptr;
@@ -314,7 +292,6 @@ ThreadHive::Task* ThreadHive::getNewTask()
 	return task;
 }
 
-//==============================================================================
 void ThreadHive::waitAllTasks()
 {
 	ANKI_HIVE_DEBUG_PRINT("mt: waiting all\n");

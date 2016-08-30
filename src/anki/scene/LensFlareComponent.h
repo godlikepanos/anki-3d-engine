@@ -81,15 +81,12 @@ public:
 
 	/// Get the occlusion query to test.
 	/// @param[out] q The returned query.
-	/// @param[out] queryInvalid It's true if the query has an old result that
-	///             cannot be used.
-	void getOcclusionQueryToCheck(
-		OcclusionQueryPtr& q, Bool& queryInvalid) const;
+	/// @param[out] queryInvalid It's true if the query has an old result that cannot be used.
+	void getOcclusionQueryToCheck(OcclusionQueryPtr& q, Bool& queryInvalid) const;
 
 	/// @name SceneComponent virtuals
 	/// @{
-	Error update(
-		SceneNode& node, F32 prevTime, F32 crntTime, Bool& updated) override
+	Error update(SceneNode& node, F32 prevTime, F32 crntTime, Bool& updated) override
 	{
 		updated = false;
 		return ErrorCode::NONE;
@@ -105,8 +102,7 @@ private:
 	Vec2 m_otherFlareSize = Vec2(1.0);
 
 	Array<OcclusionQueryPtr, MAX_FRAMES_IN_FLIGHT> m_queries;
-	Array<Timestamp, MAX_FRAMES_IN_FLIGHT> m_queryTestTimestamp = {
-		{MAX_U32, MAX_U32, MAX_U32}};
+	Array<Timestamp, MAX_FRAMES_IN_FLIGHT> m_queryTestTimestamp = {{MAX_U32, MAX_U32, MAX_U32}};
 	U8 m_crntQueryIndex = 0;
 
 	Vec4 m_worldPosition = Vec4(0.0);

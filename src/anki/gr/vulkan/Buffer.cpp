@@ -9,18 +9,15 @@
 namespace anki
 {
 
-//==============================================================================
 Buffer::Buffer(GrManager* manager, U64 hash)
 	: GrObject(manager, CLASS_TYPE, hash)
 {
 }
 
-//==============================================================================
 Buffer::~Buffer()
 {
 }
 
-//==============================================================================
 void Buffer::init(PtrSize size, BufferUsageBit usage, BufferMapAccessBit access)
 {
 	m_impl.reset(getAllocator().newInstance<BufferImpl>(&getManager()));
@@ -31,13 +28,11 @@ void Buffer::init(PtrSize size, BufferUsageBit usage, BufferMapAccessBit access)
 	}
 }
 
-//==============================================================================
 void* Buffer::map(PtrSize offset, PtrSize range, BufferMapAccessBit access)
 {
 	return m_impl->map(offset, range, access);
 }
 
-//==============================================================================
 void Buffer::unmap()
 {
 	m_impl->unmap();

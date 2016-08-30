@@ -12,23 +12,16 @@
 namespace anki
 {
 
-//==============================================================================
 static MainRenderer* getMainRenderer(lua_State* l)
 {
 	LuaBinder* binder = nullptr;
 	lua_getallocf(l, reinterpret_cast<void**>(&binder));
 
-	ScriptManager* scriptManager =
-		reinterpret_cast<ScriptManager*>(binder->getParent());
+	ScriptManager* scriptManager = reinterpret_cast<ScriptManager*>(binder->getParent());
 
 	return &scriptManager->getMainRenderer();
 }
 
-//==============================================================================
-// Dbg                                                                         =
-//==============================================================================
-
-//==============================================================================
 static const char* classnameDbg = "Dbg";
 
 template<>
@@ -43,7 +36,6 @@ const char* LuaBinder::getWrappedTypeName<Dbg>()
 	return classnameDbg;
 }
 
-//==============================================================================
 /// Pre-wrap method Dbg::getEnabled.
 static inline int pwrapDbggetEnabled(lua_State* l)
 {
@@ -73,7 +65,6 @@ static inline int pwrapDbggetEnabled(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method Dbg::getEnabled.
 static int wrapDbggetEnabled(lua_State* l)
 {
@@ -87,7 +78,6 @@ static int wrapDbggetEnabled(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Pre-wrap method Dbg::setEnabled.
 static inline int pwrapDbgsetEnabled(lua_State* l)
 {
@@ -121,7 +111,6 @@ static inline int pwrapDbgsetEnabled(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap method Dbg::setEnabled.
 static int wrapDbgsetEnabled(lua_State* l)
 {
@@ -135,7 +124,6 @@ static int wrapDbgsetEnabled(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap class Dbg.
 static inline void wrapDbg(lua_State* l)
 {
@@ -145,11 +133,6 @@ static inline void wrapDbg(lua_State* l)
 	lua_settop(l, 0);
 }
 
-//==============================================================================
-// MainRenderer                                                                =
-//==============================================================================
-
-//==============================================================================
 static const char* classnameMainRenderer = "MainRenderer";
 
 template<>
@@ -164,7 +147,6 @@ const char* LuaBinder::getWrappedTypeName<MainRenderer>()
 	return classnameMainRenderer;
 }
 
-//==============================================================================
 /// Pre-wrap method MainRenderer::getAspectRatio.
 static inline int pwrapMainRenderergetAspectRatio(lua_State* l)
 {
@@ -178,8 +160,7 @@ static inline int pwrapMainRenderergetAspectRatio(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(
-		   l, 1, classnameMainRenderer, 919289102518575326, ud))
+	if(LuaBinder::checkUserData(l, 1, classnameMainRenderer, 919289102518575326, ud))
 	{
 		return -1;
 	}
@@ -195,7 +176,6 @@ static inline int pwrapMainRenderergetAspectRatio(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap method MainRenderer::getAspectRatio.
 static int wrapMainRenderergetAspectRatio(lua_State* l)
 {
@@ -209,17 +189,14 @@ static int wrapMainRenderergetAspectRatio(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap class MainRenderer.
 static inline void wrapMainRenderer(lua_State* l)
 {
 	LuaBinder::createClass(l, classnameMainRenderer);
-	LuaBinder::pushLuaCFuncMethod(
-		l, "getAspectRatio", wrapMainRenderergetAspectRatio);
+	LuaBinder::pushLuaCFuncMethod(l, "getAspectRatio", wrapMainRenderergetAspectRatio);
 	lua_settop(l, 0);
 }
 
-//==============================================================================
 /// Pre-wrap function getMainRenderer.
 static inline int pwrapgetMainRenderer(lua_State* l)
 {
@@ -250,7 +227,6 @@ static inline int pwrapgetMainRenderer(lua_State* l)
 	return 1;
 }
 
-//==============================================================================
 /// Wrap function getMainRenderer.
 static int wrapgetMainRenderer(lua_State* l)
 {
@@ -264,7 +240,6 @@ static int wrapgetMainRenderer(lua_State* l)
 	return 0;
 }
 
-//==============================================================================
 /// Wrap the module.
 void wrapModuleRenderer(lua_State* l)
 {

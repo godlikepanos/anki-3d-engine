@@ -29,26 +29,22 @@
 namespace anki
 {
 
-//==============================================================================
 CommandBuffer::CommandBuffer(GrManager* manager, U64 hash)
 	: GrObject(manager, CLASS_TYPE, hash)
 {
 }
 
-//==============================================================================
 CommandBuffer::~CommandBuffer()
 {
 }
 
-//==============================================================================
 void CommandBuffer::init(CommandBufferInitInfo& inf)
 {
 	m_impl.reset(getAllocator().newInstance<CommandBufferImpl>(&getManager()));
 	m_impl->init(inf);
 
 #if ANKI_ASSERTS_ENABLED
-	if((inf.m_flags & CommandBufferFlag::SECOND_LEVEL)
-		== CommandBufferFlag::SECOND_LEVEL)
+	if((inf.m_flags & CommandBufferFlag::SECOND_LEVEL) == CommandBufferFlag::SECOND_LEVEL)
 	{
 		ANKI_ASSERT(inf.m_framebuffer.isCreated());
 		m_impl->m_dbg.m_insideRenderPass = true;
@@ -57,7 +53,6 @@ void CommandBuffer::init(CommandBufferInitInfo& inf)
 #endif
 }
 
-//==============================================================================
 void CommandBuffer::flush()
 {
 #if ANKI_ASSERTS_ENABLED
@@ -67,11 +62,9 @@ void CommandBuffer::flush()
 	}
 #endif
 
-	getManager().getImplementation().getRenderingThread().flushCommandBuffer(
-		CommandBufferPtr(this));
+	getManager().getImplementation().getRenderingThread().flushCommandBuffer(CommandBufferPtr(this));
 }
 
-//==============================================================================
 void CommandBuffer::finish()
 {
 #if ANKI_ASSERTS_ENABLED
@@ -80,11 +73,9 @@ void CommandBuffer::finish()
 		ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
 	}
 #endif
-	getManager().getImplementation().getRenderingThread().finishCommandBuffer(
-		CommandBufferPtr(this));
+	getManager().getImplementation().getRenderingThread().finishCommandBuffer(CommandBufferPtr(this));
 }
 
-//==============================================================================
 class ViewportCommand final : public GlCommand
 {
 public:
@@ -97,9 +88,7 @@ public:
 
 	Error operator()(GlState& state)
 	{
-		if(state.m_viewport[0] != m_value[0]
-			|| state.m_viewport[1] != m_value[1]
-			|| state.m_viewport[2] != m_value[2]
+		if(state.m_viewport[0] != m_value[0] || state.m_viewport[1] != m_value[1] || state.m_viewport[2] != m_value[2]
 			|| state.m_viewport[3] != m_value[3])
 		{
 			glViewport(m_value[0], m_value[1], m_value[2], m_value[3]);
@@ -119,7 +108,6 @@ void CommandBuffer::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 	m_impl->pushBackNewCommand<ViewportCommand>(minx, miny, maxx, maxy);
 }
 
-//==============================================================================
 class SetPolygonOffsetCommand final : public GlCommand
 {
 public:
@@ -156,7 +144,6 @@ void CommandBuffer::setPolygonOffset(F32 factor, F32 units)
 	m_impl->pushBackNewCommand<SetPolygonOffsetCommand>(factor, units);
 }
 
-//==============================================================================
 class BindPipelineCommand final : public GlCommand
 {
 public:
@@ -194,7 +181,6 @@ void CommandBuffer::bindPipeline(PipelinePtr ppline)
 	m_impl->pushBackNewCommand<BindPipelineCommand>(ppline);
 }
 
-//==============================================================================
 class BindFramebufferCommand final : public GlCommand
 {
 public:
@@ -221,7 +207,6 @@ void CommandBuffer::beginRenderPass(FramebufferPtr fb)
 	m_impl->pushBackNewCommand<BindFramebufferCommand>(fb);
 }
 
-//==============================================================================
 void CommandBuffer::endRenderPass()
 {
 	// Nothing for GL
@@ -231,68 +216,43 @@ void CommandBuffer::endRenderPass()
 #endif
 }
 
-//==============================================================================
-void CommandBuffer::bindResourceGroup(
-	ResourceGroupPtr rc, U slot, const TransientMemoryInfo* info)
+void CommandBuffer::bindResourceGroup(ResourceGroupPtr rc, U slot, const TransientMemoryInfo* info)
 {
 	m_impl->bindResourceGroup(rc, slot, info);
 }
 
-//==============================================================================
-void CommandBuffer::drawElements(U32 count,
-	U32 instanceCount,
-	U32 firstIndex,
-	U32 baseVertex,
-	U32 baseInstance)
+void CommandBuffer::drawElements(U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance)
 {
-	m_impl->drawElements(
-		count, instanceCount, firstIndex, baseVertex, baseInstance);
+	m_impl->drawElements(count, instanceCount, firstIndex, baseVertex, baseInstance);
 }
 
-//==============================================================================
-void CommandBuffer::drawArrays(
-	U32 count, U32 instanceCount, U32 first, U32 baseInstance)
+void CommandBuffer::drawArrays(U32 count, U32 instanceCount, U32 first, U32 baseInstance)
 {
 	m_impl->drawArrays(count, instanceCount, first, baseInstance);
 }
 
-//==============================================================================
-void CommandBuffer::drawElementsConditional(OcclusionQueryPtr query,
-	U32 count,
-	U32 instanceCount,
-	U32 firstIndex,
-	U32 baseVertex,
-	U32 baseInstance)
+void CommandBuffer::drawElementsConditional(
+	OcclusionQueryPtr query, U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance)
 {
-	m_impl->drawElementsConditional(
-		query, count, instanceCount, firstIndex, baseVertex, baseInstance);
+	m_impl->drawElementsConditional(query, count, instanceCount, firstIndex, baseVertex, baseInstance);
 }
 
-//==============================================================================
-void CommandBuffer::drawArraysConditional(OcclusionQueryPtr query,
-	U32 count,
-	U32 instanceCount,
-	U32 first,
-	U32 baseInstance)
+void CommandBuffer::drawArraysConditional(
+	OcclusionQueryPtr query, U32 count, U32 instanceCount, U32 first, U32 baseInstance)
 {
-	m_impl->drawArraysConditional(
-		query, count, instanceCount, first, baseInstance);
+	m_impl->drawArraysConditional(query, count, instanceCount, first, baseInstance);
 }
 
-//==============================================================================
-void CommandBuffer::dispatchCompute(
-	U32 groupCountX, U32 groupCountY, U32 groupCountZ)
+void CommandBuffer::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ)
 {
 	m_impl->dispatchCompute(groupCountX, groupCountY, groupCountZ);
 }
 
-//==============================================================================
 void CommandBuffer::resetOcclusionQuery(OcclusionQueryPtr query)
 {
 	// Nothing for GL
 }
 
-//==============================================================================
 class OqBeginCommand final : public GlCommand
 {
 public:
@@ -315,7 +275,6 @@ void CommandBuffer::beginOcclusionQuery(OcclusionQueryPtr query)
 	m_impl->pushBackNewCommand<OqBeginCommand>(query);
 }
 
-//==============================================================================
 class OqEndCommand final : public GlCommand
 {
 public:
@@ -338,7 +297,6 @@ void CommandBuffer::endOcclusionQuery(OcclusionQueryPtr query)
 	m_impl->pushBackNewCommand<OqEndCommand>(query);
 }
 
-//==============================================================================
 class TexSurfUploadCommand final : public GlCommand
 {
 public:
@@ -346,9 +304,7 @@ public:
 	TextureSurfaceInfo m_surf;
 	TransientMemoryToken m_token;
 
-	TexSurfUploadCommand(const TexturePtr& handle,
-		TextureSurfaceInfo surf,
-		const TransientMemoryToken& token)
+	TexSurfUploadCommand(const TexturePtr& handle, TextureSurfaceInfo surf, const TransientMemoryToken& token)
 		: m_handle(handle)
 		, m_surf(surf)
 		, m_token(token)
@@ -357,28 +313,22 @@ public:
 
 	Error operator()(GlState& state)
 	{
-		void* data = state.m_manager->getImplementation()
-						 .getTransientMemoryManager()
-						 .getBaseAddress(m_token);
+		void* data = state.m_manager->getImplementation().getTransientMemoryManager().getBaseAddress(m_token);
 		data = static_cast<void*>(static_cast<U8*>(data) + m_token.m_offset);
 
-		m_handle->getImplementation().writeSurface(
-			m_surf, data, m_token.m_range);
+		m_handle->getImplementation().writeSurface(m_surf, data, m_token.m_range);
 
 		if(m_token.m_lifetime == TransientMemoryTokenLifetime::PERSISTENT)
 		{
-			state.m_manager->getImplementation()
-				.getTransientMemoryManager()
-				.free(m_token);
+			state.m_manager->getImplementation().getTransientMemoryManager().free(m_token);
 		}
 
 		return ErrorCode::NONE;
 	}
 };
 
-void CommandBuffer::uploadTextureSurface(TexturePtr tex,
-	const TextureSurfaceInfo& surf,
-	const TransientMemoryToken& token)
+void CommandBuffer::uploadTextureSurface(
+	TexturePtr tex, const TextureSurfaceInfo& surf, const TransientMemoryToken& token)
 {
 	ANKI_ASSERT(tex);
 	ANKI_ASSERT(token.m_range > 0);
@@ -387,7 +337,6 @@ void CommandBuffer::uploadTextureSurface(TexturePtr tex,
 	m_impl->pushBackNewCommand<TexSurfUploadCommand>(tex, surf, token);
 }
 
-//==============================================================================
 class TexVolUploadCommand final : public GlCommand
 {
 public:
@@ -395,9 +344,7 @@ public:
 	TextureVolumeInfo m_vol;
 	TransientMemoryToken m_token;
 
-	TexVolUploadCommand(const TexturePtr& handle,
-		TextureVolumeInfo vol,
-		const TransientMemoryToken& token)
+	TexVolUploadCommand(const TexturePtr& handle, TextureVolumeInfo vol, const TransientMemoryToken& token)
 		: m_handle(handle)
 		, m_vol(vol)
 		, m_token(token)
@@ -406,27 +353,21 @@ public:
 
 	Error operator()(GlState& state)
 	{
-		void* data = state.m_manager->getImplementation()
-						 .getTransientMemoryManager()
-						 .getBaseAddress(m_token);
+		void* data = state.m_manager->getImplementation().getTransientMemoryManager().getBaseAddress(m_token);
 		data = static_cast<void*>(static_cast<U8*>(data) + m_token.m_offset);
 
 		m_handle->getImplementation().writeVolume(m_vol, data, m_token.m_range);
 
 		if(m_token.m_lifetime == TransientMemoryTokenLifetime::PERSISTENT)
 		{
-			state.m_manager->getImplementation()
-				.getTransientMemoryManager()
-				.free(m_token);
+			state.m_manager->getImplementation().getTransientMemoryManager().free(m_token);
 		}
 
 		return ErrorCode::NONE;
 	}
 };
 
-void CommandBuffer::uploadTextureVolume(TexturePtr tex,
-	const TextureVolumeInfo& vol,
-	const TransientMemoryToken& token)
+void CommandBuffer::uploadTextureVolume(TexturePtr tex, const TextureVolumeInfo& vol, const TransientMemoryToken& token)
 {
 	ANKI_ASSERT(tex);
 	ANKI_ASSERT(token.m_range > 0);
@@ -435,7 +376,6 @@ void CommandBuffer::uploadTextureVolume(TexturePtr tex,
 	m_impl->pushBackNewCommand<TexVolUploadCommand>(tex, vol, token);
 }
 
-//==============================================================================
 class BuffWriteCommand final : public GlCommand
 {
 public:
@@ -443,9 +383,7 @@ public:
 	PtrSize m_offset;
 	TransientMemoryToken m_token;
 
-	BuffWriteCommand(const BufferPtr& handle,
-		PtrSize offset,
-		const TransientMemoryToken& token)
+	BuffWriteCommand(const BufferPtr& handle, PtrSize offset, const TransientMemoryToken& token)
 		: m_handle(handle)
 		, m_offset(offset)
 		, m_token(token)
@@ -454,26 +392,21 @@ public:
 
 	Error operator()(GlState& state)
 	{
-		void* data = state.m_manager->getImplementation()
-						 .getTransientMemoryManager()
-						 .getBaseAddress(m_token);
+		void* data = state.m_manager->getImplementation().getTransientMemoryManager().getBaseAddress(m_token);
 		data = static_cast<void*>(static_cast<U8*>(data) + m_token.m_offset);
 
 		m_handle->getImplementation().write(data, m_offset, m_token.m_range);
 
 		if(m_token.m_lifetime == TransientMemoryTokenLifetime::PERSISTENT)
 		{
-			state.m_manager->getImplementation()
-				.getTransientMemoryManager()
-				.free(m_token);
+			state.m_manager->getImplementation().getTransientMemoryManager().free(m_token);
 		}
 
 		return ErrorCode::NONE;
 	}
 };
 
-void CommandBuffer::uploadBuffer(
-	BufferPtr buff, PtrSize offset, const TransientMemoryToken& token)
+void CommandBuffer::uploadBuffer(BufferPtr buff, PtrSize offset, const TransientMemoryToken& token)
 {
 	ANKI_ASSERT(token.m_range > 0);
 	ANKI_ASSERT(buff);
@@ -482,7 +415,6 @@ void CommandBuffer::uploadBuffer(
 	m_impl->pushBackNewCommand<BuffWriteCommand>(buff, offset, token);
 }
 
-//==============================================================================
 class GenMipsCommand final : public GlCommand
 {
 public:
@@ -510,13 +442,11 @@ void CommandBuffer::generateMipmaps2d(TexturePtr tex, U face, U layer)
 	m_impl->pushBackNewCommand<GenMipsCommand>(tex, face, layer);
 }
 
-//==============================================================================
 CommandBufferInitHints CommandBuffer::computeInitHints() const
 {
 	return m_impl->computeInitHints();
 }
 
-//==============================================================================
 class ExecCmdbCommand final : public GlCommand
 {
 public:
@@ -541,13 +471,11 @@ void CommandBuffer::pushSecondLevelCommandBuffer(CommandBufferPtr cmdb)
 	m_impl->pushBackNewCommand<ExecCmdbCommand>(cmdb);
 }
 
-//==============================================================================
 Bool CommandBuffer::isEmpty() const
 {
 	return m_impl->isEmpty();
 }
 
-//==============================================================================
 class CopyTexCommand final : public GlCommand
 {
 public:
@@ -556,10 +484,8 @@ public:
 	TexturePtr m_dest;
 	TextureSurfaceInfo m_destSurf;
 
-	CopyTexCommand(TexturePtr src,
-		const TextureSurfaceInfo& srcSurf,
-		TexturePtr dest,
-		const TextureSurfaceInfo& destSurf)
+	CopyTexCommand(
+		TexturePtr src, const TextureSurfaceInfo& srcSurf, TexturePtr dest, const TextureSurfaceInfo& destSurf)
 		: m_src(src)
 		, m_srcSurf(srcSurf)
 		, m_dest(dest)
@@ -569,24 +495,18 @@ public:
 
 	Error operator()(GlState&)
 	{
-		TextureImpl::copy(m_src->getImplementation(),
-			m_srcSurf,
-			m_dest->getImplementation(),
-			m_destSurf);
+		TextureImpl::copy(m_src->getImplementation(), m_srcSurf, m_dest->getImplementation(), m_destSurf);
 		return ErrorCode::NONE;
 	}
 };
 
-void CommandBuffer::copyTextureSurfaceToTextureSurface(TexturePtr src,
-	const TextureSurfaceInfo& srcSurf,
-	TexturePtr dest,
-	const TextureSurfaceInfo& destSurf)
+void CommandBuffer::copyTextureSurfaceToTextureSurface(
+	TexturePtr src, const TextureSurfaceInfo& srcSurf, TexturePtr dest, const TextureSurfaceInfo& destSurf)
 {
 	ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
 	m_impl->pushBackNewCommand<CopyTexCommand>(src, srcSurf, dest, destSurf);
 }
 
-//==============================================================================
 class SetBufferMemBarrierCommand final : public GlCommand
 {
 public:
@@ -604,11 +524,8 @@ public:
 	}
 };
 
-void CommandBuffer::setBufferBarrier(BufferPtr buff,
-	BufferUsageBit prevUsage,
-	BufferUsageBit nextUsage,
-	PtrSize offset,
-	PtrSize size)
+void CommandBuffer::setBufferBarrier(
+	BufferPtr buff, BufferUsageBit prevUsage, BufferUsageBit nextUsage, PtrSize offset, PtrSize size)
 {
 #if 0
 	GLenum d = GL_NONE;
@@ -655,25 +572,18 @@ void CommandBuffer::setBufferBarrier(BufferPtr buff,
 #endif
 }
 
-//==============================================================================
-void CommandBuffer::setTextureSurfaceBarrier(TexturePtr tex,
-	TextureUsageBit prevUsage,
-	TextureUsageBit nextUsage,
-	const TextureSurfaceInfo& surf)
+void CommandBuffer::setTextureSurfaceBarrier(
+	TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureSurfaceInfo& surf)
 {
 	// Do nothing
 }
 
-//==============================================================================
-void CommandBuffer::setTextureVolumeBarrier(TexturePtr tex,
-	TextureUsageBit prevUsage,
-	TextureUsageBit nextUsage,
-	const TextureVolumeInfo& vol)
+void CommandBuffer::setTextureVolumeBarrier(
+	TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureVolumeInfo& vol)
 {
 	// Do nothing
 }
 
-//==============================================================================
 class ClearTextCommand final : public GlCommand
 {
 public:
@@ -681,8 +591,7 @@ public:
 	ClearValue m_val;
 	TextureSurfaceInfo m_surf;
 
-	ClearTextCommand(
-		TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& val)
+	ClearTextCommand(TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& val)
 		: m_tex(tex)
 		, m_val(val)
 		, m_surf(surf)
@@ -696,14 +605,11 @@ public:
 	}
 };
 
-void CommandBuffer::clearTextureSurface(TexturePtr tex,
-	const TextureSurfaceInfo& surf,
-	const ClearValue& clearValue)
+void CommandBuffer::clearTextureSurface(TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& clearValue)
 {
 	m_impl->pushBackNewCommand<ClearTextCommand>(tex, surf, clearValue);
 }
 
-//==============================================================================
 class FillBufferCommand final : public GlCommand
 {
 public:
@@ -727,8 +633,7 @@ public:
 	}
 };
 
-void CommandBuffer::fillBuffer(
-	BufferPtr buff, PtrSize offset, PtrSize size, U32 value)
+void CommandBuffer::fillBuffer(BufferPtr buff, PtrSize offset, PtrSize size, U32 value)
 {
 	m_impl->pushBackNewCommand<FillBufferCommand>(buff, offset, size, value);
 }

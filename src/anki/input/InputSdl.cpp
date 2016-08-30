@@ -12,15 +12,13 @@
 namespace anki
 {
 
-//==============================================================================
 Error Input::init(NativeWindow* nativeWindow)
 {
 	ANKI_ASSERT(nativeWindow);
 	m_nativeWindow = nativeWindow;
 
 	// Init native
-	HeapAllocator<std::pair<const SDL_Keycode, KeyCode>> alloc =
-		m_nativeWindow->_getAllocator();
+	HeapAllocator<std::pair<const SDL_Keycode, KeyCode>> alloc = m_nativeWindow->_getAllocator();
 
 	m_impl = m_nativeWindow->_getAllocator().newInstance<InputImpl>(alloc);
 
@@ -269,7 +267,6 @@ Error Input::init(NativeWindow* nativeWindow)
 	return handleEvents();
 }
 
-//==============================================================================
 void Input::destroy()
 {
 	if(m_impl != nullptr)
@@ -280,7 +277,6 @@ void Input::destroy()
 	m_nativeWindow = nullptr;
 }
 
-//==============================================================================
 Error Input::handleEvents()
 {
 	ANKI_ASSERT(m_nativeWindow != nullptr);
@@ -323,10 +319,8 @@ Error Input::handleEvents()
 			// XXX
 			break;
 		case SDL_MOUSEMOTION:
-			m_mousePosNdc.x() =
-				(F32)event.button.x / m_nativeWindow->getWidth() * 2.0 - 1.0;
-			m_mousePosNdc.y() = -(
-				(F32)event.button.y / m_nativeWindow->getHeight() * 2.0 - 1.0);
+			m_mousePosNdc.x() = (F32)event.button.x / m_nativeWindow->getWidth() * 2.0 - 1.0;
+			m_mousePosNdc.y() = -((F32)event.button.y / m_nativeWindow->getHeight() * 2.0 - 1.0);
 			break;
 		case SDL_QUIT:
 			addEvent(Event::WINDOW_CLOSED);
@@ -345,7 +339,6 @@ Error Input::handleEvents()
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void Input::moveCursor(const Vec2& pos)
 {
 	if(pos != m_mousePosNdc)
@@ -356,7 +349,6 @@ void Input::moveCursor(const Vec2& pos)
 	}
 }
 
-//==============================================================================
 void Input::hideCursor(Bool hide)
 {
 	SDL_ShowCursor(!hide);

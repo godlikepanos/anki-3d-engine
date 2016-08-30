@@ -7,17 +7,11 @@
 #include <anki/scene/FrustumComponent.h>
 #include <anki/scene/MoveComponent.h>
 #include <anki/scene/SceneNode.h>
-#include <anki/util/Rtti.h>
 #include <anki/util/ThreadPool.h>
 
 namespace anki
 {
 
-//==============================================================================
-// Misc                                                                        =
-//==============================================================================
-
-//==============================================================================
 class UpdatePlanesPerspectiveCameraTask : public ThreadPoolTask
 {
 public:
@@ -31,7 +25,6 @@ public:
 	}
 };
 
-//==============================================================================
 static Vec4 unproject(const F32 depth, const Vec2& ndc, const Vec4& projParams)
 {
 	Vec4 view;
@@ -45,33 +38,24 @@ static Vec4 unproject(const F32 depth, const Vec2& ndc, const Vec4& projParams)
 	return view;
 }
 
-//==============================================================================
-// Clusterer                                                                   =
-//==============================================================================
-
-//==============================================================================
 Clusterer::~Clusterer()
 {
 	m_allPlanes.destroy(m_alloc);
 }
 
-//==============================================================================
-void Clusterer::initTestResults(
-	const GenericMemoryPoolAllocator<U8>& alloc, ClustererTestResult& rez) const
+void Clusterer::initTestResults(const GenericMemoryPoolAllocator<U8>& alloc, ClustererTestResult& rez) const
 {
 	rez.m_clusterIds.create(alloc, getClusterCount());
 	rez.m_count = 0;
 	rez.m_alloc = alloc;
 }
 
-//==============================================================================
 F32 Clusterer::calcNear(U k) const
 {
 	F32 neark = m_calcNearOpt * pow(k, 2.0) + m_near;
 	return neark;
 }
 
-//==============================================================================
 U Clusterer::calcZ(F32 zVspace) const
 {
 	zVspace = clamp(zVspace, -m_far, -m_near);
@@ -83,7 +67,6 @@ U Clusterer::calcZ(F32 zVspace) const
 	return k;
 }
 
-//==============================================================================
 void Clusterer::calcPlaneY(U i, const Vec4& projParams)
 {
 	Plane& plane = m_planesY[i];
@@ -98,7 +81,6 @@ void Clusterer::calcPlaneY(U i, const Vec4& projParams)
 	plane = Plane(n, 0.0);
 }
 
-//==============================================================================
 void Clusterer::calcPlaneX(U j, const Vec4& projParams)
 {
 	Plane& plane = m_planesX[j];
@@ -113,11 +95,7 @@ void Clusterer::calcPlaneX(U j, const Vec4& projParams)
 	plane = Plane(n, 0.0);
 }
 
-//==============================================================================
-void Clusterer::init(const GenericMemoryPoolAllocator<U8>& alloc,
-	U clusterCountX,
-	U clusterCountY,
-	U clusterCountZ)
+void Clusterer::init(const GenericMemoryPoolAllocator<U8>& alloc, U clusterCountX, U clusterCountY, U clusterCountZ)
 {
 	m_alloc = alloc;
 	m_counts[0] = clusterCountX;
@@ -156,7 +134,6 @@ void Clusterer::init(const GenericMemoryPoolAllocator<U8>& alloc,
 	ANKI_ASSERT(count == m_allPlanes.getSize());
 }
 
-//==============================================================================
 void Clusterer::prepare(ThreadPool& threadPool, const FrustumComponent& frc)
 {
 	// Get some things
@@ -182,8 +159,7 @@ void Clusterer::prepare(ThreadPool& threadPool, const FrustumComponent& frc)
 	// Do a job that transforms only the planes when:
 	// - it's the same frustum component as before and
 	// - the component has not changed
-	Bool frustumChanged =
-		frcTimestamp > m_planesLSpaceTimestamp || m_node != node;
+	Bool frustumChanged = frcTimestamp > m_planesLSpaceTimestamp || m_node != node;
 
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
@@ -203,9 +179,7 @@ void Clusterer::prepare(ThreadPool& threadPool, const FrustumComponent& frc)
 	(void)err;
 }
 
-//==============================================================================
-void Clusterer::computeSplitRange(
-	const CollisionShape& cs, U& zBegin, U& zEnd) const
+void Clusterer::computeSplitRange(const CollisionShape& cs, U& zBegin, U& zEnd) const
 {
 	// Find the distance between cs and near plane
 	F32 dist = cs.testPlane(*m_nearPlane);
@@ -225,15 +199,13 @@ void Clusterer::computeSplitRange(
 	ANKI_ASSERT(zEnd <= m_counts[2]);
 }
 
-//==============================================================================
-void Clusterer::bin(
-	const CollisionShape& cs, const Aabb& csBox, ClustererTestResult& rez) const
+void Clusterer::bin(const CollisionShape& cs, const Aabb& csBox, ClustererTestResult& rez) const
 {
 	rez.m_count = 0;
 
-	if(isa<Sphere>(cs))
+	if(cs.getType() == CollisionShapeType::SPHERE)
 	{
-		binSphere(dcast<const Sphere&>(cs), csBox, rez);
+		binSphere(static_cast<const Sphere&>(cs), csBox, rez);
 	}
 	else
 	{
@@ -243,9 +215,7 @@ void Clusterer::bin(
 	}
 }
 
-//==============================================================================
-void Clusterer::totallyInsideAllTiles(
-	U zBegin, U zEnd, ClustererTestResult& rez) const
+void Clusterer::totallyInsideAllTiles(U zBegin, U zEnd, ClustererTestResult& rez) const
 {
 	for(U z = zBegin; z < zEnd; ++z)
 	{
@@ -259,9 +229,7 @@ void Clusterer::totallyInsideAllTiles(
 	}
 }
 
-//==============================================================================
-void Clusterer::binSphere(
-	const Sphere& s, const Aabb& aabb, ClustererTestResult& rez) const
+void Clusterer::binSphere(const Sphere& s, const Aabb& aabb, ClustererTestResult& rez) const
 {
 	const Mat4& vp = m_frc->getViewProjectionMatrix();
 	const Mat4& v = m_frc->getViewMatrix();
@@ -299,8 +267,7 @@ void Clusterer::binSphere(
 		p = vp * p;
 		if(p.w() <= 0.0)
 		{
-			// This point is behind the near plane. It's a big hustle to
-			// properly clip it. Mark the shape totally inside
+			// This point is behind the near plane. It's a big hustle to properly clip it. Mark the shape totally inside
 			totallyInsideAllTiles(zBegin, zEnd, rez);
 			return;
 		}
@@ -333,10 +300,8 @@ void Clusterer::binSphere(
 	I yEnd = ceil(tcountY * max2.y());
 	yEnd = min<I>(yEnd, m_counts[1]);
 
-	ANKI_ASSERT(
-		xBegin >= 0 && xBegin <= tcountX && xEnd >= 0 && xEnd <= tcountX);
-	ANKI_ASSERT(
-		yBegin >= 0 && yBegin <= tcountX && yEnd >= 0 && yBegin <= tcountY);
+	ANKI_ASSERT(xBegin >= 0 && xBegin <= tcountX && xEnd >= 0 && xEnd <= tcountX);
+	ANKI_ASSERT(yBegin >= 0 && yBegin <= tcountX && yEnd >= 0 && yBegin <= tcountY);
 
 	Vec2 tileSize(1.0 / tcountX, 1.0 / tcountY);
 
@@ -375,8 +340,7 @@ void Clusterer::binSphere(
 			}
 
 			// Unproject the closest point to view space
-			Vec4 view = unproject(
-				1.0, cp * 2.0 - 1.0, m_frc->getProjectionParameters());
+			Vec4 view = unproject(1.0, cp * 2.0 - 1.0, m_frc->getProjectionParameters());
 
 			// Do a simple ray-sphere test
 			Vec4 dir = view;
@@ -395,15 +359,8 @@ void Clusterer::binSphere(
 	}
 }
 
-//==============================================================================
-void Clusterer::binGeneric(const CollisionShape& cs,
-	U xBegin,
-	U xEnd,
-	U yBegin,
-	U yEnd,
-	U zBegin,
-	U zEnd,
-	ClustererTestResult& rez) const
+void Clusterer::binGeneric(
+	const CollisionShape& cs, U xBegin, U xEnd, U yBegin, U yEnd, U zBegin, U zEnd, ClustererTestResult& rez) const
 {
 	U my = (yEnd - yBegin) / 2;
 	U mx = (xEnd - xBegin) / 2;
@@ -428,14 +385,12 @@ void Clusterer::binGeneric(const CollisionShape& cs,
 
 			if(test <= 0.0)
 			{
-				binGeneric(
-					cs, xBegin, xEnd, yBegin, yBegin + my, zBegin, zEnd, rez);
+				binGeneric(cs, xBegin, xEnd, yBegin, yBegin + my, zBegin, zEnd, rez);
 			}
 
 			if(test >= 0.0)
 			{
-				binGeneric(
-					cs, xBegin, xEnd, yBegin + my, yEnd, zBegin, zEnd, rez);
+				binGeneric(cs, xBegin, xEnd, yBegin + my, yEnd, zBegin, zEnd, rez);
 			}
 		}
 		else
@@ -445,14 +400,12 @@ void Clusterer::binGeneric(const CollisionShape& cs,
 
 			if(test <= 0.0)
 			{
-				binGeneric(
-					cs, xBegin, xBegin + mx, yBegin, yEnd, zBegin, zEnd, rez);
+				binGeneric(cs, xBegin, xBegin + mx, yBegin, yEnd, zBegin, zEnd, rez);
 			}
 
 			if(test >= 0.0)
 			{
-				binGeneric(
-					cs, xBegin + mx, xEnd, yBegin, yEnd, zBegin, zEnd, rez);
+				binGeneric(cs, xBegin + mx, xEnd, yBegin, yEnd, zBegin, zEnd, rez);
 			}
 		}
 
@@ -512,20 +465,17 @@ void Clusterer::binGeneric(const CollisionShape& cs,
 	// Now move lower to the hierarchy
 	if(inside[0][0])
 	{
-		binGeneric(
-			cs, xBegin, xBegin + mx, yBegin, yBegin + my, zBegin, zEnd, rez);
+		binGeneric(cs, xBegin, xBegin + mx, yBegin, yBegin + my, zBegin, zEnd, rez);
 	}
 
 	if(inside[0][1])
 	{
-		binGeneric(
-			cs, xBegin + mx, xEnd, yBegin, yBegin + my, zBegin, zEnd, rez);
+		binGeneric(cs, xBegin + mx, xEnd, yBegin, yBegin + my, zBegin, zEnd, rez);
 	}
 
 	if(inside[1][0])
 	{
-		binGeneric(
-			cs, xBegin, xBegin + mx, yBegin + my, yEnd, zBegin, zEnd, rez);
+		binGeneric(cs, xBegin, xBegin + mx, yBegin + my, yEnd, zBegin, zEnd, rez);
 	}
 
 	if(inside[1][1])
@@ -534,7 +484,6 @@ void Clusterer::binGeneric(const CollisionShape& cs,
 	}
 }
 
-//==============================================================================
 void Clusterer::update(U32 threadId, PtrSize threadsCount, Bool frustumChanged)
 {
 	PtrSize start, end;
@@ -549,8 +498,7 @@ void Clusterer::update(U32 threadId, PtrSize threadsCount, Bool frustumChanged)
 		// Re-calculate the planes in local space
 
 		// First the top looking planes
-		ThreadPoolTask::choseStartEnd(
-			threadId, threadsCount, m_planesYW.getSize(), start, end);
+		ThreadPoolTask::choseStartEnd(threadId, threadsCount, m_planesYW.getSize(), start, end);
 
 		for(U i = start; i < end; i++)
 		{
@@ -560,8 +508,7 @@ void Clusterer::update(U32 threadId, PtrSize threadsCount, Bool frustumChanged)
 		}
 
 		// Then the right looking planes
-		ThreadPoolTask::choseStartEnd(
-			threadId, threadsCount, m_planesXW.getSize(), start, end);
+		ThreadPoolTask::choseStartEnd(threadId, threadsCount, m_planesXW.getSize(), start, end);
 
 		for(U j = start; j < end; j++)
 		{
@@ -575,8 +522,7 @@ void Clusterer::update(U32 threadId, PtrSize threadsCount, Bool frustumChanged)
 		// Only transform planes
 
 		// First the top looking planes
-		ThreadPoolTask::choseStartEnd(
-			threadId, threadsCount, m_planesYW.getSize(), start, end);
+		ThreadPoolTask::choseStartEnd(threadId, threadsCount, m_planesYW.getSize(), start, end);
 
 		for(U i = start; i < end; i++)
 		{
@@ -584,8 +530,7 @@ void Clusterer::update(U32 threadId, PtrSize threadsCount, Bool frustumChanged)
 		}
 
 		// Then the right looking planes
-		ThreadPoolTask::choseStartEnd(
-			threadId, threadsCount, m_planesXW.getSize(), start, end);
+		ThreadPoolTask::choseStartEnd(threadId, threadsCount, m_planesXW.getSize(), start, end);
 
 		for(U j = start; j < end; j++)
 		{

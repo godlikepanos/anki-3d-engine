@@ -11,7 +11,6 @@
 namespace anki
 {
 
-//==============================================================================
 Aabb Aabb::getTransformed(const Transform& trf) const
 {
 	Mat3x4 absM;
@@ -29,7 +28,6 @@ Aabb Aabb::getTransformed(const Transform& trf) const
 	return Aabb(newC - newE, newC + newE);
 }
 
-//==============================================================================
 F32 Aabb::testPlane(const Plane& p) const
 {
 	const Aabb& aabb = *this;
@@ -69,7 +67,6 @@ F32 Aabb::testPlane(const Plane& p) const
 	}
 }
 
-//==============================================================================
 Aabb Aabb::getCompoundShape(const Aabb& b) const
 {
 	Aabb out;
@@ -84,9 +81,7 @@ Aabb Aabb::getCompoundShape(const Aabb& b) const
 	return out;
 }
 
-//==============================================================================
-void Aabb::setFromPointCloud(
-	const void* buff, U count, PtrSize stride, PtrSize buffSize)
+void Aabb::setFromPointCloud(const void* buff, U count, PtrSize stride, PtrSize buffSize)
 {
 	m_min = Vec4(Vec3(MAX_F32), 0.0);
 	m_max = Vec4(Vec3(MIN_F32), 0.0);
@@ -106,7 +101,6 @@ void Aabb::setFromPointCloud(
 	});
 }
 
-//==============================================================================
 Vec4 Aabb::computeSupport(const Vec4& dir) const
 {
 	Vec4 ret(0.0);

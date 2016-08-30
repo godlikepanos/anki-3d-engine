@@ -10,20 +10,17 @@
 namespace anki
 {
 
-//==============================================================================
 TextureAtlas::TextureAtlas(ResourceManager* manager)
 	: ResourceObject(manager)
 {
 }
 
-//==============================================================================
 TextureAtlas::~TextureAtlas()
 {
 	m_subTexes.destroy(getAllocator());
 	m_subTexNames.destroy(getAllocator());
 }
 
-//==============================================================================
 Error TextureAtlas::load(const ResourceFilename& filename)
 {
 	XmlDocument doc;
@@ -103,7 +100,6 @@ Error TextureAtlas::load(const ResourceFilename& filename)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error TextureAtlas::getSubTextureInfo(CString name, F32 uv[4]) const
 {
 	for(const SubTex& st : m_subTexes)
@@ -118,9 +114,7 @@ Error TextureAtlas::getSubTextureInfo(CString name, F32 uv[4]) const
 		}
 	}
 
-	ANKI_LOGE("Texture atlas %s doesn't have sub texture named: %s",
-		&getFilename()[0],
-		&name[0]);
+	ANKI_LOGE("Texture atlas %s doesn't have sub texture named: %s", &getFilename()[0], &name[0]);
 	return ErrorCode::USER_DATA;
 }
 

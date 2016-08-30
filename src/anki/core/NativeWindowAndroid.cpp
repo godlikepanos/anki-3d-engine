@@ -13,7 +13,6 @@
 namespace anki
 {
 
-//==============================================================================
 static void loopUntilWindowIsReady(android_app& app)
 {
 	while(app.window == nullptr)
@@ -23,9 +22,7 @@ static void loopUntilWindowIsReady(android_app& app)
 		android_poll_source* source;
 
 		const U timeoutMs = 5;
-		while(
-			(ident = ALooper_pollAll(timeoutMs, NULL, &events, (void**)&source))
-			>= 0)
+		while((ident = ALooper_pollAll(timeoutMs, NULL, &events, (void**)&source)) >= 0)
 		{
 			if(source != NULL)
 			{
@@ -35,11 +32,6 @@ static void loopUntilWindowIsReady(android_app& app)
 	}
 }
 
-//==============================================================================
-// NativeWindowImpl                                                            =
-//==============================================================================
-
-//==============================================================================
 void NativeWindowImpl::create(NativeWindowInitInfo& init)
 {
 	Array<EGLint, 256> attribs;
@@ -99,8 +91,7 @@ void NativeWindowImpl::create(NativeWindowInitInfo& init)
 
 	attribs[attr++] = EGL_NONE;
 
-	if(eglChooseConfig(display, &attribs[0], &config, 1, &configsCount)
-		== EGL_FALSE)
+	if(eglChooseConfig(display, &attribs[0], &config, 1, &configsCount) == EGL_FALSE)
 	{
 		throw ANKI_EXCEPTION("Failed to query required EGL configs");
 	}
@@ -148,7 +139,6 @@ void NativeWindowImpl::create(NativeWindowInitInfo& init)
 	init.height = h;
 }
 
-//==============================================================================
 void NativeWindowImpl::destroy()
 {
 	if(display != EGL_NO_DISPLAY)
@@ -169,16 +159,10 @@ void NativeWindowImpl::destroy()
 	}
 }
 
-//==============================================================================
-// NativeWindow                                                                =
-//==============================================================================
-
-//==============================================================================
 NativeWindow::~NativeWindow()
 {
 }
 
-//==============================================================================
 void NativeWindow::init(NativeWindowInitInfo& initializer)
 {
 	impl.reset(new NativeWindowImpl);
@@ -190,13 +174,11 @@ void NativeWindow::init(NativeWindowInitInfo& initializer)
 	height = initializer.height;
 }
 
-//==============================================================================
 void NativeWindow::destroy()
 {
 	impl.reset();
 }
 
-//==============================================================================
 void NativeWindow::swapBuffers()
 {
 	ANKI_COUNTER_START_TIMER(SWAP_BUFFERS_TIME);

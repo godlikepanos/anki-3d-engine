@@ -44,8 +44,7 @@ public:
 
 	void checkSurface(const TextureSurfaceInfo& surf) const
 	{
-		checkTextureSurface(
-			m_texType, m_depth, m_mipsCount, m_layerCount, surf);
+		checkTextureSurface(m_texType, m_depth, m_mipsCount, m_layerCount, surf);
 	}
 
 	void checkVolume(const TextureVolumeInfo& vol) const
@@ -61,12 +60,10 @@ public:
 	void init(const TextureInitInfo& init);
 
 	/// Write texture data.
-	void writeSurface(
-		const TextureSurfaceInfo& surf, void* data, PtrSize dataSize);
+	void writeSurface(const TextureSurfaceInfo& surf, void* data, PtrSize dataSize);
 
 	/// Write texture data.
-	void writeVolume(
-		const TextureVolumeInfo& vol, void* data, PtrSize dataSize);
+	void writeVolume(const TextureVolumeInfo& vol, void* data, PtrSize dataSize);
 
 	/// Generate mipmaps.
 	void generateMipmaps2d(U face, U layer);

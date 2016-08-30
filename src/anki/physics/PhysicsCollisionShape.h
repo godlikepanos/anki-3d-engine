@@ -19,39 +19,32 @@ struct PhysicsCollisionShapeInitInfo
 	// Empty for now
 };
 
+/// Type of supported physics collision shapes.
+enum class PhysicsCollisionShapeType : U8
+{
+	NONE,
+	SPHERE,
+	BOX,
+	STATIC_TRIANGLE_SOUP
+};
+
 /// The base of all collision shapes.
 class PhysicsCollisionShape : public PhysicsObject
 {
 public:
-	/// Type of supported physics collision shapes.
-	enum class ShapeType : U8
-	{
-		NONE,
-		SPHERE,
-		BOX,
-		STATIC_TRIANGLE_SOUP
-	};
-
 	PhysicsCollisionShape(PhysicsWorld* world)
-		: PhysicsObject(Type::COLLISION_SHAPE, world)
+		: PhysicsObject(PhysicsObjectType::COLLISION_SHAPE, world)
 	{
 	}
 
 	~PhysicsCollisionShape();
 
-	static Bool classof(const PhysicsObject& c)
-	{
-		return c.getType() == Type::COLLISION_SHAPE;
-	}
-
-	/// @privatesection
-	/// @{
-	NewtonCollision* _getNewtonShape() const
+anki_internal:
+	NewtonCollision* getNewtonShape() const
 	{
 		ANKI_ASSERT(m_shape);
 		return m_shape;
 	}
-	/// @}
 
 protected:
 	NewtonCollision* m_shape = nullptr;
@@ -72,8 +65,7 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error create(
-		PhysicsCollisionShapeInitInfo& init, F32 radius);
+	ANKI_USE_RESULT Error create(PhysicsCollisionShapeInitInfo& init, F32 radius);
 };
 
 /// Box collision shape.
@@ -89,8 +81,7 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error create(
-		PhysicsCollisionShapeInitInfo& init, const Vec3& extend);
+	ANKI_USE_RESULT Error create(PhysicsCollisionShapeInitInfo& init, const Vec3& extend);
 };
 
 /// Convex hull collision shape.
@@ -106,10 +97,8 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error create(PhysicsCollisionShapeInitInfo& init,
-		const Vec3* positions,
-		U32 positionsCount,
-		U32 positionsStride);
+	ANKI_USE_RESULT Error create(
+		PhysicsCollisionShapeInitInfo& init, const Vec3* positions, U32 positionsCount, U32 positionsStride);
 };
 
 /// Static triangle mesh shape.

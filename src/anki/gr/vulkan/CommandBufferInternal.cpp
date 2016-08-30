@@ -8,7 +8,6 @@
 namespace anki
 {
 
-//==============================================================================
 CommandBufferFactory::~CommandBufferFactory()
 {
 	for(CmdbType& type : m_types)
@@ -27,9 +26,7 @@ CommandBufferFactory::~CommandBufferFactory()
 	}
 }
 
-//==============================================================================
-Error CommandBufferFactory::init(
-	GenericMemoryPoolAllocator<U8> alloc, VkDevice dev, uint32_t queueFamily)
+Error CommandBufferFactory::init(GenericMemoryPoolAllocator<U8> alloc, VkDevice dev, uint32_t queueFamily)
 {
 	m_alloc = alloc;
 
@@ -44,7 +41,6 @@ Error CommandBufferFactory::init(
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 VkCommandBuffer CommandBufferFactory::newCommandBuffer(Bool secondLevel)
 {
 	ANKI_ASSERT(isCreated());
@@ -68,8 +64,7 @@ VkCommandBuffer CommandBufferFactory::newCommandBuffer(Bool secondLevel)
 		VkCommandBufferAllocateInfo ci = {};
 		ci.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 		ci.commandPool = m_pool;
-		ci.level = (secondLevel) ? VK_COMMAND_BUFFER_LEVEL_SECONDARY
-								 : VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		ci.level = (secondLevel) ? VK_COMMAND_BUFFER_LEVEL_SECONDARY : VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 		ci.commandBufferCount = 1;
 
 		ANKI_VK_CHECKF(vkAllocateCommandBuffers(m_dev, &ci, &out));
@@ -79,9 +74,7 @@ VkCommandBuffer CommandBufferFactory::newCommandBuffer(Bool secondLevel)
 	return out;
 }
 
-//==============================================================================
-void CommandBufferFactory::deleteCommandBuffer(
-	VkCommandBuffer cmdb, Bool secondLevel)
+void CommandBufferFactory::deleteCommandBuffer(VkCommandBuffer cmdb, Bool secondLevel)
 {
 	ANKI_ASSERT(isCreated());
 	ANKI_ASSERT(cmdb);

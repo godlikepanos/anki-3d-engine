@@ -316,15 +316,7 @@ ANKI_TEST(Math, Mat3)
 		Mat3 a = getNonEmptyMat<Mat3>(0);
 		Mat3 b = getNonEmptyMat<Mat3>(1);
 		Mat3 c = a * b;
-		Mat3 d = Mat3(18.000,
-			21.000,
-			24.000,
-			54.000,
-			66.000,
-			78.000,
-			90.000,
-			111.000,
-			132.000);
+		Mat3 d = Mat3(18.000, 21.000, 24.000, 54.000, 66.000, 78.000, 90.000, 111.000, 132.000);
 		ANKI_TEST_EXPECT_EQ(c, d);
 	}
 
@@ -384,18 +376,8 @@ ANKI_TEST(Math, Mat3x4)
 		Mat3x4 a = getNonEmptyMat<Mat3x4>(0);
 		Mat3x4 b = getNonEmptyMat<Mat3x4>(1);
 		Mat3x4 c = a.combineTransformations(b);
-		Mat3x4 d = Mat3x4(23.000,
-			26.000,
-			29.000,
-			35.000,
-			83.000,
-			98.000,
-			113.000,
-			135.000,
-			143.000,
-			170.000,
-			197.000,
-			235.000);
+		Mat3x4 d = Mat3x4(
+			23.000, 26.000, 29.000, 35.000, 83.000, 98.000, 113.000, 135.000, 143.000, 170.000, 197.000, 235.000);
 		ANKI_TEST_EXPECT_EQ(c, d);
 	}
 

@@ -33,30 +33,22 @@ public:
 
 	/// @name Image related methods.
 	/// @{
-	virtual ANKI_USE_RESULT Error loadImage(
-		const CString& filename, UiImagePtr& img) = 0;
+	virtual ANKI_USE_RESULT Error loadImage(const CString& filename, UiImagePtr& img) = 0;
 
 	/// Create a 8bit image. Used for fonts.
-	virtual ANKI_USE_RESULT Error createR8Image(
-		const WeakArray<U8>& data, const UVec2& size, UiImagePtr& img) = 0;
+	virtual ANKI_USE_RESULT Error createR8Image(const WeakArray<U8>& data, const UVec2& size, UiImagePtr& img) = 0;
 	/// @}
 
 	/// @name Misc methods.
 	/// @{
-	virtual ANKI_USE_RESULT Error readFile(
-		const CString& filename, DynamicArrayAuto<U8>& data) = 0;
+	virtual ANKI_USE_RESULT Error readFile(const CString& filename, DynamicArrayAuto<U8>& data) = 0;
 	/// @}
 
 	/// @name Painting related methods.
 	/// @{
-	virtual void drawImage(UiImagePtr image,
-		const Rect& uvs,
-		const Rect& drawingRect,
-		const UVec2& canvasSize) = 0;
+	virtual void drawImage(UiImagePtr image, const Rect& uvs, const Rect& drawingRect, const UVec2& canvasSize) = 0;
 
-	virtual void drawLines(const WeakArray<UVec2>& lines,
-		const Color& color,
-		const UVec2& canvasSize) = 0;
+	virtual void drawLines(const WeakArray<UVec2>& lines, const Color& color, const UVec2& canvasSize) = 0;
 	/// @}
 
 protected:

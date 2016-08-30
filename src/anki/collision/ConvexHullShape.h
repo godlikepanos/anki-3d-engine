@@ -21,18 +21,13 @@ class ConvexHullShape : public NonCopyable, public ConvexShape
 public:
 	using Base = ConvexShape;
 
-	static Bool classof(const CollisionShape& c)
-	{
-		return c.getType() == Type::CONVEX_HULL;
-	}
-
 	ConvexHullShape()
-		: Base(Type::CONVEX_HULL)
+		: Base(CollisionShapeType::CONVEX_HULL)
 	{
 	}
 
 	ConvexHullShape(ConvexHullShape&& b)
-		: Base(Type::CONVEX_HULL)
+		: Base(CollisionShapeType::CONVEX_HULL)
 	{
 		move(b);
 	}
@@ -66,21 +61,18 @@ public:
 		return m_trf;
 	}
 
-	/// Calculate from a set of points. You have to call initStorage before
-	/// calling this method.
-	void setFromPointCloud(
-		const Vec3* buff, U count, PtrSize stride, PtrSize buffSize);
+	/// Calculate from a set of points. You have to call initStorage before calling this method.
+	void setFromPointCloud(const Vec3* buff, U count, PtrSize stride, PtrSize buffSize);
 
-	/// This function initializes the storage that holds the point cloud. This
-	/// method allocates a storage and the owner is the convex hull.
+	/// This function initializes the storage that holds the point cloud. This method allocates a storage and the owner
+	/// is the convex hull.
 	/// @param alloc The allocator to use for the point cloud
 	/// @param pointCount The number of points
 	void initStorage(CollisionAllocator<U8>& alloc, U pointCount);
 
-	/// This function initializes the storage that holds the point cloud using
-	/// a predefined buffer. The convex hull is not the owner of the storage.
-	/// @param buffer The base of the storage buffer. Size should be
-	///               @a pointCount * sizeof(Vec4)
+	/// This function initializes the storage that holds the point cloud using a predefined buffer. The convex hull is
+	/// not the owner of the storage.
+	/// @param buffer The base of the storage buffer. Size should be @a pointCount * sizeof(Vec4)
 	/// @param pointCount The number of points
 	void initStorage(void* buffer, U pointCount);
 

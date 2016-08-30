@@ -17,27 +17,27 @@ namespace anki
 /// @addtogroup collision
 /// @{
 
-/// Abstract class for collision shapes. It also features a visitor for
-/// implementing specific code outside the collision codebase (eg rendering)
+/// Collision shape type
+/// @note WARNING: Order is important
+enum class CollisionShapeType : U8
+{
+	PLANE,
+	LINE_SEG,
+	COMPOUND,
+	AABB,
+	SPHERE,
+	OBB,
+	CONVEX_HULL,
+
+	COUNT,
+	LAST_CONVEX = CONVEX_HULL
+};
+
+/// Abstract class for collision shapes. It also features a visitor for implementing specific code outside the
+/// collision codebase (eg rendering)
 class CollisionShape
 {
 public:
-	/// Collision shape type
-	/// @note WARNING: Order is important
-	enum class Type : U8
-	{
-		PLANE,
-		LINE_SEG,
-		COMPOUND,
-		AABB,
-		SPHERE,
-		OBB,
-		CONVEX_HULL,
-
-		COUNT,
-		LAST_CONVEX = CONVEX_HULL
-	};
-
 	/// Generic mutable visitor
 	class MutableVisitor
 	{
@@ -72,7 +72,7 @@ public:
 		virtual void visit(const ConvexHullShape&) = 0;
 	};
 
-	CollisionShape(Type cid)
+	CollisionShape(CollisionShapeType cid)
 		: m_cid(cid)
 	{
 	}
@@ -94,15 +94,13 @@ public:
 		return *this;
 	}
 
-	Type getType() const
+	CollisionShapeType getType() const
 	{
 		return m_cid;
 	}
 
-	/// If the collision shape intersects with the plane then the method
-	/// returns 0.0, else it returns the distance. If the distance is < 0.0
-	/// then the collision shape lies behind the plane and if > 0.0 then
-	/// in front of it
+	/// If the collision shape intersects with the plane then the method returns 0.0, else it returns the distance. If
+	/// the distance is < 0.0 then the collision shape lies behind the plane and if > 0.0 then in front of it
 	virtual F32 testPlane(const Plane& p) const = 0;
 
 	/// Transform
@@ -119,8 +117,7 @@ public:
 protected:
 	/// Function that iterates a point cloud
 	template<typename TFunc>
-	void iteratePointCloud(
-		const void* buff, U count, PtrSize stride, PtrSize buffSize, TFunc func)
+	void iteratePointCloud(const void* buff, U count, PtrSize stride, PtrSize buffSize, TFunc func)
 	{
 		ANKI_ASSERT(buff);
 		ANKI_ASSERT(count > 1);
@@ -130,8 +127,7 @@ protected:
 		const U8* ptr = (const U8*)buff;
 		while(count-- != 0)
 		{
-			ANKI_ASSERT(
-				(((PtrSize)ptr + sizeof(Vec3)) - (PtrSize)buff) <= buffSize);
+			ANKI_ASSERT((((PtrSize)ptr + sizeof(Vec3)) - (PtrSize)buff) <= buffSize);
 			const Vec3* pos = (const Vec3*)(ptr);
 
 			func(*pos);
@@ -141,9 +137,8 @@ protected:
 	}
 
 private:
-	/// Keep an ID to avoid (in some cases) the visitor and thus the cost of
-	/// virtuals
-	Type m_cid;
+	/// Keep an ID to avoid (in some cases) the visitor and thus the cost of virtuals
+	CollisionShapeType m_cid;
 };
 /// @}
 

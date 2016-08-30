@@ -11,7 +11,6 @@
 namespace anki
 {
 
-//==============================================================================
 F32 LineSegment::testPlane(const Plane& p) const
 {
 	const Vec4& p0 = m_origin;
@@ -44,7 +43,6 @@ F32 LineSegment::testPlane(const Plane& p) const
 	}
 }
 
-//==============================================================================
 LineSegment LineSegment::getTransformed(const Transform& trf) const
 {
 	LineSegment out;
@@ -53,7 +51,6 @@ LineSegment LineSegment::getTransformed(const Transform& trf) const
 	return out;
 }
 
-//==============================================================================
 void LineSegment::computeAabb(Aabb& aabb) const
 {
 	Vec4 min = m_origin;

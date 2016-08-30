@@ -44,18 +44,16 @@ enum class BuiltinMaterialVariableId : U8
 };
 
 /// Material variable base. It's a visitable.
-using MateriaVariableVisitable =
-	VisitableCommonBase<MaterialVariable, // The base
-		MaterialVariableTemplate<F32>,
-		MaterialVariableTemplate<Vec2>,
-		MaterialVariableTemplate<Vec3>,
-		MaterialVariableTemplate<Vec4>,
-		MaterialVariableTemplate<Mat3>,
-		MaterialVariableTemplate<Mat4>,
-		MaterialVariableTemplate<TextureResourcePtr>>;
+using MateriaVariableVisitable = VisitableCommonBase<MaterialVariable, // The base
+	MaterialVariableTemplate<F32>,
+	MaterialVariableTemplate<Vec2>,
+	MaterialVariableTemplate<Vec3>,
+	MaterialVariableTemplate<Vec4>,
+	MaterialVariableTemplate<Mat3>,
+	MaterialVariableTemplate<Mat4>,
+	MaterialVariableTemplate<TextureResourcePtr>>;
 
-/// Holds the shader variables. Its a container for shader program variables
-/// that share the same name
+/// Holds the shader variables. Its a container for shader program variables that share the same name
 class MaterialVariable : public MateriaVariableVisitable, public NonCopyable
 {
 	friend class Material;
@@ -154,12 +152,10 @@ private:
 	void checkGetValue() const
 	{
 		ANKI_ASSERT(isTypeOf<MaterialVariableTemplate<T>>());
-		ANKI_ASSERT(
-			MaterialVariable::m_builtin == BuiltinMaterialVariableId::NONE);
+		ANKI_ASSERT(MaterialVariable::m_builtin == BuiltinMaterialVariableId::NONE);
 	}
 
-	ANKI_USE_RESULT Error init(
-		U idx, const MaterialLoaderInputVariable& in, Material& mtl);
+	ANKI_USE_RESULT Error init(U idx, const MaterialLoaderInputVariable& in, Material& mtl);
 };
 
 /// Material variant.
@@ -197,8 +193,7 @@ private:
 	DynamicArray<ShaderVariableBlockInfo> m_blockInfo;
 	DynamicArray<Bool8> m_varActive;
 
-	ANKI_USE_RESULT Error init(
-		const RenderingKey& key, Material& mtl, MaterialLoader& loader);
+	ANKI_USE_RESULT Error init(const RenderingKey& key, Material& mtl, MaterialLoader& loader);
 
 	void destroy(ResourceAllocator<U8> alloc)
 	{
@@ -264,8 +259,7 @@ private:
 /// @endcode
 /// (1): AKA uniforms
 /// (2): The \<value\> can be omitted for build-in variables
-/// (3): The \<const\> will mark a variable as constant and it cannot be changed
-///      at all. Default is 0
+/// (3): The \<const\> will mark a variable as constant and it cannot be changed at all. Default is 0
 /// (4): Optimization. Set to 1 if the var will be used in shadow passes as well
 class Material : public ResourceObject
 {
@@ -337,8 +331,7 @@ private:
 
 	/// This is a matrix of variants. It holds indices to m_variants. If the
 	/// idx is MAX_U16 then the variant is not present
-	Array4d<U16, U(Pass::COUNT), MAX_LODS, 2, MAX_INSTANCE_GROUPS>
-		m_variantMatrix;
+	Array4d<U16, U(Pass::COUNT), MAX_LODS, 2, MAX_INSTANCE_GROUPS> m_variantMatrix;
 
 	DynamicArray<MaterialVariable*> m_vars;
 
@@ -349,25 +342,18 @@ private:
 	ANKI_USE_RESULT Error createVariants(MaterialLoader& loader);
 
 	/// Create a unique shader source in chache. If already exists do nothing
-	ANKI_USE_RESULT Error createProgramSourceToCache(
-		const String& source, ShaderType type, StringAuto& out);
+	ANKI_USE_RESULT Error createProgramSourceToCache(const String& source, ShaderType type, StringAuto& out);
 };
 
-//==============================================================================
 template<typename T>
 inline void MaterialVariable::writeShaderBlockMemory(
-	const MaterialVariant& variant,
-	const T* elements,
-	U32 elementsCount,
-	void* buffBegin,
-	const void* buffEnd) const
+	const MaterialVariant& variant, const T* elements, U32 elementsCount, void* buffBegin, const void* buffEnd) const
 {
 	ANKI_ASSERT(Base::isTypeOf<MaterialVariableTemplate<T>>());
 	ANKI_ASSERT(m_varType == getShaderVariableTypeFromTypename<T>());
 
 	const auto& blockInfo = variant.m_blockInfo[m_idx];
-	anki::writeShaderBlockMemory(
-		m_varType, blockInfo, elements, elementsCount, buffBegin, buffEnd);
+	anki::writeShaderBlockMemory(m_varType, blockInfo, elements, elementsCount, buffBegin, buffEnd);
 }
 /// @}
 

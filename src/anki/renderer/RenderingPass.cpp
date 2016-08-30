@@ -10,31 +10,26 @@
 namespace anki
 {
 
-//==============================================================================
 GrManager& RenderingPass::getGrManager()
 {
 	return m_r->getGrManager();
 }
 
-//==============================================================================
 const GrManager& RenderingPass::getGrManager() const
 {
 	return m_r->getGrManager();
 }
 
-//==============================================================================
 HeapAllocator<U8> RenderingPass::getAllocator() const
 {
 	return m_r->getAllocator();
 }
 
-//==============================================================================
 StackAllocator<U8> RenderingPass::getFrameAllocator() const
 {
 	return m_r->getFrameAllocator();
 }
 
-//==============================================================================
 ResourceManager& RenderingPass::getResourceManager()
 {
 	return m_r->getResourceManager();

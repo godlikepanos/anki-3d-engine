@@ -18,42 +18,31 @@
 namespace anki
 {
 
-//==============================================================================
-// DebugDrawer                                                                 =
-//==============================================================================
-
-//==============================================================================
 DebugDrawer::DebugDrawer()
 {
 }
 
-//==============================================================================
 DebugDrawer::~DebugDrawer()
 {
 }
 
-//==============================================================================
 Error DebugDrawer::init(Renderer* r)
 {
 	m_r = r;
 	GrManager& gr = r->getGrManager();
 
 	// Create the pipelines
-	ANKI_CHECK(
-		r->getResourceManager().loadResource("shaders/Dbg.vert.glsl", m_vert));
-	ANKI_CHECK(
-		r->getResourceManager().loadResource("shaders/Dbg.frag.glsl", m_frag));
+	ANKI_CHECK(r->getResourceManager().loadResource("shaders/Dbg.vert.glsl", m_vert));
+	ANKI_CHECK(r->getResourceManager().loadResource("shaders/Dbg.frag.glsl", m_frag));
 
 	PipelineInitInfo init;
 	init.m_vertex.m_bindingCount = 1;
 	init.m_vertex.m_bindings[0].m_stride = 2 * sizeof(Vec4);
 	init.m_vertex.m_attributeCount = 2;
-	init.m_vertex.m_attributes[0].m_format =
-		PixelFormat(ComponentFormat::R32G32B32A32, TransformFormat::FLOAT);
+	init.m_vertex.m_attributes[0].m_format = PixelFormat(ComponentFormat::R32G32B32A32, TransformFormat::FLOAT);
 	init.m_vertex.m_attributes[0].m_offset = 0;
 	init.m_vertex.m_attributes[0].m_binding = 0;
-	init.m_vertex.m_attributes[1].m_format =
-		PixelFormat(ComponentFormat::R32G32B32A32, TransformFormat::FLOAT);
+	init.m_vertex.m_attributes[1].m_format = PixelFormat(ComponentFormat::R32G32B32A32, TransformFormat::FLOAT);
 	init.m_vertex.m_attributes[1].m_offset = sizeof(Vec4);
 	init.m_vertex.m_attributes[1].m_binding = 0;
 	init.m_inputAssembler.m_topology = PrimitiveTopology::LINES;
@@ -67,12 +56,10 @@ Error DebugDrawer::init(Renderer* r)
 	getPpline(true, PrimitiveTopology::LINES) = gr.newInstance<Pipeline>(init);
 
 	init.m_inputAssembler.m_topology = PrimitiveTopology::TRIANGLES;
-	getPpline(true, PrimitiveTopology::TRIANGLES) =
-		gr.newInstance<Pipeline>(init);
+	getPpline(true, PrimitiveTopology::TRIANGLES) = gr.newInstance<Pipeline>(init);
 
 	init.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
-	getPpline(false, PrimitiveTopology::TRIANGLES) =
-		gr.newInstance<Pipeline>(init);
+	getPpline(false, PrimitiveTopology::TRIANGLES) = gr.newInstance<Pipeline>(init);
 
 	init.m_inputAssembler.m_topology = PrimitiveTopology::LINES;
 	getPpline(false, PrimitiveTopology::LINES) = gr.newInstance<Pipeline>(init);
@@ -80,9 +67,8 @@ Error DebugDrawer::init(Renderer* r)
 	// Create the vert buffs
 	for(BufferPtr& v : m_vertBuff)
 	{
-		v = gr.newInstance<Buffer>(sizeof(Vertex) * MAX_VERTS_PER_FRAME,
-			BufferUsageBit::VERTEX,
-			BufferMapAccessBit::WRITE);
+		v = gr.newInstance<Buffer>(
+			sizeof(Vertex) * MAX_VERTS_PER_FRAME, BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE);
 	}
 
 	// Create the resouce groups
@@ -101,16 +87,13 @@ Error DebugDrawer::init(Renderer* r)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void DebugDrawer::prepareFrame(CommandBufferPtr& jobs)
 {
 	m_cmdb = jobs;
 
 	U frame = m_r->getFrameCount() % MAX_FRAMES_IN_FLIGHT;
-	void* mapped = m_vertBuff[frame]->map(
-		0, MAX_VERTS_PER_FRAME * sizeof(Vertex), BufferMapAccessBit::WRITE);
-	m_clientVerts =
-		WeakArray<Vertex>(static_cast<Vertex*>(mapped), MAX_VERTS_PER_FRAME);
+	void* mapped = m_vertBuff[frame]->map(0, MAX_VERTS_PER_FRAME * sizeof(Vertex), BufferMapAccessBit::WRITE);
+	m_clientVerts = WeakArray<Vertex>(static_cast<Vertex*>(mapped), MAX_VERTS_PER_FRAME);
 
 	m_cmdb->bindResourceGroup(m_rcGroup[frame], 0, nullptr);
 
@@ -118,7 +101,6 @@ void DebugDrawer::prepareFrame(CommandBufferPtr& jobs)
 	m_crntDrawVertCount = 0;
 }
 
-//==============================================================================
 void DebugDrawer::finishFrame()
 {
 	U frame = m_r->getFrameCount() % MAX_FRAMES_IN_FLIGHT;
@@ -129,25 +111,21 @@ void DebugDrawer::finishFrame()
 	m_cmdb = CommandBufferPtr(); // Release job chain
 }
 
-//==============================================================================
 void DebugDrawer::setModelMatrix(const Mat4& m)
 {
 	m_mMat = m;
 	m_mvpMat = m_vpMat * m_mMat;
 }
 
-//==============================================================================
 void DebugDrawer::setViewProjectionMatrix(const Mat4& m)
 {
 	m_vpMat = m;
 	m_mvpMat = m_vpMat * m_mMat;
 }
 
-//==============================================================================
 void DebugDrawer::begin(PrimitiveTopology topology)
 {
-	ANKI_ASSERT(topology == PrimitiveTopology::LINES
-		|| topology == PrimitiveTopology::TRIANGLES);
+	ANKI_ASSERT(topology == PrimitiveTopology::LINES || topology == PrimitiveTopology::TRIANGLES);
 
 	if(topology != m_primitive)
 	{
@@ -157,12 +135,10 @@ void DebugDrawer::begin(PrimitiveTopology topology)
 	m_primitive = topology;
 }
 
-//==============================================================================
 void DebugDrawer::end()
 {
 }
 
-//==============================================================================
 void DebugDrawer::pushBackVertex(const Vec3& pos)
 {
 	if(m_frameVertCount < MAX_VERTS_PER_FRAME)
@@ -179,7 +155,6 @@ void DebugDrawer::pushBackVertex(const Vec3& pos)
 	}
 }
 
-//==============================================================================
 void DebugDrawer::flush()
 {
 	if(m_crntDrawVertCount > 0)
@@ -201,7 +176,6 @@ void DebugDrawer::flush()
 	}
 }
 
-//==============================================================================
 void DebugDrawer::drawLine(const Vec3& from, const Vec3& to, const Vec4& color)
 {
 	setColor(color);
@@ -211,7 +185,6 @@ void DebugDrawer::drawLine(const Vec3& from, const Vec3& to, const Vec4& color)
 	end();
 }
 
-//==============================================================================
 void DebugDrawer::drawGrid()
 {
 	Vec4 col0(0.5, 0.5, 0.5, 1.0);
@@ -272,15 +245,13 @@ void DebugDrawer::drawGrid()
 	end();
 }
 
-//==============================================================================
 void DebugDrawer::drawSphere(F32 radius, I complexity)
 {
 #if 1
 	Mat4 oldMMat = m_mMat;
 	Mat4 oldVpMat = m_vpMat;
 
-	setModelMatrix(
-		m_mMat * Mat4(Vec4(0.0, 0.0, 0.0, 1.0), Mat3::getIdentity(), radius));
+	setModelMatrix(m_mMat * Mat4(Vec4(0.0, 0.0, 0.0, 1.0), Mat3::getIdentity(), radius));
 
 	begin(PrimitiveTopology::LINES);
 
@@ -318,7 +289,6 @@ void DebugDrawer::drawSphere(F32 radius, I complexity)
 #endif
 }
 
-//==============================================================================
 void DebugDrawer::drawCube(F32 size)
 {
 	Vec3 maxPos = Vec3(0.5 * size);
@@ -335,30 +305,7 @@ void DebugDrawer::drawCube(F32 size)
 		Vec3(maxPos.x(), minPos.y(), minPos.z()) // right bottom back
 	}};
 
-	static const Array<U32, 24> indeces = {{0,
-		1,
-		1,
-		2,
-		2,
-		3,
-		3,
-		0,
-		4,
-		5,
-		5,
-		6,
-		6,
-		7,
-		7,
-		4,
-		0,
-		4,
-		1,
-		5,
-		2,
-		6,
-		3,
-		7}};
+	static const Array<U32, 24> indeces = {{0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6, 6, 7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7}};
 
 	begin(PrimitiveTopology::LINES);
 	for(U32 id : indeces)
@@ -368,19 +315,12 @@ void DebugDrawer::drawCube(F32 size)
 	end();
 }
 
-//==============================================================================
-// CollisionDebugDrawer                                                        =
-//==============================================================================
-
-//==============================================================================
 void CollisionDebugDrawer::visit(const Sphere& sphere)
 {
-	m_dbg->setModelMatrix(
-		Mat4(sphere.getCenter().xyz1(), Mat3::getIdentity(), 1.0));
+	m_dbg->setModelMatrix(Mat4(sphere.getCenter().xyz1(), Mat3::getIdentity(), 1.0));
 	m_dbg->drawSphere(sphere.getRadius());
 }
 
-//==============================================================================
 void CollisionDebugDrawer::visit(const Obb& obb)
 {
 	Mat4 scale(Mat4::getIdentity());
@@ -394,7 +334,6 @@ void CollisionDebugDrawer::visit(const Obb& obb)
 	m_dbg->drawCube(2.0);
 }
 
-//==============================================================================
 void CollisionDebugDrawer::visit(const Plane& plane)
 {
 	Vec3 n = plane.getNormal().xyz();
@@ -409,7 +348,6 @@ void CollisionDebugDrawer::visit(const Plane& plane)
 	m_dbg->drawGrid();
 }
 
-//==============================================================================
 void CollisionDebugDrawer::visit(const LineSegment& ls)
 {
 	m_dbg->setModelMatrix(Mat4::getIdentity());
@@ -419,7 +357,6 @@ void CollisionDebugDrawer::visit(const LineSegment& ls)
 	m_dbg->end();
 }
 
-//==============================================================================
 void CollisionDebugDrawer::visit(const Aabb& aabb)
 {
 	Vec3 min = aabb.getMin().xyz();
@@ -439,7 +376,6 @@ void CollisionDebugDrawer::visit(const Aabb& aabb)
 	m_dbg->drawCube();
 }
 
-//==============================================================================
 void CollisionDebugDrawer::visit(const Frustum& f)
 {
 	switch(f.getType())
@@ -449,8 +385,7 @@ void CollisionDebugDrawer::visit(const Frustum& f)
 		break;
 	case Frustum::Type::PERSPECTIVE:
 	{
-		const PerspectiveFrustum& pf =
-			static_cast<const PerspectiveFrustum&>(f);
+		const PerspectiveFrustum& pf = static_cast<const PerspectiveFrustum&>(f);
 
 		F32 camLen = pf.getFar();
 		F32 tmp0 = camLen / tan((getPi<F32>() - pf.getFovX()) * 0.5) + 0.001;
@@ -477,7 +412,6 @@ void CollisionDebugDrawer::visit(const Frustum& f)
 	}
 }
 
-//==============================================================================
 void CollisionDebugDrawer::visit(const CompoundShape& cs)
 {
 	CollisionDebugDrawer* self = this;
@@ -488,7 +422,6 @@ void CollisionDebugDrawer::visit(const CompoundShape& cs)
 	(void)err;
 }
 
-//==============================================================================
 void CollisionDebugDrawer::visit(const ConvexHullShape& hull)
 {
 	m_dbg->setModelMatrix(Mat4(hull.getTransform()));
@@ -503,11 +436,7 @@ void CollisionDebugDrawer::visit(const ConvexHullShape& hull)
 	m_dbg->end();
 }
 
-//==============================================================================
-// PhysicsDebugDrawer                                                          =
-//==============================================================================
-void PhysicsDebugDrawer::drawLines(
-	const Vec3* lines, const U32 linesCount, const Vec4& color)
+void PhysicsDebugDrawer::drawLines(const Vec3* lines, const U32 linesCount, const Vec4& color)
 {
 	m_dbg->begin(PrimitiveTopology::LINES);
 	m_dbg->setColor(color);
@@ -518,11 +447,6 @@ void PhysicsDebugDrawer::drawLines(
 	m_dbg->end();
 }
 
-//==============================================================================
-// SceneDebugDrawer                                                            =
-//==============================================================================
-
-//==============================================================================
 void SceneDebugDrawer::draw(FrustumComponent& fr) const
 {
 	const Frustum& fs = fr.getFrustum();
@@ -532,7 +456,6 @@ void SceneDebugDrawer::draw(FrustumComponent& fr) const
 	fs.accept(coldraw);
 }
 
-//==============================================================================
 void SceneDebugDrawer::draw(SpatialComponent& x) const
 {
 	if(!x.getVisibleByCamera())
@@ -545,7 +468,6 @@ void SceneDebugDrawer::draw(SpatialComponent& x) const
 	x.getAabb().accept(coldraw);
 }
 
-//==============================================================================
 void SceneDebugDrawer::draw(const SectorComponent& c) const
 {
 	const SceneNode& node = c.getSceneNode();
@@ -574,7 +496,6 @@ void SceneDebugDrawer::draw(const SectorComponent& c) const
 	m_dbg->end();
 }
 
-//==============================================================================
 void SceneDebugDrawer::draw(const PortalComponent& c) const
 {
 	const SceneNode& node = c.getSceneNode();
@@ -603,7 +524,6 @@ void SceneDebugDrawer::draw(const PortalComponent& c) const
 	m_dbg->end();
 }
 
-//==============================================================================
 void SceneDebugDrawer::drawPath(const Path& path) const
 {
 	/*const U count = path.getPoints().size();
@@ -621,7 +541,6 @@ void SceneDebugDrawer::drawPath(const Path& path) const
 	m_dbg->end();*/
 }
 
-//==============================================================================
 void SceneDebugDrawer::draw(const ReflectionProxyComponent& proxy) const
 {
 	m_dbg->setModelMatrix(Mat4::getIdentity());

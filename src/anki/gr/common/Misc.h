@@ -37,22 +37,15 @@ inline TransientBufferType bufferUsageToTransient(BufferUsageBit bit)
 	}
 	else
 	{
-		ANKI_ASSERT(!!(bit & (BufferUsageBit::BUFFER_UPLOAD_SOURCE
-								 | BufferUsageBit::TEXTURE_UPLOAD_SOURCE)));
+		ANKI_ASSERT(!!(bit & (BufferUsageBit::BUFFER_UPLOAD_SOURCE | BufferUsageBit::TEXTURE_UPLOAD_SOURCE)));
 		return TransientBufferType::TRANSFER;
 	}
 }
 
 /// Internal function that logs a shader error.
-void logShaderErrorCode(const CString& error,
-	const CString& source,
-	GenericMemoryPoolAllocator<U8> alloc);
+void logShaderErrorCode(const CString& error, const CString& source, GenericMemoryPoolAllocator<U8> alloc);
 
-inline void checkTextureSurface(TextureType type,
-	U depth,
-	U mipCount,
-	U layerCount,
-	const TextureSurfaceInfo& surf)
+inline void checkTextureSurface(TextureType type, U depth, U mipCount, U layerCount, const TextureSurfaceInfo& surf)
 {
 	ANKI_ASSERT(surf.m_level < mipCount);
 	switch(type)
@@ -64,16 +57,13 @@ inline void checkTextureSurface(TextureType type,
 		ANKI_ASSERT(surf.m_depth == 0 && surf.m_face < 6 && surf.m_layer == 0);
 		break;
 	case TextureType::_3D:
-		ANKI_ASSERT(
-			surf.m_depth < depth && surf.m_face == 0 && surf.m_layer == 0);
+		ANKI_ASSERT(surf.m_depth < depth && surf.m_face == 0 && surf.m_layer == 0);
 		break;
 	case TextureType::_2D_ARRAY:
-		ANKI_ASSERT(
-			surf.m_depth == 0 && surf.m_face == 0 && surf.m_layer < layerCount);
+		ANKI_ASSERT(surf.m_depth == 0 && surf.m_face == 0 && surf.m_layer < layerCount);
 		break;
 	case TextureType::CUBE_ARRAY:
-		ANKI_ASSERT(
-			surf.m_depth == 0 && surf.m_face < 6 && surf.m_layer < layerCount);
+		ANKI_ASSERT(surf.m_depth == 0 && surf.m_face < 6 && surf.m_layer < layerCount);
 		break;
 	default:
 		ANKI_ASSERT(0);
@@ -86,11 +76,7 @@ Bool textureInitInfoValid(const TextureInitInfo& inf);
 Bool framebufferInitInfoValid(const FramebufferInitInfo& inf);
 
 /// Compute the size of a single surface.
-void getFormatInfo(const PixelFormat& fmt,
-	U& texelComponents,
-	U& texelBytes,
-	U& blockSize,
-	U& blockBytes);
+void getFormatInfo(const PixelFormat& fmt, U& texelComponents, U& texelBytes, U& blockSize, U& blockBytes);
 
 /// Compute the size of the surface.
 PtrSize computeSurfaceSize(U width, U height, const PixelFormat& fmt);

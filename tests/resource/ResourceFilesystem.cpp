@@ -10,7 +10,6 @@
 namespace anki
 {
 
-//==============================================================================
 ANKI_TEST(Resource, ResourceFilesystem)
 {
 	printf("Test requires the data dir\n");

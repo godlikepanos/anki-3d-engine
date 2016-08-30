@@ -32,9 +32,9 @@ class ResourceGroupInitInfo;
 template<typename T>
 using GrObjectPtr = IntrusivePtr<T, DefaultPtrDeleter<T>>;
 
-#define ANKI_GR_CLASS(x_)                                                      \
-	class x_##Impl;                                                            \
-	class x_;                                                                  \
+#define ANKI_GR_CLASS(x_)                                                                                              \
+	class x_##Impl;                                                                                                    \
+	class x_;                                                                                                          \
 	using x_##Ptr = GrObjectPtr<x_>;
 
 ANKI_GR_CLASS(Buffer)
@@ -169,13 +169,17 @@ class TransientMemoryToken
 anki_internal:
 	PtrSize m_offset = 0;
 	PtrSize m_range = 0;
-	TransientMemoryTokenLifetime m_lifetime =
-		TransientMemoryTokenLifetime::PER_FRAME;
+	TransientMemoryTokenLifetime m_lifetime = TransientMemoryTokenLifetime::PER_FRAME;
 	BufferUsageBit m_usage = BufferUsageBit::NONE;
 
 	void markUnused()
 	{
 		m_offset = m_range = MAX_U32;
+	}
+
+	Bool isUnused() const
+	{
+		return m_offset == MAX_U32 && m_range == MAX_U32;
 	}
 };
 

@@ -11,18 +11,15 @@
 namespace anki
 {
 
-//==============================================================================
 Buffer::Buffer(GrManager* manager, U64 hash)
 	: GrObject(manager, CLASS_TYPE, hash)
 {
 }
 
-//==============================================================================
 Buffer::~Buffer()
 {
 }
 
-//==============================================================================
 class BufferCreateCommand final : public GlCommand
 {
 public:
@@ -31,10 +28,7 @@ public:
 	BufferUsageBit m_usage;
 	BufferMapAccessBit m_access;
 
-	BufferCreateCommand(Buffer* buff,
-		PtrSize size,
-		BufferUsageBit usage,
-		BufferMapAccessBit access)
+	BufferCreateCommand(Buffer* buff, PtrSize size, BufferUsageBit usage, BufferMapAccessBit access)
 		: m_buff(buff)
 		, m_size(size)
 		, m_usage(usage)
@@ -48,8 +42,7 @@ public:
 
 		impl.init(m_size, m_usage, m_access);
 
-		GlObject::State oldState =
-			impl.setStateAtomically(GlObject::State::CREATED);
+		GlObject::State oldState = impl.setStateAtomically(GlObject::State::CREATED);
 
 		(void)oldState;
 		ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
@@ -62,15 +55,12 @@ void Buffer::init(PtrSize size, BufferUsageBit usage, BufferMapAccessBit access)
 {
 	m_impl.reset(getAllocator().newInstance<BufferImpl>(&getManager()));
 
-	CommandBufferPtr cmdb =
-		getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
+	CommandBufferPtr cmdb = getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
 
-	cmdb->getImplementation().pushBackNewCommand<BufferCreateCommand>(
-		this, size, usage, access);
+	cmdb->getImplementation().pushBackNewCommand<BufferCreateCommand>(this, size, usage, access);
 	cmdb->flush();
 }
 
-//==============================================================================
 void* Buffer::map(PtrSize offset, PtrSize range, BufferMapAccessBit access)
 {
 	// Wait for its creation
@@ -94,7 +84,6 @@ void* Buffer::map(PtrSize offset, PtrSize range, BufferMapAccessBit access)
 	return static_cast<void*>(ptr);
 }
 
-//==============================================================================
 void Buffer::unmap()
 {
 #if ANKI_ASSERTIONS

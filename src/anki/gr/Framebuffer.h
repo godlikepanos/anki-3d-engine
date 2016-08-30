@@ -24,8 +24,7 @@ public:
 	AttachmentLoadOperation m_loadOperation = AttachmentLoadOperation::CLEAR;
 	AttachmentStoreOperation m_storeOperation = AttachmentStoreOperation::STORE;
 	ClearValue m_clearValue;
-	TextureUsageBit m_usageInsideRenderPass =
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
+	TextureUsageBit m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
 
 	FramebufferAttachmentInfo() = default;
 
@@ -47,8 +46,8 @@ public:
 	}
 };
 
-/// Framebuffer initializer. If you require the default framebuffer then set
-/// m_colorAttachmentCount to 1 and don't set a color texture.
+/// Framebuffer initializer. If you require the default framebuffer then set m_colorAttachmentCount to 1 and don't set a
+/// color texture.
 class FramebufferInitInfo
 {
 public:
@@ -79,8 +78,7 @@ public:
 
 	Bool refersToDefaultFramebuffer() const
 	{
-		return m_colorAttachmentCount == 1
-			&& !m_colorAttachments[0].m_texture.isCreated();
+		return m_colorAttachmentCount == 1 && !m_colorAttachments[0].m_texture.isCreated();
 	}
 };
 

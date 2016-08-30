@@ -16,10 +16,6 @@
 namespace anki
 {
 
-//==============================================================================
-// WindowingBackend                                                            =
-//==============================================================================
-
 /// SDL implementation of WindowingBackend
 class WindowingBackend
 {
@@ -45,20 +41,16 @@ public:
 
 		if(init.m_config->getNumber("debugContext"))
 		{
-			if(SDL_GL_SetAttribute(
-				   SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG))
+			if(SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG))
 			{
 				ANKI_LOGE("SDL_GL_SetAttribute() failed");
 				return ErrorCode::FUNCTION_FAILED;
 			}
 		}
 
-		if(SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION,
-			   init.m_config->getNumber("glmajor"))
-			|| SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION,
-				   init.m_config->getNumber("glminor"))
-			|| SDL_GL_SetAttribute(
-				   SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE))
+		if(SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, init.m_config->getNumber("glmajor"))
+			|| SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, init.m_config->getNumber("glminor"))
+			|| SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE))
 		{
 			ANKI_LOGE("SDL_GL_SetAttribute() failed");
 			return ErrorCode::FUNCTION_FAILED;
@@ -96,11 +88,6 @@ public:
 	}
 };
 
-//==============================================================================
-// GrManagerImpl                                                               =
-//==============================================================================
-
-//==============================================================================
 Error GrManagerImpl::createBackend(GrManagerInitInfo& init)
 {
 	ANKI_ASSERT(m_backend == nullptr);
@@ -109,7 +96,6 @@ Error GrManagerImpl::createBackend(GrManagerInitInfo& init)
 	return m_backend->createContext(init);
 }
 
-//==============================================================================
 void GrManagerImpl::destroyBackend()
 {
 	if(m_backend)
@@ -118,14 +104,12 @@ void GrManagerImpl::destroyBackend()
 	}
 }
 
-//==============================================================================
 void GrManagerImpl::swapBuffers()
 {
 	ANKI_ASSERT(m_backend);
 	m_backend->swapBuffers();
 }
 
-//==============================================================================
 void GrManagerImpl::pinContextToCurrentThread(Bool pin)
 {
 	ANKI_ASSERT(m_backend);

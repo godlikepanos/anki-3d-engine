@@ -18,19 +18,16 @@ layout(std140, ANKI_UBO_BINDING(0, 0)) uniform ubo0_
 
 layout(location = 0) out vec3 out_color;
 
-//==============================================================================
 vec3 fog(vec2 uv)
 {
 	float depth = textureLod(u_msDepthRt, uv, 1.0).r;
 
-	float linearDepth =
-		linearizeDepthOptimal(depth, u_linearizePad2.x, u_linearizePad2.y);
+	float linearDepth = linearizeDepthOptimal(depth, u_linearizePad2.x, u_linearizePad2.y);
 
 	float t = linearDepth * u_fogColorFogFactor.w;
 	return dither(u_fogColorFogFactor.rgb * t, 4.0);
 }
 
-//==============================================================================
 void main()
 {
 	out_color = fog(in_uv);

@@ -22,19 +22,16 @@
 namespace anki
 {
 
-//==============================================================================
 MainRenderer::MainRenderer()
 {
 }
 
-//==============================================================================
 MainRenderer::~MainRenderer()
 {
 	ANKI_LOGI("Destroying main renderer");
 	m_materialShaderSource.destroy(m_alloc);
 }
 
-//==============================================================================
 Error MainRenderer::create(ThreadPool* threadpool,
 	ResourceManager* resources,
 	GrManager* gr,
@@ -46,23 +43,20 @@ Error MainRenderer::create(ThreadPool* threadpool,
 	ANKI_LOGI("Initializing main renderer");
 
 	m_alloc = HeapAllocator<U8>(allocCb, allocCbUserData);
-	m_frameAlloc =
-		StackAllocator<U8>(allocCb, allocCbUserData, 1024 * 1024 * 10, 1.0);
+	m_frameAlloc = StackAllocator<U8>(allocCb, allocCbUserData, 1024 * 1024 * 10, 1.0);
 
 	// Init default FB
 	m_width = config.getNumber("width");
 	m_height = config.getNumber("height");
 	FramebufferInitInfo fbInit;
 	fbInit.m_colorAttachmentCount = 1;
-	fbInit.m_colorAttachments[0].m_loadOperation =
-		AttachmentLoadOperation::DONT_CARE;
+	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
 	m_defaultFb = gr->newInstance<Framebuffer>(fbInit);
 
 	// Init renderer and manipulate the width/height
 	ConfigSet config2 = config;
 	m_renderingQuality = config.getNumber("renderingQuality");
-	UVec2 size(
-		m_renderingQuality * F32(m_width), m_renderingQuality * F32(m_height));
+	UVec2 size(m_renderingQuality * F32(m_width), m_renderingQuality * F32(m_height));
 	size.x() = getAlignedRoundDown(TILE_SIZE, size.x() / 2) * 2;
 	size.y() = getAlignedRoundDown(TILE_SIZE, size.y() / 2) * 2;
 
@@ -72,14 +66,7 @@ Error MainRenderer::create(ThreadPool* threadpool,
 	m_rDrawToDefaultFb = m_renderingQuality == 1.0;
 
 	m_r.reset(m_alloc.newInstance<Renderer>());
-	ANKI_CHECK(m_r->init(threadpool,
-		resources,
-		gr,
-		m_alloc,
-		m_frameAlloc,
-		config2,
-		globTimestamp,
-		m_rDrawToDefaultFb));
+	ANKI_CHECK(m_r->init(threadpool, resources, gr, m_alloc, m_frameAlloc, config2, globTimestamp, m_rDrawToDefaultFb));
 
 	// Set the default preprocessor string
 	m_materialShaderSource.sprintf(m_alloc,
@@ -93,13 +80,11 @@ Error MainRenderer::create(ThreadPool* threadpool,
 	// Init other
 	if(!m_rDrawToDefaultFb)
 	{
-		ANKI_CHECK(m_r->getResourceManager().loadResource(
-			"shaders/Final.frag.glsl", m_blitFrag));
+		ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/Final.frag.glsl", m_blitFrag));
 
 		ColorStateInfo colorState;
 		colorState.m_attachmentCount = 1;
-		m_r->createDrawQuadPipeline(
-			m_blitFrag->getGrShader(), colorState, m_blitPpline);
+		m_r->createDrawQuadPipeline(m_blitFrag->getGrShader(), colorState, m_blitPpline);
 
 		// Init RC group
 		ResourceGroupInitInfo rcinit;
@@ -109,13 +94,11 @@ Error MainRenderer::create(ThreadPool* threadpool,
 				  "renderer's result");
 	}
 
-	ANKI_LOGI(
-		"Main renderer initialized. Rendering size %ux%u", m_width, m_height);
+	ANKI_LOGI("Main renderer initialized. Rendering size %ux%u", m_width, m_height);
 
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error MainRenderer::render(SceneGraph& scene)
 {
 	ANKI_TRACE_START_EVENT(RENDER);
@@ -142,8 +125,7 @@ Error MainRenderer::render(SceneGraph& scene)
 	}
 
 	ctx.m_commandBuffer = cmdb;
-	ctx.m_frustumComponent =
-		&scene.getActiveCamera().getComponent<FrustumComponent>();
+	ctx.m_frustumComponent = &scene.getActiveCamera().getComponent<FrustumComponent>();
 	ANKI_CHECK(m_r->render(ctx));
 
 	// Blit renderer's result to default FB if needed
@@ -170,13 +152,11 @@ Error MainRenderer::render(SceneGraph& scene)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Dbg& MainRenderer::getDbg()
 {
 	return m_r->getDbg();
 }
 
-//==============================================================================
 F32 MainRenderer::getAspectRatio() const
 {
 	return m_r->getAspectRatio();

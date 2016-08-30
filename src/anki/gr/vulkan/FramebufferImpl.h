@@ -76,8 +76,7 @@ private:
 
 	ANKI_USE_RESULT Error initRenderPass(const FramebufferInitInfo& init);
 
-	void setupAttachmentDescriptor(
-		const FramebufferAttachmentInfo& in, VkAttachmentDescription& out);
+	void setupAttachmentDescriptor(const FramebufferAttachmentInfo& in, VkAttachmentDescription& out);
 
 	ANKI_USE_RESULT Error initFramebuffer(const FramebufferInitInfo& init);
 };

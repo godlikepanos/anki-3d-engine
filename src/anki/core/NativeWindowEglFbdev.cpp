@@ -11,11 +11,6 @@
 namespace anki
 {
 
-//==============================================================================
-// NativeWindowImpl                                                            =
-//==============================================================================
-
-//==============================================================================
 void NativeWindowImpl::create(NativeWindowInitInfo& init)
 {
 	// Create window
@@ -84,9 +79,7 @@ void NativeWindowImpl::create(NativeWindowInitInfo& init)
 	attribs[attr++] = EGL_NONE;
 
 	EGLint configsCount;
-	if(eglChooseConfig(
-		   display, &attribs[0], &configs[0], maxConfigs, &configsCount)
-		== EGL_FALSE)
+	if(eglChooseConfig(display, &attribs[0], &configs[0], maxConfigs, &configsCount) == EGL_FALSE)
 	{
 		throw ANKI_EXCEPTION("Failed to query required EGL configs");
 	}
@@ -158,8 +151,7 @@ void NativeWindowImpl::create(NativeWindowInitInfo& init)
 
 	// Surface
 	//
-	surface = eglCreateWindowSurface(
-		display, config_, static_cast<EGLNativeWindowType>(fbwin), NULL);
+	surface = eglCreateWindowSurface(display, config_, static_cast<EGLNativeWindowType>(fbwin), NULL);
 
 	if(surface == EGL_NO_SURFACE)
 	{
@@ -183,22 +175,15 @@ void NativeWindowImpl::create(NativeWindowInitInfo& init)
 	}
 }
 
-//==============================================================================
 void NativeWindowImpl::destroy()
 {
 	// XXX
 }
 
-//==============================================================================
-// NativeWindow                                                                =
-//==============================================================================
-
-//==============================================================================
 NativeWindow::~NativeWindow()
 {
 }
 
-//==============================================================================
 void NativeWindow::init(NativeWindowInitInfo& initializer)
 {
 	impl.reset(new NativeWindowImpl);
@@ -210,13 +195,11 @@ void NativeWindow::init(NativeWindowInitInfo& initializer)
 	height = initializer.height;
 }
 
-//==============================================================================
 void NativeWindow::destroy()
 {
 	impl.reset();
 }
 
-//==============================================================================
 void NativeWindow::swapBuffers()
 {
 	ANKI_ASSERT(isCreated());

@@ -18,12 +18,11 @@ namespace anki
 template<typename T>
 ShaderVariableDataType getShaderVariableTypeFromTypename();
 
-#define ANKI_SPECIALIZE_SHADER_VAR_TYPE_GET(typename_, type_)                  \
-	template<>                                                                 \
-	inline ShaderVariableDataType                                              \
-	getShaderVariableTypeFromTypename<typename_>()                             \
-	{                                                                          \
-		return ShaderVariableDataType::type_;                                  \
+#define ANKI_SPECIALIZE_SHADER_VAR_TYPE_GET(typename_, type_)                                                          \
+	template<>                                                                                                         \
+	inline ShaderVariableDataType getShaderVariableTypeFromTypename<typename_>()                                       \
+	{                                                                                                                  \
+		return ShaderVariableDataType::type_;                                                                          \
 	}
 
 ANKI_SPECIALIZE_SHADER_VAR_TYPE_GET(F32, FLOAT)
@@ -46,8 +45,7 @@ public:
 	/// Stride between the each array element if the variable is array.
 	I16 m_arrayStride = -1;
 
-	/// Identifying the stride between columns of a column-major matrix or rows
-	/// of a row-major matrix.
+	/// Identifying the stride between columns of a column-major matrix or rows of a row-major matrix.
 	I16 m_matrixStride = -1;
 };
 

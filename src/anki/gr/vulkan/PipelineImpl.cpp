@@ -11,10 +11,6 @@
 namespace anki
 {
 
-//==============================================================================
-// Misc                                                                        =
-//==============================================================================
-
 /// Pre-filled VkGraphicsPipelineCreateInfo
 class FilledGraphicsPipelineCreateInfo : public VkGraphicsPipelineCreateInfo
 {
@@ -29,8 +25,7 @@ public:
 	VkPipelineRasterizationStateCreateInfo m_rast;
 	VkPipelineMultisampleStateCreateInfo m_ms;
 	VkPipelineDepthStencilStateCreateInfo m_ds;
-	Array<VkPipelineColorBlendAttachmentState, MAX_COLOR_ATTACHMENTS>
-		m_attachments;
+	Array<VkPipelineColorBlendAttachmentState, MAX_COLOR_ATTACHMENTS> m_attachments;
 	VkPipelineColorBlendStateCreateInfo m_color;
 	VkPipelineDynamicStateCreateInfo m_dyn;
 
@@ -45,41 +40,24 @@ public:
 			stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 		}
 
-		m_vertex.sType =
-			VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+		m_vertex.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 		m_vertex.pVertexBindingDescriptions = &m_bindings[0];
 		m_vertex.pVertexAttributeDescriptions = &m_attribs[0];
 
-		m_ia.sType =
-			VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-
-		m_tess.sType =
-			VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
-
+		m_ia.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+		m_tess.sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
 		m_vp.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-
-		m_rast.sType =
-			VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-
+		m_rast.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 		m_ms.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-
 		m_ds.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-
-		m_color.sType =
-			VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+		m_color.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
 		m_color.pAttachments = &m_attachments[0];
-
 		m_dyn.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 	}
 };
 
 static const FilledGraphicsPipelineCreateInfo FILLED;
 
-//==============================================================================
-// PipelineImpl                                                                =
-//==============================================================================
-
-//==============================================================================
 PipelineImpl::~PipelineImpl()
 {
 	if(m_handle)
@@ -88,7 +66,6 @@ PipelineImpl::~PipelineImpl()
 	}
 }
 
-//==============================================================================
 Error PipelineImpl::initGraphics(const PipelineInitInfo& init)
 {
 	FilledGraphicsPipelineCreateInfo ci = FILLED;
@@ -98,10 +75,8 @@ Error PipelineImpl::initGraphics(const PipelineInitInfo& init)
 
 	// Init sub-states
 	ci.pVertexInputState = initVertexStage(init.m_vertex, ci.m_vertex);
-	ci.pInputAssemblyState =
-		initInputAssemblyState(init.m_inputAssembler, ci.m_ia);
-	ci.pTessellationState =
-		initTessellationState(init.m_tessellation, ci.m_tess);
+	ci.pInputAssemblyState = initInputAssemblyState(init.m_inputAssembler, ci.m_ia);
+	ci.pTessellationState = initTessellationState(init.m_tessellation, ci.m_tess);
 	ci.pViewportState = initViewportState(ci.m_vp);
 	ci.pRasterizationState = initRasterizerState(init.m_rasterizer, ci.m_rast);
 	ci.pMultisampleState = initMsState(ci.m_ms);
@@ -111,18 +86,14 @@ Error PipelineImpl::initGraphics(const PipelineInitInfo& init)
 
 	// Finalize
 	ci.layout = getGrManagerImpl().getGlobalPipelineLayout();
-	ci.renderPass = getGrManagerImpl()
-						.getCompatibleRenderPassCreator()
-						.getOrCreateCompatibleRenderPass(init);
+	ci.renderPass = getGrManagerImpl().getCompatibleRenderPassCreator().getOrCreateCompatibleRenderPass(init);
 	ci.basePipelineHandle = VK_NULL_HANDLE;
 
-	ANKI_VK_CHECK(vkCreateGraphicsPipelines(
-		getDevice(), nullptr, 1, &ci, nullptr, &m_handle));
+	ANKI_VK_CHECK(vkCreateGraphicsPipelines(getDevice(), nullptr, 1, &ci, nullptr, &m_handle));
 
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error PipelineImpl::initCompute(const PipelineInitInfo& init)
 {
 	VkComputePipelineCreateInfo ci = {};
@@ -133,39 +104,31 @@ Error PipelineImpl::initCompute(const PipelineInitInfo& init)
 	VkPipelineShaderStageCreateInfo& stage = ci.stage;
 	stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	stage.stage = VK_SHADER_STAGE_COMPUTE_BIT;
-	stage.module =
-		init.m_shaders[ShaderType::COMPUTE]->getImplementation().m_handle;
+	stage.module = init.m_shaders[ShaderType::COMPUTE]->getImplementation().m_handle;
 	stage.pName = "main";
 	stage.pSpecializationInfo = nullptr;
 
-	ANKI_VK_CHECK(vkCreateComputePipelines(
-		getDevice(), nullptr, 1, &ci, nullptr, &m_handle));
+	ANKI_VK_CHECK(vkCreateComputePipelines(getDevice(), nullptr, 1, &ci, nullptr, &m_handle));
 
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
-void PipelineImpl::initShaders(
-	const PipelineInitInfo& init, VkGraphicsPipelineCreateInfo& ci)
+void PipelineImpl::initShaders(const PipelineInitInfo& init, VkGraphicsPipelineCreateInfo& ci)
 {
 	ci.stageCount = 0;
 
-	for(ShaderType type = ShaderType::FIRST_GRAPHICS;
-		type <= ShaderType::LAST_GRAPHICS;
-		++type)
+	for(ShaderType type = ShaderType::FIRST_GRAPHICS; type <= ShaderType::LAST_GRAPHICS; ++type)
 	{
 		if(!init.m_shaders[type].isCreated())
 		{
 			continue;
 		}
 
-		ANKI_ASSERT(
-			init.m_shaders[type]->getImplementation().m_shaderType == type);
+		ANKI_ASSERT(init.m_shaders[type]->getImplementation().m_shaderType == type);
 		ANKI_ASSERT(init.m_shaders[type]->getImplementation().m_handle);
 
 		VkPipelineShaderStageCreateInfo& stage =
-			const_cast<VkPipelineShaderStageCreateInfo&>(
-				ci.pStages[ci.stageCount]);
+			const_cast<VkPipelineShaderStageCreateInfo&>(ci.pStages[ci.stageCount]);
 
 		stage.stage = VkShaderStageFlagBits(1u << U(type));
 		stage.module = init.m_shaders[type]->getImplementation().m_handle;
@@ -175,7 +138,6 @@ void PipelineImpl::initShaders(
 	}
 }
 
-//==============================================================================
 VkPipelineVertexInputStateCreateInfo* PipelineImpl::initVertexStage(
 	const VertexStateInfo& vertex, VkPipelineVertexInputStateCreateInfo& ci)
 {
@@ -184,8 +146,7 @@ VkPipelineVertexInputStateCreateInfo* PipelineImpl::initVertexStage(
 	for(U i = 0; i < ci.vertexBindingDescriptionCount; ++i)
 	{
 		VkVertexInputBindingDescription& vkBinding =
-			const_cast<VkVertexInputBindingDescription&>(
-				ci.pVertexBindingDescriptions[i]);
+			const_cast<VkVertexInputBindingDescription&>(ci.pVertexBindingDescriptions[i]);
 
 		vkBinding.binding = i;
 		vkBinding.stride = vertex.m_bindings[i].m_stride;
@@ -208,8 +169,7 @@ VkPipelineVertexInputStateCreateInfo* PipelineImpl::initVertexStage(
 	for(U i = 0; i < ci.vertexAttributeDescriptionCount; ++i)
 	{
 		VkVertexInputAttributeDescription& vkAttrib =
-			const_cast<VkVertexInputAttributeDescription&>(
-				ci.pVertexAttributeDescriptions[i]);
+			const_cast<VkVertexInputAttributeDescription&>(ci.pVertexAttributeDescriptions[i]);
 
 		vkAttrib.location = i;
 		vkAttrib.binding = vertex.m_attributes[i].m_binding;
@@ -220,10 +180,8 @@ VkPipelineVertexInputStateCreateInfo* PipelineImpl::initVertexStage(
 	return &ci;
 }
 
-//==============================================================================
 VkPipelineInputAssemblyStateCreateInfo* PipelineImpl::initInputAssemblyState(
-	const InputAssemblerStateInfo& ia,
-	VkPipelineInputAssemblyStateCreateInfo& ci)
+	const InputAssemblerStateInfo& ia, VkPipelineInputAssemblyStateCreateInfo& ci)
 {
 	ci.topology = convertTopology(ia.m_topology);
 	ci.primitiveRestartEnable = ia.m_primitiveRestartEnabled;
@@ -231,7 +189,6 @@ VkPipelineInputAssemblyStateCreateInfo* PipelineImpl::initInputAssemblyState(
 	return &ci;
 }
 
-//==============================================================================
 VkPipelineTessellationStateCreateInfo* PipelineImpl::initTessellationState(
 	const TessellationStateInfo& t, VkPipelineTessellationStateCreateInfo& ci)
 {
@@ -239,9 +196,7 @@ VkPipelineTessellationStateCreateInfo* PipelineImpl::initTessellationState(
 	return &ci;
 }
 
-//==============================================================================
-VkPipelineViewportStateCreateInfo* PipelineImpl::initViewportState(
-	VkPipelineViewportStateCreateInfo& ci)
+VkPipelineViewportStateCreateInfo* PipelineImpl::initViewportState(VkPipelineViewportStateCreateInfo& ci)
 {
 	// Viewport an scissor is dynamic
 	ci.viewportCount = 1;
@@ -250,7 +205,6 @@ VkPipelineViewportStateCreateInfo* PipelineImpl::initViewportState(
 	return &ci;
 }
 
-//==============================================================================
 VkPipelineRasterizationStateCreateInfo* PipelineImpl::initRasterizerState(
 	const RasterizerStateInfo& r, VkPipelineRasterizationStateCreateInfo& ci)
 {
@@ -265,23 +219,18 @@ VkPipelineRasterizationStateCreateInfo* PipelineImpl::initRasterizerState(
 	return &ci;
 }
 
-//==============================================================================
-VkPipelineMultisampleStateCreateInfo* PipelineImpl::initMsState(
-	VkPipelineMultisampleStateCreateInfo& ci)
+VkPipelineMultisampleStateCreateInfo* PipelineImpl::initMsState(VkPipelineMultisampleStateCreateInfo& ci)
 {
 	ci.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 	return &ci;
 }
 
-//==============================================================================
 VkPipelineDepthStencilStateCreateInfo* PipelineImpl::initDsState(
 	const DepthStencilStateInfo& ds, VkPipelineDepthStencilStateCreateInfo& ci)
 {
 	if(ds.isInUse())
 	{
-		ci.depthTestEnable =
-			(ds.m_depthCompareFunction != CompareOperation::ALWAYS)
-			|| ds.m_depthWriteEnabled;
+		ci.depthTestEnable = (ds.m_depthCompareFunction != CompareOperation::ALWAYS) || ds.m_depthWriteEnabled;
 		ci.depthWriteEnable = ds.m_depthWriteEnabled;
 		ci.depthCompareOp = convertCompareOp(ds.m_depthCompareFunction);
 		ci.depthBoundsTestEnable = VK_FALSE;
@@ -295,7 +244,6 @@ VkPipelineDepthStencilStateCreateInfo* PipelineImpl::initDsState(
 	}
 }
 
-//==============================================================================
 VkPipelineColorBlendStateCreateInfo* PipelineImpl::initColorState(
 	const ColorStateInfo& c, VkPipelineColorBlendStateCreateInfo& ci)
 {
@@ -304,13 +252,10 @@ VkPipelineColorBlendStateCreateInfo* PipelineImpl::initColorState(
 
 	for(U i = 0; i < ci.attachmentCount; ++i)
 	{
-		VkPipelineColorBlendAttachmentState& out =
-			const_cast<VkPipelineColorBlendAttachmentState&>(
-				ci.pAttachments[i]);
+		VkPipelineColorBlendAttachmentState& out = const_cast<VkPipelineColorBlendAttachmentState&>(ci.pAttachments[i]);
 		const ColorAttachmentStateInfo& in = c.m_attachments[i];
 
-		out.blendEnable = !(in.m_srcBlendMethod == BlendMethod::ONE
-			&& in.m_dstBlendMethod == BlendMethod::ZERO);
+		out.blendEnable = !(in.m_srcBlendMethod == BlendMethod::ONE && in.m_dstBlendMethod == BlendMethod::ZERO);
 		out.srcColorBlendFactor = convertBlendMethod(in.m_srcBlendMethod);
 		out.dstColorBlendFactor = convertBlendMethod(in.m_dstBlendMethod);
 		out.colorBlendOp = convertBlendFunc(in.m_blendFunction);
@@ -324,9 +269,7 @@ VkPipelineColorBlendStateCreateInfo* PipelineImpl::initColorState(
 	return &ci;
 }
 
-//==============================================================================
-VkPipelineDynamicStateCreateInfo* PipelineImpl::initDynamicState(
-	VkPipelineDynamicStateCreateInfo& ci)
+VkPipelineDynamicStateCreateInfo* PipelineImpl::initDynamicState(VkPipelineDynamicStateCreateInfo& ci)
 {
 	// Almost all state is dynamic
 	static const Array<VkDynamicState, 8> DYN = {{VK_DYNAMIC_STATE_VIEWPORT,
@@ -344,7 +287,6 @@ VkPipelineDynamicStateCreateInfo* PipelineImpl::initDynamicState(
 	return &ci;
 }
 
-//==============================================================================
 Error PipelineImpl::init(const PipelineInitInfo& init)
 {
 	if(init.m_shaders[ShaderType::COMPUTE].isCreated())

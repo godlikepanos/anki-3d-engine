@@ -11,7 +11,6 @@
 #define TERMINAL_COL_WARNING "\033[0;33m"
 #define TERMINAL_COL_RESET "\033[0m"
 
-//==============================================================================
 void log(const char* file, int line, unsigned type, const char* fmt, ...)
 {
 	char buffer[1024];
@@ -24,32 +23,18 @@ void log(const char* file, int line, unsigned type, const char* fmt, ...)
 	switch(type)
 	{
 	case 1:
-		fprintf(stdout,
-			TERMINAL_COL_INFO "[I] %s (%s:%d)\n" TERMINAL_COL_RESET,
-			buffer,
-			file,
-			line);
+		fprintf(stdout, TERMINAL_COL_INFO "[I] %s (%s:%d)\n" TERMINAL_COL_RESET, buffer, file, line);
 		break;
 	case 2:
-		fprintf(stderr,
-			TERMINAL_COL_ERROR "[E] %s (%s:%d)\n" TERMINAL_COL_RESET,
-			buffer,
-			file,
-			line);
+		fprintf(stderr, TERMINAL_COL_ERROR "[E] %s (%s:%d)\n" TERMINAL_COL_RESET, buffer, file, line);
 		break;
 	case 3:
-		fprintf(stderr,
-			TERMINAL_COL_WARNING "[W] %s (%s:%d)\n" TERMINAL_COL_RESET,
-			buffer,
-			file,
-			line);
+		fprintf(stderr, TERMINAL_COL_WARNING "[W] %s (%s:%d)\n" TERMINAL_COL_RESET, buffer, file, line);
 		break;
 	};
 }
 
-//==============================================================================
-std::string replaceAllString(
-	const std::string& str, const std::string& from, const std::string& to)
+std::string replaceAllString(const std::string& str, const std::string& from, const std::string& to)
 {
 	if(from.empty())
 	{
@@ -67,7 +52,6 @@ std::string replaceAllString(
 	return out;
 }
 
-//==============================================================================
 std::string getFilename(const std::string& path)
 {
 	std::string out;

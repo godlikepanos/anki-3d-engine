@@ -12,7 +12,6 @@ public:
 
 MyApp* app;
 
-//==============================================================================
 Error MyApp::init()
 {
 	// Init the super class
@@ -23,8 +22,7 @@ Error MyApp::init()
 
 	// Load the scene.lua
 	ScriptResourcePtr script;
-	ANKI_CHECK(
-		getResourceManager().loadResource("samples/assets/scene.lua", script));
+	ANKI_CHECK(getResourceManager().loadResource("samples/assets/scene.lua", script));
 	ANKI_CHECK(getScriptManager().evalString(script->getSource()));
 
 	// Input
@@ -33,13 +31,11 @@ Error MyApp::init()
 	getInput().moveCursor(Vec2(0.0));
 
 	// Some renderer stuff
-	getMainRenderer().getOffscreenRenderer().getVolumetric().setFog(
-		Vec3(1.0, 0.9, 0.9), 0.7);
+	getMainRenderer().getOffscreenRenderer().getVolumetric().setFog(Vec3(1.0, 0.9, 0.9), 0.7);
 
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error MyApp::userMainLoop(Bool& quit)
 {
 	const F32 MOVE_DISTANCE = 0.1;
@@ -57,8 +53,7 @@ Error MyApp::userMainLoop(Bool& quit)
 	}
 
 	// move the camera
-	static MoveComponent* mover =
-		&scene.getActiveCamera().getComponent<MoveComponent>();
+	static MoveComponent* mover = &scene.getActiveCamera().getComponent<MoveComponent>();
 
 	if(in.getKey(KeyCode::UP))
 	{
@@ -122,18 +117,15 @@ Error MyApp::userMainLoop(Bool& quit)
 
 	if(in.getMousePosition() != Vec2(0.0))
 	{
-		F32 angY = -ROTATE_ANGLE * in.getMousePosition().x() * MOUSE_SENSITIVITY
-			* getMainRenderer().getAspectRatio();
+		F32 angY = -ROTATE_ANGLE * in.getMousePosition().x() * MOUSE_SENSITIVITY * getMainRenderer().getAspectRatio();
 
 		mover->rotateLocalY(angY);
-		mover->rotateLocalX(
-			ROTATE_ANGLE * in.getMousePosition().y() * MOUSE_SENSITIVITY);
+		mover->rotateLocalX(ROTATE_ANGLE * in.getMousePosition().y() * MOUSE_SENSITIVITY);
 	}
 
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 int main(int argc, char* argv[])
 {
 	Error err = ErrorCode::NONE;
@@ -147,8 +139,7 @@ int main(int argc, char* argv[])
 
 	if(err)
 	{
-		ANKI_LOGE("Error reported. To run %s you have to navigate to the "
-				  "/path/to/anki/samples. And then execute it",
+		ANKI_LOGE("Error reported. To run %s you have to navigate to the /path/to/anki/samples. And then execute it",
 			argv[0]);
 	}
 	else

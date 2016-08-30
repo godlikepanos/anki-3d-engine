@@ -22,7 +22,6 @@
 namespace anki
 {
 
-//==============================================================================
 Bool fileExists(const CString& filename)
 {
 	struct stat s;
@@ -36,7 +35,6 @@ Bool fileExists(const CString& filename)
 	}
 }
 
-//==============================================================================
 Bool directoryExists(const CString& filename)
 {
 	struct stat s;
@@ -50,9 +48,7 @@ Bool directoryExists(const CString& filename)
 	}
 }
 
-//==============================================================================
-Error walkDirectoryTree(
-	const CString& dir, void* userData, WalkDirectoryTreeCallback callback)
+Error walkDirectoryTree(const CString& dir, void* userData, WalkDirectoryTreeCallback callback)
 {
 	ANKI_ASSERT(callback != nullptr);
 	ANKI_ASSERT(dir.getLength() > 0);
@@ -67,8 +63,7 @@ Error walkDirectoryTree(
 	}
 
 	// FTS_NOCHDIR and FTS_NOSTAT are opts. FTS_LOGICAL will follow symlics
-	FTS* tree =
-		fts_open(&dirs[0], FTS_NOCHDIR | FTS_LOGICAL | FTS_NOSTAT, nullptr);
+	FTS* tree = fts_open(&dirs[0], FTS_NOCHDIR | FTS_LOGICAL | FTS_NOSTAT, nullptr);
 
 	if(!tree)
 	{
@@ -114,9 +109,7 @@ Error walkDirectoryTree(
 	return err;
 }
 
-//==============================================================================
-// To avoid having the g_removeDirectoryPath in stack or having to allocate it,
-// make it global.
+// To avoid having the g_removeDirectoryPath in stack or having to allocate it, make it global.
 static char g_removeDirectoryPath[PATH_MAX];
 Mutex g_removeDirectoryLock;
 
@@ -137,11 +130,7 @@ Error removeDirectory(const CString& dirname)
 	{
 		if(strcmp(entry->d_name, ".") && strcmp(entry->d_name, ".."))
 		{
-			std::snprintf(g_removeDirectoryPath,
-				size_t(PATH_MAX),
-				"%s/%s",
-				dirname.get(),
-				entry->d_name);
+			std::snprintf(g_removeDirectoryPath, size_t(PATH_MAX), "%s/%s", dirname.get(), entry->d_name);
 
 			if(entry->d_type == DT_DIR)
 			{
@@ -164,7 +153,6 @@ Error removeDirectory(const CString& dirname)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error createDirectory(const CString& dir)
 {
 	if(directoryExists(dir))
@@ -182,7 +170,6 @@ Error createDirectory(const CString& dir)
 	return err;
 }
 
-//==============================================================================
 Error getHomeDirectory(GenericMemoryPoolAllocator<U8> alloc, String& out)
 {
 	const char* home = getenv("HOME");

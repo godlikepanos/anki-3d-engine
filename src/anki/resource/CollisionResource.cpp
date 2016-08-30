@@ -12,7 +12,6 @@
 namespace anki
 {
 
-//==============================================================================
 Error CollisionResource::load(const ResourceFilename& filename)
 {
 	XmlElement el;

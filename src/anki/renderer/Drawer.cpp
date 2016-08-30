@@ -19,10 +19,6 @@
 namespace anki
 {
 
-//==============================================================================
-// Misc                                                                        =
-//==============================================================================
-
 /// Common stuff to pass to renderSingle
 class DrawContext
 {
@@ -52,21 +48,16 @@ public:
 	template<typename T>
 	void uniSet(const MaterialVariable& mtlVar, const T* value, U32 size)
 	{
-		mtlVar.writeShaderBlockMemory<T>(*m_ctx->m_variant,
-			value,
-			size,
-			&m_uniformBuffer[0],
-			&m_uniformBuffer[0] + m_uniformBuffer.getSize());
+		mtlVar.writeShaderBlockMemory<T>(
+			*m_ctx->m_variant, value, size, &m_uniformBuffer[0], &m_uniformBuffer[0] + m_uniformBuffer.getSize());
 	}
 
 	template<typename TRenderableVariableTemplate>
 	Error visit(const TRenderableVariableTemplate& rvar);
 };
 
-//==============================================================================
 template<typename TRenderableVariableTemplate>
-Error SetupRenderableVariableVisitor::visit(
-	const TRenderableVariableTemplate& rvar)
+Error SetupRenderableVariableVisitor::visit(const TRenderableVariableTemplate& rvar)
 {
 	using DataType = typename TRenderableVariableTemplate::Type;
 	const MaterialVariable& mvar = rvar.getMaterialVariable();
@@ -184,7 +175,6 @@ Error SetupRenderableVariableVisitor::visit(
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 // Texture specialization
 template<>
 void SetupRenderableVariableVisitor::uniSet<TextureResourcePtr>(
@@ -194,41 +184,27 @@ void SetupRenderableVariableVisitor::uniSet<TextureResourcePtr>(
 	// Do nothing
 }
 
-//==============================================================================
-// RenderableDrawer                                                            =
-//==============================================================================
-
-//==============================================================================
 RenderableDrawer::~RenderableDrawer()
 {
 }
 
-//==============================================================================
-void RenderableDrawer::setupUniforms(DrawContext& ctx,
-	const RenderComponent& renderable,
-	const RenderingKey& key)
+void RenderableDrawer::setupUniforms(DrawContext& ctx, const RenderComponent& renderable, const RenderingKey& key)
 {
 	const Material& mtl = renderable.getMaterial();
 	const MaterialVariant& variant = mtl.getVariant(key);
 	ctx.m_variant = &variant;
 
 	// Get some memory for uniforms
-	U8* uniforms =
-		static_cast<U8*>(m_r->getGrManager().allocateFrameTransientMemory(
-			variant.getDefaultBlockSize(),
-			BufferUsageBit::UNIFORM_ALL,
-			ctx.m_dynBufferInfo.m_uniformBuffers[0]));
+	U8* uniforms = static_cast<U8*>(m_r->getGrManager().allocateFrameTransientMemory(
+		variant.getDefaultBlockSize(), BufferUsageBit::UNIFORM_ALL, ctx.m_dynBufferInfo.m_uniformBuffers[0]));
 
 	// Call the visitor
 	SetupRenderableVariableVisitor visitor;
 	visitor.m_ctx = &ctx;
 	visitor.m_drawer = this;
-	visitor.m_uniformBuffer =
-		WeakArray<U8>(uniforms, variant.getDefaultBlockSize());
+	visitor.m_uniformBuffer = WeakArray<U8>(uniforms, variant.getDefaultBlockSize());
 
-	for(auto it = renderable.getVariablesBegin();
-		it != renderable.getVariablesEnd();
-		++it)
+	for(auto it = renderable.getVariablesBegin(); it != renderable.getVariablesEnd(); ++it)
 	{
 		RenderComponentVariable* rvar = *it;
 
@@ -240,12 +216,8 @@ void RenderableDrawer::setupUniforms(DrawContext& ctx,
 	}
 }
 
-//==============================================================================
-Error RenderableDrawer::drawRange(Pass pass,
-	const FrustumComponent& frc,
-	CommandBufferPtr cmdb,
-	VisibleNode* begin,
-	VisibleNode* end)
+Error RenderableDrawer::drawRange(
+	Pass pass, const FrustumComponent& frc, CommandBufferPtr cmdb, VisibleNode* begin, VisibleNode* end)
 {
 	ANKI_ASSERT(begin && end && begin < end);
 
@@ -273,22 +245,18 @@ Error RenderableDrawer::drawRange(Pass pass,
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error RenderableDrawer::drawSingle(DrawContext& ctx)
 {
 	// Get components
-	const RenderComponent& renderable =
-		ctx.m_visibleNode->m_node->getComponent<RenderComponent>();
+	const RenderComponent& renderable = ctx.m_visibleNode->m_node->getComponent<RenderComponent>();
 	const Material& mtl = renderable.getMaterial();
 
 	// Check if it can merge drawcalls
 	if(ctx.m_nextVisibleNode)
 	{
-		const RenderComponent& nextRenderable =
-			ctx.m_nextVisibleNode->m_node->getComponent<RenderComponent>();
+		const RenderComponent& nextRenderable = ctx.m_nextVisibleNode->m_node->getComponent<RenderComponent>();
 
-		if(nextRenderable.canMergeDrawcalls(renderable)
-			&& ctx.m_cachedTrfCount < MAX_INSTANCES - 1)
+		if(nextRenderable.canMergeDrawcalls(renderable) && ctx.m_cachedTrfCount < MAX_INSTANCES - 1)
 		{
 			// Can merge, will cache the drawcall and skip the drawcall
 			Bool hasTransform;
@@ -317,18 +285,16 @@ Error RenderableDrawer::drawSingle(DrawContext& ctx)
 	}
 
 	// Calculate the key
-	F32 flod =
-		m_r->calculateLod(sqrt(ctx.m_visibleNode->m_frustumDistanceSquared));
+	F32 flod = m_r->calculateLod(sqrt(ctx.m_visibleNode->m_frustumDistanceSquared));
 	flod = min<F32>(flod, MAX_LODS - 1);
 	ctx.m_flod = flod;
 
 	RenderingBuildInfo build;
 	build.m_key.m_lod = flod;
 	build.m_key.m_pass = ctx.m_pass;
-	build.m_key.m_tessellation = m_r->getTessellationEnabled()
-		&& mtl.getTessellationEnabled() && build.m_key.m_lod == 0;
-	build.m_key.m_instanceCount =
-		(ctx.m_cachedTrfCount == 0) ? 1 : ctx.m_cachedTrfCount;
+	build.m_key.m_tessellation =
+		m_r->getTessellationEnabled() && mtl.getTessellationEnabled() && build.m_key.m_lod == 0;
+	build.m_key.m_instanceCount = (ctx.m_cachedTrfCount == 0) ? 1 : ctx.m_cachedTrfCount;
 
 	if(ctx.m_pass == Pass::SM && build.m_key.m_lod > 0)
 	{
@@ -349,8 +315,7 @@ Error RenderableDrawer::drawSingle(DrawContext& ctx)
 	// Rendered something, reset the cached transforms
 	if(ctx.m_cachedTrfCount > 1)
 	{
-		ANKI_TRACE_INC_COUNTER(
-			RENDERER_MERGED_DRAWCALLS, ctx.m_cachedTrfCount - 1);
+		ANKI_TRACE_INC_COUNTER(RENDERER_MERGED_DRAWCALLS, ctx.m_cachedTrfCount - 1);
 	}
 	ctx.m_cachedTrfCount = 0;
 

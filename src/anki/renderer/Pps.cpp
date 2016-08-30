@@ -19,22 +19,17 @@
 namespace anki
 {
 
-//==============================================================================
-const PixelFormat Pps::RT_PIXEL_FORMAT(
-	ComponentFormat::R8G8B8, TransformFormat::UNORM);
+const PixelFormat Pps::RT_PIXEL_FORMAT(ComponentFormat::R8G8B8, TransformFormat::UNORM);
 
-//==============================================================================
 Pps::Pps(Renderer* r)
 	: RenderingPass(r)
 {
 }
 
-//==============================================================================
 Pps::~Pps()
 {
 }
 
-//==============================================================================
 Error Pps::initInternal(const ConfigSet& config)
 {
 	ANKI_ASSERT("Initializing PPS");
@@ -47,8 +42,7 @@ Error Pps::initInternal(const ConfigSet& config)
 		m_r->createRenderTarget(m_r->getWidth(),
 			m_r->getHeight(),
 			RT_PIXEL_FORMAT,
-			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
-				| TextureUsageBit::SAMPLED_FRAGMENT,
+			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::SAMPLED_FRAGMENT,
 			SamplingFilter::LINEAR,
 			1,
 			m_rt);
@@ -56,17 +50,14 @@ Error Pps::initInternal(const ConfigSet& config)
 		FramebufferInitInfo fbInit;
 		fbInit.m_colorAttachmentCount = 1;
 		fbInit.m_colorAttachments[0].m_texture = m_rt;
-		fbInit.m_colorAttachments[0].m_loadOperation =
-			AttachmentLoadOperation::DONT_CARE;
-		fbInit.m_colorAttachments[0].m_usageInsideRenderPass =
-			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
+		fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
+		fbInit.m_colorAttachments[0].m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 		m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 	}
 
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error Pps::init(const ConfigSet& config)
 {
 	Error err = initInternal(config);
@@ -78,7 +69,6 @@ Error Pps::init(const ConfigSet& config)
 	return err;
 }
 
-//==============================================================================
 Error Pps::loadColorGradingTexture(CString filename)
 {
 	m_lut.reset(nullptr);
@@ -91,7 +81,6 @@ Error Pps::loadColorGradingTexture(CString filename)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error Pps::run(RenderingContext& ctx)
 {
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
@@ -125,16 +114,14 @@ Error Pps::run(RenderingContext& ctx)
 				LUT_SIZE,
 				dbgEnabled);
 
-			ANKI_CHECK(getResourceManager().loadResourceToCache(
-				frag, "shaders/Pps.frag.glsl", pps.toCString(), "r_"));
+			ANKI_CHECK(getResourceManager().loadResourceToCache(frag, "shaders/Pps.frag.glsl", pps.toCString(), "r_"));
 		}
 
 		ColorStateInfo colorState;
 		colorState.m_attachmentCount = 1;
 		if(drawToDefaultFb)
 		{
-			colorState.m_attachments[0].m_format.m_components =
-				ComponentFormat::DEFAULT_FRAMEBUFFER;
+			colorState.m_attachments[0].m_format.m_components = ComponentFormat::DEFAULT_FRAMEBUFFER;
 		}
 		else
 		{
@@ -156,10 +143,8 @@ Error Pps::run(RenderingContext& ctx)
 			rcInit.m_textures[3].m_texture = m_r->getDbg().getRt();
 		}
 
-		rcInit.m_storageBuffers[0].m_buffer =
-			m_r->getTm().getAverageLuminanceBuffer();
-		rcInit.m_storageBuffers[0].m_usage =
-			BufferUsageBit::STORAGE_FRAGMENT_READ;
+		rcInit.m_storageBuffers[0].m_buffer = m_r->getTm().getAverageLuminanceBuffer();
+		rcInit.m_storageBuffers[0].m_usage = BufferUsageBit::STORAGE_FRAGMENT_READ;
 
 		rsrc = getGrManager().newInstance<ResourceGroup>(rcInit);
 

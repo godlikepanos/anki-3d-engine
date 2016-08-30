@@ -9,10 +9,8 @@
 namespace anki
 {
 
-const U32 INIT_SUBSYSTEMS = SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_EVENTS
-	| SDL_INIT_GAMECONTROLLER;
+const U32 INIT_SUBSYSTEMS = SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_EVENTS | SDL_INIT_GAMECONTROLLER;
 
-//==============================================================================
 Error NativeWindow::init(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
 {
 	m_alloc = alloc;
@@ -56,12 +54,8 @@ Error NativeWindow::init(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
 		flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
 	}
 
-	m_impl->m_window = SDL_CreateWindow(&init.m_title[0],
-		SDL_WINDOWPOS_UNDEFINED,
-		SDL_WINDOWPOS_UNDEFINED,
-		init.m_width,
-		init.m_height,
-		flags);
+	m_impl->m_window = SDL_CreateWindow(
+		&init.m_title[0], SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, init.m_width, init.m_height, flags);
 
 	if(m_impl->m_window == nullptr)
 	{
@@ -88,7 +82,6 @@ Error NativeWindow::init(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void NativeWindow::destroy()
 {
 	if(m_impl != nullptr)

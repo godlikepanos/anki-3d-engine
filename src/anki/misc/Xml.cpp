@@ -11,11 +11,6 @@
 namespace anki
 {
 
-//==============================================================================
-// XmlElement                                                                  =
-//==============================================================================
-
-//==============================================================================
 ANKI_USE_RESULT Error XmlElement::check() const
 {
 	Error err = ErrorCode::NONE;
@@ -27,7 +22,6 @@ ANKI_USE_RESULT Error XmlElement::check() const
 	return err;
 }
 
-//==============================================================================
 Error XmlElement::getText(CString& out) const
 {
 	Error err = check();
@@ -43,7 +37,6 @@ Error XmlElement::getText(CString& out) const
 	return err;
 }
 
-//==============================================================================
 Error XmlElement::getI64(I64& out) const
 {
 	Error err = check();
@@ -65,7 +58,6 @@ Error XmlElement::getI64(I64& out) const
 	return err;
 }
 
-//==============================================================================
 Error XmlElement::getF64(F64& out) const
 {
 	Error err = check();
@@ -87,7 +79,6 @@ Error XmlElement::getF64(F64& out) const
 	return err;
 }
 
-//==============================================================================
 Error XmlElement::getFloats(DynamicArrayAuto<F64>& out) const
 {
 	Error err = check();
@@ -132,7 +123,6 @@ Error XmlElement::getFloats(DynamicArrayAuto<F64>& out) const
 	return err;
 }
 
-//==============================================================================
 Error XmlElement::getMat4(Mat4& out) const
 {
 	DynamicArrayAuto<F64> arr(m_alloc);
@@ -160,7 +150,6 @@ Error XmlElement::getMat4(Mat4& out) const
 	return err;
 }
 
-//==============================================================================
 Error XmlElement::getVec3(Vec3& out) const
 {
 	DynamicArrayAuto<F64> arr(m_alloc);
@@ -187,7 +176,7 @@ Error XmlElement::getVec3(Vec3& out) const
 
 	return err;
 }
-//==============================================================================
+
 Error XmlElement::getVec4(Vec4& out) const
 {
 	DynamicArrayAuto<F64> arr(m_alloc);
@@ -215,9 +204,7 @@ Error XmlElement::getVec4(Vec4& out) const
 	return err;
 }
 
-//==============================================================================
-Error XmlElement::getChildElementOptional(
-	const CString& name, XmlElement& out) const
+Error XmlElement::getChildElementOptional(const CString& name, XmlElement& out) const
 {
 	Error err = check();
 	if(!err)
@@ -232,7 +219,6 @@ Error XmlElement::getChildElementOptional(
 	return err;
 }
 
-//==============================================================================
 Error XmlElement::getChildElement(const CString& name, XmlElement& out) const
 {
 	Error err = check();
@@ -257,9 +243,7 @@ Error XmlElement::getChildElement(const CString& name, XmlElement& out) const
 	return err;
 }
 
-//==============================================================================
-Error XmlElement::getNextSiblingElement(
-	const CString& name, XmlElement& out) const
+Error XmlElement::getNextSiblingElement(const CString& name, XmlElement& out) const
 {
 	Error err = check();
 	if(!err)
@@ -274,7 +258,6 @@ Error XmlElement::getNextSiblingElement(
 	return err;
 }
 
-//==============================================================================
 Error XmlElement::getSiblingElementsCount(U32& out) const
 {
 	Error err = check();
@@ -299,19 +282,12 @@ Error XmlElement::getSiblingElementsCount(U32& out) const
 	return err;
 }
 
-//==============================================================================
-// XmlDocument                                                                 =
-//==============================================================================
-
-//==============================================================================
 CString XmlDocument::XML_HEADER = R"(<?xml version="1.0" encoding="UTF-8" ?>)";
 
-//==============================================================================
-Error XmlDocument::loadFile(
-	const CString& filename, GenericMemoryPoolAllocator<U8> alloc)
+Error XmlDocument::loadFile(const CString& filename, GenericMemoryPoolAllocator<U8> alloc)
 {
 	File file;
-	ANKI_CHECK(file.open(filename, File::OpenFlag::READ));
+	ANKI_CHECK(file.open(filename, FileOpenFlag::READ));
 
 	StringAuto text(alloc);
 	ANKI_CHECK(file.readAllText(text));
@@ -321,17 +297,14 @@ Error XmlDocument::loadFile(
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
-Error XmlDocument::parse(
-	const CString& xmlText, GenericMemoryPoolAllocator<U8> alloc)
+Error XmlDocument::parse(const CString& xmlText, GenericMemoryPoolAllocator<U8> alloc)
 {
 	m_alloc = alloc;
 
 	if(m_doc.Parse(&xmlText[0]))
 	{
-		ANKI_LOGE("Cannot parse file. Reason: %s",
-			((m_doc.GetErrorStr1() == nullptr) ? "unknown"
-											   : m_doc.GetErrorStr1()));
+		ANKI_LOGE(
+			"Cannot parse file. Reason: %s", ((m_doc.GetErrorStr1() == nullptr) ? "unknown" : m_doc.GetErrorStr1()));
 
 		return ErrorCode::USER_DATA;
 	}
@@ -339,9 +312,7 @@ Error XmlDocument::parse(
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
-ANKI_USE_RESULT Error XmlDocument::getChildElement(
-	const CString& name, XmlElement& out) const
+ANKI_USE_RESULT Error XmlDocument::getChildElement(const CString& name, XmlElement& out) const
 {
 	Error err = ErrorCode::NONE;
 	out = XmlElement(m_doc.FirstChildElement(&name[0]), m_alloc);

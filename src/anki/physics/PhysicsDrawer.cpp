@@ -9,14 +9,12 @@
 namespace anki
 {
 
-//==============================================================================
 struct CallbackData
 {
 	const NewtonBody* m_body;
 	PhysicsDrawer* m_drawer;
 };
 
-//==============================================================================
 void PhysicsDrawer::drawWorld(const PhysicsWorld& world)
 {
 	NewtonWorld* nworld = world.getNewtonWorld();
@@ -35,7 +33,6 @@ void PhysicsDrawer::drawWorld(const PhysicsWorld& world)
 	}
 }
 
-//==============================================================================
 void PhysicsDrawer::drawAabb(const NewtonBody* body)
 {
 	Vec4 p0;
@@ -75,7 +72,6 @@ void PhysicsDrawer::drawAabb(const NewtonBody* body)
 	drawLines(lines, linesCount, Vec4(0.0, 0.0, 1.0, 0.5));
 }
 
-//==============================================================================
 void PhysicsDrawer::drawCollision(const NewtonBody* body)
 {
 	Mat4 matrix;
@@ -85,15 +81,11 @@ void PhysicsDrawer::drawCollision(const NewtonBody* body)
 	data.m_body = body;
 	data.m_drawer = this;
 
-	NewtonCollisionForEachPolygonDo(NewtonBodyGetCollision(body),
-		&matrix[0],
-		drawGeometryCallback,
-		static_cast<void*>(&data));
+	NewtonCollisionForEachPolygonDo(
+		NewtonBodyGetCollision(body), &matrix[0], drawGeometryCallback, static_cast<void*>(&data));
 }
 
-//==============================================================================
-void PhysicsDrawer::drawGeometryCallback(
-	void* userData, int vertexCount, const dFloat* const faceVertec, int id)
+void PhysicsDrawer::drawGeometryCallback(void* userData, int vertexCount, const dFloat* const faceVertec, int id)
 {
 	CallbackData* data = static_cast<CallbackData*>(userData);
 	const NewtonBody* body = data->m_body;
@@ -112,14 +104,11 @@ void PhysicsDrawer::drawGeometryCallback(
 	U i = vertexCount - 1;
 
 	Array<Vec3, 2> points;
-	points[0] = Vec3(
-		faceVertec[i * 3 + 0], faceVertec[i * 3 + 1], faceVertec[i * 3 + 2]);
+	points[0] = Vec3(faceVertec[i * 3 + 0], faceVertec[i * 3 + 1], faceVertec[i * 3 + 2]);
 
 	for(I i = 0; i < vertexCount; i++)
 	{
-		points[1] = Vec3(faceVertec[i * 3 + 0],
-			faceVertec[i * 3 + 1],
-			faceVertec[i * 3 + 2]);
+		points[1] = Vec3(faceVertec[i * 3 + 0], faceVertec[i * 3 + 1], faceVertec[i * 3 + 2]);
 
 		data->m_drawer->drawLines(&points[0], 1, color);
 

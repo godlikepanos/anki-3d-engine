@@ -24,8 +24,7 @@ namespace anki
 ///
 /// @tparam T The type
 ///
-/// @note Don't ever EVER remove the double copy constructor and the double
-///       operator=. The compiler will create defaults
+/// @note Don't ever EVER remove the double copy constructor and the double operator=. The compiler will create defaults
 template<typename T, typename TPool>
 class GenericPoolAllocator
 {
@@ -42,9 +41,8 @@ public:
 	using const_reference = const T&;
 	using value_type = T;
 
-	/// Move assignments between containers will copy the allocator as well.
-	/// If propagate_on_container_move_assignment is not defined then not moves
-	/// are going to happen
+	/// Move assignments between containers will copy the allocator as well. If propagate_on_container_move_assignment
+	/// is not defined then not moves are going to happen.
 	using propagate_on_container_move_assignment = std::true_type;
 
 	/// A struct to rebind the allocator to another allocator of type Y
@@ -83,11 +81,9 @@ public:
 
 	/// Constuctor that creates a pool
 	template<typename... TArgs>
-	explicit GenericPoolAllocator(
-		AllocAlignedCallback allocCb, void* allocCbUserData, TArgs&&... args)
+	explicit GenericPoolAllocator(AllocAlignedCallback allocCb, void* allocCbUserData, TArgs&&... args)
 	{
-		m_pool = reinterpret_cast<TPool*>(
-			allocCb(allocCbUserData, nullptr, sizeof(TPool), alignof(TPool)));
+		m_pool = reinterpret_cast<TPool*>(allocCb(allocCbUserData, nullptr, sizeof(TPool), alignof(TPool)));
 		if(ANKI_UNLIKELY(!m_pool))
 		{
 			ANKI_LOGF("Out of memory");
@@ -134,8 +130,7 @@ public:
 
 	/// Allocate memory
 	/// @param n The elements of type T to allocate
-	/// @param hint It's been used to override the alignment. The type should
-	///             be PtrSize
+	/// @param hint It's been used to override the alignment. The type should be PtrSize.
 	pointer allocate(size_type n, const void* hint = nullptr)
 	{
 		ANKI_ASSERT(m_pool);
@@ -143,11 +138,9 @@ public:
 
 		size_type size = n * sizeof(value_type);
 
-		// Operator new doesn't respect alignment (in GCC at least) so use
-		// the type's alignment. If hint override the alignment
-		PtrSize alignment = (hint != nullptr)
-			? *reinterpret_cast<const PtrSize*>(hint)
-			: alignof(value_type);
+		// Operator new doesn't respect alignment (in GCC at least) so use the type's alignment. If hint override the
+		// alignment
+		PtrSize alignment = (hint != nullptr) ? *reinterpret_cast<const PtrSize*>(hint) : alignof(value_type);
 
 		void* out = m_pool->allocate(size, alignment);
 		if(ANKI_UNLIKELY(out == nullptr))
@@ -363,32 +356,28 @@ private:
 
 /// Another allocator of the same type can deallocate from this one
 template<typename T1, typename T2, typename TPool>
-inline Bool operator==(const GenericPoolAllocator<T1, TPool>&,
-	const GenericPoolAllocator<T2, TPool>&)
+inline Bool operator==(const GenericPoolAllocator<T1, TPool>&, const GenericPoolAllocator<T2, TPool>&)
 {
 	return true;
 }
 
 /// Another allocator of the another type cannot deallocate from this one
 template<typename T1, typename AnotherAllocator, typename TPool>
-inline Bool operator==(
-	const GenericPoolAllocator<T1, TPool>&, const AnotherAllocator&)
+inline Bool operator==(const GenericPoolAllocator<T1, TPool>&, const AnotherAllocator&)
 {
 	return false;
 }
 
 /// Another allocator of the same type can deallocate from this one
 template<typename T1, typename T2, typename TPool>
-inline Bool operator!=(const GenericPoolAllocator<T1, TPool>&,
-	const GenericPoolAllocator<T2, TPool>&)
+inline Bool operator!=(const GenericPoolAllocator<T1, TPool>&, const GenericPoolAllocator<T2, TPool>&)
 {
 	return false;
 }
 
 /// Another allocator of the another type cannot deallocate from this one
 template<typename T1, typename AnotherAllocator, typename TPool>
-inline Bool operator!=(
-	const GenericPoolAllocator<T1, TPool>&, const AnotherAllocator&)
+inline Bool operator!=(const GenericPoolAllocator<T1, TPool>&, const AnotherAllocator&)
 {
 	return true;
 }
@@ -398,8 +387,7 @@ inline Bool operator!=(
 template<typename T>
 using GenericMemoryPoolAllocator = GenericPoolAllocator<T, BaseMemoryPool>;
 
-/// Heap based allocator. The default allocator. It uses malloc and free for
-/// allocations/deallocations
+/// Heap based allocator. The default allocator. It uses malloc and free for allocations/deallocations
 template<typename T>
 using HeapAllocator = GenericPoolAllocator<T, HeapMemoryPool>;
 

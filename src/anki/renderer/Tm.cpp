@@ -10,7 +10,6 @@
 namespace anki
 {
 
-//==============================================================================
 Error Tm::create(const ConfigSet& initializer)
 {
 	// Create shader
@@ -24,28 +23,22 @@ Error Tm::create(const ConfigSet& initializer)
 		m_r->getWidth(),
 		m_r->getHeight());
 
-	ANKI_CHECK(getResourceManager().loadResourceToCache(m_luminanceShader,
-		"shaders/TmAverageLuminance.comp.glsl",
-		pps.toCString(),
-		"r_"));
+	ANKI_CHECK(getResourceManager().loadResourceToCache(
+		m_luminanceShader, "shaders/TmAverageLuminance.comp.glsl", pps.toCString(), "r_"));
 
 	// Create ppline
 	PipelineInitInfo pplineInit;
-	pplineInit.m_shaders[U(ShaderType::COMPUTE)] =
-		m_luminanceShader->getGrShader();
+	pplineInit.m_shaders[U(ShaderType::COMPUTE)] = m_luminanceShader->getGrShader();
 	m_luminancePpline = getGrManager().newInstance<Pipeline>(pplineInit);
 
 	// Create buffer
 	m_luminanceBuff = getGrManager().newInstance<Buffer>(sizeof(Vec4),
-		BufferUsageBit::STORAGE_ALL | BufferUsageBit::UNIFORM_ALL
-			| BufferUsageBit::BUFFER_UPLOAD_DESTINATION,
+		BufferUsageBit::STORAGE_ALL | BufferUsageBit::UNIFORM_ALL | BufferUsageBit::BUFFER_UPLOAD_DESTINATION,
 		BufferMapAccessBit::NONE);
 
-	CommandBufferPtr cmdb =
-		getGrManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
+	CommandBufferPtr cmdb = getGrManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
 	TransientMemoryToken token;
-	void* data = getGrManager().allocateFrameTransientMemory(
-		sizeof(Vec4), BufferUsageBit::BUFFER_UPLOAD_SOURCE, token);
+	void* data = getGrManager().allocateFrameTransientMemory(sizeof(Vec4), BufferUsageBit::BUFFER_UPLOAD_SOURCE, token);
 	*static_cast<Vec4*>(data) = Vec4(0.5);
 	cmdb->uploadBuffer(m_luminanceBuff, 0, token);
 	cmdb->flush();
@@ -54,8 +47,7 @@ Error Tm::create(const ConfigSet& initializer)
 	ResourceGroupInitInfo rcinit;
 	rcinit.m_storageBuffers[0].m_buffer = m_luminanceBuff;
 	rcinit.m_storageBuffers[0].m_range = sizeof(Vec4);
-	rcinit.m_storageBuffers[0].m_usage =
-		BufferUsageBit::STORAGE_COMPUTE_READ_WRITE;
+	rcinit.m_storageBuffers[0].m_usage = BufferUsageBit::STORAGE_COMPUTE_READ_WRITE;
 	rcinit.m_textures[0].m_texture = m_r->getIs().getRt();
 	rcinit.m_textures[0].m_usage = TextureUsageBit::SAMPLED_COMPUTE;
 
@@ -65,7 +57,6 @@ Error Tm::create(const ConfigSet& initializer)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void Tm::run(RenderingContext& ctx)
 {
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;

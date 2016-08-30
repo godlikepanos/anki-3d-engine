@@ -10,13 +10,11 @@
 namespace anki
 {
 
-//==============================================================================
 PhysicsBody::PhysicsBody(PhysicsWorld* world)
-	: PhysicsObject(Type::BODY, world)
+	: PhysicsObject(PhysicsObjectType::BODY, world)
 {
 }
 
-//==============================================================================
 PhysicsBody::~PhysicsBody()
 {
 	if(m_sceneCollisionProxy)
@@ -33,12 +31,8 @@ PhysicsBody::~PhysicsBody()
 	}
 }
 
-//==============================================================================
 Error PhysicsBody::create(const PhysicsBodyInitInfo& init)
 {
-	// I collisionType =
-	// NewtonCollisionGetType(init.m_shape->_getNewtonShape());
-
 	// Create
 	Mat4 trf = toNewton(Mat4(init.m_startTrf));
 
@@ -48,24 +42,20 @@ Error PhysicsBody::create(const PhysicsBodyInitInfo& init)
 		NewtonCollision* scene = m_world->getNewtonScene();
 
 		NewtonSceneCollisionBeginAddRemove(scene);
-		m_sceneCollisionProxy = NewtonSceneCollisionAddSubCollision(
-			scene, init.m_shape->_getNewtonShape());
+		m_sceneCollisionProxy = NewtonSceneCollisionAddSubCollision(scene, init.m_shape->getNewtonShape());
 		NewtonSceneCollisionEndAddRemove(scene);
 
-		NewtonSceneCollisionSetSubCollisionMatrix(
-			scene, m_sceneCollisionProxy, &trf[0]);
+		NewtonSceneCollisionSetSubCollisionMatrix(scene, m_sceneCollisionProxy, &trf[0]);
 
 		return ErrorCode::NONE;
 	}
 	else if(init.m_kinematic)
 	{
-		// TODO
+		ANKI_ASSERT(0 && "TODO");
 	}
 	else
 	{
-		m_body = NewtonCreateDynamicBody(m_world->getNewtonWorld(),
-			init.m_shape->_getNewtonShape(),
-			&trf(0, 0));
+		m_body = NewtonCreateDynamicBody(m_world->getNewtonWorld(), init.m_shape->getNewtonShape(), &trf(0, 0));
 	}
 
 	if(!m_body)
@@ -75,8 +65,7 @@ Error PhysicsBody::create(const PhysicsBodyInitInfo& init)
 	}
 
 	// Material
-	NewtonBodySetMaterialGroupID(
-		m_body, NewtonMaterialGetDefaultGroupID(m_world->getNewtonWorld()));
+	NewtonBodySetMaterialGroupID(m_body, NewtonMaterialGetDefaultGroupID(m_world->getNewtonWorld()));
 
 	// User data & callbacks
 	NewtonBodySetUserData(m_body, this);
@@ -98,7 +87,6 @@ Error PhysicsBody::create(const PhysicsBodyInitInfo& init)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 void PhysicsBody::setTransform(const Transform& trf)
 {
 	Mat4 mat(trf);
@@ -106,9 +94,7 @@ void PhysicsBody::setTransform(const Transform& trf)
 	NewtonBodySetMatrix(m_body, &mat(0, 0));
 }
 
-//==============================================================================
-void PhysicsBody::onTransformCallback(
-	const NewtonBody* const body, const dFloat* const matrix, int threadIndex)
+void PhysicsBody::onTransformCallback(const NewtonBody* const body, const dFloat* const matrix, int threadIndex)
 {
 	ANKI_ASSERT(body);
 	ANKI_ASSERT(matrix);
@@ -125,9 +111,7 @@ void PhysicsBody::onTransformCallback(
 	self->m_updated = true;
 }
 
-//==============================================================================
-void PhysicsBody::applyGravityForce(
-	const NewtonBody* body, dFloat timestep, int threadIndex)
+void PhysicsBody::applyGravityForce(const NewtonBody* body, dFloat timestep, int threadIndex)
 {
 	dFloat Ixx;
 	dFloat Iyy;

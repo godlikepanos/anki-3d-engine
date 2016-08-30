@@ -8,18 +8,8 @@ namespace anki
 namespace detail
 {
 
-//==============================================================================
-// HashMapBase                                                                 =
-//==============================================================================
-
-//==============================================================================
-template<typename TKey,
-	typename TValue,
-	typename THasher,
-	typename TCompare,
-	typename TNode>
-void HashMapBase<TKey, TValue, THasher, TCompare, TNode>::insertNode(
-	TNode* node)
+template<typename TKey, typename TValue, typename THasher, typename TCompare, typename TNode>
+void HashMapBase<TKey, TValue, THasher, TCompare, TNode>::insertNode(TNode* node)
 {
 	if(ANKI_UNLIKELY(!m_root))
 	{
@@ -67,12 +57,7 @@ void HashMapBase<TKey, TValue, THasher, TCompare, TNode>::insertNode(
 	} while(!done);
 }
 
-//==============================================================================
-template<typename TKey,
-	typename TValue,
-	typename THasher,
-	typename TCompare,
-	typename TNode>
+template<typename TKey, typename TValue, typename THasher, typename TCompare, typename TNode>
 typename HashMapBase<TKey, TValue, THasher, TCompare, TNode>::Iterator
 HashMapBase<TKey, TValue, THasher, TCompare, TNode>::find(const Key& key)
 {
@@ -101,12 +86,7 @@ HashMapBase<TKey, TValue, THasher, TCompare, TNode>::find(const Key& key)
 	return Iterator(node);
 }
 
-//==============================================================================
-template<typename TKey,
-	typename TValue,
-	typename THasher,
-	typename TCompare,
-	typename TNode>
+template<typename TKey, typename TValue, typename THasher, typename TCompare, typename TNode>
 void HashMapBase<TKey, TValue, THasher, TCompare, TNode>::removeNode(TNode* del)
 {
 	ANKI_ASSERT(del);
@@ -116,8 +96,7 @@ void HashMapBase<TKey, TValue, THasher, TCompare, TNode>::removeNode(TNode* del)
 
 	if(parent)
 	{
-		// If it has a parent then remove the connection to the parent and
-		// insert left and right like regular nodes
+		// If it has a parent then remove the connection to the parent and insert left and right like regular nodes
 
 		if(parent->m_left == del)
 		{
@@ -174,11 +153,6 @@ void HashMapBase<TKey, TValue, THasher, TCompare, TNode>::removeNode(TNode* del)
 
 } // end namespace detail
 
-//==============================================================================
-// HashMap                                                                     =
-//==============================================================================
-
-//==============================================================================
 template<typename TKey, typename TValue, typename THasher, typename TCompare>
 template<typename TAllocator>
 void HashMap<TKey, TValue, THasher, TCompare>::destroy(TAllocator alloc)
@@ -190,11 +164,9 @@ void HashMap<TKey, TValue, THasher, TCompare>::destroy(TAllocator alloc)
 	}
 }
 
-//==============================================================================
 template<typename TKey, typename TValue, typename THasher, typename TCompare>
 template<typename TAllocator>
-void HashMap<TKey, TValue, THasher, TCompare>::destroyInternal(
-	TAllocator alloc, Node* node)
+void HashMap<TKey, TValue, THasher, TCompare>::destroyInternal(TAllocator alloc, Node* node)
 {
 	ANKI_ASSERT(node);
 

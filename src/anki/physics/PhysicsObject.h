@@ -13,21 +13,21 @@ namespace anki
 /// @addtogroup physics
 /// @{
 
+/// Type of the physics object.
+enum class PhysicsObjectType : U8
+{
+	COLLISION_SHAPE,
+	BODY,
+	JOINT,
+	PLAYER_CONTROLLER,
+	COUNT
+};
+
 /// Base of all physics objects.
 class PhysicsObject
 {
 public:
-	/// Type of the physics object.
-	enum class Type : U8
-	{
-		COLLISION_SHAPE,
-		BODY,
-		JOINT,
-		PLAYER_CONTROLLER,
-		COUNT
-	};
-
-	PhysicsObject(Type type, PhysicsWorld* world)
+	PhysicsObject(PhysicsObjectType type, PhysicsWorld* world)
 		: m_world(world)
 		, m_type(type)
 		, m_refcount(0)
@@ -39,7 +39,7 @@ public:
 	{
 	}
 
-	Type getType() const
+	PhysicsObjectType getType() const
 	{
 		return m_type;
 	}
@@ -63,7 +63,7 @@ protected:
 	PhysicsWorld* m_world = nullptr;
 
 private:
-	Type m_type;
+	PhysicsObjectType m_type;
 	Atomic<I32> m_refcount;
 };
 /// @}

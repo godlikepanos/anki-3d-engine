@@ -26,15 +26,13 @@ public:
 	/// Stop the timer
 	void stop();
 
-	/// Get the time elapsed between start and stop (if its stopped) or
-	/// between start and the current time
+	/// Get the time elapsed between start and stop (if its stopped) or between start and the current time.
 	Scalar getElapsedTime() const;
 
 	/// Get the current date's seconds
 	static Scalar getCurrentTime();
 
-	/// Micro sleep.
-	/// The resolution is in nanoseconds.
+	/// Micro sleep. The resolution is in nanoseconds.
 	static void sleep(Scalar seconds);
 
 private:

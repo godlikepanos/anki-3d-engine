@@ -36,8 +36,7 @@ public:
 	{
 	}
 
-	XmlElement(
-		const tinyxml2::XMLElement* el, GenericMemoryPoolAllocator<U8> alloc)
+	XmlElement(const tinyxml2::XMLElement* el, GenericMemoryPoolAllocator<U8> alloc)
 		: m_el(el)
 		, m_alloc(alloc)
 	{
@@ -79,17 +78,13 @@ public:
 	ANKI_USE_RESULT Error getVec4(Vec4& out) const;
 
 	/// Get a child element quietly
-	ANKI_USE_RESULT Error getChildElementOptional(
-		const CString& name, XmlElement& out) const;
+	ANKI_USE_RESULT Error getChildElementOptional(const CString& name, XmlElement& out) const;
 
 	/// Get a child element and print error if not found
-	ANKI_USE_RESULT Error getChildElement(
-		const CString& name, XmlElement& out) const;
+	ANKI_USE_RESULT Error getChildElement(const CString& name, XmlElement& out) const;
 
-	/// Get the next element with the same name. Returns empty XmlElement if
-	/// it reached the end of the list
-	ANKI_USE_RESULT Error getNextSiblingElement(
-		const CString& name, XmlElement& out) const;
+	/// Get the next element with the same name. Returns empty XmlElement if it reached the end of the list.
+	ANKI_USE_RESULT Error getNextSiblingElement(const CString& name, XmlElement& out) const;
 
 	/// Get the number of sibling elements of this node.
 	/// @note The sibling elements share the same name.
@@ -108,14 +103,11 @@ class XmlDocument
 public:
 	static CString XML_HEADER;
 
-	ANKI_USE_RESULT Error loadFile(
-		const CString& filename, GenericMemoryPoolAllocator<U8> alloc);
+	ANKI_USE_RESULT Error loadFile(const CString& filename, GenericMemoryPoolAllocator<U8> alloc);
 
-	ANKI_USE_RESULT Error parse(
-		const CString& xmlText, GenericMemoryPoolAllocator<U8> alloc);
+	ANKI_USE_RESULT Error parse(const CString& xmlText, GenericMemoryPoolAllocator<U8> alloc);
 
-	ANKI_USE_RESULT Error getChildElement(
-		const CString& name, XmlElement& out) const;
+	ANKI_USE_RESULT Error getChildElement(const CString& name, XmlElement& out) const;
 
 private:
 	tinyxml2::XMLDocument m_doc;

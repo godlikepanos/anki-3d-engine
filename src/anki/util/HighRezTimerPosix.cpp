@@ -13,7 +13,6 @@
 namespace anki
 {
 
-//==============================================================================
 namespace
 {
 
@@ -34,20 +33,18 @@ StartTime startTime;
 
 } // end namespace anonymous
 
-//==============================================================================
 static U64 getNs()
 {
 	U64 ticks;
 
 	timespec now;
 	clock_gettime(CLOCK_MONOTONIC, &now);
-	ticks = static_cast<U64>(now.tv_sec - startTime.m_time.tv_sec) * 1000000000
-		+ (now.tv_nsec - startTime.m_time.tv_nsec);
+	ticks =
+		static_cast<U64>(now.tv_sec - startTime.m_time.tv_sec) * 1000000000 + (now.tv_nsec - startTime.m_time.tv_nsec);
 
 	return ticks;
 }
 
-//==============================================================================
 void HighRezTimer::sleep(Scalar sec)
 {
 	ANKI_ASSERT(sec >= 0.0);
@@ -68,7 +65,6 @@ void HighRezTimer::sleep(Scalar sec)
 	} while(wasError && (errno == EINTR));
 }
 
-//==============================================================================
 HighRezTimer::Scalar HighRezTimer::getCurrentTime()
 {
 	// Scalar(ticks) / 1000.0

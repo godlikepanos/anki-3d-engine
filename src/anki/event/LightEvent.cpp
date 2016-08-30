@@ -10,7 +10,6 @@
 namespace anki
 {
 
-//==============================================================================
 Error LightEvent::init(F32 startTime, F32 duration, SceneNode* light)
 {
 	Event::init(startTime, duration, light);
@@ -38,7 +37,6 @@ Error LightEvent::init(F32 startTime, F32 duration, SceneNode* light)
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Error LightEvent::update(F32 prevUpdateTime, F32 crntTime)
 {
 	F32 freq = randRange(m_freq - m_freqDeviation, m_freq + m_freqDeviation);
@@ -68,22 +66,17 @@ Error LightEvent::update(F32 prevUpdateTime, F32 crntTime)
 	{
 		Vec4 outCol = m_originalDiffColor + factor * m_intensityMultiplier;
 
-		LensFlareComponent* lfc =
-			getSceneNode()->tryGetComponent<LensFlareComponent>();
+		LensFlareComponent* lfc = getSceneNode()->tryGetComponent<LensFlareComponent>();
 
-		if(lfc
-			&& lfc->getColorMultiplier().xyz()
-				== lightc.getDiffuseColor().xyz())
+		if(lfc && lfc->getColorMultiplier().xyz() == lightc.getDiffuseColor().xyz())
 		{
-			lfc->setColorMultiplier(
-				Vec4(outCol.xyz(), lfc->getColorMultiplier().w()));
+			lfc->setColorMultiplier(Vec4(outCol.xyz(), lfc->getColorMultiplier().w()));
 		}
 
 		lightc.setDiffuseColor(outCol);
 	}
 
-	lightc.setSpecularColor(
-		m_originalSpecColor + factor * m_specularIntensityMultiplier);
+	lightc.setSpecularColor(m_originalSpecColor + factor * m_specularIntensityMultiplier);
 
 	return ErrorCode::NONE;
 }

@@ -8,22 +8,13 @@
 namespace anki
 {
 
-//==============================================================================
-// GpuBlockAllocator::Block                                                    =
-//==============================================================================
-class GpuBlockAllocator::Block
-	: public IntrusiveListEnabled<GpuBlockAllocator::Block>
+class GpuBlockAllocator::Block : public IntrusiveListEnabled<GpuBlockAllocator::Block>
 {
 public:
 	PtrSize m_offset = 0;
 	U32 m_allocationCount = 0;
 };
 
-//==============================================================================
-// GpuBlockAllocator                                                           =
-//==============================================================================
-
-//==============================================================================
 GpuBlockAllocator::~GpuBlockAllocator()
 {
 	if(m_freeBlockCount != m_blocks.getSize())
@@ -35,9 +26,7 @@ GpuBlockAllocator::~GpuBlockAllocator()
 	m_freeBlocksStack.destroy(m_alloc);
 }
 
-//==============================================================================
-void GpuBlockAllocator::init(
-	GenericMemoryPoolAllocator<U8> alloc, PtrSize totalSize, PtrSize blockSize)
+void GpuBlockAllocator::init(GenericMemoryPoolAllocator<U8> alloc, PtrSize totalSize, PtrSize blockSize)
 {
 	ANKI_ASSERT(!isCreated());
 	ANKI_ASSERT(totalSize > 0 && blockSize > 0);
@@ -60,9 +49,7 @@ void GpuBlockAllocator::init(
 	}
 }
 
-//==============================================================================
-Bool GpuBlockAllocator::blockHasEnoughSpace(
-	U blockIdx, PtrSize size, U alignment) const
+Bool GpuBlockAllocator::blockHasEnoughSpace(U blockIdx, PtrSize size, U alignment) const
 {
 	ANKI_ASSERT(size > 0);
 
@@ -74,7 +61,6 @@ Bool GpuBlockAllocator::blockHasEnoughSpace(
 	return allocEnd <= blockEnd;
 }
 
-//==============================================================================
 Error GpuBlockAllocator::allocate(PtrSize size, U alignment, PtrSize& outOffset)
 {
 	ANKI_ASSERT(isCreated());
@@ -85,8 +71,7 @@ Error GpuBlockAllocator::allocate(PtrSize size, U alignment, PtrSize& outOffset)
 
 	LockGuard<Mutex> lock(m_mtx);
 
-	if(m_currentBlock == MAX_U32
-		|| !blockHasEnoughSpace(m_currentBlock, size, alignment))
+	if(m_currentBlock == MAX_U32 || !blockHasEnoughSpace(m_currentBlock, size, alignment))
 	{
 		// Need new block
 		if(m_freeBlockCount > 0)
@@ -107,8 +92,7 @@ Error GpuBlockAllocator::allocate(PtrSize size, U alignment, PtrSize& outOffset)
 	{
 		PtrSize outOffset = getAlignedRoundUp(alignment, block->m_offset);
 		block->m_offset = outOffset + size;
-		ANKI_ASSERT(
-			block->m_offset <= (block - &m_blocks[0] + 1) * m_blockSize);
+		ANKI_ASSERT(block->m_offset <= (block - &m_blocks[0] + 1) * m_blockSize);
 
 		++block->m_allocationCount;
 
@@ -124,7 +108,6 @@ Error GpuBlockAllocator::allocate(PtrSize size, U alignment, PtrSize& outOffset)
 	return err;
 }
 
-//==============================================================================
 void GpuBlockAllocator::free(PtrSize offset)
 {
 	ANKI_ASSERT(isCreated());

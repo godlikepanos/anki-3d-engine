@@ -11,10 +11,6 @@
 namespace anki
 {
 
-//==============================================================================
-// ThreadPoolThread                                                            =
-//==============================================================================
-
 namespace detail
 {
 
@@ -41,10 +37,9 @@ public:
 
 private:
 	/// Thread callaback
-	static Error threadCallback(Thread::Info& info)
+	static Error threadCallback(ThreadCallbackInfo& info)
 	{
-		ThreadPoolThread& self =
-			*reinterpret_cast<ThreadPoolThread*>(info.m_userData);
+		ThreadPoolThread& self = *reinterpret_cast<ThreadPoolThread*>(info.m_userData);
 		Barrier& barrier = self.m_threadpool->m_barrier;
 		const PtrSize threadCount = self.m_threadpool->getThreadsCount();
 		Bool quit = false;
@@ -72,22 +67,15 @@ private:
 
 } // end namespace detail
 
-//==============================================================================
-// ThreadPool                                                                  =
-//==============================================================================
-
-//==============================================================================
 ThreadPool::DummyTask ThreadPool::m_dummyTask;
 
-//==============================================================================
 ThreadPool::ThreadPool(U32 threadsCount)
 	: m_barrier(threadsCount + 1)
 {
 	m_threadsCount = threadsCount;
 	ANKI_ASSERT(m_threadsCount <= MAX_THREADS && m_threadsCount > 0);
 
-	m_threads = reinterpret_cast<detail::ThreadPoolThread*>(
-		malloc(sizeof(detail::ThreadPoolThread) * m_threadsCount));
+	m_threads = reinterpret_cast<detail::ThreadPoolThread*>(malloc(sizeof(detail::ThreadPoolThread) * m_threadsCount));
 
 	if(m_threads == nullptr)
 	{
@@ -96,12 +84,10 @@ ThreadPool::ThreadPool(U32 threadsCount)
 
 	while(threadsCount-- != 0)
 	{
-		::new(&m_threads[threadsCount])
-			detail::ThreadPoolThread(threadsCount, this);
+		::new(&m_threads[threadsCount]) detail::ThreadPoolThread(threadsCount, this);
 	}
 }
 
-//==============================================================================
 ThreadPool::~ThreadPool()
 {
 	// Terminate threads
@@ -133,7 +119,6 @@ ThreadPool::~ThreadPool()
 	}
 }
 
-//==============================================================================
 void ThreadPool::assignNewTask(U32 slot, ThreadPoolTask* task)
 {
 	ANKI_ASSERT(slot < getThreadsCount());

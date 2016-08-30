@@ -15,11 +15,8 @@
 namespace anki
 {
 
-//==============================================================================
-
 const U32 MAX_INCLUDE_DEPTH = 8;
 
-//==============================================================================
 void ShaderLoader::printSourceLines() const
 {
 	U i = 1;
@@ -31,7 +28,6 @@ void ShaderLoader::printSourceLines() const
 	}
 }
 
-//==============================================================================
 Error ShaderLoader::parseFile(const ResourceFilename& filename)
 {
 	// Find the shader type
@@ -48,7 +44,6 @@ Error ShaderLoader::parseFile(const ResourceFilename& filename)
 	return err;
 }
 
-//==============================================================================
 Error ShaderLoader::parseFileIncludes(ResourceFilename filename, U32 depth)
 {
 	// first check the depth
@@ -81,8 +76,7 @@ Error ShaderLoader::parseFileIncludes(ResourceFilename filename, U32 depth)
 		{
 			// - Expect something between the quotes
 			// - Expect the last char to be a quote
-			if(line.getLength() >= token.getLength() + 2
-				&& line[line.getLength() - 1] == '\"')
+			if(line.getLength() >= token.getLength() + 2 && line[line.getLength() - 1] == '\"')
 			{
 				StringAuto filen(m_alloc);
 				filen.create(line.begin() + token.getLength(), line.end() - 1);

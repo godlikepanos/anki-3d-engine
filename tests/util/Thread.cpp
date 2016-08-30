@@ -13,7 +13,6 @@
 namespace anki
 {
 
-//==============================================================================
 ANKI_TEST(Util, Thread)
 {
 	static const char* THREAD_NAME = "name";
@@ -22,7 +21,7 @@ ANKI_TEST(Util, Thread)
 	static const U64 NUMBER = 0xFAFAFAFABABABA;
 	U64 u = NUMBER;
 
-	t.start(&u, [](Thread::Info& info) -> Error {
+	t.start(&u, [](ThreadCallbackInfo& info) -> Error {
 		Bool check = true;
 
 		// Check name
@@ -46,7 +45,6 @@ ANKI_TEST(Util, Thread)
 	ANKI_TEST_EXPECT_EQ(u, 0xF00);
 }
 
-//==============================================================================
 ANKI_TEST(Util, Mutex)
 {
 	Thread t0(nullptr), t1(nullptr);
@@ -64,7 +62,7 @@ ANKI_TEST(Util, Mutex)
 	In in;
 	in.m_mtx = &mtx;
 
-	t0.start(&in, [](Thread::Info& info) -> Error {
+	t0.start(&in, [](ThreadCallbackInfo& info) -> Error {
 		In& in = *reinterpret_cast<In*>(info.m_userData);
 		I64& num = in.m_num;
 		Mutex& mtx = *in.m_mtx;
@@ -79,7 +77,7 @@ ANKI_TEST(Util, Mutex)
 		return ErrorCode::NONE;
 	});
 
-	t1.start(&in, [](Thread::Info& info) -> Error {
+	t1.start(&in, [](ThreadCallbackInfo& info) -> Error {
 		In& in = *reinterpret_cast<In*>(info.m_userData);
 		I64& num = in.m_num;
 		Mutex& mtx = *in.m_mtx;
@@ -100,8 +98,6 @@ ANKI_TEST(Util, Mutex)
 
 	ANKI_TEST_EXPECT_EQ(in.m_num, ITERATIONS * 2);
 }
-
-//==============================================================================
 
 /// Struct for our tests
 struct TestJobTP : ThreadPoolTask
@@ -153,7 +149,6 @@ ANKI_TEST(Util, ThreadPool)
 	delete tp;
 }
 
-//==============================================================================
 ANKI_TEST(Util, Barrier)
 {
 	// Simple test
@@ -161,7 +156,7 @@ ANKI_TEST(Util, Barrier)
 		Barrier b(2);
 		Thread t(nullptr);
 
-		t.start(&b, [](Thread::Info& info) -> Error {
+		t.start(&b, [](ThreadCallbackInfo& info) -> Error {
 			Barrier& b = *reinterpret_cast<Barrier*>(info.m_userData);
 			b.wait();
 			return ErrorCode::NONE;

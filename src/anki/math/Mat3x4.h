@@ -32,25 +32,13 @@ public:
 };
 #endif
 
-/// 3x4 Matrix. Mainly used for transformations. It includes many helpful member
-/// functions. Its row major. The columns are the x,y,z axis
+/// 3x4 Matrix. Mainly used for transformations. It includes many helpful member functions. Its row major. The columns
+/// are the x,y,z axis
 template<typename T>
-class alignas(16) TMat3x4 : public TMat<T,
-								3,
-								4,
-								typename TMat3x4Simd<T>::Type,
-								TMat3x4<T>,
-								TVec4<T>,
-								TVec3<T>>
+class alignas(16) TMat3x4 : public TMat<T, 3, 4, typename TMat3x4Simd<T>::Type, TMat3x4<T>, TVec4<T>, TVec3<T>>
 {
 public:
-	using Base = TMat<T,
-		3,
-		4,
-		typename TMat3x4Simd<T>::Type,
-		TMat3x4<T>,
-		TVec4<T>,
-		TVec3<T>>;
+	using Base = TMat<T, 3, 4, typename TMat3x4Simd<T>::Type, TMat3x4<T>, TVec4<T>, TVec3<T>>;
 
 	using Base::Base;
 
@@ -66,18 +54,7 @@ public:
 	{
 	}
 
-	TMat3x4(T m00,
-		T m01,
-		T m02,
-		T m03,
-		T m10,
-		T m11,
-		T m12,
-		T m13,
-		T m20,
-		T m21,
-		T m22,
-		T m23)
+	TMat3x4(T m00, T m01, T m02, T m03, T m10, T m11, T m12, T m13, T m20, T m21, T m22, T m23)
 	{
 		TMat3x4& m = *this;
 		m(0, 0) = m00;
@@ -213,14 +190,11 @@ public:
 		c(2, 1) = a(2, 0) * b(0, 1) + a(2, 1) * b(1, 1) + a(2, 2) * b(2, 1);
 		c(2, 2) = a(2, 0) * b(0, 2) + a(2, 1) * b(1, 2) + a(2, 2) * b(2, 2);
 
-		c(0, 3) =
-			a(0, 0) * b(0, 3) + a(0, 1) * b(1, 3) + a(0, 2) * b(2, 3) + a(0, 3);
+		c(0, 3) = a(0, 0) * b(0, 3) + a(0, 1) * b(1, 3) + a(0, 2) * b(2, 3) + a(0, 3);
 
-		c(1, 3) =
-			a(1, 0) * b(0, 3) + a(1, 1) * b(1, 3) + a(1, 2) * b(2, 3) + a(1, 3);
+		c(1, 3) = a(1, 0) * b(0, 3) + a(1, 1) * b(1, 3) + a(1, 2) * b(2, 3) + a(1, 3);
 
-		c(2, 3) =
-			a(2, 0) * b(0, 3) + a(2, 1) * b(1, 3) + a(2, 2) * b(2, 3) + a(2, 3);
+		c(2, 3) = a(2, 0) * b(0, 3) + a(2, 1) * b(1, 3) + a(2, 2) * b(2, 3) + a(2, 3);
 
 		return c;
 	}
@@ -232,8 +206,7 @@ public:
 
 	static const TMat3x4& getIdentity()
 	{
-		static const TMat3x4 ident(
-			1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+		static const TMat3x4 ident(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 		return ident;
 	}
 	/// @}

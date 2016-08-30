@@ -49,7 +49,7 @@ public:
 	/// @return Return true if it's visible and false otherwise.
 	Bool visibilityTest(const CollisionShape& cs, const Aabb& aabb) const;
 
-public: // XXX
+private:
 	GenericMemoryPoolAllocator<U8> m_alloc;
 	Mat4 m_mv; ///< ModelView.
 	Mat4 m_p; ///< Projection.
@@ -63,19 +63,13 @@ public: // XXX
 	/// @param tri In clip space.
 	void rasterizeTriangle(const Vec4* tri);
 
-	Bool computeBarycetrinc(const Vec2& a,
-		const Vec2& b,
-		const Vec2& c,
-		const Vec2& p,
-		Vec3& uvw) const;
+	Bool computeBarycetrinc(const Vec2& a, const Vec2& b, const Vec2& c, const Vec2& p, Vec3& uvw) const;
 
 	/// Clip triangle in the near plane.
 	/// @note Triangles in view space.
-	void clipTriangle(
-		const Vec4* inTriangle, Vec4* outTriangles, U& outTriangleCount) const;
+	void clipTriangle(const Vec4* inTriangle, Vec4* outTriangles, U& outTriangleCount) const;
 
-	Bool visibilityTestInternal(
-		const CollisionShape& cs, const Aabb& aabb) const;
+	Bool visibilityTestInternal(const CollisionShape& cs, const Aabb& aabb) const;
 };
 /// @}
 

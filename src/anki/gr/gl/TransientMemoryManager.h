@@ -29,8 +29,7 @@ public:
 
 	~TransientMemoryManager();
 
-	void initMainThread(
-		GenericMemoryPoolAllocator<U8> alloc, const ConfigSet& cfg);
+	void initMainThread(GenericMemoryPoolAllocator<U8> alloc, const ConfigSet& cfg);
 
 	void initRenderThread();
 
@@ -47,8 +46,7 @@ public:
 
 	void free(const TransientMemoryToken& token)
 	{
-		ANKI_ASSERT(
-			token.m_lifetime == TransientMemoryTokenLifetime::PERSISTENT);
+		ANKI_ASSERT(token.m_lifetime == TransientMemoryTokenLifetime::PERSISTENT);
 	}
 
 	void* getBaseAddress(const TransientMemoryToken& token) const
@@ -56,8 +54,7 @@ public:
 		void* addr;
 		if(token.m_lifetime == TransientMemoryTokenLifetime::PER_FRAME)
 		{
-			addr = m_perFrameBuffers[bufferUsageToTransient(token.m_usage)]
-					   .m_mappedMem;
+			addr = m_perFrameBuffers[bufferUsageToTransient(token.m_usage)].m_mappedMem;
 		}
 		else
 		{
@@ -72,8 +69,7 @@ public:
 		GLuint name;
 		if(token.m_lifetime == TransientMemoryTokenLifetime::PER_FRAME)
 		{
-			name =
-				m_perFrameBuffers[bufferUsageToTransient(token.m_usage)].m_name;
+			name = m_perFrameBuffers[bufferUsageToTransient(token.m_usage)].m_name;
 		}
 		else
 		{

@@ -13,7 +13,6 @@
 
 namespace anki {
 
-//==============================================================================
 static EventManager* getEventManager(lua_State* l)
 {
 	LuaBinder* binder = nullptr;

@@ -9,7 +9,6 @@
 namespace anki
 {
 
-//==============================================================================
 MoveComponent::MoveComponent(SceneNode* node, MoveComponentFlag flags)
 	: SceneComponent(CLASS_TYPE, node)
 	, m_flags(flags)
@@ -17,19 +16,16 @@ MoveComponent::MoveComponent(SceneNode* node, MoveComponentFlag flags)
 	markForUpdate();
 }
 
-//==============================================================================
 MoveComponent::~MoveComponent()
 {
 }
 
-//==============================================================================
 Error MoveComponent::update(SceneNode& node, F32, F32, Bool& updated)
 {
 	updated = updateWorldTransform(node);
 	return ErrorCode::NONE;
 }
 
-//==============================================================================
 Bool MoveComponent::updateWorldTransform(SceneNode& node)
 {
 	m_prevWTrf = m_wtrf;
@@ -42,8 +38,7 @@ Bool MoveComponent::updateWorldTransform(SceneNode& node)
 
 		if(parent)
 		{
-			const MoveComponent* parentMove =
-				parent->tryGetComponent<MoveComponent>();
+			const MoveComponent* parentMove = parent->tryGetComponent<MoveComponent>();
 
 			if(parentMove == nullptr)
 			{
@@ -60,8 +55,7 @@ Bool MoveComponent::updateWorldTransform(SceneNode& node)
 			}
 			else
 			{
-				m_wtrf = parentMove->getWorldTransform().combineTransformations(
-					m_ltrf);
+				m_wtrf = parentMove->getWorldTransform().combineTransformations(m_ltrf);
 			}
 		}
 		else
@@ -75,22 +69,19 @@ Bool MoveComponent::updateWorldTransform(SceneNode& node)
 		m_flags.unset(MoveComponentFlag::MARKED_FOR_UPDATE);
 	}
 
-	// If this is dirty then make children dirty as well. Don't walk the
-	// whole tree because you will re-walk it later
+	// If this is dirty then make children dirty as well. Don't walk the whole tree because you will re-walk it later
 	if(dirty)
 	{
-		Error err =
-			node.visitChildrenMaxDepth(1, [](SceneNode& childNode) -> Error {
-				Error e = childNode.iterateComponentsOfType<MoveComponent>(
-					[](MoveComponent& mov) -> Error {
-						mov.markForUpdate();
-						return ErrorCode::NONE;
-					});
-
-				(void)e;
-
+		Error err = node.visitChildrenMaxDepth(1, [](SceneNode& childNode) -> Error {
+			Error e = childNode.iterateComponentsOfType<MoveComponent>([](MoveComponent& mov) -> Error {
+				mov.markForUpdate();
 				return ErrorCode::NONE;
 			});
+
+			(void)e;
+
+			return ErrorCode::NONE;
+		});
 
 		(void)err;
 	}

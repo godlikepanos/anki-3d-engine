@@ -10,7 +10,6 @@
 namespace anki
 {
 
-//==============================================================================
 ANKI_TEST(Util, String)
 {
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
@@ -95,11 +94,11 @@ ANKI_TEST(Util, String)
 
 	// Compare
 	{
-#define COMPARE(x_, y_, op_)                                                   \
-	a.append(alloc, x_);                                                       \
-	b.append(alloc, y_);                                                       \
-	ANKI_TEST_EXPECT_EQ(a op_ b, std::string(x_) op_ std::string(y_))          \
-	a.destroy(alloc);                                                          \
+#define COMPARE(x_, y_, op_)                                                                                           \
+	a.append(alloc, x_);                                                                                               \
+	b.append(alloc, y_);                                                                                               \
+	ANKI_TEST_EXPECT_EQ(a op_ b, std::string(x_) op_ std::string(y_))                                                  \
+	a.destroy(alloc);                                                                                                  \
 	b.destroy(alloc);
 
 		String a, b;
@@ -122,20 +121,7 @@ ANKI_TEST(Util, String)
 
 		// Extreme
 		const char* s = "1234567890ABCDEF!@#$%^&*()_+asfghjkl:,.;ljk\"><{}[]/";
-		a.sprintf(alloc,
-			"%s%s%s%s%s%s%s%s%s%s%s %d",
-			s,
-			s,
-			s,
-			s,
-			s,
-			s,
-			s,
-			s,
-			s,
-			s,
-			s,
-			88);
+		a.sprintf(alloc, "%s%s%s%s%s%s%s%s%s%s%s %d", s, s, s, s, s, s, s, s, s, s, s, 88);
 
 		String b;
 		for(U i = 0; i < 11; i++)
