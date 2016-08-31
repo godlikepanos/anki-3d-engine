@@ -43,7 +43,6 @@ vec3 getFragPosVSpace()
 }
 
 // Common code for lighting
-
 #define LIGHTING_COMMON_BRDF()                                                                                         \
 	vec3 frag2Light = light.posRadius.xyz - fragPos;                                                                   \
 	vec3 l = normalize(frag2Light);                                                                                    \

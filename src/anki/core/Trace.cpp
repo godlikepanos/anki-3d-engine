@@ -64,8 +64,7 @@ thread_local I g_traceEventsInFlight = 0;
 
 TraceManager::~TraceManager()
 {
-	// No need to close the json (no need to add ']'). Chrome will take care
-	// of that
+	// No need to close the json (no need to add ']'). Chrome will take care of that
 }
 
 Error TraceManager::create(HeapAllocator<U8> alloc, const CString& cacheDir)
@@ -80,13 +79,13 @@ Error TraceManager::create(HeapAllocator<U8> alloc, const CString& cacheDir)
 	StringAuto fname(alloc);
 	fname.sprintf("%s/trace.json", &cacheDir[0]);
 
-	ANKI_CHECK(m_traceFile.open(fname.toCString(), File::OpenFlag::WRITE));
+	ANKI_CHECK(m_traceFile.open(fname.toCString(), FileOpenFlag::WRITE));
 	ANKI_CHECK(m_traceFile.writeText("["));
 
 	// Create per frame file
 	StringAuto perFrameFname(alloc);
 	perFrameFname.sprintf("%s/per_frame.csv", &cacheDir[0]);
-	ANKI_CHECK(m_perFrameFile.open(perFrameFname.toCString(), File::OpenFlag::WRITE));
+	ANKI_CHECK(m_perFrameFile.open(perFrameFname.toCString(), FileOpenFlag::WRITE));
 
 	ANKI_CHECK(m_perFrameFile.writeText("FPS, "));
 	for(U i = 0; i < U(TraceCounterType::COUNT); ++i)

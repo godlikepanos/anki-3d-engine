@@ -28,7 +28,7 @@ static DWORD WINAPI threadCallback(LPVOID ud)
 	}
 
 	// Call the callback
-	Thread::Info info;
+	ThreadCallbackInfo info;
 	info.m_userData = thread->getUserData();
 	info.m_threadName = thread->getName();
 
@@ -60,7 +60,7 @@ Thread::~Thread()
 	m_impl = nullptr;
 }
 
-void Thread::start(void* userData, Callback callback, I pinToCore)
+void Thread::start(void* userData, ThreadCallback callback, I pinToCore)
 {
 	ANKI_ASSERT(!m_started);
 	ANKI_ASSERT(callback != nullptr);
@@ -112,7 +112,7 @@ Error Thread::join()
 	return static_cast<ErrorCode>(exitCode);
 }
 
-Thread::Id Thread::getCurrentThreadId()
+ThreadId Thread::getCurrentThreadId()
 {
 	HANDLE x = GetCurrentThread();
 	return reinterpret_cast<PtrSize>(x);

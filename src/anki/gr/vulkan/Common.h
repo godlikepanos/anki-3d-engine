@@ -9,8 +9,19 @@
 
 #if ANKI_OS == ANKI_OS_LINUX
 #define VK_USE_PLATFORM_XCB_KHR 1
+#elif ANKI_OS == ANKI_OS_WINDOWS
+#define VK_USE_PLATFORM_WIN32_KHR 1
+#else
+#error TODO
 #endif
 #include <vulkan/vulkan.h>
+
+// I wonder whose stupid idea was to pollute the global namespace with defines like ERROR, near and far
+#if ANKI_OS == ANKI_OS_WINDOWS
+#undef ERROR
+#undef near
+#undef far
+#endif
 
 namespace anki
 {

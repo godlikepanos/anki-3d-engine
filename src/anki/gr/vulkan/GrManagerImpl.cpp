@@ -182,7 +182,15 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 		"VK_LAYER_LUNARG_object_tracker",
 		"VK_LAYER_LUNARG_standard_validation"}};
 
-	static Array<const char*, 2> EXTENSIONS = {{VK_KHR_SURFACE_EXTENSION_NAME, VK_KHR_XCB_SURFACE_EXTENSION_NAME}};
+	static Array<const char*, 2> EXTENSIONS = {{VK_KHR_SURFACE_EXTENSION_NAME,
+#if ANKI_OS == ANKI_OS_LINUX
+		VK_KHR_XCB_SURFACE_EXTENSION_NAME
+#elif ANKI_OS == ANKI_OS_WINDOWS
+		VK_KHR_WIN32_SURFACE_EXTENSION_NAME
+#else
+#error TODO
+#endif
+	}};
 
 	VkApplicationInfo app = {};
 	app.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;

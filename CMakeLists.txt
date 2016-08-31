@@ -220,7 +220,7 @@ if(SDL)
 		DOWNLOAD_COMMAND ""
 		PREFIX "${CMAKE_CURRENT_BINARY_DIR}/sdl2_build"
 		SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/SDL2"
-		CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/sdl2_build -DSDL_SHARED=OFF -DSDL_STATIC=ON -DCMAKE_BUILD_TYPE=Release -DDIRECTX=OFF -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER} -DVIDEO_MIR=OFF -DSNDIO=OFF)
+		CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/sdl2_build -DSDL_SHARED=OFF -DSDL_STATIC=ON -DCMAKE_BUILD_TYPE=Release -DDIRECTX=OFF -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER} -DVIDEO_MIR=OFF -DSNDIO=OFF -DVIDEO_OPENGLES=OFF)
 
 	ExternalProject_Get_Property(SDL2_PROJECT install_dir)
 	set(SDL2_INSTALL_DIR ${install_dir})
@@ -261,7 +261,7 @@ if(VULKAN)
 
 	ExternalProject_Get_Property(GLSLANG_PROJECT install_dir)
 	set(GLSLANG_INSTALL_DIR ${install_dir})
-	
+
 	add_library(GLSLANG_LIB STATIC IMPORTED)
 	set_property(TARGET GLSLANG_LIB PROPERTY IMPORTED_LOCATION ${GLSLANG_INSTALL_DIR}/lib/libglslang.a)
 	add_dependencies(GLSLANG_LIB GLSLANG_PROJECT)
@@ -352,7 +352,7 @@ if(LINUX)
 	else()
 		set(_SYS vulkan)
 		if(SDL)
-			set(_SYS ${_SYS} X11-xcb)	
+			set(_SYS ${_SYS} X11-xcb)
 		else()
 			message(FATAL_ERROR "Unhandled case")
 		endif()
@@ -367,8 +367,13 @@ elseif(ANDROID)
 	include_directories("${ANDROID_NDK}/sources/android/native_app_glue")
 	set(_SYS_SRC "${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c")
 elseif(WINDOWS)
-	set(_SYS ankiglew opengl32 version Imm32 Winmm)
+	if(GL)
+		set(_SYS ankiglew opengl32)
+	else()
+		set(_SYS vulkan-1)
+	endif()
 
+	set(_SYS ${_SYS} version Imm32 Winmm)
 	add_definitions(-DGLEW_STATIC -D_NEWTON_STATIC_LIB)
 else()
 	message(FATAL_ERROR "Unhandled case")
