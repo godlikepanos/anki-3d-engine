@@ -60,16 +60,7 @@ GrManagerImpl::~GrManagerImpl()
 		vkDestroyPipelineLayout(m_device, m_globalPipelineLayout, nullptr);
 	}
 
-	if(m_globalDescriptorPool)
-	{
-		vkDestroyDescriptorPool(m_device, m_globalDescriptorPool, nullptr);
-	}
-
-	if(m_globalDescriptorSetLayout)
-	{
-		vkDestroyDescriptorSetLayout(m_device, m_globalDescriptorSetLayout, nullptr);
-	}
-
+	m_dsetAlloc.destroy();
 	m_transientMem.destroy();
 	m_gpuAlloc.destroy();
 
@@ -124,8 +115,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	ANKI_CHECK(initSwapchain(init));
 
 	ANKI_CHECK(initMemory(*init.m_config));
-	ANKI_CHECK(initGlobalDsetLayout());
-	ANKI_CHECK(initGlobalDsetPool());
+	ANKI_CHECK(m_dsetAlloc.init(m_device));
 	ANKI_CHECK(initGlobalPplineLayout());
 
 	for(PerFrame& f : m_perFrame)
@@ -423,103 +413,10 @@ Error GrManagerImpl::initSwapchain(const GrManagerInitInfo& init)
 	return ErrorCode::NONE;
 }
 
-Error GrManagerImpl::initGlobalDsetLayout()
-{
-	VkDescriptorSetLayoutCreateInfo ci = {};
-	ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-
-	const U BINDING_COUNT =
-		MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS + MAX_IMAGE_BINDINGS;
-	ci.bindingCount = BINDING_COUNT;
-
-	Array<VkDescriptorSetLayoutBinding, BINDING_COUNT> bindings;
-	memset(&bindings[0], 0, sizeof(bindings));
-	ci.pBindings = &bindings[0];
-
-	U count = 0;
-
-	// Combined image samplers
-	for(U i = 0; i < MAX_TEXTURE_BINDINGS; ++i)
-	{
-		VkDescriptorSetLayoutBinding& binding = bindings[count];
-		binding.binding = count;
-		binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		binding.descriptorCount = 1;
-		binding.stageFlags = VK_SHADER_STAGE_ALL;
-
-		++count;
-	}
-
-	// Uniform buffers
-	for(U i = 0; i < MAX_UNIFORM_BUFFER_BINDINGS; ++i)
-	{
-		VkDescriptorSetLayoutBinding& binding = bindings[count];
-		binding.binding = count;
-		binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-		binding.descriptorCount = 1;
-		binding.stageFlags = VK_SHADER_STAGE_ALL;
-
-		++count;
-	}
-
-	// Storage buffers
-	for(U i = 0; i < MAX_STORAGE_BUFFER_BINDINGS; ++i)
-	{
-		VkDescriptorSetLayoutBinding& binding = bindings[count];
-		binding.binding = count;
-		binding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
-		binding.descriptorCount = 1;
-		binding.stageFlags = VK_SHADER_STAGE_ALL;
-
-		++count;
-	}
-
-	// Images
-	for(U i = 0; i < MAX_IMAGE_BINDINGS; ++i)
-	{
-		VkDescriptorSetLayoutBinding& binding = bindings[count];
-		binding.binding = count;
-		binding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-		binding.descriptorCount = 1;
-		binding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
-
-		++count;
-	}
-
-	ANKI_ASSERT(count == BINDING_COUNT);
-
-	ANKI_VK_CHECK(vkCreateDescriptorSetLayout(m_device, &ci, nullptr, &m_globalDescriptorSetLayout));
-
-	return ErrorCode::NONE;
-}
-
-Error GrManagerImpl::initGlobalDsetPool()
-{
-	Array<VkDescriptorPoolSize, 4> pools = {{}};
-	pools[0] =
-		VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, MAX_TEXTURE_BINDINGS * MAX_RESOURCE_GROUPS};
-	pools[1] = VkDescriptorPoolSize{
-		VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, MAX_UNIFORM_BUFFER_BINDINGS * MAX_RESOURCE_GROUPS};
-	pools[2] = VkDescriptorPoolSize{
-		VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, MAX_STORAGE_BUFFER_BINDINGS * MAX_RESOURCE_GROUPS};
-	pools[3] = VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, MAX_IMAGE_BINDINGS * MAX_RESOURCE_GROUPS};
-
-	VkDescriptorPoolCreateInfo ci = {};
-	ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	ci.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-	ci.maxSets = MAX_RESOURCE_GROUPS;
-	ci.poolSizeCount = pools.getSize();
-	ci.pPoolSizes = &pools[0];
-
-	ANKI_VK_CHECK(vkCreateDescriptorPool(m_device, &ci, nullptr, &m_globalDescriptorPool));
-
-	return ErrorCode::NONE;
-}
-
 Error GrManagerImpl::initGlobalPplineLayout()
 {
 	Array<VkDescriptorSetLayout, MAX_BOUND_RESOURCE_GROUPS> sets = {
-		{m_globalDescriptorSetLayout, m_globalDescriptorSetLayout}};
+		{m_dsetAlloc.getGlobalDescriptorSetLayout(), m_dsetAlloc.getGlobalDescriptorSetLayout()}};
 
 	VkPipelineLayoutCreateInfo ci;
 	ci.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;

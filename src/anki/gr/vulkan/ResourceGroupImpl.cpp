@@ -17,7 +17,7 @@ ResourceGroupImpl::~ResourceGroupImpl()
 {
 	if(m_handle)
 	{
-		getGrManagerImpl().freeDescriptorSet(m_handle);
+		getGrManagerImpl().getDescriptorSetAllocator().free(m_handle);
 	}
 
 	m_refs.destroy(getAllocator());
@@ -191,7 +191,7 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 	//
 	if(needsDSet)
 	{
-		ANKI_CHECK(getGrManagerImpl().allocateDescriptorSet(m_handle));
+		ANKI_CHECK(getGrManagerImpl().getDescriptorSetAllocator().allocate(m_handle));
 		ANKI_ASSERT(m_bindPoint != VK_PIPELINE_BIND_POINT_MAX_ENUM);
 	}
 
