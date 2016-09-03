@@ -8,6 +8,7 @@
 #include <anki/gr/vulkan/GrManagerImpl.h>
 #include <anki/gr/vulkan/BufferImpl.h>
 #include <anki/core/Config.h>
+#include <anki/core/Trace.h>
 
 namespace anki
 {
@@ -94,6 +95,32 @@ void TransientMemoryManager::allocate(
 	else
 	{
 		ANKI_LOGF("Out of transient GPU memory");
+	}
+}
+
+void TransientMemoryManager::endFrame()
+{
+	for(TransientBufferType usage = TransientBufferType::UNIFORM; usage < TransientBufferType::COUNT; ++usage)
+	{
+		PerFrameBuffer& buff = m_perFrameBuffers[usage];
+
+		if(buff.m_mappedMem)
+		{
+			// Increase the counters
+			switch(usage)
+			{
+			case TransientBufferType::UNIFORM:
+				ANKI_TRACE_INC_COUNTER(GR_DYNAMIC_UNIFORMS_SIZE, buff.m_alloc.getUnallocatedMemorySize());
+				break;
+			case TransientBufferType::STORAGE:
+				ANKI_TRACE_INC_COUNTER(GR_DYNAMIC_STORAGE_SIZE, buff.m_alloc.getUnallocatedMemorySize());
+				break;
+			default:
+				break;
+			}
+
+			buff.m_alloc.endFrame();
+		}
 	}
 }
 

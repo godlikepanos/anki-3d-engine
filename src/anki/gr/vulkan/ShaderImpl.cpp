@@ -170,7 +170,7 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #endif
 
 #if defined(VERTEX_SHADER)
-#define ANKI_WRITE_POSITION(x_) gl_Position = x_; gl_Position.y = -gl_Position.y
+#define ANKI_WRITE_POSITION(x_) gl_Position = x_;
 #endif
 
 %s)";

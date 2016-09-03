@@ -57,9 +57,6 @@ void main()
 	vec2 pos = rot * POSITIONS[gl_VertexID % 3];
 
 	gl_Position = vec4(pos, 0.0, 1.0);
-#if defined(ANKI_VK)
-	gl_Position.y = -gl_Position.y;
-#endif
 })";
 
 static const char* VERT_INP_SRC = R"(
@@ -78,9 +75,6 @@ layout(location = 1) out vec3 out_color1;
 void main()
 {
 	gl_Position = vec4(in_position, 1.0);
-#if defined(ANKI_VK)
-	gl_Position.y = -gl_Position.y;
-#endif
 
 	out_color0 = in_color0;
 	out_color1 = in_color1;
@@ -100,10 +94,7 @@ void main()
 		vec2[](vec2(-1.0, 1.0), vec2(-1.0, -1.0), vec2(1.0, -1.0),
 		vec2(1.0, -1.0), vec2(1.0, 1.0), vec2(-1.0, 1.0));
 
-	gl_Position = vec4(POSITIONS[gl_VertexID], 0.0, 1.0);
-#if defined(ANKI_VK)
-	gl_Position.y = -gl_Position.y;
-#endif
+	ANKI_WRITE_POSITION(vec4(POSITIONS[gl_VertexID], 0.0, 1.0));
 	out_uv = POSITIONS[gl_VertexID] / 2.0 + 0.5;
 })";
 
@@ -228,9 +219,13 @@ layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_tex1;
 
 void main()
 {
-	float factor = in_uv.x;
-	vec3 col0 = texture(u_tex0, in_uv).rgb;
-	vec3 col1 = texture(u_tex1, in_uv).rgb;
+	vec2 uv = in_uv;
+#ifdef ANKI_VK
+	uv.y = 1.0 - uv.y;
+#endif
+	float factor = uv.x;
+	vec3 col0 = texture(u_tex0, uv).rgb;
+	vec3 col1 = texture(u_tex1, uv).rgb;
 	
 	out_color = vec4(col1 + col0, 1.0);
 })";
@@ -857,7 +852,7 @@ static void drawOffscreenDrawcalls(
 
 	TransientMemoryInfo transientInfo;
 
-	Mat4 modelMat(Vec4(0.0, 0.0, 0.0, 1.0), Mat3(Euler(ang, ang / 2.0f, ang / 3.0f)), 1.0f);
+	Mat4 modelMat(Vec4(-0.5, -0.5, 0.0, 1.0), Mat3(Euler(ang, ang / 2.0f, ang / 3.0f)), 1.0f);
 
 	Mat4* mvp = static_cast<Mat4*>(
 		gr.allocateFrameTransientMemory(sizeof(*mvp), BufferUsageBit::UNIFORM_ALL, transientInfo.m_uniformBuffers[0]));
@@ -874,7 +869,7 @@ static void drawOffscreenDrawcalls(
 	cmdb->drawElements(6 * 2 * 3);
 
 	// 2nd draw
-	modelMat = Mat4(Vec4(0.0, 0.0, 0.0, 1.0), Mat3(Euler(ang * 2.0, ang, ang / 3.0f * 2.0)), 1.0f);
+	modelMat = Mat4(Vec4(0.5, 0.5, 0.0, 1.0), Mat3(Euler(ang * 2.0, ang, ang / 3.0f * 2.0)), 1.0f);
 
 	mvp = static_cast<Mat4*>(
 		gr.allocateFrameTransientMemory(sizeof(*mvp), BufferUsageBit::UNIFORM_ALL, transientInfo.m_uniformBuffers[0]));

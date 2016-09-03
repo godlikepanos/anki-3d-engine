@@ -22,5 +22,5 @@ void main()
 
 	vec2 pos = POSITIONS[gl_VertexID];
 	out_uv = pos * 0.5 + (0.5 + UV_OFFSET);
-	gl_Position = vec4(pos, 0.0, 1.0);
+	ANKI_WRITE_POSITION(vec4(pos, 0.0, 1.0));
 }

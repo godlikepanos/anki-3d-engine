@@ -335,7 +335,7 @@ Error GrManagerImpl::initSwapchain(const GrManagerInitInfo& init)
 	VkColorSpaceKHR colorspace = VK_COLOR_SPACE_MAX_ENUM_KHR;
 	while(formatCount--)
 	{
-		if(formats[formatCount].format == VK_FORMAT_B8G8R8A8_SRGB)
+		if(formats[formatCount].format == VK_FORMAT_B8G8R8A8_UNORM)
 		{
 			m_surfaceFormat = formats[formatCount].format;
 			colorspace = formats[formatCount].colorSpace;
@@ -516,6 +516,8 @@ void GrManagerImpl::endFrame()
 		LockGuard<Mutex> lock(m_queueSubmitMtx);
 		ANKI_VK_CHECKF(vkQueuePresentKHR(m_queue, &present));
 	}
+
+	m_transientMem.endFrame();
 
 	// Finalize
 	++m_frame;

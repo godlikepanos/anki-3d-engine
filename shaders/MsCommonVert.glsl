@@ -65,7 +65,7 @@ void writePositionAndUv(in mat4 mvp)
 #if TESSELLATION
 	gl_Position = vec4(in_position, 1.0);
 #else
-	gl_Position = mvp * vec4(in_position, 1.0);
+	ANKI_WRITE_POSITION(mvp * vec4(in_position, 1.0));
 #endif
 }
 

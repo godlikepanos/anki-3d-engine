@@ -84,14 +84,14 @@ Error MainRenderer::create(ThreadPool* threadpool,
 
 		ColorStateInfo colorState;
 		colorState.m_attachmentCount = 1;
+		colorState.m_attachments[0].m_format.m_components = ComponentFormat::DEFAULT_FRAMEBUFFER;
 		m_r->createDrawQuadPipeline(m_blitFrag->getGrShader(), colorState, m_blitPpline);
 
 		// Init RC group
 		ResourceGroupInitInfo rcinit;
 		rcinit.m_textures[0].m_texture = m_r->getPps().getRt();
 		m_rcGroup = m_r->getGrManager().newInstance<ResourceGroup>(rcinit);
-		ANKI_LOGI("The main renderer will have to blit the offscreen "
-				  "renderer's result");
+		ANKI_LOGI("The main renderer will have to blit the offscreen renderer's result");
 	}
 
 	ANKI_LOGI("Main renderer initialized. Rendering size %ux%u", m_width, m_height);
