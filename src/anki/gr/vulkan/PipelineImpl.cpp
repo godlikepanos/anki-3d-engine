@@ -213,7 +213,7 @@ VkPipelineRasterizationStateCreateInfo* PipelineImpl::initRasterizerState(
 	ci.polygonMode = convertFillMode(r.m_fillMode);
 	ci.cullMode = convertCullMode(r.m_cullMode);
 	ci.frontFace = VK_FRONT_FACE_CLOCKWISE; // Use CW to workaround Vulkan's y flip
-	ci.depthBiasEnable = VK_FALSE; // TODO
+	ci.depthBiasEnable = VK_TRUE; // TODO
 	ci.lineWidth = 1.0;
 
 	return &ci;

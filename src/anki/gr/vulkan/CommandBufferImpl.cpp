@@ -293,8 +293,8 @@ void CommandBufferImpl::generateMipmaps2d(TexturePtr tex, U face, U layer)
 		I32 srcWidth = impl.m_width >> i;
 		I32 srcHeight = impl.m_height >> i;
 
-		I32 dstWidth = impl.m_width >> i;
-		I32 dstHeight = impl.m_height >> i;
+		I32 dstWidth = impl.m_width >> (i + 1);
+		I32 dstHeight = impl.m_height >> (i + 1);
 
 		ANKI_ASSERT(srcWidth > 0 && srcHeight > 0 && dstWidth > 0 && dstHeight > 0);
 
