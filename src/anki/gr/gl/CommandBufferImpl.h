@@ -115,6 +115,10 @@ public:
 
 	void drawArrays(U32 count, U32 instanceCount = 1, U32 first = 0, U32 baseInstance = 0);
 
+	void drawElementsIndirect(U32 drawCount, PtrSize offset, BufferPtr indirectBuff);
+
+	void drawArraysIndirect(U32 drawCount, PtrSize offset, BufferPtr indirectBuff);
+
 	void drawElementsConditional(OcclusionQueryPtr query,
 		U32 count,
 		U32 instanceCount = 1,

@@ -159,6 +159,10 @@ public:
 
 	void drawArrays(U32 count, U32 instanceCount = 1, U32 first = 0, U32 baseInstance = 0);
 
+	void drawElementsIndirect(U32 drawCount, PtrSize offset, BufferPtr indirectBuff);
+
+	void drawArraysIndirect(U32 drawCount, PtrSize offset, BufferPtr indirectBuff);
+
 	void drawElementsConditional(OcclusionQueryPtr query,
 		U32 count,
 		U32 instanceCount = 1,
@@ -195,6 +199,12 @@ public:
 	/// @param size The bytes to fill. Must be multiple of 4 or MAX_PTR_SIZE to indicate the whole buffer.
 	/// @param value The value to fill the buffer with.
 	void fillBuffer(BufferPtr buff, PtrSize offset, PtrSize size, U32 value);
+
+	/// Write the occlusion result to buffer.
+	/// @param[in] query The query to get the result from.
+	/// @param offset The offset inside the buffer to write the result.
+	/// @param buff The buffer to update.
+	void writeOcclusionQueryResultToBuffer(OcclusionQueryPtr query, PtrSize offset, BufferPtr buff);
 	/// @}
 
 	/// @name Resource upload

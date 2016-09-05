@@ -12,6 +12,7 @@
 #include <anki/gr/gl/ResourceGroupImpl.h>
 #include <anki/gr/OcclusionQuery.h>
 #include <anki/gr/gl/OcclusionQueryImpl.h>
+#include <anki/gr/gl/BufferImpl.h>
 
 #include <anki/util/Logger.h>
 #include <anki/core/Trace.h>
@@ -220,6 +221,101 @@ void CommandBufferImpl::drawArrays(U32 count, U32 instanceCount, U32 first, U32 
 	pushBackNewCommand<DrawArraysCondCommand>(info);
 }
 
+void CommandBufferImpl::drawElementsIndirect(U32 drawCount, PtrSize offset, BufferPtr indirectBuff)
+{
+	class DrawElementsIndirectCommand final : public GlCommand
+	{
+	public:
+		U32 m_drawCount;
+		PtrSize m_offset;
+		BufferPtr m_buff;
+
+		DrawElementsIndirectCommand(U32 drawCount, PtrSize offset, BufferPtr buff)
+			: m_drawCount(drawCount)
+			, m_offset(offset)
+			, m_buff(buff)
+		{
+			ANKI_ASSERT(drawCount > 0);
+			ANKI_ASSERT((m_offset % 4) == 0);
+		}
+
+		Error operator()(GlState& state)
+		{
+			state.flushVertexState();
+			const BufferImpl& buff = m_buff->getImplementation();
+
+			ANKI_ASSERT(m_offset + sizeof(DrawElementsIndirectInfo) * m_drawCount <= buff.m_size);
+
+			glBindBuffer(GL_DRAW_INDIRECT_BUFFER, buff.getGlName());
+
+			GLenum indicesType = 0;
+			switch(state.m_indexSize)
+			{
+			case 2:
+				indicesType = GL_UNSIGNED_SHORT;
+				break;
+			case 4:
+				indicesType = GL_UNSIGNED_INT;
+				break;
+			default:
+				ANKI_ASSERT(0);
+				break;
+			};
+
+			glMultiDrawElementsIndirect(state.m_topology,
+				indicesType,
+				numberToPtr<void*>(m_offset),
+				m_drawCount,
+				sizeof(DrawElementsIndirectInfo));
+
+			glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
+			return ErrorCode::NONE;
+		}
+	};
+
+	checkDrawcall();
+	pushBackNewCommand<DrawElementsIndirectCommand>(drawCount, offset, indirectBuff);
+}
+
+void CommandBufferImpl::drawArraysIndirect(U32 drawCount, PtrSize offset, BufferPtr indirectBuff)
+{
+	class DrawArraysIndirectCommand final : public GlCommand
+	{
+	public:
+		U32 m_drawCount;
+		PtrSize m_offset;
+		BufferPtr m_buff;
+
+		DrawArraysIndirectCommand(U32 drawCount, PtrSize offset, BufferPtr buff)
+			: m_drawCount(drawCount)
+			, m_offset(offset)
+			, m_buff(buff)
+		{
+			ANKI_ASSERT(drawCount > 0);
+			ANKI_ASSERT((m_offset % 4) == 0);
+		}
+
+		Error operator()(GlState& state)
+		{
+			state.flushVertexState();
+			const BufferImpl& buff = m_buff->getImplementation();
+
+			ANKI_ASSERT(m_offset + sizeof(DrawArraysIndirectInfo) * m_drawCount <= buff.m_size);
+
+			glBindBuffer(GL_DRAW_INDIRECT_BUFFER, buff.getGlName());
+
+			glMultiDrawArraysIndirect(
+				state.m_topology, numberToPtr<void*>(m_offset), m_drawCount, sizeof(DrawArraysIndirectInfo));
+
+			glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
+			return ErrorCode::NONE;
+		}
+	};
+
+	checkDrawcall();
+	pushBackNewCommand<DrawArraysIndirectCommand>(drawCount, offset, indirectBuff);
+}
+
 void CommandBufferImpl::drawElementsConditional(
 	OcclusionQueryPtr query, U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance)
 {
@@ -240,26 +336,27 @@ void CommandBufferImpl::drawArraysConditional(
 	pushBackNewCommand<DrawArraysCondCommand>(info, query);
 }
 
-class DispatchCommand final : public GlCommand
-{
-public:
-	Array<U32, 3> m_size;
-
-	DispatchCommand(U32 x, U32 y, U32 z)
-		: m_size({{x, y, z}})
-	{
-	}
-
-	Error operator()(GlState&)
-	{
-		glDispatchCompute(m_size[0], m_size[1], m_size[2]);
-		return ErrorCode::NONE;
-	}
-};
-
 void CommandBufferImpl::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ)
 {
 	ANKI_ASSERT(!m_dbg.m_insideRenderPass);
+
+	class DispatchCommand final : public GlCommand
+	{
+	public:
+		Array<U32, 3> m_size;
+
+		DispatchCommand(U32 x, U32 y, U32 z)
+			: m_size({{x, y, z}})
+		{
+		}
+
+		Error operator()(GlState&)
+		{
+			glDispatchCompute(m_size[0], m_size[1], m_size[2]);
+			return ErrorCode::NONE;
+		}
+	};
+
 	pushBackNewCommand<DispatchCommand>(groupCountX, groupCountY, groupCountZ);
 }
 

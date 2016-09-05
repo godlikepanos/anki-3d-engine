@@ -231,6 +231,16 @@ void CommandBuffer::drawArrays(U32 count, U32 instanceCount, U32 first, U32 base
 	m_impl->drawArrays(count, instanceCount, first, baseInstance);
 }
 
+void CommandBuffer::drawElementsIndirect(U32 drawCount, PtrSize offset, BufferPtr indirectBuff)
+{
+	m_impl->drawElementsIndirect(drawCount, offset, indirectBuff);
+}
+
+void CommandBuffer::drawArraysIndirect(U32 drawCount, PtrSize offset, BufferPtr indirectBuff)
+{
+	m_impl->drawArraysIndirect(drawCount, offset, indirectBuff);
+}
+
 void CommandBuffer::drawElementsConditional(
 	OcclusionQueryPtr query, U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance)
 {
@@ -584,58 +594,92 @@ void CommandBuffer::setTextureVolumeBarrier(
 	// Do nothing
 }
 
-class ClearTextCommand final : public GlCommand
-{
-public:
-	TexturePtr m_tex;
-	ClearValue m_val;
-	TextureSurfaceInfo m_surf;
-
-	ClearTextCommand(TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& val)
-		: m_tex(tex)
-		, m_val(val)
-		, m_surf(surf)
-	{
-	}
-
-	Error operator()(GlState&)
-	{
-		m_tex->getImplementation().clear(m_surf, m_val);
-		return ErrorCode::NONE;
-	}
-};
-
 void CommandBuffer::clearTextureSurface(TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& clearValue)
 {
+	class ClearTextCommand final : public GlCommand
+	{
+	public:
+		TexturePtr m_tex;
+		ClearValue m_val;
+		TextureSurfaceInfo m_surf;
+
+		ClearTextCommand(TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& val)
+			: m_tex(tex)
+			, m_val(val)
+			, m_surf(surf)
+		{
+		}
+
+		Error operator()(GlState&)
+		{
+			m_tex->getImplementation().clear(m_surf, m_val);
+			return ErrorCode::NONE;
+		}
+	};
+
 	m_impl->pushBackNewCommand<ClearTextCommand>(tex, surf, clearValue);
 }
 
-class FillBufferCommand final : public GlCommand
-{
-public:
-	BufferPtr m_buff;
-	PtrSize m_offset;
-	PtrSize m_size;
-	U32 m_value;
-
-	FillBufferCommand(BufferPtr buff, PtrSize offset, PtrSize size, U32 value)
-		: m_buff(buff)
-		, m_offset(offset)
-		, m_size(size)
-		, m_value(value)
-	{
-	}
-
-	Error operator()(GlState&)
-	{
-		m_buff->getImplementation().fill(m_offset, m_size, m_value);
-		return ErrorCode::NONE;
-	}
-};
-
 void CommandBuffer::fillBuffer(BufferPtr buff, PtrSize offset, PtrSize size, U32 value)
 {
+	class FillBufferCommand final : public GlCommand
+	{
+	public:
+		BufferPtr m_buff;
+		PtrSize m_offset;
+		PtrSize m_size;
+		U32 m_value;
+
+		FillBufferCommand(BufferPtr buff, PtrSize offset, PtrSize size, U32 value)
+			: m_buff(buff)
+			, m_offset(offset)
+			, m_size(size)
+			, m_value(value)
+		{
+		}
+
+		Error operator()(GlState&)
+		{
+			m_buff->getImplementation().fill(m_offset, m_size, m_value);
+			return ErrorCode::NONE;
+		}
+	};
+
 	m_impl->pushBackNewCommand<FillBufferCommand>(buff, offset, size, value);
+}
+
+void CommandBuffer::writeOcclusionQueryResultToBuffer(OcclusionQueryPtr query, PtrSize offset, BufferPtr buff)
+{
+	class WriteOcclResultToBuff final : public GlCommand
+	{
+	public:
+		OcclusionQueryPtr m_query;
+		PtrSize m_offset;
+		BufferPtr m_buff;
+
+		WriteOcclResultToBuff(OcclusionQueryPtr query, PtrSize offset, BufferPtr buff)
+			: m_query(query)
+			, m_offset(offset)
+			, m_buff(buff)
+		{
+			ANKI_ASSERT((m_offset % 4) == 0);
+		}
+
+		Error operator()(GlState&)
+		{
+			const BufferImpl& buff = m_buff->getImplementation();
+			ANKI_ASSERT(m_offset + 4 <= buff.m_size);
+
+			glBindBuffer(GL_QUERY_BUFFER, buff.getGlName());
+			glGetQueryObjectuiv(
+				m_query->getImplementation().getGlName(), GL_QUERY_RESULT, numberToPtr<GLuint*>(m_offset));
+			glBindBuffer(GL_QUERY_BUFFER, 0);
+
+			return ErrorCode::NONE;
+		}
+	};
+
+	m_impl->pushBackNewCommand<WriteOcclResultToBuff>(query, offset, buff);
 }
 
 } // end namespace anki
