@@ -96,7 +96,7 @@ Error Pps::run(RenderingContext& ctx)
 	{
 		// Need to create it
 
-		ShaderResourcePtr& frag = m_frag[dbgEnabled];
+		ShaderResourcePtr& frag = m_frag[drawToDefaultFb][dbgEnabled];
 		if(!frag)
 		{
 			StringAuto pps(ctx.m_tempAllocator);
@@ -106,13 +106,15 @@ Error Pps::run(RenderingContext& ctx)
 						"#define FBO_WIDTH %u\n"
 						"#define FBO_HEIGHT %u\n"
 						"#define LUT_SIZE %u.0\n"
-						"#define DBG_ENABLED %u\n",
+						"#define DBG_ENABLED %u\n"
+						"#define DRAW_TO_DEFAULT %u\n",
 				true,
 				m_sharpenEnabled,
 				m_r->getWidth(),
 				m_r->getHeight(),
 				LUT_SIZE,
-				dbgEnabled);
+				dbgEnabled,
+				drawToDefaultFb);
 
 			ANKI_CHECK(getResourceManager().loadResourceToCache(frag, "shaders/Pps.frag.glsl", pps.toCString(), "r_"));
 		}

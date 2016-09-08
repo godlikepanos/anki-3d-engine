@@ -448,6 +448,7 @@ void CommandBufferImpl::uploadTextureVolume(
 		U width = impl.m_width >> vol.m_level;
 		U height = impl.m_height >> vol.m_level;
 		U depth = impl.m_depth >> vol.m_level;
+		(void)depth;
 		ANKI_ASSERT(token.m_range == computeVolumeSize(width, height, depth, impl.m_format));
 
 		// Copy

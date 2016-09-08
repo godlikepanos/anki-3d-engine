@@ -44,7 +44,7 @@ private:
 	static const U LUT_SIZE = 16;
 
 	FramebufferPtr m_fb;
-	Array<ShaderResourcePtr, 2> m_frag; ///< One with Dbg and one without
+	Array2d<ShaderResourcePtr, 2, 2> m_frag; ///< One with Dbg and one without
 	Array2d<PipelinePtr, 2, 2> m_ppline; ///< With Dbg, Default FB or not
 	TexturePtr m_rt;
 	Array<ResourceGroupPtr, 2> m_rcGroup; ///< One with Dbg and one without

@@ -161,8 +161,8 @@ private:
 #if ANKI_ASSERTIONS
 	// Debug stuff
 	Bool8 m_insideRenderPass = false;
-	VkSubpassContents m_subpassContents = VK_SUBPASS_CONTENTS_MAX_ENUM;
 #endif
+	VkSubpassContents m_subpassContents = VK_SUBPASS_CONTENTS_MAX_ENUM;
 
 	/// Some common operations per command.
 	void commandCommon();

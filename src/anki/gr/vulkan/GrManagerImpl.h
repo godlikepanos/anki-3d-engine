@@ -150,12 +150,6 @@ public:
 	}
 	/// @}
 
-	TextureFallbackUploader& getTextureFallbackUploader()
-	{
-		ANKI_ASSERT(m_texUploader);
-		return *m_texUploader;
-	}
-
 	GpuVendor getGpuVendor() const
 	{
 		return m_vendor;
@@ -272,8 +266,6 @@ private:
 	FenceFactory m_fences;
 	SemaphoreFactory m_semaphores;
 	/// @}
-
-	TextureFallbackUploader* m_texUploader = nullptr;
 
 	QueryAllocator m_queryAlloc;
 

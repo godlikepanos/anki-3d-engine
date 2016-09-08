@@ -104,23 +104,29 @@ vec3 colorGrading(in vec3 color)
 
 void main()
 {
-#if SHARPEN_ENABLED
-	out_color = sharpen(u_isRt, in_uv);
+#if DRAW_TO_DEFAULT && defined(ANKI_VK)
+	vec2 uv = vec2(in_uv.x, 1.0 - in_uv.y);
 #else
-	out_color = textureLod(u_isRt, in_uv, 0.0).rgb;
+	vec2 uv = in_uv;
+#endif
+
+#if SHARPEN_ENABLED
+	out_color = sharpen(u_isRt, uv);
+#else
+	out_color = textureLod(u_isRt, uv, 0.0).rgb;
 #endif
 
 	out_color = tonemap(out_color, u_luminance.averageLuminancePad3.x, 0.0);
 
 #if BLOOM_ENABLED
-	vec3 bloom = textureLod(u_ppsBloomLfRt, in_uv, 0.0).rgb;
+	vec3 bloom = textureLod(u_ppsBloomLfRt, uv, 0.0).rgb;
 	out_color += bloom;
 #endif
 
 	out_color = colorGrading(out_color);
 
 #if DBG_ENABLED
-	out_color += textureLod(u_dbgRt, in_uv, 0.0).rgb;
+	out_color += textureLod(u_dbgRt, uv, 0.0).rgb;
 #endif
 
 #if 0
