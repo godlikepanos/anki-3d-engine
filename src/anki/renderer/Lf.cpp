@@ -17,8 +17,9 @@
 namespace anki
 {
 
-struct Sprite
+class Sprite
 {
+public:
 	Vec2 m_pos; ///< Position in NDC
 	Vec2 m_scale; ///< Scale of the quad
 	Vec4 m_color;
@@ -28,6 +29,7 @@ struct Sprite
 
 Lf::~Lf()
 {
+	m_queries.destroy(getAllocator());
 }
 
 Error Lf::init(const ConfigSet& config)
@@ -39,6 +41,15 @@ Error Lf::init(const ConfigSet& config)
 	}
 
 	return err;
+}
+
+Error Lf::initInternal(const ConfigSet& config)
+{
+	ANKI_CHECK(initSprite(config));
+	ANKI_CHECK(initOcclusion(config));
+
+	getGrManager().finish();
+	return ErrorCode::NONE;
 }
 
 Error Lf::initSprite(const ConfigSet& config)
@@ -85,10 +96,32 @@ Error Lf::initSprite(const ConfigSet& config)
 
 Error Lf::initOcclusion(const ConfigSet& config)
 {
-	// Shaders
-	ANKI_CHECK(getResourceManager().loadResource("shaders/LfOcclusion.vert.glsl", m_occlusionVert));
+	GrManager& gr = getGrManager();
 
+	m_queries.create(getAllocator(), m_maxFlares);
+
+	m_queryResultBuff = gr.newInstance<Buffer>(m_maxFlares * sizeof(U32),
+		BufferUsageBit::STORAGE_COMPUTE_READ | BufferUsageBit::QUERY_RESULT,
+		BufferMapAccessBit::NONE);
+
+	m_indirectBuff = gr.newInstance<Buffer>(m_maxFlares * sizeof(DrawArraysIndirectInfo),
+		BufferUsageBit::INDIRECT | BufferUsageBit::STORAGE_COMPUTE_WRITE | BufferUsageBit::BUFFER_UPLOAD_DESTINATION,
+		BufferMapAccessBit::NONE);
+
+	ANKI_CHECK(getResourceManager().loadResource("shaders/LfOcclusion.vert.glsl", m_occlusionVert));
 	ANKI_CHECK(getResourceManager().loadResource("shaders/LfOcclusion.frag.glsl", m_occlusionFrag));
+	ANKI_CHECK(getResourceManager().loadResource("shaders/LfUpdateIndirectInfo.comp.glsl", m_writeIndirectBuffComp));
+
+	PipelineInitInfo ppinit;
+	ppinit.m_shaders[ShaderType::COMPUTE] = m_writeIndirectBuffComp->getGrShader();
+	m_updateIndirectBuffPpline = gr.newInstance<Pipeline>(ppinit);
+
+	ResourceGroupInitInfo rcinit;
+	rcinit.m_storageBuffers[0].m_buffer = m_queryResultBuff;
+	rcinit.m_storageBuffers[0].m_usage = BufferUsageBit::STORAGE_COMPUTE_READ;
+	rcinit.m_storageBuffers[1].m_buffer = m_indirectBuff;
+	rcinit.m_storageBuffers[1].m_usage = BufferUsageBit::STORAGE_COMPUTE_WRITE;
+	m_updateIndirectBuffRsrc = gr.newInstance<ResourceGroup>(rcinit);
 
 	// Create ppline
 	// - only position attribute
@@ -114,26 +147,14 @@ Error Lf::initOcclusion(const ConfigSet& config)
 	init.m_color.m_attachments[2].m_channelWriteMask = ColorBit::NONE;
 	init.m_shaders[U(ShaderType::VERTEX)] = m_occlusionVert->getGrShader();
 	init.m_shaders[U(ShaderType::FRAGMENT)] = m_occlusionFrag->getGrShader();
-	m_occlusionPpline = getGrManager().newInstance<Pipeline>(init);
+	m_occlusionPpline = gr.newInstance<Pipeline>(init);
 
-	// Init resource group
-	{
-		ResourceGroupInitInfo rcInit;
-		rcInit.m_vertexBuffers[0].m_uploadedMemory = true;
-		rcInit.m_uniformBuffers[0].m_uploadedMemory = true;
-		rcInit.m_uniformBuffers[0].m_usage = BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
-		m_occlusionRcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);
-	}
+	rcinit = ResourceGroupInitInfo();
+	rcinit.m_vertexBuffers[0].m_uploadedMemory = true;
+	rcinit.m_uniformBuffers[0].m_uploadedMemory = true;
+	rcinit.m_uniformBuffers[0].m_usage = BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
+	m_occlusionRcGroup = gr.newInstance<ResourceGroup>(rcinit);
 
-	return ErrorCode::NONE;
-}
-
-Error Lf::initInternal(const ConfigSet& config)
-{
-	ANKI_CHECK(initSprite(config));
-	ANKI_CHECK(initOcclusion(config));
-
-	getGrManager().finish();
 	return ErrorCode::NONE;
 }
 
@@ -147,26 +168,16 @@ void Lf::resetOcclusionQueries(RenderingContext& ctx, CommandBufferPtr cmdb)
 		ANKI_LOGW("Visible flares exceed the limit. Increase lf.maxFlares");
 	}
 
-	U totalCount = min<U>(vi.getCount(VisibilityGroupType::FLARES), m_maxFlares);
-	U count = 0;
-	if(totalCount > 0)
+	const U count = min<U>(vi.getCount(VisibilityGroupType::FLARES), m_maxFlares);
+	for(U i = 0; i < count; ++i)
 	{
-		ctx.m_lf.m_queriesToTest.create(totalCount);
-
-		auto it = vi.getBegin(VisibilityGroupType::FLARES);
-		auto end = vi.getBegin(VisibilityGroupType::FLARES) + totalCount;
-		for(; it != end; ++it)
+		if(!m_queries[i])
 		{
-			LensFlareComponent& lf = (it->m_node)->getComponent<LensFlareComponent>();
-
-			OcclusionQueryPtr query = lf.getOcclusionQueryToTest();
-			ctx.m_lf.m_queriesToTest[count++] = query;
-
-			cmdb->resetOcclusionQuery(query);
+			m_queries[i] = getGrManager().newInstance<OcclusionQuery>();
 		}
-	}
 
-	ANKI_ASSERT(count == totalCount);
+		cmdb->resetOcclusionQuery(m_queries[i]);
+	}
 }
 
 void Lf::runOcclusionTests(RenderingContext& ctx, CommandBufferPtr cmdb)
@@ -175,56 +186,81 @@ void Lf::runOcclusionTests(RenderingContext& ctx, CommandBufferPtr cmdb)
 	const FrustumComponent& camFr = *ctx.m_frustumComponent;
 	const VisibilityTestResults& vi = camFr.getVisibilityTestResults();
 
-	if(vi.getCount(VisibilityGroupType::FLARES) > m_maxFlares)
+	const U count = min<U>(vi.getCount(VisibilityGroupType::FLARES), m_maxFlares);
+	Vec3* positions = nullptr;
+	const Vec3* initialPositions;
+	if(count)
 	{
-		ANKI_LOGW("Visible flares exceed the limit. Increase lf.maxFlares");
-	}
+		TransientMemoryInfo dyn;
 
-	U totalCount = min<U>(vi.getCount(VisibilityGroupType::FLARES), m_maxFlares);
-	U count = 0;
-	if(totalCount > 0)
-	{
 		// Setup MVP UBO
-		TransientMemoryToken token;
-		Mat4* mvp = static_cast<Mat4*>(
-			getGrManager().allocateFrameTransientMemory(sizeof(Mat4), BufferUsageBit::UNIFORM_ALL, token));
+		Mat4* mvp = static_cast<Mat4*>(getGrManager().allocateFrameTransientMemory(
+			sizeof(Mat4), BufferUsageBit::UNIFORM_ALL, dyn.m_uniformBuffers[0]));
 		*mvp = camFr.getViewProjectionMatrix();
 
 		// Alloc dyn mem
-		TransientMemoryToken token2;
-		Vec3* positions = static_cast<Vec3*>(
-			getGrManager().allocateFrameTransientMemory(sizeof(Vec3) * totalCount, BufferUsageBit::VERTEX, token2));
-		const Vec3* initialPositions = positions;
+		positions = static_cast<Vec3*>(getGrManager().allocateFrameTransientMemory(
+			sizeof(Vec3) * count, BufferUsageBit::VERTEX, dyn.m_vertexBuffers[0]));
+		initialPositions = positions;
 
 		// Setup state
 		cmdb->bindPipeline(m_occlusionPpline);
-		TransientMemoryInfo dyn;
-		dyn.m_uniformBuffers[0] = token;
-		dyn.m_vertexBuffers[0] = token2;
 		cmdb->bindResourceGroup(m_occlusionRcGroup, 0, &dyn);
-
-		// Iterate lens flare
-		auto it = vi.getBegin(VisibilityGroupType::FLARES);
-		auto end = vi.getBegin(VisibilityGroupType::FLARES) + totalCount;
-		for(; it != end; ++it)
-		{
-			LensFlareComponent& lf = (it->m_node)->getComponent<LensFlareComponent>();
-
-			*positions = lf.getWorldPosition().xyz();
-
-			// Draw and query
-			OcclusionQueryPtr query = ctx.m_lf.m_queriesToTest[count++];
-			cmdb->beginOcclusionQuery(query);
-
-			cmdb->drawArrays(1, 1, positions - initialPositions);
-
-			cmdb->endOcclusionQuery(query);
-
-			++positions;
-		}
-
-		ANKI_ASSERT(positions == initialPositions + totalCount);
 	}
+
+	for(U i = 0; i < count; ++i)
+	{
+		// Iterate lens flare
+		auto it = vi.getBegin(VisibilityGroupType::FLARES) + i;
+		const LensFlareComponent& lf = (it->m_node)->getComponent<LensFlareComponent>();
+
+		*positions = lf.getWorldPosition().xyz();
+
+		// Draw and query
+		cmdb->beginOcclusionQuery(m_queries[i]);
+		cmdb->drawArrays(1, 1, positions - initialPositions);
+		cmdb->endOcclusionQuery(m_queries[i]);
+
+		++positions;
+	}
+}
+
+void Lf::updateIndirectInfo(RenderingContext& ctx, CommandBufferPtr cmdb)
+{
+	// Retrieve some things
+	FrustumComponent& camFr = *ctx.m_frustumComponent;
+	VisibilityTestResults& vi = camFr.getVisibilityTestResults();
+
+	U count = min<U>(vi.getCount(VisibilityGroupType::FLARES), m_maxFlares);
+	if(count == 0)
+	{
+		return;
+	}
+
+	// Write results to buffer
+	for(U i = 0; i < count; ++i)
+	{
+		cmdb->writeOcclusionQueryResultToBuffer(m_queries[i], sizeof(U32) * i, m_queryResultBuff);
+	}
+
+	// Set barrier
+	cmdb->setBufferBarrier(m_queryResultBuff,
+		BufferUsageBit::QUERY_RESULT,
+		BufferUsageBit::STORAGE_COMPUTE_READ,
+		0,
+		sizeof(DrawArraysIndirectInfo) * count);
+
+	// Update the indirect info
+	cmdb->bindPipeline(m_updateIndirectBuffPpline);
+	cmdb->bindResourceGroup(m_updateIndirectBuffRsrc, 0, nullptr);
+	cmdb->dispatchCompute(count, 1, 1);
+
+	// Set barrier
+	cmdb->setBufferBarrier(m_indirectBuff,
+		BufferUsageBit::STORAGE_COMPUTE_WRITE,
+		BufferUsageBit::INDIRECT,
+		0,
+		sizeof(DrawArraysIndirectInfo) * count);
 }
 
 void Lf::run(RenderingContext& ctx, CommandBufferPtr cmdb)
@@ -233,70 +269,55 @@ void Lf::run(RenderingContext& ctx, CommandBufferPtr cmdb)
 	FrustumComponent& camFr = *ctx.m_frustumComponent;
 	VisibilityTestResults& vi = camFr.getVisibilityTestResults();
 
-	U totalCount = min<U>(vi.getCount(VisibilityGroupType::FLARES), m_maxFlares);
-	if(totalCount > 0)
+	U count = min<U>(vi.getCount(VisibilityGroupType::FLARES), m_maxFlares);
+	if(count == 0)
 	{
-		// Set common rendering state
-		cmdb->bindPipeline(m_realPpline);
+		return;
+	}
 
-		// Iterate lens flare
-		auto it = vi.getBegin(VisibilityGroupType::FLARES);
-		auto end = vi.getBegin(VisibilityGroupType::FLARES) + totalCount;
-		for(; it != end; ++it)
+	cmdb->bindPipeline(m_realPpline);
+	for(U i = 0; i < count; ++i)
+	{
+		auto it = vi.getBegin(VisibilityGroupType::FLARES) + i;
+		const LensFlareComponent& lf = (it->m_node)->getComponent<LensFlareComponent>();
+
+		// Compute position
+		Vec4 lfPos = Vec4(lf.getWorldPosition().xyz(), 1.0);
+		Vec4 posClip = camFr.getViewProjectionMatrix() * lfPos;
+
+		/*if(posClip.x() > posClip.w() || posClip.x() < -posClip.w() || posClip.y() > posClip.w()
+			|| posClip.y() < -posClip.w())
 		{
-			const LensFlareComponent& lf = (it->m_node)->getComponent<LensFlareComponent>();
+			// Outside clip
+			ANKI_ASSERT(0 && "Check that before");
+		}*/
 
-			// Compute position
-			Vec4 lfPos = Vec4(lf.getWorldPosition().xyz(), 1.0);
-			Vec4 posClip = camFr.getViewProjectionMatrix() * lfPos;
+		U c = 0;
+		U spritesCount = max<U>(1, m_maxSpritesPerFlare);
 
-			if(posClip.x() > posClip.w() || posClip.x() < -posClip.w() || posClip.y() > posClip.w()
-				|| posClip.y() < -posClip.w())
-			{
-				// Outside clip
-				continue;
-			}
+		// Get uniform memory
+		TransientMemoryToken token;
+		Sprite* tmpSprites = static_cast<Sprite*>(getGrManager().allocateFrameTransientMemory(
+			spritesCount * sizeof(Sprite), BufferUsageBit::UNIFORM_ALL, token));
+		WeakArray<Sprite> sprites(tmpSprites, spritesCount);
 
-			U count = 0;
-			U spritesCount = max<U>(1, m_maxSpritesPerFlare); // TODO
+		// misc
+		Vec2 posNdc = posClip.xy() / posClip.w();
 
-			// Get uniform memory
-			TransientMemoryToken token;
-			Sprite* tmpSprites = static_cast<Sprite*>(getGrManager().allocateFrameTransientMemory(
-				spritesCount * sizeof(Sprite), BufferUsageBit::UNIFORM_ALL, token));
-			WeakArray<Sprite> sprites(tmpSprites, spritesCount);
+		// First flare
+		sprites[c].m_pos = posNdc;
+		sprites[c].m_scale = lf.getFirstFlareSize() * Vec2(1.0, m_r->getAspectRatio());
+		sprites[c].m_depth = 0.0;
+		F32 alpha = lf.getColorMultiplier().w() * (1.0 - pow(absolute(posNdc.x()), 6.0))
+			* (1.0 - pow(absolute(posNdc.y()), 6.0)); // Fade the flare on the edges
+		sprites[c].m_color = Vec4(lf.getColorMultiplier().xyz(), alpha);
+		++c;
 
-			// misc
-			Vec2 posNdc = posClip.xy() / posClip.w();
-
-			// First flare
-			sprites[count].m_pos = posNdc;
-			sprites[count].m_scale = lf.getFirstFlareSize() * Vec2(1.0, m_r->getAspectRatio());
-			sprites[count].m_depth = 0.0;
-			// Fade the flare on the edges
-			F32 alpha = lf.getColorMultiplier().w() * (1.0 - pow(absolute(posNdc.x()), 6.0))
-				* (1.0 - pow(absolute(posNdc.y()), 6.0));
-
-			sprites[count].m_color = Vec4(lf.getColorMultiplier().xyz(), alpha);
-			++count;
-
-			// Render
-			OcclusionQueryPtr query;
-			Bool queryInvalid;
-			lf.getOcclusionQueryToCheck(query, queryInvalid);
-
-			if(!queryInvalid)
-			{
-				TransientMemoryInfo dyn;
-				dyn.m_uniformBuffers[0] = token;
-				cmdb->bindResourceGroup(lf.getResourceGroup(), 0, &dyn);
-				cmdb->drawArraysConditional(query, 4);
-			}
-			else
-			{
-				// Skip the drawcall. If the flare appeared suddenly inside the view we don't want to draw it.
-			}
-		}
+		// Render
+		TransientMemoryInfo dyn;
+		dyn.m_uniformBuffers[0] = token;
+		cmdb->bindResourceGroup(lf.getResourceGroup(), 0, &dyn);
+		cmdb->drawArraysIndirect(1, i * sizeof(DrawArraysIndirectInfo), m_indirectBuff);
 	}
 }
 

@@ -72,17 +72,10 @@ public:
 		return m_tex->getGrTexture();
 	}
 
-	OcclusionQueryPtr& getOcclusionQueryToTest();
-
 	const ResourceGroupPtr& getResourceGroup() const
 	{
 		return m_rcGroup;
 	}
-
-	/// Get the occlusion query to test.
-	/// @param[out] q The returned query.
-	/// @param[out] queryInvalid It's true if the query has an old result that cannot be used.
-	void getOcclusionQueryToCheck(OcclusionQueryPtr& q, Bool& queryInvalid) const;
 
 	/// @name SceneComponent virtuals
 	/// @{
@@ -100,10 +93,6 @@ private:
 
 	Vec2 m_firstFlareSize = Vec2(1.0);
 	Vec2 m_otherFlareSize = Vec2(1.0);
-
-	Array<OcclusionQueryPtr, MAX_FRAMES_IN_FLIGHT> m_queries;
-	Array<Timestamp, MAX_FRAMES_IN_FLIGHT> m_queryTestTimestamp = {{MAX_U32, MAX_U32, MAX_U32}};
-	U8 m_crntQueryIndex = 0;
 
 	Vec4 m_worldPosition = Vec4(0.0);
 

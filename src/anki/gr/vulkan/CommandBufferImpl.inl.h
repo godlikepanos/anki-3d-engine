@@ -176,11 +176,39 @@ inline void CommandBufferImpl::setBufferBarrier(
 	m_bufferList.pushBack(m_alloc, buff);
 }
 
+inline void CommandBufferImpl::drawArrays(U32 count, U32 instanceCount, U32 first, U32 baseInstance)
+{
+	drawcallCommon();
+	vkCmdDraw(m_handle, count, instanceCount, first, baseInstance);
+}
+
 inline void CommandBufferImpl::drawElements(
 	U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance)
 {
 	drawcallCommon();
 	vkCmdDrawIndexed(m_handle, count, instanceCount, firstIndex, baseVertex, baseInstance);
+}
+
+inline void CommandBufferImpl::drawArraysIndirect(U32 drawCount, PtrSize offset, BufferPtr buff)
+{
+	drawcallCommon();
+	const BufferImpl& impl = buff->getImplementation();
+	ANKI_ASSERT(impl.usageValid(BufferUsageBit::INDIRECT));
+	ANKI_ASSERT((offset % 4) == 0);
+	ANKI_ASSERT((offset + sizeof(DrawArraysIndirectInfo) * drawCount) <= impl.getSize());
+
+	vkCmdDrawIndirect(m_handle, impl.getHandle(), offset, drawCount, sizeof(DrawArraysIndirectInfo));
+}
+
+inline void CommandBufferImpl::drawElementsIndirect(U32 drawCount, PtrSize offset, BufferPtr buff)
+{
+	drawcallCommon();
+	const BufferImpl& impl = buff->getImplementation();
+	ANKI_ASSERT(impl.usageValid(BufferUsageBit::INDIRECT));
+	ANKI_ASSERT((offset % 4) == 0);
+	ANKI_ASSERT((offset + sizeof(DrawElementsIndirectInfo) * drawCount) <= impl.getSize());
+
+	vkCmdDrawIndexedIndirect(m_handle, impl.getHandle(), offset, drawCount, sizeof(DrawElementsIndirectInfo));
 }
 
 inline void CommandBufferImpl::resetOcclusionQuery(OcclusionQueryPtr query)
@@ -358,7 +386,7 @@ inline void CommandBufferImpl::fillBuffer(BufferPtr buff, PtrSize offset, PtrSiz
 {
 	commandCommon();
 	ANKI_ASSERT(!insideRenderPass());
-	BufferImpl& impl = buff->getImplementation();
+	const BufferImpl& impl = buff->getImplementation();
 	ANKI_ASSERT(impl.usageValid(BufferUsageBit::FILL));
 
 	ANKI_ASSERT(offset < impl.getSize());
@@ -369,6 +397,29 @@ inline void CommandBufferImpl::fillBuffer(BufferPtr buff, PtrSize offset, PtrSiz
 	ANKI_ASSERT((size % 4) == 0 && "Should be multiple of 4");
 
 	vkCmdFillBuffer(m_handle, impl.getHandle(), offset, size, value);
+}
+
+inline void CommandBufferImpl::writeOcclusionQueryResultToBuffer(
+	OcclusionQueryPtr query, PtrSize offset, BufferPtr buff)
+{
+	commandCommon();
+	ANKI_ASSERT(!insideRenderPass());
+
+	const BufferImpl& impl = buff->getImplementation();
+	ANKI_ASSERT(impl.usageValid(BufferUsageBit::QUERY_RESULT));
+	ANKI_ASSERT((offset % 4) == 0);
+	ANKI_ASSERT((offset + sizeof(U32)) <= impl.getSize());
+
+	const OcclusionQueryImpl& q = query->getImplementation();
+
+	vkCmdCopyQueryPoolResults(m_handle,
+		q.m_handle.m_pool,
+		q.m_handle.m_queryIndex,
+		1,
+		impl.getHandle(),
+		offset,
+		sizeof(U32),
+		VK_QUERY_RESULT_PARTIAL_BIT);
 }
 
 } // end namespace anki

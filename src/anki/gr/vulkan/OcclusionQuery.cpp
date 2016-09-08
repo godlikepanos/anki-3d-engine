@@ -18,11 +18,11 @@ OcclusionQuery::~OcclusionQuery()
 {
 }
 
-void OcclusionQuery::init(OcclusionQueryResultBit condRenderingBit)
+void OcclusionQuery::init()
 {
 	m_impl.reset(getAllocator().newInstance<OcclusionQueryImpl>(&getManager()));
 
-	if(m_impl->init(condRenderingBit))
+	if(m_impl->init())
 	{
 		ANKI_LOGF("Cannot recover");
 	}

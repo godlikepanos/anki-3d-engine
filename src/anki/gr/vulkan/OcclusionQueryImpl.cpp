@@ -17,12 +17,9 @@ OcclusionQueryImpl::~OcclusionQueryImpl()
 	}
 }
 
-Error OcclusionQueryImpl::init(OcclusionQueryResultBit condRenderingBit)
+Error OcclusionQueryImpl::init()
 {
-	m_condRenderingBit = condRenderingBit;
-
 	ANKI_CHECK(getGrManagerImpl().getQueryAllocator().newQuery(m_handle));
-
 	return ErrorCode::NONE;
 }
 

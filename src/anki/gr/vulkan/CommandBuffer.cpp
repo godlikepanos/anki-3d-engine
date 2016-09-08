@@ -90,16 +90,14 @@ void CommandBuffer::drawArrays(U32 count, U32 instanceCount, U32 first, U32 base
 	m_impl->drawArrays(count, instanceCount, first, baseInstance);
 }
 
-void CommandBuffer::drawElementsConditional(
-	OcclusionQueryPtr query, U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance)
+void CommandBuffer::drawArraysIndirect(U32 drawCount, PtrSize offset, BufferPtr buff)
 {
-	ANKI_ASSERT(0);
+	m_impl->drawArraysIndirect(drawCount, offset, buff);
 }
 
-void CommandBuffer::drawArraysConditional(
-	OcclusionQueryPtr query, U32 count, U32 instanceCount, U32 first, U32 baseInstance)
+void CommandBuffer::drawElementsIndirect(U32 drawCount, PtrSize offset, BufferPtr buff)
 {
-	ANKI_ASSERT(0);
+	m_impl->drawElementsIndirect(drawCount, offset, buff);
 }
 
 void CommandBuffer::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ)
@@ -206,6 +204,11 @@ Bool CommandBuffer::isEmpty() const
 void CommandBuffer::fillBuffer(BufferPtr buff, PtrSize offset, PtrSize size, U32 value)
 {
 	m_impl->fillBuffer(buff, offset, size, value);
+}
+
+void CommandBuffer::writeOcclusionQueryResultToBuffer(OcclusionQueryPtr query, PtrSize offset, BufferPtr buff)
+{
+	m_impl->writeOcclusionQueryResultToBuffer(query, offset, buff);
 }
 
 } // end namespace anki

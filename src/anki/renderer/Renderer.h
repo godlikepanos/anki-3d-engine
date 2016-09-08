@@ -278,11 +278,6 @@ anki_internal:
 		drawQuadInstanced(cmdb, 1);
 	}
 
-	void drawQuadConditional(OcclusionQueryPtr& q, CommandBufferPtr& cmdb)
-	{
-		cmdb->drawArraysConditional(q, 3, 1);
-	}
-
 	void drawQuadInstanced(CommandBufferPtr& cmdb, U32 primitiveCount)
 	{
 		cmdb->drawArrays(3, primitiveCount);

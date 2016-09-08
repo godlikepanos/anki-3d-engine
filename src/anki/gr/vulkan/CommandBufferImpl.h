@@ -57,13 +57,13 @@ public:
 
 	void bindResourceGroup(ResourceGroupPtr rc, U slot, const TransientMemoryInfo* dynInfo);
 
-	void drawArrays(U32 count, U32 instanceCount, U32 first, U32 baseInstance)
-	{
-		drawcallCommon();
-		vkCmdDraw(m_handle, count, instanceCount, first, baseInstance);
-	}
+	void drawArrays(U32 count, U32 instanceCount, U32 first, U32 baseInstance);
 
 	void drawElements(U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance);
+
+	void drawArraysIndirect(U32 drawCount, PtrSize offset, BufferPtr buff);
+
+	void drawElementsIndirect(U32 drawCount, PtrSize offset, BufferPtr buff);
 
 	void dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ)
 	{
@@ -131,6 +131,8 @@ public:
 	void setBufferBarrier(BufferPtr buff, BufferUsageBit before, BufferUsageBit after, PtrSize offset, PtrSize size);
 
 	void fillBuffer(BufferPtr buff, PtrSize offset, PtrSize size, U32 value);
+
+	void writeOcclusionQueryResultToBuffer(OcclusionQueryPtr query, PtrSize offset, BufferPtr buff);
 
 private:
 	StackAllocator<U8> m_alloc;

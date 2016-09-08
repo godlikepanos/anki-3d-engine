@@ -8,11 +8,10 @@
 namespace anki
 {
 
-void OcclusionQueryImpl::init(OcclusionQueryResultBit condRenderingBit)
+void OcclusionQueryImpl::init()
 {
 	glGenQueries(1, &m_glName);
 	ANKI_ASSERT(m_glName != 0);
-	m_condRenderingBit = condRenderingBit;
 }
 
 void OcclusionQueryImpl::begin()
@@ -37,7 +36,6 @@ OcclusionQueryResult OcclusionQueryImpl::getResult() const
 	if(params != 0)
 	{
 		glGetQueryObjectuiv(m_glName, GL_QUERY_RESULT, &params);
-
 		result = (params == 1) ? OcclusionQueryResult::VISIBLE : OcclusionQueryResult::NOT_VISIBLE;
 	}
 

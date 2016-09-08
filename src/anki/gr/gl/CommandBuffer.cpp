@@ -241,18 +241,6 @@ void CommandBuffer::drawArraysIndirect(U32 drawCount, PtrSize offset, BufferPtr 
 	m_impl->drawArraysIndirect(drawCount, offset, indirectBuff);
 }
 
-void CommandBuffer::drawElementsConditional(
-	OcclusionQueryPtr query, U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance)
-{
-	m_impl->drawElementsConditional(query, count, instanceCount, firstIndex, baseVertex, baseInstance);
-}
-
-void CommandBuffer::drawArraysConditional(
-	OcclusionQueryPtr query, U32 count, U32 instanceCount, U32 first, U32 baseInstance)
-{
-	m_impl->drawArraysConditional(query, count, instanceCount, first, baseInstance);
-}
-
 void CommandBuffer::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ)
 {
 	m_impl->dispatchCompute(groupCountX, groupCountY, groupCountZ);
@@ -517,69 +505,67 @@ void CommandBuffer::copyTextureSurfaceToTextureSurface(
 	m_impl->pushBackNewCommand<CopyTexCommand>(src, srcSurf, dest, destSurf);
 }
 
-class SetBufferMemBarrierCommand final : public GlCommand
-{
-public:
-	GLenum m_barrier;
-
-	SetBufferMemBarrierCommand(GLenum barrier)
-		: m_barrier(barrier)
-	{
-	}
-
-	Error operator()(GlState&)
-	{
-		glMemoryBarrier(m_barrier);
-		return ErrorCode::NONE;
-	}
-};
-
 void CommandBuffer::setBufferBarrier(
 	BufferPtr buff, BufferUsageBit prevUsage, BufferUsageBit nextUsage, PtrSize offset, PtrSize size)
 {
-#if 0
-	GLenum d = GL_NONE;
-
-	if((c & ResourceAccessBit::INDIRECT_OR_INDEX_OR_VERTEX_READ)
-		!= ResourceAccessBit::NONE)
+	class SetBufferMemBarrierCommand final : public GlCommand
 	{
-		d |= GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT | GL_ELEMENT_ARRAY_BARRIER_BIT
-			| GL_COMMAND_BARRIER_BIT;
-	}
+	public:
+		GLenum m_barrier;
 
-	if((c & ResourceAccessBit::UNIFORM_READ) != ResourceAccessBit::NONE)
+		SetBufferMemBarrierCommand(GLenum barrier)
+			: m_barrier(barrier)
+		{
+		}
+
+		Error operator()(GlState&)
+		{
+			glMemoryBarrier(m_barrier);
+			return ErrorCode::NONE;
+		}
+	};
+
+	GLenum d = GL_NONE;
+	BufferUsageBit all = prevUsage | nextUsage;
+
+	if(!!(all & BufferUsageBit::UNIFORM_ALL))
 	{
 		d |= GL_UNIFORM_BARRIER_BIT;
 	}
 
-	if((c & ResourceAccessBit::ATTACHMENT_READ) != ResourceAccessBit::NONE
-		|| (c & ResourceAccessBit::ATTACHMENT_WRITE) != ResourceAccessBit::NONE)
+	if(!!(all & BufferUsageBit::STORAGE_ALL))
 	{
-		d |= GL_FRAMEBUFFER_BARRIER_BIT;
+		d |= GL_SHADER_STORAGE_BARRIER_BIT;
 	}
 
-	if((c & ResourceAccessBit::SHADER_READ) != ResourceAccessBit::NONE
-		|| (c & ResourceAccessBit::SHADER_WRITE) != ResourceAccessBit::NONE)
+	if(!!(all & BufferUsageBit::INDEX))
 	{
-		d |= GL_ATOMIC_COUNTER_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT
-			| GL_TEXTURE_FETCH_BARRIER_BIT;
+		d |= GL_ELEMENT_ARRAY_BARRIER_BIT;
 	}
 
-	if((c & ResourceAccessBit::CLIENT_READ) != ResourceAccessBit::NONE
-		|| (c & ResourceAccessBit::CLIENT_WRITE) != ResourceAccessBit::NONE)
+	if(!!(all & BufferUsageBit::VERTEX))
 	{
-		d |= GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT;
+		d |= GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT;
 	}
 
-	if((c & ResourceAccessBit::TRANSFER_READ) != ResourceAccessBit::NONE
-		|| (c & ResourceAccessBit::TRANSFER_WRITE) != ResourceAccessBit::NONE)
+	if(!!(all & BufferUsageBit::INDIRECT))
 	{
-		d |= GL_BUFFER_UPDATE_BARRIER_BIT | GL_TEXTURE_UPDATE_BARRIER_BIT;
+		d |= GL_COMMAND_BARRIER_BIT;
 	}
 
-	ANKI_ASSERT(d != GL_NONE);
+	if(!!(all
+		   & (BufferUsageBit::FILL | BufferUsageBit::BUFFER_UPLOAD_SOURCE | BufferUsageBit::BUFFER_UPLOAD_DESTINATION)))
+	{
+		d |= GL_BUFFER_UPDATE_BARRIER_BIT;
+	}
+
+	if(!!(all & BufferUsageBit::QUERY_RESULT))
+	{
+		d |= GL_QUERY_BUFFER_BARRIER_BIT;
+	}
+
+	ANKI_ASSERT(d);
 	m_impl->pushBackNewCommand<SetBufferMemBarrierCommand>(d);
-#endif
 }
 
 void CommandBuffer::setTextureSurfaceBarrier(

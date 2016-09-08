@@ -127,38 +127,35 @@ void CommandBufferImpl::bindResourceGroup(ResourceGroupPtr rc, U slot, const Tra
 	pushBackNewCommand<BindResourcesCommand>(rc, slot, info);
 }
 
-class DrawElementsCondCommand : public GlCommand
+void CommandBufferImpl::drawElements(U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance)
 {
-public:
-	DrawElementsIndirectInfo m_info;
-	OcclusionQueryPtr m_query;
-
-	DrawElementsCondCommand(const DrawElementsIndirectInfo& info, OcclusionQueryPtr query = OcclusionQueryPtr())
-		: m_info(info)
-		, m_query(query)
+	class DrawElementsCommand : public GlCommand
 	{
-	}
+	public:
+		DrawElementsIndirectInfo m_info;
 
-	Error operator()(GlState& state)
-	{
-		GLenum indicesType = 0;
-		switch(state.m_indexSize)
+		DrawElementsCommand(const DrawElementsIndirectInfo& info)
+			: m_info(info)
 		{
-		case 2:
-			indicesType = GL_UNSIGNED_SHORT;
-			break;
-		case 4:
-			indicesType = GL_UNSIGNED_INT;
-			break;
-		default:
-			ANKI_ASSERT(0);
-			break;
-		};
+		}
 
-		if(!m_query.isCreated() || !m_query->getImplementation().skipDrawcall())
+		Error operator()(GlState& state)
 		{
+			GLenum indicesType = 0;
+			switch(state.m_indexSize)
+			{
+			case 2:
+				indicesType = GL_UNSIGNED_SHORT;
+				break;
+			case 4:
+				indicesType = GL_UNSIGNED_INT;
+				break;
+			default:
+				ANKI_ASSERT(0);
+				break;
+			};
+
 			state.flushVertexState();
-
 			glDrawElementsInstancedBaseVertexBaseInstance(state.m_topology,
 				m_info.m_count,
 				indicesType,
@@ -169,56 +166,46 @@ public:
 
 			ANKI_TRACE_INC_COUNTER(GR_DRAWCALLS, 1);
 			ANKI_TRACE_INC_COUNTER(GR_VERTICES, m_info.m_instanceCount * m_info.m_count);
+
+			return ErrorCode::NONE;
 		}
+	};
 
-		return ErrorCode::NONE;
-	}
-};
-
-void CommandBufferImpl::drawElements(U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance)
-{
 	ANKI_ASSERT(m_dbg.m_insideRenderPass);
 	DrawElementsIndirectInfo info(count, instanceCount, firstIndex, baseVertex, baseInstance);
 
 	checkDrawcall();
-	pushBackNewCommand<DrawElementsCondCommand>(info);
+	pushBackNewCommand<DrawElementsCommand>(info);
 }
 
-class DrawArraysCondCommand final : public GlCommand
+void CommandBufferImpl::drawArrays(U32 count, U32 instanceCount, U32 first, U32 baseInstance)
 {
-public:
-	DrawArraysIndirectInfo m_info;
-	OcclusionQueryPtr m_query;
-
-	DrawArraysCondCommand(const DrawArraysIndirectInfo& info, OcclusionQueryPtr query = OcclusionQueryPtr())
-		: m_info(info)
-		, m_query(query)
+	class DrawArraysCommand final : public GlCommand
 	{
-	}
+	public:
+		DrawArraysIndirectInfo m_info;
 
-	Error operator()(GlState& state)
-	{
-		if(!m_query.isCreated() || !m_query->getImplementation().skipDrawcall())
+		DrawArraysCommand(const DrawArraysIndirectInfo& info)
+			: m_info(info)
+		{
+		}
+
+		Error operator()(GlState& state)
 		{
 			state.flushVertexState();
-
 			glDrawArraysInstancedBaseInstance(
 				state.m_topology, m_info.m_first, m_info.m_count, m_info.m_instanceCount, m_info.m_baseInstance);
 
 			ANKI_TRACE_INC_COUNTER(GR_DRAWCALLS, 1);
+			return ErrorCode::NONE;
 		}
+	};
 
-		return ErrorCode::NONE;
-	}
-};
-
-void CommandBufferImpl::drawArrays(U32 count, U32 instanceCount, U32 first, U32 baseInstance)
-{
 	ANKI_ASSERT(m_dbg.m_insideRenderPass);
 	DrawArraysIndirectInfo info(count, instanceCount, first, baseInstance);
 
 	checkDrawcall();
-	pushBackNewCommand<DrawArraysCondCommand>(info);
+	pushBackNewCommand<DrawArraysCommand>(info);
 }
 
 void CommandBufferImpl::drawElementsIndirect(U32 drawCount, PtrSize offset, BufferPtr indirectBuff)
@@ -314,26 +301,6 @@ void CommandBufferImpl::drawArraysIndirect(U32 drawCount, PtrSize offset, Buffer
 
 	checkDrawcall();
 	pushBackNewCommand<DrawArraysIndirectCommand>(drawCount, offset, indirectBuff);
-}
-
-void CommandBufferImpl::drawElementsConditional(
-	OcclusionQueryPtr query, U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance)
-{
-	ANKI_ASSERT(m_dbg.m_insideRenderPass);
-	DrawElementsIndirectInfo info(count, instanceCount, firstIndex, baseVertex, baseInstance);
-
-	checkDrawcall();
-	pushBackNewCommand<DrawElementsCondCommand>(info, query);
-}
-
-void CommandBufferImpl::drawArraysConditional(
-	OcclusionQueryPtr query, U32 count, U32 instanceCount, U32 first, U32 baseInstance)
-{
-	ANKI_ASSERT(m_dbg.m_insideRenderPass);
-	DrawArraysIndirectInfo info(count, instanceCount, first, baseInstance);
-
-	checkDrawcall();
-	pushBackNewCommand<DrawArraysCondCommand>(info, query);
 }
 
 void CommandBufferImpl::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ)

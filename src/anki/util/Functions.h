@@ -140,7 +140,6 @@ inline PtrSize ptrToNumber(TPtr ptr)
 template<typename TPtr>
 inline TPtr numberToPtr(PtrSize num)
 {
-	ANKI_ASSERT(num);
 	uintptr_t i = static_cast<uintptr_t>(num);
 	TPtr ptr = reinterpret_cast<TPtr>(i);
 	return ptr;

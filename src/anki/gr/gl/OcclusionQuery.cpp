@@ -20,40 +20,38 @@ OcclusionQuery::~OcclusionQuery()
 {
 }
 
-class CreateOqCommand final : public GlCommand
+void OcclusionQuery::init()
 {
-public:
-	OcclusionQueryPtr m_q;
-	OcclusionQueryResultBit m_condRenderingBit;
-
-	CreateOqCommand(OcclusionQuery* q, OcclusionQueryResultBit condRenderingBit)
-		: m_q(q)
-		, m_condRenderingBit(condRenderingBit)
+	class CreateOqCommand final : public GlCommand
 	{
-	}
+	public:
+		OcclusionQueryPtr m_q;
 
-	Error operator()(GlState&)
-	{
-		OcclusionQueryImpl& impl = m_q->getImplementation();
+		CreateOqCommand(OcclusionQuery* q)
+			: m_q(q)
+		{
+		}
 
-		impl.init(m_condRenderingBit);
+		Error operator()(GlState&)
+		{
+			OcclusionQueryImpl& impl = m_q->getImplementation();
 
-		GlObject::State oldState = impl.setStateAtomically(GlObject::State::CREATED);
+			impl.init();
 
-		(void)oldState;
-		ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
+			GlObject::State oldState = impl.setStateAtomically(GlObject::State::CREATED);
 
-		return ErrorCode::NONE;
-	}
-};
+			(void)oldState;
+			ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
 
-void OcclusionQuery::init(OcclusionQueryResultBit condRenderingBit)
-{
+			return ErrorCode::NONE;
+		}
+	};
+
 	m_impl.reset(getAllocator().newInstance<OcclusionQueryImpl>(&getManager()));
 
 	CommandBufferPtr cmdb = getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
 
-	cmdb->getImplementation().pushBackNewCommand<CreateOqCommand>(this, condRenderingBit);
+	cmdb->getImplementation().pushBackNewCommand<CreateOqCommand>(this);
 	cmdb->flush();
 }
 

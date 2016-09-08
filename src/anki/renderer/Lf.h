@@ -33,10 +33,19 @@ anki_internal:
 
 	void runOcclusionTests(RenderingContext& ctx, CommandBufferPtr cmdb);
 
+	void updateIndirectInfo(RenderingContext& ctx, CommandBufferPtr cmdb);
+
 	void run(RenderingContext& ctx, CommandBufferPtr cmdb);
 
 private:
 	// Occlusion query
+	DynamicArray<OcclusionQueryPtr> m_queries;
+	BufferPtr m_queryResultBuff;
+	BufferPtr m_indirectBuff;
+	ShaderResourcePtr m_writeIndirectBuffComp;
+	PipelinePtr m_updateIndirectBuffPpline;
+	ResourceGroupPtr m_updateIndirectBuffRsrc;
+
 	ShaderResourcePtr m_occlusionVert;
 	ShaderResourcePtr m_occlusionFrag;
 	PipelinePtr m_occlusionPpline;

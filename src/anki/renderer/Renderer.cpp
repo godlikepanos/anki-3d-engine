@@ -266,6 +266,8 @@ Error Renderer::render(RenderingContext& ctx)
 			TextureSurfaceInfo(i, 0, 0, 0));
 	}
 
+	m_lf->updateIndirectInfo(ctx, cmdb);
+
 	m_fs->run(ctx);
 
 	m_ssao->run(ctx);
@@ -332,8 +334,7 @@ Vec3 Renderer::unproject(
 void Renderer::createRenderTarget(
 	U32 w, U32 h, const PixelFormat& format, TextureUsageBit usage, SamplingFilter filter, U mipsCount, TexturePtr& rt)
 {
-	// Not very important but keep the resolution of render targets aligned to
-	// 16
+	// Not very important but keep the resolution of render targets aligned to 16
 	if(0)
 	{
 		ANKI_ASSERT(isAligned(16, w));
