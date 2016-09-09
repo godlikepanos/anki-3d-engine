@@ -89,7 +89,8 @@ Error PipelineImpl::initGraphics(const PipelineInitInfo& init)
 	ci.renderPass = getGrManagerImpl().getCompatibleRenderPassCreator().getOrCreateCompatibleRenderPass(init);
 	ci.basePipelineHandle = VK_NULL_HANDLE;
 
-	ANKI_VK_CHECK(vkCreateGraphicsPipelines(getDevice(), nullptr, 1, &ci, nullptr, &m_handle));
+	ANKI_VK_CHECK(
+		vkCreateGraphicsPipelines(getDevice(), getGrManagerImpl().getPipelineCache(), 1, &ci, nullptr, &m_handle));
 
 	return ErrorCode::NONE;
 }
@@ -108,7 +109,8 @@ Error PipelineImpl::initCompute(const PipelineInitInfo& init)
 	stage.pName = "main";
 	stage.pSpecializationInfo = nullptr;
 
-	ANKI_VK_CHECK(vkCreateComputePipelines(getDevice(), nullptr, 1, &ci, nullptr, &m_handle));
+	ANKI_VK_CHECK(
+		vkCreateComputePipelines(getDevice(), getGrManagerImpl().getPipelineCache(), 1, &ci, nullptr, &m_handle));
 
 	return ErrorCode::NONE;
 }

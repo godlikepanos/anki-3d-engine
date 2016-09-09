@@ -372,7 +372,7 @@ enum class BufferUsageBit : U32
 	BUFFER_UPLOAD_SOURCE = 1 << 22,
 	BUFFER_UPLOAD_DESTINATION = 1 << 23, ///< Destination of buffer upload.
 	TEXTURE_UPLOAD_SOURCE = 1 << 24, ///< Source for texture upload.
-	QUERY_RESULT = 1 << 24,
+	QUERY_RESULT = 1 << 24, ///< Source to store query results.
 	TRANSFER_ALL = FILL | BUFFER_UPLOAD_SOURCE | BUFFER_UPLOAD_DESTINATION | TEXTURE_UPLOAD_SOURCE | QUERY_RESULT,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferUsageBit, inline)

@@ -175,6 +175,12 @@ public:
 		return m_dsetAlloc;
 	}
 
+	VkPipelineCache getPipelineCache() const
+	{
+		ANKI_ASSERT(m_pplineCache);
+		return m_pplineCache;
+	}
+
 private:
 	GrManager* m_manager = nullptr;
 
@@ -268,6 +274,8 @@ private:
 	/// @}
 
 	QueryAllocator m_queryAlloc;
+
+	VkPipelineCache m_pplineCache = VK_NULL_HANDLE;
 
 	Bool8 m_r8g8b8ImagesSupported = false;
 
