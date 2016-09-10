@@ -298,16 +298,33 @@ void CommandBufferImpl::generateMipmaps2d(TexturePtr tex, U face, U layer)
 
 		ANKI_ASSERT(srcWidth > 0 && srcHeight > 0 && dstWidth > 0 && dstHeight > 0);
 
+		U vkLayer = 0;
+		switch(impl.m_type)
+		{
+		case TextureType::_2D:
+		case TextureType::_2D_ARRAY:
+			break;
+		case TextureType::CUBE:
+			vkLayer = face;
+			break;
+		case TextureType::CUBE_ARRAY:
+			vkLayer = layer * 6 + face;
+			break;
+		default:
+			ANKI_ASSERT(0);
+			break;
+		}
+
 		VkImageBlit blit;
 		blit.srcSubresource.aspectMask = impl.m_aspect & (~VK_IMAGE_ASPECT_STENCIL_BIT);
-		blit.srcSubresource.baseArrayLayer = layer;
+		blit.srcSubresource.baseArrayLayer = vkLayer;
 		blit.srcSubresource.layerCount = 1;
 		blit.srcSubresource.mipLevel = i;
 		blit.srcOffsets[0] = {0, 0, 0};
 		blit.srcOffsets[1] = {srcWidth, srcHeight, 1};
 
 		blit.dstSubresource.aspectMask = impl.m_aspect & (~VK_IMAGE_ASPECT_STENCIL_BIT);
-		blit.dstSubresource.baseArrayLayer = layer;
+		blit.dstSubresource.baseArrayLayer = vkLayer;
 		blit.dstSubresource.layerCount = 1;
 		blit.dstSubresource.mipLevel = i + 1;
 		blit.dstOffsets[0] = {0, 0, 0};
