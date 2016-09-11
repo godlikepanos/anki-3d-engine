@@ -7,13 +7,13 @@
 
 #include <anki/gr/vulkan/Common.h>
 #include <anki/gr/vulkan/GpuMemoryAllocator.h>
-#include <anki/gr/vulkan/CommandBufferInternal.h>
 #include <anki/gr/vulkan/Semaphore.h>
 #include <anki/gr/vulkan/Fence.h>
 #include <anki/gr/vulkan/TransientMemoryManager.h>
-#include <anki/gr/vulkan/QueryAllocator.h>
-#include <anki/gr/vulkan/CompatibleRenderPassCreator.h>
-#include <anki/gr/vulkan/ResourceGroupMisc.h>
+#include <anki/gr/vulkan/QueryExtra.h>
+#include <anki/gr/vulkan/PipelineExtra.h>
+#include <anki/gr/vulkan/ResourceGroupExtra.h>
+#include <anki/gr/vulkan/CommandBufferExtra.h>
 #include <anki/util/HashMap.h>
 
 namespace anki

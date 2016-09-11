@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/gr/vulkan/CompatibleRenderPassCreator.h>
+#include <anki/gr/vulkan/PipelineExtra.h>
 #include <anki/gr/vulkan/GrManagerImpl.h>
 #include <anki/gr/Pipeline.h>
 

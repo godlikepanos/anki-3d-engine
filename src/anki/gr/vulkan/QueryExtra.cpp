@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/gr/vulkan/QueryAllocator.h>
+#include <anki/gr/vulkan/QueryExtra.h>
 
 namespace anki
 {

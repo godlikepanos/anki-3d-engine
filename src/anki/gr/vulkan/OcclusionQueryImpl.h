@@ -6,7 +6,7 @@
 #pragma once
 
 #include <anki/gr/vulkan/VulkanObject.h>
-#include <anki/gr/vulkan/QueryAllocator.h>
+#include <anki/gr/vulkan/QueryExtra.h>
 
 namespace anki
 {
