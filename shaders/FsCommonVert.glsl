@@ -36,25 +36,25 @@ out gl_PerVertex
 #define setPositionVec3_DEFINED
 void setPositionVec3(in vec3 pos)
 {
-	gl_Position = vec4(pos, 1.0);
+	ANKI_WRITE_POSITION(vec4(pos, 1.0));
 }
 
 #define setPositionVec4_DEFINED
 void setPositionVec4(in vec4 pos)
 {
-	gl_Position = pos;
+	ANKI_WRITE_POSITION(pos);
 }
 
 #define writePositionMvp_DEFINED
 void writePositionMvp(in mat4 mvp)
 {
-	gl_Position = mvp * vec4(in_position, 1.0);
+	ANKI_WRITE_POSITION(mvp * vec4(in_position, 1.0));
 }
 
 #define particle_DEFINED
 void particle(in mat4 mvp)
 {
-	gl_Position = mvp * vec4(in_position, 1);
+	ANKI_WRITE_POSITION(mvp * vec4(in_position, 1));
 	out_alpha = in_alpha;
 	gl_PointSize = in_scale * u_lightingUniforms.rendererSizeTimePad1.x * 0.5 / gl_Position.w;
 }
