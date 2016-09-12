@@ -10,13 +10,14 @@
 #include <anki/gr/vulkan/BufferImpl.h>
 #include <anki/gr/OcclusionQuery.h>
 #include <anki/gr/vulkan/OcclusionQueryImpl.h>
+#include <anki/core/Trace.h>
 
 namespace anki
 {
 
 inline void CommandBufferImpl::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 {
-	commandCommon();
+	commandCommon(CommandBufferCommandType::ANY_OTHER_COMMAND);
 	ANKI_ASSERT(minx < maxx && miny < maxy);
 	VkViewport s;
 	s.x = minx;
@@ -37,7 +38,7 @@ inline void CommandBufferImpl::setViewport(U16 minx, U16 miny, U16 maxx, U16 max
 
 inline void CommandBufferImpl::setPolygonOffset(F32 factor, F32 units)
 {
-	commandCommon();
+	commandCommon(CommandBufferCommandType::ANY_OTHER_COMMAND);
 	vkCmdSetDepthBias(m_handle, units, 0.0, factor);
 }
 
@@ -51,7 +52,7 @@ inline void CommandBufferImpl::setImageBarrier(VkPipelineStageFlags srcStage,
 	const VkImageSubresourceRange& range)
 {
 	ANKI_ASSERT(img);
-	commandCommon();
+	commandCommon(CommandBufferCommandType::SET_BARRIER);
 
 	VkImageMemoryBarrier inf = {};
 	inf.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -64,7 +65,20 @@ inline void CommandBufferImpl::setImageBarrier(VkPipelineStageFlags srcStage,
 	inf.image = img;
 	inf.subresourceRange = range;
 
+#if ANKI_BATCH_COMMANDS
+	if(m_imgBarriers.getSize() <= m_imgBarrierCount)
+	{
+		m_imgBarriers.resize(m_alloc, max<U>(2, m_imgBarrierCount * 2));
+	}
+
+	m_imgBarriers[m_imgBarrierCount++] = inf;
+
+	m_srcStageMask |= srcStage;
+	m_dstStageMask |= dstStage;
+#else
 	vkCmdPipelineBarrier(m_handle, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &inf);
+	ANKI_TRACE_INC_COUNTER(GR_PIPELINE_BARRIERS, 1);
+#endif
 }
 
 inline void CommandBufferImpl::setImageBarrier(VkPipelineStageFlags srcStage,
@@ -145,7 +159,7 @@ inline void CommandBufferImpl::setBufferBarrier(VkPipelineStageFlags srcStage,
 	VkBuffer buff)
 {
 	ANKI_ASSERT(buff);
-	commandCommon();
+	commandCommon(CommandBufferCommandType::SET_BARRIER);
 
 	VkBufferMemoryBarrier b = {};
 	b.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
@@ -157,7 +171,20 @@ inline void CommandBufferImpl::setBufferBarrier(VkPipelineStageFlags srcStage,
 	b.offset = offset;
 	b.size = size;
 
+#if ANKI_BATCH_COMMANDS
+	if(m_buffBarriers.getSize() <= m_buffBarrierCount)
+	{
+		m_buffBarriers.resize(m_alloc, max<U>(2, m_buffBarrierCount * 2));
+	}
+
+	m_buffBarriers[m_buffBarrierCount++] = b;
+
+	m_srcStageMask |= srcStage;
+	m_dstStageMask |= dstStage;
+#else
 	vkCmdPipelineBarrier(m_handle, srcStage, dstStage, 0, 0, nullptr, 1, &b, 0, nullptr);
+	ANKI_TRACE_INC_COUNTER(GR_PIPELINE_BARRIERS, 1);
+#endif
 }
 
 inline void CommandBufferImpl::setBufferBarrier(
@@ -211,10 +238,15 @@ inline void CommandBufferImpl::drawElementsIndirect(U32 drawCount, PtrSize offse
 	vkCmdDrawIndexedIndirect(m_handle, impl.getHandle(), offset, drawCount, sizeof(DrawElementsIndirectInfo));
 }
 
+inline void CommandBufferImpl::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ)
+{
+	commandCommon(CommandBufferCommandType::ANY_OTHER_COMMAND);
+	vkCmdDispatch(m_handle, groupCountX, groupCountY, groupCountZ);
+}
+
 inline void CommandBufferImpl::resetOcclusionQuery(OcclusionQueryPtr query)
 {
-	commandCommon();
-	flushBarriers();
+	commandCommon(CommandBufferCommandType::ANY_OTHER_COMMAND);
 
 	VkQueryPool handle = query->getImplementation().m_handle.m_pool;
 	U32 idx = query->getImplementation().m_handle.m_queryIndex;
@@ -227,8 +259,7 @@ inline void CommandBufferImpl::resetOcclusionQuery(OcclusionQueryPtr query)
 
 inline void CommandBufferImpl::beginOcclusionQuery(OcclusionQueryPtr query)
 {
-	commandCommon();
-	flushBarriers();
+	commandCommon(CommandBufferCommandType::ANY_OTHER_COMMAND);
 
 	VkQueryPool handle = query->getImplementation().m_handle.m_pool;
 	U32 idx = query->getImplementation().m_handle.m_queryIndex;
@@ -241,7 +272,7 @@ inline void CommandBufferImpl::beginOcclusionQuery(OcclusionQueryPtr query)
 
 inline void CommandBufferImpl::endOcclusionQuery(OcclusionQueryPtr query)
 {
-	commandCommon();
+	commandCommon(CommandBufferCommandType::ANY_OTHER_COMMAND);
 
 	VkQueryPool handle = query->getImplementation().m_handle.m_pool;
 	U32 idx = query->getImplementation().m_handle.m_queryIndex;
@@ -255,8 +286,7 @@ inline void CommandBufferImpl::endOcclusionQuery(OcclusionQueryPtr query)
 inline void CommandBufferImpl::clearTextureInternal(
 	TexturePtr tex, const ClearValue& clearValue, const VkImageSubresourceRange& range)
 {
-	commandCommon();
-	flushBarriers();
+	commandCommon(CommandBufferCommandType::ANY_OTHER_COMMAND);
 
 	VkClearColorValue vclear;
 	static_assert(sizeof(vclear) == sizeof(clearValue), "See file");
@@ -311,8 +341,7 @@ inline void CommandBufferImpl::clearTextureVolume(
 
 inline void CommandBufferImpl::uploadBuffer(BufferPtr buff, PtrSize offset, const TransientMemoryToken& token)
 {
-	commandCommon();
-	flushBarriers();
+	commandCommon(CommandBufferCommandType::ANY_OTHER_COMMAND);
 	BufferImpl& impl = buff->getImplementation();
 
 	VkBufferCopy region;
@@ -333,7 +362,7 @@ inline void CommandBufferImpl::uploadBuffer(BufferPtr buff, PtrSize offset, cons
 
 inline void CommandBufferImpl::pushSecondLevelCommandBuffer(CommandBufferPtr cmdb)
 {
-	commandCommon();
+	commandCommon(CommandBufferCommandType::ANY_OTHER_COMMAND);
 	ANKI_ASSERT(insideRenderPass());
 	ANKI_ASSERT(m_subpassContents == VK_SUBPASS_CONTENTS_MAX_ENUM
 		|| m_subpassContents == VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
@@ -346,7 +375,7 @@ inline void CommandBufferImpl::pushSecondLevelCommandBuffer(CommandBufferPtr cmd
 		beginRenderPassInternal();
 	}
 
-	cmdb->getImplementation().endRecordingInternal();
+	cmdb->getImplementation().endRecordingInternal(); // XXX That is wrong in MT
 
 	vkCmdExecuteCommands(m_handle, 1, &cmdb->getImplementation().m_handle);
 
@@ -357,7 +386,7 @@ inline void CommandBufferImpl::pushSecondLevelCommandBuffer(CommandBufferPtr cmd
 inline void CommandBufferImpl::drawcallCommon()
 {
 	// Preconditions
-	commandCommon();
+	commandCommon(CommandBufferCommandType::ANY_OTHER_COMMAND);
 	ANKI_ASSERT(insideRenderPass() || secondLevel());
 	ANKI_ASSERT(m_subpassContents == VK_SUBPASS_CONTENTS_MAX_ENUM || m_subpassContents == VK_SUBPASS_CONTENTS_INLINE);
 #if ANKI_ASSERTIONS
@@ -372,7 +401,7 @@ inline void CommandBufferImpl::drawcallCommon()
 	++m_rpCommandCount;
 }
 
-inline void CommandBufferImpl::commandCommon()
+inline void CommandBufferImpl::commandCommon(CommandBufferCommandType type)
 {
 	ANKI_ASSERT(Thread::getCurrentThreadId() == m_tid
 		&& "Commands must be recorder and flushed by the thread this command buffer was created");
@@ -380,11 +409,28 @@ inline void CommandBufferImpl::commandCommon()
 	ANKI_ASSERT(!m_finalized);
 	ANKI_ASSERT(m_handle);
 	m_empty = false;
+
+	// Flush batched commands
+	if(type != m_lastCmdType)
+	{
+		switch(m_lastCmdType)
+		{
+		case CommandBufferCommandType::SET_BARRIER:
+			flushBarriers();
+			break;
+		case CommandBufferCommandType::ANY_OTHER_COMMAND:
+			break;
+		default:
+			ANKI_ASSERT(0);
+		}
+
+		m_lastCmdType = type;
+	}
 }
 
 inline void CommandBufferImpl::fillBuffer(BufferPtr buff, PtrSize offset, PtrSize size, U32 value)
 {
-	commandCommon();
+	commandCommon(CommandBufferCommandType::ANY_OTHER_COMMAND);
 	ANKI_ASSERT(!insideRenderPass());
 	const BufferImpl& impl = buff->getImplementation();
 	ANKI_ASSERT(impl.usageValid(BufferUsageBit::FILL));
@@ -402,7 +448,7 @@ inline void CommandBufferImpl::fillBuffer(BufferPtr buff, PtrSize offset, PtrSiz
 inline void CommandBufferImpl::writeOcclusionQueryResultToBuffer(
 	OcclusionQueryPtr query, PtrSize offset, BufferPtr buff)
 {
-	commandCommon();
+	commandCommon(CommandBufferCommandType::ANY_OTHER_COMMAND);
 	ANKI_ASSERT(!insideRenderPass());
 
 	const BufferImpl& impl = buff->getImplementation();

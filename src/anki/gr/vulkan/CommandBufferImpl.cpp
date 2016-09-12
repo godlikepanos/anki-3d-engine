@@ -13,6 +13,8 @@
 #include <anki/gr/ResourceGroup.h>
 #include <anki/gr/vulkan/ResourceGroupImpl.h>
 
+#include <algorithm>
+
 namespace anki
 {
 
@@ -35,8 +37,7 @@ CommandBufferImpl::~CommandBufferImpl()
 
 	if(m_handle)
 	{
-		Bool secondLevel = (m_flags & CommandBufferFlag::SECOND_LEVEL) == CommandBufferFlag::SECOND_LEVEL;
-		getGrManagerImpl().deleteCommandBuffer(m_handle, secondLevel, m_tid);
+		getGrManagerImpl().deleteCommandBuffer(m_handle, m_flags, m_tid);
 	}
 
 	m_pplineList.destroy(m_alloc);
@@ -46,6 +47,9 @@ CommandBufferImpl::~CommandBufferImpl()
 	m_queryList.destroy(m_alloc);
 	m_bufferList.destroy(m_alloc);
 	m_cmdbList.destroy(m_alloc);
+
+	m_imgBarriers.destroy(m_alloc);
+	m_buffBarriers.destroy(m_alloc);
 }
 
 Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
@@ -57,8 +61,7 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 	m_flags = init.m_flags;
 	m_tid = Thread::getCurrentThreadId();
 
-	Bool secondLevel = (m_flags & CommandBufferFlag::SECOND_LEVEL) == CommandBufferFlag::SECOND_LEVEL;
-	m_handle = getGrManagerImpl().newCommandBuffer(m_tid, secondLevel);
+	m_handle = getGrManagerImpl().newCommandBuffer(m_tid, m_flags);
 	ANKI_ASSERT(m_handle);
 
 	// Begin recording
@@ -70,7 +73,7 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 	begin.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 	begin.pInheritanceInfo = &inheritance;
 
-	if(secondLevel)
+	if(!!(m_flags & CommandBufferFlag::SECOND_LEVEL))
 	{
 		const FramebufferImpl& impl = init.m_framebuffer->getImplementation();
 
@@ -96,7 +99,7 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 
 void CommandBufferImpl::bindPipeline(PipelinePtr ppline)
 {
-	commandCommon();
+	commandCommon(CommandBufferCommandType::ANY_OTHER_COMMAND);
 	vkCmdBindPipeline(m_handle, ppline->getImplementation().getBindPoint(), ppline->getImplementation().getHandle());
 
 	m_pplineList.pushBack(m_alloc, ppline);
@@ -104,7 +107,7 @@ void CommandBufferImpl::bindPipeline(PipelinePtr ppline)
 
 void CommandBufferImpl::beginRenderPass(FramebufferPtr fb)
 {
-	commandCommon();
+	commandCommon(CommandBufferCommandType::ANY_OTHER_COMMAND);
 	ANKI_ASSERT(!insideRenderPass());
 
 	m_rpCommandCount = 0;
@@ -119,8 +122,6 @@ void CommandBufferImpl::beginRenderPass(FramebufferPtr fb)
 
 void CommandBufferImpl::beginRenderPassInternal()
 {
-	flushBarriers();
-
 	VkRenderPassBeginInfo bi = {};
 	bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	FramebufferImpl& impl = m_activeFb->getImplementation();
@@ -162,7 +163,7 @@ void CommandBufferImpl::beginRenderPassInternal()
 
 void CommandBufferImpl::endRenderPass()
 {
-	commandCommon();
+	commandCommon(CommandBufferCommandType::ANY_OTHER_COMMAND);
 	ANKI_ASSERT(insideRenderPass());
 	ANKI_ASSERT(m_rpCommandCount > 0);
 
@@ -197,13 +198,13 @@ void CommandBufferImpl::endRecordingInternal()
 
 void CommandBufferImpl::endRecording()
 {
-	commandCommon();
+	commandCommon(CommandBufferCommandType::ANY_OTHER_COMMAND);
 	endRecordingInternal();
 }
 
 void CommandBufferImpl::bindResourceGroup(ResourceGroupPtr rc, U slot, const TransientMemoryInfo* dynInfo)
 {
-	commandCommon();
+	commandCommon(CommandBufferCommandType::ANY_OTHER_COMMAND);
 	const ResourceGroupImpl& impl = rc->getImplementation();
 
 	if(impl.hasDescriptorSet())
@@ -250,8 +251,7 @@ void CommandBufferImpl::bindResourceGroup(ResourceGroupPtr rc, U slot, const Tra
 
 void CommandBufferImpl::generateMipmaps2d(TexturePtr tex, U face, U layer)
 {
-	commandCommon();
-	flushBarriers();
+	commandCommon(CommandBufferCommandType::ANY_OTHER_COMMAND);
 
 	const TextureImpl& impl = tex->getImplementation();
 	ANKI_ASSERT(impl.m_type != TextureType::_3D && "Not for 3D");
@@ -349,8 +349,7 @@ void CommandBufferImpl::generateMipmaps2d(TexturePtr tex, U face, U layer)
 void CommandBufferImpl::uploadTextureSurface(
 	TexturePtr tex, const TextureSurfaceInfo& surf, const TransientMemoryToken& token)
 {
-	commandCommon();
-	flushBarriers();
+	commandCommon(CommandBufferCommandType::ANY_OTHER_COMMAND);
 
 	TextureImpl& impl = tex->getImplementation();
 	impl.checkSurface(surf);
@@ -453,8 +452,7 @@ void CommandBufferImpl::uploadTextureSurface(
 void CommandBufferImpl::uploadTextureVolume(
 	TexturePtr tex, const TextureVolumeInfo& vol, const TransientMemoryToken& token)
 {
-	commandCommon();
-	flushBarriers();
+	commandCommon(CommandBufferCommandType::ANY_OTHER_COMMAND);
 
 	TextureImpl& impl = tex->getImplementation();
 	impl.checkVolume(vol);
@@ -558,6 +556,147 @@ void CommandBufferImpl::uploadTextureVolume(
 	}
 
 	m_texList.pushBack(m_alloc, tex);
+}
+
+void CommandBufferImpl::flushBarriers()
+{
+	if(m_imgBarrierCount == 0 && m_buffBarrierCount == 0)
+	{
+		return;
+	}
+
+	// Sort
+	//
+
+	if(m_imgBarrierCount > 0)
+	{
+		std::sort(&m_imgBarriers[0],
+			&m_imgBarriers[0] + m_imgBarrierCount,
+			[](const VkImageMemoryBarrier& a, const VkImageMemoryBarrier& b) -> Bool {
+				if(a.image != b.image)
+				{
+					return a.image < b.image;
+				}
+
+				if(a.subresourceRange.aspectMask != b.subresourceRange.aspectMask)
+				{
+					return a.subresourceRange.aspectMask < b.subresourceRange.aspectMask;
+				}
+
+				if(a.oldLayout != b.oldLayout)
+				{
+					return a.oldLayout < b.oldLayout;
+				}
+
+				if(a.newLayout != b.newLayout)
+				{
+					return a.newLayout < b.newLayout;
+				}
+
+				if(a.subresourceRange.baseArrayLayer != b.subresourceRange.baseArrayLayer)
+				{
+					return a.subresourceRange.baseArrayLayer < b.subresourceRange.baseArrayLayer;
+				}
+
+				if(a.subresourceRange.baseMipLevel != b.subresourceRange.baseMipLevel)
+				{
+					return a.subresourceRange.baseMipLevel < b.subresourceRange.baseMipLevel;
+				}
+
+				return false;
+			});
+	}
+
+	// Batch
+	//
+
+	DynamicArrayAuto<VkImageMemoryBarrier> finalImgBarriers(m_alloc);
+	U finalImgBarrierCount = 0;
+	if(m_imgBarrierCount > 0)
+	{
+		DynamicArrayAuto<VkImageMemoryBarrier> squashedBarriers(m_alloc);
+		U squashedBarrierCount = 0;
+
+		squashedBarriers.create(m_imgBarrierCount);
+
+		// Squash the mips by reducing the barriers
+		for(U i = 0; i < m_imgBarrierCount; ++i)
+		{
+			const VkImageMemoryBarrier* prev = (i > 0) ? &m_imgBarriers[i - 1] : nullptr;
+			const VkImageMemoryBarrier& crnt = m_imgBarriers[i];
+
+			if(prev && prev->image == crnt.image
+				&& prev->subresourceRange.aspectMask == crnt.subresourceRange.aspectMask
+				&& prev->oldLayout == crnt.oldLayout
+				&& prev->newLayout == crnt.newLayout
+				&& prev->srcAccessMask == crnt.srcAccessMask
+				&& prev->dstAccessMask == crnt.dstAccessMask
+				&& prev->subresourceRange.baseMipLevel + prev->subresourceRange.levelCount
+					== crnt.subresourceRange.baseMipLevel
+				&& prev->subresourceRange.baseArrayLayer == crnt.subresourceRange.baseArrayLayer
+				&& prev->subresourceRange.layerCount == crnt.subresourceRange.layerCount)
+			{
+				// Can batch
+				squashedBarriers[squashedBarrierCount].subresourceRange.levelCount += crnt.subresourceRange.levelCount;
+			}
+			else
+			{
+				// Can't batch, create new barrier
+				squashedBarriers[squashedBarrierCount++] = crnt;
+			}
+		}
+
+		ANKI_ASSERT(squashedBarrierCount);
+
+		// Squash the layers
+		finalImgBarriers.create(squashedBarrierCount);
+
+		for(U i = 0; i < squashedBarrierCount; ++i)
+		{
+			const VkImageMemoryBarrier* prev = (i > 0) ? &squashedBarriers[i - 1] : nullptr;
+			const VkImageMemoryBarrier& crnt = squashedBarriers[i];
+
+			if(prev && prev->image == crnt.image
+				&& prev->subresourceRange.aspectMask == crnt.subresourceRange.aspectMask
+				&& prev->oldLayout == crnt.oldLayout
+				&& prev->newLayout == crnt.newLayout
+				&& prev->srcAccessMask == crnt.srcAccessMask
+				&& prev->dstAccessMask == crnt.dstAccessMask
+				&& prev->subresourceRange.baseMipLevel == crnt.subresourceRange.baseMipLevel
+				&& prev->subresourceRange.levelCount == crnt.subresourceRange.levelCount
+				&& prev->subresourceRange.baseArrayLayer + prev->subresourceRange.layerCount
+					== crnt.subresourceRange.baseArrayLayer)
+			{
+				// Can batch
+				finalImgBarriers[finalImgBarrierCount].subresourceRange.layerCount += crnt.subresourceRange.layerCount;
+			}
+			else
+			{
+				// Can't batch, create new barrier
+				finalImgBarriers[finalImgBarrierCount++] = crnt;
+			}
+		}
+
+		ANKI_ASSERT(finalImgBarrierCount);
+	}
+
+	// Finish the job
+	//
+	vkCmdPipelineBarrier(m_handle,
+		m_srcStageMask,
+		m_dstStageMask,
+		0,
+		0,
+		nullptr,
+		m_buffBarrierCount,
+		(m_buffBarrierCount) ? &m_buffBarriers[0] : nullptr,
+		finalImgBarrierCount,
+		(finalImgBarrierCount) ? &finalImgBarriers[0] : nullptr);
+
+	ANKI_TRACE_INC_COUNTER(GR_PIPELINE_BARRIERS, 1);
+
+	m_imgBarrierCount = 0;
+	m_buffBarrierCount = 0;
 }
 
 } // end namespace anki

@@ -38,8 +38,8 @@ public:
 	/// It points to a CPU address if mapped.
 	U8* m_mappedAddress = nullptr;
 
-	/// Protect the m_mappedAddress. It's a SpinLock because we don't want a
-	/// whole mutex for every GpuMemoryAllocatorChunk.
+	/// Protect the m_mappedAddress. It's a SpinLock because we don't want a whole mutex for every
+	/// GpuMemoryAllocatorChunk.
 	SpinLock m_mtx;
 
 	/// If true it contains linear resources.

@@ -10,14 +10,19 @@ namespace anki
 
 CommandBufferFactory::~CommandBufferFactory()
 {
-	for(CmdbType& type : m_types)
+	for(U i = 0; i < 2; ++i)
 	{
-		if(type.m_count)
+		for(U j = 0; j < 2; ++j)
 		{
-			vkFreeCommandBuffers(m_dev, m_pool, type.m_count, &type.m_cmdbs[0]);
-		}
+			CmdbType& type = m_types[i][j];
 
-		type.m_cmdbs.destroy(m_alloc);
+			if(type.m_count)
+			{
+				vkFreeCommandBuffers(m_dev, m_pool, type.m_count, &type.m_cmdbs[0]);
+			}
+
+			type.m_cmdbs.destroy(m_alloc);
+		}
 	}
 
 	if(m_pool)
@@ -41,11 +46,13 @@ Error CommandBufferFactory::init(GenericMemoryPoolAllocator<U8> alloc, VkDevice 
 	return ErrorCode::NONE;
 }
 
-VkCommandBuffer CommandBufferFactory::newCommandBuffer(Bool secondLevel)
+VkCommandBuffer CommandBufferFactory::newCommandBuffer(CommandBufferFlag cmdbFlags)
 {
 	ANKI_ASSERT(isCreated());
 
-	CmdbType& type = m_types[secondLevel];
+	Bool secondLevel = !!(cmdbFlags & CommandBufferFlag::SECOND_LEVEL);
+	Bool smallBatch = !!(cmdbFlags & CommandBufferFlag::SMALL_BATCH);
+	CmdbType& type = m_types[secondLevel][smallBatch];
 
 	LockGuard<Mutex> lock(type.m_mtx);
 
@@ -74,12 +81,14 @@ VkCommandBuffer CommandBufferFactory::newCommandBuffer(Bool secondLevel)
 	return out;
 }
 
-void CommandBufferFactory::deleteCommandBuffer(VkCommandBuffer cmdb, Bool secondLevel)
+void CommandBufferFactory::deleteCommandBuffer(VkCommandBuffer cmdb, CommandBufferFlag cmdbFlags)
 {
 	ANKI_ASSERT(isCreated());
 	ANKI_ASSERT(cmdb);
 
-	CmdbType& type = m_types[secondLevel];
+	Bool secondLevel = !!(cmdbFlags & CommandBufferFlag::SECOND_LEVEL);
+	Bool smallBatch = !!(cmdbFlags & CommandBufferFlag::SMALL_BATCH);
+	CmdbType& type = m_types[secondLevel][smallBatch];
 
 	LockGuard<Mutex> lock(type.m_mtx);
 

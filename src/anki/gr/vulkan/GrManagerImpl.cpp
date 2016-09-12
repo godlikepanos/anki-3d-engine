@@ -555,7 +555,7 @@ GrManagerImpl::PerThread& GrManagerImpl::getPerThreadCache(ThreadId tid)
 	return *thread;
 }
 
-VkCommandBuffer GrManagerImpl::newCommandBuffer(ThreadId tid, Bool secondLevel)
+VkCommandBuffer GrManagerImpl::newCommandBuffer(ThreadId tid, CommandBufferFlag cmdbFlags)
 {
 	// Get the per thread cache
 	PerThread& thread = getPerThreadCache(tid);
@@ -570,15 +570,15 @@ VkCommandBuffer GrManagerImpl::newCommandBuffer(ThreadId tid, Bool secondLevel)
 		}
 	}
 
-	return thread.m_cmdbs.newCommandBuffer(secondLevel);
+	return thread.m_cmdbs.newCommandBuffer(cmdbFlags);
 }
 
-void GrManagerImpl::deleteCommandBuffer(VkCommandBuffer cmdb, Bool secondLevel, ThreadId tid)
+void GrManagerImpl::deleteCommandBuffer(VkCommandBuffer cmdb, CommandBufferFlag cmdbFlags, ThreadId tid)
 {
 	// Get the per thread cache
 	PerThread& thread = getPerThreadCache(tid);
 
-	thread.m_cmdbs.deleteCommandBuffer(cmdb, secondLevel);
+	thread.m_cmdbs.deleteCommandBuffer(cmdb, cmdbFlags);
 }
 
 void GrManagerImpl::flushCommandBuffer(CommandBufferPtr cmdb,

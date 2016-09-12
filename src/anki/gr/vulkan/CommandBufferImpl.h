@@ -12,11 +12,20 @@
 namespace anki
 {
 
+#define ANKI_BATCH_COMMANDS 1
+
 // Forward
 class CommandBufferInitInfo;
 
 /// @addtogroup vulkan
 /// @{
+
+/// List the commands that can be batched.
+enum class CommandBufferCommandType : U8
+{
+	SET_BARRIER,
+	ANY_OTHER_COMMAND
+};
 
 /// Command buffer implementation.
 class CommandBufferImpl : public VulkanObject
@@ -65,12 +74,7 @@ public:
 
 	void drawElementsIndirect(U32 drawCount, PtrSize offset, BufferPtr buff);
 
-	void dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ)
-	{
-		commandCommon();
-		flushBarriers();
-		vkCmdDispatch(m_handle, groupCountX, groupCountY, groupCountZ);
-	}
+	void dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ);
 
 	void resetOcclusionQuery(OcclusionQueryPtr query);
 
@@ -164,8 +168,20 @@ private:
 #endif
 	VkSubpassContents m_subpassContents = VK_SUBPASS_CONTENTS_MAX_ENUM;
 
+	CommandBufferCommandType m_lastCmdType = CommandBufferCommandType::ANY_OTHER_COMMAND;
+
+	/// @name barrier_batch
+	/// @{
+	DynamicArray<VkImageMemoryBarrier> m_imgBarriers;
+	DynamicArray<VkBufferMemoryBarrier> m_buffBarriers;
+	U16 m_imgBarrierCount = 0;
+	U16 m_buffBarrierCount = 0;
+	VkPipelineStageFlags m_srcStageMask = 0;
+	VkPipelineStageFlags m_dstStageMask = 0;
+	/// @}
+
 	/// Some common operations per command.
-	void commandCommon();
+	void commandCommon(CommandBufferCommandType type);
 
 	void drawcallCommon();
 
@@ -180,12 +196,11 @@ private:
 
 	Bool secondLevel() const
 	{
-		return (m_flags & CommandBufferFlag::SECOND_LEVEL) != CommandBufferFlag::NONE;
+		return !!(m_flags & CommandBufferFlag::SECOND_LEVEL);
 	}
 
-	void flushBarriers()
-	{
-	}
+	/// Flush batched image and buffer barriers.
+	void flushBarriers();
 
 	void clearTextureInternal(TexturePtr tex, const ClearValue& clearValue, const VkImageSubresourceRange& range);
 

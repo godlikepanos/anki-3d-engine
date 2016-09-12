@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/gr/vulkan/Common.h>
+#include <anki/gr/CommandBuffer.h>
 
 namespace anki
 {
@@ -26,10 +27,10 @@ public:
 	ANKI_USE_RESULT Error init(GenericMemoryPoolAllocator<U8> alloc, VkDevice dev, uint32_t queueFamily);
 
 	/// Request a new command buffer.
-	VkCommandBuffer newCommandBuffer(Bool secondLevel);
+	VkCommandBuffer newCommandBuffer(CommandBufferFlag cmdbFlags);
 
 	/// Free a command buffer.
-	void deleteCommandBuffer(VkCommandBuffer cmdb, Bool secondLevel);
+	void deleteCommandBuffer(VkCommandBuffer cmdb, CommandBufferFlag cmdbFlags);
 
 	void collect();
 
@@ -51,7 +52,7 @@ private:
 		Mutex m_mtx; ///< Lock because the allocations may happen anywhere.
 	};
 
-	Array<CmdbType, 2> m_types;
+	Array2d<CmdbType, 2, 2> m_types;
 };
 /// @}
 

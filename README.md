@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/godlikepanos/anki-3d-engine.svg?branch=master)](https://travis-ci.org/godlikepanos/anki-3d-engine)
 
 AnKi 3D engine is a Linux and Windows opensource game engine that runs on
-OpenGL 4.4.
+OpenGL 4.5 and Vulkan 1.0 (Beta).
 
 [![Video](http://img.youtube.com/vi/va7nZ2EFR4c/0.jpg)](http://www.youtube.com/watch?v=va7nZ2EFR4c)
 

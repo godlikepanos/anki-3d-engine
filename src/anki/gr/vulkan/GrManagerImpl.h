@@ -78,9 +78,9 @@ public:
 	/// @name object_creation
 	/// @{
 
-	VkCommandBuffer newCommandBuffer(ThreadId tid, Bool secondLevel);
+	VkCommandBuffer newCommandBuffer(ThreadId tid, CommandBufferFlag cmdbFlags);
 
-	void deleteCommandBuffer(VkCommandBuffer cmdb, Bool secondLevel, ThreadId tid);
+	void deleteCommandBuffer(VkCommandBuffer cmdb, CommandBufferFlag cmdbFlags, ThreadId tid);
 
 	SemaphorePtr newSemaphore()
 	{

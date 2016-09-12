@@ -160,6 +160,7 @@ inline void TextureImpl::computeSubResourceRange(const TextureSurfaceInfo& surf,
 		break;
 	default:
 		ANKI_ASSERT(0);
+		range.baseArrayLayer = 0;
 	}
 	range.layerCount = 1;
 }
