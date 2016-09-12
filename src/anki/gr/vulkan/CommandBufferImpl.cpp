@@ -697,6 +697,8 @@ void CommandBufferImpl::flushBarriers()
 
 	m_imgBarrierCount = 0;
 	m_buffBarrierCount = 0;
+	m_srcStageMask = 0;
+	m_dstStageMask = 0;
 }
 
 } // end namespace anki
