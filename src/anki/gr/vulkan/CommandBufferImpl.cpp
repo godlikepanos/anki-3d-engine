@@ -115,9 +115,7 @@ void CommandBufferImpl::beginRenderPass(FramebufferPtr fb)
 
 	m_fbList.pushBack(m_alloc, fb);
 
-#if ANKI_ASSERTIONS
 	m_subpassContents = VK_SUBPASS_CONTENTS_MAX_ENUM;
-#endif
 }
 
 void CommandBufferImpl::beginRenderPassInternal()
@@ -185,21 +183,15 @@ void CommandBufferImpl::endRenderPass()
 	m_activeFb.reset(nullptr);
 }
 
-void CommandBufferImpl::endRecordingInternal()
+void CommandBufferImpl::endRecording()
 {
-	flushBarriers();
+	commandCommon(CommandBufferCommandType::ANY_OTHER_COMMAND);
 
 	ANKI_ASSERT(!m_finalized);
 	ANKI_ASSERT(!m_empty);
 
 	ANKI_VK_CHECKF(vkEndCommandBuffer(m_handle));
 	m_finalized = true;
-}
-
-void CommandBufferImpl::endRecording()
-{
-	commandCommon(CommandBufferCommandType::ANY_OTHER_COMMAND);
-	endRecordingInternal();
 }
 
 void CommandBufferImpl::bindResourceGroup(ResourceGroupPtr rc, U slot, const TransientMemoryInfo* dynInfo)

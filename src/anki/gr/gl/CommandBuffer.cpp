@@ -62,7 +62,10 @@ void CommandBuffer::flush()
 	}
 #endif
 
-	getManager().getImplementation().getRenderingThread().flushCommandBuffer(CommandBufferPtr(this));
+	if(!m_impl->isSecondLevel())
+	{
+		getManager().getImplementation().getRenderingThread().flushCommandBuffer(CommandBufferPtr(this));
+	}
 }
 
 void CommandBuffer::finish()

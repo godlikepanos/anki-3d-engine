@@ -12,7 +12,7 @@
 namespace anki
 {
 
-#define ANKI_BATCH_COMMANDS 1
+#define ANKI_BATCH_COMMANDS 0
 
 // Forward
 class CommandBufferInitInfo;
@@ -52,6 +52,11 @@ public:
 	Bool isEmpty() const
 	{
 		return m_empty;
+	}
+
+	Bool isSecondLevel() const
+	{
+		return !!(m_flags & CommandBufferFlag::SECOND_LEVEL);
 	}
 
 	void setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy);
@@ -191,8 +196,6 @@ private:
 	}
 
 	void beginRenderPassInternal();
-
-	void endRecordingInternal();
 
 	Bool secondLevel() const
 	{

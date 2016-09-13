@@ -27,6 +27,8 @@ void CommandBufferImpl::init(const CommandBufferInitInfo& init)
 
 	m_alloc = CommandBufferAllocator<GlCommand*>(
 		pool.getAllocationCallback(), pool.getAllocationCallbackUserData(), init.m_hints.m_chunkSize, 1.0, 0, false);
+
+	m_flags = init.m_flags;
 }
 
 void CommandBufferImpl::destroy()

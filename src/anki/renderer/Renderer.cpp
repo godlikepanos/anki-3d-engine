@@ -385,6 +385,8 @@ void Renderer::createDrawQuadPipeline(ShaderPtr frag, const ColorStateInfo& colo
 
 Error Renderer::buildCommandBuffersInternal(RenderingContext& ctx, U32 threadId, PtrSize threadCount)
 {
+	// MS
+	//
 	ANKI_CHECK(m_ms->buildCommandBuffers(ctx, threadId, threadCount));
 
 	// Append to the last MS's cmdb the occlusion tests
@@ -393,8 +395,17 @@ Error Renderer::buildCommandBuffersInternal(RenderingContext& ctx, U32 threadId,
 		m_lf->runOcclusionTests(ctx, ctx.m_ms.m_commandBuffers[threadId]);
 	}
 
+	if(ctx.m_ms.m_commandBuffers[threadId])
+	{
+		ctx.m_ms.m_commandBuffers[threadId]->flush();
+	}
+
+	// SM
+	//
 	ANKI_CHECK(m_sm->buildCommandBuffers(ctx, threadId, threadCount));
 
+	// FS
+	//
 	ANKI_CHECK(m_fs->buildCommandBuffers(ctx, threadId, threadCount));
 
 	// Append to the last FB's cmdb the other passes
@@ -419,6 +430,11 @@ Error Renderer::buildCommandBuffersInternal(RenderingContext& ctx, U32 threadId,
 		m_vol->run(ctx, cmdb);
 
 		ctx.m_fs.m_commandBuffers[threadId] = cmdb;
+	}
+
+	if(ctx.m_fs.m_commandBuffers[threadId])
+	{
+		ctx.m_fs.m_commandBuffers[threadId]->flush();
 	}
 
 	return ErrorCode::NONE;

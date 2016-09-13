@@ -125,7 +125,7 @@ public:
 	/// Compute initialization hints.
 	CommandBufferInitHints computeInitHints() const;
 
-	/// Flush command buffer for deferred execution.
+	/// Finalize and submit if it's primary command buffer and just finalize if it's second level.
 	void flush();
 
 	/// Flush and wait to finish.

@@ -131,12 +131,18 @@ public:
 
 	void dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ);
 
+	Bool isSecondLevel() const
+	{
+		return !!(m_flags & CommandBufferFlag::SECOND_LEVEL);
+	}
+
 private:
 	GrManager* m_manager = nullptr;
 	GlCommand* m_firstCommand = nullptr;
 	GlCommand* m_lastCommand = nullptr;
 	CommandBufferAllocator<U8> m_alloc;
 	Bool8 m_immutable = false;
+	CommandBufferFlag m_flags;
 
 #if ANKI_DEBUG
 	Bool8 m_executed = false;

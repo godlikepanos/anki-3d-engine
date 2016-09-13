@@ -366,16 +366,15 @@ inline void CommandBufferImpl::pushSecondLevelCommandBuffer(CommandBufferPtr cmd
 	ANKI_ASSERT(insideRenderPass());
 	ANKI_ASSERT(m_subpassContents == VK_SUBPASS_CONTENTS_MAX_ENUM
 		|| m_subpassContents == VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
-#if ANKI_ASSERTIONS
+
+	ANKI_ASSERT(cmdb->getImplementation().m_finalized);
+
 	m_subpassContents = VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS;
-#endif
 
 	if(ANKI_UNLIKELY(m_rpCommandCount == 0))
 	{
 		beginRenderPassInternal();
 	}
-
-	cmdb->getImplementation().endRecordingInternal(); // XXX That is wrong in MT
 
 	vkCmdExecuteCommands(m_handle, 1, &cmdb->getImplementation().m_handle);
 
@@ -389,9 +388,7 @@ inline void CommandBufferImpl::drawcallCommon()
 	commandCommon(CommandBufferCommandType::ANY_OTHER_COMMAND);
 	ANKI_ASSERT(insideRenderPass() || secondLevel());
 	ANKI_ASSERT(m_subpassContents == VK_SUBPASS_CONTENTS_MAX_ENUM || m_subpassContents == VK_SUBPASS_CONTENTS_INLINE);
-#if ANKI_ASSERTIONS
 	m_subpassContents = VK_SUBPASS_CONTENTS_INLINE;
-#endif
 
 	if(ANKI_UNLIKELY(m_rpCommandCount == 0) && !secondLevel())
 	{

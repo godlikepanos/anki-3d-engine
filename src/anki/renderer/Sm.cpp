@@ -262,6 +262,8 @@ Error Sm::doSpotLight(SceneNode& light, CommandBufferPtr& cmdb, FramebufferPtr& 
 		vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + start,
 		vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + end);
 
+	cmdb->flush();
+
 	return err;
 }
 
@@ -290,6 +292,8 @@ Error Sm::doOmniLight(
 				cmdbs[frCount],
 				vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + start,
 				vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + end));
+
+			cmdbs[frCount]->flush();
 		}
 
 		++frCount;

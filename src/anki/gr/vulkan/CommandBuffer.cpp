@@ -42,8 +42,12 @@ CommandBufferInitHints CommandBuffer::computeInitHints() const
 void CommandBuffer::flush()
 {
 	m_impl->endRecording();
-	m_impl->getGrManagerImpl().flushCommandBuffer(
-		CommandBufferPtr(this), SemaphorePtr(), WeakArray<SemaphorePtr>(), WeakArray<VkPipelineStageFlags>());
+
+	if(!m_impl->isSecondLevel())
+	{
+		m_impl->getGrManagerImpl().flushCommandBuffer(
+			CommandBufferPtr(this), SemaphorePtr(), WeakArray<SemaphorePtr>(), WeakArray<VkPipelineStageFlags>());
+	}
 }
 
 void CommandBuffer::finish()
