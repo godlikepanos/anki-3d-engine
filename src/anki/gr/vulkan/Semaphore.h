@@ -21,12 +21,10 @@ class Semaphore : public NonCopyable
 {
 	friend class SemaphoreFactory;
 	friend class SemaphorePtrDeleter;
+	template<typename, typename>
+	friend class GenericPoolAllocator;
 
 public:
-	Semaphore(SemaphoreFactory* f);
-
-	~Semaphore();
-
 	const VkSemaphore& getHandle() const
 	{
 		ANKI_ASSERT(m_handle);
@@ -40,12 +38,6 @@ public:
 		return m_refcount;
 	}
 
-	/// Set the associated fence.
-	void setFence(FencePtr fence)
-	{
-		m_fence = fence;
-	}
-
 private:
 	VkSemaphore m_handle = VK_NULL_HANDLE;
 	Atomic<U32> m_refcount = {0};
@@ -53,6 +45,10 @@ private:
 
 	/// Fence to find out when it's safe to reuse this semaphore.
 	FencePtr m_fence;
+
+	Semaphore(SemaphoreFactory* f, FencePtr fence);
+
+	~Semaphore();
 };
 
 /// SemaphorePtr deleter.
@@ -81,7 +77,7 @@ public:
 
 	void destroy();
 
-	SemaphorePtr newInstance();
+	SemaphorePtr newInstance(FencePtr fence);
 
 private:
 	GrAllocator<U8> m_alloc;

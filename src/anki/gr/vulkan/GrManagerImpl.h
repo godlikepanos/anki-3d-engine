@@ -82,11 +82,6 @@ public:
 
 	void deleteCommandBuffer(VkCommandBuffer cmdb, CommandBufferFlag cmdbFlags, ThreadId tid);
 
-	SemaphorePtr newSemaphore()
-	{
-		return m_semaphores.newInstance();
-	}
-
 	FencePtr newFence()
 	{
 		return m_fences.newInstance();
@@ -131,6 +126,15 @@ public:
 		SemaphorePtr signalSemaphore = {},
 		WeakArray<SemaphorePtr> waitSemaphores = {},
 		WeakArray<VkPipelineStageFlags> waitPplineStages = {});
+
+	void finishCommandBuffer(CommandBufferPtr ptr,
+		SemaphorePtr signalSemaphore = {},
+		WeakArray<SemaphorePtr> waitSemaphores = {},
+		WeakArray<VkPipelineStageFlags> waitPplineStages = {})
+	{
+		flushCommandBuffer(ptr, signalSemaphore, waitSemaphores, waitPplineStages);
+		vkQueueWaitIdle(m_queue);
+	}
 
 	/// @name Memory
 	/// @{

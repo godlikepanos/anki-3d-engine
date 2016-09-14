@@ -475,13 +475,16 @@ void GrManagerImpl::beginFrame()
 {
 	PerFrame& frame = m_perFrame[m_frame % MAX_FRAMES_IN_FLIGHT];
 
-	// Create a semaphore
-	frame.m_acquireSemaphore = newSemaphore();
+	// Create sync objects
+	FencePtr fence = newFence();
+	frame.m_acquireSemaphore = m_semaphores.newInstance(fence);
 
 	// Get new image
 	uint32_t imageIdx;
-	ANKI_VK_CHECKF(
-		vkAcquireNextImageKHR(m_device, m_swapchain, UINT64_MAX, frame.m_acquireSemaphore->getHandle(), 0, &imageIdx));
+	ANKI_TRACE_START_EVENT(VK_ACQUIRE_IMAGE);
+	ANKI_VK_CHECKF(vkAcquireNextImageKHR(
+		m_device, m_swapchain, UINT64_MAX, frame.m_acquireSemaphore->getHandle(), fence->getHandle(), &imageIdx));
+	ANKI_TRACE_STOP_EVENT(VK_ACQUIRE_IMAGE);
 	ANKI_ASSERT(imageIdx == (m_frame % MAX_FRAMES_IN_FLIGHT) && "Wrong assumption");
 }
 
@@ -505,6 +508,7 @@ void GrManagerImpl::endFrame()
 	}
 
 	// Present
+	VkResult res;
 	uint32_t imageIdx = m_frame % MAX_FRAMES_IN_FLIGHT;
 	VkPresentInfoKHR present = {};
 	present.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -513,11 +517,13 @@ void GrManagerImpl::endFrame()
 	present.swapchainCount = 1;
 	present.pSwapchains = &m_swapchain;
 	present.pImageIndices = &imageIdx;
+	present.pResults = &res;
 
 	{
 		LockGuard<Mutex> lock(m_queueSubmitMtx);
 		ANKI_VK_CHECKF(vkQueuePresentKHR(m_queue, &present));
 	}
+	ANKI_VK_CHECKF(res);
 
 	m_transientMem.endFrame();
 
@@ -597,19 +603,21 @@ void GrManagerImpl::flushCommandBuffer(CommandBufferPtr cmdb,
 
 	if(signalSemaphore)
 	{
-		submit.pSignalSemaphores = &signalSemaphore->getHandle();
+		ANKI_ASSERT(0 && "TODO");
+		/*submit.pSignalSemaphores = &signalSemaphore->getHandle();
 		submit.signalSemaphoreCount = 1;
-		signalSemaphore->setFence(fence);
+		signalSemaphore->setFence(fence);*/
 	}
 
 	Array<VkSemaphore, 16> allWaitSemaphores;
 	Array<VkPipelineStageFlags, 16> allWaitPplineStages;
 	for(U i = 0; i < waitSemaphores.getSize(); ++i)
 	{
-		ANKI_ASSERT(waitSemaphores[i]);
+		ANKI_ASSERT(0 && "TODO");
+		/*ANKI_ASSERT(waitSemaphores[i]);
 		allWaitSemaphores[submit.waitSemaphoreCount] = waitSemaphores[i]->getHandle();
 		allWaitPplineStages[submit.waitSemaphoreCount] = waitPplineStages[i];
-		++submit.waitSemaphoreCount;
+		++submit.waitSemaphoreCount;*/
 	}
 
 	// Do some special stuff for the last command buffer
@@ -621,7 +629,7 @@ void GrManagerImpl::flushCommandBuffer(CommandBufferPtr cmdb,
 
 		// Create the semaphore to signal
 		ANKI_ASSERT(!frame.m_renderSemaphore && "Only one begin/end render pass is allowed with the default fb");
-		frame.m_renderSemaphore = newSemaphore();
+		frame.m_renderSemaphore = m_semaphores.newInstance(fence);
 
 		submit.signalSemaphoreCount = 1;
 		submit.pSignalSemaphores = &frame.m_renderSemaphore->getHandle();
@@ -640,7 +648,9 @@ void GrManagerImpl::flushCommandBuffer(CommandBufferPtr cmdb,
 
 	frame.m_cmdbsSubmitted.pushBack(getAllocator(), cmdb);
 
+	ANKI_TRACE_START_EVENT(VK_QUEUE_SUBMIT);
 	ANKI_VK_CHECKF(vkQueueSubmit(m_queue, 1, &submit, fence->getHandle()));
+	ANKI_TRACE_STOP_EVENT(VK_QUEUE_SUBMIT);
 }
 
 } // end namespace anki

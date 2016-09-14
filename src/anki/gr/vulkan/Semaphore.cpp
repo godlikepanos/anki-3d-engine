@@ -31,8 +31,10 @@ void SemaphoreFactory::releaseFences()
 	}
 }
 
-SemaphorePtr SemaphoreFactory::newInstance()
+SemaphorePtr SemaphoreFactory::newInstance(FencePtr fence)
 {
+	ANKI_ASSERT(fence);
+
 	LockGuard<Mutex> lock(m_mtx);
 
 	Semaphore* out = nullptr;
@@ -64,7 +66,11 @@ SemaphorePtr SemaphoreFactory::newInstance()
 	if(out == nullptr)
 	{
 		// Create a new one
-		out = m_alloc.newInstance<Semaphore>(this);
+		out = m_alloc.newInstance<Semaphore>(this, fence);
+	}
+	else
+	{
+		out->m_fence = fence;
 	}
 
 	ANKI_ASSERT(out->m_refcount.get() == 0);

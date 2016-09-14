@@ -52,6 +52,13 @@ void CommandBuffer::flush()
 
 void CommandBuffer::finish()
 {
+	m_impl->endRecording();
+
+	if(!m_impl->isSecondLevel())
+	{
+		m_impl->getGrManagerImpl().finishCommandBuffer(
+			CommandBufferPtr(this), SemaphorePtr(), WeakArray<SemaphorePtr>(), WeakArray<VkPipelineStageFlags>());
+	}
 }
 
 void CommandBuffer::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)

@@ -4,16 +4,21 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/gr/vulkan/Semaphore.h>
+#include <anki/core/Trace.h>
 
 namespace anki
 {
 
-inline Semaphore::Semaphore(SemaphoreFactory* f)
+inline Semaphore::Semaphore(SemaphoreFactory* f, FencePtr fence)
 	: m_factory(f)
+	, m_fence(fence)
 {
 	ANKI_ASSERT(f);
+	ANKI_ASSERT(fence.isCreated());
 	VkSemaphoreCreateInfo ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+	ANKI_TRACE_INC_COUNTER(VK_SEMAPHORE_CREATE, 1);
 	ANKI_VK_CHECKF(vkCreateSemaphore(m_factory->m_dev, &ci, nullptr, &m_handle));
 }
 

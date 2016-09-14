@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/gr/vulkan/Fence.h>
+#include <anki/core/Trace.h>
 
 namespace anki
 {
@@ -15,6 +16,7 @@ inline Fence::Fence(FenceFactory* f)
 	VkFenceCreateInfo ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 
+	ANKI_TRACE_INC_COUNTER(VK_FENCE_CREATE, 1);
 	ANKI_VK_CHECKF(vkCreateFence(m_factory->m_dev, &ci, nullptr, &m_handle));
 }
 

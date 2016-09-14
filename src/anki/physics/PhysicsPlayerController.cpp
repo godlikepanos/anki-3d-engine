@@ -219,8 +219,7 @@ Error PhysicsPlayerController::create(const PhysicsPlayerControllerInitInfo& ini
 	NewtonBodySetTransformCallback(m_body, onTransformCallback);
 	NewtonBodySetMaterialGroupID(m_body, NewtonMaterialGetDefaultGroupID(m_world->getNewtonWorld()));
 
-	// Players must have weight, otherwise they are infinitely strong when
-	// they collide
+	// Players must have weight, otherwise they are infinitely strong when they collide
 	NewtonCollision* shape = NewtonBodyGetCollision(m_body);
 	if(shape == nullptr)
 	{
@@ -319,8 +318,7 @@ Vec4 PhysicsPlayerController::calculateDesiredVelocity(
 		}
 		else
 		{
-			// Player is in an illegal ramp, he slides down hill an loses
-			// control of his movement
+			// Player is in an illegal ramp, he slides down hill an loses control of his movement
 			NewtonBodyGetVelocity(m_body, &veloc[0]);
 			veloc += updir * verticalSpeed;
 			veloc += gravity * dt;

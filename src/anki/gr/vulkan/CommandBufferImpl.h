@@ -12,7 +12,7 @@
 namespace anki
 {
 
-#define ANKI_BATCH_COMMANDS 0
+#define ANKI_BATCH_COMMANDS 1
 
 // Forward
 class CommandBufferInitInfo;
@@ -186,7 +186,11 @@ private:
 	/// @}
 
 	/// Some common operations per command.
-	void commandCommon(CommandBufferCommandType type);
+	void commandCommon();
+
+	/// Flush batches. Use ANKI_CMD on every vkCmdXXX to do that automatically and call it manually before adding to a
+	/// batch.
+	void flushBatches(CommandBufferCommandType type);
 
 	void drawcallCommon();
 
@@ -210,6 +214,10 @@ private:
 	void setTextureBarrierInternal(
 		TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const VkImageSubresourceRange& range);
 };
+
+#define ANKI_CMD(x_, t_)                                                                                               \
+	flushBatches(CommandBufferCommandType::t_);                                                                        \
+	x_;
 /// @}
 
 } // end namespace anki

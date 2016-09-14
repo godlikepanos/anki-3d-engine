@@ -35,6 +35,8 @@ static Array<const char*, U(TraceEventType::COUNT)> eventNames = {{"SCENE_UPDATE
 	"GL_BIND_RESOURCES",
 	"GL_BIND_PPLINE",
 	"GL_CMD_BUFFER_DESTROY",
+	"VK_ACQUIRE_IMAGE",
+	"VK_QUEUE_SUBMIT",
 	"SWAP_BUFFERS",
 	"BARRIER_WAIT"}};
 
@@ -45,7 +47,10 @@ static Array<const char*, U(TraceCounterType::COUNT)> counterNames = {{"GR_DRAWC
 	"GR_PIPELINES_CREATED",
 	"GR_PIPELINE_BINDS_SKIPPED",
 	"GR_PIPELINE_BINDS_HAPPENED",
-	"GR_PIPELINE_BARRIERS",
+	"VK_PIPELINE_BARRIERS",
+	"VK_CMD_BUFFER_CREATE",
+	"VK_FENCE_CREATE",
+	"VK_SEMAPHORE_CREATE",
 	"RENDERER_LIGHTS",
 	"RENDERER_SHADOW_PASSES",
 	"RENDERER_MERGED_DRAWCALLS",
@@ -215,7 +220,7 @@ Error TraceManager::flushEvents()
 	{
 		const char* fmt = (i < U(TraceEventType::COUNT) - 1) ? "%f, " : "%f\n";
 		U64 ns = m_perFrameCounters[i + U(TraceCounterType::COUNT)].exchange(0);
-		ANKI_CHECK(m_perFrameFile.writeText(fmt, F64(ns) / 1000000.0));
+		ANKI_CHECK(m_perFrameFile.writeText(fmt, F64(ns) / 1000000.0)); // Time in ms
 	}
 
 	return ErrorCode::NONE;

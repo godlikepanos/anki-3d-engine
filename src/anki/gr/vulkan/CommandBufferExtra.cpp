@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/gr/vulkan/CommandBufferExtra.h>
+#include <anki/core/Trace.h>
 
 namespace anki
 {
@@ -74,6 +75,7 @@ VkCommandBuffer CommandBufferFactory::newCommandBuffer(CommandBufferFlag cmdbFla
 		ci.level = (secondLevel) ? VK_COMMAND_BUFFER_LEVEL_SECONDARY : VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 		ci.commandBufferCount = 1;
 
+		ANKI_TRACE_INC_COUNTER(VK_CMD_BUFFER_CREATE, 1);
 		ANKI_VK_CHECKF(vkAllocateCommandBuffers(m_dev, &ci, &out));
 	}
 
