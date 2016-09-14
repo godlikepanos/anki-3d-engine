@@ -86,7 +86,7 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 		}
 		else
 		{
-			inheritance.framebuffer = impl.getFramebufferHandle(getGrManagerImpl().getFrame() % MAX_FRAMES_IN_FLIGHT);
+			inheritance.framebuffer = impl.getFramebufferHandle(getGrManagerImpl().getCurrentBackbufferIndex());
 		}
 
 		begin.flags |= VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
@@ -142,7 +142,7 @@ void CommandBufferImpl::beginRenderPassInternal()
 		// Bind the default FB
 		m_renderedToDefaultFb = true;
 
-		bi.framebuffer = impl.getFramebufferHandle(getGrManagerImpl().getFrame() % MAX_FRAMES_IN_FLIGHT);
+		bi.framebuffer = impl.getFramebufferHandle(getGrManagerImpl().getCurrentBackbufferIndex());
 
 		bi.renderArea.extent.width = getGrManagerImpl().getDefaultSurfaceWidth();
 		bi.renderArea.extent.height = getGrManagerImpl().getDefaultSurfaceHeight();
@@ -154,7 +154,7 @@ void CommandBufferImpl::beginRenderPassInternal()
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-			getGrManagerImpl().getDefaultSurfaceImage(getGrManagerImpl().getFrame() % MAX_FRAMES_IN_FLIGHT),
+			getGrManagerImpl().getDefaultSurfaceImage(getGrManagerImpl().getCurrentBackbufferIndex()),
 			VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 	}
 
@@ -178,7 +178,7 @@ void CommandBufferImpl::endRenderPass()
 			VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
 			VK_ACCESS_MEMORY_READ_BIT,
 			VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-			getGrManagerImpl().getDefaultSurfaceImage(getGrManagerImpl().getFrame() % MAX_FRAMES_IN_FLIGHT),
+			getGrManagerImpl().getDefaultSurfaceImage(getGrManagerImpl().getCurrentBackbufferIndex()),
 			VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 	}
 

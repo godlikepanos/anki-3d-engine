@@ -95,14 +95,19 @@ public:
 
 	VkImageView getDefaultSurfaceImageView(U idx) const
 	{
-		ANKI_ASSERT(m_perFrame[idx].m_imageView);
-		return m_perFrame[idx].m_imageView;
+		ANKI_ASSERT(m_backbuffers[idx].m_imageView);
+		return m_backbuffers[idx].m_imageView;
 	}
 
 	VkImage getDefaultSurfaceImage(U idx) const
 	{
-		ANKI_ASSERT(m_perFrame[idx].m_image);
-		return m_perFrame[idx].m_image;
+		ANKI_ASSERT(m_backbuffers[idx].m_image);
+		return m_backbuffers[idx].m_image;
+	}
+
+	U getCurrentBackbufferIndex() const
+	{
+		return m_crntBackbufferIdx;
 	}
 
 	U getDefaultSurfaceWidth() const
@@ -115,11 +120,6 @@ public:
 	{
 		ANKI_ASSERT(m_surfaceHeight);
 		return m_surfaceHeight;
-	}
-
-	U64 getFrame() const
-	{
-		return m_frame;
 	}
 
 	void flushCommandBuffer(CommandBufferPtr ptr,
@@ -203,12 +203,16 @@ private:
 
 	/// @name Surface_related
 	/// @{
-	class PerFrame
+	class Backbuffer
 	{
 	public:
 		VkImage m_image = VK_NULL_HANDLE;
 		VkImageView m_imageView = VK_NULL_HANDLE;
+	};
 
+	class PerFrame
+	{
+	public:
 		FencePtr m_presentFence;
 		SemaphorePtr m_acquireSemaphore;
 
@@ -224,6 +228,8 @@ private:
 	VkFormat m_surfaceFormat = VK_FORMAT_UNDEFINED;
 	VkSwapchainKHR m_swapchain = VK_NULL_HANDLE;
 	Array<PerFrame, MAX_FRAMES_IN_FLIGHT> m_perFrame;
+	Array<Backbuffer, MAX_FRAMES_IN_FLIGHT> m_backbuffers;
+	U32 m_crntBackbufferIdx = 0;
 	/// @}
 
 	DescriptorSetAllocator m_dsetAlloc;

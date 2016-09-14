@@ -29,14 +29,17 @@ GrManagerImpl::~GrManagerImpl()
 	}
 
 	// SECOND THING: The destroy everything that has a reference to GrObjects.
-	for(auto& x : m_perFrame)
+	for(auto& x : m_backbuffers)
 	{
 		if(x.m_imageView)
 		{
 			vkDestroyImageView(m_device, x.m_imageView, nullptr);
 			x.m_imageView = VK_NULL_HANDLE;
 		}
+	}
 
+	for(auto& x : m_perFrame)
+	{
 		x.m_presentFence.reset(nullptr);
 		x.m_acquireSemaphore.reset(nullptr);
 		x.m_renderSemaphore.reset(nullptr);
@@ -386,19 +389,17 @@ Error GrManagerImpl::initSwapchain(const GrManagerInitInfo& init)
 	ANKI_VK_CHECK(vkGetSwapchainImagesKHR(m_device, m_swapchain, &count, &images[0]));
 	for(U i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
 	{
-		m_perFrame[i].m_image = images[i];
+		m_backbuffers[i].m_image = images[i];
 		ANKI_ASSERT(images[i]);
 	}
 
 	// Create img views
 	for(U i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
 	{
-		PerFrame& perFrame = m_perFrame[i];
-
 		VkImageViewCreateInfo ci = {};
 		ci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		ci.flags = 0;
-		ci.image = perFrame.m_image;
+		ci.image = m_backbuffers[i].m_image;
 		ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
 		ci.format = m_surfaceFormat;
 		ci.components = {
@@ -409,7 +410,7 @@ Error GrManagerImpl::initSwapchain(const GrManagerInitInfo& init)
 		ci.subresourceRange.baseArrayLayer = 0;
 		ci.subresourceRange.layerCount = 1;
 
-		ANKI_VK_CHECK(vkCreateImageView(m_device, &ci, nullptr, &perFrame.m_imageView));
+		ANKI_VK_CHECK(vkCreateImageView(m_device, &ci, nullptr, &m_backbuffers[i].m_imageView));
 	}
 
 	return ErrorCode::NONE;
@@ -485,7 +486,9 @@ void GrManagerImpl::beginFrame()
 	ANKI_VK_CHECKF(vkAcquireNextImageKHR(
 		m_device, m_swapchain, UINT64_MAX, frame.m_acquireSemaphore->getHandle(), fence->getHandle(), &imageIdx));
 	ANKI_TRACE_STOP_EVENT(VK_ACQUIRE_IMAGE);
-	ANKI_ASSERT(imageIdx == (m_frame % MAX_FRAMES_IN_FLIGHT) && "Wrong assumption");
+
+	ANKI_ASSERT(imageIdx < MAX_FRAMES_IN_FLIGHT);
+	m_crntBackbufferIdx = imageIdx;
 }
 
 void GrManagerImpl::endFrame()
