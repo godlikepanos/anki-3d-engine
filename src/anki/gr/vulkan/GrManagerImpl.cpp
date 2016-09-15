@@ -512,14 +512,13 @@ void GrManagerImpl::endFrame()
 
 	// Present
 	VkResult res;
-	uint32_t imageIdx = m_frame % MAX_FRAMES_IN_FLIGHT;
 	VkPresentInfoKHR present = {};
 	present.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 	present.waitSemaphoreCount = (frame.m_renderSemaphore) ? 1 : 0;
 	present.pWaitSemaphores = (frame.m_renderSemaphore) ? &frame.m_renderSemaphore->getHandle() : nullptr;
 	present.swapchainCount = 1;
 	present.pSwapchains = &m_swapchain;
-	present.pImageIndices = &imageIdx;
+	present.pImageIndices = &m_crntBackbufferIdx;
 	present.pResults = &res;
 
 	{
