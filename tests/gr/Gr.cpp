@@ -288,7 +288,8 @@ static void createGrManager(NativeWindow*& win, GrManager*& gr)
 	gr = new GrManager();
 
 	Config cfg;
-	cfg.set("debugContext", 1);
+	cfg.set("debugContext", true);
+	cfg.set("vsync", false);
 	GrManagerInitInfo inf;
 	inf.m_allocCallback = allocAligned;
 	inf.m_cacheDirectory = "./";

@@ -88,6 +88,7 @@ Config::Config()
 	newOption("glminor", 5);
 	newOption("fullscreenDesktopResolution", false);
 	newOption("debugContext", false);
+	newOption("vsync", false);
 }
 
 Config::~Config()

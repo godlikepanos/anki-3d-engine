@@ -354,6 +354,42 @@ Error GrManagerImpl::initSwapchain(const GrManagerInitInfo& init)
 		return ErrorCode::FUNCTION_FAILED;
 	}
 
+	// Chose present mode
+	uint32_t presentModeCount;
+	vkGetPhysicalDeviceSurfacePresentModesKHR(m_physicalDevice, m_surface, &presentModeCount, nullptr);
+	presentModeCount = min(presentModeCount, 4u);
+	Array<VkPresentModeKHR, 4> presentModes;
+	vkGetPhysicalDeviceSurfacePresentModesKHR(m_physicalDevice, m_surface, &presentModeCount, &presentModes[0]);
+
+	VkPresentModeKHR presentMode = VK_PRESENT_MODE_MAX_ENUM_KHR;
+	if(init.m_config->getNumber("vsync"))
+	{
+		presentMode = VK_PRESENT_MODE_FIFO_KHR;
+	}
+	else
+	{
+		for(U i = 0; i < presentModeCount; ++i)
+		{
+			if(presentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR)
+			{
+				presentMode = VK_PRESENT_MODE_MAILBOX_KHR;
+				break;
+			}
+			else if(presentModes[i] == VK_PRESENT_MODE_IMMEDIATE_KHR)
+			{
+				presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
+				break;
+			}
+		}
+	}
+
+	if(presentMode == VK_PRESENT_MODE_MAX_ENUM_KHR)
+	{
+		ANKI_LOGE("VK: Couldn't find a present mode");
+		return ErrorCode::FUNCTION_FAILED;
+	}
+
+	// Create swapchain
 	VkSwapchainCreateInfoKHR ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 	ci.surface = m_surface;
@@ -368,7 +404,7 @@ Error GrManagerImpl::initSwapchain(const GrManagerInitInfo& init)
 	ci.pQueueFamilyIndices = &m_queueIdx;
 	ci.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
 	ci.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-	ci.presentMode = VK_PRESENT_MODE_FIFO_KHR;
+	ci.presentMode = presentMode;
 	ci.clipped = false;
 	ci.oldSwapchain = VK_NULL_HANDLE;
 
@@ -383,7 +419,7 @@ Error GrManagerImpl::initSwapchain(const GrManagerInitInfo& init)
 		return ErrorCode::FUNCTION_FAILED;
 	}
 
-	ANKI_LOGI("VK: Swapchain images count %u", count);
+	ANKI_LOGI("VK: Created a swapchain. Image count: %u, present mode: %u", count, presentMode);
 
 	Array<VkImage, MAX_FRAMES_IN_FLIGHT> images;
 	ANKI_VK_CHECK(vkGetSwapchainImagesKHR(m_device, m_swapchain, &count, &images[0]));
