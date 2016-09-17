@@ -141,7 +141,7 @@ void getFormatInfo(const PixelFormat& fmt, U& texelComponents, U& texelBytes, U&
 		texelBytes = texelComponents * 4;
 		break;
 	case ComponentFormat::R32G32B32A32:
-		texelComponents = 3;
+		texelComponents = 4;
 		texelBytes = texelComponents * 4;
 		break;
 	case ComponentFormat::R10G10B10A2:

@@ -33,17 +33,16 @@ static void genKernel(Vec3* ANKI_RESTRICT arr, Vec3* ANKI_RESTRICT arrEnd)
 	} while(++arr != arrEnd);
 }
 
-static void genNoise(Vec3* ANKI_RESTRICT arr, Vec3* ANKI_RESTRICT arrEnd)
+static void genNoise(Vec4* ANKI_RESTRICT arr, Vec4* ANKI_RESTRICT arrEnd)
 {
 	ANKI_ASSERT(arr && arrEnd && arr != arrEnd);
 
 	do
 	{
 		// Calculate the normal
-		arr->x() = randRange(-1.0f, 1.0f);
-		arr->y() = randRange(-1.0f, 1.0f);
-		arr->z() = 0.0;
-		arr->normalize();
+		Vec3 v(randRange(-1.0f, 1.0f), randRange(-1.0f, 1.0f), 0.0f);
+		v.normalize();
+		*arr = Vec4(v, 0.0f);
 	} while(++arr != arrEnd);
 }
 
@@ -101,14 +100,14 @@ Error Ssao::initInternal(const ConfigSet& config)
 	tinit.m_depth = 1;
 	tinit.m_layerCount = 1;
 	tinit.m_type = TextureType::_2D;
-	tinit.m_format = PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
+	tinit.m_format = PixelFormat(ComponentFormat::R32G32B32A32, TransformFormat::FLOAT);
 	tinit.m_mipmapsCount = 1;
 	tinit.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
 	tinit.m_sampling.m_repeat = true;
 
 	m_noiseTex = gr.newInstance<Texture>(tinit);
 
-	Array<Vec3, NOISE_TEX_SIZE * NOISE_TEX_SIZE> noise;
+	Array<Vec4, NOISE_TEX_SIZE * NOISE_TEX_SIZE> noise;
 	genNoise(&noise[0], &noise[0] + noise.getSize());
 
 	CommandBufferInitInfo cmdbInit;
