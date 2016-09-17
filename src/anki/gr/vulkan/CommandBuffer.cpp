@@ -45,8 +45,7 @@ void CommandBuffer::flush()
 
 	if(!m_impl->isSecondLevel())
 	{
-		m_impl->getGrManagerImpl().flushCommandBuffer(
-			CommandBufferPtr(this), SemaphorePtr(), WeakArray<SemaphorePtr>(), WeakArray<VkPipelineStageFlags>());
+		m_impl->getGrManagerImpl().flushCommandBuffer(CommandBufferPtr(this));
 	}
 }
 
@@ -56,8 +55,7 @@ void CommandBuffer::finish()
 
 	if(!m_impl->isSecondLevel())
 	{
-		m_impl->getGrManagerImpl().finishCommandBuffer(
-			CommandBufferPtr(this), SemaphorePtr(), WeakArray<SemaphorePtr>(), WeakArray<VkPipelineStageFlags>());
+		m_impl->getGrManagerImpl().finishCommandBuffer(CommandBufferPtr(this));
 	}
 }
 

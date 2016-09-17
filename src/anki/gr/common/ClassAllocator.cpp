@@ -47,6 +47,16 @@ public:
 	Mutex m_mtx;
 };
 
+ClassAllocator::~ClassAllocator()
+{
+	for(Class& c : m_classes)
+	{
+		ANKI_ASSERT(c.m_inUseChunks.isEmpty() && "Forgot to deallocate");
+	}
+
+	m_classes.destroy(m_alloc);
+}
+
 void ClassAllocator::init(GenericMemoryPoolAllocator<U8> alloc, ClassAllocatorInterface* iface)
 {
 	ANKI_ASSERT(iface);
@@ -57,12 +67,15 @@ void ClassAllocator::init(GenericMemoryPoolAllocator<U8> alloc, ClassAllocatorIn
 	// Initialize the classes
 	//
 	U classCount = iface->getClassCount();
+	ANKI_ASSERT(classCount > 0);
 	m_classes.create(m_alloc, classCount);
-	
+
 	for(U i = 0; i < classCount; ++i)
 	{
-		PtrSize slotSize, chunkSize;
+		PtrSize slotSize = 0, chunkSize = 0;
 		m_iface->getClassInfo(i, slotSize, chunkSize);
+		ANKI_ASSERT(slotSize > 0 && chunkSize > 0);
+
 		ANKI_ASSERT(isPowerOfTwo(slotSize));
 		ANKI_ASSERT((chunkSize % slotSize) == 0);
 		ANKI_ASSERT((chunkSize / slotSize) <= MAX_SLOTS_PER_CHUNK);
@@ -135,12 +148,17 @@ ClassAllocator::Chunk* ClassAllocator::findChunkWithUnusedSlot(Class& cl)
 
 Error ClassAllocator::createChunk(Class& cl, Chunk*& chunk)
 {
-	chunk = m_alloc.newInstance<Chunk>();
+	ClassAllocatorMemory* mem = nullptr;
 
-	ANKI_CHECK(m_iface->allocate(&cl - &m_classes[0], chunk->m_mem));
-	ANKI_ASSERT(chunk->m_mem);
+	ANKI_CHECK(m_iface->allocate(&cl - &m_classes[0], mem));
+	ANKI_ASSERT(mem);
+
+	chunk = m_alloc.newInstance<Chunk>();
+	chunk->m_mem = mem;
 	chunk->m_class = &cl;
-	
+
+	cl.m_inUseChunks.pushBack(chunk);
+
 	return ErrorCode::NONE;
 }
 

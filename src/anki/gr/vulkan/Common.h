@@ -39,7 +39,7 @@ class GrManagerImpl;
 		VkResult rez;                                                                                                  \
 		if((rez = (x)) < 0)                                                                                            \
 		{                                                                                                              \
-			ANKI_LOGF("Vulkan function failed (%d): %s", rez, #x);                                                     \
+			ANKI_LOGF("Vulkan function failed (VkResult: %d): %s", rez, #x);                                           \
 		}                                                                                                              \
 	} while(0)
 
@@ -50,7 +50,7 @@ class GrManagerImpl;
 		VkResult rez;                                                                                                  \
 		if((rez = (x)) < 0)                                                                                            \
 		{                                                                                                              \
-			ANKI_LOGE("Vulkan function failed (%d): %s", rez, #x);                                                     \
+			ANKI_LOGE("Vulkan function failed (VkResult: %d): %s", rez, #x);                                           \
 			return ErrorCode::FUNCTION_FAILED;                                                                         \
 		}                                                                                                              \
 	} while(0)

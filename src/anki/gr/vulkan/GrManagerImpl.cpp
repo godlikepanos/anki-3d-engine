@@ -23,7 +23,7 @@ GrManagerImpl::~GrManagerImpl()
 	// FIRST THING: wait for the GPU
 	if(m_queue)
 	{
-		LockGuard<Mutex> lock(m_queueSubmitMtx);
+		LockGuard<Mutex> lock(m_globalMtx);
 		vkQueueWaitIdle(m_queue);
 		m_queue = VK_NULL_HANDLE;
 	}
@@ -270,10 +270,10 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &count, &queueInfos[0]);
 
 	uint32_t desiredFamilyIdx = MAX_U32;
-	const VkQueueFlags DESITED_QUEUE_FLAGS = VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT;
+	const VkQueueFlags DESITED_QUEUE_FLAGS = VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT;
 	for(U i = 0; i < count; ++i)
 	{
-		if((queueInfos[i].queueFlags & (DESITED_QUEUE_FLAGS)) == DESITED_QUEUE_FLAGS)
+		if((queueInfos[i].queueFlags & DESITED_QUEUE_FLAGS) == DESITED_QUEUE_FLAGS)
 		{
 			VkBool32 supportsPresent = false;
 			ANKI_VK_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(m_physicalDevice, i, m_surface, &supportsPresent));
@@ -288,8 +288,8 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 
 	if(desiredFamilyIdx == MAX_U32)
 	{
-		ANKI_LOGE("Couldn't find a queue family with graphics+compute+present."
-				  "The assumption was wrong. The code needs rework");
+		ANKI_LOGE("Couldn't find a queue family with graphics+compute+transfer+present."
+				  "The assumption was wrong. The code needs to be reworked");
 		return ErrorCode::FUNCTION_FAILED;
 	}
 
@@ -458,7 +458,7 @@ void* GrManagerImpl::allocateCallback(
 void* GrManagerImpl::reallocateCallback(
 	void* userData, void* original, size_t size, size_t alignment, VkSystemAllocationScope allocationScope)
 {
-	ANKI_ASSERT(0 && "TODO");
+	ANKI_ASSERT(!"TODO");
 	return nullptr;
 }
 
@@ -493,6 +493,8 @@ void GrManagerImpl::beginFrame()
 
 void GrManagerImpl::endFrame()
 {
+	LockGuard<Mutex> lock(m_globalMtx);
+
 	PerFrame& frame = m_perFrame[m_frame % MAX_FRAMES_IN_FLIGHT];
 
 	// Wait for the fence of N-2 frame
@@ -521,10 +523,7 @@ void GrManagerImpl::endFrame()
 	present.pImageIndices = &m_crntBackbufferIdx;
 	present.pResults = &res;
 
-	{
-		LockGuard<Mutex> lock(m_queueSubmitMtx);
-		ANKI_VK_CHECKF(vkQueuePresentKHR(m_queue, &present));
-	}
+	ANKI_VK_CHECKF(vkQueuePresentKHR(m_queue, &present));
 	ANKI_VK_CHECKF(res);
 
 	m_transientMem.endFrame();
@@ -589,10 +588,7 @@ void GrManagerImpl::deleteCommandBuffer(VkCommandBuffer cmdb, CommandBufferFlag 
 	thread.m_cmdbs.deleteCommandBuffer(cmdb, cmdbFlags);
 }
 
-void GrManagerImpl::flushCommandBuffer(CommandBufferPtr cmdb,
-	SemaphorePtr signalSemaphore,
-	WeakArray<SemaphorePtr> waitSemaphores,
-	WeakArray<VkPipelineStageFlags> waitPplineStages)
+void GrManagerImpl::flushCommandBuffer(CommandBufferPtr cmdb, Bool wait)
 {
 	CommandBufferImpl& impl = cmdb->getImplementation();
 	VkCommandBuffer handle = impl.getHandle();
@@ -601,33 +597,19 @@ void GrManagerImpl::flushCommandBuffer(CommandBufferPtr cmdb,
 	submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
 	FencePtr fence = newFence();
+
+	LockGuard<Mutex> lock(m_globalMtx);
+
 	PerFrame& frame = m_perFrame[m_frame % MAX_FRAMES_IN_FLIGHT];
 
-	if(signalSemaphore)
-	{
-		ANKI_ASSERT(0 && "TODO");
-		/*submit.pSignalSemaphores = &signalSemaphore->getHandle();
-		submit.signalSemaphoreCount = 1;
-		signalSemaphore->setFence(fence);*/
-	}
-
-	Array<VkSemaphore, 16> allWaitSemaphores;
-	Array<VkPipelineStageFlags, 16> allWaitPplineStages;
-	for(U i = 0; i < waitSemaphores.getSize(); ++i)
-	{
-		ANKI_ASSERT(0 && "TODO");
-		/*ANKI_ASSERT(waitSemaphores[i]);
-		allWaitSemaphores[submit.waitSemaphoreCount] = waitSemaphores[i]->getHandle();
-		allWaitPplineStages[submit.waitSemaphoreCount] = waitPplineStages[i];
-		++submit.waitSemaphoreCount;*/
-	}
-
 	// Do some special stuff for the last command buffer
+	VkPipelineStageFlags waitFlags;
 	if(impl.renderedToDefaultFramebuffer())
 	{
-		allWaitSemaphores[submit.waitSemaphoreCount] = frame.m_acquireSemaphore->getHandle();
-		allWaitPplineStages[submit.waitSemaphoreCount] = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		++submit.waitSemaphoreCount;
+		submit.pWaitSemaphores = &frame.m_acquireSemaphore->getHandle();
+		waitFlags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		submit.pWaitDstStageMask = &waitFlags;
+		submit.waitSemaphoreCount = 1;
 
 		// Create the semaphore to signal
 		ANKI_ASSERT(!frame.m_renderSemaphore && "Only one begin/end render pass is allowed with the default fb");
@@ -639,20 +621,19 @@ void GrManagerImpl::flushCommandBuffer(CommandBufferPtr cmdb,
 		frame.m_presentFence = fence;
 	}
 
-	submit.pWaitSemaphores = &allWaitSemaphores[0];
-	submit.pWaitDstStageMask = &allWaitPplineStages[0];
-
 	submit.commandBufferCount = 1;
 	submit.pCommandBuffers = &handle;
-
-	// Lock to submit
-	LockGuard<Mutex> lock(m_queueSubmitMtx);
 
 	frame.m_cmdbsSubmitted.pushBack(getAllocator(), cmdb);
 
 	ANKI_TRACE_START_EVENT(VK_QUEUE_SUBMIT);
 	ANKI_VK_CHECKF(vkQueueSubmit(m_queue, 1, &submit, fence->getHandle()));
 	ANKI_TRACE_STOP_EVENT(VK_QUEUE_SUBMIT);
+
+	if(wait)
+	{
+		vkQueueWaitIdle(m_queue);
+	}
 }
 
 } // end namespace anki

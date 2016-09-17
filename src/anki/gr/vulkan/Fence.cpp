@@ -20,36 +20,33 @@ void FenceFactory::destroy()
 
 Fence* FenceFactory::newFence()
 {
-	LockGuard<Mutex> lock(m_mtx);
-
 	Fence* out = nullptr;
 
-	if(m_fenceCount > 0)
+	LockGuard<Mutex> lock(m_mtx);
+
+	U count = m_fenceCount;
+	while(count--)
 	{
-		U count = m_fenceCount;
-		while(count--)
+		VkResult status;
+		ANKI_VK_CHECKF(status = vkGetFenceStatus(m_dev, m_fences[count]->getHandle()));
+		if(status == VK_SUCCESS)
 		{
-			VkResult status;
-			ANKI_VK_CHECKF(status = vkGetFenceStatus(m_dev, m_fences[count]->getHandle()));
-			if(status == VK_SUCCESS)
+			out = m_fences[count];
+			ANKI_VK_CHECKF(vkResetFences(m_dev, 1, &m_fences[count]->getHandle()));
+
+			// Pop it
+			for(U i = count; i < m_fenceCount - 1; ++i)
 			{
-				out = m_fences[count];
-				ANKI_VK_CHECKF(vkResetFences(m_dev, 1, &m_fences[count]->getHandle()));
-
-				// Pop it
-				for(U i = count; i < m_fenceCount - 1; ++i)
-				{
-					m_fences[i] = m_fences[i + 1];
-				}
-
-				--m_fenceCount;
-
-				break;
+				m_fences[i] = m_fences[i + 1];
 			}
-			else if(status != VK_NOT_READY)
-			{
-				ANKI_ASSERT(0);
-			}
+
+			--m_fenceCount;
+
+			break;
+		}
+		else if(status != VK_NOT_READY)
+		{
+			ANKI_ASSERT(0);
 		}
 	}
 

@@ -122,18 +122,11 @@ public:
 		return m_surfaceHeight;
 	}
 
-	void flushCommandBuffer(CommandBufferPtr ptr,
-		SemaphorePtr signalSemaphore = {},
-		WeakArray<SemaphorePtr> waitSemaphores = {},
-		WeakArray<VkPipelineStageFlags> waitPplineStages = {});
+	void flushCommandBuffer(CommandBufferPtr ptr, Bool wait = false);
 
-	void finishCommandBuffer(CommandBufferPtr ptr,
-		SemaphorePtr signalSemaphore = {},
-		WeakArray<SemaphorePtr> waitSemaphores = {},
-		WeakArray<VkPipelineStageFlags> waitPplineStages = {})
+	void finishCommandBuffer(CommandBufferPtr ptr)
 	{
-		flushCommandBuffer(ptr, signalSemaphore, waitSemaphores, waitPplineStages);
-		vkQueueWaitIdle(m_queue);
+		flushCommandBuffer(ptr, true);
 	}
 
 	/// @name Memory
@@ -196,7 +189,7 @@ private:
 	VkDevice m_device = VK_NULL_HANDLE;
 	U32 m_queueIdx = MAX_U32;
 	VkQueue m_queue = VK_NULL_HANDLE;
-	Mutex m_queueSubmitMtx;
+	Mutex m_globalMtx;
 
 	VkPhysicalDeviceProperties m_devProps = {};
 	VkPhysicalDeviceFeatures m_devFeatures = {};

@@ -39,7 +39,7 @@ public:
 	/// Get the number of classes.
 	virtual U getClassCount() const = 0;
 
-	/// Get info for a class. Each chunk will be chunkSize size and it can host chunkSize/slotSize sub-allocations in 
+	/// Get info for a class. Each chunk will be chunkSize size and it can host chunkSize/slotSize sub-allocations in
 	/// it.
 	virtual void getClassInfo(U classIdx, PtrSize& slotSize, PtrSize& chunkSize) const = 0;
 };
@@ -63,7 +63,7 @@ private:
 
 	Bool valid() const
 	{
-		return (m_memory && m_chunk) || (m_memory != nullptr && m_chunk != nullptr);
+		return (m_memory && m_chunk) || (m_memory == nullptr && m_chunk == nullptr);
 	}
 };
 
@@ -116,6 +116,5 @@ private:
 	void destroyChunk(Class& cl, Chunk& chunk);
 };
 /// @}
-
 
 } // end namespace anki
