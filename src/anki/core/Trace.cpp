@@ -81,6 +81,9 @@ Error TraceManager::create(HeapAllocator<U8> alloc, const CString& cacheDir)
 		return ErrorCode::NONE;
 	}
 
+	memset(&m_perFrameCounters[0], 0, sizeof(m_perFrameCounters));
+	memset(&m_perRunCounters[0], 0, sizeof(m_perRunCounters));
+
 	// Create trace file
 	StringAuto fname(alloc);
 	fname.sprintf("%s/trace.json", &cacheDir[0]);

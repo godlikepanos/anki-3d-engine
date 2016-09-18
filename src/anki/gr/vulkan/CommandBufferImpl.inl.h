@@ -258,7 +258,22 @@ inline void CommandBufferImpl::resetOcclusionQuery(OcclusionQueryPtr query)
 	U32 idx = query->getImplementation().m_handle.m_queryIndex;
 	ANKI_ASSERT(handle);
 
-	ANKI_CMD(vkCmdResetQueryPool(m_handle, handle, idx, 0), ANY_OTHER_COMMAND);
+#if ANKI_BATCH_COMMANDS
+	flushBatches(CommandBufferCommandType::RESET_OCCLUSION_QUERY);
+
+	if(m_queryResetAtoms.getSize() <= m_queryResetAtomCount)
+	{
+		m_queryResetAtoms.resize(m_alloc, max<U>(2, m_queryResetAtomCount * 2));
+	}
+
+	QueryResetAtom atom;
+	atom.m_pool = handle;
+	atom.m_queryIdx = idx;
+
+	m_queryResetAtoms[m_queryResetAtomCount++] = atom;
+#else
+	ANKI_CMD(vkCmdResetQueryPool(m_handle, handle, idx, 1), ANY_OTHER_COMMAND);
+#endif
 
 	m_queryList.pushBack(m_alloc, query);
 }
@@ -428,6 +443,12 @@ inline void CommandBufferImpl::flushBatches(CommandBufferCommandType type)
 		case CommandBufferCommandType::SET_BARRIER:
 			flushBarriers();
 			break;
+		case CommandBufferCommandType::RESET_OCCLUSION_QUERY:
+			flushQueryResets();
+			break;
+		case CommandBufferCommandType::WRITE_QUERY_RESULT:
+			flushWriteQueryResults();
+			break;
 		case CommandBufferCommandType::ANY_OTHER_COMMAND:
 			break;
 		default:
@@ -453,6 +474,8 @@ inline void CommandBufferImpl::fillBuffer(BufferPtr buff, PtrSize offset, PtrSiz
 	ANKI_ASSERT((size % 4) == 0 && "Should be multiple of 4");
 
 	ANKI_CMD(vkCmdFillBuffer(m_handle, impl.getHandle(), offset, size, value), ANY_OTHER_COMMAND);
+
+	m_bufferList.pushBack(m_alloc, buff);
 }
 
 inline void CommandBufferImpl::writeOcclusionQueryResultToBuffer(
@@ -468,6 +491,22 @@ inline void CommandBufferImpl::writeOcclusionQueryResultToBuffer(
 
 	const OcclusionQueryImpl& q = query->getImplementation();
 
+#if ANKI_BATCH_COMMANDS
+	flushBatches(CommandBufferCommandType::WRITE_QUERY_RESULT);
+
+	if(m_writeQueryAtoms.getSize() <= m_writeQueryAtomCount)
+	{
+		m_writeQueryAtoms.resize(m_alloc, max<U>(2, m_writeQueryAtomCount * 2));
+	}
+
+	WriteQueryAtom atom;
+	atom.m_pool = q.m_handle.m_pool;
+	atom.m_queryIdx = q.m_handle.m_queryIndex;
+	atom.m_buffer = impl.getHandle();
+	atom.m_offset = offset;
+
+	m_writeQueryAtoms[m_writeQueryAtomCount++] = atom;
+#else
 	ANKI_CMD(vkCmdCopyQueryPoolResults(m_handle,
 				 q.m_handle.m_pool,
 				 q.m_handle.m_queryIndex,
@@ -477,6 +516,10 @@ inline void CommandBufferImpl::writeOcclusionQueryResultToBuffer(
 				 sizeof(U32),
 				 VK_QUERY_RESULT_PARTIAL_BIT),
 		ANY_OTHER_COMMAND);
+#endif
+
+	m_queryList.pushBack(m_alloc, query);
+	m_bufferList.pushBack(m_alloc, buff);
 }
 
 } // end namespace anki

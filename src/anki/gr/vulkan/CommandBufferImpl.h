@@ -24,6 +24,8 @@ class CommandBufferInitInfo;
 enum class CommandBufferCommandType : U8
 {
 	SET_BARRIER,
+	RESET_OCCLUSION_QUERY,
+	WRITE_QUERY_RESULT,
 	ANY_OTHER_COMMAND
 };
 
@@ -185,6 +187,34 @@ private:
 	VkPipelineStageFlags m_dstStageMask = 0;
 	/// @}
 
+	/// @name reset_query_batch
+	/// @{
+	class QueryResetAtom
+	{
+	public:
+		VkQueryPool m_pool;
+		U32 m_queryIdx;
+	};
+
+	DynamicArray<QueryResetAtom> m_queryResetAtoms;
+	U16 m_queryResetAtomCount = 0;
+	/// @}
+
+	/// @name write_query_result_batch
+	/// @{
+	class WriteQueryAtom
+	{
+	public:
+		VkQueryPool m_pool;
+		U32 m_queryIdx;
+		VkBuffer m_buffer;
+		PtrSize m_offset;
+	};
+
+	DynamicArray<WriteQueryAtom> m_writeQueryAtoms;
+	U16 m_writeQueryAtomCount = 0;
+	/// @}
+
 	/// Some common operations per command.
 	void commandCommon();
 
@@ -208,6 +238,10 @@ private:
 
 	/// Flush batched image and buffer barriers.
 	void flushBarriers();
+
+	void flushQueryResets();
+
+	void flushWriteQueryResults();
 
 	void clearTextureInternal(TexturePtr tex, const ClearValue& clearValue, const VkImageSubresourceRange& range);
 

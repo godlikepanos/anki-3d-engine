@@ -50,6 +50,8 @@ CommandBufferImpl::~CommandBufferImpl()
 
 	m_imgBarriers.destroy(m_alloc);
 	m_buffBarriers.destroy(m_alloc);
+	m_queryResetAtoms.destroy(m_alloc);
+	m_writeQueryAtoms.destroy(m_alloc);
 }
 
 Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
@@ -697,6 +699,120 @@ void CommandBufferImpl::flushBarriers()
 	m_buffBarrierCount = 0;
 	m_srcStageMask = 0;
 	m_dstStageMask = 0;
+}
+
+void CommandBufferImpl::flushQueryResets()
+{
+	if(m_queryResetAtomCount == 0)
+	{
+		return;
+	}
+
+	std::sort(&m_queryResetAtoms[0],
+		&m_queryResetAtoms[0] + m_queryResetAtomCount,
+		[](const QueryResetAtom& a, const QueryResetAtom& b) -> Bool {
+			if(a.m_pool != b.m_pool)
+			{
+				return a.m_pool < b.m_pool;
+			}
+
+			ANKI_ASSERT(a.m_queryIdx != b.m_queryIdx && "Tried to reset the same query more than once");
+			return a.m_queryIdx < b.m_queryIdx;
+		});
+
+	U firstQuery = m_queryResetAtoms[0].m_queryIdx;
+	U queryCount = 1;
+	VkQueryPool pool = m_queryResetAtoms[0].m_pool;
+	for(U i = 1; i < m_queryResetAtomCount; ++i)
+	{
+		const QueryResetAtom& crnt = m_queryResetAtoms[i];
+		const QueryResetAtom& prev = m_queryResetAtoms[i - 1];
+
+		if(crnt.m_pool == prev.m_pool && crnt.m_queryIdx == prev.m_queryIdx + 1)
+		{
+			// Can batch
+			++queryCount;
+		}
+		else
+		{
+			// Flush batch
+			vkCmdResetQueryPool(m_handle, pool, firstQuery, queryCount);
+
+			// New batch
+			firstQuery = crnt.m_queryIdx;
+			queryCount = 1;
+			pool = crnt.m_pool;
+		}
+	}
+
+	vkCmdResetQueryPool(m_handle, pool, firstQuery, queryCount);
+
+	m_queryResetAtomCount = 0;
+}
+
+void CommandBufferImpl::flushWriteQueryResults()
+{
+	if(m_writeQueryAtomCount == 0)
+	{
+		return;
+	}
+
+	std::sort(&m_writeQueryAtoms[0],
+		&m_writeQueryAtoms[0] + m_writeQueryAtomCount,
+		[](const WriteQueryAtom& a, const WriteQueryAtom& b) -> Bool {
+			if(a.m_pool != b.m_pool)
+			{
+				return a.m_pool < b.m_pool;
+			}
+
+			if(a.m_buffer != a.m_buffer)
+			{
+				return a.m_buffer < b.m_buffer;
+			}
+
+			if(a.m_offset != a.m_offset)
+			{
+				return a.m_offset < b.m_offset;
+			}
+
+			ANKI_ASSERT(a.m_queryIdx != b.m_queryIdx && "Tried to write the same query more than once");
+			return a.m_queryIdx < b.m_queryIdx;
+		});
+
+	U firstQuery = m_writeQueryAtoms[0].m_queryIdx;
+	U queryCount = 1;
+	VkQueryPool pool = m_writeQueryAtoms[0].m_pool;
+	PtrSize offset = m_writeQueryAtoms[0].m_offset;
+	VkBuffer buff = m_writeQueryAtoms[0].m_buffer;
+	for(U i = 1; i < m_writeQueryAtomCount; ++i)
+	{
+		const WriteQueryAtom& crnt = m_writeQueryAtoms[i];
+		const WriteQueryAtom& prev = m_writeQueryAtoms[i - 1];
+
+		if(crnt.m_pool == prev.m_pool && crnt.m_buffer == prev.m_buffer && prev.m_queryIdx + 1 == crnt.m_queryIdx
+			&& prev.m_offset + sizeof(U32) == crnt.m_offset)
+		{
+			// Can batch
+			++queryCount;
+		}
+		else
+		{
+			// Flush batch
+			vkCmdCopyQueryPoolResults(
+				m_handle, pool, firstQuery, queryCount, buff, offset, sizeof(U32), VK_QUERY_RESULT_PARTIAL_BIT);
+
+			// New batch
+			firstQuery = crnt.m_queryIdx;
+			queryCount = 1;
+			pool = crnt.m_pool;
+			buff = crnt.m_buffer;
+		}
+	}
+
+	vkCmdCopyQueryPoolResults(
+		m_handle, pool, firstQuery, queryCount, buff, offset, sizeof(U32), VK_QUERY_RESULT_PARTIAL_BIT);
+
+	m_writeQueryAtomCount = 0;
 }
 
 } // end namespace anki
