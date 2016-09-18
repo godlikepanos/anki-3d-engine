@@ -75,9 +75,7 @@ void readIndirect(in uint idxOffset,
 	uint count = u_lightIndices[idxOffset++];
 	while(count-- != 0)
 	{
-		ReflectionProbe probe;
-		COPY_REFLECTION_PROBE(u_reflectionProbes[u_lightIndices[idxOffset]], probe);
-		++idxOffset;
+		ReflectionProbe probe = u_reflectionProbes[u_lightIndices[idxOffset++]];
 
 		float R2 = probe.positionRadiusSq.w;
 		vec3 center = probe.positionRadiusSq.xyz;
@@ -154,9 +152,7 @@ void main()
 	uint count = u_lightIndices[idxOffset++];
 	while(count-- != 0)
 	{
-		PointLight light;
-		COPY_POINT_LIGHT(u_pointLights[u_lightIndices[idxOffset]], light);
-		++idxOffset;
+		PointLight light = u_pointLights[u_lightIndices[idxOffset++]];
 
 		LIGHTING_COMMON_BRDF();
 
@@ -177,9 +173,7 @@ void main()
 	count = u_lightIndices[idxOffset++];
 	while(count-- != 0)
 	{
-		SpotLight light;
-		COPY_SPOT_LIGHT(u_spotLights[u_lightIndices[idxOffset]], light);
-		++idxOffset;
+		SpotLight light = u_spotLights[u_lightIndices[idxOffset++]];
 
 		LIGHTING_COMMON_BRDF();
 

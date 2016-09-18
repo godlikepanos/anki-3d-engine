@@ -147,9 +147,7 @@ vec3 computeLightColor(vec3 diffCol)
 	uint count = u_lightIndices[idxOffset++];
 	while(count-- != 0)
 	{
-		PointLight light;
-		COPY_POINT_LIGHT(u_pointLights[u_lightIndices[idxOffset]], light);
-		++idxOffset;
+		PointLight light = u_pointLights[u_lightIndices[idxOffset++]];
 
 		vec3 diffC = computeDiffuseColor(diffCol, light.diffuseColorShadowmapId.rgb);
 
@@ -175,9 +173,7 @@ vec3 computeLightColor(vec3 diffCol)
 	count = u_lightIndices[idxOffset++];
 	while(count-- != 0)
 	{
-		SpotLight light;
-		COPY_SPOT_LIGHT(u_spotLights[u_lightIndices[idxOffset]], light);
-		++idxOffset;
+		SpotLight light = u_spotLights[u_lightIndices[idxOffset++]];
 
 		vec3 diffC = computeDiffuseColor(diffCol, light.diffuseColorShadowmapId.rgb);
 

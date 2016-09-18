@@ -15,12 +15,6 @@ struct Sprite
 	vec4 depthPad3;
 };
 
-// WORKAROUND: See glslang issue 304
-#define COPY_SPRITE(src_, dst_)                                                                                        \
-	dst_.posScale = src_.posScale;                                                                                     \
-	dst_.color = src_.color;                                                                                           \
-	dst_.depthPad3.x = src_.depthPad3.x
-
 // The block contains data for all flares
 layout(std140, ANKI_UBO_BINDING(0, 0)) uniform _blk
 {
@@ -41,8 +35,7 @@ void main()
 
 	vec2 position = POSITIONS[gl_VertexID];
 
-	Sprite sprite;
-	COPY_SPRITE(u_sprites[gl_InstanceID], sprite);
+	Sprite sprite = u_sprites[gl_InstanceID];
 
 	// Write tex coords of the 2D array texture
 	out_uv = vec3((position * 0.5) + 0.5, sprite.depthPad3.x);
