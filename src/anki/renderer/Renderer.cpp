@@ -245,24 +245,13 @@ Error Renderer::render(RenderingContext& ctx)
 		TextureUsageBit::GENERATE_MIPMAPS,
 		TextureSurfaceInfo(0, 0, 0, 0));
 
-	cmdb->setTextureSurfaceBarrier(m_ms->getRt2(),
-		TextureUsageBit::SAMPLED_FRAGMENT,
-		TextureUsageBit::GENERATE_MIPMAPS,
-		TextureSurfaceInfo(0, 0, 0, 0));
-
 	cmdb->generateMipmaps2d(m_ms->getDepthRt(), 0, 0);
-	cmdb->generateMipmaps2d(m_ms->getRt2(), 0, 0);
 
 	for(U i = 0; i < m_ms->getDepthRtMipmapCount(); ++i)
 	{
 		cmdb->setTextureSurfaceBarrier(m_ms->getDepthRt(),
 			TextureUsageBit::GENERATE_MIPMAPS,
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ,
-			TextureSurfaceInfo(i, 0, 0, 0));
-
-		cmdb->setTextureSurfaceBarrier(m_ms->getRt2(),
-			TextureUsageBit::GENERATE_MIPMAPS,
-			TextureUsageBit::SAMPLED_FRAGMENT,
 			TextureSurfaceInfo(i, 0, 0, 0));
 	}
 

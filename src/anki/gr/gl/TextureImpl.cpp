@@ -123,7 +123,25 @@ static void convertTextureInformation(
 		}
 		else
 		{
-			ANKI_ASSERT(0 && "TODO");
+			ANKI_ASSERT(!"TODO");
+		}
+		break;
+	case ComponentFormat::R32G32B32A32:
+		if(pf.m_transform == TransformFormat::FLOAT)
+		{
+			format = GL_RGBA;
+			internalFormat = GL_RGBA32F;
+			type = GL_FLOAT;
+		}
+		else if(pf.m_transform == TransformFormat::UINT)
+		{
+			format = GL_RGBA_INTEGER;
+			internalFormat = GL_RGBA32UI;
+			type = GL_UNSIGNED_INT;
+		}
+		else
+		{
+			ANKI_ASSERT(!"TODO");
 		}
 		break;
 	case ComponentFormat::R16G16B16:

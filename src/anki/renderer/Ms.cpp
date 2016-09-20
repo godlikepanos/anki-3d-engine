@@ -53,7 +53,7 @@ Error Ms::createRt(U32 samples)
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
 			| TextureUsageBit::GENERATE_MIPMAPS,
 		SamplingFilter::NEAREST,
-		getDepthRtMipmapCount(),
+		1,
 		m_rt2);
 
 	AttachmentLoadOperation loadop = AttachmentLoadOperation::DONT_CARE;
