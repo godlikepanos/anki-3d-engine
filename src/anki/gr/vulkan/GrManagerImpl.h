@@ -6,7 +6,7 @@
 #pragma once
 
 #include <anki/gr/vulkan/Common.h>
-#include <anki/gr/vulkan/GpuMemoryAllocator.h>
+#include <anki/gr/vulkan/GpuMemoryManager.h>
 #include <anki/gr/vulkan/Semaphore.h>
 #include <anki/gr/vulkan/Fence.h>
 #include <anki/gr/vulkan/TransientMemoryManager.h>
@@ -131,9 +131,9 @@ public:
 
 	/// @name Memory
 	/// @{
-	GpuMemoryAllocator& getGpuMemoryAllocator()
+	GpuMemoryManager& getGpuMemoryManager()
 	{
-		return m_gpuAlloc;
+		return m_gpuMemManager;
 	}
 
 	TransientMemoryManager& getTransientMemoryManager()
@@ -236,7 +236,7 @@ private:
 	VkPhysicalDeviceMemoryProperties m_memoryProperties;
 
 	/// The main allocator.
-	GpuMemoryAllocator m_gpuAlloc;
+	GpuMemoryManager m_gpuMemManager;
 
 	TransientMemoryManager m_transientMem;
 	/// @}

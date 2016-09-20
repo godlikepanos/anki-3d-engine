@@ -765,12 +765,12 @@ void CommandBufferImpl::flushWriteQueryResults()
 				return a.m_pool < b.m_pool;
 			}
 
-			if(a.m_buffer != a.m_buffer)
+			if(a.m_buffer != b.m_buffer)
 			{
 				return a.m_buffer < b.m_buffer;
 			}
 
-			if(a.m_offset != a.m_offset)
+			if(a.m_offset != b.m_offset)
 			{
 				return a.m_offset < b.m_offset;
 			}

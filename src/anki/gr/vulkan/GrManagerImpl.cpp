@@ -59,7 +59,7 @@ GrManagerImpl::~GrManagerImpl()
 
 	m_dsetAlloc.destroy();
 	m_transientMem.destroy();
-	m_gpuAlloc.destroy();
+	m_gpuMemManager.destroy();
 
 	m_semaphores.destroy(); // Destroy before fences
 	m_fences.destroy();
@@ -475,7 +475,7 @@ Error GrManagerImpl::initMemory(const ConfigSet& cfg)
 {
 	vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &m_memoryProperties);
 
-	m_gpuAlloc.init(m_physicalDevice, m_device, getAllocator());
+	m_gpuMemManager.init(m_physicalDevice, m_device, getAllocator());
 
 	// Transient mem
 	ANKI_CHECK(m_transientMem.init(cfg));

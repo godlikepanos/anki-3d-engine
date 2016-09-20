@@ -6,7 +6,7 @@
 #pragma once
 
 #include <anki/gr/vulkan/VulkanObject.h>
-#include <anki/gr/vulkan/GpuMemoryAllocator.h>
+#include <anki/gr/vulkan/GpuMemoryManager.h>
 
 namespace anki
 {
@@ -66,7 +66,7 @@ public:
 
 private:
 	VkBuffer m_handle = VK_NULL_HANDLE;
-	GpuMemoryAllocationHandle m_memHandle;
+	GpuMemoryHandle m_memHandle;
 	BufferMapAccessBit m_access = BufferMapAccessBit::NONE;
 	U32 m_size = 0;
 	VkMemoryPropertyFlags m_memoryFlags = 0;

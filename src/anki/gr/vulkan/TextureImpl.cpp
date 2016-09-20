@@ -38,7 +38,7 @@ TextureImpl::~TextureImpl()
 
 	if(m_memHandle)
 	{
-		getGrManagerImpl().getGpuMemoryAllocator().freeMemory(m_memHandle);
+		getGrManagerImpl().getGpuMemoryManager().freeMemory(m_memHandle);
 	}
 }
 
@@ -272,20 +272,20 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 	VkMemoryRequirements req = {};
 	vkGetImageMemoryRequirements(getDevice(), m_imageHandle, &req);
 
-	U memIdx = getGrManagerImpl().getGpuMemoryAllocator().findMemoryType(
+	U memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(
 		req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
 	// Fallback
 	if(memIdx == MAX_U32)
 	{
-		memIdx = getGrManagerImpl().getGpuMemoryAllocator().findMemoryType(
+		memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(
 			req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0);
 	}
 
 	ANKI_ASSERT(memIdx != MAX_U32);
 
 	// Allocate
-	getGrManagerImpl().getGpuMemoryAllocator().allocateMemory(memIdx, req.size, req.alignment, false, m_memHandle);
+	getGrManagerImpl().getGpuMemoryManager().allocateMemory(memIdx, req.size, req.alignment, false, m_memHandle);
 
 	// Bind mem to image
 	ANKI_VK_CHECK(vkBindImageMemory(getDevice(), m_imageHandle, m_memHandle.m_memory, m_memHandle.m_offset));

@@ -6,7 +6,7 @@
 #pragma once
 
 #include <anki/gr/vulkan/VulkanObject.h>
-#include <anki/gr/vulkan/GpuMemoryAllocator.h>
+#include <anki/gr/vulkan/GpuMemoryManager.h>
 #include <anki/gr/vulkan/Semaphore.h>
 #include <anki/gr/common/Misc.h>
 #include <anki/util/HashMap.h>
@@ -32,7 +32,7 @@ public:
 
 	VkImage m_imageHandle = VK_NULL_HANDLE;
 
-	GpuMemoryAllocationHandle m_memHandle;
+	GpuMemoryHandle m_memHandle;
 
 	U32 m_width = 0;
 	U32 m_height = 0;

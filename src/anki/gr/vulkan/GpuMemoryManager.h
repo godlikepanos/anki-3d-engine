@@ -15,10 +15,23 @@ namespace anki
 /// @{
 
 /// The handle that is returned from GpuMemoryManager's allocations.
-class GpuMemoryHandle : public ClassAllocatorHandle
+class GpuMemoryHandle
 {
+	friend class GpuMemoryManager;
+
 public:
 	VkDeviceMemory m_memory = VK_NULL_HANDLE;
+	PtrSize m_offset = MAX_PTR_SIZE;
+
+	operator Bool() const
+	{
+		return m_memory != VK_NULL_HANDLE && m_offset < MAX_PTR_SIZE && m_memTypeIdx < MAX_U8;
+	}
+
+private:
+	ClassAllocatorHandle m_classHandle;
+	U8 m_memTypeIdx = MAX_U8;
+	Bool8 m_linear = false;
 };
 
 /// Dynamic GPU memory allocator for all types.
@@ -47,12 +60,12 @@ public:
 
 private:
 	class Memory;
-	class MemoryTypeCommon;
 	class Interface;
 
 	GrAllocator<U8> m_alloc;
 	VkDevice m_dev;
-	DynamicArray<MemoryTypeCommon> m_memType;
+	DynamicArray<Interface> m_ifaces;
+	DynamicArray<ClassAllocator> m_callocs;
 	VkPhysicalDeviceMemoryProperties m_memoryProperties;
 };
 /// @}

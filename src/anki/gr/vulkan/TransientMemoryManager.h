@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/gr/vulkan/GpuMemoryAllocator.h>
+#include <anki/gr/vulkan/Common.h>
 #include <anki/gr/common/GpuFrameRingAllocator.h>
 #include <anki/gr/common/Misc.h>
 
