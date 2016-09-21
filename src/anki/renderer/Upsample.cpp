@@ -9,6 +9,7 @@
 #include <anki/renderer/Is.h>
 #include <anki/renderer/Fs.h>
 #include <anki/renderer/Ssao.h>
+#include <anki/renderer/HalfDepth.h>
 #include <anki/scene/FrustumComponent.h>
 
 namespace anki
@@ -26,9 +27,8 @@ Error Upsample::init(const ConfigSet& config)
 	rcInit.m_textures[0].m_texture = m_r->getMs().getDepthRt();
 	rcInit.m_textures[0].m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
 
-	sinit.m_minLod = 1.0;
 	sinit.m_mipmapFilter = SamplingFilter::NEAREST;
-	rcInit.m_textures[1].m_texture = m_r->getMs().getDepthRt();
+	rcInit.m_textures[1].m_texture = m_r->getHalfDepth().m_depthRt;
 	rcInit.m_textures[1].m_sampler = gr.newInstance<Sampler>(sinit);
 	rcInit.m_textures[1].m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
 

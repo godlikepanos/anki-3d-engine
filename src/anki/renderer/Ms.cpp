@@ -28,7 +28,7 @@ Error Ms::createRt(U32 samples)
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE
 			| TextureUsageBit::GENERATE_MIPMAPS,
 		SamplingFilter::NEAREST,
-		getDepthRtMipmapCount(),
+		1,
 		m_depthRt);
 
 	m_r->createRenderTarget(m_r->getWidth(),
@@ -200,8 +200,10 @@ void Ms::setPostRunBarriers(RenderingContext& ctx)
 	cmdb->setTextureSurfaceBarrier(
 		m_rt2, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureUsageBit::SAMPLED_FRAGMENT, surf);
 
-	cmdb->setTextureSurfaceBarrier(
-		m_depthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, TextureUsageBit::SAMPLED_FRAGMENT, surf);
+	cmdb->setTextureSurfaceBarrier(m_depthRt,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
+		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ,
+		surf);
 
 	ANKI_TRACE_STOP_EVENT(RENDER_MS);
 }

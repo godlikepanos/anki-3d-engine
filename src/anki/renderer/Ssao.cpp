@@ -6,6 +6,7 @@
 #include <anki/renderer/Ssao.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/Ms.h>
+#include <anki/renderer/HalfDepth.h>
 #include <anki/scene/SceneGraph.h>
 #include <anki/util/Functions.h>
 #include <anki/misc/ConfigSet.h>
@@ -219,7 +220,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 	sinit.m_mipmapFilter = SamplingFilter::NEAREST;
 	sinit.m_repeat = false;
 
-	rcinit.m_textures[0].m_texture = m_r->getMs().getDepthRt();
+	rcinit.m_textures[0].m_texture = m_r->getHalfDepth().m_depthRt;
 	rcinit.m_textures[0].m_sampler = gr.newInstance<Sampler>(sinit);
 	rcinit.m_textures[0].m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
 

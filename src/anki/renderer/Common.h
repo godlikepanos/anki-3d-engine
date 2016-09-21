@@ -29,6 +29,7 @@ class Ir;
 class Upsample;
 class DownscaleBlur;
 class Volumetric;
+class HalfDepth;
 
 class RenderingContext;
 class DebugDrawer;

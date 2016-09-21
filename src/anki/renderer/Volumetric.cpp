@@ -5,7 +5,7 @@
 
 #include <anki/renderer/Volumetric.h>
 #include <anki/renderer/Renderer.h>
-#include <anki/renderer/Ms.h>
+#include <anki/renderer/HalfDepth.h>
 #include <anki/scene/FrustumComponent.h>
 
 namespace anki
@@ -37,7 +37,7 @@ Error Volumetric::init(const ConfigSet& config)
 
 	// Create the resource group
 	ResourceGroupInitInfo rcInit;
-	rcInit.m_textures[0].m_texture = m_r->getMs().getDepthRt();
+	rcInit.m_textures[0].m_texture = m_r->getHalfDepth().m_depthRt;
 	rcInit.m_textures[0].m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
 	rcInit.m_uniformBuffers[0].m_uploadedMemory = true;
 	rcInit.m_uniformBuffers[0].m_usage = BufferUsageBit::UNIFORM_FRAGMENT;

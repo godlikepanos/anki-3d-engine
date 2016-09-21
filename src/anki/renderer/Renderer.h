@@ -154,6 +154,11 @@ public:
 		return *m_is;
 	}
 
+	HalfDepth& getHalfDepth()
+	{
+		return *m_hd;
+	}
+
 	Fs& getFs()
 	{
 		return *m_fs;
@@ -368,6 +373,7 @@ private:
 	UniquePtr<Sm> m_sm; ///< Shadow mapping.
 	UniquePtr<Ms> m_ms; ///< Material rendering stage
 	UniquePtr<Is> m_is; ///< Illumination rendering stage
+	UniquePtr<HalfDepth> m_hd;
 	UniquePtr<Fs> m_fs; ///< Forward shading.
 	UniquePtr<Volumetric> m_vol; ///< Volumetric effects.
 	UniquePtr<Lf> m_lf; ///< Forward shading lens flares.

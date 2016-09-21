@@ -25,6 +25,7 @@
 #include <anki/renderer/Upsample.h>
 #include <anki/renderer/DownscaleBlur.h>
 #include <anki/renderer/Volumetric.h>
+#include <anki/renderer/HalfDepth.h>
 
 namespace anki
 {
@@ -143,6 +144,9 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_is.reset(m_alloc.newInstance<Is>(this));
 	ANKI_CHECK(m_is->init(config));
 
+	m_hd.reset(m_alloc.newInstance<HalfDepth>(this));
+	ANKI_CHECK(m_hd->init(config));
+
 	m_fs.reset(m_alloc.newInstance<Fs>(this));
 	ANKI_CHECK(m_fs->init(config));
 
@@ -231,6 +235,12 @@ Error Renderer::render(RenderingContext& ctx)
 	m_ssao->setPreRunBarriers(ctx);
 	m_bloom->setPreRunBarriers(ctx);
 
+	cmdb->setTextureSurfaceBarrier(m_hd->m_depthRt,
+		TextureUsageBit::NONE,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+		TextureSurfaceInfo(0, 0, 0, 0));
+
+	// SM
 	m_sm->run(ctx);
 
 	m_ms->run(ctx);
@@ -238,27 +248,19 @@ Error Renderer::render(RenderingContext& ctx)
 	m_ms->setPostRunBarriers(ctx);
 	m_sm->setPostRunBarriers(ctx);
 
+	// Batch IS + HD
 	m_is->run(ctx);
-
-	cmdb->setTextureSurfaceBarrier(m_ms->getDepthRt(),
-		TextureUsageBit::SAMPLED_FRAGMENT,
-		TextureUsageBit::GENERATE_MIPMAPS,
-		TextureSurfaceInfo(0, 0, 0, 0));
-
-	cmdb->generateMipmaps2d(m_ms->getDepthRt(), 0, 0);
-
-	for(U i = 0; i < m_ms->getDepthRtMipmapCount(); ++i)
-	{
-		cmdb->setTextureSurfaceBarrier(m_ms->getDepthRt(),
-			TextureUsageBit::GENERATE_MIPMAPS,
-			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ,
-			TextureSurfaceInfo(i, 0, 0, 0));
-	}
+	m_hd->run(ctx);
 
 	m_lf->updateIndirectInfo(ctx, cmdb);
 
-	m_fs->run(ctx);
+	cmdb->setTextureSurfaceBarrier(m_hd->m_depthRt,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ,
+		TextureSurfaceInfo(0, 0, 0, 0));
 
+	// Batch FS & SSAO
+	m_fs->run(ctx);
 	m_ssao->run(ctx);
 
 	m_ssao->setPostRunBarriers(ctx);
