@@ -133,6 +133,9 @@ using IVec3 = TVec3<I32>;
 
 /// 32bit unsigned integer 3D vector
 using UVec3 = TVec3<U32>;
+
+/// 64bit float 3D vector
+using DVec3 = TVec3<F64>;
 /// @}
 
 } // end namespace anki

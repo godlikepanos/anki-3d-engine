@@ -195,6 +195,10 @@ TMat3<T> operator/(T f, const TMat3<T>& m3)
 /// F32 3x3 matrix
 using Mat3 = TMat3<F32>;
 static_assert(sizeof(Mat3) == sizeof(F32) * 3 * 3, "Incorrect size");
+
+/// F64 3x3 matrix
+using DMat3 = TMat3<F64>;
+static_assert(sizeof(DMat3) == sizeof(F64) * 3 * 3, "Incorrect size");
 /// @}
 
 } // end namespace anki

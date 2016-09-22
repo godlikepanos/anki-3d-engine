@@ -57,6 +57,7 @@ private:
 	PipelinePtr m_vblurPpline;
 
 	TexturePtr m_noiseTex;
+	TexturePtr m_hemisphereLut;
 
 	ResourceGroupPtr m_rcFirst;
 	ResourceGroupPtr m_hblurRc;
@@ -64,6 +65,8 @@ private:
 
 	ANKI_USE_RESULT Error createFb(FramebufferPtr& fb, TexturePtr& rt);
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
+
+	void createHemisphereLut();
 };
 /// @}
 

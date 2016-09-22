@@ -42,4 +42,15 @@ float linearizeDepthOptimal(in float depth, in float a, in float b)
 	return 1.0 / (a + depth * b);
 }
 
+// Project a vector by knowing only the non zero values of a perspective matrix
+vec4 projectPerspective(in vec4 vec, in float m00, in float m11, in float m22, in float m23)
+{
+	vec4 o;
+	o.x = vec.x * m00;
+	o.y = vec.y * m11;
+	o.z = vec.z * m22 + vec.w * m23;
+	o.w = -vec.z;
+	return o;
+}
+
 #endif

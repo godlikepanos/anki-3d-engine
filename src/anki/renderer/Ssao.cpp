@@ -10,6 +10,7 @@
 #include <anki/scene/SceneGraph.h>
 #include <anki/util/Functions.h>
 #include <anki/misc/ConfigSet.h>
+#include <anki/scene/FrustumComponent.h>
 
 namespace anki
 {
@@ -17,20 +18,21 @@ namespace anki
 const U NOISE_TEX_SIZE = 4;
 const U KERNEL_SIZE = 16;
 
-static void genKernel(Vec3* ANKI_RESTRICT arr, Vec3* ANKI_RESTRICT arrEnd)
+template<typename TVec>
+static void genHemisphere(TVec* ANKI_RESTRICT arr, TVec* ANKI_RESTRICT arrEnd)
 {
 	ANKI_ASSERT(arr && arrEnd && arr != arrEnd);
 
 	do
 	{
 		// Calculate the normal
-		arr->x() = randRange(-1.0f, 1.0f);
-		arr->y() = randRange(-1.0f, 1.0f);
-		arr->z() = randRange(0.0f, 1.0f);
+		arr->x() = randRange(-1.0, 1.0);
+		arr->y() = randRange(-1.0, 1.0);
+		arr->z() = randRange(0.0, 1.0);
 		arr->normalize();
 
 		// Adjust the length
-		(*arr) *= randRange(0.0f, 1.0f);
+		(*arr) *= randRange(0.0, 1.0);
 	} while(++arr != arrEnd);
 }
 
@@ -48,6 +50,110 @@ static void genNoise(Vec4* ANKI_RESTRICT arr, Vec4* ANKI_RESTRICT arrEnd)
 }
 
 const PixelFormat Ssao::RT_PIXEL_FORMAT(ComponentFormat::R8, TransformFormat::UNORM);
+
+void Ssao::createHemisphereLut()
+{
+	constexpr F64 PI = getPi<F64>();
+	constexpr F64 MIN_ANGLE = PI / 8.0;
+
+	// Compute the hemisphere
+	Array<DVec3, KERNEL_SIZE> kernel;
+	genHemisphere(&kernel[0], &kernel[0] + KERNEL_SIZE);
+
+	constexpr U LUT_TEX_SIZE_X = 2.0 * PI / MIN_ANGLE;
+	constexpr U LUT_TEX_SIZE_Y = PI / MIN_ANGLE;
+	constexpr U LUT_TEX_LAYERS = KERNEL_SIZE;
+
+	Array<Array2d<Vec4, LUT_TEX_SIZE_Y, LUT_TEX_SIZE_X>, LUT_TEX_LAYERS> lutTexData;
+
+	UVec3 counts(0u);
+	U totalCount = 0;
+	(void)totalCount;
+	for(F64 theta = 0.0; theta < 2.0 * PI; theta += MIN_ANGLE)
+	{
+		counts.y() = 0;
+		for(F64 phi = 0.0; phi < PI; phi += MIN_ANGLE)
+		{
+			// Compute the normal from the spherical coordinates
+			DVec3 normal;
+			normal.x() = cos(theta) * sin(phi);
+			normal.y() = sin(theta) * sin(phi);
+			normal.z() = cos(phi);
+			normal.normalize();
+
+			// Compute a tangent & bitangent
+			DVec3 bitangent(0.01, 1.0, 0.01);
+			bitangent.normalize();
+
+			DVec3 tangent = bitangent.cross(normal);
+			tangent.normalize();
+
+			bitangent = normal.cross(tangent);
+
+			// Set the TBN matrix
+			DMat3 rot;
+			rot.setColumns(tangent, bitangent, normal);
+
+			counts.z() = 0;
+			for(U k = 0; k < KERNEL_SIZE; ++k)
+			{
+				DVec3 rotVec = rot * kernel[k];
+
+				lutTexData[counts.z()][counts.y()][counts.x()] = Vec4(rotVec.x(), rotVec.y(), rotVec.z(), 0.0);
+
+				++counts.z();
+				++totalCount;
+			}
+
+			++counts.y();
+		}
+
+		++counts.x();
+	}
+
+	ANKI_ASSERT(totalCount == (LUT_TEX_SIZE_Y * LUT_TEX_SIZE_X * LUT_TEX_LAYERS));
+
+	// Create the texture
+	TextureInitInfo tinit;
+	tinit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::UPLOAD;
+	tinit.m_width = LUT_TEX_SIZE_X;
+	tinit.m_height = LUT_TEX_SIZE_Y;
+	tinit.m_depth = 1;
+	tinit.m_layerCount = LUT_TEX_LAYERS;
+	tinit.m_type = TextureType::_2D_ARRAY;
+	tinit.m_format = PixelFormat(ComponentFormat::R32G32B32A32, TransformFormat::FLOAT);
+	tinit.m_mipmapsCount = 1;
+	tinit.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
+	tinit.m_sampling.m_repeat = false;
+
+	m_hemisphereLut = getGrManager().newInstance<Texture>(tinit);
+
+	CommandBufferInitInfo cmdbinit;
+	cmdbinit.m_flags = CommandBufferFlag::SMALL_BATCH;
+	CommandBufferPtr cmdb = getGrManager().newInstance<CommandBuffer>(cmdbinit);
+
+	for(U i = 0; i < LUT_TEX_LAYERS; ++i)
+	{
+		cmdb->setTextureSurfaceBarrier(
+			m_hemisphereLut, TextureUsageBit::NONE, TextureUsageBit::UPLOAD, TextureSurfaceInfo(0, 0, 0, i));
+	}
+
+	for(U i = 0; i < LUT_TEX_LAYERS; ++i)
+	{
+		cmdb->uploadTextureSurfaceCopyData(
+			m_hemisphereLut, TextureSurfaceInfo(0, 0, 0, i), &lutTexData[i][0][0], sizeof(lutTexData[i]));
+	}
+
+	for(U i = 0; i < LUT_TEX_LAYERS; ++i)
+	{
+		cmdb->setTextureSurfaceBarrier(m_hemisphereLut,
+			TextureUsageBit::UPLOAD,
+			TextureUsageBit::SAMPLED_FRAGMENT,
+			TextureSurfaceInfo(0, 0, 0, i));
+	}
+
+	cmdb->flush();
+}
 
 Error Ssao::createFb(FramebufferPtr& fb, TexturePtr& rt)
 {
@@ -132,7 +238,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 	StringAuto kernelStr(getAllocator());
 	Array<Vec3, KERNEL_SIZE> kernel;
 
-	genKernel(kernel.begin(), kernel.end());
+	genHemisphere(kernel.begin(), kernel.end());
 	kernelStr.create("vec3[](");
 	for(U i = 0; i < kernel.size(); i++)
 	{
@@ -212,6 +318,11 @@ Error Ssao::initInternal(const ConfigSet& config)
 	m_vblurPpline = getGrManager().newInstance<Pipeline>(ppinit);
 
 	//
+	// Lookup texture
+	//
+	createHemisphereLut();
+
+	//
 	// Resource groups
 	//
 	ResourceGroupInitInfo rcinit;
@@ -228,6 +339,8 @@ Error Ssao::initInternal(const ConfigSet& config)
 	rcinit.m_textures[1].m_sampler = rcinit.m_textures[0].m_sampler;
 
 	rcinit.m_textures[2].m_texture = m_noiseTex;
+
+	rcinit.m_textures[3].m_texture = m_hemisphereLut;
 
 	rcinit.m_uniformBuffers[0].m_uploadedMemory = true;
 	rcinit.m_uniformBuffers[0].m_usage = BufferUsageBit::UNIFORM_FRAGMENT;
@@ -284,7 +397,15 @@ void Ssao::run(RenderingContext& ctx)
 	cmdb->bindPipeline(m_ssaoPpline);
 
 	TransientMemoryInfo inf;
-	inf.m_uniformBuffers[0] = m_r->getCommonUniformsTransientMemoryToken();
+	Vec4* unis = static_cast<Vec4*>(getGrManager().allocateFrameTransientMemory(
+		sizeof(Vec4) * 2, BufferUsageBit::UNIFORM_ALL, inf.m_uniformBuffers[0]));
+
+	const FrustumComponent& frc = *ctx.m_frustumComponent;
+	const Mat4& pmat = frc.getProjectionMatrix();
+	*unis = frc.getProjectionParameters();
+	++unis;
+	*unis = Vec4(pmat(0, 0), pmat(1, 1), pmat(2, 2), pmat(2, 3));
+
 	cmdb->bindResourceGroup(m_rcFirst, 0, &inf);
 
 	// Draw

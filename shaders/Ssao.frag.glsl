@@ -26,12 +26,14 @@ layout(location = 0) out float out_color;
 
 layout(ANKI_UBO_BINDING(0, 0), std140, row_major) uniform _blk
 {
-	RendererCommonUniforms u_uniforms;
+	vec4 u_projectionParams;
+	vec4 u_projectionMat;
 };
 
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_mMsDepthRt;
 layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_msRt;
 layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_noiseMap;
+layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2DArray u_hemisphereLut;
 
 // Get normal
 vec3 readNormal(in vec2 uv)
@@ -55,7 +57,7 @@ vec3 readRandom(in vec2 uv)
 float readZ(in vec2 uv)
 {
 	float depth = texture(u_mMsDepthRt, uv).r;
-	float z = u_uniforms.projectionParams.z / (u_uniforms.projectionParams.w + depth);
+	float z = u_projectionParams.z / (u_projectionParams.w + depth);
 	return z;
 }
 
@@ -65,7 +67,7 @@ vec3 readPosition(in vec2 uv)
 	vec3 fragPosVspace;
 	fragPosVspace.z = readZ(uv);
 
-	fragPosVspace.xy = (2.0 * uv - 1.0) * u_uniforms.projectionParams.xy * fragPosVspace.z;
+	fragPosVspace.xy = (2.0 * uv - 1.0) * u_projectionParams.xy * fragPosVspace.z;
 
 	return fragPosVspace;
 }
@@ -85,19 +87,35 @@ void main(void)
 	vec3 bitangent = cross(normal, tangent);
 	mat3 tbn = mat3(tangent, bitangent, normal);
 
+	float theta = atan(normal.y, normal.x); // [-pi, pi]
+	// Now move theta to [0, 2*pi]. Adding 2*pi gives the same angle. Then fmod to move back to [0, 2*pi]
+	theta = mod(theta + 2.0 * PI, 2.0 * PI);
+
+	float phi = acos(normal.z / 1.0); // [0, PI]
+
+	vec2 lutCoords;
+	lutCoords.x = theta / (2.0 * PI);
+	lutCoords.y = phi / PI;
+	lutCoords = clamp(lutCoords, 0.0, 1.0);
+
 	// Iterate kernel
 	float factor = 0.0;
 	for(uint i = 0U; i < sampleCount; ++i)
 	{
+#if 0
 		// get position
 		vec3 sample_ = tbn * KERNEL[i];
 		sample_ = sample_ * RADIUS + origin;
+#else
+		vec3 sample_ = texture(u_hemisphereLut, vec3(lutCoords, float(i))).xyz;
+		sample_ = normalize(sample_);
+		sample_ = sample_ * RADIUS + origin;
+#endif
 
 		// project sample position:
-		vec4 offset = vec4(sample_, 1.0);
-		offset = u_uniforms.projectionMatrix * offset;
-		offset.xy = offset.xy / (2.0 * offset.w) + 0.5; // persp div &
-		// to NDC -> [0, 1]
+		vec4 offset = projectPerspective(
+			vec4(sample_, 1.0), u_projectionMat.x, u_projectionMat.y, u_projectionMat.z, u_projectionMat.w);
+		offset.xy = offset.xy / (2.0 * offset.w) + 0.5; // persp div & to NDC -> [0, 1]
 
 		// get sample depth:
 		float sampleDepth = readZ(offset.xy);
