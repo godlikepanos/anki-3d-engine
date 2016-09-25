@@ -17,6 +17,7 @@ namespace anki
 
 const U NOISE_TEX_SIZE = 4;
 const U KERNEL_SIZE = 16;
+const F32 HEMISPHERE_RADIUS = 1.1; // In game units
 
 template<typename TVec>
 static void genHemisphere(TVec* ANKI_RESTRICT arr, TVec* ANKI_RESTRICT arrEnd)
@@ -28,7 +29,7 @@ static void genHemisphere(TVec* ANKI_RESTRICT arr, TVec* ANKI_RESTRICT arrEnd)
 		// Calculate the normal
 		arr->x() = randRange(-1.0, 1.0);
 		arr->y() = randRange(-1.0, 1.0);
-		arr->z() = randRange(0.0, 1.0);
+		arr->z() = randRange(0.1, 1.0);
 		arr->normalize();
 
 		// Adjust the length
@@ -43,8 +44,9 @@ static void genNoise(Vec4* ANKI_RESTRICT arr, Vec4* ANKI_RESTRICT arrEnd)
 	do
 	{
 		// Calculate the normal
-		Vec3 v(randRange(-1.0f, 1.0f), randRange(-1.0f, 1.0f), 0.0f);
-		v.normalize();
+		Vec3 v(
+			randRange(0.2f, HEMISPHERE_RADIUS), randRange(0.2f, HEMISPHERE_RADIUS), randRange(0.2f, HEMISPHERE_RADIUS));
+
 		*arr = Vec4(v, 0.0f);
 	} while(++arr != arrEnd);
 }
@@ -65,13 +67,15 @@ void Ssao::createHemisphereLut()
 	constexpr U LUT_TEX_LAYERS = KERNEL_SIZE;
 
 	Array<Array2d<Vec4, LUT_TEX_SIZE_Y, LUT_TEX_SIZE_X>, LUT_TEX_LAYERS> lutTexData;
+	memset(&lutTexData[0][0][0], 0, sizeof(lutTexData));
 
-	UVec3 counts(0u);
+	U countX = 0;
+	U countY = 0;
 	U totalCount = 0;
 	(void)totalCount;
 	for(F64 theta = 0.0; theta < 2.0 * PI; theta += MIN_ANGLE)
 	{
-		counts.y() = 0;
+		countY = 0;
 		for(F64 phi = 0.0; phi < PI; phi += MIN_ANGLE)
 		{
 			// Compute the normal from the spherical coordinates
@@ -94,21 +98,19 @@ void Ssao::createHemisphereLut()
 			DMat3 rot;
 			rot.setColumns(tangent, bitangent, normal);
 
-			counts.z() = 0;
 			for(U k = 0; k < KERNEL_SIZE; ++k)
 			{
 				DVec3 rotVec = rot * kernel[k];
 
-				lutTexData[counts.z()][counts.y()][counts.x()] = Vec4(rotVec.x(), rotVec.y(), rotVec.z(), 0.0);
+				lutTexData[k][countY][countX] = Vec4(rotVec.x(), rotVec.y(), rotVec.z(), 0.0);
 
-				++counts.z();
 				++totalCount;
 			}
 
-			++counts.y();
+			++countY;
 		}
 
-		++counts.x();
+		++countX;
 	}
 
 	ANKI_ASSERT(totalCount == (LUT_TEX_SIZE_Y * LUT_TEX_SIZE_X * LUT_TEX_LAYERS));
@@ -233,24 +235,6 @@ Error Ssao::initInternal(const ConfigSet& config)
 	cmdb->flush();
 
 	//
-	// Kernel
-	//
-	StringAuto kernelStr(getAllocator());
-	Array<Vec3, KERNEL_SIZE> kernel;
-
-	genHemisphere(kernel.begin(), kernel.end());
-	kernelStr.create("vec3[](");
-	for(U i = 0; i < kernel.size(); i++)
-	{
-		StringAuto tmp(getAllocator());
-
-		tmp.sprintf(
-			"vec3(%f, %f, %f) %s", kernel[i].x(), kernel[i].y(), kernel[i].z(), (i != kernel.size() - 1) ? ", " : ")");
-
-		kernelStr.append(tmp);
-	}
-
-	//
 	// Shaders
 	//
 	PipelineInitInfo ppinit;
@@ -272,12 +256,12 @@ Error Ssao::initInternal(const ConfigSet& config)
 				"#define WIDTH %u\n"
 				"#define HEIGHT %u\n"
 				"#define KERNEL_SIZE %u\n"
-				"#define KERNEL_ARRAY %s\n",
+				"#define RADIUS float(%f)\n",
 		NOISE_TEX_SIZE,
 		m_width,
 		m_height,
 		KERNEL_SIZE,
-		&kernelStr[0]);
+		HEMISPHERE_RADIUS);
 
 	ANKI_CHECK(getResourceManager().loadResourceToCache(m_ssaoFrag, "shaders/Ssao.frag.glsl", pps.toCString(), "r_"));
 

@@ -7,15 +7,11 @@
 #include "shaders/Common.glsl"
 #include "shaders/Pack.glsl"
 #include "shaders/Functions.glsl"
-#include "shaders/RendererCommonUniforms.glsl"
 
-const vec3 KERNEL[KERNEL_SIZE] = KERNEL_ARRAY; // This will be appended in C++
-
-// Radius in game units
-const float RADIUS = 1.1;
+const float RANGE_CHECK_RADIUS = RADIUS * 2.0;
 
 // Initial is 1.0 but the bigger it is the more darker the SSAO factor gets
-const float DARKNESS_MULTIPLIER = 2.0;
+const float DARKNESS_MULTIPLIER = 1.0;
 
 // The algorithm will chose the number of samples depending on the distance
 const float MAX_DISTANCE = 40.0;
@@ -76,16 +72,8 @@ void main(void)
 {
 	vec3 origin = readPosition(in_texCoords);
 
-	// Chose the number of samples dynamicaly
-	float sampleCountf = max(1.0 + origin.z / MAX_DISTANCE, 0.0) * float(KERNEL_SIZE);
-	uint sampleCount = uint(sampleCountf);
-
 	vec3 normal = readNormal(in_texCoords);
-	vec3 rvec = readRandom(in_texCoords);
-
-	vec3 tangent = normalize(rvec - normal * dot(rvec, normal));
-	vec3 bitangent = cross(normal, tangent);
-	mat3 tbn = mat3(tangent, bitangent, normal);
+	vec3 randRadius = readRandom(in_texCoords);
 
 	float theta = atan(normal.y, normal.x); // [-pi, pi]
 	// Now move theta to [0, 2*pi]. Adding 2*pi gives the same angle. Then fmod to move back to [0, 2*pi]
@@ -100,39 +88,30 @@ void main(void)
 
 	// Iterate kernel
 	float factor = 0.0;
-	for(uint i = 0U; i < sampleCount; ++i)
+	for(uint i = 0U; i < KERNEL_SIZE; ++i)
 	{
-#if 0
-		// get position
-		vec3 sample_ = tbn * KERNEL[i];
-		sample_ = sample_ * RADIUS + origin;
-#else
-		vec3 sample_ = texture(u_hemisphereLut, vec3(lutCoords, float(i))).xyz;
-		sample_ = normalize(sample_);
-		sample_ = sample_ * RADIUS + origin;
-#endif
+		vec3 hemispherePoint = texture(u_hemisphereLut, vec3(lutCoords, float(i))).xyz;
+		hemispherePoint = normalize(hemispherePoint);
+		hemispherePoint = hemispherePoint * randRadius + origin;
 
 		// project sample position:
-		vec4 offset = projectPerspective(
-			vec4(sample_, 1.0), u_projectionMat.x, u_projectionMat.y, u_projectionMat.z, u_projectionMat.w);
-		offset.xy = offset.xy / (2.0 * offset.w) + 0.5; // persp div & to NDC -> [0, 1]
+		vec4 projHemiPoint = projectPerspective(
+			vec4(hemispherePoint, 1.0), u_projectionMat.x, u_projectionMat.y, u_projectionMat.z, u_projectionMat.w);
+		projHemiPoint.xy = projHemiPoint.xy / (2.0 * projHemiPoint.w) + 0.5; // persp div & to NDC -> [0, 1]
 
 		// get sample depth:
-		float sampleDepth = readZ(offset.xy);
+		float sampleZ = readZ(projHemiPoint.xy);
 
-		// range check & accumulate:
-		const float ADVANCE = DARKNESS_MULTIPLIER / sampleCountf;
+		// Range check
+		float rangeCheck = abs(origin.z - sampleZ) / RANGE_CHECK_RADIUS;
+		rangeCheck = 1.0 - clamp(rangeCheck, 0.0, 1.0);
 
-#if 0
-		float rangeCheck =
-			abs(origin.z - sampleDepth) * (1.0 / (RADIUS * 10.0));
-		rangeCheck = 1.0 - rangeCheck;
+		// Accumulate
+		const float ADVANCE = DARKNESS_MULTIPLIER / float(KERNEL_SIZE);
+		float f = ceil(sampleZ - hemispherePoint.z);
+		f = clamp(f, 0.0, 1.0) * ADVANCE;
 
-		factor += clamp(sampleDepth - sample_.z, 0.0, ADVANCE) * rangeCheck;
-#else
-		float rangeCheck = abs(origin.z - sampleDepth) < RADIUS ? 1.0 : 0.0;
-		factor += (sampleDepth > sample_.z ? ADVANCE : 0.0) * rangeCheck;
-#endif
+		factor += f * rangeCheck;
 	}
 
 	out_color = 1.0 - factor;
