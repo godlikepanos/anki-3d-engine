@@ -77,18 +77,48 @@ static void convertTextureInformation(
 #endif
 	case ComponentFormat::R8:
 		format = GL_R;
-		internalFormat = GL_R8;
-		type = GL_UNSIGNED_BYTE;
+
+		if(pf.m_transform == TransformFormat::UNORM)
+		{
+			internalFormat = GL_R8;
+			type = GL_UNSIGNED_BYTE;
+		}
+		else
+		{
+			ANKI_ASSERT(pf.m_transform == TransformFormat::SNORM);
+			internalFormat = GL_R8_SNORM;
+			type = GL_BYTE;
+		}
 		break;
 	case ComponentFormat::R8G8B8:
 		format = GL_RGB;
-		internalFormat = GL_RGB8;
-		type = GL_UNSIGNED_BYTE;
+
+		if(pf.m_transform == TransformFormat::UNORM)
+		{
+			internalFormat = GL_RGB8;
+			type = GL_UNSIGNED_BYTE;
+		}
+		else
+		{
+			ANKI_ASSERT(pf.m_transform == TransformFormat::SNORM);
+			internalFormat = GL_RGB8_SNORM;
+			type = GL_BYTE;
+		}
 		break;
 	case ComponentFormat::R8G8B8A8:
 		format = GL_RGBA;
-		internalFormat = GL_RGBA8;
-		type = GL_UNSIGNED_BYTE;
+
+		if(pf.m_transform == TransformFormat::UNORM)
+		{
+			internalFormat = GL_RGBA8;
+			type = GL_UNSIGNED_BYTE;
+		}
+		else
+		{
+			ANKI_ASSERT(pf.m_transform == TransformFormat::SNORM);
+			internalFormat = GL_RGBA8_SNORM;
+			type = GL_BYTE;
+		}
 		break;
 	case ComponentFormat::R32G32:
 		if(pf.m_transform == TransformFormat::FLOAT)

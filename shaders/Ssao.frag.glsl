@@ -8,10 +8,12 @@
 #include "shaders/Pack.glsl"
 #include "shaders/Functions.glsl"
 
+const vec3 KERNEL[KERNEL_SIZE] = KERNEL_ARRAY; // This will be appended in C++
+
 const float RANGE_CHECK_RADIUS = RADIUS * 2.0;
 
 // Initial is 1.0 but the bigger it is the more darker the SSAO factor gets
-const float DARKNESS_MULTIPLIER = 1.0;
+const float DARKNESS_MULTIPLIER = 1.5;
 
 // The algorithm will chose the number of samples depending on the distance
 const float MAX_DISTANCE = 40.0;
@@ -29,7 +31,6 @@ layout(ANKI_UBO_BINDING(0, 0), std140, row_major) uniform _blk
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_mMsDepthRt;
 layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_msRt;
 layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_noiseMap;
-layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2DArray u_hemisphereLut;
 
 // Get normal
 vec3 readNormal(in vec2 uv)
@@ -45,7 +46,6 @@ vec3 readRandom(in vec2 uv)
 	const vec2 tmp = vec2(float(WIDTH) / float(NOISE_MAP_SIZE), float(HEIGHT) / float(NOISE_MAP_SIZE));
 
 	vec3 noise = texture(u_noiseMap, tmp * uv).xyz;
-	// return normalize(noise * 2.0 - 1.0);
 	return noise;
 }
 
@@ -73,26 +73,18 @@ void main(void)
 	vec3 origin = readPosition(in_texCoords);
 
 	vec3 normal = readNormal(in_texCoords);
-	vec3 randRadius = readRandom(in_texCoords);
+	vec3 rvec = readRandom(in_texCoords);
 
-	float theta = atan(normal.y, normal.x); // [-pi, pi]
-	// Now move theta to [0, 2*pi]. Adding 2*pi gives the same angle. Then fmod to move back to [0, 2*pi]
-	theta = mod(theta + 2.0 * PI, 2.0 * PI);
-
-	float phi = acos(normal.z / 1.0); // [0, PI]
-
-	vec2 lutCoords;
-	lutCoords.x = theta / (2.0 * PI);
-	lutCoords.y = phi / PI;
-	lutCoords = clamp(lutCoords, 0.0, 1.0);
+	vec3 tangent = normalize(rvec - normal * dot(rvec, normal));
+	vec3 bitangent = cross(normal, tangent);
+	mat3 tbn = mat3(tangent, bitangent, normal);
 
 	// Iterate kernel
 	float factor = 0.0;
 	for(uint i = 0U; i < KERNEL_SIZE; ++i)
 	{
-		vec3 hemispherePoint = texture(u_hemisphereLut, vec3(lutCoords, float(i))).xyz;
-		hemispherePoint = normalize(hemispherePoint);
-		hemispherePoint = hemispherePoint * randRadius + origin;
+		vec3 hemispherePoint = tbn * KERNEL[i];
+		hemispherePoint = hemispherePoint * RADIUS + origin;
 
 		// project sample position:
 		vec4 projHemiPoint = projectPerspective(

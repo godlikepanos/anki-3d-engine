@@ -15,8 +15,8 @@
 namespace anki
 {
 
-const U NOISE_TEX_SIZE = 4;
-const U KERNEL_SIZE = 16;
+const U NOISE_TEX_SIZE = 8;
+const U KERNEL_SIZE = 8;
 const F32 HEMISPHERE_RADIUS = 1.1; // In game units
 
 template<typename TVec>
@@ -37,125 +37,24 @@ static void genHemisphere(TVec* ANKI_RESTRICT arr, TVec* ANKI_RESTRICT arrEnd)
 	} while(++arr != arrEnd);
 }
 
-static void genNoise(Vec4* ANKI_RESTRICT arr, Vec4* ANKI_RESTRICT arrEnd)
+static void genNoise(Array<I8, 4>* ANKI_RESTRICT arr, Array<I8, 4>* ANKI_RESTRICT arrEnd)
 {
 	ANKI_ASSERT(arr && arrEnd && arr != arrEnd);
 
 	do
 	{
 		// Calculate the normal
-		Vec3 v(
-			randRange(0.2f, HEMISPHERE_RADIUS), randRange(0.2f, HEMISPHERE_RADIUS), randRange(0.2f, HEMISPHERE_RADIUS));
+		Vec3 v(randRange(-1.0f, 1.0f), randRange(-1.0f, 1.0f), 0.0f);
+		v.normalize();
 
-		*arr = Vec4(v, 0.0f);
+		(*arr)[0] = v[0] * MAX_I8;
+		(*arr)[1] = v[1] * MAX_I8;
+		(*arr)[2] = v[2] * MAX_I8;
+		(*arr)[3] = 0;
 	} while(++arr != arrEnd);
 }
 
 const PixelFormat Ssao::RT_PIXEL_FORMAT(ComponentFormat::R8, TransformFormat::UNORM);
-
-void Ssao::createHemisphereLut()
-{
-	constexpr F64 PI = getPi<F64>();
-	constexpr F64 MIN_ANGLE = PI / 8.0;
-
-	// Compute the hemisphere
-	Array<DVec3, KERNEL_SIZE> kernel;
-	genHemisphere(&kernel[0], &kernel[0] + KERNEL_SIZE);
-
-	constexpr U LUT_TEX_SIZE_X = 2.0 * PI / MIN_ANGLE;
-	constexpr U LUT_TEX_SIZE_Y = PI / MIN_ANGLE;
-	constexpr U LUT_TEX_LAYERS = KERNEL_SIZE;
-
-	Array<Array2d<Vec4, LUT_TEX_SIZE_Y, LUT_TEX_SIZE_X>, LUT_TEX_LAYERS> lutTexData;
-	memset(&lutTexData[0][0][0], 0, sizeof(lutTexData));
-
-	U countX = 0;
-	U countY = 0;
-	U totalCount = 0;
-	(void)totalCount;
-	for(F64 theta = 0.0; theta < 2.0 * PI; theta += MIN_ANGLE)
-	{
-		countY = 0;
-		for(F64 phi = 0.0; phi < PI; phi += MIN_ANGLE)
-		{
-			// Compute the normal from the spherical coordinates
-			DVec3 normal;
-			normal.x() = cos(theta) * sin(phi);
-			normal.y() = sin(theta) * sin(phi);
-			normal.z() = cos(phi);
-			normal.normalize();
-
-			// Compute a tangent & bitangent
-			DVec3 bitangent(0.01, 1.0, 0.01);
-			bitangent.normalize();
-
-			DVec3 tangent = bitangent.cross(normal);
-			tangent.normalize();
-
-			bitangent = normal.cross(tangent);
-
-			// Set the TBN matrix
-			DMat3 rot;
-			rot.setColumns(tangent, bitangent, normal);
-
-			for(U k = 0; k < KERNEL_SIZE; ++k)
-			{
-				DVec3 rotVec = rot * kernel[k];
-
-				lutTexData[k][countY][countX] = Vec4(rotVec.x(), rotVec.y(), rotVec.z(), 0.0);
-
-				++totalCount;
-			}
-
-			++countY;
-		}
-
-		++countX;
-	}
-
-	ANKI_ASSERT(totalCount == (LUT_TEX_SIZE_Y * LUT_TEX_SIZE_X * LUT_TEX_LAYERS));
-
-	// Create the texture
-	TextureInitInfo tinit;
-	tinit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::UPLOAD;
-	tinit.m_width = LUT_TEX_SIZE_X;
-	tinit.m_height = LUT_TEX_SIZE_Y;
-	tinit.m_depth = 1;
-	tinit.m_layerCount = LUT_TEX_LAYERS;
-	tinit.m_type = TextureType::_2D_ARRAY;
-	tinit.m_format = PixelFormat(ComponentFormat::R32G32B32A32, TransformFormat::FLOAT);
-	tinit.m_mipmapsCount = 1;
-	tinit.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
-	tinit.m_sampling.m_repeat = false;
-
-	m_hemisphereLut = getGrManager().newInstance<Texture>(tinit);
-
-	CommandBufferInitInfo cmdbinit;
-	cmdbinit.m_flags = CommandBufferFlag::SMALL_BATCH;
-	CommandBufferPtr cmdb = getGrManager().newInstance<CommandBuffer>(cmdbinit);
-
-	for(U i = 0; i < LUT_TEX_LAYERS; ++i)
-	{
-		cmdb->setTextureSurfaceBarrier(
-			m_hemisphereLut, TextureUsageBit::NONE, TextureUsageBit::UPLOAD, TextureSurfaceInfo(0, 0, 0, i));
-	}
-
-	for(U i = 0; i < LUT_TEX_LAYERS; ++i)
-	{
-		cmdb->uploadTextureSurfaceCopyData(
-			m_hemisphereLut, TextureSurfaceInfo(0, 0, 0, i), &lutTexData[i][0][0], sizeof(lutTexData[i]));
-	}
-
-	for(U i = 0; i < LUT_TEX_LAYERS; ++i)
-	{
-		cmdb->setTextureSurfaceBarrier(m_hemisphereLut,
-			TextureUsageBit::UPLOAD,
-			TextureUsageBit::SAMPLED_FRAGMENT,
-			TextureSurfaceInfo(0, 0, 0, i));
-	}
-
-	cmdb->flush();
-}
 
 Error Ssao::createFb(FramebufferPtr& fb, TexturePtr& rt)
 {
@@ -209,14 +108,14 @@ Error Ssao::initInternal(const ConfigSet& config)
 	tinit.m_depth = 1;
 	tinit.m_layerCount = 1;
 	tinit.m_type = TextureType::_2D;
-	tinit.m_format = PixelFormat(ComponentFormat::R32G32B32A32, TransformFormat::FLOAT);
+	tinit.m_format = PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::SNORM);
 	tinit.m_mipmapsCount = 1;
 	tinit.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
 	tinit.m_sampling.m_repeat = true;
 
 	m_noiseTex = gr.newInstance<Texture>(tinit);
 
-	Array<Vec4, NOISE_TEX_SIZE * NOISE_TEX_SIZE> noise;
+	Array<Array<I8, 4>, NOISE_TEX_SIZE * NOISE_TEX_SIZE> noise;
 	genNoise(&noise[0], &noise[0] + noise.getSize());
 
 	CommandBufferInitInfo cmdbInit;
@@ -233,6 +132,24 @@ Error Ssao::initInternal(const ConfigSet& config)
 	cmdb->setTextureSurfaceBarrier(m_noiseTex, TextureUsageBit::UPLOAD, TextureUsageBit::SAMPLED_FRAGMENT, surf);
 
 	cmdb->flush();
+
+	//
+	// Kernel
+	//
+	StringAuto kernelStr(getAllocator());
+	Array<Vec3, KERNEL_SIZE> kernel;
+
+	genHemisphere(kernel.begin(), kernel.end());
+	kernelStr.create("vec3[](");
+	for(U i = 0; i < kernel.size(); i++)
+	{
+		StringAuto tmp(getAllocator());
+
+		tmp.sprintf(
+			"vec3(%f, %f, %f) %s", kernel[i].x(), kernel[i].y(), kernel[i].z(), (i != kernel.size() - 1) ? ", " : ")");
+
+		kernelStr.append(tmp);
+	}
 
 	//
 	// Shaders
@@ -256,11 +173,13 @@ Error Ssao::initInternal(const ConfigSet& config)
 				"#define WIDTH %u\n"
 				"#define HEIGHT %u\n"
 				"#define KERNEL_SIZE %u\n"
+				"#define KERNEL_ARRAY %s\n"
 				"#define RADIUS float(%f)\n",
 		NOISE_TEX_SIZE,
 		m_width,
 		m_height,
 		KERNEL_SIZE,
+		&kernelStr[0],
 		HEMISPHERE_RADIUS);
 
 	ANKI_CHECK(getResourceManager().loadResourceToCache(m_ssaoFrag, "shaders/Ssao.frag.glsl", pps.toCString(), "r_"));
@@ -302,11 +221,6 @@ Error Ssao::initInternal(const ConfigSet& config)
 	m_vblurPpline = getGrManager().newInstance<Pipeline>(ppinit);
 
 	//
-	// Lookup texture
-	//
-	createHemisphereLut();
-
-	//
 	// Resource groups
 	//
 	ResourceGroupInitInfo rcinit;
@@ -323,8 +237,6 @@ Error Ssao::initInternal(const ConfigSet& config)
 	rcinit.m_textures[1].m_sampler = rcinit.m_textures[0].m_sampler;
 
 	rcinit.m_textures[2].m_texture = m_noiseTex;
-
-	rcinit.m_textures[3].m_texture = m_hemisphereLut;
 
 	rcinit.m_uniformBuffers[0].m_uploadedMemory = true;
 	rcinit.m_uniformBuffers[0].m_usage = BufferUsageBit::UNIFORM_FRAGMENT;
