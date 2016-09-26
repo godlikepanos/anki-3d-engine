@@ -26,6 +26,7 @@
 #include <anki/renderer/DownscaleBlur.h>
 #include <anki/renderer/Volumetric.h>
 #include <anki/renderer/HalfDepth.h>
+#include <anki/renderer/Smaa.h>
 
 namespace anki
 {
@@ -168,6 +169,9 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_downscale.reset(getAllocator().newInstance<DownscaleBlur>(this));
 	ANKI_CHECK(m_downscale->init(config));
 
+	m_smaa.reset(getAllocator().newInstance<Smaa>(this));
+	ANKI_CHECK(m_smaa->init(config));
+
 	m_bloom.reset(m_alloc.newInstance<Bloom>(this));
 	ANKI_CHECK(m_bloom->init(config));
 
@@ -240,6 +244,9 @@ Error Renderer::render(RenderingContext& ctx)
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		TextureSurfaceInfo(0, 0, 0, 0));
 
+	m_smaa->m_edge.setPreRunBarriers(ctx);
+	m_smaa->m_weights.setPreRunBarriers(ctx);
+
 	// SM
 	m_sm->run(ctx);
 
@@ -280,17 +287,26 @@ Error Renderer::render(RenderingContext& ctx)
 		TextureUsageBit::SAMPLED_COMPUTE,
 		TextureSurfaceInfo(m_is->getRtMipmapCount() - 1, 0, 0, 0));
 
+	// Batch TM + SMAA_pass0
 	m_tm->run(ctx);
+	m_smaa->m_edge.run(ctx);
 
+	// Barriers
 	cmdb->setTextureSurfaceBarrier(m_is->getRt(),
 		TextureUsageBit::SAMPLED_COMPUTE,
 		TextureUsageBit::SAMPLED_FRAGMENT,
 		TextureSurfaceInfo(m_is->getRtMipmapCount() - 1, 0, 0, 0));
+	m_smaa->m_edge.setPostRunBarriers(ctx);
 
+	// Batch bloom + SSLF + SMAA_pass1
 	m_bloom->run(ctx);
 	m_sslf->run(ctx);
 	cmdb->endRenderPass();
+	m_smaa->m_weights.run(ctx);
+
+	// Barriers
 	m_bloom->setPostRunBarriers(ctx);
+	m_smaa->m_weights.setPostRunBarriers(ctx);
 
 	if(m_dbg->getEnabled())
 	{
@@ -369,8 +385,8 @@ void Renderer::createDrawQuadPipeline(ShaderPtr frag, const ColorStateInfo& colo
 
 	init.m_color = colorState;
 
-	init.m_shaders[U(ShaderType::VERTEX)] = m_drawQuadVert->getGrShader();
-	init.m_shaders[U(ShaderType::FRAGMENT)] = frag;
+	init.m_shaders[ShaderType::VERTEX] = m_drawQuadVert->getGrShader();
+	init.m_shaders[ShaderType::FRAGMENT] = frag;
 	ppline = m_gr->newInstance<Pipeline>(init);
 }
 

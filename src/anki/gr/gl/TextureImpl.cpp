@@ -76,7 +76,7 @@ static void convertTextureInformation(
 		break;
 #endif
 	case ComponentFormat::R8:
-		format = GL_R;
+		format = GL_RED;
 
 		if(pf.m_transform == TransformFormat::UNORM)
 		{
@@ -87,6 +87,21 @@ static void convertTextureInformation(
 		{
 			ANKI_ASSERT(pf.m_transform == TransformFormat::SNORM);
 			internalFormat = GL_R8_SNORM;
+			type = GL_BYTE;
+		}
+		break;
+	case ComponentFormat::R8G8:
+		format = GL_RG;
+
+		if(pf.m_transform == TransformFormat::UNORM)
+		{
+			internalFormat = GL_RG8;
+			type = GL_UNSIGNED_BYTE;
+		}
+		else
+		{
+			ANKI_ASSERT(pf.m_transform == TransformFormat::SNORM);
+			internalFormat = GL_RG8_SNORM;
 			type = GL_BYTE;
 		}
 		break;

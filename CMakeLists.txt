@@ -332,7 +332,7 @@ INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h" DESTINATION "${INCLUDE
 
 # Include & lib directories
 include_directories("src" "thirdparty/tinyxml2/include" "thirdparty/lua" "thirdparty/z"
-	"${SDL2_INSTALL_DIR}/include/SDL2/" "${FREETYPE_INSTALL_DIR}/include/freetype2/" "thirdparty/newton/newton" "${CMAKE_CURRENT_BINARY_DIR}" ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glslang)
+	"${SDL2_INSTALL_DIR}/include/SDL2/" "${FREETYPE_INSTALL_DIR}/include/freetype2/" "thirdparty/newton/newton" "${CMAKE_CURRENT_BINARY_DIR}" ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glslang thirdparty)
 
 if(LINUX OR MACOS OR WINDOWS)
 	include_directories("thirdparty/GLEW/include")

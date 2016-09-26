@@ -199,6 +199,11 @@ public:
 		return *m_dbg;
 	}
 
+	Smaa& getSmaa()
+	{
+		return *m_smaa;
+	}
+
 	U32 getWidth() const
 	{
 		return m_width;
@@ -379,6 +384,7 @@ private:
 	UniquePtr<Lf> m_lf; ///< Forward shading lens flares.
 	UniquePtr<Upsample> m_upsample;
 	UniquePtr<DownscaleBlur> m_downscale;
+	UniquePtr<Smaa> m_smaa;
 	UniquePtr<Tm> m_tm;
 	UniquePtr<Ssao> m_ssao;
 	UniquePtr<Bloom> m_bloom;

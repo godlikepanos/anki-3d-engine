@@ -30,6 +30,7 @@ class Upsample;
 class DownscaleBlur;
 class Volumetric;
 class HalfDepth;
+class Smaa;
 
 class RenderingContext;
 class DebugDrawer;

@@ -11,6 +11,7 @@
 #include <anki/renderer/Is.h>
 #include <anki/renderer/Ms.h>
 #include <anki/renderer/Dbg.h>
+#include <anki/renderer/Smaa.h>
 #include <anki/util/Logger.h>
 #include <anki/misc/ConfigSet.h>
 #include <anki/scene/SceneNode.h>
@@ -107,29 +108,60 @@ Error Pps::run(RenderingContext& ctx)
 						"#define FBO_HEIGHT %u\n"
 						"#define LUT_SIZE %u.0\n"
 						"#define DBG_ENABLED %u\n"
-						"#define DRAW_TO_DEFAULT %u\n",
+						"#define DRAW_TO_DEFAULT %u\n"
+						"#define SMAA_ENABLED 1\n"
+						"#define SMAA_RT_METRICS vec4(%f, %f, %f, %f)\n"
+						"#define SMAA_PRESET_%s\n",
 				true,
 				m_sharpenEnabled,
 				m_r->getWidth(),
 				m_r->getHeight(),
 				LUT_SIZE,
 				dbgEnabled,
-				drawToDefaultFb);
+				drawToDefaultFb,
+				1.0 / m_r->getWidth(),
+				1.0 / m_r->getHeight(),
+				F32(m_r->getWidth()),
+				F32(m_r->getHeight()),
+				&m_r->getSmaa().m_qualityPerset[0]);
 
 			ANKI_CHECK(getResourceManager().loadResourceToCache(frag, "shaders/Pps.frag.glsl", pps.toCString(), "r_"));
 		}
 
-		ColorStateInfo colorState;
-		colorState.m_attachmentCount = 1;
-		if(drawToDefaultFb)
+		if(!m_vert)
 		{
-			colorState.m_attachments[0].m_format.m_components = ComponentFormat::DEFAULT_FRAMEBUFFER;
+			StringAuto pps(ctx.m_tempAllocator);
+
+			pps.sprintf("#define SMAA_ENABLED 1\n"
+						"#define SMAA_RT_METRICS vec4(%f, %f, %f, %f)\n"
+						"#define SMAA_PRESET_%s\n",
+				1.0 / m_r->getWidth(),
+				1.0 / m_r->getHeight(),
+				F32(m_r->getWidth()),
+				F32(m_r->getHeight()),
+				&m_r->getSmaa().m_qualityPerset[0]);
+
+			ANKI_CHECK(
+				getResourceManager().loadResourceToCache(m_vert, "shaders/Pps.vert.glsl", pps.toCString(), "r_"));
 		}
-		else
-		{
-			colorState.m_attachments[0].m_format = RT_PIXEL_FORMAT;
-		}
-		m_r->createDrawQuadPipeline(frag->getGrShader(), colorState, ppline);
+
+		PixelFormat pfs = (drawToDefaultFb) ? PixelFormat(ComponentFormat::DEFAULT_FRAMEBUFFER, TransformFormat::NONE)
+											: RT_PIXEL_FORMAT;
+
+		PipelineInitInfo ppinit;
+
+		ppinit.m_inputAssembler.m_topology = PrimitiveTopology::TRIANGLE_STRIP;
+
+		ppinit.m_depthStencil.m_depthWriteEnabled = false;
+		ppinit.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
+
+		ppinit.m_color.m_attachmentCount = 1;
+		ppinit.m_color.m_attachments[0].m_format = pfs;
+
+		ppinit.m_shaders[ShaderType::VERTEX] = m_vert->getGrShader();
+		ppinit.m_shaders[ShaderType::FRAGMENT] = frag->getGrShader();
+
+		ppline = m_r->getGrManager().newInstance<Pipeline>(ppinit);
 	}
 
 	// Get or create the resource group
@@ -140,9 +172,10 @@ Error Pps::run(RenderingContext& ctx)
 		rcInit.m_textures[0].m_texture = m_r->getIs().getRt();
 		rcInit.m_textures[1].m_texture = m_r->getBloom().getFinalRt();
 		rcInit.m_textures[2].m_texture = m_lut->getGrTexture();
+		rcInit.m_textures[3].m_texture = m_r->getSmaa().m_weights.m_rt;
 		if(dbgEnabled)
 		{
-			rcInit.m_textures[3].m_texture = m_r->getDbg().getRt();
+			rcInit.m_textures[4].m_texture = m_r->getDbg().getRt();
 		}
 
 		rcInit.m_storageBuffers[0].m_buffer = m_r->getTm().getAverageLuminanceBuffer();

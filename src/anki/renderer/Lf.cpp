@@ -145,8 +145,8 @@ Error Lf::initOcclusion(const ConfigSet& config)
 	init.m_color.m_attachments[1].m_channelWriteMask = ColorBit::NONE;
 	init.m_color.m_attachments[2].m_format = MS_COLOR_ATTACHMENT_PIXEL_FORMATS[2];
 	init.m_color.m_attachments[2].m_channelWriteMask = ColorBit::NONE;
-	init.m_shaders[U(ShaderType::VERTEX)] = m_occlusionVert->getGrShader();
-	init.m_shaders[U(ShaderType::FRAGMENT)] = m_occlusionFrag->getGrShader();
+	init.m_shaders[ShaderType::VERTEX] = m_occlusionVert->getGrShader();
+	init.m_shaders[ShaderType::FRAGMENT] = m_occlusionFrag->getGrShader();
 	m_occlusionPpline = gr.newInstance<Pipeline>(init);
 
 	rcinit = ResourceGroupInitInfo();

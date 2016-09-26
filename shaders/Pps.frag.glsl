@@ -7,11 +7,21 @@
 #include "shaders/Tonemapping.glsl"
 #include "shaders/Functions.glsl"
 
+#if SMAA_ENABLED
+#define SMAA_GLSL_4
+#define SMAA_INCLUDE_PS 1
+#define SMAA_INCLUDE_VS 0
+#include "shaders/SMAA.hlsl"
+#endif
+
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_isRt;
 layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_ppsBloomLfRt;
 layout(ANKI_TEX_BINDING(0, 2)) uniform sampler3D u_lut;
+#if SMAA_ENABLED
+layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2D u_smaaBlendTex;
+#endif
 #if DBG_ENABLED
-layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2D u_dbgRt;
+layout(ANKI_TEX_BINDING(0, 4)) uniform sampler2D u_dbgRt;
 #endif
 
 struct Luminance
@@ -25,6 +35,10 @@ layout(std140, ANKI_SS_BINDING(0, 0)) readonly buffer s0_
 };
 
 layout(location = 0) in vec2 in_uv;
+#if SMAA_ENABLED
+layout(location = 1) in vec4 in_smaaOffset;
+#endif
+
 layout(location = 0) out vec3 out_color;
 
 const vec2 TEX_OFFSET = vec2(1.0 / float(FBO_WIDTH), 1.0 / float(FBO_HEIGHT));
@@ -112,6 +126,8 @@ void main()
 
 #if SHARPEN_ENABLED
 	out_color = sharpen(u_isRt, uv);
+#elif SMAA_ENABLED
+	out_color = SMAANeighborhoodBlendingPS(uv, in_smaaOffset, u_isRt, u_smaaBlendTex).rgb;
 #else
 	out_color = textureLod(u_isRt, uv, 0.0).rgb;
 #endif
@@ -131,7 +147,7 @@ void main()
 
 #if 0
 	{
-		out_color = bloom;
+		out_color = textureLod(u_isRt, uv, 0.0).rrr;
 	}
 #endif
 }
