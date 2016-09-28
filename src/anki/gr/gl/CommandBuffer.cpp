@@ -79,130 +79,131 @@ void CommandBuffer::finish()
 	getManager().getImplementation().getRenderingThread().finishCommandBuffer(CommandBufferPtr(this));
 }
 
-class ViewportCommand final : public GlCommand
-{
-public:
-	Array<U16, 4> m_value;
-
-	ViewportCommand(U16 a, U16 b, U16 c, U16 d)
-	{
-		m_value = {{a, b, c, d}};
-	}
-
-	Error operator()(GlState& state)
-	{
-		if(state.m_viewport[0] != m_value[0] || state.m_viewport[1] != m_value[1] || state.m_viewport[2] != m_value[2]
-			|| state.m_viewport[3] != m_value[3])
-		{
-			glViewport(m_value[0], m_value[1], m_value[2], m_value[3]);
-
-			state.m_viewport = m_value;
-		}
-
-		return ErrorCode::NONE;
-	}
-};
-
 void CommandBuffer::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 {
+	class ViewportCommand final : public GlCommand
+	{
+	public:
+		Array<U16, 4> m_value;
+
+		ViewportCommand(U16 a, U16 b, U16 c, U16 d)
+		{
+			m_value = {{a, b, c, d}};
+		}
+
+		Error operator()(GlState& state)
+		{
+			if(state.m_viewport[0] != m_value[0] || state.m_viewport[1] != m_value[1]
+				|| state.m_viewport[2] != m_value[2]
+				|| state.m_viewport[3] != m_value[3])
+			{
+				glViewport(m_value[0], m_value[1], m_value[2], m_value[3]);
+
+				state.m_viewport = m_value;
+			}
+
+			return ErrorCode::NONE;
+		}
+	};
+
 #if ANKI_ASSERTS_ENABLED
 	m_impl->m_dbg.m_viewport = true;
 #endif
 	m_impl->pushBackNewCommand<ViewportCommand>(minx, miny, maxx, maxy);
 }
 
-class SetPolygonOffsetCommand final : public GlCommand
-{
-public:
-	F32 m_factor;
-	F32 m_units;
-
-	SetPolygonOffsetCommand(F32 factor, F32 units)
-		: m_factor(factor)
-		, m_units(units)
-	{
-	}
-
-	Error operator()(GlState& state)
-	{
-		if(m_factor == 0.0 && m_units == 0.0)
-		{
-			glDisable(GL_POLYGON_OFFSET_FILL);
-		}
-		else
-		{
-			glEnable(GL_POLYGON_OFFSET_FILL);
-			glPolygonOffset(m_factor, m_units);
-		}
-
-		return ErrorCode::NONE;
-	}
-};
-
 void CommandBuffer::setPolygonOffset(F32 factor, F32 units)
 {
+	class SetPolygonOffsetCommand final : public GlCommand
+	{
+	public:
+		F32 m_factor;
+		F32 m_units;
+
+		SetPolygonOffsetCommand(F32 factor, F32 units)
+			: m_factor(factor)
+			, m_units(units)
+		{
+		}
+
+		Error operator()(GlState& state)
+		{
+			if(m_factor == 0.0 && m_units == 0.0)
+			{
+				glDisable(GL_POLYGON_OFFSET_FILL);
+			}
+			else
+			{
+				glEnable(GL_POLYGON_OFFSET_FILL);
+				glPolygonOffset(m_factor, m_units);
+			}
+
+			return ErrorCode::NONE;
+		}
+	};
+
 #if ANKI_ASSERTS_ENABLED
 	m_impl->m_dbg.m_polygonOffset = true;
 #endif
 	m_impl->pushBackNewCommand<SetPolygonOffsetCommand>(factor, units);
 }
 
-class BindPipelineCommand final : public GlCommand
-{
-public:
-	PipelinePtr m_ppline;
-
-	BindPipelineCommand(PipelinePtr& ppline)
-		: m_ppline(ppline)
-	{
-	}
-
-	Error operator()(GlState& state)
-	{
-		if(state.m_lastPplineBoundUuid != m_ppline->getUuid())
-		{
-			ANKI_TRACE_START_EVENT(GL_BIND_PPLINE);
-
-			PipelineImpl& impl = m_ppline->getImplementation();
-			impl.bind(state);
-			state.m_lastPplineBoundUuid = m_ppline->getUuid();
-			ANKI_TRACE_INC_COUNTER(GR_PIPELINE_BINDS_HAPPENED, 1);
-
-			ANKI_TRACE_STOP_EVENT(GL_BIND_PPLINE);
-		}
-		else
-		{
-			ANKI_TRACE_INC_COUNTER(GR_PIPELINE_BINDS_SKIPPED, 1);
-		}
-
-		return ErrorCode::NONE;
-	}
-};
-
 void CommandBuffer::bindPipeline(PipelinePtr ppline)
 {
+	class BindPipelineCommand final : public GlCommand
+	{
+	public:
+		PipelinePtr m_ppline;
+
+		BindPipelineCommand(PipelinePtr& ppline)
+			: m_ppline(ppline)
+		{
+		}
+
+		Error operator()(GlState& state)
+		{
+			if(state.m_lastPplineBoundUuid != m_ppline->getUuid())
+			{
+				ANKI_TRACE_START_EVENT(GL_BIND_PPLINE);
+
+				PipelineImpl& impl = m_ppline->getImplementation();
+				impl.bind(state);
+				state.m_lastPplineBoundUuid = m_ppline->getUuid();
+				ANKI_TRACE_INC_COUNTER(GR_PIPELINE_BINDS_HAPPENED, 1);
+
+				ANKI_TRACE_STOP_EVENT(GL_BIND_PPLINE);
+			}
+			else
+			{
+				ANKI_TRACE_INC_COUNTER(GR_PIPELINE_BINDS_SKIPPED, 1);
+			}
+
+			return ErrorCode::NONE;
+		}
+	};
+
 	m_impl->pushBackNewCommand<BindPipelineCommand>(ppline);
 }
 
-class BindFramebufferCommand final : public GlCommand
-{
-public:
-	FramebufferPtr m_fb;
-
-	BindFramebufferCommand(FramebufferPtr fb)
-		: m_fb(fb)
-	{
-	}
-
-	Error operator()(GlState& state)
-	{
-		m_fb->getImplementation().bind(state);
-		return ErrorCode::NONE;
-	}
-};
-
 void CommandBuffer::beginRenderPass(FramebufferPtr fb)
 {
+	class BindFramebufferCommand final : public GlCommand
+	{
+	public:
+		FramebufferPtr m_fb;
+
+		BindFramebufferCommand(FramebufferPtr fb)
+			: m_fb(fb)
+		{
+		}
+
+		Error operator()(GlState& state)
+		{
+			m_fb->getImplementation().bind(state);
+			return ErrorCode::NONE;
+		}
+	};
+
 	ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
 #if ANKI_ASSERTS_ENABLED
 	m_impl->m_dbg.m_insideRenderPass = true;
@@ -254,161 +255,172 @@ void CommandBuffer::resetOcclusionQuery(OcclusionQueryPtr query)
 	// Nothing for GL
 }
 
-class OqBeginCommand final : public GlCommand
-{
-public:
-	OcclusionQueryPtr m_handle;
-
-	OqBeginCommand(const OcclusionQueryPtr& handle)
-		: m_handle(handle)
-	{
-	}
-
-	Error operator()(GlState&)
-	{
-		m_handle->getImplementation().begin();
-		return ErrorCode::NONE;
-	}
-};
-
 void CommandBuffer::beginOcclusionQuery(OcclusionQueryPtr query)
 {
+	class OqBeginCommand final : public GlCommand
+	{
+	public:
+		OcclusionQueryPtr m_handle;
+
+		OqBeginCommand(const OcclusionQueryPtr& handle)
+			: m_handle(handle)
+		{
+		}
+
+		Error operator()(GlState&)
+		{
+			m_handle->getImplementation().begin();
+			return ErrorCode::NONE;
+		}
+	};
+
 	m_impl->pushBackNewCommand<OqBeginCommand>(query);
 }
 
-class OqEndCommand final : public GlCommand
-{
-public:
-	OcclusionQueryPtr m_handle;
-
-	OqEndCommand(const OcclusionQueryPtr& handle)
-		: m_handle(handle)
-	{
-	}
-
-	Error operator()(GlState&)
-	{
-		m_handle->getImplementation().end();
-		return ErrorCode::NONE;
-	}
-};
-
 void CommandBuffer::endOcclusionQuery(OcclusionQueryPtr query)
 {
+	class OqEndCommand final : public GlCommand
+	{
+	public:
+		OcclusionQueryPtr m_handle;
+
+		OqEndCommand(const OcclusionQueryPtr& handle)
+			: m_handle(handle)
+		{
+		}
+
+		Error operator()(GlState&)
+		{
+			m_handle->getImplementation().end();
+			return ErrorCode::NONE;
+		}
+	};
+
 	m_impl->pushBackNewCommand<OqEndCommand>(query);
 }
 
-class TexSurfUploadCommand final : public GlCommand
-{
-public:
-	TexturePtr m_handle;
-	TextureSurfaceInfo m_surf;
-	TransientMemoryToken m_token;
-
-	TexSurfUploadCommand(const TexturePtr& handle, TextureSurfaceInfo surf, const TransientMemoryToken& token)
-		: m_handle(handle)
-		, m_surf(surf)
-		, m_token(token)
-	{
-	}
-
-	Error operator()(GlState& state)
-	{
-		void* data = state.m_manager->getImplementation().getTransientMemoryManager().getBaseAddress(m_token);
-		data = static_cast<void*>(static_cast<U8*>(data) + m_token.m_offset);
-
-		m_handle->getImplementation().writeSurface(m_surf, data, m_token.m_range);
-
-		if(m_token.m_lifetime == TransientMemoryTokenLifetime::PERSISTENT)
-		{
-			state.m_manager->getImplementation().getTransientMemoryManager().free(m_token);
-		}
-
-		return ErrorCode::NONE;
-	}
-};
-
 void CommandBuffer::uploadTextureSurface(
-	TexturePtr tex, const TextureSurfaceInfo& surf, const TransientMemoryToken& token)
+	TexturePtr tex, const TextureSurfaceInfo& surf, const TransientMemoryToken& token, DepthStencilAspectMask aspect)
 {
+	class TexSurfUploadCommand final : public GlCommand
+	{
+	public:
+		TexturePtr m_handle;
+		TextureSurfaceInfo m_surf;
+		TransientMemoryToken m_token;
+		DepthStencilAspectMask m_aspect;
+
+		TexSurfUploadCommand(const TexturePtr& handle,
+			TextureSurfaceInfo surf,
+			const TransientMemoryToken& token,
+			DepthStencilAspectMask aspect)
+			: m_handle(handle)
+			, m_surf(surf)
+			, m_token(token)
+			, m_aspect(aspect)
+		{
+		}
+
+		Error operator()(GlState& state)
+		{
+			void* data = state.m_manager->getImplementation().getTransientMemoryManager().getBaseAddress(m_token);
+			data = static_cast<void*>(static_cast<U8*>(data) + m_token.m_offset);
+
+			m_handle->getImplementation().writeSurface(m_surf, data, m_token.m_range, m_aspect);
+
+			if(m_token.m_lifetime == TransientMemoryTokenLifetime::PERSISTENT)
+			{
+				state.m_manager->getImplementation().getTransientMemoryManager().free(m_token);
+			}
+
+			return ErrorCode::NONE;
+		}
+	};
+
 	ANKI_ASSERT(tex);
 	ANKI_ASSERT(token.m_range > 0);
 	ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
 
-	m_impl->pushBackNewCommand<TexSurfUploadCommand>(tex, surf, token);
+	m_impl->pushBackNewCommand<TexSurfUploadCommand>(tex, surf, token, aspect);
 }
 
-class TexVolUploadCommand final : public GlCommand
+void CommandBuffer::uploadTextureVolume(
+	TexturePtr tex, const TextureVolumeInfo& vol, const TransientMemoryToken& token, DepthStencilAspectMask aspect)
 {
-public:
-	TexturePtr m_handle;
-	TextureVolumeInfo m_vol;
-	TransientMemoryToken m_token;
-
-	TexVolUploadCommand(const TexturePtr& handle, TextureVolumeInfo vol, const TransientMemoryToken& token)
-		: m_handle(handle)
-		, m_vol(vol)
-		, m_token(token)
+	class TexVolUploadCommand final : public GlCommand
 	{
-	}
+	public:
+		TexturePtr m_handle;
+		TextureVolumeInfo m_vol;
+		TransientMemoryToken m_token;
+		DepthStencilAspectMask m_aspect;
 
-	Error operator()(GlState& state)
-	{
-		void* data = state.m_manager->getImplementation().getTransientMemoryManager().getBaseAddress(m_token);
-		data = static_cast<void*>(static_cast<U8*>(data) + m_token.m_offset);
-
-		m_handle->getImplementation().writeVolume(m_vol, data, m_token.m_range);
-
-		if(m_token.m_lifetime == TransientMemoryTokenLifetime::PERSISTENT)
+		TexVolUploadCommand(const TexturePtr& handle,
+			TextureVolumeInfo vol,
+			const TransientMemoryToken& token,
+			DepthStencilAspectMask aspect)
+			: m_handle(handle)
+			, m_vol(vol)
+			, m_token(token)
+			, m_aspect(aspect)
 		{
-			state.m_manager->getImplementation().getTransientMemoryManager().free(m_token);
 		}
 
-		return ErrorCode::NONE;
-	}
-};
+		Error operator()(GlState& state)
+		{
+			void* data = state.m_manager->getImplementation().getTransientMemoryManager().getBaseAddress(m_token);
+			data = static_cast<void*>(static_cast<U8*>(data) + m_token.m_offset);
 
-void CommandBuffer::uploadTextureVolume(TexturePtr tex, const TextureVolumeInfo& vol, const TransientMemoryToken& token)
-{
+			m_handle->getImplementation().writeVolume(m_vol, data, m_token.m_range, m_aspect);
+
+			if(m_token.m_lifetime == TransientMemoryTokenLifetime::PERSISTENT)
+			{
+				state.m_manager->getImplementation().getTransientMemoryManager().free(m_token);
+			}
+
+			return ErrorCode::NONE;
+		}
+	};
+
 	ANKI_ASSERT(tex);
 	ANKI_ASSERT(token.m_range > 0);
 	ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
 
-	m_impl->pushBackNewCommand<TexVolUploadCommand>(tex, vol, token);
+	m_impl->pushBackNewCommand<TexVolUploadCommand>(tex, vol, token, aspect);
 }
-
-class BuffWriteCommand final : public GlCommand
-{
-public:
-	BufferPtr m_handle;
-	PtrSize m_offset;
-	TransientMemoryToken m_token;
-
-	BuffWriteCommand(const BufferPtr& handle, PtrSize offset, const TransientMemoryToken& token)
-		: m_handle(handle)
-		, m_offset(offset)
-		, m_token(token)
-	{
-	}
-
-	Error operator()(GlState& state)
-	{
-		void* data = state.m_manager->getImplementation().getTransientMemoryManager().getBaseAddress(m_token);
-		data = static_cast<void*>(static_cast<U8*>(data) + m_token.m_offset);
-
-		m_handle->getImplementation().write(data, m_offset, m_token.m_range);
-
-		if(m_token.m_lifetime == TransientMemoryTokenLifetime::PERSISTENT)
-		{
-			state.m_manager->getImplementation().getTransientMemoryManager().free(m_token);
-		}
-
-		return ErrorCode::NONE;
-	}
-};
 
 void CommandBuffer::uploadBuffer(BufferPtr buff, PtrSize offset, const TransientMemoryToken& token)
 {
+	class BuffWriteCommand final : public GlCommand
+	{
+	public:
+		BufferPtr m_handle;
+		PtrSize m_offset;
+		TransientMemoryToken m_token;
+
+		BuffWriteCommand(const BufferPtr& handle, PtrSize offset, const TransientMemoryToken& token)
+			: m_handle(handle)
+			, m_offset(offset)
+			, m_token(token)
+		{
+		}
+
+		Error operator()(GlState& state)
+		{
+			void* data = state.m_manager->getImplementation().getTransientMemoryManager().getBaseAddress(m_token);
+			data = static_cast<void*>(static_cast<U8*>(data) + m_token.m_offset);
+
+			m_handle->getImplementation().write(data, m_offset, m_token.m_range);
+
+			if(m_token.m_lifetime == TransientMemoryTokenLifetime::PERSISTENT)
+			{
+				state.m_manager->getImplementation().getTransientMemoryManager().free(m_token);
+			}
+
+			return ErrorCode::NONE;
+		}
+	};
+
 	ANKI_ASSERT(token.m_range > 0);
 	ANKI_ASSERT(buff);
 	ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
@@ -416,31 +428,38 @@ void CommandBuffer::uploadBuffer(BufferPtr buff, PtrSize offset, const Transient
 	m_impl->pushBackNewCommand<BuffWriteCommand>(buff, offset, token);
 }
 
-class GenMipsCommand final : public GlCommand
+void CommandBuffer::generateMipmaps2d(TexturePtr tex, U face, U layer, DepthStencilAspectMask aspect)
 {
-public:
-	TexturePtr m_tex;
-	U8 m_face;
-	U32 m_layer;
-
-	GenMipsCommand(const TexturePtr& tex, U face, U layer)
-		: m_tex(tex)
-		, m_face(face)
-		, m_layer(layer)
+	class GenMipsCommand final : public GlCommand
 	{
-	}
+	public:
+		TexturePtr m_tex;
+		U8 m_face;
+		U32 m_layer;
+		DepthStencilAspectMask m_aspect;
 
-	Error operator()(GlState&)
-	{
-		m_tex->getImplementation().generateMipmaps2d(m_face, m_layer);
-		return ErrorCode::NONE;
-	}
-};
+		GenMipsCommand(const TexturePtr& tex, U face, U layer, DepthStencilAspectMask aspect)
+			: m_tex(tex)
+			, m_face(face)
+			, m_layer(layer)
+			, m_aspect(aspect)
+		{
+		}
 
-void CommandBuffer::generateMipmaps2d(TexturePtr tex, U face, U layer)
-{
+		Error operator()(GlState&)
+		{
+			m_tex->getImplementation().generateMipmaps2d(m_face, m_layer, m_aspect);
+			return ErrorCode::NONE;
+		}
+	};
+
 	ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
-	m_impl->pushBackNewCommand<GenMipsCommand>(tex, face, layer);
+	m_impl->pushBackNewCommand<GenMipsCommand>(tex, face, layer, aspect);
+}
+
+void CommandBuffer::generateMipmaps3d(TexturePtr tex, DepthStencilAspectMask aspect)
+{
+	ANKI_ASSERT(!!"TODO");
 }
 
 CommandBufferInitHints CommandBuffer::computeInitHints() const
@@ -448,27 +467,27 @@ CommandBufferInitHints CommandBuffer::computeInitHints() const
 	return m_impl->computeInitHints();
 }
 
-class ExecCmdbCommand final : public GlCommand
-{
-public:
-	CommandBufferPtr m_cmdb;
-
-	ExecCmdbCommand(const CommandBufferPtr& cmdb)
-		: m_cmdb(cmdb)
-	{
-	}
-
-	Error operator()(GlState&)
-	{
-		ANKI_TRACE_START_EVENT(GL_2ND_LEVEL_CMD_BUFFER);
-		Error err = m_cmdb->getImplementation().executeAllCommands();
-		ANKI_TRACE_STOP_EVENT(GL_2ND_LEVEL_CMD_BUFFER);
-		return err;
-	}
-};
-
 void CommandBuffer::pushSecondLevelCommandBuffer(CommandBufferPtr cmdb)
 {
+	class ExecCmdbCommand final : public GlCommand
+	{
+	public:
+		CommandBufferPtr m_cmdb;
+
+		ExecCmdbCommand(const CommandBufferPtr& cmdb)
+			: m_cmdb(cmdb)
+		{
+		}
+
+		Error operator()(GlState&)
+		{
+			ANKI_TRACE_START_EVENT(GL_2ND_LEVEL_CMD_BUFFER);
+			Error err = m_cmdb->getImplementation().executeAllCommands();
+			ANKI_TRACE_STOP_EVENT(GL_2ND_LEVEL_CMD_BUFFER);
+			return err;
+		}
+	};
+
 	m_impl->pushBackNewCommand<ExecCmdbCommand>(cmdb);
 }
 
@@ -477,33 +496,33 @@ Bool CommandBuffer::isEmpty() const
 	return m_impl->isEmpty();
 }
 
-class CopyTexCommand final : public GlCommand
-{
-public:
-	TexturePtr m_src;
-	TextureSurfaceInfo m_srcSurf;
-	TexturePtr m_dest;
-	TextureSurfaceInfo m_destSurf;
-
-	CopyTexCommand(
-		TexturePtr src, const TextureSurfaceInfo& srcSurf, TexturePtr dest, const TextureSurfaceInfo& destSurf)
-		: m_src(src)
-		, m_srcSurf(srcSurf)
-		, m_dest(dest)
-		, m_destSurf(destSurf)
-	{
-	}
-
-	Error operator()(GlState&)
-	{
-		TextureImpl::copy(m_src->getImplementation(), m_srcSurf, m_dest->getImplementation(), m_destSurf);
-		return ErrorCode::NONE;
-	}
-};
-
 void CommandBuffer::copyTextureSurfaceToTextureSurface(
 	TexturePtr src, const TextureSurfaceInfo& srcSurf, TexturePtr dest, const TextureSurfaceInfo& destSurf)
 {
+	class CopyTexCommand final : public GlCommand
+	{
+	public:
+		TexturePtr m_src;
+		TextureSurfaceInfo m_srcSurf;
+		TexturePtr m_dest;
+		TextureSurfaceInfo m_destSurf;
+
+		CopyTexCommand(
+			TexturePtr src, const TextureSurfaceInfo& srcSurf, TexturePtr dest, const TextureSurfaceInfo& destSurf)
+			: m_src(src)
+			, m_srcSurf(srcSurf)
+			, m_dest(dest)
+			, m_destSurf(destSurf)
+		{
+		}
+
+		Error operator()(GlState&)
+		{
+			TextureImpl::copy(m_src->getImplementation(), m_srcSurf, m_dest->getImplementation(), m_destSurf);
+			return ErrorCode::NONE;
+		}
+	};
+
 	ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
 	m_impl->pushBackNewCommand<CopyTexCommand>(src, srcSurf, dest, destSurf);
 }
@@ -583,7 +602,8 @@ void CommandBuffer::setTextureVolumeBarrier(
 	// Do nothing
 }
 
-void CommandBuffer::clearTextureSurface(TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& clearValue)
+void CommandBuffer::clearTextureSurface(
+	TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& clearValue, DepthStencilAspectMask aspect)
 {
 	class ClearTextCommand final : public GlCommand
 	{
@@ -591,22 +611,25 @@ void CommandBuffer::clearTextureSurface(TexturePtr tex, const TextureSurfaceInfo
 		TexturePtr m_tex;
 		ClearValue m_val;
 		TextureSurfaceInfo m_surf;
+		DepthStencilAspectMask m_aspect;
 
-		ClearTextCommand(TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& val)
+		ClearTextCommand(
+			TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& val, DepthStencilAspectMask aspect)
 			: m_tex(tex)
 			, m_val(val)
 			, m_surf(surf)
+			, m_aspect(aspect)
 		{
 		}
 
 		Error operator()(GlState&)
 		{
-			m_tex->getImplementation().clear(m_surf, m_val);
+			m_tex->getImplementation().clear(m_surf, m_val, m_aspect);
 			return ErrorCode::NONE;
 		}
 	};
 
-	m_impl->pushBackNewCommand<ClearTextCommand>(tex, surf, clearValue);
+	m_impl->pushBackNewCommand<ClearTextCommand>(tex, surf, clearValue, aspect);
 }
 
 void CommandBuffer::fillBuffer(BufferPtr buff, PtrSize offset, PtrSize size, U32 value)
@@ -669,6 +692,111 @@ void CommandBuffer::writeOcclusionQueryResultToBuffer(OcclusionQueryPtr query, P
 	};
 
 	m_impl->pushBackNewCommand<WriteOcclResultToBuff>(query, offset, buff);
+}
+
+void CommandBuffer::setStencilCompareMask(FaceSelectionMask face, U32 mask)
+{
+	class SetStencilCompareMask final : public GlCommand
+	{
+	public:
+		FaceSelectionMask m_face;
+		U32 m_mask;
+
+		SetStencilCompareMask(FaceSelectionMask face, U32 mask)
+			: m_face(face)
+			, m_mask(mask)
+		{
+		}
+
+		Error operator()(GlState& state)
+		{
+			if(!!(m_face & FaceSelectionMask::FRONT) && state.m_stencilCompareMask[0] != m_mask)
+			{
+				state.m_stencilCompareMask[0] = m_mask;
+				state.m_glStencilFuncSeparateDirtyMask |= 1 << 0;
+			}
+
+			if(!!(m_face & FaceSelectionMask::BACK) && state.m_stencilCompareMask[1] != m_mask)
+			{
+				state.m_stencilCompareMask[1] = m_mask;
+				state.m_glStencilFuncSeparateDirtyMask |= 1 << 1;
+			}
+
+			return ErrorCode::NONE;
+		}
+	};
+
+	m_impl->pushBackNewCommand<SetStencilCompareMask>(face, mask);
+}
+
+void CommandBuffer::setStencilWriteMask(FaceSelectionMask face, U32 mask)
+{
+	class SetStencilWriteMask final : public GlCommand
+	{
+	public:
+		FaceSelectionMask m_face;
+		U32 m_mask;
+
+		SetStencilWriteMask(FaceSelectionMask face, U32 mask)
+			: m_face(face)
+			, m_mask(mask)
+		{
+		}
+
+		Error operator()(GlState& state)
+		{
+			if(!!(m_face & FaceSelectionMask::FRONT) && state.m_stencilWriteMask[0] != m_mask)
+			{
+				glStencilMaskSeparate(GL_FRONT, m_mask);
+				state.m_stencilWriteMask[0] = m_mask;
+			}
+
+			if(!!(m_face & FaceSelectionMask::BACK) && state.m_stencilWriteMask[1] != m_mask)
+			{
+				glStencilMaskSeparate(GL_BACK, m_mask);
+				state.m_stencilWriteMask[1] = m_mask;
+			}
+
+			return ErrorCode::NONE;
+		}
+	};
+
+	m_impl->pushBackNewCommand<SetStencilWriteMask>(face, mask);
+}
+
+void CommandBuffer::setStencilReference(FaceSelectionMask face, U32 ref)
+{
+	class SetStencilRefMask final : public GlCommand
+	{
+	public:
+		FaceSelectionMask m_face;
+		U32 m_ref;
+
+		SetStencilRefMask(FaceSelectionMask face, U32 ref)
+			: m_face(face)
+			, m_ref(ref)
+		{
+		}
+
+		Error operator()(GlState& state)
+		{
+			if(!!(m_face & FaceSelectionMask::FRONT) && state.m_stencilRef[0] != m_ref)
+			{
+				state.m_stencilRef[0] = m_ref;
+				state.m_glStencilFuncSeparateDirtyMask |= 1 << 0;
+			}
+
+			if(!!(m_face & FaceSelectionMask::BACK) && state.m_stencilRef[1] != m_ref)
+			{
+				state.m_stencilRef[1] = m_ref;
+				state.m_glStencilFuncSeparateDirtyMask |= 1 << 1;
+			}
+
+			return ErrorCode::NONE;
+		}
+	};
+
+	m_impl->pushBackNewCommand<SetStencilRefMask>(face, ref);
 }
 
 } // end namespace anki

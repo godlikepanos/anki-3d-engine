@@ -100,6 +100,22 @@ public:
 		Array<U32, 4> m_coloru;
 		Ds m_depthStencil;
 	};
+
+	ClearValue()
+	{
+		memset(this, 0, sizeof(*this));
+	}
+
+	ClearValue(const ClearValue& b)
+	{
+		operator=(b);
+	}
+
+	ClearValue& operator=(const ClearValue& b)
+	{
+		memcpy(this, &b, sizeof(*this));
+		return *this;
+	}
 };
 
 /// A way to identify a surface in a texture.

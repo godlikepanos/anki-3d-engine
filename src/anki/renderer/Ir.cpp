@@ -311,7 +311,7 @@ Error Ir::initIs()
 	pinit.m_vertex.m_bindingCount = 1;
 	pinit.m_vertex.m_bindings[0].m_stride = sizeof(F32) * 3;
 
-	pinit.m_rasterizer.m_cullMode = CullMode::FRONT;
+	pinit.m_rasterizer.m_cullMode = FaceSelectionMask::FRONT;
 
 	pinit.m_depthStencil.m_depthWriteEnabled = false;
 	pinit.m_depthStencil.m_depthCompareFunction = CompareOperation::GREATER;

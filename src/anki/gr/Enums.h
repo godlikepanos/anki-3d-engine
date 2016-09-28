@@ -42,12 +42,13 @@ enum class FillMode : U8
 	SOLID
 };
 
-enum class CullMode : U8
+enum class FaceSelectionMask : U8
 {
-	FRONT,
-	BACK,
-	FRONT_AND_BACK
+	FRONT = 1 << 0,
+	BACK = 1 << 1,
+	FRONT_AND_BACK = FRONT | BACK
 };
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(FaceSelectionMask, inline)
 
 enum class CompareOperation : U8
 {
@@ -59,6 +60,18 @@ enum class CompareOperation : U8
 	GREATER_EQUAL,
 	NOT_EQUAL,
 	NEVER
+};
+
+enum class StencilOperation : U8
+{
+	KEEP,
+	ZERO,
+	REPLACE,
+	INCREMENT_AND_CLAMP,
+	DECREMENT_AND_CLAMP,
+	INVERT,
+	INCREMENT_AND_WRAP,
+	DECREMENT_AND_WRAP,
 };
 
 enum class BlendMethod : U8
@@ -385,6 +398,16 @@ enum class BufferMapAccessBit : U8
 	WRITE = 1 << 1
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferMapAccessBit, inline)
+
+/// A way to distinguish the aspect of a depth stencil texture.
+enum class DepthStencilAspectMask : U8
+{
+	NONE = 0,
+	DEPTH = 1 << 0,
+	STENCIL = 1 << 1,
+	DEPTH_STENCIL = DEPTH | STENCIL
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DepthStencilAspectMask, inline)
 /// @}
 
 } // end namespace anki

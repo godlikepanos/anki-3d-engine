@@ -38,6 +38,24 @@ const U MAX_STORAGE_BLOCK_SIZE = 2 << 27;
 /// Converter.
 GLenum convertCompareOperation(CompareOperation in);
 
+GLenum convertStencilOperation(StencilOperation in);
+
+inline GLenum convertFaceMode(FaceSelectionMask in)
+{
+	if(in == FaceSelectionMask::FRONT)
+	{
+		return GL_FRONT;
+	}
+	else if(in == FaceSelectionMask::BACK)
+	{
+		return GL_BACK;
+	}
+	else
+	{
+		return GL_FRONT_AND_BACK;
+	}
+}
+
 void convertFilter(SamplingFilter minMagFilter, SamplingFilter mipFilter, GLenum& minFilter, GLenum& magFilter);
 /// @}
 

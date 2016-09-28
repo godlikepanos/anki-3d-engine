@@ -44,8 +44,12 @@ static GLenum convertTextureType(TextureType type)
 	return out;
 }
 
-static void convertTextureInformation(
-	const PixelFormat& pf, Bool8& compressed, GLenum& format, GLenum& internalFormat, GLenum& type)
+static void convertTextureInformation(const PixelFormat& pf,
+	Bool8& compressed,
+	GLenum& format,
+	GLenum& internalFormat,
+	GLenum& type,
+	DepthStencilAspectMask& dsAspect)
 {
 	compressed =
 		pf.m_components >= ComponentFormat::FIRST_COMPRESSED && pf.m_components <= ComponentFormat::LAST_COMPRESSED;
@@ -235,11 +239,13 @@ static void convertTextureInformation(
 		format = GL_DEPTH_COMPONENT;
 		internalFormat = GL_DEPTH_COMPONENT24;
 		type = GL_UNSIGNED_INT;
+		dsAspect = DepthStencilAspectMask::DEPTH;
 		break;
 	case ComponentFormat::D16:
 		format = GL_DEPTH_COMPONENT;
 		internalFormat = GL_DEPTH_COMPONENT16;
 		type = GL_UNSIGNED_SHORT;
+		dsAspect = DepthStencilAspectMask::DEPTH;
 		break;
 	default:
 		ANKI_ASSERT(0);
@@ -325,7 +331,7 @@ void TextureImpl::preInit(const TextureInitInfo& init)
 	m_texType = init.m_type;
 	m_pformat = init.m_format;
 
-	convertTextureInformation(init.m_format, m_compressed, m_format, m_internalFormat, m_type);
+	convertTextureInformation(init.m_format, m_compressed, m_format, m_internalFormat, m_type, m_dsAspect);
 
 	if(m_target != GL_TEXTURE_3D)
 	{
@@ -450,11 +456,13 @@ void TextureImpl::init(const TextureInitInfo& init)
 	ANKI_CHECK_GL_ERROR();
 }
 
-void TextureImpl::writeSurface(const TextureSurfaceInfo& surf, void* data, PtrSize dataSize)
+void TextureImpl::writeSurface(
+	const TextureSurfaceInfo& surf, void* data, PtrSize dataSize, DepthStencilAspectMask aspect)
 {
 	checkSurface(surf);
 	ANKI_ASSERT(data);
 	ANKI_ASSERT(dataSize > 0);
+	ANKI_ASSERT(!aspect && "TODO");
 
 	U mipmap = surf.m_level;
 	U surfIdx = computeSurfaceIdx(surf);
@@ -506,12 +514,13 @@ void TextureImpl::writeSurface(const TextureSurfaceInfo& surf, void* data, PtrSi
 	ANKI_CHECK_GL_ERROR();
 }
 
-void TextureImpl::writeVolume(const TextureVolumeInfo& vol, void* data, PtrSize dataSize)
+void TextureImpl::writeVolume(const TextureVolumeInfo& vol, void* data, PtrSize dataSize, DepthStencilAspectMask aspect)
 {
 	checkVolume(vol);
 	ANKI_ASSERT(data);
 	ANKI_ASSERT(dataSize > 0);
 	ANKI_ASSERT(m_texType == TextureType::_3D);
+	ANKI_ASSERT(!aspect && "TODO");
 
 	U mipmap = vol.m_level;
 	U w = m_width >> mipmap;
@@ -535,10 +544,11 @@ void TextureImpl::writeVolume(const TextureVolumeInfo& vol, void* data, PtrSize 
 	ANKI_CHECK_GL_ERROR();
 }
 
-void TextureImpl::generateMipmaps2d(U face, U layer)
+void TextureImpl::generateMipmaps2d(U face, U layer, DepthStencilAspectMask aspect)
 {
 	U surface = computeSurfaceIdx(TextureSurfaceInfo(0, 0, face, layer));
 	ANKI_ASSERT(!m_compressed);
+	ANKI_ASSERT(aspect == m_dsAspect && "For now");
 
 	if(m_surfaceCountPerLevel > 1)
 	{
@@ -613,17 +623,40 @@ void TextureImpl::copy(const TextureImpl& src,
 		1);
 }
 
-void TextureImpl::clear(const TextureSurfaceInfo& surf, const ClearValue& clearValue)
+void TextureImpl::clear(const TextureSurfaceInfo& surf, const ClearValue& clearValue, DepthStencilAspectMask aspect)
 {
 	ANKI_ASSERT(isCreated());
 	ANKI_ASSERT(surf.m_level < m_mipsCount);
+	ANKI_ASSERT((aspect & m_dsAspect) == aspect);
+
+	// Find the aspect to clear
+	GLenum format;
+	if(aspect == DepthStencilAspectMask::DEPTH)
+	{
+		ANKI_ASSERT(m_format == GL_DEPTH_COMPONENT || m_format == GL_DEPTH_STENCIL);
+		format = GL_DEPTH_COMPONENT;
+	}
+	else if(aspect == DepthStencilAspectMask::STENCIL)
+	{
+		ANKI_ASSERT(m_format == GL_STENCIL_INDEX || m_format == GL_DEPTH_STENCIL);
+		format = GL_STENCIL_INDEX;
+	}
+	else if(aspect == DepthStencilAspectMask::DEPTH_STENCIL)
+	{
+		ANKI_ASSERT(m_format == GL_DEPTH_STENCIL);
+		format = GL_DEPTH_STENCIL;
+	}
+	else
+	{
+		format = m_format;
+	}
 
 	U surfaceIdx = computeSurfaceIdx(surf);
 	U width = m_width >> surf.m_level;
 	U height = m_height >> surf.m_level;
 
 	glClearTexSubImage(
-		m_glName, surf.m_level, 0, 0, surfaceIdx, width, height, 1, m_format, GL_FLOAT, &clearValue.m_colorf[0]);
+		m_glName, surf.m_level, 0, 0, surfaceIdx, width, height, 1, format, GL_FLOAT, &clearValue.m_colorf[0]);
 }
 
 U TextureImpl::computeSurfaceIdx(const TextureSurfaceInfo& surf) const

@@ -42,6 +42,7 @@ private:
 	Array<GLenum, MAX_COLOR_ATTACHMENTS + 1> m_invalidateBuffers;
 	U8 m_invalidateBuffersCount = 0;
 	Bool8 m_bindDefault = false;
+	DepthStencilAspectMask m_dsAspect = DepthStencilAspectMask::NONE;
 
 	/// Attach a texture
 	static void attachTextureInternal(GLenum attachment, const TextureImpl& tex, const FramebufferAttachmentInfo& info);

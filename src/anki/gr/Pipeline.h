@@ -62,14 +62,33 @@ class RasterizerStateInfo
 {
 public:
 	FillMode m_fillMode = FillMode::SOLID;
-	CullMode m_cullMode = CullMode::BACK;
+	FaceSelectionMask m_cullMode = FaceSelectionMask::BACK;
 };
 
+class StencilStateInfo
+{
+public:
+	StencilOperation m_stencilFailOperation = StencilOperation::KEEP;
+	StencilOperation m_stencilPassDepthFailOperation = StencilOperation::KEEP;
+	StencilOperation m_stencilPassDepthPassOperation = StencilOperation::KEEP;
+	CompareOperation m_compareFunction = CompareOperation::ALWAYS;
+};
+
+/// Depth stencil state.
+/// To disable depth test set m_depthWriteEnabled to false and m_depthCompareFunction to always.
+/// To disable stencil test leave m_stencilFront and m_stencilBack as is.
 class DepthStencilStateInfo
 {
 public:
+	// Depth
 	Bool8 m_depthWriteEnabled = true;
 	CompareOperation m_depthCompareFunction = CompareOperation::LESS;
+
+	// Stencil
+	StencilStateInfo m_stencilFront;
+	StencilStateInfo m_stencilBack;
+
+	// Common
 	PixelFormat m_format;
 
 	Bool isInUse() const

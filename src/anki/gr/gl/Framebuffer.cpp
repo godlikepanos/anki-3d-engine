@@ -20,33 +20,34 @@ Framebuffer::~Framebuffer()
 {
 }
 
-class CreateFramebufferCommand final : public GlCommand
-{
-public:
-	FramebufferPtr m_fb;
-	FramebufferInitInfo m_init;
-
-	CreateFramebufferCommand(Framebuffer* handle, const FramebufferInitInfo& init)
-		: m_fb(handle)
-		, m_init(init)
-	{
-	}
-
-	Error operator()(GlState&)
-	{
-		FramebufferImpl& impl = m_fb->getImplementation();
-		Error err = impl.init(m_init);
-
-		GlObject::State oldState = impl.setStateAtomically((err) ? GlObject::State::ERROR : GlObject::State::CREATED);
-		ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
-		(void)oldState;
-
-		return err;
-	}
-};
-
 void Framebuffer::init(const FramebufferInitInfo& init)
 {
+	class CreateFramebufferCommand final : public GlCommand
+	{
+	public:
+		FramebufferPtr m_fb;
+		FramebufferInitInfo m_init;
+
+		CreateFramebufferCommand(Framebuffer* handle, const FramebufferInitInfo& init)
+			: m_fb(handle)
+			, m_init(init)
+		{
+		}
+
+		Error operator()(GlState&)
+		{
+			FramebufferImpl& impl = m_fb->getImplementation();
+			Error err = impl.init(m_init);
+
+			GlObject::State oldState =
+				impl.setStateAtomically((err) ? GlObject::State::ERROR : GlObject::State::CREATED);
+			ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
+			(void)oldState;
+
+			return err;
+		}
+	};
+
 	m_impl.reset(getAllocator().newInstance<FramebufferImpl>(&getManager()));
 
 	CommandBufferPtr cmdb = getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());

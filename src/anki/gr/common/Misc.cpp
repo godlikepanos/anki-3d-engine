@@ -7,6 +7,7 @@
 #include <anki/gr/Framebuffer.h>
 #include <anki/gr/Texture.h>
 #include <anki/util/StringList.h>
+#include <anki/gr/Pipeline.h>
 
 namespace anki
 {
@@ -231,6 +232,14 @@ PtrSize computeVolumeSize(U width, U height, U depth, const PixelFormat& fmt)
 	{
 		return width * height * depth * texelBytes;
 	}
+}
+
+Bool stencilTestDisabled(const StencilStateInfo& inf)
+{
+	return inf.m_stencilFailOperation == StencilOperation::KEEP
+		&& inf.m_stencilPassDepthFailOperation == StencilOperation::KEEP
+		&& inf.m_stencilPassDepthPassOperation == StencilOperation::KEEP
+		&& inf.m_compareFunction == CompareOperation::ALWAYS;
 }
 
 } // end namespace anki

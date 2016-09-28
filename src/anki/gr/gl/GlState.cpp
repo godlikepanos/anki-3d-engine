@@ -160,4 +160,19 @@ void GlState::flushVertexState()
 	}
 }
 
+void GlState::flushStencilState()
+{
+	if(m_glStencilFuncSeparateDirtyMask & 1)
+	{
+		glStencilFuncSeparate(GL_FRONT, m_stencilCompareFunc[0], m_stencilRef[0], m_stencilCompareMask[0]);
+		m_glStencilFuncSeparateDirtyMask &= ~1u;
+	}
+
+	if(m_glStencilFuncSeparateDirtyMask & 2)
+	{
+		glStencilFuncSeparate(GL_BACK, m_stencilCompareFunc[1], m_stencilRef[1], m_stencilCompareMask[1]);
+		m_glStencilFuncSeparateDirtyMask &= ~2u;
+	}
+}
+
 } // end namespace anki

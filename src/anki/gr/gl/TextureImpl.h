@@ -34,6 +34,7 @@ public:
 	Bool8 m_compressed = false;
 	PixelFormat m_pformat;
 	DynamicArray<GLuint> m_texViews; ///< Temp views for gen mips.
+	DepthStencilAspectMask m_dsAspect = DepthStencilAspectMask::NONE;
 
 	TextureImpl(GrManager* manager)
 		: GlObject(manager)
@@ -60,13 +61,13 @@ public:
 	void init(const TextureInitInfo& init);
 
 	/// Write texture data.
-	void writeSurface(const TextureSurfaceInfo& surf, void* data, PtrSize dataSize);
+	void writeSurface(const TextureSurfaceInfo& surf, void* data, PtrSize dataSize, DepthStencilAspectMask aspect);
 
 	/// Write texture data.
-	void writeVolume(const TextureVolumeInfo& vol, void* data, PtrSize dataSize);
+	void writeVolume(const TextureVolumeInfo& vol, void* data, PtrSize dataSize, DepthStencilAspectMask aspect);
 
 	/// Generate mipmaps.
-	void generateMipmaps2d(U face, U layer);
+	void generateMipmaps2d(U face, U layer, DepthStencilAspectMask aspect);
 
 	/// Copy a single surface from one texture to another.
 	static void copy(const TextureImpl& src,
@@ -76,7 +77,7 @@ public:
 
 	void bind();
 
-	void clear(const TextureSurfaceInfo& surf, const ClearValue& clearValue);
+	void clear(const TextureSurfaceInfo& surf, const ClearValue& clearValue, DepthStencilAspectMask aspect);
 
 	U computeSurfaceIdx(const TextureSurfaceInfo& surf) const;
 };

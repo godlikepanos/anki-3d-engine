@@ -10,6 +10,9 @@
 namespace anki
 {
 
+// Forward
+class StencilStateInfo;
+
 enum class TransientBufferType
 {
 	UNIFORM,
@@ -83,5 +86,7 @@ PtrSize computeSurfaceSize(U width, U height, const PixelFormat& fmt);
 
 /// Compute the size of the volume.
 PtrSize computeVolumeSize(U width, U height, U depth, const PixelFormat& fmt);
+
+Bool stencilTestDisabled(const StencilStateInfo& inf);
 
 } // end namespace anki

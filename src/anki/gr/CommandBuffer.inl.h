@@ -10,7 +10,7 @@ namespace anki
 {
 
 inline void CommandBuffer::uploadTextureSurfaceData(
-	TexturePtr tex, const TextureSurfaceInfo& surf, void*& data, PtrSize& dataSize)
+	TexturePtr tex, const TextureSurfaceInfo& surf, void*& data, PtrSize& dataSize, DepthStencilAspectMask aspect)
 {
 	PtrSize allocationSize;
 	const BufferUsageBit usage = BufferUsageBit::TEXTURE_UPLOAD_SOURCE;
@@ -20,11 +20,11 @@ inline void CommandBuffer::uploadTextureSurfaceData(
 	TransientMemoryToken token;
 	data = getManager().allocateFrameTransientMemory(allocationSize, usage, token);
 
-	uploadTextureSurface(tex, surf, token);
+	uploadTextureSurface(tex, surf, token, aspect);
 }
 
 inline void CommandBuffer::tryUploadTextureSurfaceData(
-	TexturePtr tex, const TextureSurfaceInfo& surf, void*& data, PtrSize& dataSize)
+	TexturePtr tex, const TextureSurfaceInfo& surf, void*& data, PtrSize& dataSize, DepthStencilAspectMask aspect)
 {
 	PtrSize allocationSize;
 	const BufferUsageBit usage = BufferUsageBit::TEXTURE_UPLOAD_SOURCE;
@@ -36,12 +36,12 @@ inline void CommandBuffer::tryUploadTextureSurfaceData(
 
 	if(data)
 	{
-		uploadTextureSurface(tex, surf, token);
+		uploadTextureSurface(tex, surf, token, aspect);
 	}
 }
 
 inline void CommandBuffer::uploadTextureSurfaceCopyData(
-	TexturePtr tex, const TextureSurfaceInfo& surf, void* data, PtrSize dataSize)
+	TexturePtr tex, const TextureSurfaceInfo& surf, void* data, PtrSize dataSize, DepthStencilAspectMask aspect)
 {
 	PtrSize allocationSize;
 	const BufferUsageBit usage = BufferUsageBit::TEXTURE_UPLOAD_SOURCE;
@@ -52,11 +52,11 @@ inline void CommandBuffer::uploadTextureSurfaceCopyData(
 	void* ptr = getManager().allocateFrameTransientMemory(allocationSize, usage, token);
 	memcpy(ptr, data, dataSize);
 
-	uploadTextureSurface(tex, surf, token);
+	uploadTextureSurface(tex, surf, token, aspect);
 }
 
 inline void CommandBuffer::uploadTextureVolumeCopyData(
-	TexturePtr tex, const TextureVolumeInfo& vol, void* data, PtrSize dataSize)
+	TexturePtr tex, const TextureVolumeInfo& vol, void* data, PtrSize dataSize, DepthStencilAspectMask aspect)
 {
 	PtrSize allocationSize;
 	const BufferUsageBit usage = BufferUsageBit::TEXTURE_UPLOAD_SOURCE;
@@ -67,7 +67,7 @@ inline void CommandBuffer::uploadTextureVolumeCopyData(
 	void* ptr = getManager().allocateFrameTransientMemory(allocationSize, usage, token);
 	memcpy(ptr, data, dataSize);
 
-	uploadTextureVolume(tex, vol, token);
+	uploadTextureVolume(tex, vol, token, aspect);
 }
 
 } // end namespace anki

@@ -23,6 +23,7 @@ public:
 	TexturePtr m_texture;
 	SamplerPtr m_sampler; ///< Use it to override texture's sampler.
 	TextureUsageBit m_usage = TextureUsageBit::SAMPLED_FRAGMENT;
+	DepthStencilAspectMask m_aspect = DepthStencilAspectMask::NONE; ///< Relevant only for depth stencil textures.
 };
 
 /// Buffer binding info.

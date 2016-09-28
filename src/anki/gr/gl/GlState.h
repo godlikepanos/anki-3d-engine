@@ -66,6 +66,14 @@ public:
 		{{true, true, true, true}},
 		{{true, true, true, true}}}};
 	Bool m_depthWriteMask = true;
+
+	// Stencil
+	Array<GLenum, 2> m_stencilCompareFunc = {{GL_ALWAYS, GL_ALWAYS}}; ///< Pipeline sets it
+	Array<U32, 2> m_stencilRef = {{0, 0}}; ///< CommandBuffer sets it
+	Array<U32, 2> m_stencilCompareMask = {{MAX_U32, MAX_U32}}; ///< CommandBuffer sets it
+	U8 m_glStencilFuncSeparateDirtyMask = 0;
+
+	Array<U32, 2> m_stencilWriteMask = {{MAX_U32, MAX_U32}}; ///< Framebuffer wants that.
 	/// @}
 
 	GlState(GrManager* manager)
@@ -83,6 +91,7 @@ public:
 	void destroy();
 
 	void flushVertexState();
+	void flushStencilState();
 };
 /// @}
 

@@ -42,6 +42,43 @@ GLenum convertCompareOperation(CompareOperation in)
 	return out;
 }
 
+GLenum convertStencilOperation(StencilOperation in)
+{
+	GLenum out = GL_NONE;
+
+	switch(in)
+	{
+	case StencilOperation::KEEP:
+		out = GL_KEEP;
+		break;
+	case StencilOperation::ZERO:
+		out = GL_ZERO;
+		break;
+	case StencilOperation::REPLACE:
+		out = GL_REPLACE;
+		break;
+	case StencilOperation::INCREMENT_AND_CLAMP:
+		out = GL_INCR;
+		break;
+	case StencilOperation::DECREMENT_AND_CLAMP:
+		out = GL_DECR;
+		break;
+	case StencilOperation::INVERT:
+		out = GL_INVERT;
+		break;
+	case StencilOperation::INCREMENT_AND_WRAP:
+		out = GL_INCR_WRAP;
+		break;
+	case StencilOperation::DECREMENT_AND_WRAP:
+		out = GL_DECR_WRAP;
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+
+	return out;
+}
+
 void convertFilter(SamplingFilter minMagFilter, SamplingFilter mipFilter, GLenum& minFilter, GLenum& magFilter)
 {
 	switch(minMagFilter)

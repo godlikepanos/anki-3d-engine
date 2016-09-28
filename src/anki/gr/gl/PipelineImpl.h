@@ -51,6 +51,7 @@ private:
 	Bool8 m_compute = false; ///< Is compute
 	Bool8 m_tessellation = false;
 	Bool8 m_blendEnabled = false;
+	Bool8 m_stencilTestEnabled = false;
 
 	/// Input values.
 	PipelineInitInfo m_in;
@@ -66,6 +67,11 @@ private:
 		Bool8 m_depthWrite = false;
 		GLenum m_depthCompareFunction = 0;
 		Array<Attachment, MAX_COLOR_ATTACHMENTS> m_attachments;
+
+		Array<GLenum, 2> m_stencilFailOp = {{0, 0}};
+		Array<GLenum, 2> m_stencilPassDepthFailOp = {{0, 0}};
+		Array<GLenum, 2> m_stencilPassDepthPassOp = {{0, 0}};
+		Array<GLenum, 2> m_stencilCompareFunc = {{0, 0}};
 	} m_cache;
 
 	/// State hashes.

@@ -140,6 +140,15 @@ public:
 	/// Set depth offset and units.
 	void setPolygonOffset(F32 factor, F32 units);
 
+	/// Set the stencil compare mask.
+	void setStencilCompareMask(FaceSelectionMask face, U32 mask);
+
+	/// Set the stencil write mask.
+	void setStencilWriteMask(FaceSelectionMask face, U32 mask);
+
+	/// Set the stencil reference.
+	void setStencilReference(FaceSelectionMask face, U32 ref);
+
 	/// Bind pipeline.
 	void bindPipeline(PipelinePtr ppline);
 
@@ -166,22 +175,44 @@ public:
 	void dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ);
 
 	/// Generate mipmaps for non-3D textures.
-	void generateMipmaps2d(TexturePtr tex, U face, U layer);
+	/// @param tex The texture to generate mips.
+	/// @param face The face of a cube texture or zero.
+	/// @param layer The layer of an array texture or zero.
+	/// @param aspect The aspect of the depth stencil texture. Relevant only for depth stencil textures.
+	void generateMipmaps2d(
+		TexturePtr tex, U face, U layer, DepthStencilAspectMask aspect = DepthStencilAspectMask::NONE);
 
 	/// Generate mipmaps only for 3D textures.
-	void generateMipmaps3d(TexturePtr tex);
+	/// @param tex The texture to generate mips.
+	/// @param aspect The aspect of the depth stencil texture. Relevant only for depth stencil textures.
+	void generateMipmaps3d(TexturePtr tex, DepthStencilAspectMask aspect = DepthStencilAspectMask::NONE);
 
+	// TODO Rename to blit
 	void copyTextureSurfaceToTextureSurface(
 		TexturePtr src, const TextureSurfaceInfo& srcSurf, TexturePtr dest, const TextureSurfaceInfo& destSurf);
 
 	void copyTextureVolumeToTextureVolume(
 		TexturePtr src, const TextureVolumeInfo& srcVol, TexturePtr dest, const TextureVolumeInfo& destVol);
 
-	void clearTexture(TexturePtr tex, const ClearValue& clearValue);
+	/// Clear a single texture surface. Can be used for all textures except 3D.
+	/// @param tex The texture to clear.
+	/// @param surf The surface to clear.
+	/// @param clearValue The value to clear it with.
+	/// @param aspect The aspect of the depth stencil texture. Relevant only for depth stencil textures.
+	void clearTextureSurface(TexturePtr tex,
+		const TextureSurfaceInfo& surf,
+		const ClearValue& clearValue,
+		DepthStencilAspectMask aspect = DepthStencilAspectMask::NONE);
 
-	void clearTextureSurface(TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& clearValue);
-
-	void clearTextureVolume(TexturePtr tex, const TextureVolumeInfo& vol, const ClearValue& clearValue);
+	/// Clear a volume out of a 3D texture.
+	/// @param tex The texture to clear.
+	/// @param vol The volume to clear.
+	/// @param clearValue The value to clear it with.
+	/// @param aspect The aspect of the depth stencil texture. Relevant only for depth stencil textures.
+	void clearTextureVolume(TexturePtr tex,
+		const TextureVolumeInfo& vol,
+		const ClearValue& clearValue,
+		DepthStencilAspectMask aspect = DepthStencilAspectMask::NONE);
 
 	/// Fill a buffer with some value.
 	/// @param[in,out] buff The buffer to fill.
@@ -201,25 +232,47 @@ public:
 	/// @{
 
 	/// Upload data to a texture surface. It's the base of all texture surface upload methods.
-	void uploadTextureSurface(TexturePtr tex, const TextureSurfaceInfo& surf, const TransientMemoryToken& token);
+	void uploadTextureSurface(TexturePtr tex,
+		const TextureSurfaceInfo& surf,
+		const TransientMemoryToken& token,
+		DepthStencilAspectMask aspect = DepthStencilAspectMask::NONE);
 
 	/// Same as uploadTextureSurface but it will perform the transient allocation as well. If that allocation fails
 	/// expect the defaul OOM behaviour (crash).
-	void uploadTextureSurfaceData(TexturePtr tex, const TextureSurfaceInfo& surf, void*& data, PtrSize& dataSize);
+	void uploadTextureSurfaceData(TexturePtr tex,
+		const TextureSurfaceInfo& surf,
+		void*& data,
+		PtrSize& dataSize,
+		DepthStencilAspectMask aspect = DepthStencilAspectMask::NONE);
 
 	/// Same as uploadTextureSurfaceData but it will return a nullptr in @a data if there is a OOM condition.
-	void tryUploadTextureSurfaceData(TexturePtr tex, const TextureSurfaceInfo& surf, void*& data, PtrSize& dataSize);
+	void tryUploadTextureSurfaceData(TexturePtr tex,
+		const TextureSurfaceInfo& surf,
+		void*& data,
+		PtrSize& dataSize,
+		DepthStencilAspectMask aspect = DepthStencilAspectMask::NONE);
 
 	/// Same as uploadTextureSurface but it will perform the transient allocation and copy to it the @a data. If that
 	/// allocation fails expect the defaul OOM behaviour (crash).
-	void uploadTextureSurfaceCopyData(TexturePtr tex, const TextureSurfaceInfo& surf, void* data, PtrSize dataSize);
+	void uploadTextureSurfaceCopyData(TexturePtr tex,
+		const TextureSurfaceInfo& surf,
+		void* data,
+		PtrSize dataSize,
+		DepthStencilAspectMask aspect = DepthStencilAspectMask::NONE);
 
 	/// Upload data to a texture volume. It's the base of all texture volume upload methods.
-	void uploadTextureVolume(TexturePtr tex, const TextureVolumeInfo& vol, const TransientMemoryToken& token);
+	void uploadTextureVolume(TexturePtr tex,
+		const TextureVolumeInfo& vol,
+		const TransientMemoryToken& token,
+		DepthStencilAspectMask aspect = DepthStencilAspectMask::NONE);
 
 	/// Same as uploadTextureVolume but it will perform the transient allocation and copy to it the @a data. If that
 	/// allocation fails expect the defaul OOM behaviour (crash).
-	void uploadTextureVolumeCopyData(TexturePtr tex, const TextureVolumeInfo& surf, void* data, PtrSize dataSize);
+	void uploadTextureVolumeCopyData(TexturePtr tex,
+		const TextureVolumeInfo& surf,
+		void* data,
+		PtrSize dataSize,
+		DepthStencilAspectMask aspect = DepthStencilAspectMask::NONE);
 
 	/// Upload data to a buffer.
 	void uploadBuffer(BufferPtr buff, PtrSize offset, const TransientMemoryToken& token);

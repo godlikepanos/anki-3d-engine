@@ -158,6 +158,7 @@ void CommandBufferImpl::drawElements(U32 count, U32 instanceCount, U32 firstInde
 			};
 
 			state.flushVertexState();
+			state.flushStencilState();
 			glDrawElementsInstancedBaseVertexBaseInstance(state.m_topology,
 				m_info.m_count,
 				indicesType,
@@ -195,6 +196,7 @@ void CommandBufferImpl::drawArrays(U32 count, U32 instanceCount, U32 first, U32 
 		Error operator()(GlState& state)
 		{
 			state.flushVertexState();
+			state.flushStencilState();
 			glDrawArraysInstancedBaseInstance(
 				state.m_topology, m_info.m_first, m_info.m_count, m_info.m_instanceCount, m_info.m_baseInstance);
 
@@ -231,6 +233,7 @@ void CommandBufferImpl::drawElementsIndirect(U32 drawCount, PtrSize offset, Buff
 		Error operator()(GlState& state)
 		{
 			state.flushVertexState();
+			state.flushStencilState();
 			const BufferImpl& buff = m_buff->getImplementation();
 
 			ANKI_ASSERT(m_offset + sizeof(DrawElementsIndirectInfo) * m_drawCount <= buff.m_size);
@@ -287,6 +290,7 @@ void CommandBufferImpl::drawArraysIndirect(U32 drawCount, PtrSize offset, Buffer
 		Error operator()(GlState& state)
 		{
 			state.flushVertexState();
+			state.flushStencilState();
 			const BufferImpl& buff = m_buff->getImplementation();
 
 			ANKI_ASSERT(m_offset + sizeof(DrawArraysIndirectInfo) * m_drawCount <= buff.m_size);

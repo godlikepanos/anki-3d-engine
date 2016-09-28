@@ -6,6 +6,7 @@
 #include <anki/gr/gl/PipelineImpl.h>
 #include <anki/gr/gl/ShaderImpl.h>
 #include <anki/gr/gl/GlState.h>
+#include <anki/gr/common/Misc.h>
 #include <anki/util/Logger.h>
 #include <anki/util/Hash.h>
 
@@ -345,13 +346,13 @@ void PipelineImpl::initRasterizerState()
 
 	switch(m_in.m_rasterizer.m_cullMode)
 	{
-	case CullMode::FRONT:
+	case FaceSelectionMask::FRONT:
 		m_cache.m_cullMode = GL_FRONT;
 		break;
-	case CullMode::BACK:
+	case FaceSelectionMask::BACK:
 		m_cache.m_cullMode = GL_BACK;
 		break;
-	case CullMode::FRONT_AND_BACK:
+	case FaceSelectionMask::FRONT_AND_BACK:
 		m_cache.m_cullMode = GL_FRONT_AND_BACK;
 		break;
 	default:
@@ -363,9 +364,32 @@ void PipelineImpl::initRasterizerState()
 
 void PipelineImpl::initDepthStencilState()
 {
-	m_cache.m_depthCompareFunction = convertCompareOperation(m_in.m_depthStencil.m_depthCompareFunction);
+	const auto& ds = m_in.m_depthStencil;
 
-	m_hashes.m_depthStencil = computeHash(&m_in.m_depthStencil, sizeof(m_in.m_depthStencil));
+	// Depth
+	m_cache.m_depthCompareFunction = convertCompareOperation(ds.m_depthCompareFunction);
+
+	// Stencil
+	m_cache.m_stencilFailOp[0] = convertStencilOperation(ds.m_stencilFront.m_stencilFailOperation);
+	m_cache.m_stencilPassDepthFailOp[0] = convertStencilOperation(ds.m_stencilFront.m_stencilPassDepthFailOperation);
+	m_cache.m_stencilPassDepthPassOp[0] = convertStencilOperation(ds.m_stencilFront.m_stencilPassDepthPassOperation);
+	m_cache.m_stencilCompareFunc[0] = convertCompareOperation(ds.m_stencilFront.m_compareFunction);
+
+	m_cache.m_stencilFailOp[1] = convertStencilOperation(ds.m_stencilBack.m_stencilFailOperation);
+	m_cache.m_stencilPassDepthFailOp[1] = convertStencilOperation(ds.m_stencilBack.m_stencilPassDepthFailOperation);
+	m_cache.m_stencilPassDepthPassOp[1] = convertStencilOperation(ds.m_stencilBack.m_stencilPassDepthPassOperation);
+	m_cache.m_stencilCompareFunc[1] = convertCompareOperation(ds.m_stencilBack.m_compareFunction);
+
+	if(stencilTestDisabled(ds.m_stencilFront) && stencilTestDisabled(ds.m_stencilBack))
+	{
+		m_stencilTestEnabled = false;
+	}
+	else
+	{
+		m_stencilTestEnabled = true;
+	}
+
+	m_hashes.m_depthStencil = computeHash(&ds, sizeof(ds));
 }
 
 void PipelineImpl::initColorState()
@@ -502,6 +526,7 @@ void PipelineImpl::setDepthStencilState(GlState& state) const
 
 	state.m_stateHashes.m_depthStencil = m_hashes.m_depthStencil;
 
+	// Depth
 	glDepthMask(m_in.m_depthStencil.m_depthWriteEnabled);
 	state.m_depthWriteMask = m_in.m_depthStencil.m_depthWriteEnabled;
 
@@ -515,6 +540,34 @@ void PipelineImpl::setDepthStencilState(GlState& state) const
 	}
 
 	glDepthFunc(m_cache.m_depthCompareFunction);
+
+	// Stencil
+	if(m_stencilTestEnabled)
+	{
+		glEnable(GL_STENCIL_TEST);
+	}
+	else
+	{
+		glDisable(GL_STENCIL_TEST);
+	}
+
+	glStencilOpSeparate(
+		GL_FRONT, m_cache.m_stencilFailOp[0], m_cache.m_stencilPassDepthFailOp[0], m_cache.m_stencilPassDepthPassOp[0]);
+
+	glStencilOpSeparate(
+		GL_BACK, m_cache.m_stencilFailOp[1], m_cache.m_stencilPassDepthFailOp[1], m_cache.m_stencilPassDepthPassOp[1]);
+
+	if(state.m_stencilCompareFunc[0] != m_cache.m_stencilCompareFunc[0])
+	{
+		state.m_stencilCompareFunc[0] = m_cache.m_stencilCompareFunc[0];
+		state.m_glStencilFuncSeparateDirtyMask |= 1 << 0;
+	}
+
+	if(state.m_stencilCompareFunc[1] != m_cache.m_stencilCompareFunc[1])
+	{
+		state.m_stencilCompareFunc[1] = m_cache.m_stencilCompareFunc[1];
+		state.m_glStencilFuncSeparateDirtyMask |= 1 << 1;
+	}
 }
 
 void PipelineImpl::setColorState(GlState& state) const
