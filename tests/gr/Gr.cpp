@@ -266,7 +266,7 @@ void main()
 	delete gr;                                                                                                         \
 	delete win;
 
-const PixelFormat DS_FORMAT = PixelFormat(ComponentFormat::D24, TransformFormat::UNORM);
+const PixelFormat DS_FORMAT = PixelFormat(ComponentFormat::D24S8, TransformFormat::UNORM);
 
 static NativeWindow* createWindow()
 {

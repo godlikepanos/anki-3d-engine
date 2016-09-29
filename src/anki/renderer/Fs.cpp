@@ -42,6 +42,7 @@ Error Fs::init(const ConfigSet&)
 	fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::LOAD;
 	fbInit.m_depthStencilAttachment.m_usageInsideRenderPass =
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
+	fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectMask::DEPTH;
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 	// Init the global resources

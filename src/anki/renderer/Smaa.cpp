@@ -43,6 +43,7 @@ Error SmaaEdge::init(const ConfigSet& initializer)
 
 	ppinit.m_depthStencil.m_depthWriteEnabled = false;
 	ppinit.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
+	ppinit.m_depthStencil.m_stencilFront.m_stencilPassDepthPassOperation = StencilOperation::REPLACE;
 
 	ppinit.m_color.m_attachmentCount = 1;
 	ppinit.m_color.m_attachments[0].m_format = EDGE_PIXEL_FORMAT;
@@ -67,6 +68,9 @@ Error SmaaEdge::init(const ConfigSet& initializer)
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
 	fbInit.m_colorAttachments[0].m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
+	fbInit.m_depthStencilAttachment.m_texture = m_r->getSmaa().m_stencilTex;
+	fbInit.m_depthStencilAttachment.m_stencilLoadOperation = AttachmentLoadOperation::CLEAR;
+	fbInit.m_depthStencilAttachment.m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 	m_fb = gr.newInstance<Framebuffer>(fbInit);
 
 	// Create RC group
@@ -89,6 +93,11 @@ void SmaaEdge::setPostRunBarriers(RenderingContext& ctx)
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		TextureUsageBit::SAMPLED_FRAGMENT,
 		TextureSurfaceInfo(0, 0, 0, 0));
+
+	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_r->getSmaa().m_stencilTex,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+		TextureSurfaceInfo(0, 0, 0, 0));
 }
 
 void SmaaEdge::run(RenderingContext& ctx)
@@ -98,10 +107,12 @@ void SmaaEdge::run(RenderingContext& ctx)
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 	cmdb->bindResourceGroup(m_rcgroup, 0, nullptr);
 	cmdb->bindPipeline(m_ppline);
+	cmdb->setStencilCompareMask(FaceSelectionMask::FRONT, 0xF);
+	cmdb->setStencilWriteMask(FaceSelectionMask::FRONT, 0xF);
+	cmdb->setStencilReference(FaceSelectionMask::FRONT, 0xF);
+
 	cmdb->beginRenderPass(m_fb);
-
 	cmdb->drawArrays(3);
-
 	cmdb->endRenderPass();
 }
 
@@ -138,6 +149,7 @@ Error SmaaWeights::init(const ConfigSet& initializer)
 
 	ppinit.m_color.m_attachmentCount = 1;
 	ppinit.m_color.m_attachments[0].m_format = WEIGHTS_PIXEL_FORMAT;
+	ppinit.m_depthStencil.m_stencilFront.m_compareFunction = CompareOperation::EQUAL;
 
 	ppinit.m_shaders[ShaderType::VERTEX] = m_vert->getGrShader();
 	ppinit.m_shaders[ShaderType::FRAGMENT] = m_frag->getGrShader();
@@ -159,6 +171,9 @@ Error SmaaWeights::init(const ConfigSet& initializer)
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
 	fbInit.m_colorAttachments[0].m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
+	fbInit.m_depthStencilAttachment.m_texture = m_r->getSmaa().m_stencilTex;
+	fbInit.m_depthStencilAttachment.m_stencilLoadOperation = AttachmentLoadOperation::LOAD;
+	fbInit.m_depthStencilAttachment.m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
 	m_fb = gr.newInstance<Framebuffer>(fbInit);
 
 	// Create Area texture
@@ -174,19 +189,11 @@ Error SmaaWeights::init(const ConfigSet& initializer)
 		texinit.m_usage = TextureUsageBit::UPLOAD | TextureUsageBit::SAMPLED_FRAGMENT;
 		texinit.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
 		texinit.m_sampling.m_repeat = false;
-
 		m_areaTex = gr.newInstance<Texture>(texinit);
-
-		Array<U8, AREATEX_SIZE> tmpBuff;
-		for(U y = 0; y < AREATEX_HEIGHT; ++y)
-		{
-			U srcY = AREATEX_HEIGHT - 1 - y;
-			memcpy(&tmpBuff[y * AREATEX_PITCH], areaTexBytes + srcY * AREATEX_PITCH, AREATEX_PITCH);
-		}
 
 		const TextureSurfaceInfo surf(0, 0, 0, 0);
 		cmdb->setTextureSurfaceBarrier(m_areaTex, TextureUsageBit::NONE, TextureUsageBit::UPLOAD, surf);
-		cmdb->uploadTextureSurfaceCopyData(m_areaTex, surf, &tmpBuff[0], sizeof(tmpBuff));
+		cmdb->uploadTextureSurfaceCopyData(m_areaTex, surf, &areaTexBytes[0], sizeof(areaTexBytes));
 		cmdb->setTextureSurfaceBarrier(m_areaTex, TextureUsageBit::UPLOAD, TextureUsageBit::SAMPLED_FRAGMENT, surf);
 	}
 
@@ -199,19 +206,11 @@ Error SmaaWeights::init(const ConfigSet& initializer)
 		texinit.m_usage = TextureUsageBit::UPLOAD | TextureUsageBit::SAMPLED_FRAGMENT;
 		texinit.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
 		texinit.m_sampling.m_repeat = false;
-
 		m_searchTex = gr.newInstance<Texture>(texinit);
-
-		Array<U8, SEARCHTEX_SIZE> tmpBuff;
-		for(U y = 0; y < SEARCHTEX_HEIGHT; ++y)
-		{
-			U srcY = SEARCHTEX_HEIGHT - 1 - y;
-			memcpy(&tmpBuff[y * SEARCHTEX_PITCH], searchTexBytes + srcY * SEARCHTEX_PITCH, SEARCHTEX_PITCH);
-		}
 
 		const TextureSurfaceInfo surf(0, 0, 0, 0);
 		cmdb->setTextureSurfaceBarrier(m_searchTex, TextureUsageBit::NONE, TextureUsageBit::UPLOAD, surf);
-		cmdb->uploadTextureSurfaceCopyData(m_searchTex, surf, &tmpBuff[0], sizeof(tmpBuff));
+		cmdb->uploadTextureSurfaceCopyData(m_searchTex, surf, &searchTexBytes[0], sizeof(searchTexBytes));
 		cmdb->setTextureSurfaceBarrier(m_searchTex, TextureUsageBit::UPLOAD, TextureUsageBit::SAMPLED_FRAGMENT, surf);
 	}
 	cmdb->flush();
@@ -247,11 +246,28 @@ void SmaaWeights::run(RenderingContext& ctx)
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 	cmdb->bindResourceGroup(m_rcgroup, 0, nullptr);
 	cmdb->bindPipeline(m_ppline);
+	cmdb->setStencilCompareMask(FaceSelectionMask::FRONT, 0xF);
+	cmdb->setStencilWriteMask(FaceSelectionMask::FRONT, 0x0);
+	cmdb->setStencilReference(FaceSelectionMask::FRONT, 0xF);
+
 	cmdb->beginRenderPass(m_fb);
-
 	cmdb->drawArrays(3);
-
 	cmdb->endRenderPass();
+}
+
+Error Smaa::init(const ConfigSet& cfg)
+{
+	TextureInitInfo texinit;
+	texinit.m_format = PixelFormat(ComponentFormat::S8, TransformFormat::UINT);
+	texinit.m_width = m_r->getWidth();
+	texinit.m_height = m_r->getHeight();
+	texinit.m_usage = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
+	m_stencilTex = getGrManager().newInstance<Texture>(texinit);
+
+	m_qualityPerset = "ULTRA";
+	ANKI_CHECK(m_edge.init(cfg));
+	ANKI_CHECK(m_weights.init(cfg));
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

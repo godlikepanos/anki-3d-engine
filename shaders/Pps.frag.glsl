@@ -147,7 +147,7 @@ void main()
 
 #if 0
 	{
-		out_color = textureLod(u_isRt, uv, 0.0).rrr;
+		out_color = textureLod(u_smaaBlendTex, uv, 0.0).rgb;
 	}
 #endif
 }

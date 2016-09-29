@@ -20,6 +20,9 @@ GLenum convertCompareOperation(CompareOperation in)
 	case CompareOperation::LESS:
 		out = GL_LESS;
 		break;
+	case CompareOperation::EQUAL:
+		out = GL_EQUAL;
+		break;
 	case CompareOperation::LESS_EQUAL:
 		out = GL_LEQUAL;
 		break;

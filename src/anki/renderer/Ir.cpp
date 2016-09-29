@@ -180,6 +180,7 @@ void Ir::initFaceInfo(U cacheEntryIdx, U faceIdx)
 	}
 
 	fbInit.m_depthStencilAttachment.m_texture = face.m_gbufferDepthRt;
+	fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectMask::DEPTH;
 	fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
 	fbInit.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0;
 	fbInit.m_depthStencilAttachment.m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
@@ -199,6 +200,7 @@ void Ir::initFaceInfo(U cacheEntryIdx, U faceIdx)
 	fbInit.m_depthStencilAttachment.m_texture = face.m_gbufferDepthRt;
 	fbInit.m_depthStencilAttachment.m_usageInsideRenderPass =
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ | TextureUsageBit::SAMPLED_FRAGMENT;
+	fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectMask::DEPTH;
 
 	face.m_isFb = getGrManager().newInstance<Framebuffer>(fbInit);
 

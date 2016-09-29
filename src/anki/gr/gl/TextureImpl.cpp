@@ -235,17 +235,23 @@ static void convertTextureInformation(const PixelFormat& pf,
 			ANKI_ASSERT(0 && "TODO");
 		}
 		break;
-	case ComponentFormat::D24:
-		format = GL_DEPTH_COMPONENT;
-		internalFormat = GL_DEPTH_COMPONENT24;
+	case ComponentFormat::D24S8:
+		format = GL_DEPTH_STENCIL;
+		internalFormat = GL_DEPTH24_STENCIL8;
 		type = GL_UNSIGNED_INT;
-		dsAspect = DepthStencilAspectMask::DEPTH;
+		dsAspect = DepthStencilAspectMask::DEPTH_STENCIL;
 		break;
 	case ComponentFormat::D16:
 		format = GL_DEPTH_COMPONENT;
 		internalFormat = GL_DEPTH_COMPONENT16;
 		type = GL_UNSIGNED_SHORT;
 		dsAspect = DepthStencilAspectMask::DEPTH;
+		break;
+	case ComponentFormat::S8:
+		format = GL_STENCIL_INDEX;
+		internalFormat = GL_STENCIL_INDEX8;
+		type = GL_BYTE;
+		dsAspect = DepthStencilAspectMask::STENCIL;
 		break;
 	default:
 		ANKI_ASSERT(0);

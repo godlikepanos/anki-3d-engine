@@ -79,6 +79,7 @@ Error Ms::createRt(U32 samples)
 	fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
 	fbInit.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0;
 	fbInit.m_depthStencilAttachment.m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
+	fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectMask::DEPTH;
 
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 

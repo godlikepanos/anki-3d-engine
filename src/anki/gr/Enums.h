@@ -141,10 +141,11 @@ enum class ComponentFormat : U8
 	R8G8B8A8_S3TC, ///< DXT5
 	R8G8B8A8_ETC2,
 
-	// Depth
+	// Depth & stencil
 	D16,
-	D24,
+	D24S8,
 	D32,
+	S8,
 
 	// Limits
 	FIRST_COMPRESSED = R8G8B8_S3TC,

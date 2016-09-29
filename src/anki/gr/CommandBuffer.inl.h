@@ -41,7 +41,7 @@ inline void CommandBuffer::tryUploadTextureSurfaceData(
 }
 
 inline void CommandBuffer::uploadTextureSurfaceCopyData(
-	TexturePtr tex, const TextureSurfaceInfo& surf, void* data, PtrSize dataSize, DepthStencilAspectMask aspect)
+	TexturePtr tex, const TextureSurfaceInfo& surf, const void* data, PtrSize dataSize, DepthStencilAspectMask aspect)
 {
 	PtrSize allocationSize;
 	const BufferUsageBit usage = BufferUsageBit::TEXTURE_UPLOAD_SOURCE;
@@ -56,7 +56,7 @@ inline void CommandBuffer::uploadTextureSurfaceCopyData(
 }
 
 inline void CommandBuffer::uploadTextureVolumeCopyData(
-	TexturePtr tex, const TextureVolumeInfo& vol, void* data, PtrSize dataSize, DepthStencilAspectMask aspect)
+	TexturePtr tex, const TextureVolumeInfo& vol, const void* data, PtrSize dataSize, DepthStencilAspectMask aspect)
 {
 	PtrSize allocationSize;
 	const BufferUsageBit usage = BufferUsageBit::TEXTURE_UPLOAD_SOURCE;

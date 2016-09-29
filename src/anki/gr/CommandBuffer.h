@@ -256,7 +256,7 @@ public:
 	/// allocation fails expect the defaul OOM behaviour (crash).
 	void uploadTextureSurfaceCopyData(TexturePtr tex,
 		const TextureSurfaceInfo& surf,
-		void* data,
+		const void* data,
 		PtrSize dataSize,
 		DepthStencilAspectMask aspect = DepthStencilAspectMask::NONE);
 
@@ -270,7 +270,7 @@ public:
 	/// allocation fails expect the defaul OOM behaviour (crash).
 	void uploadTextureVolumeCopyData(TexturePtr tex,
 		const TextureVolumeInfo& surf,
-		void* data,
+		const void* data,
 		PtrSize dataSize,
 		DepthStencilAspectMask aspect = DepthStencilAspectMask::NONE);
 

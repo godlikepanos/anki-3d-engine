@@ -73,6 +73,7 @@ anki_internal:
 	SmaaEdge m_edge;
 	SmaaWeights m_weights;
 	CString m_qualityPerset;
+	TexturePtr m_stencilTex;
 
 	Smaa(Renderer* r)
 		: RenderingPass(r)
@@ -85,13 +86,7 @@ anki_internal:
 	{
 	}
 
-	ANKI_USE_RESULT Error init(const ConfigSet& cfg)
-	{
-		m_qualityPerset = "ULTRA";
-		ANKI_CHECK(m_edge.init(cfg));
-		ANKI_CHECK(m_weights.init(cfg));
-		return ErrorCode::NONE;
-	}
+	ANKI_USE_RESULT Error init(const ConfigSet& cfg);
 };
 /// @}
 

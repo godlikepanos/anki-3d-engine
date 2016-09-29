@@ -177,7 +177,7 @@ void getFormatInfo(const PixelFormat& fmt, U& texelComponents, U& texelBytes, U&
 		texelComponents = 1;
 		texelBytes = texelComponents * 2;
 		break;
-	case ComponentFormat::D24:
+	case ComponentFormat::D24S8:
 		texelComponents = 1;
 		texelBytes = texelComponents * 4;
 		break;

@@ -61,7 +61,7 @@ const U MS_COLOR_ATTACHMENT_COUNT = 3;
 
 extern const Array<PixelFormat, MS_COLOR_ATTACHMENT_COUNT> MS_COLOR_ATTACHMENT_PIXEL_FORMATS;
 
-const PixelFormat MS_DEPTH_ATTACHMENT_PIXEL_FORMAT(ComponentFormat::D24, TransformFormat::UNORM);
+const PixelFormat MS_DEPTH_ATTACHMENT_PIXEL_FORMAT(ComponentFormat::D24S8, TransformFormat::UNORM);
 
 const PixelFormat IS_COLOR_ATTACHMENT_PIXEL_FORMAT(ComponentFormat::R11G11B10, TransformFormat::FLOAT);
 

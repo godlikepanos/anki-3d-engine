@@ -50,6 +50,7 @@ Error HalfDepth::init(const ConfigSet&)
 	fbInit.m_depthStencilAttachment.m_texture = m_depthRt;
 	fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::DONT_CARE;
 	fbInit.m_depthStencilAttachment.m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
+	fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectMask::DEPTH;
 
 	m_fb = gr.newInstance<Framebuffer>(fbInit);
 
