@@ -61,13 +61,13 @@ public:
 	void init(const TextureInitInfo& init);
 
 	/// Write texture data.
-	void writeSurface(const TextureSurfaceInfo& surf, void* data, PtrSize dataSize, DepthStencilAspectMask aspect);
+	void writeSurface(const TextureSurfaceInfo& surf, void* data, PtrSize dataSize);
 
 	/// Write texture data.
-	void writeVolume(const TextureVolumeInfo& vol, void* data, PtrSize dataSize, DepthStencilAspectMask aspect);
+	void writeVolume(const TextureVolumeInfo& vol, void* data, PtrSize dataSize);
 
 	/// Generate mipmaps.
-	void generateMipmaps2d(U face, U layer, DepthStencilAspectMask aspect);
+	void generateMipmaps2d(U face, U layer);
 
 	/// Copy a single surface from one texture to another.
 	static void copy(const TextureImpl& src,

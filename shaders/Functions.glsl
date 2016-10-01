@@ -53,4 +53,20 @@ vec4 projectPerspective(in vec4 vec, in float m00, in float m11, in float m22, i
 	return o;
 }
 
+// Stolen from shadertoy.com/view/4tyGDD
+vec4 textureCatmullRom4Samples(sampler2D tex, vec2 uv, vec2 texSize)
+{
+	vec2 halff = 2.0 * fract(0.5 * uv * texSize - 0.25) - 1.0;
+	vec2 f = fract(halff);
+	vec2 sum0 = (2.0 * f - 3.5) * f + 0.5;
+	vec2 sum1 = (2.0 * f - 2.5) * f - 0.5;
+	vec4 w = vec4(f * sum0 + 1.0, f * sum1);
+	vec4 pos = vec4((((-2.0 * f + 3.0) * f + 0.5) * f - 1.5) * f / (w.xy * texSize) + uv,
+		(((-2.0 * f + 5.0) * f - 2.5) * f - 0.5) / (sum1 * texSize) + uv);
+	w.xz *= halff.x * halff.y > 0.0 ? 1.0 : -1.0;
+
+	return (texture(tex, pos.xy) * w.x + texture(tex, pos.zy) * w.z) * w.y
+		+ (texture(tex, pos.xw) * w.x + texture(tex, pos.zw) * w.z) * w.w;
+}
+
 #endif

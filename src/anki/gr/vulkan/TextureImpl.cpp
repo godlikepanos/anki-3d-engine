@@ -137,6 +137,15 @@ Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 	m_aspect = convertImageAspect(m_format);
 	m_usage = init.m_usage;
 
+	if(m_aspect & VK_IMAGE_ASPECT_DEPTH_BIT)
+	{
+		m_akAspect |= DepthStencilAspectMask::DEPTH;
+	}
+	if(m_aspect & VK_IMAGE_ASPECT_STENCIL_BIT)
+	{
+		m_akAspect |= DepthStencilAspectMask::STENCIL;
+	}
+
 	ANKI_CHECK(initImage(init));
 
 	// Init the template
@@ -578,32 +587,33 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 	return out;
 }
 
-VkImageView TextureImpl::getOrCreateSingleSurfaceView(const TextureSurfaceInfo& surf)
+VkImageView TextureImpl::getOrCreateSingleSurfaceView(const TextureSurfaceInfo& surf, DepthStencilAspectMask aspect)
 {
 	checkSurface(surf);
 
 	VkImageViewCreateInfo ci = m_viewCreateInfoTemplate;
 	ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
-	computeSubResourceRange(surf, ci.subresourceRange);
+	computeSubResourceRange(surf, aspect, ci.subresourceRange);
 
 	return getOrCreateView(ci);
 }
 
-VkImageView TextureImpl::getOrCreateSingleLevelView(U level)
+VkImageView TextureImpl::getOrCreateSingleLevelView(U level, DepthStencilAspectMask aspect)
 {
 	ANKI_ASSERT(level < m_mipCount);
 
 	VkImageViewCreateInfo ci = m_viewCreateInfoTemplate;
 	ci.subresourceRange.baseMipLevel = level;
 	ci.subresourceRange.levelCount = 1;
+	ci.subresourceRange.aspectMask = convertAspect(aspect);
 
 	return getOrCreateView(ci);
 }
 
-VkImageView TextureImpl::getOrCreateResourceGroupView()
+VkImageView TextureImpl::getOrCreateResourceGroupView(DepthStencilAspectMask aspect)
 {
 	VkImageViewCreateInfo ci = m_viewCreateInfoTemplate;
-	ci.subresourceRange.aspectMask = m_aspect & (~VK_IMAGE_ASPECT_STENCIL_BIT);
+	ci.subresourceRange.aspectMask = convertAspect(aspect);
 
 	return getOrCreateView(ci);
 }

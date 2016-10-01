@@ -29,7 +29,7 @@ FramebufferImpl::~FramebufferImpl()
 
 Error FramebufferImpl::init(const FramebufferInitInfo& init)
 {
-	ANKI_ASSERT(framebufferInitInfoValid(init));
+	ANKI_ASSERT(initInfoValid(init));
 	m_defaultFramebuffer = init.refersToDefaultFramebuffer();
 
 	ANKI_CHECK(initRenderPass(init));
@@ -57,10 +57,14 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 
 	if(init.m_depthStencilAttachment.m_texture.isCreated())
 	{
-		if(init.m_depthStencilAttachment.m_loadOperation == AttachmentLoadOperation::CLEAR)
+		if(init.m_depthStencilAttachment.m_loadOperation == AttachmentLoadOperation::CLEAR
+			|| init.m_depthStencilAttachment.m_stencilLoadOperation == AttachmentLoadOperation::CLEAR)
 		{
 			m_clearVals[m_attachmentCount].depthStencil.depth =
 				init.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth;
+
+			m_clearVals[m_attachmentCount].depthStencil.stencil =
+				init.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_stencil;
 		}
 		else
 		{
@@ -71,6 +75,28 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 	}
 
 	return ErrorCode::NONE;
+}
+
+Bool FramebufferImpl::initInfoValid(const FramebufferInitInfo& inf)
+{
+	if(!framebufferInitInfoValid(inf))
+	{
+		return false;
+	}
+
+	if(inf.m_depthStencilAttachment.m_texture)
+	{
+		const TextureImpl& impl = inf.m_depthStencilAttachment.m_texture->getImplementation();
+		if(impl.m_akAspect == DepthStencilAspectMask::DEPTH_STENCIL)
+		{
+			if(inf.m_depthStencilAttachment.m_aspect == DepthStencilAspectMask::NONE)
+			{
+				return false;
+			}
+		}
+	}
+
+	return true;
 }
 
 void FramebufferImpl::setupAttachmentDescriptor(const FramebufferAttachmentInfo& att, VkAttachmentDescription& desc)
@@ -93,8 +119,8 @@ void FramebufferImpl::setupAttachmentDescriptor(const FramebufferAttachmentInfo&
 	desc.samples = VK_SAMPLE_COUNT_1_BIT;
 	desc.loadOp = convertLoadOp(att.m_loadOperation);
 	desc.storeOp = convertStoreOp(att.m_storeOperation);
-	desc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	desc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	desc.stencilLoadOp = convertLoadOp(att.m_stencilLoadOperation);
+	desc.stencilStoreOp = convertStoreOp(att.m_stencilStoreOperation);
 	desc.initialLayout = layout;
 	desc.finalLayout = layout;
 }
@@ -190,7 +216,7 @@ Error FramebufferImpl::initFramebuffer(const FramebufferInitInfo& init)
 			const FramebufferAttachmentInfo& att = init.m_colorAttachments[i];
 			TextureImpl& tex = att.m_texture->getImplementation();
 
-			attachments[count] = tex.getOrCreateSingleSurfaceView(att.m_surface);
+			attachments[count] = tex.getOrCreateSingleSurfaceView(att.m_surface, att.m_aspect);
 
 			if(m_width == 0)
 			{
@@ -206,7 +232,7 @@ Error FramebufferImpl::initFramebuffer(const FramebufferInitInfo& init)
 			const FramebufferAttachmentInfo& att = init.m_depthStencilAttachment;
 			TextureImpl& tex = att.m_texture->getImplementation();
 
-			attachments[count] = tex.getOrCreateSingleSurfaceView(att.m_surface);
+			attachments[count] = tex.getOrCreateSingleSurfaceView(att.m_surface, att.m_aspect);
 
 			if(m_width == 0)
 			{

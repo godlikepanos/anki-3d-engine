@@ -41,9 +41,6 @@ public:
 		}
 
 		m_vertex.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-		m_vertex.pVertexBindingDescriptions = &m_bindings[0];
-		m_vertex.pVertexAttributeDescriptions = &m_attribs[0];
-
 		m_ia.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 		m_tess.sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
 		m_vp.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -51,7 +48,6 @@ public:
 		m_ms.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 		m_ds.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
 		m_color.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-		m_color.pAttachments = &m_attachments[0];
 		m_dyn.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 	}
 };
@@ -69,8 +65,11 @@ PipelineImpl::~PipelineImpl()
 Error PipelineImpl::initGraphics(const PipelineInitInfo& init)
 {
 	FilledGraphicsPipelineCreateInfo ci = FILLED;
-
+	ci.m_vertex.pVertexBindingDescriptions = &ci.m_bindings[0];
+	ci.m_vertex.pVertexAttributeDescriptions = &ci.m_attribs[0];
+	ci.m_color.pAttachments = &ci.m_attachments[0];
 	ci.pStages = &ci.m_stages[0];
+
 	initShaders(init, ci);
 
 	// Init sub-states
@@ -215,7 +214,7 @@ VkPipelineRasterizationStateCreateInfo* PipelineImpl::initRasterizerState(
 	ci.polygonMode = convertFillMode(r.m_fillMode);
 	ci.cullMode = convertCullMode(r.m_cullMode);
 	ci.frontFace = VK_FRONT_FACE_CLOCKWISE; // Use CW to workaround Vulkan's y flip
-	ci.depthBiasEnable = VK_TRUE; // TODO
+	ci.depthBiasEnable = VK_TRUE;
 	ci.lineWidth = 1.0;
 
 	return &ci;
@@ -230,20 +229,29 @@ VkPipelineMultisampleStateCreateInfo* PipelineImpl::initMsState(VkPipelineMultis
 VkPipelineDepthStencilStateCreateInfo* PipelineImpl::initDsState(
 	const DepthStencilStateInfo& ds, VkPipelineDepthStencilStateCreateInfo& ci)
 {
+	VkPipelineDepthStencilStateCreateInfo* out = nullptr;
+
 	if(ds.isInUse())
 	{
 		ci.depthTestEnable = (ds.m_depthCompareFunction != CompareOperation::ALWAYS) || ds.m_depthWriteEnabled;
 		ci.depthWriteEnable = ds.m_depthWriteEnabled;
 		ci.depthCompareOp = convertCompareOp(ds.m_depthCompareFunction);
 		ci.depthBoundsTestEnable = VK_FALSE;
-		ci.stencilTestEnable = VK_FALSE; // For now no stencil
 
-		return &ci;
+		ci.stencilTestEnable = !(stencilTestDisabled(ds.m_stencilFront) && stencilTestDisabled(ds.m_stencilBack));
+		ci.front.failOp = convertStencilOp(ds.m_stencilFront.m_stencilFailOperation);
+		ci.front.passOp = convertStencilOp(ds.m_stencilFront.m_stencilPassDepthPassOperation);
+		ci.front.depthFailOp = convertStencilOp(ds.m_stencilFront.m_stencilPassDepthFailOperation);
+		ci.front.compareOp = convertCompareOp(ds.m_stencilFront.m_compareFunction);
+		ci.back.failOp = convertStencilOp(ds.m_stencilBack.m_stencilFailOperation);
+		ci.back.passOp = convertStencilOp(ds.m_stencilBack.m_stencilPassDepthPassOperation);
+		ci.back.depthFailOp = convertStencilOp(ds.m_stencilBack.m_stencilPassDepthFailOperation);
+		ci.back.compareOp = convertCompareOp(ds.m_stencilBack.m_compareFunction);
+
+		out = &ci;
 	}
-	else
-	{
-		return nullptr;
-	}
+
+	return out;
 }
 
 VkPipelineColorBlendStateCreateInfo* PipelineImpl::initColorState(

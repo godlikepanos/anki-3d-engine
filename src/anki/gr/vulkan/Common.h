@@ -55,19 +55,6 @@ class GrManagerImpl;
 		}                                                                                                              \
 	} while(0)
 
-ANKI_USE_RESULT inline Bool formatIsDepthStencil(PixelFormat fmt)
-{
-	if(fmt.m_components == ComponentFormat::D16 || fmt.m_components == ComponentFormat::D24
-		|| fmt.m_components == ComponentFormat::D32)
-	{
-		return true;
-	}
-	else
-	{
-		return false;
-	}
-}
-
 /// Convert compare op.
 ANKI_USE_RESULT VkCompareOp convertCompareOp(CompareOperation ak);
 
@@ -77,6 +64,12 @@ ANKI_USE_RESULT VkFormat convertFormat(PixelFormat ak);
 /// Get format aspect mask.
 ANKI_USE_RESULT VkImageAspectFlags convertImageAspect(PixelFormat ak);
 
+ANKI_USE_RESULT inline Bool formatIsDepthStencil(PixelFormat fmt)
+{
+	VkImageAspectFlags aspect = convertImageAspect(fmt);
+	return !!(aspect & (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT));
+}
+
 /// Convert topology.
 ANKI_USE_RESULT VkPrimitiveTopology convertTopology(PrimitiveTopology ak);
 
@@ -84,7 +77,7 @@ ANKI_USE_RESULT VkPrimitiveTopology convertTopology(PrimitiveTopology ak);
 ANKI_USE_RESULT VkPolygonMode convertFillMode(FillMode ak);
 
 /// Convert cull mode.
-ANKI_USE_RESULT VkCullModeFlags convertCullMode(CullMode ak);
+ANKI_USE_RESULT VkCullModeFlags convertCullMode(FaceSelectionMask ak);
 
 /// Convert blend method.
 ANKI_USE_RESULT VkBlendFactor convertBlendMethod(BlendMethod ak);
@@ -112,6 +105,8 @@ ANKI_USE_RESULT VkImageType convertTextureType(TextureType ak);
 ANKI_USE_RESULT VkImageViewType convertTextureViewType(TextureType ak);
 
 ANKI_USE_RESULT VkImageUsageFlags convertTextureUsage(TextureUsageBit ak, const PixelFormat& format);
+
+ANKI_USE_RESULT VkStencilOp convertStencilOp(StencilOperation ak);
 /// @}
 
 } // end namespace anki

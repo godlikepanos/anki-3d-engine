@@ -197,9 +197,9 @@ static const ConvertFormat CONVERT_FORMAT_TABLE[] = {ANKI_FMT(NONE, NONE, VK_FOR
 	ANKI_FMT(D16, UNORM, VK_FORMAT_D16_UNORM, D),
 	ANKI_FMT(NONE, NONE, VK_FORMAT_X8_D24_UNORM_PACK32, DS),
 	ANKI_FMT(D32, FLOAT, VK_FORMAT_D32_SFLOAT, D),
-	ANKI_FMT(NONE, NONE, VK_FORMAT_S8_UINT, S),
+	ANKI_FMT(S8, UINT, VK_FORMAT_S8_UINT, S),
 	ANKI_FMT(NONE, NONE, VK_FORMAT_D16_UNORM_S8_UINT, DS),
-	ANKI_FMT(D24, UNORM, VK_FORMAT_D24_UNORM_S8_UINT, DS),
+	ANKI_FMT(D24S8, UNORM, VK_FORMAT_D24_UNORM_S8_UINT, DS),
 	ANKI_FMT(NONE, NONE, VK_FORMAT_D32_SFLOAT_S8_UINT, C),
 	ANKI_FMT(R8G8B8_S3TC, UNORM, VK_FORMAT_BC1_RGB_UNORM_BLOCK, C),
 	ANKI_FMT(NONE, NONE, VK_FORMAT_BC1_RGB_SRGB_BLOCK, C),
@@ -346,18 +346,18 @@ VkPolygonMode convertFillMode(FillMode ak)
 	return out;
 }
 
-VkCullModeFlags convertCullMode(CullMode ak)
+VkCullModeFlags convertCullMode(FaceSelectionMask ak)
 {
 	VkCullModeFlags out = 0;
 	switch(ak)
 	{
-	case CullMode::FRONT:
+	case FaceSelectionMask::FRONT:
 		out = VK_CULL_MODE_FRONT_BIT;
 		break;
-	case CullMode::BACK:
+	case FaceSelectionMask::BACK:
 		out = VK_CULL_MODE_BACK_BIT;
 		break;
-	case CullMode::FRONT_AND_BACK:
+	case FaceSelectionMask::FRONT_AND_BACK:
 		out = VK_CULL_MODE_FRONT_BIT | VK_CULL_MODE_BACK_BIT;
 		break;
 	default:
@@ -646,6 +646,43 @@ VkImageUsageFlags convertTextureUsage(TextureUsageBit ak, const PixelFormat& for
 	}
 
 	ANKI_ASSERT(out);
+	return out;
+}
+
+VkStencilOp convertStencilOp(StencilOperation ak)
+{
+	VkStencilOp out = VK_STENCIL_OP_MAX_ENUM;
+
+	switch(ak)
+	{
+	case StencilOperation::KEEP:
+		out = VK_STENCIL_OP_KEEP;
+		break;
+	case StencilOperation::ZERO:
+		out = VK_STENCIL_OP_ZERO;
+		break;
+	case StencilOperation::REPLACE:
+		out = VK_STENCIL_OP_REPLACE;
+		break;
+	case StencilOperation::INCREMENT_AND_CLAMP:
+		out = VK_STENCIL_OP_INCREMENT_AND_CLAMP;
+		break;
+	case StencilOperation::DECREMENT_AND_CLAMP:
+		out = VK_STENCIL_OP_DECREMENT_AND_CLAMP;
+		break;
+	case StencilOperation::INVERT:
+		out = VK_STENCIL_OP_INVERT;
+		break;
+	case StencilOperation::INCREMENT_AND_WRAP:
+		out = VK_STENCIL_OP_INCREMENT_AND_WRAP;
+		break;
+	case StencilOperation::DECREMENT_AND_WRAP:
+		out = VK_STENCIL_OP_DECREMENT_AND_WRAP;
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+
 	return out;
 }
 

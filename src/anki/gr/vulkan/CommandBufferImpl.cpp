@@ -259,7 +259,7 @@ void CommandBufferImpl::generateMipmaps2d(TexturePtr tex, U face, U layer)
 		if(i > 0)
 		{
 			VkImageSubresourceRange range;
-			impl.computeSubResourceRange(TextureSurfaceInfo(i, 0, face, layer), range);
+			impl.computeSubResourceRange(TextureSurfaceInfo(i, 0, face, layer), impl.m_akAspect, range);
 
 			setImageBarrier(VK_PIPELINE_STAGE_TRANSFER_BIT,
 				VK_ACCESS_TRANSFER_WRITE_BIT,
@@ -274,7 +274,7 @@ void CommandBufferImpl::generateMipmaps2d(TexturePtr tex, U face, U layer)
 		// Transition destination
 		{
 			VkImageSubresourceRange range;
-			impl.computeSubResourceRange(TextureSurfaceInfo(i + 1, 0, face, layer), range);
+			impl.computeSubResourceRange(TextureSurfaceInfo(i + 1, 0, face, layer), impl.m_akAspect, range);
 
 			setImageBarrier(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
 				0,
@@ -313,14 +313,14 @@ void CommandBufferImpl::generateMipmaps2d(TexturePtr tex, U face, U layer)
 		}
 
 		VkImageBlit blit;
-		blit.srcSubresource.aspectMask = impl.m_aspect & (~VK_IMAGE_ASPECT_STENCIL_BIT);
+		blit.srcSubresource.aspectMask = impl.m_aspect;
 		blit.srcSubresource.baseArrayLayer = vkLayer;
 		blit.srcSubresource.layerCount = 1;
 		blit.srcSubresource.mipLevel = i;
 		blit.srcOffsets[0] = {0, 0, 0};
 		blit.srcOffsets[1] = {srcWidth, srcHeight, 1};
 
-		blit.dstSubresource.aspectMask = impl.m_aspect & (~VK_IMAGE_ASPECT_STENCIL_BIT);
+		blit.dstSubresource.aspectMask = impl.m_aspect;
 		blit.dstSubresource.baseArrayLayer = vkLayer;
 		blit.dstSubresource.layerCount = 1;
 		blit.dstSubresource.mipLevel = i + 1;

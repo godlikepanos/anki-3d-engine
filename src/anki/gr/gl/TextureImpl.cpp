@@ -462,13 +462,11 @@ void TextureImpl::init(const TextureInitInfo& init)
 	ANKI_CHECK_GL_ERROR();
 }
 
-void TextureImpl::writeSurface(
-	const TextureSurfaceInfo& surf, void* data, PtrSize dataSize, DepthStencilAspectMask aspect)
+void TextureImpl::writeSurface(const TextureSurfaceInfo& surf, void* data, PtrSize dataSize)
 {
 	checkSurface(surf);
 	ANKI_ASSERT(data);
 	ANKI_ASSERT(dataSize > 0);
-	ANKI_ASSERT(!aspect && "TODO");
 
 	U mipmap = surf.m_level;
 	U surfIdx = computeSurfaceIdx(surf);
@@ -520,13 +518,12 @@ void TextureImpl::writeSurface(
 	ANKI_CHECK_GL_ERROR();
 }
 
-void TextureImpl::writeVolume(const TextureVolumeInfo& vol, void* data, PtrSize dataSize, DepthStencilAspectMask aspect)
+void TextureImpl::writeVolume(const TextureVolumeInfo& vol, void* data, PtrSize dataSize)
 {
 	checkVolume(vol);
 	ANKI_ASSERT(data);
 	ANKI_ASSERT(dataSize > 0);
 	ANKI_ASSERT(m_texType == TextureType::_3D);
-	ANKI_ASSERT(!aspect && "TODO");
 
 	U mipmap = vol.m_level;
 	U w = m_width >> mipmap;
@@ -550,11 +547,10 @@ void TextureImpl::writeVolume(const TextureVolumeInfo& vol, void* data, PtrSize 
 	ANKI_CHECK_GL_ERROR();
 }
 
-void TextureImpl::generateMipmaps2d(U face, U layer, DepthStencilAspectMask aspect)
+void TextureImpl::generateMipmaps2d(U face, U layer)
 {
 	U surface = computeSurfaceIdx(TextureSurfaceInfo(0, 0, face, layer));
 	ANKI_ASSERT(!m_compressed);
-	ANKI_ASSERT(aspect == m_dsAspect && "For now");
 
 	if(m_surfaceCountPerLevel > 1)
 	{

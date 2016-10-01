@@ -178,14 +178,11 @@ public:
 	/// @param tex The texture to generate mips.
 	/// @param face The face of a cube texture or zero.
 	/// @param layer The layer of an array texture or zero.
-	/// @param aspect The aspect of the depth stencil texture. Relevant only for depth stencil textures.
-	void generateMipmaps2d(
-		TexturePtr tex, U face, U layer, DepthStencilAspectMask aspect = DepthStencilAspectMask::NONE);
+	void generateMipmaps2d(TexturePtr tex, U face, U layer);
 
 	/// Generate mipmaps only for 3D textures.
 	/// @param tex The texture to generate mips.
-	/// @param aspect The aspect of the depth stencil texture. Relevant only for depth stencil textures.
-	void generateMipmaps3d(TexturePtr tex, DepthStencilAspectMask aspect = DepthStencilAspectMask::NONE);
+	void generateMipmaps3d(TexturePtr tex);
 
 	// TODO Rename to blit
 	void copyTextureSurfaceToTextureSurface(
@@ -232,47 +229,26 @@ public:
 	/// @{
 
 	/// Upload data to a texture surface. It's the base of all texture surface upload methods.
-	void uploadTextureSurface(TexturePtr tex,
-		const TextureSurfaceInfo& surf,
-		const TransientMemoryToken& token,
-		DepthStencilAspectMask aspect = DepthStencilAspectMask::NONE);
+	void uploadTextureSurface(TexturePtr tex, const TextureSurfaceInfo& surf, const TransientMemoryToken& token);
 
 	/// Same as uploadTextureSurface but it will perform the transient allocation as well. If that allocation fails
 	/// expect the defaul OOM behaviour (crash).
-	void uploadTextureSurfaceData(TexturePtr tex,
-		const TextureSurfaceInfo& surf,
-		void*& data,
-		PtrSize& dataSize,
-		DepthStencilAspectMask aspect = DepthStencilAspectMask::NONE);
+	void uploadTextureSurfaceData(TexturePtr tex, const TextureSurfaceInfo& surf, void*& data, PtrSize& dataSize);
 
 	/// Same as uploadTextureSurfaceData but it will return a nullptr in @a data if there is a OOM condition.
-	void tryUploadTextureSurfaceData(TexturePtr tex,
-		const TextureSurfaceInfo& surf,
-		void*& data,
-		PtrSize& dataSize,
-		DepthStencilAspectMask aspect = DepthStencilAspectMask::NONE);
+	void tryUploadTextureSurfaceData(TexturePtr tex, const TextureSurfaceInfo& surf, void*& data, PtrSize& dataSize);
 
 	/// Same as uploadTextureSurface but it will perform the transient allocation and copy to it the @a data. If that
 	/// allocation fails expect the defaul OOM behaviour (crash).
-	void uploadTextureSurfaceCopyData(TexturePtr tex,
-		const TextureSurfaceInfo& surf,
-		const void* data,
-		PtrSize dataSize,
-		DepthStencilAspectMask aspect = DepthStencilAspectMask::NONE);
+	void uploadTextureSurfaceCopyData(
+		TexturePtr tex, const TextureSurfaceInfo& surf, const void* data, PtrSize dataSize);
 
 	/// Upload data to a texture volume. It's the base of all texture volume upload methods.
-	void uploadTextureVolume(TexturePtr tex,
-		const TextureVolumeInfo& vol,
-		const TransientMemoryToken& token,
-		DepthStencilAspectMask aspect = DepthStencilAspectMask::NONE);
+	void uploadTextureVolume(TexturePtr tex, const TextureVolumeInfo& vol, const TransientMemoryToken& token);
 
 	/// Same as uploadTextureVolume but it will perform the transient allocation and copy to it the @a data. If that
 	/// allocation fails expect the defaul OOM behaviour (crash).
-	void uploadTextureVolumeCopyData(TexturePtr tex,
-		const TextureVolumeInfo& surf,
-		const void* data,
-		PtrSize dataSize,
-		DepthStencilAspectMask aspect = DepthStencilAspectMask::NONE);
+	void uploadTextureVolumeCopyData(TexturePtr tex, const TextureVolumeInfo& surf, const void* data, PtrSize dataSize);
 
 	/// Upload data to a buffer.
 	void uploadBuffer(BufferPtr buff, PtrSize offset, const TransientMemoryToken& token);

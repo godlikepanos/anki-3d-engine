@@ -300,7 +300,7 @@ void CommandBuffer::endOcclusionQuery(OcclusionQueryPtr query)
 }
 
 void CommandBuffer::uploadTextureSurface(
-	TexturePtr tex, const TextureSurfaceInfo& surf, const TransientMemoryToken& token, DepthStencilAspectMask aspect)
+	TexturePtr tex, const TextureSurfaceInfo& surf, const TransientMemoryToken& token)
 {
 	class TexSurfUploadCommand final : public GlCommand
 	{
@@ -308,16 +308,11 @@ void CommandBuffer::uploadTextureSurface(
 		TexturePtr m_handle;
 		TextureSurfaceInfo m_surf;
 		TransientMemoryToken m_token;
-		DepthStencilAspectMask m_aspect;
 
-		TexSurfUploadCommand(const TexturePtr& handle,
-			TextureSurfaceInfo surf,
-			const TransientMemoryToken& token,
-			DepthStencilAspectMask aspect)
+		TexSurfUploadCommand(const TexturePtr& handle, TextureSurfaceInfo surf, const TransientMemoryToken& token)
 			: m_handle(handle)
 			, m_surf(surf)
 			, m_token(token)
-			, m_aspect(aspect)
 		{
 		}
 
@@ -326,7 +321,7 @@ void CommandBuffer::uploadTextureSurface(
 			void* data = state.m_manager->getImplementation().getTransientMemoryManager().getBaseAddress(m_token);
 			data = static_cast<void*>(static_cast<U8*>(data) + m_token.m_offset);
 
-			m_handle->getImplementation().writeSurface(m_surf, data, m_token.m_range, m_aspect);
+			m_handle->getImplementation().writeSurface(m_surf, data, m_token.m_range);
 
 			if(m_token.m_lifetime == TransientMemoryTokenLifetime::PERSISTENT)
 			{
@@ -341,11 +336,10 @@ void CommandBuffer::uploadTextureSurface(
 	ANKI_ASSERT(token.m_range > 0);
 	ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
 
-	m_impl->pushBackNewCommand<TexSurfUploadCommand>(tex, surf, token, aspect);
+	m_impl->pushBackNewCommand<TexSurfUploadCommand>(tex, surf, token);
 }
 
-void CommandBuffer::uploadTextureVolume(
-	TexturePtr tex, const TextureVolumeInfo& vol, const TransientMemoryToken& token, DepthStencilAspectMask aspect)
+void CommandBuffer::uploadTextureVolume(TexturePtr tex, const TextureVolumeInfo& vol, const TransientMemoryToken& token)
 {
 	class TexVolUploadCommand final : public GlCommand
 	{
@@ -353,16 +347,11 @@ void CommandBuffer::uploadTextureVolume(
 		TexturePtr m_handle;
 		TextureVolumeInfo m_vol;
 		TransientMemoryToken m_token;
-		DepthStencilAspectMask m_aspect;
 
-		TexVolUploadCommand(const TexturePtr& handle,
-			TextureVolumeInfo vol,
-			const TransientMemoryToken& token,
-			DepthStencilAspectMask aspect)
+		TexVolUploadCommand(const TexturePtr& handle, TextureVolumeInfo vol, const TransientMemoryToken& token)
 			: m_handle(handle)
 			, m_vol(vol)
 			, m_token(token)
-			, m_aspect(aspect)
 		{
 		}
 
@@ -371,7 +360,7 @@ void CommandBuffer::uploadTextureVolume(
 			void* data = state.m_manager->getImplementation().getTransientMemoryManager().getBaseAddress(m_token);
 			data = static_cast<void*>(static_cast<U8*>(data) + m_token.m_offset);
 
-			m_handle->getImplementation().writeVolume(m_vol, data, m_token.m_range, m_aspect);
+			m_handle->getImplementation().writeVolume(m_vol, data, m_token.m_range);
 
 			if(m_token.m_lifetime == TransientMemoryTokenLifetime::PERSISTENT)
 			{
@@ -386,7 +375,7 @@ void CommandBuffer::uploadTextureVolume(
 	ANKI_ASSERT(token.m_range > 0);
 	ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
 
-	m_impl->pushBackNewCommand<TexVolUploadCommand>(tex, vol, token, aspect);
+	m_impl->pushBackNewCommand<TexVolUploadCommand>(tex, vol, token);
 }
 
 void CommandBuffer::uploadBuffer(BufferPtr buff, PtrSize offset, const TransientMemoryToken& token)
@@ -428,7 +417,7 @@ void CommandBuffer::uploadBuffer(BufferPtr buff, PtrSize offset, const Transient
 	m_impl->pushBackNewCommand<BuffWriteCommand>(buff, offset, token);
 }
 
-void CommandBuffer::generateMipmaps2d(TexturePtr tex, U face, U layer, DepthStencilAspectMask aspect)
+void CommandBuffer::generateMipmaps2d(TexturePtr tex, U face, U layer)
 {
 	class GenMipsCommand final : public GlCommand
 	{
@@ -436,28 +425,26 @@ void CommandBuffer::generateMipmaps2d(TexturePtr tex, U face, U layer, DepthSten
 		TexturePtr m_tex;
 		U8 m_face;
 		U32 m_layer;
-		DepthStencilAspectMask m_aspect;
 
-		GenMipsCommand(const TexturePtr& tex, U face, U layer, DepthStencilAspectMask aspect)
+		GenMipsCommand(const TexturePtr& tex, U face, U layer)
 			: m_tex(tex)
 			, m_face(face)
 			, m_layer(layer)
-			, m_aspect(aspect)
 		{
 		}
 
 		Error operator()(GlState&)
 		{
-			m_tex->getImplementation().generateMipmaps2d(m_face, m_layer, m_aspect);
+			m_tex->getImplementation().generateMipmaps2d(m_face, m_layer);
 			return ErrorCode::NONE;
 		}
 	};
 
 	ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
-	m_impl->pushBackNewCommand<GenMipsCommand>(tex, face, layer, aspect);
+	m_impl->pushBackNewCommand<GenMipsCommand>(tex, face, layer);
 }
 
-void CommandBuffer::generateMipmaps3d(TexturePtr tex, DepthStencilAspectMask aspect)
+void CommandBuffer::generateMipmaps3d(TexturePtr tex)
 {
 	ANKI_ASSERT(!!"TODO");
 }

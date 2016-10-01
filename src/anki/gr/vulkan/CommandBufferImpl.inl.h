@@ -17,29 +17,125 @@ namespace anki
 
 inline void CommandBufferImpl::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 {
-	commandCommon();
 	ANKI_ASSERT(minx < maxx && miny < maxy);
-	VkViewport s;
-	s.x = minx;
-	s.y = miny;
-	s.width = maxx - minx;
-	s.height = maxy - miny;
-	s.minDepth = 0.0;
-	s.maxDepth = 1.0;
-	ANKI_CMD(vkCmdSetViewport(m_handle, 0, 1, &s), ANY_OTHER_COMMAND);
+	commandCommon();
 
-	VkRect2D scissor = {};
-	scissor.extent.width = maxx - minx;
-	scissor.extent.height = maxy - miny;
-	scissor.offset.x = minx;
-	scissor.offset.y = miny;
-	ANKI_CMD(vkCmdSetScissor(m_handle, 0, 1, &scissor), ANY_OTHER_COMMAND);
+	if(m_viewport[0] != minx || m_viewport[1] != miny || m_viewport[2] != maxx || m_viewport[3] != maxy)
+	{
+		VkViewport s;
+		s.x = minx;
+		s.y = miny;
+		s.width = maxx - minx;
+		s.height = maxy - miny;
+		s.minDepth = 0.0;
+		s.maxDepth = 1.0;
+		ANKI_CMD(vkCmdSetViewport(m_handle, 0, 1, &s), ANY_OTHER_COMMAND);
+
+		VkRect2D scissor = {};
+		scissor.extent.width = maxx - minx;
+		scissor.extent.height = maxy - miny;
+		scissor.offset.x = minx;
+		scissor.offset.y = miny;
+		ANKI_CMD(vkCmdSetScissor(m_handle, 0, 1, &scissor), ANY_OTHER_COMMAND);
+
+		m_viewport[0] = minx;
+		m_viewport[1] = miny;
+		m_viewport[2] = maxx;
+		m_viewport[3] = maxy;
+	}
+	else
+	{
+		// Skip
+	}
 }
 
 inline void CommandBufferImpl::setPolygonOffset(F32 factor, F32 units)
 {
 	commandCommon();
-	ANKI_CMD(vkCmdSetDepthBias(m_handle, units, 0.0, factor), ANY_OTHER_COMMAND);
+
+	if(m_polygonOffsetFactor != factor || m_polygonOffsetUnits != units)
+	{
+		ANKI_CMD(vkCmdSetDepthBias(m_handle, units, 0.0, factor), ANY_OTHER_COMMAND);
+
+		m_polygonOffsetFactor = factor;
+		m_polygonOffsetUnits = units;
+	}
+	else
+	{
+		// Skip
+	}
+}
+
+inline void CommandBufferImpl::setStencilCompareMask(FaceSelectionMask face, U32 mask)
+{
+	commandCommon();
+
+	VkStencilFaceFlags flags = 0;
+
+	if(!!(face & FaceSelectionMask::FRONT) && m_stencilCompareMasks[0] != mask)
+	{
+		m_stencilCompareMasks[0] = mask;
+		flags = VK_STENCIL_FACE_FRONT_BIT;
+	}
+
+	if(!!(face & FaceSelectionMask::BACK) && m_stencilCompareMasks[1] != mask)
+	{
+		m_stencilCompareMasks[1] = mask;
+		flags |= VK_STENCIL_FACE_BACK_BIT;
+	}
+
+	if(flags)
+	{
+		ANKI_CMD(vkCmdSetStencilCompareMask(m_handle, flags, mask), ANY_OTHER_COMMAND);
+	}
+}
+
+inline void CommandBufferImpl::setStencilWriteMask(FaceSelectionMask face, U32 mask)
+{
+	commandCommon();
+
+	VkStencilFaceFlags flags = 0;
+
+	if(!!(face & FaceSelectionMask::FRONT) && m_stencilWriteMasks[0] != mask)
+	{
+		m_stencilWriteMasks[0] = mask;
+		flags = VK_STENCIL_FACE_FRONT_BIT;
+	}
+
+	if(!!(face & FaceSelectionMask::BACK) && m_stencilWriteMasks[1] != mask)
+	{
+		m_stencilWriteMasks[1] = mask;
+		flags |= VK_STENCIL_FACE_BACK_BIT;
+	}
+
+	if(flags)
+	{
+		ANKI_CMD(vkCmdSetStencilWriteMask(m_handle, flags, mask), ANY_OTHER_COMMAND);
+	}
+}
+
+inline void CommandBufferImpl::setStencilReference(FaceSelectionMask face, U32 ref)
+{
+	commandCommon();
+
+	VkStencilFaceFlags flags = 0;
+
+	if(!!(face & FaceSelectionMask::FRONT) && m_stencilReferenceMasks[0] != ref)
+	{
+		m_stencilReferenceMasks[0] = ref;
+		flags = VK_STENCIL_FACE_FRONT_BIT;
+	}
+
+	if(!!(face & FaceSelectionMask::BACK) && m_stencilReferenceMasks[1] != ref)
+	{
+		m_stencilWriteMasks[1] = ref;
+		flags |= VK_STENCIL_FACE_BACK_BIT;
+	}
+
+	if(flags)
+	{
+		ANKI_CMD(vkCmdSetStencilReference(m_handle, flags, ref), ANY_OTHER_COMMAND);
+	}
 }
 
 inline void CommandBufferImpl::setImageBarrier(VkPipelineStageFlags srcStage,
@@ -131,7 +227,7 @@ inline void CommandBufferImpl::setTextureSurfaceBarrier(
 	impl.checkSurface(surf);
 
 	VkImageSubresourceRange range;
-	impl.computeSubResourceRange(surf, range);
+	impl.computeSubResourceRange(surf, impl.m_akAspect, range);
 	setTextureBarrierInternal(tex, prevUsage, nextUsage, range);
 }
 
@@ -148,7 +244,7 @@ inline void CommandBufferImpl::setTextureVolumeBarrier(
 	impl.checkVolume(vol);
 
 	VkImageSubresourceRange range;
-	impl.computeSubResourceRange(vol, range);
+	impl.computeSubResourceRange(vol, impl.m_akAspect, range);
 	setTextureBarrierInternal(tex, prevUsage, nextUsage, range);
 }
 
@@ -328,37 +424,25 @@ inline void CommandBufferImpl::clearTextureInternal(
 	m_texList.pushBack(m_alloc, tex);
 }
 
-inline void CommandBufferImpl::clearTexture(TexturePtr tex, const ClearValue& clearValue)
-{
-	VkImageSubresourceRange range;
-	range.aspectMask = tex->getImplementation().m_aspect;
-	range.baseMipLevel = 0;
-	range.levelCount = VK_REMAINING_MIP_LEVELS;
-	range.baseArrayLayer = 0;
-	range.layerCount = VK_REMAINING_ARRAY_LAYERS;
-
-	clearTextureInternal(tex, clearValue, range);
-}
-
 inline void CommandBufferImpl::clearTextureSurface(
-	TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& clearValue)
+	TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& clearValue, DepthStencilAspectMask aspect)
 {
 	const TextureImpl& impl = tex->getImplementation();
 	ANKI_ASSERT(impl.m_type != TextureType::_3D && "Not for 3D");
 
 	VkImageSubresourceRange range;
-	impl.computeSubResourceRange(surf, range);
+	impl.computeSubResourceRange(surf, aspect, range);
 	clearTextureInternal(tex, clearValue, range);
 }
 
 inline void CommandBufferImpl::clearTextureVolume(
-	TexturePtr tex, const TextureVolumeInfo& vol, const ClearValue& clearValue)
+	TexturePtr tex, const TextureVolumeInfo& vol, const ClearValue& clearValue, DepthStencilAspectMask aspect)
 {
 	const TextureImpl& impl = tex->getImplementation();
 	ANKI_ASSERT(impl.m_type == TextureType::_3D && "Only for 3D");
 
 	VkImageSubresourceRange range;
-	impl.computeSubResourceRange(vol, range);
+	impl.computeSubResourceRange(vol, aspect, range);
 	clearTextureInternal(tex, clearValue, range);
 }
 

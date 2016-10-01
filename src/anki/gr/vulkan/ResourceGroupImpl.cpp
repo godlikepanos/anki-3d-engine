@@ -216,7 +216,7 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 			TextureImpl& teximpl = init.m_textures[i].m_texture->getImplementation();
 
 			VkDescriptorImageInfo& inf = texes[i];
-			inf.imageView = teximpl.getOrCreateResourceGroupView();
+			inf.imageView = teximpl.getOrCreateResourceGroupView(init.m_textures[i].m_aspect);
 
 			m_refs[refCount++] = init.m_textures[i].m_texture;
 
@@ -365,7 +365,7 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 			VkDescriptorImageInfo& inf = images[i];
 			TextureImpl& tex = binding.m_texture->getImplementation();
 
-			inf.imageView = tex.getOrCreateSingleLevelView(binding.m_level);
+			inf.imageView = tex.getOrCreateSingleLevelView(binding.m_level, tex.m_akAspect);
 			inf.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 
 			m_refs[refCount++] = binding.m_texture;

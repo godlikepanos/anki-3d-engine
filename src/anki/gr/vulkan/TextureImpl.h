@@ -41,6 +41,7 @@ public:
 	U8 m_mipCount = 0;
 	U32 m_layerCount = 0;
 	VkImageAspectFlags m_aspect = 0;
+	DepthStencilAspectMask m_akAspect = DepthStencilAspectMask::NONE;
 	TextureUsageBit m_usage = TextureUsageBit::NONE;
 	PixelFormat m_format;
 	VkFormat m_vkFormat = VK_FORMAT_UNDEFINED;
@@ -65,9 +66,11 @@ public:
 		ANKI_ASSERT(vol.m_level < m_mipCount);
 	}
 
-	void computeSubResourceRange(const TextureSurfaceInfo& surf, VkImageSubresourceRange& range) const;
+	void computeSubResourceRange(
+		const TextureSurfaceInfo& surf, DepthStencilAspectMask aspect, VkImageSubresourceRange& range) const;
 
-	void computeSubResourceRange(const TextureVolumeInfo& vol, VkImageSubresourceRange& range) const;
+	void computeSubResourceRange(
+		const TextureVolumeInfo& vol, DepthStencilAspectMask aspect, VkImageSubresourceRange& range) const;
 
 	/// Compute the layer as defined by Vulkan.
 	U computeVkArrayLayer(const TextureSurfaceInfo& surf) const;
@@ -82,12 +85,12 @@ public:
 		return (usage & m_usage) == usage;
 	}
 
-	VkImageView getOrCreateSingleSurfaceView(const TextureSurfaceInfo& surf);
+	VkImageView getOrCreateSingleSurfaceView(const TextureSurfaceInfo& surf, DepthStencilAspectMask aspect);
 
-	VkImageView getOrCreateSingleLevelView(U level);
+	VkImageView getOrCreateSingleLevelView(U level, DepthStencilAspectMask aspect);
 
 	/// That view will be used in descriptor sets.
-	VkImageView getOrCreateResourceGroupView();
+	VkImageView getOrCreateResourceGroupView(DepthStencilAspectMask aspect);
 
 	/// By knowing the previous and new texture usage calculate the relavant info for a ppline barrier.
 	void computeBarrierInfo(TextureUsageBit before,
@@ -100,6 +103,8 @@ public:
 
 	/// Predict the image layout.
 	VkImageLayout computeLayout(TextureUsageBit usage, U level) const;
+
+	VkImageAspectFlags convertAspect(DepthStencilAspectMask ak) const;
 
 private:
 	class ViewHasher
@@ -134,74 +139,8 @@ private:
 
 	VkImageView getOrCreateView(const VkImageViewCreateInfo& ci);
 };
-
-inline void TextureImpl::computeSubResourceRange(const TextureSurfaceInfo& surf, VkImageSubresourceRange& range) const
-{
-	checkSurface(surf);
-	range.aspectMask = m_aspect;
-	range.baseMipLevel = surf.m_level;
-	range.levelCount = 1;
-	switch(m_type)
-	{
-	case TextureType::_2D:
-		range.baseArrayLayer = 0;
-		break;
-	case TextureType::_3D:
-		range.baseArrayLayer = 0;
-		break;
-	case TextureType::CUBE:
-		range.baseArrayLayer = surf.m_face;
-		break;
-	case TextureType::_2D_ARRAY:
-		range.baseArrayLayer = surf.m_layer;
-		break;
-	case TextureType::CUBE_ARRAY:
-		range.baseArrayLayer = surf.m_layer * 6 + surf.m_face;
-		break;
-	default:
-		ANKI_ASSERT(0);
-		range.baseArrayLayer = 0;
-	}
-	range.layerCount = 1;
-}
-
-inline void TextureImpl::computeSubResourceRange(const TextureVolumeInfo& vol, VkImageSubresourceRange& range) const
-{
-	checkVolume(vol);
-	range.aspectMask = m_aspect;
-	range.baseMipLevel = vol.m_level;
-	range.levelCount = 1;
-	range.baseArrayLayer = 0;
-	range.layerCount = 1;
-}
-
-inline U TextureImpl::computeVkArrayLayer(const TextureSurfaceInfo& surf) const
-{
-	checkSurface(surf);
-	U layer = 0;
-	switch(m_type)
-	{
-	case TextureType::_2D:
-		layer = 0;
-		break;
-	case TextureType::_3D:
-		layer = 0;
-		break;
-	case TextureType::CUBE:
-		layer = surf.m_face;
-		break;
-	case TextureType::_2D_ARRAY:
-		layer = surf.m_layer;
-		break;
-	case TextureType::CUBE_ARRAY:
-		layer = surf.m_layer * 6 + surf.m_face;
-		break;
-	default:
-		ANKI_ASSERT(0);
-	}
-
-	return layer;
-}
 /// @}
 
 } // end namespace anki
+
+#include <anki/gr/vulkan/TextureImpl.inl.h>

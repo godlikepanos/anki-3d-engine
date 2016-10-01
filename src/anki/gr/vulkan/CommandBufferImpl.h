@@ -65,6 +65,12 @@ public:
 
 	void setPolygonOffset(F32 factor, F32 units);
 
+	void setStencilCompareMask(FaceSelectionMask face, U32 mask);
+
+	void setStencilWriteMask(FaceSelectionMask face, U32 mask);
+
+	void setStencilReference(FaceSelectionMask face, U32 ref);
+
 	void bindPipeline(PipelinePtr ppline);
 
 	void beginRenderPass(FramebufferPtr fb);
@@ -95,11 +101,11 @@ public:
 
 	void generateMipmaps2d(TexturePtr tex, U face, U layer);
 
-	void clearTexture(TexturePtr tex, const ClearValue& clearValue);
+	void clearTextureSurface(
+		TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& clearValue, DepthStencilAspectMask aspect);
 
-	void clearTextureSurface(TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& clearValue);
-
-	void clearTextureVolume(TexturePtr tex, const TextureVolumeInfo& volume, const ClearValue& clearValue);
+	void clearTextureVolume(
+		TexturePtr tex, const TextureVolumeInfo& volume, const ClearValue& clearValue, DepthStencilAspectMask aspect);
 
 	void uploadBuffer(BufferPtr buff, PtrSize offset, const TransientMemoryToken& token);
 
@@ -176,6 +182,16 @@ private:
 	VkSubpassContents m_subpassContents = VK_SUBPASS_CONTENTS_MAX_ENUM;
 
 	CommandBufferCommandType m_lastCmdType = CommandBufferCommandType::ANY_OTHER_COMMAND;
+
+	/// @name state_opts
+	/// @{
+	Array<U16, 4> m_viewport = {{0, 0, 0, 0}};
+	F32 m_polygonOffsetFactor = MAX_F32;
+	F32 m_polygonOffsetUnits = MAX_F32;
+	Array<U32, 2> m_stencilCompareMasks = {{0x5A5A5A5A, 0x5A5A5A5A}}; ///< Use a stupid number to initialize.
+	Array<U32, 2> m_stencilWriteMasks = {{0x5A5A5A5A, 0x5A5A5A5A}};
+	Array<U32, 2> m_stencilReferenceMasks = {{0x5A5A5A5A, 0x5A5A5A5A}};
+	/// @}
 
 	/// @name barrier_batch
 	/// @{

@@ -121,34 +121,31 @@ void CommandBuffer::generateMipmaps2d(TexturePtr tex, U face, U layer)
 
 void CommandBuffer::generateMipmaps3d(TexturePtr tex)
 {
-	ANKI_ASSERT(0 && "TODO");
+	ANKI_ASSERT(!"TODO");
 }
 
 void CommandBuffer::copyTextureSurfaceToTextureSurface(
 	TexturePtr src, const TextureSurfaceInfo& srcSurf, TexturePtr dest, const TextureSurfaceInfo& destSurf)
 {
-	ANKI_ASSERT(0 && "TODO");
+	ANKI_ASSERT(!"TODO");
 }
 
 void CommandBuffer::copyTextureVolumeToTextureVolume(
 	TexturePtr src, const TextureVolumeInfo& srcVol, TexturePtr dest, const TextureVolumeInfo& destVol)
 {
-	ANKI_ASSERT(0 && "TODO");
+	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::clearTexture(TexturePtr tex, const ClearValue& clearValue)
+void CommandBuffer::clearTextureSurface(
+	TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& clearValue, DepthStencilAspectMask aspect)
 {
-	m_impl->clearTexture(tex, clearValue);
+	m_impl->clearTextureSurface(tex, surf, clearValue, aspect);
 }
 
-void CommandBuffer::clearTextureSurface(TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& clearValue)
+void CommandBuffer::clearTextureVolume(
+	TexturePtr tex, const TextureVolumeInfo& vol, const ClearValue& clearValue, DepthStencilAspectMask aspect)
 {
-	m_impl->clearTextureSurface(tex, surf, clearValue);
-}
-
-void CommandBuffer::clearTextureVolume(TexturePtr tex, const TextureVolumeInfo& vol, const ClearValue& clearValue)
-{
-	m_impl->clearTextureVolume(tex, vol, clearValue);
+	m_impl->clearTextureVolume(tex, vol, clearValue, aspect);
 }
 
 void CommandBuffer::uploadTextureSurface(
@@ -218,6 +215,21 @@ void CommandBuffer::fillBuffer(BufferPtr buff, PtrSize offset, PtrSize size, U32
 void CommandBuffer::writeOcclusionQueryResultToBuffer(OcclusionQueryPtr query, PtrSize offset, BufferPtr buff)
 {
 	m_impl->writeOcclusionQueryResultToBuffer(query, offset, buff);
+}
+
+void CommandBuffer::setStencilCompareMask(FaceSelectionMask face, U32 mask)
+{
+	m_impl->setStencilCompareMask(face, mask);
+}
+
+void CommandBuffer::setStencilWriteMask(FaceSelectionMask face, U32 mask)
+{
+	m_impl->setStencilWriteMask(face, mask);
+}
+
+void CommandBuffer::setStencilReference(FaceSelectionMask face, U32 ref)
+{
+	m_impl->setStencilReference(face, ref);
 }
 
 } // end namespace anki
