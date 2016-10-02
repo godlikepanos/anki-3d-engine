@@ -64,7 +64,7 @@ public:
 	static const GrObjectType CLASS_TYPE = GrObjectType::SHADER;
 
 	/// Construct.
-	Shader(GrManager* manager, U64 hash = 0);
+	Shader(GrManager* manager, U64 hash, GrObjectCache* cache);
 
 	/// Destroy.
 	~Shader();

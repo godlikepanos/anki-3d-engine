@@ -76,7 +76,7 @@ public:
 	static const GrObjectType CLASS_TYPE = GrObjectType::FRAMEBUFFER;
 
 	/// Construct.
-	Framebuffer(GrManager* manager, U64 hash = 0);
+	Framebuffer(GrManager* manager, U64 hash, GrObjectCache* cache);
 
 	/// Destroy.
 	~Framebuffer();

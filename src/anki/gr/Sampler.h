@@ -21,7 +21,7 @@ public:
 	static const GrObjectType CLASS_TYPE = GrObjectType::SAMPLER;
 
 	/// Construct.
-	Sampler(GrManager* manager, U64 hash = 0);
+	Sampler(GrManager* manager, U64 hash, GrObjectCache* cache);
 
 	/// Destroy.
 	~Sampler();

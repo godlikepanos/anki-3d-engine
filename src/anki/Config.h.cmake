@@ -141,8 +141,4 @@
 
 // General config
 #define ANKI_SAFE_ALIGNMENT 16
-
-// GL
-#define ANKI_GL_MAX_SUB_DRAWCALLS 64
-
 /// @}

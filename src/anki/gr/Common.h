@@ -15,6 +15,7 @@ namespace anki
 
 // Forward
 class GrObject;
+class GrObjectCache;
 
 class GrManager;
 class GrManagerImpl;

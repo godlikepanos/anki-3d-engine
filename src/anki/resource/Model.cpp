@@ -12,7 +12,6 @@
 #include <anki/misc/Xml.h>
 #include <anki/util/Logger.h>
 #include <anki/renderer/Ms.h>
-#include <anki/renderer/Is.h>
 #include <anki/renderer/Sm.h>
 
 namespace anki
@@ -31,8 +30,8 @@ void ModelPatch::getRenderingDataSub(const RenderingKey& key,
 	WeakArray<U8> subMeshIndicesArray,
 	ResourceGroupPtr& resourceGroup,
 	PipelinePtr& ppline,
-	Array<U32, ANKI_GL_MAX_SUB_DRAWCALLS>& indicesCountArray,
-	Array<PtrSize, ANKI_GL_MAX_SUB_DRAWCALLS>& indicesOffsetArray,
+	Array<U32, MAX_SUB_DRAWCALLS>& indicesCountArray,
+	Array<PtrSize, MAX_SUB_DRAWCALLS>& indicesOffsetArray,
 	U32& drawcallCount) const
 {
 	// Get the resources
@@ -148,7 +147,7 @@ PipelinePtr ModelPatch::getPipeline(const RenderingKey& key) const
 
 		// Create
 		GrManager& gr = m_model->getManager().getGrManager();
-		ppline = gr.newInstanceCached<Pipeline>(pplineInit);
+		ppline = gr.newInstance<Pipeline>(pplineInit);
 	}
 
 	return ppline;

@@ -190,7 +190,7 @@ public:
 	static const GrObjectType CLASS_TYPE = GrObjectType::PIPELINE;
 
 	/// Construct.
-	Pipeline(GrManager* manager, U64 hash = 0);
+	Pipeline(GrManager* manager, U64 hash, GrObjectCache* cache);
 
 	/// Destroy.
 	~Pipeline();

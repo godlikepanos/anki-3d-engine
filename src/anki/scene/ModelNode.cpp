@@ -78,8 +78,8 @@ Error ModelPatchNode::buildRendering(RenderingBuildInfo& data) const
 	// That will not work on multi-draw and instanced at the same time. Make sure that there is no multi-draw anywhere
 	ANKI_ASSERT(m_modelPatch->getSubMeshesCount() == 0);
 
-	Array<U32, ANKI_GL_MAX_SUB_DRAWCALLS> indicesCountArray;
-	Array<PtrSize, ANKI_GL_MAX_SUB_DRAWCALLS> indicesOffsetArray;
+	Array<U32, MAX_SUB_DRAWCALLS> indicesCountArray;
+	Array<PtrSize, MAX_SUB_DRAWCALLS> indicesOffsetArray;
 	U32 drawcallCount;
 
 	PipelinePtr ppline;

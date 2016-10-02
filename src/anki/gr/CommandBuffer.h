@@ -108,7 +108,7 @@ public:
 	static const GrObjectType CLASS_TYPE = GrObjectType::COMMAND_BUFFER;
 
 	/// Construct.
-	CommandBuffer(GrManager* manager, U64 hash = 0);
+	CommandBuffer(GrManager* manager, U64 hash, GrObjectCache* cache);
 
 	/// Destroy.
 	~CommandBuffer();

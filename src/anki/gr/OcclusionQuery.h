@@ -20,7 +20,7 @@ public:
 	static const GrObjectType CLASS_TYPE = GrObjectType::OCCLUSION_QUERY;
 
 	/// Construct.
-	OcclusionQuery(GrManager* manager, U64 hash = 0);
+	OcclusionQuery(GrManager* manager, U64 hash, GrObjectCache* cache);
 
 	/// Destroy.
 	~OcclusionQuery();

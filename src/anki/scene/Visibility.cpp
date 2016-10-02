@@ -301,7 +301,7 @@ void VisibilityTestTask::test(ThreadHive& hive)
 			U8 m_idx;
 			Vec4 m_origin;
 		};
-		Array<SpatialTemp, ANKI_GL_MAX_SUB_DRAWCALLS> sps;
+		Array<SpatialTemp, MAX_SUB_DRAWCALLS> sps;
 
 		U spIdx = 0;
 		U count = 0;

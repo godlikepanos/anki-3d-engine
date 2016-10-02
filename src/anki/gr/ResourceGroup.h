@@ -66,7 +66,7 @@ public:
 	static const GrObjectType CLASS_TYPE = GrObjectType::RESOURCE_GROUP;
 
 	/// Construct.
-	ResourceGroup(GrManager* manager, U64 hash = 0);
+	ResourceGroup(GrManager* manager, U64 hash, GrObjectCache* cache);
 
 	/// Destroy.
 	~ResourceGroup();

@@ -19,7 +19,7 @@ namespace anki
 class GrObject : public NonCopyable
 {
 public:
-	GrObject(GrManager* manager, GrObjectType type, U64 hash);
+	GrObject(GrManager* manager, GrObjectType type, U64 hash, GrObjectCache* cache);
 
 	virtual ~GrObject();
 
@@ -63,6 +63,7 @@ private:
 	U64 m_uuid;
 	U64 m_hash;
 	GrObjectType m_type;
+	GrObjectCache* m_cache;
 };
 /// @}
 

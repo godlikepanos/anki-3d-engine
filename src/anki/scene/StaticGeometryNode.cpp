@@ -64,8 +64,8 @@ Error StaticGeometryPatchNode::init(const ModelPatch* modelPatch)
 
 Error StaticGeometryPatchNode::buildRendering(RenderingBuildInfo& data) const
 {
-	Array<U32, ANKI_GL_MAX_SUB_DRAWCALLS> indicesCountArray;
-	Array<PtrSize, ANKI_GL_MAX_SUB_DRAWCALLS> indicesOffsetArray;
+	Array<U32, MAX_SUB_DRAWCALLS> indicesCountArray;
+	Array<PtrSize, MAX_SUB_DRAWCALLS> indicesOffsetArray;
 	U32 drawCount;
 	ResourceGroupPtr grResources;
 	PipelinePtr ppline;

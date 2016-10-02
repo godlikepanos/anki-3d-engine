@@ -70,8 +70,8 @@ public:
 		WeakArray<U8> subMeshIndicesArray,
 		ResourceGroupPtr& resourceGroup,
 		PipelinePtr& ppline,
-		Array<U32, ANKI_GL_MAX_SUB_DRAWCALLS>& indicesCountArray,
-		Array<PtrSize, ANKI_GL_MAX_SUB_DRAWCALLS>& indicesOffsetArray,
+		Array<U32, MAX_SUB_DRAWCALLS>& indicesCountArray,
+		Array<PtrSize, MAX_SUB_DRAWCALLS>& indicesOffsetArray,
 		U32& drawcallCount) const;
 
 private:

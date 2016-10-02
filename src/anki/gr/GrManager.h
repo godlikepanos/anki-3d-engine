@@ -6,7 +6,6 @@
 #pragma once
 
 #include <anki/gr/Common.h>
-#include <anki/gr/GrObjectCache.h>
 #include <anki/gr/GrObject.h>
 #include <anki/util/String.h>
 
@@ -61,11 +60,19 @@ public:
 
 	/// Create a new graphics object.
 	template<typename T, typename... Args>
-	GrObjectPtr<T> newInstance(Args&&... args);
+	GrObjectPtr<T> newInstanceCached(U64 hash, GrObjectCache* cache, Args&&... args)
+	{
+		GrObjectPtr<T> ptr(m_alloc.newInstance<T>(this, hash, cache));
+		ptr->init(args...);
+		return ptr;
+	}
 
-	/// Create a new graphics object and use the cache to avoid duplication. It's thread safe.
-	template<typename T, typename TArg>
-	GrObjectPtr<T> newInstanceCached(const TArg& arg);
+	/// Create a new graphics object.
+	template<typename T, typename... Args>
+	GrObjectPtr<T> newInstance(Args&&... args)
+	{
+		return newInstanceCached<T>(0, nullptr, args...);
+	}
 
 	/// Allocate transient memory for various operations. The memory will be reclaimed at the begining of the
 	/// N-(MAX_FRAMES_IN_FLIGHT-1) frame.
@@ -115,57 +122,12 @@ anki_internal:
 		return m_uuidIndex;
 	}
 
-	void unregisterCachedObject(GrObject* ptr)
-	{
-		ANKI_ASSERT(ptr);
-		if(ptr->getHash() != 0)
-		{
-			GrObjectCache& cache = m_caches[ptr->getType()];
-			LockGuard<Mutex> lock(cache.getMutex());
-			cache.unregisterObject(ptr);
-		}
-	}
-
 private:
 	GrAllocator<U8> m_alloc; ///< Keep it first to get deleted last
 	String m_cacheDir;
-	Array<GrObjectCache, U(GrObjectType::COUNT)> m_caches;
 	UniquePtr<GrManagerImpl> m_impl;
 	U64 m_uuidIndex = 1;
 };
-
-template<typename T, typename... Args>
-GrObjectPtr<T> GrManager::newInstance(Args&&... args)
-{
-	const U64 hash = 0;
-	GrObjectPtr<T> ptr(m_alloc.newInstance<T>(this, hash));
-	ptr->init(args...);
-	return ptr;
-}
-
-template<typename T, typename TArg>
-GrObjectPtr<T> GrManager::newInstanceCached(const TArg& arg)
-{
-	GrObjectCache& cache = m_caches[T::CLASS_TYPE];
-	U64 hash = arg.computeHash();
-	ANKI_ASSERT(hash != 0);
-
-	LockGuard<Mutex> lock(cache.getMutex());
-	GrObject* ptr = cache.tryFind(hash);
-	if(ptr == nullptr)
-	{
-		T* tptr = m_alloc.newInstance<T>(this, hash);
-		tptr->init(arg);
-		ptr = tptr;
-		cache.registerObject(ptr);
-	}
-	else
-	{
-		ANKI_ASSERT(ptr->getType() == T::CLASS_TYPE);
-	}
-
-	return GrObjectPtr<T>(static_cast<T*>(ptr));
-}
 /// @}
 
 } // end namespace anki

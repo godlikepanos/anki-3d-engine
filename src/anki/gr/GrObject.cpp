@@ -5,22 +5,27 @@
 
 #include <anki/gr/GrObject.h>
 #include <anki/gr/GrManager.h>
+#include <anki/gr/GrObjectCache.h>
 
 namespace anki
 {
 
-GrObject::GrObject(GrManager* manager, GrObjectType type, U64 hash)
+GrObject::GrObject(GrManager* manager, GrObjectType type, U64 hash, GrObjectCache* cache)
 	: m_refcount(0)
 	, m_manager(manager)
 	, m_uuid(m_manager->getUuidIndex()++)
 	, m_hash(hash)
 	, m_type(type)
+	, m_cache(cache)
 {
 }
 
 GrObject::~GrObject()
 {
-	m_manager->unregisterCachedObject(this);
+	if(m_cache)
+	{
+		m_cache->unregisterObject(this);
+	}
 }
 
 GrAllocator<U8> GrObject::getAllocator() const
