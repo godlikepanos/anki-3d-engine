@@ -18,6 +18,11 @@ namespace anki
 class Ms : public RenderingPass
 {
 anki_internal:
+	TexturePtr m_rt0;
+	TexturePtr m_rt1;
+	TexturePtr m_rt2;
+	TexturePtr m_depthRt;
+
 	Ms(Renderer* r)
 		: RenderingPass(r)
 	{
@@ -35,47 +40,8 @@ anki_internal:
 
 	void setPostRunBarriers(RenderingContext& ctx);
 
-	TexturePtr& getRt0()
-	{
-		return m_rt0;
-	}
-
-	TexturePtr& getRt1()
-	{
-		return m_rt1;
-	}
-
-	TexturePtr& getRt2()
-	{
-		return m_rt2;
-	}
-
-	TexturePtr getDepthRt() const
-	{
-		return m_depthRt;
-	}
-
-	FramebufferPtr& getFramebuffer()
-	{
-		return m_fb;
-	}
-
 private:
 	FramebufferPtr m_fb;
-
-	/// Contains diffuse color and emission
-	TexturePtr m_rt0;
-
-	/// Contains specular color, roughness
-	TexturePtr m_rt1;
-
-	/// Contains normals
-	TexturePtr m_rt2;
-
-	/// Depth stencil
-	TexturePtr m_depthRt;
-
-	DynamicArray<CommandBufferPtr> m_secondLevelCmdbs;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 

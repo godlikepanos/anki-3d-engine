@@ -139,10 +139,10 @@ Error Is::initInternal(const ConfigSet& config)
 	//
 	{
 		ResourceGroupInitInfo init;
-		init.m_textures[0].m_texture = m_r->getMs().getRt0();
-		init.m_textures[1].m_texture = m_r->getMs().getRt1();
-		init.m_textures[2].m_texture = m_r->getMs().getRt2();
-		init.m_textures[3].m_texture = m_r->getMs().getDepthRt();
+		init.m_textures[0].m_texture = m_r->getMs().m_rt0;
+		init.m_textures[1].m_texture = m_r->getMs().m_rt1;
+		init.m_textures[2].m_texture = m_r->getMs().m_rt2;
+		init.m_textures[3].m_texture = m_r->getMs().m_depthRt;
 		init.m_textures[3].m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
 		init.m_textures[4].m_texture = m_r->getSm().getSpotTextureArray();
 		init.m_textures[5].m_texture = m_r->getSm().getOmniTextureArray();

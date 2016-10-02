@@ -69,7 +69,7 @@ Error Tiler::initInternal()
 		// Create graphics resources
 		ResourceGroupInitInfo rcinit;
 		rcinit.m_storageBuffers[0].m_buffer = m_outBuffers[i];
-		rcinit.m_textures[0].m_texture = m_r->getMs().getDepthRt();
+		rcinit.m_textures[0].m_texture = m_r->getMs().m_depthRt;
 
 		m_rcGroups[i] = getGrManager().newInstance<ResourceGroup>(rcinit);
 	}

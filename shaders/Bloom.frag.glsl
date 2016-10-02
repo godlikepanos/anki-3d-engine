@@ -7,7 +7,7 @@
 #include "shaders/Tonemapping.glsl"
 
 // Vars
-layout(ANKI_TEX_BINDING(0, 0)) uniform lowp sampler2D u_tex; ///< Its the IS RT
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_tex; ///< Its the IS RT
 
 layout(ANKI_UBO_BINDING(0, 0), std140) uniform u0_
 {

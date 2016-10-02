@@ -63,7 +63,7 @@ Error Dbg::lazyInit()
 	fbInit.m_colorAttachmentCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
-	fbInit.m_depthStencilAttachment.m_texture = m_r->getMs().getDepthRt();
+	fbInit.m_depthStencilAttachment.m_texture = m_r->getMs().m_depthRt;
 	fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::LOAD;
 
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);

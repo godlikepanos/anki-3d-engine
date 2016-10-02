@@ -56,7 +56,7 @@ Error HalfDepth::init(const ConfigSet&)
 
 	// Create RC group
 	ResourceGroupInitInfo rcinit;
-	rcinit.m_textures[0].m_texture = m_r->getMs().getDepthRt();
+	rcinit.m_textures[0].m_texture = m_r->getMs().m_depthRt;
 	rcinit.m_textures[0].m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
 
 	m_rcgroup = gr.newInstance<ResourceGroup>(rcinit);

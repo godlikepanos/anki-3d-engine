@@ -170,7 +170,7 @@ Error Pps::run(RenderingContext& ctx)
 	{
 		ResourceGroupInitInfo rcInit;
 		rcInit.m_textures[0].m_texture = m_r->getIs().getRt();
-		rcInit.m_textures[1].m_texture = m_r->getBloom().getFinalRt();
+		rcInit.m_textures[1].m_texture = m_r->getBloom().m_upscale.m_rt;
 		rcInit.m_textures[2].m_texture = m_lut->getGrTexture();
 		rcInit.m_textures[3].m_texture = m_r->getSmaa().m_weights.m_rt;
 		if(dbgEnabled)

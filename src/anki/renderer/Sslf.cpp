@@ -28,14 +28,14 @@ Error Sslf::initInternal(const ConfigSet& config)
 	StringAuto pps(getAllocator());
 
 	pps.sprintf("#define TEX_DIMENSIONS vec2(%u.0, %u.0)\n",
-		m_r->getBloom().getMaxExposureRtWidth(),
-		m_r->getBloom().getMaxExposureRtHeight());
+		m_r->getBloom().m_extractExposure.m_width,
+		m_r->getBloom().m_extractExposure.m_height);
 
 	ANKI_CHECK(getResourceManager().loadResourceToCache(m_frag, "shaders/Sslf.frag.glsl", pps.toCString(), "r_"));
 
 	ColorStateInfo colorState;
 	colorState.m_attachmentCount = 1;
-	colorState.m_attachments[0].m_format = Bloom::RT_PIXEL_FORMAT;
+	colorState.m_attachments[0].m_format = BLOOM_RT_PIXEL_FORMAT;
 	colorState.m_attachments[0].m_srcBlendMethod = BlendMethod::ONE;
 	colorState.m_attachments[0].m_dstBlendMethod = BlendMethod::ONE;
 
@@ -46,7 +46,7 @@ Error Sslf::initInternal(const ConfigSet& config)
 
 	// Create the resource group
 	ResourceGroupInitInfo rcInit;
-	rcInit.m_textures[0].m_texture = m_r->getBloom().getMaxExposureRt();
+	rcInit.m_textures[0].m_texture = m_r->getBloom().m_extractExposure.m_rt;
 	rcInit.m_textures[1].m_texture = m_lensDirtTex->getGrTexture();
 
 	m_rcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);

@@ -24,7 +24,7 @@ Error Upsample::init(const ConfigSet& config)
 	SamplerInitInfo sinit;
 	sinit.m_repeat = false;
 
-	rcInit.m_textures[0].m_texture = m_r->getMs().getDepthRt();
+	rcInit.m_textures[0].m_texture = m_r->getMs().m_depthRt;
 	rcInit.m_textures[0].m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
 
 	sinit.m_mipmapFilter = SamplingFilter::NEAREST;

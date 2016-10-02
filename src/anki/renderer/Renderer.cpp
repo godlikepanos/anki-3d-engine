@@ -15,7 +15,6 @@
 #include <anki/renderer/Sm.h>
 #include <anki/renderer/Pps.h>
 #include <anki/renderer/Ssao.h>
-#include <anki/renderer/Sslf.h>
 #include <anki/renderer/Bloom.h>
 #include <anki/renderer/Tm.h>
 #include <anki/renderer/Fs.h>
@@ -175,9 +174,6 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_bloom.reset(m_alloc.newInstance<Bloom>(this));
 	ANKI_CHECK(m_bloom->init(config));
 
-	m_sslf.reset(m_alloc.newInstance<Sslf>(this));
-	ANKI_CHECK(m_sslf->init(config));
-
 	m_pps.reset(m_alloc.newInstance<Pps>(this));
 	ANKI_CHECK(m_pps->init(config));
 
@@ -192,23 +188,7 @@ Error Renderer::render(RenderingContext& ctx)
 	FrustumComponent& frc = *ctx.m_frustumComponent;
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
-	// Misc
 	ANKI_ASSERT(frc.getFrustum().getType() == Frustum::Type::PERSPECTIVE);
-
-	// Write the common uniforms
-	RendererCommonUniforms* commonUniforms =
-		static_cast<RendererCommonUniforms*>(getGrManager().allocateFrameTransientMemory(
-			sizeof(*commonUniforms), BufferUsageBit::UNIFORM_ALL, m_commonUniformsToken));
-
-	commonUniforms->m_projectionParams = frc.getProjectionParameters();
-	commonUniforms->m_nearFarLinearizeDepth.x() = frc.getFrustum().getNear();
-	commonUniforms->m_nearFarLinearizeDepth.y() = frc.getFrustum().getFar();
-	computeLinearizeDepthOptimal(frc.getFrustum().getNear(),
-		frc.getFrustum().getFar(),
-		commonUniforms->m_nearFarLinearizeDepth.z(),
-		commonUniforms->m_nearFarLinearizeDepth.w());
-
-	commonUniforms->m_projectionMatrix = frc.getProjectionMatrix();
 
 	// Check if resources got loaded
 	if(m_prevLoadRequestCount != m_resources->getLoadingRequestCount()
@@ -237,7 +217,8 @@ Error Renderer::render(RenderingContext& ctx)
 	m_is->setPreRunBarriers(ctx);
 	m_fs->setPreRunBarriers(ctx);
 	m_ssao->setPreRunBarriers(ctx);
-	m_bloom->setPreRunBarriers(ctx);
+	m_bloom->m_extractExposure.setPreRunBarriers(ctx);
+	m_bloom->m_upscale.setPreRunBarriers(ctx);
 
 	cmdb->setTextureSurfaceBarrier(m_hd->m_depthRt,
 		TextureUsageBit::NONE,
@@ -299,14 +280,16 @@ Error Renderer::render(RenderingContext& ctx)
 	m_smaa->m_edge.setPostRunBarriers(ctx);
 
 	// Batch bloom + SSLF + SMAA_pass1
-	m_bloom->run(ctx);
-	m_sslf->run(ctx);
-	cmdb->endRenderPass();
+	m_bloom->m_extractExposure.run(ctx);
 	m_smaa->m_weights.run(ctx);
 
 	// Barriers
-	m_bloom->setPostRunBarriers(ctx);
+	m_bloom->m_extractExposure.setPostRunBarriers(ctx);
 	m_smaa->m_weights.setPostRunBarriers(ctx);
+
+	// Bloom last pass
+	m_bloom->m_upscale.run(ctx);
+	m_bloom->m_upscale.setPostRunBarriers(ctx);
 
 	if(m_dbg->getEnabled())
 	{

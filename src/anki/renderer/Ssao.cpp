@@ -233,7 +233,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 	rcinit.m_textures[0].m_sampler = gr.newInstance<Sampler>(sinit);
 	rcinit.m_textures[0].m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
 
-	rcinit.m_textures[1].m_texture = m_r->getMs().getRt2();
+	rcinit.m_textures[1].m_texture = m_r->getMs().m_rt2;
 	rcinit.m_textures[1].m_sampler = rcinit.m_textures[0].m_sampler;
 
 	rcinit.m_textures[2].m_texture = m_noiseTex;

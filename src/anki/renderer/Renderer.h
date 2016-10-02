@@ -184,11 +184,6 @@ public:
 		return *m_bloom;
 	}
 
-	Sslf& getSslf()
-	{
-		return *m_sslf;
-	}
-
 	Pps& getPps()
 	{
 		return *m_pps;
@@ -336,11 +331,6 @@ anki_internal:
 		return *m_threadpool;
 	}
 
-	const TransientMemoryToken& getCommonUniformsTransientMemoryToken() const
-	{
-		return m_commonUniformsToken;
-	}
-
 	Timestamp getGlobalTimestamp() const
 	{
 		return *m_globTimestamp;
@@ -370,8 +360,6 @@ private:
 	HeapAllocator<U8> m_alloc;
 	StackAllocator<U8> m_frameAlloc;
 
-	TransientMemoryToken m_commonUniformsToken;
-
 	/// @name Rendering stages
 	/// @{
 	UniquePtr<Ir> m_ir;
@@ -388,7 +376,6 @@ private:
 	UniquePtr<Tm> m_tm;
 	UniquePtr<Ssao> m_ssao;
 	UniquePtr<Bloom> m_bloom;
-	UniquePtr<Sslf> m_sslf;
 	UniquePtr<Pps> m_pps; ///< Postprocessing rendering stage
 	UniquePtr<Dbg> m_dbg; ///< Debug stage.
 	/// @}

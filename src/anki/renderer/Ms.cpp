@@ -17,7 +17,6 @@ namespace anki
 
 Ms::~Ms()
 {
-	m_secondLevelCmdbs.destroy(getAllocator());
 }
 
 Error Ms::createRt(U32 samples)
@@ -100,8 +99,6 @@ Error Ms::init(const ConfigSet& initializer)
 Error Ms::initInternal(const ConfigSet& initializer)
 {
 	ANKI_CHECK(createRt(initializer.getNumber("samples")));
-
-	m_secondLevelCmdbs.create(getAllocator(), m_r->getThreadPool().getThreadsCount());
 
 	getGrManager().finish();
 
