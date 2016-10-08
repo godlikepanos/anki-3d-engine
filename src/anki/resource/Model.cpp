@@ -11,8 +11,6 @@
 #include <anki/resource/ShaderResource.h>
 #include <anki/misc/Xml.h>
 #include <anki/util/Logger.h>
-#include <anki/renderer/Ms.h>
-#include <anki/renderer/Sm.h>
 
 namespace anki
 {
@@ -26,35 +24,92 @@ ModelPatch::~ModelPatch()
 {
 }
 
-void ModelPatch::getRenderingDataSub(const RenderingKey& key,
-	WeakArray<U8> subMeshIndicesArray,
-	ResourceGroupPtr& resourceGroup,
-	PipelinePtr& ppline,
-	Array<U32, MAX_SUB_DRAWCALLS>& indicesCountArray,
-	Array<PtrSize, MAX_SUB_DRAWCALLS>& indicesOffsetArray,
-	U32& drawcallCount) const
+void ModelPatch::getRenderingDataSub(
+	const RenderingKey& key, WeakArray<U8> subMeshIndicesArray, ModelRenderingInfo& inf) const
 {
 	// Get the resources
 	RenderingKey meshKey = key;
 	meshKey.m_lod = min<U>(key.m_lod, m_meshCount - 1);
 	const Mesh& mesh = getMesh(meshKey);
-	resourceGroup = m_grResources[meshKey.m_lod];
+	inf.m_resourceGroup = m_grResources[meshKey.m_lod];
 
-	// Get ppline
-	RenderingKey mtlKey = key;
-	mtlKey.m_lod = min<U>(key.m_lod, m_mtl->getLodCount() - 1);
-
-	ppline = getPipeline(mtlKey);
-
-	if(subMeshIndicesArray.getSize() == 0 || mesh.getSubMeshesCount() == 0)
+	// Get shaders
 	{
-		drawcallCount = 1;
-		indicesOffsetArray[0] = 0;
-		indicesCountArray[0] = mesh.getIndicesCount();
+		RenderingKey mtlKey = key;
+		mtlKey.m_lod = min<U>(key.m_lod, m_mtl->getLodCount() - 1);
+
+		if(mtlKey.m_tessellation && !m_mtl->getTessellationEnabled())
+		{
+			ANKI_ASSERT(0);
+		}
+
+		if(mtlKey.m_pass == Pass::SM && !m_mtl->getShadowEnabled())
+		{
+			ANKI_ASSERT(0);
+		}
+
+		if(mtlKey.m_instanceCount > 1 && !m_mtl->isInstanced())
+		{
+			ANKI_ASSERT(0);
+		}
+
+		const MaterialVariant& variant = m_mtl->getVariant(mtlKey);
+
+		inf.m_state.m_shaders[ShaderType::VERTEX] = variant.getShader(ShaderType::VERTEX);
+
+		if(mtlKey.m_tessellation)
+		{
+			inf.m_state.m_shaders[ShaderType::TESSELLATION_CONTROL] =
+				variant.getShader(ShaderType::TESSELLATION_CONTROL);
+
+			inf.m_state.m_shaders[ShaderType::TESSELLATION_EVALUATION] =
+				variant.getShader(ShaderType::TESSELLATION_EVALUATION);
+		}
+
+		inf.m_state.m_shaders[ShaderType::FRAGMENT] = variant.getShader(ShaderType::FRAGMENT);
+	}
+
+	// Vertex
+	VertexStateInfo& vert = inf.m_state.m_vertex;
+	vert.m_bindingCount = 1;
+	vert.m_attributeCount = 4;
+	vert.m_bindings[0].m_stride = sizeof(Vec3) + sizeof(HVec2) + 2 * sizeof(U32);
+
+	vert.m_attributes[0].m_format = PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
+	vert.m_attributes[0].m_offset = 0;
+
+	vert.m_attributes[1].m_format = PixelFormat(ComponentFormat::R16G16, TransformFormat::FLOAT);
+	vert.m_attributes[1].m_offset = sizeof(Vec3);
+
+	if(key.m_pass == Pass::MS_FS)
+	{
+		vert.m_attributes[2].m_format = PixelFormat(ComponentFormat::R10G10B10A2, TransformFormat::SNORM);
+		vert.m_attributes[2].m_offset = sizeof(Vec3) + sizeof(U32);
+
+		vert.m_attributes[3].m_format = PixelFormat(ComponentFormat::R10G10B10A2, TransformFormat::SNORM);
+		vert.m_attributes[3].m_offset = sizeof(Vec3) + sizeof(U32) * 2;
 	}
 	else
 	{
-		ANKI_ASSERT(0 && "TODO");
+		vert.m_attributeCount = 2;
+	}
+
+	// Input assembly
+	inf.m_state.m_inputAssembler.m_topology = PrimitiveTopology::TRIANGLES;
+	inf.m_state.m_inputAssembler.m_primitiveRestartEnabled = false;
+
+	inf.m_stateMask = PipelineSubStateBit::VERTEX | PipelineSubStateBit::SHADERS | PipelineSubStateBit::INPUT_ASSEMBLER;
+
+	// Other
+	if(subMeshIndicesArray.getSize() == 0 || mesh.getSubMeshesCount() == 0)
+	{
+		inf.m_drawcallCount = 1;
+		inf.m_indicesOffsetArray[0] = 0;
+		inf.m_indicesCountArray[0] = mesh.getIndicesCount();
+	}
+	else
+	{
+		ANKI_ASSERT(!"TODO");
 	}
 }
 
@@ -97,139 +152,6 @@ Error ModelPatch::create(WeakArray<CString> meshFNames, const CString& mtlFName,
 	}
 
 	return ErrorCode::NONE;
-}
-
-PipelinePtr ModelPatch::getPipeline(const RenderingKey& key) const
-{
-	// Preconditions
-	ANKI_ASSERT(key.m_lod < m_mtl->getLodCount());
-
-	if(key.m_tessellation && !m_mtl->getTessellationEnabled())
-	{
-		ANKI_ASSERT(0);
-	}
-
-	if(key.m_pass == Pass::SM && !m_mtl->getShadowEnabled())
-	{
-		ANKI_ASSERT(0);
-	}
-
-	if(key.m_instanceCount > 1 && !m_mtl->isInstanced())
-	{
-		ANKI_ASSERT(0);
-	}
-
-	LockGuard<Mutex> lock(m_lock);
-
-	PipelinePtr& ppline =
-		m_pplines[U(key.m_pass)][key.m_lod][key.m_tessellation][Material::getInstanceGroupIdx(key.m_instanceCount)];
-
-	// Lazily create it
-	if(ANKI_UNLIKELY(!ppline.isCreated()))
-	{
-		const MaterialVariant& variant = m_mtl->getVariant(key);
-
-		PipelineInitInfo pplineInit;
-		computePipelineInitInfo(key, pplineInit);
-
-		pplineInit.m_shaders[U(ShaderType::VERTEX)] = variant.getShader(ShaderType::VERTEX);
-
-		if(key.m_tessellation)
-		{
-			pplineInit.m_shaders[U(ShaderType::TESSELLATION_CONTROL)] =
-				variant.getShader(ShaderType::TESSELLATION_CONTROL);
-
-			pplineInit.m_shaders[U(ShaderType::TESSELLATION_EVALUATION)] =
-				variant.getShader(ShaderType::TESSELLATION_EVALUATION);
-		}
-
-		pplineInit.m_shaders[U(ShaderType::FRAGMENT)] = variant.getShader(ShaderType::FRAGMENT);
-
-		// Create
-		GrManager& gr = m_model->getManager().getGrManager();
-		ppline = gr.newInstance<Pipeline>(pplineInit);
-	}
-
-	return ppline;
-}
-
-void ModelPatch::computePipelineInitInfo(const RenderingKey& key, PipelineInitInfo& pinit) const
-{
-	//
-	// Vertex state
-	//
-	VertexStateInfo& vert = pinit.m_vertex;
-	if(m_meshes[0]->hasBoneWeights())
-	{
-		ANKI_ASSERT(0 && "TODO");
-	}
-	else
-	{
-		vert.m_bindingCount = 1;
-		vert.m_attributeCount = 4;
-		vert.m_bindings[0].m_stride = sizeof(Vec3) + sizeof(HVec2) + 2 * sizeof(U32);
-
-		vert.m_attributes[0].m_format = PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
-		vert.m_attributes[0].m_offset = 0;
-
-		vert.m_attributes[1].m_format = PixelFormat(ComponentFormat::R16G16, TransformFormat::FLOAT);
-		vert.m_attributes[1].m_offset = sizeof(Vec3);
-
-		if(key.m_pass == Pass::MS_FS)
-		{
-			vert.m_attributes[2].m_format = PixelFormat(ComponentFormat::R10G10B10A2, TransformFormat::SNORM);
-			vert.m_attributes[2].m_offset = sizeof(Vec3) + sizeof(U32);
-
-			vert.m_attributes[3].m_format = PixelFormat(ComponentFormat::R10G10B10A2, TransformFormat::SNORM);
-			vert.m_attributes[3].m_offset = sizeof(Vec3) + sizeof(U32) * 2;
-		}
-		else
-		{
-			vert.m_attributeCount = 2;
-		}
-	}
-
-	//
-	// Depth/stencil state
-	//
-	DepthStencilStateInfo& ds = pinit.m_depthStencil;
-	if(key.m_pass == Pass::SM)
-	{
-		ds.m_format = Sm::DEPTH_RT_PIXEL_FORMAT;
-	}
-	else if(m_mtl->getForwardShading())
-	{
-		ds.m_format = MS_DEPTH_ATTACHMENT_PIXEL_FORMAT;
-		ds.m_depthWriteEnabled = false;
-	}
-	else
-	{
-		ds.m_format = MS_DEPTH_ATTACHMENT_PIXEL_FORMAT;
-	}
-
-	//
-	// Color state
-	//
-	ColorStateInfo& color = pinit.m_color;
-	if(key.m_pass == Pass::SM)
-	{
-		// Default
-	}
-	else if(m_mtl->getForwardShading())
-	{
-		color.m_attachmentCount = 1;
-		color.m_attachments[0].m_format = IS_COLOR_ATTACHMENT_PIXEL_FORMAT;
-		color.m_attachments[0].m_srcBlendMethod = BlendMethod::SRC_ALPHA;
-		color.m_attachments[0].m_dstBlendMethod = BlendMethod::ONE_MINUS_SRC_ALPHA;
-	}
-	else
-	{
-		color.m_attachmentCount = MS_COLOR_ATTACHMENT_COUNT;
-		ANKI_ASSERT(MS_COLOR_ATTACHMENT_COUNT == 3);
-		color.m_attachments[0].m_format = MS_COLOR_ATTACHMENT_PIXEL_FORMATS[0];
-		color.m_attachments[1].m_format = MS_COLOR_ATTACHMENT_PIXEL_FORMATS[1];
-		color.m_attachments[2].m_format = MS_COLOR_ATTACHMENT_PIXEL_FORMATS[2];
-	}
 }
 
 Model::Model(ResourceManager* manager)

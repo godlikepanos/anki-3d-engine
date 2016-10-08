@@ -17,6 +17,10 @@ namespace anki
 
 Fs::~Fs()
 {
+	if(m_pplineCache)
+	{
+		getAllocator().deleteInstance(m_pplineCache);
+	}
 }
 
 Error Fs::init(const ConfigSet&)
@@ -68,7 +72,20 @@ Error Fs::init(const ConfigSet&)
 		m_globalResources = getGrManager().newInstance<ResourceGroup>(init);
 	}
 
-	getGrManager().finish();
+	// Init state
+	{
+		ColorStateInfo& color = m_state.m_color;
+		color.m_attachmentCount = 1;
+		color.m_attachments[0].m_format = IS_COLOR_ATTACHMENT_PIXEL_FORMAT;
+		color.m_attachments[0].m_srcBlendMethod = BlendMethod::SRC_ALPHA;
+		color.m_attachments[0].m_dstBlendMethod = BlendMethod::ONE_MINUS_SRC_ALPHA;
+
+		m_state.m_depthStencil.m_format = MS_DEPTH_ATTACHMENT_PIXEL_FORMAT;
+		m_state.m_depthStencil.m_depthWriteEnabled = false;
+	}
+
+	m_pplineCache = getAllocator().newInstance<GrObjectCache>(&getGrManager());
+
 	return ErrorCode::NONE;
 }
 
@@ -102,6 +119,8 @@ Error Fs::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) 
 	Error err = m_r->getSceneDrawer().drawRange(Pass::MS_FS,
 		*ctx.m_frustumComponent,
 		cmdb,
+		*m_pplineCache,
+		m_state,
 		vis.getBegin(VisibilityGroupType::RENDERABLES_FS) + start,
 		vis.getBegin(VisibilityGroupType::RENDERABLES_FS) + end);
 

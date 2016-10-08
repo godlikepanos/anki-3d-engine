@@ -34,7 +34,7 @@ public:
 
 	/// Create a new graphics object and use the cache to avoid duplication. It's thread safe.
 	template<typename T, typename TArg>
-	GrObjectPtr<T> newInstance(const TArg& arg);
+	GrObjectPtr<T> newInstance(const TArg& arg, U64 overrideHash = 0);
 
 private:
 	using Key = U64;
@@ -71,37 +71,28 @@ private:
 	}
 
 	/// Unregister an object from the cache.
-	void unregisterObject(GrObject* obj)
-	{
-		ANKI_ASSERT(obj);
-		ANKI_ASSERT(obj->getHash() != 0);
-
-		LockGuard<Mutex> lock(m_mtx);
-		ANKI_ASSERT(tryFind(obj->getHash()) != nullptr);
-		auto it = m_map.find(obj->getHash());
-		m_map.erase(m_gr->getAllocator(), it);
-	}
+	void unregisterObject(GrObject* obj);
 };
 
 template<typename T, typename TArg>
-inline GrObjectPtr<T> GrObjectCache::newInstance(const TArg& arg)
+inline GrObjectPtr<T> GrObjectCache::newInstance(const TArg& arg, U64 overrideHash)
 {
-	U64 hash = arg.computeHash();
+	U64 hash = (overrideHash != 0) ? overrideHash : arg.computeHash();
 	ANKI_ASSERT(hash != 0);
 
 	LockGuard<Mutex> lock(m_mtx);
 	GrObject* ptr = tryFind(hash);
 	if(ptr == nullptr)
 	{
-		T* tptr = m_gr->template newInstanceWithHash<T>(hash, arg);
-		m_map.pushBack(m_gr->getAllocator(), hash, tptr);
+		auto tptr = m_gr->template newInstanceCached<T>(hash, this, arg);
+		m_map.pushBack(m_gr->getAllocator(), hash, tptr.get());
+		return tptr;
 	}
 	else
 	{
 		ANKI_ASSERT(ptr->getType() == T::CLASS_TYPE);
+		return GrObjectPtr<T>(static_cast<T*>(ptr));
 	}
-
-	return GrObjectPtr<T>(static_cast<T*>(ptr));
 }
 /// @}
 

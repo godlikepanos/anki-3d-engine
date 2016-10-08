@@ -19,6 +19,17 @@ namespace anki
 
 const PixelFormat Sm::DEPTH_RT_PIXEL_FORMAT(ComponentFormat::D16, TransformFormat::UNORM);
 
+Sm::~Sm()
+{
+	m_spots.destroy(getAllocator());
+	m_omnis.destroy(getAllocator());
+
+	if(m_pplineCache)
+	{
+		getAllocator().deleteInstance(m_pplineCache);
+	}
+}
+
 Error Sm::init(const ConfigSet& config)
 {
 	m_poissonEnabled = config.getNumber("sm.poissonEnabled");
@@ -87,7 +98,11 @@ Error Sm::init(const ConfigSet& config)
 		++layer;
 	}
 
-	getGrManager().finish();
+	// Init state
+	m_state.m_depthStencil.m_format = Sm::DEPTH_RT_PIXEL_FORMAT;
+
+	m_pplineCache = getAllocator().newInstance<GrObjectCache>(&getGrManager());
+
 	return ErrorCode::NONE;
 }
 
@@ -259,6 +274,8 @@ Error Sm::doSpotLight(SceneNode& light, CommandBufferPtr& cmdb, FramebufferPtr& 
 	Error err = m_r->getSceneDrawer().drawRange(Pass::SM,
 		frc,
 		cmdb,
+		*m_pplineCache,
+		m_state,
 		vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + start,
 		vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + end);
 
@@ -290,6 +307,8 @@ Error Sm::doOmniLight(
 			ANKI_CHECK(m_r->getSceneDrawer().drawRange(Pass::SM,
 				frc,
 				cmdbs[frCount],
+				*m_pplineCache,
+				m_state,
 				vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + start,
 				vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + end));
 

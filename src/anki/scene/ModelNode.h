@@ -39,7 +39,7 @@ private:
 	Obb m_obb; ///< In world space. ModelNode will update it.
 	const ModelPatch* m_modelPatch = nullptr; ///< The resource
 
-	ANKI_USE_RESULT Error buildRendering(RenderingBuildInfo& data) const;
+	ANKI_USE_RESULT Error buildRendering(const RenderingBuildInfoIn& in, RenderingBuildInfoOut& out) const;
 };
 
 /// The model scene node

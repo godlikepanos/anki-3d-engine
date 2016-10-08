@@ -8,7 +8,7 @@
 #include <anki/scene/Common.h>
 #include <anki/scene/SceneComponent.h>
 #include <anki/resource/Material.h>
-#include <anki/resource/Model.h>
+#include <anki/util/HashMap.h>
 
 namespace anki
 {
@@ -101,16 +101,60 @@ private:
 	T m_copy; ///< Copy of the data
 };
 
-/// Rendering data input and output. This is a structure because we don't want to change what buildRendering accepts
-/// all the time.
-class RenderingBuildInfo
+/// Rendering data input.
+class RenderingBuildInfoIn
 {
 public:
 	RenderingKey m_key;
 	const U8* m_subMeshIndicesArray; ///< @note indices != drawing indices
 	U32 m_subMeshIndicesCount;
-	CommandBufferPtr m_cmdb; ///< A command buffer to append to.
-	TransientMemoryInfo* m_dynamicBufferInfo ANKI_DBG_NULLIFY_PTR;
+};
+
+/// Rendering data output.
+class RenderingBuildInfoOut
+{
+public:
+	ResourceGroupPtr m_resourceGroup;
+	Mat4 m_transform;
+	union A
+	{
+		DrawArraysIndirectInfo m_arrays;
+		DrawElementsIndirectInfo m_elements;
+
+		A()
+			: m_elements() // This is safe because of the nature of structs.
+		{
+		}
+	} m_drawcall;
+	Bool8 m_drawArrays = false;
+	Bool8 m_hasTransform = false;
+
+	PipelineInitInfo* m_state = nullptr;
+	PipelineSubStateBit m_stateMask = PipelineSubStateBit::NONE;
+
+	RenderingBuildInfoOut(PipelineInitInfo* state)
+		: m_state(state)
+	{
+		ANKI_ASSERT(state);
+	}
+
+	RenderingBuildInfoOut(const RenderingBuildInfoOut& b)
+	{
+		*this = b;
+	}
+
+	RenderingBuildInfoOut& operator=(const RenderingBuildInfoOut& b)
+	{
+		m_resourceGroup = b.m_resourceGroup;
+		m_transform = b.m_transform;
+		m_drawcall.m_elements = b.m_drawcall.m_elements;
+		m_drawArrays = b.m_drawArrays;
+		m_hasTransform = b.m_hasTransform;
+		m_state = b.m_state;
+		m_stateMask = b.m_stateMask;
+
+		return *this;
+	}
 };
 
 /// RenderComponent interface. Implemented by renderable scene nodes
@@ -121,7 +165,7 @@ public:
 
 	using Variables = DynamicArray<RenderComponentVariable*>;
 
-	RenderComponent(SceneNode* node, const Material* mtl, U64 hash = 0);
+	RenderComponent(SceneNode* node, const Material* mtl);
 
 	~RenderComponent();
 
@@ -147,21 +191,14 @@ public:
 		return m_vars.end();
 	}
 
-	/// Build up the rendering. Given an array of submeshes that are visible append jobs to the GL job chain.
-	virtual ANKI_USE_RESULT Error buildRendering(RenderingBuildInfo& data) const = 0;
+	/// Build up the rendering.
+	virtual ANKI_USE_RESULT Error buildRendering(const RenderingBuildInfoIn& in, RenderingBuildInfoOut& out) const = 0;
 
 	/// Access the material
 	const Material& getMaterial() const
 	{
 		ANKI_ASSERT(m_mtl);
 		return *m_mtl;
-	}
-
-	/// Information for movables. It's actualy an array of transformations.
-	virtual void getRenderWorldTransform(Bool& hasWorldTransforms, Transform& trf) const
-	{
-		hasWorldTransforms = false;
-		(void)trf;
 	}
 
 	Bool getCastsShadow() const
@@ -184,17 +221,54 @@ public:
 		return err;
 	}
 
-	Bool canMergeDrawcalls(const RenderComponent& b) const
+	Bool tryGetPipeline(U64 hash, PipelinePtr& ppline)
 	{
-		return m_mtl->isInstanced() && m_hash != 0 && m_hash == b.m_hash;
+		auto it = m_localPplineCache.find(hash);
+		if(it != m_localPplineCache.getEnd())
+		{
+			ppline = *it;
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	void storePipeline(U64 hash, PipelinePtr ppline)
+	{
+		ANKI_ASSERT(m_localPplineCache.find(hash) == m_localPplineCache.getEnd());
+		m_localPplineCache.pushBack(getAllocator(), hash, ppline);
 	}
 
 private:
+	using Key = U64;
+
+	/// Hash the hash.
+	class Hasher
+	{
+	public:
+		U64 operator()(const Key& b) const
+		{
+			return b;
+		}
+	};
+
+	/// Hash compare.
+	class Compare
+	{
+	public:
+		Bool operator()(const Key& a, const Key& b) const
+		{
+			return a == b;
+		}
+	};
+
 	Variables m_vars;
 	const Material* m_mtl;
 
-	/// If 2 components have the same hash the renderer may potentially try to merge them.
-	U64 m_hash = 0;
+	/// This is an optimization, a local hash of pipelines.
+	HashMap<U64, PipelinePtr, Hasher, Compare> m_localPplineCache;
 };
 /// @}
 

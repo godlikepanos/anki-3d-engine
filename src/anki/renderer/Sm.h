@@ -30,11 +30,7 @@ anki_internal:
 	{
 	}
 
-	~Sm()
-	{
-		m_spots.destroy(getAllocator());
-		m_omnis.destroy(getAllocator());
-	}
+	~Sm();
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 
@@ -98,6 +94,9 @@ private:
 
 	/// Shadowmap resolution
 	U32 m_resolution;
+
+	GrObjectCache* m_pplineCache = nullptr;
+	PipelineInitInfo m_state;
 
 	/// Find the best shadowmap for that light
 	template<typename TShadowmap, typename TContainer>

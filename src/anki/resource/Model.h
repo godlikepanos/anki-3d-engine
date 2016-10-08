@@ -23,6 +23,23 @@ class PhysicsCollisionShape;
 /// @addtogroup resource
 /// @{
 
+class ModelRenderingInfo
+{
+public:
+	Array<U32, MAX_SUB_DRAWCALLS> m_indicesCountArray;
+	Array<PtrSize, MAX_SUB_DRAWCALLS> m_indicesOffsetArray;
+	U32 m_drawcallCount;
+
+	ResourceGroupPtr m_resourceGroup;
+	PipelineInitInfo& m_state;
+	PipelineSubStateBit m_stateMask = PipelineSubStateBit::NONE;
+
+	ModelRenderingInfo(PipelineInitInfo& state)
+		: m_state(state)
+	{
+	}
+};
+
 /// Model patch interface class. Its very important class and it binds the material with the mesh
 class ModelPatch
 {
@@ -66,13 +83,7 @@ public:
 
 	/// Get information for multiDraw rendering. Given an array of submeshes that are visible return the correct indices
 	/// offsets and counts.
-	void getRenderingDataSub(const RenderingKey& key,
-		WeakArray<U8> subMeshIndicesArray,
-		ResourceGroupPtr& resourceGroup,
-		PipelinePtr& ppline,
-		Array<U32, MAX_SUB_DRAWCALLS>& indicesCountArray,
-		Array<PtrSize, MAX_SUB_DRAWCALLS>& indicesOffsetArray,
-		U32& drawcallCount) const;
+	void getRenderingDataSub(const RenderingKey& key, WeakArray<U8> subMeshIndicesArray, ModelRenderingInfo& inf) const;
 
 private:
 	Model* m_model ANKI_DBG_NULLIFY_PTR;
@@ -81,17 +92,10 @@ private:
 	U8 m_meshCount = 0;
 	MaterialResourcePtr m_mtl;
 
-	mutable Array4d<PipelinePtr, U(Pass::COUNT), MAX_LODS, 2, MAX_INSTANCE_GROUPS> m_pplines;
-	mutable Mutex m_lock; ///< Protect m_pplines
-
 	Array<ResourceGroupPtr, MAX_LODS> m_grResources;
 
 	/// Return the maximum number of LODs
 	U getLodCount() const;
-
-	PipelinePtr getPipeline(const RenderingKey& key) const;
-
-	void computePipelineInitInfo(const RenderingKey& key, PipelineInitInfo& pinit) const;
 };
 
 /// Model is an entity that acts as a container for other resources. Models are all the non static objects in a map.

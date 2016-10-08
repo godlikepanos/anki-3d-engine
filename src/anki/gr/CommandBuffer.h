@@ -19,9 +19,15 @@ namespace anki
 class DrawElementsIndirectInfo
 {
 public:
-	DrawElementsIndirectInfo()
-	{
-	}
+	U32 m_count = MAX_U32;
+	U32 m_instanceCount = 1;
+	U32 m_firstIndex = 0;
+	U32 m_baseVertex = 0;
+	U32 m_baseInstance = 0;
+
+	DrawElementsIndirectInfo() = default;
+
+	DrawElementsIndirectInfo(const DrawElementsIndirectInfo&) = default;
 
 	DrawElementsIndirectInfo(U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance)
 		: m_count(count)
@@ -32,20 +38,30 @@ public:
 	{
 	}
 
-	U32 m_count = MAX_U32;
-	U32 m_instanceCount = 1;
-	U32 m_firstIndex = 0;
-	U32 m_baseVertex = 0;
-	U32 m_baseInstance = 0;
+	Bool operator==(const DrawElementsIndirectInfo& b) const
+	{
+		return m_count == b.m_count && m_instanceCount == b.m_instanceCount && m_firstIndex == b.m_firstIndex
+			&& m_baseVertex == b.m_baseVertex && m_baseInstance == b.m_baseInstance;
+	}
+
+	Bool operator!=(const DrawElementsIndirectInfo& b) const
+	{
+		return !(operator==(b));
+	}
 };
 
 /// The draw indirect structure for arrays drawing, also the parameters of a regular drawcall
 class DrawArraysIndirectInfo
 {
 public:
-	DrawArraysIndirectInfo()
-	{
-	}
+	U32 m_count = MAX_U32;
+	U32 m_instanceCount = 1;
+	U32 m_first = 0;
+	U32 m_baseInstance = 0;
+
+	DrawArraysIndirectInfo() = default;
+
+	DrawArraysIndirectInfo(const DrawArraysIndirectInfo&) = default;
 
 	DrawArraysIndirectInfo(U32 count, U32 instanceCount, U32 first, U32 baseInstance)
 		: m_count(count)
@@ -55,10 +71,16 @@ public:
 	{
 	}
 
-	U32 m_count = MAX_U32;
-	U32 m_instanceCount = 1;
-	U32 m_first = 0;
-	U32 m_baseInstance = 0;
+	Bool operator==(const DrawArraysIndirectInfo& b) const
+	{
+		return m_count == b.m_count && m_instanceCount == b.m_instanceCount && m_first == b.m_first
+			&& m_baseInstance == b.m_baseInstance;
+	}
+
+	Bool operator!=(const DrawArraysIndirectInfo& b) const
+	{
+		return !(operator==(b));
+	}
 };
 
 /// Command buffer initialization hints. They are used to optimize the allocators of a command buffer.

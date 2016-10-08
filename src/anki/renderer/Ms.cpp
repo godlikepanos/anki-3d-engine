@@ -17,6 +17,10 @@ namespace anki
 
 Ms::~Ms()
 {
+	if(m_pplineCache)
+	{
+		getAllocator().deleteInstance(m_pplineCache);
+	}
 }
 
 Error Ms::createRt(U32 samples)
@@ -102,6 +106,18 @@ Error Ms::initInternal(const ConfigSet& initializer)
 
 	getGrManager().finish();
 
+	{
+		ColorStateInfo& color = m_state.m_color;
+		color.m_attachmentCount = MS_COLOR_ATTACHMENT_COUNT;
+		color.m_attachments[0].m_format = MS_COLOR_ATTACHMENT_PIXEL_FORMATS[0];
+		color.m_attachments[1].m_format = MS_COLOR_ATTACHMENT_PIXEL_FORMATS[1];
+		color.m_attachments[2].m_format = MS_COLOR_ATTACHMENT_PIXEL_FORMATS[2];
+
+		m_state.m_depthStencil.m_format = MS_DEPTH_ATTACHMENT_PIXEL_FORMAT;
+	}
+
+	m_pplineCache = getAllocator().newInstance<GrObjectCache>(&getGrManager());
+
 	return ErrorCode::NONE;
 }
 
@@ -131,6 +147,8 @@ Error Ms::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) 
 		ANKI_CHECK(m_r->getSceneDrawer().drawRange(Pass::MS_FS,
 			*ctx.m_frustumComponent,
 			cmdb,
+			*m_pplineCache,
+			m_state,
 			vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + start,
 			vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + end));
 	}

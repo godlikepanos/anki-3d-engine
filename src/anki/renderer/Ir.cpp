@@ -6,6 +6,7 @@
 #include <anki/renderer/Ir.h>
 #include <anki/renderer/Is.h>
 #include <anki/renderer/Pps.h>
+#include <anki/renderer/Ms.h>
 #include <anki/core/Config.h>
 #include <anki/scene/SceneNode.h>
 #include <anki/scene/Visibility.h>
@@ -448,6 +449,8 @@ Error Ir::runMs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceId
 	ANKI_CHECK(m_r->getSceneDrawer().drawRange(Pass::MS_FS,
 		frc,
 		cmdb,
+		*m_r->getMs().m_pplineCache,
+		m_r->getMs().m_state,
 		vis.getBegin(VisibilityGroupType::RENDERABLES_MS),
 		vis.getEnd(VisibilityGroupType::RENDERABLES_MS)));
 

@@ -97,9 +97,6 @@ public:
 class ParticleEmitterResource : public ResourceObject, private ParticleEmitterProperties
 {
 public:
-	/// Size of a single vertex.
-	static const U VERTEX_SIZE = 5 * sizeof(F32);
-
 	ParticleEmitterResource(ResourceManager* manager);
 
 	~ParticleEmitterResource();
@@ -119,19 +116,14 @@ public:
 		return *m_material;
 	}
 
-	/// Get pipeline for rendering.
-	PipelinePtr getPipeline(U lod) const
-	{
-		lod = min<U>(lod, m_lodCount - 1);
-		return m_pplines[lod];
-	}
+	/// Get shaders for rendering.
+	void getRenderingInfo(U lod, PipelineInitInfo& state, PipelineSubStateBit& stateMask) const;
 
 	/// Load it
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename);
 
 private:
 	MaterialResourcePtr m_material;
-	Array<PipelinePtr, MAX_LODS> m_pplines;
 	U8 m_lodCount = 1; ///< Cache the value from the material
 
 	void loadInternal(const XmlElement& el);

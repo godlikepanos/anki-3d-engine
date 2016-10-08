@@ -60,6 +60,8 @@ private:
 	FramebufferPtr m_fb;
 	TexturePtr m_rt;
 	ResourceGroupPtr m_globalResources;
+	PipelineInitInfo m_state;
+	GrObjectCache* m_pplineCache = nullptr;
 };
 /// @}
 

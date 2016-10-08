@@ -20,6 +20,16 @@ class VertexBinding
 public:
 	PtrSize m_stride; ///< Vertex stride.
 	VertexStepRate m_stepRate = VertexStepRate::VERTEX;
+
+	Bool operator==(const VertexBinding& b) const
+	{
+		return m_stride == b.m_stride && m_stepRate == b.m_stepRate;
+	}
+
+	Bool operator!=(const VertexBinding& b) const
+	{
+		return !(*this == b);
+	}
 };
 
 class VertexAttributeBinding
@@ -28,6 +38,16 @@ public:
 	PixelFormat m_format;
 	PtrSize m_offset = 0;
 	U8 m_binding = 0;
+
+	Bool operator==(const VertexAttributeBinding& b) const
+	{
+		return m_format == b.m_format && m_offset == b.m_offset && m_binding == b.m_binding;
+	}
+
+	Bool operator!=(const VertexAttributeBinding& b) const
+	{
+		return !(*this == b);
+	}
 };
 
 class VertexStateInfo
@@ -37,6 +57,37 @@ public:
 	Array<VertexBinding, MAX_VERTEX_ATTRIBUTES> m_bindings;
 	U8 m_attributeCount = 0;
 	Array<VertexAttributeBinding, MAX_VERTEX_ATTRIBUTES> m_attributes;
+
+	Bool operator==(const VertexStateInfo& b) const
+	{
+		if(m_bindingCount != b.m_bindingCount || m_attributeCount != b.m_attributeCount)
+		{
+			return false;
+		}
+
+		for(U i = 0; i < m_bindingCount; ++i)
+		{
+			if(m_bindings[i] != b.m_bindings[i])
+			{
+				return false;
+			}
+		}
+
+		for(U i = 0; i < m_attributeCount; ++i)
+		{
+			if(m_attributes[i] != b.m_attributes[i])
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	Bool operator!=(const VertexStateInfo& b) const
+	{
+		return !(*this == b);
+	}
 };
 
 class InputAssemblerStateInfo
@@ -44,6 +95,16 @@ class InputAssemblerStateInfo
 public:
 	PrimitiveTopology m_topology = PrimitiveTopology::TRIANGLES;
 	Bool8 m_primitiveRestartEnabled = false;
+
+	Bool operator==(const InputAssemblerStateInfo& b) const
+	{
+		return m_topology == b.m_topology && m_primitiveRestartEnabled == b.m_primitiveRestartEnabled;
+	}
+
+	Bool operator!=(const InputAssemblerStateInfo& b) const
+	{
+		return !(*this == b);
+	}
 };
 
 class TessellationStateInfo
@@ -126,7 +187,8 @@ enum class PipelineSubStateBit : U16
 	RASTERIZER = 1 << 4,
 	DEPTH_STENCIL = 1 << 5,
 	COLOR = 1 << 6,
-	ALL = VERTEX | INPUT_ASSEMBLER | TESSELLATION | VIEWPORT | RASTERIZER | DEPTH_STENCIL | COLOR
+	SHADERS = 1 << 7,
+	ALL = VERTEX | INPUT_ASSEMBLER | TESSELLATION | VIEWPORT | RASTERIZER | DEPTH_STENCIL | COLOR | SHADERS
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(PipelineSubStateBit, inline)
 
@@ -175,8 +237,7 @@ public:
 		Array<U64, U(ShaderType::COUNT)> uuids;
 		for(U i = 0; i < m_shaders.getSize(); ++i)
 		{
-			U64 uuid = (m_shaders[i].isCreated()) ? m_shaders[i]->getUuid() : 0;
-			uuids[i] = uuid;
+			uuids[i] = (m_shaders[i].isCreated()) ? m_shaders[i]->getUuid() : 0;
 		}
 
 		return appendHash(&uuids[0], sizeof(uuids), h);

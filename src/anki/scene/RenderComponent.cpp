@@ -48,10 +48,9 @@ RenderComponentVariable::~RenderComponentVariable()
 {
 }
 
-RenderComponent::RenderComponent(SceneNode* node, const Material* mtl, U64 hash)
+RenderComponent::RenderComponent(SceneNode* node, const Material* mtl)
 	: SceneComponent(SceneComponentType::RENDER, node)
 	, m_mtl(mtl)
-	, m_hash(hash)
 {
 }
 
@@ -64,6 +63,8 @@ RenderComponent::~RenderComponent()
 	}
 
 	m_vars.destroy(alloc);
+
+	m_localPplineCache.destroy(getAllocator());
 }
 
 Error RenderComponent::init()

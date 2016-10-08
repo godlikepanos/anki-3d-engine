@@ -25,21 +25,13 @@ public:
 	}
 
 	ModelPatchRenderComponent(ModelPatchNode* node)
-		: RenderComponent(node, &node->m_modelPatch->getMaterial(), node->m_modelPatch->getModel().getUuid())
+		: RenderComponent(node, &node->m_modelPatch->getMaterial())
 	{
 	}
 
-	ANKI_USE_RESULT Error buildRendering(RenderingBuildInfo& data) const override
+	ANKI_USE_RESULT Error buildRendering(const RenderingBuildInfoIn& in, RenderingBuildInfoOut& out) const override
 	{
-		return getNode().buildRendering(data);
-	}
-
-	void getRenderWorldTransform(Bool& hasTransform, Transform& trf) const override
-	{
-		hasTransform = true;
-		const SceneNode* node = getNode().getParent();
-		ANKI_ASSERT(node);
-		trf = node->getComponent<MoveComponent>().getWorldTransform();
+		return getNode().buildRendering(in, out);
 	}
 };
 
@@ -73,31 +65,28 @@ Error ModelPatchNode::init(const ModelPatch* modelPatch)
 	return ErrorCode::NONE;
 }
 
-Error ModelPatchNode::buildRendering(RenderingBuildInfo& data) const
+Error ModelPatchNode::buildRendering(const RenderingBuildInfoIn& in, RenderingBuildInfoOut& out) const
 {
 	// That will not work on multi-draw and instanced at the same time. Make sure that there is no multi-draw anywhere
 	ANKI_ASSERT(m_modelPatch->getSubMeshesCount() == 0);
 
-	Array<U32, MAX_SUB_DRAWCALLS> indicesCountArray;
-	Array<PtrSize, MAX_SUB_DRAWCALLS> indicesOffsetArray;
-	U32 drawcallCount;
+	// State
+	ModelRenderingInfo modelInf(*out.m_state);
+	m_modelPatch->getRenderingDataSub(in.m_key, WeakArray<U8>(), modelInf);
+	ANKI_ASSERT(modelInf.m_stateMask
+		== (PipelineSubStateBit::VERTEX | PipelineSubStateBit::SHADERS | PipelineSubStateBit::INPUT_ASSEMBLER));
 
-	PipelinePtr ppline;
-	ResourceGroupPtr grResources;
+	out.m_stateMask = modelInf.m_stateMask;
 
-	m_modelPatch->getRenderingDataSub(
-		data.m_key, WeakArray<U8>(), grResources, ppline, indicesCountArray, indicesOffsetArray, drawcallCount);
+	// Other
+	ANKI_ASSERT(modelInf.m_drawcallCount == 1 && "Cannot accept multi-draw");
+	out.m_resourceGroup = modelInf.m_resourceGroup;
+	out.m_drawcall.m_elements.m_count = modelInf.m_indicesCountArray[0];
+	out.m_drawcall.m_elements.m_instanceCount = in.m_key.m_instanceCount;
+	out.m_drawcall.m_elements.m_firstIndex = modelInf.m_indicesOffsetArray[0] / sizeof(U16);
 
-	// Cannot accept multi-draw
-	ANKI_ASSERT(drawcallCount == 1);
-
-	// Set jobs
-	data.m_cmdb->bindPipeline(ppline);
-	data.m_cmdb->bindResourceGroup(grResources, 0, data.m_dynamicBufferInfo);
-
-	// Drawcall
-	U32 offset = indicesOffsetArray[0] / sizeof(U16);
-	data.m_cmdb->drawElements(indicesCountArray[0], data.m_key.m_instanceCount, offset);
+	out.m_hasTransform = true;
+	out.m_transform = Mat4(getParent()->getComponent<MoveComponent>().getWorldTransform());
 
 	return ErrorCode::NONE;
 }

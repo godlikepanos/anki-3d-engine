@@ -174,16 +174,9 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error buildRendering(RenderingBuildInfo& data) const override
+	ANKI_USE_RESULT Error buildRendering(const RenderingBuildInfoIn& in, RenderingBuildInfoOut& out) const override
 	{
-		return getNode().buildRendering(data);
-	}
-
-	void getRenderWorldTransform(Bool& hasTransform, Transform& trf) const override
-	{
-		hasTransform = true;
-		// The particles are already in world position
-		trf = Transform::getIdentity();
+		return getNode().buildRendering(in, out);
 	}
 };
 
@@ -277,7 +270,7 @@ Error ParticleEmitter::init(const CString& filename)
 	}
 
 	// Create the vertex buffer and object
-	m_vertBuffSize = m_maxNumOfParticles * ParticleEmitterResource::VERTEX_SIZE;
+	m_vertBuffSize = m_maxNumOfParticles * VERTEX_SIZE;
 
 	GrManager& gr = getSceneGraph().getGrManager();
 
@@ -296,23 +289,47 @@ Error ParticleEmitter::init(const CString& filename)
 	return ErrorCode::NONE;
 }
 
-Error ParticleEmitter::buildRendering(RenderingBuildInfo& data) const
+Error ParticleEmitter::buildRendering(const RenderingBuildInfoIn& in, RenderingBuildInfoOut& out) const
 {
-	ANKI_ASSERT(data.m_subMeshIndicesCount == 1);
+	ANKI_ASSERT(in.m_subMeshIndicesCount == 1);
 
 	if(m_aliveParticlesCount == 0)
 	{
 		return ErrorCode::NONE;
 	}
 
-	PipelinePtr ppline = m_particleEmitterResource->getPipeline(data.m_key.m_lod);
-	data.m_cmdb->bindPipeline(ppline);
-
 	U frame = (getGlobalTimestamp() % 3);
 
-	data.m_cmdb->bindResourceGroup(m_grGroups[frame], 0, data.m_dynamicBufferInfo);
+	PipelineSubStateBit stateMask;
+	m_particleEmitterResource->getRenderingInfo(in.m_key.m_lod, *out.m_state, stateMask);
+	ANKI_ASSERT(stateMask == PipelineSubStateBit::SHADERS);
 
-	data.m_cmdb->drawArrays(m_aliveParticlesCount, data.m_subMeshIndicesCount);
+	VertexStateInfo& vertState = out.m_state->m_vertex;
+	vertState.m_bindingCount = 1;
+	vertState.m_bindings[0].m_stride = VERTEX_SIZE;
+	vertState.m_attributeCount = 3;
+	vertState.m_attributes[0].m_format = PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
+	vertState.m_attributes[0].m_offset = 0;
+	vertState.m_attributes[0].m_binding = 0;
+	vertState.m_attributes[1].m_format = PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT);
+	vertState.m_attributes[1].m_offset = sizeof(Vec3);
+	vertState.m_attributes[1].m_binding = 0;
+	vertState.m_attributes[2].m_format = PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT);
+	vertState.m_attributes[2].m_offset = sizeof(Vec3) + sizeof(F32);
+	vertState.m_attributes[2].m_binding = 0;
+
+	out.m_state->m_inputAssembler.m_topology = PrimitiveTopology::POINTS;
+
+	out.m_stateMask = stateMask | PipelineSubStateBit::VERTEX | PipelineSubStateBit::INPUT_ASSEMBLER;
+
+	out.m_drawArrays = true;
+	out.m_drawcall.m_arrays.m_count = m_aliveParticlesCount;
+
+	out.m_resourceGroup = m_grGroups[frame];
+
+	// The particles are already in world position
+	out.m_hasTransform = true;
+	out.m_transform = Mat4::getIdentity();
 
 	return ErrorCode::NONE;
 }
@@ -402,8 +419,7 @@ Error ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 			// It's alive
 
 			// Do checks
-			ANKI_ASSERT(
-				(PtrSize(verts) + ParticleEmitterResource::VERTEX_SIZE - PtrSize(verts_base)) <= m_vertBuffSize);
+			ANKI_ASSERT((PtrSize(verts) + VERTEX_SIZE - PtrSize(verts_base)) <= m_vertBuffSize);
 
 			// This will calculate a new world transformation
 			p->simulate(*this, prevUpdateTime, crntTime);

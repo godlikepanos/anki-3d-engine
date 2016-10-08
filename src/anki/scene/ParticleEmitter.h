@@ -174,6 +174,9 @@ private:
 		PHYSICS_ENGINE
 	};
 
+	/// Size of a single vertex.
+	static const U VERTEX_SIZE = 5 * sizeof(F32);
+
 	ParticleEmitterResourcePtr m_particleEmitterResource;
 	DynamicArray<ParticleBase*> m_particles;
 	F32 m_timeLeftForNextEmission = 0.0;
@@ -196,7 +199,7 @@ private:
 	void createParticlesSimulation(SceneGraph* scene);
 	void createParticlesSimpleSimulation();
 
-	ANKI_USE_RESULT Error buildRendering(RenderingBuildInfo& data) const;
+	ANKI_USE_RESULT Error buildRendering(const RenderingBuildInfoIn& in, RenderingBuildInfoOut& out) const;
 
 	void onMoveComponentUpdate(MoveComponent& move);
 };
