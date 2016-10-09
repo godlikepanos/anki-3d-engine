@@ -18,6 +18,8 @@ namespace anki
 /// Base of all graphics objects.
 class GrObject : public NonCopyable
 {
+	friend class GrObjectCache;
+
 public:
 	GrObject(GrManager* manager, GrObjectType type, U64 hash, GrObjectCache* cache);
 

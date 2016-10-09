@@ -10,6 +10,7 @@
 #include <anki/gr/CommandBuffer.h>
 #include <anki/gr/vulkan/CommandBufferImpl.h>
 #include <anki/gr/common/Misc.h>
+#include <anki/gr/GrObjectCache.h>
 
 namespace anki
 {
@@ -111,7 +112,7 @@ Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 {
 	TextureInitInfo init = init_;
 	ANKI_ASSERT(textureInitInfoValid(init));
-	m_sampler = getGrManager().newInstanceCached<Sampler>(init.m_sampling);
+	m_sampler = getGrManagerImpl().getSamplerCache().newInstance<Sampler>(init.m_sampling);
 
 	// Set some stuff
 	m_width = init.m_width;
@@ -215,6 +216,17 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 			m_format = init.m_format;
 			m_vkFormat = convertFormat(m_format);
 			m_workarounds = TextureImplWorkaround::R8G8B8_TO_R8G8B8A8;
+		}
+		else if(init.m_format.m_components == ComponentFormat::S8)
+		{
+			ANKI_ASSERT(
+				!(init.m_usage & (TextureUsageBit::IMAGE_ALL | TextureUsageBit::UPLOAD)) && "Can't do that ATM");
+			init.m_format = PixelFormat(ComponentFormat::D24S8, TransformFormat::UNORM);
+			m_format = init.m_format;
+			m_vkFormat = convertFormat(m_format);
+			m_workarounds = TextureImplWorkaround::S8_TO_D24S8;
+			m_aspect = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+			m_akAspect = DepthStencilAspectMask::DEPTH | DepthStencilAspectMask::STENCIL;
 		}
 		else
 		{
@@ -546,7 +558,8 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 		out = VK_IMAGE_LAYOUT_GENERAL;
 	}
 	else if(usage == TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
-		|| usage == TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE)
+		|| usage == TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE
+		|| usage == TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ)
 	{
 		if(m_depthStencil)
 		{

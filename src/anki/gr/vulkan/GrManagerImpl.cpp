@@ -9,6 +9,7 @@
 #include <anki/gr/Pipeline.h>
 #include <anki/gr/vulkan/CommandBufferImpl.h>
 #include <anki/gr/CommandBuffer.h>
+#include <anki/gr/GrObjectCache.h>
 
 #include <anki/core/Config.h>
 #include <glslang/Public/ShaderLang.h>
@@ -48,6 +49,11 @@ GrManagerImpl::~GrManagerImpl()
 	}
 
 	m_perThread.destroy(getAllocator());
+
+	if(m_samplerCache)
+	{
+		getAllocator().deleteInstance(m_samplerCache);
+	}
 
 	// THIRD THING: Continue with the rest
 	m_rpCreator.destroy();
@@ -137,6 +143,8 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 
 	m_queryAlloc.init(getAllocator(), m_device);
 
+	m_samplerCache = getAllocator().newInstance<GrObjectCache>(m_manager);
+
 	// Set m_r8g8b8ImagesSupported
 	{
 		VkImageFormatProperties props = {};
@@ -158,6 +166,30 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 			ANKI_ASSERT(res == VK_SUCCESS);
 			ANKI_LOGI("R8G8B8 Images are supported");
 			m_r8g8b8ImagesSupported = true;
+		}
+	}
+
+	// Set m_s8ImagesSupported
+	{
+		VkImageFormatProperties props = {};
+		VkResult res = vkGetPhysicalDeviceImageFormatProperties(m_physicalDevice,
+			VK_FORMAT_S8_UINT,
+			VK_IMAGE_TYPE_2D,
+			VK_IMAGE_TILING_OPTIMAL,
+			VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+			0,
+			&props);
+
+		if(res == VK_ERROR_FORMAT_NOT_SUPPORTED)
+		{
+			ANKI_LOGI("S8 Images are not supported. Will workaround this");
+			m_s8ImagesSupported = false;
+		}
+		else
+		{
+			ANKI_ASSERT(res == VK_SUCCESS);
+			ANKI_LOGI("S8 Images are supported");
+			m_s8ImagesSupported = true;
 		}
 	}
 

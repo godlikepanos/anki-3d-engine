@@ -109,8 +109,20 @@ VkRenderPass CompatibleRenderPassCreator::createNewRenderPass(const PipelineInit
 	VkAttachmentReference dsReference = {0, VK_IMAGE_LAYOUT_GENERAL};
 	if(hasDepthStencil)
 	{
+		// Workaround unsupported formats
+		VkFormat fmt;
+		if(init.m_depthStencil.m_format.m_components == ComponentFormat::S8 && !m_manager->getS8ImagesSupported())
+		{
+			PixelFormat newFmt = PixelFormat(ComponentFormat::D24S8, TransformFormat::UNORM);
+			fmt = convertFormat(newFmt);
+		}
+		else
+		{
+			fmt = convertFormat(init.m_depthStencil.m_format);
+		}
+
 		VkAttachmentDescription& desc = attachmentDescriptions[ci.attachmentCount];
-		desc.format = convertFormat(init.m_depthStencil.m_format);
+		desc.format = fmt;
 		desc.samples = VK_SAMPLE_COUNT_1_BIT;
 		desc.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		desc.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;

@@ -162,6 +162,11 @@ public:
 		return m_r8g8b8ImagesSupported;
 	}
 
+	Bool getS8ImagesSupported() const
+	{
+		return m_s8ImagesSupported;
+	}
+
 	CompatibleRenderPassCreator& getCompatibleRenderPassCreator()
 	{
 		return m_rpCreator;
@@ -176,6 +181,12 @@ public:
 	{
 		ANKI_ASSERT(m_pplineCache);
 		return m_pplineCache;
+	}
+
+	GrObjectCache& getSamplerCache()
+	{
+		ANKI_ASSERT(m_samplerCache);
+		return *m_samplerCache;
 	}
 
 private:
@@ -281,6 +292,9 @@ private:
 	VkPipelineCache m_pplineCache = VK_NULL_HANDLE;
 
 	Bool8 m_r8g8b8ImagesSupported = false;
+	Bool8 m_s8ImagesSupported = false;
+
+	GrObjectCache* m_samplerCache = nullptr;
 
 	ANKI_USE_RESULT Error initInternal(const GrManagerInitInfo& init);
 	ANKI_USE_RESULT Error initInstance(const GrManagerInitInfo& init);

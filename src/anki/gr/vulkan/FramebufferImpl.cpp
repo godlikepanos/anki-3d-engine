@@ -87,7 +87,8 @@ Bool FramebufferImpl::initInfoValid(const FramebufferInitInfo& inf)
 	if(inf.m_depthStencilAttachment.m_texture)
 	{
 		const TextureImpl& impl = inf.m_depthStencilAttachment.m_texture->getImplementation();
-		if(impl.m_akAspect == DepthStencilAspectMask::DEPTH_STENCIL)
+		if(impl.m_akAspect == DepthStencilAspectMask::DEPTH_STENCIL
+			&& !(impl.m_workarounds & TextureImplWorkaround::S8_TO_D24S8))
 		{
 			if(inf.m_depthStencilAttachment.m_aspect == DepthStencilAspectMask::NONE)
 			{
@@ -232,7 +233,17 @@ Error FramebufferImpl::initFramebuffer(const FramebufferInitInfo& init)
 			const FramebufferAttachmentInfo& att = init.m_depthStencilAttachment;
 			TextureImpl& tex = att.m_texture->getImplementation();
 
-			attachments[count] = tex.getOrCreateSingleSurfaceView(att.m_surface, att.m_aspect);
+			DepthStencilAspectMask aspect;
+			if(!!(tex.m_workarounds & TextureImplWorkaround::S8_TO_D24S8))
+			{
+				aspect = DepthStencilAspectMask::STENCIL;
+			}
+			else
+			{
+				aspect = att.m_aspect;
+			}
+
+			attachments[count] = tex.getOrCreateSingleSurfaceView(att.m_surface, aspect);
 
 			if(m_width == 0)
 			{

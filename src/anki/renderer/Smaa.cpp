@@ -14,6 +14,7 @@ namespace anki
 
 static const PixelFormat EDGE_PIXEL_FORMAT(ComponentFormat::R8G8, TransformFormat::UNORM);
 static const PixelFormat WEIGHTS_PIXEL_FORMAT(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
+static const PixelFormat STENCIL_PIXEL_FORMAT(ComponentFormat::S8, TransformFormat::UINT);
 
 SmaaEdge::~SmaaEdge()
 {
@@ -44,6 +45,7 @@ Error SmaaEdge::init(const ConfigSet& initializer)
 	ppinit.m_depthStencil.m_depthWriteEnabled = false;
 	ppinit.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
 	ppinit.m_depthStencil.m_stencilFront.m_stencilPassDepthPassOperation = StencilOperation::REPLACE;
+	ppinit.m_depthStencil.m_format = STENCIL_PIXEL_FORMAT;
 
 	ppinit.m_color.m_attachmentCount = 1;
 	ppinit.m_color.m_attachments[0].m_format = EDGE_PIXEL_FORMAT;
@@ -85,6 +87,11 @@ void SmaaEdge::setPreRunBarriers(RenderingContext& ctx)
 {
 	ctx.m_commandBuffer->setTextureSurfaceBarrier(
 		m_rt, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureSurfaceInfo(0, 0, 0, 0));
+
+	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_r->getSmaa().m_stencilTex,
+		TextureUsageBit::NONE,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+		TextureSurfaceInfo(0, 0, 0, 0));
 }
 
 void SmaaEdge::setPostRunBarriers(RenderingContext& ctx)
@@ -96,7 +103,7 @@ void SmaaEdge::setPostRunBarriers(RenderingContext& ctx)
 
 	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_r->getSmaa().m_stencilTex,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ,
 		TextureSurfaceInfo(0, 0, 0, 0));
 }
 
@@ -146,10 +153,11 @@ Error SmaaWeights::init(const ConfigSet& initializer)
 
 	ppinit.m_depthStencil.m_depthWriteEnabled = false;
 	ppinit.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
+	ppinit.m_depthStencil.m_stencilFront.m_compareFunction = CompareOperation::EQUAL;
+	ppinit.m_depthStencil.m_format = STENCIL_PIXEL_FORMAT;
 
 	ppinit.m_color.m_attachmentCount = 1;
 	ppinit.m_color.m_attachments[0].m_format = WEIGHTS_PIXEL_FORMAT;
-	ppinit.m_depthStencil.m_stencilFront.m_compareFunction = CompareOperation::EQUAL;
 
 	ppinit.m_shaders[ShaderType::VERTEX] = m_vert->getGrShader();
 	ppinit.m_shaders[ShaderType::FRAGMENT] = m_frag->getGrShader();
@@ -173,6 +181,7 @@ Error SmaaWeights::init(const ConfigSet& initializer)
 	fbInit.m_colorAttachments[0].m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 	fbInit.m_depthStencilAttachment.m_texture = m_r->getSmaa().m_stencilTex;
 	fbInit.m_depthStencilAttachment.m_stencilLoadOperation = AttachmentLoadOperation::LOAD;
+	fbInit.m_depthStencilAttachment.m_stencilStoreOperation = AttachmentStoreOperation::DONT_CARE;
 	fbInit.m_depthStencilAttachment.m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
 	m_fb = gr.newInstance<Framebuffer>(fbInit);
 
@@ -258,7 +267,7 @@ void SmaaWeights::run(RenderingContext& ctx)
 Error Smaa::init(const ConfigSet& cfg)
 {
 	TextureInitInfo texinit;
-	texinit.m_format = PixelFormat(ComponentFormat::S8, TransformFormat::UINT);
+	texinit.m_format = STENCIL_PIXEL_FORMAT;
 	texinit.m_width = m_r->getWidth();
 	texinit.m_height = m_r->getHeight();
 	texinit.m_usage = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;

@@ -28,9 +28,7 @@ public:
 	{
 	}
 
-	~GrObjectCache()
-	{
-	}
+	~GrObjectCache();
 
 	/// Create a new graphics object and use the cache to avoid duplication. It's thread safe.
 	template<typename T, typename TArg>

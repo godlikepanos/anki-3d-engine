@@ -21,6 +21,7 @@ enum class TextureImplWorkaround : U8
 {
 	NONE,
 	R8G8B8_TO_R8G8B8A8 = 1 << 0,
+	S8_TO_D24S8 = 1 << 1,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(TextureImplWorkaround, inline)
 

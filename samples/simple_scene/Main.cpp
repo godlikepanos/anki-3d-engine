@@ -18,6 +18,7 @@ Error MyApp::init()
 	Config config;
 	config.set("fullscreenDesktopResolution", true);
 	config.set("dataPaths", ".:..");
+	config.set("debugContext", 0);
 	ANKI_CHECK(App::init(config, allocAligned, nullptr));
 
 	// Load the scene.lua
