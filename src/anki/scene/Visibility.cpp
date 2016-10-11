@@ -12,6 +12,7 @@
 #include <anki/scene/ReflectionProbeComponent.h>
 #include <anki/scene/ReflectionProxyComponent.h>
 #include <anki/scene/OccluderComponent.h>
+#include <anki/scene/DecalComponent.h>
 #include <anki/scene/Light.h>
 #include <anki/scene/MoveComponent.h>
 #include <anki/renderer/MainRenderer.h>
@@ -239,6 +240,8 @@ void VisibilityTestTask::test(ThreadHive& hive)
 	Bool wantsReflectionProxies =
 		testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::REFLECTION_PROXIES);
 
+	Bool wantsDecals = testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::DECALS);
+
 	// Chose the test range and a few other things
 	PtrSize start, end;
 	ThreadPoolTask::choseStartEnd(m_taskIdx, m_taskCount, m_sectorsCtx->getVisibleSceneNodeCount(), start, end);
@@ -284,6 +287,12 @@ void VisibilityTestTask::test(ThreadHive& hive)
 
 		ReflectionProxyComponent* proxyc = node.tryGetComponent<ReflectionProxyComponent>();
 		if(proxyc && wantsReflectionProxies)
+		{
+			wantNode = true;
+		}
+
+		DecalComponent* decalc = node.tryGetComponent<DecalComponent>();
+		if(decalc && wantsDecals)
 		{
 			wantNode = true;
 		}
@@ -402,6 +411,11 @@ void VisibilityTestTask::test(ThreadHive& hive)
 		if(proxyc && wantsReflectionProxies)
 		{
 			visible->moveBack(alloc, VisibilityGroupType::REFLECTION_PROXIES, visibleNode);
+		}
+
+		if(decalc && wantsDecals)
+		{
+			visible->moveBack(alloc, VisibilityGroupType::DECALS, visibleNode);
 		}
 
 		// Add more frustums to the list

@@ -27,6 +27,7 @@ namespace anki
 /// 			<uv>0.1 0.2 0.5 0.6</uv>
 /// 		</subTexture>
 /// 		<subTexture>...</subTexture>
+/// 		...
 /// 	</subTextures>
 /// </textureAtlas>
 /// @endcode

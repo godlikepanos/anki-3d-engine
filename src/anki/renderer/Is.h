@@ -51,6 +51,7 @@ private:
 	static const U P_LIGHTS_LOCATION = 1;
 	static const U S_LIGHTS_LOCATION = 2;
 	static const U PROBES_LOCATION = 3;
+	static const U DECALS_LOCATION = 4;
 	static const U CLUSTERS_LOCATION = 0;
 	static const U LIGHT_IDS_LOCATION = 1;
 

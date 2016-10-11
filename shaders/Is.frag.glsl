@@ -60,6 +60,15 @@ void debugIncorrectColor(inout vec3 c)
 	}
 }
 
+// Compute the colors of a decal.
+void computeDecalColors(in Decal decal, in vec3 fragPos, out vec3 diffuseColor)
+{
+	vec4 texCoords4 = decal.texProjectionMat * vec4(fragPos, 1.0);
+	vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
+
+	diffuseColor = texCoords3;
+}
+
 void readIndirect(in uint idxOffset,
 	in vec3 posVSpace,
 	in vec3 r,
@@ -148,8 +157,17 @@ void main()
 	// Shadowpass sample count
 	uint shadowSampleCount = computeShadowSampleCount(SHADOW_SAMPLE_COUNT, fragPos.z);
 
-	// Point lights
+	// Decals
 	uint count = u_lightIndices[idxOffset++];
+	while(count-- != 0)
+	{
+		Decal decal = u_decals[u_lightIndices[idxOffset++]];
+
+		computeDecalColors(decal, fragPos, diffCol);
+	}
+
+	// Point lights
+	count = u_lightIndices[idxOffset++];
 	while(count-- != 0)
 	{
 		PointLight light = u_pointLights[u_lightIndices[idxOffset++]];

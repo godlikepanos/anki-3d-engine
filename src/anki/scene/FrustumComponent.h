@@ -21,6 +21,7 @@ class VisibilityTestResults;
 /// @{
 
 /// Flags that affect visibility tests.
+/// WARNING!!!!!!!!!!: If you change this remember to change the FrustumComponent::Flags as well
 enum class FrustumComponentVisibilityTestFlag : U8
 {
 	NONE = 0,
@@ -31,9 +32,11 @@ enum class FrustumComponentVisibilityTestFlag : U8
 	REFLECTION_PROBES = 1 << 4,
 	REFLECTION_PROXIES = 1 << 5,
 	OCCLUDERS = 1 << 6,
+	DECALS = 1 << 7,
 
 	ALL_TESTS = RENDER_COMPONENTS | LIGHT_COMPONENTS | LENS_FLARE_COMPONENTS | SHADOW_CASTERS | REFLECTION_PROBES
 		| REFLECTION_PROXIES
+		| DECALS
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(FrustumComponentVisibilityTestFlag, inline)
 
@@ -179,8 +182,8 @@ public:
 private:
 	enum Flags
 	{
-		SHAPE_MARKED_FOR_UPDATE = 1 << 7,
-		TRANSFORM_MARKED_FOR_UPDATE = 1 << 8,
+		SHAPE_MARKED_FOR_UPDATE = 1 << 8,
+		TRANSFORM_MARKED_FOR_UPDATE = 1 << 9,
 	};
 	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Flags, friend)
 

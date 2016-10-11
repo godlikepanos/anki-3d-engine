@@ -91,6 +91,15 @@ public:
 	uint32_t m_meshIndex; ///< Points to the scene that is not triangulated.
 };
 
+class DecalNode
+{
+public:
+	aiMatrix4x4 m_transform;
+	std::string m_diffuseTextureAtlasFilename;
+	std::string m_diffuseSubTextureName;
+	aiVector3D m_size;
+};
+
 /// AnKi exporter.
 class Exporter
 {
@@ -119,6 +128,7 @@ public:
 	std::vector<ReflectionProbe> m_reflectionProbes;
 	std::vector<ReflectionProxy> m_reflectionProxies;
 	std::vector<OccluderNode> m_occluders;
+	std::vector<DecalNode> m_decals;
 
 	/// Load the scene.
 	void load();

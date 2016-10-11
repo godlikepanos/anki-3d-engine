@@ -75,6 +75,16 @@ public:
 		return ErrorCode::NONE;
 	}
 
+	const Mat4& getBiasProjectionViewMatrix() const
+	{
+		return m_biasProjViewMat;
+	}
+
+	void getDiffuseAtlasInfo(Vec4& uv) const
+	{
+		uv = m_layers[LayerType::DIFFUSE].m_uv;
+	}
+
 private:
 	enum class LayerType
 	{

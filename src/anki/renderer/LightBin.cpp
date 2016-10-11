@@ -8,6 +8,7 @@
 #include <anki/scene/Visibility.h>
 #include <anki/scene/MoveComponent.h>
 #include <anki/scene/LightComponent.h>
+#include <anki/scene/DecalComponent.h>
 #include <anki/scene/ReflectionProbeComponent.h>
 #include <anki/core/Trace.h>
 #include <anki/util/ThreadPool.h>
@@ -15,39 +16,41 @@
 namespace anki
 {
 
-/// This should be the number of light types. For now it's spots & points &
-/// probes.
-const U SIZE_IDX_COUNT = 3;
+/// This should be the number of light types. For now it's spots & points & probes & decals.
+const U SIZE_IDX_COUNT = 4;
 
-// Shader structs and block representations. All positions and directions in
-// viewspace
+// Shader structs and block representations. All positions and directions in viewspace
 // For documentation see the shaders
 
-struct ShaderCluster
+class ShaderCluster
 {
+public:
 	U32 m_firstIdx;
 };
 
-struct ShaderLight
+class ShaderLight
 {
+public:
 	Vec4 m_posRadius;
 	Vec4 m_diffuseColorShadowmapId;
 	Vec4 m_specularColorTexId;
 };
 
-struct ShaderPointLight : ShaderLight
+class ShaderPointLight : public ShaderLight
 {
 };
 
-struct ShaderSpotLight : ShaderLight
+class ShaderSpotLight : public ShaderLight
 {
+public:
 	Vec4 m_lightDir;
 	Vec4 m_outerCosInnerCos;
 	Mat4 m_texProjectionMat; ///< Texture projection matrix
 };
 
-struct ShaderProbe
+class ShaderProbe
 {
+public:
 	Vec3 m_pos;
 	F32 m_radiusSq;
 	F32 m_cubemapIndex;
@@ -60,8 +63,16 @@ struct ShaderProbe
 	}
 };
 
+class ShaderDecal
+{
+public:
+	Vec4 m_uv;
+	Mat4 m_texProjectionMat;
+};
+
 static const U MAX_TYPED_LIGHTS_PER_CLUSTER = 16;
 static const U MAX_PROBES_PER_CLUSTER = 12;
+static const U MAX_DECALS_PER_CLUSTER = 8;
 static const F32 INVALID_TEXTURE_INDEX = 128.0;
 
 class ClusterLightIndex
@@ -138,10 +149,12 @@ public:
 	Atomic<U8> m_pointCount;
 	Atomic<U8> m_spotCount;
 	Atomic<U8> m_probeCount;
+	Atomic<U8> m_decalCount;
 
 	Array<ClusterLightIndex, MAX_TYPED_LIGHTS_PER_CLUSTER> m_pointIds;
 	Array<ClusterLightIndex, MAX_TYPED_LIGHTS_PER_CLUSTER> m_spotIds;
 	Array<ClusterProbeIndex, MAX_PROBES_PER_CLUSTER> m_probeIds;
+	Array<ClusterLightIndex, MAX_DECALS_PER_CLUSTER> m_decalIds;
 
 	ClusterData()
 	{
@@ -159,6 +172,7 @@ public:
 		normalize(m_pointCount, MAX_TYPED_LIGHTS_PER_CLUSTER, "point lights");
 		normalize(m_spotCount, MAX_TYPED_LIGHTS_PER_CLUSTER, "spot lights");
 		normalize(m_probeCount, MAX_PROBES_PER_CLUSTER, "probes");
+		normalize(m_decalCount, MAX_DECALS_PER_CLUSTER, "decals");
 	}
 
 	void sortLightIds()
@@ -185,6 +199,12 @@ public:
 					return a.getProbeRadius() < b.getProbeRadius();
 				});
 		}
+
+		const U decalCount = m_decalCount.get();
+		if(decalCount > 1)
+		{
+			std::sort(&m_decalIds[0], &m_decalIds[0] + decalCount);
+		}
 	}
 
 	Bool operator==(const ClusterData& b) const
@@ -192,11 +212,14 @@ public:
 		const U pointCount = m_pointCount.get();
 		const U spotCount = m_spotCount.get();
 		const U probeCount = m_probeCount.get();
+		const U decalCount = m_decalCount.get();
 		const U pointCount2 = b.m_pointCount.get();
 		const U spotCount2 = b.m_spotCount.get();
 		const U probeCount2 = b.m_probeCount.get();
+		const U decalCount2 = b.m_decalCount.get();
 
-		if(pointCount != pointCount2 || spotCount != spotCount2 || probeCount != probeCount2)
+		if(pointCount != pointCount2 || spotCount != spotCount2 || probeCount != probeCount2
+			|| decalCount != decalCount2)
 		{
 			return false;
 		}
@@ -220,6 +243,14 @@ public:
 		if(probeCount > 0)
 		{
 			if(memcmp(&m_probeIds[0], &b.m_probeIds[0], sizeof(b.m_probeIds[0]) * probeCount) != 0)
+			{
+				return false;
+			}
+		}
+
+		if(decalCount > 0)
+		{
+			if(memcmp(&m_decalIds[0], &b.m_decalIds[0], sizeof(b.m_decalIds[0]) * decalCount) != 0)
 			{
 				return false;
 			}
@@ -259,6 +290,7 @@ public:
 	WeakArray<ShaderPointLight> m_pointLights;
 	WeakArray<ShaderSpotLight> m_spotLights;
 	WeakArray<ShaderProbe> m_probes;
+	WeakArray<ShaderDecal> m_decals;
 
 	WeakArray<U32> m_lightIds;
 	WeakArray<ShaderCluster> m_clusters;
@@ -266,6 +298,7 @@ public:
 	Atomic<U32> m_pointLightsCount = {0};
 	Atomic<U32> m_spotLightsCount = {0};
 	Atomic<U32> m_probeCount = {0};
+	Atomic<U32> m_decalCount = {0};
 
 	// To fill the tile buffers
 	DynamicArrayAuto<ClusterData> m_tempClusters;
@@ -277,6 +310,7 @@ public:
 	WeakArray<VisibleNode> m_vPointLights;
 	WeakArray<VisibleNode> m_vSpotLights;
 	WeakArray<VisibleNode> m_vProbes;
+	WeakArray<VisibleNode> m_vDecals;
 
 	Atomic<U32> m_count = {0};
 	Atomic<U32> m_count2 = {0};
@@ -323,6 +357,7 @@ Error LightBin::bin(FrustumComponent& frc,
 	TransientMemoryToken& pointLightsToken,
 	TransientMemoryToken& spotLightsToken,
 	TransientMemoryToken* probesToken,
+	TransientMemoryToken& decalsToken,
 	TransientMemoryToken& clustersToken,
 	TransientMemoryToken& lightIndicesToken)
 {
@@ -339,6 +374,7 @@ Error LightBin::bin(FrustumComponent& frc,
 	U visiblePointLightsCount = vi.getCount(VisibilityGroupType::LIGHTS_POINT);
 	U visibleSpotLightsCount = vi.getCount(VisibilityGroupType::LIGHTS_SPOT);
 	U visibleProbeCount = vi.getCount(VisibilityGroupType::REFLECTION_PROBES);
+	U visibleDecalCount = vi.getCount(VisibilityGroupType::DECALS);
 
 	ANKI_TRACE_INC_COUNTER(RENDERER_LIGHTS, visiblePointLightsCount + visibleSpotLightsCount);
 
@@ -400,6 +436,20 @@ Error LightBin::bin(FrustumComponent& frc,
 		}
 	}
 
+	if(visibleDecalCount)
+	{
+		ShaderDecal* data = static_cast<ShaderDecal*>(m_gr->allocateFrameTransientMemory(
+			sizeof(ShaderDecal) * visibleDecalCount, BufferUsageBit::UNIFORM_ALL, decalsToken));
+
+		ctx.m_decals = WeakArray<ShaderDecal>(data, visibleDecalCount);
+
+		ctx.m_vDecals = WeakArray<VisibleNode>(vi.getBegin(VisibilityGroupType::DECALS), visibleDecalCount);
+	}
+	else
+	{
+		decalsToken.markUnused();
+	}
+
 	ctx.m_bin = this;
 
 	// Get mem for clusters
@@ -414,8 +464,7 @@ Error LightBin::bin(FrustumComponent& frc,
 
 	ctx.m_lightIds = WeakArray<U32>(data2, maxLightIndices);
 
-	// Fill the first part of light ids with invalid indices. Will be used
-	// for empty clusters
+	// Fill the first part of light ids with invalid indices. Will be used for empty clusters
 	for(U i = 0; i < SIZE_IDX_COUNT; ++i)
 	{
 		ctx.m_lightIds[i] = 0;
@@ -465,7 +514,7 @@ void LightBin::binLights(U32 threadId, PtrSize threadsCount, LightBinContext& ct
 	ClustererTestResult testResult;
 	m_clusterer.initTestResults(ctx.m_alloc, testResult);
 	U lightCount = ctx.m_vPointLights.getSize() + ctx.m_vSpotLights.getSize();
-	U totalCount = lightCount + ctx.m_vProbes.getSize();
+	U totalCount = lightCount + ctx.m_vProbes.getSize() + ctx.m_vDecals.getSize();
 
 	const U TO_BIN_COUNT = 1;
 	while((start = ctx.m_count2.fetchAdd(TO_BIN_COUNT)) < totalCount)
@@ -474,15 +523,15 @@ void LightBin::binLights(U32 threadId, PtrSize threadsCount, LightBinContext& ct
 
 		for(U j = start; j < end; ++j)
 		{
-			if(j >= lightCount)
+			if(j >= lightCount + ctx.m_vDecals.getSize())
 			{
-				U i = j - lightCount;
+				U i = j - (lightCount + ctx.m_vDecals.getSize());
 				SceneNode& snode = *ctx.m_vProbes[i].m_node;
 				writeAndBinProbe(camfrc, snode, ctx, testResult);
 			}
-			else if(j >= ctx.m_vPointLights.getSize())
+			else if(j >= ctx.m_vPointLights.getSize() + ctx.m_vDecals.getSize())
 			{
-				U i = j - ctx.m_vPointLights.getSize();
+				U i = j - (ctx.m_vPointLights.getSize() + ctx.m_vDecals.getSize());
 
 				SceneNode& snode = *ctx.m_vSpotLights[i].m_node;
 				MoveComponent& move = snode.getComponent<MoveComponent>();
@@ -493,9 +542,9 @@ void LightBin::binLights(U32 threadId, PtrSize threadsCount, LightBinContext& ct
 				I pos = writeSpotLight(light, move, frc, cammove, camfrc, ctx);
 				binLight(sp, pos, 1, ctx, testResult);
 			}
-			else
+			else if(j >= ctx.m_vDecals.getSize())
 			{
-				U i = j;
+				U i = j - ctx.m_vDecals.getSize();
 
 				SceneNode& snode = *ctx.m_vPointLights[i].m_node;
 				MoveComponent& move = snode.getComponent<MoveComponent>();
@@ -504,6 +553,13 @@ void LightBin::binLights(U32 threadId, PtrSize threadsCount, LightBinContext& ct
 
 				I pos = writePointLight(light, move, camfrc, ctx);
 				binLight(sp, pos, 0, ctx, testResult);
+			}
+			else
+			{
+				U i = j;
+
+				SceneNode& snode = *ctx.m_vDecals[i].m_node;
+				writeAndBinDecal(cammove, snode, ctx, testResult);
 			}
 		}
 	}
@@ -529,7 +585,8 @@ void LightBin::binLights(U32 threadId, PtrSize threadsCount, LightBinContext& ct
 			const U countP = cluster.m_pointCount.get();
 			const U countS = cluster.m_spotCount.get();
 			const U countProbe = cluster.m_probeCount.get();
-			const U count = countP + countS + countProbe;
+			const U countDecal = cluster.m_decalCount.get();
+			const U count = countP + countS + countProbe + countDecal;
 
 			auto& c = ctx.m_clusters[i];
 			c.m_firstIdx = 0; // Point to the first empty indices
@@ -541,7 +598,7 @@ void LightBin::binLights(U32 threadId, PtrSize threadsCount, LightBinContext& ct
 			}
 
 			// Check if the previous cluster contains the same lights as this one and if yes then merge them. This will
-			/// avoid allocating new IDs (and thrashing GPU caches).
+			// avoid allocating new IDs (and thrashing GPU caches).
 			cluster.sortLightIds();
 			if(i != start)
 			{
@@ -561,6 +618,12 @@ void LightBin::binLights(U32 threadId, PtrSize threadsCount, LightBinContext& ct
 			if(offset + count + SIZE_IDX_COUNT <= ctx.m_maxLightIndices)
 			{
 				c.m_firstIdx = offset;
+
+				ctx.m_lightIds[offset++] = countDecal;
+				for(U i = 0; i < countDecal; ++i)
+				{
+					ctx.m_lightIds[offset++] = cluster.m_decalIds[i].getIndex();
+				}
 
 				ctx.m_lightIds[offset++] = countP;
 				for(U i = 0; i < countP; ++i)
@@ -728,6 +791,40 @@ void LightBin::writeAndBinProbe(
 		i = cluster.m_probeCount.fetchAdd(1) % MAX_PROBES_PER_CLUSTER;
 		cluster.m_probeIds[i].setIndex(idx);
 		cluster.m_probeIds[i].setProbeRadius(reflc.getRadius());
+	}
+}
+
+void LightBin::writeAndBinDecal(
+	const MoveComponent& camMovec, const SceneNode& node, LightBinContext& ctx, ClustererTestResult& testResult)
+{
+	const DecalComponent& decalc = node.getComponent<DecalComponent>();
+	const SpatialComponent& sp = node.getComponent<SpatialComponent>();
+
+	I idx = ctx.m_decalCount.fetchAdd(1);
+	ShaderDecal& decal = ctx.m_decals[idx];
+
+	decalc.getDiffuseAtlasInfo(decal.m_uv);
+
+	// bias * proj_l * view_l * world_c
+	decal.m_texProjectionMat = decalc.getBiasProjectionViewMatrix() * Mat4(camMovec.getWorldTransform());
+
+	// Bin it
+	m_clusterer.bin(sp.getSpatialCollisionShape(), sp.getAabb(), testResult);
+
+	auto it = testResult.getClustersBegin();
+	auto end = testResult.getClustersEnd();
+	for(; it != end; ++it)
+	{
+		U x = (*it)[0];
+		U y = (*it)[1];
+		U z = (*it)[2];
+
+		U i = m_clusterer.getClusterCountX() * (z * m_clusterer.getClusterCountY() + y) + x;
+
+		auto& cluster = ctx.m_tempClusters[i];
+
+		i = cluster.m_decalCount.fetchAdd(1) % MAX_DECALS_PER_CLUSTER;
+		cluster.m_decalIds[i].setIndex(idx);
 	}
 }
 

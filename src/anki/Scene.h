@@ -23,3 +23,5 @@
 #include <anki/scene/PlayerNode.h>
 #include <anki/scene/OccluderNode.h>
 #include <anki/scene/OccluderComponent.h>
+#include <anki/scene/DecalComponent.h>
+#include <anki/scene/DecalNode.h>

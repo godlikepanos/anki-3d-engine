@@ -1095,6 +1095,145 @@ static inline void wrapLightComponent(lua_State* l)
 	lua_settop(l, 0);
 }
 
+static const char* classnameDecalComponent = "DecalComponent";
+
+template<>
+I64 LuaBinder::getWrappedTypeSignature<DecalComponent>()
+{
+	return -1979693900066114370;
+}
+
+template<>
+const char* LuaBinder::getWrappedTypeName<DecalComponent>()
+{
+	return classnameDecalComponent;
+}
+
+/// Pre-wrap method DecalComponent::setDiffuseDecal.
+static inline int pwrapDecalComponentsetDiffuseDecal(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	PtrSize size;
+	(void)size;
+
+	LuaBinder::checkArgsCount(l, 4);
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameDecalComponent, -1979693900066114370, ud))
+	{
+		return -1;
+	}
+
+	DecalComponent* self = ud->getData<DecalComponent>();
+
+	// Pop arguments
+	const char* arg0;
+	if(LuaBinder::checkString(l, 2, arg0))
+	{
+		return -1;
+	}
+
+	const char* arg1;
+	if(LuaBinder::checkString(l, 3, arg1))
+	{
+		return -1;
+	}
+
+	F32 arg2;
+	if(LuaBinder::checkNumber(l, 4, arg2))
+	{
+		return -1;
+	}
+
+	// Call the method
+	self->setDiffuseDecal(arg0, arg1, arg2);
+
+	return 0;
+}
+
+/// Wrap method DecalComponent::setDiffuseDecal.
+static int wrapDecalComponentsetDiffuseDecal(lua_State* l)
+{
+	int res = pwrapDecalComponentsetDiffuseDecal(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
+/// Pre-wrap method DecalComponent::updateShape.
+static inline int pwrapDecalComponentupdateShape(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	PtrSize size;
+	(void)size;
+
+	LuaBinder::checkArgsCount(l, 4);
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameDecalComponent, -1979693900066114370, ud))
+	{
+		return -1;
+	}
+
+	DecalComponent* self = ud->getData<DecalComponent>();
+
+	// Pop arguments
+	F32 arg0;
+	if(LuaBinder::checkNumber(l, 2, arg0))
+	{
+		return -1;
+	}
+
+	F32 arg1;
+	if(LuaBinder::checkNumber(l, 3, arg1))
+	{
+		return -1;
+	}
+
+	F32 arg2;
+	if(LuaBinder::checkNumber(l, 4, arg2))
+	{
+		return -1;
+	}
+
+	// Call the method
+	self->updateShape(arg0, arg1, arg2);
+
+	return 0;
+}
+
+/// Wrap method DecalComponent::updateShape.
+static int wrapDecalComponentupdateShape(lua_State* l)
+{
+	int res = pwrapDecalComponentupdateShape(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
+/// Wrap class DecalComponent.
+static inline void wrapDecalComponent(lua_State* l)
+{
+	LuaBinder::createClass(l, classnameDecalComponent);
+	LuaBinder::pushLuaCFuncMethod(l, "setDiffuseDecal", wrapDecalComponentsetDiffuseDecal);
+	LuaBinder::pushLuaCFuncMethod(l, "updateShape", wrapDecalComponentupdateShape);
+	lua_settop(l, 0);
+}
+
 static const char* classnameLensFlareComponent = "LensFlareComponent";
 
 template<>
@@ -1471,6 +1610,57 @@ static int wrapSceneNodegetLensFlareComponent(lua_State* l)
 	return 0;
 }
 
+/// Pre-wrap method SceneNode::tryGetComponent<DecalComponent>.
+static inline int pwrapSceneNodegetDecalComponent(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	PtrSize size;
+	(void)size;
+
+	LuaBinder::checkArgsCount(l, 1);
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameSceneNode, -2220074417980276571, ud))
+	{
+		return -1;
+	}
+
+	SceneNode* self = ud->getData<SceneNode>();
+
+	// Call the method
+	DecalComponent* ret = self->tryGetComponent<DecalComponent>();
+
+	// Push return value
+	if(ANKI_UNLIKELY(ret == nullptr))
+	{
+		lua_pushstring(l, "Glue code returned nullptr");
+		return -1;
+	}
+
+	voidp = lua_newuserdata(l, sizeof(UserData));
+	ud = static_cast<UserData*>(voidp);
+	luaL_setmetatable(l, "DecalComponent");
+	ud->initPointed(-1979693900066114370, const_cast<DecalComponent*>(ret));
+
+	return 1;
+}
+
+/// Wrap method SceneNode::tryGetComponent<DecalComponent>.
+static int wrapSceneNodegetDecalComponent(lua_State* l)
+{
+	int res = pwrapSceneNodegetDecalComponent(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
 /// Wrap class SceneNode.
 static inline void wrapSceneNode(lua_State* l)
 {
@@ -1480,6 +1670,7 @@ static inline void wrapSceneNode(lua_State* l)
 	LuaBinder::pushLuaCFuncMethod(l, "getMoveComponent", wrapSceneNodegetMoveComponent);
 	LuaBinder::pushLuaCFuncMethod(l, "getLightComponent", wrapSceneNodegetLightComponent);
 	LuaBinder::pushLuaCFuncMethod(l, "getLensFlareComponent", wrapSceneNodegetLensFlareComponent);
+	LuaBinder::pushLuaCFuncMethod(l, "getDecalComponent", wrapSceneNodegetDecalComponent);
 	lua_settop(l, 0);
 }
 
@@ -2341,6 +2532,73 @@ static inline void wrapOccluderNode(lua_State* l)
 	lua_settop(l, 0);
 }
 
+static const char* classnameDecalNode = "DecalNode";
+
+template<>
+I64 LuaBinder::getWrappedTypeSignature<DecalNode>()
+{
+	return 1097508121406753350;
+}
+
+template<>
+const char* LuaBinder::getWrappedTypeName<DecalNode>()
+{
+	return classnameDecalNode;
+}
+
+/// Pre-wrap method DecalNode::getSceneNodeBase.
+static inline int pwrapDecalNodegetSceneNodeBase(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	PtrSize size;
+	(void)size;
+
+	LuaBinder::checkArgsCount(l, 1);
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameDecalNode, 1097508121406753350, ud))
+	{
+		return -1;
+	}
+
+	DecalNode* self = ud->getData<DecalNode>();
+
+	// Call the method
+	SceneNode& ret = *self;
+
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(UserData));
+	ud = static_cast<UserData*>(voidp);
+	luaL_setmetatable(l, "SceneNode");
+	ud->initPointed(-2220074417980276571, const_cast<SceneNode*>(&ret));
+
+	return 1;
+}
+
+/// Wrap method DecalNode::getSceneNodeBase.
+static int wrapDecalNodegetSceneNodeBase(lua_State* l)
+{
+	int res = pwrapDecalNodegetSceneNodeBase(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
+/// Wrap class DecalNode.
+static inline void wrapDecalNode(lua_State* l)
+{
+	LuaBinder::createClass(l, classnameDecalNode);
+	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapDecalNodegetSceneNodeBase);
+	lua_settop(l, 0);
+}
+
 static const char* classnameSceneGraph = "SceneGraph";
 
 template<>
@@ -3049,6 +3307,64 @@ static int wrapSceneGraphnewOccluderNode(lua_State* l)
 	return 0;
 }
 
+/// Pre-wrap method SceneGraph::newDecalNode.
+static inline int pwrapSceneGraphnewDecalNode(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	PtrSize size;
+	(void)size;
+
+	LuaBinder::checkArgsCount(l, 2);
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud))
+	{
+		return -1;
+	}
+
+	SceneGraph* self = ud->getData<SceneGraph>();
+
+	// Pop arguments
+	const char* arg0;
+	if(LuaBinder::checkString(l, 2, arg0))
+	{
+		return -1;
+	}
+
+	// Call the method
+	DecalNode* ret = newSceneNode<DecalNode>(self, arg0);
+
+	// Push return value
+	if(ANKI_UNLIKELY(ret == nullptr))
+	{
+		lua_pushstring(l, "Glue code returned nullptr");
+		return -1;
+	}
+
+	voidp = lua_newuserdata(l, sizeof(UserData));
+	ud = static_cast<UserData*>(voidp);
+	luaL_setmetatable(l, "DecalNode");
+	ud->initPointed(1097508121406753350, const_cast<DecalNode*>(ret));
+
+	return 1;
+}
+
+/// Wrap method SceneGraph::newDecalNode.
+static int wrapSceneGraphnewDecalNode(lua_State* l)
+{
+	int res = pwrapSceneGraphnewDecalNode(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
 /// Pre-wrap method SceneGraph::setActiveCamera.
 static inline int pwrapSceneGraphsetActiveCamera(lua_State* l)
 {
@@ -3112,6 +3428,7 @@ static inline void wrapSceneGraph(lua_State* l)
 	LuaBinder::pushLuaCFuncMethod(l, "newReflectionProbe", wrapSceneGraphnewReflectionProbe);
 	LuaBinder::pushLuaCFuncMethod(l, "newReflectionProxy", wrapSceneGraphnewReflectionProxy);
 	LuaBinder::pushLuaCFuncMethod(l, "newOccluderNode", wrapSceneGraphnewOccluderNode);
+	LuaBinder::pushLuaCFuncMethod(l, "newDecalNode", wrapSceneGraphnewDecalNode);
 	LuaBinder::pushLuaCFuncMethod(l, "setActiveCamera", wrapSceneGraphsetActiveCamera);
 	lua_settop(l, 0);
 }
@@ -3164,6 +3481,7 @@ void wrapModuleScene(lua_State* l)
 {
 	wrapMoveComponent(l);
 	wrapLightComponent(l);
+	wrapDecalComponent(l);
 	wrapLensFlareComponent(l);
 	wrapSceneNode(l);
 	wrapModelNode(l);
@@ -3177,6 +3495,7 @@ void wrapModuleScene(lua_State* l)
 	wrapReflectionProbe(l);
 	wrapReflectionProxy(l);
 	wrapOccluderNode(l);
+	wrapDecalNode(l);
 	wrapSceneGraph(l);
 	LuaBinder::pushLuaCFunc(l, "getSceneGraph", wrapgetSceneGraph);
 }

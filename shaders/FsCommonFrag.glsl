@@ -130,21 +130,21 @@ vec3 computeLightColor(vec3 diffCol)
 	}
 
 	// Find the cluster and then the light counts
-	uint idxOffset;
-	uint idx;
-	{
-		uint clusterIdx = computeClusterIndexUsingCustomFragCoord(u_lightingUniforms.nearFarClustererMagicPad1.x,
-			u_lightingUniforms.nearFarClustererMagicPad1.z,
-			fragPos.z,
-			u_lightingUniforms.tileCountPad1.x,
-			u_lightingUniforms.tileCountPad1.y,
-			gl_FragCoord.xy * 2.0);
+	uint clusterIdx = computeClusterIndexUsingCustomFragCoord(u_lightingUniforms.nearFarClustererMagicPad1.x,
+		u_lightingUniforms.nearFarClustererMagicPad1.z,
+		fragPos.z,
+		u_lightingUniforms.tileCountPad1.x,
+		u_lightingUniforms.tileCountPad1.y,
+		gl_FragCoord.xy * 2.0);
 
-		idxOffset = u_clusters[clusterIdx];
-	}
+	uint idxOffset = u_clusters[clusterIdx];
+
+	// Skip decals
+	uint count = u_lightIndices[idxOffset];
+	idxOffset += count + 1;
 
 	// Point lights
-	uint count = u_lightIndices[idxOffset++];
+	count = u_lightIndices[idxOffset++];
 	while(count-- != 0)
 	{
 		PointLight light = u_pointLights[u_lightIndices[idxOffset++]];

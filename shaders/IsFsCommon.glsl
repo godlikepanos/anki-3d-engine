@@ -48,6 +48,13 @@ struct ReflectionProbe
 	vec4 cubemapIndexPad3;
 };
 
+// Decal
+struct Decal
+{
+	vec4 uv;
+	mat4 texProjectionMat;
+};
+
 layout(ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING), std140, row_major) uniform u0_
 {
 	LightingUniforms u_lightingUniforms;
@@ -68,6 +75,11 @@ layout(ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING + 2), std140, row_major) un
 layout(std140, row_major, ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING + 3)) uniform u3_
 {
 	ReflectionProbe u_reflectionProbes[UBO_MAX_SIZE / (2 * 4 * 4)];
+};
+
+layout(std140, row_major, ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING + 4)) uniform u4_
+{
+	Decal u_decals[UBO_MAX_SIZE / ((4 + 16) * 4)];
 };
 
 layout(ANKI_SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 0), std430) readonly buffer s0_

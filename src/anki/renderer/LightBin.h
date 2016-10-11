@@ -41,6 +41,7 @@ public:
 		TransientMemoryToken& pointLightsToken,
 		TransientMemoryToken& spotLightsToken,
 		TransientMemoryToken* probesToken,
+		TransientMemoryToken& decalsToken,
 		TransientMemoryToken& clustersToken,
 		TransientMemoryToken& lightIndicesToken);
 
@@ -73,6 +74,9 @@ private:
 
 	void writeAndBinProbe(
 		const FrustumComponent& camFrc, const SceneNode& node, LightBinContext& ctx, ClustererTestResult& testResult);
+
+	void writeAndBinDecal(
+		const MoveComponent& camMovec, const SceneNode& node, LightBinContext& ctx, ClustererTestResult& testResult);
 };
 /// @}
 

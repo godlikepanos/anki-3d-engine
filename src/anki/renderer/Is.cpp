@@ -161,6 +161,8 @@ Error Is::initInternal(const ConfigSet& config)
 		init.m_uniformBuffers[2].m_usage = BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
 		init.m_uniformBuffers[3].m_uploadedMemory = true;
 		init.m_uniformBuffers[3].m_usage = BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
+		init.m_uniformBuffers[4].m_uploadedMemory = true;
+		init.m_uniformBuffers[4].m_usage = BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
 
 		init.m_storageBuffers[0].m_uploadedMemory = true;
 		init.m_storageBuffers[0].m_usage = BufferUsageBit::STORAGE_FRAGMENT_READ | BufferUsageBit::STORAGE_VERTEX_READ;
@@ -185,6 +187,7 @@ Error Is::binLights(RenderingContext& ctx)
 		ctx.m_is.m_dynBufferInfo.m_uniformBuffers[P_LIGHTS_LOCATION],
 		ctx.m_is.m_dynBufferInfo.m_uniformBuffers[S_LIGHTS_LOCATION],
 		&ctx.m_is.m_dynBufferInfo.m_uniformBuffers[PROBES_LOCATION],
+		ctx.m_is.m_dynBufferInfo.m_uniformBuffers[DECALS_LOCATION],
 		ctx.m_is.m_dynBufferInfo.m_storageBuffers[CLUSTERS_LOCATION],
 		ctx.m_is.m_dynBufferInfo.m_storageBuffers[LIGHT_IDS_LOCATION]));
 

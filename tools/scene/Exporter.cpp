@@ -155,6 +155,20 @@ static float getUniformScale(const aiMatrix4x4& m)
 	return scale;
 }
 
+static aiVector3D getNonUniformScale(const aiMatrix4x4& m)
+{
+	aiVector3D xAxis(m.a1, m.b1, m.c1);
+	aiVector3D yAxis(m.a2, m.b2, m.c2);
+	aiVector3D zAxis(m.a3, m.b3, m.c3);
+
+	aiVector3D scale;
+	scale[0] = xAxis.Length();
+	scale[1] = yAxis.Length();
+	scale[2] = zAxis.Length();
+
+	return scale;
+}
+
 std::string Exporter::getMaterialName(const aiMaterial& mtl)
 {
 	aiString ainame;
@@ -823,6 +837,34 @@ void Exporter::visitNode(const aiNode* ainode)
 				collisionMesh = prop.second;
 				special = false;
 			}
+			else if(prop.first == "decal" && prop.second == "true")
+			{
+				DecalNode decal;
+				for(const auto& pr : m_scene->mMeshes[meshIndex]->mProperties)
+				{
+					if(pr.first == "decal_diffuse_atlas")
+					{
+						decal.m_diffuseTextureAtlasFilename = pr.second;
+					}
+					else if(pr.first == "decal_diffuse_sub_texture")
+					{
+						decal.m_diffuseSubTextureName = pr.second;
+					}
+				}
+
+				if(decal.m_diffuseTextureAtlasFilename.empty() || decal.m_diffuseSubTextureName.empty())
+				{
+					ERROR("Missing decal information");
+				}
+
+				aiMatrix4x4 trf = ainode->mTransformation;
+				decal.m_size = getNonUniformScale(trf);
+				removeScale(trf);
+				decal.m_transform = trf;
+
+				m_decals.push_back(decal);
+				special = true;
+			}
 		}
 
 		if(special)
@@ -999,6 +1041,25 @@ void Exporter::exportAll()
 			 << ".ankimesh\")\n";
 
 		writeNodeTransform("node", occluder.m_transform);
+		++i;
+	}
+
+	//
+	// Export decals
+	//
+	i = 0;
+	for(const DecalNode& decal : m_decals)
+	{
+		std::string name = "decal" + std::to_string(i);
+		file << "\nnode = scene:newDecalNode(\"" << name << "\")\n";
+
+		writeNodeTransform("node", decal.m_transform);
+
+		file << "decalc = node:getSceneNodeBase():getLightComponent()\n";
+		file << "decalc:setDiffuseDecal(\"" << decal.m_diffuseTextureAtlasFilename << "\", \""
+			 << decal.m_diffuseSubTextureName << "\", 1.0)\n";
+		file << "decalc:updateShape(" << decal.m_size.x << ", " << decal.m_size.y << ", " << decal.m_size.z << ")\n";
+
 		++i;
 	}
 

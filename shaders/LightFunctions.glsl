@@ -50,8 +50,7 @@ vec3 computeSpecularColorBrdf(vec3 v, // view dir
 	D = a2 / (PI * D * D);
 	D = clamp(D, EPSILON, 100.0); // Limit that because it may grow
 
-// G(l,v,h)/(4*dot(n,h)*dot(n,v)) aka Visibility term: Geometric shadowing
-// divided by BRDF denominator
+// G(l,v,h)/(4*dot(n,h)*dot(n,v)) aka Visibility term: Geometric shadowing divided by BRDF denominator
 #if 0
 	float nov = max(EPSILON, dot(n, v));
 	float V_v = nov + sqrt((nov - nov * a2) * nov + a2);

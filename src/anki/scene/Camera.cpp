@@ -81,7 +81,8 @@ Error Camera::init(Frustum* frustum)
 		| FrustumComponentVisibilityTestFlag::LENS_FLARE_COMPONENTS
 		| FrustumComponentVisibilityTestFlag::REFLECTION_PROBES
 		| FrustumComponentVisibilityTestFlag::REFLECTION_PROXIES
-		| FrustumComponentVisibilityTestFlag::OCCLUDERS);
+		| FrustumComponentVisibilityTestFlag::OCCLUDERS
+		| FrustumComponentVisibilityTestFlag::DECALS);
 	addComponent(frc, true);
 
 	// Feedback component #2
