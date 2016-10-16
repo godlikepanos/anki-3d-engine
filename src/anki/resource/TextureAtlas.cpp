@@ -41,6 +41,22 @@ Error TextureAtlas::load(const ResourceFilename& filename)
 	ANKI_CHECK(el.getText(texFname));
 	ANKI_CHECK(getManager().loadResource<TextureResource>(texFname, m_tex));
 
+	m_size[0] = m_tex->getWidth();
+	m_size[1] = m_tex->getHeight();
+
+	//
+	// <subTextureMargin>
+	//
+	ANKI_CHECK(rootel.getChildElement("subTextureMargin", el));
+	I64 margin = 0;
+	ANKI_CHECK(el.getI64(margin));
+	if(margin >= I(m_tex->getWidth()) || margin >= I(m_tex->getHeight()) || margin < 0)
+	{
+		ANKI_LOGE("Too big margin %d", U(margin));
+		return ErrorCode::USER_DATA;
+	}
+	m_margin = margin;
+
 	//
 	// <subTextures>
 	//
@@ -67,7 +83,7 @@ Error TextureAtlas::load(const ResourceFilename& filename)
 		++subTexesCount;
 
 		ANKI_CHECK(subTexEl.getNextSiblingElement("subTexture", subTexEl));
-	} while(el);
+	} while(subTexEl);
 
 	// Allocate
 	m_subTexNames.create(getAllocator(), namesSize);
@@ -87,6 +103,7 @@ Error TextureAtlas::load(const ResourceFilename& filename)
 
 		m_subTexes[subTexesCount].m_name = names;
 
+		ANKI_CHECK(subTexEl.getChildElement("uv", el));
 		Vec4 uv;
 		ANKI_CHECK(el.getVec4(uv));
 		m_subTexes[subTexesCount].m_uv = {{uv[0], uv[1], uv[2], uv[3]}};
@@ -95,7 +112,7 @@ Error TextureAtlas::load(const ResourceFilename& filename)
 		++subTexesCount;
 
 		ANKI_CHECK(subTexEl.getNextSiblingElement("subTexture", subTexEl));
-	} while(el);
+	} while(subTexEl);
 
 	return ErrorCode::NONE;
 }

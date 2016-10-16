@@ -17,7 +17,7 @@ Error MyApp::init()
 	// Init the super class
 	Config config;
 	config.set("fullscreenDesktopResolution", true);
-	config.set("dataPaths", ".:..");
+	config.set("dataPaths", ".:..:../assets");
 	config.set("debugContext", 0);
 	ANKI_CHECK(App::init(config, allocAligned, nullptr));
 
@@ -45,6 +45,7 @@ Error MyApp::userMainLoop(Bool& quit)
 	quit = false;
 
 	SceneGraph& scene = getSceneGraph();
+	Renderer& renderer = getMainRenderer().getOffscreenRenderer();
 	Input& in = getInput();
 
 	if(in.getKey(KeyCode::ESCAPE))
@@ -55,6 +56,24 @@ Error MyApp::userMainLoop(Bool& quit)
 
 	// move the camera
 	static MoveComponent* mover = &scene.getActiveCamera().getComponent<MoveComponent>();
+
+	if(in.getKey(KeyCode::_1) == 1)
+	{
+		mover = &scene.getActiveCamera().getComponent<MoveComponent>();
+	}
+
+	if(in.getKey(KeyCode::F1) == 1)
+	{
+		renderer.getDbg().setEnabled(!renderer.getDbg().getEnabled());
+	}
+	if(in.getKey(KeyCode::F2) == 1)
+	{
+		renderer.getDbg().flipFlags(DbgFlag::SPATIAL_COMPONENT);
+	}
+	if(in.getKey(KeyCode::F6) == 1)
+	{
+		renderer.getDbg().switchDepthTestEnabled();
+	}
 
 	if(in.getKey(KeyCode::UP))
 	{

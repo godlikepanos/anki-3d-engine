@@ -10,11 +10,7 @@
 #include <anki/renderer/Pps.h>
 #include <anki/renderer/DebugDrawer.h>
 #include <anki/resource/ShaderResource.h>
-#include <anki/scene/SceneGraph.h>
-#include <anki/scene/FrustumComponent.h>
-#include <anki/scene/MoveComponent.h>
-#include <anki/scene/Sector.h>
-#include <anki/scene/Light.h>
+#include <anki/Scene.h>
 #include <anki/util/Logger.h>
 #include <anki/util/Enum.h>
 #include <anki/misc/ConfigSet.h>
@@ -65,6 +61,7 @@ Error Dbg::lazyInit()
 	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
 	fbInit.m_depthStencilAttachment.m_texture = m_r->getMs().m_depthRt;
 	fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::LOAD;
+	fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectMask::DEPTH;
 
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
@@ -147,6 +144,16 @@ Error Dbg::run(RenderingContext& ctx)
 			});
 
 			err = node.iterateComponentsOfType<PortalComponent>([&](PortalComponent& psc) -> Error {
+				sceneDrawer.draw(psc);
+				return ErrorCode::NONE;
+			});
+			(void)err;
+		}
+
+		// Decal
+		if(m_flags.get(DbgFlag::DECAL_COMPONENT))
+		{
+			Error err = node.iterateComponentsOfType<DecalComponent>([&](DecalComponent& psc) -> Error {
 				sceneDrawer.draw(psc);
 				return ErrorCode::NONE;
 			});

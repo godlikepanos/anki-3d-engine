@@ -57,6 +57,11 @@ public:
 	Array<BufferBinding, MAX_VERTEX_ATTRIBUTES> m_vertexBuffers;
 	BufferBinding m_indexBuffer;
 	I8 m_indexSize = -1; ///< Index size in bytes. 2 or 4
+
+	U64 computeHash() const;
+
+private:
+	void appendBufferBinding(const BufferBinding& b, U64 arr[], U& count) const;
 };
 
 /// Resource group.
@@ -86,3 +91,5 @@ private:
 /// @}
 
 } // end namespace anki
+
+#include <anki/gr/ResourceGroup.inl.h>

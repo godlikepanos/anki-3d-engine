@@ -22,6 +22,7 @@ public:
 	static const SceneComponentType CLASS_TYPE = SceneComponentType::DECAL;
 
 	static constexpr F32 FRUSTUM_NEAR_PLANE = 0.1 / 4.0;
+	static constexpr U ATLAS_SUB_TEXTURE_MARGIN = 16;
 
 	DecalComponent(SceneNode* node);
 
@@ -80,9 +81,15 @@ public:
 		return m_biasProjViewMat;
 	}
 
-	void getDiffuseAtlasInfo(Vec4& uv) const
+	void getDiffuseAtlasInfo(Vec4& uv, TexturePtr& tex) const
 	{
 		uv = m_layers[LayerType::DIFFUSE].m_uv;
+		tex = m_layers[LayerType::DIFFUSE].m_atlas->getGrTexture();
+	}
+
+	const Vec3& getVolumeSize() const
+	{
+		return m_sizes;
 	}
 
 private:

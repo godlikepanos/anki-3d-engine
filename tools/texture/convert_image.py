@@ -192,52 +192,39 @@ def parse_commandline():
 			"need to define the executable explicitly")
 
 	parser.add_option("-i", "--input", dest = "inp",
-			type = "string", help = "specify the image(s) to convert. " \
-			"Seperate with :")
+			type = "string", help = "specify the image(s) to convert. Seperate with :")
 
-	parser.add_option("-o", "--output", dest = "out",
-			type = "string", help = "specify output AnKi image. ")
+	parser.add_option("-o", "--output", dest = "out", type = "string", help = "specify output AnKi image. ")
 
-	parser.add_option("-t", "--type", dest = "type",
-			type = "string", default = "2D",
+	parser.add_option("-t", "--type", dest = "type", type = "string", default = "2D",
 			help = "type of the image (2D or cube or 3D or 2DArray)")
 
-	parser.add_option("-f", "--fast", dest = "fast",
-			type = "int", action = "store", default = 0,
+	parser.add_option("-f", "--fast", dest = "fast", type = "int", action = "store", default = 0,
 			help = "run the fast version of the converters")
 
-	parser.add_option("-n", "--normal", dest = "normal",
-			type = "int", action = "store", default = 0,
+	parser.add_option("-n", "--normal", dest = "normal", type = "int", action = "store", default = 0,
 			help = "assume the texture is normal")
 
-	parser.add_option("-c", "--convert-path", dest = "convert_path",
-			type = "string", default = "/usr/bin/convert",
-			help = "the executable where convert tool is " \
-			"located. Stupid etcpack cannot get it from PATH")
+	parser.add_option("-c", "--convert-path", dest = "convert_path", type = "string", default = "/usr/bin/convert",
+			help = "the executable where convert tool is located. Stupid etcpack cannot get it from PATH")
 
-	parser.add_option("--no-alpha", dest = "no_alpha",
-			type = "int", action = "store", default = 0,
+	parser.add_option("--no-alpha", dest = "no_alpha", type = "int", action = "store", default = 0,
 			help = "remove alpha channel")
 
-	parser.add_option("--store-uncompressed", dest = "store_uncompressed",
-			type = "int", action = "store", default = 0,
+	parser.add_option("--store-uncompressed", dest = "store_uncompressed", type = "int", action = "store", default = 0,
 			help = "store or not uncompressed data")
 
-	parser.add_option("--store-compressed", dest = "store_compressed",
-			type = "int", action = "store", default = 1,
+	parser.add_option("--store-compressed", dest = "store_compressed", type = "int", action = "store", default = 1,
 			help = "store or not compressed data")
 
-	parser.add_option("--to-linear-rgb", dest = "to_linear_rgb",
-			type = "int", action = "store", default = 0,
-			help = "assume the input textures are sRGB. If this option is " \
-			"true then convert them to linear RGB")
+	parser.add_option("--to-linear-rgb", dest = "to_linear_rgb", type = "int", action = "store", default = 0,
+			help = "assume the input textures are sRGB. If this option is true then convert them to linear RGB")
 
-	parser.add_option("--filter", dest = "filter", type = "string",
-			default = "default", help = "texture filtering. Can be: " \
-			"default, linear, nearest")
+	parser.add_option("--filter", dest = "filter", type = "string", default = "default", 
+			help = "texture filtering. Can be: default, linear, nearest")
 
-	parser.add_option("--mips-count", dest = "mips_count", type = "int",
-			default = "0xFFFF", help = "Max number of mipmaps")
+	parser.add_option("--mips-count", dest = "mips_count", type = "int", default = "0xFFFF", 
+			help = "Max number of mipmaps")
 
 	# Add the default value on each option when printing help
 	for option in parser.option_list:
@@ -269,10 +256,8 @@ def parse_commandline():
 	else:
 		parser.error("Unrecognized type: " + options.filter)
 
-	if not options.store_uncompressed \
-			and not options.store_compressed:
-		parser.error("One of --store-compressed and --store-uncompressed "\
-				"should be True")
+	if not options.store_uncompressed and not options.store_compressed:
+		parser.error("One of --store-compressed and --store-uncompressed should be True")
 
 	if int(options.mips_count) <= 0:
 		parser.error("Wrong number of mipmaps")
@@ -300,8 +285,8 @@ def identify_image(in_file):
 	width = 0
 	height = 0
 
-	proc = subprocess.Popen(["identify", "-verbose" , in_file],
-			stdout=subprocess.PIPE)
+	print(["identify", "-verbose" , in_file])
+	proc = subprocess.Popen(["identify", "-verbose" , in_file], stdout=subprocess.PIPE)
 
 	stdout_str = proc.stdout.read()
 
@@ -335,8 +320,7 @@ def identify_image(in_file):
 
 	return (color_format, int(reg.group(1)), int(reg.group(2)))
 
-def create_mipmaps(in_file, tmp_dir, width_, height_, color_format, \
-		to_linear_rgb, max_mip_count):
+def create_mipmaps(in_file, tmp_dir, width_, height_, color_format, to_linear_rgb, max_mip_count):
 	""" Create a number of images for all mipmaps """
 
 	printi("Generate mipmaps")
@@ -348,8 +332,7 @@ def create_mipmaps(in_file, tmp_dir, width_, height_, color_format, \
 
 	while width >= 4 and height >= 4:
 		size_str = "%dx%d" % (width, height)
-		out_file_str = os.path.join(tmp_dir, get_base_fname(in_file)) \
-				+ "." + size_str
+		out_file_str = os.path.join(tmp_dir, get_base_fname(in_file)) + "." + size_str
 
 		printi("  %s.tga" % out_file_str)
 
@@ -421,8 +404,7 @@ def create_etc_images(mips_fnames, tmp_dir, fast, color_format, convert_path):
 		else:
 			args.append("RGBA")
 
-		# Call the executable AND change the working directory so that etcpack
-		# will find convert
+		# Call the executable AND change the working directory so that etcpack will find convert
 		subprocess.check_call(args, stdout = subprocess.PIPE, cwd = tmp_dir)
 
 def create_dds_images(mips_fnames, tmp_dir, fast, color_format, normal):
@@ -471,8 +453,7 @@ def write_raw(tex_file, fname, width, height, color_format):
 	printi("  Appending %s" % fname)
 
 	# Read and check the header
-	uncompressed_tga_header = struct.pack("BBBBBBBBBBBB", \
-			0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+	uncompressed_tga_header = struct.pack("BBBBBBBBBBBB", 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
 	in_file = open(fname, "rb")
 	tga_header = in_file.read(12)
@@ -495,8 +476,7 @@ def write_raw(tex_file, fname, width, height, color_format):
 	img_height = header6[3] * 256 + header6[2]
 	img_bpp = header6[4];
 
-	if (color_format != CF_RGB8 or img_bpp != 24) \
-			and (color_format != CF_RGBA8 or img_bpp != 32):
+	if (color_format != CF_RGB8 or img_bpp != 24) and (color_format != CF_RGBA8 or img_bpp != 32):
 		raise Exception("Unexpected bpp")
 
 	if img_width != width or img_height != height:
@@ -545,12 +525,10 @@ def write_s3tc(out_file, fname, width, height, color_format):
 	if dds_header.dwWidth != width or dds_header.dwHeight != height:
 		raise Exception("Incorrect width")
 
-	if color_format == CF_RGB8 \
-			and dds_header.dwFourCC != "DXT1":
+	if color_format == CF_RGB8 and dds_header.dwFourCC != "DXT1":
 		raise Exception("Incorrect format. Expecting DXT1")
 
-	if color_format == CF_RGBA8 \
-			and dds_header.dwFourCC != "DXT5":
+	if color_format == CF_RGBA8 and dds_header.dwFourCC != "DXT5":
 		raise Exception("Incorrect format. Expecting DXT5")
 
 	# Read and write the data
@@ -633,16 +611,14 @@ def convert(config):
 
 	# Create images
 	for in_file in config.in_files:
-		mips_fnames = create_mipmaps(in_file, config.tmp_dir, width, height, \
-				color_format, config.to_linear_rgb, config.mips_count)
+		mips_fnames = create_mipmaps(in_file, config.tmp_dir, width, height, color_format, config.to_linear_rgb, 
+				config.mips_count)
 
 		# Create etc images
-		create_etc_images(mips_fnames, config.tmp_dir, config.fast, \
-				color_format, config.convert_path)
+		create_etc_images(mips_fnames, config.tmp_dir, config.fast, color_format, config.convert_path)
 
 		# Create dds images
-		create_dds_images(mips_fnames, config.tmp_dir, config.fast, \
-				color_format, config.normal)
+		create_dds_images(mips_fnames, config.tmp_dir, config.fast, color_format, config.normal)
 
 	# Open file
 	fname = config.out_file
@@ -693,21 +669,17 @@ def convert(config):
 			# For each image
 			for in_file in config.in_files:
 				size_str = "%dx%d" % (tmp_width, tmp_height)
-				in_base_fname = os.path.join(config.tmp_dir, \
-						get_base_fname(in_file)) + "." + size_str
+				in_base_fname = os.path.join(config.tmp_dir, get_base_fname(in_file)) + "." + size_str
 
 				# Write RAW
 				if compression == 0 and config.store_uncompressed:
-					write_raw(tex_file, in_base_fname + ".tga", \
-							tmp_width, tmp_height, color_format)
+					write_raw(tex_file, in_base_fname + ".tga", tmp_width, tmp_height, color_format)
 				# Write S3TC
 				elif compression == 1 and config.store_compressed:
-					write_s3tc(tex_file, in_base_fname + ".dds", \
-							tmp_width, tmp_height, color_format)
+					write_s3tc(tex_file, in_base_fname + ".dds", tmp_width, tmp_height, color_format)
 				# Write ETC
 				elif compression == 2 and config.store_compressed:
-					write_etc(tex_file, in_base_fname + "_flip.pkm", \
-							tmp_width, tmp_height, color_format)
+					write_etc(tex_file, in_base_fname + "_flip.pkm", tmp_width, tmp_height, color_format)
 
 			tmp_width = tmp_width / 2
 			tmp_height = tmp_height / 2
@@ -721,8 +693,7 @@ def main():
 	if config.type == TT_CUBE and len(config.in_files) != 6:
 		raise Exception("Not enough images for cube generation")
 
-	if (config.type == TT_3D or config.type == TT_2D_ARRAY) \
-			and len(config.in_files) < 2:
+	if (config.type == TT_3D or config.type == TT_2D_ARRAY) and len(config.in_files) < 2:
 		#raise Exception("Not enough images for 2DArray/3D texture")
 		printw("Not enough images for 2DArray/3D texture")
 

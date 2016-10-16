@@ -95,11 +95,11 @@ vec3 sharpen(in sampler2D tex, in vec2 texCoords)
 
 vec3 erosion(in sampler2D tex, in vec2 texCoords)
 {
-	vec3 minValue = textureRt(tex, texCoords).rgb;
+	vec3 minValue = texture(tex, texCoords, 0.0).rgb;
 
 	for(int i = 0; i < 8; i++)
 	{
-		vec3 tmpCol = textureRt(tex, texCoords + KERNEL[i]).rgb;
+		vec3 tmpCol = texture(tex, texCoords + KERNEL[i], 0.0).rgb;
 		minValue = min(tmpCol, minValue);
 	}
 

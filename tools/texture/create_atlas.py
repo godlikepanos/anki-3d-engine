@@ -56,22 +56,17 @@ def printi(msg):
 def parse_commandline():
 	""" Parse the command line arguments """
 
-	parser = argparse.ArgumentParser(
-			description = "This program creates a texture atlas",
+	parser = argparse.ArgumentParser(description = "This program creates a texture atlas",
 			formatter_class = argparse.ArgumentDefaultsHelpFormatter)
 
 	parser.add_argument("-i", "--input", nargs = "+", required = True,
 			help = "specify the image(s) to convert. Seperate with space")
 
-	parser.add_argument("-o", "--output", default = "atlas.png",
-			help = "specify output PNG image.")
+	parser.add_argument("-o", "--output", default = "atlas.png", help = "specify output PNG image.")
 
-	parser.add_argument("-m", "--margin", type = int, default = 0,
-			help = "specify the margin.")
+	parser.add_argument("-m", "--margin", type = int, default = 0, help = "specify the margin.")
 
-	parser.add_argument("-b", "--background-color", 
-			help = "specify background of empty areas",
-			default = "ff00ff00")
+	parser.add_argument("-b", "--background-color", help = "specify background of empty areas", default = "ff00ff00")
 
 	args = parser.parse_args()
 
@@ -98,8 +93,7 @@ def load_images(ctx):
 			ctx.mode = img.image.mode
 		else:
 			if ctx.mode != img.image.mode:
-				raise Exception("Image \"%s\" has a different mode: \"%s\"" \
-						% (i, img.image.mode))
+				raise Exception("Image \"%s\" has a different mode: \"%s\"" % (i, img.image.mode))
 
 		img.width = img.image.size[0]
 		img.height = img.image.size[1]
@@ -174,7 +168,7 @@ def place_sub_images(ctx):
 		sub_image = ctx.sub_images[unplaced_imgs[0]]
 		unplaced_imgs.pop(0)
 
-		printi("Will try to place image \"%s\" of size %ux%d" % \
+		printi("Will try to place image \"%s\" of size %ux%d" % 
 				(sub_image.image_name, sub_image.width, sub_image.height))
 
 		# Find best frame
@@ -246,11 +240,9 @@ def create_atlas(ctx):
 	draw.rectangle((0, 0, ctx.atlas_width, ctx.atlas_height), bg_color)
 
 	for sub_image in ctx.sub_images:
-		assert sub_image.atlas_x != 0xFFFFFFFF and \
-				sub_image.atlas_y != 0xFFFFFFFF, "See file"
+		assert sub_image.atlas_x != 0xFFFFFFFF and sub_image.atlas_y != 0xFFFFFFFF, "See file"
 
-		atlas_img.paste(sub_image.image, \
-				(int(sub_image.atlas_x), int(sub_image.atlas_y)))
+		atlas_img.paste(sub_image.image, (int(sub_image.atlas_x), int(sub_image.atlas_y)))
 
 	printi("Saving atlas \"%s\"" % ctx.out_file)
 	atlas_img.save(ctx.out_file)
@@ -261,12 +253,13 @@ def write_xml(ctx):
 	fname = os.path.splitext(ctx.out_file)[0] + ".ankiatex"
 	printi("Writing XML \"%s\"" % fname)
 	f = open(fname, "w")
-	f.write("<atlasTexture>\n")
+	f.write("<textureAtlas>\n")
 	f.write("\t<texture>%s</texture>\n" % ctx.out_file)
-	f.write("\t<subImages>\n")
+	f.write("\t<subTextureMargin>%u</subTextureMargin>\n" % ctx.margin)
+	f.write("\t<subTextures>\n")
 
 	for sub_image in ctx.sub_images:
-		f.write("\t\t<subImage>\n")
+		f.write("\t\t<subTexture>\n")
 		f.write("\t\t\t<name>%s</name>\n" % sub_image.image_name)
 
 		# Now change coordinate system
@@ -276,10 +269,10 @@ def write_xml(ctx):
 		bottom = top - (sub_image.height / ctx.atlas_height)
 
 		f.write("\t\t\t<uv>%f %f %f %f</uv>\n" % (left, bottom, right, top))
-		f.write("\t\t</subImage>\n")
+		f.write("\t\t</subTexture>\n")
 
-	f.write("\t</subImages>\n")
-	f.write("</atlasTexture>\n")
+	f.write("\t</subTextures>\n")
+	f.write("</textureAtlas>\n")
 
 def main():
 	""" The main """

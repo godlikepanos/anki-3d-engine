@@ -43,7 +43,8 @@ public:
 		TransientMemoryToken* probesToken,
 		TransientMemoryToken& decalsToken,
 		TransientMemoryToken& clustersToken,
-		TransientMemoryToken& lightIndicesToken);
+		TransientMemoryToken& lightIndicesToken,
+		TexturePtr& diffuseDecalTexAtlas);
 
 	const Clusterer& getClusterer() const
 	{

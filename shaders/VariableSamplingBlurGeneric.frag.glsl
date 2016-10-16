@@ -117,12 +117,12 @@ layout(location = 0) out COL_TYPE out_fragColor;
 void main()
 {
 	// Get the first
-	COL_TYPE col = textureRt(uTex, in_texCoord).TEX_FETCH;
+	COL_TYPE col = texture(uTex, in_texCoord).TEX_FETCH;
 
 	// Get the rest of the samples
 	for(uint i = 0; i < SAMPLES - 1; i++)
 	{
-		col += textureRt(uTex, in_texCoord + KERNEL[i]).TEX_FETCH;
+		col += texture(uTex, in_texCoord + KERNEL[i]).TEX_FETCH;
 	}
 
 	out_fragColor = col / float(SAMPLES);

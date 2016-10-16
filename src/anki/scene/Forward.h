@@ -14,6 +14,10 @@ class InstanceComponent;
 class MoveComponent;
 class RenderComponent;
 class SpatialComponent;
+class DecalComponent;
+class PortalComponent;
+class SectorComponent;
+class ReflectionProxyComponent;
 
 // Nodes
 class SceneNode;

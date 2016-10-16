@@ -180,6 +180,8 @@ Error Is::binLights(RenderingContext& ctx)
 {
 	updateCommonBlock(ctx);
 
+	TexturePtr diffDecalTex;
+
 	ANKI_CHECK(m_lightBin->bin(*ctx.m_frustumComponent,
 		getFrameAllocator(),
 		m_maxLightIds,
@@ -189,7 +191,26 @@ Error Is::binLights(RenderingContext& ctx)
 		&ctx.m_is.m_dynBufferInfo.m_uniformBuffers[PROBES_LOCATION],
 		ctx.m_is.m_dynBufferInfo.m_uniformBuffers[DECALS_LOCATION],
 		ctx.m_is.m_dynBufferInfo.m_storageBuffers[CLUSTERS_LOCATION],
-		ctx.m_is.m_dynBufferInfo.m_storageBuffers[LIGHT_IDS_LOCATION]));
+		ctx.m_is.m_dynBufferInfo.m_storageBuffers[LIGHT_IDS_LOCATION],
+		diffDecalTex));
+
+	if(diffDecalTex)
+	{
+		ResourceGroupInitInfo rcinit;
+		rcinit.m_textures[0].m_texture = diffDecalTex;
+
+		U64 hash = rcinit.computeHash();
+		if(hash != m_rcGroup1Hash)
+		{
+			m_rcGroup1Hash = hash;
+
+			m_rcGroup1 = getGrManager().newInstance<ResourceGroup>(rcinit);
+		}
+	}
+	else
+	{
+		m_rcGroup1.reset(nullptr);
+	}
 
 	return ErrorCode::NONE;
 }
@@ -202,6 +223,12 @@ void Is::run(RenderingContext& ctx)
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 	cmdb->bindPipeline(m_lightPpline);
 	cmdb->bindResourceGroup(m_rcGroup, 0, &ctx.m_is.m_dynBufferInfo);
+
+	if(m_rcGroup1)
+	{
+		cmdb->bindResourceGroup(m_rcGroup1, 1, nullptr);
+	}
+
 	cmdb->drawArrays(4, m_r->getTileCount());
 	cmdb->endRenderPass();
 }

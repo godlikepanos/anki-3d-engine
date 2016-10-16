@@ -26,8 +26,20 @@ Error DecalComponent::setLayer(CString texAtlasFname, CString texAtlasSubtexName
 	ANKI_CHECK(getSceneGraph().getResourceManager().loadResource(texAtlasFname, l.m_atlas));
 
 	ANKI_CHECK(l.m_atlas->getSubTextureInfo(texAtlasSubtexName, &l.m_uv[0]));
-	l.m_blendFactor = blendFactor;
 
+	// Add a border to the UVs to avoid complex shader logic
+	if(l.m_atlas->getSubTextureMargin() < ATLAS_SUB_TEXTURE_MARGIN)
+	{
+		ANKI_LOGE("Need texture atlas with margin at least %u", ATLAS_SUB_TEXTURE_MARGIN);
+		return ErrorCode::USER_DATA;
+	}
+
+	Vec2 marginf = F32(ATLAS_SUB_TEXTURE_MARGIN / 2) / Vec2(l.m_atlas->getWidth(), l.m_atlas->getHeight());
+	Vec2 minUv = l.m_uv.xy() - marginf;
+	Vec2 sizeUv = (l.m_uv.zw() - l.m_uv.xy()) + 2.0f * marginf;
+	l.m_uv = Vec4(minUv.x(), minUv.y(), minUv.x() + sizeUv.x(), minUv.y() + sizeUv.y());
+
+	l.m_blendFactor = blendFactor;
 	return ErrorCode::NONE;
 }
 

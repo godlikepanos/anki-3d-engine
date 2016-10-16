@@ -22,6 +22,8 @@ layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_msRt1;
 layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_msRt2;
 layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2D u_msDepthRt;
 
+layout(ANKI_TEX_BINDING(1, 0)) uniform sampler2D u_diffDecalTex;
+
 layout(location = 0) in vec2 in_texCoord;
 layout(location = 1) flat in int in_instanceId;
 layout(location = 2) in vec2 in_projectionParams;
@@ -33,7 +35,7 @@ const uint TILE_COUNT = TILE_COUNT_X * TILE_COUNT_Y;
 // Return frag pos in view space
 vec3 getFragPosVSpace()
 {
-	float depth = textureRt(u_msDepthRt, in_texCoord).r;
+	float depth = texture(u_msDepthRt, in_texCoord, 0.0).r;
 
 	vec3 fragPos;
 	fragPos.z = u_lightingUniforms.projectionParams.z / (u_lightingUniforms.projectionParams.w + depth);
@@ -61,12 +63,18 @@ void debugIncorrectColor(inout vec3 c)
 }
 
 // Compute the colors of a decal.
-void computeDecalColors(in Decal decal, in vec3 fragPos, out vec3 diffuseColor)
+void appendDecalColors(in Decal decal, in vec3 fragPos, inout vec3 diffuseColor)
 {
 	vec4 texCoords4 = decal.texProjectionMat * vec4(fragPos, 1.0);
-	vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
+	vec2 texCoords2 = texCoords4.xy / texCoords4.w;
 
-	diffuseColor = texCoords3;
+	// Clamp the tex coords. Expect a border in the texture atlas
+	texCoords2 = clamp(texCoords2, 0.0, 1.0);
+
+	texCoords2 = texCoords2 * decal.uv.zw + decal.uv.xy;
+	vec4 dcol = texture(u_diffDecalTex, texCoords2);
+
+	diffuseColor = mix(diffuseColor, dcol.rgb, dcol.a);
 }
 
 void readIndirect(in uint idxOffset,
@@ -163,7 +171,7 @@ void main()
 	{
 		Decal decal = u_decals[u_lightIndices[idxOffset++]];
 
-		computeDecalColors(decal, fragPos, diffCol);
+		appendDecalColors(decal, fragPos, diffCol);
 	}
 
 	// Point lights

@@ -2,8 +2,8 @@
 <model>
 	<modelPatches>
 		<modelPatch>
-			<mesh>samples/assets/room.ankimesh</mesh>
-			<material>samples/assets/room-material.ankimtl</material>
+			<mesh>assets/room.ankimesh</mesh>
+			<material>assets/room-material.ankimtl</material>
 		</modelPatch>
 	</modelPatches>
 </model>

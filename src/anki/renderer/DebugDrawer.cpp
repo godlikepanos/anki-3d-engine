@@ -524,23 +524,6 @@ void SceneDebugDrawer::draw(const PortalComponent& c) const
 	m_dbg->end();
 }
 
-void SceneDebugDrawer::drawPath(const Path& path) const
-{
-	/*const U count = path.getPoints().size();
-
-	m_dbg->setColor(Vec3(1.0, 1.0, 0.0));
-
-	m_dbg->begin();
-
-	for(U i = 0; i < count - 1; i++)
-	{
-			m_dbg->pushBackVertex(path.getPoints()[i].getPosition());
-			m_dbg->pushBackVertex(path.getPoints()[i + 1].getPosition());
-	}
-
-	m_dbg->end();*/
-}
-
 void SceneDebugDrawer::draw(const ReflectionProxyComponent& proxy) const
 {
 	m_dbg->setModelMatrix(Mat4::getIdentity());
@@ -556,6 +539,20 @@ void SceneDebugDrawer::draw(const ReflectionProxyComponent& proxy) const
 		}
 	}
 	m_dbg->end();
+}
+
+void SceneDebugDrawer::draw(const DecalComponent& decalc) const
+{
+	const MoveComponent& movec = decalc.getSceneNode().getComponent<MoveComponent>();
+
+	m_dbg->setColor(Vec3(0.0, 1.0, 0.0));
+
+	const Vec3& size = decalc.getVolumeSize();
+	Vec3 halfSize = size / 2.0;
+	Obb box(Vec4(0.0, 0.0, -halfSize.z(), 0.0), Mat3x4::getIdentity(), Vec4(halfSize, 0.0));
+	box.transform(movec.getWorldTransform());
+	CollisionDebugDrawer cd(m_dbg);
+	box.accept(cd);
 }
 
 } // end namespace anki

@@ -315,6 +315,9 @@ public:
 	Atomic<U32> m_count = {0};
 	Atomic<U32> m_count2 = {0};
 
+	TexturePtr m_diffDecalTexAtlas;
+	SpinLock m_diffDecalTexAtlasMtx;
+
 	LightBin* m_bin = nullptr;
 };
 
@@ -359,7 +362,8 @@ Error LightBin::bin(FrustumComponent& frc,
 	TransientMemoryToken* probesToken,
 	TransientMemoryToken& decalsToken,
 	TransientMemoryToken& clustersToken,
-	TransientMemoryToken& lightIndicesToken)
+	TransientMemoryToken& lightIndicesToken,
+	TexturePtr& diffuseDecalTexAtlas)
 {
 	ANKI_TRACE_START_EVENT(RENDERER_LIGHT_BINNING);
 
@@ -481,6 +485,8 @@ Error LightBin::bin(FrustumComponent& frc,
 
 	// Sync
 	ANKI_CHECK(m_threadPool->waitForAllThreadsToFinish());
+
+	diffuseDecalTexAtlas = ctx.m_diffDecalTexAtlas;
 
 	ANKI_TRACE_STOP_EVENT(RENDERER_LIGHT_BINNING);
 	return ErrorCode::NONE;
@@ -803,7 +809,20 @@ void LightBin::writeAndBinDecal(
 	I idx = ctx.m_decalCount.fetchAdd(1);
 	ShaderDecal& decal = ctx.m_decals[idx];
 
-	decalc.getDiffuseAtlasInfo(decal.m_uv);
+	TexturePtr diffAtlas;
+	Vec4 uv;
+	decalc.getDiffuseAtlasInfo(uv, diffAtlas);
+	decal.m_uv = Vec4(uv.x(), uv.y(), uv.z() - uv.x(), uv.w() - uv.y());
+
+	{
+		LockGuard<SpinLock> lock(ctx.m_diffDecalTexAtlasMtx);
+		if(ctx.m_diffDecalTexAtlas && ctx.m_diffDecalTexAtlas != diffAtlas)
+		{
+			ANKI_LOGF("All decals should have the same tex atlas");
+		}
+
+		ctx.m_diffDecalTexAtlas = diffAtlas;
+	}
 
 	// bias * proj_l * view_l * world_c
 	decal.m_texProjectionMat = decalc.getBiasProjectionViewMatrix() * Mat4(camMovec.getWorldTransform());

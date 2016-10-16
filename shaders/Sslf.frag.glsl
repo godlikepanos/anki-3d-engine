@@ -29,11 +29,11 @@ vec3 textureDistorted(in sampler2D tex,
 	in vec3 distortion) // per-channel distortion factor
 {
 #if ENABLE_CHROMATIC_DISTORTION
-	return vec3(textureRt(tex, texcoord + direction * distortion.r).r,
-		textureRt(tex, texcoord + direction * distortion.g).g,
-		textureRt(tex, texcoord + direction * distortion.b).b);
+	return vec3(texture(tex, texcoord + direction * distortion.r).r,
+		texture(tex, texcoord + direction * distortion.g).g,
+		texture(tex, texcoord + direction * distortion.b).b);
 #else
-	return textureRt(tex, texcoord).rgb;
+	return texture(tex, texcoord).rgb;
 #endif
 }
 

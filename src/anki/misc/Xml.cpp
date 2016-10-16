@@ -184,7 +184,7 @@ Error XmlElement::getVec4(Vec4& out) const
 
 	if(!err && arr.getSize() != 4)
 	{
-		ANKI_LOGE("Expecting 4 elements for Vec3");
+		ANKI_LOGE("Expecting 4 elements for Vec4");
 		err = ErrorCode::USER_DATA;
 	}
 

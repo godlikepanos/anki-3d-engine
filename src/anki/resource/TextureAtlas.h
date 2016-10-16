@@ -21,6 +21,7 @@ namespace anki
 /// @code
 /// <textureAtlas>
 /// 	<texture>path/to/tex.ankitex</texture>
+/// 	<subTextureMargin>N</subTextureMargin>
 /// 	<subTextures>
 /// 		<subTexture>
 /// 			<name>name</name>
@@ -56,6 +57,11 @@ public:
 		return m_size[1];
 	}
 
+	U getSubTextureMargin() const
+	{
+		return m_margin;
+	}
+
 	/// Get the UV coordinates of a sub texture.
 	ANKI_USE_RESULT Error getSubTextureInfo(CString name, F32 uv[4]) const;
 
@@ -71,6 +77,7 @@ private:
 	DynamicArray<char> m_subTexNames;
 	DynamicArray<SubTex> m_subTexes;
 	Array<U32, 2> m_size;
+	U32 m_margin = 0;
 };
 /// @}
 

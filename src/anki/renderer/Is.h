@@ -63,6 +63,8 @@ private:
 	FramebufferPtr m_fb;
 
 	ResourceGroupPtr m_rcGroup;
+	U64 m_rcGroup1Hash = 0;
+	ResourceGroupPtr m_rcGroup1;
 
 	// Light shaders
 	ShaderResourcePtr m_lightVert;

@@ -150,6 +150,12 @@ public:
 		return TVec2<T>(y(), x());
 	}
 
+	TVec2<T> zw() const
+	{
+		static_assert(N == 4, "Wrong vector");
+		return TVec2<T>(z(), w());
+	}
+
 	TVec3<T> xxx() const
 	{
 		static_assert(N > 2, "Wrong vector");
