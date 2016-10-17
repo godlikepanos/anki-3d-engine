@@ -60,7 +60,7 @@ static const aiNode* findNodeWithName(const std::string& name, const aiNode* nod
 	const aiNode* out = nullptr;
 
 	// Go to children
-	for(uint32_t i = 0; i < node->mNumChildren; i++)
+	for(unsigned i = 0; i < node->mNumChildren; i++)
 	{
 		out = findNodeWithName(name, node->mChildren[i]);
 		if(out)
@@ -424,8 +424,7 @@ void Exporter::exportLight(const aiLight& light)
 	// Colors
 	// aiColor3D linear = computeLightColor(light.mColorDiffuse);
 	aiVector3D linear(light.mColorDiffuse[0], light.mColorDiffuse[1], light.mColorDiffuse[2]);
-	file << "lcomp:setDiffuseColor(Vec4.new(" << linear[0] << ", " << linear[1] << ", " << linear[2] << ", "
-		 << "1))\n";
+	file << "lcomp:setDiffuseColor(Vec4.new(" << linear[0] << ", " << linear[1] << ", " << linear[2] << ", 1))\n";
 
 	// linear = computeLightColor(light.mColorSpecular);
 	if(light.mProperties.find("specular_color") != light.mProperties.end())
@@ -433,8 +432,7 @@ void Exporter::exportLight(const aiLight& light)
 		stringToFloatArray<3>(light.mProperties.at("specular_color"), linear);
 	}
 
-	file << "lcomp:setSpecularColor(Vec4.new(" << linear[0] << ", " << linear[1] << ", " << linear[2] << ", "
-		 << "1))\n";
+	file << "lcomp:setSpecularColor(Vec4.new(" << linear[0] << ", " << linear[1] << ", " << linear[2] << ", 1))\n";
 
 	// Geometry
 	aiVector3D direction(0.0, 0.0, 1.0);
@@ -510,8 +508,7 @@ void Exporter::exportLight(const aiLight& light)
 	{
 		if(!lfCompRetrieved)
 		{
-			file << "lfcomp = node:getSceneNodeBase():"
-				 << "getLensFlareComponent()\n";
+			file << "lfcomp = node:getSceneNodeBase():getLensFlareComponent()\n";
 			lfCompRetrieved = true;
 		}
 
@@ -524,8 +521,7 @@ void Exporter::exportLight(const aiLight& light)
 	{
 		if(!lfCompRetrieved)
 		{
-			file << "lfcomp = node:getSceneNodeBase():"
-				 << "getLensFlareComponent()\n";
+			file << "lfcomp = node:getSceneNodeBase():getLensFlareComponent()\n";
 			lfCompRetrieved = true;
 		}
 
@@ -540,8 +536,7 @@ void Exporter::exportLight(const aiLight& light)
 	{
 		if(!eventCreated)
 		{
-			file << "event = events:newLightEvent(0.0, -1.0, "
-					"node:getSceneNodeBase())\n";
+			file << "event = events:newLightEvent(0.0, -1.0, node:getSceneNodeBase())\n";
 			eventCreated = true;
 		}
 
@@ -556,8 +551,7 @@ void Exporter::exportLight(const aiLight& light)
 	{
 		if(!eventCreated)
 		{
-			file << "event = events:newLightEvent(0.0, -1.0, "
-					"node:getSceneNodeBase())\n";
+			file << "event = events:newLightEvent(0.0, -1.0, node:getSceneNodeBase())\n";
 			eventCreated = true;
 		}
 
@@ -615,15 +609,13 @@ void Exporter::exportAnimation(const aiAnimation& anim, unsigned index)
 
 			if(m_flipyz)
 			{
-				file << "\t\t\t\t<key><time>" << key.mTime << "</time>"
-					 << "<value>" << key.mValue[0] << " " << key.mValue[2] << " " << -key.mValue[1]
-					 << "</value></key>\n";
+				file << "\t\t\t\t<key><time>" << key.mTime << "</time><value>" << key.mValue[0] << " " << key.mValue[2]
+					 << " " << -key.mValue[1] << "</value></key>\n";
 			}
 			else
 			{
-				file << "\t\t\t\t<key><time>" << key.mTime << "</time>"
-					 << "<value>" << key.mValue[0] << " " << key.mValue[1] << " " << key.mValue[2]
-					 << "</value></key>\n";
+				file << "\t\t\t\t<key><time>" << key.mTime << "</time><value>" << key.mValue[0] << " " << key.mValue[1]
+					 << " " << key.mValue[2] << "</value></key>\n";
 			}
 		}
 		file << "\t\t\t</positionKeys>\n";
@@ -1081,8 +1073,7 @@ void Exporter::exportAll()
 		std::string nodeName = modelName + node.m_group + std::to_string(i);
 
 		// Write the main node
-		file << "\nnode = scene:newModelNode(\"" << nodeName << "\", \"" << m_rpath << modelName << ".ankimdl"
-			 << "\")\n";
+		file << "\nnode = scene:newModelNode(\"" << nodeName << "\", \"" << m_rpath << modelName << ".ankimdl\")\n";
 		writeNodeTransform("node", node.m_transform);
 
 		// Write the collision node
@@ -1104,8 +1095,7 @@ void Exporter::exportAll()
 				exportCollisionMesh(i);
 
 				std::string fname = m_rpath + node.m_collisionMesh + ".ankicl";
-				file << "node = scene:newStaticCollisionNode(\"" << nodeName << "_cl"
-					 << "\", \"" << fname << "\", trf)\n";
+				file << "node = scene:newStaticCollisionNode(\"" << nodeName << "_cl\", \"" << fname << "\", trf)\n";
 			}
 			else
 			{

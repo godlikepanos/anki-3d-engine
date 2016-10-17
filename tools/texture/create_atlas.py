@@ -41,6 +41,7 @@ class Context:
 	out_file = ""
 	margin = 0
 	bg_color = 0
+	rpath = ""
 
 	sub_images = []
 	atlas_width = 0
@@ -68,6 +69,8 @@ def parse_commandline():
 
 	parser.add_argument("-b", "--background-color", help = "specify background of empty areas", default = "ff00ff00")
 
+	parser.add_argument("-r", "--rpath", help = "Path to append to the .ankiatex", default = "")
+
 	args = parser.parse_args()
 
 	ctx = Context()
@@ -75,6 +78,7 @@ def parse_commandline():
 	ctx.out_file = args.output
 	ctx.margin = args.margin
 	ctx.bg_color = int(args.background_color, 16)
+	ctx.rpath = args.rpath
 
 	if len(ctx.in_files) < 2:
 		parser.error("Not enough images")
@@ -102,6 +106,11 @@ def load_images(ctx):
 		img.mheight = img.height + ctx.margin
 
 		printi("Image \"%s\" loaded. Mode \"%s\"" % (i, img.image.mode))
+
+		for simage in ctx.sub_images:
+			if os.path.basename(simage.image_name) == os.path.basename(i):
+				raise Exception("Cannot have images with the same base %s" % i)
+
 		ctx.sub_images.append(img)
 
 def compute_atlas_rough_size(ctx):
@@ -253,14 +262,16 @@ def write_xml(ctx):
 	fname = os.path.splitext(ctx.out_file)[0] + ".ankiatex"
 	printi("Writing XML \"%s\"" % fname)
 	f = open(fname, "w")
+	f.write("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n")
 	f.write("<textureAtlas>\n")
-	f.write("\t<texture>%s</texture>\n" % ctx.out_file)
+	out_filename = ctx.rpath + "/" + os.path.splitext(os.path.basename(ctx.out_file))[0] + ".ankitex"
+	f.write("\t<texture>%s</texture>\n" % out_filename)
 	f.write("\t<subTextureMargin>%u</subTextureMargin>\n" % ctx.margin)
 	f.write("\t<subTextures>\n")
 
 	for sub_image in ctx.sub_images:
 		f.write("\t\t<subTexture>\n")
-		f.write("\t\t\t<name>%s</name>\n" % sub_image.image_name)
+		f.write("\t\t\t<name>%s</name>\n" % os.path.basename(sub_image.image_name))
 
 		# Now change coordinate system
 		left = sub_image.atlas_x / ctx.atlas_width

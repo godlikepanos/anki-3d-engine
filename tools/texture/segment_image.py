@@ -19,19 +19,15 @@ def printi(s):
 def parse_commandline():
 	""" Parse the command line arguments """
 
-	parser = optparse.OptionParser(usage = "usage: %prog [options]", \
-			description = "This program takes a single 2D image and spits "\
-			"a number of images. Input and output images should be TGA.")
+	parser = optparse.OptionParser(usage = "usage: %prog [options]",
+			description = "This program takes a single 2D image and spits a number of images. Input and output images "
+			"should be TGA.")
 
-	parser.add_option("-i", "--input", dest = "inp",
-			type = "string", help = "specify the image to split.")
+	parser.add_option("-i", "--input", dest = "inp", type = "string", help = "specify the image to split.")
 
-	parser.add_option("-o", "--output", dest = "out",
-			type = "string", help = "the directory of the output images.")
+	parser.add_option("-o", "--output", dest = "out", type = "string", help = "the directory of the output images.")
 
-	parser.add_option("-s", "--size", dest = "size",
-			type = "string", metavar="WxH",
-			help = "size of the splits.")
+	parser.add_option("-s", "--size", dest = "size", type = "string", metavar="WxH", help = "size of the splits.")
 
 	# Add the default value on each option when printing help
 	for option in parser.option_list:
@@ -63,8 +59,7 @@ def split(filename, split_size, out_dir):
 	""" Load an image """
 
 	# Read and check the header
-	uncompressed_tga_header = struct.pack("BBBBBBBBBBBB", \
-			0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+	uncompressed_tga_header = struct.pack("BBBBBBBBBBBB", 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
 	in_file = open(filename, "rb")
 	tga_header = in_file.read(12)
@@ -92,8 +87,7 @@ def split(filename, split_size, out_dir):
 
 	# Check split size against the image
 	if (img_width % split_size[0]) != 0 or (img_height % split_size[1]) != 0:
-		raise Exception("Sizes of the input image and the split are not " \
-				"compatible: %d %d vs %d %d"
+		raise Exception("Sizes of the input image and the split are not compatible: %d %d vs %d %d"
 				% (img_width, img_height, split_size[0], split_size[1]))
 
 	# Dump the data to an array

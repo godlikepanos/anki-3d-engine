@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/gr/vulkan/Common.h>
+#include <anki/util/HashMap.h>
 
 namespace anki
 {
@@ -74,6 +75,71 @@ private:
 
 	Error initGlobalDsetLayout();
 	Error initGlobalDsetPool();
+};
+
+/// Creates descriptor set layouts.
+class DescriptorSetLayoutFactory
+{
+public:
+	DescriptorSetLayoutFactory()
+	{
+	}
+
+	~DescriptorSetLayoutFactory()
+	{
+	}
+
+	void init(GrAllocator<U8> alloc, VkDevice dev)
+	{
+		m_alloc = alloc;
+		m_dev = dev;
+	}
+
+	void destroy();
+
+	/// If there is no bindings for a specific type then pass zero.
+	VkDescriptorSetLayout createLayout(
+		U texBindingCount, U uniBindingCount, U storageBindingCount, U imageBindingCount);
+
+private:
+	class Key
+	{
+	public:
+		U64 m_hash;
+
+		Key(U a, U b, U c, U d)
+		{
+			ANKI_ASSERT(a < 0xFF && b < 0xFF && c < 0xFF && d < 0xFF);
+			m_hash = (a << 24) | (b << 16) | (c << 8) | d;
+		}
+	};
+
+	/// Hash the hash.
+	class Hasher
+	{
+	public:
+		U64 operator()(const Key& b) const
+		{
+			return b.m_hash;
+		}
+	};
+
+	/// Hash compare.
+	class Compare
+	{
+	public:
+		Bool operator()(const Key& a, const Key& b) const
+		{
+			return a.m_hash == b.m_hash;
+		}
+	};
+
+	HashMap<Key, VkDescriptorSetLayout, Hasher, Compare> m_map;
+
+	GrAllocator<U8> m_alloc;
+	VkDevice m_dev = VK_NULL_HANDLE;
+
+	Mutex m_mtx;
 };
 /// @}
 
