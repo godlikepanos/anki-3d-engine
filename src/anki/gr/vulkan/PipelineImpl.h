@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/gr/vulkan/VulkanObject.h>
+#include <anki/gr/vulkan/ResourceGroupExtra.h>
 
 namespace anki
 {
@@ -26,6 +27,12 @@ class ColorStateInfo;
 class PipelineImpl : public VulkanObject
 {
 public:
+	VkPipeline m_handle = VK_NULL_HANDLE;
+	VkPipelineBindPoint m_bindPoint = VK_PIPELINE_BIND_POINT_MAX_ENUM;
+	VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
+	Array<DescriptorSetLayoutInfo, MAX_BOUND_RESOURCE_GROUPS> m_descriptorSetLayoutInfos;
+	U8 m_descriptorSetMask = 0;
+
 	PipelineImpl(GrManager* manager)
 		: VulkanObject(manager)
 	{
@@ -35,22 +42,7 @@ public:
 
 	ANKI_USE_RESULT Error init(const PipelineInitInfo& init);
 
-	VkPipeline getHandle() const
-	{
-		ANKI_ASSERT(m_handle);
-		return m_handle;
-	}
-
-	VkPipelineBindPoint getBindPoint() const
-	{
-		ANKI_ASSERT(m_bindPoint != VK_PIPELINE_BIND_POINT_MAX_ENUM);
-		return m_bindPoint;
-	}
-
 private:
-	VkPipeline m_handle = VK_NULL_HANDLE;
-	VkPipelineBindPoint m_bindPoint = VK_PIPELINE_BIND_POINT_MAX_ENUM;
-
 	ANKI_USE_RESULT Error initGraphics(const PipelineInitInfo& init);
 
 	ANKI_USE_RESULT Error initCompute(const PipelineInitInfo& init);
@@ -80,6 +72,8 @@ private:
 		const ColorStateInfo& c, VkPipelineColorBlendStateCreateInfo& ci);
 
 	ANKI_USE_RESULT VkPipelineDynamicStateCreateInfo* initDynamicState(VkPipelineDynamicStateCreateInfo& ci);
+
+	ANKI_USE_RESULT Error createPplineLayout(const PipelineInitInfo& init);
 };
 /// @}
 

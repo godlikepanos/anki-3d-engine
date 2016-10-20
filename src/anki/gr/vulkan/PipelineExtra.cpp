@@ -154,4 +154,56 @@ VkRenderPass CompatibleRenderPassCreator::createNewRenderPass(const PipelineInit
 	return rpass;
 }
 
+void PipelineLayoutFactory::destroy()
+{
+	for(auto it : m_map)
+	{
+		VkPipelineLayout lay = it;
+		vkDestroyPipelineLayout(m_dev, lay, nullptr);
+	}
+
+	m_map.destroy(m_alloc);
+}
+
+Error PipelineLayoutFactory::getOrCreateLayout(
+	U8 setMask, const Array<DescriptorSetLayoutInfo, MAX_BOUND_RESOURCE_GROUPS>& dsinf, VkPipelineLayout& out)
+{
+	ANKI_ASSERT(setMask == 0 || setMask == 1 || setMask == 3);
+
+	LockGuard<Mutex> lock(m_mtx);
+
+	Key key(setMask, dsinf);
+	auto it = m_map.find(key);
+
+	if(it != m_map.getEnd())
+	{
+		out = *it;
+	}
+	else
+	{
+		// Create the layout
+
+		Array<VkDescriptorSetLayout, MAX_BOUND_RESOURCE_GROUPS> sets;
+
+		VkPipelineLayoutCreateInfo ci = {};
+		ci.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+		ci.pSetLayouts = &sets[0];
+
+		for(U i = 0; i < MAX_BOUND_RESOURCE_GROUPS; ++i)
+		{
+			if(setMask & (1 << i))
+			{
+				ANKI_CHECK(m_dsetLayFactory->getOrCreateLayout(dsinf[i], sets[i]));
+				++ci.setLayoutCount;
+			}
+		}
+
+		ANKI_VK_CHECK(vkCreatePipelineLayout(m_dev, &ci, nullptr, &out));
+
+		m_map.pushBack(m_alloc, key, out);
+	}
+
+	return ErrorCode::NONE;
+}
+
 } // end namespace anki

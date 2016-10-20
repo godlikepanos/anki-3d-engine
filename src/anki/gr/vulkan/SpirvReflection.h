@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/gr/vulkan/Common.h>
+#include <anki/gr/vulkan/ResourceGroupExtra.h>
 
 namespace anki
 {
@@ -29,44 +29,31 @@ public:
 
 	ANKI_USE_RESULT Error parse();
 
-	U32 getDescriptorSetMask() const
+	U8 getDescriptorSetMask() const
 	{
 		return m_setMask;
 	}
 
-	U getTextureBindingCount(U set) const
+	DescriptorSetLayoutInfo getLayoutInfo(U set) const
 	{
 		ANKI_ASSERT(m_setMask & (1 << set));
-		return m_texBindings[set];
-	}
-
-	U getUniformBindingCount(U set) const
-	{
-		ANKI_ASSERT(m_setMask & (1 << set));
-		return m_uniBindings[set];
-	}
-
-	U getStorageBindingCount(U set) const
-	{
-		ANKI_ASSERT(m_setMask & (1 << set));
-		return m_storageBindings[set];
-	}
-
-	U getImageBindingCount(U set) const
-	{
-		ANKI_ASSERT(m_setMask & (1 << set));
-		return m_imageBindings[set];
+		DescriptorSetLayoutInfo out;
+		out.m_texCount = m_texBindings[set];
+		out.m_uniCount = m_uniBindings[set];
+		out.m_storageCount = m_storageBindings[set];
+		out.m_imgCount = m_imageBindings[set];
+		return out;
 	}
 
 private:
 	GenericMemoryPoolAllocator<U8> m_alloc;
 	WeakArray<const U32> m_spv;
 
-	U32 m_setMask = 0;
-	Array<U32, MAX_RESOURCE_GROUPS> m_texBindings = {{}};
-	Array<U32, MAX_RESOURCE_GROUPS> m_uniBindings = {{}};
-	Array<U32, MAX_RESOURCE_GROUPS> m_storageBindings = {{}};
-	Array<U32, MAX_RESOURCE_GROUPS> m_imageBindings = {{}};
+	U8 m_setMask = 0;
+	Array<U32, MAX_BOUND_RESOURCE_GROUPS> m_texBindings = {{}};
+	Array<U32, MAX_BOUND_RESOURCE_GROUPS> m_uniBindings = {{}};
+	Array<U32, MAX_BOUND_RESOURCE_GROUPS> m_storageBindings = {{}};
+	Array<U32, MAX_BOUND_RESOURCE_GROUPS> m_imageBindings = {{}};
 };
 /// @}
 

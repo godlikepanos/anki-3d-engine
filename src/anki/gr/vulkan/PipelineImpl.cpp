@@ -84,7 +84,8 @@ Error PipelineImpl::initGraphics(const PipelineInitInfo& init)
 	ci.pDynamicState = initDynamicState(ci.m_dyn);
 
 	// Finalize
-	ci.layout = getGrManagerImpl().getGlobalPipelineLayout();
+	ANKI_CHECK(createPplineLayout(init));
+	ci.layout = m_pipelineLayout;
 	ci.renderPass = getGrManagerImpl().getCompatibleRenderPassCreator().getOrCreateCompatibleRenderPass(init);
 	ci.basePipelineHandle = VK_NULL_HANDLE;
 
@@ -98,7 +99,9 @@ Error PipelineImpl::initCompute(const PipelineInitInfo& init)
 {
 	VkComputePipelineCreateInfo ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
-	ci.layout = getGrManagerImpl().getGlobalPipelineLayout();
+
+	ANKI_CHECK(createPplineLayout(init));
+	ci.layout = m_pipelineLayout;
 	ci.basePipelineHandle = VK_NULL_HANDLE;
 
 	VkPipelineShaderStageCreateInfo& stage = ci.stage;
@@ -309,6 +312,39 @@ Error PipelineImpl::init(const PipelineInitInfo& init)
 		m_bindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 		return initGraphics(init);
 	}
+
+	return ErrorCode::NONE;
+}
+
+Error PipelineImpl::createPplineLayout(const PipelineInitInfo& init)
+{
+	// Merge the descriptor layout infos
+	for(U j = 0; j < MAX_BOUND_RESOURCE_GROUPS; ++j)
+	{
+		DescriptorSetLayoutInfo& dsetInfo = m_descriptorSetLayoutInfos[j];
+		memset(&dsetInfo, 0, sizeof(dsetInfo));
+
+		for(U i = 0; i < U(ShaderType::COUNT); ++i)
+		{
+			if(init.m_shaders[i] && (init.m_shaders[i]->getImplementation().m_descriptorSetMask & (1 << j)))
+			{
+				const DescriptorSetLayoutInfo& dsetInfo1 =
+					init.m_shaders[i]->getImplementation().m_descriptorSetLayoutInfos[j];
+
+				// Merge
+				dsetInfo.m_texCount = max(dsetInfo.m_texCount, dsetInfo1.m_texCount);
+				dsetInfo.m_uniCount = max(dsetInfo.m_uniCount, dsetInfo1.m_uniCount);
+				dsetInfo.m_storageCount = max(dsetInfo.m_storageCount, dsetInfo1.m_storageCount);
+				dsetInfo.m_imgCount = max(dsetInfo.m_imgCount, dsetInfo1.m_imgCount);
+
+				m_descriptorSetMask |= (1 << j);
+			}
+		}
+	}
+
+	// Create the layout
+	PipelineLayoutFactory& factory = getGrManagerImpl().getPipelineLayoutFactory();
+	ANKI_CHECK(factory.getOrCreateLayout(m_descriptorSetMask, m_descriptorSetLayoutInfos, m_pipelineLayout));
 
 	return ErrorCode::NONE;
 }

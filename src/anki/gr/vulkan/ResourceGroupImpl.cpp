@@ -81,6 +81,7 @@ U ResourceGroupImpl::calcRefCount(const ResourceGroupInitInfo& init, Bool& hasUp
 	hasUploaded = false;
 	needsDSet = false;
 
+	m_descriptorSetLayoutInfo.m_texCount = 0;
 	for(U i = 0; i < MAX_TEXTURE_BINDINGS; ++i)
 	{
 		const TextureBinding& b = init.m_textures[i];
@@ -90,6 +91,8 @@ U ResourceGroupImpl::calcRefCount(const ResourceGroupInitInfo& init, Bool& hasUp
 			needsDSet = true;
 			updateBindPoint(b.m_usage);
 			ANKI_ASSERT(b.m_texture->getImplementation().usageValid(b.m_usage));
+
+			m_descriptorSetLayoutInfo.m_texCount = i + 1;
 		}
 
 		if(b.m_sampler)
@@ -99,6 +102,7 @@ U ResourceGroupImpl::calcRefCount(const ResourceGroupInitInfo& init, Bool& hasUp
 		}
 	}
 
+	m_descriptorSetLayoutInfo.m_uniCount = 0;
 	for(U i = 0; i < MAX_UNIFORM_BUFFER_BINDINGS; ++i)
 	{
 		const BufferBinding& b = init.m_uniformBuffers[i];
@@ -109,6 +113,8 @@ U ResourceGroupImpl::calcRefCount(const ResourceGroupInitInfo& init, Bool& hasUp
 			updateBindPoint(b.m_usage);
 			ANKI_ASSERT(!!(b.m_usage & BufferUsageBit::UNIFORM_ALL) && !(b.m_usage & ~BufferUsageBit::UNIFORM_ALL));
 			ANKI_ASSERT(b.m_buffer->getImplementation().usageValid(b.m_usage));
+
+			m_descriptorSetLayoutInfo.m_uniCount = i + 1;
 		}
 		else if(b.m_uploadedMemory)
 		{
@@ -116,9 +122,12 @@ U ResourceGroupImpl::calcRefCount(const ResourceGroupInitInfo& init, Bool& hasUp
 			needsDSet = true;
 			updateBindPoint(b.m_usage);
 			ANKI_ASSERT(!!(b.m_usage & BufferUsageBit::UNIFORM_ALL) && !(b.m_usage & ~BufferUsageBit::UNIFORM_ALL));
+
+			m_descriptorSetLayoutInfo.m_uniCount = i + 1;
 		}
 	}
 
+	m_descriptorSetLayoutInfo.m_storageCount = 0;
 	for(U i = 0; i < MAX_STORAGE_BUFFER_BINDINGS; ++i)
 	{
 		const BufferBinding& b = init.m_storageBuffers[i];
@@ -129,6 +138,8 @@ U ResourceGroupImpl::calcRefCount(const ResourceGroupInitInfo& init, Bool& hasUp
 			updateBindPoint(b.m_usage);
 			ANKI_ASSERT(!!(b.m_usage & BufferUsageBit::STORAGE_ALL) && !(b.m_usage & ~BufferUsageBit::STORAGE_ALL));
 			ANKI_ASSERT(b.m_buffer->getImplementation().usageValid(b.m_usage));
+
+			m_descriptorSetLayoutInfo.m_storageCount = i + 1;
 		}
 		else if(b.m_uploadedMemory)
 		{
@@ -136,9 +147,12 @@ U ResourceGroupImpl::calcRefCount(const ResourceGroupInitInfo& init, Bool& hasUp
 			needsDSet = true;
 			updateBindPoint(b.m_usage);
 			ANKI_ASSERT(!!(b.m_usage & BufferUsageBit::STORAGE_ALL) && !(b.m_usage & ~BufferUsageBit::STORAGE_ALL));
+
+			m_descriptorSetLayoutInfo.m_storageCount = i + 1;
 		}
 	}
 
+	m_descriptorSetLayoutInfo.m_imgCount = 0;
 	for(U i = 0; i < MAX_IMAGE_BINDINGS; ++i)
 	{
 		const ImageBinding& b = init.m_images[i];
@@ -148,6 +162,8 @@ U ResourceGroupImpl::calcRefCount(const ResourceGroupInitInfo& init, Bool& hasUp
 			needsDSet = true;
 			updateBindPoint(b.m_usage);
 			ANKI_ASSERT(b.m_texture->getImplementation().usageValid(b.m_usage));
+
+			m_descriptorSetLayoutInfo.m_imgCount = i + 1;
 		}
 	}
 
@@ -191,7 +207,7 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 	//
 	if(needsDSet)
 	{
-		ANKI_CHECK(getGrManagerImpl().getDescriptorSetAllocator().allocate(m_handle));
+		ANKI_CHECK(getGrManagerImpl().getDescriptorSetAllocator().allocate(m_descriptorSetLayoutInfo, m_handle));
 		ANKI_ASSERT(m_bindPoint != VK_PIPELINE_BIND_POINT_MAX_ENUM);
 	}
 
@@ -205,6 +221,7 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 	U writeCount = 0;
 	refCount = 0;
 	Bool hole = false;
+	(void)hole;
 	U count = 0;
 
 	// 1st the textures
@@ -454,8 +471,12 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 	return ErrorCode::NONE;
 }
 
-void ResourceGroupImpl::setupDynamicOffsets(const TransientMemoryInfo* dynInfo, U32 dynOffsets[]) const
+void ResourceGroupImpl::setupDynamicOffsets(
+	const TransientMemoryInfo* dynInfo, U32 dynOffsets[], U& dynOffsetCount) const
 {
+	dynOffsetCount = m_uniBindingCount + m_storageBindingCount;
+	memset(&dynOffsets[0], 0, dynOffsetCount * sizeof(dynOffsets[0]));
+
 	if(m_dynamicBuffersMask.getAny())
 	{
 		// Has at least one uploaded buffer
@@ -489,7 +510,7 @@ void ResourceGroupImpl::setupDynamicOffsets(const TransientMemoryInfo* dynInfo, 
 				if(!token.isUnused())
 				{
 					ANKI_ASSERT(!!(token.m_usage & BufferUsageBit::STORAGE_ALL));
-					dynOffsets[MAX_UNIFORM_BUFFER_BINDINGS + i] = token.m_offset;
+					dynOffsets[m_uniBindingCount + i] = token.m_offset;
 				}
 			}
 		}

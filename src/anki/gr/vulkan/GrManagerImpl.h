@@ -69,12 +69,6 @@ public:
 		return m_physicalDevice;
 	}
 
-	VkPipelineLayout getGlobalPipelineLayout() const
-	{
-		ANKI_ASSERT(m_globalPipelineLayout);
-		return m_globalPipelineLayout;
-	}
-
 	/// @name object_creation
 	/// @{
 
@@ -189,6 +183,11 @@ public:
 		return *m_samplerCache;
 	}
 
+	PipelineLayoutFactory& getPipelineLayoutFactory()
+	{
+		return m_pplineLayFactory;
+	}
+
 private:
 	GrManager* m_manager = nullptr;
 
@@ -237,7 +236,7 @@ private:
 	/// @}
 
 	DescriptorSetAllocator m_dsetAlloc;
-	VkPipelineLayout m_globalPipelineLayout = VK_NULL_HANDLE;
+	PipelineLayoutFactory m_pplineLayFactory;
 
 	/// Map for compatible render passes.
 	CompatibleRenderPassCreator m_rpCreator;
@@ -302,7 +301,6 @@ private:
 	ANKI_USE_RESULT Error initDevice(const GrManagerInitInfo& init);
 	ANKI_USE_RESULT Error initSwapchain(const GrManagerInitInfo& init);
 	ANKI_USE_RESULT Error initFramebuffers(const GrManagerInitInfo& init);
-	ANKI_USE_RESULT Error initGlobalPplineLayout();
 	ANKI_USE_RESULT Error initMemory(const ConfigSet& cfg);
 
 	static void* allocateCallback(

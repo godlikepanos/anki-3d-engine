@@ -223,6 +223,8 @@ public:
 
 	Bool tryGetPipeline(U64 hash, PipelinePtr& ppline)
 	{
+		LockGuard<SpinLock> lock(m_localPplineCacheMtx);
+
 		auto it = m_localPplineCache.find(hash);
 		if(it != m_localPplineCache.getEnd())
 		{
@@ -237,8 +239,12 @@ public:
 
 	void storePipeline(U64 hash, PipelinePtr ppline)
 	{
-		ANKI_ASSERT(m_localPplineCache.find(hash) == m_localPplineCache.getEnd());
-		m_localPplineCache.pushBack(getAllocator(), hash, ppline);
+		LockGuard<SpinLock> lock(m_localPplineCacheMtx);
+
+		if(m_localPplineCache.find(hash) == m_localPplineCache.getEnd())
+		{
+			m_localPplineCache.pushBack(getAllocator(), hash, ppline);
+		}
 	}
 
 private:
@@ -269,6 +275,7 @@ private:
 
 	/// This is an optimization, a local hash of pipelines.
 	HashMap<U64, PipelinePtr, Hasher, Compare> m_localPplineCache;
+	SpinLock m_localPplineCacheMtx;
 };
 /// @}
 

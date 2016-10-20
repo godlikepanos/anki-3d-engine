@@ -99,16 +99,6 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 	return ErrorCode::NONE;
 }
 
-void CommandBufferImpl::bindPipeline(PipelinePtr ppline)
-{
-	commandCommon();
-	ANKI_CMD(vkCmdBindPipeline(
-				 m_handle, ppline->getImplementation().getBindPoint(), ppline->getImplementation().getHandle()),
-		ANY_OTHER_COMMAND);
-
-	m_pplineList.pushBack(m_alloc, ppline);
-}
-
 void CommandBufferImpl::beginRenderPass(FramebufferPtr fb)
 {
 	commandCommon();
@@ -198,31 +188,29 @@ void CommandBufferImpl::endRecording()
 	m_finalized = true;
 }
 
-void CommandBufferImpl::bindResourceGroup(ResourceGroupPtr rc, U slot, const TransientMemoryInfo* dynInfo)
+void CommandBufferImpl::bindResourceGroup(ResourceGroupPtr rc, U set, const TransientMemoryInfo* dynInfo)
 {
 	commandCommon();
 	const ResourceGroupImpl& impl = rc->getImplementation();
 
-	if(impl.hasDescriptorSet())
+	if(impl.m_handle)
 	{
-		Array<U32, MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS> dynOffsets = {{}};
+		DeferredDsetBinding& binding = m_deferredDsetBindings[set];
+		m_deferredDsetBindingMask |= (1 << set);
 
-		impl.setupDynamicOffsets(dynInfo, &dynOffsets[0]);
-
-		VkDescriptorSet dset = impl.getHandle();
-		ANKI_CMD(vkCmdBindDescriptorSets(m_handle,
-					 impl.getPipelineBindPoint(),
-					 getGrManagerImpl().getGlobalPipelineLayout(),
-					 slot,
-					 1,
-					 &dset,
-					 dynOffsets.getSize(),
-					 &dynOffsets[0]),
-			ANY_OTHER_COMMAND);
+		/// Defer the dset bindings until you know the ppline layout
+		U dynOfsetCount = 0;
+		impl.setupDynamicOffsets(dynInfo, &binding.m_dynOffsets[0], dynOfsetCount);
+		binding.m_dynOffsetCount = dynOfsetCount;
+		binding.m_bindPoint = impl.m_bindPoint;
+		binding.m_dset = impl.m_handle;
+#if ANKI_ASSERTIONS
+		binding.m_dsetLayoutInfo = impl.m_descriptorSetLayoutInfo;
+#endif
 	}
 
 	// Bind vertex and index buffer only in the first set
-	if(slot == 0)
+	if(set == 0)
 	{
 		Array<VkBuffer, MAX_VERTEX_ATTRIBUTES> buffers = {{}};
 		Array<VkDeviceSize, MAX_VERTEX_ATTRIBUTES> offsets = {{}};

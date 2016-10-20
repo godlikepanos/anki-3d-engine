@@ -5,6 +5,7 @@
 
 #include <anki/gr/vulkan/ShaderImpl.h>
 #include <anki/gr/vulkan/GrManagerImpl.h>
+#include <anki/gr/vulkan/SpirvReflection.h>
 #include <anki/gr/common/Misc.h>
 #include <glslang/Public/ShaderLang.h>
 #include <SPIRV/GlslangToSpv.h>
@@ -302,6 +303,19 @@ Error ShaderImpl::init(ShaderType shaderType, const CString& source)
 		VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO, nullptr, 0, spirv.size() * sizeof(unsigned int), &spirv[0]};
 
 	ANKI_VK_CHECK(vkCreateShaderModule(getDevice(), &ci, nullptr, &m_handle));
+
+	// Get reflection info
+	SpirvReflection refl(getAllocator(), &spirv[0], &spirv[0] + spirv.size());
+	ANKI_CHECK(refl.parse());
+
+	m_descriptorSetMask = refl.getDescriptorSetMask();
+	for(U i = 0; i < MAX_BOUND_RESOURCE_GROUPS; ++i)
+	{
+		if(m_descriptorSetMask & (1 << i))
+		{
+			m_descriptorSetLayoutInfos[i] = refl.getLayoutInfo(i);
+		}
+	}
 
 	return ErrorCode::NONE;
 }

@@ -172,7 +172,12 @@ Error Is::initInternal(const ConfigSet& config)
 		m_rcGroup = getGrManager().newInstance<ResourceGroup>(init);
 	}
 
-	getGrManager().finish();
+	TextureInitInfo texinit;
+	texinit.m_width = texinit.m_height = 4;
+	texinit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT;
+	texinit.m_format = PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
+	m_dummyTex = getGrManager().newInstance<Texture>(texinit);
+
 	return ErrorCode::NONE;
 }
 
@@ -194,22 +199,23 @@ Error Is::binLights(RenderingContext& ctx)
 		ctx.m_is.m_dynBufferInfo.m_storageBuffers[LIGHT_IDS_LOCATION],
 		diffDecalTex));
 
+	ResourceGroupInitInfo rcinit;
 	if(diffDecalTex)
 	{
-		ResourceGroupInitInfo rcinit;
 		rcinit.m_textures[0].m_texture = diffDecalTex;
-
-		U64 hash = rcinit.computeHash();
-		if(hash != m_rcGroup1Hash)
-		{
-			m_rcGroup1Hash = hash;
-
-			m_rcGroup1 = getGrManager().newInstance<ResourceGroup>(rcinit);
-		}
 	}
 	else
 	{
-		m_rcGroup1.reset(nullptr);
+		// Bind something because validation layers will complain
+		rcinit.m_textures[0].m_texture = m_dummyTex;
+	}
+
+	U64 hash = rcinit.computeHash();
+	if(hash != m_rcGroup1Hash)
+	{
+		m_rcGroup1Hash = hash;
+
+		m_rcGroup1 = getGrManager().newInstance<ResourceGroup>(rcinit);
 	}
 
 	return ErrorCode::NONE;
@@ -223,12 +229,7 @@ void Is::run(RenderingContext& ctx)
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 	cmdb->bindPipeline(m_lightPpline);
 	cmdb->bindResourceGroup(m_rcGroup, 0, &ctx.m_is.m_dynBufferInfo);
-
-	if(m_rcGroup1)
-	{
-		cmdb->bindResourceGroup(m_rcGroup1, 1, nullptr);
-	}
-
+	cmdb->bindResourceGroup(m_rcGroup1, 1, nullptr);
 	cmdb->drawArrays(4, m_r->getTileCount());
 	cmdb->endRenderPass();
 }

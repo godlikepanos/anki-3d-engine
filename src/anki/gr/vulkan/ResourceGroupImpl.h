@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/gr/vulkan/VulkanObject.h>
+#include <anki/gr/vulkan/ResourceGroupExtra.h>
 #include <anki/util/BitSet.h>
 
 namespace anki
@@ -18,6 +19,10 @@ namespace anki
 class ResourceGroupImpl : public VulkanObject
 {
 public:
+	VkDescriptorSet m_handle = VK_NULL_HANDLE;
+	VkPipelineBindPoint m_bindPoint = VK_PIPELINE_BIND_POINT_MAX_ENUM;
+	DescriptorSetLayoutInfo m_descriptorSetLayoutInfo;
+
 	ResourceGroupImpl(GrManager* manager)
 		: VulkanObject(manager)
 	{
@@ -27,21 +32,10 @@ public:
 
 	ANKI_USE_RESULT Error init(const ResourceGroupInitInfo& init);
 
-	Bool hasDescriptorSet() const
-	{
-		return m_handle != VK_NULL_HANDLE;
-	}
-
-	VkDescriptorSet getHandle() const
-	{
-		ANKI_ASSERT(m_handle);
-		return m_handle;
-	}
-
 	void getVertexBindingInfo(
 		const TransientMemoryInfo* trans, VkBuffer buffers[], VkDeviceSize offsets[], U& bindingCount) const;
 
-	void setupDynamicOffsets(const TransientMemoryInfo* dynInfo, U32 dynOffsets[]) const;
+	void setupDynamicOffsets(const TransientMemoryInfo* dynInfo, U32 dynOffsets[], U& dynOffsetCount) const;
 
 	/// Get index buffer info.
 	/// @return false if there is no index buffer.
@@ -58,16 +52,7 @@ public:
 		return false;
 	}
 
-	VkPipelineBindPoint getPipelineBindPoint() const
-	{
-		ANKI_ASSERT(m_bindPoint != VK_PIPELINE_BIND_POINT_MAX_ENUM);
-		return m_bindPoint;
-	}
-
 private:
-	VkDescriptorSet m_handle = VK_NULL_HANDLE;
-	VkPipelineBindPoint m_bindPoint = VK_PIPELINE_BIND_POINT_MAX_ENUM;
-
 	class
 	{
 	public:

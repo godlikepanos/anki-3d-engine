@@ -66,6 +66,8 @@ private:
 	U64 m_rcGroup1Hash = 0;
 	ResourceGroupPtr m_rcGroup1;
 
+	TexturePtr m_dummyTex;
+
 	// Light shaders
 	ShaderResourcePtr m_lightVert;
 	ShaderResourcePtr m_lightFrag;

@@ -72,15 +72,19 @@ layout(ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING + 2), std140, row_major) un
 	SpotLight u_spotLights[UBO_MAX_SIZE / (9 * 4 * 4)];
 };
 
+#ifdef LIGHT_INDIRECT
 layout(std140, row_major, ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING + 3)) uniform u3_
 {
 	ReflectionProbe u_reflectionProbes[UBO_MAX_SIZE / (2 * 4 * 4)];
 };
+#endif
 
+#ifdef LIGHT_DECALS
 layout(std140, row_major, ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING + 4)) uniform u4_
 {
 	Decal u_decals[UBO_MAX_SIZE / ((4 + 16) * 4)];
 };
+#endif
 
 layout(ANKI_SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 0), std430) readonly buffer s0_
 {
@@ -95,11 +99,11 @@ layout(std430, ANKI_SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 1)) readonly buffer
 layout(ANKI_TEX_BINDING(LIGHT_SET, LIGHT_TEX_BINDING)) uniform highp sampler2DArrayShadow u_spotMapArr;
 layout(ANKI_TEX_BINDING(LIGHT_SET, LIGHT_TEX_BINDING + 1)) uniform highp samplerCubeArrayShadow u_omniMapArr;
 
+#ifdef LIGHT_INDIRECT
 layout(ANKI_TEX_BINDING(LIGHT_SET, LIGHT_TEX_BINDING + 2)) uniform samplerCubeArray u_reflectionsTex;
-
 layout(ANKI_TEX_BINDING(LIGHT_SET, LIGHT_TEX_BINDING + 3)) uniform samplerCubeArray u_irradianceTex;
-
 layout(ANKI_TEX_BINDING(LIGHT_SET, LIGHT_TEX_BINDING + 4)) uniform sampler2D u_integrationLut;
+#endif
 
 #endif // FRAGMENT_SHADER
 

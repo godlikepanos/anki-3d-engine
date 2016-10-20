@@ -14,67 +14,36 @@ namespace anki
 /// @addtogroup vulkan
 /// @{
 
-/// Allocator of descriptor sets.
-class DescriptorSetAllocator : public NonCopyable
+class DescriptorSetLayoutInfo
 {
 public:
-	DescriptorSetAllocator()
+	U8 m_texCount = MAX_U8;
+	U8 m_uniCount = MAX_U8;
+	U8 m_storageCount = MAX_U8;
+	U8 m_imgCount = MAX_U8;
+
+	DescriptorSetLayoutInfo() = default;
+
+	DescriptorSetLayoutInfo(U texBindingCount, U uniBindingCount, U storageBindingCount, U imageBindingCount)
+		: m_texCount(texBindingCount)
+		, m_uniCount(uniBindingCount)
+		, m_storageCount(storageBindingCount)
+		, m_imgCount(imageBindingCount)
 	{
+		ANKI_ASSERT(m_texCount < MAX_U8 && m_uniCount < MAX_U8 && m_storageCount < MAX_U8 && m_imgCount < MAX_U8);
 	}
 
-	~DescriptorSetAllocator()
+	Bool operator==(const DescriptorSetLayoutInfo& b) const
 	{
-		ANKI_ASSERT(m_globalDPool == VK_NULL_HANDLE);
-		ANKI_ASSERT(m_globalDsetLayout == VK_NULL_HANDLE);
+		return m_texCount == b.m_texCount && m_uniCount == b.m_uniCount && m_storageCount == b.m_storageCount
+			&& m_imgCount == b.m_imgCount;
 	}
 
-	ANKI_USE_RESULT Error init(VkDevice dev);
-
-	void destroy();
-
-	ANKI_USE_RESULT Error allocate(VkDescriptorSet& out)
+	U64 computeHash() const
 	{
-		out = VK_NULL_HANDLE;
-		VkDescriptorSetAllocateInfo ci = {};
-		ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		ci.descriptorPool = m_globalDPool;
-		ci.descriptorSetCount = 1;
-		ci.pSetLayouts = &m_globalDsetLayout;
-
-		LockGuard<Mutex> lock(m_mtx);
-		if(++m_descriptorSetAllocationCount > MAX_RESOURCE_GROUPS)
-		{
-			ANKI_LOGE("Exceeded the MAX_RESOURCE_GROUPS");
-			return ErrorCode::OUT_OF_MEMORY;
-		}
-		ANKI_VK_CHECK(vkAllocateDescriptorSets(m_dev, &ci, &out));
-		return ErrorCode::NONE;
+		ANKI_ASSERT(m_texCount < MAX_U8 && m_uniCount < MAX_U8 && m_storageCount < MAX_U8 && m_imgCount < MAX_U8);
+		return (m_texCount << 24) | (m_uniCount << 16) | (m_storageCount << 8) | m_imgCount;
 	}
-
-	void free(VkDescriptorSet ds)
-	{
-		ANKI_ASSERT(ds);
-		LockGuard<Mutex> lock(m_mtx);
-		ANKI_ASSERT(m_descriptorSetAllocationCount > 0);
-		--m_descriptorSetAllocationCount;
-		ANKI_VK_CHECKF(vkFreeDescriptorSets(m_dev, m_globalDPool, 1, &ds));
-	}
-
-	VkDescriptorSetLayout getGlobalDescriptorSetLayout() const
-	{
-		ANKI_ASSERT(m_globalDsetLayout);
-		return m_globalDsetLayout;
-	}
-
-private:
-	VkDevice m_dev = VK_NULL_HANDLE;
-	VkDescriptorSetLayout m_globalDsetLayout = VK_NULL_HANDLE;
-	VkDescriptorPool m_globalDPool = VK_NULL_HANDLE;
-	Mutex m_mtx;
-	U32 m_descriptorSetAllocationCount = 0;
-
-	Error initGlobalDsetLayout();
-	Error initGlobalDsetPool();
 };
 
 /// Creates descriptor set layouts.
@@ -98,21 +67,10 @@ public:
 	void destroy();
 
 	/// If there is no bindings for a specific type then pass zero.
-	VkDescriptorSetLayout createLayout(
-		U texBindingCount, U uniBindingCount, U storageBindingCount, U imageBindingCount);
+	ANKI_USE_RESULT Error getOrCreateLayout(const DescriptorSetLayoutInfo& dsinf, VkDescriptorSetLayout& out);
 
 private:
-	class Key
-	{
-	public:
-		U64 m_hash;
-
-		Key(U a, U b, U c, U d)
-		{
-			ANKI_ASSERT(a < 0xFF && b < 0xFF && c < 0xFF && d < 0xFF);
-			m_hash = (a << 24) | (b << 16) | (c << 8) | d;
-		}
-	};
+	using Key = DescriptorSetLayoutInfo;
 
 	/// Hash the hash.
 	class Hasher
@@ -120,7 +78,7 @@ private:
 	public:
 		U64 operator()(const Key& b) const
 		{
-			return b.m_hash;
+			return b.computeHash();
 		}
 	};
 
@@ -130,16 +88,60 @@ private:
 	public:
 		Bool operator()(const Key& a, const Key& b) const
 		{
-			return a.m_hash == b.m_hash;
+			return a.computeHash() == b.computeHash();
 		}
 	};
-
-	HashMap<Key, VkDescriptorSetLayout, Hasher, Compare> m_map;
 
 	GrAllocator<U8> m_alloc;
 	VkDevice m_dev = VK_NULL_HANDLE;
 
+	HashMap<Key, VkDescriptorSetLayout, Hasher, Compare> m_map;
+
 	Mutex m_mtx;
+};
+
+/// Allocator of descriptor sets.
+class DescriptorSetAllocator : public NonCopyable
+{
+public:
+	DescriptorSetAllocator()
+	{
+	}
+
+	~DescriptorSetAllocator()
+	{
+		ANKI_ASSERT(m_globalDPool == VK_NULL_HANDLE);
+	}
+
+	ANKI_USE_RESULT Error init(GrAllocator<U8> alloc, VkDevice dev);
+
+	void destroy();
+
+	ANKI_USE_RESULT Error allocate(const DescriptorSetLayoutInfo& dsinf, VkDescriptorSet& out);
+
+	void free(VkDescriptorSet ds)
+	{
+		ANKI_ASSERT(ds);
+		LockGuard<Mutex> lock(m_mtx);
+		ANKI_ASSERT(m_descriptorSetAllocationCount > 0);
+		--m_descriptorSetAllocationCount;
+		ANKI_VK_CHECKF(vkFreeDescriptorSets(m_dev, m_globalDPool, 1, &ds));
+	}
+
+	DescriptorSetLayoutFactory& getDescriptorSetLayoutFactory()
+	{
+		return m_layoutFactory;
+	}
+
+private:
+	VkDevice m_dev = VK_NULL_HANDLE;
+	VkDescriptorPool m_globalDPool = VK_NULL_HANDLE;
+	Mutex m_mtx;
+	U32 m_descriptorSetAllocationCount = 0;
+
+	DescriptorSetLayoutFactory m_layoutFactory;
+
+	Error initGlobalDsetPool();
 };
 /// @}
 

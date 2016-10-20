@@ -6,6 +6,8 @@
 #include <anki/gr/vulkan/CommandBufferImpl.h>
 #include <anki/gr/vulkan/GrManagerImpl.h>
 #include <anki/gr/vulkan/TextureImpl.h>
+#include <anki/gr/Pipeline.h>
+#include <anki/gr/vulkan/PipelineImpl.h>
 #include <anki/gr/Buffer.h>
 #include <anki/gr/vulkan/BufferImpl.h>
 #include <anki/gr/OcclusionQuery.h>
@@ -343,6 +345,7 @@ inline void CommandBufferImpl::drawElementsIndirect(U32 drawCount, PtrSize offse
 inline void CommandBufferImpl::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ)
 {
 	commandCommon();
+	flushDsetBindings();
 	ANKI_CMD(vkCmdDispatch(m_handle, groupCountX, groupCountY, groupCountZ), ANY_OTHER_COMMAND);
 }
 
@@ -503,6 +506,8 @@ inline void CommandBufferImpl::drawcallCommon()
 		beginRenderPassInternal();
 	}
 
+	flushDsetBindings();
+
 	++m_rpCommandCount;
 
 	ANKI_TRACE_INC_COUNTER(GR_DRAWCALLS, 1);
@@ -604,6 +609,61 @@ inline void CommandBufferImpl::writeOcclusionQueryResultToBuffer(
 
 	m_queryList.pushBack(m_alloc, query);
 	m_bufferList.pushBack(m_alloc, buff);
+}
+
+inline void CommandBufferImpl::flushDsetBindings()
+{
+	for(U i = 0; i < MAX_BOUND_RESOURCE_GROUPS; ++i)
+	{
+		if(m_deferredDsetBindingMask & (1 << i))
+		{
+			ANKI_ASSERT(m_crntPplineLayout);
+			const DeferredDsetBinding& binding = m_deferredDsetBindings[i];
+
+			ANKI_CMD(vkCmdBindDescriptorSets(m_handle,
+						 binding.m_bindPoint,
+						 m_crntPplineLayout,
+						 i,
+						 1,
+						 &binding.m_dset,
+						 binding.m_dynOffsetCount,
+						 &binding.m_dynOffsets[0]),
+				ANY_OTHER_COMMAND);
+#if ANKI_DEBUG
+			m_boundDsetsMask |= (1 << i);
+#endif
+		}
+	}
+
+	m_deferredDsetBindingMask = 0;
+
+#if ANKI_DEBUG
+	ANKI_ASSERT((m_boundDsetsMask & m_pplineDsetMask) == m_pplineDsetMask);
+
+	for(U i = 0; i < MAX_BOUND_RESOURCE_GROUPS; ++i)
+	{
+		if(m_pplineDsetMask & (1 << i))
+		{
+			ANKI_ASSERT(m_pplineDsetLayoutInfos[i] == m_deferredDsetBindings[i].m_dsetLayoutInfo);
+		}
+	}
+#endif
+}
+
+inline void CommandBufferImpl::bindPipeline(PipelinePtr ppline)
+{
+	commandCommon();
+	const PipelineImpl& impl = ppline->getImplementation();
+
+	ANKI_CMD(vkCmdBindPipeline(m_handle, impl.m_bindPoint, impl.m_handle), ANY_OTHER_COMMAND);
+
+	m_crntPplineLayout = impl.m_pipelineLayout;
+#if ANKI_ASSERTIONS
+	m_pplineDsetLayoutInfos = impl.m_descriptorSetLayoutInfos;
+	m_pplineDsetMask = impl.m_descriptorSetMask;
+#endif
+
+	m_pplineList.pushBack(m_alloc, ppline);
 }
 
 } // end namespace anki

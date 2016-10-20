@@ -35,63 +35,68 @@ Error SpirvReflection::parse()
 	ListAuto<Variable> variables(m_alloc);
 
 	// For all instructions
-	U counter = 0;
+	U counter = sizeof(SpirvHeader) / sizeof(Word);
 	while(counter < m_spv.getSize())
 	{
 		Word combo = m_spv[counter];
-		Word instruction = combo & 0xFFFF;
-		Word instrctionWordCount = combo >> 16;
+		spv::Op instruction = spv::Op(combo & 0xFFFF);
+		Word instructionWordCount = combo >> 16;
 
 		// If decorate
 		if(instruction == spv::OpDecorate)
 		{
-			U c = counter + sizeof(Word);
-
-			// Find or create variable
+			U c = counter + 1;
 			Word rezId = m_spv[c++];
-			Variable* var = nullptr;
-			for(Variable& v : variables)
-			{
-				if(v.m_id == rezId)
-				{
-					var = &v;
-					break;
-				}
-			}
+			spv::Decoration decoration = spv::Decoration(m_spv[c++]);
 
-			if(var == nullptr)
+			if(decoration == spv::Decoration::DecorationDescriptorSet
+				|| decoration == spv::Decoration::DecorationBinding)
 			{
-				Variable v;
-				v.m_id = rezId;
-				variables.pushBack(v);
-				var = &variables.getBack();
-			}
-
-			// Check the decoration
-			Word decoration = m_spv[c++];
-			if(decoration == Word(spv::Decoration::DecorationDescriptorSet))
-			{
-				Word set = m_spv[c];
-				if(set >= MAX_RESOURCE_GROUPS)
+				// Find or create variable
+				Variable* var = nullptr;
+				for(Variable& v : variables)
 				{
-					ANKI_LOGE("Cannot accept shaders with descriptor set >= to %u", MAX_RESOURCE_GROUPS);
-					return ErrorCode::USER_DATA;
+					if(v.m_id == rezId)
+					{
+						var = &v;
+						break;
+					}
 				}
 
-				m_setMask |= 1 << set;
-				ANKI_ASSERT(var.m_set == MAX_U8);
-				var->m_set = set;
-			}
-			else if(decoration == Word(spv::Decoration::DecorationBinding))
-			{
-				Word binding = m_spv[c];
+				if(var == nullptr)
+				{
+					Variable v;
+					v.m_id = rezId;
+					variables.pushBack(v);
+					var = &variables.getBack();
+				}
 
-				ANKI_ASSERT(var.m_binding == MAX_U8);
-				var->m_binding = binding;
+				// Check the decoration
+				if(decoration == spv::Decoration::DecorationDescriptorSet)
+				{
+					Word set = m_spv[c];
+					if(set >= MAX_BOUND_RESOURCE_GROUPS)
+					{
+						ANKI_LOGE("Cannot accept shaders with descriptor set >= to %u", MAX_BOUND_RESOURCE_GROUPS);
+						return ErrorCode::USER_DATA;
+					}
+
+					m_setMask |= 1 << set;
+					ANKI_ASSERT(var->m_set == MAX_U8);
+					var->m_set = set;
+				}
+				else
+				{
+					ANKI_ASSERT(decoration == spv::Decoration::DecorationBinding);
+					Word binding = m_spv[c];
+
+					ANKI_ASSERT(var->m_binding == MAX_U8);
+					var->m_binding = binding;
+				}
 			}
 		}
 
-		counter += instrctionWordCount;
+		counter += instructionWordCount;
 	}
 
 	// Iterate the variables
@@ -111,17 +116,19 @@ Error SpirvReflection::parse()
 		}
 		else if(binding < MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS)
 		{
-			m_uniBindings[set] = max(m_uniBindings[set], binding + 1);
+			m_uniBindings[set] = max<U>(m_uniBindings[set], binding + 1 - MAX_TEXTURE_BINDINGS);
 		}
 		else if(binding < MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS)
 		{
-			m_storageBindings[set] = max(m_storageBindings[set], binding + 1);
+			m_storageBindings[set] =
+				max<U>(m_storageBindings[set], binding + 1 - (MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS));
 		}
 		else
 		{
 			ANKI_ASSERT(binding < MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS
 					+ MAX_IMAGE_BINDINGS);
-			m_imageBindings[set] = max(m_imageBindings[set], binding + 1);
+			m_imageBindings[set] = max<U>(m_imageBindings[set],
+				binding + 1 - (MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS));
 		}
 	}
 

@@ -11,11 +11,9 @@
 #define LIGHT_SS_BINDING 0
 #define LIGHT_UBO_BINDING 0
 #define LIGHT_TEX_BINDING 4
+#define LIGHT_INDIRECT
+#define LIGHT_DECALS
 #include "shaders/IsFsCommon.glsl"
-#undef LIGHT_SET
-#undef LIGHT_SS_BINDING
-#undef LIGHT_TEX_BINDING
-#undef LIGHT_UBO_BINDING
 
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_msRt0;
 layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_msRt1;

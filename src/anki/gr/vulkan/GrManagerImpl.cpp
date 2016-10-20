@@ -58,11 +58,7 @@ GrManagerImpl::~GrManagerImpl()
 	// THIRD THING: Continue with the rest
 	m_rpCreator.destroy();
 
-	if(m_globalPipelineLayout)
-	{
-		vkDestroyPipelineLayout(m_device, m_globalPipelineLayout, nullptr);
-	}
-
+	m_pplineLayFactory.destroy();
 	m_dsetAlloc.destroy();
 	m_transientMem.destroy();
 	m_gpuMemManager.destroy();
@@ -129,8 +125,8 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	}
 
 	ANKI_CHECK(initMemory(*init.m_config));
-	ANKI_CHECK(m_dsetAlloc.init(m_device));
-	ANKI_CHECK(initGlobalPplineLayout());
+	ANKI_CHECK(m_dsetAlloc.init(getAllocator(), m_device));
+	m_pplineLayFactory.init(getAllocator(), m_device, &m_dsetAlloc.getDescriptorSetLayoutFactory());
 
 	for(PerFrame& f : m_perFrame)
 	{
@@ -480,25 +476,6 @@ Error GrManagerImpl::initSwapchain(const GrManagerInitInfo& init)
 
 		ANKI_VK_CHECK(vkCreateImageView(m_device, &ci, nullptr, &m_backbuffers[i].m_imageView));
 	}
-
-	return ErrorCode::NONE;
-}
-
-Error GrManagerImpl::initGlobalPplineLayout()
-{
-	Array<VkDescriptorSetLayout, MAX_BOUND_RESOURCE_GROUPS> sets = {
-		{m_dsetAlloc.getGlobalDescriptorSetLayout(), m_dsetAlloc.getGlobalDescriptorSetLayout()}};
-
-	VkPipelineLayoutCreateInfo ci;
-	ci.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	ci.pNext = nullptr;
-	ci.flags = 0;
-	ci.setLayoutCount = MAX_BOUND_RESOURCE_GROUPS;
-	ci.pSetLayouts = &sets[0];
-	ci.pushConstantRangeCount = 0;
-	ci.pPushConstantRanges = nullptr;
-
-	ANKI_VK_CHECK(vkCreatePipelineLayout(m_device, &ci, nullptr, &m_globalPipelineLayout));
 
 	return ErrorCode::NONE;
 }
