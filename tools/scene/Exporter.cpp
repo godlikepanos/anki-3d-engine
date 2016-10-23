@@ -829,7 +829,7 @@ void Exporter::visitNode(const aiNode* ainode)
 				collisionMesh = prop.second;
 				special = false;
 			}
-			else if(prop.first == "decal" && prop.second == "true")
+			else if(prop.first.find("decal_") == 0)
 			{
 				DecalNode decal;
 				for(const auto& pr : m_scene->mMeshes[meshIndex]->mProperties)
@@ -842,6 +842,22 @@ void Exporter::visitNode(const aiNode* ainode)
 					{
 						decal.m_diffuseSubTextureName = pr.second;
 					}
+					else if(pr.first == "decal_diffuse_factor")
+					{
+						decal.m_factors[0] = std::stof(pr.second);
+					}
+					else if(pr.first == "decal_normal_roughness_atlas")
+					{
+						decal.m_normalRoughnessAtlasFilename = pr.second;
+					}
+					else if(pr.first == "decal_normal_roughness_sub_texture")
+					{
+						decal.m_normalRoughnessSubTextureName = pr.second;
+					}
+					else if(pr.first == "decal_normal_roughness_factor")
+					{
+						decal.m_factors[1] = std::stof(pr.second);
+					}
 				}
 
 				if(decal.m_diffuseTextureAtlasFilename.empty() || decal.m_diffuseSubTextureName.empty())
@@ -849,13 +865,14 @@ void Exporter::visitNode(const aiNode* ainode)
 					ERROR("Missing decal information");
 				}
 
-				aiMatrix4x4 trf = ainode->mTransformation;
+				aiMatrix4x4 trf = toAnkiMatrix(ainode->mTransformation);
 				decal.m_size = getNonUniformScale(trf);
 				removeScale(trf);
 				decal.m_transform = trf;
 
 				m_decals.push_back(decal);
 				special = true;
+				break;
 			}
 		}
 
@@ -1047,10 +1064,16 @@ void Exporter::exportAll()
 
 		writeNodeTransform("node", decal.m_transform);
 
-		file << "decalc = node:getSceneNodeBase():getLightComponent()\n";
+		file << "decalc = node:getSceneNodeBase():getDecalComponent()\n";
 		file << "decalc:setDiffuseDecal(\"" << decal.m_diffuseTextureAtlasFilename << "\", \""
-			 << decal.m_diffuseSubTextureName << "\", 1.0)\n";
+			 << decal.m_diffuseSubTextureName << "\", " << decal.m_factors[0] << ")\n";
 		file << "decalc:updateShape(" << decal.m_size.x << ", " << decal.m_size.y << ", " << decal.m_size.z << ")\n";
+
+		if(!decal.m_normalRoughnessAtlasFilename.empty())
+		{
+			file << "decalc:setNormalRoughnessDecal(\"" << decal.m_normalRoughnessAtlasFilename << "\", \""
+				 << decal.m_normalRoughnessSubTextureName << "\", " << decal.m_factors[1] << ")\n";
+		}
 
 		++i;
 	}

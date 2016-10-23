@@ -33,6 +33,11 @@ public:
 		return setLayer(texAtlasFname, texAtlasSubtexName, blendFactor, LayerType::DIFFUSE);
 	}
 
+	ANKI_USE_RESULT Error setNormalRoughnessDecal(CString texAtlasFname, CString texAtlasSubtexName, F32 blendFactor)
+	{
+		return setLayer(texAtlasFname, texAtlasSubtexName, blendFactor, LayerType::NORMAL_ROUGHNESS);
+	}
+
 	/// Update the internal structures.
 	void updateShape(F32 width, F32 height, F32 depth)
 	{
@@ -81,10 +86,25 @@ public:
 		return m_biasProjViewMat;
 	}
 
-	void getDiffuseAtlasInfo(Vec4& uv, TexturePtr& tex) const
+	void getDiffuseAtlasInfo(Vec4& uv, TexturePtr& tex, F32& blendFactor) const
 	{
 		uv = m_layers[LayerType::DIFFUSE].m_uv;
 		tex = m_layers[LayerType::DIFFUSE].m_atlas->getGrTexture();
+		blendFactor = m_layers[LayerType::DIFFUSE].m_blendFactor;
+	}
+
+	void getNormalRoughnessAtlasInfo(Vec4& uv, TexturePtr& tex, F32& blendFactor) const
+	{
+		uv = m_layers[LayerType::NORMAL_ROUGHNESS].m_uv;
+		if(m_layers[LayerType::NORMAL_ROUGHNESS].m_atlas)
+		{
+			tex = m_layers[LayerType::NORMAL_ROUGHNESS].m_atlas->getGrTexture();
+		}
+		else
+		{
+			tex.reset(nullptr);
+		}
+		blendFactor = m_layers[LayerType::NORMAL_ROUGHNESS].m_blendFactor;
 	}
 
 	const Vec3& getVolumeSize() const
@@ -96,6 +116,7 @@ private:
 	enum class LayerType
 	{
 		DIFFUSE,
+		NORMAL_ROUGHNESS,
 		COUNT
 	};
 

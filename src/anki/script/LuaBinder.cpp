@@ -97,7 +97,7 @@ Error LuaBinder::evalString(const CString& str)
 	int e = luaL_dostring(m_l, &str[0]);
 	if(e)
 	{
-		ANKI_LOGE("%s", lua_tostring(m_l, -1));
+		ANKI_LOGE("%s (line:%d)", lua_tostring(m_l, -1));
 		lua_pop(m_l, 1);
 		err = ErrorCode::USER_DATA;
 	}

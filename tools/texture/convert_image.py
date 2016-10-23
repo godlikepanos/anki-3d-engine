@@ -285,7 +285,6 @@ def identify_image(in_file):
 	width = 0
 	height = 0
 
-	print(["identify", "-verbose" , in_file])
 	proc = subprocess.Popen(["identify", "-verbose" , in_file], stdout=subprocess.PIPE)
 
 	stdout_str = proc.stdout.read()

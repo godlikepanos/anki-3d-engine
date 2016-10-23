@@ -1167,6 +1167,64 @@ static int wrapDecalComponentsetDiffuseDecal(lua_State* l)
 	return 0;
 }
 
+/// Pre-wrap method DecalComponent::setNormalRoughnessDecal.
+static inline int pwrapDecalComponentsetNormalRoughnessDecal(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	PtrSize size;
+	(void)size;
+
+	LuaBinder::checkArgsCount(l, 4);
+
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameDecalComponent, -1979693900066114370, ud))
+	{
+		return -1;
+	}
+
+	DecalComponent* self = ud->getData<DecalComponent>();
+
+	// Pop arguments
+	const char* arg0;
+	if(LuaBinder::checkString(l, 2, arg0))
+	{
+		return -1;
+	}
+
+	const char* arg1;
+	if(LuaBinder::checkString(l, 3, arg1))
+	{
+		return -1;
+	}
+
+	F32 arg2;
+	if(LuaBinder::checkNumber(l, 4, arg2))
+	{
+		return -1;
+	}
+
+	// Call the method
+	self->setNormalRoughnessDecal(arg0, arg1, arg2);
+
+	return 0;
+}
+
+/// Wrap method DecalComponent::setNormalRoughnessDecal.
+static int wrapDecalComponentsetNormalRoughnessDecal(lua_State* l)
+{
+	int res = pwrapDecalComponentsetNormalRoughnessDecal(l);
+	if(res >= 0)
+	{
+		return res;
+	}
+
+	lua_error(l);
+	return 0;
+}
+
 /// Pre-wrap method DecalComponent::updateShape.
 static inline int pwrapDecalComponentupdateShape(lua_State* l)
 {
@@ -1230,6 +1288,7 @@ static inline void wrapDecalComponent(lua_State* l)
 {
 	LuaBinder::createClass(l, classnameDecalComponent);
 	LuaBinder::pushLuaCFuncMethod(l, "setDiffuseDecal", wrapDecalComponentsetDiffuseDecal);
+	LuaBinder::pushLuaCFuncMethod(l, "setNormalRoughnessDecal", wrapDecalComponentsetNormalRoughnessDecal);
 	LuaBinder::pushLuaCFuncMethod(l, "updateShape", wrapDecalComponentupdateShape);
 	lua_settop(l, 0);
 }

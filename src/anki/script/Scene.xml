@@ -146,6 +146,13 @@ static SceneGraph* getSceneGraph(lua_State* l)
 						<arg>F32</arg>
 					</args>
 				</method>
+				<method name="setNormalRoughnessDecal">
+					<args>
+						<arg>CString</arg>
+						<arg>CString</arg>
+						<arg>F32</arg>
+					</args>
+				</method>
 				<method name="updateShape">
 					<args>
 						<arg>F32</arg>

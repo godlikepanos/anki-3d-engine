@@ -51,8 +51,10 @@ struct ReflectionProbe
 // Decal
 struct Decal
 {
-	vec4 uv;
+	vec4 diffUv;
+	vec4 normRoughnessUv;
 	mat4 texProjectionMat;
+	vec4 blendFactors;
 };
 
 layout(ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING), std140, row_major) uniform u0_

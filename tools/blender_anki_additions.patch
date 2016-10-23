@@ -1,8 +1,8 @@
 diff --git a/source/blender/collada/EffectExporter.cpp b/source/blender/collada/EffectExporter.cpp
-index 13dc1ed..77d6a6e 100644
+index 76b5114..6b87128 100644
 --- a/source/blender/collada/EffectExporter.cpp
 +++ b/source/blender/collada/EffectExporter.cpp
-@@ -46,7 +46,9 @@ extern "C" {
+@@ -47,7 +47,9 @@ extern "C" {
  	#include "BKE_customdata.h"
  	#include "BKE_mesh.h"
  	#include "BKE_material.h"
@@ -12,7 +12,7 @@ index 13dc1ed..77d6a6e 100644
  
  // OB_MESH is assumed
  static std::string getActiveUVLayerName(Object *ob)
-@@ -169,6 +171,26 @@ void EffectsExporter::writeTextures(COLLADASW::EffectProfile &ep,
+@@ -170,6 +172,26 @@ void EffectsExporter::writeTextures(COLLADASW::EffectProfile &ep,
  		texture.setChildElementName("bump");
  		ep.addExtraTechniqueColorOrTexture(COLLADASW::ColorOrTexture(texture));
  	}
@@ -39,7 +39,7 @@ index 13dc1ed..77d6a6e 100644
  }
  
  void EffectsExporter::operator()(Material *ma, Object *ob)
-@@ -397,6 +419,67 @@ void EffectsExporter::operator()(Material *ma, Object *ob)
+@@ -398,6 +420,67 @@ void EffectsExporter::operator()(Material *ma, Object *ob)
  		}
  	}
  
@@ -108,7 +108,7 @@ index 13dc1ed..77d6a6e 100644
  	ep.addProfileElements();
  	bool twoSided = false;
 diff --git a/source/blender/collada/GeometryExporter.cpp b/source/blender/collada/GeometryExporter.cpp
-index 7c7c57f..00c909d 100644
+index 7c7c57f..b02ba47 100644
 --- a/source/blender/collada/GeometryExporter.cpp
 +++ b/source/blender/collada/GeometryExporter.cpp
 @@ -47,6 +47,7 @@ extern "C" {
@@ -119,7 +119,7 @@ index 7c7c57f..00c909d 100644
  }
  
  #include "collada_internal.h"
-@@ -143,13 +144,127 @@ void GeometryExporter::operator()(Object *ob)
+@@ -143,13 +144,133 @@ void GeometryExporter::operator()(Object *ob)
  			createPolylist(0, has_uvs, has_color, ob, me, geom_id, norind);
  		}
  	}
@@ -138,6 +138,12 @@ index 7c7c57f..00c909d 100644
 +			"reflection_proxy",
 +			"occluder",
 +			"collision_mesh",
++			"decal_diffuse_atlas",
++			"decal_diffuse_sub_texture",
++			"decal_diffuse_factor",
++			"decal_normal_roughness_atlas",
++			"decal_normal_roughness_sub_texture",
++			"decal_normal_roughness_factor",
 +			NULL};
 +
 +		ID *mesh_id = (ID*)ob->data;

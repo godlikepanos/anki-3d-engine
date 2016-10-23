@@ -185,7 +185,7 @@ Error Is::binLights(RenderingContext& ctx)
 {
 	updateCommonBlock(ctx);
 
-	TexturePtr diffDecalTex;
+	TexturePtr diffDecalTex, normRoughnessDecalTex;
 
 	ANKI_CHECK(m_lightBin->bin(*ctx.m_frustumComponent,
 		getFrameAllocator(),
@@ -197,7 +197,8 @@ Error Is::binLights(RenderingContext& ctx)
 		ctx.m_is.m_dynBufferInfo.m_uniformBuffers[DECALS_LOCATION],
 		ctx.m_is.m_dynBufferInfo.m_storageBuffers[CLUSTERS_LOCATION],
 		ctx.m_is.m_dynBufferInfo.m_storageBuffers[LIGHT_IDS_LOCATION],
-		diffDecalTex));
+		diffDecalTex,
+		normRoughnessDecalTex));
 
 	ResourceGroupInitInfo rcinit;
 	if(diffDecalTex)
@@ -208,6 +209,15 @@ Error Is::binLights(RenderingContext& ctx)
 	{
 		// Bind something because validation layers will complain
 		rcinit.m_textures[0].m_texture = m_dummyTex;
+	}
+
+	if(normRoughnessDecalTex)
+	{
+		rcinit.m_textures[1].m_texture = normRoughnessDecalTex;
+	}
+	else
+	{
+		rcinit.m_textures[1].m_texture = m_dummyTex;
 	}
 
 	U64 hash = rcinit.computeHash();

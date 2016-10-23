@@ -139,15 +139,15 @@ void main()
 	out_color += bloom;
 #endif
 
-	out_color = colorGrading(out_color);
-
-#if DBG_ENABLED
-	out_color += textureLod(u_dbgRt, uv, 0.0).rgb;
-#endif
+// out_color = colorGrading(out_color);
 
 #if 0
 	{
-		out_color = textureLod(u_smaaBlendTex, uv, 0.0).rgb;
+		out_color = textureLod(u_isRt, uv, 0.0).rgb;
 	}
+#endif
+
+#if DBG_ENABLED
+	out_color += textureLod(u_dbgRt, uv, 0.0).rgb;
 #endif
 }

@@ -21,6 +21,7 @@ layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_msRt2;
 layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2D u_msDepthRt;
 
 layout(ANKI_TEX_BINDING(1, 0)) uniform sampler2D u_diffDecalTex;
+layout(ANKI_TEX_BINDING(1, 1)) uniform sampler2D u_normalRoughnessDecalTex;
 
 layout(location = 0) in vec2 in_texCoord;
 layout(location = 1) flat in int in_instanceId;
@@ -61,7 +62,7 @@ void debugIncorrectColor(inout vec3 c)
 }
 
 // Compute the colors of a decal.
-void appendDecalColors(in Decal decal, in vec3 fragPos, inout vec3 diffuseColor)
+void appendDecalColors(in Decal decal, in vec3 fragPos, inout vec3 diffuseColor, inout float roughness)
 {
 	vec4 texCoords4 = decal.texProjectionMat * vec4(fragPos, 1.0);
 	vec2 texCoords2 = texCoords4.xy / texCoords4.w;
@@ -69,10 +70,14 @@ void appendDecalColors(in Decal decal, in vec3 fragPos, inout vec3 diffuseColor)
 	// Clamp the tex coords. Expect a border in the texture atlas
 	texCoords2 = clamp(texCoords2, 0.0, 1.0);
 
-	texCoords2 = texCoords2 * decal.uv.zw + decal.uv.xy;
-	vec4 dcol = texture(u_diffDecalTex, texCoords2);
+	vec2 diffUv = texCoords2 * decal.diffUv.zw + decal.diffUv.xy;
+	vec4 dcol = texture(u_diffDecalTex, diffUv);
+	diffuseColor = mix(diffuseColor, dcol.rgb, dcol.a * decal.blendFactors[0]);
 
-	diffuseColor = mix(diffuseColor, dcol.rgb, dcol.a);
+	// Roughness
+	vec2 roughnessUv = texCoords2 * decal.normRoughnessUv.zw + decal.normRoughnessUv.xy;
+	float r = texture(u_normalRoughnessDecalTex, roughnessUv).w;
+	roughness = mix(roughness, r, dcol.a * decal.blendFactors[1]);
 }
 
 void readIndirect(in uint idxOffset,
@@ -144,11 +149,6 @@ void main()
 	subsurface = gbuffer.subsurface;
 	emission = gbuffer.emission;
 
-	float a2 = pow(roughness, 2.0);
-
-	// Ambient and emissive color
-	out_color = diffCol * emission;
-
 	// Get counts and offsets
 	uint clusterIdx = computeClusterIndexUsingTileIdx(u_lightingUniforms.nearFarClustererMagicPad1.x,
 		u_lightingUniforms.nearFarClustererMagicPad1.z,
@@ -169,8 +169,13 @@ void main()
 	{
 		Decal decal = u_decals[u_lightIndices[idxOffset++]];
 
-		appendDecalColors(decal, fragPos, diffCol);
+		appendDecalColors(decal, fragPos, diffCol, roughness);
 	}
+
+	float a2 = pow(roughness, 2.0);
+
+	// Ambient and emissive color
+	out_color = diffCol * emission;
 
 	// Point lights
 	count = u_lightIndices[idxOffset++];
@@ -219,22 +224,23 @@ void main()
 #if INDIRECT_ENABLED
 	vec3 eye = -viewDir;
 	vec3 r = reflect(eye, normal);
-	float reflLod = float(IR_MIPMAP_COUNT) * gbuffer.roughness;
+	float reflLod = float(IR_MIPMAP_COUNT) * roughness;
 
 	vec3 specIndirect, diffIndirect;
 	readIndirect(idxOffset, fragPos, r, normal, reflLod, specIndirect, diffIndirect);
 
-	diffIndirect *= gbuffer.diffuse;
+	diffIndirect *= diffCol;
 
 	// Finalize the indirect specular
-	float ndotv = dot(gbuffer.normal, viewDir);
-	vec2 envBRDF = texture(u_integrationLut, vec2(gbuffer.roughness, ndotv)).xy;
-	specIndirect = specIndirect * (gbuffer.specular * envBRDF.x + envBRDF.y);
+	float ndotv = dot(normal, viewDir);
+	vec2 envBRDF = texture(u_integrationLut, vec2(roughness, ndotv)).xy;
+	specIndirect = specIndirect * (specCol * envBRDF.x + envBRDF.y);
 
 	out_color += specIndirect + diffIndirect;
 #endif
 
 #if 0
+	out_color = diffCol;
 	uint count = scount;
 	if(count == 0)
 	{

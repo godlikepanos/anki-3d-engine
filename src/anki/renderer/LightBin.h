@@ -44,7 +44,8 @@ public:
 		TransientMemoryToken& decalsToken,
 		TransientMemoryToken& clustersToken,
 		TransientMemoryToken& lightIndicesToken,
-		TexturePtr& diffuseDecalTexAtlas);
+		TexturePtr& diffuseDecalTexAtlas,
+		TexturePtr& normalRoughnessDecalTexAtlas);
 
 	const Clusterer& getClusterer() const
 	{

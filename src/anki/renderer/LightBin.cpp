@@ -66,8 +66,10 @@ public:
 class ShaderDecal
 {
 public:
-	Vec4 m_uv;
+	Vec4 m_diffUv;
+	Vec4 m_normRoughnessUv;
 	Mat4 m_texProjectionMat;
+	Vec4 m_blendFactors;
 };
 
 static const U MAX_TYPED_LIGHTS_PER_CLUSTER = 16;
@@ -317,6 +319,8 @@ public:
 
 	TexturePtr m_diffDecalTexAtlas;
 	SpinLock m_diffDecalTexAtlasMtx;
+	TexturePtr m_normalRoughnessDecalTexAtlas;
+	SpinLock m_normalRoughnessDecalTexAtlasMtx;
 
 	LightBin* m_bin = nullptr;
 };
@@ -363,7 +367,8 @@ Error LightBin::bin(FrustumComponent& frc,
 	TransientMemoryToken& decalsToken,
 	TransientMemoryToken& clustersToken,
 	TransientMemoryToken& lightIndicesToken,
-	TexturePtr& diffuseDecalTexAtlas)
+	TexturePtr& diffuseDecalTexAtlas,
+	TexturePtr& normalRoughnessDecalTexAtlas)
 {
 	ANKI_TRACE_START_EVENT(RENDERER_LIGHT_BINNING);
 
@@ -487,6 +492,7 @@ Error LightBin::bin(FrustumComponent& frc,
 	ANKI_CHECK(m_threadPool->waitForAllThreadsToFinish());
 
 	diffuseDecalTexAtlas = ctx.m_diffDecalTexAtlas;
+	normalRoughnessDecalTexAtlas = ctx.m_normalRoughnessDecalTexAtlas;
 
 	ANKI_TRACE_STOP_EVENT(RENDERER_LIGHT_BINNING);
 	return ErrorCode::NONE;
@@ -809,19 +815,36 @@ void LightBin::writeAndBinDecal(
 	I idx = ctx.m_decalCount.fetchAdd(1);
 	ShaderDecal& decal = ctx.m_decals[idx];
 
-	TexturePtr diffAtlas;
+	TexturePtr atlas;
 	Vec4 uv;
-	decalc.getDiffuseAtlasInfo(uv, diffAtlas);
-	decal.m_uv = Vec4(uv.x(), uv.y(), uv.z() - uv.x(), uv.w() - uv.y());
+	F32 blendFactor;
+	decalc.getDiffuseAtlasInfo(uv, atlas, blendFactor);
+	decal.m_diffUv = Vec4(uv.x(), uv.y(), uv.z() - uv.x(), uv.w() - uv.y());
+	decal.m_blendFactors[0] = blendFactor;
 
 	{
 		LockGuard<SpinLock> lock(ctx.m_diffDecalTexAtlasMtx);
-		if(ctx.m_diffDecalTexAtlas && ctx.m_diffDecalTexAtlas != diffAtlas)
+		if(ctx.m_diffDecalTexAtlas && ctx.m_diffDecalTexAtlas != atlas)
 		{
 			ANKI_LOGF("All decals should have the same tex atlas");
 		}
 
-		ctx.m_diffDecalTexAtlas = diffAtlas;
+		ctx.m_diffDecalTexAtlas = atlas;
+	}
+
+	decalc.getNormalRoughnessAtlasInfo(uv, atlas, blendFactor);
+	decal.m_normRoughnessUv = Vec4(uv.x(), uv.y(), uv.z() - uv.x(), uv.w() - uv.y());
+	decal.m_blendFactors[1] = blendFactor;
+
+	if(atlas)
+	{
+		LockGuard<SpinLock> lock(ctx.m_normalRoughnessDecalTexAtlasMtx);
+		if(ctx.m_normalRoughnessDecalTexAtlas && ctx.m_normalRoughnessDecalTexAtlas != atlas)
+		{
+			ANKI_LOGF("All decals should have the same tex atlas");
+		}
+
+		ctx.m_normalRoughnessDecalTexAtlas = atlas;
 	}
 
 	// bias * proj_l * view_l * world_c

@@ -10,17 +10,16 @@ OpenGL 4.5 and Vulkan 1.0 (Beta).
 License
 =======
 
-AnKi's license is BSD. This practicaly means that you can use the source or
-parts of the source on proprietary and non proprietary products as long as you
-follow the conditions of the license.
+AnKi's license is BSD. This practicaly means that you can use the source or parts of the source on proprietary and non 
+proprietary products as long as you follow the conditions of the license.
 
 See LICENSE file for more info.
 
 Building AnKi
 =============
 
-AnKi's build system is using CMake. A great effort was made to ease the building
-process that's why the number of external dependencies are almost none.
+AnKi's build system is using CMake. A great effort was made to ease the building process that's why the number of 
+external dependencies are almost none.
 
 On Linux
 --------
@@ -40,7 +39,7 @@ To build the release version:
 	$cmake ..
 	$make
 
-To view and configure the build options you can use ccmake tool or similar:
+To view and configure the build options you can use ccmake tool or other similar tool:
 
 	$cd <path_to_anki>/build
 	$ccmake .
@@ -55,9 +54,8 @@ Prerequisites:
 - CMake 2.8 and up
 - Mingw-w64 4.8 and up
 	- Install to a path without spaces
-	- Append the path where mingw's binaries are located (eg
-	  C:/mingw-w64/x86_64-4.9.3-win32-seh-rt_v4-rev1/mingw64/bin) to the PATH
-	  environment variable
+	- Append the path where mingw's binaries are located (eg C:/mingw-w64/x86_64-4.9.3-win32-seh-rt_v4-rev1/mingw64/bin)
+	  to the PATH environment variable
 
 To build the release version:
 
@@ -72,11 +70,16 @@ To build the release version:
 
 > NOTE: If you have a better way to build on Windows please let us know.
 
-> NOTE 2: The Windows build tends to brake often since Windows is not the 
-> primary developement platform. Please report any bugs.
+> NOTE 2: The Windows build tends to brake often since Windows is not the primary developement platform. Please report 
+> any bugs.
 
 Next steps
 ==========
 
-Try to build with samples enabled (see the relevant option in your CMake GUI) 
-and try running the simple_scene executable. More samples will follow.
+Try to build with samples enabled (see the relevant option in your CMake GUI, ANKI_BUILD_SAMPLES) and try running the 
+simple_scene executable. All samples must run from within the samples directory.
+
+	$cd path/to/anki/samples
+	$./path/to/build/samples/simple_scene/simple_scene
+
+More samples will follow.
