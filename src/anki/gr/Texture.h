@@ -55,7 +55,11 @@ public:
 /// GPU texture
 class Texture : public GrObject
 {
-public:
+	ANKI_GR_OBJECT
+
+anki_internal:
+	UniquePtr<TextureImpl> m_impl;
+
 	static const GrObjectType CLASS_TYPE = GrObjectType::TEXTURE;
 
 	/// Construct.
@@ -64,17 +68,8 @@ public:
 	/// Destroy.
 	~Texture();
 
-	/// Access the implementation.
-	TextureImpl& getImplementation()
-	{
-		return *m_impl;
-	}
-
 	/// Create it.
 	void init(const TextureInitInfo& init);
-
-private:
-	UniquePtr<TextureImpl> m_impl;
 };
 /// @}
 

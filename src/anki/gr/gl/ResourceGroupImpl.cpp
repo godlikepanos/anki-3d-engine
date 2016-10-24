@@ -33,7 +33,7 @@ void ResourceGroupImpl::initBuffers(const InBindings& in, OutBindings& out, U8& 
 		{
 			ANKI_ASSERT(binding.m_uploadedMemory == false);
 
-			const BufferImpl& buff = binding.m_buffer->getImplementation();
+			const BufferImpl& buff = *binding.m_buffer->m_impl;
 			InternalBufferBinding& outBinding = out[count];
 
 			outBinding.m_name = buff.getGlName();
@@ -68,7 +68,7 @@ void ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 	{
 		if(init.m_textures[i].m_texture.isCreated())
 		{
-			m_textureNames[i] = init.m_textures[i].m_texture->getImplementation().getGlName();
+			m_textureNames[i] = init.m_textures[i].m_texture->m_impl->getGlName();
 			m_textureNamesCount = i + 1;
 			++resourcesCount;
 		}
@@ -79,7 +79,7 @@ void ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 
 		if(init.m_textures[i].m_sampler.isCreated())
 		{
-			m_samplerNames[i] = init.m_textures[i].m_sampler->getImplementation().getGlName();
+			m_samplerNames[i] = init.m_textures[i].m_sampler->m_impl->getGlName();
 			m_allSamplersZero = false;
 			++resourcesCount;
 		}
@@ -99,12 +99,12 @@ void ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 		const auto& in = init.m_images[i];
 		if(in.m_texture)
 		{
-			TextureImpl& impl = in.m_texture->getImplementation();
+			TextureImpl& impl = *in.m_texture->m_impl;
 			impl.checkSurface(TextureSurfaceInfo(in.m_level, 0, 0, 0));
 
 			ImageBinding& out = m_images[i];
 
-			out.m_name = in.m_texture->getImplementation().getGlName();
+			out.m_name = in.m_texture->m_impl->getGlName();
 			out.m_level = in.m_level;
 			out.m_format = impl.m_internalFormat;
 
@@ -122,7 +122,7 @@ void ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 		{
 			ANKI_ASSERT(!binding.m_uploadedMemory);
 
-			m_vertBuffNames[i] = binding.m_buffer->getImplementation().getGlName();
+			m_vertBuffNames[i] = binding.m_buffer->m_impl->getGlName();
 			m_vertBuffOffsets[i] = binding.m_offset;
 
 			++m_vertBindingsCount;
@@ -148,7 +148,7 @@ void ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 	// Init index buffer
 	if(init.m_indexBuffer.m_buffer.isCreated())
 	{
-		const BufferImpl& buff = init.m_indexBuffer.m_buffer->getImplementation();
+		const BufferImpl& buff = *init.m_indexBuffer.m_buffer->m_impl;
 
 		ANKI_ASSERT(init.m_indexSize == 2 || init.m_indexSize == 4);
 

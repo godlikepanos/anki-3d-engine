@@ -16,8 +16,19 @@ namespace anki
 /// GPU buffer.
 class Buffer : public GrObject
 {
+	ANKI_GR_OBJECT
+
 public:
+	/// Map the buffer.
+	void* map(PtrSize offset, PtrSize range, BufferMapAccessBit access);
+
+	/// Unmap the buffer.
+	void unmap();
+
+anki_internal:
 	static const GrObjectType CLASS_TYPE = GrObjectType::BUFFER;
+
+	UniquePtr<BufferImpl> m_impl;
 
 	/// Construct.
 	Buffer(GrManager* manager, U64 hash, GrObjectCache* cache);
@@ -25,23 +36,8 @@ public:
 	/// Destroy.
 	~Buffer();
 
-	/// Access the implementation.
-	BufferImpl& getImplementation()
-	{
-		return *m_impl;
-	}
-
 	/// Allocate the buffer.
 	void init(PtrSize size, BufferUsageBit usage, BufferMapAccessBit access);
-
-	/// Map the buffer.
-	void* map(PtrSize offset, PtrSize range, BufferMapAccessBit access);
-
-	/// Unmap the buffer.
-	void unmap();
-
-private:
-	UniquePtr<BufferImpl> m_impl;
 };
 /// @}
 

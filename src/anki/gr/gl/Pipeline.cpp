@@ -36,7 +36,7 @@ public:
 
 	Error operator()(GlState&)
 	{
-		PipelineImpl& impl = m_ppline->getImplementation();
+		PipelineImpl& impl = *m_ppline->m_impl;
 
 		Error err = impl.init(m_init);
 
@@ -55,7 +55,7 @@ void Pipeline::init(const PipelineInitInfo& init)
 	CommandBufferInitInfo inf;
 	CommandBufferPtr cmdb = getManager().newInstance<CommandBuffer>(inf);
 
-	cmdb->getImplementation().pushBackNewCommand<CreatePipelineCommand>(this, init);
+	cmdb->m_impl->pushBackNewCommand<CreatePipelineCommand>(this, init);
 	cmdb->flush();
 }
 

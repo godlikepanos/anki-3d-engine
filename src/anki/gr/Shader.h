@@ -60,7 +60,11 @@ void writeShaderBlockMemory(ShaderVariableDataType type,
 /// GPU shader.
 class Shader : public GrObject
 {
-public:
+	ANKI_GR_OBJECT
+
+anki_internal:
+	UniquePtr<ShaderImpl> m_impl;
+
 	static const GrObjectType CLASS_TYPE = GrObjectType::SHADER;
 
 	/// Construct.
@@ -69,19 +73,10 @@ public:
 	/// Destroy.
 	~Shader();
 
-	/// Access the implementation.
-	ShaderImpl& getImplementation()
-	{
-		return *m_impl;
-	}
-
 	/// Create shader.
 	/// @param shaderType The type of the shader.
 	/// @param source The GLSL code of the shader.
 	void init(ShaderType shaderType, const CString& source);
-
-private:
-	UniquePtr<ShaderImpl> m_impl;
 };
 /// @}
 

@@ -247,7 +247,11 @@ public:
 /// Graphics and compute pipeline. Contains the static state.
 class Pipeline : public GrObject
 {
-public:
+	ANKI_GR_OBJECT
+
+anki_internal:
+	UniquePtr<PipelineImpl> m_impl;
+
 	static const GrObjectType CLASS_TYPE = GrObjectType::PIPELINE;
 
 	/// Construct.
@@ -256,17 +260,8 @@ public:
 	/// Destroy.
 	~Pipeline();
 
-	/// Access the implementation.
-	PipelineImpl& getImplementation()
-	{
-		return *m_impl;
-	}
-
 	/// Create.
 	void init(const PipelineInitInfo& init);
-
-private:
-	UniquePtr<PipelineImpl> m_impl;
 };
 /// @}
 

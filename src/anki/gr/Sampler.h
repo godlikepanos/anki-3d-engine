@@ -17,7 +17,11 @@ namespace anki
 /// GPU sampler.
 class Sampler : public GrObject
 {
-public:
+	ANKI_GR_OBJECT
+
+anki_internal:
+	UniquePtr<SamplerImpl> m_impl;
+
 	static const GrObjectType CLASS_TYPE = GrObjectType::SAMPLER;
 
 	/// Construct.
@@ -26,17 +30,8 @@ public:
 	/// Destroy.
 	~Sampler();
 
-	/// Access the implementation.
-	SamplerImpl& getImplementation()
-	{
-		return *m_impl;
-	}
-
 	/// Initialize it.
 	void init(const SamplerInitInfo& init);
-
-private:
-	UniquePtr<SamplerImpl> m_impl;
 };
 /// @}
 

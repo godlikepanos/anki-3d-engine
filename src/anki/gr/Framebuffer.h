@@ -72,7 +72,11 @@ public:
 /// GPU framebuffer.
 class Framebuffer : public GrObject
 {
-public:
+	ANKI_GR_OBJECT
+
+anki_internal:
+	UniquePtr<FramebufferImpl> m_impl;
+
 	static const GrObjectType CLASS_TYPE = GrObjectType::FRAMEBUFFER;
 
 	/// Construct.
@@ -81,17 +85,8 @@ public:
 	/// Destroy.
 	~Framebuffer();
 
-	/// Access the implementation.
-	FramebufferImpl& getImplementation()
-	{
-		return *m_impl;
-	}
-
 	/// Create.
 	void init(const FramebufferInitInfo& init);
-
-private:
-	UniquePtr<FramebufferImpl> m_impl;
 };
 /// @}
 

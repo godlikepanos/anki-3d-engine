@@ -58,7 +58,7 @@ public:
 		}
 		else
 		{
-			ANKI_ASSERT(0);
+			addr = nullptr;
 		}
 		ANKI_ASSERT(addr);
 		return addr;
@@ -73,7 +73,7 @@ public:
 		}
 		else
 		{
-			ANKI_ASSERT(0);
+			name = 0;
 		}
 		ANKI_ASSERT(name);
 		return name;

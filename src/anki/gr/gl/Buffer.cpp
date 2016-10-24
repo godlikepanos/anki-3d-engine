@@ -38,7 +38,7 @@ public:
 
 	Error operator()(GlState&)
 	{
-		BufferImpl& impl = m_buff->getImplementation();
+		BufferImpl& impl = *m_buff->m_impl;
 
 		impl.init(m_size, m_usage, m_access);
 
@@ -57,7 +57,7 @@ void Buffer::init(PtrSize size, BufferUsageBit usage, BufferMapAccessBit access)
 
 	CommandBufferPtr cmdb = getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
 
-	cmdb->getImplementation().pushBackNewCommand<BufferCreateCommand>(this, size, usage, access);
+	cmdb->m_impl->pushBackNewCommand<BufferCreateCommand>(this, size, usage, access);
 	cmdb->flush();
 }
 

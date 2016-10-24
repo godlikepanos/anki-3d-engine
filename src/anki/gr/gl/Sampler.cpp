@@ -34,7 +34,7 @@ public:
 
 	Error operator()(GlState&)
 	{
-		SamplerImpl& impl = m_sampler->getImplementation();
+		SamplerImpl& impl = *m_sampler->m_impl;
 
 		impl.init(m_init);
 
@@ -53,7 +53,7 @@ void Sampler::init(const SamplerInitInfo& init)
 
 	CommandBufferPtr cmdb = getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
 
-	cmdb->getImplementation().pushBackNewCommand<CreateSamplerCommand>(this, init);
+	cmdb->m_impl->pushBackNewCommand<CreateSamplerCommand>(this, init);
 	cmdb->flush();
 }
 

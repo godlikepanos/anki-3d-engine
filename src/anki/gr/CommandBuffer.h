@@ -126,24 +126,9 @@ public:
 /// Command buffer.
 class CommandBuffer : public GrObject
 {
+	ANKI_GR_OBJECT
+
 public:
-	static const GrObjectType CLASS_TYPE = GrObjectType::COMMAND_BUFFER;
-
-	/// Construct.
-	CommandBuffer(GrManager* manager, U64 hash, GrObjectCache* cache);
-
-	/// Destroy.
-	~CommandBuffer();
-
-	/// Access the implementation.
-	CommandBufferImpl& getImplementation()
-	{
-		return *m_impl;
-	}
-
-	/// Init the command buffer.
-	void init(CommandBufferInitInfo& inf);
-
 	/// Compute initialization hints.
 	CommandBufferInitHints computeInitHints() const;
 
@@ -306,8 +291,19 @@ public:
 	Bool isEmpty() const;
 	/// @}
 
-private:
+anki_internal:
 	UniquePtr<CommandBufferImpl> m_impl;
+
+	static const GrObjectType CLASS_TYPE = GrObjectType::COMMAND_BUFFER;
+
+	/// Construct.
+	CommandBuffer(GrManager* manager, U64 hash, GrObjectCache* cache);
+
+	/// Destroy.
+	~CommandBuffer();
+
+	/// Init the command buffer.
+	void init(CommandBufferInitInfo& inf);
 };
 /// @}
 

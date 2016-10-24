@@ -36,6 +36,7 @@ public:
 class GrManager
 {
 	friend class GrManagerImpl;
+	friend class GrObjectCache;
 
 	template<typename>
 	friend class GrObjectPtrDeleter;

@@ -79,7 +79,7 @@ RenderingThread::~RenderingThread()
 
 void RenderingThread::flushCommandBuffer(CommandBufferPtr cmdb)
 {
-	cmdb->getImplementation().makeImmutable();
+	cmdb->m_impl->makeImmutable();
 
 	{
 		LockGuard<Mutex> lock(m_mtx);
@@ -117,9 +117,9 @@ void RenderingThread::start()
 
 	// Swap buffers stuff
 	m_swapBuffersCommands = m_manager->newInstance<CommandBuffer>(CommandBufferInitInfo());
-	m_swapBuffersCommands->getImplementation().pushBackNewCommand<SwapBuffersCommand>(this);
+	m_swapBuffersCommands->m_impl->pushBackNewCommand<SwapBuffersCommand>(this);
 	// Just in case noone swaps
-	m_swapBuffersCommands->getImplementation().makeExecuted();
+	m_swapBuffersCommands->m_impl->makeExecuted();
 
 	m_manager->getImplementation().pinContextToCurrentThread(false);
 
@@ -128,10 +128,10 @@ void RenderingThread::start()
 
 	// Create sync command buffer
 	m_syncCommands = m_manager->newInstance<CommandBuffer>(CommandBufferInitInfo());
-	m_syncCommands->getImplementation().pushBackNewCommand<SyncCommand>(this);
+	m_syncCommands->m_impl->pushBackNewCommand<SyncCommand>(this);
 
 	m_emptyCmdb = m_manager->newInstance<CommandBuffer>(CommandBufferInitInfo());
-	m_emptyCmdb->getImplementation().pushBackNewCommand<EmptyCommand>();
+	m_emptyCmdb->m_impl->pushBackNewCommand<EmptyCommand>();
 }
 
 void RenderingThread::stop()
@@ -173,7 +173,7 @@ void RenderingThread::finish()
 		if(m_queue[i].isCreated())
 		{
 			// Fake that it's executed to avoid warnings
-			m_queue[i]->getImplementation().makeExecuted();
+			m_queue[i]->m_impl->makeExecuted();
 
 			// Release
 			m_queue[i] = CommandBufferPtr();
@@ -229,7 +229,7 @@ void RenderingThread::threadLoop()
 		}
 
 		ANKI_TRACE_START_EVENT(GL_THREAD);
-		Error err = cmd->getImplementation().executeAllCommands();
+		Error err = cmd->m_impl->executeAllCommands();
 		ANKI_TRACE_STOP_EVENT(GL_THREAD);
 
 		if(err)

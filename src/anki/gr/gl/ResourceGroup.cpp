@@ -37,7 +37,7 @@ public:
 
 	Error operator()(GlState&)
 	{
-		ResourceGroupImpl& impl = m_ptr->getImplementation();
+		ResourceGroupImpl& impl = *m_ptr->m_impl;
 
 		impl.init(m_init);
 
@@ -57,7 +57,7 @@ void ResourceGroup::init(const ResourceGroupInitInfo& init)
 
 	CommandBufferPtr cmdb = getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
 
-	cmdb->getImplementation().pushBackNewCommand<RcgCreateCommand>(this, init);
+	cmdb->m_impl->pushBackNewCommand<RcgCreateCommand>(this, init);
 	cmdb->flush();
 }
 

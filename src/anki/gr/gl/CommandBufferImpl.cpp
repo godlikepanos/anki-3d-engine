@@ -116,7 +116,7 @@ public:
 	Error operator()(GlState& state)
 	{
 		ANKI_TRACE_START_EVENT(GL_BIND_RESOURCES);
-		m_rc->getImplementation().bind(m_slot, m_info, state);
+		m_rc->m_impl->bind(m_slot, m_info, state);
 		ANKI_TRACE_STOP_EVENT(GL_BIND_RESOURCES);
 		return ErrorCode::NONE;
 	}
@@ -234,7 +234,7 @@ void CommandBufferImpl::drawElementsIndirect(U32 drawCount, PtrSize offset, Buff
 		{
 			state.flushVertexState();
 			state.flushStencilState();
-			const BufferImpl& buff = m_buff->getImplementation();
+			const BufferImpl& buff = *m_buff->m_impl;
 
 			ANKI_ASSERT(m_offset + sizeof(DrawElementsIndirectInfo) * m_drawCount <= buff.m_size);
 
@@ -291,7 +291,7 @@ void CommandBufferImpl::drawArraysIndirect(U32 drawCount, PtrSize offset, Buffer
 		{
 			state.flushVertexState();
 			state.flushStencilState();
-			const BufferImpl& buff = m_buff->getImplementation();
+			const BufferImpl& buff = *m_buff->m_impl;
 
 			ANKI_ASSERT(m_offset + sizeof(DrawArraysIndirectInfo) * m_drawCount <= buff.m_size);
 

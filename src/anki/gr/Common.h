@@ -50,6 +50,14 @@ ANKI_GR_CLASS(ResourceGroup)
 
 #undef ANKI_GR_CLASS
 
+#define ANKI_GR_OBJECT                                                                                                 \
+	friend class GrManager;                                                                                            \
+	template<typename, typename>                                                                                       \
+	friend class IntrusivePtr;                                                                                         \
+	template<typename, typename>                                                                                       \
+	friend class GenericPoolAllocator;                                                                                 \
+	friend class GrObjectCache;
+
 /// Graphics object type.
 enum GrObjectType : U16
 {

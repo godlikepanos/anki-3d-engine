@@ -34,7 +34,7 @@ void OcclusionQuery::init()
 
 		Error operator()(GlState&)
 		{
-			OcclusionQueryImpl& impl = m_q->getImplementation();
+			OcclusionQueryImpl& impl = *m_q->m_impl;
 
 			impl.init();
 
@@ -51,7 +51,7 @@ void OcclusionQuery::init()
 
 	CommandBufferPtr cmdb = getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
 
-	cmdb->getImplementation().pushBackNewCommand<CreateOqCommand>(this);
+	cmdb->m_impl->pushBackNewCommand<CreateOqCommand>(this);
 	cmdb->flush();
 }
 

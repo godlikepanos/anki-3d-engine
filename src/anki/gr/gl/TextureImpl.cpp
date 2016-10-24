@@ -307,7 +307,7 @@ TextureImpl::~TextureImpl()
 		CommandBufferPtr commands;
 
 		commands = manager.newInstance<CommandBuffer>(CommandBufferInitInfo());
-		commands->getImplementation().pushBackNewCommand<DeleteTextureCommand>(m_glName, m_texViews, getAllocator());
+		commands->m_impl->pushBackNewCommand<DeleteTextureCommand>(m_glName, m_texViews, getAllocator());
 		commands->flush();
 	}
 	else

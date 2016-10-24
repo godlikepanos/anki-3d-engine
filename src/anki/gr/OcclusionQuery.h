@@ -16,7 +16,11 @@ namespace anki
 /// Occlusion query.
 class OcclusionQuery : public GrObject
 {
-public:
+	ANKI_GR_OBJECT
+
+anki_internal:
+	UniquePtr<OcclusionQueryImpl> m_impl;
+
 	static const GrObjectType CLASS_TYPE = GrObjectType::OCCLUSION_QUERY;
 
 	/// Construct.
@@ -25,17 +29,8 @@ public:
 	/// Destroy.
 	~OcclusionQuery();
 
-	/// Access the implementation.
-	OcclusionQueryImpl& getImplementation()
-	{
-		return *m_impl;
-	}
-
 	/// Create a query.
 	void init();
-
-private:
-	UniquePtr<OcclusionQueryImpl> m_impl;
 };
 /// @}
 

@@ -39,7 +39,7 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 		const FramebufferAttachmentInfo& att = m_in.m_colorAttachments[i];
 		const GLenum binding = GL_COLOR_ATTACHMENT0 + i;
 
-		attachTextureInternal(binding, att.m_texture->getImplementation(), att);
+		attachTextureInternal(binding, *att.m_texture->m_impl, att);
 
 		m_drawBuffers[i] = binding;
 
@@ -53,7 +53,7 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 	if(m_in.m_depthStencilAttachment.m_texture.isCreated())
 	{
 		const FramebufferAttachmentInfo& att = m_in.m_depthStencilAttachment;
-		const TextureImpl& tex = att.m_texture->getImplementation();
+		const TextureImpl& tex = *att.m_texture->m_impl;
 		ANKI_ASSERT((tex.m_dsAspect & att.m_aspect) == att.m_aspect);
 
 		GLenum binding;
@@ -88,6 +88,7 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 		else
 		{
 			ANKI_ASSERT(!"Need to set FramebufferAttachmentInfo::m_aspect");
+			binding = 0;
 		}
 
 		attachTextureInternal(binding, tex, att);

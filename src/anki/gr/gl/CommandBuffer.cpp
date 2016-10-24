@@ -166,7 +166,7 @@ void CommandBuffer::bindPipeline(PipelinePtr ppline)
 			{
 				ANKI_TRACE_START_EVENT(GL_BIND_PPLINE);
 
-				PipelineImpl& impl = m_ppline->getImplementation();
+				PipelineImpl& impl = *m_ppline->m_impl;
 				impl.bind(state);
 				state.m_lastPplineBoundUuid = m_ppline->getUuid();
 				ANKI_TRACE_INC_COUNTER(GR_PIPELINE_BINDS_HAPPENED, 1);
@@ -199,7 +199,7 @@ void CommandBuffer::beginRenderPass(FramebufferPtr fb)
 
 		Error operator()(GlState& state)
 		{
-			m_fb->getImplementation().bind(state);
+			m_fb->m_impl->bind(state);
 			return ErrorCode::NONE;
 		}
 	};
@@ -269,7 +269,7 @@ void CommandBuffer::beginOcclusionQuery(OcclusionQueryPtr query)
 
 		Error operator()(GlState&)
 		{
-			m_handle->getImplementation().begin();
+			m_handle->m_impl->begin();
 			return ErrorCode::NONE;
 		}
 	};
@@ -291,7 +291,7 @@ void CommandBuffer::endOcclusionQuery(OcclusionQueryPtr query)
 
 		Error operator()(GlState&)
 		{
-			m_handle->getImplementation().end();
+			m_handle->m_impl->end();
 			return ErrorCode::NONE;
 		}
 	};
@@ -321,7 +321,7 @@ void CommandBuffer::uploadTextureSurface(
 			void* data = state.m_manager->getImplementation().getTransientMemoryManager().getBaseAddress(m_token);
 			data = static_cast<void*>(static_cast<U8*>(data) + m_token.m_offset);
 
-			m_handle->getImplementation().writeSurface(m_surf, data, m_token.m_range);
+			m_handle->m_impl->writeSurface(m_surf, data, m_token.m_range);
 
 			if(m_token.m_lifetime == TransientMemoryTokenLifetime::PERSISTENT)
 			{
@@ -360,7 +360,7 @@ void CommandBuffer::uploadTextureVolume(TexturePtr tex, const TextureVolumeInfo&
 			void* data = state.m_manager->getImplementation().getTransientMemoryManager().getBaseAddress(m_token);
 			data = static_cast<void*>(static_cast<U8*>(data) + m_token.m_offset);
 
-			m_handle->getImplementation().writeVolume(m_vol, data, m_token.m_range);
+			m_handle->m_impl->writeVolume(m_vol, data, m_token.m_range);
 
 			if(m_token.m_lifetime == TransientMemoryTokenLifetime::PERSISTENT)
 			{
@@ -399,7 +399,7 @@ void CommandBuffer::uploadBuffer(BufferPtr buff, PtrSize offset, const Transient
 			void* data = state.m_manager->getImplementation().getTransientMemoryManager().getBaseAddress(m_token);
 			data = static_cast<void*>(static_cast<U8*>(data) + m_token.m_offset);
 
-			m_handle->getImplementation().write(data, m_offset, m_token.m_range);
+			m_handle->m_impl->write(data, m_offset, m_token.m_range);
 
 			if(m_token.m_lifetime == TransientMemoryTokenLifetime::PERSISTENT)
 			{
@@ -435,7 +435,7 @@ void CommandBuffer::generateMipmaps2d(TexturePtr tex, U face, U layer)
 
 		Error operator()(GlState&)
 		{
-			m_tex->getImplementation().generateMipmaps2d(m_face, m_layer);
+			m_tex->m_impl->generateMipmaps2d(m_face, m_layer);
 			return ErrorCode::NONE;
 		}
 	};
@@ -469,7 +469,7 @@ void CommandBuffer::pushSecondLevelCommandBuffer(CommandBufferPtr cmdb)
 		Error operator()(GlState&)
 		{
 			ANKI_TRACE_START_EVENT(GL_2ND_LEVEL_CMD_BUFFER);
-			Error err = m_cmdb->getImplementation().executeAllCommands();
+			Error err = m_cmdb->m_impl->executeAllCommands();
 			ANKI_TRACE_STOP_EVENT(GL_2ND_LEVEL_CMD_BUFFER);
 			return err;
 		}
@@ -505,7 +505,7 @@ void CommandBuffer::copyTextureSurfaceToTextureSurface(
 
 		Error operator()(GlState&)
 		{
-			TextureImpl::copy(m_src->getImplementation(), m_srcSurf, m_dest->getImplementation(), m_destSurf);
+			TextureImpl::copy(*m_src->m_impl, m_srcSurf, *m_dest->m_impl, m_destSurf);
 			return ErrorCode::NONE;
 		}
 	};
@@ -611,7 +611,7 @@ void CommandBuffer::clearTextureSurface(
 
 		Error operator()(GlState&)
 		{
-			m_tex->getImplementation().clear(m_surf, m_val, m_aspect);
+			m_tex->m_impl->clear(m_surf, m_val, m_aspect);
 			return ErrorCode::NONE;
 		}
 	};
@@ -639,7 +639,7 @@ void CommandBuffer::fillBuffer(BufferPtr buff, PtrSize offset, PtrSize size, U32
 
 		Error operator()(GlState&)
 		{
-			m_buff->getImplementation().fill(m_offset, m_size, m_value);
+			m_buff->m_impl->fill(m_offset, m_size, m_value);
 			return ErrorCode::NONE;
 		}
 	};
@@ -666,12 +666,11 @@ void CommandBuffer::writeOcclusionQueryResultToBuffer(OcclusionQueryPtr query, P
 
 		Error operator()(GlState&)
 		{
-			const BufferImpl& buff = m_buff->getImplementation();
+			const BufferImpl& buff = *m_buff->m_impl;
 			ANKI_ASSERT(m_offset + 4 <= buff.m_size);
 
 			glBindBuffer(GL_QUERY_BUFFER, buff.getGlName());
-			glGetQueryObjectuiv(
-				m_query->getImplementation().getGlName(), GL_QUERY_RESULT, numberToPtr<GLuint*>(m_offset));
+			glGetQueryObjectuiv(m_query->m_impl->getGlName(), GL_QUERY_RESULT, numberToPtr<GLuint*>(m_offset));
 			glBindBuffer(GL_QUERY_BUFFER, 0);
 
 			return ErrorCode::NONE;

@@ -34,7 +34,7 @@ public:
 
 	Error operator()(GlState&)
 	{
-		TextureImpl& impl = m_tex->getImplementation();
+		TextureImpl& impl = *m_tex->m_impl;
 
 		impl.init(m_init);
 
@@ -57,7 +57,7 @@ void Texture::init(const TextureInitInfo& init)
 
 	CommandBufferPtr cmdb = getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
 
-	cmdb->getImplementation().pushBackNewCommand<CreateTextureCommand>(this, init);
+	cmdb->m_impl->pushBackNewCommand<CreateTextureCommand>(this, init);
 	cmdb->flush();
 }
 

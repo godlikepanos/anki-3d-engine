@@ -78,7 +78,7 @@ void GlObject::destroyDeferred(GlDeleteFunction deleteCallback)
 		CommandBufferPtr commands;
 
 		commands = manager.newInstance<CommandBuffer>(CommandBufferInitInfo());
-		commands->getImplementation().pushBackNewCommand<DeleteGlObjectCommand>(deleteCallback, m_glName);
+		commands->m_impl->pushBackNewCommand<DeleteGlObjectCommand>(deleteCallback, m_glName);
 		commands->flush();
 	}
 	else

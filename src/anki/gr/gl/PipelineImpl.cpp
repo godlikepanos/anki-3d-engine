@@ -125,7 +125,7 @@ Error PipelineImpl::createGlPipeline()
 		const ShaderPtr& shader = m_in.m_shaders[count];
 		if(shader.isCreated())
 		{
-			ANKI_ASSERT(count == enumToType(shader->getImplementation().m_type));
+			ANKI_ASSERT(count == enumToType(shader->m_impl->m_type));
 			mask |= 1 << count;
 		}
 	}
@@ -163,7 +163,7 @@ Error PipelineImpl::createGlPipeline()
 
 		if(shader.isCreated())
 		{
-			glAttachShader(m_glName, shader->getImplementation().getGlName());
+			glAttachShader(m_glName, shader->m_impl->getGlName());
 
 			if(i == U(ShaderType::TESSELLATION_CONTROL) || i == U(ShaderType::TESSELLATION_EVALUATION))
 			{
@@ -190,12 +190,10 @@ Error PipelineImpl::createGlPipeline()
 		glGetProgramInfoLog(m_glName, infoLen, &charsWritten, &infoLogTxt[0]);
 
 		ANKI_LOGE("Ppline error log follows (vs:%u, fs:%u):\n%s",
-			m_in.m_shaders[ShaderType::VERTEX].isCreated()
-				? m_in.m_shaders[ShaderType::VERTEX]->getImplementation().getGlName()
-				: -1,
-			m_in.m_shaders[ShaderType::FRAGMENT].isCreated()
-				? m_in.m_shaders[ShaderType::FRAGMENT]->getImplementation().getGlName()
-				: -1,
+			m_in.m_shaders[ShaderType::VERTEX].isCreated() ? m_in.m_shaders[ShaderType::VERTEX]->m_impl->getGlName()
+														   : -1,
+			m_in.m_shaders[ShaderType::FRAGMENT].isCreated() ? m_in.m_shaders[ShaderType::FRAGMENT]->m_impl->getGlName()
+															 : -1,
 			&infoLogTxt[0]);
 		err = ErrorCode::USER_DATA;
 	}

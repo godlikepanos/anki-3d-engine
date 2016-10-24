@@ -67,7 +67,11 @@ private:
 /// Resource group.
 class ResourceGroup : public GrObject
 {
-public:
+	ANKI_GR_OBJECT
+
+anki_internal:
+	UniquePtr<ResourceGroupImpl> m_impl;
+
 	static const GrObjectType CLASS_TYPE = GrObjectType::RESOURCE_GROUP;
 
 	/// Construct.
@@ -76,17 +80,8 @@ public:
 	/// Destroy.
 	~ResourceGroup();
 
-	/// Access the implementation.
-	ResourceGroupImpl& getImplementation()
-	{
-		return *m_impl;
-	}
-
 	/// Create.
 	void init(const ResourceGroupInitInfo& init);
-
-private:
-	UniquePtr<ResourceGroupImpl> m_impl;
 };
 /// @}
 

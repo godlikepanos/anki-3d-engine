@@ -36,7 +36,7 @@ void Framebuffer::init(const FramebufferInitInfo& init)
 
 		Error operator()(GlState&)
 		{
-			FramebufferImpl& impl = m_fb->getImplementation();
+			FramebufferImpl& impl = *m_fb->m_impl;
 			Error err = impl.init(m_init);
 
 			GlObject::State oldState =
@@ -52,7 +52,7 @@ void Framebuffer::init(const FramebufferInitInfo& init)
 
 	CommandBufferPtr cmdb = getManager().newInstance<CommandBuffer>(CommandBufferInitInfo());
 
-	cmdb->getImplementation().pushBackNewCommand<CreateFramebufferCommand>(this, init);
+	cmdb->m_impl->pushBackNewCommand<CreateFramebufferCommand>(this, init);
 	cmdb->flush();
 }
 
