@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/gr/common/ClassAllocator.h>
+#include <anki/gr/common/ClassGpuAllocator.h>
 #include <tests/framework/Framework.h>
 #include <random>
 #include <algorithm>
@@ -11,14 +11,14 @@
 namespace anki
 {
 
-class Mem : public ClassAllocatorMemory
+class Mem : public ClassGpuAllocatorMemory
 {
 public:
 	void* m_mem = nullptr;
 	PtrSize m_size = 0;
 };
 
-class Interface final : public ClassAllocatorInterface
+class Interface final : public ClassGpuAllocatorInterface
 {
 public:
 	class Class
@@ -49,7 +49,7 @@ public:
 		m_classes.push_back(Class(128 * 1024 * 1024, 256 * 1024 * 1024));
 	}
 
-	ANKI_USE_RESULT Error allocate(U classIdx, ClassAllocatorMemory*& mem)
+	ANKI_USE_RESULT Error allocate(U classIdx, ClassGpuAllocatorMemory*& mem)
 	{
 		PtrSize size = m_classes[classIdx].m_clusterSize;
 
@@ -71,7 +71,7 @@ public:
 		return ErrorCode::NONE;
 	}
 
-	void free(ClassAllocatorMemory* mem)
+	void free(ClassGpuAllocatorMemory* mem)
 	{
 		Mem* m = static_cast<Mem*>(mem);
 		m_crntSize -= m->m_size;
@@ -103,12 +103,12 @@ static inline U32 floorPow2(U32 v)
 	return v >> 1;
 }
 
-ANKI_TEST(Gr, ClassAllocator)
+ANKI_TEST(Gr, ClassGpuAllocator)
 {
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 	Interface iface;
 
-	ClassAllocator calloc;
+	ClassGpuAllocator calloc;
 	calloc.init(alloc, &iface);
 
 	std::mt19937 gen(0);
@@ -121,7 +121,7 @@ ANKI_TEST(Gr, ClassAllocator)
 		return size;
 	};
 
-	std::vector<ClassAllocatorHandle> handles;
+	std::vector<ClassGpuAllocatorHandle> handles;
 	const U TEST_COUNT = 100;
 	const U ITERATIONS = 20;
 
@@ -132,7 +132,7 @@ ANKI_TEST(Gr, ClassAllocator)
 			// Fill up the heap.
 			while(1)
 			{
-				ClassAllocatorHandle handle;
+				ClassGpuAllocatorHandle handle;
 				PtrSize size = nextAllocSize();
 
 				if(calloc.allocate(size, 1, handle))
@@ -180,7 +180,7 @@ ANKI_TEST(Gr, ClassAllocator)
 
 		while(baseFreeSize >= BASE_SIZE)
 		{
-			ClassAllocatorHandle handle;
+			ClassGpuAllocatorHandle handle;
 			while(calloc.allocate(baseFreeSize, 1, handle) == ErrorCode::NONE)
 			{
 				score += (pow(POWER, (log2(F32(baseFreeSize / BASE_SIZE)) + BIAS)) + OFFSET) * baseFreeSize;
@@ -194,7 +194,7 @@ ANKI_TEST(Gr, ClassAllocator)
 		printf("Score: %.3f\n", score / bestCase);
 
 		// Cleanup
-		for(ClassAllocatorHandle& h : handles)
+		for(ClassGpuAllocatorHandle& h : handles)
 		{
 			calloc.free(h);
 		}

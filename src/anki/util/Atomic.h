@@ -7,6 +7,7 @@
 
 #include <anki/util/StdTypes.h>
 #include <anki/util/NonCopyable.h>
+#include <type_traits>
 
 namespace anki
 {
@@ -39,6 +40,7 @@ public:
 	/// It will not set itself to zero.
 	Atomic()
 	{
+		static_assert(std::is_pointer<T>::value || std::is_arithmetic<T>::value, "Check the type");
 	}
 
 	Atomic(const Value& a)
@@ -83,7 +85,11 @@ public:
 	Value fetchAdd(const Y& a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
 	{
 #if defined(__GNUC__)
-		return __atomic_fetch_add(&m_val, a, static_cast<int>(memOrd));
+		// Do a trick to workaround the fact that __atomic_fetch_add doesn't take into account the size of the type
+		// if that type is a pointer.
+		Value v = Value(0);
+		v += a;
+		return __atomic_fetch_add(&m_val, v, static_cast<int>(memOrd));
 #else
 #error "TODO"
 #endif
@@ -94,7 +100,11 @@ public:
 	Value fetchSub(const Y& a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
 	{
 #if defined(__GNUC__)
-		return __atomic_fetch_sub(&m_val, a, static_cast<int>(memOrd));
+		// Do a trick to workaround the fact that __atomic_fetch_add doesn't take into account the size of the type
+		// if that type is a pointer.
+		Value v = Value(0);
+		v -= a;
+		return __atomic_fetch_sub(&m_val, v, static_cast<int>(memOrd));
 #else
 #error "TODO"
 #endif

@@ -17,7 +17,7 @@ Error MyApp::init()
 	// Init the super class
 	Config config;
 	config.set("fullscreenDesktopResolution", true);
-	config.set("dataPaths", ".:..:../assets");
+	config.set("dataPaths", ".:..");
 	config.set("debugContext", 0);
 	ANKI_CHECK(App::init(config, allocAligned, nullptr));
 

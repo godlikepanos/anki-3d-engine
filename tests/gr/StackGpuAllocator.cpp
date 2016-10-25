@@ -3,16 +3,5 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma once
-
-#include <anki/gr/Common.h>
-
-namespace anki
-{
-
-/// @addtogroup graphics
-/// @{
-
-/// @}
-
-} // end namespace anki
+#include <anki/gr/common/StackGpuAllocator.h>
+#include <tests/framework/Framework.h>

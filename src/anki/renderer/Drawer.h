@@ -45,7 +45,7 @@ public:
 private:
 	Renderer* m_r;
 
-	void flushDrawcall(DrawContext& ctx, CompleteRenderingBuildInfo& build);
+	ANKI_USE_RESULT Error flushDrawcall(DrawContext& ctx, CompleteRenderingBuildInfo& build);
 	void setupUniforms(DrawContext& ctx, CompleteRenderingBuildInfo& build);
 
 	ANKI_USE_RESULT Error drawSingle(DrawContext& ctx);

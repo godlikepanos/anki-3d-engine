@@ -344,8 +344,7 @@ void* StackMemoryPool::allocate(PtrSize size, PtrSize alignment)
 
 	size = getAlignedRoundUp(m_alignmentBytes, size);
 	ANKI_ASSERT(size > 0);
-	ANKI_ASSERT(size <= m_initialChunkSize && "The chunks should have enough "
-											  "space to hold at least one allocation");
+	ANKI_ASSERT(size <= m_initialChunkSize && "The chunks should have enough space to hold at least one allocation");
 
 	Chunk* crntChunk = nullptr;
 	Bool retry = true;

@@ -341,12 +341,12 @@ Error RenderableDrawer::drawRange(Pass pass,
 
 	// Flush the last drawcall
 	CompleteRenderingBuildInfo& build = ctx.m_buildInfo[!ctx.m_crntBuildInfo];
-	flushDrawcall(ctx, build);
+	ANKI_CHECK(flushDrawcall(ctx, build));
 
 	return ErrorCode::NONE;
 }
 
-void RenderableDrawer::flushDrawcall(DrawContext& ctx, CompleteRenderingBuildInfo& build)
+Error RenderableDrawer::flushDrawcall(DrawContext& ctx, CompleteRenderingBuildInfo& build)
 {
 	RenderComponent& rc = *build.m_rc;
 
@@ -354,7 +354,7 @@ void RenderableDrawer::flushDrawcall(DrawContext& ctx, CompleteRenderingBuildInf
 	if(ctx.m_cachedTrfCount > 1)
 	{
 		build.m_in.m_key.m_instanceCount = ctx.m_cachedTrfCount;
-		rc.buildRendering(build.m_in, build.m_out);
+		ANKI_CHECK(rc.buildRendering(build.m_in, build.m_out));
 	}
 
 	// Create the pipeline
@@ -394,6 +394,8 @@ void RenderableDrawer::flushDrawcall(DrawContext& ctx, CompleteRenderingBuildInf
 		ANKI_TRACE_INC_COUNTER(RENDERER_MERGED_DRAWCALLS, ctx.m_cachedTrfCount - 1);
 	}
 	ctx.m_cachedTrfCount = 0;
+
+	return ErrorCode::NONE;
 }
 
 Error RenderableDrawer::drawSingle(DrawContext& ctx)
@@ -423,7 +425,7 @@ Error RenderableDrawer::drawSingle(DrawContext& ctx)
 	crntBuild.m_in.m_subMeshIndicesCount = ctx.m_visibleNode->m_spatialsCount;
 
 	resetRenderingBuildInfoOut(crntBuild.m_out);
-	renderable.buildRendering(crntBuild.m_in, crntBuild.m_out);
+	ANKI_CHECK(renderable.buildRendering(crntBuild.m_in, crntBuild.m_out));
 	ANKI_ASSERT(crntBuild.m_out.m_stateMask
 		== (PipelineSubStateBit::VERTEX | PipelineSubStateBit::INPUT_ASSEMBLER | PipelineSubStateBit::SHADERS));
 
@@ -447,7 +449,7 @@ Error RenderableDrawer::drawSingle(DrawContext& ctx)
 	{
 		// Cannot merge, flush the previous build info
 
-		flushDrawcall(ctx, prevBuild);
+		ANKI_CHECK(flushDrawcall(ctx, prevBuild));
 
 		// Cache the current build
 		if(crntBuild.m_out.m_hasTransform)

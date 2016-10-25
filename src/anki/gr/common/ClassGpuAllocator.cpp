@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/gr/common/ClassAllocator.h>
+#include <anki/gr/common/ClassGpuAllocator.h>
 #include <anki/util/List.h>
 #include <anki/util/BitSet.h>
 
@@ -13,11 +13,11 @@ namespace anki
 /// Max number of sub allocations (aka slots) per chunk.
 const U MAX_SLOTS_PER_CHUNK = 128;
 
-class ClassAllocatorChunk : public IntrusiveListEnabled<ClassAllocatorChunk>
+class ClassGpuAllocatorChunk : public IntrusiveListEnabled<ClassGpuAllocatorChunk>
 {
 public:
 	/// mem.
-	ClassAllocatorMemory* m_mem;
+	ClassGpuAllocatorMemory* m_mem;
 
 	/// The in use slots mask.
 	BitSet<MAX_SLOTS_PER_CHUNK, U8> m_inUseSlots = {false};
@@ -26,14 +26,14 @@ public:
 	U32 m_inUseSlotCount = 0;
 
 	/// The owner.
-	ClassAllocatorClass* m_class = nullptr;
+	ClassGpuAllocatorClass* m_class = nullptr;
 };
 
-class ClassAllocatorClass
+class ClassGpuAllocatorClass
 {
 public:
 	/// The active chunks.
-	IntrusiveList<ClassAllocatorChunk> m_inUseChunks;
+	IntrusiveList<ClassGpuAllocatorChunk> m_inUseChunks;
 
 	/// The size of each chunk.
 	PtrSize m_chunkSize = 0;
@@ -47,17 +47,18 @@ public:
 	Mutex m_mtx;
 };
 
-ClassAllocator::~ClassAllocator()
+ClassGpuAllocator::~ClassGpuAllocator()
 {
 	for(Class& c : m_classes)
 	{
+		(void)c;
 		ANKI_ASSERT(c.m_inUseChunks.isEmpty() && "Forgot to deallocate");
 	}
 
 	m_classes.destroy(m_alloc);
 }
 
-void ClassAllocator::init(GenericMemoryPoolAllocator<U8> alloc, ClassAllocatorInterface* iface)
+void ClassGpuAllocator::init(GenericMemoryPoolAllocator<U8> alloc, ClassGpuAllocatorInterface* iface)
 {
 	ANKI_ASSERT(iface);
 	m_alloc = alloc;
@@ -87,7 +88,7 @@ void ClassAllocator::init(GenericMemoryPoolAllocator<U8> alloc, ClassAllocatorIn
 	}
 }
 
-ClassAllocator::Class* ClassAllocator::findClass(PtrSize size, U alignment)
+ClassGpuAllocator::Class* ClassGpuAllocator::findClass(PtrSize size, U alignment)
 {
 	ANKI_ASSERT(size > 0 && alignment > 0);
 
@@ -129,7 +130,7 @@ ClassAllocator::Class* ClassAllocator::findClass(PtrSize size, U alignment)
 	return nullptr;
 }
 
-ClassAllocator::Chunk* ClassAllocator::findChunkWithUnusedSlot(Class& cl)
+ClassGpuAllocator::Chunk* ClassGpuAllocator::findChunkWithUnusedSlot(Class& cl)
 {
 	auto it = cl.m_inUseChunks.getBegin();
 	const auto end = cl.m_inUseChunks.getEnd();
@@ -146,9 +147,9 @@ ClassAllocator::Chunk* ClassAllocator::findChunkWithUnusedSlot(Class& cl)
 	return nullptr;
 }
 
-Error ClassAllocator::createChunk(Class& cl, Chunk*& chunk)
+Error ClassGpuAllocator::createChunk(Class& cl, Chunk*& chunk)
 {
-	ClassAllocatorMemory* mem = nullptr;
+	ClassGpuAllocatorMemory* mem = nullptr;
 
 	ANKI_CHECK(m_iface->allocate(&cl - &m_classes[0], mem));
 	ANKI_ASSERT(mem);
@@ -162,14 +163,14 @@ Error ClassAllocator::createChunk(Class& cl, Chunk*& chunk)
 	return ErrorCode::NONE;
 }
 
-void ClassAllocator::destroyChunk(Class& cl, Chunk& chunk)
+void ClassGpuAllocator::destroyChunk(Class& cl, Chunk& chunk)
 {
 	cl.m_inUseChunks.erase(&chunk);
 	m_iface->free(chunk.m_mem);
 	m_alloc.deleteInstance(&chunk);
 }
 
-Error ClassAllocator::allocate(PtrSize size, U alignment, ClassAllocatorHandle& handle)
+Error ClassGpuAllocator::allocate(PtrSize size, U alignment, ClassGpuAllocatorHandle& handle)
 {
 	ANKI_ASSERT(!handle);
 	ANKI_ASSERT(handle.valid());
@@ -209,7 +210,7 @@ Error ClassAllocator::allocate(PtrSize size, U alignment, ClassAllocatorHandle& 
 	return ErrorCode::NONE;
 }
 
-void ClassAllocator::free(ClassAllocatorHandle& handle)
+void ClassGpuAllocator::free(ClassGpuAllocatorHandle& handle)
 {
 	ANKI_ASSERT(handle);
 	ANKI_ASSERT(handle.valid());

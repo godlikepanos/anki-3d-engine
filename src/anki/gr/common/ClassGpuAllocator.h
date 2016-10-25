@@ -11,30 +11,30 @@ namespace anki
 {
 
 // Forward
-class ClassAllocatorChunk;
-class ClassAllocatorClass;
+class ClassGpuAllocatorChunk;
+class ClassGpuAllocatorClass;
 
 /// @addtogroup graphics
 /// @{
 
 /// The user defined output of an allocation.
-class ClassAllocatorMemory
+class ClassGpuAllocatorMemory
 {
 };
 
 /// The user defined methods to allocate memory.
-class ClassAllocatorInterface
+class ClassGpuAllocatorInterface
 {
 public:
-	virtual ~ClassAllocatorInterface()
+	virtual ~ClassGpuAllocatorInterface()
 	{
 	}
 
 	/// Allocate memory. Should be thread safe.
-	virtual ANKI_USE_RESULT Error allocate(U classIdx, ClassAllocatorMemory*& mem) = 0;
+	virtual ANKI_USE_RESULT Error allocate(U classIdx, ClassGpuAllocatorMemory*& mem) = 0;
 
 	/// Free memory. Should be thread safe.
-	virtual void free(ClassAllocatorMemory* mem) = 0;
+	virtual void free(ClassGpuAllocatorMemory* mem) = 0;
 
 	/// Get the number of classes.
 	virtual U getClassCount() const = 0;
@@ -45,12 +45,12 @@ public:
 };
 
 /// The output of an allocation.
-class ClassAllocatorHandle
+class ClassGpuAllocatorHandle
 {
-	friend class ClassAllocator;
+	friend class ClassGpuAllocator;
 
 public:
-	ClassAllocatorMemory* m_memory = nullptr;
+	ClassGpuAllocatorMemory* m_memory = nullptr;
 	PtrSize m_offset = 0;
 
 	operator Bool() const
@@ -59,7 +59,7 @@ public:
 	}
 
 private:
-	ClassAllocatorChunk* m_chunk = nullptr;
+	ClassGpuAllocatorChunk* m_chunk = nullptr;
 
 	Bool valid() const
 	{
@@ -67,7 +67,7 @@ private:
 	}
 };
 
-class ClassAllocatorStats
+class ClassGpuAllocatorStats
 {
 public:
 	PtrSize m_totalMemoryUsage;
@@ -76,31 +76,31 @@ public:
 };
 
 /// Class based allocator.
-class ClassAllocator : public NonCopyable
+class ClassGpuAllocator : public NonCopyable
 {
 public:
-	ClassAllocator()
+	ClassGpuAllocator()
 	{
 	}
 
-	~ClassAllocator();
+	~ClassGpuAllocator();
 
-	void init(GenericMemoryPoolAllocator<U8> alloc, ClassAllocatorInterface* iface);
+	void init(GenericMemoryPoolAllocator<U8> alloc, ClassGpuAllocatorInterface* iface);
 
 	/// Allocate memory.
-	ANKI_USE_RESULT Error allocate(PtrSize size, U alignment, ClassAllocatorHandle& handle);
+	ANKI_USE_RESULT Error allocate(PtrSize size, U alignment, ClassGpuAllocatorHandle& handle);
 
 	/// Free allocated memory.
-	void free(ClassAllocatorHandle& handle);
+	void free(ClassGpuAllocatorHandle& handle);
 
-	void getStats(ClassAllocatorStats& stats) const;
+	void getStats(ClassGpuAllocatorStats& stats) const;
 
 private:
-	using Class = ClassAllocatorClass;
-	using Chunk = ClassAllocatorChunk;
+	using Class = ClassGpuAllocatorClass;
+	using Chunk = ClassGpuAllocatorChunk;
 
 	GenericMemoryPoolAllocator<U8> m_alloc;
-	ClassAllocatorInterface* m_iface = nullptr;
+	ClassGpuAllocatorInterface* m_iface = nullptr;
 
 	/// The memory classes.
 	DynamicArray<Class> m_classes;
