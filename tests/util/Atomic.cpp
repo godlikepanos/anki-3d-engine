@@ -33,6 +33,12 @@ ANKI_TEST(Util, Atomic)
 	}
 
 	{
+		Atomic<U32> a{3};
+		a.fetchSub(1);
+		ANKI_TEST_EXPECT_EQ(a.load(), 2);
+	}
+
+	{
 		U32 u[2];
 		Atomic<U32*> a{&u[0]};
 		a.fetchAdd(1);

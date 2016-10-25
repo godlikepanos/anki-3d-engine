@@ -34,9 +34,9 @@ layout(std140, ANKI_SS_BINDING(0, 0)) readonly buffer s0_
 	Luminance u_luminance;
 };
 
-layout(location = 0) in vec2 in_uv;
+layout(location = 1) in vec2 in_uv;
 #if SMAA_ENABLED
-layout(location = 1) in vec4 in_smaaOffset;
+layout(location = 0) in vec4 in_smaaOffset;
 #endif
 
 layout(location = 0) out vec3 out_color;

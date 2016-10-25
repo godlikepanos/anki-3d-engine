@@ -103,7 +103,7 @@ public:
 		// Do a trick to workaround the fact that __atomic_fetch_add doesn't take into account the size of the type
 		// if that type is a pointer.
 		Value v = Value(0);
-		v -= a;
+		v += a;
 		return __atomic_fetch_sub(&m_val, v, static_cast<int>(memOrd));
 #else
 #error "TODO"

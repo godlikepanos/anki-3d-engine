@@ -12,9 +12,9 @@
 #include "shaders/SMAA.hlsl"
 #endif
 
-layout(location = 0) out vec2 out_uv;
+layout(location = 1) out vec2 out_uv;
 #if SMAA_ENABLED
-layout(location = 1) out vec4 out_smaaOffset;
+layout(location = 0) out vec4 out_smaaOffset;
 #endif
 
 void main(void)
