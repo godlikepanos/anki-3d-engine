@@ -34,9 +34,14 @@ layout(std140, ANKI_SS_BINDING(0, 0)) readonly buffer s0_
 	Luminance u_luminance;
 };
 
-layout(location = 1) in vec2 in_uv;
+#if NVIDIA_LINK_ERROR_WORKAROUND
+layout(location = 0) in vec4 in_uv;
+#else
+layout(location = 0) in vec2 in_uv;
+#endif
+
 #if SMAA_ENABLED
-layout(location = 0) in vec4 in_smaaOffset;
+layout(location = 1) in vec4 in_smaaOffset;
 #endif
 
 layout(location = 0) out vec3 out_color;
@@ -121,7 +126,7 @@ void main()
 #if DRAW_TO_DEFAULT && defined(ANKI_VK)
 	vec2 uv = vec2(in_uv.x, 1.0 - in_uv.y);
 #else
-	vec2 uv = in_uv;
+	vec2 uv = in_uv.xy;
 #endif
 
 #if SHARPEN_ENABLED
