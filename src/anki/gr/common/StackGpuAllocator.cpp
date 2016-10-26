@@ -106,7 +106,7 @@ Error StackGpuAllocator::allocate(PtrSize size, StackGpuAllocatorHandle& handle)
 
 					newChunk->m_next = nullptr;
 					newChunk->m_offset.set(0);
-					ANKI_CHECK(m_iface->allocate(newChunk->m_size, m_alignment, newChunk->m_mem));
+					ANKI_CHECK(m_iface->allocate(newChunk->m_size, newChunk->m_mem));
 
 					m_crntChunk.store(newChunk);
 				}

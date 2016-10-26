@@ -30,7 +30,7 @@ public:
 	}
 
 	/// Allocate memory. Should be thread safe.
-	virtual ANKI_USE_RESULT Error allocate(PtrSize size, U32 alignment, StackGpuAllocatorMemory*& mem) = 0;
+	virtual ANKI_USE_RESULT Error allocate(PtrSize size, StackGpuAllocatorMemory*& mem) = 0;
 
 	/// Free memory. Should be thread safe.
 	virtual void free(StackGpuAllocatorMemory* mem) = 0;
