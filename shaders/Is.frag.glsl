@@ -191,8 +191,6 @@ void main()
 		{
 			shadow = computeShadowFactorOmni(
 				frag2Light, shadowmapLayerIdx, 1.0 / sqrt(light.posRadius.w), u_lightingUniforms.viewMat, u_omniMapArr);
-
-			shadow = dither(shadow, 64.0);
 		}
 
 		out_color += (specC + diffC) * (att * max(subsurface, lambert * shadow));
@@ -214,8 +212,6 @@ void main()
 		{
 			shadow = computeShadowFactorSpot(
 				light.texProjectionMat, fragPos, shadowmapLayerIdx, shadowSampleCount, u_spotMapArr);
-
-			shadow = dither(shadow, 64.0);
 		}
 
 		out_color += (diffC + specC) * (att * spot * max(subsurface, lambert * shadow));
