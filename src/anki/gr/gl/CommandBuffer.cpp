@@ -318,10 +318,8 @@ void CommandBuffer::uploadTextureSurface(
 
 		Error operator()(GlState& state)
 		{
-			void* data = state.m_manager->getImplementation().getTransientMemoryManager().getBaseAddress(m_token);
-			data = static_cast<void*>(static_cast<U8*>(data) + m_token.m_offset);
-
-			m_handle->m_impl->writeSurface(m_surf, data, m_token.m_range);
+			GLuint pbo = state.m_manager->getImplementation().getTransientMemoryManager().getGlName(m_token);
+			m_handle->m_impl->writeSurface(m_surf, pbo, m_token.m_offset, m_token.m_range);
 
 			if(m_token.m_lifetime == TransientMemoryTokenLifetime::PERSISTENT)
 			{
@@ -357,10 +355,8 @@ void CommandBuffer::uploadTextureVolume(TexturePtr tex, const TextureVolumeInfo&
 
 		Error operator()(GlState& state)
 		{
-			void* data = state.m_manager->getImplementation().getTransientMemoryManager().getBaseAddress(m_token);
-			data = static_cast<void*>(static_cast<U8*>(data) + m_token.m_offset);
-
-			m_handle->m_impl->writeVolume(m_vol, data, m_token.m_range);
+			GLuint pbo = state.m_manager->getImplementation().getTransientMemoryManager().getGlName(m_token);
+			m_handle->m_impl->writeVolume(m_vol, pbo, m_token.m_offset, m_token.m_range);
 
 			if(m_token.m_lifetime == TransientMemoryTokenLifetime::PERSISTENT)
 			{
@@ -396,10 +392,8 @@ void CommandBuffer::uploadBuffer(BufferPtr buff, PtrSize offset, const Transient
 
 		Error operator()(GlState& state)
 		{
-			void* data = state.m_manager->getImplementation().getTransientMemoryManager().getBaseAddress(m_token);
-			data = static_cast<void*>(static_cast<U8*>(data) + m_token.m_offset);
-
-			m_handle->m_impl->write(data, m_offset, m_token.m_range);
+			GLuint pbo = state.m_manager->getImplementation().getTransientMemoryManager().getGlName(m_token);
+			m_handle->m_impl->write(pbo, m_token.m_offset, m_offset, m_token.m_range);
 
 			if(m_token.m_lifetime == TransientMemoryTokenLifetime::PERSISTENT)
 			{

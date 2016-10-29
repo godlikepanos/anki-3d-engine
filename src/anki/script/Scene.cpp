@@ -1149,9 +1149,18 @@ static inline int pwrapDecalComponentsetDiffuseDecal(lua_State* l)
 	}
 
 	// Call the method
-	self->setDiffuseDecal(arg0, arg1, arg2);
+	Error ret = self->setDiffuseDecal(arg0, arg1, arg2);
 
-	return 0;
+	// Push return value
+	if(ANKI_UNLIKELY(ret))
+	{
+		lua_pushstring(l, "Glue code returned an error");
+		return -1;
+	}
+
+	lua_pushnumber(l, ret);
+
+	return 1;
 }
 
 /// Wrap method DecalComponent::setDiffuseDecal.
@@ -1207,9 +1216,18 @@ static inline int pwrapDecalComponentsetNormalRoughnessDecal(lua_State* l)
 	}
 
 	// Call the method
-	self->setNormalRoughnessDecal(arg0, arg1, arg2);
+	Error ret = self->setNormalRoughnessDecal(arg0, arg1, arg2);
 
-	return 0;
+	// Push return value
+	if(ANKI_UNLIKELY(ret))
+	{
+		lua_pushstring(l, "Glue code returned an error");
+		return -1;
+	}
+
+	lua_pushnumber(l, ret);
+
+	return 1;
 }
 
 /// Wrap method DecalComponent::setNormalRoughnessDecal.

@@ -14,16 +14,16 @@ namespace anki
 /// @{
 
 /// Manages pre-allocated GPU memory for per frame usage.
-class GpuFrameRingAllocator : public NonCopyable
+class FrameGpuAllocator : public NonCopyable
 {
 	friend class DynamicMemorySerializeCommand;
 
 public:
-	GpuFrameRingAllocator()
+	FrameGpuAllocator()
 	{
 	}
 
-	~GpuFrameRingAllocator()
+	~FrameGpuAllocator()
 	{
 	}
 

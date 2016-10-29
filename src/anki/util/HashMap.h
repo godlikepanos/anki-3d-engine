@@ -280,8 +280,19 @@ protected:
 
 } // end namespace detail
 
+/// Default hash key compare.
+template<typename TKey>
+class DefaultHashKeyCompare
+{
+public:
+	Bool operator()(const TKey& a, const TKey& b) const
+	{
+		return a == b;
+	}
+};
+
 /// Hash map template.
-template<typename TKey, typename TValue, typename THasher, typename TCompare>
+template<typename TKey, typename TValue, typename THasher, typename TCompare = DefaultHashKeyCompare<TKey>>
 class HashMap : public detail::HashMapBase<TKey, TValue, THasher, TCompare, detail::HashMapNode<TValue>>
 {
 private:

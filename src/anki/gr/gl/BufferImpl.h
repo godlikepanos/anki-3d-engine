@@ -46,12 +46,12 @@ public:
 		glBindBufferRange(target, binding, m_glName, offset, size);
 	}
 
-	void write(const void* buff, U32 offset, U32 size) const
+	void write(GLuint pbo, U32 pboOffset, U32 offset, U32 size) const
 	{
 		ANKI_ASSERT(isCreated());
 		ANKI_ASSERT(offset + size <= m_size);
-		glBindBuffer(m_target, m_glName);
-		glBufferSubData(m_target, offset, size, buff);
+
+		glCopyNamedBufferSubData(pbo, m_glName, pboOffset, offset, size);
 	}
 
 	void fill(PtrSize offset, PtrSize size, U32 value)

@@ -102,8 +102,7 @@ void Clusterer::init(const GenericMemoryPoolAllocator<U8>& alloc, U clusterCount
 	m_counts[1] = clusterCountY;
 	m_counts[2] = clusterCountZ;
 
-	// Init planes. One plane for each direction, plus near/far plus the world
-	// space of those
+	// Init planes. One plane for each direction, plus near/far plus the world space of those
 	U planesCount = (m_counts[0] - 1) * 2 // planes J
 		+ (m_counts[1] - 1) * 2 // planes I
 		+ 2; // Near and far planes

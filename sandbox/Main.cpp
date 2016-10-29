@@ -10,7 +10,7 @@
 
 using namespace anki;
 
-#define PLAYER 1
+#define PLAYER 0
 #define MOUSE 1
 
 class MyApp : public App

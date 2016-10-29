@@ -54,23 +54,13 @@ public:
 	{
 		return m_memory != nullptr;
 	}
-
-private:
-	StackGpuAllocatorChunk* m_chunk = nullptr;
-
-	Bool valid() const
-	{
-		return (m_memory && m_chunk) || (m_memory == nullptr && m_chunk == nullptr);
-	}
 };
 
 /// Linear based allocator.
 class StackGpuAllocator : public NonCopyable
 {
 public:
-	StackGpuAllocator()
-	{
-	}
+	StackGpuAllocator() = default;
 
 	~StackGpuAllocator();
 
@@ -81,6 +71,12 @@ public:
 
 	/// Reset all the memory chunks. Not thread safe.
 	void reset();
+
+	StackGpuAllocatorInterface* getInterface() const
+	{
+		ANKI_ASSERT(m_iface);
+		return m_iface;
+	}
 
 private:
 	using Chunk = StackGpuAllocatorChunk;

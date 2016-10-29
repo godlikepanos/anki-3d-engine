@@ -29,8 +29,6 @@ void TransientMemoryManager::destroyRenderThread()
 			glDeleteBuffers(1, &buff.m_name);
 			buff.m_name = 0;
 		}
-
-		buff.m_cpuBuff.destroy(m_alloc);
 	}
 }
 
@@ -39,82 +37,52 @@ void TransientMemoryManager::initMainThread(GenericMemoryPoolAllocator<U8> alloc
 	m_alloc = alloc;
 
 	m_perFrameBuffers[TransientBufferType::UNIFORM].m_size = cfg.getNumber("gr.uniformPerFrameMemorySize");
-
 	m_perFrameBuffers[TransientBufferType::STORAGE].m_size = cfg.getNumber("gr.storagePerFrameMemorySize");
-
 	m_perFrameBuffers[TransientBufferType::VERTEX].m_size = cfg.getNumber("gr.vertexPerFrameMemorySize");
-
 	m_perFrameBuffers[TransientBufferType::TRANSFER].m_size = cfg.getNumber("gr.transferPerFrameMemorySize");
+}
+
+void TransientMemoryManager::initBuffer(TransientBufferType type, U32 alignment, PtrSize maxAllocSize, GLenum target)
+{
+	const U BUFF_FLAGS = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT;
+
+	// Create buffer
+	PerFrameBuffer& buff = m_perFrameBuffers[type];
+	glGenBuffers(1, &buff.m_name);
+	glBindBuffer(target, buff.m_name);
+
+	// Map it
+	glBufferStorage(target, buff.m_size, nullptr, BUFF_FLAGS);
+	buff.m_mappedMem = static_cast<U8*>(glMapBufferRange(target, 0, buff.m_size, BUFF_FLAGS));
+	ANKI_ASSERT(buff.m_mappedMem);
+
+	// Create the allocator
+	buff.m_alloc.init(buff.m_size, alignment, maxAllocSize);
+
+	glBindBuffer(target, 0);
 }
 
 void TransientMemoryManager::initRenderThread()
 {
-	const U BUFF_FLAGS = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT;
-
 	// Uniform
 	{
-		// Create buffer
-		PerFrameBuffer& buff = m_perFrameBuffers[TransientBufferType::UNIFORM];
-		PtrSize size = buff.m_size;
-		glGenBuffers(1, &buff.m_name);
-		glBindBuffer(GL_UNIFORM_BUFFER, buff.m_name);
-
-		// Map it
-		glBufferStorage(GL_UNIFORM_BUFFER, size, nullptr, BUFF_FLAGS);
-		buff.m_mappedMem = static_cast<U8*>(glMapBufferRange(GL_UNIFORM_BUFFER, 0, size, BUFF_FLAGS));
-		ANKI_ASSERT(buff.m_mappedMem);
-
-		// Create the allocator
 		GLint64 blockAlignment;
 		glGetInteger64v(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &blockAlignment);
-		buff.m_alloc.init(size, blockAlignment, MAX_UNIFORM_BLOCK_SIZE);
+		initBuffer(TransientBufferType::UNIFORM, blockAlignment, MAX_UNIFORM_BLOCK_SIZE, GL_UNIFORM_BUFFER);
 	}
 
 	// Storage
 	{
-		// Create buffer
-		PerFrameBuffer& buff = m_perFrameBuffers[TransientBufferType::STORAGE];
-		PtrSize size = buff.m_size;
-		glGenBuffers(1, &buff.m_name);
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, buff.m_name);
-
-		// Map it
-		glBufferStorage(GL_SHADER_STORAGE_BUFFER, size, nullptr, BUFF_FLAGS);
-		buff.m_mappedMem = static_cast<U8*>(glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, size, BUFF_FLAGS));
-		ANKI_ASSERT(buff.m_mappedMem);
-
-		// Create the allocator
 		GLint64 blockAlignment;
 		glGetInteger64v(GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT, &blockAlignment);
-		buff.m_alloc.init(size, blockAlignment, MAX_STORAGE_BLOCK_SIZE);
+		initBuffer(TransientBufferType::STORAGE, blockAlignment, MAX_STORAGE_BLOCK_SIZE, GL_SHADER_STORAGE_BUFFER);
 	}
 
 	// Vertex
-	{
-		// Create buffer
-		PerFrameBuffer& buff = m_perFrameBuffers[TransientBufferType::VERTEX];
-		PtrSize size = buff.m_size;
-		glGenBuffers(1, &buff.m_name);
-		glBindBuffer(GL_ARRAY_BUFFER, buff.m_name);
-
-		// Map it
-		glBufferStorage(GL_ARRAY_BUFFER, size, nullptr, BUFF_FLAGS);
-		buff.m_mappedMem = static_cast<U8*>(glMapBufferRange(GL_ARRAY_BUFFER, 0, size, BUFF_FLAGS));
-		ANKI_ASSERT(buff.m_mappedMem);
-
-		// Create the allocator
-		buff.m_alloc.init(size, 16, MAX_U32);
-	}
+	initBuffer(TransientBufferType::VERTEX, 16, MAX_U32, GL_ARRAY_BUFFER);
 
 	// Transfer
-	{
-		PerFrameBuffer& buff = m_perFrameBuffers[TransientBufferType::TRANSFER];
-		PtrSize size = buff.m_size;
-		buff.m_cpuBuff.create(m_alloc, size);
-
-		buff.m_mappedMem = reinterpret_cast<U8*>(&buff.m_cpuBuff[0]);
-		buff.m_alloc.init(size, 16, MAX_U32);
-	}
+	initBuffer(TransientBufferType::TRANSFER, 16, MAX_U32, GL_PIXEL_UNPACK_BUFFER);
 }
 
 void TransientMemoryManager::allocate(PtrSize size,

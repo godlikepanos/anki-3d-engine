@@ -462,10 +462,9 @@ void TextureImpl::init(const TextureInitInfo& init)
 	ANKI_CHECK_GL_ERROR();
 }
 
-void TextureImpl::writeSurface(const TextureSurfaceInfo& surf, void* data, PtrSize dataSize)
+void TextureImpl::writeSurface(const TextureSurfaceInfo& surf, GLuint pbo, PtrSize offset, PtrSize dataSize)
 {
 	checkSurface(surf);
-	ANKI_ASSERT(data);
 	ANKI_ASSERT(dataSize > 0);
 
 	U mipmap = surf.m_level;
@@ -476,52 +475,54 @@ void TextureImpl::writeSurface(const TextureSurfaceInfo& surf, void* data, PtrSi
 	ANKI_ASSERT(h > 0);
 
 	bind();
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo);
+	const void* ptrOffset = numberToPtr<const void*>(offset);
 
 	switch(m_target)
 	{
 	case GL_TEXTURE_2D:
 		if(!m_compressed)
 		{
-			glTexSubImage2D(m_target, mipmap, 0, 0, w, h, m_format, m_type, data);
+			glTexSubImage2D(m_target, mipmap, 0, 0, w, h, m_format, m_type, ptrOffset);
 		}
 		else
 		{
-			glCompressedTexSubImage2D(m_target, mipmap, 0, 0, w, h, m_format, dataSize, data);
+			glCompressedTexSubImage2D(m_target, mipmap, 0, 0, w, h, m_format, dataSize, ptrOffset);
 		}
 		break;
 	case GL_TEXTURE_CUBE_MAP:
 		if(!m_compressed)
 		{
-			glTexSubImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + surfIdx, mipmap, 0, 0, w, h, m_format, m_type, data);
+			glTexSubImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + surfIdx, mipmap, 0, 0, w, h, m_format, m_type, ptrOffset);
 		}
 		else
 		{
 			glCompressedTexSubImage2D(
-				GL_TEXTURE_CUBE_MAP_POSITIVE_X + surfIdx, mipmap, 0, 0, w, h, m_format, dataSize, data);
+				GL_TEXTURE_CUBE_MAP_POSITIVE_X + surfIdx, mipmap, 0, 0, w, h, m_format, dataSize, ptrOffset);
 		}
 		break;
 	case GL_TEXTURE_2D_ARRAY:
 	case GL_TEXTURE_3D:
 		if(!m_compressed)
 		{
-			glTexSubImage3D(m_target, mipmap, 0, 0, surfIdx, w, h, 1, m_format, m_type, data);
+			glTexSubImage3D(m_target, mipmap, 0, 0, surfIdx, w, h, 1, m_format, m_type, ptrOffset);
 		}
 		else
 		{
-			glCompressedTexSubImage3D(m_target, mipmap, 0, 0, surfIdx, w, h, 1, m_format, dataSize, data);
+			glCompressedTexSubImage3D(m_target, mipmap, 0, 0, surfIdx, w, h, 1, m_format, dataSize, ptrOffset);
 		}
 		break;
 	default:
 		ANKI_ASSERT(0);
 	}
 
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 	ANKI_CHECK_GL_ERROR();
 }
 
-void TextureImpl::writeVolume(const TextureVolumeInfo& vol, void* data, PtrSize dataSize)
+void TextureImpl::writeVolume(const TextureVolumeInfo& vol, GLuint pbo, PtrSize offset, PtrSize dataSize)
 {
 	checkVolume(vol);
-	ANKI_ASSERT(data);
 	ANKI_ASSERT(dataSize > 0);
 	ANKI_ASSERT(m_texType == TextureType::_3D);
 
@@ -534,16 +535,19 @@ void TextureImpl::writeVolume(const TextureVolumeInfo& vol, void* data, PtrSize 
 	ANKI_ASSERT(d > 0);
 
 	bind();
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo);
+	const void* ptrOffset = numberToPtr<const void*>(offset);
 
 	if(!m_compressed)
 	{
-		glTexSubImage3D(m_target, mipmap, 0, 0, 0, w, h, d, m_format, m_type, data);
+		glTexSubImage3D(m_target, mipmap, 0, 0, 0, w, h, d, m_format, m_type, ptrOffset);
 	}
 	else
 	{
-		glCompressedTexSubImage3D(m_target, mipmap, 0, 0, 0, w, h, d, m_format, dataSize, data);
+		glCompressedTexSubImage3D(m_target, mipmap, 0, 0, 0, w, h, d, m_format, dataSize, ptrOffset);
 	}
 
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 	ANKI_CHECK_GL_ERROR();
 }
 

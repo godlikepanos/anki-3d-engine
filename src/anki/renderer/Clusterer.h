@@ -128,8 +128,7 @@ private:
 	Plane* m_nearPlane; ///< In world space
 	Plane* m_farPlane; ///< In world space
 
-	/// Used to check if the frustum is changed and we need to update the
-	/// planes.
+	/// Used to check if the frustum is changed and we need to update the planes.
 	const SceneNode* m_node = nullptr;
 
 	const FrustumComponent* m_frc = nullptr; ///< Cache it.

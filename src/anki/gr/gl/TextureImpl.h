@@ -61,10 +61,10 @@ public:
 	void init(const TextureInitInfo& init);
 
 	/// Write texture data.
-	void writeSurface(const TextureSurfaceInfo& surf, void* data, PtrSize dataSize);
+	void writeSurface(const TextureSurfaceInfo& surf, GLuint pbo, PtrSize offset, PtrSize dataSize);
 
 	/// Write texture data.
-	void writeVolume(const TextureVolumeInfo& vol, void* data, PtrSize dataSize);
+	void writeVolume(const TextureVolumeInfo& vol, GLuint pbo, PtrSize offset, PtrSize dataSize);
 
 	/// Generate mipmaps.
 	void generateMipmaps2d(U face, U layer);

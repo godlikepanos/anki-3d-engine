@@ -3,12 +3,12 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/gr/common/GpuFrameRingAllocator.h>
+#include <anki/gr/common/FrameGpuAllocator.h>
 
 namespace anki
 {
 
-void GpuFrameRingAllocator::init(PtrSize size, U32 alignment, PtrSize maxAllocationSize)
+void FrameGpuAllocator::init(PtrSize size, U32 alignment, PtrSize maxAllocationSize)
 {
 	ANKI_ASSERT(!isCreated());
 	ANKI_ASSERT(size > 0 && alignment > 0 && maxAllocationSize > 0);
@@ -21,7 +21,7 @@ void GpuFrameRingAllocator::init(PtrSize size, U32 alignment, PtrSize maxAllocat
 	m_maxAllocationSize = maxAllocationSize;
 }
 
-PtrSize GpuFrameRingAllocator::endFrame()
+PtrSize FrameGpuAllocator::endFrame()
 {
 	ANKI_ASSERT(isCreated());
 
@@ -41,7 +41,7 @@ PtrSize GpuFrameRingAllocator::endFrame()
 	return bytesNotUsed;
 }
 
-Error GpuFrameRingAllocator::allocate(PtrSize originalSize, PtrSize& outOffset)
+Error FrameGpuAllocator::allocate(PtrSize originalSize, PtrSize& outOffset)
 {
 	ANKI_ASSERT(isCreated());
 	ANKI_ASSERT(originalSize > 0);
@@ -79,7 +79,7 @@ Error GpuFrameRingAllocator::allocate(PtrSize originalSize, PtrSize& outOffset)
 }
 
 #if ANKI_ENABLE_TRACE
-PtrSize GpuFrameRingAllocator::getUnallocatedMemorySize() const
+PtrSize FrameGpuAllocator::getUnallocatedMemorySize() const
 {
 	PtrSize perFrameSize = m_size / MAX_FRAMES_IN_FLIGHT;
 	PtrSize crntFrameStartOffset = perFrameSize * (m_frame % MAX_FRAMES_IN_FLIGHT);

@@ -17,8 +17,9 @@
 namespace anki
 {
 
-struct ShaderCommonUniforms
+class ShaderCommonUniforms
 {
+public:
 	Vec4 m_projectionParams;
 	Vec4 m_rendererSizeTimePad1;
 	Vec4 m_nearFarClustererMagicPad1;
@@ -26,6 +27,17 @@ struct ShaderCommonUniforms
 	Mat3x4 m_invViewRotation;
 	UVec4 m_tileCount;
 };
+
+enum class ShaderVariantBit : U8
+{
+	P_LIGHTS = 1 << 0,
+	S_LIGHTS = 1 << 1,
+	DECALS = 1 << 2,
+	INDIRECT = 1 << 3,
+	P_LIGHTS_SHADOWS = 1 << 4,
+	S_LIGHTS_SHADOWS = 1 << 5
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderVariantBit, inline)
 
 Is::Is(Renderer* r)
 	: RenderingPass(r)
@@ -66,6 +78,7 @@ Error Is::initInternal(const ConfigSet& config)
 	ANKI_ASSERT(m_rtMipCount);
 
 	U clusterCount = m_r->getTileCountXY().x() * m_r->getTileCountXY().y() * config.getNumber("clusterSizeZ");
+	m_clusterCount = clusterCount;
 	m_maxLightIds *= clusterCount;
 
 	m_lightBin = getAllocator().newInstance<LightBin>(getAllocator(),
@@ -271,6 +284,69 @@ void Is::setPreRunBarriers(RenderingContext& ctx)
 		TextureUsageBit::NONE,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 		TextureSurfaceInfo(0, 0, 0, 0));
+}
+
+Error Is::getOrCreatePipeline(ShaderVariantBit variantMask, RenderingContext& ctx, PipelinePtr& ppline)
+{
+	auto it = m_shaderVariantMap.find(variantMask);
+	if(it != m_shaderVariantMap.getEnd())
+	{
+		ppline = it->m_lightPpline;
+	}
+	else
+	{
+		StringAuto pps(ctx.m_tempAllocator);
+
+		pps.sprintf("#define TILE_COUNT_X %u\n"
+					"#define TILE_COUNT_Y %u\n"
+					"#define CLUSTER_COUNT %u\n"
+					"#define RENDERER_WIDTH %u\n"
+					"#define RENDERER_HEIGHT %u\n"
+					"#define MAX_LIGHT_INDICES %u\n"
+					"#define POISSON %u\n"
+					"#define INDIRECT_ENABLED %u\n"
+					"#define IR_MIPMAP_COUNT %u\n"
+					"#define POINT_LIGHTS_ENABLED %u\n"
+					"#define SPOT_LIGHTS_ENABLED %u\n"
+					"#define DECALS_ENABLED %u\n"
+					"#define POINT_LIGHTS_SHADOWS_ENABLED %u\n"
+					"#define SPOT_LIGHTS_SHADOWS_ENABLED %u\n",
+			m_r->getTileCountXY().x(),
+			m_r->getTileCountXY().y(),
+			m_clusterCount,
+			m_r->getWidth(),
+			m_r->getHeight(),
+			m_maxLightIds,
+			m_r->getSm().getPoissonEnabled(),
+			!!(variantMask & ShaderVariantBit::INDIRECT),
+			m_r->getIr().getReflectionTextureMipmapCount(),
+			!!(variantMask & ShaderVariantBit::P_LIGHTS),
+			!!(variantMask & ShaderVariantBit::S_LIGHTS),
+			!!(variantMask & ShaderVariantBit::DECALS),
+			!!(variantMask & ShaderVariantBit::P_LIGHTS_SHADOWS),
+			!!(variantMask & ShaderVariantBit::S_LIGHTS_SHADOWS));
+
+		ShaderVariant variant;
+		ANKI_CHECK(getResourceManager().loadResourceToCache(
+			variant.m_lightFrag, "shaders/Is.frag.glsl", pps.toCString(), "r_"));
+
+		PipelineInitInfo init;
+
+		init.m_inputAssembler.m_topology = PrimitiveTopology::TRIANGLE_STRIP;
+		init.m_depthStencil.m_depthWriteEnabled = false;
+		init.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
+		init.m_color.m_attachmentCount = 1;
+		init.m_color.m_attachments[0].m_format = IS_COLOR_ATTACHMENT_PIXEL_FORMAT;
+		init.m_shaders[U(ShaderType::VERTEX)] = m_lightVert->getGrShader();
+		init.m_shaders[U(ShaderType::FRAGMENT)] = m_lightFrag->getGrShader();
+		variant.m_lightPpline = getGrManager().newInstance<Pipeline>(init);
+
+		ppline = variant.m_lightPpline;
+
+		m_shaderVariantMap.pushBack(getAllocator(), variantMask, variant);
+	}
+
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

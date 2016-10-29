@@ -144,7 +144,7 @@ void main()
 	out_color += bloom;
 #endif
 
-// out_color = colorGrading(out_color);
+	out_color = colorGrading(out_color);
 
 #if 0
 	{

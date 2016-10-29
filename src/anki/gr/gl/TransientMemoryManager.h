@@ -6,7 +6,7 @@
 #pragma once
 
 #include <anki/gr/gl/Common.h>
-#include <anki/gr/common/GpuFrameRingAllocator.h>
+#include <anki/gr/common/FrameGpuAllocator.h>
 #include <anki/gr/common/GpuBlockAllocator.h>
 #include <anki/gr/common/Misc.h>
 
@@ -49,21 +49,6 @@ public:
 		ANKI_ASSERT(token.m_lifetime == TransientMemoryTokenLifetime::PERSISTENT);
 	}
 
-	void* getBaseAddress(const TransientMemoryToken& token) const
-	{
-		void* addr;
-		if(token.m_lifetime == TransientMemoryTokenLifetime::PER_FRAME)
-		{
-			addr = m_perFrameBuffers[bufferUsageToTransient(token.m_usage)].m_mappedMem;
-		}
-		else
-		{
-			addr = nullptr;
-		}
-		ANKI_ASSERT(addr);
-		return addr;
-	}
-
 	GLuint getGlName(const TransientMemoryToken& token) const
 	{
 		GLuint name;
@@ -80,24 +65,20 @@ public:
 	}
 
 private:
-	class alignas(16) Aligned16Type
-	{
-		U8 _m_val[16];
-	};
-
-	// CPU or GPU buffer.
+	// GPU buffer.
 	class PerFrameBuffer
 	{
 	public:
 		PtrSize m_size = 0;
 		GLuint m_name = 0;
-		DynamicArray<Aligned16Type> m_cpuBuff;
 		U8* m_mappedMem = nullptr;
-		GpuFrameRingAllocator m_alloc;
+		FrameGpuAllocator m_alloc;
 	};
 
 	GenericMemoryPoolAllocator<U8> m_alloc;
 	Array<PerFrameBuffer, U(TransientBufferType::COUNT)> m_perFrameBuffers;
+
+	void initBuffer(TransientBufferType type, U32 alignment, PtrSize maxAllocSize, GLenum target);
 };
 /// @}
 

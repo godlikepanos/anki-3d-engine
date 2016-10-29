@@ -6,7 +6,7 @@
 #pragma once
 
 #include <anki/gr/vulkan/Common.h>
-#include <anki/gr/common/GpuFrameRingAllocator.h>
+#include <anki/gr/common/FrameGpuAllocator.h>
 #include <anki/gr/common/Misc.h>
 
 namespace anki
@@ -65,7 +65,7 @@ private:
 		BufferImpl* m_buff = nullptr;
 		U8* m_mappedMem = nullptr;
 		VkBuffer m_bufferHandle = VK_NULL_HANDLE; ///< Cache it.
-		GpuFrameRingAllocator m_alloc;
+		FrameGpuAllocator m_alloc;
 	};
 
 	GrManager* m_manager = nullptr;
