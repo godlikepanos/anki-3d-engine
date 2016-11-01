@@ -22,11 +22,36 @@ class Obb : public ConvexShape
 public:
 	using Base = ConvexShape;
 
-	Obb();
+	Obb()
+		: Base(CollisionShapeType::OBB)
+	{
+	}
 
-	Obb(const Obb& b);
+	Obb(const Obb& b)
+		: Base(CollisionShapeType::OBB)
+	{
+		operator=(b);
+	}
 
-	Obb(const Vec4& center, const Mat3x4& rotation, const Vec4& extend);
+	Obb(const Vec4& center, const Mat3x4& rotation, const Vec4& extend)
+		: Base(CollisionShapeType::OBB)
+		, m_center(center)
+		, m_rotation(rotation)
+		, m_transposedRotation(rotation)
+		, m_extend(extend)
+	{
+		m_transposedRotation.transposeRotationPart();
+	}
+
+	Obb& operator=(const Obb& b)
+	{
+		m_center = b.m_center;
+		m_rotation = b.m_rotation;
+		m_transposedRotation = b.m_transposedRotation;
+		m_extend = b.m_extend;
+		m_cache = b.m_cache;
+		return *this;
+	}
 
 	const Vec4& getCenter() const
 	{
@@ -63,34 +88,32 @@ public:
 		m_extend = x;
 	}
 
-	Obb& operator=(const Obb& b);
-
 	/// Implements CollisionShape::accept
-	void accept(MutableVisitor& v)
+	void accept(MutableVisitor& v) override
 	{
 		v.visit(*this);
 	}
 	/// Implements CollisionShape::accept
-	void accept(ConstVisitor& v) const
+	void accept(ConstVisitor& v) const override
 	{
 		v.visit(*this);
 	}
 
 	/// Implements CollisionShape::testPlane
-	F32 testPlane(const Plane& p) const;
+	F32 testPlane(const Plane& p) const override;
 
 	/// Implements CollisionShape::transform
-	void transform(const Transform& trf)
+	void transform(const Transform& trf) override
 	{
 		*this = getTransformed(trf);
 	}
 
 	/// Implements CollisionShape::computeAabb
-	void computeAabb(Aabb& aabb) const;
+	void computeAabb(Aabb& aabb) const override;
 
 	Obb getTransformed(const Transform& transform) const;
 
-	/// Get a collision shape that includes this and the given. Its not very accurate
+	/// Get a collision shape that includes this and the given. It's not very accurate.
 	Obb getCompoundShape(const Obb& b) const;
 
 	/// Calculate from a set of points
@@ -100,16 +123,18 @@ public:
 	void getExtremePoints(Array<Vec4, 8>& points) const;
 
 	/// Implements ConvexShape::computeSupport
-	Vec4 computeSupport(const Vec4& dir) const;
+	Vec4 computeSupport(const Vec4& dir) const override;
 
-public:
-	Vec4 m_center;
-	Mat3x4 m_rotation;
-	Mat3x4 m_transposedRotation; ///< Used for visibility tests
-	Vec4 m_extend; ///< With identity rotation this points to max (front, right, top in our case)
+private:
+	Vec4 m_center = Vec4(0.0f);
+	Mat3x4 m_rotation = Mat3x4::getIdentity();
+	Mat3x4 m_transposedRotation = Mat3x4::getIdentity(); ///< Used for visibility tests
+	/// With identity rotation this points to max (front, right, top in our case)
+	Vec4 m_extend = Vec4(Vec3(EPSILON), 0.0);
 
-	struct
+	class
 	{
+	public:
 		mutable Aabb m_aabb;
 		mutable Array<Vec4, 8> m_extremePoints;
 		mutable Bool8 m_dirtyAabb = true;

@@ -41,7 +41,7 @@ Error LightEvent::update(F32 prevUpdateTime, F32 crntTime)
 {
 	F32 freq = randRange(m_freq - m_freqDeviation, m_freq + m_freqDeviation);
 
-	F32 factor = sin(crntTime * freq * getPi<F32>()) / 2.0 + 0.5;
+	F32 factor = sin(crntTime * freq * PI) / 2.0 + 0.5;
 	LightComponent& lightc = getSceneNode()->getComponent<LightComponent>();
 
 	// Update radius

@@ -172,7 +172,7 @@ Error PhysicsPlayerController::create(const PhysicsPlayerControllerInitInfo& ini
 	}
 
 	// Create the outer thick cylinder
-	Mat4 outerShapeRot(Mat3(Axisang(getPi<F32>() / 2.0, Vec3(0.0, 0.0, 1.0))));
+	Mat4 outerShapeRot(Mat3(Axisang(PI / 2.0, Vec3(0.0, 0.0, 1.0))));
 	Mat4 outerShapeMatrix = localAxis * outerShapeRot;
 	F32 capsuleHeight = m_height - m_stepHeight;
 	ANKI_ASSERT(capsuleHeight > 0.0);

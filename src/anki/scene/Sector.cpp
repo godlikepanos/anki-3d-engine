@@ -451,7 +451,7 @@ void SectorGroup::binSpatial(SpatialComponent* sp)
 			}
 
 			// Detailed test
-			const F32 smallf = getEpsilon<F32>() * 10.0;
+			const F32 smallf = EPSILON * 10.0;
 			Aabb smallBox(center, center + Vec4(smallf, smallf, smallf, 0.0));
 			if(collide)
 			{

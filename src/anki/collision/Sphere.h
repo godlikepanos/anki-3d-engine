@@ -114,6 +114,10 @@ public:
 	/// Implements CompoundShape::computeSupport
 	Vec4 computeSupport(const Vec4& dir) const;
 
+	/// Intersect a ray with the sphere. It will not return the points that are not part of the ray.
+	Bool intersectsRay(
+		const Vec4& rayDir, const Vec4& rayOrigin, Array<Vec4, 2>& intersectionPoints, U& intersectionPointCount) const;
+
 private:
 	Vec4 m_center;
 	F32 m_radius;

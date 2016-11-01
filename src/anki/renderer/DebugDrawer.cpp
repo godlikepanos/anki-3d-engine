@@ -256,14 +256,14 @@ void DebugDrawer::drawSphere(F32 radius, I complexity)
 	begin(PrimitiveTopology::LINES);
 
 	// Pre-calculate the sphere points5
-	F32 fi = getPi<F32>() / complexity;
+	F32 fi = PI / complexity;
 
 	Vec3 prev(1.0, 0.0, 0.0);
-	for(F32 th = fi; th < getPi<F32>() * 2.0 + fi; th += fi)
+	for(F32 th = fi; th < PI * 2.0 + fi; th += fi)
 	{
 		Vec3 p = Mat3(Euler(0.0, th, 0.0)) * Vec3(1.0, 0.0, 0.0);
 
-		for(F32 th2 = 0.0; th2 < getPi<F32>(); th2 += fi)
+		for(F32 th2 = 0.0; th2 < PI; th2 += fi)
 		{
 			Mat3 rot(Euler(th2, 0.0, 0.0));
 
@@ -273,7 +273,7 @@ void DebugDrawer::drawSphere(F32 radius, I complexity)
 			pushBackVertex(rotPrev);
 			pushBackVertex(rotP);
 
-			Mat3 rot2(Euler(0.0, 0.0, getPi<F32>() / 2));
+			Mat3 rot2(Euler(0.0, 0.0, PI / 2));
 
 			pushBackVertex(rot2 * rotPrev);
 			pushBackVertex(rot2 * rotP);
@@ -341,7 +341,7 @@ void CollisionDebugDrawer::visit(const Plane& plane)
 	Quat q;
 	q.setFrom2Vec3(Vec3(0.0, 0.0, 1.0), n);
 	Mat3 rot(q);
-	rot.rotateXAxis(getPi<F32>() / 2.0);
+	rot.rotateXAxis(PI / 2.0);
 	Mat4 trf(Vec4(n * o, 1.0), rot);
 
 	m_dbg->setModelMatrix(trf);
@@ -388,7 +388,7 @@ void CollisionDebugDrawer::visit(const Frustum& f)
 		const PerspectiveFrustum& pf = static_cast<const PerspectiveFrustum&>(f);
 
 		F32 camLen = pf.getFar();
-		F32 tmp0 = camLen / tan((getPi<F32>() - pf.getFovX()) * 0.5) + 0.001;
+		F32 tmp0 = camLen / tan((PI - pf.getFovX()) * 0.5) + 0.001;
 		F32 tmp1 = camLen * tan(pf.getFovY() * 0.5) + 0.001;
 
 		Vec3 points[] = {

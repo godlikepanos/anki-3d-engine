@@ -42,7 +42,7 @@ void SoftwareRasterizer::clipTriangle(const Vec4* inVerts, Vec4* outVerts, U& ou
 	ANKI_ASSERT(inVerts && outVerts);
 
 	const Plane& plane = m_planesL[Frustum::PlaneType::NEAR];
-	F32 clipZ = -plane.getOffset() - getEpsilon<F32>();
+	F32 clipZ = -plane.getOffset() - EPSILON;
 	ANKI_ASSERT(clipZ < 0.0);
 
 	Array<Bool, 3> vertInside;

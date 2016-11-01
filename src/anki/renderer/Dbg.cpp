@@ -176,30 +176,25 @@ Error Dbg::run(RenderingContext& ctx)
 		CollisionDebugDrawer cd(m_drawer);
 		Mat4 proj = camFrc.getProjectionMatrix();
 
-		Array<Plane, 6> planes;
-		Array<Plane*, 6> pplanes = {&planes[0],
-			&planes[1],
-			&planes[2],
-			&planes[3],
-			&planes[4],
-			&planes[5]};
-		extractClipPlanes(proj, pplanes);
-
-		planes[5].accept(cd);
-
 		m_drawer->setViewProjectionMatrix(camFrc.getViewProjectionMatrix());
+
+		Sphere s(Vec4(1.2, 2.0, -1.1, 0.0), 2.1);
+
+		s.accept(cd);
+
+		Transform trf = scene.findSceneNode("light0").getComponent<MoveComponent>().getWorldTransform();
+		Vec4 rayOrigin = trf.getOrigin();
+		Vec3 rayDir = -trf.getRotation().getZAxis().getNormalized();
 		m_drawer->setModelMatrix(Mat4::getIdentity());
+		m_drawer->drawLine(rayOrigin.xyz(), rayOrigin.xyz() + rayDir.xyz() * 10.0, Vec4(1.0, 1.0, 1.0, 1.0));
 
-		m_drawer->setColor(Vec4(0.0, 1.0, 1.0, 1.0));
-		PerspectiveFrustum frc;
-		const PerspectiveFrustum& cfrc =
-			(const PerspectiveFrustum&)camFrc.getFrustum();
-		frc.setAll(
-			cfrc.getFovX(), cfrc.getFovY(), cfrc.getNear(), cfrc.getFar());
-		cd.visit(frc);
-
-		m_drawer->drawLine(Vec3(0.0), planes[5].getNormal().xyz() * 100.0, 
-			Vec4(1.0));
+		Array<Vec4, 2> intersectionPoints;
+		U intersectionPointCount;
+		s.intersectsRay(rayDir.xyz0(), rayOrigin, intersectionPoints, intersectionPointCount);
+		for(U i = 0; i < intersectionPointCount; ++i)
+		{
+			m_drawer->drawLine(Vec3(0.0), intersectionPoints[i].xyz(), Vec4(0.0, 1.0, 0.0, 1.0));
+		}
 	}
 #endif
 

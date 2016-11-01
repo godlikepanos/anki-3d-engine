@@ -148,13 +148,13 @@ void PerspectiveFrustum::recalculate()
 	//
 	F32 c, s; // cos & sine
 
-	sinCos(getPi<F32>() + m_fovX / 2.0, s, c);
+	sinCos(PI + m_fovX / 2.0, s, c);
 	// right
 	m_planesL[PlaneType::RIGHT] = Plane(Vec4(c, 0.0, s, 0.0), 0.0);
 	// left
 	m_planesL[PlaneType::LEFT] = Plane(Vec4(-c, 0.0, s, 0.0), 0.0);
 
-	sinCos((getPi<F32>() + m_fovY) * 0.5, s, c);
+	sinCos((PI + m_fovY) * 0.5, s, c);
 	// bottom
 	m_planesL[PlaneType::BOTTOM] = Plane(Vec4(0.0, s, c, 0.0), 0.0);
 	// top

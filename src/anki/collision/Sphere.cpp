@@ -143,4 +143,53 @@ Vec4 Sphere::computeSupport(const Vec4& dir) const
 	return m_center + dir.getNormalized() * m_radius;
 }
 
+Bool Sphere::intersectsRay(
+	const Vec4& rayDir, const Vec4& rayOrigin, Array<Vec4, 2>& intersectionPoints, U& intersectionPointCount) const
+{
+	ANKI_ASSERT(isZero(rayDir.getLengthSquared() - 1.0));
+	ANKI_ASSERT(rayDir.w() == 0.0 && rayOrigin.w() == 0.0);
+
+	// See https://en.wikipedia.org/wiki/Line%E2%80%93sphere_intersection
+
+	const Vec4& o = rayOrigin;
+	const Vec4& l = rayDir;
+	const Vec4& c = m_center;
+	F32 R = m_radius;
+
+	Vec4 o_c = o - c;
+
+	F32 a = l.dot(o_c);
+	F32 b = a * a - o_c.getLengthSquared() + R * R;
+
+	if(b < 0.0)
+	{
+		intersectionPointCount = 0;
+		return false;
+	}
+	else if(b == 0.0)
+	{
+		intersectionPointCount = 1;
+		intersectionPoints[0] = -a * l + o;
+		return true;
+	}
+	else
+	{
+		F32 d = -a - sqrt(b);
+		intersectionPointCount = 0;
+		if(d > 0.0)
+		{
+			intersectionPointCount = 1;
+			intersectionPoints[0] = d * l + o;
+		}
+
+		d = -a + sqrt(b);
+		if(d > 0.0)
+		{
+			intersectionPoints[intersectionPointCount++] = d * l + o;
+		}
+
+		return intersectionPointCount > 0;
+	}
+}
+
 } // end namespace anki

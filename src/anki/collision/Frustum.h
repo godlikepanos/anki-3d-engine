@@ -187,8 +187,8 @@ public:
 	{
 		ANKI_ASSERT(near > 0.0);
 		ANKI_ASSERT(far > near);
-		ANKI_ASSERT(fovX <= getPi<F32>());
-		ANKI_ASSERT(fovY <= getPi<F32>());
+		ANKI_ASSERT(fovX <= PI);
+		ANKI_ASSERT(fovY <= PI);
 		m_fovX = fovX;
 		m_fovY = fovY;
 		m_near = near;

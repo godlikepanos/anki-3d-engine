@@ -15,39 +15,11 @@ namespace anki
 /// @addtogroup math
 /// @{
 
-template<typename Scalar>
-constexpr Scalar getPi();
+/// Just PI.
+const F32 PI = 3.14159265358979323846f;
 
-template<>
-inline constexpr F32 getPi<F32>()
-{
-	return 3.14159265358979323846f;
-}
-
-template<>
-inline constexpr F64 getPi<F64>()
-{
-	return 3.14159265358979323846;
-}
-
-template<typename Scalar>
-constexpr Scalar getEpsilon()
-{
-	static_assert(1, "Shouldn't instantiate");
-	return Scalar(0);
-}
-
-template<>
-constexpr F32 getEpsilon<F32>()
-{
-	return 1.0e-6f;
-}
-
-template<>
-constexpr F64 getEpsilon<F64>()
-{
-	return 1.0e-6;
-}
+/// Floating point epsilon.
+const F32 EPSILON = 1.0e-6f;
 
 template<typename T>
 inline T sin(const T rad)
@@ -145,7 +117,7 @@ inline F64 absolute(const F64 f)
 template<typename T>
 inline Bool isZero(const T f)
 {
-	return absolute<T>(f) < getEpsilon<T>();
+	return absolute<T>(f) < EPSILON;
 }
 
 #define ANKI_SPECIALIZE_IS_ZERO_INT(type_)                                                                             \
@@ -169,13 +141,13 @@ ANKI_SPECIALIZE_IS_ZERO_INT(U64)
 template<typename T>
 inline T toRad(const T degrees)
 {
-	return degrees * (getPi<T>() / T(180));
+	return degrees * (PI / T(180));
 }
 
 template<typename T>
 inline T toDegrees(const T rad)
 {
-	return rad * (T(180) / getPi<T>());
+	return rad * (T(180) / PI);
 }
 
 /// Linear interpolation between values
@@ -195,7 +167,7 @@ static Type linearInterpolate(const Type& from, const Type& to, F32 u)
 template<typename Type>
 static Type cosInterpolate(const Type& from, const Type& to, F32 u)
 {
-	F32 u2 = (1.0 - cos<F32>(u * getPi<F32>())) / 2.0;
+	F32 u2 = (1.0 - cos<F32>(u * PI)) / 2.0;
 	return from * (1.0 - u2) + to * u2;
 }
 

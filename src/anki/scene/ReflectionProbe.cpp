@@ -63,7 +63,6 @@ Error ReflectionProbe::init(F32 radius)
 	const F32 zNear = FRUSTUM_NEAR_PLANE;
 
 	Mat3 rot;
-	const F32 PI = getPi<F32>();
 
 	rot = Mat3(Euler(0.0, -PI / 2.0, 0.0)) * Mat3(Euler(0.0, 0.0, PI));
 	m_cubeSides[0].m_localTrf.setRotation(Mat3x4(rot));

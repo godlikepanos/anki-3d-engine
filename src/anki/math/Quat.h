@@ -78,7 +78,7 @@ public:
 	explicit TQuat(const TMat3<T>& m3)
 	{
 		T trace = m3(0, 0) + m3(1, 1) + m3(2, 2) + 1.0;
-		if(trace > getEpsilon<T>())
+		if(trace > EPSILON)
 		{
 			T s = 0.5 / sqrt<T>(trace);
 			w() = 0.25 / s;
@@ -174,7 +174,7 @@ public:
 		normalize();
 		w() += 1.0;
 
-		if(w() <= getEpsilon<T>())
+		if(w() <= EPSILON)
 		{
 			if(from.z() * from.z() > from.x() * from.x())
 			{

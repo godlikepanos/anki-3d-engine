@@ -43,6 +43,25 @@ Clusterer::~Clusterer()
 	m_allPlanes.destroy(m_alloc);
 }
 
+void Clusterer::initDisk()
+{
+	ANKI_ASSERT(m_disk.getSize() == 8 && "Assumes that");
+
+	// The radius is a little bit bigger than 1.0
+	F32 radius = 1.0 / cos(PI / 8.0);
+
+	for(U i = 0; i < 8; ++i)
+	{
+		F32 ang = (PI / 2.0) / 8.0;
+		ang = i * ang;
+
+		F32 x = cos(ang) * radius;
+		F32 y = sin(ang) * radius;
+
+		m_disk[i] = Vec4(x, y, 0.0, 0.0);
+	}
+}
+
 void Clusterer::initTestResults(const GenericMemoryPoolAllocator<U8>& alloc, ClustererTestResult& rez) const
 {
 	rez.m_clusterIds.create(alloc, getClusterCount());

@@ -45,14 +45,14 @@ public:
 		if(test > 0.499)
 		{
 			y() = 2.0 * atan2<T>(q.x(), q.w());
-			z() = getPi<T>() / 2.0;
+			z() = PI / 2.0;
 			x() = 0.0;
 			return;
 		}
 		if(test < -0.499)
 		{
 			y() = -2.0 * atan2<T>(q.x(), q.w());
-			z() = -getPi<T>() / 2.0;
+			z() = -PI / 2.0;
 			x() = 0.0;
 			return;
 		}

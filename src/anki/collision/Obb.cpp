@@ -10,43 +10,6 @@
 namespace anki
 {
 
-Obb::Obb()
-	: Base(CollisionShapeType::OBB)
-	, m_center(Vec4(0.0))
-	, m_rotation(Mat3x4::getIdentity())
-	, m_transposedRotation(Mat3x4::getIdentity())
-	, m_extend(Vec3(getEpsilon<F32>()), 0.0)
-{
-}
-
-Obb::Obb(const Obb& b)
-	: Base(CollisionShapeType::OBB)
-{
-	operator=(b);
-}
-
-Obb::Obb(const Vec4& center, const Mat3x4& rotation, const Vec4& extend)
-	: Base(CollisionShapeType::OBB)
-	, m_center(center)
-	, m_rotation(rotation)
-	, m_transposedRotation(rotation)
-	, m_extend(extend)
-{
-	m_transposedRotation.transposeRotationPart();
-}
-
-Obb& Obb::operator=(const Obb& b)
-{
-	m_center = b.m_center;
-	m_rotation = b.m_rotation;
-	m_transposedRotation = b.m_transposedRotation;
-	m_extend = b.m_extend;
-
-	m_cache = b.m_cache;
-
-	return *this;
-}
-
 F32 Obb::testPlane(const Plane& p) const
 {
 	Vec4 xNormal = (m_transposedRotation * p.getNormal()).xyz0();
@@ -177,7 +140,7 @@ void Obb::computeAabb(Aabb& aabb) const
 	Vec4 newE = Vec4(absM * m_extend, 0.0);
 
 	// Add a small epsilon to avoid some assertions
-	Vec4 epsilon(Vec3(getEpsilon<F32>() * 100.0), 0.0);
+	Vec4 epsilon(Vec3(EPSILON * 100.0), 0.0);
 	aabb = Aabb(m_center - newE, m_center + newE + epsilon);
 
 	// Update cache

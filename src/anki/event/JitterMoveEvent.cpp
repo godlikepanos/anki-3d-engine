@@ -43,7 +43,7 @@ Error JitterMoveEvent::update(F32 prevUpdateTime, F32 crntTime)
 
 	Transform trf = move.getLocalTransform();
 
-	F32 factor = sin(getDelta(crntTime) * getPi<F32>());
+	F32 factor = sin(getDelta(crntTime) * PI);
 
 	trf.getOrigin() = linearInterpolate(m_originalPos, m_newPos, factor);
 

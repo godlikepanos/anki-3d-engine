@@ -67,7 +67,7 @@ public:
 				return;
 			}
 
-			m_ang = getPi<T>();
+			m_ang = PI;
 			m_axis.x() = (m3(0, 0) + 1.0) / 2.0;
 			if(m_axis.x() > 0.0)
 			{

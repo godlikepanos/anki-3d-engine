@@ -141,6 +141,10 @@ private:
 	F32 m_calcNearOpt = 0.0;
 	F32 m_shaderMagicVal = 0.0;
 
+	Array<Vec4, 8> m_disk; ///< To bin a sphere in tiles.
+
+	void initDisk();
+
 	F32 calcNear(U k) const;
 
 	U calcZ(F32 zVspace) const;
@@ -163,6 +167,8 @@ private:
 
 	/// Call this when a shape is visible by all tiles.
 	void totallyInsideAllTiles(U zBegin, U zEnd, ClustererTestResult& rez) const;
+
+	void createConverHull();
 };
 /// @}
 

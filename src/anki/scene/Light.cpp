@@ -205,7 +205,6 @@ Error PointLight::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 		const F32 zNear = LightComponent::FRUSTUM_NEAR_PLANE;
 
 		Mat3 rot;
-		const F32 PI = getPi<F32>();
 
 		rot = Mat3(Euler(0.0, -PI / 2.0, 0.0)) * Mat3(Euler(0.0, 0.0, PI));
 		m_shadowData[0].m_localTrf.setRotation(Mat3x4(rot));
