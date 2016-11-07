@@ -41,6 +41,7 @@ Sphere Sphere::getTransformed(const Transform& trf) const
 
 	newSphere.m_center = trf.transform(m_center);
 	newSphere.m_radius = m_radius * trf.getScale();
+	newSphere.m_radiusSq = newSphere.m_radius * newSphere.m_radius;
 	return newSphere;
 }
 
@@ -136,6 +137,7 @@ void Sphere::setFromPointCloud(const void* buff, U count, PtrSize stride, PtrSiz
 	});
 
 	m_radius = sqrt(maxDist);
+	m_radiusSq = m_radius * m_radius;
 }
 
 Vec4 Sphere::computeSupport(const Vec4& dir) const
@@ -154,12 +156,12 @@ Bool Sphere::intersectsRay(
 	const Vec4& o = rayOrigin;
 	const Vec4& l = rayDir;
 	const Vec4& c = m_center;
-	F32 R = m_radius;
+	F32 R2 = m_radiusSq;
 
 	Vec4 o_c = o - c;
 
 	F32 a = l.dot(o_c);
-	F32 b = a * a - o_c.getLengthSquared() + R * R;
+	F32 b = a * a - o_c.getLengthSquared() + R2;
 
 	if(b < 0.0)
 	{

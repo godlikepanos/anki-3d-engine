@@ -16,7 +16,7 @@
 #include <anki/misc/ConfigSet.h>
 #include <anki/collision/ConvexHullShape.h>
 #include <anki/Ui.h> /// XXX
-#include <anki/scene/SoftwareRasterizer.h> /// XXX
+#include <anki/renderer/Clusterer.h> /// XXX
 
 namespace anki
 {
@@ -200,97 +200,56 @@ Error Dbg::run(RenderingContext& ctx)
 
 #if 0
 	{
-		m_drawer->setViewProjectionMatrix(Mat4::getIdentity());
-		m_drawer->setModelMatrix(Mat4::getIdentity());
-		Mat4 proj = camFrc.getProjectionMatrix();
-		Mat4 view = camFrc.getViewMatrix();
+		Clusterer c;
+		c.init(getAllocator(), 16, 12, 30);
 
-		Array<Vec4, 12> ltriangle = {Vec4(0.0, 2.0, 2.0, 1.0),
-			Vec4(4.0, 2.0, 2.0, 1.0),
-			Vec4(0.0, 8.0, 2.0, 1.0),
+		const FrustumComponent& frc = scene.findSceneNode("cam0").getComponent<FrustumComponent>();
+		const MoveComponent& movc = scene.findSceneNode("cam0").getComponent<MoveComponent>();
 
-			Vec4(0.0, 8.0, 2.0, 1.0),
-			Vec4(4.0, 2.0, 2.0, 1.0),
-			Vec4(4.0, 8.0, 2.0, 1.0),
+		ClustererPrepareInfo pinf;
+		pinf.m_viewMat = frc.getViewMatrix();
+		pinf.m_projMat = frc.getProjectionMatrix();
+		pinf.m_camTrf = frc.getFrustum().getTransform();
+		c.prepare(m_r->getThreadPool(), pinf);
 
-			Vec4(0.9, 2.0, 1.9, 1.0),
-			Vec4(4.9, 2.0, 1.9, 1.0),
-			Vec4(0.9, 8.0, 1.9, 1.0),
-
-			Vec4(0.9, 8.0, 1.9, 1.0),
-			Vec4(4.9, 2.0, 1.9, 1.0),
-			Vec4(4.9, 8.0, 1.9, 1.0)};
-
-		SoftwareRasterizer r;
-		r.init(getAllocator());
-		r.prepare(
-			view, proj, m_r->getTileCountXY().x(), m_r->getTileCountXY().y());
-		r.draw(&ltriangle[0][0], 12, sizeof(Vec4));
-
-		/*m_drawer->begin(PrimitiveTopology::TRIANGLES);
-		U count = 0;
-		for(U y = 0; y < m_r->getTileCountXY().y(); ++y)
+		class DD : public ClustererDebugDrawer
 		{
-			for(U x = 0; x < m_r->getTileCountXY().x(); ++x)
+		public:
+			DebugDrawer* m_d;
+
+			void operator()(const Vec3& lineA, const Vec3& lineB, const Vec3& color)
 			{
-				F32 d = r.m_zbuffer[y * m_r->getTileCountXY().x() + x].get()
-					/ F32(MAX_U32);
-
-				if(d < 1.0)
-				{
-					F32 zNear = camFrc.getFrustum().getNear();
-					F32 zFar = camFrc.getFrustum().getFar();
-					F32 ld =
-						(2.0 * zNear) / (zFar + zNear - d * (zFar - zNear));
-					m_drawer->setColor(Vec4(ld));
-
-					++count;
-					Vec2 min(F32(x) / m_r->getTileCountXY().x(),
-						F32(y) / m_r->getTileCountXY().y());
-
-					Vec2 max(F32(x + 1) / m_r->getTileCountXY().x(),
-						F32(y + 1) / m_r->getTileCountXY().y());
-
-					min = min * 2.0 - 1.0;
-					max = max * 2.0 - 1.0;
-
-					m_drawer->pushBackVertex(Vec3(min.x(), min.y(), 0.0));
-					m_drawer->pushBackVertex(Vec3(max.x(), min.y(), 0.0));
-					m_drawer->pushBackVertex(Vec3(min.x(), max.y(), 0.0));
-
-					m_drawer->pushBackVertex(Vec3(min.x(), max.y(), 0.0));
-					m_drawer->pushBackVertex(Vec3(max.x(), min.y(), 0.0));
-					m_drawer->pushBackVertex(Vec3(max.x(), max.y(), 0.0));
-				}
+				m_d->drawLine(lineA, lineB, color.xyz1());
 			}
-		}
-		m_drawer->end();*/
+		};
 
-		m_drawer->setViewProjectionMatrix(camFrc.getViewProjectionMatrix());
-		Vec3 offset(0.0, 0.0, 0.0);
-		m_drawer->setColor(Vec4(0.5));
-		m_drawer->begin(PrimitiveTopology::TRIANGLES);
-		for(U i = 0; i < ltriangle.getSize() / 3; ++i)
+		DD dd;
+		dd.m_d = m_drawer;
+
+		CollisionDebugDrawer cd(m_drawer);
+
+		Sphere s(Vec4(1.0, 0.1, -1.2, 0.0), 1.2);
+		PerspectiveFrustum fr(toRad(25.), toRad(35.), 0.1, 5.);
+		fr.transform(Transform(Vec4(0., 1., 0., 0.), Mat3x4::getIdentity(), 1.0));
+
+		m_drawer->setModelMatrix(Mat4(movc.getWorldTransform()));
+		// c.debugDraw(dd);
+
+		if(frc.getFrustum().insideFrustum(s))
 		{
-			m_drawer->pushBackVertex(ltriangle[i * 3 + 0].xyz());
-			m_drawer->pushBackVertex(ltriangle[i * 3 + 1].xyz());
-			m_drawer->pushBackVertex(ltriangle[i * 3 + 2].xyz());
+			ClustererTestResult rez;
+			c.initTestResults(getAllocator(), rez);
+			Aabb sbox;
+			s.computeAabb(sbox);
+			//c.binPerspectiveFrustum(fr, sbox, rez);
+			c.bin(s, sbox, rez);
+
+			c.debugDrawResult(rez, dd);
 		}
-		m_drawer->end();
 
-		SceneNode& node = scene.findSceneNode("Lamp");
-		SpatialComponent& spc = node.getComponent<SpatialComponent>();
-		Aabb nodeAabb = spc.getAabb();
-
-		Bool inside =
-			r.visibilityTest(spc.getSpatialCollisionShape(), nodeAabb);
-
-		if(inside)
-		{
-			m_drawer->setColor(Vec4(1.0, 0.0, 0.0, 1.0));
-			CollisionDebugDrawer cd(m_drawer);
-			nodeAabb.accept(cd);
-		}
+		m_drawer->setColor(Vec4(1.0, 1.0, 0.0, 1.0));
+		frc.getFrustum().accept(cd);
+		s.accept(cd);
 	}
 #endif
 

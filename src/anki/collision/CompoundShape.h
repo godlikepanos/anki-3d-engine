@@ -55,7 +55,7 @@ private:
 };
 
 template<typename TFunc>
-Error CompoundShape::iterateShapes(TFunc f) const
+inline Error CompoundShape::iterateShapes(TFunc f) const
 {
 	Error err = ErrorCode::NONE;
 	U count = 0;

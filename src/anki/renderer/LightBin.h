@@ -72,7 +72,12 @@ private:
 		const FrustumComponent& camFrc,
 		LightBinContext& ctx);
 
-	void binLight(SpatialComponent& sp, U pos, U lightType, LightBinContext& ctx, ClustererTestResult& testResult);
+	void binLight(const SpatialComponent& sp,
+		const LightComponent& lightc,
+		U pos,
+		U lightType,
+		LightBinContext& ctx,
+		ClustererTestResult& testResult) const;
 
 	void writeAndBinProbe(
 		const FrustumComponent& camFrc, const SceneNode& node, LightBinContext& ctx, ClustererTestResult& testResult);

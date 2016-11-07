@@ -373,7 +373,11 @@ Error LightBin::bin(FrustumComponent& frc,
 	ANKI_TRACE_START_EVENT(RENDERER_LIGHT_BINNING);
 
 	// Prepare the clusterer
-	m_clusterer.prepare(*m_threadPool, frc);
+	ClustererPrepareInfo pinf;
+	pinf.m_viewMat = frc.getViewMatrix();
+	pinf.m_projMat = frc.getProjectionMatrix();
+	pinf.m_camTrf = frc.getFrustum().getTransform();
+	m_clusterer.prepare(*m_threadPool, pinf);
 
 	VisibilityTestResults& vi = frc.getVisibilityTestResults();
 
@@ -552,7 +556,7 @@ void LightBin::binLights(U32 threadId, PtrSize threadsCount, LightBinContext& ct
 				const FrustumComponent* frc = snode.tryGetComponent<FrustumComponent>();
 
 				I pos = writeSpotLight(light, move, frc, cammove, camfrc, ctx);
-				binLight(sp, pos, 1, ctx, testResult);
+				binLight(sp, light, pos, 1, ctx, testResult);
 			}
 			else if(j >= ctx.m_vDecals.getSize())
 			{
@@ -564,7 +568,7 @@ void LightBin::binLights(U32 threadId, PtrSize threadsCount, LightBinContext& ct
 				SpatialComponent& sp = snode.getComponent<SpatialComponent>();
 
 				I pos = writePointLight(light, move, camfrc, ctx);
-				binLight(sp, pos, 0, ctx, testResult);
+				binLight(sp, light, pos, 0, ctx, testResult);
 			}
 			else
 			{
@@ -737,18 +741,33 @@ I LightBin::writeSpotLight(const LightComponent& lightc,
 	return i;
 }
 
-void LightBin::binLight(SpatialComponent& sp, U pos, U lightType, LightBinContext& ctx, ClustererTestResult& testResult)
+void LightBin::binLight(const SpatialComponent& sp,
+	const LightComponent& lightc,
+	U pos,
+	U lightType,
+	LightBinContext& ctx,
+	ClustererTestResult& testResult) const
 {
-	m_clusterer.bin(sp.getSpatialCollisionShape(), sp.getAabb(), testResult);
+	if(lightc.getLightComponentType() == LightComponentType::SPOT)
+	{
+		const FrustumComponent& frc = lightc.getSceneNode().getComponent<FrustumComponent>();
+		ANKI_ASSERT(frc.getFrustum().getType() == FrustumType::PERSPECTIVE);
+		m_clusterer.binPerspectiveFrustum(
+			static_cast<const PerspectiveFrustum&>(frc.getFrustum()), sp.getAabb(), testResult);
+	}
+	else
+	{
+		m_clusterer.bin(sp.getSpatialCollisionShape(), sp.getAabb(), testResult);
+	}
 
 	// Bin to the correct tiles
 	auto it = testResult.getClustersBegin();
 	auto end = testResult.getClustersEnd();
 	for(; it != end; ++it)
 	{
-		U x = (*it)[0];
-		U y = (*it)[1];
-		U z = (*it)[2];
+		U x = (*it).x();
+		U y = (*it).y();
+		U z = (*it).z();
 
 		U i = m_clusterer.getClusterCountX() * (z * m_clusterer.getClusterCountY() + y) + x;
 
@@ -792,9 +811,9 @@ void LightBin::writeAndBinProbe(
 	auto end = testResult.getClustersEnd();
 	for(; it != end; ++it)
 	{
-		U x = (*it)[0];
-		U y = (*it)[1];
-		U z = (*it)[2];
+		U x = (*it).x();
+		U y = (*it).y();
+		U z = (*it).z();
 
 		U i = m_clusterer.getClusterCountX() * (z * m_clusterer.getClusterCountY() + y) + x;
 
@@ -857,9 +876,9 @@ void LightBin::writeAndBinDecal(
 	auto end = testResult.getClustersEnd();
 	for(; it != end; ++it)
 	{
-		U x = (*it)[0];
-		U y = (*it)[1];
-		U z = (*it)[2];
+		U x = (*it).x();
+		U y = (*it).y();
+		U z = (*it).z();
 
 		U i = m_clusterer.getClusterCountX() * (z * m_clusterer.getClusterCountY() + y) + x;
 

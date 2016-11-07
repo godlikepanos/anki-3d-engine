@@ -410,6 +410,56 @@ public:
 
 		return m;
 	}
+
+	/// Given the parameters that construct a projection matrix extract 4 values that can be used to unproject a point
+	/// from NDC to view space.
+	/// @code
+	/// Vec4 unprojParams = calculatePerspectiveUnprojectionParams(...);
+	/// F32 z = unprojParams.z() / (unprojParams.w() + depth);
+	/// Vec2 xy = ndc.xy() * unprojParams.xy() * z;
+	/// Vec3 posViewSpace(xy, z);
+	/// @endcode
+	static TVec4<T> calculatePerspectiveUnprojectionParams(T fovX, T fovY, T near, T far)
+	{
+		TVec4<T> out;
+		T g = near - far;
+		T f = T(1) / tan(fovY / T(2)); // f = cot(fovY/2)
+
+		T m00 = f * (fovY / fovX);
+		T m11 = f;
+		T m22 = (far + near) / g;
+		T m23 = (T(2) * far * near) / g;
+
+		// First, z' = (m * Pv) / 2 + 0.5 where Pv is the view space position.
+		// Solving that for Pv.z we get
+		// Pv.z = A / (z' + B)
+		// where A = (-m23 / 2) and B = (m22 / 2 - 0.5)
+		// so we save the A and B in the projection params vector
+		out.z() = -m23 * T(0.5);
+		out.w() = m22 * T(0.5) - T(0.5);
+
+		// Using the same logic the Pv.x = x' * w / m00
+		// so Pv.x = x' * Pv.z * (-1 / m00)
+		out.x() = -T(1.0) / m00;
+
+		// Same for y
+		out.y() = -T(1.0) / m11;
+
+		return out;
+	}
+
+	/// Assuming this is a projection matrix extract the unprojection parameters. See
+	/// calculatePerspectiveUnprojectionParams for more info.
+	TVec4<T> extractPerspectiveUnprojectionParams() const
+	{
+		TVec4<T> out;
+		const TMat4& m = *this;
+		out.z() = -m(2, 3) * T(0.5);
+		out.w() = m(2, 2) * T(0.5) - T(0.5);
+		out.x() = -T(1.0) / m(0, 0);
+		out.y() = -T(1.0) / m(1, 1);
+		return out;
+	}
 	/// @}
 };
 

@@ -14,6 +14,13 @@ namespace anki
 /// @addtogroup scene
 /// @{
 
+enum class LightComponentType : U8
+{
+	POINT,
+	SPOT,
+	COUNT
+};
+
 /// Light component. It's a dummy component used to identify lights
 class LightComponent : public SceneComponent
 {
@@ -24,16 +31,9 @@ public:
 	/// WARNING: If you change here update the shaders.
 	static constexpr F32 FRUSTUM_NEAR_PLANE = 0.1 / 4.0;
 
-	enum class LightType : U8
-	{
-		POINT,
-		SPOT,
-		COUNT
-	};
+	LightComponent(SceneNode* node, LightComponentType type);
 
-	LightComponent(SceneNode* node, LightType type);
-
-	LightType getLightType() const
+	LightComponentType getLightComponentType() const
 	{
 		return m_type;
 	}
@@ -138,7 +138,7 @@ public:
 	ANKI_USE_RESULT Error update(SceneNode&, F32, F32, Bool& updated) override;
 
 private:
-	LightType m_type;
+	LightComponentType m_type;
 	Vec4 m_diffColor = Vec4(0.5);
 	Vec4 m_specColor = Vec4(0.5);
 	union

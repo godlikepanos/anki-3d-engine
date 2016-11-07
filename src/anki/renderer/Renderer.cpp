@@ -188,7 +188,7 @@ Error Renderer::render(RenderingContext& ctx)
 	FrustumComponent& frc = *ctx.m_frustumComponent;
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
-	ANKI_ASSERT(frc.getFrustum().getType() == Frustum::Type::PERSPECTIVE);
+	ANKI_ASSERT(frc.getFrustum().getType() == FrustumType::PERSPECTIVE);
 
 	// Check if resources got loaded
 	if(m_prevLoadRequestCount != m_resources->getLoadingRequestCount()

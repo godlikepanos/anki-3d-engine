@@ -18,7 +18,7 @@ class File;
 /// @addtogroup util_private
 /// @{
 
-/// The logger singleton class. The logger cannot print errors or throw exceptions, it has to recover somehow. Its
+/// The logger singleton class. The logger cannot print errors or throw exceptions, it has to recover somehow. It's
 /// thread safe.
 /// To add a new signal:
 /// @code logger.addMessageHandler((void*)obj, &function) @endcode

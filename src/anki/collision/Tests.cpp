@@ -101,8 +101,17 @@ static Bool test(const Aabb& aabb, const Sphere& s)
 {
 	const Vec4& c = s.getCenter();
 
-	// find the box's closest point to the sphere
-	Vec4 cp(0.0); // Closest Point
+// find the box's closest point to the sphere
+#if ANKI_SIMD == ANKI_SIMD_SSE
+	__m128 gt = _mm_cmpgt_ps(c.getSimd(), aabb.getMax().getSimd());
+	__m128 lt = _mm_cmplt_ps(c.getSimd(), aabb.getMin().getSimd());
+
+	__m128 m = _mm_or_ps(_mm_and_ps(gt, aabb.getMax().getSimd()), _mm_andnot_ps(gt, c.getSimd()));
+	__m128 n = _mm_or_ps(_mm_and_ps(lt, aabb.getMin().getSimd()), _mm_andnot_ps(lt, m));
+
+	Vec4 cp(n);
+#else
+	Vec4 cp(c); // Closest Point
 	for(U i = 0; i < 3; i++)
 	{
 		// if the center is greater than the max then the closest point is the max
@@ -116,18 +125,16 @@ static Bool test(const Aabb& aabb, const Sphere& s)
 		}
 		else
 		{
-			// the c lies between min and max
-			cp[i] = c[i];
+			// the c lies between min and max, do nothing
 		}
 	}
-
-	F32 rsq = s.getRadius() * s.getRadius();
+#endif
 
 	// if the c lies totally inside the box then the sub is the zero, this means that the length is also zero and thus
 	// it's always smaller than rsq
 	Vec4 sub = c - cp;
 
-	if(sub.getLengthSquared() <= rsq)
+	if(sub.getLengthSquared() <= s.getRadiusSquared())
 	{
 		return true;
 	}

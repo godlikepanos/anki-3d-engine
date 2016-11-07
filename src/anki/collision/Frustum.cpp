@@ -115,7 +115,7 @@ void Frustum::updateInternal()
 }
 
 PerspectiveFrustum::PerspectiveFrustum()
-	: Frustum(Type::PERSPECTIVE)
+	: Frustum(FrustumType::PERSPECTIVE)
 {
 	addShape(&m_hull);
 	m_hull.initStorage(&m_pointsW[0], m_pointsW.getSize());
@@ -150,20 +150,20 @@ void PerspectiveFrustum::recalculate()
 
 	sinCos(PI + m_fovX / 2.0, s, c);
 	// right
-	m_planesL[PlaneType::RIGHT] = Plane(Vec4(c, 0.0, s, 0.0), 0.0);
+	m_planesL[FrustumPlaneType::RIGHT] = Plane(Vec4(c, 0.0, s, 0.0), 0.0);
 	// left
-	m_planesL[PlaneType::LEFT] = Plane(Vec4(-c, 0.0, s, 0.0), 0.0);
+	m_planesL[FrustumPlaneType::LEFT] = Plane(Vec4(-c, 0.0, s, 0.0), 0.0);
 
 	sinCos((PI + m_fovY) * 0.5, s, c);
 	// bottom
-	m_planesL[PlaneType::BOTTOM] = Plane(Vec4(0.0, s, c, 0.0), 0.0);
+	m_planesL[FrustumPlaneType::BOTTOM] = Plane(Vec4(0.0, s, c, 0.0), 0.0);
 	// top
-	m_planesL[PlaneType::TOP] = Plane(Vec4(0.0, -s, c, 0.0), 0.0);
+	m_planesL[FrustumPlaneType::TOP] = Plane(Vec4(0.0, -s, c, 0.0), 0.0);
 
 	// near
-	m_planesL[PlaneType::NEAR] = Plane(Vec4(0.0, 0.0, -1.0, 0.0), m_near);
+	m_planesL[FrustumPlaneType::NEAR] = Plane(Vec4(0.0, 0.0, -1.0, 0.0), m_near);
 	// far
-	m_planesL[PlaneType::FAR] = Plane(Vec4(0.0, 0.0, 1.0, 0.0), -m_far);
+	m_planesL[FrustumPlaneType::FAR] = Plane(Vec4(0.0, 0.0, 1.0, 0.0), -m_far);
 
 	// Points
 	//
@@ -185,7 +185,7 @@ Mat4 PerspectiveFrustum::calculateProjectionMatrix() const
 }
 
 OrthographicFrustum::OrthographicFrustum()
-	: Frustum(Type::ORTHOGRAPHIC)
+	: Frustum(FrustumType::ORTHOGRAPHIC)
 {
 	addShape(&m_obbW);
 }
@@ -210,13 +210,13 @@ Mat4 OrthographicFrustum::calculateProjectionMatrix() const
 void OrthographicFrustum::recalculate()
 {
 	// Planes
-	m_planesL[(U)PlaneType::LEFT] = Plane(Vec4(1.0, 0.0, 0.0, 0.0), m_left);
-	m_planesL[(U)PlaneType::RIGHT] = Plane(Vec4(-1.0, 0.0, 0.0, 0.0), -m_right);
+	m_planesL[FrustumPlaneType::LEFT] = Plane(Vec4(1.0, 0.0, 0.0, 0.0), m_left);
+	m_planesL[FrustumPlaneType::RIGHT] = Plane(Vec4(-1.0, 0.0, 0.0, 0.0), -m_right);
 
-	m_planesL[(U)PlaneType::NEAR] = Plane(Vec4(0.0, 0.0, -1.0, 0.0), m_near);
-	m_planesL[(U)PlaneType::FAR] = Plane(Vec4(0.0, 0.0, 1.0, 0.0), -m_far);
-	m_planesL[(U)PlaneType::TOP] = Plane(Vec4(0.0, -1.0, 0.0, 0.0), -m_top);
-	m_planesL[(U)PlaneType::BOTTOM] = Plane(Vec4(0.0, 1.0, 0.0, 0.0), m_bottom);
+	m_planesL[FrustumPlaneType::NEAR] = Plane(Vec4(0.0, 0.0, -1.0, 0.0), m_near);
+	m_planesL[FrustumPlaneType::FAR] = Plane(Vec4(0.0, 0.0, 1.0, 0.0), -m_far);
+	m_planesL[FrustumPlaneType::TOP] = Plane(Vec4(0.0, -1.0, 0.0, 0.0), -m_top);
+	m_planesL[FrustumPlaneType::BOTTOM] = Plane(Vec4(0.0, 1.0, 0.0, 0.0), m_bottom);
 
 	// OBB
 	Vec4 c((m_right + m_left) * 0.5, (m_top + m_bottom) * 0.5, -(m_far + m_near) * 0.5, 0.0);

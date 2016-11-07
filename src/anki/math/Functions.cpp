@@ -29,7 +29,7 @@ static void sinCosInternal(const Scalar a_, Scalar& sina, Scalar& cosa)
 		a = -a;
 		negative = true;
 	}
-	const Scalar TWO_OVER_PI = 1.0 / (getPi<Scalar>() / 2.0);
+	const Scalar TWO_OVER_PI = 1.0 / (PI / 2.0);
 	Scalar floatA = TWO_OVER_PI * a;
 	I intA = (int)floatA;
 

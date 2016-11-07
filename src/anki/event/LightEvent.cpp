@@ -16,14 +16,14 @@ Error LightEvent::init(F32 startTime, F32 duration, SceneNode* light)
 
 	LightComponent& lightc = light->getComponent<LightComponent>();
 
-	switch(lightc.getLightType())
+	switch(lightc.getLightComponentType())
 	{
-	case LightComponent::LightType::POINT:
+	case LightComponentType::POINT:
 	{
 		m_originalRadius = lightc.getRadius();
 	}
 	break;
-	case LightComponent::LightType::SPOT:
+	case LightComponentType::SPOT:
 		ANKI_ASSERT("TODO");
 		break;
 	default:
@@ -47,12 +47,12 @@ Error LightEvent::update(F32 prevUpdateTime, F32 crntTime)
 	// Update radius
 	if(m_radiusMultiplier != 0.0)
 	{
-		switch(lightc.getLightType())
+		switch(lightc.getLightComponentType())
 		{
-		case LightComponent::LightType::POINT:
+		case LightComponentType::POINT:
 			lightc.setRadius(m_originalRadius + factor * m_radiusMultiplier);
 			break;
-		case LightComponent::LightType::SPOT:
+		case LightComponentType::SPOT:
 			ANKI_ASSERT("TODO");
 			break;
 		default:

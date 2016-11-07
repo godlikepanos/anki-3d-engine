@@ -53,7 +53,7 @@ Light::~Light()
 {
 }
 
-Error Light::init(LightComponent::LightType type, CollisionShape* shape)
+Error Light::init(LightComponentType type, CollisionShape* shape)
 {
 	SceneComponent* comp;
 
@@ -157,7 +157,7 @@ PointLight::~PointLight()
 
 Error PointLight::init()
 {
-	return Light::init(LightComponent::LightType::POINT, &m_sphereW);
+	return Light::init(LightComponentType::POINT, &m_sphereW);
 }
 
 void PointLight::onMoveUpdate(MoveComponent& move)
@@ -247,7 +247,7 @@ SpotLight::SpotLight(SceneGraph* scene, CString name)
 
 Error SpotLight::init()
 {
-	ANKI_CHECK(Light::init(LightComponent::LightType::SPOT, &m_frustum));
+	ANKI_CHECK(Light::init(LightComponentType::SPOT, &m_frustum));
 
 	FrustumComponent* fr = getSceneAllocator().newInstance<FrustumComponent>(this, &m_frustum);
 	fr->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);

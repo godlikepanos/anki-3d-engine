@@ -8,7 +8,7 @@
 namespace anki
 {
 
-LightComponent::LightComponent(SceneNode* node, LightType type)
+LightComponent::LightComponent(SceneNode* node, LightComponentType type)
 	: SceneComponent(CLASS_TYPE, node)
 	, m_type(type)
 {

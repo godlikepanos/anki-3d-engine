@@ -341,7 +341,7 @@ void Sm::prepareBuildCommandBuffers(RenderingContext& ctx)
 	{
 		SceneNode* node = (*it).m_node;
 		LightComponent& light = node->getComponent<LightComponent>();
-		ANKI_ASSERT(light.getLightType() == LightComponent::LightType::POINT);
+		ANKI_ASSERT(light.getLightComponentType() == LightComponentType::POINT);
 
 		if(light.getShadowEnabled())
 		{
@@ -361,7 +361,7 @@ void Sm::prepareBuildCommandBuffers(RenderingContext& ctx)
 	{
 		SceneNode* node = (*it).m_node;
 		LightComponent& light = node->getComponent<LightComponent>();
-		ANKI_ASSERT(light.getLightType() == LightComponent::LightType::SPOT);
+		ANKI_ASSERT(light.getLightComponentType() == LightComponentType::SPOT);
 
 		if(light.getShadowEnabled())
 		{

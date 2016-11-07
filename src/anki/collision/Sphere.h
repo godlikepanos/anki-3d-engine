@@ -38,15 +38,11 @@ public:
 		: Base(CollisionShapeType::SPHERE)
 		, m_center(center)
 		, m_radius(radius)
+		, m_radiusSq(radius * radius)
 	{
 	}
 
 	const Vec4& getCenter() const
-	{
-		return m_center;
-	}
-
-	Vec4& getCenter()
 	{
 		return m_center;
 	}
@@ -61,14 +57,16 @@ public:
 		return m_radius;
 	}
 
-	F32& getRadius()
+	F32 getRadiusSquared() const
 	{
-		return m_radius;
+		ANKI_ASSERT(m_radiusSq == m_radius * m_radius);
+		return m_radiusSq;
 	}
 
 	void setRadius(const F32 x)
 	{
 		m_radius = x;
+		m_radiusSq = x * x;
 	}
 
 	Sphere& operator=(const Sphere& b)
@@ -76,6 +74,7 @@ public:
 		Base::operator=(b);
 		m_center = b.m_center;
 		m_radius = b.m_radius;
+		m_radiusSq = b.m_radiusSq;
 		return *this;
 	}
 
@@ -121,6 +120,7 @@ public:
 private:
 	Vec4 m_center;
 	F32 m_radius;
+	F32 m_radiusSq;
 };
 /// @}
 

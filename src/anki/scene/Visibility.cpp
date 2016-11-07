@@ -382,12 +382,12 @@ void VisibilityTestTask::test(ThreadHive& hive)
 		if(lc && wantsLightComponents)
 		{
 			VisibilityGroupType gt;
-			switch(lc->getLightType())
+			switch(lc->getLightComponentType())
 			{
-			case LightComponent::LightType::POINT:
+			case LightComponentType::POINT:
 				gt = VisibilityGroupType::LIGHTS_POINT;
 				break;
-			case LightComponent::LightType::SPOT:
+			case LightComponentType::SPOT:
 				gt = VisibilityGroupType::LIGHTS_SPOT;
 				break;
 			default:

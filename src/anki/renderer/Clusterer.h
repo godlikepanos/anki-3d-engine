@@ -17,9 +17,55 @@ namespace anki
 class FrustumComponent;
 class SceneNode;
 class ThreadPool;
+class PerspectiveFrustum;
 
 /// @addtogroup renderer
 /// @{
+
+class ClustererDebugDrawer
+{
+public:
+	virtual ~ClustererDebugDrawer() = default;
+
+	virtual void operator()(const Vec3& lineA, const Vec3& lineB, const Vec3& color) = 0;
+};
+
+class alignas(alignof(U32)) Cluster
+{
+	friend class Clusterer;
+	friend class ClustererTestResult;
+
+public:
+	U x() const
+	{
+		return m_v.m_x;
+	}
+
+	U y() const
+	{
+		return m_v.m_y;
+	}
+
+	U z() const
+	{
+		return m_v.m_z;
+	}
+
+private:
+	union
+	{
+		struct
+		{
+			U8 m_x;
+			U8 m_y;
+			U8 m_z;
+			U8 m_pad_;
+		} m_v;
+		U32 m_u32;
+	};
+};
+
+static_assert(sizeof(Cluster) == sizeof(U32), "Wrong size");
 
 /// The result of the cluster tests.
 class ClustererTestResult
@@ -36,12 +82,12 @@ public:
 		m_clusterIds.destroy(m_alloc);
 	}
 
-	DynamicArray<Array<U8, 3>>::ConstIterator getClustersBegin() const
+	DynamicArray<Cluster>::ConstIterator getClustersBegin() const
 	{
 		return m_clusterIds.getBegin();
 	}
 
-	DynamicArray<Array<U8, 3>>::ConstIterator getClustersEnd() const
+	DynamicArray<Cluster>::ConstIterator getClustersEnd() const
 	{
 		return m_clusterIds.getBegin() + m_count;
 	}
@@ -52,18 +98,32 @@ public:
 	}
 
 private:
-	DynamicArray<Array<U8, 3>> m_clusterIds;
-	U32 m_count = 0;
 	GenericMemoryPoolAllocator<U8> m_alloc;
+	DynamicArray<Cluster> m_clusterIds;
+	U32 m_count = 0;
 
 	void pushBack(U x, U y, U z)
 	{
 		ANKI_ASSERT(x <= 0xFF && y <= 0xFF && z <= 0xFF);
-		m_clusterIds[m_count][0] = U8(x);
-		m_clusterIds[m_count][1] = U8(y);
-		m_clusterIds[m_count][2] = U8(z);
+#if 1
+		m_clusterIds[m_count].m_u32 = (z << 16) | (y << 8) | x;
+		ANKI_ASSERT(m_clusterIds[m_count].x() == x && m_clusterIds[m_count].y() == y && m_clusterIds[m_count].z() == z);
+#else
+		m_clusterIds[m_count].m_v.m_x = U8(x);
+		m_clusterIds[m_count].m_v.m_y = U8(y);
+		m_clusterIds[m_count].m_v.m_z = U8(z);
+#endif
 		++m_count;
 	}
+};
+
+/// Info that will prepare the clusterer.
+class ClustererPrepareInfo
+{
+public:
+	Mat4 m_viewMat;
+	Mat4 m_projMat; ///< Must be perspective projection.
+	Transform m_camTrf;
 };
 
 /// Collection of clusters for visibility tests.
@@ -81,12 +141,15 @@ public:
 	void init(const GenericMemoryPoolAllocator<U8>& alloc, U clusterCountX, U clusterCountY, U clusterCountZ);
 
 	/// Prepare for visibility tests.
-	void prepare(ThreadPool& threadpool, const FrustumComponent& frc);
+	void prepare(ThreadPool& threadpool, const ClustererPrepareInfo& inf);
 
 	void initTestResults(const GenericMemoryPoolAllocator<U8>& alloc, ClustererTestResult& rez) const;
 
 	/// Bin collision shape.
 	void bin(const CollisionShape& cs, const Aabb& csBox, ClustererTestResult& rez) const;
+
+	/// Bin a frustum.
+	void binPerspectiveFrustum(const PerspectiveFrustum& fr, const Aabb& csBox, ClustererTestResult& rez) const;
 
 	/// A value that will be used in shaders to calculate the cluster index.
 	F32 getShaderMagicValue() const
@@ -114,6 +177,12 @@ public:
 		return m_counts[0] * m_counts[1] * m_counts[2];
 	}
 
+	/// Call this after prepare()
+	void debugDraw(ClustererDebugDrawer& drawer) const;
+
+	/// Call this with a result.
+	void debugDrawResult(const ClustererTestResult& rez, ClustererDebugDrawer& drawer) const;
+
 private:
 	GenericMemoryPoolAllocator<U8> m_alloc;
 
@@ -128,32 +197,37 @@ private:
 	Plane* m_nearPlane; ///< In world space
 	Plane* m_farPlane; ///< In world space
 
-	/// Used to check if the frustum is changed and we need to update the planes.
-	const SceneNode* m_node = nullptr;
+	/// Cluster boxes in view space.
+	DynamicArray<Aabb> m_clusterBoxes;
 
-	const FrustumComponent* m_frc = nullptr; ///< Cache it.
-
-	/// Timestamp for the same reason as m_frc.
-	Timestamp m_planesLSpaceTimestamp = 0;
-
+	Mat4 m_viewMat = Mat4::getIdentity();
+	Mat4 m_projMat = Mat4::getIdentity();
+	Transform m_camTrf = Transform::getIdentity();
+	Vec4 m_unprojParams = Vec4(0.0);
 	F32 m_near = 0.0;
 	F32 m_far = 0.0;
 	F32 m_calcNearOpt = 0.0;
 	F32 m_shaderMagicVal = 0.0;
 
-	Array<Vec4, 8> m_disk; ///< To bin a sphere in tiles.
-
-	void initDisk();
-
 	F32 calcNear(U k) const;
 
 	U calcZ(F32 zVspace) const;
 
-	void binGeneric(
+	void setClusterBoxes(const Vec4& projParams, U begin, U end);
+
+	void binGeneric(const CollisionShape& cs, const Aabb& box, ClustererTestResult& rez) const;
+	void binGenericRecursive(
 		const CollisionShape& cs, U xBegin, U xEnd, U yBegin, U yEnd, U zBegin, U zEnd, ClustererTestResult& rez) const;
 
 	/// Special fast path for binning spheres.
 	void binSphere(const Sphere& s, const Aabb& aabb, ClustererTestResult& rez) const;
+
+	/// Quick reduction.
+	void quickReduction(const Aabb& aabb, const Mat4& mvp, U& xBegin, U& xEnd, U& yBegin, U& yEnd) const;
+
+	/// Box based reduction.
+	template<typename TFunc>
+	void boxReduction(U xBegin, U xEnd, U yBegin, U yEnd, U zBegin, U zEnd, ClustererTestResult& rez, TFunc func) const;
 
 	void computeSplitRange(const CollisionShape& cs, U& zBegin, U& zEnd) const;
 
@@ -167,8 +241,6 @@ private:
 
 	/// Call this when a shape is visible by all tiles.
 	void totallyInsideAllTiles(U zBegin, U zEnd, ClustererTestResult& rez) const;
-
-	void createConverHull();
 };
 /// @}
 

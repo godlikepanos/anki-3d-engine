@@ -21,40 +21,40 @@ void extractClipPlanes(const Mat4& mvp, Array<Plane*, 6>& planes)
 	// Plane equation coefficients
 	Vec4 abcd;
 
-	if(planes[Frustum::PlaneType::NEAR])
+	if(planes[FrustumPlaneType::NEAR])
 	{
 		abcd = mvp.getRow(3) + mvp.getRow(2);
-		setPlane(abcd, *planes[Frustum::PlaneType::NEAR]);
+		setPlane(abcd, *planes[FrustumPlaneType::NEAR]);
 	}
 
-	if(planes[Frustum::PlaneType::FAR])
+	if(planes[FrustumPlaneType::FAR])
 	{
 		abcd = mvp.getRow(3) - mvp.getRow(2);
-		setPlane(abcd, *planes[Frustum::PlaneType::FAR]);
+		setPlane(abcd, *planes[FrustumPlaneType::FAR]);
 	}
 
-	if(planes[Frustum::PlaneType::LEFT])
+	if(planes[FrustumPlaneType::LEFT])
 	{
 		abcd = mvp.getRow(3) + mvp.getRow(0);
-		setPlane(abcd, *planes[Frustum::PlaneType::LEFT]);
+		setPlane(abcd, *planes[FrustumPlaneType::LEFT]);
 	}
 
-	if(planes[Frustum::PlaneType::RIGHT])
+	if(planes[FrustumPlaneType::RIGHT])
 	{
 		abcd = mvp.getRow(3) - mvp.getRow(0);
-		setPlane(abcd, *planes[Frustum::PlaneType::RIGHT]);
+		setPlane(abcd, *planes[FrustumPlaneType::RIGHT]);
 	}
 
-	if(planes[Frustum::PlaneType::TOP])
+	if(planes[FrustumPlaneType::TOP])
 	{
 		abcd = mvp.getRow(3) - mvp.getRow(1);
-		setPlane(abcd, *planes[Frustum::PlaneType::TOP]);
+		setPlane(abcd, *planes[FrustumPlaneType::TOP]);
 	}
 
-	if(planes[Frustum::PlaneType::BOTTOM])
+	if(planes[FrustumPlaneType::BOTTOM])
 	{
 		abcd = mvp.getRow(3) + mvp.getRow(1);
-		setPlane(abcd, *planes[Frustum::PlaneType::BOTTOM]);
+		setPlane(abcd, *planes[FrustumPlaneType::BOTTOM]);
 	}
 }
 

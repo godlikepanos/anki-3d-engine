@@ -8,6 +8,7 @@
 #include <anki/scene/MoveComponent.h>
 #include <anki/scene/SceneNode.h>
 #include <anki/util/ThreadPool.h>
+#include <vector>
 
 namespace anki
 {
@@ -38,28 +39,21 @@ static Vec4 unproject(const F32 depth, const Vec2& ndc, const Vec4& projParams)
 	return view;
 }
 
+static Vec4 unprojectZViewSpace(const F32 zVSpace, const Vec2& ndc, const Vec4& projParams)
+{
+	Vec4 view;
+	view.x() = ndc.x() * projParams.x();
+	view.y() = ndc.y() * projParams.y();
+	view.z() = 1.0;
+	view.w() = 0.0;
+
+	return view * zVSpace;
+}
+
 Clusterer::~Clusterer()
 {
 	m_allPlanes.destroy(m_alloc);
-}
-
-void Clusterer::initDisk()
-{
-	ANKI_ASSERT(m_disk.getSize() == 8 && "Assumes that");
-
-	// The radius is a little bit bigger than 1.0
-	F32 radius = 1.0 / cos(PI / 8.0);
-
-	for(U i = 0; i < 8; ++i)
-	{
-		F32 ang = (PI / 2.0) / 8.0;
-		ang = i * ang;
-
-		F32 x = cos(ang) * radius;
-		F32 y = sin(ang) * radius;
-
-		m_disk[i] = Vec4(x, y, 0.0, 0.0);
-	}
+	m_clusterBoxes.destroy(m_alloc);
 }
 
 void Clusterer::initTestResults(const GenericMemoryPoolAllocator<U8>& alloc, ClustererTestResult& rez) const
@@ -114,6 +108,49 @@ void Clusterer::calcPlaneX(U j, const Vec4& projParams)
 	plane = Plane(n, 0.0);
 }
 
+void Clusterer::setClusterBoxes(const Vec4& projParams, U begin, U end)
+{
+	ANKI_ASSERT((m_counts[0] % 2) == 0);
+	ANKI_ASSERT((m_counts[1] % 2) == 0);
+	const U c = m_counts[0] * m_counts[1];
+
+	for(U i = begin; i < end; ++i)
+	{
+		U z = i / c;
+		U y = (i % c) / m_counts[0];
+		U x = (i % c) % m_counts[0];
+
+		F32 zMax = -calcNear(z);
+		F32 zMin = -calcNear(z + 1);
+
+		F32 xMin, xMax;
+		if(x < m_counts[0] / 2)
+		{
+			xMin = (F32(x) / m_counts[0] * 2.0 - 1.0) * projParams.x() * zMin;
+			xMax = (F32(x + 1) / m_counts[0] * 2.0 - 1.0) * projParams.x() * zMax;
+		}
+		else
+		{
+			xMin = (F32(x) / m_counts[0] * 2.0 - 1.0) * projParams.x() * zMax;
+			xMax = (F32(x + 1) / m_counts[0] * 2.0 - 1.0) * projParams.x() * zMin;
+		}
+
+		F32 yMin, yMax;
+		if(y < m_counts[1] / 2)
+		{
+			yMin = (F32(y) / m_counts[1] * 2.0 - 1.0) * projParams.y() * zMin;
+			yMax = (F32(y + 1) / m_counts[1] * 2.0 - 1.0) * projParams.y() * zMax;
+		}
+		else
+		{
+			yMin = (F32(y) / m_counts[1] * 2.0 - 1.0) * projParams.y() * zMax;
+			yMax = (F32(y + 1) / m_counts[1] * 2.0 - 1.0) * projParams.y() * zMin;
+		}
+
+		m_clusterBoxes[i] = Aabb(Vec4(xMin, yMin, zMin, 0.0), Vec4(xMax, yMax, zMax, 0.0));
+	}
+}
+
 void Clusterer::init(const GenericMemoryPoolAllocator<U8>& alloc, U clusterCountX, U clusterCountY, U clusterCountZ)
 {
 	m_alloc = alloc;
@@ -150,22 +187,23 @@ void Clusterer::init(const GenericMemoryPoolAllocator<U8>& alloc, U clusterCount
 	++count;
 
 	ANKI_ASSERT(count == m_allPlanes.getSize());
+
+	m_clusterBoxes.create(m_alloc, m_counts[0] * m_counts[1] * m_counts[2]);
 }
 
-void Clusterer::prepare(ThreadPool& threadPool, const FrustumComponent& frc)
+void Clusterer::prepare(ThreadPool& threadPool, const ClustererPrepareInfo& inf)
 {
-	// Get some things
-	Timestamp frcTimestamp = frc.getTimestamp();
-	const Frustum& fr = frc.getFrustum();
-	ANKI_ASSERT(fr.getType() == Frustum::Type::PERSPECTIVE);
-	const PerspectiveFrustum& pfr = static_cast<const PerspectiveFrustum&>(fr);
+	Bool frustumChanged = m_projMat != inf.m_projMat;
 
-	// Set some things
-	const SceneNode* node = m_node; // Save for later compare
-	m_node = &frc.getSceneNode();
-	m_frc = &frc;
-	m_near = pfr.getNear();
-	m_far = pfr.getFar();
+	// Compute cached values
+	m_projMat = inf.m_projMat;
+	m_viewMat = inf.m_viewMat;
+	m_camTrf = inf.m_camTrf;
+
+	m_unprojParams = m_projMat.extractPerspectiveUnprojectionParams();
+	m_near = -m_unprojParams.z() / (m_unprojParams.w() + 0.0);
+	m_far = -m_unprojParams.z() / (m_unprojParams.w() + 1.0);
+	ANKI_ASSERT(m_near < m_far && m_near > 0.0);
 	m_calcNearOpt = (m_far - m_near) / pow(m_counts[2], 2.0);
 	m_shaderMagicVal = -1.0 / m_calcNearOpt;
 
@@ -174,22 +212,11 @@ void Clusterer::prepare(ThreadPool& threadPool, const FrustumComponent& frc)
 	//
 	Array<UpdatePlanesPerspectiveCameraTask, ThreadPool::MAX_THREADS> jobs;
 
-	// Do a job that transforms only the planes when:
-	// - it's the same frustum component as before and
-	// - the component has not changed
-	Bool frustumChanged = frcTimestamp > m_planesLSpaceTimestamp || m_node != node;
-
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
 		jobs[i].m_clusterer = this;
 		jobs[i].m_frustumChanged = frustumChanged;
 		threadPool.assignNewTask(i, &jobs[i]);
-	}
-
-	// Update timestamp
-	if(frustumChanged)
-	{
-		m_planesLSpaceTimestamp = frcTimestamp;
 	}
 
 	// Sync threads
@@ -201,7 +228,7 @@ void Clusterer::computeSplitRange(const CollisionShape& cs, U& zBegin, U& zEnd) 
 {
 	// Find the distance between cs and near plane
 	F32 dist = cs.testPlane(*m_nearPlane);
-	dist = max(0.0f, dist);
+	dist = max(m_near, dist);
 
 	// Find split
 	zBegin = calcZ(-dist);
@@ -227,9 +254,7 @@ void Clusterer::bin(const CollisionShape& cs, const Aabb& csBox, ClustererTestRe
 	}
 	else
 	{
-		U zBegin, zEnd;
-		computeSplitRange(cs, zBegin, zEnd);
-		binGeneric(cs, 0, m_counts[0], 0, m_counts[1], zBegin, zEnd, rez);
+		binGeneric(cs, csBox, rez);
 	}
 }
 
@@ -247,26 +272,8 @@ void Clusterer::totallyInsideAllTiles(U zBegin, U zEnd, ClustererTestResult& rez
 	}
 }
 
-void Clusterer::binSphere(const Sphere& s, const Aabb& aabb, ClustererTestResult& rez) const
+void Clusterer::quickReduction(const Aabb& aabb, const Mat4& mvp, U& xBegin, U& xEnd, U& yBegin, U& yEnd) const
 {
-	const Mat4& vp = m_frc->getViewProjectionMatrix();
-	const Mat4& v = m_frc->getViewMatrix();
-
-	const Vec4& scent = s.getCenter();
-	const F32 srad = s.getRadius();
-
-	U zBegin, zEnd;
-	computeSplitRange(s, zBegin, zEnd);
-
-	// Do a quick check
-	Vec4 eye = m_frc->getFrustumOrigin() - scent;
-	if(ANKI_UNLIKELY(eye.getLengthSquared() <= srad * srad))
-	{
-		// Camera totaly inside the sphere
-		totallyInsideAllTiles(zBegin, zEnd, rez);
-		return;
-	}
-
 	// Compute projection points
 	const Vec4& minv = aabb.getMin();
 	const Vec4& maxv = aabb.getMax();
@@ -282,14 +289,8 @@ void Clusterer::binSphere(const Sphere& s, const Aabb& aabb, ClustererTestResult
 	Vec2 min2(MAX_F32), max2(MIN_F32);
 	for(Vec4& p : points)
 	{
-		p = vp * p;
-		if(p.w() <= 0.0)
-		{
-			// This point is behind the near plane. It's a big hustle to properly clip it. Mark the shape totally inside
-			totallyInsideAllTiles(zBegin, zEnd, rez);
-			return;
-		}
-
+		p = mvp * p;
+		ANKI_ASSERT(p.w() > 0.0 && "Should have cliped tha aabb before calling this");
 		p = p.perspectiveDivide();
 
 		for(U i = 0; i < 2; ++i)
@@ -302,82 +303,187 @@ void Clusterer::binSphere(const Sphere& s, const Aabb& aabb, ClustererTestResult
 	min2 = min2 * 0.5 + 0.5;
 	max2 = max2 * 0.5 + 0.5;
 
-	// Do a box test
-	F32 tcountX = m_counts[0];
-	F32 tcountY = m_counts[1];
+	// Compute ranges
+	xBegin = clamp<F32>(floor(m_counts[0] * min2.x()), 0.0, m_counts[0]);
+	xEnd = min<F32>(ceil(m_counts[0] * max2.x()), m_counts[0]);
+	yBegin = clamp<F32>(floor(m_counts[1] * min2.y()), 0, m_counts[1]);
+	yEnd = min<F32>(ceil(m_counts[1] * max2.y()), m_counts[1]);
 
-	I xBegin = floor(tcountX * min2.x());
-	xBegin = clamp<I>(xBegin, 0, m_counts[0]);
+	ANKI_ASSERT(xBegin < m_counts[0] && xEnd <= m_counts[0]);
+	ANKI_ASSERT(yBegin < m_counts[1] && yEnd <= m_counts[1]);
+}
 
-	I xEnd = ceil(tcountX * max2.x());
-	xEnd = min<U>(xEnd, m_counts[0]);
+template<typename TFunc>
+void Clusterer::boxReduction(
+	U xBegin, U xEnd, U yBegin, U yEnd, U zBegin, U zEnd, ClustererTestResult& rez, TFunc func) const
+{
+	U zcount = zEnd - zBegin;
+	U ycount = yEnd - yBegin;
+	U xcount = xEnd - xBegin;
 
-	I yBegin = floor(tcountY * min2.y());
-	yBegin = clamp<I>(yBegin, 0, m_counts[1]);
-
-	I yEnd = ceil(tcountY * max2.y());
-	yEnd = min<I>(yEnd, m_counts[1]);
-
-	ANKI_ASSERT(xBegin >= 0 && xBegin <= tcountX && xEnd >= 0 && xEnd <= tcountX);
-	ANKI_ASSERT(yBegin >= 0 && yBegin <= tcountX && yEnd >= 0 && yBegin <= tcountY);
-
-	Vec2 tileSize(1.0 / tcountX, 1.0 / tcountY);
-
-	Vec4 a = vp * s.getCenter().xyz1();
-	Vec2 c = (a.w() != 0.0) ? (a.xy() / a.w()) : a.xy();
-	c = c * 0.5 + 0.5;
-
-	Vec4 sphereCenterVSpace = (v * scent.xyz1()).xyz0();
-
-	for(I y = yBegin; y < yEnd; ++y)
+	if(xcount > ycount && xcount > zcount)
 	{
-		for(I x = xBegin; x < xEnd; ++x)
+		for(U z = zBegin; z < zEnd; ++z)
 		{
-			// Do detailed tests
+			const U zc = (m_counts[0] * m_counts[1]) * z;
 
-			Vec2 tileMin = Vec2(x, y) * tileSize;
-			Vec2 tileMax = Vec2(x + 1, y + 1) * tileSize;
-
-			// Find closest point of sphere center and tile
-			Vec2 cp(0.0);
-			for(U i = 0; i < 2; ++i)
+			for(U y = yBegin; y < yEnd; ++y)
 			{
-				if(c[i] > tileMax[i])
+				const U yc = zc + m_counts[0] * y;
+
+				// Do a reduction to avoid some checks
+				U firstX = MAX_U;
+
+				for(U x = xBegin; x < xEnd; ++x)
 				{
-					cp[i] = tileMax[i];
+					U i = yc + x;
+
+					if(func(m_clusterBoxes[i]))
+					{
+						firstX = x;
+						break;
+					}
 				}
-				else if(c[i] < tileMin[i])
+
+				for(U x = xEnd - 1; x >= firstX; --x)
 				{
-					cp[i] = tileMin[i];
-				}
-				else
-				{
-					// the c lies between min and max
-					cp[i] = c[i];
+					U i = yc + x;
+
+					if(func(m_clusterBoxes[i]))
+					{
+						for(U a = firstX; a <= x; ++a)
+						{
+							rez.pushBack(a, y, z);
+						}
+
+						break;
+					}
 				}
 			}
+		}
+	}
+	else if(ycount > xcount && ycount > zcount)
+	{
+		for(U z = zBegin; z < zEnd; ++z)
+		{
+			const U zc = (m_counts[0] * m_counts[1]) * z;
 
-			// Unproject the closest point to view space
-			Vec4 view = unproject(1.0, cp * 2.0 - 1.0, m_frc->getProjectionParameters());
-
-			// Do a simple ray-sphere test
-			Vec4 dir = view;
-			Vec4 proj = sphereCenterVSpace.projectTo(dir);
-			F32 lenSq = (sphereCenterVSpace - proj).getLengthSquared();
-			Bool inside = lenSq <= (srad * srad);
-
-			if(inside)
+			for(U x = xBegin; x < xEnd; ++x)
 			{
+				// Do a reduction to avoid some checks
+				U firstY = MAX_U;
+
+				for(U y = yBegin; y < yEnd; ++y)
+				{
+					const U i = zc + m_counts[0] * y + x;
+
+					if(func(m_clusterBoxes[i]))
+					{
+						firstY = y;
+						break;
+					}
+				}
+
+				for(U y = yEnd - 1; y >= firstY; --y)
+				{
+					const U i = zc + m_counts[0] * y + x;
+
+					if(func(m_clusterBoxes[i]))
+					{
+						for(U a = firstY; a <= y; ++a)
+						{
+							rez.pushBack(x, a, z);
+						}
+
+						break;
+					}
+				}
+			}
+		}
+	}
+	else
+	{
+		for(U y = yBegin; y < yEnd; ++y)
+		{
+			for(U x = xBegin; x < xEnd; ++x)
+			{
+				// Do a reduction to avoid some checks
+				U firstZ = MAX_U;
+
 				for(U z = zBegin; z < zEnd; ++z)
 				{
-					rez.pushBack(x, y, z);
+					const U i = (m_counts[0] * m_counts[1]) * z + m_counts[0] * y + x;
+
+					if(func(m_clusterBoxes[i]))
+					{
+						firstZ = z;
+						break;
+					}
+				}
+
+				for(U z = zEnd - 1; z >= firstZ; --z)
+				{
+					const U i = (m_counts[0] * m_counts[1]) * z + m_counts[0] * y + x;
+
+					if(func(m_clusterBoxes[i]))
+					{
+						for(U a = firstZ; a <= z; ++a)
+						{
+							rez.pushBack(x, y, a);
+						}
+
+						break;
+					}
 				}
 			}
 		}
 	}
 }
 
-void Clusterer::binGeneric(
+void Clusterer::binSphere(const Sphere& s, const Aabb& aabb, ClustererTestResult& rez) const
+{
+	// Move the sphere to view space
+	Vec4 cVSpace = (m_viewMat * s.getCenter().xyz1()).xyz0();
+	Sphere sphere(cVSpace, s.getRadius());
+
+	// Compute a new AABB and clip it
+	Aabb box;
+	sphere.computeAabb(box);
+
+	F32 maxz = min(box.getMax().z(), -m_near - EPSILON);
+	ANKI_ASSERT(box.getMax() > box.getMin());
+	box.setMax(Vec4(box.getMax().xy(), maxz, 0.0));
+
+	// Quick reduction
+	U xBegin, xEnd, yBegin, yEnd, zBegin, zEnd;
+	computeSplitRange(s, zBegin, zEnd);
+	quickReduction(box, m_projMat, xBegin, xEnd, yBegin, yEnd);
+
+	// Detailed
+	boxReduction(xBegin, xEnd, yBegin, yEnd, zBegin, zEnd, rez, [&](const Aabb& aabb) {
+		return testCollisionShapes(sphere, aabb);
+	});
+}
+
+void Clusterer::binGeneric(const CollisionShape& cs, const Aabb& box0, ClustererTestResult& rez) const
+{
+	// Move the box to view space
+	Aabb box = box0.getTransformed(Transform(m_viewMat));
+
+	F32 maxz = min(box.getMax().z(), -m_near - EPSILON);
+	box.setMax(Vec4(box.getMax().xy(), maxz, 0.0));
+	ANKI_ASSERT(box.getMax().xyz() > box.getMin().xyz());
+
+	// Quick reduction
+	U xBegin, xEnd, yBegin, yEnd, zBegin, zEnd;
+	computeSplitRange(cs, zBegin, zEnd);
+	quickReduction(box, m_projMat, xBegin, xEnd, yBegin, yEnd);
+
+	// Detailed
+	binGenericRecursive(cs, xBegin, xEnd, yBegin, yEnd, zBegin, zEnd, rez);
+}
+
+void Clusterer::binGenericRecursive(
 	const CollisionShape& cs, U xBegin, U xEnd, U yBegin, U yEnd, U zBegin, U zEnd, ClustererTestResult& rez) const
 {
 	U my = (yEnd - yBegin) / 2;
@@ -403,12 +509,12 @@ void Clusterer::binGeneric(
 
 			if(test <= 0.0)
 			{
-				binGeneric(cs, xBegin, xEnd, yBegin, yBegin + my, zBegin, zEnd, rez);
+				binGenericRecursive(cs, xBegin, xEnd, yBegin, yBegin + my, zBegin, zEnd, rez);
 			}
 
 			if(test >= 0.0)
 			{
-				binGeneric(cs, xBegin, xEnd, yBegin + my, yEnd, zBegin, zEnd, rez);
+				binGenericRecursive(cs, xBegin, xEnd, yBegin + my, yEnd, zBegin, zEnd, rez);
 			}
 		}
 		else
@@ -418,12 +524,12 @@ void Clusterer::binGeneric(
 
 			if(test <= 0.0)
 			{
-				binGeneric(cs, xBegin, xBegin + mx, yBegin, yEnd, zBegin, zEnd, rez);
+				binGenericRecursive(cs, xBegin, xBegin + mx, yBegin, yEnd, zBegin, zEnd, rez);
 			}
 
 			if(test >= 0.0)
 			{
-				binGeneric(cs, xBegin + mx, xEnd, yBegin, yEnd, zBegin, zEnd, rez);
+				binGenericRecursive(cs, xBegin + mx, xEnd, yBegin, yEnd, zBegin, zEnd, rez);
 			}
 		}
 
@@ -483,33 +589,67 @@ void Clusterer::binGeneric(
 	// Now move lower to the hierarchy
 	if(inside[0][0])
 	{
-		binGeneric(cs, xBegin, xBegin + mx, yBegin, yBegin + my, zBegin, zEnd, rez);
+		binGenericRecursive(cs, xBegin, xBegin + mx, yBegin, yBegin + my, zBegin, zEnd, rez);
 	}
 
 	if(inside[0][1])
 	{
-		binGeneric(cs, xBegin + mx, xEnd, yBegin, yBegin + my, zBegin, zEnd, rez);
+		binGenericRecursive(cs, xBegin + mx, xEnd, yBegin, yBegin + my, zBegin, zEnd, rez);
 	}
 
 	if(inside[1][0])
 	{
-		binGeneric(cs, xBegin, xBegin + mx, yBegin + my, yEnd, zBegin, zEnd, rez);
+		binGenericRecursive(cs, xBegin, xBegin + mx, yBegin + my, yEnd, zBegin, zEnd, rez);
 	}
 
 	if(inside[1][1])
 	{
-		binGeneric(cs, xBegin + mx, xEnd, yBegin + my, yEnd, zBegin, zEnd, rez);
+		binGenericRecursive(cs, xBegin + mx, xEnd, yBegin + my, yEnd, zBegin, zEnd, rez);
 	}
+}
+
+void Clusterer::binPerspectiveFrustum(const PerspectiveFrustum& fr, const Aabb& box0, ClustererTestResult& rez) const
+{
+	rez.m_count = 0;
+
+	// Move the box to view space
+	Aabb box = box0.getTransformed(Transform(m_viewMat));
+
+	F32 maxz = min(box.getMax().z(), -m_near - EPSILON);
+	box.setMax(Vec4(box.getMax().xy(), maxz, 0.0));
+	ANKI_ASSERT(box.getMax().xyz() > box.getMin().xyz());
+
+	// Quick reduction
+	U xBegin, xEnd, yBegin, yEnd, zBegin, zEnd;
+	computeSplitRange(fr, zBegin, zEnd);
+	quickReduction(box, m_projMat, xBegin, xEnd, yBegin, yEnd);
+
+	// Detailed tests
+	Array<Plane, 5> vspacePlanes;
+	for(U i = 0; i < vspacePlanes.getSize(); ++i)
+	{
+		vspacePlanes[i] = fr.getPlanesWorldSpace()[i + 1].getTransformed(Transform(m_viewMat));
+	}
+
+	boxReduction(xBegin, xEnd, yBegin, yEnd, zBegin, zEnd, rez, [&](const Aabb& aabb) {
+		for(const Plane& p : vspacePlanes)
+		{
+			if(aabb.testPlane(p) < 0.0)
+			{
+				return false;
+			}
+		}
+
+		return true;
+	});
 }
 
 void Clusterer::update(U32 threadId, PtrSize threadsCount, Bool frustumChanged)
 {
 	PtrSize start, end;
-	const FrustumComponent& frc = *m_frc;
-	ANKI_ASSERT(frc.getFrustum().getType() == Frustum::Type::PERSPECTIVE);
 
-	const Transform& trf = frc.getFrustum().getTransform();
-	const Vec4& projParams = frc.getProjectionParameters();
+	const Transform& trf = m_camTrf;
+	const Vec4& projParams = m_unprojParams;
 
 	if(frustumChanged)
 	{
@@ -534,6 +674,10 @@ void Clusterer::update(U32 threadId, PtrSize threadsCount, Bool frustumChanged)
 
 			m_planesXW[j] = m_planesX[j].getTransformed(trf);
 		}
+
+		// The boxes
+		ThreadPoolTask::choseStartEnd(threadId, threadsCount, m_clusterBoxes.getSize(), start, end);
+		setClusterBoxes(projParams, start, end);
 	}
 	else
 	{
@@ -564,6 +708,60 @@ void Clusterer::update(U32 threadId, PtrSize threadsCount, Bool frustumChanged)
 
 		*m_farPlane = Plane(Vec4(0.0, 0.0, 1.0, 0.0), -m_far);
 		m_farPlane->transform(trf);
+	}
+}
+
+void Clusterer::debugDraw(ClustererDebugDrawer& drawer) const
+{
+}
+
+void Clusterer::debugDrawResult(const ClustererTestResult& rez, ClustererDebugDrawer& drawer) const
+{
+	const Vec4& projParams = m_unprojParams;
+
+	auto it = rez.getClustersBegin();
+	auto end = rez.getClustersEnd();
+	while(it != end)
+	{
+		const auto& id = *it;
+		Array<Vec3, 8> frustumPoints;
+		U count = 0;
+
+		for(U z = id.z(); z <= id.z() + 1u; ++z)
+		{
+			F32 zVSpace = -calcNear(z);
+
+			for(U y = id.y(); y <= id.y() + 1u; ++y)
+			{
+				F32 yNdc = F32(y) / m_counts[1] * 2.0 - 1.0;
+
+				for(U x = id.x(); x <= id.x() + 1u; ++x)
+				{
+					F32 xNdc = F32(x) / m_counts[0] * 2.0 - 1.0;
+
+					frustumPoints[count++] = unprojectZViewSpace(zVSpace, Vec2(xNdc, yNdc), projParams).xyz();
+				}
+			}
+		}
+
+		ANKI_ASSERT(count == 8);
+		static const Vec3 COLOR(1.0);
+		drawer(frustumPoints[0], frustumPoints[1], COLOR);
+		drawer(frustumPoints[1], frustumPoints[3], COLOR);
+		drawer(frustumPoints[3], frustumPoints[2], COLOR);
+		drawer(frustumPoints[0], frustumPoints[2], COLOR);
+
+		drawer(frustumPoints[4], frustumPoints[5], COLOR);
+		drawer(frustumPoints[5], frustumPoints[7], COLOR);
+		drawer(frustumPoints[7], frustumPoints[6], COLOR);
+		drawer(frustumPoints[4], frustumPoints[6], COLOR);
+
+		drawer(frustumPoints[0], frustumPoints[4], COLOR);
+		drawer(frustumPoints[1], frustumPoints[5], COLOR);
+		drawer(frustumPoints[2], frustumPoints[6], COLOR);
+		drawer(frustumPoints[3], frustumPoints[7], COLOR);
+
+		++it;
 	}
 }
 

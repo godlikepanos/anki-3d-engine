@@ -167,6 +167,14 @@ inline TVec4<F32> TVec4<F32>::Base::getAbs() const
 	return TVec4<F32>(_mm_andnot_ps(signMask, m_simd));
 }
 
+template<>
+inline F32 TVec4<F32>::Base::getLengthSquared() const
+{
+	F32 o;
+	_mm_store_ss(&o, _mm_dp_ps(m_simd, m_simd, 0xF1));
+	return o;
+}
+
 #elif ANKI_SIMD == ANKI_SIMD_NEON
 
 #error "TODO"

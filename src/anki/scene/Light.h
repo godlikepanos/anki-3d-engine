@@ -27,7 +27,7 @@ public:
 
 	~Light();
 
-	ANKI_USE_RESULT Error init(LightComponent::LightType type, CollisionShape* shape);
+	ANKI_USE_RESULT Error init(LightComponentType type, CollisionShape* shape);
 
 	ANKI_USE_RESULT Error loadLensFlare(const CString& filename);
 
