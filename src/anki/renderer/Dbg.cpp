@@ -235,21 +235,21 @@ Error Dbg::run(RenderingContext& ctx)
 		m_drawer->setModelMatrix(Mat4(movc.getWorldTransform()));
 		// c.debugDraw(dd);
 
-		if(frc.getFrustum().insideFrustum(s))
+		if(frc.getFrustum().insideFrustum(fr))
 		{
 			ClustererTestResult rez;
 			c.initTestResults(getAllocator(), rez);
 			Aabb sbox;
-			s.computeAabb(sbox);
-			//c.binPerspectiveFrustum(fr, sbox, rez);
-			c.bin(s, sbox, rez);
+			fr.computeAabb(sbox);
+			c.binPerspectiveFrustum(fr, sbox, rez);
+			//c.bin(s, sbox, rez);
 
 			c.debugDrawResult(rez, dd);
 		}
 
 		m_drawer->setColor(Vec4(1.0, 1.0, 0.0, 1.0));
 		frc.getFrustum().accept(cd);
-		s.accept(cd);
+		fr.accept(cd);
 	}
 #endif
 

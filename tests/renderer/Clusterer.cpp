@@ -21,6 +21,9 @@ ANKI_TEST(Renderer, Clusterer)
 	const U SPHERE_COUNT = 1024;
 	const F32 SPHERE_MAX_RADIUS = 1000.0;
 	const F32 E = 0.01;
+	const U FRUSTUM_COUNT = 1024;
+	const F32 FRUSTUM_MAX_ANGLE = toRad(70.0);
+	const F32 FRUSTUM_MAX_DIST = 200.0;
 
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 
@@ -87,6 +90,61 @@ ANKI_TEST(Renderer, Clusterer)
 		c.getClusterCount(),
 		F64(SPHERE_COUNT) * F64(ITERATION_COUNT) / ms,
 		clusterBinCount / F32(ITERATION_COUNT * SPHERE_COUNT));
+
+	// Gen spheres
+	DynamicArrayAuto<PerspectiveFrustum> frs(alloc);
+	frs.create(FRUSTUM_COUNT);
+	DynamicArrayAuto<Aabb> frBoxes(alloc);
+	frBoxes.create(FRUSTUM_COUNT);
+	for(U i = 0; i < FRUSTUM_COUNT; ++i)
+	{
+		Vec2 ndc;
+		ndc.x() = clamp((i % 64) / 64.0f, E, 1.0f - E) * 2.0f - 1.0f;
+		ndc.y() = ndc.x();
+		F32 depth = clamp((i % 128) / 128.0f, E, 1.0f - E);
+
+		F32 z = unprojParams.z() / (unprojParams.w() + depth);
+		Vec2 xy = ndc.xy() * unprojParams.xy() * z;
+		Vec4 c(xy, z, 0.0);
+
+		F32 dist = max((i % 64) / 64.0f, 0.1f) * FRUSTUM_MAX_DIST;
+		F32 ang = max((i % 64) / 64.0f, 0.2f) * FRUSTUM_MAX_ANGLE;
+
+		frs[i] = PerspectiveFrustum(ang, ang, 0.1, dist);
+		frs[i].transform(Transform(c, Mat3x4::getIdentity(), 1.0));
+
+		frs[i].computeAabb(frBoxes[i]);
+	}
+
+	// Bin frustums
+	timer.start();
+	clusterBinCount = 0;
+	for(U i = 0; i < ITERATION_COUNT; ++i)
+	{
+		Transform camTrf(Vec4(0.1, 0.1, 0.1, 0.0), Mat3x4::getIdentity(), 1.0);
+
+		ClustererPrepareInfo pinf;
+		pinf.m_viewMat = Mat4(camTrf).getInverse();
+		pinf.m_projMat = projMat;
+		pinf.m_camTrf = camTrf;
+
+		c.prepare(threadpool, pinf);
+		ClustererTestResult rez;
+		c.initTestResults(alloc, rez);
+
+		for(U s = 0; s < FRUSTUM_COUNT; ++s)
+		{
+			c.binPerspectiveFrustum(frs[s], frBoxes[s], rez);
+			ANKI_TEST_EXPECT_GT(rez.getClusterCount(), 0);
+			clusterBinCount += rez.getClusterCount();
+		}
+	}
+	timer.stop();
+	ms = timer.getElapsedTime() * 1000.0;
+	printf("Binned %f frustums/ms.\n"
+		   "Avg clusters per frustum %f\n",
+		F64(FRUSTUM_COUNT) * F64(ITERATION_COUNT) / ms,
+		clusterBinCount / F32(ITERATION_COUNT * FRUSTUM_COUNT));
 }
 
 } // end namespace anki

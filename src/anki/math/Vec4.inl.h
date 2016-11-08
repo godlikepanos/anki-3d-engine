@@ -175,6 +175,14 @@ inline F32 TVec4<F32>::Base::getLengthSquared() const
 	return o;
 }
 
+template<>
+inline TVec4<F32> TVec4<F32>::Base::operator-() const
+{
+	TVec4<F32> o;
+	o.getSimd() = _mm_sub_ps(_mm_setzero_ps(), getSimd());
+	return o;
+}
+
 #elif ANKI_SIMD == ANKI_SIMD_NEON
 
 #error "TODO"

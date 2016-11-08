@@ -31,6 +31,14 @@ Aabb Aabb::getTransformed(const Transform& trf) const
 F32 Aabb::testPlane(const Plane& p) const
 {
 	const Aabb& aabb = *this;
+
+#if ANKI_SIMD == ANKI_SIMD_SSE
+	__m128 gezero = _mm_cmpge_ps(p.getNormal().getSimd(), _mm_setzero_ps());
+
+	Vec4 diagMin;
+	diagMin.getSimd() =
+		_mm_or_ps(_mm_and_ps(gezero, aabb.getMin().getSimd()), _mm_andnot_ps(gezero, aabb.getMax().getSimd()));
+#else
 	Vec4 diagMin(0.0), diagMax(0.0);
 	// set min/max values for x,y,z direction
 	for(U i = 0; i < 3; i++)
@@ -46,6 +54,7 @@ F32 Aabb::testPlane(const Plane& p) const
 			diagMax[i] = aabb.getMin()[i];
 		}
 	}
+#endif
 
 	// minimum on positive side of plane, box on positive side
 	F32 test = p.test(diagMin);
@@ -54,15 +63,21 @@ F32 Aabb::testPlane(const Plane& p) const
 		return test;
 	}
 
+#if ANKI_SIMD == ANKI_SIMD_SSE
+	Vec4 diagMax;
+	diagMax.getSimd() =
+		_mm_or_ps(_mm_and_ps(gezero, aabb.getMax().getSimd()), _mm_andnot_ps(gezero, aabb.getMin().getSimd()));
+#endif
+
 	test = p.test(diagMax);
-	// min on non-positive side, max on non-negative side, intersection
 	if(test >= 0.0)
 	{
+		// min on non-positive side, max on non-negative side, intersection
 		return 0.0;
 	}
-	// max on negative side, box on negative side
 	else
 	{
+		// max on negative side, box on negative side
 		return test;
 	}
 }
