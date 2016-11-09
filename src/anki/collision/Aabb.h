@@ -43,12 +43,10 @@ public:
 	{
 		return m_min;
 	}
-	Vec4& getMin()
-	{
-		return m_min;
-	}
+
 	void setMin(const Vec4& x)
 	{
+		ANKI_ASSERT(x.w() == 0.0);
 		m_min = x;
 	}
 
@@ -56,12 +54,10 @@ public:
 	{
 		return m_max;
 	}
-	Vec4& getMax()
-	{
-		return m_max;
-	}
+
 	void setMax(const Vec4& x)
 	{
+		ANKI_ASSERT(x.w() == 0.0);
 		m_max = x;
 	}
 

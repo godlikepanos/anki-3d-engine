@@ -57,6 +57,7 @@ F32 Aabb::testPlane(const Plane& p) const
 #endif
 
 	// minimum on positive side of plane, box on positive side
+	ANKI_ASSERT(diagMin.w() == 0.0);
 	F32 test = p.test(diagMin);
 	if(test > 0.0)
 	{
@@ -69,6 +70,7 @@ F32 Aabb::testPlane(const Plane& p) const
 		_mm_or_ps(_mm_and_ps(gezero, aabb.getMax().getSimd()), _mm_andnot_ps(gezero, aabb.getMin().getSimd()));
 #endif
 
+	ANKI_ASSERT(diagMax.w() == 0.0);
 	test = p.test(diagMax);
 	if(test >= 0.0)
 	{

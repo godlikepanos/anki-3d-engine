@@ -22,6 +22,13 @@ namespace anki
 ///
 /// @note plane_count * 8 muls, plane_count sqrt
 void extractClipPlanes(const Mat4& mvp, Array<Plane*, 6>& planes);
+
+/// See extractClipPlanes.
+inline void extractClipPlanes(const Mat4& mvp, Array<Plane, 6>& planes)
+{
+	Array<Plane*, 6> ptrs = {{&planes[0], &planes[1], &planes[2], &planes[3], &planes[4], &planes[5]}};
+	extractClipPlanes(mvp, ptrs);
+}
 /// @}
 
 } // end namespace anki

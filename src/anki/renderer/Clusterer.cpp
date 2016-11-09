@@ -305,12 +305,12 @@ void Clusterer::quickReduction(const Aabb& aabb, const Mat4& mvp, U& xBegin, U& 
 
 	// Compute ranges
 	xBegin = clamp<F32>(floor(m_counts[0] * min2.x()), 0.0, m_counts[0]);
-	xEnd = min<F32>(ceil(m_counts[0] * max2.x()), m_counts[0]);
-	yBegin = clamp<F32>(floor(m_counts[1] * min2.y()), 0, m_counts[1]);
-	yEnd = min<F32>(ceil(m_counts[1] * max2.y()), m_counts[1]);
+	xEnd = clamp<F32>(ceil(m_counts[0] * max2.x()), 0.0, m_counts[0]);
+	yBegin = clamp<F32>(floor(m_counts[1] * min2.y()), 0.0, m_counts[1]);
+	yEnd = clamp<F32>(ceil(m_counts[1] * max2.y()), 0.0, m_counts[1]);
 
-	ANKI_ASSERT(xBegin < m_counts[0] && xEnd <= m_counts[0]);
-	ANKI_ASSERT(yBegin < m_counts[1] && yEnd <= m_counts[1]);
+	ANKI_ASSERT(xBegin <= m_counts[0] && xEnd <= m_counts[0]);
+	ANKI_ASSERT(yBegin <= m_counts[1] && yEnd <= m_counts[1]);
 }
 
 template<typename TFunc>
@@ -451,8 +451,8 @@ void Clusterer::binSphere(const Sphere& s, const Aabb& aabb, ClustererTestResult
 	sphere.computeAabb(box);
 
 	F32 maxz = min(box.getMax().z(), -m_near - EPSILON);
-	ANKI_ASSERT(box.getMax() > box.getMin());
 	box.setMax(Vec4(box.getMax().xy(), maxz, 0.0));
+	ANKI_ASSERT(box.getMax().xyz() > box.getMin().xyz());
 
 	// Quick reduction
 	U xBegin, xEnd, yBegin, yEnd, zBegin, zEnd;

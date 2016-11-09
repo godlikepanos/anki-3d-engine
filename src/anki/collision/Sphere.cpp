@@ -99,8 +99,8 @@ Sphere Sphere::getCompoundShape(const Sphere& b) const
 
 void Sphere::computeAabb(Aabb& aabb) const
 {
-	aabb.setMin(m_center - m_radius);
-	aabb.setMax(m_center + m_radius);
+	aabb.setMin((m_center - m_radius).xyz0());
+	aabb.setMax((m_center + m_radius).xyz0());
 }
 
 void Sphere::setFromPointCloud(const void* buff, U count, PtrSize stride, PtrSize buffSize)

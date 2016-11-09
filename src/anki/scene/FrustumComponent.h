@@ -135,7 +135,7 @@ public:
 	}
 
 	/// Is a spatial inside the frustum?
-	Bool insideFrustum(SpatialComponent& sp) const
+	Bool insideFrustum(const SpatialComponent& sp) const
 	{
 		return m_frustum->insideFrustum(sp.getSpatialCollisionShape());
 	}
