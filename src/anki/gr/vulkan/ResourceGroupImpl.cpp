@@ -90,7 +90,7 @@ U ResourceGroupImpl::calcRefCount(const ResourceGroupInitInfo& init, Bool& hasUp
 			++count;
 			needsDSet = true;
 			updateBindPoint(b.m_usage);
-			ANKI_ASSERT(b.m_texture->getImplementation().usageValid(b.m_usage));
+			ANKI_ASSERT(b.m_texture->m_impl->usageValid(b.m_usage));
 
 			m_descriptorSetLayoutInfo.m_texCount = i + 1;
 		}
@@ -112,7 +112,7 @@ U ResourceGroupImpl::calcRefCount(const ResourceGroupInitInfo& init, Bool& hasUp
 			needsDSet = true;
 			updateBindPoint(b.m_usage);
 			ANKI_ASSERT(!!(b.m_usage & BufferUsageBit::UNIFORM_ALL) && !(b.m_usage & ~BufferUsageBit::UNIFORM_ALL));
-			ANKI_ASSERT(b.m_buffer->getImplementation().usageValid(b.m_usage));
+			ANKI_ASSERT(b.m_buffer->m_impl->usageValid(b.m_usage));
 
 			m_descriptorSetLayoutInfo.m_uniCount = i + 1;
 		}
@@ -137,7 +137,7 @@ U ResourceGroupImpl::calcRefCount(const ResourceGroupInitInfo& init, Bool& hasUp
 			needsDSet = true;
 			updateBindPoint(b.m_usage);
 			ANKI_ASSERT(!!(b.m_usage & BufferUsageBit::STORAGE_ALL) && !(b.m_usage & ~BufferUsageBit::STORAGE_ALL));
-			ANKI_ASSERT(b.m_buffer->getImplementation().usageValid(b.m_usage));
+			ANKI_ASSERT(b.m_buffer->m_impl->usageValid(b.m_usage));
 
 			m_descriptorSetLayoutInfo.m_storageCount = i + 1;
 		}
@@ -161,7 +161,7 @@ U ResourceGroupImpl::calcRefCount(const ResourceGroupInitInfo& init, Bool& hasUp
 			++count;
 			needsDSet = true;
 			updateBindPoint(b.m_usage);
-			ANKI_ASSERT(b.m_texture->getImplementation().usageValid(b.m_usage));
+			ANKI_ASSERT(b.m_texture->m_impl->usageValid(b.m_usage));
 
 			m_descriptorSetLayoutInfo.m_imgCount = i + 1;
 		}
@@ -173,7 +173,7 @@ U ResourceGroupImpl::calcRefCount(const ResourceGroupInitInfo& init, Bool& hasUp
 		if(b.m_buffer)
 		{
 			++count;
-			ANKI_ASSERT(b.m_buffer->getImplementation().usageValid(BufferUsageBit::VERTEX));
+			ANKI_ASSERT(b.m_buffer->m_impl->usageValid(BufferUsageBit::VERTEX));
 		}
 		else if(b.m_uploadedMemory)
 		{
@@ -183,7 +183,7 @@ U ResourceGroupImpl::calcRefCount(const ResourceGroupInitInfo& init, Bool& hasUp
 
 	if(init.m_indexBuffer.m_buffer)
 	{
-		ANKI_ASSERT(init.m_indexBuffer.m_buffer->getImplementation().usageValid(BufferUsageBit::INDEX));
+		ANKI_ASSERT(init.m_indexBuffer.m_buffer->m_impl->usageValid(BufferUsageBit::INDEX));
 		++count;
 	}
 
@@ -230,7 +230,7 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 		if(init.m_textures[i].m_texture)
 		{
 			ANKI_ASSERT(!hole);
-			TextureImpl& teximpl = init.m_textures[i].m_texture->getImplementation();
+			TextureImpl& teximpl = *init.m_textures[i].m_texture->m_impl;
 
 			VkDescriptorImageInfo& inf = texes[i];
 			inf.imageView = teximpl.getOrCreateResourceGroupView(init.m_textures[i].m_aspect);
@@ -239,13 +239,13 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 
 			if(init.m_textures[i].m_sampler)
 			{
-				inf.sampler = init.m_textures[i].m_sampler->getImplementation().m_handle;
+				inf.sampler = init.m_textures[i].m_sampler->m_impl->m_handle;
 
 				m_refs[refCount++] = init.m_textures[i].m_sampler;
 			}
 			else
 			{
-				inf.sampler = teximpl.m_sampler->getImplementation().m_handle;
+				inf.sampler = teximpl.m_sampler->m_impl->m_handle;
 				// No need to ref
 			}
 
@@ -279,7 +279,7 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 		{
 			ANKI_ASSERT(!hole);
 			VkDescriptorBufferInfo& inf = unis[i];
-			inf.buffer = init.m_uniformBuffers[i].m_buffer->getImplementation().getHandle();
+			inf.buffer = init.m_uniformBuffers[i].m_buffer->m_impl->getHandle();
 			inf.offset = init.m_uniformBuffers[i].m_offset;
 			inf.range = init.m_uniformBuffers[i].m_range;
 			if(inf.range == 0)
@@ -330,7 +330,7 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 		{
 			ANKI_ASSERT(!hole);
 			VkDescriptorBufferInfo& inf = storages[i];
-			inf.buffer = init.m_storageBuffers[i].m_buffer->getImplementation().getHandle();
+			inf.buffer = init.m_storageBuffers[i].m_buffer->m_impl->getHandle();
 			inf.offset = init.m_storageBuffers[i].m_offset;
 			inf.range = init.m_storageBuffers[i].m_range;
 			if(inf.range == 0)
@@ -380,7 +380,7 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 		{
 			ANKI_ASSERT(!hole);
 			VkDescriptorImageInfo& inf = images[i];
-			TextureImpl& tex = binding.m_texture->getImplementation();
+			TextureImpl& tex = *binding.m_texture->m_impl;
 
 			inf.imageView = tex.getOrCreateSingleLevelView(binding.m_level, tex.m_akAspect);
 			inf.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
@@ -420,7 +420,7 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 		if(init.m_vertexBuffers[i].m_buffer)
 		{
 			ANKI_ASSERT(!hole);
-			m_vert.m_buffs[i] = init.m_vertexBuffers[i].m_buffer->getImplementation().getHandle();
+			m_vert.m_buffs[i] = init.m_vertexBuffers[i].m_buffer->m_impl->getHandle();
 			m_vert.m_offsets[i] = init.m_vertexBuffers[i].m_offset;
 			ANKI_ASSERT(m_vert.m_offsets[i] != MAX_PTR_SIZE);
 
@@ -446,7 +446,7 @@ Error ResourceGroupImpl::init(const ResourceGroupInitInfo& init)
 
 	if(init.m_indexBuffer.m_buffer)
 	{
-		m_indexBuffHandle = init.m_indexBuffer.m_buffer->getImplementation().getHandle();
+		m_indexBuffHandle = init.m_indexBuffer.m_buffer->m_impl->getHandle();
 		m_indexBufferOffset = init.m_indexBuffer.m_offset;
 
 		if(init.m_indexSize == 2)

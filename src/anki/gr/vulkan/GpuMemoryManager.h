@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/gr/common/ClassAllocator.h>
+#include <anki/gr/common/ClassGpuAllocator.h>
 #include <anki/gr/vulkan/Common.h>
 
 namespace anki
@@ -29,7 +29,7 @@ public:
 	}
 
 private:
-	ClassAllocatorHandle m_classHandle;
+	ClassGpuAllocatorHandle m_classHandle;
 	U8 m_memTypeIdx = MAX_U8;
 	Bool8 m_linear = false;
 };
@@ -65,7 +65,7 @@ private:
 	GrAllocator<U8> m_alloc;
 	VkDevice m_dev;
 	DynamicArray<Interface> m_ifaces;
-	DynamicArray<ClassAllocator> m_callocs;
+	DynamicArray<ClassGpuAllocator> m_callocs;
 	VkPhysicalDeviceMemoryProperties m_memoryProperties;
 };
 /// @}

@@ -41,7 +41,7 @@ static const Array<ClassInf, CLASS_COUNT> CLASSES = {{{256_B, 16_KB},
 	{64_MB, 256_MB},
 	{128_MB, 256_MB}}};
 
-class GpuMemoryManager::Memory final : public ClassAllocatorMemory,
+class GpuMemoryManager::Memory final : public ClassGpuAllocatorMemory,
 									   public IntrusiveListEnabled<GpuMemoryManager::Memory>
 {
 public:
@@ -53,7 +53,7 @@ public:
 	U8 m_classIdx = MAX_U8;
 };
 
-class GpuMemoryManager::Interface final : public ClassAllocatorInterface
+class GpuMemoryManager::Interface final : public ClassGpuAllocatorInterface
 {
 public:
 	GrAllocator<U8> m_alloc;
@@ -62,7 +62,7 @@ public:
 	VkDevice m_dev = VK_NULL_HANDLE;
 	U8 m_memTypeIdx = MAX_U8;
 
-	Error allocate(U classIdx, ClassAllocatorMemory*& cmem)
+	Error allocate(U classIdx, ClassGpuAllocatorMemory*& cmem)
 	{
 		Memory* mem;
 
@@ -97,7 +97,7 @@ public:
 		return ErrorCode::NONE;
 	}
 
-	void free(ClassAllocatorMemory* cmem)
+	void free(ClassGpuAllocatorMemory* cmem)
 	{
 		ANKI_ASSERT(cmem);
 
@@ -150,7 +150,7 @@ public:
 	}
 
 	// Mapp memory
-	void* mapMemory(ClassAllocatorMemory* cmem)
+	void* mapMemory(ClassGpuAllocatorMemory* cmem)
 	{
 		ANKI_ASSERT(cmem);
 		Memory* mem = static_cast<Memory*>(cmem);
@@ -226,7 +226,7 @@ void GpuMemoryManager::init(VkPhysicalDevice pdev, VkDevice dev, GrAllocator<U8>
 void GpuMemoryManager::allocateMemory(
 	U memTypeIdx, PtrSize size, U alignment, Bool linearResource, GpuMemoryHandle& handle)
 {
-	ClassAllocator& calloc = m_callocs[memTypeIdx * 2 + ((linearResource) ? 0 : 1)];
+	ClassGpuAllocator& calloc = m_callocs[memTypeIdx * 2 + ((linearResource) ? 0 : 1)];
 	Error err = calloc.allocate(size, alignment, handle.m_classHandle);
 	(void)err;
 
@@ -240,7 +240,7 @@ void GpuMemoryManager::freeMemory(GpuMemoryHandle& handle)
 {
 	ANKI_ASSERT(handle);
 
-	ClassAllocator& calloc = m_callocs[handle.m_memTypeIdx * 2 + ((handle.m_linear) ? 0 : 1)];
+	ClassGpuAllocator& calloc = m_callocs[handle.m_memTypeIdx * 2 + ((handle.m_linear) ? 0 : 1)];
 	calloc.free(handle.m_classHandle);
 
 	handle = {};

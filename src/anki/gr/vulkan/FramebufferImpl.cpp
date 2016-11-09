@@ -86,7 +86,7 @@ Bool FramebufferImpl::initInfoValid(const FramebufferInitInfo& inf)
 
 	if(inf.m_depthStencilAttachment.m_texture)
 	{
-		const TextureImpl& impl = inf.m_depthStencilAttachment.m_texture->getImplementation();
+		const TextureImpl& impl = *inf.m_depthStencilAttachment.m_texture->m_impl;
 		if(impl.m_akAspect == DepthStencilAspectMask::DEPTH_STENCIL
 			&& !(impl.m_workarounds & TextureImplWorkaround::S8_TO_D24S8))
 		{
@@ -111,12 +111,12 @@ void FramebufferImpl::setupAttachmentDescriptor(const FramebufferAttachmentInfo&
 	}
 	else
 	{
-		layout = att.m_texture->getImplementation().computeLayout(att.m_usageInsideRenderPass, 0);
+		layout = att.m_texture->m_impl->computeLayout(att.m_usageInsideRenderPass, 0);
 	}
 
 	desc = {};
 	desc.format = (m_defaultFramebuffer) ? getGrManagerImpl().getDefaultFramebufferSurfaceFormat()
-										 : convertFormat(att.m_texture->getImplementation().m_format);
+										 : convertFormat(att.m_texture->m_impl->m_format);
 	desc.samples = VK_SAMPLE_COUNT_1_BIT;
 	desc.loadOp = convertLoadOp(att.m_loadOperation);
 	desc.storeOp = convertStoreOp(att.m_storeOperation);
@@ -144,9 +144,8 @@ Error FramebufferImpl::initRenderPass(const FramebufferInitInfo& init)
 		setupAttachmentDescriptor(att, attachmentDescriptions[i]);
 
 		references[i].attachment = i;
-		references[i].layout = (att.m_texture)
-			? att.m_texture->getImplementation().computeLayout(att.m_usageInsideRenderPass, 0)
-			: VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		references[i].layout = (att.m_texture) ? att.m_texture->m_impl->computeLayout(att.m_usageInsideRenderPass, 0)
+											   : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 		++ci.attachmentCount;
 	}
@@ -157,7 +156,7 @@ Error FramebufferImpl::initRenderPass(const FramebufferInitInfo& init)
 		setupAttachmentDescriptor(init.m_depthStencilAttachment, attachmentDescriptions[ci.attachmentCount]);
 
 		dsReference.attachment = ci.attachmentCount;
-		dsReference.layout = init.m_depthStencilAttachment.m_texture->getImplementation().computeLayout(
+		dsReference.layout = init.m_depthStencilAttachment.m_texture->m_impl->computeLayout(
 			init.m_depthStencilAttachment.m_usageInsideRenderPass, 0);
 
 		++ci.attachmentCount;
@@ -215,7 +214,7 @@ Error FramebufferImpl::initFramebuffer(const FramebufferInitInfo& init)
 		for(U i = 0; i < init.m_colorAttachmentCount; ++i)
 		{
 			const FramebufferAttachmentInfo& att = init.m_colorAttachments[i];
-			TextureImpl& tex = att.m_texture->getImplementation();
+			TextureImpl& tex = *att.m_texture->m_impl;
 
 			attachments[count] = tex.getOrCreateSingleSurfaceView(att.m_surface, att.m_aspect);
 
@@ -231,7 +230,7 @@ Error FramebufferImpl::initFramebuffer(const FramebufferInitInfo& init)
 		if(hasDepthStencil)
 		{
 			const FramebufferAttachmentInfo& att = init.m_depthStencilAttachment;
-			TextureImpl& tex = att.m_texture->getImplementation();
+			TextureImpl& tex = *att.m_texture->m_impl;
 
 			DepthStencilAspectMask aspect;
 			if(!!(tex.m_workarounds & TextureImplWorkaround::S8_TO_D24S8))

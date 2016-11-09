@@ -65,7 +65,7 @@ void* GrManager::tryAllocateFrameTransientMemory(PtrSize size, BufferUsageBit us
 
 void GrManager::getTextureSurfaceUploadInfo(TexturePtr tex, const TextureSurfaceInfo& surf, PtrSize& allocationSize)
 {
-	const TextureImpl& impl = tex->getImplementation();
+	const TextureImpl& impl = *tex->m_impl;
 	impl.checkSurface(surf);
 
 	U width = impl.m_width >> surf.m_level;
@@ -92,7 +92,7 @@ void GrManager::getTextureSurfaceUploadInfo(TexturePtr tex, const TextureSurface
 
 void GrManager::getTextureVolumeUploadInfo(TexturePtr tex, const TextureVolumeInfo& vol, PtrSize& allocationSize)
 {
-	const TextureImpl& impl = tex->getImplementation();
+	const TextureImpl& impl = *tex->m_impl;
 	impl.checkVolume(vol);
 
 	U width = impl.m_width >> vol.m_level;

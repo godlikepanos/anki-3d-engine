@@ -190,8 +190,7 @@ inline void CommandBufferImpl::setImageBarrier(VkPipelineStageFlags srcStage,
 	TexturePtr tex,
 	const VkImageSubresourceRange& range)
 {
-	setImageBarrier(
-		srcStage, srcAccess, prevLayout, dstStage, dstAccess, newLayout, tex->getImplementation().m_imageHandle, range);
+	setImageBarrier(srcStage, srcAccess, prevLayout, dstStage, dstAccess, newLayout, tex->m_impl->m_imageHandle, range);
 
 	m_texList.pushBack(m_alloc, tex);
 }
@@ -199,7 +198,7 @@ inline void CommandBufferImpl::setImageBarrier(VkPipelineStageFlags srcStage,
 inline void CommandBufferImpl::setTextureBarrierInternal(
 	TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const VkImageSubresourceRange& range)
 {
-	const TextureImpl& impl = tex->getImplementation();
+	const TextureImpl& impl = *tex->m_impl;
 	ANKI_ASSERT(impl.usageValid(prevUsage));
 	ANKI_ASSERT(impl.usageValid(nextUsage));
 
@@ -225,7 +224,7 @@ inline void CommandBufferImpl::setTextureSurfaceBarrier(
 			&& "This transition happens inside CommandBufferImpl::generateMipmapsX");
 	}
 
-	const TextureImpl& impl = tex->getImplementation();
+	const TextureImpl& impl = *tex->m_impl;
 	impl.checkSurface(surf);
 
 	VkImageSubresourceRange range;
@@ -242,7 +241,7 @@ inline void CommandBufferImpl::setTextureVolumeBarrier(
 			&& "This transition happens inside CommandBufferImpl::generateMipmaps");
 	}
 
-	const TextureImpl& impl = tex->getImplementation();
+	const TextureImpl& impl = *tex->m_impl;
 	impl.checkVolume(vol);
 
 	VkImageSubresourceRange range;
@@ -292,7 +291,7 @@ inline void CommandBufferImpl::setBufferBarrier(VkPipelineStageFlags srcStage,
 inline void CommandBufferImpl::setBufferBarrier(
 	BufferPtr buff, BufferUsageBit before, BufferUsageBit after, PtrSize offset, PtrSize size)
 {
-	const BufferImpl& impl = buff->getImplementation();
+	const BufferImpl& impl = *buff->m_impl;
 
 	VkPipelineStageFlags srcStage;
 	VkAccessFlags srcAccess;
@@ -321,7 +320,7 @@ inline void CommandBufferImpl::drawElements(
 inline void CommandBufferImpl::drawArraysIndirect(U32 drawCount, PtrSize offset, BufferPtr buff)
 {
 	drawcallCommon();
-	const BufferImpl& impl = buff->getImplementation();
+	const BufferImpl& impl = *buff->m_impl;
 	ANKI_ASSERT(impl.usageValid(BufferUsageBit::INDIRECT));
 	ANKI_ASSERT((offset % 4) == 0);
 	ANKI_ASSERT((offset + sizeof(DrawArraysIndirectInfo) * drawCount) <= impl.getSize());
@@ -333,7 +332,7 @@ inline void CommandBufferImpl::drawArraysIndirect(U32 drawCount, PtrSize offset,
 inline void CommandBufferImpl::drawElementsIndirect(U32 drawCount, PtrSize offset, BufferPtr buff)
 {
 	drawcallCommon();
-	const BufferImpl& impl = buff->getImplementation();
+	const BufferImpl& impl = *buff->m_impl;
 	ANKI_ASSERT(impl.usageValid(BufferUsageBit::INDIRECT));
 	ANKI_ASSERT((offset % 4) == 0);
 	ANKI_ASSERT((offset + sizeof(DrawElementsIndirectInfo) * drawCount) <= impl.getSize());
@@ -353,8 +352,8 @@ inline void CommandBufferImpl::resetOcclusionQuery(OcclusionQueryPtr query)
 {
 	commandCommon();
 
-	VkQueryPool handle = query->getImplementation().m_handle.m_pool;
-	U32 idx = query->getImplementation().m_handle.m_queryIndex;
+	VkQueryPool handle = query->m_impl->m_handle.m_pool;
+	U32 idx = query->m_impl->m_handle.m_queryIndex;
 	ANKI_ASSERT(handle);
 
 #if ANKI_BATCH_COMMANDS
@@ -381,8 +380,8 @@ inline void CommandBufferImpl::beginOcclusionQuery(OcclusionQueryPtr query)
 {
 	commandCommon();
 
-	VkQueryPool handle = query->getImplementation().m_handle.m_pool;
-	U32 idx = query->getImplementation().m_handle.m_queryIndex;
+	VkQueryPool handle = query->m_impl->m_handle.m_pool;
+	U32 idx = query->m_impl->m_handle.m_queryIndex;
 	ANKI_ASSERT(handle);
 
 	ANKI_CMD(vkCmdBeginQuery(m_handle, handle, idx, 0), ANY_OTHER_COMMAND);
@@ -394,8 +393,8 @@ inline void CommandBufferImpl::endOcclusionQuery(OcclusionQueryPtr query)
 {
 	commandCommon();
 
-	VkQueryPool handle = query->getImplementation().m_handle.m_pool;
-	U32 idx = query->getImplementation().m_handle.m_queryIndex;
+	VkQueryPool handle = query->m_impl->m_handle.m_pool;
+	U32 idx = query->m_impl->m_handle.m_queryIndex;
 	ANKI_ASSERT(handle);
 
 	ANKI_CMD(vkCmdEndQuery(m_handle, handle, idx), ANY_OTHER_COMMAND);
@@ -412,7 +411,7 @@ inline void CommandBufferImpl::clearTextureInternal(
 	static_assert(sizeof(vclear) == sizeof(clearValue), "See file");
 	memcpy(&vclear, &clearValue, sizeof(clearValue));
 
-	const TextureImpl& impl = tex->getImplementation();
+	const TextureImpl& impl = *tex->m_impl;
 	if(impl.m_aspect == VK_IMAGE_ASPECT_COLOR_BIT)
 	{
 		ANKI_CMD(vkCmdClearColorImage(
@@ -430,7 +429,7 @@ inline void CommandBufferImpl::clearTextureInternal(
 inline void CommandBufferImpl::clearTextureSurface(
 	TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& clearValue, DepthStencilAspectMask aspect)
 {
-	const TextureImpl& impl = tex->getImplementation();
+	const TextureImpl& impl = *tex->m_impl;
 	ANKI_ASSERT(impl.m_type != TextureType::_3D && "Not for 3D");
 
 	VkImageSubresourceRange range;
@@ -441,7 +440,7 @@ inline void CommandBufferImpl::clearTextureSurface(
 inline void CommandBufferImpl::clearTextureVolume(
 	TexturePtr tex, const TextureVolumeInfo& vol, const ClearValue& clearValue, DepthStencilAspectMask aspect)
 {
-	const TextureImpl& impl = tex->getImplementation();
+	const TextureImpl& impl = *tex->m_impl;
 	ANKI_ASSERT(impl.m_type == TextureType::_3D && "Only for 3D");
 
 	VkImageSubresourceRange range;
@@ -452,7 +451,7 @@ inline void CommandBufferImpl::clearTextureVolume(
 inline void CommandBufferImpl::uploadBuffer(BufferPtr buff, PtrSize offset, const TransientMemoryToken& token)
 {
 	commandCommon();
-	BufferImpl& impl = buff->getImplementation();
+	BufferImpl& impl = *buff->m_impl;
 
 	VkBufferCopy region;
 	region.srcOffset = token.m_offset;
@@ -478,7 +477,7 @@ inline void CommandBufferImpl::pushSecondLevelCommandBuffer(CommandBufferPtr cmd
 	ANKI_ASSERT(m_subpassContents == VK_SUBPASS_CONTENTS_MAX_ENUM
 		|| m_subpassContents == VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
 
-	ANKI_ASSERT(cmdb->getImplementation().m_finalized);
+	ANKI_ASSERT(cmdb->m_impl->m_finalized);
 
 	m_subpassContents = VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS;
 
@@ -487,7 +486,7 @@ inline void CommandBufferImpl::pushSecondLevelCommandBuffer(CommandBufferPtr cmd
 		beginRenderPassInternal();
 	}
 
-	ANKI_CMD(vkCmdExecuteCommands(m_handle, 1, &cmdb->getImplementation().m_handle), ANY_OTHER_COMMAND);
+	ANKI_CMD(vkCmdExecuteCommands(m_handle, 1, &cmdb->m_impl->m_handle), ANY_OTHER_COMMAND);
 
 	++m_rpCommandCount;
 	m_cmdbList.pushBack(m_alloc, cmdb);
@@ -552,7 +551,7 @@ inline void CommandBufferImpl::fillBuffer(BufferPtr buff, PtrSize offset, PtrSiz
 {
 	commandCommon();
 	ANKI_ASSERT(!insideRenderPass());
-	const BufferImpl& impl = buff->getImplementation();
+	const BufferImpl& impl = *buff->m_impl;
 	ANKI_ASSERT(impl.usageValid(BufferUsageBit::FILL));
 
 	ANKI_ASSERT(offset < impl.getSize());
@@ -573,12 +572,12 @@ inline void CommandBufferImpl::writeOcclusionQueryResultToBuffer(
 	commandCommon();
 	ANKI_ASSERT(!insideRenderPass());
 
-	const BufferImpl& impl = buff->getImplementation();
+	const BufferImpl& impl = *buff->m_impl;
 	ANKI_ASSERT(impl.usageValid(BufferUsageBit::QUERY_RESULT));
 	ANKI_ASSERT((offset % 4) == 0);
 	ANKI_ASSERT((offset + sizeof(U32)) <= impl.getSize());
 
-	const OcclusionQueryImpl& q = query->getImplementation();
+	const OcclusionQueryImpl& q = *query->m_impl;
 
 #if ANKI_BATCH_COMMANDS
 	flushBatches(CommandBufferCommandType::WRITE_QUERY_RESULT);
@@ -653,7 +652,7 @@ inline void CommandBufferImpl::flushDsetBindings()
 inline void CommandBufferImpl::bindPipeline(PipelinePtr ppline)
 {
 	commandCommon();
-	const PipelineImpl& impl = ppline->getImplementation();
+	const PipelineImpl& impl = *ppline->m_impl;
 
 	ANKI_CMD(vkCmdBindPipeline(m_handle, impl.m_bindPoint, impl.m_handle), ANY_OTHER_COMMAND);
 

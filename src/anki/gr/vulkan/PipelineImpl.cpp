@@ -107,7 +107,7 @@ Error PipelineImpl::initCompute(const PipelineInitInfo& init)
 	VkPipelineShaderStageCreateInfo& stage = ci.stage;
 	stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	stage.stage = VK_SHADER_STAGE_COMPUTE_BIT;
-	stage.module = init.m_shaders[ShaderType::COMPUTE]->getImplementation().m_handle;
+	stage.module = init.m_shaders[ShaderType::COMPUTE]->m_impl->m_handle;
 	stage.pName = "main";
 	stage.pSpecializationInfo = nullptr;
 
@@ -128,14 +128,14 @@ void PipelineImpl::initShaders(const PipelineInitInfo& init, VkGraphicsPipelineC
 			continue;
 		}
 
-		ANKI_ASSERT(init.m_shaders[type]->getImplementation().m_shaderType == type);
-		ANKI_ASSERT(init.m_shaders[type]->getImplementation().m_handle);
+		ANKI_ASSERT(init.m_shaders[type]->m_impl->m_shaderType == type);
+		ANKI_ASSERT(init.m_shaders[type]->m_impl->m_handle);
 
 		VkPipelineShaderStageCreateInfo& stage =
 			const_cast<VkPipelineShaderStageCreateInfo&>(ci.pStages[ci.stageCount]);
 
 		stage.stage = VkShaderStageFlagBits(1u << U(type));
-		stage.module = init.m_shaders[type]->getImplementation().m_handle;
+		stage.module = init.m_shaders[type]->m_impl->m_handle;
 		stage.pName = "main";
 
 		++ci.stageCount;
@@ -326,10 +326,9 @@ Error PipelineImpl::createPplineLayout(const PipelineInitInfo& init)
 
 		for(U i = 0; i < U(ShaderType::COUNT); ++i)
 		{
-			if(init.m_shaders[i] && (init.m_shaders[i]->getImplementation().m_descriptorSetMask & (1 << j)))
+			if(init.m_shaders[i] && (init.m_shaders[i]->m_impl->m_descriptorSetMask & (1 << j)))
 			{
-				const DescriptorSetLayoutInfo& dsetInfo1 =
-					init.m_shaders[i]->getImplementation().m_descriptorSetLayoutInfos[j];
+				const DescriptorSetLayoutInfo& dsetInfo1 = init.m_shaders[i]->m_impl->m_descriptorSetLayoutInfos[j];
 
 				// Merge
 				dsetInfo.m_texCount = max(dsetInfo.m_texCount, dsetInfo1.m_texCount);

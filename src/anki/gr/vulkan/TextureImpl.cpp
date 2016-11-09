@@ -184,7 +184,7 @@ Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 		range.layerCount = m_layerCount;
 		range.levelCount = m_mipCount;
 
-		cmdb->getImplementation().setImageBarrier(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+		cmdb->m_impl->setImageBarrier(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
 			0,
 			VK_IMAGE_LAYOUT_UNDEFINED,
 			VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
@@ -193,7 +193,7 @@ Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 			TexturePtr(tex),
 			range);
 
-		cmdb->getImplementation().endRecording();
+		cmdb->m_impl->endRecording();
 		getGrManagerImpl().flushCommandBuffer(cmdb);
 	}
 

@@ -635,7 +635,7 @@ void GrManagerImpl::deleteCommandBuffer(VkCommandBuffer cmdb, CommandBufferFlag 
 
 void GrManagerImpl::flushCommandBuffer(CommandBufferPtr cmdb, Bool wait)
 {
-	CommandBufferImpl& impl = cmdb->getImplementation();
+	CommandBufferImpl& impl = *cmdb->m_impl;
 	VkCommandBuffer handle = impl.getHandle();
 
 	VkSubmitInfo submit = {};

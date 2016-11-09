@@ -77,7 +77,7 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 
 	if(!!(m_flags & CommandBufferFlag::SECOND_LEVEL))
 	{
-		const FramebufferImpl& impl = init.m_framebuffer->getImplementation();
+		const FramebufferImpl& impl = *init.m_framebuffer->m_impl;
 
 		inheritance.renderPass = impl.getRenderPassHandle();
 		inheritance.subpass = 0;
@@ -116,7 +116,7 @@ void CommandBufferImpl::beginRenderPassInternal()
 {
 	VkRenderPassBeginInfo bi = {};
 	bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	FramebufferImpl& impl = m_activeFb->getImplementation();
+	FramebufferImpl& impl = *m_activeFb->m_impl;
 	bi.renderPass = impl.getRenderPassHandle();
 	bi.clearValueCount = impl.getAttachmentCount();
 	bi.pClearValues = impl.getClearValues();
@@ -162,7 +162,7 @@ void CommandBufferImpl::endRenderPass()
 	ANKI_CMD(vkCmdEndRenderPass(m_handle), ANY_OTHER_COMMAND);
 
 	// Default FB barrier/transition
-	if(m_activeFb->getImplementation().isDefaultFramebuffer())
+	if(m_activeFb->m_impl->isDefaultFramebuffer())
 	{
 		setImageBarrier(VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
 			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
@@ -191,7 +191,7 @@ void CommandBufferImpl::endRecording()
 void CommandBufferImpl::bindResourceGroup(ResourceGroupPtr rc, U set, const TransientMemoryInfo* dynInfo)
 {
 	commandCommon();
-	const ResourceGroupImpl& impl = rc->getImplementation();
+	const ResourceGroupImpl& impl = *rc->m_impl;
 
 	if(impl.m_handle)
 	{
@@ -238,7 +238,7 @@ void CommandBufferImpl::generateMipmaps2d(TexturePtr tex, U face, U layer)
 {
 	commandCommon();
 
-	const TextureImpl& impl = tex->getImplementation();
+	const TextureImpl& impl = *tex->m_impl;
 	ANKI_ASSERT(impl.m_type != TextureType::_3D && "Not for 3D");
 
 	for(U i = 0; i < impl.m_mipCount - 1u; ++i)
@@ -335,7 +335,7 @@ void CommandBufferImpl::uploadTextureSurface(
 {
 	commandCommon();
 
-	TextureImpl& impl = tex->getImplementation();
+	TextureImpl& impl = *tex->m_impl;
 	impl.checkSurface(surf);
 	ANKI_ASSERT(impl.usageValid(TextureUsageBit::UPLOAD));
 
@@ -439,7 +439,7 @@ void CommandBufferImpl::uploadTextureVolume(
 {
 	commandCommon();
 
-	TextureImpl& impl = tex->getImplementation();
+	TextureImpl& impl = *tex->m_impl;
 	impl.checkVolume(vol);
 	ANKI_ASSERT(impl.usageValid(TextureUsageBit::UPLOAD));
 
