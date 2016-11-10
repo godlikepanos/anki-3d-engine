@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/renderer/Upsample.h>
+#include <anki/renderer/FsUpscale.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/Ms.h>
 #include <anki/renderer/Is.h>
@@ -15,7 +15,7 @@
 namespace anki
 {
 
-Error Upsample::init(const ConfigSet& config)
+Error FsUpscale::init(const ConfigSet& config)
 {
 	GrManager& gr = getGrManager();
 
@@ -57,10 +57,10 @@ Error Upsample::init(const ConfigSet& config)
 		1);
 
 	ANKI_CHECK(
-		getResourceManager().loadResourceToCache(m_frag, "shaders/NearDepthUpscale.frag.glsl", pps.toCString(), "r_"));
+		getResourceManager().loadResourceToCache(m_frag, "shaders/FsUpscale.frag.glsl", pps.toCString(), "r_"));
 
 	ANKI_CHECK(
-		getResourceManager().loadResourceToCache(m_vert, "shaders/NearDepthUpscale.vert.glsl", pps.toCString(), "r_"));
+		getResourceManager().loadResourceToCache(m_vert, "shaders/Quad.vert.glsl", pps.toCString(), "r_"));
 
 	// Ppline
 	PipelineInitInfo ppinit;
@@ -88,7 +88,7 @@ Error Upsample::init(const ConfigSet& config)
 	return ErrorCode::NONE;
 }
 
-void Upsample::run(RenderingContext& ctx)
+void FsUpscale::run(RenderingContext& ctx)
 {
 	CommandBufferPtr cmdb = ctx.m_commandBuffer;
 	TransientMemoryInfo dyn;

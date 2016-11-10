@@ -21,7 +21,7 @@
 #include <anki/renderer/Lf.h>
 #include <anki/renderer/Dbg.h>
 #include <anki/renderer/Tiler.h>
-#include <anki/renderer/Upsample.h>
+#include <anki/renderer/FsUpscale.h>
 #include <anki/renderer/DownscaleBlur.h>
 #include <anki/renderer/Volumetric.h>
 #include <anki/renderer/HalfDepth.h>
@@ -159,8 +159,8 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_ssao.reset(m_alloc.newInstance<Ssao>(this));
 	ANKI_CHECK(m_ssao->init(config));
 
-	m_upsample.reset(m_alloc.newInstance<Upsample>(this));
-	ANKI_CHECK(m_upsample->init(config));
+	m_fsUpscale.reset(m_alloc.newInstance<FsUpscale>(this));
+	ANKI_CHECK(m_fsUpscale->init(config));
 
 	m_tm.reset(getAllocator().newInstance<Tm>(this));
 	ANKI_CHECK(m_tm->create(config));
@@ -254,7 +254,7 @@ Error Renderer::render(RenderingContext& ctx)
 	m_ssao->setPostRunBarriers(ctx);
 	m_fs->setPostRunBarriers(ctx);
 
-	m_upsample->run(ctx);
+	m_fsUpscale->run(ctx);
 
 	cmdb->setTextureSurfaceBarrier(m_is->getRt(),
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,

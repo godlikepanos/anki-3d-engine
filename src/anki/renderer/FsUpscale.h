@@ -13,11 +13,11 @@ namespace anki
 /// @addtogroup renderer
 /// @{
 
-/// Upsample some textures and append them to IS.
-class Upsample : public RenderingPass
+/// Upscale some textures and append them to IS.
+class FsUpscale : public RenderingPass
 {
 public:
-	Upsample(Renderer* r)
+	FsUpscale(Renderer* r)
 		: RenderingPass(r)
 	{
 	}

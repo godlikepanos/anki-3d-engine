@@ -26,7 +26,7 @@ class Pps;
 class Dbg;
 class Tiler;
 class Ir;
-class Upsample;
+class FsUpscale;
 class DownscaleBlur;
 class Volumetric;
 class HalfDepth;
