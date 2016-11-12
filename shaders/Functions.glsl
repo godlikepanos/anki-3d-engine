@@ -69,4 +69,9 @@ vec4 textureCatmullRom4Samples(sampler2D tex, vec2 uv, vec2 texSize)
 		+ (texture(tex, pos.xw) * w.x + texture(tex, pos.zw) * w.z) * w.w;
 }
 
+float rand(vec2 n)
+{
+	return 0.5 + 0.5 * fract(sin(dot(n, vec2(12.9898, 78.233))) * 43758.5453);
+}
+
 #endif

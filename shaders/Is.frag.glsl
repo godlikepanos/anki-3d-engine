@@ -31,6 +31,8 @@ layout(location = 0) out vec3 out_color;
 
 const uint TILE_COUNT = TILE_COUNT_X * TILE_COUNT_Y;
 
+const float SUBSURFACE_MIN = 0.05;
+
 // Return frag pos in view space
 vec3 getFragPosVSpace()
 {
@@ -146,7 +148,7 @@ void main()
 	normal = gbuffer.normal;
 	roughness = gbuffer.roughness;
 	metallic = gbuffer.metallic;
-	subsurface = gbuffer.subsurface;
+	subsurface = max(gbuffer.subsurface, SUBSURFACE_MIN);
 	emission = gbuffer.emission;
 
 	// Get counts and offsets

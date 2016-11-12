@@ -50,6 +50,9 @@ const U SSAO_FRACTION = 4;
 /// Bloom size is rendererSize/BLOOM_FRACTION.
 const U BLOOM_FRACTION = 4;
 
+/// Volumetric size is rendererSize/VOLUMETRIC_FRACTION.
+const U VOLUMETRIC_FRACTION = 4;
+
 /// Computes the 'a' and 'b' numbers for linearizeDepthOptimal
 inline void computeLinearizeDepthOptimal(F32 near, F32 far, F32& a, F32& b)
 {

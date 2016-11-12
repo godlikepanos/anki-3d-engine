@@ -47,6 +47,11 @@ anki_internal:
 		return m_rtMipCount;
 	}
 
+	const LightBin& getLightBin() const
+	{
+		return *m_lightBin;
+	}
+
 private:
 	static const U COMMON_VARS_LOCATION = 0;
 	static const U P_LIGHTS_LOCATION = 1;

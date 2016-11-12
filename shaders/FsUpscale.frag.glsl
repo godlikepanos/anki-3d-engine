@@ -14,8 +14,9 @@ layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_depthFullTex;
 layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_depthHalfTex;
 layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_colorTexNearest;
 layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2D u_colorTexLinear;
+layout(ANKI_TEX_BINDING(0, 4)) uniform sampler2D u_volTex;
 #if SSAO_ENABLED
-layout(ANKI_TEX_BINDING(0, 4)) uniform sampler2D u_ssaoTex;
+layout(ANKI_TEX_BINDING(0, 5)) uniform sampler2D u_ssaoTex;
 #endif
 
 layout(ANKI_UBO_BINDING(0, 0)) uniform _u0
@@ -76,21 +77,20 @@ void main()
 #else
 	float maxDiffLinear = abs(maxDiff);
 #endif
-	vec3 color;
+	vec3 color = textureLod(u_volTex, in_uv, 0.0).rgb;
 	if(maxDiffLinear < DEPTH_THRESHOLD)
 	{
 		// No major discontinuites, sample with bilinear
-		color = textureLod(u_colorTexLinear, in_uv, 0.0).rgb;
+		color += textureLod(u_colorTexLinear, in_uv, 0.0).rgb;
 	}
 	else
 	{
 		// Some discontinuites, need to use the newUv
-		color = textureLod(u_colorTexNearest, newUv, 0.0).rgb;
+		color += textureLod(u_colorTexNearest, newUv, 0.0).rgb;
 	}
 
 #if SSAO_ENABLED
 	float ssao = texture(u_ssaoTex, in_uv).r;
-	ssao = dither(ssao, 16.0);
 	out_color = vec4(color, ssao);
 #else
 	out_color = vec4(color, 1.0);

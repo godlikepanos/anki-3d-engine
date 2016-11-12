@@ -27,6 +27,8 @@
 #include <anki/renderer/HalfDepth.h>
 #include <anki/renderer/Smaa.h>
 
+#include <cstdarg> // For var args
+
 namespace anki
 {
 
@@ -227,6 +229,7 @@ Error Renderer::render(RenderingContext& ctx)
 
 	m_smaa->m_edge.setPreRunBarriers(ctx);
 	m_smaa->m_weights.setPreRunBarriers(ctx);
+	m_vol->setPreRunBarriers(ctx);
 
 	// SM
 	m_sm->run(ctx);
@@ -250,9 +253,11 @@ Error Renderer::render(RenderingContext& ctx)
 	// Batch FS & SSAO
 	m_fs->run(ctx);
 	m_ssao->run(ctx);
+	m_vol->run(ctx);
 
 	m_ssao->setPostRunBarriers(ctx);
 	m_fs->setPostRunBarriers(ctx);
+	m_vol->setPostRunBarriers(ctx);
 
 	m_fsUpscale->run(ctx);
 
@@ -357,6 +362,18 @@ void Renderer::createRenderTarget(
 	rt = m_gr->newInstance<Texture>(init);
 }
 
+void Renderer::clearRenderTarget(TexturePtr rt, const ClearValue& clear, TextureUsageBit transferTo)
+{
+	TextureSurfaceInfo surf = {0, 0, 0, 0};
+	CommandBufferInitInfo cinit;
+	cinit.m_flags = CommandBufferFlag::SMALL_BATCH | CommandBufferFlag::TRANSFER_WORK;
+	CommandBufferPtr cmdb = m_gr->newInstance<CommandBuffer>(cinit);
+	cmdb->setTextureSurfaceBarrier(rt, TextureUsageBit::NONE, TextureUsageBit::CLEAR, surf);
+	cmdb->clearTextureSurface(rt, surf, clear);
+	cmdb->setTextureSurfaceBarrier(rt, TextureUsageBit::CLEAR, transferTo, surf);
+	cmdb->flush();
+}
+
 void Renderer::createDrawQuadPipeline(ShaderPtr frag, const ColorStateInfo& colorState, PipelinePtr& ppline)
 {
 	PipelineInitInfo init;
@@ -402,7 +419,6 @@ Error Renderer::buildCommandBuffersInternal(RenderingContext& ctx, U32 threadId,
 	if(ctx.m_fs.m_lastThreadWithWork == threadId)
 	{
 		m_lf->run(ctx, ctx.m_fs.m_commandBuffers[threadId]);
-		m_vol->run(ctx, ctx.m_fs.m_commandBuffers[threadId]);
 	}
 	else if(threadId == threadCount - 1 && ctx.m_fs.m_lastThreadWithWork == MAX_U32)
 	{
@@ -417,7 +433,6 @@ Error Renderer::buildCommandBuffersInternal(RenderingContext& ctx, U32 threadId,
 		cmdb->setPolygonOffset(0.0, 0.0);
 
 		m_lf->run(ctx, cmdb);
-		m_vol->run(ctx, cmdb);
 
 		ctx.m_fs.m_commandBuffers[threadId] = cmdb;
 	}
@@ -486,6 +501,20 @@ Error Renderer::buildCommandBuffers(RenderingContext& ctx)
 	ANKI_TRACE_STOP_EVENT(RENDERER_COMMAND_BUFFER_BUILDING);
 
 	return err;
+}
+
+Error Renderer::createShader(CString fname, ShaderResourcePtr& shader, CString fmt, ...)
+{
+	Array<char, 512> buffer;
+	va_list args;
+
+	va_start(args, fmt);
+	I len = std::vsnprintf(&buffer[0], sizeof(buffer), &fmt[0], args);
+	va_end(args);
+	ANKI_ASSERT(len > 0 && len < I(sizeof(buffer) - 1));
+	(void)len;
+
+	return m_resources->loadResourceToCache(shader, fname, &buffer[0], "r_");
 }
 
 } // end namespace anki

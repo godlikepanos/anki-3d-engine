@@ -275,7 +275,7 @@ void Is::updateCommonBlock(RenderingContext& ctx)
 
 	blk->m_rendererSizeTimePad1 = Vec4(m_r->getWidth(), m_r->getHeight(), HighRezTimer::getCurrentTime(), 0.0);
 
-	blk->m_tileCount = UVec4(m_r->getTileCountXY(), m_r->getTileCount(), 0);
+	blk->m_tileCount = UVec4(m_r->getTileCountXY(), m_lightBin->getClusterer().getClusterCountZ(), m_r->getTileCount());
 }
 
 void Is::setPreRunBarriers(RenderingContext& ctx)

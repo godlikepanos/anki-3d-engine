@@ -89,7 +89,7 @@ void main()
 #endif
 
 	out_color = COL_TYPE(0.0);
-	for(uint i = 0; i < STEP_COUNT; ++i)
+	for(uint i = 0u; i < STEP_COUNT; ++i)
 	{
 		vec2 texCoordOffset = OFFSETS[i] * TEXEL_SIZE;
 		COL_TYPE col =

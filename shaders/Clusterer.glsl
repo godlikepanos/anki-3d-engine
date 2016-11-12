@@ -39,4 +39,15 @@ uint computeClusterIndexUsingFragCoord(
 		near, clustererMagic, zVSpace, tileCountX, tileCountY, gl_FragCoord.xy);
 }
 
+// Compute the Z of the near plane given a cluster idx
+float computeClusterNear(uint k, float near, float clustererMagic)
+{
+	return 1.0 / clustererMagic * pow(float(k), 2.0) - near;
+}
+
+float computeClusterFar(uint k, float near, float clustererMagic)
+{
+	return 1.0 / clustererMagic * pow(float(k + 1u), 2.0) - near;
+}
+
 #endif

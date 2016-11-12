@@ -24,6 +24,8 @@ public:
 	}
 
 anki_internal:
+	TexturePtr m_rt;
+
 	Volumetric(Renderer* r)
 		: RenderingPass(r)
 	{
@@ -33,12 +35,27 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& config);
 
-	void run(RenderingContext& ctx, CommandBufferPtr cmdb);
+	void setPreRunBarriers(RenderingContext& ctx);
+	void run(RenderingContext& ctx);
+	void setPostRunBarriers(RenderingContext& ctx);
 
 private:
+	TexturePtr m_tmpRt;
+
+	ResourceGroupPtr m_rc;
+	ResourceGroupPtr m_hblurRc;
+	ResourceGroupPtr m_vblurRc;
+
 	ShaderResourcePtr m_frag;
-	ResourceGroupPtr m_rcGroup;
+	ShaderResourcePtr m_vblurFrag;
+	ShaderResourcePtr m_hblurFrag;
+
 	PipelinePtr m_ppline;
+	PipelinePtr m_hblurPpline;
+	PipelinePtr m_vblurPpline;
+
+	FramebufferPtr m_vblurFb;
+	FramebufferPtr m_hblurFb;
 
 	Vec3 m_fogColor = Vec3(1.0);
 	F32 m_fogFactor = 1.0;

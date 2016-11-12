@@ -16,7 +16,7 @@ struct LightingUniforms
 	vec4 nearFarClustererMagicPad1;
 	mat4 viewMat;
 	mat3 invViewRotation;
-	uvec4 tileCountPad1;
+	uvec4 tileCount;
 };
 
 // Point light

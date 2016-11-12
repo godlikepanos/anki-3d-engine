@@ -9,6 +9,7 @@
 #include <anki/renderer/Is.h>
 #include <anki/renderer/Fs.h>
 #include <anki/renderer/Ssao.h>
+#include <anki/renderer/Volumetric.h>
 #include <anki/renderer/HalfDepth.h>
 #include <anki/scene/FrustumComponent.h>
 
@@ -40,7 +41,9 @@ Error FsUpscale::init(const ConfigSet& config)
 	rcInit.m_textures[3].m_texture = m_r->getFs().getRt();
 	rcInit.m_textures[3].m_sampler = gr.newInstance<Sampler>(sinit);
 
-	rcInit.m_textures[4].m_texture = m_r->getSsao().getRt();
+	rcInit.m_textures[4].m_texture = m_r->getVolumetric().m_rt;
+
+	rcInit.m_textures[5].m_texture = m_r->getSsao().getRt();
 
 	rcInit.m_uniformBuffers[0].m_uploadedMemory = true;
 	rcInit.m_uniformBuffers[0].m_usage = BufferUsageBit::UNIFORM_FRAGMENT;
@@ -56,11 +59,9 @@ Error FsUpscale::init(const ConfigSet& config)
 		m_r->getHeight() / FS_FRACTION,
 		1);
 
-	ANKI_CHECK(
-		getResourceManager().loadResourceToCache(m_frag, "shaders/FsUpscale.frag.glsl", pps.toCString(), "r_"));
+	ANKI_CHECK(getResourceManager().loadResourceToCache(m_frag, "shaders/FsUpscale.frag.glsl", pps.toCString(), "r_"));
 
-	ANKI_CHECK(
-		getResourceManager().loadResourceToCache(m_vert, "shaders/Quad.vert.glsl", pps.toCString(), "r_"));
+	ANKI_CHECK(getResourceManager().loadResourceToCache(m_vert, "shaders/Quad.vert.glsl", pps.toCString(), "r_"));
 
 	// Ppline
 	PipelineInitInfo ppinit;
