@@ -195,7 +195,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 	pps.sprintf("#define HPASS\n"
 				"#define COL_R\n"
 				"#define TEXTURE_SIZE vec2(%f, %f)\n"
-				"#define KERNEL_SIZE 19\n",
+				"#define KERNEL_SIZE 13\n",
 		F32(m_width),
 		F32(m_height));
 
@@ -210,7 +210,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 	pps.sprintf("#define VPASS\n"
 				"#define COL_R\n"
 				"#define TEXTURE_SIZE vec2(%f, %f)\n"
-				"#define KERNEL_SIZE 15\n",
+				"#define KERNEL_SIZE 11\n",
 		F32(m_width),
 		F32(m_height));
 

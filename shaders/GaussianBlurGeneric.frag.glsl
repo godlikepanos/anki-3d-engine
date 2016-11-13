@@ -8,7 +8,7 @@
 // Switches: VPASS or HPASS, COL_RGBA or COL_RGB or COL_R
 // Also must define TEXTURE_SIZE and KERNEL_SIZE
 
-#include "shaders/Common.glsl"
+#include "shaders/GaussianBlurCommon.glsl"
 
 // Preprocessor switches sanity checks
 #if !defined(VPASS) && !defined(HPASS)
@@ -47,38 +47,6 @@ layout(location = 0) in vec2 in_uv;
 
 // Output
 layout(location = 0) out COL_TYPE out_color;
-
-#if KERNEL_SIZE == 3
-const uint STEP_COUNT = 1u;
-const float WEIGHTS[STEP_COUNT] = {0.50000};
-const float OFFSETS[STEP_COUNT] = {0.01742};
-#elif KERNEL_SIZE == 7
-const uint STEP_COUNT = 2u;
-const float WEIGHTS[STEP_COUNT] = {0.44908, 0.05092};
-const float OFFSETS[STEP_COUNT] = {0.53805, 2.06278};
-#elif KERNEL_SIZE == 11
-const uint STEP_COUNT = 3u;
-const float WEIGHTS[STEP_COUNT] = {0.33023, 0.15701, 0.01276};
-const float OFFSETS[STEP_COUNT] = {0.62184, 2.27310, 4.14653};
-#elif KERNEL_SIZE == 15
-const uint STEP_COUNT = 4u;
-const float WEIGHTS[STEP_COUNT] = {0.24961, 0.19246, 0.05148, 0.00645};
-const float OFFSETS[STEP_COUNT] = {0.64434, 2.37885, 4.29111, 6.21661};
-#elif KERNEL_SIZE == 19
-const uint STEP_COUNT = 5u;
-const float WEIGHTS[STEP_COUNT] = {0.19955, 0.18945, 0.08376, 0.02321, 0.00403};
-const float OFFSETS[STEP_COUNT] = {0.65319, 2.42547, 4.36803, 6.31412, 8.26479};
-#elif KERNEL_SIZE == 23
-const uint STEP_COUNT = 6u;
-const float WEIGHTS[STEP_COUNT] = {0.16501, 0.17507, 0.10112, 0.04268, 0.01316, 0.00296};
-const float OFFSETS[STEP_COUNT] = {0.65772, 2.45017, 4.41096, 6.37285, 8.33626, 10.30153};
-#elif KERNEL_SIZE == 27
-const int STEP_COUNT = 7;
-const float WEIGHTS[STEP_COUNT] = {0.14090, 0.15927, 0.10715, 0.05747, 0.02457, 0.00837, 0.00228};
-const float OFFSETS[STEP_COUNT] = {0.66025, 2.46415, 4.43572, 6.40771, 8.38028, 10.35359, 12.32779};
-#else
-#error See file
-#endif
 
 void main()
 {

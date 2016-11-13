@@ -1,0 +1,71 @@
+// Copyright (C) 2009-2016, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#ifndef ANKI_SHADERS_GAUSSIAN_BLUR_COMMON_GLSL
+#define ANKI_SHADERS_GAUSSIAN_BLUR_COMMON_GLSL
+
+#include "shaders/Common.glsl"
+
+const uint STEP_COUNT_K3 = 1u;
+const float WEIGHTS_K3[STEP_COUNT_K3] = {0.50000};
+const float OFFSETS_K3[STEP_COUNT_K3] = {0.01742};
+
+const uint STEP_COUNT_K5 = 2u;
+const float WEIGHTS_K5[STEP_COUNT_K5] = {0.44908, 0.05092};
+const float OFFSETS_K5[STEP_COUNT_K5] = {0.53805, 2.06278};
+
+const uint STEP_COUNT_K7 = 3u;
+const float WEIGHTS_K7[STEP_COUNT_K7] = {0.33023, 0.15701, 0.01276};
+const float OFFSETS_K7[STEP_COUNT_K7] = {0.62184, 2.27310, 4.14653};
+
+const uint STEP_COUNT_K9 = 4u;
+const float WEIGHTS_K9[STEP_COUNT_K9] = {0.24961, 0.19246, 0.05148, 0.00645};
+const float OFFSETS_K9[STEP_COUNT_K9] = {0.64434, 2.37885, 4.29111, 6.21661};
+
+const uint STEP_COUNT_K11 = 5u;
+const float WEIGHTS_K11[STEP_COUNT_K11] = {0.19955, 0.18945, 0.08376, 0.02321, 0.00403};
+const float OFFSETS_K11[STEP_COUNT_K11] = {0.65319, 2.42547, 4.36803, 6.31412, 8.26479};
+
+const uint STEP_COUNT_K13 = 6u;
+const float WEIGHTS_K13[STEP_COUNT_K13] = {0.16501, 0.17507, 0.10112, 0.04268, 0.01316, 0.00296};
+const float OFFSETS_K13[STEP_COUNT_K13] = {0.65772, 2.45017, 4.41096, 6.37285, 8.33626, 10.30153};
+
+const int STEP_COUNT_K15 = 7;
+const float WEIGHTS_K15[STEP_COUNT_K15] = {0.14090, 0.15927, 0.10715, 0.05747, 0.02457, 0.00837, 0.00228};
+const float OFFSETS_K15[STEP_COUNT_K15] = {0.66025, 2.46415, 4.43572, 6.40771, 8.38028, 10.35359, 12.32779};
+
+#if KERNEL_SIZE == 3
+#define STEP_COUNT STEP_COUNT_K3
+#define WEIGHTS WEIGHTS_K3
+#define OFFSETS OFFSETS_K3
+#elif KERNEL_SIZE == 5
+#define STEP_COUNT STEP_COUNT_K5
+#define WEIGHTS WEIGHTS_K5
+#define OFFSETS OFFSETS_K5
+#elif KERNEL_SIZE == 7
+#define STEP_COUNT STEP_COUNT_K7
+#define WEIGHTS WEIGHTS_K7
+#define OFFSETS OFFSETS_K7
+#elif KERNEL_SIZE == 9
+#define STEP_COUNT STEP_COUNT_K9
+#define WEIGHTS WEIGHTS_K9
+#define OFFSETS OFFSETS_K9
+#elif KERNEL_SIZE == 11
+#define STEP_COUNT STEP_COUNT_K11
+#define WEIGHTS WEIGHTS_K11
+#define OFFSETS OFFSETS_K11
+#elif KERNEL_SIZE == 13
+#define STEP_COUNT STEP_COUNT_K13
+#define WEIGHTS WEIGHTS_K13
+#define OFFSETS OFFSETS_K13
+#elif KERNEL_SIZE == 15
+#define STEP_COUNT STEP_COUNT_K15
+#define WEIGHTS WEIGHTS_K15
+#define OFFSETS OFFSETS_K15
+#else
+#error See file
+#endif
+
+#endif
