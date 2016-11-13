@@ -3,8 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SHADERS_IS_FS_COMMON_GLSL
-#define ANKI_SHADERS_IS_FS_COMMON_GLSL
+#ifndef ANKI_SHADERS_CLUSTER_LIGHT_COMMON_GLSL
+#define ANKI_SHADERS_CLUSTER_LIGHT_COMMON_GLSL
 
 #include "shaders/LightFunctions.glsl"
 

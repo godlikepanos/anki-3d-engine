@@ -15,7 +15,7 @@
 #define LIGHT_TEX_BINDING 1
 #define LIGHT_UBO_BINDING 0
 #define LIGHT_MINIMAL
-#include "shaders/IsFsCommon.glsl"
+#include "shaders/ClusterLightCommon.glsl"
 #undef LIGHT_SET
 #undef LIGHT_SS_BINDING
 #undef LIGHT_TEX_BINDING

@@ -6,7 +6,7 @@
 #define LIGHT_SET 0
 #define LIGHT_SS_BINDING 0
 #define LIGHT_UBO_BINDING 0
-#include "shaders/IsFsCommon.glsl"
+#include "shaders/ClusterLightCommon.glsl"
 
 layout(location = 0) out vec2 out_texCoord;
 layout(location = 1) flat out int out_instanceId;

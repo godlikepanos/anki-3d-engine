@@ -13,7 +13,7 @@
 #define LIGHT_TEX_BINDING 4
 #define LIGHT_INDIRECT
 #define LIGHT_DECALS
-#include "shaders/IsFsCommon.glsl"
+#include "shaders/ClusterLightCommon.glsl"
 
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_msRt0;
 layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_msRt1;
