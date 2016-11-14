@@ -250,7 +250,7 @@ Error Renderer::render(RenderingContext& ctx)
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ,
 		TextureSurfaceInfo(0, 0, 0, 0));
 
-	// Batch FS & SSAO
+	// Batch FS & SSAO & VOL
 	m_fs->run(ctx);
 	m_ssao->run(ctx);
 	m_vol->run(ctx);

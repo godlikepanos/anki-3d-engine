@@ -43,7 +43,7 @@ Config::Config()
 	newOption("sslf.enabled", true);
 
 	newOption("pps.enabled", true);
-	newOption("pps.sharpen", true);
+	newOption("pps.sharpen", false);
 	newOption("pps.gammaCorrection", true);
 
 	newOption("ir.enabled", true);

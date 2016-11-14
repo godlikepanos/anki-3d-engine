@@ -130,7 +130,7 @@ void main()
 #endif
 
 #if SHARPEN_ENABLED
-	out_color = textureCatmullRom4Samples();
+	out_color = sharpen(u_isRt, uv);
 #elif SMAA_ENABLED
 	out_color = SMAANeighborhoodBlendingPS(uv, in_smaaOffset, u_isRt, u_smaaBlendTex).rgb;
 #else

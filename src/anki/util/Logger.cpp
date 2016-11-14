@@ -54,13 +54,37 @@ void Logger::write(const char* file, int line, const char* func, MessageType typ
 
 void Logger::writeFormated(const char* file, int line, const char* func, MessageType type, const char* fmt, ...)
 {
-	char buffer[1024 * 40];
+	char buffer[1024 * 10];
 	va_list args;
 
 	va_start(args, fmt);
-	vsnprintf(buffer, sizeof(buffer), fmt, args);
-	write(file, line, func, type, buffer);
-	va_end(args);
+	I len = vsnprintf(buffer, sizeof(buffer), fmt, args);
+	if(len < 0)
+	{
+		fprintf(stderr, "Logger::writeFormated() failed. Will not recover");
+		abort();
+	}
+	else if(len < I(sizeof(buffer)))
+	{
+		write(file, line, func, type, buffer);
+		va_end(args);
+	}
+	else
+	{
+		// Not enough space.
+
+		va_end(args);
+		va_start(args, fmt);
+
+		const PtrSize newSize = len + 1;
+		char* newBuffer = static_cast<char*>(malloc(newSize));
+		len = vsnprintf(newBuffer, newSize, fmt, args);
+
+		write(file, line, func, type, newBuffer);
+
+		free(newBuffer);
+		va_end(args);
+	}
 }
 
 void Logger::defaultSystemMessageHandler(void*, const Info& info)
