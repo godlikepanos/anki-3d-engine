@@ -228,6 +228,17 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 			m_aspect = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
 			m_akAspect = DepthStencilAspectMask::DEPTH | DepthStencilAspectMask::STENCIL;
 		}
+		else if(init.m_format.m_components == ComponentFormat::D24S8)
+		{
+			ANKI_ASSERT(
+				!(init.m_usage & (TextureUsageBit::IMAGE_ALL | TextureUsageBit::UPLOAD)) && "Can't do that ATM");
+			init.m_format = PixelFormat(ComponentFormat::D32S8, TransformFormat::UNORM);
+			m_format = init.m_format;
+			m_vkFormat = convertFormat(m_format);
+			m_workarounds = TextureImplWorkaround::D24S8_TO_D32S8;
+			m_aspect = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+			m_akAspect = DepthStencilAspectMask::DEPTH | DepthStencilAspectMask::STENCIL;
+		}
 		else
 		{
 			break;
@@ -237,6 +248,7 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 	if(!supported)
 	{
 		ANKI_LOGE("Unsupported texture format: %u %u", U(init.m_format.m_components), U(init.m_format.m_transform));
+		return ErrorCode::FUNCTION_FAILED;
 	}
 
 	// Contunue with the creation

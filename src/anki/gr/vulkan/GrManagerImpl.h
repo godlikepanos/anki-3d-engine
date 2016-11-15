@@ -161,6 +161,11 @@ public:
 		return m_s8ImagesSupported;
 	}
 
+	Bool getD24S8ImagesSupported() const
+	{
+		return m_d24S8ImagesSupported;
+	}
+
 	CompatibleRenderPassCreator& getCompatibleRenderPassCreator()
 	{
 		return m_rpCreator;
@@ -292,6 +297,7 @@ private:
 
 	Bool8 m_r8g8b8ImagesSupported = false;
 	Bool8 m_s8ImagesSupported = false;
+	Bool8 m_d24S8ImagesSupported = false;
 
 	GrObjectCache* m_samplerCache = nullptr;
 

@@ -116,6 +116,12 @@ VkRenderPass CompatibleRenderPassCreator::createNewRenderPass(const PipelineInit
 			PixelFormat newFmt = PixelFormat(ComponentFormat::D24S8, TransformFormat::UNORM);
 			fmt = convertFormat(newFmt);
 		}
+		else if(init.m_depthStencil.m_format.m_components == ComponentFormat::D24S8
+			&& !m_manager->getD24S8ImagesSupported())
+		{
+			PixelFormat newFmt = PixelFormat(ComponentFormat::D32S8, TransformFormat::UNORM);
+			fmt = convertFormat(newFmt);
+		}
 		else
 		{
 			fmt = convertFormat(init.m_depthStencil.m_format);

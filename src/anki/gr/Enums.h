@@ -145,6 +145,7 @@ enum class ComponentFormat : U8
 	D16,
 	D24S8,
 	D32,
+	D32S8,
 	S8,
 
 	// Limits

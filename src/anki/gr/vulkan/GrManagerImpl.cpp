@@ -189,6 +189,30 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		}
 	}
 
+	// Set m_d24S8ImagesSupported
+	{
+		VkImageFormatProperties props = {};
+		VkResult res = vkGetPhysicalDeviceImageFormatProperties(m_physicalDevice,
+			VK_FORMAT_D24_UNORM_S8_UINT,
+			VK_IMAGE_TYPE_2D,
+			VK_IMAGE_TILING_OPTIMAL,
+			VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+			0,
+			&props);
+
+		if(res == VK_ERROR_FORMAT_NOT_SUPPORTED)
+		{
+			ANKI_LOGI("D24S8 Images are not supported. Will workaround this");
+			m_d24S8ImagesSupported = false;
+		}
+		else
+		{
+			ANKI_ASSERT(res == VK_SUCCESS);
+			ANKI_LOGI("D24S8 Images are supported");
+			m_d24S8ImagesSupported = true;
+		}
+	}
+
 	return ErrorCode::NONE;
 }
 
