@@ -13,9 +13,8 @@ void main()
 {
 	vec4 depths = textureGather(u_depthRt, in_uv, 0);
 
-	float mind = min(depths.x, depths.y);
-	mind = min(mind, depths.z);
-	mind = min(mind, depths.w);
+	vec2 mind2 = min(depths.xy, depths.zw);
+	float mind = min(mind2.x, mind2.y);
 
 	gl_FragDepth = mind;
 }

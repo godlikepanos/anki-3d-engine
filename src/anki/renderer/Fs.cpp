@@ -33,7 +33,7 @@ Error Fs::init(const ConfigSet&)
 		m_height,
 		IS_COLOR_ATTACHMENT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-		SamplingFilter::NEAREST,
+		SamplingFilter::LINEAR,
 		1,
 		m_rt);
 

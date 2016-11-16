@@ -33,17 +33,11 @@ Error FsUpscale::init(const ConfigSet& config)
 	rcInit.m_textures[1].m_sampler = gr.newInstance<Sampler>(sinit);
 	rcInit.m_textures[1].m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
 
-	sinit.m_minLod = 0.0;
 	rcInit.m_textures[2].m_texture = m_r->getFs().getRt();
-	rcInit.m_textures[2].m_sampler = gr.newInstance<Sampler>(sinit);
 
-	sinit.m_minMagFilter = SamplingFilter::LINEAR;
-	rcInit.m_textures[3].m_texture = m_r->getFs().getRt();
-	rcInit.m_textures[3].m_sampler = gr.newInstance<Sampler>(sinit);
+	rcInit.m_textures[3].m_texture = m_r->getVolumetric().m_rt;
 
-	rcInit.m_textures[4].m_texture = m_r->getVolumetric().m_rt;
-
-	rcInit.m_textures[5].m_texture = m_r->getSsao().getRt();
+	rcInit.m_textures[4].m_texture = m_r->getSsao().getRt();
 
 	rcInit.m_uniformBuffers[0].m_uploadedMemory = true;
 	rcInit.m_uniformBuffers[0].m_usage = BufferUsageBit::UNIFORM_FRAGMENT;
