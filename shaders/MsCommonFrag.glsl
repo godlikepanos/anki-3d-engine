@@ -3,12 +3,6 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "shaders/Common.glsl"
-
-#if !GL_ES && __VERSION__ > 400
-layout(early_fragment_tests) in;
-#endif
-
 #include "shaders/Pack.glsl"
 #include "shaders/MsFsCommon.glsl"
 
@@ -24,9 +18,12 @@ layout(location = 0) in highp vec2 in_uv;
 #if PASS == COLOR
 layout(location = 1) in mediump vec3 in_normal;
 layout(location = 2) in mediump vec4 in_tangent;
-layout(location = 3) in mediump vec3 in_vertPosViewSpace;
-layout(location = 4) in mediump vec3 in_eyeTangentSpace; // Parallax
-layout(location = 5) in mediump vec3 in_normalTangentSpace; // Parallax
+#if CALC_BITANGENT_IN_VERT
+layout(location = 3) in mediump vec3 in_bitangent;
+#endif
+layout(location = 4) in mediump vec3 in_vertPosViewSpace;
+layout(location = 5) in mediump vec3 in_eyeTangentSpace; // Parallax
+layout(location = 6) in mediump vec3 in_normalTangentSpace; // Parallax
 #endif
 
 //
@@ -96,7 +93,11 @@ vec3 readNormalFromTexture(in vec3 normal, in vec4 tangent, in sampler2D map, in
 
 	vec3 n = normal; // Assume that getNormal() is called
 	vec3 t = normalize(tangent.xyz);
+#if CALC_BITANGENT_IN_VERT
+	vec3 b = normalize(in_bitangent.xyz);
+#else
 	vec3 b = cross(n, t) * tangent.w;
+#endif
 
 	mat3 tbnMat = mat3(t, b, n);
 

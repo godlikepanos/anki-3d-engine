@@ -12,6 +12,8 @@
 #define COLOR 0
 #define DEPTH 1
 
+#define CALC_BITANGENT_IN_VERT 1
+
 // Generic functions because materials cannot use operators
 #define add_DEFINED
 #define add(a, b) ((a) + (b))
