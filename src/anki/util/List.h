@@ -162,13 +162,15 @@ public:
 		return *this;
 	}
 
-	Bool operator==(const ListIterator& b) const
+	template<typename YNodePointer, typename YValuePointer, typename YValueReference, typename YList>
+	Bool operator==(const ListIterator<YNodePointer, YValuePointer, YValueReference, YList>& b) const
 	{
 		ANKI_ASSERT(m_list == b.m_list && "Comparing iterators from different lists");
 		return m_node == b.m_node;
 	}
 
-	Bool operator!=(const ListIterator& b) const
+	template<typename YNodePointer, typename YValuePointer, typename YValueReference, typename YList>
+	Bool operator!=(const ListIterator<YNodePointer, YValuePointer, YValueReference, YList>& b) const
 	{
 		return !(*this == b);
 	}

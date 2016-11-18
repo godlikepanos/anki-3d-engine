@@ -27,6 +27,7 @@ class Input;
 class SectorGroup;
 class ConfigSet;
 class PerspectiveCamera;
+class UpdateSceneNodesCtx;
 
 /// @addtogroup scene
 /// @{
@@ -35,6 +36,7 @@ class PerspectiveCamera;
 class SceneGraph
 {
 	friend class SceneNode;
+	friend class UpdateSceneNodesTask;
 
 public:
 	SceneGraph();
@@ -234,6 +236,9 @@ private:
 
 	/// Delete the nodes that are marked for deletion
 	void deleteNodesMarkedForDeletion();
+
+	ANKI_USE_RESULT Error updateNodes(UpdateSceneNodesCtx& ctx) const;
+	ANKI_USE_RESULT static Error updateNode(F32 prevTime, F32 crntTime, SceneNode& node);
 };
 
 template<typename Node, typename... Args>

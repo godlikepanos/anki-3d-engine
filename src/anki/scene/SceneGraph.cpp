@@ -18,99 +18,30 @@
 namespace anki
 {
 
-namespace
+const U NODE_UPDATE_BATCH = 10;
+
+class UpdateSceneNodesCtx
 {
+public:
+	SceneGraph* m_scene = nullptr;
+
+	IntrusiveList<SceneNode>::Iterator m_crntNode;
+	SpinLock m_crntNodeLock;
+
+	F32 m_prevUpdateTime;
+	F32 m_crntTime;
+};
 
 class UpdateSceneNodesTask : public ThreadPoolTask
 {
 public:
-	SceneGraph* m_scene = nullptr;
-	F32 m_prevUpdateTime;
-	F32 m_crntTime;
-
-	IntrusiveList<SceneNode>::Iterator* m_crntNode;
-	SpinLock* m_crntNodeLock;
-	IntrusiveList<SceneNode>::Iterator m_nodesEnd;
+	UpdateSceneNodesCtx* m_ctx;
 
 	Error operator()(U32 taskId, PtrSize threadsCount)
 	{
-		ANKI_TRACE_START_EVENT(SCENE_NODES_UPDATE);
-
-		IntrusiveList<SceneNode>::Iterator& it = *m_crntNode;
-		SpinLock& lock = *m_crntNodeLock;
-
-		Bool quit = false;
-		Error err = ErrorCode::NONE;
-		while(!quit && !err)
-		{
-			// Fetch a few scene nodes
-			Array<SceneNode*, 5> nodes = {{
-				nullptr,
-			}};
-			lock.lock();
-			for(SceneNode*& node : nodes)
-			{
-				if(it != m_nodesEnd)
-				{
-					node = &(*it);
-					++it;
-				}
-			}
-			lock.unlock();
-
-			// Process nodes
-			U count = 0;
-			for(U i = 0; i < nodes.getSize(); ++i)
-			{
-				if(nodes[i])
-				{
-					if(nodes[i]->getParent() == nullptr)
-					{
-						err = updateInternal(*nodes[i], m_prevUpdateTime, m_crntTime);
-						ANKI_TRACE_INC_COUNTER(SCENE_NODES_UPDATED, 1);
-					}
-					++count;
-				}
-			}
-
-			if(ANKI_UNLIKELY(count == 0))
-			{
-				quit = true;
-			}
-		}
-
-		ANKI_TRACE_STOP_EVENT(SCENE_NODES_UPDATE);
-		return err;
-	}
-
-	ANKI_USE_RESULT Error updateInternal(SceneNode& node, F32 prevTime, F32 crntTime)
-	{
-		Error err = ErrorCode::NONE;
-
-		// Components update
-		err = node.iterateComponents([&](SceneComponent& comp) -> Error {
-			Bool updated = false;
-			return comp.updateReal(node, prevTime, crntTime, updated);
-		});
-
-		// Update children
-		if(!err)
-		{
-			err = node.visitChildren(
-				[&](SceneNode& child) -> Error { return updateInternal(child, prevTime, crntTime); });
-		}
-
-		// Frame update
-		if(!err)
-		{
-			err = node.frameUpdateComplete(prevTime, crntTime);
-		}
-
-		return err;
+		return m_ctx->m_scene->updateNodes(*m_ctx);
 	}
 };
-
-} // end namespace anonymous
 
 SceneGraph::SceneGraph()
 {
@@ -285,20 +216,16 @@ Error SceneGraph::update(F32 prevUpdateTime, F32 crntTime, MainRenderer& rendere
 
 	// Then the rest
 	Array<UpdateSceneNodesTask, ThreadPool::MAX_THREADS> jobs2;
-	IntrusiveList<SceneNode>::Iterator nodeIt = m_nodes.getBegin();
-	SpinLock nodeItLock;
+	UpdateSceneNodesCtx updateCtx;
+	updateCtx.m_scene = this;
+	updateCtx.m_crntNode = m_nodes.getBegin();
+	updateCtx.m_prevUpdateTime = prevUpdateTime;
+	updateCtx.m_crntTime = crntTime;
 
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
 		UpdateSceneNodesTask& job = jobs2[i];
-
-		job.m_scene = this;
-		job.m_prevUpdateTime = prevUpdateTime;
-		job.m_crntTime = crntTime;
-		job.m_crntNode = &nodeIt;
-		job.m_crntNodeLock = &nodeItLock;
-		job.m_nodesEnd = m_nodes.getEnd();
-
+		job.m_ctx = &updateCtx;
 		threadPool.assignNewTask(i, &job);
 	}
 
@@ -309,6 +236,84 @@ Error SceneGraph::update(F32 prevUpdateTime, F32 crntTime, MainRenderer& rendere
 
 	ANKI_TRACE_STOP_EVENT(SCENE_UPDATE);
 	return ErrorCode::NONE;
+}
+
+Error SceneGraph::updateNode(F32 prevTime, F32 crntTime, SceneNode& node)
+{
+	ANKI_TRACE_INC_COUNTER(SCENE_NODES_UPDATED, 1);
+
+	Error err = ErrorCode::NONE;
+
+	// Components update
+	err = node.iterateComponents([&](SceneComponent& comp) -> Error {
+		Bool updated = false;
+		return comp.updateReal(node, prevTime, crntTime, updated);
+	});
+
+	// Update children
+	if(!err)
+	{
+		err = node.visitChildren([&](SceneNode& child) -> Error { return updateNode(prevTime, crntTime, child); });
+	}
+
+	// Frame update
+	if(!err)
+	{
+		err = node.frameUpdateComplete(prevTime, crntTime);
+	}
+
+	return err;
+}
+
+Error SceneGraph::updateNodes(UpdateSceneNodesCtx& ctx) const
+{
+	ANKI_TRACE_START_EVENT(SCENE_NODES_UPDATE);
+
+	IntrusiveList<SceneNode>::Iterator& it = ctx.m_crntNode;
+	IntrusiveList<SceneNode>::ConstIterator end = m_nodes.getEnd();
+	SpinLock& lock = ctx.m_crntNodeLock;
+
+	Bool quit = false;
+	Error err = ErrorCode::NONE;
+	while(!quit && !err)
+	{
+		// Fetch a few scene nodes
+		Array<SceneNode*, NODE_UPDATE_BATCH> nodes = {{
+			nullptr,
+		}};
+		lock.lock();
+		for(SceneNode*& node : nodes)
+		{
+			if(it != end)
+			{
+				node = &(*it);
+				++it;
+			}
+		}
+		lock.unlock();
+
+		// Process nodes
+		U count = 0;
+		for(U i = 0; i < nodes.getSize(); ++i)
+		{
+			if(nodes[i])
+			{
+				if(nodes[i]->getParent() == nullptr)
+				{
+					err = updateNode(ctx.m_prevUpdateTime, ctx.m_crntTime, *nodes[i]);
+				}
+				++count;
+			}
+		}
+
+		if(ANKI_UNLIKELY(count == 0))
+		{
+			quit = true;
+		}
+	}
+
+	ANKI_TRACE_STOP_EVENT(SCENE_NODES_UPDATE);
+	return err;
 }
 
 } // end namespace anki
