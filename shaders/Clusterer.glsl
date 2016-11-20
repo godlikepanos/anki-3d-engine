@@ -50,4 +50,12 @@ float computeClusterFar(uint k, float near, float clustererMagic)
 	return 1.0 / clustererMagic * pow(float(k + 1u), 2.0) - near;
 }
 
+uint computeClusterKFromZViewSpace(float zViewSpace, float near, float far, float clustererMagic)
+{
+	float z = clamp(zViewSpace, -far, -near);
+	z = -z;
+	float kf = sqrt((z - near) * -clustererMagic);
+	return uint(kf);
+}
+
 #endif

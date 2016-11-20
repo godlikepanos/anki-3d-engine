@@ -148,8 +148,7 @@ void main()
 
 #if 0
 	{
-		out_color = textureCatmullRom4Samples(u_isRt, 
-				uv, vec2(2560. / 2., 1400. / 2.)).rgb;
+		out_color = textureLod(u_isRt, uv, 0.0).rgb;
 	}
 #endif
 

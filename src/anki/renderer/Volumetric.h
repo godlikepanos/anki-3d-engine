@@ -40,22 +40,10 @@ anki_internal:
 	void setPostRunBarriers(RenderingContext& ctx);
 
 private:
-	TexturePtr m_tmpRt;
-
 	ResourceGroupPtr m_rc;
-	ResourceGroupPtr m_hblurRc;
-	ResourceGroupPtr m_vblurRc;
-
 	ShaderResourcePtr m_frag;
-	ShaderResourcePtr m_vblurFrag;
-	ShaderResourcePtr m_hblurFrag;
-
 	PipelinePtr m_ppline;
-	PipelinePtr m_hblurPpline;
-	PipelinePtr m_vblurPpline;
-
-	FramebufferPtr m_vblurFb;
-	FramebufferPtr m_hblurFb;
+	FramebufferPtr m_fb;
 
 	Vec3 m_fogColor = Vec3(1.0);
 	F32 m_fogFactor = 1.0;
