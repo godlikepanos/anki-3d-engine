@@ -5,7 +5,7 @@
 
 #include <anki/renderer/Volumetric.h>
 #include <anki/renderer/Renderer.h>
-#include <anki/renderer/HalfDepth.h>
+#include <anki/renderer/DepthDownscale.h>
 #include <anki/renderer/Sm.h>
 #include <anki/renderer/Is.h>
 #include <anki/renderer/LightBin.h>
@@ -56,7 +56,7 @@ Error Volumetric::init(const ConfigSet& config)
 
 	// Create the resource groups
 	ResourceGroupInitInfo rcInit;
-	rcInit.m_textures[0].m_texture = m_r->getHalfDepth().m_depthRt;
+	rcInit.m_textures[0].m_texture = m_r->getDepthDownscale().m_qd.m_depthRt;
 	rcInit.m_textures[0].m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
 	rcInit.m_textures[1].m_texture = m_r->getSm().getSpotTextureArray();
 	rcInit.m_textures[2].m_texture = m_r->getSm().getOmniTextureArray();

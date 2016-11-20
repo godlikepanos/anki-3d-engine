@@ -24,7 +24,7 @@
 #include <anki/renderer/FsUpscale.h>
 #include <anki/renderer/DownscaleBlur.h>
 #include <anki/renderer/Volumetric.h>
-#include <anki/renderer/HalfDepth.h>
+#include <anki/renderer/DepthDownscale.h>
 #include <anki/renderer/Smaa.h>
 
 #include <cstdarg> // For var args
@@ -146,8 +146,8 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_is.reset(m_alloc.newInstance<Is>(this));
 	ANKI_CHECK(m_is->init(config));
 
-	m_hd.reset(m_alloc.newInstance<HalfDepth>(this));
-	ANKI_CHECK(m_hd->init(config));
+	m_depth.reset(m_alloc.newInstance<DepthDownscale>(this));
+	ANKI_CHECK(m_depth->init(config));
 
 	m_fs.reset(m_alloc.newInstance<Fs>(this));
 	ANKI_CHECK(m_fs->init(config));
@@ -221,12 +221,8 @@ Error Renderer::render(RenderingContext& ctx)
 	m_ssao->setPreRunBarriers(ctx);
 	m_bloom->m_extractExposure.setPreRunBarriers(ctx);
 	m_bloom->m_upscale.setPreRunBarriers(ctx);
-
-	cmdb->setTextureSurfaceBarrier(m_hd->m_depthRt,
-		TextureUsageBit::NONE,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		TextureSurfaceInfo(0, 0, 0, 0));
-
+	m_depth->m_hd.setPreRunBarriers(ctx);
+	m_depth->m_qd.setPreRunBarriers(ctx);
 	m_smaa->m_edge.setPreRunBarriers(ctx);
 	m_smaa->m_weights.setPreRunBarriers(ctx);
 	m_vol->setPreRunBarriers(ctx);
@@ -241,14 +237,15 @@ Error Renderer::render(RenderingContext& ctx)
 
 	// Batch IS + HD
 	m_is->run(ctx);
-	m_hd->run(ctx);
+	m_depth->m_hd.run(ctx);
+
+	m_depth->m_hd.setPostRunBarriers(ctx);
+
+	m_depth->m_qd.run(ctx);
+
+	m_depth->m_qd.setPostRunBarriers(ctx);
 
 	m_lf->updateIndirectInfo(ctx, cmdb);
-
-	cmdb->setTextureSurfaceBarrier(m_hd->m_depthRt,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ,
-		TextureSurfaceInfo(0, 0, 0, 0));
 
 	// Batch FS & SSAO & VOL
 	m_fs->run(ctx);

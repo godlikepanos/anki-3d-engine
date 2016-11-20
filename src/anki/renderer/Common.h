@@ -29,7 +29,7 @@ class Ir;
 class FsUpscale;
 class DownscaleBlur;
 class Volumetric;
-class HalfDepth;
+class DepthDownscale;
 class Smaa;
 
 class RenderingContext;

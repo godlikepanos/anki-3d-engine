@@ -10,7 +10,7 @@
 #include <anki/renderer/Fs.h>
 #include <anki/renderer/Ssao.h>
 #include <anki/renderer/Volumetric.h>
-#include <anki/renderer/HalfDepth.h>
+#include <anki/renderer/DepthDownscale.h>
 #include <anki/scene/FrustumComponent.h>
 
 namespace anki
@@ -29,7 +29,7 @@ Error FsUpscale::init(const ConfigSet& config)
 	rcInit.m_textures[0].m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
 
 	sinit.m_mipmapFilter = SamplingFilter::NEAREST;
-	rcInit.m_textures[1].m_texture = m_r->getHalfDepth().m_depthRt;
+	rcInit.m_textures[1].m_texture = m_r->getDepthDownscale().m_hd.m_depthRt;
 	rcInit.m_textures[1].m_sampler = gr.newInstance<Sampler>(sinit);
 	rcInit.m_textures[1].m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
 

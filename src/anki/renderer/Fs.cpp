@@ -8,7 +8,7 @@
 #include <anki/renderer/Ms.h>
 #include <anki/renderer/Is.h>
 #include <anki/renderer/Sm.h>
-#include <anki/renderer/HalfDepth.h>
+#include <anki/renderer/DepthDownscale.h>
 #include <anki/scene/SceneGraph.h>
 #include <anki/scene/FrustumComponent.h>
 
@@ -42,7 +42,7 @@ Error Fs::init(const ConfigSet&)
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
 	fbInit.m_colorAttachments[0].m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
-	fbInit.m_depthStencilAttachment.m_texture = m_r->getHalfDepth().m_depthRt;
+	fbInit.m_depthStencilAttachment.m_texture = m_r->getDepthDownscale().m_hd.m_depthRt;
 	fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::LOAD;
 	fbInit.m_depthStencilAttachment.m_usageInsideRenderPass =
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
@@ -52,7 +52,7 @@ Error Fs::init(const ConfigSet&)
 	// Init the global resources
 	{
 		ResourceGroupInitInfo init;
-		init.m_textures[0].m_texture = m_r->getHalfDepth().m_depthRt;
+		init.m_textures[0].m_texture = m_r->getDepthDownscale().m_hd.m_depthRt;
 		init.m_textures[0].m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
 		init.m_textures[1].m_texture = m_r->getSm().getSpotTextureArray();
 		init.m_textures[2].m_texture = m_r->getSm().getOmniTextureArray();
@@ -85,6 +85,15 @@ Error Fs::init(const ConfigSet&)
 	}
 
 	m_pplineCache = getAllocator().newInstance<GrObjectCache>(&getGrManager());
+
+	ANKI_CHECK(initVol());
+
+	return ErrorCode::NONE;
+}
+
+Error Fs::initVol()
+{
+	// TODO
 
 	return ErrorCode::NONE;
 }

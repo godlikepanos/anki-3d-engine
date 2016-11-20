@@ -34,6 +34,8 @@ anki_internal:
 
 	void setPostRunBarriers(RenderingContext& ctx);
 
+	void drawVolumetric(CommandBufferPtr cmdb);
+
 	TexturePtr getRt() const
 	{
 		return m_rt;
@@ -62,6 +64,16 @@ private:
 	ResourceGroupPtr m_globalResources;
 	PipelineInitInfo m_state;
 	GrObjectCache* m_pplineCache = nullptr;
+
+	class
+	{
+	public:
+		ShaderResourcePtr m_frag;
+		PipelinePtr m_ppline;
+		ResourceGroupPtr m_rc;
+	} m_vol;
+
+	ANKI_USE_RESULT Error initVol();
 };
 /// @}
 
