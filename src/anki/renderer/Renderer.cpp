@@ -149,11 +149,11 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_depth.reset(m_alloc.newInstance<DepthDownscale>(this));
 	ANKI_CHECK(m_depth->init(config));
 
-	m_fs.reset(m_alloc.newInstance<Fs>(this));
-	ANKI_CHECK(m_fs->init(config));
-
 	m_vol.reset(m_alloc.newInstance<Volumetric>(this));
 	ANKI_CHECK(m_vol->init(config));
+
+	m_fs.reset(m_alloc.newInstance<Fs>(this));
+	ANKI_CHECK(m_fs->init(config));
 
 	m_lf.reset(m_alloc.newInstance<Lf>(this));
 	ANKI_CHECK(m_lf->init(config));
@@ -245,16 +245,17 @@ Error Renderer::render(RenderingContext& ctx)
 
 	m_depth->m_qd.setPostRunBarriers(ctx);
 
+	m_vol->run(ctx);
+	m_vol->setPostRunBarriers(ctx);
+
 	m_lf->updateIndirectInfo(ctx, cmdb);
 
 	// Batch FS & SSAO & VOL
 	m_fs->run(ctx);
 	m_ssao->run(ctx);
-	m_vol->run(ctx);
 
 	m_ssao->setPostRunBarriers(ctx);
 	m_fs->setPostRunBarriers(ctx);
-	m_vol->setPostRunBarriers(ctx);
 
 	m_fsUpscale->run(ctx);
 
@@ -416,6 +417,7 @@ Error Renderer::buildCommandBuffersInternal(RenderingContext& ctx, U32 threadId,
 	if(ctx.m_fs.m_lastThreadWithWork == threadId)
 	{
 		m_lf->run(ctx, ctx.m_fs.m_commandBuffers[threadId]);
+		m_fs->drawVolumetric(ctx, ctx.m_fs.m_commandBuffers[threadId]);
 	}
 	else if(threadId == threadCount - 1 && ctx.m_fs.m_lastThreadWithWork == MAX_U32)
 	{
@@ -430,6 +432,7 @@ Error Renderer::buildCommandBuffersInternal(RenderingContext& ctx, U32 threadId,
 		cmdb->setPolygonOffset(0.0, 0.0);
 
 		m_lf->run(ctx, cmdb);
+		m_fs->drawVolumetric(ctx, cmdb);
 
 		ctx.m_fs.m_commandBuffers[threadId] = cmdb;
 	}

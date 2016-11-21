@@ -34,7 +34,7 @@ anki_internal:
 
 	void setPostRunBarriers(RenderingContext& ctx);
 
-	void drawVolumetric(CommandBufferPtr cmdb);
+	void drawVolumetric(RenderingContext& ctx, CommandBufferPtr cmdb);
 
 	TexturePtr getRt() const
 	{
@@ -65,7 +65,7 @@ private:
 	PipelineInitInfo m_state;
 	GrObjectCache* m_pplineCache = nullptr;
 
-	class
+	class Vol
 	{
 	public:
 		ShaderResourcePtr m_frag;

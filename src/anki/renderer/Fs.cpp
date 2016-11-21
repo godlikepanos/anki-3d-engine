@@ -8,6 +8,7 @@
 #include <anki/renderer/Ms.h>
 #include <anki/renderer/Is.h>
 #include <anki/renderer/Sm.h>
+#include <anki/renderer/Volumetric.h>
 #include <anki/renderer/DepthDownscale.h>
 #include <anki/scene/SceneGraph.h>
 #include <anki/scene/FrustumComponent.h>
@@ -93,9 +94,34 @@ Error Fs::init(const ConfigSet&)
 
 Error Fs::initVol()
 {
-	// TODO
+	ANKI_CHECK(getResourceManager().loadResource("shaders/VolumetricUpscale.frag.glsl", m_vol.m_frag));
+
+	ColorStateInfo color;
+	color.m_attachmentCount = 1;
+	color.m_attachments[0].m_format = IS_COLOR_ATTACHMENT_PIXEL_FORMAT;
+	color.m_attachments[0].m_srcBlendMethod = BlendMethod::ONE;
+	color.m_attachments[0].m_dstBlendMethod = BlendMethod::ONE;
+	m_r->createDrawQuadPipeline(m_vol.m_frag->getGrShader(), color, m_vol.m_ppline);
+
+	SamplerInitInfo sinit;
+	sinit.m_repeat = false;
+	sinit.m_mipmapFilter = SamplingFilter::NEAREST;
+
+	ResourceGroupInitInfo rcinit;
+	rcinit.m_textures[0].m_texture = m_r->getDepthDownscale().m_hd.m_depthRt;
+	rcinit.m_textures[0].m_sampler = getGrManager().newInstance<Sampler>(sinit);
+	rcinit.m_textures[1].m_texture = m_r->getDepthDownscale().m_qd.m_depthRt;
+	rcinit.m_textures[2].m_texture = m_r->getVolumetric().m_rt;
+	m_vol.m_rc = getGrManager().newInstance<ResourceGroup>(rcinit);
 
 	return ErrorCode::NONE;
+}
+
+void Fs::drawVolumetric(RenderingContext& ctx, CommandBufferPtr cmdb)
+{
+	cmdb->bindPipeline(m_vol.m_ppline);
+	cmdb->bindResourceGroup(m_vol.m_rc, 0, nullptr);
+	m_r->drawQuad(cmdb);
 }
 
 Error Fs::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) const

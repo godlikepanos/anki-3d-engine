@@ -74,4 +74,49 @@ float rand(vec2 n)
 	return 0.5 + 0.5 * fract(sin(dot(n, vec2(12.9898, 78.233))) * 43758.5453);
 }
 
+vec3 nearestDepthUpscale(vec2 uv, sampler2D depthFull, sampler2D depthHalf, sampler2D colorTex, float depthThreshold)
+{
+	float fullDepth = texture(depthFull, uv).r;
+	vec4 halfDepths = textureGather(depthHalf, uv, 0);
+	vec4 diffs = abs(vec4(fullDepth) - halfDepths);
+	vec3 color;
+
+	if(all(lessThan(diffs, vec4(depthThreshold))))
+	{
+		// No major discontinuites, sample with bilinear
+		color = texture(colorTex, uv).rgb;
+	}
+	else
+	{
+		// Some discontinuites, need to use the newUv
+		vec4 r = textureGather(colorTex, uv, 0);
+		vec4 g = textureGather(colorTex, uv, 1);
+		vec4 b = textureGather(colorTex, uv, 2);
+
+		float minDiff = diffs.x;
+		uint comp = 0;
+
+		if(diffs.y < minDiff)
+		{
+			comp = 1;
+			minDiff = diffs.y;
+		}
+
+		if(diffs.z < minDiff)
+		{
+			comp = 2;
+			minDiff = diffs.z;
+		}
+
+		if(diffs.w < minDiff)
+		{
+			comp = 3;
+		}
+
+		color = vec3(r[comp], g[comp], b[comp]);
+	}
+
+	return color;
+}
+
 #endif

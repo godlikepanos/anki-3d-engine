@@ -51,4 +51,12 @@ ANKI_TEST(Util, Atomic)
 		a.fetchSub(1);
 		ANKI_TEST_EXPECT_EQ(a.load(), &u[0]);
 	}
+
+	// Pointer of pointer
+	{
+		U32* pu = reinterpret_cast<U32*>(0xFFFAA);
+		Atomic<U32**> a{&pu};
+		a.fetchAdd(1);
+		ANKI_TEST_EXPECT_EQ(a.load(), &pu + 1);
+	}
 }

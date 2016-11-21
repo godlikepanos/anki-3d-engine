@@ -35,12 +35,7 @@ Error FsUpscale::init(const ConfigSet& config)
 
 	rcInit.m_textures[2].m_texture = m_r->getFs().getRt();
 
-	rcInit.m_textures[3].m_texture = m_r->getVolumetric().m_rt;
-
-	rcInit.m_textures[4].m_texture = m_r->getSsao().getRt();
-
-	rcInit.m_uniformBuffers[0].m_uploadedMemory = true;
-	rcInit.m_uniformBuffers[0].m_usage = BufferUsageBit::UNIFORM_FRAGMENT;
+	rcInit.m_textures[3].m_texture = m_r->getSsao().getRt();
 
 	m_rcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);
 

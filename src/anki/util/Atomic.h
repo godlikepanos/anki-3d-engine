@@ -80,31 +80,49 @@ public:
 #endif
 	}
 
-	/// Fetch and add.
-	template<typename Y>
-	Value fetchAdd(const Y& a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
+	/// Fetch and add. Pointer specialization
+	template<typename Y, typename Q = T>
+	typename std::enable_if<std::is_pointer<Q>::value, Q>::type fetchAdd(
+		const Y& a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
 	{
 #if defined(__GNUC__)
-		// Do a trick to workaround the fact that __atomic_fetch_add doesn't take into account the size of the type
-		// if that type is a pointer.
-		Value v = Value(0);
-		v += a;
-		return __atomic_fetch_add(&m_val, v, static_cast<int>(memOrd));
+		return __atomic_fetch_add(&m_val, a * sizeof(typename std::remove_pointer<Q>::type), static_cast<int>(memOrd));
 #else
 #error "TODO"
 #endif
 	}
 
-	/// Fetch and subtract.
-	template<typename Y>
-	Value fetchSub(const Y& a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
+	/// Fetch and add. Arithmetic specialization.
+	template<typename Y, typename Q = T>
+	typename std::enable_if<!std::is_pointer<Q>::value, Q>::type fetchAdd(
+		const Y& a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
 	{
 #if defined(__GNUC__)
-		// Do a trick to workaround the fact that __atomic_fetch_add doesn't take into account the size of the type
-		// if that type is a pointer.
-		Value v = Value(0);
-		v += a;
-		return __atomic_fetch_sub(&m_val, v, static_cast<int>(memOrd));
+		return __atomic_fetch_add(&m_val, a, static_cast<int>(memOrd));
+#else
+#error "TODO"
+#endif
+	}
+
+	/// Fetch and subtract. Pointer specialization.
+	template<typename Y, typename Q = T>
+	typename std::enable_if<std::is_pointer<Q>::value, Q>::type fetchSub(
+		const Y& a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
+	{
+#if defined(__GNUC__)
+		return __atomic_fetch_sub(&m_val, a * sizeof(typename std::remove_pointer<Q>::type), static_cast<int>(memOrd));
+#else
+#error "TODO"
+#endif
+	}
+
+	/// Fetch and subtract. Arithmetic specialization.
+	template<typename Y, typename Q = T>
+	typename std::enable_if<!std::is_pointer<Q>::value, Q>::type fetchSub(
+		const Y& a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
+	{
+#if defined(__GNUC__)
+		return __atomic_fetch_sub(&m_val, a, static_cast<int>(memOrd));
 #else
 #error "TODO"
 #endif
