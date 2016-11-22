@@ -94,7 +94,11 @@ Error Fs::init(const ConfigSet&)
 
 Error Fs::initVol()
 {
-	ANKI_CHECK(getResourceManager().loadResource("shaders/VolumetricUpscale.frag.glsl", m_vol.m_frag));
+	ANKI_CHECK(m_r->createShader("shaders/VolumetricUpscale.frag.glsl",
+		m_vol.m_frag,
+		"#define SRC_SIZE vec2(float(%u), float(%u))\n",
+		m_r->getWidth() / VOLUMETRIC_FRACTION,
+		m_r->getHeight() / VOLUMETRIC_FRACTION));
 
 	ColorStateInfo color;
 	color.m_attachmentCount = 1;
@@ -111,7 +115,10 @@ Error Fs::initVol()
 	rcinit.m_textures[0].m_texture = m_r->getDepthDownscale().m_hd.m_depthRt;
 	rcinit.m_textures[0].m_sampler = getGrManager().newInstance<Sampler>(sinit);
 	rcinit.m_textures[1].m_texture = m_r->getDepthDownscale().m_qd.m_depthRt;
+	rcinit.m_textures[1].m_sampler = rcinit.m_textures[0].m_sampler;
 	rcinit.m_textures[2].m_texture = m_r->getVolumetric().m_rt;
+	rcinit.m_uniformBuffers[0].m_uploadedMemory = true;
+	rcinit.m_uniformBuffers[0].m_usage = BufferUsageBit::UNIFORM_FRAGMENT;
 	m_vol.m_rc = getGrManager().newInstance<ResourceGroup>(rcinit);
 
 	return ErrorCode::NONE;
@@ -119,8 +126,17 @@ Error Fs::initVol()
 
 void Fs::drawVolumetric(RenderingContext& ctx, CommandBufferPtr cmdb)
 {
+	const Frustum& fr = ctx.m_frustumComponent->getFrustum();
+
 	cmdb->bindPipeline(m_vol.m_ppline);
-	cmdb->bindResourceGroup(m_vol.m_rc, 0, nullptr);
+
+	TransientMemoryInfo trans;
+	Vec4* unis = static_cast<Vec4*>(getGrManager().allocateFrameTransientMemory(
+		sizeof(Vec4), BufferUsageBit::UNIFORM_ALL, trans.m_uniformBuffers[0]));
+	computeLinearizeDepthOptimal(fr.getNear(), fr.getFar(), unis->x(), unis->y());
+
+	cmdb->bindResourceGroup(m_vol.m_rc, 0, &trans);
+
 	m_r->drawQuad(cmdb);
 }
 

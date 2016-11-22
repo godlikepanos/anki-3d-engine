@@ -6,6 +6,8 @@
 #ifndef ANKI_SHADERS_FUNCTIONS_GLSL
 #define ANKI_SHADERS_FUNCTIONS_GLSL
 
+#include "shaders/Common.glsl"
+
 vec3 dither(in vec3 col, in float C)
 {
 	vec3 vDither = vec3(dot(vec2(171.0, 231.0), gl_FragCoord.xy));
@@ -117,6 +119,59 @@ vec3 nearestDepthUpscale(vec2 uv, sampler2D depthFull, sampler2D depthHalf, samp
 	}
 
 	return color;
+}
+
+float _calcDepthWeight(sampler2D depthLow, vec2 uv, float ref, vec2 linearDepthCf)
+{
+	float d = texture(depthLow, uv).r;
+	float linearD = linearizeDepthOptimal(d, linearDepthCf.x, linearDepthCf.y);
+	return 1.0 / (EPSILON + abs(ref - linearD));
+}
+
+vec3 _sampleAndWeight(sampler2D depthLow,
+	sampler2D colorLow,
+	vec2 lowInvSize,
+	vec2 uv,
+	vec2 offset,
+	float ref,
+	float weight,
+	vec2 linearDepthCf,
+	inout float normalize)
+{
+	uv += offset * lowInvSize;
+	float dw = _calcDepthWeight(depthLow, uv, ref, linearDepthCf);
+	vec3 v = texture(colorLow, uv).rgb;
+	normalize += weight * dw;
+	return v * dw * weight;
+}
+
+vec3 bilateralUpsample(
+	sampler2D depthHigh, sampler2D depthLow, sampler2D colorLow, vec2 lowInvSize, vec2 uv, vec2 linearDepthCf)
+{
+	const vec3 WEIGHTS = vec3(0.25, 0.125, 0.0625);
+	float depthRef = linearizeDepthOptimal(texture(depthHigh, uv).r, linearDepthCf.x, linearDepthCf.y);
+	float normalize = 0.0;
+
+	vec3 sum = _sampleAndWeight(
+		depthLow, colorLow, lowInvSize, uv, vec2(0.0, 0.0), depthRef, WEIGHTS.x, linearDepthCf, normalize);
+	sum += _sampleAndWeight(
+		depthLow, colorLow, lowInvSize, uv, vec2(-1.0, 0.0), depthRef, WEIGHTS.y, linearDepthCf, normalize);
+	sum += _sampleAndWeight(
+		depthLow, colorLow, lowInvSize, uv, vec2(0.0, -1.0), depthRef, WEIGHTS.y, linearDepthCf, normalize);
+	sum += _sampleAndWeight(
+		depthLow, colorLow, lowInvSize, uv, vec2(1.0, 0.0), depthRef, WEIGHTS.y, linearDepthCf, normalize);
+	sum += _sampleAndWeight(
+		depthLow, colorLow, lowInvSize, uv, vec2(0.0, 1.0), depthRef, WEIGHTS.y, linearDepthCf, normalize);
+	sum += _sampleAndWeight(
+		depthLow, colorLow, lowInvSize, uv, vec2(1.0, 1.0), depthRef, WEIGHTS.z, linearDepthCf, normalize);
+	sum += _sampleAndWeight(
+		depthLow, colorLow, lowInvSize, uv, vec2(1.0, -1.0), depthRef, WEIGHTS.z, linearDepthCf, normalize);
+	sum += _sampleAndWeight(
+		depthLow, colorLow, lowInvSize, uv, vec2(-1.0, 1.0), depthRef, WEIGHTS.z, linearDepthCf, normalize);
+	sum += _sampleAndWeight(
+		depthLow, colorLow, lowInvSize, uv, vec2(-1.0, -1.0), depthRef, WEIGHTS.z, linearDepthCf, normalize);
+
+	return sum / normalize;
 }
 
 #endif

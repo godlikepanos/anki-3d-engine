@@ -19,10 +19,20 @@ layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2D u_ssaoTex;
 
 const float DEPTH_THRESHOLD = 1.0 / 4000.0;
 
+layout(ANKI_UBO_BINDING(0, 0)) uniform u0_
+{
+	vec4 u_linearizeCfPad2;
+};
+
 void main()
 {
+#if 0
 	// Get the depth of the current fragment
 	vec3 color = nearestDepthUpscale(in_uv, u_depthFullTex, u_depthHalfTex, u_fsRt, DEPTH_THRESHOLD);
+#else
+	vec3 color =
+		bilateralUpsample(u_depthFullTex, u_depthHalfTex, u_fsRt, 1.0 / vec2(SRC_SIZE), in_uv, u_linearizeCfPad2.xy);
+#endif
 
 #if SSAO_ENABLED
 	float ssao = textureLod(u_ssaoTex, in_uv, 0.0).r;

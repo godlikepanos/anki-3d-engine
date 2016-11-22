@@ -37,12 +37,14 @@ Error FsUpscale::init(const ConfigSet& config)
 
 	rcInit.m_textures[3].m_texture = m_r->getSsao().getRt();
 
+	rcInit.m_uniformBuffers[0].m_uploadedMemory = true;
+	rcInit.m_uniformBuffers[0].m_usage = BufferUsageBit::UNIFORM_FRAGMENT;
+
 	m_rcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);
 
 	// Shader
 	StringAuto pps(getFrameAllocator());
-	pps.sprintf("#define TEXTURE_WIDTH %uu\n"
-				"#define TEXTURE_HEIGHT %uu\n"
+	pps.sprintf("#define SRC_SIZE uvec2(%uu, %uu)\n"
 				"#define SSAO_ENABLED %u\n",
 		m_r->getWidth() / FS_FRACTION,
 		m_r->getHeight() / FS_FRACTION,
