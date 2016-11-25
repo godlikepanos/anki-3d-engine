@@ -22,9 +22,7 @@ class GrManagerImpl;
 class TextureInitInfo;
 class SamplerInitInfo;
 class GrManagerInitInfo;
-class PipelineInitInfo;
 class FramebufferInitInfo;
-class ResourceGroupInitInfo;
 
 /// @addtogroup graphics
 /// @{
@@ -43,10 +41,8 @@ ANKI_GR_CLASS(Texture)
 ANKI_GR_CLASS(Sampler)
 ANKI_GR_CLASS(CommandBuffer)
 ANKI_GR_CLASS(Shader)
-ANKI_GR_CLASS(Pipeline)
 ANKI_GR_CLASS(Framebuffer)
 ANKI_GR_CLASS(OcclusionQuery)
-ANKI_GR_CLASS(ResourceGroup)
 ANKI_GR_CLASS(ShaderProgram)
 
 #undef ANKI_GR_CLASS
@@ -192,15 +188,6 @@ anki_internal:
 	{
 		return m_offset == MAX_U32 && m_range == MAX_U32;
 	}
-};
-
-/// Struct to help update the offset of the dynamic buffers.
-class TransientMemoryInfo
-{
-public:
-	Array<TransientMemoryToken, MAX_UNIFORM_BUFFER_BINDINGS> m_uniformBuffers;
-	Array<TransientMemoryToken, MAX_STORAGE_BUFFER_BINDINGS> m_storageBuffers;
-	Array<TransientMemoryToken, MAX_VERTEX_ATTRIBUTES> m_vertexBuffers;
 };
 
 /// Compute max number of mipmaps for a 2D texture.

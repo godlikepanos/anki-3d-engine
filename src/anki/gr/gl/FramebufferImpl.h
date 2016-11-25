@@ -35,6 +35,23 @@ public:
 	/// Bind it to the state. Call it in rendering thread
 	void bind(const GlState& state);
 
+	U getColorBufferCount() const
+	{
+		return m_in.m_colorAttachmentCount;
+	}
+
+	Bool hasDepthBuffer() const
+	{
+		return m_in.m_depthStencilAttachment.m_texture.isCreated()
+			&& !!(m_in.m_depthStencilAttachment.m_aspect & DepthStencilAspectMask::DEPTH);
+	}
+
+	Bool hasStencilBuffer() const
+	{
+		return m_in.m_depthStencilAttachment.m_texture.isCreated()
+			&& !!(m_in.m_depthStencilAttachment.m_aspect & DepthStencilAspectMask::STENCIL);
+	}
+
 private:
 	FramebufferInitInfo m_in;
 

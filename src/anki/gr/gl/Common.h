@@ -131,6 +131,37 @@ inline GLenum convertBlendFunction(BlendFunction ak)
 
 	return out;
 }
+
+inline GLenum convertPrimitiveTopology(PrimitiveTopology ak)
+{
+	GLenum out;
+	switch(ak)
+	{
+	case PrimitiveTopology::POINTS:
+		out = GL_POINTS;
+		break;
+	case PrimitiveTopology::LINES:
+		out = GL_LINES;
+		break;
+	case PrimitiveTopology::LINE_STIP:
+		out = GL_LINE_STRIP;
+		break;
+	case PrimitiveTopology::TRIANGLES:
+		out = GL_TRIANGLES;
+		break;
+	case PrimitiveTopology::TRIANGLE_STRIP:
+		out = GL_TRIANGLE_STRIP;
+		break;
+	case PrimitiveTopology::PATCHES:
+		out = GL_PATCHES;
+		break;
+	default:
+		ANKI_ASSERT(0);
+		out = 0;
+	}
+
+	return out;
+}
 /// @}
 
 } // end namespace anki

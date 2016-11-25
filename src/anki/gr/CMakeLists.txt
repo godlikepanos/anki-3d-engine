@@ -18,4 +18,4 @@ else()
 endif()
 
 add_library(ankigr ${ANKI_GR_SOURCES} ${ANKI_GR_BACKEND_SOURCES})
-target_link_libraries(ankigr ankiutil ankicore ${EXTRA_LIBS})
+target_link_libraries(ankigr ankiutil ${EXTRA_LIBS})

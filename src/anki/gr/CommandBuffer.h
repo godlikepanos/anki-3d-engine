@@ -242,28 +242,27 @@ public:
 	/// Bind a program.
 	void bindShaderProgram(ShaderProgramPtr prog);
 
-	/// Bind pipeline.
-	void bindPipeline(PipelinePtr ppline);
-
 	/// Begin renderpass.
 	void beginRenderPass(FramebufferPtr fb);
 
 	/// End renderpass.
 	void endRenderPass();
-
-	/// Bind resources.
-	void bindResourceGroup(ResourceGroupPtr rc, U slot, const TransientMemoryInfo* dynInfo);
 	/// @}
 
 	/// @name Jobs
 	/// @{
-	void drawElements(U32 count, U32 instanceCount = 1, U32 firstIndex = 0, U32 baseVertex = 0, U32 baseInstance = 0);
+	void drawElements(PrimitiveTopology topology,
+		U32 count,
+		U32 instanceCount = 1,
+		U32 firstIndex = 0,
+		U32 baseVertex = 0,
+		U32 baseInstance = 0);
 
-	void drawArrays(U32 count, U32 instanceCount = 1, U32 first = 0, U32 baseInstance = 0);
+	void drawArrays(PrimitiveTopology topology, U32 count, U32 instanceCount = 1, U32 first = 0, U32 baseInstance = 0);
 
-	void drawElementsIndirect(U32 drawCount, PtrSize offset, BufferPtr indirectBuff);
+	void drawElementsIndirect(PrimitiveTopology topology, U32 drawCount, PtrSize offset, BufferPtr indirectBuff);
 
-	void drawArraysIndirect(U32 drawCount, PtrSize offset, BufferPtr indirectBuff);
+	void drawArraysIndirect(PrimitiveTopology topology, U32 drawCount, PtrSize offset, BufferPtr indirectBuff);
 
 	void dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ);
 

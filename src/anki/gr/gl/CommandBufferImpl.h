@@ -42,17 +42,6 @@ class CommandBufferImpl
 public:
 	using InitHints = CommandBufferInitHints;
 
-#if ANKI_ASSERTS_ENABLED
-	class StateSet
-	{
-	public:
-		Bool m_viewport = false;
-		Bool m_polygonOffset = false;
-		Bool m_insideRenderPass = false;
-		Bool m_secondLevel = false;
-	} m_dbg;
-#endif
-
 	GrManager* m_manager = nullptr;
 	GlCommand* m_firstCommand = nullptr;
 	GlCommand* m_lastCommand = nullptr;
@@ -123,41 +112,15 @@ public:
 		return m_firstCommand == nullptr;
 	}
 
-	void bindResourceGroup(ResourceGroupPtr rc, U slot, const TransientMemoryInfo* info);
-
-	void drawElements(U32 count, U32 instanceCount = 1, U32 firstIndex = 0, U32 baseVertex = 0, U32 baseInstance = 0);
-
-	void drawArrays(U32 count, U32 instanceCount = 1, U32 first = 0, U32 baseInstance = 0);
-
-	void drawElementsIndirect(U32 drawCount, PtrSize offset, BufferPtr indirectBuff);
-
-	void drawArraysIndirect(U32 drawCount, PtrSize offset, BufferPtr indirectBuff);
-
-	void drawElementsConditional(OcclusionQueryPtr query,
-		U32 count,
-		U32 instanceCount = 1,
-		U32 firstIndex = 0,
-		U32 baseVertex = 0,
-		U32 baseInstance = 0);
-
-	void drawArraysConditional(
-		OcclusionQueryPtr query, U32 count, U32 instanceCount = 1, U32 first = 0, U32 baseInstance = 0);
-
-	void dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ);
-
 	Bool isSecondLevel() const
 	{
 		return !!(m_flags & CommandBufferFlag::SECOND_LEVEL);
 	}
 
+	void flushDrawcall();
+
 private:
 	void destroy();
-
-	void checkDrawcall() const
-	{
-		ANKI_ASSERT(m_dbg.m_viewport == true);
-		ANKI_ASSERT(m_dbg.m_polygonOffset == true);
-	}
 };
 
 template<typename TCommand, typename... TArgs>

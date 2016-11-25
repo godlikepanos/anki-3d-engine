@@ -139,40 +139,11 @@ void GlState::initRenderThread()
 	{
 		glEnableVertexAttribArray(i);
 	}
-
-	// Other
-	memset(&m_vertexBindingStrides[0], 0, sizeof(m_vertexBindingStrides));
 }
 
 void GlState::destroy()
 {
 	glDeleteVertexArrays(1, &m_defaultVao);
-}
-
-void GlState::flushVertexState()
-{
-	if(m_vertBindingsDirty)
-	{
-		m_vertBindingsDirty = false;
-
-		glBindVertexBuffers(
-			0, m_vertBindingCount, &m_vertBuffNames[0], &m_vertBuffOffsets[0], &m_vertexBindingStrides[0]);
-	}
-}
-
-void GlState::flushStencilState()
-{
-	if(m_glStencilFuncSeparateDirtyMask & 1)
-	{
-		glStencilFuncSeparate(GL_FRONT, m_stencilCompareFunc[0], m_stencilRef[0], m_stencilCompareMask[0]);
-		m_glStencilFuncSeparateDirtyMask &= ~1u;
-	}
-
-	if(m_glStencilFuncSeparateDirtyMask & 2)
-	{
-		glStencilFuncSeparate(GL_BACK, m_stencilCompareFunc[1], m_stencilRef[1], m_stencilCompareMask[1]);
-		m_glStencilFuncSeparateDirtyMask &= ~2u;
-	}
 }
 
 } // end namespace anki

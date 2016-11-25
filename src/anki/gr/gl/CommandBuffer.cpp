@@ -11,10 +11,6 @@
 #include <anki/gr/gl/GlState.h>
 #include <anki/gr/gl/TransientMemoryManager.h>
 
-#include <anki/gr/Pipeline.h>
-#include <anki/gr/gl/PipelineImpl.h>
-#include <anki/gr/ResourceGroup.h>
-#include <anki/gr/gl/ResourceGroupImpl.h>
 #include <anki/gr/Framebuffer.h>
 #include <anki/gr/gl/FramebufferImpl.h>
 #include <anki/gr/OcclusionQuery.h>
@@ -230,15 +226,7 @@ void CommandBuffer::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 
 		Error operator()(GlState& state)
 		{
-			if(state.m_viewport[0] != m_value[0] || state.m_viewport[1] != m_value[1]
-				|| state.m_viewport[2] != m_value[2]
-				|| state.m_viewport[3] != m_value[3])
-			{
-				glViewport(m_value[0], m_value[1], m_value[2], m_value[3]);
-
-				state.m_viewport = m_value;
-			}
-
+			glViewport(m_value[0], m_value[1], m_value[2], m_value[3]);
 			return ErrorCode::NONE;
 		}
 	};
@@ -401,6 +389,21 @@ void CommandBuffer::setStencilWriteMask(FaceSelectionMask face, U32 mask)
 		Error operator()(GlState& state)
 		{
 			glStencilMaskSeparate(m_face, m_mask);
+
+			if(m_face == GL_FRONT)
+			{
+				state.m_stencilWriteMask[0] = m_mask;
+			}
+			else if(m_face == GL_BACK)
+			{
+				state.m_stencilWriteMask[1] = m_mask;
+			}
+			else
+			{
+				ANKI_ASSERT(m_face == GL_FRONT_AND_BACK);
+				state.m_stencilWriteMask[0] = state.m_stencilWriteMask[1] = m_mask;
+			}
+
 			return ErrorCode::NONE;
 		}
 	};
@@ -429,6 +432,7 @@ void CommandBuffer::enableDepthWrite(Bool enable)
 		Error operator()(GlState& state)
 		{
 			glDepthMask(m_enable);
+			state.m_depthWriteMask = m_enable;
 			return ErrorCode::NONE;
 		}
 	};
@@ -478,13 +482,16 @@ void CommandBuffer::setColorChannelWriteMask(U32 attachment, ColorBit mask)
 		{
 		}
 
-		Error operator()(GlState&)
+		Error operator()(GlState& state)
 		{
-			glColorMaski(m_attachment,
-				!!(m_mask & ColorBit::RED),
-				!!(m_mask & ColorBit::GREEN),
-				!!(m_mask & ColorBit::BLUE),
-				!!(m_mask & ColorBit::ALPHA));
+			const Bool r = !!(m_mask & ColorBit::RED);
+			const Bool g = !!(m_mask & ColorBit::GREEN);
+			const Bool b = !!(m_mask & ColorBit::BLUE);
+			const Bool a = !!(m_mask & ColorBit::ALPHA);
+
+			glColorMaski(m_attachment, r, g, b, a);
+
+			state.m_colorWriteMasks[m_attachment] = {{r, g, b, a}};
 
 			return ErrorCode::NONE;
 		}
@@ -767,43 +774,6 @@ void CommandBuffer::bindShaderProgram(ShaderProgramPtr prog)
 	m_impl->m_state.bindShaderProgram(prog, [=]() { m_impl->pushBackNewCommand<Cmd>(prog); });
 }
 
-void CommandBuffer::bindPipeline(PipelinePtr ppline)
-{
-	class BindPipelineCommand final : public GlCommand
-	{
-	public:
-		PipelinePtr m_ppline;
-
-		BindPipelineCommand(PipelinePtr& ppline)
-			: m_ppline(ppline)
-		{
-		}
-
-		Error operator()(GlState& state)
-		{
-			if(state.m_lastPplineBoundUuid != m_ppline->getUuid())
-			{
-				ANKI_TRACE_START_EVENT(GL_BIND_PPLINE);
-
-				PipelineImpl& impl = *m_ppline->m_impl;
-				impl.bind(state);
-				state.m_lastPplineBoundUuid = m_ppline->getUuid();
-				ANKI_TRACE_INC_COUNTER(GR_PIPELINE_BINDS_HAPPENED, 1);
-
-				ANKI_TRACE_STOP_EVENT(GL_BIND_PPLINE);
-			}
-			else
-			{
-				ANKI_TRACE_INC_COUNTER(GR_PIPELINE_BINDS_SKIPPED, 1);
-			}
-
-			return ErrorCode::NONE;
-		}
-	};
-
-	m_impl->pushBackNewCommand<BindPipelineCommand>(ppline);
-}
-
 void CommandBuffer::beginRenderPass(FramebufferPtr fb)
 {
 	class BindFramebufferCommand final : public GlCommand
@@ -823,50 +793,209 @@ void CommandBuffer::beginRenderPass(FramebufferPtr fb)
 		}
 	};
 
-	ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
-#if ANKI_ASSERTS_ENABLED
-	m_impl->m_dbg.m_insideRenderPass = true;
-#endif
-	m_impl->pushBackNewCommand<BindFramebufferCommand>(fb);
+	m_impl->m_state.beginRenderPass(fb, [=]() { m_impl->pushBackNewCommand<BindFramebufferCommand>(fb); });
 }
 
 void CommandBuffer::endRenderPass()
 {
 	// Nothing for GL
-	ANKI_ASSERT(m_impl->m_dbg.m_insideRenderPass);
-#if ANKI_ASSERTS_ENABLED
-	m_impl->m_dbg.m_insideRenderPass = false;
-#endif
+	m_impl->m_state.endRenderPass();
 }
 
-void CommandBuffer::bindResourceGroup(ResourceGroupPtr rc, U slot, const TransientMemoryInfo* info)
+void CommandBuffer::drawElements(
+	PrimitiveTopology topology, U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance)
 {
-	m_impl->bindResourceGroup(rc, slot, info);
+	class Cmd final : public GlCommand
+	{
+	public:
+		GLenum m_topology;
+		GLenum m_indexType;
+		DrawElementsIndirectInfo m_info;
+
+		Cmd(GLenum topology, GLenum indexType, const DrawElementsIndirectInfo& info)
+			: m_topology(topology)
+			, m_indexType(indexType)
+			, m_info(info)
+		{
+		}
+
+		Error operator()(GlState&)
+		{
+			glDrawElementsInstancedBaseVertexBaseInstance(m_topology,
+				m_info.m_count,
+				m_indexType,
+				numberToPtr<void*>(m_info.m_firstIndex),
+				m_info.m_instanceCount,
+				m_info.m_baseVertex,
+				m_info.m_baseInstance);
+
+			ANKI_TRACE_INC_COUNTER(GR_DRAWCALLS, 1);
+			ANKI_TRACE_INC_COUNTER(GR_VERTICES, m_info.m_instanceCount * m_info.m_count);
+			return ErrorCode::NONE;
+		}
+	};
+
+	m_impl->m_state.checkIndexedDracall();
+	m_impl->flushDrawcall();
+
+	U idxBytes;
+	if(m_impl->m_state.m_indexType == GL_UNSIGNED_SHORT)
+	{
+		idxBytes = sizeof(U16);
+	}
+	else
+	{
+		ANKI_ASSERT(m_impl->m_state.m_indexType == GL_UNSIGNED_INT);
+		idxBytes = sizeof(U32);
+	}
+
+	firstIndex = firstIndex + m_impl->m_state.m_indexBuffOffset / idxBytes;
+
+	DrawElementsIndirectInfo info(count, instanceCount, firstIndex, baseVertex, baseInstance);
+	m_impl->pushBackNewCommand<Cmd>(convertPrimitiveTopology(topology), m_impl->m_state.m_indexType, info);
 }
 
-void CommandBuffer::drawElements(U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance)
+void CommandBuffer::drawArrays(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 first, U32 baseInstance)
 {
-	m_impl->drawElements(count, instanceCount, firstIndex, baseVertex, baseInstance);
+	class DrawArraysCommand final : public GlCommand
+	{
+	public:
+		GLenum m_topology;
+		DrawArraysIndirectInfo m_info;
+
+		DrawArraysCommand(GLenum topology, const DrawArraysIndirectInfo& info)
+			: m_topology(topology)
+			, m_info(info)
+		{
+		}
+
+		Error operator()(GlState& state)
+		{
+			glDrawArraysInstancedBaseInstance(
+				m_topology, m_info.m_first, m_info.m_count, m_info.m_instanceCount, m_info.m_baseInstance);
+
+			ANKI_TRACE_INC_COUNTER(GR_DRAWCALLS, 1);
+			ANKI_TRACE_INC_COUNTER(GR_VERTICES, m_info.m_instanceCount * m_info.m_count);
+			return ErrorCode::NONE;
+		}
+	};
+
+	m_impl->m_state.checkNonIndexedDrawcall();
+	m_impl->flushDrawcall();
+
+	DrawArraysIndirectInfo info(count, instanceCount, first, baseInstance);
+	m_impl->pushBackNewCommand<DrawArraysCommand>(convertPrimitiveTopology(topology), info);
 }
 
-void CommandBuffer::drawArrays(U32 count, U32 instanceCount, U32 first, U32 baseInstance)
+void CommandBuffer::drawElementsIndirect(
+	PrimitiveTopology topology, U32 drawCount, PtrSize offset, BufferPtr indirectBuff)
 {
-	m_impl->drawArrays(count, instanceCount, first, baseInstance);
+	class DrawElementsIndirectCommand final : public GlCommand
+	{
+	public:
+		GLenum m_topology;
+		GLenum m_indexType;
+		U32 m_drawCount;
+		PtrSize m_offset;
+		BufferPtr m_buff;
+
+		DrawElementsIndirectCommand(GLenum topology, GLenum indexType, U32 drawCount, PtrSize offset, BufferPtr buff)
+			: m_topology(topology)
+			, m_indexType(indexType)
+			, m_drawCount(drawCount)
+			, m_offset(offset)
+			, m_buff(buff)
+		{
+			ANKI_ASSERT(drawCount > 0);
+			ANKI_ASSERT((m_offset % 4) == 0);
+		}
+
+		Error operator()(GlState&)
+		{
+			const BufferImpl& buff = *m_buff->m_impl;
+
+			ANKI_ASSERT(m_offset + sizeof(DrawElementsIndirectInfo) * m_drawCount <= buff.m_size);
+
+			glBindBuffer(GL_DRAW_INDIRECT_BUFFER, buff.getGlName());
+
+			glMultiDrawElementsIndirect(
+				m_topology, m_indexType, numberToPtr<void*>(m_offset), m_drawCount, sizeof(DrawElementsIndirectInfo));
+
+			glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
+			return ErrorCode::NONE;
+		}
+	};
+
+	m_impl->m_state.checkIndexedDracall();
+	m_impl->flushDrawcall();
+	m_impl->pushBackNewCommand<DrawElementsIndirectCommand>(
+		convertPrimitiveTopology(topology), m_impl->m_state.m_indexType, drawCount, offset, indirectBuff);
 }
 
-void CommandBuffer::drawElementsIndirect(U32 drawCount, PtrSize offset, BufferPtr indirectBuff)
+void CommandBuffer::drawArraysIndirect(
+	PrimitiveTopology topology, U32 drawCount, PtrSize offset, BufferPtr indirectBuff)
 {
-	m_impl->drawElementsIndirect(drawCount, offset, indirectBuff);
-}
+	class DrawArraysIndirectCommand final : public GlCommand
+	{
+	public:
+		GLenum m_topology;
+		U32 m_drawCount;
+		PtrSize m_offset;
+		BufferPtr m_buff;
 
-void CommandBuffer::drawArraysIndirect(U32 drawCount, PtrSize offset, BufferPtr indirectBuff)
-{
-	m_impl->drawArraysIndirect(drawCount, offset, indirectBuff);
+		DrawArraysIndirectCommand(GLenum topology, U32 drawCount, PtrSize offset, BufferPtr buff)
+			: m_topology(topology)
+			, m_drawCount(drawCount)
+			, m_offset(offset)
+			, m_buff(buff)
+		{
+			ANKI_ASSERT(drawCount > 0);
+			ANKI_ASSERT((m_offset % 4) == 0);
+		}
+
+		Error operator()(GlState& state)
+		{
+			const BufferImpl& buff = *m_buff->m_impl;
+
+			ANKI_ASSERT(m_offset + sizeof(DrawArraysIndirectInfo) * m_drawCount <= buff.m_size);
+
+			glBindBuffer(GL_DRAW_INDIRECT_BUFFER, buff.getGlName());
+
+			glMultiDrawArraysIndirect(
+				m_topology, numberToPtr<void*>(m_offset), m_drawCount, sizeof(DrawArraysIndirectInfo));
+
+			glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
+			return ErrorCode::NONE;
+		}
+	};
+
+	m_impl->m_state.checkNonIndexedDrawcall();
+	m_impl->flushDrawcall();
+	m_impl->pushBackNewCommand<DrawArraysIndirectCommand>(
+		convertPrimitiveTopology(topology), drawCount, offset, indirectBuff);
 }
 
 void CommandBuffer::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ)
 {
-	m_impl->dispatchCompute(groupCountX, groupCountY, groupCountZ);
+	class DispatchCommand final : public GlCommand
+	{
+	public:
+		Array<U32, 3> m_size;
+
+		DispatchCommand(U32 x, U32 y, U32 z)
+			: m_size({{x, y, z}})
+		{
+		}
+
+		Error operator()(GlState&)
+		{
+			glDispatchCompute(m_size[0], m_size[1], m_size[2]);
+			return ErrorCode::NONE;
+		}
+	};
+
+	m_impl->m_state.checkDispatch();
+	m_impl->pushBackNewCommand<DispatchCommand>(groupCountX, groupCountY, groupCountZ);
 }
 
 void CommandBuffer::resetOcclusionQuery(OcclusionQueryPtr query)

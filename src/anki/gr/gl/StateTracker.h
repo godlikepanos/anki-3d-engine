@@ -7,6 +7,8 @@
 
 #include <anki/gr/gl/Common.h>
 #include <anki/gr/ShaderProgram.h>
+#include <anki/gr/Framebuffer.h>
+#include <anki/gr/gl/FramebufferImpl.h>
 
 namespace anki
 {
@@ -65,7 +67,7 @@ public:
 
 	/// @name viewport_state
 	/// @{
-	Array<U16, 4> m_viewport = {{0, 0, 0, 0}};
+	Array<U16, 4> m_viewport = {{MAX_U16, MAX_U16, MAX_U16, MAX_U16}};
 
 	template<typename TFunc>
 	void setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy, TFunc func)
@@ -177,10 +179,14 @@ public:
 		}
 	}
 
-	Array<U32, 2> m_stencilCompareMask = {{0x969696, 0x969696}};
+	static const U32 DUMMY_STENCIL_MASK = 0x969696;
+
+	Array<U32, 2> m_stencilCompareMask = {{DUMMY_STENCIL_MASK, DUMMY_STENCIL_MASK}};
 
 	void setStencilCompareMask(FaceSelectionMask face, U32 mask)
 	{
+		ANKI_ASSERT(mask != DUMMY_STENCIL_MASK && "Oops");
+
 		if(!!(face & FaceSelectionMask::FRONT) && m_stencilCompareMask[0] != mask)
 		{
 			m_stencilCompareMask[0] = mask;
@@ -194,11 +200,13 @@ public:
 		}
 	}
 
-	Array<U32, 2> m_stencilWriteMask = {{0x969696, 0x969696}};
+	Array<U32, 2> m_stencilWriteMask = {{DUMMY_STENCIL_MASK, DUMMY_STENCIL_MASK}};
 
 	template<typename TFunc>
 	void setStencilWriteMask(FaceSelectionMask face, U32 mask, TFunc func)
 	{
+		ANKI_ASSERT(mask != DUMMY_STENCIL_MASK && "Oops");
+
 		Bool changed = false;
 		if(!!(face & FaceSelectionMask::FRONT) && m_stencilWriteMask[0] != mask)
 		{
@@ -218,10 +226,12 @@ public:
 		}
 	}
 
-	Array<U32, 2> m_stencilRef = {{0x969696, 0x969696}};
+	Array<U32, 2> m_stencilRef = {{DUMMY_STENCIL_MASK, DUMMY_STENCIL_MASK}};
 
 	void setStencilReference(FaceSelectionMask face, U32 mask)
 	{
+		ANKI_ASSERT(mask != DUMMY_STENCIL_MASK && "Oops");
+
 		if(!!(face & FaceSelectionMask::FRONT) && m_stencilRef[0] != mask)
 		{
 			m_stencilRef[0] = mask;
@@ -306,7 +316,7 @@ public:
 	}
 	/// @}
 
-	/// @resources
+	/// @name resources
 	/// @{
 	U64 m_progUuid = MAX_U64;
 
@@ -318,6 +328,86 @@ public:
 			m_progUuid = prog->getUuid();
 			func();
 		}
+	}
+	/// @}
+
+	/// @name other
+	/// @{
+	U64 m_fbUuid = MAX_U64;
+	U8 m_colorBuffCount = MAX_U8;
+	Bool8 m_fbHasDepth = 2;
+	Bool8 m_fbHasStencil = 2;
+
+	template<typename TFunc>
+	void beginRenderPass(const FramebufferPtr& fb, TFunc func)
+	{
+		ANKI_ASSERT(m_fbUuid == MAX_U64 && "Already inside a renderpass");
+
+		const FramebufferImpl& impl = *fb->m_impl;
+		m_fbUuid = fb->getUuid();
+		m_colorBuffCount = impl.getColorBufferCount();
+		m_fbHasDepth = impl.hasDepthBuffer();
+		m_fbHasStencil = impl.hasStencilBuffer();
+		func();
+	}
+
+	void endRenderPass()
+	{
+		m_fbUuid = MAX_U64;
+	}
+	/// @}
+
+	/// @name drawcalls
+	/// @{
+	void checkIndexedDracall() const
+	{
+		ANKI_ASSERT(m_indexType != 0 && "Forgot to bind index buffer");
+		checkDrawcall();
+	}
+
+	void checkNonIndexedDrawcall() const
+	{
+		checkDrawcall();
+	}
+
+	void checkDrawcall() const
+	{
+		ANKI_ASSERT(m_viewport[1] != MAX_U16 && "Forgot to set the viewport");
+		ANKI_ASSERT(m_progUuid != MAX_U64 && "Forgot to bound a program");
+		ANKI_ASSERT(m_fbUuid != MAX_U64 && "Forgot to begin a render pass");
+		ANKI_ASSERT(m_fillMode != FillMode::COUNT && "Forgot to set fill mode");
+		ANKI_ASSERT(m_cullMode != static_cast<FaceSelectionMask>(0) && "Forgot to set cull mode");
+
+		for(U i = 0; i < m_colorBuffCount; ++i)
+		{
+			ANKI_ASSERT(m_colorWriteMasks[i] != INVALID_COLOR_MASK && "Forgot to set the color write mask");
+			ANKI_ASSERT(m_blendSrcMethod[i] != BlendMethod::COUNT && "Forgot to set blend methods");
+			ANKI_ASSERT(m_blendFuncs[i] != BlendFunction::COUNT && "Forgot to set blend functions");
+		}
+
+		if(m_fbHasDepth)
+		{
+			ANKI_ASSERT(m_depthWrite != 2 && "Forgot to set depth write");
+			ANKI_ASSERT(m_depthOp != CompareOperation::COUNT && "Forgot to set depth compare function");
+		}
+
+		if(m_fbHasStencil)
+		{
+			for(U i = 0; i < 2; ++i)
+			{
+				ANKI_ASSERT(m_stencilFail[i] != StencilOperation::COUNT && "Forgot to set stencil ops");
+				ANKI_ASSERT(m_stencilCompare[i] != CompareOperation::COUNT && "Forgot to set stencil compare");
+				ANKI_ASSERT(m_stencilCompareMask[i] != DUMMY_STENCIL_MASK && "Forgot to set stencil compare mask");
+				ANKI_ASSERT(m_stencilWriteMask[i] != DUMMY_STENCIL_MASK && "Forgot to set stencil write mask");
+				ANKI_ASSERT(m_stencilRef[i] != DUMMY_STENCIL_MASK && "Forgot to set stencil ref mask");
+			}
+		}
+	}
+
+	void checkDispatch() const
+	{
+		ANKI_ASSERT(m_progUuid != MAX_U64 && "Forgot to bound a program");
+		ANKI_ASSERT(m_fbUuid == MAX_U64 && "Forgot to end the render pass");
 	}
 	/// @}
 };
