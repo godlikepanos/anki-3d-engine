@@ -23,6 +23,10 @@
 #include <anki/gr/gl/TextureImpl.h>
 #include <anki/gr/Buffer.h>
 #include <anki/gr/gl/BufferImpl.h>
+#include <anki/gr/Sampler.h>
+#include <anki/gr/gl/SamplerImpl.h>
+#include <anki/gr/ShaderProgram.h>
+#include <anki/gr/gl/ShaderProgramImpl.h>
 
 #include <anki/core/Trace.h>
 
@@ -79,6 +83,139 @@ void CommandBuffer::finish()
 	getManager().getImplementation().getRenderingThread().finishCommandBuffer(CommandBufferPtr(this));
 }
 
+void CommandBuffer::bindVertexBuffer(BufferPtr buff, U32 binding, PtrSize offset, PtrSize stride)
+{
+	class Cmd final : public GlCommand
+	{
+	public:
+		BufferPtr m_buff;
+		U32 m_binding;
+		PtrSize m_offset;
+		PtrSize m_stride;
+
+		Cmd(BufferPtr buff, U32 binding, PtrSize offset, PtrSize stride)
+			: m_buff(buff)
+			, m_binding(binding)
+			, m_offset(offset)
+			, m_stride(stride)
+		{
+		}
+
+		Error operator()(GlState& state)
+		{
+			glBindVertexBuffer(m_binding, m_buff->m_impl->getGlName(), m_offset, m_stride);
+			return ErrorCode::NONE;
+		}
+	};
+
+	m_impl->pushBackNewCommand<Cmd>(buff, binding, offset, stride);
+}
+
+void CommandBuffer::bindVertexBuffer(BufferPtr buff, U32 binding, const TransientMemoryToken& token)
+{
+	ANKI_ASSERT(!"TODO");
+}
+
+void CommandBuffer::setVertexAttribute(U32 location, U32 buffBinding, const PixelFormat& fmt, PtrSize relativeOffset)
+{
+	class Cmd final : public GlCommand
+	{
+	public:
+		U32 m_location;
+		U32 m_buffBinding;
+		U8 m_compSize;
+		GLenum m_fmt;
+		Bool8 m_normalized;
+		PtrSize m_relativeOffset;
+
+		Cmd(U32 location, U32 buffBinding, U8 compSize, GLenum fmt, Bool normalized, PtrSize relativeOffset)
+			: m_location(location)
+			, m_buffBinding(buffBinding)
+			, m_compSize(compSize)
+			, m_fmt(fmt)
+			, m_normalized(normalized)
+			, m_relativeOffset(relativeOffset)
+		{
+		}
+
+		Error operator()(GlState& state)
+		{
+			glVertexAttribFormat(m_location, m_compSize, m_fmt, m_normalized, m_relativeOffset);
+			glVertexAttribBinding(m_location, m_buffBinding);
+			return ErrorCode::NONE;
+		}
+	};
+
+	m_impl->m_state.setVertexAttribute(location, buffBinding, fmt, relativeOffset, [=]() {
+		U compCount;
+		GLenum type;
+		Bool normalized;
+
+		convertVertexFormat(fmt, compCount, type, normalized);
+
+		m_impl->pushBackNewCommand<Cmd>(location, buffBinding, compCount, type, normalized, relativeOffset);
+	});
+}
+
+void CommandBuffer::bindIndexBuffer(BufferPtr buff, PtrSize offset, IndexType type)
+{
+	class Cmd final : public GlCommand
+	{
+	public:
+		BufferPtr m_buff;
+
+		Cmd(BufferPtr buff)
+			: m_buff(buff)
+		{
+		}
+
+		Error operator()(GlState& state)
+		{
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_buff->m_impl->getGlName());
+			return ErrorCode::NONE;
+		}
+	};
+
+	m_impl->pushBackNewCommand<Cmd>(buff);
+	m_impl->m_state.m_indexBuffOffset = offset;
+	m_impl->m_state.m_indexType = convertIndexType(type);
+}
+
+void CommandBuffer::bindIndexBuffer(const TransientMemoryToken& token, IndexType type)
+{
+	ANKI_ASSERT(!"TODO");
+}
+
+void CommandBuffer::enablePrimitiveRestart(Bool enable)
+{
+	class Cmd final : public GlCommand
+	{
+	public:
+		Bool8 m_enable;
+
+		Cmd(Bool enable)
+			: m_enable(enable)
+		{
+		}
+
+		Error operator()(GlState& state)
+		{
+			if(m_enable)
+			{
+				glEnable(GL_PRIMITIVE_RESTART);
+			}
+			else
+			{
+				glDisable(GL_PRIMITIVE_RESTART);
+			}
+
+			return ErrorCode::NONE;
+		}
+	};
+
+	m_impl->m_state.enablePrimitiveRestart(enable, [=]() { m_impl->pushBackNewCommand<Cmd>(enable); });
+}
+
 void CommandBuffer::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 {
 	class ViewportCommand final : public GlCommand
@@ -109,18 +246,69 @@ void CommandBuffer::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 #if ANKI_ASSERTS_ENABLED
 	m_impl->m_dbg.m_viewport = true;
 #endif
-	m_impl->pushBackNewCommand<ViewportCommand>(minx, miny, maxx, maxy);
+
+	m_impl->m_state.setViewport(
+		minx, miny, maxx, maxy, [=]() { m_impl->pushBackNewCommand<ViewportCommand>(minx, miny, maxx, maxy); });
+}
+
+void CommandBuffer::setScissorRect(U16 minx, U16 miny, U16 maxx, U16 maxy)
+{
+	ANKI_ASSERT(!"TODO");
+}
+
+void CommandBuffer::setFillMode(FillMode mode)
+{
+	class Cmd final : public GlCommand
+	{
+	public:
+		GLenum m_fillMode;
+
+		Cmd(GLenum fillMode)
+			: m_fillMode(fillMode)
+		{
+		}
+
+		Error operator()(GlState& state)
+		{
+			glPolygonMode(GL_FRONT_AND_BACK, m_fillMode);
+			return ErrorCode::NONE;
+		}
+	};
+
+	m_impl->m_state.setFillMode(mode, [=]() { m_impl->pushBackNewCommand<Cmd>(convertFillMode(mode)); });
+}
+
+void CommandBuffer::setCullMode(FaceSelectionMask mode)
+{
+	class Cmd final : public GlCommand
+	{
+	public:
+		GLenum m_mode;
+
+		Cmd(GLenum mode)
+			: m_mode(mode)
+		{
+		}
+
+		Error operator()(GlState& state)
+		{
+			glCullFace(m_mode);
+			return ErrorCode::NONE;
+		}
+	};
+
+	m_impl->m_state.setCullMode(mode, [=]() { m_impl->pushBackNewCommand<Cmd>(convertFaceMode(mode)); });
 }
 
 void CommandBuffer::setPolygonOffset(F32 factor, F32 units)
 {
-	class SetPolygonOffsetCommand final : public GlCommand
+	class Cmd final : public GlCommand
 	{
 	public:
 		F32 m_factor;
 		F32 m_units;
 
-		SetPolygonOffsetCommand(F32 factor, F32 units)
+		Cmd(F32 factor, F32 units)
 			: m_factor(factor)
 			, m_units(units)
 		{
@@ -145,7 +333,438 @@ void CommandBuffer::setPolygonOffset(F32 factor, F32 units)
 #if ANKI_ASSERTS_ENABLED
 	m_impl->m_dbg.m_polygonOffset = true;
 #endif
-	m_impl->pushBackNewCommand<SetPolygonOffsetCommand>(factor, units);
+
+	m_impl->m_state.setPolygonOffset(factor, units, [=]() { m_impl->pushBackNewCommand<Cmd>(factor, units); });
+}
+
+void CommandBuffer::setStencilOperations(FaceSelectionMask face,
+	StencilOperation stencilFail,
+	StencilOperation stencilPassDepthFail,
+	StencilOperation stencilPassDepthPass)
+{
+	class Cmd final : public GlCommand
+	{
+	public:
+		GLenum m_face;
+		GLenum m_stencilFail;
+		GLenum m_stencilPassDepthFail;
+		GLenum m_stencilPassDepthPass;
+
+		Cmd(GLenum face, GLenum stencilFail, GLenum stencilPassDepthFail, GLenum stencilPassDepthPass)
+			: m_face(face)
+			, m_stencilFail(stencilFail)
+			, m_stencilPassDepthFail(stencilPassDepthFail)
+			, m_stencilPassDepthPass(stencilPassDepthPass)
+		{
+		}
+
+		Error operator()(GlState& state)
+		{
+			glStencilOpSeparate(m_face, m_stencilFail, m_stencilPassDepthFail, m_stencilPassDepthPass);
+			return ErrorCode::NONE;
+		}
+	};
+
+	m_impl->m_state.setStencilOperations(face, stencilFail, stencilPassDepthFail, stencilPassDepthPass, [=]() {
+
+		m_impl->pushBackNewCommand<Cmd>(convertFaceMode(face),
+			convertStencilOperation(stencilFail),
+			convertStencilOperation(stencilPassDepthFail),
+			convertStencilOperation(stencilPassDepthPass));
+	});
+}
+
+void CommandBuffer::setStencilCompareFunction(FaceSelectionMask face, CompareOperation comp)
+{
+	m_impl->m_state.setStencilCompareFunction(face, comp);
+}
+
+void CommandBuffer::setStencilCompareMask(FaceSelectionMask face, U32 mask)
+{
+	m_impl->m_state.setStencilCompareMask(face, mask);
+}
+
+void CommandBuffer::setStencilWriteMask(FaceSelectionMask face, U32 mask)
+{
+	class Cmd final : public GlCommand
+	{
+	public:
+		GLenum m_face;
+		U32 m_mask;
+
+		Cmd(GLenum face, U32 mask)
+			: m_face(face)
+			, m_mask(mask)
+		{
+		}
+
+		Error operator()(GlState& state)
+		{
+			glStencilMaskSeparate(m_face, m_mask);
+			return ErrorCode::NONE;
+		}
+	};
+
+	m_impl->m_state.setStencilWriteMask(
+		face, mask, [=]() { m_impl->pushBackNewCommand<Cmd>(convertFaceMode(face), mask); });
+}
+
+void CommandBuffer::setStencilReference(FaceSelectionMask face, U32 ref)
+{
+	m_impl->m_state.setStencilReference(face, ref);
+}
+
+void CommandBuffer::enableDepthWrite(Bool enable)
+{
+	class Cmd final : public GlCommand
+	{
+	public:
+		Bool8 m_enable;
+
+		Cmd(Bool enable)
+			: m_enable(enable)
+		{
+		}
+
+		Error operator()(GlState& state)
+		{
+			glDepthMask(m_enable);
+			return ErrorCode::NONE;
+		}
+	};
+
+	m_impl->m_state.enableDepthWrite(enable, [=]() { m_impl->pushBackNewCommand<Cmd>(enable); });
+}
+
+void CommandBuffer::setDepthCompareFunction(CompareOperation op)
+{
+	class Cmd final : public GlCommand
+	{
+	public:
+		GLenum m_op;
+
+		Cmd(GLenum op)
+			: m_op(op)
+		{
+		}
+
+		Error operator()(GlState& state)
+		{
+			glDepthFunc(m_op);
+			return ErrorCode::NONE;
+		}
+	};
+
+	m_impl->m_state.setDepthCompareFunction(
+		op, [=]() { m_impl->pushBackNewCommand<Cmd>(convertCompareOperation(op)); });
+}
+
+void CommandBuffer::enableAlphaToCoverage(Bool enable)
+{
+	ANKI_ASSERT(!"TODO");
+}
+
+void CommandBuffer::setColorChannelWriteMask(U32 attachment, ColorBit mask)
+{
+	class Cmd final : public GlCommand
+	{
+	public:
+		U8 m_attachment;
+		ColorBit m_mask;
+
+		Cmd(U8 attachment, ColorBit mask)
+			: m_attachment(attachment)
+			, m_mask(mask)
+		{
+		}
+
+		Error operator()(GlState&)
+		{
+			glColorMaski(m_attachment,
+				!!(m_mask & ColorBit::RED),
+				!!(m_mask & ColorBit::GREEN),
+				!!(m_mask & ColorBit::BLUE),
+				!!(m_mask & ColorBit::ALPHA));
+
+			return ErrorCode::NONE;
+		}
+	};
+
+	m_impl->m_state.setColorChannelWriteMask(
+		attachment, mask, [=]() { m_impl->pushBackNewCommand<Cmd>(attachment, mask); });
+}
+
+void CommandBuffer::setBlendMethods(U32 attachment, BlendMethod src, BlendMethod dst)
+{
+	class Cmd final : public GlCommand
+	{
+	public:
+		U8 m_attachment;
+		GLenum m_src;
+		GLenum m_dst;
+
+		Cmd(U8 att, GLenum src, GLenum dst)
+			: m_attachment(att)
+			, m_src(src)
+			, m_dst(dst)
+		{
+		}
+
+		Error operator()(GlState&)
+		{
+			glBlendFunci(m_attachment, m_src, m_dst);
+			return ErrorCode::NONE;
+		}
+	};
+
+	m_impl->m_state.setBlendMethods(attachment, src, dst, [=]() {
+		m_impl->pushBackNewCommand<Cmd>(attachment, convertBlendMethod(src), convertBlendMethod(dst));
+	});
+}
+
+void CommandBuffer::setBlendFunction(U32 attachment, BlendFunction func)
+{
+	class Cmd final : public GlCommand
+	{
+	public:
+		U8 m_attachment;
+		GLenum m_func;
+
+		Cmd(U8 att, GLenum func)
+			: m_attachment(att)
+			, m_func(func)
+		{
+		}
+
+		Error operator()(GlState&)
+		{
+			glBlendEquationi(m_attachment, m_func);
+			return ErrorCode::NONE;
+		}
+	};
+
+	m_impl->m_state.setBlendFunction(
+		attachment, func, [=]() { m_impl->pushBackNewCommand<Cmd>(attachment, convertBlendFunction(func)); });
+}
+
+void CommandBuffer::bindTexture(U32 set, U32 binding, TexturePtr tex, DepthStencilAspectMask aspect)
+{
+	class Cmd final : public GlCommand
+	{
+	public:
+		U32 m_unit;
+		TexturePtr m_tex;
+
+		Cmd(U32 unit, TexturePtr tex)
+			: m_unit(unit)
+			, m_tex(tex)
+		{
+		}
+
+		Error operator()(GlState&)
+		{
+			glBindTextureUnit(m_unit, m_tex->m_impl->getGlName());
+			glBindSampler(m_unit, 0);
+			return ErrorCode::NONE;
+		}
+	};
+
+	U unit = binding + MAX_TEXTURE_BINDINGS * set;
+	m_impl->pushBackNewCommand<Cmd>(unit, tex);
+}
+
+void CommandBuffer::bindTextureAndSampler(
+	U32 set, U32 binding, TexturePtr tex, SamplerPtr sampler, DepthStencilAspectMask aspect)
+{
+	class Cmd final : public GlCommand
+	{
+	public:
+		U32 m_unit;
+		TexturePtr m_tex;
+		SamplerPtr m_sampler;
+
+		Cmd(U32 unit, TexturePtr tex, SamplerPtr sampler)
+			: m_unit(unit)
+			, m_tex(tex)
+			, m_sampler(sampler)
+		{
+		}
+
+		Error operator()(GlState&)
+		{
+			glBindTextureUnit(m_unit, m_tex->m_impl->getGlName());
+			glBindSampler(m_unit, m_sampler->m_impl->getGlName());
+			return ErrorCode::NONE;
+		}
+	};
+
+	U unit = binding + MAX_TEXTURE_BINDINGS * set;
+	m_impl->pushBackNewCommand<Cmd>(unit, tex, sampler);
+}
+
+void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset)
+{
+	class Cmd final : public GlCommand
+	{
+	public:
+		U32 m_binding;
+		BufferPtr m_buff;
+		PtrSize m_offset;
+
+		Cmd(U32 binding, BufferPtr buff, PtrSize offset)
+			: m_binding(binding)
+			, m_buff(buff)
+			, m_offset(offset)
+		{
+		}
+
+		Error operator()(GlState&)
+		{
+			m_buff->m_impl->bind(GL_UNIFORM_BUFFER, m_binding, m_offset);
+			return ErrorCode::NONE;
+		}
+	};
+
+	binding = binding + MAX_UNIFORM_BUFFER_BINDINGS * set;
+	m_impl->pushBackNewCommand<Cmd>(binding, buff, offset);
+}
+
+void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, const TransientMemoryToken& token)
+{
+	class Cmd final : public GlCommand
+	{
+	public:
+		U32 m_binding;
+		TransientMemoryToken m_token;
+		GLuint m_name;
+
+		Cmd(U32 binding, const TransientMemoryToken& token, GLuint name)
+			: m_binding(binding)
+			, m_token(token)
+			, m_name(name)
+		{
+		}
+
+		Error operator()(GlState& state)
+		{
+			glBindBufferRange(GL_UNIFORM_BUFFER, m_binding, m_name, m_token.m_offset, m_token.m_range);
+			return ErrorCode::NONE;
+		}
+	};
+
+	binding = binding + MAX_UNIFORM_BUFFER_BINDINGS * set;
+	GLuint name = getManager().getImplementation().getTransientMemoryManager().getGlName(token);
+	m_impl->pushBackNewCommand<Cmd>(binding, token, name);
+}
+
+void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset)
+{
+	class Cmd final : public GlCommand
+	{
+	public:
+		U32 m_binding;
+		BufferPtr m_buff;
+		PtrSize m_offset;
+
+		Cmd(U32 binding, BufferPtr buff, PtrSize offset)
+			: m_binding(binding)
+			, m_buff(buff)
+			, m_offset(offset)
+		{
+		}
+
+		Error operator()(GlState&)
+		{
+			m_buff->m_impl->bind(GL_SHADER_STORAGE_BUFFER, m_binding, m_offset);
+			return ErrorCode::NONE;
+		}
+	};
+
+	binding = binding + MAX_STORAGE_BUFFER_BINDINGS * set;
+	m_impl->pushBackNewCommand<Cmd>(binding, buff, offset);
+}
+
+void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, const TransientMemoryToken& token)
+{
+	class Cmd final : public GlCommand
+	{
+	public:
+		U32 m_binding;
+		TransientMemoryToken m_token;
+		GLuint m_name;
+
+		Cmd(U32 binding, const TransientMemoryToken& token, GLuint name)
+			: m_binding(binding)
+			, m_token(token)
+			, m_name(name)
+		{
+		}
+
+		Error operator()(GlState& state)
+		{
+			glBindBufferRange(GL_SHADER_STORAGE_BUFFER, m_binding, m_name, m_token.m_offset, m_token.m_range);
+			return ErrorCode::NONE;
+		}
+	};
+
+	binding = binding + MAX_STORAGE_BUFFER_BINDINGS * set;
+	GLuint name = getManager().getImplementation().getTransientMemoryManager().getGlName(token);
+	m_impl->pushBackNewCommand<Cmd>(binding, token, name);
+}
+
+void CommandBuffer::bindImage(U32 set, U32 binding, TexturePtr img, U32 level)
+{
+	class Cmd final : public GlCommand
+	{
+	public:
+		TexturePtr m_img;
+		U16 m_unit;
+		U8 m_level;
+
+		Cmd(U32 unit, TexturePtr img, U32 level)
+			: m_img(img)
+			, m_unit(unit)
+			, m_level(level)
+		{
+		}
+
+		Error operator()(GlState&)
+		{
+			glBindImageTexture(m_unit,
+				m_img->m_impl->getGlName(),
+				m_level,
+				GL_TRUE,
+				0,
+				GL_READ_WRITE,
+				m_img->m_impl->m_internalFormat);
+			return ErrorCode::NONE;
+		}
+	};
+
+	binding = binding + set * MAX_IMAGE_BINDINGS;
+	m_impl->pushBackNewCommand<Cmd>(binding, img, level);
+}
+
+void CommandBuffer::bindShaderProgram(ShaderProgramPtr prog)
+{
+	class Cmd final : public GlCommand
+	{
+	public:
+		ShaderProgramPtr m_prog;
+
+		Cmd(const ShaderProgramPtr& prog)
+			: m_prog(prog)
+		{
+		}
+
+		Error operator()(GlState&)
+		{
+			glUseProgram(m_prog->m_impl->getGlName());
+			return ErrorCode::NONE;
+		}
+	};
+
+	m_impl->m_state.bindShaderProgram(prog, [=]() { m_impl->pushBackNewCommand<Cmd>(prog); });
 }
 
 void CommandBuffer::bindPipeline(PipelinePtr ppline)
@@ -672,111 +1291,6 @@ void CommandBuffer::writeOcclusionQueryResultToBuffer(OcclusionQueryPtr query, P
 	};
 
 	m_impl->pushBackNewCommand<WriteOcclResultToBuff>(query, offset, buff);
-}
-
-void CommandBuffer::setStencilCompareMask(FaceSelectionMask face, U32 mask)
-{
-	class SetStencilCompareMask final : public GlCommand
-	{
-	public:
-		FaceSelectionMask m_face;
-		U32 m_mask;
-
-		SetStencilCompareMask(FaceSelectionMask face, U32 mask)
-			: m_face(face)
-			, m_mask(mask)
-		{
-		}
-
-		Error operator()(GlState& state)
-		{
-			if(!!(m_face & FaceSelectionMask::FRONT) && state.m_stencilCompareMask[0] != m_mask)
-			{
-				state.m_stencilCompareMask[0] = m_mask;
-				state.m_glStencilFuncSeparateDirtyMask |= 1 << 0;
-			}
-
-			if(!!(m_face & FaceSelectionMask::BACK) && state.m_stencilCompareMask[1] != m_mask)
-			{
-				state.m_stencilCompareMask[1] = m_mask;
-				state.m_glStencilFuncSeparateDirtyMask |= 1 << 1;
-			}
-
-			return ErrorCode::NONE;
-		}
-	};
-
-	m_impl->pushBackNewCommand<SetStencilCompareMask>(face, mask);
-}
-
-void CommandBuffer::setStencilWriteMask(FaceSelectionMask face, U32 mask)
-{
-	class SetStencilWriteMask final : public GlCommand
-	{
-	public:
-		FaceSelectionMask m_face;
-		U32 m_mask;
-
-		SetStencilWriteMask(FaceSelectionMask face, U32 mask)
-			: m_face(face)
-			, m_mask(mask)
-		{
-		}
-
-		Error operator()(GlState& state)
-		{
-			if(!!(m_face & FaceSelectionMask::FRONT) && state.m_stencilWriteMask[0] != m_mask)
-			{
-				glStencilMaskSeparate(GL_FRONT, m_mask);
-				state.m_stencilWriteMask[0] = m_mask;
-			}
-
-			if(!!(m_face & FaceSelectionMask::BACK) && state.m_stencilWriteMask[1] != m_mask)
-			{
-				glStencilMaskSeparate(GL_BACK, m_mask);
-				state.m_stencilWriteMask[1] = m_mask;
-			}
-
-			return ErrorCode::NONE;
-		}
-	};
-
-	m_impl->pushBackNewCommand<SetStencilWriteMask>(face, mask);
-}
-
-void CommandBuffer::setStencilReference(FaceSelectionMask face, U32 ref)
-{
-	class SetStencilRefMask final : public GlCommand
-	{
-	public:
-		FaceSelectionMask m_face;
-		U32 m_ref;
-
-		SetStencilRefMask(FaceSelectionMask face, U32 ref)
-			: m_face(face)
-			, m_ref(ref)
-		{
-		}
-
-		Error operator()(GlState& state)
-		{
-			if(!!(m_face & FaceSelectionMask::FRONT) && state.m_stencilRef[0] != m_ref)
-			{
-				state.m_stencilRef[0] = m_ref;
-				state.m_glStencilFuncSeparateDirtyMask |= 1 << 0;
-			}
-
-			if(!!(m_face & FaceSelectionMask::BACK) && state.m_stencilRef[1] != m_ref)
-			{
-				state.m_stencilRef[1] = m_ref;
-				state.m_glStencilFuncSeparateDirtyMask |= 1 << 1;
-			}
-
-			return ErrorCode::NONE;
-		}
-	};
-
-	m_impl->pushBackNewCommand<SetStencilRefMask>(face, ref);
 }
 
 } // end namespace anki

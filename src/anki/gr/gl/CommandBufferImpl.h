@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/gr/CommandBuffer.h>
+#include <anki/gr/gl/StateTracker.h>
 #include <anki/util/Assert.h>
 #include <anki/util/Allocator.h>
 
@@ -51,6 +52,19 @@ public:
 		Bool m_secondLevel = false;
 	} m_dbg;
 #endif
+
+	GrManager* m_manager = nullptr;
+	GlCommand* m_firstCommand = nullptr;
+	GlCommand* m_lastCommand = nullptr;
+	CommandBufferAllocator<U8> m_alloc;
+	Bool8 m_immutable = false;
+	CommandBufferFlag m_flags;
+
+#if ANKI_DEBUG
+	Bool8 m_executed = false;
+#endif
+
+	StateTracker m_state;
 
 	/// Default constructor
 	CommandBufferImpl(GrManager* manager)
@@ -137,17 +151,6 @@ public:
 	}
 
 private:
-	GrManager* m_manager = nullptr;
-	GlCommand* m_firstCommand = nullptr;
-	GlCommand* m_lastCommand = nullptr;
-	CommandBufferAllocator<U8> m_alloc;
-	Bool8 m_immutable = false;
-	CommandBufferFlag m_flags;
-
-#if ANKI_DEBUG
-	Bool8 m_executed = false;
-#endif
-
 	void destroy();
 
 	void checkDrawcall() const

@@ -126,4 +126,137 @@ void convertFilter(SamplingFilter minMagFilter, SamplingFilter mipFilter, GLenum
 	}
 }
 
+void convertVertexFormat(const PixelFormat& fmt, U& compCount, GLenum& type, Bool& normalized)
+{
+	if(fmt == PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT))
+	{
+		compCount = 1;
+		type = GL_FLOAT;
+		normalized = false;
+	}
+	else if(fmt == PixelFormat(ComponentFormat::R32G32, TransformFormat::FLOAT))
+	{
+		compCount = 2;
+		type = GL_FLOAT;
+		normalized = false;
+	}
+	else if(fmt == PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT))
+	{
+		compCount = 3;
+		type = GL_FLOAT;
+		normalized = false;
+	}
+	else if(fmt == PixelFormat(ComponentFormat::R32G32B32A32, TransformFormat::FLOAT))
+	{
+		compCount = 4;
+		type = GL_FLOAT;
+		normalized = false;
+	}
+	else if(fmt == PixelFormat(ComponentFormat::R16G16, TransformFormat::FLOAT))
+	{
+		compCount = 2;
+		type = GL_HALF_FLOAT;
+		normalized = false;
+	}
+	else if(fmt == PixelFormat(ComponentFormat::R16G16, TransformFormat::UNORM))
+	{
+		compCount = 2;
+		type = GL_UNSIGNED_SHORT;
+		normalized = true;
+	}
+	else if(fmt == PixelFormat(ComponentFormat::R10G10B10A2, TransformFormat::SNORM))
+	{
+		compCount = 4;
+		type = GL_INT_2_10_10_10_REV;
+		normalized = true;
+	}
+	else if(fmt == PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM))
+	{
+		compCount = 4;
+		type = GL_UNSIGNED_BYTE;
+		normalized = true;
+	}
+	else if(fmt == PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM))
+	{
+		compCount = 3;
+		type = GL_UNSIGNED_BYTE;
+		normalized = true;
+	}
+	else
+	{
+		ANKI_ASSERT(0 && "TODO");
+	}
+}
+
+GLenum convertBlendMethod(BlendMethod in)
+{
+	GLenum out;
+
+	switch(in)
+	{
+	case BlendMethod::ZERO:
+		out = GL_ZERO;
+		break;
+	case BlendMethod::ONE:
+		out = GL_ONE;
+		break;
+	case BlendMethod::SRC_COLOR:
+		out = GL_SRC_COLOR;
+		break;
+	case BlendMethod::ONE_MINUS_SRC_COLOR:
+		out = GL_ONE_MINUS_SRC_COLOR;
+		break;
+	case BlendMethod::DST_COLOR:
+		out = GL_DST_COLOR;
+		break;
+	case BlendMethod::ONE_MINUS_DST_COLOR:
+		out = GL_ONE_MINUS_DST_COLOR;
+		break;
+	case BlendMethod::SRC_ALPHA:
+		out = GL_SRC_ALPHA;
+		break;
+	case BlendMethod::ONE_MINUS_SRC_ALPHA:
+		out = GL_ONE_MINUS_SRC_ALPHA;
+		break;
+	case BlendMethod::DST_ALPHA:
+		out = GL_DST_ALPHA;
+		break;
+	case BlendMethod::ONE_MINUS_DST_ALPHA:
+		out = GL_ONE_MINUS_DST_ALPHA;
+		break;
+	case BlendMethod::CONSTANT_COLOR:
+		out = GL_CONSTANT_COLOR;
+		break;
+	case BlendMethod::ONE_MINUS_CONSTANT_COLOR:
+		out = GL_ONE_MINUS_CONSTANT_COLOR;
+		break;
+	case BlendMethod::CONSTANT_ALPHA:
+		out = GL_CONSTANT_ALPHA;
+		break;
+	case BlendMethod::ONE_MINUS_CONSTANT_ALPHA:
+		out = GL_ONE_MINUS_CONSTANT_ALPHA;
+		break;
+	case BlendMethod::SRC_ALPHA_SATURATE:
+		out = GL_SRC_ALPHA_SATURATE;
+		break;
+	case BlendMethod::SRC1_COLOR:
+		out = GL_SRC1_COLOR;
+		break;
+	case BlendMethod::ONE_MINUS_SRC1_COLOR:
+		out = GL_ONE_MINUS_SRC1_COLOR;
+		break;
+	case BlendMethod::SRC1_ALPHA:
+		out = GL_SRC1_ALPHA;
+		break;
+	case BlendMethod::ONE_MINUS_SRC1_ALPHA:
+		out = GL_ONE_MINUS_SRC1_ALPHA;
+		break;
+	default:
+		ANKI_ASSERT(0);
+		out = 0;
+	}
+
+	return out;
+}
+
 } // end namespace anki

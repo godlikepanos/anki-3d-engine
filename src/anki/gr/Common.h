@@ -47,6 +47,7 @@ ANKI_GR_CLASS(Pipeline)
 ANKI_GR_CLASS(Framebuffer)
 ANKI_GR_CLASS(OcclusionQuery)
 ANKI_GR_CLASS(ResourceGroup)
+ANKI_GR_CLASS(ShaderProgram)
 
 #undef ANKI_GR_CLASS
 
@@ -57,21 +58,6 @@ ANKI_GR_CLASS(ResourceGroup)
 	template<typename, typename>                                                                                       \
 	friend class GenericPoolAllocator;                                                                                 \
 	friend class GrObjectCache;
-
-/// Graphics object type.
-enum GrObjectType : U16
-{
-	BUFFER,
-	COMMAND_BUFFER,
-	FRAMEBUFFER,
-	OCCLUSION_QUERY,
-	PIPELINE,
-	RESOURCE_GROUP,
-	SAMPLER,
-	SHADER,
-	TEXTURE,
-	COUNT
-};
 
 /// Knowing the ventor allows some optimizations
 enum class GpuVendor : U8

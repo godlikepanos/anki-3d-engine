@@ -141,11 +141,50 @@ public:
 	/// @name State manipulation
 	/// @{
 
+	/// Bind vertex buffer.
+	void bindVertexBuffer(BufferPtr buff, U32 binding, PtrSize offset, PtrSize stride);
+
+	/// Bind transient vertex buffer.
+	void bindVertexBuffer(BufferPtr buff, U32 binding, const TransientMemoryToken& token);
+
+	/// Setup a vertex attribute.
+	void setVertexAttribute(U32 location, U32 buffBinding, const PixelFormat& fmt, PtrSize relativeOffset);
+
+	/// Bind index buffer.
+	void bindIndexBuffer(BufferPtr buff, PtrSize offset, IndexType type);
+
+	/// Bind transient index buffer.
+	void bindIndexBuffer(const TransientMemoryToken& token, IndexType type);
+
+	/// Enable primitive restart.
+	void enablePrimitiveRestart(Bool enable);
+
 	/// Set the viewport.
 	void setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy);
 
-	/// Set depth offset and units.
+	/// Enable scissor test.
+	void enableScissorTest(Bool enable);
+
+	/// Set the scissor rect.
+	void setScissorRect(U16 minx, U16 miny, U16 maxx, U16 maxy);
+
+	/// Set fill mode.
+	void setFillMode(FillMode mode);
+
+	/// Set cull mode.
+	void setCullMode(FaceSelectionMask mode);
+
+	/// Set depth offset and units. Set zeros to both to disable it.
 	void setPolygonOffset(F32 factor, F32 units);
+
+	/// Set stencil operations. To disable stencil test put StencilOperation::KEEP to all operations.
+	void setStencilOperations(FaceSelectionMask face,
+		StencilOperation stencilFail,
+		StencilOperation stencilPassDepthFail,
+		StencilOperation stencilPassDepthPass);
+
+	/// Set stencil compare function.
+	void setStencilCompareFunction(FaceSelectionMask face, CompareOperation comp);
 
 	/// Set the stencil compare mask.
 	void setStencilCompareMask(FaceSelectionMask face, U32 mask);
@@ -155,6 +194,53 @@ public:
 
 	/// Set the stencil reference.
 	void setStencilReference(FaceSelectionMask face, U32 ref);
+
+	/// Enable/disable depth write.
+	void enableDepthWrite(Bool enable);
+
+	/// Set depth compare function.
+	void setDepthCompareFunction(CompareOperation op);
+
+	/// Enable/disable alpha to coverage.
+	void enableAlphaToCoverage(Bool enable);
+
+	/// Set color channel write mask.
+	void setColorChannelWriteMask(U32 attachment, ColorBit mask);
+
+	/// Set blend methods. To disable blending set src to BlendMethod::ONE and dst BlendMethod::ZERO.
+	void setBlendMethods(U32 attachment, BlendMethod src, BlendMethod dst);
+
+	/// Set the blend function.
+	void setBlendFunction(U32 attachment, BlendFunction func);
+
+	/// Bind texture.
+	void bindTexture(
+		U32 set, U32 binding, TexturePtr tex, DepthStencilAspectMask aspect = DepthStencilAspectMask::DEPTH);
+
+	/// Bind texture and sample.
+	void bindTextureAndSampler(U32 set,
+		U32 binding,
+		TexturePtr tex,
+		SamplerPtr sampler,
+		DepthStencilAspectMask aspect = DepthStencilAspectMask::DEPTH);
+
+	/// Bind uniform buffer.
+	void bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset);
+
+	/// Bind transient uniform buffer.
+	void bindUniformBuffer(U32 set, U32 binding, const TransientMemoryToken& token);
+
+	/// Bind storage buffer.
+	void bindStorageBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset);
+
+	/// Bind transient storage buffer.
+	void bindStorageBuffer(U32 set, U32 binding, const TransientMemoryToken& token);
+
+	/// Bind load/store image.
+	void bindImage(U32 set, U32 binding, TexturePtr img, U32 level);
+
+	/// Bind a program.
+	void bindShaderProgram(ShaderProgramPtr prog);
 
 	/// Bind pipeline.
 	void bindPipeline(PipelinePtr ppline);

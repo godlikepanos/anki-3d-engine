@@ -39,7 +39,8 @@ enum class FillMode : U8
 {
 	POINTS,
 	WIREFRAME,
-	SOLID
+	SOLID,
+	COUNT
 };
 
 enum class FaceSelectionMask : U8
@@ -59,7 +60,8 @@ enum class CompareOperation : U8
 	GREATER,
 	GREATER_EQUAL,
 	NOT_EQUAL,
-	NEVER
+	NEVER,
+	COUNT
 };
 
 enum class StencilOperation : U8
@@ -72,6 +74,7 @@ enum class StencilOperation : U8
 	INVERT,
 	INCREMENT_AND_WRAP,
 	DECREMENT_AND_WRAP,
+	COUNT
 };
 
 enum class BlendMethod : U8
@@ -94,7 +97,8 @@ enum class BlendMethod : U8
 	SRC1_COLOR,
 	ONE_MINUS_SRC1_COLOR,
 	SRC1_ALPHA,
-	ONE_MINUS_SRC1_ALPHA
+	ONE_MINUS_SRC1_ALPHA,
+	COUNT
 };
 
 enum class BlendFunction : U8
@@ -103,7 +107,8 @@ enum class BlendFunction : U8
 	SUBTRACT,
 	REVERSE_SUBTRACT,
 	MIN,
-	MAX
+	MAX,
+	COUNT
 };
 
 enum class VertexStepRate : U8
@@ -410,6 +415,13 @@ enum class DepthStencilAspectMask : U8
 	DEPTH_STENCIL = DEPTH | STENCIL
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DepthStencilAspectMask, inline)
+
+/// Index buffer's index type.
+enum class IndexType : U8
+{
+	U16,
+	U32
+};
 /// @}
 
 } // end namespace anki
