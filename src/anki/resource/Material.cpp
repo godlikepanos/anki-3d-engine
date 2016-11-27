@@ -14,37 +14,10 @@
 #include <anki/util/File.h>
 #include <anki/util/Filesystem.h>
 #include <anki/misc/Xml.h>
-#include <anki/renderer/Ms.h>
 #include <algorithm>
 
 namespace anki
 {
-
-/// Visit the textures to bind them
-class UpdateTexturesVisitor
-{
-public:
-	ResourceGroupInitInfo* m_init = nullptr;
-	ResourceManager* m_manager = nullptr;
-
-	template<typename TMaterialVariableTemplate>
-	Error visit(const TMaterialVariableTemplate& var)
-	{
-		// Do nothing
-		return ErrorCode::NONE;
-	}
-};
-
-// Specialize for texture
-template<>
-Error UpdateTexturesVisitor::visit<MaterialVariableTemplate<TextureResourcePtr>>(
-	const MaterialVariableTemplate<TextureResourcePtr>& var)
-{
-	m_init->m_textures[var.getTextureUnit()].m_texture = var.getValue()->getGrTexture();
-	m_init->m_textures[var.getTextureUnit()].m_usage =
-		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_TESSELLATION_EVALUATION;
-	return ErrorCode::NONE;
-}
 
 template<typename T>
 Error MaterialVariableTemplate<T>::init(U idx, const MaterialLoader::Input& in, Material& mtl)
@@ -174,6 +147,7 @@ Error MaterialVariant::init(const RenderingKey& key2, Material& mtl, MaterialLoa
 	//
 	// Shaders
 	//
+	Array<ShaderPtr, 5> shaders;
 	for(ShaderType stype = ShaderType::VERTEX; stype <= ShaderType::FRAGMENT; ++stype)
 	{
 		if(stype == ShaderType::GEOMETRY)
@@ -192,13 +166,21 @@ Error MaterialVariant::init(const RenderingKey& key2, Material& mtl, MaterialLoa
 		StringAuto filename(mtl.getTempAllocator());
 		ANKI_CHECK(mtl.createProgramSourceToCache(src, stype, filename));
 
-		ShaderResourcePtr& shader = m_shaders[U(stype)];
+		ShaderResourcePtr& shader = m_shaders[stype];
 
 		ANKI_CHECK(mtl.getManager().loadResource(filename.toCString(), shader));
+
+		shaders[stype] = shader->getGrShader();
 
 		// Update the hash
 		mtl.m_hash ^= computeHash(&src[0], src.getLength());
 	}
+
+	m_prog = mtl.getManager().getGrManager().newInstance<ShaderProgram>(shaders[ShaderType::VERTEX],
+		shaders[ShaderType::TESSELLATION_CONTROL],
+		shaders[ShaderType::TESSELLATION_EVALUATION],
+		shaders[ShaderType::GEOMETRY],
+		shaders[ShaderType::FRAGMENT]);
 
 	return ErrorCode::NONE;
 }
@@ -396,22 +378,6 @@ Error Material::createProgramSourceToCache(const String& source, ShaderType type
 	}
 
 	return ErrorCode::NONE;
-}
-
-void Material::fillResourceGroupInitInfo(ResourceGroupInitInfo& rcinit)
-{
-	rcinit.m_uniformBuffers[0].m_uploadedMemory = true;
-	rcinit.m_uniformBuffers[0].m_usage = BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
-
-	UpdateTexturesVisitor visitor;
-	visitor.m_init = &rcinit;
-	visitor.m_manager = &getManager();
-
-	for(const auto& var : m_vars)
-	{
-		Error err = var->acceptVisitor(visitor);
-		(void)err;
-	}
 }
 
 const MaterialVariant& Material::getVariant(const RenderingKey& key) const

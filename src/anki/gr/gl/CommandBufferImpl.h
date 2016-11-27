@@ -117,7 +117,7 @@ public:
 		return !!(m_flags & CommandBufferFlag::SECOND_LEVEL);
 	}
 
-	void flushDrawcall();
+	void flushDrawcall(CommandBuffer& cmdb);
 
 private:
 	void destroy();

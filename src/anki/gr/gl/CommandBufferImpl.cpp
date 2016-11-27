@@ -96,8 +96,99 @@ GrAllocator<U8> CommandBufferImpl::getAllocator() const
 	return m_manager->getAllocator();
 }
 
-void CommandBufferImpl::flushDrawcall()
+void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 {
+	ANKI_ASSERT(!!(m_flags & CommandBufferFlag::GRAPHICS_WORK));
+
+	//
+	// Set default state
+	//
+	if(ANKI_UNLIKELY(m_state.m_mayContainUnsetState))
+	{
+		m_state.m_mayContainUnsetState = false;
+
+		if(m_state.m_primitiveRestart == 2)
+		{
+			cmdb.enablePrimitiveRestart(false);
+		}
+
+		if(m_state.m_fillMode == FillMode::COUNT)
+		{
+			cmdb.setFillMode(FillMode::SOLID);
+		}
+
+		if(m_state.m_cullMode == static_cast<FaceSelectionMask>(0))
+		{
+			cmdb.setCullMode(FaceSelectionMask::BACK);
+		}
+
+		if(m_state.m_polyOffsetFactor == -1.0)
+		{
+			cmdb.setPolygonOffset(0.0, 0.0);
+		}
+
+		for(U i = 0; i < 2; ++i)
+		{
+			FaceSelectionMask face = (i == 0) ? FaceSelectionMask::FRONT : FaceSelectionMask::BACK;
+
+			if(m_state.m_stencilFail[i] == StencilOperation::COUNT)
+			{
+				cmdb.setStencilOperations(face, StencilOperation::KEEP, StencilOperation::KEEP, StencilOperation::KEEP);
+			}
+
+			if(m_state.m_stencilCompare[i] == CompareOperation::COUNT)
+			{
+				cmdb.setStencilCompareFunction(face, CompareOperation::ALWAYS);
+			}
+
+			if(m_state.m_stencilCompareMask[i] == StateTracker::DUMMY_STENCIL_MASK)
+			{
+				cmdb.setStencilCompareMask(face, MAX_U32);
+			}
+
+			if(m_state.m_stencilWriteMask[i] == StateTracker::DUMMY_STENCIL_MASK)
+			{
+				cmdb.setStencilWriteMask(face, MAX_U32);
+			}
+
+			if(m_state.m_stencilRef[i] == StateTracker::DUMMY_STENCIL_MASK)
+			{
+				cmdb.setStencilReference(face, 0);
+			}
+		}
+
+		if(m_state.m_depthWrite == 2)
+		{
+			cmdb.enableDepthWrite(true);
+		}
+
+		if(m_state.m_depthOp == CompareOperation::COUNT)
+		{
+			cmdb.setDepthCompareFunction(CompareOperation::LESS);
+		}
+
+		for(U i = 0; i < MAX_COLOR_ATTACHMENTS; ++i)
+		{
+			if(m_state.m_colorWriteMasks[i] == StateTracker::INVALID_COLOR_MASK)
+			{
+				cmdb.setColorChannelWriteMask(i, ColorBit::ALL);
+			}
+
+			if(m_state.m_blendSrcMethod[i] == BlendMethod::COUNT)
+			{
+				cmdb.setBlendMethods(i, BlendMethod::ONE, BlendMethod::ZERO);
+			}
+
+			if(m_state.m_blendFuncs[i] == BlendFunction::COUNT)
+			{
+				cmdb.setBlendFunction(i, BlendFunction::ADD);
+			}
+		}
+	}
+
+	//
+	// Fire commands to change some state
+	//
 	class Cmd final : public GlCommand
 	{
 	public:
@@ -134,6 +225,58 @@ void CommandBufferImpl::flushDrawcall()
 			m_state.m_glStencilFuncSeparateDirty[i] = false;
 		}
 	}
+
+	class DepthTestCmd final : public GlCommand
+	{
+	public:
+		Bool8 m_enable;
+
+		DepthTestCmd(Bool enable)
+			: m_enable(enable)
+		{
+		}
+
+		Error operator()(GlState&)
+		{
+			if(m_enable)
+			{
+				glEnable(GL_DEPTH_TEST);
+			}
+			else
+			{
+				glDisable(GL_DEPTH_TEST);
+			}
+			return ErrorCode::NONE;
+		}
+	};
+
+	m_state.maybeEnableDepthTest([=](Bool enable) { pushBackNewCommand<DepthTestCmd>(enable); });
+
+	class StencilTestCmd final : public GlCommand
+	{
+	public:
+		Bool8 m_enable;
+
+		StencilTestCmd(Bool enable)
+			: m_enable(enable)
+		{
+		}
+
+		Error operator()(GlState&)
+		{
+			if(m_enable)
+			{
+				glEnable(GL_STENCIL_TEST);
+			}
+			else
+			{
+				glDisable(GL_STENCIL_TEST);
+			}
+			return ErrorCode::NONE;
+		}
+	};
+
+	m_state.maybeEnableDepthTest([=](Bool enable) { pushBackNewCommand<StencilTestCmd>(enable); });
 }
 
 } // end namespace anki

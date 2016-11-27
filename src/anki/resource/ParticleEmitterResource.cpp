@@ -8,7 +8,6 @@
 #include <anki/resource/Model.h>
 #include <anki/util/StringList.h>
 #include <anki/misc/Xml.h>
-#include <anki/renderer/Ms.h>
 #include <cstring>
 
 namespace anki
@@ -198,15 +197,13 @@ Error ParticleEmitterResource::load(const ResourceFilename& filename)
 	return ErrorCode::NONE;
 }
 
-void ParticleEmitterResource::getRenderingInfo(U lod, PipelineInitInfo& state, PipelineSubStateBit& stateMask) const
+void ParticleEmitterResource::getRenderingInfo(U lod, ShaderProgramPtr& prog) const
 {
 	lod = min<U>(lod, m_lodCount - 1);
 
 	RenderingKey key(Pass::MS_FS, lod, false, 1);
 	const MaterialVariant& variant = m_material->getVariant(key);
-	state.m_shaders[ShaderType::VERTEX] = variant.getShader(ShaderType::VERTEX);
-	state.m_shaders[ShaderType::FRAGMENT] = variant.getShader(ShaderType::FRAGMENT);
-	stateMask = PipelineSubStateBit::SHADERS;
+	prog = variant.getShaderProgram();
 }
 
 } // end namespace anki

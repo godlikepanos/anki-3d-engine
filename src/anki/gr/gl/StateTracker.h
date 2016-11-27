@@ -9,6 +9,7 @@
 #include <anki/gr/ShaderProgram.h>
 #include <anki/gr/Framebuffer.h>
 #include <anki/gr/gl/FramebufferImpl.h>
+#include <anki/gr/common/Misc.h>
 
 namespace anki
 {
@@ -20,6 +21,9 @@ namespace anki
 class StateTracker
 {
 public:
+	/// If it's false then there might be unset state.
+	Bool8 m_mayContainUnsetState = true;
+
 	/// @name vert_state
 	/// @{
 	class VertexAttribute
@@ -72,6 +76,8 @@ public:
 	template<typename TFunc>
 	void setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy, TFunc func)
 	{
+		ANKI_ASSERT(m_viewport[0] != MAX_U16 && m_viewport[1] != MAX_U16 && m_viewport[2] != MAX_U16
+			&& m_viewport[3] != MAX_U16);
 		if(m_viewport[0] != minx || m_viewport[1] != miny || m_viewport[2] != maxx || m_viewport[3] != maxy)
 		{
 			m_viewport = {minx, miny, maxx, maxy};
@@ -123,6 +129,24 @@ public:
 
 	/// @name depth_stencil
 	/// @{
+	Bool8 m_stencilTestEnabled = 2;
+
+	template<typename TFunc>
+	void maybeEnableStencilTest(TFunc func)
+	{
+		Bool enable = !stencilTestDisabled(
+			m_stencilFail[0], m_stencilPassDepthFail[0], m_stencilPassDepthPass[0], m_stencilCompare[0]);
+		enable = enable
+			|| !stencilTestDisabled(
+					 m_stencilFail[1], m_stencilPassDepthFail[1], m_stencilPassDepthPass[1], m_stencilCompare[1]);
+
+		if(enable != m_stencilTestEnabled)
+		{
+			m_stencilTestEnabled = enable;
+			func(enable);
+		}
+	}
+
 	Array<StencilOperation, 2> m_stencilFail = {{StencilOperation::COUNT, StencilOperation::COUNT}};
 	Array<StencilOperation, 2> m_stencilPassDepthFail = {{StencilOperation::COUNT, StencilOperation::COUNT}};
 	Array<StencilOperation, 2> m_stencilPassDepthPass = {{StencilOperation::COUNT, StencilOperation::COUNT}};
@@ -245,6 +269,21 @@ public:
 		}
 	}
 
+	Bool8 m_depthTestEnabled = 2; ///< 2 means don't know
+
+	template<typename TFunc>
+	void maybeEnableDepthTest(TFunc func)
+	{
+		ANKI_ASSERT(m_depthWrite != 2 && m_depthOp = CompareOperation::COUNT);
+		Bool enable = m_depthWrite || m_depthOp != CompareOperation::ALWAYS;
+
+		if(enable != m_depthTestEnabled)
+		{
+			m_depthTestEnabled = enable;
+			func(enable);
+		}
+	}
+
 	Bool8 m_depthWrite = 2;
 
 	template<typename TFunc>
@@ -353,6 +392,7 @@ public:
 
 	void endRenderPass()
 	{
+		ANKI_ASSERT(m_fbUuid != MAX_U64 && "Not inside a renderpass");
 		m_fbUuid = MAX_U64;
 	}
 	/// @}
@@ -375,33 +415,6 @@ public:
 		ANKI_ASSERT(m_viewport[1] != MAX_U16 && "Forgot to set the viewport");
 		ANKI_ASSERT(m_progUuid != MAX_U64 && "Forgot to bound a program");
 		ANKI_ASSERT(m_fbUuid != MAX_U64 && "Forgot to begin a render pass");
-		ANKI_ASSERT(m_fillMode != FillMode::COUNT && "Forgot to set fill mode");
-		ANKI_ASSERT(m_cullMode != static_cast<FaceSelectionMask>(0) && "Forgot to set cull mode");
-
-		for(U i = 0; i < m_colorBuffCount; ++i)
-		{
-			ANKI_ASSERT(m_colorWriteMasks[i] != INVALID_COLOR_MASK && "Forgot to set the color write mask");
-			ANKI_ASSERT(m_blendSrcMethod[i] != BlendMethod::COUNT && "Forgot to set blend methods");
-			ANKI_ASSERT(m_blendFuncs[i] != BlendFunction::COUNT && "Forgot to set blend functions");
-		}
-
-		if(m_fbHasDepth)
-		{
-			ANKI_ASSERT(m_depthWrite != 2 && "Forgot to set depth write");
-			ANKI_ASSERT(m_depthOp != CompareOperation::COUNT && "Forgot to set depth compare function");
-		}
-
-		if(m_fbHasStencil)
-		{
-			for(U i = 0; i < 2; ++i)
-			{
-				ANKI_ASSERT(m_stencilFail[i] != StencilOperation::COUNT && "Forgot to set stencil ops");
-				ANKI_ASSERT(m_stencilCompare[i] != CompareOperation::COUNT && "Forgot to set stencil compare");
-				ANKI_ASSERT(m_stencilCompareMask[i] != DUMMY_STENCIL_MASK && "Forgot to set stencil compare mask");
-				ANKI_ASSERT(m_stencilWriteMask[i] != DUMMY_STENCIL_MASK && "Forgot to set stencil write mask");
-				ANKI_ASSERT(m_stencilRef[i] != DUMMY_STENCIL_MASK && "Forgot to set stencil ref mask");
-			}
-		}
 	}
 
 	void checkDispatch() const

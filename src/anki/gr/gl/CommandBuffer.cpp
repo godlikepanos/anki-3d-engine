@@ -836,7 +836,7 @@ void CommandBuffer::drawElements(
 	};
 
 	m_impl->m_state.checkIndexedDracall();
-	m_impl->flushDrawcall();
+	m_impl->flushDrawcall(*this);
 
 	U idxBytes;
 	if(m_impl->m_state.m_indexType == GL_UNSIGNED_SHORT)
@@ -881,7 +881,7 @@ void CommandBuffer::drawArrays(PrimitiveTopology topology, U32 count, U32 instan
 	};
 
 	m_impl->m_state.checkNonIndexedDrawcall();
-	m_impl->flushDrawcall();
+	m_impl->flushDrawcall(*this);
 
 	DrawArraysIndirectInfo info(count, instanceCount, first, baseInstance);
 	m_impl->pushBackNewCommand<DrawArraysCommand>(convertPrimitiveTopology(topology), info);
@@ -927,7 +927,7 @@ void CommandBuffer::drawElementsIndirect(
 	};
 
 	m_impl->m_state.checkIndexedDracall();
-	m_impl->flushDrawcall();
+	m_impl->flushDrawcall(*this);
 	m_impl->pushBackNewCommand<DrawElementsIndirectCommand>(
 		convertPrimitiveTopology(topology), m_impl->m_state.m_indexType, drawCount, offset, indirectBuff);
 }
@@ -970,7 +970,7 @@ void CommandBuffer::drawArraysIndirect(
 	};
 
 	m_impl->m_state.checkNonIndexedDrawcall();
-	m_impl->flushDrawcall();
+	m_impl->flushDrawcall(*this);
 	m_impl->pushBackNewCommand<DrawArraysIndirectCommand>(
 		convertPrimitiveTopology(topology), drawCount, offset, indirectBuff);
 }
