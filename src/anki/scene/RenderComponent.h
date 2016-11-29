@@ -8,6 +8,7 @@
 #include <anki/scene/Common.h>
 #include <anki/scene/SceneComponent.h>
 #include <anki/resource/Material.h>
+#include <anki/resource/Model.h>
 #include <anki/util/HashMap.h>
 
 namespace anki
@@ -110,12 +111,49 @@ public:
 	U32 m_subMeshIndicesCount;
 };
 
+/// Info on the vertex buffer binding.
+class RenderingVertexBufferBinding : public VertexBufferBinding
+{
+public:
+	TransientMemoryToken m_token;
+
+	Bool operator==(const RenderingVertexBufferBinding& b) const
+	{
+		if(m_token)
+		{
+			return m_token == b.m_token;
+		}
+		else
+		{
+			return static_cast<const VertexBufferBinding&>(*this) == static_cast<const VertexBufferBinding&>(b);
+		}
+	}
+
+	Bool operator!=(const RenderingVertexBufferBinding& b) const
+	{
+		return !(*this == b);
+	}
+};
+
+using RenderingVertexAttributeInfo = VertexAttributeInfo;
+
 /// Rendering data output.
 class RenderingBuildInfoOut
 {
 public:
-	ResourceGroupPtr m_resourceGroup;
 	Mat4 m_transform;
+	Bool8 m_hasTransform = false;
+
+	ShaderProgramPtr m_program;
+
+	Array<RenderingVertexBufferBinding, MAX_VERTEX_ATTRIBUTES> m_vertexBufferBindings;
+	U32 m_vertexBufferBindingCount;
+	Array<RenderingVertexAttributeInfo, MAX_VERTEX_ATTRIBUTES> m_vertexAttributes;
+	U32 m_vertexAttributeCount;
+
+	BufferPtr m_indexBuffer;
+	TransientMemoryToken m_indexBufferToken;
+
 	union A
 	{
 		DrawArraysIndirectInfo m_arrays;
@@ -126,17 +164,11 @@ public:
 		{
 		}
 	} m_drawcall;
-	Bool8 m_drawArrays = false;
-	Bool8 m_hasTransform = false;
+	Bool m_drawArrays = false;
 
-	PipelineInitInfo* m_state = nullptr;
-	PipelineSubStateBit m_stateMask = PipelineSubStateBit::NONE;
+	PrimitiveTopology m_topology = PrimitiveTopology::TRIANGLES;
 
-	RenderingBuildInfoOut(PipelineInitInfo* state)
-		: m_state(state)
-	{
-		ANKI_ASSERT(state);
-	}
+	RenderingBuildInfoOut() = default;
 
 	RenderingBuildInfoOut(const RenderingBuildInfoOut& b)
 	{
@@ -145,13 +177,27 @@ public:
 
 	RenderingBuildInfoOut& operator=(const RenderingBuildInfoOut& b)
 	{
-		m_resourceGroup = b.m_resourceGroup;
 		m_transform = b.m_transform;
-		m_drawcall.m_elements = b.m_drawcall.m_elements;
-		m_drawArrays = b.m_drawArrays;
 		m_hasTransform = b.m_hasTransform;
-		m_state = b.m_state;
-		m_stateMask = b.m_stateMask;
+
+		m_vertexBufferBindingCount = b.m_vertexBufferBindingCount;
+		for(U i = 0; i < m_vertexBufferBindingCount; ++i)
+		{
+			m_vertexBufferBindings[i] = b.m_vertexBufferBindings[i];
+		}
+
+		m_vertexAttributeCount = b.m_vertexAttributeCount;
+		for(U i = 0; i < m_vertexAttributeCount; ++i)
+		{
+			m_vertexAttributes[i] = b.m_vertexAttributes[i];
+		}
+
+		m_indexBuffer = b.m_indexBuffer;
+		m_indexBufferToken = b.m_indexBufferToken;
+
+		m_drawArrays = b.m_drawArrays;
+
+		m_topology = b.m_topology;
 
 		return *this;
 	}
@@ -221,32 +267,6 @@ public:
 		return err;
 	}
 
-	Bool tryGetPipeline(U64 hash, PipelinePtr& ppline)
-	{
-		LockGuard<SpinLock> lock(m_localPplineCacheMtx);
-
-		auto it = m_localPplineCache.find(hash);
-		if(it != m_localPplineCache.getEnd())
-		{
-			ppline = *it;
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	}
-
-	void storePipeline(U64 hash, PipelinePtr ppline)
-	{
-		LockGuard<SpinLock> lock(m_localPplineCacheMtx);
-
-		if(m_localPplineCache.find(hash) == m_localPplineCache.getEnd())
-		{
-			m_localPplineCache.pushBack(getAllocator(), hash, ppline);
-		}
-	}
-
 private:
 	using Key = U64;
 
@@ -272,10 +292,6 @@ private:
 
 	Variables m_vars;
 	const Material* m_mtl;
-
-	/// This is an optimization, a local hash of pipelines.
-	HashMap<U64, PipelinePtr, Hasher, Compare> m_localPplineCache;
-	SpinLock m_localPplineCacheMtx;
 };
 /// @}
 

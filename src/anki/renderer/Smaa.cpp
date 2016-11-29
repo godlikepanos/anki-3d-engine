@@ -34,26 +34,11 @@ Error SmaaEdge::init(const ConfigSet& initializer)
 		F32(m_r->getHeight()),
 		&m_r->getSmaa().m_qualityPerset[0]);
 
-	ANKI_CHECK(getResourceManager().loadResourceToCache(m_vert, "shaders/SmaaEdge.vert.glsl", pps.toCString(), "r_"));
-	ANKI_CHECK(getResourceManager().loadResourceToCache(m_frag, "shaders/SmaaEdge.frag.glsl", pps.toCString(), "r_"));
+	ANKI_CHECK(m_r->createShader("shaders/SmaaEdge.vert.glsl", m_vert, pps.toCString()));
+	ANKI_CHECK(m_r->createShader("shaders/SmaaEdge.frag.glsl", m_frag, pps.toCString()));
 
-	// Create ppline
-	PipelineInitInfo ppinit;
-
-	ppinit.m_inputAssembler.m_topology = PrimitiveTopology::TRIANGLE_STRIP;
-
-	ppinit.m_depthStencil.m_depthWriteEnabled = false;
-	ppinit.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
-	ppinit.m_depthStencil.m_stencilFront.m_stencilPassDepthPassOperation = StencilOperation::REPLACE;
-	ppinit.m_depthStencil.m_format = STENCIL_PIXEL_FORMAT;
-
-	ppinit.m_color.m_attachmentCount = 1;
-	ppinit.m_color.m_attachments[0].m_format = EDGE_PIXEL_FORMAT;
-
-	ppinit.m_shaders[ShaderType::VERTEX] = m_vert->getGrShader();
-	ppinit.m_shaders[ShaderType::FRAGMENT] = m_frag->getGrShader();
-
-	m_ppline = gr.newInstance<Pipeline>(ppinit);
+	// Create prog
+	m_prog = getGrManager().newInstance<ShaderProgram>(m_vert->getGrShader(), m_frag->getGrShader());
 
 	// Create RT
 	m_r->createRenderTarget(m_r->getWidth(),
@@ -74,11 +59,6 @@ Error SmaaEdge::init(const ConfigSet& initializer)
 	fbInit.m_depthStencilAttachment.m_stencilLoadOperation = AttachmentLoadOperation::CLEAR;
 	fbInit.m_depthStencilAttachment.m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 	m_fb = gr.newInstance<Framebuffer>(fbInit);
-
-	// Create RC group
-	ResourceGroupInitInfo rcinit;
-	rcinit.m_textures[0].m_texture = m_r->getIs().getRt();
-	m_rcgroup = gr.newInstance<ResourceGroup>(rcinit);
 
 	return ErrorCode::NONE;
 }
@@ -112,15 +92,22 @@ void SmaaEdge::run(RenderingContext& ctx)
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
-	cmdb->bindResourceGroup(m_rcgroup, 0, nullptr);
-	cmdb->bindPipeline(m_ppline);
+	cmdb->bindShaderProgram(m_prog);
+	cmdb->bindTexture(0, 0, m_r->getIs().getRt());
+
+	cmdb->setStencilOperations(
+		FaceSelectionMask::FRONT, StencilOperation::KEEP, StencilOperation::KEEP, StencilOperation::REPLACE);
 	cmdb->setStencilCompareMask(FaceSelectionMask::FRONT, 0xF);
 	cmdb->setStencilWriteMask(FaceSelectionMask::FRONT, 0xF);
 	cmdb->setStencilReference(FaceSelectionMask::FRONT, 0xF);
 
 	cmdb->beginRenderPass(m_fb);
-	cmdb->drawArrays(3);
+	m_r->drawQuad(cmdb);
 	cmdb->endRenderPass();
+
+	// Restore state
+	cmdb->setStencilOperations(
+		FaceSelectionMask::FRONT, StencilOperation::KEEP, StencilOperation::KEEP, StencilOperation::KEEP);
 }
 
 SmaaWeights::~SmaaWeights()
@@ -141,28 +128,11 @@ Error SmaaWeights::init(const ConfigSet& initializer)
 		F32(m_r->getHeight()),
 		&m_r->getSmaa().m_qualityPerset[0]);
 
-	ANKI_CHECK(
-		getResourceManager().loadResourceToCache(m_vert, "shaders/SmaaWeights.vert.glsl", pps.toCString(), "r_"));
-	ANKI_CHECK(
-		getResourceManager().loadResourceToCache(m_frag, "shaders/SmaaWeights.frag.glsl", pps.toCString(), "r_"));
+	ANKI_CHECK(m_r->createShader("shaders/SmaaWeights.vert.glsl", m_vert, pps.toCString()));
+	ANKI_CHECK(m_r->createShader("shaders/SmaaWeights.frag.glsl", m_frag, pps.toCString()));
 
-	// Create ppline
-	PipelineInitInfo ppinit;
-
-	ppinit.m_inputAssembler.m_topology = PrimitiveTopology::TRIANGLE_STRIP;
-
-	ppinit.m_depthStencil.m_depthWriteEnabled = false;
-	ppinit.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
-	ppinit.m_depthStencil.m_stencilFront.m_compareFunction = CompareOperation::EQUAL;
-	ppinit.m_depthStencil.m_format = STENCIL_PIXEL_FORMAT;
-
-	ppinit.m_color.m_attachmentCount = 1;
-	ppinit.m_color.m_attachments[0].m_format = WEIGHTS_PIXEL_FORMAT;
-
-	ppinit.m_shaders[ShaderType::VERTEX] = m_vert->getGrShader();
-	ppinit.m_shaders[ShaderType::FRAGMENT] = m_frag->getGrShader();
-
-	m_ppline = gr.newInstance<Pipeline>(ppinit);
+	// Create prog
+	m_prog = getGrManager().newInstance<ShaderProgram>(m_vert->getGrShader(), m_frag->getGrShader());
 
 	// Create RT
 	m_r->createRenderTarget(m_r->getWidth(),
@@ -224,13 +194,6 @@ Error SmaaWeights::init(const ConfigSet& initializer)
 	}
 	cmdb->flush();
 
-	// Create RC group
-	ResourceGroupInitInfo rcinit;
-	rcinit.m_textures[0].m_texture = m_r->getSmaa().m_edge.m_rt;
-	rcinit.m_textures[1].m_texture = m_areaTex;
-	rcinit.m_textures[2].m_texture = m_searchTex;
-	m_rcgroup = gr.newInstance<ResourceGroup>(rcinit);
-
 	return ErrorCode::NONE;
 }
 
@@ -253,19 +216,38 @@ void SmaaWeights::run(RenderingContext& ctx)
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
-	cmdb->bindResourceGroup(m_rcgroup, 0, nullptr);
-	cmdb->bindPipeline(m_ppline);
+	cmdb->bindTexture(0, 0, m_r->getSmaa().m_edge.m_rt);
+	cmdb->bindTexture(0, 1, m_areaTex);
+	cmdb->bindTexture(0, 2, m_searchTex);
+	cmdb->bindShaderProgram(m_prog);
+
+	cmdb->setStencilCompareFunction(FaceSelectionMask::FRONT, CompareOperation::EQUAL);
 	cmdb->setStencilCompareMask(FaceSelectionMask::FRONT, 0xF);
 	cmdb->setStencilWriteMask(FaceSelectionMask::FRONT, 0x0);
 	cmdb->setStencilReference(FaceSelectionMask::FRONT, 0xF);
 
 	cmdb->beginRenderPass(m_fb);
-	cmdb->drawArrays(3);
+	m_r->drawQuad(cmdb);
 	cmdb->endRenderPass();
 }
 
 Error Smaa::init(const ConfigSet& cfg)
 {
+	Error err = initInternal(cfg);
+	if(err)
+	{
+		ANKI_LOGE("Failed to initialize SMAA");
+	}
+
+	return err;
+}
+
+Error Smaa::initInternal(const ConfigSet& cfg)
+{
+	m_qualityPerset = "ULTRA";
+
+	ANKI_LOGI("Initializing SMAA in %s perset", &m_qualityPerset[0]);
+
 	TextureInitInfo texinit;
 	texinit.m_format = STENCIL_PIXEL_FORMAT;
 	texinit.m_width = m_r->getWidth();
@@ -273,7 +255,6 @@ Error Smaa::init(const ConfigSet& cfg)
 	texinit.m_usage = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
 	m_stencilTex = getGrManager().newInstance<Texture>(texinit);
 
-	m_qualityPerset = "ULTRA";
 	ANKI_CHECK(m_edge.init(cfg));
 	ANKI_CHECK(m_weights.init(cfg));
 	return ErrorCode::NONE;

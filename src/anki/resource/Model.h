@@ -27,18 +27,36 @@ class VertexBufferBinding
 {
 public:
 	BufferPtr m_buffer;
-	U32 m_binding;
 	PtrSize m_offset;
 	PtrSize m_stride;
+
+	Bool operator==(const VertexBufferBinding& b) const
+	{
+		return m_buffer == b.m_buffer && m_offset == b.m_offset && m_stride == b.m_stride;
+	}
+
+	Bool operator!=(const VertexBufferBinding& b) const
+	{
+		return !(*this == b);
+	}
 };
 
 class VertexAttributeInfo
 {
 public:
-	U32 m_location;
 	U32 m_bufferBinding;
 	PixelFormat m_format;
 	PtrSize m_relativeOffset;
+
+	Bool operator==(const VertexAttributeInfo& b) const
+	{
+		return m_bufferBinding == b.m_bufferBinding && m_format == b.m_format && m_relativeOffset == b.m_relativeOffset;
+	}
+
+	Bool operator!=(const VertexAttributeInfo& b) const
+	{
+		return !(*this == b);
+	}
 };
 
 class ModelRenderingInfo

@@ -503,7 +503,12 @@ Error Renderer::buildCommandBuffers(RenderingContext& ctx)
 	return err;
 }
 
-Error Renderer::createShader(CString fname, ShaderResourcePtr& shader, CString fmt, ...)
+Error Renderer::createShader(CString fname, ShaderResourcePtr& shader, CString extra)
+{
+	return m_resources->loadResourceToCache(shader, fname, &extra[0], "r_");
+}
+
+Error Renderer::createShaderf(CString fname, ShaderResourcePtr& shader, CString fmt, ...)
 {
 	Array<char, 512> buffer;
 	va_list args;

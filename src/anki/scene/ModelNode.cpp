@@ -71,16 +71,27 @@ Error ModelPatchNode::buildRendering(const RenderingBuildInfoIn& in, RenderingBu
 	ANKI_ASSERT(m_modelPatch->getSubMeshesCount() == 0);
 
 	// State
-	ModelRenderingInfo modelInf(*out.m_state);
+	ModelRenderingInfo modelInf;
 	m_modelPatch->getRenderingDataSub(in.m_key, WeakArray<U8>(), modelInf);
-	ANKI_ASSERT(modelInf.m_stateMask
-		== (PipelineSubStateBit::VERTEX | PipelineSubStateBit::SHADERS | PipelineSubStateBit::INPUT_ASSEMBLER));
 
-	out.m_stateMask = modelInf.m_stateMask;
+	out.m_vertexBufferBindingCount = modelInf.m_vertexBufferBindingCount;
+	for(U i = 0; i < modelInf.m_vertexBufferBindingCount; ++i)
+	{
+		static_cast<VertexBufferBinding&>(out.m_vertexBufferBindings[i]) = modelInf.m_vertexBufferBindings[i];
+	}
+
+	out.m_vertexAttributeCount = modelInf.m_vertexAttributeCount;
+	for(U i = 0; i < modelInf.m_vertexAttributeCount; ++i)
+	{
+		out.m_vertexAttributes[i] = out.m_vertexAttributes[i];
+	}
+
+	out.m_indexBuffer = modelInf.m_indexBuffer;
+
+	out.m_program = modelInf.m_program;
 
 	// Other
 	ANKI_ASSERT(modelInf.m_drawcallCount == 1 && "Cannot accept multi-draw");
-	out.m_resourceGroup = modelInf.m_resourceGroup;
 	out.m_drawcall.m_elements.m_count = modelInf.m_indicesCountArray[0];
 	out.m_drawcall.m_elements.m_instanceCount = in.m_key.m_instanceCount;
 	out.m_drawcall.m_elements.m_firstIndex = modelInf.m_indicesOffsetArray[0] / sizeof(U16);

@@ -76,8 +76,7 @@ public:
 	template<typename TFunc>
 	void setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy, TFunc func)
 	{
-		ANKI_ASSERT(m_viewport[0] != MAX_U16 && m_viewport[1] != MAX_U16 && m_viewport[2] != MAX_U16
-			&& m_viewport[3] != MAX_U16);
+		ANKI_ASSERT(minx != MAX_U16 && miny != MAX_U16 && maxx != MAX_U16 && maxy != MAX_U16);
 		if(m_viewport[0] != minx || m_viewport[1] != miny || m_viewport[2] != maxx || m_viewport[3] != maxy)
 		{
 			m_viewport = {minx, miny, maxx, maxy};
@@ -274,7 +273,7 @@ public:
 	template<typename TFunc>
 	void maybeEnableDepthTest(TFunc func)
 	{
-		ANKI_ASSERT(m_depthWrite != 2 && m_depthOp = CompareOperation::COUNT);
+		ANKI_ASSERT(m_depthWrite != 2 && m_depthOp != CompareOperation::COUNT);
 		Bool enable = m_depthWrite || m_depthOp != CompareOperation::ALWAYS;
 
 		if(enable != m_depthTestEnabled)
@@ -394,6 +393,11 @@ public:
 	{
 		ANKI_ASSERT(m_fbUuid != MAX_U64 && "Not inside a renderpass");
 		m_fbUuid = MAX_U64;
+	}
+
+	Bool insideRenderPass() const
+	{
+		return m_fbUuid != MAX_U64;
 	}
 	/// @}
 

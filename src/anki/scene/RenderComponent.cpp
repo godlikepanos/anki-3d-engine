@@ -63,8 +63,6 @@ RenderComponent::~RenderComponent()
 	}
 
 	m_vars.destroy(alloc);
-
-	m_localPplineCache.destroy(getAllocator());
 }
 
 Error RenderComponent::init()

@@ -272,20 +272,6 @@ Error ParticleEmitter::init(const CString& filename)
 	// Create the vertex buffer and object
 	m_vertBuffSize = m_maxNumOfParticles * VERTEX_SIZE;
 
-	GrManager& gr = getSceneGraph().getGrManager();
-
-	ResourceGroupInitInfo rcinit;
-	m_particleEmitterResource->getMaterial().fillResourceGroupInitInfo(rcinit);
-
-	for(U i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
-	{
-		m_vertBuffs[i] = gr.newInstance<Buffer>(m_vertBuffSize, BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE);
-
-		rcinit.m_vertexBuffers[0].m_buffer = m_vertBuffs[i];
-
-		m_grGroups[i] = gr.newInstance<ResourceGroup>(rcinit);
-	}
-
 	return ErrorCode::NONE;
 }
 
@@ -298,38 +284,37 @@ Error ParticleEmitter::buildRendering(const RenderingBuildInfoIn& in, RenderingB
 		return ErrorCode::NONE;
 	}
 
-	U frame = (getGlobalTimestamp() % 3);
+	U frame = (getGlobalTimestamp() % MAX_FRAMES_IN_FLIGHT);
 
-	PipelineSubStateBit stateMask;
-	m_particleEmitterResource->getRenderingInfo(in.m_key.m_lod, *out.m_state, stateMask);
-	ANKI_ASSERT(stateMask == PipelineSubStateBit::SHADERS);
+	m_particleEmitterResource->getRenderingInfo(in.m_key.m_lod, out.m_program);
 
-	VertexStateInfo& vertState = out.m_state->m_vertex;
-	vertState.m_bindingCount = 1;
-	vertState.m_bindings[0].m_stride = VERTEX_SIZE;
-	vertState.m_attributeCount = 3;
-	vertState.m_attributes[0].m_format = PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
-	vertState.m_attributes[0].m_offset = 0;
-	vertState.m_attributes[0].m_binding = 0;
-	vertState.m_attributes[1].m_format = PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT);
-	vertState.m_attributes[1].m_offset = sizeof(Vec3);
-	vertState.m_attributes[1].m_binding = 0;
-	vertState.m_attributes[2].m_format = PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT);
-	vertState.m_attributes[2].m_offset = sizeof(Vec3) + sizeof(F32);
-	vertState.m_attributes[2].m_binding = 0;
+	out.m_vertexBufferBindingCount = 1;
+	out.m_vertexBufferBindings[0].m_buffer = m_vertBuffs[frame];
+	out.m_vertexBufferBindings[0].m_binding = 0;
+	out.m_vertexBufferBindings[0].m_offset = 0;
+	out.m_vertexBufferBindings[0].m_stride = VERTEX_SIZE;
 
-	out.m_state->m_inputAssembler.m_topology = PrimitiveTopology::POINTS;
+	out.m_vertexAttributeCount = 3;
+	out.m_vertexAttributes[0].m_location = 0;
+	out.m_vertexAttributes[0].m_bufferBinding = 0;
+	out.m_vertexAttributes[0].m_format = PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
+	out.m_vertexAttributes[0].m_relativeOffset = 0;
+	out.m_vertexAttributes[1].m_location = 1;
+	out.m_vertexAttributes[1].m_bufferBinding = 0;
+	out.m_vertexAttributes[1].m_format = PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT);
+	out.m_vertexAttributes[1].m_relativeOffset = sizeof(Vec3);
+	out.m_vertexAttributes[2].m_location = 2;
+	out.m_vertexAttributes[2].m_bufferBinding = 0;
+	out.m_vertexAttributes[2].m_format = PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT);
+	out.m_vertexAttributes[2].m_relativeOffset = sizeof(Vec3) + sizeof(F32);
 
-	out.m_stateMask = stateMask | PipelineSubStateBit::VERTEX | PipelineSubStateBit::INPUT_ASSEMBLER;
+	out.m_topology = PrimitiveTopology::POINTS;
 
 	out.m_drawArrays = true;
 	out.m_drawcall.m_arrays.m_count = m_aliveParticlesCount;
 
-	out.m_resourceGroup = m_grGroups[frame];
-
 	// The particles are already in world position
-	out.m_hasTransform = true;
-	out.m_transform = Mat4::getIdentity();
+	out.m_hasTransform = false;
 
 	return ErrorCode::NONE;
 }

@@ -42,7 +42,6 @@ anki_internal:
 private:
 	DepthDownscale* m_parent;
 
-	ResourceGroupPtr m_rcgroup;
 	FramebufferPtr m_fb;
 };
 
@@ -69,7 +68,6 @@ anki_internal:
 private:
 	DepthDownscale* m_parent;
 
-	ResourceGroupPtr m_rcgroup;
 	FramebufferPtr m_fb;
 };
 
@@ -95,7 +93,9 @@ anki_internal:
 
 private:
 	ShaderResourcePtr m_frag;
-	PipelinePtr m_ppline;
+	ShaderProgramPtr m_prog;
+
+	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 };
 /// @}
 

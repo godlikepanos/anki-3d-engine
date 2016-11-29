@@ -42,25 +42,14 @@ void CommandBuffer::init(CommandBufferInitInfo& inf)
 {
 	m_impl.reset(getAllocator().newInstance<CommandBufferImpl>(&getManager()));
 	m_impl->init(inf);
-
-#if ANKI_ASSERTS_ENABLED
-	if((inf.m_flags & CommandBufferFlag::SECOND_LEVEL) == CommandBufferFlag::SECOND_LEVEL)
-	{
-		ANKI_ASSERT(inf.m_framebuffer.isCreated());
-		m_impl->m_dbg.m_insideRenderPass = true;
-		m_impl->m_dbg.m_secondLevel = true;
-	}
-#endif
 }
 
 void CommandBuffer::flush()
 {
-#if ANKI_ASSERTS_ENABLED
-	if(!m_impl->m_dbg.m_secondLevel)
+	if(!m_impl->isSecondLevel())
 	{
-		ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
+		ANKI_ASSERT(!m_impl->m_state.insideRenderPass());
 	}
-#endif
 
 	if(!m_impl->isSecondLevel())
 	{
@@ -70,12 +59,11 @@ void CommandBuffer::flush()
 
 void CommandBuffer::finish()
 {
-#if ANKI_ASSERTS_ENABLED
-	if(!m_impl->m_dbg.m_secondLevel)
+	if(!m_impl->isSecondLevel())
 	{
-		ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
+		ANKI_ASSERT(!m_impl->m_state.insideRenderPass());
 	}
-#endif
+
 	getManager().getImplementation().getRenderingThread().finishCommandBuffer(CommandBufferPtr(this));
 }
 
@@ -231,10 +219,6 @@ void CommandBuffer::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 		}
 	};
 
-#if ANKI_ASSERTS_ENABLED
-	m_impl->m_dbg.m_viewport = true;
-#endif
-
 	m_impl->m_state.setViewport(
 		minx, miny, maxx, maxy, [=]() { m_impl->pushBackNewCommand<ViewportCommand>(minx, miny, maxx, maxy); });
 }
@@ -317,10 +301,6 @@ void CommandBuffer::setPolygonOffset(F32 factor, F32 units)
 			return ErrorCode::NONE;
 		}
 	};
-
-#if ANKI_ASSERTS_ENABLED
-	m_impl->m_dbg.m_polygonOffset = true;
-#endif
 
 	m_impl->m_state.setPolygonOffset(factor, units, [=]() { m_impl->pushBackNewCommand<Cmd>(factor, units); });
 }
@@ -1080,7 +1060,7 @@ void CommandBuffer::uploadTextureSurface(
 
 	ANKI_ASSERT(tex);
 	ANKI_ASSERT(token.m_range > 0);
-	ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
+	ANKI_ASSERT(!m_impl->m_state.insideRenderPass());
 
 	m_impl->pushBackNewCommand<TexSurfUploadCommand>(tex, surf, token);
 }
@@ -1117,7 +1097,7 @@ void CommandBuffer::uploadTextureVolume(TexturePtr tex, const TextureVolumeInfo&
 
 	ANKI_ASSERT(tex);
 	ANKI_ASSERT(token.m_range > 0);
-	ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
+	ANKI_ASSERT(!m_impl->m_state.insideRenderPass());
 
 	m_impl->pushBackNewCommand<TexVolUploadCommand>(tex, vol, token);
 }
@@ -1154,7 +1134,7 @@ void CommandBuffer::uploadBuffer(BufferPtr buff, PtrSize offset, const Transient
 
 	ANKI_ASSERT(token.m_range > 0);
 	ANKI_ASSERT(buff);
-	ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
+	ANKI_ASSERT(!m_impl->m_state.insideRenderPass());
 
 	m_impl->pushBackNewCommand<BuffWriteCommand>(buff, offset, token);
 }
@@ -1182,7 +1162,7 @@ void CommandBuffer::generateMipmaps2d(TexturePtr tex, U face, U layer)
 		}
 	};
 
-	ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
+	ANKI_ASSERT(!m_impl->m_state.insideRenderPass());
 	m_impl->pushBackNewCommand<GenMipsCommand>(tex, face, layer);
 }
 
@@ -1252,7 +1232,7 @@ void CommandBuffer::copyTextureSurfaceToTextureSurface(
 		}
 	};
 
-	ANKI_ASSERT(!m_impl->m_dbg.m_insideRenderPass);
+	ANKI_ASSERT(!m_impl->m_state.insideRenderPass());
 	m_impl->pushBackNewCommand<CopyTexCommand>(src, srcSurf, dest, destSurf);
 }
 
@@ -1358,6 +1338,7 @@ void CommandBuffer::clearTextureSurface(
 		}
 	};
 
+	ANKI_ASSERT(!m_impl->m_state.insideRenderPass());
 	m_impl->pushBackNewCommand<ClearTextCommand>(tex, surf, clearValue, aspect);
 }
 
@@ -1386,6 +1367,7 @@ void CommandBuffer::fillBuffer(BufferPtr buff, PtrSize offset, PtrSize size, U32
 		}
 	};
 
+	ANKI_ASSERT(!m_impl->m_state.insideRenderPass());
 	m_impl->pushBackNewCommand<FillBufferCommand>(buff, offset, size, value);
 }
 
@@ -1419,6 +1401,7 @@ void CommandBuffer::writeOcclusionQueryResultToBuffer(OcclusionQueryPtr query, P
 		}
 	};
 
+	ANKI_ASSERT(!m_impl->m_state.insideRenderPass());
 	m_impl->pushBackNewCommand<WriteOcclResultToBuff>(query, offset, buff);
 }
 

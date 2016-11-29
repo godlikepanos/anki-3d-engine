@@ -179,6 +179,16 @@ anki_internal:
 	TransientMemoryTokenLifetime m_lifetime = TransientMemoryTokenLifetime::PER_FRAME;
 	BufferUsageBit m_usage = BufferUsageBit::NONE;
 
+	operator Bool() const
+	{
+		return m_offset != 0;
+	}
+
+	Bool operator==(const TransientMemoryToken& b) const
+	{
+		return m_offset == b.m_offset && m_range == b.m_range && m_lifetime == b.m_lifetime && m_usage == b.m_usage;
+	}
+
 	void markUnused()
 	{
 		m_offset = m_range = MAX_U32;

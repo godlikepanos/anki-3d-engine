@@ -23,9 +23,6 @@ anki_internal:
 	TexturePtr m_rt2;
 	TexturePtr m_depthRt;
 
-	PipelineInitInfo m_state;
-	GrObjectCache* m_pplineCache = nullptr;
-
 	Ms(Renderer* r)
 		: RenderingPass(r)
 	{

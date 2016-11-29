@@ -35,8 +35,7 @@ private:
 	FramebufferPtr m_fb;
 	ShaderResourcePtr m_vert;
 	ShaderResourcePtr m_frag;
-	PipelinePtr m_ppline;
-	ResourceGroupPtr m_rcgroup;
+	ShaderProgramPtr m_prog;
 };
 
 class SmaaWeights : public RenderingPass
@@ -61,10 +60,9 @@ private:
 	FramebufferPtr m_fb;
 	ShaderResourcePtr m_vert;
 	ShaderResourcePtr m_frag;
-	PipelinePtr m_ppline;
+	ShaderProgramPtr m_prog;
 	TexturePtr m_areaTex;
 	TexturePtr m_searchTex;
-	ResourceGroupPtr m_rcgroup;
 };
 
 class Smaa : public RenderingPass
@@ -87,6 +85,9 @@ anki_internal:
 	}
 
 	ANKI_USE_RESULT Error init(const ConfigSet& cfg);
+
+private:
+	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 };
 /// @}
 

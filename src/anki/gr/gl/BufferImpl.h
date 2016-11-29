@@ -49,7 +49,7 @@ public:
 	void bind(GLenum target, U32 binding, PtrSize offset) const
 	{
 		ANKI_ASSERT(isCreated());
-		ANKI_ASSERT(offset + size <= m_size);
+		ANKI_ASSERT(offset < m_size);
 		glBindBufferRange(target, binding, m_glName, offset, m_size - offset);
 	}
 
