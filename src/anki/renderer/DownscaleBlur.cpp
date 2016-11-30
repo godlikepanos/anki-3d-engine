@@ -19,34 +19,17 @@ Error DownscaleBlur::initSubpass(U idx, const UVec2& inputTexSize)
 {
 	Subpass& pass = m_passes[idx];
 
-	PipelineInitInfo ppinit;
-	ppinit.m_color.m_attachmentCount = 1;
-	ppinit.m_color.m_attachments[0].m_format = IS_COLOR_ATTACHMENT_PIXEL_FORMAT;
-	ppinit.m_depthStencil.m_depthWriteEnabled = false;
-	ppinit.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
-
-	StringAuto pps(getAllocator());
-
-	// vert shader
-	ANKI_CHECK(getResourceManager().loadResource("shaders/Quad.vert.glsl", pass.m_vert));
-
-	ppinit.m_shaders[ShaderType::VERTEX] = pass.m_vert->getGrShader();
-
 	// frag shader
-	pps.destroy();
-	pps.sprintf("#define TEXTURE_SIZE vec2(%f, %f)\n"
-				"#define TEXTURE_MIPMAP float(%u)\n",
+	ANKI_CHECK(m_r->createShaderf("shaders/DownscaleBlur.frag.glsl",
+		pass.m_frag,
+		"#define TEXTURE_SIZE vec2(%f, %f)\n"
+		"#define TEXTURE_MIPMAP float(%u)\n",
 		F32(inputTexSize.x()),
 		F32(inputTexSize.y()),
-		idx);
+		idx));
 
-	ANKI_CHECK(getResourceManager().loadResourceToCache(
-		pass.m_frag, "shaders/DownscaleBlur.frag.glsl", pps.toCString(), "r_"));
-
-	ppinit.m_shaders[ShaderType::FRAGMENT] = pass.m_frag->getGrShader();
-
-	// ppline
-	pass.m_ppline = getGrManager().newInstance<Pipeline>(ppinit);
+	// prog
+	m_r->createDrawQuadShaderProgram(pass.m_frag->getGrShader(), pass.m_prog);
 
 	// FB
 	FramebufferInitInfo fbInit;
@@ -57,15 +40,23 @@ Error DownscaleBlur::initSubpass(U idx, const UVec2& inputTexSize)
 	fbInit.m_colorAttachments[0].m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 	pass.m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
-	// Resources
-	ResourceGroupInitInfo rcinit;
-	rcinit.m_textures[0].m_texture = m_r->getIs().getRt();
-	pass.m_rcGroup = getGrManager().newInstance<ResourceGroup>(rcinit);
-
 	return ErrorCode::NONE;
 }
 
-Error DownscaleBlur::init(const ConfigSet& initializer)
+Error DownscaleBlur::init(const ConfigSet& cfg)
+{
+	ANKI_LOGI("Initializing dowscale blur");
+
+	Error err = initInternal(cfg);
+	if(err)
+	{
+		ANKI_LOGE("Failed to initialize downscale blur");
+	}
+
+	return err;
+}
+
+Error DownscaleBlur::initInternal(const ConfigSet&)
 {
 	m_passes.create(getAllocator(), m_r->getIs().getRtMipmapCount() - 1);
 
@@ -82,6 +73,9 @@ Error DownscaleBlur::init(const ConfigSet& initializer)
 void DownscaleBlur::run(RenderingContext& ctx)
 {
 	CommandBufferPtr cmdb = ctx.m_commandBuffer;
+
+	cmdb->bindTexture(0, 0, m_r->getIs().getRt());
+
 	UVec2 size(m_r->getWidth(), m_r->getHeight());
 	for(U i = 0; i < m_passes.getSize(); ++i)
 	{
@@ -103,8 +97,7 @@ void DownscaleBlur::run(RenderingContext& ctx)
 
 		cmdb->beginRenderPass(pass.m_fb);
 		cmdb->setViewport(0, 0, size.x(), size.y());
-		cmdb->bindPipeline(pass.m_ppline);
-		cmdb->bindResourceGroup(pass.m_rcGroup, 0, nullptr);
+		cmdb->bindShaderProgram(pass.m_prog);
 
 		m_r->drawQuad(cmdb);
 		cmdb->endRenderPass();

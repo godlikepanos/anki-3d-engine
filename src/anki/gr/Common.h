@@ -173,12 +173,7 @@ enum class TransientMemoryTokenLifetime : U8
 /// Token that gets returned when requesting for memory to write to a resource.
 class TransientMemoryToken
 {
-anki_internal:
-	PtrSize m_offset = 0;
-	PtrSize m_range = 0;
-	TransientMemoryTokenLifetime m_lifetime = TransientMemoryTokenLifetime::PER_FRAME;
-	BufferUsageBit m_usage = BufferUsageBit::NONE;
-
+public:
 	operator Bool() const
 	{
 		return m_offset != 0;
@@ -188,6 +183,12 @@ anki_internal:
 	{
 		return m_offset == b.m_offset && m_range == b.m_range && m_lifetime == b.m_lifetime && m_usage == b.m_usage;
 	}
+
+anki_internal:
+	PtrSize m_offset = 0;
+	PtrSize m_range = 0;
+	TransientMemoryTokenLifetime m_lifetime = TransientMemoryTokenLifetime::PER_FRAME;
+	BufferUsageBit m_usage = BufferUsageBit::NONE;
 
 	void markUnused()
 	{

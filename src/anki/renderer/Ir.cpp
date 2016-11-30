@@ -205,29 +205,6 @@ void Ir::initFaceInfo(U cacheEntryIdx, U faceIdx)
 
 	face.m_isFb = getGrManager().newInstance<Framebuffer>(fbInit);
 
-	// Create the IS resource group
-	ResourceGroupInitInfo rcinit;
-	rcinit.m_textures[0].m_texture = face.m_gbufferColorRts[0];
-	rcinit.m_textures[1].m_texture = face.m_gbufferColorRts[1];
-	rcinit.m_textures[2].m_texture = face.m_gbufferColorRts[2];
-	rcinit.m_textures[3].m_texture = face.m_gbufferDepthRt;
-	rcinit.m_textures[3].m_usage = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ | TextureUsageBit::SAMPLED_FRAGMENT;
-
-	rcinit.m_uniformBuffers[0].m_uploadedMemory = true;
-	rcinit.m_uniformBuffers[0].m_usage = BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
-	rcinit.m_uniformBuffers[1].m_uploadedMemory = true;
-	rcinit.m_uniformBuffers[1].m_usage = BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
-
-	rcinit.m_vertexBuffers[0].m_buffer = m_is.m_plightPositions;
-	rcinit.m_indexBuffer.m_buffer = m_is.m_plightIndices;
-	rcinit.m_indexSize = 2;
-
-	face.m_plightRsrc = getGrManager().newInstance<ResourceGroup>(rcinit);
-
-	rcinit.m_vertexBuffers[0].m_buffer = m_is.m_slightPositions;
-	rcinit.m_indexBuffer.m_buffer = m_is.m_slightIndices;
-	face.m_slightRsrc = getGrManager().newInstance<ResourceGroup>(rcinit);
-
 	// Create irradiance FB
 	fbInit = FramebufferInitInfo();
 	fbInit.m_colorAttachmentCount = 1;
@@ -287,52 +264,28 @@ Error Ir::initIs()
 	// Init shaders
 	ANKI_CHECK(getResourceManager().loadResource("shaders/Light.vert.glsl", m_is.m_lightVert));
 
-	StringAuto pps(getAllocator());
-	pps.sprintf("#define POINT_LIGHT\n"
-				"#define RENDERING_WIDTH %d\n"
-				"#define RENDERING_HEIGHT %d\n",
+	ANKI_CHECK(m_r->createShaderf("shaders/Light.frag.glsl",
+		m_is.m_plightFrag,
+		"#define POINT_LIGHT\n"
+		"#define RENDERING_WIDTH %d\n"
+		"#define RENDERING_HEIGHT %d\n",
 		m_fbSize,
-		m_fbSize);
+		m_fbSize));
 
-	ANKI_CHECK(
-		getResourceManager().loadResourceToCache(m_is.m_plightFrag, "shaders/Light.frag.glsl", pps.toCString(), "r_"));
-
-	pps.destroy();
-	pps.sprintf("#define SPOT_LIGHT\n"
-				"#define RENDERING_WIDTH %d\n"
-				"#define RENDERING_HEIGHT %d\n",
+	ANKI_CHECK(m_r->createShaderf("shaders/Light.frag.glsl",
+		m_is.m_slightFrag,
+		"#define SPOT_LIGHT\n"
+		"#define RENDERING_WIDTH %d\n"
+		"#define RENDERING_HEIGHT %d\n",
 		m_fbSize,
-		m_fbSize);
+		m_fbSize));
 
-	ANKI_CHECK(
-		getResourceManager().loadResourceToCache(m_is.m_slightFrag, "shaders/Light.frag.glsl", pps.toCString(), "r_"));
+	// Init the progs
+	m_is.m_plightProg =
+		getGrManager().newInstance<ShaderProgram>(m_is.m_lightVert->getGrShader(), m_is.m_plightFrag->getGrShader());
 
-	// Init the pplines
-	PipelineInitInfo pinit;
-	pinit.m_vertex.m_attributeCount = 1;
-	pinit.m_vertex.m_attributes[0].m_format = PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
-	pinit.m_vertex.m_bindingCount = 1;
-	pinit.m_vertex.m_bindings[0].m_stride = sizeof(F32) * 3;
-
-	pinit.m_rasterizer.m_cullMode = FaceSelectionMask::FRONT;
-
-	pinit.m_depthStencil.m_depthWriteEnabled = false;
-	pinit.m_depthStencil.m_depthCompareFunction = CompareOperation::GREATER;
-	pinit.m_depthStencil.m_format = MS_DEPTH_ATTACHMENT_PIXEL_FORMAT;
-
-	pinit.m_color.m_attachmentCount = 1;
-	auto& att = pinit.m_color.m_attachments[0];
-	att.m_format = IS_COLOR_ATTACHMENT_PIXEL_FORMAT;
-	att.m_srcBlendMethod = BlendMethod::ONE;
-	att.m_dstBlendMethod = BlendMethod::ONE;
-
-	pinit.m_shaders[ShaderType::VERTEX] = m_is.m_lightVert->getGrShader();
-	pinit.m_shaders[ShaderType::FRAGMENT] = m_is.m_plightFrag->getGrShader();
-
-	m_is.m_plightPpline = getGrManager().newInstance<Pipeline>(pinit);
-
-	pinit.m_shaders[ShaderType::FRAGMENT] = m_is.m_slightFrag->getGrShader();
-	m_is.m_slightPpline = getGrManager().newInstance<Pipeline>(pinit);
+	m_is.m_slightProg =
+		getGrManager().newInstance<ShaderProgram>(m_is.m_lightVert->getGrShader(), m_is.m_slightFrag->getGrShader());
 
 	// Init vert/idx buffers
 	ANKI_CHECK(
@@ -366,26 +319,11 @@ Error Ir::initIrradiance()
 	m_irradiance.m_cubeArr = getGrManager().newInstance<Texture>(texinit);
 
 	// Create the shader
-	StringAuto pps(getFrameAllocator());
-	pps.sprintf("#define CUBEMAP_SIZE %u\n", IRRADIANCE_TEX_SIZE);
+	ANKI_CHECK(m_r->createShaderf(
+		"shaders/Irradiance.frag.glsl", m_irradiance.m_frag, "#define CUBEMAP_SIZE %u\n", IRRADIANCE_TEX_SIZE));
 
-	ANKI_CHECK(getResourceManager().loadResourceToCache(
-		m_irradiance.m_frag, "shaders/Irradiance.frag.glsl", pps.toCString(), "r_"));
-
-	// Create the ppline
-	ColorStateInfo colorInf;
-	colorInf.m_attachmentCount = 1;
-	colorInf.m_attachments[0].m_format = IS_COLOR_ATTACHMENT_PIXEL_FORMAT;
-
-	m_r->createDrawQuadPipeline(m_irradiance.m_frag->getGrShader(), colorInf, m_irradiance.m_ppline);
-
-	// Create the resources
-	ResourceGroupInitInfo rcInit;
-	rcInit.m_uniformBuffers[0].m_uploadedMemory = true;
-	rcInit.m_uniformBuffers[0].m_usage = BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
-	rcInit.m_textures[0].m_texture = m_is.m_lightRt;
-
-	m_irradiance.m_rsrc = getGrManager().newInstance<ResourceGroup>(rcInit);
+	// Create the prog
+	m_r->createDrawQuadShaderProgram(m_irradiance.m_frag->getGrShader(), m_irradiance.m_prog);
 
 	// Clear texture
 	CommandBufferInitInfo cinf;
@@ -443,14 +381,11 @@ Error Ir::runMs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceId
 	// Start render pass
 	cmdb->beginRenderPass(face.m_msFb);
 	cmdb->setViewport(0, 0, m_fbSize, m_fbSize);
-	cmdb->setPolygonOffset(0.0, 0.0);
 
 	/// Draw
 	ANKI_CHECK(m_r->getSceneDrawer().drawRange(Pass::MS_FS,
 		frc,
 		cmdb,
-		*m_r->getMs().m_pplineCache,
-		m_r->getMs().m_state,
 		vis.getBegin(VisibilityGroupType::RENDERABLES_MS),
 		vis.getEnd(VisibilityGroupType::RENDERABLES_MS)));
 
@@ -487,11 +422,23 @@ void Ir::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx
 
 	cmdb->beginRenderPass(face.m_isFb);
 
+	cmdb->bindTexture(0, 0, face.m_gbufferColorRts[0]);
+	cmdb->bindTexture(0, 1, face.m_gbufferColorRts[1]);
+	cmdb->bindTexture(0, 2, face.m_gbufferColorRts[2]);
+
+	cmdb->setVertexAttribute(0, 0, PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT), 0);
+
+	cmdb->setBlendMethods(0, BlendMethod::ONE, BlendMethod::ONE);
+	cmdb->setDepthWrite(false);
+	cmdb->setDepthCompareFunction(CompareOperation::GREATER);
+
 	// Process all lights
 	const Mat4& vpMat = frc.getViewProjectionMatrix();
 	const Mat4& vMat = frc.getViewMatrix();
 
-	cmdb->bindPipeline(m_is.m_plightPpline);
+	cmdb->bindShaderProgram(m_is.m_plightProg);
+	cmdb->bindVertexBuffer(0, m_is.m_plightPositions, 0, sizeof(F32) * 3);
+	cmdb->bindIndexBuffer(m_is.m_plightIndices, 0, IndexType::U16);
 
 	const VisibleNode* it = vis.getBegin(VisibilityGroupType::LIGHTS_POINT);
 	const VisibleNode* end = vis.getEnd(VisibilityGroupType::LIGHTS_POINT);
@@ -500,11 +447,11 @@ void Ir::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx
 		const LightComponent& lightc = it->m_node->getComponent<LightComponent>();
 		const MoveComponent& movec = it->m_node->getComponent<MoveComponent>();
 
-		TransientMemoryInfo transient;
+		TransientMemoryToken uniVertToken, uniFragToken;
 
 		// Update uniforms
-		IrVertex* vert = static_cast<IrVertex*>(getGrManager().allocateFrameTransientMemory(
-			sizeof(IrVertex), BufferUsageBit::UNIFORM_ALL, transient.m_uniformBuffers[0]));
+		IrVertex* vert = static_cast<IrVertex*>(
+			getGrManager().allocateFrameTransientMemory(sizeof(IrVertex), BufferUsageBit::UNIFORM_ALL, uniVertToken));
 
 		Mat4 modelM(movec.getWorldTransform().getOrigin().xyz1(),
 			movec.getWorldTransform().getRotation().getRotationPart(),
@@ -513,7 +460,7 @@ void Ir::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx
 		vert->m_mvp = vpMat * modelM;
 
 		IrPointLight* light = static_cast<IrPointLight*>(getGrManager().allocateFrameTransientMemory(
-			sizeof(IrPointLight), BufferUsageBit::UNIFORM_ALL, transient.m_uniformBuffers[1]));
+			sizeof(IrPointLight), BufferUsageBit::UNIFORM_ALL, uniFragToken));
 
 		Vec4 pos = vMat * movec.getWorldTransform().getOrigin().xyz1();
 
@@ -523,15 +470,18 @@ void Ir::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx
 		light->m_specularColorPad1 = lightc.getSpecularColor();
 
 		// Bind stuff
-		cmdb->bindResourceGroup(face.m_plightRsrc, 0, &transient);
+		cmdb->bindUniformBuffer(0, 0, uniVertToken);
+		cmdb->bindUniformBuffer(0, 1, uniFragToken);
 
 		// Draw
-		cmdb->drawElements(m_is.m_plightIdxCount);
+		cmdb->drawElements(PrimitiveTopology::TRIANGLES, m_is.m_plightIdxCount);
 
 		++it;
 	}
 
-	cmdb->bindPipeline(m_is.m_slightPpline);
+	cmdb->bindShaderProgram(m_is.m_slightProg);
+	cmdb->bindVertexBuffer(0, m_is.m_slightPositions, 0, 0);
+	cmdb->bindIndexBuffer(m_is.m_slightIndices, 0, IndexType::U16);
 
 	it = vis.getBegin(VisibilityGroupType::LIGHTS_SPOT);
 	end = vis.getEnd(VisibilityGroupType::LIGHTS_SPOT);
@@ -554,17 +504,17 @@ void Ir::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx
 
 		modelM = modelM * scaleM;
 
-		TransientMemoryInfo transient;
+		TransientMemoryToken uniVertToken, uniFragToken;
 
 		// Update vertex uniforms
-		IrVertex* vert = static_cast<IrVertex*>(getGrManager().allocateFrameTransientMemory(
-			sizeof(IrVertex), BufferUsageBit::UNIFORM_ALL, transient.m_uniformBuffers[0]));
+		IrVertex* vert = static_cast<IrVertex*>(
+			getGrManager().allocateFrameTransientMemory(sizeof(IrVertex), BufferUsageBit::UNIFORM_ALL, uniVertToken));
 
 		vert->m_mvp = vpMat * modelM;
 
 		// Update fragment uniforms
 		IrSpotLight* light = static_cast<IrSpotLight*>(getGrManager().allocateFrameTransientMemory(
-			sizeof(IrSpotLight), BufferUsageBit::UNIFORM_ALL, transient.m_uniformBuffers[1]));
+			sizeof(IrSpotLight), BufferUsageBit::UNIFORM_ALL, uniFragToken));
 
 		light->m_projectionParams = frc.getProjectionParameters();
 
@@ -580,10 +530,11 @@ void Ir::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx
 		light->m_lightDirPad1 = lightDir.xyz0();
 
 		// Bind stuff
-		cmdb->bindResourceGroup(face.m_slightRsrc, 0, &transient);
+		cmdb->bindUniformBuffer(0, 0, uniVertToken);
+		cmdb->bindUniformBuffer(0, 1, uniFragToken);
 
 		// Draw
-		cmdb->drawElements(m_is.m_slightIdxCount);
+		cmdb->drawElements(PrimitiveTopology::TRIANGLES, m_is.m_slightIdxCount);
 
 		++it;
 	}
@@ -602,6 +553,11 @@ void Ir::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx
 		TextureUsageBit::GENERATE_MIPMAPS,
 		TextureUsageBit::SAMPLED_FRAGMENT,
 		TextureSurfaceInfo(0, 0, faceIdx, layer));
+
+	// Restore state
+	cmdb->setBlendMethods(0, BlendMethod::ONE, BlendMethod::ZERO);
+	cmdb->setDepthWrite(true);
+	cmdb->setDepthCompareFunction(CompareOperation::LESS);
 }
 
 void Ir::computeIrradiance(RenderingContext& rctx, U layer, U faceIdx)
@@ -618,14 +574,15 @@ void Ir::computeIrradiance(RenderingContext& rctx, U layer, U faceIdx)
 	// Set state and draw
 	cmdb->setViewport(0, 0, IRRADIANCE_TEX_SIZE, IRRADIANCE_TEX_SIZE);
 
-	TransientMemoryInfo dinf;
-	UVec4* faceIdxArrayIdx = static_cast<UVec4*>(getGrManager().allocateFrameTransientMemory(
-		sizeof(UVec4), BufferUsageBit::UNIFORM_ALL, dinf.m_uniformBuffers[0]));
+	TransientMemoryToken token;
+	UVec4* faceIdxArrayIdx = static_cast<UVec4*>(
+		getGrManager().allocateFrameTransientMemory(sizeof(UVec4), BufferUsageBit::UNIFORM_ALL, token));
 	faceIdxArrayIdx->x() = faceIdx;
 	faceIdxArrayIdx->y() = layer;
 
-	cmdb->bindResourceGroup(m_irradiance.m_rsrc, 0, &dinf);
-	cmdb->bindPipeline(m_irradiance.m_ppline);
+	cmdb->bindUniformBuffer(0, 0, token);
+	cmdb->bindTexture(0, 0, m_is.m_lightRt);
+	cmdb->bindShaderProgram(m_irradiance.m_prog);
 	cmdb->beginRenderPass(face.m_irradianceFb);
 
 	m_r->drawQuad(cmdb);

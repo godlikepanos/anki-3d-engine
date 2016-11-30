@@ -66,7 +66,7 @@ void HalfDepth::run(RenderingContext& ctx)
 	cmdb->bindTexture(0, 0, m_r->getMs().m_depthRt);
 
 	cmdb->setViewport(0, 0, m_r->getWidth() / 2, m_r->getHeight() / 2);
-	cmdb->enableDepthWrite(true);
+	cmdb->setDepthWrite(true);
 	cmdb->setDepthCompareFunction(CompareOperation::ALWAYS);
 
 	m_r->drawQuad(cmdb);
@@ -130,7 +130,7 @@ void QuarterDepth::run(RenderingContext& ctx)
 	cmdb->bindTexture(0, 0, m_parent->m_hd.m_depthRt);
 
 	cmdb->setViewport(0, 0, m_r->getWidth() / 4, m_r->getHeight() / 4);
-	cmdb->enableDepthWrite(true);
+	cmdb->setDepthWrite(true);
 	cmdb->setDepthCompareFunction(CompareOperation::ALWAYS);
 
 	m_r->drawQuad(cmdb);

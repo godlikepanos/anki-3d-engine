@@ -88,8 +88,7 @@ private:
 	Renderer* m_r;
 	ShaderResourcePtr m_frag;
 	ShaderResourcePtr m_vert;
-	Array2d<PipelinePtr, 2, 2> m_pplines;
-	Array<ResourceGroupPtr, MAX_FRAMES_IN_FLIGHT> m_rcGroup;
+	ShaderProgramPtr m_prog;
 	Array<BufferPtr, MAX_FRAMES_IN_FLIGHT> m_vertBuff;
 
 	CommandBufferPtr m_cmdb;
@@ -106,13 +105,6 @@ private:
 	DynamicArray<Vec3> m_sphereVerts;
 
 	Bool8 m_depthTestEnabled = true;
-
-	PipelinePtr& getPpline(Bool depth, PrimitiveTopology topology)
-	{
-		U i = (depth == false) ? 0 : 1;
-		U j = (topology == PrimitiveTopology::LINES) ? 0 : 1;
-		return m_pplines[i][j];
-	}
 
 	void flush();
 };

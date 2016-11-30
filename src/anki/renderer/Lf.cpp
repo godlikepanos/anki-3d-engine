@@ -34,10 +34,12 @@ Lf::~Lf()
 
 Error Lf::init(const ConfigSet& config)
 {
+	ANKI_LOGE("Initializing lens flare pass");
+
 	Error err = initInternal(config);
 	if(err)
 	{
-		ANKI_LOGE("Failed to init lens flare pass");
+		ANKI_LOGE("Failed to initialize lens flare pass");
 	}
 
 	return err;
@@ -48,7 +50,6 @@ Error Lf::initInternal(const ConfigSet& config)
 	ANKI_CHECK(initSprite(config));
 	ANKI_CHECK(initOcclusion(config));
 
-	getGrManager().finish();
 	return ErrorCode::NONE;
 }
 
@@ -70,26 +71,12 @@ Error Lf::initSprite(const ConfigSet& config)
 
 	pps.sprintf("#define MAX_SPRITES %u\n", m_maxSprites);
 
-	ANKI_CHECK(
-		getResourceManager().loadResourceToCache(m_realVert, "shaders/LfSpritePass.vert.glsl", pps.toCString(), "r_"));
+	ANKI_CHECK(m_r->createShader("shaders/LfSpritePass.vert.glsl", m_realVert, pps.toCString()));
 
-	ANKI_CHECK(
-		getResourceManager().loadResourceToCache(m_realFrag, "shaders/LfSpritePass.frag.glsl", pps.toCString(), "r_"));
+	ANKI_CHECK(m_r->createShader("shaders/LfSpritePass.frag.glsl", m_realFrag, pps.toCString()));
 
-	// Create ppline.
-	// Writes to IS with blending
-	PipelineInitInfo init;
-	init.m_inputAssembler.m_topology = PrimitiveTopology::TRIANGLE_STRIP;
-	init.m_depthStencil.m_depthWriteEnabled = false;
-	init.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
-	init.m_depthStencil.m_format = MS_DEPTH_ATTACHMENT_PIXEL_FORMAT;
-	init.m_color.m_attachmentCount = 1;
-	init.m_color.m_attachments[0].m_format = IS_COLOR_ATTACHMENT_PIXEL_FORMAT;
-	init.m_color.m_attachments[0].m_srcBlendMethod = BlendMethod::ONE;
-	init.m_color.m_attachments[0].m_dstBlendMethod = BlendMethod::ONE;
-	init.m_shaders[U(ShaderType::VERTEX)] = m_realVert->getGrShader();
-	init.m_shaders[U(ShaderType::FRAGMENT)] = m_realFrag->getGrShader();
-	m_realPpline = getGrManager().newInstance<Pipeline>(init);
+	// Create prog.
+	m_realProg = getGrManager().newInstance<ShaderProgram>(m_realVert->getGrShader(), m_realFrag->getGrShader());
 
 	return ErrorCode::NONE;
 }
@@ -112,48 +99,9 @@ Error Lf::initOcclusion(const ConfigSet& config)
 	ANKI_CHECK(getResourceManager().loadResource("shaders/LfOcclusion.frag.glsl", m_occlusionFrag));
 	ANKI_CHECK(getResourceManager().loadResource("shaders/LfUpdateIndirectInfo.comp.glsl", m_writeIndirectBuffComp));
 
-	PipelineInitInfo ppinit;
-	ppinit.m_shaders[ShaderType::COMPUTE] = m_writeIndirectBuffComp->getGrShader();
-	m_updateIndirectBuffPpline = gr.newInstance<Pipeline>(ppinit);
+	m_updateIndirectBuffProg = gr.newInstance<ShaderProgram>(m_writeIndirectBuffComp->getGrShader());
 
-	ResourceGroupInitInfo rcinit;
-	rcinit.m_storageBuffers[0].m_buffer = m_queryResultBuff;
-	rcinit.m_storageBuffers[0].m_usage = BufferUsageBit::STORAGE_COMPUTE_READ;
-	rcinit.m_storageBuffers[1].m_buffer = m_indirectBuff;
-	rcinit.m_storageBuffers[1].m_usage = BufferUsageBit::STORAGE_COMPUTE_WRITE;
-	m_updateIndirectBuffRsrc = gr.newInstance<ResourceGroup>(rcinit);
-
-	// Create ppline
-	// - only position attribute
-	// - points
-	// - test depth no write
-	// - will run after MS
-	// - will not update color
-	PipelineInitInfo init;
-	init.m_vertex.m_bindingCount = 1;
-	init.m_vertex.m_bindings[0].m_stride = sizeof(Vec3);
-	init.m_vertex.m_attributeCount = 1;
-	init.m_vertex.m_attributes[0].m_format = PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
-	init.m_inputAssembler.m_topology = PrimitiveTopology::POINTS;
-	init.m_depthStencil.m_depthWriteEnabled = false;
-	init.m_depthStencil.m_format = MS_DEPTH_ATTACHMENT_PIXEL_FORMAT;
-	ANKI_ASSERT(MS_COLOR_ATTACHMENT_COUNT == 3);
-	init.m_color.m_attachmentCount = MS_COLOR_ATTACHMENT_COUNT;
-	init.m_color.m_attachments[0].m_format = MS_COLOR_ATTACHMENT_PIXEL_FORMATS[0];
-	init.m_color.m_attachments[0].m_channelWriteMask = ColorBit::NONE;
-	init.m_color.m_attachments[1].m_format = MS_COLOR_ATTACHMENT_PIXEL_FORMATS[1];
-	init.m_color.m_attachments[1].m_channelWriteMask = ColorBit::NONE;
-	init.m_color.m_attachments[2].m_format = MS_COLOR_ATTACHMENT_PIXEL_FORMATS[2];
-	init.m_color.m_attachments[2].m_channelWriteMask = ColorBit::NONE;
-	init.m_shaders[ShaderType::VERTEX] = m_occlusionVert->getGrShader();
-	init.m_shaders[ShaderType::FRAGMENT] = m_occlusionFrag->getGrShader();
-	m_occlusionPpline = gr.newInstance<Pipeline>(init);
-
-	rcinit = ResourceGroupInitInfo();
-	rcinit.m_vertexBuffers[0].m_uploadedMemory = true;
-	rcinit.m_uniformBuffers[0].m_uploadedMemory = true;
-	rcinit.m_uniformBuffers[0].m_usage = BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
-	m_occlusionRcGroup = gr.newInstance<ResourceGroup>(rcinit);
+	m_occlusionProg = gr.newInstance<ShaderProgram>(m_occlusionVert->getGrShader(), m_occlusionFrag->getGrShader());
 
 	return ErrorCode::NONE;
 }
@@ -191,21 +139,27 @@ void Lf::runOcclusionTests(RenderingContext& ctx, CommandBufferPtr cmdb)
 	const Vec3* initialPositions;
 	if(count)
 	{
-		TransientMemoryInfo dyn;
+		TransientMemoryToken uniToken, vertToken;
 
 		// Setup MVP UBO
-		Mat4* mvp = static_cast<Mat4*>(getGrManager().allocateFrameTransientMemory(
-			sizeof(Mat4), BufferUsageBit::UNIFORM_ALL, dyn.m_uniformBuffers[0]));
+		Mat4* mvp = static_cast<Mat4*>(
+			getGrManager().allocateFrameTransientMemory(sizeof(Mat4), BufferUsageBit::UNIFORM_ALL, uniToken));
 		*mvp = camFr.getViewProjectionMatrix();
 
 		// Alloc dyn mem
-		positions = static_cast<Vec3*>(getGrManager().allocateFrameTransientMemory(
-			sizeof(Vec3) * count, BufferUsageBit::VERTEX, dyn.m_vertexBuffers[0]));
+		positions = static_cast<Vec3*>(
+			getGrManager().allocateFrameTransientMemory(sizeof(Vec3) * count, BufferUsageBit::VERTEX, vertToken));
 		initialPositions = positions;
 
 		// Setup state
-		cmdb->bindPipeline(m_occlusionPpline);
-		cmdb->bindResourceGroup(m_occlusionRcGroup, 0, &dyn);
+		cmdb->bindShaderProgram(m_occlusionProg);
+		cmdb->bindUniformBuffer(0, 0, uniToken);
+		cmdb->bindVertexBuffer(0, vertToken, sizeof(Vec3));
+		cmdb->setVertexAttribute(0, 0, PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT), 0);
+		cmdb->setColorChannelWriteMask(0, ColorBit::NONE);
+		cmdb->setColorChannelWriteMask(1, ColorBit::NONE);
+		cmdb->setColorChannelWriteMask(2, ColorBit::NONE);
+		cmdb->setDepthWrite(false);
 	}
 
 	for(U i = 0; i < count; ++i)
@@ -218,10 +172,19 @@ void Lf::runOcclusionTests(RenderingContext& ctx, CommandBufferPtr cmdb)
 
 		// Draw and query
 		cmdb->beginOcclusionQuery(m_queries[i]);
-		cmdb->drawArrays(1, 1, positions - initialPositions);
+		cmdb->drawArrays(PrimitiveTopology::POINTS, 1, 1, positions - initialPositions);
 		cmdb->endOcclusionQuery(m_queries[i]);
 
 		++positions;
+	}
+
+	// Restore state
+	if(count)
+	{
+		cmdb->setColorChannelWriteMask(0, ColorBit::ALL);
+		cmdb->setColorChannelWriteMask(1, ColorBit::ALL);
+		cmdb->setColorChannelWriteMask(2, ColorBit::ALL);
+		cmdb->setDepthWrite(true);
 	}
 }
 
@@ -251,8 +214,9 @@ void Lf::updateIndirectInfo(RenderingContext& ctx, CommandBufferPtr cmdb)
 		sizeof(DrawArraysIndirectInfo) * count);
 
 	// Update the indirect info
-	cmdb->bindPipeline(m_updateIndirectBuffPpline);
-	cmdb->bindResourceGroup(m_updateIndirectBuffRsrc, 0, nullptr);
+	cmdb->bindShaderProgram(m_updateIndirectBuffProg);
+	cmdb->bindStorageBuffer(0, 0, m_queryResultBuff, 0);
+	cmdb->bindStorageBuffer(0, 1, m_indirectBuff, 0);
 	cmdb->dispatchCompute(count, 1, 1);
 
 	// Set barrier
@@ -269,13 +233,16 @@ void Lf::run(RenderingContext& ctx, CommandBufferPtr cmdb)
 	FrustumComponent& camFr = *ctx.m_frustumComponent;
 	VisibilityTestResults& vi = camFr.getVisibilityTestResults();
 
-	U count = min<U>(vi.getCount(VisibilityGroupType::FLARES), m_maxFlares);
+	const U count = min<U>(vi.getCount(VisibilityGroupType::FLARES), m_maxFlares);
 	if(count == 0)
 	{
 		return;
 	}
 
-	cmdb->bindPipeline(m_realPpline);
+	cmdb->bindShaderProgram(m_realProg);
+	cmdb->setDepthWrite(false);
+	cmdb->setDepthCompareFunction(CompareOperation::ALWAYS);
+
 	for(U i = 0; i < count; ++i)
 	{
 		auto it = vi.getBegin(VisibilityGroupType::FLARES) + i;
@@ -314,11 +281,16 @@ void Lf::run(RenderingContext& ctx, CommandBufferPtr cmdb)
 		++c;
 
 		// Render
-		TransientMemoryInfo dyn;
-		dyn.m_uniformBuffers[0] = token;
-		cmdb->bindResourceGroup(lf.getResourceGroup(), 0, &dyn);
-		cmdb->drawArraysIndirect(1, i * sizeof(DrawArraysIndirectInfo), m_indirectBuff);
+		cmdb->bindTexture(0, 0, lf.getTexture());
+		cmdb->bindUniformBuffer(0, 0, token);
+
+		cmdb->drawArraysIndirect(
+			PrimitiveTopology::TRIANGLE_STRIP, 1, i * sizeof(DrawArraysIndirectInfo), m_indirectBuff);
 	}
+
+	// Restore state
+	cmdb->setDepthWrite(true);
+	cmdb->setDepthCompareFunction(CompareOperation::LESS);
 }
 
 } // end namespace anki

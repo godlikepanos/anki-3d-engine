@@ -61,16 +61,13 @@ private:
 	U m_height;
 	FramebufferPtr m_fb;
 	TexturePtr m_rt;
-	ResourceGroupPtr m_globalResources;
-	PipelineInitInfo m_state;
-	GrObjectCache* m_pplineCache = nullptr;
 
 	class Vol
 	{
 	public:
 		ShaderResourcePtr m_frag;
-		PipelinePtr m_ppline;
-		ResourceGroupPtr m_rc;
+		ShaderProgramPtr m_prog;
+		SamplerPtr m_nearestSampler;
 	} m_vol;
 
 	ANKI_USE_RESULT Error initVol();

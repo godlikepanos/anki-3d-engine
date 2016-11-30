@@ -58,7 +58,7 @@ public:
 	U8 m_primitiveRestart = 2;
 
 	template<typename TFunc>
-	void enablePrimitiveRestart(Bool enable, TFunc func)
+	void setPrimitiveRestart(Bool enable, TFunc func)
 	{
 		U enablei = enable ? 1 : 0;
 		if(enablei != m_primitiveRestart)
@@ -286,7 +286,7 @@ public:
 	Bool8 m_depthWrite = 2;
 
 	template<typename TFunc>
-	void enableDepthWrite(Bool enable, TFunc func)
+	void setDepthWrite(Bool enable, TFunc func)
 	{
 		if(m_depthWrite != enable)
 		{

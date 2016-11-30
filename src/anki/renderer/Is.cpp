@@ -108,7 +108,7 @@ Error Is::initInternal(const ConfigSet& config)
 		m_r->getWidth(),
 		m_r->getHeight(),
 		m_maxLightIds,
-		m_r->getSm().getPoissonEnabled(),
+		m_r->getSm().m_poissonEnabled,
 		1,
 		m_r->getIr().getReflectionTextureMipmapCount());
 
@@ -176,8 +176,8 @@ void Is::run(RenderingContext& ctx)
 	cmdb->bindTexture(0, 1, m_r->getMs().m_rt1);
 	cmdb->bindTexture(0, 2, m_r->getMs().m_rt2);
 	cmdb->bindTexture(0, 3, m_r->getMs().m_depthRt, DepthStencilAspectMask::DEPTH);
-	cmdb->bindTexture(0, 4, m_r->getSm().getSpotTextureArray());
-	cmdb->bindTexture(0, 5, m_r->getSm().getOmniTextureArray());
+	cmdb->bindTexture(0, 4, m_r->getSm().m_spotTexArray);
+	cmdb->bindTexture(0, 5, m_r->getSm().m_omniTexArray);
 	cmdb->bindTexture(0, 6, m_r->getIr().getReflectionTexture());
 	cmdb->bindTexture(0, 7, m_r->getIr().getIrradianceTexture());
 	cmdb->bindTextureAndSampler(0, 8, m_r->getIr().getIntegrationLut(), m_r->getIr().getIntegrationLutSampler());
@@ -236,7 +236,7 @@ Error Is::getOrCreateProgram(ShaderVariantBit variantMask, RenderingContext& ctx
 	{
 		ShaderVariant variant;
 
-		ANKI_CHECK(m_r->createShader("shaders/Is.frag.glsl",
+		ANKI_CHECK(m_r->createShaderf("shaders/Is.frag.glsl",
 			variant.m_lightFrag,
 			"#define TILE_COUNT_X %u\n"
 			"#define TILE_COUNT_Y %u\n"
@@ -258,7 +258,7 @@ Error Is::getOrCreateProgram(ShaderVariantBit variantMask, RenderingContext& ctx
 			m_r->getWidth(),
 			m_r->getHeight(),
 			m_maxLightIds,
-			m_r->getSm().getPoissonEnabled(),
+			m_r->getSm().m_poissonEnabled,
 			!!(variantMask & ShaderVariantBit::INDIRECT),
 			m_r->getIr().getReflectionTextureMipmapCount(),
 			!!(variantMask & ShaderVariantBit::P_LIGHTS),

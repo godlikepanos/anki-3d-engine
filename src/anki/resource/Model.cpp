@@ -47,31 +47,26 @@ void ModelPatch::getRenderingDataSub(
 		inf.m_vertexBufferBindingCount = 1;
 		VertexBufferBinding& vertBuffBinding = inf.m_vertexBufferBindings[0];
 		vertBuffBinding.m_buffer = mesh.getVertexBuffer();
-		vertBuffBinding.m_binding = 0;
 		vertBuffBinding.m_offset = 0;
 		vertBuffBinding.m_stride = sizeof(Vec3) + sizeof(HVec2) + 2 * sizeof(U32);
 
 		inf.m_vertexAttributeCount = 4;
 		auto& attribs = inf.m_vertexAttributes;
 
-		attribs[0].m_location = 0;
 		attribs[0].m_bufferBinding = 0;
 		attribs[0].m_format = PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
 		attribs[0].m_relativeOffset = 0;
 
-		attribs[1].m_location = 0;
 		attribs[1].m_bufferBinding = 0;
 		attribs[1].m_format = PixelFormat(ComponentFormat::R16G16, TransformFormat::FLOAT);
 		attribs[1].m_relativeOffset = sizeof(Vec3);
 
 		if(key.m_pass == Pass::MS_FS)
 		{
-			attribs[2].m_location = 0;
 			attribs[2].m_bufferBinding = 0;
 			attribs[2].m_format = PixelFormat(ComponentFormat::R10G10B10A2, TransformFormat::SNORM);
 			attribs[2].m_relativeOffset = sizeof(Vec3) + sizeof(U32);
 
-			attribs[3].m_location = 0;
 			attribs[3].m_bufferBinding = 0;
 			attribs[3].m_format = PixelFormat(ComponentFormat::R10G10B10A2, TransformFormat::SNORM);
 			attribs[3].m_relativeOffset = sizeof(Vec3) + sizeof(U32) * 2;

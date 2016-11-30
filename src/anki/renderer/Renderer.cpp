@@ -20,7 +20,6 @@
 #include <anki/renderer/Fs.h>
 #include <anki/renderer/Lf.h>
 #include <anki/renderer/Dbg.h>
-#include <anki/renderer/Tiler.h>
 #include <anki/renderer/FsUpscale.h>
 #include <anki/renderer/DownscaleBlur.h>
 #include <anki/renderer/Volumetric.h>
@@ -372,22 +371,6 @@ void Renderer::clearRenderTarget(TexturePtr rt, const ClearValue& clear, Texture
 	cmdb->flush();
 }
 
-void Renderer::createDrawQuadPipeline(ShaderPtr frag, const ColorStateInfo& colorState, PipelinePtr& ppline)
-{
-	PipelineInitInfo init;
-
-	init.m_inputAssembler.m_topology = PrimitiveTopology::TRIANGLE_STRIP;
-
-	init.m_depthStencil.m_depthWriteEnabled = false;
-	init.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
-
-	init.m_color = colorState;
-
-	init.m_shaders[ShaderType::VERTEX] = m_drawQuadVert->getGrShader();
-	init.m_shaders[ShaderType::FRAGMENT] = frag;
-	ppline = m_gr->newInstance<Pipeline>(init);
-}
-
 Error Renderer::buildCommandBuffersInternal(RenderingContext& ctx, U32 threadId, PtrSize threadCount)
 {
 	// MS
@@ -520,6 +503,11 @@ Error Renderer::createShaderf(CString fname, ShaderResourcePtr& shader, CString 
 	(void)len;
 
 	return m_resources->loadResourceToCache(shader, fname, &buffer[0], "r_");
+}
+
+void Renderer::createDrawQuadShaderProgram(ShaderPtr frag, ShaderProgramPtr& prog)
+{
+	prog = m_gr->newInstance<ShaderProgram>(m_drawQuadVert->getGrShader(), frag);
 }
 
 } // end namespace anki

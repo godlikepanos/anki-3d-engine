@@ -109,7 +109,7 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 
 		if(m_state.m_primitiveRestart == 2)
 		{
-			cmdb.enablePrimitiveRestart(false);
+			cmdb.setPrimitiveRestart(false);
 		}
 
 		if(m_state.m_fillMode == FillMode::COUNT)
@@ -159,7 +159,7 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 
 		if(m_state.m_depthWrite == 2)
 		{
-			cmdb.enableDepthWrite(true);
+			cmdb.setDepthWrite(true);
 		}
 
 		if(m_state.m_depthOp == CompareOperation::COUNT)
@@ -276,7 +276,7 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 		}
 	};
 
-	m_state.maybeEnableDepthTest([=](Bool enable) { pushBackNewCommand<StencilTestCmd>(enable); });
+	m_state.maybeEnableStencilTest([=](Bool enable) { pushBackNewCommand<StencilTestCmd>(enable); });
 }
 
 } // end namespace anki

@@ -45,7 +45,7 @@ Error BloomExposure::init(const ConfigSet& config)
 	m_fb = gr.newInstance<Framebuffer>(fbInit);
 
 	// init shaders
-	ANKI_CHECK(m_r->createShader("shaders/Bloom.frag.glsl",
+	ANKI_CHECK(m_r->createShaderf("shaders/Bloom.frag.glsl",
 		m_frag,
 		"#define WIDTH %u\n"
 		"#define HEIGHT %u\n"
@@ -89,7 +89,7 @@ void BloomExposure::run(RenderingContext& ctx)
 	*uniforms = Vec4(m_threshold, m_scale, 0.0, 0.0);
 
 	cmdb->bindUniformBuffer(0, 0, token);
-	cmdb->bindStorageBuffer(0, 0, m_r->getTm().getAverageLuminanceBuffer(), 0);
+	cmdb->bindStorageBuffer(0, 0, m_r->getTm().m_luminanceBuff, 0);
 
 	m_r->drawQuad(cmdb);
 	cmdb->endRenderPass();
@@ -124,7 +124,7 @@ Error BloomUpscale::init(const ConfigSet& config)
 	m_fb = gr.newInstance<Framebuffer>(fbInit);
 
 	// init shaders
-	ANKI_CHECK(m_r->createShader("shaders/BloomUpscale.frag.glsl",
+	ANKI_CHECK(m_r->createShaderf("shaders/BloomUpscale.frag.glsl",
 		m_frag,
 		"#define WIDTH %u\n"
 		"#define HEIGHT %u\n",

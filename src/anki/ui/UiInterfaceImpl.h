@@ -75,9 +75,7 @@ private:
 	public:
 		ShaderResourcePtr m_vShader;
 		ShaderResourcePtr m_fShader;
-		PipelinePtr m_ppline;
 		Array<BufferPtr, MAX_FRAMES_IN_FLIGHT> m_vertBuffs;
-		Array<ResourceGroupPtr, MAX_FRAMES_IN_FLIGHT> m_rcGroups;
 	};
 
 	Array<Stage, StageId::COUNT> m_stages;

@@ -18,29 +18,25 @@ namespace anki
 
 Error FsUpscale::init(const ConfigSet& config)
 {
+	Error err = initInternal(config);
+	if(err)
+	{
+		ANKI_LOGE("Failed to initialize forward shading upscale");
+	}
+
+	return err;
+}
+
+Error FsUpscale::initInternal(const ConfigSet& config)
+{
+	ANKI_LOGE("Initializing forward shading upscale");
+
 	GrManager& gr = getGrManager();
 
-	// Create RC group
-	ResourceGroupInitInfo rcInit;
 	SamplerInitInfo sinit;
 	sinit.m_repeat = false;
-
-	rcInit.m_textures[0].m_texture = m_r->getMs().m_depthRt;
-	rcInit.m_textures[0].m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
-
 	sinit.m_mipmapFilter = SamplingFilter::NEAREST;
-	rcInit.m_textures[1].m_texture = m_r->getDepthDownscale().m_hd.m_depthRt;
-	rcInit.m_textures[1].m_sampler = gr.newInstance<Sampler>(sinit);
-	rcInit.m_textures[1].m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
-
-	rcInit.m_textures[2].m_texture = m_r->getFs().getRt();
-
-	rcInit.m_textures[3].m_texture = m_r->getSsao().getRt();
-
-	rcInit.m_uniformBuffers[0].m_uploadedMemory = true;
-	rcInit.m_uniformBuffers[0].m_usage = BufferUsageBit::UNIFORM_FRAGMENT;
-
-	m_rcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);
+	m_nearestSampler = gr.newInstance<Sampler>(sinit);
 
 	// Shader
 	StringAuto pps(getFrameAllocator());
@@ -50,24 +46,12 @@ Error FsUpscale::init(const ConfigSet& config)
 		m_r->getHeight() / FS_FRACTION,
 		1);
 
-	ANKI_CHECK(getResourceManager().loadResourceToCache(m_frag, "shaders/FsUpscale.frag.glsl", pps.toCString(), "r_"));
+	ANKI_CHECK(m_r->createShader("shaders/FsUpscale.frag.glsl", m_frag, pps.toCString()));
 
-	ANKI_CHECK(getResourceManager().loadResourceToCache(m_vert, "shaders/Quad.vert.glsl", pps.toCString(), "r_"));
+	ANKI_CHECK(m_r->createShader("shaders/Quad.vert.glsl", m_vert, pps.toCString()));
 
-	// Ppline
-	PipelineInitInfo ppinit;
-
-	ppinit.m_depthStencil.m_depthWriteEnabled = false;
-	ppinit.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
-
-	ppinit.m_color.m_attachmentCount = 1;
-	ppinit.m_color.m_attachments[0].m_format = IS_COLOR_ATTACHMENT_PIXEL_FORMAT;
-	ppinit.m_color.m_attachments[0].m_srcBlendMethod = BlendMethod::ONE;
-	ppinit.m_color.m_attachments[0].m_dstBlendMethod = BlendMethod::SRC_ALPHA;
-
-	ppinit.m_shaders[U(ShaderType::VERTEX)] = m_vert->getGrShader();
-	ppinit.m_shaders[U(ShaderType::FRAGMENT)] = m_frag->getGrShader();
-	m_ppline = gr.newInstance<Pipeline>(ppinit);
+	// Prog
+	m_prog = gr.newInstance<ShaderProgram>(m_vert->getGrShader(), m_frag->getGrShader());
 
 	// Create FB
 	FramebufferInitInfo fbInit;
@@ -83,20 +67,31 @@ Error FsUpscale::init(const ConfigSet& config)
 void FsUpscale::run(RenderingContext& ctx)
 {
 	CommandBufferPtr cmdb = ctx.m_commandBuffer;
-	TransientMemoryInfo dyn;
 
-	Vec4* linearDepth = static_cast<Vec4*>(getGrManager().allocateFrameTransientMemory(
-		sizeof(Vec4), BufferUsageBit::UNIFORM_ALL, dyn.m_uniformBuffers[0]));
+	TransientMemoryToken token;
+
+	Vec4* linearDepth = static_cast<Vec4*>(
+		getGrManager().allocateFrameTransientMemory(sizeof(Vec4), BufferUsageBit::UNIFORM_ALL, token));
 	const Frustum& fr = ctx.m_frustumComponent->getFrustum();
 	computeLinearizeDepthOptimal(fr.getNear(), fr.getFar(), linearDepth->x(), linearDepth->y());
 
+	cmdb->bindUniformBuffer(0, 0, token);
+	cmdb->bindTexture(0, 0, m_r->getMs().m_depthRt);
+	cmdb->bindTextureAndSampler(0, 1, m_r->getMs().m_depthRt, m_nearestSampler);
+	cmdb->bindTexture(0, 2, m_r->getFs().getRt());
+	cmdb->bindTexture(0, 3, m_r->getSsao().getRt());
+
+	cmdb->setBlendMethods(0, BlendMethod::ONE, BlendMethod::SRC_ALPHA);
+
 	cmdb->beginRenderPass(m_fb);
-	cmdb->bindPipeline(m_ppline);
+	cmdb->bindShaderProgram(m_prog);
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
-	cmdb->bindResourceGroup(m_rcGroup, 0, &dyn);
 
 	m_r->drawQuad(cmdb);
 	cmdb->endRenderPass();
+
+	// Restore state
+	cmdb->setBlendMethods(0, BlendMethod::ONE, BlendMethod::ZERO);
 }
 
 } // end namespace anki

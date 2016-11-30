@@ -67,7 +67,7 @@ void CommandBuffer::finish()
 	getManager().getImplementation().getRenderingThread().finishCommandBuffer(CommandBufferPtr(this));
 }
 
-void CommandBuffer::bindVertexBuffer(BufferPtr buff, U32 binding, PtrSize offset, PtrSize stride)
+void CommandBuffer::bindVertexBuffer(U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride)
 {
 	class Cmd final : public GlCommand
 	{
@@ -95,9 +95,33 @@ void CommandBuffer::bindVertexBuffer(BufferPtr buff, U32 binding, PtrSize offset
 	m_impl->pushBackNewCommand<Cmd>(buff, binding, offset, stride);
 }
 
-void CommandBuffer::bindVertexBuffer(BufferPtr buff, U32 binding, const TransientMemoryToken& token)
+void CommandBuffer::bindVertexBuffer(U32 binding, const TransientMemoryToken& token, PtrSize stride)
 {
-	ANKI_ASSERT(!"TODO");
+	class Cmd final : public GlCommand
+	{
+	public:
+		U32 m_binding;
+		TransientMemoryToken m_token;
+		PtrSize m_stride;
+		GLuint m_name;
+
+		Cmd(U32 binding, const TransientMemoryToken& token, PtrSize stride, GLuint name)
+			: m_binding(binding)
+			, m_token(token)
+			, m_stride(stride)
+			, m_name(name)
+		{
+		}
+
+		Error operator()(GlState& state)
+		{
+			glBindVertexBuffer(m_binding, m_name, m_token.m_offset, m_stride);
+			return ErrorCode::NONE;
+		}
+	};
+
+	GLuint name = getManager().getImplementation().getTransientMemoryManager().getGlName(token);
+	m_impl->pushBackNewCommand<Cmd>(binding, token, stride, name);
 }
 
 void CommandBuffer::setVertexAttribute(U32 location, U32 buffBinding, const PixelFormat& fmt, PtrSize relativeOffset)
@@ -170,7 +194,7 @@ void CommandBuffer::bindIndexBuffer(const TransientMemoryToken& token, IndexType
 	ANKI_ASSERT(!"TODO");
 }
 
-void CommandBuffer::enablePrimitiveRestart(Bool enable)
+void CommandBuffer::setPrimitiveRestart(Bool enable)
 {
 	class Cmd final : public GlCommand
 	{
@@ -197,7 +221,7 @@ void CommandBuffer::enablePrimitiveRestart(Bool enable)
 		}
 	};
 
-	m_impl->m_state.enablePrimitiveRestart(enable, [=]() { m_impl->pushBackNewCommand<Cmd>(enable); });
+	m_impl->m_state.setPrimitiveRestart(enable, [=]() { m_impl->pushBackNewCommand<Cmd>(enable); });
 }
 
 void CommandBuffer::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
@@ -397,7 +421,7 @@ void CommandBuffer::setStencilReference(FaceSelectionMask face, U32 ref)
 	m_impl->m_state.setStencilReference(face, ref);
 }
 
-void CommandBuffer::enableDepthWrite(Bool enable)
+void CommandBuffer::setDepthWrite(Bool enable)
 {
 	class Cmd final : public GlCommand
 	{
@@ -417,7 +441,7 @@ void CommandBuffer::enableDepthWrite(Bool enable)
 		}
 	};
 
-	m_impl->m_state.enableDepthWrite(enable, [=]() { m_impl->pushBackNewCommand<Cmd>(enable); });
+	m_impl->m_state.setDepthWrite(enable, [=]() { m_impl->pushBackNewCommand<Cmd>(enable); });
 }
 
 void CommandBuffer::setDepthCompareFunction(CompareOperation op)
@@ -443,7 +467,7 @@ void CommandBuffer::setDepthCompareFunction(CompareOperation op)
 		op, [=]() { m_impl->pushBackNewCommand<Cmd>(convertCompareOperation(op)); });
 }
 
-void CommandBuffer::enableAlphaToCoverage(Bool enable)
+void CommandBuffer::setAlphaToCoverage(Bool enable)
 {
 	ANKI_ASSERT(!"TODO");
 }

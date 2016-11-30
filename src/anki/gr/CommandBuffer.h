@@ -142,10 +142,10 @@ public:
 	/// @{
 
 	/// Bind vertex buffer.
-	void bindVertexBuffer(BufferPtr buff, U32 binding, PtrSize offset, PtrSize stride);
+	void bindVertexBuffer(U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride);
 
 	/// Bind transient vertex buffer.
-	void bindVertexBuffer(BufferPtr buff, U32 binding, const TransientMemoryToken& token);
+	void bindVertexBuffer(U32 binding, const TransientMemoryToken& token, PtrSize stride);
 
 	/// Setup a vertex attribute.
 	void setVertexAttribute(U32 location, U32 buffBinding, const PixelFormat& fmt, PtrSize relativeOffset);
@@ -157,13 +157,13 @@ public:
 	void bindIndexBuffer(const TransientMemoryToken& token, IndexType type);
 
 	/// Enable primitive restart.
-	void enablePrimitiveRestart(Bool enable);
+	void setPrimitiveRestart(Bool enable);
 
 	/// Set the viewport.
 	void setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy);
 
 	/// Enable scissor test.
-	void enableScissorTest(Bool enable);
+	void setScissorTest(Bool enable);
 
 	/// Set the scissor rect.
 	void setScissorRect(U16 minx, U16 miny, U16 maxx, U16 maxy);
@@ -196,13 +196,13 @@ public:
 	void setStencilReference(FaceSelectionMask face, U32 ref);
 
 	/// Enable/disable depth write.
-	void enableDepthWrite(Bool enable);
+	void setDepthWrite(Bool enable);
 
 	/// Set depth compare function.
 	void setDepthCompareFunction(CompareOperation op);
 
 	/// Enable/disable alpha to coverage.
-	void enableAlphaToCoverage(Bool enable);
+	void setAlphaToCoverage(Bool enable);
 
 	/// Set color channel write mask.
 	void setColorChannelWriteMask(U32 attachment, ColorBit mask);

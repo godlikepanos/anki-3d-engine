@@ -33,7 +33,8 @@ Error UiInterfaceImpl::init(GrManager* gr, ResourceManager* rc)
 
 	ANKI_CHECK(rc->loadResource("shaders/UiLines.frag.glsl", m_stages[StageId::LINES].m_fShader));
 
-	// Init pplines
+// Init pplines
+#if 0
 	PipelineInitInfo ppinit;
 	ppinit.m_vertex.m_bindingCount = 1;
 	ppinit.m_vertex.m_bindings[0].m_stride = sizeof(Vertex);
@@ -58,6 +59,7 @@ Error UiInterfaceImpl::init(GrManager* gr, ResourceManager* rc)
 	ppinit.m_shaders[U(ShaderType::VERTEX)] = m_stages[StageId::LINES].m_vShader->getGrShader();
 	ppinit.m_shaders[U(ShaderType::FRAGMENT)] = m_stages[StageId::LINES].m_fShader->getGrShader();
 	m_stages[StageId::LINES].m_ppline = gr->newInstance<Pipeline>(ppinit);
+#endif
 
 	// Init buffers
 	for(U s = 0; s < StageId::COUNT; ++s)
@@ -69,7 +71,8 @@ Error UiInterfaceImpl::init(GrManager* gr, ResourceManager* rc)
 		}
 	}
 
-	// Init resource groups
+// Init resource groups
+#if 0
 	for(U s = 0; s < StageId::COUNT; ++s)
 	{
 		for(U i = 0; i < m_stages[s].m_rcGroups.getSize(); ++i)
@@ -85,6 +88,7 @@ Error UiInterfaceImpl::init(GrManager* gr, ResourceManager* rc)
 			m_stages[s].m_rcGroups[i] = gr->newInstance<ResourceGroup>(rcinit);
 		}
 	}
+#endif
 
 	return ErrorCode::NONE;
 }
@@ -123,9 +127,9 @@ void UiInterfaceImpl::drawLines(const WeakArray<UVec2>& positions, const Color& 
 
 	ANKI_ASSERT(m_vertCounts[stageId] + positions.getSize() <= MAX_VERTS);
 
-	m_cmdb->bindPipeline(m_stages[StageId::LINES].m_ppline);
-	m_cmdb->bindResourceGroup(m_stages[StageId::LINES].m_rcGroups[m_timestamp], 0, nullptr);
-	m_cmdb->drawArrays(positions.getSize(), 1, m_vertCounts[stageId]);
+	// m_cmdb->bindPipeline(m_stages[StageId::LINES].m_ppline);
+	// m_cmdb->bindResourceGroup(m_stages[StageId::LINES].m_rcGroups[m_timestamp], 0, nullptr);
+	// m_cmdb->drawArrays(positions.getSize(), 1, m_vertCounts[stageId]);
 
 	for(const UVec2& pos : positions)
 	{

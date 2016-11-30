@@ -290,20 +290,16 @@ Error ParticleEmitter::buildRendering(const RenderingBuildInfoIn& in, RenderingB
 
 	out.m_vertexBufferBindingCount = 1;
 	out.m_vertexBufferBindings[0].m_buffer = m_vertBuffs[frame];
-	out.m_vertexBufferBindings[0].m_binding = 0;
 	out.m_vertexBufferBindings[0].m_offset = 0;
 	out.m_vertexBufferBindings[0].m_stride = VERTEX_SIZE;
 
 	out.m_vertexAttributeCount = 3;
-	out.m_vertexAttributes[0].m_location = 0;
 	out.m_vertexAttributes[0].m_bufferBinding = 0;
 	out.m_vertexAttributes[0].m_format = PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
 	out.m_vertexAttributes[0].m_relativeOffset = 0;
-	out.m_vertexAttributes[1].m_location = 1;
 	out.m_vertexAttributes[1].m_bufferBinding = 0;
 	out.m_vertexAttributes[1].m_format = PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT);
 	out.m_vertexAttributes[1].m_relativeOffset = sizeof(Vec3);
-	out.m_vertexAttributes[2].m_location = 2;
 	out.m_vertexAttributes[2].m_bufferBinding = 0;
 	out.m_vertexAttributes[2].m_format = PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT);
 	out.m_vertexAttributes[2].m_relativeOffset = sizeof(Vec3) + sizeof(F32);
