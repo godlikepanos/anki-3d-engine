@@ -250,7 +250,10 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 		}
 	};
 
-	m_state.maybeEnableDepthTest([=](Bool enable) { pushBackNewCommand<DepthTestCmd>(enable); });
+	if(m_state.maybeEnableDepthTest())
+	{
+		pushBackNewCommand<DepthTestCmd>(m_state.m_depthTestEnabled);
+	}
 
 	class StencilTestCmd final : public GlCommand
 	{
@@ -276,7 +279,10 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 		}
 	};
 
-	m_state.maybeEnableStencilTest([=](Bool enable) { pushBackNewCommand<StencilTestCmd>(enable); });
+	if(m_state.maybeEnableStencilTest())
+	{
+		pushBackNewCommand<StencilTestCmd>(m_state.m_stencilTestEnabled);
+	}
 }
 
 } // end namespace anki

@@ -873,7 +873,25 @@ void CommandBuffer::beginRenderPass(FramebufferPtr fb)
 
 void CommandBuffer::endRenderPass()
 {
-	// Nothing for GL
+// Restore state
+#if 0
+	if(m_impl->m_state.m_lastSecondLevelCmdb)
+	{
+		// Renderpass had 2nd level cmdbs, need to restore the state
+
+		const StateTracker& olds = m_impl->m_state.m_lastSecondLevelCmdb->m_state;
+		StateTracker& news = m_impl->m_state;
+
+		// Vertex state
+		class VertIndexStateCmd final : public GlCommand
+		{
+		public:
+			Array<StateTracker::VertexAttribute, MAX_VERTEX_ATTRIBUTES> m_attribs;
+			Array<StateTracker::VertexBuffer, MAX_VERTEX_ATTRIBUTES> m_vertBuffs;
+		};
+	}
+#endif
+
 	m_impl->m_state.endRenderPass();
 }
 
@@ -914,20 +932,20 @@ void CommandBuffer::drawElements(
 	m_impl->flushDrawcall(*this);
 
 	U idxBytes;
-	if(m_impl->m_state.m_indexType == GL_UNSIGNED_SHORT)
+	if(m_impl->m_state.m_idx.m_indexType == GL_UNSIGNED_SHORT)
 	{
 		idxBytes = sizeof(U16);
 	}
 	else
 	{
-		ANKI_ASSERT(m_impl->m_state.m_indexType == GL_UNSIGNED_INT);
+		ANKI_ASSERT(m_impl->m_state.m_idx.m_indexType == GL_UNSIGNED_INT);
 		idxBytes = sizeof(U32);
 	}
 
-	firstIndex = firstIndex + m_impl->m_state.m_indexBuffOffset / idxBytes;
+	firstIndex = firstIndex + m_impl->m_state.m_idx.m_offset / idxBytes;
 
 	DrawElementsIndirectInfo info(count, instanceCount, firstIndex, baseVertex, baseInstance);
-	m_impl->pushBackNewCommand<Cmd>(convertPrimitiveTopology(topology), m_impl->m_state.m_indexType, info);
+	m_impl->pushBackNewCommand<Cmd>(convertPrimitiveTopology(topology), m_impl->m_state.m_idx.m_indexType, info);
 }
 
 void CommandBuffer::drawArrays(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 first, U32 baseInstance)
@@ -1004,7 +1022,7 @@ void CommandBuffer::drawElementsIndirect(
 	m_impl->m_state.checkIndexedDracall();
 	m_impl->flushDrawcall(*this);
 	m_impl->pushBackNewCommand<DrawElementsIndirectCommand>(
-		convertPrimitiveTopology(topology), m_impl->m_state.m_indexType, drawCount, offset, indirectBuff);
+		convertPrimitiveTopology(topology), m_impl->m_state.m_idx.m_indexType, drawCount, offset, indirectBuff);
 }
 
 void CommandBuffer::drawArraysIndirect(
@@ -1293,6 +1311,7 @@ void CommandBuffer::pushSecondLevelCommandBuffer(CommandBufferPtr cmdb)
 		}
 	};
 
+	m_impl->m_state.m_lastSecondLevelCmdb = cmdb->m_impl.get();
 	m_impl->pushBackNewCommand<ExecCmdbCommand>(cmdb);
 }
 

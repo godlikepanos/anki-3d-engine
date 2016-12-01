@@ -89,15 +89,19 @@ public:
 		return true;
 	}
 
-	BufferPtr m_indexBuff;
-	PtrSize m_indexBuffOffset = MAX_PTR_SIZE;
-	GLenum m_indexType = 0;
+	class Index
+	{
+	public:
+		BufferPtr m_buff;
+		PtrSize m_offset = MAX_PTR_SIZE;
+		GLenum m_indexType = 0;
+	} m_idx;
 
 	Bool bindIndexBuffer(BufferPtr buff, PtrSize offset, IndexType type)
 	{
-		m_indexBuff = buff;
-		m_indexBuffOffset = offset;
-		m_indexType = convertIndexType(type);
+		m_idx.m_buff = buff;
+		m_idx.m_offset = offset;
+		m_idx.m_indexType = convertIndexType(type);
 		return true;
 	}
 	/// @}
@@ -179,8 +183,7 @@ public:
 	/// @{
 	Bool8 m_stencilTestEnabled = 2;
 
-	template<typename TFunc>
-	void maybeEnableStencilTest(TFunc func)
+	Bool maybeEnableStencilTest()
 	{
 		Bool enable = !stencilTestDisabled(
 			m_stencilFail[0], m_stencilPassDepthFail[0], m_stencilPassDepthPass[0], m_stencilCompare[0]);
@@ -191,8 +194,9 @@ public:
 		if(enable != m_stencilTestEnabled)
 		{
 			m_stencilTestEnabled = enable;
-			func(enable);
+			return true;
 		}
+		return false;
 	}
 
 	Array<StencilOperation, 2> m_stencilFail = {{StencilOperation::COUNT, StencilOperation::COUNT}};
@@ -310,8 +314,7 @@ public:
 
 	Bool8 m_depthTestEnabled = 2; ///< 2 means don't know
 
-	template<typename TFunc>
-	void maybeEnableDepthTest(TFunc func)
+	Bool maybeEnableDepthTest()
 	{
 		ANKI_ASSERT(m_depthWrite != 2 && m_depthOp != CompareOperation::COUNT);
 		Bool enable = m_depthWrite || m_depthOp != CompareOperation::ALWAYS;
@@ -319,8 +322,10 @@ public:
 		if(enable != m_depthTestEnabled)
 		{
 			m_depthTestEnabled = enable;
-			func(enable);
+			return true;
 		}
+
+		return false;
 	}
 
 	Bool8 m_depthWrite = 2;
@@ -510,6 +515,7 @@ public:
 	{
 		ANKI_ASSERT(!insideRenderPass() && "Already inside a renderpass");
 		m_fb = fb;
+		m_lastSecondLevelCmdb = nullptr;
 		return true;
 	}
 
@@ -523,13 +529,15 @@ public:
 	{
 		return m_fb.isCreated();
 	}
+
+	CommandBufferImpl* m_lastSecondLevelCmdb = nullptr;
 	/// @}
 
 	/// @name drawcalls
 	/// @{
 	void checkIndexedDracall() const
 	{
-		ANKI_ASSERT(m_indexType != 0 && "Forgot to bind index buffer");
+		ANKI_ASSERT(m_idx.m_indexType != 0 && "Forgot to bind index buffer");
 		checkDrawcall();
 	}
 
