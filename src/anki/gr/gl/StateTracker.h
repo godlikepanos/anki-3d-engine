@@ -9,6 +9,10 @@
 #include <anki/gr/ShaderProgram.h>
 #include <anki/gr/Framebuffer.h>
 #include <anki/gr/gl/FramebufferImpl.h>
+#include <anki/gr/Buffer.h>
+#include <anki/gr/gl/BufferImpl.h>
+#include <anki/gr/Sampler.h>
+#include <anki/gr/gl/SamplerImpl.h>
 #include <anki/gr/common/Misc.h>
 
 namespace anki
@@ -24,6 +28,10 @@ public:
 	/// If it's false then there might be unset state.
 	Bool8 m_mayContainUnsetState = true;
 
+#if ANKI_ASSERTIONS
+	Bool8 m_secondLevel = false;
+#endif
+
 	/// @name vert_state
 	/// @{
 	class VertexAttribute
@@ -36,36 +44,77 @@ public:
 
 	Array<VertexAttribute, MAX_VERTEX_ATTRIBUTES> m_attribs;
 
-	template<typename TFunc>
-	void setVertexAttribute(U32 location, U32 buffBinding, const PixelFormat& fmt, PtrSize relativeOffset, TFunc func)
+	Bool setVertexAttribute(U32 location, U32 buffBinding, const PixelFormat& fmt, PtrSize relativeOffset)
 	{
 		VertexAttribute& attrib = m_attribs[location];
 		if(attrib.m_buffBinding != buffBinding || attrib.m_fmt != fmt || attrib.m_relativeOffset != relativeOffset)
 		{
-			func();
 			attrib.m_buffBinding = buffBinding;
 			attrib.m_fmt = fmt;
 			attrib.m_relativeOffset = relativeOffset;
+			return true;
 		}
+
+		return false;
 	}
 
+	class VertexBuffer
+	{
+	public:
+		BufferPtr m_buff;
+		PtrSize m_offset = 0;
+		PtrSize m_stride = 0;
+		TransientMemoryToken m_token;
+	};
+
+	Array<VertexBuffer, MAX_VERTEX_ATTRIBUTES> m_vertBuffs;
+
+	Bool bindVertexBuffer(U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride)
+	{
+		VertexBuffer& b = m_vertBuffs[binding];
+		b.m_buff = buff;
+		b.m_offset = offset;
+		b.m_stride = stride;
+		b.m_token = {};
+		return true;
+	}
+
+	Bool bindVertexBuffer(U32 binding, const TransientMemoryToken& token, PtrSize stride)
+	{
+		VertexBuffer& b = m_vertBuffs[binding];
+		b.m_buff = {};
+		b.m_offset = 0;
+		b.m_stride = stride;
+		b.m_token = token;
+		return true;
+	}
+
+	BufferPtr m_indexBuff;
 	PtrSize m_indexBuffOffset = MAX_PTR_SIZE;
 	GLenum m_indexType = 0;
+
+	Bool bindIndexBuffer(BufferPtr buff, PtrSize offset, IndexType type)
+	{
+		m_indexBuff = buff;
+		m_indexBuffOffset = offset;
+		m_indexType = convertIndexType(type);
+		return true;
+	}
 	/// @}
 
 	/// @name input_assembly
 	/// @{
 	U8 m_primitiveRestart = 2;
 
-	template<typename TFunc>
-	void setPrimitiveRestart(Bool enable, TFunc func)
+	Bool setPrimitiveRestart(Bool enable)
 	{
 		U enablei = enable ? 1 : 0;
 		if(enablei != m_primitiveRestart)
 		{
 			m_primitiveRestart = enablei;
-			func();
+			return true;
 		}
+		return false;
 	}
 	/// @}
 
@@ -73,15 +122,15 @@ public:
 	/// @{
 	Array<U16, 4> m_viewport = {{MAX_U16, MAX_U16, MAX_U16, MAX_U16}};
 
-	template<typename TFunc>
-	void setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy, TFunc func)
+	Bool setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 	{
 		ANKI_ASSERT(minx != MAX_U16 && miny != MAX_U16 && maxx != MAX_U16 && maxy != MAX_U16);
 		if(m_viewport[0] != minx || m_viewport[1] != miny || m_viewport[2] != maxx || m_viewport[3] != maxy)
 		{
 			m_viewport = {minx, miny, maxx, maxy};
-			func();
+			return true;
 		}
+		return false;
 	}
 	/// @}
 
@@ -89,40 +138,40 @@ public:
 	/// @{
 	FillMode m_fillMode = FillMode::COUNT;
 
-	template<typename TFunc>
-	void setFillMode(FillMode mode, TFunc func)
+	Bool setFillMode(FillMode mode)
 	{
 		if(m_fillMode != mode)
 		{
 			m_fillMode = mode;
-			func();
+			return true;
 		}
+		return false;
 	}
 
 	FaceSelectionMask m_cullMode = static_cast<FaceSelectionMask>(0);
 
-	template<typename TFunc>
-	void setCullMode(FaceSelectionMask mode, TFunc func)
+	Bool setCullMode(FaceSelectionMask mode)
 	{
 		if(m_cullMode != mode)
 		{
 			m_cullMode = mode;
-			func();
+			return true;
 		}
+		return false;
 	}
 
 	F32 m_polyOffsetFactor = -1.0;
 	F32 m_polyOffsetUnits = -1.0;
 
-	template<typename TFunc>
-	void setPolygonOffset(F32 factor, F32 units, TFunc func)
+	Bool setPolygonOffset(F32 factor, F32 units)
 	{
 		if(factor != m_polyOffsetFactor || units != m_polyOffsetUnits)
 		{
 			m_polyOffsetFactor = factor;
 			m_polyOffsetUnits = units;
-			func();
+			return true;
 		}
+		return false;
 	}
 	/// @}
 
@@ -150,12 +199,10 @@ public:
 	Array<StencilOperation, 2> m_stencilPassDepthFail = {{StencilOperation::COUNT, StencilOperation::COUNT}};
 	Array<StencilOperation, 2> m_stencilPassDepthPass = {{StencilOperation::COUNT, StencilOperation::COUNT}};
 
-	template<typename TFunc>
-	void setStencilOperations(FaceSelectionMask face,
+	Bool setStencilOperations(FaceSelectionMask face,
 		StencilOperation stencilFail,
 		StencilOperation stencilPassDepthFail,
-		StencilOperation stencilPassDepthPass,
-		TFunc func)
+		StencilOperation stencilPassDepthPass)
 	{
 		Bool changed = false;
 		if(!!(face & FaceSelectionMask::FRONT)
@@ -178,10 +225,7 @@ public:
 			changed = true;
 		}
 
-		if(changed)
-		{
-			func();
-		}
+		return changed;
 	}
 
 	Array<Bool8, 2> m_glStencilFuncSeparateDirty = {{false, false}};
@@ -225,8 +269,7 @@ public:
 
 	Array<U32, 2> m_stencilWriteMask = {{DUMMY_STENCIL_MASK, DUMMY_STENCIL_MASK}};
 
-	template<typename TFunc>
-	void setStencilWriteMask(FaceSelectionMask face, U32 mask, TFunc func)
+	Bool setStencilWriteMask(FaceSelectionMask face, U32 mask)
 	{
 		ANKI_ASSERT(mask != DUMMY_STENCIL_MASK && "Oops");
 
@@ -243,10 +286,7 @@ public:
 			changed = true;
 		}
 
-		if(changed)
-		{
-			func();
-		}
+		return changed;
 	}
 
 	Array<U32, 2> m_stencilRef = {{DUMMY_STENCIL_MASK, DUMMY_STENCIL_MASK}};
@@ -285,26 +325,26 @@ public:
 
 	Bool8 m_depthWrite = 2;
 
-	template<typename TFunc>
-	void setDepthWrite(Bool enable, TFunc func)
+	Bool setDepthWrite(Bool enable)
 	{
 		if(m_depthWrite != enable)
 		{
 			m_depthWrite = enable;
-			func();
+			return true;
 		}
+		return false;
 	}
 
 	CompareOperation m_depthOp = CompareOperation::COUNT;
 
-	template<typename TFunc>
-	void setDepthCompareFunction(CompareOperation op, TFunc func)
+	Bool setDepthCompareFunction(CompareOperation op)
 	{
 		if(op != m_depthOp)
 		{
 			m_depthOp = op;
-			func();
+			return true;
 		}
+		return false;
 	}
 	/// @}
 
@@ -314,14 +354,14 @@ public:
 	Array<ColorBit, MAX_COLOR_ATTACHMENTS> m_colorWriteMasks = {
 		{INVALID_COLOR_MASK, INVALID_COLOR_MASK, INVALID_COLOR_MASK, INVALID_COLOR_MASK}};
 
-	template<typename TFunc>
-	void setColorChannelWriteMask(U32 attachment, ColorBit mask, TFunc func)
+	Bool setColorChannelWriteMask(U32 attachment, ColorBit mask)
 	{
 		if(m_colorWriteMasks[attachment] != mask)
 		{
 			m_colorWriteMasks[attachment] = mask;
-			func();
+			return true;
 		}
+		return false;
 	}
 
 	Array<BlendMethod, MAX_COLOR_ATTACHMENTS> m_blendSrcMethod = {
@@ -329,75 +369,159 @@ public:
 	Array<BlendMethod, MAX_COLOR_ATTACHMENTS> m_blendDstMethod = {
 		{BlendMethod::COUNT, BlendMethod::COUNT, BlendMethod::COUNT, BlendMethod::COUNT}};
 
-	template<typename TFunc>
-	void setBlendMethods(U32 attachment, BlendMethod src, BlendMethod dst, TFunc func)
+	Bool setBlendMethods(U32 attachment, BlendMethod src, BlendMethod dst)
 	{
 		if(m_blendSrcMethod[attachment] != src || m_blendDstMethod[attachment] != dst)
 		{
 			m_blendSrcMethod[attachment] = src;
 			m_blendDstMethod[attachment] = dst;
-			func();
+			return true;
 		}
+		return false;
 	}
 
 	Array<BlendFunction, MAX_COLOR_ATTACHMENTS> m_blendFuncs = {
 		{BlendFunction::COUNT, BlendFunction::COUNT, BlendFunction::COUNT, BlendFunction::COUNT}};
 
-	template<typename TFunc>
-	void setBlendFunction(U32 attachment, BlendFunction func, TFunc funct)
+	Bool setBlendFunction(U32 attachment, BlendFunction func)
 	{
 		if(m_blendFuncs[attachment] != func)
 		{
 			m_blendFuncs[attachment] = func;
-			funct();
+			return true;
 		}
+		return false;
 	}
 	/// @}
 
 	/// @name resources
 	/// @{
-	U64 m_progUuid = MAX_U64;
-
-	template<typename TFunc>
-	void bindShaderProgram(ShaderProgramPtr prog, TFunc func)
+	class TextureBinding
 	{
-		if(prog->getUuid() != m_progUuid)
+	public:
+		TexturePtr m_tex;
+		SamplerPtr m_sampler;
+		DepthStencilAspectMask m_aspect;
+	};
+
+	Array2d<TextureBinding, MAX_BOUND_RESOURCE_GROUPS, MAX_TEXTURE_BINDINGS> m_textures;
+
+	Bool bindTexture(U32 set, U32 binding, TexturePtr tex, DepthStencilAspectMask aspect)
+	{
+		TextureBinding& b = m_textures[set][binding];
+		b.m_tex = tex;
+		b.m_sampler = {};
+		b.m_aspect = aspect;
+		return true;
+	}
+
+	Bool bindTextureAndSampler(U32 set, U32 binding, TexturePtr tex, SamplerPtr sampler, DepthStencilAspectMask aspect)
+	{
+		TextureBinding& b = m_textures[set][binding];
+		b.m_tex = tex;
+		b.m_sampler = sampler;
+		b.m_aspect = aspect;
+		return true;
+	}
+
+	class ShaderBufferBinding
+	{
+	public:
+		BufferPtr m_buff;
+		PtrSize m_offset;
+		TransientMemoryToken m_token;
+	};
+
+	Array2d<ShaderBufferBinding, MAX_BOUND_RESOURCE_GROUPS, MAX_UNIFORM_BUFFER_BINDINGS> m_ubos;
+
+	Bool bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset)
+	{
+		ShaderBufferBinding& b = m_ubos[set][binding];
+		b.m_buff = buff;
+		b.m_offset = offset;
+		b.m_token = {};
+		return true;
+	}
+
+	Bool bindUniformBuffer(U32 set, U32 binding, const TransientMemoryToken& token)
+	{
+		ShaderBufferBinding& b = m_ubos[set][binding];
+		b.m_buff = {};
+		b.m_offset = 0;
+		b.m_token = token;
+		return true;
+	}
+
+	Array2d<ShaderBufferBinding, MAX_BOUND_RESOURCE_GROUPS, MAX_STORAGE_BUFFER_BINDINGS> m_ssbos;
+
+	Bool bindStorageBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset)
+	{
+		ShaderBufferBinding& b = m_ssbos[set][binding];
+		b.m_buff = buff;
+		b.m_offset = offset;
+		b.m_token = {};
+		return true;
+	}
+
+	Bool bindStorageBuffer(U32 set, U32 binding, const TransientMemoryToken& token)
+	{
+		ShaderBufferBinding& b = m_ssbos[set][binding];
+		b.m_buff = {};
+		b.m_offset = 0;
+		b.m_token = token;
+		return true;
+	}
+
+	class ImageBinding
+	{
+	public:
+		TexturePtr m_tex;
+		U8 m_level;
+	};
+
+	Array2d<ImageBinding, MAX_BOUND_RESOURCE_GROUPS, MAX_IMAGE_BINDINGS> m_images;
+
+	Bool bindImage(U32 set, U32 binding, TexturePtr img, U32 level)
+	{
+		ImageBinding& b = m_images[set][binding];
+		b.m_tex = img;
+		b.m_level = level;
+		return true;
+	}
+
+	ShaderProgramPtr m_prog;
+
+	Bool bindShaderProgram(ShaderProgramPtr prog)
+	{
+		if(prog != m_prog)
 		{
-			m_progUuid = prog->getUuid();
-			func();
+			m_prog = prog;
+			return true;
 		}
+		return false;
 	}
 	/// @}
 
 	/// @name other
 	/// @{
-	U64 m_fbUuid = MAX_U64;
-	U8 m_colorBuffCount = MAX_U8;
-	Bool8 m_fbHasDepth = 2;
-	Bool8 m_fbHasStencil = 2;
+	FramebufferPtr m_fb;
 
-	template<typename TFunc>
-	void beginRenderPass(const FramebufferPtr& fb, TFunc func)
+	Bool beginRenderPass(const FramebufferPtr& fb)
 	{
-		ANKI_ASSERT(m_fbUuid == MAX_U64 && "Already inside a renderpass");
-
-		const FramebufferImpl& impl = *fb->m_impl;
-		m_fbUuid = fb->getUuid();
-		m_colorBuffCount = impl.getColorBufferCount();
-		m_fbHasDepth = impl.hasDepthBuffer();
-		m_fbHasStencil = impl.hasStencilBuffer();
-		func();
+		ANKI_ASSERT(!insideRenderPass() && "Already inside a renderpass");
+		m_fb = fb;
+		return true;
 	}
 
 	void endRenderPass()
 	{
-		ANKI_ASSERT(m_fbUuid != MAX_U64 && "Not inside a renderpass");
-		m_fbUuid = MAX_U64;
+		ANKI_ASSERT(insideRenderPass() && "Not inside a renderpass");
+		m_fb = {};
 	}
 
 	Bool insideRenderPass() const
 	{
-		return m_fbUuid != MAX_U64;
+		return m_fb.isCreated();
 	}
 	/// @}
 
@@ -417,14 +541,14 @@ public:
 	void checkDrawcall() const
 	{
 		ANKI_ASSERT(m_viewport[1] != MAX_U16 && "Forgot to set the viewport");
-		ANKI_ASSERT(m_progUuid != MAX_U64 && "Forgot to bound a program");
-		ANKI_ASSERT(m_fbUuid != MAX_U64 && "Forgot to begin a render pass");
+		ANKI_ASSERT(m_prog.isCreated() && "Forgot to bound a program");
+		ANKI_ASSERT((insideRenderPass() || m_secondLevel) && "Forgot to begin a render pass");
 	}
 
 	void checkDispatch() const
 	{
-		ANKI_ASSERT(m_progUuid != MAX_U64 && "Forgot to bound a program");
-		ANKI_ASSERT(m_fbUuid == MAX_U64 && "Forgot to end the render pass");
+		ANKI_ASSERT(m_prog.isCreated() && "Forgot to bound a program");
+		ANKI_ASSERT(!insideRenderPass() && "Forgot to end the render pass");
 	}
 	/// @}
 };

@@ -42,6 +42,8 @@ Error ShaderProgramImpl::initCompute(ShaderPtr comp)
 	m_glName = glCreateProgram();
 	ANKI_ASSERT(m_glName != 0);
 
+	glAttachShader(m_glName, comp->m_impl->getGlName());
+
 	return link(0, 0);
 }
 

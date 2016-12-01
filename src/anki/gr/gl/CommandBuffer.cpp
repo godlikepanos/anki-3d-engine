@@ -42,6 +42,10 @@ void CommandBuffer::init(CommandBufferInitInfo& inf)
 {
 	m_impl.reset(getAllocator().newInstance<CommandBufferImpl>(&getManager()));
 	m_impl->init(inf);
+
+#if ANKI_ASSERTIONS
+	m_impl->m_state.m_secondLevel = !!(inf.m_flags & CommandBufferFlag::SECOND_LEVEL);
+#endif
 }
 
 void CommandBuffer::flush()
@@ -77,7 +81,7 @@ void CommandBuffer::bindVertexBuffer(U32 binding, BufferPtr buff, PtrSize offset
 		PtrSize m_offset;
 		PtrSize m_stride;
 
-		Cmd(BufferPtr buff, U32 binding, PtrSize offset, PtrSize stride)
+		Cmd(U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride)
 			: m_buff(buff)
 			, m_binding(binding)
 			, m_offset(offset)
@@ -92,7 +96,10 @@ void CommandBuffer::bindVertexBuffer(U32 binding, BufferPtr buff, PtrSize offset
 		}
 	};
 
-	m_impl->pushBackNewCommand<Cmd>(buff, binding, offset, stride);
+	if(m_impl->m_state.bindVertexBuffer(binding, buff, offset, stride))
+	{
+		m_impl->pushBackNewCommand<Cmd>(binding, buff, offset, stride);
+	}
 }
 
 void CommandBuffer::bindVertexBuffer(U32 binding, const TransientMemoryToken& token, PtrSize stride)
@@ -120,8 +127,13 @@ void CommandBuffer::bindVertexBuffer(U32 binding, const TransientMemoryToken& to
 		}
 	};
 
+	ANKI_ASSERT(token.m_usage == BufferUsageBit::VERTEX);
 	GLuint name = getManager().getImplementation().getTransientMemoryManager().getGlName(token);
-	m_impl->pushBackNewCommand<Cmd>(binding, token, stride, name);
+
+	if(m_impl->m_state.bindVertexBuffer(binding, token, stride))
+	{
+		m_impl->pushBackNewCommand<Cmd>(binding, token, stride, name);
+	}
 }
 
 void CommandBuffer::setVertexAttribute(U32 location, U32 buffBinding, const PixelFormat& fmt, PtrSize relativeOffset)
@@ -154,7 +166,8 @@ void CommandBuffer::setVertexAttribute(U32 location, U32 buffBinding, const Pixe
 		}
 	};
 
-	m_impl->m_state.setVertexAttribute(location, buffBinding, fmt, relativeOffset, [=]() {
+	if(m_impl->m_state.setVertexAttribute(location, buffBinding, fmt, relativeOffset))
+	{
 		U compCount;
 		GLenum type;
 		Bool normalized;
@@ -162,7 +175,7 @@ void CommandBuffer::setVertexAttribute(U32 location, U32 buffBinding, const Pixe
 		convertVertexFormat(fmt, compCount, type, normalized);
 
 		m_impl->pushBackNewCommand<Cmd>(location, buffBinding, compCount, type, normalized, relativeOffset);
-	});
+	}
 }
 
 void CommandBuffer::bindIndexBuffer(BufferPtr buff, PtrSize offset, IndexType type)
@@ -184,9 +197,10 @@ void CommandBuffer::bindIndexBuffer(BufferPtr buff, PtrSize offset, IndexType ty
 		}
 	};
 
-	m_impl->pushBackNewCommand<Cmd>(buff);
-	m_impl->m_state.m_indexBuffOffset = offset;
-	m_impl->m_state.m_indexType = convertIndexType(type);
+	if(m_impl->m_state.bindIndexBuffer(buff, offset, type))
+	{
+		m_impl->pushBackNewCommand<Cmd>(buff);
+	}
 }
 
 void CommandBuffer::bindIndexBuffer(const TransientMemoryToken& token, IndexType type)
@@ -221,7 +235,10 @@ void CommandBuffer::setPrimitiveRestart(Bool enable)
 		}
 	};
 
-	m_impl->m_state.setPrimitiveRestart(enable, [=]() { m_impl->pushBackNewCommand<Cmd>(enable); });
+	if(m_impl->m_state.setPrimitiveRestart(enable))
+	{
+		m_impl->pushBackNewCommand<Cmd>(enable);
+	}
 }
 
 void CommandBuffer::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
@@ -243,8 +260,10 @@ void CommandBuffer::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 		}
 	};
 
-	m_impl->m_state.setViewport(
-		minx, miny, maxx, maxy, [=]() { m_impl->pushBackNewCommand<ViewportCommand>(minx, miny, maxx, maxy); });
+	if(m_impl->m_state.setViewport(minx, miny, maxx, maxy))
+	{
+		m_impl->pushBackNewCommand<ViewportCommand>(minx, miny, maxx, maxy);
+	}
 }
 
 void CommandBuffer::setScissorRect(U16 minx, U16 miny, U16 maxx, U16 maxy)
@@ -271,7 +290,10 @@ void CommandBuffer::setFillMode(FillMode mode)
 		}
 	};
 
-	m_impl->m_state.setFillMode(mode, [=]() { m_impl->pushBackNewCommand<Cmd>(convertFillMode(mode)); });
+	if(m_impl->m_state.setFillMode(mode))
+	{
+		m_impl->pushBackNewCommand<Cmd>(convertFillMode(mode));
+	}
 }
 
 void CommandBuffer::setCullMode(FaceSelectionMask mode)
@@ -293,7 +315,10 @@ void CommandBuffer::setCullMode(FaceSelectionMask mode)
 		}
 	};
 
-	m_impl->m_state.setCullMode(mode, [=]() { m_impl->pushBackNewCommand<Cmd>(convertFaceMode(mode)); });
+	if(m_impl->m_state.setCullMode(mode))
+	{
+		m_impl->pushBackNewCommand<Cmd>(convertFaceMode(mode));
+	}
 }
 
 void CommandBuffer::setPolygonOffset(F32 factor, F32 units)
@@ -326,7 +351,10 @@ void CommandBuffer::setPolygonOffset(F32 factor, F32 units)
 		}
 	};
 
-	m_impl->m_state.setPolygonOffset(factor, units, [=]() { m_impl->pushBackNewCommand<Cmd>(factor, units); });
+	if(m_impl->m_state.setPolygonOffset(factor, units))
+	{
+		m_impl->pushBackNewCommand<Cmd>(factor, units);
+	}
 }
 
 void CommandBuffer::setStencilOperations(FaceSelectionMask face,
@@ -357,13 +385,13 @@ void CommandBuffer::setStencilOperations(FaceSelectionMask face,
 		}
 	};
 
-	m_impl->m_state.setStencilOperations(face, stencilFail, stencilPassDepthFail, stencilPassDepthPass, [=]() {
-
+	if(m_impl->m_state.setStencilOperations(face, stencilFail, stencilPassDepthFail, stencilPassDepthPass))
+	{
 		m_impl->pushBackNewCommand<Cmd>(convertFaceMode(face),
 			convertStencilOperation(stencilFail),
 			convertStencilOperation(stencilPassDepthFail),
 			convertStencilOperation(stencilPassDepthPass));
-	});
+	}
 }
 
 void CommandBuffer::setStencilCompareFunction(FaceSelectionMask face, CompareOperation comp)
@@ -412,8 +440,10 @@ void CommandBuffer::setStencilWriteMask(FaceSelectionMask face, U32 mask)
 		}
 	};
 
-	m_impl->m_state.setStencilWriteMask(
-		face, mask, [=]() { m_impl->pushBackNewCommand<Cmd>(convertFaceMode(face), mask); });
+	if(m_impl->m_state.setStencilWriteMask(face, mask))
+	{
+		m_impl->pushBackNewCommand<Cmd>(convertFaceMode(face), mask);
+	}
 }
 
 void CommandBuffer::setStencilReference(FaceSelectionMask face, U32 ref)
@@ -441,7 +471,10 @@ void CommandBuffer::setDepthWrite(Bool enable)
 		}
 	};
 
-	m_impl->m_state.setDepthWrite(enable, [=]() { m_impl->pushBackNewCommand<Cmd>(enable); });
+	if(m_impl->m_state.setDepthWrite(enable))
+	{
+		m_impl->pushBackNewCommand<Cmd>(enable);
+	}
 }
 
 void CommandBuffer::setDepthCompareFunction(CompareOperation op)
@@ -463,8 +496,10 @@ void CommandBuffer::setDepthCompareFunction(CompareOperation op)
 		}
 	};
 
-	m_impl->m_state.setDepthCompareFunction(
-		op, [=]() { m_impl->pushBackNewCommand<Cmd>(convertCompareOperation(op)); });
+	if(m_impl->m_state.setDepthCompareFunction(op))
+	{
+		m_impl->pushBackNewCommand<Cmd>(convertCompareOperation(op));
+	}
 }
 
 void CommandBuffer::setAlphaToCoverage(Bool enable)
@@ -501,8 +536,10 @@ void CommandBuffer::setColorChannelWriteMask(U32 attachment, ColorBit mask)
 		}
 	};
 
-	m_impl->m_state.setColorChannelWriteMask(
-		attachment, mask, [=]() { m_impl->pushBackNewCommand<Cmd>(attachment, mask); });
+	if(m_impl->m_state.setColorChannelWriteMask(attachment, mask))
+	{
+		m_impl->pushBackNewCommand<Cmd>(attachment, mask);
+	}
 }
 
 void CommandBuffer::setBlendMethods(U32 attachment, BlendMethod src, BlendMethod dst)
@@ -528,9 +565,10 @@ void CommandBuffer::setBlendMethods(U32 attachment, BlendMethod src, BlendMethod
 		}
 	};
 
-	m_impl->m_state.setBlendMethods(attachment, src, dst, [=]() {
+	if(m_impl->m_state.setBlendMethods(attachment, src, dst))
+	{
 		m_impl->pushBackNewCommand<Cmd>(attachment, convertBlendMethod(src), convertBlendMethod(dst));
-	});
+	}
 }
 
 void CommandBuffer::setBlendFunction(U32 attachment, BlendFunction func)
@@ -554,8 +592,10 @@ void CommandBuffer::setBlendFunction(U32 attachment, BlendFunction func)
 		}
 	};
 
-	m_impl->m_state.setBlendFunction(
-		attachment, func, [=]() { m_impl->pushBackNewCommand<Cmd>(attachment, convertBlendFunction(func)); });
+	if(m_impl->m_state.setBlendFunction(attachment, func))
+	{
+		m_impl->pushBackNewCommand<Cmd>(attachment, convertBlendFunction(func));
+	}
 }
 
 void CommandBuffer::bindTexture(U32 set, U32 binding, TexturePtr tex, DepthStencilAspectMask aspect)
@@ -580,8 +620,11 @@ void CommandBuffer::bindTexture(U32 set, U32 binding, TexturePtr tex, DepthStenc
 		}
 	};
 
-	U unit = binding + MAX_TEXTURE_BINDINGS * set;
-	m_impl->pushBackNewCommand<Cmd>(unit, tex);
+	if(m_impl->m_state.bindTexture(set, binding, tex, aspect))
+	{
+		U unit = binding + MAX_TEXTURE_BINDINGS * set;
+		m_impl->pushBackNewCommand<Cmd>(unit, tex);
+	}
 }
 
 void CommandBuffer::bindTextureAndSampler(
@@ -609,8 +652,11 @@ void CommandBuffer::bindTextureAndSampler(
 		}
 	};
 
-	U unit = binding + MAX_TEXTURE_BINDINGS * set;
-	m_impl->pushBackNewCommand<Cmd>(unit, tex, sampler);
+	if(m_impl->m_state.bindTextureAndSampler(set, binding, tex, sampler, aspect))
+	{
+		U unit = binding + MAX_TEXTURE_BINDINGS * set;
+		m_impl->pushBackNewCommand<Cmd>(unit, tex, sampler);
+	}
 }
 
 void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset)
@@ -636,8 +682,11 @@ void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrS
 		}
 	};
 
-	binding = binding + MAX_UNIFORM_BUFFER_BINDINGS * set;
-	m_impl->pushBackNewCommand<Cmd>(binding, buff, offset);
+	if(m_impl->m_state.bindUniformBuffer(set, binding, buff, offset))
+	{
+		binding = binding + MAX_UNIFORM_BUFFER_BINDINGS * set;
+		m_impl->pushBackNewCommand<Cmd>(binding, buff, offset);
+	}
 }
 
 void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, const TransientMemoryToken& token)
@@ -663,9 +712,14 @@ void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, const TransientMemor
 		}
 	};
 
-	binding = binding + MAX_UNIFORM_BUFFER_BINDINGS * set;
-	GLuint name = getManager().getImplementation().getTransientMemoryManager().getGlName(token);
-	m_impl->pushBackNewCommand<Cmd>(binding, token, name);
+	ANKI_ASSERT(!!(token.m_usage & BufferUsageBit::UNIFORM_ALL));
+
+	if(m_impl->m_state.bindUniformBuffer(set, binding, token))
+	{
+		binding = binding + MAX_UNIFORM_BUFFER_BINDINGS * set;
+		GLuint name = getManager().getImplementation().getTransientMemoryManager().getGlName(token);
+		m_impl->pushBackNewCommand<Cmd>(binding, token, name);
+	}
 }
 
 void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset)
@@ -691,8 +745,11 @@ void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, BufferPtr buff, PtrS
 		}
 	};
 
-	binding = binding + MAX_STORAGE_BUFFER_BINDINGS * set;
-	m_impl->pushBackNewCommand<Cmd>(binding, buff, offset);
+	if(m_impl->m_state.bindStorageBuffer(set, binding, buff, offset))
+	{
+		binding = binding + MAX_STORAGE_BUFFER_BINDINGS * set;
+		m_impl->pushBackNewCommand<Cmd>(binding, buff, offset);
+	}
 }
 
 void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, const TransientMemoryToken& token)
@@ -718,9 +775,14 @@ void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, const TransientMemor
 		}
 	};
 
-	binding = binding + MAX_STORAGE_BUFFER_BINDINGS * set;
-	GLuint name = getManager().getImplementation().getTransientMemoryManager().getGlName(token);
-	m_impl->pushBackNewCommand<Cmd>(binding, token, name);
+	ANKI_ASSERT(!!(token.m_usage & BufferUsageBit::STORAGE_ALL));
+
+	if(m_impl->m_state.bindStorageBuffer(set, binding, token))
+	{
+		binding = binding + MAX_STORAGE_BUFFER_BINDINGS * set;
+		GLuint name = getManager().getImplementation().getTransientMemoryManager().getGlName(token);
+		m_impl->pushBackNewCommand<Cmd>(binding, token, name);
+	}
 }
 
 void CommandBuffer::bindImage(U32 set, U32 binding, TexturePtr img, U32 level)
@@ -752,8 +814,11 @@ void CommandBuffer::bindImage(U32 set, U32 binding, TexturePtr img, U32 level)
 		}
 	};
 
-	binding = binding + set * MAX_IMAGE_BINDINGS;
-	m_impl->pushBackNewCommand<Cmd>(binding, img, level);
+	if(m_impl->m_state.bindImage(set, binding, img, level))
+	{
+		binding = binding + set * MAX_IMAGE_BINDINGS;
+		m_impl->pushBackNewCommand<Cmd>(binding, img, level);
+	}
 }
 
 void CommandBuffer::bindShaderProgram(ShaderProgramPtr prog)
@@ -775,7 +840,10 @@ void CommandBuffer::bindShaderProgram(ShaderProgramPtr prog)
 		}
 	};
 
-	m_impl->m_state.bindShaderProgram(prog, [=]() { m_impl->pushBackNewCommand<Cmd>(prog); });
+	if(m_impl->m_state.bindShaderProgram(prog))
+	{
+		m_impl->pushBackNewCommand<Cmd>(prog);
+	}
 }
 
 void CommandBuffer::beginRenderPass(FramebufferPtr fb)
@@ -797,7 +865,10 @@ void CommandBuffer::beginRenderPass(FramebufferPtr fb)
 		}
 	};
 
-	m_impl->m_state.beginRenderPass(fb, [=]() { m_impl->pushBackNewCommand<BindFramebufferCommand>(fb); });
+	if(m_impl->m_state.beginRenderPass(fb))
+	{
+		m_impl->pushBackNewCommand<BindFramebufferCommand>(fb);
+	}
 }
 
 void CommandBuffer::endRenderPass()
@@ -998,6 +1069,7 @@ void CommandBuffer::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupC
 		}
 	};
 
+	ANKI_ASSERT(!!(m_impl->m_flags & CommandBufferFlag::COMPUTE_WORK));
 	m_impl->m_state.checkDispatch();
 	m_impl->pushBackNewCommand<DispatchCommand>(groupCountX, groupCountY, groupCountZ);
 }

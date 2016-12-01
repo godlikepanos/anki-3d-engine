@@ -130,6 +130,7 @@ Error Fs::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) 
 
 	cmdb->setBlendMethods(0, BlendMethod::SRC_ALPHA, BlendMethod::ONE_MINUS_SRC_ALPHA);
 	cmdb->setDepthWrite(false);
+	cmdb->setDepthCompareFunction(CompareOperation::LESS);
 
 	// Start drawing
 	Error err = m_r->getSceneDrawer().drawRange(Pass::MS_FS,
