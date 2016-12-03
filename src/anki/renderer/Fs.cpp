@@ -20,7 +20,20 @@ Fs::~Fs()
 {
 }
 
-Error Fs::init(const ConfigSet&)
+Error Fs::init(const ConfigSet& cfg)
+{
+	ANKI_LOGI("Initializing forward shading");
+
+	Error err = initInternal(cfg);
+	if(err)
+	{
+		ANKI_LOGE("Failed to initialize forward shading");
+	}
+
+	return err;
+}
+
+Error Fs::initInternal(const ConfigSet&)
 {
 	m_width = m_r->getWidth() / FS_FRACTION;
 	m_height = m_r->getHeight() / FS_FRACTION;
@@ -75,8 +88,8 @@ void Fs::drawVolumetric(RenderingContext& ctx, CommandBufferPtr cmdb)
 
 	cmdb->bindShaderProgram(m_vol.m_prog);
 	cmdb->setBlendMethods(0, BlendMethod::ONE, BlendMethod::ONE);
-
-	cmdb->bindShaderProgram(m_vol.m_prog);
+	cmdb->setDepthWrite(false);
+	cmdb->setDepthCompareFunction(CompareOperation::ALWAYS);
 
 	TransientMemoryToken token;
 	Vec4* unis = static_cast<Vec4*>(
@@ -93,6 +106,8 @@ void Fs::drawVolumetric(RenderingContext& ctx, CommandBufferPtr cmdb)
 
 	// Restore state
 	cmdb->setBlendMethods(0, BlendMethod::ONE, BlendMethod::ZERO);
+	cmdb->setDepthWrite(true);
+	cmdb->setDepthCompareFunction(CompareOperation::LESS);
 }
 
 Error Fs::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) const
@@ -117,8 +132,6 @@ Error Fs::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) 
 	CommandBufferPtr cmdb = m_r->getGrManager().newInstance<CommandBuffer>(cinf);
 	ctx.m_fs.m_commandBuffers[threadId] = cmdb;
 
-	cmdb->setViewport(0, 0, m_width, m_height);
-
 	cmdb->bindTexture(1, 0, m_r->getDepthDownscale().m_hd.m_depthRt);
 	cmdb->bindTexture(1, 1, m_r->getSm().m_spotTexArray);
 	cmdb->bindTexture(1, 2, m_r->getSm().m_omniTexArray);
@@ -128,9 +141,9 @@ Error Fs::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) 
 	cmdb->bindStorageBuffer(1, 0, ctx.m_is.m_clustersToken);
 	cmdb->bindStorageBuffer(1, 1, ctx.m_is.m_lightIndicesToken);
 
+	cmdb->setViewport(0, 0, m_width, m_height);
 	cmdb->setBlendMethods(0, BlendMethod::SRC_ALPHA, BlendMethod::ONE_MINUS_SRC_ALPHA);
 	cmdb->setDepthWrite(false);
-	cmdb->setDepthCompareFunction(CompareOperation::LESS);
 
 	// Start drawing
 	Error err = m_r->getSceneDrawer().drawRange(Pass::MS_FS,
@@ -163,7 +176,6 @@ void Fs::run(RenderingContext& ctx)
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 	cmdb->beginRenderPass(m_fb);
 	cmdb->setViewport(0, 0, m_width, m_height);
-	cmdb->setPolygonOffset(0.0, 0.0);
 
 	for(U i = 0; i < m_r->getThreadPool().getThreadsCount(); ++i)
 	{

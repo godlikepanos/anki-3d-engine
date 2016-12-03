@@ -284,13 +284,10 @@ Error ParticleEmitter::buildRendering(const RenderingBuildInfoIn& in, RenderingB
 		return ErrorCode::NONE;
 	}
 
-	U frame = (getGlobalTimestamp() % MAX_FRAMES_IN_FLIGHT);
-
 	m_particleEmitterResource->getRenderingInfo(in.m_key.m_lod, out.m_program);
 
 	out.m_vertexBufferBindingCount = 1;
-	out.m_vertexBufferBindings[0].m_buffer = m_vertBuffs[frame];
-	out.m_vertexBufferBindings[0].m_offset = 0;
+	out.m_vertexBufferBindings[0].m_token = m_vertBuffToken;
 	out.m_vertexBufferBindings[0].m_stride = VERTEX_SIZE;
 
 	out.m_vertexAttributeCount = 3;
@@ -309,8 +306,9 @@ Error ParticleEmitter::buildRendering(const RenderingBuildInfoIn& in, RenderingB
 	out.m_drawArrays = true;
 	out.m_drawcall.m_arrays.m_count = m_aliveParticlesCount;
 
-	// The particles are already in world position
-	out.m_hasTransform = false;
+	// The particles are already in world position but materials use the MVP
+	out.m_hasTransform = true;
+	out.m_transform = Mat4::getIdentity();
 
 	return ErrorCode::NONE;
 }
@@ -377,8 +375,9 @@ Error ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 	Vec4 aabbmax(MIN_F32, MIN_F32, MIN_F32, 0.0);
 	m_aliveParticlesCount = 0;
 
-	U frame = getGlobalTimestamp() % 3;
-	F32* verts = static_cast<F32*>(m_vertBuffs[frame]->map(0, m_vertBuffSize, BufferMapAccessBit::WRITE));
+	F32* verts = static_cast<F32*>(getResourceManager().getGrManager().allocateFrameTransientMemory(
+		m_vertBuffSize, BufferUsageBit::VERTEX, m_vertBuffToken));
+
 	const F32* verts_base = verts;
 	(void)verts_base;
 
@@ -436,8 +435,6 @@ Error ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 			verts += 5;
 		}
 	}
-
-	m_vertBuffs[frame]->unmap();
 
 	if(m_aliveParticlesCount != 0)
 	{

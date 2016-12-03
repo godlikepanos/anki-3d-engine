@@ -102,6 +102,18 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& cfg)
 	{
+		ANKI_LOGI("Initializing bloom passes");
+		Error err = initInternal(cfg);
+		if(err)
+		{
+			ANKI_LOGE("Failed to initialize bloom passes");
+		}
+		return err;
+	}
+
+private:
+	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg)
+	{
 		ANKI_CHECK(m_extractExposure.init(cfg));
 		ANKI_CHECK(m_upscale.init(cfg));
 		ANKI_CHECK(m_sslf.init(cfg));

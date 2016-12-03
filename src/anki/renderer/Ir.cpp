@@ -57,7 +57,19 @@ Ir::~Ir()
 
 Error Ir::init(const ConfigSet& config)
 {
-	ANKI_LOGI("Initializing IR (Image Reflections)");
+	ANKI_LOGI("Initializing image reflections");
+
+	Error err = initInternal(config);
+	if(err)
+	{
+		ANKI_LOGE("Failed to initialize image reflections");
+	}
+
+	return err;
+}
+
+Error Ir::initInternal(const ConfigSet& config)
+{
 	m_fbSize = config.getNumber("ir.rendererSize");
 
 	if(m_fbSize < TILE_SIZE)
@@ -420,6 +432,7 @@ void Ir::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		TextureSurfaceInfo(0, 0, faceIdx, layer));
 
+	// Set state
 	cmdb->beginRenderPass(face.m_isFb);
 
 	cmdb->bindTexture(0, 0, face.m_gbufferColorRts[0]);
@@ -429,8 +442,8 @@ void Ir::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx
 	cmdb->setVertexAttribute(0, 0, PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT), 0);
 
 	cmdb->setBlendMethods(0, BlendMethod::ONE, BlendMethod::ONE);
-	cmdb->setDepthWrite(false);
 	cmdb->setDepthCompareFunction(CompareOperation::GREATER);
+	cmdb->setDepthWrite(false);
 
 	// Process all lights
 	const Mat4& vpMat = frc.getViewProjectionMatrix();
@@ -480,7 +493,7 @@ void Ir::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx
 	}
 
 	cmdb->bindShaderProgram(m_is.m_slightProg);
-	cmdb->bindVertexBuffer(0, m_is.m_slightPositions, 0, 0);
+	cmdb->bindVertexBuffer(0, m_is.m_slightPositions, 0, sizeof(F32) * 3);
 	cmdb->bindIndexBuffer(m_is.m_slightIndices, 0, IndexType::U16);
 
 	it = vis.getBegin(VisibilityGroupType::LIGHTS_SPOT);
@@ -556,8 +569,8 @@ void Ir::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx
 
 	// Restore state
 	cmdb->setBlendMethods(0, BlendMethod::ONE, BlendMethod::ZERO);
-	cmdb->setDepthWrite(true);
 	cmdb->setDepthCompareFunction(CompareOperation::LESS);
+	cmdb->setDepthWrite(true);
 }
 
 void Ir::computeIrradiance(RenderingContext& rctx, U layer, U faceIdx)

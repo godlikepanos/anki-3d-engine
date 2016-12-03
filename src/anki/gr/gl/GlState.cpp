@@ -129,6 +129,7 @@ void GlState::initRenderThread()
 	// Set some GL state
 	glEnable(GL_PROGRAM_POINT_SIZE);
 	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+	glEnable(GL_CULL_FACE);
 
 	// Create default VAO
 	glGenVertexArrays(1, &m_defaultVao);

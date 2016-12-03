@@ -32,7 +32,7 @@ anki_internal:
 
 	~Ir();
 
-	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
+	ANKI_USE_RESULT Error init(const ConfigSet& cfg);
 
 	ANKI_USE_RESULT Error run(RenderingContext& ctx);
 
@@ -137,6 +137,7 @@ private:
 	SamplerPtr m_integrationLutSampler;
 
 	// Init
+	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 	ANKI_USE_RESULT Error initIs();
 	ANKI_USE_RESULT Error initIrradiance();
 	void initFaceInfo(U cacheEntryIdx, U faceIdx);

@@ -189,7 +189,7 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 	//
 	// Fire commands to change some state
 	//
-	class Cmd final : public GlCommand
+	class StencilCmd final : public GlCommand
 	{
 	public:
 		GLenum m_face;
@@ -197,7 +197,7 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 		GLint m_ref;
 		GLuint m_compareMask;
 
-		Cmd(GLenum face, GLenum func, GLint ref, GLuint mask)
+		StencilCmd(GLenum face, GLenum func, GLint ref, GLuint mask)
 			: m_face(face)
 			, m_func(func)
 			, m_ref(ref)
@@ -212,12 +212,11 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 		}
 	};
 
-	const Array<GLenum, 2> FACE = {{GL_FRONT, GL_BACK}};
 	for(U i = 0; i < 2; ++i)
 	{
 		if(m_state.m_glStencilFuncSeparateDirty[i])
 		{
-			pushBackNewCommand<Cmd>(FACE[i],
+			pushBackNewCommand<StencilCmd>(GL_FRONT + i,
 				convertCompareOperation(m_state.m_stencilCompare[i]),
 				m_state.m_stencilRef[i],
 				m_state.m_stencilCompareMask[i]);
@@ -282,6 +281,35 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 	if(m_state.maybeEnableStencilTest())
 	{
 		pushBackNewCommand<StencilTestCmd>(m_state.m_stencilTestEnabled);
+	}
+
+	class BlendCmd final : public GlCommand
+	{
+	public:
+		Bool8 m_enable;
+
+		BlendCmd(Bool enable)
+			: m_enable(enable)
+		{
+		}
+
+		Error operator()(GlState&)
+		{
+			if(m_enable)
+			{
+				glEnable(GL_BLEND);
+			}
+			else
+			{
+				glDisable(GL_BLEND);
+			}
+			return ErrorCode::NONE;
+		}
+	};
+
+	if(m_state.maybeEnableBlend())
+	{
+		pushBackNewCommand<BlendCmd>(m_state.m_enableBlend);
 	}
 }
 

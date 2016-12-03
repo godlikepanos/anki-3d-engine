@@ -229,6 +229,9 @@ void SmaaWeights::run(RenderingContext& ctx)
 	cmdb->beginRenderPass(m_fb);
 	m_r->drawQuad(cmdb);
 	cmdb->endRenderPass();
+
+	// Restore state
+	cmdb->setStencilCompareFunction(FaceSelectionMask::FRONT, CompareOperation::ALWAYS);
 }
 
 Error Smaa::init(const ConfigSet& cfg)

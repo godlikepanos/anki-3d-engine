@@ -29,7 +29,7 @@ Error FsUpscale::init(const ConfigSet& config)
 
 Error FsUpscale::initInternal(const ConfigSet& config)
 {
-	ANKI_LOGE("Initializing forward shading upscale");
+	ANKI_LOGI("Initializing forward shading upscale");
 
 	GrManager& gr = getGrManager();
 
@@ -77,7 +77,7 @@ void FsUpscale::run(RenderingContext& ctx)
 
 	cmdb->bindUniformBuffer(0, 0, token);
 	cmdb->bindTexture(0, 0, m_r->getMs().m_depthRt);
-	cmdb->bindTextureAndSampler(0, 1, m_r->getMs().m_depthRt, m_nearestSampler);
+	cmdb->bindTextureAndSampler(0, 1, m_r->getDepthDownscale().m_hd.m_depthRt, m_nearestSampler);
 	cmdb->bindTexture(0, 2, m_r->getFs().getRt());
 	cmdb->bindTexture(0, 3, m_r->getSsao().getRt());
 

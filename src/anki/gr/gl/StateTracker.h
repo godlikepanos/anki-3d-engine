@@ -61,7 +61,7 @@ public:
 	class VertexBuffer
 	{
 	public:
-		BufferPtr m_buff;
+		BufferImpl* m_buff = nullptr;
 		PtrSize m_offset = 0;
 		PtrSize m_stride = 0;
 		TransientMemoryToken m_token;
@@ -72,7 +72,7 @@ public:
 	Bool bindVertexBuffer(U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride)
 	{
 		VertexBuffer& b = m_vertBuffs[binding];
-		b.m_buff = buff;
+		b.m_buff = buff->m_impl.get();
 		b.m_offset = offset;
 		b.m_stride = stride;
 		b.m_token = {};
@@ -82,7 +82,7 @@ public:
 	Bool bindVertexBuffer(U32 binding, const TransientMemoryToken& token, PtrSize stride)
 	{
 		VertexBuffer& b = m_vertBuffs[binding];
-		b.m_buff = {};
+		b.m_buff = nullptr;
 		b.m_offset = 0;
 		b.m_stride = stride;
 		b.m_token = token;
@@ -92,14 +92,14 @@ public:
 	class Index
 	{
 	public:
-		BufferPtr m_buff;
+		BufferImpl* m_buff = nullptr;
 		PtrSize m_offset = MAX_PTR_SIZE;
 		GLenum m_indexType = 0;
 	} m_idx;
 
 	Bool bindIndexBuffer(BufferPtr buff, PtrSize offset, IndexType type)
 	{
-		m_idx.m_buff = buff;
+		m_idx.m_buff = buff->m_impl.get();
 		m_idx.m_offset = offset;
 		m_idx.m_indexType = convertIndexType(type);
 		return true;
@@ -108,7 +108,7 @@ public:
 
 	/// @name input_assembly
 	/// @{
-	U8 m_primitiveRestart = 2;
+	Bool8 m_primitiveRestart = 2;
 
 	Bool setPrimitiveRestart(Bool enable)
 	{
@@ -316,7 +316,7 @@ public:
 
 	Bool maybeEnableDepthTest()
 	{
-		ANKI_ASSERT(m_depthWrite != 2 && m_depthOp != CompareOperation::COUNT);
+		ANKI_ASSERT(m_depthWrite <= 1 && m_depthOp != CompareOperation::COUNT);
 		Bool enable = m_depthWrite || m_depthOp != CompareOperation::ALWAYS;
 
 		if(enable != m_depthTestEnabled)
@@ -369,10 +369,34 @@ public:
 		return false;
 	}
 
+	Bool8 m_enableBlend = 2;
+
+	Bool maybeEnableBlend()
+	{
+		Bool8 enable = 0;
+
+		for(U i = 0; i < m_fb->getColorBufferCount(); ++i)
+		{
+			if(!!(m_colorWriteMasks[i]) && (m_enableBlendMask & (1 << i)))
+			{
+				enable = enable || 1;
+			}
+		}
+
+		if(enable != m_enableBlend)
+		{
+			m_enableBlend = enable;
+			return true;
+		}
+		return false;
+	}
+
 	Array<BlendMethod, MAX_COLOR_ATTACHMENTS> m_blendSrcMethod = {
 		{BlendMethod::COUNT, BlendMethod::COUNT, BlendMethod::COUNT, BlendMethod::COUNT}};
 	Array<BlendMethod, MAX_COLOR_ATTACHMENTS> m_blendDstMethod = {
 		{BlendMethod::COUNT, BlendMethod::COUNT, BlendMethod::COUNT, BlendMethod::COUNT}};
+
+	U8 m_enableBlendMask = 0; ///< Per attachment
 
 	Bool setBlendMethods(U32 attachment, BlendMethod src, BlendMethod dst)
 	{
@@ -380,6 +404,8 @@ public:
 		{
 			m_blendSrcMethod[attachment] = src;
 			m_blendDstMethod[attachment] = dst;
+			Bool wantBlend = !(src == BlendMethod::ONE && dst == BlendMethod::ZERO);
+			m_enableBlendMask |= (wantBlend) ? (1 << attachment) : 0;
 			return true;
 		}
 		return false;
@@ -404,8 +430,8 @@ public:
 	class TextureBinding
 	{
 	public:
-		TexturePtr m_tex;
-		SamplerPtr m_sampler;
+		TextureImpl* m_tex = nullptr;
+		SamplerImpl* m_sampler = nullptr;
 		DepthStencilAspectMask m_aspect;
 	};
 
@@ -414,8 +440,8 @@ public:
 	Bool bindTexture(U32 set, U32 binding, TexturePtr tex, DepthStencilAspectMask aspect)
 	{
 		TextureBinding& b = m_textures[set][binding];
-		b.m_tex = tex;
-		b.m_sampler = {};
+		b.m_tex = tex->m_impl.get();
+		b.m_sampler = nullptr;
 		b.m_aspect = aspect;
 		return true;
 	}
@@ -423,8 +449,8 @@ public:
 	Bool bindTextureAndSampler(U32 set, U32 binding, TexturePtr tex, SamplerPtr sampler, DepthStencilAspectMask aspect)
 	{
 		TextureBinding& b = m_textures[set][binding];
-		b.m_tex = tex;
-		b.m_sampler = sampler;
+		b.m_tex = tex->m_impl.get();
+		b.m_sampler = sampler->m_impl.get();
 		b.m_aspect = aspect;
 		return true;
 	}
@@ -432,7 +458,7 @@ public:
 	class ShaderBufferBinding
 	{
 	public:
-		BufferPtr m_buff;
+		BufferImpl* m_buff = nullptr;
 		PtrSize m_offset;
 		TransientMemoryToken m_token;
 	};
@@ -442,7 +468,7 @@ public:
 	Bool bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset)
 	{
 		ShaderBufferBinding& b = m_ubos[set][binding];
-		b.m_buff = buff;
+		b.m_buff = buff->m_impl.get();
 		b.m_offset = offset;
 		b.m_token = {};
 		return true;
@@ -451,7 +477,7 @@ public:
 	Bool bindUniformBuffer(U32 set, U32 binding, const TransientMemoryToken& token)
 	{
 		ShaderBufferBinding& b = m_ubos[set][binding];
-		b.m_buff = {};
+		b.m_buff = nullptr;
 		b.m_offset = 0;
 		b.m_token = token;
 		return true;
@@ -462,7 +488,7 @@ public:
 	Bool bindStorageBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset)
 	{
 		ShaderBufferBinding& b = m_ssbos[set][binding];
-		b.m_buff = buff;
+		b.m_buff = buff->m_impl.get();
 		b.m_offset = offset;
 		b.m_token = {};
 		return true;
@@ -471,7 +497,7 @@ public:
 	Bool bindStorageBuffer(U32 set, U32 binding, const TransientMemoryToken& token)
 	{
 		ShaderBufferBinding& b = m_ssbos[set][binding];
-		b.m_buff = {};
+		b.m_buff = nullptr;
 		b.m_offset = 0;
 		b.m_token = token;
 		return true;
@@ -480,7 +506,7 @@ public:
 	class ImageBinding
 	{
 	public:
-		TexturePtr m_tex;
+		TextureImpl* m_tex = nullptr;
 		U8 m_level;
 	};
 
@@ -489,18 +515,18 @@ public:
 	Bool bindImage(U32 set, U32 binding, TexturePtr img, U32 level)
 	{
 		ImageBinding& b = m_images[set][binding];
-		b.m_tex = img;
+		b.m_tex = img->m_impl.get();
 		b.m_level = level;
 		return true;
 	}
 
-	ShaderProgramPtr m_prog;
+	ShaderProgramImpl* m_prog = nullptr;
 
 	Bool bindShaderProgram(ShaderProgramPtr prog)
 	{
-		if(prog != m_prog)
+		if(prog->m_impl.get() != m_prog)
 		{
-			m_prog = prog;
+			m_prog = prog->m_impl.get();
 			return true;
 		}
 		return false;
@@ -509,12 +535,12 @@ public:
 
 	/// @name other
 	/// @{
-	FramebufferPtr m_fb;
+	FramebufferImpl* m_fb = nullptr;
 
 	Bool beginRenderPass(const FramebufferPtr& fb)
 	{
 		ANKI_ASSERT(!insideRenderPass() && "Already inside a renderpass");
-		m_fb = fb;
+		m_fb = fb->m_impl.get();
 		m_lastSecondLevelCmdb = nullptr;
 		return true;
 	}
@@ -522,12 +548,20 @@ public:
 	void endRenderPass()
 	{
 		ANKI_ASSERT(insideRenderPass() && "Not inside a renderpass");
-		m_fb = {};
+		if(m_lastSecondLevelCmdb)
+		{
+			// Renderpass had 2nd level cmdbs, need to restore the state back to default
+			::new(this) StateTracker();
+		}
+		else
+		{
+			m_fb = nullptr;
+		}
 	}
 
 	Bool insideRenderPass() const
 	{
-		return m_fb.isCreated();
+		return m_fb != nullptr;
 	}
 
 	CommandBufferImpl* m_lastSecondLevelCmdb = nullptr;
@@ -549,13 +583,13 @@ public:
 	void checkDrawcall() const
 	{
 		ANKI_ASSERT(m_viewport[1] != MAX_U16 && "Forgot to set the viewport");
-		ANKI_ASSERT(m_prog.isCreated() && "Forgot to bound a program");
+		ANKI_ASSERT(m_prog && "Forgot to bound a program");
 		ANKI_ASSERT((insideRenderPass() || m_secondLevel) && "Forgot to begin a render pass");
 	}
 
 	void checkDispatch() const
 	{
-		ANKI_ASSERT(m_prog.isCreated() && "Forgot to bound a program");
+		ANKI_ASSERT(m_prog && "Forgot to bound a program");
 		ANKI_ASSERT(!insideRenderPass() && "Forgot to end the render pass");
 	}
 	/// @}

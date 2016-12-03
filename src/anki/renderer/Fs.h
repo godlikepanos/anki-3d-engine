@@ -70,6 +70,7 @@ private:
 		SamplerPtr m_nearestSampler;
 	} m_vol;
 
+	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 	ANKI_USE_RESULT Error initVol();
 };
 /// @}

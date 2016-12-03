@@ -176,7 +176,7 @@ class TransientMemoryToken
 public:
 	operator Bool() const
 	{
-		return m_offset != 0;
+		return m_range != 0;
 	}
 
 	Bool operator==(const TransientMemoryToken& b) const

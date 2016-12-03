@@ -24,13 +24,15 @@ anki_internal:
 	{
 	}
 
-	ANKI_USE_RESULT Error create(const ConfigSet& initializer);
+	ANKI_USE_RESULT Error init(const ConfigSet& cfg);
 
 	void run(RenderingContext& ctx);
 
 private:
 	ShaderResourcePtr m_luminanceShader;
 	ShaderProgramPtr m_prog;
+
+	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 };
 /// @}
 

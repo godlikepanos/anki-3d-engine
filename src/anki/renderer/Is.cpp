@@ -53,7 +53,7 @@ Is::~Is()
 
 Error Is::init(const ConfigSet& config)
 {
-	ANKI_LOGE("Initializing light stage");
+	ANKI_LOGI("Initializing light stage");
 	Error err = initInternal(config);
 
 	if(err)
@@ -89,7 +89,7 @@ Error Is::initInternal(const ConfigSet& config)
 		&getGrManager());
 
 	//
-	// Load the programs
+	// Load shaders and programs
 	//
 	StringAuto pps(getAllocator());
 
@@ -112,9 +112,10 @@ Error Is::initInternal(const ConfigSet& config)
 		1,
 		m_r->getIr().getReflectionTextureMipmapCount());
 
-	// point light
 	ANKI_CHECK(m_r->createShader("shaders/Is.vert.glsl", m_lightVert, &pps[0]));
 	ANKI_CHECK(m_r->createShader("shaders/Is.frag.glsl", m_lightFrag, &pps[0]));
+
+	m_lightProg = getGrManager().newInstance<ShaderProgram>(m_lightVert->getGrShader(), m_lightFrag->getGrShader());
 
 	//
 	// Create framebuffer

@@ -46,6 +46,11 @@ void CommandBuffer::init(CommandBufferInitInfo& inf)
 #if ANKI_ASSERTIONS
 	m_impl->m_state.m_secondLevel = !!(inf.m_flags & CommandBufferFlag::SECOND_LEVEL);
 #endif
+
+	if(!!(inf.m_flags & CommandBufferFlag::SECOND_LEVEL))
+	{
+		m_impl->m_state.m_fb = inf.m_framebuffer->m_impl.get();
+	}
 }
 
 void CommandBuffer::flush()
@@ -96,6 +101,9 @@ void CommandBuffer::bindVertexBuffer(U32 binding, BufferPtr buff, PtrSize offset
 		}
 	};
 
+	ANKI_ASSERT(buff);
+	ANKI_ASSERT(stride > 0);
+
 	if(m_impl->m_state.bindVertexBuffer(binding, buff, offset, stride))
 	{
 		m_impl->pushBackNewCommand<Cmd>(binding, buff, offset, stride);
@@ -127,12 +135,18 @@ void CommandBuffer::bindVertexBuffer(U32 binding, const TransientMemoryToken& to
 		}
 	};
 
-	ANKI_ASSERT(token.m_usage == BufferUsageBit::VERTEX);
-	GLuint name = getManager().getImplementation().getTransientMemoryManager().getGlName(token);
+	ANKI_ASSERT(token);
+	ANKI_ASSERT(stride > 0);
 
-	if(m_impl->m_state.bindVertexBuffer(binding, token, stride))
+	if(!token.isUnused())
 	{
-		m_impl->pushBackNewCommand<Cmd>(binding, token, stride, name);
+		ANKI_ASSERT(token.m_usage == BufferUsageBit::VERTEX);
+		GLuint name = getManager().getImplementation().getTransientMemoryManager().getGlName(token);
+
+		if(m_impl->m_state.bindVertexBuffer(binding, token, stride))
+		{
+			m_impl->pushBackNewCommand<Cmd>(binding, token, stride, name);
+		}
 	}
 }
 
@@ -196,6 +210,8 @@ void CommandBuffer::bindIndexBuffer(BufferPtr buff, PtrSize offset, IndexType ty
 			return ErrorCode::NONE;
 		}
 	};
+
+	ANKI_ASSERT(buff);
 
 	if(m_impl->m_state.bindIndexBuffer(buff, offset, type))
 	{
@@ -682,6 +698,8 @@ void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrS
 		}
 	};
 
+	ANKI_ASSERT(buff);
+
 	if(m_impl->m_state.bindUniformBuffer(set, binding, buff, offset))
 	{
 		binding = binding + MAX_UNIFORM_BUFFER_BINDINGS * set;
@@ -712,13 +730,18 @@ void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, const TransientMemor
 		}
 	};
 
-	ANKI_ASSERT(!!(token.m_usage & BufferUsageBit::UNIFORM_ALL));
+	ANKI_ASSERT(token);
 
-	if(m_impl->m_state.bindUniformBuffer(set, binding, token))
+	if(!token.isUnused())
 	{
-		binding = binding + MAX_UNIFORM_BUFFER_BINDINGS * set;
-		GLuint name = getManager().getImplementation().getTransientMemoryManager().getGlName(token);
-		m_impl->pushBackNewCommand<Cmd>(binding, token, name);
+		ANKI_ASSERT(!!(token.m_usage & BufferUsageBit::UNIFORM_ALL));
+
+		if(m_impl->m_state.bindUniformBuffer(set, binding, token))
+		{
+			binding = binding + MAX_UNIFORM_BUFFER_BINDINGS * set;
+			GLuint name = getManager().getImplementation().getTransientMemoryManager().getGlName(token);
+			m_impl->pushBackNewCommand<Cmd>(binding, token, name);
+		}
 	}
 }
 
@@ -744,6 +767,8 @@ void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, BufferPtr buff, PtrS
 			return ErrorCode::NONE;
 		}
 	};
+
+	ANKI_ASSERT(buff);
 
 	if(m_impl->m_state.bindStorageBuffer(set, binding, buff, offset))
 	{
@@ -775,13 +800,18 @@ void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, const TransientMemor
 		}
 	};
 
-	ANKI_ASSERT(!!(token.m_usage & BufferUsageBit::STORAGE_ALL));
+	ANKI_ASSERT(token);
 
-	if(m_impl->m_state.bindStorageBuffer(set, binding, token))
+	if(!token.isUnused())
 	{
-		binding = binding + MAX_STORAGE_BUFFER_BINDINGS * set;
-		GLuint name = getManager().getImplementation().getTransientMemoryManager().getGlName(token);
-		m_impl->pushBackNewCommand<Cmd>(binding, token, name);
+		ANKI_ASSERT(!!(token.m_usage & BufferUsageBit::STORAGE_ALL));
+
+		if(m_impl->m_state.bindStorageBuffer(set, binding, token))
+		{
+			binding = binding + MAX_STORAGE_BUFFER_BINDINGS * set;
+			GLuint name = getManager().getImplementation().getTransientMemoryManager().getGlName(token);
+			m_impl->pushBackNewCommand<Cmd>(binding, token, name);
+		}
 	}
 }
 
@@ -814,6 +844,8 @@ void CommandBuffer::bindImage(U32 set, U32 binding, TexturePtr img, U32 level)
 		}
 	};
 
+	ANKI_ASSERT(img);
+
 	if(m_impl->m_state.bindImage(set, binding, img, level))
 	{
 		binding = binding + set * MAX_IMAGE_BINDINGS;
@@ -839,6 +871,8 @@ void CommandBuffer::bindShaderProgram(ShaderProgramPtr prog)
 			return ErrorCode::NONE;
 		}
 	};
+
+	ANKI_ASSERT(prog);
 
 	if(m_impl->m_state.bindShaderProgram(prog))
 	{
@@ -873,25 +907,6 @@ void CommandBuffer::beginRenderPass(FramebufferPtr fb)
 
 void CommandBuffer::endRenderPass()
 {
-// Restore state
-#if 0
-	if(m_impl->m_state.m_lastSecondLevelCmdb)
-	{
-		// Renderpass had 2nd level cmdbs, need to restore the state
-
-		const StateTracker& olds = m_impl->m_state.m_lastSecondLevelCmdb->m_state;
-		StateTracker& news = m_impl->m_state;
-
-		// Vertex state
-		class VertIndexStateCmd final : public GlCommand
-		{
-		public:
-			Array<StateTracker::VertexAttribute, MAX_VERTEX_ATTRIBUTES> m_attribs;
-			Array<StateTracker::VertexBuffer, MAX_VERTEX_ATTRIBUTES> m_vertBuffs;
-		};
-	}
-#endif
-
 	m_impl->m_state.endRenderPass();
 }
 
@@ -1173,7 +1188,7 @@ void CommandBuffer::uploadTextureSurface(
 	};
 
 	ANKI_ASSERT(tex);
-	ANKI_ASSERT(token.m_range > 0);
+	ANKI_ASSERT(token);
 	ANKI_ASSERT(!m_impl->m_state.insideRenderPass());
 
 	m_impl->pushBackNewCommand<TexSurfUploadCommand>(tex, surf, token);
@@ -1210,7 +1225,7 @@ void CommandBuffer::uploadTextureVolume(TexturePtr tex, const TextureVolumeInfo&
 	};
 
 	ANKI_ASSERT(tex);
-	ANKI_ASSERT(token.m_range > 0);
+	ANKI_ASSERT(token);
 	ANKI_ASSERT(!m_impl->m_state.insideRenderPass());
 
 	m_impl->pushBackNewCommand<TexVolUploadCommand>(tex, vol, token);
@@ -1246,7 +1261,7 @@ void CommandBuffer::uploadBuffer(BufferPtr buff, PtrSize offset, const Transient
 		}
 	};
 
-	ANKI_ASSERT(token.m_range > 0);
+	ANKI_ASSERT(token);
 	ANKI_ASSERT(buff);
 	ANKI_ASSERT(!m_impl->m_state.insideRenderPass());
 

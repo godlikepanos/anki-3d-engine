@@ -164,7 +164,7 @@ Error Renderer::initInternal(const ConfigSet& config)
 	ANKI_CHECK(m_fsUpscale->init(config));
 
 	m_tm.reset(getAllocator().newInstance<Tm>(this));
-	ANKI_CHECK(m_tm->create(config));
+	ANKI_CHECK(m_tm->init(config));
 
 	m_downscale.reset(getAllocator().newInstance<DownscaleBlur>(this));
 	ANKI_CHECK(m_downscale->init(config));
@@ -412,7 +412,6 @@ Error Renderer::buildCommandBuffersInternal(RenderingContext& ctx, U32 threadId,
 		init.m_framebuffer = m_fs->getFramebuffer();
 		CommandBufferPtr cmdb = getGrManager().newInstance<CommandBuffer>(init);
 		cmdb->setViewport(0, 0, m_fs->getWidth(), m_fs->getHeight());
-		cmdb->setPolygonOffset(0.0, 0.0);
 
 		m_lf->run(ctx, cmdb);
 		m_fs->drawVolumetric(ctx, cmdb);

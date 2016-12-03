@@ -34,7 +34,7 @@ Lf::~Lf()
 
 Error Lf::init(const ConfigSet& config)
 {
-	ANKI_LOGE("Initializing lens flare pass");
+	ANKI_LOGI("Initializing lens flare pass");
 
 	Error err = initInternal(config);
 	if(err)

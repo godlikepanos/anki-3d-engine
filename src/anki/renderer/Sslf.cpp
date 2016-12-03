@@ -50,6 +50,9 @@ void Sslf::run(RenderingContext& ctx)
 	cmdb->bindTexture(0, 1, m_lensDirtTex->getGrTexture());
 
 	m_r->drawQuad(cmdb);
+
+	// Retore state
+	cmdb->setBlendMethods(0, BlendMethod::ONE, BlendMethod::ZERO);
 }
 
 } // end namespace anki

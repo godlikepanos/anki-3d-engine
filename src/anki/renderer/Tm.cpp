@@ -10,7 +10,19 @@
 namespace anki
 {
 
-Error Tm::create(const ConfigSet& initializer)
+Error Tm::init(const ConfigSet& cfg)
+{
+	ANKI_LOGI("Initializing tonemapping");
+	Error err = initInternal(cfg);
+	if(err)
+	{
+		ANKI_LOGE("Failed to initialize tonemapping");
+	}
+
+	return err;
+}
+
+Error Tm::initInternal(const ConfigSet& initializer)
 {
 	// Create shader
 	ANKI_ASSERT(m_r->getIs().getRtMipmapCount() > 1);

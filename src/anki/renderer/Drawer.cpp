@@ -361,13 +361,47 @@ Error RenderableDrawer::flushDrawcall(DrawContext& ctx, CompleteRenderingBuildIn
 	setupUniforms(ctx, build);
 
 	// Finaly, touch the command buffer
-	ctx.m_cmdb->bindUniformBuffer(0, 0, ctx.m_uboToken);
-	ctx.m_cmdb->bindShaderProgram(build.m_out.m_program);
+	CommandBufferPtr& cmdb = ctx.m_cmdb;
+
+	cmdb->bindUniformBuffer(0, 0, ctx.m_uboToken);
+	cmdb->bindShaderProgram(build.m_out.m_program);
+
+	for(U i = 0; i < build.m_out.m_vertexBufferBindingCount; ++i)
+	{
+		const RenderingVertexBufferBinding& binding = build.m_out.m_vertexBufferBindings[i];
+		if(binding.m_buffer)
+		{
+			cmdb->bindVertexBuffer(i, binding.m_buffer, binding.m_offset, binding.m_stride);
+		}
+		else
+		{
+			ANKI_ASSERT(!!(binding.m_token));
+			cmdb->bindVertexBuffer(i, binding.m_token, binding.m_stride);
+		}
+	}
+
+	for(U i = 0; i < build.m_out.m_vertexAttributeCount; ++i)
+	{
+		const RenderingVertexAttributeInfo& attrib = build.m_out.m_vertexAttributes[i];
+
+		cmdb->setVertexAttribute(i, attrib.m_bufferBinding, attrib.m_format, attrib.m_relativeOffset);
+	}
+
 	if(!build.m_out.m_drawArrays)
 	{
 		const DrawElementsIndirectInfo& drawc = build.m_out.m_drawcall.m_elements;
 
-		ctx.m_cmdb->drawElements(build.m_out.m_topology,
+		if(build.m_out.m_indexBuffer)
+		{
+			cmdb->bindIndexBuffer(build.m_out.m_indexBuffer, 0, IndexType::U16);
+		}
+		else
+		{
+			ANKI_ASSERT(!!(build.m_out.m_indexBufferToken));
+			cmdb->bindIndexBuffer(build.m_out.m_indexBufferToken, IndexType::U16);
+		}
+
+		cmdb->drawElements(build.m_out.m_topology,
 			drawc.m_count,
 			drawc.m_instanceCount,
 			drawc.m_firstIndex,
@@ -378,7 +412,7 @@ Error RenderableDrawer::flushDrawcall(DrawContext& ctx, CompleteRenderingBuildIn
 	{
 		const DrawArraysIndirectInfo& drawc = build.m_out.m_drawcall.m_arrays;
 
-		ctx.m_cmdb->drawArrays(
+		cmdb->drawArrays(
 			build.m_out.m_topology, drawc.m_count, drawc.m_instanceCount, drawc.m_first, drawc.m_baseInstance);
 	}
 

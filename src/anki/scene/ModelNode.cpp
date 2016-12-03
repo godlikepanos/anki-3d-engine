@@ -83,7 +83,7 @@ Error ModelPatchNode::buildRendering(const RenderingBuildInfoIn& in, RenderingBu
 	out.m_vertexAttributeCount = modelInf.m_vertexAttributeCount;
 	for(U i = 0; i < modelInf.m_vertexAttributeCount; ++i)
 	{
-		out.m_vertexAttributes[i] = out.m_vertexAttributes[i];
+		out.m_vertexAttributes[i] = modelInf.m_vertexAttributes[i];
 	}
 
 	out.m_indexBuffer = modelInf.m_indexBuffer;

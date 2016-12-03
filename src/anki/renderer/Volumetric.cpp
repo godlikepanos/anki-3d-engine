@@ -122,6 +122,9 @@ void Volumetric::run(RenderingContext& ctx)
 	cmdb->beginRenderPass(m_fb);
 	m_r->drawQuad(cmdb);
 	cmdb->endRenderPass();
+
+	// Restore state
+	cmdb->setBlendMethods(0, BlendMethod::ONE, BlendMethod::ZERO);
 }
 
 } // end namespace anki

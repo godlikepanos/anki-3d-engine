@@ -148,7 +148,6 @@ void Ms::run(RenderingContext& ctx)
 
 	// Set some state anyway because other stages may depend on it
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
-	cmdb->setPolygonOffset(0.0, 0.0);
 
 	for(U i = 0; i < m_r->getThreadPool().getThreadsCount(); ++i)
 	{

@@ -268,7 +268,7 @@ Error Sm::doSpotLight(SceneNode& light, CommandBufferPtr& cmdb, FramebufferPtr& 
 	}
 
 	CommandBufferInitInfo cinf;
-	cinf.m_flags = CommandBufferFlag::SECOND_LEVEL;
+	cinf.m_flags = CommandBufferFlag::SECOND_LEVEL | CommandBufferFlag::GRAPHICS_WORK;
 	cinf.m_framebuffer = fb;
 	cmdb = m_r->getGrManager().newInstance<CommandBuffer>(cinf);
 
@@ -301,7 +301,7 @@ Error Sm::doOmniLight(
 		if(start != end)
 		{
 			CommandBufferInitInfo cinf;
-			cinf.m_flags = CommandBufferFlag::SECOND_LEVEL;
+			cinf.m_flags = CommandBufferFlag::SECOND_LEVEL | CommandBufferFlag::GRAPHICS_WORK;
 			cinf.m_framebuffer = fbs[frCount];
 			cmdbs[frCount] = m_r->getGrManager().newInstance<CommandBuffer>(cinf);
 
