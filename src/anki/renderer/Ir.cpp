@@ -438,12 +438,14 @@ void Ir::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx
 	cmdb->bindTexture(0, 0, face.m_gbufferColorRts[0]);
 	cmdb->bindTexture(0, 1, face.m_gbufferColorRts[1]);
 	cmdb->bindTexture(0, 2, face.m_gbufferColorRts[2]);
+	cmdb->bindTexture(0, 3, face.m_gbufferDepthRt);
 
 	cmdb->setVertexAttribute(0, 0, PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT), 0);
 
 	cmdb->setBlendMethods(0, BlendMethod::ONE, BlendMethod::ONE);
 	cmdb->setDepthCompareFunction(CompareOperation::GREATER);
 	cmdb->setDepthWrite(false);
+	cmdb->setCullMode(FaceSelectionMask::FRONT);
 
 	// Process all lights
 	const Mat4& vpMat = frc.getViewProjectionMatrix();
@@ -571,6 +573,7 @@ void Ir::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx
 	cmdb->setBlendMethods(0, BlendMethod::ONE, BlendMethod::ZERO);
 	cmdb->setDepthCompareFunction(CompareOperation::LESS);
 	cmdb->setDepthWrite(true);
+	cmdb->setCullMode(FaceSelectionMask::BACK);
 }
 
 void Ir::computeIrradiance(RenderingContext& rctx, U layer, U faceIdx)

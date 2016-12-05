@@ -52,15 +52,18 @@ public:
 	}
 
 private:
+	class S
+	{
+	public:
+		U8 m_x;
+		U8 m_y;
+		U8 m_z;
+		U8 m_pad_;
+	};
+
 	union
 	{
-		struct
-		{
-			U8 m_x;
-			U8 m_y;
-			U8 m_z;
-			U8 m_pad_;
-		} m_v;
+		S m_v;
 		U32 m_u32;
 	};
 };

@@ -8,6 +8,7 @@
 #include <cstring>
 #include <algorithm>
 #include <pthread.h>
+#include <semaphore.h>
 
 namespace anki
 {
@@ -298,6 +299,54 @@ Bool Barrier::wait()
 	}
 
 	return true;
+}
+
+Semaphore::Semaphore(I32 val)
+{
+	sem_t* sem = static_cast<sem_t*>(malloc(sizeof(sem_t)));
+	m_impl = sem;
+	if(m_impl == nullptr)
+	{
+		ANKI_LOGF("Out of memory");
+	}
+
+	if(sem_init(sem, 0, val))
+	{
+		ANKI_LOGF("sem_init() failed");
+	}
+}
+
+Semaphore::~Semaphore()
+{
+	if(m_impl)
+	{
+		sem_t* sem = static_cast<sem_t*>(m_impl);
+		if(sem_destroy(sem))
+		{
+			ANKI_LOGE("sem_destroy() failed");
+		}
+
+		free(m_impl);
+		m_impl = nullptr;
+	}
+}
+
+void Semaphore::wait()
+{
+	ANKI_ASSERT(m_impl);
+	if(ANKI_UNLIKELY(sem_wait(static_cast<sem_t*>(m_impl))))
+	{
+		ANKI_LOGF("sem_wait() failed");
+	}
+}
+
+void Semaphore::post()
+{
+	ANKI_ASSERT(m_impl);
+	if(ANKI_UNLIKELY(sem_post(static_cast<sem_t*>(m_impl))))
+	{
+		ANKI_LOGF("sem_post() failed");
+	}
 }
 
 } // end namespace anki

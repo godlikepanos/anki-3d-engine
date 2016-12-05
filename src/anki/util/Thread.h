@@ -184,6 +184,24 @@ public:
 private:
 	void* m_impl = nullptr;
 };
+
+/// Semaphore for thread synchronization.
+class Semaphore : public NonCopyable
+{
+public:
+	Semaphore(I32 initialValue);
+
+	~Semaphore();
+
+	/// Same as sem_wait().
+	void wait();
+
+	/// Same as sem_post().
+	void post();
+
+private:
+	void* m_impl = nullptr;
+};
 /// @}
 
 } // end namespace anki

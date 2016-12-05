@@ -131,7 +131,7 @@ public:
 		ANKI_ASSERT(minx != MAX_U16 && miny != MAX_U16 && maxx != MAX_U16 && maxy != MAX_U16);
 		if(m_viewport[0] != minx || m_viewport[1] != miny || m_viewport[2] != maxx || m_viewport[3] != maxy)
 		{
-			m_viewport = {minx, miny, maxx, maxy};
+			m_viewport = {{minx, miny, maxx, maxy}};
 			return true;
 		}
 		return false;
@@ -373,13 +373,13 @@ public:
 
 	Bool maybeEnableBlend()
 	{
-		Bool8 enable = 0;
+		Bool enable = false;
 
 		for(U i = 0; i < m_fb->getColorBufferCount(); ++i)
 		{
 			if(!!(m_colorWriteMasks[i]) && (m_enableBlendMask & (1 << i)))
 			{
-				enable = enable || 1;
+				enable = true;
 			}
 		}
 
@@ -431,19 +431,35 @@ public:
 	{
 	public:
 		TextureImpl* m_tex = nullptr;
-		SamplerImpl* m_sampler = nullptr;
+		SamplerImpl* m_sampler = reinterpret_cast<SamplerImpl*>(0x1);
 		DepthStencilAspectMask m_aspect;
 	};
 
 	Array2d<TextureBinding, MAX_BOUND_RESOURCE_GROUPS, MAX_TEXTURE_BINDINGS> m_textures;
 
-	Bool bindTexture(U32 set, U32 binding, TexturePtr tex, DepthStencilAspectMask aspect)
+	Bool bindTexture(
+		U32 set, U32 binding, TexturePtr tex, DepthStencilAspectMask aspect, Bool& texChanged, Bool& samplerChanged)
 	{
 		TextureBinding& b = m_textures[set][binding];
-		b.m_tex = tex->m_impl.get();
-		b.m_sampler = nullptr;
+		TextureImpl* texi = tex->m_impl.get();
+
+		texChanged = false;
+		samplerChanged = false;
+
+		if(texi != b.m_tex)
+		{
+			b.m_tex = texi;
+			texChanged = true;
+		}
+
+		if(b.m_sampler != nullptr)
+		{
+			b.m_sampler = nullptr;
+			samplerChanged = true;
+		}
+
 		b.m_aspect = aspect;
-		return true;
+		return samplerChanged || texChanged;
 	}
 
 	Bool bindTextureAndSampler(U32 set, U32 binding, TexturePtr tex, SamplerPtr sampler, DepthStencilAspectMask aspect)

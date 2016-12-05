@@ -621,25 +621,35 @@ void CommandBuffer::bindTexture(U32 set, U32 binding, TexturePtr tex, DepthStenc
 	public:
 		U32 m_unit;
 		TexturePtr m_tex;
+		Bool8 m_samplerChanged;
 
-		Cmd(U32 unit, TexturePtr tex)
+		Cmd(U32 unit, TexturePtr tex, Bool samplerChanged)
 			: m_unit(unit)
 			, m_tex(tex)
+			, m_samplerChanged(samplerChanged)
 		{
 		}
 
 		Error operator()(GlState&)
 		{
-			glBindTextureUnit(m_unit, m_tex->m_impl->getGlName());
-			glBindSampler(m_unit, 0);
+			if(m_tex)
+			{
+				glBindTextureUnit(m_unit, m_tex->m_impl->getGlName());
+			}
+
+			if(m_samplerChanged)
+			{
+				glBindSampler(m_unit, 0);
+			}
 			return ErrorCode::NONE;
 		}
 	};
 
-	if(m_impl->m_state.bindTexture(set, binding, tex, aspect))
+	Bool texChanged, samplerChanged;
+	if(m_impl->m_state.bindTexture(set, binding, tex, aspect, texChanged, samplerChanged))
 	{
 		U unit = binding + MAX_TEXTURE_BINDINGS * set;
-		m_impl->pushBackNewCommand<Cmd>(unit, tex);
+		m_impl->pushBackNewCommand<Cmd>(unit, (texChanged) ? tex : TexturePtr(), samplerChanged);
 	}
 }
 
@@ -877,6 +887,10 @@ void CommandBuffer::bindShaderProgram(ShaderProgramPtr prog)
 	if(m_impl->m_state.bindShaderProgram(prog))
 	{
 		m_impl->pushBackNewCommand<Cmd>(prog);
+	}
+	else
+	{
+		ANKI_TRACE_INC_COUNTER(GL_PROGS_SKIPPED, 1);
 	}
 }
 

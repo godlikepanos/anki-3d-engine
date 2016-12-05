@@ -7,6 +7,8 @@
 
 #include "shaders/Common.glsl"
 
+const float INDIRECT_BUMP = 2.5; // A sort of hack
+
 layout(location = 0) in vec2 in_uv;
 layout(location = 0) out vec3 out_color;
 
@@ -53,7 +55,7 @@ void main()
 				vec3 col = texture(u_envTex, vec4(r, texArrIdx)).rgb;
 
 				float lambert = max(0.0, dot(r, ri));
-				outCol += col * lambert;
+				outCol += col * lambert * INDIRECT_BUMP;
 				weight += lambert;
 			}
 		}
