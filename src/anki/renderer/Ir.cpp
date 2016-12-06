@@ -189,14 +189,12 @@ void Ir::initFaceInfo(U cacheEntryIdx, U faceIdx)
 	{
 		fbInit.m_colorAttachments[j].m_texture = face.m_gbufferColorRts[j];
 		fbInit.m_colorAttachments[j].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-		fbInit.m_colorAttachments[j].m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 	}
 
 	fbInit.m_depthStencilAttachment.m_texture = face.m_gbufferDepthRt;
-	fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectMask::DEPTH;
+	fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
 	fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
 	fbInit.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0;
-	fbInit.m_depthStencilAttachment.m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
 
 	face.m_msFb = getGrManager().newInstance<Framebuffer>(fbInit);
 
@@ -208,12 +206,9 @@ void Ir::initFaceInfo(U cacheEntryIdx, U faceIdx)
 	fbInit.m_colorAttachments[0].m_surface.m_layer = cacheEntryIdx;
 	fbInit.m_colorAttachments[0].m_surface.m_face = faceIdx;
 	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
-	fbInit.m_colorAttachments[0].m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
 	fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::LOAD;
 	fbInit.m_depthStencilAttachment.m_texture = face.m_gbufferDepthRt;
-	fbInit.m_depthStencilAttachment.m_usageInsideRenderPass =
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ | TextureUsageBit::SAMPLED_FRAGMENT;
-	fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectMask::DEPTH;
+	fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
 
 	face.m_isFb = getGrManager().newInstance<Framebuffer>(fbInit);
 
@@ -224,7 +219,6 @@ void Ir::initFaceInfo(U cacheEntryIdx, U faceIdx)
 	fbInit.m_colorAttachments[0].m_surface.m_layer = cacheEntryIdx;
 	fbInit.m_colorAttachments[0].m_surface.m_face = faceIdx;
 	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-	fbInit.m_colorAttachments[0].m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 
 	face.m_irradianceFb = getGrManager().newInstance<Framebuffer>(fbInit);
 }
@@ -442,10 +436,10 @@ void Ir::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx
 
 	cmdb->setVertexAttribute(0, 0, PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT), 0);
 
-	cmdb->setBlendMethods(0, BlendMethod::ONE, BlendMethod::ONE);
-	cmdb->setDepthCompareFunction(CompareOperation::GREATER);
+	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ONE);
+	cmdb->setDepthCompareOperation(CompareOperation::GREATER);
 	cmdb->setDepthWrite(false);
-	cmdb->setCullMode(FaceSelectionMask::FRONT);
+	cmdb->setCullMode(FaceSelectionBit::FRONT);
 
 	// Process all lights
 	const Mat4& vpMat = frc.getViewProjectionMatrix();
@@ -570,10 +564,10 @@ void Ir::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx
 		TextureSurfaceInfo(0, 0, faceIdx, layer));
 
 	// Restore state
-	cmdb->setBlendMethods(0, BlendMethod::ONE, BlendMethod::ZERO);
-	cmdb->setDepthCompareFunction(CompareOperation::LESS);
+	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
+	cmdb->setDepthCompareOperation(CompareOperation::LESS);
 	cmdb->setDepthWrite(true);
-	cmdb->setCullMode(FaceSelectionMask::BACK);
+	cmdb->setCullMode(FaceSelectionBit::BACK);
 }
 
 void Ir::computeIrradiance(RenderingContext& rctx, U layer, U faceIdx)

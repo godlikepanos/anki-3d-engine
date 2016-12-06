@@ -57,19 +57,19 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 		ANKI_ASSERT((tex.m_dsAspect & att.m_aspect) == att.m_aspect);
 
 		GLenum binding;
-		if(att.m_aspect == DepthStencilAspectMask::DEPTH)
+		if(att.m_aspect == DepthStencilAspectBit::DEPTH)
 		{
 			ANKI_ASSERT(tex.m_format == GL_DEPTH_COMPONENT || tex.m_format == GL_DEPTH_STENCIL);
 			binding = GL_DEPTH_ATTACHMENT;
 			m_dsAspect = att.m_aspect;
 		}
-		else if(att.m_aspect == DepthStencilAspectMask::STENCIL)
+		else if(att.m_aspect == DepthStencilAspectBit::STENCIL)
 		{
 			ANKI_ASSERT(tex.m_format == GL_STENCIL_INDEX || tex.m_format == GL_DEPTH_STENCIL);
 			binding = GL_STENCIL_ATTACHMENT;
 			m_dsAspect = att.m_aspect;
 		}
-		else if(att.m_aspect == DepthStencilAspectMask::DEPTH_STENCIL)
+		else if(att.m_aspect == DepthStencilAspectBit::DEPTH_STENCIL)
 		{
 			ANKI_ASSERT(tex.m_format == GL_DEPTH_STENCIL);
 			binding = GL_DEPTH_STENCIL_ATTACHMENT;
@@ -78,12 +78,12 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 		else if(tex.m_format == GL_DEPTH_COMPONENT)
 		{
 			binding = GL_DEPTH_ATTACHMENT;
-			m_dsAspect = DepthStencilAspectMask::DEPTH;
+			m_dsAspect = DepthStencilAspectBit::DEPTH;
 		}
 		else if(tex.m_format == GL_STENCIL_INDEX)
 		{
 			binding = GL_STENCIL_ATTACHMENT;
-			m_dsAspect = DepthStencilAspectMask::STENCIL;
+			m_dsAspect = DepthStencilAspectBit::STENCIL;
 		}
 		else
 		{
@@ -219,7 +219,7 @@ void FramebufferImpl::bind(const GlState& state)
 		}
 
 		// Clear depth
-		if(!!(m_dsAspect & DepthStencilAspectMask::DEPTH) && m_in.m_depthStencilAttachment.m_texture.isCreated()
+		if(!!(m_dsAspect & DepthStencilAspectBit::DEPTH) && m_in.m_depthStencilAttachment.m_texture.isCreated()
 			&& m_in.m_depthStencilAttachment.m_loadOperation == AttachmentLoadOperation::CLEAR)
 		{
 			// Enable write mask in case a pipeline changed it (else no clear will happen) and then restore state
@@ -237,7 +237,7 @@ void FramebufferImpl::bind(const GlState& state)
 		}
 
 		// Clear stencil
-		if(!!(m_dsAspect & DepthStencilAspectMask::STENCIL) && m_in.m_depthStencilAttachment.m_texture.isCreated()
+		if(!!(m_dsAspect & DepthStencilAspectBit::STENCIL) && m_in.m_depthStencilAttachment.m_texture.isCreated()
 			&& m_in.m_depthStencilAttachment.m_stencilLoadOperation == AttachmentLoadOperation::CLEAR)
 		{
 			// Enable write mask in case a pipeline changed it (else no clear will happen) and then restore state

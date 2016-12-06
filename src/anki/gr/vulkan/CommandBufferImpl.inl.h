@@ -68,19 +68,19 @@ inline void CommandBufferImpl::setPolygonOffset(F32 factor, F32 units)
 	}
 }
 
-inline void CommandBufferImpl::setStencilCompareMask(FaceSelectionMask face, U32 mask)
+inline void CommandBufferImpl::setStencilCompareMask(FaceSelectionBit face, U32 mask)
 {
 	commandCommon();
 
 	VkStencilFaceFlags flags = 0;
 
-	if(!!(face & FaceSelectionMask::FRONT) && m_stencilCompareMasks[0] != mask)
+	if(!!(face & FaceSelectionBit::FRONT) && m_stencilCompareMasks[0] != mask)
 	{
 		m_stencilCompareMasks[0] = mask;
 		flags = VK_STENCIL_FACE_FRONT_BIT;
 	}
 
-	if(!!(face & FaceSelectionMask::BACK) && m_stencilCompareMasks[1] != mask)
+	if(!!(face & FaceSelectionBit::BACK) && m_stencilCompareMasks[1] != mask)
 	{
 		m_stencilCompareMasks[1] = mask;
 		flags |= VK_STENCIL_FACE_BACK_BIT;
@@ -92,19 +92,19 @@ inline void CommandBufferImpl::setStencilCompareMask(FaceSelectionMask face, U32
 	}
 }
 
-inline void CommandBufferImpl::setStencilWriteMask(FaceSelectionMask face, U32 mask)
+inline void CommandBufferImpl::setStencilWriteMask(FaceSelectionBit face, U32 mask)
 {
 	commandCommon();
 
 	VkStencilFaceFlags flags = 0;
 
-	if(!!(face & FaceSelectionMask::FRONT) && m_stencilWriteMasks[0] != mask)
+	if(!!(face & FaceSelectionBit::FRONT) && m_stencilWriteMasks[0] != mask)
 	{
 		m_stencilWriteMasks[0] = mask;
 		flags = VK_STENCIL_FACE_FRONT_BIT;
 	}
 
-	if(!!(face & FaceSelectionMask::BACK) && m_stencilWriteMasks[1] != mask)
+	if(!!(face & FaceSelectionBit::BACK) && m_stencilWriteMasks[1] != mask)
 	{
 		m_stencilWriteMasks[1] = mask;
 		flags |= VK_STENCIL_FACE_BACK_BIT;
@@ -116,19 +116,19 @@ inline void CommandBufferImpl::setStencilWriteMask(FaceSelectionMask face, U32 m
 	}
 }
 
-inline void CommandBufferImpl::setStencilReference(FaceSelectionMask face, U32 ref)
+inline void CommandBufferImpl::setStencilReference(FaceSelectionBit face, U32 ref)
 {
 	commandCommon();
 
 	VkStencilFaceFlags flags = 0;
 
-	if(!!(face & FaceSelectionMask::FRONT) && m_stencilReferenceMasks[0] != ref)
+	if(!!(face & FaceSelectionBit::FRONT) && m_stencilReferenceMasks[0] != ref)
 	{
 		m_stencilReferenceMasks[0] = ref;
 		flags = VK_STENCIL_FACE_FRONT_BIT;
 	}
 
-	if(!!(face & FaceSelectionMask::BACK) && m_stencilReferenceMasks[1] != ref)
+	if(!!(face & FaceSelectionBit::BACK) && m_stencilReferenceMasks[1] != ref)
 	{
 		m_stencilWriteMasks[1] = ref;
 		flags |= VK_STENCIL_FACE_BACK_BIT;
@@ -427,7 +427,7 @@ inline void CommandBufferImpl::clearTextureInternal(
 }
 
 inline void CommandBufferImpl::clearTextureSurface(
-	TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& clearValue, DepthStencilAspectMask aspect)
+	TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& clearValue, DepthStencilAspectBit aspect)
 {
 	const TextureImpl& impl = *tex->m_impl;
 	ANKI_ASSERT(impl.m_type != TextureType::_3D && "Not for 3D");
@@ -438,7 +438,7 @@ inline void CommandBufferImpl::clearTextureSurface(
 }
 
 inline void CommandBufferImpl::clearTextureVolume(
-	TexturePtr tex, const TextureVolumeInfo& vol, const ClearValue& clearValue, DepthStencilAspectMask aspect)
+	TexturePtr tex, const TextureVolumeInfo& vol, const ClearValue& clearValue, DepthStencilAspectBit aspect)
 {
 	const TextureImpl& impl = *tex->m_impl;
 	ANKI_ASSERT(impl.m_type == TextureType::_3D && "Only for 3D");

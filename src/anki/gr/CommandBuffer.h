@@ -172,34 +172,35 @@ public:
 	void setFillMode(FillMode mode);
 
 	/// Set cull mode.
-	void setCullMode(FaceSelectionMask mode);
+	void setCullMode(FaceSelectionBit mode);
 
 	/// Set depth offset and units. Set zeros to both to disable it.
 	void setPolygonOffset(F32 factor, F32 units);
 
 	/// Set stencil operations. To disable stencil test put StencilOperation::KEEP to all operations.
-	void setStencilOperations(FaceSelectionMask face,
+	void setStencilOperations(FaceSelectionBit face,
 		StencilOperation stencilFail,
 		StencilOperation stencilPassDepthFail,
 		StencilOperation stencilPassDepthPass);
 
-	/// Set stencil compare function.
-	void setStencilCompareFunction(FaceSelectionMask face, CompareOperation comp);
+	/// Set stencil compare operation.
+	void setStencilCompareOperation(FaceSelectionBit face, CompareOperation comp);
 
 	/// Set the stencil compare mask.
-	void setStencilCompareMask(FaceSelectionMask face, U32 mask);
+	void setStencilCompareMask(FaceSelectionBit face, U32 mask);
 
 	/// Set the stencil write mask.
-	void setStencilWriteMask(FaceSelectionMask face, U32 mask);
+	void setStencilWriteMask(FaceSelectionBit face, U32 mask);
 
 	/// Set the stencil reference.
-	void setStencilReference(FaceSelectionMask face, U32 ref);
+	void setStencilReference(FaceSelectionBit face, U32 ref);
 
-	/// Enable/disable depth write.
+	/// Enable/disable depth write. To disable depth testing set depth write to false and depth compare operation to
+	/// always.
 	void setDepthWrite(Bool enable);
 
-	/// Set depth compare function.
-	void setDepthCompareFunction(CompareOperation op);
+	/// Set depth compare operation.
+	void setDepthCompareOperation(CompareOperation op);
 
 	/// Enable/disable alpha to coverage.
 	void setAlphaToCoverage(Bool enable);
@@ -207,22 +208,21 @@ public:
 	/// Set color channel write mask.
 	void setColorChannelWriteMask(U32 attachment, ColorBit mask);
 
-	/// Set blend methods. To disable blending set src to BlendMethod::ONE and dst BlendMethod::ZERO.
-	void setBlendMethods(U32 attachment, BlendMethod src, BlendMethod dst);
+	/// Set blend factors.
+	void setBlendFactors(U32 attachment, BlendFactor src, BlendFactor dst);
 
-	/// Set the blend function.
-	void setBlendFunction(U32 attachment, BlendFunction func);
+	/// Set the blend operation.
+	void setBlendOperation(U32 attachment, BlendOperation func);
 
 	/// Bind texture.
-	void bindTexture(
-		U32 set, U32 binding, TexturePtr tex, DepthStencilAspectMask aspect = DepthStencilAspectMask::DEPTH);
+	void bindTexture(U32 set, U32 binding, TexturePtr tex, DepthStencilAspectBit aspect = DepthStencilAspectBit::DEPTH);
 
 	/// Bind texture and sample.
 	void bindTextureAndSampler(U32 set,
 		U32 binding,
 		TexturePtr tex,
 		SamplerPtr sampler,
-		DepthStencilAspectMask aspect = DepthStencilAspectMask::DEPTH);
+		DepthStencilAspectBit aspect = DepthStencilAspectBit::DEPTH);
 
 	/// Bind uniform buffer.
 	void bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset);
@@ -291,7 +291,7 @@ public:
 	void clearTextureSurface(TexturePtr tex,
 		const TextureSurfaceInfo& surf,
 		const ClearValue& clearValue,
-		DepthStencilAspectMask aspect = DepthStencilAspectMask::NONE);
+		DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE);
 
 	/// Clear a volume out of a 3D texture.
 	/// @param tex The texture to clear.
@@ -301,7 +301,7 @@ public:
 	void clearTextureVolume(TexturePtr tex,
 		const TextureVolumeInfo& vol,
 		const ClearValue& clearValue,
-		DepthStencilAspectMask aspect = DepthStencilAspectMask::NONE);
+		DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE);
 
 	/// Fill a buffer with some value.
 	/// @param[in,out] buff The buffer to fill.

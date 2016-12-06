@@ -346,18 +346,18 @@ VkPolygonMode convertFillMode(FillMode ak)
 	return out;
 }
 
-VkCullModeFlags convertCullMode(FaceSelectionMask ak)
+VkCullModeFlags convertCullMode(FaceSelectionBit ak)
 {
 	VkCullModeFlags out = 0;
 	switch(ak)
 	{
-	case FaceSelectionMask::FRONT:
+	case FaceSelectionBit::FRONT:
 		out = VK_CULL_MODE_FRONT_BIT;
 		break;
-	case FaceSelectionMask::BACK:
+	case FaceSelectionBit::BACK:
 		out = VK_CULL_MODE_BACK_BIT;
 		break;
-	case FaceSelectionMask::FRONT_AND_BACK:
+	case FaceSelectionBit::FRONT_AND_BACK:
 		out = VK_CULL_MODE_FRONT_BIT | VK_CULL_MODE_BACK_BIT;
 		break;
 	default:
@@ -367,66 +367,66 @@ VkCullModeFlags convertCullMode(FaceSelectionMask ak)
 	return out;
 }
 
-VkBlendFactor convertBlendMethod(BlendMethod ak)
+VkBlendFactor convertBlendFactor(BlendFactor ak)
 {
 	VkBlendFactor out = VK_BLEND_FACTOR_MAX_ENUM;
 	switch(ak)
 	{
-	case BlendMethod::ZERO:
+	case BlendFactor::ZERO:
 		out = VK_BLEND_FACTOR_ZERO;
 		break;
-	case BlendMethod::ONE:
+	case BlendFactor::ONE:
 		out = VK_BLEND_FACTOR_ONE;
 		break;
-	case BlendMethod::SRC_COLOR:
+	case BlendFactor::SRC_COLOR:
 		out = VK_BLEND_FACTOR_SRC_COLOR;
 		break;
-	case BlendMethod::ONE_MINUS_SRC_COLOR:
+	case BlendFactor::ONE_MINUS_SRC_COLOR:
 		out = VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR;
 		break;
-	case BlendMethod::DST_COLOR:
+	case BlendFactor::DST_COLOR:
 		out = VK_BLEND_FACTOR_DST_COLOR;
 		break;
-	case BlendMethod::ONE_MINUS_DST_COLOR:
+	case BlendFactor::ONE_MINUS_DST_COLOR:
 		out = VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR;
 		break;
-	case BlendMethod::SRC_ALPHA:
+	case BlendFactor::SRC_ALPHA:
 		out = VK_BLEND_FACTOR_SRC_ALPHA;
 		break;
-	case BlendMethod::ONE_MINUS_SRC_ALPHA:
+	case BlendFactor::ONE_MINUS_SRC_ALPHA:
 		out = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 		break;
-	case BlendMethod::DST_ALPHA:
+	case BlendFactor::DST_ALPHA:
 		out = VK_BLEND_FACTOR_DST_ALPHA;
 		break;
-	case BlendMethod::ONE_MINUS_DST_ALPHA:
+	case BlendFactor::ONE_MINUS_DST_ALPHA:
 		out = VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA;
 		break;
-	case BlendMethod::CONSTANT_COLOR:
+	case BlendFactor::CONSTANT_COLOR:
 		out = VK_BLEND_FACTOR_CONSTANT_COLOR;
 		break;
-	case BlendMethod::ONE_MINUS_CONSTANT_COLOR:
+	case BlendFactor::ONE_MINUS_CONSTANT_COLOR:
 		out = VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR;
 		break;
-	case BlendMethod::CONSTANT_ALPHA:
+	case BlendFactor::CONSTANT_ALPHA:
 		out = VK_BLEND_FACTOR_CONSTANT_ALPHA;
 		break;
-	case BlendMethod::ONE_MINUS_CONSTANT_ALPHA:
+	case BlendFactor::ONE_MINUS_CONSTANT_ALPHA:
 		out = VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA;
 		break;
-	case BlendMethod::SRC_ALPHA_SATURATE:
+	case BlendFactor::SRC_ALPHA_SATURATE:
 		out = VK_BLEND_FACTOR_SRC_ALPHA_SATURATE;
 		break;
-	case BlendMethod::SRC1_COLOR:
+	case BlendFactor::SRC1_COLOR:
 		out = VK_BLEND_FACTOR_SRC1_COLOR;
 		break;
-	case BlendMethod::ONE_MINUS_SRC1_COLOR:
+	case BlendFactor::ONE_MINUS_SRC1_COLOR:
 		out = VK_BLEND_FACTOR_ONE_MINUS_SRC1_COLOR;
 		break;
-	case BlendMethod::SRC1_ALPHA:
+	case BlendFactor::SRC1_ALPHA:
 		out = VK_BLEND_FACTOR_SRC1_ALPHA;
 		break;
-	case BlendMethod::ONE_MINUS_SRC1_ALPHA:
+	case BlendFactor::ONE_MINUS_SRC1_ALPHA:
 		out = VK_BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA;
 		break;
 	default:
@@ -436,25 +436,25 @@ VkBlendFactor convertBlendMethod(BlendMethod ak)
 	return out;
 }
 
-VkBlendOp convertBlendFunc(BlendFunction ak)
+VkBlendOp convertBlendFunc(BlendOperation ak)
 {
 	VkBlendOp out = VK_BLEND_OP_MAX_ENUM;
 
 	switch(ak)
 	{
-	case BlendFunction::ADD:
+	case BlendOperation::ADD:
 		out = VK_BLEND_OP_ADD;
 		break;
-	case BlendFunction::SUBTRACT:
+	case BlendOperation::SUBTRACT:
 		out = VK_BLEND_OP_SUBTRACT;
 		break;
-	case BlendFunction::REVERSE_SUBTRACT:
+	case BlendOperation::REVERSE_SUBTRACT:
 		out = VK_BLEND_OP_REVERSE_SUBTRACT;
 		break;
-	case BlendFunction::MIN:
+	case BlendOperation::MIN:
 		out = VK_BLEND_OP_MIN;
 		break;
-	case BlendFunction::MAX:
+	case BlendOperation::MAX:
 		out = VK_BLEND_OP_MAX;
 		break;
 	default:

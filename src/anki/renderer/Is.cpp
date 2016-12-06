@@ -133,7 +133,6 @@ Error Is::initInternal(const ConfigSet& config)
 	fbInit.m_colorAttachmentCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-	fbInit.m_colorAttachments[0].m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 	TextureInitInfo texinit;
@@ -176,7 +175,7 @@ void Is::run(RenderingContext& ctx)
 	cmdb->bindTexture(0, 0, m_r->getMs().m_rt0);
 	cmdb->bindTexture(0, 1, m_r->getMs().m_rt1);
 	cmdb->bindTexture(0, 2, m_r->getMs().m_rt2);
-	cmdb->bindTexture(0, 3, m_r->getMs().m_depthRt, DepthStencilAspectMask::DEPTH);
+	cmdb->bindTexture(0, 3, m_r->getMs().m_depthRt, DepthStencilAspectBit::DEPTH);
 	cmdb->bindTexture(0, 4, m_r->getSm().m_spotTexArray);
 	cmdb->bindTexture(0, 5, m_r->getSm().m_omniTexArray);
 	cmdb->bindTexture(0, 6, m_r->getIr().getReflectionTexture());

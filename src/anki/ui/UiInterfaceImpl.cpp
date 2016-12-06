@@ -53,8 +53,8 @@ Error UiInterfaceImpl::init(GrManager* gr, ResourceManager* rc)
 
 	ppinit.m_color.m_attachmentCount = 1;
 	ppinit.m_color.m_attachments[0].m_format = PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM);
-	ppinit.m_color.m_attachments[0].m_srcBlendMethod = BlendMethod::SRC_ALPHA;
-	ppinit.m_color.m_attachments[0].m_dstBlendMethod = BlendMethod::ONE_MINUS_SRC_ALPHA;
+	ppinit.m_color.m_attachments[0].m_srcBlendFactor = BlendFactor::SRC_ALPHA;
+	ppinit.m_color.m_attachments[0].m_dstBlendFactor = BlendFactor::ONE_MINUS_SRC_ALPHA;
 
 	ppinit.m_shaders[U(ShaderType::VERTEX)] = m_stages[StageId::LINES].m_vShader->getGrShader();
 	ppinit.m_shaders[U(ShaderType::FRAGMENT)] = m_stages[StageId::LINES].m_fShader->getGrShader();

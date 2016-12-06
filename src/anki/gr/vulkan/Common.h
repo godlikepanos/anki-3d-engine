@@ -77,13 +77,13 @@ ANKI_USE_RESULT VkPrimitiveTopology convertTopology(PrimitiveTopology ak);
 ANKI_USE_RESULT VkPolygonMode convertFillMode(FillMode ak);
 
 /// Convert cull mode.
-ANKI_USE_RESULT VkCullModeFlags convertCullMode(FaceSelectionMask ak);
+ANKI_USE_RESULT VkCullModeFlags convertCullMode(FaceSelectionBit ak);
 
 /// Convert blend method.
-ANKI_USE_RESULT VkBlendFactor convertBlendMethod(BlendMethod ak);
+ANKI_USE_RESULT VkBlendFactor convertBlendFactor(BlendFactor ak);
 
 /// Convert blend function.
-ANKI_USE_RESULT VkBlendOp convertBlendFunc(BlendFunction ak);
+ANKI_USE_RESULT VkBlendOp convertBlendFunc(BlendOperation ak);
 
 /// Convert color write mask.
 inline ANKI_USE_RESULT VkColorComponentFlags convertColorWriteMask(ColorBit ak)

@@ -43,13 +43,13 @@ public:
 	Bool hasDepthBuffer() const
 	{
 		return m_in.m_depthStencilAttachment.m_texture.isCreated()
-			&& !!(m_in.m_depthStencilAttachment.m_aspect & DepthStencilAspectMask::DEPTH);
+			&& !!(m_in.m_depthStencilAttachment.m_aspect & DepthStencilAspectBit::DEPTH);
 	}
 
 	Bool hasStencilBuffer() const
 	{
 		return m_in.m_depthStencilAttachment.m_texture.isCreated()
-			&& !!(m_in.m_depthStencilAttachment.m_aspect & DepthStencilAspectMask::STENCIL);
+			&& !!(m_in.m_depthStencilAttachment.m_aspect & DepthStencilAspectBit::STENCIL);
 	}
 
 private:
@@ -59,7 +59,7 @@ private:
 	Array<GLenum, MAX_COLOR_ATTACHMENTS + 1> m_invalidateBuffers;
 	U8 m_invalidateBuffersCount = 0;
 	Bool8 m_bindDefault = false;
-	DepthStencilAspectMask m_dsAspect = DepthStencilAspectMask::NONE;
+	DepthStencilAspectBit m_dsAspect = DepthStencilAspectBit::NONE;
 
 	/// Attach a texture
 	static void attachTextureInternal(GLenum attachment, const TextureImpl& tex, const FramebufferAttachmentInfo& info);

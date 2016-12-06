@@ -43,13 +43,13 @@ enum class FillMode : U8
 	COUNT
 };
 
-enum class FaceSelectionMask : U8
+enum class FaceSelectionBit : U8
 {
 	FRONT = 1 << 0,
 	BACK = 1 << 1,
 	FRONT_AND_BACK = FRONT | BACK
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(FaceSelectionMask, inline)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(FaceSelectionBit, inline)
 
 enum class CompareOperation : U8
 {
@@ -77,7 +77,7 @@ enum class StencilOperation : U8
 	COUNT
 };
 
-enum class BlendMethod : U8
+enum class BlendFactor : U8
 {
 	ZERO,
 	ONE,
@@ -101,7 +101,7 @@ enum class BlendMethod : U8
 	COUNT
 };
 
-enum class BlendFunction : U8
+enum class BlendOperation : U8
 {
 	ADD,
 	SUBTRACT,
@@ -407,14 +407,14 @@ enum class BufferMapAccessBit : U8
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferMapAccessBit, inline)
 
 /// A way to distinguish the aspect of a depth stencil texture.
-enum class DepthStencilAspectMask : U8
+enum class DepthStencilAspectBit : U8
 {
 	NONE = 0,
 	DEPTH = 1 << 0,
 	STENCIL = 1 << 1,
 	DEPTH_STENCIL = DEPTH | STENCIL
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DepthStencilAspectMask, inline)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DepthStencilAspectBit, inline)
 
 /// Index buffer's index type.
 enum class IndexType : U8

@@ -66,7 +66,6 @@ Error Volumetric::initInternal(const ConfigSet& config)
 	fbInit.m_colorAttachmentCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::LOAD;
-	fbInit.m_colorAttachments[0].m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 	return ErrorCode::NONE;
@@ -103,7 +102,7 @@ void Volumetric::run(RenderingContext& ctx)
 
 	// pass
 	cmdb->setViewport(0, 0, m_r->getWidth() / VOLUMETRIC_FRACTION, m_r->getHeight() / VOLUMETRIC_FRACTION);
-	cmdb->setBlendMethods(0, BlendMethod::SRC_ALPHA, BlendMethod::ONE_MINUS_SRC_ALPHA);
+	cmdb->setBlendFactors(0, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA);
 
 	cmdb->bindTexture(0, 0, m_r->getDepthDownscale().m_qd.m_depthRt);
 	cmdb->bindTexture(0, 1, m_r->getSm().m_spotTexArray);
@@ -124,7 +123,7 @@ void Volumetric::run(RenderingContext& ctx)
 	cmdb->endRenderPass();
 
 	// Restore state
-	cmdb->setBlendMethods(0, BlendMethod::ONE, BlendMethod::ZERO);
+	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
 }
 
 } // end namespace anki

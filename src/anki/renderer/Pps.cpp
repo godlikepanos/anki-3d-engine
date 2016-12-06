@@ -52,7 +52,6 @@ Error Pps::initInternal(const ConfigSet& config)
 		fbInit.m_colorAttachmentCount = 1;
 		fbInit.m_colorAttachments[0].m_texture = m_rt;
 		fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-		fbInit.m_colorAttachments[0].m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 		m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 	}
 

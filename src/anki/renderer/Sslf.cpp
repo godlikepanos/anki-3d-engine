@@ -45,14 +45,14 @@ void Sslf::run(RenderingContext& ctx)
 
 	// Draw to the SSLF FB
 	cmdb->bindShaderProgram(m_prog);
-	cmdb->setBlendMethods(0, BlendMethod::ONE, BlendMethod::ONE);
+	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ONE);
 	cmdb->bindTexture(0, 0, m_r->getBloom().m_extractExposure.m_rt);
 	cmdb->bindTexture(0, 1, m_lensDirtTex->getGrTexture());
 
 	m_r->drawQuad(cmdb);
 
 	// Retore state
-	cmdb->setBlendMethods(0, BlendMethod::ONE, BlendMethod::ZERO);
+	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
 }
 
 } // end namespace anki

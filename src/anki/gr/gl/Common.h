@@ -40,13 +40,13 @@ GLenum convertCompareOperation(CompareOperation in);
 
 GLenum convertStencilOperation(StencilOperation in);
 
-inline GLenum convertFaceMode(FaceSelectionMask in)
+inline GLenum convertFaceMode(FaceSelectionBit in)
 {
-	if(in == FaceSelectionMask::FRONT)
+	if(in == FaceSelectionBit::FRONT)
 	{
 		return GL_FRONT;
 	}
-	else if(in == FaceSelectionMask::BACK)
+	else if(in == FaceSelectionBit::BACK)
 	{
 		return GL_BACK;
 	}
@@ -101,27 +101,27 @@ inline GLenum convertFillMode(FillMode mode)
 	return out;
 }
 
-GLenum convertBlendMethod(BlendMethod in);
+GLenum convertBlendFactor(BlendFactor in);
 
-inline GLenum convertBlendFunction(BlendFunction ak)
+inline GLenum convertBlendOperation(BlendOperation ak)
 {
 	GLenum out;
 
 	switch(ak)
 	{
-	case BlendFunction::ADD:
+	case BlendOperation::ADD:
 		out = GL_FUNC_ADD;
 		break;
-	case BlendFunction::SUBTRACT:
+	case BlendOperation::SUBTRACT:
 		out = GL_FUNC_SUBTRACT;
 		break;
-	case BlendFunction::REVERSE_SUBTRACT:
+	case BlendOperation::REVERSE_SUBTRACT:
 		out = GL_FUNC_REVERSE_SUBTRACT;
 		break;
-	case BlendFunction::MIN:
+	case BlendOperation::MIN:
 		out = GL_MIN;
 		break;
-	case BlendFunction::MAX:
+	case BlendOperation::MAX:
 		out = GL_MAX;
 		break;
 	default:

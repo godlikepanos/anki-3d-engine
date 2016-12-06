@@ -33,8 +33,7 @@ Error HalfDepth::init(const ConfigSet&)
 	FramebufferInitInfo fbInit;
 	fbInit.m_depthStencilAttachment.m_texture = m_depthRt;
 	fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-	fbInit.m_depthStencilAttachment.m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
-	fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectMask::DEPTH;
+	fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
 
 	m_fb = gr.newInstance<Framebuffer>(fbInit);
 
@@ -66,14 +65,14 @@ void HalfDepth::run(RenderingContext& ctx)
 	cmdb->bindTexture(0, 0, m_r->getMs().m_depthRt);
 
 	cmdb->setViewport(0, 0, m_r->getWidth() / 2, m_r->getHeight() / 2);
-	cmdb->setDepthCompareFunction(CompareOperation::ALWAYS);
+	cmdb->setDepthCompareOperation(CompareOperation::ALWAYS);
 
 	m_r->drawQuad(cmdb);
 
 	cmdb->endRenderPass();
 
 	// Restore state
-	cmdb->setDepthCompareFunction(CompareOperation::LESS);
+	cmdb->setDepthCompareOperation(CompareOperation::LESS);
 }
 
 QuarterDepth::~QuarterDepth()
@@ -99,8 +98,7 @@ Error QuarterDepth::init(const ConfigSet&)
 	FramebufferInitInfo fbInit;
 	fbInit.m_depthStencilAttachment.m_texture = m_depthRt;
 	fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-	fbInit.m_depthStencilAttachment.m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
-	fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectMask::DEPTH;
+	fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
 
 	m_fb = gr.newInstance<Framebuffer>(fbInit);
 
@@ -132,14 +130,14 @@ void QuarterDepth::run(RenderingContext& ctx)
 	cmdb->bindTexture(0, 0, m_parent->m_hd.m_depthRt);
 
 	cmdb->setViewport(0, 0, m_r->getWidth() / 4, m_r->getHeight() / 4);
-	cmdb->setDepthCompareFunction(CompareOperation::ALWAYS);
+	cmdb->setDepthCompareOperation(CompareOperation::ALWAYS);
 
 	m_r->drawQuad(cmdb);
 
 	cmdb->endRenderPass();
 
 	// Restore state
-	cmdb->setDepthCompareFunction(CompareOperation::LESS);
+	cmdb->setDepthCompareOperation(CompareOperation::LESS);
 }
 
 DepthDownscale::~DepthDownscale()

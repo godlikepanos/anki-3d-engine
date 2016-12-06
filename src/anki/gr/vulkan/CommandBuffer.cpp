@@ -137,13 +137,13 @@ void CommandBuffer::copyTextureVolumeToTextureVolume(
 }
 
 void CommandBuffer::clearTextureSurface(
-	TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& clearValue, DepthStencilAspectMask aspect)
+	TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& clearValue, DepthStencilAspectBit aspect)
 {
 	m_impl->clearTextureSurface(tex, surf, clearValue, aspect);
 }
 
 void CommandBuffer::clearTextureVolume(
-	TexturePtr tex, const TextureVolumeInfo& vol, const ClearValue& clearValue, DepthStencilAspectMask aspect)
+	TexturePtr tex, const TextureVolumeInfo& vol, const ClearValue& clearValue, DepthStencilAspectBit aspect)
 {
 	m_impl->clearTextureVolume(tex, vol, clearValue, aspect);
 }
@@ -217,17 +217,17 @@ void CommandBuffer::writeOcclusionQueryResultToBuffer(OcclusionQueryPtr query, P
 	m_impl->writeOcclusionQueryResultToBuffer(query, offset, buff);
 }
 
-void CommandBuffer::setStencilCompareMask(FaceSelectionMask face, U32 mask)
+void CommandBuffer::setStencilCompareMask(FaceSelectionBit face, U32 mask)
 {
 	m_impl->setStencilCompareMask(face, mask);
 }
 
-void CommandBuffer::setStencilWriteMask(FaceSelectionMask face, U32 mask)
+void CommandBuffer::setStencilWriteMask(FaceSelectionBit face, U32 mask)
 {
 	m_impl->setStencilWriteMask(face, mask);
 }
 
-void CommandBuffer::setStencilReference(FaceSelectionMask face, U32 ref)
+void CommandBuffer::setStencilReference(FaceSelectionBit face, U32 ref)
 {
 	m_impl->setStencilReference(face, ref);
 }

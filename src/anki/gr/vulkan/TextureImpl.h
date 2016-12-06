@@ -43,7 +43,7 @@ public:
 	U8 m_mipCount = 0;
 	U32 m_layerCount = 0;
 	VkImageAspectFlags m_aspect = 0;
-	DepthStencilAspectMask m_akAspect = DepthStencilAspectMask::NONE;
+	DepthStencilAspectBit m_akAspect = DepthStencilAspectBit::NONE;
 	TextureUsageBit m_usage = TextureUsageBit::NONE;
 	PixelFormat m_format;
 	VkFormat m_vkFormat = VK_FORMAT_UNDEFINED;
@@ -69,10 +69,10 @@ public:
 	}
 
 	void computeSubResourceRange(
-		const TextureSurfaceInfo& surf, DepthStencilAspectMask aspect, VkImageSubresourceRange& range) const;
+		const TextureSurfaceInfo& surf, DepthStencilAspectBit aspect, VkImageSubresourceRange& range) const;
 
 	void computeSubResourceRange(
-		const TextureVolumeInfo& vol, DepthStencilAspectMask aspect, VkImageSubresourceRange& range) const;
+		const TextureVolumeInfo& vol, DepthStencilAspectBit aspect, VkImageSubresourceRange& range) const;
 
 	/// Compute the layer as defined by Vulkan.
 	U computeVkArrayLayer(const TextureSurfaceInfo& surf) const;
@@ -87,12 +87,12 @@ public:
 		return (usage & m_usage) == usage;
 	}
 
-	VkImageView getOrCreateSingleSurfaceView(const TextureSurfaceInfo& surf, DepthStencilAspectMask aspect);
+	VkImageView getOrCreateSingleSurfaceView(const TextureSurfaceInfo& surf, DepthStencilAspectBit aspect);
 
-	VkImageView getOrCreateSingleLevelView(U level, DepthStencilAspectMask aspect);
+	VkImageView getOrCreateSingleLevelView(U level, DepthStencilAspectBit aspect);
 
 	/// That view will be used in descriptor sets.
-	VkImageView getOrCreateResourceGroupView(DepthStencilAspectMask aspect);
+	VkImageView getOrCreateResourceGroupView(DepthStencilAspectBit aspect);
 
 	/// By knowing the previous and new texture usage calculate the relavant info for a ppline barrier.
 	void computeBarrierInfo(TextureUsageBit before,
@@ -106,7 +106,7 @@ public:
 	/// Predict the image layout.
 	VkImageLayout computeLayout(TextureUsageBit usage, U level) const;
 
-	VkImageAspectFlags convertAspect(DepthStencilAspectMask ak) const;
+	VkImageAspectFlags convertAspect(DepthStencilAspectBit ak) const;
 
 private:
 	class ViewHasher

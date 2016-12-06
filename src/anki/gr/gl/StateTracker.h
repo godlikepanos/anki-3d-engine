@@ -152,9 +152,9 @@ public:
 		return false;
 	}
 
-	FaceSelectionMask m_cullMode = static_cast<FaceSelectionMask>(0);
+	FaceSelectionBit m_cullMode = static_cast<FaceSelectionBit>(0);
 
-	Bool setCullMode(FaceSelectionMask mode)
+	Bool setCullMode(FaceSelectionBit mode)
 	{
 		if(m_cullMode != mode)
 		{
@@ -203,13 +203,13 @@ public:
 	Array<StencilOperation, 2> m_stencilPassDepthFail = {{StencilOperation::COUNT, StencilOperation::COUNT}};
 	Array<StencilOperation, 2> m_stencilPassDepthPass = {{StencilOperation::COUNT, StencilOperation::COUNT}};
 
-	Bool setStencilOperations(FaceSelectionMask face,
+	Bool setStencilOperations(FaceSelectionBit face,
 		StencilOperation stencilFail,
 		StencilOperation stencilPassDepthFail,
 		StencilOperation stencilPassDepthPass)
 	{
 		Bool changed = false;
-		if(!!(face & FaceSelectionMask::FRONT)
+		if(!!(face & FaceSelectionBit::FRONT)
 			&& (m_stencilFail[0] != stencilFail || m_stencilPassDepthFail[0] != stencilPassDepthFail
 				   || m_stencilPassDepthPass[0] != stencilPassDepthPass))
 		{
@@ -219,7 +219,7 @@ public:
 			changed = true;
 		}
 
-		if(!!(face & FaceSelectionMask::BACK)
+		if(!!(face & FaceSelectionBit::BACK)
 			&& (m_stencilFail[1] != stencilFail || m_stencilPassDepthFail[1] != stencilPassDepthFail
 				   || m_stencilPassDepthPass[1] != stencilPassDepthPass))
 		{
@@ -235,15 +235,15 @@ public:
 	Array<Bool8, 2> m_glStencilFuncSeparateDirty = {{false, false}};
 	Array<CompareOperation, 2> m_stencilCompare = {{CompareOperation::COUNT, CompareOperation::COUNT}};
 
-	void setStencilCompareFunction(FaceSelectionMask face, CompareOperation comp)
+	void setStencilCompareOperation(FaceSelectionBit face, CompareOperation comp)
 	{
-		if(!!(face & FaceSelectionMask::FRONT) && m_stencilCompare[0] != comp)
+		if(!!(face & FaceSelectionBit::FRONT) && m_stencilCompare[0] != comp)
 		{
 			m_stencilCompare[0] = comp;
 			m_glStencilFuncSeparateDirty[0] = true;
 		}
 
-		if(!!(face & FaceSelectionMask::BACK) && m_stencilCompare[1] != comp)
+		if(!!(face & FaceSelectionBit::BACK) && m_stencilCompare[1] != comp)
 		{
 			m_stencilCompare[1] = comp;
 			m_glStencilFuncSeparateDirty[1] = true;
@@ -254,17 +254,17 @@ public:
 
 	Array<U32, 2> m_stencilCompareMask = {{DUMMY_STENCIL_MASK, DUMMY_STENCIL_MASK}};
 
-	void setStencilCompareMask(FaceSelectionMask face, U32 mask)
+	void setStencilCompareMask(FaceSelectionBit face, U32 mask)
 	{
 		ANKI_ASSERT(mask != DUMMY_STENCIL_MASK && "Oops");
 
-		if(!!(face & FaceSelectionMask::FRONT) && m_stencilCompareMask[0] != mask)
+		if(!!(face & FaceSelectionBit::FRONT) && m_stencilCompareMask[0] != mask)
 		{
 			m_stencilCompareMask[0] = mask;
 			m_glStencilFuncSeparateDirty[0] = true;
 		}
 
-		if(!!(face & FaceSelectionMask::BACK) && m_stencilCompareMask[1] != mask)
+		if(!!(face & FaceSelectionBit::BACK) && m_stencilCompareMask[1] != mask)
 		{
 			m_stencilCompareMask[1] = mask;
 			m_glStencilFuncSeparateDirty[1] = true;
@@ -273,18 +273,18 @@ public:
 
 	Array<U32, 2> m_stencilWriteMask = {{DUMMY_STENCIL_MASK, DUMMY_STENCIL_MASK}};
 
-	Bool setStencilWriteMask(FaceSelectionMask face, U32 mask)
+	Bool setStencilWriteMask(FaceSelectionBit face, U32 mask)
 	{
 		ANKI_ASSERT(mask != DUMMY_STENCIL_MASK && "Oops");
 
 		Bool changed = false;
-		if(!!(face & FaceSelectionMask::FRONT) && m_stencilWriteMask[0] != mask)
+		if(!!(face & FaceSelectionBit::FRONT) && m_stencilWriteMask[0] != mask)
 		{
 			m_stencilWriteMask[0] = mask;
 			changed = true;
 		}
 
-		if(!!(face & FaceSelectionMask::BACK) && m_stencilWriteMask[1] != mask)
+		if(!!(face & FaceSelectionBit::BACK) && m_stencilWriteMask[1] != mask)
 		{
 			m_stencilWriteMask[1] = mask;
 			changed = true;
@@ -295,17 +295,17 @@ public:
 
 	Array<U32, 2> m_stencilRef = {{DUMMY_STENCIL_MASK, DUMMY_STENCIL_MASK}};
 
-	void setStencilReference(FaceSelectionMask face, U32 mask)
+	void setStencilReference(FaceSelectionBit face, U32 mask)
 	{
 		ANKI_ASSERT(mask != DUMMY_STENCIL_MASK && "Oops");
 
-		if(!!(face & FaceSelectionMask::FRONT) && m_stencilRef[0] != mask)
+		if(!!(face & FaceSelectionBit::FRONT) && m_stencilRef[0] != mask)
 		{
 			m_stencilRef[0] = mask;
 			m_glStencilFuncSeparateDirty[0] = true;
 		}
 
-		if(!!(face & FaceSelectionMask::BACK) && m_stencilRef[1] != mask)
+		if(!!(face & FaceSelectionBit::BACK) && m_stencilRef[1] != mask)
 		{
 			m_stencilRef[1] = mask;
 			m_glStencilFuncSeparateDirty[1] = true;
@@ -342,7 +342,7 @@ public:
 
 	CompareOperation m_depthOp = CompareOperation::COUNT;
 
-	Bool setDepthCompareFunction(CompareOperation op)
+	Bool setDepthCompareOperation(CompareOperation op)
 	{
 		if(op != m_depthOp)
 		{
@@ -356,69 +356,63 @@ public:
 	/// @name color
 	/// @{
 	static const ColorBit INVALID_COLOR_MASK = static_cast<ColorBit>(MAX_U8);
-	Array<ColorBit, MAX_COLOR_ATTACHMENTS> m_colorWriteMasks = {
-		{INVALID_COLOR_MASK, INVALID_COLOR_MASK, INVALID_COLOR_MASK, INVALID_COLOR_MASK}};
+
+	class ColorAttachment
+	{
+	public:
+		ColorBit m_writeMask = INVALID_COLOR_MASK;
+		Bool8 m_enableBlend = 2;
+		BlendFactor m_blendSrcFactor = BlendFactor::COUNT;
+		BlendFactor m_blendDstFactor = BlendFactor::COUNT;
+		BlendOperation m_blendOp = BlendOperation::COUNT;
+	};
+
+	Array<ColorAttachment, MAX_COLOR_ATTACHMENTS> m_colorAtt;
 
 	Bool setColorChannelWriteMask(U32 attachment, ColorBit mask)
 	{
-		if(m_colorWriteMasks[attachment] != mask)
+		if(m_colorAtt[attachment].m_writeMask != mask)
 		{
-			m_colorWriteMasks[attachment] = mask;
+			m_colorAtt[attachment].m_writeMask = mask;
 			return true;
 		}
 		return false;
 	}
 
-	Bool8 m_enableBlend = 2;
-
-	Bool maybeEnableBlend()
+	Bool maybeEnableBlend(U attidx)
 	{
-		Bool enable = false;
+		auto& att = m_colorAtt[attidx];
 
-		for(U i = 0; i < m_fb->getColorBufferCount(); ++i)
-		{
-			if(!!(m_colorWriteMasks[i]) && (m_enableBlendMask & (1 << i)))
-			{
-				enable = true;
-			}
-		}
+		Bool wantBlend = !(att.m_blendSrcFactor == BlendFactor::ONE && att.m_blendDstFactor == BlendFactor::ZERO)
+			&& (att.m_blendOp == BlendOperation::ADD || att.m_blendOp == BlendOperation::SUBTRACT);
 
-		if(enable != m_enableBlend)
+		if(wantBlend != att.m_enableBlend)
 		{
-			m_enableBlend = enable;
+			att.m_enableBlend = wantBlend;
 			return true;
 		}
 		return false;
 	}
 
-	Array<BlendMethod, MAX_COLOR_ATTACHMENTS> m_blendSrcMethod = {
-		{BlendMethod::COUNT, BlendMethod::COUNT, BlendMethod::COUNT, BlendMethod::COUNT}};
-	Array<BlendMethod, MAX_COLOR_ATTACHMENTS> m_blendDstMethod = {
-		{BlendMethod::COUNT, BlendMethod::COUNT, BlendMethod::COUNT, BlendMethod::COUNT}};
-
-	U8 m_enableBlendMask = 0; ///< Per attachment
-
-	Bool setBlendMethods(U32 attachment, BlendMethod src, BlendMethod dst)
+	Bool setBlendFactors(U32 attachment, BlendFactor src, BlendFactor dst)
 	{
-		if(m_blendSrcMethod[attachment] != src || m_blendDstMethod[attachment] != dst)
+		auto& att = m_colorAtt[attachment];
+		if(att.m_blendSrcFactor != src || att.m_blendDstFactor != dst)
 		{
-			m_blendSrcMethod[attachment] = src;
-			m_blendDstMethod[attachment] = dst;
-			Bool wantBlend = !(src == BlendMethod::ONE && dst == BlendMethod::ZERO);
-			m_enableBlendMask |= (wantBlend) ? (1 << attachment) : 0;
+			att.m_blendSrcFactor = src;
+			att.m_blendDstFactor = dst;
 			return true;
 		}
 		return false;
 	}
 
-	Array<BlendFunction, MAX_COLOR_ATTACHMENTS> m_blendFuncs = {
-		{BlendFunction::COUNT, BlendFunction::COUNT, BlendFunction::COUNT, BlendFunction::COUNT}};
-
-	Bool setBlendFunction(U32 attachment, BlendFunction func)
+	Bool setBlendOperation(U32 attachment, BlendOperation func)
 	{
-		if(m_blendFuncs[attachment] != func)
+		auto& att = m_colorAtt[attachment];
+
+		if(att.m_blendOp != func)
 		{
-			m_blendFuncs[attachment] = func;
+			att.m_blendOp = func;
 			return true;
 		}
 		return false;
@@ -432,13 +426,13 @@ public:
 	public:
 		TextureImpl* m_tex = nullptr;
 		SamplerImpl* m_sampler = reinterpret_cast<SamplerImpl*>(0x1);
-		DepthStencilAspectMask m_aspect;
+		DepthStencilAspectBit m_aspect;
 	};
 
 	Array2d<TextureBinding, MAX_BOUND_RESOURCE_GROUPS, MAX_TEXTURE_BINDINGS> m_textures;
 
 	Bool bindTexture(
-		U32 set, U32 binding, TexturePtr tex, DepthStencilAspectMask aspect, Bool& texChanged, Bool& samplerChanged)
+		U32 set, U32 binding, TexturePtr tex, DepthStencilAspectBit aspect, Bool& texChanged, Bool& samplerChanged)
 	{
 		TextureBinding& b = m_textures[set][binding];
 		TextureImpl* texi = tex->m_impl.get();
@@ -462,7 +456,7 @@ public:
 		return samplerChanged || texChanged;
 	}
 
-	Bool bindTextureAndSampler(U32 set, U32 binding, TexturePtr tex, SamplerPtr sampler, DepthStencilAspectMask aspect)
+	Bool bindTextureAndSampler(U32 set, U32 binding, TexturePtr tex, SamplerPtr sampler, DepthStencilAspectBit aspect)
 	{
 		TextureBinding& b = m_textures[set][binding];
 		b.m_tex = tex->m_impl.get();

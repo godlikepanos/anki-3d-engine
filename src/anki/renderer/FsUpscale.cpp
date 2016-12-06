@@ -58,7 +58,6 @@ Error FsUpscale::initInternal(const ConfigSet& config)
 	fbInit.m_colorAttachmentCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_r->getIs().getRt();
 	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::LOAD;
-	fbInit.m_colorAttachments[0].m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 	return ErrorCode::NONE;
@@ -81,7 +80,7 @@ void FsUpscale::run(RenderingContext& ctx)
 	cmdb->bindTexture(0, 2, m_r->getFs().getRt());
 	cmdb->bindTexture(0, 3, m_r->getSsao().getRt());
 
-	cmdb->setBlendMethods(0, BlendMethod::ONE, BlendMethod::SRC_ALPHA);
+	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::SRC_ALPHA);
 
 	cmdb->beginRenderPass(m_fb);
 	cmdb->bindShaderProgram(m_prog);
@@ -91,7 +90,7 @@ void FsUpscale::run(RenderingContext& ctx)
 	cmdb->endRenderPass();
 
 	// Restore state
-	cmdb->setBlendMethods(0, BlendMethod::ONE, BlendMethod::ZERO);
+	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
 }
 
 } // end namespace anki

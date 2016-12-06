@@ -76,7 +76,7 @@ void DebugDrawer::finishFrame()
 	flush();
 
 	// Restore state
-	m_cmdb->setDepthCompareFunction(CompareOperation::ALWAYS);
+	m_cmdb->setDepthCompareOperation(CompareOperation::ALWAYS);
 
 	m_cmdb = CommandBufferPtr(); // Release command buffer
 }
@@ -138,7 +138,7 @@ void DebugDrawer::flush()
 			ANKI_ASSERT((m_crntDrawVertCount % 3) == 0);
 		}
 
-		m_cmdb->setDepthCompareFunction((m_depthTestEnabled) ? CompareOperation::LESS : CompareOperation::ALWAYS);
+		m_cmdb->setDepthCompareOperation((m_depthTestEnabled) ? CompareOperation::LESS : CompareOperation::ALWAYS);
 
 		U firstVert = m_frameVertCount - m_crntDrawVertCount;
 		m_cmdb->drawArrays(m_primitive, m_crntDrawVertCount, 1, firstVert);

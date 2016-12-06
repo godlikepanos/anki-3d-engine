@@ -72,7 +72,6 @@ Error Sm::initInternal(const ConfigSet& config)
 	FramebufferInitInfo fbInit;
 	fbInit.m_depthStencilAttachment.m_texture = m_spotTexArray;
 	fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
-	fbInit.m_depthStencilAttachment.m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
 	fbInit.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0;
 
 	U layer = 0;

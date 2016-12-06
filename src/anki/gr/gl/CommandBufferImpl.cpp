@@ -117,9 +117,9 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 			cmdb.setFillMode(FillMode::SOLID);
 		}
 
-		if(m_state.m_cullMode == static_cast<FaceSelectionMask>(0))
+		if(m_state.m_cullMode == static_cast<FaceSelectionBit>(0))
 		{
-			cmdb.setCullMode(FaceSelectionMask::BACK);
+			cmdb.setCullMode(FaceSelectionBit::BACK);
 		}
 
 		if(m_state.m_polyOffsetFactor == -1.0)
@@ -129,7 +129,7 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 
 		for(U i = 0; i < 2; ++i)
 		{
-			FaceSelectionMask face = (i == 0) ? FaceSelectionMask::FRONT : FaceSelectionMask::BACK;
+			FaceSelectionBit face = (i == 0) ? FaceSelectionBit::FRONT : FaceSelectionBit::BACK;
 
 			if(m_state.m_stencilFail[i] == StencilOperation::COUNT)
 			{
@@ -138,7 +138,7 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 
 			if(m_state.m_stencilCompare[i] == CompareOperation::COUNT)
 			{
-				cmdb.setStencilCompareFunction(face, CompareOperation::ALWAYS);
+				cmdb.setStencilCompareOperation(face, CompareOperation::ALWAYS);
 			}
 
 			if(m_state.m_stencilCompareMask[i] == StateTracker::DUMMY_STENCIL_MASK)
@@ -164,24 +164,25 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 
 		if(m_state.m_depthOp == CompareOperation::COUNT)
 		{
-			cmdb.setDepthCompareFunction(CompareOperation::LESS);
+			cmdb.setDepthCompareOperation(CompareOperation::LESS);
 		}
 
 		for(U i = 0; i < MAX_COLOR_ATTACHMENTS; ++i)
 		{
-			if(m_state.m_colorWriteMasks[i] == StateTracker::INVALID_COLOR_MASK)
+			const auto& att = m_state.m_colorAtt[i];
+			if(att.m_writeMask == StateTracker::INVALID_COLOR_MASK)
 			{
 				cmdb.setColorChannelWriteMask(i, ColorBit::ALL);
 			}
 
-			if(m_state.m_blendSrcMethod[i] == BlendMethod::COUNT)
+			if(att.m_blendSrcFactor == BlendFactor::COUNT)
 			{
-				cmdb.setBlendMethods(i, BlendMethod::ONE, BlendMethod::ZERO);
+				cmdb.setBlendFactors(i, BlendFactor::ONE, BlendFactor::ZERO);
 			}
 
-			if(m_state.m_blendFuncs[i] == BlendFunction::COUNT)
+			if(att.m_blendOp == BlendOperation::COUNT)
 			{
-				cmdb.setBlendFunction(i, BlendFunction::ADD);
+				cmdb.setBlendOperation(i, BlendOperation::ADD);
 			}
 		}
 	}
@@ -286,30 +287,52 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 	class BlendCmd final : public GlCommand
 	{
 	public:
-		Bool8 m_enable;
+		U8 m_enableMask;
+		U8 m_disableMask;
 
-		BlendCmd(Bool enable)
-			: m_enable(enable)
+		BlendCmd(U8 enableMask, U8 disableMask)
+			: m_enableMask(enableMask)
+			, m_disableMask(disableMask)
 		{
 		}
 
 		Error operator()(GlState&)
 		{
-			if(m_enable)
+			for(U i = 0; i < MAX_COLOR_ATTACHMENTS; ++i)
 			{
-				glEnable(GL_BLEND);
-			}
-			else
-			{
-				glDisable(GL_BLEND);
+				if(m_enableMask & (1 << i))
+				{
+					glEnablei(GL_BLEND, i);
+				}
+				else if(m_disableMask & (1 << i))
+				{
+					glDisablei(GL_BLEND, i);
+				}
 			}
 			return ErrorCode::NONE;
 		}
 	};
 
-	if(m_state.maybeEnableBlend())
+	U8 blendEnableMask = 0;
+	U8 blendDisableMask = 0;
+	for(U i = 0; i < MAX_COLOR_ATTACHMENTS; ++i)
 	{
-		pushBackNewCommand<BlendCmd>(m_state.m_enableBlend);
+		if(m_state.maybeEnableBlend(i))
+		{
+			if(m_state.m_colorAtt[i].m_enableBlend)
+			{
+				blendEnableMask = 1 << i;
+			}
+			else
+			{
+				blendDisableMask = 1 << i;
+			}
+		}
+	}
+
+	if(blendEnableMask || blendDisableMask)
+	{
+		pushBackNewCommand<BlendCmd>(blendEnableMask, blendDisableMask);
 	}
 }
 

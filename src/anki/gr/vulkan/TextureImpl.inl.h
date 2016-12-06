@@ -8,13 +8,13 @@
 namespace anki
 {
 
-inline VkImageAspectFlags TextureImpl::convertAspect(DepthStencilAspectMask ak) const
+inline VkImageAspectFlags TextureImpl::convertAspect(DepthStencilAspectBit ak) const
 {
 	VkImageAspectFlags out = 0;
 	if(m_aspect == (VK_IMAGE_ASPECT_STENCIL_BIT | VK_IMAGE_ASPECT_DEPTH_BIT))
 	{
-		out = !!(ak & DepthStencilAspectMask::DEPTH) ? VK_IMAGE_ASPECT_DEPTH_BIT : 0;
-		out |= !!(ak & DepthStencilAspectMask::STENCIL) ? VK_IMAGE_ASPECT_STENCIL_BIT : 0;
+		out = !!(ak & DepthStencilAspectBit::DEPTH) ? VK_IMAGE_ASPECT_DEPTH_BIT : 0;
+		out |= !!(ak & DepthStencilAspectBit::STENCIL) ? VK_IMAGE_ASPECT_STENCIL_BIT : 0;
 	}
 	else
 	{
@@ -27,7 +27,7 @@ inline VkImageAspectFlags TextureImpl::convertAspect(DepthStencilAspectMask ak) 
 }
 
 inline void TextureImpl::computeSubResourceRange(
-	const TextureSurfaceInfo& surf, DepthStencilAspectMask aspect, VkImageSubresourceRange& range) const
+	const TextureSurfaceInfo& surf, DepthStencilAspectBit aspect, VkImageSubresourceRange& range) const
 {
 	checkSurface(surf);
 	range.aspectMask = convertAspect(aspect);
@@ -58,7 +58,7 @@ inline void TextureImpl::computeSubResourceRange(
 }
 
 inline void TextureImpl::computeSubResourceRange(
-	const TextureVolumeInfo& vol, DepthStencilAspectMask aspect, VkImageSubresourceRange& range) const
+	const TextureVolumeInfo& vol, DepthStencilAspectBit aspect, VkImageSubresourceRange& range) const
 {
 	checkVolume(vol);
 	range.aspectMask = convertAspect(aspect);

@@ -241,7 +241,8 @@ void Lf::run(RenderingContext& ctx, CommandBufferPtr cmdb)
 
 	cmdb->bindShaderProgram(m_realProg);
 	cmdb->setDepthWrite(false);
-	cmdb->setDepthCompareFunction(CompareOperation::ALWAYS);
+	cmdb->setDepthCompareOperation(CompareOperation::ALWAYS);
+	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ONE);
 
 	for(U i = 0; i < count; ++i)
 	{
@@ -290,7 +291,8 @@ void Lf::run(RenderingContext& ctx, CommandBufferPtr cmdb)
 
 	// Restore state
 	cmdb->setDepthWrite(true);
-	cmdb->setDepthCompareFunction(CompareOperation::LESS);
+	cmdb->setDepthCompareOperation(CompareOperation::LESS);
+	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
 }
 
 } // end namespace anki

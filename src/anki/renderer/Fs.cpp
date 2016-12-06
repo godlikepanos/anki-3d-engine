@@ -51,12 +51,9 @@ Error Fs::initInternal(const ConfigSet&)
 	fbInit.m_colorAttachmentCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
-	fbInit.m_colorAttachments[0].m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
 	fbInit.m_depthStencilAttachment.m_texture = m_r->getDepthDownscale().m_hd.m_depthRt;
 	fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::LOAD;
-	fbInit.m_depthStencilAttachment.m_usageInsideRenderPass =
-		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
-	fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectMask::DEPTH;
+	fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 	ANKI_CHECK(initVol());
@@ -87,9 +84,9 @@ void Fs::drawVolumetric(RenderingContext& ctx, CommandBufferPtr cmdb)
 	const Frustum& fr = ctx.m_frustumComponent->getFrustum();
 
 	cmdb->bindShaderProgram(m_vol.m_prog);
-	cmdb->setBlendMethods(0, BlendMethod::ONE, BlendMethod::ONE);
+	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ONE);
 	cmdb->setDepthWrite(false);
-	cmdb->setDepthCompareFunction(CompareOperation::ALWAYS);
+	cmdb->setDepthCompareOperation(CompareOperation::ALWAYS);
 
 	TransientMemoryToken token;
 	Vec4* unis = static_cast<Vec4*>(
@@ -105,9 +102,9 @@ void Fs::drawVolumetric(RenderingContext& ctx, CommandBufferPtr cmdb)
 	m_r->drawQuad(cmdb);
 
 	// Restore state
-	cmdb->setBlendMethods(0, BlendMethod::ONE, BlendMethod::ZERO);
+	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
 	cmdb->setDepthWrite(true);
-	cmdb->setDepthCompareFunction(CompareOperation::LESS);
+	cmdb->setDepthCompareOperation(CompareOperation::LESS);
 }
 
 Error Fs::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) const
@@ -142,7 +139,7 @@ Error Fs::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) 
 	cmdb->bindStorageBuffer(1, 1, ctx.m_is.m_lightIndicesToken);
 
 	cmdb->setViewport(0, 0, m_width, m_height);
-	cmdb->setBlendMethods(0, BlendMethod::SRC_ALPHA, BlendMethod::ONE_MINUS_SRC_ALPHA);
+	cmdb->setBlendFactors(0, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA);
 	cmdb->setDepthWrite(false);
 
 	// Start drawing

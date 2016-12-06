@@ -188,67 +188,67 @@ void convertVertexFormat(const PixelFormat& fmt, U& compCount, GLenum& type, Boo
 	}
 }
 
-GLenum convertBlendMethod(BlendMethod in)
+GLenum convertBlendFactor(BlendFactor in)
 {
 	GLenum out;
 
 	switch(in)
 	{
-	case BlendMethod::ZERO:
+	case BlendFactor::ZERO:
 		out = GL_ZERO;
 		break;
-	case BlendMethod::ONE:
+	case BlendFactor::ONE:
 		out = GL_ONE;
 		break;
-	case BlendMethod::SRC_COLOR:
+	case BlendFactor::SRC_COLOR:
 		out = GL_SRC_COLOR;
 		break;
-	case BlendMethod::ONE_MINUS_SRC_COLOR:
+	case BlendFactor::ONE_MINUS_SRC_COLOR:
 		out = GL_ONE_MINUS_SRC_COLOR;
 		break;
-	case BlendMethod::DST_COLOR:
+	case BlendFactor::DST_COLOR:
 		out = GL_DST_COLOR;
 		break;
-	case BlendMethod::ONE_MINUS_DST_COLOR:
+	case BlendFactor::ONE_MINUS_DST_COLOR:
 		out = GL_ONE_MINUS_DST_COLOR;
 		break;
-	case BlendMethod::SRC_ALPHA:
+	case BlendFactor::SRC_ALPHA:
 		out = GL_SRC_ALPHA;
 		break;
-	case BlendMethod::ONE_MINUS_SRC_ALPHA:
+	case BlendFactor::ONE_MINUS_SRC_ALPHA:
 		out = GL_ONE_MINUS_SRC_ALPHA;
 		break;
-	case BlendMethod::DST_ALPHA:
+	case BlendFactor::DST_ALPHA:
 		out = GL_DST_ALPHA;
 		break;
-	case BlendMethod::ONE_MINUS_DST_ALPHA:
+	case BlendFactor::ONE_MINUS_DST_ALPHA:
 		out = GL_ONE_MINUS_DST_ALPHA;
 		break;
-	case BlendMethod::CONSTANT_COLOR:
+	case BlendFactor::CONSTANT_COLOR:
 		out = GL_CONSTANT_COLOR;
 		break;
-	case BlendMethod::ONE_MINUS_CONSTANT_COLOR:
+	case BlendFactor::ONE_MINUS_CONSTANT_COLOR:
 		out = GL_ONE_MINUS_CONSTANT_COLOR;
 		break;
-	case BlendMethod::CONSTANT_ALPHA:
+	case BlendFactor::CONSTANT_ALPHA:
 		out = GL_CONSTANT_ALPHA;
 		break;
-	case BlendMethod::ONE_MINUS_CONSTANT_ALPHA:
+	case BlendFactor::ONE_MINUS_CONSTANT_ALPHA:
 		out = GL_ONE_MINUS_CONSTANT_ALPHA;
 		break;
-	case BlendMethod::SRC_ALPHA_SATURATE:
+	case BlendFactor::SRC_ALPHA_SATURATE:
 		out = GL_SRC_ALPHA_SATURATE;
 		break;
-	case BlendMethod::SRC1_COLOR:
+	case BlendFactor::SRC1_COLOR:
 		out = GL_SRC1_COLOR;
 		break;
-	case BlendMethod::ONE_MINUS_SRC1_COLOR:
+	case BlendFactor::ONE_MINUS_SRC1_COLOR:
 		out = GL_ONE_MINUS_SRC1_COLOR;
 		break;
-	case BlendMethod::SRC1_ALPHA:
+	case BlendFactor::SRC1_ALPHA:
 		out = GL_SRC1_ALPHA;
 		break;
-	case BlendMethod::ONE_MINUS_SRC1_ALPHA:
+	case BlendFactor::ONE_MINUS_SRC1_ALPHA:
 		out = GL_ONE_MINUS_SRC1_ALPHA;
 		break;
 	default:

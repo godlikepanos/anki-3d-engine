@@ -34,7 +34,7 @@ public:
 	Bool8 m_compressed = false;
 	PixelFormat m_pformat;
 	DynamicArray<GLuint> m_texViews; ///< Temp views for gen mips.
-	DepthStencilAspectMask m_dsAspect = DepthStencilAspectMask::NONE;
+	DepthStencilAspectBit m_dsAspect = DepthStencilAspectBit::NONE;
 
 	TextureImpl(GrManager* manager)
 		: GlObject(manager)
@@ -77,7 +77,7 @@ public:
 
 	void bind();
 
-	void clear(const TextureSurfaceInfo& surf, const ClearValue& clearValue, DepthStencilAspectMask aspect);
+	void clear(const TextureSurfaceInfo& surf, const ClearValue& clearValue, DepthStencilAspectBit aspect);
 
 	U computeSurfaceIdx(const TextureSurfaceInfo& surf) const;
 };

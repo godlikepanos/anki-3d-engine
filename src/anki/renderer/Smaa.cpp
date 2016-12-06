@@ -54,10 +54,8 @@ Error SmaaEdge::init(const ConfigSet& initializer)
 	fbInit.m_colorAttachmentCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
-	fbInit.m_colorAttachments[0].m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 	fbInit.m_depthStencilAttachment.m_texture = m_r->getSmaa().m_stencilTex;
 	fbInit.m_depthStencilAttachment.m_stencilLoadOperation = AttachmentLoadOperation::CLEAR;
-	fbInit.m_depthStencilAttachment.m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 	m_fb = gr.newInstance<Framebuffer>(fbInit);
 
 	return ErrorCode::NONE;
@@ -96,10 +94,10 @@ void SmaaEdge::run(RenderingContext& ctx)
 	cmdb->bindTexture(0, 0, m_r->getIs().getRt());
 
 	cmdb->setStencilOperations(
-		FaceSelectionMask::FRONT, StencilOperation::KEEP, StencilOperation::KEEP, StencilOperation::REPLACE);
-	cmdb->setStencilCompareMask(FaceSelectionMask::FRONT, 0xF);
-	cmdb->setStencilWriteMask(FaceSelectionMask::FRONT, 0xF);
-	cmdb->setStencilReference(FaceSelectionMask::FRONT, 0xF);
+		FaceSelectionBit::FRONT, StencilOperation::KEEP, StencilOperation::KEEP, StencilOperation::REPLACE);
+	cmdb->setStencilCompareMask(FaceSelectionBit::FRONT, 0xF);
+	cmdb->setStencilWriteMask(FaceSelectionBit::FRONT, 0xF);
+	cmdb->setStencilReference(FaceSelectionBit::FRONT, 0xF);
 
 	cmdb->beginRenderPass(m_fb);
 	m_r->drawQuad(cmdb);
@@ -107,7 +105,7 @@ void SmaaEdge::run(RenderingContext& ctx)
 
 	// Restore state
 	cmdb->setStencilOperations(
-		FaceSelectionMask::FRONT, StencilOperation::KEEP, StencilOperation::KEEP, StencilOperation::KEEP);
+		FaceSelectionBit::FRONT, StencilOperation::KEEP, StencilOperation::KEEP, StencilOperation::KEEP);
 }
 
 SmaaWeights::~SmaaWeights()
@@ -148,11 +146,9 @@ Error SmaaWeights::init(const ConfigSet& initializer)
 	fbInit.m_colorAttachmentCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
-	fbInit.m_colorAttachments[0].m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 	fbInit.m_depthStencilAttachment.m_texture = m_r->getSmaa().m_stencilTex;
 	fbInit.m_depthStencilAttachment.m_stencilLoadOperation = AttachmentLoadOperation::LOAD;
 	fbInit.m_depthStencilAttachment.m_stencilStoreOperation = AttachmentStoreOperation::DONT_CARE;
-	fbInit.m_depthStencilAttachment.m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
 	m_fb = gr.newInstance<Framebuffer>(fbInit);
 
 	// Create Area texture
@@ -221,17 +217,17 @@ void SmaaWeights::run(RenderingContext& ctx)
 	cmdb->bindTexture(0, 2, m_searchTex);
 	cmdb->bindShaderProgram(m_prog);
 
-	cmdb->setStencilCompareFunction(FaceSelectionMask::FRONT, CompareOperation::EQUAL);
-	cmdb->setStencilCompareMask(FaceSelectionMask::FRONT, 0xF);
-	cmdb->setStencilWriteMask(FaceSelectionMask::FRONT, 0x0);
-	cmdb->setStencilReference(FaceSelectionMask::FRONT, 0xF);
+	cmdb->setStencilCompareOperation(FaceSelectionBit::FRONT, CompareOperation::EQUAL);
+	cmdb->setStencilCompareMask(FaceSelectionBit::FRONT, 0xF);
+	cmdb->setStencilWriteMask(FaceSelectionBit::FRONT, 0x0);
+	cmdb->setStencilReference(FaceSelectionBit::FRONT, 0xF);
 
 	cmdb->beginRenderPass(m_fb);
 	m_r->drawQuad(cmdb);
 	cmdb->endRenderPass();
 
 	// Restore state
-	cmdb->setStencilCompareFunction(FaceSelectionMask::FRONT, CompareOperation::ALWAYS);
+	cmdb->setStencilCompareOperation(FaceSelectionBit::FRONT, CompareOperation::ALWAYS);
 }
 
 Error Smaa::init(const ConfigSet& cfg)

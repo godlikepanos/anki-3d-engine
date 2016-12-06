@@ -49,7 +49,7 @@ static void convertTextureInformation(const PixelFormat& pf,
 	GLenum& format,
 	GLenum& internalFormat,
 	GLenum& type,
-	DepthStencilAspectMask& dsAspect)
+	DepthStencilAspectBit& dsAspect)
 {
 	compressed =
 		pf.m_components >= ComponentFormat::FIRST_COMPRESSED && pf.m_components <= ComponentFormat::LAST_COMPRESSED;
@@ -239,19 +239,19 @@ static void convertTextureInformation(const PixelFormat& pf,
 		format = GL_DEPTH_STENCIL;
 		internalFormat = GL_DEPTH24_STENCIL8;
 		type = GL_UNSIGNED_INT;
-		dsAspect = DepthStencilAspectMask::DEPTH_STENCIL;
+		dsAspect = DepthStencilAspectBit::DEPTH_STENCIL;
 		break;
 	case ComponentFormat::D16:
 		format = GL_DEPTH_COMPONENT;
 		internalFormat = GL_DEPTH_COMPONENT16;
 		type = GL_UNSIGNED_SHORT;
-		dsAspect = DepthStencilAspectMask::DEPTH;
+		dsAspect = DepthStencilAspectBit::DEPTH;
 		break;
 	case ComponentFormat::S8:
 		format = GL_STENCIL_INDEX;
 		internalFormat = GL_STENCIL_INDEX8;
 		type = GL_BYTE;
-		dsAspect = DepthStencilAspectMask::STENCIL;
+		dsAspect = DepthStencilAspectBit::STENCIL;
 		break;
 	default:
 		ANKI_ASSERT(0);
@@ -629,7 +629,7 @@ void TextureImpl::copy(const TextureImpl& src,
 		1);
 }
 
-void TextureImpl::clear(const TextureSurfaceInfo& surf, const ClearValue& clearValue, DepthStencilAspectMask aspect)
+void TextureImpl::clear(const TextureSurfaceInfo& surf, const ClearValue& clearValue, DepthStencilAspectBit aspect)
 {
 	ANKI_ASSERT(isCreated());
 	ANKI_ASSERT(surf.m_level < m_mipsCount);
@@ -637,17 +637,17 @@ void TextureImpl::clear(const TextureSurfaceInfo& surf, const ClearValue& clearV
 
 	// Find the aspect to clear
 	GLenum format;
-	if(aspect == DepthStencilAspectMask::DEPTH)
+	if(aspect == DepthStencilAspectBit::DEPTH)
 	{
 		ANKI_ASSERT(m_format == GL_DEPTH_COMPONENT || m_format == GL_DEPTH_STENCIL);
 		format = GL_DEPTH_COMPONENT;
 	}
-	else if(aspect == DepthStencilAspectMask::STENCIL)
+	else if(aspect == DepthStencilAspectBit::STENCIL)
 	{
 		ANKI_ASSERT(m_format == GL_STENCIL_INDEX || m_format == GL_DEPTH_STENCIL);
 		format = GL_STENCIL_INDEX;
 	}
-	else if(aspect == DepthStencilAspectMask::DEPTH_STENCIL)
+	else if(aspect == DepthStencilAspectBit::DEPTH_STENCIL)
 	{
 		ANKI_ASSERT(m_format == GL_DEPTH_STENCIL);
 		format = GL_DEPTH_STENCIL;

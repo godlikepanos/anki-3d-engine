@@ -66,11 +66,11 @@ public:
 
 	void setPolygonOffset(F32 factor, F32 units);
 
-	void setStencilCompareMask(FaceSelectionMask face, U32 mask);
+	void setStencilCompareMask(FaceSelectionBit face, U32 mask);
 
-	void setStencilWriteMask(FaceSelectionMask face, U32 mask);
+	void setStencilWriteMask(FaceSelectionBit face, U32 mask);
 
-	void setStencilReference(FaceSelectionMask face, U32 ref);
+	void setStencilReference(FaceSelectionBit face, U32 ref);
 
 	void bindPipeline(PipelinePtr ppline);
 
@@ -103,10 +103,10 @@ public:
 	void generateMipmaps2d(TexturePtr tex, U face, U layer);
 
 	void clearTextureSurface(
-		TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& clearValue, DepthStencilAspectMask aspect);
+		TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& clearValue, DepthStencilAspectBit aspect);
 
 	void clearTextureVolume(
-		TexturePtr tex, const TextureVolumeInfo& volume, const ClearValue& clearValue, DepthStencilAspectMask aspect);
+		TexturePtr tex, const TextureVolumeInfo& volume, const ClearValue& clearValue, DepthStencilAspectBit aspect);
 
 	void uploadBuffer(BufferPtr buff, PtrSize offset, const TransientMemoryToken& token);
 

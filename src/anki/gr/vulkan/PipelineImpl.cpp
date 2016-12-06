@@ -268,9 +268,9 @@ VkPipelineColorBlendStateCreateInfo* PipelineImpl::initColorState(
 		VkPipelineColorBlendAttachmentState& out = const_cast<VkPipelineColorBlendAttachmentState&>(ci.pAttachments[i]);
 		const ColorAttachmentStateInfo& in = c.m_attachments[i];
 
-		out.blendEnable = !(in.m_srcBlendMethod == BlendMethod::ONE && in.m_dstBlendMethod == BlendMethod::ZERO);
-		out.srcColorBlendFactor = convertBlendMethod(in.m_srcBlendMethod);
-		out.dstColorBlendFactor = convertBlendMethod(in.m_dstBlendMethod);
+		out.blendEnable = !(in.m_srcBlendFactor == BlendFactor::ONE && in.m_dstBlendFactor == BlendFactor::ZERO);
+		out.srcColorBlendFactor = convertBlendFactor(in.m_srcBlendFactor);
+		out.dstColorBlendFactor = convertBlendFactor(in.m_dstBlendFactor);
 		out.colorBlendOp = convertBlendFunc(in.m_blendFunction);
 		out.srcAlphaBlendFactor = out.srcColorBlendFactor;
 		out.dstAlphaBlendFactor = out.dstColorBlendFactor;

@@ -61,7 +61,7 @@ Error Dbg::lazyInit()
 	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
 	fbInit.m_depthStencilAttachment.m_texture = m_r->getMs().m_depthRt;
 	fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::LOAD;
-	fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectMask::DEPTH;
+	fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
 
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 

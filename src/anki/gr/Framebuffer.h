@@ -28,9 +28,7 @@ public:
 	AttachmentLoadOperation m_stencilLoadOperation = AttachmentLoadOperation::CLEAR;
 	AttachmentStoreOperation m_stencilStoreOperation = AttachmentStoreOperation::STORE;
 
-	TextureUsageBit m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
-
-	DepthStencilAspectMask m_aspect = DepthStencilAspectMask::NONE; ///< Relevant only for depth stencil textures.
+	DepthStencilAspectBit m_aspect = DepthStencilAspectBit::NONE; ///< Relevant only for depth stencil textures.
 };
 
 /// Framebuffer initializer. If you require the default framebuffer then set m_colorAttachmentCount to 1 and don't set a

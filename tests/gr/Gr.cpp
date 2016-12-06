@@ -309,7 +309,7 @@ static FramebufferPtr createDefaultFb(GrManager& gr)
 {
 	FramebufferInitInfo fbinit;
 	fbinit.m_colorAttachmentCount = 1;
-	fbinit.m_colorAttachments[0].m_clearValue.m_colorf = {1.0, 0.0, 1.0, 1.0};
+	fbinit.m_colorAttachments[0].m_clearValue.m_colorf = {{1.0, 0.0, 1.0, 1.0}};
 
 	return gr.newInstance<Framebuffer>(fbinit);
 }
@@ -507,9 +507,9 @@ ANKI_TEST(Gr, DrawWithVertex)
 	ptr[1].m_pos = Vec3(0.0, -1.0, 0.0);
 	ptr[2].m_pos = Vec3(1.0, 1.0, 0.0);
 
-	ptr[0].m_color = {255, 0, 0};
-	ptr[1].m_color = {0, 255, 0};
-	ptr[2].m_color = {0, 0, 255};
+	ptr[0].m_color = {{255, 0, 0}};
+	ptr[1].m_color = {{0, 255, 0}};
+	ptr[2].m_color = {{0, 0, 255}};
 	b->unmap();
 
 	BufferPtr c = gr->newInstance<Buffer>(sizeof(Vec3) * 3, BufferUsageBit::VERTEX, BufferMapAccessBit::WRITE);
@@ -866,11 +866,11 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 	FramebufferInitInfo fbinit;
 	fbinit.m_colorAttachmentCount = 2;
 	fbinit.m_colorAttachments[0].m_texture = col0;
-	fbinit.m_colorAttachments[0].m_clearValue.m_colorf = {0.1, 0.0, 0.0, 0.0};
+	fbinit.m_colorAttachments[0].m_clearValue.m_colorf = {{0.1, 0.0, 0.0, 0.0}};
 	fbinit.m_colorAttachments[1].m_texture = col1;
-	fbinit.m_colorAttachments[1].m_clearValue.m_colorf = {0.0, 0.1, 0.0, 0.0};
+	fbinit.m_colorAttachments[1].m_clearValue.m_colorf = {{0.0, 0.1, 0.0, 0.0}};
 	fbinit.m_depthStencilAttachment.m_texture = dp;
-	fbinit.m_depthStencilAttachment.m_aspect = DepthStencilAspectMask::DEPTH;
+	fbinit.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
 	fbinit.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0;
 
 	FramebufferPtr fb = gr.newInstance<Framebuffer>(fbinit);

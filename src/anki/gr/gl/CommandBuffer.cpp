@@ -312,7 +312,7 @@ void CommandBuffer::setFillMode(FillMode mode)
 	}
 }
 
-void CommandBuffer::setCullMode(FaceSelectionMask mode)
+void CommandBuffer::setCullMode(FaceSelectionBit mode)
 {
 	class Cmd final : public GlCommand
 	{
@@ -373,7 +373,7 @@ void CommandBuffer::setPolygonOffset(F32 factor, F32 units)
 	}
 }
 
-void CommandBuffer::setStencilOperations(FaceSelectionMask face,
+void CommandBuffer::setStencilOperations(FaceSelectionBit face,
 	StencilOperation stencilFail,
 	StencilOperation stencilPassDepthFail,
 	StencilOperation stencilPassDepthPass)
@@ -410,17 +410,17 @@ void CommandBuffer::setStencilOperations(FaceSelectionMask face,
 	}
 }
 
-void CommandBuffer::setStencilCompareFunction(FaceSelectionMask face, CompareOperation comp)
+void CommandBuffer::setStencilCompareOperation(FaceSelectionBit face, CompareOperation comp)
 {
-	m_impl->m_state.setStencilCompareFunction(face, comp);
+	m_impl->m_state.setStencilCompareOperation(face, comp);
 }
 
-void CommandBuffer::setStencilCompareMask(FaceSelectionMask face, U32 mask)
+void CommandBuffer::setStencilCompareMask(FaceSelectionBit face, U32 mask)
 {
 	m_impl->m_state.setStencilCompareMask(face, mask);
 }
 
-void CommandBuffer::setStencilWriteMask(FaceSelectionMask face, U32 mask)
+void CommandBuffer::setStencilWriteMask(FaceSelectionBit face, U32 mask)
 {
 	class Cmd final : public GlCommand
 	{
@@ -462,7 +462,7 @@ void CommandBuffer::setStencilWriteMask(FaceSelectionMask face, U32 mask)
 	}
 }
 
-void CommandBuffer::setStencilReference(FaceSelectionMask face, U32 ref)
+void CommandBuffer::setStencilReference(FaceSelectionBit face, U32 ref)
 {
 	m_impl->m_state.setStencilReference(face, ref);
 }
@@ -493,7 +493,7 @@ void CommandBuffer::setDepthWrite(Bool enable)
 	}
 }
 
-void CommandBuffer::setDepthCompareFunction(CompareOperation op)
+void CommandBuffer::setDepthCompareOperation(CompareOperation op)
 {
 	class Cmd final : public GlCommand
 	{
@@ -512,7 +512,7 @@ void CommandBuffer::setDepthCompareFunction(CompareOperation op)
 		}
 	};
 
-	if(m_impl->m_state.setDepthCompareFunction(op))
+	if(m_impl->m_state.setDepthCompareOperation(op))
 	{
 		m_impl->pushBackNewCommand<Cmd>(convertCompareOperation(op));
 	}
@@ -558,7 +558,7 @@ void CommandBuffer::setColorChannelWriteMask(U32 attachment, ColorBit mask)
 	}
 }
 
-void CommandBuffer::setBlendMethods(U32 attachment, BlendMethod src, BlendMethod dst)
+void CommandBuffer::setBlendFactors(U32 attachment, BlendFactor src, BlendFactor dst)
 {
 	class Cmd final : public GlCommand
 	{
@@ -581,13 +581,13 @@ void CommandBuffer::setBlendMethods(U32 attachment, BlendMethod src, BlendMethod
 		}
 	};
 
-	if(m_impl->m_state.setBlendMethods(attachment, src, dst))
+	if(m_impl->m_state.setBlendFactors(attachment, src, dst))
 	{
-		m_impl->pushBackNewCommand<Cmd>(attachment, convertBlendMethod(src), convertBlendMethod(dst));
+		m_impl->pushBackNewCommand<Cmd>(attachment, convertBlendFactor(src), convertBlendFactor(dst));
 	}
 }
 
-void CommandBuffer::setBlendFunction(U32 attachment, BlendFunction func)
+void CommandBuffer::setBlendOperation(U32 attachment, BlendOperation func)
 {
 	class Cmd final : public GlCommand
 	{
@@ -608,13 +608,13 @@ void CommandBuffer::setBlendFunction(U32 attachment, BlendFunction func)
 		}
 	};
 
-	if(m_impl->m_state.setBlendFunction(attachment, func))
+	if(m_impl->m_state.setBlendOperation(attachment, func))
 	{
-		m_impl->pushBackNewCommand<Cmd>(attachment, convertBlendFunction(func));
+		m_impl->pushBackNewCommand<Cmd>(attachment, convertBlendOperation(func));
 	}
 }
 
-void CommandBuffer::bindTexture(U32 set, U32 binding, TexturePtr tex, DepthStencilAspectMask aspect)
+void CommandBuffer::bindTexture(U32 set, U32 binding, TexturePtr tex, DepthStencilAspectBit aspect)
 {
 	class Cmd final : public GlCommand
 	{
@@ -654,7 +654,7 @@ void CommandBuffer::bindTexture(U32 set, U32 binding, TexturePtr tex, DepthStenc
 }
 
 void CommandBuffer::bindTextureAndSampler(
-	U32 set, U32 binding, TexturePtr tex, SamplerPtr sampler, DepthStencilAspectMask aspect)
+	U32 set, U32 binding, TexturePtr tex, SamplerPtr sampler, DepthStencilAspectBit aspect)
 {
 	class Cmd final : public GlCommand
 	{
@@ -1456,7 +1456,7 @@ void CommandBuffer::setTextureVolumeBarrier(
 }
 
 void CommandBuffer::clearTextureSurface(
-	TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& clearValue, DepthStencilAspectMask aspect)
+	TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& clearValue, DepthStencilAspectBit aspect)
 {
 	class ClearTextCommand final : public GlCommand
 	{
@@ -1464,10 +1464,10 @@ void CommandBuffer::clearTextureSurface(
 		TexturePtr m_tex;
 		ClearValue m_val;
 		TextureSurfaceInfo m_surf;
-		DepthStencilAspectMask m_aspect;
+		DepthStencilAspectBit m_aspect;
 
 		ClearTextCommand(
-			TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& val, DepthStencilAspectMask aspect)
+			TexturePtr tex, const TextureSurfaceInfo& surf, const ClearValue& val, DepthStencilAspectBit aspect)
 			: m_tex(tex)
 			, m_val(val)
 			, m_surf(surf)
