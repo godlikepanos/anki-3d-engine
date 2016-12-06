@@ -175,14 +175,14 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 				cmdb.setColorChannelWriteMask(i, ColorBit::ALL);
 			}
 
-			if(att.m_blendSrcFactor == BlendFactor::COUNT)
+			if(att.m_blendSrcFactorRgb == BlendFactor::COUNT)
 			{
-				cmdb.setBlendFactors(i, BlendFactor::ONE, BlendFactor::ZERO);
+				cmdb.setBlendFactors(i, BlendFactor::ONE, BlendFactor::ZERO, BlendFactor::ONE, BlendFactor::ZERO);
 			}
 
-			if(att.m_blendOp == BlendOperation::COUNT)
+			if(att.m_blendOpRgb == BlendOperation::COUNT)
 			{
-				cmdb.setBlendOperation(i, BlendOperation::ADD);
+				cmdb.setBlendOperation(i, BlendOperation::ADD, BlendOperation::ADD);
 			}
 		}
 	}

@@ -362,9 +362,12 @@ public:
 	public:
 		ColorBit m_writeMask = INVALID_COLOR_MASK;
 		Bool8 m_enableBlend = 2;
-		BlendFactor m_blendSrcFactor = BlendFactor::COUNT;
-		BlendFactor m_blendDstFactor = BlendFactor::COUNT;
-		BlendOperation m_blendOp = BlendOperation::COUNT;
+		BlendFactor m_blendSrcFactorRgb = BlendFactor::COUNT;
+		BlendFactor m_blendDstFactorRgb = BlendFactor::COUNT;
+		BlendFactor m_blendSrcFactorA = BlendFactor::COUNT;
+		BlendFactor m_blendDstFactorA = BlendFactor::COUNT;
+		BlendOperation m_blendOpRgb = BlendOperation::COUNT;
+		BlendOperation m_blendOpA = BlendOperation::COUNT;
 	};
 
 	Array<ColorAttachment, MAX_COLOR_ATTACHMENTS> m_colorAtt;
@@ -383,8 +386,10 @@ public:
 	{
 		auto& att = m_colorAtt[attidx];
 
-		Bool wantBlend = !(att.m_blendSrcFactor == BlendFactor::ONE && att.m_blendDstFactor == BlendFactor::ZERO)
-			&& (att.m_blendOp == BlendOperation::ADD || att.m_blendOp == BlendOperation::SUBTRACT);
+		Bool wantBlend = !(att.m_blendSrcFactorRgb == BlendFactor::ONE && att.m_blendDstFactorRgb == BlendFactor::ZERO)
+			&& !(att.m_blendSrcFactorA == BlendFactor::ONE && att.m_blendDstFactorA == BlendFactor::ZERO)
+			&& (att.m_blendOpRgb == BlendOperation::ADD || att.m_blendOpRgb == BlendOperation::SUBTRACT)
+			&& (att.m_blendOpA == BlendOperation::ADD || att.m_blendOpA == BlendOperation::SUBTRACT);
 
 		if(wantBlend != att.m_enableBlend)
 		{
@@ -394,25 +399,29 @@ public:
 		return false;
 	}
 
-	Bool setBlendFactors(U32 attachment, BlendFactor src, BlendFactor dst)
+	Bool setBlendFactors(U32 attachment, BlendFactor srcRgb, BlendFactor dstRgb, BlendFactor srcA, BlendFactor dstA)
 	{
 		auto& att = m_colorAtt[attachment];
-		if(att.m_blendSrcFactor != src || att.m_blendDstFactor != dst)
+		if(att.m_blendSrcFactorRgb != srcRgb || att.m_blendDstFactorRgb != dstRgb || att.m_blendSrcFactorA != srcA
+			|| att.m_blendDstFactorA != dstA)
 		{
-			att.m_blendSrcFactor = src;
-			att.m_blendDstFactor = dst;
+			att.m_blendSrcFactorRgb = srcRgb;
+			att.m_blendDstFactorRgb = dstRgb;
+			att.m_blendSrcFactorA = srcA;
+			att.m_blendDstFactorA = dstA;
 			return true;
 		}
 		return false;
 	}
 
-	Bool setBlendOperation(U32 attachment, BlendOperation func)
+	Bool setBlendOperation(U32 attachment, BlendOperation funcRgb, BlendOperation funcA)
 	{
 		auto& att = m_colorAtt[attachment];
 
-		if(att.m_blendOp != func)
+		if(att.m_blendOpRgb != funcRgb || att.m_blendOpA != funcA)
 		{
-			att.m_blendOp = func;
+			att.m_blendOpRgb = funcRgb;
+			att.m_blendOpA = funcA;
 			return true;
 		}
 		return false;

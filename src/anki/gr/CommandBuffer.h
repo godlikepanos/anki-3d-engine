@@ -208,11 +208,23 @@ public:
 	/// Set color channel write mask.
 	void setColorChannelWriteMask(U32 attachment, ColorBit mask);
 
+	/// Set blend factors seperate.
+	void setBlendFactors(U32 attachment, BlendFactor srcRgb, BlendFactor dstRgb, BlendFactor srcA, BlendFactor dstA);
+
 	/// Set blend factors.
-	void setBlendFactors(U32 attachment, BlendFactor src, BlendFactor dst);
+	void setBlendFactors(U32 attachment, BlendFactor src, BlendFactor dst)
+	{
+		setBlendFactors(attachment, src, dst, src, dst);
+	}
+
+	/// Set the blend operation seperate.
+	void setBlendOperation(U32 attachment, BlendOperation funcRgb, BlendOperation funcA);
 
 	/// Set the blend operation.
-	void setBlendOperation(U32 attachment, BlendOperation func);
+	void setBlendOperation(U32 attachment, BlendOperation func)
+	{
+		setBlendOperation(attachment, func, func);
+	}
 
 	/// Bind texture.
 	void bindTexture(U32 set, U32 binding, TexturePtr tex, DepthStencilAspectBit aspect = DepthStencilAspectBit::DEPTH);

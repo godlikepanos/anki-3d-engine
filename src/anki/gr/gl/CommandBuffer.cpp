@@ -558,59 +558,70 @@ void CommandBuffer::setColorChannelWriteMask(U32 attachment, ColorBit mask)
 	}
 }
 
-void CommandBuffer::setBlendFactors(U32 attachment, BlendFactor src, BlendFactor dst)
+void CommandBuffer::setBlendFactors(
+	U32 attachment, BlendFactor srcRgb, BlendFactor dstRgb, BlendFactor srcA, BlendFactor dstA)
 {
 	class Cmd final : public GlCommand
 	{
 	public:
 		U8 m_attachment;
-		GLenum m_src;
-		GLenum m_dst;
+		GLenum m_srcRgb;
+		GLenum m_dstRgb;
+		GLenum m_srcA;
+		GLenum m_dstA;
 
-		Cmd(U8 att, GLenum src, GLenum dst)
+		Cmd(U8 att, GLenum srcRgb, GLenum dstRgb, GLenum srcA, GLenum dstA)
 			: m_attachment(att)
-			, m_src(src)
-			, m_dst(dst)
+			, m_srcRgb(srcRgb)
+			, m_dstRgb(dstRgb)
+			, m_srcA(srcA)
+			, m_dstA(dstA)
 		{
 		}
 
 		Error operator()(GlState&)
 		{
-			glBlendFunci(m_attachment, m_src, m_dst);
+			glBlendFuncSeparatei(m_attachment, m_srcRgb, m_dstRgb, m_srcA, m_dstA);
 			return ErrorCode::NONE;
 		}
 	};
 
-	if(m_impl->m_state.setBlendFactors(attachment, src, dst))
+	if(m_impl->m_state.setBlendFactors(attachment, srcRgb, dstRgb, srcA, dstA))
 	{
-		m_impl->pushBackNewCommand<Cmd>(attachment, convertBlendFactor(src), convertBlendFactor(dst));
+		m_impl->pushBackNewCommand<Cmd>(attachment,
+			convertBlendFactor(srcRgb),
+			convertBlendFactor(dstRgb),
+			convertBlendFactor(srcA),
+			convertBlendFactor(dstA));
 	}
 }
 
-void CommandBuffer::setBlendOperation(U32 attachment, BlendOperation func)
+void CommandBuffer::setBlendOperation(U32 attachment, BlendOperation funcRgb, BlendOperation funcA)
 {
 	class Cmd final : public GlCommand
 	{
 	public:
 		U8 m_attachment;
-		GLenum m_func;
+		GLenum m_funcRgb;
+		GLenum m_funcA;
 
-		Cmd(U8 att, GLenum func)
+		Cmd(U8 att, GLenum funcRgb, GLenum funcA)
 			: m_attachment(att)
-			, m_func(func)
+			, m_funcRgb(funcRgb)
+			, m_funcA(funcA)
 		{
 		}
 
 		Error operator()(GlState&)
 		{
-			glBlendEquationi(m_attachment, m_func);
+			glBlendEquationSeparatei(m_attachment, m_funcRgb, m_funcA);
 			return ErrorCode::NONE;
 		}
 	};
 
-	if(m_impl->m_state.setBlendOperation(attachment, func))
+	if(m_impl->m_state.setBlendOperation(attachment, funcRgb, funcA))
 	{
-		m_impl->pushBackNewCommand<Cmd>(attachment, convertBlendOperation(func));
+		m_impl->pushBackNewCommand<Cmd>(attachment, convertBlendOperation(funcRgb), convertBlendOperation(funcA));
 	}
 }
 
