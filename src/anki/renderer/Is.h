@@ -53,14 +53,6 @@ anki_internal:
 	}
 
 private:
-	static const U COMMON_VARS_LOCATION = 0;
-	static const U P_LIGHTS_LOCATION = 1;
-	static const U S_LIGHTS_LOCATION = 2;
-	static const U PROBES_LOCATION = 3;
-	static const U DECALS_LOCATION = 4;
-	static const U CLUSTERS_LOCATION = 0;
-	static const U LIGHT_IDS_LOCATION = 1;
-
 	/// The IS render target
 	TexturePtr m_rt;
 	U8 m_rtMipCount = 0;
@@ -69,22 +61,18 @@ private:
 	/// The IS FBO
 	FramebufferPtr m_fb;
 
-	ResourceGroupPtr m_rcGroup;
-	U64 m_rcGroup1Hash = 0;
-	ResourceGroupPtr m_rcGroup1;
-
 	TexturePtr m_dummyTex;
 
 	// Light shaders
 	ShaderResourcePtr m_lightVert;
 	ShaderResourcePtr m_lightFrag;
-	PipelinePtr m_lightPpline;
+	ShaderProgramPtr m_lightProg;
 
 	class ShaderVariant
 	{
 	public:
 		ShaderResourcePtr m_lightFrag;
-		PipelinePtr m_lightPpline;
+		ShaderProgramPtr m_lightProg;
 	};
 
 	using Key = ShaderVariantBit;
@@ -113,7 +101,8 @@ private:
 
 	void updateCommonBlock(RenderingContext& ctx);
 
-	ANKI_USE_RESULT Error getOrCreatePipeline(ShaderVariantBit variantMask, RenderingContext& ctx, PipelinePtr& ppline);
+	ANKI_USE_RESULT Error getOrCreateProgram(
+		ShaderVariantBit variantMask, RenderingContext& ctx, ShaderProgramPtr& prog);
 };
 /// @}
 

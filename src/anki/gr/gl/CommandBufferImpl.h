@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/gr/CommandBuffer.h>
+#include <anki/gr/gl/StateTracker.h>
 #include <anki/util/Assert.h>
 #include <anki/util/Allocator.h>
 
@@ -41,16 +42,18 @@ class CommandBufferImpl
 public:
 	using InitHints = CommandBufferInitHints;
 
-#if ANKI_ASSERTS_ENABLED
-	class StateSet
-	{
-	public:
-		Bool m_viewport = false;
-		Bool m_polygonOffset = false;
-		Bool m_insideRenderPass = false;
-		Bool m_secondLevel = false;
-	} m_dbg;
+	GrManager* m_manager = nullptr;
+	GlCommand* m_firstCommand = nullptr;
+	GlCommand* m_lastCommand = nullptr;
+	CommandBufferAllocator<U8> m_alloc;
+	Bool8 m_immutable = false;
+	CommandBufferFlag m_flags;
+
+#if ANKI_DEBUG
+	Bool8 m_executed = false;
 #endif
+
+	StateTracker m_state;
 
 	/// Default constructor
 	CommandBufferImpl(GrManager* manager)
@@ -109,52 +112,15 @@ public:
 		return m_firstCommand == nullptr;
 	}
 
-	void bindResourceGroup(ResourceGroupPtr rc, U slot, const TransientMemoryInfo* info);
-
-	void drawElements(U32 count, U32 instanceCount = 1, U32 firstIndex = 0, U32 baseVertex = 0, U32 baseInstance = 0);
-
-	void drawArrays(U32 count, U32 instanceCount = 1, U32 first = 0, U32 baseInstance = 0);
-
-	void drawElementsIndirect(U32 drawCount, PtrSize offset, BufferPtr indirectBuff);
-
-	void drawArraysIndirect(U32 drawCount, PtrSize offset, BufferPtr indirectBuff);
-
-	void drawElementsConditional(OcclusionQueryPtr query,
-		U32 count,
-		U32 instanceCount = 1,
-		U32 firstIndex = 0,
-		U32 baseVertex = 0,
-		U32 baseInstance = 0);
-
-	void drawArraysConditional(
-		OcclusionQueryPtr query, U32 count, U32 instanceCount = 1, U32 first = 0, U32 baseInstance = 0);
-
-	void dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ);
-
 	Bool isSecondLevel() const
 	{
 		return !!(m_flags & CommandBufferFlag::SECOND_LEVEL);
 	}
 
+	void flushDrawcall(CommandBuffer& cmdb);
+
 private:
-	GrManager* m_manager = nullptr;
-	GlCommand* m_firstCommand = nullptr;
-	GlCommand* m_lastCommand = nullptr;
-	CommandBufferAllocator<U8> m_alloc;
-	Bool8 m_immutable = false;
-	CommandBufferFlag m_flags;
-
-#if ANKI_DEBUG
-	Bool8 m_executed = false;
-#endif
-
 	void destroy();
-
-	void checkDrawcall() const
-	{
-		ANKI_ASSERT(m_dbg.m_viewport == true);
-		ANKI_ASSERT(m_dbg.m_polygonOffset == true);
-	}
 };
 
 template<typename TCommand, typename... TArgs>

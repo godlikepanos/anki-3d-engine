@@ -31,74 +31,54 @@ void ModelPatch::getRenderingDataSub(
 	RenderingKey meshKey = key;
 	meshKey.m_lod = min<U>(key.m_lod, m_meshCount - 1);
 	const Mesh& mesh = getMesh(meshKey);
-	inf.m_resourceGroup = m_grResources[meshKey.m_lod];
 
-	// Get shaders
+	// Get program
 	{
 		RenderingKey mtlKey = key;
 		mtlKey.m_lod = min<U>(key.m_lod, m_mtl->getLodCount() - 1);
 
-		if(mtlKey.m_tessellation && !m_mtl->getTessellationEnabled())
-		{
-			ANKI_ASSERT(0);
-		}
-
-		if(mtlKey.m_pass == Pass::SM && !m_mtl->getShadowEnabled())
-		{
-			ANKI_ASSERT(0);
-		}
-
-		if(mtlKey.m_instanceCount > 1 && !m_mtl->isInstanced())
-		{
-			ANKI_ASSERT(0);
-		}
-
 		const MaterialVariant& variant = m_mtl->getVariant(mtlKey);
 
-		inf.m_state.m_shaders[ShaderType::VERTEX] = variant.getShader(ShaderType::VERTEX);
+		inf.m_program = variant.getShaderProgram();
+	}
 
-		if(mtlKey.m_tessellation)
+	// Vertex info
+	{
+		inf.m_vertexBufferBindingCount = 1;
+		VertexBufferBinding& vertBuffBinding = inf.m_vertexBufferBindings[0];
+		vertBuffBinding.m_buffer = mesh.getVertexBuffer();
+		vertBuffBinding.m_offset = 0;
+		vertBuffBinding.m_stride = sizeof(Vec3) + sizeof(HVec2) + 2 * sizeof(U32);
+
+		inf.m_vertexAttributeCount = 4;
+		auto& attribs = inf.m_vertexAttributes;
+
+		attribs[0].m_bufferBinding = 0;
+		attribs[0].m_format = PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
+		attribs[0].m_relativeOffset = 0;
+
+		attribs[1].m_bufferBinding = 0;
+		attribs[1].m_format = PixelFormat(ComponentFormat::R16G16, TransformFormat::FLOAT);
+		attribs[1].m_relativeOffset = sizeof(Vec3);
+
+		if(key.m_pass == Pass::MS_FS)
 		{
-			inf.m_state.m_shaders[ShaderType::TESSELLATION_CONTROL] =
-				variant.getShader(ShaderType::TESSELLATION_CONTROL);
+			attribs[2].m_bufferBinding = 0;
+			attribs[2].m_format = PixelFormat(ComponentFormat::R10G10B10A2, TransformFormat::SNORM);
+			attribs[2].m_relativeOffset = sizeof(Vec3) + sizeof(U32);
 
-			inf.m_state.m_shaders[ShaderType::TESSELLATION_EVALUATION] =
-				variant.getShader(ShaderType::TESSELLATION_EVALUATION);
+			attribs[3].m_bufferBinding = 0;
+			attribs[3].m_format = PixelFormat(ComponentFormat::R10G10B10A2, TransformFormat::SNORM);
+			attribs[3].m_relativeOffset = sizeof(Vec3) + sizeof(U32) * 2;
 		}
-
-		inf.m_state.m_shaders[ShaderType::FRAGMENT] = variant.getShader(ShaderType::FRAGMENT);
+		else
+		{
+			inf.m_vertexAttributeCount = 2;
+		}
 	}
 
-	// Vertex
-	VertexStateInfo& vert = inf.m_state.m_vertex;
-	vert.m_bindingCount = 1;
-	vert.m_attributeCount = 4;
-	vert.m_bindings[0].m_stride = sizeof(Vec3) + sizeof(HVec2) + 2 * sizeof(U32);
-
-	vert.m_attributes[0].m_format = PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
-	vert.m_attributes[0].m_offset = 0;
-
-	vert.m_attributes[1].m_format = PixelFormat(ComponentFormat::R16G16, TransformFormat::FLOAT);
-	vert.m_attributes[1].m_offset = sizeof(Vec3);
-
-	if(key.m_pass == Pass::MS_FS)
-	{
-		vert.m_attributes[2].m_format = PixelFormat(ComponentFormat::R10G10B10A2, TransformFormat::SNORM);
-		vert.m_attributes[2].m_offset = sizeof(Vec3) + sizeof(U32);
-
-		vert.m_attributes[3].m_format = PixelFormat(ComponentFormat::R10G10B10A2, TransformFormat::SNORM);
-		vert.m_attributes[3].m_offset = sizeof(Vec3) + sizeof(U32) * 2;
-	}
-	else
-	{
-		vert.m_attributeCount = 2;
-	}
-
-	// Input assembly
-	inf.m_state.m_inputAssembler.m_topology = PrimitiveTopology::TRIANGLES;
-	inf.m_state.m_inputAssembler.m_primitiveRestartEnabled = false;
-
-	inf.m_stateMask = PipelineSubStateBit::VERTEX | PipelineSubStateBit::SHADERS | PipelineSubStateBit::INPUT_ASSEMBLER;
+	// Index buff
+	inf.m_indexBuffer = mesh.getIndexBuffer();
 
 	// Other
 	if(subMeshIndicesArray.getSize() == 0 || mesh.getSubMeshesCount() == 0)
@@ -125,11 +105,7 @@ Error ModelPatch::create(WeakArray<CString> meshFNames, const CString& mtlFName,
 	// Load material
 	ANKI_CHECK(manager->loadResource(mtlFName, m_mtl));
 
-	// Iterate material variables for textures
-	ResourceGroupInitInfo rcinit;
-	m_mtl->fillResourceGroupInitInfo(rcinit);
-
-	// Load meshes and update resource group
+	// Load meshes
 	m_meshCount = 0;
 	for(U i = 0; i < meshFNames.getSize(); i++)
 	{
@@ -141,12 +117,6 @@ Error ModelPatch::create(WeakArray<CString> meshFNames, const CString& mtlFName,
 			ANKI_LOGE("Meshes not compatible");
 			return ErrorCode::USER_DATA;
 		}
-
-		rcinit.m_vertexBuffers[0].m_buffer = m_meshes[i]->getVertexBuffer();
-		rcinit.m_indexBuffer.m_buffer = m_meshes[i]->getIndexBuffer();
-		rcinit.m_indexSize = 2;
-
-		m_grResources[i] = manager->getGrManager().newInstance<ResourceGroup>(rcinit);
 
 		++m_meshCount;
 	}

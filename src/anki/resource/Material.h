@@ -169,9 +169,9 @@ public:
 
 	~MaterialVariant();
 
-	ShaderPtr getShader(ShaderType type) const
+	ShaderProgramPtr getShaderProgram() const
 	{
-		return m_shaders[U(type)]->getGrShader();
+		return m_prog;
 	}
 
 	U getDefaultBlockSize() const
@@ -187,11 +187,12 @@ public:
 	}
 
 private:
-	/// All shaders except compute and geometry.
+	/// All shaders except compute.
 	Array<ShaderResourcePtr, 5> m_shaders;
 	U32 m_shaderBlockSize = 0;
 	DynamicArray<ShaderVariableBlockInfo> m_blockInfo;
 	DynamicArray<Bool8> m_varActive;
+	ShaderProgramPtr m_prog;
 
 	ANKI_USE_RESULT Error init(const RenderingKey& key, Material& mtl, MaterialLoader& loader);
 
@@ -313,8 +314,6 @@ public:
 		return m_vars;
 	}
 
-	void fillResourceGroupInitInfo(ResourceGroupInitInfo& rcinit);
-
 	static U getInstanceGroupIdx(U instanceCount);
 
 private:
@@ -329,8 +328,8 @@ private:
 
 	DynamicArray<MaterialVariant> m_variants;
 
-	/// This is a matrix of variants. It holds indices to m_variants. If the
-	/// idx is MAX_U16 then the variant is not present
+	/// This is a matrix of variants. It holds indices to m_variants. If the idx is MAX_U16 then the variant is not
+	/// present.
 	Array4d<U16, U(Pass::COUNT), MAX_LODS, 2, MAX_INSTANCE_GROUPS> m_variantMatrix;
 
 	DynamicArray<MaterialVariable*> m_vars;

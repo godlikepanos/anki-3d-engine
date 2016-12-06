@@ -25,14 +25,6 @@ Error LensFlareComponent::init(const CString& textureFilename)
 	// Texture
 	ANKI_CHECK(getSceneGraph().getResourceManager().loadResource(textureFilename, m_tex));
 
-	// Resource group
-	ResourceGroupInitInfo rcInit;
-	rcInit.m_textures[0].m_texture = m_tex->getGrTexture();
-	rcInit.m_textures[0].m_usage = TextureUsageBit::SAMPLED_FRAGMENT;
-	rcInit.m_uniformBuffers[0].m_uploadedMemory = true;
-	rcInit.m_uniformBuffers[0].m_usage = BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
-	m_rcGroup = getSceneGraph().getGrManager().newInstance<ResourceGroup>(rcInit);
-
 	return ErrorCode::NONE;
 }
 

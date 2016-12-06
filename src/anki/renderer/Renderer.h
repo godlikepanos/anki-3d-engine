@@ -66,7 +66,16 @@ public:
 	class Is
 	{
 	public:
-		TransientMemoryInfo m_dynBufferInfo;
+		TransientMemoryToken m_commonToken;
+		TransientMemoryToken m_pointLightsToken;
+		TransientMemoryToken m_spotLightsToken;
+		TransientMemoryToken m_probesToken;
+		TransientMemoryToken m_decalsToken;
+		TransientMemoryToken m_clustersToken;
+		TransientMemoryToken m_lightIndicesToken;
+
+		TexturePtr m_diffDecalTex;
+		TexturePtr m_normRoughnessDecalTex;
 	} m_is;
 	/// @}
 
@@ -285,7 +294,7 @@ anki_internal:
 
 	void drawQuadInstanced(CommandBufferPtr& cmdb, U32 primitiveCount)
 	{
-		cmdb->drawArrays(3, primitiveCount);
+		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3, primitiveCount);
 	}
 
 	/// Get the LOD given the distance of an object from the camera
@@ -294,8 +303,8 @@ anki_internal:
 		return distance / m_lodDistance;
 	}
 
-	/// Create a pipeline object that has as a vertex shader the m_drawQuadVert and the given fragment progam
-	void createDrawQuadPipeline(ShaderPtr frag, const ColorStateInfo& colorState, PipelinePtr& ppline);
+	/// Create a shader program that has as a vertex shader the m_drawQuadVert and the given fragment progam
+	void createDrawQuadShaderProgram(ShaderPtr frag, ShaderProgramPtr& prog);
 
 	/// Create a framebuffer attachment texture
 	void createRenderTarget(U32 w,
@@ -308,7 +317,8 @@ anki_internal:
 
 	void clearRenderTarget(TexturePtr rt, const ClearValue& clear, TextureUsageBit transferTo);
 
-	ANKI_USE_RESULT Error createShader(CString fname, ShaderResourcePtr& shader, CString fmt, ...);
+	ANKI_USE_RESULT Error createShader(CString fname, ShaderResourcePtr& shader, CString extra);
+	ANKI_USE_RESULT Error createShaderf(CString fname, ShaderResourcePtr& shader, CString fmt, ...);
 
 	GrManager& getGrManager()
 	{

@@ -17,11 +17,11 @@ void SoftwareRasterizer::prepare(const Mat4& mv, const Mat4& p, U width, U heigh
 	m_mvp = p * mv;
 
 	Array<Plane*, 6> planes = {
-		&m_planesL[0], &m_planesL[1], &m_planesL[2], &m_planesL[3], &m_planesL[4], &m_planesL[5]};
+		{&m_planesL[0], &m_planesL[1], &m_planesL[2], &m_planesL[3], &m_planesL[4], &m_planesL[5]}};
 	extractClipPlanes(p, planes);
 
 	Array<Plane*, 6> planes2 = {
-		&m_planesW[0], &m_planesW[1], &m_planesW[2], &m_planesW[3], &m_planesW[4], &m_planesW[5]};
+		{&m_planesW[0], &m_planesW[1], &m_planesW[2], &m_planesW[3], &m_planesW[4], &m_planesW[5]}};
 	extractClipPlanes(m_mvp, planes2);
 
 	// Reset z buffer

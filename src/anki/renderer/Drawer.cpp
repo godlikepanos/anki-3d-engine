@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/renderer/Drawer.h>
-#include <anki/renderer/Ms.h>
 #include <anki/resource/ShaderResource.h>
 #include <anki/scene/FrustumComponent.h>
 #include <anki/resource/Material.h>
@@ -30,17 +29,41 @@ static Bool canMergeBuildInfo(const RenderingBuildInfoOut& a, const RenderingBui
 
 	ANKI_ASSERT(a.m_hasTransform == b.m_hasTransform);
 
-	if(a.m_resourceGroup != b.m_resourceGroup)
+	if(a.m_program != b.m_program)
 	{
 		return false;
 	}
 
-	for(U i = 0; i < U(ShaderType::COUNT); ++i)
+	if(a.m_vertexBufferBindingCount != b.m_vertexBufferBindingCount
+		|| a.m_vertexAttributeCount != b.m_vertexAttributeCount)
 	{
-		if(a.m_state->m_shaders[i] != b.m_state->m_shaders[i])
+		return false;
+	}
+
+	for(U i = 0; i < a.m_vertexBufferBindingCount; ++i)
+	{
+		if(a.m_vertexBufferBindings[i] != b.m_vertexBufferBindings[i])
 		{
 			return false;
 		}
+	}
+
+	for(U i = 0; i < a.m_vertexAttributeCount; ++i)
+	{
+		if(a.m_vertexAttributes[i] != b.m_vertexAttributes[i])
+		{
+			return false;
+		}
+	}
+
+	if(a.m_indexBuffer != b.m_indexBuffer)
+	{
+		return false;
+	}
+
+	if(a.m_indexBufferToken != b.m_indexBufferToken)
+	{
+		return false;
 	}
 
 	// Drawcall
@@ -59,14 +82,7 @@ static Bool canMergeBuildInfo(const RenderingBuildInfoOut& a, const RenderingBui
 		return false;
 	}
 
-	// Vertex
-	if(a.m_state->m_vertex != b.m_state->m_vertex)
-	{
-		return false;
-	}
-
-	// IA
-	if(a.m_state->m_inputAssembler != b.m_state->m_inputAssembler)
+	if(a.m_topology != b.m_topology)
 	{
 		return false;
 	}
@@ -76,15 +92,18 @@ static Bool canMergeBuildInfo(const RenderingBuildInfoOut& a, const RenderingBui
 
 static void resetRenderingBuildInfoOut(RenderingBuildInfoOut& b)
 {
-	b.m_resourceGroup.reset(nullptr);
+	b.m_hasTransform = false;
+	b.m_program = {};
+
+	b.m_vertexBufferBindingCount = 0;
+	b.m_vertexAttributeCount = 0;
+
+	b.m_indexBuffer = {};
+	b.m_indexBufferToken = {};
+
 	b.m_drawcall.m_elements = DrawElementsIndirectInfo();
 	b.m_drawArrays = false;
-	b.m_hasTransform = false;
-	b.m_stateMask = PipelineSubStateBit::NONE;
-
-	b.m_state->m_inputAssembler = InputAssemblerStateInfo();
-	b.m_state->m_vertex = VertexStateInfo();
-	b.m_state->m_shaders = Array<ShaderPtr, U(ShaderType::COUNT)>();
+	b.m_topology = PrimitiveTopology::TRIANGLES;
 }
 
 class CompleteRenderingBuildInfo
@@ -94,11 +113,6 @@ public:
 	RenderComponent* m_rc = nullptr;
 	RenderingBuildInfoIn m_in;
 	RenderingBuildInfoOut m_out;
-
-	CompleteRenderingBuildInfo(PipelineInitInfo* state)
-		: m_out(state)
-	{
-	}
 };
 
 /// Drawer's context
@@ -114,19 +128,12 @@ public:
 	Array<Mat4, MAX_INSTANCES> m_cachedTrfs;
 	U m_cachedTrfCount = 0;
 
-	TransientMemoryInfo m_dynBufferInfo;
+	TransientMemoryToken m_uboToken;
+
 	U m_nodeProcessedCount = 0;
 
-	GrObjectCache* m_pplineCache;
-
 	Array<CompleteRenderingBuildInfo, 2> m_buildInfo;
-	Array<PipelineInitInfo, 2> m_state;
 	U m_crntBuildInfo = 0;
-
-	DrawContext()
-		: m_buildInfo{{&m_state[0], &m_state[1]}}
-	{
-	}
 };
 
 /// Visitor that sets a uniform
@@ -276,7 +283,8 @@ void SetupRenderableVariableVisitor::uniSet<TextureResourcePtr>(
 	const MaterialVariable& mtlvar, const TextureResourcePtr* values, U32 size)
 {
 	ANKI_ASSERT(size == 1);
-	// Do nothing
+	ANKI_ASSERT(values);
+	m_ctx->m_cmdb->bindTexture(0, mtlvar.getTextureUnit(), (*values)->getGrTexture());
 }
 
 RenderableDrawer::~RenderableDrawer()
@@ -290,7 +298,7 @@ void RenderableDrawer::setupUniforms(DrawContext& ctx, CompleteRenderingBuildInf
 
 	// Get some memory for uniforms
 	U8* uniforms = static_cast<U8*>(m_r->getGrManager().allocateFrameTransientMemory(
-		variant.getDefaultBlockSize(), BufferUsageBit::UNIFORM_ALL, ctx.m_dynBufferInfo.m_uniformBuffers[0]));
+		variant.getDefaultBlockSize(), BufferUsageBit::UNIFORM_ALL, ctx.m_uboToken));
 
 	// Call the visitor
 	SetupRenderableVariableVisitor visitor;
@@ -312,13 +320,8 @@ void RenderableDrawer::setupUniforms(DrawContext& ctx, CompleteRenderingBuildInf
 	}
 }
 
-Error RenderableDrawer::drawRange(Pass pass,
-	const FrustumComponent& frc,
-	CommandBufferPtr cmdb,
-	GrObjectCache& pplineCache,
-	const PipelineInitInfo& state,
-	VisibleNode* begin,
-	VisibleNode* end)
+Error RenderableDrawer::drawRange(
+	Pass pass, const FrustumComponent& frc, CommandBufferPtr cmdb, VisibleNode* begin, VisibleNode* end)
 {
 	ANKI_ASSERT(begin && end && begin < end);
 
@@ -326,9 +329,6 @@ Error RenderableDrawer::drawRange(Pass pass,
 	ctx.m_frc = &frc;
 	ctx.m_pass = pass;
 	ctx.m_cmdb = cmdb;
-	ctx.m_pplineCache = &pplineCache;
-	ctx.m_state[0] = state;
-	ctx.m_state[1] = state;
 
 	for(; begin != end; ++begin)
 	{
@@ -357,35 +357,63 @@ Error RenderableDrawer::flushDrawcall(DrawContext& ctx, CompleteRenderingBuildIn
 		ANKI_CHECK(rc.buildRendering(build.m_in, build.m_out));
 	}
 
-	// Create the pipeline
-	U64 pplineHash = build.m_out.m_state->computeHash();
-	PipelinePtr ppline;
-	Bool pplineFound = rc.tryGetPipeline(pplineHash, ppline);
-
-	if(ANKI_UNLIKELY(!pplineFound))
-	{
-		ppline = ctx.m_pplineCache->newInstance<Pipeline>(*build.m_out.m_state, pplineHash);
-		rc.storePipeline(pplineHash, ppline);
-	}
-
 	// Enqueue uniform state updates
 	setupUniforms(ctx, build);
 
 	// Finaly, touch the command buffer
-	ctx.m_cmdb->bindResourceGroup(build.m_out.m_resourceGroup, 0, &ctx.m_dynBufferInfo);
-	ctx.m_cmdb->bindPipeline(ppline);
+	CommandBufferPtr& cmdb = ctx.m_cmdb;
+
+	cmdb->bindUniformBuffer(0, 0, ctx.m_uboToken);
+	cmdb->bindShaderProgram(build.m_out.m_program);
+
+	for(U i = 0; i < build.m_out.m_vertexBufferBindingCount; ++i)
+	{
+		const RenderingVertexBufferBinding& binding = build.m_out.m_vertexBufferBindings[i];
+		if(binding.m_buffer)
+		{
+			cmdb->bindVertexBuffer(i, binding.m_buffer, binding.m_offset, binding.m_stride);
+		}
+		else
+		{
+			ANKI_ASSERT(!!(binding.m_token));
+			cmdb->bindVertexBuffer(i, binding.m_token, binding.m_stride);
+		}
+	}
+
+	for(U i = 0; i < build.m_out.m_vertexAttributeCount; ++i)
+	{
+		const RenderingVertexAttributeInfo& attrib = build.m_out.m_vertexAttributes[i];
+
+		cmdb->setVertexAttribute(i, attrib.m_bufferBinding, attrib.m_format, attrib.m_relativeOffset);
+	}
+
 	if(!build.m_out.m_drawArrays)
 	{
 		const DrawElementsIndirectInfo& drawc = build.m_out.m_drawcall.m_elements;
 
-		ctx.m_cmdb->drawElements(
-			drawc.m_count, drawc.m_instanceCount, drawc.m_firstIndex, drawc.m_baseVertex, drawc.m_baseInstance);
+		if(build.m_out.m_indexBuffer)
+		{
+			cmdb->bindIndexBuffer(build.m_out.m_indexBuffer, 0, IndexType::U16);
+		}
+		else
+		{
+			ANKI_ASSERT(!!(build.m_out.m_indexBufferToken));
+			cmdb->bindIndexBuffer(build.m_out.m_indexBufferToken, IndexType::U16);
+		}
+
+		cmdb->drawElements(build.m_out.m_topology,
+			drawc.m_count,
+			drawc.m_instanceCount,
+			drawc.m_firstIndex,
+			drawc.m_baseVertex,
+			drawc.m_baseInstance);
 	}
 	else
 	{
 		const DrawArraysIndirectInfo& drawc = build.m_out.m_drawcall.m_arrays;
 
-		ctx.m_cmdb->drawArrays(drawc.m_count, drawc.m_instanceCount, drawc.m_first, drawc.m_baseInstance);
+		cmdb->drawArrays(
+			build.m_out.m_topology, drawc.m_count, drawc.m_instanceCount, drawc.m_first, drawc.m_baseInstance);
 	}
 
 	// Rendered something, reset the cached transforms
@@ -426,8 +454,6 @@ Error RenderableDrawer::drawSingle(DrawContext& ctx)
 
 	resetRenderingBuildInfoOut(crntBuild.m_out);
 	ANKI_CHECK(renderable.buildRendering(crntBuild.m_in, crntBuild.m_out));
-	ANKI_ASSERT(crntBuild.m_out.m_stateMask
-		== (PipelineSubStateBit::VERTEX | PipelineSubStateBit::INPUT_ASSEMBLER | PipelineSubStateBit::SHADERS));
 
 	if(ANKI_UNLIKELY(ctx.m_nodeProcessedCount == 0))
 	{

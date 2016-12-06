@@ -32,7 +32,7 @@ anki_internal:
 
 	~Ir();
 
-	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
+	ANKI_USE_RESULT Error init(const ConfigSet& cfg);
 
 	ANKI_USE_RESULT Error run(RenderingContext& ctx);
 
@@ -72,8 +72,6 @@ private:
 
 		// IS
 		FramebufferPtr m_isFb;
-		ResourceGroupPtr m_plightRsrc;
-		ResourceGroupPtr m_slightRsrc;
 
 		// Irradiance
 		FramebufferPtr m_irradianceFb;
@@ -110,8 +108,8 @@ private:
 		ShaderResourcePtr m_lightVert;
 		ShaderResourcePtr m_plightFrag;
 		ShaderResourcePtr m_slightFrag;
-		PipelinePtr m_plightPpline;
-		PipelinePtr m_slightPpline;
+		ShaderProgramPtr m_plightProg;
+		ShaderProgramPtr m_slightProg;
 
 		BufferPtr m_plightPositions;
 		BufferPtr m_plightIndices;
@@ -129,8 +127,7 @@ private:
 		U32 m_cubeArrMipCount = 0;
 
 		ShaderResourcePtr m_frag;
-		PipelinePtr m_ppline;
-		ResourceGroupPtr m_rsrc;
+		ShaderProgramPtr m_prog;
 	} m_irradiance;
 
 	DynamicArray<CacheEntry> m_cacheEntries;
@@ -140,6 +137,7 @@ private:
 	SamplerPtr m_integrationLutSampler;
 
 	// Init
+	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 	ANKI_USE_RESULT Error initIs();
 	ANKI_USE_RESULT Error initIrradiance();
 	void initFaceInfo(U cacheEntryIdx, U faceIdx);

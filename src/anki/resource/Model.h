@@ -23,6 +23,42 @@ class PhysicsCollisionShape;
 /// @addtogroup resource
 /// @{
 
+class VertexBufferBinding
+{
+public:
+	BufferPtr m_buffer;
+	PtrSize m_offset;
+	PtrSize m_stride;
+
+	Bool operator==(const VertexBufferBinding& b) const
+	{
+		return m_buffer == b.m_buffer && m_offset == b.m_offset && m_stride == b.m_stride;
+	}
+
+	Bool operator!=(const VertexBufferBinding& b) const
+	{
+		return !(*this == b);
+	}
+};
+
+class VertexAttributeInfo
+{
+public:
+	U32 m_bufferBinding;
+	PixelFormat m_format;
+	PtrSize m_relativeOffset;
+
+	Bool operator==(const VertexAttributeInfo& b) const
+	{
+		return m_bufferBinding == b.m_bufferBinding && m_format == b.m_format && m_relativeOffset == b.m_relativeOffset;
+	}
+
+	Bool operator!=(const VertexAttributeInfo& b) const
+	{
+		return !(*this == b);
+	}
+};
+
 class ModelRenderingInfo
 {
 public:
@@ -30,14 +66,14 @@ public:
 	Array<PtrSize, MAX_SUB_DRAWCALLS> m_indicesOffsetArray;
 	U32 m_drawcallCount;
 
-	ResourceGroupPtr m_resourceGroup;
-	PipelineInitInfo& m_state;
-	PipelineSubStateBit m_stateMask = PipelineSubStateBit::NONE;
+	ShaderProgramPtr m_program;
 
-	ModelRenderingInfo(PipelineInitInfo& state)
-		: m_state(state)
-	{
-	}
+	Array<VertexBufferBinding, MAX_VERTEX_ATTRIBUTES> m_vertexBufferBindings;
+	U32 m_vertexBufferBindingCount;
+	Array<VertexAttributeInfo, MAX_VERTEX_ATTRIBUTES> m_vertexAttributes;
+	U32 m_vertexAttributeCount;
+
+	BufferPtr m_indexBuffer;
 };
 
 /// Model patch interface class. Its very important class and it binds the material with the mesh
@@ -91,8 +127,6 @@ private:
 	Array<MeshResourcePtr, MAX_LODS> m_meshes; ///< One for each LOD
 	U8 m_meshCount = 0;
 	MaterialResourcePtr m_mtl;
-
-	Array<ResourceGroupPtr, MAX_LODS> m_grResources;
 
 	/// Return the maximum number of LODs
 	U getLodCount() const;

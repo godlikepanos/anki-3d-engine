@@ -17,25 +17,22 @@ namespace anki
 class Tm : public RenderingPass
 {
 anki_internal:
+	BufferPtr m_luminanceBuff;
+
 	Tm(Renderer* r)
 		: RenderingPass(r)
 	{
 	}
 
-	BufferPtr& getAverageLuminanceBuffer()
-	{
-		return m_luminanceBuff;
-	}
-
-	ANKI_USE_RESULT Error create(const ConfigSet& initializer);
+	ANKI_USE_RESULT Error init(const ConfigSet& cfg);
 
 	void run(RenderingContext& ctx);
 
 private:
 	ShaderResourcePtr m_luminanceShader;
-	PipelinePtr m_luminancePpline;
-	BufferPtr m_luminanceBuff;
-	ResourceGroupPtr m_rcGroup;
+	ShaderProgramPtr m_prog;
+
+	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 };
 /// @}
 

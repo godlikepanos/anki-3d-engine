@@ -190,8 +190,7 @@ private:
 	/// @name Graphics
 	/// @{
 	U32 m_vertBuffSize = 0;
-	Array<BufferPtr, MAX_FRAMES_IN_FLIGHT> m_vertBuffs;
-	Array<ResourceGroupPtr, MAX_FRAMES_IN_FLIGHT> m_grGroups;
+	TransientMemoryToken m_vertBuffToken;
 	/// @}
 
 	SimulationType m_simulationType = SimulationType::UNDEFINED;

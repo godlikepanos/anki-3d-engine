@@ -81,16 +81,8 @@ Error MainRenderer::create(ThreadPool* threadpool,
 	if(!m_rDrawToDefaultFb)
 	{
 		ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/Final.frag.glsl", m_blitFrag));
+		m_r->createDrawQuadShaderProgram(m_blitFrag->getGrShader(), m_blitProg);
 
-		ColorStateInfo colorState;
-		colorState.m_attachmentCount = 1;
-		colorState.m_attachments[0].m_format.m_components = ComponentFormat::DEFAULT_FRAMEBUFFER;
-		m_r->createDrawQuadPipeline(m_blitFrag->getGrShader(), colorState, m_blitPpline);
-
-		// Init RC group
-		ResourceGroupInitInfo rcinit;
-		rcinit.m_textures[0].m_texture = m_r->getPps().getRt();
-		m_rcGroup = m_r->getGrManager().newInstance<ResourceGroup>(rcinit);
 		ANKI_LOGI("The main renderer will have to blit the offscreen renderer's result");
 	}
 
@@ -108,11 +100,10 @@ Error MainRenderer::render(SceneGraph& scene)
 
 	GrManager& gl = m_r->getGrManager();
 	CommandBufferInitInfo cinf;
+	cinf.m_flags =
+		CommandBufferFlag::COMPUTE_WORK | CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::TRANSFER_WORK;
 	cinf.m_hints = m_cbInitHints;
 	CommandBufferPtr cmdb = gl.newInstance<CommandBuffer>(cinf);
-
-	// Set some of the dynamic state
-	cmdb->setPolygonOffset(0.0, 0.0);
 
 	// Run renderer
 	RenderingContext ctx(m_frameAlloc);
@@ -134,8 +125,8 @@ Error MainRenderer::render(SceneGraph& scene)
 		cmdb->beginRenderPass(m_defaultFb);
 		cmdb->setViewport(0, 0, m_width, m_height);
 
-		cmdb->bindPipeline(m_blitPpline);
-		cmdb->bindResourceGroup(m_rcGroup, 0, nullptr);
+		cmdb->bindShaderProgram(m_blitProg);
+		cmdb->bindTexture(0, 0, m_r->getPps().getRt());
 
 		m_r->drawQuad(cmdb);
 		cmdb->endRenderPass();

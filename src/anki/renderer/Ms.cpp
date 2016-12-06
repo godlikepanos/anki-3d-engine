@@ -17,10 +17,6 @@ namespace anki
 
 Ms::~Ms()
 {
-	if(m_pplineCache)
-	{
-		getAllocator().deleteInstance(m_pplineCache);
-	}
 }
 
 Error Ms::createRt(U32 samples)
@@ -91,10 +87,12 @@ Error Ms::createRt(U32 samples)
 
 Error Ms::init(const ConfigSet& initializer)
 {
+	ANKI_LOGI("Initializing g-buffer pass");
+
 	Error err = initInternal(initializer);
 	if(err)
 	{
-		ANKI_LOGE("Failed to initialize material stage");
+		ANKI_LOGE("Failed to initialize g-buffer pass");
 	}
 
 	return err;
@@ -103,21 +101,6 @@ Error Ms::init(const ConfigSet& initializer)
 Error Ms::initInternal(const ConfigSet& initializer)
 {
 	ANKI_CHECK(createRt(initializer.getNumber("samples")));
-
-	getGrManager().finish();
-
-	{
-		ColorStateInfo& color = m_state.m_color;
-		color.m_attachmentCount = MS_COLOR_ATTACHMENT_COUNT;
-		color.m_attachments[0].m_format = MS_COLOR_ATTACHMENT_PIXEL_FORMATS[0];
-		color.m_attachments[1].m_format = MS_COLOR_ATTACHMENT_PIXEL_FORMATS[1];
-		color.m_attachments[2].m_format = MS_COLOR_ATTACHMENT_PIXEL_FORMATS[2];
-
-		m_state.m_depthStencil.m_format = MS_DEPTH_ATTACHMENT_PIXEL_FORMAT;
-	}
-
-	m_pplineCache = getAllocator().newInstance<GrObjectCache>(&getGrManager());
-
 	return ErrorCode::NONE;
 }
 
@@ -134,21 +117,20 @@ Error Ms::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) 
 
 	if(start != end)
 	{
-		// Create the command buffer and set some state
+		// Create the command buffer
 		CommandBufferInitInfo cinf;
-		cinf.m_flags = CommandBufferFlag::SECOND_LEVEL;
+		cinf.m_flags = CommandBufferFlag::SECOND_LEVEL | CommandBufferFlag::GRAPHICS_WORK;
 		cinf.m_framebuffer = m_fb;
 		CommandBufferPtr cmdb = m_r->getGrManager().newInstance<CommandBuffer>(cinf);
 		ctx.m_ms.m_commandBuffers[threadId] = cmdb;
+
+		// Set some state, leave the rest to default
 		cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
-		cmdb->setPolygonOffset(0.0, 0.0);
 
 		// Start drawing
 		ANKI_CHECK(m_r->getSceneDrawer().drawRange(Pass::MS_FS,
 			*ctx.m_frustumComponent,
 			cmdb,
-			*m_pplineCache,
-			m_state,
 			vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + start,
 			vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + end));
 	}
@@ -166,7 +148,6 @@ void Ms::run(RenderingContext& ctx)
 
 	// Set some state anyway because other stages may depend on it
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
-	cmdb->setPolygonOffset(0.0, 0.0);
 
 	for(U i = 0; i < m_r->getThreadPool().getThreadsCount(); ++i)
 	{

@@ -15,6 +15,20 @@ namespace anki
 /// @addtogroup graphics
 /// @{
 
+/// Graphics object type.
+enum GrObjectType : U16
+{
+	BUFFER,
+	COMMAND_BUFFER,
+	FRAMEBUFFER,
+	OCCLUSION_QUERY,
+	SAMPLER,
+	SHADER,
+	TEXTURE,
+	SHADER_PROGRAM,
+	COUNT
+};
+
 /// Base of all graphics objects.
 class GrObject : public NonCopyable
 {

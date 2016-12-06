@@ -27,11 +27,13 @@ public:
 	void run(RenderingContext& ctx);
 
 private:
-	ResourceGroupPtr m_rcGroup;
 	FramebufferPtr m_fb;
 	ShaderResourcePtr m_frag;
 	ShaderResourcePtr m_vert;
-	PipelinePtr m_ppline;
+	ShaderProgramPtr m_prog;
+	SamplerPtr m_nearestSampler;
+
+	ANKI_USE_RESULT Error initInternal(const ConfigSet& config);
 };
 /// @}
 

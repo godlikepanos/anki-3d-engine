@@ -46,8 +46,7 @@ anki_internal:
 private:
 	FramebufferPtr m_fb;
 	ShaderResourcePtr m_frag;
-	PipelinePtr m_ppline;
-	ResourceGroupPtr m_rsrc;
+	ShaderProgramPtr m_prog;
 
 	F32 m_threshold = 10.0; ///< How bright it is
 	F32 m_scale = 1.0;
@@ -78,8 +77,7 @@ anki_internal:
 private:
 	FramebufferPtr m_fb;
 	ShaderResourcePtr m_frag;
-	PipelinePtr m_ppline;
-	ResourceGroupPtr m_rsrc;
+	ShaderProgramPtr m_prog;
 };
 
 /// Bloom pass.
@@ -103,6 +101,18 @@ anki_internal:
 	}
 
 	ANKI_USE_RESULT Error init(const ConfigSet& cfg)
+	{
+		ANKI_LOGI("Initializing bloom passes");
+		Error err = initInternal(cfg);
+		if(err)
+		{
+			ANKI_LOGE("Failed to initialize bloom passes");
+		}
+		return err;
+	}
+
+private:
+	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg)
 	{
 		ANKI_CHECK(m_extractExposure.init(cfg));
 		ANKI_CHECK(m_upscale.init(cfg));

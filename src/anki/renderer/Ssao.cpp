@@ -119,16 +119,14 @@ Error Ssao::initInternal(const ConfigSet& config)
 	genNoise(&noise[0], &noise[0] + noise.getSize());
 
 	CommandBufferInitInfo cmdbInit;
-	cmdbInit.m_flags = CommandBufferFlag::SMALL_BATCH;
+	cmdbInit.m_flags = CommandBufferFlag::SMALL_BATCH | CommandBufferFlag::TRANSFER_WORK;
 
 	CommandBufferPtr cmdb = gr.newInstance<CommandBuffer>(cmdbInit);
 
 	TextureSurfaceInfo surf(0, 0, 0, 0);
 
 	cmdb->setTextureSurfaceBarrier(m_noiseTex, TextureUsageBit::NONE, TextureUsageBit::UPLOAD, surf);
-
 	cmdb->uploadTextureSurfaceCopyData(m_noiseTex, surf, &noise[0], sizeof(noise));
-
 	cmdb->setTextureSurfaceBarrier(m_noiseTex, TextureUsageBit::UPLOAD, TextureUsageBit::SAMPLED_FRAGMENT, surf);
 
 	cmdb->flush();
@@ -154,103 +152,51 @@ Error Ssao::initInternal(const ConfigSet& config)
 	//
 	// Shaders
 	//
-	PipelineInitInfo ppinit;
-	ppinit.m_color.m_attachmentCount = 1;
-	ppinit.m_color.m_attachments[0].m_format = RT_PIXEL_FORMAT;
-	ppinit.m_depthStencil.m_depthWriteEnabled = false;
-	ppinit.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
-
-	StringAuto pps(getAllocator());
-
-	// vert shader
-	ANKI_CHECK(getResourceManager().loadResource("shaders/Quad.vert.glsl", m_quadVert));
-
-	ppinit.m_shaders[ShaderType::VERTEX] = m_quadVert->getGrShader();
 
 	// main pass prog
-	pps.destroy();
-	pps.sprintf("#define NOISE_MAP_SIZE %u\n"
-				"#define WIDTH %u\n"
-				"#define HEIGHT %u\n"
-				"#define KERNEL_SIZE %u\n"
-				"#define KERNEL_ARRAY %s\n"
-				"#define RADIUS float(%f)\n",
+	ANKI_CHECK(m_r->createShaderf("shaders/Ssao.frag.glsl",
+		m_ssaoFrag,
+		"#define NOISE_MAP_SIZE %u\n"
+		"#define WIDTH %u\n"
+		"#define HEIGHT %u\n"
+		"#define KERNEL_SIZE %u\n"
+		"#define KERNEL_ARRAY %s\n"
+		"#define RADIUS float(%f)\n",
 		NOISE_TEX_SIZE,
 		m_width,
 		m_height,
 		KERNEL_SIZE,
 		&kernelStr[0],
-		HEMISPHERE_RADIUS);
+		HEMISPHERE_RADIUS));
 
-	ANKI_CHECK(getResourceManager().loadResourceToCache(m_ssaoFrag, "shaders/Ssao.frag.glsl", pps.toCString(), "r_"));
-
-	ppinit.m_shaders[ShaderType::FRAGMENT] = m_ssaoFrag->getGrShader();
-
-	m_ssaoPpline = getGrManager().newInstance<Pipeline>(ppinit);
+	m_r->createDrawQuadShaderProgram(m_ssaoFrag->getGrShader(), m_ssaoProg);
 
 	// h blur
 	const char* SHADER_FILENAME = "shaders/GaussianBlurGeneric.frag.glsl";
 
-	pps.destroy();
-	pps.sprintf("#define HPASS\n"
-				"#define COL_R\n"
-				"#define TEXTURE_SIZE vec2(%f, %f)\n"
-				"#define KERNEL_SIZE 13\n",
+	ANKI_CHECK(m_r->createShaderf(SHADER_FILENAME,
+		m_hblurFrag,
+		"#define HPASS\n"
+		"#define COL_R\n"
+		"#define TEXTURE_SIZE vec2(%f, %f)\n"
+		"#define KERNEL_SIZE 13\n",
 		F32(m_width),
-		F32(m_height));
+		F32(m_height)));
 
-	ANKI_CHECK(getResourceManager().loadResourceToCache(m_hblurFrag, SHADER_FILENAME, pps.toCString(), "r_"));
-
-	ppinit.m_shaders[ShaderType::FRAGMENT] = m_hblurFrag->getGrShader();
-
-	m_hblurPpline = getGrManager().newInstance<Pipeline>(ppinit);
+	m_r->createDrawQuadShaderProgram(m_hblurFrag->getGrShader(), m_hblurProg);
 
 	// v blur
-	pps.destroy();
-	pps.sprintf("#define VPASS\n"
-				"#define COL_R\n"
-				"#define TEXTURE_SIZE vec2(%f, %f)\n"
-				"#define KERNEL_SIZE 11\n",
+	ANKI_CHECK(m_r->createShaderf(SHADER_FILENAME,
+		m_vblurFrag,
+		"#define VPASS\n"
+		"#define COL_R\n"
+		"#define TEXTURE_SIZE vec2(%f, %f)\n"
+		"#define KERNEL_SIZE 11\n",
 		F32(m_width),
-		F32(m_height));
+		F32(m_height)));
 
-	ANKI_CHECK(getResourceManager().loadResourceToCache(m_vblurFrag, SHADER_FILENAME, pps.toCString(), "r_"));
+	m_r->createDrawQuadShaderProgram(m_vblurFrag->getGrShader(), m_vblurProg);
 
-	ppinit.m_shaders[ShaderType::FRAGMENT] = m_vblurFrag->getGrShader();
-
-	m_vblurPpline = getGrManager().newInstance<Pipeline>(ppinit);
-
-	//
-	// Resource groups
-	//
-	ResourceGroupInitInfo rcinit;
-	SamplerInitInfo sinit;
-	sinit.m_minMagFilter = SamplingFilter::LINEAR;
-	sinit.m_mipmapFilter = SamplingFilter::NEAREST;
-	sinit.m_repeat = false;
-
-	rcinit.m_textures[0].m_texture = m_r->getDepthDownscale().m_qd.m_depthRt;
-	rcinit.m_textures[0].m_sampler = gr.newInstance<Sampler>(sinit);
-	rcinit.m_textures[0].m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
-
-	rcinit.m_textures[1].m_texture = m_r->getMs().m_rt2;
-	rcinit.m_textures[1].m_sampler = rcinit.m_textures[0].m_sampler;
-
-	rcinit.m_textures[2].m_texture = m_noiseTex;
-
-	rcinit.m_uniformBuffers[0].m_uploadedMemory = true;
-	rcinit.m_uniformBuffers[0].m_usage = BufferUsageBit::UNIFORM_FRAGMENT;
-	m_rcFirst = gr.newInstance<ResourceGroup>(rcinit);
-
-	rcinit = ResourceGroupInitInfo();
-	rcinit.m_textures[0].m_texture = m_vblurRt;
-	m_hblurRc = gr.newInstance<ResourceGroup>(rcinit);
-
-	rcinit = ResourceGroupInitInfo();
-	rcinit.m_textures[0].m_texture = m_hblurRt;
-	m_vblurRc = gr.newInstance<ResourceGroup>(rcinit);
-
-	gr.finish();
 	return ErrorCode::NONE;
 }
 
@@ -290,11 +236,15 @@ void Ssao::run(RenderingContext& ctx)
 	//
 	cmdb->beginRenderPass(m_vblurFb);
 	cmdb->setViewport(0, 0, m_width, m_height);
-	cmdb->bindPipeline(m_ssaoPpline);
+	cmdb->bindShaderProgram(m_ssaoProg);
 
-	TransientMemoryInfo inf;
-	Vec4* unis = static_cast<Vec4*>(getGrManager().allocateFrameTransientMemory(
-		sizeof(Vec4) * 2, BufferUsageBit::UNIFORM_ALL, inf.m_uniformBuffers[0]));
+	cmdb->bindTexture(0, 0, m_r->getDepthDownscale().m_qd.m_depthRt);
+	cmdb->bindTexture(0, 1, m_r->getMs().m_rt2);
+	cmdb->bindTexture(0, 2, m_noiseTex);
+
+	TransientMemoryToken token;
+	Vec4* unis = static_cast<Vec4*>(
+		getGrManager().allocateFrameTransientMemory(sizeof(Vec4) * 2, BufferUsageBit::UNIFORM_ALL, token));
 
 	const FrustumComponent& frc = *ctx.m_frustumComponent;
 	const Mat4& pmat = frc.getProjectionMatrix();
@@ -302,7 +252,7 @@ void Ssao::run(RenderingContext& ctx)
 	++unis;
 	*unis = Vec4(pmat(0, 0), pmat(1, 1), pmat(2, 2), pmat(2, 3));
 
-	cmdb->bindResourceGroup(m_rcFirst, 0, &inf);
+	cmdb->bindUniformBuffer(0, 0, token);
 
 	// Draw
 	m_r->drawQuad(cmdb);
@@ -322,8 +272,8 @@ void Ssao::run(RenderingContext& ctx)
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 			TextureSurfaceInfo(0, 0, 0, 0));
 		cmdb->beginRenderPass(m_hblurFb);
-		cmdb->bindPipeline(m_hblurPpline);
-		cmdb->bindResourceGroup(m_hblurRc, 0, nullptr);
+		cmdb->bindShaderProgram(m_hblurProg);
+		cmdb->bindTexture(0, 0, m_vblurRt);
 		m_r->drawQuad(cmdb);
 		cmdb->endRenderPass();
 
@@ -337,8 +287,8 @@ void Ssao::run(RenderingContext& ctx)
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 			TextureSurfaceInfo(0, 0, 0, 0));
 		cmdb->beginRenderPass(m_vblurFb);
-		cmdb->bindPipeline(m_vblurPpline);
-		cmdb->bindResourceGroup(m_vblurRc, 0, nullptr);
+		cmdb->bindShaderProgram(m_vblurProg);
+		cmdb->bindTexture(0, 0, m_hblurRt);
 		m_r->drawQuad(cmdb);
 		cmdb->endRenderPass();
 	}

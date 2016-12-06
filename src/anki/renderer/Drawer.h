@@ -34,13 +34,8 @@ public:
 
 	~RenderableDrawer();
 
-	ANKI_USE_RESULT Error drawRange(Pass pass,
-		const FrustumComponent& frc,
-		CommandBufferPtr cmdb,
-		GrObjectCache& pplineCache,
-		const PipelineInitInfo& state,
-		VisibleNode* begin,
-		VisibleNode* end);
+	ANKI_USE_RESULT Error drawRange(
+		Pass pass, const FrustumComponent& frc, CommandBufferPtr cmdb, VisibleNode* begin, VisibleNode* end);
 
 private:
 	Renderer* m_r;

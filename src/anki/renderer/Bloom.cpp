@@ -45,32 +45,17 @@ Error BloomExposure::init(const ConfigSet& config)
 	m_fb = gr.newInstance<Framebuffer>(fbInit);
 
 	// init shaders
-	StringAuto pps(getAllocator());
-	pps.sprintf("#define WIDTH %u\n"
-				"#define HEIGHT %u\n"
-				"#define MIPMAP %u.0\n",
+	ANKI_CHECK(m_r->createShaderf("shaders/Bloom.frag.glsl",
+		m_frag,
+		"#define WIDTH %u\n"
+		"#define HEIGHT %u\n"
+		"#define MIPMAP %u.0\n",
 		m_r->getWidth() >> (m_r->getIs().getRtMipmapCount() - 1),
 		m_r->getHeight() >> (m_r->getIs().getRtMipmapCount() - 1),
-		m_r->getIs().getRtMipmapCount() - 1);
+		m_r->getIs().getRtMipmapCount() - 1));
 
-	ANKI_CHECK(getResourceManager().loadResourceToCache(m_frag, "shaders/Bloom.frag.glsl", pps.toCString(), "r_"));
-
-	// Init pplines
-	ColorStateInfo colorInf;
-	colorInf.m_attachmentCount = 1;
-	colorInf.m_attachments[0].m_format = BLOOM_RT_PIXEL_FORMAT;
-
-	m_r->createDrawQuadPipeline(m_frag->getGrShader(), colorInf, m_ppline);
-
-	// Set descriptors
-	ResourceGroupInitInfo descInit;
-	descInit.m_textures[0].m_texture = m_r->getIs().getRt();
-	descInit.m_uniformBuffers[0].m_uploadedMemory = true;
-	descInit.m_uniformBuffers[0].m_usage = BufferUsageBit::UNIFORM_FRAGMENT;
-	descInit.m_storageBuffers[0].m_buffer = m_r->getTm().getAverageLuminanceBuffer();
-	descInit.m_storageBuffers[0].m_usage = BufferUsageBit::STORAGE_FRAGMENT_READ;
-
-	m_rsrc = gr.newInstance<ResourceGroup>(descInit);
+	// Init prog
+	m_r->createDrawQuadShaderProgram(m_frag->getGrShader(), m_prog);
 
 	return ErrorCode::NONE;
 }
@@ -95,14 +80,16 @@ void BloomExposure::run(RenderingContext& ctx)
 
 	cmdb->beginRenderPass(m_fb);
 	cmdb->setViewport(0, 0, m_width, m_height);
-	cmdb->bindPipeline(m_ppline);
+	cmdb->bindShaderProgram(m_prog);
+	cmdb->bindTexture(0, 0, m_r->getIs().getRt());
 
-	TransientMemoryInfo dyn;
-	Vec4* uniforms = static_cast<Vec4*>(getGrManager().allocateFrameTransientMemory(
-		sizeof(Vec4), BufferUsageBit::UNIFORM_ALL, dyn.m_uniformBuffers[0]));
+	TransientMemoryToken token;
+	Vec4* uniforms = static_cast<Vec4*>(
+		getGrManager().allocateFrameTransientMemory(sizeof(Vec4), BufferUsageBit::UNIFORM_ALL, token));
 	*uniforms = Vec4(m_threshold, m_scale, 0.0, 0.0);
 
-	cmdb->bindResourceGroup(m_rsrc, 0, &dyn);
+	cmdb->bindUniformBuffer(0, 0, token);
+	cmdb->bindStorageBuffer(0, 0, m_r->getTm().m_luminanceBuff, 0);
 
 	m_r->drawQuad(cmdb);
 	cmdb->endRenderPass();
@@ -137,25 +124,15 @@ Error BloomUpscale::init(const ConfigSet& config)
 	m_fb = gr.newInstance<Framebuffer>(fbInit);
 
 	// init shaders
-	StringAuto pps(getAllocator());
-	pps.sprintf("#define WIDTH %u\n"
-				"#define HEIGHT %u\n",
+	ANKI_CHECK(m_r->createShaderf("shaders/BloomUpscale.frag.glsl",
+		m_frag,
+		"#define WIDTH %u\n"
+		"#define HEIGHT %u\n",
 		m_width,
-		m_height);
+		m_height));
 
-	ANKI_CHECK(
-		getResourceManager().loadResourceToCache(m_frag, "shaders/BloomUpscale.frag.glsl", pps.toCString(), "r_"));
-
-	// Init pplines
-	ColorStateInfo colorInf;
-	colorInf.m_attachmentCount = 1;
-	colorInf.m_attachments[0].m_format = BLOOM_RT_PIXEL_FORMAT;
-	m_r->createDrawQuadPipeline(m_frag->getGrShader(), colorInf, m_ppline);
-
-	// Set descriptors
-	ResourceGroupInitInfo descInit;
-	descInit.m_textures[0].m_texture = m_r->getBloom().m_extractExposure.m_rt;
-	m_rsrc = gr.newInstance<ResourceGroup>(descInit);
+	// Init prog
+	m_r->createDrawQuadShaderProgram(m_frag->getGrShader(), m_prog);
 
 	return ErrorCode::NONE;
 }
@@ -182,8 +159,8 @@ void BloomUpscale::run(RenderingContext& ctx)
 
 	cmdb->setViewport(0, 0, m_width, m_height);
 	cmdb->beginRenderPass(m_fb);
-	cmdb->bindPipeline(m_ppline);
-	cmdb->bindResourceGroup(m_rsrc, 0, nullptr);
+	cmdb->bindShaderProgram(m_prog);
+	cmdb->bindTexture(0, 0, m_r->getBloom().m_extractExposure.m_rt);
 	m_r->drawQuad(cmdb);
 
 	m_r->getBloom().m_sslf.run(ctx);

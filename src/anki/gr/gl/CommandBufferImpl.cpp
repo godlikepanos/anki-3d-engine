@@ -9,9 +9,9 @@
 #include <anki/gr/gl/GlState.h>
 #include <anki/gr/gl/Error.h>
 
-#include <anki/gr/gl/ResourceGroupImpl.h>
 #include <anki/gr/OcclusionQuery.h>
 #include <anki/gr/gl/OcclusionQueryImpl.h>
+#include <anki/gr/Buffer.h>
 #include <anki/gr/gl/BufferImpl.h>
 
 #include <anki/util/Logger.h>
@@ -96,241 +96,221 @@ GrAllocator<U8> CommandBufferImpl::getAllocator() const
 	return m_manager->getAllocator();
 }
 
-class BindResourcesCommand final : public GlCommand
+void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 {
-public:
-	ResourceGroupPtr m_rc;
-	TransientMemoryInfo m_info;
-	U8 m_slot;
+	ANKI_ASSERT(!!(m_flags & CommandBufferFlag::GRAPHICS_WORK));
 
-	BindResourcesCommand(ResourceGroupPtr rc, U8 slot, const TransientMemoryInfo* info)
-		: m_rc(rc)
-		, m_slot(slot)
+	//
+	// Set default state
+	//
+	if(ANKI_UNLIKELY(m_state.m_mayContainUnsetState))
 	{
-		if(info)
+		m_state.m_mayContainUnsetState = false;
+
+		if(m_state.m_primitiveRestart == 2)
 		{
-			m_info = *info;
+			cmdb.setPrimitiveRestart(false);
+		}
+
+		if(m_state.m_fillMode == FillMode::COUNT)
+		{
+			cmdb.setFillMode(FillMode::SOLID);
+		}
+
+		if(m_state.m_cullMode == static_cast<FaceSelectionMask>(0))
+		{
+			cmdb.setCullMode(FaceSelectionMask::BACK);
+		}
+
+		if(m_state.m_polyOffsetFactor == -1.0)
+		{
+			cmdb.setPolygonOffset(0.0, 0.0);
+		}
+
+		for(U i = 0; i < 2; ++i)
+		{
+			FaceSelectionMask face = (i == 0) ? FaceSelectionMask::FRONT : FaceSelectionMask::BACK;
+
+			if(m_state.m_stencilFail[i] == StencilOperation::COUNT)
+			{
+				cmdb.setStencilOperations(face, StencilOperation::KEEP, StencilOperation::KEEP, StencilOperation::KEEP);
+			}
+
+			if(m_state.m_stencilCompare[i] == CompareOperation::COUNT)
+			{
+				cmdb.setStencilCompareFunction(face, CompareOperation::ALWAYS);
+			}
+
+			if(m_state.m_stencilCompareMask[i] == StateTracker::DUMMY_STENCIL_MASK)
+			{
+				cmdb.setStencilCompareMask(face, MAX_U32);
+			}
+
+			if(m_state.m_stencilWriteMask[i] == StateTracker::DUMMY_STENCIL_MASK)
+			{
+				cmdb.setStencilWriteMask(face, MAX_U32);
+			}
+
+			if(m_state.m_stencilRef[i] == StateTracker::DUMMY_STENCIL_MASK)
+			{
+				cmdb.setStencilReference(face, 0);
+			}
+		}
+
+		if(m_state.m_depthWrite == 2)
+		{
+			cmdb.setDepthWrite(true);
+		}
+
+		if(m_state.m_depthOp == CompareOperation::COUNT)
+		{
+			cmdb.setDepthCompareFunction(CompareOperation::LESS);
+		}
+
+		for(U i = 0; i < MAX_COLOR_ATTACHMENTS; ++i)
+		{
+			if(m_state.m_colorWriteMasks[i] == StateTracker::INVALID_COLOR_MASK)
+			{
+				cmdb.setColorChannelWriteMask(i, ColorBit::ALL);
+			}
+
+			if(m_state.m_blendSrcMethod[i] == BlendMethod::COUNT)
+			{
+				cmdb.setBlendMethods(i, BlendMethod::ONE, BlendMethod::ZERO);
+			}
+
+			if(m_state.m_blendFuncs[i] == BlendFunction::COUNT)
+			{
+				cmdb.setBlendFunction(i, BlendFunction::ADD);
+			}
 		}
 	}
 
-	Error operator()(GlState& state)
-	{
-		ANKI_TRACE_START_EVENT(GL_BIND_RESOURCES);
-		m_rc->m_impl->bind(m_slot, m_info, state);
-		ANKI_TRACE_STOP_EVENT(GL_BIND_RESOURCES);
-		return ErrorCode::NONE;
-	}
-};
-
-void CommandBufferImpl::bindResourceGroup(ResourceGroupPtr rc, U slot, const TransientMemoryInfo* info)
-{
-	ANKI_ASSERT(rc.isCreated());
-
-	pushBackNewCommand<BindResourcesCommand>(rc, slot, info);
-}
-
-void CommandBufferImpl::drawElements(U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance)
-{
-	class DrawElementsCommand : public GlCommand
+	//
+	// Fire commands to change some state
+	//
+	class StencilCmd final : public GlCommand
 	{
 	public:
-		DrawElementsIndirectInfo m_info;
+		GLenum m_face;
+		GLenum m_func;
+		GLint m_ref;
+		GLuint m_compareMask;
 
-		DrawElementsCommand(const DrawElementsIndirectInfo& info)
-			: m_info(info)
-		{
-		}
-
-		Error operator()(GlState& state)
-		{
-			GLenum indicesType = 0;
-			switch(state.m_indexSize)
-			{
-			case 2:
-				indicesType = GL_UNSIGNED_SHORT;
-				break;
-			case 4:
-				indicesType = GL_UNSIGNED_INT;
-				break;
-			default:
-				ANKI_ASSERT(0);
-				break;
-			};
-
-			state.flushVertexState();
-			state.flushStencilState();
-			glDrawElementsInstancedBaseVertexBaseInstance(state.m_topology,
-				m_info.m_count,
-				indicesType,
-				(const void*)(PtrSize)(m_info.m_firstIndex * state.m_indexSize),
-				m_info.m_instanceCount,
-				m_info.m_baseVertex,
-				m_info.m_baseInstance);
-
-			ANKI_TRACE_INC_COUNTER(GR_DRAWCALLS, 1);
-			ANKI_TRACE_INC_COUNTER(GR_VERTICES, m_info.m_instanceCount * m_info.m_count);
-
-			return ErrorCode::NONE;
-		}
-	};
-
-	ANKI_ASSERT(m_dbg.m_insideRenderPass);
-	DrawElementsIndirectInfo info(count, instanceCount, firstIndex, baseVertex, baseInstance);
-
-	checkDrawcall();
-	pushBackNewCommand<DrawElementsCommand>(info);
-}
-
-void CommandBufferImpl::drawArrays(U32 count, U32 instanceCount, U32 first, U32 baseInstance)
-{
-	class DrawArraysCommand final : public GlCommand
-	{
-	public:
-		DrawArraysIndirectInfo m_info;
-
-		DrawArraysCommand(const DrawArraysIndirectInfo& info)
-			: m_info(info)
-		{
-		}
-
-		Error operator()(GlState& state)
-		{
-			state.flushVertexState();
-			state.flushStencilState();
-			glDrawArraysInstancedBaseInstance(
-				state.m_topology, m_info.m_first, m_info.m_count, m_info.m_instanceCount, m_info.m_baseInstance);
-
-			ANKI_TRACE_INC_COUNTER(GR_DRAWCALLS, 1);
-			return ErrorCode::NONE;
-		}
-	};
-
-	ANKI_ASSERT(m_dbg.m_insideRenderPass);
-	DrawArraysIndirectInfo info(count, instanceCount, first, baseInstance);
-
-	checkDrawcall();
-	pushBackNewCommand<DrawArraysCommand>(info);
-}
-
-void CommandBufferImpl::drawElementsIndirect(U32 drawCount, PtrSize offset, BufferPtr indirectBuff)
-{
-	class DrawElementsIndirectCommand final : public GlCommand
-	{
-	public:
-		U32 m_drawCount;
-		PtrSize m_offset;
-		BufferPtr m_buff;
-
-		DrawElementsIndirectCommand(U32 drawCount, PtrSize offset, BufferPtr buff)
-			: m_drawCount(drawCount)
-			, m_offset(offset)
-			, m_buff(buff)
-		{
-			ANKI_ASSERT(drawCount > 0);
-			ANKI_ASSERT((m_offset % 4) == 0);
-		}
-
-		Error operator()(GlState& state)
-		{
-			state.flushVertexState();
-			state.flushStencilState();
-			const BufferImpl& buff = *m_buff->m_impl;
-
-			ANKI_ASSERT(m_offset + sizeof(DrawElementsIndirectInfo) * m_drawCount <= buff.m_size);
-
-			glBindBuffer(GL_DRAW_INDIRECT_BUFFER, buff.getGlName());
-
-			GLenum indicesType = 0;
-			switch(state.m_indexSize)
-			{
-			case 2:
-				indicesType = GL_UNSIGNED_SHORT;
-				break;
-			case 4:
-				indicesType = GL_UNSIGNED_INT;
-				break;
-			default:
-				ANKI_ASSERT(0);
-				break;
-			};
-
-			glMultiDrawElementsIndirect(state.m_topology,
-				indicesType,
-				numberToPtr<void*>(m_offset),
-				m_drawCount,
-				sizeof(DrawElementsIndirectInfo));
-
-			glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
-			return ErrorCode::NONE;
-		}
-	};
-
-	checkDrawcall();
-	pushBackNewCommand<DrawElementsIndirectCommand>(drawCount, offset, indirectBuff);
-}
-
-void CommandBufferImpl::drawArraysIndirect(U32 drawCount, PtrSize offset, BufferPtr indirectBuff)
-{
-	class DrawArraysIndirectCommand final : public GlCommand
-	{
-	public:
-		U32 m_drawCount;
-		PtrSize m_offset;
-		BufferPtr m_buff;
-
-		DrawArraysIndirectCommand(U32 drawCount, PtrSize offset, BufferPtr buff)
-			: m_drawCount(drawCount)
-			, m_offset(offset)
-			, m_buff(buff)
-		{
-			ANKI_ASSERT(drawCount > 0);
-			ANKI_ASSERT((m_offset % 4) == 0);
-		}
-
-		Error operator()(GlState& state)
-		{
-			state.flushVertexState();
-			state.flushStencilState();
-			const BufferImpl& buff = *m_buff->m_impl;
-
-			ANKI_ASSERT(m_offset + sizeof(DrawArraysIndirectInfo) * m_drawCount <= buff.m_size);
-
-			glBindBuffer(GL_DRAW_INDIRECT_BUFFER, buff.getGlName());
-
-			glMultiDrawArraysIndirect(
-				state.m_topology, numberToPtr<void*>(m_offset), m_drawCount, sizeof(DrawArraysIndirectInfo));
-
-			glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
-			return ErrorCode::NONE;
-		}
-	};
-
-	checkDrawcall();
-	pushBackNewCommand<DrawArraysIndirectCommand>(drawCount, offset, indirectBuff);
-}
-
-void CommandBufferImpl::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ)
-{
-	ANKI_ASSERT(!m_dbg.m_insideRenderPass);
-
-	class DispatchCommand final : public GlCommand
-	{
-	public:
-		Array<U32, 3> m_size;
-
-		DispatchCommand(U32 x, U32 y, U32 z)
-			: m_size({{x, y, z}})
+		StencilCmd(GLenum face, GLenum func, GLint ref, GLuint mask)
+			: m_face(face)
+			, m_func(func)
+			, m_ref(ref)
+			, m_compareMask(mask)
 		{
 		}
 
 		Error operator()(GlState&)
 		{
-			glDispatchCompute(m_size[0], m_size[1], m_size[2]);
+			glStencilFuncSeparate(m_face, m_func, m_ref, m_compareMask);
 			return ErrorCode::NONE;
 		}
 	};
 
-	pushBackNewCommand<DispatchCommand>(groupCountX, groupCountY, groupCountZ);
+	for(U i = 0; i < 2; ++i)
+	{
+		if(m_state.m_glStencilFuncSeparateDirty[i])
+		{
+			pushBackNewCommand<StencilCmd>(GL_FRONT + i,
+				convertCompareOperation(m_state.m_stencilCompare[i]),
+				m_state.m_stencilRef[i],
+				m_state.m_stencilCompareMask[i]);
+
+			m_state.m_glStencilFuncSeparateDirty[i] = false;
+		}
+	}
+
+	class DepthTestCmd final : public GlCommand
+	{
+	public:
+		Bool8 m_enable;
+
+		DepthTestCmd(Bool enable)
+			: m_enable(enable)
+		{
+		}
+
+		Error operator()(GlState&)
+		{
+			if(m_enable)
+			{
+				glEnable(GL_DEPTH_TEST);
+			}
+			else
+			{
+				glDisable(GL_DEPTH_TEST);
+			}
+			return ErrorCode::NONE;
+		}
+	};
+
+	if(m_state.maybeEnableDepthTest())
+	{
+		pushBackNewCommand<DepthTestCmd>(m_state.m_depthTestEnabled);
+	}
+
+	class StencilTestCmd final : public GlCommand
+	{
+	public:
+		Bool8 m_enable;
+
+		StencilTestCmd(Bool enable)
+			: m_enable(enable)
+		{
+		}
+
+		Error operator()(GlState&)
+		{
+			if(m_enable)
+			{
+				glEnable(GL_STENCIL_TEST);
+			}
+			else
+			{
+				glDisable(GL_STENCIL_TEST);
+			}
+			return ErrorCode::NONE;
+		}
+	};
+
+	if(m_state.maybeEnableStencilTest())
+	{
+		pushBackNewCommand<StencilTestCmd>(m_state.m_stencilTestEnabled);
+	}
+
+	class BlendCmd final : public GlCommand
+	{
+	public:
+		Bool8 m_enable;
+
+		BlendCmd(Bool enable)
+			: m_enable(enable)
+		{
+		}
+
+		Error operator()(GlState&)
+		{
+			if(m_enable)
+			{
+				glEnable(GL_BLEND);
+			}
+			else
+			{
+				glDisable(GL_BLEND);
+			}
+			return ErrorCode::NONE;
+		}
+	};
+
+	if(m_state.maybeEnableBlend())
+	{
+		pushBackNewCommand<BlendCmd>(m_state.m_enableBlend);
+	}
 }
 
 } // end namespace anki

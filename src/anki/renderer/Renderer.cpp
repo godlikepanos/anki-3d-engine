@@ -20,7 +20,6 @@
 #include <anki/renderer/Fs.h>
 #include <anki/renderer/Lf.h>
 #include <anki/renderer/Dbg.h>
-#include <anki/renderer/Tiler.h>
 #include <anki/renderer/FsUpscale.h>
 #include <anki/renderer/DownscaleBlur.h>
 #include <anki/renderer/Volumetric.h>
@@ -165,7 +164,7 @@ Error Renderer::initInternal(const ConfigSet& config)
 	ANKI_CHECK(m_fsUpscale->init(config));
 
 	m_tm.reset(getAllocator().newInstance<Tm>(this));
-	ANKI_CHECK(m_tm->create(config));
+	ANKI_CHECK(m_tm->init(config));
 
 	m_downscale.reset(getAllocator().newInstance<DownscaleBlur>(this));
 	ANKI_CHECK(m_downscale->init(config));
@@ -372,22 +371,6 @@ void Renderer::clearRenderTarget(TexturePtr rt, const ClearValue& clear, Texture
 	cmdb->flush();
 }
 
-void Renderer::createDrawQuadPipeline(ShaderPtr frag, const ColorStateInfo& colorState, PipelinePtr& ppline)
-{
-	PipelineInitInfo init;
-
-	init.m_inputAssembler.m_topology = PrimitiveTopology::TRIANGLE_STRIP;
-
-	init.m_depthStencil.m_depthWriteEnabled = false;
-	init.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
-
-	init.m_color = colorState;
-
-	init.m_shaders[ShaderType::VERTEX] = m_drawQuadVert->getGrShader();
-	init.m_shaders[ShaderType::FRAGMENT] = frag;
-	ppline = m_gr->newInstance<Pipeline>(init);
-}
-
 Error Renderer::buildCommandBuffersInternal(RenderingContext& ctx, U32 threadId, PtrSize threadCount)
 {
 	// MS
@@ -429,7 +412,6 @@ Error Renderer::buildCommandBuffersInternal(RenderingContext& ctx, U32 threadId,
 		init.m_framebuffer = m_fs->getFramebuffer();
 		CommandBufferPtr cmdb = getGrManager().newInstance<CommandBuffer>(init);
 		cmdb->setViewport(0, 0, m_fs->getWidth(), m_fs->getHeight());
-		cmdb->setPolygonOffset(0.0, 0.0);
 
 		m_lf->run(ctx, cmdb);
 		m_fs->drawVolumetric(ctx, cmdb);
@@ -503,7 +485,12 @@ Error Renderer::buildCommandBuffers(RenderingContext& ctx)
 	return err;
 }
 
-Error Renderer::createShader(CString fname, ShaderResourcePtr& shader, CString fmt, ...)
+Error Renderer::createShader(CString fname, ShaderResourcePtr& shader, CString extra)
+{
+	return m_resources->loadResourceToCache(shader, fname, &extra[0], "r_");
+}
+
+Error Renderer::createShaderf(CString fname, ShaderResourcePtr& shader, CString fmt, ...)
 {
 	Array<char, 512> buffer;
 	va_list args;
@@ -515,6 +502,11 @@ Error Renderer::createShader(CString fname, ShaderResourcePtr& shader, CString f
 	(void)len;
 
 	return m_resources->loadResourceToCache(shader, fname, &buffer[0], "r_");
+}
+
+void Renderer::createDrawQuadShaderProgram(ShaderPtr frag, ShaderProgramPtr& prog)
+{
+	prog = m_gr->newInstance<ShaderProgram>(m_drawQuadVert->getGrShader(), frag);
 }
 
 } // end namespace anki

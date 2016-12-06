@@ -20,6 +20,19 @@ Volumetric::~Volumetric()
 
 Error Volumetric::init(const ConfigSet& config)
 {
+	ANKI_LOGI("Initializing volumetric pass");
+
+	Error err = initInternal(config);
+	if(err)
+	{
+		ANKI_LOGE("Failed to initialize volumetric pass");
+	}
+
+	return err;
+}
+
+Error Volumetric::initInternal(const ConfigSet& config)
+{
 	U width = m_r->getWidth() / VOLUMETRIC_FRACTION;
 	U height = m_r->getHeight() / VOLUMETRIC_FRACTION;
 
@@ -35,7 +48,7 @@ Error Volumetric::init(const ConfigSet& config)
 	m_r->clearRenderTarget(m_rt, ClearValue(), TextureUsageBit::SAMPLED_FRAGMENT);
 
 	// Create shaders
-	ANKI_CHECK(m_r->createShader("shaders/Volumetric.frag.glsl",
+	ANKI_CHECK(m_r->createShaderf("shaders/Volumetric.frag.glsl",
 		m_frag,
 		"#define RPASS_SIZE uvec2(%uu, %uu)\n"
 		"#define CLUSTER_COUNT uvec3(%uu, %uu, %uu)\n",
@@ -45,34 +58,8 @@ Error Volumetric::init(const ConfigSet& config)
 		m_r->getIs().getLightBin().getClusterer().getClusterCountY(),
 		m_r->getIs().getLightBin().getClusterer().getClusterCountZ()));
 
-	// Create pplines
-	ColorStateInfo state;
-	state.m_attachmentCount = 1;
-	state.m_attachments[0].m_format = IS_COLOR_ATTACHMENT_PIXEL_FORMAT;
-	state.m_attachments[0].m_srcBlendMethod = BlendMethod::SRC_ALPHA;
-	state.m_attachments[0].m_dstBlendMethod = BlendMethod::ONE_MINUS_SRC_ALPHA;
-
-	m_r->createDrawQuadPipeline(m_frag->getGrShader(), state, m_ppline);
-
-	// Create the resource groups
-	ResourceGroupInitInfo rcInit;
-	rcInit.m_textures[0].m_texture = m_r->getDepthDownscale().m_qd.m_depthRt;
-	rcInit.m_textures[0].m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
-	rcInit.m_textures[1].m_texture = m_r->getSm().getSpotTextureArray();
-	rcInit.m_textures[2].m_texture = m_r->getSm().getOmniTextureArray();
-	rcInit.m_uniformBuffers[0].m_uploadedMemory = true;
-	rcInit.m_uniformBuffers[0].m_usage = BufferUsageBit::UNIFORM_FRAGMENT;
-	rcInit.m_uniformBuffers[1].m_uploadedMemory = true;
-	rcInit.m_uniformBuffers[1].m_usage = BufferUsageBit::UNIFORM_FRAGMENT;
-	rcInit.m_uniformBuffers[2].m_uploadedMemory = true;
-	rcInit.m_uniformBuffers[2].m_usage = BufferUsageBit::UNIFORM_FRAGMENT;
-	rcInit.m_uniformBuffers[3].m_uploadedMemory = true;
-	rcInit.m_uniformBuffers[3].m_usage = BufferUsageBit::UNIFORM_FRAGMENT;
-	rcInit.m_storageBuffers[0].m_uploadedMemory = true;
-	rcInit.m_storageBuffers[0].m_usage = BufferUsageBit::STORAGE_FRAGMENT_READ;
-	rcInit.m_storageBuffers[1].m_uploadedMemory = true;
-	rcInit.m_storageBuffers[1].m_usage = BufferUsageBit::STORAGE_FRAGMENT_READ;
-	m_rc = getGrManager().newInstance<ResourceGroup>(rcInit);
+	// Create prog
+	m_r->createDrawQuadShaderProgram(m_frag->getGrShader(), m_prog);
 
 	// Create FBs
 	FramebufferInitInfo fbInit;
@@ -107,20 +94,37 @@ void Volumetric::run(RenderingContext& ctx)
 	const Frustum& frc = ctx.m_frustumComponent->getFrustum();
 
 	// Update uniforms
-	TransientMemoryInfo dyn = ctx.m_is.m_dynBufferInfo;
-	Vec4* uniforms = static_cast<Vec4*>(getGrManager().allocateFrameTransientMemory(
-		sizeof(Vec4) * 2, BufferUsageBit::UNIFORM_ALL, dyn.m_uniformBuffers[3]));
+	TransientMemoryToken token;
+	Vec4* uniforms = static_cast<Vec4*>(
+		getGrManager().allocateFrameTransientMemory(sizeof(Vec4) * 2, BufferUsageBit::UNIFORM_ALL, token));
 	computeLinearizeDepthOptimal(frc.getNear(), frc.getFar(), uniforms[0].x(), uniforms[0].y());
 
 	uniforms[1] = Vec4(m_fogColor, m_fogFactor);
 
-	// pass 0
+	// pass
 	cmdb->setViewport(0, 0, m_r->getWidth() / VOLUMETRIC_FRACTION, m_r->getHeight() / VOLUMETRIC_FRACTION);
+	cmdb->setBlendMethods(0, BlendMethod::SRC_ALPHA, BlendMethod::ONE_MINUS_SRC_ALPHA);
+
+	cmdb->bindTexture(0, 0, m_r->getDepthDownscale().m_qd.m_depthRt);
+	cmdb->bindTexture(0, 1, m_r->getSm().m_spotTexArray);
+	cmdb->bindTexture(0, 2, m_r->getSm().m_omniTexArray);
+
+	cmdb->bindUniformBuffer(0, 0, ctx.m_is.m_commonToken);
+	cmdb->bindUniformBuffer(0, 1, ctx.m_is.m_pointLightsToken);
+	cmdb->bindUniformBuffer(0, 2, ctx.m_is.m_spotLightsToken);
+	cmdb->bindUniformBuffer(0, 3, token);
+
+	cmdb->bindStorageBuffer(0, 0, ctx.m_is.m_clustersToken);
+	cmdb->bindStorageBuffer(0, 1, ctx.m_is.m_lightIndicesToken);
+
+	cmdb->bindShaderProgram(m_prog);
+
 	cmdb->beginRenderPass(m_fb);
-	cmdb->bindPipeline(m_ppline);
-	cmdb->bindResourceGroup(m_rc, 0, &dyn);
 	m_r->drawQuad(cmdb);
 	cmdb->endRenderPass();
+
+	// Restore state
+	cmdb->setBlendMethods(0, BlendMethod::ONE, BlendMethod::ZERO);
 }
 
 } // end namespace anki

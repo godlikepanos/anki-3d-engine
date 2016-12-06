@@ -116,8 +116,8 @@ public:
 		return *m_material;
 	}
 
-	/// Get shaders for rendering.
-	void getRenderingInfo(U lod, PipelineInitInfo& state, PipelineSubStateBit& stateMask) const;
+	/// Get program for rendering.
+	void getRenderingInfo(U lod, ShaderProgramPtr& prog) const;
 
 	/// Load it
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename);

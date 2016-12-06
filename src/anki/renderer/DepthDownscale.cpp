@@ -38,13 +38,6 @@ Error HalfDepth::init(const ConfigSet&)
 
 	m_fb = gr.newInstance<Framebuffer>(fbInit);
 
-	// Create RC group
-	ResourceGroupInitInfo rcinit;
-	rcinit.m_textures[0].m_texture = m_r->getMs().m_depthRt;
-	rcinit.m_textures[0].m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
-
-	m_rcgroup = gr.newInstance<ResourceGroup>(rcinit);
-
 	return ErrorCode::NONE;
 }
 
@@ -69,13 +62,18 @@ void HalfDepth::run(RenderingContext& ctx)
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 	cmdb->beginRenderPass(m_fb);
+	cmdb->bindShaderProgram(m_parent->m_prog);
+	cmdb->bindTexture(0, 0, m_r->getMs().m_depthRt);
+
 	cmdb->setViewport(0, 0, m_r->getWidth() / 2, m_r->getHeight() / 2);
-	cmdb->bindPipeline(m_parent->m_ppline);
-	cmdb->bindResourceGroup(m_rcgroup, 0, nullptr);
+	cmdb->setDepthCompareFunction(CompareOperation::ALWAYS);
 
 	m_r->drawQuad(cmdb);
 
 	cmdb->endRenderPass();
+
+	// Restore state
+	cmdb->setDepthCompareFunction(CompareOperation::LESS);
 }
 
 QuarterDepth::~QuarterDepth()
@@ -106,13 +104,6 @@ Error QuarterDepth::init(const ConfigSet&)
 
 	m_fb = gr.newInstance<Framebuffer>(fbInit);
 
-	// Create RC group
-	ResourceGroupInitInfo rcinit;
-	rcinit.m_textures[0].m_texture = m_parent->m_hd.m_depthRt;
-	rcinit.m_textures[0].m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
-
-	m_rcgroup = gr.newInstance<ResourceGroup>(rcinit);
-
 	return ErrorCode::NONE;
 }
 
@@ -137,42 +128,48 @@ void QuarterDepth::run(RenderingContext& ctx)
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 	cmdb->beginRenderPass(m_fb);
+	cmdb->bindShaderProgram(m_parent->m_prog);
+	cmdb->bindTexture(0, 0, m_parent->m_hd.m_depthRt);
+
 	cmdb->setViewport(0, 0, m_r->getWidth() / 4, m_r->getHeight() / 4);
-	cmdb->bindPipeline(m_parent->m_ppline);
-	cmdb->bindResourceGroup(m_rcgroup, 0, nullptr);
+	cmdb->setDepthCompareFunction(CompareOperation::ALWAYS);
 
 	m_r->drawQuad(cmdb);
 
 	cmdb->endRenderPass();
+
+	// Restore state
+	cmdb->setDepthCompareFunction(CompareOperation::LESS);
 }
 
 DepthDownscale::~DepthDownscale()
 {
 }
 
-Error DepthDownscale::init(const ConfigSet& cfg)
+Error DepthDownscale::initInternal(const ConfigSet& cfg)
 {
-	GrManager& gr = getGrManager();
-
 	// Create shader
 	ANKI_CHECK(getResourceManager().loadResource("shaders/DepthDownscale.frag.glsl", m_frag));
 
-	// Create pipeline
-	PipelineInitInfo pinit;
-
-	pinit.m_inputAssembler.m_topology = PrimitiveTopology::TRIANGLE_STRIP;
-
-	pinit.m_depthStencil.m_depthWriteEnabled = true;
-	pinit.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
-	pinit.m_depthStencil.m_format = MS_DEPTH_ATTACHMENT_PIXEL_FORMAT;
-
-	pinit.m_shaders[ShaderType::VERTEX] = m_r->getDrawQuadVertexShader();
-	pinit.m_shaders[ShaderType::FRAGMENT] = m_frag->getGrShader();
-	m_ppline = gr.newInstance<Pipeline>(pinit);
+	// Create prog
+	m_r->createDrawQuadShaderProgram(m_frag->getGrShader(), m_prog);
 
 	ANKI_CHECK(m_hd.init(cfg));
 	ANKI_CHECK(m_qd.init(cfg));
 	return ErrorCode::NONE;
+}
+
+Error DepthDownscale::init(const ConfigSet& cfg)
+{
+	ANKI_LOGI("Initializing depth downscale passes");
+
+	Error err = initInternal(cfg);
+	if(err)
+	{
+		ANKI_LOGE("Failed to initialize depth downscale passes");
+	}
+
+	return err;
 }
 
 } // end namespace anki

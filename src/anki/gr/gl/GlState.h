@@ -26,54 +26,18 @@ public:
 	GpuVendor m_gpu = GpuVendor::UNKNOWN;
 	Bool8 m_registerMessages = false;
 
-	GLuint m_defaultVao;
+	GLuint m_defaultVao = 0;
 
-	/// @name Cached state
+	/// @name FB
 	/// @{
-	Array<U16, 4> m_viewport = {{0, 0, 0, 0}};
-
-	GLenum m_blendSfunc = GL_ONE;
-	GLenum m_blendDfunc = GL_ZERO;
-	/// @}
-
-	/// @name Pipeline/resource group state
-	/// @{
-	U64 m_lastPplineBoundUuid = MAX_U64;
-
-	Array<GLuint, MAX_VERTEX_ATTRIBUTES> m_vertBuffNames;
-	Array<GLintptr, MAX_VERTEX_ATTRIBUTES> m_vertBuffOffsets;
-	Array<GLsizei, MAX_VERTEX_ATTRIBUTES> m_vertexBindingStrides;
-	U8 m_vertBindingCount = 0;
-	Bool8 m_vertBindingsDirty = true;
-
-	GLenum m_topology = 0;
-	U8 m_indexSize = 4;
-
-	class
-	{
-	public:
-		U64 m_vertex = 0;
-		U64 m_inputAssembler = 0;
-		U64 m_tessellation = 0;
-		U64 m_viewport = 0;
-		U64 m_rasterizer = 0;
-		U64 m_depthStencil = 0;
-		U64 m_color = 0;
-	} m_stateHashes;
-
 	Array2d<Bool, MAX_COLOR_ATTACHMENTS, 4> m_colorWriteMasks = {{{{true, true, true, true}},
 		{{true, true, true, true}},
 		{{true, true, true, true}},
 		{{true, true, true, true}}}};
-	Bool m_depthWriteMask = true;
 
-	// Stencil
-	Array<GLenum, 2> m_stencilCompareFunc = {{GL_ALWAYS, GL_ALWAYS}}; ///< Pipeline sets it
-	Array<U32, 2> m_stencilRef = {{0, 0}}; ///< CommandBuffer sets it
-	Array<U32, 2> m_stencilCompareMask = {{MAX_U32, MAX_U32}}; ///< CommandBuffer sets it
-	U8 m_glStencilFuncSeparateDirtyMask = 0;
+	Bool8 m_depthWriteMask = true;
 
-	Array<U32, 2> m_stencilWriteMask = {{MAX_U32, MAX_U32}}; ///< Framebuffer wants that.
+	Array<U32, 2> m_stencilWriteMask = {{MAX_U32, MAX_U32}};
 	/// @}
 
 	GlState(GrManager* manager)
@@ -89,9 +53,6 @@ public:
 
 	/// Call this from the rendering thread.
 	void destroy();
-
-	void flushVertexState();
-	void flushStencilState();
 };
 /// @}
 

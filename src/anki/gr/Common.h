@@ -22,9 +22,7 @@ class GrManagerImpl;
 class TextureInitInfo;
 class SamplerInitInfo;
 class GrManagerInitInfo;
-class PipelineInitInfo;
 class FramebufferInitInfo;
-class ResourceGroupInitInfo;
 
 /// @addtogroup graphics
 /// @{
@@ -43,10 +41,9 @@ ANKI_GR_CLASS(Texture)
 ANKI_GR_CLASS(Sampler)
 ANKI_GR_CLASS(CommandBuffer)
 ANKI_GR_CLASS(Shader)
-ANKI_GR_CLASS(Pipeline)
 ANKI_GR_CLASS(Framebuffer)
 ANKI_GR_CLASS(OcclusionQuery)
-ANKI_GR_CLASS(ResourceGroup)
+ANKI_GR_CLASS(ShaderProgram)
 
 #undef ANKI_GR_CLASS
 
@@ -57,21 +54,6 @@ ANKI_GR_CLASS(ResourceGroup)
 	template<typename, typename>                                                                                       \
 	friend class GenericPoolAllocator;                                                                                 \
 	friend class GrObjectCache;
-
-/// Graphics object type.
-enum GrObjectType : U16
-{
-	BUFFER,
-	COMMAND_BUFFER,
-	FRAMEBUFFER,
-	OCCLUSION_QUERY,
-	PIPELINE,
-	RESOURCE_GROUP,
-	SAMPLER,
-	SHADER,
-	TEXTURE,
-	COUNT
-};
 
 /// Knowing the ventor allows some optimizations
 enum class GpuVendor : U8
@@ -191,6 +173,17 @@ enum class TransientMemoryTokenLifetime : U8
 /// Token that gets returned when requesting for memory to write to a resource.
 class TransientMemoryToken
 {
+public:
+	operator Bool() const
+	{
+		return m_range != 0;
+	}
+
+	Bool operator==(const TransientMemoryToken& b) const
+	{
+		return m_offset == b.m_offset && m_range == b.m_range && m_lifetime == b.m_lifetime && m_usage == b.m_usage;
+	}
+
 anki_internal:
 	PtrSize m_offset = 0;
 	PtrSize m_range = 0;
@@ -206,15 +199,6 @@ anki_internal:
 	{
 		return m_offset == MAX_U32 && m_range == MAX_U32;
 	}
-};
-
-/// Struct to help update the offset of the dynamic buffers.
-class TransientMemoryInfo
-{
-public:
-	Array<TransientMemoryToken, MAX_UNIFORM_BUFFER_BINDINGS> m_uniformBuffers;
-	Array<TransientMemoryToken, MAX_STORAGE_BUFFER_BINDINGS> m_storageBuffers;
-	Array<TransientMemoryToken, MAX_VERTEX_ATTRIBUTES> m_vertexBuffers;
 };
 
 /// Compute max number of mipmaps for a 2D texture.

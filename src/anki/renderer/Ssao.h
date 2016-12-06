@@ -48,19 +48,14 @@ private:
 	FramebufferPtr m_vblurFb;
 	FramebufferPtr m_hblurFb;
 
-	ShaderResourcePtr m_quadVert;
 	ShaderResourcePtr m_ssaoFrag;
 	ShaderResourcePtr m_hblurFrag;
 	ShaderResourcePtr m_vblurFrag;
-	PipelinePtr m_ssaoPpline;
-	PipelinePtr m_hblurPpline;
-	PipelinePtr m_vblurPpline;
+	ShaderProgramPtr m_ssaoProg;
+	ShaderProgramPtr m_hblurProg;
+	ShaderProgramPtr m_vblurProg;
 
 	TexturePtr m_noiseTex;
-
-	ResourceGroupPtr m_rcFirst;
-	ResourceGroupPtr m_hblurRc;
-	ResourceGroupPtr m_vblurRc;
 
 	ANKI_USE_RESULT Error createFb(FramebufferPtr& fb, TexturePtr& rt);
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);

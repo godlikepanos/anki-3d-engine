@@ -23,14 +23,22 @@ Sm::~Sm()
 {
 	m_spots.destroy(getAllocator());
 	m_omnis.destroy(getAllocator());
-
-	if(m_pplineCache)
-	{
-		getAllocator().deleteInstance(m_pplineCache);
-	}
 }
 
 Error Sm::init(const ConfigSet& config)
+{
+	ANKI_LOGI("Initializing shadowmapping");
+
+	Error err = initInternal(config);
+	if(err)
+	{
+		ANKI_LOGE("Failed to initialize shadowmapping");
+	}
+
+	return err;
+}
+
+Error Sm::initInternal(const ConfigSet& config)
 {
 	m_poissonEnabled = config.getNumber("sm.poissonEnabled");
 	m_bilinearEnabled = config.getNumber("sm.bilinearEnabled");
@@ -97,11 +105,6 @@ Error Sm::init(const ConfigSet& config)
 
 		++layer;
 	}
-
-	// Init state
-	m_state.m_depthStencil.m_format = Sm::DEPTH_RT_PIXEL_FORMAT;
-
-	m_pplineCache = getAllocator().newInstance<GrObjectCache>(&getGrManager());
 
 	return ErrorCode::NONE;
 }
@@ -265,17 +268,17 @@ Error Sm::doSpotLight(SceneNode& light, CommandBufferPtr& cmdb, FramebufferPtr& 
 	}
 
 	CommandBufferInitInfo cinf;
-	cinf.m_flags = CommandBufferFlag::SECOND_LEVEL;
+	cinf.m_flags = CommandBufferFlag::SECOND_LEVEL | CommandBufferFlag::GRAPHICS_WORK;
 	cinf.m_framebuffer = fb;
 	cmdb = m_r->getGrManager().newInstance<CommandBuffer>(cinf);
+
+	// Set state
 	cmdb->setViewport(0, 0, m_resolution, m_resolution);
 	cmdb->setPolygonOffset(1.0, 2.0);
 
 	Error err = m_r->getSceneDrawer().drawRange(Pass::SM,
 		frc,
 		cmdb,
-		*m_pplineCache,
-		m_state,
 		vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + start,
 		vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + end);
 
@@ -298,17 +301,17 @@ Error Sm::doOmniLight(
 		if(start != end)
 		{
 			CommandBufferInitInfo cinf;
-			cinf.m_flags = CommandBufferFlag::SECOND_LEVEL;
+			cinf.m_flags = CommandBufferFlag::SECOND_LEVEL | CommandBufferFlag::GRAPHICS_WORK;
 			cinf.m_framebuffer = fbs[frCount];
 			cmdbs[frCount] = m_r->getGrManager().newInstance<CommandBuffer>(cinf);
+
+			// Set state
 			cmdbs[frCount]->setViewport(0, 0, m_resolution, m_resolution);
 			cmdbs[frCount]->setPolygonOffset(1.0, 2.0);
 
 			ANKI_CHECK(m_r->getSceneDrawer().drawRange(Pass::SM,
 				frc,
 				cmdbs[frCount],
-				*m_pplineCache,
-				m_state,
 				vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + start,
 				vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + end));
 

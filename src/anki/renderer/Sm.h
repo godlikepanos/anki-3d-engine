@@ -25,6 +25,12 @@ class Sm : public RenderingPass
 anki_internal:
 	static const PixelFormat DEPTH_RT_PIXEL_FORMAT;
 
+	/// Enable Poisson for all the levels
+	Bool8 m_poissonEnabled = false;
+
+	TexturePtr m_spotTexArray;
+	TexturePtr m_omniTexArray;
+
 	Sm(Renderer* r)
 		: RenderingPass(r)
 	{
@@ -44,25 +50,7 @@ anki_internal:
 
 	void setPostRunBarriers(RenderingContext& ctx);
 
-	Bool getPoissonEnabled() const
-	{
-		return m_poissonEnabled;
-	}
-
-	TexturePtr getSpotTextureArray() const
-	{
-		return m_spotTexArray;
-	}
-
-	TexturePtr getOmniTextureArray() const
-	{
-		return m_omniTexArray;
-	}
-
 private:
-	TexturePtr m_spotTexArray;
-	TexturePtr m_omniTexArray;
-
 	class ShadowmapBase
 	{
 	public:
@@ -86,17 +74,13 @@ private:
 	DynamicArray<ShadowmapSpot> m_spots;
 	DynamicArray<ShadowmapOmni> m_omnis;
 
-	/// Enable Poisson for all the levels
-	Bool8 m_poissonEnabled = false;
-
 	/// Shadowmap bilinear filtering for the first level. Better quality
 	Bool8 m_bilinearEnabled;
 
 	/// Shadowmap resolution
 	U32 m_resolution;
 
-	GrObjectCache* m_pplineCache = nullptr;
-	PipelineInitInfo m_state;
+	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 
 	/// Find the best shadowmap for that light
 	template<typename TShadowmap, typename TContainer>

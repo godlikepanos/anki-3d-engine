@@ -13,10 +13,12 @@ namespace anki
 
 Error Sslf::init(const ConfigSet& config)
 {
+	ANKI_LOGI("Initializing screen space lens flare");
+
 	Error err = initInternal(config);
 	if(err)
 	{
-		ANKI_LOGE("Failed to init screen space lens flare pass");
+		ANKI_LOGE("Failed to init screen space lens flare");
 	}
 
 	return err;
@@ -24,34 +26,16 @@ Error Sslf::init(const ConfigSet& config)
 
 Error Sslf::initInternal(const ConfigSet& config)
 {
-	// Load program 1
-	StringAuto pps(getAllocator());
-
-	pps.sprintf("#define TEX_DIMENSIONS vec2(%u.0, %u.0)\n",
+	ANKI_CHECK(m_r->createShaderf("shaders/Sslf.frag.glsl",
+		m_frag,
+		"#define TEX_DIMENSIONS vec2(%u.0, %u.0)\n",
 		m_r->getBloom().m_extractExposure.m_width,
-		m_r->getBloom().m_extractExposure.m_height);
+		m_r->getBloom().m_extractExposure.m_height));
 
-	ANKI_CHECK(getResourceManager().loadResourceToCache(m_frag, "shaders/Sslf.frag.glsl", pps.toCString(), "r_"));
+	m_r->createDrawQuadShaderProgram(m_frag->getGrShader(), m_prog);
 
-	ColorStateInfo colorState;
-	colorState.m_attachmentCount = 1;
-	colorState.m_attachments[0].m_format = BLOOM_RT_PIXEL_FORMAT;
-	colorState.m_attachments[0].m_srcBlendMethod = BlendMethod::ONE;
-	colorState.m_attachments[0].m_dstBlendMethod = BlendMethod::ONE;
-
-	m_r->createDrawQuadPipeline(m_frag->getGrShader(), colorState, m_ppline);
-
-	// Textures
 	ANKI_CHECK(getResourceManager().loadResource("engine_data/LensDirt.ankitex", m_lensDirtTex));
 
-	// Create the resource group
-	ResourceGroupInitInfo rcInit;
-	rcInit.m_textures[0].m_texture = m_r->getBloom().m_extractExposure.m_rt;
-	rcInit.m_textures[1].m_texture = m_lensDirtTex->getGrTexture();
-
-	m_rcGroup = getGrManager().newInstance<ResourceGroup>(rcInit);
-
-	getGrManager().finish();
 	return ErrorCode::NONE;
 }
 
@@ -60,10 +44,15 @@ void Sslf::run(RenderingContext& ctx)
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 	// Draw to the SSLF FB
-	cmdb->bindPipeline(m_ppline);
-	cmdb->bindResourceGroup(m_rcGroup, 0, nullptr);
+	cmdb->bindShaderProgram(m_prog);
+	cmdb->setBlendMethods(0, BlendMethod::ONE, BlendMethod::ONE);
+	cmdb->bindTexture(0, 0, m_r->getBloom().m_extractExposure.m_rt);
+	cmdb->bindTexture(0, 1, m_lensDirtTex->getGrTexture());
 
 	m_r->drawQuad(cmdb);
+
+	// Retore state
+	cmdb->setBlendMethods(0, BlendMethod::ONE, BlendMethod::ZERO);
 }
 
 } // end namespace anki

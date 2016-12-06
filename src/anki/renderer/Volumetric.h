@@ -40,13 +40,14 @@ anki_internal:
 	void setPostRunBarriers(RenderingContext& ctx);
 
 private:
-	ResourceGroupPtr m_rc;
 	ShaderResourcePtr m_frag;
-	PipelinePtr m_ppline;
+	ShaderProgramPtr m_prog;
 	FramebufferPtr m_fb;
 
 	Vec3 m_fogColor = Vec3(1.0);
 	F32 m_fogFactor = 1.0;
+
+	ANKI_USE_RESULT Error initInternal(const ConfigSet& config);
 };
 /// @}
 

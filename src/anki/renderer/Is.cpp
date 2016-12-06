@@ -6,7 +6,6 @@
 #include <anki/renderer/Is.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/Sm.h>
-#include <anki/renderer/Pps.h>
 #include <anki/renderer/Ir.h>
 #include <anki/renderer/Ms.h>
 #include <anki/renderer/LightBin.h>
@@ -54,11 +53,12 @@ Is::~Is()
 
 Error Is::init(const ConfigSet& config)
 {
+	ANKI_LOGI("Initializing light stage");
 	Error err = initInternal(config);
 
 	if(err)
 	{
-		ANKI_LOGE("Failed to init IS");
+		ANKI_LOGE("Failed to init light stage");
 	}
 
 	return err;
@@ -89,11 +89,11 @@ Error Is::initInternal(const ConfigSet& config)
 		&getGrManager());
 
 	//
-	// Load the programs
+	// Load shaders and programs
 	//
 	StringAuto pps(getAllocator());
 
-	pps.sprintf("\n#define TILE_COUNT_X %u\n"
+	pps.sprintf("#define TILE_COUNT_X %u\n"
 				"#define TILE_COUNT_Y %u\n"
 				"#define CLUSTER_COUNT %u\n"
 				"#define RENDERER_WIDTH %u\n"
@@ -108,25 +108,14 @@ Error Is::initInternal(const ConfigSet& config)
 		m_r->getWidth(),
 		m_r->getHeight(),
 		m_maxLightIds,
-		m_r->getSm().getPoissonEnabled(),
+		m_r->getSm().m_poissonEnabled,
 		1,
 		m_r->getIr().getReflectionTextureMipmapCount());
 
-	// point light
-	ANKI_CHECK(getResourceManager().loadResourceToCache(m_lightVert, "shaders/Is.vert.glsl", pps.toCString(), "r_"));
+	ANKI_CHECK(m_r->createShader("shaders/Is.vert.glsl", m_lightVert, &pps[0]));
+	ANKI_CHECK(m_r->createShader("shaders/Is.frag.glsl", m_lightFrag, &pps[0]));
 
-	ANKI_CHECK(getResourceManager().loadResourceToCache(m_lightFrag, "shaders/Is.frag.glsl", pps.toCString(), "r_"));
-
-	PipelineInitInfo init;
-
-	init.m_inputAssembler.m_topology = PrimitiveTopology::TRIANGLE_STRIP;
-	init.m_depthStencil.m_depthWriteEnabled = false;
-	init.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
-	init.m_color.m_attachmentCount = 1;
-	init.m_color.m_attachments[0].m_format = IS_COLOR_ATTACHMENT_PIXEL_FORMAT;
-	init.m_shaders[U(ShaderType::VERTEX)] = m_lightVert->getGrShader();
-	init.m_shaders[U(ShaderType::FRAGMENT)] = m_lightFrag->getGrShader();
-	m_lightPpline = getGrManager().newInstance<Pipeline>(init);
+	m_lightProg = getGrManager().newInstance<ShaderProgram>(m_lightVert->getGrShader(), m_lightFrag->getGrShader());
 
 	//
 	// Create framebuffer
@@ -147,44 +136,6 @@ Error Is::initInternal(const ConfigSet& config)
 	fbInit.m_colorAttachments[0].m_usageInsideRenderPass = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
-	//
-	// Create resource group
-	//
-	{
-		ResourceGroupInitInfo init;
-		init.m_textures[0].m_texture = m_r->getMs().m_rt0;
-		init.m_textures[1].m_texture = m_r->getMs().m_rt1;
-		init.m_textures[2].m_texture = m_r->getMs().m_rt2;
-		init.m_textures[3].m_texture = m_r->getMs().m_depthRt;
-		init.m_textures[3].m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
-		init.m_textures[4].m_texture = m_r->getSm().getSpotTextureArray();
-		init.m_textures[5].m_texture = m_r->getSm().getOmniTextureArray();
-
-		init.m_textures[6].m_texture = m_r->getIr().getReflectionTexture();
-		init.m_textures[7].m_texture = m_r->getIr().getIrradianceTexture();
-
-		init.m_textures[8].m_texture = m_r->getIr().getIntegrationLut();
-		init.m_textures[8].m_sampler = m_r->getIr().getIntegrationLutSampler();
-
-		init.m_uniformBuffers[0].m_uploadedMemory = true;
-		init.m_uniformBuffers[0].m_usage = BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
-		init.m_uniformBuffers[1].m_uploadedMemory = true;
-		init.m_uniformBuffers[1].m_usage = BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
-		init.m_uniformBuffers[2].m_uploadedMemory = true;
-		init.m_uniformBuffers[2].m_usage = BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
-		init.m_uniformBuffers[3].m_uploadedMemory = true;
-		init.m_uniformBuffers[3].m_usage = BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
-		init.m_uniformBuffers[4].m_uploadedMemory = true;
-		init.m_uniformBuffers[4].m_usage = BufferUsageBit::UNIFORM_FRAGMENT | BufferUsageBit::UNIFORM_VERTEX;
-
-		init.m_storageBuffers[0].m_uploadedMemory = true;
-		init.m_storageBuffers[0].m_usage = BufferUsageBit::STORAGE_FRAGMENT_READ | BufferUsageBit::STORAGE_VERTEX_READ;
-		init.m_storageBuffers[1].m_uploadedMemory = true;
-		init.m_storageBuffers[1].m_usage = BufferUsageBit::STORAGE_FRAGMENT_READ | BufferUsageBit::STORAGE_VERTEX_READ;
-
-		m_rcGroup = getGrManager().newInstance<ResourceGroup>(init);
-	}
-
 	TextureInitInfo texinit;
 	texinit.m_width = texinit.m_height = 4;
 	texinit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT;
@@ -198,48 +149,18 @@ Error Is::binLights(RenderingContext& ctx)
 {
 	updateCommonBlock(ctx);
 
-	TexturePtr diffDecalTex, normRoughnessDecalTex;
-
 	ANKI_CHECK(m_lightBin->bin(*ctx.m_frustumComponent,
 		getFrameAllocator(),
 		m_maxLightIds,
 		true,
-		ctx.m_is.m_dynBufferInfo.m_uniformBuffers[P_LIGHTS_LOCATION],
-		ctx.m_is.m_dynBufferInfo.m_uniformBuffers[S_LIGHTS_LOCATION],
-		&ctx.m_is.m_dynBufferInfo.m_uniformBuffers[PROBES_LOCATION],
-		ctx.m_is.m_dynBufferInfo.m_uniformBuffers[DECALS_LOCATION],
-		ctx.m_is.m_dynBufferInfo.m_storageBuffers[CLUSTERS_LOCATION],
-		ctx.m_is.m_dynBufferInfo.m_storageBuffers[LIGHT_IDS_LOCATION],
-		diffDecalTex,
-		normRoughnessDecalTex));
-
-	ResourceGroupInitInfo rcinit;
-	if(diffDecalTex)
-	{
-		rcinit.m_textures[0].m_texture = diffDecalTex;
-	}
-	else
-	{
-		// Bind something because validation layers will complain
-		rcinit.m_textures[0].m_texture = m_dummyTex;
-	}
-
-	if(normRoughnessDecalTex)
-	{
-		rcinit.m_textures[1].m_texture = normRoughnessDecalTex;
-	}
-	else
-	{
-		rcinit.m_textures[1].m_texture = m_dummyTex;
-	}
-
-	U64 hash = rcinit.computeHash();
-	if(hash != m_rcGroup1Hash)
-	{
-		m_rcGroup1Hash = hash;
-
-		m_rcGroup1 = getGrManager().newInstance<ResourceGroup>(rcinit);
-	}
+		ctx.m_is.m_pointLightsToken,
+		ctx.m_is.m_spotLightsToken,
+		&ctx.m_is.m_probesToken,
+		ctx.m_is.m_decalsToken,
+		ctx.m_is.m_clustersToken,
+		ctx.m_is.m_lightIndicesToken,
+		ctx.m_is.m_diffDecalTex,
+		ctx.m_is.m_normRoughnessDecalTex));
 
 	return ErrorCode::NONE;
 }
@@ -250,20 +171,39 @@ void Is::run(RenderingContext& ctx)
 
 	cmdb->beginRenderPass(m_fb);
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
-	cmdb->bindPipeline(m_lightPpline);
-	cmdb->bindResourceGroup(m_rcGroup, 0, &ctx.m_is.m_dynBufferInfo);
-	cmdb->bindResourceGroup(m_rcGroup1, 1, nullptr);
-	cmdb->drawArrays(4, m_r->getTileCount());
+	cmdb->bindShaderProgram(m_lightProg);
+
+	cmdb->bindTexture(0, 0, m_r->getMs().m_rt0);
+	cmdb->bindTexture(0, 1, m_r->getMs().m_rt1);
+	cmdb->bindTexture(0, 2, m_r->getMs().m_rt2);
+	cmdb->bindTexture(0, 3, m_r->getMs().m_depthRt, DepthStencilAspectMask::DEPTH);
+	cmdb->bindTexture(0, 4, m_r->getSm().m_spotTexArray);
+	cmdb->bindTexture(0, 5, m_r->getSm().m_omniTexArray);
+	cmdb->bindTexture(0, 6, m_r->getIr().getReflectionTexture());
+	cmdb->bindTexture(0, 7, m_r->getIr().getIrradianceTexture());
+	cmdb->bindTextureAndSampler(0, 8, m_r->getIr().getIntegrationLut(), m_r->getIr().getIntegrationLutSampler());
+
+	cmdb->bindTexture(1, 0, (ctx.m_is.m_diffDecalTex) ? ctx.m_is.m_diffDecalTex : m_dummyTex);
+	cmdb->bindTexture(1, 1, (ctx.m_is.m_normRoughnessDecalTex) ? ctx.m_is.m_normRoughnessDecalTex : m_dummyTex);
+
+	cmdb->bindUniformBuffer(0, 0, ctx.m_is.m_commonToken);
+	cmdb->bindUniformBuffer(0, 1, ctx.m_is.m_pointLightsToken);
+	cmdb->bindUniformBuffer(0, 2, ctx.m_is.m_spotLightsToken);
+	cmdb->bindUniformBuffer(0, 3, ctx.m_is.m_probesToken);
+	cmdb->bindUniformBuffer(0, 4, ctx.m_is.m_decalsToken);
+
+	cmdb->bindStorageBuffer(0, 0, ctx.m_is.m_clustersToken);
+	cmdb->bindStorageBuffer(0, 1, ctx.m_is.m_lightIndicesToken);
+
+	cmdb->drawArrays(PrimitiveTopology::TRIANGLE_STRIP, 4, m_r->getTileCount());
 	cmdb->endRenderPass();
 }
 
 void Is::updateCommonBlock(RenderingContext& ctx)
 {
 	const FrustumComponent& fr = *ctx.m_frustumComponent;
-	ShaderCommonUniforms* blk =
-		static_cast<ShaderCommonUniforms*>(getGrManager().allocateFrameTransientMemory(sizeof(ShaderCommonUniforms),
-			BufferUsageBit::UNIFORM_ALL,
-			ctx.m_is.m_dynBufferInfo.m_uniformBuffers[COMMON_VARS_LOCATION]));
+	ShaderCommonUniforms* blk = static_cast<ShaderCommonUniforms*>(getGrManager().allocateFrameTransientMemory(
+		sizeof(ShaderCommonUniforms), BufferUsageBit::UNIFORM_ALL, ctx.m_is.m_commonToken));
 
 	// Start writing
 	blk->m_projectionParams = fr.getProjectionParameters();
@@ -286,62 +226,52 @@ void Is::setPreRunBarriers(RenderingContext& ctx)
 		TextureSurfaceInfo(0, 0, 0, 0));
 }
 
-Error Is::getOrCreatePipeline(ShaderVariantBit variantMask, RenderingContext& ctx, PipelinePtr& ppline)
+Error Is::getOrCreateProgram(ShaderVariantBit variantMask, RenderingContext& ctx, ShaderProgramPtr& prog)
 {
 	auto it = m_shaderVariantMap.find(variantMask);
 	if(it != m_shaderVariantMap.getEnd())
 	{
-		ppline = it->m_lightPpline;
+		prog = it->m_lightProg;
 	}
 	else
 	{
-		StringAuto pps(ctx.m_tempAllocator);
+		ShaderVariant variant;
 
-		pps.sprintf("#define TILE_COUNT_X %u\n"
-					"#define TILE_COUNT_Y %u\n"
-					"#define CLUSTER_COUNT %u\n"
-					"#define RENDERER_WIDTH %u\n"
-					"#define RENDERER_HEIGHT %u\n"
-					"#define MAX_LIGHT_INDICES %u\n"
-					"#define POISSON %u\n"
-					"#define INDIRECT_ENABLED %u\n"
-					"#define IR_MIPMAP_COUNT %u\n"
-					"#define POINT_LIGHTS_ENABLED %u\n"
-					"#define SPOT_LIGHTS_ENABLED %u\n"
-					"#define DECALS_ENABLED %u\n"
-					"#define POINT_LIGHTS_SHADOWS_ENABLED %u\n"
-					"#define SPOT_LIGHTS_SHADOWS_ENABLED %u\n",
+		ANKI_CHECK(m_r->createShaderf("shaders/Is.frag.glsl",
+			variant.m_lightFrag,
+			"#define TILE_COUNT_X %u\n"
+			"#define TILE_COUNT_Y %u\n"
+			"#define CLUSTER_COUNT %u\n"
+			"#define RENDERER_WIDTH %u\n"
+			"#define RENDERER_HEIGHT %u\n"
+			"#define MAX_LIGHT_INDICES %u\n"
+			"#define POISSON %u\n"
+			"#define INDIRECT_ENABLED %u\n"
+			"#define IR_MIPMAP_COUNT %u\n"
+			"#define POINT_LIGHTS_ENABLED %u\n"
+			"#define SPOT_LIGHTS_ENABLED %u\n"
+			"#define DECALS_ENABLED %u\n"
+			"#define POINT_LIGHTS_SHADOWS_ENABLED %u\n"
+			"#define SPOT_LIGHTS_SHADOWS_ENABLED %u\n",
 			m_r->getTileCountXY().x(),
 			m_r->getTileCountXY().y(),
 			m_clusterCount,
 			m_r->getWidth(),
 			m_r->getHeight(),
 			m_maxLightIds,
-			m_r->getSm().getPoissonEnabled(),
+			m_r->getSm().m_poissonEnabled,
 			!!(variantMask & ShaderVariantBit::INDIRECT),
 			m_r->getIr().getReflectionTextureMipmapCount(),
 			!!(variantMask & ShaderVariantBit::P_LIGHTS),
 			!!(variantMask & ShaderVariantBit::S_LIGHTS),
 			!!(variantMask & ShaderVariantBit::DECALS),
 			!!(variantMask & ShaderVariantBit::P_LIGHTS_SHADOWS),
-			!!(variantMask & ShaderVariantBit::S_LIGHTS_SHADOWS));
+			!!(variantMask & ShaderVariantBit::S_LIGHTS_SHADOWS)));
 
-		ShaderVariant variant;
-		ANKI_CHECK(getResourceManager().loadResourceToCache(
-			variant.m_lightFrag, "shaders/Is.frag.glsl", pps.toCString(), "r_"));
+		variant.m_lightProg =
+			getGrManager().newInstance<ShaderProgram>(m_lightVert->getGrShader(), variant.m_lightFrag->getGrShader());
 
-		PipelineInitInfo init;
-
-		init.m_inputAssembler.m_topology = PrimitiveTopology::TRIANGLE_STRIP;
-		init.m_depthStencil.m_depthWriteEnabled = false;
-		init.m_depthStencil.m_depthCompareFunction = CompareOperation::ALWAYS;
-		init.m_color.m_attachmentCount = 1;
-		init.m_color.m_attachments[0].m_format = IS_COLOR_ATTACHMENT_PIXEL_FORMAT;
-		init.m_shaders[U(ShaderType::VERTEX)] = m_lightVert->getGrShader();
-		init.m_shaders[U(ShaderType::FRAGMENT)] = m_lightFrag->getGrShader();
-		variant.m_lightPpline = getGrManager().newInstance<Pipeline>(init);
-
-		ppline = variant.m_lightPpline;
+		prog = variant.m_lightProg;
 
 		m_shaderVariantMap.pushBack(getAllocator(), variantMask, variant);
 	}

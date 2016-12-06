@@ -24,7 +24,7 @@ anki_internal:
 
 	~DownscaleBlur();
 
-	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
+	ANKI_USE_RESULT Error init(const ConfigSet& cfg);
 
 	void run(RenderingContext& ctx);
 
@@ -32,16 +32,15 @@ private:
 	class Subpass
 	{
 	public:
-		ShaderResourcePtr m_vert;
 		ShaderResourcePtr m_frag;
-		PipelinePtr m_ppline;
-		ResourceGroupPtr m_rcGroup;
+		ShaderProgramPtr m_prog;
 		FramebufferPtr m_fb;
 	};
 
 	DynamicArray<Subpass> m_passes;
 
-	Error initSubpass(U idx, const UVec2& inputTexSize);
+	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
+	ANKI_USE_RESULT Error initSubpass(U idx, const UVec2& inputTexSize);
 };
 /// @}
 

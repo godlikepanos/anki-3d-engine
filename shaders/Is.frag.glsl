@@ -238,27 +238,26 @@ void main()
 #endif
 
 #if 0
-	out_color = diffCol;
-	uint count = scount;
+	count = scount;
 	if(count == 0)
 	{
-		out_color = vec3(1.0, 0.0, 0.0);
+		out_color = vec3(0.0, 0.0, 0.0);
 	}
 	else if(count == 1)
 	{
-		out_color = vec3(0.0, 1.0, 0.0);
+		out_color = vec3(1.0, 0.0, 0.0);
 	}
 	else if(count == 2)
 	{
-		out_color = vec3(0.0, 0.0, 1.0);
+		out_color = vec3(0.0, 1.0, 0.0);
 	}
 	else if(count == 3)
 	{
-		out_color = vec3(1.0, 0.0, 1.0);
+		out_color = vec3(0.0, 0.0, 1.0);
 	}
 	else
 	{
-		out_color = vec3(1.0, 1.0, 0.0);
+		out_color = vec3(1.0, 1.0, 1.0);
 	}
 #endif
 }
