@@ -10,7 +10,7 @@ OpenGL 4.5 and Vulkan 1.0 (Beta).
 License
 =======
 
-AnKi's license is BSD. This practicaly means that you can use the source or parts of the source on proprietary and non 
+AnKi's license is BSD. This practically means that you can use the source or parts of the source on proprietary and non 
 proprietary products as long as you follow the conditions of the license.
 
 See LICENSE file for more info.
@@ -70,7 +70,7 @@ To build the release version:
 
 > NOTE: If you have a better way to build on Windows please let us know.
 
-> NOTE 2: The Windows build tends to brake often since Windows is not the primary developement platform. Please report 
+> NOTE 2: The Windows build tends to break often since Windows is not the primary development platform. Please report 
 > any bugs.
 
 Next steps
