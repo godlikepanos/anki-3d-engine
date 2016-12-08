@@ -5,7 +5,7 @@
 # Code licensed under the BSD License.
 # http://www.anki3d.org/LICENSE
 
-import optparse
+import argparse
 import subprocess
 import re
 import os
@@ -183,98 +183,86 @@ def get_base_fname(path):
 def parse_commandline():
 	""" Parse the command line arguments """
 
-	parser = optparse.OptionParser(usage = "usage: %prog [options]", \
-			description = "This program converts a single image or a number " \
+	parser = argparse.ArgumentParser(description = "This program converts a single image or a number " \
 			"of images (for 3D and 2DArray textures) to AnKi texture format." \
 			" It requires 4 different applications/executables to " \
 			"operate: convert, identify, nvcompress and etcpack. These " \
 			"applications should be in PATH except the convert where you " \
-			"need to define the executable explicitly")
+			"need to define the executable explicitly",
+			formatter_class = argparse.ArgumentDefaultsHelpFormatter)
 
-	parser.add_option("-i", "--input", dest = "inp",
-			type = "string", help = "specify the image(s) to convert. Seperate with :")
+	parser.add_argument("-i", "--input", nargs = "+", required = True,
+			help = "specify the image(s) to convert. Seperate with space")
 
-	parser.add_option("-o", "--output", dest = "out", type = "string", help = "specify output AnKi image. ")
+	parser.add_argument("-o", "--output", required = True, help = "specify output AnKi image.")
 
-	parser.add_option("-t", "--type", dest = "type", type = "string", default = "2D",
-			help = "type of the image (2D or cube or 3D or 2DArray)")
+	parser.add_argument("-t", "--type", default = "2D", choices = ["2D", "3D", "2DArray"],
+		help = "type of the image (2D or cube or 3D or 2DArray)")
 
-	parser.add_option("-f", "--fast", dest = "fast", type = "int", action = "store", default = 0,
-			help = "run the fast version of the converters")
+	parser.add_argument("-f", "--fast", type = int, default = 0, help = "run the fast version of the converters")
 
-	parser.add_option("-n", "--normal", dest = "normal", type = "int", action = "store", default = 0,
-			help = "assume the texture is normal")
+	parser.add_argument("-n", "--normal", type = int, default = 0, help = "assume the texture is normal")
 
-	parser.add_option("-c", "--convert-path", dest = "convert_path", type = "string", default = "/usr/bin/convert",
+	parser.add_argument("-c", "--convert-path", default = "/usr/bin/convert",
 			help = "the executable where convert tool is located. Stupid etcpack cannot get it from PATH")
 
-	parser.add_option("--no-alpha", dest = "no_alpha", type = "int", action = "store", default = 0,
-			help = "remove alpha channel")
+	parser.add_argument("--no-alpha", type = int, default = 0, help = "remove alpha channel")
 
-	parser.add_option("--store-uncompressed", dest = "store_uncompressed", type = "int", action = "store", default = 0,
-			help = "store or not uncompressed data")
+	parser.add_argument("--store-uncompressed", type = int, default = 0, help = "store or not uncompressed data")
 
-	parser.add_option("--store-compressed", dest = "store_compressed", type = "int", action = "store", default = 1,
-			help = "store or not compressed data")
+	parser.add_argument("--store-compressed", type = int, default = 1, help = "store or not compressed data")
 
-	parser.add_option("--to-linear-rgb", dest = "to_linear_rgb", type = "int", action = "store", default = 0,
+	parser.add_argument("--to-linear-rgb", type = int, default = 0,
 			help = "assume the input textures are sRGB. If this option is true then convert them to linear RGB")
 
-	parser.add_option("--filter", dest = "filter", type = "string", default = "default", 
-			help = "texture filtering. Can be: default, linear, nearest")
+	parser.add_argument("--filter", default = "default", choices = ["default", "linear", "nearest"],
+		help = "texture filtering. Can be: default, linear, nearest")
 
-	parser.add_option("--mips-count", dest = "mips_count", type = "int", default = "0xFFFF", 
-			help = "Max number of mipmaps")
+	parser.add_argument("--mips-count", type = int, default = 0xFFFF, help = "Max number of mipmaps")
 
-	# Add the default value on each option when printing help
-	for option in parser.option_list:
-		if option.default != ("NO", "DEFAULT"):
-			option.help += (" " if option.help else "") + "[default: %default]"
+	args = parser.parse_args()
 
-	(options, args) = parser.parse_args()
-
-	if not options.inp or not options.out or not options.convert_path:
-		parser.error("argument is missing")
-
-	if options.type == "2D":
+	if args.type == "2D":
 		typ = TT_2D
-	elif options.type == "cube":
+	elif args.type == "cube":
 		typ = TT_CUBE
-	elif options.type == "3D":
+	elif args.type == "3D":
 		typ = TT_3D
-	elif options.type == "2DArray":
+	elif args.type == "2DArray":
 		typ = TT_2D_ARRAY
 	else:
-		parser.error("Unrecognized type: " + options.type)
+		assert 0, "See file"
 
-	if options.filter == "default":
+	if args.filter == "default":
 		filter = TF_DEFAULT
-	elif options.filter == "linear":
+	elif args.filter == "linear":
 		filter = TF_LINEAR
-	elif options.filter == "nearest":
+	elif args.filter == "nearest":
 		filter = TF_NEAREST
 	else:
-		parser.error("Unrecognized type: " + options.filter)
+		assert 0, "See file"
 
-	if not options.store_uncompressed and not options.store_compressed:
+	if not args.store_uncompressed and not args.store_compressed:
 		parser.error("One of --store-compressed and --store-uncompressed should be True")
 
-	if int(options.mips_count) <= 0:
+	if args.mips_count <= 0:
 		parser.error("Wrong number of mipmaps")
 
 	config = Config()
-	config.in_files = options.inp.split(":")
-	config.out_file = options.out
-	config.fast = options.fast
+	config.in_files = args.input
+	config.out_file = args.output
+	config.fast = args.fast
 	config.type = typ
-	config.normal = options.normal
-	config.convert_path = options.convert_path
-	config.no_alpha = options.no_alpha
-	config.store_uncompressed = options.store_uncompressed
-	config.store_compressed = options.store_compressed
-	config.to_linear_rgb = options.to_linear_rgb
+	config.normal = args.normal
+	config.convert_path = args.convert_path
+	config.no_alpha = args.no_alpha
+	config.store_uncompressed = args.store_uncompressed
+	config.store_compressed = args.store_compressed
+	config.to_linear_rgb = args.to_linear_rgb
 	config.filter = filter
-	config.mips_count = int(options.mips_count)
+	config.mips_count = args.mips_count
+
+	print(config)
 
 	return config
 
