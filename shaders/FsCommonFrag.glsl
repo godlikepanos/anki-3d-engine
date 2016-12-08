@@ -80,9 +80,9 @@ void particleSoftTextureAlpha(in sampler2D depthMap, in sampler2D tex, in float 
 
 #if PASS == COLOR
 #define particleTextureAlpha_DEFINED
-void particleTextureAlpha(in sampler2D tex, in float alpha)
+void particleTextureAlpha(in sampler2D tex, vec4 mulColor, vec4 addColor, in float alpha)
 {
-	vec4 color = texture(tex, gl_PointCoord);
+	vec4 color = texture(tex, gl_PointCoord) * mulColor + addColor;
 	color.a *= alpha;
 
 	writeGBuffer(color);
@@ -220,10 +220,10 @@ void particleTextureAlphaLight(in sampler2D tex, in float alpha)
 void particleAnimatedTextureAlphaLight(sampler2DArray tex, float alpha, float layerCount, float period)
 {
 	vec4 color = readAnimatedTextureRgba(tex, layerCount, period, gl_PointCoord, anki_u_time);
-	color.a *= alpha;
 
 	color.rgb = computeLightColor(color.rgb);
 
+	color.a *= alpha;
 	writeGBuffer(color);
 }
 #endif
@@ -248,8 +248,7 @@ void fog(in sampler2D depthMap, in vec3 color, in float fogScale)
 	}
 	else
 	{
-		// The depth buffer is cleared at this place. Set the diff to zero to
-		// avoid weird pop ups
+		// The depth buffer is cleared at this place. Set the diff to zero to avoid weird pop ups
 		diff = 0.0;
 	}
 

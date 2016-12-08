@@ -485,10 +485,9 @@ void CombineResultsTask::combine()
 		visible->getEnd(VisibilityGroupType::RENDERABLES_MS),
 		comp);
 
-	// TODO: Reverse the sort
 	std::sort(visible->getBegin(VisibilityGroupType::RENDERABLES_FS),
 		visible->getEnd(VisibilityGroupType::RENDERABLES_FS),
-		comp);
+		RevDistanceSortFunctor());
 
 	std::sort(visible->getBegin(VisibilityGroupType::REFLECTION_PROBES),
 		visible->getEnd(VisibilityGroupType::REFLECTION_PROBES),

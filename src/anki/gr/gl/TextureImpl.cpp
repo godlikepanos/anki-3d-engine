@@ -157,6 +157,22 @@ static void convertTextureInformation(const PixelFormat& pf,
 			ANKI_ASSERT(0 && "TODO");
 		}
 		break;
+	case ComponentFormat::R16G16B16A16:
+		if(pf.m_transform == TransformFormat::FLOAT)
+		{
+			format = GL_RGBA;
+			internalFormat = GL_RGBA16F;
+			type = GL_FLOAT;
+		}
+		else if(pf.m_transform == TransformFormat::UINT)
+		{
+			ANKI_ASSERT(!"TODO");
+		}
+		else
+		{
+			ANKI_ASSERT(!"TODO");
+		}
+		break;
 	case ComponentFormat::R32G32B32:
 		if(pf.m_transform == TransformFormat::FLOAT)
 		{

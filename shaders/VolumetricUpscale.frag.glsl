@@ -25,6 +25,6 @@ void main()
 	out_color = nearestDepthUpscale(in_uv, u_depthFullTex, u_depthHalfTex, u_colorTex, DEPTH_THRESHOLD);
 #else
 	out_color =
-		bilateralUpsample(u_depthFullTex, u_depthHalfTex, u_colorTex, 1.0 / SRC_SIZE, in_uv, u_linearizeCfPad2.xy);
+		bilateralUpsample(u_depthFullTex, u_depthHalfTex, u_colorTex, 1.0 / SRC_SIZE, in_uv, u_linearizeCfPad2.xy).rgb;
 #endif
 }

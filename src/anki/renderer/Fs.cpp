@@ -41,7 +41,7 @@ Error Fs::initInternal(const ConfigSet&)
 	// Create RT
 	m_r->createRenderTarget(m_width,
 		m_height,
-		IS_COLOR_ATTACHMENT_PIXEL_FORMAT,
+		FS_COLOR_ATTACHMENT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 		SamplingFilter::LINEAR,
 		1,
@@ -51,6 +51,7 @@ Error Fs::initInternal(const ConfigSet&)
 	fbInit.m_colorAttachmentCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
+	fbInit.m_colorAttachments[0].m_clearValue.m_colorf = {{0.0, 0.0, 0.0, 1.0}};
 	fbInit.m_depthStencilAttachment.m_texture = m_r->getDepthDownscale().m_hd.m_depthRt;
 	fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::LOAD;
 	fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
@@ -139,7 +140,9 @@ Error Fs::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) 
 	cmdb->bindStorageBuffer(1, 1, ctx.m_is.m_lightIndicesToken);
 
 	cmdb->setViewport(0, 0, m_width, m_height);
-	cmdb->setBlendFactors(0, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA);
+	cmdb->setBlendFactors(
+		0, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA, BlendFactor::DST_ALPHA, BlendFactor::ONE);
+	cmdb->setBlendOperation(0, BlendOperation::ADD, BlendOperation::REVERSE_SUBTRACT);
 	cmdb->setDepthWrite(false);
 
 	// Start drawing

@@ -424,12 +424,13 @@ Error ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 			// Set alpha
 			if(m_particle.m_alphaAnimation)
 			{
-				verts[4] = sin((lifePercent)*PI) * p->m_alpha;
+				verts[4] = sin(lifePercent * PI) * p->m_alpha;
 			}
 			else
 			{
 				verts[4] = p->m_alpha;
 			}
+			verts[4] = clamp(verts[4], 0.0f, 1.0f);
 
 			++m_aliveParticlesCount;
 			verts += 5;

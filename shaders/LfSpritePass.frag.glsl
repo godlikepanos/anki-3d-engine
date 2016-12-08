@@ -12,12 +12,10 @@ layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2DArray u_tex;
 layout(location = 0) in vec3 in_uv;
 layout(location = 1) flat in vec4 in_color;
 
-layout(location = 0) out vec3 outColor;
+layout(location = 0) out vec4 out_color;
 
 void main()
 {
-	vec3 col = texture(u_tex, in_uv).rgb;
-
-	outColor = col * in_color.rgb;
-	outColor *= in_color.a;
+	vec4 col = texture(u_tex, in_uv);
+	out_color = col * in_color;
 }

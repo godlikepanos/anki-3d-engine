@@ -13,7 +13,7 @@ const vec3 KERNEL[KERNEL_SIZE] = KERNEL_ARRAY; // This will be appended in C++
 const float RANGE_CHECK_RADIUS = RADIUS * 2.0;
 
 // Initial is 1.0 but the bigger it is the more darker the SSAO factor gets
-const float DARKNESS_MULTIPLIER = 1.5;
+const float DARKNESS_MULTIPLIER = 1.9;
 
 // The algorithm will chose the number of samples depending on the distance
 const float MAX_DISTANCE = 40.0;

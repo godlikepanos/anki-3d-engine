@@ -242,7 +242,9 @@ void Lf::run(RenderingContext& ctx, CommandBufferPtr cmdb)
 	cmdb->bindShaderProgram(m_realProg);
 	cmdb->setDepthWrite(false);
 	cmdb->setDepthCompareOperation(CompareOperation::ALWAYS);
-	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ONE);
+	cmdb->setBlendFactors(
+		0, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA, BlendFactor::DST_ALPHA, BlendFactor::ONE);
+	cmdb->setBlendOperation(0, BlendOperation::ADD, BlendOperation::REVERSE_SUBTRACT);
 
 	for(U i = 0; i < count; ++i)
 	{
@@ -293,6 +295,7 @@ void Lf::run(RenderingContext& ctx, CommandBufferPtr cmdb)
 	cmdb->setDepthWrite(true);
 	cmdb->setDepthCompareOperation(CompareOperation::LESS);
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
+	cmdb->setBlendOperation(0, BlendOperation::ADD);
 }
 
 } // end namespace anki

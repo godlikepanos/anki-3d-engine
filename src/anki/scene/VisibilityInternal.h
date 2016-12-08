@@ -33,6 +33,16 @@ public:
 	}
 };
 
+class RevDistanceSortFunctor
+{
+public:
+	Bool operator()(const VisibleNode& a, const VisibleNode& b)
+	{
+		ANKI_ASSERT(a.m_node && b.m_node);
+		return a.m_frustumDistanceSquared > b.m_frustumDistanceSquared;
+	}
+};
+
 /// Sort renderable scene nodes on material
 class MaterialSortFunctor
 {

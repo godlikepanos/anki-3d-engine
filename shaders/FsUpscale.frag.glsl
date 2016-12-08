@@ -30,14 +30,15 @@ void main()
 	// Get the depth of the current fragment
 	vec3 color = nearestDepthUpscale(in_uv, u_depthFullTex, u_depthHalfTex, u_fsRt, DEPTH_THRESHOLD);
 #else
-	vec3 color =
+	vec4 color =
 		bilateralUpsample(u_depthFullTex, u_depthHalfTex, u_fsRt, 1.0 / vec2(SRC_SIZE), in_uv, u_linearizeCfPad2.xy);
 #endif
 
 #if SSAO_ENABLED
 	float ssao = textureLod(u_ssaoTex, in_uv, 0.0).r;
-	out_color = vec4(color, ssao);
+	out_color = color;
+	out_color.a *= ssao;
 #else
-	out_color = vec4(color, 1.0);
+	out_color = color;
 #endif
 }

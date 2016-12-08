@@ -128,7 +128,7 @@ float _calcDepthWeight(sampler2D depthLow, vec2 uv, float ref, vec2 linearDepthC
 	return 1.0 / (EPSILON + abs(ref - linearD));
 }
 
-vec3 _sampleAndWeight(sampler2D depthLow,
+vec4 _sampleAndWeight(sampler2D depthLow,
 	sampler2D colorLow,
 	vec2 lowInvSize,
 	vec2 uv,
@@ -140,19 +140,19 @@ vec3 _sampleAndWeight(sampler2D depthLow,
 {
 	uv += offset * lowInvSize;
 	float dw = _calcDepthWeight(depthLow, uv, ref, linearDepthCf);
-	vec3 v = texture(colorLow, uv).rgb;
+	vec4 v = texture(colorLow, uv);
 	normalize += weight * dw;
 	return v * dw * weight;
 }
 
-vec3 bilateralUpsample(
+vec4 bilateralUpsample(
 	sampler2D depthHigh, sampler2D depthLow, sampler2D colorLow, vec2 lowInvSize, vec2 uv, vec2 linearDepthCf)
 {
 	const vec3 WEIGHTS = vec3(0.25, 0.125, 0.0625);
 	float depthRef = linearizeDepthOptimal(texture(depthHigh, uv).r, linearDepthCf.x, linearDepthCf.y);
 	float normalize = 0.0;
 
-	vec3 sum = _sampleAndWeight(
+	vec4 sum = _sampleAndWeight(
 		depthLow, colorLow, lowInvSize, uv, vec2(0.0, 0.0), depthRef, WEIGHTS.x, linearDepthCf, normalize);
 	sum += _sampleAndWeight(
 		depthLow, colorLow, lowInvSize, uv, vec2(-1.0, 0.0), depthRef, WEIGHTS.y, linearDepthCf, normalize);
