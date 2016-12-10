@@ -1,0 +1,30 @@
+// Copyright (C) 2009-2016, Panagiotis Christopoulos Charitos and contributors.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#include "shaders/Common.glsl"
+
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_depthRt;
+
+layout(location = 0) in vec2 in_uv;
+layout(location = 0) out float out_depth;
+
+#define AVG
+
+void main()
+{
+	vec4 depths = textureGather(u_depthRt, in_uv, 0);
+
+#if defined(MIN)
+	vec2 mind2 = min(depths.xy, depths.zw);
+	out_depth = min(mind2.x, mind2.y);
+#elif defined(MAX)
+	vec2 max2 = max(depths.xy, depths.zw);
+	out_depth = max(max2.x, max2.y);
+#elif defined(AVG)
+	out_depth = dot(depths, vec4(1.0 / 4.0));
+#else
+#error See file
+#endif
+}

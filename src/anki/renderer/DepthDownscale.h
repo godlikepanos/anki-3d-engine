@@ -43,6 +43,8 @@ private:
 	DepthDownscale* m_parent;
 
 	FramebufferPtr m_fb;
+	ShaderResourcePtr m_frag;
+	ShaderProgramPtr m_prog;
 };
 
 /// Quick pass to downscale the depth buffer.
@@ -69,13 +71,12 @@ private:
 	DepthDownscale* m_parent;
 
 	FramebufferPtr m_fb;
+	ShaderResourcePtr m_frag;
+	ShaderProgramPtr m_prog;
 };
 
 class DepthDownscale : public RenderingPass
 {
-	friend class HalfDepth;
-	friend class QuarterDepth;
-
 anki_internal:
 	HalfDepth m_hd;
 	QuarterDepth m_qd;
@@ -92,9 +93,6 @@ anki_internal:
 	ANKI_USE_RESULT Error init(const ConfigSet& cfg);
 
 private:
-	ShaderResourcePtr m_frag;
-	ShaderProgramPtr m_prog;
-
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 };
 /// @}
