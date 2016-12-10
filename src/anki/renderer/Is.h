@@ -24,6 +24,8 @@ enum class ShaderVariantBit : U8;
 class Is : public RenderingPass
 {
 anki_internal:
+	TexturePtr m_stencilRt;
+
 	Is(Renderer* r);
 
 	~Is();
@@ -36,9 +38,9 @@ anki_internal:
 
 	void run(RenderingContext& ctx);
 
-	TexturePtr getRt() const
+	TexturePtr getRt(U idx) const
 	{
-		return m_rt;
+		return m_rt[idx];
 	}
 
 	/// Get the number of mips for IS's render target.
@@ -54,12 +56,12 @@ anki_internal:
 
 private:
 	/// The IS render target
-	TexturePtr m_rt;
+	Array<TexturePtr, 2> m_rt;
 	U8 m_rtMipCount = 0;
 	U32 m_clusterCount = 0;
 
 	/// The IS FBO
-	FramebufferPtr m_fb;
+	Array<FramebufferPtr, 2> m_fb;
 
 	TexturePtr m_dummyTex;
 
@@ -95,6 +97,13 @@ private:
 	/// @{
 	U32 m_maxLightIds;
 	/// @}
+
+	class Alt
+	{
+	public:
+		ShaderResourcePtr m_frag;
+		ShaderProgramPtr m_prog;
+	} m_alt;
 
 	/// Called by init
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);

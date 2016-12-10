@@ -16,6 +16,7 @@
 #include <anki/misc/ConfigSet.h>
 #include <anki/scene/SceneNode.h>
 #include <anki/scene/FrustumComponent.h>
+#include <anki/renderer/Velocity.h>
 
 namespace anki
 {
@@ -142,7 +143,8 @@ Error Pps::run(RenderingContext& ctx)
 	}
 
 	// Bind stuff
-	cmdb->bindTexture(0, 0, m_r->getIs().getRt());
+	cmdb->bindTexture(0, 0, m_r->getIs().getRt(m_r->getFrameCount() % 2));
+	//cmdb->bindTexture(0, 0, m_r->getVelocity().m_rt);
 	cmdb->bindTexture(0, 1, m_r->getBloom().m_upscale.m_rt);
 	cmdb->bindTexture(0, 2, m_lut->getGrTexture());
 	cmdb->bindTexture(0, 3, m_r->getSmaa().m_weights.m_rt);

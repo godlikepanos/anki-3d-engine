@@ -148,7 +148,7 @@ void main()
 
 #if 0
 	{
-		out_color = textureLod(u_smaaBlendTex, uv, 0.0).rgb;
+		out_color = vec3(textureLod(u_isRt, uv, 0.0).rgb);
 	}
 #endif
 

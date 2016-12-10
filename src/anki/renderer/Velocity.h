@@ -13,35 +13,41 @@ namespace anki
 /// @addtogroup renderer
 /// @{
 
-/// Downsample the IS and blur it at the same time.
-class DownscaleBlur : public RenderingPass
+/// XXX
+class Velocity : public RenderingPass
 {
 anki_internal:
-	DownscaleBlur(Renderer* r)
+	TexturePtr m_rt;
+
+	Velocity(Renderer* r)
 		: RenderingPass(r)
 	{
 	}
 
-	~DownscaleBlur();
+	~Velocity();
 
 	ANKI_USE_RESULT Error init(const ConfigSet& cfg);
 
+	void setPreRunBarriers(RenderingContext& ctx)
+	{
+		// XXX
+	}
+
 	void run(RenderingContext& ctx);
 
-private:
-	class Subpass
+	void setPostRunBarriers(RenderingContext& ctx)
 	{
-	public:
-		ShaderResourcePtr m_frag;
-		ShaderProgramPtr m_prog;
-		Array<FramebufferPtr, 2> m_fb;
-	};
+		// XXX
+	}
 
-	DynamicArray<Subpass> m_passes;
+private:
+	ShaderResourcePtr m_frag;
+	ShaderProgramPtr m_prog;
+	FramebufferPtr m_fb;
 
-	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
-	ANKI_USE_RESULT Error initSubpass(U idx, const UVec2& inputTexSize);
+	Error initInternal(const ConfigSet& cfg);
 };
 /// @}
 
 } // end namespace anki
+

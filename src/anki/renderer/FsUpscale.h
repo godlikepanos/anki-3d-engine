@@ -27,7 +27,7 @@ public:
 	void run(RenderingContext& ctx);
 
 private:
-	FramebufferPtr m_fb;
+	Array<FramebufferPtr, 2> m_fb;
 	ShaderResourcePtr m_frag;
 	ShaderResourcePtr m_vert;
 	ShaderProgramPtr m_prog;

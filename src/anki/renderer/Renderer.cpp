@@ -25,6 +25,7 @@
 #include <anki/renderer/Volumetric.h>
 #include <anki/renderer/DepthDownscale.h>
 #include <anki/renderer/Smaa.h>
+#include <anki/renderer/Velocity.h>
 
 #include <cstdarg> // For var args
 
@@ -181,6 +182,9 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_dbg.reset(m_alloc.newInstance<Dbg>(this));
 	ANKI_CHECK(m_dbg->init(config));
 
+	m_vel.reset(m_alloc.newInstance<Velocity>(this));
+	ANKI_CHECK(m_vel->init(config));
+
 	return ErrorCode::NONE;
 }
 
@@ -188,6 +192,7 @@ Error Renderer::render(RenderingContext& ctx)
 {
 	FrustumComponent& frc = *ctx.m_frustumComponent;
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
+	ctx.m_prevFrameViewProjMatrix = m_prevFrameViewProjMatrix;
 
 	ANKI_ASSERT(frc.getFrustum().getType() == FrustumType::PERSPECTIVE);
 
@@ -226,10 +231,10 @@ Error Renderer::render(RenderingContext& ctx)
 	m_smaa->m_weights.setPreRunBarriers(ctx);
 	m_vol->setPreRunBarriers(ctx);
 
-	// SM
+	// Batch
 	m_sm->run(ctx);
-
 	m_ms->run(ctx);
+	m_vel->run(ctx);
 
 	m_ms->setPostRunBarriers(ctx);
 	m_sm->setPostRunBarriers(ctx);
@@ -258,14 +263,14 @@ Error Renderer::render(RenderingContext& ctx)
 
 	m_fsUpscale->run(ctx);
 
-	cmdb->setTextureSurfaceBarrier(m_is->getRt(),
+	cmdb->setTextureSurfaceBarrier(m_is->getRt(getFrameCount() % 2),
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 		TextureUsageBit::SAMPLED_FRAGMENT,
 		TextureSurfaceInfo(0, 0, 0, 0));
 
 	m_downscale->run(ctx);
 
-	cmdb->setTextureSurfaceBarrier(m_is->getRt(),
+	cmdb->setTextureSurfaceBarrier(m_is->getRt(getFrameCount() % 2),
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		TextureUsageBit::SAMPLED_COMPUTE,
 		TextureSurfaceInfo(m_is->getRtMipmapCount() - 1, 0, 0, 0));
@@ -275,7 +280,7 @@ Error Renderer::render(RenderingContext& ctx)
 	m_smaa->m_edge.run(ctx);
 
 	// Barriers
-	cmdb->setTextureSurfaceBarrier(m_is->getRt(),
+	cmdb->setTextureSurfaceBarrier(m_is->getRt(getFrameCount() % 2),
 		TextureUsageBit::SAMPLED_COMPUTE,
 		TextureUsageBit::SAMPLED_FRAGMENT,
 		TextureSurfaceInfo(m_is->getRtMipmapCount() - 1, 0, 0, 0));
@@ -300,6 +305,7 @@ Error Renderer::render(RenderingContext& ctx)
 
 	ANKI_CHECK(m_pps->run(ctx));
 
+	m_prevFrameViewProjMatrix = frc.getViewProjectionMatrix();
 	++m_frameCount;
 
 	return ErrorCode::NONE;

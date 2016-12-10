@@ -32,12 +32,15 @@ Error DownscaleBlur::initSubpass(U idx, const UVec2& inputTexSize)
 	m_r->createDrawQuadShaderProgram(pass.m_frag->getGrShader(), pass.m_prog);
 
 	// FB
-	FramebufferInitInfo fbInit;
-	fbInit.m_colorAttachmentCount = 1;
-	fbInit.m_colorAttachments[0].m_texture = m_r->getIs().getRt();
-	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-	fbInit.m_colorAttachments[0].m_surface.m_level = idx + 1;
-	pass.m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
+	for(U i = 0; i < 2; ++i)
+	{
+		FramebufferInitInfo fbInit;
+		fbInit.m_colorAttachmentCount = 1;
+		fbInit.m_colorAttachments[0].m_texture = m_r->getIs().getRt(i);
+		fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
+		fbInit.m_colorAttachments[0].m_surface.m_level = idx + 1;
+		pass.m_fb[i] = getGrManager().newInstance<Framebuffer>(fbInit);
+	}
 
 	return ErrorCode::NONE;
 }
@@ -73,7 +76,7 @@ void DownscaleBlur::run(RenderingContext& ctx)
 {
 	CommandBufferPtr cmdb = ctx.m_commandBuffer;
 
-	cmdb->bindTexture(0, 0, m_r->getIs().getRt());
+	cmdb->bindTexture(0, 0, m_r->getIs().getRt(m_r->getFrameCount() % 2));
 
 	UVec2 size(m_r->getWidth(), m_r->getHeight());
 	for(U i = 0; i < m_passes.getSize(); ++i)
@@ -83,18 +86,18 @@ void DownscaleBlur::run(RenderingContext& ctx)
 
 		if(i > 0)
 		{
-			cmdb->setTextureSurfaceBarrier(m_r->getIs().getRt(),
+			cmdb->setTextureSurfaceBarrier(m_r->getIs().getRt(m_r->getFrameCount() % 2),
 				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 				TextureUsageBit::SAMPLED_FRAGMENT,
 				TextureSurfaceInfo(i, 0, 0, 0));
 		}
 
-		cmdb->setTextureSurfaceBarrier(m_r->getIs().getRt(),
+		cmdb->setTextureSurfaceBarrier(m_r->getIs().getRt(m_r->getFrameCount() % 2),
 			TextureUsageBit::NONE,
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 			TextureSurfaceInfo(i + 1, 0, 0, 0));
 
-		cmdb->beginRenderPass(pass.m_fb);
+		cmdb->beginRenderPass(pass.m_fb[m_r->getFrameCount() % 2]);
 		cmdb->setViewport(0, 0, size.x(), size.y());
 		cmdb->bindShaderProgram(pass.m_prog);
 

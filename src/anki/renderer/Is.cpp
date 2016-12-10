@@ -9,6 +9,7 @@
 #include <anki/renderer/Ir.h>
 #include <anki/renderer/Ms.h>
 #include <anki/renderer/LightBin.h>
+#include <anki/renderer/DepthDownscale.h>
 #include <anki/scene/FrustumComponent.h>
 #include <anki/misc/ConfigSet.h>
 #include <anki/util/HighRezTimer.h>
@@ -117,29 +118,59 @@ Error Is::initInternal(const ConfigSet& config)
 
 	m_lightProg = getGrManager().newInstance<ShaderProgram>(m_lightVert->getGrShader(), m_lightFrag->getGrShader());
 
+
+	// XXX
+	m_r->createRenderTarget(m_r->getWidth(),
+		m_r->getHeight(),
+			PixelFormat(ComponentFormat::S8, TransformFormat::UINT),
+			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
+			SamplingFilter::LINEAR,
+			1,
+			m_stencilRt);
+
 	//
 	// Create framebuffer
 	//
-	m_r->createRenderTarget(m_r->getWidth(),
-		m_r->getHeight(),
-		IS_COLOR_ATTACHMENT_PIXEL_FORMAT,
-		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE
-			| TextureUsageBit::SAMPLED_COMPUTE,
-		SamplingFilter::LINEAR,
-		m_rtMipCount,
-		m_rt);
+	for(U i = 0; i < 2; ++i)
+	{
+		m_r->createRenderTarget(m_r->getWidth(),
+			m_r->getHeight(),
+			IS_COLOR_ATTACHMENT_PIXEL_FORMAT,
+			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE
+				| TextureUsageBit::SAMPLED_COMPUTE,
+			SamplingFilter::LINEAR,
+			m_rtMipCount,
+			m_rt[i]);
 
-	FramebufferInitInfo fbInit;
-	fbInit.m_colorAttachmentCount = 1;
-	fbInit.m_colorAttachments[0].m_texture = m_rt;
-	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
+		FramebufferInitInfo fbInit;
+		fbInit.m_colorAttachmentCount = 1;
+		fbInit.m_colorAttachments[0].m_texture = m_rt[i];
+		//fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
+		fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
+		fbInit.m_colorAttachments[0].m_clearValue.m_colorf = {{1.0, 0.0, 1.0, 0.0}};
+
+		if(i == 1)
+		{
+			fbInit.m_depthStencilAttachment.m_texture = m_stencilRt;
+			fbInit.m_depthStencilAttachment.m_stencilLoadOperation = AttachmentLoadOperation::CLEAR;
+			fbInit.m_depthStencilAttachment.m_stencilStoreOperation = AttachmentStoreOperation::STORE;
+			fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::STENCIL;
+		}
+		m_fb[i] = getGrManager().newInstance<Framebuffer>(fbInit);
+	}
 
 	TextureInitInfo texinit;
 	texinit.m_width = texinit.m_height = 4;
 	texinit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT;
 	texinit.m_format = PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
 	m_dummyTex = getGrManager().newInstance<Texture>(texinit);
+
+	//
+	// Create XXX
+	//
+	ANKI_CHECK(getResourceManager().loadResource("shaders/IsAlternate.frag.glsl", m_alt.m_frag));
+
+	m_r->createDrawQuadShaderProgram(m_alt.m_frag->getGrShader(), m_alt.m_prog);
 
 	return ErrorCode::NONE;
 }
@@ -168,8 +199,46 @@ void Is::run(RenderingContext& ctx)
 {
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
-	cmdb->beginRenderPass(m_fb);
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
+	cmdb->beginRenderPass(m_fb[m_r->getFrameCount() % 2]);
+
+	Bool cheat = (m_r->getFrameCount() % 2) == 1;
+	if(cheat)
+	{
+		cmdb->bindTexture(0, 0, m_r->getMs().m_depthRt, DepthStencilAspectBit::DEPTH);
+		cmdb->bindTexture(0, 1, m_rt[(m_r->getFrameCount() + 1) % 2], DepthStencilAspectBit::DEPTH);
+		cmdb->bindTexture(0, 2, m_r->getDepthDownscale().m_qd.m_depthRt);
+
+		struct Uniforms
+		{
+			Mat4 m_invViewProjMat;
+			Mat4 m_prevViewProjMat;
+		};
+
+		TransientMemoryToken token;
+		Uniforms* unis = static_cast<Uniforms*>(getGrManager().allocateFrameTransientMemory(sizeof(Uniforms), 
+			BufferUsageBit::UNIFORM_ALL, token));
+		cmdb->bindUniformBuffer(0, 0, token);
+
+		unis->m_invViewProjMat = ctx.m_frustumComponent->getViewProjectionMatrix().getInverse();
+		unis->m_prevViewProjMat = ctx.m_prevFrameViewProjMatrix;
+
+		cmdb->setStencilOperations(
+			FaceSelectionBit::FRONT, StencilOperation::KEEP, StencilOperation::KEEP, StencilOperation::REPLACE);
+		cmdb->setStencilCompareMask(FaceSelectionBit::FRONT, 0xF);
+		cmdb->setStencilWriteMask(FaceSelectionBit::FRONT, 0xF);
+		cmdb->setStencilReference(FaceSelectionBit::FRONT, 0xF);
+		cmdb->setStencilCompareOperation(FaceSelectionBit::FRONT, CompareOperation::ALWAYS);
+
+		cmdb->bindShaderProgram(m_alt.m_prog);
+		m_r->drawQuad(cmdb);
+
+		cmdb->setStencilOperations(
+			FaceSelectionBit::FRONT, StencilOperation::KEEP, StencilOperation::KEEP, StencilOperation::KEEP);
+		cmdb->setStencilCompareOperation(FaceSelectionBit::FRONT, CompareOperation::NOT_EQUAL);
+	}
+
+
 	cmdb->bindShaderProgram(m_lightProg);
 
 	cmdb->bindTexture(0, 0, m_r->getMs().m_rt0);
@@ -195,7 +264,14 @@ void Is::run(RenderingContext& ctx)
 	cmdb->bindStorageBuffer(0, 1, ctx.m_is.m_lightIndicesToken);
 
 	cmdb->drawArrays(PrimitiveTopology::TRIANGLE_STRIP, 4, m_r->getTileCount());
+
 	cmdb->endRenderPass();
+
+	// Restore state
+	if(cheat)
+	{
+		cmdb->setStencilCompareOperation(FaceSelectionBit::FRONT, CompareOperation::ALWAYS);
+	}
 }
 
 void Is::updateCommonBlock(RenderingContext& ctx)
@@ -219,7 +295,7 @@ void Is::updateCommonBlock(RenderingContext& ctx)
 
 void Is::setPreRunBarriers(RenderingContext& ctx)
 {
-	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_rt,
+	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_rt[m_r->getFrameCount() % 2],
 		TextureUsageBit::NONE,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 		TextureSurfaceInfo(0, 0, 0, 0));

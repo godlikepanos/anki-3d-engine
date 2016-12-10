@@ -32,6 +32,7 @@ class RenderingContext
 public:
 	/// Active frustum.
 	FrustumComponent* m_frustumComponent ANKI_DBG_NULLIFY_PTR;
+	Mat4 m_prevFrameViewProjMatrix;
 
 	CommandBufferPtr m_commandBuffer; ///< Primary command buffer.
 
@@ -206,6 +207,11 @@ public:
 	Smaa& getSmaa()
 	{
 		return *m_smaa;
+	}
+
+	Velocity& getVelocity()
+	{
+		return *m_vel;
 	}
 
 	U32 getWidth() const
@@ -392,6 +398,7 @@ private:
 	UniquePtr<Bloom> m_bloom;
 	UniquePtr<Pps> m_pps; ///< Postprocessing rendering stage
 	UniquePtr<Dbg> m_dbg; ///< Debug stage.
+	UniquePtr<Velocity> m_vel;
 	/// @}
 
 	U32 m_width;
@@ -414,6 +421,8 @@ private:
 	Bool m_resourcesDirty = true;
 
 	Bool8 m_willDrawToDefaultFbo = false;
+
+	Mat4 m_prevFrameViewProjMatrix = Mat4::getIdentity();
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 

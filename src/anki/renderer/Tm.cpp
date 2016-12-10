@@ -61,7 +61,7 @@ void Tm::run(RenderingContext& ctx)
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 	cmdb->bindShaderProgram(m_prog);
 	cmdb->bindStorageBuffer(0, 0, m_luminanceBuff, 0);
-	cmdb->bindTexture(0, 0, m_r->getIs().getRt());
+	cmdb->bindTexture(0, 0, m_r->getIs().getRt(m_r->getFrameCount() % 2));
 
 	cmdb->dispatchCompute(1, 1, 1);
 }

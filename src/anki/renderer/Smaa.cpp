@@ -91,7 +91,7 @@ void SmaaEdge::run(RenderingContext& ctx)
 
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 	cmdb->bindShaderProgram(m_prog);
-	cmdb->bindTexture(0, 0, m_r->getIs().getRt());
+	cmdb->bindTexture(0, 0, m_r->getIs().getRt(m_r->getFrameCount() % 2));
 
 	cmdb->setStencilOperations(
 		FaceSelectionBit::FRONT, StencilOperation::KEEP, StencilOperation::KEEP, StencilOperation::REPLACE);

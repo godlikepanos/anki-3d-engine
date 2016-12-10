@@ -80,7 +80,7 @@ void BloomExposure::run(RenderingContext& ctx)
 	cmdb->beginRenderPass(m_fb);
 	cmdb->setViewport(0, 0, m_width, m_height);
 	cmdb->bindShaderProgram(m_prog);
-	cmdb->bindTexture(0, 0, m_r->getIs().getRt());
+	cmdb->bindTexture(0, 0, m_r->getIs().getRt(m_r->getFrameCount() % 2));
 
 	TransientMemoryToken token;
 	Vec4* uniforms = static_cast<Vec4*>(

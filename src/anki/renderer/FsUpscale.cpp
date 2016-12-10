@@ -54,11 +54,22 @@ Error FsUpscale::initInternal(const ConfigSet& config)
 	m_prog = gr.newInstance<ShaderProgram>(m_vert->getGrShader(), m_frag->getGrShader());
 
 	// Create FB
-	FramebufferInitInfo fbInit;
-	fbInit.m_colorAttachmentCount = 1;
-	fbInit.m_colorAttachments[0].m_texture = m_r->getIs().getRt();
-	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::LOAD;
-	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
+	for(U i = 0; i < 2; ++i)
+	{
+		FramebufferInitInfo fbInit;
+		fbInit.m_colorAttachmentCount = 1;
+		fbInit.m_colorAttachments[0].m_texture = m_r->getIs().getRt(i);
+		fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::LOAD;
+
+		if(i == 1)
+		{
+			fbInit.m_depthStencilAttachment.m_texture = m_r->getIs().m_stencilRt;
+			fbInit.m_depthStencilAttachment.m_stencilLoadOperation = AttachmentLoadOperation::LOAD;
+			fbInit.m_depthStencilAttachment.m_stencilStoreOperation = AttachmentStoreOperation::DONT_CARE;
+			fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::STENCIL;
+		}
+		m_fb[i] = getGrManager().newInstance<Framebuffer>(fbInit);
+	}
 
 	return ErrorCode::NONE;
 }
@@ -82,15 +93,29 @@ void FsUpscale::run(RenderingContext& ctx)
 
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::SRC_ALPHA);
 
-	cmdb->beginRenderPass(m_fb);
+	cmdb->beginRenderPass(m_fb[m_r->getFrameCount() % 2]);
 	cmdb->bindShaderProgram(m_prog);
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
+
+	Bool cheat = (m_r->getFrameCount() % 2) == 1;
+	if(cheat)
+	{
+		cmdb->setStencilCompareMask(FaceSelectionBit::FRONT, 0xF);
+		cmdb->setStencilWriteMask(FaceSelectionBit::FRONT, 0x0);
+		cmdb->setStencilReference(FaceSelectionBit::FRONT, 0xF);
+		cmdb->setStencilCompareOperation(FaceSelectionBit::FRONT, CompareOperation::NOT_EQUAL);
+	}
 
 	m_r->drawQuad(cmdb);
 	cmdb->endRenderPass();
 
 	// Restore state
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
+
+	if(cheat)
+	{
+		cmdb->setStencilCompareOperation(FaceSelectionBit::FRONT, CompareOperation::ALWAYS);
+	}
 }
 
 } // end namespace anki

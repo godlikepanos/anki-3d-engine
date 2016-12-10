@@ -31,6 +31,7 @@ class DownscaleBlur;
 class Volumetric;
 class DepthDownscale;
 class Smaa;
+class Velocity;
 
 class RenderingContext;
 class DebugDrawer;
