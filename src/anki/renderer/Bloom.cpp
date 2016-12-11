@@ -40,7 +40,7 @@ Error BloomExposure::init(const ConfigSet& config)
 	FramebufferInitInfo fbInit;
 	fbInit.m_colorAttachmentCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
-	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
+	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::LOAD;
 	m_fb = gr.newInstance<Framebuffer>(fbInit);
 
 	// init shaders
@@ -90,8 +90,13 @@ void BloomExposure::run(RenderingContext& ctx)
 	cmdb->bindUniformBuffer(0, 0, token);
 	cmdb->bindStorageBuffer(0, 0, m_r->getTm().m_luminanceBuff, 0);
 
+	cmdb->setBlendFactors(0, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA);
+
 	m_r->drawQuad(cmdb);
 	cmdb->endRenderPass();
+
+	// Restore state
+	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
 }
 
 BloomUpscale::~BloomUpscale()
