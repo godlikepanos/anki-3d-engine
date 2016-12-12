@@ -140,6 +140,8 @@ public:
 class Renderer
 {
 public:
+	Bool m_interlace = false;
+
 	Renderer();
 
 	~Renderer();

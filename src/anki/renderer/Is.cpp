@@ -202,7 +202,7 @@ void Is::run(RenderingContext& ctx)
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 	cmdb->beginRenderPass(m_fb[m_r->getFrameCount() % 2]);
 
-	Bool cheat = (m_r->getFrameCount() % 2) == 1;
+	Bool cheat = (m_r->getFrameCount() % 2) == 1 && m_r->m_interlace;
 	if(cheat)
 	{
 		cmdb->bindTexture(0, 0, m_r->getMs().m_depthRt, DepthStencilAspectBit::DEPTH);

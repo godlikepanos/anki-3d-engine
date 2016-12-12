@@ -53,7 +53,7 @@ vec3 tonemapUncharted2(in vec3 color)
 vec3 tonemap(in vec3 color, in float avgLum, in float threshold)
 {
 	vec3 c = computeExposedColor(color, avgLum, threshold);
-	// float saturation = clamp(avgLum, 0.0, 1.0);
+	//float saturation = clamp(avgLum, 0.5, 1.0);
 	float saturation = 1.0;
 	return tonemapReinhard(c, saturation);
 	// return tonemapUncharted2(c);

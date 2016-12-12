@@ -97,7 +97,7 @@ void FsUpscale::run(RenderingContext& ctx)
 	cmdb->bindShaderProgram(m_prog);
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 
-	Bool cheat = (m_r->getFrameCount() % 2) == 1;
+	Bool cheat = (m_r->getFrameCount() % 2) == 1 && m_r->m_interlace;
 	if(cheat)
 	{
 		cmdb->setStencilCompareMask(FaceSelectionBit::FRONT, 0xF);

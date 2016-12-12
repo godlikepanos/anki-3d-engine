@@ -234,7 +234,7 @@ Error Renderer::render(RenderingContext& ctx)
 	// Batch
 	m_sm->run(ctx);
 	m_ms->run(ctx);
-	m_vel->run(ctx);
+	//m_vel->run(ctx);
 
 	m_ms->setPostRunBarriers(ctx);
 	m_sm->setPostRunBarriers(ctx);

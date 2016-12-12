@@ -34,11 +34,11 @@ void main()
 	if(oldNdc.x < 1.0 && oldNdc.y < 1.0 && oldNdc.x > -1.0 && oldNdc.y > -1.0)
 	{
 		vec2 oldUv = oldNdc * 0.5 + 0.5;
+		float oldDepth = (oldNdc4.z / oldNdc4.w) * 0.5 + 0.5;
 
-		// Get prev depth
-		float prevDepth = textureLod(u_prevDepthRt, oldUv, 0.0).r;
+		float oldDepthRef = textureLod(u_prevDepthRt, oldUv, 0.0).r;
 
-		if(abs(prevDepth - depth) < 0.01)
+		if(abs(oldDepthRef - oldDepth) < 0.01)
 		{
 			out_color = textureLod(u_oldIsRt, oldUv, 0.0).rgb;
 		}

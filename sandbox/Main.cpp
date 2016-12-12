@@ -96,6 +96,8 @@ Error MyApp::userMainLoop(Bool& quit)
 	Input& in = getInput();
 	MainRenderer& renderer = getMainRenderer();
 
+	renderer.getOffscreenRenderer().m_interlace = true;
+
 	if(in.getKey(KeyCode::ESCAPE))
 	{
 		quit = true;
@@ -116,10 +118,7 @@ Error MyApp::userMainLoop(Bool& quit)
 
 	if(in.getKey(KeyCode::L) == 1)
 	{
-		/*Vec3 origin = mover->getWorldTransform().getOrigin().xyz();
-		printf("%f %f %f\n", origin.x(), origin.y(), origin.z());*/
-		mover->setLocalOrigin(Vec4(0.0));
-		mover->setLocalRotation(Mat3x4::getIdentity());
+		renderer.getOffscreenRenderer().m_interlace = !renderer.getOffscreenRenderer().m_interlace;
 	}
 
 	if(in.getKey(KeyCode::F1) == 1)
