@@ -56,6 +56,8 @@ private:
 	/// The IS render target
 	TexturePtr m_rt;
 	U8 m_rtMipCount = 0;
+
+	Array<U32, 3> m_clusterCounts = {{0, 0, 0}};
 	U32 m_clusterCount = 0;
 
 	/// The IS FBO

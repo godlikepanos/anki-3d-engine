@@ -252,24 +252,9 @@ anki_internal:
 		return m_sceneDrawer;
 	}
 
-	U getSamples() const
-	{
-		return m_samples;
-	}
-
 	Bool getTessellationEnabled() const
 	{
 		return m_tessellation;
-	}
-
-	U getTileCount() const
-	{
-		return m_tileCount;
-	}
-
-	const UVec2& getTileCountXY() const
-	{
-		return m_tileCountXY;
 	}
 
 	const ShaderPtr& getDrawQuadVertexShader() const
@@ -398,10 +383,7 @@ private:
 	U32 m_height;
 
 	F32 m_lodDistance; ///< Distance that used to calculate the LOD
-	U8 m_samples; ///< Number of sample in multisampling
 	Bool8 m_tessellation;
-	U32 m_tileCount;
-	UVec2 m_tileCountXY;
 
 	ShaderResourcePtr m_drawQuadVert;
 

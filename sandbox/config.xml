@@ -36,7 +36,6 @@
 	<height>1080</height>
 	<renderingQuality>1</renderingQuality>
 	<lodDistance>20</lodDistance>
-	<samples>1</samples>
 	<tessellation>1</tessellation>
 	<clusterSizeZ>32</clusterSizeZ>
 	<imageReflectionMaxDistance>30</imageReflectionMaxDistance>

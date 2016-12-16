@@ -23,7 +23,7 @@ layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2D u_msDepthRt;
 layout(ANKI_TEX_BINDING(1, 0)) uniform sampler2D u_diffDecalTex;
 layout(ANKI_TEX_BINDING(1, 1)) uniform sampler2D u_normalRoughnessDecalTex;
 
-layout(location = 0) in vec2 in_texCoord;
+layout(location = 0) in vec2 in_uv;
 layout(location = 1) flat in int in_instanceId;
 layout(location = 2) in vec2 in_projectionParams;
 
@@ -36,7 +36,7 @@ const float SUBSURFACE_MIN = 0.05;
 // Return frag pos in view space
 vec3 getFragPosVSpace()
 {
-	float depth = texture(u_msDepthRt, in_texCoord, 0.0).r;
+	float depth = texture(u_msDepthRt, in_uv, 0.0).r;
 
 	vec3 fragPos;
 	fragPos.z = u_lightingUniforms.projectionParams.z / (u_lightingUniforms.projectionParams.w + depth);
@@ -142,7 +142,7 @@ void main()
 	float metallic;
 
 	GbufferInfo gbuffer;
-	readGBuffer(u_msRt0, u_msRt1, u_msRt2, in_texCoord, 0.0, gbuffer);
+	readGBuffer(u_msRt0, u_msRt1, u_msRt2, in_uv, 0.0, gbuffer);
 	diffCol = gbuffer.diffuse;
 	specCol = gbuffer.specular;
 	normal = gbuffer.normal;
@@ -152,12 +152,11 @@ void main()
 	emission = gbuffer.emission;
 
 	// Get counts and offsets
-	uint clusterIdx = computeClusterIndexUsingTileIdx(u_lightingUniforms.nearFarClustererMagicPad1.x,
-		u_lightingUniforms.nearFarClustererMagicPad1.z,
-		fragPos.z,
-		in_instanceId,
-		TILE_COUNT_X,
-		TILE_COUNT_Y);
+	uint clusterIdx =
+		computeClusterK(
+			u_lightingUniforms.nearFarClustererMagicPad1.x, u_lightingUniforms.nearFarClustererMagicPad1.z, fragPos.z)
+			* TILE_COUNT
+		+ in_instanceId;
 
 	uint idxOffset = u_clusters[clusterIdx];
 	uint idx;

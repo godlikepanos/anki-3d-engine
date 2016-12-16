@@ -10,33 +10,28 @@
 
 #include "shaders/Common.glsl"
 
-// Compute the cluster index using the tile index.
-uint computeClusterIndexUsingTileIdx(
-	float near, float clustererMagic, float zVSpace, uint tileIdx, uint tileCountX, uint tileCountY)
+uint computeClusterK(float near, float clustererMagic, float zVSpace)
 {
-	float fk = sqrt((zVSpace + near) * clustererMagic);
-	uint k = uint(fk);
-
-	return tileIdx + k * (tileCountX * tileCountY);
+	float fz = sqrt((zVSpace + near) * clustererMagic);
+	uint z = uint(fz);
+	return z;
 }
 
-// Compute the cluster index using the a custom gl_FragCoord.xy.
-uint computeClusterIndexUsingCustomFragCoord(
-	float near, float clustererMagic, float zVSpace, uint tileCountX, uint tileCountY, vec2 fragCoord)
+uint computeClusterKSafe(float near, float far, float clustererMagic, float zVSpace)
 {
-	// Compute tile idx
-	uvec2 f = uvec2(fragCoord) >> 6;
-	uint tileIdx = f.y * tileCountX + f.x;
-
-	return computeClusterIndexUsingTileIdx(near, clustererMagic, zVSpace, tileIdx, tileCountX, tileCountY);
+	float z = clamp(zVSpace, -far, -near);
+	float kf = sqrt((z + near) * clustererMagic);
+	return uint(kf);
 }
 
-// Compute the cluster index using the gl_FragCoord.xy.
-uint computeClusterIndexUsingFragCoord(
-	float near, float clustererMagic, float zVSpace, uint tileCountX, uint tileCountY)
+// Compute cluster index
+uint computeClusterIndex(
+	vec2 uv, float near, float clustererMagic, float zVSpace, uint clusterCountX, uint clusterCountY)
 {
-	return computeClusterIndexUsingCustomFragCoord(
-		near, clustererMagic, zVSpace, tileCountX, tileCountY, gl_FragCoord.xy);
+	uvec2 xy = uvec2(uv * vec2(clusterCountX, clusterCountY));
+
+	return computeClusterK(near, clustererMagic, zVSpace) * (clusterCountX * clusterCountY) + xy.y * clusterCountX
+		+ xy.x;
 }
 
 // Compute the Z of the near plane given a cluster idx
@@ -48,14 +43,6 @@ float computeClusterNear(uint k, float near, float clustererMagic)
 float computeClusterFar(uint k, float near, float clustererMagic)
 {
 	return 1.0 / clustererMagic * pow(float(k + 1u), 2.0) - near;
-}
-
-uint computeClusterKFromZViewSpace(float zViewSpace, float near, float far, float clustererMagic)
-{
-	float z = clamp(zViewSpace, -far, -near);
-	z = -z;
-	float kf = sqrt((z - near) * -clustererMagic);
-	return uint(kf);
 }
 
 #endif

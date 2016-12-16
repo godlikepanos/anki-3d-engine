@@ -109,16 +109,16 @@ void main()
 	float farZ = u_lightingUniforms.projectionParams.z / (u_lightingUniforms.projectionParams.w + depth);
 
 	// Compute the max cluster
-	uint maxK = computeClusterKFromZViewSpace(farZ,
-		u_lightingUniforms.nearFarClustererMagicPad1.x,
+	uint maxK = computeClusterKSafe(u_lightingUniforms.nearFarClustererMagicPad1.x,
 		u_lightingUniforms.nearFarClustererMagicPad1.y,
-		u_lightingUniforms.nearFarClustererMagicPad1.z);
+		u_lightingUniforms.nearFarClustererMagicPad1.z,
+		farZ);
 	++maxK;
 
 	vec2 ndc = in_uv * 2.0 - 1.0;
 
-	uint i = uint(gl_FragCoord.x * 4.0) >> 6;
-	uint j = uint(gl_FragCoord.y * 4.0) >> 6;
+	uint i = uint(in_uv.x * CLUSTER_COUNT.x);
+	uint j = uint(in_uv.y * CLUSTER_COUNT.y);
 
 	const float DIST = 1.0 / float(MAX_SAMPLES_PER_CLUSTER);
 	float randFactor = rand(ndc + u_lightingUniforms.rendererSizeTimePad1.z);

@@ -130,12 +130,12 @@ vec3 computeLightColor(vec3 diffCol)
 	}
 
 	// Find the cluster and then the light counts
-	uint clusterIdx = computeClusterIndexUsingCustomFragCoord(u_lightingUniforms.nearFarClustererMagicPad1.x,
+	uint clusterIdx = computeClusterIndex(gl_FragCoord.xy / RENDERER_SIZE,
+		u_lightingUniforms.nearFarClustererMagicPad1.x,
 		u_lightingUniforms.nearFarClustererMagicPad1.z,
 		fragPos.z,
 		u_lightingUniforms.tileCount.x,
-		u_lightingUniforms.tileCount.y,
-		gl_FragCoord.xy * 2.0);
+		u_lightingUniforms.tileCount.y);
 
 	uint idxOffset = u_clusters[clusterIdx];
 

@@ -46,7 +46,7 @@ private:
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 
 	/// Create a G buffer FBO
-	ANKI_USE_RESULT Error createRt(U32 samples);
+	ANKI_USE_RESULT Error createRt();
 };
 /// @}
 

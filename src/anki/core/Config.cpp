@@ -60,8 +60,9 @@ Config::Config()
 	newOption("height", 768);
 	newOption("renderingQuality", 1.0); // Applies only to MainRenderer
 	newOption("lodDistance", 10.0); // Distance that used to calculate the LOD
-	newOption("samples", 1);
 	newOption("tessellation", true);
+	newOption("clusterSizeX", 32);
+	newOption("clusterSizeY", 26);
 	newOption("clusterSizeZ", 32);
 	newOption("imageReflectionMaxDistance", 30.0);
 

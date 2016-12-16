@@ -92,40 +92,17 @@ Error Renderer::initInternal(const ConfigSet& config)
 	// Set from the config
 	m_width = config.getNumber("width");
 	m_height = config.getNumber("height");
-	ANKI_ASSERT(isAligned(TILE_SIZE, m_width) && isAligned(TILE_SIZE, m_height));
 	ANKI_LOGI("Initializing offscreen renderer. Size %ux%u", m_width, m_height);
 
 	m_lodDistance = config.getNumber("lodDistance");
 	m_frameCount = 0;
-	m_samples = config.getNumber("samples");
-	m_tileCountXY.x() = m_width / TILE_SIZE;
-	m_tileCountXY.y() = m_height / TILE_SIZE;
-	m_tileCount = m_tileCountXY.x() * m_tileCountXY.y();
 
 	m_tessellation = config.getNumber("tessellation");
 
 	// A few sanity checks
-	if(m_samples != 1 && m_samples != 4 && m_samples != 8 && m_samples != 16 && m_samples != 32)
-	{
-		ANKI_LOGE("Incorrect samples");
-		return ErrorCode::USER_DATA;
-	}
-
 	if(m_width < 10 || m_height < 10)
 	{
 		ANKI_LOGE("Incorrect sizes");
-		return ErrorCode::USER_DATA;
-	}
-
-	if(m_width % m_tileCountXY.x() != 0)
-	{
-		ANKI_LOGE("Width is not multiple of tile width");
-		return ErrorCode::USER_DATA;
-	}
-
-	if(m_height % m_tileCountXY.y() != 0)
-	{
-		ANKI_LOGE("Height is not multiple of tile height");
 		return ErrorCode::USER_DATA;
 	}
 

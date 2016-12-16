@@ -77,14 +77,17 @@ Error Is::initInternal(const ConfigSet& config)
 	m_rtMipCount = computeMaxMipmapCount2d(m_r->getWidth(), m_r->getHeight(), 32);
 	ANKI_ASSERT(m_rtMipCount);
 
-	U clusterCount = m_r->getTileCountXY().x() * m_r->getTileCountXY().y() * config.getNumber("clusterSizeZ");
-	m_clusterCount = clusterCount;
-	m_maxLightIds *= clusterCount;
+	m_clusterCounts[0] = config.getNumber("clusterSizeX");
+	m_clusterCounts[1] = config.getNumber("clusterSizeY");
+	m_clusterCounts[2] = config.getNumber("clusterSizeZ");
+	m_clusterCount = m_clusterCounts[0] * m_clusterCounts[1] * m_clusterCounts[2];
+
+	m_maxLightIds *= m_clusterCount;
 
 	m_lightBin = getAllocator().newInstance<LightBin>(getAllocator(),
-		m_r->getTileCountXY().x(),
-		m_r->getTileCountXY().y(),
-		config.getNumber("clusterSizeZ"),
+		m_clusterCounts[0],
+		m_clusterCounts[1],
+		m_clusterCounts[2],
 		&m_r->getThreadPool(),
 		&getGrManager());
 
@@ -102,9 +105,9 @@ Error Is::initInternal(const ConfigSet& config)
 				"#define POISSON %u\n"
 				"#define INDIRECT_ENABLED %u\n"
 				"#define IR_MIPMAP_COUNT %u\n",
-		m_r->getTileCountXY().x(),
-		m_r->getTileCountXY().y(),
-		clusterCount,
+		m_clusterCounts[0],
+		m_clusterCounts[1],
+		m_clusterCount,
 		m_r->getWidth(),
 		m_r->getHeight(),
 		m_maxLightIds,
@@ -194,7 +197,7 @@ void Is::run(RenderingContext& ctx)
 	cmdb->bindStorageBuffer(0, 0, ctx.m_is.m_clustersToken);
 	cmdb->bindStorageBuffer(0, 1, ctx.m_is.m_lightIndicesToken);
 
-	cmdb->drawArrays(PrimitiveTopology::TRIANGLE_STRIP, 4, m_r->getTileCount());
+	cmdb->drawArrays(PrimitiveTopology::TRIANGLE_STRIP, 4, m_clusterCount);
 	cmdb->endRenderPass();
 }
 
@@ -214,7 +217,7 @@ void Is::updateCommonBlock(RenderingContext& ctx)
 
 	blk->m_rendererSizeTimePad1 = Vec4(m_r->getWidth(), m_r->getHeight(), HighRezTimer::getCurrentTime(), 0.0);
 
-	blk->m_tileCount = UVec4(m_r->getTileCountXY(), m_lightBin->getClusterer().getClusterCountZ(), m_r->getTileCount());
+	blk->m_tileCount = UVec4(m_clusterCounts[0], m_clusterCounts[1], m_clusterCounts[2], m_clusterCount);
 }
 
 void Is::setPreRunBarriers(RenderingContext& ctx)
@@ -252,8 +255,8 @@ Error Is::getOrCreateProgram(ShaderVariantBit variantMask, RenderingContext& ctx
 			"#define DECALS_ENABLED %u\n"
 			"#define POINT_LIGHTS_SHADOWS_ENABLED %u\n"
 			"#define SPOT_LIGHTS_SHADOWS_ENABLED %u\n",
-			m_r->getTileCountXY().x(),
-			m_r->getTileCountXY().y(),
+			m_clusterCounts[0],
+			m_clusterCounts[1],
 			m_clusterCount,
 			m_r->getWidth(),
 			m_r->getHeight(),

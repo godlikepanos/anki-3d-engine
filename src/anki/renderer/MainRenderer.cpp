@@ -57,8 +57,6 @@ Error MainRenderer::create(ThreadPool* threadpool,
 	ConfigSet config2 = config;
 	m_renderingQuality = config.getNumber("renderingQuality");
 	UVec2 size(m_renderingQuality * F32(m_width), m_renderingQuality * F32(m_height));
-	size.x() = getAlignedRoundDown(TILE_SIZE, size.x() / 2) * 2;
-	size.y() = getAlignedRoundDown(TILE_SIZE, size.y() / 2) * 2;
 
 	config2.set("width", size.x());
 	config2.set("height", size.y());
@@ -71,11 +69,9 @@ Error MainRenderer::create(ThreadPool* threadpool,
 	// Set the default preprocessor string
 	m_materialShaderSource.sprintf(m_alloc,
 		"#define ANKI_RENDERER_WIDTH %u\n"
-		"#define ANKI_RENDERER_HEIGHT %u\n"
-		"#define TILE_SIZE %u\n",
+		"#define ANKI_RENDERER_HEIGHT %u\n",
 		m_r->getWidth(),
-		m_r->getHeight(),
-		TILE_SIZE);
+		m_r->getHeight());
 
 	// Init other
 	if(!m_rDrawToDefaultFb)

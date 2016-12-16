@@ -19,7 +19,7 @@ Ms::~Ms()
 {
 }
 
-Error Ms::createRt(U32 samples)
+Error Ms::createRt()
 {
 	m_r->createRenderTarget(m_r->getWidth(),
 		m_r->getHeight(),
@@ -96,7 +96,7 @@ Error Ms::init(const ConfigSet& initializer)
 
 Error Ms::initInternal(const ConfigSet& initializer)
 {
-	ANKI_CHECK(createRt(initializer.getNumber("samples")));
+	ANKI_CHECK(createRt());
 	return ErrorCode::NONE;
 }
 
