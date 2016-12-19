@@ -163,44 +163,6 @@ const U MAX_BOUND_RESOURCE_GROUPS = 2;
 /// An anoying limit for Vulkan.
 const U MAX_RESOURCE_GROUPS = 1024;
 
-/// The life expectancy of a TransientMemoryToken.
-enum class TransientMemoryTokenLifetime : U8
-{
-	PER_FRAME,
-	PERSISTENT
-};
-
-/// Token that gets returned when requesting for memory to write to a resource.
-class TransientMemoryToken
-{
-public:
-	operator Bool() const
-	{
-		return m_range != 0;
-	}
-
-	Bool operator==(const TransientMemoryToken& b) const
-	{
-		return m_offset == b.m_offset && m_range == b.m_range && m_lifetime == b.m_lifetime && m_usage == b.m_usage;
-	}
-
-anki_internal:
-	PtrSize m_offset = 0;
-	PtrSize m_range = 0;
-	TransientMemoryTokenLifetime m_lifetime = TransientMemoryTokenLifetime::PER_FRAME;
-	BufferUsageBit m_usage = BufferUsageBit::NONE;
-
-	void markUnused()
-	{
-		m_offset = m_range = MAX_U32;
-	}
-
-	Bool isUnused() const
-	{
-		return m_offset == MAX_U32 && m_range == MAX_U32;
-	}
-};
-
 /// Compute max number of mipmaps for a 2D texture.
 inline U computeMaxMipmapCount2d(U w, U h, U minSizeOfLastMip = 1)
 {

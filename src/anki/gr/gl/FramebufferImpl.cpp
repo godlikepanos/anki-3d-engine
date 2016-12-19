@@ -248,8 +248,8 @@ void FramebufferImpl::bind(const GlState& state)
 				glStencilMaskSeparate(GL_FRONT, MAX_U32);
 			}
 
-			GLuint clearVal = m_in.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_stencil;
-			glClearBufferuiv(GL_STENCIL, 0, &clearVal);
+			GLint clearVal = m_in.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_stencil;
+			glClearBufferiv(GL_STENCIL, 0, &clearVal);
 
 			if(state.m_stencilWriteMask[0] != MAX_U32)
 			{

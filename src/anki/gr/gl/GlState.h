@@ -28,6 +28,11 @@ public:
 
 	GLuint m_defaultVao = 0;
 
+	U32 m_uboAlignment = 0;
+	U32 m_ssboAlignment = 0;
+	U32 m_uniBlockMaxSize = 0;
+	U32 m_storageBlockMaxSize = 0;
+
 	/// @name FB
 	/// @{
 	Array2d<Bool, MAX_COLOR_ATTACHMENTS, 4> m_colorWriteMasks = {{{{true, true, true, true}},

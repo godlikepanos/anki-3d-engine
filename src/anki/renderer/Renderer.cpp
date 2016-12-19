@@ -64,6 +64,7 @@ Renderer::~Renderer()
 Error Renderer::init(ThreadPool* threadpool,
 	ResourceManager* resources,
 	GrManager* gl,
+	StagingGpuMemoryManager* stagingMem,
 	HeapAllocator<U8> alloc,
 	StackAllocator<U8> frameAlloc,
 	const ConfigSet& config,
@@ -74,6 +75,7 @@ Error Renderer::init(ThreadPool* threadpool,
 	m_threadpool = threadpool;
 	m_resources = resources;
 	m_gr = gl;
+	m_stagingMem = stagingMem;
 	m_alloc = alloc;
 	m_frameAlloc = frameAlloc;
 	m_willDrawToDefaultFbo = willDrawToDefaultFbo;

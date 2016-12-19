@@ -67,14 +67,10 @@ void FsUpscale::run(RenderingContext& ctx)
 {
 	CommandBufferPtr cmdb = ctx.m_commandBuffer;
 
-	TransientMemoryToken token;
-
-	Vec4* linearDepth = static_cast<Vec4*>(
-		getGrManager().allocateFrameTransientMemory(sizeof(Vec4), BufferUsageBit::UNIFORM_ALL, token));
+	Vec4* linearDepth = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
 	const Frustum& fr = ctx.m_frustumComponent->getFrustum();
 	computeLinearizeDepthOptimal(fr.getNear(), fr.getFar(), linearDepth->x(), linearDepth->y());
 
-	cmdb->bindUniformBuffer(0, 0, token);
 	cmdb->bindTexture(0, 0, m_r->getMs().m_depthRt);
 	cmdb->bindTextureAndSampler(0, 1, m_r->getDepthDownscale().m_hd.m_depthRt, m_nearestSampler);
 	cmdb->bindTexture(0, 2, m_r->getFs().getRt());

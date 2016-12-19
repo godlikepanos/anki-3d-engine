@@ -41,8 +41,6 @@ static Array<const char*, U(TraceEventType::COUNT)> eventNames = {{"SCENE_UPDATE
 	"BARRIER_WAIT"}};
 
 static Array<const char*, U(TraceCounterType::COUNT)> counterNames = {{"GR_DRAWCALLS",
-	"GR_DYNAMIC_UNIFORMS_SIZE",
-	"GR_DYNAMIC_STORAGE_SIZE",
 	"GR_VERTICES",
 	"GL_PROGS_SKIPPED",
 	"VK_PIPELINES_CREATED",
@@ -55,7 +53,9 @@ static Array<const char*, U(TraceCounterType::COUNT)> counterNames = {{"GR_DRAWC
 	"RENDERER_MERGED_DRAWCALLS",
 	"RENDERER_REFLECTIONS",
 	"RESOURCE_ASYNC_TASKS",
-	"SCENE_NODES_UPDATED"}};
+	"SCENE_NODES_UPDATED",
+	"STAGING_UNIFORMS_SIZE",
+	"STAGING_STORAGE_SIZE"}};
 
 #define ANKI_TRACE_FILE_ERROR()                                                                                        \
 	if(err)                                                                                                            \

@@ -6,6 +6,7 @@
 #include <anki/gr/ShaderProgram.h>
 #include <anki/gr/gl/ShaderProgramImpl.h>
 #include <anki/gr/gl/CommandBufferImpl.h>
+#include <anki/gr/GrManager.h>
 #include <anki/gr/Shader.h>
 
 namespace anki

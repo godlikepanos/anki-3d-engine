@@ -167,6 +167,7 @@ Error UiInterfaceImpl::loadImage(const CString& filename, IntrusivePtr<UiImage>&
 
 Error UiInterfaceImpl::createR8Image(const WeakArray<U8>& data, const UVec2& size, IntrusivePtr<UiImage>& img)
 {
+#if 0
 	ANKI_ASSERT(data.getSize() == size.x() * size.y());
 
 	// Calc mip count
@@ -204,6 +205,7 @@ Error UiInterfaceImpl::createR8Image(const WeakArray<U8>& data, const UVec2& siz
 	UiImageImpl* impl = getAllocator().newInstance<UiImageImpl>(this);
 	impl->m_texture = tex;
 	img.reset(impl);
+#endif
 
 	return ErrorCode::NONE;
 }

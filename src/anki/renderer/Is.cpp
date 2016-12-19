@@ -89,7 +89,7 @@ Error Is::initInternal(const ConfigSet& config)
 		m_clusterCounts[1],
 		m_clusterCounts[2],
 		&m_r->getThreadPool(),
-		&getGrManager());
+		&m_r->getStagingGpuMemoryManager());
 
 	//
 	// Load shaders and programs
@@ -188,14 +188,14 @@ void Is::run(RenderingContext& ctx)
 	cmdb->bindTexture(1, 0, (ctx.m_is.m_diffDecalTex) ? ctx.m_is.m_diffDecalTex : m_dummyTex);
 	cmdb->bindTexture(1, 1, (ctx.m_is.m_normRoughnessDecalTex) ? ctx.m_is.m_normRoughnessDecalTex : m_dummyTex);
 
-	cmdb->bindUniformBuffer(0, 0, ctx.m_is.m_commonToken);
-	cmdb->bindUniformBuffer(0, 1, ctx.m_is.m_pointLightsToken);
-	cmdb->bindUniformBuffer(0, 2, ctx.m_is.m_spotLightsToken);
-	cmdb->bindUniformBuffer(0, 3, ctx.m_is.m_probesToken);
-	cmdb->bindUniformBuffer(0, 4, ctx.m_is.m_decalsToken);
+	bindUniforms(cmdb, 0, 0, ctx.m_is.m_commonToken);
+	bindUniforms(cmdb, 0, 1, ctx.m_is.m_pointLightsToken);
+	bindUniforms(cmdb, 0, 2, ctx.m_is.m_spotLightsToken);
+	bindUniforms(cmdb, 0, 3, ctx.m_is.m_probesToken);
+	bindUniforms(cmdb, 0, 4, ctx.m_is.m_decalsToken);
 
-	cmdb->bindStorageBuffer(0, 0, ctx.m_is.m_clustersToken);
-	cmdb->bindStorageBuffer(0, 1, ctx.m_is.m_lightIndicesToken);
+	bindStorage(cmdb, 0, 0, ctx.m_is.m_clustersToken);
+	bindStorage(cmdb, 0, 1, ctx.m_is.m_lightIndicesToken);
 
 	cmdb->drawArrays(PrimitiveTopology::TRIANGLE_STRIP, 4, m_clusterCount);
 	cmdb->endRenderPass();
@@ -204,8 +204,8 @@ void Is::run(RenderingContext& ctx)
 void Is::updateCommonBlock(RenderingContext& ctx)
 {
 	const FrustumComponent& fr = *ctx.m_frustumComponent;
-	ShaderCommonUniforms* blk = static_cast<ShaderCommonUniforms*>(getGrManager().allocateFrameTransientMemory(
-		sizeof(ShaderCommonUniforms), BufferUsageBit::UNIFORM_ALL, ctx.m_is.m_commonToken));
+	ShaderCommonUniforms* blk =
+		allocateUniforms<ShaderCommonUniforms*>(sizeof(ShaderCommonUniforms), ctx.m_is.m_commonToken);
 
 	// Start writing
 	blk->m_projectionParams = fr.getProjectionParameters();

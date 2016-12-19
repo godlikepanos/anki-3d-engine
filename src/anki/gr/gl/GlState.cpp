@@ -140,6 +140,19 @@ void GlState::initRenderThread()
 	{
 		glEnableVertexAttribArray(i);
 	}
+
+	I64 val;
+	glGetInteger64v(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &val);
+	m_uboAlignment = val;
+
+	glGetInteger64v(GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT, &val);
+	m_ssboAlignment = val;
+
+	glGetInteger64v(GL_MAX_UNIFORM_BLOCK_SIZE, &val);
+	m_uniBlockMaxSize = val;
+
+	glGetInteger64v(GL_MAX_SHADER_STORAGE_BLOCK_SIZE, &val);
+	m_storageBlockMaxSize = val;
 }
 
 void GlState::destroy()

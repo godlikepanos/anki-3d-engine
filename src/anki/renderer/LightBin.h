@@ -30,7 +30,7 @@ public:
 		U clusterCountY,
 		U clusterCountZ,
 		ThreadPool* threadPool,
-		GrManager* gr);
+		StagingGpuMemoryManager* stagingMem);
 
 	~LightBin();
 
@@ -38,12 +38,12 @@ public:
 		StackAllocator<U8> frameAlloc,
 		U maxLightIndices,
 		Bool shadowsEnabled,
-		TransientMemoryToken& pointLightsToken,
-		TransientMemoryToken& spotLightsToken,
-		TransientMemoryToken* probesToken,
-		TransientMemoryToken& decalsToken,
-		TransientMemoryToken& clustersToken,
-		TransientMemoryToken& lightIndicesToken,
+		StagingGpuMemoryToken& pointLightsToken,
+		StagingGpuMemoryToken& spotLightsToken,
+		StagingGpuMemoryToken* probesToken,
+		StagingGpuMemoryToken& decalsToken,
+		StagingGpuMemoryToken& clustersToken,
+		StagingGpuMemoryToken& lightIndicesToken,
 		TexturePtr& diffuseDecalTexAtlas,
 		TexturePtr& normalRoughnessDecalTexAtlas);
 
@@ -57,7 +57,7 @@ private:
 	Clusterer m_clusterer;
 	U32 m_clusterCount = 0;
 	ThreadPool* m_threadPool = nullptr;
-	GrManager* m_gr = nullptr;
+	StagingGpuMemoryManager* m_stagingMem = nullptr;
 	Barrier m_barrier;
 
 	void binLights(U32 threadId, PtrSize threadsCount, LightBinContext& ctx);

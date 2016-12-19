@@ -66,30 +66,23 @@ Config::Config()
 	newOption("clusterSizeZ", 32);
 	newOption("imageReflectionMaxDistance", 30.0);
 
-	//
-	// GR
-	//
-	newOption("gr.uniformPerFrameMemorySize", 1024 * 1024 * 16);
-	newOption("gr.storagePerFrameMemorySize", 1024 * 1024 * 16);
-	newOption("gr.vertexPerFrameMemorySize", 1024 * 1024 * 10);
-	newOption("gr.transferPerFrameMemorySize", 1024 * 1024 * 128);
-	newOption("gr.transferPersistentMemorySize", (4096 / 4) * (4096 / 4) * 16 * 4);
-
-	//
 	// Resource
-	//
 	newOption("maxTextureSize", 1024 * 1024);
 	newOption("textureAnisotropy", 8);
 	newOption("dataPaths", ".");
 
-	//
 	// Window
-	//
 	newOption("glmajor", 4);
 	newOption("glminor", 5);
 	newOption("fullscreenDesktopResolution", false);
 	newOption("debugContext", false);
 	newOption("vsync", false);
+
+	// Core
+	newOption("core.uniformPerFrameMemorySize", 1024 * 1024 * 16);
+	newOption("core.storagePerFrameMemorySize", 1024 * 1024 * 16);
+	newOption("core.vertexPerFrameMemorySize", 1024 * 1024 * 10);
+	newOption("core.transferPerFrameMemorySize", 1024 * 1024 * 128);
 }
 
 Config::~Config()

@@ -12,7 +12,6 @@
 #include <anki/util/Logger.h>
 #include <anki/resource/ResourceManager.h>
 #include <anki/resource/MeshLoader.h>
-#include <anki/renderer/Renderer.h>
 
 namespace anki
 {

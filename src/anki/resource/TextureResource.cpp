@@ -7,6 +7,7 @@
 #include <anki/resource/ImageLoader.h>
 #include <anki/resource/ResourceManager.h>
 #include <anki/resource/AsyncLoader.h>
+#include <anki/core/StagingGpuMemoryManager.h>
 
 namespace anki
 {
@@ -18,6 +19,7 @@ public:
 	ImageLoader m_loader;
 	TexturePtr m_tex;
 	GrManager* m_gr ANKI_DBG_NULLIFY_PTR;
+	StagingGpuMemoryManager* m_stagingMem ANKI_DBG_NULLIFY_PTR;
 	U m_layers = 0;
 	U m_faces = 0;
 	TextureType m_texType;
@@ -52,7 +54,6 @@ Error TexUploadTask::operator()(AsyncLoaderTaskContext& ctx)
 				PtrSize surfOrVolSize;
 				const void* surfOrVolData;
 				PtrSize allocationSize;
-				const BufferUsageBit uploadBuffUsage = BufferUsageBit::TEXTURE_UPLOAD_SOURCE;
 
 				if(m_texType == TextureType::_3D)
 				{
@@ -73,8 +74,8 @@ Error TexUploadTask::operator()(AsyncLoaderTaskContext& ctx)
 
 				ANKI_ASSERT(allocationSize >= surfOrVolSize);
 
-				TransientMemoryToken token;
-				void* data = m_gr->tryAllocateFrameTransientMemory(allocationSize, uploadBuffUsage, token);
+				StagingGpuMemoryToken token;
+				void* data = m_stagingMem->tryAllocatePerFrame(allocationSize, StagingGpuMemoryType::TRANSFER, token);
 
 				if(data)
 				{
@@ -96,7 +97,7 @@ Error TexUploadTask::operator()(AsyncLoaderTaskContext& ctx)
 
 						cmdb->setTextureVolumeBarrier(m_tex, TextureUsageBit::NONE, TextureUsageBit::UPLOAD, vol);
 
-						cmdb->uploadTextureVolume(m_tex, vol, token);
+						cmdb->copyBufferToTextureVolume(token.m_buffer, token.m_offset, token.m_range, m_tex, vol);
 
 						cmdb->setTextureVolumeBarrier(m_tex,
 							TextureUsageBit::UPLOAD,
@@ -109,7 +110,7 @@ Error TexUploadTask::operator()(AsyncLoaderTaskContext& ctx)
 
 						cmdb->setTextureSurfaceBarrier(m_tex, TextureUsageBit::NONE, TextureUsageBit::UPLOAD, surf);
 
-						cmdb->uploadTextureSurface(m_tex, surf, token);
+						cmdb->copyBufferToTextureSurface(token.m_buffer, token.m_offset, token.m_range, m_tex, surf);
 
 						cmdb->setTextureSurfaceBarrier(m_tex,
 							TextureUsageBit::UPLOAD,
@@ -271,6 +272,7 @@ Error TextureResource::load(const ResourceFilename& filename)
 	task->m_layers = init.m_layerCount;
 	task->m_faces = faces;
 	task->m_gr = &getManager().getGrManager();
+	task->m_stagingMem = &getManager().getStagingGpuMemoryManager();
 	task->m_tex = m_tex;
 	task->m_texType = init.m_type;
 

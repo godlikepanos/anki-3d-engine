@@ -36,6 +36,7 @@ ResourceManager::~ResourceManager()
 Error ResourceManager::create(ResourceManagerInitInfo& init)
 {
 	m_gr = init.m_gr;
+	m_stagingMem = init.m_stagingMem;
 	m_physics = init.m_physics;
 	m_fs = init.m_resourceFs;
 	m_alloc = ResourceAllocator<U8>(init.m_allocCallback, init.m_allocCallbackData);

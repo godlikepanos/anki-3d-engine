@@ -22,6 +22,7 @@
 #include <anki/script/ScriptManager.h>
 #include <anki/resource/ResourceFilesystem.h>
 #include <anki/resource/AsyncLoader.h>
+#include <anki/core/StagingGpuMemoryManager.h>
 
 #if ANKI_OS == ANKI_OS_ANDROID
 #include <android_native_app_glue.h>
@@ -82,6 +83,12 @@ void App::cleanup()
 	{
 		m_heapAlloc.deleteInstance(m_physics);
 		m_physics = nullptr;
+	}
+
+	if(m_stagingMem)
+	{
+		m_heapAlloc.deleteInstance(m_stagingMem);
+		m_stagingMem = nullptr;
 	}
 
 	if(m_gr)
@@ -217,6 +224,12 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	ANKI_CHECK(m_gr->init(grInit));
 
 	//
+	// Staging mem
+	//
+	m_stagingMem = m_heapAlloc.newInstance<StagingGpuMemoryManager>();
+	ANKI_CHECK(m_stagingMem->init(m_gr, config));
+
+	//
 	// Physics
 	//
 	m_physics = m_heapAlloc.newInstance<PhysicsWorld>();
@@ -234,6 +247,7 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	//
 	ResourceManagerInitInfo rinit;
 	rinit.m_gr = m_gr;
+	rinit.m_stagingMem = m_stagingMem;
 	rinit.m_physics = m_physics;
 	rinit.m_resourceFs = m_resourceFs;
 	rinit.m_config = &config;
@@ -255,8 +269,8 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 
 	m_renderer = m_heapAlloc.newInstance<MainRenderer>();
 
-	ANKI_CHECK(
-		m_renderer->create(m_threadpool, m_resources, m_gr, m_allocCb, m_allocCbData, config, &m_globalTimestamp));
+	ANKI_CHECK(m_renderer->create(
+		m_threadpool, m_resources, m_gr, m_stagingMem, m_allocCb, m_allocCbData, config, &m_globalTimestamp));
 
 	m_resources->_setShadersPrependedSource(m_renderer->getMaterialShaderSource().toCString());
 
@@ -361,6 +375,7 @@ Error App::mainLoop()
 		m_resources->getAsyncLoader().pause();
 
 		m_gr->swapBuffers();
+		m_stagingMem->endFrame();
 
 		// Update the trace info with some async loader stats
 		U64 asyncTaskCount = m_resources->getAsyncLoader().getCompletedTaskCount();

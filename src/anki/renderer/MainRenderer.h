@@ -18,6 +18,7 @@ class ConfigSet;
 class SceneGraph;
 class SceneNode;
 class ThreadPool;
+class StagingGpuMemoryManager;
 
 /// @addtogroup renderer
 /// @{
@@ -33,6 +34,7 @@ public:
 	ANKI_USE_RESULT Error create(ThreadPool* threadpool,
 		ResourceManager* resources,
 		GrManager* gl,
+		StagingGpuMemoryManager* stagingMem,
 		AllocAlignedCallback allocCb,
 		void* allocCbUserData,
 		const ConfigSet& config,

@@ -9,7 +9,6 @@
 #include <anki/gr/gl/GrManagerImpl.h>
 #include <anki/gr/gl/RenderingThread.h>
 #include <anki/gr/gl/GlState.h>
-#include <anki/gr/gl/TransientMemoryManager.h>
 
 #include <anki/gr/Framebuffer.h>
 #include <anki/gr/gl/FramebufferImpl.h>
@@ -110,46 +109,6 @@ void CommandBuffer::bindVertexBuffer(U32 binding, BufferPtr buff, PtrSize offset
 	}
 }
 
-void CommandBuffer::bindVertexBuffer(U32 binding, const TransientMemoryToken& token, PtrSize stride)
-{
-	class Cmd final : public GlCommand
-	{
-	public:
-		U32 m_binding;
-		TransientMemoryToken m_token;
-		PtrSize m_stride;
-		GLuint m_name;
-
-		Cmd(U32 binding, const TransientMemoryToken& token, PtrSize stride, GLuint name)
-			: m_binding(binding)
-			, m_token(token)
-			, m_stride(stride)
-			, m_name(name)
-		{
-		}
-
-		Error operator()(GlState& state)
-		{
-			glBindVertexBuffer(m_binding, m_name, m_token.m_offset, m_stride);
-			return ErrorCode::NONE;
-		}
-	};
-
-	ANKI_ASSERT(token);
-	ANKI_ASSERT(stride > 0);
-
-	if(!token.isUnused())
-	{
-		ANKI_ASSERT(token.m_usage == BufferUsageBit::VERTEX);
-		GLuint name = getManager().getImplementation().getTransientMemoryManager().getGlName(token);
-
-		if(m_impl->m_state.bindVertexBuffer(binding, token, stride))
-		{
-			m_impl->pushBackNewCommand<Cmd>(binding, token, stride, name);
-		}
-	}
-}
-
 void CommandBuffer::setVertexAttribute(U32 location, U32 buffBinding, const PixelFormat& fmt, PtrSize relativeOffset)
 {
 	class Cmd final : public GlCommand
@@ -217,11 +176,6 @@ void CommandBuffer::bindIndexBuffer(BufferPtr buff, PtrSize offset, IndexType ty
 	{
 		m_impl->pushBackNewCommand<Cmd>(buff);
 	}
-}
-
-void CommandBuffer::bindIndexBuffer(const TransientMemoryToken& token, IndexType type)
-{
-	ANKI_ASSERT(!"TODO");
 }
 
 void CommandBuffer::setPrimitiveRestart(Bool enable)
@@ -696,143 +650,73 @@ void CommandBuffer::bindTextureAndSampler(
 	}
 }
 
-void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset)
+void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range)
 {
 	class Cmd final : public GlCommand
 	{
 	public:
-		U32 m_binding;
 		BufferPtr m_buff;
+		PtrSize m_binding;
 		PtrSize m_offset;
+		PtrSize m_range;
 
-		Cmd(U32 binding, BufferPtr buff, PtrSize offset)
-			: m_binding(binding)
-			, m_buff(buff)
+		Cmd(U32 binding, BufferPtr buff, PtrSize offset, PtrSize range)
+			: m_buff(buff)
+			, m_binding(binding)
 			, m_offset(offset)
+			, m_range(range)
 		{
 		}
 
 		Error operator()(GlState&)
 		{
-			m_buff->m_impl->bind(GL_UNIFORM_BUFFER, m_binding, m_offset);
+			m_buff->m_impl->bind(GL_UNIFORM_BUFFER, m_binding, m_offset, m_range);
 			return ErrorCode::NONE;
 		}
 	};
 
 	ANKI_ASSERT(buff);
+	ANKI_ASSERT(range > 0);
 
-	if(m_impl->m_state.bindUniformBuffer(set, binding, buff, offset))
+	if(m_impl->m_state.bindUniformBuffer(set, binding, buff, offset, range))
 	{
 		binding = binding + MAX_UNIFORM_BUFFER_BINDINGS * set;
-		m_impl->pushBackNewCommand<Cmd>(binding, buff, offset);
+		m_impl->pushBackNewCommand<Cmd>(binding, buff, offset, range);
 	}
 }
 
-void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, const TransientMemoryToken& token)
+void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range)
 {
 	class Cmd final : public GlCommand
 	{
 	public:
-		U32 m_binding;
-		TransientMemoryToken m_token;
-		GLuint m_name;
-
-		Cmd(U32 binding, const TransientMemoryToken& token, GLuint name)
-			: m_binding(binding)
-			, m_token(token)
-			, m_name(name)
-		{
-		}
-
-		Error operator()(GlState& state)
-		{
-			glBindBufferRange(GL_UNIFORM_BUFFER, m_binding, m_name, m_token.m_offset, m_token.m_range);
-			return ErrorCode::NONE;
-		}
-	};
-
-	ANKI_ASSERT(token);
-
-	if(!token.isUnused())
-	{
-		ANKI_ASSERT(!!(token.m_usage & BufferUsageBit::UNIFORM_ALL));
-
-		if(m_impl->m_state.bindUniformBuffer(set, binding, token))
-		{
-			binding = binding + MAX_UNIFORM_BUFFER_BINDINGS * set;
-			GLuint name = getManager().getImplementation().getTransientMemoryManager().getGlName(token);
-			m_impl->pushBackNewCommand<Cmd>(binding, token, name);
-		}
-	}
-}
-
-void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset)
-{
-	class Cmd final : public GlCommand
-	{
-	public:
-		U32 m_binding;
 		BufferPtr m_buff;
+		PtrSize m_binding;
 		PtrSize m_offset;
+		PtrSize m_range;
 
-		Cmd(U32 binding, BufferPtr buff, PtrSize offset)
-			: m_binding(binding)
-			, m_buff(buff)
+		Cmd(U32 binding, BufferPtr buff, PtrSize offset, PtrSize range)
+			: m_buff(buff)
+			, m_binding(binding)
 			, m_offset(offset)
+			, m_range(range)
 		{
 		}
 
 		Error operator()(GlState&)
 		{
-			m_buff->m_impl->bind(GL_SHADER_STORAGE_BUFFER, m_binding, m_offset);
+			m_buff->m_impl->bind(GL_SHADER_STORAGE_BUFFER, m_binding, m_offset, m_range);
 			return ErrorCode::NONE;
 		}
 	};
 
 	ANKI_ASSERT(buff);
+	ANKI_ASSERT(range > 0);
 
-	if(m_impl->m_state.bindStorageBuffer(set, binding, buff, offset))
+	if(m_impl->m_state.bindStorageBuffer(set, binding, buff, offset, range))
 	{
 		binding = binding + MAX_STORAGE_BUFFER_BINDINGS * set;
-		m_impl->pushBackNewCommand<Cmd>(binding, buff, offset);
-	}
-}
-
-void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, const TransientMemoryToken& token)
-{
-	class Cmd final : public GlCommand
-	{
-	public:
-		U32 m_binding;
-		TransientMemoryToken m_token;
-		GLuint m_name;
-
-		Cmd(U32 binding, const TransientMemoryToken& token, GLuint name)
-			: m_binding(binding)
-			, m_token(token)
-			, m_name(name)
-		{
-		}
-
-		Error operator()(GlState& state)
-		{
-			glBindBufferRange(GL_SHADER_STORAGE_BUFFER, m_binding, m_name, m_token.m_offset, m_token.m_range);
-			return ErrorCode::NONE;
-		}
-	};
-
-	ANKI_ASSERT(token);
-
-	if(!token.isUnused())
-	{
-		ANKI_ASSERT(!!(token.m_usage & BufferUsageBit::STORAGE_ALL));
-
-		if(m_impl->m_state.bindStorageBuffer(set, binding, token))
-		{
-			binding = binding + MAX_STORAGE_BUFFER_BINDINGS * set;
-			GLuint name = getManager().getImplementation().getTransientMemoryManager().getGlName(token);
-			m_impl->pushBackNewCommand<Cmd>(binding, token, name);
-		}
+		m_impl->pushBackNewCommand<Cmd>(binding, buff, offset, range);
 	}
 }
 
@@ -1181,116 +1065,113 @@ void CommandBuffer::endOcclusionQuery(OcclusionQueryPtr query)
 	m_impl->pushBackNewCommand<OqEndCommand>(query);
 }
 
-void CommandBuffer::uploadTextureSurface(
-	TexturePtr tex, const TextureSurfaceInfo& surf, const TransientMemoryToken& token)
+void CommandBuffer::copyBufferToTextureSurface(
+	BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureSurfaceInfo& surf)
 {
 	class TexSurfUploadCommand final : public GlCommand
 	{
 	public:
-		TexturePtr m_handle;
+		BufferPtr m_buff;
+		PtrSize m_offset;
+		PtrSize m_range;
+		TexturePtr m_tex;
 		TextureSurfaceInfo m_surf;
-		TransientMemoryToken m_token;
 
-		TexSurfUploadCommand(const TexturePtr& handle, TextureSurfaceInfo surf, const TransientMemoryToken& token)
-			: m_handle(handle)
+		TexSurfUploadCommand(
+			BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureSurfaceInfo& surf)
+			: m_buff(buff)
+			, m_offset(offset)
+			, m_range(range)
+			, m_tex(tex)
 			, m_surf(surf)
-			, m_token(token)
 		{
 		}
 
 		Error operator()(GlState& state)
 		{
-			GLuint pbo = state.m_manager->getImplementation().getTransientMemoryManager().getGlName(m_token);
-			m_handle->m_impl->writeSurface(m_surf, pbo, m_token.m_offset, m_token.m_range);
-
-			if(m_token.m_lifetime == TransientMemoryTokenLifetime::PERSISTENT)
-			{
-				state.m_manager->getImplementation().getTransientMemoryManager().free(m_token);
-			}
-
+			m_tex->m_impl->writeSurface(m_surf, m_buff->m_impl->getGlName(), m_offset, m_range);
 			return ErrorCode::NONE;
 		}
 	};
 
 	ANKI_ASSERT(tex);
-	ANKI_ASSERT(token);
+	ANKI_ASSERT(buff);
+	ANKI_ASSERT(range > 0);
 	ANKI_ASSERT(!m_impl->m_state.insideRenderPass());
 
-	m_impl->pushBackNewCommand<TexSurfUploadCommand>(tex, surf, token);
+	m_impl->pushBackNewCommand<TexSurfUploadCommand>(buff, offset, range, tex, surf);
 }
 
-void CommandBuffer::uploadTextureVolume(TexturePtr tex, const TextureVolumeInfo& vol, const TransientMemoryToken& token)
+void CommandBuffer::copyBufferToTextureVolume(
+	BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureVolumeInfo& vol)
 {
 	class TexVolUploadCommand final : public GlCommand
 	{
 	public:
-		TexturePtr m_handle;
+		BufferPtr m_buff;
+		PtrSize m_offset;
+		PtrSize m_range;
+		TexturePtr m_tex;
 		TextureVolumeInfo m_vol;
-		TransientMemoryToken m_token;
 
-		TexVolUploadCommand(const TexturePtr& handle, TextureVolumeInfo vol, const TransientMemoryToken& token)
-			: m_handle(handle)
+		TexVolUploadCommand(BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureVolumeInfo& vol)
+			: m_buff(buff)
+			, m_offset(offset)
+			, m_range(range)
+			, m_tex(tex)
 			, m_vol(vol)
-			, m_token(token)
 		{
 		}
 
 		Error operator()(GlState& state)
 		{
-			GLuint pbo = state.m_manager->getImplementation().getTransientMemoryManager().getGlName(m_token);
-			m_handle->m_impl->writeVolume(m_vol, pbo, m_token.m_offset, m_token.m_range);
-
-			if(m_token.m_lifetime == TransientMemoryTokenLifetime::PERSISTENT)
-			{
-				state.m_manager->getImplementation().getTransientMemoryManager().free(m_token);
-			}
-
+			m_tex->m_impl->writeVolume(m_vol, m_buff->m_impl->getGlName(), m_offset, m_range);
 			return ErrorCode::NONE;
 		}
 	};
 
 	ANKI_ASSERT(tex);
-	ANKI_ASSERT(token);
+	ANKI_ASSERT(buff);
+	ANKI_ASSERT(range > 0);
 	ANKI_ASSERT(!m_impl->m_state.insideRenderPass());
 
-	m_impl->pushBackNewCommand<TexVolUploadCommand>(tex, vol, token);
+	m_impl->pushBackNewCommand<TexVolUploadCommand>(buff, offset, range, tex, vol);
 }
 
-void CommandBuffer::uploadBuffer(BufferPtr buff, PtrSize offset, const TransientMemoryToken& token)
+void CommandBuffer::copyBufferToBuffer(
+	BufferPtr src, PtrSize srcOffset, BufferPtr dst, PtrSize dstOffset, PtrSize range)
 {
-	class BuffWriteCommand final : public GlCommand
+	class Cmd final : public GlCommand
 	{
 	public:
-		BufferPtr m_handle;
-		PtrSize m_offset;
-		TransientMemoryToken m_token;
+		BufferPtr m_src;
+		PtrSize m_srcOffset;
+		BufferPtr m_dst;
+		PtrSize m_dstOffset;
+		PtrSize m_range;
 
-		BuffWriteCommand(const BufferPtr& handle, PtrSize offset, const TransientMemoryToken& token)
-			: m_handle(handle)
-			, m_offset(offset)
-			, m_token(token)
+		Cmd(BufferPtr src, PtrSize srcOffset, BufferPtr dst, PtrSize dstOffset, PtrSize range)
+			: m_src(src)
+			, m_srcOffset(srcOffset)
+			, m_dst(dst)
+			, m_dstOffset(dstOffset)
+			, m_range(range)
 		{
 		}
 
 		Error operator()(GlState& state)
 		{
-			GLuint pbo = state.m_manager->getImplementation().getTransientMemoryManager().getGlName(m_token);
-			m_handle->m_impl->write(pbo, m_token.m_offset, m_offset, m_token.m_range);
-
-			if(m_token.m_lifetime == TransientMemoryTokenLifetime::PERSISTENT)
-			{
-				state.m_manager->getImplementation().getTransientMemoryManager().free(m_token);
-			}
-
+			m_dst->m_impl->write(m_src->m_impl->getGlName(), m_srcOffset, m_dstOffset, m_range);
 			return ErrorCode::NONE;
 		}
 	};
 
-	ANKI_ASSERT(token);
-	ANKI_ASSERT(buff);
+	ANKI_ASSERT(src);
+	ANKI_ASSERT(dst);
+	ANKI_ASSERT(range > 0);
 	ANKI_ASSERT(!m_impl->m_state.insideRenderPass());
 
-	m_impl->pushBackNewCommand<BuffWriteCommand>(buff, offset, token);
+	m_impl->pushBackNewCommand<Cmd>(src, srcOffset, dst, dstOffset, range);
 }
 
 void CommandBuffer::generateMipmaps2d(TexturePtr tex, U face, U layer)

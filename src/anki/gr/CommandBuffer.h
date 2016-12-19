@@ -144,17 +144,11 @@ public:
 	/// Bind vertex buffer.
 	void bindVertexBuffer(U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride);
 
-	/// Bind transient vertex buffer.
-	void bindVertexBuffer(U32 binding, const TransientMemoryToken& token, PtrSize stride);
-
 	/// Setup a vertex attribute.
 	void setVertexAttribute(U32 location, U32 buffBinding, const PixelFormat& fmt, PtrSize relativeOffset);
 
 	/// Bind index buffer.
 	void bindIndexBuffer(BufferPtr buff, PtrSize offset, IndexType type);
-
-	/// Bind transient index buffer.
-	void bindIndexBuffer(const TransientMemoryToken& token, IndexType type);
 
 	/// Enable primitive restart.
 	void setPrimitiveRestart(Bool enable);
@@ -237,16 +231,22 @@ public:
 		DepthStencilAspectBit aspect = DepthStencilAspectBit::DEPTH);
 
 	/// Bind uniform buffer.
-	void bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset);
-
-	/// Bind transient uniform buffer.
-	void bindUniformBuffer(U32 set, U32 binding, const TransientMemoryToken& token);
+	/// @param set The set to bind to.
+	/// @param binding The binding to bind to.
+	/// @param[in,out] buff The buffer to bind.
+	/// @param offset The base of the binding.
+	/// @param range The bytes to bind starting from the offset. If it's MAX_PTR_SIZE then map from offset to the end
+	///              of the buffer.
+	void bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range);
 
 	/// Bind storage buffer.
-	void bindStorageBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset);
-
-	/// Bind transient storage buffer.
-	void bindStorageBuffer(U32 set, U32 binding, const TransientMemoryToken& token);
+	/// @param set The set to bind to.
+	/// @param binding The binding to bind to.
+	/// @param[in,out] buff The buffer to bind.
+	/// @param offset The base of the binding.
+	/// @param range The bytes to bind starting from the offset. If it's MAX_PTR_SIZE then map from offset to the end
+	///              of the buffer.
+	void bindStorageBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range);
 
 	/// Bind load/store image.
 	void bindImage(U32 set, U32 binding, TexturePtr img, U32 level);
@@ -315,6 +315,14 @@ public:
 		const ClearValue& clearValue,
 		DepthStencilAspectBit aspect = DepthStencilAspectBit::NONE);
 
+	/// Copy a buffer to a texture surface.
+	void copyBufferToTextureSurface(
+		BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureSurfaceInfo& surf);
+
+	/// Copy buffer to a texture volume.
+	void copyBufferToTextureVolume(
+		BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureVolumeInfo& vol);
+
 	/// Fill a buffer with some value.
 	/// @param[in,out] buff The buffer to fill.
 	/// @param offset From where to start filling. Must be multiple of 4.
@@ -327,35 +335,14 @@ public:
 	/// @param offset The offset inside the buffer to write the result.
 	/// @param buff The buffer to update.
 	void writeOcclusionQueryResultToBuffer(OcclusionQueryPtr query, PtrSize offset, BufferPtr buff);
-	/// @}
 
-	/// @name Resource upload
-	/// @{
-
-	/// Upload data to a texture surface. It's the base of all texture surface upload methods.
-	void uploadTextureSurface(TexturePtr tex, const TextureSurfaceInfo& surf, const TransientMemoryToken& token);
-
-	/// Same as uploadTextureSurface but it will perform the transient allocation as well. If that allocation fails
-	/// expect the defaul OOM behaviour (crash).
-	void uploadTextureSurfaceData(TexturePtr tex, const TextureSurfaceInfo& surf, void*& data, PtrSize& dataSize);
-
-	/// Same as uploadTextureSurfaceData but it will return a nullptr in @a data if there is a OOM condition.
-	void tryUploadTextureSurfaceData(TexturePtr tex, const TextureSurfaceInfo& surf, void*& data, PtrSize& dataSize);
-
-	/// Same as uploadTextureSurface but it will perform the transient allocation and copy to it the @a data. If that
-	/// allocation fails expect the defaul OOM behaviour (crash).
-	void uploadTextureSurfaceCopyData(
-		TexturePtr tex, const TextureSurfaceInfo& surf, const void* data, PtrSize dataSize);
-
-	/// Upload data to a texture volume. It's the base of all texture volume upload methods.
-	void uploadTextureVolume(TexturePtr tex, const TextureVolumeInfo& vol, const TransientMemoryToken& token);
-
-	/// Same as uploadTextureVolume but it will perform the transient allocation and copy to it the @a data. If that
-	/// allocation fails expect the defaul OOM behaviour (crash).
-	void uploadTextureVolumeCopyData(TexturePtr tex, const TextureVolumeInfo& surf, const void* data, PtrSize dataSize);
-
-	/// Upload data to a buffer.
-	void uploadBuffer(BufferPtr buff, PtrSize offset, const TransientMemoryToken& token);
+	/// Copy buffer to buffer.
+	/// @param[in] src Source buffer.
+	/// @param srcOffset Offset in the src buffer.
+	/// @param[out] dst Destination buffer.
+	/// @param dstOffset Offset in the destination buffer.
+	/// @param range Size to copy.
+	void copyBufferToBuffer(BufferPtr src, PtrSize srcOffset, BufferPtr dst, PtrSize dstOffset, PtrSize range);
 	/// @}
 
 	/// @name Sync
@@ -405,5 +392,3 @@ anki_internal:
 /// @}
 
 } // end namespace anki
-
-#include <anki/gr/CommandBuffer.inl.h>

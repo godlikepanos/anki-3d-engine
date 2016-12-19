@@ -35,6 +35,7 @@ MainRenderer::~MainRenderer()
 Error MainRenderer::create(ThreadPool* threadpool,
 	ResourceManager* resources,
 	GrManager* gr,
+	StagingGpuMemoryManager* stagingMem,
 	AllocAlignedCallback allocCb,
 	void* allocCbUserData,
 	const ConfigSet& config,
@@ -64,7 +65,8 @@ Error MainRenderer::create(ThreadPool* threadpool,
 	m_rDrawToDefaultFb = m_renderingQuality == 1.0;
 
 	m_r.reset(m_alloc.newInstance<Renderer>());
-	ANKI_CHECK(m_r->init(threadpool, resources, gr, m_alloc, m_frameAlloc, config2, globTimestamp, m_rDrawToDefaultFb));
+	ANKI_CHECK(m_r->init(
+		threadpool, resources, gr, stagingMem, m_alloc, m_frameAlloc, config2, globTimestamp, m_rDrawToDefaultFb));
 
 	// Set the default preprocessor string
 	m_materialShaderSource.sprintf(m_alloc,

@@ -139,22 +139,20 @@ void Lf::runOcclusionTests(RenderingContext& ctx, CommandBufferPtr cmdb)
 	const Vec3* initialPositions;
 	if(count)
 	{
-		TransientMemoryToken uniToken, vertToken;
-
 		// Setup MVP UBO
-		Mat4* mvp = static_cast<Mat4*>(
-			getGrManager().allocateFrameTransientMemory(sizeof(Mat4), BufferUsageBit::UNIFORM_ALL, uniToken));
+		Mat4* mvp = allocateAndBindUniforms<Mat4*>(sizeof(Mat4), cmdb, 0, 0);
 		*mvp = camFr.getViewProjectionMatrix();
 
 		// Alloc dyn mem
-		positions = static_cast<Vec3*>(
-			getGrManager().allocateFrameTransientMemory(sizeof(Vec3) * count, BufferUsageBit::VERTEX, vertToken));
+		StagingGpuMemoryToken vertToken;
+		positions = static_cast<Vec3*>(m_r->getStagingGpuMemoryManager().allocatePerFrame(
+			sizeof(Vec3) * count, StagingGpuMemoryType::VERTEX, vertToken));
 		initialPositions = positions;
+
+		cmdb->bindVertexBuffer(0, vertToken.m_buffer, vertToken.m_offset, sizeof(Vec3));
 
 		// Setup state
 		cmdb->bindShaderProgram(m_occlusionProg);
-		cmdb->bindUniformBuffer(0, 0, uniToken);
-		cmdb->bindVertexBuffer(0, vertToken, sizeof(Vec3));
 		cmdb->setVertexAttribute(0, 0, PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT), 0);
 		cmdb->setColorChannelWriteMask(0, ColorBit::NONE);
 		cmdb->setColorChannelWriteMask(1, ColorBit::NONE);
@@ -215,8 +213,8 @@ void Lf::updateIndirectInfo(RenderingContext& ctx, CommandBufferPtr cmdb)
 
 	// Update the indirect info
 	cmdb->bindShaderProgram(m_updateIndirectBuffProg);
-	cmdb->bindStorageBuffer(0, 0, m_queryResultBuff, 0);
-	cmdb->bindStorageBuffer(0, 1, m_indirectBuff, 0);
+	cmdb->bindStorageBuffer(0, 0, m_queryResultBuff, 0, MAX_PTR_SIZE);
+	cmdb->bindStorageBuffer(0, 1, m_indirectBuff, 0, MAX_PTR_SIZE);
 	cmdb->dispatchCompute(count, 1, 1);
 
 	// Set barrier
@@ -266,9 +264,7 @@ void Lf::run(RenderingContext& ctx, CommandBufferPtr cmdb)
 		U spritesCount = max<U>(1, m_maxSpritesPerFlare);
 
 		// Get uniform memory
-		TransientMemoryToken token;
-		Sprite* tmpSprites = static_cast<Sprite*>(getGrManager().allocateFrameTransientMemory(
-			spritesCount * sizeof(Sprite), BufferUsageBit::UNIFORM_ALL, token));
+		Sprite* tmpSprites = allocateAndBindUniforms<Sprite*>(spritesCount * sizeof(Sprite), cmdb, 0, 0);
 		WeakArray<Sprite> sprites(tmpSprites, spritesCount);
 
 		// misc
@@ -285,7 +281,6 @@ void Lf::run(RenderingContext& ctx, CommandBufferPtr cmdb)
 
 		// Render
 		cmdb->bindTexture(0, 0, lf.getTexture());
-		cmdb->bindUniformBuffer(0, 0, token);
 
 		cmdb->drawArraysIndirect(
 			PrimitiveTopology::TRIANGLE_STRIP, 1, i * sizeof(DrawArraysIndirectInfo), m_indirectBuff);

@@ -47,10 +47,12 @@ Error Tm::initInternal(const ConfigSet& initializer)
 	CommandBufferInitInfo cmdbinit;
 	cmdbinit.m_flags = CommandBufferFlag::SMALL_BATCH | CommandBufferFlag::TRANSFER_WORK;
 	CommandBufferPtr cmdb = getGrManager().newInstance<CommandBuffer>(cmdbinit);
-	TransientMemoryToken token;
-	void* data = getGrManager().allocateFrameTransientMemory(sizeof(Vec4), BufferUsageBit::BUFFER_UPLOAD_SOURCE, token);
+
+	StagingGpuMemoryToken token;
+	void* data =
+		m_r->getStagingGpuMemoryManager().allocatePerFrame(sizeof(Vec4), StagingGpuMemoryType::TRANSFER, token);
 	*static_cast<Vec4*>(data) = Vec4(0.5);
-	cmdb->uploadBuffer(m_luminanceBuff, 0, token);
+	cmdb->copyBufferToBuffer(token.m_buffer, token.m_offset, m_luminanceBuff, 0, token.m_range);
 	cmdb->flush();
 
 	return ErrorCode::NONE;
@@ -60,7 +62,7 @@ void Tm::run(RenderingContext& ctx)
 {
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 	cmdb->bindShaderProgram(m_prog);
-	cmdb->bindStorageBuffer(0, 0, m_luminanceBuff, 0);
+	cmdb->bindStorageBuffer(0, 0, m_luminanceBuff, 0, MAX_PTR_SIZE);
 	cmdb->bindTexture(0, 0, m_r->getIs().getRt());
 
 	cmdb->dispatchCompute(1, 1, 1);

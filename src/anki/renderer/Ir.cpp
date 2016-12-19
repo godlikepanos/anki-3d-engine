@@ -123,9 +123,9 @@ Error Ir::loadMesh(CString fname, BufferPtr& vert, BufferPtr& idx, U32& idxCount
 	init.m_flags = CommandBufferFlag::SMALL_BATCH;
 	CommandBufferPtr cmdb = getGrManager().newInstance<CommandBuffer>(init);
 
-	TransientMemoryToken token;
+	StagingGpuMemoryToken token;
 	Vec3* verts = static_cast<Vec3*>(
-		getGrManager().allocateFrameTransientMemory(vertBuffSize, BufferUsageBit::BUFFER_UPLOAD_SOURCE, token));
+		m_r->getStagingGpuMemoryManager().allocatePerFrame(vertBuffSize, StagingGpuMemoryType::TRANSFER, token));
 
 	const U8* ptr = loader.getVertexData();
 	for(U i = 0; i < loader.getHeader().m_totalVerticesCount; ++i)
@@ -135,14 +135,14 @@ Error Ir::loadMesh(CString fname, BufferPtr& vert, BufferPtr& idx, U32& idxCount
 		ptr += loader.getVertexSize();
 	}
 
-	cmdb->uploadBuffer(vert, 0, token);
+	cmdb->copyBufferToBuffer(token.m_buffer, token.m_offset, vert, 0, token.m_range);
 
-	void* cpuIds = getGrManager().allocateFrameTransientMemory(
-		loader.getIndexDataSize(), BufferUsageBit::BUFFER_UPLOAD_SOURCE, token);
+	void* cpuIds = m_r->getStagingGpuMemoryManager().allocatePerFrame(
+		loader.getIndexDataSize(), StagingGpuMemoryType::TRANSFER, token);
 
 	memcpy(cpuIds, loader.getIndexData(), loader.getIndexDataSize());
 
-	cmdb->uploadBuffer(idx, 0, token);
+	cmdb->copyBufferToBuffer(token.m_buffer, token.m_offset, idx, 0, token.m_range);
 	idxCount = loader.getHeader().m_totalIndicesCount;
 
 	cmdb->flush();
@@ -456,11 +456,8 @@ void Ir::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx
 		const LightComponent& lightc = it->m_node->getComponent<LightComponent>();
 		const MoveComponent& movec = it->m_node->getComponent<MoveComponent>();
 
-		TransientMemoryToken uniVertToken, uniFragToken;
-
 		// Update uniforms
-		IrVertex* vert = static_cast<IrVertex*>(
-			getGrManager().allocateFrameTransientMemory(sizeof(IrVertex), BufferUsageBit::UNIFORM_ALL, uniVertToken));
+		IrVertex* vert = allocateAndBindUniforms<IrVertex*>(sizeof(IrVertex), cmdb, 0, 0);
 
 		Mat4 modelM(movec.getWorldTransform().getOrigin().xyz1(),
 			movec.getWorldTransform().getRotation().getRotationPart(),
@@ -468,8 +465,7 @@ void Ir::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx
 
 		vert->m_mvp = vpMat * modelM;
 
-		IrPointLight* light = static_cast<IrPointLight*>(getGrManager().allocateFrameTransientMemory(
-			sizeof(IrPointLight), BufferUsageBit::UNIFORM_ALL, uniFragToken));
+		IrPointLight* light = allocateAndBindUniforms<IrPointLight*>(sizeof(IrPointLight), cmdb, 0, 1);
 
 		Vec4 pos = vMat * movec.getWorldTransform().getOrigin().xyz1();
 
@@ -477,10 +473,6 @@ void Ir::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx
 		light->m_posRadius = Vec4(pos.xyz(), 1.0 / (lightc.getRadius() * lightc.getRadius()));
 		light->m_diffuseColorPad1 = lightc.getDiffuseColor();
 		light->m_specularColorPad1 = lightc.getSpecularColor();
-
-		// Bind stuff
-		cmdb->bindUniformBuffer(0, 0, uniVertToken);
-		cmdb->bindUniformBuffer(0, 1, uniFragToken);
 
 		// Draw
 		cmdb->drawElements(PrimitiveTopology::TRIANGLES, m_is.m_plightIdxCount);
@@ -513,17 +505,12 @@ void Ir::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx
 
 		modelM = modelM * scaleM;
 
-		TransientMemoryToken uniVertToken, uniFragToken;
-
 		// Update vertex uniforms
-		IrVertex* vert = static_cast<IrVertex*>(
-			getGrManager().allocateFrameTransientMemory(sizeof(IrVertex), BufferUsageBit::UNIFORM_ALL, uniVertToken));
-
+		IrVertex* vert = allocateAndBindUniforms<IrVertex*>(sizeof(IrVertex), cmdb, 0, 0);
 		vert->m_mvp = vpMat * modelM;
 
 		// Update fragment uniforms
-		IrSpotLight* light = static_cast<IrSpotLight*>(getGrManager().allocateFrameTransientMemory(
-			sizeof(IrSpotLight), BufferUsageBit::UNIFORM_ALL, uniFragToken));
+		IrSpotLight* light = allocateAndBindUniforms<IrSpotLight*>(sizeof(IrSpotLight), cmdb, 0, 1);
 
 		light->m_projectionParams = frc.getProjectionParameters();
 
@@ -537,10 +524,6 @@ void Ir::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx
 		Vec3 lightDir = -movec.getWorldTransform().getRotation().getZAxis();
 		lightDir = vMat.getRotationPart() * lightDir;
 		light->m_lightDirPad1 = lightDir.xyz0();
-
-		// Bind stuff
-		cmdb->bindUniformBuffer(0, 0, uniVertToken);
-		cmdb->bindUniformBuffer(0, 1, uniFragToken);
 
 		// Draw
 		cmdb->drawElements(PrimitiveTopology::TRIANGLES, m_is.m_slightIdxCount);
@@ -584,13 +567,10 @@ void Ir::computeIrradiance(RenderingContext& rctx, U layer, U faceIdx)
 	// Set state and draw
 	cmdb->setViewport(0, 0, IRRADIANCE_TEX_SIZE, IRRADIANCE_TEX_SIZE);
 
-	TransientMemoryToken token;
-	UVec4* faceIdxArrayIdx = static_cast<UVec4*>(
-		getGrManager().allocateFrameTransientMemory(sizeof(UVec4), BufferUsageBit::UNIFORM_ALL, token));
+	UVec4* faceIdxArrayIdx = allocateAndBindUniforms<UVec4*>(sizeof(UVec4), cmdb, 0, 0);
 	faceIdxArrayIdx->x() = faceIdx;
 	faceIdxArrayIdx->y() = layer;
 
-	cmdb->bindUniformBuffer(0, 0, token);
 	cmdb->bindTexture(0, 0, m_is.m_lightRt);
 	cmdb->bindShaderProgram(m_irradiance.m_prog);
 	cmdb->beginRenderPass(face.m_irradianceFb);

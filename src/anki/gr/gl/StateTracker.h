@@ -64,7 +64,6 @@ public:
 		BufferImpl* m_buff = nullptr;
 		PtrSize m_offset = 0;
 		PtrSize m_stride = 0;
-		TransientMemoryToken m_token;
 	};
 
 	Array<VertexBuffer, MAX_VERTEX_ATTRIBUTES> m_vertBuffs;
@@ -75,17 +74,6 @@ public:
 		b.m_buff = buff->m_impl.get();
 		b.m_offset = offset;
 		b.m_stride = stride;
-		b.m_token = {};
-		return true;
-	}
-
-	Bool bindVertexBuffer(U32 binding, const TransientMemoryToken& token, PtrSize stride)
-	{
-		VertexBuffer& b = m_vertBuffs[binding];
-		b.m_buff = nullptr;
-		b.m_offset = 0;
-		b.m_stride = stride;
-		b.m_token = token;
 		return true;
 	}
 
@@ -480,46 +468,28 @@ public:
 	public:
 		BufferImpl* m_buff = nullptr;
 		PtrSize m_offset;
-		TransientMemoryToken m_token;
+		PtrSize m_range;
 	};
 
 	Array2d<ShaderBufferBinding, MAX_BOUND_RESOURCE_GROUPS, MAX_UNIFORM_BUFFER_BINDINGS> m_ubos;
 
-	Bool bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset)
+	Bool bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range)
 	{
 		ShaderBufferBinding& b = m_ubos[set][binding];
 		b.m_buff = buff->m_impl.get();
 		b.m_offset = offset;
-		b.m_token = {};
-		return true;
-	}
-
-	Bool bindUniformBuffer(U32 set, U32 binding, const TransientMemoryToken& token)
-	{
-		ShaderBufferBinding& b = m_ubos[set][binding];
-		b.m_buff = nullptr;
-		b.m_offset = 0;
-		b.m_token = token;
+		b.m_range = range;
 		return true;
 	}
 
 	Array2d<ShaderBufferBinding, MAX_BOUND_RESOURCE_GROUPS, MAX_STORAGE_BUFFER_BINDINGS> m_ssbos;
 
-	Bool bindStorageBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset)
+	Bool bindStorageBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range)
 	{
 		ShaderBufferBinding& b = m_ssbos[set][binding];
 		b.m_buff = buff->m_impl.get();
 		b.m_offset = offset;
-		b.m_token = {};
-		return true;
-	}
-
-	Bool bindStorageBuffer(U32 set, U32 binding, const TransientMemoryToken& token)
-	{
-		ShaderBufferBinding& b = m_ssbos[set][binding];
-		b.m_buff = nullptr;
-		b.m_offset = 0;
-		b.m_token = token;
+		b.m_range = range;
 		return true;
 	}
 

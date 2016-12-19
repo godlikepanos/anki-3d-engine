@@ -82,13 +82,10 @@ void BloomExposure::run(RenderingContext& ctx)
 	cmdb->bindShaderProgram(m_prog);
 	cmdb->bindTexture(0, 0, m_r->getIs().getRt());
 
-	TransientMemoryToken token;
-	Vec4* uniforms = static_cast<Vec4*>(
-		getGrManager().allocateFrameTransientMemory(sizeof(Vec4), BufferUsageBit::UNIFORM_ALL, token));
+	Vec4* uniforms = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
 	*uniforms = Vec4(m_threshold, m_scale, 0.0, 0.0);
 
-	cmdb->bindUniformBuffer(0, 0, token);
-	cmdb->bindStorageBuffer(0, 0, m_r->getTm().m_luminanceBuff, 0);
+	cmdb->bindStorageBuffer(0, 0, m_r->getTm().m_luminanceBuff, 0, MAX_PTR_SIZE);
 
 	cmdb->setBlendFactors(0, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA);
 

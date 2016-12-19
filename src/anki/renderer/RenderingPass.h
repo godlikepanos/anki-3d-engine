@@ -10,6 +10,7 @@
 #include <anki/Gr.h>
 #include <anki/resource/ResourceManager.h>
 #include <anki/resource/ShaderResource.h>
+#include <anki/core/StagingGpuMemoryManager.h>
 
 namespace anki
 {
@@ -39,6 +40,43 @@ anki_internal:
 
 	StackAllocator<U8> getFrameAllocator() const;
 
+	template<typename TPtr>
+	TPtr allocateUniforms(PtrSize size, StagingGpuMemoryToken& token)
+	{
+		return static_cast<TPtr>(allocatePerFrameStagingMemory(size, StagingGpuMemoryType::UNIFORM, token));
+	}
+
+	static void bindUniforms(CommandBufferPtr& cmdb, U set, U binding, const StagingGpuMemoryToken& token)
+	{
+		if(token && !token.isUnused())
+		{
+			cmdb->bindUniformBuffer(set, binding, token.m_buffer, token.m_offset, token.m_range);
+		}
+	}
+
+	template<typename TPtr>
+	TPtr allocateAndBindUniforms(PtrSize size, CommandBufferPtr& cmdb, U set, U binding)
+	{
+		StagingGpuMemoryToken token;
+		TPtr ptr = allocateUniforms<TPtr>(size, token);
+		bindUniforms(cmdb, set, binding, token);
+		return ptr;
+	}
+
+	template<typename TPtr>
+	TPtr allocateStorage(PtrSize size, StagingGpuMemoryToken& token)
+	{
+		return static_cast<TPtr>(allocatePerFrameStagingMemory(size, StagingGpuMemoryType::STORAGE, token));
+	}
+
+	static void bindStorage(CommandBufferPtr& cmdb, U set, U binding, const StagingGpuMemoryToken& token)
+	{
+		if(token && !token.isUnused())
+		{
+			cmdb->bindStorageBuffer(set, binding, token.m_buffer, token.m_offset, token.m_range);
+		}
+	}
+
 protected:
 	Renderer* m_r; ///< Know your father
 
@@ -46,6 +84,8 @@ protected:
 	const GrManager& getGrManager() const;
 
 	ResourceManager& getResourceManager();
+
+	void* allocatePerFrameStagingMemory(PtrSize size, StagingGpuMemoryType usage, StagingGpuMemoryToken& token);
 };
 /// @}
 

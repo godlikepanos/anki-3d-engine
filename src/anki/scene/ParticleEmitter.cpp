@@ -375,8 +375,8 @@ Error ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 	Vec4 aabbmax(MIN_F32, MIN_F32, MIN_F32, 0.0);
 	m_aliveParticlesCount = 0;
 
-	F32* verts = static_cast<F32*>(getResourceManager().getGrManager().allocateFrameTransientMemory(
-		m_vertBuffSize, BufferUsageBit::VERTEX, m_vertBuffToken));
+	F32* verts = static_cast<F32*>(getResourceManager().getStagingGpuMemoryManager().allocatePerFrame(
+		m_vertBuffSize, StagingGpuMemoryType::VERTEX, m_vertBuffToken));
 
 	const F32* verts_base = verts;
 	(void)verts_base;

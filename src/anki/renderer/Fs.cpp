@@ -89,16 +89,12 @@ void Fs::drawVolumetric(RenderingContext& ctx, CommandBufferPtr cmdb)
 	cmdb->setDepthWrite(false);
 	cmdb->setDepthCompareOperation(CompareOperation::ALWAYS);
 
-	TransientMemoryToken token;
-	Vec4* unis = static_cast<Vec4*>(
-		getGrManager().allocateFrameTransientMemory(sizeof(Vec4), BufferUsageBit::UNIFORM_ALL, token));
+	Vec4* unis = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
 	computeLinearizeDepthOptimal(fr.getNear(), fr.getFar(), unis->x(), unis->y());
 
 	cmdb->bindTextureAndSampler(0, 0, m_r->getDepthDownscale().m_hd.m_depthRt, m_vol.m_nearestSampler);
 	cmdb->bindTextureAndSampler(0, 1, m_r->getDepthDownscale().m_qd.m_depthRt, m_vol.m_nearestSampler);
 	cmdb->bindTexture(0, 2, m_r->getVolumetric().m_rt);
-
-	cmdb->bindUniformBuffer(0, 0, token);
 
 	m_r->drawQuad(cmdb);
 
@@ -133,11 +129,11 @@ Error Fs::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) 
 	cmdb->bindTexture(1, 0, m_r->getDepthDownscale().m_hd.m_depthRt);
 	cmdb->bindTexture(1, 1, m_r->getSm().m_spotTexArray);
 	cmdb->bindTexture(1, 2, m_r->getSm().m_omniTexArray);
-	cmdb->bindUniformBuffer(1, 0, ctx.m_is.m_commonToken);
-	cmdb->bindUniformBuffer(1, 1, ctx.m_is.m_pointLightsToken);
-	cmdb->bindUniformBuffer(1, 2, ctx.m_is.m_spotLightsToken);
-	cmdb->bindStorageBuffer(1, 0, ctx.m_is.m_clustersToken);
-	cmdb->bindStorageBuffer(1, 1, ctx.m_is.m_lightIndicesToken);
+	bindUniforms(cmdb, 1, 0, ctx.m_is.m_commonToken);
+	bindUniforms(cmdb, 1, 1, ctx.m_is.m_pointLightsToken);
+	bindUniforms(cmdb, 1, 2, ctx.m_is.m_spotLightsToken);
+	bindStorage(cmdb, 1, 0, ctx.m_is.m_clustersToken);
+	bindStorage(cmdb, 1, 1, ctx.m_is.m_lightIndicesToken);
 
 	cmdb->setViewport(0, 0, m_width, m_height);
 	cmdb->setBlendFactors(

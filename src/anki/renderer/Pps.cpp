@@ -151,7 +151,7 @@ Error Pps::run(RenderingContext& ctx)
 		cmdb->bindTexture(0, 4, m_r->getDbg().getRt());
 	}
 
-	cmdb->bindStorageBuffer(0, 0, m_r->getTm().m_luminanceBuff, 0);
+	cmdb->bindStorageBuffer(0, 0, m_r->getTm().m_luminanceBuff, 0, MAX_PTR_SIZE);
 
 	// Get or create FB
 	FramebufferPtr* fb = nullptr;

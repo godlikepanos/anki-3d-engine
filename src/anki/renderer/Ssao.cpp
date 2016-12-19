@@ -114,18 +114,21 @@ Error Ssao::initInternal(const ConfigSet& config)
 
 	m_noiseTex = gr.newInstance<Texture>(tinit);
 
-	Array<Array<I8, 4>, NOISE_TEX_SIZE * NOISE_TEX_SIZE> noise;
-	genNoise(&noise[0], &noise[0] + noise.getSize());
+	StagingGpuMemoryToken token;
+	const U noiseSize = NOISE_TEX_SIZE * NOISE_TEX_SIZE * sizeof(Array<I8, 4>);
+	Array<I8, 4>* noise = static_cast<Array<I8, 4>*>(
+		m_r->getStagingGpuMemoryManager().allocatePerFrame(noiseSize, StagingGpuMemoryType::TRANSFER, token));
+
+	genNoise(&noise[0], &noise[0] + noiseSize);
 
 	CommandBufferInitInfo cmdbInit;
 	cmdbInit.m_flags = CommandBufferFlag::SMALL_BATCH | CommandBufferFlag::TRANSFER_WORK;
-
 	CommandBufferPtr cmdb = gr.newInstance<CommandBuffer>(cmdbInit);
 
 	TextureSurfaceInfo surf(0, 0, 0, 0);
 
 	cmdb->setTextureSurfaceBarrier(m_noiseTex, TextureUsageBit::NONE, TextureUsageBit::UPLOAD, surf);
-	cmdb->uploadTextureSurfaceCopyData(m_noiseTex, surf, &noise[0], sizeof(noise));
+	cmdb->copyBufferToTextureSurface(token.m_buffer, token.m_offset, token.m_range, m_noiseTex, surf);
 	cmdb->setTextureSurfaceBarrier(m_noiseTex, TextureUsageBit::UPLOAD, TextureUsageBit::SAMPLED_FRAGMENT, surf);
 
 	cmdb->flush();
@@ -241,17 +244,12 @@ void Ssao::run(RenderingContext& ctx)
 	cmdb->bindTexture(0, 1, m_r->getMs().m_rt2);
 	cmdb->bindTexture(0, 2, m_noiseTex);
 
-	TransientMemoryToken token;
-	Vec4* unis = static_cast<Vec4*>(
-		getGrManager().allocateFrameTransientMemory(sizeof(Vec4) * 2, BufferUsageBit::UNIFORM_ALL, token));
-
+	Vec4* unis = allocateAndBindUniforms<Vec4*>(sizeof(Vec4) * 2, cmdb, 0, 0);
 	const FrustumComponent& frc = *ctx.m_frustumComponent;
 	const Mat4& pmat = frc.getProjectionMatrix();
 	*unis = frc.getProjectionParameters();
 	++unis;
 	*unis = Vec4(pmat(0, 0), pmat(1, 1), pmat(2, 2), pmat(2, 3));
-
-	cmdb->bindUniformBuffer(0, 0, token);
 
 	// Draw
 	m_r->drawQuad(cmdb);

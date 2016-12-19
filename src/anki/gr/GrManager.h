@@ -61,7 +61,7 @@ public:
 
 	/// Create a new graphics object.
 	template<typename T, typename... Args>
-	GrObjectPtr<T> newInstanceCached(U64 hash, GrObjectCache* cache, Args&&... args)
+	ANKI_USE_RESULT GrObjectPtr<T> newInstanceCached(U64 hash, GrObjectCache* cache, Args&&... args)
 	{
 		GrObjectPtr<T> ptr(m_alloc.newInstance<T>(this, hash, cache));
 		ptr->init(args...);
@@ -70,19 +70,10 @@ public:
 
 	/// Create a new graphics object.
 	template<typename T, typename... Args>
-	GrObjectPtr<T> newInstance(Args&&... args)
+	ANKI_USE_RESULT GrObjectPtr<T> newInstance(Args&&... args)
 	{
 		return newInstanceCached<T>(0, nullptr, args...);
 	}
-
-	/// Allocate transient memory for various operations. The memory will be reclaimed at the begining of the
-	/// N-(MAX_FRAMES_IN_FLIGHT-1) frame.
-	ANKI_USE_RESULT void* allocateFrameTransientMemory(PtrSize size, BufferUsageBit usage, TransientMemoryToken& token);
-
-	/// Allocate transient memory for various operations. The memory will be reclaimed at the begining of the
-	/// N-(MAX_FRAMES_IN_FLIGHT-1) frame.
-	ANKI_USE_RESULT void* tryAllocateFrameTransientMemory(
-		PtrSize size, BufferUsageBit usage, TransientMemoryToken& token);
 
 	/// Call this before calling allocateFrameTransientMemory or tryAllocateFrameTransientMemory to get the exact memory
 	/// that will be required for the CommandBuffer::uploadTextureSurface.
@@ -96,6 +87,12 @@ public:
 	/// Same as getTextureSurfaceUploadInfo but for volumes.
 	void getTextureVolumeUploadInfo(
 		TexturePtr tex, const TextureVolumeInfo& vol, PtrSize& expectedTransientAllocationSize);
+
+	/// Get some buffer alignment and size info.
+	void getUniformBufferInfo(U32& bindOffsetAlignment, PtrSize& maxUniformBlockSize) const;
+
+	/// Get some buffer alignment info.
+	void getStorageBufferInfo(U32& bindOffsetAlignment, PtrSize& maxStorageBlockSize) const;
 
 anki_internal:
 	GrAllocator<U8>& getAllocator()

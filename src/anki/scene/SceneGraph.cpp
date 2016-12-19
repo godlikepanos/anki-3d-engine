@@ -11,7 +11,6 @@
 #include <anki/physics/PhysicsWorld.h>
 #include <anki/resource/ResourceManager.h>
 #include <anki/renderer/MainRenderer.h>
-#include <anki/renderer/Renderer.h>
 #include <anki/misc/ConfigSet.h>
 #include <anki/util/ThreadPool.h>
 

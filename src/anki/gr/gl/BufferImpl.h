@@ -38,19 +38,20 @@ public:
 
 	void init(PtrSize size, BufferUsageBit usage, BufferMapAccessBit access);
 
-	void bind(GLenum target, U32 binding, PtrSize offset, PtrSize size) const
+	void bind(GLenum target, U32 binding, PtrSize offset, PtrSize range) const
 	{
 		ANKI_ASSERT(isCreated());
-		ANKI_ASSERT(offset + size <= m_size);
-		ANKI_ASSERT(size > 0);
-		glBindBufferRange(target, binding, m_glName, offset, size);
+
+		range = (range == MAX_PTR_SIZE) ? (m_size - offset) : range;
+		ANKI_ASSERT(range > 0);
+		ANKI_ASSERT(offset + range <= m_size);
+
+		glBindBufferRange(target, binding, m_glName, offset, range);
 	}
 
 	void bind(GLenum target, U32 binding, PtrSize offset) const
 	{
-		ANKI_ASSERT(isCreated());
-		ANKI_ASSERT(offset < m_size);
-		glBindBufferRange(target, binding, m_glName, offset, m_size - offset);
+		bind(target, binding, offset, MAX_PTR_SIZE);
 	}
 
 	void write(GLuint pbo, U32 pboOffset, U32 offset, U32 size) const

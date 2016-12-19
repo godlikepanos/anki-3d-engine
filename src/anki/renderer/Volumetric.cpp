@@ -92,14 +92,6 @@ void Volumetric::run(RenderingContext& ctx)
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 	const Frustum& frc = ctx.m_frustumComponent->getFrustum();
 
-	// Update uniforms
-	TransientMemoryToken token;
-	Vec4* uniforms = static_cast<Vec4*>(
-		getGrManager().allocateFrameTransientMemory(sizeof(Vec4) * 2, BufferUsageBit::UNIFORM_ALL, token));
-	computeLinearizeDepthOptimal(frc.getNear(), frc.getFar(), uniforms[0].x(), uniforms[0].y());
-
-	uniforms[1] = Vec4(m_fogColor, m_fogFactor);
-
 	// pass
 	cmdb->setViewport(0, 0, m_r->getWidth() / VOLUMETRIC_FRACTION, m_r->getHeight() / VOLUMETRIC_FRACTION);
 	cmdb->setBlendFactors(0, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA);
@@ -108,13 +100,16 @@ void Volumetric::run(RenderingContext& ctx)
 	cmdb->bindTexture(0, 1, m_r->getSm().m_spotTexArray);
 	cmdb->bindTexture(0, 2, m_r->getSm().m_omniTexArray);
 
-	cmdb->bindUniformBuffer(0, 0, ctx.m_is.m_commonToken);
-	cmdb->bindUniformBuffer(0, 1, ctx.m_is.m_pointLightsToken);
-	cmdb->bindUniformBuffer(0, 2, ctx.m_is.m_spotLightsToken);
-	cmdb->bindUniformBuffer(0, 3, token);
+	bindUniforms(cmdb, 0, 0, ctx.m_is.m_commonToken);
+	bindUniforms(cmdb, 0, 1, ctx.m_is.m_pointLightsToken);
+	bindUniforms(cmdb, 0, 2, ctx.m_is.m_spotLightsToken);
 
-	cmdb->bindStorageBuffer(0, 0, ctx.m_is.m_clustersToken);
-	cmdb->bindStorageBuffer(0, 1, ctx.m_is.m_lightIndicesToken);
+	Vec4* uniforms = allocateAndBindUniforms<Vec4*>(sizeof(Vec4) * 2, cmdb, 0, 3);
+	computeLinearizeDepthOptimal(frc.getNear(), frc.getFar(), uniforms[0].x(), uniforms[0].y());
+	uniforms[1] = Vec4(m_fogColor, m_fogFactor);
+
+	bindStorage(cmdb, 0, 0, ctx.m_is.m_clustersToken);
+	bindStorage(cmdb, 0, 1, ctx.m_is.m_lightIndicesToken);
 
 	cmdb->bindShaderProgram(m_prog);
 

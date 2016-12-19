@@ -166,9 +166,14 @@ Error SmaaWeights::init(const ConfigSet& initializer)
 		texinit.m_sampling.m_repeat = false;
 		m_areaTex = gr.newInstance<Texture>(texinit);
 
+		StagingGpuMemoryToken token;
+		void* stagingMem = m_r->getStagingGpuMemoryManager().allocatePerFrame(
+			sizeof(areaTexBytes), StagingGpuMemoryType::TRANSFER, token);
+		memcpy(stagingMem, &areaTexBytes[0], sizeof(areaTexBytes));
+
 		const TextureSurfaceInfo surf(0, 0, 0, 0);
 		cmdb->setTextureSurfaceBarrier(m_areaTex, TextureUsageBit::NONE, TextureUsageBit::UPLOAD, surf);
-		cmdb->uploadTextureSurfaceCopyData(m_areaTex, surf, &areaTexBytes[0], sizeof(areaTexBytes));
+		cmdb->copyBufferToTextureSurface(token.m_buffer, token.m_offset, token.m_range, m_areaTex, surf);
 		cmdb->setTextureSurfaceBarrier(m_areaTex, TextureUsageBit::UPLOAD, TextureUsageBit::SAMPLED_FRAGMENT, surf);
 	}
 
@@ -183,9 +188,14 @@ Error SmaaWeights::init(const ConfigSet& initializer)
 		texinit.m_sampling.m_repeat = false;
 		m_searchTex = gr.newInstance<Texture>(texinit);
 
+		StagingGpuMemoryToken token;
+		void* stagingMem = m_r->getStagingGpuMemoryManager().allocatePerFrame(
+			sizeof(searchTexBytes), StagingGpuMemoryType::TRANSFER, token);
+		memcpy(stagingMem, &searchTexBytes[0], sizeof(searchTexBytes));
+
 		const TextureSurfaceInfo surf(0, 0, 0, 0);
 		cmdb->setTextureSurfaceBarrier(m_searchTex, TextureUsageBit::NONE, TextureUsageBit::UPLOAD, surf);
-		cmdb->uploadTextureSurfaceCopyData(m_searchTex, surf, &searchTexBytes[0], sizeof(searchTexBytes));
+		cmdb->copyBufferToTextureSurface(token.m_buffer, token.m_offset, token.m_range, m_searchTex, surf);
 		cmdb->setTextureSurfaceBarrier(m_searchTex, TextureUsageBit::UPLOAD, TextureUsageBit::SAMPLED_FRAGMENT, surf);
 	}
 	cmdb->flush();

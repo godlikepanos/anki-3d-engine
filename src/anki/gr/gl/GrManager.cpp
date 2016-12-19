@@ -6,8 +6,8 @@
 #include <anki/gr/GrManager.h>
 #include <anki/gr/gl/GrManagerImpl.h>
 #include <anki/gr/gl/RenderingThread.h>
-#include <anki/gr/gl/TransientMemoryManager.h>
 #include <anki/gr/gl/TextureImpl.h>
+#include <anki/gr/gl/GlState.h>
 #include <anki/core/Timestamp.h>
 #include <cstring>
 
@@ -52,25 +52,6 @@ void GrManager::finish()
 	m_impl->getRenderingThread().syncClientServer();
 }
 
-void* GrManager::allocateFrameTransientMemory(PtrSize size, BufferUsageBit usage, TransientMemoryToken& token)
-{
-	void* data = nullptr;
-	m_impl->getTransientMemoryManager().allocate(
-		size, usage, TransientMemoryTokenLifetime::PER_FRAME, token, data, nullptr);
-
-	return data;
-}
-
-void* GrManager::tryAllocateFrameTransientMemory(PtrSize size, BufferUsageBit usage, TransientMemoryToken& token)
-{
-	void* data = nullptr;
-	Error err = ErrorCode::NONE;
-	m_impl->getTransientMemoryManager().allocate(
-		size, usage, TransientMemoryTokenLifetime::PER_FRAME, token, data, &err);
-
-	return (!err) ? data : nullptr;
-}
-
 void GrManager::getTextureSurfaceUploadInfo(TexturePtr tex, const TextureSurfaceInfo& surf, PtrSize& allocationSize)
 {
 	const TextureImpl& impl = *tex->m_impl;
@@ -90,6 +71,22 @@ void GrManager::getTextureVolumeUploadInfo(TexturePtr tex, const TextureVolumeIn
 	U height = impl.m_height >> vol.m_level;
 	U depth = impl.m_depth >> vol.m_level;
 	allocationSize = computeVolumeSize(width, height, depth, impl.m_pformat);
+}
+
+void GrManager::getUniformBufferInfo(U32& bindOffsetAlignment, PtrSize& maxUniformBlockSize) const
+{
+	bindOffsetAlignment = m_impl->getState().m_uboAlignment;
+	maxUniformBlockSize = m_impl->getState().m_uniBlockMaxSize;
+
+	ANKI_ASSERT(bindOffsetAlignment > 0 && maxUniformBlockSize > 0);
+}
+
+void GrManager::getStorageBufferInfo(U32& bindOffsetAlignment, PtrSize& maxStorageBlockSize) const
+{
+	bindOffsetAlignment = m_impl->getState().m_ssboAlignment;
+	maxStorageBlockSize = m_impl->getState().m_storageBlockMaxSize;
+
+	ANKI_ASSERT(bindOffsetAlignment > 0 && maxStorageBlockSize > 0);
 }
 
 } // end namespace anki

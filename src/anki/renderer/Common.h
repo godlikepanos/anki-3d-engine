@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/Gr.h>
+#include <anki/core/StagingGpuMemoryManager.h>
 #include <anki/util/Ptr.h>
 
 namespace anki

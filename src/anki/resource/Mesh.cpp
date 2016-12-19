@@ -9,6 +9,7 @@
 #include <anki/resource/AsyncLoader.h>
 #include <anki/util/Functions.h>
 #include <anki/misc/Xml.h>
+#include <anki/core/StagingGpuMemoryManager.h>
 
 namespace anki
 {
@@ -34,14 +35,15 @@ public:
 Error MeshLoadTask::operator()(AsyncLoaderTaskContext& ctx)
 {
 	GrManager& gr = m_manager->getGrManager();
+	StagingGpuMemoryManager& stagingMem = m_manager->getStagingGpuMemoryManager();
 	CommandBufferPtr cmdb;
 
 	// Write vert buff
 	if(m_vertBuff)
 	{
-		TransientMemoryToken token;
-		void* data = gr.tryAllocateFrameTransientMemory(
-			m_loader.getVertexDataSize(), BufferUsageBit::BUFFER_UPLOAD_SOURCE, token);
+		StagingGpuMemoryToken token;
+		void* data =
+			stagingMem.tryAllocatePerFrame(m_loader.getVertexDataSize(), StagingGpuMemoryType::TRANSFER, token);
 
 		if(data)
 		{
@@ -51,7 +53,7 @@ Error MeshLoadTask::operator()(AsyncLoaderTaskContext& ctx)
 			cmdb->setBufferBarrier(
 				m_vertBuff, BufferUsageBit::VERTEX, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, 0, MAX_PTR_SIZE);
 
-			cmdb->uploadBuffer(m_vertBuff, 0, token);
+			cmdb->copyBufferToBuffer(token.m_buffer, token.m_offset, m_vertBuff, 0, token.m_range);
 
 			cmdb->setBufferBarrier(
 				m_vertBuff, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, BufferUsageBit::VERTEX, 0, MAX_PTR_SIZE);
@@ -68,9 +70,8 @@ Error MeshLoadTask::operator()(AsyncLoaderTaskContext& ctx)
 
 	// Create index buffer
 	{
-		TransientMemoryToken token;
-		void* data = gr.tryAllocateFrameTransientMemory(
-			m_loader.getIndexDataSize(), BufferUsageBit::BUFFER_UPLOAD_SOURCE, token);
+		StagingGpuMemoryToken token;
+		void* data = stagingMem.tryAllocatePerFrame(m_loader.getIndexDataSize(), StagingGpuMemoryType::TRANSFER, token);
 
 		if(data)
 		{
@@ -84,7 +85,7 @@ Error MeshLoadTask::operator()(AsyncLoaderTaskContext& ctx)
 			cmdb->setBufferBarrier(
 				m_indicesBuff, BufferUsageBit::INDEX, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, 0, MAX_PTR_SIZE);
 
-			cmdb->uploadBuffer(m_indicesBuff, 0, token);
+			cmdb->copyBufferToBuffer(token.m_buffer, token.m_offset, m_indicesBuff, 0, token.m_range);
 
 			cmdb->setBufferBarrier(
 				m_indicesBuff, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, BufferUsageBit::INDEX, 0, MAX_PTR_SIZE);

@@ -1,4 +1,4 @@
-set(ANKI_CORE_SOURCES App.cpp StdinListener.cpp Config.cpp Trace.cpp)
+set(ANKI_CORE_SOURCES App.cpp StdinListener.cpp Config.cpp Trace.cpp StagingGpuMemoryManager.cpp)
 
 if(SDL)
 	set(ANKI_CORE_SOURCES ${ANKI_CORE_SOURCES} NativeWindowSdl.cpp)

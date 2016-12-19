@@ -128,7 +128,7 @@ public:
 	Array<Mat4, MAX_INSTANCES> m_cachedTrfs;
 	U m_cachedTrfCount = 0;
 
-	TransientMemoryToken m_uboToken;
+	StagingGpuMemoryToken m_uboToken;
 
 	U m_nodeProcessedCount = 0;
 
@@ -297,8 +297,8 @@ void RenderableDrawer::setupUniforms(DrawContext& ctx, CompleteRenderingBuildInf
 	const MaterialVariant& variant = mtl.getVariant(build.m_in.m_key);
 
 	// Get some memory for uniforms
-	U8* uniforms = static_cast<U8*>(m_r->getGrManager().allocateFrameTransientMemory(
-		variant.getDefaultBlockSize(), BufferUsageBit::UNIFORM_ALL, ctx.m_uboToken));
+	U8* uniforms = static_cast<U8*>(m_r->getStagingGpuMemoryManager().allocatePerFrame(
+		variant.getDefaultBlockSize(), StagingGpuMemoryType::UNIFORM, ctx.m_uboToken));
 
 	// Call the visitor
 	SetupRenderableVariableVisitor visitor;
@@ -363,7 +363,7 @@ Error RenderableDrawer::flushDrawcall(DrawContext& ctx, CompleteRenderingBuildIn
 	// Finaly, touch the command buffer
 	CommandBufferPtr& cmdb = ctx.m_cmdb;
 
-	cmdb->bindUniformBuffer(0, 0, ctx.m_uboToken);
+	cmdb->bindUniformBuffer(0, 0, ctx.m_uboToken.m_buffer, ctx.m_uboToken.m_offset, ctx.m_uboToken.m_range);
 	cmdb->bindShaderProgram(build.m_out.m_program);
 
 	for(U i = 0; i < build.m_out.m_vertexBufferBindingCount; ++i)
@@ -376,7 +376,7 @@ Error RenderableDrawer::flushDrawcall(DrawContext& ctx, CompleteRenderingBuildIn
 		else
 		{
 			ANKI_ASSERT(!!(binding.m_token));
-			cmdb->bindVertexBuffer(i, binding.m_token, binding.m_stride);
+			cmdb->bindVertexBuffer(i, binding.m_token.m_buffer, binding.m_token.m_offset, binding.m_stride);
 		}
 	}
 
@@ -398,7 +398,8 @@ Error RenderableDrawer::flushDrawcall(DrawContext& ctx, CompleteRenderingBuildIn
 		else
 		{
 			ANKI_ASSERT(!!(build.m_out.m_indexBufferToken));
-			cmdb->bindIndexBuffer(build.m_out.m_indexBufferToken, IndexType::U16);
+			cmdb->bindIndexBuffer(
+				build.m_out.m_indexBufferToken.m_buffer, build.m_out.m_indexBufferToken.m_offset, IndexType::U16);
 		}
 
 		cmdb->drawElements(build.m_out.m_topology,

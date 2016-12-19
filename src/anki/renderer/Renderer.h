@@ -13,6 +13,7 @@
 #include <anki/resource/Forward.h>
 #include <anki/resource/ShaderResource.h>
 #include <anki/core/Timestamp.h>
+#include <anki/core/StagingGpuMemoryManager.h>
 #include <anki/util/ThreadPool.h>
 #include <anki/collision/Forward.h>
 
@@ -22,6 +23,7 @@ namespace anki
 // Forward
 class ConfigSet;
 class ResourceManager;
+class StagingGpuMemoryManager;
 
 /// @addtogroup renderer
 /// @{
@@ -66,13 +68,13 @@ public:
 	class Is
 	{
 	public:
-		TransientMemoryToken m_commonToken;
-		TransientMemoryToken m_pointLightsToken;
-		TransientMemoryToken m_spotLightsToken;
-		TransientMemoryToken m_probesToken;
-		TransientMemoryToken m_decalsToken;
-		TransientMemoryToken m_clustersToken;
-		TransientMemoryToken m_lightIndicesToken;
+		StagingGpuMemoryToken m_commonToken;
+		StagingGpuMemoryToken m_pointLightsToken;
+		StagingGpuMemoryToken m_spotLightsToken;
+		StagingGpuMemoryToken m_probesToken;
+		StagingGpuMemoryToken m_decalsToken;
+		StagingGpuMemoryToken m_clustersToken;
+		StagingGpuMemoryToken m_lightIndicesToken;
 
 		TexturePtr m_diffDecalTex;
 		TexturePtr m_normRoughnessDecalTex;
@@ -227,6 +229,7 @@ public:
 	ANKI_USE_RESULT Error init(ThreadPool* threadpool,
 		ResourceManager* resources,
 		GrManager* gr,
+		StagingGpuMemoryManager* stagingMem,
 		HeapAllocator<U8> alloc,
 		StackAllocator<U8> frameAlloc,
 		const ConfigSet& config,
@@ -310,6 +313,11 @@ anki_internal:
 		return *m_gr;
 	}
 
+	StagingGpuMemoryManager& getStagingGpuMemoryManager()
+	{
+		return *m_stagingMem;
+	}
+
 	HeapAllocator<U8> getAllocator() const
 	{
 		return m_alloc;
@@ -352,9 +360,10 @@ anki_internal:
 	}
 
 private:
-	ThreadPool* m_threadpool;
-	ResourceManager* m_resources;
-	GrManager* m_gr;
+	ThreadPool* m_threadpool = nullptr;
+	ResourceManager* m_resources = nullptr;
+	GrManager* m_gr = nullptr;
+	StagingGpuMemoryManager* m_stagingMem = nullptr;
 	Timestamp* m_globTimestamp;
 	HeapAllocator<U8> m_alloc;
 	StackAllocator<U8> m_frameAlloc;

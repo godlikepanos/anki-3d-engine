@@ -10,6 +10,7 @@
 #include <anki/resource/Material.h>
 #include <anki/resource/Model.h>
 #include <anki/util/HashMap.h>
+#include <anki/core/StagingGpuMemoryManager.h>
 
 namespace anki
 {
@@ -115,7 +116,7 @@ public:
 class RenderingVertexBufferBinding : public VertexBufferBinding
 {
 public:
-	TransientMemoryToken m_token;
+	StagingGpuMemoryToken m_token;
 
 	Bool operator==(const RenderingVertexBufferBinding& b) const
 	{
@@ -152,7 +153,7 @@ public:
 	U32 m_vertexAttributeCount;
 
 	BufferPtr m_indexBuffer;
-	TransientMemoryToken m_indexBufferToken;
+	StagingGpuMemoryToken m_indexBufferToken;
 
 	union A
 	{
