@@ -117,7 +117,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 	StagingGpuMemoryToken token;
 	const U noiseSize = NOISE_TEX_SIZE * NOISE_TEX_SIZE * sizeof(Array<I8, 4>);
 	Array<I8, 4>* noise = static_cast<Array<I8, 4>*>(
-		m_r->getStagingGpuMemoryManager().allocatePerFrame(noiseSize, StagingGpuMemoryType::TRANSFER, token));
+		m_r->getStagingGpuMemoryManager().allocateFrame(noiseSize, StagingGpuMemoryType::TRANSFER, token));
 
 	genNoise(&noise[0], &noise[0] + noiseSize);
 

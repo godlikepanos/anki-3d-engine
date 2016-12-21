@@ -49,8 +49,7 @@ Error Tm::initInternal(const ConfigSet& initializer)
 	CommandBufferPtr cmdb = getGrManager().newInstance<CommandBuffer>(cmdbinit);
 
 	StagingGpuMemoryToken token;
-	void* data =
-		m_r->getStagingGpuMemoryManager().allocatePerFrame(sizeof(Vec4), StagingGpuMemoryType::TRANSFER, token);
+	void* data = m_r->getStagingGpuMemoryManager().allocateFrame(sizeof(Vec4), StagingGpuMemoryType::TRANSFER, token);
 	*static_cast<Vec4*>(data) = Vec4(0.5);
 	cmdb->copyBufferToBuffer(token.m_buffer, token.m_offset, m_luminanceBuff, 0, token.m_range);
 	cmdb->flush();

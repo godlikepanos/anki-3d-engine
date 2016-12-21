@@ -403,7 +403,7 @@ Error LightBin::bin(FrustumComponent& frc,
 
 	if(visiblePointLightsCount)
 	{
-		ShaderPointLight* data = static_cast<ShaderPointLight*>(m_stagingMem->allocatePerFrame(
+		ShaderPointLight* data = static_cast<ShaderPointLight*>(m_stagingMem->allocateFrame(
 			sizeof(ShaderPointLight) * visiblePointLightsCount, StagingGpuMemoryType::UNIFORM, pointLightsToken));
 
 		ctx.m_pointLights = WeakArray<ShaderPointLight>(data, visiblePointLightsCount);
@@ -418,7 +418,7 @@ Error LightBin::bin(FrustumComponent& frc,
 
 	if(visibleSpotLightsCount)
 	{
-		ShaderSpotLight* data = static_cast<ShaderSpotLight*>(m_stagingMem->allocatePerFrame(
+		ShaderSpotLight* data = static_cast<ShaderSpotLight*>(m_stagingMem->allocateFrame(
 			sizeof(ShaderSpotLight) * visibleSpotLightsCount, StagingGpuMemoryType::UNIFORM, spotLightsToken));
 
 		ctx.m_spotLights = WeakArray<ShaderSpotLight>(data, visibleSpotLightsCount);
@@ -435,7 +435,7 @@ Error LightBin::bin(FrustumComponent& frc,
 	{
 		if(visibleProbeCount)
 		{
-			ShaderProbe* data = static_cast<ShaderProbe*>(m_stagingMem->allocatePerFrame(
+			ShaderProbe* data = static_cast<ShaderProbe*>(m_stagingMem->allocateFrame(
 				sizeof(ShaderProbe) * visibleProbeCount, StagingGpuMemoryType::UNIFORM, *probesToken));
 
 			ctx.m_probes = WeakArray<ShaderProbe>(data, visibleProbeCount);
@@ -451,7 +451,7 @@ Error LightBin::bin(FrustumComponent& frc,
 
 	if(visibleDecalCount)
 	{
-		ShaderDecal* data = static_cast<ShaderDecal*>(m_stagingMem->allocatePerFrame(
+		ShaderDecal* data = static_cast<ShaderDecal*>(m_stagingMem->allocateFrame(
 			sizeof(ShaderDecal) * visibleDecalCount, StagingGpuMemoryType::UNIFORM, decalsToken));
 
 		ctx.m_decals = WeakArray<ShaderDecal>(data, visibleDecalCount);
@@ -466,14 +466,14 @@ Error LightBin::bin(FrustumComponent& frc,
 	ctx.m_bin = this;
 
 	// Get mem for clusters
-	ShaderCluster* data = static_cast<ShaderCluster*>(m_stagingMem->allocatePerFrame(
+	ShaderCluster* data = static_cast<ShaderCluster*>(m_stagingMem->allocateFrame(
 		sizeof(ShaderCluster) * m_clusterCount, StagingGpuMemoryType::STORAGE, clustersToken));
 
 	ctx.m_clusters = WeakArray<ShaderCluster>(data, m_clusterCount);
 
 	// Allocate light IDs
-	U32* data2 = static_cast<U32*>(m_stagingMem->allocatePerFrame(
-		maxLightIndices * sizeof(U32), StagingGpuMemoryType::STORAGE, lightIndicesToken));
+	U32* data2 = static_cast<U32*>(
+		m_stagingMem->allocateFrame(maxLightIndices * sizeof(U32), StagingGpuMemoryType::STORAGE, lightIndicesToken));
 
 	ctx.m_lightIds = WeakArray<U32>(data2, maxLightIndices);
 

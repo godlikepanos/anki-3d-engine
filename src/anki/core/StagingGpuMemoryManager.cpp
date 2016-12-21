@@ -59,7 +59,7 @@ void StagingGpuMemoryManager::initBuffer(
 	perframe.m_mappedMem = static_cast<U8*>(perframe.m_buff->map(0, perframe.m_size, BufferMapAccessBit::WRITE));
 }
 
-void* StagingGpuMemoryManager::allocatePerFrame(PtrSize size, StagingGpuMemoryType usage, StagingGpuMemoryToken& token)
+void* StagingGpuMemoryManager::allocateFrame(PtrSize size, StagingGpuMemoryType usage, StagingGpuMemoryToken& token)
 {
 	PerFrameBuffer& buff = m_perFrameBuffers[usage];
 	Error err = buff.m_alloc.allocate(size, token.m_offset);
@@ -75,8 +75,7 @@ void* StagingGpuMemoryManager::allocatePerFrame(PtrSize size, StagingGpuMemoryTy
 	return buff.m_mappedMem + token.m_offset;
 }
 
-void* StagingGpuMemoryManager::tryAllocatePerFrame(
-	PtrSize size, StagingGpuMemoryType usage, StagingGpuMemoryToken& token)
+void* StagingGpuMemoryManager::tryAllocateFrame(PtrSize size, StagingGpuMemoryType usage, StagingGpuMemoryToken& token)
 {
 	PerFrameBuffer& buff = m_perFrameBuffers[usage];
 	Error err = buff.m_alloc.allocate(size, token.m_offset);

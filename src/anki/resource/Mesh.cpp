@@ -42,8 +42,7 @@ Error MeshLoadTask::operator()(AsyncLoaderTaskContext& ctx)
 	if(m_vertBuff)
 	{
 		StagingGpuMemoryToken token;
-		void* data =
-			stagingMem.tryAllocatePerFrame(m_loader.getVertexDataSize(), StagingGpuMemoryType::TRANSFER, token);
+		void* data = stagingMem.tryAllocateFrame(m_loader.getVertexDataSize(), StagingGpuMemoryType::TRANSFER, token);
 
 		if(data)
 		{
@@ -71,7 +70,7 @@ Error MeshLoadTask::operator()(AsyncLoaderTaskContext& ctx)
 	// Create index buffer
 	{
 		StagingGpuMemoryToken token;
-		void* data = stagingMem.tryAllocatePerFrame(m_loader.getIndexDataSize(), StagingGpuMemoryType::TRANSFER, token);
+		void* data = stagingMem.tryAllocateFrame(m_loader.getIndexDataSize(), StagingGpuMemoryType::TRANSFER, token);
 
 		if(data)
 		{

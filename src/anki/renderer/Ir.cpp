@@ -125,7 +125,7 @@ Error Ir::loadMesh(CString fname, BufferPtr& vert, BufferPtr& idx, U32& idxCount
 
 	StagingGpuMemoryToken token;
 	Vec3* verts = static_cast<Vec3*>(
-		m_r->getStagingGpuMemoryManager().allocatePerFrame(vertBuffSize, StagingGpuMemoryType::TRANSFER, token));
+		m_r->getStagingGpuMemoryManager().allocateFrame(vertBuffSize, StagingGpuMemoryType::TRANSFER, token));
 
 	const U8* ptr = loader.getVertexData();
 	for(U i = 0; i < loader.getHeader().m_totalVerticesCount; ++i)
@@ -137,7 +137,7 @@ Error Ir::loadMesh(CString fname, BufferPtr& vert, BufferPtr& idx, U32& idxCount
 
 	cmdb->copyBufferToBuffer(token.m_buffer, token.m_offset, vert, 0, token.m_range);
 
-	void* cpuIds = m_r->getStagingGpuMemoryManager().allocatePerFrame(
+	void* cpuIds = m_r->getStagingGpuMemoryManager().allocateFrame(
 		loader.getIndexDataSize(), StagingGpuMemoryType::TRANSFER, token);
 
 	memcpy(cpuIds, loader.getIndexData(), loader.getIndexDataSize());

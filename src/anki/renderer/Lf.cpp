@@ -145,7 +145,7 @@ void Lf::runOcclusionTests(RenderingContext& ctx, CommandBufferPtr cmdb)
 
 		// Alloc dyn mem
 		StagingGpuMemoryToken vertToken;
-		positions = static_cast<Vec3*>(m_r->getStagingGpuMemoryManager().allocatePerFrame(
+		positions = static_cast<Vec3*>(m_r->getStagingGpuMemoryManager().allocateFrame(
 			sizeof(Vec3) * count, StagingGpuMemoryType::VERTEX, vertToken));
 		initialPositions = positions;
 

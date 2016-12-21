@@ -75,11 +75,11 @@ public:
 
 	/// Allocate staging memory for various operations. The memory will be reclaimed at the begining of the
 	/// N-(MAX_FRAMES_IN_FLIGHT-1) frame.
-	void* allocatePerFrame(PtrSize size, StagingGpuMemoryType usage, StagingGpuMemoryToken& token);
+	void* allocateFrame(PtrSize size, StagingGpuMemoryType usage, StagingGpuMemoryToken& token);
 
 	/// Allocate staging memory for various operations. The memory will be reclaimed at the begining of the
 	/// N-(MAX_FRAMES_IN_FLIGHT-1) frame.
-	void* tryAllocatePerFrame(PtrSize size, StagingGpuMemoryType usage, StagingGpuMemoryToken& token);
+	void* tryAllocateFrame(PtrSize size, StagingGpuMemoryType usage, StagingGpuMemoryToken& token);
 
 private:
 	class PerFrameBuffer

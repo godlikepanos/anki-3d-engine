@@ -8,6 +8,7 @@
 #include <anki/core/NativeWindow.h>
 #include <anki/core/Config.h>
 #include <anki/util/HighRezTimer.h>
+#include <anki/core/StagingGpuMemoryManager.h>
 
 namespace anki
 {
@@ -255,16 +256,61 @@ void main()
 	imageStore(u_img, ivec2(gl_WorkGroupID.x, gl_WorkGroupID.y), u_color);
 })";
 
+static NativeWindow* win = nullptr;
+static GrManager* gr = nullptr;
+static StagingGpuMemoryManager* stagingMem = nullptr;
+
 #define COMMON_BEGIN()                                                                                                 \
-	NativeWindow* win = nullptr;                                                                                       \
-	GrManager* gr = nullptr;                                                                                           \
+	stagingMem = new StagingGpuMemoryManager();                                                                        \
 	createGrManager(win, gr);                                                                                          \
+	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(gr, Config()));                                                           \
 	{
 
 #define COMMON_END()                                                                                                   \
 	}                                                                                                                  \
+	delete stagingMem;                                                                                                 \
 	delete gr;                                                                                                         \
-	delete win;
+	delete win;                                                                                                        \
+	win = nullptr;                                                                                                     \
+	gr = nullptr;                                                                                                      \
+	stagingMem = nullptr;
+
+static void* setUniforms(PtrSize size, CommandBufferPtr& cmdb, U set, U binding)
+{
+	StagingGpuMemoryToken token;
+	void* ptr = stagingMem->allocateFrame(size, StagingGpuMemoryType::UNIFORM, token);
+	cmdb->bindUniformBuffer(set, binding, token.m_buffer, token.m_offset, token.m_range);
+	return ptr;
+}
+
+static void* setStorage(PtrSize size, CommandBufferPtr& cmdb, U set, U binding)
+{
+	StagingGpuMemoryToken token;
+	void* ptr = stagingMem->allocateFrame(size, StagingGpuMemoryType::STORAGE, token);
+	cmdb->bindStorageBuffer(set, binding, token.m_buffer, token.m_offset, token.m_range);
+	return ptr;
+}
+
+#define SET_UNIFORMS(type_, size_, cmdb_, set_, binding_) static_cast<type_>(setUniforms(size_, cmdb_, set_, binding_))
+#define SET_STORAGE(type_, size_, cmdb_, set_, binding_) static_cast<type_>(setStorage(size_, cmdb_, set_, binding_))
+
+#define UPLOAD_TEX_SURFACE(cmdb_, tex_, surf_, ptr_, size_)                                                            \
+	do                                                                                                                 \
+	{                                                                                                                  \
+		StagingGpuMemoryToken token;                                                                                   \
+		void* f = stagingMem->allocateFrame(size_, StagingGpuMemoryType::TRANSFER, token);                             \
+		memcpy(f, ptr_, size_);                                                                                        \
+		cmdb_->copyBufferToTextureSurface(token.m_buffer, token.m_offset, token.m_range, tex_, surf_);                 \
+	} while(0)
+
+#define UPLOAD_TEX_VOL(cmdb_, tex_, vol_, ptr_, size_)                                                                 \
+	do                                                                                                                 \
+	{                                                                                                                  \
+		StagingGpuMemoryToken token;                                                                                   \
+		void* f = stagingMem->allocateFrame(size_, StagingGpuMemoryType::TRANSFER, token);                             \
+		memcpy(f, ptr_, size_);                                                                                        \
+		cmdb_->copyBufferToTextureVolume(token.m_buffer, token.m_offset, token.m_range, tex_, vol_);                   \
+	} while(0)
 
 const PixelFormat DS_FORMAT = PixelFormat(ComponentFormat::D24S8, TransformFormat::UNORM);
 
@@ -449,16 +495,6 @@ ANKI_TEST(Gr, DrawWithUniforms)
 		timer.start();
 		gr->beginFrame();
 
-		// Uploaded buffer
-		TransientMemoryToken token;
-		Vec4* rotMat =
-			static_cast<Vec4*>(gr->allocateFrameTransientMemory(sizeof(Vec4), BufferUsageBit::UNIFORM_ALL, token));
-		F32 angle = toRad(360.0f / ITERATION_COUNT * iterations);
-		(*rotMat)[0] = cos(angle);
-		(*rotMat)[1] = -sin(angle);
-		(*rotMat)[2] = sin(angle);
-		(*rotMat)[3] = cos(angle);
-
 		CommandBufferInitInfo cinit;
 		CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
 
@@ -466,8 +502,15 @@ ANKI_TEST(Gr, DrawWithUniforms)
 		cmdb->bindShaderProgram(prog);
 		cmdb->beginRenderPass(fb);
 
-		cmdb->bindUniformBuffer(0, 0, b, 0);
-		cmdb->bindUniformBuffer(0, 1, token);
+		cmdb->bindUniformBuffer(0, 0, b, 0, MAX_PTR_SIZE);
+
+		// Uploaded buffer
+		Vec4* rotMat = SET_UNIFORMS(Vec4*, sizeof(Vec4), cmdb, 0, 1);
+		F32 angle = toRad(360.0f / ITERATION_COUNT * iterations);
+		(*rotMat)[0] = cos(angle);
+		(*rotMat)[1] = -sin(angle);
+		(*rotMat)[2] = sin(angle);
+		(*rotMat)[3] = cos(angle);
 
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
 		cmdb->endRenderPass();
@@ -705,11 +748,11 @@ ANKI_TEST(Gr, DrawWithTexture)
 
 	cmdb->setTextureSurfaceBarrier(b, TextureUsageBit::NONE, TextureUsageBit::UPLOAD, TextureSurfaceInfo(0, 0, 0, 0));
 
-	cmdb->uploadTextureSurfaceCopyData(a, TextureSurfaceInfo(0, 0, 0, 0), &mip0[0], sizeof(mip0));
+	UPLOAD_TEX_SURFACE(cmdb, a, TextureSurfaceInfo(0, 0, 0, 0), &mip0[0], sizeof(mip0));
 
-	cmdb->uploadTextureSurfaceCopyData(a, TextureSurfaceInfo(1, 0, 0, 0), &mip1[0], sizeof(mip1));
+	UPLOAD_TEX_SURFACE(cmdb, a, TextureSurfaceInfo(1, 0, 0, 0), &mip1[0], sizeof(mip1));
 
-	cmdb->uploadTextureSurfaceCopyData(b, TextureSurfaceInfo(0, 0, 0, 0), &bmip0[0], sizeof(bmip0));
+	UPLOAD_TEX_SURFACE(cmdb, b, TextureSurfaceInfo(0, 0, 0, 0), &bmip0[0], sizeof(bmip0));
 
 	// Gen mips
 	cmdb->setTextureSurfaceBarrier(
@@ -795,15 +838,12 @@ static void drawOffscreenDrawcalls(GrManager& gr,
 
 	Mat4 projMat = Mat4::calculatePerspectiveProjectionMatrix(toRad(60.0), toRad(60.0), 0.1f, 100.0f);
 
-	TransientMemoryToken token0, token1;
-
 	Mat4 modelMat(Vec4(-0.5, -0.5, 0.0, 1.0), Mat3(Euler(ang, ang / 2.0f, ang / 3.0f)), 1.0f);
 
-	Mat4* mvp = static_cast<Mat4*>(gr.allocateFrameTransientMemory(sizeof(*mvp), BufferUsageBit::UNIFORM_ALL, token0));
+	Mat4* mvp = SET_UNIFORMS(Mat4*, sizeof(*mvp), cmdb, 0, 0);
 	*mvp = projMat * viewMat * modelMat;
 
-	Vec4* color =
-		static_cast<Vec4*>(gr.allocateFrameTransientMemory(sizeof(*color) * 2, BufferUsageBit::UNIFORM_ALL, token1));
+	Vec4* color = SET_UNIFORMS(Vec4*, sizeof(*color) * 2, cmdb, 0, 1);
 	*color++ = Vec4(1.0, 0.0, 0.0, 0.0);
 	*color = Vec4(0.0, 1.0, 0.0, 0.0);
 
@@ -812,23 +852,18 @@ static void drawOffscreenDrawcalls(GrManager& gr,
 	cmdb->bindShaderProgram(prog);
 	cmdb->bindIndexBuffer(indexBuff, 0, IndexType::U16);
 	cmdb->setViewport(0, 0, viewPortSize, viewPortSize);
-	cmdb->bindUniformBuffer(0, 0, token0);
-	cmdb->bindUniformBuffer(0, 1, token1);
 	cmdb->drawElements(PrimitiveTopology::TRIANGLES, 6 * 2 * 3);
 
 	// 2nd draw
 	modelMat = Mat4(Vec4(0.5, 0.5, 0.0, 1.0), Mat3(Euler(ang * 2.0, ang, ang / 3.0f * 2.0)), 1.0f);
 
-	mvp = static_cast<Mat4*>(gr.allocateFrameTransientMemory(sizeof(*mvp), BufferUsageBit::UNIFORM_ALL, token0));
+	mvp = SET_UNIFORMS(Mat4*, sizeof(*mvp), cmdb, 0, 0);
 	*mvp = projMat * viewMat * modelMat;
 
-	color =
-		static_cast<Vec4*>(gr.allocateFrameTransientMemory(sizeof(*color) * 2, BufferUsageBit::UNIFORM_ALL, token1));
+	color = SET_UNIFORMS(Vec4*, sizeof(*color) * 2, cmdb, 0, 1);
 	*color++ = Vec4(0.0, 0.0, 1.0, 0.0);
 	*color = Vec4(0.0, 1.0, 1.0, 0.0);
 
-	cmdb->bindUniformBuffer(0, 0, token0);
-	cmdb->bindUniformBuffer(0, 1, token1);
 	cmdb->drawElements(PrimitiveTopology::TRIANGLES, 6 * 2 * 3);
 }
 
@@ -1051,16 +1086,13 @@ ANKI_TEST(Gr, ImageLoadStore)
 		CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
 
 		// Write image
-		TransientMemoryToken token;
-		Vec4* col =
-			static_cast<Vec4*>(gr->allocateFrameTransientMemory(sizeof(*col), BufferUsageBit::STORAGE_ALL, token));
+		Vec4* col = SET_STORAGE(Vec4*, sizeof(*col), cmdb, 1, 0);
 		*col = Vec4(iterations / F32(ITERATION_COUNT));
 
 		cmdb->setTextureSurfaceBarrier(
 			tex, TextureUsageBit::NONE, TextureUsageBit::IMAGE_COMPUTE_WRITE, TextureSurfaceInfo(1, 0, 0, 0));
 		cmdb->bindShaderProgram(compProg);
 		cmdb->bindImage(0, 0, tex, 1);
-		cmdb->bindStorageBuffer(1, 0, token);
 		cmdb->dispatchCompute(WIDTH / 2, HEIGHT / 2, 1);
 		cmdb->setTextureSurfaceBarrier(tex,
 			TextureUsageBit::IMAGE_COMPUTE_WRITE,
@@ -1163,9 +1195,9 @@ ANKI_TEST(Gr, 3DTextures)
 
 	cmdb->setTextureVolumeBarrier(a, TextureUsageBit::NONE, TextureUsageBit::UPLOAD, TextureVolumeInfo(1));
 
-	cmdb->uploadTextureVolumeCopyData(a, TextureVolumeInfo(0), &mip0[0], sizeof(mip0));
+	UPLOAD_TEX_VOL(cmdb, a, TextureVolumeInfo(0), &mip0[0], sizeof(mip0));
 
-	cmdb->uploadTextureVolumeCopyData(a, TextureVolumeInfo(1), &mip1[0], sizeof(mip1));
+	UPLOAD_TEX_VOL(cmdb, a, TextureVolumeInfo(1), &mip1[0], sizeof(mip1));
 
 	cmdb->setTextureVolumeBarrier(a, TextureUsageBit::UPLOAD, TextureUsageBit::SAMPLED_FRAGMENT, TextureVolumeInfo(0));
 
@@ -1207,14 +1239,11 @@ ANKI_TEST(Gr, 3DTextures)
 
 		cmdb->bindShaderProgram(prog);
 
-		TransientMemoryToken token;
-		Vec4* uv =
-			static_cast<Vec4*>(gr->allocateFrameTransientMemory(sizeof(Vec4), BufferUsageBit::UNIFORM_ALL, token));
+		Vec4* uv = SET_UNIFORMS(Vec4*, sizeof(Vec4), cmdb, 0, 0);
 
 		U idx = (F32(ITERATION_COUNT - iterations - 1) / ITERATION_COUNT) * TEX_COORDS_LOD.getSize();
 		*uv = TEX_COORDS_LOD[idx];
 
-		cmdb->bindUniformBuffer(0, 0, token);
 		cmdb->bindTexture(0, 0, a);
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
 

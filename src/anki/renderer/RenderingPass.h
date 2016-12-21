@@ -43,7 +43,7 @@ anki_internal:
 	template<typename TPtr>
 	TPtr allocateUniforms(PtrSize size, StagingGpuMemoryToken& token)
 	{
-		return static_cast<TPtr>(allocatePerFrameStagingMemory(size, StagingGpuMemoryType::UNIFORM, token));
+		return static_cast<TPtr>(allocateFrameStagingMemory(size, StagingGpuMemoryType::UNIFORM, token));
 	}
 
 	static void bindUniforms(CommandBufferPtr& cmdb, U set, U binding, const StagingGpuMemoryToken& token)
@@ -66,7 +66,7 @@ anki_internal:
 	template<typename TPtr>
 	TPtr allocateStorage(PtrSize size, StagingGpuMemoryToken& token)
 	{
-		return static_cast<TPtr>(allocatePerFrameStagingMemory(size, StagingGpuMemoryType::STORAGE, token));
+		return static_cast<TPtr>(allocateFrameStagingMemory(size, StagingGpuMemoryType::STORAGE, token));
 	}
 
 	static void bindStorage(CommandBufferPtr& cmdb, U set, U binding, const StagingGpuMemoryToken& token)
@@ -85,7 +85,7 @@ protected:
 
 	ResourceManager& getResourceManager();
 
-	void* allocatePerFrameStagingMemory(PtrSize size, StagingGpuMemoryType usage, StagingGpuMemoryToken& token);
+	void* allocateFrameStagingMemory(PtrSize size, StagingGpuMemoryType usage, StagingGpuMemoryToken& token);
 };
 /// @}
 

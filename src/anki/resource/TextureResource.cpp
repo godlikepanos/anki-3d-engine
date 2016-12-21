@@ -75,7 +75,7 @@ Error TexUploadTask::operator()(AsyncLoaderTaskContext& ctx)
 				ANKI_ASSERT(allocationSize >= surfOrVolSize);
 
 				StagingGpuMemoryToken token;
-				void* data = m_stagingMem->tryAllocatePerFrame(allocationSize, StagingGpuMemoryType::TRANSFER, token);
+				void* data = m_stagingMem->tryAllocateFrame(allocationSize, StagingGpuMemoryType::TRANSFER, token);
 
 				if(data)
 				{

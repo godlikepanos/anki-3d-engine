@@ -297,7 +297,7 @@ void RenderableDrawer::setupUniforms(DrawContext& ctx, CompleteRenderingBuildInf
 	const MaterialVariant& variant = mtl.getVariant(build.m_in.m_key);
 
 	// Get some memory for uniforms
-	U8* uniforms = static_cast<U8*>(m_r->getStagingGpuMemoryManager().allocatePerFrame(
+	U8* uniforms = static_cast<U8*>(m_r->getStagingGpuMemoryManager().allocateFrame(
 		variant.getDefaultBlockSize(), StagingGpuMemoryType::UNIFORM, ctx.m_uboToken));
 
 	// Call the visitor

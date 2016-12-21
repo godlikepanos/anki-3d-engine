@@ -167,7 +167,7 @@ Error SmaaWeights::init(const ConfigSet& initializer)
 		m_areaTex = gr.newInstance<Texture>(texinit);
 
 		StagingGpuMemoryToken token;
-		void* stagingMem = m_r->getStagingGpuMemoryManager().allocatePerFrame(
+		void* stagingMem = m_r->getStagingGpuMemoryManager().allocateFrame(
 			sizeof(areaTexBytes), StagingGpuMemoryType::TRANSFER, token);
 		memcpy(stagingMem, &areaTexBytes[0], sizeof(areaTexBytes));
 
@@ -189,7 +189,7 @@ Error SmaaWeights::init(const ConfigSet& initializer)
 		m_searchTex = gr.newInstance<Texture>(texinit);
 
 		StagingGpuMemoryToken token;
-		void* stagingMem = m_r->getStagingGpuMemoryManager().allocatePerFrame(
+		void* stagingMem = m_r->getStagingGpuMemoryManager().allocateFrame(
 			sizeof(searchTexBytes), StagingGpuMemoryType::TRANSFER, token);
 		memcpy(stagingMem, &searchTexBytes[0], sizeof(searchTexBytes));
 

@@ -30,45 +30,11 @@ void BufferImpl::init(PtrSize size, BufferUsageBit usage, BufferMapAccessBit acc
 
 	if((usage & BufferUsageBit::UNIFORM_ALL) != BufferUsageBit::NONE)
 	{
-		GLint64 maxBufferSize;
-		glGetInteger64v(GL_MAX_UNIFORM_BLOCK_SIZE, &maxBufferSize);
-
-		if(size > 16384)
-		{
-			ANKI_LOGW("The size (%u) of the uniform buffer is greater "
-					  "than the spec's min",
-				size);
-		}
-		else if(size > PtrSize(maxBufferSize))
-		{
-			ANKI_LOGW("The size (%u) of the uniform buffer is greater "
-					  "than the implementation's min (%u)",
-				size,
-				maxBufferSize);
-		}
-
 		m_target = GL_UNIFORM_BUFFER;
 	}
 
 	if((usage & BufferUsageBit::STORAGE_ALL) != BufferUsageBit::NONE)
 	{
-		GLint64 maxBufferSize;
-		glGetInteger64v(GL_MAX_SHADER_STORAGE_BLOCK_SIZE, &maxBufferSize);
-
-		if(size > pow(2, 24))
-		{
-			ANKI_LOGW("The size (%u) of the uniform buffer is greater "
-					  "than the spec's min",
-				size);
-		}
-		else if(size > PtrSize(maxBufferSize))
-		{
-			ANKI_LOGW("The size (%u) of the shader storage buffer is greater "
-					  "than the implementation's min (%u)",
-				size,
-				maxBufferSize);
-		}
-
 		m_target = GL_SHADER_STORAGE_BUFFER;
 	}
 

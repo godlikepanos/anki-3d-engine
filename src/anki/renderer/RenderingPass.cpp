@@ -35,10 +35,9 @@ ResourceManager& RenderingPass::getResourceManager()
 	return m_r->getResourceManager();
 }
 
-void* RenderingPass::allocatePerFrameStagingMemory(
-	PtrSize size, StagingGpuMemoryType usage, StagingGpuMemoryToken& token)
+void* RenderingPass::allocateFrameStagingMemory(PtrSize size, StagingGpuMemoryType usage, StagingGpuMemoryToken& token)
 {
-	return m_r->getStagingGpuMemoryManager().allocatePerFrame(size, usage, token);
+	return m_r->getStagingGpuMemoryManager().allocateFrame(size, usage, token);
 }
 
 } // end namespace anki
