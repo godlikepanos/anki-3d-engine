@@ -6,19 +6,20 @@ using namespace anki;
 class MyApp : public App
 {
 public:
-	Error init();
+	Error init(int argc, char** argv);
 	Error userMainLoop(Bool& quit) override;
 };
 
 MyApp* app;
 
-Error MyApp::init()
+Error MyApp::init(int argc, char** argv)
 {
 	// Init the super class
 	Config config;
 	config.set("fullscreenDesktopResolution", true);
 	config.set("dataPaths", ".:..");
 	config.set("debugContext", 0);
+	ANKI_CHECK(config.setFromCommandLineArguments(argc, argv));
 	ANKI_CHECK(App::init(config, allocAligned, nullptr));
 
 	// Load the scene.lua
@@ -151,7 +152,7 @@ int main(int argc, char* argv[])
 	Error err = ErrorCode::NONE;
 
 	app = new MyApp;
-	err = app->init();
+	err = app->init(argc, argv);
 	if(!err)
 	{
 		err = app->mainLoop();

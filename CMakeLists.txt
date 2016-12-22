@@ -33,6 +33,12 @@ else()
 	message(FATAL_ERROR "Unknown system")
 endif()
 
+if(${CMAKE_C_COMPILER_ID} MATCHES "GNU")
+	set(GCC TRUE)
+else()
+	set(GCC FALSE)
+endif()
+
 ################################################################################
 # Configuration                                                                #
 ################################################################################
@@ -122,7 +128,7 @@ endif()
 add_definitions(-fno-exceptions)
 
 # static libstdc++
-if(${CMAKE_C_COMPILER_ID} MATCHES "GNU")
+if(GCC)
 	set(CXX_FLAGS "${CXX_FLAGS} -static-libstdc++ ")
 endif()
 
@@ -141,7 +147,7 @@ if(ANKI_DEBUG_SYMBOLS)
 endif()
 
 if(ANKI_DEBUG)
-	if(${CMAKE_C_COMPILER_ID} MATCHES "GNU")
+	if(GCC)
 		set(COMPILER_FLAGS "${COMPILER_FLAGS} -fstack-check ")
 	endif()
 else()
@@ -209,6 +215,10 @@ if((LINUX OR MACOS OR WINDOWS) AND GL)
 	set(ANKI_EXTERN_SUB_DIRS ${ANKI_EXTERN_SUB_DIRS} GLEW)
 endif()
 
+if(VULKAN)
+	set(ANKI_EXTERN_SUB_DIRS ${ANKI_EXTERN_SUB_DIRS} SPIRV-Cross)
+endif()
+
 if(ANKI_BUILD_TOOLS)
 	set(ANKI_EXTERN_SUB_DIRS ${ANKI_EXTERN_SUB_DIRS} assimp)
 endif()
@@ -248,10 +258,6 @@ add_library(FREETYPE_LIB STATIC IMPORTED)
 set_property(TARGET FREETYPE_LIB PROPERTY IMPORTED_LOCATION ${FREETYPE_INSTALL_DIR}/lib/libfreetype.a)
 add_dependencies(FREETYPE_LIB FREETYPE_PROJECT)
 
-foreach(TMP ${ANKI_EXTERN_SUB_DIRS})
-	add_subdirectory(thirdparty/${TMP})
-endforeach()
-
 # glslang
 if(VULKAN)
 	ExternalProject_Add(
@@ -284,6 +290,10 @@ if(VULKAN)
 	set_property(TARGET HLSL_LIB PROPERTY IMPORTED_LOCATION ${GLSLANG_INSTALL_DIR}/lib/libHLSL.a)
 	add_dependencies(HLSL_LIB GLSLANG_PROJECT)
 endif()
+
+foreach(TMP ${ANKI_EXTERN_SUB_DIRS})
+	add_subdirectory(thirdparty/${TMP})
+endforeach()
 
 ################################################################################
 # AnKi                                                                         #
