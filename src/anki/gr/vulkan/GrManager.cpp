@@ -48,21 +48,6 @@ void GrManager::finish()
 {
 }
 
-void* GrManager::allocateFrameTransientMemory(PtrSize size, BufferUsageBit usage, TransientMemoryToken& token)
-{
-	void* ptr = nullptr;
-	m_impl->getTransientMemoryManager().allocate(size, usage, token, ptr, nullptr);
-	return ptr;
-}
-
-void* GrManager::tryAllocateFrameTransientMemory(PtrSize size, BufferUsageBit usage, TransientMemoryToken& token)
-{
-	void* ptr = nullptr;
-	Error err = ErrorCode::NONE;
-	m_impl->getTransientMemoryManager().allocate(size, usage, token, ptr, &err);
-	return (!err) ? ptr : nullptr;
-}
-
 void GrManager::getTextureSurfaceUploadInfo(TexturePtr tex, const TextureSurfaceInfo& surf, PtrSize& allocationSize)
 {
 	const TextureImpl& impl = *tex->m_impl;
@@ -116,6 +101,16 @@ void GrManager::getTextureVolumeUploadInfo(TexturePtr tex, const TextureVolumeIn
 	{
 		ANKI_ASSERT(0);
 	}
+}
+
+void GrManager::getUniformBufferInfo(U32& bindOffsetAlignment, PtrSize& maxUniformBlockSize) const
+{
+	ANKI_ASSERT(!"TODO");
+}
+
+void GrManager::getStorageBufferInfo(U32& bindOffsetAlignment, PtrSize& maxStorageBlockSize) const
+{
+	ANKI_ASSERT(!"TODO");
 }
 
 } // end namespace anki

@@ -397,6 +397,8 @@ endif()
 
 link_directories(${FREETYPE_INSTALL_DIR}/lib)
 
+add_definitions(-DSPIRV_CROSS_EXCEPTIONS_TO_ASSERTIONS)
+
 # Add anki sub libraries
 set(ANKI_SUB_DIRS core script renderer scene ui event input physics resource misc gr collision math util)
 set(ANKI_LIBS "")

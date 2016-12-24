@@ -7,12 +7,9 @@
 
 #include <anki/gr/vulkan/Common.h>
 #include <anki/gr/vulkan/GpuMemoryManager.h>
-#include <anki/gr/vulkan/Semaphore.h>
+#include <anki/gr/vulkan/GrSemaphore.h>
 #include <anki/gr/vulkan/Fence.h>
-#include <anki/gr/vulkan/TransientMemoryManager.h>
 #include <anki/gr/vulkan/QueryExtra.h>
-#include <anki/gr/vulkan/PipelineExtra.h>
-#include <anki/gr/vulkan/ResourceGroupExtra.h>
 #include <anki/gr/vulkan/CommandBufferExtra.h>
 #include <anki/util/HashMap.h>
 
@@ -21,6 +18,7 @@ namespace anki
 
 // Forward
 class TextureFallbackUploader;
+class ConfigSet;
 
 /// @addtogroup vulkan
 /// @{
@@ -31,8 +29,6 @@ class GrManagerImpl
 public:
 	GrManagerImpl(GrManager* manager)
 		: m_manager(manager)
-		, m_rpCreator(this)
-		, m_transientMem(manager)
 	{
 		ANKI_ASSERT(manager);
 	}
@@ -130,11 +126,6 @@ public:
 		return m_gpuMemManager;
 	}
 
-	TransientMemoryManager& getTransientMemoryManager()
-	{
-		return m_transientMem;
-	}
-
 	const VkPhysicalDeviceMemoryProperties& getMemoryProperties() const
 	{
 		return m_memoryProperties;
@@ -166,31 +157,10 @@ public:
 		return m_d24S8ImagesSupported;
 	}
 
-	CompatibleRenderPassCreator& getCompatibleRenderPassCreator()
-	{
-		return m_rpCreator;
-	}
-
-	DescriptorSetAllocator& getDescriptorSetAllocator()
-	{
-		return m_dsetAlloc;
-	}
-
-	VkPipelineCache getPipelineCache() const
-	{
-		ANKI_ASSERT(m_pplineCache);
-		return m_pplineCache;
-	}
-
 	GrObjectCache& getSamplerCache()
 	{
 		ANKI_ASSERT(m_samplerCache);
 		return *m_samplerCache;
-	}
-
-	PipelineLayoutFactory& getPipelineLayoutFactory()
-	{
-		return m_pplineLayFactory;
 	}
 
 private:
@@ -222,10 +192,10 @@ private:
 	{
 	public:
 		FencePtr m_presentFence;
-		SemaphorePtr m_acquireSemaphore;
+		GrSemaphorePtr m_acquireSemaphore;
 
 		/// The semaphore that the submit that renders to the default FB.
-		SemaphorePtr m_renderSemaphore;
+		GrSemaphorePtr m_renderSemaphore;
 
 		/// Keep it here for deferred cleanup.
 		List<CommandBufferPtr> m_cmdbsSubmitted;
@@ -240,20 +210,12 @@ private:
 	U32 m_crntBackbufferIdx = 0;
 	/// @}
 
-	DescriptorSetAllocator m_dsetAlloc;
-	PipelineLayoutFactory m_pplineLayFactory;
-
-	/// Map for compatible render passes.
-	CompatibleRenderPassCreator m_rpCreator;
-
 	/// @name Memory
 	/// @{
 	VkPhysicalDeviceMemoryProperties m_memoryProperties;
 
 	/// The main allocator.
 	GpuMemoryManager m_gpuMemManager;
-
-	TransientMemoryManager m_transientMem;
 	/// @}
 
 	/// @name Per_thread_cache
@@ -288,7 +250,7 @@ private:
 	SpinLock m_perThreadMtx;
 
 	FenceFactory m_fences;
-	SemaphoreFactory m_semaphores;
+	GrSemaphoreFactory m_semaphores;
 	/// @}
 
 	QueryAllocator m_queryAlloc;

@@ -7,7 +7,6 @@
 
 #include <anki/gr/vulkan/VulkanObject.h>
 #include <anki/gr/CommandBuffer.h>
-#include <anki/gr/vulkan/ResourceGroupExtra.h>
 #include <anki/util/List.h>
 
 namespace anki
@@ -72,13 +71,9 @@ public:
 
 	void setStencilReference(FaceSelectionBit face, U32 ref);
 
-	void bindPipeline(PipelinePtr ppline);
-
 	void beginRenderPass(FramebufferPtr fb);
 
 	void endRenderPass();
-
-	void bindResourceGroup(ResourceGroupPtr rc, U slot, const TransientMemoryInfo* dynInfo);
 
 	void drawArrays(U32 count, U32 instanceCount, U32 first, U32 baseInstance);
 
@@ -96,10 +91,6 @@ public:
 
 	void endOcclusionQuery(OcclusionQueryPtr query);
 
-	void uploadTextureSurface(TexturePtr tex, const TextureSurfaceInfo& surf, const TransientMemoryToken& token);
-
-	void uploadTextureVolume(TexturePtr tex, const TextureVolumeInfo& vol, const TransientMemoryToken& token);
-
 	void generateMipmaps2d(TexturePtr tex, U face, U layer);
 
 	void clearTextureSurface(
@@ -107,8 +98,6 @@ public:
 
 	void clearTextureVolume(
 		TexturePtr tex, const TextureVolumeInfo& volume, const ClearValue& clearValue, DepthStencilAspectBit aspect);
-
-	void uploadBuffer(BufferPtr buff, PtrSize offset, const TransientMemoryToken& token);
 
 	void pushSecondLevelCommandBuffer(CommandBufferPtr cmdb);
 
@@ -167,9 +156,7 @@ private:
 
 	/// @name cleanup_references
 	/// @{
-	List<PipelinePtr> m_pplineList;
 	List<FramebufferPtr> m_fbList;
-	List<ResourceGroupPtr> m_rcList;
 	List<TexturePtr> m_texList;
 	List<OcclusionQueryPtr> m_queryList;
 	List<BufferPtr> m_bufferList;

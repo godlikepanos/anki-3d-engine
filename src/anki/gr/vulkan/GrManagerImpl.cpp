@@ -6,7 +6,6 @@
 #include <anki/gr/vulkan/GrManagerImpl.h>
 #include <anki/gr/GrManager.h>
 
-#include <anki/gr/Pipeline.h>
 #include <anki/gr/vulkan/CommandBufferImpl.h>
 #include <anki/gr/CommandBuffer.h>
 #include <anki/gr/GrObjectCache.h>
@@ -56,11 +55,6 @@ GrManagerImpl::~GrManagerImpl()
 	}
 
 	// THIRD THING: Continue with the rest
-	m_rpCreator.destroy();
-
-	m_pplineLayFactory.destroy();
-	m_dsetAlloc.destroy();
-	m_transientMem.destroy();
 	m_gpuMemManager.destroy();
 
 	m_semaphores.destroy(); // Destroy before fences
@@ -125,8 +119,6 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	}
 
 	ANKI_CHECK(initMemory(*init.m_config));
-	ANKI_CHECK(m_dsetAlloc.init(getAllocator(), m_device));
-	m_pplineLayFactory.init(getAllocator(), m_device, &m_dsetAlloc.getDescriptorSetLayoutFactory());
 
 	for(PerFrame& f : m_perFrame)
 	{
@@ -507,11 +499,7 @@ Error GrManagerImpl::initSwapchain(const GrManagerInitInfo& init)
 Error GrManagerImpl::initMemory(const ConfigSet& cfg)
 {
 	vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &m_memoryProperties);
-
 	m_gpuMemManager.init(m_physicalDevice, m_device, getAllocator());
-
-	// Transient mem
-	ANKI_CHECK(m_transientMem.init(cfg));
 
 	return ErrorCode::NONE;
 }
@@ -594,8 +582,6 @@ void GrManagerImpl::endFrame()
 
 	ANKI_VK_CHECKF(vkQueuePresentKHR(m_queue, &present));
 	ANKI_VK_CHECKF(res);
-
-	m_transientMem.endFrame();
 
 	// Finalize
 	++m_frame;

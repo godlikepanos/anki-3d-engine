@@ -6,12 +6,8 @@
 #include <anki/gr/vulkan/CommandBufferImpl.h>
 #include <anki/gr/vulkan/GrManagerImpl.h>
 
-#include <anki/gr/Pipeline.h>
-#include <anki/gr/vulkan/PipelineImpl.h>
 #include <anki/gr/Framebuffer.h>
 #include <anki/gr/vulkan/FramebufferImpl.h>
-#include <anki/gr/ResourceGroup.h>
-#include <anki/gr/vulkan/ResourceGroupImpl.h>
 
 #include <algorithm>
 
@@ -40,9 +36,7 @@ CommandBufferImpl::~CommandBufferImpl()
 		getGrManagerImpl().deleteCommandBuffer(m_handle, m_flags, m_tid);
 	}
 
-	m_pplineList.destroy(m_alloc);
 	m_fbList.destroy(m_alloc);
-	m_rcList.destroy(m_alloc);
 	m_texList.destroy(m_alloc);
 	m_queryList.destroy(m_alloc);
 	m_bufferList.destroy(m_alloc);
@@ -79,17 +73,18 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 	{
 		const FramebufferImpl& impl = *init.m_framebuffer->m_impl;
 
-		inheritance.renderPass = impl.getRenderPassHandle();
+		// TODO inheritance.renderPass = impl.getRenderPassHandle();
 		inheritance.subpass = 0;
 
-		if(!impl.isDefaultFramebuffer())
+		// TODO
+		/*if(!impl.isDefaultFramebuffer())
 		{
 			inheritance.framebuffer = impl.getFramebufferHandle(0);
 		}
 		else
 		{
 			inheritance.framebuffer = impl.getFramebufferHandle(getGrManagerImpl().getCurrentBackbufferIndex());
-		}
+		}*/
 
 		begin.flags |= VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
 	}
@@ -114,6 +109,8 @@ void CommandBufferImpl::beginRenderPass(FramebufferPtr fb)
 
 void CommandBufferImpl::beginRenderPassInternal()
 {
+// TODO
+#if 0
 	VkRenderPassBeginInfo bi = {};
 	bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	FramebufferImpl& impl = *m_activeFb->m_impl;
@@ -151,10 +148,13 @@ void CommandBufferImpl::beginRenderPassInternal()
 	}
 
 	ANKI_CMD(vkCmdBeginRenderPass(m_handle, &bi, m_subpassContents), ANY_OTHER_COMMAND);
+#endif
 }
 
 void CommandBufferImpl::endRenderPass()
 {
+// TODO
+#if 0
 	commandCommon();
 	ANKI_ASSERT(insideRenderPass());
 	ANKI_ASSERT(m_rpCommandCount > 0);
@@ -175,6 +175,7 @@ void CommandBufferImpl::endRenderPass()
 	}
 
 	m_activeFb.reset(nullptr);
+#endif
 }
 
 void CommandBufferImpl::endRecording()
@@ -186,52 +187,6 @@ void CommandBufferImpl::endRecording()
 
 	ANKI_CMD(ANKI_VK_CHECKF(vkEndCommandBuffer(m_handle)), ANY_OTHER_COMMAND);
 	m_finalized = true;
-}
-
-void CommandBufferImpl::bindResourceGroup(ResourceGroupPtr rc, U set, const TransientMemoryInfo* dynInfo)
-{
-	commandCommon();
-	const ResourceGroupImpl& impl = *rc->m_impl;
-
-	if(impl.m_handle)
-	{
-		DeferredDsetBinding& binding = m_deferredDsetBindings[set];
-		m_deferredDsetBindingMask |= (1 << set);
-
-		/// Defer the dset bindings until you know the ppline layout
-		U dynOfsetCount = 0;
-		impl.setupDynamicOffsets(dynInfo, &binding.m_dynOffsets[0], dynOfsetCount);
-		binding.m_dynOffsetCount = dynOfsetCount;
-		binding.m_bindPoint = impl.m_bindPoint;
-		binding.m_dset = impl.m_handle;
-#if ANKI_ASSERTIONS
-		binding.m_dsetLayoutInfo = impl.m_descriptorSetLayoutInfo;
-#endif
-	}
-
-	// Bind vertex and index buffer only in the first set
-	if(set == 0)
-	{
-		Array<VkBuffer, MAX_VERTEX_ATTRIBUTES> buffers = {{}};
-		Array<VkDeviceSize, MAX_VERTEX_ATTRIBUTES> offsets = {{}};
-		U bindingCount = 0;
-		impl.getVertexBindingInfo(dynInfo, &buffers[0], &offsets[0], bindingCount);
-		if(bindingCount)
-		{
-			ANKI_CMD(vkCmdBindVertexBuffers(m_handle, 0, bindingCount, &buffers[0], &offsets[0]), ANY_OTHER_COMMAND);
-		}
-
-		VkBuffer idxBuff;
-		VkDeviceSize idxBuffOffset;
-		VkIndexType idxType;
-		if(impl.getIndexBufferInfo(idxBuff, idxBuffOffset, idxType))
-		{
-			ANKI_CMD(vkCmdBindIndexBuffer(m_handle, idxBuff, idxBuffOffset, idxType), ANY_OTHER_COMMAND);
-		}
-	}
-
-	// Hold the reference
-	m_rcList.pushBack(m_alloc, rc);
 }
 
 void CommandBufferImpl::generateMipmaps2d(TexturePtr tex, U face, U layer)
@@ -330,6 +285,7 @@ void CommandBufferImpl::generateMipmaps2d(TexturePtr tex, U face, U layer)
 	m_texList.pushBack(m_alloc, tex);
 }
 
+#if 0
 void CommandBufferImpl::uploadTextureSurface(
 	TexturePtr tex, const TextureSurfaceInfo& surf, const TransientMemoryToken& token)
 {
@@ -543,6 +499,7 @@ void CommandBufferImpl::uploadTextureVolume(
 
 	m_texList.pushBack(m_alloc, tex);
 }
+#endif
 
 void CommandBufferImpl::flushBarriers()
 {

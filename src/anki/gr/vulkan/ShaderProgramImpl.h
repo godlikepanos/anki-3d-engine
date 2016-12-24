@@ -10,24 +10,21 @@
 namespace anki
 {
 
-// Forward
-class FramebufferAttachmentInfo;
-
 /// @addtogroup vulkan
 /// @{
 
-/// Framebuffer implementation.
-class FramebufferImpl : public VulkanObject
+/// Shader program implementation.
+class ShaderProgramImpl : public VulkanObject
 {
 public:
-	FramebufferImpl(GrManager* manager)
+	ShaderProgramImpl(GrManager* manager)
 		: VulkanObject(manager)
 	{
 	}
 
-	~FramebufferImpl();
-
-	ANKI_USE_RESULT Error init(const FramebufferInitInfo& init);
+	~ShaderProgramImpl()
+	{
+	}
 };
 /// @}
 

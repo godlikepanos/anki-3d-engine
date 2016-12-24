@@ -6,8 +6,6 @@
 #include <anki/gr/vulkan/CommandBufferImpl.h>
 #include <anki/gr/vulkan/GrManagerImpl.h>
 #include <anki/gr/vulkan/TextureImpl.h>
-#include <anki/gr/Pipeline.h>
-#include <anki/gr/vulkan/PipelineImpl.h>
 #include <anki/gr/Buffer.h>
 #include <anki/gr/vulkan/BufferImpl.h>
 #include <anki/gr/OcclusionQuery.h>
@@ -448,28 +446,6 @@ inline void CommandBufferImpl::clearTextureVolume(
 	clearTextureInternal(tex, clearValue, range);
 }
 
-inline void CommandBufferImpl::uploadBuffer(BufferPtr buff, PtrSize offset, const TransientMemoryToken& token)
-{
-	commandCommon();
-	BufferImpl& impl = *buff->m_impl;
-
-	VkBufferCopy region;
-	region.srcOffset = token.m_offset;
-	region.dstOffset = offset;
-	region.size = token.m_range;
-
-	ANKI_ASSERT(offset + token.m_range <= impl.getSize());
-
-	ANKI_CMD(vkCmdCopyBuffer(m_handle,
-				 getGrManagerImpl().getTransientMemoryManager().getBufferHandle(token.m_usage),
-				 impl.getHandle(),
-				 1,
-				 &region),
-		ANY_OTHER_COMMAND);
-
-	m_bufferList.pushBack(m_alloc, buff);
-}
-
 inline void CommandBufferImpl::pushSecondLevelCommandBuffer(CommandBufferPtr cmdb)
 {
 	commandCommon();
@@ -647,22 +623,6 @@ inline void CommandBufferImpl::flushDsetBindings()
 		}
 	}
 #endif
-}
-
-inline void CommandBufferImpl::bindPipeline(PipelinePtr ppline)
-{
-	commandCommon();
-	const PipelineImpl& impl = *ppline->m_impl;
-
-	ANKI_CMD(vkCmdBindPipeline(m_handle, impl.m_bindPoint, impl.m_handle), ANY_OTHER_COMMAND);
-
-	m_crntPplineLayout = impl.m_pipelineLayout;
-#if ANKI_ASSERTIONS
-	m_pplineDsetLayoutInfos = impl.m_descriptorSetLayoutInfos;
-	m_pplineDsetMask = impl.m_descriptorSetMask;
-#endif
-
-	m_pplineList.pushBack(m_alloc, ppline);
 }
 
 } // end namespace anki

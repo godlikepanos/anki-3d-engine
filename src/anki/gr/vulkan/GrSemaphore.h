@@ -11,16 +11,16 @@ namespace anki
 {
 
 // Forward
-class SemaphoreFactory;
+class GrSemaphoreFactory;
 
 /// @addtogroup vulkan
 /// @{
 
 /// Simple semaphore wrapper.
-class Semaphore : public NonCopyable
+class GrSemaphore : public NonCopyable
 {
-	friend class SemaphoreFactory;
-	friend class SemaphorePtrDeleter;
+	friend class GrSemaphoreFactory;
+	friend class GrSemaphorePtrDeleter;
 	template<typename, typename>
 	friend class GenericPoolAllocator;
 
@@ -41,31 +41,31 @@ public:
 private:
 	VkSemaphore m_handle = VK_NULL_HANDLE;
 	Atomic<U32> m_refcount = {0};
-	SemaphoreFactory* m_factory = nullptr;
+	GrSemaphoreFactory* m_factory = nullptr;
 
 	/// Fence to find out when it's safe to reuse this semaphore.
 	FencePtr m_fence;
 
-	Semaphore(SemaphoreFactory* f, FencePtr fence);
+	GrSemaphore(GrSemaphoreFactory* f, FencePtr fence);
 
-	~Semaphore();
+	~GrSemaphore();
 };
 
-/// SemaphorePtr deleter.
-class SemaphorePtrDeleter
+/// GrSemaphorePtr deleter.
+class GrSemaphorePtrDeleter
 {
 public:
-	void operator()(Semaphore* s);
+	void operator()(GrSemaphore* s);
 };
 
-/// Semaphore smart pointer.
-using SemaphorePtr = IntrusivePtr<Semaphore, SemaphorePtrDeleter>;
+/// GrSemaphore smart pointer.
+using GrSemaphorePtr = IntrusivePtr<GrSemaphore, GrSemaphorePtrDeleter>;
 
 /// Factory of semaphores.
-class SemaphoreFactory
+class GrSemaphoreFactory
 {
-	friend class Semaphore;
-	friend class SemaphorePtrDeleter;
+	friend class GrSemaphore;
+	friend class GrSemaphorePtrDeleter;
 
 public:
 	void init(GrAllocator<U8> alloc, VkDevice dev)
@@ -77,16 +77,16 @@ public:
 
 	void destroy();
 
-	SemaphorePtr newInstance(FencePtr fence);
+	GrSemaphorePtr newInstance(FencePtr fence);
 
 private:
 	GrAllocator<U8> m_alloc;
-	DynamicArray<Semaphore*> m_sems;
+	DynamicArray<GrSemaphore*> m_sems;
 	U32 m_semCount = 0;
 	VkDevice m_dev = VK_NULL_HANDLE;
 	Mutex m_mtx;
 
-	void destroySemaphore(Semaphore* s);
+	void destroySemaphore(GrSemaphore* s);
 
 	/// Iterate the semaphores and release the fences.
 	void releaseFences();
@@ -95,4 +95,4 @@ private:
 
 } // end namespace anki
 
-#include <anki/gr/vulkan/Semaphore.inl.h>
+#include <anki/gr/vulkan/GrSemaphore.inl.h>

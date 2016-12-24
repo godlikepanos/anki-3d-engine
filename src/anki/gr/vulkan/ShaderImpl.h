@@ -6,7 +6,7 @@
 #pragma once
 
 #include <anki/gr/vulkan/VulkanObject.h>
-#include <anki/gr/vulkan/ResourceGroupExtra.h>
+#include <anki/gr/vulkan/DescriptorSet.h>
 #include <anki/util/String.h>
 #include <vector>
 
@@ -22,8 +22,6 @@ class ShaderImpl : public VulkanObject
 public:
 	VkShaderModule m_handle = VK_NULL_HANDLE;
 	ShaderType m_shaderType = ShaderType::COUNT;
-	U8 m_descriptorSetMask = 0;
-	Array<DescriptorSetLayoutInfo, MAX_BOUND_RESOURCE_GROUPS> m_descriptorSetLayoutInfos;
 
 	ShaderImpl(GrManager* manager)
 		: VulkanObject(manager)

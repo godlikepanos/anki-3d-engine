@@ -7,7 +7,6 @@
 
 #include <anki/gr/vulkan/VulkanObject.h>
 #include <anki/gr/vulkan/GpuMemoryManager.h>
-#include <anki/gr/vulkan/Semaphore.h>
 #include <anki/gr/common/Misc.h>
 #include <anki/util/HashMap.h>
 
