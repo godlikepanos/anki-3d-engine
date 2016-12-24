@@ -390,7 +390,7 @@ ANKI_TEST(Gr, Shader)
 {
 	COMMON_BEGIN()
 
-	ShaderPtr shader = gr->newInstance<Shader>(ShaderType::VERTEX, VERT_SRC);
+	ShaderPtr shader = gr->newInstance<Shader>(ShaderType::FRAGMENT, FRAG_MRT_SRC);
 
 	COMMON_END()
 }

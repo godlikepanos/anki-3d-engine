@@ -23,6 +23,9 @@ public:
 	VkShaderModule m_handle = VK_NULL_HANDLE;
 	ShaderType m_shaderType = ShaderType::COUNT;
 
+	Array<DynamicArray<DescriptorBinding>, MAX_BOUND_RESOURCE_GROUPS> m_bindings;
+	U8 m_colorAttachmentWritemask = 0;
+
 	ShaderImpl(GrManager* manager)
 		: VulkanObject(manager)
 	{
@@ -35,6 +38,8 @@ public:
 private:
 	/// Generate SPIRV from GLSL.
 	ANKI_USE_RESULT Error genSpirv(const CString& source, std::vector<unsigned int>& spirv);
+
+	void doReflection(const std::vector<unsigned int>& spirv);
 };
 /// @}
 

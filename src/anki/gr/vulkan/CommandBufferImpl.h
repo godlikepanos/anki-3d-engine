@@ -226,19 +226,10 @@ private:
 		U8 m_dynOffsetCount;
 		VkPipelineBindPoint m_bindPoint;
 		VkDescriptorSet m_dset;
-#if ANKI_ASSERTIONS
-		DescriptorSetLayoutInfo m_dsetLayoutInfo;
-#endif
 	};
 	Array<DeferredDsetBinding, MAX_BOUND_RESOURCE_GROUPS> m_deferredDsetBindings;
 	U8 m_deferredDsetBindingMask = 0;
 	VkPipelineLayout m_crntPplineLayout = VK_NULL_HANDLE;
-#if ANKI_ASSERTIONS
-	Array<DescriptorSetLayoutInfo, MAX_BOUND_RESOURCE_GROUPS> m_pplineDsetLayoutInfos;
-	U8 m_pplineDsetMask = 0;
-
-	U8 m_boundDsetsMask = 0;
-#endif
 
 	/// Some common operations per command.
 	void commandCommon();

@@ -604,25 +604,10 @@ inline void CommandBufferImpl::flushDsetBindings()
 						 binding.m_dynOffsetCount,
 						 &binding.m_dynOffsets[0]),
 				ANY_OTHER_COMMAND);
-#if ANKI_DEBUG
-			m_boundDsetsMask |= (1 << i);
-#endif
 		}
 	}
 
 	m_deferredDsetBindingMask = 0;
-
-#if ANKI_DEBUG
-	ANKI_ASSERT((m_boundDsetsMask & m_pplineDsetMask) == m_pplineDsetMask);
-
-	for(U i = 0; i < MAX_BOUND_RESOURCE_GROUPS; ++i)
-	{
-		if(m_pplineDsetMask & (1 << i))
-		{
-			ANKI_ASSERT(m_pplineDsetLayoutInfos[i] == m_deferredDsetBindings[i].m_dsetLayoutInfo);
-		}
-	}
-#endif
 }
 
 } // end namespace anki

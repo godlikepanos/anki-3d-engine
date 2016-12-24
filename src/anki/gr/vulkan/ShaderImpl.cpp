@@ -305,9 +305,65 @@ Error ShaderImpl::init(ShaderType shaderType, const CString& source)
 	ANKI_VK_CHECK(vkCreateShaderModule(getDevice(), &ci, nullptr, &m_handle));
 
 	// Get reflection info
-	spirv_cross::Compiler spvc(spirv);
+	doReflection(spirv);
 
 	return ErrorCode::NONE;
+}
+
+void ShaderImpl::doReflection(const std::vector<unsigned int>& spirv)
+{
+	spirv_cross::Compiler spvc(spirv);
+	spirv_cross::ShaderResources rsrc = spvc.get_shader_resources(spvc.get_active_interface_variables());
+
+	Array<U, MAX_BOUND_RESOURCE_GROUPS> counts = {{
+		0,
+	}};
+	Array2d<DescriptorBinding, MAX_BOUND_RESOURCE_GROUPS, MAX_DESCRIPTORS_PER_SET> descriptors;
+
+	auto func = [&](const std::vector<spirv_cross::Resource>& resources, VkDescriptorType type) -> void {
+		for(const spirv_cross::Resource& r : resources)
+		{
+			const U32 id = r.id;
+			const U32 set = spvc.get_decoration(id, spv::Decoration::DecorationDescriptorSet);
+			const U32 binding = spvc.get_decoration(id, spv::Decoration::DecorationBinding);
+
+			// Check that there are no other descriptors with the same binding
+			for(U i = 0; i < counts[set]; ++i)
+			{
+				ANKI_ASSERT(descriptors[set][i].m_binding != binding);
+			}
+
+			DescriptorBinding& descriptor = descriptors[set][counts[set]++];
+			descriptor.m_binding = binding;
+			descriptor.m_type = type;
+		}
+	};
+
+	func(rsrc.uniform_buffers, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC);
+	func(rsrc.sampled_images, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE);
+	func(rsrc.storage_buffers, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC);
+	func(rsrc.storage_images, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
+
+	for(U set = 0; set < MAX_BOUND_RESOURCE_GROUPS; ++set)
+	{
+		if(counts[set])
+		{
+			m_bindings[set].create(getAllocator(), counts[set]);
+			memcpy(&m_bindings[set][0], &descriptors[set][0], counts[set] * sizeof(DescriptorBinding));
+		}
+	}
+
+	// Color attachments
+	if(m_shaderType == ShaderType::FRAGMENT)
+	{
+		for(const spirv_cross::Resource& r : rsrc.stage_outputs)
+		{
+			const U32 id = r.id;
+			const U32 location = spvc.get_decoration(id, spv::Decoration::DecorationLocation);
+
+			m_colorAttachmentWritemask |= 1 << location;
+		}
+	}
 }
 
 } // end namespace anki

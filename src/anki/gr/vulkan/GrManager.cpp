@@ -105,12 +105,14 @@ void GrManager::getTextureVolumeUploadInfo(TexturePtr tex, const TextureVolumeIn
 
 void GrManager::getUniformBufferInfo(U32& bindOffsetAlignment, PtrSize& maxUniformBlockSize) const
 {
-	ANKI_ASSERT(!"TODO");
+	bindOffsetAlignment = m_impl->getPhysicalDeviceProperties().limits.minUniformBufferOffsetAlignment;
+	maxUniformBlockSize = m_impl->getPhysicalDeviceProperties().limits.maxUniformBufferRange;
 }
 
 void GrManager::getStorageBufferInfo(U32& bindOffsetAlignment, PtrSize& maxStorageBlockSize) const
 {
-	ANKI_ASSERT(!"TODO");
+	bindOffsetAlignment = m_impl->getPhysicalDeviceProperties().limits.minStorageBufferOffsetAlignment;
+	maxStorageBlockSize = m_impl->getPhysicalDeviceProperties().limits.maxStorageBufferRange;
 }
 
 } // end namespace anki
