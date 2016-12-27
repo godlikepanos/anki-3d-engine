@@ -318,7 +318,7 @@ void ShaderImpl::doReflection(const std::vector<unsigned int>& spirv)
 	Array<U, MAX_BOUND_RESOURCE_GROUPS> counts = {{
 		0,
 	}};
-	Array2d<DescriptorBinding, MAX_BOUND_RESOURCE_GROUPS, MAX_DESCRIPTORS_PER_SET> descriptors;
+	Array2d<DescriptorBinding, MAX_BOUND_RESOURCE_GROUPS, MAX_BINDINGS_PER_DESCRIPTOR_SET> descriptors;
 
 	auto func = [&](const std::vector<spirv_cross::Resource>& resources, VkDescriptorType type) -> void {
 		for(const spirv_cross::Resource& r : resources)

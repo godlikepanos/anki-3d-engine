@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/gr/vulkan/VulkanObject.h>
+#include <anki/gr/vulkan/DescriptorSet.h>
 
 namespace anki
 {
@@ -17,14 +18,12 @@ namespace anki
 class ShaderProgramImpl : public VulkanObject
 {
 public:
-	ShaderProgramImpl(GrManager* manager)
-		: VulkanObject(manager)
-	{
-	}
+	Array<ShaderPtr, U(ShaderType::COUNT)> m_shaders;
 
-	~ShaderProgramImpl()
-	{
-	}
+	ShaderProgramImpl(GrManager* manager);
+	~ShaderProgramImpl();
+
+	Error init(const Array<ShaderPtr, U(ShaderType::COUNT)>& shaders);
 };
 /// @}
 

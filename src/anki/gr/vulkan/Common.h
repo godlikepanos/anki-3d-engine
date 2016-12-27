@@ -107,6 +107,12 @@ ANKI_USE_RESULT VkImageViewType convertTextureViewType(TextureType ak);
 ANKI_USE_RESULT VkImageUsageFlags convertTextureUsage(TextureUsageBit ak, const PixelFormat& format);
 
 ANKI_USE_RESULT VkStencilOp convertStencilOp(StencilOperation ak);
+
+ANKI_USE_RESULT inline VkShaderStageFlagBits convertShaderTypeBit(ShaderTypeBit bit)
+{
+	ANKI_ASSERT(bit != ShaderTypeBit::NONE);
+	return static_cast<VkShaderStageFlagBits>(bit);
+}
 /// @}
 
 } // end namespace anki

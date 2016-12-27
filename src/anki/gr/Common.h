@@ -158,14 +158,13 @@ const U MAX_UNIFORM_BUFFER_BINDINGS = 5;
 const U MAX_STORAGE_BUFFER_BINDINGS = 4;
 const U MAX_IMAGE_BINDINGS = 4;
 
-const U MAX_DESCRIPTORS_PER_SET =
+const U DESCRIPTOR_TYPE_COUNT = 4;
+const U MAX_BINDINGS_PER_DESCRIPTOR_SET =
 	MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS + MAX_IMAGE_BINDINGS;
 
 const U MAX_FRAMES_IN_FLIGHT = 3; ///< Triple buffering.
-/// Groups that can be bound at the same time.
-const U MAX_BOUND_RESOURCE_GROUPS = 2;
-/// An anoying limit for Vulkan.
-const U MAX_RESOURCE_GROUPS = 1024;
+const U MAX_BOUND_RESOURCE_GROUPS = 2; ///< Groups that can be bound at the same time.
+const U MAX_DESCRIPTOR_SETS_PER_POOL = 1024; ///< An anoying limit for Vulkan.
 
 /// Compute max number of mipmaps for a 2D texture.
 inline U computeMaxMipmapCount2d(U w, U h, U minSizeOfLastMip = 1)

@@ -205,6 +205,8 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		}
 	}
 
+	m_descrGen.init(getAllocator());
+
 	return ErrorCode::NONE;
 }
 
