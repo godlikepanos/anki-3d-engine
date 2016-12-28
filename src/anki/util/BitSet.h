@@ -74,8 +74,7 @@ public:
 		memset(m_chunks, 0, sizeof(m_chunks));
 	}
 
-	/// Flip the bits at the given position. It will go from 1 to 0 or from 0 to
-	/// 1.
+	/// Flip the bits at the given position. It will go from 1 to 0 or from 0 to 1.
 	template<typename TInt>
 	void flip(TInt pos)
 	{
@@ -119,7 +118,7 @@ protected:
 	static const U CHUNK_COUNT = (N + (CHUNK_BIT_COUNT - 1)) / CHUNK_BIT_COUNT;
 
 	/// A mask for some stuff.
-	static const ChunkType MASK = 1 << (CHUNK_BIT_COUNT - 1);
+	static const ChunkType MASK = ChunkType(1) << (CHUNK_BIT_COUNT - 1);
 
 	ChunkType m_chunks[CHUNK_COUNT];
 

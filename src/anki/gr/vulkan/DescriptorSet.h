@@ -113,7 +113,6 @@ public:
 
 private:
 	VkDescriptorSet m_handle = VK_NULL_HANDLE;
-	DynamicArray<U64> m_resourcesUuids;
 };
 
 /// Creates new descriptor set layouts and descriptor sets.

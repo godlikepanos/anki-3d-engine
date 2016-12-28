@@ -3,8 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "tests/framework/Framework.h"
-#include "anki/util/Atomic.h"
+#include <tests/framework/Framework.h>
+#include <anki/util/Atomic.h>
 
 ANKI_TEST(Util, Atomic)
 {
