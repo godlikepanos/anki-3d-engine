@@ -427,7 +427,7 @@ public:
 		DepthStencilAspectBit m_aspect;
 	};
 
-	Array2d<TextureBinding, MAX_BOUND_RESOURCE_GROUPS, MAX_TEXTURE_BINDINGS> m_textures;
+	Array2d<TextureBinding, MAX_DESCRIPTOR_SETS, MAX_TEXTURE_BINDINGS> m_textures;
 
 	Bool bindTexture(
 		U32 set, U32 binding, TexturePtr tex, DepthStencilAspectBit aspect, Bool& texChanged, Bool& samplerChanged)
@@ -471,7 +471,7 @@ public:
 		PtrSize m_range;
 	};
 
-	Array2d<ShaderBufferBinding, MAX_BOUND_RESOURCE_GROUPS, MAX_UNIFORM_BUFFER_BINDINGS> m_ubos;
+	Array2d<ShaderBufferBinding, MAX_DESCRIPTOR_SETS, MAX_UNIFORM_BUFFER_BINDINGS> m_ubos;
 
 	Bool bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range)
 	{
@@ -482,7 +482,7 @@ public:
 		return true;
 	}
 
-	Array2d<ShaderBufferBinding, MAX_BOUND_RESOURCE_GROUPS, MAX_STORAGE_BUFFER_BINDINGS> m_ssbos;
+	Array2d<ShaderBufferBinding, MAX_DESCRIPTOR_SETS, MAX_STORAGE_BUFFER_BINDINGS> m_ssbos;
 
 	Bool bindStorageBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range)
 	{
@@ -500,7 +500,7 @@ public:
 		U8 m_level;
 	};
 
-	Array2d<ImageBinding, MAX_BOUND_RESOURCE_GROUPS, MAX_IMAGE_BINDINGS> m_images;
+	Array2d<ImageBinding, MAX_DESCRIPTOR_SETS, MAX_IMAGE_BINDINGS> m_images;
 
 	Bool bindImage(U32 set, U32 binding, TexturePtr img, U32 level)
 	{

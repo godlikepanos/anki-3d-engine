@@ -8,6 +8,7 @@
 #include <anki/gr/vulkan/VulkanObject.h>
 #include <anki/gr/vulkan/DescriptorSet.h>
 #include <anki/util/String.h>
+#include <anki/util/BitSet.h>
 #include <vector>
 
 namespace anki
@@ -23,8 +24,9 @@ public:
 	VkShaderModule m_handle = VK_NULL_HANDLE;
 	ShaderType m_shaderType = ShaderType::COUNT;
 
-	Array<DynamicArray<DescriptorBinding>, MAX_BOUND_RESOURCE_GROUPS> m_bindings;
-	U8 m_colorAttachmentWritemask = 0;
+	Array<DynamicArray<DescriptorBinding>, MAX_DESCRIPTOR_SETS> m_bindings;
+	BitSet<MAX_COLOR_ATTACHMENTS, U8> m_colorAttachmentWritemask = {false};
+	BitSet<MAX_VERTEX_ATTRIBUTES, U8> m_attributeMask = {false};
 
 	ShaderImpl(GrManager* manager)
 		: VulkanObject(manager)

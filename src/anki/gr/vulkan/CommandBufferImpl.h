@@ -227,7 +227,7 @@ private:
 		VkPipelineBindPoint m_bindPoint;
 		VkDescriptorSet m_dset;
 	};
-	Array<DeferredDsetBinding, MAX_BOUND_RESOURCE_GROUPS> m_deferredDsetBindings;
+	Array<DeferredDsetBinding, MAX_DESCRIPTOR_SETS> m_deferredDsetBindings;
 	U8 m_deferredDsetBindingMask = 0;
 	VkPipelineLayout m_crntPplineLayout = VK_NULL_HANDLE;
 

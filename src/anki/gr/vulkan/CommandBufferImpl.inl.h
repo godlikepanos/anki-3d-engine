@@ -588,7 +588,7 @@ inline void CommandBufferImpl::writeOcclusionQueryResultToBuffer(
 
 inline void CommandBufferImpl::flushDsetBindings()
 {
-	for(U i = 0; i < MAX_BOUND_RESOURCE_GROUPS; ++i)
+	for(U i = 0; i < MAX_DESCRIPTOR_SETS; ++i)
 	{
 		if(m_deferredDsetBindingMask & (1 << i))
 		{

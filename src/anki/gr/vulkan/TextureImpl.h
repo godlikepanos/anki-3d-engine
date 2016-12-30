@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/gr/vulkan/VulkanObject.h>
+#include <anki/gr/vulkan/DescriptorObject.h>
 #include <anki/gr/vulkan/GpuMemoryManager.h>
 #include <anki/gr/common/Misc.h>
 #include <anki/util/HashMap.h>
@@ -26,7 +26,7 @@ enum class TextureImplWorkaround : U8
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(TextureImplWorkaround, inline)
 
 /// Texture container.
-class TextureImpl : public VulkanObject
+class TextureImpl : public DescriptorObject
 {
 public:
 	SamplerPtr m_sampler;

@@ -11,6 +11,7 @@
 #include <anki/gr/vulkan/Fence.h>
 #include <anki/gr/vulkan/QueryExtra.h>
 #include <anki/gr/vulkan/DescriptorObject.h>
+#include <anki/gr/vulkan/DescriptorSet.h>
 #include <anki/gr/vulkan/CommandBufferExtra.h>
 #include <anki/util/HashMap.h>
 
@@ -169,6 +170,11 @@ public:
 		return m_descrGen;
 	}
 
+	DescriptorSetFactory& getDescriptorSetFactory()
+	{
+		return m_descrFactory;
+	}
+
 private:
 	GrManager* m_manager = nullptr;
 
@@ -260,6 +266,7 @@ private:
 	/// @}
 
 	DescriptorObjectTombstoneGenerator m_descrGen;
+	DescriptorSetFactory m_descrFactory;
 
 	QueryAllocator m_queryAlloc;
 

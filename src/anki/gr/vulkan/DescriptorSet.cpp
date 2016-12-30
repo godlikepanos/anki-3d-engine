@@ -19,6 +19,10 @@ public:
 	Mutex m_mtx;
 };
 
+DescriptorSetFactory::~DescriptorSetFactory()
+{
+}
+
 void DescriptorSetFactory::init(const GrAllocator<U8>& alloc, VkDevice dev)
 {
 	m_alloc = alloc;

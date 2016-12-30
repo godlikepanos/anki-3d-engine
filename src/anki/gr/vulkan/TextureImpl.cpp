@@ -16,7 +16,7 @@ namespace anki
 {
 
 TextureImpl::TextureImpl(GrManager* manager)
-	: VulkanObject(manager)
+	: DescriptorObject(manager)
 {
 }
 

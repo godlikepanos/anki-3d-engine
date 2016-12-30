@@ -84,6 +84,8 @@ GrManagerImpl::~GrManagerImpl()
 	{
 		vkDestroyInstance(m_instance, nullptr);
 	}
+
+	m_descrFactory.destroy();
 }
 
 GrAllocator<U8> GrManagerImpl::getAllocator() const
@@ -206,6 +208,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	}
 
 	m_descrGen.init(getAllocator());
+	m_descrFactory.init(getAllocator(), m_device);
 
 	return ErrorCode::NONE;
 }

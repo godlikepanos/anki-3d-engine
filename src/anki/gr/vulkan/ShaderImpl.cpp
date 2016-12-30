@@ -315,10 +315,10 @@ void ShaderImpl::doReflection(const std::vector<unsigned int>& spirv)
 	spirv_cross::Compiler spvc(spirv);
 	spirv_cross::ShaderResources rsrc = spvc.get_shader_resources(spvc.get_active_interface_variables());
 
-	Array<U, MAX_BOUND_RESOURCE_GROUPS> counts = {{
+	Array<U, MAX_DESCRIPTOR_SETS> counts = {{
 		0,
 	}};
-	Array2d<DescriptorBinding, MAX_BOUND_RESOURCE_GROUPS, MAX_BINDINGS_PER_DESCRIPTOR_SET> descriptors;
+	Array2d<DescriptorBinding, MAX_DESCRIPTOR_SETS, MAX_BINDINGS_PER_DESCRIPTOR_SET> descriptors;
 
 	auto func = [&](const std::vector<spirv_cross::Resource>& resources, VkDescriptorType type) -> void {
 		for(const spirv_cross::Resource& r : resources)
@@ -336,6 +336,7 @@ void ShaderImpl::doReflection(const std::vector<unsigned int>& spirv)
 			DescriptorBinding& descriptor = descriptors[set][counts[set]++];
 			descriptor.m_binding = binding;
 			descriptor.m_type = type;
+			descriptor.m_stageMask = static_cast<ShaderTypeBit>(1 << m_shaderType);
 		}
 	};
 
@@ -344,7 +345,7 @@ void ShaderImpl::doReflection(const std::vector<unsigned int>& spirv)
 	func(rsrc.storage_buffers, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC);
 	func(rsrc.storage_images, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
 
-	for(U set = 0; set < MAX_BOUND_RESOURCE_GROUPS; ++set)
+	for(U set = 0; set < MAX_DESCRIPTOR_SETS; ++set)
 	{
 		if(counts[set])
 		{
@@ -361,7 +362,19 @@ void ShaderImpl::doReflection(const std::vector<unsigned int>& spirv)
 			const U32 id = r.id;
 			const U32 location = spvc.get_decoration(id, spv::Decoration::DecorationLocation);
 
-			m_colorAttachmentWritemask |= 1 << location;
+			m_colorAttachmentWritemask.set(location);
+		}
+	}
+
+	// Attribs
+	if(m_shaderType == ShaderType::VERTEX)
+	{
+		for(const spirv_cross::Resource& r : rsrc.stage_inputs)
+		{
+			const U32 id = r.id;
+			const U32 location = spvc.get_decoration(id, spv::Decoration::DecorationLocation);
+
+			m_attributeMask.set(location);
 		}
 	}
 }

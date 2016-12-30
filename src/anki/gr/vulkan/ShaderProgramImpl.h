@@ -6,7 +6,7 @@
 #pragma once
 
 #include <anki/gr/vulkan/VulkanObject.h>
-#include <anki/gr/vulkan/DescriptorSet.h>
+#include <anki/gr/vulkan/PipelineLayout.h>
 
 namespace anki
 {
@@ -19,6 +19,14 @@ class ShaderProgramImpl : public VulkanObject
 {
 public:
 	Array<ShaderPtr, U(ShaderType::COUNT)> m_shaders;
+
+	Array<VkPipelineShaderStageCreateInfo, U(ShaderType::COUNT) - 1> m_shaderCreateInfos;
+	U32 m_shaderCreateInfoCount = 0;
+	PipelineLayout m_pplineLayout;
+
+	Array<DescriptorSetLayout, MAX_DESCRIPTOR_SETS> m_descriptorSetLayouts;
+	BitSet<MAX_COLOR_ATTACHMENTS, U8> m_colorAttachmentWritemask = {false};
+	BitSet<MAX_VERTEX_ATTRIBUTES, U8> m_attributeMask = {false};
 
 	ShaderProgramImpl(GrManager* manager);
 	~ShaderProgramImpl();

@@ -43,6 +43,11 @@ public:
 		return m_handle;
 	}
 
+	Bool isCreated() const
+	{
+		return m_handle != VK_NULL_HANDLE;
+	}
+
 private:
 	VkDescriptorSetLayout m_handle = VK_NULL_HANDLE;
 	U32 m_cacheEntryIdx = MAX_U32;
@@ -123,6 +128,11 @@ public:
 	~DescriptorSetFactory();
 
 	void init(const GrAllocator<U8>& alloc, VkDevice dev);
+
+	void destroy()
+	{
+		ANKI_ASSERT(!"TODO");
+	}
 
 	void newDescriptorSetLayout(const DescriptorSetLayoutInitInfo& init, DescriptorSetLayout& layout);
 
