@@ -54,9 +54,7 @@ public:
 class VertexStateInfo
 {
 public:
-	U8 m_bindingCount = 0;
 	Array<VertexBufferBinding, MAX_VERTEX_ATTRIBUTES> m_bindings;
-	U8 m_attributeCount = 0;
 	Array<VertexAttributeBinding, MAX_VERTEX_ATTRIBUTES> m_attributes;
 };
 
@@ -104,15 +102,20 @@ public:
 		StencilOperation m_stencilPassDepthFailOperation = StencilOperation::KEEP;
 		StencilOperation m_stencilPassDepthPassOperation = StencilOperation::KEEP;
 		CompareOperation m_compareFunction = CompareOperation::ALWAYS;
-	} m_face[2];
+	};
+
+	Array<S, 2> m_face;
 };
 
 class ColorAttachmentStateInfo
 {
 public:
-	BlendFactor m_srcBlendMethod = BlendFactor::ONE;
-	BlendFactor m_dstBlendMethod = BlendFactor::ZERO;
-	BlendOperation m_blendFunction = BlendOperation::ADD;
+	BlendFactor m_srcBlendFactorRgb = BlendFactor::ONE;
+	BlendFactor m_srcBlendFactorA = BlendFactor::ONE;
+	BlendFactor m_dstBlendFactorRgb = BlendFactor::ZERO;
+	BlendFactor m_dstBlendFactorA = BlendFactor::ZERO;
+	BlendOperation m_blendFunctionRgb = BlendOperation::ADD;
+	BlendOperation m_blendFunctionA = BlendOperation::ADD;
 	ColorBit m_channelWriteMask = ColorBit::ALL;
 };
 
@@ -120,7 +123,6 @@ class ColorStateInfo
 {
 public:
 	Bool8 m_alphaToCoverageEnabled = false;
-	U8 m_attachmentCount = 0;
 	Array<ColorAttachmentStateInfo, MAX_COLOR_ATTACHMENTS> m_attachments;
 };
 
@@ -171,6 +173,7 @@ public:
 			m_state.m_vertex.m_bindings[binding].m_stride = stride;
 			m_dirty.m_vertBindings.set(binding);
 		}
+		m_set.m_vertBindings.set(binding);
 	}
 
 	void setVertexAttribute(U32 location, U32 buffBinding, const PixelFormat& fmt, PtrSize relativeOffset)
@@ -184,6 +187,7 @@ public:
 			m_state.m_vertex.m_attributes[location] = b;
 			m_dirty.m_attribs.set(location);
 		}
+		m_set.m_attribs.set(location);
 	}
 
 	void setPrimitiveRestart(Bool enable)
@@ -266,21 +270,55 @@ public:
 		}
 	}
 
-	void setStencilCompareMask(FaceSelectionBit face, U32 mask);
+	void setDepthWrite(Bool enable)
+	{
+		if(m_state.m_depth.m_depthWriteEnabled != enable)
+		{
+			m_state.m_depth.m_depthWriteEnabled = enable;
+			m_dirty.m_depth = true;
+		}
+	}
 
-	void setStencilWriteMask(FaceSelectionBit face, U32 mask);
+	void setDepthCompareOperation(CompareOperation op)
+	{
+		if(m_state.m_depth.m_depthCompareFunction != op)
+		{
+			m_state.m_depth.m_depthCompareFunction = op;
+			m_dirty.m_depth = true;
+		}
+	}
 
-	void setStencilReference(FaceSelectionBit face, U32 ref);
+	void setAlphaToCoverage(Bool enable)
+	{
+		if(m_state.m_color.m_alphaToCoverageEnabled != enable)
+		{
+			m_state.m_color.m_alphaToCoverageEnabled = enable;
+			m_dirty.m_color = true;
+		}
+	}
 
-	void setDepthWrite(Bool enable);
+	void setColorChannelWriteMask(U32 attachment, ColorBit mask)
+	{
+		if(m_state.m_color.m_attachments[attachment].m_channelWriteMask != mask)
+		{
+			m_state.m_color.m_attachments[attachment].m_channelWriteMask = mask;
+			m_dirty.m_colAttachments.set(attachment);
+		}
+	}
 
-	void setDepthCompareOperation(CompareOperation op);
-
-	void setAlphaToCoverage(Bool enable);
-
-	void setColorChannelWriteMask(U32 attachment, ColorBit mask);
-
-	void setBlendFactors(U32 attachment, BlendFactor srcRgb, BlendFactor dstRgb, BlendFactor srcA, BlendFactor dstA);
+	void setBlendFactors(U32 attachment, BlendFactor srcRgb, BlendFactor dstRgb, BlendFactor srcA, BlendFactor dstA)
+	{
+		ColorAttachmentStateInfo& c = m_state.m_color.m_attachments[attachment];
+		if(c.m_srcBlendFactorRgb != srcRgb || c.m_dstBlendFactorRgb != dstRgb || c.m_srcBlendFactorA != srcA
+			|| c.m_dstBlendFactorA != dstA)
+		{
+			c.m_srcBlendFactorRgb = srcRgb;
+			c.m_dstBlendFactorRgb = dstRgb;
+			c.m_srcBlendFactorA = srcA;
+			c.m_dstBlendFactorA = dstA;
+			m_dirty.m_colAttachments.set(attachment);
+		}
+	}
 
 	void bindShaderProgram(const ShaderProgramPtr& prog)
 	{
@@ -297,11 +335,13 @@ private:
 	class Hashes
 	{
 	public:
-		U64 m_vertex = 0;
-		BitSet<MAX_VERTEX_ATTRIBUTES, U8> m_shaderAttributeMaskWhenHashed = {false};
-
+		Array<U64, MAX_VERTEX_ATTRIBUTES> m_vertexAttribs = {};
 		U64 m_ia = 0;
 		U64 m_raster = 0;
+		U64 m_depth = 0;
+		U64 m_stencil = 0;
+		U64 m_color = 0;
+		Array<U64, MAX_COLOR_ATTACHMENTS> m_colAttachments = {};
 	} m_hashes;
 
 	class DirtyBits
@@ -313,13 +353,28 @@ private:
 		Bool8 m_ia = true;
 		Bool8 m_raster = true;
 		Bool8 m_stencil = true;
+		Bool8 m_depth = true;
+		Bool8 m_color = true;
+		BitSet<MAX_COLOR_ATTACHMENTS, U8> m_colAttachments = {true};
 	} m_dirty;
 
-	// Vertex
-	BitSet<MAX_VERTEX_ATTRIBUTES, U8> m_shaderAttributeMask = {false};
+	class SetBits
+	{
+	public:
+		BitSet<MAX_VERTEX_ATTRIBUTES, U8> m_attribs = {false};
+		BitSet<MAX_VERTEX_ATTRIBUTES, U8> m_vertBindings = {false};
+	} m_set;
 
-	// Color & blend
+	// Shader info
+	BitSet<MAX_VERTEX_ATTRIBUTES, U8> m_shaderAttributeMask = {false};
 	BitSet<MAX_COLOR_ATTACHMENTS, U8> m_shaderColorAttachmentWritemask = {false};
+
+	// Renderpass info
+	Bool8 m_fbDepth = false;
+	Bool8 m_fbStencil = false;
+	BitSet<MAX_COLOR_ATTACHMENTS, U8> m_fbColorAttachmentMask = {false};
+
+	void updateHashes();
 };
 
 /// Small wrapper on top of the pipeline.
