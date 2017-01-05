@@ -53,7 +53,7 @@ void DescriptorSetFactory::newDescriptorSetLayout(const DescriptorSetLayoutInitI
 	// Find or create the cache entry
 	LockGuard<Mutex> lock(m_mtx);
 
-	Cache* cache;
+	Cache* cache = nullptr;
 	U cacheIdx = MAX_U;
 	U count = 0;
 	for(Cache* it : m_caches)
@@ -91,9 +91,8 @@ DescriptorSetFactory::Cache* DescriptorSetFactory::newCacheEntry(
 
 	// Create the VK layout
 	Array<VkDescriptorSetLayoutBinding, MAX_BINDINGS_PER_DESCRIPTOR_SET> vkBindings;
-	VkDescriptorSetLayoutCreateInfo ci = {
-		VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-	};
+	VkDescriptorSetLayoutCreateInfo ci = {};
+	ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 
 	for(U i = 0; i < bindingCount; ++i)
 	{
@@ -142,9 +141,8 @@ DescriptorSetFactory::Cache* DescriptorSetFactory::newCacheEntry(
 		poolSizes[i].descriptorCount *= MAX_DESCRIPTOR_SETS_PER_POOL;
 	}
 
-	VkDescriptorPoolCreateInfo poolci = {
-		VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-	};
+	VkDescriptorPoolCreateInfo poolci = {};
+	poolci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	poolci.maxSets = MAX_DESCRIPTOR_SETS_PER_POOL;
 	poolci.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 	poolci.poolSizeCount = poolSizeCount;

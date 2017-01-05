@@ -4,13 +4,22 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/gr/vulkan/Pipeline.h>
+#include <anki/gr/common/Misc.h>
 
 namespace anki
 {
 
-void PipelineStateTracker::updateHashes()
+Bool PipelineStateTracker::updateHashes()
 {
 	Bool stateDirty = false;
+
+	// Prog
+	if(m_dirty.m_prog)
+	{
+		m_dirty.m_prog = false;
+		stateDirty = true;
+		m_hashes.m_prog = m_state.m_prog->getUuid();
+	}
 
 	// Vertex
 	if(m_dirty.m_attribs.getAny() || m_dirty.m_vertBindings.getAny())
@@ -100,12 +109,249 @@ void PipelineStateTracker::updateHashes()
 		{
 			if(m_shaderColorAttachmentWritemask.get(i) && m_dirty.m_colAttachments.get(i))
 			{
+				m_dirty.m_colAttachments.unset(i);
 				m_hashes.m_colAttachments[i] =
 					computeHash(&m_state.m_color.m_attachments[i], sizeof(m_state.m_color.m_attachments[i]));
 				stateDirty = true;
 			}
 		}
 	}
+
+	return stateDirty;
+}
+
+void PipelineStateTracker::updateSuperHash()
+{
+	Array<U64, sizeof(Hashes) / sizeof(U64)> buff;
+	U count = 0;
+
+	// Prog
+	buff[count++] = m_hashes.m_prog;
+
+	// Vertex
+	if(!!m_shaderAttributeMask)
+	{
+		for(U i = 0; i < MAX_VERTEX_ATTRIBUTES; ++i)
+		{
+			if(m_shaderAttributeMask.get(i))
+			{
+				buff[count++] = m_hashes.m_vertexAttribs[i];
+			}
+		}
+	}
+
+	// IA
+	buff[count++] = m_hashes.m_ia;
+
+	// Rasterizer
+	buff[count++] = m_hashes.m_raster;
+
+	// Depth
+	if(m_fbDepth)
+	{
+		buff[count++] = m_hashes.m_depth;
+	}
+
+	// Stencil
+	if(m_fbStencil)
+	{
+		buff[count++] = m_hashes.m_stencil;
+	}
+
+	// Color
+	if(!!m_shaderColorAttachmentWritemask)
+	{
+		if(m_dirty.m_color)
+		{
+			buff[count++] = m_hashes.m_color;
+		}
+
+		for(U i = 0; i < MAX_COLOR_ATTACHMENTS; ++i)
+		{
+			if(m_shaderColorAttachmentWritemask.get(i))
+			{
+				buff[count++] = m_hashes.m_colAttachments[i];
+			}
+		}
+	}
+
+	// Super hash
+	m_hashes.m_superHash = computeHash(&buff[0], count * sizeof(buff[0]));
+}
+
+const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateInfo()
+{
+	VkGraphicsPipelineCreateInfo& ci = m_ci.m_ppline;
+
+	ci = {};
+	ci.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+
+	// Prog
+	ci.pStages = &m_state.m_prog->m_impl->m_shaderCreateInfos[0];
+	ci.stageCount = m_state.m_prog->m_impl->m_shaderCreateInfoCount;
+
+	// Vert
+	if(!!m_shaderAttributeMask)
+	{
+		VkPipelineVertexInputStateCreateInfo& vertCi = m_ci.m_vert;
+		vertCi = {};
+		vertCi.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+
+		for(U i = 0; i < MAX_VERTEX_ATTRIBUTES; ++i)
+		{
+			BitSet<MAX_VERTEX_ATTRIBUTES, U8> bindingSet = {false};
+
+			if(m_shaderAttributeMask.get(i))
+			{
+				VkVertexInputAttributeDescription& attrib = m_ci.m_attribs[vertCi.vertexAttributeDescriptionCount++];
+				attrib.binding = m_state.m_vertex.m_attributes[i].m_binding;
+				attrib.format = convertFormat(m_state.m_vertex.m_attributes[i].m_format);
+				attrib.location = i;
+				attrib.offset = m_state.m_vertex.m_attributes[i].m_offset;
+
+				if(!bindingSet.get(i))
+				{
+					bindingSet.set(i);
+
+					VkVertexInputBindingDescription& binding =
+						m_ci.m_vertBindings[vertCi.vertexBindingDescriptionCount++];
+
+					binding.binding = attrib.binding;
+					binding.inputRate = convertVertexStepRate(m_state.m_vertex.m_bindings[attrib.binding].m_stepRate);
+					binding.stride = m_state.m_vertex.m_bindings[attrib.binding].m_stride;
+				}
+			}
+		}
+
+		ci.pVertexInputState = &vertCi;
+	}
+
+	// IA
+	VkPipelineInputAssemblyStateCreateInfo& iaCi = m_ci.m_ia;
+	iaCi = {};
+	iaCi.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	iaCi.primitiveRestartEnable = m_state.m_inputAssembler.m_primitiveRestartEnabled;
+	iaCi.topology = convertTopology(m_state.m_inputAssembler.m_topology);
+	ci.pInputAssemblyState = &iaCi;
+
+	// Raster
+	VkPipelineRasterizationStateCreateInfo& rastCi = m_ci.m_rast;
+	rastCi = {};
+	rastCi.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+	rastCi.depthClampEnable = false;
+	rastCi.rasterizerDiscardEnable = false;
+	rastCi.polygonMode = convertFillMode(m_state.m_rasterizer.m_fillMode);
+	rastCi.cullMode = convertCullMode(m_state.m_rasterizer.m_cullMode);
+	rastCi.frontFace = VK_FRONT_FACE_CLOCKWISE; // Use CW to workaround Vulkan's y flip
+	rastCi.depthBiasEnable =
+		m_state.m_rasterizer.m_depthBiasConstantFactor != 0.0 && m_state.m_rasterizer.m_depthBiasSlopeFactor != 0.0;
+	rastCi.depthBiasConstantFactor = m_state.m_rasterizer.m_depthBiasConstantFactor;
+	rastCi.depthBiasClamp = 0.0;
+	rastCi.depthBiasSlopeFactor = m_state.m_rasterizer.m_depthBiasSlopeFactor;
+	rastCi.lineWidth = 1.0;
+	ci.pRasterizationState = &rastCi;
+
+	// MS
+	VkPipelineMultisampleStateCreateInfo& msCi = m_ci.m_ms;
+	msCi = {};
+	msCi.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+	msCi.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+	ci.pMultisampleState = &msCi;
+
+	// DS
+	if(m_fbDepth || m_fbStencil)
+	{
+		VkPipelineDepthStencilStateCreateInfo& dsCi = m_ci.m_ds;
+		dsCi = {};
+
+		if(m_fbDepth)
+		{
+			dsCi.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+			dsCi.depthTestEnable = m_state.m_depth.m_depthCompareFunction != CompareOperation::ALWAYS
+				|| m_state.m_depth.m_depthWriteEnabled;
+			dsCi.depthCompareOp = convertCompareOp(m_state.m_depth.m_depthCompareFunction);
+		}
+
+		if(m_fbStencil)
+		{
+			dsCi.stencilTestEnable = !stencilTestDisabled(m_state.m_stencil.m_face[0].m_stencilFailOperation,
+										 m_state.m_stencil.m_face[0].m_stencilPassDepthFailOperation,
+										 m_state.m_stencil.m_face[0].m_stencilPassDepthPassOperation,
+										 m_state.m_stencil.m_face[0].m_compareFunction)
+				|| !stencilTestDisabled(m_state.m_stencil.m_face[1].m_stencilFailOperation,
+					   m_state.m_stencil.m_face[1].m_stencilPassDepthFailOperation,
+					   m_state.m_stencil.m_face[1].m_stencilPassDepthPassOperation,
+					   m_state.m_stencil.m_face[1].m_compareFunction);
+
+			dsCi.front.failOp = convertStencilOp(m_state.m_stencil.m_face[0].m_stencilFailOperation);
+			dsCi.front.passOp = convertStencilOp(m_state.m_stencil.m_face[0].m_stencilPassDepthPassOperation);
+			dsCi.front.depthFailOp = convertStencilOp(m_state.m_stencil.m_face[0].m_stencilPassDepthFailOperation);
+			dsCi.front.compareOp = convertCompareOp(m_state.m_stencil.m_face[0].m_compareFunction);
+			dsCi.back.failOp = convertStencilOp(m_state.m_stencil.m_face[1].m_stencilFailOperation);
+			dsCi.back.passOp = convertStencilOp(m_state.m_stencil.m_face[1].m_stencilPassDepthPassOperation);
+			dsCi.back.depthFailOp = convertStencilOp(m_state.m_stencil.m_face[1].m_stencilPassDepthFailOperation);
+			dsCi.back.compareOp = convertCompareOp(m_state.m_stencil.m_face[1].m_compareFunction);
+		}
+
+		ci.pDepthStencilState = &dsCi;
+	}
+
+	// Color/blend
+	if(!!m_shaderColorAttachmentWritemask)
+	{
+		VkPipelineColorBlendStateCreateInfo& colCi = m_ci.m_color;
+		colCi = {};
+		colCi.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+		colCi.attachmentCount = m_shaderColorAttachmentWritemask.getEnabledBitCount();
+		colCi.pAttachments = &m_ci.m_colAttachments[0];
+
+		for(U i = 0; i < colCi.attachmentCount; ++i)
+		{
+			ANKI_ASSERT(m_shaderColorAttachmentWritemask.get(i) && "No gaps are allowed");
+			VkPipelineColorBlendAttachmentState& out = m_ci.m_colAttachments[i];
+			const ColorAttachmentStateInfo& in = m_state.m_color.m_attachments[i];
+
+			out.blendEnable = !blendingDisabled(in.m_srcBlendFactorRgb,
+				in.m_dstBlendFactorRgb,
+				in.m_srcBlendFactorA,
+				in.m_dstBlendFactorA,
+				in.m_blendFunctionRgb,
+				in.m_blendFunctionA);
+			out.srcColorBlendFactor = convertBlendFactor(in.m_srcBlendFactorRgb);
+			out.dstColorBlendFactor = convertBlendFactor(in.m_dstBlendFactorRgb);
+			out.srcAlphaBlendFactor = convertBlendFactor(in.m_srcBlendFactorA);
+			out.dstAlphaBlendFactor = convertBlendFactor(in.m_dstBlendFactorA);
+			out.colorBlendOp = convertBlendOperation(in.m_blendFunctionRgb);
+			out.alphaBlendOp = convertBlendOperation(in.m_blendFunctionA);
+
+			out.colorWriteMask = convertColorWriteMask(in.m_channelWriteMask);
+		}
+
+		ci.pColorBlendState = &colCi;
+	}
+
+	// Dyn state
+	VkPipelineDynamicStateCreateInfo& dynCi = m_ci.m_dyn;
+
+	// Almost all state is dynamic. Depth bias is static
+	static const Array<VkDynamicState, 7> DYN = {{VK_DYNAMIC_STATE_VIEWPORT,
+		VK_DYNAMIC_STATE_SCISSOR,
+		VK_DYNAMIC_STATE_BLEND_CONSTANTS,
+		VK_DYNAMIC_STATE_DEPTH_BOUNDS,
+		VK_DYNAMIC_STATE_STENCIL_COMPARE_MASK,
+		VK_DYNAMIC_STATE_STENCIL_WRITE_MASK,
+		VK_DYNAMIC_STATE_STENCIL_REFERENCE}};
+
+	dynCi.dynamicStateCount = DYN.getSize();
+	dynCi.pDynamicStates = &DYN[0];
+	ci.pDynamicState = &dynCi;
+
+	// The rest
+	ci.layout = m_state.m_prog->m_impl->m_pplineLayout.getHandle();
+	ci.renderPass = m_rpass;
+	ci.subpass = 0;
+
+	return ci;
 }
 
 } // end namespace anki

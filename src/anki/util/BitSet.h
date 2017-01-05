@@ -80,8 +80,7 @@ public:
 
 	Bool operator!() const
 	{
-		static const BitSet ZERO(false);
-		return *this == ZERO;
+		return !getAny();
 	}
 
 	/// Set or unset a bit at the given position.
@@ -109,6 +108,7 @@ public:
 	{
 		memset(m_chunks, 0xFF, sizeof(m_chunks));
 
+		// Zero the unused bits
 		const ChunkType REMAINING_BITS = N - (CHUNK_COUNT - 1) * CHUNK_BIT_COUNT;
 		const ChunkType REMAINING_BITMASK = (~ChunkType(0)) >> REMAINING_BITS;
 		m_chunks[CHUNK_COUNT - 1] ^= REMAINING_BITMASK;
@@ -157,15 +157,19 @@ public:
 	/// Any are enabled.
 	Bool getAny() const
 	{
+		static const BitSet ZERO(false);
+		return *this != ZERO;
+	}
+
+	/// Count bits.
+	U getEnabledBitCount() const
+	{
+		U count = 0;
 		for(U i = 0; i < CHUNK_COUNT; ++i)
 		{
-			if(m_chunks[i] != 0)
-			{
-				return true;
-			}
+			count += __builtin_popcount(m_chunks[i]);
 		}
-
-		return false;
+		return count;
 	}
 
 protected:

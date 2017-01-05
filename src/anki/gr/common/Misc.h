@@ -93,4 +93,18 @@ inline Bool stencilTestDisabled(StencilOperation stencilFail,
 		&& stencilPassDepthPass == StencilOperation::KEEP && compare == CompareOperation::ALWAYS;
 }
 
+inline Bool blendingDisabled(BlendFactor srcFactorRgb,
+	BlendFactor dstFactorRgb,
+	BlendFactor srcFactorA,
+	BlendFactor dstFactorA,
+	BlendOperation opRgb,
+	BlendOperation opA)
+{
+	Bool dontWantBlend = srcFactorRgb == BlendFactor::ONE && dstFactorRgb == BlendFactor::ZERO
+		&& srcFactorA == BlendFactor::ONE && dstFactorA == BlendFactor::ZERO
+		&& (opRgb == BlendOperation::ADD || opRgb == BlendOperation::SUBTRACT)
+		&& (opA == BlendOperation::ADD || opA == BlendOperation::SUBTRACT);
+	return dontWantBlend;
+}
+
 } // end namespace anki

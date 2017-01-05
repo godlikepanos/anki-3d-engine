@@ -102,9 +102,8 @@ Error ShaderProgramImpl::init(const Array<ShaderPtr, U(ShaderType::COUNT)>& shad
 			}
 
 			VkPipelineShaderStageCreateInfo& inf = m_shaderCreateInfos[m_shaderCreateInfoCount++];
-			inf = {
-				VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-			};
+			inf = {};
+			inf.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 			inf.stage = convertShaderTypeBit(static_cast<ShaderTypeBit>(1 << stype));
 			inf.pName = "main";
 			inf.module = shaders[stype]->m_impl->m_handle;

@@ -67,9 +67,8 @@ void PipelineLayoutFactory::newPipelineLayout(const WeakArray<DescriptorSetLayou
 		Layout* lay = m_alloc.newInstance<Layout>();
 		lay->m_hash = hash;
 
-		VkPipelineLayoutCreateInfo ci = {
-			VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-		};
+		VkPipelineLayoutCreateInfo ci = {};
+		ci.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		ci.pSetLayouts = &vkDsetLayouts[0];
 		ci.setLayoutCount = dsetLayoutCount;
 

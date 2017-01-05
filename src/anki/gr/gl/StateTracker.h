@@ -372,13 +372,13 @@ public:
 
 	Bool maybeEnableBlend(U attidx)
 	{
-		auto& att = m_colorAtt[attidx];
-
-		Bool dontWantBlend = att.m_blendSrcFactorRgb == BlendFactor::ONE && att.m_blendDstFactorRgb == BlendFactor::ZERO
-			&& att.m_blendSrcFactorA == BlendFactor::ONE && att.m_blendDstFactorA == BlendFactor::ZERO
-			&& (att.m_blendOpRgb == BlendOperation::ADD || att.m_blendOpRgb == BlendOperation::SUBTRACT)
-			&& (att.m_blendOpA == BlendOperation::ADD || att.m_blendOpA == BlendOperation::SUBTRACT);
-		Bool wantBlend = !dontWantBlend;
+		const ColorAttachment& att = m_colorAtt[attidx];
+		Bool wantBlend = !blendingDisabled(att.m_blendSrcFactorRgb,
+			att.m_blendDstFactorRgb,
+			att.m_blendSrcFactorA,
+			att.m_blendDstFactorA,
+			att.m_blendOpRgb,
+			att.m_blendOpA);
 
 		if(wantBlend != att.m_enableBlend)
 		{

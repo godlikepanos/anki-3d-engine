@@ -83,7 +83,7 @@ ANKI_USE_RESULT VkCullModeFlags convertCullMode(FaceSelectionBit ak);
 ANKI_USE_RESULT VkBlendFactor convertBlendFactor(BlendFactor ak);
 
 /// Convert blend function.
-ANKI_USE_RESULT VkBlendOp convertBlendFunc(BlendOperation ak);
+ANKI_USE_RESULT VkBlendOp convertBlendOperation(BlendOperation ak);
 
 /// Convert color write mask.
 inline ANKI_USE_RESULT VkColorComponentFlags convertColorWriteMask(ColorBit ak)
@@ -112,6 +112,24 @@ ANKI_USE_RESULT inline VkShaderStageFlagBits convertShaderTypeBit(ShaderTypeBit 
 {
 	ANKI_ASSERT(bit != ShaderTypeBit::NONE);
 	return static_cast<VkShaderStageFlagBits>(bit);
+}
+
+ANKI_USE_RESULT inline VkVertexInputRate convertVertexStepRate(VertexStepRate ak)
+{
+	VkVertexInputRate out;
+	switch(ak)
+	{
+	case VertexStepRate::VERTEX:
+		out = VK_VERTEX_INPUT_RATE_VERTEX;
+		break;
+	case VertexStepRate::INSTANCE:
+		out = VK_VERTEX_INPUT_RATE_INSTANCE;
+		break;
+	default:
+		ANKI_ASSERT(0);
+		out = VK_VERTEX_INPUT_RATE_INSTANCE;
+	}
+	return out;
 }
 /// @}
 

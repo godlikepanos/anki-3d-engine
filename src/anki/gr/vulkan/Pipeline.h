@@ -82,7 +82,8 @@ class RasterizerStateInfo
 public:
 	FillMode m_fillMode = FillMode::SOLID;
 	FaceSelectionBit m_cullMode = FaceSelectionBit::BACK;
-	Bool8 m_depthBiasEnabled = false;
+	F32 m_depthBiasConstantFactor = 0.0;
+	F32 m_depthBiasSlopeFactor = 0.0;
 };
 
 class DepthStateInfo
@@ -137,6 +138,7 @@ public:
 
 #define ANKI_CONSTRUCT_AND_ZERO_PADDING(memb_) new(&memb_) decltype(memb_)()
 
+		ANKI_CONSTRUCT_AND_ZERO_PADDING(m_prog);
 		ANKI_CONSTRUCT_AND_ZERO_PADDING(m_vertex);
 		ANKI_CONSTRUCT_AND_ZERO_PADDING(m_inputAssembler);
 		ANKI_CONSTRUCT_AND_ZERO_PADDING(m_tessellation);
@@ -149,6 +151,7 @@ public:
 #undef ANKI_CONSTRUCT_AND_ZERO_PADDING
 	}
 
+	ShaderProgramPtr m_prog;
 	VertexStateInfo m_vertex;
 	InputAssemblerStateInfo m_inputAssembler;
 	TessellationStateInfo m_tessellation;
@@ -219,10 +222,11 @@ public:
 
 	void setPolygonOffset(F32 factor, F32 units)
 	{
-		const Bool enable = factor != 0.0 && units != 0.0;
-		if(m_state.m_rasterizer.m_depthBiasEnabled != enable)
+		if(m_state.m_rasterizer.m_depthBiasConstantFactor != factor
+			|| m_state.m_rasterizer.m_depthBiasSlopeFactor != units)
 		{
-			m_state.m_rasterizer.m_depthBiasEnabled = enable;
+			m_state.m_rasterizer.m_depthBiasConstantFactor = factor;
+			m_state.m_rasterizer.m_depthBiasSlopeFactor = units;
 			m_dirty.m_raster = true;
 		}
 	}
@@ -322,12 +326,40 @@ public:
 
 	void bindShaderProgram(const ShaderProgramPtr& prog)
 	{
-		const ShaderProgramImpl& impl = *prog->m_impl;
-		m_shaderColorAttachmentWritemask = impl.m_colorAttachmentWritemask;
-		m_shaderAttributeMask = impl.m_attributeMask;
+		if(prog != m_state.m_prog)
+		{
+			const ShaderProgramImpl& impl = *prog->m_impl;
+			m_shaderColorAttachmentWritemask = impl.m_colorAttachmentWritemask;
+			m_shaderAttributeMask = impl.m_attributeMask;
+			m_dirty.m_prog = true;
+		}
 	}
 
 	void beginRenderPass(FramebufferPtr fb);
+
+	void setPrimitiveTopology(PrimitiveTopology topology)
+	{
+		if(m_state.m_inputAssembler.m_topology != topology)
+		{
+			m_state.m_inputAssembler.m_topology = topology;
+			m_dirty.m_ia = true;
+		}
+	}
+
+	/// Flush state
+	void flush(U64& pipelineHash)
+	{
+		Bool dirtyHashes = updateHashes();
+		if(dirtyHashes)
+		{
+			updateSuperHash();
+		}
+		pipelineHash = m_hashes.m_superHash;
+		ANKI_ASSERT(pipelineHash);
+	}
+
+	/// Populate the internal pipeline create info structure.
+	const VkGraphicsPipelineCreateInfo& updatePipelineCreateInfo();
 
 private:
 	PipelineInfoState m_state;
@@ -335,6 +367,7 @@ private:
 	class Hashes
 	{
 	public:
+		U64 m_prog = 0;
 		Array<U64, MAX_VERTEX_ATTRIBUTES> m_vertexAttribs = {};
 		U64 m_ia = 0;
 		U64 m_raster = 0;
@@ -342,11 +375,14 @@ private:
 		U64 m_stencil = 0;
 		U64 m_color = 0;
 		Array<U64, MAX_COLOR_ATTACHMENTS> m_colAttachments = {};
+
+		U64 m_superHash = 0;
 	} m_hashes;
 
 	class DirtyBits
 	{
 	public:
+		Bool8 m_prog = true;
 		BitSet<MAX_VERTEX_ATTRIBUTES, U8> m_attribs = {true};
 		BitSet<MAX_VERTEX_ATTRIBUTES, U8> m_vertBindings = {true};
 
@@ -373,8 +409,28 @@ private:
 	Bool8 m_fbDepth = false;
 	Bool8 m_fbStencil = false;
 	BitSet<MAX_COLOR_ATTACHMENTS, U8> m_fbColorAttachmentMask = {false};
+	VkRenderPass m_rpass = VK_NULL_HANDLE;
 
-	void updateHashes();
+	// Create info
+	class CreateInfo
+	{
+	public:
+		Array<VkVertexInputBindingDescription, MAX_VERTEX_ATTRIBUTES> m_vertBindings;
+		Array<VkVertexInputAttributeDescription, MAX_VERTEX_ATTRIBUTES> m_attribs;
+		VkPipelineVertexInputStateCreateInfo m_vert;
+		VkPipelineInputAssemblyStateCreateInfo m_ia;
+		VkPipelineTessellationStateCreateInfo m_tess;
+		VkPipelineRasterizationStateCreateInfo m_rast;
+		VkPipelineMultisampleStateCreateInfo m_ms;
+		VkPipelineDepthStencilStateCreateInfo m_ds;
+		Array<VkPipelineColorBlendAttachmentState, MAX_COLOR_ATTACHMENTS> m_colAttachments;
+		VkPipelineColorBlendStateCreateInfo m_color;
+		VkPipelineDynamicStateCreateInfo m_dyn;
+		VkGraphicsPipelineCreateInfo m_ppline;
+	} m_ci;
+
+	Bool updateHashes();
+	void updateSuperHash();
 };
 
 /// Small wrapper on top of the pipeline.
