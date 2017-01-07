@@ -55,6 +55,8 @@ Error Pps::initInternal(const ConfigSet& config)
 		m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 	}
 
+	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseLdrRgb.ankitex", m_blueNoise));
+
 	return ErrorCode::NONE;
 }
 
@@ -145,10 +147,11 @@ Error Pps::run(RenderingContext& ctx)
 	cmdb->bindTexture(0, 0, m_r->getIs().getRt());
 	cmdb->bindTexture(0, 1, m_r->getBloom().m_upscale.m_rt);
 	cmdb->bindTexture(0, 2, m_lut->getGrTexture());
-	cmdb->bindTexture(0, 3, m_r->getSmaa().m_weights.m_rt);
+	cmdb->bindTexture(0, 3, m_blueNoise->getGrTexture());
+	cmdb->bindTexture(0, 4, m_r->getSmaa().m_weights.m_rt);
 	if(dbgEnabled)
 	{
-		cmdb->bindTexture(0, 4, m_r->getDbg().getRt());
+		cmdb->bindTexture(0, 5, m_r->getDbg().getRt());
 	}
 
 	cmdb->bindStorageBuffer(0, 0, m_r->getTm().m_luminanceBuff, 0, MAX_PTR_SIZE);

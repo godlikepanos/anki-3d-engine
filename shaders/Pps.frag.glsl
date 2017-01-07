@@ -14,24 +14,22 @@
 #include "shaders/SMAA.hlsl"
 #endif
 
+#define BLUE_NOISE 1
+
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_isRt;
 layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_ppsBloomLfRt;
 layout(ANKI_TEX_BINDING(0, 2)) uniform sampler3D u_lut;
+layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2DArray u_blueNoise;
 #if SMAA_ENABLED
-layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2D u_smaaBlendTex;
+layout(ANKI_TEX_BINDING(0, 4)) uniform sampler2D u_smaaBlendTex;
 #endif
 #if DBG_ENABLED
-layout(ANKI_TEX_BINDING(0, 4)) uniform sampler2D u_dbgRt;
+layout(ANKI_TEX_BINDING(0, 5)) uniform sampler2D u_dbgRt;
 #endif
-
-struct Luminance
-{
-	vec4 averageLuminancePad3;
-};
 
 layout(std140, ANKI_SS_BINDING(0, 0)) readonly buffer s0_
 {
-	Luminance u_luminance;
+	vec4 u_averageLuminancePad3;
 };
 
 #if NVIDIA_LINK_ERROR_WORKAROUND
@@ -137,7 +135,7 @@ void main()
 	out_color = textureLod(u_isRt, uv, 0.0).rgb;
 #endif
 
-	out_color = tonemap(out_color, u_luminance.averageLuminancePad3.x, 0.0);
+	out_color = tonemap(out_color, u_averageLuminancePad3.x, 0.0);
 
 #if BLOOM_ENABLED
 	vec3 bloom = textureLod(u_ppsBloomLfRt, uv, 0.0).rgb;
@@ -154,5 +152,14 @@ void main()
 
 #if DBG_ENABLED
 	out_color += textureLod(u_dbgRt, uv, 0.0).rgb;
+#endif
+
+#if BLUE_NOISE
+	ivec2 fragCoord = ivec2(gl_FragCoord.xy);
+	vec3 blueNoise = texelFetch(u_blueNoise, ivec3(fragCoord.x % 64, fragCoord.y % 64, 0), 0).rgb;
+	blueNoise = blueNoise * 2.0 - 1.0;
+	blueNoise = sign(blueNoise) * (1.0 - sqrt(1.0 - abs(blueNoise)));
+
+	out_color += blueNoise / 255.0;
 #endif
 }

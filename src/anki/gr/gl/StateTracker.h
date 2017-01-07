@@ -372,7 +372,7 @@ public:
 
 	Bool maybeEnableBlend(U attidx)
 	{
-		const ColorAttachment& att = m_colorAtt[attidx];
+		ColorAttachment& att = m_colorAtt[attidx];
 		Bool wantBlend = !blendingDisabled(att.m_blendSrcFactorRgb,
 			att.m_blendDstFactorRgb,
 			att.m_blendSrcFactorA,
