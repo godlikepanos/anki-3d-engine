@@ -11,6 +11,9 @@
 namespace anki
 {
 
+// Forward
+class PipelineFactory;
+
 /// @addtogroup vulkan
 /// @{
 
@@ -27,6 +30,8 @@ public:
 	Array<DescriptorSetLayout, MAX_DESCRIPTOR_SETS> m_descriptorSetLayouts;
 	BitSet<MAX_COLOR_ATTACHMENTS, U8> m_colorAttachmentWritemask = {false};
 	BitSet<MAX_VERTEX_ATTRIBUTES, U8> m_attributeMask = {false};
+
+	PipelineFactory* m_pplineFactory = nullptr; ///< Only for graphics programs.
 
 	ShaderProgramImpl(GrManager* manager);
 	~ShaderProgramImpl();

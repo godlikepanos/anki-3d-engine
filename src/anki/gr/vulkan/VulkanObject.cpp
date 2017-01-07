@@ -25,4 +25,9 @@ GrManagerImpl& VulkanObject::getGrManagerImpl()
 	return m_manager->getImplementation();
 }
 
+const GrManagerImpl& VulkanObject::getGrManagerImpl() const
+{
+	return m_manager->getImplementation();
+}
+
 } // end namespace anki

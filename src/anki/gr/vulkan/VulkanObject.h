@@ -33,6 +33,8 @@ public:
 
 	GrManagerImpl& getGrManagerImpl();
 
+	const GrManagerImpl& getGrManagerImpl() const;
+
 	GrManager& getGrManager()
 	{
 		ANKI_ASSERT(m_manager);

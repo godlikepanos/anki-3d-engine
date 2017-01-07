@@ -175,6 +175,12 @@ public:
 		return m_descrFactory;
 	}
 
+	VkPipelineCache getPipelineCache() const
+	{
+		ANKI_ASSERT(m_pplineCache);
+		return m_pplineCache;
+	}
+
 private:
 	GrManager* m_manager = nullptr;
 

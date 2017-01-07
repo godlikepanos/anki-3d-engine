@@ -453,7 +453,15 @@ private:
 class PipelineFactory
 {
 public:
-	void init(GrAllocator<U8> alloc, VkDevice dev, VkPipelineCache pplineCache);
+	PipelineFactory() = default;
+	~PipelineFactory() = default;
+
+	void init(GrAllocator<U8> alloc, VkDevice dev, VkPipelineCache pplineCache)
+	{
+		m_alloc = alloc;
+		m_dev = dev;
+		m_pplineCache = pplineCache;
+	}
 
 	void destroy();
 
@@ -461,14 +469,14 @@ public:
 	void newPipeline(PipelineStateTracker& state, Pipeline& ppline);
 
 private:
-	class Pipeline;
+	class PipelineInternal;
 	class Hasher;
 
 	GrAllocator<U8> m_alloc;
 	VkDevice m_dev = VK_NULL_HANDLE;
 	VkPipelineCache m_pplineCache = VK_NULL_HANDLE;
 
-	HashMap<U64, Pipeline, Hasher> m_pplines;
+	HashMap<U64, PipelineInternal, Hasher> m_pplines;
 };
 /// @}
 

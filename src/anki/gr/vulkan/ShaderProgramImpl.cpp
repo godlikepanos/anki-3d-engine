@@ -7,6 +7,7 @@
 #include <anki/gr/Shader.h>
 #include <anki/gr/vulkan/ShaderImpl.h>
 #include <anki/gr/vulkan/GrManagerImpl.h>
+#include <anki/gr/vulkan/Pipeline.h>
 
 namespace anki
 {
@@ -18,6 +19,11 @@ ShaderProgramImpl::ShaderProgramImpl(GrManager* manager)
 
 ShaderProgramImpl::~ShaderProgramImpl()
 {
+	if(m_pplineFactory)
+	{
+		m_pplineFactory->destroy();
+		getAllocator().deleteInstance(m_pplineFactory);
+	}
 }
 
 Error ShaderProgramImpl::init(const Array<ShaderPtr, U(ShaderType::COUNT)>& shaders)
@@ -108,6 +114,14 @@ Error ShaderProgramImpl::init(const Array<ShaderPtr, U(ShaderType::COUNT)>& shad
 			inf.pName = "main";
 			inf.module = shaders[stype]->m_impl->m_handle;
 		}
+	}
+
+	// Create the factory
+	if(graphicsProg)
+	{
+		m_pplineFactory = getAllocator().newInstance<PipelineFactory>();
+		m_pplineFactory->init(
+			getGrManagerImpl().getAllocator(), getGrManagerImpl().getDevice(), getGrManagerImpl().getPipelineCache());
 	}
 
 	return ErrorCode::NONE;

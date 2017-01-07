@@ -354,4 +354,53 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 	return ci;
 }
 
+class PipelineFactory::PipelineInternal
+{
+public:
+	VkPipeline m_handle = VK_NULL_HANDLE;
+};
+
+class PipelineFactory::Hasher
+{
+public:
+	U64 operator()(U64 h)
+	{
+		return h;
+	}
+};
+
+void PipelineFactory::destroy()
+{
+	for(auto it : m_pplines)
+	{
+		if(it.m_handle)
+		{
+			vkDestroyPipeline(m_dev, it.m_handle, nullptr);
+		}
+	}
+
+	m_pplines.destroy(m_alloc);
+}
+
+void PipelineFactory::newPipeline(PipelineStateTracker& state, Pipeline& ppline)
+{
+	U64 hash;
+	state.flush(hash);
+	auto it = m_pplines.find(hash);
+	if(it != m_pplines.getEnd())
+	{
+		ppline.m_handle = (*it).m_handle;
+	}
+	else
+	{
+		PipelineFactory::PipelineInternal pp;
+		const VkGraphicsPipelineCreateInfo& ci = state.updatePipelineCreateInfo();
+
+		ANKI_VK_CHECKF(vkCreateGraphicsPipelines(m_dev, m_pplineCache, 1, &ci, nullptr, &pp.m_handle));
+
+		m_pplines.pushBack(m_alloc, hash, pp);
+		ppline.m_handle = pp.m_handle;
+	}
+}
+
 } // end namespace anki
