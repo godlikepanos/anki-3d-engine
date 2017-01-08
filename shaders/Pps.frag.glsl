@@ -27,6 +27,11 @@ layout(ANKI_TEX_BINDING(0, 4)) uniform sampler2D u_smaaBlendTex;
 layout(ANKI_TEX_BINDING(0, 5)) uniform sampler2D u_dbgRt;
 #endif
 
+layout(std140, ANKI_UBO_BINDING(0, 0)) uniform u0_
+{
+	vec4 u_blueNoiseLayerPad3;
+};
+
 layout(std140, ANKI_SS_BINDING(0, 0)) readonly buffer s0_
 {
 	vec4 u_averageLuminancePad3;
@@ -155,8 +160,7 @@ void main()
 #endif
 
 #if BLUE_NOISE
-	ivec2 fragCoord = ivec2(gl_FragCoord.xy);
-	vec3 blueNoise = texelFetch(u_blueNoise, ivec3(fragCoord.x % 64, fragCoord.y % 64, 0), 0).rgb;
+	vec3 blueNoise = texture(u_blueNoise, vec3(FB_SIZE / vec2(64.0) * uv, u_blueNoiseLayerPad3.x), 0.0).rgb;
 	blueNoise = blueNoise * 2.0 - 1.0;
 	blueNoise = sign(blueNoise) * (1.0 - sqrt(1.0 - abs(blueNoise)));
 

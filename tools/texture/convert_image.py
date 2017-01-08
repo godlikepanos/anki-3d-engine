@@ -683,6 +683,7 @@ def main():
 	if (config.type == TT_3D or config.type == TT_2D_ARRAY) and len(config.in_files) < 2:
 		#raise Exception("Not enough images for 2DArray/3D texture")
 		printw("Not enough images for 2DArray/3D texture")
+	printi("Number of images %u" % len(config.in_files))
 
 	if config.type == TT_2D and len(config.in_files) != 1:
 		raise Exception("Only one image for 2D textures needed")

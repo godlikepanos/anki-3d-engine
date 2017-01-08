@@ -111,7 +111,8 @@ Error Pps::run(RenderingContext& ctx)
 				"#define DRAW_TO_DEFAULT %u\n"
 				"#define SMAA_ENABLED 1\n"
 				"#define SMAA_RT_METRICS vec4(%f, %f, %f, %f)\n"
-				"#define SMAA_PRESET_%s\n",
+				"#define SMAA_PRESET_%s\n"
+				"#define FB_SIZE vec2(%uf, %uf)\n",
 				true,
 				m_sharpenEnabled,
 				m_r->getWidth(),
@@ -123,7 +124,9 @@ Error Pps::run(RenderingContext& ctx)
 				1.0 / m_r->getHeight(),
 				F32(m_r->getWidth()),
 				F32(m_r->getHeight()),
-				&m_r->getSmaa().m_qualityPerset[0]));
+				&m_r->getSmaa().m_qualityPerset[0],
+				m_r->getWidth(),
+				m_r->getHeight()));
 		}
 
 		if(!m_vert)
@@ -155,6 +158,9 @@ Error Pps::run(RenderingContext& ctx)
 	}
 
 	cmdb->bindStorageBuffer(0, 0, m_r->getTm().m_luminanceBuff, 0, MAX_PTR_SIZE);
+
+	Vec4* uniforms = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
+	uniforms->x() = F32(m_r->getFrameCount() % m_blueNoise->getLayerCount());
 
 	// Get or create FB
 	FramebufferPtr* fb = nullptr;
