@@ -7,6 +7,7 @@
 
 #include <anki/gr/vulkan/VulkanObject.h>
 #include <anki/util/HashMap.h>
+#include <anki/util/BitSet.h>
 
 namespace anki
 {
@@ -46,6 +47,13 @@ public:
 		return m_fbs[frame];
 	}
 
+	void getAttachmentInfo(BitSet<MAX_COLOR_ATTACHMENTS, U8>& colorAttachments, Bool& depth, Bool& stencil) const
+	{
+		colorAttachments = m_colorAttachmentMask;
+		depth = m_depthAttachment;
+		stencil = m_stencilAttachment;
+	}
+
 private:
 	class Hasher
 	{
@@ -60,6 +68,10 @@ private:
 	U32 m_height = 0;
 
 	Bool8 m_defaultFb = false;
+
+	BitSet<MAX_COLOR_ATTACHMENTS, U8> m_colorAttachmentMask = {false};
+	Bool8 m_depthAttachment = false;
+	Bool8 m_stencilAttachment = false;
 
 	Array<TexturePtr, MAX_COLOR_ATTACHMENTS + 1> m_refs; ///< @note The pos of every attachment is fixed.
 	Array<U32, MAX_COLOR_ATTACHMENTS + 1> m_attachedMipLevels = {};

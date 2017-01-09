@@ -86,6 +86,7 @@ GrManagerImpl::~GrManagerImpl()
 	}
 
 	m_descrFactory.destroy();
+	m_pplineLayoutFactory.destroy();
 }
 
 GrAllocator<U8> GrManagerImpl::getAllocator() const

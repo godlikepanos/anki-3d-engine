@@ -8,6 +8,8 @@
 #include <anki/gr/vulkan/DescriptorSet.h>
 #include <anki/gr/ShaderProgram.h>
 #include <anki/gr/vulkan/ShaderProgramImpl.h>
+#include <anki/gr/Framebuffer.h>
+#include <anki/gr/vulkan/FramebufferImpl.h>
 #include <anki/util/HashMap.h>
 
 namespace anki
@@ -335,7 +337,21 @@ public:
 		}
 	}
 
-	void beginRenderPass(FramebufferPtr fb);
+	void beginRenderPass(const FramebufferPtr& fb)
+	{
+		ANKI_ASSERT(m_rpass == VK_NULL_HANDLE);
+		Bool d, s;
+		fb->m_impl->getAttachmentInfo(m_fbColorAttachmentMask, d, s);
+		m_fbDepth = d;
+		m_fbStencil = s;
+		m_rpass = fb->m_impl->getCompatibleRenderPass();
+	}
+
+	void endRenderPass()
+	{
+		ANKI_ASSERT(m_rpass);
+		m_rpass = VK_NULL_HANDLE;
+	}
 
 	void setPrimitiveTopology(PrimitiveTopology topology)
 	{
@@ -465,7 +481,7 @@ public:
 
 	void destroy();
 
-	/// @note Not thread-safe.
+	/// @note Thread-safe.
 	void newPipeline(PipelineStateTracker& state, Pipeline& ppline);
 
 private:
@@ -477,6 +493,7 @@ private:
 	VkPipelineCache m_pplineCache = VK_NULL_HANDLE;
 
 	HashMap<U64, PipelineInternal, Hasher> m_pplines;
+	Mutex m_pplinesMtx;
 };
 /// @}
 

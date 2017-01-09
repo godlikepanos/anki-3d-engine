@@ -55,6 +55,8 @@ Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 
 			ANKI_VK_CHECK(vkCreateFramebuffer(getDevice(), &ci, nullptr, &m_fbs[i]));
 		}
+
+		m_colorAttachmentMask.set(0);
 	}
 	else
 	{
@@ -75,6 +77,7 @@ Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 			}
 
 			m_refs[i] = att.m_texture;
+			m_colorAttachmentMask.set(i);
 		}
 
 		if(hasDepthStencil)
@@ -91,6 +94,9 @@ Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 			{
 				aspect = att.m_aspect;
 			}
+
+			m_depthAttachment = !!(aspect & DepthStencilAspectBit::DEPTH);
+			m_stencilAttachment = !!(aspect & DepthStencilAspectBit::STENCIL);
 
 			attachments[count++] = tex.getOrCreateSingleSurfaceView(att.m_surface, aspect);
 

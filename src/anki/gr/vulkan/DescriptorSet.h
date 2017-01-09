@@ -134,6 +134,7 @@ public:
 		ANKI_ASSERT(!"TODO");
 	}
 
+	/// @note It's thread-safe.
 	void newDescriptorSetLayout(const DescriptorSetLayoutInitInfo& init, DescriptorSetLayout& layout);
 
 	void newDescriptorSet(const DescriptorSetState& init, DescriptorSet& set);

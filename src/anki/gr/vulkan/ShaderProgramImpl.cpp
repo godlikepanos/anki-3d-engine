@@ -32,8 +32,10 @@ Error ShaderProgramImpl::init(const Array<ShaderPtr, U(ShaderType::COUNT)>& shad
 	m_shaders = shaders;
 
 	// Merge bindings
+	//
 	Array2d<DescriptorBinding, MAX_BINDINGS_PER_DESCRIPTOR_SET, MAX_DESCRIPTOR_SETS> bindings;
 	Array<U, MAX_DESCRIPTOR_SETS> counts = {};
+	U descriptorSetCount = 0;
 	for(U set = 0; set < MAX_DESCRIPTOR_SETS; ++set)
 	{
 		for(ShaderType stype = ShaderType::FIRST; stype < ShaderType::COUNT; ++stype)
@@ -73,31 +75,46 @@ Error ShaderProgramImpl::init(const Array<ShaderPtr, U(ShaderType::COUNT)>& shad
 				}
 			}
 		}
-	}
 
-	// Create the descriptor set layouts
-	for(U set = 0; set < MAX_DESCRIPTOR_SETS; ++set)
-	{
-		if(counts[set] > 0)
+		if(counts[set])
 		{
-			DescriptorSetLayoutInitInfo inf;
-			inf.m_bindings = WeakArray<DescriptorBinding>(&bindings[set][0], counts[set]);
-
-			getGrManagerImpl().getDescriptorSetFactory().newDescriptorSetLayout(inf, m_descriptorSetLayouts[set]);
+			descriptorSetCount = set + 1;
 		}
 	}
 
-	ANKI_ASSERT(!"TODO Pipeline layout");
+	// Create the descriptor set layouts
+	//
+	for(U set = 0; set < descriptorSetCount; ++set)
+	{
+		DescriptorSetLayoutInitInfo inf;
+		inf.m_bindings = WeakArray<DescriptorBinding>((counts[set]) ? &bindings[set][0] : nullptr, counts[set]);
+
+		getGrManagerImpl().getDescriptorSetFactory().newDescriptorSetLayout(inf, m_descriptorSetLayouts[set]);
+	}
+
+	// Create the ppline layout
+	//
+	WeakArray<DescriptorSetLayout> dsetLayouts(
+		(descriptorSetCount) ? &m_descriptorSetLayouts[0] : nullptr, descriptorSetCount);
+	ANKI_CHECK(getGrManagerImpl().getPipelineLayoutFactory().newPipelineLayout(dsetLayouts, m_pplineLayout));
 
 	// Get some masks
+	//
 	const Bool graphicsProg = !!(shaderMask & ShaderTypeBit::VERTEX);
 	if(graphicsProg)
 	{
 		m_attributeMask = shaders[ShaderType::VERTEX]->m_impl->m_attributeMask;
 		m_colorAttachmentWritemask = shaders[ShaderType::FRAGMENT]->m_impl->m_colorAttachmentWritemask;
+
+		const U attachmentCount = m_colorAttachmentWritemask.getEnabledBitCount();
+		for(U i = 0; i < attachmentCount; ++i)
+		{
+			ANKI_ASSERT(m_colorAttachmentWritemask.get(i) && "Should write to all attachments");
+		}
 	}
 
 	// Cache some values
+	//
 	if(graphicsProg)
 	{
 		for(ShaderType stype = ShaderType::VERTEX; stype <= ShaderType::FRAGMENT; ++stype)
@@ -117,6 +134,7 @@ Error ShaderProgramImpl::init(const Array<ShaderPtr, U(ShaderType::COUNT)>& shad
 	}
 
 	// Create the factory
+	//
 	if(graphicsProg)
 	{
 		m_pplineFactory = getAllocator().newInstance<PipelineFactory>();

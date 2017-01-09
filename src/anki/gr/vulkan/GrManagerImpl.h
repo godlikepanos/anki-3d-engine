@@ -13,6 +13,7 @@
 #include <anki/gr/vulkan/DescriptorObject.h>
 #include <anki/gr/vulkan/DescriptorSet.h>
 #include <anki/gr/vulkan/CommandBufferExtra.h>
+#include <anki/gr/vulkan/PipelineLayout.h>
 #include <anki/util/HashMap.h>
 
 namespace anki
@@ -181,6 +182,11 @@ public:
 		return m_pplineCache;
 	}
 
+	PipelineLayoutFactory& getPipelineLayoutFactory()
+	{
+		return m_pplineLayoutFactory;
+	}
+
 private:
 	GrManager* m_manager = nullptr;
 
@@ -270,6 +276,8 @@ private:
 	FenceFactory m_fences;
 	GrSemaphoreFactory m_semaphores;
 	/// @}
+
+	PipelineLayoutFactory m_pplineLayoutFactory;
 
 	DescriptorObjectTombstoneGenerator m_descrGen;
 	DescriptorSetFactory m_descrFactory;

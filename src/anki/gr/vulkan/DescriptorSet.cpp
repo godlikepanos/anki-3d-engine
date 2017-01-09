@@ -44,10 +44,11 @@ void DescriptorSetFactory::newDescriptorSetLayout(const DescriptorSetLayoutInitI
 			[](const DescriptorBinding& a, const DescriptorBinding& b) { return a.m_binding < b.m_binding; });
 
 		hash = computeHash(&bindings[0], init.m_bindings.getSizeInBytes());
+		ANKI_ASSERT(hash != 1);
 	}
 	else
 	{
-		hash = 0;
+		hash = 1;
 	}
 
 	// Find or create the cache entry

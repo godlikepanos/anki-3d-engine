@@ -44,7 +44,8 @@ public:
 
 	void destroy();
 
-	void newPipelineLayout(const WeakArray<DescriptorSetLayout>& dsetLayouts, PipelineLayout& layout);
+	/// @note It's thread-safe.
+	ANKI_USE_RESULT Error newPipelineLayout(const WeakArray<DescriptorSetLayout>& dsetLayouts, PipelineLayout& layout);
 
 private:
 	class Layout;

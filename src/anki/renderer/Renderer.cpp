@@ -165,10 +165,9 @@ Error Renderer::initInternal(const ConfigSet& config)
 
 Error Renderer::render(RenderingContext& ctx)
 {
-	FrustumComponent& frc = *ctx.m_frustumComponent;
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
-	ANKI_ASSERT(frc.getFrustum().getType() == FrustumType::PERSPECTIVE);
+	ANKI_ASSERT(ctx.m_frustumComponent->getFrustum().getType() == FrustumType::PERSPECTIVE);
 
 	// Check if resources got loaded
 	if(m_prevLoadRequestCount != m_resources->getLoadingRequestCount()

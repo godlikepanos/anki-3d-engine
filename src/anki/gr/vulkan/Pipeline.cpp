@@ -386,6 +386,9 @@ void PipelineFactory::newPipeline(PipelineStateTracker& state, Pipeline& ppline)
 {
 	U64 hash;
 	state.flush(hash);
+
+	LockGuard<Mutex> lock(m_pplinesMtx);
+
 	auto it = m_pplines.find(hash);
 	if(it != m_pplines.getEnd())
 	{
