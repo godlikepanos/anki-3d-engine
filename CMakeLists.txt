@@ -33,7 +33,6 @@ else()
 	message(FATAL_ERROR "Unknown system")
 endif()
 
-message(${CMAKE_C_COMPILER_ID})
 if(${CMAKE_C_COMPILER_ID} MATCHES "GNU" OR ${CMAKE_C_COMPILER_ID} MATCHES "Clang")
 	set(GCC TRUE)
 else()

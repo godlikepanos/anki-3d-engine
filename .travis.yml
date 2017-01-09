@@ -1,30 +1,38 @@
-language: cpp
+# Linux build configuration for Travis
 
-sudo: required
+language: cpp
+sudo: false
+dist: trusty
+os: linux
 
 compiler:
   - gcc
+  - clang
 
-dist: trusty
+env:
+  - OPTIMIZE=ON TRACE=ON
+  - OPTIMIZE=OFF TRACE=OFF
+
+cache:
+  apt: true
+
+addons:
+  apt:
+    sources:
+      - sourceline: 'ppa:ubuntu-toolchain-r/test'
+    packages:
+      - cmake
+      - g++-4.9
 
 before_install:
-  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-  - sudo apt-get update -qq
-
-install:
-  - sudo apt-get install -qq g++-4.8
-  - export CXX="g++-4.8"
-  - export CC="gcc-4.8"
+  # Set the newer gcc on Linux
+  - export CXX="g++-4.9"
+  - export CC="gcc-4.9"
 
 script:
-  - mkdir build
+  - mkdir build 
   - cd build
-  - echo Build release
-  - cmake .. -DANKI_OPTIMIZE=ON -DANKI_DEBUG=OFF -DANKI_DEBUG_SYMBOLS=OFF -DANKI_BUILD_TOOLS=ON -DANKI_BUILD_TESTS=ON -DANKI_ENABLE_TRACE=OFF
-  - make
-  - rm -rf ./*
-  - echo Build debug
-  - cmake .. -DANKI_OPTIMIZE=OFF -DANKI_DEBUG=ON -DANKI_DEBUG_SYMBOLS=ON -DANKI_BUILD_TOOLS=ON -DANKI_BUILD_TESTS=ON -DANKI_ENABLE_TRACE=ON
+  - cmake .. -DANKI_OPTIMIZE=${OPTIMIZE} -DANKI_DEBUG=${OPTIMIZE} -DANKI_DEBUG_SYMBOLS=OFF -DANKI_BUILD_TOOLS=ON -DANKI_BUILD_TESTS=ON -DANKI_ENABLE_TRACE=${TRACE}
   - make
 
 branches:
@@ -33,7 +41,4 @@ branches:
 
 notifications:
   email: false
-
-os: linux
-
 
