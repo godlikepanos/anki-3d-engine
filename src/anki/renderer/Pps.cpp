@@ -55,7 +55,7 @@ Error Pps::initInternal(const ConfigSet& config)
 		m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 	}
 
-	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseLdrRgb.ankitex", m_blueNoise));
+	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseLdrRgb64x64.ankitex", m_blueNoise));
 
 	return ErrorCode::NONE;
 }

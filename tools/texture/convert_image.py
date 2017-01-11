@@ -338,6 +338,10 @@ def create_mipmaps(in_file, tmp_dir, width_, height_, color_format, to_linear_rg
 			args.append("-colorspace")
 			args.append("RGB")
 
+		# Add this because it will automatically convert gray-like images to grayscale TGAs
+		args.append("-type")
+		args.append("TrueColor")
+
 		# resize
 		args.append("-resize")
 		args.append(size_str)

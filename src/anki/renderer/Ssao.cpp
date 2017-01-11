@@ -15,9 +15,9 @@
 namespace anki
 {
 
-const U NOISE_TEX_SIZE = 8;
-const U KERNEL_SIZE = 8;
 const F32 HEMISPHERE_RADIUS = 1.1; // In game units
+const U KERNEL_SIZE = 8;
+const PixelFormat Ssao::RT_PIXEL_FORMAT(ComponentFormat::R8, TransformFormat::UNORM);
 
 template<typename TVec>
 static void genHemisphere(TVec* ANKI_RESTRICT arr, TVec* ANKI_RESTRICT arrEnd)
@@ -33,28 +33,9 @@ static void genHemisphere(TVec* ANKI_RESTRICT arr, TVec* ANKI_RESTRICT arrEnd)
 		arr->normalize();
 
 		// Adjust the length
-		(*arr) *= randRange(0.0, 1.0);
+		(*arr) *= randRange(HEMISPHERE_RADIUS / 2.0f, HEMISPHERE_RADIUS);
 	} while(++arr != arrEnd);
 }
-
-static void genNoise(Array<I8, 4>* ANKI_RESTRICT arr, Array<I8, 4>* ANKI_RESTRICT arrEnd)
-{
-	ANKI_ASSERT(arr && arrEnd && arr != arrEnd);
-
-	do
-	{
-		// Calculate the normal
-		Vec3 v(randRange(-1.0f, 1.0f), randRange(-1.0f, 1.0f), 0.0f);
-		v.normalize();
-
-		(*arr)[0] = v[0] * MAX_I8;
-		(*arr)[1] = v[1] * MAX_I8;
-		(*arr)[2] = v[2] * MAX_I8;
-		(*arr)[3] = 0;
-	} while(++arr != arrEnd);
-}
-
-const PixelFormat Ssao::RT_PIXEL_FORMAT(ComponentFormat::R8, TransformFormat::UNORM);
 
 Error Ssao::createFb(FramebufferPtr& fb, TexturePtr& rt)
 {
@@ -79,8 +60,6 @@ Error Ssao::createFb(FramebufferPtr& fb, TexturePtr& rt)
 
 Error Ssao::initInternal(const ConfigSet& config)
 {
-	GrManager& gr = getGrManager();
-
 	m_blurringIterationsCount = config.getNumber("ssao.blurringIterationsCount");
 
 	//
@@ -100,38 +79,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 	//
 	// noise texture
 	//
-	TextureInitInfo tinit;
-
-	tinit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::UPLOAD;
-	tinit.m_width = tinit.m_height = NOISE_TEX_SIZE;
-	tinit.m_depth = 1;
-	tinit.m_layerCount = 1;
-	tinit.m_type = TextureType::_2D;
-	tinit.m_format = PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::SNORM);
-	tinit.m_mipmapsCount = 1;
-	tinit.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
-	tinit.m_sampling.m_repeat = true;
-
-	m_noiseTex = gr.newInstance<Texture>(tinit);
-
-	StagingGpuMemoryToken token;
-	const U noiseSize = NOISE_TEX_SIZE * NOISE_TEX_SIZE * sizeof(Array<I8, 4>);
-	Array<I8, 4>* noise = static_cast<Array<I8, 4>*>(
-		m_r->getStagingGpuMemoryManager().allocateFrame(noiseSize, StagingGpuMemoryType::TRANSFER, token));
-
-	genNoise(&noise[0], &noise[0] + noiseSize);
-
-	CommandBufferInitInfo cmdbInit;
-	cmdbInit.m_flags = CommandBufferFlag::SMALL_BATCH | CommandBufferFlag::TRANSFER_WORK;
-	CommandBufferPtr cmdb = gr.newInstance<CommandBuffer>(cmdbInit);
-
-	TextureSurfaceInfo surf(0, 0, 0, 0);
-
-	cmdb->setTextureSurfaceBarrier(m_noiseTex, TextureUsageBit::NONE, TextureUsageBit::UPLOAD, surf);
-	cmdb->copyBufferToTextureSurface(token.m_buffer, token.m_offset, token.m_range, m_noiseTex, surf);
-	cmdb->setTextureSurfaceBarrier(m_noiseTex, TextureUsageBit::UPLOAD, TextureUsageBit::SAMPLED_FRAGMENT, surf);
-
-	cmdb->flush();
+	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseLdrRgb64x64.ankitex", m_noiseTex));
 
 	//
 	// Kernel
@@ -164,7 +112,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 		"#define KERNEL_SIZE %u\n"
 		"#define KERNEL_ARRAY %s\n"
 		"#define RADIUS float(%f)\n",
-		NOISE_TEX_SIZE,
+		m_noiseTex->getWidth(),
 		m_width,
 		m_height,
 		KERNEL_SIZE,
@@ -242,7 +190,7 @@ void Ssao::run(RenderingContext& ctx)
 
 	cmdb->bindTexture(0, 0, m_r->getDepthDownscale().m_qd.m_depthRt);
 	cmdb->bindTexture(0, 1, m_r->getMs().m_rt2);
-	cmdb->bindTexture(0, 2, m_noiseTex);
+	cmdb->bindTexture(0, 2, m_noiseTex->getGrTexture());
 
 	Vec4* unis = allocateAndBindUniforms<Vec4*>(sizeof(Vec4) * 2, cmdb, 0, 0);
 	const FrustumComponent& frc = *ctx.m_frustumComponent;

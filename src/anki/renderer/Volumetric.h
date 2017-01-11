@@ -47,6 +47,8 @@ private:
 	Vec3 m_fogColor = Vec3(1.0);
 	F32 m_fogFactor = 1.0;
 
+	TextureResourcePtr m_noiseTex;
+
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& config);
 };
 /// @}

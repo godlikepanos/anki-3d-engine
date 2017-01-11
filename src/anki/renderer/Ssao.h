@@ -55,7 +55,7 @@ private:
 	ShaderProgramPtr m_hblurProg;
 	ShaderProgramPtr m_vblurProg;
 
-	TexturePtr m_noiseTex;
+	TextureResourcePtr m_noiseTex;
 
 	ANKI_USE_RESULT Error createFb(FramebufferPtr& fb, TexturePtr& rt);
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);

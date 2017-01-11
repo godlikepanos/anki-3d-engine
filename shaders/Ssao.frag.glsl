@@ -30,7 +30,7 @@ layout(ANKI_UBO_BINDING(0, 0), std140, row_major) uniform _blk
 
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_mMsDepthRt;
 layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_msRt;
-layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_noiseMap;
+layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2DArray u_noiseMap;
 
 // Get normal
 vec3 readNormal(in vec2 uv)
@@ -45,7 +45,7 @@ vec3 readRandom(in vec2 uv)
 {
 	const vec2 tmp = vec2(float(WIDTH) / float(NOISE_MAP_SIZE), float(HEIGHT) / float(NOISE_MAP_SIZE));
 
-	vec3 noise = texture(u_noiseMap, tmp * uv).xyz;
+	vec3 noise = texture(u_noiseMap, vec3(tmp * uv, 0.0)).xyz;
 	return noise;
 }
 

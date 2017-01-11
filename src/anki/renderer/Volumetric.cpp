@@ -36,6 +36,9 @@ Error Volumetric::initInternal(const ConfigSet& config)
 	U width = m_r->getWidth() / VOLUMETRIC_FRACTION;
 	U height = m_r->getHeight() / VOLUMETRIC_FRACTION;
 
+	// Misc
+	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseLdrRgb64x64.ankitex", m_noiseTex));
+
 	// Create RTs
 	m_r->createRenderTarget(width,
 		height,
@@ -50,13 +53,15 @@ Error Volumetric::initInternal(const ConfigSet& config)
 	// Create shaders
 	ANKI_CHECK(m_r->createShaderf("shaders/Volumetric.frag.glsl",
 		m_frag,
-		"#define RPASS_SIZE uvec2(%uu, %uu)\n"
-		"#define CLUSTER_COUNT uvec3(%uu, %uu, %uu)\n",
+		"#define FB_SIZE uvec2(%uu, %uu)\n"
+		"#define CLUSTER_COUNT uvec3(%uu, %uu, %uu)\n"
+		"#define NOISE_MAP_SIZE %u\n",
 		width,
 		height,
 		m_r->getIs().getLightBin().getClusterer().getClusterCountX(),
 		m_r->getIs().getLightBin().getClusterer().getClusterCountY(),
-		m_r->getIs().getLightBin().getClusterer().getClusterCountZ()));
+		m_r->getIs().getLightBin().getClusterer().getClusterCountZ(),
+		m_noiseTex->getWidth()));
 
 	// Create prog
 	m_r->createDrawQuadShaderProgram(m_frag->getGrShader(), m_prog);
@@ -97,8 +102,9 @@ void Volumetric::run(RenderingContext& ctx)
 	cmdb->setBlendFactors(0, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA);
 
 	cmdb->bindTexture(0, 0, m_r->getDepthDownscale().m_qd.m_depthRt);
-	cmdb->bindTexture(0, 1, m_r->getSm().m_spotTexArray);
-	cmdb->bindTexture(0, 2, m_r->getSm().m_omniTexArray);
+	cmdb->bindTexture(0, 1, m_noiseTex->getGrTexture());
+	cmdb->bindTexture(0, 2, m_r->getSm().m_spotTexArray);
+	cmdb->bindTexture(0, 3, m_r->getSm().m_omniTexArray);
 
 	bindUniforms(cmdb, 0, 0, ctx.m_is.m_commonToken);
 	bindUniforms(cmdb, 0, 1, ctx.m_is.m_pointLightsToken);
@@ -106,6 +112,11 @@ void Volumetric::run(RenderingContext& ctx)
 
 	Vec4* uniforms = allocateAndBindUniforms<Vec4*>(sizeof(Vec4) * 2, cmdb, 0, 3);
 	computeLinearizeDepthOptimal(frc.getNear(), frc.getFar(), uniforms[0].x(), uniforms[0].y());
+
+	F32 texelOffset = (1.0 / m_noiseTex->getWidth()) * 1.0;
+	uniforms[0].z() = m_r->getFrameCount() * texelOffset;
+	uniforms[0].w() = m_r->getFrameCount() & (m_noiseTex->getLayerCount() - 1);
+
 	uniforms[1] = Vec4(m_fogColor, m_fogFactor);
 
 	bindStorage(cmdb, 0, 0, ctx.m_is.m_clustersToken);

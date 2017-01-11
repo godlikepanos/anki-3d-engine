@@ -7,7 +7,7 @@
 #include "shaders/Functions.glsl"
 #include "shaders/Clusterer.glsl"
 
-#define LIGHT_TEX_BINDING 1
+#define LIGHT_TEX_BINDING 2
 #define LIGHT_UBO_BINDING 0
 #define LIGHT_SS_BINDING 0
 #define LIGHT_SET 0
@@ -16,16 +16,21 @@
 layout(location = 0) in vec2 in_uv;
 
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_msDepthRt;
+layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2DArray u_noiseTex;
 
 layout(std140, ANKI_UBO_BINDING(0, 3)) uniform ubo0_
 {
-	vec4 u_linearizePad2;
+	vec4 u_linearizeNoiseTexOffsetLayer;
 	vec4 u_fogColorFogFactor;
 };
 
+#define u_linearize u_linearizeNoiseTexOffsetLayer.xy
+#define u_noiseYOffset u_linearizeNoiseTexOffsetLayer.z
+#define u_noiseLayer u_linearizeNoiseTexOffsetLayer.w
+
 layout(location = 0) out vec4 out_color;
 
-#define ENABLE_SHADOWS 0
+#define ENABLE_SHADOWS 1
 const uint MAX_SAMPLES_PER_CLUSTER = 4u;
 
 // Return the diffuse color without taking into account the diffuse term of the particles.
@@ -98,7 +103,7 @@ vec3 computeLightColor(vec3 fragPos[MAX_SAMPLES_PER_CLUSTER], uint iterCount, ui
 
 vec3 fog(in float depth)
 {
-	float linearDepth = linearizeDepthOptimal(depth, u_linearizePad2.x, u_linearizePad2.y);
+	float linearDepth = linearizeDepthOptimal(depth, u_linearize.x, u_linearize.y);
 	float t = linearDepth * u_fogColorFogFactor.w;
 	return u_fogColorFogFactor.rgb * t;
 }
@@ -121,7 +126,8 @@ void main()
 	uint j = uint(in_uv.y * CLUSTER_COUNT.y);
 
 	const float DIST = 1.0 / float(MAX_SAMPLES_PER_CLUSTER);
-	float randFactor = rand(ndc + u_lightingUniforms.rendererSizeTimePad1.z);
+	vec3 noiseTexUv = vec3(vec2(FB_SIZE) / vec2(NOISE_MAP_SIZE) * in_uv + vec2(0.0, u_noiseYOffset), u_noiseLayer);
+	float randFactor = texture(u_noiseTex, noiseTexUv).r;
 	float start = DIST * randFactor;
 	float factors[MAX_SAMPLES_PER_CLUSTER] = float[](start, DIST + start, 2.0 * DIST + start, 3.0 * DIST + start);
 
@@ -157,5 +163,5 @@ void main()
 	}
 
 	newCol = newCol * fog(depth) / max(1.0, float(count));
-	out_color = vec4(newCol, 0.666);
+	out_color = vec4(newCol, 1.0 / 3.0);
 }
