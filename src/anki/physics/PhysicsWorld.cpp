@@ -90,7 +90,6 @@ Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
 	NewtonMaterialSetCollisionCallback(m_world,
 		NewtonMaterialGetDefaultGroupID(m_world),
 		NewtonMaterialGetDefaultGroupID(m_world),
-		nullptr,
 		onAabbOverlapCallback,
 		onContactCallback);
 

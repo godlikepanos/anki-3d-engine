@@ -9,7 +9,7 @@
 #include <anki/util/Enum.h>
 #include <anki/util/Ptr.h>
 #include <anki/Math.h>
-#include <Newton.h>
+#include <newton/Newton.h>
 
 namespace anki
 {

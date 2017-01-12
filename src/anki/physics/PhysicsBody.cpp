@@ -118,7 +118,7 @@ void PhysicsBody::applyGravityForce(const NewtonBody* body, dFloat timestep, int
 	dFloat Izz;
 	dFloat mass;
 
-	NewtonBodyGetMassMatrix(body, &mass, &Ixx, &Iyy, &Izz);
+	NewtonBodyGetMass(body, &mass, &Ixx, &Iyy, &Izz);
 
 	const F32 GRAVITY = -9.8;
 	Vec4 force(0.0, mass * GRAVITY, 0.0, 0.0);

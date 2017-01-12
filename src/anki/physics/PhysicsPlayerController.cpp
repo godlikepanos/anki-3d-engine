@@ -183,7 +183,7 @@ Error PhysicsPlayerController::create(const PhysicsPlayerControllerInitInfo& ini
 	outerShapeMatrix.setTranslationPart(transl);
 	outerShapeMatrix.transpose();
 
-	NewtonCollision* bodyCapsule = NewtonCreateCapsule(world, 0.25, 0.5, 0, &outerShapeMatrix[0]);
+	NewtonCollision* bodyCapsule = NewtonCreateCapsule(world, 0.25, 0.25, 0.5, 0, &outerShapeMatrix[0]);
 	if(bodyCapsule == nullptr)
 	{
 		ANKI_LOGE("NewtonCreateCapsule() failed");
@@ -373,16 +373,20 @@ void PhysicsPlayerController::updateGroundPlane(Mat4& matrix, const Mat4& castMa
 {
 	NewtonWorld* world = m_world->getNewtonWorld();
 
+	NewtonWorldConvexCastReturnInfo info;
 	CustomControllerConvexRayFilter filter;
 	filter.m_me = m_body;
 
-	NewtonWorldConvexRayCast(world,
-		m_castingShape,
+	F32 param = 10.0f;
+	NewtonWorldConvexCast(world,
 		&toNewton(castMatrix)[0],
 		reinterpret_cast<const F32*>(&dst),
-		CustomControllerConvexRayFilter::filterCallback,
+		m_castingShape,
+		&param,
 		&filter,
 		CustomControllerConvexRayFilter::prefilterCallback,
+		&info,
+		1,
 		threadIndex);
 
 	m_groundPlane = Vec4(0.0);

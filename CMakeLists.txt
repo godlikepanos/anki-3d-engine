@@ -129,7 +129,7 @@ add_definitions(-fno-exceptions)
 
 # static libstdc++
 if(GCC)
-	set(CXX_FLAGS "${CXX_FLAGS} -static-libstdc++ ")
+	#set(CXX_FLAGS "${CXX_FLAGS} -static-libstdc++ ")
 endif()
 
 # SSE
@@ -209,7 +209,7 @@ message("++ Lib install dir: ${LIB_INSTALL_DIR}")
 ################################################################################
 include(ExternalProject)
 
-set(ANKI_EXTERN_SUB_DIRS tinyxml2 lua z newton)
+set(ANKI_EXTERN_SUB_DIRS tinyxml2 lua z)
 
 if((LINUX OR MACOS OR WINDOWS) AND GL)
 	set(ANKI_EXTERN_SUB_DIRS ${ANKI_EXTERN_SUB_DIRS} GLEW)
@@ -243,6 +243,20 @@ if(SDL)
 else()
 	set(SDL2_INSTALL_DIR "")
 endif()
+
+# Newton
+ExternalProject_Add(
+	NEWTON_PROJECT
+	DOWNLOAD_COMMAND ""
+	PREFIX "${CMAKE_CURRENT_BINARY_DIR}/newton_build"
+	SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/newton"
+	CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/newton_build -DCMAKE_BUILD_TYPE=Release 
+		-DNEWTON_DEMOS_SANDBOX=OFF -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER} -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER})
+
+add_library(NEWTON_LIB SHARED IMPORTED)
+set_property(TARGET NEWTON_LIB PROPERTY IMPORTED_LOCATION 
+	"${CMAKE_CURRENT_BINARY_DIR}/newton_build/lib/libNewton${CMAKE_SHARED_LIBRARY_SUFFIX}")
+add_dependencies(NEWTON_LIB NEWTON_PROJECT)
 
 # freetype
 ExternalProject_Add(
@@ -322,7 +336,8 @@ find_package(Doxygen)
 if(DOXYGEN_FOUND)
 	message("++ Doxygen found")
 
-	add_custom_target(doc ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doxyfile WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+	add_custom_target(doc ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doxyfile 
+		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 		COMMENT "Generating API documentation with Doxygen" VERBATIM)
 endif()
 
@@ -341,8 +356,10 @@ CONFIGURE_FILE("src/anki/Config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/anki/Confi
 INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h" DESTINATION "${INCLUDE_INSTALL_DIR}/anki")
 
 # Include & lib directories
-include_directories("src" "thirdparty/tinyxml2/include" "thirdparty/lua" "thirdparty/z"
-	"${SDL2_INSTALL_DIR}/include/SDL2/" "${FREETYPE_INSTALL_DIR}/include/freetype2/" "thirdparty/newton/newton" "${CMAKE_CURRENT_BINARY_DIR}" ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glslang thirdparty)
+include_directories("src" "thirdparty/tinyxml2/include" "thirdparty/lua" "thirdparty/z" 
+	"${SDL2_INSTALL_DIR}/include/SDL2/" "${FREETYPE_INSTALL_DIR}/include/freetype2/" 
+	"thirdparty/newton/coreLibrary_300/source/" "${CMAKE_CURRENT_BINARY_DIR}" 
+	${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glslang thirdparty)
 
 if(LINUX OR MACOS OR WINDOWS)
 	include_directories("thirdparty/GLEW/include")
@@ -410,7 +427,7 @@ endforeach()
 
 add_library(anki src/anki/Dummy.cpp "${_SYS_SRC}")
 
-target_link_libraries(anki ${ANKI_LIBS} ankitinyxml2 ankilua ankiz ankinewton ${ANKI_GPERFTOOLS_LIBS} SDL2_LIB FREETYPE_LIB ${_SYS})
+target_link_libraries(anki ${ANKI_LIBS} ankitinyxml2 ankilua ankiz NEWTON_LIB ${ANKI_GPERFTOOLS_LIBS} SDL2_LIB FREETYPE_LIB ${_SYS})
 
 if(VULKAN)
 #target_link_libraries(anki GLSLANG_LIB)
