@@ -103,17 +103,17 @@ Error ShaderProgramImpl::init(const Array<ShaderPtr, U(ShaderType::COUNT)>& shad
 	const Bool graphicsProg = !!(shaderMask & ShaderTypeBit::VERTEX);
 	if(graphicsProg)
 	{
-		m_attributeMask = shaders[ShaderType::VERTEX]->m_impl->m_attributeMask;
-		m_colorAttachmentWritemask = shaders[ShaderType::FRAGMENT]->m_impl->m_colorAttachmentWritemask;
+		m_refl.m_attributeMask = shaders[ShaderType::VERTEX]->m_impl->m_attributeMask;
+		m_refl.m_colorAttachmentWritemask = shaders[ShaderType::FRAGMENT]->m_impl->m_colorAttachmentWritemask;
 
-		const U attachmentCount = m_colorAttachmentWritemask.getEnabledBitCount();
+		const U attachmentCount = m_refl.m_colorAttachmentWritemask.getEnabledBitCount();
 		for(U i = 0; i < attachmentCount; ++i)
 		{
-			ANKI_ASSERT(m_colorAttachmentWritemask.get(i) && "Should write to all attachments");
+			ANKI_ASSERT(m_refl.m_colorAttachmentWritemask.get(i) && "Should write to all attachments");
 		}
 	}
 
-	// Cache some values
+	// Init the create infos
 	//
 	if(graphicsProg)
 	{

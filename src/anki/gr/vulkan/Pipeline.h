@@ -331,8 +331,8 @@ public:
 		if(prog != m_state.m_prog)
 		{
 			const ShaderProgramImpl& impl = *prog->m_impl;
-			m_shaderColorAttachmentWritemask = impl.m_colorAttachmentWritemask;
-			m_shaderAttributeMask = impl.m_attributeMask;
+			m_shaderColorAttachmentWritemask = impl.getReflectionInfo().m_colorAttachmentWritemask;
+			m_shaderAttributeMask = impl.getReflectionInfo().m_attributeMask;
 			m_dirty.m_prog = true;
 		}
 	}

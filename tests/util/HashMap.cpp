@@ -151,9 +151,11 @@ ANKI_TEST(Util, HashMap)
 
 	// Bench it
 	{
-		HashMap<int, int, Hasher, Compare> akMap;
-		std::unordered_map<int, int, std::hash<int>, std::equal_to<int>, HeapAllocator<std::pair<int, int>>> stdMap(
-			10, std::hash<int>(), std::equal_to<int>(), alloc);
+		using AkMap = HashMap<int, int, Hasher, Compare>;
+		AkMap akMap;
+		using StlMap =
+			std::unordered_map<int, int, std::hash<int>, std::equal_to<int>, HeapAllocator<std::pair<int, int>>>;
+		StlMap stdMap(10, std::hash<int>(), std::equal_to<int>(), alloc);
 
 		std::unordered_map<int, int> tmpMap;
 
@@ -161,7 +163,7 @@ ANKI_TEST(Util, HashMap)
 		I64 count = 0;
 
 		// Create a huge set
-		const U COUNT = 1024 * 100;
+		const U COUNT = 1024 * 1024;
 		DynamicArrayAuto<int> vals(alloc);
 		vals.create(COUNT);
 
@@ -218,6 +220,49 @@ ANKI_TEST(Util, HashMap)
 		stlTime = timer.getElapsedTime();
 
 		printf("Find bench: STL %f AnKi %f | %f%%\n", stlTime, akTime, stlTime / akTime * 100.0);
+
+		// Create a random set for deletion out of vals
+		tmpMap.clear();
+		const U DEL_COUNT = COUNT / 2;
+		DynamicArrayAuto<AkMap::Iterator> delValsAk(alloc);
+		delValsAk.create(DEL_COUNT);
+
+		DynamicArrayAuto<StlMap::iterator> delValsStl(alloc);
+		delValsStl.create(DEL_COUNT);
+
+		for(U i = 0; i < DEL_COUNT; ++i)
+		{
+			// Put unique keys
+			int v;
+			do
+			{
+				v = vals[rand() % COUNT];
+			} while(tmpMap.find(v) != tmpMap.end());
+			tmpMap[v] = 1;
+
+			delValsAk[i] = akMap.find(v);
+			delValsStl[i] = stdMap.find(v);
+		}
+
+		// Random delete AnKi
+		timer.start();
+		for(U i = 0; i < DEL_COUNT; ++i)
+		{
+			akMap.erase(alloc, delValsAk[i]);
+		}
+		timer.stop();
+		akTime = timer.getElapsedTime();
+
+		// Random delete STL
+		timer.start();
+		for(U i = 0; i < DEL_COUNT; ++i)
+		{
+			stdMap.erase(delValsStl[i]);
+		}
+		timer.stop();
+		stlTime = timer.getElapsedTime();
+
+		printf("Deleting bench: STL %f AnKi %f | %f%%\n", stlTime, akTime, stlTime / akTime * 100.0);
 
 		akMap.destroy(alloc);
 	}

@@ -187,8 +187,7 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 	ci.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 
 	// Prog
-	ci.pStages = &m_state.m_prog->m_impl->m_shaderCreateInfos[0];
-	ci.stageCount = m_state.m_prog->m_impl->m_shaderCreateInfoCount;
+	ci.pStages = m_state.m_prog->m_impl->getShaderCreateInfos(ci.stageCount);
 
 	// Vert
 	if(!!m_shaderAttributeMask)
@@ -347,7 +346,7 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 	ci.pDynamicState = &dynCi;
 
 	// The rest
-	ci.layout = m_state.m_prog->m_impl->m_pplineLayout.getHandle();
+	ci.layout = m_state.m_prog->m_impl->getPipelineLayout().getHandle();
 	ci.renderPass = m_rpass;
 	ci.subpass = 0;
 
