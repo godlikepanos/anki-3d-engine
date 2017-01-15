@@ -40,6 +40,16 @@ else()
 endif()
 
 ################################################################################
+# Some functions                                                               #
+################################################################################
+
+macro(defineStaticExternalLibrary extProj extLib extLibFname)
+	add_library(${extLib} STATIC IMPORTED GLOBAL)
+	set_property(TARGET ${extLib} PROPERTY IMPORTED_LOCATION ${extLibFname})
+	add_dependencies(${extLib} ${extProj})
+endmacro()
+
+################################################################################
 # Configuration                                                                #
 ################################################################################
 
@@ -53,8 +63,6 @@ option(ANKI_BUILD_TESTS "Build unit tests" OFF)
 option(ANKI_BUILD_SANDBOX "Build sandbox application" ON)
 option(ANKI_BUILD_BENCH "Build benchmark application" OFF)
 option(ANKI_BUILD_SAMPLES "Build sample applications" ON)
-
-option(ANKI_WITH_GPERFTOOLS_PROF "Link with gperftools profiler" OFF)
 
 option(ANKI_STRIP "Srip the symbols from the executables" OFF)
 
@@ -237,9 +245,7 @@ if(SDL)
 	ExternalProject_Get_Property(SDL2_PROJECT install_dir)
 	set(SDL2_INSTALL_DIR ${install_dir})
 
-	add_library(SDL2_LIB STATIC IMPORTED)
-	set_property(TARGET SDL2_LIB PROPERTY IMPORTED_LOCATION ${SDL2_INSTALL_DIR}/lib/libSDL2.a)
-	add_dependencies(SDL2_LIB SDL2_PROJECT)
+	defineStaticExternalLibrary(SDL2_PROJECT SDL2_LIB "${SDL2_INSTALL_DIR}/lib/libSDL2${CMAKE_STATIC_LIBRARY_SUFFIX}")
 else()
 	set(SDL2_INSTALL_DIR "")
 endif()
@@ -253,10 +259,10 @@ ExternalProject_Add(
 	CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/newton_build -DCMAKE_BUILD_TYPE=Release 
 	-DNEWTON_DEMOS_SANDBOX=OFF -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER} -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER})
 
-add_library(NEWTON_LIB SHARED IMPORTED)
-set_property(TARGET NEWTON_LIB PROPERTY IMPORTED_LOCATION 
-	"${CMAKE_CURRENT_BINARY_DIR}/newton_build/lib/libNewton${CMAKE_SHARED_LIBRARY_SUFFIX}")
-add_dependencies(NEWTON_LIB NEWTON_PROJECT)
+defineStaticExternalLibrary(NEWTON_PROJECT NEWTON_LIB "${CMAKE_CURRENT_BINARY_DIR}/newton_build/src/NEWTON_PROJECT-build/lib/libNewton${CMAKE_STATIC_LIBRARY_SUFFIX}")
+defineStaticExternalLibrary(NEWTON_PROJECT NEWTON_JOINTS_LIB "${CMAKE_CURRENT_BINARY_DIR}/newton_build/src/NEWTON_PROJECT-build/lib/libdCustomJoints${CMAKE_STATIC_LIBRARY_SUFFIX}")
+defineStaticExternalLibrary(NEWTON_PROJECT NEWTON_CONTAINERS_LIB "${CMAKE_CURRENT_BINARY_DIR}/newton_build/src/NEWTON_PROJECT-build/lib/libdContainers${CMAKE_STATIC_LIBRARY_SUFFIX}")
+defineStaticExternalLibrary(NEWTON_PROJECT NEWTON_MATH_LIB "${CMAKE_CURRENT_BINARY_DIR}/newton_build/src/NEWTON_PROJECT-build/lib/libdMath${CMAKE_STATIC_LIBRARY_SUFFIX}")
 
 # freetype
 ExternalProject_Add(
@@ -268,9 +274,7 @@ ExternalProject_Add(
 
 ExternalProject_Get_Property(FREETYPE_PROJECT install_dir)
 set(FREETYPE_INSTALL_DIR ${install_dir})
-add_library(FREETYPE_LIB STATIC IMPORTED)
-set_property(TARGET FREETYPE_LIB PROPERTY IMPORTED_LOCATION ${FREETYPE_INSTALL_DIR}/lib/libfreetype.a)
-add_dependencies(FREETYPE_LIB FREETYPE_PROJECT)
+defineStaticExternalLibrary(FREETYPE_PROJECT FREETYPE_LIB "${FREETYPE_INSTALL_DIR}/lib/libfreetype${CMAKE_STATIC_LIBRARY_SUFFIX}")
 
 # glslang
 if(VULKAN)
@@ -284,25 +288,11 @@ if(VULKAN)
 	ExternalProject_Get_Property(GLSLANG_PROJECT install_dir)
 	set(GLSLANG_INSTALL_DIR ${install_dir})
 
-	add_library(GLSLANG_LIB STATIC IMPORTED)
-	set_property(TARGET GLSLANG_LIB PROPERTY IMPORTED_LOCATION ${GLSLANG_INSTALL_DIR}/lib/libglslang.a)
-	add_dependencies(GLSLANG_LIB GLSLANG_PROJECT)
-
-	add_library(SPIRV_LIB STATIC IMPORTED)
-	set_property(TARGET SPIRV_LIB PROPERTY IMPORTED_LOCATION ${GLSLANG_INSTALL_DIR}/lib/libSPIRV.a)
-	add_dependencies(SPIRV_LIB GLSLANG_PROJECT)
-
-	add_library(OSD_LIB STATIC IMPORTED)
-	set_property(TARGET OSD_LIB PROPERTY IMPORTED_LOCATION ${GLSLANG_INSTALL_DIR}/lib/libOSDependent.a)
-	add_dependencies(OSD_LIB GLSLANG_PROJECT)
-
-	add_library(GLC_LIB STATIC IMPORTED)
-	set_property(TARGET GLC_LIB PROPERTY IMPORTED_LOCATION ${GLSLANG_INSTALL_DIR}/lib/libOGLCompiler.a)
-	add_dependencies(GLC_LIB GLSLANG_PROJECT)
-
-	add_library(HLSL_LIB STATIC IMPORTED)
-	set_property(TARGET HLSL_LIB PROPERTY IMPORTED_LOCATION ${GLSLANG_INSTALL_DIR}/lib/libHLSL.a)
-	add_dependencies(HLSL_LIB GLSLANG_PROJECT)
+	defineStaticExternalLibrary(GLSLANG_PROJECT GLSLANG_LIB "${GLSLANG_INSTALL_DIR}/lib/libglslang${CMAKE_STATIC_LIBRARY_SUFFIX}")
+	defineStaticExternalLibrary(GLSLANG_PROJECT SPIRV_LIB "${GLSLANG_INSTALL_DIR}/lib/libSPIRV${CMAKE_STATIC_LIBRARY_SUFFIX}")
+	defineStaticExternalLibrary(GLSLANG_PROJECT OSD_LIB "${GLSLANG_INSTALL_DIR}/lib/libOSDependent${CMAKE_STATIC_LIBRARY_SUFFIX}")
+	defineStaticExternalLibrary(GLSLANG_PROJECT GLC_LIB "${GLSLANG_INSTALL_DIR}/lib/libOGLCompiler${CMAKE_STATIC_LIBRARY_SUFFIX}")
+	defineStaticExternalLibrary(GLSLANG_PROJECT HLSL_LIB "${GLSLANG_INSTALL_DIR}/lib/libHLSL${CMAKE_STATIC_LIBRARY_SUFFIX}")
 endif()
 
 foreach(TMP ${ANKI_EXTERN_SUB_DIRS})
@@ -352,14 +342,24 @@ else()
 	set(ANKI_DEBUG 0)
 endif()
 
-CONFIGURE_FILE("src/anki/Config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h")
-INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h" DESTINATION "${INCLUDE_INSTALL_DIR}/anki")
+configure_file("src/anki/Config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h")
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h" DESTINATION "${INCLUDE_INSTALL_DIR}/anki")
 
 # Include & lib directories
-include_directories("src" "thirdparty/tinyxml2/include" "thirdparty/lua" "thirdparty/z" 
-	"${SDL2_INSTALL_DIR}/include/SDL2/" "${FREETYPE_INSTALL_DIR}/include/freetype2/" 
-	"thirdparty/newton/coreLibrary_300/source/" "${CMAKE_CURRENT_BINARY_DIR}" 
-	${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glslang thirdparty)
+include_directories("src" 
+	"thirdparty/tinyxml2/include" 
+	"thirdparty/lua" 
+	"thirdparty/z" 
+	"${SDL2_INSTALL_DIR}/include/SDL2/" 
+	"${FREETYPE_INSTALL_DIR}/include/freetype2/" 
+	"thirdparty/newton/coreLibrary_300/source/newton" 
+	"thirdparty/newton/packages/dCustomJoints"
+	"thirdparty/newton/packages/dContainers" 
+	"thirdparty/newton/packages/dMath" 
+	"thirdparty/newton/packages/thirdParty/timeTracker/"
+	"${CMAKE_CURRENT_BINARY_DIR}" 
+	"${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glslang" 
+	"thirdparty")
 
 if(LINUX OR MACOS OR WINDOWS)
 	include_directories("thirdparty/GLEW/include")
@@ -427,15 +427,7 @@ endforeach()
 
 add_library(anki src/anki/Dummy.cpp "${_SYS_SRC}")
 
-target_link_libraries(anki ${ANKI_LIBS} ankitinyxml2 ankilua ankiz NEWTON_LIB ${ANKI_GPERFTOOLS_LIBS} SDL2_LIB FREETYPE_LIB ${_SYS})
-
-if(VULKAN)
-#target_link_libraries(anki GLSLANG_LIB)
-endif()
-
-if(SDL)
-	target_link_libraries(anki SDL2_LIB)
-endif()
+target_link_libraries(anki ${ANKI_LIBS} ankitinyxml2 ankilua ankiz FREETYPE_LIB ${_SYS})
 
 ################################################################################
 # AnKi extra                                                                   #
@@ -459,27 +451,4 @@ endif()
 
 if(ANKI_BUILD_BENCH)
 	add_subdirectory(bench)
-endif()
-
-################################################################################
-# Android                                                                      #
-################################################################################
-if(${ANDROID})
-	# 1. generate Android.mk
-	FILE(WRITE ./jni/Android.mk "APP_ABI := ${ANDROID_NDK_ABI_NAME}\n")
-
-	# 2. generate gdb.setup
-	GET_DIRECTORY_PROPERTY(include_directories DIRECTORY . include_directories)
-	STRING(REGEX REPLACE ";" " " include_directories "${include_directories}")
-	FILE(WRITE ./libs/${ANDROID_NDK_ABI_NAME}/gdb.setup "set solib-search-path ./libs/${ANDROID_NDK_ABI_NAME}\n")
-	FILE(APPEND ./libs/${ANDROID_NDK_ABI_NAME}/gdb.setup "directory ${include_directories} ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}\n")
-
-	# 3. copy gdbserver executable
-	FILE(COPY ${ANDROID_NDK}/prebuilt/android-arm/gdbserver/gdbserver DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/libs/${ANDROID_NDK_ABI_NAME}/)
-
-	set(LIBRARY_NAME ankibench)
-
-	# 4. copy lib to obj
-	#ADD_CUSTOM_COMMAND(TARGET ${LIBRARY_NAME} POST_BUILD COMMAND mkdir -p ./obj/local/${ANDROID_NDK_ABI_NAME}/)
-	#ADD_CUSTOM_COMMAND(TARGET ${LIBRARY_NAME} POST_BUILD COMMAND cp ./libs/${ANDROID_NDK_ABI_NAME}/lib${LIBRARY_NAME}.so ./obj/local/${ANDROID_NDK_ABI_NAME}/)
 endif()

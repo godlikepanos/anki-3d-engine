@@ -74,6 +74,9 @@ Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
 	// Set the simplified solver mode (faster but less accurate)
 	NewtonSetSolverModel(m_world, 1);
 
+	// Create the character controller manager. Newton needs it's own allocators
+	m_playerManager = new CharacterControllerManager(this);
+
 	// Create scene collision
 	m_sceneCollision = NewtonCreateSceneCollision(m_world, 0);
 	Mat4 trf = Mat4::getIdentity();
@@ -82,9 +85,6 @@ Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
 
 	NewtonDestroyCollision(m_sceneCollision); // destroy old scene
 	m_sceneCollision = NewtonBodyGetCollision(m_sceneBody);
-
-	// Set the post update listener
-	NewtonWorldAddPostListener(m_world, "world", this, postUpdateCallback, destroyCallback);
 
 	// Set callbacks
 	NewtonMaterialSetCollisionCallback(m_world,
@@ -126,43 +126,14 @@ void PhysicsWorld::cleanupMarkedForDeletion()
 		// Remove from objects marked for deletion
 		m_forDeletion.erase(m_alloc, it);
 
-		// Remove from player controllers
-		if(obj->getType() == PhysicsObjectType::PLAYER_CONTROLLER)
-		{
-			auto it2 = m_playerControllers.getBegin();
-			for(; it2 != m_playerControllers.getEnd(); ++it2)
-			{
-				PhysicsObject* obj2 = *it2;
-				if(obj2 == obj)
-				{
-					break;
-				}
-			}
-
-			ANKI_ASSERT(it2 != m_playerControllers.getEnd());
-			m_playerControllers.erase(m_alloc, it2);
-		}
-
 		// Finaly, delete it
 		m_alloc.deleteInstance(obj);
 	}
 }
 
-void PhysicsWorld::postUpdate(F32 dt)
-{
-	for(PhysicsPlayerController* player : m_playerControllers)
-	{
-		NewtonDispachThreadJob(m_world, PhysicsPlayerController::postUpdateKernelCallback, player);
-	}
-}
-
 void PhysicsWorld::registerObject(PhysicsObject* ptr)
 {
-	if(ptr->getType() == PhysicsObjectType::PLAYER_CONTROLLER)
-	{
-		LockGuard<Mutex> lock(m_mtx);
-		m_playerControllers.pushBack(m_alloc, static_cast<PhysicsPlayerController*>(ptr));
-	}
+	// TODO Remove
 }
 
 void PhysicsWorld::onContactCallback(const NewtonJoint* contactJoint, F32 timestep, int threadIndex)

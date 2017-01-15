@@ -34,7 +34,7 @@ PhysicsBody::~PhysicsBody()
 Error PhysicsBody::create(const PhysicsBodyInitInfo& init)
 {
 	// Create
-	Mat4 trf = toNewton(Mat4(init.m_startTrf));
+	dMatrix trf = toNewton(Mat4(init.m_startTrf));
 
 	if(init.m_static)
 	{
@@ -45,7 +45,7 @@ Error PhysicsBody::create(const PhysicsBodyInitInfo& init)
 		m_sceneCollisionProxy = NewtonSceneCollisionAddSubCollision(scene, init.m_shape->getNewtonShape());
 		NewtonSceneCollisionEndAddRemove(scene);
 
-		NewtonSceneCollisionSetSubCollisionMatrix(scene, m_sceneCollisionProxy, &trf[0]);
+		NewtonSceneCollisionSetSubCollisionMatrix(scene, m_sceneCollisionProxy, &trf[0][0]);
 
 		return ErrorCode::NONE;
 	}
@@ -55,7 +55,7 @@ Error PhysicsBody::create(const PhysicsBodyInitInfo& init)
 	}
 	else
 	{
-		m_body = NewtonCreateDynamicBody(m_world->getNewtonWorld(), init.m_shape->getNewtonShape(), &trf(0, 0));
+		m_body = NewtonCreateDynamicBody(m_world->getNewtonWorld(), init.m_shape->getNewtonShape(), &trf[0][0]);
 	}
 
 	if(!m_body)

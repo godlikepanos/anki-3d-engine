@@ -2,5 +2,5 @@ file(GLOB ANKI_PHYS_SOURCES *.cpp)
 file(GLOB ANKI_PHYS_HEADERS *.h)
 
 add_library(ankiphysics ${ANKI_PHYS_SOURCES} ${ANKI_PHYS_HEADERS})
-target_link_libraries(ankiphysics NEWTON_LIB)
+target_link_libraries(ankiphysics NEWTON_LIB NEWTON_JOINTS_LIB NEWTON_CONTAINERS_LIB NEWTON_MATH_LIB)
 

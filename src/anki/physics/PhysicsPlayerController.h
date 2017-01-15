@@ -6,12 +6,28 @@
 #pragma once
 
 #include <anki/physics/PhysicsObject.h>
+#include <CustomPlayerControllerManager.h>
 
 namespace anki
 {
 
 /// @addtogroup physics
 /// @{
+
+/// The implementation of the Newton manager.
+class CharacterControllerManager : public CustomPlayerControllerManager
+{
+public:
+	PhysicsWorld* m_world;
+
+	CharacterControllerManager(PhysicsWorld* world);
+
+	~CharacterControllerManager()
+	{
+	}
+
+	void ApplyPlayerMove(CustomPlayerController* const controller, dFloat timestep);
+};
 
 /// Init info for PhysicsPlayerController.
 class PhysicsPlayerControllerInitInfo
@@ -28,6 +44,8 @@ public:
 /// A player controller that walks the world.
 class PhysicsPlayerController final : public PhysicsObject
 {
+	friend class CharacterControllerManager;
+
 public:
 	PhysicsPlayerController(PhysicsWorld* world)
 		: PhysicsObject(PhysicsObjectType::PLAYER_CONTROLLER, world)
@@ -56,69 +74,34 @@ public:
 		return m_trf;
 	}
 
-anki_internal:
-	/// Called by Newton thread to update the controller.
-	static void postUpdateKernelCallback(NewtonWorld* const world, void* const context, int threadIndex);
-
 private:
-	Vec4 m_upDir;
-	Vec4 m_frontDir;
-	Vec4 m_groundPlane;
-	Vec4 m_groundVelocity;
-	F32 m_innerRadius;
-	F32 m_outerRadius;
-	F32 m_height;
-	F32 m_stepHeight;
-	F32 m_maxSlope;
-	F32 m_sphereCastOrigin;
-	F32 m_restrainingDistance;
-	Bool8 m_isJumping;
-	NewtonBody* m_body;
-	NewtonCollision* m_castingShape;
-	NewtonCollision* m_supportShape;
-	NewtonCollision* m_upperBodyShape;
+	CustomPlayerController* m_newtonPlayer = nullptr;
+	Transform m_trf = Transform::getIdentity();
+	Bool m_updated = true;
 
 	// State
 	F32 m_forwardSpeed = 0.0;
 	F32 m_strafeSpeed = 0.0;
 	F32 m_jumpSpeed = 0.0;
 	Vec4 m_forwardDir = Vec4(0.0, 0.0, -1.0, 0.0);
-	Vec4 m_gravity;
 
-	// Motion state
-	Bool8 m_updated = true;
-	Transform m_trf = {Transform::getIdentity()};
-	Mat4 m_prevTrf = {Mat4::getIdentity()};
-
-	static constexpr F32 MIN_RESTRAINING_DISTANCE = 1.0e-2;
-	static constexpr U DESCRETE_MOTION_STEPS = 8;
-	static constexpr U MAX_CONTACTS = 32;
-	static constexpr U MAX_INTERGRATION_STEPS = 8;
-	static constexpr F32 CONTACT_SKIN_THICKNESS = 0.025;
-	static constexpr U MAX_SOLVER_ITERATIONS = 16;
-
-	void setClimbSlope(F32 ang)
+	static void onTransformUpdateCallback(const NewtonBody* body, const dFloat* matrix, int threadIndex)
 	{
-		ANKI_ASSERT(ang >= 0.0);
-		m_maxSlope = cos(ang);
+		ANKI_ASSERT(body && matrix);
+		Transform trf = Transform(toAnki(dMatrix(matrix)));
+		void* ud = NewtonBodyGetUserData(body);
+		ANKI_ASSERT(ud);
+		static_cast<PhysicsPlayerController*>(ud)->onTransformUpdate(trf);
 	}
 
-	Vec4 calculateDesiredOmega(const Vec4& headingAngle, F32 dt) const;
-
-	Vec4 calculateDesiredVelocity(
-		F32 forwardSpeed, F32 strafeSpeed, F32 verticalSpeed, const Vec4& gravity, F32 dt) const;
-
-	void calculateVelocity(F32 dt);
-
-	F32 calculateContactKinematics(const Vec4& veloc, const NewtonWorldConvexCastReturnInfo* contactInfo) const;
-
-	void updateGroundPlane(Mat4& matrix, const Mat4& castMatrix, const Vec4& dst, int threadIndex);
-
-	void postUpdate(F32 dt, int threadIndex);
-
-	static void onTransformCallback(const NewtonBody* const body, const dFloat* const matrix, int threadIndex);
-
-	void onTransform(Mat4 matrix);
+	void onTransformUpdate(const Transform& trf)
+	{
+		if(trf != m_trf)
+		{
+			m_updated = true;
+			m_trf = trf;
+		}
+	}
 };
 /// @}
 
