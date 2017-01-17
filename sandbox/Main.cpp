@@ -76,7 +76,7 @@ Error MyApp::init(int argc, char* argv[])
 		"player", pnode, cam.getComponent<MoveComponent>().getLocalOrigin() - Vec4(0.0, 1.0, 0.0, 0.0)));
 
 	cam.getComponent<MoveComponent>().setLocalTransform(
-		Transform(Vec4(0.0), Mat3x4(Euler(toRad(0.0), toRad(180.0), toRad(0.0))), 1.0));
+		Transform(Vec4(0.0, 0.0, 0.0, 0.0), Mat3x4::getIdentity(), 1.0));
 
 	pnode->addChild(&cam);
 #endif

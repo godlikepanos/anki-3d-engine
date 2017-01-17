@@ -42,6 +42,7 @@ inline T tan(const T rad)
 template<typename T>
 inline T acos(const T x)
 {
+	ANKI_ASSERT(x >= T(-1) && x <= T(1));
 	return std::acos(x);
 }
 

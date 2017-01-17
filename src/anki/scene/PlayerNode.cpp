@@ -42,7 +42,7 @@ public:
 			origin.y() += 1.9;
 
 			// Set rotation
-			Mat3x4 rot(Euler(ang * y * -11.25, ang * x * -20.0, 0.0));
+			Mat3x4 rot(Euler(ang * y * 11.25, ang * x * -20.0, 0.0));
 
 			rot = move.getLocalRotation().combineTransformations(rot);
 
@@ -100,7 +100,7 @@ public:
 			moveVec.x() += 1.0;
 		}
 
-		Vec4 dir = move.getLocalRotation().getColumn(2).xyz0();
+		Vec4 dir = -move.getLocalRotation().getZAxis().xyz0();
 		dir.y() = 0.0;
 		dir.normalize();
 

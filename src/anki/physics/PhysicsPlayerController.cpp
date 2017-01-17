@@ -24,7 +24,13 @@ void CharacterControllerManager::ApplyPlayerMove(CustomPlayerController* const c
 	ANKI_ASSERT(player);
 
 	dVector gravity = toNewton(player->getWorld().getGravity());
-	F32 angle = acos(Vec4(0.0, 0.0, -1.0, 0.0).dot(player->m_forwardDir));
+
+	// Compute the angle the way newton wants it
+	Vec4 forwardDir{player->m_forwardDir.x(), 0.0, player->m_forwardDir.z(), 0.0f};
+	F32 cosTheta = clamp(Vec4(0.0, 0.0, -1.0, 0.0).dot(forwardDir), -1.0f, 1.0f);
+	F32 sign = Vec4(0.0, 0.0, -1.0, 0.0).cross(forwardDir).y();
+	sign = (!isZero(sign)) ? (absolute(sign) / sign) : 1.0f;
+	F32 angle = acos(cosTheta) * sign;
 
 	controller->SetPlayerVelocity(
 		player->m_forwardSpeed, player->m_strafeSpeed, player->m_jumpSpeed, angle, gravity, timestep);
