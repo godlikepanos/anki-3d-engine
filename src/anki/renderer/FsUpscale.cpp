@@ -8,7 +8,6 @@
 #include <anki/renderer/Ms.h>
 #include <anki/renderer/Is.h>
 #include <anki/renderer/Fs.h>
-#include <anki/renderer/Ssao.h>
 #include <anki/renderer/Volumetric.h>
 #include <anki/renderer/DepthDownscale.h>
 #include <anki/scene/FrustumComponent.h>
@@ -74,7 +73,6 @@ void FsUpscale::run(RenderingContext& ctx)
 	cmdb->bindTexture(0, 0, m_r->getMs().m_depthRt);
 	cmdb->bindTextureAndSampler(0, 1, m_r->getDepthDownscale().m_hd.m_depthRt, m_nearestSampler);
 	cmdb->bindTexture(0, 2, m_r->getFs().getRt());
-	cmdb->bindTexture(0, 3, m_r->getSsao().getRt());
 
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::SRC_ALPHA);
 

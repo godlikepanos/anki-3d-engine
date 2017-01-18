@@ -22,6 +22,7 @@ layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2D u_msDepthRt;
 
 layout(ANKI_TEX_BINDING(1, 0)) uniform sampler2D u_diffDecalTex;
 layout(ANKI_TEX_BINDING(1, 1)) uniform sampler2D u_normalRoughnessDecalTex;
+layout(ANKI_TEX_BINDING(1, 2)) uniform sampler2D u_ssaoTex;
 
 layout(location = 0) in vec2 in_uv;
 layout(location = 1) flat in int in_instanceId;
@@ -34,10 +35,8 @@ const uint TILE_COUNT = TILE_COUNT_X * TILE_COUNT_Y;
 const float SUBSURFACE_MIN = 0.05;
 
 // Return frag pos in view space
-vec3 getFragPosVSpace()
+vec3 getFragPosVSpace(float depth)
 {
-	float depth = texture(u_msDepthRt, in_uv, 0.0).r;
-
 	vec3 fragPos;
 	fragPos.z = u_lightingUniforms.projectionParams.z / (u_lightingUniforms.projectionParams.w + depth);
 	fragPos.xy = in_projectionParams * fragPos.z;
@@ -126,10 +125,26 @@ void readIndirect(in uint idxOffset,
 	}
 }
 
+float readSsao(float depth, vec2 ndc)
+{
+	vec4 worldPos4 = u_lightingUniforms.invViewProjMat * vec4(ndc, UV_TO_NDC(depth), 1.0);
+	worldPos4 = worldPos4 / worldPos4.w;
+
+	// Project to get old ndc
+	vec4 oldNdc4 = u_lightingUniforms.prevViewProjMat * worldPos4;
+	vec2 oldNdc = oldNdc4.xy / oldNdc4.w;
+
+	vec2 oldUv = NDC_TO_UV(oldNdc);
+
+	return texture(u_ssaoTex, oldUv).r;
+}
+
 void main()
 {
+	float depth = texture(u_msDepthRt, in_uv, 0.0).r;
+
 	// Get frag pos in view space
-	vec3 fragPos = getFragPosVSpace();
+	vec3 fragPos = getFragPosVSpace(depth);
 	vec3 viewDir = normalize(-fragPos);
 
 	// Decode GBuffer
@@ -150,6 +165,10 @@ void main()
 	metallic = gbuffer.metallic;
 	subsurface = max(gbuffer.subsurface, SUBSURFACE_MIN);
 	emission = gbuffer.emission;
+
+	// Get SSAO
+	float ssao = readSsao(depth, UV_TO_NDC(in_uv));
+	diffCol *= ssao;
 
 	// Get counts and offsets
 	uint clusterIdx =

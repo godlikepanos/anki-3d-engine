@@ -149,21 +149,21 @@ void main()
 
 	out_color = colorGrading(out_color);
 
-#if 0
-	{
-		out_color = textureLod(u_smaaBlendTex, uv, 0.0).rgb;
-	}
-#endif
-
-#if DBG_ENABLED
-	out_color += textureLod(u_dbgRt, uv, 0.0).rgb;
-#endif
-
 #if BLUE_NOISE
 	vec3 blueNoise = texture(u_blueNoise, vec3(FB_SIZE / vec2(64.0) * uv, u_blueNoiseLayerPad3.x), 0.0).rgb;
 	blueNoise = blueNoise * 2.0 - 1.0;
 	blueNoise = sign(blueNoise) * (1.0 - sqrt(1.0 - abs(blueNoise)));
 
 	out_color += blueNoise / 255.0;
+#endif
+
+#if 0
+	{
+		out_color = vec3(textureLod(u_isRt, uv, 0.0).r);
+	}
+#endif
+
+#if DBG_ENABLED
+	out_color += textureLod(u_dbgRt, uv, 0.0).rgb;
 #endif
 }

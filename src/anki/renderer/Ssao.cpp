@@ -15,8 +15,8 @@
 namespace anki
 {
 
-const F32 HEMISPHERE_RADIUS = 1.1; // In game units
-const U KERNEL_SIZE = 8;
+const F32 HEMISPHERE_RADIUS = 3.0; // In game units
+const U SAMPLES = 8;
 const PixelFormat Ssao::RT_PIXEL_FORMAT(ComponentFormat::R8, TransformFormat::UNORM);
 
 template<typename TVec>
@@ -34,6 +34,18 @@ static void genHemisphere(TVec* ANKI_RESTRICT arr, TVec* ANKI_RESTRICT arrEnd)
 
 		// Adjust the length
 		(*arr) *= randRange(HEMISPHERE_RADIUS / 2.0f, HEMISPHERE_RADIUS);
+	} while(++arr != arrEnd);
+}
+
+template<typename TVec>
+static void genDisk(TVec* ANKI_RESTRICT arr, TVec* ANKI_RESTRICT arrEnd)
+{
+	ANKI_ASSERT(arr && arrEnd && arr != arrEnd);
+
+	do
+	{
+		arr->x() = randRange(0.1, 1.0) * 2.0 - 1.0;
+		arr->y() = randRange(0.1, 1.0) * 2.0 - 1.0;
 	} while(++arr != arrEnd);
 }
 
@@ -85,17 +97,14 @@ Error Ssao::initInternal(const ConfigSet& config)
 	// Kernel
 	//
 	StringAuto kernelStr(getAllocator());
-	Array<Vec3, KERNEL_SIZE> kernel;
+	Array<Vec2, SAMPLES> kernel;
 
-	genHemisphere(kernel.begin(), kernel.end());
-	kernelStr.create("vec3[](");
+	genDisk(kernel.begin(), kernel.end());
+	kernelStr.create("vec2[](");
 	for(U i = 0; i < kernel.size(); i++)
 	{
 		StringAuto tmp(getAllocator());
-
-		tmp.sprintf(
-			"vec3(%f, %f, %f) %s", kernel[i].x(), kernel[i].y(), kernel[i].z(), (i != kernel.size() - 1) ? ", " : ")");
-
+		tmp.sprintf("vec2(%f, %f)%s", kernel[i].x(), kernel[i].y(), (i != kernel.getSize() - 1) ? ", " : ")");
 		kernelStr.append(tmp);
 	}
 
@@ -109,13 +118,13 @@ Error Ssao::initInternal(const ConfigSet& config)
 		"#define NOISE_MAP_SIZE %u\n"
 		"#define WIDTH %u\n"
 		"#define HEIGHT %u\n"
-		"#define KERNEL_SIZE %u\n"
+		"#define SAMPLES %u\n"
 		"#define KERNEL_ARRAY %s\n"
 		"#define RADIUS float(%f)\n",
 		m_noiseTex->getWidth(),
 		m_width,
 		m_height,
-		KERNEL_SIZE,
+		SAMPLES,
 		&kernelStr[0],
 		HEMISPHERE_RADIUS));
 
@@ -129,7 +138,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 		"#define HPASS\n"
 		"#define COL_R\n"
 		"#define TEXTURE_SIZE vec2(%f, %f)\n"
-		"#define KERNEL_SIZE 13\n",
+		"#define KERNEL_SIZE 11\n",
 		F32(m_width),
 		F32(m_height)));
 
@@ -141,7 +150,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 		"#define VPASS\n"
 		"#define COL_R\n"
 		"#define TEXTURE_SIZE vec2(%f, %f)\n"
-		"#define KERNEL_SIZE 11\n",
+		"#define KERNEL_SIZE 9\n",
 		F32(m_width),
 		F32(m_height)));
 

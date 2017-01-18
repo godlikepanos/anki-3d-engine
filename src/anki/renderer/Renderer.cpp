@@ -31,15 +31,6 @@
 namespace anki
 {
 
-/// See shader for documentation
-class RendererCommonUniforms
-{
-public:
-	Vec4 m_projectionParams;
-	Vec4 m_nearFarLinearizeDepth;
-	Mat4 m_projectionMatrix;
-};
-
 static Bool threadWillDoWork(
 	const RenderingContext& ctx, VisibilityGroupType typeOfWork, U32 threadId, PtrSize threadCount)
 {
@@ -169,6 +160,8 @@ Error Renderer::render(RenderingContext& ctx)
 
 	ANKI_ASSERT(ctx.m_frustumComponent->getFrustum().getType() == FrustumType::PERSPECTIVE);
 
+	ctx.m_prevViewProjMat = m_prevViewProjMat;
+
 	// Check if resources got loaded
 	if(m_prevLoadRequestCount != m_resources->getLoadingRequestCount()
 		|| m_prevAsyncTasksCompleted != m_resources->getAsyncTaskCompletedCount())
@@ -279,6 +272,7 @@ Error Renderer::render(RenderingContext& ctx)
 	ANKI_CHECK(m_pps->run(ctx));
 
 	++m_frameCount;
+	m_prevViewProjMat = ctx.m_frustumComponent->getViewProjectionMatrix();
 
 	return ErrorCode::NONE;
 }

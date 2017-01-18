@@ -17,6 +17,8 @@ struct LightingUniforms
 	mat4 viewMat;
 	mat3 invViewRotation;
 	uvec4 tileCount;
+	mat4 invViewProjMat;
+	mat4 prevViewProjMat;
 };
 
 // Point light

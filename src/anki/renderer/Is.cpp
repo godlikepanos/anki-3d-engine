@@ -6,6 +6,7 @@
 #include <anki/renderer/Is.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/Sm.h>
+#include <anki/renderer/Ssao.h>
 #include <anki/renderer/Ir.h>
 #include <anki/renderer/Ms.h>
 #include <anki/renderer/LightBin.h>
@@ -25,6 +26,8 @@ public:
 	Mat4 m_viewMat;
 	Mat3x4 m_invViewRotation;
 	UVec4 m_tileCount;
+	Mat4 m_invViewProjMat;
+	Mat4 m_prevViewProjMat;
 };
 
 enum class ShaderVariantBit : U8
@@ -187,6 +190,7 @@ void Is::run(RenderingContext& ctx)
 
 	cmdb->bindTexture(1, 0, (ctx.m_is.m_diffDecalTex) ? ctx.m_is.m_diffDecalTex : m_dummyTex);
 	cmdb->bindTexture(1, 1, (ctx.m_is.m_normRoughnessDecalTex) ? ctx.m_is.m_normRoughnessDecalTex : m_dummyTex);
+	cmdb->bindTexture(1, 2, m_r->getSsao().getRt());
 
 	bindUniforms(cmdb, 0, 0, ctx.m_is.m_commonToken);
 	bindUniforms(cmdb, 0, 1, ctx.m_is.m_pointLightsToken);
@@ -218,6 +222,9 @@ void Is::updateCommonBlock(RenderingContext& ctx)
 	blk->m_rendererSizeTimePad1 = Vec4(m_r->getWidth(), m_r->getHeight(), HighRezTimer::getCurrentTime(), 0.0);
 
 	blk->m_tileCount = UVec4(m_clusterCounts[0], m_clusterCounts[1], m_clusterCounts[2], m_clusterCount);
+
+	blk->m_invViewProjMat = fr.getViewProjectionMatrix().getInverse();
+	blk->m_prevViewProjMat = ctx.m_prevViewProjMat;
 }
 
 void Is::setPreRunBarriers(RenderingContext& ctx)

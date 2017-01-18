@@ -8,23 +8,16 @@
 #include "shaders/Pack.glsl"
 #include "shaders/Functions.glsl"
 
-const vec3 KERNEL[KERNEL_SIZE] = KERNEL_ARRAY; // This will be appended in C++
+const vec2 KERNEL[SAMPLES] = KERNEL_ARRAY; // This will be appended in C++
+const float BIAS = 0.3;
 
-const float RANGE_CHECK_RADIUS = RADIUS * 2.0;
-
-// Initial is 1.0 but the bigger it is the more darker the SSAO factor gets
-const float DARKNESS_MULTIPLIER = 1.9;
-
-// The algorithm will chose the number of samples depending on the distance
-const float MAX_DISTANCE = 40.0;
-
-layout(location = 0) in vec2 in_texCoords;
+layout(location = 0) in vec2 in_uv;
 
 layout(location = 0) out float out_color;
 
 layout(ANKI_UBO_BINDING(0, 0), std140, row_major) uniform _blk
 {
-	vec4 u_projectionParams;
+	vec4 u_unprojectionParams;
 	vec4 u_projectionMat;
 };
 
@@ -41,19 +34,17 @@ vec3 readNormal(in vec2 uv)
 }
 
 // Read the noise tex
-vec3 readRandom(in vec2 uv)
+float readRandom(in vec2 uv)
 {
 	const vec2 tmp = vec2(float(WIDTH) / float(NOISE_MAP_SIZE), float(HEIGHT) / float(NOISE_MAP_SIZE));
-
-	vec3 noise = texture(u_noiseMap, vec3(tmp * uv, 0.0)).xyz;
-	return noise;
+	return texture(u_noiseMap, vec3(tmp * uv, 0.0)).r;
 }
 
 // Returns the Z of the position in view space
 float readZ(in vec2 uv)
 {
 	float depth = texture(u_mMsDepthRt, uv).r;
-	float z = u_projectionParams.z / (u_projectionParams.w + depth);
+	float z = u_unprojectionParams.z / (u_unprojectionParams.w + depth);
 	return z;
 }
 
@@ -63,48 +54,51 @@ vec3 readPosition(in vec2 uv)
 	vec3 fragPosVspace;
 	fragPosVspace.z = readZ(uv);
 
-	fragPosVspace.xy = (2.0 * uv - 1.0) * u_projectionParams.xy * fragPosVspace.z;
+	fragPosVspace.xy = (2.0 * uv - 1.0) * u_unprojectionParams.xy * fragPosVspace.z;
 
 	return fragPosVspace;
 }
 
+vec4 project(vec4 point)
+{
+	return projectPerspective(point, u_projectionMat.x, u_projectionMat.y, u_projectionMat.z, u_projectionMat.w);
+}
+
 void main(void)
 {
-	vec3 origin = readPosition(in_texCoords);
+	vec2 ndc = in_uv * 2.0 - 1.0;
+	vec3 origin = readPosition(in_uv);
+	vec3 normal = readNormal(in_uv);
 
-	vec3 normal = readNormal(in_texCoords);
-	vec3 rvec = readRandom(in_texCoords);
+	float randFactor = readRandom(in_uv);
+	float randAng = randFactor * PI * 2.0;
+	float cosAng = cos(randAng);
+	float sinAng = sin(randAng);
 
-	vec3 tangent = normalize(rvec - normal * dot(rvec, normal));
-	vec3 bitangent = cross(normal, tangent);
-	mat3 tbn = mat3(tangent, bitangent, normal);
+	// Find the projected radius
+	vec3 sphereLimit = origin + vec3(RADIUS, 0.0, 0.0);
+	vec4 projSphereLimit = project(vec4(sphereLimit, 1.0));
+	vec2 projSphereLimit2 = projSphereLimit.xy / projSphereLimit.w;
+	float projRadius = length(projSphereLimit2 - ndc);
 
-	// Iterate kernel
+	// Integrate
 	float factor = 0.0;
-	for(uint i = 0U; i < KERNEL_SIZE; ++i)
+	for(uint i = 0U; i < SAMPLES; ++i)
 	{
-		vec3 hemispherePoint = tbn * KERNEL[i];
-		hemispherePoint = hemispherePoint * RADIUS + origin;
+		// Rotate the disk point
+		vec2 diskPoint = KERNEL[i] * projRadius;
+		vec2 rotDiskPoint;
+		rotDiskPoint.x = diskPoint.x * cosAng - diskPoint.y * sinAng;
+		rotDiskPoint.y = diskPoint.y * cosAng + diskPoint.x * sinAng;
+		vec2 finalDiskPoint = ndc + rotDiskPoint;
 
-		// project sample position:
-		vec4 projHemiPoint = projectPerspective(
-			vec4(hemispherePoint, 1.0), u_projectionMat.x, u_projectionMat.y, u_projectionMat.z, u_projectionMat.w);
-		projHemiPoint.xy = projHemiPoint.xy / (2.0 * projHemiPoint.w) + 0.5; // persp div & to NDC -> [0, 1]
+		vec3 s = readPosition(NDC_TO_UV(finalDiskPoint));
+		vec3 u = s - origin;
 
-		// get sample depth:
-		float sampleZ = readZ(projHemiPoint.xy);
+		float f = max(dot(normal, u) + BIAS, 0.0) / max(dot(u, u), EPSILON);
 
-		// Range check
-		float rangeCheck = abs(origin.z - sampleZ) / RANGE_CHECK_RADIUS;
-		rangeCheck = 1.0 - clamp(rangeCheck, 0.0, 1.0);
-
-		// Accumulate
-		const float ADVANCE = DARKNESS_MULTIPLIER / float(KERNEL_SIZE);
-		float f = ceil(sampleZ - hemispherePoint.z);
-		f = clamp(f, 0.0, 1.0) * ADVANCE;
-
-		factor += f * rangeCheck;
+		factor += f;
 	}
 
-	out_color = 1.0 - factor;
+	out_color = 1.0 - factor / float(SAMPLES);
 }

@@ -45,7 +45,7 @@ endif()
 
 macro(defineStaticExternalLibrary extProj extLib extLibFname)
 	add_library(${extLib} STATIC IMPORTED GLOBAL)
-	set_property(TARGET ${extLib} PROPERTY IMPORTED_LOCATION ${extLibFname})
+	set_target_properties(${extLib} PROPERTIES IMPORTED_LOCATION ${extLibFname})
 	add_dependencies(${extLib} ${extProj})
 endmacro()
 

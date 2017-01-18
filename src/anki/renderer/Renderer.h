@@ -34,6 +34,7 @@ class RenderingContext
 public:
 	/// Active frustum.
 	FrustumComponent* m_frustumComponent ANKI_DBG_NULLIFY_PTR;
+	Mat4 m_prevViewProjMat;
 
 	CommandBufferPtr m_commandBuffer; ///< Primary command buffer.
 
@@ -405,6 +406,8 @@ private:
 	Bool m_resourcesDirty = true;
 
 	Bool8 m_willDrawToDefaultFbo = false;
+
+	Mat4 m_prevViewProjMat = Mat4::getIdentity();
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 
