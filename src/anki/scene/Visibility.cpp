@@ -126,6 +126,7 @@ void VisibilityContext::submitNewWork(FrustumComponent& frc, ThreadHive& hive)
 		test.m_sectorsCtx = &gather->m_sectorsCtx;
 		test.m_taskIdx = i;
 		test.m_taskCount = testCount;
+		test.m_r = r;
 
 		auto& task = testTasks[i];
 		task.m_callback = VisibilityTestTask::callback;
@@ -381,21 +382,37 @@ void VisibilityTestTask::test(ThreadHive& hive)
 
 		if(lc && wantsLightComponents)
 		{
-			VisibilityGroupType gt;
-			switch(lc->getLightComponentType())
+			// Perform an additional check against the rasterizer
+			Bool in;
+			if(lc->getShadowEnabled())
 			{
-			case LightComponentType::POINT:
-				gt = VisibilityGroupType::LIGHTS_POINT;
-				break;
-			case LightComponentType::SPOT:
-				gt = VisibilityGroupType::LIGHTS_SPOT;
-				break;
-			default:
-				ANKI_ASSERT(0);
-				gt = VisibilityGroupType::TYPE_COUNT;
+				ANKI_ASSERT(spIdx == 1);
+				const SpatialComponent& sc = *sps[0].m_sp;
+				in = testAgainstRasterizer(sc.getSpatialCollisionShape(), sc.getAabb());
+			}
+			else
+			{
+				in = true;
 			}
 
-			visible->moveBack(alloc, gt, visibleNode);
+			if(in)
+			{
+				VisibilityGroupType gt;
+				switch(lc->getLightComponentType())
+				{
+				case LightComponentType::POINT:
+					gt = VisibilityGroupType::LIGHTS_POINT;
+					break;
+				case LightComponentType::SPOT:
+					gt = VisibilityGroupType::LIGHTS_SPOT;
+					break;
+				default:
+					ANKI_ASSERT(0);
+					gt = VisibilityGroupType::TYPE_COUNT;
+				}
+
+				visible->moveBack(alloc, gt, visibleNode);
+			}
 		}
 
 		if(lfc && wantsFlareComponents)
@@ -405,7 +422,12 @@ void VisibilityTestTask::test(ThreadHive& hive)
 
 		if(reflc && wantsReflectionProbes)
 		{
-			visible->moveBack(alloc, VisibilityGroupType::REFLECTION_PROBES, visibleNode);
+			ANKI_ASSERT(spIdx == 1);
+			const SpatialComponent& sc = *sps[0].m_sp;
+			if(testAgainstRasterizer(sc.getSpatialCollisionShape(), sc.getAabb()))
+			{
+				visible->moveBack(alloc, VisibilityGroupType::REFLECTION_PROBES, visibleNode);
+			}
 		}
 
 		if(proxyc && wantsReflectionProxies)

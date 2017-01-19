@@ -150,6 +150,7 @@ public:
 	U32 m_taskCount;
 	WeakPtr<VisibilityTestResults> m_result;
 	Timestamp m_timestamp = 0;
+	SoftwareRasterizer* m_r ANKI_DBG_NULLIFY_PTR;
 
 	/// Thread hive task.
 	static void callback(void* ud, U32 threadId, ThreadHive& hive)
@@ -161,6 +162,11 @@ public:
 private:
 	void test(ThreadHive& hive);
 	void updateTimestamp(const SceneNode& node);
+
+	ANKI_USE_RESULT Bool testAgainstRasterizer(const CollisionShape& cs, const Aabb& aabb) const
+	{
+		return (m_r) ? m_r->visibilityTest(cs, aabb) : true;
+	}
 };
 
 /// Task that combines and sorts the results.

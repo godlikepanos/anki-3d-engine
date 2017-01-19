@@ -25,24 +25,11 @@ layout(ANKI_TEX_BINDING(1, 1)) uniform sampler2D u_normalRoughnessDecalTex;
 layout(ANKI_TEX_BINDING(1, 2)) uniform sampler2D u_ssaoTex;
 
 layout(location = 0) in vec2 in_uv;
-layout(location = 1) flat in int in_instanceId;
-layout(location = 2) in vec2 in_projectionParams;
+layout(location = 1) in vec2 in_clusterIJ;
 
 layout(location = 0) out vec3 out_color;
 
-const uint TILE_COUNT = TILE_COUNT_X * TILE_COUNT_Y;
-
 const float SUBSURFACE_MIN = 0.05;
-
-// Return frag pos in view space
-vec3 getFragPosVSpace(float depth)
-{
-	vec3 fragPos;
-	fragPos.z = u_lightingUniforms.projectionParams.z / (u_lightingUniforms.projectionParams.w + depth);
-	fragPos.xy = in_projectionParams * fragPos.z;
-
-	return fragPos;
-}
 
 // Common code for lighting
 #define LIGHTING_COMMON_BRDF()                                                                                         \
@@ -142,9 +129,12 @@ float readSsao(float depth, vec2 ndc)
 void main()
 {
 	float depth = texture(u_msDepthRt, in_uv, 0.0).r;
+	vec2 ndc = UV_TO_NDC(in_uv);
 
 	// Get frag pos in view space
-	vec3 fragPos = getFragPosVSpace(depth);
+	vec3 fragPos;
+	fragPos.z = u_lightingUniforms.projectionParams.z / (u_lightingUniforms.projectionParams.w + depth);
+	fragPos.xy = ndc * u_lightingUniforms.projectionParams.xy * fragPos.z;
 	vec3 viewDir = normalize(-fragPos);
 
 	// Decode GBuffer
@@ -167,15 +157,15 @@ void main()
 	emission = gbuffer.emission;
 
 	// Get SSAO
-	float ssao = readSsao(depth, UV_TO_NDC(in_uv));
+	float ssao = readSsao(depth, ndc);
 	diffCol *= ssao;
 
 	// Get counts and offsets
 	uint clusterIdx =
 		computeClusterK(
 			u_lightingUniforms.nearFarClustererMagicPad1.x, u_lightingUniforms.nearFarClustererMagicPad1.z, fragPos.z)
-			* TILE_COUNT
-		+ in_instanceId;
+			* (CLUSTER_COUNT_X * CLUSTER_COUNT_Y)
+		+ uint(in_clusterIJ.y) * CLUSTER_COUNT_X + uint(in_clusterIJ.x);
 
 	uint idxOffset = u_clusters[clusterIdx];
 	uint idx;

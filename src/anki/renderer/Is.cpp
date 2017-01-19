@@ -99,8 +99,8 @@ Error Is::initInternal(const ConfigSet& config)
 	//
 	StringAuto pps(getAllocator());
 
-	pps.sprintf("#define TILE_COUNT_X %u\n"
-				"#define TILE_COUNT_Y %u\n"
+	pps.sprintf("#define CLUSTER_COUNT_X %u\n"
+				"#define CLUSTER_COUNT_Y %u\n"
 				"#define CLUSTER_COUNT %u\n"
 				"#define RENDERER_WIDTH %u\n"
 				"#define RENDERER_HEIGHT %u\n"
@@ -201,7 +201,7 @@ void Is::run(RenderingContext& ctx)
 	bindStorage(cmdb, 0, 0, ctx.m_is.m_clustersToken);
 	bindStorage(cmdb, 0, 1, ctx.m_is.m_lightIndicesToken);
 
-	cmdb->drawArrays(PrimitiveTopology::TRIANGLE_STRIP, 4, m_clusterCount);
+	cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
 	cmdb->endRenderPass();
 }
 
