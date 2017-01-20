@@ -36,7 +36,7 @@ const float SUBSURFACE_MIN = 0.05;
 	vec3 frag2Light = light.posRadius.xyz - fragPos;                                                                   \
 	vec3 l = normalize(frag2Light);                                                                                    \
 	float nol = max(0.0, dot(normal, l));                                                                              \
-	vec3 specC = computeSpecularColorBrdf(viewDir, l, normal, specCol, light.specularColorTexId.rgb, a2, nol);         \
+	vec3 specC = computeSpecularColorBrdf(viewDir, l, normal, specCol, light.specularColorRadius.rgb, a2, nol);        \
 	vec3 diffC = computeDiffuseColor(diffCol, light.diffuseColorShadowmapId.rgb);                                      \
 	float att = computeAttenuationFactor(light.posRadius.w, frag2Light);                                               \
 	float lambert = nol;
@@ -168,7 +168,6 @@ void main()
 		+ uint(in_clusterIJ.y) * CLUSTER_COUNT_X + uint(in_clusterIJ.x);
 
 	uint idxOffset = u_clusters[clusterIdx];
-	uint idx;
 
 	// Shadowpass sample count
 	uint shadowSampleCount = computeShadowSampleCount(SHADOW_SAMPLE_COUNT, fragPos.z);
@@ -195,15 +194,15 @@ void main()
 
 		LIGHTING_COMMON_BRDF();
 
-		float shadow = 1.0;
 		float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
-		if(light.diffuseColorShadowmapId.w < 128.0)
+		if(light.diffuseColorShadowmapId.w >= 0.0)
 		{
-			shadow = computeShadowFactorOmni(
-				frag2Light, shadowmapLayerIdx, 1.0 / sqrt(light.posRadius.w), u_lightingUniforms.viewMat, u_omniMapArr);
+			float shadow = computeShadowFactorOmni(
+				frag2Light, shadowmapLayerIdx, light.specularColorRadius.w, u_lightingUniforms.viewMat, u_omniMapArr);
+			lambert *= shadow;
 		}
 
-		out_color += (specC + diffC) * (att * max(subsurface, lambert * shadow));
+		out_color += (specC + diffC) * (att * max(subsurface, lambert));
 	}
 
 	// Spot lights
@@ -216,15 +215,15 @@ void main()
 
 		float spot = computeSpotFactor(l, light.outerCosInnerCos.x, light.outerCosInnerCos.y, light.lightDir.xyz);
 
-		float shadow = 1.0;
 		float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
-		if(shadowmapLayerIdx < 128.0)
+		if(shadowmapLayerIdx >= 0.0)
 		{
-			shadow = computeShadowFactorSpot(
+			float shadow = computeShadowFactorSpot(
 				light.texProjectionMat, fragPos, shadowmapLayerIdx, shadowSampleCount, u_spotMapArr);
+			lambert *= shadow;
 		}
 
-		out_color += (diffC + specC) * (att * spot * max(subsurface, lambert * shadow));
+		out_color += (diffC + specC) * (att * spot * max(subsurface, lambert));
 	}
 
 #if INDIRECT_ENABLED

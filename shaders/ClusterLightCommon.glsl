@@ -24,17 +24,17 @@ struct LightingUniforms
 // Point light
 struct PointLight
 {
-	vec4 posRadius; // xyz: Light pos in eye space. w: The -1/radius
+	vec4 posRadius; // xyz: Light pos in view space. w: The -1/(radius^2)
 	vec4 diffuseColorShadowmapId; // xyz: diff color, w: shadowmap tex ID
-	vec4 specularColorTexId; // xyz: spec color, w: diffuse tex ID
+	vec4 specularColorRadius; // xyz: spec color, w: radius
 };
 
 // Spot light
 struct SpotLight
 {
-	vec4 posRadius; // xyz: Light pos in eye space. w: The -1/radius
+	vec4 posRadius; // xyz: Light pos in view space. w: The -1/(radius^2)
 	vec4 diffuseColorShadowmapId; // xyz: diff color, w: shadowmap tex ID
-	vec4 specularColorTexId; // xyz: spec color, w: diffuse tex ID
+	vec4 specularColorRadius; // xyz: spec color, w: radius
 	vec4 lightDir;
 	vec4 outerCosInnerCos;
 	mat4 texProjectionMat;

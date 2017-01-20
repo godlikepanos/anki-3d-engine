@@ -33,7 +33,7 @@ class ShaderLight
 public:
 	Vec4 m_posRadius;
 	Vec4 m_diffuseColorShadowmapId;
-	Vec4 m_specularColorTexId;
+	Vec4 m_specularColorRadius;
 };
 
 class ShaderPointLight : public ShaderLight
@@ -75,7 +75,7 @@ public:
 static const U MAX_TYPED_LIGHTS_PER_CLUSTER = 16;
 static const U MAX_PROBES_PER_CLUSTER = 12;
 static const U MAX_DECALS_PER_CLUSTER = 8;
-static const F32 INVALID_TEXTURE_INDEX = 128.0;
+static const F32 INVALID_TEXTURE_INDEX = -1.0;
 
 class ClusterLightIndex
 {
@@ -693,7 +693,7 @@ I LightBin::writePointLight(
 		slight.m_diffuseColorShadowmapId.w() = lightc.getShadowMapIndex();
 	}
 
-	slight.m_specularColorTexId = lightc.getSpecularColor();
+	slight.m_specularColorRadius = Vec4(lightc.getSpecularColor().xyz(), lightc.getRadius());
 
 	return i;
 }
@@ -728,7 +728,7 @@ I LightBin::writeSpotLight(const LightComponent& lightc,
 	light.m_diffuseColorShadowmapId = Vec4(lightc.getDiffuseColor().xyz(), shadowmapIndex);
 
 	// Spec color
-	light.m_specularColorTexId = lightc.getSpecularColor();
+	light.m_specularColorRadius = Vec4(lightc.getSpecularColor().xyz(), lightc.getDistance());
 
 	// Light dir
 	Vec3 lightDir = -lightMove.getWorldTransform().getRotation().getZAxis();

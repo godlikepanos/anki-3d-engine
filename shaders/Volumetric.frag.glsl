@@ -58,7 +58,7 @@ vec3 computeLightColor(vec3 fragPos[MAX_SAMPLES_PER_CLUSTER], uint iterCount, ui
 			float shadow = 1.0;
 #if ENABLE_SHADOWS
 			float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
-			if(light.diffuseColorShadowmapId.w < 128.0)
+			if(light.diffuseColorShadowmapId.w >= 0.0)
 			{
 				shadow = computeShadowFactorOmni(
 					frag2Light, shadowmapLayerIdx, -1.0 / light.posRadius.w, u_lightingUniforms.viewMat, u_omniMapArr);
@@ -87,7 +87,7 @@ vec3 computeLightColor(vec3 fragPos[MAX_SAMPLES_PER_CLUSTER], uint iterCount, ui
 			float shadow = 1.0;
 #if ENABLE_SHADOWS
 			float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
-			if(shadowmapLayerIdx < 128.0)
+			if(shadowmapLayerIdx >= 0.0)
 			{
 				shadow =
 					computeShadowFactorSpot(light.texProjectionMat, fragPos[i], shadowmapLayerIdx, 1, u_spotMapArr);

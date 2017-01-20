@@ -10,7 +10,6 @@
 
 #include "shaders/Common.glsl"
 
-const float ATTENUATION_BOOST = 0.05;
 const float OMNI_LIGHT_FRUSTUM_NEAR_PLANE = 0.1 / 4.0;
 
 const uint SHADOW_SAMPLE_COUNT = 16;
