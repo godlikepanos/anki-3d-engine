@@ -30,10 +30,10 @@ class ThreadHiveTask
 {
 public:
 	/// What this task will do.
-	ThreadHiveTaskCallback m_callback ANKI_DBG_NULLIFY_PTR;
+	ThreadHiveTaskCallback m_callback ANKI_DBG_NULLIFY;
 
 	/// Arguments to pass to the m_callback.
-	void* m_argument ANKI_DBG_NULLIFY_PTR;
+	void* m_argument ANKI_DBG_NULLIFY;
 
 	/// The tasks that this task will depend on.
 	WeakArray<ThreadHiveDependencyHandle> m_inDependencies;

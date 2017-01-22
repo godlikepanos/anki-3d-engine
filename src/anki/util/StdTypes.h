@@ -180,9 +180,9 @@ private:
 
 /// Macro to nuliffy a pointer on debug builds.
 #if ANKI_DEBUG == 1
-#define ANKI_DBG_NULLIFY_PTR = nullptr
+#define ANKI_DBG_NULLIFY = {}
 #else
-#define ANKI_DBG_NULLIFY_PTR
+#define ANKI_DBG_NULLIFY
 #endif
 /// @}
 

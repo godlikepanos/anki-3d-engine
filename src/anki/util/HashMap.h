@@ -43,12 +43,12 @@ public:
 	{
 	}
 
-	TValue& getValue()
+	TValue& getHashMapNodeValue()
 	{
 		return m_value;
 	}
 
-	const TValue& getValue() const
+	const TValue& getHashMapNodeValue() const
 	{
 		return m_value;
 	}
@@ -93,13 +93,13 @@ public:
 	TValueReference operator*() const
 	{
 		ANKI_ASSERT(m_node);
-		return m_node->getValue();
+		return m_node->getHashMapNodeValue();
 	}
 
 	TValuePointer operator->() const
 	{
 		ANKI_ASSERT(m_node);
-		return &m_node->getValue();
+		return &m_node->getHashMapNodeValue();
 	}
 
 	HashMapIterator& operator++()
@@ -291,8 +291,33 @@ public:
 	}
 };
 
+/// Default hasher.
+template<typename TKey>
+class DefaultHasher
+{
+public:
+	U64 operator()(const TKey& a) const
+	{
+		return a.genHash();
+	}
+};
+
+/// Specialization for U64 keys.
+template<>
+class DefaultHasher<U64>
+{
+public:
+	U64 operator()(const U64 a) const
+	{
+		return a;
+	}
+};
+
 /// Hash map template.
-template<typename TKey, typename TValue, typename THasher, typename TCompare = DefaultHashKeyCompare<TKey>>
+template<typename TKey,
+	typename TValue,
+	typename THasher = DefaultHasher<TKey>,
+	typename TCompare = DefaultHashKeyCompare<TKey>>
 class HashMap : public detail::HashMapBase<TKey, TValue, THasher, TCompare, detail::HashMapNode<TValue>>
 {
 private:
@@ -412,12 +437,12 @@ private:
 	TClass* m_right = nullptr;
 	TClass* m_parent = nullptr; ///< Used for iterating.
 
-	TClass& getValue()
+	TClass& getHashMapNodeValue()
 	{
 		return *static_cast<TClass*>(this);
 	}
 
-	const TClass& getValue() const
+	const TClass& getHashMapNodeValue() const
 	{
 		return *static_cast<const TClass*>(this);
 	}
@@ -425,7 +450,10 @@ private:
 
 /// Hash map that doesn't perform any allocations. To work the TValue nodes will have to inherit from
 /// IntrusiveHashMapEnabled.
-template<typename TKey, typename TValue, typename THasher, typename TCompare>
+template<typename TKey,
+	typename TValue,
+	typename THasher = DefaultHasher<TKey>,
+	typename TCompare = DefaultHashKeyCompare<TKey>>
 class IntrusiveHashMap : public detail::HashMapBase<TKey, TValue, THasher, TCompare, TValue>
 {
 private:

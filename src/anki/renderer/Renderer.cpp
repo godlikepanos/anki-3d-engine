@@ -434,8 +434,8 @@ Error Renderer::buildCommandBuffers(RenderingContext& ctx)
 	class Task : public ThreadPoolTask
 	{
 	public:
-		Renderer* m_r ANKI_DBG_NULLIFY_PTR;
-		RenderingContext* m_ctx ANKI_DBG_NULLIFY_PTR;
+		Renderer* m_r ANKI_DBG_NULLIFY;
+		RenderingContext* m_ctx ANKI_DBG_NULLIFY;
 
 		Error operator()(U32 threadId, PtrSize threadCount)
 		{

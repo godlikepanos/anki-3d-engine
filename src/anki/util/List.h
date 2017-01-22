@@ -38,12 +38,12 @@ public:
 	{
 	}
 
-	T& getValue()
+	T& getListNodeValue()
 	{
 		return m_value;
 	}
 
-	const T& getValue() const
+	const T& getListNodeValue() const
 	{
 		return m_value;
 	}
@@ -90,13 +90,13 @@ public:
 	TValueReference operator*() const
 	{
 		ANKI_ASSERT(m_node);
-		return m_node->getValue();
+		return m_node->getListNodeValue();
 	}
 
 	TValuePointer operator->() const
 	{
 		ANKI_ASSERT(m_node);
-		return &m_node->getValue();
+		return &m_node->getListNodeValue();
 	}
 
 	ListIterator& operator++()
@@ -206,28 +206,28 @@ public:
 	ConstReference getFront() const
 	{
 		ANKI_ASSERT(!isEmpty());
-		return m_head->getValue();
+		return m_head->getListNodeValue();
 	}
 
 	/// Get first element.
 	Reference getFront()
 	{
 		ANKI_ASSERT(!isEmpty());
-		return m_head->getValue();
+		return m_head->getListNodeValue();
 	}
 
 	/// Get last element.
 	ConstReference getBack() const
 	{
 		ANKI_ASSERT(!isEmpty());
-		return m_tail->getValue();
+		return m_tail->getListNodeValue();
 	}
 
 	/// Get last element.
 	Reference getBack()
 	{
 		ANKI_ASSERT(!isEmpty());
-		return m_tail->getValue();
+		return m_tail->getListNodeValue();
 	}
 
 	/// Get begin.
@@ -573,12 +573,12 @@ private:
 	{
 	}
 
-	TClass& getValue()
+	TClass& getListNodeValue()
 	{
 		return *static_cast<TClass*>(this);
 	}
 
-	const TClass& getValue() const
+	const TClass& getListNodeValue() const
 	{
 		return *static_cast<const TClass*>(this);
 	}

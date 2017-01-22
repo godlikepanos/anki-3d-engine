@@ -18,8 +18,8 @@ class TexUploadTask : public AsyncLoaderTask
 public:
 	ImageLoader m_loader;
 	TexturePtr m_tex;
-	GrManager* m_gr ANKI_DBG_NULLIFY_PTR;
-	StagingGpuMemoryManager* m_stagingMem ANKI_DBG_NULLIFY_PTR;
+	GrManager* m_gr ANKI_DBG_NULLIFY;
+	StagingGpuMemoryManager* m_stagingMem ANKI_DBG_NULLIFY;
 	U m_layers = 0;
 	U m_faces = 0;
 	TextureType m_texType;

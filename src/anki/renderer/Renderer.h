@@ -33,7 +33,7 @@ class RenderingContext
 {
 public:
 	/// Active frustum.
-	FrustumComponent* m_frustumComponent ANKI_DBG_NULLIFY_PTR;
+	FrustumComponent* m_frustumComponent ANKI_DBG_NULLIFY;
 	Mat4 m_prevViewProjMat;
 
 	CommandBufferPtr m_commandBuffer; ///< Primary command buffer.

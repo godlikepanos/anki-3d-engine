@@ -32,6 +32,13 @@ class GrManagerImpl;
 /// @addtogroup vulkan
 /// @{
 
+/// @name Constants
+/// @{
+const U DESCRIPTOR_POOL_INITIAL_SIZE = 64;
+const F32 DESCRIPTOR_POOL_SIZE_SCALE = 2.0;
+const U DESCRIPTOR_FRAME_BUFFERING = 60 * 5; ///< How many frames worth of descriptors to buffer.
+/// @}
+
 /// Check if a vulkan function failed. It will abort on failure.
 #define ANKI_VK_CHECKF(x)                                                                                              \
 	do                                                                                                                 \

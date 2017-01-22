@@ -122,7 +122,7 @@ public:
 	void getRenderingDataSub(const RenderingKey& key, WeakArray<U8> subMeshIndicesArray, ModelRenderingInfo& inf) const;
 
 private:
-	Model* m_model ANKI_DBG_NULLIFY_PTR;
+	Model* m_model ANKI_DBG_NULLIFY;
 
 	Array<MeshResourcePtr, MAX_LODS> m_meshes; ///< One for each LOD
 	U8 m_meshCount = 0;

@@ -140,10 +140,10 @@ public:
 class SetupRenderableVariableVisitor
 {
 public:
-	DrawContext* m_ctx ANKI_DBG_NULLIFY_PTR;
-	const RenderableDrawer* m_drawer ANKI_DBG_NULLIFY_PTR;
+	DrawContext* m_ctx ANKI_DBG_NULLIFY;
+	const RenderableDrawer* m_drawer ANKI_DBG_NULLIFY;
 	WeakArray<U8> m_uniformBuffer;
-	const MaterialVariant* m_variant ANKI_DBG_NULLIFY_PTR;
+	const MaterialVariant* m_variant ANKI_DBG_NULLIFY;
 	F32 m_flod;
 
 	/// Set a uniform in a client block

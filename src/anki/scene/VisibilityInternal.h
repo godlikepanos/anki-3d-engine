@@ -150,7 +150,7 @@ public:
 	U32 m_taskCount;
 	WeakPtr<VisibilityTestResults> m_result;
 	Timestamp m_timestamp = 0;
-	SoftwareRasterizer* m_r ANKI_DBG_NULLIFY_PTR;
+	SoftwareRasterizer* m_r ANKI_DBG_NULLIFY;
 
 	/// Thread hive task.
 	static void callback(void* ud, U32 threadId, ThreadHive& hive)

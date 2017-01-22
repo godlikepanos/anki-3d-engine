@@ -18,7 +18,7 @@ namespace anki
 class MeshLoadTask : public AsyncLoaderTask
 {
 public:
-	ResourceManager* m_manager ANKI_DBG_NULLIFY_PTR;
+	ResourceManager* m_manager ANKI_DBG_NULLIFY;
 	BufferPtr m_vertBuff;
 	BufferPtr m_indicesBuff;
 	MeshLoader m_loader;

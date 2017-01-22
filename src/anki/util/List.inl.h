@@ -130,7 +130,7 @@ Error ListBase<T, TNode>::iterateForward(TFunc func)
 	TNode* node = m_head;
 	while(node && !err)
 	{
-		err = func(node->getValue());
+		err = func(node->getListNodeValue());
 		node = node->m_next;
 	}
 
@@ -145,7 +145,7 @@ Error ListBase<T, TNode>::iterateBackward(TFunc func)
 	TNode* node = m_tail;
 	while(node && !err)
 	{
-		err = func(node->getValue());
+		err = func(node->getListNodeValue());
 		node = node->m_prev;
 	}
 
@@ -171,7 +171,7 @@ void ListBase<T, TNode>::sort(TCompFunc compFunc)
 			TNode* sortPtrNext = sortPtr->m_next;
 			ANKI_ASSERT(sortPtrNext != nullptr);
 
-			if(compFunc(sortPtrNext->getValue(), sortPtr->getValue()))
+			if(compFunc(sortPtrNext->getListNodeValue(), sortPtr->getListNodeValue()))
 			{
 				sortPtr = swap(sortPtr, sortPtrNext);
 				swapped = true;

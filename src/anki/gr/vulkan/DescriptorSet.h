@@ -12,6 +12,10 @@
 namespace anki
 {
 
+// Forward
+class DSThreadAllocator;
+class DSLayoutCacheEntry;
+
 /// @addtogroup vulkan
 /// @{
 
@@ -53,8 +57,39 @@ private:
 	U32 m_cacheEntryIdx = MAX_U32;
 };
 
+class TextureBinding
+{
+public:
+	TexturePtr m_tex;
+	SamplerPtr m_sampler;
+};
+
+class BufferBinding
+{
+public:
+	BufferPtr m_buff;
+	PtrSize m_offset = MAX_PTR_SIZE;
+	PtrSize m_range = 0;
+};
+
+class ImageBinding
+{
+public:
+	TexturePtr m_tex;
+	U16 m_level = 0;
+};
+
+class DSWriteInfo
+{
+public:
+	Array<BufferBinding, MAX_UNIFORM_BUFFER_BINDINGS> m_uniformBuffers;
+	Array<BufferBinding, MAX_STORAGE_BUFFER_BINDINGS> m_storageBuffers;
+	Array<TextureBinding, MAX_TEXTURE_BINDINGS> m_textures;
+	Array<ImageBinding, MAX_IMAGE_BINDINGS> m_images;
+};
+
 /// A state tracker of descriptors.
-class DescriptorSetState
+class DescriptorSetState : private DSWriteInfo
 {
 public:
 	void bindUniformBuffer(U binding, const BufferPtr& buff, PtrSize offset, PtrSize range)
@@ -76,34 +111,7 @@ public:
 	}
 
 private:
-	class TextureBinding
-	{
-	public:
-		TexturePtr m_tex;
-		SamplerPtr m_sampler;
-	};
-
-	class BufferBinding
-	{
-	public:
-		BufferPtr m_buff;
-		PtrSize m_offset = MAX_PTR_SIZE;
-		PtrSize m_range = 0;
-	};
-
-	class ImageBinding
-	{
-	public:
-		TexturePtr m_tex;
-		U16 m_level = 0;
-	};
-
 	DescriptorSetLayout m_layout;
-	Array<BufferBinding, MAX_UNIFORM_BUFFER_BINDINGS> m_uniformBuffers;
-	Array<BufferBinding, MAX_STORAGE_BUFFER_BINDINGS> m_storageBuffers;
-	Array<TextureBinding, MAX_TEXTURE_BINDINGS> m_textures;
-	Array<ImageBinding, MAX_IMAGE_BINDINGS> m_images;
-
 	BitSet<MAX_BINDINGS_PER_DESCRIPTOR_SET, U8> m_setBindings = {false};
 };
 
@@ -123,6 +131,9 @@ private:
 /// Creates new descriptor set layouts and descriptor sets.
 class DescriptorSetFactory
 {
+	friend class DSLayoutCacheEntry;
+	friend class DSThreadAllocator;
+
 public:
 	DescriptorSetFactory() = default;
 	~DescriptorSetFactory();
@@ -135,21 +146,24 @@ public:
 	}
 
 	/// @note It's thread-safe.
-	void newDescriptorSetLayout(const DescriptorSetLayoutInitInfo& init, DescriptorSetLayout& layout);
+	ANKI_USE_RESULT Error newDescriptorSetLayout(const DescriptorSetLayoutInitInfo& init, DescriptorSetLayout& layout);
 
 	void newDescriptorSet(const DescriptorSetState& init, DescriptorSet& set);
 
-	void collectGarbage();
+	void endFrame()
+	{
+		++m_frameCount;
+	}
 
 private:
-	class Cache;
-
 	GrAllocator<U8> m_alloc;
 	VkDevice m_dev = VK_NULL_HANDLE;
-	DynamicArray<Cache*> m_caches;
-	Mutex m_mtx;
+	U64 m_frameCount = 0;
 
-	Cache* newCacheEntry(const DescriptorBinding* bindings, U bindingCount, U64 hash);
+	DynamicArray<DSLayoutCacheEntry*> m_caches;
+	Mutex m_cachesMtx;
+
+	void initThreadAllocator(DSThreadAllocator& alloc);
 };
 /// @}
 
