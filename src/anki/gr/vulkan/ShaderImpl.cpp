@@ -320,7 +320,7 @@ void ShaderImpl::doReflection(const std::vector<unsigned int>& spirv)
 	}};
 	Array2d<DescriptorBinding, MAX_DESCRIPTOR_SETS, MAX_BINDINGS_PER_DESCRIPTOR_SET> descriptors;
 
-	auto func = [&](const std::vector<spirv_cross::Resource>& resources, VkDescriptorType type) -> void {
+	auto func = [&](const std::vector<spirv_cross::Resource>& resources, DescriptorType type) -> void {
 		for(const spirv_cross::Resource& r : resources)
 		{
 			const U32 id = r.id;
@@ -340,10 +340,10 @@ void ShaderImpl::doReflection(const std::vector<unsigned int>& spirv)
 		}
 	};
 
-	func(rsrc.uniform_buffers, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC);
-	func(rsrc.sampled_images, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE);
-	func(rsrc.storage_buffers, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC);
-	func(rsrc.storage_images, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
+	func(rsrc.uniform_buffers, DescriptorType::UNIFORM_BUFFER);
+	func(rsrc.sampled_images, DescriptorType::TEXTURE);
+	func(rsrc.storage_buffers, DescriptorType::STORAGE_BUFFER);
+	func(rsrc.storage_images, DescriptorType::IMAGE);
 
 	for(U set = 0; set < MAX_DESCRIPTOR_SETS; ++set)
 	{

@@ -137,9 +137,9 @@ float computeShadowFactorSpot(
 }
 
 float computeShadowFactorOmni(
-	in vec3 frag2Light, in float layer, in float radius, in mat4 viewMat, in samplerCubeArrayShadow omniMapArr)
+	in vec3 frag2Light, in float layer, in float radius, in mat3 invViewMat, in samplerCubeArrayShadow omniMapArr)
 {
-	vec3 dir = (viewMat * vec4(-frag2Light, 1.0)).xyz;
+	vec3 dir = invViewMat * -frag2Light;
 	vec3 dirabs = abs(dir);
 	float dist = -max(dirabs.x, max(dirabs.y, dirabs.z));
 	dir = normalize(dir);

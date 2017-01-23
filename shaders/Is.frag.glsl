@@ -197,8 +197,11 @@ void main()
 		float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
 		if(light.diffuseColorShadowmapId.w >= 0.0)
 		{
-			float shadow = computeShadowFactorOmni(
-				frag2Light, shadowmapLayerIdx, light.specularColorRadius.w, u_lightingUniforms.viewMat, u_omniMapArr);
+			float shadow = computeShadowFactorOmni(frag2Light,
+				shadowmapLayerIdx,
+				light.specularColorRadius.w,
+				u_lightingUniforms.invViewRotation,
+				u_omniMapArr);
 			lambert *= shadow;
 		}
 

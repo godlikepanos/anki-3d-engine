@@ -14,7 +14,6 @@ struct LightingUniforms
 	vec4 projectionParams;
 	vec4 rendererSizeTimePad1;
 	vec4 nearFarClustererMagicPad1;
-	mat4 viewMat;
 	mat3 invViewRotation;
 	uvec4 tileCount;
 	mat4 invViewProjMat;

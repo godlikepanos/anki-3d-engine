@@ -23,7 +23,6 @@ public:
 	Vec4 m_projectionParams;
 	Vec4 m_rendererSizeTimePad1;
 	Vec4 m_nearFarClustererMagicPad1;
-	Mat4 m_viewMat;
 	Mat3x4 m_invViewRotation;
 	UVec4 m_tileCount;
 	Mat4 m_invViewProjMat;
@@ -213,7 +212,6 @@ void Is::updateCommonBlock(RenderingContext& ctx)
 
 	// Start writing
 	blk->m_projectionParams = fr.getProjectionParameters();
-	blk->m_viewMat = fr.getViewMatrix().getTransposed();
 	blk->m_nearFarClustererMagicPad1 = Vec4(
 		fr.getFrustum().getNear(), fr.getFrustum().getFar(), m_lightBin->getClusterer().getShaderMagicValue(), 0.0);
 

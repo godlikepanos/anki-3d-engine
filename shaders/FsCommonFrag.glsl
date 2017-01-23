@@ -161,8 +161,11 @@ vec3 computeLightColor(vec3 diffCol)
 		float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
 		if(light.diffuseColorShadowmapId.w >= 0.0)
 		{
-			shadow = computeShadowFactorOmni(
-				frag2Light, shadowmapLayerIdx, -1.0 / light.posRadius.w, u_lightingUniforms.viewMat, u_omniMapArr);
+			shadow = computeShadowFactorOmni(frag2Light,
+				shadowmapLayerIdx,
+				light.specularColorRadius.w,
+				u_lightingUniforms.invViewRotation,
+				u_omniMapArr);
 		}
 #endif
 

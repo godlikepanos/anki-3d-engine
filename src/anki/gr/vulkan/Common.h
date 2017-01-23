@@ -138,6 +138,31 @@ ANKI_USE_RESULT inline VkVertexInputRate convertVertexStepRate(VertexStepRate ak
 	}
 	return out;
 }
+
+ANKI_USE_RESULT inline VkDescriptorType convertDescriptorType(DescriptorType ak)
+{
+	VkDescriptorType out;
+	switch(ak)
+	{
+	case DescriptorType::TEXTURE:
+		out = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+		break;
+	case DescriptorType::UNIFORM_BUFFER:
+		out = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+		break;
+	case DescriptorType::STORAGE_BUFFER:
+		out = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
+		break;
+	case DescriptorType::IMAGE:
+		out = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+		break;
+	default:
+		out = VK_DESCRIPTOR_TYPE_MAX_ENUM;
+		ANKI_ASSERT(0);
+	}
+
+	return out;
+}
 /// @}
 
 } // end namespace anki

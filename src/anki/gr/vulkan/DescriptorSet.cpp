@@ -4,6 +4,8 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/gr/vulkan/DescriptorSet.h>
+#include <anki/gr/Buffer.h>
+#include <anki/gr/vulkan/BufferImpl.h>
 #include <anki/util/List.h>
 #include <anki/util/HashMap.h>
 #include <algorithm>
@@ -19,7 +21,8 @@ public:
 	U64 m_lastFrameUsed = MAX_U64;
 };
 
-class DSThreadAllocator
+/// Per thread allocator.
+class DSThreadAllocator : public NonCopyable
 {
 public:
 	const DSLayoutCacheEntry* m_layoutEntry; ///< Know your father.
@@ -44,21 +47,23 @@ public:
 	ANKI_USE_RESULT Error init();
 	ANKI_USE_RESULT Error createNewPool();
 
-	ANKI_USE_RESULT Error getOrCreateSet(U64 hash, const DSWriteInfo& inf, DS*& out)
+	ANKI_USE_RESULT Error getOrCreateSet(
+		U64 hash, const Array<AnyBinding, MAX_BINDINGS_PER_DESCRIPTOR_SET>& bindings, const DS*& out)
 	{
 		out = tryFindSet(hash);
 		if(out == nullptr)
 		{
-			ANKI_CHECK(newSet(hash, inf, out));
+			ANKI_CHECK(newSet(hash, bindings, out));
 		}
 
 		return ErrorCode::NONE;
 	}
 
 private:
-	ANKI_USE_RESULT DS* tryFindSet(U64 hash);
-	ANKI_USE_RESULT Error newSet(U64 hash, const DSWriteInfo& inf, DS*& out);
-	void writeSet(const DSWriteInfo& inf, DS& set);
+	ANKI_USE_RESULT const DS* tryFindSet(U64 hash);
+	ANKI_USE_RESULT Error newSet(
+		U64 hash, const Array<AnyBinding, MAX_BINDINGS_PER_DESCRIPTOR_SET>& bindings, const DS*& out);
+	void writeSet(const Array<AnyBinding, MAX_BINDINGS_PER_DESCRIPTOR_SET>& bindings, const DS& set);
 };
 
 /// Cache entry. It's built around a specific descriptor set layout.
@@ -69,13 +74,16 @@ public:
 
 	U64 m_hash = 0; ///< Layout hash.
 	VkDescriptorSetLayout m_layoutHandle = {};
+	BitSet<MAX_BINDINGS_PER_DESCRIPTOR_SET, U8> m_activeBindings = {false};
+	U32 m_minBinding = MAX_U32;
+	U32 m_maxBinding = 0;
 
 	// Cache the create info
-	Array<VkDescriptorPoolSize, DESCRIPTOR_TYPE_COUNT> m_poolSizesCreateInf = {};
+	Array<VkDescriptorPoolSize, U(DescriptorType::COUNT)> m_poolSizesCreateInf = {};
 	VkDescriptorPoolCreateInfo m_poolCreateInf = {};
 
-	DynamicArray<DSThreadAllocator*> m_threadCaches;
-	Mutex m_threadCachesMtx;
+	DynamicArray<DSThreadAllocator*> m_threadAllocs;
+	SpinLock m_threadAllocsMtx;
 
 	DSLayoutCacheEntry(DescriptorSetFactory* factory)
 		: m_factory(factory)
@@ -85,6 +93,8 @@ public:
 	~DSLayoutCacheEntry();
 
 	ANKI_USE_RESULT Error init(const DescriptorBinding* bindings, U bindingCount, U64 hash);
+
+	ANKI_USE_RESULT Error getOrCreateThreadAllocator(ThreadId tid, DSThreadAllocator*& alloc);
 };
 
 Error DSThreadAllocator::init()
@@ -100,7 +110,7 @@ Error DSThreadAllocator::createNewPool()
 	m_lastPoolFreeDSCount = m_lastPoolDSCount;
 
 	// Set the create info
-	Array<VkDescriptorPoolSize, DESCRIPTOR_TYPE_COUNT> poolSizes;
+	Array<VkDescriptorPoolSize, U(DescriptorType::COUNT)> poolSizes;
 	memcpy(&poolSizes[0],
 		&m_layoutEntry->m_poolSizesCreateInf[0],
 		sizeof(poolSizes[0]) * m_layoutEntry->m_poolCreateInf.poolSizeCount);
@@ -126,7 +136,7 @@ Error DSThreadAllocator::createNewPool()
 	return ErrorCode::NONE;
 }
 
-DS* DSThreadAllocator::tryFindSet(U64 hash)
+const DS* DSThreadAllocator::tryFindSet(U64 hash)
 {
 	ANKI_ASSERT(hash > 0);
 
@@ -148,9 +158,10 @@ DS* DSThreadAllocator::tryFindSet(U64 hash)
 	}
 }
 
-Error DSThreadAllocator::newSet(U64 hash, const DSWriteInfo& inf, DS*& out)
+Error DSThreadAllocator::newSet(
+	U64 hash, const Array<AnyBinding, MAX_BINDINGS_PER_DESCRIPTOR_SET>& bindings, const DS*& out_)
 {
-	out = nullptr;
+	DS* out = nullptr;
 
 	// First try to see if there are unused to recycle
 	const U64 crntFrame = m_layoutEntry->m_factory->m_frameCount;
@@ -202,14 +213,77 @@ Error DSThreadAllocator::newSet(U64 hash, const DSWriteInfo& inf, DS*& out)
 	out->m_lastFrameUsed = m_layoutEntry->m_factory->m_frameCount;
 
 	// Finally, write it
-	writeSet(inf, *out);
+	writeSet(bindings, *out);
 
+	out_ = out;
 	return ErrorCode::NONE;
 }
 
-void DSThreadAllocator::writeSet(const DSWriteInfo& inf, DS& set)
+void DSThreadAllocator::writeSet(const Array<AnyBinding, MAX_BINDINGS_PER_DESCRIPTOR_SET>& bindings, const DS& set)
 {
-	ANKI_ASSERT(!"TODO");
+	Array<VkWriteDescriptorSet, MAX_BINDINGS_PER_DESCRIPTOR_SET> writes;
+	U writeCount = 0;
+
+	Array<VkDescriptorImageInfo, MAX_TEXTURE_BINDINGS> tex;
+	U texCount = 0;
+	Array<VkDescriptorBufferInfo, MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS> buff;
+	U buffCount = 0;
+
+	VkWriteDescriptorSet writeTemplate = {};
+	writeTemplate.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	writeTemplate.pNext = nullptr;
+	writeTemplate.dstSet = set.m_handle;
+	writeTemplate.descriptorCount = 1;
+
+	for(U i = m_layoutEntry->m_minBinding; i <= m_layoutEntry->m_maxBinding; ++i)
+	{
+		if(m_layoutEntry->m_activeBindings.get(i))
+		{
+			const AnyBinding& b = bindings[i];
+
+			VkWriteDescriptorSet& w = writes[writeCount++];
+			w = writeTemplate;
+			w.dstBinding = i;
+			w.descriptorType = convertDescriptorType(b.m_type);
+
+			switch(b.m_type)
+			{
+			case DescriptorType::TEXTURE:
+				tex[texCount].sampler = b.m_tex.m_sampler->m_handle;
+				tex[texCount].imageView = b.m_tex.m_tex->getOrCreateResourceGroupView(b.m_tex.m_aspect);
+				tex[texCount].imageLayout = b.m_tex.m_layout;
+
+				w.pImageInfo = &tex[texCount];
+
+				++texCount;
+				break;
+			case DescriptorType::UNIFORM_BUFFER:
+			case DescriptorType::STORAGE_BUFFER:
+				buff[buffCount].buffer = b.m_buff.m_buff->getHandle();
+				buff[buffCount].offset = b.m_buff.m_offset;
+				buff[buffCount].range = b.m_buff.m_range;
+
+				w.pBufferInfo = &buff[buffCount];
+
+				++buffCount;
+				break;
+			case DescriptorType::IMAGE:
+				tex[texCount].sampler = VK_NULL_HANDLE;
+				tex[texCount].imageView = b.m_image.m_tex->getOrCreateSingleSurfaceView(
+					TextureSurfaceInfo(b.m_image.m_level, 0, 0, 0), b.m_tex.m_aspect);
+				tex[texCount].imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+
+				w.pImageInfo = &tex[texCount];
+
+				++texCount;
+				break;
+			default:
+				ANKI_ASSERT(0);
+			}
+		}
+	}
+
+	vkUpdateDescriptorSets(m_layoutEntry->m_factory->m_dev, writeCount, &writes[0], 0, nullptr);
 }
 
 Error DSLayoutCacheEntry::init(const DescriptorBinding* bindings, U bindingCount, U64 hash)
@@ -231,9 +305,14 @@ Error DSLayoutCacheEntry::init(const DescriptorBinding* bindings, U bindingCount
 
 		vk.binding = ak.m_binding;
 		vk.descriptorCount = 1;
-		vk.descriptorType = static_cast<VkDescriptorType>(ak.m_type);
+		vk.descriptorType = convertDescriptorType(ak.m_type);
 		vk.pImmutableSamplers = nullptr;
 		vk.stageFlags = convertShaderTypeBit(ak.m_stageMask);
+
+		ANKI_ASSERT(m_activeBindings.get(ak.m_binding) == false);
+		m_activeBindings.set(ak.m_binding);
+		m_minBinding = min<U32>(m_minBinding, ak.m_binding);
+		m_maxBinding = max<U32>(m_maxBinding, ak.m_binding);
 	}
 
 	ci.bindingCount = bindingCount;
@@ -248,7 +327,7 @@ Error DSLayoutCacheEntry::init(const DescriptorBinding* bindings, U bindingCount
 		U j;
 		for(j = 0; j < poolSizeCount; ++j)
 		{
-			if(m_poolSizesCreateInf[j].type == bindings[i].m_type)
+			if(m_poolSizesCreateInf[j].type == convertDescriptorType(bindings[i].m_type))
 			{
 				++m_poolSizesCreateInf[j].descriptorCount;
 				break;
@@ -257,7 +336,7 @@ Error DSLayoutCacheEntry::init(const DescriptorBinding* bindings, U bindingCount
 
 		if(j == poolSizeCount)
 		{
-			m_poolSizesCreateInf[poolSizeCount].type = static_cast<VkDescriptorType>(bindings[i].m_type);
+			m_poolSizesCreateInf[poolSizeCount].type = convertDescriptorType(bindings[i].m_type);
 
 			switch(m_poolSizesCreateInf[poolSizeCount].type)
 			{
@@ -287,6 +366,53 @@ Error DSLayoutCacheEntry::init(const DescriptorBinding* bindings, U bindingCount
 	m_poolCreateInf.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	m_poolCreateInf.poolSizeCount = poolSizeCount;
 
+	return ErrorCode::NONE;
+}
+
+Error DSLayoutCacheEntry::getOrCreateThreadAllocator(ThreadId tid, DSThreadAllocator*& alloc)
+{
+	alloc = nullptr;
+
+	LockGuard<SpinLock> lock(m_threadAllocsMtx);
+
+	class Comp
+	{
+	public:
+		Bool operator()(const DSThreadAllocator* a, ThreadId tid) const
+		{
+			return a->m_tid < tid;
+		}
+
+		Bool operator()(ThreadId tid, const DSThreadAllocator* a) const
+		{
+			return tid < a->m_tid;
+		}
+	};
+
+	// Find using binary search
+	auto it = std::lower_bound(m_threadAllocs.getBegin(), m_threadAllocs.getEnd(), tid, Comp());
+
+	if(it != m_threadAllocs.getEnd())
+	{
+		alloc = *it;
+	}
+	else
+	{
+		// Need to create one
+
+		alloc = m_factory->m_alloc.newInstance<DSThreadAllocator>(this, tid);
+		ANKI_CHECK(alloc->init());
+
+		m_threadAllocs.resize(m_factory->m_alloc, m_threadAllocs.getSize() + 1);
+		m_threadAllocs[m_threadAllocs.getSize() - 1] = alloc;
+
+		// Sort for fast find
+		std::sort(m_threadAllocs.getBegin(),
+			m_threadAllocs.getEnd(),
+			[](const DSThreadAllocator* a, const DSThreadAllocator* b) { return a->m_tid < b->m_tid; });
+	}
+
+	ANKI_ASSERT(alloc);
 	return ErrorCode::NONE;
 }
 
@@ -323,7 +449,7 @@ Error DescriptorSetFactory::newDescriptorSetLayout(const DescriptorSetLayoutInit
 	}
 
 	// Find or create the cache entry
-	LockGuard<Mutex> lock(m_cachesMtx);
+	LockGuard<SpinLock> lock(m_cachesMtx);
 
 	DSLayoutCacheEntry* cache = nullptr;
 	U cacheIdx = MAX_U;
@@ -352,6 +478,43 @@ Error DescriptorSetFactory::newDescriptorSetLayout(const DescriptorSetLayoutInit
 	// Set the layout
 	layout.m_handle = cache->m_layoutHandle;
 	layout.m_cacheEntryIdx = cacheIdx;
+
+	return ErrorCode::NONE;
+}
+
+Error DescriptorSetFactory::newDescriptorSet(ThreadId tid, const DescriptorSetState& init, DescriptorSet& set)
+{
+	// Get cache entry
+	m_cachesMtx.lock();
+	DSLayoutCacheEntry& entry = *m_caches[init.m_layout.m_cacheEntryIdx];
+	m_cachesMtx.unlock();
+
+	// Get thread allocator
+	DSThreadAllocator* alloc;
+	ANKI_CHECK(entry.getOrCreateThreadAllocator(tid, alloc));
+
+	// Compute the hash
+	Array<U64, MAX_BINDINGS_PER_DESCRIPTOR_SET> uuids;
+	U uuidCount = 0;
+
+	const U minBinding = entry.m_minBinding;
+	const U maxBinding = entry.m_maxBinding;
+	for(U i = minBinding; i <= maxBinding; ++i)
+	{
+		if(entry.m_activeBindings.get(i))
+		{
+			uuids[uuidCount++] = init.m_bindings[i].m_uuids[0];
+			uuids[uuidCount++] = init.m_bindings[i].m_uuids[1];
+		}
+	}
+
+	U64 hash = computeHash(&uuids[0], uuidCount * sizeof(U64));
+
+	// Finally, allocate
+	const DS* s;
+	ANKI_CHECK(alloc->getOrCreateSet(hash, init.m_bindings, s));
+	set.m_handle = s->m_handle;
+	ANKI_ASSERT(set.m_handle != VK_NULL_HANDLE);
 
 	return ErrorCode::NONE;
 }
