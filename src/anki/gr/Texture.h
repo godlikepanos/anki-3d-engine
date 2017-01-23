@@ -38,8 +38,13 @@ class TextureInitInfo
 {
 public:
 	TextureType m_type = TextureType::_2D;
-	TextureUsageBit m_usage = TextureUsageBit::NONE;
-	TextureUsageBit m_initialUsage = TextureUsageBit::NONE;
+
+	TextureUsageBit m_usage = TextureUsageBit::NONE; ///< How the texture will be used.
+	TextureUsageBit m_initialUsage = TextureUsageBit::NONE; ///< It's initial usage.
+
+	/// It's usual usage. That way you won't need to call CommandBuffer::informTextureCurrentUsage() all the time.
+	TextureUsageBit m_usageWhenEncountered = TextureUsageBit::NONE;
+
 	U32 m_width = 0;
 	U32 m_height = 0;
 	U32 m_depth = 1; //< Relevant only for 3D textures.

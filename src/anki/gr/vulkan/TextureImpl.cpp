@@ -171,8 +171,6 @@ Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 		ANKI_ASSERT(usageValid(init.m_initialUsage));
 		ANKI_ASSERT(!(init.m_initialUsage & TextureUsageBit::GENERATE_MIPMAPS) && "That doesn't make any sense");
 
-		VkImageLayout initialLayout = computeLayout(init.m_initialUsage, 0);
-
 		CommandBufferInitInfo cmdbinit;
 		cmdbinit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
 		CommandBufferPtr cmdb = getGrManager().newInstance<CommandBuffer>(cmdbinit);
@@ -184,14 +182,7 @@ Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 		range.layerCount = m_layerCount;
 		range.levelCount = m_mipCount;
 
-		cmdb->m_impl->setImageBarrier(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-			0,
-			VK_IMAGE_LAYOUT_UNDEFINED,
-			VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-			VK_ACCESS_MEMORY_READ_BIT,
-			initialLayout,
-			TexturePtr(tex),
-			range);
+		cmdb->m_impl->setTextureBarrierRange(TexturePtr(tex), TextureUsageBit::NONE, init.m_initialUsage, range);
 
 		cmdb->m_impl->endRecording();
 		getGrManagerImpl().flushCommandBuffer(cmdb);

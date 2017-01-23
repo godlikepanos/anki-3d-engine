@@ -103,29 +103,14 @@ public:
 
 	void endRecording();
 
-	void setImageBarrier(VkPipelineStageFlags srcStage,
-		VkAccessFlags srcAccess,
-		VkImageLayout prevLayout,
-		VkPipelineStageFlags dstStage,
-		VkAccessFlags dstAccess,
-		VkImageLayout newLayout,
-		VkImage img,
-		const VkImageSubresourceRange& range);
-
-	void setImageBarrier(VkPipelineStageFlags srcStage,
-		VkAccessFlags srcAccess,
-		VkImageLayout prevLayout,
-		VkPipelineStageFlags dstStage,
-		VkAccessFlags dstAccess,
-		VkImageLayout newLayout,
-		TexturePtr tex,
-		const VkImageSubresourceRange& range);
-
 	void setTextureSurfaceBarrier(
 		TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureSurfaceInfo& surf);
 
 	void setTextureVolumeBarrier(
 		TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const TextureVolumeInfo& vol);
+
+	void setTextureBarrierRange(
+		TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const VkImageSubresourceRange& range);
 
 	void setBufferBarrier(VkPipelineStageFlags srcStage,
 		VkAccessFlags srcAccess,
@@ -263,8 +248,14 @@ private:
 
 	void clearTextureInternal(TexturePtr tex, const ClearValue& clearValue, const VkImageSubresourceRange& range);
 
-	void setTextureBarrierInternal(
-		TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const VkImageSubresourceRange& range);
+	void setImageBarrier(VkPipelineStageFlags srcStage,
+		VkAccessFlags srcAccess,
+		VkImageLayout prevLayout,
+		VkPipelineStageFlags dstStage,
+		VkAccessFlags dstAccess,
+		VkImageLayout newLayout,
+		VkImage img,
+		const VkImageSubresourceRange& range);
 };
 
 #define ANKI_CMD(x_, t_)                                                                                               \

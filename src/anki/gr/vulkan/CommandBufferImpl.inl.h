@@ -179,21 +179,7 @@ inline void CommandBufferImpl::setImageBarrier(VkPipelineStageFlags srcStage,
 #endif
 }
 
-inline void CommandBufferImpl::setImageBarrier(VkPipelineStageFlags srcStage,
-	VkAccessFlags srcAccess,
-	VkImageLayout prevLayout,
-	VkPipelineStageFlags dstStage,
-	VkAccessFlags dstAccess,
-	VkImageLayout newLayout,
-	TexturePtr tex,
-	const VkImageSubresourceRange& range)
-{
-	setImageBarrier(srcStage, srcAccess, prevLayout, dstStage, dstAccess, newLayout, tex->m_impl->m_imageHandle, range);
-
-	m_texList.pushBack(m_alloc, tex);
-}
-
-inline void CommandBufferImpl::setTextureBarrierInternal(
+inline void CommandBufferImpl::setTextureBarrierRange(
 	TexturePtr tex, TextureUsageBit prevUsage, TextureUsageBit nextUsage, const VkImageSubresourceRange& range)
 {
 	const TextureImpl& impl = *tex->m_impl;
@@ -210,7 +196,9 @@ inline void CommandBufferImpl::setTextureBarrierInternal(
 	oldLayout = impl.computeLayout(prevUsage, range.baseMipLevel);
 	newLayout = impl.computeLayout(nextUsage, range.baseMipLevel);
 
-	setImageBarrier(srcStage, srcAccess, oldLayout, dstStage, dstAccess, newLayout, tex, range);
+	setImageBarrier(srcStage, srcAccess, oldLayout, dstStage, dstAccess, newLayout, impl.m_imageHandle, range);
+
+	m_texList.pushBack(m_alloc, tex);
 }
 
 inline void CommandBufferImpl::setTextureSurfaceBarrier(
@@ -227,7 +215,7 @@ inline void CommandBufferImpl::setTextureSurfaceBarrier(
 
 	VkImageSubresourceRange range;
 	impl.computeSubResourceRange(surf, impl.m_akAspect, range);
-	setTextureBarrierInternal(tex, prevUsage, nextUsage, range);
+	setTextureBarrierRange(tex, prevUsage, nextUsage, range);
 }
 
 inline void CommandBufferImpl::setTextureVolumeBarrier(
@@ -244,7 +232,7 @@ inline void CommandBufferImpl::setTextureVolumeBarrier(
 
 	VkImageSubresourceRange range;
 	impl.computeSubResourceRange(vol, impl.m_akAspect, range);
-	setTextureBarrierInternal(tex, prevUsage, nextUsage, range);
+	setTextureBarrierRange(tex, prevUsage, nextUsage, range);
 }
 
 inline void CommandBufferImpl::setBufferBarrier(VkPipelineStageFlags srcStage,
