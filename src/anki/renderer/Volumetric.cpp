@@ -117,7 +117,7 @@ void Volumetric::run(RenderingContext& ctx)
 	uniforms[0].z() = m_r->getFrameCount() * texelOffset;
 	uniforms[0].w() = m_r->getFrameCount() & (m_noiseTex->getLayerCount() - 1);
 
-	uniforms[1] = Vec4(m_fogColor, m_fogFactor);
+	uniforms[1] = Vec4(m_fogParticleColor, 0.0);
 
 	bindStorage(cmdb, 0, 0, ctx.m_is.m_clustersToken);
 	bindStorage(cmdb, 0, 1, ctx.m_is.m_lightIndicesToken);

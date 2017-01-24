@@ -34,7 +34,7 @@ Error MyApp::init()
 	MainRenderer& renderer = app->getMainRenderer();
 	ResourceManager& resources = app->getResourceManager();
 
-	renderer.getOffscreenRenderer().getVolumetric().setFog(
+	renderer.getOffscreenRenderer().getVolumetric().setFogParticleColor(
 		Vec3(1.0, 0.9, 0.9), 0.7);
 	if(getenv("PROFILE"))
 	{

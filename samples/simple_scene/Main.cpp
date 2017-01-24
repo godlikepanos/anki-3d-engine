@@ -33,7 +33,7 @@ Error MyApp::init(int argc, char** argv)
 	getInput().moveCursor(Vec2(0.0));
 
 	// Some renderer stuff
-	getMainRenderer().getOffscreenRenderer().getVolumetric().setFog(Vec3(1.0, 0.9, 0.9), 0.7);
+	getMainRenderer().getOffscreenRenderer().getVolumetric().setFogParticleColor(Vec3(1.0, 0.9, 0.9) * 0.0001);
 
 	return ErrorCode::NONE;
 }

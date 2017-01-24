@@ -17,10 +17,9 @@ namespace anki
 class Volumetric : public RenderingPass
 {
 public:
-	void setFog(const Vec3& color, F32 factor)
+	void setFogParticleColor(const Vec3& color)
 	{
-		m_fogColor = color;
-		m_fogFactor = factor;
+		m_fogParticleColor = color;
 	}
 
 anki_internal:
@@ -44,8 +43,8 @@ private:
 	ShaderProgramPtr m_prog;
 	FramebufferPtr m_fb;
 
-	Vec3 m_fogColor = Vec3(1.0);
-	F32 m_fogFactor = 1.0;
+	Vec3 m_fogParticleColor = Vec3(1.0);
+	Mat3x4 m_prevCameraRot = Mat3x4::getIdentity();
 
 	TextureResourcePtr m_noiseTex;
 
