@@ -137,6 +137,8 @@ Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 	m_depthStencil = formatIsDepthStencil(m_format);
 	m_aspect = convertImageAspect(m_format);
 	m_usage = init.m_usage;
+	m_usageWhenEncountered = init.m_usageWhenEncountered;
+	ANKI_ASSERT((m_usageWhenEncountered | m_usage) == m_usage);
 
 	if(m_aspect & VK_IMAGE_ASPECT_DEPTH_BIT)
 	{

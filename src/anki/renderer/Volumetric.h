@@ -23,7 +23,7 @@ public:
 	}
 
 anki_internal:
-	TexturePtr m_rt;
+	TexturePtr m_rt; ///< vRT
 
 	Volumetric(Renderer* r)
 		: RenderingPass(r)
@@ -39,12 +39,23 @@ anki_internal:
 	void setPostRunBarriers(RenderingContext& ctx);
 
 private:
+	U32 m_width = 0, m_height = 0;
+	Vec3 m_fogParticleColor = Vec3(1.0);
+	Mat3x4 m_prevCameraRot = Mat3x4::getIdentity();
+
+	TexturePtr m_hRt;
+
 	ShaderResourcePtr m_frag;
 	ShaderProgramPtr m_prog;
 	FramebufferPtr m_fb;
 
-	Vec3 m_fogParticleColor = Vec3(1.0);
-	Mat3x4 m_prevCameraRot = Mat3x4::getIdentity();
+	ShaderResourcePtr m_vFrag;
+	ShaderProgramPtr m_vProg;
+	FramebufferPtr m_vFb;
+
+	ShaderResourcePtr m_hFrag;
+	ShaderProgramPtr m_hProg;
+	FramebufferPtr m_hFb;
 
 	TextureResourcePtr m_noiseTex;
 

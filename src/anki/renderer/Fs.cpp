@@ -64,11 +64,18 @@ Error Fs::initInternal(const ConfigSet&)
 
 Error Fs::initVol()
 {
+	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseLdrRgb64x64.ankitex", m_vol.m_noiseTex));
+
 	ANKI_CHECK(m_r->createShaderf("shaders/VolumetricUpscale.frag.glsl",
 		m_vol.m_frag,
-		"#define SRC_SIZE vec2(float(%u), float(%u))\n",
+		"#define SRC_SIZE vec2(float(%u), float(%u))\n"
+		"#define FB_SIZE vec2(float(%u), float(%u))\n"
+		"#define NOISE_TEX_SIZE %u\n",
 		m_r->getWidth() / VOLUMETRIC_FRACTION,
-		m_r->getHeight() / VOLUMETRIC_FRACTION));
+		m_r->getHeight() / VOLUMETRIC_FRACTION,
+		m_width,
+		m_height,
+		m_vol.m_noiseTex->getWidth()));
 
 	m_r->createDrawQuadShaderProgram(m_vol.m_frag->getGrShader(), m_vol.m_prog);
 
@@ -95,6 +102,7 @@ void Fs::drawVolumetric(RenderingContext& ctx, CommandBufferPtr cmdb)
 	cmdb->bindTextureAndSampler(0, 0, m_r->getDepthDownscale().m_hd.m_depthRt, m_vol.m_nearestSampler);
 	cmdb->bindTextureAndSampler(0, 1, m_r->getDepthDownscale().m_qd.m_depthRt, m_vol.m_nearestSampler);
 	cmdb->bindTexture(0, 2, m_r->getVolumetric().m_rt);
+	cmdb->bindTexture(0, 3, m_vol.m_noiseTex->getGrTexture());
 
 	m_r->drawQuad(cmdb);
 

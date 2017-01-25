@@ -154,5 +154,5 @@ void main()
 	}
 
 	newCol *= u_fogParticleColor;
-	out_color = vec4(newCol, 1.0 / 2.0);
+	out_color = vec4(newCol, 1.0 / 3.0);
 }

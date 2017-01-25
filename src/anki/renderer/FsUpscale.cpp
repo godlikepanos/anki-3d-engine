@@ -30,6 +30,8 @@ Error FsUpscale::initInternal(const ConfigSet& config)
 {
 	ANKI_LOGI("Initializing forward shading upscale");
 
+	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseLdrRgb64x64.ankitex", m_noiseTex));
+
 	GrManager& gr = getGrManager();
 
 	SamplerInitInfo sinit;
@@ -38,19 +40,18 @@ Error FsUpscale::initInternal(const ConfigSet& config)
 	m_nearestSampler = gr.newInstance<Sampler>(sinit);
 
 	// Shader
-	StringAuto pps(getFrameAllocator());
-	pps.sprintf("#define SRC_SIZE uvec2(%uu, %uu)\n"
-				"#define SSAO_ENABLED %u\n",
+	ANKI_CHECK(m_r->createShaderf("shaders/FsUpscale.frag.glsl",
+		m_frag,
+		"#define FB_SIZE uvec2(%uu, %uu)\n"
+		"#define SRC_SIZE uvec2(%uu, %uu)\n"
+		"#define NOISE_TEX_SIZE %u\n",
+		m_r->getWidth(),
+		m_r->getHeight(),
 		m_r->getWidth() / FS_FRACTION,
 		m_r->getHeight() / FS_FRACTION,
-		1);
+		m_noiseTex->getWidth()));
 
-	ANKI_CHECK(m_r->createShader("shaders/FsUpscale.frag.glsl", m_frag, pps.toCString()));
-
-	ANKI_CHECK(m_r->createShader("shaders/Quad.vert.glsl", m_vert, pps.toCString()));
-
-	// Prog
-	m_prog = gr.newInstance<ShaderProgram>(m_vert->getGrShader(), m_frag->getGrShader());
+	m_r->createDrawQuadShaderProgram(m_frag->getGrShader(), m_prog);
 
 	// Create FB
 	FramebufferInitInfo fbInit;
@@ -73,6 +74,7 @@ void FsUpscale::run(RenderingContext& ctx)
 	cmdb->bindTexture(0, 0, m_r->getMs().m_depthRt);
 	cmdb->bindTextureAndSampler(0, 1, m_r->getDepthDownscale().m_hd.m_depthRt, m_nearestSampler);
 	cmdb->bindTexture(0, 2, m_r->getFs().getRt());
+	cmdb->bindTexture(0, 3, m_noiseTex->getGrTexture());
 
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::SRC_ALPHA);
 

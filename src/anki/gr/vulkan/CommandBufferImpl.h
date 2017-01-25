@@ -7,6 +7,8 @@
 
 #include <anki/gr/vulkan/VulkanObject.h>
 #include <anki/gr/CommandBuffer.h>
+#include <anki/gr/Texture.h>
+#include <anki/gr/vulkan/TextureImpl.h>
 #include <anki/util/List.h>
 
 namespace anki
@@ -215,6 +217,52 @@ private:
 	Array<DeferredDsetBinding, MAX_DESCRIPTOR_SETS> m_deferredDsetBindings;
 	U8 m_deferredDsetBindingMask = 0;
 	VkPipelineLayout m_crntPplineLayout = VK_NULL_HANDLE;
+
+	/// Track texture usage.
+	class TextureUsageTracker
+	{
+	public:
+		Bool findUsage(const Texture& tex, TextureUsageBit& usage) const
+		{
+			auto it = m_map.find(tex.getUuid());
+			if(it != m_map.getEnd())
+			{
+				usage = (*it);
+				return true;
+			}
+			else if(tex.m_impl->m_usageWhenEncountered != TextureUsageBit::NONE)
+			{
+				usage = tex.m_impl->m_usageWhenEncountered;
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		void setUsage(const Texture& tex, TextureUsageBit usage, StackAllocator<U8>& alloc)
+		{
+			ANKI_ASSERT(usage != TextureUsageBit::NONE);
+			auto it = m_map.find(tex.getUuid());
+			if(it != m_map.getEnd())
+			{
+				(*it) = usage;
+			}
+			else
+			{
+				m_map.pushBack(alloc, tex.getUuid(), usage);
+			}
+		}
+
+		void destroy(StackAllocator<U8>& alloc)
+		{
+			m_map.destroy(alloc);
+		}
+
+	private:
+		HashMap<U64, TextureUsageBit> m_map;
+	} m_texUsageTracker;
 
 	/// Some common operations per command.
 	void commandCommon();

@@ -20,24 +20,6 @@ const U SAMPLES = 8;
 const PixelFormat Ssao::RT_PIXEL_FORMAT(ComponentFormat::R8, TransformFormat::UNORM);
 
 template<typename TVec>
-static void genHemisphere(TVec* ANKI_RESTRICT arr, TVec* ANKI_RESTRICT arrEnd)
-{
-	ANKI_ASSERT(arr && arrEnd && arr != arrEnd);
-
-	do
-	{
-		// Calculate the normal
-		arr->x() = randRange(-1.0, 1.0);
-		arr->y() = randRange(-1.0, 1.0);
-		arr->z() = randRange(0.1, 1.0);
-		arr->normalize();
-
-		// Adjust the length
-		(*arr) *= randRange(HEMISPHERE_RADIUS / 2.0f, HEMISPHERE_RADIUS);
-	} while(++arr != arrEnd);
-}
-
-template<typename TVec>
 static void genDisk(TVec* ANKI_RESTRICT arr, TVec* ANKI_RESTRICT arrEnd)
 {
 	ANKI_ASSERT(arr && arrEnd && arr != arrEnd);

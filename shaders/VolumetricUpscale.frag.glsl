@@ -5,14 +5,17 @@
 
 #include "shaders/Functions.glsl"
 
+#define BLUE_NOISE 0
+
 layout(location = 0) in vec2 in_uv;
 layout(location = 0) out vec3 out_color;
 
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_depthFullTex;
 layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_depthHalfTex;
 layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_colorTex;
-
-const float DEPTH_THRESHOLD = 1.0 / 5000.0;
+#if BLUE_NOISE
+layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2DArray u_noiseTex;
+#endif
 
 layout(ANKI_UBO_BINDING(0, 0)) uniform u0_
 {
@@ -21,10 +24,13 @@ layout(ANKI_UBO_BINDING(0, 0)) uniform u0_
 
 void main()
 {
-#if 0
-	out_color = nearestDepthUpscale(in_uv, u_depthFullTex, u_depthHalfTex, u_colorTex, DEPTH_THRESHOLD);
-#else
 	out_color =
 		bilateralUpsample(u_depthFullTex, u_depthHalfTex, u_colorTex, 1.0 / SRC_SIZE, in_uv, u_linearizeCfPad2.xy).rgb;
+
+#if BLUE_NOISE
+	vec3 blueNoise = texture(u_noiseTex, vec3(FB_SIZE / vec2(NOISE_TEX_SIZE) * in_uv, 0.0), 0.0).rgb;
+	blueNoise = blueNoise * 2.0 - 1.0;
+	blueNoise = sign(blueNoise) * (1.0 - sqrt(1.0 - abs(blueNoise)));
+	out_color += blueNoise / 16.0;
 #endif
 }

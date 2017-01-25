@@ -261,6 +261,9 @@ public:
 	/// Find item.
 	Iterator find(const Key& key);
 
+	/// Find item.
+	ConstIterator find(const Key& key) const;
+
 protected:
 	/// @privatesection
 	TNode* m_root = nullptr;

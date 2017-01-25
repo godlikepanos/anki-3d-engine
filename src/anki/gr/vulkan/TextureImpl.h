@@ -44,6 +44,7 @@ public:
 	VkImageAspectFlags m_aspect = 0;
 	DepthStencilAspectBit m_akAspect = DepthStencilAspectBit::NONE;
 	TextureUsageBit m_usage = TextureUsageBit::NONE;
+	TextureUsageBit m_usageWhenEncountered = TextureUsageBit::NONE;
 	PixelFormat m_format;
 	VkFormat m_vkFormat = VK_FORMAT_UNDEFINED;
 

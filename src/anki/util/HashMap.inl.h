@@ -87,6 +87,35 @@ HashMapBase<TKey, TValue, THasher, TCompare, TNode>::find(const Key& key)
 }
 
 template<typename TKey, typename TValue, typename THasher, typename TCompare, typename TNode>
+typename HashMapBase<TKey, TValue, THasher, TCompare, TNode>::ConstIterator
+HashMapBase<TKey, TValue, THasher, TCompare, TNode>::find(const Key& key) const
+{
+	const U64 hash = THasher()(key);
+
+	const TNode* node = m_root;
+	while(node)
+	{
+		const U64 bhash = node->m_hash;
+
+		if(hash < bhash)
+		{
+			node = node->m_left;
+		}
+		else if(hash > bhash)
+		{
+			node = node->m_right;
+		}
+		else
+		{
+			// Found
+			break;
+		}
+	}
+
+	return ConstIterator(node);
+}
+
+template<typename TKey, typename TValue, typename THasher, typename TCompare, typename TNode>
 void HashMapBase<TKey, TValue, THasher, TCompare, TNode>::removeNode(TNode* del)
 {
 	ANKI_ASSERT(del);

@@ -39,9 +39,10 @@ public:
 	}
 
 	/// Use it for binding.
-	VkRenderPass getRenderPass(WeakArray<TextureUsageBit> usages);
+	VkRenderPass getRenderPassHandle(
+		const Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS>& colorUsages, TextureUsageBit dsUsage);
 
-	VkFramebuffer getFramebuffer(U frame) const
+	VkFramebuffer getFramebufferHandle(U frame) const
 	{
 		ANKI_ASSERT(m_fbs[frame]);
 		return m_fbs[frame];
@@ -54,16 +55,50 @@ public:
 		stencil = m_stencilAttachment;
 	}
 
-private:
-	class Hasher
+	U getColorAttachmentCount() const
 	{
-	public:
-		U64 operator()(const U64 key) const
-		{
-			return key;
-		}
-	};
+		return m_colorAttCount;
+	}
 
+	Bool hasDepthStencil() const
+	{
+		return m_refs[MAX_COLOR_ATTACHMENTS].get() != nullptr;
+	}
+
+	U getAttachmentCount() const
+	{
+		return m_colorAttCount + (hasDepthStencil() ? 1 : 0);
+	}
+
+	TexturePtr getColorAttachment(U att) const
+	{
+		ANKI_ASSERT(m_refs[att].get());
+		return m_refs[att];
+	}
+
+	TexturePtr getDepthStencilAttachment() const
+	{
+		ANKI_ASSERT(m_refs[MAX_COLOR_ATTACHMENTS].get());
+		return m_refs[MAX_COLOR_ATTACHMENTS];
+	}
+
+	const VkClearValue* getClearValues() const
+	{
+		return &m_clearVals[0];
+	}
+
+	Bool isDefaultFramebuffer() const
+	{
+		return m_defaultFb;
+	}
+
+	void getAttachmentsSize(U32& width, U32& height) const
+	{
+		width = m_width;
+		height = m_height;
+	}
+
+private:
 	U32 m_width = 0;
 	U32 m_height = 0;
 
@@ -72,6 +107,9 @@ private:
 	BitSet<MAX_COLOR_ATTACHMENTS, U8> m_colorAttachmentMask = {false};
 	Bool8 m_depthAttachment = false;
 	Bool8 m_stencilAttachment = false;
+
+	U8 m_colorAttCount = 0;
+	Array<VkClearValue, MAX_COLOR_ATTACHMENTS + 1> m_clearVals;
 
 	Array<TexturePtr, MAX_COLOR_ATTACHMENTS + 1> m_refs; ///< @note The pos of every attachment is fixed.
 	Array<U32, MAX_COLOR_ATTACHMENTS + 1> m_attachedMipLevels = {};
@@ -84,7 +122,7 @@ private:
 
 	// VK objects
 	VkRenderPass m_rpass = {}; ///< Compatible renderpass or default FB's renderpass.
-	HashMap<U64, VkRenderPass, Hasher> m_rpasses;
+	HashMap<U64, VkRenderPass> m_rpasses;
 	Mutex m_rpassesMtx;
 	Array<VkFramebuffer, MAX_FRAMES_IN_FLIGHT> m_fbs = {};
 

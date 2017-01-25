@@ -68,6 +68,7 @@ private:
 		ShaderResourcePtr m_frag;
 		ShaderProgramPtr m_prog;
 		SamplerPtr m_nearestSampler;
+		TextureResourcePtr m_noiseTex;
 	} m_vol;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);

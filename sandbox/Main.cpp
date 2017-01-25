@@ -118,8 +118,8 @@ Error MyApp::userMainLoop(Bool& quit)
 	{
 		/*Vec3 origin = mover->getWorldTransform().getOrigin().xyz();
 		printf("%f %f %f\n", origin.x(), origin.y(), origin.z());*/
-		mover->setLocalOrigin(Vec4(0.0));
-		mover->setLocalRotation(Mat3x4::getIdentity());
+		mover->setLocalOrigin(Vec4(81.169312, -2.309618, 17.088392, 0.0));
+		// mover->setLocalRotation(Mat3x4::getIdentity());
 	}
 
 	if(in.getKey(KeyCode::F1) == 1)

@@ -109,12 +109,10 @@ void CommandBufferImpl::beginRenderPass(FramebufferPtr fb)
 
 void CommandBufferImpl::beginRenderPassInternal()
 {
-// TODO
-#if 0
+	FramebufferImpl& impl = *m_activeFb->m_impl;
+
 	VkRenderPassBeginInfo bi = {};
 	bi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	FramebufferImpl& impl = *m_activeFb->m_impl;
-	bi.renderPass = impl.getRenderPassHandle();
 	bi.clearValueCount = impl.getAttachmentCount();
 	bi.pClearValues = impl.getClearValues();
 
@@ -123,8 +121,26 @@ void CommandBufferImpl::beginRenderPassInternal()
 		// Bind a non-default FB
 
 		bi.framebuffer = impl.getFramebufferHandle(0);
-
 		impl.getAttachmentsSize(bi.renderArea.extent.width, bi.renderArea.extent.height);
+
+		// Calc the usage
+		Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> colAttUsages;
+		for(U i = 0; i < impl.getColorAttachmentCount(); ++i)
+		{
+			Bool found = m_texUsageTracker.findUsage(*impl.getColorAttachment(i), colAttUsages[i]);
+			ANKI_ASSERT(found);
+			(void)found;
+		}
+
+		TextureUsageBit dsAttUsage = TextureUsageBit::NONE;
+		if(impl.hasDepthStencil())
+		{
+			Bool found = m_texUsageTracker.findUsage(*impl.getDepthStencilAttachment(), dsAttUsage);
+			ANKI_ASSERT(found);
+			(void)found;
+		}
+
+		bi.renderPass = impl.getRenderPassHandle(colAttUsages, dsAttUsage);
 	}
 	else
 	{
@@ -148,7 +164,6 @@ void CommandBufferImpl::beginRenderPassInternal()
 	}
 
 	ANKI_CMD(vkCmdBeginRenderPass(m_handle, &bi, m_subpassContents), ANY_OTHER_COMMAND);
-#endif
 }
 
 void CommandBufferImpl::endRenderPass()

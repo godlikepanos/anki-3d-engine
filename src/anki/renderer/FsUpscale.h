@@ -29,9 +29,10 @@ public:
 private:
 	FramebufferPtr m_fb;
 	ShaderResourcePtr m_frag;
-	ShaderResourcePtr m_vert;
 	ShaderProgramPtr m_prog;
 	SamplerPtr m_nearestSampler;
+
+	TextureResourcePtr m_noiseTex;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& config);
 };

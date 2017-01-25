@@ -27,6 +27,40 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 	// Create the FBs
 	ANKI_CHECK(initFbs(init));
 
+	// Set clear values
+	for(U i = 0; i < m_colorAttCount; ++i)
+	{
+		if(init.m_colorAttachments[i].m_loadOperation == AttachmentLoadOperation::CLEAR)
+		{
+			F32* col = &m_clearVals[i].color.float32[0];
+			col[0] = init.m_colorAttachments[i].m_clearValue.m_colorf[0];
+			col[1] = init.m_colorAttachments[i].m_clearValue.m_colorf[1];
+			col[2] = init.m_colorAttachments[i].m_clearValue.m_colorf[2];
+			col[3] = init.m_colorAttachments[i].m_clearValue.m_colorf[3];
+		}
+		else
+		{
+			m_clearVals[i] = {};
+		}
+	}
+
+	if(hasDepthStencil())
+	{
+		if(init.m_depthStencilAttachment.m_loadOperation == AttachmentLoadOperation::CLEAR
+			|| init.m_depthStencilAttachment.m_stencilLoadOperation == AttachmentLoadOperation::CLEAR)
+		{
+			m_clearVals[m_colorAttCount].depthStencil.depth =
+				init.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth;
+
+			m_clearVals[m_colorAttCount].depthStencil.stencil =
+				init.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_stencil;
+		}
+		else
+		{
+			m_clearVals[m_colorAttCount] = {};
+		}
+	}
+
 	return ErrorCode::NONE;
 }
 
@@ -57,6 +91,7 @@ Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 		}
 
 		m_colorAttachmentMask.set(0);
+		m_colorAttCount = 1;
 	}
 	else
 	{
@@ -78,6 +113,7 @@ Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 
 			m_refs[i] = att.m_texture;
 			m_colorAttachmentMask.set(i);
+			m_colorAttCount = i + 1;
 		}
 
 		if(hasDepthStencil)
@@ -177,14 +213,34 @@ void FramebufferImpl::initRpassCreateInfo(const FramebufferInitInfo& init)
 	m_rpassCi.pSubpasses = &m_subpassDescr;
 }
 
-VkRenderPass FramebufferImpl::getRenderPass(WeakArray<TextureUsageBit> usages)
+VkRenderPass FramebufferImpl::getRenderPassHandle(
+	const Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS>& colorUsages, TextureUsageBit dsUsage)
 {
 	VkRenderPass out;
 
 	if(!m_defaultFb)
 	{
 		// Create hash
-		U64 hash = computeHash(&usages[0], usages.getSize() * sizeof(usages[0]));
+		Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS + 1> allUsages;
+		U allUsageCount = 0;
+		for(U i = 0; i < MAX_COLOR_ATTACHMENTS; ++i)
+		{
+			if(m_colorAttachmentMask.get(i))
+			{
+				ANKI_ASSERT(!!(colorUsages[i]));
+				allUsages[allUsageCount++] = colorUsages[i];
+			}
+		}
+
+		if(m_depthAttachment || m_stencilAttachment)
+		{
+			ANKI_ASSERT(!!(dsUsage));
+			allUsages[allUsageCount++] = dsUsage;
+		}
+
+		U64 hash = computeHash(&allUsages[0], allUsageCount * sizeof(allUsages[0]));
+
+		// Get or create
 		LockGuard<Mutex> lock(m_rpassesMtx);
 		auto it = m_rpasses.find(hash);
 		if(it != m_rpasses.getEnd())
@@ -208,7 +264,7 @@ VkRenderPass FramebufferImpl::getRenderPass(WeakArray<TextureUsageBit> usages)
 
 			for(U i = 0; i < subpassDescr.colorAttachmentCount; ++i)
 			{
-				const VkImageLayout lay = m_refs[i]->m_impl->computeLayout(usages[i], m_attachedMipLevels[i]);
+				const VkImageLayout lay = m_refs[i]->m_impl->computeLayout(colorUsages[i], m_attachedMipLevels[i]);
 
 				attachmentDescriptions[i].initialLayout = lay;
 				attachmentDescriptions[i].finalLayout = lay;
@@ -219,7 +275,7 @@ VkRenderPass FramebufferImpl::getRenderPass(WeakArray<TextureUsageBit> usages)
 			if(m_refs[MAX_COLOR_ATTACHMENTS])
 			{
 				const U i = MAX_COLOR_ATTACHMENTS;
-				const VkImageLayout lay = m_refs[i]->m_impl->computeLayout(usages[i], m_attachedMipLevels[i]);
+				const VkImageLayout lay = m_refs[i]->m_impl->computeLayout(dsUsage, m_attachedMipLevels[i]);
 
 				attachmentDescriptions[i].initialLayout = lay;
 				attachmentDescriptions[i].finalLayout = lay;
