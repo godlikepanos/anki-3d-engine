@@ -200,6 +200,7 @@ void FramebufferImpl::initRpassCreateInfo(const FramebufferInitInfo& init)
 	}
 
 	// Setup the render pass
+	m_rpassCi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 	m_rpassCi.pAttachments = &m_attachmentDescriptions[0];
 	m_rpassCi.attachmentCount = init.m_colorAttachmentCount + ((hasDepthStencil) ? 1 : 0);
 

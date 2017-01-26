@@ -17,6 +17,7 @@ StagingGpuMemoryManager::~StagingGpuMemoryManager()
 
 	for(auto& it : m_perFrameBuffers)
 	{
+		it.m_buff->unmap();
 		it.m_buff = {};
 	}
 }

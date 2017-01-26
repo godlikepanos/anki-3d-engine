@@ -433,7 +433,6 @@ target_link_libraries(anki ${ANKI_LIBS} ankitinyxml2 ankilua ankiz FREETYPE_LIB 
 # AnKi extra                                                                   #
 ################################################################################
 if(ANKI_BUILD_TESTS)
-	ENABLE_TESTING()
 	add_subdirectory(tests)
 endif()
 

@@ -313,7 +313,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 {
 	uint32_t count = 0;
 	vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &count, nullptr);
-	ANKI_LOGI("VK: Number of queue families: %u\n", count);
+	ANKI_LOGI("VK: Number of queue families: %u", count);
 
 	DynamicArrayAuto<VkQueueFamilyProperties> queueInfos(getAllocator());
 	queueInfos.create(count);

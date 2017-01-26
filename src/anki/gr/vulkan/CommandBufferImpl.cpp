@@ -148,6 +148,8 @@ void CommandBufferImpl::beginRenderPassInternal()
 		m_renderedToDefaultFb = true;
 
 		bi.framebuffer = impl.getFramebufferHandle(getGrManagerImpl().getCurrentBackbufferIndex());
+		Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> dummy;
+		bi.renderPass = impl.getRenderPassHandle(dummy, TextureUsageBit::NONE);
 
 		bi.renderArea.extent.width = getGrManagerImpl().getDefaultSurfaceWidth();
 		bi.renderArea.extent.height = getGrManagerImpl().getDefaultSurfaceHeight();
@@ -168,11 +170,13 @@ void CommandBufferImpl::beginRenderPassInternal()
 
 void CommandBufferImpl::endRenderPass()
 {
-// TODO
-#if 0
 	commandCommon();
 	ANKI_ASSERT(insideRenderPass());
-	ANKI_ASSERT(m_rpCommandCount > 0);
+	if(m_rpCommandCount == 0)
+	{
+		m_subpassContents = VK_SUBPASS_CONTENTS_INLINE;
+		beginRenderPassInternal();
+	}
 
 	ANKI_CMD(vkCmdEndRenderPass(m_handle), ANY_OTHER_COMMAND);
 
@@ -190,7 +194,6 @@ void CommandBufferImpl::endRenderPass()
 	}
 
 	m_activeFb.reset(nullptr);
-#endif
 }
 
 void CommandBufferImpl::endRecording()

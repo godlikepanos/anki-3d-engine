@@ -62,7 +62,7 @@ public:
 
 	Bool hasDepthStencil() const
 	{
-		return m_refs[MAX_COLOR_ATTACHMENTS].get() != nullptr;
+		return m_refs[MAX_COLOR_ATTACHMENTS].isCreated();
 	}
 
 	U getAttachmentCount() const

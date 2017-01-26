@@ -404,6 +404,41 @@ ANKI_TEST(Gr, ShaderProgram)
 	COMMON_END()
 }
 
+ANKI_TEST(Gr, ClearScreen)
+{
+	COMMON_BEGIN()
+
+	FramebufferPtr fb = createDefaultFb(*gr);
+
+	U iterations = 100;
+	while(iterations--)
+	{
+		HighRezTimer timer;
+		timer.start();
+
+		gr->beginFrame();
+
+		CommandBufferInitInfo cinit;
+		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK;
+		CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
+
+		cmdb->beginRenderPass(fb);
+		cmdb->endRenderPass();
+		cmdb->flush();
+
+		gr->swapBuffers();
+
+		timer.stop();
+		const F32 TICK = 1.0 / 30.0;
+		if(timer.getElapsedTime() < TICK)
+		{
+			HighRezTimer::sleep(TICK - timer.getElapsedTime());
+		}
+	}
+
+	COMMON_END()
+}
+
 ANKI_TEST(Gr, SimpleDrawcall)
 {
 	COMMON_BEGIN()
