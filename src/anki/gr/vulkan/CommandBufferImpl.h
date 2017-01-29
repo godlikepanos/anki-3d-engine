@@ -140,6 +140,14 @@ public:
 
 	void bindShaderProgram(ShaderProgramPtr& prog);
 
+	void bindUniformBuffer(U32 set, U32 binding, BufferPtr& buff, PtrSize offset, PtrSize range)
+	{
+		commandCommon();
+		U realBinding = MAX_TEXTURE_BINDINGS + binding;
+		m_dsetState[set].bindUniformBuffer(realBinding, buff.get(), offset, range);
+		m_dsetDirty.set(set);
+	}
+
 private:
 	StackAllocator<U8> m_alloc;
 
@@ -156,6 +164,9 @@ private:
 	ShaderProgramImpl* m_graphicsProg ANKI_DBG_NULLIFY; ///< Last bound graphics program
 
 	PipelineStateTracker m_state;
+
+	Array<DescriptorSetState, MAX_DESCRIPTOR_SETS> m_dsetState;
+	BitSet<MAX_DESCRIPTOR_SETS, U8> m_dsetDirty = {false};
 
 	/// @name cleanup_references
 	/// @{

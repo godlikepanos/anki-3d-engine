@@ -49,6 +49,9 @@ Error ShaderProgramImpl::init(const Array<ShaderPtr, U(ShaderType::COUNT)>& shad
 
 			const ShaderImpl& simpl = *shaders[stype]->m_impl;
 
+			m_refl.m_descriptorSetMask |= simpl.m_descriptorSetMask;
+			m_refl.m_activeBindingMask[set] |= simpl.m_activeBindingMask[set];
+
 			for(U i = 0; i < simpl.m_bindings[set].getSize(); ++i)
 			{
 				Bool bindingFound = false;

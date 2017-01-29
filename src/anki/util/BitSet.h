@@ -46,6 +46,16 @@ public:
 		return out;
 	}
 
+	/// Bitwise or between this and @a b sets.
+	BitSet& operator|=(const BitSet& b)
+	{
+		for(U i = 0; i < CHUNK_COUNT; ++i)
+		{
+			m_chunks[i] |= b.m_chunks[i];
+		}
+		return *this;
+	}
+
 	/// Bitwise and between this and @a b sets.
 	BitSet operator&(const BitSet& b) const
 	{
@@ -57,6 +67,16 @@ public:
 		return out;
 	}
 
+	/// Bitwise and between this and @a b sets.
+	BitSet& operator&=(const BitSet& b)
+	{
+		for(U i = 0; i < CHUNK_COUNT; ++i)
+		{
+			m_chunks[i] &= b.m_chunks[i];
+		}
+		return *this;
+	}
+
 	/// Bitwise xor between this and @a b sets.
 	BitSet operator^(const BitSet& b) const
 	{
@@ -66,6 +86,16 @@ public:
 			out.m_chunks[i] = m_chunks[i] ^ b.m_chunks[i];
 		}
 		return out;
+	}
+
+	/// Bitwise xor between this and @a b sets.
+	BitSet& operator^=(const BitSet& b)
+	{
+		for(U i = 0; i < CHUNK_COUNT; ++i)
+		{
+			m_chunks[i] ^= b.m_chunks[i];
+		}
+		return *this;
 	}
 
 	Bool operator==(const BitSet& b) const

@@ -454,6 +454,8 @@ inline void CommandBufferImpl::drawcallCommon()
 		ANKI_CMD(vkCmdBindPipeline(m_handle, VK_PIPELINE_BIND_POINT_GRAPHICS, ppline.getHandle()), ANY_OTHER_COMMAND);
 	}
 
+	// Bind dsets
+
 	ANKI_TRACE_INC_COUNTER(GR_DRAWCALLS, 1);
 }
 

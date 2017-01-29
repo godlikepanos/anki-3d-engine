@@ -107,7 +107,7 @@ public:
 		m_layout = layout;
 	}
 
-	void bindTexture(U binding, TexturePtr& tex, DepthStencilAspectBit aspect, VkImageLayout layout)
+	void bindTexture(U binding, Texture* tex, DepthStencilAspectBit aspect, VkImageLayout layout)
 	{
 		m_bindings[binding].m_type = DescriptorType::TEXTURE;
 		m_bindings[binding].m_uuids[0] = m_bindings[binding].m_uuids[1] = tex->getUuid();
@@ -119,7 +119,7 @@ public:
 	}
 
 	void bindTextureAndSampler(
-		U binding, TexturePtr& tex, SamplerPtr& sampler, DepthStencilAspectBit aspect, VkImageLayout layout)
+		U binding, Texture* tex, SamplerPtr& sampler, DepthStencilAspectBit aspect, VkImageLayout layout)
 	{
 		m_bindings[binding].m_type = DescriptorType::TEXTURE;
 		m_bindings[binding].m_uuids[0] = tex->getUuid();
@@ -131,7 +131,7 @@ public:
 		m_bindings[binding].m_tex.m_layout = layout;
 	}
 
-	void bindUniformBuffer(U binding, BufferPtr& buff, PtrSize offset, PtrSize range)
+	void bindUniformBuffer(U binding, Buffer* buff, PtrSize offset, PtrSize range)
 	{
 		m_bindings[binding].m_type = DescriptorType::UNIFORM_BUFFER;
 		m_bindings[binding].m_uuids[0] = m_bindings[binding].m_uuids[1] = buff->getUuid();
@@ -141,7 +141,7 @@ public:
 		m_bindings[binding].m_buff.m_range = range;
 	}
 
-	void bindStorageBuffer(U binding, BufferPtr& buff, PtrSize offset, PtrSize range)
+	void bindStorageBuffer(U binding, Buffer* buff, PtrSize offset, PtrSize range)
 	{
 		m_bindings[binding].m_type = DescriptorType::STORAGE_BUFFER;
 		m_bindings[binding].m_uuids[0] = m_bindings[binding].m_uuids[1] = buff->getUuid();
@@ -151,15 +151,13 @@ public:
 		m_bindings[binding].m_buff.m_range = range;
 	}
 
-	void bindImage(U binding, TexturePtr& tex, U32 level)
+	void bindImage(U binding, Texture* tex, U32 level)
 	{
 		m_bindings[binding].m_type = DescriptorType::IMAGE;
 		m_bindings[binding].m_uuids[0] = m_bindings[binding].m_uuids[1] = tex->getUuid();
 
-		m_bindings[binding].m_tex.m_tex = tex->m_impl.get();
-		m_bindings[binding].m_tex.m_sampler = nullptr;
-		m_bindings[binding].m_tex.m_aspect = DepthStencilAspectBit::NONE;
-		m_bindings[binding].m_tex.m_layout = VK_IMAGE_LAYOUT_GENERAL;
+		m_bindings[binding].m_image.m_tex = tex->m_impl.get();
+		m_bindings[binding].m_image.m_level = level;
 	}
 
 private:

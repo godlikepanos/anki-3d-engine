@@ -327,6 +327,9 @@ void ShaderImpl::doReflection(const std::vector<unsigned int>& spirv)
 			const U32 set = spvc.get_decoration(id, spv::Decoration::DecorationDescriptorSet);
 			const U32 binding = spvc.get_decoration(id, spv::Decoration::DecorationBinding);
 
+			m_descriptorSetMask.set(set);
+			m_activeBindingMask[set].set(set);
+
 			// Check that there are no other descriptors with the same binding
 			for(U i = 0; i < counts[set]; ++i)
 			{
