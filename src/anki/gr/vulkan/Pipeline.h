@@ -333,6 +333,7 @@ public:
 			const ShaderProgramImpl& impl = *prog->m_impl;
 			m_shaderColorAttachmentWritemask = impl.getReflectionInfo().m_colorAttachmentWritemask;
 			m_shaderAttributeMask = impl.getReflectionInfo().m_attributeMask;
+			m_state.m_prog = prog;
 			m_dirty.m_prog = true;
 		}
 	}
@@ -363,13 +364,24 @@ public:
 	}
 
 	/// Flush state
-	void flush(U64& pipelineHash)
+	void flush(U64& pipelineHash, Bool& stateDirty)
 	{
 		Bool dirtyHashes = updateHashes();
 		if(dirtyHashes)
 		{
 			updateSuperHash();
 		}
+
+		if(m_hashes.m_superHash != m_hashes.m_lastSuperHash)
+		{
+			m_hashes.m_lastSuperHash = m_hashes.m_superHash;
+			stateDirty = true;
+		}
+		else
+		{
+			stateDirty = false;
+		}
+
 		pipelineHash = m_hashes.m_superHash;
 		ANKI_ASSERT(pipelineHash);
 	}
@@ -393,6 +405,7 @@ private:
 		Array<U64, MAX_COLOR_ATTACHMENTS> m_colAttachments = {};
 
 		U64 m_superHash = 0;
+		U64 m_lastSuperHash = 0;
 	} m_hashes;
 
 	class DirtyBits
@@ -435,6 +448,7 @@ private:
 		Array<VkVertexInputAttributeDescription, MAX_VERTEX_ATTRIBUTES> m_attribs;
 		VkPipelineVertexInputStateCreateInfo m_vert;
 		VkPipelineInputAssemblyStateCreateInfo m_ia;
+		VkPipelineViewportStateCreateInfo m_vp;
 		VkPipelineTessellationStateCreateInfo m_tess;
 		VkPipelineRasterizationStateCreateInfo m_rast;
 		VkPipelineMultisampleStateCreateInfo m_ms;
@@ -462,7 +476,7 @@ public:
 	}
 
 private:
-	VkPipeline m_handle = VK_NULL_HANDLE;
+	VkPipeline m_handle ANKI_DBG_NULLIFY;
 };
 
 /// Given some state it creates/hashes pipelines.
@@ -482,7 +496,7 @@ public:
 	void destroy();
 
 	/// @note Thread-safe.
-	void newPipeline(PipelineStateTracker& state, Pipeline& ppline);
+	void newPipeline(PipelineStateTracker& state, Pipeline& ppline, Bool& stateDirty);
 
 private:
 	class PipelineInternal;

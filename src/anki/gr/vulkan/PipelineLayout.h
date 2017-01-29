@@ -49,12 +49,11 @@ public:
 
 private:
 	class Layout;
-	class Hasher;
 
 	GrAllocator<U8> m_alloc;
 	VkDevice m_dev = VK_NULL_HANDLE;
 
-	HashMap<U64, Layout*, Hasher> m_layouts;
+	IntrusiveHashMap<U64, Layout> m_layouts;
 	Mutex m_layoutsMtx;
 };
 /// @}

@@ -24,7 +24,7 @@ void Buffer::init(PtrSize size, BufferUsageBit usage, BufferMapAccessBit access)
 
 	if(m_impl->init(size, usage, access))
 	{
-		ANKI_LOGF("Cannot recover");
+		ANKI_VK_LOGF("Cannot recover");
 	}
 }
 

@@ -196,10 +196,7 @@ public:
 
 	void init(const GrAllocator<U8>& alloc, VkDevice dev);
 
-	void destroy()
-	{
-		ANKI_ASSERT(!"TODO");
-	}
+	void destroy();
 
 	/// @note It's thread-safe.
 	ANKI_USE_RESULT Error newDescriptorSetLayout(const DescriptorSetLayoutInitInfo& init, DescriptorSetLayout& layout);

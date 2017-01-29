@@ -67,7 +67,7 @@ Error ShaderProgramImpl::link(GLuint vert, GLuint frag)
 
 		glGetProgramInfoLog(m_glName, infoLen, &charsWritten, &infoLogTxt[0]);
 
-		ANKI_LOGE("Link error log follows (vs:%u, fs:%u):\n%s", vert, frag, &infoLogTxt[0]);
+		ANKI_GL_LOGE("Link error log follows (vs:%u, fs:%u):\n%s", vert, frag, &infoLogTxt[0]);
 
 		err = ErrorCode::USER_DATA;
 	}

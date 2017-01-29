@@ -26,7 +26,7 @@ void Shader::init(ShaderType shaderType, const CString& source)
 
 	if(m_impl->init(shaderType, source))
 	{
-		ANKI_LOGF("Cannot recover");
+		ANKI_VK_LOGF("Cannot recover");
 	}
 }
 

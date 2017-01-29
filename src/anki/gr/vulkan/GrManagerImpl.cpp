@@ -16,8 +16,6 @@
 namespace anki
 {
 
-#define ANKI_GR_MANAGER_DEBUG_MEMMORY ANKI_DEBUG
-
 GrManagerImpl::~GrManagerImpl()
 {
 	// FIRST THING: wait for the GPU
@@ -60,6 +58,9 @@ GrManagerImpl::~GrManagerImpl()
 	m_semaphores.destroy(); // Destroy before fences
 	m_fences.destroy();
 
+	m_pplineLayoutFactory.destroy();
+	m_descrFactory.destroy();
+
 	if(m_swapchain)
 	{
 		vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
@@ -82,11 +83,14 @@ GrManagerImpl::~GrManagerImpl()
 
 	if(m_instance)
 	{
-		vkDestroyInstance(m_instance, nullptr);
-	}
+#if ANKI_GR_MANAGER_DEBUG_MEMMORY
+		VkAllocationCallbacks* pallocCbs = &m_debugAllocCbs;
+#else
+		VkAllocationCallbacks* pallocCbs = nullptr;
+#endif
 
-	m_descrFactory.destroy();
-	m_pplineLayoutFactory.destroy();
+		vkDestroyInstance(m_instance, pallocCbs);
+	}
 }
 
 GrAllocator<U8> GrManagerImpl::getAllocator() const
@@ -99,7 +103,7 @@ Error GrManagerImpl::init(const GrManagerInitInfo& init)
 	Error err = initInternal(init);
 	if(err)
 	{
-		ANKI_LOGE("Vulkan initialization failed");
+		ANKI_VK_LOGE("Vulkan initialization failed");
 		return ErrorCode::FUNCTION_FAILED;
 	}
 
@@ -108,7 +112,7 @@ Error GrManagerImpl::init(const GrManagerInitInfo& init)
 
 Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 {
-	ANKI_LOGI("Initializing Vulkan backend");
+	ANKI_VK_LOGI("Initializing Vulkan backend");
 	ANKI_CHECK(initInstance(init));
 	ANKI_CHECK(initSurface(init));
 	ANKI_CHECK(initDevice(init));
@@ -149,13 +153,13 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 
 		if(res == VK_ERROR_FORMAT_NOT_SUPPORTED)
 		{
-			ANKI_LOGI("R8G8B8 Images are not supported. Will workaround this");
+			ANKI_VK_LOGI("R8G8B8 Images are not supported. Will workaround this");
 			m_r8g8b8ImagesSupported = false;
 		}
 		else
 		{
 			ANKI_ASSERT(res == VK_SUCCESS);
-			ANKI_LOGI("R8G8B8 Images are supported");
+			ANKI_VK_LOGI("R8G8B8 Images are supported");
 			m_r8g8b8ImagesSupported = true;
 		}
 	}
@@ -173,13 +177,13 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 
 		if(res == VK_ERROR_FORMAT_NOT_SUPPORTED)
 		{
-			ANKI_LOGI("S8 Images are not supported. Will workaround this");
+			ANKI_VK_LOGI("S8 Images are not supported. Will workaround this");
 			m_s8ImagesSupported = false;
 		}
 		else
 		{
 			ANKI_ASSERT(res == VK_SUCCESS);
-			ANKI_LOGI("S8 Images are supported");
+			ANKI_VK_LOGI("S8 Images are supported");
 			m_s8ImagesSupported = true;
 		}
 	}
@@ -197,19 +201,20 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 
 		if(res == VK_ERROR_FORMAT_NOT_SUPPORTED)
 		{
-			ANKI_LOGI("D24S8 Images are not supported. Will workaround this");
+			ANKI_VK_LOGI("D24S8 Images are not supported. Will workaround this");
 			m_d24S8ImagesSupported = false;
 		}
 		else
 		{
 			ANKI_ASSERT(res == VK_SUCCESS);
-			ANKI_LOGI("D24S8 Images are supported");
+			ANKI_VK_LOGI("D24S8 Images are supported");
 			m_d24S8ImagesSupported = true;
 		}
 	}
 
 	m_descrGen.init(getAllocator());
 	m_descrFactory.init(getAllocator(), m_device);
+	m_pplineLayoutFactory.init(getAllocator(), m_device);
 
 	return ErrorCode::NONE;
 }
@@ -251,7 +256,7 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 
 	if(init.m_config->getNumber("debugContext"))
 	{
-		ANKI_LOGI("VK: Will enable debug layers");
+		ANKI_VK_LOGI("Will enable debug layers");
 		ci.enabledLayerCount = LAYERS.getSize();
 		ci.ppEnabledLayerNames = &LAYERS[0];
 	}
@@ -260,12 +265,13 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 	ci.ppEnabledExtensionNames = &EXTENSIONS[0];
 
 #if ANKI_GR_MANAGER_DEBUG_MEMMORY
-	VkAllocationCallbacks allocCbs = {};
-	VkAllocationCallbacks* pallocCbs = &allocCbs;
-	allocCbs.pUserData = this;
-	allocCbs.pfnAllocation = allocateCallback;
-	allocCbs.pfnReallocation = reallocateCallback;
-	allocCbs.pfnFree = freeCallback;
+	m_debugAllocCbs = {};
+	m_debugAllocCbs.pUserData = this;
+	m_debugAllocCbs.pfnAllocation = allocateCallback;
+	m_debugAllocCbs.pfnReallocation = reallocateCallback;
+	m_debugAllocCbs.pfnFree = freeCallback;
+
+	VkAllocationCallbacks* pallocCbs = &m_debugAllocCbs;
 #else
 	VkAllocationCallbacks* pallocCbs = nullptr;
 #endif
@@ -276,10 +282,10 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 	//
 	uint32_t count = 0;
 	ANKI_VK_CHECK(vkEnumeratePhysicalDevices(m_instance, &count, nullptr));
-	ANKI_LOGI("VK: Number of physical devices: %u", count);
+	ANKI_VK_LOGI("Number of physical devices: %u", count);
 	if(count < 1)
 	{
-		ANKI_LOGE("Wrong number of physical devices");
+		ANKI_VK_LOGE("Wrong number of physical devices");
 		return ErrorCode::FUNCTION_FAILED;
 	}
 
@@ -302,7 +308,7 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 		m_vendor = GpuVendor::AMD;
 		break;
 	}
-	ANKI_LOGI("GPU vendor is %s", &GPU_VENDOR_STR[m_vendor][0]);
+	ANKI_VK_LOGI("GPU vendor is %s", &GPU_VENDOR_STR[m_vendor][0]);
 
 	vkGetPhysicalDeviceFeatures(m_physicalDevice, &m_devFeatures);
 
@@ -313,7 +319,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 {
 	uint32_t count = 0;
 	vkGetPhysicalDeviceQueueFamilyProperties(m_physicalDevice, &count, nullptr);
-	ANKI_LOGI("VK: Number of queue families: %u", count);
+	ANKI_VK_LOGI("Number of queue families: %u", count);
 
 	DynamicArrayAuto<VkQueueFamilyProperties> queueInfos(getAllocator());
 	queueInfos.create(count);
@@ -338,8 +344,8 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 
 	if(desiredFamilyIdx == MAX_U32)
 	{
-		ANKI_LOGE("Couldn't find a queue family with graphics+compute+transfer+present."
-				  "The assumption was wrong. The code needs to be reworked");
+		ANKI_VK_LOGE("Couldn't find a queue family with graphics+compute+transfer+present."
+					 "The assumption was wrong. The code needs to be reworked");
 		return ErrorCode::FUNCTION_FAILED;
 	}
 
@@ -374,7 +380,7 @@ Error GrManagerImpl::initSwapchain(const GrManagerInitInfo& init)
 
 	if(surfaceProperties.currentExtent.width == MAX_U32 || surfaceProperties.currentExtent.height == MAX_U32)
 	{
-		ANKI_LOGE("Wrong surface size");
+		ANKI_VK_LOGE("Wrong surface size");
 		return ErrorCode::FUNCTION_FAILED;
 	}
 	m_surfaceWidth = surfaceProperties.currentExtent.width;
@@ -400,7 +406,7 @@ Error GrManagerImpl::initSwapchain(const GrManagerInitInfo& init)
 
 	if(m_surfaceFormat == VK_FORMAT_UNDEFINED)
 	{
-		ANKI_LOGE("Surface format not found");
+		ANKI_VK_LOGE("Surface format not found");
 		return ErrorCode::FUNCTION_FAILED;
 	}
 
@@ -435,7 +441,7 @@ Error GrManagerImpl::initSwapchain(const GrManagerInitInfo& init)
 
 	if(presentMode == VK_PRESENT_MODE_MAX_ENUM_KHR)
 	{
-		ANKI_LOGE("VK: Couldn't find a present mode");
+		ANKI_VK_LOGE("Couldn't find a present mode");
 		return ErrorCode::FUNCTION_FAILED;
 	}
 
@@ -465,11 +471,11 @@ Error GrManagerImpl::initSwapchain(const GrManagerInitInfo& init)
 	ANKI_VK_CHECK(vkGetSwapchainImagesKHR(m_device, m_swapchain, &count, nullptr));
 	if(count != MAX_FRAMES_IN_FLIGHT)
 	{
-		ANKI_LOGE("Requested a swapchain with %u images but got one with %u", MAX_FRAMES_IN_FLIGHT, count);
+		ANKI_VK_LOGE("Requested a swapchain with %u images but got one with %u", MAX_FRAMES_IN_FLIGHT, count);
 		return ErrorCode::FUNCTION_FAILED;
 	}
 
-	ANKI_LOGI("VK: Created a swapchain. Image count: %u, present mode: %u", count, presentMode);
+	ANKI_VK_LOGI("Created a swapchain. Image count: %u, present mode: %u", count, presentMode);
 
 	Array<VkImage, MAX_FRAMES_IN_FLIGHT> images;
 	ANKI_VK_CHECK(vkGetSwapchainImagesKHR(m_device, m_swapchain, &count, &images[0]));
@@ -572,7 +578,7 @@ void GrManagerImpl::endFrame()
 
 	if(!frame.m_renderSemaphore)
 	{
-		ANKI_LOGW("Nobody draw to the default framebuffer");
+		ANKI_VK_LOGW("Nobody draw to the default framebuffer");
 	}
 
 	// Present
@@ -634,7 +640,7 @@ VkCommandBuffer GrManagerImpl::newCommandBuffer(ThreadId tid, CommandBufferFlag 
 		Error err = thread.m_cmdbs.init(getAllocator(), m_device, m_queueIdx);
 		if(err)
 		{
-			ANKI_LOGF("Cannot recover");
+			ANKI_VK_LOGF("Cannot recover");
 		}
 	}
 

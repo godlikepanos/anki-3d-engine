@@ -46,7 +46,7 @@ const U DESCRIPTOR_FRAME_BUFFERING = 60 * 5; ///< How many frames worth of descr
 		VkResult rez;                                                                                                  \
 		if((rez = (x)) < 0)                                                                                            \
 		{                                                                                                              \
-			ANKI_LOGF("Vulkan function failed (VkResult: %d): %s", rez, #x);                                           \
+			ANKI_VK_LOGF("Vulkan function failed (VkResult: %d): %s", rez, #x);                                        \
 		}                                                                                                              \
 	} while(0)
 
@@ -57,10 +57,15 @@ const U DESCRIPTOR_FRAME_BUFFERING = 60 * 5; ///< How many frames worth of descr
 		VkResult rez;                                                                                                  \
 		if((rez = (x)) < 0)                                                                                            \
 		{                                                                                                              \
-			ANKI_LOGE("Vulkan function failed (VkResult: %d): %s", rez, #x);                                           \
+			ANKI_VK_LOGE("Vulkan function failed (VkResult: %d): %s", rez, #x);                                        \
 			return ErrorCode::FUNCTION_FAILED;                                                                         \
 		}                                                                                                              \
 	} while(0)
+
+#define ANKI_VK_LOGI(...) ANKI_LOGI("GR/VK: " __VA_ARGS__)
+#define ANKI_VK_LOGE(...) ANKI_LOGE("GR/VK: " __VA_ARGS__)
+#define ANKI_VK_LOGW(...) ANKI_LOGW("GR/VK: " __VA_ARGS__)
+#define ANKI_VK_LOGF(...) ANKI_LOGF("GR/VK: " __VA_ARGS__)
 
 /// Convert compare op.
 ANKI_USE_RESULT VkCompareOp convertCompareOp(CompareOperation ak);

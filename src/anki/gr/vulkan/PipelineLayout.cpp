@@ -8,32 +8,22 @@
 namespace anki
 {
 
-class PipelineLayoutFactory::Layout
+class PipelineLayoutFactory::Layout : public IntrusiveHashMapEnabled<PipelineLayoutFactory::Layout>
 {
 public:
-	U64 m_hash;
 	VkPipelineLayout m_handle;
-};
-
-class PipelineLayoutFactory::Hasher
-{
-public:
-	U64 operator()(U64 k) const
-	{
-		return k;
-	}
 };
 
 void PipelineLayoutFactory::destroy()
 {
-	for(auto it : m_layouts)
+	while(!m_layouts.isEmpty())
 	{
-		Layout* l = it;
+		Layout* l = &(*m_layouts.getBegin());
+		m_layouts.erase(l);
+
 		vkDestroyPipelineLayout(m_dev, l->m_handle, nullptr);
 		m_alloc.deleteInstance(l);
 	}
-
-	m_layouts.destroy(m_alloc);
 }
 
 Error PipelineLayoutFactory::newPipelineLayout(
@@ -59,14 +49,13 @@ Error PipelineLayoutFactory::newPipelineLayout(
 	{
 		// Found it
 
-		layout.m_handle = (*it)->m_handle;
+		layout.m_handle = (*it).m_handle;
 	}
 	else
 	{
 		// Not found, create new
 
 		Layout* lay = m_alloc.newInstance<Layout>();
-		lay->m_hash = hash;
 
 		VkPipelineLayoutCreateInfo ci = {};
 		ci.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -74,6 +63,7 @@ Error PipelineLayoutFactory::newPipelineLayout(
 		ci.setLayoutCount = dsetLayoutCount;
 
 		ANKI_VK_CHECK(vkCreatePipelineLayout(m_dev, &ci, nullptr, &lay->m_handle));
+		m_layouts.pushBack(hash, lay);
 
 		layout.m_handle = lay->m_handle;
 	}

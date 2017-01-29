@@ -25,7 +25,7 @@ void CommandBuffer::init(CommandBufferInitInfo& inf)
 
 	if(m_impl->init(inf))
 	{
-		ANKI_LOGF("Cannot recover");
+		ANKI_VK_LOGF("Cannot recover");
 	}
 }
 
@@ -193,7 +193,7 @@ void CommandBuffer::bindImage(U32 set, U32 binding, TexturePtr img, U32 level)
 
 void CommandBuffer::bindShaderProgram(ShaderProgramPtr prog)
 {
-	ANKI_ASSERT(!"TODO");
+	m_impl->bindShaderProgram(prog);
 }
 
 void CommandBuffer::beginRenderPass(FramebufferPtr fb)
@@ -209,22 +209,22 @@ void CommandBuffer::endRenderPass()
 void CommandBuffer::drawElements(
 	PrimitiveTopology topology, U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance)
 {
-	ANKI_ASSERT(!"TODO");
+	m_impl->drawElements(topology, count, instanceCount, firstIndex, baseVertex, baseInstance);
 }
 
 void CommandBuffer::drawArrays(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 first, U32 baseInstance)
 {
-	ANKI_ASSERT(!"TODO");
+	m_impl->drawArrays(topology, count, instanceCount, first, baseInstance);
 }
 
 void CommandBuffer::drawArraysIndirect(PrimitiveTopology topology, U32 drawCount, PtrSize offset, BufferPtr buff)
 {
-	ANKI_ASSERT(!"TODO");
+	m_impl->drawArraysIndirect(topology, drawCount, offset, buff);
 }
 
 void CommandBuffer::drawElementsIndirect(PrimitiveTopology topology, U32 drawCount, PtrSize offset, BufferPtr buff)
 {
-	ANKI_ASSERT(!"TODO");
+	m_impl->drawElementsIndirect(topology, drawCount, offset, buff);
 }
 
 void CommandBuffer::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ)

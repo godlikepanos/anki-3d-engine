@@ -95,7 +95,7 @@ void RenderingThread::flushCommandBuffer(CommandBufferPtr cmdb)
 		}
 		else
 		{
-			ANKI_LOGW("Rendering queue too small");
+			ANKI_GL_LOGW("Rendering queue too small");
 		}
 
 		m_condVar.notifyOne(); // Wake the thread
@@ -150,7 +150,7 @@ void RenderingThread::prepare()
 	// Ignore the first error
 	glGetError();
 
-	ANKI_LOGI("OpenGL async thread started: OpenGL version %s, GLSL version %s",
+	ANKI_GL_LOGI("OpenGL async thread started: OpenGL version %s, GLSL version %s",
 		reinterpret_cast<const char*>(glGetString(GL_VERSION)),
 		reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION)));
 
@@ -228,7 +228,7 @@ void RenderingThread::threadLoop()
 
 		if(err)
 		{
-			ANKI_LOGE("Error in rendering thread. Aborting");
+			ANKI_GL_LOGE("Error in rendering thread. Aborting");
 			abort();
 		}
 	}

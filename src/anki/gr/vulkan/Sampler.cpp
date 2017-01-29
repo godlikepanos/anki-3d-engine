@@ -24,7 +24,7 @@ void Sampler::init(const SamplerInitInfo& init)
 
 	if(m_impl->init(init))
 	{
-		ANKI_LOGF("Cannot recover");
+		ANKI_VK_LOGF("Cannot recover");
 	}
 }
 

@@ -12,7 +12,7 @@ QueryAllocator::~QueryAllocator()
 {
 	if(!m_chunks.isEmpty())
 	{
-		ANKI_LOGW("Forgot the delete some queries");
+		ANKI_VK_LOGW("Forgot the delete some queries");
 	}
 }
 

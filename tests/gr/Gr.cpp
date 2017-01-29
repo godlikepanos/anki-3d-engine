@@ -443,6 +443,7 @@ ANKI_TEST(Gr, SimpleDrawcall)
 {
 	COMMON_BEGIN()
 
+	ANKI_TEST_LOGI("Expect to see a grey triangle");
 	ShaderProgramPtr prog = createProgram(VERT_SRC, FRAG_SRC, *gr);
 	FramebufferPtr fb = createDefaultFb(*gr);
 

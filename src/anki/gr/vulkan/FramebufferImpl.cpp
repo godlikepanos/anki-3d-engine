@@ -13,7 +13,25 @@ namespace anki
 
 FramebufferImpl::~FramebufferImpl()
 {
-	// TODO
+	for(VkFramebuffer fb : m_fbs)
+	{
+		if(fb)
+		{
+			vkDestroyFramebuffer(getDevice(), fb, nullptr);
+		}
+	}
+
+	for(auto it : m_rpasses)
+	{
+		VkRenderPass rpass = it;
+		ANKI_ASSERT(rpass);
+		vkDestroyRenderPass(getDevice(), rpass, nullptr);
+	}
+
+	if(m_compatibleOrDefaultRpass)
+	{
+		vkDestroyRenderPass(getDevice(), m_compatibleOrDefaultRpass, nullptr);
+	}
 }
 
 Error FramebufferImpl::init(const FramebufferInitInfo& init)
@@ -22,7 +40,7 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 
 	// Create a renderpass.
 	initRpassCreateInfo(init);
-	ANKI_VK_CHECK(vkCreateRenderPass(getDevice(), &m_rpassCi, nullptr, &m_rpass));
+	ANKI_VK_CHECK(vkCreateRenderPass(getDevice(), &m_rpassCi, nullptr, &m_compatibleOrDefaultRpass));
 
 	// Create the FBs
 	ANKI_CHECK(initFbs(init));
@@ -70,7 +88,7 @@ Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 
 	VkFramebufferCreateInfo ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-	ci.renderPass = m_rpass;
+	ci.renderPass = m_compatibleOrDefaultRpass;
 	ci.attachmentCount = init.m_colorAttachmentCount + ((hasDepthStencil) ? 1 : 0);
 
 	ci.layers = 1;
@@ -291,7 +309,7 @@ VkRenderPass FramebufferImpl::getRenderPassHandle(
 	}
 	else
 	{
-		out = m_rpass;
+		out = m_compatibleOrDefaultRpass;
 	}
 
 	ANKI_ASSERT(out);

@@ -205,7 +205,7 @@ Error ShaderImpl::genSpirv(const CString& source, std::vector<unsigned int>& spi
 
 	if(!program.link(messages))
 	{
-		ANKI_LOGE("glslang failed to link a shader");
+		ANKI_VK_LOGE("glslang failed to link a shader");
 		return ErrorCode::USER_DATA;
 	}
 

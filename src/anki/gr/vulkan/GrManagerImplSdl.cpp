@@ -25,7 +25,7 @@ Error GrManagerImpl::initSurface(const GrManagerInitInfo& init)
 	SDL_VERSION(&wminfo.version);
 	if(!SDL_GetWindowWMInfo(init.m_window->getNative().m_window, &wminfo))
 	{
-		ANKI_LOGE("SDL_GetWindowWMInfo() failed");
+		ANKI_VK_LOGE("SDL_GetWindowWMInfo() failed");
 		return ErrorCode::NONE;
 	}
 

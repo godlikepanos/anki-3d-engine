@@ -97,6 +97,25 @@ public:
 	ANKI_USE_RESULT Error getOrCreateThreadAllocator(ThreadId tid, DSThreadAllocator*& alloc);
 };
 
+DSThreadAllocator::~DSThreadAllocator()
+{
+	auto alloc = m_layoutEntry->m_factory->m_alloc;
+
+	while(!m_list.isEmpty())
+	{
+		DS* ds = &m_list.getFront();
+		m_list.popFront();
+
+		alloc.deleteInstance(ds);
+	}
+
+	for(VkDescriptorPool pool : m_pools)
+	{
+		vkDestroyDescriptorPool(m_layoutEntry->m_factory->m_dev, pool, nullptr);
+	}
+	m_pools.destroy(alloc);
+}
+
 Error DSThreadAllocator::init()
 {
 	ANKI_CHECK(createNewPool());
@@ -286,6 +305,23 @@ void DSThreadAllocator::writeSet(const Array<AnyBinding, MAX_BINDINGS_PER_DESCRI
 	vkUpdateDescriptorSets(m_layoutEntry->m_factory->m_dev, writeCount, &writes[0], 0, nullptr);
 }
 
+DSLayoutCacheEntry::~DSLayoutCacheEntry()
+{
+	auto alloc = m_factory->m_alloc;
+
+	for(DSThreadAllocator* a : m_threadAllocs)
+	{
+		alloc.deleteInstance(a);
+	}
+
+	m_threadAllocs.destroy(alloc);
+
+	if(m_layoutHandle)
+	{
+		vkDestroyDescriptorSetLayout(m_factory->m_dev, m_layoutHandle, nullptr);
+	}
+}
+
 Error DSLayoutCacheEntry::init(const DescriptorBinding* bindings, U bindingCount, U64 hash)
 {
 	ANKI_ASSERT(bindings);
@@ -424,6 +460,16 @@ void DescriptorSetFactory::init(const GrAllocator<U8>& alloc, VkDevice dev)
 {
 	m_alloc = alloc;
 	m_dev = dev;
+}
+
+void DescriptorSetFactory::destroy()
+{
+	for(DSLayoutCacheEntry* l : m_caches)
+	{
+		m_alloc.deleteInstance(l);
+	}
+
+	m_caches.destroy(m_alloc);
 }
 
 Error DescriptorSetFactory::newDescriptorSetLayout(const DescriptorSetLayoutInitInfo& init, DescriptorSetLayout& layout)

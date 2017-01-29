@@ -35,7 +35,7 @@ public:
 	{
 		m_window = init.m_window->getNative().m_window;
 
-		ANKI_LOGI("Creating GL %u.%u context...",
+		ANKI_GL_LOGI("Creating GL %u.%u context...",
 			U(init.m_config->getNumber("glmajor")),
 			U(init.m_config->getNumber("glminor")));
 
@@ -43,7 +43,7 @@ public:
 		{
 			if(SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG))
 			{
-				ANKI_LOGE("SDL_GL_SetAttribute() failed");
+				ANKI_GL_LOGE("SDL_GL_SetAttribute() failed");
 				return ErrorCode::FUNCTION_FAILED;
 			}
 		}
@@ -52,7 +52,7 @@ public:
 			|| SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, init.m_config->getNumber("glminor"))
 			|| SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE))
 		{
-			ANKI_LOGE("SDL_GL_SetAttribute() failed");
+			ANKI_GL_LOGE("SDL_GL_SetAttribute() failed");
 			return ErrorCode::FUNCTION_FAILED;
 		}
 
@@ -60,7 +60,7 @@ public:
 		m_context = SDL_GL_CreateContext(m_window);
 		if(m_context == nullptr)
 		{
-			ANKI_LOGE("SDL_GL_CreateContext() failed");
+			ANKI_GL_LOGE("SDL_GL_CreateContext() failed");
 			return ErrorCode::FUNCTION_FAILED;
 		}
 
@@ -68,7 +68,7 @@ public:
 		glewExperimental = GL_TRUE;
 		if(glewInit() != GLEW_OK)
 		{
-			ANKI_LOGE("GLEW initialization failed");
+			ANKI_GL_LOGE("GLEW initialization failed");
 			return ErrorCode::FUNCTION_FAILED;
 		}
 		glGetError();

@@ -92,33 +92,41 @@ void Logger::defaultSystemMessageHandler(void*, const Info& info)
 #if ANKI_OS == ANKI_OS_LINUX
 	FILE* out = nullptr;
 	const char* terminalColor = nullptr;
+	const char* terminalColorBg = nullptr;
+
+#define ANKI_END_TERMINAL_FMT "\033[0m"
 
 	switch(info.m_type)
 	{
 	case Logger::MessageType::NORMAL:
 		out = stdout;
 		terminalColor = "\033[0;32m";
+		terminalColorBg = "\033[1;42;37m";
 		break;
 	case Logger::MessageType::ERROR:
 		out = stderr;
 		terminalColor = "\033[0;31m";
+		terminalColorBg = "\033[1;41;37m";
 		break;
 	case Logger::MessageType::WARNING:
 		out = stderr;
-		terminalColor = "\033[0;33m";
+		terminalColor = "\033[2;33m";
+		terminalColorBg = "\033[1;43;37m";
 		break;
 	case Logger::MessageType::FATAL:
 		out = stderr;
 		terminalColor = "\033[0;31m";
+		terminalColorBg = "\033[1;41;37m";
 		break;
 	default:
 		ANKI_ASSERT(0);
 	}
 
 	fprintf(out,
-		"%s[%s] %s (%s:%d %s)\033[0m\n",
-		terminalColor,
+		"%s[%s]" ANKI_END_TERMINAL_FMT "%s %s (%s:%d %s)" ANKI_END_TERMINAL_FMT "\n",
+		terminalColorBg,
 		MSG_TEXT[static_cast<U>(info.m_type)],
+		terminalColor,
 		info.m_msg,
 		info.m_file,
 		info.m_line,

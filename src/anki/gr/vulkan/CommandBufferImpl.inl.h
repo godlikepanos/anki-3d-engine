@@ -15,40 +15,6 @@
 namespace anki
 {
 
-inline void CommandBufferImpl::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
-{
-	ANKI_ASSERT(minx < maxx && miny < maxy);
-	commandCommon();
-
-	if(m_viewport[0] != minx || m_viewport[1] != miny || m_viewport[2] != maxx || m_viewport[3] != maxy)
-	{
-		VkViewport s;
-		s.x = minx;
-		s.y = miny;
-		s.width = maxx - minx;
-		s.height = maxy - miny;
-		s.minDepth = 0.0;
-		s.maxDepth = 1.0;
-		ANKI_CMD(vkCmdSetViewport(m_handle, 0, 1, &s), ANY_OTHER_COMMAND);
-
-		VkRect2D scissor = {};
-		scissor.extent.width = maxx - minx;
-		scissor.extent.height = maxy - miny;
-		scissor.offset.x = minx;
-		scissor.offset.y = miny;
-		ANKI_CMD(vkCmdSetScissor(m_handle, 0, 1, &scissor), ANY_OTHER_COMMAND);
-
-		m_viewport[0] = minx;
-		m_viewport[1] = miny;
-		m_viewport[2] = maxx;
-		m_viewport[3] = maxy;
-	}
-	else
-	{
-		// Skip
-	}
-}
-
 inline void CommandBufferImpl::setPolygonOffset(F32 factor, F32 units)
 {
 	commandCommon();
@@ -290,21 +256,26 @@ inline void CommandBufferImpl::setBufferBarrier(
 	m_bufferList.pushBack(m_alloc, buff);
 }
 
-inline void CommandBufferImpl::drawArrays(U32 count, U32 instanceCount, U32 first, U32 baseInstance)
+inline void CommandBufferImpl::drawArrays(
+	PrimitiveTopology topology, U32 count, U32 instanceCount, U32 first, U32 baseInstance)
 {
+	m_state.setPrimitiveTopology(topology);
 	drawcallCommon();
 	ANKI_CMD(vkCmdDraw(m_handle, count, instanceCount, first, baseInstance), ANY_OTHER_COMMAND);
 }
 
 inline void CommandBufferImpl::drawElements(
-	U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance)
+	PrimitiveTopology topology, U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance)
 {
+	m_state.setPrimitiveTopology(topology);
 	drawcallCommon();
 	ANKI_CMD(vkCmdDrawIndexed(m_handle, count, instanceCount, firstIndex, baseVertex, baseInstance), ANY_OTHER_COMMAND);
 }
 
-inline void CommandBufferImpl::drawArraysIndirect(U32 drawCount, PtrSize offset, BufferPtr buff)
+inline void CommandBufferImpl::drawArraysIndirect(
+	PrimitiveTopology topology, U32 drawCount, PtrSize offset, BufferPtr& buff)
 {
+	m_state.setPrimitiveTopology(topology);
 	drawcallCommon();
 	const BufferImpl& impl = *buff->m_impl;
 	ANKI_ASSERT(impl.usageValid(BufferUsageBit::INDIRECT));
@@ -315,8 +286,10 @@ inline void CommandBufferImpl::drawArraysIndirect(U32 drawCount, PtrSize offset,
 		ANY_OTHER_COMMAND);
 }
 
-inline void CommandBufferImpl::drawElementsIndirect(U32 drawCount, PtrSize offset, BufferPtr buff)
+inline void CommandBufferImpl::drawElementsIndirect(
+	PrimitiveTopology topology, U32 drawCount, PtrSize offset, BufferPtr& buff)
 {
+	m_state.setPrimitiveTopology(topology);
 	drawcallCommon();
 	const BufferImpl& impl = *buff->m_impl;
 	ANKI_ASSERT(impl.usageValid(BufferUsageBit::INDIRECT));
@@ -330,7 +303,6 @@ inline void CommandBufferImpl::drawElementsIndirect(U32 drawCount, PtrSize offse
 inline void CommandBufferImpl::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ)
 {
 	commandCommon();
-	flushDsetBindings();
 	ANKI_CMD(vkCmdDispatch(m_handle, groupCountX, groupCountY, groupCountZ), ANY_OTHER_COMMAND);
 }
 
@@ -469,9 +441,18 @@ inline void CommandBufferImpl::drawcallCommon()
 		beginRenderPassInternal();
 	}
 
-	flushDsetBindings();
-
 	++m_rpCommandCount;
+
+	// Get or create ppline
+	ANKI_ASSERT(m_graphicsProg);
+	Pipeline ppline;
+	Bool stateDirty;
+	m_graphicsProg->getPipelineFactory().newPipeline(m_state, ppline, stateDirty);
+
+	if(stateDirty)
+	{
+		ANKI_CMD(vkCmdBindPipeline(m_handle, VK_PIPELINE_BIND_POINT_GRAPHICS, ppline.getHandle()), ANY_OTHER_COMMAND);
+	}
 
 	ANKI_TRACE_INC_COUNTER(GR_DRAWCALLS, 1);
 }
@@ -574,28 +555,11 @@ inline void CommandBufferImpl::writeOcclusionQueryResultToBuffer(
 	m_bufferList.pushBack(m_alloc, buff);
 }
 
-inline void CommandBufferImpl::flushDsetBindings()
+inline void CommandBufferImpl::bindShaderProgram(ShaderProgramPtr& prog)
 {
-	for(U i = 0; i < MAX_DESCRIPTOR_SETS; ++i)
-	{
-		if(m_deferredDsetBindingMask & (1 << i))
-		{
-			ANKI_ASSERT(m_crntPplineLayout);
-			const DeferredDsetBinding& binding = m_deferredDsetBindings[i];
-
-			ANKI_CMD(vkCmdBindDescriptorSets(m_handle,
-						 binding.m_bindPoint,
-						 m_crntPplineLayout,
-						 i,
-						 1,
-						 &binding.m_dset,
-						 binding.m_dynOffsetCount,
-						 &binding.m_dynOffsets[0]),
-				ANY_OTHER_COMMAND);
-		}
-	}
-
-	m_deferredDsetBindingMask = 0;
+	m_graphicsProg = prog->m_impl.get();
+	m_state.bindShaderProgram(prog);
+	m_progs.pushBack(m_alloc, prog);
 }
 
 } // end namespace anki

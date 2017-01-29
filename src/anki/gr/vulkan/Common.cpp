@@ -436,7 +436,7 @@ VkBlendFactor convertBlendFactor(BlendFactor ak)
 	return out;
 }
 
-VkBlendOp convertBlendFunc(BlendOperation ak)
+VkBlendOp convertBlendOperation(BlendOperation ak)
 {
 	VkBlendOp out = VK_BLEND_OP_MAX_ENUM;
 

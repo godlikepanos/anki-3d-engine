@@ -34,8 +34,8 @@ public:
 	/// Good for pipeline creation.
 	VkRenderPass getCompatibleRenderPass() const
 	{
-		ANKI_ASSERT(m_rpass);
-		return m_rpass;
+		ANKI_ASSERT(m_compatibleOrDefaultRpass);
+		return m_compatibleOrDefaultRpass;
 	}
 
 	/// Use it for binding.
@@ -121,7 +121,7 @@ private:
 	VkSubpassDescription m_subpassDescr = {};
 
 	// VK objects
-	VkRenderPass m_rpass = {}; ///< Compatible renderpass or default FB's renderpass.
+	VkRenderPass m_compatibleOrDefaultRpass = {}; ///< Compatible renderpass or default FB's renderpass.
 	HashMap<U64, VkRenderPass> m_rpasses;
 	Mutex m_rpassesMtx;
 	Array<VkFramebuffer, MAX_FRAMES_IN_FLIGHT> m_fbs = {};

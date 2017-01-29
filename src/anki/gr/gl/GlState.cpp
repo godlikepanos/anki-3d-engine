@@ -69,13 +69,13 @@ __stdcall
 	switch(severity)
 	{
 	case GL_DEBUG_SEVERITY_LOW:
-		ANKI_LOGI("GL: %s, %s: %s", sourced->str, typed->str, message);
+		ANKI_GL_LOGI("GL: %s, %s: %s", sourced->str, typed->str, message);
 		break;
 	case GL_DEBUG_SEVERITY_MEDIUM:
-		ANKI_LOGW("GL: %s, %s: %s", sourced->str, typed->str, message);
+		ANKI_GL_LOGW("GL: %s, %s: %s", sourced->str, typed->str, message);
 		break;
 	case GL_DEBUG_SEVERITY_HIGH:
-		ANKI_LOGE("GL: %s, %s: %s", sourced->str, typed->str, message);
+		ANKI_GL_LOGE("GL: %s, %s: %s", sourced->str, typed->str, message);
 		break;
 	}
 }
@@ -105,7 +105,7 @@ void GlState::initRenderThread()
 	{
 		m_gpu = GpuVendor::NVIDIA;
 	}
-	ANKI_LOGI("GPU vendor is %s", &GPU_VENDOR_STR[m_gpu][0]);
+	ANKI_GL_LOGI("GPU vendor is %s", &GPU_VENDOR_STR[m_gpu][0]);
 
 // Enable debug messages
 #if ANKI_GL == ANKI_GL_DESKTOP

@@ -49,7 +49,7 @@ inline Bool Fence::done() const
 	}
 	else if(status != VK_NOT_READY)
 	{
-		ANKI_LOGF("vkGetFenceStatus() failed");
+		ANKI_VK_LOGF("vkGetFenceStatus() failed");
 	}
 
 	return false;

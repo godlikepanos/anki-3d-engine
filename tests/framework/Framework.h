@@ -7,6 +7,7 @@
 
 #include <anki/util/Singleton.h>
 #include <anki/Math.h>
+#include <anki/util/Logger.h>
 #include <stdexcept>
 #include <vector>
 #include <string>
@@ -19,6 +20,11 @@ namespace anki
 class TestSuite;
 class Test;
 class Tester;
+
+#define ANKI_TEST_LOGI(...) ANKI_LOGI("TESTS: " __VA_ARGS__)
+#define ANKI_TEST_LOGE(...) ANKI_LOGE("TESTS: " __VA_ARGS__)
+#define ANKI_TEST_LOGW(...) ANKI_LOGW("TESTS: " __VA_ARGS__)
+#define ANKI_TEST_LOGF(...) ANKI_LOGF("TESTS: " __VA_ARGS__)
 
 /// The actual test
 using TestCallback = void (*)(Test&);

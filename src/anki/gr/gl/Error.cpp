@@ -45,7 +45,7 @@ void glConditionalCheckError(const char* file, int line, const char* func)
 	memcpy(errStr, tmp, sizeof(tmp));
 	strcat(errStr, glerr);
 
-	ANKI_LOGF("GL error: %s (%s:%d %s)", errStr, file, line, func);
+	ANKI_GL_LOGF("GL error: %s (%s:%d %s)", errStr, file, line, func);
 }
 
 } // end namespace

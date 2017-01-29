@@ -190,40 +190,36 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 	ci.pStages = m_state.m_prog->m_impl->getShaderCreateInfos(ci.stageCount);
 
 	// Vert
-	if(!!m_shaderAttributeMask)
+	VkPipelineVertexInputStateCreateInfo& vertCi = m_ci.m_vert;
+	vertCi = {};
+	vertCi.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+
+	for(U i = 0; i < MAX_VERTEX_ATTRIBUTES; ++i)
 	{
-		VkPipelineVertexInputStateCreateInfo& vertCi = m_ci.m_vert;
-		vertCi = {};
-		vertCi.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+		BitSet<MAX_VERTEX_ATTRIBUTES, U8> bindingSet = {false};
 
-		for(U i = 0; i < MAX_VERTEX_ATTRIBUTES; ++i)
+		if(m_shaderAttributeMask.get(i))
 		{
-			BitSet<MAX_VERTEX_ATTRIBUTES, U8> bindingSet = {false};
+			VkVertexInputAttributeDescription& attrib = m_ci.m_attribs[vertCi.vertexAttributeDescriptionCount++];
+			attrib.binding = m_state.m_vertex.m_attributes[i].m_binding;
+			attrib.format = convertFormat(m_state.m_vertex.m_attributes[i].m_format);
+			attrib.location = i;
+			attrib.offset = m_state.m_vertex.m_attributes[i].m_offset;
 
-			if(m_shaderAttributeMask.get(i))
+			if(!bindingSet.get(i))
 			{
-				VkVertexInputAttributeDescription& attrib = m_ci.m_attribs[vertCi.vertexAttributeDescriptionCount++];
-				attrib.binding = m_state.m_vertex.m_attributes[i].m_binding;
-				attrib.format = convertFormat(m_state.m_vertex.m_attributes[i].m_format);
-				attrib.location = i;
-				attrib.offset = m_state.m_vertex.m_attributes[i].m_offset;
+				bindingSet.set(i);
 
-				if(!bindingSet.get(i))
-				{
-					bindingSet.set(i);
+				VkVertexInputBindingDescription& binding = m_ci.m_vertBindings[vertCi.vertexBindingDescriptionCount++];
 
-					VkVertexInputBindingDescription& binding =
-						m_ci.m_vertBindings[vertCi.vertexBindingDescriptionCount++];
-
-					binding.binding = attrib.binding;
-					binding.inputRate = convertVertexStepRate(m_state.m_vertex.m_bindings[attrib.binding].m_stepRate);
-					binding.stride = m_state.m_vertex.m_bindings[attrib.binding].m_stride;
-				}
+				binding.binding = attrib.binding;
+				binding.inputRate = convertVertexStepRate(m_state.m_vertex.m_bindings[attrib.binding].m_stepRate);
+				binding.stride = m_state.m_vertex.m_bindings[attrib.binding].m_stride;
 			}
 		}
-
-		ci.pVertexInputState = &vertCi;
 	}
+
+	ci.pVertexInputState = &vertCi;
 
 	// IA
 	VkPipelineInputAssemblyStateCreateInfo& iaCi = m_ci.m_ia;
@@ -232,6 +228,14 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 	iaCi.primitiveRestartEnable = m_state.m_inputAssembler.m_primitiveRestartEnabled;
 	iaCi.topology = convertTopology(m_state.m_inputAssembler.m_topology);
 	ci.pInputAssemblyState = &iaCi;
+
+	// Viewport
+	VkPipelineViewportStateCreateInfo& vpCi = m_ci.m_vp;
+	vpCi = {};
+	vpCi.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+	vpCi.scissorCount = 1;
+	vpCi.viewportCount = 1;
+	ci.pViewportState = &vpCi;
 
 	// Raster
 	VkPipelineRasterizationStateCreateInfo& rastCi = m_ci.m_rast;
@@ -331,6 +335,8 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 
 	// Dyn state
 	VkPipelineDynamicStateCreateInfo& dynCi = m_ci.m_dyn;
+	dynCi = {};
+	dynCi.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 
 	// Almost all state is dynamic. Depth bias is static
 	static const Array<VkDynamicState, 7> DYN = {{VK_DYNAMIC_STATE_VIEWPORT,
@@ -381,10 +387,16 @@ void PipelineFactory::destroy()
 	m_pplines.destroy(m_alloc);
 }
 
-void PipelineFactory::newPipeline(PipelineStateTracker& state, Pipeline& ppline)
+void PipelineFactory::newPipeline(PipelineStateTracker& state, Pipeline& ppline, Bool& stateDirty)
 {
 	U64 hash;
-	state.flush(hash);
+	state.flush(hash, stateDirty);
+
+	if(ANKI_UNLIKELY(!stateDirty))
+	{
+		ppline.m_handle = VK_NULL_HANDLE;
+		return;
+	}
 
 	LockGuard<Mutex> lock(m_pplinesMtx);
 
@@ -395,7 +407,7 @@ void PipelineFactory::newPipeline(PipelineStateTracker& state, Pipeline& ppline)
 	}
 	else
 	{
-		PipelineFactory::PipelineInternal pp;
+		PipelineInternal pp;
 		const VkGraphicsPipelineCreateInfo& ci = state.updatePipelineCreateInfo();
 
 		ANKI_VK_CHECKF(vkCreateGraphicsPipelines(m_dev, m_pplineCache, 1, &ci, nullptr, &pp.m_handle));

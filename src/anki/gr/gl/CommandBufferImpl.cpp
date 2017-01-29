@@ -38,8 +38,8 @@ void CommandBufferImpl::destroy()
 #if ANKI_DEBUG
 	if(!m_executed && m_firstCommand)
 	{
-		ANKI_LOGW("Chain contains commands but never executed. "
-				  "This should only happen on exceptions");
+		ANKI_GL_LOGW("Chain contains commands but never executed. "
+					 "This should only happen on exceptions");
 	}
 #endif
 

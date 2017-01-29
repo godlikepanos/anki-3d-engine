@@ -240,7 +240,7 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 
 	if(!supported)
 	{
-		ANKI_LOGE("Unsupported texture format: %u %u", U(init.m_format.m_components), U(init.m_format.m_transform));
+		ANKI_VK_LOGE("Unsupported texture format: %u %u", U(init.m_format.m_components), U(init.m_format.m_transform));
 		return ErrorCode::FUNCTION_FAILED;
 	}
 

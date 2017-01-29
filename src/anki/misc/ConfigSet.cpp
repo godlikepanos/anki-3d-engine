@@ -163,7 +163,17 @@ Error ConfigSet::loadFromFile(CString filename)
 		}
 		else
 		{
-			ANKI_LOGW("Missing option for \"%s\". Will use the default value", &option.m_name[0]);
+			if(option.m_type == 0)
+			{
+				ANKI_LOGW("Missing option for \"%s\". Will use the default value: %s",
+					&option.m_name[0],
+					&option.m_strVal[0]);
+			}
+			else
+			{
+				ANKI_LOGW(
+					"Missing option for \"%s\". Will use the default value: %f", &option.m_name[0], option.m_fVal);
+			}
 		}
 	}
 

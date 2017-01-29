@@ -9,6 +9,7 @@
 #include <anki/gr/CommandBuffer.h>
 #include <anki/gr/Texture.h>
 #include <anki/gr/vulkan/TextureImpl.h>
+#include <anki/gr/vulkan/Pipeline.h>
 #include <anki/util/List.h>
 
 namespace anki
@@ -63,6 +64,14 @@ public:
 		return !!(m_flags & CommandBufferFlag::SECOND_LEVEL);
 	}
 
+	void bindVertexBuffer(U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride);
+
+	void setVertexAttribute(U32 location, U32 buffBinding, const PixelFormat& fmt, PtrSize relativeOffset);
+
+	void bindIndexBuffer(BufferPtr buff, PtrSize offset, IndexType type);
+
+	void setPrimitiveRestart(Bool enable);
+
 	void setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy);
 
 	void setPolygonOffset(F32 factor, F32 units);
@@ -77,13 +86,14 @@ public:
 
 	void endRenderPass();
 
-	void drawArrays(U32 count, U32 instanceCount, U32 first, U32 baseInstance);
+	void drawArrays(PrimitiveTopology topology, U32 count, U32 instanceCount, U32 first, U32 baseInstance);
 
-	void drawElements(U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance);
+	void drawElements(
+		PrimitiveTopology topology, U32 count, U32 instanceCount, U32 firstIndex, U32 baseVertex, U32 baseInstance);
 
-	void drawArraysIndirect(U32 drawCount, PtrSize offset, BufferPtr buff);
+	void drawArraysIndirect(PrimitiveTopology topology, U32 drawCount, PtrSize offset, BufferPtr& buff);
 
-	void drawElementsIndirect(U32 drawCount, PtrSize offset, BufferPtr buff);
+	void drawElementsIndirect(PrimitiveTopology topology, U32 drawCount, PtrSize offset, BufferPtr& buff);
 
 	void dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ);
 
@@ -128,6 +138,8 @@ public:
 
 	void writeOcclusionQueryResultToBuffer(OcclusionQueryPtr query, PtrSize offset, BufferPtr buff);
 
+	void bindShaderProgram(ShaderProgramPtr& prog);
+
 private:
 	StackAllocator<U8> m_alloc;
 
@@ -141,6 +153,10 @@ private:
 	U m_rpCommandCount = 0; ///< Number of drawcalls or pushed cmdbs in rp.
 	FramebufferPtr m_activeFb;
 
+	ShaderProgramImpl* m_graphicsProg ANKI_DBG_NULLIFY; ///< Last bound graphics program
+
+	PipelineStateTracker m_state;
+
 	/// @name cleanup_references
 	/// @{
 	List<FramebufferPtr> m_fbList;
@@ -148,6 +164,7 @@ private:
 	List<OcclusionQueryPtr> m_queryList;
 	List<BufferPtr> m_bufferList;
 	List<CommandBufferPtr> m_cmdbList;
+	List<ShaderProgramPtr> m_progs;
 /// @}
 
 #if ANKI_ASSERTIONS
@@ -205,18 +222,6 @@ private:
 	DynamicArray<WriteQueryAtom> m_writeQueryAtoms;
 	U16 m_writeQueryAtomCount = 0;
 	/// @}
-
-	class DeferredDsetBinding
-	{
-	public:
-		Array<U32, MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS> m_dynOffsets;
-		U8 m_dynOffsetCount;
-		VkPipelineBindPoint m_bindPoint;
-		VkDescriptorSet m_dset;
-	};
-	Array<DeferredDsetBinding, MAX_DESCRIPTOR_SETS> m_deferredDsetBindings;
-	U8 m_deferredDsetBindingMask = 0;
-	VkPipelineLayout m_crntPplineLayout = VK_NULL_HANDLE;
 
 	/// Track texture usage.
 	class TextureUsageTracker
@@ -291,8 +296,6 @@ private:
 	void flushQueryResets();
 
 	void flushWriteQueryResults();
-
-	void flushDsetBindings();
 
 	void clearTextureInternal(TexturePtr tex, const ClearValue& clearValue, const VkImageSubresourceRange& range);
 

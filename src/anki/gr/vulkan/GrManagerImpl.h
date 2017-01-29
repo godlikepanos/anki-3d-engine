@@ -19,6 +19,8 @@
 namespace anki
 {
 
+#define ANKI_GR_MANAGER_DEBUG_MEMMORY ANKI_DEBUG
+
 // Forward
 class TextureFallbackUploader;
 class ConfigSet;
@@ -191,6 +193,10 @@ private:
 	GrManager* m_manager = nullptr;
 
 	U64 m_frame = 0;
+
+#if ANKI_GR_MANAGER_DEBUG_MEMMORY
+	VkAllocationCallbacks m_debugAllocCbs;
+#endif
 
 	VkInstance m_instance = VK_NULL_HANDLE;
 	VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;

@@ -67,7 +67,7 @@ private:
 	Array<VkPipelineShaderStageCreateInfo, U(ShaderType::COUNT) - 1> m_shaderCreateInfos;
 	U32 m_shaderCreateInfoCount = 0;
 
-	PipelineLayout m_pplineLayout;
+	PipelineLayout m_pplineLayout = {};
 	Array<DescriptorSetLayout, MAX_DESCRIPTOR_SETS> m_descriptorSetLayouts;
 
 	ShaderProgramReflectionInfo m_refl;

@@ -24,7 +24,7 @@ void Texture::init(const TextureInitInfo& init)
 
 	if(m_impl->init(init, this))
 	{
-		ANKI_LOGF("Cannot recover");
+		ANKI_VK_LOGF("Cannot recover");
 	}
 }
 

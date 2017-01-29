@@ -23,12 +23,12 @@ CommandBufferImpl::~CommandBufferImpl()
 {
 	if(m_empty)
 	{
-		ANKI_LOGW("Command buffer was empty");
+		ANKI_VK_LOGW("Command buffer was empty");
 	}
 
 	if(!m_finalized)
 	{
-		ANKI_LOGW("Command buffer was not flushed");
+		ANKI_VK_LOGW("Command buffer was not flushed");
 	}
 
 	if(m_handle)
@@ -41,6 +41,7 @@ CommandBufferImpl::~CommandBufferImpl()
 	m_queryList.destroy(m_alloc);
 	m_bufferList.destroy(m_alloc);
 	m_cmdbList.destroy(m_alloc);
+	m_progs.destroy(m_alloc);
 
 	m_imgBarriers.destroy(m_alloc);
 	m_buffBarriers.destroy(m_alloc);
@@ -109,6 +110,8 @@ void CommandBufferImpl::beginRenderPass(FramebufferPtr fb)
 
 void CommandBufferImpl::beginRenderPassInternal()
 {
+	m_state.beginRenderPass(m_activeFb);
+
 	FramebufferImpl& impl = *m_activeFb->m_impl;
 
 	VkRenderPassBeginInfo bi = {};
@@ -776,6 +779,40 @@ void CommandBufferImpl::flushWriteQueryResults()
 		m_handle, pool, firstQuery, queryCount, buff, offset, sizeof(U32), VK_QUERY_RESULT_PARTIAL_BIT);
 
 	m_writeQueryAtomCount = 0;
+}
+
+void CommandBufferImpl::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
+{
+	ANKI_ASSERT(minx < maxx && miny < maxy);
+	commandCommon();
+
+	if(m_viewport[0] != minx || m_viewport[1] != miny || m_viewport[2] != maxx || m_viewport[3] != maxy)
+	{
+		VkViewport s;
+		s.x = minx;
+		s.y = miny;
+		s.width = maxx - minx;
+		s.height = maxy - miny;
+		s.minDepth = 0.0;
+		s.maxDepth = 1.0;
+		ANKI_CMD(vkCmdSetViewport(m_handle, 0, 1, &s), ANY_OTHER_COMMAND);
+
+		VkRect2D scissor = {};
+		scissor.extent.width = maxx - minx;
+		scissor.extent.height = maxy - miny;
+		scissor.offset.x = minx;
+		scissor.offset.y = miny;
+		ANKI_CMD(vkCmdSetScissor(m_handle, 0, 1, &scissor), ANY_OTHER_COMMAND);
+
+		m_viewport[0] = minx;
+		m_viewport[1] = miny;
+		m_viewport[2] = maxx;
+		m_viewport[3] = maxy;
+	}
+	else
+	{
+		// Skip
+	}
 }
 
 } // end namespace anki
