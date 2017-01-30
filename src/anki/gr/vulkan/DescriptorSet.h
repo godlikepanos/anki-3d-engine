@@ -43,6 +43,7 @@ public:
 class DescriptorSetLayout
 {
 	friend class DescriptorSetFactory;
+	friend class DescriptorSetState;
 
 public:
 	VkDescriptorSetLayout getHandle() const
@@ -58,7 +59,7 @@ public:
 
 private:
 	VkDescriptorSetLayout m_handle = VK_NULL_HANDLE;
-	U32 m_cacheEntryIdx = MAX_U32;
+	DSLayoutCacheEntry* m_entry = nullptr;
 };
 
 class TextureBinding
@@ -116,6 +117,8 @@ public:
 		m_bindings[binding].m_tex.m_sampler = tex->m_impl->m_sampler->m_impl.get();
 		m_bindings[binding].m_tex.m_aspect = aspect;
 		m_bindings[binding].m_tex.m_layout = layout;
+
+		m_anyBindingDirty = true;
 	}
 
 	void bindTextureAndSampler(
@@ -129,6 +132,8 @@ public:
 		m_bindings[binding].m_tex.m_sampler = sampler->m_impl.get();
 		m_bindings[binding].m_tex.m_aspect = aspect;
 		m_bindings[binding].m_tex.m_layout = layout;
+
+		m_anyBindingDirty = true;
 	}
 
 	void bindUniformBuffer(U binding, Buffer* buff, PtrSize offset, PtrSize range)
@@ -139,6 +144,8 @@ public:
 		m_bindings[binding].m_buff.m_buff = buff->m_impl.get();
 		m_bindings[binding].m_buff.m_offset = offset;
 		m_bindings[binding].m_buff.m_range = range;
+
+		m_anyBindingDirty = true;
 	}
 
 	void bindStorageBuffer(U binding, Buffer* buff, PtrSize offset, PtrSize range)
@@ -149,6 +156,8 @@ public:
 		m_bindings[binding].m_buff.m_buff = buff->m_impl.get();
 		m_bindings[binding].m_buff.m_offset = offset;
 		m_bindings[binding].m_buff.m_range = range;
+
+		m_anyBindingDirty = true;
 	}
 
 	void bindImage(U binding, Texture* tex, U32 level)
@@ -158,12 +167,21 @@ public:
 
 		m_bindings[binding].m_image.m_tex = tex->m_impl.get();
 		m_bindings[binding].m_image.m_level = level;
+
+		m_anyBindingDirty = true;
 	}
 
 private:
 	DescriptorSetLayout m_layout;
 
 	Array<AnyBinding, MAX_BINDINGS_PER_DESCRIPTOR_SET> m_bindings;
+
+	Bool8 m_anyBindingDirty = false;
+	Bool8 m_layoutDirty = false;
+	U64 m_lastHash = 0;
+
+	/// Only DescriptorSetFactory should call this.
+	void flush(Bool& stateDirty, U64& hash);
 };
 
 /// Descriptor set thin wraper.
@@ -200,7 +218,7 @@ public:
 	ANKI_USE_RESULT Error newDescriptorSetLayout(const DescriptorSetLayoutInitInfo& init, DescriptorSetLayout& layout);
 
 	/// @note Obviously not thread-safe.
-	ANKI_USE_RESULT Error newDescriptorSet(ThreadId tid, const DescriptorSetState& init, DescriptorSet& set);
+	ANKI_USE_RESULT Error newDescriptorSet(ThreadId tid, DescriptorSetState& state, DescriptorSet& set, Bool& dirty);
 
 	void endFrame()
 	{

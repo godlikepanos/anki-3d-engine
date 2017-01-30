@@ -145,7 +145,6 @@ public:
 		commandCommon();
 		U realBinding = MAX_TEXTURE_BINDINGS + binding;
 		m_dsetState[set].bindUniformBuffer(realBinding, buff.get(), offset, range);
-		m_dsetDirty.set(set);
 	}
 
 private:
@@ -166,7 +165,6 @@ private:
 	PipelineStateTracker m_state;
 
 	Array<DescriptorSetState, MAX_DESCRIPTOR_SETS> m_dsetState;
-	BitSet<MAX_DESCRIPTOR_SETS, U8> m_dsetDirty = {false};
 
 	/// @name cleanup_references
 	/// @{

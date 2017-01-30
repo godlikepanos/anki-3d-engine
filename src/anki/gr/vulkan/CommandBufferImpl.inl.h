@@ -455,6 +455,31 @@ inline void CommandBufferImpl::drawcallCommon()
 	}
 
 	// Bind dsets
+	for(U i = 0; i < MAX_DESCRIPTOR_SETS; ++i)
+	{
+		if(m_graphicsProg->getReflectionInfo().m_descriptorSetMask.get(i))
+		{
+			DescriptorSet dset;
+			Bool dirty;
+			getGrManagerImpl().getDescriptorSetFactory().newDescriptorSet(m_tid, m_dsetState[i], dset, dirty);
+
+			if(dirty)
+			{
+				VkDescriptorSet dsHandle = dset.getHandle();
+
+				ANKI_ASSERT(!"TODO set dynamic handles");
+				ANKI_CMD(vkCmdBindDescriptorSets(m_handle,
+							 VK_PIPELINE_BIND_POINT_GRAPHICS,
+							 m_graphicsProg->getPipelineLayout().getHandle(),
+							 i,
+							 1,
+							 &dsHandle,
+							 0,
+							 nullptr),
+					ANY_OTHER_COMMAND);
+			}
+		}
+	}
 
 	ANKI_TRACE_INC_COUNTER(GR_DRAWCALLS, 1);
 }

@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/util/Hash.h>
+#include <anki/util/Assert.h>
 
 namespace anki
 {
@@ -53,6 +54,7 @@ U64 appendHash(const void* buffer, U32 bufferSize, U64 h)
 	h *= HASH_M;
 	h ^= h >> HASH_R;
 
+	ANKI_ASSERT(h != 0);
 	return h;
 }
 

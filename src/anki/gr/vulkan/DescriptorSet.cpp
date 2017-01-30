@@ -452,6 +452,50 @@ Error DSLayoutCacheEntry::getOrCreateThreadAllocator(ThreadId tid, DSThreadAlloc
 	return ErrorCode::NONE;
 }
 
+void DescriptorSetState::flush(Bool& stateDirty, U64& hash)
+{
+	// Get cache entry
+	ANKI_ASSERT(m_layout.m_entry);
+	DSLayoutCacheEntry& entry = *m_layout.m_entry;
+
+	// Early out if nothing happened
+	if(!m_anyBindingDirty && !m_layoutDirty)
+	{
+		stateDirty = false;
+		return;
+	}
+
+	m_anyBindingDirty = false;
+	m_layoutDirty = false;
+
+	// Compute the hash
+	Array<U64, MAX_BINDINGS_PER_DESCRIPTOR_SET> uuids;
+	U uuidCount = 0;
+
+	const U minBinding = entry.m_minBinding;
+	const U maxBinding = entry.m_maxBinding;
+	for(U i = minBinding; i <= maxBinding; ++i)
+	{
+		if(entry.m_activeBindings.get(i))
+		{
+			uuids[uuidCount++] = m_bindings[i].m_uuids[0];
+			uuids[uuidCount++] = m_bindings[i].m_uuids[1];
+		}
+	}
+
+	hash = computeHash(&uuids[0], uuidCount * sizeof(U64));
+
+	if(hash != m_lastHash)
+	{
+		m_lastHash = hash;
+		stateDirty = true;
+	}
+	else
+	{
+		stateDirty = false;
+	}
+}
+
 DescriptorSetFactory::~DescriptorSetFactory()
 {
 }
@@ -498,14 +542,12 @@ Error DescriptorSetFactory::newDescriptorSetLayout(const DescriptorSetLayoutInit
 	LockGuard<SpinLock> lock(m_cachesMtx);
 
 	DSLayoutCacheEntry* cache = nullptr;
-	U cacheIdx = MAX_U;
 	U count = 0;
 	for(DSLayoutCacheEntry* it : m_caches)
 	{
 		if(it->m_hash == hash)
 		{
 			cache = it;
-			cacheIdx = count;
 			break;
 		}
 		++count;
@@ -518,47 +560,35 @@ Error DescriptorSetFactory::newDescriptorSetLayout(const DescriptorSetLayoutInit
 
 		m_caches.resize(m_alloc, m_caches.getSize() + 1);
 		m_caches[m_caches.getSize() - 1] = cache;
-		cacheIdx = m_caches.getSize() - 1;
 	}
 
 	// Set the layout
 	layout.m_handle = cache->m_layoutHandle;
-	layout.m_cacheEntryIdx = cacheIdx;
+	layout.m_entry = cache;
 
 	return ErrorCode::NONE;
 }
 
-Error DescriptorSetFactory::newDescriptorSet(ThreadId tid, const DescriptorSetState& init, DescriptorSet& set)
+Error DescriptorSetFactory::newDescriptorSet(ThreadId tid, DescriptorSetState& state, DescriptorSet& set, Bool& dirty)
 {
-	// Get cache entry
-	m_cachesMtx.lock();
-	DSLayoutCacheEntry& entry = *m_caches[init.m_layout.m_cacheEntryIdx];
-	m_cachesMtx.unlock();
+	U64 hash;
+	state.flush(dirty, hash);
+
+	if(!dirty)
+	{
+		return ErrorCode::NONE;
+	}
+
+	DescriptorSetLayout layout = state.m_layout;
+	DSLayoutCacheEntry& entry = *layout.m_entry;
 
 	// Get thread allocator
 	DSThreadAllocator* alloc;
 	ANKI_CHECK(entry.getOrCreateThreadAllocator(tid, alloc));
 
-	// Compute the hash
-	Array<U64, MAX_BINDINGS_PER_DESCRIPTOR_SET> uuids;
-	U uuidCount = 0;
-
-	const U minBinding = entry.m_minBinding;
-	const U maxBinding = entry.m_maxBinding;
-	for(U i = minBinding; i <= maxBinding; ++i)
-	{
-		if(entry.m_activeBindings.get(i))
-		{
-			uuids[uuidCount++] = init.m_bindings[i].m_uuids[0];
-			uuids[uuidCount++] = init.m_bindings[i].m_uuids[1];
-		}
-	}
-
-	U64 hash = computeHash(&uuids[0], uuidCount * sizeof(U64));
-
 	// Finally, allocate
 	const DS* s;
-	ANKI_CHECK(alloc->getOrCreateSet(hash, init.m_bindings, s));
+	ANKI_CHECK(alloc->getOrCreateSet(hash, state.m_bindings, s));
 	set.m_handle = s->m_handle;
 	ANKI_ASSERT(set.m_handle != VK_NULL_HANDLE);
 

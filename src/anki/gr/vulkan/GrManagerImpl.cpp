@@ -595,6 +595,8 @@ void GrManagerImpl::endFrame()
 	ANKI_VK_CHECKF(vkQueuePresentKHR(m_queue, &present));
 	ANKI_VK_CHECKF(res);
 
+	m_descrFactory.endFrame();
+
 	// Finalize
 	++m_frame;
 }
