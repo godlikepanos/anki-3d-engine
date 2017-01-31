@@ -10,7 +10,7 @@
 #include <glslang/SPIRV/GlslangToSpv.h>
 #include <SPIRV-Cross/spirv_cross.hpp>
 
-#define ANKI_DUMP_SHADERS ANKI_DEBUG
+#define ANKI_DUMP_SHADERS ANKI_EXTRA_CHECKS
 
 #if ANKI_DUMP_SHADERS
 #include <anki/util/File.h>

@@ -56,7 +56,7 @@ Error Ms::createRt()
 		m_rt2);
 
 	AttachmentLoadOperation loadop = AttachmentLoadOperation::DONT_CARE;
-#if ANKI_DEBUG
+#if ANKI_EXTRA_CHECKS
 	loadop = AttachmentLoadOperation::CLEAR;
 #endif
 

@@ -144,7 +144,7 @@ void* BufferImpl::map(PtrSize offset, PtrSize range, BufferMapAccessBit access)
 	void* ptr = getGrManagerImpl().getGpuMemoryManager().getMappedAddress(m_memHandle);
 	ANKI_ASSERT(ptr);
 
-#if ANKI_ASSERTIONS
+#if ANKI_EXTRA_CHECKS
 	m_mapped = true;
 #endif
 

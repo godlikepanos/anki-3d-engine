@@ -226,7 +226,7 @@ template<typename TBase, typename... Types>
 class VisitableCommonBase
 {
 public:
-#if ANKI_DEBUG
+#if ANKI_EXTRA_CHECKS
 	// Allow dynamic cast in acceptVisitor
 	virtual ~VisitableCommonBase()
 	{
@@ -290,7 +290,7 @@ private:
 		{
 		case 0:
 		{
-#if ANKI_DEBUG
+#if ANKI_EXTRA_CHECKS
 			TFirst* base = dynamic_cast<TFirst*>(this);
 			ANKI_ASSERT(base != nullptr);
 #else
@@ -317,7 +317,7 @@ private:
 		{
 		case i:
 		{
-#if ANKI_DEBUG
+#if ANKI_EXTRA_CHECKS
 			TSecond* base = dynamic_cast<TSecond*>(this);
 			ANKI_ASSERT(base != nullptr);
 #else
@@ -343,7 +343,7 @@ private:
 		{
 		case 0:
 		{
-#if ANKI_DEBUG
+#if ANKI_EXTRA_CHECKS
 			const TFirst* base = dynamic_cast<const TFirst*>(this);
 			ANKI_ASSERT(base != nullptr);
 #else
@@ -370,7 +370,7 @@ private:
 		{
 		case i:
 		{
-#if ANKI_DEBUG
+#if ANKI_EXTRA_CHECKS
 			const TSecond* base = dynamic_cast<const TSecond*>(this);
 			ANKI_ASSERT(base != nullptr);
 #else

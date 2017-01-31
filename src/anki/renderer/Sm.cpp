@@ -392,7 +392,7 @@ void Sm::prepareBuildCommandBuffers(RenderingContext& ctx)
 		ctx.m_sm.m_spotCommandBuffers.create(spotCastersCount * m_r->getThreadPool().getThreadsCount());
 
 		ctx.m_sm.m_spotCacheIndices.create(spotCastersCount);
-#if ANKI_ASSERTIONS
+#if ANKI_EXTRA_CHECKS
 		memset(&ctx.m_sm.m_spotCacheIndices[0], 0xFF, sizeof(ctx.m_sm.m_spotCacheIndices[0]) * spotCastersCount);
 #endif
 
@@ -415,7 +415,7 @@ void Sm::prepareBuildCommandBuffers(RenderingContext& ctx)
 		ctx.m_sm.m_omniCommandBuffers.create(omniCastersCount * 6 * m_r->getThreadPool().getThreadsCount());
 
 		ctx.m_sm.m_omniCacheIndices.create(omniCastersCount);
-#if ANKI_ASSERTIONS
+#if ANKI_EXTRA_CHECKS
 		memset(&ctx.m_sm.m_omniCacheIndices[0], 0xFF, sizeof(ctx.m_sm.m_omniCacheIndices[0]) * omniCastersCount);
 #endif
 

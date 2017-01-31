@@ -345,7 +345,7 @@ public:
 
 	~WeakArray()
 	{
-#if ANKI_ASSERTIONS
+#if ANKI_EXTRA_CHECKS
 		m_data = nullptr;
 		m_size = 0;
 #endif

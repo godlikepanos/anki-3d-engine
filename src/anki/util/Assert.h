@@ -8,7 +8,7 @@
 #include <anki/Config.h>
 
 /// Assertion. Print an error and stop the debugger (if it runs through a debugger) and then abort.
-#if !ANKI_ASSERTIONS
+#if !ANKI_EXTRA_CHECKS
 #define ANKI_ASSERT(x) ((void)0)
 #define ANKI_ASSERTS_ENABLED 0
 #else

@@ -40,7 +40,7 @@ To build the release version:
 	$cd path/to/anki
 	$cd mkdir build
 	$cd ./build
-	$cmake ..
+	$cmake .. -DCMAKE_BUILD_TYPE=Release
 	$make
 
 To view and configure the build options you can use ccmake tool or other similar tool:

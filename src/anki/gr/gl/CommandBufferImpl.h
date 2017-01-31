@@ -49,7 +49,7 @@ public:
 	Bool8 m_immutable = false;
 	CommandBufferFlag m_flags;
 
-#if ANKI_DEBUG
+#if ANKI_EXTRA_CHECKS
 	Bool8 m_executed = false;
 #endif
 
@@ -91,7 +91,7 @@ public:
 	/// Fake that it's been executed
 	void makeExecuted()
 	{
-#if ANKI_DEBUG
+#if ANKI_EXTRA_CHECKS
 		m_executed = true;
 #endif
 	}

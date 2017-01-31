@@ -91,7 +91,7 @@ void Thread::start(void* userData, ThreadCallback callback, I pinToCore)
 	}
 	else
 	{
-#if ANKI_ASSERTIONS
+#if ANKI_EXTRA_CHECKS
 		m_started = true;
 #endif
 	}
@@ -109,7 +109,7 @@ Error Thread::join()
 		ANKI_LOGF("pthread_join() failed");
 	}
 
-#if ANKI_ASSERTIONS
+#if ANKI_EXTRA_CHECKS
 	m_started = false;
 #endif
 

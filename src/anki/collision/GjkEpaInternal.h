@@ -76,7 +76,7 @@ public:
 		m_dist = -1.0;
 		m_originInside = 2;
 		m_dead = false;
-#if ANKI_DEBUG
+#if ANKI_EXTRA_CHECKS
 		m_idx[0] = m_idx[1] = m_idx[2] = MAX_U32;
 #endif
 	}

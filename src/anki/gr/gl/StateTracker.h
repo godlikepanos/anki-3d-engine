@@ -28,7 +28,7 @@ public:
 	/// If it's false then there might be unset state.
 	Bool8 m_mayContainUnsetState = true;
 
-#if ANKI_ASSERTIONS
+#if ANKI_EXTRA_CHECKS
 	Bool8 m_secondLevel = false;
 #endif
 

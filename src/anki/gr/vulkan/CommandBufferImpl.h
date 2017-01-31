@@ -176,7 +176,7 @@ private:
 	List<ShaderProgramPtr> m_progs;
 /// @}
 
-#if ANKI_ASSERTIONS
+#if ANKI_EXTRA_CHECKS
 	// Debug stuff
 	Bool8 m_insideRenderPass = false;
 #endif

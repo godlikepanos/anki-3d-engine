@@ -14,7 +14,7 @@
 namespace anki
 {
 
-#if ANKI_ASSERTIONS
+#if ANKI_EXTRA_CHECKS
 
 void akassert(const char* exprTxt, const char* file, int line, const char* func)
 {

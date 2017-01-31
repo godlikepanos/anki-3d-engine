@@ -166,7 +166,7 @@ struct RemovePointer<T*>
 template<typename To, typename From>
 To staticCastPtr(From from)
 {
-#if ANKI_DEBUG == 1
+#if ANKI_EXTRA_CHECKS
 	To ptr = dynamic_cast<To>(from);
 	ANKI_ASSERT(ptr != nullptr);
 	return ptr;

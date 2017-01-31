@@ -35,11 +35,10 @@ void CommandBufferImpl::destroy()
 {
 	ANKI_TRACE_START_EVENT(GL_CMD_BUFFER_DESTROY);
 
-#if ANKI_DEBUG
+#if ANKI_EXTRA_CHECKS
 	if(!m_executed && m_firstCommand)
 	{
-		ANKI_GL_LOGW("Chain contains commands but never executed. "
-					 "This should only happen on exceptions");
+		ANKI_GL_LOGW("Chain contains commands but never executed. This should only happen on exceptions");
 	}
 #endif
 
@@ -63,7 +62,7 @@ Error CommandBufferImpl::executeAllCommands()
 {
 	ANKI_ASSERT(m_firstCommand != nullptr && "Empty command buffer");
 	ANKI_ASSERT(m_lastCommand != nullptr && "Empty command buffer");
-#if ANKI_DEBUG
+#if ANKI_EXTRA_CHECKS
 	m_executed = true;
 #endif
 

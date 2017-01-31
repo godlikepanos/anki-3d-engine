@@ -278,7 +278,7 @@ ThreadHive::Task* ThreadHive::getNewTask()
 					m_tail = prevTask;
 				}
 
-#if ANKI_DEBUG
+#if ANKI_EXTRA_CHECKS
 				task->m_next = nullptr;
 #endif
 				break;

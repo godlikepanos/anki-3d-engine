@@ -75,7 +75,7 @@ private:
 	ThreadCallback m_callback = nullptr; ///< The callback
 	void* m_userData = nullptr; ///< The user date to pass to the callback
 
-#if ANKI_ASSERTIONS
+#if ANKI_EXTRA_CHECKS
 	Bool8 m_started = false;
 #endif
 };

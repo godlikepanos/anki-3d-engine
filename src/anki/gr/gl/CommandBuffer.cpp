@@ -42,7 +42,7 @@ void CommandBuffer::init(CommandBufferInitInfo& inf)
 	m_impl.reset(getAllocator().newInstance<CommandBufferImpl>(&getManager()));
 	m_impl->init(inf);
 
-#if ANKI_ASSERTIONS
+#if ANKI_EXTRA_CHECKS
 	m_impl->m_state.m_secondLevel = !!(inf.m_flags & CommandBufferFlag::SECOND_LEVEL);
 #endif
 

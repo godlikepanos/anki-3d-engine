@@ -152,15 +152,26 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 
 	// Print a message
 	const char* buildType =
-#if !ANKI_DEBUG
-		"release";
+#if ANKI_OPTIMIZE
+		"optimized, "
 #else
-		"debug";
+		"NOT optimized, "
+#endif
+#if ANKI_DEBUG_SYMBOLS
+		"dbg symbols, "
+#else
+		"NO dbg symbols, "
+#endif
+#if ANKI_EXTRA_CHECKS
+		"extra checks";
+#else
+		"NO extra checks";
 #endif
 
 	ANKI_LOGI("Initializing application ("
 			  "version %u.%u, "
-			  "build %s %s, "
+			  "%s, "
+			  "date %s, "
 			  "commit %s)...",
 		ANKI_VERSION_MAJOR,
 		ANKI_VERSION_MINOR,

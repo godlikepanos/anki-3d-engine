@@ -34,7 +34,7 @@ public:
 		ANKI_ASSERT(isCreated());
 		ANKI_ASSERT(m_mapped);
 
-#if ANKI_ASSERTIONS
+#if ANKI_EXTRA_CHECKS
 		m_mapped = false;
 #endif
 		// TODO Flush or invalidate caches
@@ -72,7 +72,7 @@ private:
 	VkMemoryPropertyFlags m_memoryFlags = 0;
 	BufferUsageBit m_usage = BufferUsageBit::NONE;
 
-#if ANKI_ASSERTIONS
+#if ANKI_EXTRA_CHECKS
 	Bool8 m_mapped = false;
 #endif
 

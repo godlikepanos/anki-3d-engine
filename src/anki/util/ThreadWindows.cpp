@@ -75,7 +75,7 @@ void Thread::start(void* userData, ThreadCallback callback, I pinToCore)
 	}
 	else
 	{
-#if ANKI_ASSERTIONS
+#if ANKI_EXTRA_CHECKS
 		m_started = true;
 #endif
 	}
@@ -105,7 +105,7 @@ Error Thread::join()
 
 	m_impl = nullptr;
 
-#if ANKI_ASSERTIONS
+#if ANKI_EXTRA_CHECKS
 	m_started = false;
 #endif
 

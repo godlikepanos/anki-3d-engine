@@ -15,7 +15,7 @@ namespace anki
 
 // Enable the exception on debug. Calling glGetError calls serialization
 
-#if ANKI_DEBUG
+#if ANKI_EXTRA_CHECKS
 
 /// The function exits if there is an OpenGL error. Use it with the
 /// ANKI_CHECK_GL_ERROR macro

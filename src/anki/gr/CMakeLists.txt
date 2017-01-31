@@ -5,7 +5,7 @@ if(GL)
 	set(EXTRA_LIBS "")
 else()
 	set(GR_BACKEND "vulkan")
-	set(EXTRA_LIBS GLSLANG_LIB SPIRV_LIB OSD_LIB GLC_LIB HLSL_LIB ankispirvcross)
+	set(EXTRA_LIBS glslang SPIRV HLSL OGLCompiler OSDependent ankispirvcross)
 endif()
 
 file(GLOB ANKI_GR_BACKEND_SOURCES ${GR_BACKEND}/*.cpp)

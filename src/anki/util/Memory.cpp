@@ -17,7 +17,7 @@
 namespace anki
 {
 
-#define ANKI_MEM_SIGNATURES ANKI_DEBUG
+#define ANKI_MEM_SIGNATURES ANKI_EXTRA_CHECKS
 
 #if ANKI_MEM_SIGNATURES
 using Signature = U32;
@@ -40,7 +40,7 @@ static Signature computeSignature(void* ptr)
 template<typename TPtr, typename TSize>
 static void invalidateMemory(TPtr ptr, TSize size)
 {
-#if ANKI_DEBUG
+#if ANKI_EXTRA_CHECKS
 	memset(static_cast<void*>(ptr), 0xCC, size);
 #endif
 }

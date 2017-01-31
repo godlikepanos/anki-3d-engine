@@ -11,5 +11,5 @@ add_library(ankicore ${ANKI_CORE_SOURCES})
 target_link_libraries(ankicore ankiscript ankirenderer ankiscene ankiresource ankiinput ankimisc ankiutil)
 
 if(SDL)
-	target_link_libraries(ankicore SDL2_LIB)
+	target_link_libraries(ankicore SDL2-static)
 endif()

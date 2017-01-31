@@ -76,7 +76,7 @@ void* Buffer::map(PtrSize offset, PtrSize range, BufferMapAccessBit access)
 	U8* ptr = static_cast<U8*>(m_impl->m_persistentMapping);
 	ptr += offset;
 
-#if ANKI_ASSERTIONS
+#if ANKI_EXTRA_CHECKS
 	ANKI_ASSERT(!m_impl->m_mapped);
 	m_impl->m_mapped = true;
 #endif
@@ -86,7 +86,7 @@ void* Buffer::map(PtrSize offset, PtrSize range, BufferMapAccessBit access)
 
 void Buffer::unmap()
 {
-#if ANKI_ASSERTIONS
+#if ANKI_EXTRA_CHECKS
 	ANKI_ASSERT(m_impl->m_mapped);
 	m_impl->m_mapped = false;
 #endif

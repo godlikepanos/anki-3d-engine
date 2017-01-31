@@ -19,7 +19,7 @@
 namespace anki
 {
 
-#define ANKI_GR_MANAGER_DEBUG_MEMMORY ANKI_DEBUG
+#define ANKI_GR_MANAGER_DEBUG_MEMMORY ANKI_EXTRA_CHECKS
 
 // Forward
 class TextureFallbackUploader;

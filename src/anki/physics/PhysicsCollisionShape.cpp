@@ -79,7 +79,7 @@ Error PhysicsTriangleSoup::create(PhysicsCollisionShapeInitInfo& init,
 		NewtonTreeCollisionAddFace(m_shape, 3, &facePos[0][0], sizeof(Vec3), 0);
 	}
 
-	const I optimize = !ANKI_DEBUG;
+	const I optimize = 1;
 	NewtonTreeCollisionEndBuild(m_shape, optimize);
 
 	return ErrorCode::NONE;

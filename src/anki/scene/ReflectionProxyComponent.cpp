@@ -36,7 +36,7 @@ Error ReflectionProxyComponent::update(SceneNode& node, F32 prevTime, F32 crntTi
 			// Update the plane
 			face.m_plane.setFrom3Points(a, b, c);
 
-#if ANKI_ASSERTIONS == 1
+#if ANKI_EXTRA_CHECKS == 1
 			// Make sure that all points are co-planar
 			Vec4 n0 = (b - a).cross(c - b);
 			Vec4 n1 = (c - b).cross(d - c);

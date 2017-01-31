@@ -11,7 +11,7 @@
 #include <anki/util/StringList.h>
 #include <anki/util/Logger.h>
 
-#define ANKI_DUMP_SHADERS ANKI_DEBUG
+#define ANKI_DUMP_SHADERS ANKI_EXTRA_CHECKS
 
 #if ANKI_DUMP_SHADERS
 #include <anki/util/File.h>

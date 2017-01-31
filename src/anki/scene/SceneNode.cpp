@@ -91,7 +91,7 @@ void SceneNode::addComponent(SceneComponent* comp, Bool transferOwnership)
 {
 	ANKI_ASSERT(comp);
 
-#if ANKI_ASSERTIONS
+#if ANKI_EXTRA_CHECKS
 	Error err = iterateComponents([&](const SceneComponent& bcomp) -> Error {
 		ANKI_ASSERT(comp != &bcomp);
 		return ErrorCode::NONE;

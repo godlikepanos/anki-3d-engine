@@ -326,7 +326,7 @@ void Sector::tryRemoveSpatialComponent(SpatialComponent* sp)
 	}
 	else
 	{
-#if ANKI_ASSERTIONS
+#if ANKI_EXTRA_CHECKS
 		ANKI_ASSERT(findSpatialComponent(sp) == m_spatials.getEnd());
 #endif
 	}

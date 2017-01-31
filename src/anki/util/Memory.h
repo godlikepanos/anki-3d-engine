@@ -22,7 +22,7 @@ class SpinLock;
 /// @addtogroup util_memory
 /// @{
 
-#define ANKI_MEM_USE_SIGNATURES ANKI_DEBUG
+#define ANKI_MEM_USE_SIGNATURES ANKI_EXTRA_CHECKS
 
 /// Allocate aligned memory
 void* mallocAligned(PtrSize size, PtrSize alignmentBytes);

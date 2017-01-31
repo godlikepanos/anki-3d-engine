@@ -22,7 +22,7 @@ public:
 	BufferUsageBit m_usage = BufferUsageBit::NONE;
 	BufferMapAccessBit m_access = BufferMapAccessBit::NONE;
 	GLenum m_target = GL_NONE; ///< A guess
-#if ANKI_ASSERTIONS
+#if ANKI_EXTRA_CHECKS
 	Bool m_mapped = false;
 #endif
 

@@ -18,7 +18,7 @@ static Scalar polynomialSinQuadrant(const Scalar a)
 template<typename Scalar>
 static void sinCosInternal(const Scalar a_, Scalar& sina, Scalar& cosa)
 {
-#if ANKI_DEBUG
+#if ANKI_EXTRA_CHECKS
 	sina = sin(a_);
 	cosa = cos(a_);
 #else
