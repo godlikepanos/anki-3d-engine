@@ -291,9 +291,9 @@ void writeRts(in vec3 diffColor, // from 0 to 1
 	in float metallic)
 {
 	GbufferInfo g;
-	g.diffuse = mix(diffColor, vec3(0.0), metallic);
+	g.diffuse = diffColor;
 	g.normal = normal;
-	g.specular = mix(specularColor, diffColor, metallic);
+	g.specular = specularColor;
 	g.roughness = roughness;
 	g.subsurface = subsurface;
 	g.emission = emission;

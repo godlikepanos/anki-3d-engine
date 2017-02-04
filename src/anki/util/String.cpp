@@ -54,6 +54,12 @@ Error CString::toI64(I64& out) const
 	return err;
 }
 
+String& String::operator=(StringAuto&& b)
+{
+	m_data = std::move(b.m_data);
+	return *this;
+}
+
 void String::create(Allocator alloc, const CStringType& cstr)
 {
 	auto len = cstr.getLength();

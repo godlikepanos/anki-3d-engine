@@ -20,11 +20,9 @@ class XmlElement;
 class MaterialLoaderInputVariable : public NonCopyable
 {
 public:
-	GenericMemoryPoolAllocator<U8> m_alloc;
-
-	String m_name;
-	StringList m_value;
-	String m_line;
+	StringAuto m_name;
+	StringListAuto m_value;
+	StringAuto m_line;
 
 	ShaderVariableDataType m_type = ShaderVariableDataType::NONE;
 	BuiltinMaterialVariableId m_builtin = BuiltinMaterialVariableId::NONE;
@@ -54,29 +52,33 @@ public:
 	ShaderTypeBit m_shaderDefinedMask = ShaderTypeBit::NONE; ///< Defined in
 	ShaderTypeBit m_shaderReferencedMask = ShaderTypeBit::NONE; ///< Referenced
 
-	MaterialLoaderInputVariable()
+	MaterialLoaderInputVariable(GenericMemoryPoolAllocator<U8> alloc)
+		: m_name(alloc)
+		, m_value(alloc)
+		, m_line(alloc)
 	{
 	}
 
 	MaterialLoaderInputVariable(MaterialLoaderInputVariable&& b)
+		: m_name(std::move(b.m_name))
+		, m_value(std::move(b.m_value))
+		, m_line(std::move(b.m_line))
 	{
 		move(b);
 	}
 
 	~MaterialLoaderInputVariable()
 	{
-		m_name.destroy(m_alloc);
-		m_value.destroy(m_alloc);
-		m_line.destroy(m_alloc);
 	}
 
 	MaterialLoaderInputVariable& operator=(MaterialLoaderInputVariable&& b)
 	{
+		m_name = std::move(b.m_name);
+		m_value = std::move(b.m_value);
+		m_line = std::move(b.m_line);
 		move(b);
 		return *this;
 	}
-
-	void move(MaterialLoaderInputVariable& b);
 
 	Bool duplicate(const MaterialLoaderInputVariable& b) const
 	{
@@ -85,6 +87,9 @@ public:
 	}
 
 	CString typeStr() const;
+
+private:
+	void move(MaterialLoaderInputVariable& b);
 };
 
 /// Creator of shader programs. This class parses between
@@ -159,9 +164,9 @@ public:
 
 private:
 	GenericMemoryPoolAllocator<char> m_alloc;
-	Array<StringList, 5> m_source; ///< Shader program final source
-	Array<String, 5> m_sourceBaked; ///< Final source baked
-	List<Input> m_inputs;
+	Array<StringListAuto, 5> m_source; ///< Shader program final source
+	Array<StringAuto, 5> m_sourceBaked; ///< Final source baked
+	ListAuto<Input> m_inputs;
 	ShaderTypeBit m_uniformBlockReferencedMask = ShaderTypeBit::NONE;
 	U32 m_blockSize = 0;
 	Bool8 m_instanced = false;

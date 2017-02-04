@@ -38,6 +38,9 @@ public:
 	/// Join all the elements into a single big string using a the seperator @a separator
 	void join(Allocator alloc, const CString& separator, String& out) const;
 
+	/// Join all the elements into a single big string using a the seperator @a separator
+	void join(const CString& separator, StringAuto& out) const;
+
 	/// Returns the index position of the last occurrence of @a value in the list.
 	/// @return -1 of not found
 	I getIndexOf(const CString& value) const;
@@ -51,6 +54,16 @@ public:
 	{
 		String str;
 		str.sprintf(alloc, args...);
+
+		Base::emplaceBack(alloc);
+		Base::getBack() = std::move(str);
+	}
+
+	/// Push back plain CString.
+	void pushBack(Allocator alloc, CString cstr)
+	{
+		String str;
+		str.create(alloc, cstr);
 
 		Base::emplaceBack(alloc);
 		Base::getBack() = std::move(str);
@@ -104,6 +117,12 @@ public:
 	void pushBackSprintf(const TArgs&... args)
 	{
 		Base::pushBackSprintf(m_alloc, args...);
+	}
+
+	/// Push back plain CString.
+	void pushBack(CString cstr)
+	{
+		Base::pushBack(m_alloc, cstr);
 	}
 
 	/// Split a string using a separator (@a separator) and return these strings in a string list.

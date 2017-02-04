@@ -226,12 +226,6 @@ static ShaderVariableDataType getBuiltinType(BuiltinMaterialVariableId in)
 
 void MaterialLoaderInputVariable::move(MaterialLoaderInputVariable& b)
 {
-	m_alloc = std::move(b.m_alloc);
-
-	m_name = std::move(b.m_name);
-	m_value = std::move(b.m_value);
-	m_line = std::move(b.m_line);
-
 	m_type = b.m_type;
 	m_builtin = b.m_builtin;
 	m_flags = b.m_flags;
@@ -250,22 +244,14 @@ CString MaterialLoaderInputVariable::typeStr() const
 
 MaterialLoader::MaterialLoader(GenericMemoryPoolAllocator<U8> alloc)
 	: m_alloc(alloc)
+	, m_source{{{alloc}, {alloc}, {alloc}, {alloc}, {alloc}}}
+	, m_sourceBaked{{{alloc}, {alloc}, {alloc}, {alloc}, {alloc}}}
+	, m_inputs{alloc}
 {
 }
 
 MaterialLoader::~MaterialLoader()
 {
-	for(auto& it : m_source)
-	{
-		it.destroy(m_alloc);
-	}
-
-	for(auto& it : m_sourceBaked)
-	{
-		it.destroy(m_alloc);
-	}
-
-	m_inputs.destroy(m_alloc);
 }
 
 Error MaterialLoader::parseXmlDocument(const XmlDocument& doc)
@@ -384,14 +370,13 @@ Error MaterialLoader::parseProgramTag(const XmlElement& programEl)
 	}
 
 	// Some instancing crap
-	lines.pushBackSprintf(m_alloc,
-		"\n#if INSTANCE_COUNT > 1\n"
-		"#define INSTANCE_ID [%s]\n"
-		"#define INSTANCED [INSTANCE_COUNT]\n"
-		"#else\n"
-		"#define INSTANCE_ID\n"
-		"#define INSTANCED\n"
-		"#endif\n",
+	lines.pushBackSprintf("\n#if INSTANCE_COUNT > 1\n"
+						  "#define INSTANCE_ID [%s]\n"
+						  "#define INSTANCED [INSTANCE_COUNT]\n"
+						  "#else\n"
+						  "#define INSTANCE_ID\n"
+						  "#define INSTANCED\n"
+						  "#endif\n",
 		glshader == ShaderType::VERTEX ? "gl_InstanceID" : "in_instanceId");
 
 	// <includes></includes>
@@ -404,7 +389,7 @@ Error MaterialLoader::parseProgramTag(const XmlElement& programEl)
 	{
 		CString tmp;
 		ANKI_CHECK(includeEl.getText(tmp));
-		lines.pushBackSprintf(m_alloc, "#include \"%s\"", &tmp[0]);
+		lines.pushBackSprintf("#include \"%s\"", &tmp[0]);
 
 		ANKI_CHECK(includeEl.getNextSiblingElement("include", includeEl));
 	} while(includeEl);
@@ -414,19 +399,17 @@ Error MaterialLoader::parseProgramTag(const XmlElement& programEl)
 	// Block
 	if((m_uniformBlockReferencedMask & glshaderbit) != ShaderTypeBit::NONE)
 	{
-		lines.pushBackSprintf(m_alloc,
-			"\nlayout(ANKI_UBO_BINDING(0, 0), std140, row_major) "
-			"uniform u00_\n{");
+		lines.pushBack("\nlayout(ANKI_UBO_BINDING(0, 0), std140, row_major) uniform u00_\n{");
 
 		for(Input& in : m_inputs)
 		{
 			if(in.m_flags.m_inBlock)
 			{
-				lines.pushBackSprintf(m_alloc, &in.m_line[0]);
+				lines.pushBack(&in.m_line[0]);
 			}
 		}
 
-		lines.pushBackSprintf(m_alloc, "};");
+		lines.pushBack("};");
 	}
 
 	// Other variables
@@ -435,12 +418,20 @@ Error MaterialLoader::parseProgramTag(const XmlElement& programEl)
 		if(!in.m_flags.m_inBlock && (in.m_shaderDefinedMask & glshaderbit) != ShaderTypeBit::NONE
 			&& !in.m_flags.m_specialBuiltin)
 		{
-			lines.pushBackSprintf(m_alloc, &in.m_line[0]);
+			lines.pushBack(&in.m_line[0]);
 		}
 	}
 
 	// <operations></operations>
-	lines.pushBackSprintf(m_alloc, "\nvoid main()\n{");
+	lines.pushBack("\nvoid main()\n{");
+
+	if(!m_forwardShading && glshader == ShaderType::FRAGMENT)
+	{
+		// Write default values
+		lines.pushBack("#if defined(writeRts_DEFINED)");
+		lines.pushBack("writeRts(vec3(0.0), vec3(1.0), vec3(0.04), 0.5, 0.0, 0.0, 0.0);");
+		lines.pushBack("#endif");
+	}
 
 	XmlElement opsEl;
 	ANKI_CHECK(programEl.getChildElement("operations", opsEl));
@@ -450,14 +441,14 @@ Error MaterialLoader::parseProgramTag(const XmlElement& programEl)
 	{
 		String out;
 		ANKI_CHECK(parseOperationTag(opEl, glshader, glshaderbit, out));
-		lines.pushBackSprintf(m_alloc, &out[0]);
+		lines.pushBack(&out[0]);
 		out.destroy(m_alloc);
 
 		// Advance
 		ANKI_CHECK(opEl.getNextSiblingElement("operation", opEl));
 	} while(opEl);
 
-	lines.pushBackSprintf(m_alloc, "}\n");
+	lines.pushBack("}\n");
 	return ErrorCode::NONE;
 }
 
@@ -484,13 +475,12 @@ Error MaterialLoader::parseInputsTag(const XmlElement& programEl)
 	ANKI_CHECK(inputsEl.getChildElement("input", inputEl));
 	do
 	{
-		Input in;
-		in.m_alloc = m_alloc;
+		Input in(m_alloc);
 
 		// <name>
 		ANKI_CHECK(inputEl.getChildElement("name", el));
 		ANKI_CHECK(el.getText(cstr));
-		in.m_name.create(m_alloc, cstr);
+		in.m_name.create(cstr);
 
 		ANKI_CHECK(computeBuiltin(in.m_name.toCString(), in.m_builtin));
 
@@ -559,7 +549,7 @@ Error MaterialLoader::parseInputsTag(const XmlElement& programEl)
 				return ErrorCode::USER_DATA;
 			}
 
-			in.m_value.splitString(m_alloc, cstr, ' ');
+			in.m_value.splitString(cstr, ' ');
 		}
 		else
 		{
@@ -620,9 +610,7 @@ Error MaterialLoader::parseInputsTag(const XmlElement& programEl)
 
 			if(!same)
 			{
-				ANKI_LOGE("Variable defined differently between "
-						  "shaders: %s",
-					&in.m_name[0]);
+				ANKI_LOGE("Variable defined differently between shaders: %s", &in.m_name[0]);
 				return ErrorCode::USER_DATA;
 			}
 
@@ -637,8 +625,7 @@ Error MaterialLoader::parseInputsTag(const XmlElement& programEl)
 		{
 			in.m_shaderDefinedMask = glshaderbit;
 
-			m_inputs.emplaceBack(m_alloc);
-			m_inputs.getBack().move(in);
+			m_inputs.emplaceBack(std::move(in));
 		}
 
 		// Advance
@@ -667,8 +654,7 @@ void MaterialLoader::processInputs()
 				{
 					in.m_binding = m_texBinding++;
 
-					in.m_line.sprintf(m_alloc,
-						"layout(ANKI_TEX_BINDING(0, %u)) uniform %s tex%u;",
+					in.m_line.sprintf("layout(ANKI_TEX_BINDING(0, %u)) uniform %s tex%u;",
 						in.m_binding,
 						&in.typeStr()[0],
 						in.m_binding);
@@ -680,10 +666,9 @@ void MaterialLoader::processInputs()
 
 				in.m_index = m_nextIndex++;
 
-				in.m_line.sprintf(m_alloc,
-					"#if %s\n"
-					"%s var%u%s;\n"
-					"#endif",
+				in.m_line.sprintf("#if %s\n"
+								  "%s var%u%s;\n"
+								  "#endif",
 					!in.m_flags.m_inShadow ? "PASS == COLOR" : "1",
 					&in.typeStr()[0],
 					in.m_index,
@@ -703,8 +688,7 @@ void MaterialLoader::processInputs()
 			String initList;
 			in.m_value.join(m_alloc, ", ", initList);
 
-			in.m_line.sprintf(
-				m_alloc, "const %s var%u = %s(%s);", &in.typeStr()[0], in.m_index, &in.typeStr()[0], &initList[0]);
+			in.m_line.sprintf("const %s var%u = %s(%s);", &in.typeStr()[0], in.m_index, &in.typeStr()[0], &initList[0]);
 
 			initList.destroy(m_alloc);
 		}
@@ -968,13 +952,12 @@ void MaterialLoader::mutate(const RenderingKey& key)
 	{
 		if(!m_source[i].isEmpty())
 		{
-			m_sourceBaked[i].destroy(m_alloc);
+			m_sourceBaked[i].destroy();
 
-			String tmp;
-			m_source[i].join(m_alloc, "\n", tmp);
+			StringAuto tmp(m_alloc);
+			m_source[i].join("\n", tmp);
 
-			m_sourceBaked[i].sprintf(m_alloc, "%s%s", &defines[0], &tmp[0]);
-			tmp.destroy(m_alloc);
+			m_sourceBaked[i].sprintf("%s%s", &defines[0], &tmp[0]);
 		}
 	}
 }

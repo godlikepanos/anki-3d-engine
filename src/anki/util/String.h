@@ -18,6 +18,7 @@ namespace anki
 
 // Forward
 class String;
+class StringAuto;
 
 /// @addtogroup util_private
 /// @{
@@ -264,7 +265,12 @@ public:
 	/// Move constructor.
 	String(String&& b)
 	{
-		move(b);
+		*this = std::move(b);
+	}
+
+	String(StringAuto&& b)
+	{
+		*this = std::move(b);
 	}
 
 	/// Requires manual destruction.
@@ -299,6 +305,9 @@ public:
 		move(b);
 		return *this;
 	}
+
+	/// Move a StringAuto to this one.
+	String& operator=(StringAuto&& b);
 
 	/// Return char at the specified position.
 	const Char& operator[](U pos) const
@@ -496,6 +505,12 @@ public:
 	ANKI_USE_RESULT Error toF64(F64& out) const
 	{
 		return toCString().toF64(out);
+	}
+
+	/// Convert to F32.
+	ANKI_USE_RESULT Error toF32(F32& out) const
+	{
+		return toCString().toF32(out);
 	}
 
 	/// Convert to I64.

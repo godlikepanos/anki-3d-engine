@@ -500,14 +500,14 @@ public:
 	template<typename... TArgs>
 	void emplaceBack(TArgs&&... args)
 	{
-		Base::emplaceBack(m_alloc, std::forward(args)...);
+		Base::emplaceBack(m_alloc, std::forward<TArgs>(args)...);
 	}
 
 	/// Construct element at the beginning of the list.
 	template<typename... TArgs>
 	void emplaceFront(TArgs&&... args)
 	{
-		Base::emplaceFront(m_alloc, std::forward(args)...);
+		Base::emplaceFront(m_alloc, std::forward<TArgs>(args)...);
 	}
 
 	/// Construct element at the the given position.

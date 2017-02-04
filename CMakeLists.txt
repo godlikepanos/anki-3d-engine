@@ -94,6 +94,10 @@ else()
 	set(VULKAN TRUE)
 endif()
 
+if(NOT DEFINED CMAKE_BUILD_TYPE)
+	message(FATAL_ERROR "You need to define CMAKE_BUILD_TYPE")
+endif()
+
 ################################################################################
 # Compiler & linker flags                                                      #
 ################################################################################
@@ -103,7 +107,7 @@ set(COMPILER_FLAGS "")
 set(LINKER_FLAGS "")
 
 # When building AnKi define this special flag
-set(COMPILER_FLAGS "${COMPILER_FLAGS} -DANKI_BUILD ")
+set(COMPILER_FLAGS "${COMPILER_FLAGS} -DANKI_BUILD -fPIC ")
 
 if(NOT ANKI_CPU_ADDR_SPACE STREQUAL "0")
 	set(LINKER_FLAGS "${LINKER_FLAGS} -m${ANKI_CPU_ADDR_SPACE} ")
@@ -314,7 +318,7 @@ if(ANDROID)
 endif()
 
 # AnKi compiler flags (Mainly warnings)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -Wall -W -Wextra -Wstrict-aliasing -Wwrite-strings -Wunused -Wunused-variable -Wno-unused-parameter -Wundef -Wno-ignored-attributes -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -Wall -W -Wextra -Wstrict-aliasing -Wwrite-strings -Wunused -Wunused-variable -Wno-unused-parameter -Wundef -Wno-ignored-attributes -Wunused-result -std=c++11")
 
 # Set platform specific
 if(LINUX)

@@ -273,11 +273,12 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 		materialStr = replaceAllString(materialStr, "%specularColorArg%", "uSpecularColor");
 	}
 
+	// Roughness
 	if(!shininessTex.empty())
 	{
 		materialStr = replaceAllString(materialStr,
 			"%specularPowerInput%",
-			R"(<input><type>sampler2D</type><name>uSpecularPower</name><value>)" + m_texrpath + shininessTex
+			R"(<input><type>sampler2D</type><name>roughness</name><value>)" + m_texrpath + shininessTex
 				+ R"(</value></input>)");
 
 		materialStr = replaceAllString(materialStr, "%specularPowerValue%", m_texrpath + shininessTex);
@@ -286,7 +287,7 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 
 		materialStr = replaceAllString(materialStr, "%id%", "60");
 
-		materialStr = replaceAllString(materialStr, "%map%", "uSpecularPower");
+		materialStr = replaceAllString(materialStr, "%map%", "roughness");
 
 		materialStr = replaceAllString(materialStr, "%specularPowerArg%", "out60");
 	}
@@ -305,12 +306,12 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 
 		materialStr = replaceAllString(materialStr,
 			"%specularPowerInput%",
-			R"(<input><type>float</type><name>uSpecularPower</name><value>)" + std::to_string(shininess)
+			R"(<input><type>float</type><name>roughness</name><const>1</const><value>)" + std::to_string(shininess)
 				+ R"(</value></input>)");
 
 		materialStr = replaceAllString(materialStr, "%specularPowerFunc%", "");
 
-		materialStr = replaceAllString(materialStr, "%specularPowerArg%", "uSpecularPower");
+		materialStr = replaceAllString(materialStr, "%specularPowerArg%", "roughness");
 	}
 
 	materialStr = replaceAllString(materialStr, "%maxSpecularPower%", " ");

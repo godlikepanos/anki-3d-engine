@@ -114,27 +114,11 @@ struct GbufferInfo
 // Populate the G buffer
 void writeGBuffer(in GbufferInfo g, out vec4 rt0, out vec4 rt1, out vec4 rt2)
 {
-	float comp = packUnorm2ToUnorm1(vec2(g.subsurface, g.emission / MAX_EMISSION));
+	float comp = packUnorm2ToUnorm1(vec2(g.subsurface, g.metallic));
 	rt0 = vec4(g.diffuse, comp);
 	rt1 = vec4(g.specular, g.roughness);
-	rt2 = vec4(g.normal * 0.5 + 0.5, g.metallic);
+	rt2 = vec4(g.normal * 0.5 + 0.5, g.emission / MAX_EMISSION);
 }
-
-// Read from G-buffer
-#define readSpecularRoughnessFromGBuffer(rt1_, uv_, lod_, g_)                                                          \
-	{                                                                                                                  \
-		vec4 comp = textureLod(rt1_, uv_, lod_);                                                                       \
-		g_.specular = comp.xyz;                                                                                        \
-		g_.roughness = max(EPSILON, comp.w);                                                                           \
-	}
-
-// Read from G-buffer
-#define readNormalMetallicFromGBuffer(rt2_, uv_, lod_, g_)                                                             \
-	{                                                                                                                  \
-		vec4 comp = textureLod(rt2_, uv_, lod_);                                                                       \
-		g_.normal = comp.xyz * 2.0 - 1.0;                                                                              \
-		g_.metallic = comp.w;                                                                                          \
-	}
 
 // Read from G-buffer
 void readNormalFromGBuffer(in sampler2D rt2, in vec2 uv, out vec3 normal)
@@ -149,10 +133,19 @@ void readGBuffer(in sampler2D rt0, in sampler2D rt1, in sampler2D rt2, in vec2 u
 	g.diffuse = comp.xyz;
 	vec2 comp2 = unpackUnorm1ToUnorm2(comp.w);
 	g.subsurface = comp2.x;
-	g.emission = comp2.y * MAX_EMISSION;
+	g.metallic = comp2.y;
 
-	readSpecularRoughnessFromGBuffer(rt1, uv, lod, g);
-	readNormalMetallicFromGBuffer(rt2, uv, lod, g);
+	comp = textureLod(rt1, uv, lod);
+	g.specular = comp.xyz;
+	g.roughness = max(EPSILON, comp.w);
+
+	comp = textureLod(rt2, uv, lod);
+	g.normal = comp.xyz * 2.0 - 1.0;
+	g.emission = comp.w * MAX_EMISSION;
+
+	// Fix values
+	g.specular = mix(g.specular, g.diffuse, g.metallic);
+	g.diffuse *= (1.0 - g.metallic);
 }
 
 #endif

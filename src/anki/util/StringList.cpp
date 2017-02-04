@@ -22,6 +22,13 @@ void StringList::destroy(Allocator alloc)
 
 void StringList::join(Allocator alloc, const CString& separator, String& out) const
 {
+	StringAuto outl(alloc);
+	join(separator, outl);
+	out = std::move(outl);
+}
+
+void StringList::join(const CString& separator, StringAuto& out) const
+{
 	if(Base::isEmpty())
 	{
 		return;
@@ -39,7 +46,7 @@ void StringList::join(Allocator alloc, const CString& separator, String& out) co
 	ANKI_ASSERT(charCount > 0);
 
 	// Allocate
-	out.create(alloc, '?', charCount);
+	out.create('?', charCount);
 
 	// Append to output
 	Char* to = &out[0];
