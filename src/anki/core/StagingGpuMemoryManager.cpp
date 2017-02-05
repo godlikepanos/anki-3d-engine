@@ -30,6 +30,7 @@ Error StagingGpuMemoryManager::init(GrManager* gr, const ConfigSet& cfg)
 	m_perFrameBuffers[StagingGpuMemoryType::STORAGE].m_size = cfg.getNumber("core.storagePerFrameMemorySize");
 	m_perFrameBuffers[StagingGpuMemoryType::VERTEX].m_size = cfg.getNumber("core.vertexPerFrameMemorySize");
 	m_perFrameBuffers[StagingGpuMemoryType::TRANSFER].m_size = cfg.getNumber("core.transferPerFrameMemorySize");
+	m_perFrameBuffers[StagingGpuMemoryType::TEXTURE].m_size = cfg.getNumber("core.textureBufferPerFrameMemorySize");
 
 	U32 alignment;
 	PtrSize maxSize;
@@ -46,6 +47,9 @@ Error StagingGpuMemoryManager::init(GrManager* gr, const ConfigSet& cfg)
 		MAX_U32,
 		BufferUsageBit::BUFFER_UPLOAD_SOURCE | BufferUsageBit::TEXTURE_UPLOAD_SOURCE,
 		*gr);
+
+	gr->getTextureBufferInfo(alignment, maxSize);
+	initBuffer(StagingGpuMemoryType::TEXTURE, alignment, maxSize, BufferUsageBit::TEXTURE_ALL, *gr);
 
 	return ErrorCode::NONE;
 }

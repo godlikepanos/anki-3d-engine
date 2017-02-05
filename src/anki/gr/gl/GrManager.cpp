@@ -89,4 +89,12 @@ void GrManager::getStorageBufferInfo(U32& bindOffsetAlignment, PtrSize& maxStora
 	ANKI_ASSERT(bindOffsetAlignment > 0 && maxStorageBlockSize > 0);
 }
 
+void GrManager::getTextureBufferInfo(U32& bindOffsetAlignment, PtrSize& maxRange) const
+{
+	bindOffsetAlignment = m_impl->getState().m_tboAlignment;
+	maxRange = m_impl->getState().m_tboMaxRange;
+
+	ANKI_ASSERT(bindOffsetAlignment > 0 && maxRange > 0);
+}
+
 } // end namespace anki

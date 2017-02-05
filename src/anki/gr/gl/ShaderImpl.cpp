@@ -36,6 +36,7 @@ static const char* SHADER_HEADER = R"(#version %u %s
 #define ANKI_SS_BINDING(set_, binding_) binding = set_ * %u + binding_
 #define ANKI_TEX_BINDING(set_, binding_) binding = set_ * %u + binding_
 #define ANKI_IMAGE_BINDING(set_, binding_) binding = set_ * %u + binding_
+#define ANKI_TBO_BINDING(set_, binding_) binding = %u + set_ * %u + binding_
 
 #if defined(FRAGMENT_SHADER)
 #define ANKI_USING_FRAG_COORD(height_) vec4 anki_fragCoord = gl_FragCoord;
@@ -101,6 +102,8 @@ Error ShaderImpl::init(ShaderType type, const CString& source)
 		MAX_STORAGE_BUFFER_BINDINGS,
 		MAX_TEXTURE_BINDINGS,
 		MAX_IMAGE_BINDINGS,
+		MAX_TEXTURE_BINDINGS * MAX_DESCRIPTOR_SETS,
+		MAX_TEXTURE_BUFFER_BINDINGS,
 		&source[0]);
 
 	// 2) Gen name, create, compile and link

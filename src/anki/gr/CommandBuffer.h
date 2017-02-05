@@ -251,6 +251,9 @@ public:
 	/// Bind load/store image.
 	void bindImage(U32 set, U32 binding, TexturePtr img, U32 level);
 
+	/// Bind texture buffer.
+	void bindTextureBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range, PixelFormat fmt);
+
 	/// Bind a program.
 	void bindShaderProgram(ShaderProgramPtr prog);
 

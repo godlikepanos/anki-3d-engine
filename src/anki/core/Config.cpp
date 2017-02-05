@@ -83,6 +83,7 @@ Config::Config()
 	newOption("core.storagePerFrameMemorySize", 1024 * 1024 * 16);
 	newOption("core.vertexPerFrameMemorySize", 1024 * 1024 * 10);
 	newOption("core.transferPerFrameMemorySize", 1024 * 1024 * 128);
+	newOption("core.textureBufferPerFrameMemorySize", 1024 * 1024 * 1);
 }
 
 Config::~Config()

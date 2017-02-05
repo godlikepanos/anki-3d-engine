@@ -23,6 +23,7 @@ enum class StagingGpuMemoryType
 	STORAGE,
 	VERTEX,
 	TRANSFER,
+	TEXTURE,
 	COUNT
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(StagingGpuMemoryType, inline)

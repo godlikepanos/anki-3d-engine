@@ -94,6 +94,9 @@ public:
 	/// Get some buffer alignment info.
 	void getStorageBufferInfo(U32& bindOffsetAlignment, PtrSize& maxStorageBlockSize) const;
 
+	/// Get some buffer alignment info.
+	void getTextureBufferInfo(U32& bindOffsetAlignment, PtrSize& maxRange) const;
+
 anki_internal:
 	GrAllocator<U8>& getAllocator()
 	{

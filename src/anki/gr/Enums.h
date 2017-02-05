@@ -341,7 +341,7 @@ enum class AttachmentStoreOperation : U8
 };
 
 /// Buffer usage modes.
-enum class BufferUsageBit : U32
+enum class BufferUsageBit : U64
 {
 	NONE = 0,
 
@@ -385,15 +385,26 @@ enum class BufferUsageBit : U32
 		| STORAGE_FRAGMENT_WRITE,
 	STORAGE_ALL = STORAGE_ALL_GRAPHICS | STORAGE_COMPUTE_READ_WRITE,
 
-	INDEX = 1 << 18,
-	VERTEX = 1 << 19,
-	INDIRECT = 1 << 20,
+	TEXTURE_VERTEX_READ = 1 << 18,
+	TEXTURE_TESSELLATION_EVALUATION_READ = 1 << 19,
+	TEXTURE_TESSELLATION_CONTROL_READ = 1 << 20,
+	TEXTURE_GEOMETRY_READ = 1 << 21,
+	TEXTURE_FRAGMENT_READ = 1 << 22,
+	TEXTURE_COMPUTE_READ = 1 << 23,
+	TEXTURE_ALL = TEXTURE_VERTEX_READ | TEXTURE_TESSELLATION_EVALUATION_READ | TEXTURE_TESSELLATION_CONTROL_READ
+		| TEXTURE_GEOMETRY_READ
+		| TEXTURE_FRAGMENT_READ
+		| TEXTURE_COMPUTE_READ,
 
-	FILL = 1 << 21,
-	BUFFER_UPLOAD_SOURCE = 1 << 22,
-	BUFFER_UPLOAD_DESTINATION = 1 << 23, ///< Destination of buffer upload.
-	TEXTURE_UPLOAD_SOURCE = 1 << 24, ///< Source for texture upload.
-	QUERY_RESULT = 1 << 24, ///< Source to store query results.
+	INDEX = 1 << 24,
+	VERTEX = 1 << 25,
+	INDIRECT = 1 << 26,
+
+	FILL = 1 << 27,
+	BUFFER_UPLOAD_SOURCE = 1 << 28,
+	BUFFER_UPLOAD_DESTINATION = 1 << 29, ///< Destination of buffer upload.
+	TEXTURE_UPLOAD_SOURCE = 1 << 30, ///< Source for texture upload.
+	QUERY_RESULT = 1u << 31u, ///< Source to store query results.
 	TRANSFER_ALL = FILL | BUFFER_UPLOAD_SOURCE | BUFFER_UPLOAD_DESTINATION | TEXTURE_UPLOAD_SOURCE | QUERY_RESULT,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferUsageBit, inline)

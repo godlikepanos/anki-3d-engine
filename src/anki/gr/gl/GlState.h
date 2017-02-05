@@ -32,6 +32,8 @@ public:
 	U32 m_ssboAlignment = 0;
 	U32 m_uniBlockMaxSize = 0;
 	U32 m_storageBlockMaxSize = 0;
+	U32 m_tboAlignment = 0;
+	U32 m_tboMaxRange = 0;
 
 	/// @name FB
 	/// @{
@@ -44,6 +46,8 @@ public:
 
 	Array<U32, 2> m_stencilWriteMask = {{MAX_U32, MAX_U32}};
 	/// @}
+
+	Array2d<GLuint, MAX_DESCRIPTOR_SETS, MAX_TEXTURE_BUFFER_BINDINGS> m_texBuffTextures = {};
 
 	GlState(GrManager* manager)
 		: m_manager(manager)

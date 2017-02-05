@@ -148,11 +148,29 @@ void GlState::initRenderThread()
 	glGetInteger64v(GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT, &val);
 	m_ssboAlignment = val;
 
+	glGetInteger64v(GL_TEXTURE_BUFFER_OFFSET_ALIGNMENT, &val);
+	m_tboAlignment = val;
+
 	glGetInteger64v(GL_MAX_UNIFORM_BLOCK_SIZE, &val);
 	m_uniBlockMaxSize = val;
 
 	glGetInteger64v(GL_MAX_SHADER_STORAGE_BLOCK_SIZE, &val);
 	m_storageBlockMaxSize = val;
+
+	m_tboMaxRange = MAX_U32;
+
+	// Texture buffer textures
+	glGenTextures(MAX_DESCRIPTOR_SETS * MAX_TEXTURE_BUFFER_BINDINGS, &m_texBuffTextures[0][0]);
+	for(U i = 0; i < MAX_DESCRIPTOR_SETS; ++i)
+	{
+		for(U j = 0; j < MAX_TEXTURE_BUFFER_BINDINGS; ++j)
+		{
+			U unit = MAX_TEXTURE_BINDINGS * MAX_DESCRIPTOR_SETS + MAX_TEXTURE_BUFFER_BINDINGS * i + j;
+			glActiveTexture(GL_TEXTURE0 + unit);
+
+			glBindTexture(GL_TEXTURE_BUFFER, m_texBuffTextures[i][j]);
+		}
+	}
 }
 
 void GlState::destroy()

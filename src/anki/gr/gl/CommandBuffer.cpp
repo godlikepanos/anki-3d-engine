@@ -758,6 +758,54 @@ void CommandBuffer::bindImage(U32 set, U32 binding, TexturePtr img, U32 level)
 	}
 }
 
+void CommandBuffer::bindTextureBuffer(
+	U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range, PixelFormat fmt)
+{
+	class Cmd final : public GlCommand
+	{
+	public:
+		U32 m_set;
+		U32 m_binding;
+		BufferPtr m_buff;
+		PtrSize m_offset;
+		PtrSize m_range;
+		GLenum m_fmt;
+
+		Cmd(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range, GLenum fmt)
+			: m_set(set)
+			, m_binding(binding)
+			, m_buff(buff)
+			, m_offset(offset)
+			, m_range(range)
+			, m_fmt(fmt)
+		{
+		}
+
+		Error operator()(GlState& state)
+		{
+			ANKI_ASSERT(m_offset + m_range <= m_buff->m_impl->m_size);
+
+			const GLuint tex = state.m_texBuffTextures[m_set][m_binding];
+			glTextureBufferRange(tex, m_fmt, m_buff->m_impl->getGlName(), m_offset, m_range);
+
+			return ErrorCode::NONE;
+		}
+	};
+
+	Bool8 compressed;
+	GLenum format;
+	GLenum internalFormat;
+	GLenum type;
+	DepthStencilAspectBit dsAspect;
+	convertTextureInformation(fmt, compressed, format, internalFormat, type, dsAspect);
+	(void)compressed;
+	(void)format;
+	(void)type;
+	(void)dsAspect;
+
+	m_impl->pushBackNewCommand<Cmd>(set, binding, buff, offset, range, internalFormat);
+}
+
 void CommandBuffer::bindShaderProgram(ShaderProgramPtr prog)
 {
 	class Cmd final : public GlCommand

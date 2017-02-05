@@ -167,6 +167,13 @@ inline GLenum convertPrimitiveTopology(PrimitiveTopology ak)
 
 	return out;
 }
+
+void convertTextureInformation(const PixelFormat& pf,
+	Bool8& compressed,
+	GLenum& format,
+	GLenum& internalFormat,
+	GLenum& type,
+	DepthStencilAspectBit& dsAspect);
 /// @}
 
 } // end namespace anki
