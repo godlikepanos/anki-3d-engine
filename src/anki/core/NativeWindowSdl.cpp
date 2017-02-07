@@ -18,14 +18,14 @@ Error NativeWindow::init(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
 
 	if(SDL_Init(INIT_SUBSYSTEMS) != 0)
 	{
-		ANKI_LOGE("SDL_Init() failed");
+		ANKI_CORE_LOGE("SDL_Init() failed");
 		return ErrorCode::FUNCTION_FAILED;
 	}
 
 	//
 	// Set GL attributes
 	//
-	ANKI_LOGI("Creating SDL window");
+	ANKI_CORE_LOGI("Creating SDL window");
 
 #if ANKI_GR_BACKEND == ANKI_GR_BACKEND_GL
 	if(SDL_GL_SetAttribute(SDL_GL_RED_SIZE, init.m_rgbaBits[0])
@@ -35,7 +35,7 @@ Error NativeWindow::init(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
 		|| SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, init.m_depthBits)
 		|| SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, init.m_doubleBuffer))
 	{
-		ANKI_LOGE("SDL_GL_SetAttribute() failed");
+		ANKI_CORE_LOGE("SDL_GL_SetAttribute() failed");
 		return ErrorCode::FUNCTION_FAILED;
 	}
 #endif
@@ -59,7 +59,7 @@ Error NativeWindow::init(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
 
 	if(m_impl->m_window == nullptr)
 	{
-		ANKI_LOGE("SDL_CreateWindow() failed");
+		ANKI_CORE_LOGE("SDL_CreateWindow() failed");
 		return ErrorCode::FUNCTION_FAILED;
 	}
 
@@ -78,7 +78,7 @@ Error NativeWindow::init(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
 		m_height = init.m_height;
 	}
 
-	ANKI_LOGI("SDL window created");
+	ANKI_CORE_LOGI("SDL window created");
 	return ErrorCode::NONE;
 }
 

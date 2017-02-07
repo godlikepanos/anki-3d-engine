@@ -44,12 +44,12 @@ Error DownscaleBlur::initSubpass(U idx, const UVec2& inputTexSize)
 
 Error DownscaleBlur::init(const ConfigSet& cfg)
 {
-	ANKI_LOGI("Initializing dowscale blur");
+	ANKI_R_LOGI("Initializing dowscale blur");
 
 	Error err = initInternal(cfg);
 	if(err)
 	{
-		ANKI_LOGE("Failed to initialize downscale blur");
+		ANKI_R_LOGE("Failed to initialize downscale blur");
 	}
 
 	return err;

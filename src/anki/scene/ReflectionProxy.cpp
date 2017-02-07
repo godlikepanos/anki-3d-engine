@@ -53,7 +53,7 @@ Error ReflectionProxy::init(const CString& proxyMesh)
 
 	if((loader.getHeader().m_flags & MeshLoader::Flag::QUADS) == MeshLoader::Flag::NONE)
 	{
-		ANKI_LOGE("Expecting quad mesh");
+		ANKI_SCENE_LOGE("Expecting quad mesh");
 		return ErrorCode::USER_DATA;
 	}
 

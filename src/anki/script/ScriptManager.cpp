@@ -15,12 +15,12 @@ ScriptManager::ScriptManager()
 
 ScriptManager::~ScriptManager()
 {
-	ANKI_LOGI("Destroying scripting engine...");
+	ANKI_SCRIPT_LOGI("Destroying scripting engine...");
 }
 
 Error ScriptManager::init(AllocAlignedCallback allocCb, void* allocCbData, SceneGraph* scene, MainRenderer* renderer)
 {
-	ANKI_LOGI("Initializing scripting engine...");
+	ANKI_SCRIPT_LOGI("Initializing scripting engine...");
 
 	m_scene = scene;
 	m_r = renderer;

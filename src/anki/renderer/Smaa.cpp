@@ -245,7 +245,7 @@ Error Smaa::init(const ConfigSet& cfg)
 	Error err = initInternal(cfg);
 	if(err)
 	{
-		ANKI_LOGE("Failed to initialize SMAA");
+		ANKI_R_LOGE("Failed to initialize SMAA");
 	}
 
 	return err;
@@ -255,7 +255,7 @@ Error Smaa::initInternal(const ConfigSet& cfg)
 {
 	m_qualityPerset = "ULTRA";
 
-	ANKI_LOGI("Initializing SMAA in %s perset", &m_qualityPerset[0]);
+	ANKI_R_LOGI("Initializing SMAA in %s perset", &m_qualityPerset[0]);
 
 	TextureInitInfo texinit;
 	texinit.m_format = STENCIL_PIXEL_FORMAT;

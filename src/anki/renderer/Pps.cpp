@@ -65,7 +65,7 @@ Error Pps::init(const ConfigSet& config)
 	Error err = initInternal(config);
 	if(err)
 	{
-		ANKI_LOGE("Failed to init PPS");
+		ANKI_R_LOGE("Failed to init PPS");
 	}
 
 	return err;

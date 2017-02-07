@@ -22,12 +22,12 @@ Fs::~Fs()
 
 Error Fs::init(const ConfigSet& cfg)
 {
-	ANKI_LOGI("Initializing forward shading");
+	ANKI_R_LOGI("Initializing forward shading");
 
 	Error err = initInternal(cfg);
 	if(err)
 	{
-		ANKI_LOGE("Failed to initialize forward shading");
+		ANKI_R_LOGE("Failed to initialize forward shading");
 	}
 
 	return err;

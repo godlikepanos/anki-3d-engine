@@ -67,7 +67,7 @@ Error walkDirectoryTree(const CString& dir, void* userData, WalkDirectoryTreeCal
 
 	if(!tree)
 	{
-		ANKI_LOGE("fts_open() failed");
+		ANKI_UTIL_LOGE("fts_open() failed");
 		return ErrorCode::FUNCTION_FAILED;
 	}
 
@@ -96,13 +96,13 @@ Error walkDirectoryTree(const CString& dir, void* userData, WalkDirectoryTreeCal
 
 	if(errno)
 	{
-		ANKI_LOGE("fts_read() failed: %s", strerror(errno));
+		ANKI_UTIL_LOGE("fts_read() failed: %s", strerror(errno));
 		err = ErrorCode::FUNCTION_FAILED;
 	}
 
 	if(fts_close(tree))
 	{
-		ANKI_LOGE("fts_close() failed");
+		ANKI_UTIL_LOGE("fts_close() failed");
 		err = ErrorCode::FUNCTION_FAILED;
 	}
 
@@ -121,7 +121,7 @@ Error removeDirectory(const CString& dirname)
 	dir = opendir(dirname.get());
 	if(dir == nullptr)
 	{
-		ANKI_LOGE("opendir() failed");
+		ANKI_UTIL_LOGE("opendir() failed");
 		return ErrorCode::FUNCTION_FAILED;
 	}
 
@@ -163,7 +163,7 @@ Error createDirectory(const CString& dir)
 	Error err = ErrorCode::NONE;
 	if(mkdir(dir.get(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH))
 	{
-		ANKI_LOGE("%s : %s", strerror(errno), dir.get());
+		ANKI_UTIL_LOGE("%s : %s", strerror(errno), dir.get());
 		err = ErrorCode::FUNCTION_FAILED;
 	}
 
@@ -175,7 +175,7 @@ Error getHomeDirectory(GenericMemoryPoolAllocator<U8> alloc, String& out)
 	const char* home = getenv("HOME");
 	if(home == nullptr)
 	{
-		ANKI_LOGE("HOME environment variable not set");
+		ANKI_UTIL_LOGE("HOME environment variable not set");
 		return ErrorCode::FUNCTION_FAILED;
 	}
 

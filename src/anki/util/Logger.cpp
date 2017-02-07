@@ -32,11 +32,12 @@ void Logger::addMessageHandler(void* data, MessageHandlerCallback callback)
 	m_handlers[m_handlersCount++] = Handler(data, callback);
 }
 
-void Logger::write(const char* file, int line, const char* func, MessageType type, const char* msg)
+void Logger::write(
+	const char* file, int line, const char* func, const char* subsystem, MessageType type, const char* msg)
 {
 	m_mutex.lock();
 
-	Info inf = {file, line, func, type, msg};
+	Info inf = {file, line, func, type, msg, subsystem};
 
 	U count = m_handlersCount;
 	while(count-- != 0)
@@ -52,7 +53,8 @@ void Logger::write(const char* file, int line, const char* func, MessageType typ
 	}
 }
 
-void Logger::writeFormated(const char* file, int line, const char* func, MessageType type, const char* fmt, ...)
+void Logger::writeFormated(
+	const char* file, int line, const char* func, const char* subsystem, MessageType type, const char* fmt, ...)
 {
 	char buffer[1024 * 10];
 	va_list args;
@@ -66,7 +68,7 @@ void Logger::writeFormated(const char* file, int line, const char* func, Message
 	}
 	else if(len < I(sizeof(buffer)))
 	{
-		write(file, line, func, type, buffer);
+		write(file, line, func, subsystem, type, buffer);
 		va_end(args);
 	}
 	else
@@ -80,7 +82,7 @@ void Logger::writeFormated(const char* file, int line, const char* func, Message
 		char* newBuffer = static_cast<char*>(malloc(newSize));
 		len = vsnprintf(newBuffer, newSize, fmt, args);
 
-		write(file, line, func, type, newBuffer);
+		write(file, line, func, subsystem, type, newBuffer);
 
 		free(newBuffer);
 		va_end(args);
@@ -122,10 +124,13 @@ void Logger::defaultSystemMessageHandler(void*, const Info& info)
 		ANKI_ASSERT(0);
 	}
 
+	const char* fmt = "%s[%s][%s]" ANKI_END_TERMINAL_FMT "%s %s (%s:%d %s)" ANKI_END_TERMINAL_FMT "\n";
+
 	fprintf(out,
-		"%s[%s]" ANKI_END_TERMINAL_FMT "%s %s (%s:%d %s)" ANKI_END_TERMINAL_FMT "\n",
+		fmt,
 		terminalColorBg,
 		MSG_TEXT[static_cast<U>(info.m_type)],
+		info.m_subsystem ? info.m_subsystem : "N/A ",
 		terminalColor,
 		info.m_msg,
 		info.m_file,
@@ -177,8 +182,9 @@ void Logger::defaultSystemMessageHandler(void*, const Info& info)
 	}
 
 	fprintf(out,
-		"[%s] %s (%s:%d %s)\n",
+		"[%s][%s] %s (%s:%d %s)\n",
 		MSG_TEXT[static_cast<U>(info.m_type)],
+		info.m_subsystem ? info.m_subsystem : "N/A ",
 		info.m_msg,
 		info.m_file,
 		info.m_line,

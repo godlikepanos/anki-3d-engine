@@ -20,7 +20,7 @@ AsyncLoader::~AsyncLoader()
 
 	if(!m_taskQueue.isEmpty())
 	{
-		ANKI_LOGW("Stoping loading thread while there is work to do");
+		ANKI_RESOURCE_LOGW("Stoping loading thread while there is work to do");
 
 		while(!m_taskQueue.isEmpty())
 		{
@@ -129,7 +129,7 @@ Error AsyncLoader::threadWorker()
 			}
 			else
 			{
-				ANKI_LOGE("Async loader task failed");
+				ANKI_RESOURCE_LOGE("Async loader task failed");
 			}
 
 			// Do other stuff

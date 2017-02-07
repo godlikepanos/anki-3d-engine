@@ -83,12 +83,12 @@ Error Ms::createRt()
 
 Error Ms::init(const ConfigSet& initializer)
 {
-	ANKI_LOGI("Initializing g-buffer pass");
+	ANKI_R_LOGI("Initializing g-buffer pass");
 
 	Error err = initInternal(initializer);
 	if(err)
 	{
-		ANKI_LOGE("Failed to initialize g-buffer pass");
+		ANKI_R_LOGE("Failed to initialize g-buffer pass");
 	}
 
 	return err;

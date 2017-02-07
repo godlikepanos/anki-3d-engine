@@ -62,7 +62,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 	m_width = m_r->getWidth() / SSAO_FRACTION;
 	m_height = m_r->getHeight() / SSAO_FRACTION;
 
-	ANKI_LOGI("Initializing SSAO. Size %ux%u", m_width, m_height);
+	ANKI_R_LOGI("Initializing SSAO. Size %ux%u", m_width, m_height);
 
 	//
 	// create FBOs
@@ -147,7 +147,7 @@ Error Ssao::init(const ConfigSet& config)
 
 	if(err)
 	{
-		ANKI_LOGE("Failed to init PPS SSAO");
+		ANKI_R_LOGE("Failed to init PPS SSAO");
 	}
 
 	return err;

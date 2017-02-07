@@ -74,7 +74,7 @@ Error Renderer::init(ThreadPool* threadpool,
 	Error err = initInternal(config);
 	if(err)
 	{
-		ANKI_LOGE("Failed to initialize the renderer");
+		ANKI_R_LOGE("Failed to initialize the renderer");
 	}
 
 	return err;
@@ -85,7 +85,7 @@ Error Renderer::initInternal(const ConfigSet& config)
 	// Set from the config
 	m_width = config.getNumber("width");
 	m_height = config.getNumber("height");
-	ANKI_LOGI("Initializing offscreen renderer. Size %ux%u", m_width, m_height);
+	ANKI_R_LOGI("Initializing offscreen renderer. Size %ux%u", m_width, m_height);
 
 	m_lodDistance = config.getNumber("lodDistance");
 	m_frameCount = 0;
@@ -95,7 +95,7 @@ Error Renderer::initInternal(const ConfigSet& config)
 	// A few sanity checks
 	if(m_width < 10 || m_height < 10)
 	{
-		ANKI_LOGE("Incorrect sizes");
+		ANKI_R_LOGE("Incorrect sizes");
 		return ErrorCode::USER_DATA;
 	}
 

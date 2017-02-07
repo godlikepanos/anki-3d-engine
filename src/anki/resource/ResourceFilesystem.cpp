@@ -82,7 +82,7 @@ public:
 		m_archive = unzOpen(&archive[0]);
 		if(m_archive == nullptr)
 		{
-			ANKI_LOGE("Failed to open archive");
+			ANKI_RESOURCE_LOGE("Failed to open archive");
 			return ErrorCode::FILE_ACCESS;
 		}
 
@@ -90,14 +90,14 @@ public:
 		const int caseSensitive = 1;
 		if(unzLocateFile(m_archive, &archivedFname[0], caseSensitive) != UNZ_OK)
 		{
-			ANKI_LOGE("Failed to locate file in archive");
+			ANKI_RESOURCE_LOGE("Failed to locate file in archive");
 			return ErrorCode::FILE_ACCESS;
 		}
 
 		// Open file
 		if(unzOpenCurrentFile(m_archive) != UNZ_OK)
 		{
-			ANKI_LOGE("unzOpenCurrentFile() failed");
+			ANKI_RESOURCE_LOGE("unzOpenCurrentFile() failed");
 			return ErrorCode::FILE_ACCESS;
 		}
 
@@ -127,7 +127,7 @@ public:
 
 		if(I64(size) != readSize)
 		{
-			ANKI_LOGE("File read failed");
+			ANKI_RESOURCE_LOGE("File read failed");
 			return ErrorCode::FILE_ACCESS;
 		}
 
@@ -162,7 +162,7 @@ public:
 		{
 			if(unzCloseCurrentFile(m_archive) || unzOpenCurrentFile(m_archive))
 			{
-				ANKI_LOGE("Rewind failed");
+				ANKI_RESOURCE_LOGE("Rewind failed");
 				return ErrorCode::FUNCTION_FAILED;
 			}
 		}
@@ -205,14 +205,14 @@ Error ResourceFilesystem::init(const ConfigSet& config, const CString& cacheDir)
 
 	if(paths.getSize() < 1)
 	{
-		ANKI_LOGE("Config option \"dataPaths\" is empty");
+		ANKI_RESOURCE_LOGE("Config option \"dataPaths\" is empty");
 		return ErrorCode::USER_DATA;
 	}
 
 	for(auto& path : paths)
 	{
 		ANKI_CHECK(addNewPath(path.toCString()));
-		ANKI_LOGI("Adding new data path \"%s\"", &path[0]);
+		ANKI_RESOURCE_LOGI("Adding new data path \"%s\"", &path[0]);
 	}
 
 	addCachePath(cacheDir);
@@ -242,7 +242,7 @@ Error ResourceFilesystem::addNewPath(const CString& path)
 		unzFile zfile = unzOpen(&path[0]);
 		if(!zfile)
 		{
-			ANKI_LOGE("Failed to open archive");
+			ANKI_RESOURCE_LOGE("Failed to open archive");
 			return ErrorCode::FILE_ACCESS;
 		}
 
@@ -250,7 +250,7 @@ Error ResourceFilesystem::addNewPath(const CString& path)
 		if(unzGoToFirstFile(zfile) != UNZ_OK)
 		{
 			unzClose(zfile);
-			ANKI_LOGE("unzGoToFirstFile() failed. Empty archive?");
+			ANKI_RESOURCE_LOGE("unzGoToFirstFile() failed. Empty archive?");
 			return ErrorCode::FILE_ACCESS;
 		}
 
@@ -266,7 +266,7 @@ Error ResourceFilesystem::addNewPath(const CString& path)
 			if(unzGetCurrentFileInfo(zfile, &info, &filename[0], filename.getSize(), nullptr, 0, nullptr, 0) != UNZ_OK)
 			{
 				unzClose(zfile);
-				ANKI_LOGE("unzGetCurrentFileInfo() failed");
+				ANKI_RESOURCE_LOGE("unzGetCurrentFileInfo() failed");
 				return ErrorCode::FILE_ACCESS;
 			}
 
@@ -304,7 +304,7 @@ Error ResourceFilesystem::addNewPath(const CString& path)
 
 		if(p.m_files.getSize() < 1)
 		{
-			ANKI_LOGE("Directory is empty: %s", &path[0]);
+			ANKI_RESOURCE_LOGE("Directory is empty: %s", &path[0]);
 			return ErrorCode::USER_DATA;
 		}
 	}
@@ -386,7 +386,7 @@ Error ResourceFilesystem::openFile(const ResourceFilename& filename, ResourceFil
 
 	if(!rfile)
 	{
-		ANKI_LOGE("File not found: %s", &filename[0]);
+		ANKI_RESOURCE_LOGE("File not found: %s", &filename[0]);
 		return ErrorCode::USER_DATA;
 	}
 

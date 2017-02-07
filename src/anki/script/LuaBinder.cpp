@@ -13,7 +13,7 @@ namespace anki
 
 static int luaPanic(lua_State* l)
 {
-	ANKI_LOGE("Lua panic attack: %s", lua_tostring(l, -1));
+	ANKI_SCRIPT_LOGE("Lua panic attack: %s", lua_tostring(l, -1));
 	abort();
 }
 
@@ -97,7 +97,7 @@ Error LuaBinder::evalString(const CString& str)
 	int e = luaL_dostring(m_l, &str[0]);
 	if(e)
 	{
-		ANKI_LOGE("%s (line:%d)", lua_tostring(m_l, -1));
+		ANKI_SCRIPT_LOGE("%s (line:%d)", lua_tostring(m_l, -1));
 		lua_pop(m_l, 1);
 		err = ErrorCode::USER_DATA;
 	}

@@ -79,7 +79,7 @@ ThreadPool::ThreadPool(U32 threadsCount)
 
 	if(m_threads == nullptr)
 	{
-		ANKI_LOGF("Out of memory");
+		ANKI_UTIL_LOGF("Out of memory");
 	}
 
 	while(threadsCount-- != 0)

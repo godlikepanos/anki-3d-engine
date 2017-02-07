@@ -39,7 +39,7 @@ Error ResourceManager::loadResource(const CString& filename, ResourcePtr<T>& out
 			err = ptr->load(filename);
 			if(err)
 			{
-				ANKI_LOGE("Failed to load resource: %s", &filename[0]);
+				ANKI_RESOURCE_LOGE("Failed to load resource: %s", &filename[0]);
 				m_alloc.deleteInstance(ptr);
 				return err;
 			}

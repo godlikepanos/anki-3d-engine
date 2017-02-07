@@ -23,7 +23,7 @@ Error Volumetric::init(const ConfigSet& config)
 	Error err = initInternal(config);
 	if(err)
 	{
-		ANKI_LOGE("Failed to initialize volumetric pass");
+		ANKI_R_LOGE("Failed to initialize volumetric pass");
 	}
 
 	return err;
@@ -34,7 +34,7 @@ Error Volumetric::initInternal(const ConfigSet& config)
 	m_width = m_r->getWidth() / VOLUMETRIC_FRACTION;
 	m_height = m_r->getHeight() / VOLUMETRIC_FRACTION;
 
-	ANKI_LOGI("Initializing volumetric pass. Size %ux%u", m_width, m_height);
+	ANKI_R_LOGI("Initializing volumetric pass. Size %ux%u", m_width, m_height);
 
 	// Misc
 	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseLdrRgb64x64.ankitex", m_noiseTex));

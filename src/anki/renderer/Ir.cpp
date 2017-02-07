@@ -57,12 +57,12 @@ Ir::~Ir()
 
 Error Ir::init(const ConfigSet& config)
 {
-	ANKI_LOGI("Initializing image reflections");
+	ANKI_R_LOGI("Initializing image reflections");
 
 	Error err = initInternal(config);
 	if(err)
 	{
-		ANKI_LOGE("Failed to initialize image reflections");
+		ANKI_R_LOGE("Failed to initialize image reflections");
 	}
 
 	return err;
@@ -74,7 +74,7 @@ Error Ir::initInternal(const ConfigSet& config)
 
 	if(m_fbSize < TILE_SIZE)
 	{
-		ANKI_LOGE("Too low ir.rendererSize");
+		ANKI_R_LOGE("Too low ir.rendererSize");
 		return ErrorCode::USER_DATA;
 	}
 
@@ -82,7 +82,7 @@ Error Ir::initInternal(const ConfigSet& config)
 
 	if(m_cubemapArrSize < 2)
 	{
-		ANKI_LOGE("Too low ir.cubemapTextureArraySize");
+		ANKI_R_LOGE("Too low ir.cubemapTextureArraySize");
 		return ErrorCode::USER_DATA;
 	}
 
@@ -600,7 +600,7 @@ Error Ir::run(RenderingContext& rctx)
 
 	if(visRez.getCount(VisibilityGroupType::REFLECTION_PROBES) > m_cubemapArrSize)
 	{
-		ANKI_LOGW("Increase the ir.cubemapTextureArraySize");
+		ANKI_R_LOGW("Increase the ir.cubemapTextureArraySize");
 	}
 
 	// Render some of the probes

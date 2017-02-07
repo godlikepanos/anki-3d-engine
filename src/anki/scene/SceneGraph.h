@@ -264,7 +264,7 @@ inline Error SceneGraph::newSceneNode(const CString& name, Node*& node, Args&&..
 
 	if(err)
 	{
-		ANKI_LOGE("Failed to create scene node: %s", (name.isEmpty()) ? "unnamed" : &name[0]);
+		ANKI_SCENE_LOGE("Failed to create scene node: %s", (name.isEmpty()) ? "unnamed" : &name[0]);
 
 		if(node)
 		{

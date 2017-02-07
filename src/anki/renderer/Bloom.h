@@ -102,11 +102,11 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& cfg)
 	{
-		ANKI_LOGI("Initializing bloom passes");
+		ANKI_R_LOGI("Initializing bloom passes");
 		Error err = initInternal(cfg);
 		if(err)
 		{
-			ANKI_LOGE("Failed to initialize bloom passes");
+			ANKI_R_LOGE("Failed to initialize bloom passes");
 		}
 		return err;
 	}

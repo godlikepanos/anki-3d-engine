@@ -151,12 +151,12 @@ Error DepthDownscale::initInternal(const ConfigSet& cfg)
 
 Error DepthDownscale::init(const ConfigSet& cfg)
 {
-	ANKI_LOGI("Initializing depth downscale passes");
+	ANKI_R_LOGI("Initializing depth downscale passes");
 
 	Error err = initInternal(cfg);
 	if(err)
 	{
-		ANKI_LOGE("Failed to initialize depth downscale passes");
+		ANKI_R_LOGE("Failed to initialize depth downscale passes");
 	}
 
 	return err;

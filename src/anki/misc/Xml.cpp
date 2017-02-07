@@ -16,7 +16,7 @@ ANKI_USE_RESULT Error XmlElement::check() const
 	Error err = ErrorCode::NONE;
 	if(m_el == nullptr)
 	{
-		ANKI_LOGE("Empty element");
+		ANKI_MISC_LOGE("Empty element");
 		err = ErrorCode::USER_DATA;
 	}
 	return err;
@@ -50,7 +50,7 @@ Error XmlElement::getI64(I64& out) const
 		}
 		else
 		{
-			ANKI_LOGE("Failed to return int. Element: %s", m_el->Value());
+			ANKI_MISC_LOGE("Failed to return int. Element: %s", m_el->Value());
 			err = ErrorCode::USER_DATA;
 		}
 	}
@@ -71,7 +71,7 @@ Error XmlElement::getF64(F64& out) const
 		}
 		else
 		{
-			ANKI_LOGE("Failed to return float. Element: %s", m_el->Value());
+			ANKI_MISC_LOGE("Failed to return float. Element: %s", m_el->Value());
 			err = ErrorCode::USER_DATA;
 		}
 	}
@@ -115,7 +115,7 @@ Error XmlElement::getFloats(DynamicArrayAuto<F64>& out) const
 
 	if(err)
 	{
-		ANKI_LOGE("Failed to return floats. Element: %s", m_el->Value());
+		ANKI_MISC_LOGE("Failed to return floats. Element: %s", m_el->Value());
 	}
 
 	list.destroy(m_alloc);
@@ -130,7 +130,7 @@ Error XmlElement::getMat4(Mat4& out) const
 
 	if(!err && arr.getSize() != 16)
 	{
-		ANKI_LOGE("Expecting 16 elements for Mat4");
+		ANKI_MISC_LOGE("Expecting 16 elements for Mat4");
 		err = ErrorCode::USER_DATA;
 	}
 
@@ -144,7 +144,7 @@ Error XmlElement::getMat4(Mat4& out) const
 
 	if(err)
 	{
-		ANKI_LOGE("Failed to return Mat4. Element: %s", m_el->Value());
+		ANKI_MISC_LOGE("Failed to return Mat4. Element: %s", m_el->Value());
 	}
 
 	return err;
@@ -157,7 +157,7 @@ Error XmlElement::getVec3(Vec3& out) const
 
 	if(!err && arr.getSize() != 3)
 	{
-		ANKI_LOGE("Expecting 3 elements for Vec3");
+		ANKI_MISC_LOGE("Expecting 3 elements for Vec3");
 		err = ErrorCode::USER_DATA;
 	}
 
@@ -171,7 +171,7 @@ Error XmlElement::getVec3(Vec3& out) const
 
 	if(err)
 	{
-		ANKI_LOGE("Failed to return Vec3. Element: %s", m_el->Value());
+		ANKI_MISC_LOGE("Failed to return Vec3. Element: %s", m_el->Value());
 	}
 
 	return err;
@@ -184,7 +184,7 @@ Error XmlElement::getVec4(Vec4& out) const
 
 	if(!err && arr.getSize() != 4)
 	{
-		ANKI_LOGE("Expecting 4 elements for Vec4");
+		ANKI_MISC_LOGE("Expecting 4 elements for Vec4");
 		err = ErrorCode::USER_DATA;
 	}
 
@@ -198,7 +198,7 @@ Error XmlElement::getVec4(Vec4& out) const
 
 	if(err)
 	{
-		ANKI_LOGE("Failed to return Vec4. Element: %s", m_el->Value());
+		ANKI_MISC_LOGE("Failed to return Vec4. Element: %s", m_el->Value());
 	}
 
 	return err;
@@ -236,7 +236,7 @@ Error XmlElement::getChildElement(const CString& name, XmlElement& out) const
 
 	if(!out)
 	{
-		ANKI_LOGE("Cannot find tag %s", &name[0]);
+		ANKI_MISC_LOGE("Cannot find tag %s", &name[0]);
 		err = ErrorCode::USER_DATA;
 	}
 
@@ -303,7 +303,7 @@ Error XmlDocument::parse(const CString& xmlText, GenericMemoryPoolAllocator<U8> 
 
 	if(m_doc.Parse(&xmlText[0]))
 	{
-		ANKI_LOGE(
+		ANKI_MISC_LOGE(
 			"Cannot parse file. Reason: %s", ((m_doc.GetErrorStr1() == nullptr) ? "unknown" : m_doc.GetErrorStr1()));
 
 		return ErrorCode::USER_DATA;
@@ -319,7 +319,7 @@ ANKI_USE_RESULT Error XmlDocument::getChildElement(const CString& name, XmlEleme
 
 	if(!out)
 	{
-		ANKI_LOGE("Cannot find tag %s", &name[0]);
+		ANKI_MISC_LOGE("Cannot find tag %s", &name[0]);
 		err = ErrorCode::USER_DATA;
 	}
 

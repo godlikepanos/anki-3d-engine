@@ -34,8 +34,8 @@ static Signature computeSignature(void* ptr)
 }
 #endif
 
-#define ANKI_CREATION_OOM_ACTION() ANKI_LOGF("Out of memory")
-#define ANKI_OOM_ACTION() ANKI_LOGE("Out of memory. Expect segfault")
+#define ANKI_CREATION_OOM_ACTION() ANKI_UTIL_LOGF("Out of memory")
+#define ANKI_OOM_ACTION() ANKI_UTIL_LOGE("Out of memory. Expect segfault")
 
 template<typename TPtr, typename TSize>
 static void invalidateMemory(TPtr ptr, TSize size)
@@ -64,7 +64,7 @@ void* mallocAligned(PtrSize size, PtrSize alignmentBytes)
 	}
 	else
 	{
-		ANKI_LOGE("mallocAligned() failed");
+		ANKI_UTIL_LOGE("mallocAligned() failed");
 	}
 
 	return out;
@@ -78,7 +78,7 @@ void* mallocAligned(PtrSize size, PtrSize alignmentBytes)
 	}
 	else
 	{
-		ANKI_LOGE("memalign() failed");
+		ANKI_UTIL_LOGE("memalign() failed");
 	}
 
 	return out;
@@ -93,7 +93,7 @@ void* mallocAligned(PtrSize size, PtrSize alignmentBytes)
 	}
 	else
 	{
-		ANKI_LOGE("_aligned_malloc() failed");
+		ANKI_UTIL_LOGE("_aligned_malloc() failed");
 	}
 
 	return out;
@@ -196,8 +196,8 @@ HeapMemoryPool::~HeapMemoryPool()
 	U count = m_allocationsCount.load();
 	if(count != 0)
 	{
-		ANKI_LOGW("Memory pool destroyed before all memory being released "
-				  "(%u deallocations missed)",
+		ANKI_UTIL_LOGW("Memory pool destroyed before all memory being released "
+					   "(%u deallocations missed)",
 			count);
 	}
 }
@@ -255,7 +255,7 @@ void HeapMemoryPool::free(void* ptr)
 	memU8 -= m_headerSize;
 	if(memcmp(memU8, &m_signature, sizeof(m_signature)) != 0)
 	{
-		ANKI_LOGE("Signature missmatch on free");
+		ANKI_UTIL_LOGE("Signature missmatch on free");
 	}
 
 	ptr = static_cast<void*>(memU8);
@@ -291,7 +291,7 @@ StackMemoryPool::~StackMemoryPool()
 	auto allocCount = m_allocationsCount.load();
 	if(!m_ignoreDeallocationErrors && allocCount != 0)
 	{
-		ANKI_LOGW("Forgot to deallocate");
+		ANKI_UTIL_LOGW("Forgot to deallocate");
 	}
 }
 
@@ -380,7 +380,7 @@ void* StackMemoryPool::allocate(PtrSize size, PtrSize alignment)
 				++crntChunk;
 				if(crntChunk >= m_chunks.getEnd())
 				{
-					ANKI_LOGE("Number of chunks is not enough. Expect a crash");
+					ANKI_UTIL_LOGE("Number of chunks is not enough. Expect a crash");
 				}
 
 				if(crntChunk->m_baseMem == nullptr)
@@ -470,7 +470,7 @@ void StackMemoryPool::reset()
 	auto allocCount = m_allocationsCount.exchange(0);
 	if(!m_ignoreDeallocationErrors && allocCount != 0)
 	{
-		ANKI_LOGW("Forgot to deallocate");
+		ANKI_UTIL_LOGW("Forgot to deallocate");
 	}
 }
 
@@ -495,7 +495,7 @@ ChainMemoryPool::~ChainMemoryPool()
 {
 	if(m_allocationsCount.load() != 0)
 	{
-		ANKI_LOGW("Memory pool destroyed before all memory being released");
+		ANKI_UTIL_LOGW("Memory pool destroyed before all memory being released");
 	}
 
 	Chunk* ch = m_headChunk;

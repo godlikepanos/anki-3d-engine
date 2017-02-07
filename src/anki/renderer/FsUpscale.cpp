@@ -20,7 +20,7 @@ Error FsUpscale::init(const ConfigSet& config)
 	Error err = initInternal(config);
 	if(err)
 	{
-		ANKI_LOGE("Failed to initialize forward shading upscale");
+		ANKI_R_LOGE("Failed to initialize forward shading upscale");
 	}
 
 	return err;
@@ -28,7 +28,7 @@ Error FsUpscale::init(const ConfigSet& config)
 
 Error FsUpscale::initInternal(const ConfigSet& config)
 {
-	ANKI_LOGI("Initializing forward shading upscale");
+	ANKI_R_LOGI("Initializing forward shading upscale");
 
 	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseLdrRgb64x64.ankitex", m_noiseTex));
 

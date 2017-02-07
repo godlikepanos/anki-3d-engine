@@ -67,7 +67,7 @@ Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
 	m_world = NewtonCreate();
 	if(!m_world)
 	{
-		ANKI_LOGE("NewtonCreate() failed");
+		ANKI_PHYS_LOGE("NewtonCreate() failed");
 		return ErrorCode::FUNCTION_FAILED;
 	}
 

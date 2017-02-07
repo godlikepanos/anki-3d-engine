@@ -547,7 +547,7 @@ inline void String::toString(Allocator alloc, TNumber number)
 
 	if(ret < 0 || ret > static_cast<I>(buff.getSize()))
 	{
-		ANKI_LOGF("To small intermediate buffer");
+		ANKI_UTIL_LOGF("To small intermediate buffer");
 	}
 	else
 	{

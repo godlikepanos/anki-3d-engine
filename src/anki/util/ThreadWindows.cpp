@@ -71,7 +71,7 @@ void Thread::start(void* userData, ThreadCallback callback, I pinToCore)
 	m_impl = CreateThread(nullptr, 0, threadCallback, this, 0, nullptr);
 	if(m_impl == nullptr)
 	{
-		ANKI_LOGF("CreateThread() failed");
+		ANKI_UTIL_LOGF("CreateThread() failed");
 	}
 	else
 	{
@@ -93,14 +93,14 @@ Error Thread::join()
 	BOOL ok = GetExitCodeThread(m_impl, &exitCode);
 	if(!ok)
 	{
-		ANKI_LOGF("GetExitCodeThread() failed");
+		ANKI_UTIL_LOGF("GetExitCodeThread() failed");
 	}
 
 	// Delete handle
 	ok = CloseHandle(m_impl);
 	if(!ok)
 	{
-		ANKI_LOGF("CloseHandle() failed");
+		ANKI_UTIL_LOGF("CloseHandle() failed");
 	}
 
 	m_impl = nullptr;
@@ -123,7 +123,7 @@ Mutex::Mutex()
 	CRITICAL_SECTION* mtx = reinterpret_cast<CRITICAL_SECTION*>(malloc(sizeof(CRITICAL_SECTION)));
 	if(mtx == nullptr)
 	{
-		ANKI_LOGF("Out of memory");
+		ANKI_UTIL_LOGF("Out of memory");
 	}
 
 	m_impl = mtx;
@@ -164,7 +164,7 @@ ConditionVariable::ConditionVariable()
 	CONDITION_VARIABLE* cond = reinterpret_cast<CONDITION_VARIABLE*>(malloc(sizeof(CONDITION_VARIABLE)));
 	if(cond == nullptr)
 	{
-		ANKI_LOGF("Out of memory");
+		ANKI_UTIL_LOGF("Out of memory");
 	}
 
 	m_impl = cond;
@@ -214,7 +214,7 @@ Barrier::Barrier(U32 count)
 	BarrierImpl* barrier = reinterpret_cast<BarrierImpl*>(malloc(sizeof(BarrierImpl)));
 	if(barrier == nullptr)
 	{
-		ANKI_LOGF("Out of memory");
+		ANKI_UTIL_LOGF("Out of memory");
 	}
 
 	InitializeCriticalSection(&barrier->m_mtx);

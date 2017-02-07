@@ -30,7 +30,7 @@ Error DecalComponent::setLayer(CString texAtlasFname, CString texAtlasSubtexName
 	// Add a border to the UVs to avoid complex shader logic
 	if(l.m_atlas->getSubTextureMargin() < ATLAS_SUB_TEXTURE_MARGIN)
 	{
-		ANKI_LOGE("Need texture atlas with margin at least %u", ATLAS_SUB_TEXTURE_MARGIN);
+		ANKI_SCENE_LOGE("Need texture atlas with margin at least %u", ATLAS_SUB_TEXTURE_MARGIN);
 		return ErrorCode::USER_DATA;
 	}
 

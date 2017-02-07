@@ -38,7 +38,7 @@ Error removeDirectory(const CString& dirname)
 	// For some reason dirname should be double null terminated
 	if(dirname.getLength() > MAX_PATH - 2)
 	{
-		ANKI_LOGE("Path too big");
+		ANKI_UTIL_LOGE("Path too big");
 		return ErrorCode::FUNCTION_FAILED;
 	}
 
@@ -53,7 +53,7 @@ Error removeDirectory(const CString& dirname)
 	I result = SHFileOperationA(&fileOperation);
 	if(result != 0)
 	{
-		ANKI_LOGE("Could not delete directory %s", &dirname[0]);
+		ANKI_UTIL_LOGE("Could not delete directory %s", &dirname[0]);
 		err = ErrorCode::FUNCTION_FAILED;
 	}
 
@@ -65,7 +65,7 @@ Error createDirectory(const CString& dir)
 	Error err = ErrorCode::NONE;
 	if(CreateDirectory(dir.get(), NULL) == 0)
 	{
-		ANKI_LOGE("Failed to create directory %s", dir.get());
+		ANKI_UTIL_LOGE("Failed to create directory %s", dir.get());
 		err = ErrorCode::FUNCTION_FAILED;
 	}
 
@@ -79,7 +79,7 @@ Error getHomeDirectory(GenericMemoryPoolAllocator<U8> alloc, String& out)
 
 	if(homed == nullptr || homep == nullptr)
 	{
-		ANKI_LOGE("HOME environment variables not set");
+		ANKI_UTIL_LOGE("HOME environment variables not set");
 		return ErrorCode::FUNCTION_FAILED;
 	}
 
@@ -103,7 +103,7 @@ static Error walkDirectoryTreeInternal(
 	// Append something to the path
 	if(dir.getLength() > MAX_PATH_LEN - 2)
 	{
-		ANKI_LOGE("Path too long");
+		ANKI_UTIL_LOGE("Path too long");
 		return ErrorCode::FUNCTION_FAILED;
 	}
 
@@ -128,7 +128,7 @@ static Error walkDirectoryTreeInternal(
 	handle = FindFirstFile(&dir2[0], &find);
 	if(handle == INVALID_HANDLE_VALUE)
 	{
-		ANKI_LOGE("FindFirstFile() failed");
+		ANKI_UTIL_LOGE("FindFirstFile() failed");
 		return ErrorCode::FUNCTION_FAILED;
 	}
 
@@ -147,7 +147,7 @@ static Error walkDirectoryTreeInternal(
 			U oldLen = strlen(&dir2[0]);
 			if(oldLen + filename.getLength() > MAX_PATH_LEN)
 			{
-				ANKI_LOGE("Path too long");
+				ANKI_UTIL_LOGE("Path too long");
 				return ErrorCode::FUNCTION_FAILED;
 			}
 
@@ -176,7 +176,7 @@ static Error walkDirectoryTreeInternal(
 
 	if(GetLastError() != ERROR_NO_MORE_FILES)
 	{
-		ANKI_LOGE("Unknown error");
+		ANKI_UTIL_LOGE("Unknown error");
 		FindClose(handle);
 		return ErrorCode::FUNCTION_FAILED;
 	}

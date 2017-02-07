@@ -55,12 +55,12 @@ Is::~Is()
 
 Error Is::init(const ConfigSet& config)
 {
-	ANKI_LOGI("Initializing light stage");
+	ANKI_R_LOGI("Initializing light stage");
 	Error err = initInternal(config);
 
 	if(err)
 	{
-		ANKI_LOGE("Failed to init light stage");
+		ANKI_R_LOGE("Failed to init light stage");
 	}
 
 	return err;
@@ -72,7 +72,7 @@ Error Is::initInternal(const ConfigSet& config)
 
 	if(m_maxLightIds == 0)
 	{
-		ANKI_LOGE("Incorrect number of max light indices");
+		ANKI_R_LOGE("Incorrect number of max light indices");
 		return ErrorCode::USER_DATA;
 	}
 

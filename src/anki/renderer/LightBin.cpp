@@ -268,7 +268,7 @@ private:
 		count.set(a % maxCount);
 		if(ANKI_UNLIKELY(a >= maxCount))
 		{
-			ANKI_LOGW("Increase cluster limit: %s", &what[0]);
+			ANKI_R_LOGW("Increase cluster limit: %s", &what[0]);
 		}
 	}
 };
@@ -663,7 +663,7 @@ void LightBin::binLights(U32 threadId, PtrSize threadsCount, LightBinContext& ct
 			}
 			else
 			{
-				ANKI_LOGW("Light IDs buffer too small");
+				ANKI_R_LOGW("Light IDs buffer too small");
 			}
 		} // end for
 	} // end while
@@ -845,7 +845,7 @@ void LightBin::writeAndBinDecal(
 		LockGuard<SpinLock> lock(ctx.m_diffDecalTexAtlasMtx);
 		if(ctx.m_diffDecalTexAtlas && ctx.m_diffDecalTexAtlas != atlas)
 		{
-			ANKI_LOGF("All decals should have the same tex atlas");
+			ANKI_R_LOGF("All decals should have the same tex atlas");
 		}
 
 		ctx.m_diffDecalTexAtlas = atlas;
@@ -860,7 +860,7 @@ void LightBin::writeAndBinDecal(
 		LockGuard<SpinLock> lock(ctx.m_normalRoughnessDecalTexAtlasMtx);
 		if(ctx.m_normalRoughnessDecalTexAtlas && ctx.m_normalRoughnessDecalTexAtlas != atlas)
 		{
-			ANKI_LOGF("All decals should have the same tex atlas");
+			ANKI_R_LOGF("All decals should have the same tex atlas");
 		}
 
 		ctx.m_normalRoughnessDecalTexAtlas = atlas;

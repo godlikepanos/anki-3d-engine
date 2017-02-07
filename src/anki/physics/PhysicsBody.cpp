@@ -60,7 +60,7 @@ Error PhysicsBody::create(const PhysicsBodyInitInfo& init)
 
 	if(!m_body)
 	{
-		ANKI_LOGE("NewtonCreateXXBody() failed");
+		ANKI_PHYS_LOGE("NewtonCreateXXBody() failed");
 		return ErrorCode::FUNCTION_FAILED;
 	}
 

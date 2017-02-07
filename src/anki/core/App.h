@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <anki/core/Common.h>
 #include <anki/util/Allocator.h>
 #include <anki/util/String.h>
 #include <anki/util/Ptr.h>

@@ -213,7 +213,7 @@ vec2 computeTextureCoordParallax(in sampler2D heightMap, in vec2 uv, in float he
 #if PASS == COLOR && LOD == 0
 	const uint MAX_SAMPLES = 25;
 	const uint MIN_SAMPLES = 1;
-	const float MAX_EFFECTIVE_DISTANCE = 8.0;
+	const float MAX_EFFECTIVE_DISTANCE = 32.0;
 
 	// Get that because we are sampling inside a loop
 	vec2 dPdx = dFdx(uv);
@@ -230,9 +230,10 @@ vec2 computeTextureCoordParallax(in sampler2D heightMap, in vec2 uv, in float he
 
 	vec3 E = normalize(eyeTangentSpace);
 
-	float sampleCountf = mix(float(MAX_SAMPLES),
-		float(MIN_SAMPLES),
-		min(dot(E, normTangentSpace), in_vertPosViewSpace.z / -MAX_EFFECTIVE_DISTANCE));
+	float factor0 = -dot(E, normTangentSpace);
+	float factor1 = in_vertPosViewSpace.z / -MAX_EFFECTIVE_DISTANCE;
+	float factor = (1.0 - factor0) * (1.0 - factor1);
+	float sampleCountf = mix(float(MIN_SAMPLES), float(MAX_SAMPLES), factor);
 
 	float stepSize = 1.0 / sampleCountf;
 

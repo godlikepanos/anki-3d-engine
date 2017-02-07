@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <anki/core/Common.h>
 #include <anki/util/StdTypes.h>
 #include <anki/util/Array.h>
 #include <anki/util/String.h>

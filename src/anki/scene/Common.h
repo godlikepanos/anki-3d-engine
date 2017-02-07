@@ -12,6 +12,11 @@
 namespace anki
 {
 
+#define ANKI_SCENE_LOGI(...) ANKI_LOG("SCEN", NORMAL, __VA_ARGS__)
+#define ANKI_SCENE_LOGE(...) ANKI_LOG("SCEN", ERROR, __VA_ARGS__)
+#define ANKI_SCENE_LOGW(...) ANKI_LOG("SCEN", WARNING, __VA_ARGS__)
+#define ANKI_SCENE_LOGF(...) ANKI_LOG("SCEN", FATAL, __VA_ARGS__)
+
 // Forward
 class SceneGraph;
 class SceneNode;

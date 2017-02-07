@@ -12,11 +12,11 @@ namespace anki
 
 Error Tm::init(const ConfigSet& cfg)
 {
-	ANKI_LOGI("Initializing tonemapping");
+	ANKI_R_LOGI("Initializing tonemapping");
 	Error err = initInternal(cfg);
 	if(err)
 	{
-		ANKI_LOGE("Failed to initialize tonemapping");
+		ANKI_R_LOGE("Failed to initialize tonemapping");
 	}
 
 	return err;

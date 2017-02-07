@@ -60,7 +60,7 @@ static Array<const char*, U(TraceCounterType::COUNT)> counterNames = {{"GR_DRAWC
 #define ANKI_TRACE_FILE_ERROR()                                                                                        \
 	if(err)                                                                                                            \
 	{                                                                                                                  \
-		ANKI_LOGE("Error writing the trace file");                                                                     \
+		ANKI_CORE_LOGE("Error writing the trace file");                                                                \
 	}
 
 const U MAX_EVENTS_DEPTH = 20;
@@ -148,7 +148,7 @@ void TraceManager::stopEvent(TraceEventType type)
 	}
 	else
 	{
-		ANKI_LOGW("Increase the buffered trace entries");
+		ANKI_CORE_LOGW("Increase the buffered trace entries");
 		m_perFrameCounters[U(TraceCounterType::COUNT) + U(type)].fetchAdd(0);
 	}
 }
@@ -254,7 +254,7 @@ void TraceManager::stopFrame()
 
 	if(err)
 	{
-		ANKI_LOGE("Error writing the trace file");
+		ANKI_CORE_LOGE("Error writing the trace file");
 	}
 }
 

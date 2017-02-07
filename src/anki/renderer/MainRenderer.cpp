@@ -28,7 +28,7 @@ MainRenderer::MainRenderer()
 
 MainRenderer::~MainRenderer()
 {
-	ANKI_LOGI("Destroying main renderer");
+	ANKI_R_LOGI("Destroying main renderer");
 	m_materialShaderSource.destroy(m_alloc);
 }
 
@@ -41,7 +41,7 @@ Error MainRenderer::create(ThreadPool* threadpool,
 	const ConfigSet& config,
 	Timestamp* globTimestamp)
 {
-	ANKI_LOGI("Initializing main renderer");
+	ANKI_R_LOGI("Initializing main renderer");
 
 	m_alloc = HeapAllocator<U8>(allocCb, allocCbUserData);
 	m_frameAlloc = StackAllocator<U8>(allocCb, allocCbUserData, 1024 * 1024 * 10, 1.0);
@@ -81,10 +81,10 @@ Error MainRenderer::create(ThreadPool* threadpool,
 		ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/Final.frag.glsl", m_blitFrag));
 		m_r->createDrawQuadShaderProgram(m_blitFrag->getGrShader(), m_blitProg);
 
-		ANKI_LOGI("The main renderer will have to blit the offscreen renderer's result");
+		ANKI_R_LOGI("The main renderer will have to blit the offscreen renderer's result");
 	}
 
-	ANKI_LOGI("Main renderer initialized. Rendering size %ux%u", m_width, m_height);
+	ANKI_R_LOGI("Main renderer initialized. Rendering size %ux%u", m_width, m_height);
 
 	return ErrorCode::NONE;
 }

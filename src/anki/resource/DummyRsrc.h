@@ -43,7 +43,7 @@ public:
 		}
 		else
 		{
-			ANKI_LOGE("Dummy error");
+			ANKI_RESOURCE_LOGE("Dummy error");
 			err = ErrorCode::USER_DATA;
 		}
 

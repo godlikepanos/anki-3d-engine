@@ -59,7 +59,7 @@ Error CollisionResource::load(const ResourceFilename& filename)
 	}
 	else
 	{
-		ANKI_LOGE("Incorrect collision type");
+		ANKI_RESOURCE_LOGE("Incorrect collision type");
 		return ErrorCode::USER_DATA;
 	}
 

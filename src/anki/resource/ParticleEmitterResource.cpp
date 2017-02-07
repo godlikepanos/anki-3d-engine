@@ -156,37 +156,37 @@ Error ParticleEmitterResource::load(const ResourceFilename& filename)
 
 	if(m_particle.m_life <= 0.0)
 	{
-		ANKI_LOGE(ERROR, "life");
+		ANKI_RESOURCE_LOGE(ERROR, "life");
 		return ErrorCode::USER_DATA;
 	}
 
 	if(m_particle.m_life - m_particle.m_lifeDeviation <= 0.0)
 	{
-		ANKI_LOGE(ERROR, "lifeDeviation");
+		ANKI_RESOURCE_LOGE(ERROR, "lifeDeviation");
 		return ErrorCode::USER_DATA;
 	}
 
 	if(m_particle.m_size <= 0.0)
 	{
-		ANKI_LOGE(ERROR, "size");
+		ANKI_RESOURCE_LOGE(ERROR, "size");
 		return ErrorCode::USER_DATA;
 	}
 
 	if(m_maxNumOfParticles < 1)
 	{
-		ANKI_LOGE(ERROR, "maxNumOfParticles");
+		ANKI_RESOURCE_LOGE(ERROR, "maxNumOfParticles");
 		return ErrorCode::USER_DATA;
 	}
 
 	if(m_emissionPeriod <= 0.0)
 	{
-		ANKI_LOGE(ERROR, "emissionPeriod");
+		ANKI_RESOURCE_LOGE(ERROR, "emissionPeriod");
 		return ErrorCode::USER_DATA;
 	}
 
 	if(m_particlesPerEmittion < 1)
 	{
-		ANKI_LOGE(ERROR, "particlesPerEmission");
+		ANKI_RESOURCE_LOGE(ERROR, "particlesPerEmission");
 		return ErrorCode::USER_DATA;
 	}
 

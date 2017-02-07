@@ -135,7 +135,7 @@ Error App::init(const ConfigSet& config, AllocAlignedCallback allocCb, void* all
 	if(err)
 	{
 		cleanup();
-		ANKI_LOGE("App initialization failed");
+		ANKI_CORE_LOGE("App initialization failed");
 	}
 
 	return err;
@@ -168,11 +168,11 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 		"NO extra checks";
 #endif
 
-	ANKI_LOGI("Initializing application ("
-			  "version %u.%u, "
-			  "%s, "
-			  "date %s, "
-			  "commit %s)...",
+	ANKI_CORE_LOGI("Initializing application ("
+				   "version %u.%u, "
+				   "%s, "
+				   "date %s, "
+				   "commit %s)...",
 		ANKI_VERSION_MAJOR,
 		ANKI_VERSION_MINOR,
 		buildType,
@@ -185,8 +185,8 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 #if ANKI_SIMD == ANKI_SIMD_SSE
 	if(!__builtin_cpu_supports("sse4.2"))
 	{
-		ANKI_LOGF("AnKi is built with sse4.2 support but your CPU doesn't "
-				  "support it. Try bulding without SSE support");
+		ANKI_CORE_LOGF("AnKi is built with sse4.2 support but your CPU doesn't "
+					   "support it. Try bulding without SSE support");
 	}
 #endif
 
@@ -300,7 +300,7 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 
 	ANKI_CHECK(m_script->init(m_allocCb, m_allocCbData, m_scene, m_renderer));
 
-	ANKI_LOGI("Application initialized");
+	ANKI_CORE_LOGI("Application initialized");
 	return ErrorCode::NONE;
 }
 
@@ -354,7 +354,7 @@ Error App::initDirs()
 
 Error App::mainLoop()
 {
-	ANKI_LOGI("Entering main loop");
+	ANKI_CORE_LOGI("Entering main loop");
 	Bool quit = false;
 
 	HighRezTimer::Scalar prevUpdateTime = HighRezTimer::getCurrentTime();

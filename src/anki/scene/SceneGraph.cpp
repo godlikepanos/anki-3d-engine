@@ -109,7 +109,7 @@ Error SceneGraph::registerNode(SceneNode* node)
 	{
 		if(tryFindSceneNode(node->getName()))
 		{
-			ANKI_LOGE("Node with the same name already exists");
+			ANKI_SCENE_LOGE("Node with the same name already exists");
 			return ErrorCode::USER_DATA;
 		}
 

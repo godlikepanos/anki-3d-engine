@@ -114,7 +114,7 @@ Error ModelPatch::create(WeakArray<CString> meshFNames, const CString& mtlFName,
 		// Sanity check
 		if(i > 0 && !m_meshes[i]->isCompatible(*m_meshes[i - 1]))
 		{
-			ANKI_LOGE("Meshes not compatible");
+			ANKI_RESOURCE_LOGE("Meshes not compatible");
 			return ErrorCode::USER_DATA;
 		}
 
@@ -173,7 +173,7 @@ Error Model::load(const ResourceFilename& filename)
 	// Check number of model patches
 	if(count < 1)
 	{
-		ANKI_LOGE("Zero number of model patches");
+		ANKI_RESOURCE_LOGE("Zero number of model patches");
 		return ErrorCode::USER_DATA;
 	}
 

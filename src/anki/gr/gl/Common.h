@@ -31,10 +31,10 @@ class RenderingThread;
 /// @addtogroup opengl
 /// @{
 
-#define ANKI_GL_LOGI(...) ANKI_LOGI("GR/GL: " __VA_ARGS__)
-#define ANKI_GL_LOGE(...) ANKI_LOGE("GR/GL: " __VA_ARGS__)
-#define ANKI_GL_LOGW(...) ANKI_LOGW("GR/GL: " __VA_ARGS__)
-#define ANKI_GL_LOGF(...) ANKI_LOGF("GR/GL: " __VA_ARGS__)
+#define ANKI_GL_LOGI(...) ANKI_LOG("GL  ", NORMAL, __VA_ARGS__)
+#define ANKI_GL_LOGE(...) ANKI_LOG("GL  ", ERROR, __VA_ARGS__)
+#define ANKI_GL_LOGW(...) ANKI_LOG("GL  ", WARNING, __VA_ARGS__)
+#define ANKI_GL_LOGF(...) ANKI_LOG("GL  ", FATAL, __VA_ARGS__)
 
 // Spec limits
 const U MAX_UNIFORM_BLOCK_SIZE = 16384;

@@ -27,12 +27,12 @@ Sm::~Sm()
 
 Error Sm::init(const ConfigSet& config)
 {
-	ANKI_LOGI("Initializing shadowmapping");
+	ANKI_R_LOGI("Initializing shadowmapping");
 
 	Error err = initInternal(config);
 	if(err)
 	{
-		ANKI_LOGE("Failed to initialize shadowmapping");
+		ANKI_R_LOGE("Failed to initialize shadowmapping");
 	}
 
 	return err;
@@ -379,7 +379,7 @@ void Sm::prepareBuildCommandBuffers(RenderingContext& ctx)
 
 	if(omniCastersCount > m_omnis.getSize() || spotCastersCount > m_spots.getSize())
 	{
-		ANKI_LOGW("Too many shadow casters");
+		ANKI_R_LOGW("Too many shadow casters");
 		omniCastersCount = min<U>(omniCastersCount, m_omnis.getSize());
 		spotCastersCount = min<U>(spotCastersCount, m_spots.getSize());
 	}

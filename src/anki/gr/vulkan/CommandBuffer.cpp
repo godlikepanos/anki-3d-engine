@@ -191,6 +191,12 @@ void CommandBuffer::bindImage(U32 set, U32 binding, TexturePtr img, U32 level)
 	ANKI_ASSERT(!"TODO");
 }
 
+void CommandBuffer::bindTextureBuffer(
+	U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range, PixelFormat fmt)
+{
+	ANKI_ASSERT(!"TODO");
+}
+
 void CommandBuffer::bindShaderProgram(ShaderProgramPtr prog)
 {
 	m_impl->bindShaderProgram(prog);

@@ -121,7 +121,7 @@ void DebugDrawer::pushBackVertex(const Vec3& pos)
 	}
 	else
 	{
-		ANKI_LOGW("Increase DebugDrawer::MAX_VERTS_PER_FRAME");
+		ANKI_R_LOGW("Increase DebugDrawer::MAX_VERTS_PER_FRAME");
 	}
 }
 

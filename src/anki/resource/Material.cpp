@@ -40,7 +40,7 @@ Error MaterialVariableTemplate<T>::init(U idx, const MaterialLoader::Input& in, 
 
 		if(in.m_value.getSize() != floatsNeeded)
 		{
-			ANKI_LOGE("Incorrect number of values. Variable %s", &in.m_name[0]);
+			ANKI_RESOURCE_LOGE("Incorrect number of values. Variable %s", &in.m_name[0]);
 			return ErrorCode::USER_DATA;
 		}
 

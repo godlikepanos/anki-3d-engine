@@ -34,12 +34,12 @@ Lf::~Lf()
 
 Error Lf::init(const ConfigSet& config)
 {
-	ANKI_LOGI("Initializing lens flare pass");
+	ANKI_R_LOGI("Initializing lens flare pass");
 
 	Error err = initInternal(config);
 	if(err)
 	{
-		ANKI_LOGE("Failed to initialize lens flare pass");
+		ANKI_R_LOGE("Failed to initialize lens flare pass");
 	}
 
 	return err;
@@ -60,7 +60,7 @@ Error Lf::initSprite(const ConfigSet& config)
 
 	if(m_maxSpritesPerFlare < 1 || m_maxFlares < 1)
 	{
-		ANKI_LOGE("Incorrect m_maxSpritesPerFlare or m_maxFlares");
+		ANKI_R_LOGE("Incorrect m_maxSpritesPerFlare or m_maxFlares");
 		return ErrorCode::USER_DATA;
 	}
 
@@ -113,7 +113,7 @@ void Lf::resetOcclusionQueries(RenderingContext& ctx, CommandBufferPtr cmdb)
 
 	if(vi.getCount(VisibilityGroupType::FLARES) > m_maxFlares)
 	{
-		ANKI_LOGW("Visible flares exceed the limit. Increase lf.maxFlares");
+		ANKI_R_LOGW("Visible flares exceed the limit. Increase lf.maxFlares");
 	}
 
 	const U count = min<U>(vi.getCount(VisibilityGroupType::FLARES), m_maxFlares);

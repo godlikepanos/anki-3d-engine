@@ -39,7 +39,7 @@ Thread::Thread(const char* name)
 	m_impl = malloc(sizeof(pthread_t));
 	if(m_impl == nullptr)
 	{
-		ANKI_LOGF("Out of memory");
+		ANKI_UTIL_LOGF("Out of memory");
 	}
 
 	// Init the name
@@ -87,7 +87,7 @@ void Thread::start(void* userData, ThreadCallback callback, I pinToCore)
 	I err = pthread_create(thread, &attr, pthreadCallback, this);
 	if(err)
 	{
-		ANKI_LOGF("pthread_create() failed");
+		ANKI_UTIL_LOGF("pthread_create() failed");
 	}
 	else
 	{
@@ -106,7 +106,7 @@ Error Thread::join()
 	I err = pthread_join(*thread, &out);
 	if(err)
 	{
-		ANKI_LOGF("pthread_join() failed");
+		ANKI_UTIL_LOGF("pthread_join() failed");
 	}
 
 #if ANKI_EXTRA_CHECKS
@@ -129,14 +129,14 @@ Mutex::Mutex()
 	pthread_mutex_t* mtx = static_cast<pthread_mutex_t*>(malloc(sizeof(pthread_mutex_t)));
 	if(mtx == nullptr)
 	{
-		ANKI_LOGF("Out of memory");
+		ANKI_UTIL_LOGF("Out of memory");
 	}
 
 	I err = pthread_mutex_init(mtx, nullptr);
 	if(err)
 	{
 		free(mtx);
-		ANKI_LOGF("pthread_mutex_init() failed");
+		ANKI_UTIL_LOGF("pthread_mutex_init() failed");
 	}
 
 	m_impl = mtx;
@@ -159,7 +159,7 @@ void Mutex::lock()
 	I err = pthread_mutex_lock(mtx);
 	if(err)
 	{
-		ANKI_LOGF("pthread_mutex_lock() failed");
+		ANKI_UTIL_LOGF("pthread_mutex_lock() failed");
 	}
 }
 
@@ -180,7 +180,7 @@ void Mutex::unlock()
 	I err = pthread_mutex_unlock(mtx);
 	if(err)
 	{
-		ANKI_LOGF("pthread_mutex_unlock() failed");
+		ANKI_UTIL_LOGF("pthread_mutex_unlock() failed");
 	}
 }
 
@@ -189,14 +189,14 @@ ConditionVariable::ConditionVariable()
 	pthread_cond_t* cond = static_cast<pthread_cond_t*>(malloc(sizeof(pthread_cond_t)));
 	if(cond == nullptr)
 	{
-		ANKI_LOGF("Out of memory");
+		ANKI_UTIL_LOGF("Out of memory");
 	}
 
 	I err = pthread_cond_init(cond, nullptr);
 	if(err)
 	{
 		free(cond);
-		ANKI_LOGF("pthread_cond_init() failed");
+		ANKI_UTIL_LOGF("pthread_cond_init() failed");
 	}
 
 	m_impl = cond;
@@ -235,7 +235,7 @@ void ConditionVariable::wait(Mutex& amtx)
 	I err = pthread_cond_wait(cond, mtx);
 	if(err)
 	{
-		ANKI_LOGF("pthread_cond_wait() failed");
+		ANKI_UTIL_LOGF("pthread_cond_wait() failed");
 	}
 }
 
@@ -248,28 +248,28 @@ Barrier::Barrier(U32 count)
 	m_impl = static_cast<pthread_barrier_t*>(malloc(sizeof(pthread_barrier_t)));
 	if(m_impl == nullptr)
 	{
-		ANKI_LOGF("Out of memory");
+		ANKI_UTIL_LOGF("Out of memory");
 	}
 
 	pthread_barrierattr_t attr;
 	I err = pthread_barrierattr_init(&attr);
 	if(err)
 	{
-		ANKI_LOGF("pthread_barrierattr_init() failed");
+		ANKI_UTIL_LOGF("pthread_barrierattr_init() failed");
 	}
 
 	err = pthread_barrierattr_setpshared(&attr, PTHREAD_PROCESS_PRIVATE);
 	if(err)
 	{
 		pthread_barrierattr_destroy(&attr);
-		ANKI_LOGF("pthread_barrierattr_setpshared() failed");
+		ANKI_UTIL_LOGF("pthread_barrierattr_setpshared() failed");
 	}
 
 	err = pthread_barrier_init(&ANKI_BARR_GET(), &attr, count);
 	if(err)
 	{
 		pthread_barrierattr_destroy(&attr);
-		ANKI_LOGF("pthread_barrier_init() failed");
+		ANKI_UTIL_LOGF("pthread_barrier_init() failed");
 	}
 
 	pthread_barrierattr_destroy(&attr);
@@ -282,7 +282,7 @@ Barrier::~Barrier()
 		I err = pthread_barrier_destroy(&ANKI_BARR_GET());
 		if(err)
 		{
-			ANKI_LOGE("pthread_barrier_destroy() failed");
+			ANKI_UTIL_LOGE("pthread_barrier_destroy() failed");
 		}
 
 		free(m_impl);
@@ -295,7 +295,7 @@ Bool Barrier::wait()
 	I err = pthread_barrier_wait(&ANKI_BARR_GET());
 	if(ANKI_UNLIKELY(err != PTHREAD_BARRIER_SERIAL_THREAD && err != 0))
 	{
-		ANKI_LOGF("pthread_barrier_wait() failed");
+		ANKI_UTIL_LOGF("pthread_barrier_wait() failed");
 	}
 
 	return true;
@@ -307,12 +307,12 @@ Semaphore::Semaphore(I32 val)
 	m_impl = sem;
 	if(m_impl == nullptr)
 	{
-		ANKI_LOGF("Out of memory");
+		ANKI_UTIL_LOGF("Out of memory");
 	}
 
 	if(sem_init(sem, 0, val))
 	{
-		ANKI_LOGF("sem_init() failed");
+		ANKI_UTIL_LOGF("sem_init() failed");
 	}
 }
 
@@ -323,7 +323,7 @@ Semaphore::~Semaphore()
 		sem_t* sem = static_cast<sem_t*>(m_impl);
 		if(sem_destroy(sem))
 		{
-			ANKI_LOGE("sem_destroy() failed");
+			ANKI_UTIL_LOGE("sem_destroy() failed");
 		}
 
 		free(m_impl);
@@ -336,7 +336,7 @@ void Semaphore::wait()
 	ANKI_ASSERT(m_impl);
 	if(ANKI_UNLIKELY(sem_wait(static_cast<sem_t*>(m_impl))))
 	{
-		ANKI_LOGF("sem_wait() failed");
+		ANKI_UTIL_LOGF("sem_wait() failed");
 	}
 }
 
@@ -345,7 +345,7 @@ void Semaphore::post()
 	ANKI_ASSERT(m_impl);
 	if(ANKI_UNLIKELY(sem_post(static_cast<sem_t*>(m_impl))))
 	{
-		ANKI_LOGF("sem_post() failed");
+		ANKI_UTIL_LOGF("sem_post() failed");
 	}
 }
 

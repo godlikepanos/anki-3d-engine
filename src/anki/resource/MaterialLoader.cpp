@@ -50,7 +50,7 @@ static ANKI_USE_RESULT Error getShaderInfo(const CString& str, ShaderType& type,
 	}
 	else
 	{
-		ANKI_LOGE("Incorrect type %s", &str[0]);
+		ANKI_RESOURCE_LOGE("Incorrect type %s", &str[0]);
 		err = ErrorCode::USER_DATA;
 	}
 
@@ -99,7 +99,7 @@ static ANKI_USE_RESULT Error computeShaderVariableDataType(const CString& str, S
 	}
 	else
 	{
-		ANKI_LOGE("Incorrect variable type %s", &str[0]);
+		ANKI_RESOURCE_LOGE("Incorrect variable type %s", &str[0]);
 		err = ErrorCode::USER_DATA;
 	}
 
@@ -178,7 +178,7 @@ static ANKI_USE_RESULT Error computeBuiltin(const CString& name, BuiltinMaterial
 	}
 	else if(name.find("anki_") == 0)
 	{
-		ANKI_LOGE("Unknown builtin %s", &name[0]);
+		ANKI_RESOURCE_LOGE("Unknown builtin %s", &name[0]);
 		return ErrorCode::USER_DATA;
 	}
 	else
@@ -276,7 +276,7 @@ Error MaterialLoader::parseXmlDocument(const XmlDocument& doc)
 
 	if(m_lodCount > MAX_LODS)
 	{
-		ANKI_LOGW("Too many <levelsOfDetail>");
+		ANKI_RESOURCE_LOGW("Too many <levelsOfDetail>");
 		m_lodCount = MAX_LODS;
 	}
 
@@ -341,7 +341,7 @@ Error MaterialLoader::parseProgramsTag(const XmlElement& el)
 	{
 		if(in.m_shaderDefinedMask != in.m_shaderReferencedMask)
 		{
-			ANKI_LOGE("Variable not referenced or not defined %s", &in.m_name[0]);
+			ANKI_RESOURCE_LOGE("Variable not referenced or not defined %s", &in.m_name[0]);
 			return ErrorCode::USER_DATA;
 		}
 	}
@@ -511,7 +511,7 @@ Error MaterialLoader::parseInputsTag(const XmlElement& programEl)
 		{
 			if(getBuiltinType(in.m_builtin) != in.m_type)
 			{
-				ANKI_LOGE("Builtin variable %s cannot be of type %s", &in.m_name[0], &cstr[0]);
+				ANKI_RESOURCE_LOGE("Builtin variable %s cannot be of type %s", &in.m_name[0], &cstr[0]);
 				return ErrorCode::USER_DATA;
 			}
 		}
@@ -527,7 +527,7 @@ Error MaterialLoader::parseInputsTag(const XmlElement& programEl)
 
 		if(in.m_flags.m_builtin && in.m_flags.m_const)
 		{
-			ANKI_LOGE("Builtins cannot be consts: %s", &in.m_name[0]);
+			ANKI_RESOURCE_LOGE("Builtins cannot be consts: %s", &in.m_name[0]);
 			return ErrorCode::USER_DATA;
 		}
 
@@ -539,13 +539,13 @@ Error MaterialLoader::parseInputsTag(const XmlElement& programEl)
 
 			if(!cstr)
 			{
-				ANKI_LOGE("Value tag is empty for: %s", &in.m_name[0]);
+				ANKI_RESOURCE_LOGE("Value tag is empty for: %s", &in.m_name[0]);
 				return ErrorCode::USER_DATA;
 			}
 
 			if(in.m_flags.m_builtin)
 			{
-				ANKI_LOGE("Builtins cannot have value: %s", &in.m_name[0]);
+				ANKI_RESOURCE_LOGE("Builtins cannot have value: %s", &in.m_name[0]);
 				return ErrorCode::USER_DATA;
 			}
 
@@ -555,13 +555,13 @@ Error MaterialLoader::parseInputsTag(const XmlElement& programEl)
 		{
 			if(!in.m_flags.m_builtin)
 			{
-				ANKI_LOGE("Non-builtins should have a value: %s", &in.m_name[0]);
+				ANKI_RESOURCE_LOGE("Non-builtins should have a value: %s", &in.m_name[0]);
 				return ErrorCode::USER_DATA;
 			}
 
 			if(in.m_flags.m_const)
 			{
-				ANKI_LOGE("Consts should have a value: %s", &in.m_name[0]);
+				ANKI_RESOURCE_LOGE("Consts should have a value: %s", &in.m_name[0]);
 				return ErrorCode::USER_DATA;
 			}
 		}
@@ -610,7 +610,7 @@ Error MaterialLoader::parseInputsTag(const XmlElement& programEl)
 
 			if(!same)
 			{
-				ANKI_LOGE("Variable defined differently between shaders: %s", &in.m_name[0]);
+				ANKI_RESOURCE_LOGE("Variable defined differently between shaders: %s", &in.m_name[0]);
 				return ErrorCode::USER_DATA;
 			}
 
@@ -753,7 +753,7 @@ Error MaterialLoader::parseOperationTag(
 			{
 				if(arg.find(OUT) != 0)
 				{
-					ANKI_LOGE("Incorrect argument: %s", &arg[0]);
+					ANKI_RESOURCE_LOGE("Incorrect argument: %s", &arg[0]);
 					return ErrorCode::USER_DATA;
 				}
 			}

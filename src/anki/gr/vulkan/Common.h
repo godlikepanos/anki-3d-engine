@@ -32,6 +32,11 @@ class GrManagerImpl;
 /// @addtogroup vulkan
 /// @{
 
+#define ANKI_VK_LOGI(...) ANKI_LOG("VK  ", NORMAL, __VA_ARGS__)
+#define ANKI_VK_LOGE(...) ANKI_LOG("VK  ", ERROR, __VA_ARGS__)
+#define ANKI_VK_LOGW(...) ANKI_LOG("VK  ", WARNING, __VA_ARGS__)
+#define ANKI_VK_LOGF(...) ANKI_LOG("VK  ", FATAL, __VA_ARGS__)
+
 /// @name Constants
 /// @{
 const U DESCRIPTOR_POOL_INITIAL_SIZE = 64;
@@ -61,11 +66,6 @@ const U DESCRIPTOR_FRAME_BUFFERING = 60 * 5; ///< How many frames worth of descr
 			return ErrorCode::FUNCTION_FAILED;                                                                         \
 		}                                                                                                              \
 	} while(0)
-
-#define ANKI_VK_LOGI(...) ANKI_LOGI("GR/VK: " __VA_ARGS__)
-#define ANKI_VK_LOGE(...) ANKI_LOGE("GR/VK: " __VA_ARGS__)
-#define ANKI_VK_LOGW(...) ANKI_LOGW("GR/VK: " __VA_ARGS__)
-#define ANKI_VK_LOGF(...) ANKI_LOGF("GR/VK: " __VA_ARGS__)
 
 /// Convert compare op.
 ANKI_USE_RESULT VkCompareOp convertCompareOp(CompareOperation ak);

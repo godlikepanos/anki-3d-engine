@@ -86,7 +86,7 @@ public:
 		m_pool = reinterpret_cast<TPool*>(allocCb(allocCbUserData, nullptr, sizeof(TPool), alignof(TPool)));
 		if(ANKI_UNLIKELY(!m_pool))
 		{
-			ANKI_LOGF("Out of memory");
+			ANKI_UTIL_LOGF("Out of memory");
 		}
 
 		new(m_pool) TPool();
@@ -145,7 +145,7 @@ public:
 		void* out = m_pool->allocate(size, alignment);
 		if(ANKI_UNLIKELY(out == nullptr))
 		{
-			ANKI_LOGF("Out of memory");
+			ANKI_UTIL_LOGF("Out of memory");
 		}
 
 		return reinterpret_cast<pointer>(out);

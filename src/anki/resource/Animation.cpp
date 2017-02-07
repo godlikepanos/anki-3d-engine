@@ -67,7 +67,7 @@ Error Animation::load(const ResourceFilename& filename)
 	ANKI_CHECK(chEl.getSiblingElementsCount(channelCount));
 	if(channelCount == 0)
 	{
-		ANKI_LOGE("Didn't found any channels");
+		ANKI_RESOURCE_LOGE("Didn't found any channels");
 		return ErrorCode::USER_DATA;
 	}
 	m_channels.create(getAllocator(), channelCount);

@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <anki/script/Common.h>
 #include <anki/util/Assert.h>
 #include <anki/util/StdTypes.h>
 #include <anki/util/Allocator.h>

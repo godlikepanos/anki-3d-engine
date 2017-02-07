@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/Config.h>
+#include <anki/util/Common.h>
 
 /// Assertion. Print an error and stop the debugger (if it runs through a debugger) and then abort.
 #if !ANKI_EXTRA_CHECKS

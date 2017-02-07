@@ -13,12 +13,12 @@ namespace anki
 
 Error Sslf::init(const ConfigSet& config)
 {
-	ANKI_LOGI("Initializing screen space lens flare");
+	ANKI_R_LOGI("Initializing screen space lens flare");
 
 	Error err = initInternal(config);
 	if(err)
 	{
-		ANKI_LOGE("Failed to init screen space lens flare");
+		ANKI_R_LOGE("Failed to init screen space lens flare");
 	}
 
 	return err;

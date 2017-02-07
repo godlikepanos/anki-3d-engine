@@ -52,7 +52,7 @@ Error TextureAtlas::load(const ResourceFilename& filename)
 	ANKI_CHECK(el.getI64(margin));
 	if(margin >= I(m_tex->getWidth()) || margin >= I(m_tex->getHeight()) || margin < 0)
 	{
-		ANKI_LOGE("Too big margin %d", U(margin));
+		ANKI_RESOURCE_LOGE("Too big margin %d", U(margin));
 		return ErrorCode::USER_DATA;
 	}
 	m_margin = margin;
@@ -75,7 +75,7 @@ Error TextureAtlas::load(const ResourceFilename& filename)
 
 		if(name.getLength() < 1)
 		{
-			ANKI_LOGE("Something wrong with the <name> tag. Probably empty");
+			ANKI_RESOURCE_LOGE("Something wrong with the <name> tag. Probably empty");
 			return ErrorCode::USER_DATA;
 		}
 
@@ -131,7 +131,7 @@ Error TextureAtlas::getSubTextureInfo(CString name, F32 uv[4]) const
 		}
 	}
 
-	ANKI_LOGE("Texture atlas %s doesn't have sub texture named: %s", &getFilename()[0], &name[0]);
+	ANKI_RESOURCE_LOGE("Texture atlas %s doesn't have sub texture named: %s", &getFilename()[0], &name[0]);
 	return ErrorCode::USER_DATA;
 }
 

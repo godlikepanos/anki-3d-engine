@@ -40,7 +40,7 @@ void NativeWindowImpl::create(NativeWindowInitInfo& init)
 	EGLint format;
 	EGLConfig config;
 
-	ANKI_LOGI("Creating native window");
+	ANKI_CORE_LOGI("Creating native window");
 
 	ANKI_ASSERT(gAndroidApp);
 	android_app& andApp = *gAndroidApp;

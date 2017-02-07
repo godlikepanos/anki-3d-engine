@@ -20,7 +20,7 @@ Error CString::toF64(F64& out) const
 
 	if(out == HUGE_VAL)
 	{
-		ANKI_LOGE("Conversion failed");
+		ANKI_UTIL_LOGE("Conversion failed");
 		err = ErrorCode::USER_DATA;
 	}
 
@@ -47,7 +47,7 @@ Error CString::toI64(I64& out) const
 
 	if(out == LLONG_MAX || out == LLONG_MIN)
 	{
-		ANKI_LOGE("Conversion failed");
+		ANKI_UTIL_LOGE("Conversion failed");
 		err = ErrorCode::USER_DATA;
 	}
 
@@ -128,7 +128,7 @@ void String::sprintf(Allocator alloc, CString fmt, ...)
 
 	if(len < 0)
 	{
-		ANKI_LOGF("vsnprintf() failed");
+		ANKI_UTIL_LOGF("vsnprintf() failed");
 	}
 	else if(static_cast<PtrSize>(len) >= sizeof(buffer))
 	{

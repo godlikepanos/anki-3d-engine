@@ -48,7 +48,7 @@ Error fileExtensionToShaderType(const CString& filename, ShaderType& type)
 	}
 	else
 	{
-		ANKI_LOGE("Wrong shader file format: %s", &filename[0]);
+		ANKI_RESOURCE_LOGE("Wrong shader file format: %s", &filename[0]);
 		err = ErrorCode::USER_DATA;
 	}
 

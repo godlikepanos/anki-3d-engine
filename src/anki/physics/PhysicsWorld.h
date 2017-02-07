@@ -126,7 +126,7 @@ inline PhysicsPtr<T> PhysicsWorld::newInstance(TArgs&&... args)
 	}
 	else
 	{
-		ANKI_LOGE("Failed to create physics object");
+		ANKI_PHYS_LOGE("Failed to create physics object");
 
 		if(ptr)
 		{

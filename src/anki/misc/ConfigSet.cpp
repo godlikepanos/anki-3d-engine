@@ -135,7 +135,7 @@ CString ConfigSet::getString(const CString& name) const
 
 Error ConfigSet::loadFromFile(CString filename)
 {
-	ANKI_LOGI("Loading config file %s", &filename[0]);
+	ANKI_MISC_LOGI("Loading config file %s", &filename[0]);
 	XmlDocument xml;
 	ANKI_CHECK(xml.loadFile(filename, m_alloc));
 
@@ -165,13 +165,13 @@ Error ConfigSet::loadFromFile(CString filename)
 		{
 			if(option.m_type == 0)
 			{
-				ANKI_LOGW("Missing option for \"%s\". Will use the default value: %s",
+				ANKI_MISC_LOGW("Missing option for \"%s\". Will use the default value: %s",
 					&option.m_name[0],
 					&option.m_strVal[0]);
 			}
 			else
 			{
-				ANKI_LOGW(
+				ANKI_MISC_LOGW(
 					"Missing option for \"%s\". Will use the default value: %f", &option.m_name[0], option.m_fVal);
 			}
 		}
@@ -182,7 +182,7 @@ Error ConfigSet::loadFromFile(CString filename)
 
 Error ConfigSet::saveToFile(CString filename) const
 {
-	ANKI_LOGI("Saving config file %s", &filename[0]);
+	ANKI_MISC_LOGI("Saving config file %s", &filename[0]);
 
 	File file;
 	ANKI_CHECK(file.open(filename, FileOpenFlag::WRITE));
@@ -224,7 +224,7 @@ Error ConfigSet::setFromCommandLineArguments(U cmdLineArgsCount, char* cmdLineAr
 		{
 			if(i + 2 >= cmdLineArgsCount)
 			{
-				ANKI_LOGE("Wrong number of arguments after -cfg");
+				ANKI_MISC_LOGE("Wrong number of arguments after -cfg");
 				return ErrorCode::USER_DATA;
 			}
 
@@ -235,7 +235,7 @@ Error ConfigSet::setFromCommandLineArguments(U cmdLineArgsCount, char* cmdLineAr
 			Option* option = tryFind(arg);
 			if(option == nullptr)
 			{
-				ANKI_LOGE("Option name following -cfg not found: %s", arg);
+				ANKI_MISC_LOGE("Option name following -cfg not found: %s", arg);
 				return ErrorCode::USER_DATA;
 			}
 

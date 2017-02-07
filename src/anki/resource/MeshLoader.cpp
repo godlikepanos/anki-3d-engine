@@ -37,7 +37,7 @@ Error MeshLoader::load(const ResourceFilename& filename)
 	//
 	if(memcmp(&m_header.m_magic[0], "ANKIMES3", 8) != 0)
 	{
-		ANKI_LOGE("Wrong magic word");
+		ANKI_RESOURCE_LOGE("Wrong magic word");
 		return ErrorCode::USER_DATA;
 	}
 
@@ -57,7 +57,7 @@ Error MeshLoader::load(const ResourceFilename& filename)
 	if(m_header.m_positionsFormat.m_components != ComponentFormat::R32G32B32
 		|| m_header.m_positionsFormat.m_transform != FormatTransform::FLOAT)
 	{
-		ANKI_LOGE("Incorrect/unsupported positions format");
+		ANKI_RESOURCE_LOGE("Incorrect/unsupported positions format");
 		return ErrorCode::USER_DATA;
 	}
 
@@ -65,7 +65,7 @@ Error MeshLoader::load(const ResourceFilename& filename)
 	if(m_header.m_normalsFormat.m_components != ComponentFormat::R10G10B10A2
 		|| m_header.m_normalsFormat.m_transform != FormatTransform::SNORM)
 	{
-		ANKI_LOGE("Incorrect/unsupported normals format");
+		ANKI_RESOURCE_LOGE("Incorrect/unsupported normals format");
 		return ErrorCode::USER_DATA;
 	}
 
@@ -73,7 +73,7 @@ Error MeshLoader::load(const ResourceFilename& filename)
 	if(m_header.m_tangentsFormat.m_components != ComponentFormat::R10G10B10A2
 		|| m_header.m_tangentsFormat.m_transform != FormatTransform::SNORM)
 	{
-		ANKI_LOGE("Incorrect/unsupported tangents format");
+		ANKI_RESOURCE_LOGE("Incorrect/unsupported tangents format");
 		return ErrorCode::USER_DATA;
 	}
 
@@ -81,7 +81,7 @@ Error MeshLoader::load(const ResourceFilename& filename)
 	if(m_header.m_colorsFormat.m_components != ComponentFormat::NONE
 		|| m_header.m_colorsFormat.m_transform != FormatTransform::NONE)
 	{
-		ANKI_LOGE("Incorrect/unsupported color format");
+		ANKI_RESOURCE_LOGE("Incorrect/unsupported color format");
 		return ErrorCode::USER_DATA;
 	}
 
@@ -89,7 +89,7 @@ Error MeshLoader::load(const ResourceFilename& filename)
 	if(m_header.m_uvsFormat.m_components != ComponentFormat::R16G16
 		|| m_header.m_uvsFormat.m_transform != FormatTransform::FLOAT)
 	{
-		ANKI_LOGE("Incorrect/unsupported UVs format");
+		ANKI_RESOURCE_LOGE("Incorrect/unsupported UVs format");
 		return ErrorCode::USER_DATA;
 	}
 
@@ -104,7 +104,7 @@ Error MeshLoader::load(const ResourceFilename& filename)
 		if(m_header.m_boneWeightsFormat.m_components != ComponentFormat::R8G8B8A8
 			|| m_header.m_boneWeightsFormat.m_transform != FormatTransform::UNORM)
 		{
-			ANKI_LOGE("Incorrect/unsupported UVs format");
+			ANKI_RESOURCE_LOGE("Incorrect/unsupported UVs format");
 			return ErrorCode::USER_DATA;
 		}
 
@@ -112,7 +112,7 @@ Error MeshLoader::load(const ResourceFilename& filename)
 		if(m_header.m_boneIndicesFormat.m_components != ComponentFormat::R16G16B16A16
 			|| m_header.m_boneIndicesFormat.m_transform != FormatTransform::UINT)
 		{
-			ANKI_LOGE("Incorrect/unsupported UVs format");
+			ANKI_RESOURCE_LOGE("Incorrect/unsupported UVs format");
 			return ErrorCode::USER_DATA;
 		}
 	}
@@ -124,7 +124,7 @@ Error MeshLoader::load(const ResourceFilename& filename)
 		if(m_header.m_boneWeightsFormat.m_components != ComponentFormat::NONE
 			|| m_header.m_boneWeightsFormat.m_transform != FormatTransform::NONE)
 		{
-			ANKI_LOGE("Incorrect/unsupported UVs format");
+			ANKI_RESOURCE_LOGE("Incorrect/unsupported UVs format");
 			return ErrorCode::USER_DATA;
 		}
 
@@ -132,7 +132,7 @@ Error MeshLoader::load(const ResourceFilename& filename)
 		if(m_header.m_boneIndicesFormat.m_components != ComponentFormat::NONE
 			|| m_header.m_boneIndicesFormat.m_transform != FormatTransform::NONE)
 		{
-			ANKI_LOGE("Incorrect/unsupported UVs format");
+			ANKI_RESOURCE_LOGE("Incorrect/unsupported UVs format");
 			return ErrorCode::USER_DATA;
 		}
 	}
@@ -145,26 +145,26 @@ Error MeshLoader::load(const ResourceFilename& filename)
 		|| m_header.m_indicesFormat.m_transform != FormatTransform::UINT)
 	{
 		// Only 16bit indices are supported for now
-		ANKI_LOGE("Incorrect/unsuported index info");
+		ANKI_RESOURCE_LOGE("Incorrect/unsuported index info");
 		return ErrorCode::USER_DATA;
 	}
 
 	// Check other
 	if(m_header.m_totalVerticesCount == 0)
 	{
-		ANKI_LOGE("Incorrect/unsuported vertex count");
+		ANKI_RESOURCE_LOGE("Incorrect/unsuported vertex count");
 		return ErrorCode::USER_DATA;
 	}
 
 	if(m_header.m_uvsChannelCount != 1)
 	{
-		ANKI_LOGE("Incorrect/unsuported UVs channel count");
+		ANKI_RESOURCE_LOGE("Incorrect/unsuported UVs channel count");
 		return ErrorCode::USER_DATA;
 	}
 
 	if(m_header.m_subMeshCount == 0)
 	{
-		ANKI_LOGE("Incorrect/unsuported submesh count");
+		ANKI_RESOURCE_LOGE("Incorrect/unsuported submesh count");
 		return ErrorCode::USER_DATA;
 	}
 
@@ -181,7 +181,7 @@ Error MeshLoader::load(const ResourceFilename& filename)
 		const SubMesh& sm = m_subMeshes[0];
 		if(sm.m_firstIndex != idxSum || sm.m_indicesCount < 3)
 		{
-			ANKI_LOGE("Incorrect sub mesh info");
+			ANKI_RESOURCE_LOGE("Incorrect sub mesh info");
 			return ErrorCode::USER_DATA;
 		}
 
@@ -190,7 +190,7 @@ Error MeshLoader::load(const ResourceFilename& filename)
 
 	if(idxSum != m_header.m_totalIndicesCount)
 	{
-		ANKI_LOGE("Incorrect sub mesh info");
+		ANKI_RESOURCE_LOGE("Incorrect sub mesh info");
 		return ErrorCode::USER_DATA;
 	}
 
@@ -219,13 +219,13 @@ Error MeshLoader::checkFormat(const Format& fmt, const CString& attrib, Bool can
 {
 	if(fmt.m_components >= ComponentFormat::COUNT)
 	{
-		ANKI_LOGE("Incorrect component format for %s", &attrib[0]);
+		ANKI_RESOURCE_LOGE("Incorrect component format for %s", &attrib[0]);
 		return ErrorCode::USER_DATA;
 	}
 
 	if(fmt.m_transform >= FormatTransform::COUNT)
 	{
-		ANKI_LOGE("Incorrect format transform for %s", &attrib[0]);
+		ANKI_RESOURCE_LOGE("Incorrect format transform for %s", &attrib[0]);
 		return ErrorCode::USER_DATA;
 	}
 
@@ -233,13 +233,13 @@ Error MeshLoader::checkFormat(const Format& fmt, const CString& attrib, Bool can
 	{
 		if(fmt.m_components == ComponentFormat::NONE)
 		{
-			ANKI_LOGE("Format cannot be zero for %s", &attrib[0]);
+			ANKI_RESOURCE_LOGE("Format cannot be zero for %s", &attrib[0]);
 			return ErrorCode::USER_DATA;
 		}
 
 		if(fmt.m_transform == FormatTransform::NONE)
 		{
-			ANKI_LOGE("Transform cannot be zero for %s", &attrib[0]);
+			ANKI_RESOURCE_LOGE("Transform cannot be zero for %s", &attrib[0]);
 			return ErrorCode::USER_DATA;
 		}
 	}

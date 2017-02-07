@@ -17,7 +17,7 @@ StdinListener::~StdinListener()
 	Error err = m_thrd.join();
 	if(err)
 	{
-		ANKI_LOGE("Error when joining StdinListener");
+		ANKI_CORE_LOGE("Error when joining StdinListener");
 	}
 
 	for(String& s : m_q)
