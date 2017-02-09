@@ -209,8 +209,11 @@ Material::~Material()
 
 	for(MaterialVariable* var : m_vars)
 	{
-		var->destroy(alloc);
-		alloc.deleteInstance(var);
+		if(var)
+		{
+			var->destroy(alloc);
+			alloc.deleteInstance(var);
+		}
 	}
 	m_vars.destroy(alloc);
 }
@@ -247,17 +250,18 @@ Error Material::createVars(const MaterialLoader& loader)
 
 	auto alloc = getAllocator();
 	m_vars.create(alloc, count);
+	memset(&m_vars[0], 0, count * sizeof(m_vars[0]));
 
 	// Find the name
 	count = 0;
 	err = loader.iterateAllInputVariables([&](const MaterialLoader::Input& in) -> Error {
-		MaterialVariable* mtlvar = nullptr;
 
 #define ANKI_INIT_VAR(type_)                                                                                           \
 	{                                                                                                                  \
 		MaterialVariableTemplate<type_>* var = alloc.newInstance<MaterialVariableTemplate<type_>>();                   \
+		m_vars[count] = var;                                                                                           \
 		ANKI_CHECK(var->init(count, in, *this));                                                                       \
-		mtlvar = var;                                                                                                  \
+		++count;                                                                                                       \
 	}
 
 		switch(in.m_type)
@@ -291,8 +295,6 @@ Error Material::createVars(const MaterialLoader& loader)
 
 #undef ANKI_INIT_VAR
 
-		m_vars[count] = mtlvar;
-		++count;
 		return ErrorCode::NONE;
 	});
 

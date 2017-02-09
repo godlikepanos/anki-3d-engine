@@ -25,7 +25,7 @@ class Config:
 	normal = False
 	convert_path = ""
 	no_alpha = False
-	store_compressed = False
+	compressed_formats = 0
 	store_uncompressed = True
 	to_linear_rgb = False
 
@@ -50,8 +50,8 @@ CF_RGBA8 = 2
 # Data compression
 DC_NONE = 0
 DC_RAW = 1 << 0
-DC_ETC2 = 1 << 1
-DC_S3TC = 1 << 2
+DC_S3TC = 1 << 1
+DC_ETC2 = 1 << 2
 
 # Texture filtering
 TF_DEFAULT = 0
@@ -184,8 +184,8 @@ def parse_commandline():
 	""" Parse the command line arguments """
 
 	parser = argparse.ArgumentParser(description = "This program converts a single image or a number " \
-			"of images (for 3D and 2DArray textures) to AnKi texture format." \
-			" It requires 4 different applications/executables to " \
+			"of images (for 3D and 2DArray textures) to AnKi texture format. " \
+			"It requires 4 different applications/executables to " \
 			"operate: convert, identify, nvcompress and etcpack. These " \
 			"applications should be in PATH except the convert where you " \
 			"need to define the executable explicitly",
@@ -197,7 +197,7 @@ def parse_commandline():
 	parser.add_argument("-o", "--output", required = True, help = "specify output AnKi image.")
 
 	parser.add_argument("-t", "--type", default = "2D", choices = ["2D", "3D", "2DArray"],
-		help = "type of the image (2D or cube or 3D or 2DArray)")
+			help = "type of the image (2D or cube or 3D or 2DArray)")
 
 	parser.add_argument("-f", "--fast", type = int, default = 0, help = "run the fast version of the converters")
 
@@ -210,13 +210,15 @@ def parse_commandline():
 
 	parser.add_argument("--store-uncompressed", type = int, default = 0, help = "store or not uncompressed data")
 
-	parser.add_argument("--store-compressed", type = int, default = 1, help = "store or not compressed data")
+	parser.add_argument("--store-etc", type = int, default = 0, help = "store or not etc compressed data")
+
+	parser.add_argument("--store-s3tc", type = int, default = 1, help = "store or not S3TC compressed data")
 
 	parser.add_argument("--to-linear-rgb", type = int, default = 0,
 			help = "assume the input textures are sRGB. If this option is true then convert them to linear RGB")
 
 	parser.add_argument("--filter", default = "default", choices = ["default", "linear", "nearest"],
-		help = "texture filtering. Can be: default, linear, nearest")
+			help = "texture filtering. Can be: default, linear, nearest")
 
 	parser.add_argument("--mips-count", type = int, default = 0xFFFF, help = "Max number of mipmaps")
 
@@ -242,9 +244,6 @@ def parse_commandline():
 	else:
 		assert 0, "See file"
 
-	if not args.store_uncompressed and not args.store_compressed:
-		parser.error("One of --store-compressed and --store-uncompressed should be True")
-
 	if args.mips_count <= 0:
 		parser.error("Wrong number of mipmaps")
 
@@ -257,12 +256,15 @@ def parse_commandline():
 	config.convert_path = args.convert_path
 	config.no_alpha = args.no_alpha
 	config.store_uncompressed = args.store_uncompressed
-	config.store_compressed = args.store_compressed
 	config.to_linear_rgb = args.to_linear_rgb
 	config.filter = filter
 	config.mips_count = args.mips_count
 
-	print(config)
+	if args.store_etc:
+		config.compressed_formats = config.compressed_formats | DC_ETC2
+
+	if args.store_s3tc:
+		config.compressed_formats = config.compressed_formats | DC_S3TC
 
 	return config
 
@@ -606,10 +608,12 @@ def convert(config):
 				config.mips_count)
 
 		# Create etc images
-		create_etc_images(mips_fnames, config.tmp_dir, config.fast, color_format, config.convert_path)
+		if config.compressed_formats & DC_ETC2:
+			create_etc_images(mips_fnames, config.tmp_dir, config.fast, color_format, config.convert_path)
 
 		# Create dds images
-		create_dds_images(mips_fnames, config.tmp_dir, config.fast, color_format, config.normal)
+		if config.compressed_formats & DC_S3TC:
+			create_dds_images(mips_fnames, config.tmp_dir, config.fast, color_format, config.normal)
 
 	# Open file
 	fname = config.out_file
@@ -619,9 +623,7 @@ def convert(config):
 	# Write header
 	ak_format = "8sIIIIIIII"
 
-	data_compression = 0
-	if config.store_compressed:
-		data_compression = data_compression | DC_S3TC | DC_ETC2
+	data_compression = config.compressed_formats
 
 	if config.store_uncompressed:
 		data_compression = data_compression | DC_RAW
@@ -666,10 +668,10 @@ def convert(config):
 				if compression == 0 and config.store_uncompressed:
 					write_raw(tex_file, in_base_fname + ".tga", tmp_width, tmp_height, color_format)
 				# Write S3TC
-				elif compression == 1 and config.store_compressed:
+				elif compression == 1 and (config.compressed_formats & DC_S3TC):
 					write_s3tc(tex_file, in_base_fname + ".dds", tmp_width, tmp_height, color_format)
 				# Write ETC
-				elif compression == 2 and config.store_compressed:
+				elif compression == 2 and (config.compressed_formats & DC_ETC2):
 					write_etc(tex_file, in_base_fname + "_flip.pkm", tmp_width, tmp_height, color_format)
 
 			tmp_width = tmp_width / 2
