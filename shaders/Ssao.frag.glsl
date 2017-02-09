@@ -10,6 +10,7 @@
 
 const vec2 KERNEL[SAMPLES] = KERNEL_ARRAY; // This will be appended in C++
 const float BIAS = 0.3;
+const float STRENGTH = 1.5;
 
 layout(location = 0) in vec2 in_uv;
 
@@ -100,5 +101,5 @@ void main(void)
 		factor += f;
 	}
 
-	out_color = 1.0 - factor / float(SAMPLES);
+	out_color = 1.0 - factor / float(SAMPLES) * STRENGTH;
 }

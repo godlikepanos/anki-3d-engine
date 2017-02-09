@@ -161,6 +161,7 @@ Error Renderer::render(RenderingContext& ctx)
 	ANKI_ASSERT(ctx.m_frustumComponent->getFrustum().getType() == FrustumType::PERSPECTIVE);
 
 	ctx.m_prevViewProjMat = m_prevViewProjMat;
+	ctx.m_prevCamTransform = m_prevCamTransform;
 
 	// Check if resources got loaded
 	if(m_prevLoadRequestCount != m_resources->getLoadingRequestCount()
@@ -273,6 +274,7 @@ Error Renderer::render(RenderingContext& ctx)
 
 	++m_frameCount;
 	m_prevViewProjMat = ctx.m_frustumComponent->getViewProjectionMatrix();
+	m_prevCamTransform = Mat4(ctx.m_frustumComponent->getFrustum().getTransform());
 
 	return ErrorCode::NONE;
 }

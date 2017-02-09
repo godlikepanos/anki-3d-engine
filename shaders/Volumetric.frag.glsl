@@ -21,13 +21,14 @@ layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2DArray u_noiseTex;
 layout(std140, ANKI_UBO_BINDING(0, 3)) uniform ubo0_
 {
 	vec4 u_linearizeNoiseTexOffsetLayer;
-	vec4 u_fogParticleColorPad1;
+	vec4 u_fogParticleColorBlendFactor;
 };
 
 #define u_linearize u_linearizeNoiseTexOffsetLayer.xy
 #define u_noiseYOffset u_linearizeNoiseTexOffsetLayer.z
 #define u_noiseLayer u_linearizeNoiseTexOffsetLayer.w
-#define u_fogParticleColor u_fogParticleColorPad1.rgb
+#define u_fogParticleColor u_fogParticleColorBlendFactor.rgb
+#define u_blendFactor u_fogParticleColorBlendFactor.w
 
 layout(location = 0) out vec4 out_color;
 
@@ -154,5 +155,5 @@ void main()
 	}
 
 	newCol *= u_fogParticleColor;
-	out_color = vec4(newCol, 1.0 / 3.0);
+	out_color = vec4(newCol, u_blendFactor);
 }

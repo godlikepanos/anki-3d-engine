@@ -87,13 +87,8 @@ void BloomExposure::run(RenderingContext& ctx)
 
 	cmdb->bindStorageBuffer(0, 0, m_r->getTm().m_luminanceBuff, 0, MAX_PTR_SIZE);
 
-	cmdb->setBlendFactors(0, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA);
-
 	m_r->drawQuad(cmdb);
 	cmdb->endRenderPass();
-
-	// Restore state
-	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
 }
 
 BloomUpscale::~BloomUpscale()

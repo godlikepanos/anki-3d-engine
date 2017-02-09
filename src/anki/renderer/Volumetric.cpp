@@ -159,7 +159,24 @@ void Volumetric::run(RenderingContext& ctx)
 	uniforms[0].z() = m_r->getFrameCount() * texelOffset;
 	uniforms[0].w() = m_r->getFrameCount() & (m_noiseTex->getLayerCount() - 1);
 
-	uniforms[1] = Vec4(m_fogParticleColor, 0.0);
+	// compute the blend factor. If the camera rotated don't blend with previous frames
+	F32 dotZ = ctx.m_frustumComponent->getFrustum().getTransform().getRotation().getZAxis().xyz().dot(
+		ctx.m_prevCamTransform.getZAxis().xyz());
+	F32 dotY = ctx.m_frustumComponent->getFrustum().getTransform().getRotation().getYAxis().xyz().dot(
+		ctx.m_prevCamTransform.getYAxis().xyz());
+
+	const F32 TOLERANCE = cos(toRad(1.0f / 8.0f));
+	F32 blendFactor;
+	if(clamp(dotZ, 0.0f, 1.0f) > TOLERANCE && clamp(dotY, 0.0f, 1.0f) > TOLERANCE)
+	{
+		blendFactor = 1.0 / 4.0;
+	}
+	else
+	{
+		blendFactor = 1.0 / 2.0;
+	}
+
+	uniforms[1] = Vec4(m_fogParticleColor, blendFactor);
 
 	bindStorage(cmdb, 0, 0, ctx.m_is.m_clustersToken);
 	bindStorage(cmdb, 0, 1, ctx.m_is.m_lightIndicesToken);

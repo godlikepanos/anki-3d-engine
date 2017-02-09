@@ -35,6 +35,7 @@ public:
 	/// Active frustum.
 	FrustumComponent* m_frustumComponent ANKI_DBG_NULLIFY;
 	Mat4 m_prevViewProjMat;
+	Mat4 m_prevCamTransform;
 
 	CommandBufferPtr m_commandBuffer; ///< Primary command buffer.
 
@@ -408,6 +409,7 @@ private:
 	Bool8 m_willDrawToDefaultFbo = false;
 
 	Mat4 m_prevViewProjMat = Mat4::getIdentity();
+	Mat4 m_prevCamTransform = Mat4::getIdentity();
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 
