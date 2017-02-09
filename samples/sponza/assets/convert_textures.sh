@@ -1,0 +1,1 @@
+ls ~/etc/blender/maps/sponza-crytek-pbr/textures/ | xargs -I % echo % | grep .tga | rev | cut -b4- | rev | xargs -I % ~/src/anki/tools/texture/convert_image.py -i ~/etc/blender/maps/sponza-crytek-pbr/textures/%tga -o %ankitex -t 2D

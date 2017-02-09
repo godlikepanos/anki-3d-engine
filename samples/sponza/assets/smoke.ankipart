@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<particleEmitter>
+	<life>5.0</life>
+	<lifeDeviation>1.0</lifeDeviation>
+	<mass>0.0</mass>
+	<massDeviation>0.0</massDeviation>
+	<gravity>0.0 0.095 0.0</gravity>
+	<alpha>0.2</alpha>
+	<alphaDeviation>0.1</alphaDeviation>
+	<alphaAnimationEnabled>1</alphaAnimationEnabled>
+	<emissionPeriod>0.5</emissionPeriod>
+	<particlesPerEmission>1</particlesPerEmission>
+	<startingPosition>0.0 0.0 0.0</startingPosition>
+	<startingPositionDeviation>0.0 0.2 0.0</startingPositionDeviation>
+	<material>assets/smoke.ankimtl</material>
+	<size>0.2</size>
+	<sizeDeviation>0.1</sizeDeviation>
+	<sizeAnimation>0.5</sizeAnimation>
+	<usePhysicsEngine>0</usePhysicsEngine>
+	<maxNumberOfParticles>128</maxNumberOfParticles>
+</particleEmitter>

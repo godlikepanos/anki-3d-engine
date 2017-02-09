@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<material>
+	<forwardShading>1</forwardShading>
+	<shadow>0</shadow>
+	<levelsOfDetail>2</levelsOfDetail>
+
+	<programs>
+		<program>
+			<type>vert</type>
+			<includes>
+				<include>shaders/FsCommonVert.glsl</include>
+			</includes>
+
+			<inputs>
+				<input><type>mat4</type><name>anki_mvp</name></input>
+			</inputs>
+
+			<operations>
+				<operation>
+					<id>0</id>
+					<returnType>void</returnType>
+					<function>particle</function>
+					<arguments><argument>anki_mvp</argument></arguments>
+				</operation>
+			</operations>
+		</program>
+
+		<program>
+			<type>frag</type>
+
+			<includes>
+				<include>shaders/FsCommonFrag.glsl</include>
+			</includes>
+
+			<inputs>
+				<input><type>sampler2D</type><name>diffuseMap</name><value>assets/smoke.ankitex</value></input>
+			</inputs>
+
+			<operations>
+				<operation>
+					<id>1</id>
+					<returnType>float</returnType>
+					<function>getAlpha</function>
+				</operation>
+				<operation>
+					<id>0</id>
+					<returnType>void</returnType>
+					<function>particleTextureAlphaLight</function>
+					<arguments>
+						<argument>diffuseMap</argument>
+						<argument>out1</argument>
+					</arguments>
+				</operation>
+			</operations>
+		</program>
+	</programs>
+</material>
+
+

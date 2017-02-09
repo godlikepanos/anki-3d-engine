@@ -279,11 +279,6 @@ Error ParticleEmitter::buildRendering(const RenderingBuildInfoIn& in, RenderingB
 {
 	ANKI_ASSERT(in.m_subMeshIndicesCount == 1);
 
-	if(m_aliveParticlesCount == 0)
-	{
-		return ErrorCode::NONE;
-	}
-
 	m_particleEmitterResource->getRenderingInfo(in.m_key.m_lod, out.m_program);
 
 	out.m_vertexBufferBindingCount = 1;

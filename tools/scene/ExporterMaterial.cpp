@@ -458,10 +458,18 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 	materialStr = replaceAllString(materialStr, "%diffuseMap%", m_texrpath + diffTex);
 
 	// Subsurface
+	float subsurface = 0.0;
+	if(mtl.mAnKiProperties.find("subsurface") != mtl.mAnKiProperties.end())
+	{
+		subsurface = std::stof(mtl.mAnKiProperties.at("subsurface"));
+	}
+
 	materialStr = replaceAllString(materialStr,
 		"%subsurfaceInput%",
 		"<input><type>float</type><name>subsurface</name>"
-		"<const>1</const><value>0.0</value></input>");
+		"<const>1</const><value>"
+			+ std::to_string(subsurface)
+			+ "</value></input>");
 	materialStr = replaceAllString(materialStr, "%subsurfaceArg%", "subsurface");
 
 	// Replace texture extensions with .anki

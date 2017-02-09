@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<model>
+	<modelPatches>
+		<modelPatch>
+			<mesh>assets/lion_frame.ankimesh</mesh>
+			<material>assets/lion_stand-material.ankimtl</material>
+		</modelPatch>
+	</modelPatches>
+</model>

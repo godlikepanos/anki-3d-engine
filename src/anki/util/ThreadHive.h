@@ -75,7 +75,7 @@ public:
 	void waitAllTasks();
 
 private:
-	static const U MAX_TASKS_PER_SESSION = 1024 * 2;
+	static const U MAX_TASKS_PER_SESSION = 1024 * 4;
 
 	class Thread;
 

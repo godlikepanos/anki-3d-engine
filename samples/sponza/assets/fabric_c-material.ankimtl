@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<material>
+	<programs>
+		<program>
+			<type>vert</type>
+			<includes>
+				<include>shaders/MsCommonVert.glsl</include>
+			</includes>
+
+			<inputs>
+				<input><type>mat4</type><name>anki_mvp</name></input>
+				<input><type>mat3</type><name>anki_n</name><inShadow>0</inShadow></input>
+				 
+			</inputs>
+
+			<operations>
+				<operation>
+					<id>0</id>
+					<returnType>void</returnType>
+					<function>writePositionAndUv</function>
+					<arguments><argument>anki_mvp</argument></arguments>
+				</operation>
+				<operation>
+					<id>1</id>
+					<returnType>void</returnType>
+					<function>writeNormalAndTangent</function>
+					<arguments><argument>anki_n</argument></arguments>
+				</operation>
+				 
+			</operations>
+		</program>
+		<program>
+			<type>frag</type>
+
+			<includes>
+				<include>shaders/MsCommonFrag.glsl</include>
+			</includes>
+
+			<inputs>
+				<input><type>vec3</type><name>uSpecularColor</name><value>0.000000 0.000000 0.000000</value></input>
+				<input><type>sampler2D</type><name>roughness</name><value>assets/Sponza_Curtain_roughness.ankitex</value></input>
+				<input><type>sampler2D</type><name>uDiffuseColor</name><value>assets/Sponza_Curtain_Green_diffuse.ankitex</value></input>
+				<input><type>sampler2D</type><name>uNormal</name><value>assets/Sponza_Curtain_Red_normal.ankitex</value></input>
+				<input><type>float</type><name>subsurface</name><const>1</const><value>0.250000</value></input>
+				<input><type>float</type><name>emission</name><value>0.000000</value><const>1</const></input>
+				<input><type>float</type><name>metallic</name><value>0.000000</value><const>1</const></input>
+				 
+			</inputs>
+
+			<operations>
+				<operation>
+					<id>0</id>
+					<returnType>vec3</returnType>
+					<function>getNormal</function>
+				</operation>
+				<operation>
+					<id>1</id>
+					<returnType>vec4</returnType>
+					<function>getTangent</function>
+				</operation>
+				<operation>
+					<id>2</id>
+					<returnType>vec2</returnType>
+					<function>getTextureCoord</function>
+				</operation>
+				 
+				
+				<operation>
+					<id>10</id>
+					<returnType>vec3</returnType>
+					<function>readRgbFromTexture</function>
+					<arguments>
+						<argument>uDiffuseColor</argument>
+						<argument>out2</argument>
+					</arguments>
+				</operation>
+				
+				<operation>
+					<id>20</id>
+					<returnType>vec3</returnType>
+					<function>readNormalFromTexture</function>
+					<arguments>
+						<argument>out0</argument>
+						<argument>out1</argument>
+						<argument>uNormal</argument>
+						<argument>out2</argument>
+					</arguments>
+				</operation>
+				
+				
+				<operation>
+					<id>60</id>
+					<returnType>float</returnType>
+					<function>readRFromTexture</function>
+					<arguments>
+						<argument>roughness</argument>
+						<argument>out2</argument>
+					</arguments>
+				</operation>
+				
+				
+				<operation>
+					<id>100</id>
+					<returnType>void</returnType>
+					<function>writeRts</function>
+					<arguments>
+						<argument>out10</argument>
+						<argument>out20</argument>
+						<argument>uSpecularColor</argument>
+						<argument>out60</argument>
+						<argument>subsurface</argument>
+						<argument>emission</argument>
+						<argument>metallic</argument>
+					</arguments>
+				</operation>
+			</operations>
+		</program>
+	</programs>	</material>

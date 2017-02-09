@@ -1,5 +1,5 @@
 diff --git a/source/blender/collada/EffectExporter.cpp b/source/blender/collada/EffectExporter.cpp
-index 76b5114..6b87128 100644
+index 76b5114..11ea02e 100644
 --- a/source/blender/collada/EffectExporter.cpp
 +++ b/source/blender/collada/EffectExporter.cpp
 @@ -47,7 +47,9 @@ extern "C" {
@@ -39,7 +39,7 @@ index 76b5114..6b87128 100644
  }
  
  void EffectsExporter::operator()(Material *ma, Object *ob)
-@@ -398,6 +420,67 @@ void EffectsExporter::operator()(Material *ma, Object *ob)
+@@ -398,6 +420,68 @@ void EffectsExporter::operator()(Material *ma, Object *ob)
  		}
  	}
  
@@ -50,6 +50,7 @@ index 76b5114..6b87128 100644
 +		"material_override",
 +		"metallic",
 +		"roughness",
++		"subsurface",
 +		NULL};
 +	IDProperty *rprop = ma->id.properties;
 +	while (rprop) {

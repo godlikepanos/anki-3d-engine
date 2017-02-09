@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<material>
+	<forwardShading>1</forwardShading>
+	<shadow>0</shadow>
+
+	<programs>
+		<program>
+			<type>vert</type>
+			<includes>
+				<include>shaders/FsCommonVert.glsl</include>
+			</includes>
+
+			<inputs>
+				<input><type>mat4</type><name>anki_mvp</name></input>
+			</inputs>
+
+			<operations>
+				<operation>
+					<id>0</id>
+					<returnType>void</returnType>
+					<function>particle</function>
+					<arguments><argument>anki_mvp</argument></arguments>
+				</operation>
+			</operations>
+		</program>
+
+		<program>
+			<type>frag</type>
+
+			<includes>
+				<include>shaders/FsCommonFrag.glsl</include>
+			</includes>
+
+			<inputs>
+				<input><type>sampler2D</type><name>diffuseMap</name><value>assets/ember_mid.ankitex</value></input>
+				<input><type>vec4</type><name>mulCol</name><value>3. 3. 3. 1.</value><const>1</const></input>
+				<input><type>vec4</type><name>addCol</name><value>0 0 0 0</value><const>1</const></input>
+			</inputs>
+
+			<operations>
+				<operation>
+					<id>1</id>
+					<returnType>float</returnType>
+					<function>getAlpha</function>
+				</operation>
+				<operation>
+					<id>0</id>
+					<returnType>void</returnType>
+					<function>particleTextureAlpha</function>
+					<arguments>
+						<argument>diffuseMap</argument>
+						<argument>mulCol</argument>
+						<argument>addCol</argument>
+						<argument>out1</argument>
+					</arguments>
+				</operation>
+			</operations>
+		</program>
+	</programs>
+</material>
+
+
