@@ -159,15 +159,20 @@ void Volumetric::run(RenderingContext& ctx)
 	uniforms[0].z() = m_r->getFrameCount() * texelOffset;
 	uniforms[0].w() = m_r->getFrameCount() & (m_noiseTex->getLayerCount() - 1);
 
-	// compute the blend factor. If the camera rotated don't blend with previous frames
+	// compute the blend factor. If the camera rotated or moved alot don't blend with previous frames
 	F32 dotZ = ctx.m_frustumComponent->getFrustum().getTransform().getRotation().getZAxis().xyz().dot(
 		ctx.m_prevCamTransform.getZAxis().xyz());
 	F32 dotY = ctx.m_frustumComponent->getFrustum().getTransform().getRotation().getYAxis().xyz().dot(
 		ctx.m_prevCamTransform.getYAxis().xyz());
 
-	const F32 TOLERANCE = cos(toRad(1.0f / 8.0f));
+	const F32 ANG_TOLERANCE = cos(toRad(1.0f / 8.0f));
+	const F32 DIST_TOLERANCE = 0.1f;
 	F32 blendFactor;
-	if(clamp(dotZ, 0.0f, 1.0f) > TOLERANCE && clamp(dotY, 0.0f, 1.0f) > TOLERANCE)
+	const F32 dist = (ctx.m_frustumComponent->getFrustum().getTransform().getOrigin().xyz0()
+						 - ctx.m_prevCamTransform.getTranslationPart().xyz0())
+						 .getLengthSquared();
+	if(clamp(dotZ, 0.0f, 1.0f) > ANG_TOLERANCE && clamp(dotY, 0.0f, 1.0f) > ANG_TOLERANCE
+		&& dist < DIST_TOLERANCE * DIST_TOLERANCE)
 	{
 		blendFactor = 1.0 / 4.0;
 	}
