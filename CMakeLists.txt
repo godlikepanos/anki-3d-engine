@@ -303,6 +303,7 @@ include_directories("src"
 	"thirdparty/newton/packages/dContainers" 
 	"thirdparty/newton/packages/dMath" 
 	"thirdparty/newton/packages/thirdParty/timeTracker/"
+	"thirdparty/khronos" 
 	"${CMAKE_CURRENT_BINARY_DIR}" 
 	"${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glslang" 
 	"thirdparty")

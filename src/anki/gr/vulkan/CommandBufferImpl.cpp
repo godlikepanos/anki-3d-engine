@@ -781,38 +781,4 @@ void CommandBufferImpl::flushWriteQueryResults()
 	m_writeQueryAtomCount = 0;
 }
 
-void CommandBufferImpl::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
-{
-	ANKI_ASSERT(minx < maxx && miny < maxy);
-	commandCommon();
-
-	if(m_viewport[0] != minx || m_viewport[1] != miny || m_viewport[2] != maxx || m_viewport[3] != maxy)
-	{
-		VkViewport s;
-		s.x = minx;
-		s.y = miny;
-		s.width = maxx - minx;
-		s.height = maxy - miny;
-		s.minDepth = 0.0;
-		s.maxDepth = 1.0;
-		ANKI_CMD(vkCmdSetViewport(m_handle, 0, 1, &s), ANY_OTHER_COMMAND);
-
-		VkRect2D scissor = {};
-		scissor.extent.width = maxx - minx;
-		scissor.extent.height = maxy - miny;
-		scissor.offset.x = minx;
-		scissor.offset.y = miny;
-		ANKI_CMD(vkCmdSetScissor(m_handle, 0, 1, &scissor), ANY_OTHER_COMMAND);
-
-		m_viewport[0] = minx;
-		m_viewport[1] = miny;
-		m_viewport[2] = maxx;
-		m_viewport[3] = maxy;
-	}
-	else
-	{
-		// Skip
-	}
-}
-
 } // end namespace anki

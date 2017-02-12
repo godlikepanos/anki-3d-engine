@@ -232,7 +232,7 @@ void CommandBuffer::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 
 	if(m_impl->m_state.setViewport(minx, miny, maxx, maxy))
 	{
-		m_impl->pushBackNewCommand<ViewportCommand>(minx, miny, maxx, maxy);
+		m_impl->pushBackNewCommand<ViewportCommand>(minx, miny, maxx - minx, maxy - miny);
 	}
 }
 

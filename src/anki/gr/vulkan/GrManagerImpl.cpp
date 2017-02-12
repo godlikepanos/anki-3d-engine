@@ -358,7 +358,14 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	q.queueCount = 1;
 	q.pQueuePriorities = &priority;
 
-	static Array<const char*, 1> DEV_EXTENSIONS = {{VK_KHR_SWAPCHAIN_EXTENSION_NAME}};
+	static Array<const char*, 2> DEV_EXTENSIONS = {
+		{VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_MAINTENANCE1_EXTENSION_NAME}};
+
+	ANKI_VK_LOGI("Will enable the following device extensions:");
+	for(const char* ext : DEV_EXTENSIONS)
+	{
+		ANKI_VK_LOGI("\t%s", ext);
+	}
 
 	VkDeviceCreateInfo ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;

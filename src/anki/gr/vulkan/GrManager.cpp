@@ -117,7 +117,8 @@ void GrManager::getStorageBufferInfo(U32& bindOffsetAlignment, PtrSize& maxStora
 
 void GrManager::getTextureBufferInfo(U32& bindOffsetAlignment, PtrSize& maxRange) const
 {
-	ANKI_ASSERT(!"TODO");
+	bindOffsetAlignment = m_impl->getPhysicalDeviceProperties().limits.minTexelBufferOffsetAlignment;
+	maxRange = MAX_U32;
 }
 
 } // end namespace anki

@@ -545,6 +545,11 @@ VkBufferUsageFlags convertBufferUsageBit(BufferUsageBit usageMask)
 		out |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 	}
 
+	if(!!(usageMask & BufferUsageBit::TEXTURE_ALL))
+	{
+		out |= VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT;
+	}
+
 	ANKI_ASSERT(out);
 
 	return out;

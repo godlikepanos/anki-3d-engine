@@ -178,6 +178,11 @@ static const char* SHADER_HEADER = R"(#version 450 core
 
 ShaderImpl::~ShaderImpl()
 {
+	for(auto& x : m_bindings)
+	{
+		x.destroy(getAllocator());
+	}
+
 	if(m_handle)
 	{
 		vkDestroyShaderModule(getDevice(), m_handle, nullptr);
