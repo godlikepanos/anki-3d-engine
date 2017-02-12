@@ -11,4 +11,4 @@
 !*.md
 !*.txt
 !CMakeLists.txt
-build/*
+build*/*

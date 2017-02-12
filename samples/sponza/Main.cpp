@@ -16,6 +16,8 @@ public:
 		ScriptResourcePtr script;
 		ANKI_CHECK(getResourceManager().loadResource("assets/scene.lua", script));
 		ANKI_CHECK(getScriptManager().evalString(script->getSource()));
+
+		getMainRenderer().getOffscreenRenderer().getVolumetric().setFogParticleColor(Vec3(1.0, 0.9, 0.9) * 0.009);
 		return ErrorCode::NONE;
 	}
 };
@@ -33,7 +35,7 @@ int main(int argc, char* argv[])
 
 	if(err)
 	{
-		ANKI_LOGE("Error reported. To run %s you have to navigate to the /path/to/anki/samples/simple_scene. "
+		ANKI_LOGE("Error reported. To run %s you have to navigate to the /path/to/anki/samples/sponza. "
 				  "And then execute it",
 			argv[0]);
 	}

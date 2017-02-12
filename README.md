@@ -81,9 +81,10 @@ Next steps
 ==========
 
 Try to build with samples enabled (see the relevant option in your CMake GUI, ANKI_BUILD_SAMPLES) and try running the 
-simple_scene executable. All samples must run from within the samples directory.
+sponza executable. Then you will be able to see sponza running in AnKi. All samples must run from within their 
+directory.
 
-	$cd path/to/anki/samples
-	$./path/to/build/samples/simple_scene/simple_scene
+	$cd path/to/anki/samples/sponza
+	$./path/to/build/samples/sponza/sponza
 
 More samples will follow.
