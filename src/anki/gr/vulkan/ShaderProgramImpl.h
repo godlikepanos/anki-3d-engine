@@ -52,6 +52,12 @@ public:
 		return m_pplineLayout;
 	}
 
+	const DescriptorSetLayout& getDescriptorSetLayout(U set) const
+	{
+		ANKI_ASSERT(m_descriptorSetLayouts[set].isCreated());
+		return m_descriptorSetLayouts[set];
+	}
+
 	const ShaderProgramReflectionInfo& getReflectionInfo() const
 	{
 		return m_refl;

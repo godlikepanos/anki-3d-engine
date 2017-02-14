@@ -168,6 +168,10 @@ public:
 class PipelineStateTracker
 {
 public:
+	PipelineStateTracker()
+	{
+	}
+
 	void bindVertexBuffer(U32 binding, PtrSize stride)
 	{
 		VertexBufferBinding b;

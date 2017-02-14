@@ -461,21 +461,23 @@ inline void CommandBufferImpl::drawcallCommon()
 		{
 			DescriptorSet dset;
 			Bool dirty;
-			getGrManagerImpl().getDescriptorSetFactory().newDescriptorSet(m_tid, m_dsetState[i], dset, dirty);
+			Array<U32, MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS> dynamicOffsets;
+			U dynamicOffsetCount;
+			getGrManagerImpl().getDescriptorSetFactory().newDescriptorSet(
+				m_tid, m_dsetState[i], dset, dirty, dynamicOffsets, dynamicOffsetCount);
 
 			if(dirty)
 			{
 				VkDescriptorSet dsHandle = dset.getHandle();
 
-				ANKI_ASSERT(!"TODO set dynamic handles");
 				ANKI_CMD(vkCmdBindDescriptorSets(m_handle,
 							 VK_PIPELINE_BIND_POINT_GRAPHICS,
 							 m_graphicsProg->getPipelineLayout().getHandle(),
 							 i,
 							 1,
 							 &dsHandle,
-							 0,
-							 nullptr),
+							 dynamicOffsetCount,
+							 &dynamicOffsets[0]),
 					ANY_OTHER_COMMAND);
 			}
 		}
@@ -619,6 +621,14 @@ inline void CommandBufferImpl::bindShaderProgram(ShaderProgramPtr& prog)
 	m_graphicsProg = prog->m_impl.get();
 	m_state.bindShaderProgram(prog);
 	m_progs.pushBack(m_alloc, prog);
+
+	for(U i = 0; i < MAX_DESCRIPTOR_SETS; ++i)
+	{
+		if(m_graphicsProg->getReflectionInfo().m_descriptorSetMask.get(i))
+		{
+			m_dsetState[i].setLayout(m_graphicsProg->getDescriptorSetLayout(i));
+		}
+	}
 }
 
 } // end namespace anki

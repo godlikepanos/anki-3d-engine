@@ -532,6 +532,7 @@ ANKI_TEST(Gr, DrawWithUniforms)
 		gr->beginFrame();
 
 		CommandBufferInitInfo cinit;
+		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK;
 		CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
 
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);

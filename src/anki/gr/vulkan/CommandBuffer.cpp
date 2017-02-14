@@ -178,7 +178,7 @@ void CommandBuffer::bindTextureAndSampler(
 
 void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range)
 {
-	ANKI_ASSERT(!"TODO");
+	m_impl->bindUniformBuffer(set, binding, buff, offset, range);
 }
 
 void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range)

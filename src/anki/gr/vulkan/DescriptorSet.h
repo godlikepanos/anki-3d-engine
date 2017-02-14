@@ -181,7 +181,10 @@ private:
 	U64 m_lastHash = 0;
 
 	/// Only DescriptorSetFactory should call this.
-	void flush(Bool& stateDirty, U64& hash);
+	void flush(Bool& stateDirty,
+		U64& hash,
+		Array<U32, MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS>& dynamicOffsets,
+		U& dynamicOffsetCount);
 };
 
 /// Descriptor set thin wraper.
@@ -218,7 +221,12 @@ public:
 	ANKI_USE_RESULT Error newDescriptorSetLayout(const DescriptorSetLayoutInitInfo& init, DescriptorSetLayout& layout);
 
 	/// @note Obviously not thread-safe.
-	ANKI_USE_RESULT Error newDescriptorSet(ThreadId tid, DescriptorSetState& state, DescriptorSet& set, Bool& dirty);
+	ANKI_USE_RESULT Error newDescriptorSet(ThreadId tid,
+		DescriptorSetState& state,
+		DescriptorSet& set,
+		Bool& dirty,
+		Array<U32, MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS>& dynamicOffsets,
+		U& dynamicOffsetCount);
 
 	void endFrame()
 	{

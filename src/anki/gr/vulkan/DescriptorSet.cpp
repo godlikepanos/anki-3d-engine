@@ -75,6 +75,7 @@ public:
 	U64 m_hash = 0; ///< Layout hash.
 	VkDescriptorSetLayout m_layoutHandle = {};
 	BitSet<MAX_BINDINGS_PER_DESCRIPTOR_SET, U8> m_activeBindings = {false};
+	Array<DescriptorType, MAX_BINDINGS_PER_DESCRIPTOR_SET> m_bindingType = {};
 	U32 m_minBinding = MAX_U32;
 	U32 m_maxBinding = 0;
 
@@ -160,7 +161,7 @@ const DS* DSThreadAllocator::tryFindSet(U64 hash)
 	ANKI_ASSERT(hash > 0);
 
 	auto it = m_hashmap.find(hash);
-	if(it != m_hashmap.getEnd())
+	if(it == m_hashmap.getEnd())
 	{
 		return nullptr;
 	}
@@ -226,10 +227,13 @@ Error DSThreadAllocator::newSet(
 
 		out = m_layoutEntry->m_factory->m_alloc.newInstance<DS>();
 		out->m_handle = handle;
+
+		m_hashmap.pushBack(hash, out);
+		m_list.pushBack(out);
 	}
 
 	ANKI_ASSERT(out);
-	out->m_lastFrameUsed = m_layoutEntry->m_factory->m_frameCount;
+	out->m_lastFrameUsed = crntFrame;
 
 	// Finally, write it
 	writeSet(bindings, *out);
@@ -243,7 +247,7 @@ void DSThreadAllocator::writeSet(const Array<AnyBinding, MAX_BINDINGS_PER_DESCRI
 	Array<VkWriteDescriptorSet, MAX_BINDINGS_PER_DESCRIPTOR_SET> writes;
 	U writeCount = 0;
 
-	Array<VkDescriptorImageInfo, MAX_TEXTURE_BINDINGS> tex;
+	Array<VkDescriptorImageInfo, MAX_TEXTURE_BINDINGS + MAX_IMAGE_BINDINGS> tex;
 	U texCount = 0;
 	Array<VkDescriptorBufferInfo, MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS> buff;
 	U buffCount = 0;
@@ -279,8 +283,8 @@ void DSThreadAllocator::writeSet(const Array<AnyBinding, MAX_BINDINGS_PER_DESCRI
 			case DescriptorType::UNIFORM_BUFFER:
 			case DescriptorType::STORAGE_BUFFER:
 				buff[buffCount].buffer = b.m_buff.m_buff->getHandle();
-				buff[buffCount].offset = b.m_buff.m_offset;
-				buff[buffCount].range = b.m_buff.m_range;
+				buff[buffCount].offset = 0;
+				buff[buffCount].range = (b.m_buff.m_range == MAX_PTR_SIZE) ? VK_WHOLE_SIZE : b.m_buff.m_range;
 
 				w.pBufferInfo = &buff[buffCount];
 
@@ -347,6 +351,7 @@ Error DSLayoutCacheEntry::init(const DescriptorBinding* bindings, U bindingCount
 
 		ANKI_ASSERT(m_activeBindings.get(ak.m_binding) == false);
 		m_activeBindings.set(ak.m_binding);
+		m_bindingType[ak.m_binding] = ak.m_type;
 		m_minBinding = min<U32>(m_minBinding, ak.m_binding);
 		m_maxBinding = max<U32>(m_maxBinding, ak.m_binding);
 	}
@@ -452,8 +457,13 @@ Error DSLayoutCacheEntry::getOrCreateThreadAllocator(ThreadId tid, DSThreadAlloc
 	return ErrorCode::NONE;
 }
 
-void DescriptorSetState::flush(Bool& stateDirty, U64& hash)
+void DescriptorSetState::flush(Bool& stateDirty,
+	U64& hash,
+	Array<U32, MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS>& dynamicOffsets,
+	U& dynamicOffsetCount)
 {
+	dynamicOffsetCount = 0;
+
 	// Get cache entry
 	ANKI_ASSERT(m_layout.m_entry);
 	DSLayoutCacheEntry& entry = *m_layout.m_entry;
@@ -469,8 +479,8 @@ void DescriptorSetState::flush(Bool& stateDirty, U64& hash)
 	m_layoutDirty = false;
 
 	// Compute the hash
-	Array<U64, MAX_BINDINGS_PER_DESCRIPTOR_SET> uuids;
-	U uuidCount = 0;
+	Array<U64, MAX_BINDINGS_PER_DESCRIPTOR_SET * 2 * 2> toHash;
+	U toHashCount = 0;
 
 	const U minBinding = entry.m_minBinding;
 	const U maxBinding = entry.m_maxBinding;
@@ -478,12 +488,30 @@ void DescriptorSetState::flush(Bool& stateDirty, U64& hash)
 	{
 		if(entry.m_activeBindings.get(i))
 		{
-			uuids[uuidCount++] = m_bindings[i].m_uuids[0];
-			uuids[uuidCount++] = m_bindings[i].m_uuids[1];
+			toHash[toHashCount++] = m_bindings[i].m_uuids[0];
+
+			switch(entry.m_bindingType[i])
+			{
+			case DescriptorType::TEXTURE:
+				toHash[toHashCount++] = m_bindings[i].m_uuids[1];
+				toHash[toHashCount++] = U(m_bindings[i].m_tex.m_aspect);
+				toHash[toHashCount++] = U(m_bindings[i].m_tex.m_layout);
+				break;
+			case DescriptorType::UNIFORM_BUFFER:
+			case DescriptorType::STORAGE_BUFFER:
+				toHash[toHashCount++] = m_bindings[i].m_buff.m_range;
+				dynamicOffsets[dynamicOffsetCount++] = m_bindings[i].m_buff.m_offset;
+				break;
+			case DescriptorType::IMAGE:
+				toHash[toHashCount++] = m_bindings[i].m_image.m_level;
+				break;
+			default:
+				ANKI_ASSERT(0);
+			}
 		}
 	}
 
-	hash = computeHash(&uuids[0], uuidCount * sizeof(U64));
+	hash = (toHashCount == 1) ? toHash[0] : computeHash(&toHash[0], toHashCount * sizeof(U64));
 
 	if(hash != m_lastHash)
 	{
@@ -569,10 +597,15 @@ Error DescriptorSetFactory::newDescriptorSetLayout(const DescriptorSetLayoutInit
 	return ErrorCode::NONE;
 }
 
-Error DescriptorSetFactory::newDescriptorSet(ThreadId tid, DescriptorSetState& state, DescriptorSet& set, Bool& dirty)
+Error DescriptorSetFactory::newDescriptorSet(ThreadId tid,
+	DescriptorSetState& state,
+	DescriptorSet& set,
+	Bool& dirty,
+	Array<U32, MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS>& dynamicOffsets,
+	U& dynamicOffsetCount)
 {
 	U64 hash;
-	state.flush(dirty, hash);
+	state.flush(dirty, hash, dynamicOffsets, dynamicOffsetCount);
 
 	if(!dirty)
 	{
