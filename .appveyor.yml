@@ -39,3 +39,6 @@ before_build:
 build_script:
   - mingw32-make
 
+notifications:
+  email: false
+
