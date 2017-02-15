@@ -19,6 +19,7 @@ environment:
       ASSERTIONS: ON
 
 install:
+  - git submodule update --init --recursive
   - if not exist "%MINGW_ARCHIVE%" appveyor DownloadFile "%MINGW_URL%" -FileName "%MINGW_ARCHIVE%"
   - 7z x -y "%MINGW_ARCHIVE%" > nul
   - python -m ensurepip
