@@ -16,10 +16,10 @@ See LICENSE file for more info.
 Building AnKi
 =============
 
-|OS|Master branch build status|
-|-|-|
-|Linux  | [![Build Status Linux](https://travis-ci.org/godlikepanos/anki-3d-engine.svg?branch=master)](https://travis-ci.org/godlikepanos/anki-3d-engine) | 
-|Windows| [![Build status Windows](https://ci.appveyor.com/api/projects/status/waij29m7o8ajjoqh?svg=true)](https://ci.appveyor.com/project/godlikepanos/anki-3d-engine)|
+| OS      | Master branch build status                                                                                                                                    |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Linux   | [![Build Status Linux](https://travis-ci.org/godlikepanos/anki-3d-engine.svg?branch=master)](https://travis-ci.org/godlikepanos/anki-3d-engine)               | 
+| Windows | [![Build status Windows](https://ci.appveyor.com/api/projects/status/waij29m7o8ajjoqh?svg=true)](https://ci.appveyor.com/project/godlikepanos/anki-3d-engine) |
 
 To checkout the source including the submodules type:
 
