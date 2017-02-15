@@ -112,7 +112,7 @@ Error Pps::run(RenderingContext& ctx)
 				"#define SMAA_ENABLED 1\n"
 				"#define SMAA_RT_METRICS vec4(%f, %f, %f, %f)\n"
 				"#define SMAA_PRESET_%s\n"
-				"#define FB_SIZE vec2(%uf, %uf)\n",
+				"#define FB_SIZE vec2(float(%u), float(%u))\n",
 				true,
 				m_sharpenEnabled,
 				m_r->getWidth(),

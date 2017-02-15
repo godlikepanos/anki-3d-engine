@@ -150,7 +150,7 @@ void main()
 	out_color = colorGrading(out_color);
 
 #if BLUE_NOISE
-	vec3 blueNoise = texture(u_blueNoise, vec3(FB_SIZE / vec2(64.0) * uv, u_blueNoiseLayerPad3.x), 0.0).rgb;
+	vec3 blueNoise = textureLod(u_blueNoise, vec3(FB_SIZE / vec2(64.0) * uv, u_blueNoiseLayerPad3.x), 0.0).rgb;
 	blueNoise = blueNoise * 2.0 - 1.0;
 	blueNoise = sign(blueNoise) * (1.0 - sqrt(1.0 - abs(blueNoise)));
 

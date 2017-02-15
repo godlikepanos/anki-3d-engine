@@ -38,7 +38,13 @@ void logShaderErrorCode(const CString& error, const CString& source, GenericMemo
 		prettySrc.append(tmp);
 	}
 
-	ANKI_LOGE("Shader compilation failed:\n%s\n%s\n%s\n%s", padding, &error[0], padding, &prettySrc[0]);
+	ANKI_LOGE("Shader compilation failed:\n%s\n%s\n%s\n%s\n%s\n%s",
+		padding,
+		&error[0],
+		padding,
+		&prettySrc[0],
+		padding,
+		&error[0]);
 }
 
 Bool textureInitInfoValid(const TextureInitInfo& inf)

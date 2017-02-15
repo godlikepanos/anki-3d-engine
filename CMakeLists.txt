@@ -106,8 +106,16 @@ set(CXX_FLAGS "")
 set(COMPILER_FLAGS "")
 set(LINKER_FLAGS "")
 
+add_definitions(-D_NEWTON_STATIC_LIB -D_CUSTOM_JOINTS_STATIC_LIB -D_POSIX_VER)
+if(MINGW)
+	add_definitions(-D_MINGW_64_VER) # Newton wants that
+endif()
+add_definitions(-DGLEW_NO_GLU)
+add_definitions(-DSPIRV_CROSS_EXCEPTIONS_TO_ASSERTIONS)
+add_definitions(-DANKI_BUILD)
+
 # When building AnKi define this special flag
-set(COMPILER_FLAGS "${COMPILER_FLAGS} -DANKI_BUILD -fPIC ")
+set(COMPILER_FLAGS "${COMPILER_FLAGS} -fPIC ")
 
 if(NOT ANKI_CPU_ADDR_SPACE STREQUAL "0")
 	set(LINKER_FLAGS "${LINKER_FLAGS} -m${ANKI_CPU_ADDR_SPACE} ")
@@ -137,9 +145,6 @@ if(ANKI_STRIP)
 	set(LINKER_FLAGS "${LINKER_FLAGS} -s ")
 	set(COMPILER_FLAGS "${COMPILER_FLAGS} -s ")
 endif()
-
-add_definitions(-DGLEW_NO_GLU)
-add_definitions(-DSPIRV_CROSS_EXCEPTIONS_TO_ASSERTIONS)
 
 if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
 	set(COMPILER_FLAGS "${COMPILER_FLAGS} -O3 -DNDEBUG ")
@@ -177,7 +182,7 @@ message("++ Lib install dir: ${LIB_INSTALL_DIR}")
 ################################################################################
 # Thirdparty                                                                   #
 ################################################################################
-set(ANKI_EXTERN_SUB_DIRS tinyxml2 lua z)
+set(ANKI_EXTERN_SUB_DIRS tinyxml2 lua z newton)
 
 if((LINUX OR MACOS OR WINDOWS) AND GL)
 	set(ANKI_EXTERN_SUB_DIRS ${ANKI_EXTERN_SUB_DIRS} GLEW)
@@ -203,11 +208,6 @@ if(SDL)
 else()
 	set(SDL2_INCLUDE_DIRS "")
 endif()
-
-# Newton
-message("++ Configuring Newton")
-add_subdirectory(thirdparty/newton)
-message("++ End configuring Newton")
 
 # freetype
 message("++ Configuring freetype")
