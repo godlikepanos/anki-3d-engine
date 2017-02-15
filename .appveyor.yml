@@ -1,0 +1,37 @@
+version: '{build}'
+
+branches:
+  only: master
+
+cache:
+- x86_64-6.3.0-release-posix-seh-rt_v5-rev1.7z
+
+environment:
+  MINGW_DIR: mingw64
+  MINGW_URL: https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win64/Personal%20Builds/mingw-builds/6.3.0/threads-posix/seh/x86_64-6.3.0-release-posix-seh-rt_v5-rev1.7z/download
+  MINGW_ARCHIVE: x86_64-6.3.0-release-posix-seh-rt_v5-rev1.7z
+
+matrix:
+  - BUILD_TYPE: Release
+    ASSERTIONS: OFF
+  - BUILD_TYPE: Debug
+    ASSERTIONS: ON
+
+install:
+- if not exist "%MINGW_ARCHIVE%" appveyor DownloadFile "%MINGW_URL%" -FileName "%MINGW_ARCHIVE%"
+- 7z x -y "%MINGW_ARCHIVE%" > nul
+- python -m ensurepip
+- python -m pip install cpp-coveralls==0.3.11
+# CMake refuses to generate MinGW Makefiles if sh.exe is in the Path
+- ps: Get-Command sh.exe -All | Remove-Item
+
+before_build:
+- set Path=%CD%\%MINGW_DIR%\bin;%Path%
+- g++ --version
+- mingw32-make --version
+- cmake --version
+- cmake -H. -Bbuild -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=%BUILD_TYPE% -DANKI_EXTRA_CHECKS=%ASSERTIONS%
+
+build_script:
+- cmake --build build
+
