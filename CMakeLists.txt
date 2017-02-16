@@ -98,6 +98,14 @@ if(NOT DEFINED CMAKE_BUILD_TYPE)
 	message(FATAL_ERROR "You need to define CMAKE_BUILD_TYPE")
 endif()
 
+if(${ANKI_CPU_ADDR_SPACE} STREQUAL "0" OR ${ANKI_CPU_ADDR_SPACE} STREQUAL "64")
+	set(ARCH_64 TRUE)
+	set(ARCH_32 FALSE)
+else()
+	set(ARCH_64 FALSE)
+	set(ARCH_32 TRUE)
+endif()
+
 ################################################################################
 # Compiler & linker flags                                                      #
 ################################################################################
@@ -106,10 +114,21 @@ set(CXX_FLAGS "")
 set(COMPILER_FLAGS "")
 set(LINKER_FLAGS "")
 
-add_definitions(-D_NEWTON_STATIC_LIB -D_CUSTOM_JOINTS_STATIC_LIB -D_POSIX_VER)
-if(MINGW)
-	add_definitions(-D_MINGW_64_VER) # Newton wants that
+add_definitions(-D_NEWTON_STATIC_LIB -D_CUSTOM_JOINTS_STATIC_LIB)
+
+if(ARCH_64)
+	add_definitions(-D_POSIX_VER_64)
+else()
+	add_definitions(-D_POSIX_VER_32)
 endif()
+
+# Newton wants that
+if(MINGW AND ARCH_64)
+	add_definitions(-D_MINGW_64_VER)
+elseif(MINGW AND ARCH_32)
+	add_definitions(-D_MINGW_32_VER)
+endif()
+
 add_definitions(-DGLEW_NO_GLU)
 add_definitions(-DSPIRV_CROSS_EXCEPTIONS_TO_ASSERTIONS)
 add_definitions(-DANKI_BUILD)

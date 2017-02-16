@@ -114,8 +114,8 @@ Error Thread::join()
 
 ThreadId Thread::getCurrentThreadId()
 {
-	HANDLE x = GetCurrentThread();
-	return reinterpret_cast<PtrSize>(x);
+	DWORD x = GetCurrentThreadId();
+	return PtrSize(x);
 }
 
 Mutex::Mutex()

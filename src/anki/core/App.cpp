@@ -315,7 +315,12 @@ Error App::initDirs()
 
 	if(!directoryExists(m_settingsDir.toCString()))
 	{
+		ANKI_CORE_LOGI("Creating settings dir \"%s\"", &m_settingsDir[0]);
 		ANKI_CHECK(createDirectory(m_settingsDir.toCString()));
+	}
+	else
+	{
+		ANKI_CORE_LOGI("Using settings dir \"%s\"", &m_settingsDir[0]);
 	}
 
 	// Cache

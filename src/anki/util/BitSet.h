@@ -139,8 +139,8 @@ public:
 		memset(m_chunks, 0xFF, sizeof(m_chunks));
 
 		// Zero the unused bits
-		const U REMAINING_BITS = N - (CHUNK_COUNT - 1) * CHUNK_BIT_COUNT;
-		const U REMAINING_BITMASK = std::numeric_limits<ChunkType>::max() >> REMAINING_BITS;
+		const ChunkType REMAINING_BITS = N - (CHUNK_COUNT - 1) * CHUNK_BIT_COUNT;
+		const ChunkType REMAINING_BITMASK = std::numeric_limits<ChunkType>::max() >> REMAINING_BITS;
 		m_chunks[CHUNK_COUNT - 1] ^= REMAINING_BITMASK;
 	}
 

@@ -45,7 +45,7 @@ float getAlpha()
 #define writeGBuffer_DEFINED
 void writeGBuffer(in vec4 color)
 {
-	out_color = color;
+	out_color = vec4(color.rgb, 1.0 - color.a);
 }
 #endif
 

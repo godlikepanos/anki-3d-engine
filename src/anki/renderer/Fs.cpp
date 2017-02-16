@@ -145,8 +145,8 @@ Error Fs::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) 
 
 	cmdb->setViewport(0, 0, m_width, m_height);
 	cmdb->setBlendFactors(
-		0, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA, BlendFactor::DST_ALPHA, BlendFactor::ONE);
-	cmdb->setBlendOperation(0, BlendOperation::ADD, BlendOperation::REVERSE_SUBTRACT);
+		0, BlendFactor::ONE_MINUS_SRC_ALPHA, BlendFactor::SRC_ALPHA, BlendFactor::DST_ALPHA, BlendFactor::ZERO);
+	cmdb->setBlendOperation(0, BlendOperation::ADD);
 	cmdb->setDepthWrite(false);
 
 	// Start drawing

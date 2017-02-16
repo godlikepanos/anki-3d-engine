@@ -84,10 +84,10 @@ ANKI_TEST(Renderer, Clusterer)
 	}
 	timer.stop();
 	F64 ms = timer.getElapsedTime() * 1000.0;
-	printf("Cluster count: %lu.\n"
+	printf("Cluster count: %u.\n"
 		   "Binned %f spheres/ms.\n"
 		   "Avg clusters per sphere %f\n",
-		c.getClusterCount(),
+		unsigned(c.getClusterCount()),
 		F64(SPHERE_COUNT) * F64(ITERATION_COUNT) / ms,
 		clusterBinCount / F32(ITERATION_COUNT * SPHERE_COUNT));
 

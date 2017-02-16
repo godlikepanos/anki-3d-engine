@@ -61,5 +61,5 @@ void main()
 		}
 	}
 
-	out_color = outCol / weight;
+	out_color = outCol / max(EPSILON, weight);
 }
