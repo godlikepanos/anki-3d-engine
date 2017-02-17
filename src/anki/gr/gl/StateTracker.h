@@ -26,10 +26,10 @@ class StateTracker
 {
 public:
 	/// If it's false then there might be unset state.
-	Bool8 m_mayContainUnsetState = true;
+	Bool m_mayContainUnsetState = true;
 
 #if ANKI_EXTRA_CHECKS
-	Bool8 m_secondLevel = false;
+	Bool m_secondLevel = false;
 #endif
 
 	/// @name vert_state
@@ -96,14 +96,13 @@ public:
 
 	/// @name input_assembly
 	/// @{
-	Bool8 m_primitiveRestart = 2;
+	Bool m_primitiveRestart = 2;
 
 	Bool setPrimitiveRestart(Bool enable)
 	{
-		U enablei = enable ? 1 : 0;
-		if(enablei != m_primitiveRestart)
+		if(enable != m_primitiveRestart)
 		{
-			m_primitiveRestart = enablei;
+			m_primitiveRestart = enable;
 			return true;
 		}
 		return false;
@@ -169,7 +168,7 @@ public:
 
 	/// @name depth_stencil
 	/// @{
-	Bool8 m_stencilTestEnabled = 2;
+	Bool m_stencilTestEnabled = 2;
 
 	Bool maybeEnableStencilTest()
 	{
@@ -300,7 +299,7 @@ public:
 		}
 	}
 
-	Bool8 m_depthTestEnabled = 2; ///< 2 means don't know
+	Bool m_depthTestEnabled = 2; ///< 2 means don't know
 
 	Bool maybeEnableDepthTest()
 	{
@@ -316,7 +315,7 @@ public:
 		return false;
 	}
 
-	Bool8 m_depthWrite = 2;
+	Bool m_depthWrite = 2;
 
 	Bool setDepthWrite(Bool enable)
 	{

@@ -223,9 +223,8 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 {
 	// Create the instance
 	//
-	static Array<const char*, 8> LAYERS = {{"VK_LAYER_LUNARG_core_validation",
+	static Array<const char*, 7> LAYERS = {{"VK_LAYER_LUNARG_core_validation",
 		"VK_LAYER_LUNARG_swapchain",
-		"VK_LAYER_LUNARG_image",
 		"VK_LAYER_GOOGLE_threading",
 		"VK_LAYER_LUNARG_parameter_validation",
 		"VK_LAYER_GOOGLE_unique_objects",
@@ -312,6 +311,25 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 
 	vkGetPhysicalDeviceFeatures(m_physicalDevice, &m_devFeatures);
 
+	// Get extensions
+	vkEnumerateDeviceExtensionProperties(m_physicalDevice, nullptr, &count, nullptr);
+	DynamicArrayAuto<VkExtensionProperties> extensions(getAllocator());
+	extensions.create(count);
+	vkEnumerateDeviceExtensionProperties(m_physicalDevice, nullptr, &count, &extensions[0]);
+
+	m_extensions = VulkanExtensions::NONE;
+	while(count-- != 0)
+	{
+		if(strcmp(&extensions[count].extensionName[0], VK_KHR_MAINTENANCE1_EXTENSION_NAME) == 0)
+		{
+			m_extensions |= VulkanExtensions::KHR_MAINENANCE1;
+		}
+		else if(strcmp(&extensions[count].extensionName[0], VK_AMD_NEGATIVE_VIEWPORT_HEIGHT_EXTENSION_NAME) == 0)
+		{
+			m_extensions |= VulkanExtensions::AMD_NEGATIVE_VIEWPORT_HEIGHT;
+		}
+	}
+
 	return ErrorCode::NONE;
 }
 
@@ -360,6 +378,15 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 
 	static Array<const char*, 2> DEV_EXTENSIONS = {
 		{VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_MAINTENANCE1_EXTENSION_NAME}};
+
+	if(!!(m_extensions & VulkanExtensions::KHR_MAINENANCE1))
+	{
+		// Do nothing
+	}
+	else if(!!(m_extensions & VulkanExtensions::AMD_NEGATIVE_VIEWPORT_HEIGHT))
+	{
+		DEV_EXTENSIONS[1] = VK_AMD_NEGATIVE_VIEWPORT_HEIGHT_EXTENSION_NAME;
+	}
 
 	ANKI_VK_LOGI("Will enable the following device extensions:");
 	for(const char* ext : DEV_EXTENSIONS)

@@ -175,16 +175,6 @@ To staticCastPtr(From from)
 #endif
 }
 
-/// Count bits
-inline U32 countBits(U32 number)
-{
-#if defined(__GNUC__)
-	return __builtin_popcount(number);
-#else
-#error "Unimplemented"
-#endif
-}
-
 /// Check if types are the same.
 template<class T, class Y>
 struct TypesAreTheSame

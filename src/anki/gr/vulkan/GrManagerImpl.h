@@ -189,6 +189,11 @@ public:
 		return m_pplineLayoutFactory;
 	}
 
+	VulkanExtensions getExtensions() const
+	{
+		return m_extensions;
+	}
+
 private:
 	GrManager* m_manager = nullptr;
 
@@ -200,6 +205,7 @@ private:
 
 	VkInstance m_instance = VK_NULL_HANDLE;
 	VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
+	VulkanExtensions m_extensions;
 	GpuVendor m_vendor = GpuVendor::UNKNOWN;
 	VkDevice m_device = VK_NULL_HANDLE;
 	U32 m_queueIdx = MAX_U32;

@@ -39,6 +39,12 @@ else()
 	set(GCC FALSE)
 endif()
 
+if(${CMAKE_C_COMPILER_ID} MATCHES "Clang")
+	set(CLANG TRUE)
+else()
+	set(CLANG FALSE)
+endif()
+
 ################################################################################
 # Configuration                                                                #
 ################################################################################
@@ -143,7 +149,7 @@ endif()
 
 set(COMPILER_FLAGS "${COMPILER_FLAGS} -fno-exceptions ")
 
-if(GCC)
+if(GCC AND NOT CLANG)
 	set(CXX_FLAGS "${CXX_FLAGS} -static-libstdc++ ")
 endif()
 
@@ -365,6 +371,11 @@ elseif(WINDOWS)
 	if(GL)
 		set(_SYS ankiglew opengl32)
 	else()
+		if(NOT DEFINED ENV{VULKAN_SDK})
+			message(FATAL_ERROR "You need to have VULKAN SDK installed and the VULKAN_SDK env variable set")
+		endif()
+
+		link_directories($ENV{VULKAN_SDK}/Bin)
 		set(_SYS vulkan-1)
 	endif()
 

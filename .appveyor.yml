@@ -34,7 +34,7 @@ before_build:
   - cmake --version
   - mkdir build
   - cd build
-  - cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=%BUILD_TYPE% -DANKI_EXTRA_CHECKS=%ASSERTIONS%
+  - cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=%BUILD_TYPE% -DANKI_EXTRA_CHECKS=%ASSERTIONS% -DANKI_BUILD_TESTS=ON -DANKI_BUILD_SAMPLES=ON -DANKI_BUILD_TOOLS=ON
 
 build_script:
   - mingw32-make

@@ -8,6 +8,8 @@
 #include <anki/gr/vulkan/VulkanObject.h>
 #include <anki/gr/CommandBuffer.h>
 #include <anki/gr/Texture.h>
+#include <anki/gr/Buffer.h>
+#include <anki/gr/vulkan/BufferImpl.h>
 #include <anki/gr/vulkan/TextureImpl.h>
 #include <anki/gr/vulkan/Pipeline.h>
 #include <anki/util/List.h>
@@ -22,6 +24,10 @@ class CommandBufferInitInfo;
 
 /// @addtogroup vulkan
 /// @{
+
+#define ANKI_CMD(x_, t_)                                                                                               \
+	flushBatches(CommandBufferCommandType::t_);                                                                        \
+	x_;
 
 /// List the commands that can be batched.
 enum class CommandBufferCommandType : U8
@@ -64,11 +70,28 @@ public:
 		return !!(m_flags & CommandBufferFlag::SECOND_LEVEL);
 	}
 
-	void bindVertexBuffer(U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride);
+	void bindVertexBuffer(U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride)
+	{
+		commandCommon();
+		m_state.bindVertexBuffer(binding, stride);
+		VkBuffer vkbuff = buff->m_impl->getHandle();
+		ANKI_CMD(vkCmdBindVertexBuffers(m_handle, binding, 1, &vkbuff, &offset), ANY_OTHER_COMMAND);
+		m_bufferList.pushBack(m_alloc, buff);
+	}
 
-	void setVertexAttribute(U32 location, U32 buffBinding, const PixelFormat& fmt, PtrSize relativeOffset);
+	void setVertexAttribute(U32 location, U32 buffBinding, const PixelFormat& fmt, PtrSize relativeOffset)
+	{
+		commandCommon();
+		m_state.setVertexAttribute(location, buffBinding, fmt, relativeOffset);
+	}
 
-	void bindIndexBuffer(BufferPtr buff, PtrSize offset, IndexType type);
+	void bindIndexBuffer(BufferPtr buff, PtrSize offset, IndexType type)
+	{
+		commandCommon();
+		ANKI_CMD(vkCmdBindIndexBuffer(m_handle, buff->m_impl->getHandle(), offset, convertIndexType(type)),
+			ANY_OTHER_COMMAND);
+		m_bufferList.pushBack(m_alloc, buff);
+	}
 
 	void setPrimitiveRestart(Bool enable);
 
@@ -159,6 +182,7 @@ public:
 		commandCommon();
 		U realBinding = MAX_TEXTURE_BINDINGS + binding;
 		m_dsetState[set].bindUniformBuffer(realBinding, buff.get(), offset, range);
+		m_bufferList.pushBack(m_alloc, buff);
 	}
 
 private:
@@ -332,10 +356,6 @@ private:
 		VkImage img,
 		const VkImageSubresourceRange& range);
 };
-
-#define ANKI_CMD(x_, t_)                                                                                               \
-	flushBatches(CommandBufferCommandType::t_);                                                                        \
-	x_;
 /// @}
 
 } // end namespace anki

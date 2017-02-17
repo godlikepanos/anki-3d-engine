@@ -6,8 +6,6 @@
 #include <anki/gr/vulkan/CommandBufferImpl.h>
 #include <anki/gr/vulkan/GrManagerImpl.h>
 #include <anki/gr/vulkan/TextureImpl.h>
-#include <anki/gr/Buffer.h>
-#include <anki/gr/vulkan/BufferImpl.h>
 #include <anki/gr/OcclusionQuery.h>
 #include <anki/gr/vulkan/OcclusionQueryImpl.h>
 #include <anki/core/Trace.h>
@@ -463,8 +461,11 @@ inline void CommandBufferImpl::drawcallCommon()
 			Bool dirty;
 			Array<U32, MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS> dynamicOffsets;
 			U dynamicOffsetCount;
-			getGrManagerImpl().getDescriptorSetFactory().newDescriptorSet(
-				m_tid, m_dsetState[i], dset, dirty, dynamicOffsets, dynamicOffsetCount);
+			if(getGrManagerImpl().getDescriptorSetFactory().newDescriptorSet(
+				   m_tid, m_dsetState[i], dset, dirty, dynamicOffsets, dynamicOffsetCount))
+			{
+				ANKI_VK_LOGF("Cannot recover");
+			}
 
 			if(dirty)
 			{
@@ -487,6 +488,7 @@ inline void CommandBufferImpl::drawcallCommon()
 	if(ANKI_UNLIKELY(m_viewportDirty))
 	{
 		// Do some hacks to flip the viewport
+		const Bool khrMaintenance1 = !!(getGrManagerImpl().getExtensions() & VulkanExtensions::KHR_MAINENANCE1);
 
 		const I minx = m_viewport[0];
 		const I miny = m_viewport[1];
@@ -498,9 +500,9 @@ inline void CommandBufferImpl::drawcallCommon()
 
 		VkViewport s;
 		s.x = minx;
-		s.y = fbHeight - miny; // Move to the bottom
+		s.y = (khrMaintenance1) ? (fbHeight - miny) : (fbHeight - maxy); // Move to the bottom
 		s.width = maxx - minx;
-		s.height = -(maxy - miny); // Negative to flip
+		s.height = -(maxy - miny); // Negate to flip
 		s.minDepth = 0.0;
 		s.maxDepth = 1.0;
 		ANKI_CMD(vkCmdSetViewport(m_handle, 0, 1, &s), ANY_OTHER_COMMAND);

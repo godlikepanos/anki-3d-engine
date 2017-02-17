@@ -68,9 +68,9 @@ using F64 = double; ///< Floating point 64bit
 const F64 MAX_F64 = std::numeric_limits<F64>::max();
 const F64 MIN_F64 = -std::numeric_limits<F64>::max();
 
-using Bool = bool; ///< Fast boolean type
-using Bool8 = U8; ///< Small 8bit boolean type
-using Bool32 = U32; ///< A 32bit boolean
+using Bool = int; ///< Fast boolean type
+using Bool8 = I8; ///< Small 8bit boolean type
+using Bool32 = I32; ///< A 32bit boolean
 
 /// Error codes
 enum class ErrorCode : I32

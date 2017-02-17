@@ -29,13 +29,21 @@ namespace anki
 // Forward
 class GrManagerImpl;
 
-/// @addtogroup vulkan
+/// @addtogrou/cygdrive/c/VulkanSDK/1.0.39.1/Include/vulkan/vulkan.h
 /// @{
 
 #define ANKI_VK_LOGI(...) ANKI_LOG("VK  ", NORMAL, __VA_ARGS__)
 #define ANKI_VK_LOGE(...) ANKI_LOG("VK  ", ERROR, __VA_ARGS__)
 #define ANKI_VK_LOGW(...) ANKI_LOG("VK  ", WARNING, __VA_ARGS__)
 #define ANKI_VK_LOGF(...) ANKI_LOG("VK  ", FATAL, __VA_ARGS__)
+
+enum class VulkanExtensions : U8
+{
+	NONE = 0,
+	KHR_MAINENANCE1 = 1 << 0,
+	AMD_NEGATIVE_VIEWPORT_HEIGHT = 1 << 1,
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VulkanExtensions, inline)
 
 /// @name Constants
 /// @{
@@ -164,6 +172,25 @@ ANKI_USE_RESULT inline VkDescriptorType convertDescriptorType(DescriptorType ak)
 	default:
 		out = VK_DESCRIPTOR_TYPE_MAX_ENUM;
 		ANKI_ASSERT(0);
+	}
+
+	return out;
+}
+
+ANKI_USE_RESULT inline VkIndexType convertIndexType(IndexType ak)
+{
+	VkIndexType out;
+	switch(ak)
+	{
+	case IndexType::U16:
+		out = VK_INDEX_TYPE_UINT16;
+		break;
+	case IndexType::U32:
+		out = VK_INDEX_TYPE_UINT32;
+		break;
+	default:
+		ANKI_ASSERT(0);
+		out = VK_INDEX_TYPE_MAX_ENUM;
 	}
 
 	return out;

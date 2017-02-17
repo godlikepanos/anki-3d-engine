@@ -7,7 +7,7 @@
 
 #include <anki/util/StdTypes.h>
 #include <anki/util/NonCopyable.h>
-#include <type_traits>
+#include <atomic>
 
 namespace anki
 {
@@ -17,16 +17,12 @@ namespace anki
 
 enum class AtomicMemoryOrder
 {
-#if defined(__GNUC__)
-	RELAXED = __ATOMIC_RELAXED,
-	CONSUME = __ATOMIC_CONSUME,
-	ACQUIRE = __ATOMIC_ACQUIRE,
-	RELEASE = __ATOMIC_RELEASE,
-	ACQ_REL = __ATOMIC_ACQ_REL,
-	SEQ_CST = __ATOMIC_SEQ_CST
-#else
-#error "TODO"
-#endif
+	RELAXED = std::memory_order_relaxed,
+	CONSUME = std::memory_order_consume,
+	ACQUIRE = std::memory_order_acquire,
+	RELEASE = std::memory_order_release,
+	ACQ_REL = std::memory_order_acq_rel,
+	SEQ_CST = std::memory_order_seq_cst
 };
 
 /// Atomic template. At the moment it doesn't work well with pointers.
@@ -40,7 +36,6 @@ public:
 	/// It will not set itself to zero.
 	Atomic()
 	{
-		static_assert(std::is_pointer<T>::value || std::is_arithmetic<T>::value, "Check the type");
 	}
 
 	Atomic(const Value& a)
@@ -63,69 +58,27 @@ public:
 	/// Get the value of the atomic.
 	Value load(AtomicMemoryOrder memOrd = MEMORY_ORDER) const
 	{
-#if defined(__GNUC__)
-		return __atomic_load_n(&m_val, static_cast<int>(memOrd));
-#else
-#error "TODO"
-#endif
+		return m_att.load(static_cast<std::memory_order>(memOrd));
 	}
 
 	/// Store
 	void store(const Value& a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
 	{
-#if defined(__GNUC__)
-		__atomic_store_n(&m_val, a, static_cast<int>(memOrd));
-#else
-#error "TODO"
-#endif
+		m_att.store(a, static_cast<std::memory_order>(memOrd));
 	}
 
-	/// Fetch and add. Pointer specialization
-	template<typename Y, typename Q = T>
-	typename std::enable_if<std::is_pointer<Q>::value, Q>::type fetchAdd(
-		const Y& a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
+	/// Fetch and add.
+	template<typename Y>
+	Value fetchAdd(const Y& a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
 	{
-#if defined(__GNUC__)
-		return __atomic_fetch_add(&m_val, a * sizeof(typename std::remove_pointer<Q>::type), static_cast<int>(memOrd));
-#else
-#error "TODO"
-#endif
+		return m_att.fetch_add(a, static_cast<std::memory_order>(memOrd));
 	}
 
-	/// Fetch and add. Arithmetic specialization.
-	template<typename Y, typename Q = T>
-	typename std::enable_if<!std::is_pointer<Q>::value, Q>::type fetchAdd(
-		const Y& a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
+	/// Fetch and subtract.
+	template<typename Y>
+	Value fetchSub(const Y& a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
 	{
-#if defined(__GNUC__)
-		return __atomic_fetch_add(&m_val, a, static_cast<int>(memOrd));
-#else
-#error "TODO"
-#endif
-	}
-
-	/// Fetch and subtract. Pointer specialization.
-	template<typename Y, typename Q = T>
-	typename std::enable_if<std::is_pointer<Q>::value, Q>::type fetchSub(
-		const Y& a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
-	{
-#if defined(__GNUC__)
-		return __atomic_fetch_sub(&m_val, a * sizeof(typename std::remove_pointer<Q>::type), static_cast<int>(memOrd));
-#else
-#error "TODO"
-#endif
-	}
-
-	/// Fetch and subtract. Arithmetic specialization.
-	template<typename Y, typename Q = T>
-	typename std::enable_if<!std::is_pointer<Q>::value, Q>::type fetchSub(
-		const Y& a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
-	{
-#if defined(__GNUC__)
-		return __atomic_fetch_sub(&m_val, a, static_cast<int>(memOrd));
-#else
-#error "TODO"
-#endif
+		return m_att.fetch_sub(a, static_cast<std::memory_order>(memOrd));
 	}
 
 	/// @code
@@ -139,22 +92,14 @@ public:
 	/// @endcode
 	Bool compareExchange(Value& expected, const Value& desired, AtomicMemoryOrder memOrd = MEMORY_ORDER)
 	{
-#if defined(__GNUC__)
-		return __atomic_compare_exchange_n(
-			&m_val, &expected, desired, false, static_cast<int>(memOrd), __ATOMIC_RELAXED);
-#else
-#error "TODO"
-#endif
+		return m_att.compare_exchange_weak(
+			expected, desired, static_cast<std::memory_order>(memOrd), static_cast<std::memory_order>(memOrd));
 	}
 
 	/// Set @a a to the atomic and return the previous value.
 	Value exchange(const Value& a, AtomicMemoryOrder memOrd = MEMORY_ORDER)
 	{
-#if defined(__GNUC__)
-		return __atomic_exchange_n(&m_val, a, static_cast<int>(memOrd));
-#else
-#error "TODO"
-#endif
+		return m_att.exchange(a, static_cast<std::memory_order>(memOrd));
 	}
 
 	/// Store the minimum using compare-and-swap.
@@ -176,7 +121,11 @@ public:
 	}
 
 private:
-	Value m_val;
+	union
+	{
+		Value m_val;
+		std::atomic<Value> m_att;
+	};
 };
 /// @}
 

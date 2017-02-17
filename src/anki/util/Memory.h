@@ -156,7 +156,7 @@ public:
 private:
 #if ANKI_MEM_USE_SIGNATURES
 	AllocationSignature m_signature = 0;
-	static const U32 MAX_ALIGNMENT = 16;
+	static const U32 MAX_ALIGNMENT = 64;
 	U32 m_headerSize = 0;
 #endif
 };

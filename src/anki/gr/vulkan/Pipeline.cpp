@@ -193,6 +193,8 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 	VkPipelineVertexInputStateCreateInfo& vertCi = m_ci.m_vert;
 	vertCi = {};
 	vertCi.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	vertCi.pVertexAttributeDescriptions = &m_ci.m_attribs[0];
+	vertCi.pVertexBindingDescriptions = &m_ci.m_vertBindings[0];
 
 	for(U i = 0; i < MAX_VERTEX_ATTRIBUTES; ++i)
 	{

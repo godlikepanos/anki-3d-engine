@@ -443,12 +443,17 @@ ANKI_TEST(Gr, SimpleDrawcall)
 {
 	COMMON_BEGIN()
 
-	ANKI_TEST_LOGI("Expect to see a grey triangle");
+	ANKI_TEST_LOGI("Expect to see a grey triangle appearing in the 4 corners");
 	ShaderProgramPtr prog = createProgram(VERT_SRC, FRAG_SRC, *gr);
 	FramebufferPtr fb = createDefaultFb(*gr);
 
-	U iterations = 100;
-	while(iterations--)
+	static const Array2d<U, 4, 4> VIEWPORTS = {{{{0, 0, WIDTH / 2, HEIGHT / 2}},
+		{{WIDTH / 2, 0, WIDTH, HEIGHT / 2}},
+		{{WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT}},
+		{{0, HEIGHT / 2, WIDTH / 2, HEIGHT}}}};
+
+	const U ITERATIONS = 200;
+	for(U i = 0; i < ITERATIONS; ++i)
 	{
 		HighRezTimer timer;
 		timer.start();
@@ -459,7 +464,8 @@ ANKI_TEST(Gr, SimpleDrawcall)
 		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK;
 		CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
 
-		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
+		auto vp = VIEWPORTS[(i / 30) % 4];
+		cmdb->setViewport(vp[0], vp[1], vp[2], vp[3]);
 		cmdb->bindShaderProgram(prog);
 		cmdb->beginRenderPass(fb);
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);

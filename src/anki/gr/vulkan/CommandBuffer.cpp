@@ -58,17 +58,17 @@ void CommandBuffer::finish()
 
 void CommandBuffer::bindVertexBuffer(U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride)
 {
-	ANKI_ASSERT(!"TODO");
+	m_impl->bindVertexBuffer(binding, buff, offset, stride);
 }
 
 void CommandBuffer::setVertexAttribute(U32 location, U32 buffBinding, const PixelFormat& fmt, PtrSize relativeOffset)
 {
-	ANKI_ASSERT(!"TODO");
+	m_impl->setVertexAttribute(location, buffBinding, fmt, relativeOffset);
 }
 
 void CommandBuffer::bindIndexBuffer(BufferPtr buff, PtrSize offset, IndexType type)
 {
-	ANKI_ASSERT(!"TODO");
+	m_impl->bindIndexBuffer(buff, offset, type);
 }
 
 void CommandBuffer::setPrimitiveRestart(Bool enable)

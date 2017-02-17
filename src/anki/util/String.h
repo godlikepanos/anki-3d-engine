@@ -192,10 +192,10 @@ public:
 	}
 
 	/// Get the string length.
-	U getLength() const
+	U32 getLength() const
 	{
 		checkInit();
-		return std::strlen(m_ptr);
+		return U32(std::strlen(m_ptr));
 	}
 
 	PtrSize find(const CString& cstr, PtrSize position = 0) const
@@ -203,7 +203,7 @@ public:
 		checkInit();
 		ANKI_ASSERT(position < getLength());
 		const Char* out = std::strstr(m_ptr, &cstr[0]);
-		return (out == nullptr) ? NPOS : (out - m_ptr);
+		return (out == nullptr) ? NPOS : PtrSize(out - m_ptr);
 	}
 
 	/// Convert to F64.
