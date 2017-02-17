@@ -33,7 +33,7 @@ script:
   - mkdir build 
   - cd build
   - cmake .. -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DANKI_EXTRA_CHECKS=${EXTRA_CHECKS} -DANKI_BUILD_TOOLS=ON -DANKI_BUILD_TESTS=ON -DANKI_ENABLE_TRACE=${TRACE}
-  - make
+  - make -j 2
 
 branches:
   only:
