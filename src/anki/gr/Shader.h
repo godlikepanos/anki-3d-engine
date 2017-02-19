@@ -58,7 +58,7 @@ void writeShaderBlockMemory(ShaderVariableDataType type,
 	const void* buffEnd);
 
 /// GPU shader.
-class Shader : public GrObject
+class Shader final : public GrObject
 {
 	ANKI_GR_OBJECT
 

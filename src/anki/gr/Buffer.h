@@ -14,7 +14,7 @@ namespace anki
 /// @{
 
 /// GPU buffer.
-class Buffer : public GrObject
+class Buffer final : public GrObject
 {
 	ANKI_GR_OBJECT
 

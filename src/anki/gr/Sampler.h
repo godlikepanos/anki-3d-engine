@@ -15,7 +15,7 @@ namespace anki
 /// @{
 
 /// GPU sampler.
-class Sampler : public GrObject
+class Sampler final : public GrObject
 {
 	ANKI_GR_OBJECT
 

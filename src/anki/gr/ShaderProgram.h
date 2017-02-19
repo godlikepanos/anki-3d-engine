@@ -14,7 +14,7 @@ namespace anki
 /// @{
 
 /// GPU program.
-class ShaderProgram : public GrObject
+class ShaderProgram final : public GrObject
 {
 	ANKI_GR_OBJECT
 

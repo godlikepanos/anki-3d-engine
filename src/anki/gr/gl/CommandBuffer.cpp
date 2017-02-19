@@ -1489,4 +1489,9 @@ void CommandBuffer::writeOcclusionQueryResultToBuffer(OcclusionQueryPtr query, P
 	m_impl->pushBackNewCommand<WriteOcclResultToBuff>(query, offset, buff);
 }
 
+void CommandBuffer::informTextureCurrentUsage(TexturePtr tex, TextureUsageBit crntUsage)
+{
+	// Nothing for GL
+}
+
 } // end namespace anki

@@ -212,10 +212,15 @@ enum class TextureUsageBit : U16
 	FRAMEBUFFER_ATTACHMENT_READ_WRITE = FRAMEBUFFER_ATTACHMENT_READ | FRAMEBUFFER_ATTACHMENT_WRITE,
 	/// @}
 
+	/// @name Transfer
+	/// @{
+	TRANSFER_DESTINATION = 1 << 10,
+	TRANSFER_ANY = TRANSFER_DESTINATION,
+	/// @}
+
 	/// @name Misc
 	/// @{
-	GENERATE_MIPMAPS = 1 << 10,
-	UPLOAD = 1 << 11,
+	GENERATE_MIPMAPS = 1 << 11,
 	CLEAR = 1 << 12 ///< Will be used in CommandBuffer::clearImage.
 	/// @}
 };

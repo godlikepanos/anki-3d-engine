@@ -13,23 +13,6 @@
 namespace anki
 {
 
-inline void CommandBufferImpl::setPolygonOffset(F32 factor, F32 units)
-{
-	commandCommon();
-
-	if(m_polygonOffsetFactor != factor || m_polygonOffsetUnits != units)
-	{
-		ANKI_CMD(vkCmdSetDepthBias(m_handle, units, 0.0, factor), ANY_OTHER_COMMAND);
-
-		m_polygonOffsetFactor = factor;
-		m_polygonOffsetUnits = units;
-	}
-	else
-	{
-		// Skip
-	}
-}
-
 inline void CommandBufferImpl::setStencilCompareMask(FaceSelectionBit face, U32 mask)
 {
 	commandCommon();

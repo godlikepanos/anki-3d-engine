@@ -73,7 +73,7 @@ void CommandBuffer::bindIndexBuffer(BufferPtr buff, PtrSize offset, IndexType ty
 
 void CommandBuffer::setPrimitiveRestart(Bool enable)
 {
-	ANKI_ASSERT(!"TODO");
+	m_impl->setPrimitiveRestart(enable);
 }
 
 void CommandBuffer::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
@@ -93,12 +93,12 @@ void CommandBuffer::setScissorRect(U16 minx, U16 miny, U16 maxx, U16 maxy)
 
 void CommandBuffer::setFillMode(FillMode mode)
 {
-	ANKI_ASSERT(!"TODO");
+	m_impl->setFillMode(mode);
 }
 
 void CommandBuffer::setCullMode(FaceSelectionBit mode)
 {
-	ANKI_ASSERT(!"TODO");
+	m_impl->setCullMode(mode);
 }
 
 void CommandBuffer::setPolygonOffset(F32 factor, F32 units)
@@ -111,12 +111,12 @@ void CommandBuffer::setStencilOperations(FaceSelectionBit face,
 	StencilOperation stencilPassDepthFail,
 	StencilOperation stencilPassDepthPass)
 {
-	ANKI_ASSERT(!"TODO");
+	m_impl->setStencilOperations(face, stencilFail, stencilPassDepthFail, stencilPassDepthPass);
 }
 
 void CommandBuffer::setStencilCompareOperation(FaceSelectionBit face, CompareOperation comp)
 {
-	ANKI_ASSERT(!"TODO");
+	m_impl->setStencilCompareOperation(face, comp);
 }
 
 void CommandBuffer::setStencilCompareMask(FaceSelectionBit face, U32 mask)
@@ -136,44 +136,44 @@ void CommandBuffer::setStencilReference(FaceSelectionBit face, U32 ref)
 
 void CommandBuffer::setDepthWrite(Bool enable)
 {
-	ANKI_ASSERT(!"TODO");
+	m_impl->setDepthWrite(enable);
 }
 
 void CommandBuffer::setDepthCompareOperation(CompareOperation op)
 {
-	ANKI_ASSERT(!"TODO");
+	m_impl->setDepthCompareOperation(op);
 }
 
 void CommandBuffer::setAlphaToCoverage(Bool enable)
 {
-	ANKI_ASSERT(!"TODO");
+	m_impl->setAlphaToCoverage(enable);
 }
 
 void CommandBuffer::setColorChannelWriteMask(U32 attachment, ColorBit mask)
 {
-	ANKI_ASSERT(!"TODO");
+	m_impl->setColorChannelWriteMask(attachment, mask);
 }
 
 void CommandBuffer::setBlendFactors(
 	U32 attachment, BlendFactor srcRgb, BlendFactor dstRgb, BlendFactor srcA, BlendFactor dstA)
 {
-	ANKI_ASSERT(!"TODO");
+	m_impl->setBlendFactors(attachment, srcRgb, dstRgb, srcA, dstA);
 }
 
 void CommandBuffer::setBlendOperation(U32 attachment, BlendOperation funcRgb, BlendOperation funcA)
 {
-	ANKI_ASSERT(!"TODO");
+	m_impl->setBlendOperation(attachment, funcRgb, funcA);
 }
 
 void CommandBuffer::bindTexture(U32 set, U32 binding, TexturePtr tex, DepthStencilAspectBit aspect)
 {
-	ANKI_ASSERT(!"TODO");
+	m_impl->bindTexture(set, binding, tex, aspect);
 }
 
 void CommandBuffer::bindTextureAndSampler(
 	U32 set, U32 binding, TexturePtr tex, SamplerPtr sampler, DepthStencilAspectBit aspect)
 {
-	ANKI_ASSERT(!"TODO");
+	m_impl->bindTextureAndSampler(set, binding, tex, sampler, aspect);
 }
 
 void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range)
@@ -275,7 +275,7 @@ void CommandBuffer::clearTextureVolume(
 void CommandBuffer::copyBufferToTextureSurface(
 	BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureSurfaceInfo& surf)
 {
-	ANKI_ASSERT(!"TODO");
+	m_impl->copyBufferToTextureSurface(buff, offset, range, tex, surf);
 }
 
 void CommandBuffer::copyBufferToTextureVolume(
@@ -316,6 +316,11 @@ void CommandBuffer::setBufferBarrier(
 	BufferPtr buff, BufferUsageBit before, BufferUsageBit after, PtrSize offset, PtrSize size)
 {
 	m_impl->setBufferBarrier(buff, before, after, offset, size);
+}
+
+void CommandBuffer::informTextureCurrentUsage(TexturePtr tex, TextureUsageBit crntUsage)
+{
+	m_impl->informTextureCurrentUsage(tex, crntUsage);
 }
 
 void CommandBuffer::resetOcclusionQuery(OcclusionQueryPtr query)

@@ -68,7 +68,7 @@ public:
 };
 
 /// GPU framebuffer.
-class Framebuffer : public GrObject
+class Framebuffer final : public GrObject
 {
 	ANKI_GR_OBJECT
 

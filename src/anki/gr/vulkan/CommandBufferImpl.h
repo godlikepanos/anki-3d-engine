@@ -93,7 +93,23 @@ public:
 		m_bufferList.pushBack(m_alloc, buff);
 	}
 
-	void setPrimitiveRestart(Bool enable);
+	void setPrimitiveRestart(Bool enable)
+	{
+		commandCommon();
+		m_state.setPrimitiveRestart(enable);
+	}
+
+	void setFillMode(FillMode mode)
+	{
+		commandCommon();
+		m_state.setFillMode(mode);
+	}
+
+	void setCullMode(FaceSelectionBit mode)
+	{
+		commandCommon();
+		m_state.setCullMode(mode);
+	}
 
 	void setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 	{
@@ -111,13 +127,89 @@ public:
 		}
 	}
 
-	void setPolygonOffset(F32 factor, F32 units);
+	void setPolygonOffset(F32 factor, F32 units)
+	{
+		commandCommon();
+		m_state.setPolygonOffset(factor, units);
+	}
+
+	void setStencilOperations(FaceSelectionBit face,
+		StencilOperation stencilFail,
+		StencilOperation stencilPassDepthFail,
+		StencilOperation stencilPassDepthPass)
+	{
+		commandCommon();
+		m_state.setStencilOperations(face, stencilFail, stencilPassDepthFail, stencilPassDepthPass);
+	}
+
+	void setStencilCompareOperation(FaceSelectionBit face, CompareOperation comp)
+	{
+		commandCommon();
+		m_state.setStencilCompareOperation(face, comp);
+	}
 
 	void setStencilCompareMask(FaceSelectionBit face, U32 mask);
 
 	void setStencilWriteMask(FaceSelectionBit face, U32 mask);
 
 	void setStencilReference(FaceSelectionBit face, U32 ref);
+
+	void setDepthWrite(Bool enable)
+	{
+		commandCommon();
+		m_state.setDepthWrite(enable);
+	}
+
+	void setDepthCompareOperation(CompareOperation op)
+	{
+		commandCommon();
+		m_state.setDepthCompareOperation(op);
+	}
+
+	void setAlphaToCoverage(Bool enable)
+	{
+		commandCommon();
+		m_state.setAlphaToCoverage(enable);
+	}
+
+	void setColorChannelWriteMask(U32 attachment, ColorBit mask)
+	{
+		commandCommon();
+		m_state.setColorChannelWriteMask(attachment, mask);
+	}
+
+	void setBlendFactors(U32 attachment, BlendFactor srcRgb, BlendFactor dstRgb, BlendFactor srcA, BlendFactor dstA)
+	{
+		commandCommon();
+		m_state.setBlendFactors(attachment, srcRgb, dstRgb, srcA, dstA);
+	}
+
+	void setBlendOperation(U32 attachment, BlendOperation funcRgb, BlendOperation funcA)
+	{
+		commandCommon();
+		m_state.setBlendOperation(attachment, funcRgb, funcA);
+	}
+
+	void bindTexture(U32 set, U32 binding, TexturePtr tex_, DepthStencilAspectBit aspect)
+	{
+		const U realBinding = binding;
+		Texture& tex = *tex_;
+		TextureUsageBit usage = m_texUsageTracker.findUsage(tex);
+		VkImageLayout lay = tex.m_impl->computeLayout(usage, 0);
+		m_dsetState[set].bindTexture(realBinding, &tex, aspect, lay);
+		m_texList.pushBack(m_alloc, tex_);
+	}
+
+	void bindTextureAndSampler(U32 set, U32 binding, TexturePtr tex_, SamplerPtr sampler, DepthStencilAspectBit aspect)
+	{
+		const U realBinding = binding;
+		Texture& tex = *tex_;
+		TextureUsageBit usage = m_texUsageTracker.findUsage(tex);
+		VkImageLayout lay = tex.m_impl->computeLayout(usage, 0);
+		m_dsetState[set].bindTextureAndSampler(realBinding, &tex, sampler.get(), aspect, lay);
+		m_texList.pushBack(m_alloc, tex_);
+		m_samplerList.pushBack(m_alloc, sampler);
+	}
 
 	void beginRenderPass(FramebufferPtr fb);
 
@@ -180,9 +272,26 @@ public:
 	void bindUniformBuffer(U32 set, U32 binding, BufferPtr& buff, PtrSize offset, PtrSize range)
 	{
 		commandCommon();
-		U realBinding = MAX_TEXTURE_BINDINGS + binding;
+		const U realBinding = MAX_TEXTURE_BINDINGS + binding;
 		m_dsetState[set].bindUniformBuffer(realBinding, buff.get(), offset, range);
 		m_bufferList.pushBack(m_alloc, buff);
+	}
+
+	void bindStorageBuffer(U32 set, U32 binding, BufferPtr& buff, PtrSize offset, PtrSize range)
+	{
+		commandCommon();
+		const U realBinding = MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS + binding;
+		m_dsetState[set].bindStorageBuffer(realBinding, buff.get(), offset, range);
+		m_bufferList.pushBack(m_alloc, buff);
+	}
+
+	void copyBufferToTextureSurface(
+		BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureSurfaceInfo& surf);
+
+	void informTextureCurrentUsage(TexturePtr& tex, TextureUsageBit crntUsage)
+	{
+		ANKI_ASSERT(tex->m_impl->usageValid(crntUsage));
+		m_texUsageTracker.setUsage(*tex, crntUsage, m_alloc);
 	}
 
 private:
@@ -212,6 +321,7 @@ private:
 	List<BufferPtr> m_bufferList;
 	List<CommandBufferPtr> m_cmdbList;
 	List<ShaderProgramPtr> m_progs;
+	List<SamplerPtr> m_samplerList;
 /// @}
 
 #if ANKI_EXTRA_CHECKS
@@ -226,8 +336,6 @@ private:
 	/// @{
 	Array<U16, 4> m_viewport = {{0, 0, 0, 0}};
 	Bool8 m_viewportDirty = true;
-	F32 m_polygonOffsetFactor = MAX_F32;
-	F32 m_polygonOffsetUnits = MAX_F32;
 	Array<U32, 2> m_stencilCompareMasks = {{0x5A5A5A5A, 0x5A5A5A5A}}; ///< Use a stupid number to initialize.
 	Array<U32, 2> m_stencilWriteMasks = {{0x5A5A5A5A, 0x5A5A5A5A}};
 	Array<U32, 2> m_stencilReferenceMasks = {{0x5A5A5A5A, 0x5A5A5A5A}};
@@ -275,22 +383,21 @@ private:
 	class TextureUsageTracker
 	{
 	public:
-		Bool findUsage(const Texture& tex, TextureUsageBit& usage) const
+		ANKI_USE_RESULT TextureUsageBit findUsage(const Texture& tex) const
 		{
 			auto it = m_map.find(tex.getUuid());
 			if(it != m_map.getEnd())
 			{
-				usage = (*it);
-				return true;
+				return (*it);
 			}
 			else if(tex.m_impl->m_usageWhenEncountered != TextureUsageBit::NONE)
 			{
-				usage = tex.m_impl->m_usageWhenEncountered;
-				return true;
+				return tex.m_impl->m_usageWhenEncountered;
 			}
 			else
 			{
-				return false;
+				ANKI_ASSERT(!"Cannot find the layout of the image");
+				return TextureUsageBit::NONE;
 			}
 		}
 

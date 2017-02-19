@@ -330,6 +330,17 @@ public:
 		}
 	}
 
+	void setBlendOperation(U32 attachment, BlendOperation funcRgb, BlendOperation funcA)
+	{
+		ColorAttachmentStateInfo& c = m_state.m_color.m_attachments[attachment];
+		if(c.m_blendFunctionRgb != funcRgb || c.m_blendFunctionA != funcA)
+		{
+			c.m_blendFunctionRgb = funcRgb;
+			c.m_blendFunctionA = funcA;
+			m_dirty.m_colAttachments.set(attachment);
+		}
+	}
+
 	void bindShaderProgram(const ShaderProgramPtr& prog)
 	{
 		if(prog != m_state.m_prog)

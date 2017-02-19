@@ -640,7 +640,7 @@ VkImageUsageFlags convertTextureUsage(TextureUsageBit ak, const PixelFormat& for
 		out |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 	}
 
-	if(!!(ak & TextureUsageBit::UPLOAD))
+	if(!!(ak & TextureUsageBit::TRANSFER_DESTINATION))
 	{
 		out |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 	}

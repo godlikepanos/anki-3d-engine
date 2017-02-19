@@ -58,7 +58,7 @@ public:
 };
 
 /// GPU texture
-class Texture : public GrObject
+class Texture final : public GrObject
 {
 	ANKI_GR_OBJECT
 

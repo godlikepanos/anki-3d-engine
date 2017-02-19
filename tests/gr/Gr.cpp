@@ -696,7 +696,7 @@ ANKI_TEST(Gr, DrawWithTexture)
 	TextureInitInfo init;
 	init.m_depth = 1;
 	init.m_format = PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM);
-	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::UPLOAD;
+	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::TRANSFER_DESTINATION;
 	init.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 	init.m_height = 2;
 	init.m_width = 2;
@@ -717,7 +717,8 @@ ANKI_TEST(Gr, DrawWithTexture)
 	init.m_width = 4;
 	init.m_height = 4;
 	init.m_mipmapsCount = 3;
-	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::UPLOAD | TextureUsageBit::GENERATE_MIPMAPS;
+	init.m_usage =
+		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::TRANSFER_DESTINATION | TextureUsageBit::GENERATE_MIPMAPS;
 	init.m_initialUsage = TextureUsageBit::NONE;
 
 	TexturePtr b = gr->newInstance<Texture>(init);
@@ -784,12 +785,13 @@ ANKI_TEST(Gr, DrawWithTexture)
 
 	// Set barriers
 	cmdb->setTextureSurfaceBarrier(
-		a, TextureUsageBit::SAMPLED_FRAGMENT, TextureUsageBit::UPLOAD, TextureSurfaceInfo(0, 0, 0, 0));
+		a, TextureUsageBit::SAMPLED_FRAGMENT, TextureUsageBit::TRANSFER_DESTINATION, TextureSurfaceInfo(0, 0, 0, 0));
 
 	cmdb->setTextureSurfaceBarrier(
-		a, TextureUsageBit::SAMPLED_FRAGMENT, TextureUsageBit::UPLOAD, TextureSurfaceInfo(1, 0, 0, 0));
+		a, TextureUsageBit::SAMPLED_FRAGMENT, TextureUsageBit::TRANSFER_DESTINATION, TextureSurfaceInfo(1, 0, 0, 0));
 
-	cmdb->setTextureSurfaceBarrier(b, TextureUsageBit::NONE, TextureUsageBit::UPLOAD, TextureSurfaceInfo(0, 0, 0, 0));
+	cmdb->setTextureSurfaceBarrier(
+		b, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION, TextureSurfaceInfo(0, 0, 0, 0));
 
 	UPLOAD_TEX_SURFACE(cmdb, a, TextureSurfaceInfo(0, 0, 0, 0), &mip0[0], sizeof(mip0));
 
@@ -799,16 +801,16 @@ ANKI_TEST(Gr, DrawWithTexture)
 
 	// Gen mips
 	cmdb->setTextureSurfaceBarrier(
-		b, TextureUsageBit::UPLOAD, TextureUsageBit::GENERATE_MIPMAPS, TextureSurfaceInfo(0, 0, 0, 0));
+		b, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::GENERATE_MIPMAPS, TextureSurfaceInfo(0, 0, 0, 0));
 
 	cmdb->generateMipmaps2d(b, 0, 0);
 
 	// Set barriers
 	cmdb->setTextureSurfaceBarrier(
-		a, TextureUsageBit::UPLOAD, TextureUsageBit::SAMPLED_FRAGMENT, TextureSurfaceInfo(0, 0, 0, 0));
+		a, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::SAMPLED_FRAGMENT, TextureSurfaceInfo(0, 0, 0, 0));
 
 	cmdb->setTextureSurfaceBarrier(
-		a, TextureUsageBit::UPLOAD, TextureUsageBit::SAMPLED_FRAGMENT, TextureSurfaceInfo(1, 0, 0, 0));
+		a, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::SAMPLED_FRAGMENT, TextureSurfaceInfo(1, 0, 0, 0));
 
 	for(U i = 0; i < 3; ++i)
 	{
@@ -847,6 +849,8 @@ ANKI_TEST(Gr, DrawWithTexture)
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
 		cmdb->bindShaderProgram(prog);
 		cmdb->beginRenderPass(fb);
+		cmdb->informTextureCurrentUsage(a, TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->informTextureCurrentUsage(b, TextureUsageBit::SAMPLED_FRAGMENT);
 		cmdb->bindTexture(0, 0, a);
 		cmdb->bindTexture(0, 1, b);
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
@@ -1177,8 +1181,8 @@ ANKI_TEST(Gr, 3DTextures)
 	TextureInitInfo init;
 	init.m_depth = 1;
 	init.m_format = PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
-	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::UPLOAD;
-	init.m_initialUsage = TextureUsageBit::UPLOAD;
+	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::TRANSFER_DESTINATION;
+	init.m_initialUsage = TextureUsageBit::TRANSFER_DESTINATION;
 	init.m_height = 2;
 	init.m_width = 2;
 	init.m_mipmapsCount = 2;
@@ -1234,17 +1238,21 @@ ANKI_TEST(Gr, 3DTextures)
 	cmdbinit.m_flags = CommandBufferFlag::TRANSFER_WORK;
 	CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cmdbinit);
 
-	cmdb->setTextureVolumeBarrier(a, TextureUsageBit::NONE, TextureUsageBit::UPLOAD, TextureVolumeInfo(0));
+	cmdb->setTextureVolumeBarrier(
+		a, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION, TextureVolumeInfo(0));
 
-	cmdb->setTextureVolumeBarrier(a, TextureUsageBit::NONE, TextureUsageBit::UPLOAD, TextureVolumeInfo(1));
+	cmdb->setTextureVolumeBarrier(
+		a, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION, TextureVolumeInfo(1));
 
 	UPLOAD_TEX_VOL(cmdb, a, TextureVolumeInfo(0), &mip0[0], sizeof(mip0));
 
 	UPLOAD_TEX_VOL(cmdb, a, TextureVolumeInfo(1), &mip1[0], sizeof(mip1));
 
-	cmdb->setTextureVolumeBarrier(a, TextureUsageBit::UPLOAD, TextureUsageBit::SAMPLED_FRAGMENT, TextureVolumeInfo(0));
+	cmdb->setTextureVolumeBarrier(
+		a, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::SAMPLED_FRAGMENT, TextureVolumeInfo(0));
 
-	cmdb->setTextureVolumeBarrier(a, TextureUsageBit::UPLOAD, TextureUsageBit::SAMPLED_FRAGMENT, TextureVolumeInfo(1));
+	cmdb->setTextureVolumeBarrier(
+		a, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::SAMPLED_FRAGMENT, TextureVolumeInfo(1));
 
 	cmdb->flush();
 

@@ -213,7 +213,7 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 		else if(init.m_format.m_components == ComponentFormat::S8)
 		{
 			ANKI_ASSERT(
-				!(init.m_usage & (TextureUsageBit::IMAGE_ALL | TextureUsageBit::UPLOAD)) && "Can't do that ATM");
+				!(init.m_usage & (TextureUsageBit::IMAGE_ALL | TextureUsageBit::TRANSFER_ANY)) && "Can't do that ATM");
 			init.m_format = PixelFormat(ComponentFormat::D24S8, TransformFormat::UNORM);
 			m_format = init.m_format;
 			m_vkFormat = convertFormat(m_format);
@@ -224,7 +224,7 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 		else if(init.m_format.m_components == ComponentFormat::D24S8)
 		{
 			ANKI_ASSERT(
-				!(init.m_usage & (TextureUsageBit::IMAGE_ALL | TextureUsageBit::UPLOAD)) && "Can't do that ATM");
+				!(init.m_usage & (TextureUsageBit::IMAGE_ALL | TextureUsageBit::TRANSFER_ANY)) && "Can't do that ATM");
 			init.m_format = PixelFormat(ComponentFormat::D32S8, TransformFormat::UNORM);
 			m_format = init.m_format;
 			m_vkFormat = convertFormat(m_format);
@@ -422,7 +422,7 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit before,
 		}
 	}
 
-	if(!!(before & TextureUsageBit::UPLOAD))
+	if(!!(before & TextureUsageBit::TRANSFER_DESTINATION))
 	{
 		srcStages |= VK_PIPELINE_STAGE_TRANSFER_BIT;
 		srcAccesses |= VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -526,7 +526,7 @@ void TextureImpl::computeBarrierInfo(TextureUsageBit before,
 		}
 	}
 
-	if(!!(after & TextureUsageBit::UPLOAD))
+	if(!!(after & TextureUsageBit::TRANSFER_DESTINATION))
 	{
 		dstStages |= VK_PIPELINE_STAGE_TRANSFER_BIT;
 		dstAccesses |= VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -596,7 +596,7 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 	{
 		out = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 	}
-	else if(!m_depthStencil && usage == TextureUsageBit::UPLOAD)
+	else if(!m_depthStencil && usage == TextureUsageBit::TRANSFER_DESTINATION)
 	{
 		out = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 	}

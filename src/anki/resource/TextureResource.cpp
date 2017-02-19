@@ -95,12 +95,13 @@ Error TexUploadTask::operator()(AsyncLoaderTaskContext& ctx)
 					{
 						TextureVolumeInfo vol(mip);
 
-						cmdb->setTextureVolumeBarrier(m_tex, TextureUsageBit::NONE, TextureUsageBit::UPLOAD, vol);
+						cmdb->setTextureVolumeBarrier(
+							m_tex, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION, vol);
 
 						cmdb->copyBufferToTextureVolume(token.m_buffer, token.m_offset, token.m_range, m_tex, vol);
 
 						cmdb->setTextureVolumeBarrier(m_tex,
-							TextureUsageBit::UPLOAD,
+							TextureUsageBit::TRANSFER_DESTINATION,
 							TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_TESSELLATION_EVALUATION,
 							vol);
 					}
@@ -108,12 +109,13 @@ Error TexUploadTask::operator()(AsyncLoaderTaskContext& ctx)
 					{
 						TextureSurfaceInfo surf(mip, 0, face, layer);
 
-						cmdb->setTextureSurfaceBarrier(m_tex, TextureUsageBit::NONE, TextureUsageBit::UPLOAD, surf);
+						cmdb->setTextureSurfaceBarrier(
+							m_tex, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION, surf);
 
 						cmdb->copyBufferToTextureSurface(token.m_buffer, token.m_offset, token.m_range, m_tex, surf);
 
 						cmdb->setTextureSurfaceBarrier(m_tex,
-							TextureUsageBit::UPLOAD,
+							TextureUsageBit::TRANSFER_DESTINATION,
 							TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_TESSELLATION_EVALUATION,
 							surf);
 					}
@@ -156,8 +158,8 @@ TextureResource::~TextureResource()
 Error TextureResource::load(const ResourceFilename& filename)
 {
 	TextureInitInfo init;
-	init.m_usage =
-		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_TESSELLATION_EVALUATION | TextureUsageBit::UPLOAD;
+	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_TESSELLATION_EVALUATION
+		| TextureUsageBit::TRANSFER_DESTINATION;
 	U faces = 0;
 
 	// Load image

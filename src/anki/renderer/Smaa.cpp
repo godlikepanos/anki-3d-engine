@@ -161,7 +161,7 @@ Error SmaaWeights::init(const ConfigSet& initializer)
 		texinit.m_width = AREATEX_WIDTH;
 		texinit.m_height = AREATEX_HEIGHT;
 		texinit.m_format = PixelFormat(ComponentFormat::R8G8, TransformFormat::UNORM);
-		texinit.m_usage = TextureUsageBit::UPLOAD | TextureUsageBit::SAMPLED_FRAGMENT;
+		texinit.m_usage = TextureUsageBit::TRANSFER_DESTINATION | TextureUsageBit::SAMPLED_FRAGMENT;
 		texinit.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
 		texinit.m_sampling.m_repeat = false;
 		m_areaTex = gr.newInstance<Texture>(texinit);
@@ -172,9 +172,10 @@ Error SmaaWeights::init(const ConfigSet& initializer)
 		memcpy(stagingMem, &areaTexBytes[0], sizeof(areaTexBytes));
 
 		const TextureSurfaceInfo surf(0, 0, 0, 0);
-		cmdb->setTextureSurfaceBarrier(m_areaTex, TextureUsageBit::NONE, TextureUsageBit::UPLOAD, surf);
+		cmdb->setTextureSurfaceBarrier(m_areaTex, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION, surf);
 		cmdb->copyBufferToTextureSurface(token.m_buffer, token.m_offset, token.m_range, m_areaTex, surf);
-		cmdb->setTextureSurfaceBarrier(m_areaTex, TextureUsageBit::UPLOAD, TextureUsageBit::SAMPLED_FRAGMENT, surf);
+		cmdb->setTextureSurfaceBarrier(
+			m_areaTex, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::SAMPLED_FRAGMENT, surf);
 	}
 
 	// Create search texture
@@ -183,7 +184,7 @@ Error SmaaWeights::init(const ConfigSet& initializer)
 		texinit.m_width = SEARCHTEX_WIDTH;
 		texinit.m_height = SEARCHTEX_HEIGHT;
 		texinit.m_format = PixelFormat(ComponentFormat::R8, TransformFormat::UNORM);
-		texinit.m_usage = TextureUsageBit::UPLOAD | TextureUsageBit::SAMPLED_FRAGMENT;
+		texinit.m_usage = TextureUsageBit::TRANSFER_DESTINATION | TextureUsageBit::SAMPLED_FRAGMENT;
 		texinit.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
 		texinit.m_sampling.m_repeat = false;
 		m_searchTex = gr.newInstance<Texture>(texinit);
@@ -194,9 +195,10 @@ Error SmaaWeights::init(const ConfigSet& initializer)
 		memcpy(stagingMem, &searchTexBytes[0], sizeof(searchTexBytes));
 
 		const TextureSurfaceInfo surf(0, 0, 0, 0);
-		cmdb->setTextureSurfaceBarrier(m_searchTex, TextureUsageBit::NONE, TextureUsageBit::UPLOAD, surf);
+		cmdb->setTextureSurfaceBarrier(m_searchTex, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION, surf);
 		cmdb->copyBufferToTextureSurface(token.m_buffer, token.m_offset, token.m_range, m_searchTex, surf);
-		cmdb->setTextureSurfaceBarrier(m_searchTex, TextureUsageBit::UPLOAD, TextureUsageBit::SAMPLED_FRAGMENT, surf);
+		cmdb->setTextureSurfaceBarrier(
+			m_searchTex, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::SAMPLED_FRAGMENT, surf);
 	}
 	cmdb->flush();
 

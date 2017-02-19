@@ -14,7 +14,7 @@ namespace anki
 /// @{
 
 /// Occlusion query.
-class OcclusionQuery : public GrObject
+class OcclusionQuery final : public GrObject
 {
 	ANKI_GR_OBJECT
 

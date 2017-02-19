@@ -122,7 +122,7 @@ public:
 	}
 
 	void bindTextureAndSampler(
-		U binding, Texture* tex, SamplerPtr& sampler, DepthStencilAspectBit aspect, VkImageLayout layout)
+		U binding, Texture* tex, Sampler* sampler, DepthStencilAspectBit aspect, VkImageLayout layout)
 	{
 		m_bindings[binding].m_type = DescriptorType::TEXTURE;
 		m_bindings[binding].m_uuids[0] = tex->getUuid();

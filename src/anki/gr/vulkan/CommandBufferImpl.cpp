@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/gr/vulkan/CommandBufferImpl.h>
+#include <anki/gr/GrManager.h>
 #include <anki/gr/vulkan/GrManagerImpl.h>
 
 #include <anki/gr/Framebuffer.h>
@@ -42,6 +43,7 @@ CommandBufferImpl::~CommandBufferImpl()
 	m_bufferList.destroy(m_alloc);
 	m_cmdbList.destroy(m_alloc);
 	m_progs.destroy(m_alloc);
+	m_samplerList.destroy(m_alloc);
 
 	m_imgBarriers.destroy(m_alloc);
 	m_buffBarriers.destroy(m_alloc);
@@ -130,17 +132,13 @@ void CommandBufferImpl::beginRenderPassInternal()
 		Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> colAttUsages;
 		for(U i = 0; i < impl.getColorAttachmentCount(); ++i)
 		{
-			Bool found = m_texUsageTracker.findUsage(*impl.getColorAttachment(i), colAttUsages[i]);
-			ANKI_ASSERT(found);
-			(void)found;
+			colAttUsages[i] = m_texUsageTracker.findUsage(*impl.getColorAttachment(i));
 		}
 
 		TextureUsageBit dsAttUsage = TextureUsageBit::NONE;
 		if(impl.hasDepthStencil())
 		{
-			Bool found = m_texUsageTracker.findUsage(*impl.getDepthStencilAttachment(), dsAttUsage);
-			ANKI_ASSERT(found);
-			(void)found;
+			dsAttUsage = m_texUsageTracker.findUsage(*impl.getDepthStencilAttachment());
 		}
 
 		bi.renderPass = impl.getRenderPassHandle(colAttUsages, dsAttUsage);
@@ -314,7 +312,7 @@ void CommandBufferImpl::uploadTextureSurface(
 
 	TextureImpl& impl = *tex->m_impl;
 	impl.checkSurface(surf);
-	ANKI_ASSERT(impl.usageValid(TextureUsageBit::UPLOAD));
+	ANKI_ASSERT(impl.usageValid(TextureUsageBit::TRANSFER_DESTINATION));
 
 	if(!impl.m_workarounds)
 	{
@@ -418,7 +416,7 @@ void CommandBufferImpl::uploadTextureVolume(
 
 	TextureImpl& impl = *tex->m_impl;
 	impl.checkVolume(vol);
-	ANKI_ASSERT(impl.usageValid(TextureUsageBit::UPLOAD));
+	ANKI_ASSERT(impl.usageValid(TextureUsageBit::TRANSFER_DESTINATION));
 
 	if(!impl.m_workarounds)
 	{
@@ -779,6 +777,107 @@ void CommandBufferImpl::flushWriteQueryResults()
 		m_handle, pool, firstQuery, queryCount, buff, offset, sizeof(U32), VK_QUERY_RESULT_PARTIAL_BIT);
 
 	m_writeQueryAtomCount = 0;
+}
+
+void CommandBufferImpl::copyBufferToTextureSurface(
+	BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureSurfaceInfo& surf)
+{
+	commandCommon();
+
+	TextureImpl& impl = *tex->m_impl;
+	impl.checkSurface(surf);
+	ANKI_ASSERT(impl.usageValid(TextureUsageBit::TRANSFER_DESTINATION));
+	TextureUsageBit usage = m_texUsageTracker.findUsage(*tex);
+	const VkImageLayout layout = impl.computeLayout(usage, surf.m_level);
+
+	if(!impl.m_workarounds)
+	{
+		U width = impl.m_width >> surf.m_level;
+		U height = impl.m_height >> surf.m_level;
+		ANKI_ASSERT(range == computeSurfaceSize(width, height, impl.m_format));
+
+		// Copy
+		VkBufferImageCopy region;
+		region.imageSubresource.aspectMask = impl.m_aspect;
+		region.imageSubresource.baseArrayLayer = impl.computeVkArrayLayer(surf);
+		region.imageSubresource.layerCount = 1;
+		region.imageSubresource.mipLevel = surf.m_level;
+		region.imageOffset = {0, 0, I32(surf.m_depth)};
+		region.imageExtent.width = width;
+		region.imageExtent.height = height;
+		region.imageExtent.depth = 1;
+		region.bufferOffset = offset;
+		region.bufferImageHeight = 0;
+		region.bufferRowLength = 0;
+
+		ANKI_CMD(vkCmdCopyBufferToImage(m_handle, buff->m_impl->getHandle(), impl.m_imageHandle, layout, 1, &region),
+			ANY_OTHER_COMMAND);
+	}
+	else if(!!(impl.m_workarounds & TextureImplWorkaround::R8G8B8_TO_R8G8B8A8))
+	{
+		U width = impl.m_width >> surf.m_level;
+		U height = impl.m_height >> surf.m_level;
+
+		// Create a new shadow buffer
+		const PtrSize shadowSize =
+			computeSurfaceSize(width, height, PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM));
+		BufferPtr shadow =
+			getGrManager().newInstance<Buffer>(shadowSize, BufferUsageBit::TRANSFER_ALL, BufferMapAccessBit::NONE);
+		const VkBuffer shadowHandle = shadow->m_impl->getHandle();
+		m_bufferList.pushBack(m_alloc, shadow);
+
+		// Create the copy regions
+		DynamicArrayAuto<VkBufferCopy> copies(m_alloc);
+		copies.create(width * height);
+		U count = 0;
+		for(U x = 0; x < width; ++x)
+		{
+			for(U y = 0; y < height; ++y)
+			{
+				VkBufferCopy& c = copies[count++];
+				c.srcOffset = (y * width + x) * 3 + offset;
+				c.dstOffset = (y * width + x) * 4 + 0;
+				c.size = 3;
+			}
+		}
+
+		// Copy buffer to buffer
+		ANKI_CMD(vkCmdCopyBuffer(m_handle, buff->m_impl->getHandle(), shadowHandle, copies.getSize(), &copies[0]),
+			ANY_OTHER_COMMAND);
+
+		// Set barrier
+		setBufferBarrier(VK_PIPELINE_STAGE_TRANSFER_BIT,
+			VK_ACCESS_TRANSFER_WRITE_BIT,
+			VK_PIPELINE_STAGE_TRANSFER_BIT,
+			VK_ACCESS_TRANSFER_READ_BIT,
+			0,
+			shadowSize,
+			shadow->m_impl->getHandle());
+
+		// Do the copy to the image
+		VkBufferImageCopy region;
+		region.imageSubresource.aspectMask = impl.m_aspect;
+		region.imageSubresource.baseArrayLayer = impl.computeVkArrayLayer(surf);
+		region.imageSubresource.layerCount = 1;
+		region.imageSubresource.mipLevel = surf.m_level;
+		region.imageOffset = {0, 0, I32(surf.m_depth)};
+		region.imageExtent.width = width;
+		region.imageExtent.height = height;
+		region.imageExtent.depth = 1;
+		region.bufferOffset = 0;
+		region.bufferImageHeight = 0;
+		region.bufferRowLength = 0;
+
+		ANKI_CMD(
+			vkCmdCopyBufferToImage(m_handle, shadowHandle, impl.m_imageHandle, layout, 1, &region), ANY_OTHER_COMMAND);
+	}
+	else
+	{
+		ANKI_ASSERT(0);
+	}
+
+	m_texList.pushBack(m_alloc, tex);
+	m_bufferList.pushBack(m_alloc, buff);
 }
 
 } // end namespace anki
