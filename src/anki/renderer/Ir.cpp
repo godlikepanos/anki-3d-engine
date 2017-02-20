@@ -670,6 +670,10 @@ Error Ir::renderReflection(RenderingContext& ctx, SceneNode& node, U cubemapIdx)
 	{
 		ANKI_CHECK(runMs(ctx, *frustumComponents[i], cubemapIdx, i));
 		runIs(ctx, *frustumComponents[i], cubemapIdx, i);
+	}
+
+	for(U i = 0; i < 6; ++i)
+	{
 		computeIrradiance(ctx, cubemapIdx, i);
 	}
 

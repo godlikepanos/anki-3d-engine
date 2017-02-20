@@ -92,7 +92,7 @@ private:
 		Array<FaceInfo, 6> m_faces;
 	};
 
-	static const U IRRADIANCE_TEX_SIZE = 32;
+	static const U IRRADIANCE_TEX_SIZE = 16;
 	static const U MAX_PROBE_RENDERS_PER_FRAME = 1;
 
 	U16 m_cubemapArrSize = 0;

@@ -137,6 +137,12 @@ public:
 		m_probeRadius = r / F32(MAX_PROBE_RADIUS) * F32(MAX_U16);
 	}
 
+	Bool operator<(const ClusterProbeIndex& b) const
+	{
+		ANKI_ASSERT(m_probeRadius > 0.0 && b.m_probeRadius > 0.0);
+		return m_probeRadius < b.m_probeRadius;
+	}
+
 private:
 	static const U MAX_PROBE_RADIUS = 1000;
 	U16 m_index;
@@ -194,12 +200,7 @@ public:
 		const U probeCount = m_probeCount.get();
 		if(probeCount > 1)
 		{
-			std::sort(m_probeIds.getBegin(),
-				m_probeIds.getBegin() + probeCount,
-				[](const ClusterProbeIndex& a, const ClusterProbeIndex& b) {
-					ANKI_ASSERT(a.getProbeRadius() > 0.0 && b.getProbeRadius() > 0.0);
-					return a.getProbeRadius() < b.getProbeRadius();
-				});
+			std::sort(m_probeIds.getBegin(), m_probeIds.getBegin() + probeCount);
 		}
 
 		const U decalCount = m_decalCount.get();
@@ -797,7 +798,7 @@ void LightBin::writeAndBinProbe(
 
 	// Write it
 	ShaderProbe probe;
-	probe.m_pos = (camFrc.getViewMatrix() * reflc.getPosition().xyz1()).xyz();
+	probe.m_pos = reflc.getPosition().xyz();
 	probe.m_radiusSq = reflc.getRadius() * reflc.getRadius();
 	probe.m_cubemapIndex = reflc.getTextureArrayIndex();
 

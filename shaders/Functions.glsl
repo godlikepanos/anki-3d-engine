@@ -174,4 +174,13 @@ vec4 bilateralUpsample(
 	return sum / normalize;
 }
 
+vec3 getCubemapDirection(vec2 norm, uint faceIdx)
+{
+	vec3 zDir = vec3((faceIdx <= 1u) ? 1 : 0, (faceIdx & 2u) >> 1u, (faceIdx & 4u) >> 2u);
+	zDir *= (((faceIdx & 1u) == 1u) ? -1.0 : 1.0);
+	vec3 yDir = (faceIdx == 2u) ? vec3(0.0, 0.0, 1.0) : (faceIdx == 3u) ? vec3(0.0, 0.0, -1.0) : vec3(0.0, -1.0, 0.0);
+	vec3 xDir = cross(zDir, yDir);
+	return normalize(norm.x * xDir + norm.y * yDir + zDir);
+}
+
 #endif

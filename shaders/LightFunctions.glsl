@@ -162,7 +162,7 @@ float computeShadowFactorOmni(
 
 // Compute the cubemap texture lookup vector given the reflection vector (r) the radius squared of the probe (R2) and
 // the frag pos in sphere space (f)
-vec3 computeCubemapVecAccurate(in vec3 r, in float R2, in vec3 f, in mat3 invViewRotation)
+vec3 computeCubemapVecAccurate(in vec3 r, in float R2, in vec3 f)
 {
 	// Compute the collision of the r to the inner part of the sphere
 	// From now on we work on the sphere's space
@@ -180,16 +180,13 @@ vec3 computeCubemapVecAccurate(in vec3 r, in float R2, in vec3 f, in mat3 invVie
 	float sq = sqrt(R2 - pp);
 	vec3 x = p + sq * r;
 
-	// Rotate UV to move it to world space
-	vec3 uv = invViewRotation * x;
-
-	return uv;
+	return x;
 }
 
 // Cheap version of computeCubemapVecAccurate
-vec3 computeCubemapVecCheap(in vec3 r, in float R2, in vec3 f, in mat3 invViewRotation)
+vec3 computeCubemapVecCheap(in vec3 r, in float R2, in vec3 f)
 {
-	return invViewRotation * r;
+	return r;
 }
 
 #endif

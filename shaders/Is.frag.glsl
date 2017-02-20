@@ -68,13 +68,8 @@ void appendDecalColors(in Decal decal, in vec3 fragPos, inout vec3 diffuseColor,
 	roughness = mix(roughness, r, dcol.a * decal.blendFactors[1]);
 }
 
-void readIndirect(in uint idxOffset,
-	in vec3 posVSpace,
-	in vec3 r,
-	in vec3 n,
-	in float lod,
-	out vec3 specIndirect,
-	out vec3 diffIndirect)
+void readIndirect(
+	in uint idxOffset, in vec3 pos, in vec3 r, in vec3 n, in float lod, out vec3 specIndirect, out vec3 diffIndirect)
 {
 	specIndirect = vec3(0.0);
 	diffIndirect = vec3(0.0);
@@ -89,10 +84,10 @@ void readIndirect(in uint idxOffset,
 		vec3 center = probe.positionRadiusSq.xyz;
 
 		// Get distance from the center of the probe
-		vec3 f = posVSpace - center;
+		vec3 f = pos - center;
 
 		// Cubemap UV in view space
-		vec3 uv = computeCubemapVecAccurate(r, R2, f, u_lightingUniforms.invViewRotation);
+		vec3 uv = computeCubemapVecAccurate(r, R2, f);
 
 		// Read!
 		float cubemapIndex = probe.cubemapIndexPad3.x;
@@ -106,24 +101,10 @@ void readIndirect(in uint idxOffset,
 		// Same as: specIndirect = c * (1.0 - factor) + specIndirect * factor
 
 		// Do the same for diffuse
-		uv = computeCubemapVecCheap(n, R2, f, u_lightingUniforms.invViewRotation);
+		uv = computeCubemapVecCheap(n, R2, f);
 		vec3 id = texture(u_irradianceTex, vec4(uv, cubemapIndex)).rgb;
 		diffIndirect = mix(id, diffIndirect, factor);
 	}
-}
-
-float readSsao(float depth, vec2 ndc)
-{
-	vec4 worldPos4 = u_lightingUniforms.invViewProjMat * vec4(ndc, UV_TO_NDC(depth), 1.0);
-	worldPos4 = worldPos4 / worldPos4.w;
-
-	// Project to get old ndc
-	vec4 oldNdc4 = u_lightingUniforms.prevViewProjMat * worldPos4;
-	vec2 oldNdc = oldNdc4.xy / oldNdc4.w;
-
-	vec2 oldUv = NDC_TO_UV(oldNdc);
-
-	return texture(u_ssaoTex, oldUv).r;
 }
 
 void main()
@@ -157,8 +138,22 @@ void main()
 	emission = gbuffer.emission;
 
 	// Get SSAO
-	float ssao = readSsao(depth, ndc);
-	diffCol *= ssao;
+	vec3 worldPos;
+
+	{
+		vec4 worldPos4 = u_lightingUniforms.invViewProjMat * vec4(ndc, UV_TO_NDC(depth), 1.0);
+		worldPos4 = worldPos4 / worldPos4.w;
+		worldPos = worldPos4.xyz;
+
+		// Project to get old ndc
+		vec4 oldNdc4 = u_lightingUniforms.prevViewProjMat * worldPos4;
+		vec2 oldNdc = oldNdc4.xy / oldNdc4.w;
+
+		vec2 oldUv = NDC_TO_UV(oldNdc);
+
+		float ssao = texture(u_ssaoTex, oldUv).r;
+		diffCol *= ssao;
+	}
 
 	// Get counts and offsets
 	uint clusterIdx =
@@ -231,20 +226,21 @@ void main()
 
 #if INDIRECT_ENABLED
 	vec3 eye = -viewDir;
-	vec3 r = reflect(eye, normal);
+
+	vec3 worldEye = u_lightingUniforms.invViewRotation * eye;
+	vec3 worldNormal = u_lightingUniforms.invViewRotation * normal;
+	vec3 worldR = reflect(worldEye, worldNormal);
+
 	float reflLod = float(IR_MIPMAP_COUNT) * roughness;
 
-	vec3 specIndirect, diffIndirect;
-	readIndirect(idxOffset, fragPos, r, normal, reflLod, specIndirect, diffIndirect);
-
-	diffIndirect *= diffCol;
-
-	// Finalize the indirect specular
 	float ndotv = dot(normal, viewDir);
 	vec2 envBRDF = texture(u_integrationLut, vec2(roughness, ndotv)).xy;
-	specIndirect = specIndirect * (specCol * envBRDF.x + envBRDF.y);
+	vec3 specIndirectTerm = specCol * envBRDF.x + envBRDF.y;
 
-	out_color += specIndirect + diffIndirect;
+	vec3 specIndirect, diffIndirect;
+	readIndirect(idxOffset, worldPos, worldR, worldNormal, reflLod, specIndirect, diffIndirect);
+
+	out_color += specIndirect * specIndirectTerm + diffIndirect * diffCol;
 #endif
 
 #if 0

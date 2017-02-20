@@ -9,8 +9,8 @@
 #include "shaders/Functions.glsl"
 
 const vec2 KERNEL[SAMPLES] = KERNEL_ARRAY; // This will be appended in C++
-const float BIAS = 0.3;
-const float STRENGTH = 1.5;
+const float BIAS = 0.2;
+const float STRENGTH = 1.1;
 
 layout(location = 0) in vec2 in_uv;
 
