@@ -86,7 +86,7 @@ void main()
 	float lambert = nol;
 
 #if defined(POINT_LIGHT)
-	out_color = (specC + diffC) * (att * lambert);
+	out_color = (specC + diffC) * (att * max(lambert, gbuffer.subsurface));
 #else
 	float spot =
 		computeSpotFactor(l, u_light.diffuseColorOuterCos.w, u_light.specularColorInnerCos.w, u_light.lightDirPad1.xyz);
