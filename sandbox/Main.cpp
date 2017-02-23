@@ -191,6 +191,11 @@ Error MyApp::userMainLoop(Bool& quit)
 	}
 #endif
 
+	if(in.getEvent(InputEvent::WINDOW_CLOSED))
+	{
+		quit = true;
+	}
+
 	if(m_profile && getGlobalTimestamp() == 500)
 	{
 		quit = true;

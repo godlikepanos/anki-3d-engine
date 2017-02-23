@@ -96,4 +96,29 @@ inline U TextureImpl::computeVkArrayLayer(const TextureSurfaceInfo& surf) const
 	return layer;
 }
 
+inline U TextureImpl::computeSubresourceIdx(const TextureSurfaceInfo& surf) const
+{
+	checkSurface(surf);
+
+	switch(m_type)
+	{
+	case TextureType::_1D:
+	case TextureType::_2D:
+		return surf.m_level;
+		break;
+	case TextureType::_2D_ARRAY:
+		return surf.m_layer * m_mipCount + surf.m_level;
+		break;
+	case TextureType::CUBE:
+		return surf.m_face * m_mipCount + surf.m_level;
+		break;
+	case TextureType::CUBE_ARRAY:
+		return surf.m_layer * m_mipCount * 6 + surf.m_face * m_mipCount + surf.m_level;
+		break;
+	default:
+		ANKI_ASSERT(0);
+		return 0;
+	}
+}
+
 } // end namespace anki

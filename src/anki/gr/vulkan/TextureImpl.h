@@ -25,6 +25,17 @@ enum class TextureImplWorkaround : U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(TextureImplWorkaround, inline)
 
+class TextureUsageState
+{
+public:
+	DynamicArray<VkImageLayout> m_subResources; ///< Volumes or surfaces.
+
+	void destroy(StackAllocator<U8>& alloc)
+	{
+		m_subResources.destroy(alloc);
+	}
+};
+
 /// Texture container.
 class TextureImpl : public DescriptorObject
 {
@@ -41,6 +52,7 @@ public:
 	TextureType m_type = TextureType::CUBE;
 	U8 m_mipCount = 0;
 	U32 m_layerCount = 0;
+	U32 m_surfaceOrVolumeCount = 0;
 	VkImageAspectFlags m_aspect = 0;
 	DepthStencilAspectBit m_akAspect = DepthStencilAspectBit::NONE;
 	TextureUsageBit m_usage = TextureUsageBit::NONE;
@@ -89,8 +101,6 @@ public:
 
 	VkImageView getOrCreateSingleSurfaceView(const TextureSurfaceInfo& surf, DepthStencilAspectBit aspect);
 
-	VkImageView getOrCreateSingleLevelView(U level, DepthStencilAspectBit aspect);
-
 	/// That view will be used in descriptor sets.
 	VkImageView getOrCreateResourceGroupView(DepthStencilAspectBit aspect);
 
@@ -107,6 +117,73 @@ public:
 	VkImageLayout computeLayout(TextureUsageBit usage, U level) const;
 
 	VkImageAspectFlags convertAspect(DepthStencilAspectBit ak) const;
+
+	void checkSubresourceRange(const VkImageSubresourceRange& range) const
+	{
+		ANKI_ASSERT(range.baseArrayLayer < m_layerCount);
+		ANKI_ASSERT(range.baseArrayLayer + range.layerCount <= m_layerCount);
+		ANKI_ASSERT(range.levelCount < m_mipCount);
+		ANKI_ASSERT(range.baseMipLevel + range.levelCount <= m_mipCount);
+	}
+
+	VkImageLayout getLayoutFromState(const TextureSurfaceInfo& surf, const TextureUsageState& state) const
+	{
+		checkSurface(surf);
+		const U surfIdx = computeSubresourceIdx(surf);
+		ANKI_ASSERT(state.m_subResources[surfIdx] != VK_IMAGE_LAYOUT_UNDEFINED);
+		return state.m_subResources[surfIdx];
+	}
+
+	VkImageLayout getLayoutFromState(const TextureVolumeInfo& vol, const TextureUsageState& state) const
+	{
+		checkVolume(vol);
+		ANKI_ASSERT(state.m_subResources[vol.m_level] != VK_IMAGE_LAYOUT_UNDEFINED);
+		return state.m_subResources[vol.m_level];
+	}
+
+	VkImageLayout getLayoutFromState(const TextureUsageState& state) const
+	{
+		for(VkImageLayout l : state.m_subResources)
+		{
+			ANKI_ASSERT(l == state.m_subResources[0] && "Not all image subresources are in the same layout");
+		}
+		ANKI_ASSERT(state.m_subResources[0] != VK_IMAGE_LAYOUT_UNDEFINED);
+		return state.m_subResources[0];
+	}
+
+	void updateUsageState(const TextureSurfaceInfo& surf,
+		TextureUsageBit usage,
+		TextureUsageState& state,
+		StackAllocator<U8>& alloc) const
+	{
+		checkSurface(surf);
+		if(ANKI_UNLIKELY(state.m_subResources.getSize() == 0))
+		{
+			state.m_subResources.create(alloc, m_surfaceOrVolumeCount);
+			memorySet(reinterpret_cast<int*>(&state.m_subResources[0]),
+				int(VK_IMAGE_LAYOUT_UNDEFINED),
+				m_surfaceOrVolumeCount);
+		}
+		auto lay = computeLayout(usage, surf.m_level);
+		ANKI_ASSERT(lay != VK_IMAGE_LAYOUT_UNDEFINED);
+		state.m_subResources[computeSubresourceIdx(surf)] = lay;
+	}
+
+	void updateUsageState(
+		const TextureVolumeInfo& vol, TextureUsageBit usage, TextureUsageState& state, StackAllocator<U8>& alloc) const
+	{
+		checkVolume(vol);
+		if(ANKI_UNLIKELY(state.m_subResources.getSize() == 0))
+		{
+			state.m_subResources.create(alloc, m_surfaceOrVolumeCount);
+			memorySet(reinterpret_cast<int*>(&state.m_subResources[0]),
+				int(VK_IMAGE_LAYOUT_UNDEFINED),
+				m_surfaceOrVolumeCount);
+		}
+		auto lay = computeLayout(usage, vol.m_level);
+		ANKI_ASSERT(lay != VK_IMAGE_LAYOUT_UNDEFINED);
+		state.m_subResources[vol.m_level] = lay;
+	}
 
 private:
 	class ViewHasher
@@ -140,6 +217,8 @@ private:
 	ANKI_USE_RESULT Error initImage(const TextureInitInfo& init);
 
 	VkImageView getOrCreateView(const VkImageViewCreateInfo& ci);
+
+	U computeSubresourceIdx(const TextureSurfaceInfo& surf) const;
 };
 /// @}
 

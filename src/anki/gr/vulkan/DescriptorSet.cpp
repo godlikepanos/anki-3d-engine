@@ -381,7 +381,7 @@ Error DSLayoutCacheEntry::init(const DescriptorBinding* bindings, U bindingCount
 
 			switch(m_poolSizesCreateInf[poolSizeCount].type)
 			{
-			case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
+			case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
 				m_poolSizesCreateInf[poolSizeCount].descriptorCount = MAX_TEXTURE_BINDINGS;
 				break;
 			case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC:

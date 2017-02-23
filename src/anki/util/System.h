@@ -19,6 +19,9 @@ extern U32 getCpuCoresCount();
 /// Print the backtrace
 extern void printBacktrace();
 
+/// Trap the sefaults.
+extern void trapSegfaults(void (*)(void*));
+
 /// @}
 
 } // end namespace anki

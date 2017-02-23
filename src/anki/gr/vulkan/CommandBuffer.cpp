@@ -318,9 +318,16 @@ void CommandBuffer::setBufferBarrier(
 	m_impl->setBufferBarrier(buff, before, after, offset, size);
 }
 
-void CommandBuffer::informTextureCurrentUsage(TexturePtr tex, TextureUsageBit crntUsage)
+void CommandBuffer::informTextureSurfaceCurrentUsage(
+	TexturePtr tex, const TextureSurfaceInfo& surf, TextureUsageBit crntUsage)
 {
-	m_impl->informTextureCurrentUsage(tex, crntUsage);
+	m_impl->informTextureSurfaceCurrentUsage(tex, surf, crntUsage);
+}
+
+void CommandBuffer::informTextureVolumeCurrentUsage(
+	TexturePtr tex, const TextureVolumeInfo& vol, TextureUsageBit crntUsage)
+{
+	m_impl->informTextureVolumeCurrentUsage(tex, vol, crntUsage);
 }
 
 void CommandBuffer::resetOcclusionQuery(OcclusionQueryPtr query)

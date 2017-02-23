@@ -1489,7 +1489,14 @@ void CommandBuffer::writeOcclusionQueryResultToBuffer(OcclusionQueryPtr query, P
 	m_impl->pushBackNewCommand<WriteOcclResultToBuff>(query, offset, buff);
 }
 
-void CommandBuffer::informTextureCurrentUsage(TexturePtr tex, TextureUsageBit crntUsage)
+void CommandBuffer::informTextureSurfaceCurrentUsage(
+	TexturePtr tex, const TextureSurfaceInfo& surf, TextureUsageBit crntUsage)
+{
+	// Nothing for GL
+}
+
+void CommandBuffer::informTextureVolumeCurrentUsage(
+	TexturePtr tex, const TextureVolumeInfo& vol, TextureUsageBit crntUsage)
 {
 	// Nothing for GL
 }

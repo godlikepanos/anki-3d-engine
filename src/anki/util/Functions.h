@@ -13,6 +13,7 @@
 #include <cmath>
 #include <utility>
 #include <new>
+#include <cstring>
 
 namespace anki
 {
@@ -162,19 +163,6 @@ struct RemovePointer<T*>
 	typedef T Type;
 };
 
-/// Perform a static cast of a pointer
-template<typename To, typename From>
-To staticCastPtr(From from)
-{
-#if ANKI_EXTRA_CHECKS
-	To ptr = dynamic_cast<To>(from);
-	ANKI_ASSERT(ptr != nullptr);
-	return ptr;
-#else
-	return static_cast<To>(from);
-#endif
-}
-
 /// Check if types are the same.
 template<class T, class Y>
 struct TypesAreTheSame
@@ -193,6 +181,33 @@ struct TypesAreTheSame<T, T>
 		m_value = 1
 	};
 };
+
+template<typename T>
+void memorySet(T* dest, T value, const PtrSize count);
+
+#define ANKI_SPECIALISE_MEMORY_SET(T)                                                                                  \
+	template<>                                                                                                         \
+	inline void memorySet(T* dest, T value, const PtrSize count)                                                       \
+	{                                                                                                                  \
+		ANKI_ASSERT(dest);                                                                                             \
+		const T* end = dest + count;                                                                                   \
+		while(dest != end)                                                                                             \
+		{                                                                                                              \
+			memcpy(reinterpret_cast<char*>(dest), &value, sizeof(T));                                                  \
+			++dest;                                                                                                    \
+		}                                                                                                              \
+	}
+
+ANKI_SPECIALISE_MEMORY_SET(U8)
+ANKI_SPECIALISE_MEMORY_SET(I8)
+ANKI_SPECIALISE_MEMORY_SET(U16)
+ANKI_SPECIALISE_MEMORY_SET(I16)
+ANKI_SPECIALISE_MEMORY_SET(U32)
+ANKI_SPECIALISE_MEMORY_SET(I32)
+ANKI_SPECIALISE_MEMORY_SET(U64)
+ANKI_SPECIALISE_MEMORY_SET(I64)
+
+#undef ANKI_SPECIALISE_MEMORY_SET
 /// @}
 
 } // end namespace anki

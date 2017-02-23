@@ -28,8 +28,6 @@
 #include <android_native_app_glue.h>
 #endif
 
-// Sybsystems
-
 namespace anki
 {
 
@@ -386,8 +384,7 @@ Error App::mainLoop()
 
 		ANKI_CHECK(m_renderer->render(*m_scene));
 
-		// Pause and sync async loader. That will force all tasks before the
-		// pause to finish in this frame.
+		// Pause and sync async loader. That will force all tasks before the pause to finish in this frame.
 		m_resources->getAsyncLoader().pause();
 
 		m_gr->swapBuffers();

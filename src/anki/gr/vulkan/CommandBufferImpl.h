@@ -194,8 +194,7 @@ public:
 	{
 		const U realBinding = binding;
 		Texture& tex = *tex_;
-		TextureUsageBit usage = m_texUsageTracker.findUsage(tex);
-		VkImageLayout lay = tex.m_impl->computeLayout(usage, 0);
+		VkImageLayout lay = m_texUsageTracker.findLayout(tex);
 		m_dsetState[set].bindTexture(realBinding, &tex, aspect, lay);
 		m_texList.pushBack(m_alloc, tex_);
 	}
@@ -204,8 +203,7 @@ public:
 	{
 		const U realBinding = binding;
 		Texture& tex = *tex_;
-		TextureUsageBit usage = m_texUsageTracker.findUsage(tex);
-		VkImageLayout lay = tex.m_impl->computeLayout(usage, 0);
+		VkImageLayout lay = m_texUsageTracker.findLayout(tex);
 		m_dsetState[set].bindTextureAndSampler(realBinding, &tex, sampler.get(), aspect, lay);
 		m_texList.pushBack(m_alloc, tex_);
 		m_samplerList.pushBack(m_alloc, sampler);
@@ -288,10 +286,14 @@ public:
 	void copyBufferToTextureSurface(
 		BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureSurfaceInfo& surf);
 
-	void informTextureCurrentUsage(TexturePtr& tex, TextureUsageBit crntUsage)
+	void informTextureSurfaceCurrentUsage(TexturePtr& tex, const TextureSurfaceInfo& surf, TextureUsageBit crntUsage)
 	{
-		ANKI_ASSERT(tex->m_impl->usageValid(crntUsage));
-		m_texUsageTracker.setUsage(*tex, crntUsage, m_alloc);
+		m_texUsageTracker.setUsage(*tex, surf, crntUsage, m_alloc);
+	}
+
+	void informTextureVolumeCurrentUsage(TexturePtr& tex, const TextureVolumeInfo& vol, TextureUsageBit crntUsage)
+	{
+		m_texUsageTracker.setUsage(*tex, vol, crntUsage, m_alloc);
 	}
 
 private:
@@ -302,6 +304,7 @@ private:
 	Bool8 m_renderedToDefaultFb = false;
 	Bool8 m_finalized = false;
 	Bool8 m_empty = true;
+	Bool m_beganRecording = false;
 	ThreadId m_tid = 0;
 
 	U m_rpCommandCount = 0; ///< Number of drawcalls or pushed cmdbs in rp.
@@ -322,12 +325,8 @@ private:
 	List<CommandBufferPtr> m_cmdbList;
 	List<ShaderProgramPtr> m_progs;
 	List<SamplerPtr> m_samplerList;
-/// @}
+	/// @}
 
-#if ANKI_EXTRA_CHECKS
-	// Debug stuff
-	Bool8 m_insideRenderPass = false;
-#endif
 	VkSubpassContents m_subpassContents = VK_SUBPASS_CONTENTS_MAX_ENUM;
 
 	CommandBufferCommandType m_lastCmdType = CommandBufferCommandType::ANY_OTHER_COMMAND;
@@ -383,45 +382,67 @@ private:
 	class TextureUsageTracker
 	{
 	public:
-		ANKI_USE_RESULT TextureUsageBit findUsage(const Texture& tex) const
+		template<typename TextureInfo>
+		ANKI_USE_RESULT VkImageLayout findLayout(const Texture& tex, const TextureInfo& surf) const
 		{
 			auto it = m_map.find(tex.getUuid());
-			if(it != m_map.getEnd())
+			ANKI_ASSERT((it != m_map.getEnd() || tex.m_impl->m_usageWhenEncountered != TextureUsageBit::NONE)
+				&& "Cannot find the layout of the image");
+			if(it == m_map.getEnd())
 			{
-				return (*it);
-			}
-			else if(tex.m_impl->m_usageWhenEncountered != TextureUsageBit::NONE)
-			{
-				return tex.m_impl->m_usageWhenEncountered;
+				return tex.m_impl->computeLayout(tex.m_impl->m_usageWhenEncountered, surf.m_level);
 			}
 			else
 			{
-				ANKI_ASSERT(!"Cannot find the layout of the image");
-				return TextureUsageBit::NONE;
+				return tex.m_impl->getLayoutFromState(surf, *it);
 			}
 		}
 
-		void setUsage(const Texture& tex, TextureUsageBit usage, StackAllocator<U8>& alloc)
+		ANKI_USE_RESULT VkImageLayout findLayout(const Texture& tex) const
 		{
-			ANKI_ASSERT(usage != TextureUsageBit::NONE);
 			auto it = m_map.find(tex.getUuid());
-			if(it != m_map.getEnd())
+			ANKI_ASSERT((it != m_map.getEnd() || tex.m_impl->m_usageWhenEncountered != TextureUsageBit::NONE)
+				&& "Cannot find the layout of the image");
+			if(it == m_map.getEnd())
 			{
-				(*it) = usage;
+				return tex.m_impl->computeLayout(tex.m_impl->m_usageWhenEncountered, 0);
 			}
 			else
 			{
-				m_map.pushBack(alloc, tex.getUuid(), usage);
+				return tex.m_impl->getLayoutFromState(*it);
+			}
+		}
+
+		template<typename TextureInfo>
+		void setUsage(const Texture& tex, const TextureInfo& surf, TextureUsageBit usage, StackAllocator<U8>& alloc)
+		{
+			ANKI_ASSERT(usage != TextureUsageBit::NONE);
+
+			auto it = m_map.find(tex.getUuid());
+			if(it != m_map.getEnd())
+			{
+				tex.m_impl->updateUsageState(surf, usage, *it, alloc);
+			}
+			else
+			{
+				TextureUsageState state;
+				tex.m_impl->updateUsageState(surf, usage, state, alloc);
+				m_map.emplaceBack(alloc, tex.getUuid(), std::move(state));
 			}
 		}
 
 		void destroy(StackAllocator<U8>& alloc)
 		{
+			for(auto& it : m_map)
+			{
+				it.destroy(alloc);
+			}
+
 			m_map.destroy(alloc);
 		}
 
 	private:
-		HashMap<U64, TextureUsageBit> m_map;
+		HashMap<U64, TextureUsageState> m_map;
 	} m_texUsageTracker;
 
 	/// Some common operations per command.
@@ -462,6 +483,8 @@ private:
 		VkImageLayout newLayout,
 		VkImage img,
 		const VkImageSubresourceRange& range);
+
+	void beginRecording();
 };
 /// @}
 

@@ -362,8 +362,16 @@ public:
 	/// The command buffer will have to know the current usage of a texture. That can be known if there was a barrier
 	/// but if it wasn't use this method.
 	/// @param tex The texture.
+	/// @param surf The texture surface.
 	/// @param crntUsage The texture's current usage.
-	void informTextureCurrentUsage(TexturePtr tex, TextureUsageBit crntUsage);
+	void informTextureSurfaceCurrentUsage(TexturePtr tex, const TextureSurfaceInfo& surf, TextureUsageBit crntUsage);
+
+	/// The command buffer will have to know the current usage of a texture. That can be known if there was a barrier
+	/// but if it wasn't use this method.
+	/// @param tex The texture.
+	/// @param vol The texture volume.
+	/// @param crntUsage The texture's current usage.
+	void informTextureVolumeCurrentUsage(TexturePtr tex, const TextureVolumeInfo& vol, TextureUsageBit crntUsage);
 	/// @}
 
 	/// @name Other

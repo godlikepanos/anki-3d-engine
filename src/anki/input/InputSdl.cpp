@@ -323,7 +323,7 @@ Error Input::handleEvents()
 			m_mousePosNdc.y() = -((F32)event.button.y / m_nativeWindow->getHeight() * 2.0 - 1.0);
 			break;
 		case SDL_QUIT:
-			addEvent(Event::WINDOW_CLOSED);
+			addEvent(InputEvent::WINDOW_CLOSED);
 			break;
 		case SDL_TEXTINPUT:
 			break;

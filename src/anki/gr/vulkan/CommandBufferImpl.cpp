@@ -49,6 +49,54 @@ CommandBufferImpl::~CommandBufferImpl()
 	m_buffBarriers.destroy(m_alloc);
 	m_queryResetAtoms.destroy(m_alloc);
 	m_writeQueryAtoms.destroy(m_alloc);
+
+	m_texUsageTracker.destroy(m_alloc);
+}
+
+void CommandBufferImpl::beginRecording()
+{
+	VkCommandBufferInheritanceInfo inheritance = {};
+	inheritance.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
+
+	VkCommandBufferBeginInfo begin = {};
+	begin.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	begin.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+	begin.pInheritanceInfo = &inheritance;
+
+	if(!!(m_flags & CommandBufferFlag::SECOND_LEVEL))
+	{
+		FramebufferImpl& impl = *m_activeFb->m_impl;
+
+		// Calc the layouts
+		Array<VkImageLayout, MAX_COLOR_ATTACHMENTS> colAttLayouts;
+		for(U i = 0; i < impl.getColorAttachmentCount(); ++i)
+		{
+			colAttLayouts[i] = m_texUsageTracker.findLayout(*impl.getColorAttachment(i), impl.getAttachedSurfaces()[i]);
+		}
+
+		VkImageLayout dsAttLayout = VK_IMAGE_LAYOUT_MAX_ENUM;
+		if(impl.hasDepthStencil())
+		{
+			dsAttLayout = m_texUsageTracker.findLayout(
+				*impl.getDepthStencilAttachment(), impl.getAttachedSurfaces()[MAX_COLOR_ATTACHMENTS]);
+		}
+
+		inheritance.renderPass = impl.getRenderPassHandle(colAttLayouts, dsAttLayout);
+		inheritance.subpass = 0;
+
+		if(!impl.isDefaultFramebuffer())
+		{
+			inheritance.framebuffer = impl.getFramebufferHandle(0);
+		}
+		else
+		{
+			inheritance.framebuffer = impl.getFramebufferHandle(getGrManagerImpl().getCurrentBackbufferIndex());
+		}
+
+		begin.flags |= VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
+	}
+
+	vkBeginCommandBuffer(m_handle, &begin);
 }
 
 Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
@@ -63,36 +111,11 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 	m_handle = getGrManagerImpl().newCommandBuffer(m_tid, m_flags);
 	ANKI_ASSERT(m_handle);
 
-	// Begin recording
-	VkCommandBufferInheritanceInfo inheritance = {};
-	inheritance.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
-
-	VkCommandBufferBeginInfo begin = {};
-	begin.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	begin.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-	begin.pInheritanceInfo = &inheritance;
-
 	if(!!(m_flags & CommandBufferFlag::SECOND_LEVEL))
 	{
-		const FramebufferImpl& impl = *init.m_framebuffer->m_impl;
-
-		// TODO inheritance.renderPass = impl.getRenderPassHandle();
-		inheritance.subpass = 0;
-
-		// TODO
-		/*if(!impl.isDefaultFramebuffer())
-		{
-			inheritance.framebuffer = impl.getFramebufferHandle(0);
-		}
-		else
-		{
-			inheritance.framebuffer = impl.getFramebufferHandle(getGrManagerImpl().getCurrentBackbufferIndex());
-		}*/
-
-		begin.flags |= VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
+		m_activeFb = init.m_framebuffer;
+		m_state.beginRenderPass(m_activeFb);
 	}
-
-	vkBeginCommandBuffer(m_handle, &begin);
 
 	return ErrorCode::NONE;
 }
@@ -128,20 +151,21 @@ void CommandBufferImpl::beginRenderPassInternal()
 		bi.framebuffer = impl.getFramebufferHandle(0);
 		impl.getAttachmentsSize(bi.renderArea.extent.width, bi.renderArea.extent.height);
 
-		// Calc the usage
-		Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> colAttUsages;
+		// Calc the layouts
+		Array<VkImageLayout, MAX_COLOR_ATTACHMENTS> colAttLayouts;
 		for(U i = 0; i < impl.getColorAttachmentCount(); ++i)
 		{
-			colAttUsages[i] = m_texUsageTracker.findUsage(*impl.getColorAttachment(i));
+			colAttLayouts[i] = m_texUsageTracker.findLayout(*impl.getColorAttachment(i), impl.getAttachedSurfaces()[i]);
 		}
 
-		TextureUsageBit dsAttUsage = TextureUsageBit::NONE;
+		VkImageLayout dsAttLayout = VK_IMAGE_LAYOUT_MAX_ENUM;
 		if(impl.hasDepthStencil())
 		{
-			dsAttUsage = m_texUsageTracker.findUsage(*impl.getDepthStencilAttachment());
+			dsAttLayout = m_texUsageTracker.findLayout(
+				*impl.getDepthStencilAttachment(), impl.getAttachedSurfaces()[MAX_COLOR_ATTACHMENTS]);
 		}
 
-		bi.renderPass = impl.getRenderPassHandle(colAttUsages, dsAttUsage);
+		bi.renderPass = impl.getRenderPassHandle(colAttLayouts, dsAttLayout);
 	}
 	else
 	{
@@ -149,8 +173,8 @@ void CommandBufferImpl::beginRenderPassInternal()
 		m_renderedToDefaultFb = true;
 
 		bi.framebuffer = impl.getFramebufferHandle(getGrManagerImpl().getCurrentBackbufferIndex());
-		Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS> dummy;
-		bi.renderPass = impl.getRenderPassHandle(dummy, TextureUsageBit::NONE);
+		Array<VkImageLayout, MAX_COLOR_ATTACHMENTS> dummy;
+		bi.renderPass = impl.getRenderPassHandle(dummy, VK_IMAGE_LAYOUT_MAX_ENUM);
 
 		bi.renderArea.extent.width = getGrManagerImpl().getDefaultSurfaceWidth();
 		bi.renderArea.extent.height = getGrManagerImpl().getDefaultSurfaceHeight();
@@ -195,6 +219,7 @@ void CommandBufferImpl::endRenderPass()
 	}
 
 	m_activeFb.reset(nullptr);
+	m_state.endRenderPass();
 }
 
 void CommandBufferImpl::endRecording()
@@ -303,222 +328,6 @@ void CommandBufferImpl::generateMipmaps2d(TexturePtr tex, U face, U layer)
 	// Hold the reference
 	m_texList.pushBack(m_alloc, tex);
 }
-
-#if 0
-void CommandBufferImpl::uploadTextureSurface(
-	TexturePtr tex, const TextureSurfaceInfo& surf, const TransientMemoryToken& token)
-{
-	commandCommon();
-
-	TextureImpl& impl = *tex->m_impl;
-	impl.checkSurface(surf);
-	ANKI_ASSERT(impl.usageValid(TextureUsageBit::TRANSFER_DESTINATION));
-
-	if(!impl.m_workarounds)
-	{
-		U width = impl.m_width >> surf.m_level;
-		U height = impl.m_height >> surf.m_level;
-		ANKI_ASSERT(token.m_range == computeSurfaceSize(width, height, impl.m_format));
-
-		// Copy
-		VkBufferImageCopy region;
-		region.imageSubresource.aspectMask = impl.m_aspect;
-		region.imageSubresource.baseArrayLayer = impl.computeVkArrayLayer(surf);
-		region.imageSubresource.layerCount = 1;
-		region.imageSubresource.mipLevel = surf.m_level;
-		region.imageOffset = {0, 0, I32(surf.m_depth)};
-		region.imageExtent.width = width;
-		region.imageExtent.height = height;
-		region.imageExtent.depth = 1;
-		region.bufferOffset = token.m_offset;
-		region.bufferImageHeight = 0;
-		region.bufferRowLength = 0;
-
-		ANKI_CMD(vkCmdCopyBufferToImage(m_handle,
-					 getGrManagerImpl().getTransientMemoryManager().getBufferHandle(token.m_usage),
-					 impl.m_imageHandle,
-					 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-					 1,
-					 &region),
-			ANY_OTHER_COMMAND);
-	}
-	else if(!!(impl.m_workarounds & TextureImplWorkaround::R8G8B8_TO_R8G8B8A8))
-	{
-		// Find the offset to the RGBA staging buff
-		U width = impl.m_width >> surf.m_level;
-		U height = impl.m_height >> surf.m_level;
-		PtrSize dstOffset =
-			computeSurfaceSize(width, height, PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM));
-		alignRoundUp(16, dstOffset);
-		ANKI_ASSERT(token.m_range
-			== dstOffset
-				+ computeSurfaceSize(width, height, PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM)));
-		dstOffset += token.m_offset;
-
-		// Create the copy regions
-		DynamicArrayAuto<VkBufferCopy> copies(m_alloc);
-		copies.create(width * height);
-		U count = 0;
-		for(U x = 0; x < width; ++x)
-		{
-			for(U y = 0; y < height; ++y)
-			{
-				VkBufferCopy& c = copies[count++];
-				c.srcOffset = (y * width + x) * 3 + token.m_offset;
-				c.dstOffset = (y * width + x) * 4 + dstOffset;
-				c.size = 3;
-			}
-		}
-
-		// Copy buffer to buffer
-		VkBuffer buffHandle = getGrManagerImpl().getTransientMemoryManager().getBufferHandle(token.m_usage);
-		ANKI_CMD(vkCmdCopyBuffer(m_handle, buffHandle, buffHandle, copies.getSize(), &copies[0]), ANY_OTHER_COMMAND);
-
-		// Set barrier
-		setBufferBarrier(VK_PIPELINE_STAGE_TRANSFER_BIT,
-			VK_ACCESS_TRANSFER_WRITE_BIT,
-			VK_PIPELINE_STAGE_TRANSFER_BIT,
-			VK_ACCESS_TRANSFER_READ_BIT,
-			dstOffset,
-			token.m_range - (dstOffset - token.m_offset),
-			buffHandle);
-
-		// Do the copy to the image
-		VkBufferImageCopy region;
-		region.imageSubresource.aspectMask = impl.m_aspect;
-		region.imageSubresource.baseArrayLayer = impl.computeVkArrayLayer(surf);
-		region.imageSubresource.layerCount = 1;
-		region.imageSubresource.mipLevel = surf.m_level;
-		region.imageOffset = {0, 0, I32(surf.m_depth)};
-		region.imageExtent.width = width;
-		region.imageExtent.height = height;
-		region.imageExtent.depth = 1;
-		region.bufferOffset = dstOffset;
-		region.bufferImageHeight = 0;
-		region.bufferRowLength = 0;
-
-		ANKI_CMD(vkCmdCopyBufferToImage(
-					 m_handle, buffHandle, impl.m_imageHandle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region),
-			ANY_OTHER_COMMAND);
-	}
-	else
-	{
-		ANKI_ASSERT(0);
-	}
-
-	m_texList.pushBack(m_alloc, tex);
-}
-
-void CommandBufferImpl::uploadTextureVolume(
-	TexturePtr tex, const TextureVolumeInfo& vol, const TransientMemoryToken& token)
-{
-	commandCommon();
-
-	TextureImpl& impl = *tex->m_impl;
-	impl.checkVolume(vol);
-	ANKI_ASSERT(impl.usageValid(TextureUsageBit::TRANSFER_DESTINATION));
-
-	if(!impl.m_workarounds)
-	{
-		U width = impl.m_width >> vol.m_level;
-		U height = impl.m_height >> vol.m_level;
-		U depth = impl.m_depth >> vol.m_level;
-		(void)depth;
-		ANKI_ASSERT(token.m_range == computeVolumeSize(width, height, depth, impl.m_format));
-
-		// Copy
-		VkBufferImageCopy region;
-		region.imageSubresource.aspectMask = impl.m_aspect;
-		region.imageSubresource.baseArrayLayer = impl.computeVkArrayLayer(vol);
-		region.imageSubresource.layerCount = 1;
-		region.imageSubresource.mipLevel = vol.m_level;
-		region.imageOffset = {0, 0, 0};
-		region.imageExtent.width = width;
-		region.imageExtent.height = height;
-		region.imageExtent.depth = impl.m_depth;
-		region.bufferOffset = token.m_offset;
-		region.bufferImageHeight = 0;
-		region.bufferRowLength = 0;
-
-		ANKI_CMD(vkCmdCopyBufferToImage(m_handle,
-					 getGrManagerImpl().getTransientMemoryManager().getBufferHandle(token.m_usage),
-					 impl.m_imageHandle,
-					 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-					 1,
-					 &region),
-			ANY_OTHER_COMMAND);
-	}
-	else if(!!(impl.m_workarounds & TextureImplWorkaround::R8G8B8_TO_R8G8B8A8))
-	{
-		// Find the offset to the RGBA staging buff
-		U width = impl.m_width >> vol.m_level;
-		U height = impl.m_height >> vol.m_level;
-		U depth = impl.m_depth >> vol.m_level;
-		PtrSize dstOffset =
-			computeVolumeSize(width, height, depth, PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM));
-		alignRoundUp(16, dstOffset);
-		ANKI_ASSERT(token.m_range
-			== dstOffset + computeVolumeSize(
-							   width, height, depth, PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM)));
-		dstOffset += token.m_offset;
-
-		// Create the copy regions
-		DynamicArrayAuto<VkBufferCopy> copies(m_alloc);
-		copies.create(width * height * depth);
-		U count = 0;
-		for(U x = 0; x < width; ++x)
-		{
-			for(U y = 0; y < height; ++y)
-			{
-				for(U d = 0; d < depth; ++d)
-				{
-					VkBufferCopy& c = copies[count++];
-					c.srcOffset = (d * height * width + y * width + x) * 3 + token.m_offset;
-					c.dstOffset = (d * height * width + y * width + x) * 4 + dstOffset;
-					c.size = 3;
-				}
-			}
-		}
-
-		// Copy buffer to buffer
-		VkBuffer buffHandle = getGrManagerImpl().getTransientMemoryManager().getBufferHandle(token.m_usage);
-		ANKI_CMD(vkCmdCopyBuffer(m_handle, buffHandle, buffHandle, copies.getSize(), &copies[0]), ANY_OTHER_COMMAND);
-
-		// Set barrier
-		setBufferBarrier(VK_PIPELINE_STAGE_TRANSFER_BIT,
-			VK_ACCESS_TRANSFER_WRITE_BIT,
-			VK_PIPELINE_STAGE_TRANSFER_BIT,
-			VK_ACCESS_TRANSFER_READ_BIT,
-			dstOffset,
-			token.m_range - (dstOffset - token.m_offset),
-			buffHandle);
-
-		// Do the copy to the image
-		VkBufferImageCopy region;
-		region.imageSubresource.aspectMask = impl.m_aspect;
-		region.imageSubresource.baseArrayLayer = impl.computeVkArrayLayer(vol);
-		region.imageSubresource.layerCount = 1;
-		region.imageSubresource.mipLevel = vol.m_level;
-		region.imageOffset = {0, 0, 0};
-		region.imageExtent.width = width;
-		region.imageExtent.height = height;
-		region.imageExtent.depth = depth;
-		region.bufferOffset = dstOffset;
-		region.bufferImageHeight = 0;
-		region.bufferRowLength = 0;
-
-		ANKI_CMD(vkCmdCopyBufferToImage(
-					 m_handle, buffHandle, impl.m_imageHandle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region),
-			ANY_OTHER_COMMAND);
-	}
-	else
-	{
-		ANKI_ASSERT(0);
-	}
-
-	m_texList.pushBack(m_alloc, tex);
-}
-#endif
 
 void CommandBufferImpl::flushBarriers()
 {
@@ -787,8 +596,7 @@ void CommandBufferImpl::copyBufferToTextureSurface(
 	TextureImpl& impl = *tex->m_impl;
 	impl.checkSurface(surf);
 	ANKI_ASSERT(impl.usageValid(TextureUsageBit::TRANSFER_DESTINATION));
-	TextureUsageBit usage = m_texUsageTracker.findUsage(*tex);
-	const VkImageLayout layout = impl.computeLayout(usage, surf.m_level);
+	const VkImageLayout layout = m_texUsageTracker.findLayout(*tex, surf);
 
 	if(!impl.m_workarounds)
 	{

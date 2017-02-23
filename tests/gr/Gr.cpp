@@ -849,8 +849,16 @@ ANKI_TEST(Gr, DrawWithTexture)
 		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
 		cmdb->bindShaderProgram(prog);
 		cmdb->beginRenderPass(fb);
-		cmdb->informTextureCurrentUsage(a, TextureUsageBit::SAMPLED_FRAGMENT);
-		cmdb->informTextureCurrentUsage(b, TextureUsageBit::SAMPLED_FRAGMENT);
+
+		for(U i = 0; i < 2; ++i)
+		{
+			cmdb->informTextureSurfaceCurrentUsage(
+				a, TextureSurfaceInfo(i, 0, 0, 0), TextureUsageBit::SAMPLED_FRAGMENT);
+			cmdb->informTextureSurfaceCurrentUsage(
+				b, TextureSurfaceInfo(i, 0, 0, 0), TextureUsageBit::SAMPLED_FRAGMENT);
+		}
+		cmdb->informTextureSurfaceCurrentUsage(b, TextureSurfaceInfo(2, 0, 0, 0), TextureUsageBit::SAMPLED_FRAGMENT);
+
 		cmdb->bindTexture(0, 0, a);
 		cmdb->bindTexture(0, 1, b);
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);

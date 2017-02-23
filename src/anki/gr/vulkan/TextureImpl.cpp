@@ -259,22 +259,32 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 	case TextureType::_2D:
 		ci.extent.depth = 1;
 		ci.arrayLayers = 1;
+
+		m_surfaceOrVolumeCount = m_mipCount;
 		break;
 	case TextureType::_2D_ARRAY:
 		ci.extent.depth = 1;
 		ci.arrayLayers = init.m_layerCount;
+
+		m_surfaceOrVolumeCount = m_mipCount * m_layerCount;
 		break;
 	case TextureType::CUBE:
 		ci.extent.depth = 1;
 		ci.arrayLayers = 6;
+
+		m_surfaceOrVolumeCount = m_mipCount * 6;
 		break;
 	case TextureType::CUBE_ARRAY:
 		ci.extent.depth = 1;
 		ci.arrayLayers = 6 * init.m_layerCount;
+
+		m_surfaceOrVolumeCount = m_mipCount * 6 * m_layerCount;
 		break;
 	case TextureType::_3D:
 		ci.extent.depth = init.m_depth;
 		ci.arrayLayers = 1;
+
+		m_surfaceOrVolumeCount = m_mipCount;
 		break;
 	default:
 		ANKI_ASSERT(0);
@@ -553,19 +563,19 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 	{
 		out = VK_IMAGE_LAYOUT_UNDEFINED;
 	}
-	else if(!!(usage & TextureUsageBit::SAMPLED_ALL) && !(usage & ~TextureUsageBit::SAMPLED_ALL))
+	else if(!(usage & ~TextureUsageBit::SAMPLED_ALL))
 	{
+		// Only sampling
 		out = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	}
-	else if(!!(usage & TextureUsageBit::IMAGE_COMPUTE_READ_WRITE)
-		&& !(usage & ~TextureUsageBit::IMAGE_COMPUTE_READ_WRITE))
+	else if(!(usage & ~TextureUsageBit::IMAGE_COMPUTE_READ_WRITE))
 	{
+		// Only image load/store
 		out = VK_IMAGE_LAYOUT_GENERAL;
 	}
-	else if(usage == TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
-		|| usage == TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE
-		|| usage == TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ)
+	else if(!(usage & ~TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE))
 	{
+		// Only FB access
 		if(m_depthStencil)
 		{
 			out = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
@@ -575,11 +585,17 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 			out = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		}
 	}
-	else if(m_depthStencil && !!(usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ)
-		&& !!(usage & TextureUsageBit::SAMPLED_ALL_GRAPHICS)
+	else if(m_depthStencil
 		&& !(usage & ~(TextureUsageBit::SAMPLED_ALL_GRAPHICS | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ)))
 	{
+		// FB read & shader read
 		out = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+	}
+	else if(m_depthStencil
+		&& !(usage & ~(TextureUsageBit::SAMPLED_ALL_GRAPHICS | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE)))
+	{
+		// Wild guess: One aspect is shader read and the other is read write
+		out = VK_IMAGE_LAYOUT_GENERAL;
 	}
 	else if(usage == TextureUsageBit::GENERATE_MIPMAPS)
 	{
@@ -612,18 +628,6 @@ VkImageView TextureImpl::getOrCreateSingleSurfaceView(const TextureSurfaceInfo& 
 	VkImageViewCreateInfo ci = m_viewCreateInfoTemplate;
 	ci.viewType = VK_IMAGE_VIEW_TYPE_2D;
 	computeSubResourceRange(surf, aspect, ci.subresourceRange);
-
-	return getOrCreateView(ci);
-}
-
-VkImageView TextureImpl::getOrCreateSingleLevelView(U level, DepthStencilAspectBit aspect)
-{
-	ANKI_ASSERT(level < m_mipCount);
-
-	VkImageViewCreateInfo ci = m_viewCreateInfoTemplate;
-	ci.subresourceRange.baseMipLevel = level;
-	ci.subresourceRange.levelCount = 1;
-	ci.subresourceRange.aspectMask = convertAspect(aspect);
 
 	return getOrCreateView(ci);
 }

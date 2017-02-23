@@ -163,6 +163,8 @@ inline void CommandBufferImpl::setTextureSurfaceBarrier(
 	VkImageSubresourceRange range;
 	impl.computeSubResourceRange(surf, impl.m_akAspect, range);
 	setTextureBarrierRange(tex, prevUsage, nextUsage, range);
+
+	m_texUsageTracker.setUsage(*tex, surf, nextUsage, m_alloc);
 }
 
 inline void CommandBufferImpl::setTextureVolumeBarrier(
@@ -180,6 +182,8 @@ inline void CommandBufferImpl::setTextureVolumeBarrier(
 	VkImageSubresourceRange range;
 	impl.computeSubResourceRange(vol, impl.m_akAspect, range);
 	setTextureBarrierRange(tex, prevUsage, nextUsage, range);
+
+	m_texUsageTracker.setUsage(*tex, vol, nextUsage, m_alloc);
 }
 
 inline void CommandBufferImpl::setBufferBarrier(VkPipelineStageFlags srcStage,
@@ -511,6 +515,12 @@ inline void CommandBufferImpl::commandCommon()
 	ANKI_ASSERT(!m_finalized);
 	ANKI_ASSERT(m_handle);
 	m_empty = false;
+
+	if(ANKI_UNLIKELY(!m_beganRecording))
+	{
+		beginRecording();
+		m_beganRecording = true;
+	}
 }
 
 inline void CommandBufferImpl::flushBatches(CommandBufferCommandType type)

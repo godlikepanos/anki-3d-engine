@@ -45,7 +45,7 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 	// Create the FBs
 	ANKI_CHECK(initFbs(init));
 
-	// Set clear values
+	// Set clear values and some other stuff
 	for(U i = 0; i < m_colorAttCount; ++i)
 	{
 		if(init.m_colorAttachments[i].m_loadOperation == AttachmentLoadOperation::CLEAR)
@@ -60,6 +60,8 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 		{
 			m_clearVals[i] = {};
 		}
+
+		m_attachedSurfaces[i] = init.m_colorAttachments[i].m_surface;
 	}
 
 	if(hasDepthStencil())
@@ -77,6 +79,8 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 		{
 			m_clearVals[m_colorAttCount] = {};
 		}
+
+		m_attachedSurfaces[MAX_COLOR_ATTACHMENTS] = init.m_depthStencilAttachment.m_surface;
 	}
 
 	return ErrorCode::NONE;
@@ -160,7 +164,7 @@ Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 				m_height = tex.m_height >> att.m_surface.m_level;
 			}
 
-			m_refs[init.m_colorAttachmentCount] = att.m_texture;
+			m_refs[MAX_COLOR_ATTACHMENTS] = att.m_texture;
 		}
 
 		ci.width = m_width;
@@ -203,7 +207,7 @@ void FramebufferImpl::initRpassCreateInfo(const FramebufferInitInfo& init)
 		setupAttachmentDescriptor(att, m_attachmentDescriptions[i]);
 
 		m_references[i].attachment = i;
-		m_references[i].layout = (att.m_texture) ? VK_IMAGE_LAYOUT_UNDEFINED : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		m_references[i].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	}
 
 	const Bool hasDepthStencil = init.m_depthStencilAttachment.m_texture == true;
@@ -214,7 +218,7 @@ void FramebufferImpl::initRpassCreateInfo(const FramebufferInitInfo& init)
 		setupAttachmentDescriptor(init.m_depthStencilAttachment, m_attachmentDescriptions[init.m_colorAttachmentCount]);
 
 		dsReference.attachment = init.m_colorAttachmentCount;
-		dsReference.layout = VK_IMAGE_LAYOUT_UNDEFINED;
+		dsReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 	}
 
 	// Setup the render pass
@@ -233,31 +237,31 @@ void FramebufferImpl::initRpassCreateInfo(const FramebufferInitInfo& init)
 }
 
 VkRenderPass FramebufferImpl::getRenderPassHandle(
-	const Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS>& colorUsages, TextureUsageBit dsUsage)
+	const Array<VkImageLayout, MAX_COLOR_ATTACHMENTS>& colorLayouts, VkImageLayout dsLayout)
 {
 	VkRenderPass out;
 
 	if(!m_defaultFb)
 	{
 		// Create hash
-		Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS + 1> allUsages;
-		U allUsageCount = 0;
+		Array<VkImageLayout, MAX_COLOR_ATTACHMENTS + 1> allLayouts;
+		U allLayoutCount = 0;
 		for(U i = 0; i < MAX_COLOR_ATTACHMENTS; ++i)
 		{
 			if(m_colorAttachmentMask.get(i))
 			{
-				ANKI_ASSERT(!!(colorUsages[i]));
-				allUsages[allUsageCount++] = colorUsages[i];
+				ANKI_ASSERT(colorLayouts[i] != VK_IMAGE_LAYOUT_UNDEFINED);
+				allLayouts[allLayoutCount++] = colorLayouts[i];
 			}
 		}
 
 		if(m_depthAttachment || m_stencilAttachment)
 		{
-			ANKI_ASSERT(!!(dsUsage));
-			allUsages[allUsageCount++] = dsUsage;
+			ANKI_ASSERT(dsLayout != VK_IMAGE_LAYOUT_UNDEFINED);
+			allLayouts[allLayoutCount++] = dsLayout;
 		}
 
-		U64 hash = computeHash(&allUsages[0], allUsageCount * sizeof(allUsages[0]));
+		U64 hash = computeHash(&allLayouts[0], allLayoutCount * sizeof(allLayouts[0]));
 
 		// Get or create
 		LockGuard<Mutex> lock(m_rpassesMtx);
@@ -277,13 +281,14 @@ VkRenderPass FramebufferImpl::getRenderPassHandle(
 
 			// Fix pointers
 			subpassDescr.pColorAttachments = &references[0];
-			subpassDescr.pDepthStencilAttachment = &references[MAX_COLOR_ATTACHMENTS];
+			subpassDescr.pDepthStencilAttachment = &references[subpassDescr.colorAttachmentCount];
 			ci.pAttachments = &attachmentDescriptions[0];
 			ci.pSubpasses = &subpassDescr;
 
 			for(U i = 0; i < subpassDescr.colorAttachmentCount; ++i)
 			{
-				const VkImageLayout lay = m_refs[i]->m_impl->computeLayout(colorUsages[i], m_attachedMipLevels[i]);
+				const VkImageLayout lay = colorLayouts[i];
+				ANKI_ASSERT(lay != VK_IMAGE_LAYOUT_UNDEFINED);
 
 				attachmentDescriptions[i].initialLayout = lay;
 				attachmentDescriptions[i].finalLayout = lay;
@@ -293,8 +298,9 @@ VkRenderPass FramebufferImpl::getRenderPassHandle(
 
 			if(m_refs[MAX_COLOR_ATTACHMENTS])
 			{
-				const U i = MAX_COLOR_ATTACHMENTS;
-				const VkImageLayout lay = m_refs[i]->m_impl->computeLayout(dsUsage, m_attachedMipLevels[i]);
+				const U i = subpassDescr.colorAttachmentCount;
+				const VkImageLayout lay = dsLayout;
+				ANKI_ASSERT(lay != VK_IMAGE_LAYOUT_UNDEFINED);
 
 				attachmentDescriptions[i].initialLayout = lay;
 				attachmentDescriptions[i].finalLayout = lay;

@@ -40,7 +40,7 @@ public:
 
 	/// Use it for binding.
 	VkRenderPass getRenderPassHandle(
-		const Array<TextureUsageBit, MAX_COLOR_ATTACHMENTS>& colorUsages, TextureUsageBit dsUsage);
+		const Array<VkImageLayout, MAX_COLOR_ATTACHMENTS>& colorLayouts, VkImageLayout dsLayout);
 
 	VkFramebuffer getFramebufferHandle(U frame) const
 	{
@@ -98,6 +98,11 @@ public:
 		height = m_height;
 	}
 
+	const Array<TextureSurfaceInfo, MAX_COLOR_ATTACHMENTS + 1>& getAttachedSurfaces() const
+	{
+		return m_attachedSurfaces;
+	}
+
 private:
 	U32 m_width = 0;
 	U32 m_height = 0;
@@ -112,7 +117,7 @@ private:
 	Array<VkClearValue, MAX_COLOR_ATTACHMENTS + 1> m_clearVals;
 
 	Array<TexturePtr, MAX_COLOR_ATTACHMENTS + 1> m_refs; ///< @note The pos of every attachment is fixed.
-	Array<U32, MAX_COLOR_ATTACHMENTS + 1> m_attachedMipLevels = {};
+	Array<TextureSurfaceInfo, MAX_COLOR_ATTACHMENTS + 1> m_attachedSurfaces = {};
 
 	// RenderPass create info
 	VkRenderPassCreateInfo m_rpassCi = {};

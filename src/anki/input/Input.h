@@ -14,23 +14,23 @@
 namespace anki
 {
 
+// Forward
 class InputImpl;
 class NativeWindow;
 
+enum class InputEvent : U8
+{
+	WINDOW_FOCUS_LOST,
+	WINDOW_FOCUS_GAINED,
+	WINDOW_CLOSED,
+	COUNT
+};
+
 /// Handle the input and other events
-///
 /// @note All positions are in NDC space
 class Input
 {
 public:
-	enum class Event : U8
-	{
-		WINDOW_FOCUS_LOST,
-		WINDOW_FOCUS_GAINED,
-		WINDOW_CLOSED,
-		COUNT
-	};
-
 	Input()
 	{
 	}
@@ -64,7 +64,7 @@ public:
 	}
 
 	/// Get the times an event was triggered and resets the counter
-	U getEvent(Event eventId) const
+	U getEvent(InputEvent eventId) const
 	{
 		return m_events[static_cast<U>(eventId)];
 	}
@@ -89,7 +89,7 @@ public:
 	}
 
 	/// Add a new event
-	void addEvent(Event eventId)
+	void addEvent(InputEvent eventId)
 	{
 		++m_events[static_cast<U>(eventId)];
 	}
@@ -113,7 +113,7 @@ private:
 
 	Vec2 m_mousePosNdc = Vec2(2.0); ///< The coords are in the NDC space
 
-	Array<U8, static_cast<U>(Event::COUNT)> m_events;
+	Array<U8, static_cast<U>(InputEvent::COUNT)> m_events;
 
 	Bool8 m_lockCurs = false;
 
