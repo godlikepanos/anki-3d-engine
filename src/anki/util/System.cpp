@@ -4,14 +4,14 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/util/System.h>
-#include <anki/Config.h>
+#include <anki/util/Logger.h>
 #include <cstdio>
 
 #if ANKI_POSIX
 #include <unistd.h>
 #include <signal.h>
 #elif ANKI_OS == ANKI_OS_WINDOWS
-#include <Windows.h>
+#include <windows.h>
 #else
 #error "Unimplemented"
 #endif
@@ -19,6 +19,7 @@
 // For print backtrace
 #if ANKI_POSIX && ANKI_OS != ANKI_OS_ANDROID
 #include <execinfo.h>
+#include <cstdlib>
 #endif
 
 namespace anki
@@ -37,19 +38,32 @@ U32 getCpuCoresCount()
 #endif
 }
 
-void printBacktrace()
+void BackTraceWalker::exec()
 {
 #if ANKI_POSIX && ANKI_OS != ANKI_OS_ANDROID
-	void* array[10];
-	size_t size;
+	// Get addresses's for all entries on the stack
+	void** array = static_cast<void**>(malloc(m_stackSize * sizeof(void*)));
+	if(array)
+	{
+		size_t size = backtrace(array, m_stackSize);
 
-	// get void*'s for all entries on the stack
-	size = backtrace(array, 10);
+		// Get symbols
+		char** strings = backtrace_symbols(array, size);
 
-	// print out all the frames to stderr
-	backtrace_symbols_fd(array, size, 2);
+		if(strings)
+		{
+			for(size_t i = 0; i < size; ++i)
+			{
+				operator()(strings[i]);
+			}
+
+			free(strings);
+		}
+
+		free(array);
+	}
 #else
-	printf("TODO\n");
+	ANKI_UTIL_LOGW("BackTraceWalker::exec() Not supported in this platform");
 #endif
 }
 

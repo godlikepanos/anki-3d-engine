@@ -1020,7 +1020,16 @@ static void drawOffscreen(GrManager& gr, Bool useSecondLevel)
 			cinit.m_framebuffer = fb;
 			CommandBufferPtr cmdb2 = gr.newInstance<CommandBuffer>(cinit);
 
+			cmdb2->informTextureSurfaceCurrentUsage(
+				col0, TextureSurfaceInfo(0, 0, 0, 0), TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE);
+			cmdb2->informTextureSurfaceCurrentUsage(
+				col1, TextureSurfaceInfo(0, 0, 0, 0), TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE);
+			cmdb2->informTextureSurfaceCurrentUsage(
+				dp, TextureSurfaceInfo(0, 0, 0, 0), TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE);
+
 			drawOffscreenDrawcalls(gr, prog, cmdb2, TEX_SIZE, indices, verts);
+
+			cmdb2->flush();
 
 			cmdb->pushSecondLevelCommandBuffer(cmdb2);
 		}

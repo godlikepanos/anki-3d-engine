@@ -273,6 +273,7 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 			dsCi.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
 			dsCi.depthTestEnable = m_state.m_depth.m_depthCompareFunction != CompareOperation::ALWAYS
 				|| m_state.m_depth.m_depthWriteEnabled;
+			dsCi.depthWriteEnable = m_state.m_depth.m_depthWriteEnabled;
 			dsCi.depthCompareOp = convertCompareOp(m_state.m_depth.m_depthCompareFunction);
 		}
 

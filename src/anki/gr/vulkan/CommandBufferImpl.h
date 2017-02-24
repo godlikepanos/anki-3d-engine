@@ -35,6 +35,7 @@ enum class CommandBufferCommandType : U8
 	SET_BARRIER,
 	RESET_OCCLUSION_QUERY,
 	WRITE_QUERY_RESULT,
+	PUSH_SECOND_LEVEL,
 	ANY_OTHER_COMMAND
 };
 
@@ -376,6 +377,12 @@ private:
 
 	DynamicArray<WriteQueryAtom> m_writeQueryAtoms;
 	U16 m_writeQueryAtomCount = 0;
+	/// @}
+
+	/// @name push_second_level_batch
+	/// @{
+	DynamicArray<VkCommandBuffer> m_secondLevelAtoms;
+	U16 m_secondLevelAtomCount = 0;
 	/// @}
 
 	/// Track texture usage.

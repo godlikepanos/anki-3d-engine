@@ -14,14 +14,28 @@ namespace anki
 /// @{
 
 /// Get the number of CPU cores
-extern U32 getCpuCoresCount();
+U32 getCpuCoresCount();
 
-/// Print the backtrace
-extern void printBacktrace();
+/// Visit the program stack.
+class BackTraceWalker
+{
+public:
+	BackTraceWalker(U stackSize = 50)
+		: m_stackSize(stackSize)
+	{
+	}
 
-/// Trap the sefaults.
-extern void trapSegfaults(void (*)(void*));
+	virtual ~BackTraceWalker()
+	{
+	}
 
+	virtual void operator()(const char* symbol) = 0;
+
+	void exec();
+
+private:
+	U m_stackSize;
+};
 /// @}
 
 } // end namespace anki

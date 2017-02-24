@@ -106,6 +106,7 @@ public:
 	void setLayout(const DescriptorSetLayout& layout)
 	{
 		m_layout = layout;
+		m_layoutDirty = true;
 	}
 
 	void bindTexture(U binding, Texture* tex, DepthStencilAspectBit aspect, VkImageLayout layout)
@@ -146,6 +147,7 @@ public:
 		m_bindings[binding].m_buff.m_range = range;
 
 		m_anyBindingDirty = true;
+		m_dynamicOffsetDirty.set(binding);
 	}
 
 	void bindStorageBuffer(U binding, Buffer* buff, PtrSize offset, PtrSize range)
@@ -158,6 +160,7 @@ public:
 		m_bindings[binding].m_buff.m_range = range;
 
 		m_anyBindingDirty = true;
+		m_dynamicOffsetDirty.set(binding);
 	}
 
 	void bindImage(U binding, Texture* tex, U32 level)
@@ -176,8 +179,9 @@ private:
 
 	Array<AnyBinding, MAX_BINDINGS_PER_DESCRIPTOR_SET> m_bindings;
 
-	Bool8 m_anyBindingDirty = false;
-	Bool8 m_layoutDirty = false;
+	Bool8 m_anyBindingDirty = true;
+	Bool8 m_layoutDirty = true;
+	BitSet<MAX_BINDINGS_PER_DESCRIPTOR_SET> m_dynamicOffsetDirty = {true};
 	U64 m_lastHash = 0;
 
 	/// Only DescriptorSetFactory should call this.

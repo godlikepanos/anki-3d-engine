@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/Config.h>
+#include <anki/util/Common.h>
 #include <cstdint>
 #include <cstddef>
 #include <limits>

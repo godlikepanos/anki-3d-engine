@@ -49,6 +49,7 @@ CommandBufferImpl::~CommandBufferImpl()
 	m_buffBarriers.destroy(m_alloc);
 	m_queryResetAtoms.destroy(m_alloc);
 	m_writeQueryAtoms.destroy(m_alloc);
+	m_secondLevelAtoms.destroy(m_alloc);
 
 	m_texUsageTracker.destroy(m_alloc);
 }

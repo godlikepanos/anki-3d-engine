@@ -407,7 +407,18 @@ inline void CommandBufferImpl::pushSecondLevelCommandBuffer(CommandBufferPtr cmd
 		beginRenderPassInternal();
 	}
 
+#if ANKI_BATCH_COMMANDS
+	flushBatches(CommandBufferCommandType::PUSH_SECOND_LEVEL);
+
+	if(m_secondLevelAtoms.getSize() <= m_secondLevelAtomCount)
+	{
+		m_secondLevelAtoms.resize(m_alloc, max<U>(8, m_secondLevelAtomCount * 2));
+	}
+
+	m_secondLevelAtoms[m_secondLevelAtomCount++] = cmdb->m_impl->m_handle;
+#else
 	ANKI_CMD(vkCmdExecuteCommands(m_handle, 1, &cmdb->m_impl->m_handle), ANY_OTHER_COMMAND);
+#endif
 
 	++m_rpCommandCount;
 	m_cmdbList.pushBack(m_alloc, cmdb);
@@ -537,6 +548,10 @@ inline void CommandBufferImpl::flushBatches(CommandBufferCommandType type)
 			break;
 		case CommandBufferCommandType::WRITE_QUERY_RESULT:
 			flushWriteQueryResults();
+			break;
+		case CommandBufferCommandType::PUSH_SECOND_LEVEL:
+			ANKI_ASSERT(m_secondLevelAtomCount > 0);
+			vkCmdExecuteCommands(m_handle, m_secondLevelAtomCount, &m_secondLevelAtoms[0]);
 			break;
 		case CommandBufferCommandType::ANY_OTHER_COMMAND:
 			break;

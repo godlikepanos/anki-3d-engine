@@ -466,7 +466,7 @@ void DescriptorSetState::flush(Bool& stateDirty,
 
 	// Get cache entry
 	ANKI_ASSERT(m_layout.m_entry);
-	DSLayoutCacheEntry& entry = *m_layout.m_entry;
+	const DSLayoutCacheEntry& entry = *m_layout.m_entry;
 
 	// Early out if nothing happened
 	if(!m_anyBindingDirty && !m_layoutDirty)
@@ -475,8 +475,7 @@ void DescriptorSetState::flush(Bool& stateDirty,
 		return;
 	}
 
-	m_anyBindingDirty = false;
-	m_layoutDirty = false;
+	Bool dynamicOffsetsDirty = false;
 
 	// Compute the hash
 	Array<U64, MAX_BINDINGS_PER_DESCRIPTOR_SET * 2 * 2> toHash;
@@ -494,13 +493,15 @@ void DescriptorSetState::flush(Bool& stateDirty,
 			{
 			case DescriptorType::TEXTURE:
 				toHash[toHashCount++] = m_bindings[i].m_uuids[1];
-				toHash[toHashCount++] = U(m_bindings[i].m_tex.m_aspect);
-				toHash[toHashCount++] = U(m_bindings[i].m_tex.m_layout);
+				toHash[toHashCount++] = U64(m_bindings[i].m_tex.m_aspect);
+				toHash[toHashCount++] = U64(m_bindings[i].m_tex.m_layout);
 				break;
 			case DescriptorType::UNIFORM_BUFFER:
 			case DescriptorType::STORAGE_BUFFER:
 				toHash[toHashCount++] = m_bindings[i].m_buff.m_range;
+
 				dynamicOffsets[dynamicOffsetCount++] = m_bindings[i].m_buff.m_offset;
+				dynamicOffsetsDirty = dynamicOffsetsDirty || m_dynamicOffsetDirty.get(i);
 				break;
 			case DescriptorType::IMAGE:
 				toHash[toHashCount++] = m_bindings[i].m_image.m_level;
@@ -513,7 +514,7 @@ void DescriptorSetState::flush(Bool& stateDirty,
 
 	hash = (toHashCount == 1) ? toHash[0] : computeHash(&toHash[0], toHashCount * sizeof(U64));
 
-	if(hash != m_lastHash)
+	if(hash != m_lastHash || dynamicOffsetsDirty)
 	{
 		m_lastHash = hash;
 		stateDirty = true;
@@ -522,6 +523,10 @@ void DescriptorSetState::flush(Bool& stateDirty,
 	{
 		stateDirty = false;
 	}
+
+	m_anyBindingDirty = false;
+	m_layoutDirty = false;
+	m_dynamicOffsetDirty.unsetAll();
 }
 
 DescriptorSetFactory::~DescriptorSetFactory()

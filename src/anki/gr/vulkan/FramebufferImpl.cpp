@@ -28,6 +28,8 @@ FramebufferImpl::~FramebufferImpl()
 		vkDestroyRenderPass(getDevice(), rpass, nullptr);
 	}
 
+	m_rpasses.destroy(getAllocator());
+
 	if(m_compatibleOrDefaultRpass)
 	{
 		vkDestroyRenderPass(getDevice(), m_compatibleOrDefaultRpass, nullptr);
