@@ -306,6 +306,11 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 	case 0x1022:
 		m_vendor = GpuVendor::AMD;
 		break;
+	case 0x8086:
+		m_vendor = GpuVendor::INTEL;
+		break;
+	default:
+		m_vendor = GpuVendor::UNKNOWN;
 	}
 	ANKI_VK_LOGI("GPU vendor is %s", &GPU_VENDOR_STR[m_vendor][0]);
 
