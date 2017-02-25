@@ -24,6 +24,11 @@ ShaderProgramImpl::~ShaderProgramImpl()
 		m_pplineFactory->destroy();
 		getAllocator().deleteInstance(m_pplineFactory);
 	}
+
+	if(m_computePpline)
+	{
+		vkDestroyPipeline(getDevice(), m_computePpline, nullptr);
+	}
 }
 
 Error ShaderProgramImpl::init(const Array<ShaderPtr, U(ShaderType::COUNT)>& shaders)
@@ -144,6 +149,23 @@ Error ShaderProgramImpl::init(const Array<ShaderPtr, U(ShaderType::COUNT)>& shad
 		m_pplineFactory = getAllocator().newInstance<PipelineFactory>();
 		m_pplineFactory->init(
 			getGrManagerImpl().getAllocator(), getGrManagerImpl().getDevice(), getGrManagerImpl().getPipelineCache());
+	}
+
+	// Create the pipeline if compute
+	//
+	if(!graphicsProg)
+	{
+		VkComputePipelineCreateInfo ci = {};
+		ci.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+		ci.layout = m_pplineLayout.getHandle();
+
+		ci.stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		ci.stage.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+		ci.stage.pName = "main";
+		ci.stage.module = shaders[ShaderType::COMPUTE]->m_impl->m_handle;
+
+		ANKI_VK_CHECK(vkCreateComputePipelines(
+			getDevice(), getGrManagerImpl().getPipelineCache(), 1, &ci, nullptr, &m_computePpline));
 	}
 
 	return ErrorCode::NONE;

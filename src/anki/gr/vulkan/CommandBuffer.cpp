@@ -183,12 +183,12 @@ void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrS
 
 void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, BufferPtr buff, PtrSize offset, PtrSize range)
 {
-	ANKI_ASSERT(!"TODO");
+	m_impl->bindStorageBuffer(set, binding, buff, offset, range);
 }
 
 void CommandBuffer::bindImage(U32 set, U32 binding, TexturePtr img, U32 level)
 {
-	ANKI_ASSERT(!"TODO");
+	m_impl->bindImage(set, binding, img, level);
 }
 
 void CommandBuffer::bindTextureBuffer(

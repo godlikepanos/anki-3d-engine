@@ -1168,6 +1168,7 @@ ANKI_TEST(Gr, ImageLoadStore)
 
 		cmdb->bindShaderProgram(prog);
 		cmdb->beginRenderPass(dfb);
+		cmdb->informTextureSurfaceCurrentUsage(tex, TextureSurfaceInfo(0, 0, 0, 0), TextureUsageBit::SAMPLED_FRAGMENT);
 		cmdb->bindTexture(0, 0, tex);
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
 		cmdb->endRenderPass();

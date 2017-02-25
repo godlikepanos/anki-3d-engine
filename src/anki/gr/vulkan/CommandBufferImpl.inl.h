@@ -287,7 +287,41 @@ inline void CommandBufferImpl::drawElementsIndirect(
 
 inline void CommandBufferImpl::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ)
 {
+	ANKI_ASSERT(m_computeProg);
 	commandCommon();
+
+	// Bind descriptors
+	for(U i = 0; i < MAX_DESCRIPTOR_SETS; ++i)
+	{
+		if(m_computeProg->getReflectionInfo().m_descriptorSetMask.get(i))
+		{
+			DescriptorSet dset;
+			Bool dirty;
+			Array<U32, MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS> dynamicOffsets;
+			U dynamicOffsetCount;
+			if(getGrManagerImpl().getDescriptorSetFactory().newDescriptorSet(
+				   m_tid, m_dsetState[i], dset, dirty, dynamicOffsets, dynamicOffsetCount))
+			{
+				ANKI_VK_LOGF("Cannot recover");
+			}
+
+			if(dirty)
+			{
+				VkDescriptorSet dsHandle = dset.getHandle();
+
+				ANKI_CMD(vkCmdBindDescriptorSets(m_handle,
+							 VK_PIPELINE_BIND_POINT_GRAPHICS,
+							 m_computeProg->getPipelineLayout().getHandle(),
+							 i,
+							 1,
+							 &dsHandle,
+							 dynamicOffsetCount,
+							 &dynamicOffsets[0]),
+					ANY_OTHER_COMMAND);
+			}
+		}
+	}
+
 	ANKI_CMD(vkCmdDispatch(m_handle, groupCountX, groupCountY, groupCountZ), ANY_OTHER_COMMAND);
 }
 
@@ -628,17 +662,33 @@ inline void CommandBufferImpl::writeOcclusionQueryResultToBuffer(
 
 inline void CommandBufferImpl::bindShaderProgram(ShaderProgramPtr& prog)
 {
-	m_graphicsProg = prog->m_impl.get();
-	m_state.bindShaderProgram(prog);
-	m_progs.pushBack(m_alloc, prog);
+	ShaderProgramImpl& impl = *prog->m_impl;
+
+	if(impl.isGraphics())
+	{
+		m_graphicsProg = &impl;
+		m_computeProg = nullptr; // Unbind the compute prog. Doesn't work like vulkan
+		m_state.bindShaderProgram(prog);
+	}
+	else
+	{
+		m_computeProg = &impl;
+		m_graphicsProg = nullptr; // See comment in the if()
+
+		// Bind the pipeline now
+		ANKI_CMD(vkCmdBindPipeline(m_handle, VK_PIPELINE_BIND_POINT_COMPUTE, impl.getComputePipelineHandle()),
+			ANY_OTHER_COMMAND);
+	}
 
 	for(U i = 0; i < MAX_DESCRIPTOR_SETS; ++i)
 	{
-		if(m_graphicsProg->getReflectionInfo().m_descriptorSetMask.get(i))
+		if(impl.getReflectionInfo().m_descriptorSetMask.get(i))
 		{
-			m_dsetState[i].setLayout(m_graphicsProg->getDescriptorSetLayout(i));
+			m_dsetState[i].setLayout(impl.getDescriptorSetLayout(i));
 		}
 	}
+
+	m_progs.pushBack(m_alloc, prog);
 }
 
 } // end namespace anki

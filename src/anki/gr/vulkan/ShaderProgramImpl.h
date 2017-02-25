@@ -63,10 +63,17 @@ public:
 		return m_refl;
 	}
 
+	/// Only for graphics programs.
 	PipelineFactory& getPipelineFactory()
 	{
 		ANKI_ASSERT(m_pplineFactory);
 		return *m_pplineFactory;
+	}
+
+	VkPipeline getComputePipelineHandle() const
+	{
+		ANKI_ASSERT(m_computePpline);
+		return m_computePpline;
 	}
 
 private:
@@ -81,6 +88,8 @@ private:
 	ShaderProgramReflectionInfo m_refl;
 
 	PipelineFactory* m_pplineFactory = nullptr; ///< Only for graphics programs.
+
+	VkPipeline m_computePpline = VK_NULL_HANDLE;
 };
 /// @}
 

@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/gr/vulkan/DescriptorObject.h>
+#include <anki/gr/vulkan/VulkanObject.h>
 #include <anki/gr/vulkan/GpuMemoryManager.h>
 #include <anki/gr/common/Misc.h>
 #include <anki/util/HashMap.h>
@@ -37,7 +37,7 @@ public:
 };
 
 /// Texture container.
-class TextureImpl : public DescriptorObject
+class TextureImpl : public VulkanObject
 {
 public:
 	SamplerPtr m_sampler;

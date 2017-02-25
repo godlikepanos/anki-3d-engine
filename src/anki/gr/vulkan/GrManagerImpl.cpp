@@ -212,7 +212,6 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 		}
 	}
 
-	m_descrGen.init(getAllocator());
 	m_descrFactory.init(getAllocator(), m_device);
 	m_pplineLayoutFactory.init(getAllocator(), m_device);
 

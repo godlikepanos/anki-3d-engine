@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/gr/vulkan/DescriptorObject.h>
+#include <anki/gr/vulkan/VulkanObject.h>
 #include <anki/gr/vulkan/GpuMemoryManager.h>
 
 namespace anki
@@ -15,11 +15,11 @@ namespace anki
 /// @{
 
 /// Buffer implementation
-class BufferImpl : public DescriptorObject
+class BufferImpl : public VulkanObject
 {
 public:
 	BufferImpl(GrManager* manager)
-		: DescriptorObject(manager)
+		: VulkanObject(manager)
 	{
 	}
 

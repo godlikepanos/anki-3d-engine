@@ -200,7 +200,7 @@ public:
 		m_texList.pushBack(m_alloc, tex_);
 	}
 
-	void bindTextureAndSampler(U32 set, U32 binding, TexturePtr tex_, SamplerPtr sampler, DepthStencilAspectBit aspect)
+	void bindTextureAndSampler(U32 set, U32 binding, TexturePtr& tex_, SamplerPtr sampler, DepthStencilAspectBit aspect)
 	{
 		const U realBinding = binding;
 		Texture& tex = *tex_;
@@ -208,6 +208,14 @@ public:
 		m_dsetState[set].bindTextureAndSampler(realBinding, &tex, sampler.get(), aspect, lay);
 		m_texList.pushBack(m_alloc, tex_);
 		m_samplerList.pushBack(m_alloc, sampler);
+	}
+
+	void bindImage(U32 set, U32 binding, TexturePtr& img, U32 level)
+	{
+		const U realBinding =
+			binding + MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS;
+		m_dsetState[set].bindImage(realBinding, img.get(), level);
+		m_texList.pushBack(m_alloc, img);
 	}
 
 	void beginRenderPass(FramebufferPtr fb);
@@ -316,6 +324,8 @@ private:
 	PipelineStateTracker m_state;
 
 	Array<DescriptorSetState, MAX_DESCRIPTOR_SETS> m_dsetState;
+
+	ShaderProgramImpl* m_computeProg ANKI_DBG_NULLIFY;
 
 	/// @name cleanup_references
 	/// @{

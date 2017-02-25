@@ -10,7 +10,6 @@
 #include <anki/gr/vulkan/GrSemaphore.h>
 #include <anki/gr/vulkan/Fence.h>
 #include <anki/gr/vulkan/QueryExtra.h>
-#include <anki/gr/vulkan/DescriptorObject.h>
 #include <anki/gr/vulkan/DescriptorSet.h>
 #include <anki/gr/vulkan/CommandBufferExtra.h>
 #include <anki/gr/vulkan/PipelineLayout.h>
@@ -168,11 +167,6 @@ public:
 		return *m_samplerCache;
 	}
 
-	DescriptorObjectTombstoneGenerator& getDescriptorObjectTombstoneGenerator()
-	{
-		return m_descrGen;
-	}
-
 	DescriptorSetFactory& getDescriptorSetFactory()
 	{
 		return m_descrFactory;
@@ -291,7 +285,6 @@ private:
 
 	PipelineLayoutFactory m_pplineLayoutFactory;
 
-	DescriptorObjectTombstoneGenerator m_descrGen;
 	DescriptorSetFactory m_descrFactory;
 
 	QueryAllocator m_queryAlloc;
