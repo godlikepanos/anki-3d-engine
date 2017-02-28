@@ -42,7 +42,7 @@ public:
 	TextureUsageBit m_usage = TextureUsageBit::NONE; ///< How the texture will be used.
 	TextureUsageBit m_initialUsage = TextureUsageBit::NONE; ///< It's initial usage.
 
-	/// It's usual usage. That way you won't need to call CommandBuffer::informTextureCurrentUsage() all the time.
+	/// It's usual usage. That way you won't need to call CommandBuffer::informTextureXXXCurrentUsage() all the time.
 	TextureUsageBit m_usageWhenEncountered = TextureUsageBit::NONE;
 
 	U32 m_width = 0;

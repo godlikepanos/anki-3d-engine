@@ -1201,6 +1201,7 @@ ANKI_TEST(Gr, 3DTextures)
 	init.m_format = PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
 	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::TRANSFER_DESTINATION;
 	init.m_initialUsage = TextureUsageBit::TRANSFER_DESTINATION;
+	init.m_usageWhenEncountered = TextureUsageBit::SAMPLED_FRAGMENT;
 	init.m_height = 2;
 	init.m_width = 2;
 	init.m_mipmapsCount = 2;

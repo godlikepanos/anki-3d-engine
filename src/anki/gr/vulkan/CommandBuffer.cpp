@@ -281,7 +281,7 @@ void CommandBuffer::copyBufferToTextureSurface(
 void CommandBuffer::copyBufferToTextureVolume(
 	BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureVolumeInfo& vol)
 {
-	ANKI_ASSERT(!"TODO");
+	m_impl->copyBufferToTextureVolume(buff, offset, range, tex, vol);
 }
 
 void CommandBuffer::fillBuffer(BufferPtr buff, PtrSize offset, PtrSize size, U32 value)

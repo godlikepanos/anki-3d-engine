@@ -295,6 +295,9 @@ public:
 	void copyBufferToTextureSurface(
 		BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureSurfaceInfo& surf);
 
+	void copyBufferToTextureVolume(
+		BufferPtr buff, PtrSize offset, PtrSize range, TexturePtr tex, const TextureVolumeInfo& vol);
+
 	void informTextureSurfaceCurrentUsage(TexturePtr& tex, const TextureSurfaceInfo& surf, TextureUsageBit crntUsage)
 	{
 		m_texUsageTracker.setUsage(*tex, surf, crntUsage, m_alloc);

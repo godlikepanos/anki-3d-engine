@@ -240,6 +240,12 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 #endif
 	}};
 
+	ANKI_VK_LOGI("Will enable the following instanse extensions:");
+	for(const char* c : EXTENSIONS)
+	{
+		ANKI_VK_LOGI("\t%s", c);
+	}
+
 	VkApplicationInfo app = {};
 	app.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 	app.pApplicationName = "unamed";
@@ -254,7 +260,12 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 
 	if(init.m_config->getNumber("debugContext"))
 	{
-		ANKI_VK_LOGI("Will enable debug layers");
+		ANKI_VK_LOGI("Will enable the following debug layers:");
+		for(const char* c : LAYERS)
+		{
+			ANKI_VK_LOGI("\t%s", c);
+		}
+
 		ci.enabledLayerCount = LAYERS.getSize();
 		ci.ppEnabledLayerNames = &LAYERS[0];
 	}
