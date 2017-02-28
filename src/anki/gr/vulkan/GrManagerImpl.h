@@ -195,6 +195,14 @@ private:
 
 #if ANKI_GR_MANAGER_DEBUG_MEMMORY
 	VkAllocationCallbacks m_debugAllocCbs;
+	static const U32 MAX_ALLOC_ALIGNMENT = 64;
+	static const PtrSize ALLOC_SIG = 0xF00B00;
+
+	struct alignas(MAX_ALLOC_ALIGNMENT) AllocHeader
+	{
+		PtrSize m_sig;
+		PtrSize m_size;
+	};
 #endif
 
 	VkInstance m_instance = VK_NULL_HANDLE;
@@ -305,6 +313,7 @@ private:
 	ANKI_USE_RESULT Error initFramebuffers(const GrManagerInitInfo& init);
 	ANKI_USE_RESULT Error initMemory(const ConfigSet& cfg);
 
+#if ANKI_GR_MANAGER_DEBUG_MEMMORY
 	static void* allocateCallback(
 		void* userData, size_t size, size_t alignment, VkSystemAllocationScope allocationScope);
 
@@ -312,6 +321,7 @@ private:
 		void* userData, void* original, size_t size, size_t alignment, VkSystemAllocationScope allocationScope);
 
 	static void freeCallback(void* userData, void* ptr);
+#endif
 
 	void resetFrame(PerFrame& frame);
 

@@ -554,19 +554,46 @@ Error GrManagerImpl::initMemory(const ConfigSet& cfg)
 	return ErrorCode::NONE;
 }
 
+#if ANKI_GR_MANAGER_DEBUG_MEMMORY
 void* GrManagerImpl::allocateCallback(
 	void* userData, size_t size, size_t alignment, VkSystemAllocationScope allocationScope)
 {
 	ANKI_ASSERT(userData);
-	GrManagerImpl* self = static_cast<GrManagerImpl*>(userData);
-	return self->getAllocator().getMemoryPool().allocate(size, alignment);
+	ANKI_ASSERT(size);
+	ANKI_ASSERT(isPowerOfTwo(alignment));
+	ANKI_ASSERT(alignment <= MAX_ALLOC_ALIGNMENT);
+
+	auto alloc = static_cast<GrManagerImpl*>(userData)->getAllocator();
+
+	PtrSize newSize = size + sizeof(AllocHeader);
+	AllocHeader* header = static_cast<AllocHeader*>(alloc.getMemoryPool().allocate(newSize, MAX_ALLOC_ALIGNMENT));
+	header->m_sig = ALLOC_SIG;
+	header->m_size = size;
+	++header;
+
+	return static_cast<AllocHeader*>(header);
 }
 
 void* GrManagerImpl::reallocateCallback(
 	void* userData, void* original, size_t size, size_t alignment, VkSystemAllocationScope allocationScope)
 {
-	ANKI_ASSERT(!"TODO");
-	return nullptr;
+	if(original && size == 0)
+	{
+		freeCallback(userData, original);
+		return nullptr;
+	}
+
+	void* mem = allocateCallback(userData, size, alignment, allocationScope);
+	if(original)
+	{
+		// Move the data
+		AllocHeader* header = static_cast<AllocHeader*>(original);
+		--header;
+		ANKI_ASSERT(header->m_sig == ALLOC_SIG);
+		memcpy(mem, original, header->m_size);
+	}
+
+	return mem;
 }
 
 void GrManagerImpl::freeCallback(void* userData, void* ptr)
@@ -574,10 +601,16 @@ void GrManagerImpl::freeCallback(void* userData, void* ptr)
 	if(ptr)
 	{
 		ANKI_ASSERT(userData);
-		GrManagerImpl* self = static_cast<GrManagerImpl*>(userData);
-		self->getAllocator().getMemoryPool().free(ptr);
+		auto alloc = static_cast<GrManagerImpl*>(userData)->getAllocator();
+
+		AllocHeader* header = static_cast<AllocHeader*>(ptr);
+		--header;
+		ANKI_ASSERT(header->m_sig == ALLOC_SIG);
+
+		alloc.getMemoryPool().free(header);
 	}
 }
+#endif
 
 void GrManagerImpl::beginFrame()
 {
