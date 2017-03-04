@@ -70,6 +70,7 @@ endif()
 set(ANKI_CPU_ADDR_SPACE "0" CACHE STRING "The CPU architecture (0 or 32 or 64). If zero go native")
 
 option(ANKI_ENABLE_SIMD "Enable or not SIMD optimizations" ON)
+option(ANKI_ADDRESS_SANITIZER "Enable address sanitizer (-fsanitize=address)" OFF)
 
 # Take a wild guess on the windowing system
 if(LINUX)
@@ -86,9 +87,6 @@ elseif(MACOS)
 else()
 	message(FATAL_ERROR "Couldn't determine the window backend. You need to specify it manually")
 endif()
-
-# Valgrind
-option(ANKI_VALGRIND_HAPPY "Make valgrind happy" OFF)
 
 set(ANKI_GR_BACKEND "GL" CACHE STRING "The graphics API (GL or VULKAN)")
 
@@ -169,6 +167,10 @@ endif()
 if(ANKI_STRIP)
 	set(LINKER_FLAGS "${LINKER_FLAGS} -s ")
 	set(COMPILER_FLAGS "${COMPILER_FLAGS} -s ")
+endif()
+
+if(ANKI_ADDRESS_SANITIZER)
+	set(COMPILER_FLAGS "${COMPILER_FLAGS} -fsanitize=address ")
 endif()
 
 if(${CMAKE_BUILD_TYPE} STREQUAL "Release")

@@ -54,7 +54,7 @@ public:
 	ThreadHiveTaskCallback m_cb; ///< Callback that defines the task.
 	void* m_arg; ///< Args for the callback.
 
-	U16* m_deps;
+	Task** m_deps;
 	U16 m_depCount;
 	Bool8 m_othersDepend; ///< Other tasks depend on this one.
 
@@ -72,24 +72,21 @@ public:
 };
 
 ThreadHive::ThreadHive(U threadCount, GenericMemoryPoolAllocator<U8> alloc)
-	: m_alloc(alloc)
+	: m_slowAlloc(alloc)
+	, m_alloc(alloc.getMemoryPool().getAllocationCallback(),
+		  alloc.getMemoryPool().getAllocationCallbackUserData(),
+		  1024 * 4)
 	, m_threadCount(threadCount)
 {
-	m_threads = reinterpret_cast<Thread*>(alloc.allocate(sizeof(Thread) * threadCount));
+	m_threads = reinterpret_cast<Thread*>(m_slowAlloc.allocate(sizeof(Thread) * threadCount));
 	for(U i = 0; i < threadCount; ++i)
 	{
 		::new(&m_threads[i]) Thread(i, this);
 	}
-
-	m_storage.create(m_alloc, MAX_TASKS_PER_SESSION);
-	m_deps.create(m_alloc, MAX_TASKS_PER_SESSION * threadCount);
 }
 
 ThreadHive::~ThreadHive()
 {
-	m_storage.destroy(m_alloc);
-	m_deps.destroy(m_alloc);
-
 	if(m_threads)
 	{
 		{
@@ -109,15 +106,59 @@ ThreadHive::~ThreadHive()
 			m_threads[threadCount].~Thread();
 		}
 
-		m_alloc.deallocate(static_cast<void*>(m_threads), m_threadCount * sizeof(Thread));
+		m_slowAlloc.deallocate(static_cast<void*>(m_threads), m_threadCount * sizeof(Thread));
 	}
 }
 
-void ThreadHive::submitTasks(ThreadHiveTask* tasks, U taskCount)
+void ThreadHive::submitTasks(ThreadHiveTask* tasks, const U taskCount)
 {
 	ANKI_ASSERT(tasks && taskCount > 0);
 
-	U allocatedTasks;
+	// Allocate tasks
+	Task* const htasks = m_alloc.newArray<Task>(taskCount);
+
+	// Allocate the dependency handles
+	U depCount = 0;
+	for(U i = 0; i < taskCount; ++i)
+	{
+		depCount += tasks[i].m_inDependencies.getSize();
+	}
+
+	Task** depHandles;
+	if(depCount)
+	{
+		depHandles = m_alloc.newArray<Task*>(depCount);
+	}
+	else
+	{
+		depHandles = nullptr;
+	}
+
+	depCount = 0;
+
+	// Initialize tasks
+	for(U i = 0; i < taskCount; ++i)
+	{
+		const ThreadHiveTask& inTask = tasks[i];
+		Task& outTask = htasks[i];
+
+		outTask.m_cb = inTask.m_callback;
+		outTask.m_arg = inTask.m_argument;
+		outTask.m_depCount = 0;
+		outTask.m_next = nullptr;
+		outTask.m_othersDepend = false;
+
+		// Set the dependencies
+		if(inTask.m_inDependencies.getSize() > 0)
+		{
+			outTask.m_deps = &depHandles[depCount];
+			depCount += inTask.m_inDependencies.getSize();
+		}
+		else
+		{
+			outTask.m_deps = nullptr;
+		}
+	}
 
 	// Push work
 	{
@@ -125,58 +166,39 @@ void ThreadHive::submitTasks(ThreadHiveTask* tasks, U taskCount)
 
 		for(U i = 0; i < taskCount; ++i)
 		{
-			const auto& inTask = tasks[i];
-
-			Task& outTask = m_storage[m_allocatedTasks];
-
-			outTask.m_cb = inTask.m_callback;
-			outTask.m_arg = inTask.m_argument;
-			outTask.m_depCount = 0;
-			outTask.m_next = nullptr;
-			outTask.m_othersDepend = false;
-
-			// Set the dependencies
-			if(inTask.m_inDependencies.getSize() > 0)
-			{
-				outTask.m_deps = &m_deps[m_allocatedDeps];
-				m_allocatedDeps += inTask.m_inDependencies.getSize();
-				ANKI_ASSERT(m_allocatedDeps <= m_deps.getSize());
-			}
-			else
-			{
-				outTask.m_deps = nullptr;
-			}
+			const ThreadHiveTask& inTask = tasks[i];
+			Task& outTask = htasks[i];
 
 			for(U j = 0; j < inTask.m_inDependencies.getSize(); ++j)
 			{
 				ThreadHiveDependencyHandle dep = inTask.m_inDependencies[j];
-				ANKI_ASSERT(dep < m_allocatedTasks);
+				ANKI_ASSERT(dep);
+				Task* depTask = static_cast<Task*>(dep);
 
-				if(!m_storage[dep].done())
+				if(!depTask->done())
 				{
-					outTask.m_deps[outTask.m_depCount++] = dep;
-					m_storage[dep].m_othersDepend = true;
+					outTask.m_deps[outTask.m_depCount++] = depTask;
+					depTask->m_othersDepend = true;
 				}
 			}
 
 			// Push to the list
-			if(m_head == nullptr)
-			{
-				ANKI_ASSERT(m_tail == nullptr);
-				m_head = &m_storage[m_allocatedTasks];
-				m_tail = m_head;
-			}
-			else
+			ANKI_HIVE_DEBUG_PRINT(
+				"pushing back %p (udata %p)\n", static_cast<void*>(&outTask), static_cast<void*>(outTask.m_arg));
+			if(m_head != nullptr)
 			{
 				ANKI_ASSERT(m_tail && m_head);
 				m_tail->m_next = &outTask;
 				m_tail = &outTask;
 			}
-
-			++m_allocatedTasks;
+			else
+			{
+				ANKI_ASSERT(m_tail == nullptr);
+				m_head = &outTask;
+				m_tail = m_head;
+			}
 		}
 
-		allocatedTasks = m_allocatedTasks;
 		m_pendingTasks += taskCount;
 
 		ANKI_HIVE_DEBUG_PRINT("submit tasks\n");
@@ -187,7 +209,7 @@ void ThreadHive::submitTasks(ThreadHiveTask* tasks, U taskCount)
 	// Set the out dependencies
 	for(U i = 0; i < taskCount; ++i)
 	{
-		tasks[i].m_outDependency = allocatedTasks - taskCount + i;
+		tasks[i].m_outDependency = static_cast<ThreadHiveDependencyHandle>(&htasks[i]);
 	}
 }
 
@@ -199,8 +221,9 @@ void ThreadHive::threadRun(U threadId)
 	{
 		// Run the task
 		ANKI_ASSERT(task && task->m_cb);
+		ANKI_HIVE_DEBUG_PRINT(
+			"tid: %lu will exec %p (udata: %p)\n", threadId, static_cast<void*>(task), static_cast<void*>(task->m_arg));
 		task->m_cb(task->m_arg, threadId, *this);
-		ANKI_HIVE_DEBUG_PRINT("tid: %lu executed\n", threadId);
 	}
 
 	ANKI_HIVE_DEBUG_PRINT("tid: %lu thread quits!\n", threadId);
@@ -243,46 +266,43 @@ ThreadHive::Task* ThreadHive::getNewTask()
 	Task* task = m_head;
 	while(task)
 	{
-		if(!task->done())
+		ANKI_ASSERT(!task->done());
+
+		// Check if there are dependencies
+		Bool allDepsCompleted = true;
+		for(U j = 0; j < task->m_depCount; ++j)
 		{
-			// We may have a candiate
+			Task* depTask = task->m_deps[j];
 
-			// Check if there are dependencies
-			Bool allDepsCompleted = true;
-			for(U j = 0; j < task->m_depCount; ++j)
+			if(!depTask->done())
 			{
-				U dep = task->m_deps[j];
-
-				if(!m_storage[dep].done())
-				{
-					allDepsCompleted = false;
-					break;
-				}
-			}
-
-			if(allDepsCompleted)
-			{
-				// Found something, pop it
-				if(prevTask)
-				{
-					prevTask->m_next = task->m_next;
-				}
-
-				if(m_head == task)
-				{
-					m_head = task->m_next;
-				}
-
-				if(m_tail == task)
-				{
-					m_tail = prevTask;
-				}
-
-#if ANKI_EXTRA_CHECKS
-				task->m_next = nullptr;
-#endif
+				allDepsCompleted = false;
 				break;
 			}
+		}
+
+		if(allDepsCompleted)
+		{
+			// Found something, pop it
+			if(prevTask)
+			{
+				prevTask->m_next = task->m_next;
+			}
+
+			if(m_head == task)
+			{
+				m_head = task->m_next;
+			}
+
+			if(m_tail == task)
+			{
+				m_tail = prevTask;
+			}
+
+#if ANKI_EXTRA_CHECKS
+			task->m_next = nullptr;
+#endif
+			break;
 		}
 
 		prevTask = task;
@@ -306,6 +326,7 @@ void ThreadHive::waitAllTasks()
 	m_tail = nullptr;
 	m_allocatedTasks = 0;
 	m_allocatedDeps = 0;
+	m_alloc.getMemoryPool().reset();
 
 	ANKI_HIVE_DEBUG_PRINT("mt: done waiting all\n");
 }

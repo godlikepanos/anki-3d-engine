@@ -21,10 +21,10 @@ class TestSuite;
 class Test;
 class Tester;
 
-#define ANKI_TEST_LOGI(...) ANKI_LOGI("TESTS: " __VA_ARGS__)
-#define ANKI_TEST_LOGE(...) ANKI_LOGE("TESTS: " __VA_ARGS__)
-#define ANKI_TEST_LOGW(...) ANKI_LOGW("TESTS: " __VA_ARGS__)
-#define ANKI_TEST_LOGF(...) ANKI_LOGF("TESTS: " __VA_ARGS__)
+#define ANKI_TEST_LOGI(...) ANKI_LOG("TEST", NORMAL, __VA_ARGS__)
+#define ANKI_TEST_LOGE(...) ANKI_LOG("TEST", ERROR, __VA_ARGS__)
+#define ANKI_TEST_LOGW(...) ANKI_LOG("TEST", WARNING, __VA_ARGS__)
+#define ANKI_TEST_LOGF(...) ANKI_LOG("TEST", FATAL, __VA_ARGS__)
 
 /// The actual test
 using TestCallback = void (*)(Test&);

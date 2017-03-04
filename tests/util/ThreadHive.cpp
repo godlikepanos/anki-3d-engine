@@ -6,6 +6,7 @@
 #include <tests/framework/Framework.h>
 #include <anki/util/ThreadHive.h>
 #include <anki/util/HighRezTimer.h>
+#include <anki/util/System.h>
 
 namespace anki
 {
@@ -143,7 +144,7 @@ ANKI_TEST(Util, ThreadHive)
 				task.m_callback = (cb) ? incNumber : decNumber;
 				task.m_argument = &ctx;
 
-				if((rand() % 3) == 0 && j > 0)
+				if((rand() % 3) == 0 && j > 0 && dep)
 				{
 					task.m_inDependencies = WeakArray<ThreadHiveDependencyHandle>(&dep, 1);
 				}
@@ -162,6 +163,82 @@ ANKI_TEST(Util, ThreadHive)
 
 		ANKI_TEST_EXPECT_EQ(ctx.m_countAtomic.get(), number);
 	}
+}
+
+class FibTask
+{
+public:
+	Atomic<U64>* m_sum;
+	StackAllocator<U8> m_alloc;
+	U64 m_n;
+
+	FibTask(Atomic<U64>* sum, StackAllocator<U8>& alloc, U64 n)
+		: m_sum(sum)
+		, m_alloc(alloc)
+		, m_n(n)
+	{
+	}
+
+	void doWork(ThreadHive& hive)
+	{
+		if(m_n > 1)
+		{
+			FibTask* a = m_alloc.newInstance<FibTask>(m_sum, m_alloc, m_n - 1);
+			FibTask* b = m_alloc.newInstance<FibTask>(m_sum, m_alloc, m_n - 2);
+
+			Array<ThreadHiveTask, 2> tasks;
+			tasks[0].m_callback = tasks[1].m_callback = FibTask::callback;
+			tasks[0].m_argument = a;
+			tasks[1].m_argument = b;
+
+			hive.submitTasks(&tasks[0], tasks.getSize());
+		}
+		else
+		{
+			m_sum->fetchAdd(m_n);
+		}
+	}
+
+	static void callback(void* arg, U32, ThreadHive& hive)
+	{
+		static_cast<FibTask*>(arg)->doWork(hive);
+	}
+};
+
+static U64 fib(U64 n)
+{
+	if(n > 1)
+	{
+		return fib(n - 1) + fib(n - 2);
+	}
+	else
+	{
+		return n;
+	}
+}
+
+ANKI_TEST(Util, ThreadHiveBench)
+{
+	static const U FIB_N = 32;
+
+	const U32 threadCount = getCpuCoresCount();
+	HeapAllocator<U8> alloc(allocAligned, nullptr);
+	ThreadHive hive(threadCount, alloc);
+
+	StackAllocator<U8> salloc(allocAligned, nullptr, 1024);
+	Atomic<U64> sum = {0};
+	FibTask task(&sum, salloc, FIB_N);
+
+	HighRezTimer timer;
+	timer.start();
+	hive.submitTask(FibTask::callback, &task);
+
+	hive.waitAllTasks();
+	timer.stop();
+
+	ANKI_TEST_LOGI("Total time %fms", timer.getElapsedTime() * 1000.0);
+	const U64 serialFib = fib(FIB_N);
+	ANKI_TEST_EXPECT_EQ(sum.get(), serialFib);
 }
 
 } // end namespace anki

@@ -19,7 +19,7 @@ class ThreadHive;
 /// @{
 
 /// Opaque handle that defines a ThreadHive depedency. @memberof ThreadHive
-using ThreadHiveDependencyHandle = U16;
+using ThreadHiveDependencyHandle = void*;
 
 /// The callback that defines a ThreadHibe task.
 /// @memberof ThreadHive
@@ -60,7 +60,7 @@ public:
 	}
 
 	/// Submit tasks. The ThreadHiveTaskCallback callbacks can also call this.
-	void submitTasks(ThreadHiveTask* tasks, U taskCount);
+	void submitTasks(ThreadHiveTask* tasks, const U taskCount);
 
 	/// Submit a single task without dependencies. The ThreadHiveTaskCallback callbacks can also call this.
 	void submitTask(ThreadHiveTaskCallback callback, void* arg)
@@ -75,19 +75,16 @@ public:
 	void waitAllTasks();
 
 private:
-	static const U MAX_TASKS_PER_SESSION = 1024 * 4;
-
 	class Thread;
 
 	/// Lightweight task.
 	class Task;
 
-	GenericMemoryPoolAllocator<U8> m_alloc;
+	GenericMemoryPoolAllocator<U8> m_slowAlloc;
+	StackAllocator<U8> m_alloc;
 	Thread* m_threads = nullptr;
 	U32 m_threadCount = 0;
 
-	DynamicArray<Task> m_storage; ///< Task storage.
-	DynamicArray<ThreadHiveDependencyHandle> m_deps; ///< Dependencies storage.
 	Task* m_head = nullptr; ///< Head of the task list.
 	Task* m_tail = nullptr; ///< Tail of the task list.
 	Bool m_quit = false;
