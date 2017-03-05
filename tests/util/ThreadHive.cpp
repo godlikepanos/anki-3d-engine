@@ -229,15 +229,15 @@ ANKI_TEST(Util, ThreadHiveBench)
 	Atomic<U64> sum = {0};
 	FibTask task(&sum, salloc, FIB_N);
 
-	HighRezTimer timer;
-	timer.start();
+	auto timeA = HighRezTimer::getCurrentTime();
 	hive.submitTask(FibTask::callback, &task);
-
 	hive.waitAllTasks();
-	timer.stop();
 
-	ANKI_TEST_LOGI("Total time %fms", timer.getElapsedTime() * 1000.0);
+	auto timeB = HighRezTimer::getCurrentTime();
 	const U64 serialFib = fib(FIB_N);
+	auto timeC = HighRezTimer::getCurrentTime();
+
+	ANKI_TEST_LOGI("Total time %fms. Ground truth %fms", (timeB - timeA) * 1000.0, (timeC - timeB) * 1000.0);
 	ANKI_TEST_EXPECT_EQ(sum.get(), serialFib);
 }
 
