@@ -184,65 +184,94 @@ Error Renderer::render(RenderingContext& ctx)
 	m_lf->resetOcclusionQueries(ctx, cmdb);
 	ANKI_CHECK(buildCommandBuffers(ctx));
 
-	// Perform image transitions
+	// Barriers
 	m_sm->setPreRunBarriers(ctx);
 	m_ms->setPreRunBarriers(ctx);
-	m_is->setPreRunBarriers(ctx);
-	m_fs->setPreRunBarriers(ctx);
-	m_ssao->setPreRunBarriers(ctx);
-	m_bloom->m_extractExposure.setPreRunBarriers(ctx);
-	m_bloom->m_upscale.setPreRunBarriers(ctx);
-	m_depth->m_hd.setPreRunBarriers(ctx);
-	m_depth->m_qd.setPreRunBarriers(ctx);
-	m_smaa->m_edge.setPreRunBarriers(ctx);
-	m_smaa->m_weights.setPreRunBarriers(ctx);
-	m_vol->setPreRunBarriers(ctx);
 
-	// SM
+	// Passes
 	m_sm->run(ctx);
-
 	m_ms->run(ctx);
 
+	// Barriers
 	m_ms->setPostRunBarriers(ctx);
 	m_sm->setPostRunBarriers(ctx);
+	m_depth->m_hd.setPreRunBarriers(ctx);
+	m_is->setPreRunBarriers(ctx);
 
-	// Batch IS + HD
+	// Passes
 	m_is->run(ctx);
 	m_depth->m_hd.run(ctx);
 
+	// Barriers
 	m_depth->m_hd.setPostRunBarriers(ctx);
+	m_depth->m_qd.setPreRunBarriers(ctx);
 
+	// Passes
 	m_depth->m_qd.run(ctx);
 
+	// Barriers
 	m_depth->m_qd.setPostRunBarriers(ctx);
+	m_vol->m_main.setPreRunBarriers(ctx);
+	m_ssao->m_main.setPreRunBarriers(ctx);
 
-	m_vol->run(ctx);
-	m_vol->setPostRunBarriers(ctx);
+	// Passes
+	m_vol->m_main.run(ctx);
+	m_ssao->m_main.run(ctx);
 
+	// Barriers
+	m_vol->m_main.setPostRunBarriers(ctx);
+	m_vol->m_hblur.setPreRunBarriers(ctx);
+	m_ssao->m_main.setPostRunBarriers(ctx);
+	m_ssao->m_hblur.setPreRunBarriers(ctx);
+
+	// Misc
 	m_lf->updateIndirectInfo(ctx, cmdb);
 
-	// Batch FS & SSAO & VOL
-	m_fs->run(ctx);
-	m_ssao->run(ctx);
+	// Passes
+	m_vol->m_hblur.run(ctx);
+	m_ssao->m_hblur.run(ctx);
 
-	m_ssao->setPostRunBarriers(ctx);
+	// Barriers
+	m_vol->m_hblur.setPostRunBarriers(ctx);
+	m_vol->m_vblur.setPreRunBarriers(ctx);
+	m_ssao->m_hblur.setPostRunBarriers(ctx);
+	m_ssao->m_vblur.setPreRunBarriers(ctx);
+
+	// Passes
+	m_vol->m_vblur.run(ctx);
+	m_ssao->m_vblur.run(ctx);
+
+	// Barriers
+	m_vol->m_vblur.setPostRunBarriers(ctx);
+	m_ssao->m_vblur.setPostRunBarriers(ctx);
+	m_fs->setPreRunBarriers(ctx);
+
+	// Passes
+	m_fs->run(ctx);
+
+	// Barriers
 	m_fs->setPostRunBarriers(ctx);
 
+	// Passes
 	m_fsUpscale->run(ctx);
 
+	// Barriers
 	cmdb->setTextureSurfaceBarrier(m_is->getRt(),
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 		TextureUsageBit::SAMPLED_FRAGMENT,
 		TextureSurfaceInfo(0, 0, 0, 0));
 
+	// Passes
 	m_downscale->run(ctx);
 
+	// Barriers
 	cmdb->setTextureSurfaceBarrier(m_is->getRt(),
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		TextureUsageBit::SAMPLED_COMPUTE,
 		TextureSurfaceInfo(m_is->getRtMipmapCount() - 1, 0, 0, 0));
+	m_smaa->m_edge.setPreRunBarriers(ctx);
 
-	// Batch TM + SMAA_pass0
+	// Passes
 	m_tm->run(ctx);
 	m_smaa->m_edge.run(ctx);
 
@@ -252,17 +281,22 @@ Error Renderer::render(RenderingContext& ctx)
 		TextureUsageBit::SAMPLED_FRAGMENT,
 		TextureSurfaceInfo(m_is->getRtMipmapCount() - 1, 0, 0, 0));
 	m_smaa->m_edge.setPostRunBarriers(ctx);
+	m_bloom->m_extractExposure.setPreRunBarriers(ctx);
+	m_smaa->m_weights.setPreRunBarriers(ctx);
 
-	// Batch bloom + SSLF + SMAA_pass1
+	// Passes
 	m_bloom->m_extractExposure.run(ctx);
 	m_smaa->m_weights.run(ctx);
 
 	// Barriers
 	m_bloom->m_extractExposure.setPostRunBarriers(ctx);
+	m_bloom->m_upscale.setPreRunBarriers(ctx);
 	m_smaa->m_weights.setPostRunBarriers(ctx);
 
-	// Bloom last pass
+	// Passes
 	m_bloom->m_upscale.run(ctx);
+
+	// Barriers
 	m_bloom->m_upscale.setPostRunBarriers(ctx);
 
 	if(m_dbg->getEnabled())
@@ -270,6 +304,7 @@ Error Renderer::render(RenderingContext& ctx)
 		ANKI_CHECK(m_dbg->run(ctx));
 	}
 
+	// Passes
 	ANKI_CHECK(m_pps->run(ctx));
 
 	++m_frameCount;
@@ -385,6 +420,14 @@ Error Renderer::buildCommandBuffersInternal(RenderingContext& ctx, U32 threadId,
 			CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SECOND_LEVEL | CommandBufferFlag::SMALL_BATCH;
 		init.m_framebuffer = m_fs->getFramebuffer();
 		CommandBufferPtr cmdb = getGrManager().newInstance<CommandBuffer>(init);
+
+		// Inform on textures
+		cmdb->informTextureSurfaceCurrentUsage(
+			m_fs->getRt(), TextureSurfaceInfo(0, 0, 0, 0), TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE);
+		cmdb->informTextureSurfaceCurrentUsage(m_depth->m_hd.m_depthRt,
+			TextureSurfaceInfo(0, 0, 0, 0),
+			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ | TextureUsageBit::SAMPLED_FRAGMENT);
+
 		cmdb->setViewport(0, 0, m_fs->getWidth(), m_fs->getHeight());
 
 		m_lf->run(ctx, cmdb);

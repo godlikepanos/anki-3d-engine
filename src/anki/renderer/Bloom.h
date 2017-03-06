@@ -14,8 +14,6 @@
 namespace anki
 {
 
-class ShaderProgram;
-
 /// @addtogroup renderer
 /// @{
 

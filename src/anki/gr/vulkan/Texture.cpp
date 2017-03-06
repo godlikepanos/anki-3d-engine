@@ -20,7 +20,7 @@ Texture::~Texture()
 
 void Texture::init(const TextureInitInfo& init)
 {
-	m_impl.reset(getAllocator().newInstance<TextureImpl>(&getManager()));
+	m_impl.reset(getAllocator().newInstance<TextureImpl>(&getManager(), getUuid()));
 
 	if(m_impl->init(init, this))
 	{

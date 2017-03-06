@@ -51,6 +51,8 @@ Error Sm::initInternal(const ConfigSet& config)
 	// Create shadowmaps array
 	TextureInitInfo sminit;
 	sminit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
+	sminit.m_usageWhenEncountered = TextureUsageBit::SAMPLED_FRAGMENT;
+	sminit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 	sminit.m_type = TextureType::_2D_ARRAY;
 	sminit.m_width = m_resolution;
 	sminit.m_height = m_resolution;
@@ -271,6 +273,11 @@ Error Sm::doSpotLight(SceneNode& light, CommandBufferPtr& cmdb, FramebufferPtr& 
 	cinf.m_framebuffer = fb;
 	cmdb = m_r->getGrManager().newInstance<CommandBuffer>(cinf);
 
+	// Inform on Rts
+	cmdb->informTextureSurfaceCurrentUsage(m_spotTexArray,
+		TextureSurfaceInfo(0, 0, 0, light.getComponent<LightComponent>().getShadowMapIndex()),
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE);
+
 	// Set state
 	cmdb->setViewport(0, 0, m_resolution, m_resolution);
 	cmdb->setPolygonOffset(1.0, 2.0);
@@ -303,6 +310,11 @@ Error Sm::doOmniLight(
 			cinf.m_flags = CommandBufferFlag::SECOND_LEVEL | CommandBufferFlag::GRAPHICS_WORK;
 			cinf.m_framebuffer = fbs[frCount];
 			cmdbs[frCount] = m_r->getGrManager().newInstance<CommandBuffer>(cinf);
+
+			// Inform on Rts
+			cmdbs[frCount]->informTextureSurfaceCurrentUsage(m_omniTexArray,
+				TextureSurfaceInfo(0, 0, frCount, light.getComponent<LightComponent>().getShadowMapIndex()),
+				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE);
 
 			// Set state
 			cmdbs[frCount]->setViewport(0, 0, m_resolution, m_resolution);
@@ -400,7 +412,7 @@ void Sm::prepareBuildCommandBuffers(RenderingContext& ctx)
 		for(U i = 0; i < spotCastersCount; ++i)
 		{
 			const LightComponent& lightc = ctx.m_sm.m_spots[i]->getComponent<LightComponent>();
-			U idx = lightc.getShadowMapIndex();
+			const U idx = lightc.getShadowMapIndex();
 
 			ctx.m_sm.m_spotFramebuffers[i] = m_spots[idx].m_fb;
 			ctx.m_sm.m_spotCacheIndices[i] = idx;
@@ -423,7 +435,7 @@ void Sm::prepareBuildCommandBuffers(RenderingContext& ctx)
 		for(U i = 0; i < omniCastersCount; ++i)
 		{
 			const LightComponent& lightc = ctx.m_sm.m_omnis[i]->getComponent<LightComponent>();
-			U idx = lightc.getShadowMapIndex();
+			const U idx = lightc.getShadowMapIndex();
 
 			for(U j = 0; j < 6; ++j)
 			{

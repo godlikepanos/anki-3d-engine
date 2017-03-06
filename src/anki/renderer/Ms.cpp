@@ -120,6 +120,13 @@ Error Ms::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) 
 		CommandBufferPtr cmdb = m_r->getGrManager().newInstance<CommandBuffer>(cinf);
 		ctx.m_ms.m_commandBuffers[threadId] = cmdb;
 
+		// Inform on RTs
+		TextureSurfaceInfo surf(0, 0, 0, 0);
+		cmdb->informTextureSurfaceCurrentUsage(m_rt0, surf, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE);
+		cmdb->informTextureSurfaceCurrentUsage(m_rt1, surf, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE);
+		cmdb->informTextureSurfaceCurrentUsage(m_rt2, surf, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE);
+		cmdb->informTextureSurfaceCurrentUsage(m_depthRt, surf, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE);
+
 		// Set some state, leave the rest to default
 		cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 
@@ -166,11 +173,8 @@ void Ms::setPreRunBarriers(RenderingContext& ctx)
 	TextureSurfaceInfo surf(0, 0, 0, 0);
 
 	cmdb->setTextureSurfaceBarrier(m_rt0, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, surf);
-
 	cmdb->setTextureSurfaceBarrier(m_rt1, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, surf);
-
 	cmdb->setTextureSurfaceBarrier(m_rt2, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, surf);
-
 	cmdb->setTextureSurfaceBarrier(
 		m_depthRt, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, surf);
 

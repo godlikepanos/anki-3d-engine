@@ -55,7 +55,7 @@ void GrManager::finish()
 void GrManager::getTextureSurfaceUploadInfo(TexturePtr tex, const TextureSurfaceInfo& surf, PtrSize& allocationSize)
 {
 	const TextureImpl& impl = *tex->m_impl;
-	impl.checkSurface(surf);
+	impl.checkSurfaceOrVolume(surf);
 
 	U width = impl.m_width >> surf.m_level;
 	U height = impl.m_height >> surf.m_level;
@@ -65,7 +65,7 @@ void GrManager::getTextureSurfaceUploadInfo(TexturePtr tex, const TextureSurface
 void GrManager::getTextureVolumeUploadInfo(TexturePtr tex, const TextureVolumeInfo& vol, PtrSize& allocationSize)
 {
 	const TextureImpl& impl = *tex->m_impl;
-	impl.checkVolume(vol);
+	impl.checkSurfaceOrVolume(vol);
 
 	U width = impl.m_width >> vol.m_level;
 	U height = impl.m_height >> vol.m_level;

@@ -50,8 +50,29 @@ CommandBufferImpl::~CommandBufferImpl()
 	m_queryResetAtoms.destroy(m_alloc);
 	m_writeQueryAtoms.destroy(m_alloc);
 	m_secondLevelAtoms.destroy(m_alloc);
+}
 
-	m_texUsageTracker.destroy(m_alloc);
+Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
+{
+	auto& pool = getGrManagerImpl().getAllocator().getMemoryPool();
+	m_alloc = StackAllocator<U8>(
+		pool.getAllocationCallback(), pool.getAllocationCallbackUserData(), init.m_hints.m_chunkSize, 1.0, 0, false);
+
+	m_texUsageTracker.init(m_alloc);
+
+	m_flags = init.m_flags;
+	m_tid = Thread::getCurrentThreadId();
+
+	m_handle = getGrManagerImpl().newCommandBuffer(m_tid, m_flags);
+	ANKI_ASSERT(m_handle);
+
+	if(!!(m_flags & CommandBufferFlag::SECOND_LEVEL))
+	{
+		m_activeFb = init.m_framebuffer;
+		m_state.beginRenderPass(m_activeFb);
+	}
+
+	return ErrorCode::NONE;
 }
 
 void CommandBufferImpl::beginRecording()
@@ -72,14 +93,15 @@ void CommandBufferImpl::beginRecording()
 		Array<VkImageLayout, MAX_COLOR_ATTACHMENTS> colAttLayouts;
 		for(U i = 0; i < impl.getColorAttachmentCount(); ++i)
 		{
-			colAttLayouts[i] = m_texUsageTracker.findLayout(*impl.getColorAttachment(i), impl.getAttachedSurfaces()[i]);
+			colAttLayouts[i] = impl.getColorAttachment(i)->m_impl->findLayoutFromTracker(
+				impl.getAttachedSurfaces()[i], m_texUsageTracker);
 		}
 
 		VkImageLayout dsAttLayout = VK_IMAGE_LAYOUT_MAX_ENUM;
 		if(impl.hasDepthStencil())
 		{
-			dsAttLayout = m_texUsageTracker.findLayout(
-				*impl.getDepthStencilAttachment(), impl.getAttachedSurfaces()[MAX_COLOR_ATTACHMENTS]);
+			dsAttLayout = impl.getDepthStencilAttachment()->m_impl->findLayoutFromTracker(
+				impl.getAttachedSurfaces()[MAX_COLOR_ATTACHMENTS], m_texUsageTracker);
 		}
 
 		inheritance.renderPass = impl.getRenderPassHandle(colAttLayouts, dsAttLayout);
@@ -98,27 +120,6 @@ void CommandBufferImpl::beginRecording()
 	}
 
 	vkBeginCommandBuffer(m_handle, &begin);
-}
-
-Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
-{
-	auto& pool = getGrManagerImpl().getAllocator().getMemoryPool();
-	m_alloc = StackAllocator<U8>(
-		pool.getAllocationCallback(), pool.getAllocationCallbackUserData(), init.m_hints.m_chunkSize, 1.0, 0, false);
-
-	m_flags = init.m_flags;
-	m_tid = Thread::getCurrentThreadId();
-
-	m_handle = getGrManagerImpl().newCommandBuffer(m_tid, m_flags);
-	ANKI_ASSERT(m_handle);
-
-	if(!!(m_flags & CommandBufferFlag::SECOND_LEVEL))
-	{
-		m_activeFb = init.m_framebuffer;
-		m_state.beginRenderPass(m_activeFb);
-	}
-
-	return ErrorCode::NONE;
 }
 
 void CommandBufferImpl::beginRenderPass(FramebufferPtr fb)
@@ -156,14 +157,15 @@ void CommandBufferImpl::beginRenderPassInternal()
 		Array<VkImageLayout, MAX_COLOR_ATTACHMENTS> colAttLayouts;
 		for(U i = 0; i < impl.getColorAttachmentCount(); ++i)
 		{
-			colAttLayouts[i] = m_texUsageTracker.findLayout(*impl.getColorAttachment(i), impl.getAttachedSurfaces()[i]);
+			colAttLayouts[i] = impl.getColorAttachment(i)->m_impl->findLayoutFromTracker(
+				impl.getAttachedSurfaces()[i], m_texUsageTracker);
 		}
 
 		VkImageLayout dsAttLayout = VK_IMAGE_LAYOUT_MAX_ENUM;
 		if(impl.hasDepthStencil())
 		{
-			dsAttLayout = m_texUsageTracker.findLayout(
-				*impl.getDepthStencilAttachment(), impl.getAttachedSurfaces()[MAX_COLOR_ATTACHMENTS]);
+			dsAttLayout = impl.getDepthStencilAttachment()->m_impl->findLayoutFromTracker(
+				impl.getAttachedSurfaces()[MAX_COLOR_ATTACHMENTS], m_texUsageTracker);
 		}
 
 		bi.renderPass = impl.getRenderPassHandle(colAttLayouts, dsAttLayout);
@@ -595,9 +597,9 @@ void CommandBufferImpl::copyBufferToTextureSurface(
 	commandCommon();
 
 	TextureImpl& impl = *tex->m_impl;
-	impl.checkSurface(surf);
+	impl.checkSurfaceOrVolume(surf);
 	ANKI_ASSERT(impl.usageValid(TextureUsageBit::TRANSFER_DESTINATION));
-	const VkImageLayout layout = m_texUsageTracker.findLayout(*tex, surf);
+	const VkImageLayout layout = impl.findLayoutFromTracker(surf, m_texUsageTracker);
 
 	if(!impl.m_workarounds)
 	{
@@ -695,9 +697,9 @@ void CommandBufferImpl::copyBufferToTextureVolume(
 	commandCommon();
 
 	TextureImpl& impl = *tex->m_impl;
-	impl.checkVolume(vol);
+	impl.checkSurfaceOrVolume(vol);
 	ANKI_ASSERT(impl.usageValid(TextureUsageBit::TRANSFER_DESTINATION));
-	const VkImageLayout layout = m_texUsageTracker.findLayout(*tex, vol);
+	const VkImageLayout layout = impl.findLayoutFromTracker(vol, m_texUsageTracker);
 
 	if(!impl.m_workarounds)
 	{

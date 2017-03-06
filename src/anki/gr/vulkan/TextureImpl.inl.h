@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/gr/vulkan/TextureImpl.h>
+#include <anki/gr/vulkan/TextureUsageTracker.h>
 
 namespace anki
 {
@@ -29,7 +30,7 @@ inline VkImageAspectFlags TextureImpl::convertAspect(DepthStencilAspectBit ak) c
 inline void TextureImpl::computeSubResourceRange(
 	const TextureSurfaceInfo& surf, DepthStencilAspectBit aspect, VkImageSubresourceRange& range) const
 {
-	checkSurface(surf);
+	checkSurfaceOrVolume(surf);
 	range.aspectMask = convertAspect(aspect);
 	range.baseMipLevel = surf.m_level;
 	range.levelCount = 1;
@@ -60,7 +61,7 @@ inline void TextureImpl::computeSubResourceRange(
 inline void TextureImpl::computeSubResourceRange(
 	const TextureVolumeInfo& vol, DepthStencilAspectBit aspect, VkImageSubresourceRange& range) const
 {
-	checkVolume(vol);
+	checkSurfaceOrVolume(vol);
 	range.aspectMask = convertAspect(aspect);
 	range.baseMipLevel = vol.m_level;
 	range.levelCount = 1;
@@ -70,7 +71,7 @@ inline void TextureImpl::computeSubResourceRange(
 
 inline U TextureImpl::computeVkArrayLayer(const TextureSurfaceInfo& surf) const
 {
-	checkSurface(surf);
+	checkSurfaceOrVolume(surf);
 	U layer = 0;
 	switch(m_type)
 	{
@@ -98,7 +99,7 @@ inline U TextureImpl::computeVkArrayLayer(const TextureSurfaceInfo& surf) const
 
 inline U TextureImpl::computeSubresourceIdx(const TextureSurfaceInfo& surf) const
 {
-	checkSurface(surf);
+	checkSurfaceOrVolume(surf);
 
 	switch(m_type)
 	{
@@ -119,6 +120,86 @@ inline U TextureImpl::computeSubresourceIdx(const TextureSurfaceInfo& surf) cons
 		ANKI_ASSERT(0);
 		return 0;
 	}
+}
+
+template<typename TextureInfo>
+inline VkImageLayout TextureImpl::findLayoutFromTracker(
+	const TextureInfo& surfOrVol, const TextureUsageTracker& tracker) const
+{
+	checkSurfaceOrVolume(surfOrVol);
+
+	auto it = tracker.m_map.find(m_uuid);
+	if(it == tracker.m_map.getEnd())
+	{
+		ANKI_ASSERT(m_usageWhenEncountered != TextureUsageBit::NONE);
+		return computeLayout(m_usageWhenEncountered, surfOrVol.m_level);
+	}
+	else
+	{
+		const U idx = computeSubresourceIdx(surfOrVol);
+		const VkImageLayout out = it->m_subResources[idx];
+		ANKI_ASSERT(out != VK_IMAGE_LAYOUT_UNDEFINED);
+		return out;
+	}
+}
+
+inline VkImageLayout TextureImpl::findLayoutFromTracker(const TextureUsageTracker& tracker) const
+{
+	auto it = tracker.m_map.find(m_uuid);
+	if(it == tracker.m_map.getEnd())
+	{
+		ANKI_ASSERT(m_usageWhenEncountered != TextureUsageBit::NONE);
+		return computeLayout(m_usageWhenEncountered, 0);
+	}
+	else
+	{
+		for(U i = 0; i < it->m_subResources.getSize(); ++i)
+		{
+			ANKI_ASSERT(
+				it->m_subResources[i] == it->m_subResources[0] && "Not all image subresources are in the same layout");
+		}
+		const VkImageLayout out = it->m_subResources[0];
+		ANKI_ASSERT(out != VK_IMAGE_LAYOUT_UNDEFINED);
+		return out;
+	}
+}
+
+template<typename TextureInfo>
+inline void TextureImpl::updateTracker(
+	const TextureInfo& surfOrVol, TextureUsageBit usage, TextureUsageTracker& tracker) const
+{
+	ANKI_ASSERT(usage != TextureUsageBit::NONE);
+	checkSurfaceOrVolume(surfOrVol);
+
+	auto it = tracker.m_map.find(m_uuid);
+	if(it != tracker.m_map.getEnd())
+	{
+		// Found
+		updateUsageState(surfOrVol, usage, tracker.m_alloc, *it);
+	}
+	else
+	{
+		// Not found
+		TextureUsageState state;
+		updateUsageState(surfOrVol, usage, tracker.m_alloc, state);
+		tracker.m_map.emplaceBack(tracker.m_alloc, m_uuid, std::move(state));
+	}
+}
+
+template<typename TextureInfo>
+inline void TextureImpl::updateUsageState(
+	const TextureInfo& surfOrVol, TextureUsageBit usage, StackAllocator<U8>& alloc, TextureUsageState& state) const
+{
+	checkSurfaceOrVolume(surfOrVol);
+	if(ANKI_UNLIKELY(state.m_subResources.getSize() == 0))
+	{
+		state.m_subResources.create(alloc, m_surfaceOrVolumeCount);
+		memorySet(
+			reinterpret_cast<int*>(&state.m_subResources[0]), int(VK_IMAGE_LAYOUT_UNDEFINED), m_surfaceOrVolumeCount);
+	}
+	const VkImageLayout lay = computeLayout(usage, surfOrVol.m_level);
+	ANKI_ASSERT(lay != VK_IMAGE_LAYOUT_UNDEFINED);
+	state.m_subResources[computeSubresourceIdx(surfOrVol)] = lay;
 }
 
 } // end namespace anki

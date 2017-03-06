@@ -15,8 +15,9 @@
 namespace anki
 {
 
-TextureImpl::TextureImpl(GrManager* manager)
+TextureImpl::TextureImpl(GrManager* manager, U64 uuid)
 	: VulkanObject(manager)
+	, m_uuid(uuid)
 {
 }
 
@@ -623,7 +624,7 @@ VkImageLayout TextureImpl::computeLayout(TextureUsageBit usage, U level) const
 
 VkImageView TextureImpl::getOrCreateSingleSurfaceView(const TextureSurfaceInfo& surf, DepthStencilAspectBit aspect)
 {
-	checkSurface(surf);
+	checkSurfaceOrVolume(surf);
 
 	VkImageViewCreateInfo ci = m_viewCreateInfoTemplate;
 	ci.viewType = VK_IMAGE_VIEW_TYPE_2D;

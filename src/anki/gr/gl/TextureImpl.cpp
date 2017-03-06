@@ -250,7 +250,7 @@ void TextureImpl::init(const TextureInitInfo& init)
 
 void TextureImpl::writeSurface(const TextureSurfaceInfo& surf, GLuint pbo, PtrSize offset, PtrSize dataSize)
 {
-	checkSurface(surf);
+	checkSurfaceOrVolume(surf);
 	ANKI_ASSERT(dataSize > 0);
 
 	U mipmap = surf.m_level;
@@ -308,7 +308,7 @@ void TextureImpl::writeSurface(const TextureSurfaceInfo& surf, GLuint pbo, PtrSi
 
 void TextureImpl::writeVolume(const TextureVolumeInfo& vol, GLuint pbo, PtrSize offset, PtrSize dataSize)
 {
-	checkVolume(vol);
+	checkSurfaceOrVolume(vol);
 	ANKI_ASSERT(dataSize > 0);
 	ANKI_ASSERT(m_texType == TextureType::_3D);
 
@@ -453,7 +453,7 @@ void TextureImpl::clear(const TextureSurfaceInfo& surf, const ClearValue& clearV
 
 U TextureImpl::computeSurfaceIdx(const TextureSurfaceInfo& surf) const
 {
-	checkSurface(surf);
+	checkSurfaceOrVolume(surf);
 	U out;
 
 	if(m_target == GL_TEXTURE_3D)

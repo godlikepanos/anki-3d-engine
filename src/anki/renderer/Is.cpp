@@ -189,7 +189,7 @@ void Is::run(RenderingContext& ctx)
 
 	cmdb->bindTexture(1, 0, (ctx.m_is.m_diffDecalTex) ? ctx.m_is.m_diffDecalTex : m_dummyTex);
 	cmdb->bindTexture(1, 1, (ctx.m_is.m_normRoughnessDecalTex) ? ctx.m_is.m_normRoughnessDecalTex : m_dummyTex);
-	cmdb->bindTexture(1, 2, m_r->getSsao().getRt());
+	cmdb->bindTexture(1, 2, m_r->getSsao().m_main.m_rt);
 
 	bindUniforms(cmdb, 0, 0, ctx.m_is.m_commonToken);
 	bindUniforms(cmdb, 0, 1, ctx.m_is.m_pointLightsToken);

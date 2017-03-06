@@ -305,6 +305,7 @@ anki_internal:
 		U mipsCount,
 		TexturePtr& rt);
 
+	/// Clear using graphics.
 	void clearRenderTarget(TexturePtr rt, const ClearValue& clear, TextureUsageBit transferTo);
 
 	ANKI_USE_RESULT Error createShader(CString fname, ShaderResourcePtr& shader, CString extra);

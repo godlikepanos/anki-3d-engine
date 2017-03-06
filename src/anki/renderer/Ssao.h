@@ -14,51 +14,126 @@
 namespace anki
 {
 
+// Forward
+class Ssao;
+
 /// @addtogroup renderer
 /// @{
 
 /// Screen space ambient occlusion pass
+class SsaoMain : public RenderingPass
+{
+	friend class SsaoVBlur;
+
+anki_internal:
+	static constexpr F32 HEMISPHERE_RADIUS = 3.0; // In game units
+	static const U SAMPLES = 8;
+
+	TexturePtr m_rt;
+
+	SsaoMain(Renderer* r, Ssao* ssao)
+		: RenderingPass(r)
+		, m_ssao(ssao)
+	{
+	}
+
+	ANKI_USE_RESULT Error init(const ConfigSet& config);
+
+	void setPreRunBarriers(RenderingContext& ctx);
+
+	void run(RenderingContext& ctx);
+
+	void setPostRunBarriers(RenderingContext& ctx);
+
+private:
+	Ssao* m_ssao;
+
+	FramebufferPtr m_fb;
+	ShaderResourcePtr m_frag;
+	ShaderProgramPtr m_prog;
+	TextureResourcePtr m_noiseTex;
+};
+
+/// Screen space ambient occlusion blur pass.
+class SsaoHBlur : public RenderingPass
+{
+	friend class SsaoVBlur;
+
+anki_internal:
+	SsaoHBlur(Renderer* r, Ssao* ssao)
+		: RenderingPass(r)
+		, m_ssao(ssao)
+	{
+	}
+
+	ANKI_USE_RESULT Error init(const ConfigSet& config);
+
+	void setPreRunBarriers(RenderingContext& ctx);
+
+	void run(RenderingContext& ctx);
+
+	void setPostRunBarriers(RenderingContext& ctx);
+
+private:
+	Ssao* m_ssao;
+
+	TexturePtr m_rt;
+	FramebufferPtr m_fb;
+	ShaderResourcePtr m_frag;
+	ShaderProgramPtr m_prog;
+};
+
+/// Screen space ambient occlusion blur pass.
+class SsaoVBlur : public RenderingPass
+{
+anki_internal:
+	SsaoVBlur(Renderer* r, Ssao* ssao)
+		: RenderingPass(r)
+		, m_ssao(ssao)
+	{
+	}
+
+	ANKI_USE_RESULT Error init(const ConfigSet& config);
+
+	void setPreRunBarriers(RenderingContext& ctx);
+
+	void run(RenderingContext& ctx);
+
+	void setPostRunBarriers(RenderingContext& ctx);
+
+private:
+	Ssao* m_ssao;
+
+	ShaderResourcePtr m_frag;
+	ShaderProgramPtr m_prog;
+};
+
+/// Screen space ambient occlusion pass
 class Ssao : public RenderingPass
 {
+	friend class SsaoMain;
+	friend class SsaoHBlur;
+	friend class SsaoVBlur;
+
 anki_internal:
 	static const PixelFormat RT_PIXEL_FORMAT;
 
+	SsaoMain m_main;
+	SsaoHBlur m_hblur;
+	SsaoVBlur m_vblur;
+
 	Ssao(Renderer* r)
 		: RenderingPass(r)
+		, m_main(r, this)
+		, m_hblur(r, this)
+		, m_vblur(r, this)
 	{
 	}
 
-	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
-
-	void setPreRunBarriers(RenderingContext& ctx);
-	void run(RenderingContext& ctx);
-	void setPostRunBarriers(RenderingContext& ctx);
-
-	TexturePtr& getRt()
-	{
-		return m_vblurRt;
-	}
+	ANKI_USE_RESULT Error init(const ConfigSet& config);
 
 private:
-	U32 m_width, m_height; ///< Blur passes size
-	U8 m_blurringIterationsCount;
-
-	TexturePtr m_vblurRt;
-	TexturePtr m_hblurRt;
-	FramebufferPtr m_vblurFb;
-	FramebufferPtr m_hblurFb;
-
-	ShaderResourcePtr m_ssaoFrag;
-	ShaderResourcePtr m_hblurFrag;
-	ShaderResourcePtr m_vblurFrag;
-	ShaderProgramPtr m_ssaoProg;
-	ShaderProgramPtr m_hblurProg;
-	ShaderProgramPtr m_vblurProg;
-
-	TextureResourcePtr m_noiseTex;
-
-	ANKI_USE_RESULT Error createFb(FramebufferPtr& fb, TexturePtr& rt);
-	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
+	U32 m_width, m_height;
 };
 /// @}
 

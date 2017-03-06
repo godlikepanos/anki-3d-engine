@@ -43,12 +43,12 @@ public:
 
 	~TextureImpl();
 
-	void checkSurface(const TextureSurfaceInfo& surf) const
+	void checkSurfaceOrVolume(const TextureSurfaceInfo& surf) const
 	{
 		checkTextureSurface(m_texType, m_depth, m_mipsCount, m_layerCount, surf);
 	}
 
-	void checkVolume(const TextureVolumeInfo& vol) const
+	void checkSurfaceOrVolume(const TextureVolumeInfo& vol) const
 	{
 		ANKI_ASSERT(m_texType == TextureType::_3D);
 		ANKI_ASSERT(vol.m_level < m_mipsCount);

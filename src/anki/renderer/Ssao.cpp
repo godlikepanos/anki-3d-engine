@@ -15,14 +15,12 @@
 namespace anki
 {
 
-const F32 HEMISPHERE_RADIUS = 3.0; // In game units
-const U SAMPLES = 8;
 const PixelFormat Ssao::RT_PIXEL_FORMAT(ComponentFormat::R8, TransformFormat::UNORM);
 
 template<typename TVec>
 static void genDisk(TVec* ANKI_RESTRICT arr, TVec* ANKI_RESTRICT arrEnd)
 {
-	ANKI_ASSERT(arr && arrEnd && arr != arrEnd);
+	ANKI_ASSERT(arr && arrEnd && arr < arrEnd);
 
 	do
 	{
@@ -31,53 +29,31 @@ static void genDisk(TVec* ANKI_RESTRICT arr, TVec* ANKI_RESTRICT arrEnd)
 	} while(++arr != arrEnd);
 }
 
-Error Ssao::createFb(FramebufferPtr& fb, TexturePtr& rt)
+Error SsaoMain::init(const ConfigSet& config)
 {
-	// Set to bilinear because the blurring techniques take advantage of that
-	m_r->createRenderTarget(m_width,
-		m_height,
-		RT_PIXEL_FORMAT,
-		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+	// RT
+	m_r->createRenderTarget(m_ssao->m_width,
+		m_ssao->m_height,
+		Ssao::RT_PIXEL_FORMAT,
+		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::CLEAR,
 		SamplingFilter::LINEAR,
 		1,
-		rt);
+		m_rt);
 
-	// Create FB
+	ClearValue clear;
+	m_r->clearRenderTarget(m_rt, clear, TextureUsageBit::SAMPLED_FRAGMENT);
+
+	// FB
 	FramebufferInitInfo fbInit;
 	fbInit.m_colorAttachmentCount = 1;
-	fbInit.m_colorAttachments[0].m_texture = rt;
+	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-	fb = getGrManager().newInstance<Framebuffer>(fbInit);
+	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
-	return ErrorCode::NONE;
-}
-
-Error Ssao::initInternal(const ConfigSet& config)
-{
-	m_blurringIterationsCount = config.getNumber("ssao.blurringIterationsCount");
-
-	//
-	// Init the widths/heights
-	//
-	m_width = m_r->getWidth() / SSAO_FRACTION;
-	m_height = m_r->getHeight() / SSAO_FRACTION;
-
-	ANKI_R_LOGI("Initializing SSAO. Size %ux%u", m_width, m_height);
-
-	//
-	// create FBOs
-	//
-	ANKI_CHECK(createFb(m_hblurFb, m_hblurRt));
-	ANKI_CHECK(createFb(m_vblurFb, m_vblurRt));
-
-	//
-	// noise texture
-	//
+	// Noise
 	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseLdrRgb64x64.ankitex", m_noiseTex));
 
-	//
 	// Kernel
-	//
 	StringAuto kernelStr(getAllocator());
 	Array<Vec2, SAMPLES> kernel;
 
@@ -90,13 +66,9 @@ Error Ssao::initInternal(const ConfigSet& config)
 		kernelStr.append(tmp);
 	}
 
-	//
-	// Shaders
-	//
-
-	// main pass prog
+	// Shader
 	ANKI_CHECK(m_r->createShaderf("shaders/Ssao.frag.glsl",
-		m_ssaoFrag,
+		m_frag,
 		"#define NOISE_MAP_SIZE %u\n"
 		"#define WIDTH %u\n"
 		"#define HEIGHT %u\n"
@@ -104,80 +76,30 @@ Error Ssao::initInternal(const ConfigSet& config)
 		"#define KERNEL_ARRAY %s\n"
 		"#define RADIUS float(%f)\n",
 		m_noiseTex->getWidth(),
-		m_width,
-		m_height,
+		m_ssao->m_width,
+		m_ssao->m_height,
 		SAMPLES,
 		&kernelStr[0],
 		HEMISPHERE_RADIUS));
 
-	m_r->createDrawQuadShaderProgram(m_ssaoFrag->getGrShader(), m_ssaoProg);
-
-	// h blur
-	const char* SHADER_FILENAME = "shaders/GaussianBlurGeneric.frag.glsl";
-
-	ANKI_CHECK(m_r->createShaderf(SHADER_FILENAME,
-		m_hblurFrag,
-		"#define HPASS\n"
-		"#define COL_R\n"
-		"#define TEXTURE_SIZE vec2(%f, %f)\n"
-		"#define KERNEL_SIZE 11\n",
-		F32(m_width),
-		F32(m_height)));
-
-	m_r->createDrawQuadShaderProgram(m_hblurFrag->getGrShader(), m_hblurProg);
-
-	// v blur
-	ANKI_CHECK(m_r->createShaderf(SHADER_FILENAME,
-		m_vblurFrag,
-		"#define VPASS\n"
-		"#define COL_R\n"
-		"#define TEXTURE_SIZE vec2(%f, %f)\n"
-		"#define KERNEL_SIZE 9\n",
-		F32(m_width),
-		F32(m_height)));
-
-	m_r->createDrawQuadShaderProgram(m_vblurFrag->getGrShader(), m_vblurProg);
+	m_r->createDrawQuadShaderProgram(m_frag->getGrShader(), m_prog);
 
 	return ErrorCode::NONE;
 }
 
-Error Ssao::init(const ConfigSet& config)
+void SsaoMain::setPreRunBarriers(RenderingContext& ctx)
 {
-	Error err = initInternal(config);
-
-	if(err)
-	{
-		ANKI_R_LOGE("Failed to init PPS SSAO");
-	}
-
-	return err;
+	ctx.m_commandBuffer->setTextureSurfaceBarrier(
+		m_rt, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureSurfaceInfo(0, 0, 0, 0));
 }
 
-void Ssao::setPreRunBarriers(RenderingContext& ctx)
-{
-	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_vblurRt,
-		TextureUsageBit::NONE,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		TextureSurfaceInfo(0, 0, 0, 0));
-}
-
-void Ssao::setPostRunBarriers(RenderingContext& ctx)
-{
-	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_vblurRt,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		TextureUsageBit::SAMPLED_FRAGMENT,
-		TextureSurfaceInfo(0, 0, 0, 0));
-}
-
-void Ssao::run(RenderingContext& ctx)
+void SsaoMain::run(RenderingContext& ctx)
 {
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
-	// 1st pass
-	//
-	cmdb->beginRenderPass(m_vblurFb);
-	cmdb->setViewport(0, 0, m_width, m_height);
-	cmdb->bindShaderProgram(m_ssaoProg);
+	cmdb->beginRenderPass(m_fb);
+	cmdb->setViewport(0, 0, m_ssao->m_width, m_ssao->m_height);
+	cmdb->bindShaderProgram(m_prog);
 
 	cmdb->bindTexture(0, 0, m_r->getDepthDownscale().m_qd.m_depthRt);
 	cmdb->bindTexture(0, 1, m_r->getMs().m_rt2);
@@ -190,44 +112,146 @@ void Ssao::run(RenderingContext& ctx)
 	++unis;
 	*unis = Vec4(pmat(0, 0), pmat(1, 1), pmat(2, 2), pmat(2, 3));
 
-	// Draw
 	m_r->drawQuad(cmdb);
 	cmdb->endRenderPass();
+}
 
-	// Blurring passes
-	//
-	for(U i = 0; i < m_blurringIterationsCount; i++)
+void SsaoMain::setPostRunBarriers(RenderingContext& ctx)
+{
+	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_rt,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+		TextureUsageBit::SAMPLED_FRAGMENT,
+		TextureSurfaceInfo(0, 0, 0, 0));
+}
+
+Error SsaoHBlur::init(const ConfigSet& config)
+{
+	// RT
+	m_r->createRenderTarget(m_ssao->m_width,
+		m_ssao->m_height,
+		Ssao::RT_PIXEL_FORMAT,
+		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+		SamplingFilter::LINEAR,
+		1,
+		m_rt);
+
+	// FB
+	FramebufferInitInfo fbInit;
+	fbInit.m_colorAttachmentCount = 1;
+	fbInit.m_colorAttachments[0].m_texture = m_rt;
+	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
+	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
+
+	// shader
+	ANKI_CHECK(m_r->createShaderf("shaders/GaussianBlurGeneric.frag.glsl",
+		m_frag,
+		"#define HPASS\n"
+		"#define COL_R\n"
+		"#define TEXTURE_SIZE vec2(%f, %f)\n"
+		"#define KERNEL_SIZE 11\n",
+		F32(m_ssao->m_width),
+		F32(m_ssao->m_height)));
+
+	m_r->createDrawQuadShaderProgram(m_frag->getGrShader(), m_prog);
+
+	return ErrorCode::NONE;
+}
+
+void SsaoHBlur::setPreRunBarriers(RenderingContext& ctx)
+{
+	ctx.m_commandBuffer->setTextureSurfaceBarrier(
+		m_rt, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureSurfaceInfo(0, 0, 0, 0));
+}
+
+void SsaoHBlur::run(RenderingContext& ctx)
+{
+	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
+
+	cmdb->setViewport(0, 0, m_ssao->m_width, m_ssao->m_height);
+	cmdb->beginRenderPass(m_fb);
+	cmdb->bindShaderProgram(m_prog);
+	cmdb->bindTexture(0, 0, m_ssao->m_main.m_rt);
+	m_r->drawQuad(cmdb);
+	cmdb->endRenderPass();
+}
+
+void SsaoHBlur::setPostRunBarriers(RenderingContext& ctx)
+{
+	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_rt,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+		TextureUsageBit::SAMPLED_FRAGMENT,
+		TextureSurfaceInfo(0, 0, 0, 0));
+}
+
+Error SsaoVBlur::init(const ConfigSet& config)
+{
+	ANKI_CHECK(m_r->createShaderf("shaders/GaussianBlurGeneric.frag.glsl",
+		m_frag,
+		"#define VPASS\n"
+		"#define COL_R\n"
+		"#define TEXTURE_SIZE vec2(%f, %f)\n"
+		"#define KERNEL_SIZE 9\n",
+		F32(m_ssao->m_width),
+		F32(m_ssao->m_height)));
+
+	m_r->createDrawQuadShaderProgram(m_frag->getGrShader(), m_prog);
+
+	return ErrorCode::NONE;
+}
+
+void SsaoVBlur::setPreRunBarriers(RenderingContext& ctx)
+{
+	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_ssao->m_main.m_rt,
+		TextureUsageBit::NONE,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+		TextureSurfaceInfo(0, 0, 0, 0));
+}
+
+void SsaoVBlur::run(RenderingContext& ctx)
+{
+	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
+
+	cmdb->setViewport(0, 0, m_ssao->m_width, m_ssao->m_height);
+	cmdb->beginRenderPass(m_ssao->m_main.m_fb);
+	cmdb->bindShaderProgram(m_prog);
+	cmdb->bindTexture(0, 0, m_ssao->m_hblur.m_rt);
+	m_r->drawQuad(cmdb);
+	cmdb->endRenderPass();
+}
+
+void SsaoVBlur::setPostRunBarriers(RenderingContext& ctx)
+{
+	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_ssao->m_main.m_rt,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+		TextureUsageBit::SAMPLED_FRAGMENT,
+		TextureSurfaceInfo(0, 0, 0, 0));
+}
+
+Error Ssao::init(const ConfigSet& config)
+{
+	m_width = m_r->getWidth() / SSAO_FRACTION;
+	m_height = m_r->getHeight() / SSAO_FRACTION;
+
+	ANKI_R_LOGI("Initializing SSAO. Size %ux%u", m_width, m_height);
+
+	Error err = m_main.init(config);
+
+	if(!err)
 	{
-		// hpass
-		cmdb->setTextureSurfaceBarrier(m_vblurRt,
-			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-			TextureUsageBit::SAMPLED_FRAGMENT,
-			TextureSurfaceInfo(0, 0, 0, 0));
-		cmdb->setTextureSurfaceBarrier(m_hblurRt,
-			TextureUsageBit::NONE,
-			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-			TextureSurfaceInfo(0, 0, 0, 0));
-		cmdb->beginRenderPass(m_hblurFb);
-		cmdb->bindShaderProgram(m_hblurProg);
-		cmdb->bindTexture(0, 0, m_vblurRt);
-		m_r->drawQuad(cmdb);
-		cmdb->endRenderPass();
-
-		// vpass
-		cmdb->setTextureSurfaceBarrier(m_hblurRt,
-			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-			TextureUsageBit::SAMPLED_FRAGMENT,
-			TextureSurfaceInfo(0, 0, 0, 0));
-		cmdb->setTextureSurfaceBarrier(m_vblurRt,
-			TextureUsageBit::NONE,
-			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-			TextureSurfaceInfo(0, 0, 0, 0));
-		cmdb->beginRenderPass(m_vblurFb);
-		cmdb->bindShaderProgram(m_vblurProg);
-		cmdb->bindTexture(0, 0, m_hblurRt);
-		m_r->drawQuad(cmdb);
-		cmdb->endRenderPass();
+		err = m_hblur.init(config);
 	}
+
+	if(!err)
+	{
+		err = m_vblur.init(config);
+	}
+
+	if(err)
+	{
+		ANKI_R_LOGE("Failed to init PPS SSAO");
+	}
+
+	return err;
 }
 
 } // end namespace anki

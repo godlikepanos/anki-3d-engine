@@ -99,9 +99,14 @@ void Fs::drawVolumetric(RenderingContext& ctx, CommandBufferPtr cmdb)
 	Vec4* unis = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
 	computeLinearizeDepthOptimal(fr.getNear(), fr.getFar(), unis->x(), unis->y());
 
+	cmdb->informTextureSurfaceCurrentUsage(
+		m_r->getDepthDownscale().m_qd.m_depthRt, TextureSurfaceInfo(0, 0, 0, 0), TextureUsageBit::SAMPLED_FRAGMENT);
+	cmdb->informTextureSurfaceCurrentUsage(
+		m_r->getVolumetric().m_main.m_rt, TextureSurfaceInfo(0, 0, 0, 0), TextureUsageBit::SAMPLED_FRAGMENT);
+
 	cmdb->bindTextureAndSampler(0, 0, m_r->getDepthDownscale().m_hd.m_depthRt, m_vol.m_nearestSampler);
 	cmdb->bindTextureAndSampler(0, 1, m_r->getDepthDownscale().m_qd.m_depthRt, m_vol.m_nearestSampler);
-	cmdb->bindTexture(0, 2, m_r->getVolumetric().m_rt);
+	cmdb->bindTexture(0, 2, m_r->getVolumetric().m_main.m_rt);
 	cmdb->bindTexture(0, 3, m_vol.m_noiseTex->getGrTexture());
 
 	m_r->drawQuad(cmdb);

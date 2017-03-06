@@ -114,7 +114,7 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 void FramebufferImpl::attachTextureInternal(
 	GLenum attachment, const TextureImpl& tex, const FramebufferAttachmentInfo& info)
 {
-	tex.checkSurface(info.m_surface);
+	tex.checkSurfaceOrVolume(info.m_surface);
 
 	const GLenum target = GL_FRAMEBUFFER;
 	switch(tex.m_target)

@@ -297,7 +297,7 @@ void CommandBuffer::writeOcclusionQueryResultToBuffer(OcclusionQueryPtr query, P
 void CommandBuffer::copyBufferToBuffer(
 	BufferPtr src, PtrSize srcOffset, BufferPtr dst, PtrSize dstOffset, PtrSize range)
 {
-	ANKI_ASSERT(!"TODO");
+	m_impl->copyBufferToBuffer(src, srcOffset, dst, dstOffset, range);
 }
 
 void CommandBuffer::setTextureSurfaceBarrier(

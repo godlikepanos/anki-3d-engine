@@ -38,7 +38,7 @@ Error ShaderProgramImpl::init(const Array<ShaderPtr, U(ShaderType::COUNT)>& shad
 
 	// Merge bindings
 	//
-	Array2d<DescriptorBinding, MAX_BINDINGS_PER_DESCRIPTOR_SET, MAX_DESCRIPTOR_SETS> bindings;
+	Array2d<DescriptorBinding, MAX_DESCRIPTOR_SETS, MAX_BINDINGS_PER_DESCRIPTOR_SET> bindings;
 	Array<U, MAX_DESCRIPTOR_SETS> counts = {};
 	U descriptorSetCount = 0;
 	for(U set = 0; set < MAX_DESCRIPTOR_SETS; ++set)

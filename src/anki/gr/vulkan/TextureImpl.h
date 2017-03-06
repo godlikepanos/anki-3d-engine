@@ -13,6 +13,10 @@
 namespace anki
 {
 
+// Forward
+class TextureUsageTracker;
+class TextureUsageState;
+
 /// @addtogroup vulkan
 /// @{
 
@@ -24,17 +28,6 @@ enum class TextureImplWorkaround : U8
 	D24S8_TO_D32S8 = 1 << 2,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(TextureImplWorkaround, inline)
-
-class TextureUsageState
-{
-public:
-	DynamicArray<VkImageLayout> m_subResources; ///< Volumes or surfaces.
-
-	void destroy(StackAllocator<U8>& alloc)
-	{
-		m_subResources.destroy(alloc);
-	}
-};
 
 /// Texture container.
 class TextureImpl : public VulkanObject
@@ -63,18 +56,18 @@ public:
 	Bool m_depthStencil = false;
 	TextureImplWorkaround m_workarounds = TextureImplWorkaround::NONE;
 
-	TextureImpl(GrManager* manager);
+	TextureImpl(GrManager* manager, U64 uuid);
 
 	~TextureImpl();
 
 	ANKI_USE_RESULT Error init(const TextureInitInfo& init, Texture* tex);
 
-	void checkSurface(const TextureSurfaceInfo& surf) const
+	void checkSurfaceOrVolume(const TextureSurfaceInfo& surf) const
 	{
 		checkTextureSurface(m_type, m_depth, m_mipCount, m_layerCount, surf);
 	}
 
-	void checkVolume(const TextureVolumeInfo& vol) const
+	void checkSurfaceOrVolume(const TextureVolumeInfo& vol) const
 	{
 		ANKI_ASSERT(m_type == TextureType::_3D);
 		ANKI_ASSERT(vol.m_level < m_mipCount);
@@ -126,64 +119,13 @@ public:
 		ANKI_ASSERT(range.baseMipLevel + range.levelCount <= m_mipCount);
 	}
 
-	VkImageLayout getLayoutFromState(const TextureSurfaceInfo& surf, const TextureUsageState& state) const
-	{
-		checkSurface(surf);
-		const U surfIdx = computeSubresourceIdx(surf);
-		ANKI_ASSERT(state.m_subResources[surfIdx] != VK_IMAGE_LAYOUT_UNDEFINED);
-		return state.m_subResources[surfIdx];
-	}
+	template<typename TextureInfo>
+	VkImageLayout findLayoutFromTracker(const TextureInfo& surfOrVol, const TextureUsageTracker& tracker) const;
 
-	VkImageLayout getLayoutFromState(const TextureVolumeInfo& vol, const TextureUsageState& state) const
-	{
-		checkVolume(vol);
-		ANKI_ASSERT(state.m_subResources[vol.m_level] != VK_IMAGE_LAYOUT_UNDEFINED);
-		return state.m_subResources[vol.m_level];
-	}
+	VkImageLayout findLayoutFromTracker(const TextureUsageTracker& tracker) const;
 
-	VkImageLayout getLayoutFromState(const TextureUsageState& state) const
-	{
-		for(VkImageLayout l : state.m_subResources)
-		{
-			ANKI_ASSERT(l == state.m_subResources[0] && "Not all image subresources are in the same layout");
-		}
-		ANKI_ASSERT(state.m_subResources[0] != VK_IMAGE_LAYOUT_UNDEFINED);
-		return state.m_subResources[0];
-	}
-
-	void updateUsageState(const TextureSurfaceInfo& surf,
-		TextureUsageBit usage,
-		TextureUsageState& state,
-		StackAllocator<U8>& alloc) const
-	{
-		checkSurface(surf);
-		if(ANKI_UNLIKELY(state.m_subResources.getSize() == 0))
-		{
-			state.m_subResources.create(alloc, m_surfaceOrVolumeCount);
-			memorySet(reinterpret_cast<int*>(&state.m_subResources[0]),
-				int(VK_IMAGE_LAYOUT_UNDEFINED),
-				m_surfaceOrVolumeCount);
-		}
-		auto lay = computeLayout(usage, surf.m_level);
-		ANKI_ASSERT(lay != VK_IMAGE_LAYOUT_UNDEFINED);
-		state.m_subResources[computeSubresourceIdx(surf)] = lay;
-	}
-
-	void updateUsageState(
-		const TextureVolumeInfo& vol, TextureUsageBit usage, TextureUsageState& state, StackAllocator<U8>& alloc) const
-	{
-		checkVolume(vol);
-		if(ANKI_UNLIKELY(state.m_subResources.getSize() == 0))
-		{
-			state.m_subResources.create(alloc, m_surfaceOrVolumeCount);
-			memorySet(reinterpret_cast<int*>(&state.m_subResources[0]),
-				int(VK_IMAGE_LAYOUT_UNDEFINED),
-				m_surfaceOrVolumeCount);
-		}
-		auto lay = computeLayout(usage, vol.m_level);
-		ANKI_ASSERT(lay != VK_IMAGE_LAYOUT_UNDEFINED);
-		state.m_subResources[vol.m_level] = lay;
-	}
+	template<typename TextureInfo>
+	void updateTracker(const TextureInfo& surfOrVol, TextureUsageBit usage, TextureUsageTracker& tracker) const;
 
 private:
 	class ViewHasher
@@ -207,6 +149,7 @@ private:
 	HashMap<VkImageViewCreateInfo, VkImageView, ViewHasher, ViewCompare> m_viewsMap;
 	Mutex m_viewsMapMtx;
 	VkImageViewCreateInfo m_viewCreateInfoTemplate;
+	U64 m_uuid; ///< Steal the UUID from the Texture.
 
 	ANKI_USE_RESULT static VkFormatFeatureFlags calcFeatures(const TextureInitInfo& init);
 
@@ -219,6 +162,16 @@ private:
 	VkImageView getOrCreateView(const VkImageViewCreateInfo& ci);
 
 	U computeSubresourceIdx(const TextureSurfaceInfo& surf) const;
+
+	U computeSubresourceIdx(const TextureVolumeInfo& vol) const
+	{
+		checkSurfaceOrVolume(vol);
+		return vol.m_level;
+	}
+
+	template<typename TextureInfo>
+	void updateUsageState(
+		const TextureInfo& surfOrVol, TextureUsageBit usage, StackAllocator<U8>& alloc, TextureUsageState& state) const;
 };
 /// @}
 

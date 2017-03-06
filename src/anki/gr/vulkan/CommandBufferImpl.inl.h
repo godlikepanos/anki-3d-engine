@@ -158,13 +158,13 @@ inline void CommandBufferImpl::setTextureSurfaceBarrier(
 	}
 
 	const TextureImpl& impl = *tex->m_impl;
-	impl.checkSurface(surf);
+	impl.checkSurfaceOrVolume(surf);
 
 	VkImageSubresourceRange range;
 	impl.computeSubResourceRange(surf, impl.m_akAspect, range);
 	setTextureBarrierRange(tex, prevUsage, nextUsage, range);
 
-	m_texUsageTracker.setUsage(*tex, surf, nextUsage, m_alloc);
+	impl.updateTracker(surf, nextUsage, m_texUsageTracker);
 }
 
 inline void CommandBufferImpl::setTextureVolumeBarrier(
@@ -177,13 +177,13 @@ inline void CommandBufferImpl::setTextureVolumeBarrier(
 	}
 
 	const TextureImpl& impl = *tex->m_impl;
-	impl.checkVolume(vol);
+	impl.checkSurfaceOrVolume(vol);
 
 	VkImageSubresourceRange range;
 	impl.computeSubResourceRange(vol, impl.m_akAspect, range);
 	setTextureBarrierRange(tex, prevUsage, nextUsage, range);
 
-	m_texUsageTracker.setUsage(*tex, vol, nextUsage, m_alloc);
+	impl.updateTracker(vol, nextUsage, m_texUsageTracker);
 }
 
 inline void CommandBufferImpl::setBufferBarrier(VkPipelineStageFlags srcStage,
@@ -689,6 +689,23 @@ inline void CommandBufferImpl::bindShaderProgram(ShaderProgramPtr& prog)
 	}
 
 	m_progs.pushBack(m_alloc, prog);
+}
+
+inline void CommandBufferImpl::copyBufferToBuffer(
+	BufferPtr& src, PtrSize srcOffset, BufferPtr& dst, PtrSize dstOffset, PtrSize range)
+{
+	commandCommon();
+
+	VkBufferCopy region = {};
+	region.srcOffset = srcOffset;
+	region.dstOffset = dstOffset;
+	region.size = range;
+
+	ANKI_CMD(
+		vkCmdCopyBuffer(m_handle, src->m_impl->getHandle(), dst->m_impl->getHandle(), 1, &region), ANY_OTHER_COMMAND);
+
+	m_bufferList.pushBack(m_alloc, src);
+	m_bufferList.pushBack(m_alloc, dst);
 }
 
 } // end namespace anki

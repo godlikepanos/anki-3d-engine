@@ -11,6 +11,7 @@
 #include <anki/gr/Buffer.h>
 #include <anki/gr/vulkan/BufferImpl.h>
 #include <anki/gr/vulkan/TextureImpl.h>
+#include <anki/gr/vulkan/TextureUsageTracker.h>
 #include <anki/gr/vulkan/Pipeline.h>
 #include <anki/util/List.h>
 
@@ -195,7 +196,7 @@ public:
 	{
 		const U realBinding = binding;
 		Texture& tex = *tex_;
-		VkImageLayout lay = m_texUsageTracker.findLayout(tex);
+		const VkImageLayout lay = tex.m_impl->findLayoutFromTracker(m_texUsageTracker);
 		m_dsetState[set].bindTexture(realBinding, &tex, aspect, lay);
 		m_texList.pushBack(m_alloc, tex_);
 	}
@@ -204,7 +205,7 @@ public:
 	{
 		const U realBinding = binding;
 		Texture& tex = *tex_;
-		VkImageLayout lay = m_texUsageTracker.findLayout(tex);
+		const VkImageLayout lay = tex.m_impl->findLayoutFromTracker(m_texUsageTracker);
 		m_dsetState[set].bindTextureAndSampler(realBinding, &tex, sampler.get(), aspect, lay);
 		m_texList.pushBack(m_alloc, tex_);
 		m_samplerList.pushBack(m_alloc, sampler);
@@ -300,13 +301,15 @@ public:
 
 	void informTextureSurfaceCurrentUsage(TexturePtr& tex, const TextureSurfaceInfo& surf, TextureUsageBit crntUsage)
 	{
-		m_texUsageTracker.setUsage(*tex, surf, crntUsage, m_alloc);
+		tex->m_impl->updateTracker(surf, crntUsage, m_texUsageTracker);
 	}
 
 	void informTextureVolumeCurrentUsage(TexturePtr& tex, const TextureVolumeInfo& vol, TextureUsageBit crntUsage)
 	{
-		m_texUsageTracker.setUsage(*tex, vol, crntUsage, m_alloc);
+		tex->m_impl->updateTracker(vol, crntUsage, m_texUsageTracker);
 	}
+
+	void copyBufferToBuffer(BufferPtr& src, PtrSize srcOffset, BufferPtr& dst, PtrSize dstOffset, PtrSize range);
 
 private:
 	StackAllocator<U8> m_alloc;
@@ -399,71 +402,7 @@ private:
 	/// @}
 
 	/// Track texture usage.
-	class TextureUsageTracker
-	{
-	public:
-		template<typename TextureInfo>
-		ANKI_USE_RESULT VkImageLayout findLayout(const Texture& tex, const TextureInfo& surf) const
-		{
-			auto it = m_map.find(tex.getUuid());
-			ANKI_ASSERT((it != m_map.getEnd() || tex.m_impl->m_usageWhenEncountered != TextureUsageBit::NONE)
-				&& "Cannot find the layout of the image");
-			if(it == m_map.getEnd())
-			{
-				return tex.m_impl->computeLayout(tex.m_impl->m_usageWhenEncountered, surf.m_level);
-			}
-			else
-			{
-				return tex.m_impl->getLayoutFromState(surf, *it);
-			}
-		}
-
-		ANKI_USE_RESULT VkImageLayout findLayout(const Texture& tex) const
-		{
-			auto it = m_map.find(tex.getUuid());
-			ANKI_ASSERT((it != m_map.getEnd() || tex.m_impl->m_usageWhenEncountered != TextureUsageBit::NONE)
-				&& "Cannot find the layout of the image");
-			if(it == m_map.getEnd())
-			{
-				return tex.m_impl->computeLayout(tex.m_impl->m_usageWhenEncountered, 0);
-			}
-			else
-			{
-				return tex.m_impl->getLayoutFromState(*it);
-			}
-		}
-
-		template<typename TextureInfo>
-		void setUsage(const Texture& tex, const TextureInfo& surf, TextureUsageBit usage, StackAllocator<U8>& alloc)
-		{
-			ANKI_ASSERT(usage != TextureUsageBit::NONE);
-
-			auto it = m_map.find(tex.getUuid());
-			if(it != m_map.getEnd())
-			{
-				tex.m_impl->updateUsageState(surf, usage, *it, alloc);
-			}
-			else
-			{
-				TextureUsageState state;
-				tex.m_impl->updateUsageState(surf, usage, state, alloc);
-				m_map.emplaceBack(alloc, tex.getUuid(), std::move(state));
-			}
-		}
-
-		void destroy(StackAllocator<U8>& alloc)
-		{
-			for(auto& it : m_map)
-			{
-				it.destroy(alloc);
-			}
-
-			m_map.destroy(alloc);
-		}
-
-	private:
-		HashMap<U64, TextureUsageState> m_map;
-	} m_texUsageTracker;
+	TextureUsageTracker m_texUsageTracker;
 
 	/// Some common operations per command.
 	void commandCommon();
