@@ -54,28 +54,9 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 	{
 		const FramebufferAttachmentInfo& att = m_in.m_depthStencilAttachment;
 		const TextureImpl& tex = *att.m_texture->m_impl;
-		ANKI_ASSERT((tex.m_dsAspect & att.m_aspect) == att.m_aspect);
 
 		GLenum binding;
-		if(att.m_aspect == DepthStencilAspectBit::DEPTH)
-		{
-			ANKI_ASSERT(tex.m_format == GL_DEPTH_COMPONENT || tex.m_format == GL_DEPTH_STENCIL);
-			binding = GL_DEPTH_ATTACHMENT;
-			m_dsAspect = att.m_aspect;
-		}
-		else if(att.m_aspect == DepthStencilAspectBit::STENCIL)
-		{
-			ANKI_ASSERT(tex.m_format == GL_STENCIL_INDEX || tex.m_format == GL_DEPTH_STENCIL);
-			binding = GL_STENCIL_ATTACHMENT;
-			m_dsAspect = att.m_aspect;
-		}
-		else if(att.m_aspect == DepthStencilAspectBit::DEPTH_STENCIL)
-		{
-			ANKI_ASSERT(tex.m_format == GL_DEPTH_STENCIL);
-			binding = GL_DEPTH_STENCIL_ATTACHMENT;
-			m_dsAspect = att.m_aspect;
-		}
-		else if(tex.m_format == GL_DEPTH_COMPONENT)
+		if(tex.m_format == GL_DEPTH_COMPONENT)
 		{
 			binding = GL_DEPTH_ATTACHMENT;
 			m_dsAspect = DepthStencilAspectBit::DEPTH;
@@ -87,8 +68,27 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 		}
 		else
 		{
-			ANKI_ASSERT(!"Need to set FramebufferAttachmentInfo::m_aspect");
-			binding = 0;
+			ANKI_ASSERT(tex.m_format == GL_DEPTH_STENCIL);
+
+			if(att.m_aspect == DepthStencilAspectBit::DEPTH)
+			{
+				binding = GL_DEPTH_ATTACHMENT;
+			}
+			else if(att.m_aspect == DepthStencilAspectBit::STENCIL)
+			{
+				binding = GL_STENCIL_ATTACHMENT;
+			}
+			else if(att.m_aspect == DepthStencilAspectBit::DEPTH_STENCIL)
+			{
+				binding = GL_DEPTH_STENCIL_ATTACHMENT;
+			}
+			else
+			{
+				ANKI_ASSERT(!"Need to set FramebufferAttachmentInfo::m_aspect");
+				binding = 0;
+			}
+
+			m_dsAspect = att.m_aspect;
 		}
 
 		attachTextureInternal(binding, tex, att);
@@ -103,7 +103,7 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 	if(status != GL_FRAMEBUFFER_COMPLETE)
 	{
-		ANKI_GL_LOGE("FBO is incomplete: 0x%x", status);
+		ANKI_GL_LOGE("FBO is incomplete. Status: 0x%x", status);
 		return ErrorCode::FUNCTION_FAILED;
 	}
 

@@ -21,39 +21,31 @@ Ms::~Ms()
 
 Error Ms::createRt()
 {
-	m_r->createRenderTarget(m_r->getWidth(),
+	m_depthRt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_r->getWidth(),
 		m_r->getHeight(),
 		MS_DEPTH_ATTACHMENT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE
 			| TextureUsageBit::GENERATE_MIPMAPS,
-		SamplingFilter::NEAREST,
-		1,
-		m_depthRt);
+		SamplingFilter::NEAREST));
 
-	m_r->createRenderTarget(m_r->getWidth(),
+	m_rt0 = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_r->getWidth(),
 		m_r->getHeight(),
 		MS_COLOR_ATTACHMENT_PIXEL_FORMATS[0],
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		SamplingFilter::NEAREST,
-		1,
-		m_rt0);
+		SamplingFilter::NEAREST));
 
-	m_r->createRenderTarget(m_r->getWidth(),
+	m_rt1 = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_r->getWidth(),
 		m_r->getHeight(),
 		MS_COLOR_ATTACHMENT_PIXEL_FORMATS[1],
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		SamplingFilter::NEAREST,
-		1,
-		m_rt1);
+		SamplingFilter::NEAREST));
 
-	m_r->createRenderTarget(m_r->getWidth(),
+	m_rt2 = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_r->getWidth(),
 		m_r->getHeight(),
 		MS_COLOR_ATTACHMENT_PIXEL_FORMATS[2],
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
 			| TextureUsageBit::GENERATE_MIPMAPS,
-		SamplingFilter::NEAREST,
-		1,
-		m_rt2);
+		SamplingFilter::NEAREST));
 
 	AttachmentLoadOperation loadop = AttachmentLoadOperation::DONT_CARE;
 #if ANKI_EXTRA_CHECKS

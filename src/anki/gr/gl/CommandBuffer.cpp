@@ -1501,4 +1501,9 @@ void CommandBuffer::informTextureVolumeCurrentUsage(
 	// Nothing for GL
 }
 
+void CommandBuffer::informTextureCurrentUsage(TexturePtr tex, TextureUsageBit crntUsage)
+{
+	// Nothing for GL
+}
+
 } // end namespace anki

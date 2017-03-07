@@ -296,17 +296,11 @@ anki_internal:
 	/// Create a shader program that has as a vertex shader the m_drawQuadVert and the given fragment progam
 	void createDrawQuadShaderProgram(ShaderPtr frag, ShaderProgramPtr& prog);
 
-	/// Create a framebuffer attachment texture
-	void createRenderTarget(U32 w,
-		U32 h,
-		const PixelFormat& format,
-		TextureUsageBit usage,
-		SamplingFilter filter,
-		U mipsCount,
-		TexturePtr& rt);
+	/// Create the init info for a 2D texture that will be used as a render target.
+	ANKI_USE_RESULT TextureInitInfo create2DRenderTargetInitInfo(
+		U32 w, U32 h, const PixelFormat& format, TextureUsageBit usage, SamplingFilter filter, U mipsCount = 1);
 
-	/// Clear using graphics.
-	void clearRenderTarget(TexturePtr rt, const ClearValue& clear, TextureUsageBit transferTo);
+	ANKI_USE_RESULT TexturePtr createAndClearRenderTarget(const TextureInitInfo& inf);
 
 	ANKI_USE_RESULT Error createShader(CString fname, ShaderResourcePtr& shader, CString extra);
 	ANKI_USE_RESULT Error createShaderf(CString fname, ShaderResourcePtr& shader, CString fmt, ...);
@@ -362,6 +356,11 @@ anki_internal:
 		return m_willDrawToDefaultFbo;
 	}
 
+	TexturePtr getDummyTexture() const
+	{
+		return m_dummyTex;
+	}
+
 private:
 	ThreadPool* m_threadpool = nullptr;
 	ResourceManager* m_resources = nullptr;
@@ -411,6 +410,8 @@ private:
 
 	Mat4 m_prevViewProjMat = Mat4::getIdentity();
 	Mat4 m_prevCamTransform = Mat4::getIdentity();
+
+	TexturePtr m_dummyTex;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 

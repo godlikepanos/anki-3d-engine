@@ -44,71 +44,6 @@ TextureImpl::~TextureImpl()
 	}
 }
 
-VkFormatFeatureFlags TextureImpl::calcFeatures(const TextureInitInfo& init)
-{
-	VkFormatFeatureFlags flags = 0;
-
-	if(init.m_mipmapsCount > 1 && !!(init.m_usage & TextureUsageBit::GENERATE_MIPMAPS))
-	{
-		// May be used for mip gen.
-		flags |= VK_FORMAT_FEATURE_BLIT_DST_BIT | VK_FORMAT_FEATURE_BLIT_SRC_BIT;
-	}
-
-	if(!!(init.m_usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE))
-	{
-		if(formatIsDepthStencil(init.m_format))
-		{
-			flags |= VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
-		}
-		else
-		{
-			flags |= VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT | VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BLEND_BIT;
-		}
-	}
-
-	if(!!(init.m_usage & TextureUsageBit::SAMPLED_ALL))
-	{
-		flags |= VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT;
-	}
-
-	ANKI_ASSERT(flags);
-	return flags;
-}
-
-VkImageCreateFlags TextureImpl::calcCreateFlags(const TextureInitInfo& init)
-{
-	VkImageCreateFlags flags = 0;
-	if(init.m_type == TextureType::CUBE || init.m_type == TextureType::CUBE_ARRAY)
-	{
-		flags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
-	}
-
-	return flags;
-}
-
-Bool TextureImpl::imageSupported(const TextureInitInfo& init)
-{
-	VkImageFormatProperties props = {};
-
-	VkResult res = vkGetPhysicalDeviceImageFormatProperties(getGrManagerImpl().getPhysicalDevice(),
-		m_vkFormat,
-		convertTextureType(init.m_type),
-		VK_IMAGE_TILING_OPTIMAL,
-		convertTextureUsage(init.m_usage, init.m_format),
-		calcCreateFlags(init),
-		&props);
-
-	if(res == VK_ERROR_FORMAT_NOT_SUPPORTED)
-	{
-		return false;
-	}
-	else
-	{
-		ANKI_ASSERT(res == VK_SUCCESS);
-		return true;
-	}
-}
-
 Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 {
 	TextureInitInfo init = init_;
@@ -192,6 +127,71 @@ Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 	}
 
 	return ErrorCode::NONE;
+}
+
+VkFormatFeatureFlags TextureImpl::calcFeatures(const TextureInitInfo& init)
+{
+	VkFormatFeatureFlags flags = 0;
+
+	if(init.m_mipmapsCount > 1 && !!(init.m_usage & TextureUsageBit::GENERATE_MIPMAPS))
+	{
+		// May be used for mip gen.
+		flags |= VK_FORMAT_FEATURE_BLIT_DST_BIT | VK_FORMAT_FEATURE_BLIT_SRC_BIT;
+	}
+
+	if(!!(init.m_usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE))
+	{
+		if(formatIsDepthStencil(init.m_format))
+		{
+			flags |= VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
+		}
+		else
+		{
+			flags |= VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT | VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BLEND_BIT;
+		}
+	}
+
+	if(!!(init.m_usage & TextureUsageBit::SAMPLED_ALL))
+	{
+		flags |= VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT;
+	}
+
+	ANKI_ASSERT(flags);
+	return flags;
+}
+
+VkImageCreateFlags TextureImpl::calcCreateFlags(const TextureInitInfo& init)
+{
+	VkImageCreateFlags flags = 0;
+	if(init.m_type == TextureType::CUBE || init.m_type == TextureType::CUBE_ARRAY)
+	{
+		flags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+	}
+
+	return flags;
+}
+
+Bool TextureImpl::imageSupported(const TextureInitInfo& init)
+{
+	VkImageFormatProperties props = {};
+
+	VkResult res = vkGetPhysicalDeviceImageFormatProperties(getGrManagerImpl().getPhysicalDevice(),
+		m_vkFormat,
+		convertTextureType(init.m_type),
+		VK_IMAGE_TILING_OPTIMAL,
+		convertTextureUsage(init.m_usage, init.m_format),
+		calcCreateFlags(init),
+		&props);
+
+	if(res == VK_ERROR_FORMAT_NOT_SUPPORTED)
+	{
+		return false;
+	}
+	else
+	{
+		ANKI_ASSERT(res == VK_SUCCESS);
+		return true;
+	}
 }
 
 Error TextureImpl::initImage(const TextureInitInfo& init_)

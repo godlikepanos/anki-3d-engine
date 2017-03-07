@@ -32,16 +32,11 @@ static void genDisk(TVec* ANKI_RESTRICT arr, TVec* ANKI_RESTRICT arrEnd)
 Error SsaoMain::init(const ConfigSet& config)
 {
 	// RT
-	m_r->createRenderTarget(m_ssao->m_width,
+	m_rt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_ssao->m_width,
 		m_ssao->m_height,
 		Ssao::RT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::CLEAR,
-		SamplingFilter::LINEAR,
-		1,
-		m_rt);
-
-	ClearValue clear;
-	m_r->clearRenderTarget(m_rt, clear, TextureUsageBit::SAMPLED_FRAGMENT);
+		SamplingFilter::LINEAR));
 
 	// FB
 	FramebufferInitInfo fbInit;
@@ -127,13 +122,11 @@ void SsaoMain::setPostRunBarriers(RenderingContext& ctx)
 Error SsaoHBlur::init(const ConfigSet& config)
 {
 	// RT
-	m_r->createRenderTarget(m_ssao->m_width,
+	m_rt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_ssao->m_width,
 		m_ssao->m_height,
 		Ssao::RT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		SamplingFilter::LINEAR,
-		1,
-		m_rt);
+		SamplingFilter::LINEAR));
 
 	// FB
 	FramebufferInitInfo fbInit;

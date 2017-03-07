@@ -40,13 +40,11 @@ Error Pps::initInternal(const ConfigSet& config)
 
 	if(!m_r->getDrawToDefaultFramebuffer())
 	{
-		m_r->createRenderTarget(m_r->getWidth(),
+		m_rt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_r->getWidth(),
 			m_r->getHeight(),
 			RT_PIXEL_FORMAT,
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::SAMPLED_FRAGMENT,
-			SamplingFilter::LINEAR,
-			1,
-			m_rt);
+			SamplingFilter::LINEAR));
 
 		FramebufferInitInfo fbInit;
 		fbInit.m_colorAttachmentCount = 1;

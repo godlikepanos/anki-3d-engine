@@ -125,26 +125,19 @@ Error Is::initInternal(const ConfigSet& config)
 	//
 	// Create framebuffer
 	//
-	m_r->createRenderTarget(m_r->getWidth(),
+	m_rt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_r->getWidth(),
 		m_r->getHeight(),
 		IS_COLOR_ATTACHMENT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE
 			| TextureUsageBit::SAMPLED_COMPUTE,
 		SamplingFilter::LINEAR,
-		m_rtMipCount,
-		m_rt);
+		m_rtMipCount));
 
 	FramebufferInitInfo fbInit;
 	fbInit.m_colorAttachmentCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
-
-	TextureInitInfo texinit;
-	texinit.m_width = texinit.m_height = 4;
-	texinit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT;
-	texinit.m_format = PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
-	m_dummyTex = getGrManager().newInstance<Texture>(texinit);
 
 	return ErrorCode::NONE;
 }
@@ -187,8 +180,10 @@ void Is::run(RenderingContext& ctx)
 	cmdb->bindTexture(0, 7, m_r->getIr().getIrradianceTexture());
 	cmdb->bindTextureAndSampler(0, 8, m_r->getIr().getIntegrationLut(), m_r->getIr().getIntegrationLutSampler());
 
-	cmdb->bindTexture(1, 0, (ctx.m_is.m_diffDecalTex) ? ctx.m_is.m_diffDecalTex : m_dummyTex);
-	cmdb->bindTexture(1, 1, (ctx.m_is.m_normRoughnessDecalTex) ? ctx.m_is.m_normRoughnessDecalTex : m_dummyTex);
+	cmdb->bindTexture(1, 0, (ctx.m_is.m_diffDecalTex) ? ctx.m_is.m_diffDecalTex : m_r->getDummyTexture());
+	cmdb->bindTexture(
+		1, 1, (ctx.m_is.m_normRoughnessDecalTex) ? ctx.m_is.m_normRoughnessDecalTex : m_r->getDummyTexture());
+	cmdb->informTextureCurrentUsage(m_r->getSsao().m_main.m_rt, TextureUsageBit::SAMPLED_FRAGMENT);
 	cmdb->bindTexture(1, 2, m_r->getSsao().m_main.m_rt);
 
 	bindUniforms(cmdb, 0, 0, ctx.m_is.m_commonToken);

@@ -127,6 +127,8 @@ public:
 	template<typename TextureInfo>
 	void updateTracker(const TextureInfo& surfOrVol, TextureUsageBit usage, TextureUsageTracker& tracker) const;
 
+	void updateTracker(TextureUsageBit usage, TextureUsageTracker& tracker) const;
+
 private:
 	class ViewHasher
 	{
@@ -172,6 +174,8 @@ private:
 	template<typename TextureInfo>
 	void updateUsageState(
 		const TextureInfo& surfOrVol, TextureUsageBit usage, StackAllocator<U8>& alloc, TextureUsageState& state) const;
+
+	void updateUsageState(TextureUsageBit usage, StackAllocator<U8>& alloc, TextureUsageState& state) const;
 };
 /// @}
 

@@ -283,7 +283,6 @@ VkRenderPass FramebufferImpl::getRenderPassHandle(
 
 			// Fix pointers
 			subpassDescr.pColorAttachments = &references[0];
-			subpassDescr.pDepthStencilAttachment = &references[subpassDescr.colorAttachmentCount];
 			ci.pAttachments = &attachmentDescriptions[0];
 			ci.pSubpasses = &subpassDescr;
 
@@ -307,7 +306,8 @@ VkRenderPass FramebufferImpl::getRenderPassHandle(
 				attachmentDescriptions[i].initialLayout = lay;
 				attachmentDescriptions[i].finalLayout = lay;
 
-				references[i].layout = lay;
+				references[subpassDescr.colorAttachmentCount].layout = lay;
+				subpassDescr.pDepthStencilAttachment = &references[subpassDescr.colorAttachmentCount];
 			}
 
 			ANKI_VK_CHECKF(vkCreateRenderPass(getDevice(), &ci, nullptr, &out));

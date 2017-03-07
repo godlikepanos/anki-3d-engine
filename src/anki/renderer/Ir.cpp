@@ -173,13 +173,13 @@ void Ir::initFaceInfo(U cacheEntryIdx, U faceIdx)
 	{
 		texinit.m_format = MS_COLOR_ATTACHMENT_PIXEL_FORMATS[i];
 
-		face.m_gbufferColorRts[i] = getGrManager().newInstance<Texture>(texinit);
+		face.m_gbufferColorRts[i] = m_r->createAndClearRenderTarget(texinit);
 	}
 
 	// Create depth attachment
 	texinit.m_usage |= TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
 	texinit.m_format = MS_DEPTH_ATTACHMENT_PIXEL_FORMAT;
-	face.m_gbufferDepthRt = getGrManager().newInstance<Texture>(texinit);
+	face.m_gbufferDepthRt = m_r->createAndClearRenderTarget(texinit);
 
 	// Create MS FB
 	FramebufferInitInfo fbInit;
@@ -242,30 +242,7 @@ Error Ir::initIs()
 		| TextureUsageBit::CLEAR | TextureUsageBit::GENERATE_MIPMAPS;
 	texinit.m_format = IS_COLOR_ATTACHMENT_PIXEL_FORMAT;
 
-	m_is.m_lightRt = getGrManager().newInstance<Texture>(texinit);
-
-	// Clear the texture
-	CommandBufferInitInfo cinf;
-	CommandBufferPtr cmdb = getGrManager().newInstance<CommandBuffer>(cinf);
-	ClearValue clear;
-	for(U i = 0; i < m_cubemapArrSize; ++i)
-	{
-		for(U f = 0; f < 6; ++f)
-		{
-			for(U l = 0; l < m_is.m_lightRtMipCount; ++l)
-			{
-				TextureSurfaceInfo surf(l, 0, f, i);
-
-				cmdb->setTextureSurfaceBarrier(m_is.m_lightRt, TextureUsageBit::NONE, TextureUsageBit::CLEAR, surf);
-
-				cmdb->clearTextureSurface(m_is.m_lightRt, surf, clear);
-
-				cmdb->setTextureSurfaceBarrier(
-					m_is.m_lightRt, TextureUsageBit::CLEAR, TextureUsageBit::SAMPLED_FRAGMENT, surf);
-			}
-		}
-	}
-	cmdb->flush();
+	m_is.m_lightRt = m_r->createAndClearRenderTarget(texinit);
 
 	// Init shaders
 	ANKI_CHECK(getResourceManager().loadResource("shaders/Light.vert.glsl", m_is.m_lightVert));
@@ -322,7 +299,7 @@ Error Ir::initIrradiance()
 		| TextureUsageBit::CLEAR | TextureUsageBit::GENERATE_MIPMAPS;
 	texinit.m_format = IS_COLOR_ATTACHMENT_PIXEL_FORMAT;
 
-	m_irradiance.m_cubeArr = getGrManager().newInstance<Texture>(texinit);
+	m_irradiance.m_cubeArr = m_r->createAndClearRenderTarget(texinit);
 
 	// Create the shader
 	ANKI_CHECK(m_r->createShaderf(
@@ -330,30 +307,6 @@ Error Ir::initIrradiance()
 
 	// Create the prog
 	m_r->createDrawQuadShaderProgram(m_irradiance.m_frag->getGrShader(), m_irradiance.m_prog);
-
-	// Clear texture
-	CommandBufferInitInfo cinf;
-	cinf.m_flags = CommandBufferFlag::SMALL_BATCH;
-	CommandBufferPtr cmdb = getGrManager().newInstance<CommandBuffer>(cinf);
-	ClearValue clear;
-	for(U i = 0; i < m_cubemapArrSize; ++i)
-	{
-		for(U f = 0; f < 6; ++f)
-		{
-			for(U l = 0; l < m_irradiance.m_cubeArrMipCount; ++l)
-			{
-				TextureSurfaceInfo surf(l, 0, f, i);
-
-				cmdb->setTextureSurfaceBarrier(m_is.m_lightRt, TextureUsageBit::NONE, TextureUsageBit::CLEAR, surf);
-
-				cmdb->clearTextureSurface(m_irradiance.m_cubeArr, surf, clear);
-
-				cmdb->setTextureSurfaceBarrier(
-					m_is.m_lightRt, TextureUsageBit::CLEAR, TextureUsageBit::SAMPLED_FRAGMENT, surf);
-			}
-		}
-	}
-	cmdb->flush();
 
 	return ErrorCode::NONE;
 }
@@ -618,6 +571,11 @@ Error Ir::run(RenderingContext& rctx)
 		++probeIdx;
 	}
 	ANKI_ASSERT(probeIdx == visRez.getCount(VisibilityGroupType::REFLECTION_PROBES));
+
+	// Inform on tex usage
+	CommandBufferPtr& cmdb = rctx.m_commandBuffer;
+	cmdb->informTextureCurrentUsage(m_irradiance.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
+	cmdb->informTextureCurrentUsage(m_is.m_lightRt, TextureUsageBit::SAMPLED_FRAGMENT);
 
 	// Bye
 	ANKI_TRACE_STOP_EVENT(RENDER_IR);

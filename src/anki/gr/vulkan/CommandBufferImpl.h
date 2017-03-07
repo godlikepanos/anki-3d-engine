@@ -309,6 +309,11 @@ public:
 		tex->m_impl->updateTracker(vol, crntUsage, m_texUsageTracker);
 	}
 
+	void informTextureCurrentUsage(TexturePtr& tex, TextureUsageBit crntUsage)
+	{
+		tex->m_impl->updateTracker(crntUsage, m_texUsageTracker);
+	}
+
 	void copyBufferToBuffer(BufferPtr& src, PtrSize srcOffset, BufferPtr& dst, PtrSize dstOffset, PtrSize range);
 
 private:

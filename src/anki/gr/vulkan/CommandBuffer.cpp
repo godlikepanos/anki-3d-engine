@@ -330,6 +330,11 @@ void CommandBuffer::informTextureVolumeCurrentUsage(
 	m_impl->informTextureVolumeCurrentUsage(tex, vol, crntUsage);
 }
 
+void CommandBuffer::informTextureCurrentUsage(TexturePtr tex, TextureUsageBit crntUsage)
+{
+	m_impl->informTextureCurrentUsage(tex, crntUsage);
+}
+
 void CommandBuffer::resetOcclusionQuery(OcclusionQueryPtr query)
 {
 	m_impl->resetOcclusionQuery(query);

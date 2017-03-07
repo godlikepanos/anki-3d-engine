@@ -121,8 +121,8 @@ private:
 
 	// RenderPass create info
 	VkRenderPassCreateInfo m_rpassCi = {};
-	Array<VkAttachmentDescription, MAX_COLOR_ATTACHMENTS + 1> m_attachmentDescriptions;
-	Array<VkAttachmentReference, MAX_COLOR_ATTACHMENTS + 1> m_references;
+	Array<VkAttachmentDescription, MAX_COLOR_ATTACHMENTS + 1> m_attachmentDescriptions = {};
+	Array<VkAttachmentReference, MAX_COLOR_ATTACHMENTS + 1> m_references = {};
 	VkSubpassDescription m_subpassDescr = {};
 
 	// VK objects

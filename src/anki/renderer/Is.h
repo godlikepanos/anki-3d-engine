@@ -63,8 +63,6 @@ private:
 	/// The IS FBO
 	FramebufferPtr m_fb;
 
-	TexturePtr m_dummyTex;
-
 	// Light shaders
 	ShaderResourcePtr m_lightVert;
 	ShaderResourcePtr m_lightFrag;

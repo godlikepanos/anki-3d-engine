@@ -41,13 +41,11 @@ Error SmaaEdge::init(const ConfigSet& initializer)
 	m_prog = getGrManager().newInstance<ShaderProgram>(m_vert->getGrShader(), m_frag->getGrShader());
 
 	// Create RT
-	m_r->createRenderTarget(m_r->getWidth(),
+	m_rt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_r->getWidth(),
 		m_r->getHeight(),
 		EDGE_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		SamplingFilter::LINEAR,
-		1,
-		m_rt);
+		SamplingFilter::LINEAR));
 
 	// Create FB
 	FramebufferInitInfo fbInit;
@@ -133,13 +131,11 @@ Error SmaaWeights::init(const ConfigSet& initializer)
 	m_prog = getGrManager().newInstance<ShaderProgram>(m_vert->getGrShader(), m_frag->getGrShader());
 
 	// Create RT
-	m_r->createRenderTarget(m_r->getWidth(),
+	m_rt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_r->getWidth(),
 		m_r->getHeight(),
 		WEIGHTS_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		SamplingFilter::LINEAR,
-		1,
-		m_rt);
+		SamplingFilter::LINEAR));
 
 	// Create FB
 	FramebufferInitInfo fbInit;
@@ -264,7 +260,7 @@ Error Smaa::initInternal(const ConfigSet& cfg)
 	texinit.m_width = m_r->getWidth();
 	texinit.m_height = m_r->getHeight();
 	texinit.m_usage = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
-	m_stencilTex = getGrManager().newInstance<Texture>(texinit);
+	m_stencilTex = m_r->createAndClearRenderTarget(texinit);
 
 	ANKI_CHECK(m_edge.init(cfg));
 	ANKI_CHECK(m_weights.init(cfg));

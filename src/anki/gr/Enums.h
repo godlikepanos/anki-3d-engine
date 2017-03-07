@@ -153,9 +153,11 @@ enum class ComponentFormat : U8
 	D32S8,
 	S8,
 
-	// Limits
+	// Helpers
 	FIRST_COMPRESSED = R8G8B8_S3TC,
-	LAST_COMPRESSED = R8G8B8A8_ETC2
+	LAST_COMPRESSED = R8G8B8A8_ETC2,
+	FIRST_DEPTH_STENCIL = D16,
+	LAST_DEPTH_STENCIL = S8
 };
 
 enum class TransformFormat : U8

@@ -63,10 +63,10 @@ Error Sm::initInternal(const ConfigSet& config)
 	sminit.m_sampling.m_minMagFilter = m_bilinearEnabled ? SamplingFilter::LINEAR : SamplingFilter::NEAREST;
 	sminit.m_sampling.m_compareOperation = CompareOperation::LESS_EQUAL;
 
-	m_spotTexArray = getGrManager().newInstance<Texture>(sminit);
+	m_spotTexArray = m_r->createAndClearRenderTarget(sminit);
 
 	sminit.m_type = TextureType::CUBE_ARRAY;
-	m_omniTexArray = getGrManager().newInstance<Texture>(sminit);
+	m_omniTexArray = m_r->createAndClearRenderTarget(sminit);
 
 	// Init 2D layers
 	m_spots.create(getAllocator(), config.getNumber("sm.maxLights"));
@@ -511,6 +511,9 @@ void Sm::setPostRunBarriers(RenderingContext& ctx)
 				TextureSurfaceInfo(0, 0, j, layer));
 		}
 	}
+
+	cmdb->informTextureCurrentUsage(m_spotTexArray, TextureUsageBit::SAMPLED_FRAGMENT);
+	cmdb->informTextureCurrentUsage(m_omniTexArray, TextureUsageBit::SAMPLED_FRAGMENT);
 
 	ANKI_TRACE_STOP_EVENT(RENDER_SM);
 }

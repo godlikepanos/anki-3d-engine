@@ -99,6 +99,16 @@ Error Renderer::initInternal(const ConfigSet& config)
 		return ErrorCode::USER_DATA;
 	}
 
+	{
+		TextureInitInfo texinit;
+		texinit.m_width = texinit.m_height = 4;
+		texinit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT;
+		texinit.m_format = PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
+		texinit.m_usageWhenEncountered = TextureUsageBit::SAMPLED_FRAGMENT;
+		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
+		m_dummyTex = getGrManager().newInstance<Texture>(texinit);
+	}
+
 	// quad setup
 	ANKI_CHECK(m_resources->loadResource("shaders/Quad.vert.glsl", m_drawQuadVert));
 
@@ -332,16 +342,10 @@ Vec3 Renderer::unproject(
 	return out.xyz();
 }
 
-void Renderer::createRenderTarget(
-	U32 w, U32 h, const PixelFormat& format, TextureUsageBit usage, SamplingFilter filter, U mipsCount, TexturePtr& rt)
+TextureInitInfo Renderer::create2DRenderTargetInitInfo(
+	U32 w, U32 h, const PixelFormat& format, TextureUsageBit usage, SamplingFilter filter, U mipsCount)
 {
-	// Not very important but keep the resolution of render targets aligned to 16
-	if(0)
-	{
-		ANKI_ASSERT(isAligned(16, w));
-		ANKI_ASSERT(isAligned(16, h));
-	}
-
+	ANKI_ASSERT(!!(usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
 	TextureInitInfo init;
 
 	init.m_width = w;
@@ -365,19 +369,69 @@ void Renderer::createRenderTarget(
 	init.m_sampling.m_repeat = false;
 	init.m_sampling.m_anisotropyLevel = 0;
 
-	rt = m_gr->newInstance<Texture>(init);
+	return init;
 }
 
-void Renderer::clearRenderTarget(TexturePtr rt, const ClearValue& clear, TextureUsageBit transferTo)
+TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf)
 {
-	TextureSurfaceInfo surf = {0, 0, 0, 0};
-	CommandBufferInitInfo cinit;
-	cinit.m_flags = CommandBufferFlag::SMALL_BATCH | CommandBufferFlag::TRANSFER_WORK;
-	CommandBufferPtr cmdb = m_gr->newInstance<CommandBuffer>(cinit);
-	cmdb->setTextureSurfaceBarrier(rt, TextureUsageBit::NONE, TextureUsageBit::CLEAR, surf);
-	cmdb->clearTextureSurface(rt, surf, clear);
-	cmdb->setTextureSurfaceBarrier(rt, TextureUsageBit::CLEAR, transferTo, surf);
+	ANKI_ASSERT(!!(inf.m_usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
+
+	// Create tex
+	TexturePtr tex = m_gr->newInstance<Texture>(inf);
+
+	// Clear all surfaces
+	CommandBufferInitInfo cmdbinit;
+	cmdbinit.m_flags = CommandBufferFlag::SMALL_BATCH | CommandBufferFlag::GRAPHICS_WORK;
+	CommandBufferPtr cmdb = m_gr->newInstance<CommandBuffer>(cmdbinit);
+
+	const U faceCount = (inf.m_type == TextureType::CUBE || inf.m_type == TextureType::CUBE_ARRAY) ? 6 : 1;
+
+	for(U mip = 0; mip < inf.m_mipmapsCount; ++mip)
+	{
+		for(U face = 0; face < faceCount; ++face)
+		{
+			for(U layer = 0; layer < inf.m_layerCount; ++layer)
+			{
+				TextureSurfaceInfo surf(mip, 0, face, layer);
+
+				FramebufferInitInfo fbInit;
+
+				if(inf.m_format.m_components >= ComponentFormat::FIRST_DEPTH_STENCIL
+					&& inf.m_format.m_components <= ComponentFormat::LAST_DEPTH_STENCIL)
+				{
+					fbInit.m_depthStencilAttachment.m_texture = tex;
+					fbInit.m_depthStencilAttachment.m_surface = surf;
+					fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH_STENCIL;
+					fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
+				}
+				else
+				{
+					fbInit.m_colorAttachmentCount = 1;
+					fbInit.m_colorAttachments[0].m_texture = tex;
+					fbInit.m_colorAttachments[0].m_surface = surf;
+					fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
+					fbInit.m_colorAttachments[0].m_stencilLoadOperation = AttachmentLoadOperation::CLEAR;
+				}
+				FramebufferPtr fb = m_gr->newInstance<Framebuffer>(fbInit);
+
+				cmdb->setTextureSurfaceBarrier(
+					tex, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, surf);
+
+				cmdb->beginRenderPass(fb);
+				cmdb->endRenderPass();
+
+				if(!!inf.m_initialUsage)
+				{
+					cmdb->setTextureSurfaceBarrier(
+						tex, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, inf.m_initialUsage, surf);
+				}
+			}
+		}
+	}
+
 	cmdb->flush();
+
+	return tex;
 }
 
 Error Renderer::buildCommandBuffersInternal(RenderingContext& ctx, U32 threadId, PtrSize threadCount)

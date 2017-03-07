@@ -21,13 +21,11 @@ Error HalfDepth::init(const ConfigSet&)
 	U height = m_r->getHeight() / 2;
 
 	// Create RT
-	m_r->createRenderTarget(width,
+	m_depthRt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(width,
 		height,
 		MS_DEPTH_ATTACHMENT_PIXEL_FORMAT,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE | TextureUsageBit::SAMPLED_FRAGMENT,
-		SamplingFilter::LINEAR,
-		1,
-		m_depthRt);
+		SamplingFilter::LINEAR));
 
 	// Create FB
 	FramebufferInitInfo fbInit;
@@ -87,13 +85,11 @@ Error QuarterDepth::init(const ConfigSet&)
 	U width = m_r->getWidth() / 4;
 	U height = m_r->getHeight() / 4;
 
-	m_r->createRenderTarget(width,
+	m_depthRt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(width,
 		height,
 		PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT),
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::SAMPLED_FRAGMENT,
-		SamplingFilter::LINEAR,
-		1,
-		m_depthRt);
+		SamplingFilter::LINEAR));
 
 	FramebufferInitInfo fbInit;
 	fbInit.m_colorAttachments[0].m_texture = m_depthRt;

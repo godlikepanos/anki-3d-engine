@@ -28,13 +28,11 @@ Error BloomExposure::init(const ConfigSet& config)
 	m_scale = config.getNumber("bloom.scale");
 
 	// Create RT
-	m_r->createRenderTarget(m_width,
+	m_rt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_width,
 		m_height,
 		BLOOM_RT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		SamplingFilter::LINEAR,
-		1,
-		m_rt);
+		SamplingFilter::LINEAR));
 
 	// Create FBs
 	FramebufferInitInfo fbInit;
@@ -103,13 +101,11 @@ Error BloomUpscale::init(const ConfigSet& config)
 	m_height = m_r->getHeight() / BLOOM_FRACTION;
 
 	// Create RTs
-	m_r->createRenderTarget(m_width,
+	m_rt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_width,
 		m_height,
 		BLOOM_RT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-		SamplingFilter::LINEAR,
-		1,
-		m_rt);
+		SamplingFilter::LINEAR));
 
 	// Create FBs
 	FramebufferInitInfo fbInit;

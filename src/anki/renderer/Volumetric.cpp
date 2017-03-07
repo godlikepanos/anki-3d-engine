@@ -20,15 +20,11 @@ Error VolumetricMain::init(const ConfigSet& config)
 	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseLdrRgb64x64.ankitex", m_noiseTex));
 
 	// RT
-	m_r->createRenderTarget(m_vol->m_width,
+	m_rt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_vol->m_width,
 		m_vol->m_height,
 		IS_COLOR_ATTACHMENT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE | TextureUsageBit::CLEAR,
-		SamplingFilter::LINEAR,
-		1,
-		m_rt);
-
-	m_r->clearRenderTarget(m_rt, ClearValue(), TextureUsageBit::SAMPLED_FRAGMENT);
+		SamplingFilter::LINEAR));
 
 	// FB
 	FramebufferInitInfo fbInit;
@@ -138,13 +134,11 @@ void VolumetricMain::setPostRunBarriers(RenderingContext& ctx)
 Error VolumetricHBlur::init(const ConfigSet& config)
 {
 	// Create RTs
-	m_r->createRenderTarget(m_vol->m_width,
+	m_rt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_vol->m_width,
 		m_vol->m_height,
 		IS_COLOR_ATTACHMENT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		SamplingFilter::LINEAR,
-		1,
-		m_rt);
+		SamplingFilter::LINEAR));
 
 	// Create FBs
 	FramebufferInitInfo fbInit;

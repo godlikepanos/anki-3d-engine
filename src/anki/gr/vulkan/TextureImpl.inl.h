@@ -131,7 +131,7 @@ inline VkImageLayout TextureImpl::findLayoutFromTracker(
 	auto it = tracker.m_map.find(m_uuid);
 	if(it == tracker.m_map.getEnd())
 	{
-		ANKI_ASSERT(m_usageWhenEncountered != TextureUsageBit::NONE);
+		ANKI_ASSERT(m_usageWhenEncountered != TextureUsageBit::NONE && "Cannot find the layout of the tex");
 		return computeLayout(m_usageWhenEncountered, surfOrVol.m_level);
 	}
 	else
@@ -148,7 +148,7 @@ inline VkImageLayout TextureImpl::findLayoutFromTracker(const TextureUsageTracke
 	auto it = tracker.m_map.find(m_uuid);
 	if(it == tracker.m_map.getEnd())
 	{
-		ANKI_ASSERT(m_usageWhenEncountered != TextureUsageBit::NONE);
+		ANKI_ASSERT(m_usageWhenEncountered != TextureUsageBit::NONE && "Cannot find the layout of the tex");
 		return computeLayout(m_usageWhenEncountered, 0);
 	}
 	else
@@ -169,6 +169,7 @@ inline void TextureImpl::updateTracker(
 	const TextureInfo& surfOrVol, TextureUsageBit usage, TextureUsageTracker& tracker) const
 {
 	ANKI_ASSERT(usage != TextureUsageBit::NONE);
+	ANKI_ASSERT(usageValid(usage));
 	checkSurfaceOrVolume(surfOrVol);
 
 	auto it = tracker.m_map.find(m_uuid);
@@ -182,6 +183,26 @@ inline void TextureImpl::updateTracker(
 		// Not found
 		TextureUsageState state;
 		updateUsageState(surfOrVol, usage, tracker.m_alloc, state);
+		tracker.m_map.emplaceBack(tracker.m_alloc, m_uuid, std::move(state));
+	}
+}
+
+inline void TextureImpl::updateTracker(TextureUsageBit usage, TextureUsageTracker& tracker) const
+{
+	ANKI_ASSERT(usage != TextureUsageBit::NONE);
+	ANKI_ASSERT(usageValid(usage));
+
+	auto it = tracker.m_map.find(m_uuid);
+	if(it != tracker.m_map.getEnd())
+	{
+		// Found
+		updateUsageState(usage, tracker.m_alloc, *it);
+	}
+	else
+	{
+		// Not found
+		TextureUsageState state;
+		updateUsageState(usage, tracker.m_alloc, state);
 		tracker.m_map.emplaceBack(tracker.m_alloc, m_uuid, std::move(state));
 	}
 }
@@ -200,6 +221,19 @@ inline void TextureImpl::updateUsageState(
 	const VkImageLayout lay = computeLayout(usage, surfOrVol.m_level);
 	ANKI_ASSERT(lay != VK_IMAGE_LAYOUT_UNDEFINED);
 	state.m_subResources[computeSubresourceIdx(surfOrVol)] = lay;
+}
+
+inline void TextureImpl::updateUsageState(
+	TextureUsageBit usage, StackAllocator<U8>& alloc, TextureUsageState& state) const
+{
+	if(ANKI_UNLIKELY(state.m_subResources.getSize() == 0))
+	{
+		state.m_subResources.create(alloc, m_surfaceOrVolumeCount);
+	}
+	const VkImageLayout lay = computeLayout(usage, 0);
+	ANKI_ASSERT(lay != VK_IMAGE_LAYOUT_UNDEFINED);
+
+	memorySet(reinterpret_cast<int*>(&state.m_subResources[0]), int(lay), m_surfaceOrVolumeCount);
 }
 
 } // end namespace anki
