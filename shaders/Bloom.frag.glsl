@@ -26,11 +26,11 @@ void main()
 {
 	const vec2 TEXEL_SIZE = 1.0 / vec2(WIDTH, HEIGHT);
 
-	vec3 color = textureLod(u_tex, in_uv, MIPMAP).rgb;
-	color += textureLod(u_tex, in_uv + TEXEL_SIZE, MIPMAP).rgb;
-	color += textureLod(u_tex, in_uv - TEXEL_SIZE, MIPMAP).rgb;
-	color += textureLod(u_tex, in_uv + vec2(TEXEL_SIZE.x, -TEXEL_SIZE.y), MIPMAP).rgb;
-	color += textureLod(u_tex, in_uv + vec2(-TEXEL_SIZE.x, TEXEL_SIZE.y), MIPMAP).rgb;
+	vec3 color = textureLod(u_tex, in_uv, 0.0).rgb;
+	color += textureLod(u_tex, in_uv + TEXEL_SIZE, 0.0).rgb;
+	color += textureLod(u_tex, in_uv - TEXEL_SIZE, 0.0).rgb;
+	color += textureLod(u_tex, in_uv + vec2(TEXEL_SIZE.x, -TEXEL_SIZE.y), 0.0).rgb;
+	color += textureLod(u_tex, in_uv + vec2(-TEXEL_SIZE.x, TEXEL_SIZE.y), 0.0).rgb;
 
 	color /= 5.0;
 

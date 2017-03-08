@@ -586,6 +586,7 @@ inline void CommandBufferImpl::flushBatches(CommandBufferCommandType type)
 		case CommandBufferCommandType::PUSH_SECOND_LEVEL:
 			ANKI_ASSERT(m_secondLevelAtomCount > 0);
 			vkCmdExecuteCommands(m_handle, m_secondLevelAtomCount, &m_secondLevelAtoms[0]);
+			m_secondLevelAtomCount = 0;
 			break;
 		case CommandBufferCommandType::ANY_OTHER_COMMAND:
 			break;

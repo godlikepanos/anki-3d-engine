@@ -46,13 +46,7 @@ anki_internal:
 		return static_cast<TPtr>(allocateFrameStagingMemory(size, StagingGpuMemoryType::UNIFORM, token));
 	}
 
-	static void bindUniforms(CommandBufferPtr& cmdb, U set, U binding, const StagingGpuMemoryToken& token)
-	{
-		if(token && !token.isUnused())
-		{
-			cmdb->bindUniformBuffer(set, binding, token.m_buffer, token.m_offset, token.m_range);
-		}
-	}
+	void bindUniforms(CommandBufferPtr& cmdb, U set, U binding, const StagingGpuMemoryToken& token) const;
 
 	template<typename TPtr>
 	TPtr allocateAndBindUniforms(PtrSize size, CommandBufferPtr& cmdb, U set, U binding)
@@ -69,13 +63,7 @@ anki_internal:
 		return static_cast<TPtr>(allocateFrameStagingMemory(size, StagingGpuMemoryType::STORAGE, token));
 	}
 
-	static void bindStorage(CommandBufferPtr& cmdb, U set, U binding, const StagingGpuMemoryToken& token)
-	{
-		if(token && !token.isUnused())
-		{
-			cmdb->bindStorageBuffer(set, binding, token.m_buffer, token.m_offset, token.m_range);
-		}
-	}
+	void bindStorage(CommandBufferPtr& cmdb, U set, U binding, const StagingGpuMemoryToken& token) const;
 
 protected:
 	Renderer* m_r; ///< Know your father

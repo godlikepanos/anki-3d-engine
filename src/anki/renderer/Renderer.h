@@ -212,6 +212,11 @@ public:
 		return *m_smaa;
 	}
 
+	DownscaleBlur& getDownscaleBlur()
+	{
+		return *m_downscale;
+	}
+
 	U32 getWidth() const
 	{
 		return m_width;
@@ -361,6 +366,16 @@ anki_internal:
 		return m_dummyTex;
 	}
 
+	BufferPtr getDummyBuffer() const
+	{
+		return m_dummyBuff;
+	}
+
+	static constexpr PtrSize getDummyBufferSize()
+	{
+		return 1024;
+	}
+
 private:
 	ThreadPool* m_threadpool = nullptr;
 	ResourceManager* m_resources = nullptr;
@@ -412,6 +427,7 @@ private:
 	Mat4 m_prevCamTransform = Mat4::getIdentity();
 
 	TexturePtr m_dummyTex;
+	BufferPtr m_dummyBuff;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 

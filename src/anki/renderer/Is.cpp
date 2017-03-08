@@ -76,9 +76,6 @@ Error Is::initInternal(const ConfigSet& config)
 		return ErrorCode::USER_DATA;
 	}
 
-	m_rtMipCount = computeMaxMipmapCount2d(m_r->getWidth(), m_r->getHeight(), 32);
-	ANKI_ASSERT(m_rtMipCount);
-
 	m_clusterCounts[0] = config.getNumber("clusterSizeX");
 	m_clusterCounts[1] = config.getNumber("clusterSizeY");
 	m_clusterCounts[2] = config.getNumber("clusterSizeZ");
@@ -128,10 +125,8 @@ Error Is::initInternal(const ConfigSet& config)
 	m_rt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_r->getWidth(),
 		m_r->getHeight(),
 		IS_COLOR_ATTACHMENT_PIXEL_FORMAT,
-		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE
-			| TextureUsageBit::SAMPLED_COMPUTE,
-		SamplingFilter::LINEAR,
-		m_rtMipCount));
+		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
+		SamplingFilter::LINEAR));
 
 	FramebufferInitInfo fbInit;
 	fbInit.m_colorAttachmentCount = 1;

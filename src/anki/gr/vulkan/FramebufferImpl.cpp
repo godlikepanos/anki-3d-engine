@@ -150,8 +150,17 @@ Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 			{
 				aspect = DepthStencilAspectBit::STENCIL;
 			}
+			else if(tex.m_akAspect == DepthStencilAspectBit::DEPTH)
+			{
+				aspect = DepthStencilAspectBit::DEPTH;
+			}
+			else if(tex.m_akAspect == DepthStencilAspectBit::STENCIL)
+			{
+				aspect = DepthStencilAspectBit::STENCIL;
+			}
 			else
 			{
+				ANKI_ASSERT(!!att.m_aspect);
 				aspect = att.m_aspect;
 			}
 

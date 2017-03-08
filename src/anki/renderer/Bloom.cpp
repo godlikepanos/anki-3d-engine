@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/renderer/Bloom.h>
-#include <anki/renderer/Is.h>
+#include <anki/renderer/DownscaleBlur.h>
 #include <anki/renderer/Pps.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/Tm.h>
@@ -21,8 +21,8 @@ Error BloomExposure::init(const ConfigSet& config)
 {
 	GrManager& gr = getGrManager();
 
-	m_width = m_r->getWidth() >> (m_r->getIs().getRtMipmapCount() - 2);
-	m_height = m_r->getHeight() >> (m_r->getIs().getRtMipmapCount() - 2);
+	m_width = m_r->getDownscaleBlur().getSmallPassWidth() * 2;
+	m_height = m_r->getDownscaleBlur().getSmallPassHeight() * 2;
 
 	m_threshold = config.getNumber("bloom.threshold");
 	m_scale = config.getNumber("bloom.scale");
@@ -38,18 +38,16 @@ Error BloomExposure::init(const ConfigSet& config)
 	FramebufferInitInfo fbInit;
 	fbInit.m_colorAttachmentCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
-	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::LOAD;
+	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
 	m_fb = gr.newInstance<Framebuffer>(fbInit);
 
 	// init shaders
 	ANKI_CHECK(m_r->createShaderf("shaders/Bloom.frag.glsl",
 		m_frag,
 		"#define WIDTH %u\n"
-		"#define HEIGHT %u\n"
-		"#define MIPMAP %u.0\n",
-		m_r->getWidth() >> (m_r->getIs().getRtMipmapCount() - 1),
-		m_r->getHeight() >> (m_r->getIs().getRtMipmapCount() - 1),
-		m_r->getIs().getRtMipmapCount() - 1));
+		"#define HEIGHT %u\n",
+		m_r->getDownscaleBlur().getSmallPassWidth(),
+		m_r->getDownscaleBlur().getSmallPassHeight()));
 
 	// Init prog
 	m_r->createDrawQuadShaderProgram(m_frag->getGrShader(), m_prog);
@@ -78,7 +76,7 @@ void BloomExposure::run(RenderingContext& ctx)
 	cmdb->beginRenderPass(m_fb);
 	cmdb->setViewport(0, 0, m_width, m_height);
 	cmdb->bindShaderProgram(m_prog);
-	cmdb->bindTexture(0, 0, m_r->getIs().getRt());
+	cmdb->bindTexture(0, 0, m_r->getDownscaleBlur().getSmallPassTexture());
 
 	Vec4* uniforms = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
 	*uniforms = Vec4(m_threshold, m_scale, 0.0, 0.0);
@@ -104,7 +102,7 @@ Error BloomUpscale::init(const ConfigSet& config)
 	m_rt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_width,
 		m_height,
 		BLOOM_RT_PIXEL_FORMAT,
-		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
+		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		SamplingFilter::LINEAR));
 
 	// Create FBs

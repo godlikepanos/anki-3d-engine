@@ -111,13 +111,15 @@ public:
 
 	void bindTexture(U binding, Texture* tex, DepthStencilAspectBit aspect, VkImageLayout layout)
 	{
-		m_bindings[binding].m_type = DescriptorType::TEXTURE;
-		m_bindings[binding].m_uuids[0] = m_bindings[binding].m_uuids[1] = tex->getUuid();
+		AnyBinding& b = m_bindings[binding];
+		b = {};
+		b.m_type = DescriptorType::TEXTURE;
+		b.m_uuids[0] = b.m_uuids[1] = tex->getUuid();
 
-		m_bindings[binding].m_tex.m_tex = tex->m_impl.get();
-		m_bindings[binding].m_tex.m_sampler = tex->m_impl->m_sampler->m_impl.get();
-		m_bindings[binding].m_tex.m_aspect = aspect;
-		m_bindings[binding].m_tex.m_layout = layout;
+		b.m_tex.m_tex = tex->m_impl.get();
+		b.m_tex.m_sampler = tex->m_impl->m_sampler->m_impl.get();
+		b.m_tex.m_aspect = aspect;
+		b.m_tex.m_layout = layout;
 
 		m_anyBindingDirty = true;
 	}
@@ -125,26 +127,30 @@ public:
 	void bindTextureAndSampler(
 		U binding, Texture* tex, Sampler* sampler, DepthStencilAspectBit aspect, VkImageLayout layout)
 	{
-		m_bindings[binding].m_type = DescriptorType::TEXTURE;
-		m_bindings[binding].m_uuids[0] = tex->getUuid();
-		m_bindings[binding].m_uuids[1] = sampler->getUuid();
+		AnyBinding& b = m_bindings[binding];
+		b = {};
+		b.m_type = DescriptorType::TEXTURE;
+		b.m_uuids[0] = tex->getUuid();
+		b.m_uuids[1] = sampler->getUuid();
 
-		m_bindings[binding].m_tex.m_tex = tex->m_impl.get();
-		m_bindings[binding].m_tex.m_sampler = sampler->m_impl.get();
-		m_bindings[binding].m_tex.m_aspect = aspect;
-		m_bindings[binding].m_tex.m_layout = layout;
+		b.m_tex.m_tex = tex->m_impl.get();
+		b.m_tex.m_sampler = sampler->m_impl.get();
+		b.m_tex.m_aspect = aspect;
+		b.m_tex.m_layout = layout;
 
 		m_anyBindingDirty = true;
 	}
 
 	void bindUniformBuffer(U binding, Buffer* buff, PtrSize offset, PtrSize range)
 	{
-		m_bindings[binding].m_type = DescriptorType::UNIFORM_BUFFER;
-		m_bindings[binding].m_uuids[0] = m_bindings[binding].m_uuids[1] = buff->getUuid();
+		AnyBinding& b = m_bindings[binding];
+		b = {};
+		b.m_type = DescriptorType::UNIFORM_BUFFER;
+		b.m_uuids[0] = b.m_uuids[1] = buff->getUuid();
 
-		m_bindings[binding].m_buff.m_buff = buff->m_impl.get();
-		m_bindings[binding].m_buff.m_offset = offset;
-		m_bindings[binding].m_buff.m_range = range;
+		b.m_buff.m_buff = buff->m_impl.get();
+		b.m_buff.m_offset = offset;
+		b.m_buff.m_range = range;
 
 		m_anyBindingDirty = true;
 		m_dynamicOffsetDirty.set(binding);
@@ -152,12 +158,14 @@ public:
 
 	void bindStorageBuffer(U binding, Buffer* buff, PtrSize offset, PtrSize range)
 	{
-		m_bindings[binding].m_type = DescriptorType::STORAGE_BUFFER;
-		m_bindings[binding].m_uuids[0] = m_bindings[binding].m_uuids[1] = buff->getUuid();
+		AnyBinding& b = m_bindings[binding];
+		b = {};
+		b.m_type = DescriptorType::STORAGE_BUFFER;
+		b.m_uuids[0] = b.m_uuids[1] = buff->getUuid();
 
-		m_bindings[binding].m_buff.m_buff = buff->m_impl.get();
-		m_bindings[binding].m_buff.m_offset = offset;
-		m_bindings[binding].m_buff.m_range = range;
+		b.m_buff.m_buff = buff->m_impl.get();
+		b.m_buff.m_offset = offset;
+		b.m_buff.m_range = range;
 
 		m_anyBindingDirty = true;
 		m_dynamicOffsetDirty.set(binding);
@@ -165,11 +173,13 @@ public:
 
 	void bindImage(U binding, Texture* tex, U32 level)
 	{
-		m_bindings[binding].m_type = DescriptorType::IMAGE;
-		m_bindings[binding].m_uuids[0] = m_bindings[binding].m_uuids[1] = tex->getUuid();
+		AnyBinding& b = m_bindings[binding];
+		b = {};
+		b.m_type = DescriptorType::IMAGE;
+		b.m_uuids[0] = b.m_uuids[1] = tex->getUuid();
 
-		m_bindings[binding].m_image.m_tex = tex->m_impl.get();
-		m_bindings[binding].m_image.m_level = level;
+		b.m_image.m_tex = tex->m_impl.get();
+		b.m_image.m_level = level;
 
 		m_anyBindingDirty = true;
 	}

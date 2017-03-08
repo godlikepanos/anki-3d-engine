@@ -202,6 +202,7 @@ Error DSThreadAllocator::newSet(
 			out = set;
 			break;
 		}
+		++it;
 	}
 
 	if(out == nullptr)

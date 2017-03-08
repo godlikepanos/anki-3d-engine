@@ -41,12 +41,6 @@ anki_internal:
 		return m_rt;
 	}
 
-	/// Get the number of mips for IS's render target.
-	U getRtMipmapCount() const
-	{
-		return m_rtMipCount;
-	}
-
 	const LightBin& getLightBin() const
 	{
 		return *m_lightBin;
@@ -55,7 +49,6 @@ anki_internal:
 private:
 	/// The IS render target
 	TexturePtr m_rt;
-	U8 m_rtMipCount = 0;
 
 	Array<U32, 3> m_clusterCounts = {{0, 0, 0}};
 	U32 m_clusterCount = 0;

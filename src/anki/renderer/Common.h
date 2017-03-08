@@ -62,11 +62,14 @@ const U VOLUMETRIC_FRACTION = 4;
 /// Computes the 'a' and 'b' numbers for linearizeDepthOptimal
 inline void computeLinearizeDepthOptimal(F32 near, F32 far, F32& a, F32& b)
 {
-	a = (far + near) / (2.0 * near);
-	b = (near - far) / (2.0 * near);
+	a = (far + near) / (2.0f * near);
+	b = (near - far) / (2.0f * near);
 }
 
 const U MS_COLOR_ATTACHMENT_COUNT = 3;
+
+/// Downsample and blur down to a texture with size DOWNSCALE_BLUR_DOWN_TO
+const U DOWNSCALE_BLUR_DOWN_TO = 32;
 
 extern const Array<PixelFormat, MS_COLOR_ATTACHMENT_COUNT> MS_COLOR_ATTACHMENT_PIXEL_FORMATS;
 

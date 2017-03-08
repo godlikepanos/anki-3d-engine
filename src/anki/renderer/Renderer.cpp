@@ -109,6 +109,9 @@ Error Renderer::initInternal(const ConfigSet& config)
 		m_dummyTex = getGrManager().newInstance<Texture>(texinit);
 	}
 
+	m_dummyBuff = getGrManager().newInstance<Buffer>(
+		getDummyBufferSize(), BufferUsageBit::UNIFORM_ALL | BufferUsageBit::STORAGE_ALL, BufferMapAccessBit::NONE);
+
 	// quad setup
 	ANKI_CHECK(m_resources->loadResource("shaders/Quad.vert.glsl", m_drawQuadVert));
 
@@ -143,11 +146,11 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_fsUpscale.reset(m_alloc.newInstance<FsUpscale>(this));
 	ANKI_CHECK(m_fsUpscale->init(config));
 
-	m_tm.reset(getAllocator().newInstance<Tm>(this));
-	ANKI_CHECK(m_tm->init(config));
-
 	m_downscale.reset(getAllocator().newInstance<DownscaleBlur>(this));
 	ANKI_CHECK(m_downscale->init(config));
+
+	m_tm.reset(getAllocator().newInstance<Tm>(this));
+	ANKI_CHECK(m_tm->init(config));
 
 	m_smaa.reset(getAllocator().newInstance<Smaa>(this));
 	ANKI_CHECK(m_smaa->init(config));
@@ -270,15 +273,13 @@ Error Renderer::render(RenderingContext& ctx)
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 		TextureUsageBit::SAMPLED_FRAGMENT,
 		TextureSurfaceInfo(0, 0, 0, 0));
+	m_downscale->setPreRunBarriers(ctx);
 
 	// Passes
 	m_downscale->run(ctx);
 
 	// Barriers
-	cmdb->setTextureSurfaceBarrier(m_is->getRt(),
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		TextureUsageBit::SAMPLED_COMPUTE,
-		TextureSurfaceInfo(m_is->getRtMipmapCount() - 1, 0, 0, 0));
+	m_downscale->setPostRunBarriers(ctx);
 	m_smaa->m_edge.setPreRunBarriers(ctx);
 
 	// Passes
@@ -286,10 +287,6 @@ Error Renderer::render(RenderingContext& ctx)
 	m_smaa->m_edge.run(ctx);
 
 	// Barriers
-	cmdb->setTextureSurfaceBarrier(m_is->getRt(),
-		TextureUsageBit::SAMPLED_COMPUTE,
-		TextureUsageBit::SAMPLED_FRAGMENT,
-		TextureSurfaceInfo(m_is->getRtMipmapCount() - 1, 0, 0, 0));
 	m_smaa->m_edge.setPostRunBarriers(ctx);
 	m_bloom->m_extractExposure.setPreRunBarriers(ctx);
 	m_smaa->m_weights.setPreRunBarriers(ctx);

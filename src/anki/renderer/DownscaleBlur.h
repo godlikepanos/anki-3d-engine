@@ -26,7 +26,24 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& cfg);
 
+	void setPreRunBarriers(RenderingContext& ctx);
 	void run(RenderingContext& ctx);
+	void setPostRunBarriers(RenderingContext& ctx);
+
+	U getSmallPassWidth() const
+	{
+		return m_passes.getBack().m_width;
+	}
+
+	U getSmallPassHeight() const
+	{
+		return m_passes.getBack().m_height;
+	}
+
+	TexturePtr getSmallPassTexture() const
+	{
+		return m_passes.getBack().m_rt;
+	}
 
 private:
 	class Subpass
@@ -34,7 +51,9 @@ private:
 	public:
 		ShaderResourcePtr m_frag;
 		ShaderProgramPtr m_prog;
+		TexturePtr m_rt;
 		FramebufferPtr m_fb;
+		U32 m_width, m_height;
 	};
 
 	DynamicArray<Subpass> m_passes;

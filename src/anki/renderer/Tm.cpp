@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/renderer/Tm.h>
-#include <anki/renderer/Is.h>
+#include <anki/renderer/DownscaleBlur.h>
 #include <anki/renderer/Renderer.h>
 
 namespace anki
@@ -25,16 +25,11 @@ Error Tm::init(const ConfigSet& cfg)
 Error Tm::initInternal(const ConfigSet& initializer)
 {
 	// Create shader
-	ANKI_ASSERT(m_r->getIs().getRtMipmapCount() > 1);
-
 	ANKI_CHECK(m_r->createShaderf("shaders/TmAverageLuminance.comp.glsl",
 		m_luminanceShader,
-		"#define IS_RT_MIPMAP %u\n"
-		"#define ANKI_RENDERER_WIDTH %u\n"
-		"#define ANKI_RENDERER_HEIGHT %u\n",
-		m_r->getIs().getRtMipmapCount() - 1,
-		m_r->getWidth(),
-		m_r->getHeight()));
+		"#define INPUT_TEX_SIZE uvec2(%uu, %uu)\n",
+		m_r->getDownscaleBlur().getSmallPassWidth(),
+		m_r->getDownscaleBlur().getSmallPassHeight()));
 
 	// Create prog
 	m_prog = getGrManager().newInstance<ShaderProgram>(m_luminanceShader->getGrShader());
@@ -62,7 +57,7 @@ void Tm::run(RenderingContext& ctx)
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 	cmdb->bindShaderProgram(m_prog);
 	cmdb->bindStorageBuffer(0, 0, m_luminanceBuff, 0, MAX_PTR_SIZE);
-	cmdb->bindTexture(0, 0, m_r->getIs().getRt());
+	cmdb->bindTexture(0, 0, m_r->getDownscaleBlur().getSmallPassTexture());
 
 	cmdb->dispatchCompute(1, 1, 1);
 }
