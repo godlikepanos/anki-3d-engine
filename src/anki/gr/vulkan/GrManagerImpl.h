@@ -188,6 +188,8 @@ public:
 		return m_extensions;
 	}
 
+	void trySetVulkanHandleName(CString name, VkDebugReportObjectTypeEXT type, U64 handle) const;
+
 private:
 	GrManager* m_manager = nullptr;
 
@@ -207,7 +209,7 @@ private:
 
 	VkInstance m_instance = VK_NULL_HANDLE;
 	VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
-	VulkanExtensions m_extensions;
+	VulkanExtensions m_extensions = VulkanExtensions::NONE;
 	GpuVendor m_vendor = GpuVendor::UNKNOWN;
 	VkDevice m_device = VK_NULL_HANDLE;
 	U32 m_queueIdx = MAX_U32;
@@ -216,6 +218,8 @@ private:
 
 	VkPhysicalDeviceProperties m_devProps = {};
 	VkPhysicalDeviceFeatures m_devFeatures = {};
+
+	PFN_vkDebugMarkerSetObjectNameEXT m_pfnDebugMarkerSetObjectNameEXT = nullptr;
 
 	/// @name Surface_related
 	/// @{

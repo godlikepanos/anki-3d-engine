@@ -42,6 +42,11 @@ enum class VulkanExtensions : U8
 	NONE = 0,
 	KHR_MAINENANCE1 = 1 << 0,
 	AMD_NEGATIVE_VIEWPORT_HEIGHT = 1 << 1,
+	KHR_XCB_SURFACE = 1 << 2,
+	KHR_WIN32_SURFACE = 1 << 3,
+	KHR_SWAPCHAIN = 1 << 4,
+	KHR_SURFACE = 1 << 5,
+	EXT_DEBUG_MARKER = 1 << 6,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VulkanExtensions, inline)
 

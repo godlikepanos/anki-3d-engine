@@ -267,6 +267,7 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 	{
 		VkPipelineDepthStencilStateCreateInfo& dsCi = m_ci.m_ds;
 		dsCi = {};
+		dsCi.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
 
 		if(m_fbDepth)
 		{

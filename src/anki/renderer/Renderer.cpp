@@ -340,11 +340,12 @@ Vec3 Renderer::unproject(
 }
 
 TextureInitInfo Renderer::create2DRenderTargetInitInfo(
-	U32 w, U32 h, const PixelFormat& format, TextureUsageBit usage, SamplingFilter filter, U mipsCount)
+	U32 w, U32 h, const PixelFormat& format, TextureUsageBit usage, SamplingFilter filter, U mipsCount, CString name)
 {
 	ANKI_ASSERT(!!(usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
 	TextureInitInfo init;
 
+	init.m_name = name;
 	init.m_width = w;
 	init.m_height = h;
 	init.m_depth = 1;

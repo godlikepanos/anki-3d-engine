@@ -222,6 +222,19 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 {
 	// Create the instance
 	//
+	VkApplicationInfo app = {};
+	app.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+	app.pApplicationName = "unamed";
+	app.applicationVersion = 1;
+	app.pEngineName = "AnKi 3D Engine";
+	app.engineVersion = (ANKI_VERSION_MAJOR << 16) | ANKI_VERSION_MINOR;
+	app.apiVersion = VK_MAKE_VERSION(1, 0, 3);
+
+	VkInstanceCreateInfo ci = {};
+	ci.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+	ci.pApplicationInfo = &app;
+
+	// Layers
 	static Array<const char*, 7> LAYERS = {{"VK_LAYER_LUNARG_core_validation",
 		"VK_LAYER_LUNARG_swapchain",
 		"VK_LAYER_GOOGLE_threading",
@@ -229,49 +242,94 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 		"VK_LAYER_GOOGLE_unique_objects",
 		"VK_LAYER_LUNARG_object_tracker",
 		"VK_LAYER_LUNARG_standard_validation"}};
+	Array<const char*, LAYERS.getSize()> layersToEnable; // Keep it alive in the stack
+	if(init.m_config->getNumber("debugContext"))
+	{
+		uint32_t count;
+		vkEnumerateInstanceLayerProperties(&count, nullptr);
 
-	static Array<const char*, 2> EXTENSIONS = {{VK_KHR_SURFACE_EXTENSION_NAME,
+		if(count)
+		{
+			DynamicArrayAuto<VkLayerProperties> layerProps(getAllocator());
+			layerProps.create(count);
+
+			vkEnumerateInstanceLayerProperties(&count, &layerProps[0]);
+
+			U32 layersToEnableCount = 0;
+			for(const char* c : LAYERS)
+			{
+				for(U i = 0; i < count; ++i)
+				{
+					if(CString(c) == layerProps[i].layerName)
+					{
+						layersToEnable[layersToEnableCount++] = c;
+						break;
+					}
+				}
+			}
+
+			if(layersToEnableCount)
+			{
+				ANKI_VK_LOGI("Will enable the following layers:");
+				for(U i = 0; i < layersToEnableCount; ++i)
+				{
+					ANKI_VK_LOGI("\t%s", layersToEnable[i]);
+				}
+
+				ci.enabledLayerCount = layersToEnableCount;
+				ci.ppEnabledLayerNames = &layersToEnable[0];
+			}
+		}
+	}
+
+	// Extensions
+	DynamicArrayAuto<const char*> instExtensions(getAllocator());
+	DynamicArrayAuto<VkExtensionProperties> instExtensionInf(getAllocator());
+	U32 extCount = 0;
+	vkEnumerateInstanceExtensionProperties(nullptr, &extCount, nullptr);
+	if(extCount)
+	{
+		instExtensions.create(extCount);
+		instExtensionInf.create(extCount);
+		vkEnumerateInstanceExtensionProperties(nullptr, &extCount, &instExtensionInf[0]);
+		U instExtensionCount = 0;
+
+		for(U i = 0; i < extCount; ++i)
+		{
 #if ANKI_OS == ANKI_OS_LINUX
-		VK_KHR_XCB_SURFACE_EXTENSION_NAME
+			if(CString(instExtensionInf[i].extensionName) == VK_KHR_XCB_SURFACE_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::KHR_XCB_SURFACE;
+				instExtensions[instExtensionCount++] = VK_KHR_XCB_SURFACE_EXTENSION_NAME;
+			}
 #elif ANKI_OS == ANKI_OS_WINDOWS
-		VK_KHR_WIN32_SURFACE_EXTENSION_NAME
+			if(CString(instExtensionInf[i].extensionName) == VK_KHR_WIN32_SURFACE_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::KHR_WIN32_SURFACE;
+				instExtensions[instExtensionCount++] = VK_KHR_WIN32_SURFACE_EXTENSION_NAME;
+			}
 #else
 #error TODO
 #endif
-	}};
-
-	ANKI_VK_LOGI("Will enable the following instanse extensions:");
-	for(const char* c : EXTENSIONS)
-	{
-		ANKI_VK_LOGI("\t%s", c);
-	}
-
-	VkApplicationInfo app = {};
-	app.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-	app.pApplicationName = "unamed";
-	app.applicationVersion = 1;
-	app.pEngineName = "AnKi 3D Engine";
-	app.engineVersion = (ANKI_VERSION_MAJOR << 1) | ANKI_VERSION_MINOR;
-	app.apiVersion = VK_MAKE_VERSION(1, 0, 3);
-
-	VkInstanceCreateInfo ci = {};
-	ci.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-	ci.pApplicationInfo = &app;
-
-	if(init.m_config->getNumber("debugContext"))
-	{
-		ANKI_VK_LOGI("Will enable the following debug layers:");
-		for(const char* c : LAYERS)
-		{
-			ANKI_VK_LOGI("\t%s", c);
+			else if(CString(instExtensionInf[i].extensionName) == VK_KHR_SURFACE_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::KHR_SURFACE;
+				instExtensions[instExtensionCount++] = VK_KHR_SURFACE_EXTENSION_NAME;
+			}
 		}
 
-		ci.enabledLayerCount = LAYERS.getSize();
-		ci.ppEnabledLayerNames = &LAYERS[0];
-	}
+		if(instExtensionCount)
+		{
+			ANKI_VK_LOGI("Will enable the following instance extensions:");
+			for(U i = 0; i < instExtensionCount; ++i)
+			{
+				ANKI_VK_LOGI("\t%s", instExtensions[i]);
+			}
 
-	ci.enabledExtensionCount = EXTENSIONS.getSize();
-	ci.ppEnabledExtensionNames = &EXTENSIONS[0];
+			ci.enabledExtensionCount = instExtensionCount;
+			ci.ppEnabledExtensionNames = &instExtensions[0];
+		}
+	}
 
 #if ANKI_GR_MANAGER_DEBUG_MEMMORY
 	m_debugAllocCbs = {};
@@ -326,25 +384,6 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 
 	vkGetPhysicalDeviceFeatures(m_physicalDevice, &m_devFeatures);
 
-	// Get extensions
-	vkEnumerateDeviceExtensionProperties(m_physicalDevice, nullptr, &count, nullptr);
-	DynamicArrayAuto<VkExtensionProperties> extensions(getAllocator());
-	extensions.create(count);
-	vkEnumerateDeviceExtensionProperties(m_physicalDevice, nullptr, &count, &extensions[0]);
-
-	m_extensions = VulkanExtensions::NONE;
-	while(count-- != 0)
-	{
-		if(strcmp(&extensions[count].extensionName[0], VK_KHR_MAINTENANCE1_EXTENSION_NAME) == 0)
-		{
-			m_extensions |= VulkanExtensions::KHR_MAINENANCE1;
-		}
-		else if(strcmp(&extensions[count].extensionName[0], VK_AMD_NEGATIVE_VIEWPORT_HEIGHT_EXTENSION_NAME) == 0)
-		{
-			m_extensions |= VulkanExtensions::AMD_NEGATIVE_VIEWPORT_HEIGHT;
-		}
-	}
-
 	return ErrorCode::NONE;
 }
 
@@ -391,33 +430,88 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	q.queueCount = 1;
 	q.pQueuePriorities = &priority;
 
-	static Array<const char*, 2> DEV_EXTENSIONS = {
-		{VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_MAINTENANCE1_EXTENSION_NAME}};
-
-	if(!!(m_extensions & VulkanExtensions::KHR_MAINENANCE1))
-	{
-		// Do nothing
-	}
-	else if(!!(m_extensions & VulkanExtensions::AMD_NEGATIVE_VIEWPORT_HEIGHT))
-	{
-		DEV_EXTENSIONS[1] = VK_AMD_NEGATIVE_VIEWPORT_HEIGHT_EXTENSION_NAME;
-	}
-
-	ANKI_VK_LOGI("Will enable the following device extensions:");
-	for(const char* ext : DEV_EXTENSIONS)
-	{
-		ANKI_VK_LOGI("\t%s", ext);
-	}
-
 	VkDeviceCreateInfo ci = {};
 	ci.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 	ci.queueCreateInfoCount = 1;
 	ci.pQueueCreateInfos = &q;
-	ci.enabledExtensionCount = DEV_EXTENSIONS.getSize();
-	ci.ppEnabledExtensionNames = &DEV_EXTENSIONS[0];
 	ci.pEnabledFeatures = &m_devFeatures;
 
+	// Extensions
+	U32 extCount = 0;
+	vkEnumerateDeviceExtensionProperties(m_physicalDevice, nullptr, &extCount, nullptr);
+
+	DynamicArrayAuto<VkExtensionProperties> extensionInfos(getAllocator()); // Keep it alive in the stack
+	DynamicArrayAuto<const char*> extensionsToEnable(getAllocator());
+	if(extCount)
+	{
+		extensionInfos.create(extCount);
+		extensionsToEnable.create(extCount);
+		U extensionsToEnableCount = 0;
+		vkEnumerateDeviceExtensionProperties(m_physicalDevice, nullptr, &extCount, &extensionInfos[0]);
+
+		while(extCount-- != 0)
+		{
+			if(CString(&extensionInfos[extCount].extensionName[0]) == VK_KHR_SWAPCHAIN_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::KHR_SWAPCHAIN;
+				extensionsToEnable[extensionsToEnableCount++] = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
+			}
+			else if(CString(&extensionInfos[extCount].extensionName[0]) == VK_KHR_MAINTENANCE1_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::KHR_MAINENANCE1;
+				extensionsToEnable[extensionsToEnableCount++] = VK_KHR_MAINTENANCE1_EXTENSION_NAME;
+			}
+			else if(CString(&extensionInfos[extCount].extensionName[0])
+				== VK_AMD_NEGATIVE_VIEWPORT_HEIGHT_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::AMD_NEGATIVE_VIEWPORT_HEIGHT;
+				// Don't add it just yet. Can't enable it at the same time with VK_KHR_maintenance1
+			}
+			else if(CString(extensionInfos[extCount].extensionName) == VK_EXT_DEBUG_MARKER_EXTENSION_NAME
+				&& init.m_config->getNumber("debugContext"))
+			{
+				m_extensions |= VulkanExtensions::EXT_DEBUG_MARKER;
+				extensionsToEnable[extensionsToEnableCount++] = VK_EXT_DEBUG_MARKER_EXTENSION_NAME;
+			}
+		}
+
+		if(!!(m_extensions & VulkanExtensions::KHR_MAINENANCE1))
+		{
+			m_extensions = m_extensions & ~VulkanExtensions::AMD_NEGATIVE_VIEWPORT_HEIGHT;
+		}
+		else if(!!(m_extensions & VulkanExtensions::AMD_NEGATIVE_VIEWPORT_HEIGHT))
+		{
+			extensionsToEnable[extensionsToEnableCount++] = VK_AMD_NEGATIVE_VIEWPORT_HEIGHT_EXTENSION_NAME;
+		}
+		else
+		{
+			ANKI_VK_LOGE("VK_KHR_maintenance1 or VK_AMD_negative_viewport_height required");
+			return ErrorCode::FUNCTION_FAILED;
+		}
+
+		ANKI_VK_LOGI("Will enable the following device extensions:");
+		for(U i = 0; i < extensionsToEnableCount; ++i)
+		{
+			ANKI_VK_LOGI("\t%s", extensionsToEnable[i]);
+		}
+
+		ci.enabledExtensionCount = extensionsToEnableCount;
+		ci.ppEnabledExtensionNames = &extensionsToEnable[0];
+	}
+
 	ANKI_VK_CHECK(vkCreateDevice(m_physicalDevice, &ci, nullptr, &m_device));
+
+	// Get debug marker
+	if(!!(m_extensions & VulkanExtensions::EXT_DEBUG_MARKER))
+	{
+		m_pfnDebugMarkerSetObjectNameEXT = reinterpret_cast<PFN_vkDebugMarkerSetObjectNameEXT>(
+			vkGetDeviceProcAddr(m_device, "vkDebugMarkerSetObjectNameEXT"));
+
+		if(!m_pfnDebugMarkerSetObjectNameEXT)
+		{
+			ANKI_VK_LOGW("VK_EXT_debug_marker is present but vkDebugMarkerSetObjectNameEXT is not there");
+		}
+	}
 
 	return ErrorCode::NONE;
 }
@@ -784,6 +878,20 @@ void GrManagerImpl::flushCommandBuffer(CommandBufferPtr cmdb, Bool wait)
 	if(wait)
 	{
 		vkQueueWaitIdle(m_queue);
+	}
+}
+
+void GrManagerImpl::trySetVulkanHandleName(CString name, VkDebugReportObjectTypeEXT type, U64 handle) const
+{
+	if(m_pfnDebugMarkerSetObjectNameEXT && name)
+	{
+		VkDebugMarkerObjectNameInfoEXT inf = {};
+		inf.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_NAME_INFO_EXT;
+		inf.objectType = type;
+		inf.pObjectName = name.get();
+		inf.object = handle;
+
+		m_pfnDebugMarkerSetObjectNameEXT(m_device, &inf);
 	}
 }
 

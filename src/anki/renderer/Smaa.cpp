@@ -158,6 +158,7 @@ Error SmaaWeights::init(const ConfigSet& initializer)
 		texinit.m_height = AREATEX_HEIGHT;
 		texinit.m_format = PixelFormat(ComponentFormat::R8G8, TransformFormat::UNORM);
 		texinit.m_usage = TextureUsageBit::TRANSFER_DESTINATION | TextureUsageBit::SAMPLED_FRAGMENT;
+		texinit.m_usageWhenEncountered = TextureUsageBit::SAMPLED_FRAGMENT;
 		texinit.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
 		texinit.m_sampling.m_repeat = false;
 		m_areaTex = gr.newInstance<Texture>(texinit);
@@ -181,6 +182,7 @@ Error SmaaWeights::init(const ConfigSet& initializer)
 		texinit.m_height = SEARCHTEX_HEIGHT;
 		texinit.m_format = PixelFormat(ComponentFormat::R8, TransformFormat::UNORM);
 		texinit.m_usage = TextureUsageBit::TRANSFER_DESTINATION | TextureUsageBit::SAMPLED_FRAGMENT;
+		texinit.m_usageWhenEncountered = TextureUsageBit::SAMPLED_FRAGMENT;
 		texinit.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
 		texinit.m_sampling.m_repeat = false;
 		m_searchTex = gr.newInstance<Texture>(texinit);

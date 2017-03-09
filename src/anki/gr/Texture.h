@@ -37,6 +37,8 @@ static_assert(offsetof(SamplerInitInfo, m_repeat) == 12, "Class needs to be tigh
 class TextureInitInfo
 {
 public:
+	CString m_name; ///< Optional
+
 	TextureType m_type = TextureType::_2D;
 
 	TextureUsageBit m_usage = TextureUsageBit::NONE; ///< How the texture will be used.

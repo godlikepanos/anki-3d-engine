@@ -24,7 +24,9 @@ Error VolumetricMain::init(const ConfigSet& config)
 		m_vol->m_height,
 		IS_COLOR_ATTACHMENT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE | TextureUsageBit::CLEAR,
-		SamplingFilter::LINEAR));
+		SamplingFilter::LINEAR,
+		1,
+		"RVolMain"));
 
 	// FB
 	FramebufferInitInfo fbInit;

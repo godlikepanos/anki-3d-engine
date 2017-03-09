@@ -128,10 +128,8 @@ Error BloomUpscale::init(const ConfigSet& config)
 
 void BloomUpscale::setPreRunBarriers(RenderingContext& ctx)
 {
-	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_rt,
-		TextureUsageBit::NONE,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-		TextureSurfaceInfo(0, 0, 0, 0));
+	ctx.m_commandBuffer->setTextureSurfaceBarrier(
+		m_rt, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureSurfaceInfo(0, 0, 0, 0));
 }
 
 void BloomUpscale::setPostRunBarriers(RenderingContext& ctx)

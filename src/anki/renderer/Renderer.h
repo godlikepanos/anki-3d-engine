@@ -302,8 +302,13 @@ anki_internal:
 	void createDrawQuadShaderProgram(ShaderPtr frag, ShaderProgramPtr& prog);
 
 	/// Create the init info for a 2D texture that will be used as a render target.
-	ANKI_USE_RESULT TextureInitInfo create2DRenderTargetInitInfo(
-		U32 w, U32 h, const PixelFormat& format, TextureUsageBit usage, SamplingFilter filter, U mipsCount = 1);
+	ANKI_USE_RESULT TextureInitInfo create2DRenderTargetInitInfo(U32 w,
+		U32 h,
+		const PixelFormat& format,
+		TextureUsageBit usage,
+		SamplingFilter filter,
+		U mipsCount = 1,
+		CString name = {});
 
 	ANKI_USE_RESULT TexturePtr createAndClearRenderTarget(const TextureInitInfo& inf);
 
