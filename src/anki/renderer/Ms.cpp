@@ -124,7 +124,8 @@ Error Ms::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) 
 
 		// Start drawing
 		ANKI_CHECK(m_r->getSceneDrawer().drawRange(Pass::MS_FS,
-			*ctx.m_frustumComponent,
+			ctx.m_frustumComponent->getViewMatrix(),
+			ctx.m_frustumComponent->getViewProjectionMatrix(),
 			cmdb,
 			vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + start,
 			vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + end));

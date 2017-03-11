@@ -154,7 +154,8 @@ Error Fs::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) 
 
 	// Start drawing
 	Error err = m_r->getSceneDrawer().drawRange(Pass::MS_FS,
-		*ctx.m_frustumComponent,
+		ctx.m_frustumComponent->getViewMatrix(),
+		ctx.m_frustumComponent->getViewProjectionMatrix(),
 		cmdb,
 		vis.getBegin(VisibilityGroupType::RENDERABLES_FS) + start,
 		vis.getBegin(VisibilityGroupType::RENDERABLES_FS) + end);

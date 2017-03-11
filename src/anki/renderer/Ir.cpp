@@ -343,7 +343,8 @@ Error Ir::runMs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceId
 
 	/// Draw
 	ANKI_CHECK(m_r->getSceneDrawer().drawRange(Pass::MS_FS,
-		frc,
+		frc.getViewMatrix(),
+		frc.getViewProjectionMatrix(),
 		cmdb,
 		vis.getBegin(VisibilityGroupType::RENDERABLES_MS),
 		vis.getEnd(VisibilityGroupType::RENDERABLES_MS)));

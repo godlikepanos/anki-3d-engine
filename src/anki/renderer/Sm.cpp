@@ -283,7 +283,8 @@ Error Sm::doSpotLight(SceneNode& light, CommandBufferPtr& cmdb, FramebufferPtr& 
 	cmdb->setPolygonOffset(1.0, 2.0);
 
 	Error err = m_r->getSceneDrawer().drawRange(Pass::SM,
-		frc,
+		frc.getViewMatrix(),
+		frc.getViewProjectionMatrix(),
 		cmdb,
 		vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + start,
 		vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + end);
@@ -321,7 +322,8 @@ Error Sm::doOmniLight(
 			cmdbs[frCount]->setPolygonOffset(1.0, 2.0);
 
 			ANKI_CHECK(m_r->getSceneDrawer().drawRange(Pass::SM,
-				frc,
+				frc.getViewMatrix(),
+				frc.getViewProjectionMatrix(),
 				cmdbs[frCount],
 				vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + start,
 				vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + end));

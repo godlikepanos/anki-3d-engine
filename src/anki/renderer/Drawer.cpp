@@ -119,8 +119,9 @@ public:
 class DrawContext
 {
 public:
-	const FrustumComponent* m_frc = nullptr;
 	Pass m_pass;
+	Mat4 m_viewMat;
+	Mat4 m_viewProjMat;
 	CommandBufferPtr m_cmdb;
 
 	VisibleNode* m_visibleNode = nullptr;
@@ -170,8 +171,8 @@ Error SetupRenderableVariableVisitor::visit(const TRenderableVariableTemplate& r
 
 	// Set uniform
 	//
-	const Mat4& vp = m_ctx->m_frc->getViewProjectionMatrix();
-	const Mat4& v = m_ctx->m_frc->getViewMatrix();
+	const Mat4& vp = m_ctx->m_viewProjMat;
+	const Mat4& v = m_ctx->m_viewMat;
 
 	switch(mvar.getBuiltin())
 	{
@@ -320,13 +321,18 @@ void RenderableDrawer::setupUniforms(DrawContext& ctx, CompleteRenderingBuildInf
 	}
 }
 
-Error RenderableDrawer::drawRange(
-	Pass pass, const FrustumComponent& frc, CommandBufferPtr cmdb, VisibleNode* begin, VisibleNode* end)
+Error RenderableDrawer::drawRange(Pass pass,
+	const Mat4& viewMat,
+	const Mat4& viewProjMat,
+	CommandBufferPtr cmdb,
+	VisibleNode* begin,
+	VisibleNode* end)
 {
 	ANKI_ASSERT(begin && end && begin < end);
 
 	DrawContext ctx;
-	ctx.m_frc = &frc;
+	ctx.m_viewMat = viewMat;
+	ctx.m_viewProjMat = viewProjMat;
 	ctx.m_pass = pass;
 	ctx.m_cmdb = cmdb;
 
