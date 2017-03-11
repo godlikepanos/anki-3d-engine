@@ -41,7 +41,6 @@ Error FrustumComponent::update(SceneNode& node, F32, F32, Bool& updated)
 	{
 		updated = true;
 		m_pm = m_frustum->calculateProjectionMatrix();
-		computeProjectionParams();
 	}
 
 	if(m_flags.get(TRANSFORM_MARKED_FOR_UPDATE))
@@ -57,18 +56,6 @@ Error FrustumComponent::update(SceneNode& node, F32, F32, Bool& updated)
 	}
 
 	return ErrorCode::NONE;
-}
-
-void FrustumComponent::computeProjectionParams()
-{
-	if(m_frustum->getType() == FrustumType::PERSPECTIVE)
-	{
-		m_projParams = m_pm.extractPerspectiveUnprojectionParams();
-	}
-	else
-	{
-		ANKI_ASSERT(0 && "TODO");
-	}
 }
 
 } // end namespace anki

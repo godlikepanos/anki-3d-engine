@@ -122,7 +122,7 @@ Error MainRenderer::render(SceneGraph& scene)
 	ctx.m_camTrfMat = Mat4(frc.getFrustum().getTransform());
 	ctx.m_near = frc.getFrustum().getNear();
 	ctx.m_far = frc.getFrustum().getFar();
-	ctx.m_unprojParams = frc.getProjectionParameters();
+	ctx.m_unprojParams = ctx.m_projMat.extractPerspectiveUnprojectionParams();
 	ANKI_CHECK(m_r->render(ctx));
 
 	// Blit renderer's result to default FB if needed

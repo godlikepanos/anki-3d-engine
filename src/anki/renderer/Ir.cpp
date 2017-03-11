@@ -423,7 +423,7 @@ void Ir::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx
 
 		Vec4 pos = vMat * movec.getWorldTransform().getOrigin().xyz1();
 
-		light->m_projectionParams = frc.getProjectionParameters();
+		light->m_projectionParams = frc.getProjectionMatrix().extractPerspectiveUnprojectionParams();
 		light->m_posRadius = Vec4(pos.xyz(), 1.0 / (lightc.getRadius() * lightc.getRadius()));
 		light->m_diffuseColorPad1 = lightc.getDiffuseColor();
 		light->m_specularColorPad1 = lightc.getSpecularColor();
@@ -466,7 +466,7 @@ void Ir::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx
 		// Update fragment uniforms
 		IrSpotLight* light = allocateAndBindUniforms<IrSpotLight*>(sizeof(IrSpotLight), cmdb, 0, 1);
 
-		light->m_projectionParams = frc.getProjectionParameters();
+		light->m_projectionParams = frc.getProjectionMatrix().extractPerspectiveUnprojectionParams();
 
 		Vec4 pos = vMat * movec.getWorldTransform().getOrigin().xyz1();
 		light->m_posRadius = Vec4(pos.xyz(), 1.0 / (lightc.getDistance() * lightc.getDistance()));
