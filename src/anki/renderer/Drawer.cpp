@@ -124,7 +124,7 @@ public:
 	Mat4 m_viewProjMat;
 	CommandBufferPtr m_cmdb;
 
-	VisibleNode* m_visibleNode = nullptr;
+	const VisibleNode* m_visibleNode = nullptr;
 
 	Array<Mat4, MAX_INSTANCES> m_cachedTrfs;
 	U m_cachedTrfCount = 0;
@@ -325,8 +325,8 @@ Error RenderableDrawer::drawRange(Pass pass,
 	const Mat4& viewMat,
 	const Mat4& viewProjMat,
 	CommandBufferPtr cmdb,
-	VisibleNode* begin,
-	VisibleNode* end)
+	const VisibleNode* begin,
+	const VisibleNode* end)
 {
 	ANKI_ASSERT(begin && end && begin < end);
 

@@ -38,8 +38,8 @@ public:
 		const Mat4& viewMat,
 		const Mat4& viewProjMat,
 		CommandBufferPtr cmdb,
-		VisibleNode* begin,
-		VisibleNode* end);
+		const VisibleNode* begin,
+		const VisibleNode* end);
 
 private:
 	Renderer* m_r;
