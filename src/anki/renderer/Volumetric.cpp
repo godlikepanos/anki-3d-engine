@@ -64,7 +64,6 @@ void VolumetricMain::setPreRunBarriers(RenderingContext& ctx)
 void VolumetricMain::run(RenderingContext& ctx)
 {
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
-	const Frustum& frc = ctx.m_frustumComponent->getFrustum();
 
 	//
 	// Main pass
@@ -82,23 +81,20 @@ void VolumetricMain::run(RenderingContext& ctx)
 	bindUniforms(cmdb, 0, 2, ctx.m_is.m_spotLightsToken);
 
 	Vec4* uniforms = allocateAndBindUniforms<Vec4*>(sizeof(Vec4) * 2, cmdb, 0, 3);
-	computeLinearizeDepthOptimal(frc.getNear(), frc.getFar(), uniforms[0].x(), uniforms[0].y());
+	computeLinearizeDepthOptimal(ctx.m_near, ctx.m_far, uniforms[0].x(), uniforms[0].y());
 
 	F32 texelOffset = 1.0 / m_noiseTex->getWidth();
 	uniforms[0].z() = m_r->getFrameCount() * texelOffset;
 	uniforms[0].w() = m_r->getFrameCount() & (m_noiseTex->getLayerCount() - 1);
 
 	// Compute the blend factor. If the camera rotated or moved alot don't blend with previous frames
-	F32 dotZ = ctx.m_frustumComponent->getFrustum().getTransform().getRotation().getZAxis().xyz().dot(
-		ctx.m_prevCamTransform.getZAxis().xyz());
-	F32 dotY = ctx.m_frustumComponent->getFrustum().getTransform().getRotation().getYAxis().xyz().dot(
-		ctx.m_prevCamTransform.getYAxis().xyz());
+	F32 dotZ = ctx.m_camTrfMat.getZAxis().xyz().dot(ctx.m_prevCamTransform.getZAxis().xyz());
+	F32 dotY = ctx.m_camTrfMat.getYAxis().xyz().dot(ctx.m_prevCamTransform.getYAxis().xyz());
 
 	const F32 ANG_TOLERANCE = cos(toRad(1.0f / 8.0f));
 	const F32 DIST_TOLERANCE = 0.1f;
 	F32 blendFactor;
-	const F32 dist = (ctx.m_frustumComponent->getFrustum().getTransform().getOrigin().xyz0()
-						 - ctx.m_prevCamTransform.getTranslationPart().xyz0())
+	const F32 dist = (ctx.m_camTrfMat.getTranslationPart().xyz0() - ctx.m_prevCamTransform.getTranslationPart().xyz0())
 						 .getLengthSquared();
 	if(clamp(dotZ, 0.0f, 1.0f) > ANG_TOLERANCE && clamp(dotY, 0.0f, 1.0f) > ANG_TOLERANCE
 		&& dist < DIST_TOLERANCE * DIST_TOLERANCE)

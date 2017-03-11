@@ -101,9 +101,8 @@ void SsaoMain::run(RenderingContext& ctx)
 	cmdb->bindTexture(0, 2, m_noiseTex->getGrTexture());
 
 	Vec4* unis = allocateAndBindUniforms<Vec4*>(sizeof(Vec4) * 2, cmdb, 0, 0);
-	const FrustumComponent& frc = *ctx.m_frustumComponent;
-	const Mat4& pmat = frc.getProjectionMatrix();
-	*unis = frc.getProjectionParameters();
+	const Mat4& pmat = ctx.m_projMat;
+	*unis = ctx.m_unprojParams;
 	++unis;
 	*unis = Vec4(pmat(0, 0), pmat(1, 1), pmat(2, 2), pmat(2, 3));
 

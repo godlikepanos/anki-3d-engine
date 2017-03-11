@@ -24,6 +24,7 @@ namespace anki
 class ConfigSet;
 class ResourceManager;
 class StagingGpuMemoryManager;
+class VisibilityTestResults;
 
 /// @addtogroup renderer
 /// @{
@@ -32,8 +33,15 @@ class StagingGpuMemoryManager;
 class RenderingContext
 {
 public:
-	/// Active frustum.
-	FrustumComponent* m_frustumComponent ANKI_DBG_NULLIFY;
+	const VisibilityTestResults* m_visResults ANKI_DBG_NULLIFY;
+	Mat4 m_viewMat;
+	Mat4 m_projMat;
+	Mat4 m_viewProjMat;
+	Mat4 m_camTrfMat;
+	F32 m_near;
+	F32 m_far;
+	Vec4 m_unprojParams;
+
 	Mat4 m_prevViewProjMat;
 	Mat4 m_prevCamTransform;
 

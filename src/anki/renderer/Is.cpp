@@ -141,11 +141,11 @@ Error Is::binLights(RenderingContext& ctx)
 {
 	updateCommonBlock(ctx);
 
-	ANKI_CHECK(m_lightBin->bin(ctx.m_frustumComponent->getViewMatrix(),
-		ctx.m_frustumComponent->getProjectionMatrix(),
-		ctx.m_frustumComponent->getViewProjectionMatrix(),
-		Mat4(ctx.m_frustumComponent->getFrustum().getTransform()),
-		ctx.m_frustumComponent->getVisibilityTestResults(),
+	ANKI_CHECK(m_lightBin->bin(ctx.m_viewMat,
+		ctx.m_projMat,
+		ctx.m_viewProjMat,
+		ctx.m_camTrfMat,
+		*ctx.m_visResults,
 		getFrameAllocator(),
 		m_maxLightIds,
 		true,
@@ -200,22 +200,21 @@ void Is::run(RenderingContext& ctx)
 
 void Is::updateCommonBlock(RenderingContext& ctx)
 {
-	const FrustumComponent& fr = *ctx.m_frustumComponent;
 	ShaderCommonUniforms* blk =
 		allocateUniforms<ShaderCommonUniforms*>(sizeof(ShaderCommonUniforms), ctx.m_is.m_commonToken);
 
 	// Start writing
-	blk->m_projectionParams = fr.getProjectionParameters();
-	blk->m_nearFarClustererMagicPad1 = Vec4(
-		fr.getFrustum().getNear(), fr.getFrustum().getFar(), m_lightBin->getClusterer().getShaderMagicValue(), 0.0);
+	blk->m_projectionParams = ctx.m_unprojParams;
+	blk->m_nearFarClustererMagicPad1 =
+		Vec4(ctx.m_near, ctx.m_far, m_lightBin->getClusterer().getShaderMagicValue(), 0.0);
 
-	blk->m_invViewRotation = Mat3x4(fr.getViewMatrix().getInverse().getRotationPart());
+	blk->m_invViewRotation = Mat3x4(ctx.m_viewMat.getInverse().getRotationPart());
 
 	blk->m_rendererSizeTimePad1 = Vec4(m_r->getWidth(), m_r->getHeight(), HighRezTimer::getCurrentTime(), 0.0);
 
 	blk->m_tileCount = UVec4(m_clusterCounts[0], m_clusterCounts[1], m_clusterCounts[2], m_clusterCount);
 
-	blk->m_invViewProjMat = fr.getViewProjectionMatrix().getInverse();
+	blk->m_invViewProjMat = ctx.m_viewProjMat.getInverse();
 	blk->m_prevViewProjMat = ctx.m_prevViewProjMat;
 }
 

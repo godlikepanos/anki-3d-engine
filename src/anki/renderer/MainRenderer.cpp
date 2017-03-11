@@ -114,7 +114,15 @@ Error MainRenderer::render(SceneGraph& scene)
 	}
 
 	ctx.m_commandBuffer = cmdb;
-	ctx.m_frustumComponent = &scene.getActiveCamera().getComponent<FrustumComponent>();
+	const FrustumComponent& frc = scene.getActiveCamera().getComponent<FrustumComponent>();
+	ctx.m_visResults = &frc.getVisibilityTestResults();
+	ctx.m_viewMat = frc.getViewMatrix();
+	ctx.m_projMat = frc.getProjectionMatrix();
+	ctx.m_viewProjMat = frc.getViewProjectionMatrix();
+	ctx.m_camTrfMat = Mat4(frc.getFrustum().getTransform());
+	ctx.m_near = frc.getFrustum().getNear();
+	ctx.m_far = frc.getFrustum().getFar();
+	ctx.m_unprojParams = frc.getProjectionParameters();
 	ANKI_CHECK(m_r->render(ctx));
 
 	// Blit renderer's result to default FB if needed

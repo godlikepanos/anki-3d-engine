@@ -549,8 +549,7 @@ void Ir::computeIrradiance(RenderingContext& rctx, U layer, U faceIdx)
 Error Ir::run(RenderingContext& rctx)
 {
 	ANKI_TRACE_START_EVENT(RENDER_IR);
-	FrustumComponent& frc = *rctx.m_frustumComponent;
-	VisibilityTestResults& visRez = frc.getVisibilityTestResults();
+	const VisibilityTestResults& visRez = *rctx.m_visResults;
 
 	if(visRez.getCount(VisibilityGroupType::REFLECTION_PROBES) > m_cubemapArrSize)
 	{

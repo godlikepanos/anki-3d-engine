@@ -168,6 +168,11 @@ anki_internal:
 		return *m_physics;
 	}
 
+	const PhysicsWorld& getPhysicsWorld() const
+	{
+		return *m_physics;
+	}
+
 	const Input& getInput() const
 	{
 		ANKI_ASSERT(m_input);

@@ -108,15 +108,12 @@ Error Lf::initOcclusion(const ConfigSet& config)
 
 void Lf::resetOcclusionQueries(RenderingContext& ctx, CommandBufferPtr cmdb)
 {
-	const FrustumComponent& camFr = *ctx.m_frustumComponent;
-	const VisibilityTestResults& vi = camFr.getVisibilityTestResults();
-
-	if(vi.getCount(VisibilityGroupType::FLARES) > m_maxFlares)
+	if(ctx.m_visResults->getCount(VisibilityGroupType::FLARES) > m_maxFlares)
 	{
 		ANKI_R_LOGW("Visible flares exceed the limit. Increase lf.maxFlares");
 	}
 
-	const U count = min<U>(vi.getCount(VisibilityGroupType::FLARES), m_maxFlares);
+	const U count = min<U>(ctx.m_visResults->getCount(VisibilityGroupType::FLARES), m_maxFlares);
 	for(U i = 0; i < count; ++i)
 	{
 		if(!m_queries[i])
@@ -130,18 +127,14 @@ void Lf::resetOcclusionQueries(RenderingContext& ctx, CommandBufferPtr cmdb)
 
 void Lf::runOcclusionTests(RenderingContext& ctx, CommandBufferPtr cmdb)
 {
-	// Retrieve some things
-	const FrustumComponent& camFr = *ctx.m_frustumComponent;
-	const VisibilityTestResults& vi = camFr.getVisibilityTestResults();
-
-	const U count = min<U>(vi.getCount(VisibilityGroupType::FLARES), m_maxFlares);
+	const U count = min<U>(ctx.m_visResults->getCount(VisibilityGroupType::FLARES), m_maxFlares);
 	Vec3* positions = nullptr;
 	const Vec3* initialPositions;
 	if(count)
 	{
 		// Setup MVP UBO
 		Mat4* mvp = allocateAndBindUniforms<Mat4*>(sizeof(Mat4), cmdb, 0, 0);
-		*mvp = camFr.getViewProjectionMatrix();
+		*mvp = ctx.m_viewProjMat;
 
 		// Alloc dyn mem
 		StagingGpuMemoryToken vertToken;
@@ -163,7 +156,7 @@ void Lf::runOcclusionTests(RenderingContext& ctx, CommandBufferPtr cmdb)
 	for(U i = 0; i < count; ++i)
 	{
 		// Iterate lens flare
-		auto it = vi.getBegin(VisibilityGroupType::FLARES) + i;
+		auto it = ctx.m_visResults->getBegin(VisibilityGroupType::FLARES) + i;
 		const LensFlareComponent& lf = (it->m_node)->getComponent<LensFlareComponent>();
 
 		*positions = lf.getWorldPosition().xyz();
@@ -188,11 +181,7 @@ void Lf::runOcclusionTests(RenderingContext& ctx, CommandBufferPtr cmdb)
 
 void Lf::updateIndirectInfo(RenderingContext& ctx, CommandBufferPtr cmdb)
 {
-	// Retrieve some things
-	FrustumComponent& camFr = *ctx.m_frustumComponent;
-	VisibilityTestResults& vi = camFr.getVisibilityTestResults();
-
-	U count = min<U>(vi.getCount(VisibilityGroupType::FLARES), m_maxFlares);
+	U count = min<U>(ctx.m_visResults->getCount(VisibilityGroupType::FLARES), m_maxFlares);
 	if(count == 0)
 	{
 		return;
@@ -227,11 +216,7 @@ void Lf::updateIndirectInfo(RenderingContext& ctx, CommandBufferPtr cmdb)
 
 void Lf::run(RenderingContext& ctx, CommandBufferPtr cmdb)
 {
-	// Retrieve some things
-	FrustumComponent& camFr = *ctx.m_frustumComponent;
-	VisibilityTestResults& vi = camFr.getVisibilityTestResults();
-
-	const U count = min<U>(vi.getCount(VisibilityGroupType::FLARES), m_maxFlares);
+	const U count = min<U>(ctx.m_visResults->getCount(VisibilityGroupType::FLARES), m_maxFlares);
 	if(count == 0)
 	{
 		return;
@@ -246,12 +231,12 @@ void Lf::run(RenderingContext& ctx, CommandBufferPtr cmdb)
 
 	for(U i = 0; i < count; ++i)
 	{
-		auto it = vi.getBegin(VisibilityGroupType::FLARES) + i;
+		auto it = ctx.m_visResults->getBegin(VisibilityGroupType::FLARES) + i;
 		const LensFlareComponent& lf = (it->m_node)->getComponent<LensFlareComponent>();
 
 		// Compute position
 		Vec4 lfPos = Vec4(lf.getWorldPosition().xyz(), 1.0);
-		Vec4 posClip = camFr.getViewProjectionMatrix() * lfPos;
+		Vec4 posClip = ctx.m_viewProjMat * lfPos;
 
 		/*if(posClip.x() > posClip.w() || posClip.x() < -posClip.w() || posClip.y() > posClip.w()
 			|| posClip.y() < -posClip.w())

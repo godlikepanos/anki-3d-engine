@@ -87,15 +87,13 @@ Error Fs::initVol()
 
 void Fs::drawVolumetric(RenderingContext& ctx, CommandBufferPtr cmdb)
 {
-	const Frustum& fr = ctx.m_frustumComponent->getFrustum();
-
 	cmdb->bindShaderProgram(m_vol.m_prog);
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ONE);
 	cmdb->setDepthWrite(false);
 	cmdb->setDepthCompareOperation(CompareOperation::ALWAYS);
 
 	Vec4* unis = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
-	computeLinearizeDepthOptimal(fr.getNear(), fr.getFar(), unis->x(), unis->y());
+	computeLinearizeDepthOptimal(ctx.m_near, ctx.m_far, unis->x(), unis->y());
 
 	cmdb->informTextureSurfaceCurrentUsage(
 		m_r->getDepthDownscale().m_qd.m_depthRt, TextureSurfaceInfo(0, 0, 0, 0), TextureUsageBit::SAMPLED_FRAGMENT);
@@ -117,10 +115,7 @@ void Fs::drawVolumetric(RenderingContext& ctx, CommandBufferPtr cmdb)
 
 Error Fs::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) const
 {
-	// Get some stuff
-	VisibilityTestResults& vis = ctx.m_frustumComponent->getVisibilityTestResults();
-
-	U problemSize = vis.getCount(VisibilityGroupType::RENDERABLES_FS);
+	U problemSize = ctx.m_visResults->getCount(VisibilityGroupType::RENDERABLES_FS);
 	PtrSize start, end;
 	ThreadPoolTask::choseStartEnd(threadId, threadCount, problemSize, start, end);
 
@@ -154,11 +149,11 @@ Error Fs::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) 
 
 	// Start drawing
 	Error err = m_r->getSceneDrawer().drawRange(Pass::MS_FS,
-		ctx.m_frustumComponent->getViewMatrix(),
-		ctx.m_frustumComponent->getViewProjectionMatrix(),
+		ctx.m_viewMat,
+		ctx.m_viewProjMat,
 		cmdb,
-		vis.getBegin(VisibilityGroupType::RENDERABLES_FS) + start,
-		vis.getBegin(VisibilityGroupType::RENDERABLES_FS) + end);
+		ctx.m_visResults->getBegin(VisibilityGroupType::RENDERABLES_FS) + start,
+		ctx.m_visResults->getBegin(VisibilityGroupType::RENDERABLES_FS) + end);
 
 	return err;
 }

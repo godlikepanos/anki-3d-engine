@@ -34,9 +34,7 @@ namespace anki
 static Bool threadWillDoWork(
 	const RenderingContext& ctx, VisibilityGroupType typeOfWork, U32 threadId, PtrSize threadCount)
 {
-	const VisibilityTestResults& vis = ctx.m_frustumComponent->getVisibilityTestResults();
-
-	U problemSize = vis.getCount(typeOfWork);
+	U problemSize = ctx.m_visResults->getCount(typeOfWork);
 	PtrSize start, end;
 	ThreadPoolTask::choseStartEnd(threadId, threadCount, problemSize, start, end);
 
@@ -170,8 +168,6 @@ Error Renderer::initInternal(const ConfigSet& config)
 Error Renderer::render(RenderingContext& ctx)
 {
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
-
-	ANKI_ASSERT(ctx.m_frustumComponent->getFrustum().getType() == FrustumType::PERSPECTIVE);
 
 	ctx.m_prevViewProjMat = m_prevViewProjMat;
 	ctx.m_prevCamTransform = m_prevCamTransform;
@@ -315,8 +311,8 @@ Error Renderer::render(RenderingContext& ctx)
 	ANKI_CHECK(m_pps->run(ctx));
 
 	++m_frameCount;
-	m_prevViewProjMat = ctx.m_frustumComponent->getViewProjectionMatrix();
-	m_prevCamTransform = Mat4(ctx.m_frustumComponent->getFrustum().getTransform());
+	m_prevViewProjMat = ctx.m_viewProjMat;
+	m_prevCamTransform = ctx.m_camTrfMat;
 
 	return ErrorCode::NONE;
 }

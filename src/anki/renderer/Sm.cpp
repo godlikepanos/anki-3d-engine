@@ -343,7 +343,7 @@ void Sm::prepareBuildCommandBuffers(RenderingContext& ctx)
 	ANKI_TRACE_START_EVENT(RENDER_SM);
 
 	// Gather the lights
-	VisibilityTestResults& vi = ctx.m_frustumComponent->getVisibilityTestResults();
+	const VisibilityTestResults& vi = *ctx.m_visResults;
 
 	const U MAX = 64;
 	Array<SceneNode*, MAX> spotCasters;

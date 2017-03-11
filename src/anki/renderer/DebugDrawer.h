@@ -163,9 +163,9 @@ public:
 	{
 	}
 
-	void draw(FrustumComponent& fr) const;
+	void draw(const FrustumComponent& fr) const;
 
-	void draw(SpatialComponent& sp) const;
+	void draw(const SpatialComponent& sp) const;
 
 	void draw(const PortalComponent& c) const;
 

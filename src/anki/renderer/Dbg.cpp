@@ -84,24 +84,28 @@ Error Dbg::run(RenderingContext& ctx)
 	cmdb->beginRenderPass(m_fb);
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 
-	FrustumComponent& camFrc = *ctx.m_frustumComponent;
-	SceneNode& cam = camFrc.getSceneNode();
 	m_drawer->prepareFrame(cmdb);
-	m_drawer->setViewProjectionMatrix(camFrc.getViewProjectionMatrix());
+	m_drawer->setViewProjectionMatrix(ctx.m_viewProjMat);
 	m_drawer->setModelMatrix(Mat4::getIdentity());
 	// m_drawer->drawGrid();
 
-	SceneGraph& scene = cam.getSceneGraph();
+	const SceneGraph* scene = nullptr;
 
 	SceneDebugDrawer sceneDrawer(m_drawer);
-	camFrc.getVisibilityTestResults().iterateAll([&](SceneNode& node) {
-		if(&node == &cam)
+	ctx.m_visResults->iterateAll([&](const SceneNode& node) {
+		// Get the scenegraph
+		if(scene == nullptr)
 		{
-			return;
+			scene = &node.getSceneGraph();
 		}
 
+		/*if(&node == &cam)
+		{
+			return;
+		}*/
+
 		// Set position
-		MoveComponent* mv = node.tryGetComponent<MoveComponent>();
+		const MoveComponent* mv = node.tryGetComponent<MoveComponent>();
 		if(mv)
 		{
 			m_drawer->setModelMatrix(Mat4(mv->getWorldTransform()));
@@ -114,7 +118,7 @@ Error Dbg::run(RenderingContext& ctx)
 		// Spatial
 		if(m_flags.get(DbgFlag::SPATIAL_COMPONENT))
 		{
-			Error err = node.iterateComponentsOfType<SpatialComponent>([&](SpatialComponent& sp) -> Error {
+			Error err = node.iterateComponentsOfType<const SpatialComponent>([&](const SpatialComponent& sp) -> Error {
 				sceneDrawer.draw(sp);
 				return ErrorCode::NONE;
 			});
@@ -125,10 +129,10 @@ Error Dbg::run(RenderingContext& ctx)
 		if(m_flags.get(DbgFlag::FRUSTUM_COMPONENT))
 		{
 			Error err = node.iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) -> Error {
-				if(&frc != &camFrc)
+				/*if(&frc != &camFrc)
 				{
 					sceneDrawer.draw(frc);
-				}
+				}*/
 				return ErrorCode::NONE;
 			});
 			(void)err;
@@ -160,12 +164,12 @@ Error Dbg::run(RenderingContext& ctx)
 		}
 	});
 
-	if(m_flags.get(DbgFlag::PHYSICS))
+	if(m_flags.get(DbgFlag::PHYSICS) && scene)
 	{
 		PhysicsDebugDrawer phyd(m_drawer);
 
 		m_drawer->setModelMatrix(Mat4::getIdentity());
-		phyd.drawWorld(scene.getPhysicsWorld());
+		phyd.drawWorld(scene->getPhysicsWorld());
 	}
 
 #if 0

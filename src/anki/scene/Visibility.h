@@ -144,12 +144,12 @@ public:
 	void combineWith(SceneFrameAllocator<U8> alloc, WeakArray<VisibilityTestResults*>& results);
 
 	template<typename TFunc>
-	void iterateAll(TFunc f)
+	void iterateAll(TFunc f) const
 	{
 		for(VisibilityGroupType i = VisibilityGroupType::FIRST; i < VisibilityGroupType::TYPE_COUNT; ++i)
 		{
-			VisibleNode* it = getBegin(i);
-			VisibleNode* end = getEnd(i);
+			const VisibleNode* it = getBegin(i);
+			const VisibleNode* end = getEnd(i);
 			while(it != end)
 			{
 				f(*it->m_node);

@@ -68,8 +68,7 @@ void FsUpscale::run(RenderingContext& ctx)
 	CommandBufferPtr cmdb = ctx.m_commandBuffer;
 
 	Vec4* linearDepth = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
-	const Frustum& fr = ctx.m_frustumComponent->getFrustum();
-	computeLinearizeDepthOptimal(fr.getNear(), fr.getFar(), linearDepth->x(), linearDepth->y());
+	computeLinearizeDepthOptimal(ctx.m_near, ctx.m_far, linearDepth->x(), linearDepth->y());
 
 	cmdb->bindTexture(0, 0, m_r->getMs().m_depthRt);
 	cmdb->bindTextureAndSampler(0, 1, m_r->getDepthDownscale().m_hd.m_depthRt, m_nearestSampler);

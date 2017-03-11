@@ -41,6 +41,11 @@ public:
 		return *m_scene;
 	}
 
+	const SceneGraph& getSceneGraph() const
+	{
+		return *m_scene;
+	}
+
 	/// Return the name. It may be empty for nodes that we don't want to track
 	CString getName() const
 	{
@@ -121,14 +126,14 @@ public:
 
 	/// Iterate all components of a specific type
 	template<typename Component, typename Func>
-	ANKI_USE_RESULT Error iterateComponentsOfType(Func func)
+	ANKI_USE_RESULT Error iterateComponentsOfType(Func func) const
 	{
 		Error err = ErrorCode::NONE;
 		auto it = m_components.getBegin();
 		auto end = it + m_componentsCount;
 		for(; !err && it != end; ++it)
 		{
-			SceneComponent* comp = *it;
+			auto* comp = *it;
 			if(comp->getType() == Component::CLASS_TYPE)
 			{
 				err = func(*static_cast<Component*>(comp));

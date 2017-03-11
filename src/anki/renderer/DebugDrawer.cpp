@@ -418,7 +418,7 @@ void PhysicsDebugDrawer::drawLines(const Vec3* lines, const U32 linesCount, cons
 	m_dbg->end();
 }
 
-void SceneDebugDrawer::draw(FrustumComponent& fr) const
+void SceneDebugDrawer::draw(const FrustumComponent& fr) const
 {
 	const Frustum& fs = fr.getFrustum();
 
@@ -427,7 +427,7 @@ void SceneDebugDrawer::draw(FrustumComponent& fr) const
 	fs.accept(coldraw);
 }
 
-void SceneDebugDrawer::draw(SpatialComponent& x) const
+void SceneDebugDrawer::draw(const SpatialComponent& x) const
 {
 	if(!x.getVisibleByCamera())
 	{

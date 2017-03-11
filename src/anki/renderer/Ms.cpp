@@ -97,7 +97,7 @@ Error Ms::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) 
 	ANKI_TRACE_START_EVENT(RENDER_MS);
 
 	// Get some stuff
-	VisibilityTestResults& vis = ctx.m_frustumComponent->getVisibilityTestResults();
+	const VisibilityTestResults& vis = *ctx.m_visResults;
 
 	U problemSize = vis.getCount(VisibilityGroupType::RENDERABLES_MS);
 	PtrSize start, end;
@@ -124,8 +124,8 @@ Error Ms::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) 
 
 		// Start drawing
 		ANKI_CHECK(m_r->getSceneDrawer().drawRange(Pass::MS_FS,
-			ctx.m_frustumComponent->getViewMatrix(),
-			ctx.m_frustumComponent->getViewProjectionMatrix(),
+			ctx.m_viewMat,
+			ctx.m_viewProjMat,
 			cmdb,
 			vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + start,
 			vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + end));
