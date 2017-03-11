@@ -284,7 +284,10 @@ public:
 	{
 	}
 
-	FrustumComponent* m_frc = nullptr;
+	Mat4 m_viewMat;
+	Mat4 m_viewProjMat;
+	Mat4 m_camTrf;
+
 	U32 m_maxLightIndices = 0;
 	Bool m_shadowsEnabled = false;
 	StackAllocator<U8> m_alloc;
@@ -310,10 +313,10 @@ public:
 	Atomic<U32> m_lightIdsCount = {0};
 
 	// Misc
-	WeakArray<VisibleNode> m_vPointLights;
-	WeakArray<VisibleNode> m_vSpotLights;
-	WeakArray<VisibleNode> m_vProbes;
-	WeakArray<VisibleNode> m_vDecals;
+	WeakArray<const VisibleNode> m_vPointLights;
+	WeakArray<const VisibleNode> m_vSpotLights;
+	WeakArray<const VisibleNode> m_vProbes;
+	WeakArray<const VisibleNode> m_vDecals;
 
 	Atomic<U32> m_count = {0};
 	Atomic<U32> m_count2 = {0};
@@ -358,7 +361,11 @@ LightBin::~LightBin()
 {
 }
 
-Error LightBin::bin(FrustumComponent& frc,
+Error LightBin::bin(const Mat4& viewMat,
+	const Mat4& projMat,
+	const Mat4& viewProjMat,
+	const Mat4& camTrf,
+	const VisibilityTestResults& vi,
 	StackAllocator<U8> frameAlloc,
 	U maxLightIndices,
 	Bool shadowsEnabled,
@@ -375,12 +382,10 @@ Error LightBin::bin(FrustumComponent& frc,
 
 	// Prepare the clusterer
 	ClustererPrepareInfo pinf;
-	pinf.m_viewMat = frc.getViewMatrix();
-	pinf.m_projMat = frc.getProjectionMatrix();
-	pinf.m_camTrf = frc.getFrustum().getTransform();
+	pinf.m_viewMat = viewMat;
+	pinf.m_projMat = projMat;
+	pinf.m_camTrf = Transform(camTrf);
 	m_clusterer.prepare(*m_threadPool, pinf);
-
-	VisibilityTestResults& vi = frc.getVisibilityTestResults();
 
 	//
 	// Quickly get the lights
@@ -397,7 +402,9 @@ Error LightBin::bin(FrustumComponent& frc,
 	//
 	Array<WriteLightsTask, ThreadPool::MAX_THREADS> tasks;
 	LightBinContext ctx(frameAlloc);
-	ctx.m_frc = &frc;
+	ctx.m_viewMat = viewMat;
+	ctx.m_viewProjMat = viewProjMat;
+	ctx.m_camTrf = camTrf;
 	ctx.m_maxLightIndices = maxLightIndices;
 	ctx.m_shadowsEnabled = shadowsEnabled;
 	ctx.m_tempClusters.create(m_clusterCount);
@@ -410,7 +417,7 @@ Error LightBin::bin(FrustumComponent& frc,
 		ctx.m_pointLights = WeakArray<ShaderPointLight>(data, visiblePointLightsCount);
 
 		ctx.m_vPointLights =
-			WeakArray<VisibleNode>(vi.getBegin(VisibilityGroupType::LIGHTS_POINT), visiblePointLightsCount);
+			WeakArray<const VisibleNode>(vi.getBegin(VisibilityGroupType::LIGHTS_POINT), visiblePointLightsCount);
 	}
 	else
 	{
@@ -425,7 +432,7 @@ Error LightBin::bin(FrustumComponent& frc,
 		ctx.m_spotLights = WeakArray<ShaderSpotLight>(data, visibleSpotLightsCount);
 
 		ctx.m_vSpotLights =
-			WeakArray<VisibleNode>(vi.getBegin(VisibilityGroupType::LIGHTS_SPOT), visibleSpotLightsCount);
+			WeakArray<const VisibleNode>(vi.getBegin(VisibilityGroupType::LIGHTS_SPOT), visibleSpotLightsCount);
 	}
 	else
 	{
@@ -442,7 +449,7 @@ Error LightBin::bin(FrustumComponent& frc,
 			ctx.m_probes = WeakArray<ShaderProbe>(data, visibleProbeCount);
 
 			ctx.m_vProbes =
-				WeakArray<VisibleNode>(vi.getBegin(VisibilityGroupType::REFLECTION_PROBES), visibleProbeCount);
+				WeakArray<const VisibleNode>(vi.getBegin(VisibilityGroupType::REFLECTION_PROBES), visibleProbeCount);
 		}
 		else
 		{
@@ -457,7 +464,7 @@ Error LightBin::bin(FrustumComponent& frc,
 
 		ctx.m_decals = WeakArray<ShaderDecal>(data, visibleDecalCount);
 
-		ctx.m_vDecals = WeakArray<VisibleNode>(vi.getBegin(VisibilityGroupType::DECALS), visibleDecalCount);
+		ctx.m_vDecals = WeakArray<const VisibleNode>(vi.getBegin(VisibilityGroupType::DECALS), visibleDecalCount);
 	}
 	else
 	{
@@ -506,8 +513,6 @@ Error LightBin::bin(FrustumComponent& frc,
 void LightBin::binLights(U32 threadId, PtrSize threadsCount, LightBinContext& ctx)
 {
 	ANKI_TRACE_START_EVENT(RENDERER_LIGHT_BINNING);
-	const FrustumComponent& camfrc = *ctx.m_frc;
-	const MoveComponent& cammove = camfrc.getSceneNode().getComponent<MoveComponent>();
 	U clusterCount = m_clusterCount;
 	PtrSize start, end;
 
@@ -544,7 +549,7 @@ void LightBin::binLights(U32 threadId, PtrSize threadsCount, LightBinContext& ct
 			{
 				U i = j - (lightCount + ctx.m_vDecals.getSize());
 				SceneNode& snode = *ctx.m_vProbes[i].m_node;
-				writeAndBinProbe(camfrc, snode, ctx, testResult);
+				writeAndBinProbe(snode, ctx, testResult);
 			}
 			else if(j >= ctx.m_vPointLights.getSize() + ctx.m_vDecals.getSize())
 			{
@@ -556,7 +561,7 @@ void LightBin::binLights(U32 threadId, PtrSize threadsCount, LightBinContext& ct
 				SpatialComponent& sp = snode.getComponent<SpatialComponent>();
 				const FrustumComponent* frc = snode.tryGetComponent<FrustumComponent>();
 
-				I pos = writeSpotLight(light, move, frc, cammove, camfrc, ctx);
+				I pos = writeSpotLight(light, move, frc, ctx);
 				binLight(sp, light, pos, 1, ctx, testResult);
 			}
 			else if(j >= ctx.m_vDecals.getSize())
@@ -568,7 +573,7 @@ void LightBin::binLights(U32 threadId, PtrSize threadsCount, LightBinContext& ct
 				LightComponent& light = snode.getComponent<LightComponent>();
 				SpatialComponent& sp = snode.getComponent<SpatialComponent>();
 
-				I pos = writePointLight(light, move, camfrc, ctx);
+				I pos = writePointLight(light, move, ctx);
 				binLight(sp, light, pos, 0, ctx, testResult);
 			}
 			else
@@ -576,7 +581,7 @@ void LightBin::binLights(U32 threadId, PtrSize threadsCount, LightBinContext& ct
 				U i = j;
 
 				SceneNode& snode = *ctx.m_vDecals[i].m_node;
-				writeAndBinDecal(cammove, snode, ctx, testResult);
+				writeAndBinDecal(snode, ctx, testResult);
 			}
 		}
 	}
@@ -672,15 +677,14 @@ void LightBin::binLights(U32 threadId, PtrSize threadsCount, LightBinContext& ct
 	ANKI_TRACE_STOP_EVENT(RENDERER_LIGHT_BINNING);
 }
 
-I LightBin::writePointLight(
-	const LightComponent& lightc, const MoveComponent& lightMove, const FrustumComponent& camFrc, LightBinContext& ctx)
+I LightBin::writePointLight(const LightComponent& lightc, const MoveComponent& lightMove, LightBinContext& ctx)
 {
 	// Get GPU light
 	I i = ctx.m_pointLightsCount.fetchAdd(1);
 
 	ShaderPointLight& slight = ctx.m_pointLights[i];
 
-	Vec4 pos = camFrc.getViewMatrix() * lightMove.getWorldTransform().getOrigin().xyz1();
+	Vec4 pos = ctx.m_viewMat * lightMove.getWorldTransform().getOrigin().xyz1();
 
 	slight.m_posRadius = Vec4(pos.xyz(), 1.0 / (lightc.getRadius() * lightc.getRadius()));
 	slight.m_diffuseColorShadowmapId = lightc.getDiffuseColor();
@@ -702,8 +706,6 @@ I LightBin::writePointLight(
 I LightBin::writeSpotLight(const LightComponent& lightc,
 	const MoveComponent& lightMove,
 	const FrustumComponent* lightFrc,
-	const MoveComponent& camMove,
-	const FrustumComponent& camFrc,
 	LightBinContext& ctx)
 {
 	I i = ctx.m_spotLightsCount.fetchAdd(1);
@@ -716,13 +718,13 @@ I LightBin::writeSpotLight(const LightComponent& lightc,
 		// Write matrix
 		static const Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0);
 		// bias * proj_l * view_l * world_c
-		light.m_texProjectionMat = biasMat4 * lightFrc->getViewProjectionMatrix() * Mat4(camMove.getWorldTransform());
+		light.m_texProjectionMat = biasMat4 * lightFrc->getViewProjectionMatrix() * ctx.m_camTrf;
 
 		shadowmapIndex = F32(lightc.getShadowMapIndex());
 	}
 
 	// Pos & dist
-	Vec4 pos = camFrc.getViewMatrix() * lightMove.getWorldTransform().getOrigin().xyz1();
+	Vec4 pos = ctx.m_viewMat * lightMove.getWorldTransform().getOrigin().xyz1();
 	light.m_posRadius = Vec4(pos.xyz(), 1.0 / (lightc.getDistance() * lightc.getDistance()));
 
 	// Diff color and shadowmap ID now
@@ -733,7 +735,7 @@ I LightBin::writeSpotLight(const LightComponent& lightc,
 
 	// Light dir
 	Vec3 lightDir = -lightMove.getWorldTransform().getRotation().getZAxis();
-	lightDir = camFrc.getViewMatrix().getRotationPart() * lightDir;
+	lightDir = ctx.m_viewMat.getRotationPart() * lightDir;
 	light.m_lightDir = Vec4(lightDir, 0.0);
 
 	// Angles
@@ -790,8 +792,7 @@ void LightBin::binLight(const SpatialComponent& sp,
 	}
 }
 
-void LightBin::writeAndBinProbe(
-	const FrustumComponent& camFrc, const SceneNode& node, LightBinContext& ctx, ClustererTestResult& testResult)
+void LightBin::writeAndBinProbe(const SceneNode& node, LightBinContext& ctx, ClustererTestResult& testResult)
 {
 	const ReflectionProbeComponent& reflc = node.getComponent<ReflectionProbeComponent>();
 	const SpatialComponent& sp = node.getComponent<SpatialComponent>();
@@ -826,8 +827,7 @@ void LightBin::writeAndBinProbe(
 	}
 }
 
-void LightBin::writeAndBinDecal(
-	const MoveComponent& camMovec, const SceneNode& node, LightBinContext& ctx, ClustererTestResult& testResult)
+void LightBin::writeAndBinDecal(const SceneNode& node, LightBinContext& ctx, ClustererTestResult& testResult)
 {
 	const DecalComponent& decalc = node.getComponent<DecalComponent>();
 	const SpatialComponent& sp = node.getComponent<SpatialComponent>();
@@ -868,7 +868,7 @@ void LightBin::writeAndBinDecal(
 	}
 
 	// bias * proj_l * view_l * world_c
-	decal.m_texProjectionMat = decalc.getBiasProjectionViewMatrix() * Mat4(camMovec.getWorldTransform());
+	decal.m_texProjectionMat = decalc.getBiasProjectionViewMatrix() * ctx.m_camTrf;
 
 	// Bin it
 	m_clusterer.bin(sp.getSpatialCollisionShape(), sp.getAabb(), testResult);

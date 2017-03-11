@@ -141,7 +141,11 @@ Error Is::binLights(RenderingContext& ctx)
 {
 	updateCommonBlock(ctx);
 
-	ANKI_CHECK(m_lightBin->bin(*ctx.m_frustumComponent,
+	ANKI_CHECK(m_lightBin->bin(ctx.m_frustumComponent->getViewMatrix(),
+		ctx.m_frustumComponent->getProjectionMatrix(),
+		ctx.m_frustumComponent->getViewProjectionMatrix(),
+		Mat4(ctx.m_frustumComponent->getFrustum().getTransform()),
+		ctx.m_frustumComponent->getVisibilityTestResults(),
 		getFrameAllocator(),
 		m_maxLightIds,
 		true,

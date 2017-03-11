@@ -514,6 +514,12 @@ void convertTextureInformation(const PixelFormat& pf,
 		type = GL_UNSIGNED_SHORT;
 		dsAspect = DepthStencilAspectBit::DEPTH;
 		break;
+	case ComponentFormat::D32:
+		format = GL_DEPTH_COMPONENT;
+		internalFormat = GL_DEPTH_COMPONENT32;
+		type = GL_UNSIGNED_INT;
+		dsAspect = DepthStencilAspectBit::DEPTH;
+		break;
 	case ComponentFormat::S8:
 		format = GL_STENCIL_INDEX;
 		internalFormat = GL_STENCIL_INDEX8;

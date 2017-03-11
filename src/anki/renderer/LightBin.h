@@ -15,6 +15,7 @@ class MoveComponent;
 class LightBinContext;
 class SpatialComponent;
 class LightComponent;
+class VisibilityTestResults;
 
 /// @addtogroup renderer
 /// @{
@@ -34,7 +35,11 @@ public:
 
 	~LightBin();
 
-	ANKI_USE_RESULT Error bin(FrustumComponent& frc,
+	ANKI_USE_RESULT Error bin(const Mat4& viewMat,
+		const Mat4& projMat,
+		const Mat4& viewProjMat,
+		const Mat4& camTrf,
+		const VisibilityTestResults& vi,
 		StackAllocator<U8> frameAlloc,
 		U maxLightIndices,
 		Bool shadowsEnabled,
@@ -62,14 +67,11 @@ private:
 
 	void binLights(U32 threadId, PtrSize threadsCount, LightBinContext& ctx);
 
-	I writePointLight(
-		const LightComponent& light, const MoveComponent& move, const FrustumComponent& camfrc, LightBinContext& ctx);
+	I writePointLight(const LightComponent& light, const MoveComponent& move, LightBinContext& ctx);
 
 	I writeSpotLight(const LightComponent& lightc,
 		const MoveComponent& lightMove,
 		const FrustumComponent* lightFrc,
-		const MoveComponent& camMove,
-		const FrustumComponent& camFrc,
 		LightBinContext& ctx);
 
 	void binLight(const SpatialComponent& sp,
@@ -79,11 +81,9 @@ private:
 		LightBinContext& ctx,
 		ClustererTestResult& testResult) const;
 
-	void writeAndBinProbe(
-		const FrustumComponent& camFrc, const SceneNode& node, LightBinContext& ctx, ClustererTestResult& testResult);
+	void writeAndBinProbe(const SceneNode& node, LightBinContext& ctx, ClustererTestResult& testResult);
 
-	void writeAndBinDecal(
-		const MoveComponent& camMovec, const SceneNode& node, LightBinContext& ctx, ClustererTestResult& testResult);
+	void writeAndBinDecal(const SceneNode& node, LightBinContext& ctx, ClustererTestResult& testResult);
 };
 /// @}
 
