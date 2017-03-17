@@ -36,7 +36,7 @@ class FsUpscale;
 class DownscaleBlur;
 class Volumetric;
 class DepthDownscale;
-class Smaa;
+class Taa;
 
 class RenderingContext;
 class DebugDrawer;

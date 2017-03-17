@@ -125,7 +125,7 @@ Error Ms::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) 
 		// Start drawing
 		ANKI_CHECK(m_r->getSceneDrawer().drawRange(Pass::MS_FS,
 			ctx.m_viewMat,
-			ctx.m_viewProjMat,
+			ctx.m_viewProjMatJitter,
 			cmdb,
 			vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + start,
 			vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + end));

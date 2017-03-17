@@ -45,7 +45,6 @@ private:
 
 	FramebufferPtr m_fb;
 	Array2d<ShaderResourcePtr, 2, 2> m_frag; ///< One with Dbg and one without
-	ShaderResourcePtr m_vert;
 	Array2d<ShaderProgramPtr, 2, 2> m_prog; ///< With Dbg, Default FB or not
 	TexturePtr m_rt;
 

@@ -5,13 +5,12 @@
 
 #include "shaders/Common.glsl"
 
-layout(ANKI_TEX_BINDING(0, 0)) uniform lowp sampler2D uTex;
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_tex;
 
-layout(location = 0) in vec2 inTexCoords;
-
-layout(location = 0) out vec3 outColor;
+layout(location = 0) in vec2 in_uv;
+layout(location = 0) out vec3 out_col;
 
 void main()
 {
-	outColor = texture(uTex, inTexCoords).rgb;
+	out_col = textureLod(u_tex, in_uv, 0.0).rgb;
 }

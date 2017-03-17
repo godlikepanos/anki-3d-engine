@@ -27,6 +27,7 @@ public:
 	UVec4 m_tileCount;
 	Mat4 m_invViewProjMat;
 	Mat4 m_prevViewProjMat;
+	Mat4 m_invProjMat;
 };
 
 enum class ShaderVariantBit : U8
@@ -214,8 +215,9 @@ void Is::updateCommonBlock(RenderingContext& ctx)
 
 	blk->m_tileCount = UVec4(m_clusterCounts[0], m_clusterCounts[1], m_clusterCounts[2], m_clusterCount);
 
-	blk->m_invViewProjMat = ctx.m_viewProjMat.getInverse();
+	blk->m_invViewProjMat = ctx.m_viewProjMatJitter.getInverse();
 	blk->m_prevViewProjMat = ctx.m_prevViewProjMat;
+	blk->m_invProjMat = ctx.m_projMatJitter.getInverse();
 }
 
 void Is::setPreRunBarriers(RenderingContext& ctx)

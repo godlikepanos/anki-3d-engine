@@ -18,6 +18,7 @@ struct LightingUniforms
 	uvec4 tileCount;
 	mat4 invViewProjMat;
 	mat4 prevViewProjMat;
+	mat4 invProjMat;
 };
 
 // Point light

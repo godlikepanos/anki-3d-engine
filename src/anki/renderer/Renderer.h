@@ -37,6 +37,11 @@ public:
 	Mat4 m_viewMat;
 	Mat4 m_projMat;
 	Mat4 m_viewProjMat;
+
+	Mat4 m_projMatJitter;
+	Mat4 m_viewProjMatJitter;
+	Mat4 m_jitterMat;
+
 	Mat4 m_camTrfMat;
 	F32 m_near;
 	F32 m_far;
@@ -215,9 +220,9 @@ public:
 		return *m_dbg;
 	}
 
-	Smaa& getSmaa()
+	Taa& getTaa()
 	{
-		return *m_smaa;
+		return *m_taa;
 	}
 
 	DownscaleBlur& getDownscaleBlur()
@@ -389,6 +394,16 @@ anki_internal:
 		return 1024;
 	}
 
+	SamplerPtr getNearestSampler() const
+	{
+		return m_nearestSampler;
+	}
+
+	SamplerPtr getLinearSampler() const
+	{
+		return m_linearSampler;
+	}
+
 private:
 	ThreadPool* m_threadpool = nullptr;
 	ResourceManager* m_resources = nullptr;
@@ -410,7 +425,7 @@ private:
 	UniquePtr<Lf> m_lf; ///< Forward shading lens flares.
 	UniquePtr<FsUpscale> m_fsUpscale;
 	UniquePtr<DownscaleBlur> m_downscale;
-	UniquePtr<Smaa> m_smaa;
+	UniquePtr<Taa> m_taa;
 	UniquePtr<Tm> m_tm;
 	UniquePtr<Ssao> m_ssao;
 	UniquePtr<Bloom> m_bloom;
@@ -439,13 +454,21 @@ private:
 	Mat4 m_prevViewProjMat = Mat4::getIdentity();
 	Mat4 m_prevCamTransform = Mat4::getIdentity();
 
+	Array<Mat4, 16> m_jitteredMats16x;
+	Array<Mat4, 8> m_jitteredMats8x;
+
 	TexturePtr m_dummyTex;
 	BufferPtr m_dummyBuff;
+
+	SamplerPtr m_nearestSampler;
+	SamplerPtr m_linearSampler;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 
 	ANKI_USE_RESULT Error buildCommandBuffers(RenderingContext& ctx);
 	ANKI_USE_RESULT Error buildCommandBuffersInternal(RenderingContext& ctx, U32 threadId, PtrSize threadCount);
+
+	void initJitteredMats();
 };
 /// @}
 

@@ -24,7 +24,7 @@
 #include <anki/renderer/DownscaleBlur.h>
 #include <anki/renderer/Volumetric.h>
 #include <anki/renderer/DepthDownscale.h>
-#include <anki/renderer/Smaa.h>
+#include <anki/renderer/Taa.h>
 
 #include <cstdarg> // For var args
 
@@ -150,8 +150,8 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_tm.reset(getAllocator().newInstance<Tm>(this));
 	ANKI_CHECK(m_tm->init(config));
 
-	m_smaa.reset(getAllocator().newInstance<Smaa>(this));
-	ANKI_CHECK(m_smaa->init(config));
+	m_taa.reset(getAllocator().newInstance<Taa>(this));
+	ANKI_CHECK(m_taa->init(config));
 
 	m_bloom.reset(m_alloc.newInstance<Bloom>(this));
 	ANKI_CHECK(m_bloom->init(config));
@@ -162,12 +162,83 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_dbg.reset(m_alloc.newInstance<Dbg>(this));
 	ANKI_CHECK(m_dbg->init(config));
 
+	SamplerInitInfo sinit;
+	sinit.m_repeat = false;
+	sinit.m_minMagFilter = SamplingFilter::NEAREST;
+	m_nearestSampler = m_gr->newInstance<Sampler>(sinit);
+
+	sinit.m_minMagFilter = SamplingFilter::LINEAR;
+	m_linearSampler = m_gr->newInstance<Sampler>(sinit);
+
+	initJitteredMats();
+
 	return ErrorCode::NONE;
+}
+
+void Renderer::initJitteredMats()
+{
+	static const Array<Vec2, 16> SAMPLE_LOCS_16 = {{Vec2(-8.0, 0.0),
+		Vec2(-6.0, -4.0),
+		Vec2(-3.0, -2.0),
+		Vec2(-2.0, -6.0),
+		Vec2(1.0, -1.0),
+		Vec2(2.0, -5.0),
+		Vec2(6.0, -7.0),
+		Vec2(5.0, -3.0),
+		Vec2(4.0, 1.0),
+		Vec2(7.0, 4.0),
+		Vec2(3.0, 5.0),
+		Vec2(0.0, 7.0),
+		Vec2(-1.0, 3.0),
+		Vec2(-4.0, 6.0),
+		Vec2(-7.0, 8.0),
+		Vec2(-5.0, 2.0)}};
+
+	for(U i = 0; i < 16; ++i)
+	{
+		Vec2 texSize(1.0f / Vec2(m_width, m_height)); // Texel size
+		texSize *= 2.0f; // Move it to NDC
+
+		Vec2 S = SAMPLE_LOCS_16[i] / 8.0f; // In [-1, 1]
+
+		Vec2 subSample = S * texSize; // In [-texSize, texSize]
+		subSample *= 0.5f; // In [-texSize / 2, texSize / 2]
+
+		m_jitteredMats16x[i] = Mat4::getIdentity();
+		m_jitteredMats16x[i].setTranslationPart(Vec4(subSample, 0.0, 1.0));
+	}
+
+	static const Array<Vec2, 8> SAMPLE_LOCS_8 = {{Vec2(-7.0, 1.0),
+		Vec2(-5.0, -5.0),
+		Vec2(-1.0, -3.0),
+		Vec2(3.0, -7.0),
+		Vec2(5.0, -1.0),
+		Vec2(7.0, 7.0),
+		Vec2(1.0, 3.0),
+		Vec2(-3.0, 5.0)}};
+
+	for(U i = 0; i < 8; ++i)
+	{
+		Vec2 texSize(1.0f / Vec2(m_width, m_height)); // Texel size
+		texSize *= 2.0f; // Move it to NDC
+
+		Vec2 S = SAMPLE_LOCS_8[i] / 8.0f; // In [-1, 1]
+
+		Vec2 subSample = S * texSize; // In [-texSize, texSize]
+		subSample *= 0.5f; // In [-texSize / 2, texSize / 2]
+
+		m_jitteredMats8x[i] = Mat4::getIdentity();
+		m_jitteredMats8x[i].setTranslationPart(Vec4(subSample, 0.0, 1.0));
+	}
 }
 
 Error Renderer::render(RenderingContext& ctx)
 {
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
+
+	ctx.m_jitterMat = m_jitteredMats16x[m_frameCount & (16 - 1)];
+	ctx.m_projMatJitter = ctx.m_jitterMat * ctx.m_projMat;
+	ctx.m_viewProjMatJitter = ctx.m_projMatJitter * ctx.m_viewMat;
 
 	ctx.m_prevViewProjMat = m_prevViewProjMat;
 	ctx.m_prevCamTransform = m_prevCamTransform;
@@ -269,6 +340,13 @@ Error Renderer::render(RenderingContext& ctx)
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 		TextureUsageBit::SAMPLED_FRAGMENT,
 		TextureSurfaceInfo(0, 0, 0, 0));
+	m_taa->setPreRunBarriers(ctx);
+
+	// Passes
+	m_taa->run(ctx);
+
+	// Barriers
+	m_taa->setPostRunBarriers(ctx);
 	m_downscale->setPreRunBarriers(ctx);
 
 	// Passes
@@ -276,25 +354,19 @@ Error Renderer::render(RenderingContext& ctx)
 
 	// Barriers
 	m_downscale->setPostRunBarriers(ctx);
-	m_smaa->m_edge.setPreRunBarriers(ctx);
 
 	// Passes
 	m_tm->run(ctx);
-	m_smaa->m_edge.run(ctx);
 
 	// Barriers
-	m_smaa->m_edge.setPostRunBarriers(ctx);
 	m_bloom->m_extractExposure.setPreRunBarriers(ctx);
-	m_smaa->m_weights.setPreRunBarriers(ctx);
 
 	// Passes
 	m_bloom->m_extractExposure.run(ctx);
-	m_smaa->m_weights.run(ctx);
 
 	// Barriers
 	m_bloom->m_extractExposure.setPostRunBarriers(ctx);
 	m_bloom->m_upscale.setPreRunBarriers(ctx);
-	m_smaa->m_weights.setPostRunBarriers(ctx);
 
 	// Passes
 	m_bloom->m_upscale.run(ctx);

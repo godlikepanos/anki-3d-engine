@@ -113,10 +113,24 @@ void main()
 	vec2 ndc = UV_TO_NDC(in_uv);
 
 	// Get frag pos in view space
-	vec3 fragPos;
-	fragPos.z = u_lightingUniforms.projectionParams.z / (u_lightingUniforms.projectionParams.w + depth);
-	fragPos.xy = ndc * u_lightingUniforms.projectionParams.xy * fragPos.z;
+	vec4 fragPos4 = u_lightingUniforms.invProjMat * vec4(ndc, UV_TO_NDC(depth), 1.0);
+	vec3 fragPos = fragPos4.xyz / fragPos4.w;
 	vec3 viewDir = normalize(-fragPos);
+
+	// Get world position
+	vec3 worldPos;
+	vec2 oldUv;
+	{
+		vec4 worldPos4 = u_lightingUniforms.invViewProjMat * vec4(ndc, UV_TO_NDC(depth), 1.0);
+		worldPos4 = worldPos4 / worldPos4.w;
+		worldPos = worldPos4.xyz;
+
+		// Project to get old ndc
+		vec4 oldNdc4 = u_lightingUniforms.prevViewProjMat * vec4(worldPos, 1.0);
+		vec2 oldNdc = oldNdc4.xy / oldNdc4.w;
+
+		oldUv = NDC_TO_UV(oldNdc);
+	}
 
 	// Decode GBuffer
 	vec3 normal;
@@ -138,22 +152,8 @@ void main()
 	emission = gbuffer.emission;
 
 	// Get SSAO
-	vec3 worldPos;
-
-	{
-		vec4 worldPos4 = u_lightingUniforms.invViewProjMat * vec4(ndc, UV_TO_NDC(depth), 1.0);
-		worldPos4 = worldPos4 / worldPos4.w;
-		worldPos = worldPos4.xyz;
-
-		// Project to get old ndc
-		vec4 oldNdc4 = u_lightingUniforms.prevViewProjMat * worldPos4;
-		vec2 oldNdc = oldNdc4.xy / oldNdc4.w;
-
-		vec2 oldUv = NDC_TO_UV(oldNdc);
-
-		float ssao = texture(u_ssaoTex, oldUv).r;
-		diffCol *= ssao;
-	}
+	float ssao = texture(u_ssaoTex, oldUv).r;
+	diffCol *= ssao;
 
 	// Get counts and offsets
 	uint clusterIdx =
@@ -179,7 +179,7 @@ void main()
 	float a2 = pow(roughness, 2.0);
 
 	// Ambient and emissive color
-	out_color = diffCol * emission;
+	vec3 outC = diffCol * emission;
 
 	// Point lights
 	count = u_lightIndices[idxOffset++];
@@ -200,7 +200,7 @@ void main()
 			lambert *= shadow;
 		}
 
-		out_color += (specC + diffC) * (att * max(subsurface, lambert));
+		outC += (specC + diffC) * (att * max(subsurface, lambert));
 	}
 
 	// Spot lights
@@ -221,7 +221,7 @@ void main()
 			lambert *= shadow;
 		}
 
-		out_color += (diffC + specC) * (att * spot * max(subsurface, lambert));
+		outC += (diffC + specC) * (att * spot * max(subsurface, lambert));
 	}
 
 #if INDIRECT_ENABLED
@@ -240,9 +240,10 @@ void main()
 	vec3 specIndirect, diffIndirect;
 	readIndirect(idxOffset, worldPos, worldR, worldNormal, reflLod, specIndirect, diffIndirect);
 
-	out_color += specIndirect * specIndirectTerm + diffIndirect * diffCol;
+	outC += specIndirect * specIndirectTerm + diffIndirect * diffCol;
 #endif
 
+	out_color = outC;
 #if 0
 	count = scount;
 	if(count == 0)

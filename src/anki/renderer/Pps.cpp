@@ -6,12 +6,13 @@
 #include <anki/renderer/Pps.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/Bloom.h>
+#include <anki/renderer/Taa.h>
 #include <anki/renderer/Sslf.h>
 #include <anki/renderer/Tm.h>
 #include <anki/renderer/Is.h>
 #include <anki/renderer/Ms.h>
 #include <anki/renderer/Dbg.h>
-#include <anki/renderer/Smaa.h>
+#include <anki/renderer/DownscaleBlur.h>
 #include <anki/util/Logger.h>
 #include <anki/misc/ConfigSet.h>
 #include <anki/scene/SceneNode.h>
@@ -107,9 +108,6 @@ Error Pps::run(RenderingContext& ctx)
 				"#define LUT_SIZE %u.0\n"
 				"#define DBG_ENABLED %u\n"
 				"#define DRAW_TO_DEFAULT %u\n"
-				"#define SMAA_ENABLED 1\n"
-				"#define SMAA_RT_METRICS vec4(%f, %f, %f, %f)\n"
-				"#define SMAA_PRESET_%s\n"
 				"#define FB_SIZE vec2(float(%u), float(%u))\n",
 				true,
 				m_sharpenEnabled,
@@ -118,38 +116,19 @@ Error Pps::run(RenderingContext& ctx)
 				LUT_SIZE,
 				dbgEnabled,
 				drawToDefaultFb,
-				1.0 / m_r->getWidth(),
-				1.0 / m_r->getHeight(),
-				F32(m_r->getWidth()),
-				F32(m_r->getHeight()),
-				&m_r->getSmaa().m_qualityPerset[0],
 				m_r->getWidth(),
 				m_r->getHeight()));
 		}
 
-		if(!m_vert)
-		{
-			ANKI_CHECK(m_r->createShaderf("shaders/Pps.vert.glsl",
-				m_vert,
-				"#define SMAA_ENABLED 1\n"
-				"#define SMAA_RT_METRICS vec4(%f, %f, %f, %f)\n"
-				"#define SMAA_PRESET_%s\n",
-				1.0 / m_r->getWidth(),
-				1.0 / m_r->getHeight(),
-				F32(m_r->getWidth()),
-				F32(m_r->getHeight()),
-				&m_r->getSmaa().m_qualityPerset[0]));
-		}
-
-		prog = getGrManager().newInstance<ShaderProgram>(m_vert->getGrShader(), frag->getGrShader());
+		m_r->createDrawQuadShaderProgram(frag->getGrShader(), prog);
 	}
 
 	// Bind stuff
-	cmdb->bindTexture(0, 0, m_r->getIs().getRt());
+	cmdb->bindTextureAndSampler(
+		0, 0, m_r->getTaa().getRt(), (drawToDefaultFb) ? m_r->getNearestSampler() : m_r->getLinearSampler());
 	cmdb->bindTexture(0, 1, m_r->getBloom().m_upscale.m_rt);
 	cmdb->bindTexture(0, 2, m_lut->getGrTexture());
 	cmdb->bindTexture(0, 3, m_blueNoise->getGrTexture());
-	cmdb->bindTexture(0, 4, m_r->getSmaa().m_weights.m_rt);
 	if(dbgEnabled)
 	{
 		cmdb->bindTexture(0, 5, m_r->getDbg().getRt());
