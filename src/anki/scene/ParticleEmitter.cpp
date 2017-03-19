@@ -401,11 +401,8 @@ Error ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 
 			const Vec4& origin = p->getPosition();
 
-			for(U i = 0; i < 3; i++)
-			{
-				aabbmin[i] = std::min(aabbmin[i], origin[i]);
-				aabbmax[i] = std::max(aabbmax[i], origin[i]);
-			}
+			aabbmin = aabbmin.min(origin);
+			aabbmax = aabbmax.max(origin);
 
 			F32 lifePercent = (crntTime - p->getTimeOfBirth()) / (p->getTimeOfDeath() - p->getTimeOfBirth());
 

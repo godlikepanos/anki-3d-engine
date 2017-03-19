@@ -2174,39 +2174,67 @@ public:
 	/// Clamp between two values.
 	void clamp(const T& minv, const T& maxv)
 	{
-		for(U i = 0; i < N; ++i)
-		{
-			m_arr[i] = min<T>(max<T>(minv, m_arr[i]), maxv);
-		}
+		*this = max(TV(minv)).min(TV(maxv));
 	}
 
 	/// Get clamped between two values.
 	TV getClamped(const T& minv, const T& maxv) const
 	{
-		TV out;
-		for(U i = 0; i < N; ++i)
-		{
-			out[i] = min<T>(max<T>(minv, m_arr[i]), maxv);
-		}
-		return out;
+		return max(TV(minv)).min(TV(maxv));
 	}
 
 	/// Clamp between two vectors.
 	void clamp(const TV& minv, const TV& maxv)
 	{
-		for(U i = 0; i < N; ++i)
-		{
-			m_arr[i] = min<T>(max<T>(minv[i], m_arr[i]), maxv[i]);
-		}
+		*this = max(minv).min(maxv);
 	}
 
 	/// Get clamped between two vectors.
 	TV getClamped(const TV& minv, const TV& maxv) const
 	{
+		return max(minv).min(maxv);
+	}
+
+	/// Get the min of all components.
+	TV min(const T& b) const
+	{
 		TV out;
 		for(U i = 0; i < N; ++i)
 		{
-			out[i] = min<T>(max<T>(minv[i], m_arr[i]), maxv[i]);
+			out[i] = anki::min<T>(m_arr[i], b);
+		}
+		return out;
+	}
+
+	/// Get the min of all components.
+	TV min(const TV& b) const
+	{
+		TV out;
+		for(U i = 0; i < N; ++i)
+		{
+			out[i] = anki::min<T>(m_arr[i], b[i]);
+		}
+		return out;
+	}
+
+	/// Get the max of all components.
+	TV max(const TV& b) const
+	{
+		TV out;
+		for(U i = 0; i < N; ++i)
+		{
+			out[i] = anki::max<T>(m_arr[i], b[i]);
+		}
+		return out;
+	}
+
+	/// Get the max of all components.
+	TV max(const T& b) const
+	{
+		TV out;
+		for(U i = 0; i < N; ++i)
+		{
+			out[i] = anki::max<T>(m_arr[i], b);
 		}
 		return out;
 	}
