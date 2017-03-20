@@ -236,7 +236,7 @@ Error Renderer::render(RenderingContext& ctx)
 {
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
-	ctx.m_jitterMat = m_jitteredMats16x[m_frameCount & (16 - 1)];
+	ctx.m_jitterMat = m_jitteredMats8x[m_frameCount & (8 - 1)];
 	ctx.m_projMatJitter = ctx.m_jitterMat * ctx.m_projMat;
 	ctx.m_viewProjMatJitter = ctx.m_projMatJitter * ctx.m_viewMat;
 

@@ -8,7 +8,7 @@
 #include "shaders/Tonemapping.glsl"
 
 #define YCBCR 1
-const float BLEND_FACTOR = 1.0 / 16.0;
+const float BLEND_FACTOR = 1.0 / 8.0;
 
 layout(location = 0) in vec2 in_uv;
 
@@ -20,8 +20,7 @@ layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_historyRt;
 
 layout(ANKI_UBO_BINDING(0, 0), std140, row_major) uniform u0_
 {
-	mat4 u_prevViewProjMat;
-	mat4 u_invViewProjMat;
+	mat4 u_prevViewProjMatMulInvViewProjMat;
 };
 
 #if YCBCR
@@ -36,15 +35,9 @@ void main()
 {
 	float depth = textureLod(u_depthRt, in_uv, 0.0).r;
 
-	// Get world position
-	vec4 worldPos4 = u_invViewProjMat * vec4(UV_TO_NDC(in_uv), UV_TO_NDC(depth), 1.0);
-	worldPos4 = worldPos4 / worldPos4.w;
-	vec3 worldPos = worldPos4.xyz;
-
-	// Project pos to get old ndc
-	vec4 oldNdc4 = u_prevViewProjMat * vec4(worldPos, 1.0);
-	vec2 oldNdc = oldNdc4.xy / oldNdc4.w;
-	vec2 oldUv = NDC_TO_UV(oldNdc);
+	// Get prev uv coords
+	vec4 v4 = u_prevViewProjMatMulInvViewProjMat * UV_TO_NDC(vec4(in_uv, depth, 1.0));
+	vec2 oldUv = NDC_TO_UV(v4.xy / v4.w);
 
 	// Read textures
 	vec3 historyCol = sample(u_historyRt, oldUv);

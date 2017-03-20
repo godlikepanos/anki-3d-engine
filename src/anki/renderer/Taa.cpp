@@ -11,13 +11,6 @@
 namespace anki
 {
 
-class TaaUniforms
-{
-public:
-	Mat4 m_prevViewProjMat;
-	Mat4 m_invViewProjMat;
-};
-
 Taa::~Taa()
 {
 }
@@ -78,9 +71,8 @@ void Taa::run(RenderingContext& ctx)
 	cmdb->bindTextureAndSampler(0, 1, m_r->getIs().getRt(), m_r->getNearestSampler());
 	cmdb->bindTextureAndSampler(0, 2, m_rts[(m_r->getFrameCount() + 1) & 1], m_r->getLinearSampler());
 
-	TaaUniforms* unis = allocateAndBindUniforms<TaaUniforms*>(sizeof(TaaUniforms), cmdb, 0, 0);
-	unis->m_prevViewProjMat = ctx.m_jitterMat * ctx.m_prevViewProjMat;
-	unis->m_invViewProjMat = ctx.m_viewProjMatJitter.getInverse();
+	Mat4* unis = allocateAndBindUniforms<Mat4*>(sizeof(Mat4), cmdb, 0, 0);
+	*unis = ctx.m_jitterMat * ctx.m_prevViewProjMat * ctx.m_viewProjMatJitter.getInverse();
 
 	m_r->drawQuad(cmdb);
 	cmdb->endRenderPass();
