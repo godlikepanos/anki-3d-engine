@@ -72,6 +72,11 @@ public:
 		return *m_manager;
 	}
 
+	const GrManager& getManager() const
+	{
+		return *m_manager;
+	}
+
 protected:
 	GrManager* m_manager = nullptr;
 	GLuint m_glName = 0; ///< OpenGL name

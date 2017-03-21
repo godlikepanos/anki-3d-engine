@@ -176,6 +176,44 @@ const U MAX_BINDINGS_PER_DESCRIPTOR_SET = MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUF
 const U MAX_FRAMES_IN_FLIGHT = 3; ///< Triple buffering.
 const U MAX_DESCRIPTOR_SETS = 2; ///< Groups that can be bound at the same time.
 
+const U MAX_GR_OBJECT_NAME_LENGTH = 15;
+
+/// The base of all init infos for GR.
+class GrBaseInitInfo
+{
+public:
+	/// @name The name of the object.
+	GrBaseInitInfo(CString name)
+	{
+		ANKI_ASSERT(name.getLength() > 0 && name.getLength() <= MAX_GR_OBJECT_NAME_LENGTH);
+		memcpy(&m_name[0], &name[0], name.getLength() + 1);
+	}
+
+	GrBaseInitInfo()
+	{
+		m_name[0] = '\0';
+	}
+
+	GrBaseInitInfo(const GrBaseInitInfo& b)
+	{
+		m_name = b.m_name;
+	}
+
+	GrBaseInitInfo& operator=(const GrBaseInitInfo& b)
+	{
+		m_name = b.m_name;
+		return *this;
+	}
+
+	CString getName() const
+	{
+		return (m_name[0] != '\0') ? CString(&m_name[0]) : CString();
+	}
+
+private:
+	Array<char, MAX_GR_OBJECT_NAME_LENGTH + 1> m_name;
+};
+
 /// Compute max number of mipmaps for a 2D texture.
 inline U computeMaxMipmapCount2d(U w, U h, U minSizeOfLastMip = 1)
 {

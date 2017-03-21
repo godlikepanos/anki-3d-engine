@@ -41,7 +41,7 @@ Error Taa::initInternal(const ConfigSet& config)
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 			SamplingFilter::LINEAR));
 
-		FramebufferInitInfo fbInit;
+		FramebufferInitInfo fbInit("taa");
 		fbInit.m_colorAttachmentCount = 1;
 		fbInit.m_colorAttachments[0].m_texture = m_rts[i];
 		fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;

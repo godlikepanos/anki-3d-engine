@@ -77,6 +77,7 @@ Config::Config()
 	newOption("fullscreenDesktopResolution", false);
 	newOption("debugContext", false);
 	newOption("vsync", false);
+	newOption("debugMarkers", false);
 
 	// Core
 	newOption("core.uniformPerFrameMemorySize", 1024 * 1024 * 16);

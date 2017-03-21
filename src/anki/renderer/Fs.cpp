@@ -45,7 +45,7 @@ Error Fs::initInternal(const ConfigSet&)
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 		SamplingFilter::LINEAR));
 
-	FramebufferInitInfo fbInit;
+	FramebufferInitInfo fbInit("forward");
 	fbInit.m_colorAttachmentCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;

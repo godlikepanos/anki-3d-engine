@@ -71,7 +71,7 @@ Error Sm::initInternal(const ConfigSet& config)
 	// Init 2D layers
 	m_spots.create(getAllocator(), config.getNumber("sm.maxLights"));
 
-	FramebufferInitInfo fbInit;
+	FramebufferInitInfo fbInit("shadows");
 	fbInit.m_depthStencilAttachment.m_texture = m_spotTexArray;
 	fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
 	fbInit.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0;

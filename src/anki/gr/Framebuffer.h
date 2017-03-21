@@ -33,16 +33,25 @@ public:
 
 /// Framebuffer initializer. If you require the default framebuffer then set m_colorAttachmentCount to 1 and don't set a
 /// color texture.
-class FramebufferInitInfo
+class FramebufferInitInfo : public GrBaseInitInfo
 {
 public:
 	Array<FramebufferAttachmentInfo, MAX_COLOR_ATTACHMENTS> m_colorAttachments;
 	U32 m_colorAttachmentCount = 0;
 	FramebufferAttachmentInfo m_depthStencilAttachment;
 
-	FramebufferInitInfo() = default;
+	FramebufferInitInfo()
+		: GrBaseInitInfo()
+	{
+	}
+
+	FramebufferInitInfo(CString name)
+		: GrBaseInitInfo(name)
+	{
+	}
 
 	FramebufferInitInfo(const FramebufferInitInfo& b)
+		: GrBaseInitInfo(b)
 	{
 		operator=(b);
 	}
@@ -51,6 +60,8 @@ public:
 
 	FramebufferInitInfo& operator=(const FramebufferInitInfo& b)
 	{
+		GrBaseInitInfo::operator=(b);
+
 		for(U i = 0; i < b.m_colorAttachmentCount; i++)
 		{
 			m_colorAttachments[i] = b.m_colorAttachments[i];

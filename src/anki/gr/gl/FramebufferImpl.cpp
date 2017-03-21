@@ -153,6 +153,11 @@ void FramebufferImpl::attachTextureInternal(
 
 void FramebufferImpl::bind(const GlState& state)
 {
+	if(m_in.getName() && getManager().getImplementation().debugMarkersEnabled())
+	{
+		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, m_glName, 0, &m_in.getName()[0]);
+	}
+
 	if(m_bindDefault)
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -256,6 +261,14 @@ void FramebufferImpl::bind(const GlState& state)
 				glStencilMaskSeparate(GL_FRONT, state.m_stencilWriteMask[0]);
 			}
 		}
+	}
+}
+
+void FramebufferImpl::endRenderPass() const
+{
+	if(m_in.getName() && getManager().getImplementation().debugMarkersEnabled())
+	{
+		glPopDebugGroup();
 	}
 }
 

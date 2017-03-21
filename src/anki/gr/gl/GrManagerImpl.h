@@ -62,11 +62,17 @@ public:
 
 	void pinContextToCurrentThread(Bool pin);
 
+	Bool debugMarkersEnabled() const
+	{
+		return m_debugMarkers;
+	}
+
 private:
 	GrManager* m_manager;
 	GlState* m_state = nullptr;
 	RenderingThread* m_thread = nullptr;
 	WindowingBackend* m_backend = nullptr; ///< The backend of the backend.
+	Bool m_debugMarkers = false;
 
 	ANKI_USE_RESULT Error createBackend(GrManagerInitInfo& init);
 	void destroyBackend();

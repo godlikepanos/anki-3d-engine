@@ -54,7 +54,7 @@ Error FsUpscale::initInternal(const ConfigSet& config)
 	m_r->createDrawQuadShaderProgram(m_frag->getGrShader(), m_prog);
 
 	// Create FB
-	FramebufferInitInfo fbInit;
+	FramebufferInitInfo fbInit("fwdupscale");
 	fbInit.m_colorAttachmentCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_r->getIs().getRt();
 	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::LOAD;

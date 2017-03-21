@@ -7,6 +7,7 @@
 #include <anki/gr/GrManager.h>
 #include <anki/gr/gl/RenderingThread.h>
 #include <anki/gr/gl/GlState.h>
+#include <anki/core/Config.h>
 
 namespace anki
 {
@@ -36,6 +37,8 @@ GrAllocator<U8> GrManagerImpl::getAllocator() const
 
 Error GrManagerImpl::init(GrManagerInitInfo& init)
 {
+	m_debugMarkers = init.m_config->getNumber("debugMarkers");
+
 	// Init the backend of the backend
 	ANKI_CHECK(createBackend(init));
 

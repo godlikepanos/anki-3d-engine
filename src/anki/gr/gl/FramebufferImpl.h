@@ -35,6 +35,8 @@ public:
 	/// Bind it to the state. Call it in rendering thread
 	void bind(const GlState& state);
 
+	void endRenderPass() const;
+
 	U getColorBufferCount() const
 	{
 		return m_in.m_colorAttachmentCount;

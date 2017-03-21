@@ -41,7 +41,7 @@ Error DownscaleBlur::initSubpass(U idx, const UVec2& inputTexSize)
 		SamplingFilter::LINEAR));
 
 	// FB
-	FramebufferInitInfo fbInit;
+	FramebufferInitInfo fbInit("downblur");
 	fbInit.m_colorAttachmentCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = pass.m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;

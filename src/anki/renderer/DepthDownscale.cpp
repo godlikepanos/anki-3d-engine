@@ -28,7 +28,7 @@ Error HalfDepth::init(const ConfigSet&)
 		SamplingFilter::LINEAR));
 
 	// Create FB
-	FramebufferInitInfo fbInit;
+	FramebufferInitInfo fbInit("halfdepth");
 	fbInit.m_depthStencilAttachment.m_texture = m_depthRt;
 	fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::DONT_CARE;
 	fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
@@ -91,7 +91,7 @@ Error QuarterDepth::init(const ConfigSet&)
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::SAMPLED_FRAGMENT,
 		SamplingFilter::LINEAR));
 
-	FramebufferInitInfo fbInit;
+	FramebufferInitInfo fbInit("quarterdepth");
 	fbInit.m_colorAttachments[0].m_texture = m_depthRt;
 	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
 	fbInit.m_colorAttachmentCount = 1;

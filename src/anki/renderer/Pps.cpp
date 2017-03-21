@@ -47,7 +47,7 @@ Error Pps::initInternal(const ConfigSet& config)
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::SAMPLED_FRAGMENT,
 			SamplingFilter::LINEAR));
 
-		FramebufferInitInfo fbInit;
+		FramebufferInitInfo fbInit("pps");
 		fbInit.m_colorAttachmentCount = 1;
 		fbInit.m_colorAttachments[0].m_texture = m_rt;
 		fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;

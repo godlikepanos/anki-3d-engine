@@ -868,6 +868,25 @@ void CommandBuffer::beginRenderPass(FramebufferPtr fb)
 
 void CommandBuffer::endRenderPass()
 {
+	class Command final : public GlCommand
+	{
+	public:
+		FramebufferImpl* m_fb;
+
+		Command(FramebufferImpl* fb)
+			: m_fb(fb)
+		{
+			ANKI_ASSERT(fb);
+		}
+
+		Error operator()(GlState&)
+		{
+			m_fb->endRenderPass();
+			return ErrorCode::NONE;
+		}
+	};
+
+	m_impl->pushBackNewCommand<Command>(m_impl->m_state.m_fb);
 	m_impl->m_state.endRenderPass();
 }
 

@@ -139,7 +139,7 @@ Error VolumetricHBlur::init(const ConfigSet& config)
 		SamplingFilter::LINEAR));
 
 	// Create FBs
-	FramebufferInitInfo fbInit;
+	FramebufferInitInfo fbInit("volumetric");
 	fbInit.m_colorAttachmentCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;

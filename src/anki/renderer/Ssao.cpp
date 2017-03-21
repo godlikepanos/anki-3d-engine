@@ -39,7 +39,7 @@ Error SsaoMain::init(const ConfigSet& config)
 		SamplingFilter::LINEAR));
 
 	// FB
-	FramebufferInitInfo fbInit;
+	FramebufferInitInfo fbInit("ssaomain");
 	fbInit.m_colorAttachmentCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
@@ -128,7 +128,7 @@ Error SsaoHBlur::init(const ConfigSet& config)
 		SamplingFilter::LINEAR));
 
 	// FB
-	FramebufferInitInfo fbInit;
+	FramebufferInitInfo fbInit("ssaoblur");
 	fbInit.m_colorAttachmentCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;

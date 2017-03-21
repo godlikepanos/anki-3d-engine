@@ -52,7 +52,7 @@ Error Ms::createRt()
 	loadop = AttachmentLoadOperation::CLEAR;
 #endif
 
-	FramebufferInitInfo fbInit;
+	FramebufferInitInfo fbInit("gbuffer");
 	fbInit.m_colorAttachmentCount = MS_COLOR_ATTACHMENT_COUNT;
 	fbInit.m_colorAttachments[0].m_texture = m_rt0;
 	fbInit.m_colorAttachments[0].m_loadOperation = loadop;

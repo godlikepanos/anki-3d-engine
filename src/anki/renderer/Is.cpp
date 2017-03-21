@@ -129,7 +129,7 @@ Error Is::initInternal(const ConfigSet& config)
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 		SamplingFilter::LINEAR));
 
-	FramebufferInitInfo fbInit;
+	FramebufferInitInfo fbInit("lightp");
 	fbInit.m_colorAttachmentCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
