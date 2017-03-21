@@ -95,6 +95,11 @@ void main()
 
 	vec2 ndc = in_uv * 2.0 - 1.0;
 
+	vec3 farPos;
+	farPos.xy = ndc * u_lightingUniforms.projectionParams.xy * farZ;
+	farPos.z = farZ;
+	vec3 viewDir = normalize(farPos);
+
 	uint i = uint(in_uv.x * float(CLUSTER_COUNT.x));
 	uint j = uint(in_uv.y * float(CLUSTER_COUNT.y));
 	uint ij = j * CLUSTER_COUNT.x + i;
@@ -144,9 +149,7 @@ void main()
 				break;
 			}
 
-			vec3 fragPos;
-			fragPos.z = zMedian;
-			fragPos.xy = ndc * u_lightingUniforms.projectionParams.xy * fragPos.z;
+			vec3 fragPos = viewDir * (zMedian / viewDir.z);
 
 			newCol += computeLightColor(fragPos, plightCount, plightIdx, slightCount, slightIdx);
 		}

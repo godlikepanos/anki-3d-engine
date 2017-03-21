@@ -142,7 +142,8 @@ public:
 	/// @{
 
 	/// Bind vertex buffer.
-	void bindVertexBuffer(U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride);
+	void bindVertexBuffer(
+		U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride, VertexStepRate stepRate = VertexStepRate::VERTEX);
 
 	/// Setup a vertex attribute.
 	void setVertexAttribute(U32 location, U32 buffBinding, const PixelFormat& fmt, PtrSize relativeOffset);

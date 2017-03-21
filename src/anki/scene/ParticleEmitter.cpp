@@ -284,6 +284,7 @@ Error ParticleEmitter::buildRendering(const RenderingBuildInfoIn& in, RenderingB
 	out.m_vertexBufferBindingCount = 1;
 	out.m_vertexBufferBindings[0].m_token = m_vertBuffToken;
 	out.m_vertexBufferBindings[0].m_stride = VERTEX_SIZE;
+	out.m_vertexBufferBindings[0].m_stepRate = VertexStepRate::INSTANCE;
 
 	out.m_vertexAttributeCount = 3;
 	out.m_vertexAttributes[0].m_bufferBinding = 0;
@@ -296,10 +297,11 @@ Error ParticleEmitter::buildRendering(const RenderingBuildInfoIn& in, RenderingB
 	out.m_vertexAttributes[2].m_format = PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT);
 	out.m_vertexAttributes[2].m_relativeOffset = sizeof(Vec3) + sizeof(F32);
 
-	out.m_topology = PrimitiveTopology::POINTS;
+	out.m_topology = PrimitiveTopology::TRIANGLE_STRIP;
 
 	out.m_drawArrays = true;
-	out.m_drawcall.m_arrays.m_count = m_aliveParticlesCount;
+	out.m_drawcall.m_arrays.m_instanceCount = m_aliveParticlesCount;
+	out.m_drawcall.m_arrays.m_count = 4;
 
 	// The particles are already in world position but materials use the MVP
 	out.m_hasTransform = true;

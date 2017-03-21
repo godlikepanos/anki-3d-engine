@@ -75,7 +75,8 @@ void CommandBuffer::finish()
 	getManager().getImplementation().getRenderingThread().finishCommandBuffer(CommandBufferPtr(this));
 }
 
-void CommandBuffer::bindVertexBuffer(U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride)
+void CommandBuffer::bindVertexBuffer(
+	U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride, VertexStepRate stepRate)
 {
 	class Cmd final : public GlCommand
 	{
@@ -84,18 +85,21 @@ void CommandBuffer::bindVertexBuffer(U32 binding, BufferPtr buff, PtrSize offset
 		U32 m_binding;
 		PtrSize m_offset;
 		PtrSize m_stride;
+		Bool8 m_instanced;
 
-		Cmd(U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride)
+		Cmd(U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride, Bool instanced)
 			: m_buff(buff)
 			, m_binding(binding)
 			, m_offset(offset)
 			, m_stride(stride)
+			, m_instanced(instanced)
 		{
 		}
 
 		Error operator()(GlState& state)
 		{
 			glBindVertexBuffer(m_binding, m_buff->m_impl->getGlName(), m_offset, m_stride);
+			glVertexBindingDivisor(m_binding, (m_instanced) ? 1 : 0);
 			return ErrorCode::NONE;
 		}
 	};
@@ -103,9 +107,9 @@ void CommandBuffer::bindVertexBuffer(U32 binding, BufferPtr buff, PtrSize offset
 	ANKI_ASSERT(buff);
 	ANKI_ASSERT(stride > 0);
 
-	if(m_impl->m_state.bindVertexBuffer(binding, buff, offset, stride))
+	if(m_impl->m_state.bindVertexBuffer(binding, buff, offset, stride, stepRate))
 	{
-		m_impl->pushBackNewCommand<Cmd>(binding, buff, offset, stride);
+		m_impl->pushBackNewCommand<Cmd>(binding, buff, offset, stride, stepRate == VertexStepRate::INSTANCE);
 	}
 }
 

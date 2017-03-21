@@ -25,13 +25,13 @@ layout(location = POSITION_LOCATION) in vec3 in_position;
 layout(location = SCALE_LOCATION) in float in_scale;
 layout(location = ALPHA_LOCATION) in float in_alpha;
 
-layout(location = 0) out vec3 out_vertPosViewSpace;
-layout(location = 1) flat out float out_alpha;
+layout(location = 0) flat out float out_alpha;
+layout(location = 1) out vec2 out_uv;
+layout(location = 2) out vec3 out_posViewSpace;
 
 out gl_PerVertex
 {
 	vec4 gl_Position;
-	float gl_PointSize;
 };
 
 #define setPositionVec3_DEFINED
@@ -53,23 +53,23 @@ void writePositionMvp(in mat4 mvp)
 }
 
 #define particle_DEFINED
-void particle(in mat4 mvp)
+void particle(in mat4 mvp, in mat3 camRot, in mat4 viewMat)
 {
-	ANKI_WRITE_POSITION(mvp * vec4(in_position, 1));
+	const vec2 POSITIONS[4] = vec2[](vec2(-0.5, -0.5), vec2(0.5, -0.5), vec2(-0.5, 0.5), vec2(0.5, 0.5));
+	vec3 worldPos = camRot * vec3(POSITIONS[gl_VertexID] * in_scale, 0.0) + in_position;
+	ANKI_WRITE_POSITION(mvp * vec4(worldPos, 1.0));
+
+	out_posViewSpace = (viewMat * vec4(worldPos, 1.0)).xyz;
+
 	out_alpha = in_alpha;
-	gl_PointSize = in_scale * u_lightingUniforms.rendererSizeTimePad1.x * 0.5 / gl_Position.w;
+
+	out_uv = POSITIONS[gl_VertexID] + 0.5;
 }
 
 #define writeAlpha_DEFINED
 void writeAlpha(in float alpha)
 {
 	out_alpha = alpha;
-}
-
-#define writeVertPosViewSpace_DEFINED
-void writeVertPosViewSpace(in mat4 modelViewMat)
-{
-	out_vertPosViewSpace = vec3(modelViewMat * vec4(in_position, 1.0));
 }
 
 #endif

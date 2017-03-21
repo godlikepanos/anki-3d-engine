@@ -151,8 +151,7 @@ Error ParticleEmitterResource::load(const ResourceFilename& filename)
 	// sanity checks
 	//
 
-	static const char* ERROR = "Particle emmiter: "
-							   "Incorrect or missing value %s";
+	static const char* ERROR = "Particle emmiter: Incorrect or missing value %s";
 
 	if(m_particle.m_life <= 0.0)
 	{

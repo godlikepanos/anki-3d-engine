@@ -117,16 +117,18 @@ class RenderingVertexBufferBinding : public VertexBufferBinding
 {
 public:
 	StagingGpuMemoryToken m_token;
+	VertexStepRate m_stepRate = VertexStepRate::VERTEX;
 
 	Bool operator==(const RenderingVertexBufferBinding& b) const
 	{
 		if(m_token)
 		{
-			return m_token == b.m_token;
+			return m_token == b.m_token && m_stepRate == b.m_stepRate;
 		}
 		else
 		{
-			return static_cast<const VertexBufferBinding&>(*this) == static_cast<const VertexBufferBinding&>(b);
+			return static_cast<const VertexBufferBinding&>(*this) == static_cast<const VertexBufferBinding&>(b)
+				&& m_stepRate == b.m_stepRate;
 		}
 	}
 

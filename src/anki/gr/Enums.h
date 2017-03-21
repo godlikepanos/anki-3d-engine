@@ -115,7 +115,8 @@ enum class VertexStepRate : U8
 {
 	VERTEX,
 	INSTANCE,
-	DRAW
+	DRAW,
+	COUNT
 };
 
 enum class ComponentFormat : U8

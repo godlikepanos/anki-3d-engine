@@ -23,8 +23,9 @@ layout(ANKI_TEX_BINDING(1, 0)) uniform sampler2D anki_msDepthRt;
 #define anki_u_time u_lightingUniforms.rendererSizeTimePad1.z
 #define RENDERER_SIZE (u_lightingUniforms.rendererSizeTimePad1.xy * 0.5)
 
-layout(location = 0) in vec3 in_vertPosViewSpace;
-layout(location = 1) flat in float in_alpha;
+layout(location = 0) flat in float in_alpha;
+layout(location = 1) in vec2 in_uv;
+layout(location = 2) in vec3 in_posViewSpace;
 
 layout(location = 0) out vec4 out_color;
 
@@ -82,7 +83,7 @@ void particleSoftTextureAlpha(in sampler2D depthMap, in sampler2D tex, in float 
 #define particleTextureAlpha_DEFINED
 void particleTextureAlpha(in sampler2D tex, vec4 mulColor, vec4 addColor, in float alpha)
 {
-	vec4 color = texture(tex, gl_PointCoord) * mulColor + addColor;
+	vec4 color = texture(tex, in_uv) * mulColor + addColor;
 	color.a *= alpha;
 
 	writeGBuffer(color);
@@ -117,17 +118,7 @@ vec3 computeLightColor(vec3 diffCol)
 	vec3 outColor = vec3(0.0);
 
 	// Compute frag pos in view space
-	vec3 fragPos;
-	{
-		float depth = gl_FragCoord.z;
-		fragPos.z = u_lightingUniforms.projectionParams.z / (u_lightingUniforms.projectionParams.w + depth);
-
-		vec2 screenSize = 1.0 / RENDERER_SIZE;
-
-		vec2 ndc = gl_FragCoord.xy * screenSize * 2.0 - 1.0;
-
-		fragPos.xy = ndc * u_lightingUniforms.projectionParams.xy * fragPos.z;
-	}
+	vec3 fragPos = in_posViewSpace;
 
 	// Find the cluster and then the light counts
 	uint clusterIdx = computeClusterIndex(gl_FragCoord.xy / RENDERER_SIZE,
@@ -209,7 +200,7 @@ vec3 computeLightColor(vec3 diffCol)
 #define particleTextureAlphaLight_DEFINED
 void particleTextureAlphaLight(in sampler2D tex, in float alpha)
 {
-	vec4 color = texture(tex, gl_PointCoord);
+	vec4 color = texture(tex, in_uv);
 	color.a *= alpha;
 
 	color.rgb = computeLightColor(color.rgb);
@@ -222,7 +213,7 @@ void particleTextureAlphaLight(in sampler2D tex, in float alpha)
 #define particleAnimatedTextureAlphaLight_DEFINED
 void particleAnimatedTextureAlphaLight(sampler2DArray tex, float alpha, float layerCount, float period)
 {
-	vec4 color = readAnimatedTextureRgba(tex, layerCount, period, gl_PointCoord, anki_u_time);
+	vec4 color = readAnimatedTextureRgba(tex, layerCount, period, in_uv, anki_u_time);
 
 	color.rgb = computeLightColor(color.rgb);
 

@@ -64,16 +64,18 @@ public:
 		BufferImpl* m_buff = nullptr;
 		PtrSize m_offset = 0;
 		PtrSize m_stride = 0;
+		VertexStepRate m_stepRate = VertexStepRate::COUNT;
 	};
 
 	Array<VertexBuffer, MAX_VERTEX_ATTRIBUTES> m_vertBuffs;
 
-	Bool bindVertexBuffer(U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride)
+	Bool bindVertexBuffer(U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride, VertexStepRate stepRate)
 	{
 		VertexBuffer& b = m_vertBuffs[binding];
 		b.m_buff = buff->m_impl.get();
 		b.m_offset = offset;
 		b.m_stride = stride;
+		b.m_stepRate = stepRate;
 		return true;
 	}
 

@@ -213,6 +213,9 @@ Error SetupRenderableVariableVisitor::visit(const TRenderableVariableTemplate& r
 		ANKI_ASSERT(cachedTrfs == 0 && "Cannot have transform");
 		uniSet(mvar, &vp, 1);
 		break;
+	case BuiltinMaterialVariableId::V_MATRIX:
+		uniSet(mvar, &v, 1);
+		break;
 	case BuiltinMaterialVariableId::NORMAL_MATRIX:
 	{
 		ANKI_ASSERT(cachedTrfs > 0);
@@ -246,6 +249,13 @@ Error SetupRenderableVariableVisitor::visit(const TRenderableVariableTemplate& r
 		}
 
 		uniSet(mvar, &bmvp[0], cachedTrfs);
+		break;
+	}
+	case BuiltinMaterialVariableId::CAMERA_ROT_MATRIX:
+	{
+		// Calc the billboard rotation matrix
+		Mat3 rot = v.getRotationPart().getTransposed();
+		uniSet(mvar, &rot, 1);
 		break;
 	}
 	case BuiltinMaterialVariableId::MAX_TESS_LEVEL:
@@ -377,12 +387,13 @@ Error RenderableDrawer::flushDrawcall(DrawContext& ctx, CompleteRenderingBuildIn
 		const RenderingVertexBufferBinding& binding = build.m_out.m_vertexBufferBindings[i];
 		if(binding.m_buffer)
 		{
-			cmdb->bindVertexBuffer(i, binding.m_buffer, binding.m_offset, binding.m_stride);
+			cmdb->bindVertexBuffer(i, binding.m_buffer, binding.m_offset, binding.m_stride, binding.m_stepRate);
 		}
 		else
 		{
 			ANKI_ASSERT(!!(binding.m_token));
-			cmdb->bindVertexBuffer(i, binding.m_token.m_buffer, binding.m_token.m_offset, binding.m_stride);
+			cmdb->bindVertexBuffer(
+				i, binding.m_token.m_buffer, binding.m_token.m_offset, binding.m_stride, binding.m_stepRate);
 		}
 	}
 

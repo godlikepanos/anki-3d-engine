@@ -160,6 +160,10 @@ static ANKI_USE_RESULT Error computeBuiltin(const CString& name, BuiltinMaterial
 	{
 		out = BuiltinMaterialVariableId::VP_MATRIX;
 	}
+	else if(name == "anki_viewMatrix")
+	{
+		out = BuiltinMaterialVariableId::V_MATRIX;
+	}
 	else if(name == "anki_n")
 	{
 		out = BuiltinMaterialVariableId::NORMAL_MATRIX;
@@ -167,6 +171,10 @@ static ANKI_USE_RESULT Error computeBuiltin(const CString& name, BuiltinMaterial
 	else if(name == "anki_billboardMvp")
 	{
 		out = BuiltinMaterialVariableId::BILLBOARD_MVP_MATRIX;
+	}
+	else if(name == "anki_cameraRotation")
+	{
+		out = BuiltinMaterialVariableId::CAMERA_ROT_MATRIX;
 	}
 	else if(name == "anki_tessLevel")
 	{
@@ -204,11 +212,17 @@ static ShaderVariableDataType getBuiltinType(BuiltinMaterialVariableId in)
 	case BuiltinMaterialVariableId::VP_MATRIX:
 		out = ShaderVariableDataType::MAT4;
 		break;
+	case BuiltinMaterialVariableId::V_MATRIX:
+		out = ShaderVariableDataType::MAT4;
+		break;
 	case BuiltinMaterialVariableId::NORMAL_MATRIX:
 		out = ShaderVariableDataType::MAT3;
 		break;
 	case BuiltinMaterialVariableId::BILLBOARD_MVP_MATRIX:
 		out = ShaderVariableDataType::MAT4;
+		break;
+	case BuiltinMaterialVariableId::CAMERA_ROT_MATRIX:
+		out = ShaderVariableDataType::MAT3;
 		break;
 	case BuiltinMaterialVariableId::MAX_TESS_LEVEL:
 		out = ShaderVariableDataType::FLOAT;
