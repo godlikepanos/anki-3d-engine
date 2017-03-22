@@ -176,7 +176,9 @@ void main()
 		appendDecalColors(decal, fragPos, diffCol, roughness);
 	}
 
-	float a2 = pow(roughness, 2.0);
+	// Don't allow zero a2 because we may end up with division with zero
+	float a2 = roughness * 0.9 + 0.1;
+	a2 *= a2;
 
 	// Ambient and emissive color
 	vec3 outC = diffCol * emission;

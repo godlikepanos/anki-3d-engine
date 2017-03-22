@@ -137,7 +137,7 @@ void readGBuffer(in sampler2D rt0, in sampler2D rt1, in sampler2D rt2, in vec2 u
 
 	comp = textureLod(rt1, uv, lod);
 	g.specular = comp.xyz;
-	g.roughness = max(EPSILON, comp.w);
+	g.roughness = comp.w;
 
 	comp = textureLod(rt2, uv, lod);
 	g.normal = comp.xyz * 2.0 - 1.0;
