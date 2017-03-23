@@ -127,7 +127,9 @@ Error Is::initInternal(const ConfigSet& config)
 		m_r->getHeight(),
 		IS_COLOR_ATTACHMENT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-		SamplingFilter::LINEAR));
+		SamplingFilter::LINEAR,
+		1,
+		"lightp"));
 
 	FramebufferInitInfo fbInit("lightp");
 	fbInit.m_colorAttachmentCount = 1;

@@ -43,7 +43,9 @@ Error Fs::initInternal(const ConfigSet&)
 		m_height,
 		FS_COLOR_ATTACHMENT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-		SamplingFilter::LINEAR));
+		SamplingFilter::LINEAR,
+		1,
+		"forward"));
 
 	FramebufferInitInfo fbInit("forward");
 	fbInit.m_colorAttachmentCount = 1;

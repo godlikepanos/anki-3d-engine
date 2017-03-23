@@ -49,7 +49,7 @@ Error Sm::initInternal(const ConfigSet& config)
 	//
 
 	// Create shadowmaps array
-	TextureInitInfo sminit;
+	TextureInitInfo sminit("shadows");
 	sminit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
 	sminit.m_usageWhenEncountered = TextureUsageBit::SAMPLED_FRAGMENT;
 	sminit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;

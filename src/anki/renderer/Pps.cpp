@@ -45,7 +45,9 @@ Error Pps::initInternal(const ConfigSet& config)
 			m_r->getHeight(),
 			RT_PIXEL_FORMAT,
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::SAMPLED_FRAGMENT,
-			SamplingFilter::LINEAR));
+			SamplingFilter::LINEAR,
+			1,
+			"pps"));
 
 		FramebufferInitInfo fbInit("pps");
 		fbInit.m_colorAttachmentCount = 1;

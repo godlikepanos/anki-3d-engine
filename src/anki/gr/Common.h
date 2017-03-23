@@ -185,13 +185,20 @@ public:
 	/// @name The name of the object.
 	GrBaseInitInfo(CString name)
 	{
-		ANKI_ASSERT(name.getLength() > 0 && name.getLength() <= MAX_GR_OBJECT_NAME_LENGTH);
-		memcpy(&m_name[0], &name[0], name.getLength() + 1);
+		if(name)
+		{
+			ANKI_ASSERT(name.getLength() <= MAX_GR_OBJECT_NAME_LENGTH);
+			memcpy(&m_name[0], &name[0], name.getLength() + 1);
+		}
+		else
+		{
+			m_name[0] = '\0';
+		}
 	}
 
 	GrBaseInitInfo()
+		: GrBaseInitInfo(CString())
 	{
-		m_name[0] = '\0';
 	}
 
 	GrBaseInitInfo(const GrBaseInitInfo& b)

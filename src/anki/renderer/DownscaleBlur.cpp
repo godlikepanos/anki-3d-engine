@@ -38,7 +38,9 @@ Error DownscaleBlur::initSubpass(U idx, const UVec2& inputTexSize)
 		IS_COLOR_ATTACHMENT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
 			| TextureUsageBit::SAMPLED_COMPUTE,
-		SamplingFilter::LINEAR));
+		SamplingFilter::LINEAR,
+		1,
+		"downblur"));
 
 	// FB
 	FramebufferInitInfo fbInit("downblur");

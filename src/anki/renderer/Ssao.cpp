@@ -36,7 +36,9 @@ Error SsaoMain::init(const ConfigSet& config)
 		m_ssao->m_height,
 		Ssao::RT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::CLEAR,
-		SamplingFilter::LINEAR));
+		SamplingFilter::LINEAR,
+		1,
+		"ssaomain"));
 
 	// FB
 	FramebufferInitInfo fbInit("ssaomain");
@@ -97,7 +99,7 @@ void SsaoMain::run(RenderingContext& ctx)
 	cmdb->bindShaderProgram(m_prog);
 
 	cmdb->bindTexture(0, 0, m_r->getDepthDownscale().m_qd.m_depthRt);
-	cmdb->bindTexture(0, 1, m_r->getMs().m_rt2);
+	cmdb->bindTextureAndSampler(0, 1, m_r->getMs().m_rt2, m_r->getLinearSampler());
 	cmdb->bindTexture(0, 2, m_noiseTex->getGrTexture());
 
 	Vec4* unis = allocateAndBindUniforms<Vec4*>(sizeof(Vec4) * 2, cmdb, 0, 0);
@@ -125,7 +127,9 @@ Error SsaoHBlur::init(const ConfigSet& config)
 		m_ssao->m_height,
 		Ssao::RT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		SamplingFilter::LINEAR));
+		SamplingFilter::LINEAR,
+		1,
+		"ssaoblur"));
 
 	// FB
 	FramebufferInitInfo fbInit("ssaoblur");

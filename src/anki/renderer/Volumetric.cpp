@@ -20,16 +20,18 @@ Error VolumetricMain::init(const ConfigSet& config)
 	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseLdrRgb64x64.ankitex", m_noiseTex));
 
 	// RT
-	m_rt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_vol->m_width,
+	TextureInitInfo rtInit = m_r->create2DRenderTargetInitInfo(m_vol->m_width,
 		m_vol->m_height,
 		IS_COLOR_ATTACHMENT_PIXEL_FORMAT,
-		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE | TextureUsageBit::CLEAR,
+		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 		SamplingFilter::LINEAR,
 		1,
-		"RVolMain"));
+		"volmain");
+	rtInit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
+	m_rt = m_r->createAndClearRenderTarget(rtInit);
 
 	// FB
-	FramebufferInitInfo fbInit;
+	FramebufferInitInfo fbInit("volmain");
 	fbInit.m_colorAttachmentCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::LOAD;
@@ -136,10 +138,12 @@ Error VolumetricHBlur::init(const ConfigSet& config)
 		m_vol->m_height,
 		IS_COLOR_ATTACHMENT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		SamplingFilter::LINEAR));
+		SamplingFilter::LINEAR,
+		1,
+		"volblur"));
 
 	// Create FBs
-	FramebufferInitInfo fbInit("volumetric");
+	FramebufferInitInfo fbInit("volblur");
 	fbInit.m_colorAttachmentCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;

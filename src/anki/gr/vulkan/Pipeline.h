@@ -172,14 +172,14 @@ public:
 	{
 	}
 
-	void bindVertexBuffer(U32 binding, PtrSize stride)
+	void bindVertexBuffer(U32 binding, PtrSize stride, VertexStepRate stepRate)
 	{
 		VertexBufferBinding b;
 		b.m_stride = stride;
-		b.m_stepRate = VertexStepRate::VERTEX;
+		b.m_stepRate = stepRate;
 		if(m_state.m_vertex.m_bindings[binding] != b)
 		{
-			m_state.m_vertex.m_bindings[binding].m_stride = stride;
+			m_state.m_vertex.m_bindings[binding] = b;
 			m_dirty.m_vertBindings.set(binding);
 		}
 		m_set.m_vertBindings.set(binding);

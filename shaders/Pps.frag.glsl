@@ -107,11 +107,7 @@ vec3 colorGrading(in vec3 color)
 
 void main()
 {
-#if DRAW_TO_DEFAULT && defined(ANKI_VK)
-	vec2 uv = vec2(in_uv.x, 1.0 - in_uv.y);
-#else
 	vec2 uv = in_uv.xy;
-#endif
 
 #if SHARPEN_ENABLED
 	out_color = sharpen(u_isRt, uv);

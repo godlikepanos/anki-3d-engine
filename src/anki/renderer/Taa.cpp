@@ -39,7 +39,9 @@ Error Taa::initInternal(const ConfigSet& config)
 			m_r->getHeight(),
 			IS_COLOR_ATTACHMENT_PIXEL_FORMAT,
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-			SamplingFilter::LINEAR));
+			SamplingFilter::LINEAR,
+			1,
+			"taa"));
 
 		FramebufferInitInfo fbInit("taa");
 		fbInit.m_colorAttachmentCount = 1;
@@ -69,6 +71,7 @@ void Taa::run(RenderingContext& ctx)
 	cmdb->bindShaderProgram(m_prog);
 	cmdb->bindTextureAndSampler(0, 0, m_r->getMs().m_depthRt, m_r->getNearestSampler());
 	cmdb->bindTextureAndSampler(0, 1, m_r->getIs().getRt(), m_r->getNearestSampler());
+	cmdb->informTextureCurrentUsage(m_rts[(m_r->getFrameCount() + 1) & 1], TextureUsageBit::SAMPLED_FRAGMENT);
 	cmdb->bindTextureAndSampler(0, 2, m_rts[(m_r->getFrameCount() + 1) & 1], m_r->getLinearSampler());
 
 	Mat4* unis = allocateAndBindUniforms<Mat4*>(sizeof(Mat4), cmdb, 0, 0);

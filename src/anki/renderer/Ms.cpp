@@ -26,26 +26,34 @@ Error Ms::createRt()
 		MS_DEPTH_ATTACHMENT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE
 			| TextureUsageBit::GENERATE_MIPMAPS,
-		SamplingFilter::NEAREST));
+		SamplingFilter::NEAREST,
+		1,
+		"gbuffdepth"));
 
 	m_rt0 = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_r->getWidth(),
 		m_r->getHeight(),
 		MS_COLOR_ATTACHMENT_PIXEL_FORMATS[0],
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		SamplingFilter::NEAREST));
+		SamplingFilter::NEAREST,
+		1,
+		"gbuffrt0"));
 
 	m_rt1 = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_r->getWidth(),
 		m_r->getHeight(),
 		MS_COLOR_ATTACHMENT_PIXEL_FORMATS[1],
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		SamplingFilter::NEAREST));
+		SamplingFilter::NEAREST,
+		1,
+		"gbuffrt1"));
 
 	m_rt2 = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_r->getWidth(),
 		m_r->getHeight(),
 		MS_COLOR_ATTACHMENT_PIXEL_FORMATS[2],
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
 			| TextureUsageBit::GENERATE_MIPMAPS,
-		SamplingFilter::NEAREST));
+		SamplingFilter::NEAREST,
+		1,
+		"gbuffrt2"));
 
 	AttachmentLoadOperation loadop = AttachmentLoadOperation::DONT_CARE;
 #if ANKI_EXTRA_CHECKS

@@ -304,7 +304,7 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 
 	ANKI_VK_CHECK(vkCreateImage(getDevice(), &ci, nullptr, &m_imageHandle));
 	getGrManagerImpl().trySetVulkanHandleName(
-		init.m_name, VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, ptrToNumber(m_imageHandle));
+		init.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, ptrToNumber(m_imageHandle));
 
 	// Allocate memory
 	//

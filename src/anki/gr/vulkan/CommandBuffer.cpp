@@ -56,9 +56,10 @@ void CommandBuffer::finish()
 	}
 }
 
-void CommandBuffer::bindVertexBuffer(U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride)
+void CommandBuffer::bindVertexBuffer(
+	U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride, VertexStepRate stepRate)
 {
-	m_impl->bindVertexBuffer(binding, buff, offset, stride);
+	m_impl->bindVertexBuffer(binding, buff, offset, stride, stepRate);
 }
 
 void CommandBuffer::setVertexAttribute(U32 location, U32 buffBinding, const PixelFormat& fmt, PtrSize relativeOffset)

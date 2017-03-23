@@ -14,7 +14,7 @@ namespace anki
 /// @{
 
 /// Sampler initializer.
-class SamplerInitInfo
+class SamplerInitInfo : public GrBaseInitInfo
 {
 public:
 	F32 m_minLod = -1000.0;
@@ -25,20 +25,26 @@ public:
 	I8 m_anisotropyLevel = 0;
 	Bool8 m_repeat = true; ///< Repeat or clamp.
 
+	SamplerInitInfo() = default;
+
+	SamplerInitInfo(CString name)
+		: GrBaseInitInfo(name)
+	{
+	}
+
 	U64 computeHash() const
 	{
-		return anki::computeHash(this, offsetof(SamplerInitInfo, m_repeat) + sizeof(m_repeat));
+		const U8* start = reinterpret_cast<const U8*>(&m_minLod);
+		const U8* end = reinterpret_cast<const U8*>(&m_repeat) + sizeof(m_repeat);
+		ANKI_ASSERT((end - start == 13) && "Class needs to be tightly packed since we hash it");
+		return anki::computeHash(start, end - start);
 	}
 };
 
-static_assert(offsetof(SamplerInitInfo, m_repeat) == 12, "Class needs to be tightly packed since we hash it");
-
 /// Texture initializer.
-class TextureInitInfo
+class TextureInitInfo : public GrBaseInitInfo
 {
 public:
-	CString m_name; ///< Optional
-
 	TextureType m_type = TextureType::_2D;
 
 	TextureUsageBit m_usage = TextureUsageBit::NONE; ///< How the texture will be used.
@@ -57,6 +63,14 @@ public:
 	U8 m_samples = 1;
 
 	SamplerInitInfo m_sampling;
+
+	TextureInitInfo() = default;
+
+	TextureInitInfo(CString name)
+		: GrBaseInitInfo(name)
+		, m_sampling(name)
+	{
+	}
 };
 
 /// GPU texture

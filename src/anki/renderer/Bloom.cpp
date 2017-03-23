@@ -32,10 +32,12 @@ Error BloomExposure::init(const ConfigSet& config)
 		m_height,
 		BLOOM_RT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		SamplingFilter::LINEAR));
+		SamplingFilter::LINEAR,
+		1,
+		"bloomexp"));
 
 	// Create FBs
-	FramebufferInitInfo fbInit("bloomex");
+	FramebufferInitInfo fbInit("bloomexp");
 	fbInit.m_colorAttachmentCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
@@ -103,10 +105,12 @@ Error BloomUpscale::init(const ConfigSet& config)
 		m_height,
 		BLOOM_RT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		SamplingFilter::LINEAR));
+		SamplingFilter::LINEAR,
+		1,
+		"bloomupscale"));
 
 	// Create FBs
-	FramebufferInitInfo fbInit("bloomup");
+	FramebufferInitInfo fbInit("bloomupscale");
 	fbInit.m_colorAttachmentCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;

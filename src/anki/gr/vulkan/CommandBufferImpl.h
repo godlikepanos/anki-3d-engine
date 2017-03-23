@@ -72,10 +72,10 @@ public:
 		return !!(m_flags & CommandBufferFlag::SECOND_LEVEL);
 	}
 
-	void bindVertexBuffer(U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride)
+	void bindVertexBuffer(U32 binding, BufferPtr buff, PtrSize offset, PtrSize stride, VertexStepRate stepRate)
 	{
 		commandCommon();
-		m_state.bindVertexBuffer(binding, stride);
+		m_state.bindVertexBuffer(binding, stride, stepRate);
 		VkBuffer vkbuff = buff->m_impl->getHandle();
 		ANKI_CMD(vkCmdBindVertexBuffers(m_handle, binding, 1, &vkbuff, &offset), ANY_OTHER_COMMAND);
 		m_bufferList.pushBack(m_alloc, buff);

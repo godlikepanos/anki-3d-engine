@@ -25,7 +25,9 @@ Error HalfDepth::init(const ConfigSet&)
 		height,
 		MS_DEPTH_ATTACHMENT_PIXEL_FORMAT,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE | TextureUsageBit::SAMPLED_FRAGMENT,
-		SamplingFilter::LINEAR));
+		SamplingFilter::LINEAR,
+		1,
+		"halfdepth"));
 
 	// Create FB
 	FramebufferInitInfo fbInit("halfdepth");
@@ -89,7 +91,9 @@ Error QuarterDepth::init(const ConfigSet&)
 		height,
 		PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT),
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::SAMPLED_FRAGMENT,
-		SamplingFilter::LINEAR));
+		SamplingFilter::LINEAR,
+		1,
+		"quarterdepth"));
 
 	FramebufferInitInfo fbInit("quarterdepth");
 	fbInit.m_colorAttachments[0].m_texture = m_depthRt;
