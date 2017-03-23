@@ -5,16 +5,16 @@ OpenGL 4.5 and Vulkan 1.0 (Experimental).
 
 [![Video](http://img.youtube.com/vi/va7nZ2EFR4c/0.jpg)](http://www.youtube.com/watch?v=va7nZ2EFR4c)
 
-1) License
-==========
+1 License
+=========
 
 AnKi's license is BSD. This practically means that you can use the source or parts of the source on proprietary and non 
 proprietary products as long as you follow the conditions of the license.
 
 See LICENSE file for more info.
 
-2) Building AnKi
-================
+2 Building AnKi
+===============
 
 | OS      | Master Branch Build Status                                                                                                                                    |
 | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -28,8 +28,8 @@ To checkout the source including the submodules type:
 AnKi's build system is using CMake. A great effort was made to ease the building process that's why the number of 
 external dependencies are almost none.
 
-2.1) On Linux
--------------
+2.1 On Linux
+------------
 
 Prerequisites:
 
@@ -53,8 +53,8 @@ To view and configure the build options you can use ccmake tool or other similar
 
 This will open an interface with all the available options.
 
-2.2) On Windows
----------------
+2.2 On Windows
+--------------
 
 Prerequisites:
 
@@ -75,8 +75,8 @@ To build the release version open PowerShell and type:
 
 > NOTE: If you have a better way to build on Windows please let us know.
 
-3) Next steps
-=============
+3 Next steps
+============
 
 Try to build with samples enabled (search for the ANKI_BUILD_SAMPLES option in your CMake GUI) and try running the 
 sponza executable. Then you will be able to see sponza running in AnKi. All samples must run from within their 
