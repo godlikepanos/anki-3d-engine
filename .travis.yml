@@ -10,10 +10,10 @@ compiler:
   - clang
 
 env:
-  - BUILD_TYPE=Debug EXTRA_CHECKS=ON TRACE=ON CXX=g++-5 CC=gcc-5
-  - BUILD_TYPE=Release EXTRA_CHECKS=OFF TRACE=OFF CXX=g++-5 CC=gcc-5
-  - BUILD_TYPE=Debug EXTRA_CHECKS=ON TRACE=ON CXX=clang++-3.5 CC=clang-3.5
-  - BUILD_TYPE=Release EXTRA_CHECKS=OFF TRACE=OFF CXX=clang++-3.5 CC=clang-3.5
+  - BUILD_TYPE=Debug EXTRA_CHECKS=ON TRACE=ON CXX_=g++-5 CC_=gcc-5
+  - BUILD_TYPE=Release EXTRA_CHECKS=OFF TRACE=OFF CXX_=g++-5 CC_=gcc-5
+  - BUILD_TYPE=Debug EXTRA_CHECKS=ON TRACE=ON CXX_=clang++-3.5 CC_=clang-3.5
+  - BUILD_TYPE=Release EXTRA_CHECKS=OFF TRACE=OFF CXX_=clang++-3.5 CC_=clang-3.5
 
 cache:
   apt: true
@@ -31,6 +31,8 @@ addons:
 script:
   - mkdir build 
   - cd build
+  - export CC=${CC_}
+  - export CCX=${CXX_}
   - $CC --version
   - $CXX --version
   - cmake .. -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DANKI_EXTRA_CHECKS=${EXTRA_CHECKS} -DANKI_BUILD_TOOLS=ON -DANKI_BUILD_TESTS=ON -DANKI_ENABLE_TRACE=${TRACE}
