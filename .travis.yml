@@ -12,8 +12,8 @@ compiler:
 env:
   - BUILD_TYPE=Debug EXTRA_CHECKS=ON TRACE=ON CXX_=g++-5 CC_=gcc-5
   - BUILD_TYPE=Release EXTRA_CHECKS=OFF TRACE=OFF CXX_=g++-5 CC_=gcc-5
-  - BUILD_TYPE=Debug EXTRA_CHECKS=ON TRACE=ON CXX_=clang++-3.5 CC_=clang-3.5
-  - BUILD_TYPE=Release EXTRA_CHECKS=OFF TRACE=OFF CXX_=clang++-3.5 CC_=clang-3.5
+  - BUILD_TYPE=Debug EXTRA_CHECKS=ON TRACE=ON CXX_=clang++-3.6 CC_=clang-3.6
+  - BUILD_TYPE=Release EXTRA_CHECKS=OFF TRACE=OFF CXX_=clang++-3.6 CC_=clang-3.6
 
 cache:
   apt: true
@@ -26,7 +26,7 @@ addons:
     packages:
       - cmake
       - g++-5
-      - clang-3.5
+      - clang-3.6
 
 script:
   - mkdir build 
