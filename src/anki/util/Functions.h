@@ -14,6 +14,8 @@
 #include <utility>
 #include <new>
 #include <cstring>
+#include <algorithm>
+#include <functional>
 
 namespace anki
 {
@@ -208,6 +210,14 @@ ANKI_SPECIALISE_MEMORY_SET(U64)
 ANKI_SPECIALISE_MEMORY_SET(I64)
 
 #undef ANKI_SPECIALISE_MEMORY_SET
+
+/// Find a value in a shorted container.
+template<class TForwardIterator, class T, class TCompare = std::less<>>
+TForwardIterator binarySearch(TForwardIterator first, TForwardIterator last, const T& value, TCompare comp = {})
+{
+	first = std::lower_bound(first, last, value, comp);
+	return (first != last && !comp(value, *first)) ? first : last;
+}
 /// @}
 
 } // end namespace anki

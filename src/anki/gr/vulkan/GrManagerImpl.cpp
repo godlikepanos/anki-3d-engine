@@ -468,7 +468,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 				// Don't add it just yet. Can't enable it at the same time with VK_KHR_maintenance1
 			}
 			else if(CString(extensionInfos[extCount].extensionName) == VK_EXT_DEBUG_MARKER_EXTENSION_NAME
-				&& init.m_config->getNumber("debugContext"))
+				&& init.m_config->getNumber("debugMarkers"))
 			{
 				m_extensions |= VulkanExtensions::EXT_DEBUG_MARKER;
 				extensionsToEnable[extensionsToEnableCount++] = VK_EXT_DEBUG_MARKER_EXTENSION_NAME;

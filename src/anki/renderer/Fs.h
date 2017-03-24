@@ -67,7 +67,6 @@ private:
 	public:
 		ShaderResourcePtr m_frag;
 		ShaderProgramPtr m_prog;
-		SamplerPtr m_nearestSampler;
 		TextureResourcePtr m_noiseTex;
 	} m_vol;
 

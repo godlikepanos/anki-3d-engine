@@ -119,10 +119,10 @@ void ConfigSet::set(const CString& name, const CString& value)
 
 F64 ConfigSet::getNumber(const CString& name) const
 {
-	const Option* o = tryFind(name);
-	ANKI_ASSERT(o);
-	ANKI_ASSERT(o->m_type == 1);
-	return o->m_fVal;
+	const Option* option = tryFind(name);
+	ANKI_ASSERT(option);
+	ANKI_ASSERT(option->m_type == 1);
+	return option->m_fVal;
 }
 
 CString ConfigSet::getString(const CString& name) const

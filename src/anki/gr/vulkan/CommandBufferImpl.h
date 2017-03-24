@@ -194,6 +194,7 @@ public:
 
 	void bindTexture(U32 set, U32 binding, TexturePtr tex_, DepthStencilAspectBit aspect)
 	{
+		commandCommon();
 		const U realBinding = binding;
 		Texture& tex = *tex_;
 		const VkImageLayout lay = tex.m_impl->findLayoutFromTracker(m_texUsageTracker);
@@ -203,6 +204,7 @@ public:
 
 	void bindTextureAndSampler(U32 set, U32 binding, TexturePtr& tex_, SamplerPtr sampler, DepthStencilAspectBit aspect)
 	{
+		commandCommon();
 		const U realBinding = binding;
 		Texture& tex = *tex_;
 		const VkImageLayout lay = tex.m_impl->findLayoutFromTracker(m_texUsageTracker);
@@ -213,6 +215,7 @@ public:
 
 	void bindImage(U32 set, U32 binding, TexturePtr& img, U32 level)
 	{
+		commandCommon();
 		const U realBinding =
 			binding + MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS;
 		m_dsetState[set].bindImage(realBinding, img.get(), level);

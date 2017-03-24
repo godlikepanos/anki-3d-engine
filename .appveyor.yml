@@ -6,7 +6,6 @@ branches:
 
 cache:
   - x86_64-6.3.0-release-posix-seh-rt_v5-rev1.7z
-  - x86_64-4.8.4-release-posix-seh-rt_v3-rev0.7z
 
 environment:
   MINGW_DIR: mingw64
@@ -22,16 +21,6 @@ environment:
       TOOLS: OFF
       MINGW_URL: https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win64/Personal%20Builds/mingw-builds/6.3.0/threads-posix/seh/x86_64-6.3.0-release-posix-seh-rt_v5-rev1.7z/download
       MINGW_ARCHIVE: x86_64-6.3.0-release-posix-seh-rt_v5-rev1.7z
-    - BUILD_TYPE: Release
-      ASSERTIONS: OFF
-      TOOLS: ON
-      MINGW_URL: https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win64/Personal%20Builds/mingw-builds/4.8.4/threads-posix/seh/x86_64-4.8.4-release-posix-seh-rt_v3-rev0.7z/download
-      MINGW_ARCHIVE: x86_64-4.8.4-release-posix-seh-rt_v3-rev0.7z
-    - BUILD_TYPE: Debug
-      ASSERTIONS: ON
-      TOOLS: OFF
-      MINGW_URL: https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win64/Personal%20Builds/mingw-builds/4.8.4/threads-posix/seh/x86_64-4.8.4-release-posix-seh-rt_v3-rev0.7z/download
-      MINGW_ARCHIVE: x86_64-4.8.4-release-posix-seh-rt_v3-rev0.7z
 
 install:
   - git submodule update --init --recursive

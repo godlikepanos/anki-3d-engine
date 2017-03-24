@@ -198,10 +198,8 @@ void Ms::setPostRunBarriers(RenderingContext& ctx)
 	cmdb->setTextureSurfaceBarrier(
 		m_rt2, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureUsageBit::SAMPLED_FRAGMENT, surf);
 
-	cmdb->setTextureSurfaceBarrier(m_depthRt,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ,
-		surf);
+	cmdb->setTextureSurfaceBarrier(
+		m_depthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, TextureUsageBit::SAMPLED_FRAGMENT, surf);
 
 	ANKI_TRACE_STOP_EVENT(RENDER_MS);
 }

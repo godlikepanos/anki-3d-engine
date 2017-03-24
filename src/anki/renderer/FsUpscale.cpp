@@ -32,13 +32,6 @@ Error FsUpscale::initInternal(const ConfigSet& config)
 
 	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseLdrRgb64x64.ankitex", m_noiseTex));
 
-	GrManager& gr = getGrManager();
-
-	SamplerInitInfo sinit;
-	sinit.m_repeat = false;
-	sinit.m_mipmapFilter = SamplingFilter::NEAREST;
-	m_nearestSampler = gr.newInstance<Sampler>(sinit);
-
 	// Shader
 	ANKI_CHECK(m_r->createShaderf("shaders/FsUpscale.frag.glsl",
 		m_frag,
@@ -71,7 +64,7 @@ void FsUpscale::run(RenderingContext& ctx)
 	computeLinearizeDepthOptimal(ctx.m_near, ctx.m_far, linearDepth->x(), linearDepth->y());
 
 	cmdb->bindTexture(0, 0, m_r->getMs().m_depthRt);
-	cmdb->bindTextureAndSampler(0, 1, m_r->getDepthDownscale().m_hd.m_depthRt, m_nearestSampler);
+	cmdb->bindTextureAndSampler(0, 1, m_r->getDepthDownscale().m_hd.m_depthRt, m_r->getNearestSampler());
 	cmdb->bindTexture(0, 2, m_r->getFs().getRt());
 	cmdb->bindTexture(0, 3, m_noiseTex->getGrTexture());
 

@@ -346,7 +346,7 @@ if(ANDROID)
 endif()
 
 # AnKi compiler flags (Mainly warnings)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -Wall -W -Wextra -Wstrict-aliasing -Wwrite-strings -Wunused -Wunused-variable -Wno-unused-parameter -Wundef -Wno-ignored-attributes -Wunused-result -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -Wall -W -Wextra -Wstrict-aliasing -Wwrite-strings -Wunused -Wunused-variable -Wno-unused-parameter -Wundef -Wno-ignored-attributes -Wunused-result -std=c++14")
 
 # Set platform specific
 if(LINUX)

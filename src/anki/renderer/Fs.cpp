@@ -79,11 +79,6 @@ Error Fs::initVol()
 
 	m_r->createDrawQuadShaderProgram(m_vol.m_frag->getGrShader(), m_vol.m_prog);
 
-	SamplerInitInfo sinit;
-	sinit.m_repeat = false;
-	sinit.m_mipmapFilter = SamplingFilter::NEAREST;
-	m_vol.m_nearestSampler = getGrManager().newInstance<Sampler>(sinit);
-
 	return ErrorCode::NONE;
 }
 
@@ -102,8 +97,8 @@ void Fs::drawVolumetric(RenderingContext& ctx, CommandBufferPtr cmdb)
 	cmdb->informTextureSurfaceCurrentUsage(
 		m_r->getVolumetric().m_main.m_rt, TextureSurfaceInfo(0, 0, 0, 0), TextureUsageBit::SAMPLED_FRAGMENT);
 
-	cmdb->bindTextureAndSampler(0, 0, m_r->getDepthDownscale().m_hd.m_depthRt, m_vol.m_nearestSampler);
-	cmdb->bindTextureAndSampler(0, 1, m_r->getDepthDownscale().m_qd.m_depthRt, m_vol.m_nearestSampler);
+	cmdb->bindTextureAndSampler(0, 0, m_r->getDepthDownscale().m_hd.m_depthRt, m_r->getNearestSampler());
+	cmdb->bindTextureAndSampler(0, 1, m_r->getDepthDownscale().m_qd.m_depthRt, m_r->getNearestSampler());
 	cmdb->bindTexture(0, 2, m_r->getVolumetric().m_main.m_rt);
 	cmdb->bindTexture(0, 3, m_vol.m_noiseTex->getGrTexture());
 
@@ -133,6 +128,10 @@ Error Fs::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) 
 	cinf.m_framebuffer = m_fb;
 	CommandBufferPtr cmdb = m_r->getGrManager().newInstance<CommandBuffer>(cinf);
 	ctx.m_fs.m_commandBuffers[threadId] = cmdb;
+
+	cmdb->informTextureCurrentUsage(m_r->getDepthDownscale().m_hd.m_depthRt,
+		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ);
+	cmdb->informTextureCurrentUsage(m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE);
 
 	cmdb->bindTexture(1, 0, m_r->getDepthDownscale().m_hd.m_depthRt);
 	cmdb->bindTexture(1, 1, m_r->getSm().m_spotTexArray);

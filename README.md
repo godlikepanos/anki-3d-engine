@@ -34,7 +34,7 @@ external dependencies are almost none.
 Prerequisites:
 
 - Cmake 2.8 and up
-- GCC 4.8 and up or Clang 3.7 and up
+- GCC 5.0 and up or Clang 3.7 and up
 - libx11-dev installed
 - [Optional] libxinerama-dev if you want proper multi-monitor support
 
@@ -60,7 +60,7 @@ Prerequisites:
 
 - CMake 2.8 and up
 	- Make sure you add cmake.exe to your PATH environment variable (The installer asks, press yes)
-- MinGW-w64 4.8 and up
+- MinGW-w64 5.0 and up
 	- MinGW has many variants. You need the POSIX version plus SEH (eg x86_64-posix-seh)
 	- Install to a path without spaces (eg C:/mingw-w64)
 	- Append the path where mingw's binaries are located (eg C:/mingw-w64/bin) to the PATH environment variable

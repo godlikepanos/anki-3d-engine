@@ -432,10 +432,11 @@ Error DSLayoutCacheEntry::getOrCreateThreadAllocator(ThreadId tid, DSThreadAlloc
 	};
 
 	// Find using binary search
-	auto it = std::lower_bound(m_threadAllocs.getBegin(), m_threadAllocs.getEnd(), tid, Comp());
+	auto it = binarySearch(m_threadAllocs.getBegin(), m_threadAllocs.getEnd(), tid, Comp());
 
 	if(it != m_threadAllocs.getEnd())
 	{
+		ANKI_ASSERT((*it)->m_tid == tid);
 		alloc = *it;
 	}
 	else

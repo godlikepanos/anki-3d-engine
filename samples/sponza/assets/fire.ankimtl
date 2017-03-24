@@ -13,6 +13,8 @@
 
 			<inputs>
 				<input><type>mat4</type><name>anki_mvp</name></input>
+				<input><type>mat3</type><name>anki_cameraRotation</name></input>
+				<input><type>mat4</type><name>anki_viewMatrix</name></input>
 			</inputs>
 
 			<operations>
@@ -20,7 +22,11 @@
 					<id>0</id>
 					<returnType>void</returnType>
 					<function>particle</function>
-					<arguments><argument>anki_mvp</argument></arguments>
+					<arguments>
+						<argument>anki_mvp</argument>
+						<argument>anki_cameraRotation</argument>
+						<argument>anki_viewMatrix</argument>
+					</arguments>
 				</operation>
 			</operations>
 		</program>
