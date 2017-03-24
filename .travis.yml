@@ -22,7 +22,7 @@ addons:
   apt:
     sources:
       - sourceline: 'ppa:ubuntu-toolchain-r/test'
-      - sourceline: 'llvm-toolchain-precise-3.5'
+      - sourceline: 'ppa:jonathonf/llvm'
     packages:
       - cmake
       - g++-5
