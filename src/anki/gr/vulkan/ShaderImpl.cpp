@@ -318,7 +318,7 @@ Error ShaderImpl::init(ShaderType shaderType, const CString& source)
 void ShaderImpl::doReflection(const std::vector<unsigned int>& spirv)
 {
 	spirv_cross::Compiler spvc(spirv);
-	spirv_cross::ShaderResources rsrc = spvc.get_shader_resources(spvc.get_active_interface_variables());
+	spirv_cross::ShaderResources rsrc = spvc.get_shader_resources();
 
 	Array<U, MAX_DESCRIPTOR_SETS> counts = {{
 		0,

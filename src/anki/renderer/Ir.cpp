@@ -525,6 +525,7 @@ void Ir::computeIrradiance(RenderingContext& rctx, U layer, U faceIdx)
 	faceIdxArrayIdx->x() = faceIdx;
 	faceIdxArrayIdx->y() = layer;
 
+	cmdb->informTextureCurrentUsage(m_is.m_lightRt, TextureUsageBit::SAMPLED_FRAGMENT);
 	cmdb->bindTexture(0, 0, m_is.m_lightRt);
 	cmdb->bindShaderProgram(m_irradiance.m_prog);
 	cmdb->beginRenderPass(face.m_irradianceFb);
