@@ -246,7 +246,7 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 	rastCi.rasterizerDiscardEnable = false;
 	rastCi.polygonMode = convertFillMode(m_state.m_rasterizer.m_fillMode);
 	rastCi.cullMode = convertCullMode(m_state.m_rasterizer.m_cullMode);
-	rastCi.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+	rastCi.frontFace = VK_FRONT_FACE_CLOCKWISE; // For viewport flip
 	rastCi.depthBiasEnable =
 		m_state.m_rasterizer.m_depthBiasConstantFactor != 0.0 && m_state.m_rasterizer.m_depthBiasSlopeFactor != 0.0;
 	rastCi.depthBiasConstantFactor = m_state.m_rasterizer.m_depthBiasConstantFactor;

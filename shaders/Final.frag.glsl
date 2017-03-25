@@ -16,9 +16,10 @@ layout(location = 0) out vec3 out_color;
 void main()
 {
 	vec2 uv = in_texCoord;
-#ifdef ANKI_VK
+#if ANKI_VK
 	uv.y = 1.0 - uv.y;
 #endif
+
 	vec3 col = textureLod(u_tex, uv, 0.0).rgb;
 	out_color = col;
 }
