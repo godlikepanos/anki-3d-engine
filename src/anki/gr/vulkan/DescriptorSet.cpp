@@ -8,6 +8,7 @@
 #include <anki/gr/vulkan/BufferImpl.h>
 #include <anki/util/List.h>
 #include <anki/util/HashMap.h>
+#include <anki/core/Trace.h>
 #include <algorithm>
 
 namespace anki
@@ -148,6 +149,7 @@ Error DSThreadAllocator::createNewPool()
 	// Create
 	VkDescriptorPool pool;
 	ANKI_VK_CHECK(vkCreateDescriptorPool(m_layoutEntry->m_factory->m_dev, &ci, nullptr, &pool));
+	ANKI_TRACE_INC_COUNTER(VK_DESCRIPTOR_POOL_CREATE, 1);
 
 	// Push back
 	m_pools.resize(m_layoutEntry->m_factory->m_alloc, m_pools.getSize() + 1);
@@ -215,6 +217,8 @@ Error DSThreadAllocator::newSet(
 			ANKI_CHECK(createNewPool());
 		}
 
+		--m_lastPoolFreeDSCount;
+
 		VkDescriptorSetAllocateInfo ci = {};
 		ci.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 		ci.descriptorPool = m_pools.getBack();
@@ -225,6 +229,7 @@ Error DSThreadAllocator::newSet(
 		VkResult rez = vkAllocateDescriptorSets(m_layoutEntry->m_factory->m_dev, &ci, &handle);
 		(void)rez;
 		ANKI_ASSERT(rez == VK_SUCCESS && "That allocation can't fail");
+		ANKI_TRACE_INC_COUNTER(VK_DESCRIPTOR_SET_CREATE, 1);
 
 		out = m_layoutEntry->m_factory->m_alloc.newInstance<DS>();
 		out->m_handle = handle;

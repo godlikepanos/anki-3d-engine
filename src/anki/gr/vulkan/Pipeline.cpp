@@ -5,6 +5,7 @@
 
 #include <anki/gr/vulkan/Pipeline.h>
 #include <anki/gr/common/Misc.h>
+#include <anki/core/Trace.h>
 
 namespace anki
 {
@@ -414,6 +415,7 @@ void PipelineFactory::newPipeline(PipelineStateTracker& state, Pipeline& ppline,
 		const VkGraphicsPipelineCreateInfo& ci = state.updatePipelineCreateInfo();
 
 		ANKI_VK_CHECKF(vkCreateGraphicsPipelines(m_dev, m_pplineCache, 1, &ci, nullptr, &pp.m_handle));
+		ANKI_TRACE_INC_COUNTER(VK_PIPELINE_CREATE, 1);
 
 		m_pplines.pushBack(m_alloc, hash, pp);
 		ppline.m_handle = pp.m_handle;
