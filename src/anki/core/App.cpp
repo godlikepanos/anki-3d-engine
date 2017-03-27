@@ -183,8 +183,8 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 #if ANKI_SIMD == ANKI_SIMD_SSE
 	if(!__builtin_cpu_supports("sse4.2"))
 	{
-		ANKI_CORE_LOGF("AnKi is built with sse4.2 support but your CPU doesn't "
-					   "support it. Try bulding without SSE support");
+		ANKI_CORE_LOGF(
+			"AnKi is built with sse4.2 support but your CPU doesn't support it. Try bulding without SSE support");
 	}
 #endif
 
@@ -324,12 +324,12 @@ Error App::initDirs()
 	// Cache
 	m_cacheDir.sprintf(m_heapAlloc, "%s/cache", &m_settingsDir[0]);
 
-	if(directoryExists(m_cacheDir.toCString()))
-	{
-		ANKI_CHECK(removeDirectory(m_cacheDir.toCString()));
-	}
-
+/*if(directoryExists(m_cacheDir.toCString()))
+{
+	ANKI_CHECK(removeDirectory(m_cacheDir.toCString()));
 	ANKI_CHECK(createDirectory(m_cacheDir.toCString()));
+}*/
+
 #else
 	// ANKI_ASSERT(gAndroidApp);
 	// ANativeActivity* activity = gAndroidApp->activity;

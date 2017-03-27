@@ -66,10 +66,7 @@ GrManagerImpl::~GrManagerImpl()
 		vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
 	}
 
-	if(m_pplineCache)
-	{
-		vkDestroyPipelineCache(m_device, m_pplineCache, nullptr);
-	}
+	m_pplineCache.destroy(m_device, m_physicalDevice, getAllocator());
 
 	if(m_device)
 	{
@@ -119,11 +116,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	vkGetDeviceQueue(m_device, m_queueIdx, 0, &m_queue);
 	ANKI_CHECK(initSwapchain(init));
 
-	{
-		VkPipelineCacheCreateInfo ci = {};
-		ci.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
-		vkCreatePipelineCache(m_device, &ci, nullptr, &m_pplineCache);
-	}
+	ANKI_CHECK(m_pplineCache.init(m_device, m_physicalDevice, init.m_cacheDirectory, *init.m_config, getAllocator()));
 
 	ANKI_CHECK(initMemory(*init.m_config));
 

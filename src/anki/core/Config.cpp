@@ -79,6 +79,9 @@ Config::Config()
 	newOption("vsync", false);
 	newOption("debugMarkers", false);
 
+	// GR
+	newOption("gr.diskShaderCacheMaxSize", 10 * 1024 * 1024);
+
 	// Core
 	newOption("core.uniformPerFrameMemorySize", 1024 * 1024 * 16);
 	newOption("core.storagePerFrameMemorySize", 1024 * 1024 * 16);

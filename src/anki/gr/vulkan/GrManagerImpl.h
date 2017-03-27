@@ -13,6 +13,7 @@
 #include <anki/gr/vulkan/DescriptorSet.h>
 #include <anki/gr/vulkan/CommandBufferExtra.h>
 #include <anki/gr/vulkan/PipelineLayout.h>
+#include <anki/gr/vulkan/PipelineCache.h>
 #include <anki/util/HashMap.h>
 
 namespace anki
@@ -174,8 +175,8 @@ public:
 
 	VkPipelineCache getPipelineCache() const
 	{
-		ANKI_ASSERT(m_pplineCache);
-		return m_pplineCache;
+		ANKI_ASSERT(m_pplineCache.m_cacheHandle);
+		return m_pplineCache.m_cacheHandle;
 	}
 
 	PipelineLayoutFactory& getPipelineLayoutFactory()
@@ -301,7 +302,7 @@ private:
 
 	QueryAllocator m_queryAlloc;
 
-	VkPipelineCache m_pplineCache = VK_NULL_HANDLE;
+	PipelineCache m_pplineCache;
 
 	Bool8 m_r8g8b8ImagesSupported = false;
 	Bool8 m_s8ImagesSupported = false;
