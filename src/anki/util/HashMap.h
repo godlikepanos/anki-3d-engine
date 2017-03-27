@@ -492,6 +492,7 @@ public:
 		ANKI_ASSERT(x);
 		IntrusiveHashMapEnabled<TValue>* e = static_cast<IntrusiveHashMapEnabled<TValue>*>(x);
 		e->m_hash = THasher()(key);
+		e->m_left = e->m_right = e->m_parent = nullptr;
 		Base::insertNode(x);
 	}
 

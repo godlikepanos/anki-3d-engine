@@ -47,6 +47,7 @@ enum class VulkanExtensions : U8
 	KHR_SWAPCHAIN = 1 << 4,
 	KHR_SURFACE = 1 << 5,
 	EXT_DEBUG_MARKER = 1 << 6,
+	NV_DEDICATED_ALLOCATION = 1 << 7,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VulkanExtensions, inline)
 

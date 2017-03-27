@@ -473,6 +473,11 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 				m_extensions |= VulkanExtensions::EXT_DEBUG_MARKER;
 				extensionsToEnable[extensionsToEnableCount++] = VK_EXT_DEBUG_MARKER_EXTENSION_NAME;
 			}
+			else if(CString(extensionInfos[extCount].extensionName) == VK_NV_DEDICATED_ALLOCATION_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::NV_DEDICATED_ALLOCATION;
+				extensionsToEnable[extensionsToEnableCount++] = VK_NV_DEDICATED_ALLOCATION_EXTENSION_NAME;
+			}
 		}
 
 		if(!!(m_extensions & VulkanExtensions::KHR_MAINENANCE1))

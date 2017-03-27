@@ -153,6 +153,8 @@ private:
 	VkImageViewCreateInfo m_viewCreateInfoTemplate;
 	U64 m_uuid; ///< Steal the UUID from the Texture.
 
+	VkDeviceMemory m_dedicatedMem = VK_NULL_HANDLE;
+
 	ANKI_USE_RESULT static VkFormatFeatureFlags calcFeatures(const TextureInitInfo& init);
 
 	ANKI_USE_RESULT static VkImageCreateFlags calcCreateFlags(const TextureInitInfo& init);

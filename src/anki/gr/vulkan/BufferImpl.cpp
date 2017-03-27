@@ -125,7 +125,9 @@ Error BufferImpl::init(PtrSize size, BufferUsageBit usage, BufferMapAccessBit ac
 	getGrManagerImpl().getGpuMemoryManager().allocateMemory(memIdx, req.size, req.alignment, true, m_memHandle);
 
 	// Bind mem to buffer
+	ANKI_TRACE_START_EVENT(VK_BIND_OBJECT);
 	ANKI_VK_CHECK(vkBindBufferMemory(getDevice(), m_handle, m_memHandle.m_memory, m_memHandle.m_offset));
+	ANKI_TRACE_STOP_EVENT(VK_BIND_OBJECT);
 
 	m_access = access;
 	m_size = size;

@@ -42,6 +42,11 @@ TextureImpl::~TextureImpl()
 	{
 		getGrManagerImpl().getGpuMemoryManager().freeMemory(m_memHandle);
 	}
+
+	if(m_dedicatedMem)
+	{
+		vkFreeMemory(getDevice(), m_dedicatedMem, nullptr);
+	}
 }
 
 Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
@@ -197,6 +202,8 @@ Bool TextureImpl::imageSupported(const TextureInitInfo& init)
 Error TextureImpl::initImage(const TextureInitInfo& init_)
 {
 	TextureInitInfo init = init_;
+	Bool useDedicatedMemory = !!(init.m_usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE)
+		&& !!(getGrManagerImpl().getExtensions() & VulkanExtensions::NV_DEDICATED_ALLOCATION);
 
 	// Check if format is supported
 	Bool supported;
@@ -302,6 +309,14 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 	ci.pQueueFamilyIndices = &queueIdx;
 	ci.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
+	VkDedicatedAllocationImageCreateInfoNV dedicatedMemCi = {};
+	if(useDedicatedMemory)
+	{
+		dedicatedMemCi.sType = VK_STRUCTURE_TYPE_DEDICATED_ALLOCATION_IMAGE_CREATE_INFO_NV;
+		dedicatedMemCi.dedicatedAllocation = true;
+		ci.pNext = &dedicatedMemCi;
+	}
+
 	ANKI_VK_CHECK(vkCreateImage(getDevice(), &ci, nullptr, &m_imageHandle));
 	getGrManagerImpl().trySetVulkanHandleName(
 		init.getName(), VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT, ptrToNumber(m_imageHandle));
@@ -323,11 +338,34 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 
 	ANKI_ASSERT(memIdx != MAX_U32);
 
-	// Allocate
-	getGrManagerImpl().getGpuMemoryManager().allocateMemory(memIdx, req.size, req.alignment, false, m_memHandle);
+	if(!useDedicatedMemory)
+	{
+		// Allocate
+		getGrManagerImpl().getGpuMemoryManager().allocateMemory(memIdx, req.size, req.alignment, false, m_memHandle);
 
-	// Bind mem to image
-	ANKI_VK_CHECK(vkBindImageMemory(getDevice(), m_imageHandle, m_memHandle.m_memory, m_memHandle.m_offset));
+		// Bind mem to image
+		ANKI_TRACE_START_EVENT(VK_BIND_OBJECT);
+		ANKI_VK_CHECK(vkBindImageMemory(getDevice(), m_imageHandle, m_memHandle.m_memory, m_memHandle.m_offset));
+		ANKI_TRACE_STOP_EVENT(VK_BIND_OBJECT);
+	}
+	else
+	{
+		VkDedicatedAllocationMemoryAllocateInfoNV dedicatedInfo = {};
+		dedicatedInfo.sType = VK_STRUCTURE_TYPE_DEDICATED_ALLOCATION_MEMORY_ALLOCATE_INFO_NV;
+		dedicatedInfo.image = m_imageHandle;
+
+		VkMemoryAllocateInfo memAllocCi = {};
+		memAllocCi.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		memAllocCi.pNext = &dedicatedInfo;
+		memAllocCi.allocationSize = req.size;
+		memAllocCi.memoryTypeIndex = memIdx;
+
+		ANKI_VK_CHECK(vkAllocateMemory(getDevice(), &memAllocCi, nullptr, &m_dedicatedMem));
+
+		ANKI_TRACE_START_EVENT(VK_BIND_OBJECT);
+		ANKI_VK_CHECK(vkBindImageMemory(getDevice(), m_imageHandle, m_dedicatedMem, 0));
+		ANKI_TRACE_STOP_EVENT(VK_BIND_OBJECT);
+	}
 
 	return ErrorCode::NONE;
 }

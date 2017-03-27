@@ -414,7 +414,9 @@ void PipelineFactory::newPipeline(PipelineStateTracker& state, Pipeline& ppline,
 		PipelineInternal pp;
 		const VkGraphicsPipelineCreateInfo& ci = state.updatePipelineCreateInfo();
 
+		ANKI_TRACE_START_EVENT(VK_PIPELINE_CREATE);
 		ANKI_VK_CHECKF(vkCreateGraphicsPipelines(m_dev, m_pplineCache, 1, &ci, nullptr, &pp.m_handle));
+		ANKI_TRACE_STOP_EVENT(VK_PIPELINE_CREATE);
 		ANKI_TRACE_INC_COUNTER(VK_PIPELINE_CREATE, 1);
 
 		m_pplines.pushBack(m_alloc, hash, pp);
