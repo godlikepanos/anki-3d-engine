@@ -169,7 +169,7 @@ private:
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& config, AllocAlignedCallback allocCb, void* allocCbUserData);
 
-	ANKI_USE_RESULT Error initDirs();
+	ANKI_USE_RESULT Error initDirs(const ConfigSet& cfg);
 	void cleanup();
 };
 

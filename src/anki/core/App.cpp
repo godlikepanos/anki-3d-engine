@@ -146,7 +146,7 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	m_heapAlloc = HeapAllocator<U8>(allocCb, allocCbUserData);
 	ConfigSet config = config_;
 
-	ANKI_CHECK(initDirs());
+	ANKI_CHECK(initDirs(config));
 
 	// Print a message
 	const char* buildType =
@@ -302,7 +302,7 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	return ErrorCode::NONE;
 }
 
-Error App::initDirs()
+Error App::initDirs(const ConfigSet& cfg)
 {
 #if ANKI_OS != ANKI_OS_ANDROID
 	// Settings path
@@ -324,11 +324,12 @@ Error App::initDirs()
 	// Cache
 	m_cacheDir.sprintf(m_heapAlloc, "%s/cache", &m_settingsDir[0]);
 
-/*if(directoryExists(m_cacheDir.toCString()))
-{
-	ANKI_CHECK(removeDirectory(m_cacheDir.toCString()));
-	ANKI_CHECK(createDirectory(m_cacheDir.toCString()));
-}*/
+	if(cfg.getNumber("clearCaches") && directoryExists(m_cacheDir.toCString()))
+	{
+		ANKI_CORE_LOGI("Will delete the cache dir and start fresh: %s", &m_cacheDir[0]);
+		ANKI_CHECK(removeDirectory(m_cacheDir.toCString()));
+		ANKI_CHECK(createDirectory(m_cacheDir.toCString()));
+	}
 
 #else
 	// ANKI_ASSERT(gAndroidApp);

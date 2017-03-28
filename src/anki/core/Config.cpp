@@ -65,6 +65,7 @@ Config::Config()
 	newOption("clusterSizeY", 26);
 	newOption("clusterSizeZ", 32);
 	newOption("imageReflectionMaxDistance", 30.0);
+	newOption("clearCaches", false);
 
 	// Resource
 	newOption("maxTextureSize", 1024 * 1024);
