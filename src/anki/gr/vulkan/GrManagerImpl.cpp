@@ -26,6 +26,8 @@ GrManagerImpl::~GrManagerImpl()
 		m_queue = VK_NULL_HANDLE;
 	}
 
+	m_cmdbFactory.destroy();
+
 	// SECOND THING: The destroy everything that has a reference to GrObjects.
 	for(auto& x : m_backbuffers)
 	{
@@ -41,11 +43,7 @@ GrManagerImpl::~GrManagerImpl()
 		x.m_presentFence.reset(nullptr);
 		x.m_acquireSemaphore.reset(nullptr);
 		x.m_renderSemaphore.reset(nullptr);
-
-		x.m_cmdbsSubmitted.destroy(getAllocator());
 	}
-
-	m_perThread.destroy(getAllocator());
 
 	if(m_samplerCache)
 	{
@@ -119,6 +117,8 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	ANKI_CHECK(m_pplineCache.init(m_device, m_physicalDevice, init.m_cacheDirectory, *init.m_config, getAllocator()));
 
 	ANKI_CHECK(initMemory(*init.m_config));
+	
+	ANKI_CHECK(m_cmdbFactory.init(getAllocator(), m_device, m_queueIdx));
 
 	for(PerFrame& f : m_perFrame)
 	{
@@ -780,55 +780,6 @@ void GrManagerImpl::resetFrame(PerFrame& frame)
 	frame.m_presentFence.reset(nullptr);
 	frame.m_acquireSemaphore.reset(nullptr);
 	frame.m_renderSemaphore.reset(nullptr);
-
-	frame.m_cmdbsSubmitted.destroy(getAllocator());
-}
-
-GrManagerImpl::PerThread& GrManagerImpl::getPerThreadCache(ThreadId tid)
-{
-	PerThread* thread = nullptr;
-	LockGuard<SpinLock> lock(m_perThreadMtx);
-
-	// Find or create a record
-	auto it = m_perThread.find(tid);
-	if(it != m_perThread.getEnd())
-	{
-		thread = &(*it);
-	}
-	else
-	{
-		m_perThread.emplaceBack(getAllocator(), tid);
-		it = m_perThread.find(tid);
-		thread = &(*it);
-	}
-
-	return *thread;
-}
-
-VkCommandBuffer GrManagerImpl::newCommandBuffer(ThreadId tid, CommandBufferFlag cmdbFlags)
-{
-	// Get the per thread cache
-	PerThread& thread = getPerThreadCache(tid);
-
-	// Try initialize the recycler
-	if(ANKI_UNLIKELY(!thread.m_cmdbs.isCreated()))
-	{
-		Error err = thread.m_cmdbs.init(getAllocator(), m_device, m_queueIdx);
-		if(err)
-		{
-			ANKI_VK_LOGF("Cannot recover");
-		}
-	}
-
-	return thread.m_cmdbs.newCommandBuffer(cmdbFlags);
-}
-
-void GrManagerImpl::deleteCommandBuffer(VkCommandBuffer cmdb, CommandBufferFlag cmdbFlags, ThreadId tid)
-{
-	// Get the per thread cache
-	PerThread& thread = getPerThreadCache(tid);
-
-	thread.m_cmdbs.deleteCommandBuffer(cmdb, cmdbFlags);
 }
 
 void GrManagerImpl::flushCommandBuffer(CommandBufferPtr cmdb, Bool wait)
@@ -867,7 +818,7 @@ void GrManagerImpl::flushCommandBuffer(CommandBufferPtr cmdb, Bool wait)
 	submit.commandBufferCount = 1;
 	submit.pCommandBuffers = &handle;
 
-	frame.m_cmdbsSubmitted.pushBack(getAllocator(), cmdb);
+	impl.setFence(fence);
 
 	ANKI_TRACE_START_EVENT(VK_QUEUE_SUBMIT);
 	ANKI_VK_CHECKF(vkQueueSubmit(m_queue, 1, &submit, fence->getHandle()));

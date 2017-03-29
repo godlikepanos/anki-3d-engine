@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/gr/vulkan/VulkanObject.h>
+#include <anki/gr/vulkan/CommandBufferFactory.h>
 #include <anki/gr/CommandBuffer.h>
 #include <anki/gr/Texture.h>
 #include <anki/gr/Buffer.h>
@@ -51,6 +52,11 @@ public:
 
 	ANKI_USE_RESULT Error init(const CommandBufferInitInfo& init);
 
+	void setFence(FencePtr& fence)
+	{
+		m_microCmdb->setFence(fence);
+	}
+
 	VkCommandBuffer getHandle() const
 	{
 		ANKI_ASSERT(m_handle);
@@ -78,7 +84,7 @@ public:
 		m_state.bindVertexBuffer(binding, stride, stepRate);
 		VkBuffer vkbuff = buff->m_impl->getHandle();
 		ANKI_CMD(vkCmdBindVertexBuffers(m_handle, binding, 1, &vkbuff, &offset), ANY_OTHER_COMMAND);
-		m_bufferList.pushBack(m_alloc, buff);
+		m_microCmdb->pushObjectRef(buff);
 	}
 
 	void setVertexAttribute(U32 location, U32 buffBinding, const PixelFormat& fmt, PtrSize relativeOffset)
@@ -92,7 +98,7 @@ public:
 		commandCommon();
 		ANKI_CMD(vkCmdBindIndexBuffer(m_handle, buff->m_impl->getHandle(), offset, convertIndexType(type)),
 			ANY_OTHER_COMMAND);
-		m_bufferList.pushBack(m_alloc, buff);
+		m_microCmdb->pushObjectRef(buff);
 	}
 
 	void setPrimitiveRestart(Bool enable)
@@ -199,7 +205,7 @@ public:
 		Texture& tex = *tex_;
 		const VkImageLayout lay = tex.m_impl->findLayoutFromTracker(m_texUsageTracker);
 		m_dsetState[set].bindTexture(realBinding, &tex, aspect, lay);
-		m_texList.pushBack(m_alloc, tex_);
+		m_microCmdb->pushObjectRef(tex_);
 	}
 
 	void bindTextureAndSampler(U32 set, U32 binding, TexturePtr& tex_, SamplerPtr sampler, DepthStencilAspectBit aspect)
@@ -209,8 +215,8 @@ public:
 		Texture& tex = *tex_;
 		const VkImageLayout lay = tex.m_impl->findLayoutFromTracker(m_texUsageTracker);
 		m_dsetState[set].bindTextureAndSampler(realBinding, &tex, sampler.get(), aspect, lay);
-		m_texList.pushBack(m_alloc, tex_);
-		m_samplerList.pushBack(m_alloc, sampler);
+		m_microCmdb->pushObjectRef(tex_);
+		m_microCmdb->pushObjectRef(sampler);
 	}
 
 	void bindImage(U32 set, U32 binding, TexturePtr& img, U32 level)
@@ -219,7 +225,7 @@ public:
 		const U realBinding =
 			binding + MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS;
 		m_dsetState[set].bindImage(realBinding, img.get(), level);
-		m_texList.pushBack(m_alloc, img);
+		m_microCmdb->pushObjectRef(img);
 	}
 
 	void beginRenderPass(FramebufferPtr fb);
@@ -285,7 +291,7 @@ public:
 		commandCommon();
 		const U realBinding = MAX_TEXTURE_BINDINGS + binding;
 		m_dsetState[set].bindUniformBuffer(realBinding, buff.get(), offset, range);
-		m_bufferList.pushBack(m_alloc, buff);
+		m_microCmdb->pushObjectRef(buff);
 	}
 
 	void bindStorageBuffer(U32 set, U32 binding, BufferPtr& buff, PtrSize offset, PtrSize range)
@@ -293,7 +299,7 @@ public:
 		commandCommon();
 		const U realBinding = MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS + binding;
 		m_dsetState[set].bindStorageBuffer(realBinding, buff.get(), offset, range);
-		m_bufferList.pushBack(m_alloc, buff);
+		m_microCmdb->pushObjectRef(buff);
 	}
 
 	void copyBufferToTextureSurface(
@@ -322,6 +328,7 @@ public:
 private:
 	StackAllocator<U8> m_alloc;
 
+	MicroCommandBufferPtr m_microCmdb;
 	VkCommandBuffer m_handle = VK_NULL_HANDLE;
 	CommandBufferFlag m_flags = CommandBufferFlag::NONE;
 	Bool8 m_renderedToDefaultFb = false;
@@ -329,6 +336,9 @@ private:
 	Bool8 m_empty = true;
 	Bool m_beganRecording = false;
 	ThreadId m_tid = 0;
+#if ANKI_EXTRA_CHECKS
+	U32 m_commandCount = 0;
+#endif
 
 	U m_rpCommandCount = 0; ///< Number of drawcalls or pushed cmdbs in rp.
 	FramebufferPtr m_activeFb;
@@ -340,17 +350,6 @@ private:
 	Array<DescriptorSetState, MAX_DESCRIPTOR_SETS> m_dsetState;
 
 	ShaderProgramImpl* m_computeProg ANKI_DBG_NULLIFY;
-
-	/// @name cleanup_references
-	/// @{
-	List<FramebufferPtr> m_fbList;
-	List<TexturePtr> m_texList;
-	List<OcclusionQueryPtr> m_queryList;
-	List<BufferPtr> m_bufferList;
-	List<CommandBufferPtr> m_cmdbList;
-	List<ShaderProgramPtr> m_progs;
-	List<SamplerPtr> m_samplerList;
-	/// @}
 
 	VkSubpassContents m_subpassContents = VK_SUBPASS_CONTENTS_MAX_ENUM;
 

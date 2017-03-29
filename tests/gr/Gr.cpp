@@ -419,7 +419,7 @@ ANKI_TEST(Gr, ClearScreen)
 		gr->beginFrame();
 
 		CommandBufferInitInfo cinit;
-		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK;
+		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
 		CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
 
 		cmdb->beginRenderPass(fb);

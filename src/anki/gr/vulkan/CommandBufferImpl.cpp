@@ -31,19 +31,23 @@ CommandBufferImpl::~CommandBufferImpl()
 	{
 		ANKI_VK_LOGW("Command buffer was not flushed");
 	}
-
-	if(m_handle)
+	
+#if ANKI_EXTRA_CHECKS
+	if(!!(m_flags & CommandBufferFlag::SMALL_BATCH))
 	{
-		getGrManagerImpl().deleteCommandBuffer(m_handle, m_flags, m_tid);
+		if(m_commandCount > 20)
+		{
+			ANKI_VK_LOGW("Command buffer has too many commands");
+		}
 	}
-
-	m_fbList.destroy(m_alloc);
-	m_texList.destroy(m_alloc);
-	m_queryList.destroy(m_alloc);
-	m_bufferList.destroy(m_alloc);
-	m_cmdbList.destroy(m_alloc);
-	m_progs.destroy(m_alloc);
-	m_samplerList.destroy(m_alloc);
+	else
+	{
+		if(m_commandCount <= 20)
+		{
+			ANKI_VK_LOGW("Command buffer has too few commands");
+		}
+	}
+#endif
 
 	m_imgBarriers.destroy(m_alloc);
 	m_buffBarriers.destroy(m_alloc);
@@ -54,16 +58,16 @@ CommandBufferImpl::~CommandBufferImpl()
 
 Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 {
-	auto& pool = getGrManagerImpl().getAllocator().getMemoryPool();
-	m_alloc = StackAllocator<U8>(
-		pool.getAllocationCallback(), pool.getAllocationCallbackUserData(), init.m_hints.m_chunkSize, 1.0, 0, false);
-
-	m_texUsageTracker.init(m_alloc);
-
 	m_flags = init.m_flags;
 	m_tid = Thread::getCurrentThreadId();
 
-	m_handle = getGrManagerImpl().newCommandBuffer(m_tid, m_flags);
+	ANKI_CHECK(getGrManagerImpl().getCommandBufferFactory().newCommandBuffer(m_tid, m_flags, m_microCmdb));
+
+	m_alloc = m_microCmdb->getFastAllocator();
+
+	m_texUsageTracker.init(m_alloc);
+
+	m_handle = m_microCmdb->getHandle();
 	ANKI_ASSERT(m_handle);
 
 	if(!!(m_flags & CommandBufferFlag::SECOND_LEVEL))
@@ -130,7 +134,7 @@ void CommandBufferImpl::beginRenderPass(FramebufferPtr fb)
 	m_rpCommandCount = 0;
 	m_activeFb = fb;
 
-	m_fbList.pushBack(m_alloc, fb);
+	m_microCmdb->pushObjectRef(fb);
 
 	m_subpassContents = VK_SUBPASS_CONTENTS_MAX_ENUM;
 }
@@ -329,7 +333,7 @@ void CommandBufferImpl::generateMipmaps2d(TexturePtr tex, U face, U layer)
 	}
 
 	// Hold the reference
-	m_texList.pushBack(m_alloc, tex);
+	m_microCmdb->pushObjectRef(tex);
 }
 
 void CommandBufferImpl::flushBarriers()
@@ -635,7 +639,7 @@ void CommandBufferImpl::copyBufferToTextureSurface(
 		BufferPtr shadow =
 			getGrManager().newInstance<Buffer>(shadowSize, BufferUsageBit::TRANSFER_ALL, BufferMapAccessBit::NONE);
 		const VkBuffer shadowHandle = shadow->m_impl->getHandle();
-		m_bufferList.pushBack(m_alloc, shadow);
+		m_microCmdb->pushObjectRef(shadow);
 
 		// Create the copy regions
 		DynamicArrayAuto<VkBufferCopy> copies(m_alloc);
@@ -687,8 +691,8 @@ void CommandBufferImpl::copyBufferToTextureSurface(
 		ANKI_ASSERT(0);
 	}
 
-	m_texList.pushBack(m_alloc, tex);
-	m_bufferList.pushBack(m_alloc, buff);
+	m_microCmdb->pushObjectRef(tex);
+	m_microCmdb->pushObjectRef(buff);
 }
 
 void CommandBufferImpl::copyBufferToTextureVolume(
@@ -739,7 +743,7 @@ void CommandBufferImpl::copyBufferToTextureVolume(
 		BufferPtr shadow =
 			getGrManager().newInstance<Buffer>(shadowSize, BufferUsageBit::TRANSFER_ALL, BufferMapAccessBit::NONE);
 		const VkBuffer shadowHandle = shadow->m_impl->getHandle();
-		m_bufferList.pushBack(m_alloc, shadow);
+		m_microCmdb->pushObjectRef(shadow);
 
 		// Create the copy regions
 		DynamicArrayAuto<VkBufferCopy> copies(m_alloc);
@@ -795,8 +799,8 @@ void CommandBufferImpl::copyBufferToTextureVolume(
 		ANKI_ASSERT(0);
 	}
 
-	m_texList.pushBack(m_alloc, tex);
-	m_bufferList.pushBack(m_alloc, buff);
+	m_microCmdb->pushObjectRef(tex);
+	m_microCmdb->pushObjectRef(buff);
 }
 
 } // end namespace anki

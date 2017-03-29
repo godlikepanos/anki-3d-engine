@@ -52,6 +52,7 @@ template<typename T, typename TNode>
 void ListBase<T, TNode>::pushBackNode(TNode* node)
 {
 	ANKI_ASSERT(node);
+	ANKI_ASSERT(node->m_next == nullptr && node->m_prev == nullptr);
 
 	if(m_tail != nullptr)
 	{
@@ -71,6 +72,7 @@ template<typename T, typename TNode>
 void ListBase<T, TNode>::pushFrontNode(TNode* node)
 {
 	ANKI_ASSERT(node);
+	ANKI_ASSERT(node->m_next == nullptr && node->m_prev == nullptr);
 
 	if(m_head != nullptr)
 	{
@@ -90,6 +92,7 @@ template<typename T, typename TNode>
 void ListBase<T, TNode>::insertNode(TNode* pos, TNode* node)
 {
 	ANKI_ASSERT(node);
+	ANKI_ASSERT(node->m_next == nullptr && node->m_prev == nullptr);
 
 	if(pos == nullptr)
 	{

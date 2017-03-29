@@ -11,7 +11,7 @@
 #include <anki/gr/vulkan/Fence.h>
 #include <anki/gr/vulkan/QueryExtra.h>
 #include <anki/gr/vulkan/DescriptorSet.h>
-#include <anki/gr/vulkan/CommandBufferExtra.h>
+#include <anki/gr/vulkan/CommandBufferFactory.h>
 #include <anki/gr/vulkan/PipelineLayout.h>
 #include <anki/gr/vulkan/PipelineCache.h>
 #include <anki/util/HashMap.h>
@@ -73,9 +73,10 @@ public:
 	/// @name object_creation
 	/// @{
 
-	VkCommandBuffer newCommandBuffer(ThreadId tid, CommandBufferFlag cmdbFlags);
-
-	void deleteCommandBuffer(VkCommandBuffer cmdb, CommandBufferFlag cmdbFlags, ThreadId tid);
+	CommandBufferFactory& getCommandBufferFactory()
+	{
+		return m_cmdbFactory;
+	}
 
 	FencePtr newFence()
 	{
@@ -239,9 +240,6 @@ private:
 
 		/// The semaphore that the submit that renders to the default FB.
 		GrSemaphorePtr m_renderSemaphore;
-
-		/// Keep it here for deferred cleanup.
-		List<CommandBufferPtr> m_cmdbsSubmitted;
 	};
 
 	VkSurfaceKHR m_surface = VK_NULL_HANDLE;
@@ -261,36 +259,7 @@ private:
 	GpuMemoryManager m_gpuMemManager;
 	/// @}
 
-	/// @name Per_thread_cache
-	/// @{
-
-	class PerThreadHasher
-	{
-	public:
-		U64 operator()(const ThreadId& b) const
-		{
-			return b;
-		}
-	};
-
-	class PerThreadCompare
-	{
-	public:
-		Bool operator()(const ThreadId& a, const ThreadId& b) const
-		{
-			return a == b;
-		}
-	};
-
-	/// Per thread cache.
-	class PerThread
-	{
-	public:
-		CommandBufferFactory m_cmdbs;
-	};
-
-	HashMap<ThreadId, PerThread, PerThreadHasher, PerThreadCompare> m_perThread;
-	SpinLock m_perThreadMtx;
+	CommandBufferFactory m_cmdbFactory;
 
 	FenceFactory m_fences;
 	GrSemaphoreFactory m_semaphores;
@@ -329,8 +298,6 @@ private:
 #endif
 
 	void resetFrame(PerFrame& frame);
-
-	PerThread& getPerThreadCache(ThreadId tid);
 };
 /// @}
 

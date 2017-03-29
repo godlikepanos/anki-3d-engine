@@ -145,7 +145,7 @@ inline void CommandBufferImpl::setTextureBarrierRange(
 
 	setImageBarrier(srcStage, srcAccess, oldLayout, dstStage, dstAccess, newLayout, impl.m_imageHandle, range);
 
-	m_texList.pushBack(m_alloc, tex);
+	m_microCmdb->pushObjectRef(tex);
 }
 
 inline void CommandBufferImpl::setTextureSurfaceBarrier(
@@ -238,7 +238,7 @@ inline void CommandBufferImpl::setBufferBarrier(
 
 	setBufferBarrier(srcStage, srcAccess, dstStage, dstAccess, offset, size, impl.getHandle());
 
-	m_bufferList.pushBack(m_alloc, buff);
+	m_microCmdb->pushObjectRef(buff);
 }
 
 inline void CommandBufferImpl::drawArrays(
@@ -350,7 +350,7 @@ inline void CommandBufferImpl::resetOcclusionQuery(OcclusionQueryPtr query)
 	ANKI_CMD(vkCmdResetQueryPool(m_handle, handle, idx, 1), ANY_OTHER_COMMAND);
 #endif
 
-	m_queryList.pushBack(m_alloc, query);
+	m_microCmdb->pushObjectRef(query);
 }
 
 inline void CommandBufferImpl::beginOcclusionQuery(OcclusionQueryPtr query)
@@ -363,7 +363,7 @@ inline void CommandBufferImpl::beginOcclusionQuery(OcclusionQueryPtr query)
 
 	ANKI_CMD(vkCmdBeginQuery(m_handle, handle, idx, 0), ANY_OTHER_COMMAND);
 
-	m_queryList.pushBack(m_alloc, query);
+	m_microCmdb->pushObjectRef(query);
 }
 
 inline void CommandBufferImpl::endOcclusionQuery(OcclusionQueryPtr query)
@@ -376,7 +376,7 @@ inline void CommandBufferImpl::endOcclusionQuery(OcclusionQueryPtr query)
 
 	ANKI_CMD(vkCmdEndQuery(m_handle, handle, idx), ANY_OTHER_COMMAND);
 
-	m_queryList.pushBack(m_alloc, query);
+	m_microCmdb->pushObjectRef(query);
 }
 
 inline void CommandBufferImpl::clearTextureInternal(
@@ -400,7 +400,7 @@ inline void CommandBufferImpl::clearTextureInternal(
 		ANKI_ASSERT(0 && "TODO");
 	}
 
-	m_texList.pushBack(m_alloc, tex);
+	m_microCmdb->pushObjectRef(tex);
 }
 
 inline void CommandBufferImpl::clearTextureSurface(
@@ -455,7 +455,7 @@ inline void CommandBufferImpl::pushSecondLevelCommandBuffer(CommandBufferPtr cmd
 #endif
 
 	++m_rpCommandCount;
-	m_cmdbList.pushBack(m_alloc, cmdb);
+	m_microCmdb->pushObjectRef(cmdb);
 }
 
 inline void CommandBufferImpl::drawcallCommon()
@@ -553,6 +553,11 @@ inline void CommandBufferImpl::commandCommon()
 
 	ANKI_ASSERT(!m_finalized);
 	ANKI_ASSERT(m_handle);
+	
+#if ANKI_EXTRA_CHECKS
+	++m_commandCount;
+#endif
+	
 	m_empty = false;
 
 	if(ANKI_UNLIKELY(!m_beganRecording))
@@ -608,7 +613,7 @@ inline void CommandBufferImpl::fillBuffer(BufferPtr buff, PtrSize offset, PtrSiz
 
 	ANKI_CMD(vkCmdFillBuffer(m_handle, impl.getHandle(), offset, size, value), ANY_OTHER_COMMAND);
 
-	m_bufferList.pushBack(m_alloc, buff);
+	m_microCmdb->pushObjectRef(buff);
 }
 
 inline void CommandBufferImpl::writeOcclusionQueryResultToBuffer(
@@ -651,8 +656,8 @@ inline void CommandBufferImpl::writeOcclusionQueryResultToBuffer(
 		ANY_OTHER_COMMAND);
 #endif
 
-	m_queryList.pushBack(m_alloc, query);
-	m_bufferList.pushBack(m_alloc, buff);
+	m_microCmdb->pushObjectRef(query);
+	m_microCmdb->pushObjectRef(buff);
 }
 
 inline void CommandBufferImpl::bindShaderProgram(ShaderProgramPtr& prog)
@@ -683,7 +688,7 @@ inline void CommandBufferImpl::bindShaderProgram(ShaderProgramPtr& prog)
 		}
 	}
 
-	m_progs.pushBack(m_alloc, prog);
+	m_microCmdb->pushObjectRef(prog);
 }
 
 inline void CommandBufferImpl::copyBufferToBuffer(
@@ -699,8 +704,8 @@ inline void CommandBufferImpl::copyBufferToBuffer(
 	ANKI_CMD(
 		vkCmdCopyBuffer(m_handle, src->m_impl->getHandle(), dst->m_impl->getHandle(), 1, &region), ANY_OTHER_COMMAND);
 
-	m_bufferList.pushBack(m_alloc, src);
-	m_bufferList.pushBack(m_alloc, dst);
+	m_microCmdb->pushObjectRef(src);
+	m_microCmdb->pushObjectRef(dst);
 }
 
 } // end namespace anki
