@@ -553,11 +553,11 @@ inline void CommandBufferImpl::commandCommon()
 
 	ANKI_ASSERT(!m_finalized);
 	ANKI_ASSERT(m_handle);
-	
+
 #if ANKI_EXTRA_CHECKS
 	++m_commandCount;
 #endif
-	
+
 	m_empty = false;
 
 	if(ANKI_UNLIKELY(!m_beganRecording))

@@ -178,6 +178,9 @@ const U MAX_DESCRIPTOR_SETS = 2; ///< Groups that can be bound at the same time.
 
 const U MAX_GR_OBJECT_NAME_LENGTH = 15;
 
+/// The number of commands in a command buffer that make it a small batch command buffer.
+const U COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS = 100;
+
 /// The base of all init infos for GR.
 class GrBaseInitInfo
 {

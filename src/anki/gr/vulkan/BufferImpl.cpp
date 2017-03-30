@@ -207,6 +207,11 @@ VkPipelineStageFlags BufferImpl::computePplineStage(BufferUsageBit usage)
 		stageMask |= VK_PIPELINE_STAGE_TRANSFER_BIT;
 	}
 
+	if(!!(usage & (BufferUsageBit::QUERY_RESULT)))
+	{
+		stageMask |= VK_PIPELINE_STAGE_TRANSFER_BIT;
+	}
+
 	ANKI_ASSERT(stageMask);
 	return stageMask;
 }
@@ -263,6 +268,11 @@ VkAccessFlags BufferImpl::computeAccessMask(BufferUsageBit usage)
 	if(!!(usage & (BufferUsageBit::BUFFER_UPLOAD_SOURCE | BufferUsageBit::TEXTURE_UPLOAD_SOURCE)))
 	{
 		mask |= VK_ACCESS_TRANSFER_READ_BIT;
+	}
+
+	if(!!(usage & BufferUsageBit::QUERY_RESULT))
+	{
+		mask |= VK_ACCESS_TRANSFER_WRITE_BIT;
 	}
 
 	ANKI_ASSERT(mask);

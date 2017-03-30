@@ -117,7 +117,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	ANKI_CHECK(m_pplineCache.init(m_device, m_physicalDevice, init.m_cacheDirectory, *init.m_config, getAllocator()));
 
 	ANKI_CHECK(initMemory(*init.m_config));
-	
+
 	ANKI_CHECK(m_cmdbFactory.init(getAllocator(), m_device, m_queueIdx));
 
 	for(PerFrame& f : m_perFrame)

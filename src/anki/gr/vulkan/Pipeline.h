@@ -18,68 +18,69 @@ namespace anki
 /// @addtogroup vulkan
 /// @{
 
-class VertexBufferBinding
+/// @note Non copyable because that complicates the hashing.
+class PPVertexBufferBinding : public NonCopyable
 {
 public:
 	PtrSize m_stride = MAX_PTR_SIZE; ///< Vertex stride.
 	VertexStepRate m_stepRate = VertexStepRate::VERTEX;
 
-	Bool operator==(const VertexBufferBinding& b) const
+	Bool operator==(const PPVertexBufferBinding& b) const
 	{
 		return m_stride == b.m_stride && m_stepRate == b.m_stepRate;
 	}
 
-	Bool operator!=(const VertexBufferBinding& b) const
+	Bool operator!=(const PPVertexBufferBinding& b) const
 	{
 		return !(*this == b);
 	}
 };
 
-class VertexAttributeBinding
+class PPVertexAttributeBinding : public NonCopyable
 {
 public:
-	PixelFormat m_format;
 	PtrSize m_offset = 0;
+	PixelFormat m_format;
 	U8 m_binding = 0;
 
-	Bool operator==(const VertexAttributeBinding& b) const
+	Bool operator==(const PPVertexAttributeBinding& b) const
 	{
 		return m_format == b.m_format && m_offset == b.m_offset && m_binding == b.m_binding;
 	}
 
-	Bool operator!=(const VertexAttributeBinding& b) const
+	Bool operator!=(const PPVertexAttributeBinding& b) const
 	{
 		return !(*this == b);
 	}
 };
 
-class VertexStateInfo
+class PPVertexStateInfo : public NonCopyable
 {
 public:
-	Array<VertexBufferBinding, MAX_VERTEX_ATTRIBUTES> m_bindings;
-	Array<VertexAttributeBinding, MAX_VERTEX_ATTRIBUTES> m_attributes;
+	Array<PPVertexBufferBinding, MAX_VERTEX_ATTRIBUTES> m_bindings;
+	Array<PPVertexAttributeBinding, MAX_VERTEX_ATTRIBUTES> m_attributes;
 };
 
-class InputAssemblerStateInfo
+class PPInputAssemblerStateInfo : public NonCopyable
 {
 public:
 	PrimitiveTopology m_topology = PrimitiveTopology::TRIANGLES;
 	Bool8 m_primitiveRestartEnabled = false;
 };
 
-class TessellationStateInfo
+class PPTessellationStateInfo : public NonCopyable
 {
 public:
 	U32 m_patchControlPointCount = 3;
 };
 
-class ViewportStateInfo
+class PPViewportStateInfo : public NonCopyable
 {
 public:
 	Bool8 m_scissorEnabled = false;
 };
 
-class RasterizerStateInfo
+class PPRasterizerStateInfo : public NonCopyable
 {
 public:
 	FillMode m_fillMode = FillMode::SOLID;
@@ -88,17 +89,17 @@ public:
 	F32 m_depthBiasSlopeFactor = 0.0;
 };
 
-class DepthStateInfo
+class PPDepthStateInfo : public NonCopyable
 {
 public:
 	Bool8 m_depthWriteEnabled = true;
 	CompareOperation m_depthCompareFunction = CompareOperation::LESS;
 };
 
-class StencilStateInfo
+class PPStencilStateInfo : public NonCopyable
 {
 public:
-	class S
+	class S : public NonCopyable
 	{
 	public:
 		StencilOperation m_stencilFailOperation = StencilOperation::KEEP;
@@ -110,7 +111,7 @@ public:
 	Array<S, 2> m_face;
 };
 
-class ColorAttachmentStateInfo
+class PPColorAttachmentStateInfo : public NonCopyable
 {
 public:
 	BlendFactor m_srcBlendFactorRgb = BlendFactor::ONE;
@@ -122,14 +123,14 @@ public:
 	ColorBit m_channelWriteMask = ColorBit::ALL;
 };
 
-class ColorStateInfo
+class PPColorStateInfo : public NonCopyable
 {
 public:
 	Bool8 m_alphaToCoverageEnabled = false;
-	Array<ColorAttachmentStateInfo, MAX_COLOR_ATTACHMENTS> m_attachments;
+	Array<PPColorAttachmentStateInfo, MAX_COLOR_ATTACHMENTS> m_attachments;
 };
 
-class PipelineInfoState
+class PipelineInfoState : public NonCopyable
 {
 public:
 	PipelineInfoState()
@@ -154,18 +155,18 @@ public:
 	}
 
 	ShaderProgramPtr m_prog;
-	VertexStateInfo m_vertex;
-	InputAssemblerStateInfo m_inputAssembler;
-	TessellationStateInfo m_tessellation;
-	ViewportStateInfo m_viewport;
-	RasterizerStateInfo m_rasterizer;
-	DepthStateInfo m_depth;
-	StencilStateInfo m_stencil;
-	ColorStateInfo m_color;
+	PPVertexStateInfo m_vertex;
+	PPInputAssemblerStateInfo m_inputAssembler;
+	PPTessellationStateInfo m_tessellation;
+	PPViewportStateInfo m_viewport;
+	PPRasterizerStateInfo m_rasterizer;
+	PPDepthStateInfo m_depth;
+	PPStencilStateInfo m_stencil;
+	PPColorStateInfo m_color;
 };
 
 /// Track changes in the static state.
-class PipelineStateTracker
+class PipelineStateTracker : public NonCopyable
 {
 public:
 	PipelineStateTracker()
@@ -174,12 +175,13 @@ public:
 
 	void bindVertexBuffer(U32 binding, PtrSize stride, VertexStepRate stepRate)
 	{
-		VertexBufferBinding b;
+		PPVertexBufferBinding b;
 		b.m_stride = stride;
 		b.m_stepRate = stepRate;
 		if(m_state.m_vertex.m_bindings[binding] != b)
 		{
-			m_state.m_vertex.m_bindings[binding] = b;
+			m_state.m_vertex.m_bindings[binding].m_stride = b.m_stride;
+			m_state.m_vertex.m_bindings[binding].m_stepRate = b.m_stepRate;
 			m_dirty.m_vertBindings.set(binding);
 		}
 		m_set.m_vertBindings.set(binding);
@@ -187,13 +189,15 @@ public:
 
 	void setVertexAttribute(U32 location, U32 buffBinding, const PixelFormat& fmt, PtrSize relativeOffset)
 	{
-		VertexAttributeBinding b;
+		PPVertexAttributeBinding b;
 		b.m_binding = buffBinding;
 		b.m_format = fmt;
 		b.m_offset = relativeOffset;
 		if(m_state.m_vertex.m_attributes[location] != b)
 		{
-			m_state.m_vertex.m_attributes[location] = b;
+			m_state.m_vertex.m_attributes[location].m_binding = buffBinding;
+			m_state.m_vertex.m_attributes[location].m_format = fmt;
+			m_state.m_vertex.m_attributes[location].m_offset = relativeOffset;
 			m_dirty.m_attribs.set(location);
 		}
 		m_set.m_attribs.set(location);
@@ -318,7 +322,7 @@ public:
 
 	void setBlendFactors(U32 attachment, BlendFactor srcRgb, BlendFactor dstRgb, BlendFactor srcA, BlendFactor dstA)
 	{
-		ColorAttachmentStateInfo& c = m_state.m_color.m_attachments[attachment];
+		PPColorAttachmentStateInfo& c = m_state.m_color.m_attachments[attachment];
 		if(c.m_srcBlendFactorRgb != srcRgb || c.m_dstBlendFactorRgb != dstRgb || c.m_srcBlendFactorA != srcA
 			|| c.m_dstBlendFactorA != dstA)
 		{
@@ -332,7 +336,7 @@ public:
 
 	void setBlendOperation(U32 attachment, BlendOperation funcRgb, BlendOperation funcA)
 	{
-		ColorAttachmentStateInfo& c = m_state.m_color.m_attachments[attachment];
+		PPColorAttachmentStateInfo& c = m_state.m_color.m_attachments[attachment];
 		if(c.m_blendFunctionRgb != funcRgb || c.m_blendFunctionA != funcA)
 		{
 			c.m_blendFunctionRgb = funcRgb;

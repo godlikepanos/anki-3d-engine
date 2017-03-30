@@ -31,20 +31,20 @@ CommandBufferImpl::~CommandBufferImpl()
 	{
 		ANKI_VK_LOGW("Command buffer was not flushed");
 	}
-	
+
 #if ANKI_EXTRA_CHECKS
 	if(!!(m_flags & CommandBufferFlag::SMALL_BATCH))
 	{
-		if(m_commandCount > 20)
+		if(m_commandCount > COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS * 2)
 		{
-			ANKI_VK_LOGW("Command buffer has too many commands");
+			ANKI_VK_LOGW("Command buffer has too many commands: %u", U(m_commandCount));
 		}
 	}
 	else
 	{
-		if(m_commandCount <= 20)
+		if(m_commandCount <= COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS / 2)
 		{
-			ANKI_VK_LOGW("Command buffer has too few commands");
+			ANKI_VK_LOGW("Command buffer has too few commands: %u", U(m_commandCount));
 		}
 	}
 #endif

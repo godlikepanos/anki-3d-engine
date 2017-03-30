@@ -316,6 +316,8 @@ public:
 	}
 };
 
+static_assert(sizeof(PixelFormat) == 2, "Need it to be packed");
+
 /// Occlusion query result bit.
 enum class OcclusionQueryResultBit : U8
 {

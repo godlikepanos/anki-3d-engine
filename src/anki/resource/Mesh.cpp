@@ -47,7 +47,9 @@ Error MeshLoadTask::operator()(AsyncLoaderTaskContext& ctx)
 		if(data)
 		{
 			memcpy(data, m_loader.getVertexData(), m_loader.getVertexDataSize());
-			cmdb = gr.newInstance<CommandBuffer>(CommandBufferInitInfo());
+			CommandBufferInitInfo cmdbinit;
+			cmdbinit.m_flags = CommandBufferFlag::SMALL_BATCH;
+			cmdb = gr.newInstance<CommandBuffer>(cmdbinit);
 
 			cmdb->setBufferBarrier(
 				m_vertBuff, BufferUsageBit::VERTEX, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, 0, MAX_PTR_SIZE);
@@ -78,7 +80,9 @@ Error MeshLoadTask::operator()(AsyncLoaderTaskContext& ctx)
 
 			if(!cmdb)
 			{
-				cmdb = gr.newInstance<CommandBuffer>(CommandBufferInitInfo());
+				CommandBufferInitInfo cmdbinit;
+				cmdbinit.m_flags = CommandBufferFlag::SMALL_BATCH;
+				cmdb = gr.newInstance<CommandBuffer>(cmdbinit);
 			}
 
 			cmdb->setBufferBarrier(

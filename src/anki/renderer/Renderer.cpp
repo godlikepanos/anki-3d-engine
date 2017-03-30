@@ -441,15 +441,19 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf)
 {
 	ANKI_ASSERT(!!(inf.m_usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
 
+	const U faceCount = (inf.m_type == TextureType::CUBE || inf.m_type == TextureType::CUBE_ARRAY) ? 6 : 1;
+
 	// Create tex
 	TexturePtr tex = m_gr->newInstance<Texture>(inf);
 
 	// Clear all surfaces
 	CommandBufferInitInfo cmdbinit;
 	cmdbinit.m_flags = CommandBufferFlag::SMALL_BATCH | CommandBufferFlag::GRAPHICS_WORK;
+	if((inf.m_mipmapsCount * faceCount * inf.m_layerCount * 4) < COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS)
+	{
+		cmdbinit.m_flags |= CommandBufferFlag::SMALL_BATCH;
+	}
 	CommandBufferPtr cmdb = m_gr->newInstance<CommandBuffer>(cmdbinit);
-
-	const U faceCount = (inf.m_type == TextureType::CUBE || inf.m_type == TextureType::CUBE_ARRAY) ? 6 : 1;
 
 	for(U mip = 0; mip < inf.m_mipmapsCount; ++mip)
 	{

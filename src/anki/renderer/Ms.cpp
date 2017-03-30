@@ -116,6 +116,10 @@ Error Ms::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) 
 		// Create the command buffer
 		CommandBufferInitInfo cinf;
 		cinf.m_flags = CommandBufferFlag::SECOND_LEVEL | CommandBufferFlag::GRAPHICS_WORK;
+		if(end - start < COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS)
+		{
+			cinf.m_flags |= CommandBufferFlag::SMALL_BATCH;
+		}
 		cinf.m_framebuffer = m_fb;
 		CommandBufferPtr cmdb = m_r->getGrManager().newInstance<CommandBuffer>(cinf);
 		ctx.m_ms.m_commandBuffers[threadId] = cmdb;

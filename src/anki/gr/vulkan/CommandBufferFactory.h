@@ -142,6 +142,7 @@ private:
 	Array2d<CmdbType, 2, 2> m_types;
 
 	void destroyList(IntrusiveList<MicroCommandBuffer>& list);
+	void destroyLists();
 };
 
 /// Command bufffer object recycler.

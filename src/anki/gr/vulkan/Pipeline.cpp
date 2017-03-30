@@ -316,7 +316,7 @@ const VkGraphicsPipelineCreateInfo& PipelineStateTracker::updatePipelineCreateIn
 		{
 			ANKI_ASSERT(m_shaderColorAttachmentWritemask.get(i) && "No gaps are allowed");
 			VkPipelineColorBlendAttachmentState& out = m_ci.m_colAttachments[i];
-			const ColorAttachmentStateInfo& in = m_state.m_color.m_attachments[i];
+			const PPColorAttachmentStateInfo& in = m_state.m_color.m_attachments[i];
 
 			out.blendEnable = !blendingDisabled(in.m_srcBlendFactorRgb,
 				in.m_dstBlendFactorRgb,

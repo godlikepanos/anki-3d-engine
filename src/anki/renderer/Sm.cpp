@@ -271,6 +271,10 @@ Error Sm::doSpotLight(SceneNode& light, CommandBufferPtr& cmdb, FramebufferPtr& 
 	CommandBufferInitInfo cinf;
 	cinf.m_flags = CommandBufferFlag::SECOND_LEVEL | CommandBufferFlag::GRAPHICS_WORK;
 	cinf.m_framebuffer = fb;
+	if(end - start < COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS)
+	{
+		cinf.m_flags |= CommandBufferFlag::SMALL_BATCH;
+	}
 	cmdb = m_r->getGrManager().newInstance<CommandBuffer>(cinf);
 
 	// Inform on Rts
@@ -309,6 +313,10 @@ Error Sm::doOmniLight(
 		{
 			CommandBufferInitInfo cinf;
 			cinf.m_flags = CommandBufferFlag::SECOND_LEVEL | CommandBufferFlag::GRAPHICS_WORK;
+			if(end - start < COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS)
+			{
+				cinf.m_flags |= CommandBufferFlag::SMALL_BATCH;
+			}
 			cinf.m_framebuffer = fbs[frCount];
 			cmdbs[frCount] = m_r->getGrManager().newInstance<CommandBuffer>(cinf);
 

@@ -56,7 +56,7 @@ void CommandBufferThreadAllocator::destroyList(IntrusiveList<MicroCommandBuffer>
 	}
 }
 
-void CommandBufferThreadAllocator::destroy()
+void CommandBufferThreadAllocator::destroyLists()
 {
 	for(U i = 0; i < 2; ++i)
 	{
@@ -64,15 +64,19 @@ void CommandBufferThreadAllocator::destroy()
 		{
 			CmdbType& type = m_types[i][j];
 
+			destroyList(type.m_deletedCmdbs);
 			destroyList(type.m_readyCmdbs);
 			destroyList(type.m_inUseCmdbs);
-			destroyList(type.m_deletedCmdbs);
 		}
 	}
+}
 
+void CommandBufferThreadAllocator::destroy()
+{
 	if(m_pool)
 	{
 		vkDestroyCommandPool(m_factory->m_dev, m_pool, nullptr);
+		m_pool = {};
 	}
 }
 
@@ -168,7 +172,7 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 		MicroCommandBuffer* newCmdb = getAllocator().newInstance<MicroCommandBuffer>(this);
 		newCmdb->m_fastAlloc = StackAllocator<U8>(m_factory->m_alloc.getMemoryPool().getAllocationCallback(),
 			m_factory->m_alloc.getMemoryPool().getAllocationCallbackUserData(),
-			(smallBatch) ? (1 * 1024) : (10 * 1024),
+			(smallBatch) ? (1024 * 1024) : (1024 * 1024),
 			2.0f);
 
 		newCmdb->m_handle = cmdb;
@@ -213,10 +217,19 @@ Error CommandBufferFactory::init(GrAllocator<U8> alloc, VkDevice dev, uint32_t q
 
 void CommandBufferFactory::destroy()
 {
-	for(CommandBufferThreadAllocator* alloc : m_threadAllocs)
+	// Run 2 times because destroyLists() populates other allocators' lists
+	for(U i = 0; i < 2; ++i)
 	{
-		alloc->destroy();
-		m_alloc.deleteInstance(alloc);
+		for(CommandBufferThreadAllocator* alloc : m_threadAllocs)
+		{
+			alloc->destroyLists();
+		}
+	}
+
+	for(CommandBufferThreadAllocator* talloc : m_threadAllocs)
+	{
+		talloc->destroy();
+		m_alloc.deleteInstance(talloc);
 	}
 
 	m_threadAllocs.destroy(m_alloc);
