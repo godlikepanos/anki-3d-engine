@@ -5,13 +5,9 @@ sudo: false
 dist: trusty
 os: linux
 
-compiler:
-  - gcc
-  - clang
-
 env:
-  - BUILD_TYPE=Debug EXTRA_CHECKS=ON TRACE=ON CXX_=g++-5 CC_=gcc-5
-  - BUILD_TYPE=Release EXTRA_CHECKS=OFF TRACE=OFF CXX_=g++-5 CC_=gcc-5
+  - BUILD_TYPE=Debug EXTRA_CHECKS=ON TRACE=ON CXX_=g++-6 CC_=gcc-6
+  - BUILD_TYPE=Release EXTRA_CHECKS=OFF TRACE=OFF CXX_=g++-6 CC_=gcc-6
   - BUILD_TYPE=Debug EXTRA_CHECKS=ON TRACE=ON CXX_=clang++-3.7 CC_=clang-3.7
   - BUILD_TYPE=Release EXTRA_CHECKS=OFF TRACE=OFF CXX_=clang++-3.7 CC_=clang-3.7
 
@@ -25,7 +21,7 @@ addons:
       - sourceline: 'ppa:jonathonf/llvm'
     packages:
       - cmake
-      - g++-5
+      - g++-6
       - clang-3.7
 
 script:
