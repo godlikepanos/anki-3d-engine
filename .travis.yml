@@ -6,10 +6,12 @@ dist: trusty
 os: linux
 
 env:
-  - BUILD_TYPE=Debug EXTRA_CHECKS=ON TRACE=ON CXX_=g++-6 CC_=gcc-6
-  - BUILD_TYPE=Release EXTRA_CHECKS=OFF TRACE=OFF CXX_=g++-6 CC_=gcc-6
-  - BUILD_TYPE=Debug EXTRA_CHECKS=ON TRACE=ON CXX_=clang++-3.7 CC_=clang-3.7
-  - BUILD_TYPE=Release EXTRA_CHECKS=OFF TRACE=OFF CXX_=clang++-3.7 CC_=clang-3.7
+  - BUILD_TYPE=Debug EXTRA_CHECKS=ON TRACE=ON CXX_=g++-6 CC_=gcc-6 GR_BACKEND=GL
+  - BUILD_TYPE=Release EXTRA_CHECKS=OFF TRACE=OFF CXX_=g++-6 CC_=gcc-6 GR_BACKEND=GL
+  - BUILD_TYPE=Debug EXTRA_CHECKS=ON TRACE=ON CXX_=clang++-3.7 CC_=clang-3.7 GR_BACKEND=GL
+  - BUILD_TYPE=Release EXTRA_CHECKS=OFF TRACE=OFF CXX_=clang++-3.7 CC_=clang-3.7 GR_BACKEND=GL
+  - BUILD_TYPE=Debug EXTRA_CHECKS=ON TRACE=ON CXX_=g++-6 CC_=gcc-6 GR_BACKEND=VULKAN
+  - BUILD_TYPE=Debug EXTRA_CHECKS=ON TRACE=ON CXX_=clang++-3.7 CC_=clang-3.7 GR_BACKEND=VULKAN
 
 cache:
   apt: true
@@ -19,6 +21,7 @@ addons:
     sources:
       - sourceline: 'ppa:ubuntu-toolchain-r/test'
       - sourceline: 'ppa:jonathonf/llvm'
+      - sourceline: 'ppa:graphics-drivers/ppa'
     packages:
       - cmake
       - g++-6
@@ -31,7 +34,7 @@ script:
   - export CXX=${CXX_}
   - $CC --version
   - $CXX --version
-  - cmake .. -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DANKI_EXTRA_CHECKS=${EXTRA_CHECKS} -DANKI_BUILD_TOOLS=ON -DANKI_BUILD_TESTS=ON -DANKI_ENABLE_TRACE=${TRACE}
+  - cmake .. -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DANKI_EXTRA_CHECKS=${EXTRA_CHECKS} -DANKI_BUILD_TOOLS=ON -DANKI_BUILD_TESTS=ON -DANKI_ENABLE_TRACE=${TRACE} -DANKI_GR_BACKEND=${GR_BACKEND}
   - make -j 2
 
 branches:
