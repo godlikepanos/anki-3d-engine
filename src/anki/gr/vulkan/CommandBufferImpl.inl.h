@@ -310,7 +310,7 @@ inline void CommandBufferImpl::dispatchCompute(U32 groupCountX, U32 groupCountY,
 				VkDescriptorSet dsHandle = dset.getHandle();
 
 				ANKI_CMD(vkCmdBindDescriptorSets(m_handle,
-							 VK_PIPELINE_BIND_POINT_GRAPHICS,
+							 VK_PIPELINE_BIND_POINT_COMPUTE,
 							 m_computeProg->getPipelineLayout().getHandle(),
 							 i,
 							 1,

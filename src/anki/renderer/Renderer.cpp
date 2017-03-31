@@ -448,7 +448,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf)
 
 	// Clear all surfaces
 	CommandBufferInitInfo cmdbinit;
-	cmdbinit.m_flags = CommandBufferFlag::SMALL_BATCH | CommandBufferFlag::GRAPHICS_WORK;
+	cmdbinit.m_flags = CommandBufferFlag::GRAPHICS_WORK;
 	if((inf.m_mipmapsCount * faceCount * inf.m_layerCount * 4) < COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS)
 	{
 		cmdbinit.m_flags |= CommandBufferFlag::SMALL_BATCH;

@@ -32,23 +32,6 @@ CommandBufferImpl::~CommandBufferImpl()
 		ANKI_VK_LOGW("Command buffer was not flushed");
 	}
 
-#if ANKI_EXTRA_CHECKS
-	if(!!(m_flags & CommandBufferFlag::SMALL_BATCH))
-	{
-		if(m_commandCount > COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS * 2)
-		{
-			ANKI_VK_LOGW("Command buffer has too many commands: %u", U(m_commandCount));
-		}
-	}
-	else
-	{
-		if(m_commandCount <= COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS / 2)
-		{
-			ANKI_VK_LOGW("Command buffer has too few commands: %u", U(m_commandCount));
-		}
-	}
-#endif
-
 	m_imgBarriers.destroy(m_alloc);
 	m_buffBarriers.destroy(m_alloc);
 	m_queryResetAtoms.destroy(m_alloc);
@@ -238,6 +221,23 @@ void CommandBufferImpl::endRecording()
 
 	ANKI_CMD(ANKI_VK_CHECKF(vkEndCommandBuffer(m_handle)), ANY_OTHER_COMMAND);
 	m_finalized = true;
+
+#if ANKI_EXTRA_CHECKS
+	if(!!(m_flags & CommandBufferFlag::SMALL_BATCH))
+	{
+		if(m_commandCount > COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS * 4)
+		{
+			ANKI_VK_LOGW("Command buffer has too many commands: %u", U(m_commandCount));
+		}
+	}
+	else
+	{
+		if(m_commandCount <= COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS / 4)
+		{
+			ANKI_VK_LOGW("Command buffer has too few commands: %u", U(m_commandCount));
+		}
+	}
+#endif
 }
 
 void CommandBufferImpl::generateMipmaps2d(TexturePtr tex, U face, U layer)
