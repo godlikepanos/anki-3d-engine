@@ -26,6 +26,7 @@ addons:
       - cmake
       - g++-6
       - clang-3.7
+      - vulkan
 
 script:
   - mkdir build 
