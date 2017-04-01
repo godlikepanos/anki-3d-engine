@@ -519,16 +519,22 @@ inline void CommandBufferImpl::drawcallCommon()
 	// Flush viewport
 	if(ANKI_UNLIKELY(m_viewportDirty))
 	{
+		const Bool flipViewport = m_activeFb->m_impl->isDefaultFramebuffer()
+			&& !!(getGrManagerImpl().getExtensions() & VulkanExtensions::KHR_MAINENANCE1);
+
 		const I minx = m_viewport[0];
 		const I miny = m_viewport[1];
 		const I maxx = m_viewport[2];
 		const I maxy = m_viewport[3];
 
+		U32 fbWidth, fbHeight;
+		m_activeFb->m_impl->getAttachmentsSize(fbWidth, fbHeight);
+
 		VkViewport s;
 		s.x = minx;
-		s.y = miny;
+		s.y = (flipViewport) ? (fbHeight - miny) : miny; // Move to the bottom;
 		s.width = maxx - minx;
-		s.height = maxy - miny;
+		s.height = (flipViewport) ? -(maxy - miny) : (maxy - miny);
 		s.minDepth = 0.0;
 		s.maxDepth = 1.0;
 		ANKI_CMD(vkCmdSetViewport(m_handle, 0, 1, &s), ANY_OTHER_COMMAND);
@@ -537,7 +543,7 @@ inline void CommandBufferImpl::drawcallCommon()
 		scissor.extent.width = maxx - minx;
 		scissor.extent.height = maxy - miny;
 		scissor.offset.x = minx;
-		scissor.offset.y = miny;
+		scissor.offset.y = (flipViewport) ? (fbHeight - maxy) : miny;
 		ANKI_CMD(vkCmdSetScissor(m_handle, 0, 1, &scissor), ANY_OTHER_COMMAND);
 
 		m_viewportDirty = false;

@@ -365,6 +365,7 @@ public:
 		m_fbDepth = d;
 		m_fbStencil = s;
 		m_rpass = fb->m_impl->getCompatibleRenderPass();
+		m_defaultFb = fb->m_impl->isDefaultFramebuffer();
 	}
 
 	void endRenderPass()
@@ -456,6 +457,7 @@ private:
 	// Renderpass info
 	Bool8 m_fbDepth = false;
 	Bool8 m_fbStencil = false;
+	Bool8 m_defaultFb = false;
 	BitSet<MAX_COLOR_ATTACHMENTS, U8> m_fbColorAttachmentMask = {false};
 	VkRenderPass m_rpass = VK_NULL_HANDLE;
 
