@@ -24,8 +24,6 @@ class VolumetricMain : public RenderingPass
 	friend class VolumetricVBlur;
 
 anki_internal:
-	TexturePtr m_rt; ///< vRT
-
 	VolumetricMain(Renderer* r, Volumetric* vol)
 		: RenderingPass(r)
 		, m_vol(vol)
@@ -42,6 +40,8 @@ anki_internal:
 	void run(RenderingContext& ctx);
 	void setPostRunBarriers(RenderingContext& ctx);
 
+	TexturePtr getRt() const;
+
 private:
 	Volumetric* m_vol;
 
@@ -50,7 +50,8 @@ private:
 
 	ShaderResourcePtr m_frag;
 	ShaderProgramPtr m_prog;
-	FramebufferPtr m_fb;
+	Array<TexturePtr, 2> m_rt; ///< vRT
+	Array<FramebufferPtr, 2> m_fb;
 
 	TextureResourcePtr m_noiseTex;
 };
@@ -114,7 +115,7 @@ private:
 
 	ShaderResourcePtr m_frag;
 	ShaderProgramPtr m_prog;
-	FramebufferPtr m_fb;
+	Array<FramebufferPtr, 2> m_fb;
 };
 
 /// Volumetric effects.

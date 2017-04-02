@@ -55,5 +55,5 @@ void main()
 		}
 	}
 
-	out_color = outCol / weight * (2 * PI);
+	out_color = outCol / weight;
 }

@@ -7,7 +7,7 @@
 #include "shaders/Functions.glsl"
 #include "shaders/Clusterer.glsl"
 
-#define LIGHT_TEX_BINDING 2
+#define LIGHT_TEX_BINDING 3
 #define LIGHT_UBO_BINDING 0
 #define LIGHT_SS_BINDING 0
 #define LIGHT_SET 0
@@ -17,20 +17,21 @@ layout(location = 0) in vec2 in_uv;
 
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_msDepthRt;
 layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2DArray u_noiseTex;
+layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_historyRt;
 
-layout(std140, ANKI_UBO_BINDING(0, 3)) uniform ubo0_
+layout(std140, ANKI_UBO_BINDING(0, 3), row_major) uniform ubo0_
 {
 	vec4 u_linearizeNoiseTexOffsetLayer;
-	vec4 u_fogParticleColorBlendFactor;
+	vec4 u_fogParticleColorPad1;
+	mat4 u_prevViewProjMatMulInvViewProjMat;
 };
 
 #define u_linearize u_linearizeNoiseTexOffsetLayer.xy
 #define u_noiseYOffset u_linearizeNoiseTexOffsetLayer.z
 #define u_noiseLayer u_linearizeNoiseTexOffsetLayer.w
-#define u_fogParticleColor u_fogParticleColorBlendFactor.rgb
-#define u_blendFactor u_fogParticleColorBlendFactor.w
+#define u_fogParticleColor u_fogParticleColorPad1.rgb
 
-layout(location = 0) out vec4 out_color;
+layout(location = 0) out vec3 out_color;
 
 #define ENABLE_SHADOWS 1
 const uint MAX_SAMPLES_PER_CLUSTER = 4u;
@@ -91,13 +92,16 @@ vec3 computeLightColor(vec3 fragPos, uint plightCount, uint plightIdx, uint slig
 void main()
 {
 	float depth = textureLod(u_msDepthRt, in_uv, 0.0).r;
-	float farZ = u_lightingUniforms.projectionParams.z / (u_lightingUniforms.projectionParams.w + depth);
 
-	vec2 ndc = in_uv * 2.0 - 1.0;
+	vec3 ndc = UV_TO_NDC(vec3(in_uv, depth));
+
+	vec4 v4 = u_prevViewProjMatMulInvViewProjMat * vec4(ndc, 1.0);
+	vec2 oldUv = NDC_TO_UV(v4.xy / v4.w);
+	vec3 history = textureLod(u_historyRt, oldUv, 0.0).rgb;
 
 	vec3 farPos;
-	farPos.xy = ndc * u_lightingUniforms.projectionParams.xy * farZ;
-	farPos.z = farZ;
+	farPos.z = u_lightingUniforms.projectionParams.z / (u_lightingUniforms.projectionParams.w + depth);
+	farPos.xy = ndc.xy * u_lightingUniforms.projectionParams.xy * farPos.z;
 	vec3 viewDir = normalize(farPos);
 
 	uint i = uint(in_uv.x * float(CLUSTER_COUNT.x));
@@ -143,7 +147,7 @@ void main()
 		{
 			float zMedian = mix(kNear, kFar, factor);
 
-			if(zMedian < farZ)
+			if(zMedian < farPos.z)
 			{
 				k = CLUSTER_COUNT.z; // Break the outer loop
 				break;
@@ -158,5 +162,7 @@ void main()
 	}
 
 	newCol *= u_fogParticleColor;
-	out_color = vec4(newCol, u_blendFactor);
+
+	history = max(history, newCol);
+	out_color = mix(history, newCol, 1.0 / 16.0);
 }
