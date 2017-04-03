@@ -174,6 +174,11 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #define ANKI_WRITE_POSITION(x_) gl_Position = x_; gl_Position.z = (gl_Position.z + gl_Position.w) * 0.5
 #endif
 
+#if %s
+#extension GL_ARB_shader_ballot : require
+#define ANKI_ARB_SHADER_BALLOT 1
+#endif
+
 %s)";
 
 ShaderImpl::~ShaderImpl()
@@ -244,6 +249,7 @@ Error ShaderImpl::init(ShaderType shaderType, const CString& source)
 		MAX_TEXTURE_BINDINGS,
 		MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS,
 		MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS + MAX_STORAGE_BUFFER_BINDINGS,
+		!!(getGrManagerImpl().getExtensions() & VulkanExtensions::EXT_SHADER_SUBGROUP_BALLOT) ? "1" : "0",
 		&source[0]);
 
 	std::vector<unsigned int> spirv;

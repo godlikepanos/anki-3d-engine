@@ -44,4 +44,8 @@ const uint MAX_U32 = 0xFFFFFFFFu;
 #define SCALE_LOCATION 1
 #define ALPHA_LOCATION 2
 
+#if !defined(ANKI_ARB_SHADER_BALLOT)
+#define readFirstInvocationARB(x_) (x_)
+#endif
+
 #endif

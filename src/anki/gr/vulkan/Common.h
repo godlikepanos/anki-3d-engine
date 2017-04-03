@@ -37,7 +37,7 @@ class GrManagerImpl;
 #define ANKI_VK_LOGW(...) ANKI_LOG("VK  ", WARNING, __VA_ARGS__)
 #define ANKI_VK_LOGF(...) ANKI_LOG("VK  ", FATAL, __VA_ARGS__)
 
-enum class VulkanExtensions : U8
+enum class VulkanExtensions : U16
 {
 	NONE = 0,
 	KHR_MAINENANCE1 = 1 << 0,
@@ -48,6 +48,7 @@ enum class VulkanExtensions : U8
 	KHR_SURFACE = 1 << 5,
 	EXT_DEBUG_MARKER = 1 << 6,
 	NV_DEDICATED_ALLOCATION = 1 << 7,
+	EXT_SHADER_SUBGROUP_BALLOT = 1 << 8,
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VulkanExtensions, inline)
 
