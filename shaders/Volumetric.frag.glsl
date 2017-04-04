@@ -143,7 +143,7 @@ void main()
 		uint slightCount = u_lightIndices[idxOffset++];
 		uint slightIdx = idxOffset;
 
-		for(float factor = start; factor < 1.0; factor += dist)
+		for(float factor = start; factor <= 1.0; factor += dist)
 		{
 			float zMedian = mix(kNear, kFar, factor);
 

@@ -6,7 +6,7 @@
 #pragma once
 
 #include <anki/physics/PhysicsObject.h>
-#include <CustomPlayerControllerManager.h>
+#include <dCustomPlayerControllerManager.h>
 
 namespace anki
 {
@@ -15,7 +15,7 @@ namespace anki
 /// @{
 
 /// The implementation of the Newton manager.
-class CharacterControllerManager : public CustomPlayerControllerManager
+class CharacterControllerManager : public dCustomPlayerControllerManager
 {
 public:
 	PhysicsWorld* m_world;
@@ -26,7 +26,7 @@ public:
 	{
 	}
 
-	void ApplyPlayerMove(CustomPlayerController* const controller, dFloat timestep);
+	void ApplyPlayerMove(dCustomPlayerController* const controller, dFloat timestep);
 };
 
 /// Init info for PhysicsPlayerController.
@@ -75,7 +75,7 @@ public:
 	}
 
 private:
-	CustomPlayerController* m_newtonPlayer = nullptr;
+	dCustomPlayerController* m_newtonPlayer = nullptr;
 	Transform m_trf = Transform::getIdentity();
 	Bool m_updated = true;
 

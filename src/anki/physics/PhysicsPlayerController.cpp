@@ -10,12 +10,12 @@ namespace anki
 {
 
 CharacterControllerManager::CharacterControllerManager(PhysicsWorld* world)
-	: CustomPlayerControllerManager(world->getNewtonWorld())
+	: dCustomPlayerControllerManager(world->getNewtonWorld())
 	, m_world(world)
 {
 }
 
-void CharacterControllerManager::ApplyPlayerMove(CustomPlayerController* const controller, dFloat timestep)
+void CharacterControllerManager::ApplyPlayerMove(dCustomPlayerController* const controller, dFloat timestep)
 {
 	ANKI_ASSERT(controller);
 
