@@ -46,6 +46,11 @@ static const char* SHADER_HEADER = R"(#version %u %s
 #define ANKI_WRITE_POSITION(x_) gl_Position = x_
 #endif
 
+#if 1
+#extension GL_ARB_shader_ballot : require
+#define ANKI_ARB_SHADER_BALLOT 1
+#endif
+
 %s)";
 
 ShaderImpl::~ShaderImpl()

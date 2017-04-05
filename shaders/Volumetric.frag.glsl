@@ -26,10 +26,10 @@ layout(std140, ANKI_UBO_BINDING(0, 3), row_major) uniform ubo0_
 	mat4 u_prevViewProjMatMulInvViewProjMat;
 };
 
-#define u_linearize u_linearizeNoiseTexOffsetLayer.xy
-#define u_noiseYOffset u_linearizeNoiseTexOffsetLayer.z
-#define u_noiseLayer u_linearizeNoiseTexOffsetLayer.w
-#define u_fogParticleColor u_fogParticleColorPad1.rgb
+#define u_linearize readFirstInvocationARB(u_linearizeNoiseTexOffsetLayer.xy)
+#define u_noiseYOffset readFirstInvocationARB(u_linearizeNoiseTexOffsetLayer.z)
+#define u_noiseLayer readFirstInvocationARB(u_linearizeNoiseTexOffsetLayer.w)
+#define u_fogParticleColor readFirstInvocationARB(u_fogParticleColorPad1.rgb)
 
 layout(location = 0) out vec3 out_color;
 
@@ -100,8 +100,8 @@ void main()
 	vec3 history = textureLod(u_historyRt, oldUv, 0.0).rgb;
 
 	vec3 farPos;
-	farPos.z = u_lightingUniforms.projectionParams.z / (u_lightingUniforms.projectionParams.w + depth);
-	farPos.xy = ndc.xy * u_lightingUniforms.projectionParams.xy * farPos.z;
+	farPos.z = u_projectionParams.z / (u_projectionParams.w + depth);
+	farPos.xy = ndc.xy * u_projectionParams.xy * farPos.z;
 	vec3 viewDir = normalize(farPos);
 
 	uint i = uint(in_uv.x * float(CLUSTER_COUNT.x));
@@ -115,8 +115,7 @@ void main()
 	vec3 newCol = vec3(0.0);
 	for(uint k = 0u; k < CLUSTER_COUNT.z; ++k)
 	{
-		float kFar = computeClusterFar(
-			k, u_lightingUniforms.nearFarClustererMagicPad1.x, u_lightingUniforms.nearFarClustererMagicPad1.z);
+		float kFar = computeClusterFar(k, u_near, u_clustererMagic);
 
 		//
 		// Compute sample count

@@ -156,10 +156,7 @@ void main()
 	diffCol *= ssao;
 
 	// Get counts and offsets
-	uint clusterIdx =
-		computeClusterK(
-			u_lightingUniforms.nearFarClustererMagicPad1.x, u_lightingUniforms.nearFarClustererMagicPad1.z, fragPos.z)
-			* (CLUSTER_COUNT_X * CLUSTER_COUNT_Y)
+	uint clusterIdx = computeClusterK(u_near, u_clustererMagic, fragPos.z) * (CLUSTER_COUNT_X * CLUSTER_COUNT_Y)
 		+ uint(in_clusterIJ.y) * CLUSTER_COUNT_X + uint(in_clusterIJ.x);
 
 	uint idxOffset = u_clusters[clusterIdx];

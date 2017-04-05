@@ -30,7 +30,7 @@ public:
 	Mat4 m_invProjMat;
 };
 
-enum class ShaderVariantBit : U8
+enum class IsShaderVariantBit : U8
 {
 	P_LIGHTS = 1 << 0,
 	S_LIGHTS = 1 << 1,
@@ -39,7 +39,7 @@ enum class ShaderVariantBit : U8
 	P_LIGHTS_SHADOWS = 1 << 4,
 	S_LIGHTS_SHADOWS = 1 << 5
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderVariantBit, inline)
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(IsShaderVariantBit, inline)
 
 Is::Is(Renderer* r)
 	: RenderingPass(r)
@@ -228,59 +228,6 @@ void Is::setPreRunBarriers(RenderingContext& ctx)
 		TextureUsageBit::NONE,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 		TextureSurfaceInfo(0, 0, 0, 0));
-}
-
-Error Is::getOrCreateProgram(ShaderVariantBit variantMask, RenderingContext& ctx, ShaderProgramPtr& prog)
-{
-	auto it = m_shaderVariantMap.find(variantMask);
-	if(it != m_shaderVariantMap.getEnd())
-	{
-		prog = it->m_lightProg;
-	}
-	else
-	{
-		ShaderVariant variant;
-
-		ANKI_CHECK(m_r->createShaderf("shaders/Is.frag.glsl",
-			variant.m_lightFrag,
-			"#define TILE_COUNT_X %u\n"
-			"#define TILE_COUNT_Y %u\n"
-			"#define CLUSTER_COUNT %u\n"
-			"#define RENDERER_WIDTH %u\n"
-			"#define RENDERER_HEIGHT %u\n"
-			"#define MAX_LIGHT_INDICES %u\n"
-			"#define POISSON %u\n"
-			"#define INDIRECT_ENABLED %u\n"
-			"#define IR_MIPMAP_COUNT %u\n"
-			"#define POINT_LIGHTS_ENABLED %u\n"
-			"#define SPOT_LIGHTS_ENABLED %u\n"
-			"#define DECALS_ENABLED %u\n"
-			"#define POINT_LIGHTS_SHADOWS_ENABLED %u\n"
-			"#define SPOT_LIGHTS_SHADOWS_ENABLED %u\n",
-			m_clusterCounts[0],
-			m_clusterCounts[1],
-			m_clusterCount,
-			m_r->getWidth(),
-			m_r->getHeight(),
-			m_maxLightIds,
-			m_r->getSm().m_poissonEnabled,
-			!!(variantMask & ShaderVariantBit::INDIRECT),
-			m_r->getIr().getReflectionTextureMipmapCount(),
-			!!(variantMask & ShaderVariantBit::P_LIGHTS),
-			!!(variantMask & ShaderVariantBit::S_LIGHTS),
-			!!(variantMask & ShaderVariantBit::DECALS),
-			!!(variantMask & ShaderVariantBit::P_LIGHTS_SHADOWS),
-			!!(variantMask & ShaderVariantBit::S_LIGHTS_SHADOWS)));
-
-		variant.m_lightProg =
-			getGrManager().newInstance<ShaderProgram>(m_lightVert->getGrShader(), variant.m_lightFrag->getGrShader());
-
-		prog = variant.m_lightProg;
-
-		m_shaderVariantMap.pushBack(getAllocator(), variantMask, variant);
-	}
-
-	return ErrorCode::NONE;
 }
 
 } // end namespace anki

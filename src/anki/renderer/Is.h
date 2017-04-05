@@ -15,7 +15,6 @@ namespace anki
 // Forward
 class FrustumComponent;
 class LightBin;
-enum class ShaderVariantBit : U8;
 
 /// @addtogroup renderer
 /// @{
@@ -61,27 +60,6 @@ private:
 	ShaderResourcePtr m_lightFrag;
 	ShaderProgramPtr m_lightProg;
 
-	class ShaderVariant
-	{
-	public:
-		ShaderResourcePtr m_lightFrag;
-		ShaderProgramPtr m_lightProg;
-	};
-
-	using Key = ShaderVariantBit;
-
-	/// Hash the hash.
-	class Hasher
-	{
-	public:
-		U64 operator()(const Key& b) const
-		{
-			return U64(b);
-		}
-	};
-
-	HashMap<Key, ShaderVariant, Hasher> m_shaderVariantMap;
-
 	LightBin* m_lightBin = nullptr;
 
 	/// @name Limits
@@ -93,9 +71,6 @@ private:
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 
 	void updateCommonBlock(RenderingContext& ctx);
-
-	ANKI_USE_RESULT Error getOrCreateProgram(
-		ShaderVariantBit variantMask, RenderingContext& ctx, ShaderProgramPtr& prog);
 };
 /// @}
 

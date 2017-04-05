@@ -64,6 +64,14 @@ layout(ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING), std140, row_major) unifor
 	LightingUniforms u_lightingUniforms;
 };
 
+#define u_near readFirstInvocationARB(u_lightingUniforms.nearFarClustererMagicPad1.x)
+#define u_far readFirstInvocationARB(u_lightingUniforms.nearFarClustererMagicPad1.y)
+#define u_clusterCountX readFirstInvocationARB(u_lightingUniforms.tileCount.x)
+#define u_clusterCountY readFirstInvocationARB(u_lightingUniforms.tileCount.y)
+#define u_clustererMagic readFirstInvocationARB(u_lightingUniforms.nearFarClustererMagicPad1.z)
+#define u_time readFirstInvocationARB(u_lightingUniforms.rendererSizeTimePad1.z)
+#define u_unprojectionParams readFirstInvocationARB(u_lightingUniforms.projectionParams)
+
 #ifdef FRAGMENT_SHADER
 
 layout(ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING + 1), std140) uniform u1_

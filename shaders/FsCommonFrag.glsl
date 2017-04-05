@@ -20,7 +20,7 @@ layout(ANKI_TEX_BINDING(1, 0)) uniform sampler2D anki_msDepthRt;
 #define LIGHT_TEX_BINDING 1
 #include "shaders/ClusterLightCommon.glsl"
 
-#define anki_u_time u_lightingUniforms.rendererSizeTimePad1.z
+#define anki_u_time u_time
 #define RENDERER_SIZE (u_lightingUniforms.rendererSizeTimePad1.xy * 0.5)
 
 layout(location = 0) flat in float in_alpha;
@@ -121,12 +121,8 @@ vec3 computeLightColor(vec3 diffCol)
 	vec3 fragPos = in_posViewSpace;
 
 	// Find the cluster and then the light counts
-	uint clusterIdx = computeClusterIndex(gl_FragCoord.xy / RENDERER_SIZE,
-		u_lightingUniforms.nearFarClustererMagicPad1.x,
-		u_lightingUniforms.nearFarClustererMagicPad1.z,
-		fragPos.z,
-		u_lightingUniforms.tileCount.x,
-		u_lightingUniforms.tileCount.y);
+	uint clusterIdx = computeClusterIndex(
+		gl_FragCoord.xy / RENDERER_SIZE, u_near, u_far, fragPos.z, u_clusterCountX, u_clusterCountY);
 
 	uint idxOffset = u_clusters[clusterIdx];
 
@@ -234,8 +230,8 @@ void fog(in sampler2D depthMap, in vec3 color, in float fogScale)
 
 	if(depth < 1.0)
 	{
-		float zNear = u_lightingUniforms.nearFarClustererMagicPad1.x;
-		float zFar = u_lightingUniforms.nearFarClustererMagicPad1.y;
+		float zNear = u_near;
+		float zFar = u_far;
 		vec2 linearDepths = (2.0 * zNear) / (zFar + zNear - vec2(depth, gl_FragCoord.z) * (zFar - zNear));
 
 		diff = linearDepths.x - linearDepths.y;
