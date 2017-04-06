@@ -53,11 +53,8 @@ vec3 computeLightColor(vec3 fragPos, uint plightCount, uint plightIdx, uint slig
 		float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
 		if(light.diffuseColorShadowmapId.w >= 0.0)
 		{
-			factor *= computeShadowFactorOmni(frag2Light,
-				shadowmapLayerIdx,
-				-1.0 / light.posRadius.w,
-				u_lightingUniforms.invViewRotation,
-				u_omniMapArr);
+			factor *= computeShadowFactorOmni(
+				frag2Light, shadowmapLayerIdx, -1.0 / light.posRadius.w, u_invViewRotation, u_omniMapArr);
 		}
 #endif
 
@@ -100,8 +97,8 @@ void main()
 	vec3 history = textureLod(u_historyRt, oldUv, 0.0).rgb;
 
 	vec3 farPos;
-	farPos.z = u_projectionParams.z / (u_projectionParams.w + depth);
-	farPos.xy = ndc.xy * u_projectionParams.xy * farPos.z;
+	farPos.z = u_unprojectionParams.z / (u_unprojectionParams.w + depth);
+	farPos.xy = ndc.xy * u_unprojectionParams.xy * farPos.z;
 	vec3 viewDir = normalize(farPos);
 
 	uint i = uint(in_uv.x * float(CLUSTER_COUNT.x));
@@ -111,7 +108,7 @@ void main()
 	vec3 noiseTexUv = vec3(vec2(FB_SIZE) / vec2(NOISE_MAP_SIZE) * in_uv + vec2(0.0, u_noiseYOffset), u_noiseLayer);
 	float randFactor = clamp(texture(u_noiseTex, noiseTexUv).r, EPSILON, 1.0 - EPSILON);
 
-	float kNear = -u_lightingUniforms.nearFarClustererMagicPad1.x;
+	float kNear = -u_near;
 	vec3 newCol = vec3(0.0);
 	for(uint k = 0u; k < CLUSTER_COUNT.z; ++k)
 	{

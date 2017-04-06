@@ -72,6 +72,29 @@ layout(ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING), std140, row_major) unifor
 #define u_time readFirstInvocationARB(u_lightingUniforms.rendererSizeTimePad1.z)
 #define u_unprojectionParams readFirstInvocationARB(u_lightingUniforms.projectionParams)
 
+#define u_invViewRotation                                                                                              \
+	mat3(readFirstInvocationARB(u_lightingUniforms.invViewRotation[0]),                                                \
+		readFirstInvocationARB(u_lightingUniforms.invViewRotation[1]),                                                 \
+		readFirstInvocationARB(u_lightingUniforms.invViewRotation[2]))
+
+#define u_invProjMat                                                                                                   \
+	mat4(readFirstInvocationARB(u_lightingUniforms.invProjMat[0]),                                                     \
+		readFirstInvocationARB(u_lightingUniforms.invProjMat[1]),                                                      \
+		readFirstInvocationARB(u_lightingUniforms.invProjMat[2]),                                                      \
+		readFirstInvocationARB(u_lightingUniforms.invProjMat[3]))
+
+#define u_invViewProjMat                                                                                               \
+	mat4(readFirstInvocationARB(u_lightingUniforms.invViewProjMat[0]),                                                 \
+		readFirstInvocationARB(u_lightingUniforms.invViewProjMat[1]),                                                  \
+		readFirstInvocationARB(u_lightingUniforms.invViewProjMat[2]),                                                  \
+		readFirstInvocationARB(u_lightingUniforms.invViewProjMat[3]))
+
+#define u_prevViewProjMat                                                                                              \
+	mat4(readFirstInvocationARB(u_lightingUniforms.prevViewProjMat[0]),                                                \
+		readFirstInvocationARB(u_lightingUniforms.prevViewProjMat[1]),                                                 \
+		readFirstInvocationARB(u_lightingUniforms.prevViewProjMat[2]),                                                 \
+		readFirstInvocationARB(u_lightingUniforms.prevViewProjMat[3]))
+
 #ifdef FRAGMENT_SHADER
 
 layout(ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING + 1), std140) uniform u1_

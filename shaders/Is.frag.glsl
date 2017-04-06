@@ -113,7 +113,7 @@ void main()
 	vec2 ndc = UV_TO_NDC(in_uv);
 
 	// Get frag pos in view space
-	vec4 fragPos4 = u_lightingUniforms.invProjMat * vec4(ndc, UV_TO_NDC(depth), 1.0);
+	vec4 fragPos4 = u_invProjMat * vec4(ndc, UV_TO_NDC(depth), 1.0);
 	vec3 fragPos = fragPos4.xyz / fragPos4.w;
 	vec3 viewDir = normalize(-fragPos);
 
@@ -121,12 +121,12 @@ void main()
 	vec3 worldPos;
 	vec2 oldUv;
 	{
-		vec4 worldPos4 = u_lightingUniforms.invViewProjMat * vec4(ndc, UV_TO_NDC(depth), 1.0);
+		vec4 worldPos4 = u_invViewProjMat * vec4(ndc, UV_TO_NDC(depth), 1.0);
 		worldPos4 = worldPos4 / worldPos4.w;
 		worldPos = worldPos4.xyz;
 
 		// Project to get old ndc
-		vec4 oldNdc4 = u_lightingUniforms.prevViewProjMat * vec4(worldPos, 1.0);
+		vec4 oldNdc4 = u_prevViewProjMat * vec4(worldPos, 1.0);
 		vec2 oldNdc = oldNdc4.xy / oldNdc4.w;
 
 		oldUv = NDC_TO_UV(oldNdc);
@@ -191,11 +191,8 @@ void main()
 		float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
 		if(light.diffuseColorShadowmapId.w >= 0.0)
 		{
-			float shadow = computeShadowFactorOmni(frag2Light,
-				shadowmapLayerIdx,
-				light.specularColorRadius.w,
-				u_lightingUniforms.invViewRotation,
-				u_omniMapArr);
+			float shadow = computeShadowFactorOmni(
+				frag2Light, shadowmapLayerIdx, light.specularColorRadius.w, u_invViewRotation, u_omniMapArr);
 			lambert *= shadow;
 		}
 
@@ -226,8 +223,8 @@ void main()
 #if INDIRECT_ENABLED
 	vec3 eye = -viewDir;
 
-	vec3 worldEye = u_lightingUniforms.invViewRotation * eye;
-	vec3 worldNormal = u_lightingUniforms.invViewRotation * normal;
+	vec3 worldEye = u_invViewRotation * eye;
+	vec3 worldNormal = u_invViewRotation * normal;
 	vec3 worldR = reflect(worldEye, worldNormal);
 
 	float reflLod = float(IR_MIPMAP_COUNT) * roughness;

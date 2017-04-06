@@ -679,14 +679,20 @@ void MaterialLoader::processInputs()
 				// In block
 
 				in.m_index = m_nextIndex++;
+				const Bool isMatrix = in.m_type >= ShaderVariableDataType::MATRIX_FIRST
+					&& in.m_type <= ShaderVariableDataType::MATRIX_LAST;
 
 				in.m_line.sprintf("#if %s\n"
-								  "%s var%u%s;\n"
+								  "%s var%u_u%s;\n"
+								  "#define var%u %s(var%u_u)\n"
 								  "#endif",
 					!in.m_flags.m_inShadow ? "PASS == COLOR" : "1",
 					&in.typeStr()[0],
 					in.m_index,
-					in.m_flags.m_instanced ? " INSTANCED" : "");
+					in.m_flags.m_instanced ? " INSTANCED" : "",
+					in.m_index,
+					(isMatrix) ? "" : "readFirstInvocationARB",
+					in.m_index);
 			}
 			else
 			{
