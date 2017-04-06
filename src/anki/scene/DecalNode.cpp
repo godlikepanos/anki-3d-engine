@@ -65,22 +65,11 @@ DecalNode::~DecalNode()
 
 Error DecalNode::init()
 {
-	SceneComponent* comp;
-
-	comp = getSceneAllocator().newInstance<MoveComponent>(this);
-	addComponent(comp, true);
-
-	comp = getSceneAllocator().newInstance<DecalMoveFeedbackComponent>(this);
-	addComponent(comp, true);
-
-	comp = getSceneAllocator().newInstance<DecalComponent>(this);
-	addComponent(comp, true);
-
-	comp = getSceneAllocator().newInstance<DecalShapeFeedbackComponent>(this);
-	addComponent(comp, true);
-
-	comp = getSceneAllocator().newInstance<SpatialComponent>(this, &m_obbW);
-	addComponent(comp, true);
+	newComponent<MoveComponent>(this);
+	newComponent<DecalMoveFeedbackComponent>(this);
+	newComponent<DecalComponent>(this);
+	newComponent<DecalShapeFeedbackComponent>(this);
+	newComponent<SpatialComponent>(this, &m_obbW);
 
 	return ErrorCode::NONE;
 }

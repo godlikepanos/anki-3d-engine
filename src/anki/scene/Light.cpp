@@ -55,23 +55,17 @@ Light::~Light()
 
 Error Light::init(LightComponentType type, CollisionShape* shape)
 {
-	SceneComponent* comp;
-
 	// Move component
-	comp = getSceneAllocator().newInstance<MoveComponent>(this);
-	addComponent(comp, true);
+	newComponent<MoveComponent>(this);
 
 	// Light component
-	comp = getSceneAllocator().newInstance<LightComponent>(this, type);
-	addComponent(comp, true);
+	newComponent<LightComponent>(this, type);
 
 	// Feedback component
-	comp = getSceneAllocator().newInstance<LightFeedbackComponent>(this);
-	addComponent(comp, true);
+	newComponent<LightFeedbackComponent>(this);
 
 	// Spatial component
-	comp = getSceneAllocator().newInstance<SpatialComponent>(this, shape);
-	addComponent(comp, true);
+	newComponent<SpatialComponent>(this, shape);
 
 	return ErrorCode::NONE;
 }
@@ -131,7 +125,7 @@ Error Light::loadLensFlare(const CString& filename)
 {
 	ANKI_ASSERT(tryGetComponent<LensFlareComponent>() == nullptr);
 
-	LensFlareComponent* flareComp = getSceneAllocator().newInstance<LensFlareComponent>(this);
+	LensFlareComponent* flareComp = newComponent<LensFlareComponent>(this);
 
 	Error err = flareComp->init(filename);
 	if(err)
@@ -139,8 +133,6 @@ Error Light::loadLensFlare(const CString& filename)
 		getSceneAllocator().deleteInstance(flareComp);
 		return err;
 	}
-
-	addComponent(flareComp, true);
 
 	return ErrorCode::NONE;
 }
@@ -228,10 +220,7 @@ Error PointLight::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 			trf.setOrigin(origin);
 			m_shadowData[i].m_frustum.resetTransform(trf);
 
-			FrustumComponent* comp =
-				getSceneAllocator().newInstance<FrustumComponent>(this, &m_shadowData[i].m_frustum);
-
-			addComponent(comp, true);
+			newComponent<FrustumComponent>(this, &m_shadowData[i].m_frustum);
 		}
 	}
 
@@ -249,10 +238,8 @@ Error SpotLight::init()
 {
 	ANKI_CHECK(Light::init(LightComponentType::SPOT, &m_frustum));
 
-	FrustumComponent* fr = getSceneAllocator().newInstance<FrustumComponent>(this, &m_frustum);
+	FrustumComponent* fr = newComponent<FrustumComponent>(this, &m_frustum);
 	fr->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
-
-	addComponent(fr, true);
 
 	return ErrorCode::NONE;
 }

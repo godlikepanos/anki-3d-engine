@@ -47,18 +47,13 @@ Error StaticGeometryPatchNode::init(const ModelPatch* modelPatch)
 	// Create spatial components
 	for(U i = 1; i < m_modelPatch->getSubMeshesCount(); i++)
 	{
-		SpatialComponent* spatial =
-			getSceneAllocator().newInstance<SpatialComponent>(this, &m_modelPatch->getBoundingShapeSub(i));
-
-		addComponent(spatial, true);
+		SpatialComponent* spatial = newComponent<SpatialComponent>(this, &m_modelPatch->getBoundingShapeSub(i));
 
 		spatial->setSpatialOrigin(m_modelPatch->getBoundingShapeSub(i).getCenter());
-		spatial->setAutomaticCleanup(true);
 	}
 
 	// Create render component
-	RenderComponent* rcomp = getSceneAllocator().newInstance<StaticGeometryRenderComponent>(this);
-	addComponent(rcomp, true);
+	newComponent<StaticGeometryRenderComponent>(this);
 
 	return ErrorCode::NONE;
 }

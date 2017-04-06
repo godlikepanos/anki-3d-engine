@@ -48,15 +48,11 @@ ReflectionProbe::~ReflectionProbe()
 
 Error ReflectionProbe::init(F32 radius)
 {
-	SceneComponent* comp;
-
 	// Move component first
-	comp = getSceneAllocator().newInstance<MoveComponent>(this);
-	addComponent(comp, true);
+	newComponent<MoveComponent>(this);
 
 	// Feedback component
-	comp = getSceneAllocator().newInstance<ReflectionProbeMoveFeedbackComponent>(this);
-	addComponent(comp, true);
+	newComponent<ReflectionProbeMoveFeedbackComponent>(this);
 
 	// The frustum components
 	const F32 ang = toRad(90.0);
@@ -85,23 +81,19 @@ Error ReflectionProbe::init(F32 radius)
 		m_cubeSides[i].m_frustum.setAll(ang, ang, zNear, EFFECTIVE_DISTANCE);
 		m_cubeSides[i].m_frustum.resetTransform(m_cubeSides[i].m_localTrf);
 
-		FrustumComponent* frc = getSceneAllocator().newInstance<FrustumComponent>(this, &m_cubeSides[i].m_frustum);
+		FrustumComponent* frc = newComponent<FrustumComponent>(this, &m_cubeSides[i].m_frustum);
 
 		frc->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
-
-		addComponent(frc, true);
 	}
 
 	// Spatial component
 	m_spatialSphere.setCenter(Vec4(0.0));
 	m_spatialSphere.setRadius(radius);
-	comp = getSceneAllocator().newInstance<SpatialComponent>(this, &m_spatialSphere);
-	addComponent(comp, true);
+	newComponent<SpatialComponent>(this, &m_spatialSphere);
 
 	// Reflection probe comp
-	ReflectionProbeComponent* reflc = getSceneAllocator().newInstance<ReflectionProbeComponent>(this);
+	ReflectionProbeComponent* reflc = newComponent<ReflectionProbeComponent>(this);
 	reflc->setRadius(radius);
-	addComponent(reflc, true);
 
 	return ErrorCode::NONE;
 }

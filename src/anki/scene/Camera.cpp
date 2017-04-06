@@ -64,18 +64,14 @@ Camera::Camera(SceneGraph* scene, Type type, CString name)
 
 Error Camera::init(Frustum* frustum)
 {
-	SceneComponent* comp;
-
 	// Move component
-	comp = getSceneAllocator().newInstance<MoveComponent>(this);
-	addComponent(comp, true);
+	newComponent<MoveComponent>(this);
 
 	// Feedback component
-	comp = getSceneAllocator().newInstance<CameraMoveFeedbackComponent>(this);
-	addComponent(comp, true);
+	newComponent<CameraMoveFeedbackComponent>(this);
 
 	// Frustum component
-	FrustumComponent* frc = getSceneAllocator().newInstance<FrustumComponent>(this, frustum);
+	FrustumComponent* frc = newComponent<FrustumComponent>(this, frustum);
 	frc->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS
 		| FrustumComponentVisibilityTestFlag::LIGHT_COMPONENTS
 		| FrustumComponentVisibilityTestFlag::LENS_FLARE_COMPONENTS
@@ -83,15 +79,12 @@ Error Camera::init(Frustum* frustum)
 		| FrustumComponentVisibilityTestFlag::REFLECTION_PROXIES
 		| FrustumComponentVisibilityTestFlag::OCCLUDERS
 		| FrustumComponentVisibilityTestFlag::DECALS);
-	addComponent(frc, true);
 
 	// Feedback component #2
-	comp = getSceneAllocator().newInstance<CameraFrustumFeedbackComponent>(this);
-	addComponent(comp, true);
+	newComponent<CameraFrustumFeedbackComponent>(this);
 
 	// Spatial component
-	comp = getSceneAllocator().newInstance<SpatialComponent>(this, frustum);
-	addComponent(comp, true);
+	newComponent<SpatialComponent>(this, frustum);
 
 	return ErrorCode::NONE;
 }

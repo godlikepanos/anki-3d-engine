@@ -58,19 +58,17 @@ PortalSectorBase::~PortalSectorBase()
 Error PortalSectorBase::init(const CString& meshFname, Bool isSector)
 {
 	// Create move component
-	SceneComponent* comp = getSceneAllocator().newInstance<MoveComponent>(this);
-	addComponent(comp, true);
+	newComponent<MoveComponent>(this);
 
 	// Create portal or sector component
 	if(isSector)
 	{
-		comp = getSceneAllocator().newInstance<SectorComponent>(this);
+		newComponent<SectorComponent>(this);
 	}
 	else
 	{
-		comp = getSceneAllocator().newInstance<PortalComponent>(this);
+		newComponent<PortalComponent>(this);
 	}
-	addComponent(comp, true);
 
 	// Load mesh
 	MeshLoader loader(&getSceneGraph().getResourceManager());

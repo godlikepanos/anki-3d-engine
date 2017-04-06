@@ -126,23 +126,17 @@ Error PlayerNode::init(const Vec4& position)
 	init.m_position = position;
 	m_player = getSceneGraph().getPhysicsWorld().newInstance<PhysicsPlayerController>(init);
 
-	SceneComponent* comp;
-
 	// Player controller component
-	comp = getSceneAllocator().newInstance<PlayerControllerComponent>(this, m_player);
-	addComponent(comp, true);
+	newComponent<PlayerControllerComponent>(this, m_player);
 
 	// Feedback component
-	comp = getSceneAllocator().newInstance<PlayerNodeFeedbackComponent>(this);
-	addComponent(comp, true);
+	newComponent<PlayerNodeFeedbackComponent>(this);
 
 	// Move component
-	comp = getSceneAllocator().newInstance<MoveComponent>(this);
-	addComponent(comp, true);
+	newComponent<MoveComponent>(this);
 
 	// Feedback component #2
-	comp = getSceneAllocator().newInstance<PlayerNodeFeedbackComponent2>(this);
-	addComponent(comp, true);
+	newComponent<PlayerNodeFeedbackComponent2>(this);
 
 	return ErrorCode::NONE;
 }

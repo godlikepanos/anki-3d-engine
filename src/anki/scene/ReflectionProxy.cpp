@@ -40,12 +40,10 @@ public:
 Error ReflectionProxy::init(const CString& proxyMesh)
 {
 	// Move component first
-	SceneComponent* comp = getSceneAllocator().newInstance<MoveComponent>(this);
-	addComponent(comp, true);
+	newComponent<MoveComponent>(this);
 
 	// Feedback component
-	comp = getSceneAllocator().newInstance<ReflectionProxyMoveFeedbackComponent>(this);
-	addComponent(comp, true);
+	newComponent<ReflectionProxyMoveFeedbackComponent>(this);
 
 	// Load vertices
 	MeshLoader loader(&getResourceManager());
@@ -81,8 +79,7 @@ Error ReflectionProxy::init(const CString& proxyMesh)
 	}
 
 	// Proxy component
-	comp = getSceneAllocator().newInstance<ReflectionProxyComponent>(this, quadCount);
-	addComponent(comp, true);
+	newComponent<ReflectionProxyComponent>(this, quadCount);
 
 	// Spatial component
 	m_boxLSpace.setFromPointCloud(loader.getVertexData(),
@@ -92,8 +89,7 @@ Error ReflectionProxy::init(const CString& proxyMesh)
 
 	m_boxWSpace = m_boxLSpace;
 
-	comp = getSceneAllocator().newInstance<SpatialComponent>(this, &m_boxWSpace);
-	addComponent(comp, true);
+	newComponent<SpatialComponent>(this, &m_boxWSpace);
 
 	return ErrorCode::NONE;
 }

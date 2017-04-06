@@ -224,29 +224,21 @@ ParticleEmitter::~ParticleEmitter()
 
 Error ParticleEmitter::init(const CString& filename)
 {
-	SceneComponent* comp;
-
 	// Load resource
 	ANKI_CHECK(getResourceManager().loadResource(filename, m_particleEmitterResource));
 
 	// Move component
-	comp = getSceneAllocator().newInstance<MoveComponent>(this);
-	addComponent(comp, true);
+	newComponent<MoveComponent>(this);
 
 	// Move component feedback
-	comp = getSceneAllocator().newInstance<MoveFeedbackComponent>(this);
-	addComponent(comp, true);
+	newComponent<MoveFeedbackComponent>(this);
 
 	// Spatial component
-	comp = getSceneAllocator().newInstance<SpatialComponent>(this, &m_obb);
-	addComponent(comp, true);
+	newComponent<SpatialComponent>(this, &m_obb);
 
 	// Render component
-	ParticleEmitterRenderComponent* rcomp = getSceneAllocator().newInstance<ParticleEmitterRenderComponent>(this);
-
+	ParticleEmitterRenderComponent* rcomp = newComponent<ParticleEmitterRenderComponent>(this);
 	ANKI_CHECK(rcomp->init());
-	comp = rcomp;
-	addComponent(comp, true);
 
 	// Other
 	m_obb.setCenter(Vec4(0.0));

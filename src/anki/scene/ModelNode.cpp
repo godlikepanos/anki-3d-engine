@@ -51,15 +51,10 @@ Error ModelPatchNode::init(const ModelPatch* modelPatch)
 	m_modelPatch = modelPatch;
 
 	// Spatial component
-	SceneComponent* comp = getSceneAllocator().newInstance<SpatialComponent>(this, &m_obb);
-
-	addComponent(comp, true);
+	newComponent<SpatialComponent>(this, &m_obb);
 
 	// Render component
-	RenderComponent* rcomp = getSceneAllocator().newInstance<ModelPatchRenderComponent>(this);
-	comp = rcomp;
-
-	addComponent(comp, true);
+	RenderComponent* rcomp = newComponent<ModelPatchRenderComponent>(this);
 	ANKI_CHECK(rcomp->init());
 
 	return ErrorCode::NONE;
@@ -138,8 +133,6 @@ ModelNode::~ModelNode()
 
 Error ModelNode::init(const CString& modelFname)
 {
-	SceneComponent* comp;
-
 	ANKI_CHECK(getResourceManager().loadResource(modelFname, m_model));
 
 	m_modelPatches.create(getSceneAllocator(), m_model->getModelPatches().getSize(), nullptr);
@@ -158,12 +151,10 @@ Error ModelNode::init(const CString& modelFname)
 	}
 
 	// Move component
-	comp = getSceneAllocator().newInstance<MoveComponent>(this);
-	addComponent(comp, true);
+	newComponent<MoveComponent>(this);
 
 	// Feedback component
-	comp = getSceneAllocator().newInstance<ModelMoveFeedbackComponent>(this);
-	addComponent(comp, true);
+	newComponent<ModelMoveFeedbackComponent>(this);
 
 	return ErrorCode::NONE;
 }

@@ -14,12 +14,18 @@ SceneComponent::SceneComponent(SceneComponentType type, SceneNode* node)
 	: m_node(node)
 	, m_type(type)
 {
-	m_node->getSceneGraph().getSceneComponentLists().insertNew(this);
+	if(m_type != SceneComponentType::NONE)
+	{
+		m_node->getSceneGraph().getSceneComponentLists().insertNew(this);
+	}
 }
 
 SceneComponent::~SceneComponent()
 {
-	m_node->getSceneGraph().getSceneComponentLists().remove(this);
+	if(m_type != SceneComponentType::NONE)
+	{
+		m_node->getSceneGraph().getSceneComponentLists().remove(this);
+	}
 }
 
 Timestamp SceneComponent::getGlobalTimestamp() const
@@ -61,37 +67,15 @@ SceneAllocator<U8> SceneComponent::getAllocator() const
 void SceneComponentLists::insertNew(SceneComponent* comp)
 {
 	ANKI_ASSERT(comp);
-	ANKI_ASSERT(find(comp) == m_lists[comp->getType()].getEnd());
 
-	m_lists[comp->getType()].pushBack(m_alloc, comp);
+	m_lists[comp->getType()].pushBack(comp);
 }
 
 void SceneComponentLists::remove(SceneComponent* comp)
 {
 	ANKI_ASSERT(comp);
 
-	auto it = find(comp);
-	ANKI_ASSERT(it != m_lists[comp->getType()].getEnd());
-	m_lists[comp->getType()].erase(m_alloc, it);
-}
-
-List<SceneComponent*>::Iterator SceneComponentLists::find(SceneComponent* comp)
-{
-	ANKI_ASSERT(comp);
-
-	List<SceneComponent*>& list = m_lists[comp->getType()];
-	auto it = list.getBegin();
-	auto end = list.getEnd();
-	while(it != end)
-	{
-		if(*it == comp)
-		{
-			break;
-		}
-		++it;
-	}
-
-	return it;
+	m_lists[comp->getType()].erase(comp);
 }
 
 } // end namespace anki

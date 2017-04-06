@@ -28,10 +28,7 @@ SceneNode::~SceneNode()
 	for(; it != end; ++it)
 	{
 		SceneComponent* comp = *it;
-		if(comp->getAutomaticCleanup())
-		{
-			alloc.deleteInstance(comp);
-		}
+		alloc.deleteInstance(comp);
 	}
 
 	Base::destroy(alloc);
@@ -85,34 +82,6 @@ U32 SceneNode::getLastUpdateFrame() const
 	(void)err;
 
 	return max;
-}
-
-void SceneNode::addComponent(SceneComponent* comp, Bool transferOwnership)
-{
-	ANKI_ASSERT(comp);
-
-#if ANKI_EXTRA_CHECKS
-	Error err = iterateComponents([&](const SceneComponent& bcomp) -> Error {
-		ANKI_ASSERT(comp != &bcomp);
-		return ErrorCode::NONE;
-	});
-	(void)err;
-#endif
-
-	if(m_components.getSize() < m_componentsCount + 1u)
-	{
-		// Not enough room
-		const U extra = 2;
-		m_components.resize(getSceneAllocator(), m_componentsCount + 1 + extra);
-	}
-
-	m_components[m_componentsCount++] = comp;
-	comp->setAutomaticCleanup(transferOwnership);
-}
-
-void SceneNode::removeComponent(SceneComponent* comp)
-{
-	ANKI_ASSERT(0 && "TODO");
 }
 
 ResourceManager& SceneNode::getResourceManager()

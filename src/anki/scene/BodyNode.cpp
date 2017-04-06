@@ -49,8 +49,6 @@ BodyNode::~BodyNode()
 
 Error BodyNode::init(const CString& resourceFname)
 {
-	SceneComponent* comp;
-
 	// Load resource
 	ANKI_CHECK(getResourceManager().loadResource(resourceFname, m_rsrc));
 
@@ -61,16 +59,13 @@ Error BodyNode::init(const CString& resourceFname)
 	m_body = getSceneGraph().getPhysicsWorld().newInstance<PhysicsBody>(init);
 
 	// Body component
-	comp = getSceneAllocator().newInstance<BodyComponent>(this, m_body);
-	addComponent(comp, true);
+	newComponent<BodyComponent>(this, m_body);
 
 	// Feedback component
-	comp = getSceneAllocator().newInstance<BodyFeedbackComponent>(this);
-	addComponent(comp, true);
+	newComponent<BodyFeedbackComponent>(this);
 
 	// Move component
-	comp = getSceneAllocator().newInstance<MoveComponent>(this);
-	addComponent(comp, true);
+	newComponent<MoveComponent>(this);
 
 	return ErrorCode::NONE;
 }

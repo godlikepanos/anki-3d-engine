@@ -41,7 +41,7 @@ enum class SceneComponentType : U16
 };
 
 /// Scene node component
-class SceneComponent
+class SceneComponent : public IntrusiveListEnabled<SceneComponent>
 {
 public:
 	/// Construct the scene component.
@@ -81,16 +81,6 @@ public:
 	/// Called only by the SceneGraph
 	ANKI_USE_RESULT Error updateReal(SceneNode& node, F32 prevTime, F32 crntTime, Bool& updated);
 
-	void setAutomaticCleanup(Bool enable)
-	{
-		m_flags.set(AUTOMATIC_CLEANUP, enable);
-	}
-
-	Bool getAutomaticCleanup() const
-	{
-		return m_flags.get(AUTOMATIC_CLEANUP);
-	}
-
 	SceneNode& getSceneNode()
 	{
 		return *m_node;
@@ -111,13 +101,7 @@ protected:
 	Timestamp m_timestamp; ///< Indicates when an update happened
 
 private:
-	enum Flags
-	{
-		AUTOMATIC_CLEANUP = 1 << 0
-	};
-
 	SceneComponentType m_type;
-	BitMask<U8> m_flags;
 };
 
 /// Multiple lists of all types of components.
@@ -132,11 +116,6 @@ anki_internal:
 	{
 	}
 
-	void init(SceneAllocator<U8> alloc)
-	{
-		m_alloc = alloc;
-	}
-
 	void insertNew(SceneComponent* comp);
 
 	void remove(SceneComponent* comp);
@@ -149,16 +128,13 @@ anki_internal:
 
 		while(it != end)
 		{
-			func(*static_cast<TSceneComponentType*>(*it));
+			func(static_cast<TSceneComponentType&>(*it));
 			++it;
 		}
 	}
 
 private:
-	SceneAllocator<U8> m_alloc;
-	Array<List<SceneComponent*>, U(SceneComponentType::COUNT)> m_lists;
-
-	List<SceneComponent*>::Iterator find(SceneComponent* comp);
+	Array<IntrusiveList<SceneComponent>, U(SceneComponentType::COUNT)> m_lists;
 };
 /// @}
 

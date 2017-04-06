@@ -90,8 +90,6 @@ Error SceneGraph::init(AllocAlignedCallback allocCb,
 
 	m_maxReflectionProxyDistance = config.getNumber("imageReflectionMaxDistance");
 
-	m_componentLists.init(m_alloc);
-
 	// Init the default main camera
 	ANKI_CHECK(newSceneNode<PerspectiveCamera>("mainCamera", m_defaultMainCam));
 	m_defaultMainCam->setAll(toRad(60.0), toRad(60.0), 0.1, 1000.0);

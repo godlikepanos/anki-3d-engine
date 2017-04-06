@@ -194,11 +194,22 @@ public:
 	}
 
 protected:
-	/// Append a component to the components container. The SceneNode will not take ownership.
-	void addComponent(SceneComponent* comp, Bool transferOwnership = false);
+	/// Create and append a component to the components container. The SceneNode will not take ownership.
+	template<typename TComponent, typename... TArgs>
+	TComponent* newComponent(TArgs&&... args)
+	{
+		TComponent* comp = getSceneAllocator().newInstance<TComponent>(std::forward<TArgs>(args)...);
 
-	/// Remove a component from the container
-	void removeComponent(SceneComponent* comp);
+		if(m_components.getSize() <= m_componentsCount)
+		{
+			// Not enough room
+			const U extra = 2;
+			m_components.resize(getSceneAllocator(), max<PtrSize>(m_components.getSize() + extra, 1));
+		}
+
+		m_components[m_componentsCount++] = comp;
+		return comp;
+	}
 
 	ResourceManager& getResourceManager();
 

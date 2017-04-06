@@ -63,14 +63,9 @@ Error OccluderNode::init(const CString& meshFname)
 	}
 
 	// Create the components
-	SceneComponent* comp = getSceneAllocator().newInstance<MoveComponent>(this);
-	addComponent(comp, true);
-
-	comp = getSceneAllocator().newInstance<OccluderMoveFeedbackComponent>(this);
-	addComponent(comp, true);
-
-	comp = getSceneAllocator().newInstance<OccluderComponent>(this);
-	addComponent(comp, true);
+	newComponent<MoveComponent>(this);
+	newComponent<OccluderMoveFeedbackComponent>(this);
+	newComponent<OccluderComponent>(this);
 
 	return ErrorCode::NONE;
 }
