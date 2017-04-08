@@ -172,22 +172,26 @@ public:
 	/// Set depth offset and units. Set zeros to both to disable it.
 	void setPolygonOffset(F32 factor, F32 units);
 
-	/// Set stencil operations. To disable stencil test put StencilOperation::KEEP to all operations.
+	/// Set stencil operations. The default is StencilOperation::KEEP for all operations.
+	/// @note To disable stencil test put StencilOperation::KEEP to all operations and set setStencilCompareOperation
+	///       to CompareOperation::ALWAYS.
 	void setStencilOperations(FaceSelectionBit face,
 		StencilOperation stencilFail,
 		StencilOperation stencilPassDepthFail,
 		StencilOperation stencilPassDepthPass);
 
-	/// Set stencil compare operation.
+	/// Set stencil compare operation. The default comp is CompareOperation::ALWAYS.
+	/// @note To disable stencil test set the comp to CompareOperation::ALWAYS and set setStencilOperations to
+	///       StencilOperation::KEEP, StencilOperation::KEEP, StencilOperation::KEEP.
 	void setStencilCompareOperation(FaceSelectionBit face, CompareOperation comp);
 
-	/// Set the stencil compare mask.
+	/// Set the stencil compare mask. The default mask is MAX_U32.
 	void setStencilCompareMask(FaceSelectionBit face, U32 mask);
 
-	/// Set the stencil write mask.
+	/// Set the stencil write mask. The default mask is MAX_U32.
 	void setStencilWriteMask(FaceSelectionBit face, U32 mask);
 
-	/// Set the stencil reference.
+	/// Set the stencil reference. The default ref is 0.
 	void setStencilReference(FaceSelectionBit face, U32 ref);
 
 	/// Enable/disable depth write. To disable depth testing set depth write to false and depth compare operation to

@@ -80,6 +80,15 @@ const PixelFormat IS_COLOR_ATTACHMENT_PIXEL_FORMAT(ComponentFormat::R11G11B10, T
 const PixelFormat FS_COLOR_ATTACHMENT_PIXEL_FORMAT(ComponentFormat::R16G16B16A16, TransformFormat::FLOAT);
 
 const PixelFormat DBG_COLOR_ATTACHMENT_PIXEL_FORMAT(ComponentFormat::R8G8B8, TransformFormat::UNORM);
+
+enum class IsShaderPermutationOption
+{
+	POINT_LIGHTS,
+	SPOT_LIGHTS,
+	COUNT
+};
+
+const U IS_SHADER_PERMOUTATION_COUNT = 1u << U(IsShaderPermutationOption::COUNT); // 2^IsShaderPermutationOption::COUNT
 /// @}
 
 } // end namespace anki

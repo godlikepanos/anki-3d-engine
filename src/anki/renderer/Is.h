@@ -57,8 +57,8 @@ private:
 
 	// Light shaders
 	ShaderResourcePtr m_lightVert;
-	ShaderResourcePtr m_lightFrag;
-	ShaderProgramPtr m_lightProg;
+	Array<ShaderResourcePtr, IS_SHADER_PERMOUTATION_COUNT> m_lightFrags;
+	Array<ShaderProgramPtr, IS_SHADER_PERMOUTATION_COUNT> m_lightProgs;
 
 	LightBin* m_lightBin = nullptr;
 

@@ -29,6 +29,24 @@ class VisibilityTestResults;
 /// @addtogroup renderer
 /// @{
 
+/// Contains shapes of light volumes.
+class LightVolumePrimitives
+{
+public:
+	BufferPtr m_pointLightPositions;
+	BufferPtr m_pointLightIndices;
+	U32 m_pointLightIndexCount;
+
+	BufferPtr m_spotLightPositions;
+	BufferPtr m_spotLightIndices;
+	U32 m_spotLightIndexCount;
+
+	ANKI_USE_RESULT Error init(Renderer& r);
+
+private:
+	ANKI_USE_RESULT Error loadMesh(CString fname, Renderer& r, BufferPtr& vert, BufferPtr& idx, U32& idxCount);
+};
+
 /// Rendering context.
 class RenderingContext
 {
@@ -404,6 +422,11 @@ anki_internal:
 		return m_linearSampler;
 	}
 
+	const LightVolumePrimitives& getLightVolumePrimitives() const
+	{
+		return m_lightPrimitives;
+	}
+
 private:
 	ThreadPool* m_threadpool = nullptr;
 	ResourceManager* m_resources = nullptr;
@@ -462,6 +485,8 @@ private:
 
 	SamplerPtr m_nearestSampler;
 	SamplerPtr m_linearSampler;
+
+	LightVolumePrimitives m_lightPrimitives;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 

@@ -105,51 +105,6 @@ Error Ir::initInternal(const ConfigSet& config)
 	return ErrorCode::NONE;
 }
 
-Error Ir::loadMesh(CString fname, BufferPtr& vert, BufferPtr& idx, U32& idxCount)
-{
-	MeshLoader loader(&getResourceManager());
-	ANKI_CHECK(loader.load(fname));
-
-	PtrSize vertBuffSize = loader.getHeader().m_totalVerticesCount * sizeof(Vec3);
-	vert = getGrManager().newInstance<Buffer>(
-		vertBuffSize, BufferUsageBit::VERTEX | BufferUsageBit::BUFFER_UPLOAD_DESTINATION, BufferMapAccessBit::NONE);
-
-	idx = getGrManager().newInstance<Buffer>(loader.getIndexDataSize(),
-		BufferUsageBit::INDEX | BufferUsageBit::BUFFER_UPLOAD_DESTINATION,
-		BufferMapAccessBit::NONE);
-
-	// Upload data
-	CommandBufferInitInfo init;
-	init.m_flags = CommandBufferFlag::SMALL_BATCH;
-	CommandBufferPtr cmdb = getGrManager().newInstance<CommandBuffer>(init);
-
-	StagingGpuMemoryToken token;
-	Vec3* verts = static_cast<Vec3*>(
-		m_r->getStagingGpuMemoryManager().allocateFrame(vertBuffSize, StagingGpuMemoryType::TRANSFER, token));
-
-	const U8* ptr = loader.getVertexData();
-	for(U i = 0; i < loader.getHeader().m_totalVerticesCount; ++i)
-	{
-		*verts = *reinterpret_cast<const Vec3*>(ptr);
-		++verts;
-		ptr += loader.getVertexSize();
-	}
-
-	cmdb->copyBufferToBuffer(token.m_buffer, token.m_offset, vert, 0, token.m_range);
-
-	void* cpuIds = m_r->getStagingGpuMemoryManager().allocateFrame(
-		loader.getIndexDataSize(), StagingGpuMemoryType::TRANSFER, token);
-
-	memcpy(cpuIds, loader.getIndexData(), loader.getIndexDataSize());
-
-	cmdb->copyBufferToBuffer(token.m_buffer, token.m_offset, idx, 0, token.m_range);
-	idxCount = loader.getHeader().m_totalIndicesCount;
-
-	cmdb->flush();
-
-	return ErrorCode::NONE;
-}
-
 void Ir::initFaceInfo(U cacheEntryIdx, U faceIdx)
 {
 	FaceInfo& face = m_cacheEntries[cacheEntryIdx].m_faces[faceIdx];
@@ -269,13 +224,6 @@ Error Ir::initIs()
 
 	m_is.m_slightProg =
 		getGrManager().newInstance<ShaderProgram>(m_is.m_lightVert->getGrShader(), m_is.m_slightFrag->getGrShader());
-
-	// Init vert/idx buffers
-	ANKI_CHECK(
-		loadMesh("engine_data/Plight.ankimesh", m_is.m_plightPositions, m_is.m_plightIndices, m_is.m_plightIdxCount));
-
-	ANKI_CHECK(
-		loadMesh("engine_data/Slight.ankimesh", m_is.m_slightPositions, m_is.m_slightIndices, m_is.m_slightIdxCount));
 
 	return ErrorCode::NONE;
 }
@@ -400,8 +348,8 @@ void Ir::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx
 	const Mat4& vMat = frc.getViewMatrix();
 
 	cmdb->bindShaderProgram(m_is.m_plightProg);
-	cmdb->bindVertexBuffer(0, m_is.m_plightPositions, 0, sizeof(F32) * 3);
-	cmdb->bindIndexBuffer(m_is.m_plightIndices, 0, IndexType::U16);
+	cmdb->bindVertexBuffer(0, m_r->getLightVolumePrimitives().m_pointLightPositions, 0, sizeof(F32) * 3);
+	cmdb->bindIndexBuffer(m_r->getLightVolumePrimitives().m_pointLightIndices, 0, IndexType::U16);
 
 	const VisibleNode* it = vis.getBegin(VisibilityGroupType::LIGHTS_POINT);
 	const VisibleNode* end = vis.getEnd(VisibilityGroupType::LIGHTS_POINT);
@@ -429,14 +377,14 @@ void Ir::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx
 		light->m_specularColorPad1 = lightc.getSpecularColor();
 
 		// Draw
-		cmdb->drawElements(PrimitiveTopology::TRIANGLES, m_is.m_plightIdxCount);
+		cmdb->drawElements(PrimitiveTopology::TRIANGLES, m_r->getLightVolumePrimitives().m_pointLightIndexCount);
 
 		++it;
 	}
 
 	cmdb->bindShaderProgram(m_is.m_slightProg);
-	cmdb->bindVertexBuffer(0, m_is.m_slightPositions, 0, sizeof(F32) * 3);
-	cmdb->bindIndexBuffer(m_is.m_slightIndices, 0, IndexType::U16);
+	cmdb->bindVertexBuffer(0, m_r->getLightVolumePrimitives().m_spotLightPositions, 0, sizeof(F32) * 3);
+	cmdb->bindIndexBuffer(m_r->getLightVolumePrimitives().m_spotLightIndices, 0, IndexType::U16);
 
 	it = vis.getBegin(VisibilityGroupType::LIGHTS_SPOT);
 	end = vis.getEnd(VisibilityGroupType::LIGHTS_SPOT);
@@ -480,7 +428,7 @@ void Ir::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx
 		light->m_lightDirPad1 = lightDir.xyz0();
 
 		// Draw
-		cmdb->drawElements(PrimitiveTopology::TRIANGLES, m_is.m_slightIdxCount);
+		cmdb->drawElements(PrimitiveTopology::TRIANGLES, m_r->getLightVolumePrimitives().m_spotLightIndexCount);
 
 		++it;
 	}

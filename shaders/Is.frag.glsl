@@ -164,7 +164,8 @@ void main()
 	// Shadowpass sample count
 	uint shadowSampleCount = computeShadowSampleCount(SHADOW_SAMPLE_COUNT, fragPos.z);
 
-	// Decals
+// Decals
+#if 1
 	uint count = u_lightIndices[idxOffset++];
 	while(count-- != 0)
 	{
@@ -172,6 +173,10 @@ void main()
 
 		appendDecalColors(decal, fragPos, diffCol, roughness);
 	}
+#else
+	uint count = u_lightIndices[idxOffset];
+	idxOffset += count;
+#endif
 
 	// Don't allow zero a2 because we may end up with division with zero
 	float a2 = roughness * 0.9 + 0.1;
@@ -180,7 +185,8 @@ void main()
 	// Ambient and emissive color
 	vec3 outC = diffCol * emission;
 
-	// Point lights
+// Point lights
+#if PERMUTATION & 1
 	count = u_lightIndices[idxOffset++];
 	while(count-- != 0)
 	{
@@ -198,8 +204,13 @@ void main()
 
 		outC += (specC + diffC) * (att * max(subsurface, lambert));
 	}
+#else
+	count = u_lightIndices[idxOffset];
+	idxOffset += count + 1;
+#endif
 
-	// Spot lights
+// Spot lights
+#if PERMUTATION & 2
 	count = u_lightIndices[idxOffset++];
 	while(count-- != 0)
 	{
@@ -219,6 +230,10 @@ void main()
 
 		outC += (diffC + specC) * (att * spot * max(subsurface, lambert));
 	}
+#else
+	count = u_lightIndices[idxOffset];
+	idxOffset += count + 1;
+#endif
 
 #if INDIRECT_ENABLED
 	vec3 eye = -viewDir;
@@ -240,6 +255,11 @@ void main()
 #endif
 
 	out_color = outC;
+
+#if 0
+	out_color = vec3(((PERMUTATION & 2) != 0) ? 1.0 : 0.0, ((PERMUTATION & 1) != 0) ? 1.0 : 0.0, 0.0);
+#endif
+
 #if 0
 	count = scount;
 	if(count == 0)

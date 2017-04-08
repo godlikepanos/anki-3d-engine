@@ -43,10 +43,13 @@ anki_internal:
 private:
 	FramebufferPtr m_fb;
 
+	ShaderResourcePtr m_isPermutationsVert;
+	ShaderResourcePtr m_isPermutationsFrag;
+	ShaderProgramPtr m_isPermutationsProg;
+
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 
-	/// Create a G buffer FBO
-	ANKI_USE_RESULT Error createRt();
+	void fillStencilBufferWithIsPermutations(RenderingContext& ctx, CommandBufferPtr& cmdb) const;
 };
 /// @}
 

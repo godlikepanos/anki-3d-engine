@@ -49,6 +49,8 @@ static const char* SHADER_HEADER = R"(#version %u %s
 #if 1
 #extension GL_ARB_shader_ballot : require
 #define ANKI_ARB_SHADER_BALLOT 1
+#extension GL_ARB_shader_group_vote : require
+#define ANKI_ARB_SHADER_GROUP_VOTE 1
 #endif
 
 %s)";

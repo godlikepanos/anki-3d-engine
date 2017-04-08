@@ -94,31 +94,50 @@ Error Is::initInternal(const ConfigSet& config)
 	//
 	// Load shaders and programs
 	//
+	static const char* DEFINES = "#define CLUSTER_COUNT_X %u\n"
+								 "#define CLUSTER_COUNT_Y %u\n"
+								 "#define CLUSTER_COUNT %u\n"
+								 "#define RENDERER_WIDTH %u\n"
+								 "#define RENDERER_HEIGHT %u\n"
+								 "#define POISSON %u\n"
+								 "#define INDIRECT_ENABLED %u\n"
+								 "#define IR_MIPMAP_COUNT %u\n"
+								 "#define PERMUTATION %u";
+
 	StringAuto pps(getAllocator());
 
-	pps.sprintf("#define CLUSTER_COUNT_X %u\n"
-				"#define CLUSTER_COUNT_Y %u\n"
-				"#define CLUSTER_COUNT %u\n"
-				"#define RENDERER_WIDTH %u\n"
-				"#define RENDERER_HEIGHT %u\n"
-				"#define MAX_LIGHT_INDICES %u\n"
-				"#define POISSON %u\n"
-				"#define INDIRECT_ENABLED %u\n"
-				"#define IR_MIPMAP_COUNT %u\n",
+	pps.sprintf(DEFINES,
 		m_clusterCounts[0],
 		m_clusterCounts[1],
 		m_clusterCount,
 		m_r->getWidth(),
 		m_r->getHeight(),
-		m_maxLightIds,
 		m_r->getSm().m_poissonEnabled,
 		1,
-		m_r->getIr().getReflectionTextureMipmapCount());
+		m_r->getIr().getReflectionTextureMipmapCount(),
+		MAX_U8);
 
 	ANKI_CHECK(m_r->createShader("shaders/Is.vert.glsl", m_lightVert, &pps[0]));
-	ANKI_CHECK(m_r->createShader("shaders/Is.frag.glsl", m_lightFrag, &pps[0]));
 
-	m_lightProg = getGrManager().newInstance<ShaderProgram>(m_lightVert->getGrShader(), m_lightFrag->getGrShader());
+	for(U i = 0; i < IS_SHADER_PERMOUTATION_COUNT; ++i)
+	{
+		pps.destroy();
+		pps.sprintf(DEFINES,
+			m_clusterCounts[0],
+			m_clusterCounts[1],
+			m_clusterCount,
+			m_r->getWidth(),
+			m_r->getHeight(),
+			m_r->getSm().m_poissonEnabled,
+			1,
+			m_r->getIr().getReflectionTextureMipmapCount(),
+			i);
+
+		ANKI_CHECK(m_r->createShader("shaders/Is.frag.glsl", m_lightFrags[i], &pps[0]));
+
+		m_lightProgs[i] =
+			getGrManager().newInstance<ShaderProgram>(m_lightVert->getGrShader(), m_lightFrags[i]->getGrShader());
+	}
 
 	//
 	// Create framebuffer
@@ -135,6 +154,14 @@ Error Is::initInternal(const ConfigSet& config)
 	fbInit.m_colorAttachmentCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
+	// fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
+	// fbInit.m_colorAttachments[0].m_clearValue.m_colorf = {{1.0, 0.0, 1.0, 0.0}};
+	// TODO
+
+	fbInit.m_depthStencilAttachment.m_texture = m_r->getMs().m_depthRt;
+	fbInit.m_depthStencilAttachment.m_stencilLoadOperation = AttachmentLoadOperation::LOAD;
+	fbInit.m_depthStencilAttachment.m_stencilStoreOperation = AttachmentStoreOperation::DONT_CARE;
+	fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::STENCIL;
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 	return ErrorCode::NONE;
@@ -170,7 +197,10 @@ void Is::run(RenderingContext& ctx)
 
 	cmdb->beginRenderPass(m_fb);
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
-	cmdb->bindShaderProgram(m_lightProg);
+
+	cmdb->setStencilWriteMask(FaceSelectionBit::FRONT_AND_BACK, 0);
+	cmdb->setStencilCompareMask(FaceSelectionBit::FRONT_AND_BACK, 0xF);
+	cmdb->setStencilCompareOperation(FaceSelectionBit::FRONT_AND_BACK, CompareOperation::EQUAL);
 
 	cmdb->bindTexture(0, 0, m_r->getMs().m_rt0);
 	cmdb->bindTexture(0, 1, m_r->getMs().m_rt1);
@@ -197,8 +227,19 @@ void Is::run(RenderingContext& ctx)
 	bindStorage(cmdb, 0, 0, ctx.m_is.m_clustersToken);
 	bindStorage(cmdb, 0, 1, ctx.m_is.m_lightIndicesToken);
 
-	cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
+	// Draw all permutations
+	for(U i = 0; i < IS_SHADER_PERMOUTATION_COUNT; ++i)
+	{
+		cmdb->bindShaderProgram(m_lightProgs[i]);
+		cmdb->setStencilReference(FaceSelectionBit::FRONT_AND_BACK, i);
+
+		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
+	}
+
 	cmdb->endRenderPass();
+
+	// Restore state
+	cmdb->setStencilCompareOperation(FaceSelectionBit::FRONT_AND_BACK, CompareOperation::ALWAYS);
 }
 
 void Is::updateCommonBlock(RenderingContext& ctx)

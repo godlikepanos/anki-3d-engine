@@ -110,13 +110,6 @@ private:
 		ShaderResourcePtr m_slightFrag;
 		ShaderProgramPtr m_plightProg;
 		ShaderProgramPtr m_slightProg;
-
-		BufferPtr m_plightPositions;
-		BufferPtr m_plightIndices;
-		U32 m_plightIdxCount;
-		BufferPtr m_slightPositions;
-		BufferPtr m_slightIndices;
-		U32 m_slightIdxCount;
 	} m_is;
 
 	// Irradiance
@@ -141,7 +134,6 @@ private:
 	ANKI_USE_RESULT Error initIs();
 	ANKI_USE_RESULT Error initIrradiance();
 	void initFaceInfo(U cacheEntryIdx, U faceIdx);
-	ANKI_USE_RESULT Error loadMesh(CString fname, BufferPtr& vert, BufferPtr& idx, U32& idxCount);
 
 	// Rendering
 	ANKI_USE_RESULT Error tryRender(RenderingContext& ctx, SceneNode& node, U& probesRendered);

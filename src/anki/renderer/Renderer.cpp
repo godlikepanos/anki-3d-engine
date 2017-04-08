@@ -26,6 +26,7 @@
 #include <anki/renderer/DepthDownscale.h>
 #include <anki/renderer/Taa.h>
 
+#include <anki/resource/MeshLoader.h>
 #include <cstdarg> // For var args
 
 namespace anki
@@ -39,6 +40,60 @@ static Bool threadWillDoWork(
 	ThreadPoolTask::choseStartEnd(threadId, threadCount, problemSize, start, end);
 
 	return start != end;
+}
+
+Error LightVolumePrimitives::init(Renderer& r)
+{
+	ANKI_CHECK(
+		loadMesh("engine_data/Plight.ankimesh", r, m_pointLightPositions, m_pointLightIndices, m_pointLightIndexCount));
+	ANKI_CHECK(
+		loadMesh("engine_data/Slight.ankimesh", r, m_spotLightPositions, m_spotLightIndices, m_spotLightIndexCount));
+	return ErrorCode::NONE;
+}
+
+Error LightVolumePrimitives::loadMesh(CString fname, Renderer& r, BufferPtr& vert, BufferPtr& idx, U32& idxCount)
+{
+	MeshLoader loader(&r.getResourceManager());
+	ANKI_CHECK(loader.load(fname));
+
+	PtrSize vertBuffSize = loader.getHeader().m_totalVerticesCount * sizeof(Vec3);
+	vert = r.getGrManager().newInstance<Buffer>(
+		vertBuffSize, BufferUsageBit::VERTEX | BufferUsageBit::BUFFER_UPLOAD_DESTINATION, BufferMapAccessBit::NONE);
+
+	idx = r.getGrManager().newInstance<Buffer>(loader.getIndexDataSize(),
+		BufferUsageBit::INDEX | BufferUsageBit::BUFFER_UPLOAD_DESTINATION,
+		BufferMapAccessBit::NONE);
+
+	// Upload data
+	CommandBufferInitInfo init;
+	init.m_flags = CommandBufferFlag::SMALL_BATCH;
+	CommandBufferPtr cmdb = r.getGrManager().newInstance<CommandBuffer>(init);
+
+	StagingGpuMemoryToken token;
+	Vec3* verts = static_cast<Vec3*>(
+		r.getStagingGpuMemoryManager().allocateFrame(vertBuffSize, StagingGpuMemoryType::TRANSFER, token));
+
+	const U8* ptr = loader.getVertexData();
+	for(U i = 0; i < loader.getHeader().m_totalVerticesCount; ++i)
+	{
+		*verts = *reinterpret_cast<const Vec3*>(ptr);
+		++verts;
+		ptr += loader.getVertexSize();
+	}
+
+	cmdb->copyBufferToBuffer(token.m_buffer, token.m_offset, vert, 0, token.m_range);
+
+	void* cpuIds =
+		r.getStagingGpuMemoryManager().allocateFrame(loader.getIndexDataSize(), StagingGpuMemoryType::TRANSFER, token);
+
+	memcpy(cpuIds, loader.getIndexData(), loader.getIndexDataSize());
+
+	cmdb->copyBufferToBuffer(token.m_buffer, token.m_offset, idx, 0, token.m_range);
+	idxCount = loader.getHeader().m_totalIndicesCount;
+
+	cmdb->flush();
+
+	return ErrorCode::NONE;
 }
 
 Renderer::Renderer()
@@ -171,6 +226,8 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_linearSampler = m_gr->newInstance<Sampler>(sinit);
 
 	initJitteredMats();
+
+	ANKI_CHECK(m_lightPrimitives.init(*this));
 
 	return ErrorCode::NONE;
 }
