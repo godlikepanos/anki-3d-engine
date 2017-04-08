@@ -316,7 +316,7 @@ void VisibilityTestTask::test(ThreadHive& hive)
 		U spIdx = 0;
 		U count = 0;
 		Error err = node.iterateComponentsOfType<SpatialComponent>([&](SpatialComponent& sp) {
-			if(testedFrc.insideFrustum(sp))
+			if(testedFrc.insideFrustum(sp) && testAgainstRasterizer(sp.getSpatialCollisionShape(), sp.getAabb()))
 			{
 				// Inside
 				ANKI_ASSERT(spIdx < MAX_U8);
@@ -382,37 +382,21 @@ void VisibilityTestTask::test(ThreadHive& hive)
 
 		if(lc && wantsLightComponents)
 		{
-			// Perform an additional check against the rasterizer
-			Bool in;
-			if(lc->getShadowEnabled())
+			VisibilityGroupType gt;
+			switch(lc->getLightComponentType())
 			{
-				ANKI_ASSERT(spIdx == 1);
-				const SpatialComponent& sc = *sps[0].m_sp;
-				in = testAgainstRasterizer(sc.getSpatialCollisionShape(), sc.getAabb());
-			}
-			else
-			{
-				in = true;
+			case LightComponentType::POINT:
+				gt = VisibilityGroupType::LIGHTS_POINT;
+				break;
+			case LightComponentType::SPOT:
+				gt = VisibilityGroupType::LIGHTS_SPOT;
+				break;
+			default:
+				ANKI_ASSERT(0);
+				gt = VisibilityGroupType::TYPE_COUNT;
 			}
 
-			if(in)
-			{
-				VisibilityGroupType gt;
-				switch(lc->getLightComponentType())
-				{
-				case LightComponentType::POINT:
-					gt = VisibilityGroupType::LIGHTS_POINT;
-					break;
-				case LightComponentType::SPOT:
-					gt = VisibilityGroupType::LIGHTS_SPOT;
-					break;
-				default:
-					ANKI_ASSERT(0);
-					gt = VisibilityGroupType::TYPE_COUNT;
-				}
-
-				visible->moveBack(alloc, gt, visibleNode);
-			}
+			visible->moveBack(alloc, gt, visibleNode);
 		}
 
 		if(lfc && wantsFlareComponents)
@@ -422,12 +406,7 @@ void VisibilityTestTask::test(ThreadHive& hive)
 
 		if(reflc && wantsReflectionProbes)
 		{
-			ANKI_ASSERT(spIdx == 1);
-			const SpatialComponent& sc = *sps[0].m_sp;
-			if(testAgainstRasterizer(sc.getSpatialCollisionShape(), sc.getAabb()))
-			{
-				visible->moveBack(alloc, VisibilityGroupType::REFLECTION_PROBES, visibleNode);
-			}
+			visible->moveBack(alloc, VisibilityGroupType::REFLECTION_PROBES, visibleNode);
 		}
 
 		if(proxyc && wantsReflectionProxies)
