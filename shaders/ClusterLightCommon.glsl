@@ -21,24 +21,22 @@ struct LightingUniforms
 	mat4 invProjMat;
 };
 
-// Point light
-struct PointLight
+// Point or spot light
+struct Light
 {
 	vec4 posRadius; // xyz: Light pos in view space. w: The -1/(radius^2)
 	vec4 diffuseColorShadowmapId; // xyz: diff color, w: shadowmap tex ID
 	vec4 specularColorRadius; // xyz: spec color, w: radius
-};
 
-// Spot light
-struct SpotLight
-{
-	vec4 posRadius; // xyz: Light pos in view space. w: The -1/(radius^2)
-	vec4 diffuseColorShadowmapId; // xyz: diff color, w: shadowmap tex ID
-	vec4 specularColorRadius; // xyz: spec color, w: radius
 	vec4 lightDir;
 	vec4 outerCosInnerCos;
 	mat4 texProjectionMat;
 };
+
+bool isSpotLight(in Light l)
+{
+	return l.outerCosInnerCos.x != 0.0;
+}
 
 // Representation of a reflection probe
 struct ReflectionProbe
@@ -97,25 +95,20 @@ layout(ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING), std140, row_major) unifor
 
 #ifdef FRAGMENT_SHADER
 
-layout(ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING + 1), std140) uniform u1_
+layout(ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING + 1), std140, row_major) uniform u1_
 {
-	PointLight u_pointLights[UBO_MAX_SIZE / (3 * 4 * 4)];
-};
-
-layout(ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING + 2), std140, row_major) uniform u2_
-{
-	SpotLight u_spotLights[UBO_MAX_SIZE / (9 * 4 * 4)];
+	Light u_lights[UBO_MAX_SIZE / (9 * 4 * 4)];
 };
 
 #ifdef LIGHT_INDIRECT
-layout(std140, row_major, ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING + 3)) uniform u3_
+layout(std140, row_major, ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING + 2)) uniform u2_
 {
 	ReflectionProbe u_reflectionProbes[UBO_MAX_SIZE / (2 * 4 * 4)];
 };
 #endif
 
 #ifdef LIGHT_DECALS
-layout(std140, row_major, ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING + 4)) uniform u4_
+layout(std140, row_major, ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING + 3)) uniform u3_
 {
 	Decal u_decals[UBO_MAX_SIZE / ((4 + 16) * 4)];
 };

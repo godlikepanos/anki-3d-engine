@@ -19,7 +19,7 @@ layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_msDepthRt;
 layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2DArray u_noiseTex;
 layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_historyRt;
 
-layout(std140, ANKI_UBO_BINDING(0, 3), row_major) uniform ubo0_
+layout(std140, ANKI_UBO_BINDING(0, 2), row_major) uniform u2_
 {
 	vec4 u_linearizeNoiseTexOffsetLayer;
 	vec4 u_fogParticleColorPad1;
@@ -38,47 +38,41 @@ const uint MAX_SAMPLES_PER_CLUSTER = 4u;
 const float DIST_BETWEEN_SAMPLES = 0.25;
 
 // Return the diffuse color without taking into account the diffuse term of the particles.
-vec3 computeLightColor(vec3 fragPos, uint plightCount, uint plightIdx, uint slightCount, uint slightIdx)
+vec3 computeLightColor(vec3 fragPos, uint lightCount, uint lightIdx)
 {
 	vec3 outColor = vec3(0.0);
 
-	// Point lights
-	while(plightCount-- != 0)
+	// All lights
+	while(lightCount-- != 0)
 	{
-		PointLight light = u_pointLights[u_lightIndices[plightIdx++]];
+		Light light = u_lights[u_lightIndices[lightIdx++]];
 		vec3 frag2Light = light.posRadius.xyz - fragPos;
 		float factor = computeAttenuationFactor(light.posRadius.w, frag2Light);
 
-#if ENABLE_SHADOWS
-		float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
-		if(light.diffuseColorShadowmapId.w >= 0.0)
+		if(isSpotLight(light))
 		{
-			factor *= computeShadowFactorOmni(
-				frag2Light, shadowmapLayerIdx, -1.0 / light.posRadius.w, u_invViewRotation, u_omniMapArr);
-		}
-#endif
-
-		outColor += light.diffuseColorShadowmapId.rgb * factor;
-	}
-
-	// Spot lights
-	while(slightCount-- != 0)
-	{
-		SpotLight light = u_spotLights[u_lightIndices[slightIdx++]];
-		vec3 frag2Light = light.posRadius.xyz - fragPos;
-		float factor = computeAttenuationFactor(light.posRadius.w, frag2Light);
-
-		vec3 l = normalize(frag2Light);
-
-		factor *= computeSpotFactor(l, light.outerCosInnerCos.x, light.outerCosInnerCos.y, light.lightDir.xyz);
+			vec3 l = normalize(frag2Light);
+			factor *= computeSpotFactor(l, light.outerCosInnerCos.x, light.outerCosInnerCos.y, light.lightDir.xyz);
 
 #if ENABLE_SHADOWS
-		float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
-		if(shadowmapLayerIdx >= 0.0)
-		{
-			factor *= computeShadowFactorSpot(light.texProjectionMat, fragPos, shadowmapLayerIdx, 1, u_spotMapArr);
-		}
+			float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
+			if(shadowmapLayerIdx >= 0.0)
+			{
+				factor *= computeShadowFactorSpot(light.texProjectionMat, fragPos, shadowmapLayerIdx, 1, u_spotMapArr);
+			}
 #endif
+		}
+		else
+		{
+#if ENABLE_SHADOWS
+			float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
+			if(light.diffuseColorShadowmapId.w >= 0.0)
+			{
+				factor *= computeShadowFactorOmni(
+					frag2Light, shadowmapLayerIdx, -1.0 / light.posRadius.w, u_invViewRotation, u_omniMapArr);
+			}
+#endif
+		}
 
 		outColor += light.diffuseColorShadowmapId.rgb * factor;
 	}
@@ -132,12 +126,8 @@ void main()
 		uint count = u_lightIndices[idxOffset];
 		idxOffset += count + 1;
 
-		uint plightCount = u_lightIndices[idxOffset++];
-		uint plightIdx = idxOffset;
-		idxOffset += plightCount;
-
-		uint slightCount = u_lightIndices[idxOffset++];
-		uint slightIdx = idxOffset;
+		uint lightCount = u_lightIndices[idxOffset];
+		uint lightIdx = idxOffset + 1;
 
 		for(float factor = start; factor <= 1.0; factor += dist)
 		{
@@ -151,7 +141,7 @@ void main()
 
 			vec3 fragPos = viewDir * (zMedian / viewDir.z);
 
-			newCol += computeLightColor(fragPos, plightCount, plightIdx, slightCount, slightIdx);
+			newCol += computeLightColor(fragPos, lightCount, lightIdx);
 		}
 
 		kNear = kFar;

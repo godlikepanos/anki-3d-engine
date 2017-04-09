@@ -141,8 +141,7 @@ Error Fs::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) 
 	cmdb->bindTexture(1, 1, m_r->getSm().m_spotTexArray);
 	cmdb->bindTexture(1, 2, m_r->getSm().m_omniTexArray);
 	bindUniforms(cmdb, 1, 0, ctx.m_is.m_commonToken);
-	bindUniforms(cmdb, 1, 1, ctx.m_is.m_pointLightsToken);
-	bindUniforms(cmdb, 1, 2, ctx.m_is.m_spotLightsToken);
+	bindUniforms(cmdb, 1, 1, ctx.m_is.m_lightsToken);
 	bindStorage(cmdb, 1, 0, ctx.m_is.m_clustersToken);
 	bindStorage(cmdb, 1, 1, ctx.m_is.m_lightIndicesToken);
 

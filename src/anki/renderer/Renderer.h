@@ -84,8 +84,7 @@ public:
 	{
 	public:
 		StagingGpuMemoryToken m_commonToken;
-		StagingGpuMemoryToken m_pointLightsToken;
-		StagingGpuMemoryToken m_spotLightsToken;
+		StagingGpuMemoryToken m_lightsToken;
 		StagingGpuMemoryToken m_probesToken;
 		StagingGpuMemoryToken m_decalsToken;
 		StagingGpuMemoryToken m_clustersToken;

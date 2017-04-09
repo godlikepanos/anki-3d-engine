@@ -43,8 +43,7 @@ public:
 		StackAllocator<U8> frameAlloc,
 		U maxLightIndices,
 		Bool shadowsEnabled,
-		StagingGpuMemoryToken& pointLightsToken,
-		StagingGpuMemoryToken& spotLightsToken,
+		StagingGpuMemoryToken& lightsToken,
 		StagingGpuMemoryToken* probesToken,
 		StagingGpuMemoryToken& decalsToken,
 		StagingGpuMemoryToken& clustersToken,
@@ -77,7 +76,6 @@ private:
 	void binLight(const SpatialComponent& sp,
 		const LightComponent& lightc,
 		U pos,
-		U lightType,
 		LightBinContext& ctx,
 		ClustererTestResult& testResult) const;
 

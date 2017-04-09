@@ -152,8 +152,7 @@ Error Is::binLights(RenderingContext& ctx)
 		getFrameAllocator(),
 		m_maxLightIds,
 		true,
-		ctx.m_is.m_pointLightsToken,
-		ctx.m_is.m_spotLightsToken,
+		ctx.m_is.m_lightsToken,
 		&ctx.m_is.m_probesToken,
 		ctx.m_is.m_decalsToken,
 		ctx.m_is.m_clustersToken,
@@ -189,10 +188,9 @@ void Is::run(RenderingContext& ctx)
 	cmdb->bindTexture(1, 2, m_r->getSsao().m_main.m_rt);
 
 	bindUniforms(cmdb, 0, 0, ctx.m_is.m_commonToken);
-	bindUniforms(cmdb, 0, 1, ctx.m_is.m_pointLightsToken);
-	bindUniforms(cmdb, 0, 2, ctx.m_is.m_spotLightsToken);
-	bindUniforms(cmdb, 0, 3, ctx.m_is.m_probesToken);
-	bindUniforms(cmdb, 0, 4, ctx.m_is.m_decalsToken);
+	bindUniforms(cmdb, 0, 1, ctx.m_is.m_lightsToken);
+	bindUniforms(cmdb, 0, 2, ctx.m_is.m_probesToken);
+	bindUniforms(cmdb, 0, 3, ctx.m_is.m_decalsToken);
 
 	bindStorage(cmdb, 0, 0, ctx.m_is.m_clustersToken);
 	bindStorage(cmdb, 0, 1, ctx.m_is.m_lightIndicesToken);

@@ -89,8 +89,7 @@ void VolumetricMain::run(RenderingContext& ctx)
 	cmdb->bindTexture(0, 4, m_r->getSm().m_omniTexArray);
 
 	bindUniforms(cmdb, 0, 0, ctx.m_is.m_commonToken);
-	bindUniforms(cmdb, 0, 1, ctx.m_is.m_pointLightsToken);
-	bindUniforms(cmdb, 0, 2, ctx.m_is.m_spotLightsToken);
+	bindUniforms(cmdb, 0, 1, ctx.m_is.m_lightsToken);
 
 	struct Unis
 	{
@@ -99,7 +98,7 @@ void VolumetricMain::run(RenderingContext& ctx)
 		Mat4 m_prevViewProjMatMulInvViewProjMat;
 	};
 
-	Unis* uniforms = allocateAndBindUniforms<Unis*>(sizeof(Unis), cmdb, 0, 3);
+	Unis* uniforms = allocateAndBindUniforms<Unis*>(sizeof(Unis), cmdb, 0, 2);
 	computeLinearizeDepthOptimal(ctx.m_near,
 		ctx.m_far,
 		uniforms->m_linearizeNoiseTexOffsetLayer.x(),

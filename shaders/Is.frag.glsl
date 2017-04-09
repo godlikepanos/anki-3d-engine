@@ -180,44 +180,38 @@ void main()
 	// Ambient and emissive color
 	vec3 outC = diffCol * emission;
 
-	// Point lights
+	// Lights
 	count = u_lightIndices[idxOffset++];
 	while(count-- != 0)
 	{
-		PointLight light = u_pointLights[u_lightIndices[idxOffset++]];
+		Light light = u_lights[u_lightIndices[idxOffset++]];
 
 		LIGHTING_COMMON_BRDF();
 
 		float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
-		if(light.diffuseColorShadowmapId.w >= 0.0)
+		if(isSpotLight(light))
 		{
-			float shadow = computeShadowFactorOmni(
-				frag2Light, shadowmapLayerIdx, light.specularColorRadius.w, u_invViewRotation, u_omniMapArr);
-			lambert *= shadow;
+			float spot = computeSpotFactor(l, light.outerCosInnerCos.x, light.outerCosInnerCos.y, light.lightDir.xyz);
+			att *= spot;
+
+			if(shadowmapLayerIdx >= 0.0)
+			{
+				float shadow = computeShadowFactorSpot(
+					light.texProjectionMat, fragPos, shadowmapLayerIdx, shadowSampleCount, u_spotMapArr);
+				lambert *= shadow;
+			}
+		}
+		else
+		{
+			if(light.diffuseColorShadowmapId.w >= 0.0)
+			{
+				float shadow = computeShadowFactorOmni(
+					frag2Light, shadowmapLayerIdx, light.specularColorRadius.w, u_invViewRotation, u_omniMapArr);
+				lambert *= shadow;
+			}
 		}
 
 		outC += (specC + diffC) * (att * max(subsurface, lambert));
-	}
-
-	// Spot lights
-	count = u_lightIndices[idxOffset++];
-	while(count-- != 0)
-	{
-		SpotLight light = u_spotLights[u_lightIndices[idxOffset++]];
-
-		LIGHTING_COMMON_BRDF();
-
-		float spot = computeSpotFactor(l, light.outerCosInnerCos.x, light.outerCosInnerCos.y, light.lightDir.xyz);
-
-		float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
-		if(shadowmapLayerIdx >= 0.0)
-		{
-			float shadow = computeShadowFactorSpot(
-				light.texProjectionMat, fragPos, shadowmapLayerIdx, shadowSampleCount, u_spotMapArr);
-			lambert *= shadow;
-		}
-
-		outC += (diffC + specC) * (att * spot * max(subsurface, lambert));
 	}
 
 #if INDIRECT_ENABLED
