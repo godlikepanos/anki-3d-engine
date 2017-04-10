@@ -8,7 +8,7 @@
 #include "shaders/Tonemapping.glsl"
 
 #define YCBCR 1
-const float BLEND_FACTOR = 1.0 / 8.0;
+const float BLEND_FACTOR = 1.0 / 16.0; // Keep it low to have a better result
 
 layout(location = 0) in vec2 in_uv;
 
@@ -65,7 +65,7 @@ void main()
 	float maxLum = computeLuminance(boxMax);
 #endif
 
-	float diff = abs(lum0 - lum1) / max(lum0, max(lum1, maxLum));
+	float diff = abs(lum0 - lum1) / max(lum0, max(lum1, maxLum + EPSILON));
 	diff = 1.0 - diff;
 	diff = diff * diff;
 	float feedback = mix(0.0, BLEND_FACTOR, diff);
