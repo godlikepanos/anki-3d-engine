@@ -48,6 +48,12 @@ public:
 	}
 };
 
+template<>
+constexpr Bool isPacked<RenderingKey>()
+{
+	return sizeof(RenderingKey) == 4;
+}
+
 /// The hash function
 class RenderingKeyHasher
 {

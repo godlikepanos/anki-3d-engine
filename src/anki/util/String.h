@@ -347,6 +347,11 @@ public:
 		return &m_data[m_data.getSize() - 1];
 	}
 
+	operator Bool() const
+	{
+		return !isEmpty();
+	}
+
 	/// Return true if strings are equal
 	Bool operator==(const String& b) const
 	{

@@ -33,6 +33,11 @@ public:
 	// Use the base constructors
 	using Base::Base;
 
+	operator Bool() const
+	{
+		return !Base::isEmpty();
+	}
+
 	void destroy(Allocator alloc);
 
 	/// Join all the elements into a single big string using a the seperator @a separator
