@@ -76,6 +76,7 @@ ANKI_FORWARD(DummyRsrc, DummyResourcePtr)
 ANKI_FORWARD(CollisionResource, CollisionResourcePtr)
 ANKI_FORWARD(GenericResource, GenericResourcePtr)
 ANKI_FORWARD(TextureAtlas, TextureAtlasResourcePtr)
+ANKI_FORWARD(ShaderProgramResource, ShaderProgramResourcePtr)
 
 #undef ANKI_FORWARD
 

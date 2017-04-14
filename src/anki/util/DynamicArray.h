@@ -38,6 +38,11 @@ public:
 		return m_data[n];
 	}
 
+	operator Bool() const
+	{
+		return !isEmpty();
+	}
+
 	Iterator getBegin()
 	{
 		return m_data;

@@ -154,7 +154,25 @@ ShaderProgramResource::ShaderProgramResource(ResourceManager* manager)
 
 ShaderProgramResource::~ShaderProgramResource()
 {
-	// TODO
+	auto alloc = getAllocator();
+
+	while(!m_variants.isEmpty())
+	{
+		ShaderProgramResourceVariant* variant = &(*m_variants.getBegin());
+		m_variants.erase(variant);
+
+		variant->m_blockInfos.destroy(alloc);
+		variant->m_texUnits.destroy(alloc);
+		alloc.deleteInstance(variant);
+	}
+
+	m_inputVars.destroy(alloc);
+	m_inputVarsNames.destroy(alloc);
+
+	for(String& s : m_sources)
+	{
+		s.destroy(alloc);
+	}
 }
 
 Error ShaderProgramResource::load(const ResourceFilename& filename)
@@ -221,10 +239,10 @@ Error ShaderProgramResource::load(const ResourceFilename& filename)
 					if(num)
 					{
 						StringAuto str(getTempAllocator());
-						str.sprintf("#if DEPTH == %d\n"
-									"%s %s = %s(%s_const);\n"
+						str.sprintf("#if !(DEPTH && %d)\n"
+									"const %s %s = %s(%s_const);\n"
 									"#endif\n",
-							depth,
+							!depth,
 							&typeTxt[0],
 							&name[0],
 							&typeTxt[0],
@@ -291,14 +309,29 @@ Error ShaderProgramResource::load(const ResourceFilename& filename)
 		ShaderLoader loader(&getManager());
 		ANKI_CHECK(loader.parseSourceString(shaderSource));
 
-		m_sources[shaderIdx].create(getAllocator(), constantSrc);
-		m_sources[shaderIdx].append(getAllocator(), "void main() {\n");
+		if(constantSrc)
+		{
+			m_sources[shaderIdx].append(getAllocator(), constantSrc);
+		}
+
 		m_sources[shaderIdx].append(getAllocator(), loader.getShaderSource());
-		m_sources[shaderIdx].append(getAllocator(), "}\n");
 
 		// Advance
 		ANKI_CHECK(shaderEl.getNextSiblingElement("shader", shaderEl));
 	} while(shaderEl);
+
+	// Sanity checks
+	if(!(presentShaders & ShaderTypeBit::VERTEX))
+	{
+		ANKI_RESOURCE_LOGE("Missing vertex shader");
+		return ErrorCode::USER_DATA;
+	}
+
+	if(!(presentShaders & ShaderTypeBit::FRAGMENT))
+	{
+		ANKI_RESOURCE_LOGE("Missing fragment shader");
+		return ErrorCode::USER_DATA;
+	}
 
 	return ErrorCode::NONE;
 }
@@ -390,6 +423,14 @@ Error ShaderProgramResource::parseInputs(XmlElement& inputsEl)
 			}
 		}
 
+		if(var.m_dataType >= ShaderVariableDataType::MATRIX_FIRST
+			&& var.m_dataType <= ShaderVariableDataType::MATRIX_LAST
+			&& var.m_const)
+		{
+			ANKI_RESOURCE_LOGE("Matrix input variable cannot be constant: %s", &var.m_name[0]);
+			return ErrorCode::USER_DATA;
+		}
+
 		++inputVarCount;
 
 		ANKI_CHECK(inputEl.getNextSiblingElement("input", inputEl));
@@ -468,10 +509,14 @@ Error ShaderProgramResource::initVariant(const RenderingKey& key,
 	variant.m_activeInputVars.unsetAll();
 	variant.m_blockInfos.create(getAllocator(), m_inputVars.getSize());
 	variant.m_texUnits.create(getAllocator(), m_inputVars.getSize());
-	memorySet<I16>(&variant.m_texUnits[0], -1, variant.m_texUnits.getSize());
+	if(m_inputVars)
+	{
+		memorySet<I16>(&variant.m_texUnits[0], -1, variant.m_texUnits.getSize());
+	}
 
 	// - Compute the block info for each var
 	// - Activate vars
+	// - Compute varius strings
 	StringListAuto blockCode(getTempAllocator());
 	StringListAuto constsCode(getTempAllocator());
 	StringListAuto texturesCode(getTempAllocator());
@@ -564,7 +609,7 @@ Error ShaderProgramResource::initVariant(const RenderingKey& key,
 				ANKI_ASSERT(0);
 			}
 
-			blockCode.pushBackSprintf("%s %s;\n", toString(in.m_dataType), &in.m_name[0]);
+			blockCode.pushBackSprintf("%s %s;\n", &toString(in.m_dataType)[0], &in.m_name[0]);
 		} // if(in.inBlock())
 
 		if(in.m_const)
@@ -582,25 +627,24 @@ Error ShaderProgramResource::initVariant(const RenderingKey& key,
 
 			ANKI_ASSERT(constVal);
 
-			StringAuto entry(getTempAllocator());
-
 			switch(in.m_dataType)
 			{
 			case ShaderVariableDataType::FLOAT:
-				entry.sprintf("#define %s_const %f\n", &in.m_name[0], constVal->m_float);
+				constsCode.pushBackSprintf("#define %s_const %f\n", &in.m_name[0], constVal->m_float);
 				break;
 			case ShaderVariableDataType::VEC2:
-				entry.sprintf("#define %s_const %f, %f\n", &in.m_name[0], constVal->m_vec2.x(), constVal->m_vec2.y());
+				constsCode.pushBackSprintf(
+					"#define %s_const %f, %f\n", &in.m_name[0], constVal->m_vec2.x(), constVal->m_vec2.y());
 				break;
 			case ShaderVariableDataType::VEC3:
-				entry.sprintf("#define %s_const %f, %f, %f\n",
+				constsCode.pushBackSprintf("#define %s_const %f, %f, %f\n",
 					&in.m_name[0],
 					constVal->m_vec3.x(),
 					constVal->m_vec3.y(),
 					constVal->m_vec3.z());
 				break;
 			case ShaderVariableDataType::VEC4:
-				entry.sprintf("#define %s_const %f, %f, %f, %f\n",
+				constsCode.pushBackSprintf("#define %s_const %f, %f, %f, %f\n",
 					&in.m_name[0],
 					constVal->m_vec4.x(),
 					constVal->m_vec4.y(),
@@ -614,8 +658,10 @@ Error ShaderProgramResource::initVariant(const RenderingKey& key,
 
 		if(in.isTexture())
 		{
-			texturesCode.pushBackSprintf(
-				"layout(ANKI_TEX_BINDING(0, %u)) uniform %s %s;\n", texUnit, toString(in.m_dataType), &in.m_name[0]);
+			texturesCode.pushBackSprintf("layout(ANKI_TEX_BINDING(0, %u)) uniform %s %s;\n",
+				texUnit,
+				&toString(in.m_dataType)[0],
+				&in.m_name[0]);
 
 			variant.m_texUnits[in.m_idx] = texUnit;
 			++texUnit;
@@ -667,6 +713,11 @@ Error ShaderProgramResource::initVariant(const RenderingKey& key,
 	for(ShaderType i = ShaderType::FIRST_GRAPHICS; i <= ShaderType::LAST_GRAPHICS; ++i)
 	{
 		if(!tessellation && (i == ShaderType::TESSELLATION_CONTROL || i == ShaderType::TESSELLATION_EVALUATION))
+		{
+			continue;
+		}
+
+		if(i == ShaderType::GEOMETRY)
 		{
 			continue;
 		}

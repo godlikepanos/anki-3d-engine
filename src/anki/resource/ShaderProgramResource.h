@@ -142,7 +142,7 @@ public:
 		Vec4 m_vec4;
 	};
 
-	ShaderProgramResourceInputVariable* m_variable;
+	const ShaderProgramResourceInputVariable* m_variable;
 	U8 _padding[sizeof(Vec4) - sizeof(void*)];
 
 	ShaderProgramResourceConstantValue()
