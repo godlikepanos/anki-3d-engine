@@ -20,7 +20,7 @@ class XmlElement;
 /// @{
 
 /// A wrapper over the uniforms of a shader or members of the uniform block.
-class ShaderProgramResourceInputVariable
+class ShaderProgramResourceInputVariable : public NonCopyable
 {
 	friend class ShaderProgramResourceVariant;
 	friend class ShaderProgramResource;
@@ -40,6 +40,11 @@ public:
 	Bool isInstanced() const
 	{
 		return m_instanced;
+	}
+
+	Bool isConstant() const
+	{
+		return m_const;
 	}
 
 private:
@@ -158,6 +163,8 @@ constexpr Bool isPacked<ShaderProgramResourceConstantValue>()
 }
 
 /// Shader program resource. It defines a custom format for shader programs.
+///
+/// XML file format:
 /// @code
 /// <shaderProgram>
 ///		<shaders>
@@ -202,6 +209,16 @@ public:
 	ANKI_USE_RESULT Error getOrCreateVariant(const RenderingKey& key,
 		WeakArray<ShaderProgramResourceConstantValue> constants,
 		const ShaderProgramResourceVariant*& variant);
+
+	Bool hasTessellation() const
+	{
+		return m_tessellation;
+	}
+
+	Bool isInstanced() const
+	{
+		return m_instanced;
+	}
 
 private:
 	DynamicArray<ShaderProgramResourceInputVariable> m_inputVars;

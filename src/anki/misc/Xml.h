@@ -81,6 +81,12 @@ public:
 	/// Return the text inside as a Mat4
 	ANKI_USE_RESULT Error getMat4(Mat4& out) const;
 
+	/// Return the text inside as a Mat3
+	ANKI_USE_RESULT Error getMat3(Mat3& out) const;
+
+	/// Return the text inside as a Vec2
+	ANKI_USE_RESULT Error getVec2(Vec2& out) const;
+
 	/// Return the text inside as a Vec3
 	ANKI_USE_RESULT Error getVec3(Vec3& out) const;
 

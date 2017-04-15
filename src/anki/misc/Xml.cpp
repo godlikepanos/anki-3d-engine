@@ -123,6 +123,33 @@ Error XmlElement::getFloats(DynamicArrayAuto<F64>& out) const
 	return err;
 }
 
+Error XmlElement::getMat3(Mat3& out) const
+{
+	DynamicArrayAuto<F64> arr(m_alloc);
+	Error err = getFloats(arr);
+
+	if(!err && arr.getSize() != 9)
+	{
+		ANKI_MISC_LOGE("Expecting 9 elements for Mat3");
+		err = ErrorCode::USER_DATA;
+	}
+
+	if(!err)
+	{
+		for(U i = 0; i < 9 && !err; i++)
+		{
+			out[i] = arr[i];
+		}
+	}
+
+	if(err)
+	{
+		ANKI_MISC_LOGE("Failed to return Mat3. Element: %s", m_el->Value());
+	}
+
+	return err;
+}
+
 Error XmlElement::getMat4(Mat4& out) const
 {
 	DynamicArrayAuto<F64> arr(m_alloc);
@@ -145,6 +172,33 @@ Error XmlElement::getMat4(Mat4& out) const
 	if(err)
 	{
 		ANKI_MISC_LOGE("Failed to return Mat4. Element: %s", m_el->Value());
+	}
+
+	return err;
+}
+
+Error XmlElement::getVec2(Vec2& out) const
+{
+	DynamicArrayAuto<F64> arr(m_alloc);
+	Error err = getFloats(arr);
+
+	if(!err && arr.getSize() != 2)
+	{
+		ANKI_MISC_LOGE("Expecting 2 elements for Vec2");
+		err = ErrorCode::USER_DATA;
+	}
+
+	if(!err)
+	{
+		for(U i = 0; i < 2; i++)
+		{
+			out[i] = arr[i];
+		}
+	}
+
+	if(err)
+	{
+		ANKI_MISC_LOGE("Failed to return Vec2. Element: %s", m_el->Value());
 	}
 
 	return err;

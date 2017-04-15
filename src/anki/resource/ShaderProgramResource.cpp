@@ -413,6 +413,18 @@ Error ShaderProgramResource::parseInputs(XmlElement& inputsEl)
 			return ErrorCode::USER_DATA;
 		}
 
+		if(var.m_const && var.m_instanced)
+		{
+			ANKI_RESOURCE_LOGE("Can't have input variables that are instanced and const: %s", &var.m_name[0]);
+			return ErrorCode::USER_DATA;
+		}
+
+		if(var.isTexture() && var.m_instanced)
+		{
+			ANKI_RESOURCE_LOGE("Can't have texture that is instanced: %s", &var.m_name[0]);
+			return ErrorCode::USER_DATA;
+		}
+
 		for(U i = 0; i < inputVarCount; ++i)
 		{
 			const ShaderProgramResourceInputVariable& b = m_inputVars[i];
@@ -491,16 +503,10 @@ Error ShaderProgramResource::initVariant(const RenderingKey& key,
 	ShaderProgramResourceVariant& variant)
 {
 	U instanceCount = key.m_instanceCount;
-	Bool tessellation = key.m_tessellation;
 	U lod = key.m_lod;
 	Pass pass = key.m_pass;
 
 	// Preconditions
-	if(tessellation)
-	{
-		ANKI_ASSERT(m_tessellation);
-	}
-
 	if(instanceCount > 1)
 	{
 		ANKI_ASSERT(m_instanced);
@@ -609,7 +615,24 @@ Error ShaderProgramResource::initVariant(const RenderingKey& key,
 				ANKI_ASSERT(0);
 			}
 
-			blockCode.pushBackSprintf("%s %s;\n", &toString(in.m_dataType)[0], &in.m_name[0]);
+			if(in.m_instanced)
+			{
+				blockCode.pushBackSprintf(R"(%s %s_i[INSTANCE_COUNT];
+#if VERTEX_SHADER
+#	define %s s%_i[gl_InstanceID]
+#else
+// TODO
+#endif
+)",
+					&toString(in.m_dataType)[0],
+					&in.m_name[0],
+					&in.m_name[0],
+					&in.m_name[0]);
+			}
+			else
+			{
+				blockCode.pushBackSprintf("%s %s;\n", &toString(in.m_dataType)[0], &in.m_name[0]);
+			}
 		} // if(in.inBlock())
 
 		if(in.m_const)
@@ -670,13 +693,12 @@ Error ShaderProgramResource::initVariant(const RenderingKey& key,
 
 	// Write the source header
 	StringListAuto shaderHeaderSrc(getTempAllocator());
-	shaderHeaderSrc.pushBackSprintf("#define INSTANCE_COUNT %u\n"
-									"#define TESSELATION %u\n"
-									"#define LOD %u\n"
-									"#define COLOR %u\n"
-									"#define DEPTH %u\n",
+	shaderHeaderSrc.pushBackSprintf(R"(#define INSTANCE_COUNT %u
+#define LOD %u
+#define COLOR %u
+#define DEPTH %u
+)",
 		instanceCount,
-		tessellation,
 		lod,
 		pass == Pass::MS_FS,
 		pass == Pass::SM);
@@ -712,12 +734,7 @@ Error ShaderProgramResource::initVariant(const RenderingKey& key,
 	Array<ShaderPtr, 5> shaders;
 	for(ShaderType i = ShaderType::FIRST_GRAPHICS; i <= ShaderType::LAST_GRAPHICS; ++i)
 	{
-		if(!tessellation && (i == ShaderType::TESSELLATION_CONTROL || i == ShaderType::TESSELLATION_EVALUATION))
-		{
-			continue;
-		}
-
-		if(i == ShaderType::GEOMETRY)
+		if(!m_sources[i])
 		{
 			continue;
 		}
@@ -729,19 +746,11 @@ Error ShaderProgramResource::initVariant(const RenderingKey& key,
 		shaders[i] = getManager().getGrManager().newInstance<Shader>(i, src.toCString());
 	}
 
-	if(tessellation)
-	{
-		variant.m_prog = getManager().getGrManager().newInstance<ShaderProgram>(shaders[ShaderType::VERTEX],
-			shaders[ShaderType::TESSELLATION_CONTROL],
-			shaders[ShaderType::TESSELLATION_EVALUATION],
-			shaders[ShaderType::GEOMETRY],
-			shaders[ShaderType::FRAGMENT]);
-	}
-	else
-	{
-		variant.m_prog = getManager().getGrManager().newInstance<ShaderProgram>(
-			shaders[ShaderType::VERTEX], shaders[ShaderType::FRAGMENT]);
-	}
+	variant.m_prog = getManager().getGrManager().newInstance<ShaderProgram>(shaders[ShaderType::VERTEX],
+		shaders[ShaderType::TESSELLATION_CONTROL],
+		shaders[ShaderType::TESSELLATION_EVALUATION],
+		shaders[ShaderType::GEOMETRY],
+		shaders[ShaderType::FRAGMENT]);
 
 	return ErrorCode::NONE;
 }
