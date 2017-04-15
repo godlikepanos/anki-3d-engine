@@ -454,7 +454,7 @@ Error ShaderProgramResource::parseInputs(XmlElement& inputsEl)
 }
 
 U64 ShaderProgramResource::computeVariantHash(
-	const RenderingKey& key, WeakArray<ShaderProgramResourceConstantValue> constants) const
+	const RenderingKey& key, WeakArray<const ShaderProgramResourceConstantValue> constants) const
 {
 	static_assert(isPacked<RenderingKey>(), "See file");
 	U hash = computeHash(&key, sizeof(key));
@@ -467,9 +467,9 @@ U64 ShaderProgramResource::computeVariantHash(
 	return hash;
 }
 
-Error ShaderProgramResource::getOrCreateVariant(const RenderingKey& key,
-	WeakArray<ShaderProgramResourceConstantValue> constants,
-	const ShaderProgramResourceVariant*& variant)
+void ShaderProgramResource::getOrCreateVariant(const RenderingKey& key,
+	WeakArray<const ShaderProgramResourceConstantValue> constants,
+	const ShaderProgramResourceVariant*& variant) const
 {
 	U64 hash = computeVariantHash(key, constants);
 
@@ -484,23 +484,16 @@ Error ShaderProgramResource::getOrCreateVariant(const RenderingKey& key,
 	{
 		// Create one
 		ShaderProgramResourceVariant* v = getAllocator().newInstance<ShaderProgramResourceVariant>();
-		Error err = initVariant(key, constants, *v);
-		if(err)
-		{
-			getAllocator().deleteInstance(v);
-			return err;
-		}
+		initVariant(key, constants, *v);
 
 		m_variants.pushBack(hash, v);
 		variant = v;
 	}
-
-	return ErrorCode::NONE;
 }
 
-Error ShaderProgramResource::initVariant(const RenderingKey& key,
-	WeakArray<ShaderProgramResourceConstantValue> constants,
-	ShaderProgramResourceVariant& variant)
+void ShaderProgramResource::initVariant(const RenderingKey& key,
+	WeakArray<const ShaderProgramResourceConstantValue> constants,
+	ShaderProgramResourceVariant& variant) const
 {
 	U instanceCount = key.m_instanceCount;
 	U lod = key.m_lod;
@@ -751,8 +744,6 @@ Error ShaderProgramResource::initVariant(const RenderingKey& key,
 		shaders[ShaderType::TESSELLATION_EVALUATION],
 		shaders[ShaderType::GEOMETRY],
 		shaders[ShaderType::FRAGMENT]);
-
-	return ErrorCode::NONE;
 }
 
 } // end namespace anki

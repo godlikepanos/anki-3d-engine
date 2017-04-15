@@ -280,6 +280,32 @@ Error Material::parseInputs(XmlElement inputsEl)
 	return ErrorCode::NONE;
 }
 
+const MaterialVariant& Material::getOrCreateVariant(const RenderingKey& key_) const
+{
+	RenderingKey key = key_;
+	key.m_lod = min<U>(m_lodCount - 1, key.m_lod);
+
+	if(!isInstanced())
+	{
+		ANKI_ASSERT(key.m_instanceCount == 1);
+	}
+
+	key.m_instanceCount = 1 << getInstanceGroupIdx(key.m_instanceCount);
+
+	MaterialVariant& variant = m_variantMatrix[U(key.m_pass)][key.m_lod][getInstanceGroupIdx(key.m_instanceCount)];
+	LockGuard<Mutex> lock(m_variantMatrixMtx);
+
+	if(variant.m_variant == nullptr)
+	{
+		m_prog->getOrCreateVariant(key,
+			WeakArray<const ShaderProgramResourceConstantValue>((m_constValues.getSize()) ? &m_constValues[0] : nullptr,
+									   m_constValues.getSize()),
+			variant.m_variant);
+	}
+
+	return variant;
+}
+
 U Material::getInstanceGroupIdx(U instanceCount)
 {
 	ANKI_ASSERT(instanceCount > 0);

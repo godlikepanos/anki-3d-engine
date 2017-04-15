@@ -135,6 +135,11 @@ public:
 		return m_variant->variableActive(*var.m_input);
 	}
 
+	const ShaderProgramPtr& getShaderProgram() const
+	{
+		return m_variant->getProgram();
+	}
+
 private:
 	const ShaderProgramResourceVariant* m_variant = nullptr;
 };
@@ -199,7 +204,7 @@ public:
 		return m_prog->isInstanced();
 	}
 
-	const MaterialVariant& getVariant(const RenderingKey& key) const;
+	const MaterialVariant& getOrCreateVariant(const RenderingKey& key) const;
 
 	const DynamicArray<MaterialVariable>& getVariables() const
 	{
@@ -213,7 +218,9 @@ private:
 	Bool8 m_forwardShading = false;
 	U8 m_lodCount = 1;
 
-	Array3d<MaterialVariant, U(Pass::COUNT), MAX_LODS, MAX_INSTANCE_GROUPS> m_variantMatrix; ///< Matrix of variants.
+	/// Matrix of variants.
+	mutable Array3d<MaterialVariant, U(Pass::COUNT), MAX_LODS, MAX_INSTANCE_GROUPS> m_variantMatrix;
+	mutable Mutex m_variantMatrixMtx;
 
 	DynamicArray<MaterialVariable> m_vars; ///< Non-const vars.
 	DynamicArray<ShaderProgramResourceConstantValue> m_constValues;

@@ -206,9 +206,9 @@ public:
 
 	/// Get or create a graphics shader program variant.
 	/// @note It's thread-safe.
-	ANKI_USE_RESULT Error getOrCreateVariant(const RenderingKey& key,
-		WeakArray<ShaderProgramResourceConstantValue> constants,
-		const ShaderProgramResourceVariant*& variant);
+	void getOrCreateVariant(const RenderingKey& key,
+		WeakArray<const ShaderProgramResourceConstantValue> constants,
+		const ShaderProgramResourceVariant*& variant) const;
 
 	Bool hasTessellation() const
 	{
@@ -226,8 +226,8 @@ private:
 
 	Array<String, 5> m_sources;
 
-	IntrusiveHashMap<U64, ShaderProgramResourceVariant> m_variants;
-	Mutex m_mtx;
+	mutable IntrusiveHashMap<U64, ShaderProgramResourceVariant> m_variants;
+	mutable Mutex m_mtx;
 
 	Bool8 m_tessellation = false;
 	Bool8 m_instanced = false;
@@ -235,11 +235,12 @@ private:
 	/// Parse whatever is inside <inputs>
 	ANKI_USE_RESULT Error parseInputs(XmlElement& inputsEl);
 
-	U64 computeVariantHash(const RenderingKey& key, WeakArray<ShaderProgramResourceConstantValue> constants) const;
+	U64 computeVariantHash(
+		const RenderingKey& key, WeakArray<const ShaderProgramResourceConstantValue> constants) const;
 
-	ANKI_USE_RESULT Error initVariant(const RenderingKey& key,
-		WeakArray<ShaderProgramResourceConstantValue> constants,
-		ShaderProgramResourceVariant& v);
+	void initVariant(const RenderingKey& key,
+		WeakArray<const ShaderProgramResourceConstantValue> constants,
+		ShaderProgramResourceVariant& v) const;
 };
 /// @}
 
