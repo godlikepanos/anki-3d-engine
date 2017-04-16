@@ -47,10 +47,9 @@ class MaterialVariable : public NonCopyable
 	friend class MaterialVariant;
 
 public:
-	MaterialVariable()
-	{
-		m_mat4 = Mat4::getZero();
-	}
+	MaterialVariable();
+
+	~MaterialVariable();
 
 	/// Get the builtin info.
 	BuiltinMaterialVariableId getBuiltin() const
@@ -88,7 +87,7 @@ protected:
 // Specialize the MaterialVariable::getValue
 #define ANKI_SPECIALIZE_GET_VALUE(t_, var_, shaderType_)                                                               \
 	template<>                                                                                                         \
-	const t_& MaterialVariable::getValue<t_>() const                                                                   \
+	inline const t_& MaterialVariable::getValue<t_>() const                                                            \
 	{                                                                                                                  \
 		ANKI_ASSERT(m_input);                                                                                          \
 		ANKI_ASSERT(m_input->getShaderVariableDataType() == ShaderVariableDataType::shaderType_);                      \
@@ -101,9 +100,10 @@ ANKI_SPECIALIZE_GET_VALUE(Vec2, m_vec2, VEC2)
 ANKI_SPECIALIZE_GET_VALUE(Vec3, m_vec3, VEC3)
 ANKI_SPECIALIZE_GET_VALUE(Vec4, m_vec4, VEC4)
 ANKI_SPECIALIZE_GET_VALUE(Mat3, m_mat3, MAT3)
+ANKI_SPECIALIZE_GET_VALUE(Mat4, m_mat4, MAT4)
 
 template<>
-const TextureResourcePtr& MaterialVariable::getValue() const
+inline const TextureResourcePtr& MaterialVariable::getValue() const
 {
 	ANKI_ASSERT(m_input);
 	ANKI_ASSERT(m_input->getShaderVariableDataType() >= ShaderVariableDataType::SAMPLERS_FIRST
@@ -129,15 +129,27 @@ public:
 	{
 	}
 
+	const ShaderProgramResourceVariant& getShaderProgramResourceVariant() const
+	{
+		ANKI_ASSERT(m_variant);
+		return *m_variant;
+	}
+
 	/// Return true of the the variable is active.
 	Bool variableActive(const MaterialVariable& var) const
 	{
+		ANKI_ASSERT(var.m_input);
 		return m_variant->variableActive(*var.m_input);
 	}
 
 	const ShaderProgramPtr& getShaderProgram() const
 	{
 		return m_variant->getProgram();
+	}
+
+	U getUniformBlockSize() const
+	{
+		return m_variant->getUniformBlockSize();
 	}
 
 private:
@@ -184,7 +196,7 @@ public:
 		return m_lodCount;
 	}
 
-	Bool hasShadow() const
+	Bool castsShadow() const
 	{
 		return m_shadow;
 	}

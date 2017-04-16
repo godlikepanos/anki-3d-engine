@@ -14,15 +14,25 @@ struct BuiltinVarInfo
 {
 	const char* m_name;
 	ShaderVariableDataType m_type;
+	Bool m_instanced;
 };
 
 static const Array<BuiltinVarInfo, U(BuiltinMaterialVariableId::COUNT) - 1> BUILTIN_INFOS = {
-	{{"MODEL_VIEW_PROJECTION_MATRIX", ShaderVariableDataType::MAT4},
-		{"MODEL_VIEW_MATRIX", ShaderVariableDataType::MAT4},
-		{"VIEW_PROJECTION_MATRIX", ShaderVariableDataType::MAT4},
-		{"VIEW_MATRIX", ShaderVariableDataType::MAT4},
-		{"NORMAL_MATRIX", ShaderVariableDataType::MAT3},
-		{"CAMERA_ROTATION_MATRIX", ShaderVariableDataType::MAT3}}};
+	{{"MODEL_VIEW_PROJECTION_MATRIX", ShaderVariableDataType::MAT4, true},
+		{"MODEL_VIEW_MATRIX", ShaderVariableDataType::MAT4, true},
+		{"VIEW_PROJECTION_MATRIX", ShaderVariableDataType::MAT4, false},
+		{"VIEW_MATRIX", ShaderVariableDataType::MAT4, false},
+		{"NORMAL_MATRIX", ShaderVariableDataType::MAT3, true},
+		{"CAMERA_ROTATION_MATRIX", ShaderVariableDataType::MAT3, false}}};
+
+MaterialVariable::MaterialVariable()
+{
+	m_mat4 = Mat4::getZero();
+}
+
+MaterialVariable::~MaterialVariable()
+{
+}
 
 Material::Material(ResourceManager* manager)
 	: ResourceObject(manager)
@@ -209,6 +219,12 @@ Error Material::parseInputs(XmlElement inputsEl)
 					return ErrorCode::USER_DATA;
 				}
 
+				if(foundVar->isInstanced() && !BUILTIN_INFOS[i].m_instanced)
+				{
+					ANKI_RESOURCE_LOGE("Builtin variable %s cannot be instanced", BUILTIN_INFOS[i].m_name);
+					return ErrorCode::USER_DATA;
+				}
+
 				MaterialVariable& mtlVar = m_vars[nonConstInputCount--];
 				mtlVar.m_input = foundVar;
 				mtlVar.m_builtin = BuiltinMaterialVariableId(i + 1);
@@ -216,6 +232,12 @@ Error Material::parseInputs(XmlElement inputsEl)
 			else
 			{
 				// Not built-in
+
+				if(foundVar->isInstanced())
+				{
+					ANKI_RESOURCE_LOGE("Only some builtin variables can be instanced: %s", &foundVar->getName()[0]);
+					return ErrorCode::USER_DATA;
+				}
 
 				MaterialVariable& mtlVar = m_vars[nonConstInputCount--];
 				mtlVar.m_input = foundVar;

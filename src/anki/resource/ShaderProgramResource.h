@@ -126,6 +126,12 @@ public:
 		return m_prog;
 	}
 
+	U getTextureUnit(const ShaderProgramResourceInputVariable& var) const
+	{
+		ANKI_ASSERT(m_texUnits[var.m_idx] >= 0);
+		return U(m_texUnits[var.m_idx]);
+	}
+
 private:
 	ShaderProgramPtr m_prog;
 

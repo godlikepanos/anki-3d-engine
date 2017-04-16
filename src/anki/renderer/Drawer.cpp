@@ -137,167 +137,6 @@ public:
 	U m_crntBuildInfo = 0;
 };
 
-/// Visitor that sets a uniform
-class SetupRenderableVariableVisitor
-{
-public:
-	DrawContext* m_ctx ANKI_DBG_NULLIFY;
-	const RenderableDrawer* m_drawer ANKI_DBG_NULLIFY;
-	WeakArray<U8> m_uniformBuffer;
-	const MaterialVariant* m_variant ANKI_DBG_NULLIFY;
-	F32 m_flod;
-
-	/// Set a uniform in a client block
-	template<typename T>
-	void uniSet(const MaterialVariable& mtlVar, const T* value, U32 size)
-	{
-		mtlVar.writeShaderBlockMemory<T>(
-			*m_variant, value, size, &m_uniformBuffer[0], &m_uniformBuffer[0] + m_uniformBuffer.getSize());
-	}
-
-	template<typename TRenderableVariableTemplate>
-	Error visit(const TRenderableVariableTemplate& rvar);
-};
-
-template<typename TRenderableVariableTemplate>
-Error SetupRenderableVariableVisitor::visit(const TRenderableVariableTemplate& rvar)
-{
-	using DataType = typename TRenderableVariableTemplate::Type;
-	const MaterialVariable& mvar = rvar.getMaterialVariable();
-
-	// Array size
-	U cachedTrfs = m_ctx->m_cachedTrfCount;
-	ANKI_ASSERT(cachedTrfs <= MAX_INSTANCES);
-
-	// Set uniform
-	//
-	const Mat4& vp = m_ctx->m_viewProjMat;
-	const Mat4& v = m_ctx->m_viewMat;
-
-	switch(mvar.getBuiltin())
-	{
-	case BuiltinMaterialVariableId::NONE:
-		uniSet<DataType>(mvar, &rvar.getValue(), 1);
-		break;
-	case BuiltinMaterialVariableId::MVP_MATRIX:
-	{
-		ANKI_ASSERT(cachedTrfs > 0);
-
-		DynamicArrayAuto<Mat4> mvp(m_drawer->m_r->getFrameAllocator());
-		mvp.create(cachedTrfs);
-
-		for(U i = 0; i < cachedTrfs; i++)
-		{
-			mvp[i] = vp * m_ctx->m_cachedTrfs[i];
-		}
-
-		uniSet(mvar, &mvp[0], cachedTrfs);
-		break;
-	}
-	case BuiltinMaterialVariableId::MV_MATRIX:
-	{
-		ANKI_ASSERT(cachedTrfs > 0);
-
-		DynamicArrayAuto<Mat4> mv(m_drawer->m_r->getFrameAllocator());
-		mv.create(cachedTrfs);
-
-		for(U i = 0; i < cachedTrfs; i++)
-		{
-			mv[i] = v * m_ctx->m_cachedTrfs[i];
-		}
-
-		uniSet(mvar, &mv[0], cachedTrfs);
-		break;
-	}
-	case BuiltinMaterialVariableId::VP_MATRIX:
-		ANKI_ASSERT(cachedTrfs == 0 && "Cannot have transform");
-		uniSet(mvar, &vp, 1);
-		break;
-	case BuiltinMaterialVariableId::V_MATRIX:
-		uniSet(mvar, &v, 1);
-		break;
-	case BuiltinMaterialVariableId::NORMAL_MATRIX:
-	{
-		ANKI_ASSERT(cachedTrfs > 0);
-
-		DynamicArrayAuto<Mat3> normMats(m_drawer->m_r->getFrameAllocator());
-		normMats.create(cachedTrfs);
-
-		for(U i = 0; i < cachedTrfs; i++)
-		{
-			Mat4 mv = v * m_ctx->m_cachedTrfs[i];
-			normMats[i] = mv.getRotationPart();
-			normMats[i].reorthogonalize();
-		}
-
-		uniSet(mvar, &normMats[0], cachedTrfs);
-		break;
-	}
-	case BuiltinMaterialVariableId::BILLBOARD_MVP_MATRIX:
-	{
-		// Calc the billboard rotation matrix
-		Mat3 rot = v.getRotationPart().getTransposed();
-
-		DynamicArrayAuto<Mat4> bmvp(m_drawer->m_r->getFrameAllocator());
-		bmvp.create(cachedTrfs);
-
-		for(U i = 0; i < cachedTrfs; i++)
-		{
-			Mat4 trf = m_ctx->m_cachedTrfs[i];
-			trf.setRotationPart(rot);
-			bmvp[i] = vp * trf;
-		}
-
-		uniSet(mvar, &bmvp[0], cachedTrfs);
-		break;
-	}
-	case BuiltinMaterialVariableId::CAMERA_ROT_MATRIX:
-	{
-		// Calc the billboard rotation matrix
-		Mat3 rot = v.getRotationPart().getTransposed();
-		uniSet(mvar, &rot, 1);
-		break;
-	}
-	case BuiltinMaterialVariableId::MAX_TESS_LEVEL:
-	{
-		const RenderComponentVariable& base = rvar;
-		F32 maxtess = base.getValue<F32>();
-		F32 tess = 0.0;
-
-		if(m_flod >= 1.0)
-		{
-			tess = 1.0;
-		}
-		else
-		{
-			tess = maxtess - m_flod * maxtess;
-			tess = std::max(tess, 1.0f);
-		}
-
-		uniSet(mvar, &tess, 1);
-		break;
-	}
-	case BuiltinMaterialVariableId::MS_DEPTH_MAP:
-		// Do nothing
-		break;
-	default:
-		ANKI_ASSERT(0);
-		break;
-	}
-
-	return ErrorCode::NONE;
-}
-
-// Texture specialization
-template<>
-void SetupRenderableVariableVisitor::uniSet<TextureResourcePtr>(
-	const MaterialVariable& mtlvar, const TextureResourcePtr* values, U32 size)
-{
-	ANKI_ASSERT(size == 1);
-	ANKI_ASSERT(values);
-	m_ctx->m_cmdb->bindTexture(0, mtlvar.getTextureUnit(), (*values)->getGrTexture());
-}
-
 RenderableDrawer::~RenderableDrawer()
 {
 }
@@ -305,29 +144,162 @@ RenderableDrawer::~RenderableDrawer()
 void RenderableDrawer::setupUniforms(DrawContext& ctx, CompleteRenderingBuildInfo& build)
 {
 	const Material& mtl = build.m_rc->getMaterial();
-	const MaterialVariant& variant = mtl.getVariant(build.m_in.m_key);
+	const MaterialVariant& variant = mtl.getOrCreateVariant(build.m_in.m_key);
+	const ShaderProgramResourceVariant& progVariant = variant.getShaderProgramResourceVariant();
+
+	const U cachedTrfs = ctx.m_cachedTrfCount;
+	ANKI_ASSERT(cachedTrfs <= MAX_INSTANCES);
 
 	// Get some memory for uniforms
 	U8* uniforms = static_cast<U8*>(m_r->getStagingGpuMemoryManager().allocateFrame(
-		variant.getDefaultBlockSize(), StagingGpuMemoryType::UNIFORM, ctx.m_uboToken));
+		variant.getUniformBlockSize(), StagingGpuMemoryType::UNIFORM, ctx.m_uboToken));
+	void* const uniformsBegin = uniforms;
+	const void* const uniformsEnd = uniforms + variant.getUniformBlockSize();
 
-	// Call the visitor
-	SetupRenderableVariableVisitor visitor;
-	visitor.m_ctx = &ctx;
-	visitor.m_drawer = this;
-	visitor.m_uniformBuffer = WeakArray<U8>(uniforms, variant.getDefaultBlockSize());
-	visitor.m_variant = &variant;
-	visitor.m_flod = build.m_flod;
-
+	// Iterate variables
 	for(auto it = build.m_rc->getVariablesBegin(); it != build.m_rc->getVariablesEnd(); ++it)
 	{
-		RenderComponentVariable* rvar = *it;
+		const RenderComponentVariable& var = *it;
+		const MaterialVariable& mvar = var.getMaterialVariable();
+		const ShaderProgramResourceInputVariable& progvar = mvar.getShaderProgramResourceInputVariable();
 
-		if(variant.variableActive(rvar->getMaterialVariable()))
+		if(!variant.variableActive(mvar))
 		{
-			Error err = rvar->acceptVisitor(visitor);
-			(void)err;
+			continue;
 		}
+
+		switch(progvar.getShaderVariableDataType())
+		{
+		case ShaderVariableDataType::FLOAT:
+		{
+			F32 val = mvar.getValue<F32>();
+			progVariant.writeShaderBlockMemory(progvar, &val, 1, uniformsBegin, uniformsEnd);
+			break;
+		}
+		case ShaderVariableDataType::VEC2:
+		{
+			Vec2 val = mvar.getValue<Vec2>();
+			progVariant.writeShaderBlockMemory(progvar, &val, 1, uniformsBegin, uniformsEnd);
+			break;
+		}
+		case ShaderVariableDataType::VEC3:
+		{
+			Vec3 val = mvar.getValue<Vec3>();
+			progVariant.writeShaderBlockMemory(progvar, &val, 1, uniformsBegin, uniformsEnd);
+			break;
+		}
+		case ShaderVariableDataType::VEC4:
+		{
+			Vec4 val = mvar.getValue<Vec4>();
+			progVariant.writeShaderBlockMemory(progvar, &val, 1, uniformsBegin, uniformsEnd);
+			break;
+		}
+		case ShaderVariableDataType::MAT3:
+		{
+			switch(mvar.getBuiltin())
+			{
+			case BuiltinMaterialVariableId::NONE:
+			{
+				Mat3 val = mvar.getValue<Mat3>();
+				progVariant.writeShaderBlockMemory(progvar, &val, 1, uniformsBegin, uniformsEnd);
+				break;
+			}
+			case BuiltinMaterialVariableId::NORMAL_MATRIX:
+			{
+				ANKI_ASSERT(cachedTrfs > 0);
+
+				DynamicArrayAuto<Mat3> normMats(m_r->getFrameAllocator());
+				normMats.create(cachedTrfs);
+
+				for(U i = 0; i < cachedTrfs; i++)
+				{
+					Mat4 mv = ctx.m_viewMat * ctx.m_cachedTrfs[i];
+					normMats[i] = mv.getRotationPart();
+					normMats[i].reorthogonalize();
+				}
+
+				progVariant.writeShaderBlockMemory(progvar, &normMats[0], cachedTrfs, uniformsBegin, uniformsEnd);
+				break;
+			}
+			case BuiltinMaterialVariableId::CAMERA_ROTATION_MATRIX:
+			{
+				Mat3 rot = ctx.m_viewMat.getRotationPart().getTransposed();
+				progVariant.writeShaderBlockMemory(progvar, &rot, 1, uniformsBegin, uniformsEnd);
+				break;
+			}
+			default:
+				ANKI_ASSERT(0);
+			}
+
+			break;
+		}
+		case ShaderVariableDataType::MAT4:
+		{
+			switch(mvar.getBuiltin())
+			{
+			case BuiltinMaterialVariableId::NONE:
+			{
+				Mat4 val = mvar.getValue<Mat4>();
+				progVariant.writeShaderBlockMemory(progvar, &val, 1, uniformsBegin, uniformsEnd);
+				break;
+			}
+			case BuiltinMaterialVariableId::MODEL_VIEW_PROJECTION_MATRIX:
+			{
+				ANKI_ASSERT(cachedTrfs > 0);
+
+				DynamicArrayAuto<Mat4> mvp(m_r->getFrameAllocator());
+				mvp.create(cachedTrfs);
+
+				for(U i = 0; i < cachedTrfs; i++)
+				{
+					mvp[i] = ctx.m_viewProjMat * ctx.m_cachedTrfs[i];
+				}
+
+				progVariant.writeShaderBlockMemory(progvar, &mvp[0], cachedTrfs, uniformsBegin, uniformsEnd);
+				break;
+			}
+			case BuiltinMaterialVariableId::MODEL_VIEW_MATRIX:
+			{
+				ANKI_ASSERT(cachedTrfs > 0);
+
+				DynamicArrayAuto<Mat4> mv(m_r->getFrameAllocator());
+				mv.create(cachedTrfs);
+
+				for(U i = 0; i < cachedTrfs; i++)
+				{
+					mv[i] = ctx.m_viewMat * ctx.m_cachedTrfs[i];
+				}
+
+				progVariant.writeShaderBlockMemory(progvar, &mv[0], cachedTrfs, uniformsBegin, uniformsEnd);
+				break;
+			}
+			case BuiltinMaterialVariableId::VIEW_PROJECTION_MATRIX:
+			{
+				ANKI_ASSERT(cachedTrfs == 0 && "Cannot have transform");
+				progVariant.writeShaderBlockMemory(progvar, &ctx.m_viewProjMat, 1, uniformsBegin, uniformsEnd);
+				break;
+			}
+			case BuiltinMaterialVariableId::VIEW_MATRIX:
+			{
+				progVariant.writeShaderBlockMemory(progvar, &ctx.m_viewMat, 1, uniformsBegin, uniformsEnd);
+				break;
+			}
+			default:
+				ANKI_ASSERT(0);
+			}
+		}
+		case ShaderVariableDataType::SAMPLER_2D:
+		case ShaderVariableDataType::SAMPLER_2D_ARRAY:
+		case ShaderVariableDataType::SAMPLER_3D:
+		case ShaderVariableDataType::SAMPLER_CUBE:
+		{
+			ctx.m_cmdb->bindTexture(
+				0, progVariant.getTextureUnit(progvar), mvar.getValue<TextureResourcePtr>()->getGrTexture());
+			break;
+		}
+		default:
+			ANKI_ASSERT(0);
+		} // end switch
 	}
 }
 
@@ -448,7 +420,6 @@ Error RenderableDrawer::drawSingle(DrawContext& ctx)
 {
 	// Get components
 	RenderComponent& renderable = ctx.m_visibleNode->m_node->getComponent<RenderComponent>();
-	const Material& mtl = renderable.getMaterial();
 
 	// Get info of current
 	CompleteRenderingBuildInfo& crntBuild = ctx.m_buildInfo[ctx.m_crntBuildInfo];
@@ -464,8 +435,6 @@ Error RenderableDrawer::drawSingle(DrawContext& ctx)
 
 	crntBuild.m_in.m_key.m_lod = flod;
 	crntBuild.m_in.m_key.m_pass = ctx.m_pass;
-	crntBuild.m_in.m_key.m_tessellation = m_r->getTessellationEnabled() && mtl.getTessellationEnabled()
-		&& crntBuild.m_in.m_key.m_lod == 0 && ctx.m_pass != Pass::SM;
 	crntBuild.m_in.m_key.m_instanceCount = 1;
 	crntBuild.m_in.m_subMeshIndicesArray = &ctx.m_visibleNode->m_spatialIndices[0];
 	crntBuild.m_in.m_subMeshIndicesCount = ctx.m_visibleNode->m_spatialsCount;

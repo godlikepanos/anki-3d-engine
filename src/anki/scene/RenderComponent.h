@@ -18,46 +18,19 @@ namespace anki
 /// @addtogroup scene
 /// @{
 
-// Forward
-class RenderComponentVariable;
-
-template<typename T>
-class RenderComponentVariableTemplate;
-
-/// RenderComponent variable base. It's a visitable.
-using RenderComponentVariableVisitable = VisitableCommonBase<RenderComponentVariable, // The base
-	RenderComponentVariableTemplate<F32>,
-	RenderComponentVariableTemplate<Vec2>,
-	RenderComponentVariableTemplate<Vec3>,
-	RenderComponentVariableTemplate<Vec4>,
-	RenderComponentVariableTemplate<Mat3>,
-	RenderComponentVariableTemplate<Mat4>,
-	RenderComponentVariableTemplate<TextureResourcePtr>>;
-
 /// A wrapper on top of MaterialVariable
-class RenderComponentVariable : public RenderComponentVariableVisitable
+class RenderComponentVariable
 {
+	friend class RenderComponent;
+
 public:
-	using Base = RenderComponentVariableVisitable;
-
-	RenderComponentVariable(const MaterialVariable* mvar);
-	virtual ~RenderComponentVariable();
-
-	/// This will trigger copy on write
-	template<typename T>
-	void setValue(const T& value)
-	{
-		ANKI_ASSERT(Base::isTypeOf<RenderComponentVariableTemplate<T>>());
-		auto derived = static_cast<RenderComponentVariableTemplate<T>*>(this);
-		derived->setValue(value);
-	}
+	RenderComponentVariable() = default;
+	~RenderComponentVariable() = default;
 
 	template<typename T>
 	const T& getValue() const
 	{
-		ANKI_ASSERT(Base::isTypeOf<RenderComponentVariableTemplate<T>>());
-		auto derived = static_cast<const RenderComponentVariableTemplate<T>*>(this);
-		return derived->getValue();
+		return m_mvar->getValue<T>();
 	}
 
 	const MaterialVariable& getMaterialVariable() const
@@ -65,42 +38,8 @@ public:
 		return *m_mvar;
 	}
 
-protected:
-	const MaterialVariable* m_mvar = nullptr;
-};
-
-/// RenderComponent variable. This class should not be visible to other interfaces except render component.
-template<typename T>
-class RenderComponentVariableTemplate : public RenderComponentVariable
-{
-public:
-	using Base = RenderComponentVariable;
-	using Type = T;
-
-	RenderComponentVariableTemplate(const MaterialVariable* mvar)
-		: RenderComponentVariable(mvar)
-	{
-		setupVisitable(this);
-	}
-
-	~RenderComponentVariableTemplate()
-	{
-	}
-
-	void setValue(const T& value)
-	{
-		ANKI_ASSERT(isTypeOf<RenderComponentVariableTemplate<T>>());
-		ANKI_ASSERT(Base::getMaterialVariable().getBuiltin() == BuiltinMaterialVariableId::NONE);
-		m_copy = value;
-	}
-
-	const T& getValue() const
-	{
-		return m_copy;
-	}
-
 private:
-	T m_copy; ///< Copy of the data
+	const MaterialVariable* m_mvar = nullptr;
 };
 
 /// Rendering data input.
@@ -212,7 +151,7 @@ class RenderComponent : public SceneComponent
 public:
 	static const SceneComponentType CLASS_TYPE = SceneComponentType::RENDER;
 
-	using Variables = DynamicArray<RenderComponentVariable*>;
+	using Variables = DynamicArray<RenderComponentVariable>;
 
 	RenderComponent(SceneNode* node, const Material* mtl);
 
@@ -253,7 +192,7 @@ public:
 	Bool getCastsShadow() const
 	{
 		const Material& mtl = getMaterial();
-		return mtl.getShadowEnabled();
+		return mtl.castsShadow();
 	}
 
 	/// Iterate variables using a lambda
@@ -264,7 +203,7 @@ public:
 		Variables::Iterator it = m_vars.getBegin();
 		for(; it != m_vars.getEnd() && !err; it++)
 		{
-			err = func(*(*it));
+			err = func(*it);
 		}
 
 		return err;
