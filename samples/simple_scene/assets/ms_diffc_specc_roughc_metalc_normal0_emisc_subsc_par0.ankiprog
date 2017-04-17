@@ -9,13 +9,15 @@
 				<input><type>mat3</type><name>normalMat</name><depth>0</depth></input>
 
 			</inputs>
-			<source><![CDATA[
+			<source><![CDATA[#include "shaders/MsCommonVert.glsl"
+void main() {
 #if COLOR
 positionUvNormalTangent(mvp, normalMat);
 #else
 ANKI_WRITE_POSITION(mvp * vec4(in_position, 1.0));
 #endif
 
+}
 			]]></source>
 		</shader>
 		<shader>
@@ -29,13 +31,15 @@ ANKI_WRITE_POSITION(mvp * vec4(in_position, 1.0));
 				<input><type>float</type><name>subsurface</name><const>1</const><depth>0</depth></input>
 
 			</inputs>
-			<source><![CDATA[
+			<source><![CDATA[#include "shaders/MsCommonFrag.glsl"
+void main() {
 #if COLOR
 vec2 uv = in_uv;
 vec3 normal = in_normal;
-writeRts(diffCol, normal, specCol, roughness, subsurface, emission, metallic);
+writeRts(diffColor, normal, specColor, roughness, subsurface, emission, metallic);
 #endif
 
+}
 			]]></source>
 		</shader>
 	</shaders>

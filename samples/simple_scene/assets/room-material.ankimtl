@@ -4,8 +4,12 @@
 	<shaderProgram>assets/ms_diffc_specc_roughc_metalc_normal0_emisc_subsc_par0.ankiprog</shaderProgram>
 	
 	<inputs>
-		<input><shaderInput>diffCol</shaderInput><value>0.799988 0.635542 0.640324</value></input>
-		<input><shaderInput>specCol</shaderInput><value>0.500000 0.500000 0.500000</value></input>
+		<input><shaderInput>mvp</shaderInput><builtin>MODEL_VIEW_PROJECTION_MATRIX</builtin></input>
+		<input><shaderInput>normalMat</shaderInput><builtin>NORMAL_MATRIX</builtin></input>
+		
+	
+		<input><shaderInput>diffColor</shaderInput><value>0.799988 0.635542 0.640324</value></input>
+		<input><shaderInput>specColor</shaderInput><value>0.500000 0.500000 0.500000</value></input>
 		<input><shaderInput>roughness</shaderInput><value>0.097847</value></input>
 		<input><shaderInput>metallic</shaderInput><value>0.000000</value></input>
 		

@@ -24,7 +24,7 @@ out gl_PerVertex
 	vec4 gl_Position;
 };
 
-layout(location = 0) out highp vec4 out_uv;
+layout(location = 0) out highp vec2 out_uv;
 layout(location = 1) out mediump vec3 out_normal;
 layout(location = 2) out mediump vec4 out_tangent;
 #if CALC_BITANGENT_IN_VERT

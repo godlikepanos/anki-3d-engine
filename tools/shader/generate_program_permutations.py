@@ -18,8 +18,10 @@ template_xml = """<?xml version="1.0" encoding="UTF-8" ?>
 			<inputs>
 %vertInputs%
 			</inputs>
-			<source><![CDATA[
+			<source><![CDATA[#include "shaders/MsCommonVert.glsl"
+void main() {
 %vertSrc%
+}
 			]]></source>
 		</shader>
 		<shader>
@@ -27,8 +29,10 @@ template_xml = """<?xml version="1.0" encoding="UTF-8" ?>
 			<inputs>
 %fragInputs%
 			</inputs>
-			<source><![CDATA[
+			<source><![CDATA[#include "shaders/MsCommonFrag.glsl"
+void main() {
 %fragSrc%
+}
 			]]></source>
 		</shader>
 	</shaders>
@@ -233,7 +237,7 @@ ANKI_WRITE_POSITION(mvp * vec4(in_position, 1.0));
 	else:
 		assert 0
 
-	frag_src += "writeRts(diffCol, normal, specCol, roughness, subsurface, emission, metallic);\n"
+	frag_src += "writeRts(diffColor, normal, specColor, roughness, subsurface, emission, metallic);\n"
 	frag_src += "#endif\n"
 
 	xml = template_xml

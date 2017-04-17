@@ -12,6 +12,10 @@ const char* MATERIAL_TEMPLATE = R"(<?xml version="1.0" encoding="UTF-8" ?>
 	<shaderProgram>%shaderProg%</shaderProgram>
 	
 	<inputs>
+		<input><shaderInput>mvp</shaderInput><builtin>MODEL_VIEW_PROJECTION_MATRIX</builtin></input>
+		<input><shaderInput>normalMat</shaderInput><builtin>NORMAL_MATRIX</builtin></input>
+		%modelViewMat%
+	
 		<input>%diff%</input>
 		<input>%spec%</input>
 		<input>%roughness%</input>
@@ -56,7 +60,8 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 
 		xml = replaceAllString(xml,
 			"%diff%",
-			"<shaderInput>diffCol</shaderInput><value>" + std::to_string(diffCol[0]) + " " + std::to_string(diffCol[1])
+			"<shaderInput>diffColor</shaderInput><value>" + std::to_string(diffCol[0]) + " "
+				+ std::to_string(diffCol[1])
 				+ " "
 				+ std::to_string(diffCol[2])
 				+ "</value>");
@@ -86,7 +91,8 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 
 		xml = replaceAllString(xml,
 			"%spec%",
-			"<shaderInput>specCol</shaderInput><value>" + std::to_string(specCol[0]) + " " + std::to_string(specCol[1])
+			"<shaderInput>specColor</shaderInput><value>" + std::to_string(specCol[0]) + " "
+				+ std::to_string(specCol[1])
 				+ " "
 				+ std::to_string(specCol[2])
 				+ "</value>");
@@ -240,6 +246,10 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 					+ "</value></input>\n"
 					  "\t\t<input><shaderInput>heightMapScale</input><value>0.05</value></input>");
 
+			xml = replaceAllString(xml,
+				"%modelViewMat%",
+				"<input><shaderInput>modelViewMat</shaderInput><builtin>MODEL_VIEW_MATRIX</builtin></input>");
+
 			prog_fname += "par1";
 		}
 		else
@@ -250,6 +260,9 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 	else
 	{
 		xml = replaceAllString(xml, "%height%", "");
+
+		xml = replaceAllString(xml, "%modelViewMat%", "");
+
 		prog_fname += "par0";
 	}
 

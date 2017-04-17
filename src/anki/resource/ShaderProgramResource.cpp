@@ -267,6 +267,8 @@ Error ShaderProgramResource::load(const ResourceFilename& filename)
 	}
 
 	// <shader> again
+	inputVarCount = 0;
+	inputsNameLen = 0;
 	ShaderTypeBit presentShaders = ShaderTypeBit::NONE;
 	ANKI_CHECK(shadersEl.getChildElement("shader", shaderEl));
 	do
@@ -298,7 +300,7 @@ Error ShaderProgramResource::load(const ResourceFilename& filename)
 
 		if(inputsEl)
 		{
-			ANKI_CHECK(parseInputs(inputsEl));
+			ANKI_CHECK(parseInputs(inputsEl, inputVarCount, inputsNameLen));
 		}
 
 		// <source>
@@ -320,6 +322,9 @@ Error ShaderProgramResource::load(const ResourceFilename& filename)
 		ANKI_CHECK(shaderEl.getNextSiblingElement("shader", shaderEl));
 	} while(shaderEl);
 
+	ANKI_ASSERT(inputsNameLen == m_inputVarsNames.getSize());
+	ANKI_ASSERT(inputVarCount == m_inputVars.getSize());
+
 	// Sanity checks
 	if(!(presentShaders & ShaderTypeBit::VERTEX))
 	{
@@ -336,11 +341,8 @@ Error ShaderProgramResource::load(const ResourceFilename& filename)
 	return ErrorCode::NONE;
 }
 
-Error ShaderProgramResource::parseInputs(XmlElement& inputsEl)
+Error ShaderProgramResource::parseInputs(XmlElement& inputsEl, U& inputVarCount, U& namePos)
 {
-	U inputVarCount = 0;
-	U namePos = 0;
-
 	XmlElement inputEl;
 	ANKI_CHECK(inputsEl.getChildElement("input", inputEl));
 	do
@@ -447,8 +449,6 @@ Error ShaderProgramResource::parseInputs(XmlElement& inputsEl)
 
 		ANKI_CHECK(inputEl.getNextSiblingElement("input", inputEl));
 	} while(inputEl);
-
-	ANKI_ASSERT(namePos == m_inputVarsNames.getSize());
 
 	return ErrorCode::NONE;
 }
@@ -708,7 +708,7 @@ void ShaderProgramResource::initVariant(const RenderingKey& key,
 		StringAuto str(getTempAllocator());
 		blockCode.join("", str);
 
-		shaderHeaderSrc.pushBack("layout(ANKI_UBO_BINDING(0, 0)) uniform u0_ {\n");
+		shaderHeaderSrc.pushBack("layout(ANKI_UBO_BINDING(0, 0), std140, row_major) uniform u0_ {\n");
 		shaderHeaderSrc.pushBack(str.toCString());
 		shaderHeaderSrc.pushBack("};\n");
 	}

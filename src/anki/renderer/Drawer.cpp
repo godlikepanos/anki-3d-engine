@@ -287,6 +287,8 @@ void RenderableDrawer::setupUniforms(DrawContext& ctx, CompleteRenderingBuildInf
 			default:
 				ANKI_ASSERT(0);
 			}
+
+			break;
 		}
 		case ShaderVariableDataType::SAMPLER_2D:
 		case ShaderVariableDataType::SAMPLER_2D_ARRAY:

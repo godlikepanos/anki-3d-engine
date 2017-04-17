@@ -138,7 +138,7 @@ void writeRts(in vec3 diffColor, // from 0 to 1
 	in vec3 specularColor,
 	in float roughness,
 	in float subsurface,
-	in float emission,
+	in vec3 emission,
 	in float metallic)
 {
 	GbufferInfo g;
@@ -147,7 +147,7 @@ void writeRts(in vec3 diffColor, // from 0 to 1
 	g.specular = specularColor;
 	g.roughness = roughness;
 	g.subsurface = subsurface;
-	g.emission = emission;
+	g.emission = (emission.r + emission.g + emission.b) / 3.0;
 	g.metallic = metallic;
 	writeGBuffer(g, out_msRt0, out_msRt1, out_msRt2);
 }

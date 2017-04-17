@@ -239,7 +239,7 @@ private:
 	Bool8 m_instanced = false;
 
 	/// Parse whatever is inside <inputs>
-	ANKI_USE_RESULT Error parseInputs(XmlElement& inputsEl);
+	ANKI_USE_RESULT Error parseInputs(XmlElement& inputsEl, U& inputVarCount, U& namePos);
 
 	U64 computeVariantHash(
 		const RenderingKey& key, WeakArray<const ShaderProgramResourceConstantValue> constants) const;

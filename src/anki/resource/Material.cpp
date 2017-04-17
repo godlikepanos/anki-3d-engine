@@ -41,7 +41,8 @@ Material::Material(ResourceManager* manager)
 
 Material::~Material()
 {
-	// TODO
+	m_vars.destroy(getAllocator());
+	m_constValues.destroy(getAllocator());
 }
 
 Error Material::load(const ResourceFilename& filename)
@@ -160,8 +161,7 @@ Error Material::parseInputs(XmlElement inputsEl)
 			XmlElement valueEl;
 			ANKI_CHECK(inputEl.getChildElement("value", valueEl));
 
-			--constInputCount;
-			ShaderProgramResourceConstantValue& constVal = m_constValues[constInputCount];
+			ShaderProgramResourceConstantValue& constVal = m_constValues[--constInputCount];
 			constVal.m_variable = foundVar;
 
 			switch(foundVar->getShaderVariableDataType())
@@ -225,7 +225,7 @@ Error Material::parseInputs(XmlElement inputsEl)
 					return ErrorCode::USER_DATA;
 				}
 
-				MaterialVariable& mtlVar = m_vars[nonConstInputCount--];
+				MaterialVariable& mtlVar = m_vars[--nonConstInputCount];
 				mtlVar.m_input = foundVar;
 				mtlVar.m_builtin = BuiltinMaterialVariableId(i + 1);
 			}
@@ -239,7 +239,7 @@ Error Material::parseInputs(XmlElement inputsEl)
 					return ErrorCode::USER_DATA;
 				}
 
-				MaterialVariable& mtlVar = m_vars[nonConstInputCount--];
+				MaterialVariable& mtlVar = m_vars[--nonConstInputCount];
 				mtlVar.m_input = foundVar;
 
 				XmlElement valueEl;
