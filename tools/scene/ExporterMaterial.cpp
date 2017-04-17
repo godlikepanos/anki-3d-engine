@@ -253,7 +253,7 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 		prog_fname += "par0";
 	}
 
-	xml = replaceAllString(xml, "%shaderProg%", "programs/" + prog_fname + ".ankiprog");
+	xml = replaceAllString(xml, "%shaderProg%", m_progrpath + prog_fname + ".ankiprog");
 
 	// Replace texture extensions with .anki
 	xml = replaceAllString(xml, ".tga", ".ankitex");

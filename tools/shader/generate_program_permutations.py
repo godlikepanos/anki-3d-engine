@@ -196,7 +196,7 @@ ANKI_WRITE_POSITION(mvp * vec4(in_position, 1.0));
 		frag_src += "vec3 normal = readNormalFromTexture(normalTex, uv);\n"
 
 		fname += "normalt_"
-	elif wheel[NORMAL] == INPUT_CONST:
+	elif wheel[NORMAL] == INPUT_NONE:
 		frag_src += "vec3 normal = in_normal;\n"
 
 		fname += "normal0_"
