@@ -12,46 +12,97 @@
 namespace anki
 {
 
-Error CString::toF64(F64& out) const
+Error CString::toNumber(F64& out) const
 {
 	checkInit();
-	Error err = ErrorCode::NONE;
+	errno = 0;
 	out = std::strtod(m_ptr, nullptr);
 
-	if(out == HUGE_VAL)
+	if(errno)
 	{
+		errno = 0;
 		ANKI_UTIL_LOGE("Conversion failed");
-		err = ErrorCode::USER_DATA;
+		return ErrorCode::USER_DATA;
 	}
 
-	return err;
+	return ErrorCode::NONE;
 }
 
-Error CString::toF32(F32& out) const
+Error CString::toNumber(F32& out) const
 {
 	F64 d;
-	Error err = toF64(d);
-	if(!err)
-	{
-		out = d;
-	}
-
-	return err;
+	ANKI_CHECK(toNumber(d));
+	out = d;
+	return ErrorCode::NONE;
 }
 
-Error CString::toI64(I64& out) const
+Error CString::toNumber(I64& out) const
 {
 	checkInit();
-	Error err = ErrorCode::NONE;
+	errno = 0;
+	static_assert(sizeof(long long) == sizeof(I64), "See file");
 	out = std::strtoll(m_ptr, nullptr, 10);
 
-	if(out == LLONG_MAX || out == LLONG_MIN)
+	if(errno)
 	{
+		errno = 0;
 		ANKI_UTIL_LOGE("Conversion failed");
-		err = ErrorCode::USER_DATA;
+		return ErrorCode::USER_DATA;
 	}
 
-	return err;
+	return ErrorCode::NONE;
+}
+
+Error CString::toNumber(I32& out) const
+{
+	checkInit();
+	errno = 0;
+	long long i = std::strtoll(m_ptr, nullptr, 10);
+
+	if(errno || i < MIN_I32 || i > MAX_I32)
+	{
+		errno = 0;
+		ANKI_UTIL_LOGE("Conversion failed");
+		return ErrorCode::USER_DATA;
+	}
+
+	out = I32(i);
+
+	return ErrorCode::NONE;
+}
+
+Error CString::toNumber(U64& out) const
+{
+	checkInit();
+	errno = 0;
+	static_assert(sizeof(unsigned long long) == sizeof(U64), "See file");
+	out = std::strtoull(m_ptr, nullptr, 10);
+
+	if(errno)
+	{
+		errno = 0;
+		ANKI_UTIL_LOGE("Conversion failed");
+		return ErrorCode::USER_DATA;
+	}
+
+	return ErrorCode::NONE;
+}
+
+Error CString::toNumber(U32& out) const
+{
+	checkInit();
+	errno = 0;
+	unsigned long long i = std::strtoull(m_ptr, nullptr, 10);
+
+	if(errno || i > MAX_U32)
+	{
+		errno = 0;
+		ANKI_UTIL_LOGE("Conversion failed");
+		return ErrorCode::USER_DATA;
+	}
+
+	out = U32(i);
+	return ErrorCode::NONE;
 }
 
 String& String::operator=(StringAuto&& b)

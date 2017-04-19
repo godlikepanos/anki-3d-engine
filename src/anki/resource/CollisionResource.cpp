@@ -34,7 +34,7 @@ Error CollisionResource::load(const ResourceFilename& filename)
 	if(type == "sphere")
 	{
 		F64 tmp;
-		ANKI_CHECK(valEl.getF64(tmp));
+		ANKI_CHECK(valEl.getNumber(tmp));
 		m_physicsShape = physics.newInstance<PhysicsSphere>(csInit, tmp);
 	}
 	else if(type == "box")

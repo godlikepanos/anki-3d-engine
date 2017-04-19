@@ -19,6 +19,28 @@ class XmlElement;
 /// @addtogroup resource
 /// @{
 
+class ShaderProgramResourceMutator : public NonCopyable
+{
+	friend class ShaderProgramResource;
+
+public:
+	const CString& getName() const
+	{
+		ANKI_ASSERT(m_name);
+		return m_name;
+	}
+
+	const DynamicArray<I32>& getValues() const
+	{
+		ANKI_ASSERT(m_values.getSize() > 0);
+		return m_values;
+	}
+
+private:
+	CString m_name;
+	DynamicArray<I32> m_values;
+};
+
 /// A wrapper over the uniforms of a shader or members of the uniform block.
 class ShaderProgramResourceInputVariable : public NonCopyable
 {
@@ -48,12 +70,21 @@ public:
 	}
 
 private:
+	class Mutator
+	{
+	public:
+		ShaderProgramResourceMutator* m_mutator;
+		DynamicArray<I32> m_values;
+	};
+
 	CString m_name;
 	U32 m_idx;
 	ShaderVariableDataType m_dataType = ShaderVariableDataType::NONE;
 	Bool8 m_const = false;
 	Bool8 m_depth = true;
 	Bool8 m_instanced = false;
+
+	DynamicArray<Mutator> m_mutators;
 
 	Bool isTexture() const
 	{
@@ -173,17 +204,19 @@ constexpr Bool isPacked<ShaderProgramResourceConstantValue>()
 /// XML file format:
 /// @code
 /// <shaderProgram>
+/// 	[<mutators> (1)
+/// 		<mutator name="str" values="array of ints"/>
+/// 	</mutators>]
+///
 ///		<shaders>
-///			<shader>
-///				<type>vert | frag | tese | tesc</type>
+///			<shader type="vert | frag | tese | tesc"/>
 ///
 ///				<inputs>
-///					<input>
-///						<name>str</name>
-///						<type>float | vec2 | vec3 | vec4 | mat3 | mat4</type>
-///						[<depth>0 | 1*</depth>]
-///						[<const>0* | 1</const>]
-///						[instanced>0* | 1</instanced>]
+///					<input name="str" type="float | vec2 | vec3 | vec4 | mat3 | mat4 | samplerXXX"
+/// 					[instanceCount="mutator name"] [const="0 | 1"]>
+/// 					<mutators> (2)
+/// 						<mutator name="variant_name" values="array of ints"/>
+/// 					</mutators>
 ///					</input>
 ///				</inputs>
 ///
@@ -194,7 +227,9 @@ constexpr Bool isPacked<ShaderProgramResourceConstantValue>()
 ///		</shaders>
 /// </shaderProgram>
 /// @endcode
-/// *: The default values.
+/// (1): This is a variant list. It contains the means to permutate the program.
+/// (2): This lists a subset of mutators and out of these variants a subset of their values. The input variable will
+///      become active only on those mutators. Mutators not listed are implicitly added with all their values.
 class ShaderProgramResource : public ResourceObject
 {
 public:
@@ -229,6 +264,7 @@ public:
 private:
 	DynamicArray<ShaderProgramResourceInputVariable> m_inputVars;
 	DynamicArray<char> m_inputVarsNames;
+	DynamicArray<ShaderProgramResourceMutator> m_mutators;
 
 	Array<String, 5> m_sources;
 

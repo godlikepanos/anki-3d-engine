@@ -207,13 +207,22 @@ public:
 	}
 
 	/// Convert to F64.
-	ANKI_USE_RESULT Error toF64(F64& out) const;
+	ANKI_USE_RESULT Error toNumber(F64& out) const;
 
 	/// Convert to F32.
-	ANKI_USE_RESULT Error toF32(F32& out) const;
+	ANKI_USE_RESULT Error toNumber(F32& out) const;
 
 	/// Convert to I64.
-	ANKI_USE_RESULT Error toI64(I64& out) const;
+	ANKI_USE_RESULT Error toNumber(I64& out) const;
+
+	/// Convert to I32.
+	ANKI_USE_RESULT Error toNumber(I32& out) const;
+
+	/// Convert to U64.
+	ANKI_USE_RESULT Error toNumber(U64& out) const;
+
+	/// Convert to U32.
+	ANKI_USE_RESULT Error toNumber(U32& out) const;
 
 private:
 	const Char* m_ptr = nullptr;
@@ -507,21 +516,39 @@ public:
 	void toString(Allocator alloc, TNumber number);
 
 	/// Convert to F64.
-	ANKI_USE_RESULT Error toF64(F64& out) const
+	ANKI_USE_RESULT Error toNumber(F64& out) const
 	{
-		return toCString().toF64(out);
+		return toCString().toNumber(out);
 	}
 
 	/// Convert to F32.
-	ANKI_USE_RESULT Error toF32(F32& out) const
+	ANKI_USE_RESULT Error toNumber(F32& out) const
 	{
-		return toCString().toF32(out);
+		return toCString().toNumber(out);
 	}
 
 	/// Convert to I64.
-	ANKI_USE_RESULT Error toI64(I64& out) const
+	ANKI_USE_RESULT Error toNumber(I64& out) const
 	{
-		return toCString().toI64(out);
+		return toCString().toNumber(out);
+	}
+
+	/// Convert to I32.
+	ANKI_USE_RESULT Error toNumber(I32& out) const
+	{
+		return toCString().toNumber(out);
+	}
+
+	/// Convert to U64.
+	ANKI_USE_RESULT Error toNumber(U64& out) const
+	{
+		return toCString().toNumber(out);
+	}
+
+	/// Convert to U32.
+	ANKI_USE_RESULT Error toNumber(U32& out) const
+	{
+		return toCString().toNumber(out);
 	}
 
 protected:

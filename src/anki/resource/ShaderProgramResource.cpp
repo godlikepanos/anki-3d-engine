@@ -185,6 +185,42 @@ Error ShaderProgramResource::load(const ResourceFilename& filename)
 	XmlElement rootEl;
 	ANKI_CHECK(doc.getChildElement("shaderProgram", rootEl));
 
+	// <mutators>
+	XmlElement mutatorsEl;
+	ANKI_CHECK(rootEl.getChildElementOptional("mutators", mutatorsEl));
+	if(mutatorsEl)
+	{
+		XmlElement mutatorEl;
+		ANKI_CHECK(mutatorsEl.getChildElement("mutator", mutatorEl));
+		U32 count = 0;
+		mutatorEl.getSiblingElementsCount(count);
+
+		m_mutators.create(getAllocator(), count);
+		count = 0;
+
+		do
+		{
+			// Get name
+			CString name;
+			ANKI_CHECK(mutatorEl.getAttributeText("name", name));
+
+			// Check if already there
+			for(U i = 0; i < count; ++i)
+			{
+				if(m_mutators[i].m_name == name)
+				{
+					ANKI_RESOURCE_LOGE("Mutator aleady present %s", &name[0]);
+					return ErrorCode::USER_DATA;
+				}
+			}
+
+			// Get values
+			// DynamicArrayAuto<I64>
+
+			ANKI_ASSERT(mutatorEl.getNextSiblingElement("mutator", mutatorEl));
+		} while(mutatorEl);
+	}
+
 	// <shaders>
 	XmlElement shadersEl;
 	ANKI_CHECK(rootEl.getChildElement("shaders", shadersEl));
@@ -226,7 +262,7 @@ Error ShaderProgramResource::load(const ResourceFilename& filename)
 				if(el)
 				{
 					I64 num;
-					ANKI_CHECK(el.getI64(num));
+					ANKI_CHECK(el.getNumber(num));
 					depth = num != 0;
 				}
 
@@ -235,7 +271,7 @@ Error ShaderProgramResource::load(const ResourceFilename& filename)
 				if(el)
 				{
 					I64 num;
-					ANKI_CHECK(el.getI64(num));
+					ANKI_CHECK(el.getNumber(num));
 					if(num)
 					{
 						StringAuto str(getTempAllocator());
@@ -371,7 +407,7 @@ Error ShaderProgramResource::parseInputs(XmlElement& inputsEl, U& inputVarCount,
 		ANKI_CHECK(inputEl.getChildElementOptional("depth", el));
 		if(el)
 		{
-			ANKI_CHECK(el.getI64(num));
+			ANKI_CHECK(el.getNumber(num));
 			var.m_depth = num != 0;
 		}
 		else
@@ -383,7 +419,7 @@ Error ShaderProgramResource::parseInputs(XmlElement& inputsEl, U& inputVarCount,
 		ANKI_CHECK(inputEl.getChildElementOptional("const", el));
 		if(el)
 		{
-			ANKI_CHECK(el.getI64(num));
+			ANKI_CHECK(el.getNumber(num));
 			var.m_const = num != 0;
 		}
 		else
@@ -395,7 +431,7 @@ Error ShaderProgramResource::parseInputs(XmlElement& inputsEl, U& inputVarCount,
 		ANKI_CHECK(inputEl.getChildElementOptional("instanced", el));
 		if(el)
 		{
-			ANKI_CHECK(el.getI64(num));
+			ANKI_CHECK(el.getNumber(num));
 			var.m_instanced = num != 0;
 
 			if(var.m_instanced)

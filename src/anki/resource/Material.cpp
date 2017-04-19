@@ -66,7 +66,7 @@ Error Material::load(const ResourceFilename& filename)
 	if(el)
 	{
 		I64 num;
-		ANKI_CHECK(el.getI64(num));
+		ANKI_CHECK(el.getNumber(num));
 		m_shadow = num != 0;
 	}
 
@@ -75,7 +75,7 @@ Error Material::load(const ResourceFilename& filename)
 	if(el)
 	{
 		I64 num;
-		ANKI_CHECK(el.getI64(num));
+		ANKI_CHECK(el.getNumber(num));
 
 		if(num <= 0 || num > I64(MAX_LODS))
 		{
@@ -91,7 +91,7 @@ Error Material::load(const ResourceFilename& filename)
 	if(el)
 	{
 		I64 num;
-		ANKI_CHECK(el.getI64(num));
+		ANKI_CHECK(el.getNumber(num));
 		m_forwardShading = num != 0;
 	}
 
@@ -167,7 +167,7 @@ Error Material::parseInputs(XmlElement inputsEl)
 			switch(foundVar->getShaderVariableDataType())
 			{
 			case ShaderVariableDataType::FLOAT:
-				ANKI_CHECK(valueEl.getF32(constVal.m_float));
+				ANKI_CHECK(valueEl.getNumber(constVal.m_float));
 				break;
 			case ShaderVariableDataType::VEC2:
 				ANKI_CHECK(valueEl.getVec2(constVal.m_vec2));
@@ -248,7 +248,7 @@ Error Material::parseInputs(XmlElement inputsEl)
 				switch(foundVar->getShaderVariableDataType())
 				{
 				case ShaderVariableDataType::FLOAT:
-					ANKI_CHECK(valueEl.getF32(mtlVar.m_float));
+					ANKI_CHECK(valueEl.getNumber(mtlVar.m_float));
 					break;
 				case ShaderVariableDataType::VEC2:
 					ANKI_CHECK(valueEl.getVec2(mtlVar.m_vec2));
