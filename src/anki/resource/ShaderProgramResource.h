@@ -19,26 +19,40 @@ class XmlElement;
 /// @addtogroup resource
 /// @{
 
+using ShaderProgramResourceMutatorValue = I32;
+
 class ShaderProgramResourceMutator : public NonCopyable
 {
 	friend class ShaderProgramResource;
 
 public:
-	const CString& getName() const
+	CString getName() const
 	{
 		ANKI_ASSERT(m_name);
-		return m_name;
+		return m_name.toCString();
 	}
 
-	const DynamicArray<I32>& getValues() const
+	const DynamicArray<ShaderProgramResourceMutatorValue>& getValues() const
 	{
 		ANKI_ASSERT(m_values.getSize() > 0);
 		return m_values;
 	}
 
 private:
-	CString m_name;
-	DynamicArray<I32> m_values;
+	String m_name;
+	DynamicArray<ShaderProgramResourceMutatorValue> m_values;
+
+	Bool valueExists(ShaderProgramResourceMutatorValue v) const
+	{
+		for(ShaderProgramResourceMutatorValue val : m_values)
+		{
+			if(v == val)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
 };
 
 /// A wrapper over the uniforms of a shader or members of the uniform block.
@@ -50,7 +64,7 @@ class ShaderProgramResourceInputVariable : public NonCopyable
 public:
 	CString getName() const
 	{
-		return m_name;
+		return m_name.toCString();
 	}
 
 	ShaderVariableDataType getShaderVariableDataType() const
@@ -61,7 +75,7 @@ public:
 
 	Bool isInstanced() const
 	{
-		return m_instanced;
+		return m_instancingMutator != nullptr;
 	}
 
 	Bool isConstant() const
@@ -70,20 +84,19 @@ public:
 	}
 
 private:
+	/// Information on how this variable will be used by this mutator.
 	class Mutator
 	{
 	public:
-		ShaderProgramResourceMutator* m_mutator;
-		DynamicArray<I32> m_values;
+		ShaderProgramResourceMutator* m_mutator = nullptr;
+		DynamicArray<ShaderProgramResourceMutatorValue> m_values;
 	};
 
-	CString m_name;
+	String m_name;
 	U32 m_idx;
 	ShaderVariableDataType m_dataType = ShaderVariableDataType::NONE;
 	Bool8 m_const = false;
-	Bool8 m_depth = true;
-	Bool8 m_instanced = false;
-
+	Mutator* m_instancingMutator = nullptr;
 	DynamicArray<Mutator> m_mutators;
 
 	Bool isTexture() const
@@ -95,17 +108,6 @@ private:
 	Bool inBlock() const
 	{
 		return !m_const && !isTexture();
-	}
-
-	Bool operator==(const ShaderProgramResourceInputVariable& b) const
-	{
-		return m_name == b.m_name && m_dataType == b.m_dataType && m_const == b.m_const && m_depth == b.m_depth
-			&& m_instanced == b.m_instanced;
-	}
-
-	Bool operator!=(const ShaderProgramResourceInputVariable& b) const
-	{
-		return !(*this == b);
 	}
 };
 
@@ -196,7 +198,28 @@ public:
 template<>
 constexpr Bool isPacked<ShaderProgramResourceConstantValue>()
 {
-	return sizeof(ShaderProgramResourceConstantValue) == sizeof(Vec4) * 2;
+	static_assert(sizeof(ShaderProgramResourceConstantValue) == sizeof(Vec4) * 2, "Need it to be packed");
+	return true;
+}
+
+class ShaderProgramResourceMutatorInfo
+{
+public:
+	const ShaderProgramResourceMutator* m_mutator;
+	ShaderProgramResourceMutatorInfo m_value;
+	U8 _padding[sizeof(void*) - sizeof(m_value)];
+
+	ShaderProgramResourceMutatorInfo()
+	{
+		memset(this, 0, sizeof(*this));
+	}
+};
+
+template<>
+constexpr Bool isPacked<ShaderProgramResourceMutatorInfo>()
+{
+	static_assert(sizeof(ShaderProgramResourceMutatorInfo) == sizeof(Vec4) * 2, "Need it to be packed");
+	return true;
 }
 
 /// Shader program resource. It defines a custom format for shader programs.
@@ -245,9 +268,14 @@ public:
 		return m_inputVars;
 	}
 
+	const DynamicArray<ShaderProgramResourceMutator>& getMutators() const
+	{
+		return m_mutators;
+	}
+
 	/// Get or create a graphics shader program variant.
 	/// @note It's thread-safe.
-	void getOrCreateVariant(const RenderingKey& key,
+	void getOrCreateVariant(WeakArray<const ShaderProgramResourceMutatorInfo> mutations,
 		WeakArray<const ShaderProgramResourceConstantValue> constants,
 		const ShaderProgramResourceVariant*& variant) const;
 
@@ -263,7 +291,6 @@ public:
 
 private:
 	DynamicArray<ShaderProgramResourceInputVariable> m_inputVars;
-	DynamicArray<char> m_inputVarsNames;
 	DynamicArray<ShaderProgramResourceMutator> m_mutators;
 
 	Array<String, 5> m_sources;
@@ -275,14 +302,16 @@ private:
 	Bool8 m_instanced = false;
 
 	/// Parse whatever is inside <inputs>
-	ANKI_USE_RESULT Error parseInputs(XmlElement& inputsEl, U& inputVarCount, U& namePos);
+	ANKI_USE_RESULT Error parseInputs(XmlElement& inputsEl, U& inputVarCount, StringListAuto& constsSrc);
 
-	U64 computeVariantHash(
-		const RenderingKey& key, WeakArray<const ShaderProgramResourceConstantValue> constants) const;
+	U64 computeVariantHash(WeakArray<const ShaderProgramResourceMutatorInfo> mutations,
+		WeakArray<const ShaderProgramResourceConstantValue> constants) const;
 
-	void initVariant(const RenderingKey& key,
+	void initVariant(WeakArray<const ShaderProgramResourceMutatorInfo> mutations,
 		WeakArray<const ShaderProgramResourceConstantValue> constants,
 		ShaderProgramResourceVariant& v) const;
+
+	void compInputVarDefineString(const ShaderProgramResourceInputVariable& var, StringAuto& list);
 };
 /// @}
 

@@ -140,7 +140,7 @@ static ANKI_USE_RESULT Error getShaderInfo(const CString& str, ShaderType& type,
 	}
 	else
 	{
-		ANKI_RESOURCE_LOGE("Incorrect type %s", &str[0]);
+		ANKI_RESOURCE_LOGE("Incorrect type %s", (str) ? &str[0] : "<empty string>");
 		err = ErrorCode::USER_DATA;
 	}
 
@@ -167,7 +167,6 @@ ShaderProgramResource::~ShaderProgramResource()
 	}
 
 	m_inputVars.destroy(alloc);
-	m_inputVarsNames.destroy(alloc);
 
 	for(String& s : m_sources)
 	{
@@ -215,8 +214,33 @@ Error ShaderProgramResource::load(const ResourceFilename& filename)
 			}
 
 			// Get values
-			// DynamicArrayAuto<I64>
+			DynamicArrayAuto<ShaderProgramResourceMutatorValue> values(getTempAllocator());
+			ANKI_CHECK(mutatorEl.getAttributeNumbers("value", values));
+			if(values.getSize() < 1)
+			{
+				ANKI_RESOURCE_LOGE("Mutator doesn't have values %s", &name[0]);
+				return ErrorCode::USER_DATA;
+			}
 
+			std::sort(values.getBegin(), values.getEnd());
+			for(U i = 1; i < values.getSize(); ++i)
+			{
+				if(values[i - 1] == values[i])
+				{
+					ANKI_RESOURCE_LOGE("Mutator %s has duplicate values", &name[0]);
+					return ErrorCode::USER_DATA;
+				}
+			}
+
+			// Init mutator
+			m_mutators[count].m_name.create(getAllocator(), name);
+			m_mutators[count].m_values.create(getAllocator(), values.getSize());
+			for(U i = 0; i < values.getSize(); ++i)
+			{
+				m_mutators[count].m_values[i] = values[i];
+			}
+
+			++count;
 			ANKI_ASSERT(mutatorEl.getNextSiblingElement("mutator", mutatorEl));
 		} while(mutatorEl);
 	}
@@ -226,12 +250,9 @@ Error ShaderProgramResource::load(const ResourceFilename& filename)
 	ANKI_CHECK(rootEl.getChildElement("shaders", shadersEl));
 
 	// <shader>
-	// - Count the input variables and the length of their name
-	// - Create the constant code
+	// Count the input variables
 	U inputVarCount = 0;
-	U inputsNameLen = 0;
 	XmlElement shaderEl;
-	StringAuto constantSrc(getTempAllocator());
 	ANKI_CHECK(shadersEl.getChildElement("shader", shaderEl));
 	do
 	{
@@ -242,55 +263,11 @@ Error ShaderProgramResource::load(const ResourceFilename& filename)
 		{
 			XmlElement inputEl;
 			ANKI_CHECK(inputsEl.getChildElement("input", inputEl));
-			do
-			{
-				// <name>
-				XmlElement nameEl;
-				ANKI_CHECK(inputEl.getChildElement("name", nameEl));
-				CString name;
-				ANKI_CHECK(nameEl.getText(name));
-				inputsNameLen += name.getLength() + 1;
 
-				// <type>
-				ANKI_CHECK(inputEl.getChildElement("type", el));
-				CString typeTxt;
-				ANKI_CHECK(el.getText(typeTxt));
+			U32 count;
+			ANKI_CHECK(inputsEl.getSiblingElementsCount(count));
 
-				// <depth>
-				Bool depth = true;
-				ANKI_CHECK(inputEl.getChildElementOptional("depth", el));
-				if(el)
-				{
-					I64 num;
-					ANKI_CHECK(el.getNumber(num));
-					depth = num != 0;
-				}
-
-				// <const>
-				ANKI_CHECK(inputEl.getChildElementOptional("const", el));
-				if(el)
-				{
-					I64 num;
-					ANKI_CHECK(el.getNumber(num));
-					if(num)
-					{
-						StringAuto str(getTempAllocator());
-						str.sprintf("#if !(DEPTH && %d)\n"
-									"const %s %s = %s(%s_const);\n"
-									"#endif\n",
-							!depth,
-							&typeTxt[0],
-							&name[0],
-							&typeTxt[0],
-							&name[0]);
-						constantSrc.append(str);
-					}
-				}
-
-				++inputVarCount;
-
-				ANKI_CHECK(inputEl.getNextSiblingElement("input", inputEl));
-			} while(inputEl);
+			inputVarCount += count;
 		}
 
 		ANKI_CHECK(shaderEl.getNextSiblingElement("shader", shaderEl));
@@ -299,20 +276,19 @@ Error ShaderProgramResource::load(const ResourceFilename& filename)
 	if(inputVarCount)
 	{
 		m_inputVars.create(getAllocator(), inputVarCount);
-		m_inputVarsNames.create(getAllocator(), inputsNameLen);
 	}
 
 	// <shader> again
 	inputVarCount = 0;
-	inputsNameLen = 0;
+	StringListAuto constSrcList(getTempAllocator());
 	ShaderTypeBit presentShaders = ShaderTypeBit::NONE;
+	Array<CString, 5> shaderSources;
 	ANKI_CHECK(shadersEl.getChildElement("shader", shaderEl));
 	do
 	{
-		// <type>
-		ANKI_CHECK(shaderEl.getChildElement("type", el));
+		// type
 		CString shaderTypeTxt;
-		ANKI_CHECK(el.getText(shaderTypeTxt));
+		ANKI_CHECK(shaderEl.getAttributeText("type", shaderTypeTxt));
 		ShaderType shaderType;
 		ShaderTypeBit shaderTypeBit;
 		U shaderIdx;
@@ -336,29 +312,17 @@ Error ShaderProgramResource::load(const ResourceFilename& filename)
 
 		if(inputsEl)
 		{
-			ANKI_CHECK(parseInputs(inputsEl, inputVarCount, inputsNameLen));
+			ANKI_CHECK(parseInputs(inputsEl, inputVarCount, constSrcList));
 		}
 
 		// <source>
 		ANKI_CHECK(shaderEl.getChildElement("source", el));
-		CString shaderSource;
-		ANKI_CHECK(el.getText(shaderSource));
-
-		ShaderLoader loader(&getManager());
-		ANKI_CHECK(loader.parseSourceString(shaderSource));
-
-		if(constantSrc)
-		{
-			m_sources[shaderIdx].append(getAllocator(), constantSrc);
-		}
-
-		m_sources[shaderIdx].append(getAllocator(), loader.getShaderSource());
+		ANKI_CHECK(el.getText(shaderSources[shaderIdx]));
 
 		// Advance
 		ANKI_CHECK(shaderEl.getNextSiblingElement("shader", shaderEl));
 	} while(shaderEl);
 
-	ANKI_ASSERT(inputsNameLen == m_inputVarsNames.getSize());
 	ANKI_ASSERT(inputVarCount == m_inputVars.getSize());
 
 	// Sanity checks
@@ -374,74 +338,178 @@ Error ShaderProgramResource::load(const ResourceFilename& filename)
 		return ErrorCode::USER_DATA;
 	}
 
+	// Create sources
+	StringListAuto backedConstSrc(getTempAllocator());
+	if(!constSrcList.isEmpty())
+	{
+		constSrcList.join(" ", backedConstSrc);
+	}
+
+	for(U s = 0; s < 5; ++s)
+	{
+		if(shaderSources[s])
+		{
+			ShaderLoader loader(&getManager());
+			ANKI_CHECK(loader.parseSourceString(shaderSources[s]));
+
+			if(!constSrcList.isEmpty())
+			{
+				m_sources[s].create(getAllocator(), constSrcList);
+			}
+
+			m_sources[s].append(getAllocator(), loader.getShaderSource());
+		}
+	}
+
 	return ErrorCode::NONE;
 }
 
-Error ShaderProgramResource::parseInputs(XmlElement& inputsEl, U& inputVarCount, U& namePos)
+Error ShaderProgramResource::parseInputs(XmlElement& inputsEl, U& inputVarCount, StringListAuto& constsSrc)
 {
 	XmlElement inputEl;
 	ANKI_CHECK(inputsEl.getChildElement("input", inputEl));
 	do
 	{
-		XmlElement el;
-		I64 num;
-
 		ShaderProgramResourceInputVariable& var = m_inputVars[inputVarCount];
 		var.m_idx = inputVarCount;
 
-		// <name>
-		ANKI_CHECK(inputEl.getChildElement("name", el));
+		// name
 		CString name;
-		ANKI_CHECK(el.getText(name));
-		memcpy(&m_inputVarsNames[namePos], &name[0], name.getLength() + 1);
-		var.m_name = &m_inputVarsNames[namePos];
-		namePos += name.getLength() + 1;
-
-		// <type>
-		ANKI_CHECK(inputEl.getChildElement("type", el));
-		CString type;
-		ANKI_CHECK(el.getText(type));
-		ANKI_CHECK(computeShaderVariableDataType(type, var.m_dataType));
-
-		// <depth>
-		ANKI_CHECK(inputEl.getChildElementOptional("depth", el));
-		if(el)
+		ANKI_CHECK(inputEl.getAttributeText("name", name));
+		if(!name)
 		{
-			ANKI_CHECK(el.getNumber(num));
-			var.m_depth = num != 0;
+			ANKI_RESOURCE_LOGE("Input variable name is empty");
+			return ErrorCode::USER_DATA;
 		}
-		else
-		{
-			var.m_depth = true;
-		}
+		var.m_name.create(getAllocator(), name);
 
-		// <const>
-		ANKI_CHECK(inputEl.getChildElementOptional("const", el));
-		if(el)
-		{
-			ANKI_CHECK(el.getNumber(num));
-			var.m_const = num != 0;
-		}
-		else
-		{
-			var.m_const = false;
-		}
+		// type
+		CString typeTxt;
+		ANKI_CHECK(inputEl.getAttributeText("type", typeTxt));
+		ANKI_CHECK(computeShaderVariableDataType(typeTxt, var.m_dataType));
 
-		// <instanced>
-		ANKI_CHECK(inputEl.getChildElementOptional("instanced", el));
-		if(el)
-		{
-			ANKI_CHECK(el.getNumber(num));
-			var.m_instanced = num != 0;
+		// const
+		Bool present;
+		ANKI_CHECK(inputEl.getAttributeNumberOptional("const", var.m_const, present));
+		var.m_const = var.m_const != 0;
 
-			if(var.m_instanced)
+		// <mutators>
+		XmlElement mutatorsEl;
+		ANKI_CHECK(inputEl.getChildElementOptional("mutators", mutatorsEl));
+		if(mutatorsEl)
+		{
+			XmlElement mutatorEl;
+			ANKI_CHECK(mutatorsEl.getChildElement("mutator", mutatorEl));
+
+			U32 mutatorCount;
+			ANKI_CHECK(mutatorEl.getSiblingElementsCount(mutatorCount));
+			ANKI_ASSERT(mutatorCount > 0);
+			var.m_mutators.create(getAllocator(), mutatorCount);
+			mutatorCount = 0;
+
+			do
 			{
-				m_instanced = true;
-			}
-		}
-		else
+				// name
+				CString mutatorName;
+				ANKI_CHECK(mutatorEl.getAttributeText("name", mutatorName));
+				if(!mutatorName)
+				{
+					ANKI_RESOURCE_LOGE("Empty mutator name in input variable %s", &name[0]);
+					return ErrorCode::USER_DATA;
+				}
+
+				// Find the mutator
+				ShaderProgramResourceMutator* foundMutator = nullptr;
+				for(U i = 0; i < m_mutators.getSize(); ++i)
+				{
+					if(m_mutators[i].m_name == mutatorName)
+					{
+						foundMutator = &m_mutators[i];
+						break;
+					}
+				}
+
+				if(!foundMutator)
+				{
+					ANKI_RESOURCE_LOGE("Input variable %s can't link to unknown mutator %s", &name[0], &mutatorName[0]);
+					return ErrorCode::USER_DATA;
+				}
+
+				// Get values
+				DynamicArrayAuto<ShaderProgramResourceMutatorValue> vals(getTempAllocator());
+				ANKI_CHECK(mutatorEl.getAttributeNumbers("values", vals));
+				if(vals.getSize() < 1)
+				{
+					ANKI_RESOURCE_LOGE(
+						"Mutator %s doesn't have any values for input variable %s", &mutatorName[0], &name[0]);
+					return ErrorCode::USER_DATA;
+				}
+
+				// Sanity check values
+				std::sort(vals.getBegin(), vals.getEnd());
+
+				for(U i = 0; i < vals.getSize(); ++i)
+				{
+					auto val = vals[i];
+					if(i > 0 && vals[i - 1] == val)
+					{
+						ANKI_RESOURCE_LOGE(
+							"Mutator %s for input var %s has duplicate values", &mutatorName[0], &name[0]);
+						return ErrorCode::USER_DATA;
+					}
+
+					if(!foundMutator->valueExists(val))
+					{
+						ANKI_RESOURCE_LOGE(
+							"Mutator %s for input variable %s has a value that is not part of the mutator",
+							&mutatorName[0],
+							&name[0]);
+						return ErrorCode::USER_DATA;
+					}
+				}
+
+				// Set var
+				var.m_mutators[mutatorCount].m_mutator = foundMutator;
+				var.m_mutators[mutatorCount].m_values.create(getAllocator(), vals);
+				++mutatorCount;
+
+				// Advance
+				ANKI_CHECK(mutatorEl.getNextSiblingElement("mutator", mutatorEl));
+			} while(mutatorEl);
+
+			ANKI_ASSERT(mutatorCount == var.m_mutators.getSize());
+		} // if(mutatorsEl)
+
+		// instanceCount
+		CString instanceCountTxt;
+		Bool found;
+		ANKI_CHECK(inputEl.getAttributeTextOptional("instanceCount", instanceCountTxt, found));
+		if(found)
 		{
-			var.m_instanced = false;
+			if(!instanceCountTxt)
+			{
+				ANKI_RESOURCE_LOGE("instanceCount tag is empty for input variable %s", &name[0]);
+				return ErrorCode::USER_DATA;
+			}
+
+			for(ShaderProgramResourceInputVariable::Mutator& mut : var.m_mutators)
+			{
+				if(mut.m_mutator->m_name == instanceCountTxt)
+				{
+					var.m_instancingMutator = &mut;
+					m_instanced = true;
+					break;
+				}
+			}
+
+			if(!var.m_instancingMutator)
+			{
+				ANKI_RESOURCE_LOGE(
+					"Having %s as mutator for instanceCount attribute is not acceptable for input variable %s",
+					&instanceCountTxt[0],
+					&name[0]);
+				return ErrorCode::USER_DATA;
+			}
 		}
 
 		// Sanity checks
@@ -451,13 +519,13 @@ Error ShaderProgramResource::parseInputs(XmlElement& inputsEl, U& inputVarCount,
 			return ErrorCode::USER_DATA;
 		}
 
-		if(var.m_const && var.m_instanced)
+		if(var.m_const && var.isInstanced())
 		{
 			ANKI_RESOURCE_LOGE("Can't have input variables that are instanced and const: %s", &var.m_name[0]);
 			return ErrorCode::USER_DATA;
 		}
 
-		if(var.isTexture() && var.m_instanced)
+		if(var.isTexture() && var.isInstanced())
 		{
 			ANKI_RESOURCE_LOGE("Can't have texture that is instanced: %s", &var.m_name[0]);
 			return ErrorCode::USER_DATA;
@@ -477,23 +545,65 @@ Error ShaderProgramResource::parseInputs(XmlElement& inputsEl, U& inputVarCount,
 			&& var.m_dataType <= ShaderVariableDataType::MATRIX_LAST
 			&& var.m_const)
 		{
-			ANKI_RESOURCE_LOGE("Matrix input variable cannot be constant: %s", &var.m_name[0]);
+			ANKI_RESOURCE_LOGE("Matrix input variable %s cannot be constant", &var.m_name[0]);
 			return ErrorCode::USER_DATA;
 		}
 
-		++inputVarCount;
+		// Append to consts source
+		if(var.m_const)
+		{
+			if(var.m_mutators.getSize())
+			{
+				constsSrc.pushBack("#if ");
+				compInputVarDefineString(var, constsSrc);
+				constsSrc.pushBack("\n");
+			}
 
+			constsSrc.pushBackSprintf("const %s %s = %s(%s_const);\n", &typeTxt[0], &name[0], &typeTxt[0], &name[0]);
+
+			if(var.m_mutators.getSize())
+			{
+				constsSrc.pushBack("#endif\n");
+			}
+		}
+
+		// Advance
+		++inputVarCount;
 		ANKI_CHECK(inputEl.getNextSiblingElement("input", inputEl));
 	} while(inputEl);
 
 	return ErrorCode::NONE;
 }
 
-U64 ShaderProgramResource::computeVariantHash(
-	const RenderingKey& key, WeakArray<const ShaderProgramResourceConstantValue> constants) const
+void ShaderProgramResource::compInputVarDefineString(const ShaderProgramResourceInputVariable& var, StringAuto& list)
 {
-	static_assert(isPacked<RenderingKey>(), "See file");
-	U hash = computeHash(&key, sizeof(key));
+	if(var.m_mutators.getSize() > 0)
+	{
+		for(const ShaderProgramResourceInputVariable::Mutator& mutator : var.m_mutators)
+		{
+			list.pushBack("(");
+
+			for(ShaderProgramResourceMutatorValue val : mutator.m_values)
+			{
+				list.pushBackSprintf("%s == %d || ", &mutator.m_mutator->m_name[0], int(val));
+			}
+
+			list.pushBack("0) && ");
+		}
+
+		list.pushBack("1");
+	}
+}
+
+U64 ShaderProgramResource::computeVariantHash(WeakArray<const ShaderProgramResourceMutatorInfo> mutations,
+	WeakArray<const ShaderProgramResourceConstantValue> constants) const
+{
+	U hash = 1;
+
+	if(mutations.getSize())
+	{
+		hash = computeHash(&mutations[0], sizeof(mutations[0]) * mutations.getSize());
+	}
 
 	if(constants.getSize())
 	{
@@ -503,13 +613,17 @@ U64 ShaderProgramResource::computeVariantHash(
 	return hash;
 }
 
-void ShaderProgramResource::getOrCreateVariant(const RenderingKey& key,
+void ShaderProgramResource::getOrCreateVariant(WeakArray<const ShaderProgramResourceMutatorInfo> mutations,
 	WeakArray<const ShaderProgramResourceConstantValue> constants,
 	const ShaderProgramResourceVariant*& variant) const
 {
-	U64 hash = computeVariantHash(key, constants);
+	U64 hash = computeVariantHash(mutations, constants);
 
 	LockGuard<Mutex> lock(m_mtx);
+
+	// Sanity checks
+	ANKI_ASSERT(mutations.getSize() == m_mutations.getSize());
+	// TODO
 
 	auto it = m_variants.find(hash);
 	if(it != m_variants.getEnd())
