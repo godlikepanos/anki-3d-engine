@@ -59,6 +59,44 @@ Error MyApp::init(int argc, char* argv[])
 	getInput().moveCursor(Vec2(0.0));
 #endif
 
+	{
+		ShaderProgramResourcePtr prog;
+		ANKI_CHECK(getResourceManager().loadResource("programs/MsGeneric.ankiprog", prog));
+
+		Array<ShaderProgramResourceMutation, 10> mm;
+		mm[0].m_mutator = prog->tryFindMutator("INSTANCE_COUNT");
+		mm[0].m_value = 4;
+		mm[1].m_mutator = prog->tryFindMutator("LOD");
+		mm[1].m_value = 1;
+		mm[2].m_mutator = prog->tryFindMutator("PASS");
+		mm[2].m_value = 0;
+		mm[3].m_mutator = prog->tryFindMutator("DIFFUSE_TEX");
+		mm[3].m_value = 1;
+		mm[4].m_mutator = prog->tryFindMutator("SPECULAR_TEX");
+		mm[4].m_value = 0;
+		mm[5].m_mutator = prog->tryFindMutator("ROUGHNESS_TEX");
+		mm[5].m_value = 1;
+		mm[6].m_mutator = prog->tryFindMutator("METAL_TEX");
+		mm[6].m_value = 1;
+		mm[7].m_mutator = prog->tryFindMutator("NORMAL_TEX");
+		mm[7].m_value = 1;
+		mm[8].m_mutator = prog->tryFindMutator("PARALLAX");
+		mm[8].m_value = 0;
+		mm[9].m_mutator = prog->tryFindMutator("EMISSIVE_TEX");
+		mm[9].m_value = 1;
+
+		Array<ShaderProgramResourceConstantValue, 2> consts;
+		consts[0].m_variable = prog->tryFindInputVariable("specColor");
+		consts[0].m_vec3 = Vec3(1.0);
+		consts[1].m_variable = prog->tryFindInputVariable("subsurface");
+		consts[1].m_vec3 = Vec3(1.0);
+
+		const ShaderProgramResourceVariant* v;
+		prog->getOrCreateVariant(mm, consts, v);
+
+		return ErrorCode::USER_DATA;
+	}
+
 	// Load scene
 	ScriptResourcePtr script;
 	ANKI_CHECK(resources.loadResource(argv[2], script));

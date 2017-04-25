@@ -165,7 +165,7 @@ public:
 	ANKI_USE_RESULT Error getAttributeNumberOptional(const CString& name, T& out, Bool& attribPresent) const
 	{
 		DynamicArrayAuto<T> arr(m_alloc);
-		ANKI_CHECK(getAttributeIntsOptional(name, arr, attribPresent));
+		ANKI_CHECK(getAttributeNumbersOptional(name, arr, attribPresent));
 
 		if(attribPresent)
 		{
@@ -179,6 +179,44 @@ public:
 		}
 
 		return ErrorCode::NONE;
+	}
+
+	/// Get the attribute's value as a vector.
+	/// @param name The name of the attribute.
+	/// @param out The value of the attribute.
+	/// @param attribPresent True if the attribute exists. If it doesn't the @a out is undefined.
+	template<typename T>
+	ANKI_USE_RESULT Error getAttributeVectorOptional(const CString& name, T& out, Bool& attribPresent) const
+	{
+		DynamicArrayAuto<F32> arr(m_alloc);
+		ANKI_CHECK(getAttributeNumbersOptional(name, arr, attribPresent));
+
+		if(attribPresent)
+		{
+			if(arr.getSize() != sizeof(T) / sizeof(out[0]))
+			{
+				ANKI_MISC_LOGE("Expecting %u elements for attrib %s", sizeof(T) / sizeof(out[0]), &name[0]);
+				return ErrorCode::USER_DATA;
+			}
+
+			U count = 0;
+			for(F32 v : arr)
+			{
+				out[count++] = v;
+			}
+		}
+
+		return ErrorCode::NONE;
+	}
+
+	/// Get the attribute's value as a matrix.
+	/// @param name The name of the attribute.
+	/// @param out The value of the attribute.
+	/// @param attribPresent True if the attribute exists. If it doesn't the @a out is undefined.
+	template<typename T>
+	ANKI_USE_RESULT Error getAttributeMatrixOptional(const CString& name, T& out, Bool& attribPresent) const
+	{
+		return getAttributeVectorOptional(name, out, attribPresent);
 	}
 	/// @}
 
@@ -215,6 +253,26 @@ public:
 		Bool found;
 		ANKI_CHECK(getAttributeNumberOptional(name, out, found));
 		return throwAttribNotFoundError(name, found);
+	}
+
+	/// Get the attribute's value as a vector.
+	/// @param name The name of the attribute.
+	/// @param out The value of the attribute.
+	template<typename T>
+	ANKI_USE_RESULT Error getAttributeVector(const CString& name, T& out) const
+	{
+		Bool found;
+		ANKI_CHECK(getAttributeVectorOptional(name, out, found));
+		return throwAttribNotFoundError(name, found);
+	}
+
+	/// Get the attribute's value as a matrix.
+	/// @param name The name of the attribute.
+	/// @param out The value of the attribute.
+	template<typename T>
+	ANKI_USE_RESULT Error getAttributeMatrix(const CString& name, T& out) const
+	{
+		return getAttributeVector(name, out);
 	}
 	/// @}
 
@@ -258,7 +316,7 @@ private:
 	{
 		if(!found)
 		{
-			ANKI_MISC_LOGE("Attribute not found %s", &attrib[0]);
+			ANKI_MISC_LOGE("Attribute not found \"%s\"", &attrib[0]);
 			return ErrorCode::USER_DATA;
 		}
 		else

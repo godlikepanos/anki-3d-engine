@@ -160,19 +160,20 @@ private:
 ///
 /// Material XML file format:
 /// @code
-/// <material>
-/// 	[<levelsOfDetail>N</levelsOfDetail>]
-/// 	[<shadow>0 | 1</shadow>]
-/// 	[<forwardShading>0 | 1</forwardShading>]
+/// <material
+///		[shadow="0 | 1"]
+///		[forwardShading="0 | 1"]
+///		shaderProgram="path"/>
 ///
-///		<shaderProgram>path/to/shader_program.ankiprog</shaderProgram>
+///		[<mutators>
+///			<mutator name="str" value="value"/>
+///		</mutators>]
 ///
 ///		[<inputs>
-///			<input>
-///				<shaderInput>name</shaderInput>
-///				[<value></value>] (1)
-///				[<builtin></builtin>] (2)
-///			</input>
+///			<input
+///				shaderInput="name to shaderProg input"
+///				[value="values"] (1)
+///				[builtin="name"]/> (2)
 ///		</inputs>]
 /// </material>
 /// @endcode
@@ -230,8 +231,14 @@ private:
 	Bool8 m_forwardShading = false;
 	U8 m_lodCount = 1;
 
+	const ShaderProgramResourceMutator* m_lodMutator = nullptr;
+	const ShaderProgramResourceMutator* m_passMutator = nullptr;
+	const ShaderProgramResourceMutator* m_instanceMutator = nullptr;
+
+	DynamicArray<ShaderProgramResourceMutation> m_mutations;
+
 	/// Matrix of variants.
-	mutable Array3d<MaterialVariant, U(Pass::COUNT), MAX_LODS, MAX_INSTANCE_GROUPS> m_variantMatrix;
+	mutable Array3d<MaterialVariant, U(Pass::COUNT), MAX_LOD, MAX_INSTANCE_GROUPS> m_variantMatrix;
 	mutable Mutex m_variantMatrixMtx;
 
 	DynamicArray<MaterialVariable> m_vars; ///< Non-const vars.
@@ -241,6 +248,8 @@ private:
 
 	/// Parse whatever is inside the <inputs> tag.
 	ANKI_USE_RESULT Error parseInputs(XmlElement inputsEl);
+
+	ANKI_USE_RESULT Error parseMutators(XmlElement mutatorsEl);
 };
 /// @}
 

@@ -430,7 +430,7 @@ Error RenderableDrawer::drawSingle(DrawContext& ctx)
 
 	// Fill the crntBuild
 	F32 flod = m_r->calculateLod(sqrt(ctx.m_visibleNode->m_frustumDistanceSquared));
-	flod = min<F32>(flod, MAX_LODS - 1);
+	flod = min<F32>(flod, MAX_LOD - 1);
 
 	crntBuild.m_rc = &renderable;
 	crntBuild.m_flod = flod;

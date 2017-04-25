@@ -203,7 +203,7 @@ Error XmlElement::getChildElement(const CString& name, XmlElement& out) const
 
 	if(!out)
 	{
-		ANKI_MISC_LOGE("Cannot find tag %s", &name[0]);
+		ANKI_MISC_LOGE("Cannot find tag \"%s\"", &name[0]);
 		err = ErrorCode::USER_DATA;
 	}
 
@@ -227,26 +227,19 @@ Error XmlElement::getNextSiblingElement(const CString& name, XmlElement& out) co
 
 Error XmlElement::getSiblingElementsCount(U32& out) const
 {
-	Error err = check();
-	if(!err)
+	ANKI_CHECK(check());
+	const tinyxml2::XMLElement* el = m_el;
+
+	I count = -1;
+	do
 	{
-		const tinyxml2::XMLElement* el = m_el;
+		el = el->NextSiblingElement(m_el->Name());
+		++count;
+	} while(el);
 
-		I count = -1;
-		do
-		{
-			el = el->NextSiblingElement(m_el->Name());
-			++count;
-		} while(el);
+	out = count;
 
-		out = count;
-	}
-	else
-	{
-		out = 0;
-	}
-
-	return err;
+	return ErrorCode::NONE;
 }
 
 Error XmlElement::getAttributeTextOptional(const CString& name, CString& out, Bool& attribPresent) const
@@ -257,7 +250,7 @@ Error XmlElement::getAttributeTextOptional(const CString& name, CString& out, Bo
 	if(!attrib)
 	{
 		attribPresent = false;
-		return ErrorCode::USER_DATA;
+		return ErrorCode::NONE;
 	}
 
 	attribPresent = true;
@@ -312,7 +305,7 @@ ANKI_USE_RESULT Error XmlDocument::getChildElement(const CString& name, XmlEleme
 
 	if(!out)
 	{
-		ANKI_MISC_LOGE("Cannot find tag %s", &name[0]);
+		ANKI_MISC_LOGE("Cannot find tag \"%s\"", &name[0]);
 		err = ErrorCode::USER_DATA;
 	}
 

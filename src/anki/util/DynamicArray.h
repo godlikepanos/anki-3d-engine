@@ -38,11 +38,6 @@ public:
 		return m_data[n];
 	}
 
-	operator Bool() const
-	{
-		return !isEmpty();
-	}
-
 	Iterator getBegin()
 	{
 		return m_data;
@@ -333,6 +328,18 @@ public:
 		{
 			ANKI_ASSERT(mem);
 		}
+	}
+
+	template<typename Y, PtrSize S>
+	WeakArray(const Array<Y, S>& arr)
+		: Base(&arr[0], S)
+	{
+	}
+
+	template<typename Y>
+	WeakArray(const DynamicArrayBase<Y>& arr)
+		: Base((arr.getSize()) ? &arr[0] : nullptr, arr.getSize())
+	{
 	}
 
 	/// Copy.

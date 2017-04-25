@@ -31,7 +31,7 @@ class ResourcePointer;
 
 /// @name Constants
 /// @{
-const U MAX_LODS = 3;
+const U MAX_LOD = 3;
 const U MAX_INSTANCES = 64;
 const U MAX_SUB_DRAWCALLS = 64;
 

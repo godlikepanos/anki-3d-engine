@@ -26,7 +26,7 @@ layout(location = 6) in mediump vec3 in_normalTangentSpace; // Parallax
 //
 // Output
 //
-#if COLOR
+#if PASS == 0
 layout(location = 0) out vec4 out_msRt0;
 layout(location = 1) out vec4 out_msRt1;
 layout(location = 2) out vec4 out_msRt2;
@@ -132,7 +132,7 @@ vec2 computeTextureCoordParallax(in sampler2D heightMap, in vec2 uv, in float he
 }
 
 // Write the data to FAIs
-#if COLOR
+#if PASS == 0
 void writeRts(in vec3 diffColor, // from 0 to 1
 	in vec3 normal,
 	in vec3 specularColor,

@@ -43,56 +43,39 @@ Material::~Material()
 {
 	m_vars.destroy(getAllocator());
 	m_constValues.destroy(getAllocator());
+	m_mutations.destroy(getAllocator());
 }
 
 Error Material::load(const ResourceFilename& filename)
 {
 	XmlDocument doc;
 	XmlElement el;
+	Bool present = false;
 	ANKI_CHECK(openFileParseXml(filename, doc));
 
 	// <material>
 	XmlElement rootEl;
 	ANKI_CHECK(doc.getChildElement("material", rootEl));
 
-	// <shaderProgram>
-	ANKI_CHECK(rootEl.getChildElement("shaderProgram", el));
+	// shaderProgram
 	CString fname;
-	ANKI_CHECK(el.getText(fname));
+	ANKI_CHECK(rootEl.getAttributeText("shaderProgram", fname));
 	getManager().loadResource(fname, m_prog);
 
-	// <shadow>
-	ANKI_CHECK(rootEl.getChildElementOptional("shadow", el));
-	if(el)
+	// shadow
+	ANKI_CHECK(rootEl.getAttributeNumberOptional("shadow", m_shadow, present));
+	m_shadow = m_shadow != 0;
+
+	// forwardShading
+	ANKI_CHECK(rootEl.getAttributeNumberOptional("forwardShading", m_forwardShading, present));
+	m_forwardShading = m_forwardShading != 0;
+
+	// <mutators>
+	XmlElement mutatorsEl;
+	ANKI_CHECK(rootEl.getChildElementOptional("mutators", mutatorsEl));
+	if(mutatorsEl)
 	{
-		I64 num;
-		ANKI_CHECK(el.getNumber(num));
-		m_shadow = num != 0;
-	}
-
-	// <levelsOfDetail>
-	ANKI_CHECK(rootEl.getChildElementOptional("levelsOfDetail", el));
-	if(el)
-	{
-		I64 num;
-		ANKI_CHECK(el.getNumber(num));
-
-		if(num <= 0 || num > I64(MAX_LODS))
-		{
-			ANKI_RESOURCE_LOGE("Incorrect <levelsOfDetail>: %d", num);
-			return ErrorCode::USER_DATA;
-		}
-
-		m_lodCount = U8(num);
-	}
-
-	// <forwardShading>
-	ANKI_CHECK(rootEl.getChildElementOptional("forwardShading", el));
-	if(el)
-	{
-		I64 num;
-		ANKI_CHECK(el.getNumber(num));
-		m_forwardShading = num != 0;
+		ANKI_CHECK(parseMutators(mutatorsEl));
 	}
 
 	// <inputs>
@@ -105,6 +88,154 @@ Error Material::load(const ResourceFilename& filename)
 	return ErrorCode::NONE;
 }
 
+Error Material::parseMutators(XmlElement mutatorsEl)
+{
+	XmlElement mutatorEl;
+	ANKI_CHECK(mutatorsEl.getChildElement("mutator", mutatorEl));
+
+	U32 mutatorCount = 0;
+	mutatorEl.getSiblingElementsCount(mutatorCount);
+	++mutatorCount;
+	ANKI_ASSERT(mutatorCount > 0);
+	m_mutations.create(getAllocator(), mutatorCount);
+	mutatorCount = 0;
+
+	do
+	{
+		ShaderProgramResourceMutation& mutation = m_mutations[mutatorCount];
+
+		// name
+		CString mutatorName;
+		ANKI_CHECK(mutatorEl.getAttributeText("name", mutatorName));
+		if(mutatorName.isEmpty())
+		{
+			ANKI_RESOURCE_LOGE("Mutator name is empty");
+			return ErrorCode::USER_DATA;
+		}
+
+		if(mutatorName == "INSTANCE_COUNT" || mutatorName == "PASS" || mutatorName == "LOD")
+		{
+			ANKI_RESOURCE_LOGE("Cannot list builtin mutator \"%s\"", &mutatorName[0]);
+			return ErrorCode::USER_DATA;
+		}
+
+		// value
+		ANKI_CHECK(mutatorEl.getAttributeNumber("value", mutation.m_value));
+
+		// Find mutator
+		mutation.m_mutator = m_prog->tryFindMutator(mutatorName);
+
+		if(!mutation.m_mutator)
+		{
+			ANKI_RESOURCE_LOGE("Mutator not found in program %s", &mutatorName[0]);
+			return ErrorCode::USER_DATA;
+		}
+
+		if(!mutation.m_mutator->valueExists(mutation.m_value))
+		{
+			ANKI_RESOURCE_LOGE("Value %d is not part of the mutator %s", mutation.m_value, &mutatorName[0]);
+			return ErrorCode::USER_DATA;
+		}
+
+		// Advance
+		++mutatorCount;
+		ANKI_CHECK(mutatorEl.getNextSiblingElement("mutator", mutatorEl));
+	} while(mutatorEl);
+
+	// Find the builtin mutators
+	U builtinMutatorCount = 0;
+	for(const ShaderProgramResourceMutator& m : m_prog->getMutators())
+	{
+		if(m.getName() == "INSTANCE_COUNT")
+		{
+			if(!m_prog->isInstanced())
+			{
+				ANKI_RESOURCE_LOGE("Program is not instanced but has the INSTANCE_COUNT mutator");
+				return ErrorCode::USER_DATA;
+			}
+
+			if(m.getValues().getSize() != MAX_INSTANCE_GROUPS)
+			{
+				ANKI_RESOURCE_LOGE("Mutator INSTANCE_COUNT should have %u values in the program", MAX_INSTANCE_GROUPS);
+				return ErrorCode::USER_DATA;
+			}
+
+			for(U i = 0; i < MAX_INSTANCE_GROUPS; ++i)
+			{
+				if(m.getValues()[i] != (1 << i))
+				{
+					ANKI_RESOURCE_LOGE("Values of the INSTANCE_COUNT mutator in the program are not the expected");
+					return ErrorCode::USER_DATA;
+				}
+			}
+
+			m_instanceMutator = &m;
+			++builtinMutatorCount;
+		}
+		else if(m.getName() == "PASS")
+		{
+			if(m.getValues().getSize() != U(Pass::COUNT))
+			{
+				ANKI_RESOURCE_LOGE("Mutator PASS should have %u values in the program", U(Pass::COUNT));
+				return ErrorCode::USER_DATA;
+			}
+
+			for(U i = 0; i < U(Pass::COUNT); ++i)
+			{
+				if(m.getValues()[i] != I(i))
+				{
+					ANKI_RESOURCE_LOGE("Values of the PASS mutator in the program are not the expected");
+					return ErrorCode::USER_DATA;
+				}
+			}
+
+			m_passMutator = &m;
+			++builtinMutatorCount;
+		}
+		else if(m.getName() == "LOD")
+		{
+			if(m.getValues().getSize() > MAX_LOD)
+			{
+				ANKI_RESOURCE_LOGE("Mutator LOD should have at least %u values in the program", U(MAX_LOD));
+				return ErrorCode::USER_DATA;
+			}
+
+			for(U i = 0; i < m.getValues().getSize(); ++i)
+			{
+				if(m.getValues()[i] != I(i))
+				{
+					ANKI_RESOURCE_LOGE("Values of the LOD mutator in the program are not the expected");
+					return ErrorCode::USER_DATA;
+				}
+			}
+
+			m_lodMutator = &m;
+			m_lodCount = m.getValues().getSize();
+			++builtinMutatorCount;
+		}
+	}
+
+	if(m_prog->isInstanced() && !m_instanceMutator)
+	{
+		ANKI_RESOURCE_LOGE("If program is instanced then the instance mutator sHould be the INSTANCE_COUNT");
+		return ErrorCode::USER_DATA;
+	}
+
+	if(!m_forwardShading && !m_passMutator)
+	{
+		ANKI_RESOURCE_LOGE("PASS mutator is required");
+		return ErrorCode::USER_DATA;
+	}
+
+	if(m_mutations.getSize() + builtinMutatorCount != m_prog->getMutators().getSize())
+	{
+		ANKI_RESOURCE_LOGE("Some mutatators are unacounted for");
+		return ErrorCode::USER_DATA;
+	}
+
+	return ErrorCode::NONE;
+}
+
 Error Material::parseInputs(XmlElement inputsEl)
 {
 	// Iterate the program's variables and get counts
@@ -112,6 +243,12 @@ Error Material::parseInputs(XmlElement inputsEl)
 	U nonConstInputCount = 0;
 	for(const ShaderProgramResourceInputVariable& in : m_prog->getInputVariables())
 	{
+		if(!in.acceptAllMutations(m_mutations))
+		{
+			// Will not be used by this material at all
+			continue;
+		}
+
 		if(in.isConstant())
 		{
 			++constInputCount;
@@ -131,25 +268,20 @@ Error Material::parseInputs(XmlElement inputsEl)
 	while(inputEl)
 	{
 		// Get var name
-		XmlElement shaderInputEl;
-		ANKI_CHECK(inputEl.getChildElement("shaderInput", shaderInputEl));
 		CString varName;
-		ANKI_CHECK(shaderInputEl.getText(varName));
+		ANKI_CHECK(inputEl.getAttributeText("shaderInput", varName));
 
 		// Try find var
-		const ShaderProgramResourceInputVariable* foundVar = nullptr;
-		for(const ShaderProgramResourceInputVariable& in : m_prog->getInputVariables())
-		{
-			if(in.getName() == varName)
-			{
-				foundVar = &in;
-				break;
-			}
-		}
-
+		const ShaderProgramResourceInputVariable* foundVar = m_prog->tryFindInputVariable(varName);
 		if(foundVar == nullptr)
 		{
-			ANKI_RESOURCE_LOGE("Variable not found: %s", &varName[0]);
+			ANKI_RESOURCE_LOGE("Variable \"%s\" not found", &varName[0]);
+			return ErrorCode::USER_DATA;
+		}
+
+		if(!foundVar->acceptAllMutations(m_mutations))
+		{
+			ANKI_RESOURCE_LOGE("Variable \"%s\" is not needed by the material's mutations. Don't need it");
 			return ErrorCode::USER_DATA;
 		}
 
@@ -158,25 +290,22 @@ Error Material::parseInputs(XmlElement inputsEl)
 		{
 			// Const
 
-			XmlElement valueEl;
-			ANKI_CHECK(inputEl.getChildElement("value", valueEl));
-
 			ShaderProgramResourceConstantValue& constVal = m_constValues[--constInputCount];
 			constVal.m_variable = foundVar;
 
 			switch(foundVar->getShaderVariableDataType())
 			{
 			case ShaderVariableDataType::FLOAT:
-				ANKI_CHECK(valueEl.getNumber(constVal.m_float));
+				ANKI_CHECK(inputEl.getAttributeNumber("value", constVal.m_float));
 				break;
 			case ShaderVariableDataType::VEC2:
-				ANKI_CHECK(valueEl.getVec2(constVal.m_vec2));
+				ANKI_CHECK(inputEl.getAttributeVector("value", constVal.m_vec2));
 				break;
 			case ShaderVariableDataType::VEC3:
-				ANKI_CHECK(valueEl.getVec3(constVal.m_vec3));
+				ANKI_CHECK(inputEl.getAttributeVector("value", constVal.m_vec3));
 				break;
 			case ShaderVariableDataType::VEC4:
-				ANKI_CHECK(valueEl.getVec4(constVal.m_vec4));
+				ANKI_CHECK(inputEl.getAttributeVector("value", constVal.m_vec4));
 				break;
 			default:
 				ANKI_ASSERT(0);
@@ -187,14 +316,12 @@ Error Material::parseInputs(XmlElement inputsEl)
 		{
 			// Builtin or not
 
-			XmlElement builtinEl;
-			ANKI_CHECK(inputEl.getChildElementOptional("builtin", builtinEl));
-			if(builtinEl)
+			Bool builtinPresent = false;
+			CString builtinStr;
+			ANKI_CHECK(inputEl.getAttributeTextOptional("builtin", builtinStr, builtinPresent));
+			if(builtinPresent)
 			{
 				// Builtin
-
-				CString builtinStr;
-				ANKI_CHECK(builtinEl.getText(builtinStr));
 
 				U i;
 				for(i = 0; i < BUILTIN_INFOS.getSize(); ++i)
@@ -242,28 +369,25 @@ Error Material::parseInputs(XmlElement inputsEl)
 				MaterialVariable& mtlVar = m_vars[--nonConstInputCount];
 				mtlVar.m_input = foundVar;
 
-				XmlElement valueEl;
-				ANKI_CHECK(inputEl.getChildElement("value", valueEl));
-
 				switch(foundVar->getShaderVariableDataType())
 				{
 				case ShaderVariableDataType::FLOAT:
-					ANKI_CHECK(valueEl.getNumber(mtlVar.m_float));
+					ANKI_CHECK(inputEl.getAttributeNumber("value", mtlVar.m_float));
 					break;
 				case ShaderVariableDataType::VEC2:
-					ANKI_CHECK(valueEl.getVec2(mtlVar.m_vec2));
+					ANKI_CHECK(inputEl.getAttributeVector("value", mtlVar.m_vec2));
 					break;
 				case ShaderVariableDataType::VEC3:
-					ANKI_CHECK(valueEl.getVec3(mtlVar.m_vec3));
+					ANKI_CHECK(inputEl.getAttributeVector("value", mtlVar.m_vec3));
 					break;
 				case ShaderVariableDataType::VEC4:
-					ANKI_CHECK(valueEl.getVec4(mtlVar.m_vec4));
+					ANKI_CHECK(inputEl.getAttributeVector("value", mtlVar.m_vec4));
 					break;
 				case ShaderVariableDataType::MAT3:
-					ANKI_CHECK(valueEl.getMat3(mtlVar.m_mat3));
+					ANKI_CHECK(inputEl.getAttributeMatrix("value", mtlVar.m_mat3));
 					break;
 				case ShaderVariableDataType::MAT4:
-					ANKI_CHECK(valueEl.getMat4(mtlVar.m_mat4));
+					ANKI_CHECK(inputEl.getAttributeMatrix("value", mtlVar.m_mat4));
 					break;
 				case ShaderVariableDataType::SAMPLER_2D:
 				case ShaderVariableDataType::SAMPLER_2D_ARRAY:
@@ -271,7 +395,7 @@ Error Material::parseInputs(XmlElement inputsEl)
 				case ShaderVariableDataType::SAMPLER_CUBE:
 				{
 					CString texfname;
-					ANKI_CHECK(valueEl.getText(texfname));
+					ANKI_CHECK(inputEl.getAttributeText("value", texfname));
 					getManager().loadResource(texfname, mtlVar.m_tex);
 					break;
 				}
@@ -319,9 +443,42 @@ const MaterialVariant& Material::getOrCreateVariant(const RenderingKey& key_) co
 
 	if(variant.m_variant == nullptr)
 	{
-		m_prog->getOrCreateVariant(key,
-			WeakArray<const ShaderProgramResourceConstantValue>((m_constValues.getSize()) ? &m_constValues[0] : nullptr,
-									   m_constValues.getSize()),
+		const U mutatorCount = m_mutations.getSize() + ((m_instanceMutator) ? 1 : 0) + ((m_passMutator) ? 1 : 0)
+			+ ((m_lodMutator) ? 1 : 0);
+
+		DynamicArrayAuto<ShaderProgramResourceMutation> mutations(getTempAllocator());
+		mutations.create(mutatorCount);
+		U count = m_mutations.getSize();
+		if(m_mutations.getSize())
+		{
+			memcpy(&mutations[0], &m_mutations[0], m_mutations.getSize() * sizeof(m_mutations[0]));
+		}
+
+		if(m_instanceMutator)
+		{
+			mutations[count].m_mutator = m_instanceMutator;
+			mutations[count].m_value = key.m_instanceCount;
+			++count;
+		}
+
+		if(m_passMutator)
+		{
+			mutations[count].m_mutator = m_passMutator;
+			mutations[count].m_value = I(key.m_pass);
+			++count;
+		}
+
+		if(m_lodMutator)
+		{
+			mutations[count].m_mutator = m_lodMutator;
+			mutations[count].m_value = I(key.m_lod);
+			++count;
+		}
+
+		m_prog->getOrCreateVariant(
+			WeakArray<const ShaderProgramResourceMutation>(mutations.getSize() ? &mutations[0] : nullptr, count),
+			WeakArray<const ShaderProgramResourceConstantValue>(
+				(m_constValues.getSize()) ? &m_constValues[0] : nullptr, m_constValues.getSize()),
 			variant.m_variant);
 	}
 

@@ -52,19 +52,6 @@ Options:
 				goto error;
 			}
 		}
-		else if(strcmp(argv[i], "-progrpath") == 0)
-		{
-			++i;
-
-			if(i < argc)
-			{
-				exporter.m_progrpath = argv[i] + std::string("/");
-			}
-			else
-			{
-				goto error;
-			}
-		}
 		else if(strcmp(argv[i], "-flipyz") == 0)
 		{
 			exporter.m_flipyz = true;

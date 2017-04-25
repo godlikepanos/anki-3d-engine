@@ -32,7 +32,7 @@ public:
 		, m_instanceCount(instanceCount)
 	{
 		ANKI_ASSERT(m_instanceCount <= MAX_INSTANCES && m_instanceCount != 0);
-		ANKI_ASSERT(m_lod <= MAX_LODS);
+		ANKI_ASSERT(m_lod <= MAX_LOD);
 	}
 
 	RenderingKey()

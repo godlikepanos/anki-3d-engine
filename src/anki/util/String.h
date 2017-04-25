@@ -212,11 +212,17 @@ public:
 	/// Convert to F32.
 	ANKI_USE_RESULT Error toNumber(F32& out) const;
 
+	/// Convert to I8.
+	ANKI_USE_RESULT Error toNumber(I8& out) const;
+
 	/// Convert to I64.
 	ANKI_USE_RESULT Error toNumber(I64& out) const;
 
 	/// Convert to I32.
 	ANKI_USE_RESULT Error toNumber(I32& out) const;
+
+	/// Convert to U8.
+	ANKI_USE_RESULT Error toNumber(U8& out) const;
 
 	/// Convert to U64.
 	ANKI_USE_RESULT Error toNumber(U64& out) const;
@@ -539,6 +545,12 @@ public:
 		return toCString().toNumber(out);
 	}
 
+	/// Convert to I8.
+	ANKI_USE_RESULT Error toNumber(I8& out) const
+	{
+		return toCString().toNumber(out);
+	}
+
 	/// Convert to U64.
 	ANKI_USE_RESULT Error toNumber(U64& out) const
 	{
@@ -547,6 +559,12 @@ public:
 
 	/// Convert to U32.
 	ANKI_USE_RESULT Error toNumber(U32& out) const
+	{
+		return toCString().toNumber(out);
+	}
+
+	/// Convert to U8.
+	ANKI_USE_RESULT Error toNumber(U8& out) const
 	{
 		return toCString().toNumber(out);
 	}

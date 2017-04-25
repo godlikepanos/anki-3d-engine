@@ -36,6 +36,21 @@ Error CString::toNumber(F32& out) const
 	return ErrorCode::NONE;
 }
 
+Error CString::toNumber(I8& out) const
+{
+	I64 i64 = 0;
+	ANKI_CHECK(toNumber(i64));
+
+	if(i64 < MIN_I8 || i64 > MAX_I8)
+	{
+		ANKI_UTIL_LOGE("Conversion failed. Our of range");
+		return ErrorCode::USER_DATA;
+	}
+
+	out = I8(i64);
+	return ErrorCode::NONE;
+}
+
 Error CString::toNumber(I64& out) const
 {
 	checkInit();
@@ -102,6 +117,21 @@ Error CString::toNumber(U32& out) const
 	}
 
 	out = U32(i);
+	return ErrorCode::NONE;
+}
+
+Error CString::toNumber(U8& out) const
+{
+	U64 i64 = 0;
+	ANKI_CHECK(toNumber(i64));
+
+	if(i64 > MAX_U8)
+	{
+		ANKI_UTIL_LOGE("Conversion failed. Our of range");
+		return ErrorCode::USER_DATA;
+	}
+
+	out = U8(i64);
 	return ErrorCode::NONE;
 }
 

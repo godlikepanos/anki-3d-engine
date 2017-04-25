@@ -111,7 +111,6 @@ public:
 	std::string m_outputDirectory;
 	std::string m_rpath;
 	std::string m_texrpath;
-	std::string m_progrpath = "programs";
 
 	bool m_flipyz = false;
 
