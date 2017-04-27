@@ -29,90 +29,18 @@ layout(location = 2) in vec3 in_posViewSpace;
 
 layout(location = 0) out vec4 out_color;
 
-#if PASS == COLOR
-#define texture_DEFINED
-#endif
-
-#define getAlpha_DEFINED
-float getAlpha()
-{
-	return in_alpha;
-}
-
-#define getPointCoord_DEFINED
-#define getPointCoord() gl_PointCoord
-
-#if PASS == COLOR
-#define writeGBuffer_DEFINED
 void writeGBuffer(in vec4 color)
 {
 	out_color = vec4(color.rgb, 1.0 - color.a);
 }
-#endif
 
-#if PASS == COLOR
-#define particleAlpha_DEFINED
-void particleAlpha(in sampler2D tex, in float alpha)
+vec4 readAnimatedTextureRgba(sampler2DArray tex, float period, vec2 uv, float time)
 {
-	vec4 color = texture(tex, gl_PointCoord);
-	color.a *= alpha;
-	writeGBuffer(color);
+	float layerCount = float(textureSize(tex, 0).z);
+	float layer = mod(time * layerCount / period, layerCount);
+	return texture(tex, vec3(uv, layer));
 }
-#endif
 
-#if PASS == COLOR
-#define particleSoftTextureAlpha_DEFINED
-void particleSoftTextureAlpha(in sampler2D depthMap, in sampler2D tex, in float alpha)
-{
-	vec2 screenSize = 1.0 / RENDERER_SIZE;
-
-	float depth = texture(depthMap, gl_FragCoord.xy * screenSize).r;
-
-	float delta = depth - gl_FragCoord.z;
-	float softalpha = clamp(delta * 50.0, 0.0, 1.0);
-
-	vec4 color = texture(tex, gl_PointCoord);
-	color.a *= alpha;
-	// color.a *= softalpha;
-
-	writeGBuffer(color);
-}
-#endif
-
-#if PASS == COLOR
-#define particleTextureAlpha_DEFINED
-void particleTextureAlpha(in sampler2D tex, vec4 mulColor, vec4 addColor, in float alpha)
-{
-	vec4 color = texture(tex, in_uv) * mulColor + addColor;
-	color.a *= alpha;
-
-	writeGBuffer(color);
-}
-#endif
-
-#if PASS == COLOR
-#define particleSoftColorAlpha_DEFINED
-void particleSoftColorAlpha(in sampler2D depthMap, in vec3 icolor, in float alpha)
-{
-	vec2 screenSize = 1.0 / RENDERER_SIZE;
-
-	float depth = texture(depthMap, gl_FragCoord.xy * screenSize).r;
-
-	float delta = depth - gl_FragCoord.z;
-	float softalpha = clamp(delta * 50.0, 0.0, 1.0);
-
-	vec2 pix = (1.0 - abs(gl_PointCoord * 2.0 - 1.0));
-	float roundFactor = pix.x * pix.y;
-
-	vec4 color;
-	color.rgb = icolor;
-	color.a = alpha * softalpha * roundFactor;
-	writeGBuffer(color);
-}
-#endif
-
-#if PASS == COLOR
-#define computeLightColor_DEFINED
 vec3 computeLightColor(vec3 diffCol)
 {
 	vec3 outColor = vec3(0.0);
@@ -187,36 +115,12 @@ vec3 computeLightColor(vec3 diffCol)
 
 	return outColor;
 }
-#endif
 
-#if PASS == COLOR
-#define particleTextureAlphaLight_DEFINED
-void particleTextureAlphaLight(in sampler2D tex, in float alpha)
+void particleAlpha(vec4 color, vec4 scaleColor, vec4 biasColor)
 {
-	vec4 color = texture(tex, in_uv);
-	color.a *= alpha;
-
-	color.rgb = computeLightColor(color.rgb);
-
-	writeGBuffer(color);
+	writeGBuffer(color * mulColor + addColor);
 }
-#endif
 
-#if PASS == COLOR
-#define particleAnimatedTextureAlphaLight_DEFINED
-void particleAnimatedTextureAlphaLight(sampler2DArray tex, float alpha, float layerCount, float period)
-{
-	vec4 color = readAnimatedTextureRgba(tex, layerCount, period, in_uv, anki_u_time);
-
-	color.rgb = computeLightColor(color.rgb);
-
-	color.a *= alpha;
-	writeGBuffer(color);
-}
-#endif
-
-#if PASS == COLOR
-#define fog_DEFINED
 void fog(in sampler2D depthMap, in vec3 color, in float fogScale)
 {
 	const vec2 screenSize = 1.0 / RENDERER_SIZE;
@@ -241,6 +145,5 @@ void fog(in sampler2D depthMap, in vec3 color, in float fogScale)
 
 	writeGBuffer(vec4(color, diff * fogScale));
 }
-#endif
 
 #endif

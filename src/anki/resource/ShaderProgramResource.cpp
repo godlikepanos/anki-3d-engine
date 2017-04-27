@@ -209,7 +209,7 @@ Error ShaderProgramResource::load(const ResourceFilename& filename)
 		XmlElement mutatorEl;
 		ANKI_CHECK(mutatorsEl.getChildElement("mutator", mutatorEl));
 		U32 count = 0;
-		mutatorEl.getSiblingElementsCount(count);
+		ANKI_CHECK(mutatorEl.getSiblingElementsCount(count));
 		++count;
 
 		m_mutators.create(getAllocator(), count);

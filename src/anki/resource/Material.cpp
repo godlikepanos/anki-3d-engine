@@ -60,7 +60,7 @@ Error Material::load(const ResourceFilename& filename)
 	// shaderProgram
 	CString fname;
 	ANKI_CHECK(rootEl.getAttributeText("shaderProgram", fname));
-	getManager().loadResource(fname, m_prog);
+	ANKI_CHECK(getManager().loadResource(fname, m_prog));
 
 	// shadow
 	ANKI_CHECK(rootEl.getAttributeNumberOptional("shadow", m_shadow, present));
@@ -94,7 +94,7 @@ Error Material::parseMutators(XmlElement mutatorsEl)
 	ANKI_CHECK(mutatorsEl.getChildElement("mutator", mutatorEl));
 
 	U32 mutatorCount = 0;
-	mutatorEl.getSiblingElementsCount(mutatorCount);
+	ANKI_CHECK(mutatorEl.getSiblingElementsCount(mutatorCount));
 	++mutatorCount;
 	ANKI_ASSERT(mutatorCount > 0);
 	m_mutations.create(getAllocator(), mutatorCount);
@@ -396,7 +396,7 @@ Error Material::parseInputs(XmlElement inputsEl)
 				{
 					CString texfname;
 					ANKI_CHECK(inputEl.getAttributeText("value", texfname));
-					getManager().loadResource(texfname, mtlVar.m_tex);
+					ANKI_CHECK(getManager().loadResource(texfname, mtlVar.m_tex));
 					break;
 				}
 

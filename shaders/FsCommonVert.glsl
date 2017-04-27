@@ -34,25 +34,6 @@ out gl_PerVertex
 	vec4 gl_Position;
 };
 
-#define setPositionVec3_DEFINED
-void setPositionVec3(in vec3 pos)
-{
-	ANKI_WRITE_POSITION(vec4(pos, 1.0));
-}
-
-#define setPositionVec4_DEFINED
-void setPositionVec4(in vec4 pos)
-{
-	ANKI_WRITE_POSITION(pos);
-}
-
-#define writePositionMvp_DEFINED
-void writePositionMvp(in mat4 mvp)
-{
-	ANKI_WRITE_POSITION(mvp * vec4(in_position, 1.0));
-}
-
-#define particle_DEFINED
 void particle(in mat4 mvp, in mat3 camRot, in mat4 viewMat)
 {
 	const vec2 POSITIONS[4] = vec2[](vec2(-0.5, -0.5), vec2(0.5, -0.5), vec2(-0.5, 0.5), vec2(0.5, 0.5));
@@ -64,12 +45,6 @@ void particle(in mat4 mvp, in mat3 camRot, in mat4 viewMat)
 	out_alpha = in_alpha;
 
 	out_uv = POSITIONS[gl_VertexID] + 0.5;
-}
-
-#define writeAlpha_DEFINED
-void writeAlpha(in float alpha)
-{
-	out_alpha = alpha;
 }
 
 #endif

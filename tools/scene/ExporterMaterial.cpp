@@ -175,7 +175,7 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 		if(mtl.GetTexture(aiTextureType_NORMALS, 0, &path) == AI_SUCCESS)
 		{
 			std::string normTex = m_texrpath + getFilename(path.C_Str());
-			xml = replaceAllString(xml, "%normal%", "<input shaderInput=\"normalTex\" value\"" + normTex + "\"/>");
+			xml = replaceAllString(xml, "%normal%", "<input shaderInput=\"normalTex\" value=\"" + normTex + "\"/>");
 
 			xml = replaceAllString(xml, "%normalTexMutator%", "1");
 		}

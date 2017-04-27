@@ -1,66 +1,18 @@
 <?xml version="1.0" encoding="UTF-8" ?>
+<material shaderProgram="programs/FsParticles.ankiprog" forwardShading="1">
+	<mutators>
+		<mutator name="ANIMATED_TEXTURE" value="0"/>
+		<mutator name="LIGHT" value="1"/>
+	</mutators>
 
-<material>
-	<forwardShading>1</forwardShading>
-	<shadow>0</shadow>
-	<levelsOfDetail>2</levelsOfDetail>
+	<inputs>
+		<input shaderInput="mvp" builtin="MODEL_VIEW_PROJECTION_MATRIX"/>
+		<input shaderInput="cameraRotMat" builtin="CAMERA_ROTATION_MATRIX"/>
+		<input shaderInput="viewMat" builtin="VIEW_MATRIX"/>
 
-	<programs>
-		<program>
-			<type>vert</type>
-			<includes>
-				<include>shaders/FsCommonVert.glsl</include>
-			</includes>
-
-			<inputs>
-				<input><type>mat4</type><name>anki_mvp</name></input>
-				<input><type>mat3</type><name>anki_cameraRotation</name></input>
-				<input><type>mat4</type><name>anki_viewMatrix</name></input>
-			</inputs>
-
-			<operations>
-				<operation>
-					<id>0</id>
-					<returnType>void</returnType>
-					<function>particle</function>
-					<arguments>
-						<argument>anki_mvp</argument>
-						<argument>anki_cameraRotation</argument>
-						<argument>anki_viewMatrix</argument>
-					</arguments>
-				</operation>
-			</operations>
-		</program>
-
-		<program>
-			<type>frag</type>
-
-			<includes>
-				<include>shaders/FsCommonFrag.glsl</include>
-			</includes>
-
-			<inputs>
-				<input><type>sampler2D</type><name>diffuseMap</name><value>assets/smoke.ankitex</value></input>
-			</inputs>
-
-			<operations>
-				<operation>
-					<id>1</id>
-					<returnType>float</returnType>
-					<function>getAlpha</function>
-				</operation>
-				<operation>
-					<id>0</id>
-					<returnType>void</returnType>
-					<function>particleTextureAlphaLight</function>
-					<arguments>
-						<argument>diffuseMap</argument>
-						<argument>out1</argument>
-					</arguments>
-				</operation>
-			</operations>
-		</program>
-	</programs>
+		<input shaderInput="diffuseMap" value="assets/smoke.ankitex"/>
+		<input shaderInput="colorScale" value="1.0 1.0 1.0 1.0"/>
+		<input shaderInput="colorBias" value="0 0 0 0"/>
+	</inputs>
 </material>
-
 

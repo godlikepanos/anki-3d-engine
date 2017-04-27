@@ -10,12 +10,4 @@
 
 #define CALC_BITANGENT_IN_VERT 1
 
-// Read from animated texture
-#define readAnimatedTextureRgba_DEFINED
-vec4 readAnimatedTextureRgba(sampler2DArray tex, float layerCount, float period, vec2 uv, float time)
-{
-	float layer = mod(time * layerCount / period, layerCount);
-	return texture(tex, vec3(uv, layer));
-}
-
 #endif
