@@ -95,7 +95,7 @@ layout(ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING), std140, row_major) unifor
 		readFirstInvocationARB(u_lightingUniforms.prevViewProjMat[2]),                                                 \
 		readFirstInvocationARB(u_lightingUniforms.prevViewProjMat[3]))
 
-#ifdef FRAGMENT_SHADER
+#ifdef ANKI_FRAGMENT_SHADER
 
 layout(ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING + 1), std140) uniform u1_
 {
@@ -140,6 +140,6 @@ layout(ANKI_TEX_BINDING(LIGHT_SET, LIGHT_TEX_BINDING + 3)) uniform samplerCubeAr
 layout(ANKI_TEX_BINDING(LIGHT_SET, LIGHT_TEX_BINDING + 4)) uniform sampler2D u_integrationLut;
 #endif
 
-#endif // FRAGMENT_SHADER
+#endif // ANKI_FRAGMENT_SHADER
 
 #endif

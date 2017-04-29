@@ -165,12 +165,12 @@ static const char* SHADER_HEADER = R"(#version 450 core
 #define ANKI_SS_BINDING(set_, binding_) set = set_, binding = %u + binding_
 #define ANKI_IMAGE_BINDING(set_, binding_) set = set_, binding = %u + binding_
 
-#if defined(FRAGMENT_SHADER)
+#if defined(ANKI_FRAGMENT_SHADER)
 #define ANKI_USING_FRAG_COORD(h_) vec4 anki_fragCoord = \
 	vec4(gl_FragCoord.x, h_ - gl_FragCoord.y, gl_FragCoord.z, gl_FragCoord.w);
 #endif
 
-#if defined(VERTEX_SHADER)
+#if defined(ANKI_VERTEX_SHADER)
 #define ANKI_WRITE_POSITION(x_) gl_Position = x_; gl_Position.z = (gl_Position.z + gl_Position.w) * 0.5
 #endif
 
@@ -235,12 +235,12 @@ Error ShaderImpl::init(ShaderType shaderType, const CString& source)
 	auto alloc = getAllocator();
 	StringAuto fullSrc(alloc);
 
-	static const Array<const char*, 6> shaderName = {{"VERTEX_SHADER",
-		"TESSELATION_CONTROL_SHADER",
-		"TESSELATION_EVALUATION_SHADER",
-		"GEOMETRY_SHADER",
-		"FRAGMENT_SHADER",
-		"COMPUTE_SHADER"}};
+	static const Array<const char*, 6> shaderName = {{"ANKI_VERTEX_SHADER",
+		"ANKI_TESSELATION_CONTROL_SHADER",
+		"ANKI_TESSELATION_EVALUATION_SHADER",
+		"ANKI_GEOMETRY_SHADER",
+		"ANKI_FRAGMENT_SHADER",
+		"ANKI_COMPUTE_SHADER"}};
 
 	fullSrc.sprintf(SHADER_HEADER,
 		&GPU_VENDOR_STR[getGrManagerImpl().getGpuVendor()][0],

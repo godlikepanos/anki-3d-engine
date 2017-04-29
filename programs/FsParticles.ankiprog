@@ -56,8 +56,9 @@ void main()
 	texCol.rgb = computeLightColor(texCol.rgb);
 #endif
 	
-	colorScale.a *= in_alpha;
-	particleAlpha(texCol, colorScale, colorBias);
+	vec4 colScale = colorScale;
+	colScale.a *= in_alpha;
+	particleAlpha(texCol, colScale, colorBias);
 }
 			]]>
 			</source>

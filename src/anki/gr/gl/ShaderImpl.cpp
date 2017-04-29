@@ -38,11 +38,11 @@ static const char* SHADER_HEADER = R"(#version %u %s
 #define ANKI_IMAGE_BINDING(set_, binding_) binding = set_ * %u + binding_
 #define ANKI_TBO_BINDING(set_, binding_) binding = %u + set_ * %u + binding_
 
-#if defined(FRAGMENT_SHADER)
+#if defined(ANKI_FRAGMENT_SHADER)
 #define ANKI_USING_FRAG_COORD(height_) vec4 anki_fragCoord = gl_FragCoord;
 #endif
 
-#if defined(VERTEX_SHADER)
+#if defined(ANKI_VERTEX_SHADER)
 #define ANKI_WRITE_POSITION(x_) gl_Position = x_
 #endif
 
@@ -70,12 +70,12 @@ Error ShaderImpl::init(ShaderType type, const CString& source)
 		GL_FRAGMENT_SHADER,
 		GL_COMPUTE_SHADER}};
 
-	static const Array<const char*, 6> shaderName = {{"VERTEX_SHADER",
-		"TESSELATION_CONTROL_SHADER",
-		"TESSELATION_EVALUATION_SHADER",
-		"GEOMETRY_SHADER",
-		"FRAGMENT_SHADER",
-		"COMPUTE_SHADER"}};
+	static const Array<const char*, 6> shaderName = {{"ANKI_VERTEX_SHADER",
+		"ANKI_TESSELATION_CONTROL_SHADER",
+		"ANKI_TESSELATION_EVALUATION_SHADER",
+		"ANKI_GEOMETRY_SHADER",
+		"ANKI_FRAGMENT_SHADER",
+		"ANKI_COMPUTE_SHADER"}};
 
 	m_type = type;
 	m_glType = gltype[U(type)];

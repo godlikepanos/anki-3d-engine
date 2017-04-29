@@ -91,7 +91,7 @@ public:
 
 	Bool isInstanced() const
 	{
-		return m_instancingMutator != nullptr;
+		return m_instanced;
 	}
 
 	Bool isConstant() const
@@ -121,11 +121,11 @@ private:
 	};
 
 	String m_name;
+	DynamicArray<Mutator> m_mutators;
 	U32 m_idx;
 	ShaderVariableDataType m_dataType = ShaderVariableDataType::NONE;
 	Bool8 m_const = false;
-	const ShaderProgramResourceMutator* m_instancingMutator = nullptr;
-	DynamicArray<Mutator> m_mutators;
+	Bool8 m_instanced = false;
 
 	Bool isTexture() const
 	{
@@ -347,7 +347,7 @@ public:
 
 	Bool isInstanced() const
 	{
-		return m_instanced;
+		return m_instancingMutator != nullptr;
 	}
 
 private:
@@ -360,17 +360,10 @@ private:
 	mutable Mutex m_mtx;
 
 	Bool8 m_tessellation = false;
-	Bool8 m_instanced = false;
-
-#if ANKI_EXTRA_CHECKS
 	const ShaderProgramResourceMutator* m_instancingMutator = nullptr;
-#endif
 
 	/// Parse whatever is inside <inputs>
-	ANKI_USE_RESULT Error parseInputs(XmlElement& inputsEl,
-		U& inputVarCount,
-		StringListAuto& constsSrc,
-		const ShaderProgramResourceMutator*& instanceMutator);
+	ANKI_USE_RESULT Error parseInputs(XmlElement& inputsEl, U& inputVarCount, StringListAuto& constsSrc);
 
 	U64 computeVariantHash(WeakArray<const ShaderProgramResourceMutation> mutations,
 		WeakArray<const ShaderProgramResourceConstantValue> constants) const;

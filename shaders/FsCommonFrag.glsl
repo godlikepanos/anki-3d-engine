@@ -118,7 +118,7 @@ vec3 computeLightColor(vec3 diffCol)
 
 void particleAlpha(vec4 color, vec4 scaleColor, vec4 biasColor)
 {
-	writeGBuffer(color * mulColor + addColor);
+	writeGBuffer(color * scaleColor + biasColor);
 }
 
 void fog(in sampler2D depthMap, in vec3 color, in float fogScale)

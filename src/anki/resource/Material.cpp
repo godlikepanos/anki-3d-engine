@@ -439,7 +439,7 @@ const MaterialVariant& Material::getOrCreateVariant(const RenderingKey& key_) co
 	key.m_instanceCount = 1 << getInstanceGroupIdx(key.m_instanceCount);
 
 	MaterialVariant& variant = m_variantMatrix[U(key.m_pass)][key.m_lod][getInstanceGroupIdx(key.m_instanceCount)];
-	LockGuard<Mutex> lock(m_variantMatrixMtx);
+	LockGuard<SpinLock> lock(m_variantMatrixMtx);
 
 	if(variant.m_variant == nullptr)
 	{

@@ -307,7 +307,6 @@ Error ShaderProgramResource::load(const ResourceFilename& filename)
 	StringListAuto constSrcList(getTempAllocator());
 	ShaderTypeBit presentShaders = ShaderTypeBit::NONE;
 	Array<CString, 5> shaderSources;
-	const ShaderProgramResourceMutator* instanceMutator = nullptr;
 	ANKI_CHECK(shadersEl.getChildElement("shader", shaderEl));
 	do
 	{
@@ -337,7 +336,7 @@ Error ShaderProgramResource::load(const ResourceFilename& filename)
 
 		if(inputsEl)
 		{
-			ANKI_CHECK(parseInputs(inputsEl, inputVarCount, constSrcList, instanceMutator));
+			ANKI_CHECK(parseInputs(inputsEl, inputVarCount, constSrcList));
 		}
 
 		// <source>
@@ -347,10 +346,6 @@ Error ShaderProgramResource::load(const ResourceFilename& filename)
 		// Advance
 		ANKI_CHECK(shaderEl.getNextSiblingElement("shader", shaderEl));
 	} while(shaderEl);
-
-#if ANKI_EXTRA_CHECKS
-	m_instancingMutator = instanceMutator;
-#endif
 
 	ANKI_ASSERT(inputVarCount == m_inputVars.getSize());
 
@@ -393,10 +388,7 @@ Error ShaderProgramResource::load(const ResourceFilename& filename)
 	return ErrorCode::NONE;
 }
 
-Error ShaderProgramResource::parseInputs(XmlElement& inputsEl,
-	U& inputVarCount,
-	StringListAuto& constsSrc,
-	const ShaderProgramResourceMutator*& instanceMutator)
+Error ShaderProgramResource::parseInputs(XmlElement& inputsEl, U& inputVarCount, StringListAuto& constsSrc)
 {
 	XmlElement inputEl;
 	ANKI_CHECK(inputsEl.getChildElement("input", inputEl));
@@ -515,16 +507,15 @@ Error ShaderProgramResource::parseInputs(XmlElement& inputsEl,
 		ANKI_CHECK(inputEl.getAttributeTextOptional("instanceCount", instanceCountTxt, found));
 		if(found)
 		{
-			m_instanced = true;
-
 			if(instanceCountTxt.isEmpty())
 			{
 				ANKI_RESOURCE_LOGE("instanceCount tag is empty for input variable %s", &name[0]);
 				return ErrorCode::USER_DATA;
 			}
 
-			var.m_instancingMutator = tryFindMutator(instanceCountTxt);
-			if(!var.m_instancingMutator)
+			var.m_instanced = true;
+			const ShaderProgramResourceMutator* instancingMutator = tryFindMutator(instanceCountTxt);
+			if(!instancingMutator)
 			{
 				ANKI_RESOURCE_LOGE("Failed to find mutator %s, used as instanceCount attribute for input variable %s",
 					&instanceCountTxt[0],
@@ -532,11 +523,11 @@ Error ShaderProgramResource::parseInputs(XmlElement& inputsEl,
 				return ErrorCode::USER_DATA;
 			}
 
-			if(!instanceMutator)
+			if(!m_instancingMutator)
 			{
-				instanceMutator = var.m_instancingMutator;
+				m_instancingMutator = instancingMutator;
 			}
-			else if(instanceMutator != var.m_instancingMutator)
+			else if(instancingMutator != m_instancingMutator)
 			{
 				ANKI_RESOURCE_LOGE("All input variables should have the same instancing mutator");
 				return ErrorCode::USER_DATA;
@@ -706,12 +697,28 @@ void ShaderProgramResource::initVariant(WeakArray<const ShaderProgramResourceMut
 		memorySet<I16>(&variant.m_texUnits[0], -1, variant.m_texUnits.getSize());
 	}
 
+	// Get instance count, one mutation has it
+	U instanceCount = 1;
+	if(m_instancingMutator)
+	{
+		for(const ShaderProgramResourceMutation& m : mutations)
+		{
+			if(m.m_mutator == m_instancingMutator)
+			{
+				ANKI_ASSERT(m.m_value > 0);
+				instanceCount = m.m_value;
+				break;
+			}
+		}
+	}
+
 	// - Compute the block info for each var
 	// - Activate vars
 	// - Compute varius strings
 	StringListAuto blockCode(getTempAllocator());
 	StringListAuto constsCode(getTempAllocator());
 	StringListAuto texturesCode(getTempAllocator());
+	StringListAuto globalsCode(getTempAllocator());
 	U texUnit = 0;
 
 	for(const ShaderProgramResourceInputVariable& in : m_inputVars)
@@ -721,7 +728,6 @@ void ShaderProgramResource::initVariant(WeakArray<const ShaderProgramResourceMut
 			continue;
 		}
 
-		U instanceCount = 1;
 		variant.m_activeInputVars.set(in.m_idx);
 
 		// Init block info
@@ -731,7 +737,7 @@ void ShaderProgramResource::initVariant(WeakArray<const ShaderProgramResourceMut
 
 			// std140 rules
 			blockInfo.m_offset = variant.m_uniBlockSize;
-			blockInfo.m_arraySize = instanceCount;
+			blockInfo.m_arraySize = (in.m_instanced) ? instanceCount : 1;
 
 			if(in.m_dataType == ShaderVariableDataType::FLOAT)
 			{
@@ -802,18 +808,18 @@ void ShaderProgramResource::initVariant(WeakArray<const ShaderProgramResourceMut
 				ANKI_ASSERT(0);
 			}
 
-			if(instanceCount > 1)
+			if(in.m_instanced && instanceCount > 1)
 			{
-				blockCode.pushBackSprintf(R"(%s %s_i[%s];
-#if VERTEX_SHADER
-#	define %s s%_i[gl_InstanceID]
+				blockCode.pushBackSprintf(
+					"%s %s_i[%s];\n", &toString(in.m_dataType)[0], &in.m_name[0], &m_instancingMutator->getName()[0]);
+
+				globalsCode.pushBackSprintf(R"(#if defined(ANKI_VERTEX_SHADER)
+%s %s = %s_i[gl_InstanceID];
 #else
 // TODO
 #endif
 )",
 					&toString(in.m_dataType)[0],
-					&in.m_name[0],
-					&in.m_instancingMutator->getName()[0],
 					&in.m_name[0],
 					&in.m_name[0]);
 			}
@@ -899,7 +905,7 @@ void ShaderProgramResource::initVariant(WeakArray<const ShaderProgramResourceMut
 		StringAuto str(getTempAllocator());
 		blockCode.join("", str);
 
-		shaderHeaderSrc.pushBack("layout(ANKI_UBO_BINDING(0, 0), std140, row_major) uniform u0_ {\n");
+		shaderHeaderSrc.pushBack("layout(ANKI_UBO_BINDING(0, 0), std140, row_major) uniform sprubo00_ {\n");
 		shaderHeaderSrc.pushBack(str.toCString());
 		shaderHeaderSrc.pushBack("};\n");
 	}
@@ -908,6 +914,13 @@ void ShaderProgramResource::initVariant(WeakArray<const ShaderProgramResourceMut
 	{
 		StringAuto str(getTempAllocator());
 		texturesCode.join("", str);
+		shaderHeaderSrc.pushBack(str.toCString());
+	}
+
+	if(globalsCode)
+	{
+		StringAuto str(getTempAllocator());
+		globalsCode.join("", str);
 		shaderHeaderSrc.pushBack(str.toCString());
 	}
 

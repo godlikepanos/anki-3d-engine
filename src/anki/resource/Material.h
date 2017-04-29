@@ -239,7 +239,7 @@ private:
 
 	/// Matrix of variants.
 	mutable Array3d<MaterialVariant, U(Pass::COUNT), MAX_LOD, MAX_INSTANCE_GROUPS> m_variantMatrix;
-	mutable Mutex m_variantMatrixMtx;
+	mutable SpinLock m_variantMatrixMtx;
 
 	DynamicArray<MaterialVariable> m_vars; ///< Non-const vars.
 	DynamicArray<ShaderProgramResourceConstantValue> m_constValues;
