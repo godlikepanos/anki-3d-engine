@@ -363,7 +363,12 @@ private:
 	const ShaderProgramResourceMutator* m_instancingMutator = nullptr;
 
 	/// Parse whatever is inside <inputs>
-	ANKI_USE_RESULT Error parseInputs(XmlElement& inputsEl, U& inputVarCount, StringListAuto& constsSrc);
+	ANKI_USE_RESULT Error parseInputs(XmlElement& inputsEl,
+		U& inputVarCount,
+		StringListAuto& constsSrc,
+		StringListAuto& blockSrc,
+		StringListAuto& globalsSrc,
+		StringListAuto& definesSrc);
 
 	U64 computeVariantHash(WeakArray<const ShaderProgramResourceMutation> mutations,
 		WeakArray<const ShaderProgramResourceConstantValue> constants) const;

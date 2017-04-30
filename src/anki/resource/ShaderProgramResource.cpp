@@ -60,49 +60,6 @@ static ANKI_USE_RESULT Error computeShaderVariableDataType(const CString& str, S
 	return err;
 }
 
-static CString toString(ShaderVariableDataType in)
-{
-	CString out;
-
-	switch(in)
-	{
-	case ShaderVariableDataType::FLOAT:
-		out = "float";
-		break;
-	case ShaderVariableDataType::VEC2:
-		out = "vec2";
-		break;
-	case ShaderVariableDataType::VEC3:
-		out = "vec3";
-		break;
-	case ShaderVariableDataType::VEC4:
-		out = "vec4";
-		break;
-	case ShaderVariableDataType::MAT4:
-		out = "mat4";
-		break;
-	case ShaderVariableDataType::MAT3:
-		out = "mat3";
-		break;
-	case ShaderVariableDataType::SAMPLER_2D:
-		out = "sampler2D";
-		break;
-	case ShaderVariableDataType::SAMPLER_3D:
-		out = "sampler3D";
-		break;
-	case ShaderVariableDataType::SAMPLER_2D_ARRAY:
-		out = "sampler2DArray";
-		break;
-	case ShaderVariableDataType::SAMPLER_CUBE:
-		out = "samplerCube";
-		break;
-	default:
-		ANKI_ASSERT(0);
-	};
-
-	return out;
-}
-
 /// Given a string return info about the shader.
 static ANKI_USE_RESULT Error getShaderInfo(const CString& str, ShaderType& type, ShaderTypeBit& bit, U& idx)
 {
@@ -305,6 +262,9 @@ Error ShaderProgramResource::load(const ResourceFilename& filename)
 	// <shader> again
 	inputVarCount = 0;
 	StringListAuto constSrcList(getTempAllocator());
+	StringListAuto blockSrcList(getTempAllocator());
+	StringListAuto globalsSrcList(getTempAllocator());
+	StringListAuto definesSrcList(getTempAllocator());
 	ShaderTypeBit presentShaders = ShaderTypeBit::NONE;
 	Array<CString, 5> shaderSources;
 	ANKI_CHECK(shadersEl.getChildElement("shader", shaderEl));
@@ -336,7 +296,8 @@ Error ShaderProgramResource::load(const ResourceFilename& filename)
 
 		if(inputsEl)
 		{
-			ANKI_CHECK(parseInputs(inputsEl, inputVarCount, constSrcList));
+			ANKI_CHECK(
+				parseInputs(inputsEl, inputVarCount, constSrcList, blockSrcList, globalsSrcList, definesSrcList));
 		}
 
 		// <source>
@@ -369,6 +330,25 @@ Error ShaderProgramResource::load(const ResourceFilename& filename)
 		constSrcList.join("", backedConstSrc);
 	}
 
+	StringAuto backedUboSrc(getTempAllocator());
+	if(!blockSrcList.isEmpty())
+	{
+		blockSrcList.pushBack("};\n");
+		blockSrcList.join("", backedUboSrc);
+	}
+
+	StringAuto backedGlobalsSrc(getTempAllocator());
+	if(!globalsSrcList.isEmpty())
+	{
+		globalsSrcList.join("", backedGlobalsSrc);
+	}
+
+	StringAuto backedDefinesSrc(getTempAllocator());
+	if(!definesSrcList.isEmpty())
+	{
+		definesSrcList.join("", backedDefinesSrc);
+	}
+
 	for(U s = 0; s < 5; ++s)
 	{
 		if(shaderSources[s])
@@ -376,9 +356,24 @@ Error ShaderProgramResource::load(const ResourceFilename& filename)
 			ShaderLoader loader(&getManager());
 			ANKI_CHECK(loader.parseSourceString(shaderSources[s]));
 
-			if(!constSrcList.isEmpty())
+			if(!backedDefinesSrc.isEmpty())
 			{
-				m_sources[s].create(getAllocator(), backedConstSrc);
+				m_sources[s].append(getAllocator(), backedDefinesSrc);
+			}
+
+			if(!backedConstSrc.isEmpty())
+			{
+				m_sources[s].append(getAllocator(), backedConstSrc);
+			}
+
+			if(!backedUboSrc.isEmpty())
+			{
+				m_sources[s].append(getAllocator(), backedUboSrc);
+			}
+
+			if(!backedGlobalsSrc.isEmpty())
+			{
+				m_sources[s].append(getAllocator(), backedGlobalsSrc);
 			}
 
 			m_sources[s].append(getAllocator(), loader.getShaderSource());
@@ -388,7 +383,12 @@ Error ShaderProgramResource::load(const ResourceFilename& filename)
 	return ErrorCode::NONE;
 }
 
-Error ShaderProgramResource::parseInputs(XmlElement& inputsEl, U& inputVarCount, StringListAuto& constsSrc)
+Error ShaderProgramResource::parseInputs(XmlElement& inputsEl,
+	U& inputVarCount,
+	StringListAuto& constsSrc,
+	StringListAuto& blockSrc,
+	StringListAuto& globalsSrc,
+	StringListAuto& definesSrc)
 {
 	XmlElement inputEl;
 	ANKI_CHECK(inputsEl.getChildElement("input", inputEl));
@@ -571,22 +571,66 @@ Error ShaderProgramResource::parseInputs(XmlElement& inputsEl, U& inputVarCount,
 			return ErrorCode::USER_DATA;
 		}
 
+		// Write the _DEFINED
+		if(var.m_mutators.getSize())
+		{
+			definesSrc.pushBackSprintf("#define %s_DEFINED (", &name[0]);
+			compInputVarDefineString(var, definesSrc);
+			definesSrc.pushBack(")\n");
+		}
+		else
+		{
+			definesSrc.pushBackSprintf("#define %s_DEFINED 1\n", &name[0]);
+		}
+
 		// Append to consts source
 		if(var.m_const)
 		{
-			if(var.m_mutators.getSize())
+			constsSrc.pushBackSprintf("#if %s_DEFINED == 1\n", &name[0]);
+			constsSrc.pushBackSprintf("const %s %s = %s(%s_CONSTVAL);\n", &typeTxt[0], &name[0], &typeTxt[0], &name[0]);
+			constsSrc.pushBack("#endif\n");
+		}
+
+		// Append to ubo source
+		if(var.inBlock())
+		{
+			if(blockSrc.isEmpty())
 			{
-				constsSrc.pushBack("#if ");
-				compInputVarDefineString(var, constsSrc);
-				constsSrc.pushBack("\n");
+				blockSrc.pushBack("layout(ANKI_UBO_BINDING(0, 0), std140, row_major) uniform sprubo00_ {\n");
 			}
 
-			constsSrc.pushBackSprintf("const %s %s = %s(%s_const);\n", &typeTxt[0], &name[0], &typeTxt[0], &name[0]);
+			blockSrc.pushBackSprintf("#if %s_DEFINED == 1\n", &name[0]);
 
-			if(var.m_mutators.getSize())
+			if(var.m_instanced)
 			{
-				constsSrc.pushBack("#endif\n");
+				blockSrc.pushBackSprintf("#if %s > 1\n", &m_instancingMutator->getName()[0]);
+				blockSrc.pushBackSprintf(
+					"%s %s_INSTARR[%s];\n", &typeTxt[0], &name[0], &m_instancingMutator->getName()[0]);
+				blockSrc.pushBack("#else\n");
+				blockSrc.pushBackSprintf("%s %s;\n", &typeTxt[0], &name[0]);
+				blockSrc.pushBack("#endif\n");
+
+				globalsSrc.pushBackSprintf("#if defined(ANKI_VERTEX_SHADER) && %s_DEFINED == 1 && %s > 1\n",
+					&name[0],
+					&m_instancingMutator->getName()[0]);
+				globalsSrc.pushBackSprintf("%s %s = %s_INSTARR[gl_InstanceID];\n", &typeTxt[0], &name[0], &name[0]);
+				globalsSrc.pushBack("#else\n// TODO\n#endif\n");
 			}
+			else
+			{
+				blockSrc.pushBackSprintf("%s %s;\n", &typeTxt[0], &name[0]);
+			}
+
+			blockSrc.pushBack("#endif\n");
+		}
+
+		// Append the textures to global area
+		if(var.isTexture())
+		{
+			globalsSrc.pushBackSprintf("#if %s_DEFINED == 1\n", &name[0]);
+			globalsSrc.pushBackSprintf(
+				"layout(ANKI_TEX_BINDING(0, %s_TEXUNIT)) uniform %s %s;\n", &name[0], &typeTxt[0], &name[0]);
+			globalsSrc.pushBack("#endif\n");
 		}
 
 		// Advance
@@ -602,19 +646,30 @@ void ShaderProgramResource::compInputVarDefineString(
 {
 	if(var.m_mutators.getSize() > 0)
 	{
-		for(const ShaderProgramResourceInputVariable::Mutator& mutator : var.m_mutators)
+		for(U mi = 0; mi < var.m_mutators.getSize(); ++mi)
 		{
+			const ShaderProgramResourceInputVariable::Mutator& mutator = var.m_mutators[mi];
 			list.pushBack("(");
 
-			for(ShaderProgramResourceMutatorValue val : mutator.m_values)
+			for(U vi = 0; vi < mutator.m_values.getSize(); ++vi)
 			{
-				list.pushBackSprintf("%s == %d || ", &mutator.m_mutator->m_name[0], int(val));
+				ShaderProgramResourceMutatorValue val = mutator.m_values[vi];
+
+				if(vi != mutator.m_values.getSize() - 1)
+				{
+					list.pushBackSprintf("%s == %d || ", &mutator.m_mutator->m_name[0], int(val));
+				}
+				else
+				{
+					list.pushBackSprintf("%s == %d)", &mutator.m_mutator->m_name[0], int(val));
+				}
 			}
 
-			list.pushBack("0) && ");
+			if(mi != var.m_mutators.getSize() - 1)
+			{
+				list.pushBack(" && ");
+			}
 		}
-
-		list.pushBack("1");
 	}
 }
 
@@ -715,10 +770,7 @@ void ShaderProgramResource::initVariant(WeakArray<const ShaderProgramResourceMut
 	// - Compute the block info for each var
 	// - Activate vars
 	// - Compute varius strings
-	StringListAuto blockCode(getTempAllocator());
-	StringListAuto constsCode(getTempAllocator());
-	StringListAuto texturesCode(getTempAllocator());
-	StringListAuto globalsCode(getTempAllocator());
+	StringListAuto headerSrc(getTempAllocator());
 	U texUnit = 0;
 
 	for(const ShaderProgramResourceInputVariable& in : m_inputVars)
@@ -807,26 +859,6 @@ void ShaderProgramResource::initVariant(WeakArray<const ShaderProgramResourceMut
 			{
 				ANKI_ASSERT(0);
 			}
-
-			if(in.m_instanced && instanceCount > 1)
-			{
-				blockCode.pushBackSprintf(
-					"%s %s_i[%s];\n", &toString(in.m_dataType)[0], &in.m_name[0], &m_instancingMutator->getName()[0]);
-
-				globalsCode.pushBackSprintf(R"(#if defined(ANKI_VERTEX_SHADER)
-%s %s = %s_i[gl_InstanceID];
-#else
-// TODO
-#endif
-)",
-					&toString(in.m_dataType)[0],
-					&in.m_name[0],
-					&in.m_name[0]);
-			}
-			else
-			{
-				blockCode.pushBackSprintf("%s %s;\n", &toString(in.m_dataType)[0], &in.m_name[0]);
-			}
 		} // if(in.inBlock())
 
 		if(in.m_const)
@@ -847,21 +879,21 @@ void ShaderProgramResource::initVariant(WeakArray<const ShaderProgramResourceMut
 			switch(in.m_dataType)
 			{
 			case ShaderVariableDataType::FLOAT:
-				constsCode.pushBackSprintf("#define %s_const %f\n", &in.m_name[0], constVal->m_float);
+				headerSrc.pushBackSprintf("#define %s_CONSTVAL %f\n", &in.m_name[0], constVal->m_float);
 				break;
 			case ShaderVariableDataType::VEC2:
-				constsCode.pushBackSprintf(
-					"#define %s_const %f, %f\n", &in.m_name[0], constVal->m_vec2.x(), constVal->m_vec2.y());
+				headerSrc.pushBackSprintf(
+					"#define %s_CONSTVAL %f, %f\n", &in.m_name[0], constVal->m_vec2.x(), constVal->m_vec2.y());
 				break;
 			case ShaderVariableDataType::VEC3:
-				constsCode.pushBackSprintf("#define %s_const %f, %f, %f\n",
+				headerSrc.pushBackSprintf("#define %s_CONSTVAL %f, %f, %f\n",
 					&in.m_name[0],
 					constVal->m_vec3.x(),
 					constVal->m_vec3.y(),
 					constVal->m_vec3.z());
 				break;
 			case ShaderVariableDataType::VEC4:
-				constsCode.pushBackSprintf("#define %s_const %f, %f, %f, %f\n",
+				headerSrc.pushBackSprintf("#define %s_CONSTVAL %f, %f, %f, %f\n",
 					&in.m_name[0],
 					constVal->m_vec4.x(),
 					constVal->m_vec4.y(),
@@ -875,11 +907,7 @@ void ShaderProgramResource::initVariant(WeakArray<const ShaderProgramResourceMut
 
 		if(in.isTexture())
 		{
-			texturesCode.pushBackSprintf("layout(ANKI_TEX_BINDING(0, %u)) uniform %s %s;\n",
-				texUnit,
-				&toString(in.m_dataType)[0],
-				&in.m_name[0]);
-
+			headerSrc.pushBackSprintf("#define %s_TEXUNIT %u\n", &in.m_name[0], texUnit);
 			variant.m_texUnits[in.m_idx] = texUnit;
 			++texUnit;
 		}
@@ -893,34 +921,10 @@ void ShaderProgramResource::initVariant(WeakArray<const ShaderProgramResourceMut
 		shaderHeaderSrc.pushBackSprintf("#define %s %d\n", &m.m_mutator->getName()[0], m.m_value);
 	}
 
-	if(constsCode)
+	if(!headerSrc.isEmpty())
 	{
 		StringAuto str(getTempAllocator());
-		constsCode.join("", str);
-		shaderHeaderSrc.pushBack(str.toCString());
-	}
-
-	if(variant.m_uniBlockSize)
-	{
-		StringAuto str(getTempAllocator());
-		blockCode.join("", str);
-
-		shaderHeaderSrc.pushBack("layout(ANKI_UBO_BINDING(0, 0), std140, row_major) uniform sprubo00_ {\n");
-		shaderHeaderSrc.pushBack(str.toCString());
-		shaderHeaderSrc.pushBack("};\n");
-	}
-
-	if(texturesCode)
-	{
-		StringAuto str(getTempAllocator());
-		texturesCode.join("", str);
-		shaderHeaderSrc.pushBack(str.toCString());
-	}
-
-	if(globalsCode)
-	{
-		StringAuto str(getTempAllocator());
-		globalsCode.join("", str);
+		headerSrc.join("", str);
 		shaderHeaderSrc.pushBack(str.toCString());
 	}
 

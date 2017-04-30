@@ -116,7 +116,6 @@ void main()
 					<mutators>
 						<mutator name="METAL_TEX" values="1"/>
 						<mutator name="PASS" values="0"/>
-						<mutator name="LOD" values="0"/>
 					</mutators>
 				</input>
 				<input name="normalTex" type="sampler2D">
@@ -144,35 +143,35 @@ void main()
 void main()
 {
 #if PASS == 0
-	#if PARALLAX && LOD == 0
+	#if heightTex_DEFINED
 		vec2 uv =  computeTextureCoordParallax(heightTex, in_uv, heightMapScale);
 	#else
 		vec2 uv = in_uv;
 	#endif
 
-	#if DIFFUSE_TEX
+	#if diffTex_DEFINED
 		vec3 diffColor = texture(diffTex, uv).rgb;
 	#endif
 
-	#if SPECULAR_TEX
+	#if specTex_DEFINED
 		vec3 specColor = texture(specTex, uv).rgb;
 	#endif
 
-	#if ROUGHNESS_TEX
+	#if roughnessTex_DEFINED
 		float roughness = texture(roughnessTex, uv).r;
 	#endif
 
-	#if METAL_TEX
+	#if metallicTex_DEFINED
 		float metallic = texture(metallicTex, uv).r;
 	#endif
 
-	#if NORMAL_TEX && LOD == 0
+	#if normalTex_DEFINED
 		vec3 normal = readNormalFromTexture(normalTex, uv);
 	#else
 		vec3 normal = normalize(in_normal);
 	#endif
 
-	#if EMISSIVE_TEX
+	#if emissionTex_DEFINED
 		vec3 emission = texture(emissionTex, uv).rgb;
 	#endif
 
