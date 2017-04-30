@@ -18,9 +18,43 @@
 namespace anki
 {
 
-/// Check if the drawcalls can be merged.
-static Bool canMergeBuildInfo(const RenderingBuildInfoOut& a, const RenderingBuildInfoOut& b)
+class CompleteRenderingBuildInfo
 {
+public:
+	F32 m_flod = 0.0;
+	RenderComponent* m_rc = nullptr;
+	RenderingBuildInfoIn m_in;
+	RenderingBuildInfoOut m_out;
+};
+
+/// Drawer's context
+class DrawContext
+{
+public:
+	Pass m_pass;
+	Mat4 m_viewMat;
+	Mat4 m_viewProjMat;
+	CommandBufferPtr m_cmdb;
+
+	const VisibleNode* m_visibleNode = nullptr;
+
+	Array<Mat4, MAX_INSTANCES> m_cachedTrfs;
+	U m_cachedTrfCount = 0;
+
+	StagingGpuMemoryToken m_uboToken;
+
+	U m_nodeProcessedCount = 0;
+
+	Array<CompleteRenderingBuildInfo, 2> m_buildInfo;
+	U m_crntBuildInfo = 0;
+};
+
+/// Check if the drawcalls can be merged.
+static Bool canMergeBuildInfo(const CompleteRenderingBuildInfo& abi, const CompleteRenderingBuildInfo& bbi)
+{
+	const RenderingBuildInfoOut& a = abi.m_out;
+	const RenderingBuildInfoOut& b = bbi.m_out;
+
 	if(!a.m_hasTransform || !b.m_hasTransform)
 	{
 		// Cannot merge if there is no transform
@@ -28,6 +62,11 @@ static Bool canMergeBuildInfo(const RenderingBuildInfoOut& a, const RenderingBui
 	}
 
 	ANKI_ASSERT(a.m_hasTransform == b.m_hasTransform);
+
+	if(abi.m_rc->getMaterial().getUuid() != bbi.m_rc->getMaterial().getUuid())
+	{
+		return false;
+	}
 
 	if(a.m_program != b.m_program)
 	{
@@ -105,37 +144,6 @@ static void resetRenderingBuildInfoOut(RenderingBuildInfoOut& b)
 	b.m_drawArrays = false;
 	b.m_topology = PrimitiveTopology::TRIANGLES;
 }
-
-class CompleteRenderingBuildInfo
-{
-public:
-	F32 m_flod = 0.0;
-	RenderComponent* m_rc = nullptr;
-	RenderingBuildInfoIn m_in;
-	RenderingBuildInfoOut m_out;
-};
-
-/// Drawer's context
-class DrawContext
-{
-public:
-	Pass m_pass;
-	Mat4 m_viewMat;
-	Mat4 m_viewProjMat;
-	CommandBufferPtr m_cmdb;
-
-	const VisibleNode* m_visibleNode = nullptr;
-
-	Array<Mat4, MAX_INSTANCES> m_cachedTrfs;
-	U m_cachedTrfCount = 0;
-
-	StagingGpuMemoryToken m_uboToken;
-
-	U m_nodeProcessedCount = 0;
-
-	Array<CompleteRenderingBuildInfo, 2> m_buildInfo;
-	U m_crntBuildInfo = 0;
-};
 
 RenderableDrawer::~RenderableDrawer()
 {
@@ -453,7 +461,7 @@ Error RenderableDrawer::drawSingle(DrawContext& ctx)
 			ctx.m_cachedTrfs[ctx.m_cachedTrfCount++] = crntBuild.m_out.m_transform;
 		}
 	}
-	else if(crntBuild.m_out.m_hasTransform && canMergeBuildInfo(crntBuild.m_out, prevBuild.m_out)
+	else if(crntBuild.m_out.m_hasTransform && canMergeBuildInfo(crntBuild, prevBuild)
 		&& ctx.m_cachedTrfCount < MAX_INSTANCES - 1)
 	{
 		// Can merge, will cache the drawcall and skip the drawcall
