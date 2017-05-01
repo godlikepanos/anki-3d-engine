@@ -12,6 +12,7 @@
 #include <anki/renderer/Is.h>
 #include <anki/renderer/Ms.h>
 #include <anki/renderer/Dbg.h>
+#include <anki/renderer/Ssao.h>
 #include <anki/renderer/DownscaleBlur.h>
 #include <anki/util/Logger.h>
 #include <anki/misc/ConfigSet.h>

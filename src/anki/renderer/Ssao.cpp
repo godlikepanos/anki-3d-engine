@@ -17,51 +17,39 @@ namespace anki
 
 const PixelFormat Ssao::RT_PIXEL_FORMAT(ComponentFormat::R8, TransformFormat::UNORM);
 
-template<typename TVec>
-static void genDisk(TVec* ANKI_RESTRICT arr, TVec* ANKI_RESTRICT arrEnd)
+TexturePtr SsaoMain::getRt() const
 {
-	ANKI_ASSERT(arr && arrEnd && arr < arrEnd);
+	return m_rt[m_r->getFrameCount() & 1];
+}
 
-	do
-	{
-		arr->x() = randRange(0.1, 1.0) * 2.0 - 1.0;
-		arr->y() = randRange(0.1, 1.0) * 2.0 - 1.0;
-	} while(++arr != arrEnd);
+TexturePtr SsaoMain::getPreviousRt() const
+{
+	return m_rt[(m_r->getFrameCount() + 1) & 1];
 }
 
 Error SsaoMain::init(const ConfigSet& config)
 {
-	// RT
-	m_rt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_ssao->m_width,
-		m_ssao->m_height,
-		Ssao::RT_PIXEL_FORMAT,
-		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::CLEAR,
-		SamplingFilter::LINEAR,
-		1,
-		"ssaomain"));
+	for(U i = 0; i < 2; ++i)
+	{
+		// RT
+		m_rt[i] = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_ssao->m_width,
+			m_ssao->m_height,
+			Ssao::RT_PIXEL_FORMAT,
+			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::CLEAR,
+			SamplingFilter::LINEAR,
+			1,
+			"ssaomain"));
 
-	// FB
-	FramebufferInitInfo fbInit("ssaomain");
-	fbInit.m_colorAttachmentCount = 1;
-	fbInit.m_colorAttachments[0].m_texture = m_rt;
-	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
+		// FB
+		FramebufferInitInfo fbInit("ssaomain");
+		fbInit.m_colorAttachmentCount = 1;
+		fbInit.m_colorAttachments[0].m_texture = m_rt[i];
+		fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
+		m_fb[i] = getGrManager().newInstance<Framebuffer>(fbInit);
+	}
 
 	// Noise
 	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseLdrRgb64x64.ankitex", m_noiseTex));
-
-	// Kernel
-	StringAuto kernelStr(getAllocator());
-	Array<Vec2, SAMPLES> kernel;
-
-	genDisk(kernel.begin(), kernel.end());
-	kernelStr.create("vec2[](");
-	for(U i = 0; i < kernel.size(); i++)
-	{
-		StringAuto tmp(getAllocator());
-		tmp.sprintf("vec2(%f, %f)%s", kernel[i].x(), kernel[i].y(), (i != kernel.getSize() - 1) ? ", " : ")");
-		kernelStr.append(tmp);
-	}
 
 	// Shader
 	ANKI_CHECK(m_r->createShaderf("shaders/Ssao.frag.glsl",
@@ -69,14 +57,10 @@ Error SsaoMain::init(const ConfigSet& config)
 		"#define NOISE_MAP_SIZE %u\n"
 		"#define WIDTH %u\n"
 		"#define HEIGHT %u\n"
-		"#define SAMPLES %u\n"
-		"#define KERNEL_ARRAY %s\n"
 		"#define RADIUS float(%f)\n",
 		m_noiseTex->getWidth(),
 		m_ssao->m_width,
 		m_ssao->m_height,
-		SAMPLES,
-		&kernelStr[0],
 		HEMISPHERE_RADIUS));
 
 	m_r->createDrawQuadShaderProgram(m_frag->getGrShader(), m_prog);
@@ -86,27 +70,39 @@ Error SsaoMain::init(const ConfigSet& config)
 
 void SsaoMain::setPreRunBarriers(RenderingContext& ctx)
 {
-	ctx.m_commandBuffer->setTextureSurfaceBarrier(
-		m_rt, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureSurfaceInfo(0, 0, 0, 0));
+	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_rt[m_r->getFrameCount() & 1],
+		TextureUsageBit::NONE,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+		TextureSurfaceInfo(0, 0, 0, 0));
 }
 
 void SsaoMain::run(RenderingContext& ctx)
 {
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
-	cmdb->beginRenderPass(m_fb);
+	cmdb->beginRenderPass(m_fb[m_r->getFrameCount() & 1]);
 	cmdb->setViewport(0, 0, m_ssao->m_width, m_ssao->m_height);
 	cmdb->bindShaderProgram(m_prog);
 
 	cmdb->bindTexture(0, 0, m_r->getDepthDownscale().m_qd.m_depthRt);
 	cmdb->bindTextureAndSampler(0, 1, m_r->getMs().m_rt2, m_r->getLinearSampler());
 	cmdb->bindTexture(0, 2, m_noiseTex->getGrTexture());
+	cmdb->bindTexture(0, 3, m_rt[(m_r->getFrameCount() + 1) & 1]);
 
-	Vec4* unis = allocateAndBindUniforms<Vec4*>(sizeof(Vec4) * 2, cmdb, 0, 0);
+	struct Unis
+	{
+		Vec4 m_unprojectionParams;
+		Vec4 m_projectionMat;
+		Vec4 m_noiseLayerPad3;
+		Mat4 m_prevViewProjMatMulInvViewProjMat;
+	};
+
+	Unis* unis = allocateAndBindUniforms<Unis*>(sizeof(Unis), cmdb, 0, 0);
 	const Mat4& pmat = ctx.m_projMat;
-	*unis = ctx.m_unprojParams;
-	++unis;
-	*unis = Vec4(pmat(0, 0), pmat(1, 1), pmat(2, 2), pmat(2, 3));
+	unis->m_unprojectionParams = ctx.m_unprojParams;
+	unis->m_projectionMat = Vec4(pmat(0, 0), pmat(1, 1), pmat(2, 2), pmat(2, 3));
+	unis->m_noiseLayerPad3 = Vec4(m_r->getFrameCount() % m_noiseTex->getLayerCount(), 0.0, 0.0, 0.0);
+	unis->m_prevViewProjMatMulInvViewProjMat = ctx.m_prevViewProjMat * ctx.m_viewProjMat.getInverse();
 
 	m_r->drawQuad(cmdb);
 	cmdb->endRenderPass();
@@ -114,7 +110,7 @@ void SsaoMain::run(RenderingContext& ctx)
 
 void SsaoMain::setPostRunBarriers(RenderingContext& ctx)
 {
-	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_rt,
+	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_rt[m_r->getFrameCount() & 1],
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		TextureUsageBit::SAMPLED_FRAGMENT,
 		TextureSurfaceInfo(0, 0, 0, 0));
@@ -144,7 +140,7 @@ Error SsaoHBlur::init(const ConfigSet& config)
 		"#define HPASS\n"
 		"#define COL_R\n"
 		"#define TEXTURE_SIZE vec2(%f, %f)\n"
-		"#define KERNEL_SIZE 11\n",
+		"#define KERNEL_SIZE 5\n",
 		F32(m_ssao->m_width),
 		F32(m_ssao->m_height)));
 
@@ -166,7 +162,7 @@ void SsaoHBlur::run(RenderingContext& ctx)
 	cmdb->setViewport(0, 0, m_ssao->m_width, m_ssao->m_height);
 	cmdb->beginRenderPass(m_fb);
 	cmdb->bindShaderProgram(m_prog);
-	cmdb->bindTexture(0, 0, m_ssao->m_main.m_rt);
+	cmdb->bindTexture(0, 0, m_ssao->m_main.m_rt[m_r->getFrameCount() & 1]);
 	m_r->drawQuad(cmdb);
 	cmdb->endRenderPass();
 }
@@ -186,7 +182,7 @@ Error SsaoVBlur::init(const ConfigSet& config)
 		"#define VPASS\n"
 		"#define COL_R\n"
 		"#define TEXTURE_SIZE vec2(%f, %f)\n"
-		"#define KERNEL_SIZE 9\n",
+		"#define KERNEL_SIZE 5\n",
 		F32(m_ssao->m_width),
 		F32(m_ssao->m_height)));
 
@@ -197,7 +193,7 @@ Error SsaoVBlur::init(const ConfigSet& config)
 
 void SsaoVBlur::setPreRunBarriers(RenderingContext& ctx)
 {
-	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_ssao->m_main.m_rt,
+	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_ssao->m_main.m_rt[m_r->getFrameCount() & 1],
 		TextureUsageBit::NONE,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		TextureSurfaceInfo(0, 0, 0, 0));
@@ -208,7 +204,7 @@ void SsaoVBlur::run(RenderingContext& ctx)
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 	cmdb->setViewport(0, 0, m_ssao->m_width, m_ssao->m_height);
-	cmdb->beginRenderPass(m_ssao->m_main.m_fb);
+	cmdb->beginRenderPass(m_ssao->m_main.m_fb[m_r->getFrameCount() & 1]);
 	cmdb->bindShaderProgram(m_prog);
 	cmdb->bindTexture(0, 0, m_ssao->m_hblur.m_rt);
 	m_r->drawQuad(cmdb);
@@ -217,7 +213,7 @@ void SsaoVBlur::run(RenderingContext& ctx)
 
 void SsaoVBlur::setPostRunBarriers(RenderingContext& ctx)
 {
-	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_ssao->m_main.m_rt,
+	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_ssao->m_main.m_rt[m_r->getFrameCount() & 1],
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		TextureUsageBit::SAMPLED_FRAGMENT,
 		TextureSurfaceInfo(0, 0, 0, 0));

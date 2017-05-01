@@ -51,7 +51,7 @@ const U TILE_SIZE = 64;
 const U FS_FRACTION = 2;
 
 /// SSAO size is rendererSize/SSAO_FRACTION.
-const U SSAO_FRACTION = 4;
+const U SSAO_FRACTION = 2;
 
 /// Bloom size is rendererSize/BLOOM_FRACTION.
 const U BLOOM_FRACTION = 4;
