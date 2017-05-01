@@ -185,8 +185,8 @@ void Is::run(RenderingContext& ctx)
 	cmdb->bindTexture(1, 0, (ctx.m_is.m_diffDecalTex) ? ctx.m_is.m_diffDecalTex : m_r->getDummyTexture());
 	cmdb->bindTexture(
 		1, 1, (ctx.m_is.m_normRoughnessDecalTex) ? ctx.m_is.m_normRoughnessDecalTex : m_r->getDummyTexture());
-	cmdb->informTextureCurrentUsage(m_r->getSsao().m_main.m_rt, TextureUsageBit::SAMPLED_FRAGMENT);
-	cmdb->bindTexture(1, 2, m_r->getSsao().m_main.m_rt);
+	cmdb->informTextureCurrentUsage(m_r->getSsao().m_main.getPreviousRt(), TextureUsageBit::SAMPLED_FRAGMENT);
+	cmdb->bindTexture(1, 2, m_r->getSsao().m_main.getPreviousRt());
 
 	bindUniforms(cmdb, 0, 0, ctx.m_is.m_commonToken);
 	bindUniforms(cmdb, 0, 1, ctx.m_is.m_pointLightsToken);
