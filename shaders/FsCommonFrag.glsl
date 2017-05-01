@@ -23,6 +23,7 @@ layout(ANKI_TEX_BINDING(1, 0)) uniform sampler2D anki_msDepthRt;
 #define anki_u_time u_time
 #define RENDERER_SIZE (u_lightingUniforms.rendererSizeTimePad1.xy * 0.5)
 
+// Varyings
 layout(location = 0) flat in float in_alpha;
 layout(location = 1) in vec2 in_uv;
 layout(location = 2) in vec3 in_posViewSpace;
@@ -121,12 +122,12 @@ void particleAlpha(vec4 color, vec4 scaleColor, vec4 biasColor)
 	writeGBuffer(color * scaleColor + biasColor);
 }
 
-void fog(in sampler2D depthMap, in vec3 color, in float fogScale)
+void fog(vec3 color, float fogScale)
 {
 	const vec2 screenSize = 1.0 / RENDERER_SIZE;
 
 	vec2 texCoords = gl_FragCoord.xy * screenSize;
-	float depth = texture(depthMap, texCoords).r;
+	float depth = texture(anki_msDepthRt, texCoords).r;
 	float diff;
 
 	if(depth < 1.0)

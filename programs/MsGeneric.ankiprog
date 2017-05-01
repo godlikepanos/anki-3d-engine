@@ -161,8 +161,8 @@ void main()
 		float roughness = texture(roughnessTex, uv).r;
 	#endif
 
-	#if metallicTex_DEFINED
-		float metallic = texture(metallicTex, uv).r;
+	#if metalTex_DEFINED
+		float metallic = texture(metalTex, uv).r;
 	#endif
 
 	#if normalTex_DEFINED
@@ -171,8 +171,8 @@ void main()
 		vec3 normal = normalize(in_normal);
 	#endif
 
-	#if emissionTex_DEFINED
-		vec3 emission = texture(emissionTex, uv).rgb;
+	#if emissiveTex_DEFINED
+		vec3 emission = texture(emissiveTex, uv).rgb;
 	#endif
 
 	writeRts(diffColor, normal, specColor, roughness, subsurface, emission, metallic);

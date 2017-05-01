@@ -145,8 +145,8 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 		if(mtl.GetTexture(aiTextureType_REFLECTION, 0, &path) == AI_SUCCESS)
 		{
 			std::string metallicTex = m_texrpath + getFilename(path.C_Str());
-			xml = replaceAllString(
-				xml, "%metallic%", "<input shaderInput=\"metallicTex\" value=\"" + metallicTex + "\"/>");
+			xml =
+				replaceAllString(xml, "%metallic%", "<input shaderInput=\"metalTex\" value=\"" + metallicTex + "\"/>");
 
 			xml = replaceAllString(xml, "%metalTexMutator%", "1");
 		}
@@ -197,7 +197,7 @@ void Exporter::exportMaterial(const aiMaterial& mtl) const
 		{
 			std::string emissiveTex = m_texrpath + getFilename(path.C_Str());
 			xml = replaceAllString(
-				xml, "%emission%", "<input shaderInput=\"emissionTex\" value=\"" + emissiveTex + "\"/>");
+				xml, "%emission%", "<input shaderInput=\"emissiveTex\" value=\"" + emissiveTex + "\"/>");
 
 			xml = replaceAllString(xml, "%emissiveTexMutator%", "1");
 		}
