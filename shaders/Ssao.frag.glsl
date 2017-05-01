@@ -82,13 +82,22 @@ void main(void)
 
 	vec3 normal = readNormal(in_uv);
 
-	// Get prev SSAO
-	vec4 clip = u_prevViewProjMatMulInvViewProjMat * vec4(vec3(ndc, UV_TO_NDC(depth)), 1.0);
-	vec2 oldUv = NDC_TO_UV(clip.xy / clip.w);
-	float prevSsao = textureLod(u_prevSsaoRt, oldUv, 0.0).r;
-
 	// Get rand factors
 	vec3 randFactors = readRandom(in_uv);
+
+	// Get prev SSAO
+	vec4 clip = u_prevViewProjMatMulInvViewProjMat * vec4(vec3(ndc, UV_TO_NDC(depth)), 1.0);
+	clip.xy /= clip.w;
+	float prevSsao;
+	if(any(greaterThan(abs(clip.xy), vec2(1.0))))
+	{
+		prevSsao = 1.0;
+	}
+	else
+	{
+		vec2 oldUv = NDC_TO_UV(clip.xy);
+		prevSsao = textureLod(u_prevSsaoRt, oldUv, 0.0).r;
+	}
 
 	// Find the projected radius
 	vec3 sphereLimit = origin + vec3(RADIUS, 0.0, 0.0);
