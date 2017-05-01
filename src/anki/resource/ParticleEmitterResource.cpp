@@ -40,7 +40,7 @@ static ANKI_USE_RESULT Error xmlF32(const XmlElement& el_, const CString& str, F
 	}
 
 	F64 tmp;
-	err = el.getF64(tmp);
+	err = el.getNumber(tmp);
 	if(!err)
 	{
 		out = tmp;
@@ -61,7 +61,7 @@ static ANKI_USE_RESULT Error xmlU32(const XmlElement& el_, const CString& str, U
 	}
 
 	I64 tmp;
-	err = el.getI64(tmp);
+	err = el.getNumber(tmp);
 	if(!err)
 	{
 		out = static_cast<U32>(tmp);
@@ -200,8 +200,8 @@ void ParticleEmitterResource::getRenderingInfo(U lod, ShaderProgramPtr& prog) co
 {
 	lod = min<U>(lod, m_lodCount - 1);
 
-	RenderingKey key(Pass::MS_FS, lod, false, 1);
-	const MaterialVariant& variant = m_material->getVariant(key);
+	RenderingKey key(Pass::MS_FS, lod, 1);
+	const MaterialVariant& variant = m_material->getOrCreateVariant(key);
 	prog = variant.getShaderProgram();
 }
 

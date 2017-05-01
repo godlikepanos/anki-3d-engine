@@ -31,14 +31,23 @@ public:
 		m_sourceLines.destroy(m_alloc);
 	}
 
-	/// Parse a PrePreprocessor formated GLSL file. Use the accessors to get the output
-	/// @param filename The file to parse
+	/// Run an include preprocessor in a GLSL file.
+	/// @param filename The file to parse.
 	ANKI_USE_RESULT Error parseFile(const ResourceFilename& filename);
 
-	const String& getShaderSource() const
+	/// Run an include preprocessor in some GLSL source.
+	/// @param src The source to parse.
+	ANKI_USE_RESULT Error parseSourceString(CString src)
+	{
+		ANKI_CHECK(parseSource(src, 0));
+		m_sourceLines.join(m_alloc, "\n", m_shaderSource);
+		return ErrorCode::NONE;
+	}
+
+	CString getShaderSource() const
 	{
 		ANKI_ASSERT(!m_shaderSource.isEmpty());
-		return m_shaderSource;
+		return m_shaderSource.toCString();
 	}
 
 	ShaderType getShaderType() const
@@ -67,6 +76,9 @@ protected:
 	/// @param depth The #line in GLSL does not support filename so an depth it being used. It also tracks the
 	///        includance depth
 	ANKI_USE_RESULT Error parseFileIncludes(ResourceFilename filename, U32 depth);
+
+	/// Parse some source text.
+	ANKI_USE_RESULT Error parseSource(CString src, U depth);
 
 	void printSourceLines() const; ///< For debugging
 };

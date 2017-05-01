@@ -51,8 +51,8 @@ public:
 	{
 		ANKI_ASSERT(a.m_node && b.m_node);
 
-		return a.m_node->getComponent<RenderComponent>().getMaterial()
-			< b.m_node->getComponent<RenderComponent>().getMaterial();
+		return a.m_node->getComponent<RenderComponent>().getMaterial().getUuid()
+			< b.m_node->getComponent<RenderComponent>().getMaterial().getUuid();
 	}
 };
 

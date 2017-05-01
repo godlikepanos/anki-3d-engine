@@ -218,6 +218,14 @@ TForwardIterator binarySearch(TForwardIterator first, TForwardIterator last, con
 	first = std::lower_bound(first, last, value, comp);
 	return (first != last && !comp(value, *first)) ? first : last;
 }
+
+/// Individual classes should specialize that function if they are packed. If a class is packed it can be used as
+/// whole in hashing.
+template<typename T>
+constexpr Bool isPacked()
+{
+	return false;
+}
 /// @}
 
 } // end namespace anki

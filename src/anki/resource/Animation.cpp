@@ -49,7 +49,7 @@ Error Animation::load(const ResourceFilename& filename)
 	ANKI_CHECK(rootel.getChildElementOptional("repeat", repel));
 	if(repel)
 	{
-		ANKI_CHECK(repel.getI64(tmp));
+		ANKI_CHECK(repel.getNumber(tmp));
 		m_repeat = tmp;
 	}
 	else
@@ -103,7 +103,7 @@ Error Animation::load(const ResourceFilename& filename)
 
 				// <time>
 				ANKI_CHECK(keyEl.getChildElement("time", el));
-				ANKI_CHECK(el.getF64(ftmp));
+				ANKI_CHECK(el.getNumber(ftmp));
 				key.m_time = ftmp;
 				m_startTime = std::min(m_startTime, key.m_time);
 				maxTime = std::max(maxTime, key.m_time);
@@ -140,7 +140,7 @@ Error Animation::load(const ResourceFilename& filename)
 
 				// <time>
 				ANKI_CHECK(keyEl.getChildElement("time", el));
-				ANKI_CHECK(el.getF64(ftmp));
+				ANKI_CHECK(el.getNumber(ftmp));
 				key.m_time = ftmp;
 				m_startTime = std::min(m_startTime, key.m_time);
 				maxTime = std::max(maxTime, key.m_time);
@@ -179,14 +179,14 @@ Error Animation::load(const ResourceFilename& filename)
 
 				// <time>
 				ANKI_CHECK(keyEl.getChildElement("time", el));
-				ANKI_CHECK(el.getF64(ftmp));
+				ANKI_CHECK(el.getNumber(ftmp));
 				key.m_time = ftmp;
 				m_startTime = std::min(m_startTime, key.m_time);
 				maxTime = std::max(maxTime, key.m_time);
 
 				// <value>
 				ANKI_CHECK(keyEl.getChildElement("value", el));
-				ANKI_CHECK(el.getF64(ftmp));
+				ANKI_CHECK(el.getNumber(ftmp));
 				key.m_value = ftmp;
 
 				// Check ident

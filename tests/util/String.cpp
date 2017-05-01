@@ -192,18 +192,18 @@ ANKI_TEST(Util, String)
 		I64 i;
 		String a;
 		a.create(alloc, "123456789");
-		ANKI_TEST_EXPECT_NO_ERR(a.toI64(i));
+		ANKI_TEST_EXPECT_NO_ERR(a.toNumber(i));
 		ANKI_TEST_EXPECT_EQ(i, 123456789);
 		a.destroy(alloc);
 
 		a.create(alloc, "-9223372036854775807");
-		ANKI_TEST_EXPECT_NO_ERR(a.toI64(i));
+		ANKI_TEST_EXPECT_NO_ERR(a.toNumber(i));
 		ANKI_TEST_EXPECT_EQ(i, -9223372036854775807);
 		a.destroy(alloc);
 
 		F64 f;
 		a.create(alloc, "123456789.145");
-		ANKI_TEST_EXPECT_NO_ERR(a.toF64(f));
+		ANKI_TEST_EXPECT_NO_ERR(a.toNumber(f));
 		ANKI_TEST_EXPECT_EQ(f, 123456789.145);
 		a.destroy(alloc);
 	}

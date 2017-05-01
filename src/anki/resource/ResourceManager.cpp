@@ -16,6 +16,7 @@
 #include <anki/resource/TextureResource.h>
 #include <anki/resource/GenericResource.h>
 #include <anki/resource/TextureAtlas.h>
+#include <anki/resource/ShaderProgramResource.h>
 #include <anki/util/Logger.h>
 #include <anki/misc/ConfigSet.h>
 
@@ -67,6 +68,7 @@ Error ResourceManager::create(ResourceManagerInitInfo& init)
 	ANKI_RESOURCE(CollisionResource)
 	ANKI_RESOURCE(GenericResource)
 	ANKI_RESOURCE(TextureAtlas)
+	ANKI_RESOURCE(ShaderProgramResource)
 
 #undef ANKI_RESOURCE
 

@@ -151,7 +151,7 @@ Error ConfigSet::loadFromFile(CString filename)
 		{
 			if(option.m_type == 1)
 			{
-				ANKI_CHECK(el.getF64(option.m_fVal));
+				ANKI_CHECK(el.getNumber(option.m_fVal));
 			}
 			else
 			{
@@ -251,7 +251,7 @@ Error ConfigSet::setFromCommandLineArguments(U cmdLineArgsCount, char* cmdLineAr
 			else
 			{
 				CString val(arg);
-				ANKI_CHECK(val.toF64(option->m_fVal));
+				ANKI_CHECK(val.toNumber(option->m_fVal));
 			}
 		}
 	}

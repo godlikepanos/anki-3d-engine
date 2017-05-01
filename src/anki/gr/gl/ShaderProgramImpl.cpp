@@ -10,29 +10,51 @@
 namespace anki
 {
 
+static void deletePrograms(GLsizei n, const GLuint* progs)
+{
+	ANKI_ASSERT(n == 1);
+	ANKI_ASSERT(progs);
+	glDeleteProgram(*progs);
+}
+
+ShaderProgramImpl::ShaderProgramImpl(GrManager* manager)
+	: GlObject(manager)
+{
+}
+
+ShaderProgramImpl::~ShaderProgramImpl()
+{
+	destroyDeferred(deletePrograms);
+}
+
 Error ShaderProgramImpl::initGraphics(ShaderPtr vert, ShaderPtr tessc, ShaderPtr tesse, ShaderPtr geom, ShaderPtr frag)
 {
 	m_glName = glCreateProgram();
 	ANKI_ASSERT(m_glName != 0);
 
 	glAttachShader(m_glName, vert->m_impl->getGlName());
+	m_shaders[ShaderType::VERTEX] = vert;
 
 	if(tessc)
 	{
 		glAttachShader(m_glName, tessc->m_impl->getGlName());
+		m_shaders[ShaderType::TESSELLATION_CONTROL] = tessc;
 	}
 
 	if(tesse)
 	{
 		glAttachShader(m_glName, tesse->m_impl->getGlName());
+		m_shaders[ShaderType::TESSELLATION_EVALUATION] = tesse;
 	}
 
 	if(geom)
 	{
 		glAttachShader(m_glName, geom->m_impl->getGlName());
+		m_shaders[ShaderType::GEOMETRY] = geom;
 	}
 
 	glAttachShader(m_glName, frag->m_impl->getGlName());
+	m_shaders[ShaderType::FRAGMENT] = frag;
 
 	return link(vert->m_impl->getGlName(), frag->m_impl->getGlName());
 }
@@ -43,6 +65,7 @@ Error ShaderProgramImpl::initCompute(ShaderPtr comp)
 	ANKI_ASSERT(m_glName != 0);
 
 	glAttachShader(m_glName, comp->m_impl->getGlName());
+	m_shaders[ShaderType::COMPUTE] = comp;
 
 	return link(0, 0);
 }

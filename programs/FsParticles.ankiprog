@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<shaderProgram>
+	<mutators>
+		<mutator name="ANIMATED_TEXTURE" values="0 1"/>
+		<mutator name="LIGHT" values="0 1"/>
+	</mutators>
+
+	<shaders>
+		<shader type="vert">
+			<inputs>
+				<input name="mvp" type="mat4"/>
+				<input name="cameraRotMat" type="mat3"/>
+				<input name="viewMat" type="mat4"/>
+			</inputs>
+
+			<source><![CDATA[#include "shaders/FsCommonVert.glsl"
+void main() 
+{
+	particle(mvp, cameraRotMat, viewMat);
+}
+			]]>
+			</source>
+		</shader>
+
+		<shader type="frag">
+			<inputs>
+				<input name="diffuseMap" type="sampler2D">
+					<mutators>
+						<mutator name="ANIMATED_TEXTURE" values="0"/>
+					</mutators>
+				</input>
+				<input name="diffuseMapArr" type="sampler2DArray">
+					<mutators>
+						<mutator name="ANIMATED_TEXTURE" values="1"/>
+					</mutators>
+				</input>
+				<input name="animationPeriod" type="float" const="1">
+					<mutators>
+						<mutator name="ANIMATED_TEXTURE" values="1"/>
+					</mutators>
+				</input>
+				<input name="colorScale" type="vec4" const="1"/>
+				<input name="colorBias" type="vec4" const="1"/>
+			</inputs>
+
+			<source><![CDATA[#include "shaders/FsCommonFrag.glsl"
+void main() 
+{
+#if ANIMATED_TEXTURE == 1
+	vec4 texCol = readAnimatedTextureRgba(diffuseMapArr, animationPeriod, in_uv, anki_u_time);
+#else
+	vec4 texCol = texture(diffuseMap, in_uv);
+#endif
+
+#if LIGHT
+	texCol.rgb = computeLightColor(texCol.rgb);
+#endif
+	
+	vec4 colScale = colorScale;
+	colScale.a *= in_alpha;
+	particleAlpha(texCol, colScale, colorBias);
+}
+			]]>
+			</source>
+		</shader>
+	</shaders>
+</shaderProgram>
+

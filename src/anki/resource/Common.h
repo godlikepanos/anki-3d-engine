@@ -31,7 +31,7 @@ class ResourcePointer;
 
 /// @name Constants
 /// @{
-const U MAX_LODS = 3;
+const U MAX_LOD = 3;
 const U MAX_INSTANCES = 64;
 const U MAX_SUB_DRAWCALLS = 64;
 
@@ -76,6 +76,7 @@ ANKI_FORWARD(DummyRsrc, DummyResourcePtr)
 ANKI_FORWARD(CollisionResource, CollisionResourcePtr)
 ANKI_FORWARD(GenericResource, GenericResourcePtr)
 ANKI_FORWARD(TextureAtlas, TextureAtlasResourcePtr)
+ANKI_FORWARD(ShaderProgramResource, ShaderProgramResourcePtr)
 
 #undef ANKI_FORWARD
 

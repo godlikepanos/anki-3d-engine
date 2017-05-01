@@ -330,6 +330,18 @@ public:
 		}
 	}
 
+	template<typename Y, PtrSize S>
+	WeakArray(const Array<Y, S>& arr)
+		: Base(&arr[0], S)
+	{
+	}
+
+	template<typename Y>
+	WeakArray(const DynamicArrayBase<Y>& arr)
+		: Base((arr.getSize()) ? &arr[0] : nullptr, arr.getSize())
+	{
+	}
+
 	/// Copy.
 	WeakArray(const WeakArray& b)
 		: Base(b.m_data, b.m_size)

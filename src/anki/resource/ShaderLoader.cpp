@@ -34,37 +34,42 @@ Error ShaderLoader::parseFile(const ResourceFilename& filename)
 	ANKI_CHECK(fileExtensionToShaderType(filename, m_type));
 
 	// Parse files recursively
-	Error err = parseFileIncludes(filename, 0);
+	ANKI_CHECK(parseFileIncludes(filename, 0));
 
-	if(!err)
-	{
-		m_sourceLines.join(m_alloc, "\n", m_shaderSource);
-	}
+	m_sourceLines.join(m_alloc, "\n", m_shaderSource);
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 Error ShaderLoader::parseFileIncludes(ResourceFilename filename, U32 depth)
 {
+	// load file in lines
+	ResourceFilePtr file;
+	ANKI_CHECK(m_manager->getFilesystem().openFile(filename, file));
+
+	StringAuto txt(m_alloc);
+	ANKI_CHECK(file->readAllText(m_alloc, txt));
+
+	ANKI_CHECK(parseSource(txt.toCString(), depth));
+
+	return ErrorCode::NONE;
+}
+
+Error ShaderLoader::parseSource(CString src, U depth)
+{
 	// first check the depth
 	if(depth > MAX_INCLUDE_DEPTH)
 	{
-		ANKI_RESOURCE_LOGE("The include depth is too high. "
-						   "Probably circular includance");
+		ANKI_RESOURCE_LOGE("The include depth is too high. Probably circular includance");
 		return ErrorCode::USER_DATA;
 	}
 
-	// load file in lines
-	StringAuto txt(m_alloc);
+	// Split the file to lines
 	StringListAuto lines(m_alloc);
-
-	ResourceFilePtr file;
-	ANKI_CHECK(m_manager->getFilesystem().openFile(filename, file));
-	ANKI_CHECK(file->readAllText(TempResourceAllocator<char>(m_alloc), txt));
-	lines.splitString(txt.toCString(), '\n');
+	lines.splitString(src, '\n');
 	if(lines.getSize() < 1)
 	{
-		ANKI_RESOURCE_LOGE("File is empty: %s", &filename[0]);
+		ANKI_RESOURCE_LOGE("Source is empty");
 		return ErrorCode::USER_DATA;
 	}
 

@@ -369,8 +369,8 @@ void VisibilityTestTask::test(ThreadHive& hive)
 			if(wantsRenderComponents || (wantsShadowCasters && rc->getCastsShadow()))
 			{
 				visible->moveBack(alloc,
-					rc->getMaterial().getForwardShading() ? VisibilityGroupType::RENDERABLES_FS
-														  : VisibilityGroupType::RENDERABLES_MS,
+					rc->getMaterial().isForwardShading() ? VisibilityGroupType::RENDERABLES_FS
+														 : VisibilityGroupType::RENDERABLES_MS,
 					visibleNode);
 
 				if(wantsShadowCasters)

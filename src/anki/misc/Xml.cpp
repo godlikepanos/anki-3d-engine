@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/misc/Xml.h>
-#include <anki/util/StringList.h>
 #include <anki/util/File.h>
 #include <anki/util/Logger.h>
 
@@ -37,96 +36,37 @@ Error XmlElement::getText(CString& out) const
 	return err;
 }
 
-Error XmlElement::getI64(I64& out) const
+Error XmlElement::getMat3(Mat3& out) const
 {
-	Error err = check();
+	DynamicArrayAuto<F32> arr(m_alloc);
+	Error err = getNumbers(arr);
+
+	if(!err && arr.getSize() != 9)
+	{
+		ANKI_MISC_LOGE("Expecting 9 elements for Mat3");
+		err = ErrorCode::USER_DATA;
+	}
 
 	if(!err)
 	{
-		const char* txt = m_el->GetText();
-		if(txt != nullptr)
+		for(U i = 0; i < 9 && !err; i++)
 		{
-			err = CString(txt).toI64(out);
+			out[i] = arr[i];
 		}
-		else
-		{
-			ANKI_MISC_LOGE("Failed to return int. Element: %s", m_el->Value());
-			err = ErrorCode::USER_DATA;
-		}
-	}
-
-	return err;
-}
-
-Error XmlElement::getF64(F64& out) const
-{
-	Error err = check();
-
-	if(!err)
-	{
-		const char* txt = m_el->GetText();
-		if(txt != nullptr)
-		{
-			err = CString(txt).toF64(out);
-		}
-		else
-		{
-			ANKI_MISC_LOGE("Failed to return float. Element: %s", m_el->Value());
-			err = ErrorCode::USER_DATA;
-		}
-	}
-
-	return err;
-}
-
-Error XmlElement::getFloats(DynamicArrayAuto<F64>& out) const
-{
-	Error err = check();
-
-	const char* txt;
-	if(!err)
-	{
-		txt = m_el->GetText();
-		if(txt == nullptr)
-		{
-			err = ErrorCode::USER_DATA;
-		}
-	}
-
-	StringList list;
-	if(!err)
-	{
-		list.splitString(m_alloc, txt, ' ');
-	}
-
-	out = DynamicArrayAuto<F64>(m_alloc);
-
-	if(!err)
-	{
-		out.create(list.getSize());
-	}
-
-	auto it = list.getBegin();
-	for(U i = 0; i < out.getSize() && !err; i++)
-	{
-		err = it->toF64(out[i]);
-		++it;
 	}
 
 	if(err)
 	{
-		ANKI_MISC_LOGE("Failed to return floats. Element: %s", m_el->Value());
+		ANKI_MISC_LOGE("Failed to return Mat3. Element: %s", m_el->Value());
 	}
-
-	list.destroy(m_alloc);
 
 	return err;
 }
 
 Error XmlElement::getMat4(Mat4& out) const
 {
-	DynamicArrayAuto<F64> arr(m_alloc);
-	Error err = getFloats(arr);
+	DynamicArrayAuto<F32> arr(m_alloc);
+	Error err = getNumbers(arr);
 
 	if(!err && arr.getSize() != 16)
 	{
@@ -150,10 +90,37 @@ Error XmlElement::getMat4(Mat4& out) const
 	return err;
 }
 
+Error XmlElement::getVec2(Vec2& out) const
+{
+	DynamicArrayAuto<F32> arr(m_alloc);
+	Error err = getNumbers(arr);
+
+	if(!err && arr.getSize() != 2)
+	{
+		ANKI_MISC_LOGE("Expecting 2 elements for Vec2");
+		err = ErrorCode::USER_DATA;
+	}
+
+	if(!err)
+	{
+		for(U i = 0; i < 2; i++)
+		{
+			out[i] = arr[i];
+		}
+	}
+
+	if(err)
+	{
+		ANKI_MISC_LOGE("Failed to return Vec2. Element: %s", m_el->Value());
+	}
+
+	return err;
+}
+
 Error XmlElement::getVec3(Vec3& out) const
 {
-	DynamicArrayAuto<F64> arr(m_alloc);
-	Error err = getFloats(arr);
+	DynamicArrayAuto<F32> arr(m_alloc);
+	Error err = getNumbers(arr);
 
 	if(!err && arr.getSize() != 3)
 	{
@@ -179,8 +146,8 @@ Error XmlElement::getVec3(Vec3& out) const
 
 Error XmlElement::getVec4(Vec4& out) const
 {
-	DynamicArrayAuto<F64> arr(m_alloc);
-	Error err = getFloats(arr);
+	DynamicArrayAuto<F32> arr(m_alloc);
+	Error err = getNumbers(arr);
 
 	if(!err && arr.getSize() != 4)
 	{
@@ -236,7 +203,7 @@ Error XmlElement::getChildElement(const CString& name, XmlElement& out) const
 
 	if(!out)
 	{
-		ANKI_MISC_LOGE("Cannot find tag %s", &name[0]);
+		ANKI_MISC_LOGE("Cannot find tag \"%s\"", &name[0]);
 		err = ErrorCode::USER_DATA;
 	}
 
@@ -260,26 +227,45 @@ Error XmlElement::getNextSiblingElement(const CString& name, XmlElement& out) co
 
 Error XmlElement::getSiblingElementsCount(U32& out) const
 {
-	Error err = check();
-	if(!err)
+	ANKI_CHECK(check());
+	const tinyxml2::XMLElement* el = m_el;
+
+	I count = -1;
+	do
 	{
-		const tinyxml2::XMLElement* el = m_el;
+		el = el->NextSiblingElement(m_el->Name());
+		++count;
+	} while(el);
 
-		I count = -1;
-		do
-		{
-			el = el->NextSiblingElement(m_el->Name());
-			++count;
-		} while(el);
+	out = count;
 
-		out = count;
+	return ErrorCode::NONE;
+}
+
+Error XmlElement::getAttributeTextOptional(const CString& name, CString& out, Bool& attribPresent) const
+{
+	ANKI_CHECK(check());
+
+	const tinyxml2::XMLAttribute* attrib = m_el->FindAttribute(&name[0]);
+	if(!attrib)
+	{
+		attribPresent = false;
+		return ErrorCode::NONE;
+	}
+
+	attribPresent = true;
+
+	const char* value = attrib->Value();
+	if(value)
+	{
+		out = value;
 	}
 	else
 	{
-		out = 0;
+		out = CString();
 	}
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 CString XmlDocument::XML_HEADER = R"(<?xml version="1.0" encoding="UTF-8" ?>)";
@@ -319,7 +305,7 @@ ANKI_USE_RESULT Error XmlDocument::getChildElement(const CString& name, XmlEleme
 
 	if(!out)
 	{
-		ANKI_MISC_LOGE("Cannot find tag %s", &name[0]);
+		ANKI_MISC_LOGE("Cannot find tag \"%s\"", &name[0]);
 		err = ErrorCode::USER_DATA;
 	}
 

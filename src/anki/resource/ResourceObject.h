@@ -30,7 +30,7 @@ public:
 	virtual ~ResourceObject();
 
 	/// @privatesection
-	ResourceManager& getManager()
+	ResourceManager& getManager() const
 	{
 		return *m_manager;
 	}

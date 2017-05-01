@@ -49,7 +49,7 @@ Error TextureAtlas::load(const ResourceFilename& filename)
 	//
 	ANKI_CHECK(rootel.getChildElement("subTextureMargin", el));
 	I64 margin = 0;
-	ANKI_CHECK(el.getI64(margin));
+	ANKI_CHECK(el.getNumber(margin));
 	if(margin >= I(m_tex->getWidth()) || margin >= I(m_tex->getHeight()) || margin < 0)
 	{
 		ANKI_RESOURCE_LOGE("Too big margin %d", U(margin));

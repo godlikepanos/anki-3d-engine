@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<shaderProgram>
+	<mutators>
+		<mutator name="INSTANCE_COUNT" values="1 2 4 8 16 32 64"/>
+		<mutator name="LOD" values="0 1"/>
+		<mutator name="PASS" values="0 1"/>
+		<mutator name="DIFFUSE_TEX" values="0 1"/>
+		<mutator name="SPECULAR_TEX" values="0 1"/>
+		<mutator name="ROUGHNESS_TEX" values="0 1"/>
+		<mutator name="METAL_TEX" values="0 1"/>
+		<mutator name="NORMAL_TEX" values="0 1"/>
+		<mutator name="PARALLAX" values="0 1"/>
+		<mutator name="EMISSIVE_TEX" values="0 1"/>
+	</mutators>
+
+	<shaders>
+		<shader type="vert">
+			<inputs>
+				<input name="mvp" type="mat4" instanceCount="INSTANCE_COUNT"/>
+				<input name="normalMat" type="mat3" instanceCount="INSTANCE_COUNT">
+					<mutators>
+						<mutator name="PASS" values="0"/>
+					</mutators>
+				</input>
+				<input name="modelViewMat" type="mat4" instanceCount="INSTANCE_COUNT">
+					<mutators>
+						<mutator name="PASS" values="0"/>
+						<mutator name="PARALLAX" values="1"/>
+					</mutators>
+				</input>
+			</inputs>
+
+			<source><![CDATA[#include "shaders/MsCommonVert.glsl"
+void main() 
+{
+#if PASS == 0
+	positionUvNormalTangent(mvp, normalMat);
+	
+	#if PARALLAX
+		parallax(modelViewMat);
+	#endif
+#else
+	ANKI_WRITE_POSITION(mvp * vec4(in_position, 1.0));
+#endif
+}
+			]]>
+			</source>
+		</shader>
+
+		<shader type="frag">
+			<inputs>
+				<!-- Consts -->
+				<input name="diffColor" type="vec3" const="1">
+					<mutators>
+						<mutator name="DIFFUSE_TEX" values="0"/>
+						<mutator name="PASS" values="0"/>
+					</mutators>
+				</input>
+				<input name="specColor" type="vec3" const="1">
+					<mutators>
+						<mutator name="SPECULAR_TEX" values="0"/>
+						<mutator name="PASS" values="0"/>
+					</mutators>
+				</input>
+				<input name="roughness" type="float" const="1">
+					<mutators>
+						<mutator name="ROUGHNESS_TEX" values="0"/>
+						<mutator name="PASS" values="0"/>
+					</mutators>
+				</input>
+				<input name="metallic" type="float" const="1">
+					<mutators>
+						<mutator name="METAL_TEX" values="0"/>
+						<mutator name="PASS" values="0"/>
+					</mutators>
+				</input>
+				<input name="emission" type="vec3" const="1">
+					<mutators>
+						<mutator name="EMISSIVE_TEX" values="0"/>
+						<mutator name="PASS" values="0"/>
+					</mutators>
+				</input>
+				<input name="heightMapScale" type="float" const="1">
+					<mutators>
+						<mutator name="PARALLAX" values="1"/>
+						<mutator name="PASS" values="0"/>
+						<mutator name="LOD" values="0"/>
+					</mutators>
+				</input>
+				<input name="subsurface" type="float" const="1">
+					<mutators>
+						<mutator name="PASS" values="0"/>
+					</mutators>
+				</input>
+
+				<!-- Textures -->
+				<input name="diffTex" type="sampler2D">
+					<mutators>
+						<mutator name="DIFFUSE_TEX" values="1"/>
+						<mutator name="PASS" values="0"/>
+					</mutators>
+				</input>
+				<input name="specTex" type="sampler2D">
+					<mutators>
+						<mutator name="SPECULAR_TEX" values="1"/>
+						<mutator name="PASS" values="0"/>
+					</mutators>
+				</input>
+				<input name="roughnessTex" type="sampler2D">
+					<mutators>
+						<mutator name="ROUGHNESS_TEX" values="1"/>
+						<mutator name="PASS" values="0"/>
+					</mutators>
+				</input>
+				<input name="metalTex" type="sampler2D">
+					<mutators>
+						<mutator name="METAL_TEX" values="1"/>
+						<mutator name="PASS" values="0"/>
+					</mutators>
+				</input>
+				<input name="normalTex" type="sampler2D">
+					<mutators>
+						<mutator name="NORMAL_TEX" values="1"/>
+						<mutator name="PASS" values="0"/>
+					</mutators>
+				</input>
+				<input name="heightTex" type="sampler2D">
+					<mutators>
+						<mutator name="PARALLAX" values="1"/>
+						<mutator name="PASS" values="0"/>
+						<mutator name="LOD" values="0"/>
+					</mutators>
+				</input>
+				<input name="emissiveTex" type="sampler2D">
+					<mutators>
+						<mutator name="EMISSIVE_TEX" values="1"/>
+						<mutator name="PASS" values="0"/>
+					</mutators>
+				</input>
+			</inputs>
+
+			<source><![CDATA[#include "shaders/MsCommonFrag.glsl"
+void main()
+{
+#if PASS == 0
+	#if heightTex_DEFINED
+		vec2 uv =  computeTextureCoordParallax(heightTex, in_uv, heightMapScale);
+	#else
+		vec2 uv = in_uv;
+	#endif
+
+	#if diffTex_DEFINED
+		vec3 diffColor = texture(diffTex, uv).rgb;
+	#endif
+
+	#if specTex_DEFINED
+		vec3 specColor = texture(specTex, uv).rgb;
+	#endif
+
+	#if roughnessTex_DEFINED
+		float roughness = texture(roughnessTex, uv).r;
+	#endif
+
+	#if metalTex_DEFINED
+		float metallic = texture(metalTex, uv).r;
+	#endif
+
+	#if normalTex_DEFINED
+		vec3 normal = readNormalFromTexture(normalTex, uv);
+	#else
+		vec3 normal = normalize(in_normal);
+	#endif
+
+	#if emissiveTex_DEFINED
+		vec3 emission = texture(emissiveTex, uv).rgb;
+	#endif
+
+	writeRts(diffColor, normal, specColor, roughness, subsurface, emission, metallic);
+#endif
+}
+			]]></source>
+		</shader>
+	</shaders>
+</shaderProgram>

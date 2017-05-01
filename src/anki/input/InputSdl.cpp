@@ -87,7 +87,7 @@ Error Input::init(NativeWindow* nativeWindow)
 	MAP(SDLK_q, Q);
 	MAP(SDLK_r, R);
 	MAP(SDLK_s, S);
-	MAP(SDLK_y, T);
+	MAP(SDLK_t, T);
 	MAP(SDLK_u, U);
 	MAP(SDLK_v, V);
 	MAP(SDLK_w, W);

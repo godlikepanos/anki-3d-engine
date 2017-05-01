@@ -9,9 +9,10 @@ static void parseCommandLineArgs(int argc, char** argv, Exporter& exporter)
 {
 	static const char* usage = R"(Usage: %s in_file out_dir [options]
 Options:
--rpath <string>    : Append a string to the meshes and materials
--texrpath <string> : Append a string to the textures paths
--flipyz            : Flip y with z (For blender exports)
+-rpath <string>     : Replace all absolute paths of assets with that path
+-texrpath <string>  : Same as rpath but for textures
+-progrpath <string> : Same as rpath but for shader programs
+-flipyz             : Flip y with z (For blender exports)
 )";
 
 	// Parse config

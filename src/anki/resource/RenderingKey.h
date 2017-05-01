@@ -24,29 +24,33 @@ class RenderingKey
 public:
 	Pass m_pass;
 	U8 m_lod;
-	Bool8 m_tessellation;
 	U8 m_instanceCount;
 
-	RenderingKey(Pass pass, U8 lod, Bool tessellation, U instanceCount)
+	RenderingKey(Pass pass, U8 lod, U instanceCount)
 		: m_pass(pass)
 		, m_lod(lod)
-		, m_tessellation(tessellation)
 		, m_instanceCount(instanceCount)
 	{
 		ANKI_ASSERT(m_instanceCount <= MAX_INSTANCES && m_instanceCount != 0);
-		ANKI_ASSERT(m_lod <= MAX_LODS);
+		ANKI_ASSERT(m_lod <= MAX_LOD);
 	}
 
 	RenderingKey()
-		: RenderingKey(Pass::MS_FS, 0, false, 1)
+		: RenderingKey(Pass::MS_FS, 0, 1)
 	{
 	}
 
 	RenderingKey(const RenderingKey& b)
-		: RenderingKey(b.m_pass, b.m_lod, b.m_tessellation, b.m_instanceCount)
+		: RenderingKey(b.m_pass, b.m_lod, b.m_instanceCount)
 	{
 	}
 };
+
+template<>
+constexpr Bool isPacked<RenderingKey>()
+{
+	return sizeof(RenderingKey) == 3;
+}
 
 /// The hash function
 class RenderingKeyHasher
@@ -54,7 +58,7 @@ class RenderingKeyHasher
 public:
 	PtrSize operator()(const RenderingKey& key) const
 	{
-		return U8(key.m_pass) | (key.m_lod << 8) | (key.m_tessellation << 16) | (key.m_instanceCount << 24);
+		return U8(key.m_pass) | (key.m_lod << 8) | (key.m_instanceCount << 16);
 	}
 };
 
@@ -64,8 +68,7 @@ class RenderingKeyEqual
 public:
 	Bool operator()(const RenderingKey& a, const RenderingKey& b) const
 	{
-		return a.m_pass == b.m_pass && a.m_lod == b.m_lod && a.m_tessellation == b.m_tessellation
-			&& a.m_instanceCount == b.m_instanceCount;
+		return a.m_pass == b.m_pass && a.m_lod == b.m_lod && a.m_instanceCount == b.m_instanceCount;
 	}
 };
 

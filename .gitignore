@@ -10,5 +10,6 @@
 !*.xml
 !*.md
 !*.txt
+!*.ankiprog
 !CMakeLists.txt
 build*/*
