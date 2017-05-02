@@ -325,6 +325,7 @@ void ShaderImpl::doReflection(const std::vector<unsigned int>& spirv)
 {
 	spirv_cross::Compiler spvc(spirv);
 	spirv_cross::ShaderResources rsrc = spvc.get_shader_resources();
+	spirv_cross::ShaderResources rsrcActive = spvc.get_shader_resources(spvc.get_active_interface_variables());
 
 	Array<U, MAX_DESCRIPTOR_SETS> counts = {{
 		0,
@@ -383,7 +384,7 @@ void ShaderImpl::doReflection(const std::vector<unsigned int>& spirv)
 	// Attribs
 	if(m_shaderType == ShaderType::VERTEX)
 	{
-		for(const spirv_cross::Resource& r : rsrc.stage_inputs)
+		for(const spirv_cross::Resource& r : rsrcActive.stage_inputs)
 		{
 			const U32 id = r.id;
 			const U32 location = spvc.get_decoration(id, spv::Decoration::DecorationLocation);
