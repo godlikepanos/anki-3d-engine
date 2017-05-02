@@ -380,11 +380,7 @@ static void createCube(GrManager& gr, BufferPtr& verts, BufferPtr& indices)
 	indices->unmap();
 }
 
-ANKI_TEST(Gr, GrManager)
-{
-	COMMON_BEGIN()
-	COMMON_END()
-}
+ANKI_TEST(Gr, GrManager){COMMON_BEGIN() COMMON_END()}
 
 ANKI_TEST(Gr, Shader)
 {

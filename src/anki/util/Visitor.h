@@ -59,7 +59,7 @@ struct GetVariadicTypeId
 	template<typename Type>
 	static constexpr I get()
 	{
-		return sizeof...(Types)-Helper<Type, Types...>::ID - 1;
+		return sizeof...(Types) - Helper<Type, Types...>::ID - 1;
 	}
 };
 
@@ -172,7 +172,7 @@ private:
 	template<typename TVisitor, typename TFirst, typename TSecond, typename... Types_>
 	void acceptVisitorInternal(TVisitor& v)
 	{
-		constexpr I i = sizeof...(Types) - sizeof...(Types_)-1;
+		constexpr I i = sizeof...(Types) - sizeof...(Types_) - 1;
 
 		switch(m_what)
 		{
@@ -202,7 +202,7 @@ private:
 	template<typename TVisitor, typename TFirst, typename TSecond, typename... Types_>
 	void acceptVisitorInternalConst(TVisitor& v) const
 	{
-		constexpr I i = sizeof...(Types) - sizeof...(Types_)-1;
+		constexpr I i = sizeof...(Types) - sizeof...(Types_) - 1;
 
 		switch(m_what)
 		{
@@ -311,7 +311,7 @@ private:
 	ANKI_USE_RESULT Error acceptVisitorInternal(TVisitor& v)
 	{
 		Error err = ErrorCode::NONE;
-		constexpr I i = sizeof...(Types) - sizeof...(Types_)-1;
+		constexpr I i = sizeof...(Types) - sizeof...(Types_) - 1;
 
 		switch(m_what)
 		{
@@ -364,7 +364,7 @@ private:
 	ANKI_USE_RESULT Error acceptVisitorInternalConst(TVisitor& v) const
 	{
 		Error err = ErrorCode::NONE;
-		constexpr I i = sizeof...(Types) - sizeof...(Types_)-1;
+		constexpr I i = sizeof...(Types) - sizeof...(Types_) - 1;
 
 		switch(m_what)
 		{
