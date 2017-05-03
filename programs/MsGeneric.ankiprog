@@ -2,7 +2,7 @@
 <shaderProgram>
 	<mutators>
 		<mutator name="INSTANCE_COUNT" values="1 2 4 8 16 32 64"/>
-		<mutator name="LOD" values="0 1"/>
+		<mutator name="LOD" values="0 1 2"/>
 		<mutator name="PASS" values="0 1"/>
 		<mutator name="DIFFUSE_TEX" values="0 1"/>
 		<mutator name="SPECULAR_TEX" values="0 1"/>
@@ -122,6 +122,7 @@ void main()
 					<mutators>
 						<mutator name="NORMAL_TEX" values="1"/>
 						<mutator name="PASS" values="0"/>
+						<mutator name="LOD" values="0 1"/>
 					</mutators>
 				</input>
 				<input name="heightTex" type="sampler2D">

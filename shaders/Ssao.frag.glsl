@@ -10,7 +10,7 @@
 
 const float BIAS = 0.3;
 const float STRENGTH = 2.5;
-const float HISTORY_FEEDBACK = 1.0 / 16.0;
+const float HISTORY_FEEDBACK = 1.0 / 8.0;
 
 layout(location = 0) in vec2 in_uv;
 
