@@ -10,19 +10,18 @@
 #define LIGHT_SET 0
 #define LIGHT_SS_BINDING 0
 #define LIGHT_UBO_BINDING 0
-#define LIGHT_TEX_BINDING 4
+#define LIGHT_TEX_BINDING 0
+#define LIGHT_LIGHTS
 #define LIGHT_INDIRECT
 #define LIGHT_DECALS
 #include "shaders/ClusterLightCommon.glsl"
 
-layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_msRt0;
-layout(ANKI_TEX_BINDING(0, 1)) uniform sampler2D u_msRt1;
-layout(ANKI_TEX_BINDING(0, 2)) uniform sampler2D u_msRt2;
-layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2D u_msDepthRt;
+layout(ANKI_TEX_BINDING(1, 0)) uniform sampler2D u_msRt0;
+layout(ANKI_TEX_BINDING(1, 1)) uniform sampler2D u_msRt1;
+layout(ANKI_TEX_BINDING(1, 2)) uniform sampler2D u_msRt2;
+layout(ANKI_TEX_BINDING(1, 3)) uniform sampler2D u_msDepthRt;
 
-layout(ANKI_TEX_BINDING(1, 0)) uniform sampler2D u_diffDecalTex;
-layout(ANKI_TEX_BINDING(1, 1)) uniform sampler2D u_normalRoughnessDecalTex;
-layout(ANKI_TEX_BINDING(1, 2)) uniform sampler2D u_ssaoTex;
+layout(ANKI_TEX_BINDING(1, 4)) uniform sampler2D u_ssaoTex;
 
 layout(location = 0) in vec2 in_uv;
 layout(location = 1) in vec2 in_clusterIJ;

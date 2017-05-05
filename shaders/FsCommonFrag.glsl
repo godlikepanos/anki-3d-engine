@@ -18,6 +18,7 @@ layout(ANKI_TEX_BINDING(1, 0)) uniform sampler2D anki_msDepthRt;
 #define LIGHT_UBO_BINDING 0
 #define LIGHT_SS_BINDING 0
 #define LIGHT_TEX_BINDING 1
+#define LIGHT_LIGHTS
 #include "shaders/ClusterLightCommon.glsl"
 
 #define anki_u_time u_time

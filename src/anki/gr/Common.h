@@ -27,6 +27,29 @@ class FramebufferInitInfo;
 /// @addtogroup graphics
 /// @{
 
+// Some constants
+const U MAX_VERTEX_ATTRIBUTES = 8;
+const U MAX_COLOR_ATTACHMENTS = 4;
+const U MAX_MIPMAPS = 16;
+const U MAX_TEXTURE_LAYERS = 32;
+
+const U MAX_TEXTURE_BINDINGS = 8;
+const U MAX_UNIFORM_BUFFER_BINDINGS = 5;
+const U MAX_STORAGE_BUFFER_BINDINGS = 4;
+const U MAX_IMAGE_BINDINGS = 4;
+const U MAX_TEXTURE_BUFFER_BINDINGS = 4;
+
+const U MAX_BINDINGS_PER_DESCRIPTOR_SET = MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS
+	+ MAX_STORAGE_BUFFER_BINDINGS + MAX_IMAGE_BINDINGS + MAX_TEXTURE_BUFFER_BINDINGS;
+
+const U MAX_FRAMES_IN_FLIGHT = 3; ///< Triple buffering.
+const U MAX_DESCRIPTOR_SETS = 2; ///< Groups that can be bound at the same time.
+
+const U MAX_GR_OBJECT_NAME_LENGTH = 15;
+
+/// The number of commands in a command buffer that make it a small batch command buffer.
+const U COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS = 100;
+
 /// Smart pointer for resources.
 template<typename T>
 using GrObjectPtr = IntrusivePtr<T, DefaultPtrDeleter<T>>;
@@ -147,18 +170,6 @@ public:
 	U32 m_level = 0;
 };
 
-// Some constants
-const U MAX_VERTEX_ATTRIBUTES = 8;
-const U MAX_COLOR_ATTACHMENTS = 4;
-const U MAX_MIPMAPS = 16;
-const U MAX_TEXTURE_LAYERS = 32;
-
-const U MAX_TEXTURE_BINDINGS = 10;
-const U MAX_UNIFORM_BUFFER_BINDINGS = 5;
-const U MAX_STORAGE_BUFFER_BINDINGS = 4;
-const U MAX_IMAGE_BINDINGS = 4;
-const U MAX_TEXTURE_BUFFER_BINDINGS = 4;
-
 enum class DescriptorType : U8
 {
 	TEXTURE,
@@ -169,17 +180,6 @@ enum class DescriptorType : U8
 
 	COUNT
 };
-
-const U MAX_BINDINGS_PER_DESCRIPTOR_SET = MAX_TEXTURE_BINDINGS + MAX_UNIFORM_BUFFER_BINDINGS
-	+ MAX_STORAGE_BUFFER_BINDINGS + MAX_IMAGE_BINDINGS + MAX_TEXTURE_BUFFER_BINDINGS;
-
-const U MAX_FRAMES_IN_FLIGHT = 3; ///< Triple buffering.
-const U MAX_DESCRIPTOR_SETS = 2; ///< Groups that can be bound at the same time.
-
-const U MAX_GR_OBJECT_NAME_LENGTH = 15;
-
-/// The number of commands in a command buffer that make it a small batch command buffer.
-const U COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS = 100;
 
 /// The base of all init infos for GR.
 class GrBaseInitInfo

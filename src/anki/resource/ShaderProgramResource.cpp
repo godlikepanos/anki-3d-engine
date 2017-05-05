@@ -225,13 +225,10 @@ Error ShaderProgramResource::load(const ResourceFilename& filename)
 		} while(mutatorEl);
 	}
 
-	// <shaders>
-	XmlElement shadersEl;
-	ANKI_CHECK(rootEl.getChildElement("shaders", shadersEl));
-
-	// <shader>
 	// Count the input variables
 	U inputVarCount = 0;
+	XmlElement shadersEl;
+	ANKI_CHECK(rootEl.getChildElement("shaders", shadersEl));
 	XmlElement shaderEl;
 	ANKI_CHECK(shadersEl.getChildElement("shader", shaderEl));
 	do
@@ -253,6 +250,20 @@ Error ShaderProgramResource::load(const ResourceFilename& filename)
 
 		ANKI_CHECK(shaderEl.getNextSiblingElement("shader", shaderEl));
 	} while(shaderEl);
+
+	XmlElement inputsEl;
+	ANKI_CHECK(rootEl.getChildElementOptional("inputs", inputsEl));
+	if(inputsEl)
+	{
+		XmlElement inputEl;
+		ANKI_CHECK(inputsEl.getChildElement("input", inputEl));
+
+		U32 count;
+		ANKI_CHECK(inputEl.getSiblingElementsCount(count));
+		++count;
+
+		inputVarCount += count;
+	}
 
 	if(inputVarCount)
 	{
@@ -307,6 +318,12 @@ Error ShaderProgramResource::load(const ResourceFilename& filename)
 		// Advance
 		ANKI_CHECK(shaderEl.getNextSiblingElement("shader", shaderEl));
 	} while(shaderEl);
+
+	// <inputs>
+	if(inputsEl)
+	{
+		ANKI_CHECK(parseInputs(inputsEl, inputVarCount, constSrcList, blockSrcList, globalsSrcList, definesSrcList));
+	}
 
 	ANKI_ASSERT(inputVarCount == m_inputVars.getSize());
 

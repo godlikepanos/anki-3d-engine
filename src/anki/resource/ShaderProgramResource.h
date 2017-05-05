@@ -268,6 +268,15 @@ static_assert(sizeof(ShaderProgramResourceConstantValue) == sizeof(Vec4) * 2, "N
 /// 		<mutator name="str" values="array of ints"/>
 /// 	</mutators>]
 ///
+///		[<inputs> (3)
+///			<input name="str" type="float | vec2 | vec3 | vec4 | mat3 | mat4 | samplerXXX"
+///				[instanceCount="mutator name"] [const="0 | 1"]>
+///				[<mutators> (2)
+///					<mutator name="variant_name" values="array of ints"/>
+///				</mutators>]
+///			</input>
+///		</inputs>]
+///
 ///		<shaders>
 ///			<shader type="vert | frag | tese | tesc"/>
 ///
@@ -290,6 +299,7 @@ static_assert(sizeof(ShaderProgramResourceConstantValue) == sizeof(Vec4) * 2, "N
 /// (1): This is a variant list. It contains the means to permutate the program.
 /// (2): This lists a subset of mutators and out of these variants a subset of their values. The input variable will
 ///      become active only on those mutators. Mutators not listed are implicitly added with all their values.
+/// (3): Global inputs. For all shaders.
 class ShaderProgramResource : public ResourceObject
 {
 public:

@@ -172,21 +172,21 @@ void Is::run(RenderingContext& ctx)
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 	cmdb->bindShaderProgram(m_lightProg);
 
-	cmdb->bindTexture(0, 0, m_r->getMs().m_rt0);
-	cmdb->bindTexture(0, 1, m_r->getMs().m_rt1);
-	cmdb->bindTexture(0, 2, m_r->getMs().m_rt2);
-	cmdb->bindTexture(0, 3, m_r->getMs().m_depthRt, DepthStencilAspectBit::DEPTH);
-	cmdb->bindTexture(0, 4, m_r->getSm().m_spotTexArray);
-	cmdb->bindTexture(0, 5, m_r->getSm().m_omniTexArray);
-	cmdb->bindTexture(0, 6, m_r->getIr().getReflectionTexture());
-	cmdb->bindTexture(0, 7, m_r->getIr().getIrradianceTexture());
-	cmdb->bindTextureAndSampler(0, 8, m_r->getIr().getIntegrationLut(), m_r->getIr().getIntegrationLutSampler());
+	cmdb->bindTexture(1, 0, m_r->getMs().m_rt0);
+	cmdb->bindTexture(1, 1, m_r->getMs().m_rt1);
+	cmdb->bindTexture(1, 2, m_r->getMs().m_rt2);
+	cmdb->bindTexture(1, 3, m_r->getMs().m_depthRt, DepthStencilAspectBit::DEPTH);
+	cmdb->bindTexture(1, 4, m_r->getSsao().m_main.getPreviousRt());
 
-	cmdb->bindTexture(1, 0, (ctx.m_is.m_diffDecalTex) ? ctx.m_is.m_diffDecalTex : m_r->getDummyTexture());
+	cmdb->bindTexture(0, 0, m_r->getSm().m_spotTexArray);
+	cmdb->bindTexture(0, 1, m_r->getSm().m_omniTexArray);
+	cmdb->bindTexture(0, 2, m_r->getIr().getReflectionTexture());
+	cmdb->bindTexture(0, 3, m_r->getIr().getIrradianceTexture());
+	cmdb->bindTextureAndSampler(0, 4, m_r->getIr().getIntegrationLut(), m_r->getIr().getIntegrationLutSampler());
+	cmdb->bindTexture(0, 5, (ctx.m_is.m_diffDecalTex) ? ctx.m_is.m_diffDecalTex : m_r->getDummyTexture());
 	cmdb->bindTexture(
-		1, 1, (ctx.m_is.m_normRoughnessDecalTex) ? ctx.m_is.m_normRoughnessDecalTex : m_r->getDummyTexture());
+		0, 6, (ctx.m_is.m_normRoughnessDecalTex) ? ctx.m_is.m_normRoughnessDecalTex : m_r->getDummyTexture());
 	cmdb->informTextureCurrentUsage(m_r->getSsao().m_main.getPreviousRt(), TextureUsageBit::SAMPLED_FRAGMENT);
-	cmdb->bindTexture(1, 2, m_r->getSsao().m_main.getPreviousRt());
 
 	bindUniforms(cmdb, 0, 0, ctx.m_is.m_commonToken);
 	bindUniforms(cmdb, 0, 1, ctx.m_is.m_pointLightsToken);
