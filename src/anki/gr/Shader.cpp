@@ -94,14 +94,38 @@ void writeShaderBlockMemory(ShaderVariableDataType type,
 {
 	switch(type)
 	{
+	case ShaderVariableDataType::INT:
+		writeShaderBlockMemorySimple<I32>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
+		break;
+	case ShaderVariableDataType::UINT:
+		writeShaderBlockMemorySimple<U32>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
+		break;
 	case ShaderVariableDataType::FLOAT:
 		writeShaderBlockMemorySimple<F32>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
+		break;
+	case ShaderVariableDataType::IVEC2:
+		writeShaderBlockMemorySimple<IVec2>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
+		break;
+	case ShaderVariableDataType::UVEC2:
+		writeShaderBlockMemorySimple<UVec2>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
 		break;
 	case ShaderVariableDataType::VEC2:
 		writeShaderBlockMemorySimple<Vec2>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
 		break;
+	case ShaderVariableDataType::IVEC3:
+		writeShaderBlockMemorySimple<IVec3>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
+		break;
+	case ShaderVariableDataType::UVEC3:
+		writeShaderBlockMemorySimple<UVec3>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
+		break;
 	case ShaderVariableDataType::VEC3:
 		writeShaderBlockMemorySimple<Vec3>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
+		break;
+	case ShaderVariableDataType::IVEC4:
+		writeShaderBlockMemorySimple<IVec4>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
+		break;
+	case ShaderVariableDataType::UVEC4:
+		writeShaderBlockMemorySimple<UVec4>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);
 		break;
 	case ShaderVariableDataType::VEC4:
 		writeShaderBlockMemorySimple<Vec4>(varBlkInfo, elements, elementsCount, buffBegin, buffEnd);

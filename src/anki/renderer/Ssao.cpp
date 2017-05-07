@@ -140,7 +140,7 @@ Error SsaoHBlur::init(const ConfigSet& config)
 		"#define HPASS\n"
 		"#define COL_R\n"
 		"#define TEXTURE_SIZE vec2(%f, %f)\n"
-		"#define KERNEL_SIZE 5\n",
+		"#define KERNEL_SIZE 9\n",
 		F32(m_ssao->m_width),
 		F32(m_ssao->m_height)));
 
@@ -182,7 +182,7 @@ Error SsaoVBlur::init(const ConfigSet& config)
 		"#define VPASS\n"
 		"#define COL_R\n"
 		"#define TEXTURE_SIZE vec2(%f, %f)\n"
-		"#define KERNEL_SIZE 5\n",
+		"#define KERNEL_SIZE 9\n",
 		F32(m_ssao->m_width),
 		F32(m_ssao->m_height)));
 

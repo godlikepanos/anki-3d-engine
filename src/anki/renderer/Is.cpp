@@ -94,31 +94,15 @@ Error Is::initInternal(const ConfigSet& config)
 	//
 	// Load shaders and programs
 	//
-	StringAuto pps(getAllocator());
+	ANKI_CHECK(getResourceManager().loadResource("programs/Is.ankiprog", m_prog));
 
-	pps.sprintf("#define CLUSTER_COUNT_X %u\n"
-				"#define CLUSTER_COUNT_Y %u\n"
-				"#define CLUSTER_COUNT %u\n"
-				"#define RENDERER_WIDTH %u\n"
-				"#define RENDERER_HEIGHT %u\n"
-				"#define MAX_LIGHT_INDICES %u\n"
-				"#define POISSON %u\n"
-				"#define INDIRECT_ENABLED %u\n"
-				"#define IR_MIPMAP_COUNT %u\n",
-		m_clusterCounts[0],
-		m_clusterCounts[1],
-		m_clusterCount,
-		m_r->getWidth(),
-		m_r->getHeight(),
-		m_maxLightIds,
-		m_r->getSm().m_poissonEnabled,
-		1,
-		m_r->getIr().getReflectionTextureMipmapCount());
+	ShaderProgramResourceConstantValues<5> consts(m_prog);
+	consts.add("CLUSTER_COUNT_X", U32(m_clusterCounts[0]))
+		.add("CLUSTER_COUNT_Y", U32(m_clusterCounts[1]))
+		.add("CLUSTER_COUNT", U32(m_clusterCount))
+		.add("IR_MIPMAP_COUNT", U32(m_r->getIr().getReflectionTextureMipmapCount()));
 
-	ANKI_CHECK(m_r->createShader("shaders/Is.vert.glsl", m_lightVert, &pps[0]));
-	ANKI_CHECK(m_r->createShader("shaders/Is.frag.glsl", m_lightFrag, &pps[0]));
-
-	m_lightProg = getGrManager().newInstance<ShaderProgram>(m_lightVert->getGrShader(), m_lightFrag->getGrShader());
+	m_prog->getOrCreateVariant(consts.m_constantValues, m_progVariant);
 
 	//
 	// Create framebuffer
@@ -170,7 +154,7 @@ void Is::run(RenderingContext& ctx)
 
 	cmdb->beginRenderPass(m_fb);
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
-	cmdb->bindShaderProgram(m_lightProg);
+	cmdb->bindShaderProgram(m_progVariant->getProgram());
 
 	cmdb->bindTexture(1, 0, m_r->getMs().m_rt0);
 	cmdb->bindTexture(1, 1, m_r->getMs().m_rt1);

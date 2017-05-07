@@ -242,6 +242,16 @@ class ShaderProgramResourceConstantValue
 public:
 	union
 	{
+		I32 m_int;
+		IVec2 m_ivec2;
+		IVec3 m_ivec3;
+		IVec4 m_ivec4;
+
+		U32 m_uint;
+		UVec2 m_uvec2;
+		UVec3 m_uvec3;
+		UVec4 m_uvec4;
+
 		F32 m_float;
 		Vec2 m_vec2;
 		Vec3 m_vec3;
@@ -269,7 +279,7 @@ static_assert(sizeof(ShaderProgramResourceConstantValue) == sizeof(Vec4) * 2, "N
 /// 	</mutators>]
 ///
 ///		[<inputs> (3)
-///			<input name="str" type="float | vec2 | vec3 | vec4 | mat3 | mat4 | samplerXXX"
+///			<input name="str" type="uint | int | float | vec2 | vec3 | vec4 | mat3 | mat4 | samplerXXX"
 ///				[instanceCount="mutator name"] [const="0 | 1"]>
 ///				[<mutators> (2)
 ///					<mutator name="variant_name" values="array of ints"/>
@@ -281,7 +291,7 @@ static_assert(sizeof(ShaderProgramResourceConstantValue) == sizeof(Vec4) * 2, "N
 ///			<shader type="vert | frag | tese | tesc"/>
 ///
 ///				[<inputs>
-///					<input name="str" type="float | vec2 | vec3 | vec4 | mat3 | mat4 | samplerXXX"
+///					<input name="str" type="uint | int | float | vec2 | vec3 | vec4 | mat3 | mat4 | samplerXXX"
 /// 					[instanceCount="mutator name"] [const="0 | 1"]>
 /// 					[<mutators> (2)
 /// 						<mutator name="variant_name" values="array of ints"/>
@@ -350,6 +360,14 @@ public:
 		WeakArray<const ShaderProgramResourceConstantValue> constants,
 		const ShaderProgramResourceVariant*& variant) const;
 
+	/// Get or create a graphics shader program variant.
+	/// @note It's thread-safe.
+	void getOrCreateVariant(WeakArray<const ShaderProgramResourceConstantValue> constants,
+		const ShaderProgramResourceVariant*& variant) const
+	{
+		getOrCreateVariant(WeakArray<const ShaderProgramResourceMutation>(), constants, variant);
+	}
+
 	Bool hasTessellation() const
 	{
 		return m_tessellation;
@@ -388,6 +406,36 @@ private:
 		ShaderProgramResourceVariant& v) const;
 
 	void compInputVarDefineString(const ShaderProgramResourceInputVariable& var, StringListAuto& list);
+};
+
+/// Smart initializer of multiple ShaderProgramResourceConstantValue.
+template<U count>
+class ShaderProgramResourceConstantValues
+{
+public:
+	Array<ShaderProgramResourceConstantValue, count> m_constantValues;
+
+	ShaderProgramResourceConstantValues(ShaderProgramResourcePtr ptr)
+		: m_ptr(ptr)
+	{
+	}
+
+	template<typename T>
+	ShaderProgramResourceConstantValues& add(CString name, const T& t)
+	{
+		const ShaderProgramResourceInputVariable* in = m_ptr->tryFindInputVariable(name);
+		ANKI_ASSERT(in);
+		ANKI_ASSERT(in->isConstant());
+		ANKI_ASSERT(in->getShaderVariableDataType() == getShaderVariableTypeFromTypename<T>());
+		m_constantValues[m_count].m_variable = in;
+		memcpy(&m_constantValues[m_count].m_int, &t, sizeof(T));
+		++m_count;
+		return *this;
+	}
+
+private:
+	ShaderProgramResourcePtr m_ptr;
+	U m_count = 0;
 };
 /// @}
 

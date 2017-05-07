@@ -320,11 +320,11 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 		{
 			if(m_state.m_colorAtt[i].m_enableBlend)
 			{
-				blendEnableMask = 1 << i;
+				blendEnableMask |= 1 << i;
 			}
 			else
 			{
-				blendDisableMask = 1 << i;
+				blendDisableMask |= 1 << i;
 			}
 		}
 	}

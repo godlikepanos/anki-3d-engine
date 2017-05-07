@@ -71,6 +71,14 @@ protected:
 
 	union
 	{
+		I32 m_int;
+		IVec2 m_ivec2;
+		IVec3 m_ivec3;
+		IVec4 m_ivec4;
+		U32 m_uint;
+		UVec2 m_uvec2;
+		UVec3 m_uvec3;
+		UVec4 m_uvec4;
 		F32 m_float;
 		Vec2 m_vec2;
 		Vec3 m_vec3;
@@ -95,6 +103,14 @@ protected:
 		return var_;                                                                                                   \
 	}
 
+ANKI_SPECIALIZE_GET_VALUE(I32, m_int, INT)
+ANKI_SPECIALIZE_GET_VALUE(IVec2, m_ivec2, IVEC2)
+ANKI_SPECIALIZE_GET_VALUE(IVec3, m_ivec3, IVEC3)
+ANKI_SPECIALIZE_GET_VALUE(IVec4, m_ivec4, IVEC4)
+ANKI_SPECIALIZE_GET_VALUE(U32, m_uint, UINT)
+ANKI_SPECIALIZE_GET_VALUE(UVec2, m_uvec2, UVEC2)
+ANKI_SPECIALIZE_GET_VALUE(UVec3, m_uvec3, UVEC3)
+ANKI_SPECIALIZE_GET_VALUE(UVec4, m_uvec4, UVEC4)
 ANKI_SPECIALIZE_GET_VALUE(F32, m_float, FLOAT)
 ANKI_SPECIALIZE_GET_VALUE(Vec2, m_vec2, VEC2)
 ANKI_SPECIALIZE_GET_VALUE(Vec3, m_vec3, VEC3)

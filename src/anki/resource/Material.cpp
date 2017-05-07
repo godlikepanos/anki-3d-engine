@@ -295,6 +295,30 @@ Error Material::parseInputs(XmlElement inputsEl)
 
 			switch(foundVar->getShaderVariableDataType())
 			{
+			case ShaderVariableDataType::INT:
+				ANKI_CHECK(inputEl.getAttributeNumber("value", constVal.m_int));
+				break;
+			case ShaderVariableDataType::IVEC2:
+				ANKI_CHECK(inputEl.getAttributeVector("value", constVal.m_ivec2));
+				break;
+			case ShaderVariableDataType::IVEC3:
+				ANKI_CHECK(inputEl.getAttributeVector("value", constVal.m_ivec3));
+				break;
+			case ShaderVariableDataType::IVEC4:
+				ANKI_CHECK(inputEl.getAttributeVector("value", constVal.m_ivec4));
+				break;
+			case ShaderVariableDataType::UINT:
+				ANKI_CHECK(inputEl.getAttributeNumber("value", constVal.m_uint));
+				break;
+			case ShaderVariableDataType::UVEC2:
+				ANKI_CHECK(inputEl.getAttributeVector("value", constVal.m_uvec2));
+				break;
+			case ShaderVariableDataType::UVEC3:
+				ANKI_CHECK(inputEl.getAttributeVector("value", constVal.m_uvec3));
+				break;
+			case ShaderVariableDataType::UVEC4:
+				ANKI_CHECK(inputEl.getAttributeVector("value", constVal.m_uvec4));
+				break;
 			case ShaderVariableDataType::FLOAT:
 				ANKI_CHECK(inputEl.getAttributeNumber("value", constVal.m_float));
 				break;
@@ -371,6 +395,30 @@ Error Material::parseInputs(XmlElement inputsEl)
 
 				switch(foundVar->getShaderVariableDataType())
 				{
+				case ShaderVariableDataType::INT:
+					ANKI_CHECK(inputEl.getAttributeNumber("value", mtlVar.m_int));
+					break;
+				case ShaderVariableDataType::IVEC2:
+					ANKI_CHECK(inputEl.getAttributeVector("value", mtlVar.m_ivec2));
+					break;
+				case ShaderVariableDataType::IVEC3:
+					ANKI_CHECK(inputEl.getAttributeVector("value", mtlVar.m_ivec3));
+					break;
+				case ShaderVariableDataType::IVEC4:
+					ANKI_CHECK(inputEl.getAttributeVector("value", mtlVar.m_ivec4));
+					break;
+				case ShaderVariableDataType::UINT:
+					ANKI_CHECK(inputEl.getAttributeNumber("value", mtlVar.m_uint));
+					break;
+				case ShaderVariableDataType::UVEC2:
+					ANKI_CHECK(inputEl.getAttributeVector("value", mtlVar.m_uvec2));
+					break;
+				case ShaderVariableDataType::UVEC3:
+					ANKI_CHECK(inputEl.getAttributeVector("value", mtlVar.m_uvec3));
+					break;
+				case ShaderVariableDataType::UVEC4:
+					ANKI_CHECK(inputEl.getAttributeVector("value", mtlVar.m_uvec4));
+					break;
 				case ShaderVariableDataType::FLOAT:
 					ANKI_CHECK(inputEl.getAttributeNumber("value", mtlVar.m_float));
 					break;

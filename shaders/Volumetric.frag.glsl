@@ -12,6 +12,7 @@
 #define LIGHT_SS_BINDING 0
 #define LIGHT_SET 0
 #define LIGHT_LIGHTS
+#define LIGHT_COMMON_UNIS
 #include "shaders/ClusterLightCommon.glsl"
 
 layout(location = 0) in vec2 in_uv;

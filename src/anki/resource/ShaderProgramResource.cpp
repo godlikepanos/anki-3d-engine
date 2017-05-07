@@ -15,7 +15,39 @@ static ANKI_USE_RESULT Error computeShaderVariableDataType(const CString& str, S
 {
 	Error err = ErrorCode::NONE;
 
-	if(str == "float")
+	if(str == "int")
+	{
+		out = ShaderVariableDataType::INT;
+	}
+	else if(str == "ivec2")
+	{
+		out = ShaderVariableDataType::IVEC2;
+	}
+	else if(str == "ivec3")
+	{
+		out = ShaderVariableDataType::IVEC3;
+	}
+	else if(str == "ivec4")
+	{
+		out = ShaderVariableDataType::IVEC4;
+	}
+	if(str == "uint")
+	{
+		out = ShaderVariableDataType::UINT;
+	}
+	else if(str == "uvec2")
+	{
+		out = ShaderVariableDataType::UVEC2;
+	}
+	else if(str == "uvec3")
+	{
+		out = ShaderVariableDataType::UVEC3;
+	}
+	else if(str == "uvec4")
+	{
+		out = ShaderVariableDataType::UVEC4;
+	}
+	else if(str == "float")
 	{
 		out = ShaderVariableDataType::FLOAT;
 	}
@@ -808,7 +840,8 @@ void ShaderProgramResource::initVariant(WeakArray<const ShaderProgramResourceMut
 			blockInfo.m_offset = variant.m_uniBlockSize;
 			blockInfo.m_arraySize = (in.m_instanced) ? instanceCount : 1;
 
-			if(in.m_dataType == ShaderVariableDataType::FLOAT)
+			if(in.m_dataType == ShaderVariableDataType::FLOAT || in.m_dataType == ShaderVariableDataType::INT
+				|| in.m_dataType == ShaderVariableDataType::UINT)
 			{
 				blockInfo.m_arrayStride = sizeof(Vec4);
 
@@ -823,7 +856,8 @@ void ShaderProgramResource::initVariant(WeakArray<const ShaderProgramResourceMut
 					variant.m_uniBlockSize += sizeof(Vec4) * blockInfo.m_arraySize;
 				}
 			}
-			else if(in.m_dataType == ShaderVariableDataType::VEC2)
+			else if(in.m_dataType == ShaderVariableDataType::VEC2 || in.m_dataType == ShaderVariableDataType::IVEC2
+				|| in.m_dataType == ShaderVariableDataType::UVEC2)
 			{
 				blockInfo.m_arrayStride = sizeof(Vec4);
 
@@ -838,7 +872,8 @@ void ShaderProgramResource::initVariant(WeakArray<const ShaderProgramResourceMut
 					variant.m_uniBlockSize = blockInfo.m_offset + sizeof(Vec4) * blockInfo.m_arraySize;
 				}
 			}
-			else if(in.m_dataType == ShaderVariableDataType::VEC3)
+			else if(in.m_dataType == ShaderVariableDataType::VEC3 || in.m_dataType == ShaderVariableDataType::IVEC3
+				|| in.m_dataType == ShaderVariableDataType::UVEC3)
 			{
 				alignRoundUp(sizeof(Vec4), blockInfo.m_offset);
 				blockInfo.m_arrayStride = sizeof(Vec4);
@@ -852,7 +887,8 @@ void ShaderProgramResource::initVariant(WeakArray<const ShaderProgramResourceMut
 					variant.m_uniBlockSize = blockInfo.m_offset + sizeof(Vec4) * blockInfo.m_arraySize;
 				}
 			}
-			else if(in.m_dataType == ShaderVariableDataType::VEC4)
+			else if(in.m_dataType == ShaderVariableDataType::VEC4 || in.m_dataType == ShaderVariableDataType::IVEC4
+				|| in.m_dataType == ShaderVariableDataType::UVEC4)
 			{
 				blockInfo.m_arrayStride = sizeof(Vec4);
 				alignRoundUp(sizeof(Vec4), blockInfo.m_offset);
@@ -895,6 +931,50 @@ void ShaderProgramResource::initVariant(WeakArray<const ShaderProgramResourceMut
 
 			switch(in.m_dataType)
 			{
+			case ShaderVariableDataType::INT:
+				headerSrc.pushBackSprintf("#define %s_CONSTVAL %d\n", &in.m_name[0], constVal->m_int);
+				break;
+			case ShaderVariableDataType::IVEC2:
+				headerSrc.pushBackSprintf(
+					"#define %s_CONSTVAL %d, %d\n", &in.m_name[0], constVal->m_ivec2.x(), constVal->m_ivec2.y());
+				break;
+			case ShaderVariableDataType::IVEC3:
+				headerSrc.pushBackSprintf("#define %s_CONSTVAL %d, %d, %d\n",
+					&in.m_name[0],
+					constVal->m_ivec3.x(),
+					constVal->m_ivec3.y(),
+					constVal->m_ivec3.z());
+				break;
+			case ShaderVariableDataType::IVEC4:
+				headerSrc.pushBackSprintf("#define %s_CONSTVAL %d, %d, %d, %d\n",
+					&in.m_name[0],
+					constVal->m_ivec4.x(),
+					constVal->m_ivec4.y(),
+					constVal->m_ivec4.z(),
+					constVal->m_ivec4.w());
+				break;
+			case ShaderVariableDataType::UINT:
+				headerSrc.pushBackSprintf("#define %s_CONSTVAL %u\n", &in.m_name[0], constVal->m_uint);
+				break;
+			case ShaderVariableDataType::UVEC2:
+				headerSrc.pushBackSprintf(
+					"#define %s_CONSTVAL %u, %u\n", &in.m_name[0], constVal->m_uvec2.x(), constVal->m_uvec2.y());
+				break;
+			case ShaderVariableDataType::UVEC3:
+				headerSrc.pushBackSprintf("#define %s_CONSTVAL %u, %u, %u\n",
+					&in.m_name[0],
+					constVal->m_uvec3.x(),
+					constVal->m_uvec3.y(),
+					constVal->m_uvec3.z());
+				break;
+			case ShaderVariableDataType::UVEC4:
+				headerSrc.pushBackSprintf("#define %s_CONSTVAL %u, %u, %u, %u\n",
+					&in.m_name[0],
+					constVal->m_uvec4.x(),
+					constVal->m_uvec4.y(),
+					constVal->m_uvec4.z(),
+					constVal->m_uvec4.w());
+				break;
 			case ShaderVariableDataType::FLOAT:
 				headerSrc.pushBackSprintf("#define %s_CONSTVAL %f\n", &in.m_name[0], constVal->m_float);
 				break;

@@ -59,6 +59,13 @@ struct Decal
 	vec4 blendFactors;
 };
 
+//
+// Common uniforms
+//
+#if defined(LIGHT_COMMON_UNIS)
+
+const uint _NEXT_UBO_BINDING = LIGHT_UBO_BINDING + 1;
+
 layout(ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING), std140, row_major) uniform u0_
 {
 	LightingUniforms u_lightingUniforms;
@@ -95,44 +102,70 @@ layout(ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING), std140, row_major) unifor
 		readFirstInvocationARB(u_lightingUniforms.prevViewProjMat[2]),                                                 \
 		readFirstInvocationARB(u_lightingUniforms.prevViewProjMat[3]))
 
-#ifdef ANKI_FRAGMENT_SHADER
+#else
+const uint _NEXT_UBO_BINDING = LIGHT_UBO_BINDING;
+#endif
 
+//
+// Light uniforms
+//
 #if defined(LIGHT_LIGHTS)
-layout(ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING + 1), std140) uniform u1_
+const uint _NEXT_UBO_BINDING_2 = _NEXT_UBO_BINDING + 2;
+const uint _NEXT_TEX_BINDING_2 = LIGHT_TEX_BINDING + 2;
+
+layout(ANKI_UBO_BINDING(LIGHT_SET, _NEXT_UBO_BINDING), std140) uniform u1_
 {
 	PointLight u_pointLights[UBO_MAX_SIZE / (3 * 4 * 4)];
 };
 
-layout(ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING + 2), std140, row_major) uniform u2_
+layout(ANKI_UBO_BINDING(LIGHT_SET, _NEXT_UBO_BINDING + 1), std140, row_major) uniform u2_
 {
 	SpotLight u_spotLights[UBO_MAX_SIZE / (9 * 4 * 4)];
 };
 
-layout(ANKI_TEX_BINDING(LIGHT_SET, LIGHT_TEX_BINDING)) uniform highp sampler2DArrayShadow u_spotMapArr;
+layout(ANKI_TEX_BINDING(LIGHT_SET, LIGHT_TEX_BINDING + 0)) uniform highp sampler2DArrayShadow u_spotMapArr;
 layout(ANKI_TEX_BINDING(LIGHT_SET, LIGHT_TEX_BINDING + 1)) uniform highp samplerCubeArrayShadow u_omniMapArr;
+#else
+const uint _NEXT_UBO_BINDING_2 = _NEXT_UBO_BINDING;
+const uint _NEXT_TEX_BINDING_2 = LIGHT_TEX_BINDING;
 #endif
 
+//
+// Indirect uniforms
+//
 #if defined(LIGHT_INDIRECT)
-layout(std140, row_major, ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING + 3)) uniform u3_
+const uint _NEXT_UBO_BINDING_3 = _NEXT_UBO_BINDING_2 + 1;
+const uint _NEXT_TEX_BINDING_3 = _NEXT_TEX_BINDING_2 + 3;
+
+layout(std140, row_major, ANKI_UBO_BINDING(LIGHT_SET, _NEXT_UBO_BINDING_2)) uniform u3_
 {
 	ReflectionProbe u_reflectionProbes[UBO_MAX_SIZE / (2 * 4 * 4)];
 };
 
-layout(ANKI_TEX_BINDING(LIGHT_SET, LIGHT_TEX_BINDING + 2)) uniform samplerCubeArray u_reflectionsTex;
-layout(ANKI_TEX_BINDING(LIGHT_SET, LIGHT_TEX_BINDING + 3)) uniform samplerCubeArray u_irradianceTex;
-layout(ANKI_TEX_BINDING(LIGHT_SET, LIGHT_TEX_BINDING + 4)) uniform sampler2D u_integrationLut;
+layout(ANKI_TEX_BINDING(LIGHT_SET, _NEXT_TEX_BINDING_2 + 0)) uniform samplerCubeArray u_reflectionsTex;
+layout(ANKI_TEX_BINDING(LIGHT_SET, _NEXT_TEX_BINDING_2 + 1)) uniform samplerCubeArray u_irradianceTex;
+layout(ANKI_TEX_BINDING(LIGHT_SET, _NEXT_TEX_BINDING_2 + 2)) uniform sampler2D u_integrationLut;
+#else
+const uint _NEXT_UBO_BINDING_3 = _NEXT_UBO_BINDING_2;
+const uint _NEXT_TEX_BINDING_3 = _NEXT_TEX_BINDING_2;
 #endif
 
+//
+// Decal uniforms
+//
 #if defined(LIGHT_DECALS)
-layout(std140, row_major, ANKI_UBO_BINDING(LIGHT_SET, LIGHT_UBO_BINDING + 4)) uniform u4_
+layout(std140, row_major, ANKI_UBO_BINDING(LIGHT_SET, _NEXT_UBO_BINDING_3)) uniform u4_
 {
 	Decal u_decals[UBO_MAX_SIZE / ((4 + 16) * 4)];
 };
 
-layout(ANKI_TEX_BINDING(LIGHT_SET, LIGHT_TEX_BINDING + 5)) uniform sampler2D u_diffDecalTex;
-layout(ANKI_TEX_BINDING(LIGHT_SET, LIGHT_TEX_BINDING + 6)) uniform sampler2D u_normalRoughnessDecalTex;
+layout(ANKI_TEX_BINDING(LIGHT_SET, _NEXT_TEX_BINDING_3 + 0)) uniform sampler2D u_diffDecalTex;
+layout(ANKI_TEX_BINDING(LIGHT_SET, _NEXT_TEX_BINDING_3 + 1)) uniform sampler2D u_normalRoughnessDecalTex;
 #endif
 
+//
+// Cluster uniforms
+//
 layout(ANKI_SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 0), std430) readonly buffer s0_
 {
 	uint u_clusters[];
@@ -142,7 +175,5 @@ layout(std430, ANKI_SS_BINDING(LIGHT_SET, LIGHT_SS_BINDING + 1)) readonly buffer
 {
 	uint u_lightIndices[];
 };
-
-#endif // ANKI_FRAGMENT_SHADER
 
 #endif

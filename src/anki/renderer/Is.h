@@ -8,6 +8,7 @@
 #include <anki/renderer/RenderingPass.h>
 #include <anki/resource/TextureResource.h>
 #include <anki/resource/ShaderResource.h>
+#include <anki/resource/ShaderProgramResource.h>
 
 namespace anki
 {
@@ -56,9 +57,8 @@ private:
 	FramebufferPtr m_fb;
 
 	// Light shaders
-	ShaderResourcePtr m_lightVert;
-	ShaderResourcePtr m_lightFrag;
-	ShaderProgramPtr m_lightProg;
+	ShaderProgramResourcePtr m_prog;
+	const ShaderProgramResourceVariant* m_progVariant = nullptr;
 
 	LightBin* m_lightBin = nullptr;
 

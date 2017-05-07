@@ -41,6 +41,8 @@ class Taa;
 class RenderingContext;
 class DebugDrawer;
 
+class ShaderProgramResourceVariant;
+
 /// @addtogroup renderer
 /// @{
 

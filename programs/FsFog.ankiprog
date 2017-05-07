@@ -11,13 +11,14 @@ http://www.anki3d.org/LICENSE
 				<input name="mvp" type="mat4"/>
 			</inputs>
 
-			<source><![CDATA[#include "shaders/FsCommonVert.glsl"
+			<source><![CDATA[
+#include "shaders/FsCommonVert.glsl"
+
 void main() 
 {
 	ANKI_WRITE_POSITION(mvp * vec4(in_position, 1.0));
 }
-			]]>
-			</source>
+			]]></source>
 		</shader>
 
 		<shader type="frag">
@@ -26,13 +27,14 @@ void main()
 				<input name="fogScale" type="float" const="1"/>
 			</inputs>
 
-			<source><![CDATA[#include "shaders/FsCommonFrag.glsl"
+			<source><![CDATA[
+#include "shaders/FsCommonFrag.glsl"
+
 void main() 
 {
 	fog(fogColor, fogScale);
 }
-			]]>
-			</source>
+			]]></source>
 		</shader>
 	</shaders>
 </shaderProgram>

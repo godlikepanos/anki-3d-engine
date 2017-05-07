@@ -267,9 +267,17 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderTypeBit, inline)
 enum class ShaderVariableDataType : U8
 {
 	NONE,
+	INT,
+	UINT,
 	FLOAT,
+	IVEC2,
+	UVEC2,
 	VEC2,
+	IVEC3,
+	UVEC3,
 	VEC3,
+	IVEC4,
+	UVEC4,
 	VEC4,
 	MAT3,
 	MAT4,
@@ -278,7 +286,7 @@ enum class ShaderVariableDataType : U8
 	SAMPLER_2D_ARRAY,
 	SAMPLER_CUBE,
 
-	NUMERICS_FIRST = FLOAT,
+	NUMERICS_FIRST = INT,
 	NUMERICS_LAST = MAT4,
 
 	MATRIX_FIRST = MAT3,
