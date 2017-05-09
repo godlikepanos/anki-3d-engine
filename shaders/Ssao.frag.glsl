@@ -9,7 +9,7 @@
 #include "shaders/Functions.glsl"
 
 const float BIAS = 0.3;
-const float STRENGTH = 2.5;
+const float STRENGTH = 3.0;
 const float HISTORY_FEEDBACK = 1.0 / 8.0;
 
 layout(location = 0) in vec2 in_uv;
@@ -88,16 +88,15 @@ void main(void)
 	// Get prev SSAO
 	vec4 clip = u_prevViewProjMatMulInvViewProjMat * vec4(vec3(ndc, UV_TO_NDC(depth)), 1.0);
 	clip.xy /= clip.w;
-	float prevSsao;
-	if(any(greaterThan(abs(clip.xy), vec2(1.0))))
-	{
-		prevSsao = 1.0;
-	}
-	else
-	{
-		vec2 oldUv = NDC_TO_UV(clip.xy);
-		prevSsao = textureLod(u_prevSsaoRt, oldUv, 0.0).r;
-	}
+	vec2 oldUv = NDC_TO_UV(clip.xy);
+	float prevSsao = textureLod(u_prevSsaoRt, oldUv, 0.0).r;
+
+	// Compute the history blend. If clip falls outside NDC then it's 1.0 (use only current SSAO term) and if it's
+	// inside NDC then use the HISTORY_FEEDBACK value
+	vec2 posNdc = abs(clip.xy);
+	float historyFeedback = max(posNdc.x, posNdc.y);
+	historyFeedback = min(floor(historyFeedback), 1.0 - HISTORY_FEEDBACK);
+	historyFeedback += HISTORY_FEEDBACK;
 
 	// Find the projected radius
 	vec3 sphereLimit = origin + vec3(RADIUS, 0.0, 0.0);
@@ -124,5 +123,5 @@ void main(void)
 	ssao = 1.0 - ssao * STRENGTH;
 
 	// Blend
-	out_color = mix(prevSsao, ssao, HISTORY_FEEDBACK);
+	out_color = mix(prevSsao, ssao, historyFeedback);
 }

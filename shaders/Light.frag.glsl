@@ -91,6 +91,6 @@ void main()
 	float spot =
 		computeSpotFactor(l, u_light.diffuseColorOuterCos.w, u_light.specularColorInnerCos.w, u_light.lightDirPad1.xyz);
 
-	out_color = (diffC + specC) * (att * spot * lambert);
+	out_color = (diffC + specC) * (att * spot * max(lambert, gbuffer.subsurface));
 #endif
 }
