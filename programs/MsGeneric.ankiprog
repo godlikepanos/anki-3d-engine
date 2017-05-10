@@ -6,7 +6,7 @@ http://www.anki3d.org/LICENSE
 -->
 <shaderProgram>
 	<mutators>
-		<mutator name="INSTANCE_COUNT" values="1 2 4 8 16 32 64"/>
+		<mutator name="INSTANCE_COUNT" values="1 2 4 8 16 32 64" instanced="1"/>
 		<mutator name="LOD" values="0 1 2"/>
 		<mutator name="PASS" values="0 1"/>
 		<mutator name="DIFFUSE_TEX" values="0 1"/>
@@ -21,13 +21,13 @@ http://www.anki3d.org/LICENSE
 	<shaders>
 		<shader type="vert">
 			<inputs>
-				<input name="mvp" type="mat4" instanceCount="INSTANCE_COUNT"/>
-				<input name="normalMat" type="mat3" instanceCount="INSTANCE_COUNT">
+				<input name="mvp" type="mat4" instanced="1"/>
+				<input name="normalMat" type="mat3" instanced="1">
 					<mutators>
 						<mutator name="PASS" values="0"/>
 					</mutators>
 				</input>
-				<input name="modelViewMat" type="mat4" instanceCount="INSTANCE_COUNT">
+				<input name="modelViewMat" type="mat4" instanced="1">
 					<mutators>
 						<mutator name="PASS" values="0"/>
 						<mutator name="PARALLAX" values="1"/>

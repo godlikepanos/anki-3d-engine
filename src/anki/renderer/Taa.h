@@ -17,10 +17,7 @@ namespace anki
 class Taa : public RenderingPass
 {
 public:
-	Taa(Renderer* r)
-		: RenderingPass(r)
-	{
-	}
+	Taa(Renderer* r);
 
 	~Taa();
 
@@ -36,8 +33,8 @@ private:
 	Array<TexturePtr, 2> m_rts;
 	Array<FramebufferPtr, 2> m_fbs;
 
-	ShaderResourcePtr m_frag;
-	ShaderProgramPtr m_prog;
+	ShaderProgramResourcePtr m_prog;
+	ShaderProgramPtr m_grProg;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 };

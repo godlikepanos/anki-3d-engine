@@ -144,87 +144,81 @@ Error Material::parseMutators(XmlElement mutatorsEl)
 
 	// Find the builtin mutators
 	U builtinMutatorCount = 0;
-	for(const ShaderProgramResourceMutator& m : m_prog->getMutators())
+
+	m_instanceMutator = m_prog->getInstancingMutator();
+	if(m_instanceMutator)
 	{
-		if(m.getName() == "INSTANCE_COUNT")
+		if(m_instanceMutator->getName() != "INSTANCE_COUNT")
 		{
-			if(!m_prog->isInstanced())
-			{
-				ANKI_RESOURCE_LOGE("Program is not instanced but has the INSTANCE_COUNT mutator");
-				return ErrorCode::USER_DATA;
-			}
-
-			if(m.getValues().getSize() != MAX_INSTANCE_GROUPS)
-			{
-				ANKI_RESOURCE_LOGE("Mutator INSTANCE_COUNT should have %u values in the program", MAX_INSTANCE_GROUPS);
-				return ErrorCode::USER_DATA;
-			}
-
-			for(U i = 0; i < MAX_INSTANCE_GROUPS; ++i)
-			{
-				if(m.getValues()[i] != (1 << i))
-				{
-					ANKI_RESOURCE_LOGE("Values of the INSTANCE_COUNT mutator in the program are not the expected");
-					return ErrorCode::USER_DATA;
-				}
-			}
-
-			m_instanceMutator = &m;
-			++builtinMutatorCount;
+			ANKI_RESOURCE_LOGE("If program is instanced then the instance mutator should be the INSTANCE_COUNT");
+			return ErrorCode::USER_DATA;
 		}
-		else if(m.getName() == "PASS")
+
+		if(m_instanceMutator->getValues().getSize() != MAX_INSTANCE_GROUPS)
 		{
-			if(m.getValues().getSize() != U(Pass::COUNT))
-			{
-				ANKI_RESOURCE_LOGE("Mutator PASS should have %u values in the program", U(Pass::COUNT));
-				return ErrorCode::USER_DATA;
-			}
-
-			for(U i = 0; i < U(Pass::COUNT); ++i)
-			{
-				if(m.getValues()[i] != I(i))
-				{
-					ANKI_RESOURCE_LOGE("Values of the PASS mutator in the program are not the expected");
-					return ErrorCode::USER_DATA;
-				}
-			}
-
-			m_passMutator = &m;
-			++builtinMutatorCount;
+			ANKI_RESOURCE_LOGE("Mutator INSTANCE_COUNT should have %u values in the program", MAX_INSTANCE_GROUPS);
+			return ErrorCode::USER_DATA;
 		}
-		else if(m.getName() == "LOD")
+
+		for(U i = 0; i < MAX_INSTANCE_GROUPS; ++i)
 		{
-			if(m.getValues().getSize() > MAX_LOD)
+			if(m_instanceMutator->getValues()[i] != (1 << i))
 			{
-				ANKI_RESOURCE_LOGE("Mutator LOD should have at least %u values in the program", U(MAX_LOD));
+				ANKI_RESOURCE_LOGE("Values of the INSTANCE_COUNT mutator in the program are not the expected");
 				return ErrorCode::USER_DATA;
 			}
-
-			for(U i = 0; i < m.getValues().getSize(); ++i)
-			{
-				if(m.getValues()[i] != I(i))
-				{
-					ANKI_RESOURCE_LOGE("Values of the LOD mutator in the program are not the expected");
-					return ErrorCode::USER_DATA;
-				}
-			}
-
-			m_lodMutator = &m;
-			m_lodCount = m.getValues().getSize();
-			++builtinMutatorCount;
 		}
+
+		++builtinMutatorCount;
 	}
 
-	if(m_prog->isInstanced() && !m_instanceMutator)
+	m_passMutator = m_prog->tryFindMutator("PASS");
+	if(m_passMutator)
 	{
-		ANKI_RESOURCE_LOGE("If program is instanced then the instance mutator sHould be the INSTANCE_COUNT");
-		return ErrorCode::USER_DATA;
+		if(m_passMutator->getValues().getSize() != U(Pass::COUNT))
+		{
+			ANKI_RESOURCE_LOGE("Mutator PASS should have %u values in the program", U(Pass::COUNT));
+			return ErrorCode::USER_DATA;
+		}
+
+		for(U i = 0; i < U(Pass::COUNT); ++i)
+		{
+			if(m_passMutator->getValues()[i] != I(i))
+			{
+				ANKI_RESOURCE_LOGE("Values of the PASS mutator in the program are not the expected");
+				return ErrorCode::USER_DATA;
+			}
+		}
+
+		++builtinMutatorCount;
 	}
 
 	if(!m_forwardShading && !m_passMutator)
 	{
 		ANKI_RESOURCE_LOGE("PASS mutator is required");
 		return ErrorCode::USER_DATA;
+	}
+
+	m_lodMutator = m_prog->tryFindMutator("LOD");
+	if(m_lodMutator)
+	{
+		if(m_lodMutator->getValues().getSize() > MAX_LOD_COUNT)
+		{
+			ANKI_RESOURCE_LOGE("Mutator LOD should have at least %u values in the program", U(MAX_LOD_COUNT));
+			return ErrorCode::USER_DATA;
+		}
+
+		for(U i = 0; i < m_lodMutator->getValues().getSize(); ++i)
+		{
+			if(m_lodMutator->getValues()[i] != I(i))
+			{
+				ANKI_RESOURCE_LOGE("Values of the LOD mutator in the program are not the expected");
+				return ErrorCode::USER_DATA;
+			}
+		}
+
+		m_lodCount = m_lodMutator->getValues().getSize();
+		++builtinMutatorCount;
 	}
 
 	if(m_mutations.getSize() + builtinMutatorCount != m_prog->getMutators().getSize())

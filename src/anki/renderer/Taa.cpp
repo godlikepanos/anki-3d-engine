@@ -11,6 +11,11 @@
 namespace anki
 {
 
+Taa::Taa(Renderer* r)
+	: RenderingPass(r)
+{
+}
+
 Taa::~Taa()
 {
 }
@@ -30,8 +35,10 @@ Error Taa::init(const ConfigSet& config)
 
 Error Taa::initInternal(const ConfigSet& config)
 {
-	ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/Taa.frag.glsl", m_frag));
-	m_r->createDrawQuadShaderProgram(m_frag->getGrShader(), m_prog);
+	ANKI_CHECK(m_r->getResourceManager().loadResource("programs/TemporalAAResolve.ankiprog", m_prog));
+	const ShaderProgramResourceVariant* variant;
+	m_prog->getOrCreateVariant(variant);
+	m_grProg = variant->getProgram();
 
 	for(U i = 0; i < 2; ++i)
 	{
@@ -68,9 +75,9 @@ void Taa::run(RenderingContext& ctx)
 	cmdb->beginRenderPass(m_fbs[m_r->getFrameCount() & 1]);
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 
-	cmdb->bindShaderProgram(m_prog);
-	cmdb->bindTextureAndSampler(0, 0, m_r->getMs().m_depthRt, m_r->getNearestSampler());
-	cmdb->bindTextureAndSampler(0, 1, m_r->getIs().getRt(), m_r->getNearestSampler());
+	cmdb->bindShaderProgram(m_grProg);
+	cmdb->bindTextureAndSampler(0, 0, m_r->getMs().m_depthRt, m_r->getLinearSampler());
+	cmdb->bindTextureAndSampler(0, 1, m_r->getIs().getRt(), m_r->getLinearSampler());
 	cmdb->informTextureCurrentUsage(m_rts[(m_r->getFrameCount() + 1) & 1], TextureUsageBit::SAMPLED_FRAGMENT);
 	cmdb->bindTextureAndSampler(0, 2, m_rts[(m_r->getFrameCount() + 1) & 1], m_r->getLinearSampler());
 

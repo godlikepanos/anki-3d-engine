@@ -1,8 +1,19 @@
-// Copyright (C) 2009-2017, Panagiotis Christopoulos Charitos and contributors.
-// All rights reserved.
-// Code licensed under the BSD License.
-// http://www.anki3d.org/LICENSE
+<!-- 
+Copyright (C) 2009-2017, Panagiotis Christopoulos Charitos and contributors.
+All rights reserved.
+Code licensed under the BSD License.
+http://www.anki3d.org/LICENSE
+-->
+<shaderProgram>
+	<shaders>
+		<shader type="vert">
+			<source><![CDATA[
+#include "shaders/Quad.vert.glsl"
+			]]></source>
+		</shader>
 
+		<shader type="frag">
+			<source><![CDATA[
 #include "shaders/Functions.glsl"
 #include "shaders/Pack.glsl"
 #include "shaders/Tonemapping.glsl"
@@ -54,7 +65,7 @@ void main()
 
 	historyCol = clamp(historyCol, boxMin, boxMax);
 
-// Remove jitter (T. Lottes)
+	// Remove jitter (T. Lottes)
 #if YCBCR
 	float lum0 = crntCol.r;
 	float lum1 = historyCol.r;
@@ -70,10 +81,14 @@ void main()
 	diff = diff * diff;
 	float feedback = mix(0.0, BLEND_FACTOR, diff);
 
-// Write result
+	// Write result
 #if YCBCR
 	out_color = yCbCrToRgb(mix(historyCol, crntCol, feedback));
 #else
 	out_color = mix(historyCol, crntCol, feedback);
 #endif
 }
+			]]></source>
+		</shader>
+	</shaders>
+</shaderProgram>	

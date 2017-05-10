@@ -275,12 +275,12 @@ static_assert(sizeof(ShaderProgramResourceConstantValue) == sizeof(Vec4) * 2, "N
 /// @code
 /// <shaderProgram>
 /// 	[<mutators> (1)
-/// 		<mutator name="str" values="array of ints"/>
+/// 		<mutator name="str" values="array of ints" [instanced="0 | 1"]/>
 /// 	</mutators>]
 ///
 ///		[<inputs> (3)
 ///			<input name="str" type="uint | int | float | vec2 | vec3 | vec4 | mat3 | mat4 | samplerXXX"
-///				[instanceCount="mutator name"] [const="0 | 1"]>
+///				[instanced="0 | 1"] [const="0 | 1"]>
 ///				[<mutators> (2)
 ///					<mutator name="variant_name" values="array of ints"/>
 ///				</mutators>]
@@ -292,7 +292,7 @@ static_assert(sizeof(ShaderProgramResourceConstantValue) == sizeof(Vec4) * 2, "N
 ///
 ///				[<inputs>
 ///					<input name="str" type="uint | int | float | vec2 | vec3 | vec4 | mat3 | mat4 | samplerXXX"
-/// 					[instanceCount="mutator name"] [const="0 | 1"]>
+/// 					[instanced="0 | 1"] [const="0 | 1"]>
 /// 					[<mutators> (2)
 /// 						<mutator name="variant_name" values="array of ints"/>
 /// 					</mutators>]
@@ -368,6 +368,15 @@ public:
 		getOrCreateVariant(WeakArray<const ShaderProgramResourceMutation>(), constants, variant);
 	}
 
+	/// Get or create a graphics shader program variant.
+	/// @note It's thread-safe.
+	void getOrCreateVariant(const ShaderProgramResourceVariant*& variant) const
+	{
+		getOrCreateVariant(WeakArray<const ShaderProgramResourceMutation>(),
+			WeakArray<const ShaderProgramResourceConstantValue>(),
+			variant);
+	}
+
 	Bool hasTessellation() const
 	{
 		return m_tessellation;
@@ -376,6 +385,11 @@ public:
 	Bool isInstanced() const
 	{
 		return m_instancingMutator != nullptr;
+	}
+
+	const ShaderProgramResourceMutator* getInstancingMutator() const
+	{
+		return m_instancingMutator;
 	}
 
 private:

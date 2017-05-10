@@ -124,7 +124,7 @@ public:
 private:
 	Model* m_model ANKI_DBG_NULLIFY;
 
-	Array<MeshResourcePtr, MAX_LOD> m_meshes; ///< One for each LOD
+	Array<MeshResourcePtr, MAX_LOD_COUNT> m_meshes; ///< One for each LOD
 	U8 m_meshCount = 0;
 	MaterialResourcePtr m_mtl;
 

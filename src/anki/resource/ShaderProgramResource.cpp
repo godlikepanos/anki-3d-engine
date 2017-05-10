@@ -244,6 +244,21 @@ Error ShaderProgramResource::load(const ResourceFilename& filename)
 				}
 			}
 
+			// instanced
+			Bool instancedPresent;
+			U32 instanced = 0;
+			ANKI_CHECK(mutatorEl.getAttributeNumberOptional("instanced", instanced, instancedPresent));
+			if(instanced)
+			{
+				if(m_instancingMutator)
+				{
+					ANKI_RESOURCE_LOGE("Cannot have more than one instancing mutator");
+					return ErrorCode::USER_DATA;
+				}
+
+				m_instancingMutator = &m_mutators[count];
+			}
+
 			// Init mutator
 			m_mutators[count].m_name.create(getAllocator(), name);
 			m_mutators[count].m_values.create(getAllocator(), values.getSize());
@@ -550,38 +565,16 @@ Error ShaderProgramResource::parseInputs(XmlElement& inputsEl,
 			ANKI_ASSERT(mutatorCount == var.m_mutators.getSize());
 		} // if(mutatorsEl)
 
-		// instanceCount
-		CString instanceCountTxt;
+		// instanced
+		U32 instanced = false;
 		Bool found;
-		ANKI_CHECK(inputEl.getAttributeTextOptional("instanceCount", instanceCountTxt, found));
-		if(found)
+		ANKI_CHECK(inputEl.getAttributeNumberOptional("instanced", instanced, found));
+		if(instanced && !m_instancingMutator)
 		{
-			if(instanceCountTxt.isEmpty())
-			{
-				ANKI_RESOURCE_LOGE("instanceCount tag is empty for input variable %s", &name[0]);
-				return ErrorCode::USER_DATA;
-			}
-
-			var.m_instanced = true;
-			const ShaderProgramResourceMutator* instancingMutator = tryFindMutator(instanceCountTxt);
-			if(!instancingMutator)
-			{
-				ANKI_RESOURCE_LOGE("Failed to find mutator %s, used as instanceCount attribute for input variable %s",
-					&instanceCountTxt[0],
-					&name[0]);
-				return ErrorCode::USER_DATA;
-			}
-
-			if(!m_instancingMutator)
-			{
-				m_instancingMutator = instancingMutator;
-			}
-			else if(instancingMutator != m_instancingMutator)
-			{
-				ANKI_RESOURCE_LOGE("All input variables should have the same instancing mutator");
-				return ErrorCode::USER_DATA;
-			}
+			ANKI_RESOURCE_LOGE("Input variable \"%s\" is instanced but there is no instanced mutator", &name[0]);
+			return ErrorCode::USER_DATA;
 		}
+		var.m_instanced = instanced != 0;
 
 		// Sanity checks
 		if(var.isTexture() && var.m_const)
