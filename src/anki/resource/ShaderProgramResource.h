@@ -424,18 +424,18 @@ private:
 
 /// Smart initializer of multiple ShaderProgramResourceConstantValue.
 template<U count>
-class ShaderProgramResourceConstantValues
+class ShaderProgramResourceConstantValueInitList
 {
 public:
 	Array<ShaderProgramResourceConstantValue, count> m_constantValues;
 
-	ShaderProgramResourceConstantValues(ShaderProgramResourcePtr ptr)
+	ShaderProgramResourceConstantValueInitList(ShaderProgramResourcePtr ptr)
 		: m_ptr(ptr)
 	{
 	}
 
 	template<typename T>
-	ShaderProgramResourceConstantValues& add(CString name, const T& t)
+	ShaderProgramResourceConstantValueInitList& add(CString name, const T& t)
 	{
 		const ShaderProgramResourceInputVariable* in = m_ptr->tryFindInputVariable(name);
 		ANKI_ASSERT(in);
@@ -443,6 +443,33 @@ public:
 		ANKI_ASSERT(in->getShaderVariableDataType() == getShaderVariableTypeFromTypename<T>());
 		m_constantValues[m_count].m_variable = in;
 		memcpy(&m_constantValues[m_count].m_int, &t, sizeof(T));
+		++m_count;
+		return *this;
+	}
+
+private:
+	ShaderProgramResourcePtr m_ptr;
+	U m_count = 0;
+};
+
+/// Smart initializer of multiple ShaderProgramResourceMutation.
+template<U count>
+class ShaderProgramResourceMutationInitList
+{
+public:
+	Array<ShaderProgramResourceMutation, count> m_mutations;
+
+	ShaderProgramResourceMutationInitList(ShaderProgramResourcePtr ptr)
+		: m_ptr(ptr)
+	{
+	}
+
+	ShaderProgramResourceMutationInitList& add(CString name, ShaderProgramResourceMutatorValue t)
+	{
+		const ShaderProgramResourceMutator* m = m_ptr->tryFindMutator(name);
+		ANKI_ASSERT(m);
+		m_mutations[m_count].m_mutator = m;
+		m_mutations[m_count].m_value = t;
 		++m_count;
 		return *this;
 	}

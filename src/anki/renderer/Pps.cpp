@@ -59,6 +59,26 @@ Error Pps::initInternal(const ConfigSet& config)
 
 	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseLdrRgb64x64.ankitex", m_blueNoise));
 
+	// Progs
+	ANKI_CHECK(getResourceManager().loadResource("programs/FinalComposite.ankiprog", m_prog));
+
+	ShaderProgramResourceMutationInitList<4> mutations(m_prog);
+	mutations.add("BLUE_NOISE", 1)
+		.add("SHARPEN_ENABLED", m_sharpenEnabled)
+		.add("BLOOM_ENABLED", 1)
+		.add("DBG_ENABLED", 0);
+
+	ShaderProgramResourceConstantValueInitList<2> consts(m_prog);
+	consts.add("LUT_SIZE", U32(LUT_SIZE)).add("FB_SIZE", UVec2(m_r->getWidth(), m_r->getHeight()));
+
+	const ShaderProgramResourceVariant* variant;
+	m_prog->getOrCreateVariant(mutations.m_mutations, consts.m_constantValues, variant);
+	m_grProgs[0] = variant->getProgram();
+
+	mutations.m_mutations[3].m_value = 1;
+	m_prog->getOrCreateVariant(mutations.m_mutations, consts.m_constantValues, variant);
+	m_grProgs[1] = variant->getProgram();
+
 	return ErrorCode::NONE;
 }
 
@@ -91,40 +111,6 @@ Error Pps::run(RenderingContext& ctx)
 	// Get the drawing parameters
 	Bool drawToDefaultFb = ctx.m_outFb.isCreated();
 	Bool dbgEnabled = m_r->getDbg().getEnabled();
-
-	// Get or create the ppline
-	ShaderProgramPtr& prog = m_prog[drawToDefaultFb][dbgEnabled];
-
-	if(!prog)
-	{
-		// Need to create it
-
-		ShaderResourcePtr& frag = m_frag[drawToDefaultFb][dbgEnabled];
-		if(!frag)
-		{
-			ANKI_CHECK(m_r->createShaderf("shaders/Pps.frag.glsl",
-				frag,
-				"#define BLOOM_ENABLED %u\n"
-				"#define SHARPEN_ENABLED %u\n"
-				"#define FBO_WIDTH %u\n"
-				"#define FBO_HEIGHT %u\n"
-				"#define LUT_SIZE %u.0\n"
-				"#define DBG_ENABLED %u\n"
-				"#define DRAW_TO_DEFAULT %u\n"
-				"#define FB_SIZE vec2(float(%u), float(%u))\n",
-				true,
-				m_sharpenEnabled,
-				m_r->getWidth(),
-				m_r->getHeight(),
-				LUT_SIZE,
-				dbgEnabled,
-				drawToDefaultFb,
-				m_r->getWidth(),
-				m_r->getHeight()));
-		}
-
-		m_r->createDrawQuadShaderProgram(frag->getGrShader(), prog);
-	}
 
 	// Bind stuff
 	cmdb->bindTextureAndSampler(
@@ -160,7 +146,7 @@ Error Pps::run(RenderingContext& ctx)
 
 	cmdb->beginRenderPass(*fb);
 	cmdb->setViewport(0, 0, width, height);
-	cmdb->bindShaderProgram(prog);
+	cmdb->bindShaderProgram(m_grProgs[dbgEnabled]);
 	m_r->drawQuad(cmdb);
 	cmdb->endRenderPass();
 

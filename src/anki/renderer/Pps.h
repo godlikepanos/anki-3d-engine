@@ -44,9 +44,10 @@ private:
 	static const U LUT_SIZE = 16;
 
 	FramebufferPtr m_fb;
-	Array2d<ShaderResourcePtr, 2, 2> m_frag; ///< One with Dbg and one without
-	Array2d<ShaderProgramPtr, 2, 2> m_prog; ///< With Dbg, Default FB or not
 	TexturePtr m_rt;
+
+	ShaderProgramResourcePtr m_prog;
+	Array<ShaderProgramPtr, 2> m_grProgs; ///< One with Dbg and one without
 
 	TextureResourcePtr m_lut; ///< Color grading lookup texture.
 	TextureResourcePtr m_blueNoise;

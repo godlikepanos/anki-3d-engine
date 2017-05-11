@@ -183,4 +183,69 @@ vec3 getCubemapDirection(vec2 norm, uint faceIdx)
 	return normalize(norm.x * xDir + norm.y * yDir + zDir);
 }
 
+vec3 grayScale(vec3 col)
+{
+	float grey = (col.r + col.g + col.b) * (1.0 / 3.0);
+	return vec3(grey);
+}
+
+vec3 saturate(vec3 col, float factor)
+{
+	const vec3 LUM_COEFF = vec3(0.2125, 0.7154, 0.0721);
+	vec3 intensity = vec3(dot(col, LUM_COEFF));
+	return mix(intensity, col, factor);
+}
+
+vec3 gammaCorrection(vec3 gamma, vec3 col)
+{
+	return pow(col, 1.0 / gamma);
+}
+
+// Can use 0.15 for sharpenFactor
+vec3 readSharpen(sampler2D tex, vec2 uv, float sharpenFactor, bool detailed)
+{
+	vec3 col = textureLod(tex, uv, 0.0).rgb;
+
+	vec3 col2 = textureLodOffset(tex, uv, 0.0, ivec2(1, 1)).rgb;
+	col2 += textureLodOffset(tex, uv, 0.0, ivec2(-1, -1)).rgb;
+	col2 += textureLodOffset(tex, uv, 0.0, ivec2(1, -1)).rgb;
+	col2 += textureLodOffset(tex, uv, 0.0, ivec2(-1, 1)).rgb;
+
+	float f = 4.0;
+	if(detailed)
+	{
+		col2 += textureLodOffset(tex, uv, 0.0, ivec2(0, 1)).rgb;
+		col2 += textureLodOffset(tex, uv, 0.0, ivec2(1, 0)).rgb;
+		col2 += textureLodOffset(tex, uv, 0.0, ivec2(-1, 0)).rgb;
+		col2 += textureLodOffset(tex, uv, 0.0, ivec2(0, -1)).rgb;
+
+		f = 8.0;
+	}
+
+	col = col * (f * sharpenFactor + 1.0) - sharpenFactor * col2;
+	return max(vec3(0.0), col);
+}
+
+vec3 readErosion(sampler2D tex, vec2 uv)
+{
+	vec3 minValue = textureLod(tex, uv, 0.0).rgb;
+
+#define ANKI_EROSION(x, y)                                                                                             \
+	col2 = textureLodOffset(tex, uv, 0.0, ivec2(x, y)).rgb;                                                            \
+	minValue = min(col2, minValue);
+
+	vec3 col2;
+	ANKI_EROSION(1, 1);
+	ANKI_EROSION(-1, -1);
+	ANKI_EROSION(1, -1);
+	ANKI_EROSION(-1, 1);
+	ANKI_EROSION(0, 1);
+	ANKI_EROSION(1, 0);
+	ANKI_EROSION(-1, 0);
+	ANKI_EROSION(0, -1);
+
+#undef ANKI_EROSION
+
+	return minValue;
+}
 #endif

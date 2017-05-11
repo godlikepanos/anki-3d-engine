@@ -53,8 +53,8 @@ Error SsaoMain::init(const ConfigSet& config)
 
 	// Shader
 	ANKI_CHECK(getResourceManager().loadResource("programs/Ssao.ankiprog", m_prog));
-	
-	ShaderProgramResourceConstantValues<6> consts(m_prog);
+
+	ShaderProgramResourceConstantValueInitList<6> consts(m_prog);
 	consts.add("NOISE_MAP_SIZE", U32(m_noiseTex->getWidth()))
 		.add("FB_SIZE", UVec2(m_ssao->m_width, m_ssao->m_height))
 		.add("RADIUS", F32(HEMISPHERE_RADIUS))
