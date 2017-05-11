@@ -52,18 +52,18 @@ Error SsaoMain::init(const ConfigSet& config)
 	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseLdrRgb64x64.ankitex", m_noiseTex));
 
 	// Shader
-	ANKI_CHECK(m_r->createShaderf("shaders/Ssao.frag.glsl",
-		m_frag,
-		"#define NOISE_MAP_SIZE %u\n"
-		"#define WIDTH %u\n"
-		"#define HEIGHT %u\n"
-		"#define RADIUS float(%f)\n",
-		m_noiseTex->getWidth(),
-		m_ssao->m_width,
-		m_ssao->m_height,
-		HEMISPHERE_RADIUS));
-
-	m_r->createDrawQuadShaderProgram(m_frag->getGrShader(), m_prog);
+	ANKI_CHECK(getResourceManager().loadResource("programs/Ssao.ankiprog", m_prog));
+	
+	ShaderProgramResourceConstantValues<6> consts(m_prog);
+	consts.add("NOISE_MAP_SIZE", U32(m_noiseTex->getWidth()))
+		.add("FB_SIZE", UVec2(m_ssao->m_width, m_ssao->m_height))
+		.add("RADIUS", F32(HEMISPHERE_RADIUS))
+		.add("BIAS", F32(0.3))
+		.add("STRENGTH", F32(3.0))
+		.add("HISTORY_FEEDBACK", F32(1.0f / 8.0f));
+	const ShaderProgramResourceVariant* variant;
+	m_prog->getOrCreateVariant(consts.m_constantValues, variant);
+	m_grProg = variant->getProgram();
 
 	return ErrorCode::NONE;
 }
@@ -82,7 +82,7 @@ void SsaoMain::run(RenderingContext& ctx)
 
 	cmdb->beginRenderPass(m_fb[m_r->getFrameCount() & 1]);
 	cmdb->setViewport(0, 0, m_ssao->m_width, m_ssao->m_height);
-	cmdb->bindShaderProgram(m_prog);
+	cmdb->bindShaderProgram(m_grProg);
 
 	cmdb->bindTexture(0, 0, m_r->getDepthDownscale().m_qd.m_depthRt);
 	cmdb->bindTextureAndSampler(0, 1, m_r->getMs().m_rt2, m_r->getLinearSampler());

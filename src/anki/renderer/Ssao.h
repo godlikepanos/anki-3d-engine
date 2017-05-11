@@ -52,8 +52,8 @@ private:
 
 	Array<TexturePtr, 2> m_rt;
 	Array<FramebufferPtr, 2> m_fb;
-	ShaderResourcePtr m_frag;
-	ShaderProgramPtr m_prog;
+	ShaderProgramResourcePtr m_prog;
+	ShaderProgramPtr m_grProg;
 	TextureResourcePtr m_noiseTex;
 };
 

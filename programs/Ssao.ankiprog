@@ -1,16 +1,31 @@
-// Copyright (C) 2009-2017, Panagiotis Christopoulos Charitos and contributors.
-// All rights reserved.
-// Code licensed under the BSD License.
-// http://www.anki3d.org/LICENSE
+<!-- 
+Copyright (C) 2009-2017, Panagiotis Christopoulos Charitos and contributors.
+All rights reserved.
+Code licensed under the BSD License.
+http://www.anki3d.org/LICENSE
+-->
+<shaderProgram>
+	<shaders>
+		<shader type="vert">
+			<source><![CDATA[
+#include "shaders/Quad.vert.glsl"
+			]]></source>
+		</shader>
 
-// SSAO fragment shader
+		<shader type="frag">
+			<inputs>
+				<input name="NOISE_MAP_SIZE" type="uint" const="1"/>
+				<input name="FB_SIZE" type="uvec2" const="1"/>
+				<input name="RADIUS" type="float" const="1"/>
+				<input name="BIAS" type="float" const="1"/>
+				<input name="STRENGTH" type="float" const="1"/>
+				<input name="HISTORY_FEEDBACK" type="float" const="1"/>
+			</inputs>
+
+			<source><![CDATA[
 #include "shaders/Common.glsl"
 #include "shaders/Pack.glsl"
 #include "shaders/Functions.glsl"
-
-const float BIAS = 0.3;
-const float STRENGTH = 3.0;
-const float HISTORY_FEEDBACK = 1.0 / 8.0;
 
 layout(location = 0) in vec2 in_uv;
 
@@ -42,7 +57,7 @@ vec3 readNormal(in vec2 uv)
 // Read the noise tex
 vec3 readRandom(in vec2 uv)
 {
-	const vec2 tmp = vec2(float(WIDTH) / float(NOISE_MAP_SIZE), float(HEIGHT) / float(NOISE_MAP_SIZE));
+	const vec2 tmp = vec2(float(FB_SIZE.x) / float(NOISE_MAP_SIZE), float(FB_SIZE.y) / float(NOISE_MAP_SIZE));
 	vec3 r = texture(u_noiseMap, vec3(tmp * uv, u_noiseLayer)).rgb;
 	return r;
 }
@@ -125,3 +140,8 @@ void main(void)
 	// Blend
 	out_color = mix(prevSsao, ssao, historyFeedback);
 }
+			]]></source>
+		</shader>
+	</shaders>
+</shaderProgram>
+
