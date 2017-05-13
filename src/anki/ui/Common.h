@@ -5,35 +5,49 @@
 
 #pragma once
 
-#include <anki/Math.h>
+#include <anki/ui/NuklearConfig.h>
 #include <anki/util/Allocator.h>
 
 namespace anki
 {
 
 // Forward
-class Widget;
-class Canvas;
-class UiImage;
+class UiManager;
 
 /// @addtogroup ui
 /// @{
+using UiAllocator = HeapAllocator<U8>;
 
-using UiAllocator = GenericMemoryPoolAllocator<U8>;
+const I32 FONT_TEXTURE_INDEX = 1;
 
-/// Color.
-using Color = Vec4;
-
-/// Rectangle
-class Rect
+/// Initialize a nk_allocator.
+template<typename TMemPool>
+inline nk_allocator makeNkAllocator(TMemPool* alloc)
 {
-public:
-	UVec2 m_min;
-	UVec2 m_max;
-};
+	nk_allocator nkAlloc;
+	nkAlloc.userdata.ptr = alloc;
 
-/// Used in widget classes.
-#define ANKI_WIDGET friend class Canvas;
+	auto allocCallback = [](nk_handle handle, void*, nk_size size) -> void* {
+		ANKI_ASSERT(handle.ptr);
+		TMemPool* al = static_cast<TMemPool*>(handle.ptr);
+		return al->allocate(size, 16);
+	};
+
+	nkAlloc.alloc = allocCallback;
+
+	auto freeCallback = [](nk_handle handle, void* ptr) -> void {
+		ANKI_ASSERT(handle.ptr);
+		if(ptr)
+		{
+			TMemPool* al = static_cast<TMemPool*>(handle.ptr);
+			al->free(ptr);
+		}
+	};
+
+	nkAlloc.free = freeCallback;
+
+	return nkAlloc;
+}
 /// @}
 
 } // end namespace anki

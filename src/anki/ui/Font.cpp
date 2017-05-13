@@ -4,134 +4,94 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/ui/Font.h>
-#include <ft2build.h>
-#include FT_FREETYPE_H
+#include <anki/ui/UiManager.h>
+#include <anki/resource/ResourceManager.h>
+#include <anki/resource/ResourceFilesystem.h>
+#include <anki/gr/GrManager.h>
+#include <anki/gr/Buffer.h>
+#include <anki/gr/Texture.h>
+#include <anki/gr/CommandBuffer.h>
 
 namespace anki
 {
 
-class FtFont
-{
-public:
-	FT_Library m_lib = 0;
-	FT_Face m_face = 0;
-
-	~FtFont()
-	{
-		if(m_face)
-		{
-			FT_Done_Face(m_face);
-		}
-
-		if(m_lib)
-		{
-			FT_Done_FreeType(m_lib);
-		}
-	}
-};
-
 Font::~Font()
 {
+	nk_font_atlas_clear(&m_atlas);
 }
 
 Error Font::init(const CString& filename, U32 fontHeight)
 {
-	// Load font
+	// Load font in memory
+	ResourceFilePtr file;
+	ANKI_CHECK(m_manager->getResourceManager().getFilesystem().openFile(filename, file));
 	DynamicArrayAuto<U8> fontData(getAllocator());
-	ANKI_CHECK(m_interface->readFile(filename, fontData));
+	fontData.create(file->getSize());
+	ANKI_CHECK(file->read(&fontData[0], file->getSize()));
 
-	// Create impl
-	FtFont ft;
+	// Bake font
+	nk_allocator nkAlloc = makeNkAllocator(&getAllocator().getMemoryPool());
+	nk_font_atlas_init_custom(&m_atlas, &nkAlloc, &nkAlloc);
+	nk_font_atlas_begin(&m_atlas);
+	m_font = nk_font_atlas_add_from_memory(&m_atlas, &fontData[0], fontData.getSize(), fontHeight, nullptr);
 
-	// Create lib
-	if(FT_Init_FreeType(&ft.m_lib))
-	{
-		ANKI_LOGE("FT_Init_FreeType() failed");
-		return ErrorCode::FUNCTION_FAILED;
-	}
+	int width, height;
+	const void* img = nk_font_atlas_bake(&m_atlas, &width, &height, NK_FONT_ATLAS_RGBA32);
 
-	// Create face and set glyph size
-	if(FT_New_Memory_Face(ft.m_lib, &fontData[0], fontData.getSize(), 0, &ft.m_face))
-	{
-		ANKI_LOGE("FT_New_Face() failed");
-		return ErrorCode::FUNCTION_FAILED;
-	}
+	// Create the texture
+	createTexture(img, width, height);
 
-	if(FT_Set_Pixel_Sizes(ft.m_face, 0, fontHeight))
-	{
-		ANKI_LOGE("FT_Set_Pixel_Sizes() failed");
-		return ErrorCode::FUNCTION_FAILED;
-	}
+	// End building
+	nk_handle texHandle;
+	texHandle.id = FONT_TEXTURE_INDEX;
+	nk_font_atlas_end(&m_atlas, texHandle, nullptr);
 
-	// Compute the atlas size
-	UVec2 imgSize(0u);
-	{
-		U width = 0, height = 0;
-
-		for(I c = FIRST_CHAR; c <= LAST_CHAR; ++c)
-		{
-			if(FT_Load_Char(ft.m_face, c, FT_LOAD_DEFAULT))
-			{
-				ANKI_LOGE("Loading character '%c' failed", c);
-				return ErrorCode::USER_DATA;
-			}
-
-			width += ft.m_face->glyph->bitmap.width;
-			height = max<U>(height, ft.m_face->glyph->bitmap.rows);
-		}
-
-		imgSize.x() = width;
-		imgSize.y() = height;
-	}
-
-	// Allocate bitmap for rasterization
-	DynamicArrayAuto<U8> bitmap(getAllocator());
-	bitmap.create(imgSize.x() * imgSize.y());
-	memset(&bitmap[0], 0, bitmap.getSize());
-
-	// Rasterize image to memory and get some glyph info
-	{
-		U xOffset = 0;
-
-		for(I c = FIRST_CHAR; c <= LAST_CHAR; ++c)
-		{
-			if(FT_Load_Char(ft.m_face, c, FT_LOAD_RENDER))
-			{
-				ANKI_LOGE("Loading character '%c' failed", c);
-				return ErrorCode::USER_DATA;
-			}
-
-			const U w = ft.m_face->glyph->bitmap.width;
-			const U h = ft.m_face->glyph->bitmap.rows;
-			WeakArray<U8> srcBitmap(ft.m_face->glyph->bitmap.buffer, w * h);
-
-			// Copy
-			for(U y = 0; y < h; ++y)
-			{
-				for(U x = 0; x < w; ++x)
-				{
-					bitmap[y * w + (x + xOffset)] = srcBitmap[y * w + x];
-				}
-			}
-
-			// Get glyph info
-			FontCharInfo& inf = m_chars[c - FIRST_CHAR];
-			inf.m_imageRect.m_min = UVec2(xOffset, 0);
-			inf.m_imageRect.m_max = inf.m_imageRect.m_min + UVec2(w, h);
-
-			inf.m_advance = UVec2(ft.m_face->glyph->advance.x >> 6, ft.m_face->glyph->advance.y >> 6);
-
-			inf.m_offset = IVec2(ft.m_face->glyph->bitmap_left, ft.m_face->glyph->bitmap_top - I(h));
-
-			// Advance
-			xOffset += w;
-		}
-	}
-
-	// Create image
-	ANKI_CHECK(m_interface->createR8Image(WeakArray<U8>(&bitmap[0], bitmap.getSize()), imgSize, m_img));
+	nk_font_atlas_cleanup(&m_atlas);
 
 	return ErrorCode::NONE;
+}
+
+void Font::createTexture(const void* data, U32 width, U32 height)
+{
+	ANKI_ASSERT(data && width > 0 && height > 0);
+
+	// Create and populate the buffer
+	PtrSize buffSize = width * height * 4 * 4;
+	BufferPtr buff = m_manager->getGrManager().newInstance<Buffer>(
+		buffSize, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, BufferMapAccessBit::WRITE);
+	void* mapped = buff->map(0, buffSize, BufferMapAccessBit::WRITE);
+	memcpy(mapped, data, buffSize);
+	buff->unmap();
+
+	// Create the texture
+	TextureInitInfo texInit;
+	texInit.m_width = width;
+	texInit.m_height = height;
+	texInit.m_format = PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
+	texInit.m_usage =
+		TextureUsageBit::TRANSFER_DESTINATION | TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::GENERATE_MIPMAPS;
+	texInit.m_usageWhenEncountered = TextureUsageBit::SAMPLED_FRAGMENT;
+	texInit.m_mipmapsCount = 2;
+	texInit.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
+	texInit.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
+
+	m_tex = m_manager->getGrManager().newInstance<Texture>(texInit);
+
+	// Do the copy
+	CommandBufferInitInfo cmdbInit;
+	cmdbInit.m_flags = CommandBufferFlag::TRANSFER_WORK | CommandBufferFlag::SMALL_BATCH;
+	CommandBufferPtr cmdb = m_manager->getGrManager().newInstance<CommandBuffer>(cmdbInit);
+
+	TextureSurfaceInfo surf(0, 0, 0, 0);
+
+	cmdb->setTextureSurfaceBarrier(m_tex, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION, surf);
+	cmdb->copyBufferToTextureSurface(buff, 0, buffSize, m_tex, surf);
+	cmdb->setTextureSurfaceBarrier(
+		m_tex, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::GENERATE_MIPMAPS, surf);
+	cmdb->generateMipmaps2d(m_tex, 0, 0);
+	cmdb->setTextureSurfaceBarrier(m_tex, TextureUsageBit::GENERATE_MIPMAPS, TextureUsageBit::SAMPLED_FRAGMENT, surf);
+
+	cmdb->flush();
 }
 
 } // end namespace anki

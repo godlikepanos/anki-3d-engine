@@ -4,14 +4,14 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/ui/UiObject.h>
-#include <anki/ui/Canvas.h>
+#include <anki/ui/UiManager.h>
 
 namespace anki
 {
 
 UiAllocator UiObject::getAllocator() const
 {
-	return m_canvas->getAllocator();
+	return m_manager->getAllocator();
 }
 
 } // end namespace anki

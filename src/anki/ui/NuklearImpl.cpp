@@ -3,8 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#pragma once
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+#endif
 
-/// @defgroup ui User interface that is using nuklear library.
-
-#include <anki/ui/UiManager.h>
+#define NK_IMPLEMENTATION
+#include <anki/ui/NuklearConfig.h>
