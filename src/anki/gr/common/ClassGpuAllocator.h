@@ -67,14 +67,6 @@ private:
 	}
 };
 
-class ClassGpuAllocatorStats
-{
-public:
-	PtrSize m_totalMemoryUsage;
-	PtrSize m_realMemoryUsage;
-	F32 m_fragmentation; ///< XXX
-};
-
 /// Class based allocator.
 class ClassGpuAllocator : public NonCopyable
 {
@@ -92,8 +84,6 @@ public:
 
 	/// Free allocated memory.
 	void free(ClassGpuAllocatorHandle& handle);
-
-	void getStats(ClassGpuAllocatorStats& stats) const;
 
 private:
 	using Class = ClassGpuAllocatorClass;

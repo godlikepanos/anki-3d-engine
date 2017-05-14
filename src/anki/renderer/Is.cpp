@@ -160,6 +160,7 @@ void Is::run(RenderingContext& ctx)
 	cmdb->bindTexture(1, 1, m_r->getMs().m_rt1);
 	cmdb->bindTexture(1, 2, m_r->getMs().m_rt2);
 	cmdb->bindTexture(1, 3, m_r->getMs().m_depthRt, DepthStencilAspectBit::DEPTH);
+	cmdb->informTextureCurrentUsage(m_r->getSsao().m_main.getPreviousRt(), TextureUsageBit::SAMPLED_FRAGMENT);
 	cmdb->bindTexture(1, 4, m_r->getSsao().m_main.getPreviousRt());
 
 	cmdb->bindTexture(0, 0, m_r->getSm().m_spotTexArray);
@@ -170,7 +171,6 @@ void Is::run(RenderingContext& ctx)
 	cmdb->bindTexture(0, 5, (ctx.m_is.m_diffDecalTex) ? ctx.m_is.m_diffDecalTex : m_r->getDummyTexture());
 	cmdb->bindTexture(
 		0, 6, (ctx.m_is.m_normRoughnessDecalTex) ? ctx.m_is.m_normRoughnessDecalTex : m_r->getDummyTexture());
-	cmdb->informTextureCurrentUsage(m_r->getSsao().m_main.getPreviousRt(), TextureUsageBit::SAMPLED_FRAGMENT);
 
 	bindUniforms(cmdb, 0, 0, ctx.m_is.m_commonToken);
 	bindUniforms(cmdb, 0, 1, ctx.m_is.m_pointLightsToken);
