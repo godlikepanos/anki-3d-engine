@@ -259,8 +259,7 @@ void* GpuMemoryManager::getMappedAddress(GpuMemoryHandle& handle)
 U GpuMemoryManager::findMemoryType(
 	U resourceMemTypeBits, VkMemoryPropertyFlags preferFlags, VkMemoryPropertyFlags avoidFlags) const
 {
-	U preferedHigh = MAX_U32;
-	U preferedMed = MAX_U32;
+	U prefered = MAX_U32;
 
 	// Iterate all mem types
 	for(U i = 0; i < m_memoryProperties.memoryTypeCount; i++)
@@ -269,26 +268,14 @@ U GpuMemoryManager::findMemoryType(
 		{
 			VkMemoryPropertyFlags flags = m_memoryProperties.memoryTypes[i].propertyFlags;
 
-			if((flags & preferFlags) == preferFlags)
+			if((flags & preferFlags) == preferFlags && (flags & avoidFlags) == 0)
 			{
-				preferedMed = i;
-
-				if((flags & avoidFlags) != avoidFlags)
-				{
-					preferedHigh = i;
-				}
+				prefered = i;
 			}
 		}
 	}
 
-	if(preferedHigh < MAX_U32)
-	{
-		return preferedHigh;
-	}
-	else
-	{
-		return preferedMed;
-	}
+	return prefered;
 }
 
 } // end namespace anki

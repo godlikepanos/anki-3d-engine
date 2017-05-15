@@ -53,19 +53,21 @@ Error BufferImpl::init(PtrSize size, BufferUsageBit usage, BufferMapAccessBit ac
 	{
 		// Only write
 
-		// Device & host but not coherent
+		// Device & host & coherent but not cached
 		memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(req.memoryTypeBits,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-			VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+				| VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			VK_MEMORY_PROPERTY_HOST_CACHED_BIT);
 
-		// Fallback: host and not coherent
+		// Fallback: host & coherent and not cached
 		if(memIdx == MAX_U32)
 		{
-			memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(
-				req.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			memIdx = getGrManagerImpl().getGpuMemoryManager().findMemoryType(req.memoryTypeBits,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+				VK_MEMORY_PROPERTY_HOST_CACHED_BIT);
 		}
 
-		// Fallback: any host
+		// Fallback: just host
 		if(memIdx == MAX_U32)
 		{
 			ANKI_VK_LOGW("Vulkan: Using a fallback mode for write-only buffer");
