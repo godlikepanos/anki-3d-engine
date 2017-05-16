@@ -1,8 +1,29 @@
-// Copyright (C) 2009-2017, Panagiotis Christopoulos Charitos and contributors.
-// All rights reserved.
-// Code licensed under the BSD License.
-// http://www.anki3d.org/LICENSE
+<!-- 
+Copyright (C) 2009-2017, Panagiotis Christopoulos Charitos and contributors.
+All rights reserved.
+Code licensed under the BSD License.
+http://www.anki3d.org/LICENSE
+-->
+<shaderProgram>
+	<mutators>
+		<mutator name="ENABLE_SHADOWS" values="0 1"/>
+	</mutators>
 
+	<shaders>
+		<shader type="vert">
+			<source><![CDATA[
+#include "shaders/Quad.vert.glsl"
+			]]></source>
+		</shader>
+
+		<shader type="frag">
+			<inputs>
+				<input name="FB_SIZE" type="uvec2" const="1"/>
+				<input name="CLUSTER_COUNT" type="uvec3" const="1"/>
+				<input name="NOISE_MAP_SIZE" type="uint" const="1"/>
+			</inputs>
+
+			<source><![CDATA[
 #include "shaders/Common.glsl"
 #include "shaders/Functions.glsl"
 #include "shaders/Clusterer.glsl"
@@ -35,7 +56,6 @@ layout(std140, ANKI_UBO_BINDING(0, 3), row_major) uniform ubo0_
 
 layout(location = 0) out vec3 out_color;
 
-#define ENABLE_SHADOWS 1
 const uint MAX_SAMPLES_PER_CLUSTER = 4u;
 const float DIST_BETWEEN_SAMPLES = 0.25;
 
@@ -164,3 +184,11 @@ void main()
 	history = max(history, newCol);
 	out_color = mix(history, newCol, 1.0 / 16.0);
 }
+			]]></source>
+		</shader>
+	</shaders>
+
+</shaderProgram>
+
+
+

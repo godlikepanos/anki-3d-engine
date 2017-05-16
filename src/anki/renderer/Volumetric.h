@@ -48,10 +48,11 @@ private:
 	Vec3 m_fogParticleColor = Vec3(1.0);
 	Mat3x4 m_prevCameraRot = Mat3x4::getIdentity();
 
-	ShaderResourcePtr m_frag;
-	ShaderProgramPtr m_prog;
 	Array<TexturePtr, 2> m_rt; ///< vRT
 	Array<FramebufferPtr, 2> m_fb;
+
+	ShaderProgramResourcePtr m_prog;
+	ShaderProgramPtr m_grProg;
 
 	TextureResourcePtr m_noiseTex;
 };

@@ -41,19 +41,22 @@ Error VolumetricMain::init(const ConfigSet& config)
 	}
 
 	// Shaders
-	ANKI_CHECK(m_r->createShaderf("shaders/Volumetric.frag.glsl",
-		m_frag,
-		"#define FB_SIZE uvec2(%uu, %uu)\n"
-		"#define CLUSTER_COUNT uvec3(%uu, %uu, %uu)\n"
-		"#define NOISE_MAP_SIZE %u\n",
-		m_vol->m_width,
-		m_vol->m_height,
-		m_r->getIs().getLightBin().getClusterer().getClusterCountX(),
-		m_r->getIs().getLightBin().getClusterer().getClusterCountY(),
-		m_r->getIs().getLightBin().getClusterer().getClusterCountZ(),
-		m_noiseTex->getWidth()));
+	ANKI_CHECK(getResourceManager().loadResource("programs/VolumetricFog.ankiprog", m_prog));
 
-	m_r->createDrawQuadShaderProgram(m_frag->getGrShader(), m_prog);
+	ShaderProgramResourceMutationInitList<1> mutators(m_prog);
+	mutators.add("ENABLE_SHADOWS", 1);
+
+	ShaderProgramResourceConstantValueInitList<3> consts(m_prog);
+	consts.add("FB_SIZE", UVec2(m_vol->m_width, m_vol->m_height))
+		.add("CLUSTER_COUNT",
+			UVec3(m_r->getIs().getLightBin().getClusterer().getClusterCountX(),
+				m_r->getIs().getLightBin().getClusterer().getClusterCountY(),
+				m_r->getIs().getLightBin().getClusterer().getClusterCountZ()))
+		.add("NOISE_MAP_SIZE", U32(m_noiseTex->getWidth()));
+
+	const ShaderProgramResourceVariant* variant;
+	m_prog->getOrCreateVariant(mutators.m_mutations, consts.m_constantValues, variant);
+	m_grProg = variant->getProgram();
 
 	return ErrorCode::NONE;
 }
@@ -113,7 +116,7 @@ void VolumetricMain::run(RenderingContext& ctx)
 	bindStorage(cmdb, 0, 0, ctx.m_is.m_clustersToken);
 	bindStorage(cmdb, 0, 1, ctx.m_is.m_lightIndicesToken);
 
-	cmdb->bindShaderProgram(m_prog);
+	cmdb->bindShaderProgram(m_grProg);
 
 	cmdb->beginRenderPass(m_fb[m_r->getFrameCount() & 1]);
 	m_r->drawQuad(cmdb);

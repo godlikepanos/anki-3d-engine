@@ -10,6 +10,7 @@
 #include <anki/Gr.h>
 #include <anki/resource/ResourceManager.h>
 #include <anki/resource/ShaderResource.h>
+#include <anki/resource/ShaderProgramResource.h>
 #include <anki/core/StagingGpuMemoryManager.h>
 
 namespace anki

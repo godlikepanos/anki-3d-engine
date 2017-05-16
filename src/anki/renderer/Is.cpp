@@ -96,7 +96,7 @@ Error Is::initInternal(const ConfigSet& config)
 	//
 	ANKI_CHECK(getResourceManager().loadResource("programs/Is.ankiprog", m_prog));
 
-	ShaderProgramResourceConstantValueInitList<5> consts(m_prog);
+	ShaderProgramResourceConstantValueInitList<4> consts(m_prog);
 	consts.add("CLUSTER_COUNT_X", U32(m_clusterCounts[0]))
 		.add("CLUSTER_COUNT_Y", U32(m_clusterCounts[1]))
 		.add("CLUSTER_COUNT", U32(m_clusterCount))

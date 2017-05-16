@@ -434,6 +434,11 @@ public:
 	{
 	}
 
+	~ShaderProgramResourceConstantValueInitList()
+	{
+		ANKI_ASSERT((m_count == count || m_count == 0) && "Forgot to set something");
+	}
+
 	template<typename T>
 	ShaderProgramResourceConstantValueInitList& add(CString name, const T& t)
 	{
@@ -462,6 +467,11 @@ public:
 	ShaderProgramResourceMutationInitList(ShaderProgramResourcePtr ptr)
 		: m_ptr(ptr)
 	{
+	}
+
+	~ShaderProgramResourceMutationInitList()
+	{
+		ANKI_ASSERT((m_count == count || m_count == 0) && "Forgot to set something");
 	}
 
 	ShaderProgramResourceMutationInitList& add(CString name, ShaderProgramResourceMutatorValue t)
