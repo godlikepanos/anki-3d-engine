@@ -198,9 +198,6 @@ void main()
 
 	uint idxOffset = u_clusters[clusterIdx];
 
-	// Shadowpass sample count
-	uint shadowSampleCount = computeShadowSampleCount(SHADOW_SAMPLE_COUNT, fragPos.z);
-
 	// Decals
 	uint count = u_lightIndices[idxOffset++];
 	while(count-- != 0)
@@ -210,12 +207,12 @@ void main()
 		appendDecalColors(decal, fragPos, diffCol, roughness);
 	}
 
+	// Ambient and emissive color
+	vec3 outC = diffCol * emission;
+
 	// Don't allow zero a2 because we may end up with division with zero
 	float a2 = roughness * 0.9 + 0.1;
 	a2 *= a2;
-
-	// Ambient and emissive color
-	vec3 outC = diffCol * emission;
 
 	// Point lights
 	count = u_lightIndices[idxOffset++];
@@ -250,7 +247,7 @@ void main()
 		if(shadowmapLayerIdx >= 0.0)
 		{
 			float shadow = computeShadowFactorSpot(
-				light.texProjectionMat, fragPos, shadowmapLayerIdx, shadowSampleCount, u_spotMapArr);
+				light.texProjectionMat, fragPos, shadowmapLayerIdx, 1, u_spotMapArr);
 			lambert *= shadow;
 		}
 
@@ -264,10 +261,10 @@ void main()
 	vec3 worldNormal = u_invViewRotation * normal;
 	vec3 worldR = reflect(worldEye, worldNormal);
 
-	float reflLod = float(IR_MIPMAP_COUNT) * roughness;
+	float reflLod = float(IR_MIPMAP_COUNT) * a2;
 
 	float ndotv = dot(normal, viewDir);
-	vec2 envBRDF = texture(u_integrationLut, vec2(roughness, ndotv)).xy;
+	vec2 envBRDF = texture(u_integrationLut, vec2(a2, ndotv)).xy;
 	vec3 specIndirectTerm = specCol * envBRDF.x + envBRDF.y;
 
 	vec3 specIndirect, diffIndirect;
