@@ -184,6 +184,21 @@ private:
 #else
 #define ANKI_DBG_NULLIFY
 #endif
+
+static constexpr unsigned long long int operator""_B(unsigned long long int x)
+{
+	return x;
+}
+
+static constexpr unsigned long long int operator""_KB(unsigned long long int x)
+{
+	return x * 1024;
+}
+
+static constexpr unsigned long long int operator""_MB(unsigned long long int x)
+{
+	return x * 1024 * 1024;
+}
 /// @}
 
 } // end namespace anki

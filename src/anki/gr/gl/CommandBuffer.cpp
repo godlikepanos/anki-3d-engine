@@ -52,16 +52,17 @@ void CommandBuffer::init(CommandBufferInitInfo& inf)
 	}
 }
 
-void CommandBuffer::flush()
+void CommandBuffer::flush(FencePtr* fence)
 {
 	if(!m_impl->isSecondLevel())
 	{
 		ANKI_ASSERT(!m_impl->m_state.insideRenderPass());
+		ANKI_ASSERT(fence == nullptr);
 	}
 
 	if(!m_impl->isSecondLevel())
 	{
-		getManager().getImplementation().getRenderingThread().flushCommandBuffer(CommandBufferPtr(this));
+		getManager().getImplementation().getRenderingThread().flushCommandBuffer(CommandBufferPtr(this), fence);
 	}
 }
 
