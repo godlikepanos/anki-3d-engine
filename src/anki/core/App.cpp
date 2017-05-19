@@ -265,7 +265,7 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	rinit.m_allocCallbackData = m_allocCbData;
 	m_resources = m_heapAlloc.newInstance<ResourceManager>();
 
-	ANKI_CHECK(m_resources->create(rinit));
+	ANKI_CHECK(m_resources->init(rinit));
 
 	//
 	// Renderer

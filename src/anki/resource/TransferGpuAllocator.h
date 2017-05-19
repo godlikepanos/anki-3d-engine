@@ -6,7 +6,8 @@
 #pragma once
 
 #include <anki/resource/Common.h>
-#include <anki/gr/common/ClassGpuAllocator.h>
+#include <anki/gr/common/StackGpuAllocator.h>
+#include <anki/util/List.h>
 
 namespace anki
 {
@@ -17,6 +18,8 @@ namespace anki
 /// Memory handle.
 class TransferGpuAllocatorHandle
 {
+	friend class TransferGpuAllocator;
+
 public:
 	TransferGpuAllocatorHandle() = default;
 
@@ -27,7 +30,10 @@ public:
 		*this = std::move(b);
 	}
 
-	~TransferGpuAllocatorHandle();
+	~TransferGpuAllocatorHandle()
+	{
+		ANKI_ASSERT(!valid() && "Forgot to release");
+	}
 
 	TransferGpuAllocatorHandle& operator=(TransferGpuAllocatorHandle&& b)
 	{
@@ -37,6 +43,8 @@ public:
 	}
 
 	BufferPtr getBuffer() const;
+
+	void* getMappedMemory() const;
 
 	PtrSize getOffset() const
 	{
@@ -52,29 +60,63 @@ public:
 	}
 
 private:
-	ClassGpuAllocatorHandle m_handle;
+	StackGpuAllocatorHandle m_handle;
 	PtrSize m_range = 0;
+	U8 m_frame = MAX_U8;
+
+	Bool valid() const
+	{
+		return m_range != 0 && m_frame < MAX_U8;
+	}
 };
 
 /// GPU memory allocator for GPU buffers used in transfer operations.
 class TransferGpuAllocator
 {
+	friend class TransferGpuAllocatorHandle;
+
 public:
-	class ClassInf;
+	static const U FRAME_COUNT = 3;
+	static const PtrSize CHUNK_INITIAL_SIZE = 64_MB;
+	static constexpr F64 MAX_FENCE_WAIT_TIME = 500.0_ms;
 
-	ANKI_USE_RESULT Bool allocate(PtrSize size, TransferGpuAllocatorHandle& handle);
+	TransferGpuAllocator();
 
+	~TransferGpuAllocator();
+
+	ANKI_USE_RESULT Error init(PtrSize maxSize, GrManager* gr, ResourceAllocator<U8> alloc);
+
+	void destroy();
+
+	/// Allocate some transfer memory.
+	ANKI_USE_RESULT Error allocate(PtrSize size, TransferGpuAllocatorHandle& handle);
+
+	/// Release the memory. It will not be recycled before the fence is signaled.
 	void release(TransferGpuAllocatorHandle& handle, FencePtr fence);
 
 private:
-	class Memory;
 	class Interface;
+	class Memory;
 
 	ResourceAllocator<U8> m_alloc;
 	GrManager* m_gr = nullptr;
+	PtrSize m_maxAllocSize = 0;
 
-	ClassGpuAllocatorInterface* m_interface = nullptr;
-	ClassGpuAllocator m_classAlloc;
+	UniquePtr<Interface> m_interface;
+
+	class Frame
+	{
+	public:
+		StackGpuAllocator m_stackAlloc;
+		List<FencePtr> m_fences;
+		U32 m_pendingReleases = 0;
+	};
+
+	Mutex m_mtx; ///< Protect all members bellow.
+	ConditionVariable m_condVar;
+	Array<Frame, FRAME_COUNT> m_frames;
+	U8 m_frameCount = 0;
+	PtrSize m_crntFrameAllocatedSize;
 };
 /// @}
 

@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/resource/Common.h>
+#include <anki/resource/TransferGpuAllocator.h>
 #include <anki/util/List.h>
 #include <anki/util/Functions.h>
 #include <anki/util/String.h>
@@ -126,7 +126,7 @@ public:
 
 	~ResourceManager();
 
-	ANKI_USE_RESULT Error create(ResourceManagerInitInfo& init);
+	ANKI_USE_RESULT Error init(ResourceManagerInitInfo& init);
 
 	/// Load a resource.
 	template<typename T>
@@ -167,6 +167,11 @@ anki_internal:
 	{
 		ANKI_ASSERT(m_stagingMem);
 		return *m_stagingMem;
+	}
+
+	TransferGpuAllocator& getTransferGpuAllocator()
+	{
+		return m_transferGpuAlloc;
 	}
 
 	PhysicsWorld& getPhysicsWorld()
@@ -243,6 +248,7 @@ private:
 	AsyncLoader* m_asyncLoader = nullptr; ///< Async loading thread
 	U64 m_uuid = 0;
 	U64 m_loadRequestCount = 0;
+	TransferGpuAllocator m_transferGpuAlloc;
 };
 /// @}
 

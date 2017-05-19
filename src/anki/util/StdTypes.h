@@ -185,6 +185,8 @@ private:
 #define ANKI_DBG_NULLIFY
 #endif
 
+/// @name Size user literals
+/// @{
 static constexpr unsigned long long int operator""_B(unsigned long long int x)
 {
 	return x;
@@ -199,6 +201,21 @@ static constexpr unsigned long long int operator""_MB(unsigned long long int x)
 {
 	return x * 1024 * 1024;
 }
+/// @}
+
+/// @name Time user literals
+/// @{
+static constexpr long double operator""_ms(long double x)
+{
+	return x / 1000.0;
+}
+
+static constexpr long double operator""_ns(long double x)
+{
+	return x / 1000000000.0;
+}
+/// @}
+
 /// @}
 
 } // end namespace anki

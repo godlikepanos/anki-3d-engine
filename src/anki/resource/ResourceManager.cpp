@@ -32,9 +32,10 @@ ResourceManager::~ResourceManager()
 	m_cacheDir.destroy(m_alloc);
 	m_shadersPrependedSource.destroy(m_alloc);
 	m_alloc.deleteInstance(m_asyncLoader);
+	m_transferGpuAlloc.destroy();
 }
 
-Error ResourceManager::create(ResourceManagerInitInfo& init)
+Error ResourceManager::init(ResourceManagerInitInfo& init)
 {
 	m_gr = init.m_gr;
 	m_stagingMem = init.m_stagingMem;
@@ -48,8 +49,8 @@ Error ResourceManager::create(ResourceManagerInitInfo& init)
 
 	// Init some constants
 	//
-	m_maxTextureSize = init.m_config->getNumber("maxTextureSize");
-	m_textureAnisotropy = init.m_config->getNumber("textureAnisotropy");
+	m_maxTextureSize = init.m_config->getNumber("rsrc.maxTextureSize");
+	m_textureAnisotropy = init.m_config->getNumber("rsrc.textureAnisotropy");
 
 // Init type resource managers
 //
@@ -75,6 +76,8 @@ Error ResourceManager::create(ResourceManagerInitInfo& init)
 	// Init the thread
 	m_asyncLoader = m_alloc.newInstance<AsyncLoader>();
 	m_asyncLoader->init(m_alloc);
+
+	ANKI_CHECK(m_transferGpuAlloc.init(init.m_config->getNumber("rsrc.transferScratchMemorySize"), m_gr, m_alloc));
 
 	return ErrorCode::NONE;
 }
