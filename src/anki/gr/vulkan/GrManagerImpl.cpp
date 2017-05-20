@@ -5,10 +5,11 @@
 
 #include <anki/gr/vulkan/GrManagerImpl.h>
 #include <anki/gr/GrManager.h>
-
 #include <anki/gr/vulkan/CommandBufferImpl.h>
 #include <anki/gr/CommandBuffer.h>
 #include <anki/gr/GrObjectCache.h>
+#include <anki/gr/Fence.h>
+#include <anki/gr/vulkan/FenceImpl.h>
 
 #include <anki/core/Config.h>
 #include <glslang/Public/ShaderLang.h>
@@ -725,7 +726,7 @@ void GrManagerImpl::beginFrame()
 	PerFrame& frame = m_perFrame[m_frame % MAX_FRAMES_IN_FLIGHT];
 
 	// Create sync objects
-	FencePtr fence = newFence();
+	MicroFencePtr fence = newFence();
 	frame.m_acquireSemaphore = m_semaphores.newInstance(fence);
 
 	// Get new image
@@ -787,7 +788,7 @@ void GrManagerImpl::resetFrame(PerFrame& frame)
 	frame.m_renderSemaphore.reset(nullptr);
 }
 
-void GrManagerImpl::flushCommandBuffer(CommandBufferPtr cmdb, Bool wait)
+void GrManagerImpl::flushCommandBuffer(CommandBufferPtr cmdb, FencePtr* outFence, Bool wait)
 {
 	CommandBufferImpl& impl = *cmdb->m_impl;
 	VkCommandBuffer handle = impl.getHandle();
@@ -795,7 +796,15 @@ void GrManagerImpl::flushCommandBuffer(CommandBufferPtr cmdb, Bool wait)
 	VkSubmitInfo submit = {};
 	submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-	FencePtr fence = newFence();
+	MicroFencePtr fence = newFence();
+
+	// Create fence
+	if(outFence)
+	{
+		outFence->reset(getAllocator().newInstance<Fence>(m_manager, 0, nullptr));
+		(*outFence)->m_impl.reset(getAllocator().newInstance<FenceImpl>(m_manager));
+		(*outFence)->m_impl->m_fence = fence;
+	}
 
 	LockGuard<Mutex> lock(m_globalMtx);
 

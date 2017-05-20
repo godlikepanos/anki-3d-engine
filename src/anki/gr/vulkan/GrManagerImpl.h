@@ -8,7 +8,7 @@
 #include <anki/gr/vulkan/Common.h>
 #include <anki/gr/vulkan/GpuMemoryManager.h>
 #include <anki/gr/vulkan/GrSemaphore.h>
-#include <anki/gr/vulkan/Fence.h>
+#include <anki/gr/vulkan/FenceFactory.h>
 #include <anki/gr/vulkan/QueryExtra.h>
 #include <anki/gr/vulkan/DescriptorSet.h>
 #include <anki/gr/vulkan/CommandBufferFactory.h>
@@ -78,7 +78,7 @@ public:
 		return m_cmdbFactory;
 	}
 
-	FencePtr newFence()
+	MicroFencePtr newFence()
 	{
 		return m_fences.newInstance();
 	}
@@ -118,11 +118,11 @@ public:
 		return m_surfaceHeight;
 	}
 
-	void flushCommandBuffer(CommandBufferPtr ptr, Bool wait = false);
+	void flushCommandBuffer(CommandBufferPtr ptr, FencePtr* fence, Bool wait = false);
 
 	void finishCommandBuffer(CommandBufferPtr ptr)
 	{
-		flushCommandBuffer(ptr, true);
+		flushCommandBuffer(ptr, nullptr, true);
 	}
 
 	/// @name Memory
@@ -235,7 +235,7 @@ private:
 	class PerFrame
 	{
 	public:
-		FencePtr m_presentFence;
+		MicroFencePtr m_presentFence;
 		GrSemaphorePtr m_acquireSemaphore;
 
 		/// The semaphore that the submit that renders to the default FB.

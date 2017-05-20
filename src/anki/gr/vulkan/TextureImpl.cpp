@@ -128,7 +128,7 @@ Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 		cmdb->m_impl->setTextureBarrierRange(TexturePtr(tex), TextureUsageBit::NONE, init.m_initialUsage, range);
 
 		cmdb->m_impl->endRecording();
-		getGrManagerImpl().flushCommandBuffer(cmdb);
+		getGrManagerImpl().flushCommandBuffer(cmdb, nullptr);
 	}
 
 	return ErrorCode::NONE;

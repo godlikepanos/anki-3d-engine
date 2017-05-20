@@ -7,6 +7,7 @@
 #include <anki/gr/Fence.h>
 #include <anki/gr/Buffer.h>
 #include <anki/gr/GrManager.h>
+#include <anki/core/Trace.h>
 
 namespace anki
 {
@@ -45,6 +46,10 @@ public:
 		ANKI_ASSERT(mem);
 
 		TransferGpuAllocator::Memory* mm = static_cast<TransferGpuAllocator::Memory*>(mem);
+		if(mm->m_mappedMemory)
+		{
+			mm->m_buffer->unmap();
+		}
 		m_alloc.deleteInstance(mm);
 	}
 
@@ -118,6 +123,8 @@ void TransferGpuAllocator::destroy()
 
 Error TransferGpuAllocator::allocate(PtrSize size, TransferGpuAllocatorHandle& handle)
 {
+	ANKI_TRACE_SCOPED_EVENT(RESOURCE_ALLOCATE_TRANSFER);
+
 	const PtrSize frameSize = m_maxAllocSize / FRAME_COUNT;
 
 	LockGuard<Mutex> lock(m_mtx);

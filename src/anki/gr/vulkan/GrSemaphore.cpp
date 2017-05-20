@@ -31,7 +31,7 @@ void GrSemaphoreFactory::releaseFences()
 	}
 }
 
-GrSemaphorePtr GrSemaphoreFactory::newInstance(FencePtr fence)
+GrSemaphorePtr GrSemaphoreFactory::newInstance(MicroFencePtr fence)
 {
 	ANKI_ASSERT(fence);
 

@@ -3,13 +3,13 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/gr/vulkan/Fence.h>
+#include <anki/gr/vulkan/FenceFactory.h>
 #include <anki/core/Trace.h>
 
 namespace anki
 {
 
-inline Fence::Fence(FenceFactory* f)
+inline MicroFence::MicroFence(FenceFactory* f)
 	: m_factory(f)
 {
 	ANKI_ASSERT(f);
@@ -20,7 +20,7 @@ inline Fence::Fence(FenceFactory* f)
 	ANKI_VK_CHECKF(vkCreateFence(m_factory->m_dev, &ci, nullptr, &m_handle));
 }
 
-inline Fence::~Fence()
+inline MicroFence::~MicroFence()
 {
 	if(m_handle)
 	{
@@ -28,18 +28,18 @@ inline Fence::~Fence()
 	}
 }
 
-inline GrAllocator<U8> Fence::getAllocator() const
+inline GrAllocator<U8> MicroFence::getAllocator() const
 {
 	return m_factory->m_alloc;
 }
 
-inline void Fence::wait()
+inline void MicroFence::wait()
 {
 	ANKI_ASSERT(m_handle);
 	ANKI_VK_CHECKF(vkWaitForFences(m_factory->m_dev, 1, &m_handle, true, ~0U));
 }
 
-inline Bool Fence::done() const
+inline Bool MicroFence::done() const
 {
 	ANKI_ASSERT(m_handle);
 	VkResult status = vkGetFenceStatus(m_factory->m_dev, m_handle);
@@ -55,7 +55,24 @@ inline Bool Fence::done() const
 	return false;
 }
 
-inline void FencePtrDeleter::operator()(Fence* f)
+inline Bool MicroFence::clientWait(F64 seconds)
+{
+	if(seconds == 0.0)
+	{
+		return done();
+	}
+	else
+	{
+		VkResult res;
+		F64 nsf = 1e+9 * seconds;
+		U64 ns = U64(nsf);
+		ANKI_VK_CHECKF(res = vkWaitForFences(m_factory->m_dev, 1, &m_handle, true, ns));
+
+		return res != VK_TIMEOUT;
+	}
+}
+
+inline void MicroFencePtrDeleter::operator()(MicroFence* f)
 {
 	ANKI_ASSERT(f);
 	f->m_factory->deleteFence(f);

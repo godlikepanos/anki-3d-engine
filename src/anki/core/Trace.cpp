@@ -11,7 +11,8 @@
 namespace anki
 {
 
-static Array<const char*, U(TraceEventType::COUNT)> eventNames = {{"SCENE_UPDATE",
+static Array<const char*, U(TraceEventType::COUNT)> eventNames = {{"RESOURCE_ALLOCATE_TRANSFER",
+	"SCENE_UPDATE",
 	"SCENE_DELETE_STUFF",
 	"SCENE_PHYSICS_UPDATE",
 	"SCENE_NODES_UPDATE",

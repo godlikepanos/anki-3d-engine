@@ -24,6 +24,7 @@ namespace anki
 /// Trace event type.
 enum class TraceEventType
 {
+	RESOURCE_ALLOCATE_TRANSFER,
 	SCENE_UPDATE,
 	SCENE_DELETE_STUFF,
 	SCENE_PHYSICS_UPDATE,
@@ -139,6 +140,26 @@ private:
 	ANKI_USE_RESULT Error flushEvents();
 };
 
+class ScopedTraceManagerEvent
+{
+public:
+	ScopedTraceManagerEvent(TraceManager* manager, TraceEventType type)
+		: m_manager(manager)
+		, m_type(type)
+	{
+		m_manager->startEvent();
+	}
+
+	~ScopedTraceManagerEvent()
+	{
+		m_manager->stopEvent(m_type);
+	}
+
+private:
+	TraceManager* m_manager;
+	TraceEventType m_type;
+};
+
 using TraceManagerSingleton = Singleton<TraceManager>;
 
 /// @name Trace macros.
@@ -150,6 +171,9 @@ using TraceManagerSingleton = Singleton<TraceManager>;
 
 #define ANKI_TRACE_STOP_EVENT(name_) TraceManagerSingleton::get().stopEvent(TraceEventType::name_)
 
+#define ANKI_TRACE_SCOPED_EVENT(name_)                                                                                 \
+	ScopedTraceManagerEvent _tse##name_(&TraceManagerSingleton::get(), TraceEventType::name_)
+
 #define ANKI_TRACE_INC_COUNTER(name_, val_) TraceManagerSingleton::get().incCounter(TraceCounterType::name_, val_)
 
 #define ANKI_TRACE_START_FRAME() TraceManagerSingleton::get().startFrame()
@@ -160,6 +184,7 @@ using TraceManagerSingleton = Singleton<TraceManager>;
 
 #define ANKI_TRACE_START_EVENT(name_) ((void)0)
 #define ANKI_TRACE_STOP_EVENT(name_) ((void)0)
+#define ANKI_TRACE_SCOPED_EVENT(name_) ((void)0)
 #define ANKI_TRACE_INC_COUNTER(name_, val_) ((void)0)
 #define ANKI_TRACE_START_FRAME() ((void)0)
 #define ANKI_TRACE_STOP_FRAME() ((void)0)

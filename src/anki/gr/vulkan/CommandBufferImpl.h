@@ -52,7 +52,7 @@ public:
 
 	ANKI_USE_RESULT Error init(const CommandBufferInitInfo& init);
 
-	void setFence(FencePtr& fence)
+	void setFence(MicroFencePtr& fence)
 	{
 		m_microCmdb->setFence(fence);
 	}

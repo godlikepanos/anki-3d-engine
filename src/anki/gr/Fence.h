@@ -20,6 +20,8 @@ class Fence final : public GrObject
 
 public:
 	/// Wait for the fence.
+	/// @param seconds The time to wait in seconds. If it's zero then just return the status.
+	/// @return True if is signaled (signaled == GPU work is done).
 	Bool clientWait(F64 seconds);
 
 anki_internal:

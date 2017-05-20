@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/gr/vulkan/Fence.h>
+#include <anki/gr/vulkan/FenceFactory.h>
 #include <anki/gr/CommandBuffer.h>
 #include <anki/util/List.h>
 
@@ -61,7 +61,7 @@ public:
 		m_objectRefs[m_objectRefCount++] = IntrusivePtr<GrObject>(grobj);
 	}
 
-	void setFence(FencePtr& fence)
+	void setFence(MicroFencePtr& fence)
 	{
 		ANKI_ASSERT(!(m_flags & CommandBufferFlag::SECOND_LEVEL));
 		ANKI_ASSERT(!m_fence.isCreated());
@@ -78,7 +78,7 @@ private:
 	U32 m_objectRefCount = 0;
 	CommandBufferFlag m_flags = CommandBufferFlag::NONE;
 
-	FencePtr m_fence;
+	MicroFencePtr m_fence;
 
 	void destroy();
 	void reset();
