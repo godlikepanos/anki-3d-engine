@@ -123,9 +123,10 @@ Error Ir::loadMesh(CString fname, BufferPtr& vert, BufferPtr& idx, U32& idxCount
 	init.m_flags = CommandBufferFlag::SMALL_BATCH;
 	CommandBufferPtr cmdb = getGrManager().newInstance<CommandBuffer>(init);
 
-	StagingGpuMemoryToken token;
-	Vec3* verts = static_cast<Vec3*>(
-		m_r->getStagingGpuMemoryManager().allocateFrame(vertBuffSize, StagingGpuMemoryType::TRANSFER, token));
+	TransferGpuAllocatorHandle handle;
+	ANKI_CHECK(m_r->getResourceManager().getTransferGpuAllocator().allocate(vertBuffSize, handle));
+
+	Vec3* verts = static_cast<Vec3*>(handle.getMappedMemory());
 
 	const U8* ptr = loader.getVertexData();
 	for(U i = 0; i < loader.getHeader().m_totalVerticesCount; ++i)
@@ -135,17 +136,21 @@ Error Ir::loadMesh(CString fname, BufferPtr& vert, BufferPtr& idx, U32& idxCount
 		ptr += loader.getVertexSize();
 	}
 
-	cmdb->copyBufferToBuffer(token.m_buffer, token.m_offset, vert, 0, token.m_range);
+	cmdb->copyBufferToBuffer(handle.getBuffer(), handle.getOffset(), vert, 0, handle.getRange());
 
-	void* cpuIds = m_r->getStagingGpuMemoryManager().allocateFrame(
-		loader.getIndexDataSize(), StagingGpuMemoryType::TRANSFER, token);
+	TransferGpuAllocatorHandle handle2;
+	ANKI_CHECK(m_r->getResourceManager().getTransferGpuAllocator().allocate(loader.getIndexDataSize(), handle2));
+	void* cpuIds = handle2.getMappedMemory();
 
 	memcpy(cpuIds, loader.getIndexData(), loader.getIndexDataSize());
 
-	cmdb->copyBufferToBuffer(token.m_buffer, token.m_offset, idx, 0, token.m_range);
+	cmdb->copyBufferToBuffer(handle2.getBuffer(), handle2.getOffset(), idx, 0, handle2.getRange());
 	idxCount = loader.getHeader().m_totalIndicesCount;
 
-	cmdb->flush();
+	FencePtr fence;
+	cmdb->flush(&fence);
+	m_r->getResourceManager().getTransferGpuAllocator().release(handle, fence);
+	m_r->getResourceManager().getTransferGpuAllocator().release(handle2, fence);
 
 	return ErrorCode::NONE;
 }

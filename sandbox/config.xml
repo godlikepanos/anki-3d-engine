@@ -41,7 +41,6 @@
 	<imageReflectionMaxDistance>30</imageReflectionMaxDistance>
 	<core.uniformPerFrameMemorySize>16777216</core.uniformPerFrameMemorySize>
 	<core.storagePerFrameMemorySize>16777216</core.storagePerFrameMemorySize>
-	<core.transferPerFrameMemorySize>67108864</core.transferPerFrameMemorySize>
 	<core.vertexPerFrameMemorySize>16777216</core.vertexPerFrameMemorySize>
 	<rsrc.maxTextureSize>1048576</rsrc.maxTextureSize>
 	<rsrc.textureAnisotropy>8</rsrc.textureAnisotropy>
