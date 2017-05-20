@@ -21,7 +21,9 @@ class TransferGpuAllocatorHandle
 	friend class TransferGpuAllocator;
 
 public:
-	TransferGpuAllocatorHandle() = default;
+	TransferGpuAllocatorHandle()
+	{
+	}
 
 	TransferGpuAllocatorHandle(const TransferGpuAllocatorHandle&) = delete;
 
@@ -38,7 +40,9 @@ public:
 	TransferGpuAllocatorHandle& operator=(TransferGpuAllocatorHandle&& b)
 	{
 		m_handle = b.m_handle;
-		b.m_handle = {};
+		m_range = b.m_range;
+		m_frame = b.m_frame;
+		b.invalidate();
 		return *this;
 	}
 
@@ -67,6 +71,14 @@ private:
 	Bool valid() const
 	{
 		return m_range != 0 && m_frame < MAX_U8;
+	}
+
+	void invalidate()
+	{
+		m_handle.m_memory = nullptr;
+		m_handle.m_offset = 0;
+		m_range = 0;
+		m_frame = MAX_U8;
 	}
 };
 

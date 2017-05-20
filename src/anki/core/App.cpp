@@ -256,7 +256,6 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	//
 	ResourceManagerInitInfo rinit;
 	rinit.m_gr = m_gr;
-	rinit.m_stagingMem = m_stagingMem;
 	rinit.m_physics = m_physics;
 	rinit.m_resourceFs = m_resourceFs;
 	rinit.m_config = &config;
@@ -288,8 +287,15 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	//
 	m_scene = m_heapAlloc.newInstance<SceneGraph>();
 
-	ANKI_CHECK(m_scene->init(
-		m_allocCb, m_allocCbData, m_threadpool, m_threadHive, m_resources, m_input, &m_globalTimestamp, config));
+	ANKI_CHECK(m_scene->init(m_allocCb,
+		m_allocCbData,
+		m_threadpool,
+		m_threadHive,
+		m_resources,
+		m_stagingMem,
+		m_input,
+		&m_globalTimestamp,
+		config));
 
 	//
 	// Script

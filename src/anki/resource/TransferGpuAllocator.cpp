@@ -74,7 +74,7 @@ void* TransferGpuAllocatorHandle::getMappedMemory() const
 	ANKI_ASSERT(m_handle.m_memory);
 	const TransferGpuAllocator::Memory* mm = static_cast<const TransferGpuAllocator::Memory*>(m_handle.m_memory);
 	ANKI_ASSERT(mm->m_mappedMemory);
-	return mm->m_mappedMemory;
+	return static_cast<U8*>(mm->m_mappedMemory) + m_handle.m_offset;
 }
 
 TransferGpuAllocator::TransferGpuAllocator()
@@ -163,6 +163,7 @@ Error TransferGpuAllocator::allocate(PtrSize size, TransferGpuAllocatorHandle& h
 	handle.m_range = size;
 	handle.m_frame = frame - &m_frames[0];
 	m_crntFrameAllocatedSize += size;
+	++frame->m_pendingReleases;
 
 	return ErrorCode::NONE;
 }
@@ -185,7 +186,7 @@ void TransferGpuAllocator::release(TransferGpuAllocatorHandle& handle, FencePtr 
 		m_condVar.notifyOne();
 	}
 
-	handle = {};
+	handle.invalidate();
 }
 
 } // end namespace anki

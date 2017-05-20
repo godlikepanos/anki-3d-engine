@@ -21,7 +21,6 @@ class ResourceManager;
 class AsyncLoader;
 class ResourceManagerModel;
 class Renderer;
-class StagingGpuMemoryManager;
 
 /// @addtogroup resource
 /// @{
@@ -93,7 +92,6 @@ class ResourceManagerInitInfo
 {
 public:
 	GrManager* m_gr = nullptr;
-	StagingGpuMemoryManager* m_stagingMem = nullptr;
 	PhysicsWorld* m_physics = nullptr;
 	ResourceFilesystem* m_resourceFs = nullptr;
 	const ConfigSet* m_config = nullptr;
@@ -163,12 +161,6 @@ anki_internal:
 		return *m_gr;
 	}
 
-	StagingGpuMemoryManager& getStagingGpuMemoryManager()
-	{
-		ANKI_ASSERT(m_stagingMem);
-		return *m_stagingMem;
-	}
-
 	TransferGpuAllocator& getTransferGpuAllocator()
 	{
 		return m_transferGpuAlloc;
@@ -236,7 +228,6 @@ anki_internal:
 
 private:
 	GrManager* m_gr = nullptr;
-	StagingGpuMemoryManager* m_stagingMem = nullptr;
 	PhysicsWorld* m_physics = nullptr;
 	ResourceFilesystem* m_fs = nullptr;
 	ResourceAllocator<U8> m_alloc;

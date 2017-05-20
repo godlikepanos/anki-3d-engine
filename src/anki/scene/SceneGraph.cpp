@@ -68,6 +68,7 @@ Error SceneGraph::init(AllocAlignedCallback allocCb,
 	ThreadPool* threadpool,
 	ThreadHive* threadHive,
 	ResourceManager* resources,
+	StagingGpuMemoryManager* stagingMem,
 	Input* input,
 	const Timestamp* globalTimestamp,
 	const ConfigSet& config)
@@ -76,6 +77,7 @@ Error SceneGraph::init(AllocAlignedCallback allocCb,
 	m_threadpool = threadpool;
 	m_threadHive = threadHive;
 	m_resources = resources;
+	m_stagingAlloc = stagingMem;
 	m_objectsMarkedForDeletionCount.store(0);
 	m_gr = &m_resources->getGrManager();
 	m_physics = &m_resources->getPhysicsWorld();

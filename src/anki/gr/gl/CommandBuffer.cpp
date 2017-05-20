@@ -57,6 +57,9 @@ void CommandBuffer::flush(FencePtr* fence)
 	if(!m_impl->isSecondLevel())
 	{
 		ANKI_ASSERT(!m_impl->m_state.insideRenderPass());
+	}
+	else
+	{
 		ANKI_ASSERT(fence == nullptr);
 	}
 
