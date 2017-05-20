@@ -9,6 +9,7 @@
 #include <anki/core/Config.h>
 #include <anki/util/HighRezTimer.h>
 #include <anki/core/StagingGpuMemoryManager.h>
+#include <anki/resource/TransferGpuAllocator.h>
 
 namespace anki
 {
@@ -264,6 +265,8 @@ static StagingGpuMemoryManager* stagingMem = nullptr;
 	stagingMem = new StagingGpuMemoryManager();                                                                        \
 	createGrManager(win, gr);                                                                                          \
 	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(gr, Config()));                                                           \
+	TransferGpuAllocator transfAlloc;                                                                                  \
+	ANKI_TEST_EXPECT_NO_ERR(transfAlloc.init(128_MB, gr, gr->getAllocator()));                                         \
 	{
 
 #define COMMON_END()                                                                                                   \
@@ -294,22 +297,22 @@ static void* setStorage(PtrSize size, CommandBufferPtr& cmdb, U set, U binding)
 #define SET_UNIFORMS(type_, size_, cmdb_, set_, binding_) static_cast<type_>(setUniforms(size_, cmdb_, set_, binding_))
 #define SET_STORAGE(type_, size_, cmdb_, set_, binding_) static_cast<type_>(setStorage(size_, cmdb_, set_, binding_))
 
-#define UPLOAD_TEX_SURFACE(cmdb_, tex_, surf_, ptr_, size_)                                                            \
+#define UPLOAD_TEX_SURFACE(cmdb_, tex_, surf_, ptr_, size_, handle_)                                                   \
 	do                                                                                                                 \
 	{                                                                                                                  \
-		StagingGpuMemoryToken token;                                                                                   \
-		void* f = stagingMem->allocateFrame(size_, StagingGpuMemoryType::TRANSFER, token);                             \
+		ANKI_TEST_EXPECT_NO_ERR(transfAlloc.allocate(size_, handle_));                                                 \
+		void* f = handle_.getMappedMemory();                                                                           \
 		memcpy(f, ptr_, size_);                                                                                        \
-		cmdb_->copyBufferToTextureSurface(token.m_buffer, token.m_offset, token.m_range, tex_, surf_);                 \
+		cmdb_->copyBufferToTextureSurface(handle_.getBuffer(), handle_.getOffset(), handle_.getRange(), tex_, surf_);  \
 	} while(0)
 
-#define UPLOAD_TEX_VOL(cmdb_, tex_, vol_, ptr_, size_)                                                                 \
+#define UPLOAD_TEX_VOL(cmdb_, tex_, vol_, ptr_, size_, handle_)                                                        \
 	do                                                                                                                 \
 	{                                                                                                                  \
-		StagingGpuMemoryToken token;                                                                                   \
-		void* f = stagingMem->allocateFrame(size_, StagingGpuMemoryType::TRANSFER, token);                             \
+		ANKI_TEST_EXPECT_NO_ERR(transfAlloc.allocate(size_, handle_));                                                 \
+		void* f = handle_.getMappedMemory();                                                                           \
 		memcpy(f, ptr_, size_);                                                                                        \
-		cmdb_->copyBufferToTextureVolume(token.m_buffer, token.m_offset, token.m_range, tex_, vol_);                   \
+		cmdb_->copyBufferToTextureVolume(handle_.getBuffer(), handle_.getOffset(), handle_.getRange(), tex_, vol_);    \
 	} while(0)
 
 const PixelFormat DS_FORMAT = PixelFormat(ComponentFormat::D24S8, TransformFormat::UNORM);
@@ -789,11 +792,12 @@ ANKI_TEST(Gr, DrawWithTexture)
 	cmdb->setTextureSurfaceBarrier(
 		b, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION, TextureSurfaceInfo(0, 0, 0, 0));
 
-	UPLOAD_TEX_SURFACE(cmdb, a, TextureSurfaceInfo(0, 0, 0, 0), &mip0[0], sizeof(mip0));
+	TransferGpuAllocatorHandle handle0, handle1, handle2;
+	UPLOAD_TEX_SURFACE(cmdb, a, TextureSurfaceInfo(0, 0, 0, 0), &mip0[0], sizeof(mip0), handle0);
 
-	UPLOAD_TEX_SURFACE(cmdb, a, TextureSurfaceInfo(1, 0, 0, 0), &mip1[0], sizeof(mip1));
+	UPLOAD_TEX_SURFACE(cmdb, a, TextureSurfaceInfo(1, 0, 0, 0), &mip1[0], sizeof(mip1), handle1);
 
-	UPLOAD_TEX_SURFACE(cmdb, b, TextureSurfaceInfo(0, 0, 0, 0), &bmip0[0], sizeof(bmip0));
+	UPLOAD_TEX_SURFACE(cmdb, b, TextureSurfaceInfo(0, 0, 0, 0), &bmip0[0], sizeof(bmip0), handle2);
 
 	// Gen mips
 	cmdb->setTextureSurfaceBarrier(
@@ -814,7 +818,11 @@ ANKI_TEST(Gr, DrawWithTexture)
 			b, TextureUsageBit::GENERATE_MIPMAPS, TextureUsageBit::SAMPLED_FRAGMENT, TextureSurfaceInfo(i, 0, 0, 0));
 	}
 
-	cmdb->flush();
+	FencePtr fence;
+	cmdb->flush(&fence);
+	transfAlloc.release(handle0, fence);
+	transfAlloc.release(handle1, fence);
+	transfAlloc.release(handle2, fence);
 
 	//
 	// Create prog
@@ -1259,9 +1267,10 @@ ANKI_TEST(Gr, 3DTextures)
 	cmdb->setTextureVolumeBarrier(
 		a, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION, TextureVolumeInfo(1));
 
-	UPLOAD_TEX_VOL(cmdb, a, TextureVolumeInfo(0), &mip0[0], sizeof(mip0));
+	TransferGpuAllocatorHandle handle0, handle1;
+	UPLOAD_TEX_VOL(cmdb, a, TextureVolumeInfo(0), &mip0[0], sizeof(mip0), handle0);
 
-	UPLOAD_TEX_VOL(cmdb, a, TextureVolumeInfo(1), &mip1[0], sizeof(mip1));
+	UPLOAD_TEX_VOL(cmdb, a, TextureVolumeInfo(1), &mip1[0], sizeof(mip1), handle1);
 
 	cmdb->setTextureVolumeBarrier(
 		a, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::SAMPLED_FRAGMENT, TextureVolumeInfo(0));
@@ -1269,7 +1278,10 @@ ANKI_TEST(Gr, 3DTextures)
 	cmdb->setTextureVolumeBarrier(
 		a, TextureUsageBit::TRANSFER_DESTINATION, TextureUsageBit::SAMPLED_FRAGMENT, TextureVolumeInfo(1));
 
-	cmdb->flush();
+	FencePtr fence;
+	cmdb->flush(&fence);
+	transfAlloc.release(handle0, fence);
+	transfAlloc.release(handle1, fence);
 
 	//
 	// Rest
