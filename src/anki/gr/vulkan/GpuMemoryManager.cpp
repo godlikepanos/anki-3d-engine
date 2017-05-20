@@ -18,21 +18,6 @@ public:
 	PtrSize m_chunkSize;
 };
 
-static constexpr unsigned long long int operator""_B(unsigned long long int x)
-{
-	return x;
-}
-
-static constexpr unsigned long long int operator""_KB(unsigned long long int x)
-{
-	return x * 1024;
-}
-
-static constexpr unsigned long long int operator""_MB(unsigned long long int x)
-{
-	return x * 1024 * 1024;
-}
-
 static const Array<ClassInf, CLASS_COUNT> CLASSES = {{{256_B, 16_KB},
 	{4_KB, 256_KB},
 	{128_KB, 8_MB},

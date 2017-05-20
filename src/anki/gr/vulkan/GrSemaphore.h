@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/gr/vulkan/Fence.h>
+#include <anki/gr/vulkan/FenceFactory.h>
 
 namespace anki
 {
@@ -44,9 +44,9 @@ private:
 	GrSemaphoreFactory* m_factory = nullptr;
 
 	/// Fence to find out when it's safe to reuse this semaphore.
-	FencePtr m_fence;
+	MicroFencePtr m_fence;
 
-	GrSemaphore(GrSemaphoreFactory* f, FencePtr fence);
+	GrSemaphore(GrSemaphoreFactory* f, MicroFencePtr fence);
 
 	~GrSemaphore();
 };
@@ -77,7 +77,7 @@ public:
 
 	void destroy();
 
-	GrSemaphorePtr newInstance(FencePtr fence);
+	GrSemaphorePtr newInstance(MicroFencePtr fence);
 
 private:
 	GrAllocator<U8> m_alloc;

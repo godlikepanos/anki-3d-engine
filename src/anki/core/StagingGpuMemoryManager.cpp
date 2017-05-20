@@ -29,7 +29,6 @@ Error StagingGpuMemoryManager::init(GrManager* gr, const ConfigSet& cfg)
 	m_perFrameBuffers[StagingGpuMemoryType::UNIFORM].m_size = cfg.getNumber("core.uniformPerFrameMemorySize");
 	m_perFrameBuffers[StagingGpuMemoryType::STORAGE].m_size = cfg.getNumber("core.storagePerFrameMemorySize");
 	m_perFrameBuffers[StagingGpuMemoryType::VERTEX].m_size = cfg.getNumber("core.vertexPerFrameMemorySize");
-	m_perFrameBuffers[StagingGpuMemoryType::TRANSFER].m_size = cfg.getNumber("core.transferPerFrameMemorySize");
 	m_perFrameBuffers[StagingGpuMemoryType::TEXTURE].m_size = cfg.getNumber("core.textureBufferPerFrameMemorySize");
 
 	U32 alignment;
@@ -42,11 +41,6 @@ Error StagingGpuMemoryManager::init(GrManager* gr, const ConfigSet& cfg)
 	initBuffer(StagingGpuMemoryType::STORAGE, alignment, maxSize, BufferUsageBit::STORAGE_ALL, *gr);
 
 	initBuffer(StagingGpuMemoryType::VERTEX, 16, MAX_U32, BufferUsageBit::VERTEX, *gr);
-	initBuffer(StagingGpuMemoryType::TRANSFER,
-		16,
-		MAX_U32,
-		BufferUsageBit::BUFFER_UPLOAD_SOURCE | BufferUsageBit::TEXTURE_UPLOAD_SOURCE,
-		*gr);
 
 	gr->getTextureBufferInfo(alignment, maxSize);
 	initBuffer(StagingGpuMemoryType::TEXTURE, alignment, maxSize, BufferUsageBit::TEXTURE_ALL, *gr);

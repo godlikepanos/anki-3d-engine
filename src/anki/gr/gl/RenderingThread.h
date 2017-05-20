@@ -33,7 +33,7 @@ public:
 	void stop();
 
 	/// Push a command buffer to the queue for deferred execution
-	void flushCommandBuffer(CommandBufferPtr commands);
+	void flushCommandBuffer(CommandBufferPtr commands, FencePtr* fence);
 
 	/// Push a command buffer to the queue and wait for it
 	void finishCommandBuffer(CommandBufferPtr commands);

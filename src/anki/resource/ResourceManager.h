@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/resource/Common.h>
+#include <anki/resource/TransferGpuAllocator.h>
 #include <anki/util/List.h>
 #include <anki/util/Functions.h>
 #include <anki/util/String.h>
@@ -21,7 +21,6 @@ class ResourceManager;
 class AsyncLoader;
 class ResourceManagerModel;
 class Renderer;
-class StagingGpuMemoryManager;
 
 /// @addtogroup resource
 /// @{
@@ -93,7 +92,6 @@ class ResourceManagerInitInfo
 {
 public:
 	GrManager* m_gr = nullptr;
-	StagingGpuMemoryManager* m_stagingMem = nullptr;
 	PhysicsWorld* m_physics = nullptr;
 	ResourceFilesystem* m_resourceFs = nullptr;
 	const ConfigSet* m_config = nullptr;
@@ -126,7 +124,7 @@ public:
 
 	~ResourceManager();
 
-	ANKI_USE_RESULT Error create(ResourceManagerInitInfo& init);
+	ANKI_USE_RESULT Error init(ResourceManagerInitInfo& init);
 
 	/// Load a resource.
 	template<typename T>
@@ -163,10 +161,9 @@ anki_internal:
 		return *m_gr;
 	}
 
-	StagingGpuMemoryManager& getStagingGpuMemoryManager()
+	TransferGpuAllocator& getTransferGpuAllocator()
 	{
-		ANKI_ASSERT(m_stagingMem);
-		return *m_stagingMem;
+		return m_transferGpuAlloc;
 	}
 
 	PhysicsWorld& getPhysicsWorld()
@@ -231,7 +228,6 @@ anki_internal:
 
 private:
 	GrManager* m_gr = nullptr;
-	StagingGpuMemoryManager* m_stagingMem = nullptr;
 	PhysicsWorld* m_physics = nullptr;
 	ResourceFilesystem* m_fs = nullptr;
 	ResourceAllocator<U8> m_alloc;
@@ -243,6 +239,7 @@ private:
 	AsyncLoader* m_asyncLoader = nullptr; ///< Async loading thread
 	U64 m_uuid = 0;
 	U64 m_loadRequestCount = 0;
+	TransferGpuAllocator m_transferGpuAlloc;
 };
 /// @}
 

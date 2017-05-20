@@ -68,9 +68,10 @@ Config::Config()
 	newOption("clearCaches", false);
 
 	// Resource
-	newOption("maxTextureSize", 1024 * 1024);
-	newOption("textureAnisotropy", 8);
-	newOption("dataPaths", ".");
+	newOption("rsrc.maxTextureSize", 1024 * 1024);
+	newOption("rsrc.textureAnisotropy", 8);
+	newOption("rsrc.dataPaths", ".");
+	newOption("rsrc.transferScratchMemorySize", 256_MB);
 
 	// Window
 	newOption("glmajor", 4);
@@ -81,14 +82,13 @@ Config::Config()
 	newOption("debugMarkers", false);
 
 	// GR
-	newOption("gr.diskShaderCacheMaxSize", 10 * 1024 * 1024);
+	newOption("gr.diskShaderCacheMaxSize", 10_MB);
 
 	// Core
-	newOption("core.uniformPerFrameMemorySize", 1024 * 1024 * 16);
-	newOption("core.storagePerFrameMemorySize", 1024 * 1024 * 16);
-	newOption("core.vertexPerFrameMemorySize", 1024 * 1024 * 10);
-	newOption("core.transferPerFrameMemorySize", 1024 * 1024 * 128);
-	newOption("core.textureBufferPerFrameMemorySize", 1024 * 1024 * 1);
+	newOption("core.uniformPerFrameMemorySize", 16_MB);
+	newOption("core.storagePerFrameMemorySize", 16_MB);
+	newOption("core.vertexPerFrameMemorySize", 10_MB);
+	newOption("core.textureBufferPerFrameMemorySize", 1_MB);
 }
 
 Config::~Config()

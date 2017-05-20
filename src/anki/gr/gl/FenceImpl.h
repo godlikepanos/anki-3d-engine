@@ -5,18 +5,27 @@
 
 #pragma once
 
-#include <anki/resource/Common.h>
-#include <anki/gr/common/ClassGpuAllocator.h>
+#include <anki/gr/gl/GlObject.h>
 
 namespace anki
 {
 
-/// @addtogroup resource
+/// @addtogroup opengl
 /// @{
 
-/// GPU memory allocator for GPU buffers used in transfer operations.
-class TransferGpuMemoryAllocator
+/// Fence implementation.
+class FenceImpl : public GlObject
 {
+public:
+	GLsync m_fence = nullptr;
+	Atomic<Bool> m_signaled = {false};
+
+	FenceImpl(GrManager* gr)
+		: GlObject(gr)
+	{
+	}
+
+	~FenceImpl();
 };
 /// @}
 

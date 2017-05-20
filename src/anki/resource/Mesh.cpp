@@ -9,7 +9,6 @@
 #include <anki/resource/AsyncLoader.h>
 #include <anki/util/Functions.h>
 #include <anki/misc/Xml.h>
-#include <anki/core/StagingGpuMemoryManager.h>
 
 namespace anki
 {
@@ -19,9 +18,9 @@ class MeshLoadTask : public AsyncLoaderTask
 {
 public:
 	ResourceManager* m_manager ANKI_DBG_NULLIFY;
+	MeshLoader m_loader;
 	BufferPtr m_vertBuff;
 	BufferPtr m_indicesBuff;
-	MeshLoader m_loader;
 
 	MeshLoadTask(ResourceManager* manager)
 		: m_manager(manager)
@@ -35,79 +34,57 @@ public:
 Error MeshLoadTask::operator()(AsyncLoaderTaskContext& ctx)
 {
 	GrManager& gr = m_manager->getGrManager();
-	StagingGpuMemoryManager& stagingMem = m_manager->getStagingGpuMemoryManager();
-	CommandBufferPtr cmdb;
+	TransferGpuAllocator& transferAlloc = m_manager->getTransferGpuAllocator();
+	Array<TransferGpuAllocatorHandle, 2> handles;
+
+	CommandBufferInitInfo cmdbinit;
+	cmdbinit.m_flags = CommandBufferFlag::SMALL_BATCH | CommandBufferFlag::TRANSFER_WORK;
+	CommandBufferPtr cmdb = gr.newInstance<CommandBuffer>(cmdbinit);
 
 	// Write vert buff
-	if(m_vertBuff)
 	{
-		StagingGpuMemoryToken token;
-		void* data = stagingMem.tryAllocateFrame(m_loader.getVertexDataSize(), StagingGpuMemoryType::TRANSFER, token);
+		ANKI_CHECK(transferAlloc.allocate(m_loader.getVertexDataSize(), handles[0]));
+		void* data = handles[0].getMappedMemory();
+		ANKI_ASSERT(data);
 
-		if(data)
-		{
-			memcpy(data, m_loader.getVertexData(), m_loader.getVertexDataSize());
-			CommandBufferInitInfo cmdbinit;
-			cmdbinit.m_flags = CommandBufferFlag::SMALL_BATCH;
-			cmdb = gr.newInstance<CommandBuffer>(cmdbinit);
+		memcpy(data, m_loader.getVertexData(), m_loader.getVertexDataSize());
 
-			cmdb->setBufferBarrier(
-				m_vertBuff, BufferUsageBit::VERTEX, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, 0, MAX_PTR_SIZE);
+		cmdb->setBufferBarrier(
+			m_vertBuff, BufferUsageBit::VERTEX, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, 0, MAX_PTR_SIZE);
 
-			cmdb->copyBufferToBuffer(token.m_buffer, token.m_offset, m_vertBuff, 0, token.m_range);
+		cmdb->copyBufferToBuffer(handles[0].getBuffer(), handles[0].getOffset(), m_vertBuff, 0, handles[0].getRange());
 
-			cmdb->setBufferBarrier(
-				m_vertBuff, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, BufferUsageBit::VERTEX, 0, MAX_PTR_SIZE);
+		cmdb->setBufferBarrier(
+			m_vertBuff, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, BufferUsageBit::VERTEX, 0, MAX_PTR_SIZE);
 
-			m_vertBuff.reset(nullptr);
-		}
-		else
-		{
-			ctx.m_pause = true;
-			ctx.m_resubmitTask = true;
-			return ErrorCode::NONE;
-		}
+		m_vertBuff.reset(nullptr);
 	}
 
 	// Create index buffer
 	{
-		StagingGpuMemoryToken token;
-		void* data = stagingMem.tryAllocateFrame(m_loader.getIndexDataSize(), StagingGpuMemoryType::TRANSFER, token);
+		ANKI_CHECK(transferAlloc.allocate(m_loader.getIndexDataSize(), handles[1]));
+		void* data = handles[1].getMappedMemory();
+		ANKI_ASSERT(data);
 
-		if(data)
-		{
-			memcpy(data, m_loader.getIndexData(), m_loader.getIndexDataSize());
+		memcpy(data, m_loader.getIndexData(), m_loader.getIndexDataSize());
 
-			if(!cmdb)
-			{
-				CommandBufferInitInfo cmdbinit;
-				cmdbinit.m_flags = CommandBufferFlag::SMALL_BATCH;
-				cmdb = gr.newInstance<CommandBuffer>(cmdbinit);
-			}
+		cmdb->setBufferBarrier(
+			m_indicesBuff, BufferUsageBit::INDEX, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, 0, MAX_PTR_SIZE);
 
-			cmdb->setBufferBarrier(
-				m_indicesBuff, BufferUsageBit::INDEX, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, 0, MAX_PTR_SIZE);
+		cmdb->copyBufferToBuffer(
+			handles[1].getBuffer(), handles[1].getOffset(), m_indicesBuff, 0, handles[1].getRange());
 
-			cmdb->copyBufferToBuffer(token.m_buffer, token.m_offset, m_indicesBuff, 0, token.m_range);
+		cmdb->setBufferBarrier(
+			m_indicesBuff, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, BufferUsageBit::INDEX, 0, MAX_PTR_SIZE);
 
-			cmdb->setBufferBarrier(
-				m_indicesBuff, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, BufferUsageBit::INDEX, 0, MAX_PTR_SIZE);
-
-			cmdb->flush();
-		}
-		else
-		{
-			// Submit prev work
-			if(cmdb)
-			{
-				cmdb->flush();
-			}
-
-			ctx.m_pause = true;
-			ctx.m_resubmitTask = true;
-			return ErrorCode::NONE;
-		}
+		m_indicesBuff.reset(nullptr);
 	}
+
+	FencePtr fence;
+	cmdb->flush(&fence);
+
+	transferAlloc.release(handles[0], fence);
+	transferAlloc.release(handles[1], fence);
 
 	return ErrorCode::NONE;
 }

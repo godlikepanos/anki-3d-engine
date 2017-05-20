@@ -12,7 +12,7 @@ Error SampleApp::init(int argc, char** argv)
 	// Init the super class
 	Config config;
 	config.set("fullscreenDesktopResolution", true);
-	config.set("dataPaths", ".:../..");
+	config.set("rsrc.dataPaths", ".:../..");
 	config.set("debugContext", 0);
 	ANKI_CHECK(config.setFromCommandLineArguments(argc, argv));
 	ANKI_CHECK(App::init(config, allocAligned, nullptr));

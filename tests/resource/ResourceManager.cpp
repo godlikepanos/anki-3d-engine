@@ -25,7 +25,7 @@ ANKI_TEST(Resource, ResourceManager)
 	rinit.m_allocCallback = allocAligned;
 	rinit.m_allocCallbackData = nullptr;
 	ResourceManager* resources = alloc.newInstance<ResourceManager>();
-	ANKI_TEST_EXPECT_NO_ERR(resources->create(rinit));
+	ANKI_TEST_EXPECT_NO_ERR(resources->init(rinit));
 
 	// Very simple
 	{

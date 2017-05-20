@@ -22,7 +22,6 @@ enum class StagingGpuMemoryType
 	UNIFORM,
 	STORAGE,
 	VERTEX,
-	TRANSFER,
 	TEXTURE,
 	COUNT
 };

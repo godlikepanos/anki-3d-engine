@@ -17,15 +17,15 @@ class FenceFactory;
 /// @{
 
 /// Fence wrapper over VkFence.
-class Fence : public NonCopyable
+class MicroFence : public NonCopyable
 {
 	friend class FenceFactory;
-	friend class FencePtrDeleter;
+	friend class MicroFencePtrDeleter;
 
 public:
-	Fence(FenceFactory* f);
+	MicroFence(FenceFactory* f);
 
-	~Fence();
+	~MicroFence();
 
 	const VkFence& getHandle() const
 	{
@@ -44,6 +44,8 @@ public:
 
 	Bool done() const;
 
+	Bool clientWait(F64 seconds);
+
 private:
 	VkFence m_handle = VK_NULL_HANDLE;
 	Atomic<U32> m_refcount = {0};
@@ -51,20 +53,20 @@ private:
 };
 
 /// Deleter for FencePtr.
-class FencePtrDeleter
+class MicroFencePtrDeleter
 {
 public:
-	void operator()(Fence* f);
+	void operator()(MicroFence* f);
 };
 
 /// Fence smart pointer.
-using FencePtr = IntrusivePtr<Fence, FencePtrDeleter>;
+using MicroFencePtr = IntrusivePtr<MicroFence, MicroFencePtrDeleter>;
 
 /// A factory of fences.
 class FenceFactory
 {
-	friend class Fence;
-	friend class FencePtrDeleter;
+	friend class MicroFence;
+	friend class MicroFencePtrDeleter;
 
 public:
 	FenceFactory()
@@ -85,23 +87,23 @@ public:
 	void destroy();
 
 	/// Create a new fence pointer.
-	FencePtr newInstance()
+	MicroFencePtr newInstance()
 	{
-		return FencePtr(newFence());
+		return MicroFencePtr(newFence());
 	}
 
 private:
 	GrAllocator<U8> m_alloc;
 	VkDevice m_dev = VK_NULL_HANDLE;
-	DynamicArray<Fence*> m_fences;
+	DynamicArray<MicroFence*> m_fences;
 	U32 m_fenceCount = 0;
 	Mutex m_mtx;
 
-	Fence* newFence();
-	void deleteFence(Fence* fence);
+	MicroFence* newFence();
+	void deleteFence(MicroFence* fence);
 };
 /// @}
 
 } // end namespace anki
 
-#include <anki/gr/vulkan/Fence.inl.h>
+#include <anki/gr/vulkan/FenceFactory.inl.h>

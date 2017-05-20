@@ -9,7 +9,7 @@
 namespace anki
 {
 
-inline GrSemaphore::GrSemaphore(GrSemaphoreFactory* f, FencePtr fence)
+inline GrSemaphore::GrSemaphore(GrSemaphoreFactory* f, MicroFencePtr fence)
 	: m_factory(f)
 	, m_fence(fence)
 {

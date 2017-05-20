@@ -41,11 +41,10 @@
 	<imageReflectionMaxDistance>30</imageReflectionMaxDistance>
 	<core.uniformPerFrameMemorySize>16777216</core.uniformPerFrameMemorySize>
 	<core.storagePerFrameMemorySize>16777216</core.storagePerFrameMemorySize>
-	<core.transferPerFrameMemorySize>67108864</core.transferPerFrameMemorySize>
 	<core.vertexPerFrameMemorySize>16777216</core.vertexPerFrameMemorySize>
-	<maxTextureSize>1048576</maxTextureSize>
-	<textureAnisotropy>8</textureAnisotropy>
-	<dataPaths>assets:.</dataPaths>
+	<rsrc.maxTextureSize>1048576</rsrc.maxTextureSize>
+	<rsrc.textureAnisotropy>8</rsrc.textureAnisotropy>
+	<rsrc.dataPaths>assets:.</rsrc.dataPaths>
 	<glmajor>4</glmajor>
 	<glminor>5</glminor>
 	<fullscreenDesktopResolution>1</fullscreenDesktopResolution>

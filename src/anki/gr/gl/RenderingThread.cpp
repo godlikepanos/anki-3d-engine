@@ -8,6 +8,8 @@
 #include <anki/gr/GrManager.h>
 #include <anki/gr/gl/GrManagerImpl.h>
 #include <anki/gr/gl/GlState.h>
+#include <anki/gr/Fence.h>
+#include <anki/gr/gl/FenceImpl.h>
 #include <anki/util/Logger.h>
 #include <anki/core/Trace.h>
 #include <cstdlib>
@@ -76,8 +78,36 @@ RenderingThread::~RenderingThread()
 	m_queue.destroy(m_manager->getAllocator());
 }
 
-void RenderingThread::flushCommandBuffer(CommandBufferPtr cmdb)
+void RenderingThread::flushCommandBuffer(CommandBufferPtr cmdb, FencePtr* fence)
 {
+	// Create a fence
+	if(fence)
+	{
+		FencePtr& f = *fence;
+
+		f.reset(m_manager->getImplementation().getAllocator().newInstance<Fence>(m_manager.get(), 0, nullptr));
+		f->m_impl.reset(m_manager->getAllocator().newInstance<FenceImpl>(m_manager.get()));
+
+		class CreateFenceCmd final : public GlCommand
+		{
+		public:
+			FencePtr m_fence;
+
+			CreateFenceCmd(FencePtr fence)
+				: m_fence(fence)
+			{
+			}
+
+			Error operator()(GlState&)
+			{
+				m_fence->m_impl->m_fence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+				return ErrorCode::NONE;
+			}
+		};
+
+		cmdb->m_impl->pushBackNewCommand<CreateFenceCmd>(f);
+	}
+
 	cmdb->m_impl->makeImmutable();
 
 	{
@@ -104,7 +134,7 @@ void RenderingThread::flushCommandBuffer(CommandBufferPtr cmdb)
 
 void RenderingThread::finishCommandBuffer(CommandBufferPtr commands)
 {
-	flushCommandBuffer(commands);
+	flushCommandBuffer(commands, nullptr);
 
 	syncClientServer();
 }
@@ -137,7 +167,7 @@ void RenderingThread::stop()
 {
 	syncClientServer();
 	m_renderingThreadSignal = 1;
-	flushCommandBuffer(m_emptyCmdb);
+	flushCommandBuffer(m_emptyCmdb, nullptr);
 
 	Error err = m_thread.join();
 	(void)err;
@@ -242,7 +272,7 @@ void RenderingThread::syncClientServer()
 	// syncClientServer all of them will hit the same barrier.
 	LockGuard<SpinLock> lock(m_syncLock);
 
-	flushCommandBuffer(m_syncCommands);
+	flushCommandBuffer(m_syncCommands, nullptr);
 	m_syncBarrier.wait();
 }
 
@@ -279,7 +309,7 @@ void RenderingThread::swapBuffers()
 	}
 
 	// ...and then flush a new swap buffers
-	flushCommandBuffer(m_swapBuffersCommands);
+	flushCommandBuffer(m_swapBuffersCommands, nullptr);
 	ANKI_TRACE_STOP_EVENT(SWAP_BUFFERS);
 }
 

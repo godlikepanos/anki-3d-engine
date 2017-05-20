@@ -36,13 +36,17 @@ CommandBufferInitHints CommandBuffer::computeInitHints() const
 	return hints;
 }
 
-void CommandBuffer::flush()
+void CommandBuffer::flush(FencePtr* fence)
 {
 	m_impl->endRecording();
 
 	if(!m_impl->isSecondLevel())
 	{
-		m_impl->getGrManagerImpl().flushCommandBuffer(CommandBufferPtr(this));
+		m_impl->getGrManagerImpl().flushCommandBuffer(CommandBufferPtr(this), fence);
+	}
+	else
+	{
+		ANKI_ASSERT(fence == nullptr);
 	}
 }
 

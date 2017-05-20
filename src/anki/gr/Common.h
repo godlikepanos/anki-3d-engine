@@ -67,6 +67,7 @@ ANKI_GR_CLASS(Shader)
 ANKI_GR_CLASS(Framebuffer)
 ANKI_GR_CLASS(OcclusionQuery)
 ANKI_GR_CLASS(ShaderProgram)
+ANKI_GR_CLASS(Fence)
 
 #undef ANKI_GR_CLASS
 

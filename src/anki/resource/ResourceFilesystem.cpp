@@ -201,11 +201,11 @@ ResourceFilesystem::~ResourceFilesystem()
 Error ResourceFilesystem::init(const ConfigSet& config, const CString& cacheDir)
 {
 	StringListAuto paths(m_alloc);
-	paths.splitString(config.getString("dataPaths"), ':');
+	paths.splitString(config.getString("rsrc.dataPaths"), ':');
 
 	if(paths.getSize() < 1)
 	{
-		ANKI_RESOURCE_LOGE("Config option \"dataPaths\" is empty");
+		ANKI_RESOURCE_LOGE("Config option \"rsrc.dataPaths\" is empty");
 		return ErrorCode::USER_DATA;
 	}
 

@@ -7,7 +7,6 @@
 #include <anki/resource/ImageLoader.h>
 #include <anki/resource/ResourceManager.h>
 #include <anki/resource/AsyncLoader.h>
-#include <anki/core/StagingGpuMemoryManager.h>
 
 namespace anki
 {
@@ -16,21 +15,15 @@ namespace anki
 class TexUploadTask : public AsyncLoaderTask
 {
 public:
+	static constexpr U MAX_COPIES_BEFORE_FLUSH = 8;
+
 	ImageLoader m_loader;
 	TexturePtr m_tex;
 	GrManager* m_gr ANKI_DBG_NULLIFY;
-	StagingGpuMemoryManager* m_stagingMem ANKI_DBG_NULLIFY;
+	TransferGpuAllocator* m_transferAlloc ANKI_DBG_NULLIFY;
 	U m_layers = 0;
 	U m_faces = 0;
 	TextureType m_texType;
-
-	class
-	{
-	public:
-		U m_face = 0;
-		U m_mip = 0;
-		U m_layer = 0;
-	} m_ctx;
 
 	TexUploadTask(GenericMemoryPoolAllocator<U8> alloc)
 		: m_loader(alloc)
@@ -38,19 +31,44 @@ public:
 	}
 
 	Error operator()(AsyncLoaderTaskContext& ctx) final;
+
+	void flush(WeakArray<TransferGpuAllocatorHandle> handles, CommandBufferPtr& cmdb);
 };
+
+void TexUploadTask::flush(WeakArray<TransferGpuAllocatorHandle> handles, CommandBufferPtr& cmdb)
+{
+	FencePtr fence;
+	cmdb->flush(&fence);
+
+	for(TransferGpuAllocatorHandle& handle : handles)
+	{
+		m_transferAlloc->release(handle, fence);
+	}
+
+	cmdb.reset(nullptr);
+}
 
 Error TexUploadTask::operator()(AsyncLoaderTaskContext& ctx)
 {
 	CommandBufferPtr cmdb;
 
+	Array<TransferGpuAllocatorHandle, MAX_COPIES_BEFORE_FLUSH> handles;
+	U handleCount = 0;
+
 	// Upload the data
-	for(U layer = m_ctx.m_layer; layer < m_layers; ++layer)
+	for(U layer = 0; layer < m_layers; ++layer)
 	{
-		for(U face = m_ctx.m_face; face < m_faces; ++face)
+		for(U face = 0; face < m_faces; ++face)
 		{
-			for(U mip = m_ctx.m_mip; mip < m_loader.getMipLevelsCount(); ++mip)
+			for(U mip = 0; mip < m_loader.getMipLevelsCount(); ++mip)
 			{
+				if(!cmdb)
+				{
+					CommandBufferInitInfo ci;
+					ci.m_flags = CommandBufferFlag::TRANSFER_WORK | CommandBufferFlag::SMALL_BATCH;
+					cmdb = m_gr->newInstance<CommandBuffer>(ci);
+				}
+
 				PtrSize surfOrVolSize;
 				const void* surfOrVolData;
 				PtrSize allocationSize;
@@ -74,78 +92,58 @@ Error TexUploadTask::operator()(AsyncLoaderTaskContext& ctx)
 
 				ANKI_ASSERT(allocationSize >= surfOrVolSize);
 
-				StagingGpuMemoryToken token;
-				void* data = m_stagingMem->tryAllocateFrame(allocationSize, StagingGpuMemoryType::TRANSFER, token);
+				TransferGpuAllocatorHandle& handle = handles[handleCount++];
+				ANKI_CHECK(m_transferAlloc->allocate(allocationSize, handle));
+				void* data = handle.getMappedMemory();
+				ANKI_ASSERT(data);
 
-				if(data)
+				memcpy(data, surfOrVolData, surfOrVolSize);
+
+				if(m_texType == TextureType::_3D)
 				{
-					// There is enough transfer memory
+					TextureVolumeInfo vol(mip);
 
-					memcpy(data, surfOrVolData, surfOrVolSize);
+					cmdb->setTextureVolumeBarrier(
+						m_tex, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION, vol);
 
-					if(!cmdb)
-					{
-						CommandBufferInitInfo ci;
-						ci.m_flags = CommandBufferFlag::TRANSFER_WORK | CommandBufferFlag::SMALL_BATCH;
+					cmdb->copyBufferToTextureVolume(
+						handle.getBuffer(), handle.getOffset(), handle.getRange(), m_tex, vol);
 
-						cmdb = m_gr->newInstance<CommandBuffer>(ci);
-					}
-
-					if(m_texType == TextureType::_3D)
-					{
-						TextureVolumeInfo vol(mip);
-
-						cmdb->setTextureVolumeBarrier(
-							m_tex, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION, vol);
-
-						cmdb->copyBufferToTextureVolume(token.m_buffer, token.m_offset, token.m_range, m_tex, vol);
-
-						cmdb->setTextureVolumeBarrier(m_tex,
-							TextureUsageBit::TRANSFER_DESTINATION,
-							TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_TESSELLATION_EVALUATION,
-							vol);
-					}
-					else
-					{
-						TextureSurfaceInfo surf(mip, 0, face, layer);
-
-						cmdb->setTextureSurfaceBarrier(
-							m_tex, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION, surf);
-
-						cmdb->copyBufferToTextureSurface(token.m_buffer, token.m_offset, token.m_range, m_tex, surf);
-
-						cmdb->setTextureSurfaceBarrier(m_tex,
-							TextureUsageBit::TRANSFER_DESTINATION,
-							TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_TESSELLATION_EVALUATION,
-							surf);
-					}
+					cmdb->setTextureVolumeBarrier(m_tex,
+						TextureUsageBit::TRANSFER_DESTINATION,
+						TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_TESSELLATION_EVALUATION,
+						vol);
 				}
 				else
 				{
-					// Not enough transfer memory. Move the work to the future
+					TextureSurfaceInfo surf(mip, 0, face, layer);
 
-					if(cmdb)
-					{
-						cmdb->flush();
-					}
+					cmdb->setTextureSurfaceBarrier(
+						m_tex, TextureUsageBit::NONE, TextureUsageBit::TRANSFER_DESTINATION, surf);
 
-					m_ctx.m_mip = mip;
-					m_ctx.m_face = face;
-					m_ctx.m_layer = layer;
+					cmdb->copyBufferToTextureSurface(
+						handle.getBuffer(), handle.getOffset(), handle.getRange(), m_tex, surf);
 
-					ctx.m_pause = true;
-					ctx.m_resubmitTask = true;
+					cmdb->setTextureSurfaceBarrier(m_tex,
+						TextureUsageBit::TRANSFER_DESTINATION,
+						TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::SAMPLED_TESSELLATION_EVALUATION,
+						surf);
+				}
 
-					return ErrorCode::NONE;
+				// Check if you should flush the batch
+				if(handleCount == handles.getSize())
+				{
+					flush({&handles[0], handleCount}, cmdb);
+					handleCount = 0;
 				}
 			}
 		}
 	}
 
-	// Finaly enque the command buffer
-	if(cmdb)
+	// Enque what remains
+	if(handleCount)
 	{
-		cmdb->flush();
+		flush({&handles[0], handleCount}, cmdb);
 	}
 
 	return ErrorCode::NONE;
@@ -275,7 +273,7 @@ Error TextureResource::load(const ResourceFilename& filename)
 	task->m_layers = init.m_layerCount;
 	task->m_faces = faces;
 	task->m_gr = &getManager().getGrManager();
-	task->m_stagingMem = &getManager().getStagingGpuMemoryManager();
+	task->m_transferAlloc = &getManager().getTransferGpuAllocator();
 	task->m_tex = m_tex;
 	task->m_texType = init.m_type;
 

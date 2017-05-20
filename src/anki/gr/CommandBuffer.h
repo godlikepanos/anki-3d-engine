@@ -133,7 +133,8 @@ public:
 	CommandBufferInitHints computeInitHints() const;
 
 	/// Finalize and submit if it's primary command buffer and just finalize if it's second level.
-	void flush();
+	/// @param[out] fence Optionaly create fence.
+	void flush(FencePtr* fence = nullptr);
 
 	/// Flush and wait to finish.
 	void finish();

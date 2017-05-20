@@ -43,11 +43,17 @@ Error Tm::initInternal(const ConfigSet& initializer)
 	cmdbinit.m_flags = CommandBufferFlag::SMALL_BATCH | CommandBufferFlag::TRANSFER_WORK;
 	CommandBufferPtr cmdb = getGrManager().newInstance<CommandBuffer>(cmdbinit);
 
-	StagingGpuMemoryToken token;
-	void* data = m_r->getStagingGpuMemoryManager().allocateFrame(sizeof(Vec4), StagingGpuMemoryType::TRANSFER, token);
+	TransferGpuAllocatorHandle handle;
+	ANKI_CHECK(m_r->getResourceManager().getTransferGpuAllocator().allocate(sizeof(Vec4), handle));
+	void* data = handle.getMappedMemory();
+
 	*static_cast<Vec4*>(data) = Vec4(0.5);
-	cmdb->copyBufferToBuffer(token.m_buffer, token.m_offset, m_luminanceBuff, 0, token.m_range);
-	cmdb->flush();
+	cmdb->copyBufferToBuffer(handle.getBuffer(), handle.getOffset(), m_luminanceBuff, 0, handle.getRange());
+
+	FencePtr fence;
+	cmdb->flush(&fence);
+
+	m_r->getResourceManager().getTransferGpuAllocator().release(handle, fence);
 
 	return ErrorCode::NONE;
 }
