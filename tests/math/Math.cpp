@@ -96,7 +96,7 @@ void length()
 		res += x * x;
 	}
 
-	res = sqrt(res);
+	res = sqrt(F64(res));
 	ANKI_TEST_EXPECT_EQ(vec.getLength(), res);
 
 	if(Vec::IS_INTEGER)
