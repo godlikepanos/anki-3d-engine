@@ -8,6 +8,10 @@
 #include <anki/util/Singleton.h>
 #include <anki/Math.h>
 #include <anki/util/Logger.h>
+#include <anki/Core.h>
+#include <anki/Gr.h>
+#include <anki/Resource.h>
+#include <anki/Physics.h>
 #include <stdexcept>
 #include <vector>
 #include <string>
@@ -215,5 +219,11 @@ extern void deleteTesterSingleton();
 
 /// Check error code.
 #define ANKI_TEST_EXPECT_ERR(x_, y_) ANKI_TEST_EXPECT_EQ_IMPL(__FILE__, __LINE__, __func__, x_, y_)
+
+NativeWindow* createWindow(U width, U height);
+
+GrManager* createGrManager(NativeWindow* win);
+
+ResourceManager* createResourceManager(GrManager* gr, PhysicsWorld*& physics, ResourceFilesystem*& resourceFs);
 
 } // end namespace anki

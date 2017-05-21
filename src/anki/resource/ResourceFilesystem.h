@@ -89,7 +89,9 @@ public:
 	/// Search the path list to find the file. Then open the file for reading.
 	ANKI_USE_RESULT Error openFile(const ResourceFilename& filename, ResourceFilePtr& file);
 
+#if !ANKI_TESTS
 private:
+#endif
 	class Path : public NonCopyable
 	{
 	public:

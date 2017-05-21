@@ -8,6 +8,14 @@
 namespace anki
 {
 
+UiManager::UiManager()
+{
+}
+
+UiManager::~UiManager()
+{
+}
+
 Error UiManager::init(HeapAllocator<U8> alloc, ResourceManager* resources, GrManager* gr)
 {
 	ANKI_ASSERT(resources);

@@ -263,7 +263,8 @@ static StagingGpuMemoryManager* stagingMem = nullptr;
 
 #define COMMON_BEGIN()                                                                                                 \
 	stagingMem = new StagingGpuMemoryManager();                                                                        \
-	createGrManager(win, gr);                                                                                          \
+	win = createWindow(WIDTH, HEIGHT);                                                                                 \
+	gr = createGrManager(win);                                                                                         \
 	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(gr, Config()));                                                           \
 	TransferGpuAllocator transfAlloc;                                                                                  \
 	ANKI_TEST_EXPECT_NO_ERR(transfAlloc.init(128_MB, gr, gr->getAllocator()));                                         \
@@ -317,23 +318,9 @@ static void* setStorage(PtrSize size, CommandBufferPtr& cmdb, U set, U binding)
 
 const PixelFormat DS_FORMAT = PixelFormat(ComponentFormat::D24S8, TransformFormat::UNORM);
 
-static NativeWindow* createWindow()
-{
-	HeapAllocator<U8> alloc(allocAligned, nullptr);
-
-	NativeWindowInitInfo inf;
-	inf.m_width = WIDTH;
-	inf.m_height = HEIGHT;
-	NativeWindow* win = new NativeWindow();
-
-	ANKI_TEST_EXPECT_NO_ERR(win->init(inf, alloc));
-
-	return win;
-}
-
 static void createGrManager(NativeWindow*& win, GrManager*& gr)
 {
-	win = createWindow();
+	win = createWindow(WIDTH, HEIGHT);
 	gr = new GrManager();
 
 	Config cfg;

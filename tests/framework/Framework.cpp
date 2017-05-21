@@ -223,4 +223,63 @@ void deleteTesterSingleton()
 	}
 }
 
+NativeWindow* createWindow(U width, U height)
+{
+	HeapAllocator<U8> alloc(allocAligned, nullptr);
+
+	NativeWindowInitInfo inf;
+	inf.m_width = width;
+	inf.m_height = height;
+	inf.m_title = "AnKi unit tests";
+	NativeWindow* win = new NativeWindow();
+
+	ANKI_TEST_EXPECT_NO_ERR(win->init(inf, alloc));
+
+	return win;
+}
+
+GrManager* createGrManager(NativeWindow* win)
+{
+	GrManager* gr = new GrManager();
+
+	Config cfg;
+	cfg.set("debugContext", true);
+	cfg.set("vsync", false);
+	GrManagerInitInfo inf;
+	inf.m_allocCallback = allocAligned;
+	inf.m_cacheDirectory = "./";
+	inf.m_config = &cfg;
+	inf.m_window = win;
+	ANKI_TEST_EXPECT_NO_ERR(gr->init(inf));
+
+	return gr;
+}
+
+ResourceManager* createResourceManager(GrManager* gr, PhysicsWorld*& physics, ResourceFilesystem*& resourceFs)
+{
+	HeapAllocator<U8> alloc(allocAligned, nullptr);
+
+	physics = new PhysicsWorld();
+
+	ANKI_TEST_EXPECT_NO_ERR(physics->create(allocAligned, nullptr));
+
+	resourceFs = new ResourceFilesystem(alloc);
+	Config cfg;
+	ANKI_TEST_EXPECT_NO_ERR(resourceFs->init(cfg, "./"));
+
+	ResourceManagerInitInfo rinit;
+	rinit.m_gr = gr;
+	rinit.m_physics = physics;
+	rinit.m_resourceFs = resourceFs;
+	rinit.m_config = &cfg;
+	rinit.m_cacheDir = "./";
+	rinit.m_allocCallback = allocAligned;
+	rinit.m_allocCallbackData = nullptr;
+	ResourceManager* resources = new ResourceManager();
+
+	ANKI_TEST_EXPECT_NO_ERR(resources->init(rinit));
+
+	return resources;
+}
+
 } // end namespace anki

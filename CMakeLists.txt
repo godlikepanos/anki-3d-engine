@@ -314,6 +314,12 @@ else()
 	message(FATAL_ERROR "Wrong CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 endif()
 
+if(ANKI_BUILD_TESTS)
+	set(ANKI_TESTS 1)
+else()
+	set(ANKI_TESTS 0)
+endif()
+
 configure_file("src/anki/Config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h")
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h" DESTINATION "${INCLUDE_INSTALL_DIR}/anki")
 

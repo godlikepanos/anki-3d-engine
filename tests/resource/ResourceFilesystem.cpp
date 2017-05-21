@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #include "tests/framework/Framework.h"
-#define private public
 #include "anki/resource/ResourceFilesystem.h"
 
 namespace anki
