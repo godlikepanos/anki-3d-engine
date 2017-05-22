@@ -13,8 +13,12 @@ namespace anki
 /// @addtogroup ui
 /// @{
 
-// TODO
-
+/// An interface that just builds the UI.
+class UiImmediateModeBuilder : public UiObject
+{
+public:
+	virtual void build(CanvasPtr ctx) = 0;
+};
 /// @}
 
 } // end namespace anki

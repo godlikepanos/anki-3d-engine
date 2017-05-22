@@ -263,8 +263,13 @@ static StagingGpuMemoryManager* stagingMem = nullptr;
 
 #define COMMON_BEGIN()                                                                                                 \
 	stagingMem = new StagingGpuMemoryManager();                                                                        \
-	win = createWindow(WIDTH, HEIGHT);                                                                                 \
-	gr = createGrManager(win);                                                                                         \
+	Config cfg;                                                                                                        \
+	cfg.set("width", WIDTH);                                                                                           \
+	cfg.set("height", HEIGHT);                                                                                         \
+	cfg.set("debugContext", true);                                                                                     \
+	cfg.set("vsync", false);                                                                                           \
+	win = createWindow(cfg);                                                                                           \
+	gr = createGrManager(cfg, win);                                                                                    \
 	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(gr, Config()));                                                           \
 	TransferGpuAllocator transfAlloc;                                                                                  \
 	ANKI_TEST_EXPECT_NO_ERR(transfAlloc.init(128_MB, gr, gr->getAllocator()));                                         \
@@ -317,22 +322,6 @@ static void* setStorage(PtrSize size, CommandBufferPtr& cmdb, U set, U binding)
 	} while(0)
 
 const PixelFormat DS_FORMAT = PixelFormat(ComponentFormat::D24S8, TransformFormat::UNORM);
-
-static void createGrManager(NativeWindow*& win, GrManager*& gr)
-{
-	win = createWindow(WIDTH, HEIGHT);
-	gr = new GrManager();
-
-	Config cfg;
-	cfg.set("debugContext", true);
-	cfg.set("vsync", false);
-	GrManagerInitInfo inf;
-	inf.m_allocCallback = allocAligned;
-	inf.m_cacheDirectory = "./";
-	inf.m_config = &cfg;
-	inf.m_window = win;
-	ANKI_TEST_EXPECT_NO_ERR(gr->init(inf));
-}
 
 static ShaderProgramPtr createProgram(CString vertSrc, CString fragSrc, GrManager& gr)
 {

@@ -42,6 +42,14 @@ public:
 		return *m_gr;
 	}
 
+	/// Create a new UI object.
+	template<typename T, typename... Args>
+	ANKI_USE_RESULT Error newInstance(IntrusivePtr<T>& ptr, Args&&... args)
+	{
+		ptr.reset(m_alloc.newInstance<T>(this));
+		return ptr->init(args...);
+	}
+
 private:
 	UiAllocator m_alloc;
 	ResourceManager* m_resources = nullptr;

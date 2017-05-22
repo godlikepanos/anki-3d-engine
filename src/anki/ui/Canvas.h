@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/ui/Common.h>
+#include <anki/ui/UiObject.h>
 
 namespace anki
 {
@@ -13,8 +13,37 @@ namespace anki
 /// @addtogroup ui
 /// @{
 
-// TODO
+/// UI canvas.
+class Canvas : public UiObject
+{
+public:
+	Canvas(UiManager* manager)
+		: UiObject(manager)
+	{
+	}
 
+	~Canvas();
+
+	ANKI_USE_RESULT Error init(FontPtr font);
+
+	nk_context& getContext()
+	{
+		return m_nkCtx;
+	}
+
+	/// Handle input.
+	virtual void handleInput();
+
+	/// Begin building the UI.
+	void beginBuilding();
+
+	/// End building.
+	void endBuilding();
+
+private:
+	FontPtr m_font;
+	nk_context m_nkCtx = {};
+};
 /// @}
 
 } // end namespace anki

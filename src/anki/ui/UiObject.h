@@ -27,8 +27,14 @@ public:
 
 	UiAllocator getAllocator() const;
 
+	Atomic<I32>& getRefcount()
+	{
+		return m_refcount;
+	}
+
 protected:
 	UiManager* m_manager;
+	Atomic<I32> m_refcount = {0};
 };
 /// @}
 

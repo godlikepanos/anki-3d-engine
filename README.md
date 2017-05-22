@@ -1,7 +1,6 @@
 [![AnKi logo](http://anki3d.org/wp-content/uploads/2015/11/logo_248.png)](http://anki3d.org)
 
-AnKi 3D engine is a Linux and Windows opensource game engine that runs on
-OpenGL 4.5 and Vulkan 1.0 (Experimental).
+AnKi 3D engine is a Linux and Windows opensource game engine that runs on OpenGL 4.5 and Vulkan 1.0 (Experimental).
 
 [![Video](http://img.youtube.com/vi/va7nZ2EFR4c/0.jpg)](http://www.youtube.com/watch?v=va7nZ2EFR4c)
 
@@ -11,7 +10,7 @@ OpenGL 4.5 and Vulkan 1.0 (Experimental).
 AnKi's license is BSD. This practically means that you can use the source or parts of the source on proprietary and non 
 proprietary products as long as you follow the conditions of the license.
 
-See LICENSE file for more info.
+See `LICENSE` file for more info.
 
 2 Building AnKi
 ===============
@@ -25,7 +24,7 @@ To checkout the source including the submodules type:
 
 	git clone --recurse-submodules https://github.com/godlikepanos/anki-3d-engine.git anki
 
-AnKi's build system is using CMake. A great effort was made to ease the building process that's why the number of 
+AnKi's build system is using `CMake`. A great effort was made to ease the building process that's why the number of 
 external dependencies are almost none.
 
 2.1 On Linux
@@ -46,7 +45,7 @@ To build the release version:
 	$cmake .. -DCMAKE_BUILD_TYPE=Release
 	$make
 
-To view and configure the build options you can use ccmake tool or other similar tool:
+To view and configure the build options you can use `ccmake` tool or other similar tool:
 
 	$cd path/to/anki/build
 	$ccmake .
@@ -65,7 +64,7 @@ Prerequisites:
 	- Install to a path without spaces (eg C:/mingw-w64)
 	- Append the path where mingw's binaries are located (eg C:/mingw-w64/bin) to the PATH environment variable
 
-To build the release version open PowerShell and type:
+To build the release version open `PowerShell` and type:
 
 	$cd path/to/anki
 	$mkdir build
@@ -78,7 +77,7 @@ To build the release version open PowerShell and type:
 3 Next steps
 ============
 
-Try to build with samples enabled (search for the ANKI_BUILD_SAMPLES option in your CMake GUI) and try running the 
+Try to build with `samples` enabled (search for the `ANKI_BUILD_SAMPLES` option in your CMake GUI) and try running the 
 sponza executable. Then you will be able to see sponza running in AnKi. All samples must run from within their 
 directory.
 

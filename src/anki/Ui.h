@@ -8,3 +8,6 @@
 /// @defgroup ui User interface that is using nuklear library.
 
 #include <anki/ui/UiManager.h>
+#include <anki/ui/Font.h>
+#include <anki/ui/UiImmediateModeBuilder.h>
+#include <anki/ui/Canvas.h>

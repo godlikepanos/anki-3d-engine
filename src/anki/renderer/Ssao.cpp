@@ -135,16 +135,17 @@ Error SsaoHBlur::init(const ConfigSet& config)
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 	// shader
-	ANKI_CHECK(m_r->createShaderf("shaders/GaussianBlurGeneric.frag.glsl",
-		m_frag,
-		"#define HPASS\n"
-		"#define COL_R\n"
-		"#define TEXTURE_SIZE vec2(%f, %f)\n"
-		"#define KERNEL_SIZE 9\n",
-		F32(m_ssao->m_width),
-		F32(m_ssao->m_height)));
+	ANKI_CHECK(m_r->getResourceManager().loadResource("programs/GaussianBlur.ankiprog", m_prog));
 
-	m_r->createDrawQuadShaderProgram(m_frag->getGrShader(), m_prog);
+	ShaderProgramResourceMutationInitList<3> mutators(m_prog);
+	mutators.add("HORIZONTAL", 1).add("KERNEL_SIZE", 9).add("COLOR_COMPONENTS", 1);
+	ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
+	consts.add("TEXTURE_SIZE", UVec2(m_ssao->m_width, m_ssao->m_height));
+
+	const ShaderProgramResourceVariant* variant;
+	m_prog->getOrCreateVariant(mutators.m_mutations, consts.m_constantValues, variant);
+
+	m_grProg = variant->getProgram();
 
 	return ErrorCode::NONE;
 }
@@ -161,7 +162,7 @@ void SsaoHBlur::run(RenderingContext& ctx)
 
 	cmdb->setViewport(0, 0, m_ssao->m_width, m_ssao->m_height);
 	cmdb->beginRenderPass(m_fb);
-	cmdb->bindShaderProgram(m_prog);
+	cmdb->bindShaderProgram(m_grProg);
 	cmdb->bindTexture(0, 0, m_ssao->m_main.m_rt[m_r->getFrameCount() & 1]);
 	m_r->drawQuad(cmdb);
 	cmdb->endRenderPass();
@@ -177,16 +178,18 @@ void SsaoHBlur::setPostRunBarriers(RenderingContext& ctx)
 
 Error SsaoVBlur::init(const ConfigSet& config)
 {
-	ANKI_CHECK(m_r->createShaderf("shaders/GaussianBlurGeneric.frag.glsl",
-		m_frag,
-		"#define VPASS\n"
-		"#define COL_R\n"
-		"#define TEXTURE_SIZE vec2(%f, %f)\n"
-		"#define KERNEL_SIZE 9\n",
-		F32(m_ssao->m_width),
-		F32(m_ssao->m_height)));
+	// shader
+	ANKI_CHECK(m_r->getResourceManager().loadResource("programs/GaussianBlur.ankiprog", m_prog));
 
-	m_r->createDrawQuadShaderProgram(m_frag->getGrShader(), m_prog);
+	ShaderProgramResourceMutationInitList<3> mutators(m_prog);
+	mutators.add("HORIZONTAL", 0).add("KERNEL_SIZE", 9).add("COLOR_COMPONENTS", 1);
+	ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
+	consts.add("TEXTURE_SIZE", UVec2(m_ssao->m_width, m_ssao->m_height));
+
+	const ShaderProgramResourceVariant* variant;
+	m_prog->getOrCreateVariant(mutators.m_mutations, consts.m_constantValues, variant);
+
+	m_grProg = variant->getProgram();
 
 	return ErrorCode::NONE;
 }
@@ -205,7 +208,7 @@ void SsaoVBlur::run(RenderingContext& ctx)
 
 	cmdb->setViewport(0, 0, m_ssao->m_width, m_ssao->m_height);
 	cmdb->beginRenderPass(m_ssao->m_main.m_fb[m_r->getFrameCount() & 1]);
-	cmdb->bindShaderProgram(m_prog);
+	cmdb->bindShaderProgram(m_grProg);
 	cmdb->bindTexture(0, 0, m_ssao->m_hblur.m_rt);
 	m_r->drawQuad(cmdb);
 	cmdb->endRenderPass();

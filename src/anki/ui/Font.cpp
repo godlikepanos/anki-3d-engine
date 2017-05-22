@@ -56,7 +56,7 @@ void Font::createTexture(const void* data, U32 width, U32 height)
 	ANKI_ASSERT(data && width > 0 && height > 0);
 
 	// Create and populate the buffer
-	PtrSize buffSize = width * height * 4 * 4;
+	PtrSize buffSize = width * height * 4;
 	BufferPtr buff = m_manager->getGrManager().newInstance<Buffer>(
 		buffSize, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, BufferMapAccessBit::WRITE);
 	void* mapped = buff->map(0, buffSize, BufferMapAccessBit::WRITE);

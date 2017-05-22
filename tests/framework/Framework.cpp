@@ -223,13 +223,20 @@ void deleteTesterSingleton()
 	}
 }
 
-NativeWindow* createWindow(U width, U height)
+void initConfig(Config& cfg)
+{
+	cfg.set("width", 1920);
+	cfg.set("height", 1080);
+	cfg.set("rsrc.dataPaths", ".:../engine_data");
+}
+
+NativeWindow* createWindow(const Config& cfg)
 {
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 
 	NativeWindowInitInfo inf;
-	inf.m_width = width;
-	inf.m_height = height;
+	inf.m_width = cfg.getNumber("width");
+	inf.m_height = cfg.getNumber("height");
 	inf.m_title = "AnKi unit tests";
 	NativeWindow* win = new NativeWindow();
 
@@ -238,13 +245,10 @@ NativeWindow* createWindow(U width, U height)
 	return win;
 }
 
-GrManager* createGrManager(NativeWindow* win)
+GrManager* createGrManager(const Config& cfg, NativeWindow* win)
 {
 	GrManager* gr = new GrManager();
 
-	Config cfg;
-	cfg.set("debugContext", true);
-	cfg.set("vsync", false);
 	GrManagerInitInfo inf;
 	inf.m_allocCallback = allocAligned;
 	inf.m_cacheDirectory = "./";
@@ -255,7 +259,8 @@ GrManager* createGrManager(NativeWindow* win)
 	return gr;
 }
 
-ResourceManager* createResourceManager(GrManager* gr, PhysicsWorld*& physics, ResourceFilesystem*& resourceFs)
+ResourceManager* createResourceManager(
+	const Config& cfg, GrManager* gr, PhysicsWorld*& physics, ResourceFilesystem*& resourceFs)
 {
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 
@@ -264,7 +269,6 @@ ResourceManager* createResourceManager(GrManager* gr, PhysicsWorld*& physics, Re
 	ANKI_TEST_EXPECT_NO_ERR(physics->create(allocAligned, nullptr));
 
 	resourceFs = new ResourceFilesystem(alloc);
-	Config cfg;
 	ANKI_TEST_EXPECT_NO_ERR(resourceFs->init(cfg, "./"));
 
 	ResourceManagerInitInfo rinit;

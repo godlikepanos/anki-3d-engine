@@ -11,9 +11,6 @@
 namespace anki
 {
 
-static const U WIDTH = 1920;
-static const U HEIGHT = 1080;
-
 static FramebufferPtr createDefaultFb(GrManager& gr)
 {
 	FramebufferInitInfo fbinit;
@@ -23,22 +20,39 @@ static FramebufferPtr createDefaultFb(GrManager& gr)
 	return gr.newInstance<Framebuffer>(fbinit);
 }
 
+class Label : public UiImmediateModeBuilder
+{
+public:
+	void build(CanvasPtr canvas)
+	{
+		nk_context* ctx = &canvas->getContext();
+		// TODO
+	}
+};
+
 ANKI_TEST(Ui, Ui)
 {
-	NativeWindow* win = createWindow(WIDTH, HEIGHT);
-	GrManager* gr = createGrManager(win);
+	Config cfg;
+	initConfig(cfg);
+	cfg.set("vsync", 1);
+
+	NativeWindow* win = createWindow(cfg);
+	GrManager* gr = createGrManager(cfg, win);
 	PhysicsWorld* physics;
 	ResourceFilesystem* fs;
-	ResourceManager* resource = createResourceManager(gr, physics, fs);
+	ResourceManager* resource = createResourceManager(cfg, gr, physics, fs);
 	UiManager* ui = new UiManager();
 
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 	ANKI_TEST_EXPECT_NO_ERR(ui->init(alloc, resource, gr));
 
 	{
+		FontPtr font;
+		ANKI_TEST_EXPECT_NO_ERR(ui->newInstance(font, "UbuntuRegular.ttf", 30));
+
 		FramebufferPtr fb = createDefaultFb(*gr);
 
-		U iterations = 100;
+		U iterations = 200;
 		while(iterations--)
 		{
 			HighRezTimer timer;

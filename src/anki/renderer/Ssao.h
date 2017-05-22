@@ -82,8 +82,8 @@ private:
 
 	TexturePtr m_rt;
 	FramebufferPtr m_fb;
-	ShaderResourcePtr m_frag;
-	ShaderProgramPtr m_prog;
+	ShaderProgramResourcePtr m_prog;
+	ShaderProgramPtr m_grProg;
 };
 
 /// Screen space ambient occlusion blur pass.
@@ -107,8 +107,8 @@ anki_internal:
 private:
 	Ssao* m_ssao;
 
-	ShaderResourcePtr m_frag;
-	ShaderProgramPtr m_prog;
+	ShaderProgramResourcePtr m_prog;
+	ShaderProgramPtr m_grProg;
 };
 
 /// Screen space ambient occlusion pass

@@ -25,11 +25,6 @@ public:
 
 	~Font();
 
-	Atomic<I32>& getRefcount()
-	{
-		return m_refcount;
-	}
-
 	/// Initialize the font.
 	ANKI_USE_RESULT Error init(const CString& filename, U32 fontHeight);
 
@@ -40,9 +35,13 @@ anki_internal:
 		return m_tex;
 	}
 
-private:
-	Atomic<I32> m_refcount = {0};
+	const nk_font& getFont() const
+	{
+		ANKI_ASSERT(m_font);
+		return *m_font;
+	}
 
+private:
 	nk_font_atlas m_atlas = {};
 	nk_font* m_font = nullptr;
 
@@ -50,8 +49,6 @@ private:
 
 	void createTexture(const void* data, U32 width, U32 height);
 };
-
-using FontPtr = IntrusivePtr<Font>;
 /// @}
 
 } // end namespace anki
