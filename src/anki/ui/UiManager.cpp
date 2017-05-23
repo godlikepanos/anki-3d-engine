@@ -16,14 +16,17 @@ UiManager::~UiManager()
 {
 }
 
-Error UiManager::init(HeapAllocator<U8> alloc, ResourceManager* resources, GrManager* gr)
+Error UiManager::init(
+	HeapAllocator<U8> alloc, ResourceManager* resources, GrManager* gr, StagingGpuMemoryManager* gpuMem)
 {
 	ANKI_ASSERT(resources);
 	ANKI_ASSERT(gr);
+	ANKI_ASSERT(gpuMem);
 
 	m_alloc = alloc;
 	m_resources = resources;
 	m_gr = gr;
+	m_gpuMem = gpuMem;
 
 	return ErrorCode::NONE;
 }

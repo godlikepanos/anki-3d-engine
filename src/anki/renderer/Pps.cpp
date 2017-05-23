@@ -72,11 +72,11 @@ Error Pps::initInternal(const ConfigSet& config)
 	consts.add("LUT_SIZE", U32(LUT_SIZE)).add("FB_SIZE", UVec2(m_r->getWidth(), m_r->getHeight()));
 
 	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(mutations.m_mutations, consts.m_constantValues, variant);
+	m_prog->getOrCreateVariant(mutations.get(), consts.get(), variant);
 	m_grProgs[0] = variant->getProgram();
 
-	mutations.m_mutations[3].m_value = 1;
-	m_prog->getOrCreateVariant(mutations.m_mutations, consts.m_constantValues, variant);
+	mutations[3].m_value = 1;
+	m_prog->getOrCreateVariant(mutations.get(), consts.get(), variant);
 	m_grProgs[1] = variant->getProgram();
 
 	return ErrorCode::NONE;

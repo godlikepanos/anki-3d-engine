@@ -370,6 +370,14 @@ public:
 
 	/// Get or create a graphics shader program variant.
 	/// @note It's thread-safe.
+	void getOrCreateVariant(
+		WeakArray<const ShaderProgramResourceMutation> mutations, const ShaderProgramResourceVariant*& variant) const
+	{
+		getOrCreateVariant(mutations, WeakArray<const ShaderProgramResourceConstantValue>(), variant);
+	}
+
+	/// Get or create a graphics shader program variant.
+	/// @note It's thread-safe.
 	void getOrCreateVariant(const ShaderProgramResourceVariant*& variant) const
 	{
 		getOrCreateVariant(WeakArray<const ShaderProgramResourceMutation>(),
@@ -427,8 +435,6 @@ template<U count>
 class ShaderProgramResourceConstantValueInitList
 {
 public:
-	Array<ShaderProgramResourceConstantValue, count> m_constantValues;
-
 	ShaderProgramResourceConstantValueInitList(ShaderProgramResourcePtr ptr)
 		: m_ptr(ptr)
 	{
@@ -452,9 +458,16 @@ public:
 		return *this;
 	}
 
+	WeakArray<const ShaderProgramResourceConstantValue> get() const
+	{
+		ANKI_ASSERT(m_count == count);
+		return WeakArray<const ShaderProgramResourceConstantValue>(&m_constantValues[0], m_count);
+	}
+
 private:
 	ShaderProgramResourcePtr m_ptr;
 	U m_count = 0;
+	Array<ShaderProgramResourceConstantValue, count> m_constantValues;
 };
 
 /// Smart initializer of multiple ShaderProgramResourceMutation.
@@ -462,8 +475,6 @@ template<U count>
 class ShaderProgramResourceMutationInitList
 {
 public:
-	Array<ShaderProgramResourceMutation, count> m_mutations;
-
 	ShaderProgramResourceMutationInitList(ShaderProgramResourcePtr ptr)
 		: m_ptr(ptr)
 	{
@@ -484,9 +495,21 @@ public:
 		return *this;
 	}
 
+	WeakArray<const ShaderProgramResourceMutation> get() const
+	{
+		ANKI_ASSERT(m_count == count);
+		return WeakArray<const ShaderProgramResourceMutation>(&m_mutations[0], m_count);
+	}
+
+	ShaderProgramResourceMutation& operator[](U idx)
+	{
+		return m_mutations[idx];
+	}
+
 private:
 	ShaderProgramResourcePtr m_ptr;
 	U m_count = 0;
+	Array<ShaderProgramResourceMutation, count> m_mutations;
 };
 /// @}
 

@@ -6,6 +6,8 @@
 #pragma once
 
 #include <anki/ui/UiObject.h>
+#include <anki/gr/CommandBuffer.h>
+#include <anki/resource/ShaderProgramResource.h>
 
 namespace anki
 {
@@ -17,12 +19,9 @@ namespace anki
 class Canvas : public UiObject
 {
 public:
-	Canvas(UiManager* manager)
-		: UiObject(manager)
-	{
-	}
+	Canvas(UiManager* manager);
 
-	~Canvas();
+	virtual ~Canvas();
 
 	ANKI_USE_RESULT Error init(FontPtr font);
 
@@ -40,9 +39,20 @@ public:
 	/// End building.
 	void endBuilding();
 
+	void appendToCommandBuffer(CommandBufferPtr cmdb);
+
 private:
 	FontPtr m_font;
 	nk_context m_nkCtx = {};
+	nk_buffer m_nkCmdsBuff = {};
+
+	ShaderProgramResourcePtr m_prog;
+	ShaderProgramPtr m_texGrProg;
+	ShaderProgramPtr m_whiteTexGrProg;
+
+#if ANKI_EXTRA_CHECKS
+	Bool8 m_building = false;
+#endif
 };
 /// @}
 

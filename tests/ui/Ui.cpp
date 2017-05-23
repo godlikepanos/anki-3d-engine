@@ -7,6 +7,7 @@
 #include <anki/core/Config.h>
 #include <anki/util/HighRezTimer.h>
 #include <anki/Ui.h>
+#include <anki/core/StagingGpuMemoryManager.h>
 
 namespace anki
 {
@@ -23,10 +24,14 @@ static FramebufferPtr createDefaultFb(GrManager& gr)
 class Label : public UiImmediateModeBuilder
 {
 public:
-	void build(CanvasPtr canvas)
+	using UiImmediateModeBuilder::UiImmediateModeBuilder;
+
+	void build(CanvasPtr canvas) final
 	{
 		nk_context* ctx = &canvas->getContext();
-		// TODO
+		nk_begin(ctx, "Window", nk_rect(10, 10, 200, 800), NK_WINDOW_NO_SCROLLBAR);
+
+		nk_end(ctx);
 	}
 };
 
@@ -35,6 +40,7 @@ ANKI_TEST(Ui, Ui)
 	Config cfg;
 	initConfig(cfg);
 	cfg.set("vsync", 1);
+	cfg.set("debugContext", 1);
 
 	NativeWindow* win = createWindow(cfg);
 	GrManager* gr = createGrManager(cfg, win);
@@ -43,12 +49,21 @@ ANKI_TEST(Ui, Ui)
 	ResourceManager* resource = createResourceManager(cfg, gr, physics, fs);
 	UiManager* ui = new UiManager();
 
+	StagingGpuMemoryManager* stagingMem = new StagingGpuMemoryManager();
+	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(gr, cfg));
+
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
-	ANKI_TEST_EXPECT_NO_ERR(ui->init(alloc, resource, gr));
+	ANKI_TEST_EXPECT_NO_ERR(ui->init(alloc, resource, gr, stagingMem));
 
 	{
 		FontPtr font;
-		ANKI_TEST_EXPECT_NO_ERR(ui->newInstance(font, "UbuntuRegular.ttf", 30));
+		ANKI_TEST_EXPECT_NO_ERR(ui->newInstance(font, "engine_data/UbuntuRegular.ttf", 30));
+
+		CanvasPtr canvas;
+		ANKI_TEST_EXPECT_NO_ERR(ui->newInstance(canvas, font));
+
+		IntrusivePtr<Label> label;
+		ANKI_TEST_EXPECT_NO_ERR(ui->newInstance(label));
 
 		FramebufferPtr fb = createDefaultFb(*gr);
 
@@ -58,6 +73,10 @@ ANKI_TEST(Ui, Ui)
 			HighRezTimer timer;
 			timer.start();
 
+			canvas->beginBuilding();
+			label->build(canvas);
+			canvas->endBuilding();
+
 			gr->beginFrame();
 
 			CommandBufferInitInfo cinit;
@@ -65,10 +84,12 @@ ANKI_TEST(Ui, Ui)
 			CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
 
 			cmdb->beginRenderPass(fb);
+			canvas->appendToCommandBuffer(cmdb);
 			cmdb->endRenderPass();
 			cmdb->flush();
 
 			gr->swapBuffers();
+			stagingMem->endFrame();
 
 			timer.stop();
 			const F32 TICK = 1.0 / 30.0;
@@ -80,6 +101,7 @@ ANKI_TEST(Ui, Ui)
 	}
 
 	delete ui;
+	delete stagingMem;
 	delete resource;
 	delete physics;
 	delete fs;

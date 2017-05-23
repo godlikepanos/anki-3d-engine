@@ -62,7 +62,7 @@ Error SsaoMain::init(const ConfigSet& config)
 		.add("STRENGTH", F32(3.0))
 		.add("HISTORY_FEEDBACK", F32(1.0f / 8.0f));
 	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(consts.m_constantValues, variant);
+	m_prog->getOrCreateVariant(consts.get(), variant);
 	m_grProg = variant->getProgram();
 
 	return ErrorCode::NONE;
@@ -143,7 +143,7 @@ Error SsaoHBlur::init(const ConfigSet& config)
 	consts.add("TEXTURE_SIZE", UVec2(m_ssao->m_width, m_ssao->m_height));
 
 	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(mutators.m_mutations, consts.m_constantValues, variant);
+	m_prog->getOrCreateVariant(mutators.get(), consts.get(), variant);
 
 	m_grProg = variant->getProgram();
 
@@ -187,7 +187,7 @@ Error SsaoVBlur::init(const ConfigSet& config)
 	consts.add("TEXTURE_SIZE", UVec2(m_ssao->m_width, m_ssao->m_height));
 
 	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(mutators.m_mutations, consts.m_constantValues, variant);
+	m_prog->getOrCreateVariant(mutators.get(), consts.get(), variant);
 
 	m_grProg = variant->getProgram();
 

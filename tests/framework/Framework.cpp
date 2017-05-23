@@ -227,7 +227,7 @@ void initConfig(Config& cfg)
 {
 	cfg.set("width", 1920);
 	cfg.set("height", 1080);
-	cfg.set("rsrc.dataPaths", ".:../engine_data");
+	cfg.set("rsrc.dataPaths", ".:..");
 }
 
 NativeWindow* createWindow(const Config& cfg)

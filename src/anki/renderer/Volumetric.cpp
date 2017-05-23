@@ -55,7 +55,7 @@ Error VolumetricMain::init(const ConfigSet& config)
 		.add("NOISE_MAP_SIZE", U32(m_noiseTex->getWidth()));
 
 	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(mutators.m_mutations, consts.m_constantValues, variant);
+	m_prog->getOrCreateVariant(mutators.get(), consts.get(), variant);
 	m_grProg = variant->getProgram();
 
 	return ErrorCode::NONE;

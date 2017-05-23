@@ -13,6 +13,7 @@ namespace anki
 // Forward
 class ResourceManager;
 class GrManager;
+class StagingGpuMemoryManager;
 
 /// @addtogroup ui
 /// @{
@@ -25,7 +26,8 @@ public:
 
 	~UiManager();
 
-	ANKI_USE_RESULT Error init(HeapAllocator<U8> alloc, ResourceManager* resources, GrManager* gr);
+	ANKI_USE_RESULT Error init(
+		HeapAllocator<U8> alloc, ResourceManager* resources, GrManager* gr, StagingGpuMemoryManager* gpuMem);
 
 	UiAllocator getAllocator() const
 	{
@@ -34,12 +36,20 @@ public:
 
 	ResourceManager& getResourceManager()
 	{
+		ANKI_ASSERT(m_resources);
 		return *m_resources;
 	}
 
 	GrManager& getGrManager()
 	{
+		ANKI_ASSERT(m_gr);
 		return *m_gr;
+	}
+
+	StagingGpuMemoryManager& getStagingGpuMemoryManager()
+	{
+		ANKI_ASSERT(m_gpuMem);
+		return *m_gpuMem;
 	}
 
 	/// Create a new UI object.
@@ -54,6 +64,7 @@ private:
 	UiAllocator m_alloc;
 	ResourceManager* m_resources = nullptr;
 	GrManager* m_gr = nullptr;
+	StagingGpuMemoryManager* m_gpuMem = nullptr;
 };
 /// @}
 

@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/ui/Common.h>
+#include <anki/ui/UiObject.h>
 
 namespace anki
 {
@@ -17,7 +17,21 @@ namespace anki
 class UiImmediateModeBuilder : public UiObject
 {
 public:
+	UiImmediateModeBuilder(UiManager* manager)
+		: UiObject(manager)
+	{
+	}
+
+	virtual ~UiImmediateModeBuilder()
+	{
+	}
+
 	virtual void build(CanvasPtr ctx) = 0;
+
+	ANKI_USE_RESULT Error init() const
+	{
+		return ErrorCode::NONE;
+	}
 };
 /// @}
 

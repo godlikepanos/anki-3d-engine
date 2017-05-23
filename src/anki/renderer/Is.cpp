@@ -102,7 +102,7 @@ Error Is::initInternal(const ConfigSet& config)
 		.add("CLUSTER_COUNT", U32(m_clusterCount))
 		.add("IR_MIPMAP_COUNT", U32(m_r->getIr().getReflectionTextureMipmapCount()));
 
-	m_prog->getOrCreateVariant(consts.m_constantValues, m_progVariant);
+	m_prog->getOrCreateVariant(consts.get(), m_progVariant);
 
 	//
 	// Create framebuffer
