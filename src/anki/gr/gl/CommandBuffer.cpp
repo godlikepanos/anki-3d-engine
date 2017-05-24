@@ -941,7 +941,7 @@ void CommandBuffer::drawElements(
 		idxBytes = sizeof(U32);
 	}
 
-	firstIndex = firstIndex + m_impl->m_state.m_idx.m_offset / idxBytes;
+	firstIndex = firstIndex * idxBytes + m_impl->m_state.m_idx.m_offset;
 
 	DrawElementsIndirectInfo info(count, instanceCount, firstIndex, baseVertex, baseInstance);
 	m_impl->pushBackNewCommand<Cmd>(convertPrimitiveTopology(topology), m_impl->m_state.m_idx.m_indexType, info);

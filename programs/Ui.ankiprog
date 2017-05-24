@@ -16,7 +16,7 @@ http://www.anki3d.org/LICENSE
 
 layout(location = 0) in vec2 in_pos;
 layout(location = 1) in vec2 in_uv;
-layout(location = 3) in vec4 in_col;
+layout(location = 2) in vec4 in_col;
 
 layout(location = 0) out vec2 out_uv;
 layout(location = 1) out vec4 out_col;
@@ -26,12 +26,18 @@ out gl_PerVertex
 	vec4 gl_Position;
 };
 
+layout(ANKI_UBO_BINDING(0, 0)) uniform u_
+{
+	vec4 u_transform; // x: x scale, y: y scale, z: x transl, w: y transl
+};
+
 void main()
 {
 	out_uv = in_uv;
 	out_col = in_col;
 
-	gl_Position = vec4(in_pos, 0.0, 1.0);
+	vec2 pos = u_transform.xy * in_pos + u_transform.zw;
+	gl_Position = vec4(pos, 0.0, 1.0);
 }
 			]]></source>
 		</shader>

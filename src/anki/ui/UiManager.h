@@ -14,6 +14,7 @@ namespace anki
 class ResourceManager;
 class GrManager;
 class StagingGpuMemoryManager;
+class Input;
 
 /// @addtogroup ui
 /// @{
@@ -26,8 +27,11 @@ public:
 
 	~UiManager();
 
-	ANKI_USE_RESULT Error init(
-		HeapAllocator<U8> alloc, ResourceManager* resources, GrManager* gr, StagingGpuMemoryManager* gpuMem);
+	ANKI_USE_RESULT Error init(HeapAllocator<U8> alloc,
+		ResourceManager* resources,
+		GrManager* gr,
+		StagingGpuMemoryManager* gpuMem,
+		Input* input);
 
 	UiAllocator getAllocator() const
 	{
@@ -52,6 +56,12 @@ public:
 		return *m_gpuMem;
 	}
 
+	const Input& getInput() const
+	{
+		ANKI_ASSERT(m_input);
+		return *m_input;
+	}
+
 	/// Create a new UI object.
 	template<typename T, typename... Args>
 	ANKI_USE_RESULT Error newInstance(IntrusivePtr<T>& ptr, Args&&... args)
@@ -65,6 +75,7 @@ private:
 	ResourceManager* m_resources = nullptr;
 	GrManager* m_gr = nullptr;
 	StagingGpuMemoryManager* m_gpuMem = nullptr;
+	Input* m_input = nullptr;
 };
 /// @}
 

@@ -268,7 +268,9 @@ enum class MouseButton
 {
 	LEFT,
 	MIDDLE,
-	RIGHT
+	RIGHT,
+
+	COUNT
 };
 
 } // end namespace anki

@@ -33,7 +33,11 @@ Error Font::init(const CString& filename, U32 fontHeight)
 	nk_allocator nkAlloc = makeNkAllocator(&getAllocator().getMemoryPool());
 	nk_font_atlas_init_custom(&m_atlas, &nkAlloc, &nkAlloc);
 	nk_font_atlas_begin(&m_atlas);
-	m_font = nk_font_atlas_add_from_memory(&m_atlas, &fontData[0], fontData.getSize(), fontHeight, nullptr);
+
+	struct nk_font_config cfg = nk_font_config(fontHeight);
+	cfg.oversample_h = 8;
+	cfg.oversample_v = 8;
+	m_font = nk_font_atlas_add_from_memory(&m_atlas, &fontData[0], fontData.getSize(), fontHeight, &cfg);
 
 	int width, height;
 	const void* img = nk_font_atlas_bake(&m_atlas, &width, &height, NK_FONT_ATLAS_RGBA32);

@@ -17,16 +17,18 @@ UiManager::~UiManager()
 }
 
 Error UiManager::init(
-	HeapAllocator<U8> alloc, ResourceManager* resources, GrManager* gr, StagingGpuMemoryManager* gpuMem)
+	HeapAllocator<U8> alloc, ResourceManager* resources, GrManager* gr, StagingGpuMemoryManager* gpuMem, Input* input)
 {
 	ANKI_ASSERT(resources);
 	ANKI_ASSERT(gr);
 	ANKI_ASSERT(gpuMem);
+	ANKI_ASSERT(input);
 
 	m_alloc = alloc;
 	m_resources = resources;
 	m_gr = gr;
 	m_gpuMem = gpuMem;
+	m_input = input;
 
 	return ErrorCode::NONE;
 }

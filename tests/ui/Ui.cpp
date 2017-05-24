@@ -7,6 +7,7 @@
 #include <anki/core/Config.h>
 #include <anki/util/HighRezTimer.h>
 #include <anki/Ui.h>
+#include <anki/Input.h>
 #include <anki/core/StagingGpuMemoryManager.h>
 
 namespace anki
@@ -29,7 +30,16 @@ public:
 	void build(CanvasPtr canvas) final
 	{
 		nk_context* ctx = &canvas->getContext();
-		nk_begin(ctx, "Window", nk_rect(10, 10, 200, 800), NK_WINDOW_NO_SCROLLBAR);
+
+		if(nk_begin(ctx,
+			   "Window name",
+			   nk_rect(10, 10, 200, 800),
+			   NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE | NK_WINDOW_MINIMIZABLE | NK_WINDOW_TITLE))
+		{
+			nk_layout_row_dynamic(ctx, 30, 1);
+			nk_label(ctx, "Label0", NK_TEXT_ALIGN_LEFT);
+			nk_label(ctx, "Label1", NK_TEXT_ALIGN_LEFT);
+		}
 
 		nk_end(ctx);
 	}
@@ -40,20 +50,23 @@ ANKI_TEST(Ui, Ui)
 	Config cfg;
 	initConfig(cfg);
 	cfg.set("vsync", 1);
-	cfg.set("debugContext", 1);
+	cfg.set("debugContext", 0);
 
 	NativeWindow* win = createWindow(cfg);
+	Input* in = new Input();
 	GrManager* gr = createGrManager(cfg, win);
 	PhysicsWorld* physics;
 	ResourceFilesystem* fs;
 	ResourceManager* resource = createResourceManager(cfg, gr, physics, fs);
 	UiManager* ui = new UiManager();
 
+	ANKI_TEST_EXPECT_NO_ERR(in->init(win));
+
 	StagingGpuMemoryManager* stagingMem = new StagingGpuMemoryManager();
 	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(gr, cfg));
 
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
-	ANKI_TEST_EXPECT_NO_ERR(ui->init(alloc, resource, gr, stagingMem));
+	ANKI_TEST_EXPECT_NO_ERR(ui->init(alloc, resource, gr, stagingMem, in));
 
 	{
 		FontPtr font;
@@ -67,11 +80,14 @@ ANKI_TEST(Ui, Ui)
 
 		FramebufferPtr fb = createDefaultFb(*gr);
 
-		U iterations = 200;
+		U iterations = 300;
 		while(iterations--)
 		{
+			ANKI_TEST_EXPECT_NO_ERR(in->handleEvents());
 			HighRezTimer timer;
 			timer.start();
+
+			canvas->handleInput();
 
 			canvas->beginBuilding();
 			label->build(canvas);
@@ -106,6 +122,7 @@ ANKI_TEST(Ui, Ui)
 	delete physics;
 	delete fs;
 	delete gr;
+	delete in;
 	delete win;
 }
 

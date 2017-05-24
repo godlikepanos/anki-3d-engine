@@ -42,10 +42,10 @@ public:
 		ANKI_ASSERT(m_nativeWindow == nullptr);
 	}
 
-	ANKI_USE_RESULT Error create(NativeWindow* nativeWindow)
+	ANKI_USE_RESULT Error init(NativeWindow* nativeWindow)
 	{
 		reset();
-		return init(nativeWindow);
+		return initInternal(nativeWindow);
 	}
 
 	U getKey(KeyCode i) const
@@ -53,7 +53,7 @@ public:
 		return m_keys[static_cast<U>(i)];
 	}
 
-	U getMouseButton(U32 i) const
+	U getMouseButton(MouseButton i) const
 	{
 		return m_mouseBtns[i];
 	}
@@ -108,7 +108,7 @@ private:
 	Array<U32, static_cast<U>(KeyCode::COUNT)> m_keys;
 
 	/// Mouse btns. Supporting 3 btns & wheel. @see keys
-	Array<U32, 8> m_mouseBtns;
+	Array<U32, U(MouseButton::COUNT)> m_mouseBtns;
 	/// @}
 
 	Vec2 m_mousePosNdc = Vec2(2.0); ///< The coords are in the NDC space
@@ -118,7 +118,7 @@ private:
 	Bool8 m_lockCurs = false;
 
 	/// Initialize the platform's input system
-	ANKI_USE_RESULT Error init(NativeWindow* nativeWindow);
+	ANKI_USE_RESULT Error initInternal(NativeWindow* nativeWindow);
 
 	/// Destroy the platform specific input system
 	void destroy();

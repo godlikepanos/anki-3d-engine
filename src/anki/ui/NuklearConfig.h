@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/util/Assert.h>
+#include <cstring>
 
 #define NK_INCLUDE_FIXED_TYPES
 #define NK_INCLUDE_STANDARD_VARARGS
@@ -27,4 +28,5 @@
 // #define NK_STRTOD
 // #define NK_DTOA
 // #define NK_VSNPRINTF
+#define NK_MEMCPY memcpy
 #include <nuklear/nuklear.h>

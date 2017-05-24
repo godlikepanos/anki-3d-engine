@@ -12,7 +12,27 @@
 namespace anki
 {
 
-Error Input::init(NativeWindow* nativeWindow)
+static MouseButton sdlMouseButtonToAnKi(const U32 sdl)
+{
+	MouseButton out = MouseButton::COUNT;
+
+	switch(sdl)
+	{
+	case SDL_BUTTON_LEFT:
+		out = MouseButton::LEFT;
+		break;
+	case SDL_BUTTON_RIGHT:
+		out = MouseButton::RIGHT;
+		break;
+	case SDL_BUTTON_MIDDLE:
+		out = MouseButton::MIDDLE;
+		break;
+	}
+
+	return out;
+}
+
+Error Input::initInternal(NativeWindow* nativeWindow)
 {
 	ANKI_ASSERT(nativeWindow);
 	m_nativeWindow = nativeWindow;
@@ -306,18 +326,30 @@ Error Input::handleEvents()
 		{
 		case SDL_KEYDOWN:
 			akkey = m_impl->m_sdlToAnki[event.key.keysym.sym];
-			m_keys[static_cast<U>(akkey)] = 1;
+			m_keys[akkey] = 1;
 			break;
 		case SDL_KEYUP:
 			akkey = m_impl->m_sdlToAnki[event.key.keysym.sym];
-			m_keys[static_cast<U>(akkey)] = 0;
+			m_keys[akkey] = 0;
 			break;
 		case SDL_MOUSEBUTTONDOWN:
-			// XXX
+		{
+			MouseButton mb = sdlMouseButtonToAnKi(event.button.button);
+			if(mb != MouseButton::COUNT)
+			{
+				m_mouseBtns[mb] = 1;
+			}
 			break;
+		}
 		case SDL_MOUSEBUTTONUP:
-			// XXX
+		{
+			MouseButton mb = sdlMouseButtonToAnKi(event.button.button);
+			if(mb != MouseButton::COUNT)
+			{
+				m_mouseBtns[mb] = 0;
+			}
 			break;
+		}
 		case SDL_MOUSEMOTION:
 			m_mousePosNdc.x() = (F32)event.button.x / m_nativeWindow->getWidth() * 2.0 - 1.0;
 			m_mousePosNdc.y() = -((F32)event.button.y / m_nativeWindow->getHeight() * 2.0 - 1.0);

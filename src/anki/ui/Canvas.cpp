@@ -8,6 +8,7 @@
 #include <anki/ui/UiManager.h>
 #include <anki/resource/ResourceManager.h>
 #include <anki/core/StagingGpuMemoryManager.h>
+#include <anki/input/Input.h>
 
 namespace anki
 {
@@ -59,7 +60,23 @@ Error Canvas::init(FontPtr font)
 
 void Canvas::handleInput()
 {
-	// TODO
+	// Start
+	const Input& in = m_manager->getInput();
+	nk_input_begin(&m_nkCtx);
+
+	Array<U32, 4> viewport = {{0, 0, 1920, 1080}}; // TODO
+
+	// Handle mouse
+	Vec2 mousePosf = in.getMousePosition() / 2.0f + 0.5f;
+	mousePosf.y() = 1.0f - mousePosf.y();
+	UVec2 mousePos(mousePosf.x() * viewport[2], mousePosf.y() * viewport[3]);
+
+	nk_input_motion(&m_nkCtx, mousePos.x(), mousePos.y());
+	nk_input_button(&m_nkCtx, NK_BUTTON_LEFT, mousePos.x(), mousePos.y(), in.getMouseButton(MouseButton::LEFT) > 1);
+	nk_input_button(&m_nkCtx, NK_BUTTON_RIGHT, mousePos.x(), mousePos.y(), in.getMouseButton(MouseButton::RIGHT) > 1);
+
+	// Done
+	nk_input_end(&m_nkCtx);
 }
 
 void Canvas::beginBuilding()
@@ -80,6 +97,8 @@ void Canvas::endBuilding()
 
 void Canvas::appendToCommandBuffer(CommandBufferPtr cmdb)
 {
+	Array<U32, 4> viewport = {{0, 0, 1920, 1080}}; // TODO
+
 	//
 	// Allocate vertex data
 	//
@@ -151,6 +170,18 @@ void Canvas::appendToCommandBuffer(CommandBufferPtr cmdb)
 	//
 	// Draw
 	//
+
+	// Uniforms
+	StagingGpuMemoryToken uboToken;
+	Vec4* trf = static_cast<Vec4*>(
+		m_manager->getStagingGpuMemoryManager().allocateFrame(sizeof(Vec4), StagingGpuMemoryType::UNIFORM, uboToken));
+	trf->x() = 2.0f / (viewport[2] - viewport[0]);
+	trf->y() = -2.0f / (viewport[3] - viewport[1]);
+	trf->z() = -1.0f;
+	trf->w() = 1.0f;
+	cmdb->bindUniformBuffer(0, 0, uboToken.m_buffer, uboToken.m_offset, uboToken.m_range);
+
+	// Vert & idx buffers
 	cmdb->bindVertexBuffer(0, vertCtx.m_token.m_buffer, vertCtx.m_token.m_offset, sizeof(Vert));
 	cmdb->setVertexAttribute(0, 0, PixelFormat(ComponentFormat::R32G32, TransformFormat::FLOAT), 0);
 	cmdb->setVertexAttribute(1, 0, PixelFormat(ComponentFormat::R32G32, TransformFormat::FLOAT), sizeof(Vec2));
@@ -158,11 +189,11 @@ void Canvas::appendToCommandBuffer(CommandBufferPtr cmdb)
 
 	cmdb->bindIndexBuffer(idxCtx.m_token.m_buffer, idxCtx.m_token.m_offset, IndexType::U16);
 
-	cmdb->setViewport(0, 0, 1024, 1024); // TODO
+	cmdb->setViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 
+	// Prog & tex
 	cmdb->bindShaderProgram(m_texGrProg);
 	ShaderProgramPtr boundProg = m_texGrProg;
-	cmdb->setBlendFactors(0, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA);
 
 	const nk_draw_command* cmd = nullptr;
 	U offset = 0;
@@ -191,6 +222,12 @@ void Canvas::appendToCommandBuffer(CommandBufferPtr cmdb)
 			cmdb->bindShaderProgram(progToBind);
 			boundProg = progToBind;
 		}
+
+		// Other state
+		cmdb->setBlendFactors(0, BlendFactor::SRC_ALPHA, BlendFactor::ONE_MINUS_SRC_ALPHA);
+		cmdb->setDepthWrite(false);
+		cmdb->setDepthCompareOperation(CompareOperation::ALWAYS);
+		cmdb->setCullMode(FaceSelectionBit::FRONT);
 
 		// TODO set scissor
 

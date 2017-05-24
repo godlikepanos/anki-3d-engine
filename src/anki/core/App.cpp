@@ -210,7 +210,7 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	//
 	m_input = m_heapAlloc.newInstance<Input>();
 
-	ANKI_CHECK(m_input->create(m_window));
+	ANKI_CHECK(m_input->init(m_window));
 
 	//
 	// ThreadPool
