@@ -37,8 +37,14 @@ public:
 			   NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE | NK_WINDOW_MINIMIZABLE | NK_WINDOW_TITLE))
 		{
 			nk_layout_row_dynamic(ctx, 30, 1);
+
+			nk_style_push_font(ctx, &canvas->getDefaultFont()->getFont(20));
 			nk_label(ctx, "Label0", NK_TEXT_ALIGN_LEFT);
+			nk_style_pop_font(ctx);
+
+			nk_style_push_font(ctx, &canvas->getDefaultFont()->getFont(30));
 			nk_label(ctx, "Label1", NK_TEXT_ALIGN_LEFT);
+			nk_style_pop_font(ctx);
 		}
 
 		nk_end(ctx);
@@ -70,10 +76,11 @@ ANKI_TEST(Ui, Ui)
 
 	{
 		FontPtr font;
-		ANKI_TEST_EXPECT_NO_ERR(ui->newInstance(font, "engine_data/UbuntuRegular.ttf", 30));
+		ANKI_TEST_EXPECT_NO_ERR(
+			ui->newInstance(font, "engine_data/UbuntuRegular.ttf", std::initializer_list<U32>{20, 30, 32}));
 
 		CanvasPtr canvas;
-		ANKI_TEST_EXPECT_NO_ERR(ui->newInstance(canvas, font));
+		ANKI_TEST_EXPECT_NO_ERR(ui->newInstance(canvas, font, 30));
 
 		IntrusivePtr<Label> label;
 		ANKI_TEST_EXPECT_NO_ERR(ui->newInstance(label));

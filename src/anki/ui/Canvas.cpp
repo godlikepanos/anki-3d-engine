@@ -24,12 +24,12 @@ Canvas::~Canvas()
 	nk_buffer_free(&m_nkCmdsBuff);
 }
 
-Error Canvas::init(FontPtr font)
+Error Canvas::init(FontPtr font, U32 fontHeight)
 {
 	m_font = font;
 
 	nk_allocator alloc = makeNkAllocator(&getAllocator().getMemoryPool());
-	if(!nk_init(&m_nkCtx, &alloc, &m_font->getFont().handle))
+	if(!nk_init(&m_nkCtx, &alloc, &m_font->getFont(fontHeight)))
 	{
 		ANKI_UI_LOGE("nk_init() failed");
 		return ErrorCode::FUNCTION_FAILED;
@@ -162,8 +162,8 @@ void Canvas::appendToCommandBuffer(CommandBufferPtr cmdb)
 	config.curve_segment_count = 22;
 	config.arc_segment_count = 22;
 	config.global_alpha = 1.0f;
-	config.shape_AA = NK_ANTI_ALIASING_ON;
-	config.line_AA = NK_ANTI_ALIASING_ON;
+	config.shape_AA = NK_ANTI_ALIASING_OFF;
+	config.line_AA = NK_ANTI_ALIASING_OFF;
 
 	nk_convert(&m_nkCtx, &m_nkCmdsBuff, &vertBuff, &idxBuff, &config);
 

@@ -18,9 +18,10 @@ namespace anki
 Font::~Font()
 {
 	nk_font_atlas_clear(&m_atlas);
+	m_fonts.destroy(getAllocator());
 }
 
-Error Font::init(const CString& filename, U32 fontHeight)
+Error Font::init(const CString& filename, const std::initializer_list<U32>& fontHeights)
 {
 	// Load font in memory
 	ResourceFilePtr file;
@@ -29,15 +30,23 @@ Error Font::init(const CString& filename, U32 fontHeight)
 	fontData.create(file->getSize());
 	ANKI_CHECK(file->read(&fontData[0], file->getSize()));
 
+	m_fonts.create(getAllocator(), fontHeights.size());
+
 	// Bake font
 	nk_allocator nkAlloc = makeNkAllocator(&getAllocator().getMemoryPool());
 	nk_font_atlas_init_custom(&m_atlas, &nkAlloc, &nkAlloc);
 	nk_font_atlas_begin(&m_atlas);
 
-	struct nk_font_config cfg = nk_font_config(fontHeight);
-	cfg.oversample_h = 8;
-	cfg.oversample_v = 8;
-	m_font = nk_font_atlas_add_from_memory(&m_atlas, &fontData[0], fontData.getSize(), fontHeight, &cfg);
+	U count = 0;
+	for(U32 height : fontHeights)
+	{
+		struct nk_font_config cfg = nk_font_config(height);
+		cfg.oversample_h = 4;
+		cfg.oversample_v = 4;
+		m_fonts[count].m_font = nk_font_atlas_add_from_memory(&m_atlas, &fontData[0], fontData.getSize(), height, &cfg);
+		m_fonts[count].m_height = height;
+		++count;
+	}
 
 	int width, height;
 	const void* img = nk_font_atlas_bake(&m_atlas, &width, &height, NK_FONT_ATLAS_RGBA32);
@@ -75,7 +84,7 @@ void Font::createTexture(const void* data, U32 width, U32 height)
 	texInit.m_usage =
 		TextureUsageBit::TRANSFER_DESTINATION | TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::GENERATE_MIPMAPS;
 	texInit.m_usageWhenEncountered = TextureUsageBit::SAMPLED_FRAGMENT;
-	texInit.m_mipmapsCount = 2;
+	texInit.m_mipmapsCount = 4;
 	texInit.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
 	texInit.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
 

@@ -7,6 +7,7 @@
 
 #include <anki/ui/UiObject.h>
 #include <anki/gr/Texture.h>
+#include <initializer_list>
 
 namespace anki
 {
@@ -26,7 +27,7 @@ public:
 	~Font();
 
 	/// Initialize the font.
-	ANKI_USE_RESULT Error init(const CString& filename, U32 fontHeight);
+	ANKI_USE_RESULT Error init(const CString& filename, const std::initializer_list<U32>& fontHeights);
 
 anki_internal:
 	/// Get font image atlas.
@@ -35,15 +36,30 @@ anki_internal:
 		return m_tex;
 	}
 
-	const nk_font& getFont() const
+	const nk_user_font& getFont(U32 fontHeight) const
 	{
-		ANKI_ASSERT(m_font);
-		return *m_font;
+		for(const NkFont& f : m_fonts)
+		{
+			if(f.m_height == fontHeight)
+			{
+				return f.m_font->handle;
+			}
+		}
+
+		ANKI_ASSERT(0);
+		return *static_cast<const nk_user_font*>(nullptr);
 	}
 
 private:
 	nk_font_atlas m_atlas = {};
-	nk_font* m_font = nullptr;
+
+	struct NkFont
+	{
+		nk_font* m_font;
+		U32 m_height;
+	};
+
+	DynamicArray<NkFont> m_fonts;
 
 	TexturePtr m_tex;
 

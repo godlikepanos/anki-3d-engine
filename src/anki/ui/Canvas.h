@@ -23,11 +23,16 @@ public:
 
 	virtual ~Canvas();
 
-	ANKI_USE_RESULT Error init(FontPtr font);
+	ANKI_USE_RESULT Error init(FontPtr font, U32 fontHeight);
 
 	nk_context& getContext()
 	{
 		return m_nkCtx;
+	}
+
+	FontPtr getDefaultFont() const
+	{
+		return m_font;
 	}
 
 	/// Handle input.
