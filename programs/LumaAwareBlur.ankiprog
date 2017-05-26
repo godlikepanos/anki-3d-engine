@@ -25,6 +25,7 @@ http://www.anki3d.org/LICENSE
 
 			<source><![CDATA[
 #include "shaders/GaussianBlurCommon.glsl"
+#include "shaders/Tonemapping.glsl"
 
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_tex; ///< Input FAI
 
@@ -44,6 +45,14 @@ layout(location = 0) in vec2 in_uv;
 #	error See file
 #endif
 
+float computeLumaWeight(float refLuma, COL_TYPE col)
+{
+	float l = computeLuminance(col);
+	float diff = abs(refLuma - l);
+	float weight = 1.0 / (EPSILON + diff);
+	return weight;
+}
+
 // Output
 layout(location = 0) out COL_TYPE out_color;
 
@@ -54,22 +63,34 @@ void main()
 #else
 	const vec2 TEXEL_SIZE = vec2(0.0, 1.0 / float(TEXTURE_SIZE.y));
 #endif
-	vec2 uv = in_uv;
 
-	out_color = texture(u_tex, uv).TEX_FETCH * WEIGHTS[0u];
+	COL_TYPE col = texture(u_tex, in_uv).TEX_FETCH;
+	out_color = col;
+	float refLuma = computeLuminance(col);
+	float weight = 1.0;
 	vec2 texCoordOffset = 1.5 * TEXEL_SIZE;
 
 	for(uint i = 0u; i < STEP_COUNT; ++i)
 	{
-		COL_TYPE col =
-			texture(u_tex, uv + texCoordOffset).TEX_FETCH + texture(u_tex, uv - texCoordOffset).TEX_FETCH;
-		out_color += WEIGHTS[i + 1u] * col;
+		COL_TYPE col = texture(u_tex, in_uv + texCoordOffset).TEX_FETCH;
+		float w = computeLumaWeight(refLuma, col);
+		out_color += col * w;
+		weight += w;
+
+		col = texture(u_tex, in_uv - texCoordOffset).TEX_FETCH;
+		w = computeLumaWeight(refLuma, col);
+		out_color += col * w;
+		weight += w;
 
 		texCoordOffset += 2.0 * TEXEL_SIZE;
 	}
+
+	out_color = out_color / weight;
 }
 			]]></source>
 		</shader>
 	</shaders>
 </shaderProgram>
+
+
 

@@ -34,7 +34,7 @@ ANKI_UI_OBJECT_FW(UiImmediateModeBuilder)
 
 #undef ANKI_UI_OBJECT
 
-const I32 FONT_TEXTURE_INDEX = 1;
+const PtrSize FONT_TEXTURE_MASK = 1llu << (sizeof(PtrSize) * 8llu - 1llu);
 
 /// Initialize a nk_allocator.
 template<typename TMemPool>

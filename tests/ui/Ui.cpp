@@ -29,7 +29,7 @@ public:
 
 	void build(CanvasPtr canvas) final
 	{
-		nk_context* ctx = &canvas->getContext();
+		nk_context* ctx = &canvas->getNkContext();
 
 		if(nk_begin(ctx,
 			   "Window name",
@@ -38,13 +38,13 @@ public:
 		{
 			nk_layout_row_dynamic(ctx, 30, 1);
 
-			nk_style_push_font(ctx, &canvas->getDefaultFont()->getFont(20));
+			canvas->pushFont(canvas->getDefaultFont(), 10);
 			nk_label(ctx, "Label0", NK_TEXT_ALIGN_LEFT);
-			nk_style_pop_font(ctx);
+			canvas->popFont();
 
-			nk_style_push_font(ctx, &canvas->getDefaultFont()->getFont(30));
+			canvas->pushFont(canvas->getDefaultFont(), 60);
 			nk_label(ctx, "Label1", NK_TEXT_ALIGN_LEFT);
-			nk_style_pop_font(ctx);
+			canvas->popFont();
 		}
 
 		nk_end(ctx);
@@ -77,7 +77,7 @@ ANKI_TEST(Ui, Ui)
 	{
 		FontPtr font;
 		ANKI_TEST_EXPECT_NO_ERR(
-			ui->newInstance(font, "engine_data/UbuntuRegular.ttf", std::initializer_list<U32>{20, 30, 32}));
+			ui->newInstance(font, "engine_data/UbuntuRegular.ttf", std::initializer_list<U32>{10, 20, 30, 60}));
 
 		CanvasPtr canvas;
 		ANKI_TEST_EXPECT_NO_ERR(ui->newInstance(canvas, font, 30));

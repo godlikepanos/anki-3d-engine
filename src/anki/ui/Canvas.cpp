@@ -41,21 +41,28 @@ Error Canvas::init(FontPtr font, U32 fontHeight)
 	ANKI_CHECK(m_manager->getResourceManager().loadResource("programs/Ui.ankiprog", m_prog));
 	const ShaderProgramResourceVariant* variant;
 
+	for(U i = 0; i < SHADER_COUNT; ++i)
 	{
 		ShaderProgramResourceMutationInitList<1> mutators(m_prog);
-		mutators.add("IDENTITY_TEX", 0);
+		mutators.add("TEXTURE_TYPE", i);
 		m_prog->getOrCreateVariant(mutators.get(), variant);
-		m_texGrProg = variant->getProgram();
+		m_grProgs[i] = variant->getProgram();
 	}
 
-	{
-		ShaderProgramResourceMutationInitList<1> mutators(m_prog);
-		mutators.add("IDENTITY_TEX", 1);
-		m_prog->getOrCreateVariant(mutators.get(), variant);
-		m_whiteTexGrProg = variant->getProgram();
-	}
+	// Other
+	m_stackAlloc = StackAllocator<U8>(getAllocator().getMemoryPool().getAllocationCallback(),
+		getAllocator().getMemoryPool().getAllocationCallbackUserData(),
+		512_B);
 
 	return ErrorCode::NONE;
+}
+
+void Canvas::reset()
+{
+	m_references.destroy(m_stackAlloc);
+	m_stackAlloc.getMemoryPool().reset();
+
+	nk_clear(&m_nkCtx);
 }
 
 void Canvas::handleInput()
@@ -93,6 +100,13 @@ void Canvas::endBuilding()
 	ANKI_ASSERT(m_building);
 	m_building = false;
 #endif
+}
+
+void Canvas::pushFont(FontPtr font, U32 fontHeight)
+{
+	ANKI_ASSERT(m_building);
+	m_references.pushBack(m_stackAlloc, IntrusivePtr<UiObject>(font.get()));
+	nk_style_push_font(&m_nkCtx, &font->getFont(fontHeight));
 }
 
 void Canvas::appendToCommandBuffer(CommandBufferPtr cmdb)
@@ -192,8 +206,7 @@ void Canvas::appendToCommandBuffer(CommandBufferPtr cmdb)
 	cmdb->setViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 
 	// Prog & tex
-	cmdb->bindShaderProgram(m_texGrProg);
-	ShaderProgramPtr boundProg = m_texGrProg;
+	ShaderProgramPtr boundProg;
 
 	const nk_draw_command* cmd = nullptr;
 	U offset = 0;
@@ -206,15 +219,20 @@ void Canvas::appendToCommandBuffer(CommandBufferPtr cmdb)
 
 		// Set texture and program
 		ShaderProgramPtr progToBind;
-		switch(cmd->texture.id)
+		if(cmd->texture.ptr == nullptr)
 		{
-		case 0:
-			progToBind = m_whiteTexGrProg;
-			break;
-		case FONT_TEXTURE_INDEX:
-			progToBind = m_texGrProg;
-			cmdb->bindTexture(0, 0, m_font->getTexture());
-			break;
+			progToBind = m_grProgs[NO_TEX];
+		}
+		else if(ptrToNumber(cmd->texture.ptr) & FONT_TEXTURE_MASK)
+		{
+			progToBind = m_grProgs[RGBA_TEX];
+
+			Texture* t = numberToPtr<Texture*>(ptrToNumber(cmd->texture.ptr) & ~FONT_TEXTURE_MASK);
+			cmdb->bindTexture(0, 0, TexturePtr(t));
+		}
+		else
+		{
+			ANKI_ASSERT(!"TODO");
 		}
 
 		if(boundProg != progToBind)
@@ -241,7 +259,7 @@ void Canvas::appendToCommandBuffer(CommandBufferPtr cmdb)
 	//
 	// Done
 	//
-	nk_clear(&m_nkCtx);
+	reset();
 }
 
 } // end namespace anki

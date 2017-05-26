@@ -6,7 +6,7 @@ http://www.anki3d.org/LICENSE
 -->
 <shaderProgram>
 	<mutators>
-		<mutator name="IDENTITY_TEX" values="0 1"/>
+		<mutator name="TEXTURE_TYPE" values="0 1"/> <!-- 0: no tex, 1: rgba tex -->
 	</mutators>
 
 	<shaders>
@@ -18,7 +18,9 @@ layout(location = 0) in vec2 in_pos;
 layout(location = 1) in vec2 in_uv;
 layout(location = 2) in vec4 in_col;
 
+#if TEXTURE_TYPE > 0
 layout(location = 0) out vec2 out_uv;
+#endif
 layout(location = 1) out vec4 out_col;
 
 out gl_PerVertex
@@ -33,7 +35,9 @@ layout(ANKI_UBO_BINDING(0, 0)) uniform u_
 
 void main()
 {
+#if TEXTURE_TYPE > 0
 	out_uv = in_uv;
+#endif
 	out_col = in_col;
 
 	vec2 pos = u_transform.xy * in_pos + u_transform.zw;
@@ -46,22 +50,24 @@ void main()
 			<source><![CDATA[
 #include "shaders/Common.glsl"
 
+#if TEXTURE_TYPE > 0
 layout(location = 0) in vec2 in_uv;
+#endif
 layout(location = 1) in vec4 in_col;
 
 layout(location = 0) out vec4 out_col;
 
-#if !IDENTITY_TEX
+#if TEXTURE_TYPE > 0
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_tex;
 #endif
 
 void main()
 {
-	out_col = in_col 
-#if !IDENTITY_TEX
-		* texture(u_tex, in_uv)
+#if TEXTURE_TYPE == 0
+	out_col = in_col;
+#elif TEXTURE_TYPE == 1
+	out_col = in_col * texture(u_tex, in_uv);
 #endif
-		;
 }
 			]]></source>
 		</shader>

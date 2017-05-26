@@ -56,7 +56,7 @@ Error Font::init(const CString& filename, const std::initializer_list<U32>& font
 
 	// End building
 	nk_handle texHandle;
-	texHandle.id = FONT_TEXTURE_INDEX;
+	texHandle.ptr = numberToPtr<void*>(ptrToNumber(m_tex.get()) | FONT_TEXTURE_MASK);
 	nk_font_atlas_end(&m_atlas, texHandle, nullptr);
 
 	nk_font_atlas_cleanup(&m_atlas);
@@ -85,8 +85,8 @@ void Font::createTexture(const void* data, U32 width, U32 height)
 		TextureUsageBit::TRANSFER_DESTINATION | TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::GENERATE_MIPMAPS;
 	texInit.m_usageWhenEncountered = TextureUsageBit::SAMPLED_FRAGMENT;
 	texInit.m_mipmapsCount = 4;
-	texInit.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
-	texInit.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
+	texInit.m_sampling.m_minMagFilter = SamplingFilter::NEAREST;
+	texInit.m_sampling.m_mipmapFilter = SamplingFilter::NEAREST;
 
 	m_tex = m_manager->getGrManager().newInstance<Texture>(texInit);
 

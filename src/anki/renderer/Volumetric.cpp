@@ -149,16 +149,17 @@ Error VolumetricHBlur::init(const ConfigSet& config)
 	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
-	ANKI_CHECK(m_r->createShaderf("shaders/LumaAwareBlurGeneric.frag.glsl",
-		m_frag,
-		"#define HPASS\n"
-		"#define COL_RGB\n"
-		"#define TEXTURE_SIZE vec2(%f, %f)\n"
-		"#define KERNEL_SIZE 11\n",
-		F32(m_vol->m_width),
-		F32(m_vol->m_height)));
+	// Progs
+	ANKI_CHECK(m_r->getResourceManager().loadResource("programs/LumaAwareBlur.ankiprog", m_prog));
 
-	m_r->createDrawQuadShaderProgram(m_frag->getGrShader(), m_prog);
+	ShaderProgramResourceMutationInitList<3> mutators(m_prog);
+	mutators.add("HORIZONTAL", 1).add("KERNEL_SIZE", 11).add("COLOR_COMPONENTS", 3);
+	ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
+	consts.add("TEXTURE_SIZE", UVec2(m_vol->m_width, m_vol->m_height));
+
+	const ShaderProgramResourceVariant* variant;
+	m_prog->getOrCreateVariant(mutators.get(), consts.get(), variant);
+	m_grProg = variant->getProgram();
 
 	return ErrorCode::NONE;
 }
@@ -174,7 +175,7 @@ void VolumetricHBlur::run(RenderingContext& ctx)
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 	cmdb->bindTexture(0, 0, m_vol->m_main.m_rt[m_r->getFrameCount() & 1]);
-	cmdb->bindShaderProgram(m_prog);
+	cmdb->bindShaderProgram(m_grProg);
 	cmdb->setViewport(0, 0, m_vol->m_width, m_vol->m_height);
 
 	cmdb->beginRenderPass(m_fb);
@@ -202,16 +203,17 @@ Error VolumetricVBlur::init(const ConfigSet& config)
 		m_fb[i] = getGrManager().newInstance<Framebuffer>(fbInit);
 	}
 
-	ANKI_CHECK(m_r->createShaderf("shaders/LumaAwareBlurGeneric.frag.glsl",
-		m_frag,
-		"#define VPASS\n"
-		"#define COL_RGB\n"
-		"#define TEXTURE_SIZE vec2(%f, %f)\n"
-		"#define KERNEL_SIZE 11\n",
-		F32(m_vol->m_width),
-		F32(m_vol->m_height)));
+	// Progs
+	ANKI_CHECK(m_r->getResourceManager().loadResource("programs/LumaAwareBlur.ankiprog", m_prog));
 
-	m_r->createDrawQuadShaderProgram(m_frag->getGrShader(), m_prog);
+	ShaderProgramResourceMutationInitList<3> mutators(m_prog);
+	mutators.add("HORIZONTAL", 0).add("KERNEL_SIZE", 11).add("COLOR_COMPONENTS", 3);
+	ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
+	consts.add("TEXTURE_SIZE", UVec2(m_vol->m_width, m_vol->m_height));
+
+	const ShaderProgramResourceVariant* variant;
+	m_prog->getOrCreateVariant(mutators.get(), consts.get(), variant);
+	m_grProg = variant->getProgram();
 
 	return ErrorCode::NONE;
 }
@@ -229,7 +231,7 @@ void VolumetricVBlur::run(RenderingContext& ctx)
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 	cmdb->bindTexture(0, 0, m_vol->m_hblur.m_rt);
-	cmdb->bindShaderProgram(m_prog);
+	cmdb->bindShaderProgram(m_grProg);
 	cmdb->setViewport(0, 0, m_vol->m_width, m_vol->m_height);
 
 	cmdb->beginRenderPass(m_fb[m_r->getFrameCount() & 1]);

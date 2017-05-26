@@ -25,24 +25,36 @@ public:
 
 	ANKI_USE_RESULT Error init(FontPtr font, U32 fontHeight);
 
-	nk_context& getContext()
-	{
-		return m_nkCtx;
-	}
-
 	FontPtr getDefaultFont() const
 	{
 		return m_font;
 	}
 
+	nk_context& getNkContext()
+	{
+		return m_nkCtx;
+	}
+
 	/// Handle input.
 	virtual void handleInput();
+
+	/// @name building commands
+	/// @{
 
 	/// Begin building the UI.
 	void beginBuilding();
 
 	/// End building.
 	void endBuilding();
+
+	void pushFont(FontPtr font, U32 fontHeight);
+
+	void popFont()
+	{
+		ANKI_ASSERT(m_building);
+		nk_style_pop_font(&m_nkCtx);
+	}
+	/// @}
 
 	void appendToCommandBuffer(CommandBufferPtr cmdb);
 
@@ -51,13 +63,25 @@ private:
 	nk_context m_nkCtx = {};
 	nk_buffer m_nkCmdsBuff = {};
 
+	enum SHADER_TYPE
+	{
+		NO_TEX,
+		RGBA_TEX,
+		SHADER_COUNT
+	};
+
 	ShaderProgramResourcePtr m_prog;
-	ShaderProgramPtr m_texGrProg;
-	ShaderProgramPtr m_whiteTexGrProg;
+	Array<ShaderProgramPtr, SHADER_COUNT> m_grProgs;
+
+	StackAllocator<U8> m_stackAlloc;
+
+	List<IntrusivePtr<UiObject>> m_references;
 
 #if ANKI_EXTRA_CHECKS
 	Bool8 m_building = false;
 #endif
+
+	void reset();
 };
 /// @}
 

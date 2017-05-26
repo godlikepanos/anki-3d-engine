@@ -84,9 +84,10 @@ private:
 	Volumetric* m_vol;
 
 	TexturePtr m_rt;
-	ShaderResourcePtr m_frag;
-	ShaderProgramPtr m_prog;
 	FramebufferPtr m_fb;
+
+	ShaderProgramResourcePtr m_prog;
+	ShaderProgramPtr m_grProg;
 };
 
 /// Volumetric blur pass.
@@ -114,9 +115,10 @@ anki_internal:
 private:
 	Volumetric* m_vol;
 
-	ShaderResourcePtr m_frag;
-	ShaderProgramPtr m_prog;
 	Array<FramebufferPtr, 2> m_fb;
+
+	ShaderProgramResourcePtr m_prog;
+	ShaderProgramPtr m_grProg;
 };
 
 /// Volumetric effects.
@@ -150,6 +152,11 @@ anki_internal:
 	}
 
 	ANKI_USE_RESULT Error init(const ConfigSet& config);
+
+	TexturePtr getRt() const
+	{
+		return m_main.getRt();
+	}
 
 private:
 	U32 m_width = 0, m_height = 0;

@@ -135,6 +135,11 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& config);
 
+	TexturePtr getRt() const
+	{
+		return m_main.getRt();
+	}
+
 private:
 	U32 m_width, m_height;
 };
