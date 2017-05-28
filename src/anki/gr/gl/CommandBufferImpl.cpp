@@ -184,6 +184,11 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 				cmdb.setBlendOperation(i, BlendOperation::ADD, BlendOperation::ADD);
 			}
 		}
+
+		if(!m_state.m_scissorSet)
+		{
+			cmdb.setScissor(0, 0, MAX_U16, MAX_U16);
+		}
 	}
 
 	//

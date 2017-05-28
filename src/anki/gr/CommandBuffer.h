@@ -158,11 +158,8 @@ public:
 	/// Set the viewport.
 	void setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy);
 
-	/// Enable scissor test.
-	void setScissorTest(Bool enable);
-
-	/// Set the scissor rect.
-	void setScissorRect(U16 minx, U16 miny, U16 maxx, U16 maxy);
+	/// Set the scissor rect. To disable the scissor just set a rect bigger than the viewport. By default it's disabled.
+	void setScissor(U16 minx, U16 miny, U16 maxx, U16 maxy);
 
 	/// Set fill mode.
 	void setFillMode(FillMode mode);

@@ -244,9 +244,34 @@ void CommandBuffer::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 	}
 }
 
-void CommandBuffer::setScissorRect(U16 minx, U16 miny, U16 maxx, U16 maxy)
+void CommandBuffer::setScissor(U16 minx, U16 miny, U16 maxx, U16 maxy)
 {
-	ANKI_ASSERT(!"TODO");
+	class ScissorCommand final : public GlCommand
+	{
+	public:
+		Array<U16, 4> m_value;
+
+		ScissorCommand(U16 a, U16 b, U16 c, U16 d)
+		{
+			m_value = {{a, b, c, d}};
+		}
+
+		Error operator()(GlState& state)
+		{
+			if(state.m_scissor[0] != m_value[0] || state.m_scissor[1] != m_value[1] || state.m_scissor[2] != m_value[2]
+				|| state.m_scissor[3] != m_value[3])
+			{
+				state.m_scissor = m_value;
+				glScissor(m_value[0], m_value[1], m_value[2], m_value[3]);
+			}
+			return ErrorCode::NONE;
+		}
+	};
+
+	if(m_impl->m_state.setScissor(minx, miny, maxx, maxy))
+	{
+		m_impl->pushBackNewCommand<ScissorCommand>(minx, miny, maxx - minx, maxy - miny);
+	}
 }
 
 void CommandBuffer::setFillMode(FillMode mode)

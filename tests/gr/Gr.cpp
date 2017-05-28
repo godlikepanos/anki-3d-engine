@@ -428,6 +428,7 @@ ANKI_TEST(Gr, SimpleDrawcall)
 		{{0, HEIGHT / 2, WIDTH / 2, HEIGHT}}}};
 
 	const U ITERATIONS = 200;
+	const U SCISSOR_MARGIN = 20;
 	for(U i = 0; i < ITERATIONS; ++i)
 	{
 		HighRezTimer timer;
@@ -441,6 +442,8 @@ ANKI_TEST(Gr, SimpleDrawcall)
 
 		auto vp = VIEWPORTS[(i / 30) % 4];
 		cmdb->setViewport(vp[0], vp[1], vp[2], vp[3]);
+		cmdb->setScissor(
+			vp[0] + SCISSOR_MARGIN, vp[1] + SCISSOR_MARGIN, vp[2] - SCISSOR_MARGIN, vp[3] - SCISSOR_MARGIN);
 		cmdb->bindShaderProgram(prog);
 		cmdb->beginRenderPass(fb);
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);

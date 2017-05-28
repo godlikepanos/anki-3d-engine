@@ -127,6 +127,24 @@ public:
 	}
 	/// @}
 
+	/// @name scissor_state
+	/// @{
+	Array<U16, 4> m_scissor = {{0, 0, MAX_U16, MAX_U16}};
+	Bool8 m_scissorSet = false;
+
+	Bool setScissor(U16 minx, U16 miny, U16 maxx, U16 maxy)
+	{
+		if(!m_scissorSet
+			|| (m_scissor[0] != minx || m_scissor[1] != miny || m_scissor[2] != maxx || m_scissor[3] != maxy))
+		{
+			m_scissor = {{minx, miny, maxx, maxy}};
+			m_scissorSet = true;
+			return true;
+		}
+		return false;
+	}
+	/// @}
+
 	/// @name rasterizer
 	/// @{
 	FillMode m_fillMode = FillMode::COUNT;

@@ -195,7 +195,7 @@ void FramebufferImpl::setupAttachmentDescriptor(
 {
 	// TODO This func won't work if it's default but this is a depth attachment
 
-	const VkImageLayout layout = (m_defaultFb) ? VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_MAX_ENUM;
+	const VkImageLayout layout = (m_defaultFb) ? VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_GENERAL;
 
 	desc = {};
 	desc.format = (m_defaultFb) ? getGrManagerImpl().getDefaultFramebufferSurfaceFormat()

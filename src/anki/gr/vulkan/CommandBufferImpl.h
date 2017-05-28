@@ -135,6 +135,22 @@ public:
 		}
 	}
 
+	void setScissor(U16 minx, U16 miny, U16 maxx, U16 maxy)
+	{
+		ANKI_ASSERT(minx < maxx && miny < maxy);
+		commandCommon();
+
+		if(m_scissor[0] != minx || m_scissor[1] != miny || m_scissor[2] != maxx || m_scissor[3] != maxy)
+		{
+			m_scissorDirty = true;
+
+			m_scissor[0] = minx;
+			m_scissor[1] = miny;
+			m_scissor[2] = maxx;
+			m_scissor[3] = maxy;
+		}
+	}
+
 	void setPolygonOffset(F32 factor, F32 units)
 	{
 		commandCommon();
@@ -358,7 +374,9 @@ private:
 	/// @name state_opts
 	/// @{
 	Array<U16, 4> m_viewport = {{0, 0, 0, 0}};
+	Array<U16, 4> m_scissor = {{0, 0, MAX_U16, MAX_U16}};
 	Bool8 m_viewportDirty = true;
+	Bool8 m_scissorDirty = true;
 	Array<U32, 2> m_stencilCompareMasks = {{0x5A5A5A5A, 0x5A5A5A5A}}; ///< Use a stupid number to initialize.
 	Array<U32, 2> m_stencilWriteMasks = {{0x5A5A5A5A, 0x5A5A5A5A}};
 	Array<U32, 2> m_stencilReferenceMasks = {{0x5A5A5A5A, 0x5A5A5A5A}};
@@ -451,6 +469,8 @@ private:
 		const VkImageSubresourceRange& range);
 
 	void beginRecording();
+
+	Bool flipViewport() const;
 };
 /// @}
 

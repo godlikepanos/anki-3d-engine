@@ -158,6 +158,14 @@ void FramebufferImpl::bind(const GlState& state)
 		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, m_glName, 0, &m_in.getName()[0]);
 	}
 
+	// Disable the scissor to make sure clears will clear everything
+	Bool disableScissor = !(state.m_scissor[0] == 0 && state.m_scissor[1] == 0 && state.m_scissor[2] == MAX_U16
+		&& state.m_scissor[3] == MAX_U16);
+	if(disableScissor)
+	{
+		glDisable(GL_SCISSOR_TEST);
+	}
+
 	if(m_bindDefault)
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -261,6 +269,11 @@ void FramebufferImpl::bind(const GlState& state)
 				glStencilMaskSeparate(GL_FRONT, state.m_stencilWriteMask[0]);
 			}
 		}
+	}
+
+	if(disableScissor)
+	{
+		glEnable(GL_SCISSOR_TEST);
 	}
 }
 

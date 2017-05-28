@@ -519,8 +519,7 @@ inline void CommandBufferImpl::drawcallCommon()
 	// Flush viewport
 	if(ANKI_UNLIKELY(m_viewportDirty))
 	{
-		const Bool flipViewport = m_activeFb->m_impl->isDefaultFramebuffer()
-			&& !!(getGrManagerImpl().getExtensions() & VulkanExtensions::KHR_MAINENANCE1);
+		const Bool flipvp = flipViewport();
 
 		const I minx = m_viewport[0];
 		const I miny = m_viewport[1];
@@ -532,21 +531,37 @@ inline void CommandBufferImpl::drawcallCommon()
 
 		VkViewport s;
 		s.x = minx;
-		s.y = (flipViewport) ? (fbHeight - miny) : miny; // Move to the bottom;
+		s.y = (flipvp) ? (fbHeight - miny) : miny; // Move to the bottom;
 		s.width = maxx - minx;
-		s.height = (flipViewport) ? -(maxy - miny) : (maxy - miny);
+		s.height = (flipvp) ? -(maxy - miny) : (maxy - miny);
 		s.minDepth = 0.0;
 		s.maxDepth = 1.0;
 		ANKI_CMD(vkCmdSetViewport(m_handle, 0, 1, &s), ANY_OTHER_COMMAND);
+
+		m_viewportDirty = false;
+	}
+
+	// Flush scissor
+	if(ANKI_UNLIKELY(m_scissorDirty))
+	{
+		const Bool flipvp = flipViewport();
+
+		const I minx = m_scissor[0];
+		const I miny = m_scissor[1];
+		const I maxx = m_scissor[2];
+		const I maxy = m_scissor[3];
+
+		U32 fbWidth, fbHeight;
+		m_activeFb->m_impl->getAttachmentsSize(fbWidth, fbHeight);
 
 		VkRect2D scissor = {};
 		scissor.extent.width = maxx - minx;
 		scissor.extent.height = maxy - miny;
 		scissor.offset.x = minx;
-		scissor.offset.y = (flipViewport) ? (fbHeight - maxy) : miny;
+		scissor.offset.y = (flipvp) ? (fbHeight - maxy) : miny;
 		ANKI_CMD(vkCmdSetScissor(m_handle, 0, 1, &scissor), ANY_OTHER_COMMAND);
 
-		m_viewportDirty = false;
+		m_scissorDirty = false;
 	}
 
 	ANKI_TRACE_INC_COUNTER(GR_DRAWCALLS, 1);
@@ -712,6 +727,12 @@ inline void CommandBufferImpl::copyBufferToBuffer(
 
 	m_microCmdb->pushObjectRef(src);
 	m_microCmdb->pushObjectRef(dst);
+}
+
+inline Bool CommandBufferImpl::flipViewport() const
+{
+	return m_activeFb->m_impl->isDefaultFramebuffer()
+		&& !!(getGrManagerImpl().getExtensions() & VulkanExtensions::KHR_MAINENANCE1);
 }
 
 } // end namespace anki

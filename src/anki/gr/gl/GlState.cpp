@@ -134,6 +134,8 @@ void GlState::initRenderThread()
 	glEnable(GL_PROGRAM_POINT_SIZE);
 	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 	glEnable(GL_CULL_FACE);
+	glEnable(GL_SCISSOR_TEST);
+	glScissor(0, 0, MAX_U16, MAX_U16);
 
 	// Create default VAO
 	glGenVertexArrays(1, &m_defaultVao);

@@ -86,14 +86,9 @@ void CommandBuffer::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 	m_impl->setViewport(minx, miny, maxx, maxy);
 }
 
-void CommandBuffer::setScissorTest(Bool enable)
+void CommandBuffer::setScissor(U16 minx, U16 miny, U16 maxx, U16 maxy)
 {
-	ANKI_ASSERT(!"TODO");
-}
-
-void CommandBuffer::setScissorRect(U16 minx, U16 miny, U16 maxx, U16 maxy)
-{
-	ANKI_ASSERT(!"TODO");
+	m_impl->setScissor(minx, miny, maxx, maxy);
 }
 
 void CommandBuffer::setFillMode(FillMode mode)
