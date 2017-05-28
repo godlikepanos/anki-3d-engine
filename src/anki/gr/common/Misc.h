@@ -10,38 +10,6 @@
 namespace anki
 {
 
-enum class TransientBufferType
-{
-	UNIFORM,
-	STORAGE,
-	VERTEX,
-	TRANSFER,
-	COUNT
-};
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(TransientBufferType, inline)
-
-/// Convert buff usage to TransientBufferType.
-inline TransientBufferType bufferUsageToTransient(BufferUsageBit bit)
-{
-	if(!!(bit & BufferUsageBit::UNIFORM_ALL))
-	{
-		return TransientBufferType::UNIFORM;
-	}
-	else if(!!(bit & BufferUsageBit::STORAGE_ALL))
-	{
-		return TransientBufferType::STORAGE;
-	}
-	else if((bit & BufferUsageBit::VERTEX) != BufferUsageBit::NONE)
-	{
-		return TransientBufferType::VERTEX;
-	}
-	else
-	{
-		ANKI_ASSERT(!!(bit & (BufferUsageBit::BUFFER_UPLOAD_SOURCE | BufferUsageBit::TEXTURE_UPLOAD_SOURCE)));
-		return TransientBufferType::TRANSFER;
-	}
-}
-
 /// Internal function that logs a shader error.
 void logShaderErrorCode(const CString& error, const CString& source, GenericMemoryPoolAllocator<U8> alloc);
 
