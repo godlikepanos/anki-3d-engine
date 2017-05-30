@@ -151,20 +151,15 @@ void FramebufferImpl::attachTextureInternal(
 	}
 }
 
-void FramebufferImpl::bind(const GlState& state)
+void FramebufferImpl::bind(const GlState& state, U16 minx, U16 miny, U16 maxx, U16 maxy)
 {
 	if(m_in.getName() && getManager().getImplementation().debugMarkersEnabled())
 	{
 		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, m_glName, 0, &m_in.getName()[0]);
 	}
 
-	// Disable the scissor to make sure clears will clear everything
-	Bool disableScissor = !(state.m_scissor[0] == 0 && state.m_scissor[1] == 0 && state.m_scissor[2] == MAX_U16
-		&& state.m_scissor[3] == MAX_U16);
-	if(disableScissor)
-	{
-		glDisable(GL_SCISSOR_TEST);
-	}
+	// Clear in the render area
+	glScissor(minx, miny, maxx - minx, maxy - miny);
 
 	if(m_bindDefault)
 	{
@@ -271,10 +266,7 @@ void FramebufferImpl::bind(const GlState& state)
 		}
 	}
 
-	if(disableScissor)
-	{
-		glEnable(GL_SCISSOR_TEST);
-	}
+	glScissor(state.m_scissor[0], state.m_scissor[1], state.m_scissor[2], state.m_scissor[3]);
 }
 
 void FramebufferImpl::endRenderPass() const

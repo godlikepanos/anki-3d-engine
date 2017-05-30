@@ -257,7 +257,9 @@ public:
 	void bindShaderProgram(ShaderProgramPtr prog);
 
 	/// Begin renderpass.
-	void beginRenderPass(FramebufferPtr fb);
+	/// The minx, miny, maxx, maxy control the area that the load and store operations will happen. If the scissor is
+	/// bigger than the render area the results are undefined.
+	void beginRenderPass(FramebufferPtr fb, U16 minx = 0, U16 miny = 0, U16 maxx = MAX_U16, U16 maxy = MAX_U16);
 
 	/// End renderpass.
 	void endRenderPass();

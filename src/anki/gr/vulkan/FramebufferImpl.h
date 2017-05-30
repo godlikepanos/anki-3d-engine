@@ -94,6 +94,7 @@ public:
 
 	void getAttachmentsSize(U32& width, U32& height) const
 	{
+		ANKI_ASSERT(m_width != 0 && m_height != 0);
 		width = m_width;
 		height = m_height;
 	}

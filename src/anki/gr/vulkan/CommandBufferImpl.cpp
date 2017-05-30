@@ -109,13 +109,24 @@ void CommandBufferImpl::beginRecording()
 	vkBeginCommandBuffer(m_handle, &begin);
 }
 
-void CommandBufferImpl::beginRenderPass(FramebufferPtr fb)
+void CommandBufferImpl::beginRenderPass(FramebufferPtr fb, U16 minx, U16 miny, U16 maxx, U16 maxy)
 {
 	commandCommon();
 	ANKI_ASSERT(!insideRenderPass());
 
 	m_rpCommandCount = 0;
 	m_activeFb = fb;
+
+	U32 fbWidth, fbHeight;
+	fb->m_impl->getAttachmentsSize(fbWidth, fbHeight);
+	m_fbSize[0] = fbWidth;
+	m_fbSize[1] = fbHeight;
+
+	m_renderArea[0] = max<U16>(0, minx);
+	m_renderArea[1] = max<U16>(0, miny);
+	m_renderArea[2] = min<U16>(m_fbSize[0], maxx);
+	m_renderArea[3] = min<U16>(m_fbSize[1], maxy);
+	ANKI_ASSERT(m_renderArea[0] < m_renderArea[2] && m_renderArea[1] < m_renderArea[3]);
 
 	m_microCmdb->pushObjectRef(fb);
 
@@ -138,7 +149,6 @@ void CommandBufferImpl::beginRenderPassInternal()
 		// Bind a non-default FB
 
 		bi.framebuffer = impl.getFramebufferHandle(0);
-		impl.getAttachmentsSize(bi.renderArea.extent.width, bi.renderArea.extent.height);
 
 		// Calc the layouts
 		Array<VkImageLayout, MAX_COLOR_ATTACHMENTS> colAttLayouts;
@@ -166,9 +176,6 @@ void CommandBufferImpl::beginRenderPassInternal()
 		Array<VkImageLayout, MAX_COLOR_ATTACHMENTS> dummy;
 		bi.renderPass = impl.getRenderPassHandle(dummy, VK_IMAGE_LAYOUT_MAX_ENUM);
 
-		bi.renderArea.extent.width = getGrManagerImpl().getDefaultSurfaceWidth();
-		bi.renderArea.extent.height = getGrManagerImpl().getDefaultSurfaceHeight();
-
 		// Perform the transition
 		setImageBarrier(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
 			0,
@@ -179,6 +186,16 @@ void CommandBufferImpl::beginRenderPassInternal()
 			getGrManagerImpl().getDefaultSurfaceImage(getGrManagerImpl().getCurrentBackbufferIndex()),
 			VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 	}
+
+	const Bool flipvp = flipViewport();
+	bi.renderArea.offset.x = m_renderArea[0];
+	if(flipvp)
+	{
+		ANKI_ASSERT(m_renderArea[3] <= m_fbSize[1]);
+	}
+	bi.renderArea.offset.y = (flipvp) ? m_fbSize[1] - m_renderArea[3] : m_renderArea[1];
+	bi.renderArea.extent.width = m_renderArea[2] - m_renderArea[0];
+	bi.renderArea.extent.height = m_renderArea[3] - m_renderArea[1];
 
 	ANKI_CMD(vkCmdBeginRenderPass(m_handle, &bi, m_subpassContents), ANY_OTHER_COMMAND);
 }

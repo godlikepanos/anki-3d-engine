@@ -244,7 +244,7 @@ public:
 		m_microCmdb->pushObjectRef(img);
 	}
 
-	void beginRenderPass(FramebufferPtr fb);
+	void beginRenderPass(FramebufferPtr fb, U16 minx, U16 miny, U16 maxx, U16 maxy);
 
 	void endRenderPass();
 
@@ -358,6 +358,8 @@ private:
 
 	U m_rpCommandCount = 0; ///< Number of drawcalls or pushed cmdbs in rp.
 	FramebufferPtr m_activeFb;
+	Array<U16, 4> m_renderArea = {{0, 0, MAX_U16, MAX_U16}};
+	Array<U16, 2> m_fbSize = {{0, 0}};
 
 	ShaderProgramImpl* m_graphicsProg ANKI_DBG_NULLIFY; ///< Last bound graphics program
 

@@ -202,9 +202,10 @@ void CommandBuffer::bindShaderProgram(ShaderProgramPtr prog)
 	m_impl->bindShaderProgram(prog);
 }
 
-void CommandBuffer::beginRenderPass(FramebufferPtr fb)
+void CommandBuffer::beginRenderPass(FramebufferPtr fb, U16 minx, U16 miny, U16 maxx, U16 maxy)
 {
-	m_impl->beginRenderPass(fb);
+	ANKI_ASSERT(minx < maxx && miny < maxy);
+	m_impl->beginRenderPass(fb, minx, miny, maxx, maxy);
 }
 
 void CommandBuffer::endRenderPass()

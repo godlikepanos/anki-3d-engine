@@ -870,28 +870,32 @@ void CommandBuffer::bindShaderProgram(ShaderProgramPtr prog)
 	}
 }
 
-void CommandBuffer::beginRenderPass(FramebufferPtr fb)
+void CommandBuffer::beginRenderPass(FramebufferPtr fb, U16 minx, U16 miny, U16 maxx, U16 maxy)
 {
+	ANKI_ASSERT(minx < maxx && miny < maxy);
+
 	class BindFramebufferCommand final : public GlCommand
 	{
 	public:
 		FramebufferPtr m_fb;
+		Array<U16, 4> m_renderArea;
 
-		BindFramebufferCommand(FramebufferPtr fb)
+		BindFramebufferCommand(FramebufferPtr fb, U16 minx, U16 miny, U16 maxx, U16 maxy)
 			: m_fb(fb)
+			, m_renderArea{{minx, miny, maxx, maxy}}
 		{
 		}
 
 		Error operator()(GlState& state)
 		{
-			m_fb->m_impl->bind(state);
+			m_fb->m_impl->bind(state, m_renderArea[0], m_renderArea[1], m_renderArea[2], m_renderArea[3]);
 			return ErrorCode::NONE;
 		}
 	};
 
 	if(m_impl->m_state.beginRenderPass(fb))
 	{
-		m_impl->pushBackNewCommand<BindFramebufferCommand>(fb);
+		m_impl->pushBackNewCommand<BindFramebufferCommand>(fb, minx, miny, maxx, maxy);
 	}
 }
 

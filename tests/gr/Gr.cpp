@@ -30,6 +30,19 @@ void main()
 	ANKI_WRITE_POSITION(vec4(POSITIONS[gl_VertexID % 3], 0.0, 1.0));
 })";
 
+static const char* VERT_QUAD_STRIP_SRC = R"(
+out gl_PerVertex
+{
+	vec4 gl_Position;
+};
+
+void main()
+{
+	const vec2 POSITIONS[4] = vec2[](vec2(-1.0, -1.0), vec2(1.0, -1.0), vec2(-1.0, 1.0), vec2(1.0, 1.0));
+
+	ANKI_WRITE_POSITION(vec4(POSITIONS[gl_VertexID % 4], 0.0, 1.0));
+})";
+
 static const char* VERT_UBO_SRC = R"(
 out gl_PerVertex
 {
@@ -145,6 +158,17 @@ void main()
 })";
 
 static const char* FRAG_TEX_SRC = R"(layout (location = 0) out vec4 out_color;
+
+layout(location = 0) in vec2 in_uv;
+
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_tex0;
+
+void main()
+{
+	out_color = texture(u_tex0, in_uv);
+})";
+
+static const char* FRAG_2TEX_SRC = R"(layout (location = 0) out vec4 out_color;
 
 layout(location = 0) in vec2 in_uv;
 
@@ -418,17 +442,11 @@ ANKI_TEST(Gr, SimpleDrawcall)
 {
 	COMMON_BEGIN()
 
-	ANKI_TEST_LOGI("Expect to see a grey triangle appearing in the 4 corners");
+	ANKI_TEST_LOGI("Expect to see a grey triangle");
 	ShaderProgramPtr prog = createProgram(VERT_SRC, FRAG_SRC, *gr);
 	FramebufferPtr fb = createDefaultFb(*gr);
 
-	static const Array2d<U, 4, 4> VIEWPORTS = {{{{0, 0, WIDTH / 2, HEIGHT / 2}},
-		{{WIDTH / 2, 0, WIDTH, HEIGHT / 2}},
-		{{WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT}},
-		{{0, HEIGHT / 2, WIDTH / 2, HEIGHT}}}};
-
 	const U ITERATIONS = 200;
-	const U SCISSOR_MARGIN = 20;
 	for(U i = 0; i < ITERATIONS; ++i)
 	{
 		HighRezTimer timer;
@@ -440,14 +458,204 @@ ANKI_TEST(Gr, SimpleDrawcall)
 		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK;
 		CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
 
+		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
+		cmdb->bindShaderProgram(prog);
+		cmdb->beginRenderPass(fb);
+		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
+		cmdb->endRenderPass();
+		cmdb->flush();
+
+		gr->swapBuffers();
+
+		timer.stop();
+		const F32 TICK = 1.0 / 30.0;
+		if(timer.getElapsedTime() < TICK)
+		{
+			HighRezTimer::sleep(TICK - timer.getElapsedTime());
+		}
+	}
+
+	COMMON_END()
+}
+
+ANKI_TEST(Gr, ViewportAndScissor)
+{
+	COMMON_BEGIN()
+
+	ANKI_TEST_LOGI("Expect to see a grey quad appearing in the 4 corners. The clear color will change and affect only"
+				   "the area around the quad");
+	ShaderProgramPtr prog = createProgram(VERT_QUAD_STRIP_SRC, FRAG_SRC, *gr);
+
+	srand(time(NULL));
+	Array<FramebufferPtr, 4> fb;
+	for(FramebufferPtr& f : fb)
+	{
+		FramebufferInitInfo fbinit;
+		fbinit.m_colorAttachmentCount = 1;
+		fbinit.m_colorAttachments[0].m_clearValue.m_colorf = {{randFloat(1.0), randFloat(1.0), randFloat(1.0), 1.0}};
+
+		f = gr->newInstance<Framebuffer>(fbinit);
+	}
+
+	static const Array2d<U, 4, 4> VIEWPORTS = {{{{0, 0, WIDTH / 2, HEIGHT / 2}},
+		{{WIDTH / 2, 0, WIDTH, HEIGHT / 2}},
+		{{WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT}},
+		{{0, HEIGHT / 2, WIDTH / 2, HEIGHT}}}};
+
+	const U ITERATIONS = 400;
+	const U SCISSOR_MARGIN = 20;
+	const U RENDER_AREA_MARGIN = 10;
+	for(U i = 0; i < ITERATIONS; ++i)
+	{
+		HighRezTimer timer;
+		timer.start();
+
+		gr->beginFrame();
+
+		CommandBufferInitInfo cinit;
+		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
+		CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
+
+		U idx = (i / 30) % 4;
+		auto vp = VIEWPORTS[idx];
+		cmdb->setViewport(vp[0], vp[1], vp[2], vp[3]);
+		cmdb->setScissor(
+			vp[0] + SCISSOR_MARGIN, vp[1] + SCISSOR_MARGIN, vp[2] - SCISSOR_MARGIN, vp[3] - SCISSOR_MARGIN);
+		cmdb->bindShaderProgram(prog);
+		cmdb->beginRenderPass(fb[i % 4],
+			vp[0] + RENDER_AREA_MARGIN,
+			vp[1] + RENDER_AREA_MARGIN,
+			vp[2] - RENDER_AREA_MARGIN,
+			vp[3] - RENDER_AREA_MARGIN);
+		cmdb->drawArrays(PrimitiveTopology::TRIANGLE_STRIP, 4);
+		cmdb->endRenderPass();
+		cmdb->flush();
+
+		gr->swapBuffers();
+
+		timer.stop();
+		const F32 TICK = 1.0 / 30.0;
+		if(timer.getElapsedTime() < TICK)
+		{
+			HighRezTimer::sleep(TICK - timer.getElapsedTime());
+		}
+	}
+
+	COMMON_END()
+}
+
+ANKI_TEST(Gr, ViewportAndScissorOffscreen)
+{
+	srand(time(NULL));
+	COMMON_BEGIN()
+
+	ANKI_TEST_LOGI("Expect to see a grey quad appearing in the 4 corners. "
+				   "Around that quad is a border that changes color. "
+				   "The quads appear counter-clockwise");
+	ShaderProgramPtr prog = createProgram(VERT_QUAD_STRIP_SRC, FRAG_SRC, *gr);
+	ShaderProgramPtr blitProg = createProgram(VERT_QUAD_SRC, FRAG_TEX_SRC, *gr);
+
+	const PixelFormat COL_FORMAT = PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
+	const U RT_WIDTH = 32;
+	const U RT_HEIGHT = 16;
+	TextureInitInfo init;
+	init.m_depth = 1;
+	init.m_format = COL_FORMAT;
+	init.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE;
+	init.m_height = RT_HEIGHT;
+	init.m_width = RT_WIDTH;
+	init.m_mipmapsCount = 1;
+	init.m_depth = 1;
+	init.m_layerCount = 1;
+	init.m_samples = 1;
+	init.m_sampling.m_minMagFilter = SamplingFilter::NEAREST;
+	init.m_sampling.m_mipmapFilter = SamplingFilter::NEAREST;
+	init.m_type = TextureType::_2D;
+	TexturePtr rt = gr->newInstance<Texture>(init);
+
+	Array<FramebufferPtr, 4> fb;
+	for(FramebufferPtr& f : fb)
+	{
+		FramebufferInitInfo fbinit;
+		fbinit.m_colorAttachmentCount = 1;
+		fbinit.m_colorAttachments[0].m_clearValue.m_colorf = {{randFloat(1.0), randFloat(1.0), randFloat(1.0), 1.0}};
+		fbinit.m_colorAttachments[0].m_texture = rt;
+
+		f = gr->newInstance<Framebuffer>(fbinit);
+	}
+
+	FramebufferPtr defaultFb = createDefaultFb(*gr);
+
+	static const Array2d<U, 4, 4> VIEWPORTS = {{{{0, 0, RT_WIDTH / 2, RT_HEIGHT / 2}},
+		{{RT_WIDTH / 2, 0, RT_WIDTH, RT_HEIGHT / 2}},
+		{{RT_WIDTH / 2, RT_HEIGHT / 2, RT_WIDTH, RT_HEIGHT}},
+		{{0, RT_HEIGHT / 2, RT_WIDTH / 2, RT_HEIGHT}}}};
+
+	const U ITERATIONS = 400;
+	const U SCISSOR_MARGIN = 2;
+	const U RENDER_AREA_MARGIN = 1;
+	for(U i = 0; i < ITERATIONS; ++i)
+	{
+		HighRezTimer timer;
+		timer.start();
+
+		gr->beginFrame();
+
+		if(i == 0)
+		{
+			CommandBufferInitInfo cinit;
+			cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
+			CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
+
+			cmdb->setViewport(0, 0, RT_WIDTH, RT_HEIGHT);
+			cmdb->setTextureSurfaceBarrier(rt,
+				TextureUsageBit::NONE,
+				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+				TextureSurfaceInfo(0, 0, 0, 0));
+			cmdb->beginRenderPass(fb[0]);
+			cmdb->endRenderPass();
+			cmdb->setTextureSurfaceBarrier(rt,
+				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+				TextureUsageBit::SAMPLED_FRAGMENT,
+				TextureSurfaceInfo(0, 0, 0, 0));
+			cmdb->flush();
+		}
+
+		CommandBufferInitInfo cinit;
+		cinit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
+		CommandBufferPtr cmdb = gr->newInstance<CommandBuffer>(cinit);
+
+		// Draw offscreen
+		cmdb->setTextureSurfaceBarrier(rt,
+			TextureUsageBit::SAMPLED_FRAGMENT,
+			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+			TextureSurfaceInfo(0, 0, 0, 0));
 		auto vp = VIEWPORTS[(i / 30) % 4];
 		cmdb->setViewport(vp[0], vp[1], vp[2], vp[3]);
 		cmdb->setScissor(
 			vp[0] + SCISSOR_MARGIN, vp[1] + SCISSOR_MARGIN, vp[2] - SCISSOR_MARGIN, vp[3] - SCISSOR_MARGIN);
 		cmdb->bindShaderProgram(prog);
-		cmdb->beginRenderPass(fb);
-		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
+		cmdb->beginRenderPass(fb[i % 4],
+			vp[0] + RENDER_AREA_MARGIN,
+			vp[1] + RENDER_AREA_MARGIN,
+			vp[2] - RENDER_AREA_MARGIN,
+			vp[3] - RENDER_AREA_MARGIN);
+		cmdb->drawArrays(PrimitiveTopology::TRIANGLE_STRIP, 4);
 		cmdb->endRenderPass();
+
+		// Draw onscreen
+		cmdb->setViewport(0, 0, WIDTH, HEIGHT);
+		cmdb->setScissor(0, 0, WIDTH, HEIGHT);
+		cmdb->bindShaderProgram(blitProg);
+		cmdb->setTextureSurfaceBarrier(rt,
+			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+			TextureUsageBit::SAMPLED_FRAGMENT,
+			TextureSurfaceInfo(0, 0, 0, 0));
+		cmdb->bindTexture(0, 0, rt);
+		cmdb->beginRenderPass(defaultFb);
+		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 6);
+		cmdb->endRenderPass();
+
 		cmdb->flush();
 
 		gr->swapBuffers();
@@ -806,7 +1014,7 @@ ANKI_TEST(Gr, DrawWithTexture)
 	//
 	// Create prog
 	//
-	ShaderProgramPtr prog = createProgram(VERT_QUAD_SRC, FRAG_TEX_SRC, *gr);
+	ShaderProgramPtr prog = createProgram(VERT_QUAD_SRC, FRAG_2TEX_SRC, *gr);
 
 	//
 	// Create FB

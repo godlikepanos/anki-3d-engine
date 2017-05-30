@@ -33,7 +33,7 @@ public:
 	ANKI_USE_RESULT Error init(const FramebufferInitInfo& init);
 
 	/// Bind it to the state. Call it in rendering thread
-	void bind(const GlState& state);
+	void bind(const GlState& state, U16 minx, U16 miny, U16 maxx, U16 maxy);
 
 	void endRenderPass() const;
 
