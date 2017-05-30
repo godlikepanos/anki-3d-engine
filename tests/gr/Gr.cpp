@@ -10,6 +10,7 @@
 #include <anki/util/HighRezTimer.h>
 #include <anki/core/StagingGpuMemoryManager.h>
 #include <anki/resource/TransferGpuAllocator.h>
+#include <ctime>
 
 namespace anki
 {
