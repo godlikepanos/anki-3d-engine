@@ -155,17 +155,10 @@ void main()
 
 	// Get world position
 	vec3 worldPos;
-	vec2 oldUv;
 	{
 		vec4 worldPos4 = u_invViewProjMat * vec4(ndc, UV_TO_NDC(depth), 1.0);
 		worldPos4 = worldPos4 / worldPos4.w;
 		worldPos = worldPos4.xyz;
-
-		// Project to get old ndc
-		vec4 oldNdc4 = u_prevViewProjMat * vec4(worldPos, 1.0);
-		vec2 oldNdc = oldNdc4.xy / oldNdc4.w;
-
-		oldUv = NDC_TO_UV(oldNdc);
 	}
 
 	// Decode GBuffer
@@ -188,7 +181,7 @@ void main()
 	emission = gbuffer.emission;
 
 	// Get SSAO
-	float ssao = texture(u_ssaoTex, oldUv).r;
+	float ssao = texture(u_ssaoTex, in_uv).r;
 	diffCol *= ssao;
 
 	// Get counts and offsets

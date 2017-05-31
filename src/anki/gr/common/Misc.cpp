@@ -49,13 +49,13 @@ void logShaderErrorCode(const CString& error, const CString& source, GenericMemo
 
 Bool textureInitInfoValid(const TextureInitInfo& inf)
 {
-#define ANKI_CHECK_VAL_VALIDITY(x)                                                                                     \
-	do                                                                                                                 \
-	{                                                                                                                  \
-		if(!(x))                                                                                                       \
-		{                                                                                                              \
-			return false;                                                                                              \
-		}                                                                                                              \
+#define ANKI_CHECK_VAL_VALIDITY(x) \
+	do                             \
+	{                              \
+		if(!(x))                   \
+		{                          \
+			return false;          \
+		}                          \
 	} while(0)
 
 	ANKI_CHECK_VAL_VALIDITY(inf.m_usage != TextureUsageBit::NONE);

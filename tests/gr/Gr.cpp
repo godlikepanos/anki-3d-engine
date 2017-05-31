@@ -286,27 +286,27 @@ static NativeWindow* win = nullptr;
 static GrManager* gr = nullptr;
 static StagingGpuMemoryManager* stagingMem = nullptr;
 
-#define COMMON_BEGIN()                                                                                                 \
-	stagingMem = new StagingGpuMemoryManager();                                                                        \
-	Config cfg;                                                                                                        \
-	cfg.set("width", WIDTH);                                                                                           \
-	cfg.set("height", HEIGHT);                                                                                         \
-	cfg.set("debugContext", true);                                                                                     \
-	cfg.set("vsync", false);                                                                                           \
-	win = createWindow(cfg);                                                                                           \
-	gr = createGrManager(cfg, win);                                                                                    \
-	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(gr, Config()));                                                           \
-	TransferGpuAllocator transfAlloc;                                                                                  \
-	ANKI_TEST_EXPECT_NO_ERR(transfAlloc.init(128_MB, gr, gr->getAllocator()));                                         \
+#define COMMON_BEGIN()                                                         \
+	stagingMem = new StagingGpuMemoryManager();                                \
+	Config cfg;                                                                \
+	cfg.set("width", WIDTH);                                                   \
+	cfg.set("height", HEIGHT);                                                 \
+	cfg.set("debugContext", true);                                             \
+	cfg.set("vsync", false);                                                   \
+	win = createWindow(cfg);                                                   \
+	gr = createGrManager(cfg, win);                                            \
+	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(gr, Config()));                   \
+	TransferGpuAllocator transfAlloc;                                          \
+	ANKI_TEST_EXPECT_NO_ERR(transfAlloc.init(128_MB, gr, gr->getAllocator())); \
 	{
 
-#define COMMON_END()                                                                                                   \
-	}                                                                                                                  \
-	delete stagingMem;                                                                                                 \
-	delete gr;                                                                                                         \
-	delete win;                                                                                                        \
-	win = nullptr;                                                                                                     \
-	gr = nullptr;                                                                                                      \
+#define COMMON_END()   \
+	}                  \
+	delete stagingMem; \
+	delete gr;         \
+	delete win;        \
+	win = nullptr;     \
+	gr = nullptr;      \
 	stagingMem = nullptr;
 
 static void* setUniforms(PtrSize size, CommandBufferPtr& cmdb, U set, U binding)
@@ -328,22 +328,22 @@ static void* setStorage(PtrSize size, CommandBufferPtr& cmdb, U set, U binding)
 #define SET_UNIFORMS(type_, size_, cmdb_, set_, binding_) static_cast<type_>(setUniforms(size_, cmdb_, set_, binding_))
 #define SET_STORAGE(type_, size_, cmdb_, set_, binding_) static_cast<type_>(setStorage(size_, cmdb_, set_, binding_))
 
-#define UPLOAD_TEX_SURFACE(cmdb_, tex_, surf_, ptr_, size_, handle_)                                                   \
-	do                                                                                                                 \
-	{                                                                                                                  \
-		ANKI_TEST_EXPECT_NO_ERR(transfAlloc.allocate(size_, handle_));                                                 \
-		void* f = handle_.getMappedMemory();                                                                           \
-		memcpy(f, ptr_, size_);                                                                                        \
-		cmdb_->copyBufferToTextureSurface(handle_.getBuffer(), handle_.getOffset(), handle_.getRange(), tex_, surf_);  \
+#define UPLOAD_TEX_SURFACE(cmdb_, tex_, surf_, ptr_, size_, handle_)                                                  \
+	do                                                                                                                \
+	{                                                                                                                 \
+		ANKI_TEST_EXPECT_NO_ERR(transfAlloc.allocate(size_, handle_));                                                \
+		void* f = handle_.getMappedMemory();                                                                          \
+		memcpy(f, ptr_, size_);                                                                                       \
+		cmdb_->copyBufferToTextureSurface(handle_.getBuffer(), handle_.getOffset(), handle_.getRange(), tex_, surf_); \
 	} while(0)
 
-#define UPLOAD_TEX_VOL(cmdb_, tex_, vol_, ptr_, size_, handle_)                                                        \
-	do                                                                                                                 \
-	{                                                                                                                  \
-		ANKI_TEST_EXPECT_NO_ERR(transfAlloc.allocate(size_, handle_));                                                 \
-		void* f = handle_.getMappedMemory();                                                                           \
-		memcpy(f, ptr_, size_);                                                                                        \
-		cmdb_->copyBufferToTextureVolume(handle_.getBuffer(), handle_.getOffset(), handle_.getRange(), tex_, vol_);    \
+#define UPLOAD_TEX_VOL(cmdb_, tex_, vol_, ptr_, size_, handle_)                                                     \
+	do                                                                                                              \
+	{                                                                                                               \
+		ANKI_TEST_EXPECT_NO_ERR(transfAlloc.allocate(size_, handle_));                                              \
+		void* f = handle_.getMappedMemory();                                                                        \
+		memcpy(f, ptr_, size_);                                                                                     \
+		cmdb_->copyBufferToTextureVolume(handle_.getBuffer(), handle_.getOffset(), handle_.getRange(), tex_, vol_); \
 	} while(0)
 
 const PixelFormat DS_FORMAT = PixelFormat(ComponentFormat::D24S8, TransformFormat::UNORM);

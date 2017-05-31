@@ -24,8 +24,8 @@ class UiManager;
 
 using UiAllocator = HeapAllocator<U8>;
 
-#define ANKI_UI_OBJECT_FW(name_)                                                                                       \
-	class name_;                                                                                                       \
+#define ANKI_UI_OBJECT_FW(name_) \
+	class name_;                 \
 	using name_##Ptr = IntrusivePtr<name_>;
 
 ANKI_UI_OBJECT_FW(Font)

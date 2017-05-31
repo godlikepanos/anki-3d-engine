@@ -54,9 +54,9 @@ const U COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS = 100;
 template<typename T>
 using GrObjectPtr = IntrusivePtr<T, DefaultPtrDeleter<T>>;
 
-#define ANKI_GR_CLASS(x_)                                                                                              \
-	class x_##Impl;                                                                                                    \
-	class x_;                                                                                                          \
+#define ANKI_GR_CLASS(x_) \
+	class x_##Impl;       \
+	class x_;             \
 	using x_##Ptr = GrObjectPtr<x_>;
 
 ANKI_GR_CLASS(Buffer)
@@ -71,12 +71,12 @@ ANKI_GR_CLASS(Fence)
 
 #undef ANKI_GR_CLASS
 
-#define ANKI_GR_OBJECT                                                                                                 \
-	friend class GrManager;                                                                                            \
-	template<typename, typename>                                                                                       \
-	friend class IntrusivePtr;                                                                                         \
-	template<typename, typename>                                                                                       \
-	friend class GenericPoolAllocator;                                                                                 \
+#define ANKI_GR_OBJECT                 \
+	friend class GrManager;            \
+	template<typename, typename>       \
+	friend class IntrusivePtr;         \
+	template<typename, typename>       \
+	friend class GenericPoolAllocator; \
 	friend class GrObjectCache;
 
 /// Knowing the ventor allows some optimizations

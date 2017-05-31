@@ -169,11 +169,13 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	ANKI_CORE_LOGI("Initializing application ("
 				   "version %u.%u, "
 				   "%s, "
-				   "date %s, "
-				   "commit %s)...",
+				   "compiler %s, "
+				   "build date %s, "
+				   "commit %s)",
 		ANKI_VERSION_MAJOR,
 		ANKI_VERSION_MINOR,
 		buildType,
+		ANKI_COMPILER_STR,
 		__DATE__,
 		ANKI_REVISION);
 

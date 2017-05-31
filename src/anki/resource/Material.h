@@ -93,14 +93,14 @@ protected:
 };
 
 // Specialize the MaterialVariable::getValue
-#define ANKI_SPECIALIZE_GET_VALUE(t_, var_, shaderType_)                                                               \
-	template<>                                                                                                         \
-	inline const t_& MaterialVariable::getValue<t_>() const                                                            \
-	{                                                                                                                  \
-		ANKI_ASSERT(m_input);                                                                                          \
-		ANKI_ASSERT(m_input->getShaderVariableDataType() == ShaderVariableDataType::shaderType_);                      \
-		ANKI_ASSERT(m_builtin == BuiltinMaterialVariableId::NONE);                                                     \
-		return var_;                                                                                                   \
+#define ANKI_SPECIALIZE_GET_VALUE(t_, var_, shaderType_)                                          \
+	template<>                                                                                    \
+	inline const t_& MaterialVariable::getValue<t_>() const                                       \
+	{                                                                                             \
+		ANKI_ASSERT(m_input);                                                                     \
+		ANKI_ASSERT(m_input->getShaderVariableDataType() == ShaderVariableDataType::shaderType_); \
+		ANKI_ASSERT(m_builtin == BuiltinMaterialVariableId::NONE);                                \
+		return var_;                                                                              \
 	}
 
 ANKI_SPECIALIZE_GET_VALUE(I32, m_int, INT)

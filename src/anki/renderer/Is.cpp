@@ -160,8 +160,8 @@ void Is::run(RenderingContext& ctx)
 	cmdb->bindTexture(1, 1, m_r->getMs().m_rt1);
 	cmdb->bindTexture(1, 2, m_r->getMs().m_rt2);
 	cmdb->bindTexture(1, 3, m_r->getMs().m_depthRt, DepthStencilAspectBit::DEPTH);
-	cmdb->informTextureCurrentUsage(m_r->getSsao().m_main.getPreviousRt(), TextureUsageBit::SAMPLED_FRAGMENT);
-	cmdb->bindTexture(1, 4, m_r->getSsao().m_main.getPreviousRt());
+	cmdb->informTextureCurrentUsage(m_r->getSsao().getRt(), TextureUsageBit::SAMPLED_FRAGMENT);
+	cmdb->bindTexture(1, 4, m_r->getSsao().getRt());
 
 	cmdb->bindTexture(0, 0, m_r->getSm().m_spotTexArray);
 	cmdb->bindTexture(0, 1, m_r->getSm().m_omniTexArray);

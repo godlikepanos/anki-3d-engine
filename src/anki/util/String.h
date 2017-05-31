@@ -32,11 +32,11 @@ constexpr const char* toStringFormat()
 	return nullptr;
 }
 
-#define ANKI_DEPLOY_TO_STRING(type_, string_)                                                                          \
-	template<>                                                                                                         \
-	constexpr const char* toStringFormat<type_>()                                                                      \
-	{                                                                                                                  \
-		return string_;                                                                                                \
+#define ANKI_DEPLOY_TO_STRING(type_, string_)     \
+	template<>                                    \
+	constexpr const char* toStringFormat<type_>() \
+	{                                             \
+		return string_;                           \
 	}
 
 ANKI_DEPLOY_TO_STRING(I8, "%" PRId8)

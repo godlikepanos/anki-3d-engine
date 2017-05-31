@@ -68,7 +68,7 @@ public:
 	}
 };
 
-#define ANKI_FMT(fmt, trf, vk, as)                                                                                     \
+#define ANKI_FMT(fmt, trf, vk, as) \
 	ConvertFormat(PixelFormat(ComponentFormat::fmt, TransformFormat::trf), vk, Aspect::as)
 
 static const ConvertFormat CONVERT_FORMAT_TABLE[] = {ANKI_FMT(NONE, NONE, VK_FORMAT_R4G4_UNORM_PACK8, C),

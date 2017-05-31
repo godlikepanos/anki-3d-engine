@@ -60,26 +60,26 @@ const U DESCRIPTOR_FRAME_BUFFERING = 60 * 5; ///< How many frames worth of descr
 /// @}
 
 /// Check if a vulkan function failed. It will abort on failure.
-#define ANKI_VK_CHECKF(x)                                                                                              \
-	do                                                                                                                 \
-	{                                                                                                                  \
-		VkResult rez;                                                                                                  \
-		if((rez = (x)) < 0)                                                                                            \
-		{                                                                                                              \
-			ANKI_VK_LOGF("Vulkan function failed (VkResult: %d): %s", rez, #x);                                        \
-		}                                                                                                              \
+#define ANKI_VK_CHECKF(x)                                                       \
+	do                                                                          \
+	{                                                                           \
+		VkResult rez;                                                           \
+		if((rez = (x)) < 0)                                                     \
+		{                                                                       \
+			ANKI_VK_LOGF("Vulkan function failed (VkResult: %d): %s", rez, #x); \
+		}                                                                       \
 	} while(0)
 
 /// Check if a vulkan function failed.
-#define ANKI_VK_CHECK(x)                                                                                               \
-	do                                                                                                                 \
-	{                                                                                                                  \
-		VkResult rez;                                                                                                  \
-		if((rez = (x)) < 0)                                                                                            \
-		{                                                                                                              \
-			ANKI_VK_LOGE("Vulkan function failed (VkResult: %d): %s", rez, #x);                                        \
-			return ErrorCode::FUNCTION_FAILED;                                                                         \
-		}                                                                                                              \
+#define ANKI_VK_CHECK(x)                                                        \
+	do                                                                          \
+	{                                                                           \
+		VkResult rez;                                                           \
+		if((rez = (x)) < 0)                                                     \
+		{                                                                       \
+			ANKI_VK_LOGE("Vulkan function failed (VkResult: %d): %s", rez, #x); \
+			return ErrorCode::FUNCTION_FAILED;                                  \
+		}                                                                       \
 	} while(0)
 
 /// Convert compare op.

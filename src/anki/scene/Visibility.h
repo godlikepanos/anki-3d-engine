@@ -46,7 +46,7 @@ public:
 	/// An array of the visible spatials
 	U8* m_spatialIndices = nullptr;
 	/// Distance from the frustum component.
-	F32 m_frustumDistanceSquared = 0.0;
+	F32 m_frustumDistance = 0.0;
 	U8 m_spatialsCount = 0;
 
 	VisibleNode()
@@ -62,7 +62,7 @@ public:
 	{
 		m_node = other.m_node;
 		m_spatialIndices = other.m_spatialIndices;
-		m_frustumDistanceSquared = other.m_frustumDistanceSquared;
+		m_frustumDistance = other.m_frustumDistance;
 		m_spatialsCount = other.m_spatialsCount;
 		return *this;
 	}

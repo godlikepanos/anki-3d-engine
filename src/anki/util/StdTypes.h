@@ -158,24 +158,24 @@ private:
 };
 
 /// Macro to check if a method/function returned an error.
-#define ANKI_CHECK(x_)                                                                                                 \
-	do                                                                                                                 \
-	{                                                                                                                  \
-		Error error = x_;                                                                                              \
-		if(ANKI_UNLIKELY(error))                                                                                       \
-		{                                                                                                              \
-			return error;                                                                                              \
-		}                                                                                                              \
+#define ANKI_CHECK(x_)           \
+	do                           \
+	{                            \
+		Error error = x_;        \
+		if(ANKI_UNLIKELY(error)) \
+		{                        \
+			return error;        \
+		}                        \
 	} while(0)
 
 /// Macro the check if a memory allocation is OOM.
-#define ANKI_CHECK_OOM(x_)                                                                                             \
-	do                                                                                                                 \
-	{                                                                                                                  \
-		if(ANKI_UNLIKELY(x_ == nullptr))                                                                               \
-		{                                                                                                              \
-			return ErrorCode::OUT_OF_MEMORY;                                                                           \
-		}                                                                                                              \
+#define ANKI_CHECK_OOM(x_)                   \
+	do                                       \
+	{                                        \
+		if(ANKI_UNLIKELY(x_ == nullptr))     \
+		{                                    \
+			return ErrorCode::OUT_OF_MEMORY; \
+		}                                    \
 	} while(0)
 
 /// Macro to nuliffy a pointer on debug builds.

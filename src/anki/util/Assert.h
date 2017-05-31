@@ -20,13 +20,13 @@ void akassert(const char* exprTxt, const char* file, int line, const char* func)
 
 } // end namespace
 
-#define ANKI_ASSERT(x)                                                                                                 \
-	do                                                                                                                 \
-	{                                                                                                                  \
-		if(!(x))                                                                                                       \
-		{                                                                                                              \
-			anki::akassert(#x, ANKI_FILE, __LINE__, ANKI_FUNC);                                                        \
-		}                                                                                                              \
+#define ANKI_ASSERT(x)                                          \
+	do                                                          \
+	{                                                           \
+		if(!(x))                                                \
+		{                                                       \
+			anki::akassert(#x, ANKI_FILE, __LINE__, ANKI_FUNC); \
+		}                                                       \
 	} while(0)
 #define ANKI_ASSERTS_ENABLED 1
 

@@ -353,7 +353,8 @@ void VisibilityTestTask::test(ThreadHive& hive)
 		visibleNode.m_node = &node;
 
 		// Compute distance from the frustum
-		visibleNode.m_frustumDistanceSquared = (sps[0].m_origin - testedFrc.getFrustumOrigin()).getLengthSquared();
+		const Plane& nearPlane = testedFrc.getFrustum().getPlanesWorldSpace()[FrustumPlaneType::NEAR];
+		visibleNode.m_frustumDistance = max(0.0f, sps[0].m_sp->getAabb().testPlane(nearPlane));
 
 		ANKI_ASSERT(count < MAX_U8);
 		visibleNode.m_spatialsCount = count;

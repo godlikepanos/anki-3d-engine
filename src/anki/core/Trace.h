@@ -171,7 +171,7 @@ using TraceManagerSingleton = Singleton<TraceManager>;
 
 #define ANKI_TRACE_STOP_EVENT(name_) TraceManagerSingleton::get().stopEvent(TraceEventType::name_)
 
-#define ANKI_TRACE_SCOPED_EVENT(name_)                                                                                 \
+#define ANKI_TRACE_SCOPED_EVENT(name_) \
 	ScopedTraceManagerEvent _tse##name_(&TraceManagerSingleton::get(), TraceEventType::name_)
 
 #define ANKI_TRACE_INC_COUNTER(name_, val_) TraceManagerSingleton::get().incCounter(TraceCounterType::name_, val_)
@@ -191,12 +191,12 @@ using TraceManagerSingleton = Singleton<TraceManager>;
 
 #endif
 
-#define ANKI_TRACE_START_STOP_EVENT(execute, event)                                                                    \
-	do                                                                                                                 \
-	{                                                                                                                  \
-		ANKI_TRACE_START_EVENT(event);                                                                                 \
-		execute;                                                                                                       \
-		ANKI_TRACE_STOP_EVENT(event);                                                                                  \
+#define ANKI_TRACE_START_STOP_EVENT(execute, event) \
+	do                                              \
+	{                                               \
+		ANKI_TRACE_START_EVENT(event);              \
+		execute;                                    \
+		ANKI_TRACE_STOP_EVENT(event);               \
 	} while(0)
 /// @}
 

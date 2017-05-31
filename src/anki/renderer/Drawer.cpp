@@ -437,7 +437,7 @@ Error RenderableDrawer::drawSingle(DrawContext& ctx)
 	ctx.m_crntBuildInfo = !ctx.m_crntBuildInfo;
 
 	// Fill the crntBuild
-	F32 flod = m_r->calculateLod(sqrt(ctx.m_visibleNode->m_frustumDistanceSquared));
+	F32 flod = m_r->calculateLod(ctx.m_visibleNode->m_frustumDistance);
 	flod = min<F32>(flod, MAX_LOD_COUNT - 1);
 
 	crntBuild.m_rc = &renderable;

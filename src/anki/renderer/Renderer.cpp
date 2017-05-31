@@ -276,11 +276,10 @@ Error Renderer::render(RenderingContext& ctx)
 	m_ms->setPostRunBarriers(ctx);
 	m_sm->setPostRunBarriers(ctx);
 	m_depth->m_hd.setPreRunBarriers(ctx);
-	m_is->setPreRunBarriers(ctx);
 
 	// Passes
-	m_is->run(ctx);
 	m_depth->m_hd.run(ctx);
+	m_lf->updateIndirectInfo(ctx, cmdb);
 
 	// Barriers
 	m_depth->m_hd.setPostRunBarriers(ctx);
@@ -304,9 +303,6 @@ Error Renderer::render(RenderingContext& ctx)
 	m_ssao->m_main.setPostRunBarriers(ctx);
 	m_ssao->m_hblur.setPreRunBarriers(ctx);
 
-	// Misc
-	m_lf->updateIndirectInfo(ctx, cmdb);
-
 	// Passes
 	m_vol->m_hblur.run(ctx);
 	m_ssao->m_hblur.run(ctx);
@@ -324,9 +320,11 @@ Error Renderer::render(RenderingContext& ctx)
 	// Barriers
 	m_vol->m_vblur.setPostRunBarriers(ctx);
 	m_ssao->m_vblur.setPostRunBarriers(ctx);
+	m_is->setPreRunBarriers(ctx);
 	m_fs->setPreRunBarriers(ctx);
 
 	// Passes
+	m_is->run(ctx);
 	m_fs->run(ctx);
 
 	// Barriers

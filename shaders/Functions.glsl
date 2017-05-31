@@ -230,8 +230,8 @@ vec3 readErosion(sampler2D tex, vec2 uv)
 {
 	vec3 minValue = textureLod(tex, uv, 0.0).rgb;
 
-#define ANKI_EROSION(x, y)                                                                                             \
-	col2 = textureLodOffset(tex, uv, 0.0, ivec2(x, y)).rgb;                                                            \
+#define ANKI_EROSION(x, y)                                  \
+	col2 = textureLodOffset(tex, uv, 0.0, ivec2(x, y)).rgb; \
 	minValue = min(col2, minValue);
 
 	vec3 col2;

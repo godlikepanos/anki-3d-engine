@@ -27,17 +27,11 @@ class SsaoMain : public RenderingPass
 	friend class SsaoHBlur;
 
 anki_internal:
-	static constexpr F32 HEMISPHERE_RADIUS = 3.0; // In game units
-
 	SsaoMain(Renderer* r, Ssao* ssao)
 		: RenderingPass(r)
 		, m_ssao(ssao)
 	{
 	}
-
-	TexturePtr getRt() const;
-
-	TexturePtr getPreviousRt() const;
 
 	ANKI_USE_RESULT Error init(const ConfigSet& config);
 
@@ -50,8 +44,6 @@ anki_internal:
 private:
 	Ssao* m_ssao;
 
-	Array<TexturePtr, 2> m_rt;
-	Array<FramebufferPtr, 2> m_fb;
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
 	TextureResourcePtr m_noiseTex;
@@ -80,8 +72,6 @@ anki_internal:
 private:
 	Ssao* m_ssao;
 
-	TexturePtr m_rt;
-	FramebufferPtr m_fb;
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
 };
@@ -135,13 +125,13 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& config);
 
-	TexturePtr getRt() const
-	{
-		return m_main.getRt();
-	}
+	TexturePtr getRt() const;
 
 private:
 	U32 m_width, m_height;
+
+	Array<TexturePtr, 2> m_rt;
+	Array<FramebufferPtr, 2> m_fb;
 };
 /// @}
 

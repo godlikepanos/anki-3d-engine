@@ -8,6 +8,9 @@
 /// @addtogroup config
 /// @{
 
+#define _ANKI_STR_HELPER(x) #x
+#define _ANKI_STR(x) _ANKI_STR_HELPER(x)
+
 #define ANKI_VERSION_MINOR ${ANKI_VERSION_MINOR}
 #define ANKI_VERSION_MAJOR ${ANKI_VERSION_MAJOR}
 #define ANKI_REVISION ${ANKI_REVISION}
@@ -16,6 +19,24 @@
 #define ANKI_DEBUG_SYMBOLS ${ANKI_DEBUG_SYMBOLS}
 #define ANKI_OPTIMIZE ${ANKI_OPTIMIZE}
 #define ANKI_TESTS ${ANKI_TESTS}
+
+// Compiler
+#define ANKI_COMPILER_CLANG 0
+#define ANKI_COMPILER_GCC 1
+#define ANKI_COMPILER_MSVC 2
+
+#if defined(__clang__)
+#	define ANKI_COMPILER ANKI_COMPILER_CLANG
+#	define ANKI_COMPILER_STR "clang " __VERSION__
+#elif defined(__GNUC__) || defined(__GNUG__)
+#	define ANKI_COMPILER ANKI_COMPILER_GCC
+#	define ANKI_COMPILER_STR "gcc " __VERSION__
+#elif defined(_MSC_VER)
+#	define ANKI_COMPILER ANKI_COMPILER_MSVC
+#	define ANKI_COMPILER_STR "MSVC " _ANKI_STR(_MSC_FULL_VER)
+#else
+#	error Unknown compiler
+#endif
 
 // Operating system
 #define ANKI_OS_LINUX 1

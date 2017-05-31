@@ -17,37 +17,8 @@ namespace anki
 
 const PixelFormat Ssao::RT_PIXEL_FORMAT(ComponentFormat::R8, TransformFormat::UNORM);
 
-TexturePtr SsaoMain::getRt() const
-{
-	return m_rt[m_r->getFrameCount() & 1];
-}
-
-TexturePtr SsaoMain::getPreviousRt() const
-{
-	return m_rt[(m_r->getFrameCount() + 1) & 1];
-}
-
 Error SsaoMain::init(const ConfigSet& config)
 {
-	for(U i = 0; i < 2; ++i)
-	{
-		// RT
-		m_rt[i] = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_ssao->m_width,
-			m_ssao->m_height,
-			Ssao::RT_PIXEL_FORMAT,
-			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::CLEAR,
-			SamplingFilter::LINEAR,
-			1,
-			"ssaomain"));
-
-		// FB
-		FramebufferInitInfo fbInit("ssaomain");
-		fbInit.m_colorAttachmentCount = 1;
-		fbInit.m_colorAttachments[0].m_texture = m_rt[i];
-		fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-		m_fb[i] = getGrManager().newInstance<Framebuffer>(fbInit);
-	}
-
 	// Noise
 	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseLdrRgb64x64.ankitex", m_noiseTex));
 
@@ -57,10 +28,10 @@ Error SsaoMain::init(const ConfigSet& config)
 	ShaderProgramResourceConstantValueInitList<6> consts(m_prog);
 	consts.add("NOISE_MAP_SIZE", U32(m_noiseTex->getWidth()))
 		.add("FB_SIZE", UVec2(m_ssao->m_width, m_ssao->m_height))
-		.add("RADIUS", F32(HEMISPHERE_RADIUS))
-		.add("BIAS", F32(0.3))
-		.add("STRENGTH", F32(3.0))
-		.add("HISTORY_FEEDBACK", F32(1.0f / 8.0f));
+		.add("RADIUS", 2.0f)
+		.add("BIAS", 0.0f)
+		.add("STRENGTH", 2.0f)
+		.add("HISTORY_FEEDBACK", 1.0f / 4.0f);
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(consts.get(), variant);
 	m_grProg = variant->getProgram();
@@ -70,7 +41,7 @@ Error SsaoMain::init(const ConfigSet& config)
 
 void SsaoMain::setPreRunBarriers(RenderingContext& ctx)
 {
-	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_rt[m_r->getFrameCount() & 1],
+	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_ssao->m_rt[m_r->getFrameCount() & 1],
 		TextureUsageBit::NONE,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		TextureSurfaceInfo(0, 0, 0, 0));
@@ -80,14 +51,14 @@ void SsaoMain::run(RenderingContext& ctx)
 {
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
-	cmdb->beginRenderPass(m_fb[m_r->getFrameCount() & 1]);
+	cmdb->beginRenderPass(m_ssao->m_fb[m_r->getFrameCount() & 1]);
 	cmdb->setViewport(0, 0, m_ssao->m_width, m_ssao->m_height);
 	cmdb->bindShaderProgram(m_grProg);
 
 	cmdb->bindTexture(0, 0, m_r->getDepthDownscale().m_qd.m_depthRt);
 	cmdb->bindTextureAndSampler(0, 1, m_r->getMs().m_rt2, m_r->getLinearSampler());
 	cmdb->bindTexture(0, 2, m_noiseTex->getGrTexture());
-	cmdb->bindTexture(0, 3, m_rt[(m_r->getFrameCount() + 1) & 1]);
+	cmdb->bindTexture(0, 3, m_ssao->m_rt[(m_r->getFrameCount() + 1) & 1]);
 
 	struct Unis
 	{
@@ -110,7 +81,7 @@ void SsaoMain::run(RenderingContext& ctx)
 
 void SsaoMain::setPostRunBarriers(RenderingContext& ctx)
 {
-	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_rt[m_r->getFrameCount() & 1],
+	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_ssao->m_rt[m_r->getFrameCount() & 1],
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		TextureUsageBit::SAMPLED_FRAGMENT,
 		TextureSurfaceInfo(0, 0, 0, 0));
@@ -118,27 +89,11 @@ void SsaoMain::setPostRunBarriers(RenderingContext& ctx)
 
 Error SsaoHBlur::init(const ConfigSet& config)
 {
-	// RT
-	m_rt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_ssao->m_width,
-		m_ssao->m_height,
-		Ssao::RT_PIXEL_FORMAT,
-		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		SamplingFilter::LINEAR,
-		1,
-		"ssaoblur"));
-
-	// FB
-	FramebufferInitInfo fbInit("ssaoblur");
-	fbInit.m_colorAttachmentCount = 1;
-	fbInit.m_colorAttachments[0].m_texture = m_rt;
-	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
-
 	// shader
-	ANKI_CHECK(m_r->getResourceManager().loadResource("programs/GaussianBlur.ankiprog", m_prog));
+	ANKI_CHECK(m_r->getResourceManager().loadResource("programs/DepthAwareBlur.ankiprog", m_prog));
 
 	ShaderProgramResourceMutationInitList<3> mutators(m_prog);
-	mutators.add("HORIZONTAL", 1).add("KERNEL_SIZE", 9).add("COLOR_COMPONENTS", 1);
+	mutators.add("HORIZONTAL", 1).add("KERNEL_SIZE", 7).add("COLOR_COMPONENTS", 1);
 	ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
 	consts.add("TEXTURE_SIZE", UVec2(m_ssao->m_width, m_ssao->m_height));
 
@@ -152,8 +107,10 @@ Error SsaoHBlur::init(const ConfigSet& config)
 
 void SsaoHBlur::setPreRunBarriers(RenderingContext& ctx)
 {
-	ctx.m_commandBuffer->setTextureSurfaceBarrier(
-		m_rt, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureSurfaceInfo(0, 0, 0, 0));
+	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_ssao->m_rt[(m_r->getFrameCount() + 1) & 1],
+		TextureUsageBit::NONE,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+		TextureSurfaceInfo(0, 0, 0, 0));
 }
 
 void SsaoHBlur::run(RenderingContext& ctx)
@@ -161,16 +118,17 @@ void SsaoHBlur::run(RenderingContext& ctx)
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 	cmdb->setViewport(0, 0, m_ssao->m_width, m_ssao->m_height);
-	cmdb->beginRenderPass(m_fb);
+	cmdb->beginRenderPass(m_ssao->m_fb[(m_r->getFrameCount() + 1) & 1]);
 	cmdb->bindShaderProgram(m_grProg);
-	cmdb->bindTexture(0, 0, m_ssao->m_main.m_rt[m_r->getFrameCount() & 1]);
+	cmdb->bindTexture(0, 0, m_ssao->m_rt[m_r->getFrameCount() & 1]);
+	cmdb->bindTexture(0, 1, m_r->getDepthDownscale().m_qd.m_depthRt);
 	m_r->drawQuad(cmdb);
 	cmdb->endRenderPass();
 }
 
 void SsaoHBlur::setPostRunBarriers(RenderingContext& ctx)
 {
-	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_rt,
+	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_ssao->m_rt[(m_r->getFrameCount() + 1) & 1],
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		TextureUsageBit::SAMPLED_FRAGMENT,
 		TextureSurfaceInfo(0, 0, 0, 0));
@@ -179,10 +137,10 @@ void SsaoHBlur::setPostRunBarriers(RenderingContext& ctx)
 Error SsaoVBlur::init(const ConfigSet& config)
 {
 	// shader
-	ANKI_CHECK(m_r->getResourceManager().loadResource("programs/GaussianBlur.ankiprog", m_prog));
+	ANKI_CHECK(m_r->getResourceManager().loadResource("programs/DepthAwareBlur.ankiprog", m_prog));
 
 	ShaderProgramResourceMutationInitList<3> mutators(m_prog);
-	mutators.add("HORIZONTAL", 0).add("KERNEL_SIZE", 9).add("COLOR_COMPONENTS", 1);
+	mutators.add("HORIZONTAL", 0).add("KERNEL_SIZE", 7).add("COLOR_COMPONENTS", 1);
 	ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
 	consts.add("TEXTURE_SIZE", UVec2(m_ssao->m_width, m_ssao->m_height));
 
@@ -196,7 +154,7 @@ Error SsaoVBlur::init(const ConfigSet& config)
 
 void SsaoVBlur::setPreRunBarriers(RenderingContext& ctx)
 {
-	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_ssao->m_main.m_rt[m_r->getFrameCount() & 1],
+	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_ssao->m_rt[m_r->getFrameCount() & 1],
 		TextureUsageBit::NONE,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		TextureSurfaceInfo(0, 0, 0, 0));
@@ -207,16 +165,17 @@ void SsaoVBlur::run(RenderingContext& ctx)
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 	cmdb->setViewport(0, 0, m_ssao->m_width, m_ssao->m_height);
-	cmdb->beginRenderPass(m_ssao->m_main.m_fb[m_r->getFrameCount() & 1]);
+	cmdb->beginRenderPass(m_ssao->m_fb[m_r->getFrameCount() & 1]);
 	cmdb->bindShaderProgram(m_grProg);
-	cmdb->bindTexture(0, 0, m_ssao->m_hblur.m_rt);
+	cmdb->bindTexture(0, 0, m_ssao->m_rt[(m_r->getFrameCount() + 1) & 1]);
+	cmdb->bindTexture(0, 1, m_r->getDepthDownscale().m_qd.m_depthRt);
 	m_r->drawQuad(cmdb);
 	cmdb->endRenderPass();
 }
 
 void SsaoVBlur::setPostRunBarriers(RenderingContext& ctx)
 {
-	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_ssao->m_main.m_rt[m_r->getFrameCount() & 1],
+	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_ssao->m_rt[m_r->getFrameCount() & 1],
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		TextureUsageBit::SAMPLED_FRAGMENT,
 		TextureSurfaceInfo(0, 0, 0, 0));
@@ -228,6 +187,25 @@ Error Ssao::init(const ConfigSet& config)
 	m_height = m_r->getHeight() / SSAO_FRACTION;
 
 	ANKI_R_LOGI("Initializing SSAO. Size %ux%u", m_width, m_height);
+
+	for(U i = 0; i < 2; ++i)
+	{
+		// RT
+		m_rt[i] = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_width,
+			m_height,
+			Ssao::RT_PIXEL_FORMAT,
+			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::CLEAR,
+			SamplingFilter::LINEAR,
+			1,
+			"ssaomain"));
+
+		// FB
+		FramebufferInitInfo fbInit("ssaomain");
+		fbInit.m_colorAttachmentCount = 1;
+		fbInit.m_colorAttachments[0].m_texture = m_rt[i];
+		fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
+		m_fb[i] = getGrManager().newInstance<Framebuffer>(fbInit);
+	}
 
 	Error err = m_main.init(config);
 
@@ -247,6 +225,11 @@ Error Ssao::init(const ConfigSet& config)
 	}
 
 	return err;
+}
+
+TexturePtr Ssao::getRt() const
+{
+	return m_rt[m_r->getFrameCount() & 1];
 }
 
 } // end namespace anki
