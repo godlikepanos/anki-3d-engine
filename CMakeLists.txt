@@ -133,6 +133,10 @@ elseif(MINGW AND ARCH_32)
 	add_definitions(-D_MINGW_32_VER)
 endif()
 
+if(MINGW)
+	set(COMPILER_FLAGS "${COMPILER_FLAGS} -mconsole ")
+endif()
+
 add_definitions(-DGLEW_NO_GLU)
 add_definitions(-DSPIRV_CROSS_EXCEPTIONS_TO_ASSERTIONS)
 add_definitions(-DANKI_BUILD)
@@ -229,8 +233,8 @@ if(SDL)
 	add_subdirectory(thirdparty/SDL2)
 	message("++ End configuring SDL2")
 
-	# Include first the build directory. 
-	set(SDL2_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/thirdparty/SDL2/include" 
+	# Include first the build directory.
+	set(SDL2_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/thirdparty/SDL2/include"
 		"${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/SDL2/include")
 else()
 	set(SDL2_INCLUDE_DIRS "")
@@ -279,7 +283,7 @@ find_package(Doxygen)
 if(DOXYGEN_FOUND)
 	message("++ Doxygen found")
 
-	add_custom_target(doc ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doxyfile 
+	add_custom_target(doc ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doxyfile
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 		COMMENT "Generating API documentation with Doxygen" VERBATIM)
 endif()
@@ -324,21 +328,21 @@ configure_file("src/anki/Config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/anki/Confi
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h" DESTINATION "${INCLUDE_INSTALL_DIR}/anki")
 
 # Include & lib directories
-include_directories("src" 
-	"thirdparty/tinyxml2/include" 
-	"thirdparty/lua" 
-	"thirdparty/z" 
+include_directories("src"
+	"thirdparty/tinyxml2/include"
+	"thirdparty/lua"
+	"thirdparty/z"
 	"${SDL2_INCLUDE_DIRS}"
-	"thirdparty/freetype/include" 
+	"thirdparty/freetype/include"
 	"${CMAKE_CURRENT_BINARY_DIR}/thirdparty/freetype/include/freetype2"
-	"thirdparty/newton/coreLibrary_300/source/newton" 
+	"thirdparty/newton/coreLibrary_300/source/newton"
 	"thirdparty/newton/packages/dCustomJoints"
-	"thirdparty/newton/packages/dContainers" 
-	"thirdparty/newton/packages/dMath" 
+	"thirdparty/newton/packages/dContainers"
+	"thirdparty/newton/packages/dMath"
 	"thirdparty/newton/packages/thirdParty/timeTracker/"
-	"thirdparty/khronos" 
-	"${CMAKE_CURRENT_BINARY_DIR}" 
-	"${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glslang" 
+	"thirdparty/khronos"
+	"${CMAKE_CURRENT_BINARY_DIR}"
+	"${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glslang"
 	"thirdparty")
 
 if(LINUX OR MACOS OR WINDOWS)

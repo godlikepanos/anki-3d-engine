@@ -332,10 +332,16 @@ Error App::initDirs(const ConfigSet& cfg)
 	// Cache
 	m_cacheDir.sprintf(m_heapAlloc, "%s/cache", &m_settingsDir[0]);
 
-	if(cfg.getNumber("clearCaches") && directoryExists(m_cacheDir.toCString()))
+	const Bool cacheDirExists = directoryExists(m_cacheDir.toCString());
+	if(cfg.getNumber("clearCaches") && cacheDirExists)
 	{
 		ANKI_CORE_LOGI("Will delete the cache dir and start fresh: %s", &m_cacheDir[0]);
 		ANKI_CHECK(removeDirectory(m_cacheDir.toCString()));
+		ANKI_CHECK(createDirectory(m_cacheDir.toCString()));
+	}
+	else if(!cacheDirExists)
+	{
+		ANKI_CORE_LOGI("Will create cache dir: %s", &m_cacheDir[0]);
 		ANKI_CHECK(createDirectory(m_cacheDir.toCString()));
 	}
 
