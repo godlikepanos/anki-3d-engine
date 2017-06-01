@@ -110,8 +110,9 @@ void SoftwareRasterizer::clipTriangle(const Vec4* inVerts, Vec4* outVerts, U& ou
 		outVerts[1] = intersection0.xyz1();
 		outVerts[2] = intersection1.xyz1();
 		outVertCount = 3;
+
+		break;
 	}
-	break;
 	case 2:
 	{
 		U in0, in1, out;
@@ -161,12 +162,13 @@ void SoftwareRasterizer::clipTriangle(const Vec4* inVerts, Vec4* outVerts, U& ou
 		outVerts[4] = inVerts[in0];
 		outVerts[5] = inVerts[in1];
 		outVertCount = 6;
+
+		break;
 	}
-	break;
 	}
 }
 
-void SoftwareRasterizer::draw(const F32* verts, U vertCount, U stride)
+void SoftwareRasterizer::draw(const F32* verts, U vertCount, U stride, Bool backfaceCulling)
 {
 	ANKI_ASSERT(verts && vertCount > 0 && (vertCount % 3) == 0);
 	ANKI_ASSERT(stride >= sizeof(F32) * 3 && (stride % sizeof(F32)) == 0);
@@ -184,13 +186,16 @@ void SoftwareRasterizer::draw(const F32* verts, U vertCount, U stride)
 		}
 
 		// Cull if backfacing
-		Vec4 norm = (triVspace[1] - triVspace[0]).cross(triVspace[2] - triVspace[1]);
-		ANKI_ASSERT(norm.w() == 0.0f);
-
-		Vec4 eye = triVspace[0].xyz0();
-		if(norm.dot(eye) >= 0.0f)
+		if(backfaceCulling)
 		{
-			continue;
+			Vec4 norm = (triVspace[1] - triVspace[0]).cross(triVspace[2] - triVspace[1]);
+			ANKI_ASSERT(norm.w() == 0.0f);
+
+			Vec4 eye = triVspace[0].xyz0();
+			if(norm.dot(eye) >= 0.0f)
+			{
+				continue;
+			}
 		}
 
 		// Clip it

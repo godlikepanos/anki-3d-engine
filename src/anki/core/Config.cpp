@@ -20,6 +20,8 @@ Config::Config()
 	newOption("sm.resolution", 512);
 	newOption("sm.maxLights", 4);
 
+	newOption("r.ms.earlyZDistance", 10.0);
+
 	newOption("is.maxPointLights", 384);
 	newOption("is.maxSpotLights", 16);
 	newOption("is.maxSpotTexLights", 8);

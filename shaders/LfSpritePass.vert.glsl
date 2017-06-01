@@ -31,9 +31,7 @@ out gl_PerVertex
 
 void main()
 {
-	const vec2 POSITIONS[4] = vec2[](vec2(-1.0, -1.0), vec2(1.0, -1.0), vec2(-1.0, 1.0), vec2(1.0, 1.0));
-
-	vec2 position = POSITIONS[gl_VertexID];
+	vec2 position = UV_TO_NDC(vec2(gl_VertexID & 1, gl_VertexID >> 1));
 
 	Sprite sprite = u_sprites[gl_InstanceID];
 

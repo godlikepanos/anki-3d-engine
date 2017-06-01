@@ -567,10 +567,12 @@ Error GrManagerImpl::initSwapchain(const GrManagerInitInfo& init)
 	VkPresentModeKHR presentMode = VK_PRESENT_MODE_MAX_ENUM_KHR;
 	if(init.m_config->getNumber("vsync"))
 	{
+		ANKI_VK_LOGI("vsync is on");
 		presentMode = VK_PRESENT_MODE_FIFO_KHR;
 	}
 	else
 	{
+		ANKI_VK_LOGI("vsync is off");
 		for(U i = 0; i < presentModeCount; ++i)
 		{
 			if(presentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR)

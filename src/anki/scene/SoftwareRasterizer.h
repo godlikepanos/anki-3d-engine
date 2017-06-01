@@ -41,7 +41,8 @@ public:
 	/// @param[in] verts Pointer to the first vertex to draw.
 	/// @param vertCount The number of verts to draw.
 	/// @param stride The stride (in bytes) of the next vertex.
-	void draw(const F32* verts, U vertCount, U stride);
+	/// @param backfaceCulling If true it will do backface culling.
+	void draw(const F32* verts, U vertCount, U stride, Bool backfaceCulling);
 
 	/// Perform visibility tests.
 	/// @param cs The collision shape in world space.

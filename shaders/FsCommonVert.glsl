@@ -36,15 +36,14 @@ out gl_PerVertex
 
 void particle(in mat4 mvp, in mat3 camRot, in mat4 viewMat)
 {
-	const vec2 POSITIONS[4] = vec2[](vec2(-0.5, -0.5), vec2(0.5, -0.5), vec2(-0.5, 0.5), vec2(0.5, 0.5));
-	vec3 worldPos = camRot * vec3(POSITIONS[gl_VertexID] * in_scale, 0.0) + in_position;
+	out_uv = vec2(gl_VertexID & 1, gl_VertexID >> 1);
+
+	vec3 worldPos = camRot * vec3((out_uv - 0.5) * in_scale, 0.0) + in_position;
 	ANKI_WRITE_POSITION(mvp * vec4(worldPos, 1.0));
 
 	out_posViewSpace = (viewMat * vec4(worldPos, 1.0)).xyz;
 
 	out_alpha = in_alpha;
-
-	out_uv = POSITIONS[gl_VertexID] + 0.5;
 }
 
 #endif

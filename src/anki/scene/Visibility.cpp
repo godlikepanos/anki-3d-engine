@@ -204,7 +204,7 @@ void RasterizeTrianglesTask::rasterize()
 		U count = (end - start) * 3;
 		ANKI_ASSERT(count <= m_gatherTask->m_vertCount);
 
-		m_gatherTask->m_r.draw(&first[0][0], count, sizeof(Vec3));
+		m_gatherTask->m_r.draw(&first[0][0], count, sizeof(Vec3), false);
 	}
 
 	ANKI_TRACE_STOP_EVENT(SCENE_VISIBILITY_RASTERIZE);
