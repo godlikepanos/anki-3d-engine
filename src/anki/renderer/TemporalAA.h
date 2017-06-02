@@ -13,24 +13,28 @@ namespace anki
 /// @addtogroup renderer
 /// @{
 
-/// Tonemapping.
-class Tm : public RenderingPass
+/// Temporal AA resolve.
+class TemporalAA : public RenderingPass
 {
-anki_internal:
-	BufferPtr m_luminanceBuff;
+public:
+	TemporalAA(Renderer* r);
 
-	Tm(Renderer* r)
-		: RenderingPass(r)
-	{
-	}
+	~TemporalAA();
+
+	TexturePtr getRt() const;
 
 	ANKI_USE_RESULT Error init(const ConfigSet& cfg);
 
+	void setPreRunBarriers(RenderingContext& ctx);
 	void run(RenderingContext& ctx);
+	void setPostRunBarriers(RenderingContext& ctx);
 
 private:
-	ShaderResourcePtr m_luminanceShader;
-	ShaderProgramPtr m_prog;
+	Array<TexturePtr, 2> m_rts;
+	Array<FramebufferPtr, 2> m_fbs;
+
+	ShaderProgramResourcePtr m_prog;
+	ShaderProgramPtr m_grProg;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 };

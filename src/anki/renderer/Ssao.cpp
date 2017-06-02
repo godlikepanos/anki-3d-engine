@@ -5,7 +5,7 @@
 
 #include <anki/renderer/Ssao.h>
 #include <anki/renderer/Renderer.h>
-#include <anki/renderer/Ms.h>
+#include <anki/renderer/GBuffer.h>
 #include <anki/renderer/DepthDownscale.h>
 #include <anki/scene/SceneGraph.h>
 #include <anki/util/Functions.h>
@@ -56,7 +56,7 @@ void SsaoMain::run(RenderingContext& ctx)
 	cmdb->bindShaderProgram(m_grProg);
 
 	cmdb->bindTexture(0, 0, m_r->getDepthDownscale().m_qd.m_depthRt);
-	cmdb->bindTextureAndSampler(0, 1, m_r->getMs().m_rt2, m_r->getLinearSampler());
+	cmdb->bindTextureAndSampler(0, 1, m_r->getGBuffer().m_rt2, m_r->getLinearSampler());
 	cmdb->bindTexture(0, 2, m_noiseTex->getGrTexture());
 	cmdb->bindTexture(0, 3, m_ssao->m_rt[(m_r->getFrameCount() + 1) & 1]);
 

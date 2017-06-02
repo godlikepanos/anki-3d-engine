@@ -158,20 +158,25 @@ void getFormatInfo(const PixelFormat& fmt, U& texelComponents, U& texelBytes, U&
 		texelComponents = 3;
 		texelBytes = 4;
 		break;
-	case ComponentFormat::R8G8B8_S3TC:
+	case ComponentFormat::R8G8B8_BC1:
 		texelComponents = 3;
 		blockSize = 4;
 		blockBytes = 8;
+		break;
+	case ComponentFormat::R8G8B8A8_BC3:
+		texelComponents = 4;
+		blockSize = 4;
+		blockBytes = 16;
+		break;
+	case ComponentFormat::R16G16B16_BC6:
+		texelComponents = 3;
+		blockSize = 4;
+		blockBytes = 16;
 		break;
 	case ComponentFormat::R8G8B8_ETC2:
 		texelComponents = 3;
 		blockSize = 4;
 		blockBytes = 8;
-		break;
-	case ComponentFormat::R8G8B8A8_S3TC:
-		texelComponents = 4;
-		blockSize = 4;
-		blockBytes = 16;
 		break;
 	case ComponentFormat::R8G8B8A8_ETC2:
 		texelComponents = 4;

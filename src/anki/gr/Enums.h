@@ -142,9 +142,10 @@ enum class ComponentFormat : U8
 	DEFAULT_FRAMEBUFFER, ///< Implicit format.
 
 	// Compressed
-	R8G8B8_S3TC, ///< DXT1
+	R8G8B8_BC1, ///< DXT1
+	R8G8B8A8_BC3, ///< DXT5
+	R16G16B16_BC6, ///< HDR
 	R8G8B8_ETC2,
-	R8G8B8A8_S3TC, ///< DXT5
 	R8G8B8A8_ETC2,
 
 	// Depth & stencil
@@ -155,7 +156,7 @@ enum class ComponentFormat : U8
 	S8,
 
 	// Helpers
-	FIRST_COMPRESSED = R8G8B8_S3TC,
+	FIRST_COMPRESSED = R8G8B8_BC1,
 	LAST_COMPRESSED = R8G8B8A8_ETC2,
 	FIRST_DEPTH_STENCIL = D16,
 	LAST_DEPTH_STENCIL = S8

@@ -7,7 +7,7 @@
 
 #include <anki/renderer/MainRenderer.h>
 #include <anki/renderer/Renderer.h>
-#include <anki/renderer/Pps.h>
+#include <anki/renderer/FinalComposite.h>
 #include <anki/renderer/Dbg.h>
 #include <anki/renderer/Volumetric.h>
 

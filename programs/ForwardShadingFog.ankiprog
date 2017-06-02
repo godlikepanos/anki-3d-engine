@@ -12,7 +12,7 @@ http://www.anki3d.org/LICENSE
 			</inputs>
 
 			<source><![CDATA[
-#include "shaders/FsCommonVert.glsl"
+#include "shaders/ForwardShadingCommonVert.glsl"
 
 void main() 
 {
@@ -28,7 +28,7 @@ void main()
 			</inputs>
 
 			<source><![CDATA[
-#include "shaders/FsCommonFrag.glsl"
+#include "shaders/ForwardShadingCommonFrag.glsl"
 
 void main() 
 {

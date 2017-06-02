@@ -18,7 +18,9 @@ http://www.anki3d.org/LICENSE
 				<input name="viewMat" type="mat4"/>
 			</inputs>
 
-			<source><![CDATA[#include "shaders/FsCommonVert.glsl"
+			<source><![CDATA[
+#include "shaders/ForwardShadingCommonVert.glsl"
+
 void main() 
 {
 	particle(mvp, cameraRotMat, viewMat);
@@ -48,7 +50,10 @@ void main()
 				<input name="colorBias" type="vec4" const="1"/>
 			</inputs>
 
-			<source><![CDATA[#include "shaders/FsCommonFrag.glsl"
+			<source><![CDATA[
+
+#include "shaders/ForwardShadingCommonFrag.glsl"
+
 void main() 
 {
 #if ANIMATED_TEXTURE == 1

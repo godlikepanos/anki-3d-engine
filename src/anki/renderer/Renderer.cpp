@@ -9,22 +9,21 @@
 #include <anki/core/Trace.h>
 #include <anki/misc/ConfigSet.h>
 
-#include <anki/renderer/Ir.h>
-#include <anki/renderer/Ms.h>
-#include <anki/renderer/Is.h>
-#include <anki/renderer/Sm.h>
-#include <anki/renderer/Pps.h>
+#include <anki/renderer/Indirect.h>
+#include <anki/renderer/GBuffer.h>
+#include <anki/renderer/LightShading.h>
+#include <anki/renderer/ShadowMapping.h>
+#include <anki/renderer/FinalComposite.h>
 #include <anki/renderer/Ssao.h>
 #include <anki/renderer/Bloom.h>
-#include <anki/renderer/Tm.h>
-#include <anki/renderer/Fs.h>
-#include <anki/renderer/Lf.h>
+#include <anki/renderer/Tonemapping.h>
+#include <anki/renderer/ForwardShading.h>
+#include <anki/renderer/LensFlare.h>
 #include <anki/renderer/Dbg.h>
-#include <anki/renderer/FsUpscale.h>
 #include <anki/renderer/DownscaleBlur.h>
 #include <anki/renderer/Volumetric.h>
 #include <anki/renderer/DepthDownscale.h>
-#include <anki/renderer/Taa.h>
+#include <anki/renderer/TemporalAA.h>
 
 #include <cstdarg> // For var args
 
@@ -114,17 +113,17 @@ Error Renderer::initInternal(const ConfigSet& config)
 	ANKI_CHECK(m_resources->loadResource("shaders/Quad.vert.glsl", m_drawQuadVert));
 
 	// Init the stages. Careful with the order!!!!!!!!!!
-	m_ir.reset(m_alloc.newInstance<Ir>(this));
-	ANKI_CHECK(m_ir->init(config));
+	m_indirect.reset(m_alloc.newInstance<Indirect>(this));
+	ANKI_CHECK(m_indirect->init(config));
 
-	m_ms.reset(m_alloc.newInstance<Ms>(this));
-	ANKI_CHECK(m_ms->init(config));
+	m_gbuffer.reset(m_alloc.newInstance<GBuffer>(this));
+	ANKI_CHECK(m_gbuffer->init(config));
 
-	m_sm.reset(m_alloc.newInstance<Sm>(this));
-	ANKI_CHECK(m_sm->init(config));
+	m_shadowMapping.reset(m_alloc.newInstance<ShadowMapping>(this));
+	ANKI_CHECK(m_shadowMapping->init(config));
 
-	m_is.reset(m_alloc.newInstance<Is>(this));
-	ANKI_CHECK(m_is->init(config));
+	m_lightShading.reset(m_alloc.newInstance<LightShading>(this));
+	ANKI_CHECK(m_lightShading->init(config));
 
 	m_depth.reset(m_alloc.newInstance<DepthDownscale>(this));
 	ANKI_CHECK(m_depth->init(config));
@@ -132,32 +131,32 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_vol.reset(m_alloc.newInstance<Volumetric>(this));
 	ANKI_CHECK(m_vol->init(config));
 
-	m_fs.reset(m_alloc.newInstance<Fs>(this));
-	ANKI_CHECK(m_fs->init(config));
+	m_forwardShading.reset(m_alloc.newInstance<ForwardShading>(this));
+	ANKI_CHECK(m_forwardShading->init(config));
 
-	m_lf.reset(m_alloc.newInstance<Lf>(this));
-	ANKI_CHECK(m_lf->init(config));
+	m_lensFlare.reset(m_alloc.newInstance<LensFlare>(this));
+	ANKI_CHECK(m_lensFlare->init(config));
 
 	m_ssao.reset(m_alloc.newInstance<Ssao>(this));
 	ANKI_CHECK(m_ssao->init(config));
 
-	m_fsUpscale.reset(m_alloc.newInstance<FsUpscale>(this));
+	m_fsUpscale.reset(m_alloc.newInstance<ForwardShadingUpscale>(this));
 	ANKI_CHECK(m_fsUpscale->init(config));
 
 	m_downscale.reset(getAllocator().newInstance<DownscaleBlur>(this));
 	ANKI_CHECK(m_downscale->init(config));
 
-	m_tm.reset(getAllocator().newInstance<Tm>(this));
-	ANKI_CHECK(m_tm->init(config));
+	m_tonemapping.reset(getAllocator().newInstance<Tonemapping>(this));
+	ANKI_CHECK(m_tonemapping->init(config));
 
-	m_taa.reset(getAllocator().newInstance<Taa>(this));
-	ANKI_CHECK(m_taa->init(config));
+	m_temporalAA.reset(getAllocator().newInstance<TemporalAA>(this));
+	ANKI_CHECK(m_temporalAA->init(config));
 
 	m_bloom.reset(m_alloc.newInstance<Bloom>(this));
 	ANKI_CHECK(m_bloom->init(config));
 
-	m_pps.reset(m_alloc.newInstance<Pps>(this));
-	ANKI_CHECK(m_pps->init(config));
+	m_finalComposite.reset(m_alloc.newInstance<FinalComposite>(this));
+	ANKI_CHECK(m_finalComposite->init(config));
 
 	m_dbg.reset(m_alloc.newInstance<Dbg>(this));
 	ANKI_CHECK(m_dbg->init(config));
@@ -257,29 +256,29 @@ Error Renderer::render(RenderingContext& ctx)
 	}
 
 	// Run stages
-	ANKI_CHECK(m_ir->run(ctx));
+	ANKI_CHECK(m_indirect->run(ctx));
 
-	ANKI_CHECK(m_is->binLights(ctx));
+	ANKI_CHECK(m_lightShading->binLights(ctx));
 
-	m_lf->resetOcclusionQueries(ctx, cmdb);
+	m_lensFlare->resetOcclusionQueries(ctx, cmdb);
 	ANKI_CHECK(buildCommandBuffers(ctx));
 
 	// Barriers
-	m_sm->setPreRunBarriers(ctx);
-	m_ms->setPreRunBarriers(ctx);
+	m_shadowMapping->setPreRunBarriers(ctx);
+	m_gbuffer->setPreRunBarriers(ctx);
 
 	// Passes
-	m_sm->run(ctx);
-	m_ms->run(ctx);
+	m_shadowMapping->run(ctx);
+	m_gbuffer->run(ctx);
 
 	// Barriers
-	m_ms->setPostRunBarriers(ctx);
-	m_sm->setPostRunBarriers(ctx);
+	m_gbuffer->setPostRunBarriers(ctx);
+	m_shadowMapping->setPostRunBarriers(ctx);
 	m_depth->m_hd.setPreRunBarriers(ctx);
 
 	// Passes
 	m_depth->m_hd.run(ctx);
-	m_lf->updateIndirectInfo(ctx, cmdb);
+	m_lensFlare->updateIndirectInfo(ctx, cmdb);
 
 	// Barriers
 	m_depth->m_hd.setPostRunBarriers(ctx);
@@ -320,31 +319,31 @@ Error Renderer::render(RenderingContext& ctx)
 	// Barriers
 	m_vol->m_vblur.setPostRunBarriers(ctx);
 	m_ssao->m_vblur.setPostRunBarriers(ctx);
-	m_is->setPreRunBarriers(ctx);
-	m_fs->setPreRunBarriers(ctx);
+	m_lightShading->setPreRunBarriers(ctx);
+	m_forwardShading->setPreRunBarriers(ctx);
 
 	// Passes
-	m_is->run(ctx);
-	m_fs->run(ctx);
+	m_lightShading->run(ctx);
+	m_forwardShading->run(ctx);
 
 	// Barriers
-	m_fs->setPostRunBarriers(ctx);
+	m_forwardShading->setPostRunBarriers(ctx);
 
 	// Passes
 	m_fsUpscale->run(ctx);
 
 	// Barriers
-	cmdb->setTextureSurfaceBarrier(m_is->getRt(),
+	cmdb->setTextureSurfaceBarrier(m_lightShading->getRt(),
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 		TextureUsageBit::SAMPLED_FRAGMENT,
 		TextureSurfaceInfo(0, 0, 0, 0));
-	m_taa->setPreRunBarriers(ctx);
+	m_temporalAA->setPreRunBarriers(ctx);
 
 	// Passes
-	m_taa->run(ctx);
+	m_temporalAA->run(ctx);
 
 	// Barriers
-	m_taa->setPostRunBarriers(ctx);
+	m_temporalAA->setPostRunBarriers(ctx);
 	m_downscale->setPreRunBarriers(ctx);
 
 	// Passes
@@ -354,7 +353,7 @@ Error Renderer::render(RenderingContext& ctx)
 	m_downscale->setPostRunBarriers(ctx);
 
 	// Passes
-	m_tm->run(ctx);
+	m_tonemapping->run(ctx);
 
 	// Barriers
 	m_bloom->m_extractExposure.setPreRunBarriers(ctx);
@@ -378,7 +377,7 @@ Error Renderer::render(RenderingContext& ctx)
 	}
 
 	// Passes
-	ANKI_CHECK(m_pps->run(ctx));
+	ANKI_CHECK(m_finalComposite->run(ctx));
 
 	++m_frameCount;
 	m_prevViewProjMat = ctx.m_viewProjMat;
@@ -505,61 +504,62 @@ Error Renderer::buildCommandBuffersInternal(RenderingContext& ctx, U32 threadId,
 {
 	// MS
 	//
-	ANKI_CHECK(m_ms->buildCommandBuffers(ctx, threadId, threadCount));
+	ANKI_CHECK(m_gbuffer->buildCommandBuffers(ctx, threadId, threadCount));
 
 	// Append to the last MS's cmdb the occlusion tests
-	if(ctx.m_ms.m_lastThreadWithWork == threadId)
+	if(ctx.m_gbuffer.m_lastThreadWithWork == threadId)
 	{
-		m_lf->runOcclusionTests(ctx, ctx.m_ms.m_commandBuffers[threadId]);
+		m_lensFlare->runOcclusionTests(ctx, ctx.m_gbuffer.m_commandBuffers[threadId]);
 	}
 
-	if(ctx.m_ms.m_commandBuffers[threadId])
+	if(ctx.m_gbuffer.m_commandBuffers[threadId])
 	{
-		ctx.m_ms.m_commandBuffers[threadId]->flush();
+		ctx.m_gbuffer.m_commandBuffers[threadId]->flush();
 	}
 
 	// SM
 	//
-	ANKI_CHECK(m_sm->buildCommandBuffers(ctx, threadId, threadCount));
+	ANKI_CHECK(m_shadowMapping->buildCommandBuffers(ctx, threadId, threadCount));
 
 	// FS
 	//
-	ANKI_CHECK(m_fs->buildCommandBuffers(ctx, threadId, threadCount));
+	ANKI_CHECK(m_forwardShading->buildCommandBuffers(ctx, threadId, threadCount));
 
 	// Append to the last FB's cmdb the other passes
-	if(ctx.m_fs.m_lastThreadWithWork == threadId)
+	if(ctx.m_forwardShading.m_lastThreadWithWork == threadId)
 	{
-		m_lf->run(ctx, ctx.m_fs.m_commandBuffers[threadId]);
-		m_fs->drawVolumetric(ctx, ctx.m_fs.m_commandBuffers[threadId]);
+		m_lensFlare->run(ctx, ctx.m_forwardShading.m_commandBuffers[threadId]);
+		m_forwardShading->drawVolumetric(ctx, ctx.m_forwardShading.m_commandBuffers[threadId]);
 	}
-	else if(threadId == threadCount - 1 && ctx.m_fs.m_lastThreadWithWork == MAX_U32)
+	else if(threadId == threadCount - 1 && ctx.m_forwardShading.m_lastThreadWithWork == MAX_U32)
 	{
 		// There is no FS work. Create a cmdb just for LF & VOL
 
 		CommandBufferInitInfo init;
 		init.m_flags =
 			CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SECOND_LEVEL | CommandBufferFlag::SMALL_BATCH;
-		init.m_framebuffer = m_fs->getFramebuffer();
+		init.m_framebuffer = m_forwardShading->getFramebuffer();
 		CommandBufferPtr cmdb = getGrManager().newInstance<CommandBuffer>(init);
 
 		// Inform on textures
-		cmdb->informTextureSurfaceCurrentUsage(
-			m_fs->getRt(), TextureSurfaceInfo(0, 0, 0, 0), TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE);
+		cmdb->informTextureSurfaceCurrentUsage(m_forwardShading->getRt(),
+			TextureSurfaceInfo(0, 0, 0, 0),
+			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE);
 		cmdb->informTextureSurfaceCurrentUsage(m_depth->m_hd.m_depthRt,
 			TextureSurfaceInfo(0, 0, 0, 0),
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ | TextureUsageBit::SAMPLED_FRAGMENT);
 
-		cmdb->setViewport(0, 0, m_fs->getWidth(), m_fs->getHeight());
+		cmdb->setViewport(0, 0, m_forwardShading->getWidth(), m_forwardShading->getHeight());
 
-		m_lf->run(ctx, cmdb);
-		m_fs->drawVolumetric(ctx, cmdb);
+		m_lensFlare->run(ctx, cmdb);
+		m_forwardShading->drawVolumetric(ctx, cmdb);
 
-		ctx.m_fs.m_commandBuffers[threadId] = cmdb;
+		ctx.m_forwardShading.m_commandBuffers[threadId] = cmdb;
 	}
 
-	if(ctx.m_fs.m_commandBuffers[threadId])
+	if(ctx.m_forwardShading.m_commandBuffers[threadId])
 	{
-		ctx.m_fs.m_commandBuffers[threadId]->flush();
+		ctx.m_forwardShading.m_commandBuffers[threadId]->flush();
 	}
 
 	return ErrorCode::NONE;
@@ -571,9 +571,9 @@ Error Renderer::buildCommandBuffers(RenderingContext& ctx)
 	ThreadPool& threadPool = getThreadPool();
 
 	// Prepare
-	if(m_sm)
+	if(m_shadowMapping)
 	{
-		m_sm->prepareBuildCommandBuffers(ctx);
+		m_shadowMapping->prepareBuildCommandBuffers(ctx);
 	}
 
 	// Find the last jobs for MS and FS
@@ -593,8 +593,8 @@ Error Renderer::buildCommandBuffers(RenderingContext& ctx)
 		}
 	}
 
-	ctx.m_ms.m_lastThreadWithWork = lastMsJob;
-	ctx.m_fs.m_lastThreadWithWork = lastFsJob;
+	ctx.m_gbuffer.m_lastThreadWithWork = lastMsJob;
+	ctx.m_forwardShading.m_lastThreadWithWork = lastFsJob;
 
 	// Build
 	class Task : public ThreadPoolTask

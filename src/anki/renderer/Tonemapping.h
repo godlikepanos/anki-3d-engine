@@ -13,27 +13,26 @@ namespace anki
 /// @addtogroup renderer
 /// @{
 
-/// Upscale some textures and append them to IS.
-class FsUpscale : public RenderingPass
+/// Tonemapping.
+class Tonemapping : public RenderingPass
 {
-public:
-	FsUpscale(Renderer* r)
+anki_internal:
+	BufferPtr m_luminanceBuff;
+
+	Tonemapping(Renderer* r)
 		: RenderingPass(r)
 	{
 	}
 
-	ANKI_USE_RESULT Error init(const ConfigSet& config);
+	ANKI_USE_RESULT Error init(const ConfigSet& cfg);
 
 	void run(RenderingContext& ctx);
 
 private:
-	FramebufferPtr m_fb;
-	ShaderResourcePtr m_frag;
+	ShaderResourcePtr m_luminanceShader;
 	ShaderProgramPtr m_prog;
 
-	TextureResourcePtr m_noiseTex;
-
-	ANKI_USE_RESULT Error initInternal(const ConfigSet& config);
+	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 };
 /// @}
 

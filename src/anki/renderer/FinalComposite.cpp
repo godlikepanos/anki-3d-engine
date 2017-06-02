@@ -3,14 +3,14 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/renderer/Pps.h>
+#include <anki/renderer/FinalComposite.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/Bloom.h>
-#include <anki/renderer/Taa.h>
-#include <anki/renderer/Sslf.h>
-#include <anki/renderer/Tm.h>
-#include <anki/renderer/Is.h>
-#include <anki/renderer/Ms.h>
+#include <anki/renderer/TemporalAA.h>
+#include <anki/renderer/ScreenspaceLensFlare.h>
+#include <anki/renderer/Tonemapping.h>
+#include <anki/renderer/LightShading.h>
+#include <anki/renderer/GBuffer.h>
 #include <anki/renderer/Dbg.h>
 #include <anki/renderer/Ssao.h>
 #include <anki/renderer/DownscaleBlur.h>
@@ -22,18 +22,18 @@
 namespace anki
 {
 
-const PixelFormat Pps::RT_PIXEL_FORMAT(ComponentFormat::R8G8B8, TransformFormat::UNORM);
+const PixelFormat FinalComposite::RT_PIXEL_FORMAT(ComponentFormat::R8G8B8, TransformFormat::UNORM);
 
-Pps::Pps(Renderer* r)
+FinalComposite::FinalComposite(Renderer* r)
 	: RenderingPass(r)
 {
 }
 
-Pps::~Pps()
+FinalComposite::~FinalComposite()
 {
 }
 
-Error Pps::initInternal(const ConfigSet& config)
+Error FinalComposite::initInternal(const ConfigSet& config)
 {
 	ANKI_ASSERT("Initializing PPS");
 
@@ -82,7 +82,7 @@ Error Pps::initInternal(const ConfigSet& config)
 	return ErrorCode::NONE;
 }
 
-Error Pps::init(const ConfigSet& config)
+Error FinalComposite::init(const ConfigSet& config)
 {
 	Error err = initInternal(config);
 	if(err)
@@ -93,7 +93,7 @@ Error Pps::init(const ConfigSet& config)
 	return err;
 }
 
-Error Pps::loadColorGradingTexture(CString filename)
+Error FinalComposite::loadColorGradingTexture(CString filename)
 {
 	m_lut.reset(nullptr);
 	ANKI_CHECK(getResourceManager().loadResource(filename, m_lut));
@@ -104,7 +104,7 @@ Error Pps::loadColorGradingTexture(CString filename)
 	return ErrorCode::NONE;
 }
 
-Error Pps::run(RenderingContext& ctx)
+Error FinalComposite::run(RenderingContext& ctx)
 {
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
@@ -114,7 +114,7 @@ Error Pps::run(RenderingContext& ctx)
 
 	// Bind stuff
 	cmdb->bindTextureAndSampler(
-		0, 0, m_r->getTaa().getRt(), (drawToDefaultFb) ? m_r->getNearestSampler() : m_r->getLinearSampler());
+		0, 0, m_r->getTemporalAA().getRt(), (drawToDefaultFb) ? m_r->getNearestSampler() : m_r->getLinearSampler());
 	cmdb->bindTexture(0, 1, m_r->getBloom().m_upscale.m_rt);
 	cmdb->bindTexture(0, 2, m_lut->getGrTexture());
 	cmdb->bindTexture(0, 3, m_blueNoise->getGrTexture());
@@ -123,7 +123,7 @@ Error Pps::run(RenderingContext& ctx)
 		cmdb->bindTexture(0, 5, m_r->getDbg().getRt());
 	}
 
-	cmdb->bindStorageBuffer(0, 0, m_r->getTm().m_luminanceBuff, 0, MAX_PTR_SIZE);
+	cmdb->bindStorageBuffer(0, 0, m_r->getTonemapping().m_luminanceBuff, 0, MAX_PTR_SIZE);
 
 	Vec4* uniforms = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
 	uniforms->x() = F32(m_r->getFrameCount() % m_blueNoise->getLayerCount());

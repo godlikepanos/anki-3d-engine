@@ -14,15 +14,15 @@ namespace anki
 /// @{
 
 /// Forward rendering stage. The objects that blend must be handled differently
-class Fs : public RenderingPass
+class ForwardShading : public RenderingPass
 {
 anki_internal:
-	Fs(Renderer* r)
+	ForwardShading(Renderer* r)
 		: RenderingPass(r)
 	{
 	}
 
-	~Fs();
+	~ForwardShading();
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 
@@ -72,6 +72,29 @@ private:
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 	ANKI_USE_RESULT Error initVol();
+};
+
+/// Upscale some textures and append them to light buffer.
+class ForwardShadingUpscale : public RenderingPass
+{
+public:
+	ForwardShadingUpscale(Renderer* r)
+		: RenderingPass(r)
+	{
+	}
+
+	ANKI_USE_RESULT Error init(const ConfigSet& config);
+
+	void run(RenderingContext& ctx);
+
+private:
+	FramebufferPtr m_fb;
+	ShaderResourcePtr m_frag;
+	ShaderProgramPtr m_prog;
+
+	TextureResourcePtr m_noiseTex;
+
+	ANKI_USE_RESULT Error initInternal(const ConfigSet& config);
 };
 /// @}
 

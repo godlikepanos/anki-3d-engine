@@ -35,7 +35,7 @@ http://www.anki3d.org/LICENSE
 				</input>
 			</inputs>
 
-			<source><![CDATA[#include "shaders/MsCommonVert.glsl"
+			<source><![CDATA[#include "shaders/GBufferCommonVert.glsl"
 void main() 
 {
 #if PASS == 0
@@ -145,7 +145,7 @@ void main()
 				</input>
 			</inputs>
 
-			<source><![CDATA[#include "shaders/MsCommonFrag.glsl"
+			<source><![CDATA[#include "shaders/GBufferCommonFrag.glsl"
 void main()
 {
 #if PASS == 0

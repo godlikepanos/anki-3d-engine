@@ -22,15 +22,15 @@ class ReflectionProbeComponent;
 /// @addtogroup renderer
 /// @{
 
-/// Image based reflections.
-class Ir : public RenderingPass
+/// Probe reflections and irradiance.
+class Indirect : public RenderingPass
 {
 	friend class IrTask;
 
 anki_internal:
-	Ir(Renderer* r);
+	Indirect(Renderer* r);
 
-	~Ir();
+	~Indirect();
 
 	ANKI_USE_RESULT Error init(const ConfigSet& cfg);
 
@@ -66,19 +66,19 @@ private:
 	{
 	public:
 		// MS
-		Array<TexturePtr, MS_COLOR_ATTACHMENT_COUNT> m_gbufferColorRts;
+		Array<TexturePtr, GBUFFER_COLOR_ATTACHMENT_COUNT> m_gbufferColorRts;
 		TexturePtr m_gbufferDepthRt;
-		FramebufferPtr m_msFb;
+		FramebufferPtr m_gbufferFb;
 
 		// IS
-		FramebufferPtr m_isFb;
+		FramebufferPtr m_lightShadingFb;
 
 		// Irradiance
 		FramebufferPtr m_irradianceFb;
 
 		Bool created() const
 		{
-			return m_isFb.isCreated();
+			return m_lightShadingFb.isCreated();
 		}
 	};
 
@@ -105,11 +105,9 @@ private:
 		TexturePtr m_lightRt; ///< Cube array.
 		U32 m_lightRtMipCount = 0;
 
-		ShaderResourcePtr m_lightVert;
-		ShaderResourcePtr m_plightFrag;
-		ShaderResourcePtr m_slightFrag;
-		ShaderProgramPtr m_plightProg;
-		ShaderProgramPtr m_slightProg;
+		ShaderProgramResourcePtr m_lightProg;
+		ShaderProgramPtr m_plightGrProg;
+		ShaderProgramPtr m_slightGrProg;
 
 		BufferPtr m_plightPositions;
 		BufferPtr m_plightIndices;
@@ -126,8 +124,8 @@ private:
 		TexturePtr m_cubeArr;
 		U32 m_cubeArrMipCount = 0;
 
-		ShaderResourcePtr m_frag;
-		ShaderProgramPtr m_prog;
+		ShaderProgramResourcePtr m_prog;
+		ShaderProgramPtr m_grProg;
 	} m_irradiance;
 
 	DynamicArray<CacheEntry> m_cacheEntries;

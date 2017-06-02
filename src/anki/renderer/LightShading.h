@@ -20,13 +20,13 @@ class LightBin;
 /// @addtogroup renderer
 /// @{
 
-/// Illumination stage
-class Is : public RenderingPass
+/// Clustered deferred light pass.
+class LightShading : public RenderingPass
 {
 anki_internal:
-	Is(Renderer* r);
+	LightShading(Renderer* r);
 
-	~Is();
+	~LightShading();
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 

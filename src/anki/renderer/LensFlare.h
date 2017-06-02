@@ -17,15 +17,15 @@ namespace anki
 /// @{
 
 /// Lens flare rendering pass. Part of forward shading.
-class Lf : public RenderingPass
+class LensFlare : public RenderingPass
 {
 anki_internal:
-	Lf(Renderer* r)
+	LensFlare(Renderer* r)
 		: RenderingPass(r)
 	{
 	}
 
-	~Lf();
+	~LensFlare();
 
 	ANKI_USE_RESULT Error init(const ConfigSet& config);
 

@@ -3,14 +3,14 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/renderer/Tm.h>
+#include <anki/renderer/Tonemapping.h>
 #include <anki/renderer/DownscaleBlur.h>
 #include <anki/renderer/Renderer.h>
 
 namespace anki
 {
 
-Error Tm::init(const ConfigSet& cfg)
+Error Tonemapping::init(const ConfigSet& cfg)
 {
 	ANKI_R_LOGI("Initializing tonemapping");
 	Error err = initInternal(cfg);
@@ -22,7 +22,7 @@ Error Tm::init(const ConfigSet& cfg)
 	return err;
 }
 
-Error Tm::initInternal(const ConfigSet& initializer)
+Error Tonemapping::initInternal(const ConfigSet& initializer)
 {
 	// Create shader
 	ANKI_CHECK(m_r->createShaderf("shaders/TmAverageLuminance.comp.glsl",
@@ -58,7 +58,7 @@ Error Tm::initInternal(const ConfigSet& initializer)
 	return ErrorCode::NONE;
 }
 
-void Tm::run(RenderingContext& ctx)
+void Tonemapping::run(RenderingContext& ctx)
 {
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 	cmdb->bindShaderProgram(m_prog);

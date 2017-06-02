@@ -272,15 +272,20 @@ void convertTextureInformation(const PixelFormat& pf,
 	switch(pf.m_components)
 	{
 #if ANKI_GL == ANKI_GL_DESKTOP
-	case ComponentFormat::R8G8B8_S3TC:
+	case ComponentFormat::R8G8B8_BC1:
 		format = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
 		internalFormat = format;
 		type = GL_UNSIGNED_BYTE;
 		break;
-	case ComponentFormat::R8G8B8A8_S3TC:
+	case ComponentFormat::R8G8B8A8_BC3:
 		format = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
 		internalFormat = format;
 		type = GL_UNSIGNED_BYTE;
+		break;
+	case ComponentFormat::R16G16B16_BC6:
+		format = GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT;
+		internalFormat = format;
+		type = GL_FLOAT;
 		break;
 #else
 	case ComponentFormat::R8G8B8_ETC2:

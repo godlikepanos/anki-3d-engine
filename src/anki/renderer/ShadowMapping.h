@@ -20,7 +20,7 @@ class SceneNode;
 /// @{
 
 /// Shadowmapping pass
-class Sm : public RenderingPass
+class ShadowMapping : public RenderingPass
 {
 anki_internal:
 	static const PixelFormat DEPTH_RT_PIXEL_FORMAT;
@@ -31,12 +31,12 @@ anki_internal:
 	TexturePtr m_spotTexArray;
 	TexturePtr m_omniTexArray;
 
-	Sm(Renderer* r)
+	ShadowMapping(Renderer* r)
 		: RenderingPass(r)
 	{
 	}
 
-	~Sm();
+	~ShadowMapping();
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 

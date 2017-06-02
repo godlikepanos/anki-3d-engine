@@ -5,7 +5,7 @@
 
 #include <anki/renderer/DownscaleBlur.h>
 #include <anki/renderer/Renderer.h>
-#include <anki/renderer/Taa.h>
+#include <anki/renderer/TemporalAA.h>
 
 namespace anki
 {
@@ -35,7 +35,7 @@ Error DownscaleBlur::initSubpass(U idx, const UVec2& inputTexSize)
 	// RT
 	pass.m_rt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(pass.m_width,
 		pass.m_height,
-		IS_COLOR_ATTACHMENT_PIXEL_FORMAT,
+		LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
 			| TextureUsageBit::SAMPLED_COMPUTE,
 		SamplingFilter::LINEAR,
@@ -92,7 +92,7 @@ void DownscaleBlur::run(RenderingContext& ctx)
 {
 	CommandBufferPtr cmdb = ctx.m_commandBuffer;
 
-	cmdb->bindTexture(0, 0, m_r->getTaa().getRt());
+	cmdb->bindTexture(0, 0, m_r->getTemporalAA().getRt());
 
 	for(U i = 0; i < m_passes.getSize(); ++i)
 	{

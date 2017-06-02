@@ -217,7 +217,7 @@ Error TextureResource::load(const ResourceFilename& filename)
 			break;
 #if ANKI_GL == ANKI_GL_DESKTOP
 		case ImageLoader::DataCompression::S3TC:
-			init.m_format.m_components = ComponentFormat::R8G8B8_S3TC;
+			init.m_format.m_components = ComponentFormat::R8G8B8_BC1;
 			break;
 #else
 		case ImageLoader::DataCompression::ETC:
@@ -237,7 +237,7 @@ Error TextureResource::load(const ResourceFilename& filename)
 			break;
 #if ANKI_GL == ANKI_GL_DESKTOP
 		case ImageLoader::DataCompression::S3TC:
-			init.m_format.m_components = ComponentFormat::R8G8B8A8_S3TC;
+			init.m_format.m_components = ComponentFormat::R8G8B8A8_BC3;
 			break;
 #else
 		case ImageLoader::DataCompression::ETC:

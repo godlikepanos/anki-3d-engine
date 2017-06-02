@@ -1,10 +1,52 @@
-// Copyright (C) 2009-2017, Panagiotis Christopoulos Charitos and contributors.
-// All rights reserved.
-// Code licensed under the BSD License.
-// http://www.anki3d.org/LICENSE
+<!-- 
+Copyright (C) 2009-2017, Panagiotis Christopoulos Charitos and contributors.
+All rights reserved.
+Code licensed under the BSD License.
+http://www.anki3d.org/LICENSE
+-->
 
+<!-- Classic deferred lighting shader -->
+
+<shaderProgram>
+	<mutators>
+		<mutator name="LIGHT_TYPE" values="0 1"/>
+	</mutators>
+
+	<shaders>
+		<shader type="vert">
+			<source><![CDATA[
+#include "shaders/Common.glsl"
+
+layout(location = 0) in vec3 in_position;
+
+out gl_PerVertex
+{
+	vec4 gl_Position;
+};
+
+layout(ANKI_UBO_BINDING(0, 0), row_major) uniform u0_
+{
+	mat4 u_mvp;
+};
+
+void main()
+{
+	ANKI_WRITE_POSITION(u_mvp * vec4(in_position, 1.0));
+}
+			]]></source>
+		</shader>
+
+		<shader type="frag">
+			<inputs>
+				<input name="FB_SIZE" type="uvec2" const="1" />
+			</inputs>
+
+			<source><![CDATA[
 #include "shaders/Pack.glsl"
 #include "shaders/LightFunctions.glsl"
+
+#define POINT_LIGHT_TYPE 0
+#define SPOT_LIGHT_TYPE 1
 
 layout(location = 0) out vec3 out_color;
 
@@ -34,16 +76,16 @@ layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2D u_msDepthRt;
 
 layout(ANKI_UBO_BINDING(0, 1)) uniform u1_
 {
-#if defined(POINT_LIGHT)
+#if LIGHT_TYPE == POINT_LIGHT_TYPE
 	PointLight u_light;
-#elif defined(SPOT_LIGHT)
+#elif LIGHT_TYPE == SPOT_LIGHT_TYPE
 	SpotLight u_light;
 #else
 #error See file
 #endif
 };
 
-#if defined(POINT_LIGHT)
+#if LIGHT_TYPE == POINT_LIGHT_TYPE
 #define u_ldiff u_light.diffuseColorPad1.xyz
 #define u_lspec u_light.specularColorPad1.xyz
 #else
@@ -66,7 +108,7 @@ vec3 readPosition(in vec2 uv)
 void main()
 {
 	// Read G-buffer
-	vec2 uv = vec2(gl_FragCoord.xy) / vec2(RENDERING_WIDTH, RENDERING_HEIGHT);
+	vec2 uv = vec2(gl_FragCoord.xy) / vec2(FB_SIZE.x, FB_SIZE.y);
 	GbufferInfo gbuffer;
 	readGBuffer(u_msRt0, u_msRt1, u_msRt2, uv, 0.0, gbuffer);
 	float a2 = pow(gbuffer.roughness, 2.0);
@@ -85,7 +127,7 @@ void main()
 	float att = computeAttenuationFactor(u_light.posRadius.w, frag2Light);
 	float lambert = nol;
 
-#if defined(POINT_LIGHT)
+#if LIGHT_TYPE == POINT_LIGHT_TYPE
 	out_color = (specC + diffC) * (att * max(lambert, gbuffer.subsurface));
 #else
 	float spot =
@@ -94,3 +136,7 @@ void main()
 	out_color = (diffC + specC) * (att * spot * max(lambert, gbuffer.subsurface));
 #endif
 }
+			]]></source>
+		</shader>
+	</shaders>
+</shaderProgram>

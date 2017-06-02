@@ -6,8 +6,8 @@
 #include <anki/renderer/Volumetric.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/DepthDownscale.h>
-#include <anki/renderer/Sm.h>
-#include <anki/renderer/Is.h>
+#include <anki/renderer/ShadowMapping.h>
+#include <anki/renderer/LightShading.h>
 #include <anki/renderer/LightBin.h>
 #include <anki/scene/FrustumComponent.h>
 
@@ -24,7 +24,7 @@ Error VolumetricMain::init(const ConfigSet& config)
 		// RT
 		TextureInitInfo rtInit = m_r->create2DRenderTargetInitInfo(m_vol->m_width,
 			m_vol->m_height,
-			IS_COLOR_ATTACHMENT_PIXEL_FORMAT,
+			LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 			SamplingFilter::LINEAR,
 			1,
@@ -49,9 +49,9 @@ Error VolumetricMain::init(const ConfigSet& config)
 	ShaderProgramResourceConstantValueInitList<3> consts(m_prog);
 	consts.add("FB_SIZE", UVec2(m_vol->m_width, m_vol->m_height))
 		.add("CLUSTER_COUNT",
-			UVec3(m_r->getIs().getLightBin().getClusterer().getClusterCountX(),
-				m_r->getIs().getLightBin().getClusterer().getClusterCountY(),
-				m_r->getIs().getLightBin().getClusterer().getClusterCountZ()))
+			UVec3(m_r->getLightShading().getLightBin().getClusterer().getClusterCountX(),
+				m_r->getLightShading().getLightBin().getClusterer().getClusterCountY(),
+				m_r->getLightShading().getLightBin().getClusterer().getClusterCountZ()))
 		.add("NOISE_MAP_SIZE", U32(m_noiseTex->getWidth()));
 
 	const ShaderProgramResourceVariant* variant;
@@ -88,12 +88,12 @@ void VolumetricMain::run(RenderingContext& ctx)
 	TexturePtr& history = m_rt[(m_r->getFrameCount() + 1) & 1];
 	cmdb->informTextureCurrentUsage(history, TextureUsageBit::SAMPLED_FRAGMENT);
 	cmdb->bindTexture(0, 2, history);
-	cmdb->bindTexture(0, 3, m_r->getSm().m_spotTexArray);
-	cmdb->bindTexture(0, 4, m_r->getSm().m_omniTexArray);
+	cmdb->bindTexture(0, 3, m_r->getShadowMapping().m_spotTexArray);
+	cmdb->bindTexture(0, 4, m_r->getShadowMapping().m_omniTexArray);
 
-	bindUniforms(cmdb, 0, 0, ctx.m_is.m_commonToken);
-	bindUniforms(cmdb, 0, 1, ctx.m_is.m_pointLightsToken);
-	bindUniforms(cmdb, 0, 2, ctx.m_is.m_spotLightsToken);
+	bindUniforms(cmdb, 0, 0, ctx.m_lightShading.m_commonToken);
+	bindUniforms(cmdb, 0, 1, ctx.m_lightShading.m_pointLightsToken);
+	bindUniforms(cmdb, 0, 2, ctx.m_lightShading.m_spotLightsToken);
 
 	struct Unis
 	{
@@ -113,8 +113,8 @@ void VolumetricMain::run(RenderingContext& ctx)
 	uniforms->m_fogParticleColorPad1 = Vec4(m_fogParticleColor, 0.0);
 	uniforms->m_prevViewProjMatMulInvViewProjMat = ctx.m_prevViewProjMat * ctx.m_viewProjMat.getInverse();
 
-	bindStorage(cmdb, 0, 0, ctx.m_is.m_clustersToken);
-	bindStorage(cmdb, 0, 1, ctx.m_is.m_lightIndicesToken);
+	bindStorage(cmdb, 0, 0, ctx.m_lightShading.m_clustersToken);
+	bindStorage(cmdb, 0, 1, ctx.m_lightShading.m_lightIndicesToken);
 
 	cmdb->bindShaderProgram(m_grProg);
 
@@ -136,7 +136,7 @@ Error VolumetricHBlur::init(const ConfigSet& config)
 	// Create RTs
 	m_rt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_vol->m_width,
 		m_vol->m_height,
-		IS_COLOR_ATTACHMENT_PIXEL_FORMAT,
+		LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		SamplingFilter::LINEAR,
 		1,

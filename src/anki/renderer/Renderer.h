@@ -54,33 +54,25 @@ public:
 
 	StackAllocator<U8> m_tempAllocator;
 
-	/// @name MS
-	/// @{
-	class Ms
+	class GBuffer
 	{
 	public:
 		Array<CommandBufferPtr, ThreadPool::MAX_THREADS> m_commandBuffers;
 		U32 m_lastThreadWithWork = 0;
-	} m_ms;
-	/// @}
+	} m_gbuffer;
 
-	/// @name LF
-	/// @{
-	class Lf
+	class LensFlare
 	{
 	public:
 		DynamicArrayAuto<OcclusionQueryPtr> m_queriesToTest;
 
-		Lf(const StackAllocator<U8>& alloc)
+		LensFlare(const StackAllocator<U8>& alloc)
 			: m_queriesToTest(alloc)
 		{
 		}
-	} m_lf;
-	/// @}
+	} m_lensFlare;
 
-	/// @name IS
-	/// @{
-	class Is
+	class LightShading
 	{
 	public:
 		StagingGpuMemoryToken m_commonToken;
@@ -93,12 +85,9 @@ public:
 
 		TexturePtr m_diffDecalTex;
 		TexturePtr m_normRoughnessDecalTex;
-	} m_is;
-	/// @}
+	} m_lightShading;
 
-	/// @name Shadow mapping
-	/// @{
-	class Sm
+	class ShadowMapping
 	{
 	public:
 		DynamicArrayAuto<FramebufferPtr> m_spotFramebuffers;
@@ -115,7 +104,7 @@ public:
 		DynamicArrayAuto<SceneNode*> m_spots;
 		DynamicArrayAuto<SceneNode*> m_omnis;
 
-		Sm(const StackAllocator<U8>& alloc)
+		ShadowMapping(const StackAllocator<U8>& alloc)
 			: m_spotFramebuffers(alloc)
 			, m_omniFramebuffers(alloc)
 			, m_spotCacheIndices(alloc)
@@ -126,18 +115,14 @@ public:
 			, m_omnis(alloc)
 		{
 		}
-	} m_sm;
-	/// @}
+	} m_shadowMapping;
 
-	/// @name FS
-	/// @{
-	class Fs
+	class ForwardShading
 	{
 	public:
 		Array<CommandBufferPtr, ThreadPool::MAX_THREADS> m_commandBuffers;
 		U32 m_lastThreadWithWork = 0;
-	} m_fs;
-	/// @}
+	} m_forwardShading;
 
 	FramebufferPtr m_outFb;
 	U32 m_outFbWidth = 0;
@@ -145,8 +130,8 @@ public:
 
 	RenderingContext(const StackAllocator<U8>& alloc)
 		: m_tempAllocator(alloc)
-		, m_lf(alloc)
-		, m_sm(alloc)
+		, m_lensFlare(alloc)
+		, m_shadowMapping(alloc)
 	{
 	}
 };
@@ -160,24 +145,24 @@ public:
 
 	~Renderer();
 
-	Ir& getIr()
+	Indirect& getIndirect()
 	{
-		return *m_ir;
+		return *m_indirect;
 	}
 
-	Sm& getSm()
+	ShadowMapping& getShadowMapping()
 	{
-		return *m_sm;
+		return *m_shadowMapping;
 	}
 
-	Ms& getMs()
+	GBuffer& getGBuffer()
 	{
-		return *m_ms;
+		return *m_gbuffer;
 	}
 
-	Is& getIs()
+	LightShading& getLightShading()
 	{
-		return *m_is;
+		return *m_lightShading;
 	}
 
 	DepthDownscale& getDepthDownscale()
@@ -185,9 +170,9 @@ public:
 		return *m_depth;
 	}
 
-	Fs& getFs()
+	ForwardShading& getForwardShading()
 	{
-		return *m_fs;
+		return *m_forwardShading;
 	}
 
 	Volumetric& getVolumetric()
@@ -195,9 +180,9 @@ public:
 		return *m_vol;
 	}
 
-	Tm& getTm()
+	Tonemapping& getTonemapping()
 	{
-		return *m_tm;
+		return *m_tonemapping;
 	}
 
 	Ssao& getSsao()
@@ -210,9 +195,9 @@ public:
 		return *m_bloom;
 	}
 
-	Pps& getPps()
+	FinalComposite& getFinalComposite()
 	{
-		return *m_pps;
+		return *m_finalComposite;
 	}
 
 	Dbg& getDbg()
@@ -220,9 +205,9 @@ public:
 		return *m_dbg;
 	}
 
-	Taa& getTaa()
+	TemporalAA& getTemporalAA()
 	{
-		return *m_taa;
+		return *m_temporalAA;
 	}
 
 	DownscaleBlur& getDownscaleBlur()
@@ -415,21 +400,21 @@ private:
 
 	/// @name Rendering stages
 	/// @{
-	UniquePtr<Ir> m_ir;
-	UniquePtr<Sm> m_sm; ///< Shadow mapping.
-	UniquePtr<Ms> m_ms; ///< Material rendering stage
-	UniquePtr<Is> m_is; ///< Illumination rendering stage
+	UniquePtr<Indirect> m_indirect;
+	UniquePtr<ShadowMapping> m_shadowMapping; ///< Shadow mapping.
+	UniquePtr<GBuffer> m_gbuffer; ///< Material rendering stage
+	UniquePtr<LightShading> m_lightShading; ///< Illumination rendering stage
 	UniquePtr<DepthDownscale> m_depth;
-	UniquePtr<Fs> m_fs; ///< Forward shading.
+	UniquePtr<ForwardShading> m_forwardShading; ///< Forward shading.
 	UniquePtr<Volumetric> m_vol; ///< Volumetric effects.
-	UniquePtr<Lf> m_lf; ///< Forward shading lens flares.
-	UniquePtr<FsUpscale> m_fsUpscale;
+	UniquePtr<LensFlare> m_lensFlare; ///< Forward shading lens flares.
+	UniquePtr<ForwardShadingUpscale> m_fsUpscale;
 	UniquePtr<DownscaleBlur> m_downscale;
-	UniquePtr<Taa> m_taa;
-	UniquePtr<Tm> m_tm;
+	UniquePtr<TemporalAA> m_temporalAA;
+	UniquePtr<Tonemapping> m_tonemapping;
 	UniquePtr<Ssao> m_ssao;
 	UniquePtr<Bloom> m_bloom;
-	UniquePtr<Pps> m_pps; ///< Postprocessing rendering stage
+	UniquePtr<FinalComposite> m_finalComposite; ///< Postprocessing rendering stage
 	UniquePtr<Dbg> m_dbg; ///< Debug stage.
 	/// @}
 

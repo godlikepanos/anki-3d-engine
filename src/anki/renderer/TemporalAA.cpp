@@ -3,24 +3,24 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/renderer/Taa.h>
+#include <anki/renderer/TemporalAA.h>
 #include <anki/renderer/Renderer.h>
-#include <anki/renderer/Ms.h>
-#include <anki/renderer/Is.h>
+#include <anki/renderer/GBuffer.h>
+#include <anki/renderer/LightShading.h>
 
 namespace anki
 {
 
-Taa::Taa(Renderer* r)
+TemporalAA::TemporalAA(Renderer* r)
 	: RenderingPass(r)
 {
 }
 
-Taa::~Taa()
+TemporalAA::~TemporalAA()
 {
 }
 
-Error Taa::init(const ConfigSet& config)
+Error TemporalAA::init(const ConfigSet& config)
 {
 	ANKI_R_LOGI("Initializing TAA");
 	Error err = initInternal(config);
@@ -33,7 +33,7 @@ Error Taa::init(const ConfigSet& config)
 	return ErrorCode::NONE;
 }
 
-Error Taa::initInternal(const ConfigSet& config)
+Error TemporalAA::initInternal(const ConfigSet& config)
 {
 	ANKI_CHECK(m_r->getResourceManager().loadResource("programs/TemporalAAResolve.ankiprog", m_prog));
 	const ShaderProgramResourceVariant* variant;
@@ -44,7 +44,7 @@ Error Taa::initInternal(const ConfigSet& config)
 	{
 		m_rts[i] = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_r->getWidth(),
 			m_r->getHeight(),
-			IS_COLOR_ATTACHMENT_PIXEL_FORMAT,
+			LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 			SamplingFilter::LINEAR,
 			1,
@@ -60,7 +60,7 @@ Error Taa::initInternal(const ConfigSet& config)
 	return ErrorCode::NONE;
 }
 
-void Taa::setPreRunBarriers(RenderingContext& ctx)
+void TemporalAA::setPreRunBarriers(RenderingContext& ctx)
 {
 	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_rts[m_r->getFrameCount() & 1],
 		TextureUsageBit::NONE,
@@ -68,7 +68,7 @@ void Taa::setPreRunBarriers(RenderingContext& ctx)
 		TextureSurfaceInfo(0, 0, 0, 0));
 }
 
-void Taa::run(RenderingContext& ctx)
+void TemporalAA::run(RenderingContext& ctx)
 {
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
@@ -76,8 +76,8 @@ void Taa::run(RenderingContext& ctx)
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 
 	cmdb->bindShaderProgram(m_grProg);
-	cmdb->bindTextureAndSampler(0, 0, m_r->getMs().m_depthRt, m_r->getLinearSampler());
-	cmdb->bindTextureAndSampler(0, 1, m_r->getIs().getRt(), m_r->getLinearSampler());
+	cmdb->bindTextureAndSampler(0, 0, m_r->getGBuffer().m_depthRt, m_r->getLinearSampler());
+	cmdb->bindTextureAndSampler(0, 1, m_r->getLightShading().getRt(), m_r->getLinearSampler());
 	cmdb->informTextureCurrentUsage(m_rts[(m_r->getFrameCount() + 1) & 1], TextureUsageBit::SAMPLED_FRAGMENT);
 	cmdb->bindTextureAndSampler(0, 2, m_rts[(m_r->getFrameCount() + 1) & 1], m_r->getLinearSampler());
 
@@ -88,7 +88,7 @@ void Taa::run(RenderingContext& ctx)
 	cmdb->endRenderPass();
 }
 
-void Taa::setPostRunBarriers(RenderingContext& ctx)
+void TemporalAA::setPostRunBarriers(RenderingContext& ctx)
 {
 	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_rts[m_r->getFrameCount() & 1],
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
@@ -96,7 +96,7 @@ void Taa::setPostRunBarriers(RenderingContext& ctx)
 		TextureSurfaceInfo(0, 0, 0, 0));
 }
 
-TexturePtr Taa::getRt() const
+TexturePtr TemporalAA::getRt() const
 {
 	return m_rts[m_r->getFrameCount() & 1];
 }

@@ -15,7 +15,7 @@ namespace anki
 /// @{
 
 /// Post-processing stage.
-class Pps : public RenderingPass
+class FinalComposite : public RenderingPass
 {
 public:
 	/// Load the color grading texture.
@@ -24,8 +24,8 @@ public:
 anki_internal:
 	static const PixelFormat RT_PIXEL_FORMAT;
 
-	Pps(Renderer* r);
-	~Pps();
+	FinalComposite(Renderer* r);
+	~FinalComposite();
 
 	ANKI_USE_RESULT Error init(const ConfigSet& config);
 	ANKI_USE_RESULT Error run(RenderingContext& ctx);

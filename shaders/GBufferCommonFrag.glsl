@@ -3,11 +3,11 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SHADERS_MS_COMMON_FRAG_GLSL
-#define ANKI_SHADERS_MS_COMMON_FRAG_GLSL
+#ifndef ANKI_SHADERS_GBUFFER_COMMON_FRAG_GLSL
+#define ANKI_SHADERS_GBUFFER_COMMON_FRAG_GLSL
 
 #include "shaders/Pack.glsl"
-#include "shaders/MsFsCommon.glsl"
+#include "shaders/Common.glsl"
 
 //
 // Input

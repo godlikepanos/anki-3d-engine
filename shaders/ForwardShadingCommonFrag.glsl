@@ -3,12 +3,11 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SHADERS_FS_COMMON_FRAG_GLSL
-#define ANKI_SHADERS_FS_COMMON_FRAG_GLSL
+#ifndef ANKI_SHADERS_FORWARD_SHADING_COMMON_FRAG_GLSL
+#define ANKI_SHADERS_FORWARD_SHADING_COMMON_FRAG_GLSL
 
 // Common code for all fragment shaders of BS
 #include "shaders/Common.glsl"
-#include "shaders/MsFsCommon.glsl"
 #include "shaders/Functions.glsl"
 #include "shaders/Clusterer.glsl"
 

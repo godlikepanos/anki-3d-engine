@@ -19,24 +19,24 @@ namespace anki
 
 // Forward
 class Renderer;
-class Ms;
-class Sm;
-class Is;
-class Fs;
-class Lf;
+class GBuffer;
+class ShadowMapping;
+class LightShading;
+class ForwardShading;
+class LensFlare;
 class Ssao;
-class Sslf;
-class Tm;
+class ScreenspaceLensFlare;
+class Tonemapping;
 class Bloom;
-class Pps;
+class FinalComposite;
 class Dbg;
 class Tiler;
-class Ir;
-class FsUpscale;
+class Indirect;
+class ForwardShadingUpscale;
 class DownscaleBlur;
 class Volumetric;
 class DepthDownscale;
-class Taa;
+class TemporalAA;
 
 class RenderingContext;
 class DebugDrawer;
@@ -68,18 +68,18 @@ inline void computeLinearizeDepthOptimal(F32 near, F32 far, F32& a, F32& b)
 	b = (near - far) / (2.0f * near);
 }
 
-const U MS_COLOR_ATTACHMENT_COUNT = 3;
+const U GBUFFER_COLOR_ATTACHMENT_COUNT = 3;
 
 /// Downsample and blur down to a texture with size DOWNSCALE_BLUR_DOWN_TO
 const U DOWNSCALE_BLUR_DOWN_TO = 32;
 
-extern const Array<PixelFormat, MS_COLOR_ATTACHMENT_COUNT> MS_COLOR_ATTACHMENT_PIXEL_FORMATS;
+extern const Array<PixelFormat, GBUFFER_COLOR_ATTACHMENT_COUNT> MS_COLOR_ATTACHMENT_PIXEL_FORMATS;
 
-const PixelFormat MS_DEPTH_ATTACHMENT_PIXEL_FORMAT(ComponentFormat::D24S8, TransformFormat::UNORM);
+const PixelFormat GBUFFER_DEPTH_ATTACHMENT_PIXEL_FORMAT(ComponentFormat::D24S8, TransformFormat::UNORM);
 
-const PixelFormat IS_COLOR_ATTACHMENT_PIXEL_FORMAT(ComponentFormat::R11G11B10, TransformFormat::FLOAT);
+const PixelFormat LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT(ComponentFormat::R11G11B10, TransformFormat::FLOAT);
 
-const PixelFormat FS_COLOR_ATTACHMENT_PIXEL_FORMAT(ComponentFormat::R16G16B16A16, TransformFormat::FLOAT);
+const PixelFormat FORWARD_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT(ComponentFormat::R16G16B16A16, TransformFormat::FLOAT);
 
 const PixelFormat DBG_COLOR_ATTACHMENT_PIXEL_FORMAT(ComponentFormat::R8G8B8, TransformFormat::UNORM);
 /// @}

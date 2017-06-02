@@ -61,7 +61,7 @@ void ModelPatch::getRenderingDataSub(
 		attribs[1].m_format = PixelFormat(ComponentFormat::R16G16, TransformFormat::FLOAT);
 		attribs[1].m_relativeOffset = sizeof(Vec3);
 
-		if(key.m_pass == Pass::MS_FS)
+		if(key.m_pass == Pass::GB_FS)
 		{
 			attribs[2].m_bufferBinding = 0;
 			attribs[2].m_format = PixelFormat(ComponentFormat::R10G10B10A2, TransformFormat::SNORM);

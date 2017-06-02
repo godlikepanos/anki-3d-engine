@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/renderer/Ms.h>
+#include <anki/renderer/GBuffer.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/util/Logger.h>
 #include <anki/util/ThreadPool.h>
@@ -15,15 +15,15 @@
 namespace anki
 {
 
-Ms::~Ms()
+GBuffer::~GBuffer()
 {
 }
 
-Error Ms::createRt()
+Error GBuffer::createRt()
 {
 	m_depthRt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_r->getWidth(),
 		m_r->getHeight(),
-		MS_DEPTH_ATTACHMENT_PIXEL_FORMAT,
+		GBUFFER_DEPTH_ATTACHMENT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE
 			| TextureUsageBit::GENERATE_MIPMAPS,
 		SamplingFilter::NEAREST,
@@ -61,7 +61,7 @@ Error Ms::createRt()
 #endif
 
 	FramebufferInitInfo fbInit("gbuffer");
-	fbInit.m_colorAttachmentCount = MS_COLOR_ATTACHMENT_COUNT;
+	fbInit.m_colorAttachmentCount = GBUFFER_COLOR_ATTACHMENT_COUNT;
 	fbInit.m_colorAttachments[0].m_texture = m_rt0;
 	fbInit.m_colorAttachments[0].m_loadOperation = loadop;
 	fbInit.m_colorAttachments[0].m_clearValue.m_colorf = {{1.0, 0.0, 0.0, 0.0}};
@@ -81,7 +81,7 @@ Error Ms::createRt()
 	return ErrorCode::NONE;
 }
 
-Error Ms::init(const ConfigSet& initializer)
+Error GBuffer::init(const ConfigSet& initializer)
 {
 	ANKI_R_LOGI("Initializing g-buffer pass");
 
@@ -94,13 +94,13 @@ Error Ms::init(const ConfigSet& initializer)
 	return err;
 }
 
-Error Ms::initInternal(const ConfigSet& initializer)
+Error GBuffer::initInternal(const ConfigSet& initializer)
 {
 	ANKI_CHECK(createRt());
 	return ErrorCode::NONE;
 }
 
-Error Ms::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) const
+Error GBuffer::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) const
 {
 	ANKI_TRACE_START_EVENT(RENDER_MS);
 
@@ -122,7 +122,7 @@ Error Ms::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) 
 		}
 		cinf.m_framebuffer = m_fb;
 		CommandBufferPtr cmdb = m_r->getGrManager().newInstance<CommandBuffer>(cinf);
-		ctx.m_ms.m_commandBuffers[threadId] = cmdb;
+		ctx.m_gbuffer.m_commandBuffers[threadId] = cmdb;
 
 		// Inform on RTs
 		TextureSurfaceInfo surf(0, 0, 0, 0);
@@ -135,7 +135,7 @@ Error Ms::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) 
 		cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 
 		// Start drawing
-		ANKI_CHECK(m_r->getSceneDrawer().drawRange(Pass::MS_FS,
+		ANKI_CHECK(m_r->getSceneDrawer().drawRange(Pass::GB_FS,
 			ctx.m_viewMat,
 			ctx.m_viewProjMatJitter,
 			cmdb,
@@ -147,7 +147,7 @@ Error Ms::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) 
 	return ErrorCode::NONE;
 }
 
-void Ms::run(RenderingContext& ctx)
+void GBuffer::run(RenderingContext& ctx)
 {
 	ANKI_TRACE_START_EVENT(RENDER_MS);
 
@@ -159,9 +159,9 @@ void Ms::run(RenderingContext& ctx)
 
 	for(U i = 0; i < m_r->getThreadPool().getThreadsCount(); ++i)
 	{
-		if(ctx.m_ms.m_commandBuffers[i].isCreated())
+		if(ctx.m_gbuffer.m_commandBuffers[i].isCreated())
 		{
-			cmdb->pushSecondLevelCommandBuffer(ctx.m_ms.m_commandBuffers[i]);
+			cmdb->pushSecondLevelCommandBuffer(ctx.m_gbuffer.m_commandBuffers[i]);
 		}
 	}
 
@@ -170,7 +170,7 @@ void Ms::run(RenderingContext& ctx)
 	ANKI_TRACE_STOP_EVENT(RENDER_MS);
 }
 
-void Ms::setPreRunBarriers(RenderingContext& ctx)
+void GBuffer::setPreRunBarriers(RenderingContext& ctx)
 {
 	ANKI_TRACE_START_EVENT(RENDER_MS);
 
@@ -186,7 +186,7 @@ void Ms::setPreRunBarriers(RenderingContext& ctx)
 	ANKI_TRACE_STOP_EVENT(RENDER_MS);
 }
 
-void Ms::setPostRunBarriers(RenderingContext& ctx)
+void GBuffer::setPostRunBarriers(RenderingContext& ctx)
 {
 	ANKI_TRACE_START_EVENT(RENDER_MS);
 

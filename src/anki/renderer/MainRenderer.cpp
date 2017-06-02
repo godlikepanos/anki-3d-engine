@@ -5,11 +5,11 @@
 
 #include <anki/renderer/MainRenderer.h>
 #include <anki/renderer/Renderer.h>
-#include <anki/renderer/Is.h>
-#include <anki/renderer/Pps.h>
+#include <anki/renderer/LightShading.h>
+#include <anki/renderer/FinalComposite.h>
 #include <anki/renderer/Dbg.h>
-#include <anki/renderer/Ms.h>
-#include <anki/renderer/Ir.h>
+#include <anki/renderer/GBuffer.h>
+#include <anki/renderer/Indirect.h>
 #include <anki/scene/SceneGraph.h>
 #include <anki/scene/Camera.h>
 #include <anki/util/Logger.h>
@@ -132,7 +132,7 @@ Error MainRenderer::render(SceneGraph& scene)
 		cmdb->setViewport(0, 0, m_width, m_height);
 
 		cmdb->bindShaderProgram(m_blitProg);
-		cmdb->bindTexture(0, 0, m_r->getPps().getRt());
+		cmdb->bindTexture(0, 0, m_r->getFinalComposite().getRt());
 
 		m_r->drawQuad(cmdb);
 		cmdb->endRenderPass();

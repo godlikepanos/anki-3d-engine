@@ -48,4 +48,6 @@ const uint MAX_U32 = 0xFFFFFFFFu;
 #define readFirstInvocationARB(x_) (x_)
 #endif
 
+#define CALC_BITANGENT_IN_VERT 1
+
 #endif

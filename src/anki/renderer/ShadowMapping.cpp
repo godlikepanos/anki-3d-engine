@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/renderer/Sm.h>
+#include <anki/renderer/ShadowMapping.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/core/App.h>
 #include <anki/core/Trace.h>
@@ -17,15 +17,15 @@
 namespace anki
 {
 
-const PixelFormat Sm::DEPTH_RT_PIXEL_FORMAT(ComponentFormat::D16, TransformFormat::UNORM);
+const PixelFormat ShadowMapping::DEPTH_RT_PIXEL_FORMAT(ComponentFormat::D16, TransformFormat::UNORM);
 
-Sm::~Sm()
+ShadowMapping::~ShadowMapping()
 {
 	m_spots.destroy(getAllocator());
 	m_omnis.destroy(getAllocator());
 }
 
-Error Sm::init(const ConfigSet& config)
+Error ShadowMapping::init(const ConfigSet& config)
 {
 	ANKI_R_LOGI("Initializing shadowmapping");
 
@@ -38,7 +38,7 @@ Error Sm::init(const ConfigSet& config)
 	return err;
 }
 
-Error Sm::initInternal(const ConfigSet& config)
+Error ShadowMapping::initInternal(const ConfigSet& config)
 {
 	m_poissonEnabled = config.getNumber("sm.poissonEnabled");
 	m_bilinearEnabled = config.getNumber("sm.bilinearEnabled");
@@ -110,7 +110,7 @@ Error Sm::initInternal(const ConfigSet& config)
 	return ErrorCode::NONE;
 }
 
-void Sm::run(RenderingContext& ctx)
+void ShadowMapping::run(RenderingContext& ctx)
 {
 	ANKI_TRACE_START_EVENT(RENDER_SM);
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
@@ -118,13 +118,13 @@ void Sm::run(RenderingContext& ctx)
 	const U threadCount = m_r->getThreadPool().getThreadsCount();
 
 	// Spot lights
-	for(U i = 0; i < ctx.m_sm.m_spots.getSize(); ++i)
+	for(U i = 0; i < ctx.m_shadowMapping.m_spots.getSize(); ++i)
 	{
-		cmdb->beginRenderPass(ctx.m_sm.m_spotFramebuffers[i]);
+		cmdb->beginRenderPass(ctx.m_shadowMapping.m_spotFramebuffers[i]);
 		for(U j = 0; j < threadCount; ++j)
 		{
 			U idx = i * threadCount + j;
-			CommandBufferPtr& cmdb2 = ctx.m_sm.m_spotCommandBuffers[idx];
+			CommandBufferPtr& cmdb2 = ctx.m_shadowMapping.m_spotCommandBuffers[idx];
 			if(cmdb2.isCreated())
 			{
 				cmdb->pushSecondLevelCommandBuffer(cmdb2);
@@ -134,16 +134,16 @@ void Sm::run(RenderingContext& ctx)
 	}
 
 	// Omni lights
-	for(U i = 0; i < ctx.m_sm.m_omnis.getSize(); ++i)
+	for(U i = 0; i < ctx.m_shadowMapping.m_omnis.getSize(); ++i)
 	{
 		for(U j = 0; j < 6; ++j)
 		{
-			cmdb->beginRenderPass(ctx.m_sm.m_omniFramebuffers[i][j]);
+			cmdb->beginRenderPass(ctx.m_shadowMapping.m_omniFramebuffers[i][j]);
 
 			for(U k = 0; k < threadCount; ++k)
 			{
 				U idx = i * threadCount * 6 + k * 6 + j;
-				CommandBufferPtr& cmdb2 = ctx.m_sm.m_omniCommandBuffers[idx];
+				CommandBufferPtr& cmdb2 = ctx.m_shadowMapping.m_omniCommandBuffers[idx];
 				if(cmdb2.isCreated())
 				{
 					cmdb->pushSecondLevelCommandBuffer(cmdb2);
@@ -157,7 +157,7 @@ void Sm::run(RenderingContext& ctx)
 }
 
 template<typename TShadowmap, typename TContainer>
-void Sm::bestCandidate(SceneNode& light, TContainer& arr, TShadowmap*& out)
+void ShadowMapping::bestCandidate(SceneNode& light, TContainer& arr, TShadowmap*& out)
 {
 	// Allready there
 	for(TShadowmap& sm : arr)
@@ -196,7 +196,7 @@ void Sm::bestCandidate(SceneNode& light, TContainer& arr, TShadowmap*& out)
 	out = sm;
 }
 
-Bool Sm::skip(SceneNode& light, ShadowmapBase& sm)
+Bool ShadowMapping::skip(SceneNode& light, ShadowmapBase& sm)
 {
 	MoveComponent* movc = light.tryGetComponent<MoveComponent>();
 
@@ -225,28 +225,28 @@ Bool Sm::skip(SceneNode& light, ShadowmapBase& sm)
 	return !shouldUpdate;
 }
 
-Error Sm::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) const
+Error ShadowMapping::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) const
 {
 	ANKI_TRACE_START_EVENT(RENDER_SM);
 
-	for(U i = 0; i < ctx.m_sm.m_spots.getSize(); ++i)
+	for(U i = 0; i < ctx.m_shadowMapping.m_spots.getSize(); ++i)
 	{
 		U idx = i * threadCount + threadId;
 
-		ANKI_CHECK(doSpotLight(*ctx.m_sm.m_spots[i],
-			ctx.m_sm.m_spotCommandBuffers[idx],
-			ctx.m_sm.m_spotFramebuffers[i],
+		ANKI_CHECK(doSpotLight(*ctx.m_shadowMapping.m_spots[i],
+			ctx.m_shadowMapping.m_spotCommandBuffers[idx],
+			ctx.m_shadowMapping.m_spotFramebuffers[i],
 			threadId,
 			threadCount));
 	}
 
-	for(U i = 0; i < ctx.m_sm.m_omnis.getSize(); ++i)
+	for(U i = 0; i < ctx.m_shadowMapping.m_omnis.getSize(); ++i)
 	{
 		U idx = i * threadCount * 6 + threadId * 6 + 0;
 
-		ANKI_CHECK(doOmniLight(*ctx.m_sm.m_omnis[i],
-			&ctx.m_sm.m_omniCommandBuffers[idx],
-			ctx.m_sm.m_omniFramebuffers[i],
+		ANKI_CHECK(doOmniLight(*ctx.m_shadowMapping.m_omnis[i],
+			&ctx.m_shadowMapping.m_omniCommandBuffers[idx],
+			ctx.m_shadowMapping.m_omniFramebuffers[i],
 			threadId,
 			threadCount));
 	}
@@ -255,7 +255,8 @@ Error Sm::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) 
 	return ErrorCode::NONE;
 }
 
-Error Sm::doSpotLight(SceneNode& light, CommandBufferPtr& cmdb, FramebufferPtr& fb, U threadId, U threadCount) const
+Error ShadowMapping::doSpotLight(
+	SceneNode& light, CommandBufferPtr& cmdb, FramebufferPtr& fb, U threadId, U threadCount) const
 {
 	FrustumComponent& frc = light.getComponent<FrustumComponent>();
 	VisibilityTestResults& vis = frc.getVisibilityTestResults();
@@ -298,7 +299,7 @@ Error Sm::doSpotLight(SceneNode& light, CommandBufferPtr& cmdb, FramebufferPtr& 
 	return err;
 }
 
-Error Sm::doOmniLight(
+Error ShadowMapping::doOmniLight(
 	SceneNode& light, CommandBufferPtr cmdbs[], Array<FramebufferPtr, 6>& fbs, U threadId, U threadCount) const
 {
 	U frCount = 0;
@@ -346,7 +347,7 @@ Error Sm::doOmniLight(
 	return err;
 }
 
-void Sm::prepareBuildCommandBuffers(RenderingContext& ctx)
+void ShadowMapping::prepareBuildCommandBuffers(RenderingContext& ctx)
 {
 	ANKI_TRACE_START_EVENT(RENDER_SM);
 
@@ -408,66 +409,70 @@ void Sm::prepareBuildCommandBuffers(RenderingContext& ctx)
 
 	if(spotCastersCount > 0)
 	{
-		ctx.m_sm.m_spots.create(spotCastersCount);
-		memcpy(&ctx.m_sm.m_spots[0], &spotCasters[0], sizeof(SceneNode*) * spotCastersCount);
+		ctx.m_shadowMapping.m_spots.create(spotCastersCount);
+		memcpy(&ctx.m_shadowMapping.m_spots[0], &spotCasters[0], sizeof(SceneNode*) * spotCastersCount);
 
-		ctx.m_sm.m_spotCommandBuffers.create(spotCastersCount * m_r->getThreadPool().getThreadsCount());
+		ctx.m_shadowMapping.m_spotCommandBuffers.create(spotCastersCount * m_r->getThreadPool().getThreadsCount());
 
-		ctx.m_sm.m_spotCacheIndices.create(spotCastersCount);
+		ctx.m_shadowMapping.m_spotCacheIndices.create(spotCastersCount);
 #if ANKI_EXTRA_CHECKS
-		memset(&ctx.m_sm.m_spotCacheIndices[0], 0xFF, sizeof(ctx.m_sm.m_spotCacheIndices[0]) * spotCastersCount);
+		memset(&ctx.m_shadowMapping.m_spotCacheIndices[0],
+			0xFF,
+			sizeof(ctx.m_shadowMapping.m_spotCacheIndices[0]) * spotCastersCount);
 #endif
 
-		ctx.m_sm.m_spotFramebuffers.create(spotCastersCount);
+		ctx.m_shadowMapping.m_spotFramebuffers.create(spotCastersCount);
 		for(U i = 0; i < spotCastersCount; ++i)
 		{
-			const LightComponent& lightc = ctx.m_sm.m_spots[i]->getComponent<LightComponent>();
+			const LightComponent& lightc = ctx.m_shadowMapping.m_spots[i]->getComponent<LightComponent>();
 			const U idx = lightc.getShadowMapIndex();
 
-			ctx.m_sm.m_spotFramebuffers[i] = m_spots[idx].m_fb;
-			ctx.m_sm.m_spotCacheIndices[i] = idx;
+			ctx.m_shadowMapping.m_spotFramebuffers[i] = m_spots[idx].m_fb;
+			ctx.m_shadowMapping.m_spotCacheIndices[i] = idx;
 		}
 	}
 
 	if(omniCastersCount > 0)
 	{
-		ctx.m_sm.m_omnis.create(omniCastersCount);
-		memcpy(&ctx.m_sm.m_omnis[0], &omniCasters[0], sizeof(SceneNode*) * omniCastersCount);
+		ctx.m_shadowMapping.m_omnis.create(omniCastersCount);
+		memcpy(&ctx.m_shadowMapping.m_omnis[0], &omniCasters[0], sizeof(SceneNode*) * omniCastersCount);
 
-		ctx.m_sm.m_omniCommandBuffers.create(omniCastersCount * 6 * m_r->getThreadPool().getThreadsCount());
+		ctx.m_shadowMapping.m_omniCommandBuffers.create(omniCastersCount * 6 * m_r->getThreadPool().getThreadsCount());
 
-		ctx.m_sm.m_omniCacheIndices.create(omniCastersCount);
+		ctx.m_shadowMapping.m_omniCacheIndices.create(omniCastersCount);
 #if ANKI_EXTRA_CHECKS
-		memset(&ctx.m_sm.m_omniCacheIndices[0], 0xFF, sizeof(ctx.m_sm.m_omniCacheIndices[0]) * omniCastersCount);
+		memset(&ctx.m_shadowMapping.m_omniCacheIndices[0],
+			0xFF,
+			sizeof(ctx.m_shadowMapping.m_omniCacheIndices[0]) * omniCastersCount);
 #endif
 
-		ctx.m_sm.m_omniFramebuffers.create(omniCastersCount);
+		ctx.m_shadowMapping.m_omniFramebuffers.create(omniCastersCount);
 		for(U i = 0; i < omniCastersCount; ++i)
 		{
-			const LightComponent& lightc = ctx.m_sm.m_omnis[i]->getComponent<LightComponent>();
+			const LightComponent& lightc = ctx.m_shadowMapping.m_omnis[i]->getComponent<LightComponent>();
 			const U idx = lightc.getShadowMapIndex();
 
 			for(U j = 0; j < 6; ++j)
 			{
-				ctx.m_sm.m_omniFramebuffers[i][j] = m_omnis[idx].m_fb[j];
+				ctx.m_shadowMapping.m_omniFramebuffers[i][j] = m_omnis[idx].m_fb[j];
 			}
 
-			ctx.m_sm.m_omniCacheIndices[i] = idx;
+			ctx.m_shadowMapping.m_omniCacheIndices[i] = idx;
 		}
 	}
 
 	ANKI_TRACE_STOP_EVENT(RENDER_SM);
 }
 
-void Sm::setPreRunBarriers(RenderingContext& ctx)
+void ShadowMapping::setPreRunBarriers(RenderingContext& ctx)
 {
 	ANKI_TRACE_START_EVENT(RENDER_SM);
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 	// Spot lights
-	for(U i = 0; i < ctx.m_sm.m_spotCacheIndices.getSize(); ++i)
+	for(U i = 0; i < ctx.m_shadowMapping.m_spotCacheIndices.getSize(); ++i)
 	{
-		U layer = ctx.m_sm.m_spotCacheIndices[i];
+		U layer = ctx.m_shadowMapping.m_spotCacheIndices[i];
 
 		cmdb->setTextureSurfaceBarrier(m_spotTexArray,
 			TextureUsageBit::NONE,
@@ -476,11 +481,11 @@ void Sm::setPreRunBarriers(RenderingContext& ctx)
 	}
 
 	// Omni lights
-	for(U i = 0; i < ctx.m_sm.m_omniCacheIndices.getSize(); ++i)
+	for(U i = 0; i < ctx.m_shadowMapping.m_omniCacheIndices.getSize(); ++i)
 	{
 		for(U j = 0; j < 6; ++j)
 		{
-			U layer = ctx.m_sm.m_omniCacheIndices[i];
+			U layer = ctx.m_shadowMapping.m_omniCacheIndices[i];
 
 			cmdb->setTextureSurfaceBarrier(m_omniTexArray,
 				TextureUsageBit::NONE,
@@ -492,15 +497,15 @@ void Sm::setPreRunBarriers(RenderingContext& ctx)
 	ANKI_TRACE_STOP_EVENT(RENDER_SM);
 }
 
-void Sm::setPostRunBarriers(RenderingContext& ctx)
+void ShadowMapping::setPostRunBarriers(RenderingContext& ctx)
 {
 	ANKI_TRACE_START_EVENT(RENDER_SM);
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 	// Spot lights
-	for(U i = 0; i < ctx.m_sm.m_spotCacheIndices.getSize(); ++i)
+	for(U i = 0; i < ctx.m_shadowMapping.m_spotCacheIndices.getSize(); ++i)
 	{
-		U layer = ctx.m_sm.m_spotCacheIndices[i];
+		U layer = ctx.m_shadowMapping.m_spotCacheIndices[i];
 
 		cmdb->setTextureSurfaceBarrier(m_spotTexArray,
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
@@ -509,11 +514,11 @@ void Sm::setPostRunBarriers(RenderingContext& ctx)
 	}
 
 	// Omni lights
-	for(U i = 0; i < ctx.m_sm.m_omniCacheIndices.getSize(); ++i)
+	for(U i = 0; i < ctx.m_shadowMapping.m_omniCacheIndices.getSize(); ++i)
 	{
 		for(U j = 0; j < 6; ++j)
 		{
-			U layer = ctx.m_sm.m_omniCacheIndices[i];
+			U layer = ctx.m_shadowMapping.m_omniCacheIndices[i];
 
 			cmdb->setTextureSurfaceBarrier(m_omniTexArray,
 				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,

@@ -64,7 +64,7 @@ Error MyApp::init(int argc, char* argv[])
 	ANKI_CHECK(resources.loadResource(argv[2], script));
 	ANKI_CHECK(getScriptManager().evalString(script->getSource()));
 
-	ANKI_CHECK(renderer.getOffscreenRenderer().getPps().loadColorGradingTexture(
+	ANKI_CHECK(renderer.getOffscreenRenderer().getFinalComposite().loadColorGradingTexture(
 		"textures/color_gradient_luts/forge_lut.ankitex"));
 
 #if PLAYER

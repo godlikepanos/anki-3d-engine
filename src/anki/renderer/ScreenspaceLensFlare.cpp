@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/renderer/Sslf.h>
+#include <anki/renderer/ScreenspaceLensFlare.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/Bloom.h>
 #include <anki/misc/ConfigSet.h>
@@ -11,7 +11,7 @@
 namespace anki
 {
 
-Error Sslf::init(const ConfigSet& config)
+Error ScreenspaceLensFlare::init(const ConfigSet& config)
 {
 	ANKI_R_LOGI("Initializing screen space lens flare");
 
@@ -24,7 +24,7 @@ Error Sslf::init(const ConfigSet& config)
 	return err;
 }
 
-Error Sslf::initInternal(const ConfigSet& config)
+Error ScreenspaceLensFlare::initInternal(const ConfigSet& config)
 {
 	ANKI_CHECK(m_r->createShaderf("shaders/Sslf.frag.glsl",
 		m_frag,
@@ -39,7 +39,7 @@ Error Sslf::initInternal(const ConfigSet& config)
 	return ErrorCode::NONE;
 }
 
-void Sslf::run(RenderingContext& ctx)
+void ScreenspaceLensFlare::run(RenderingContext& ctx)
 {
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 

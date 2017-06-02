@@ -3,10 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/renderer/Ir.h>
-#include <anki/renderer/Is.h>
-#include <anki/renderer/Pps.h>
-#include <anki/renderer/Ms.h>
+#include <anki/renderer/Indirect.h>
+#include <anki/renderer/LightShading.h>
+#include <anki/renderer/FinalComposite.h>
+#include <anki/renderer/GBuffer.h>
 #include <anki/core/Config.h>
 #include <anki/scene/SceneNode.h>
 #include <anki/scene/Visibility.h>
@@ -45,17 +45,17 @@ public:
 	Vec4 m_lightDirPad1;
 };
 
-Ir::Ir(Renderer* r)
+Indirect::Indirect(Renderer* r)
 	: RenderingPass(r)
 {
 }
 
-Ir::~Ir()
+Indirect::~Indirect()
 {
 	m_cacheEntries.destroy(getAllocator());
 }
 
-Error Ir::init(const ConfigSet& config)
+Error Indirect::init(const ConfigSet& config)
 {
 	ANKI_R_LOGI("Initializing image reflections");
 
@@ -68,7 +68,7 @@ Error Ir::init(const ConfigSet& config)
 	return err;
 }
 
-Error Ir::initInternal(const ConfigSet& config)
+Error Indirect::initInternal(const ConfigSet& config)
 {
 	m_fbSize = config.getNumber("ir.rendererSize");
 
@@ -105,7 +105,7 @@ Error Ir::initInternal(const ConfigSet& config)
 	return ErrorCode::NONE;
 }
 
-Error Ir::loadMesh(CString fname, BufferPtr& vert, BufferPtr& idx, U32& idxCount)
+Error Indirect::loadMesh(CString fname, BufferPtr& vert, BufferPtr& idx, U32& idxCount)
 {
 	MeshLoader loader(&getResourceManager());
 	ANKI_CHECK(loader.load(fname));
@@ -155,7 +155,7 @@ Error Ir::loadMesh(CString fname, BufferPtr& vert, BufferPtr& idx, U32& idxCount
 	return ErrorCode::NONE;
 }
 
-void Ir::initFaceInfo(U cacheEntryIdx, U faceIdx)
+void Indirect::initFaceInfo(U cacheEntryIdx, U faceIdx)
 {
 	FaceInfo& face = m_cacheEntries[cacheEntryIdx].m_faces[faceIdx];
 	ANKI_ASSERT(!face.created());
@@ -174,7 +174,7 @@ void Ir::initFaceInfo(U cacheEntryIdx, U faceIdx)
 	texinit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
 
 	// Create color attachments
-	for(U i = 0; i < MS_COLOR_ATTACHMENT_COUNT; ++i)
+	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 	{
 		texinit.m_format = MS_COLOR_ATTACHMENT_PIXEL_FORMATS[i];
 
@@ -183,14 +183,14 @@ void Ir::initFaceInfo(U cacheEntryIdx, U faceIdx)
 
 	// Create depth attachment
 	texinit.m_usage |= TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
-	texinit.m_format = MS_DEPTH_ATTACHMENT_PIXEL_FORMAT;
+	texinit.m_format = GBUFFER_DEPTH_ATTACHMENT_PIXEL_FORMAT;
 	face.m_gbufferDepthRt = m_r->createAndClearRenderTarget(texinit);
 
 	// Create MS FB
 	FramebufferInitInfo fbInit;
-	fbInit.m_colorAttachmentCount = MS_COLOR_ATTACHMENT_COUNT;
+	fbInit.m_colorAttachmentCount = GBUFFER_COLOR_ATTACHMENT_COUNT;
 
-	for(U j = 0; j < MS_COLOR_ATTACHMENT_COUNT; ++j)
+	for(U j = 0; j < GBUFFER_COLOR_ATTACHMENT_COUNT; ++j)
 	{
 		fbInit.m_colorAttachments[j].m_texture = face.m_gbufferColorRts[j];
 		fbInit.m_colorAttachments[j].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
@@ -228,7 +228,7 @@ void Ir::initFaceInfo(U cacheEntryIdx, U faceIdx)
 	face.m_irradianceFb = getGrManager().newInstance<Framebuffer>(fbInit);
 }
 
-Error Ir::initIs()
+Error Indirect::initIs()
 {
 	m_is.m_lightRtMipCount = computeMaxMipmapCount2d(m_fbSize, m_fbSize, 4);
 
@@ -245,35 +245,26 @@ Error Ir::initIs()
 	texinit.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
 	texinit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE
 		| TextureUsageBit::CLEAR | TextureUsageBit::GENERATE_MIPMAPS;
-	texinit.m_format = IS_COLOR_ATTACHMENT_PIXEL_FORMAT;
+	texinit.m_format = LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT;
 
 	m_is.m_lightRt = m_r->createAndClearRenderTarget(texinit);
 
 	// Init shaders
-	ANKI_CHECK(getResourceManager().loadResource("shaders/Light.vert.glsl", m_is.m_lightVert));
+	ANKI_CHECK(getResourceManager().loadResource("programs/DeferredShading.ankiprog", m_is.m_lightProg));
 
-	ANKI_CHECK(m_r->createShaderf("shaders/Light.frag.glsl",
-		m_is.m_plightFrag,
-		"#define POINT_LIGHT\n"
-		"#define RENDERING_WIDTH %d\n"
-		"#define RENDERING_HEIGHT %d\n",
-		m_fbSize,
-		m_fbSize));
+	ShaderProgramResourceMutationInitList<1> mutators(m_is.m_lightProg);
+	mutators.add("LIGHT_TYPE", 0);
 
-	ANKI_CHECK(m_r->createShaderf("shaders/Light.frag.glsl",
-		m_is.m_slightFrag,
-		"#define SPOT_LIGHT\n"
-		"#define RENDERING_WIDTH %d\n"
-		"#define RENDERING_HEIGHT %d\n",
-		m_fbSize,
-		m_fbSize));
+	ShaderProgramResourceConstantValueInitList<1> consts(m_is.m_lightProg);
+	consts.add("FB_SIZE", UVec2(m_fbSize, m_fbSize));
 
-	// Init the progs
-	m_is.m_plightProg =
-		getGrManager().newInstance<ShaderProgram>(m_is.m_lightVert->getGrShader(), m_is.m_plightFrag->getGrShader());
+	const ShaderProgramResourceVariant* variant;
+	m_is.m_lightProg->getOrCreateVariant(mutators.get(), consts.get(), variant);
+	m_is.m_plightGrProg = variant->getProgram();
 
-	m_is.m_slightProg =
-		getGrManager().newInstance<ShaderProgram>(m_is.m_lightVert->getGrShader(), m_is.m_slightFrag->getGrShader());
+	mutators[0].m_value = 1;
+	m_is.m_lightProg->getOrCreateVariant(mutators.get(), consts.get(), variant);
+	m_is.m_slightGrProg = variant->getProgram();
 
 	// Init vert/idx buffers
 	ANKI_CHECK(
@@ -285,7 +276,7 @@ Error Ir::initIs()
 	return ErrorCode::NONE;
 }
 
-Error Ir::initIrradiance()
+Error Indirect::initIrradiance()
 {
 	m_irradiance.m_cubeArrMipCount = computeMaxMipmapCount2d(IRRADIANCE_TEX_SIZE, IRRADIANCE_TEX_SIZE, 4);
 
@@ -302,21 +293,24 @@ Error Ir::initIrradiance()
 	texinit.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
 	texinit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
 		| TextureUsageBit::CLEAR | TextureUsageBit::GENERATE_MIPMAPS;
-	texinit.m_format = IS_COLOR_ATTACHMENT_PIXEL_FORMAT;
+	texinit.m_format = LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT;
 
 	m_irradiance.m_cubeArr = m_r->createAndClearRenderTarget(texinit);
 
-	// Create the shader
-	ANKI_CHECK(m_r->createShaderf(
-		"shaders/Irradiance.frag.glsl", m_irradiance.m_frag, "#define CUBEMAP_SIZE %u\n", IRRADIANCE_TEX_SIZE));
+	// Create prog
+	ANKI_CHECK(m_r->getResourceManager().loadResource("programs/Irradiance.ankiprog", m_irradiance.m_prog));
 
-	// Create the prog
-	m_r->createDrawQuadShaderProgram(m_irradiance.m_frag->getGrShader(), m_irradiance.m_prog);
+	ShaderProgramResourceConstantValueInitList<1> consts(m_irradiance.m_prog);
+	consts.add("FACE_SIZE", U32(IRRADIANCE_TEX_SIZE));
+
+	const ShaderProgramResourceVariant* variant;
+	m_irradiance.m_prog->getOrCreateVariant(consts.get(), variant);
+	m_irradiance.m_grProg = variant->getProgram();
 
 	return ErrorCode::NONE;
 }
 
-Error Ir::runMs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx)
+Error Indirect::runMs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx)
 {
 	CommandBufferPtr& cmdb = rctx.m_commandBuffer;
 	VisibilityTestResults& vis = frc.getVisibilityTestResults();
@@ -329,7 +323,7 @@ Error Ir::runMs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceId
 	}
 
 	// Set barriers
-	for(U i = 0; i < MS_COLOR_ATTACHMENT_COUNT; ++i)
+	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 	{
 		cmdb->setTextureSurfaceBarrier(face.m_gbufferColorRts[i],
 			TextureUsageBit::NONE,
@@ -347,7 +341,7 @@ Error Ir::runMs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceId
 	cmdb->setViewport(0, 0, m_fbSize, m_fbSize);
 
 	/// Draw
-	ANKI_CHECK(m_r->getSceneDrawer().drawRange(Pass::MS_FS,
+	ANKI_CHECK(m_r->getSceneDrawer().drawRange(Pass::GB_FS,
 		frc.getViewMatrix(),
 		frc.getViewProjectionMatrix(),
 		cmdb,
@@ -357,7 +351,7 @@ Error Ir::runMs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceId
 	// End and set barriers
 	cmdb->endRenderPass();
 
-	for(U i = 0; i < MS_COLOR_ATTACHMENT_COUNT; ++i)
+	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 	{
 		cmdb->setTextureSurfaceBarrier(face.m_gbufferColorRts[i],
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
@@ -373,7 +367,7 @@ Error Ir::runMs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceId
 	return ErrorCode::NONE;
 }
 
-void Ir::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx)
+void Indirect::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx)
 {
 	CommandBufferPtr& cmdb = rctx.m_commandBuffer;
 	VisibilityTestResults& vis = frc.getVisibilityTestResults();
@@ -404,7 +398,7 @@ void Ir::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx
 	const Mat4& vpMat = frc.getViewProjectionMatrix();
 	const Mat4& vMat = frc.getViewMatrix();
 
-	cmdb->bindShaderProgram(m_is.m_plightProg);
+	cmdb->bindShaderProgram(m_is.m_plightGrProg);
 	cmdb->bindVertexBuffer(0, m_is.m_plightPositions, 0, sizeof(F32) * 3);
 	cmdb->bindIndexBuffer(m_is.m_plightIndices, 0, IndexType::U16);
 
@@ -439,7 +433,7 @@ void Ir::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx
 		++it;
 	}
 
-	cmdb->bindShaderProgram(m_is.m_slightProg);
+	cmdb->bindShaderProgram(m_is.m_slightGrProg);
 	cmdb->bindVertexBuffer(0, m_is.m_slightPositions, 0, sizeof(F32) * 3);
 	cmdb->bindIndexBuffer(m_is.m_slightIndices, 0, IndexType::U16);
 
@@ -512,7 +506,7 @@ void Ir::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx
 	cmdb->setCullMode(FaceSelectionBit::BACK);
 }
 
-void Ir::computeIrradiance(RenderingContext& rctx, U layer, U faceIdx)
+void Indirect::computeIrradiance(RenderingContext& rctx, U layer, U faceIdx)
 {
 	CommandBufferPtr& cmdb = rctx.m_commandBuffer;
 	FaceInfo& face = m_cacheEntries[layer].m_faces[faceIdx];
@@ -532,7 +526,7 @@ void Ir::computeIrradiance(RenderingContext& rctx, U layer, U faceIdx)
 
 	cmdb->informTextureCurrentUsage(m_is.m_lightRt, TextureUsageBit::SAMPLED_FRAGMENT);
 	cmdb->bindTexture(0, 0, m_is.m_lightRt);
-	cmdb->bindShaderProgram(m_irradiance.m_prog);
+	cmdb->bindShaderProgram(m_irradiance.m_grProg);
 	cmdb->beginRenderPass(face.m_irradianceFb);
 
 	m_r->drawQuad(cmdb);
@@ -552,7 +546,7 @@ void Ir::computeIrradiance(RenderingContext& rctx, U layer, U faceIdx)
 		TextureSurfaceInfo(0, 0, faceIdx, layer));
 }
 
-Error Ir::run(RenderingContext& rctx)
+Error Indirect::run(RenderingContext& rctx)
 {
 	ANKI_TRACE_START_EVENT(RENDER_IR);
 	const VisibilityTestResults& visRez = *rctx.m_visResults;
@@ -588,7 +582,7 @@ Error Ir::run(RenderingContext& rctx)
 	return ErrorCode::NONE;
 }
 
-Error Ir::tryRender(RenderingContext& ctx, SceneNode& node, U& probesRendered)
+Error Indirect::tryRender(RenderingContext& ctx, SceneNode& node, U& probesRendered)
 {
 	ReflectionProbeComponent& reflc = node.getComponent<ReflectionProbeComponent>();
 
@@ -615,7 +609,7 @@ Error Ir::tryRender(RenderingContext& ctx, SceneNode& node, U& probesRendered)
 	return ErrorCode::NONE;
 }
 
-Error Ir::renderReflection(RenderingContext& ctx, SceneNode& node, U cubemapIdx)
+Error Indirect::renderReflection(RenderingContext& ctx, SceneNode& node, U cubemapIdx)
 {
 	ANKI_TRACE_INC_COUNTER(RENDERER_REFLECTIONS, 1);
 
@@ -644,7 +638,7 @@ Error Ir::renderReflection(RenderingContext& ctx, SceneNode& node, U cubemapIdx)
 	return ErrorCode::NONE;
 }
 
-void Ir::findCacheEntry(SceneNode& node, U& entry, Bool& render)
+void Indirect::findCacheEntry(SceneNode& node, U& entry, Bool& render)
 {
 	CacheEntry* it = m_cacheEntries.getBegin();
 	const CacheEntry* const end = m_cacheEntries.getEnd();

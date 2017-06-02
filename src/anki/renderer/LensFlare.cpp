@@ -3,9 +3,9 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/renderer/Lf.h>
+#include <anki/renderer/LensFlare.h>
 #include <anki/renderer/Bloom.h>
-#include <anki/renderer/Ms.h>
+#include <anki/renderer/GBuffer.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/scene/SceneGraph.h>
 #include <anki/scene/MoveComponent.h>
@@ -27,12 +27,12 @@ public:
 	U32 m_padding[3];
 };
 
-Lf::~Lf()
+LensFlare::~LensFlare()
 {
 	m_queries.destroy(getAllocator());
 }
 
-Error Lf::init(const ConfigSet& config)
+Error LensFlare::init(const ConfigSet& config)
 {
 	ANKI_R_LOGI("Initializing lens flare pass");
 
@@ -45,7 +45,7 @@ Error Lf::init(const ConfigSet& config)
 	return err;
 }
 
-Error Lf::initInternal(const ConfigSet& config)
+Error LensFlare::initInternal(const ConfigSet& config)
 {
 	ANKI_CHECK(initSprite(config));
 	ANKI_CHECK(initOcclusion(config));
@@ -53,7 +53,7 @@ Error Lf::initInternal(const ConfigSet& config)
 	return ErrorCode::NONE;
 }
 
-Error Lf::initSprite(const ConfigSet& config)
+Error LensFlare::initSprite(const ConfigSet& config)
 {
 	m_maxSpritesPerFlare = config.getNumber("lf.maxSpritesPerFlare");
 	m_maxFlares = config.getNumber("lf.maxFlares");
@@ -81,7 +81,7 @@ Error Lf::initSprite(const ConfigSet& config)
 	return ErrorCode::NONE;
 }
 
-Error Lf::initOcclusion(const ConfigSet& config)
+Error LensFlare::initOcclusion(const ConfigSet& config)
 {
 	GrManager& gr = getGrManager();
 
@@ -106,7 +106,7 @@ Error Lf::initOcclusion(const ConfigSet& config)
 	return ErrorCode::NONE;
 }
 
-void Lf::resetOcclusionQueries(RenderingContext& ctx, CommandBufferPtr cmdb)
+void LensFlare::resetOcclusionQueries(RenderingContext& ctx, CommandBufferPtr cmdb)
 {
 	if(ctx.m_visResults->getCount(VisibilityGroupType::FLARES) > m_maxFlares)
 	{
@@ -125,7 +125,7 @@ void Lf::resetOcclusionQueries(RenderingContext& ctx, CommandBufferPtr cmdb)
 	}
 }
 
-void Lf::runOcclusionTests(RenderingContext& ctx, CommandBufferPtr cmdb)
+void LensFlare::runOcclusionTests(RenderingContext& ctx, CommandBufferPtr cmdb)
 {
 	const U count = min<U>(ctx.m_visResults->getCount(VisibilityGroupType::FLARES), m_maxFlares);
 	Vec3* positions = nullptr;
@@ -179,7 +179,7 @@ void Lf::runOcclusionTests(RenderingContext& ctx, CommandBufferPtr cmdb)
 	}
 }
 
-void Lf::updateIndirectInfo(RenderingContext& ctx, CommandBufferPtr cmdb)
+void LensFlare::updateIndirectInfo(RenderingContext& ctx, CommandBufferPtr cmdb)
 {
 	U count = min<U>(ctx.m_visResults->getCount(VisibilityGroupType::FLARES), m_maxFlares);
 	if(count == 0)
@@ -214,7 +214,7 @@ void Lf::updateIndirectInfo(RenderingContext& ctx, CommandBufferPtr cmdb)
 		sizeof(DrawArraysIndirectInfo) * count);
 }
 
-void Lf::run(RenderingContext& ctx, CommandBufferPtr cmdb)
+void LensFlare::run(RenderingContext& ctx, CommandBufferPtr cmdb)
 {
 	const U count = min<U>(ctx.m_visResults->getCount(VisibilityGroupType::FLARES), m_maxFlares);
 	if(count == 0)

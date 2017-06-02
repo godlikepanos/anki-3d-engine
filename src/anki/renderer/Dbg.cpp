@@ -5,9 +5,9 @@
 
 #include <anki/renderer/Dbg.h>
 #include <anki/renderer/Renderer.h>
-#include <anki/renderer/Ms.h>
-#include <anki/renderer/Is.h>
-#include <anki/renderer/Pps.h>
+#include <anki/renderer/GBuffer.h>
+#include <anki/renderer/LightShading.h>
+#include <anki/renderer/FinalComposite.h>
 #include <anki/renderer/DebugDrawer.h>
 #include <anki/resource/ShaderResource.h>
 #include <anki/Scene.h>
@@ -58,7 +58,7 @@ Error Dbg::lazyInit()
 	fbInit.m_colorAttachmentCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
-	fbInit.m_depthStencilAttachment.m_texture = m_r->getMs().m_depthRt;
+	fbInit.m_depthStencilAttachment.m_texture = m_r->getGBuffer().m_depthRt;
 	fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::LOAD;
 	fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
 

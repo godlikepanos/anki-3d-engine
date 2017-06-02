@@ -5,9 +5,9 @@
 
 #include <anki/renderer/Bloom.h>
 #include <anki/renderer/DownscaleBlur.h>
-#include <anki/renderer/Pps.h>
+#include <anki/renderer/FinalComposite.h>
 #include <anki/renderer/Renderer.h>
-#include <anki/renderer/Tm.h>
+#include <anki/renderer/Tonemapping.h>
 #include <anki/misc/ConfigSet.h>
 
 namespace anki
@@ -83,7 +83,7 @@ void BloomExposure::run(RenderingContext& ctx)
 	Vec4* uniforms = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
 	*uniforms = Vec4(m_threshold, m_scale, 0.0, 0.0);
 
-	cmdb->bindStorageBuffer(0, 0, m_r->getTm().m_luminanceBuff, 0, MAX_PTR_SIZE);
+	cmdb->bindStorageBuffer(0, 0, m_r->getTonemapping().m_luminanceBuff, 0, MAX_PTR_SIZE);
 
 	m_r->drawQuad(cmdb);
 	cmdb->endRenderPass();

@@ -5,7 +5,7 @@
 
 #include <anki/renderer/DepthDownscale.h>
 #include <anki/renderer/Renderer.h>
-#include <anki/renderer/Ms.h>
+#include <anki/renderer/GBuffer.h>
 
 namespace anki
 {
@@ -23,7 +23,7 @@ Error HalfDepth::init(const ConfigSet&)
 	// Create RT
 	m_depthRt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(width,
 		height,
-		MS_DEPTH_ATTACHMENT_PIXEL_FORMAT,
+		GBUFFER_DEPTH_ATTACHMENT_PIXEL_FORMAT,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE | TextureUsageBit::SAMPLED_FRAGMENT,
 		SamplingFilter::LINEAR,
 		1,
@@ -64,7 +64,7 @@ void HalfDepth::run(RenderingContext& ctx)
 
 	cmdb->beginRenderPass(m_fb);
 	cmdb->bindShaderProgram(m_prog);
-	cmdb->bindTexture(0, 0, m_r->getMs().m_depthRt);
+	cmdb->bindTexture(0, 0, m_r->getGBuffer().m_depthRt);
 
 	cmdb->setViewport(0, 0, m_r->getWidth() / 2, m_r->getHeight() / 2);
 	cmdb->setDepthCompareOperation(CompareOperation::ALWAYS);

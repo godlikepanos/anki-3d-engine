@@ -14,10 +14,10 @@ namespace anki
 /// @{
 
 /// Screen space lens flare pass.
-class Sslf : public RenderingPass
+class ScreenspaceLensFlare : public RenderingPass
 {
 anki_internal:
-	Sslf(Renderer* r)
+	ScreenspaceLensFlare(Renderer* r)
 		: RenderingPass(r)
 	{
 	}

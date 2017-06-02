@@ -3,11 +3,11 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_SHADERS_FS_COMMON_VERT_GLSL
-#define ANKI_SHADERS_FS_COMMON_VERT_GLSL
+#ifndef ANKI_SHADERS_FORWARD_SHADING_COMMON_VERT_GLSL
+#define ANKI_SHADERS_FORWARD_SHADING_COMMON_VERT_GLSL
 
 // Common code for all vertex shaders of FS
-#include "shaders/MsFsCommon.glsl"
+#include "shaders/Common.glsl"
 
 // Global resources
 #define LIGHT_SET 1

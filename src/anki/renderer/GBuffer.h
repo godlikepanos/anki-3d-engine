@@ -14,8 +14,8 @@ namespace anki
 /// @addtogroup renderer
 /// @{
 
-/// Material stage also known as G buffer stage. It populates the G buffer
-class Ms : public RenderingPass
+/// G buffer stage. It populates the G buffer
+class GBuffer : public RenderingPass
 {
 anki_internal:
 	TexturePtr m_rt0;
@@ -23,12 +23,12 @@ anki_internal:
 	TexturePtr m_rt2;
 	TexturePtr m_depthRt;
 
-	Ms(Renderer* r)
+	GBuffer(Renderer* r)
 		: RenderingPass(r)
 	{
 	}
 
-	~Ms();
+	~GBuffer();
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 

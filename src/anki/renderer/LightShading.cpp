@@ -3,12 +3,12 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/renderer/Is.h>
+#include <anki/renderer/LightShading.h>
 #include <anki/renderer/Renderer.h>
-#include <anki/renderer/Sm.h>
+#include <anki/renderer/ShadowMapping.h>
 #include <anki/renderer/Ssao.h>
-#include <anki/renderer/Ir.h>
-#include <anki/renderer/Ms.h>
+#include <anki/renderer/Indirect.h>
+#include <anki/renderer/GBuffer.h>
 #include <anki/renderer/LightBin.h>
 #include <anki/scene/FrustumComponent.h>
 #include <anki/misc/ConfigSet.h>
@@ -41,12 +41,12 @@ enum class IsShaderVariantBit : U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(IsShaderVariantBit, inline)
 
-Is::Is(Renderer* r)
+LightShading::LightShading(Renderer* r)
 	: RenderingPass(r)
 {
 }
 
-Is::~Is()
+LightShading::~LightShading()
 {
 	if(m_lightBin)
 	{
@@ -54,7 +54,7 @@ Is::~Is()
 	}
 }
 
-Error Is::init(const ConfigSet& config)
+Error LightShading::init(const ConfigSet& config)
 {
 	ANKI_R_LOGI("Initializing light stage");
 	Error err = initInternal(config);
@@ -67,7 +67,7 @@ Error Is::init(const ConfigSet& config)
 	return err;
 }
 
-Error Is::initInternal(const ConfigSet& config)
+Error LightShading::initInternal(const ConfigSet& config)
 {
 	m_maxLightIds = config.getNumber("is.maxLightsPerCluster");
 
@@ -94,13 +94,13 @@ Error Is::initInternal(const ConfigSet& config)
 	//
 	// Load shaders and programs
 	//
-	ANKI_CHECK(getResourceManager().loadResource("programs/Is.ankiprog", m_prog));
+	ANKI_CHECK(getResourceManager().loadResource("programs/LightShading.ankiprog", m_prog));
 
 	ShaderProgramResourceConstantValueInitList<4> consts(m_prog);
 	consts.add("CLUSTER_COUNT_X", U32(m_clusterCounts[0]))
 		.add("CLUSTER_COUNT_Y", U32(m_clusterCounts[1]))
 		.add("CLUSTER_COUNT", U32(m_clusterCount))
-		.add("IR_MIPMAP_COUNT", U32(m_r->getIr().getReflectionTextureMipmapCount()));
+		.add("IR_MIPMAP_COUNT", U32(m_r->getIndirect().getReflectionTextureMipmapCount()));
 
 	m_prog->getOrCreateVariant(consts.get(), m_progVariant);
 
@@ -109,7 +109,7 @@ Error Is::initInternal(const ConfigSet& config)
 	//
 	m_rt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_r->getWidth(),
 		m_r->getHeight(),
-		IS_COLOR_ATTACHMENT_PIXEL_FORMAT,
+		LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 		SamplingFilter::LINEAR,
 		1,
@@ -124,7 +124,7 @@ Error Is::initInternal(const ConfigSet& config)
 	return ErrorCode::NONE;
 }
 
-Error Is::binLights(RenderingContext& ctx)
+Error LightShading::binLights(RenderingContext& ctx)
 {
 	updateCommonBlock(ctx);
 
@@ -136,19 +136,19 @@ Error Is::binLights(RenderingContext& ctx)
 		getFrameAllocator(),
 		m_maxLightIds,
 		true,
-		ctx.m_is.m_pointLightsToken,
-		ctx.m_is.m_spotLightsToken,
-		&ctx.m_is.m_probesToken,
-		ctx.m_is.m_decalsToken,
-		ctx.m_is.m_clustersToken,
-		ctx.m_is.m_lightIndicesToken,
-		ctx.m_is.m_diffDecalTex,
-		ctx.m_is.m_normRoughnessDecalTex));
+		ctx.m_lightShading.m_pointLightsToken,
+		ctx.m_lightShading.m_spotLightsToken,
+		&ctx.m_lightShading.m_probesToken,
+		ctx.m_lightShading.m_decalsToken,
+		ctx.m_lightShading.m_clustersToken,
+		ctx.m_lightShading.m_lightIndicesToken,
+		ctx.m_lightShading.m_diffDecalTex,
+		ctx.m_lightShading.m_normRoughnessDecalTex));
 
 	return ErrorCode::NONE;
 }
 
-void Is::run(RenderingContext& ctx)
+void LightShading::run(RenderingContext& ctx)
 {
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
@@ -156,39 +156,43 @@ void Is::run(RenderingContext& ctx)
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 	cmdb->bindShaderProgram(m_progVariant->getProgram());
 
-	cmdb->bindTexture(1, 0, m_r->getMs().m_rt0);
-	cmdb->bindTexture(1, 1, m_r->getMs().m_rt1);
-	cmdb->bindTexture(1, 2, m_r->getMs().m_rt2);
-	cmdb->bindTexture(1, 3, m_r->getMs().m_depthRt, DepthStencilAspectBit::DEPTH);
+	cmdb->bindTexture(1, 0, m_r->getGBuffer().m_rt0);
+	cmdb->bindTexture(1, 1, m_r->getGBuffer().m_rt1);
+	cmdb->bindTexture(1, 2, m_r->getGBuffer().m_rt2);
+	cmdb->bindTexture(1, 3, m_r->getGBuffer().m_depthRt, DepthStencilAspectBit::DEPTH);
 	cmdb->informTextureCurrentUsage(m_r->getSsao().getRt(), TextureUsageBit::SAMPLED_FRAGMENT);
 	cmdb->bindTexture(1, 4, m_r->getSsao().getRt());
 
-	cmdb->bindTexture(0, 0, m_r->getSm().m_spotTexArray);
-	cmdb->bindTexture(0, 1, m_r->getSm().m_omniTexArray);
-	cmdb->bindTexture(0, 2, m_r->getIr().getReflectionTexture());
-	cmdb->bindTexture(0, 3, m_r->getIr().getIrradianceTexture());
-	cmdb->bindTextureAndSampler(0, 4, m_r->getIr().getIntegrationLut(), m_r->getIr().getIntegrationLutSampler());
-	cmdb->bindTexture(0, 5, (ctx.m_is.m_diffDecalTex) ? ctx.m_is.m_diffDecalTex : m_r->getDummyTexture());
+	cmdb->bindTexture(0, 0, m_r->getShadowMapping().m_spotTexArray);
+	cmdb->bindTexture(0, 1, m_r->getShadowMapping().m_omniTexArray);
+	cmdb->bindTexture(0, 2, m_r->getIndirect().getReflectionTexture());
+	cmdb->bindTexture(0, 3, m_r->getIndirect().getIrradianceTexture());
+	cmdb->bindTextureAndSampler(
+		0, 4, m_r->getIndirect().getIntegrationLut(), m_r->getIndirect().getIntegrationLutSampler());
 	cmdb->bindTexture(
-		0, 6, (ctx.m_is.m_normRoughnessDecalTex) ? ctx.m_is.m_normRoughnessDecalTex : m_r->getDummyTexture());
+		0, 5, (ctx.m_lightShading.m_diffDecalTex) ? ctx.m_lightShading.m_diffDecalTex : m_r->getDummyTexture());
+	cmdb->bindTexture(0,
+		6,
+		(ctx.m_lightShading.m_normRoughnessDecalTex) ? ctx.m_lightShading.m_normRoughnessDecalTex
+													 : m_r->getDummyTexture());
 
-	bindUniforms(cmdb, 0, 0, ctx.m_is.m_commonToken);
-	bindUniforms(cmdb, 0, 1, ctx.m_is.m_pointLightsToken);
-	bindUniforms(cmdb, 0, 2, ctx.m_is.m_spotLightsToken);
-	bindUniforms(cmdb, 0, 3, ctx.m_is.m_probesToken);
-	bindUniforms(cmdb, 0, 4, ctx.m_is.m_decalsToken);
+	bindUniforms(cmdb, 0, 0, ctx.m_lightShading.m_commonToken);
+	bindUniforms(cmdb, 0, 1, ctx.m_lightShading.m_pointLightsToken);
+	bindUniforms(cmdb, 0, 2, ctx.m_lightShading.m_spotLightsToken);
+	bindUniforms(cmdb, 0, 3, ctx.m_lightShading.m_probesToken);
+	bindUniforms(cmdb, 0, 4, ctx.m_lightShading.m_decalsToken);
 
-	bindStorage(cmdb, 0, 0, ctx.m_is.m_clustersToken);
-	bindStorage(cmdb, 0, 1, ctx.m_is.m_lightIndicesToken);
+	bindStorage(cmdb, 0, 0, ctx.m_lightShading.m_clustersToken);
+	bindStorage(cmdb, 0, 1, ctx.m_lightShading.m_lightIndicesToken);
 
 	cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
 	cmdb->endRenderPass();
 }
 
-void Is::updateCommonBlock(RenderingContext& ctx)
+void LightShading::updateCommonBlock(RenderingContext& ctx)
 {
 	ShaderCommonUniforms* blk =
-		allocateUniforms<ShaderCommonUniforms*>(sizeof(ShaderCommonUniforms), ctx.m_is.m_commonToken);
+		allocateUniforms<ShaderCommonUniforms*>(sizeof(ShaderCommonUniforms), ctx.m_lightShading.m_commonToken);
 
 	// Start writing
 	blk->m_projectionParams = ctx.m_unprojParams;
@@ -206,7 +210,7 @@ void Is::updateCommonBlock(RenderingContext& ctx)
 	blk->m_invProjMat = ctx.m_projMatJitter.getInverse();
 }
 
-void Is::setPreRunBarriers(RenderingContext& ctx)
+void LightShading::setPreRunBarriers(RenderingContext& ctx)
 {
 	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_rt,
 		TextureUsageBit::NONE,

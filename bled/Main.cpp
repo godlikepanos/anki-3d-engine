@@ -56,7 +56,7 @@ Error MyApp::init()
 
 		app->getMainRenderer()
 			.getOffscreenRenderer()
-			.getPps();
+			.getFinalComposite();
 			// .loadColorGradingTexture("textures/adis/dungeon.ankitex");
 	}
 
