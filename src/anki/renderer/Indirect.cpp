@@ -201,7 +201,7 @@ void Indirect::initFaceInfo(U cacheEntryIdx, U faceIdx)
 	fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
 	fbInit.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0;
 
-	face.m_msFb = getGrManager().newInstance<Framebuffer>(fbInit);
+	face.m_gbufferFb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 	// Create IS FB
 	ANKI_ASSERT(m_is.m_lightRt.isCreated());
@@ -215,7 +215,7 @@ void Indirect::initFaceInfo(U cacheEntryIdx, U faceIdx)
 	fbInit.m_depthStencilAttachment.m_texture = face.m_gbufferDepthRt;
 	fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
 
-	face.m_isFb = getGrManager().newInstance<Framebuffer>(fbInit);
+	face.m_lightShadingFb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 	// Create irradiance FB
 	fbInit = FramebufferInitInfo();
@@ -337,7 +337,7 @@ Error Indirect::runMs(RenderingContext& rctx, FrustumComponent& frc, U layer, U 
 		TextureSurfaceInfo(0, 0, 0, 0));
 
 	// Start render pass
-	cmdb->beginRenderPass(face.m_msFb);
+	cmdb->beginRenderPass(face.m_gbufferFb);
 	cmdb->setViewport(0, 0, m_fbSize, m_fbSize);
 
 	/// Draw
@@ -380,7 +380,7 @@ void Indirect::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U f
 		TextureSurfaceInfo(0, 0, faceIdx, layer));
 
 	// Set state
-	cmdb->beginRenderPass(face.m_isFb);
+	cmdb->beginRenderPass(face.m_lightShadingFb);
 
 	cmdb->bindTexture(0, 0, face.m_gbufferColorRts[0]);
 	cmdb->bindTexture(0, 1, face.m_gbufferColorRts[1]);
