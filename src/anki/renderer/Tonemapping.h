@@ -29,8 +29,8 @@ anki_internal:
 	void run(RenderingContext& ctx);
 
 private:
-	ShaderResourcePtr m_luminanceShader;
-	ShaderProgramPtr m_prog;
+	ShaderProgramResourcePtr m_prog;
+	ShaderProgramPtr m_grProg;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 };

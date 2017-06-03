@@ -404,12 +404,13 @@ private:
 	DynamicArray<ShaderProgramResourceInputVariable> m_inputVars;
 	DynamicArray<ShaderProgramResourceMutator> m_mutators;
 
-	Array<String, 5> m_sources;
+	Array<String, U(ShaderType::COUNT)> m_sources;
 
 	mutable IntrusiveHashMap<U64, ShaderProgramResourceVariant> m_variants;
 	mutable Mutex m_mtx;
 
 	Bool8 m_tessellation = false;
+	Bool8 m_compute = false;
 	const ShaderProgramResourceMutator* m_instancingMutator = nullptr;
 
 	/// Parse whatever is inside <inputs>

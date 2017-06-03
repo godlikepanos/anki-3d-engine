@@ -24,15 +24,16 @@ Error Tonemapping::init(const ConfigSet& cfg)
 
 Error Tonemapping::initInternal(const ConfigSet& initializer)
 {
-	// Create shader
-	ANKI_CHECK(m_r->createShaderf("shaders/TmAverageLuminance.comp.glsl",
-		m_luminanceShader,
-		"#define INPUT_TEX_SIZE uvec2(%uu, %uu)\n",
-		m_r->getDownscaleBlur().getSmallPassWidth(),
-		m_r->getDownscaleBlur().getSmallPassHeight()));
+	// Create program
+	ANKI_CHECK(getResourceManager().loadResource("programs/TonemappingAverageLuminance.ankiprog", m_prog));
 
-	// Create prog
-	m_prog = getGrManager().newInstance<ShaderProgram>(m_luminanceShader->getGrShader());
+	ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
+	consts.add("INPUT_TEX_SIZE",
+		UVec2(m_r->getDownscaleBlur().getSmallPassWidth(), m_r->getDownscaleBlur().getSmallPassHeight()));
+
+	const ShaderProgramResourceVariant* variant;
+	m_prog->getOrCreateVariant(consts.get(), variant);
+	m_grProg = variant->getProgram();
 
 	// Create buffer
 	m_luminanceBuff = getGrManager().newInstance<Buffer>(sizeof(Vec4),
@@ -61,7 +62,7 @@ Error Tonemapping::initInternal(const ConfigSet& initializer)
 void Tonemapping::run(RenderingContext& ctx)
 {
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
-	cmdb->bindShaderProgram(m_prog);
+	cmdb->bindShaderProgram(m_grProg);
 	cmdb->bindStorageBuffer(0, 0, m_luminanceBuff, 0, MAX_PTR_SIZE);
 	cmdb->bindTexture(0, 0, m_r->getDownscaleBlur().getSmallPassTexture());
 

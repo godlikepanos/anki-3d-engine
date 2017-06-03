@@ -1,8 +1,17 @@
-// Copyright (C) 2009-2017, Panagiotis Christopoulos Charitos and contributors.
-// All rights reserved.
-// Code licensed under the BSD License.
-// http://www.anki3d.org/LICENSE
+<!-- 
+Copyright (C) 2009-2017, Panagiotis Christopoulos Charitos and contributors.
+All rights reserved.
+Code licensed under the BSD License.
+http://www.anki3d.org/LICENSE
+-->
+<shaderProgram>
+	<shaders>
+		<shader type="comp">
+			<inputs>
+				<input name="INPUT_TEX_SIZE" type="uvec2" const="1"/>
+			</inputs>
 
+			<source><![CDATA[
 #include "shaders/Common.glsl"
 #include "shaders/Tonemapping.glsl"
 
@@ -78,3 +87,7 @@ void main()
 #endif
 	}
 }
+			]]></source>
+		</shader>
+	</shaders>
+</shaderProgram>

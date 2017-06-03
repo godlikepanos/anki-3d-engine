@@ -127,6 +127,12 @@ static ANKI_USE_RESULT Error getShaderInfo(const CString& str, ShaderType& type,
 		bit = ShaderTypeBit::FRAGMENT;
 		idx = 4;
 	}
+	else if(str == "comp")
+	{
+		type = ShaderType::COMPUTE;
+		bit = ShaderTypeBit::COMPUTE;
+		idx = 5;
+	}
 	else
 	{
 		ANKI_RESOURCE_LOGE("Incorrect type %s", (str) ? &str[0] : "<empty string>");
@@ -324,7 +330,7 @@ Error ShaderProgramResource::load(const ResourceFilename& filename)
 	StringListAuto globalsSrcList(getTempAllocator());
 	StringListAuto definesSrcList(getTempAllocator());
 	ShaderTypeBit presentShaders = ShaderTypeBit::NONE;
-	Array<CString, 5> shaderSources;
+	Array<CString, U(ShaderType::COUNT)> shaderSources;
 	ANKI_CHECK(shadersEl.getChildElement("shader", shaderEl));
 	do
 	{
@@ -346,6 +352,11 @@ Error ShaderProgramResource::load(const ResourceFilename& filename)
 		if(shaderType == ShaderType::TESSELLATION_CONTROL || shaderType == ShaderType::TESSELLATION_EVALUATION)
 		{
 			m_tessellation = true;
+		}
+
+		if(!!(presentShaders & ShaderTypeBit::COMPUTE))
+		{
+			m_compute = true;
 		}
 
 		// <inputs>
@@ -375,16 +386,27 @@ Error ShaderProgramResource::load(const ResourceFilename& filename)
 	ANKI_ASSERT(inputVarCount == m_inputVars.getSize());
 
 	// Sanity checks
-	if(!(presentShaders & ShaderTypeBit::VERTEX))
+	if(!!(presentShaders & ShaderTypeBit::COMPUTE))
 	{
-		ANKI_RESOURCE_LOGE("Missing vertex shader");
-		return ErrorCode::USER_DATA;
+		if(presentShaders != ShaderTypeBit::COMPUTE)
+		{
+			ANKI_RESOURCE_LOGE("Can't combine compute shader with other types of shaders");
+			return ErrorCode::USER_DATA;
+		}
 	}
-
-	if(!(presentShaders & ShaderTypeBit::FRAGMENT))
+	else
 	{
-		ANKI_RESOURCE_LOGE("Missing fragment shader");
-		return ErrorCode::USER_DATA;
+		if(!(presentShaders & ShaderTypeBit::VERTEX))
+		{
+			ANKI_RESOURCE_LOGE("Missing vertex shader");
+			return ErrorCode::USER_DATA;
+		}
+
+		if(!(presentShaders & ShaderTypeBit::FRAGMENT))
+		{
+			ANKI_RESOURCE_LOGE("Missing fragment shader");
+			return ErrorCode::USER_DATA;
+		}
 	}
 
 	// Create sources
@@ -413,7 +435,7 @@ Error ShaderProgramResource::load(const ResourceFilename& filename)
 		definesSrcList.join("", backedDefinesSrc);
 	}
 
-	for(U s = 0; s < 5; ++s)
+	for(U s = 0; s < U(ShaderType::COUNT); ++s)
 	{
 		if(shaderSources[s])
 		{
@@ -574,6 +596,13 @@ Error ShaderProgramResource::parseInputs(XmlElement& inputsEl,
 			ANKI_RESOURCE_LOGE("Input variable \"%s\" is instanced but there is no instanced mutator", &name[0]);
 			return ErrorCode::USER_DATA;
 		}
+
+		if(instanced && m_compute)
+		{
+			ANKI_RESOURCE_LOGE("Compute program can't be instanced");
+			return ErrorCode::USER_DATA;
+		}
+
 		var.m_instanced = instanced != 0;
 
 		// Sanity checks
@@ -1022,8 +1051,8 @@ void ShaderProgramResource::initVariant(WeakArray<const ShaderProgramResourceMut
 	shaderHeaderSrc.join("", shaderHeader);
 
 	// Create the shaders and the program
-	Array<ShaderPtr, 5> shaders;
-	for(ShaderType i = ShaderType::FIRST_GRAPHICS; i <= ShaderType::LAST_GRAPHICS; ++i)
+	Array<ShaderPtr, U(ShaderType::COUNT)> shaders;
+	for(ShaderType i = ShaderType::FIRST; i < ShaderType::COUNT; ++i)
 	{
 		if(!m_sources[i])
 		{
@@ -1037,11 +1066,18 @@ void ShaderProgramResource::initVariant(WeakArray<const ShaderProgramResourceMut
 		shaders[i] = getManager().getGrManager().newInstance<Shader>(i, src.toCString());
 	}
 
-	variant.m_prog = getManager().getGrManager().newInstance<ShaderProgram>(shaders[ShaderType::VERTEX],
-		shaders[ShaderType::TESSELLATION_CONTROL],
-		shaders[ShaderType::TESSELLATION_EVALUATION],
-		shaders[ShaderType::GEOMETRY],
-		shaders[ShaderType::FRAGMENT]);
+	if(!m_compute)
+	{
+		variant.m_prog = getManager().getGrManager().newInstance<ShaderProgram>(shaders[ShaderType::VERTEX],
+			shaders[ShaderType::TESSELLATION_CONTROL],
+			shaders[ShaderType::TESSELLATION_EVALUATION],
+			shaders[ShaderType::GEOMETRY],
+			shaders[ShaderType::FRAGMENT]);
+	}
+	else
+	{
+		variant.m_prog = getManager().getGrManager().newInstance<ShaderProgram>(shaders[ShaderType::COMPUTE]);
+	}
 }
 
 } // end namespace anki
