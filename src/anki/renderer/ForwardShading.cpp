@@ -66,25 +66,23 @@ Error ForwardShading::initVol()
 {
 	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseLdrRgb64x64.ankitex", m_vol.m_noiseTex));
 
-	ANKI_CHECK(m_r->createShaderf("shaders/VolumetricUpscale.frag.glsl",
-		m_vol.m_frag,
-		"#define SRC_SIZE vec2(float(%u), float(%u))\n"
-		"#define FB_SIZE vec2(float(%u), float(%u))\n"
-		"#define NOISE_TEX_SIZE %u\n",
-		m_r->getWidth() / VOLUMETRIC_FRACTION,
-		m_r->getHeight() / VOLUMETRIC_FRACTION,
-		m_width,
-		m_height,
-		m_vol.m_noiseTex->getWidth()));
+	ANKI_CHECK(getResourceManager().loadResource("programs/ForwardShadingVolumetricUpscale.ankiprog", m_vol.m_prog));
 
-	m_r->createDrawQuadShaderProgram(m_vol.m_frag->getGrShader(), m_vol.m_prog);
+	ShaderProgramResourceConstantValueInitList<3> consts(m_vol.m_prog);
+	consts.add("NOISE_TEX_SIZE", U32(m_vol.m_noiseTex->getWidth()))
+		.add("SRC_SIZE", Vec2(m_r->getWidth() / VOLUMETRIC_FRACTION, m_r->getHeight() / VOLUMETRIC_FRACTION))
+		.add("FB_SIZE", Vec2(m_width, m_height));
+
+	const ShaderProgramResourceVariant* variant;
+	m_vol.m_prog->getOrCreateVariant(consts.get(), variant);
+	m_vol.m_grProg = variant->getProgram();
 
 	return ErrorCode::NONE;
 }
 
 void ForwardShading::drawVolumetric(RenderingContext& ctx, CommandBufferPtr cmdb)
 {
-	cmdb->bindShaderProgram(m_vol.m_prog);
+	cmdb->bindShaderProgram(m_vol.m_grProg);
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ONE);
 	cmdb->setDepthWrite(false);
 	cmdb->setDepthCompareOperation(CompareOperation::ALWAYS);
@@ -214,18 +212,16 @@ Error ForwardShadingUpscale::initInternal(const ConfigSet& config)
 	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseLdrRgb64x64.ankitex", m_noiseTex));
 
 	// Shader
-	ANKI_CHECK(m_r->createShaderf("shaders/FsUpscale.frag.glsl",
-		m_frag,
-		"#define FB_SIZE uvec2(%uu, %uu)\n"
-		"#define SRC_SIZE uvec2(%uu, %uu)\n"
-		"#define NOISE_TEX_SIZE %u\n",
-		m_r->getWidth(),
-		m_r->getHeight(),
-		m_r->getWidth() / FS_FRACTION,
-		m_r->getHeight() / FS_FRACTION,
-		m_noiseTex->getWidth()));
+	ANKI_CHECK(getResourceManager().loadResource("programs/ForwardShadingUpscale.ankiprog", m_prog));
 
-	m_r->createDrawQuadShaderProgram(m_frag->getGrShader(), m_prog);
+	ShaderProgramResourceConstantValueInitList<3> consts(m_prog);
+	consts.add("NOISE_TEX_SIZE", U32(m_noiseTex->getWidth()))
+		.add("SRC_SIZE", Vec2(m_r->getWidth() / FS_FRACTION, m_r->getHeight() / FS_FRACTION))
+		.add("FB_SIZE", Vec2(m_r->getWidth(), m_r->getWidth()));
+
+	const ShaderProgramResourceVariant* variant;
+	m_prog->getOrCreateVariant(consts.get(), variant);
+	m_grProg = variant->getProgram();
 
 	// Create FB
 	FramebufferInitInfo fbInit("fwdupscale");
@@ -252,7 +248,7 @@ void ForwardShadingUpscale::run(RenderingContext& ctx)
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::SRC_ALPHA);
 
 	cmdb->beginRenderPass(m_fb);
-	cmdb->bindShaderProgram(m_prog);
+	cmdb->bindShaderProgram(m_grProg);
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 
 	m_r->drawQuad(cmdb);

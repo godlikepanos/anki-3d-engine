@@ -65,8 +65,8 @@ private:
 	class Vol
 	{
 	public:
-		ShaderResourcePtr m_frag;
-		ShaderProgramPtr m_prog;
+		ShaderProgramResourcePtr m_prog;
+		ShaderProgramPtr m_grProg;
 		TextureResourcePtr m_noiseTex;
 	} m_vol;
 
@@ -89,8 +89,9 @@ public:
 
 private:
 	FramebufferPtr m_fb;
-	ShaderResourcePtr m_frag;
-	ShaderProgramPtr m_prog;
+
+	ShaderProgramResourcePtr m_prog;
+	ShaderProgramPtr m_grProg;
 
 	TextureResourcePtr m_noiseTex;
 

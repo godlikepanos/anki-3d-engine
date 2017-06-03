@@ -1,8 +1,25 @@
-// Copyright (C) 2009-2017, Panagiotis Christopoulos Charitos and contributors.
-// All rights reserved.
-// Code licensed under the BSD License.
-// http://www.anki3d.org/LICENSE
+<!-- 
+Copyright (C) 2009-2017, Panagiotis Christopoulos Charitos and contributors.
+All rights reserved.
+Code licensed under the BSD License.
+http://www.anki3d.org/LICENSE
+-->
+<shaderProgram>
+	<shaders>
+		<shader type="vert">
+			<source><![CDATA[
+#include "shaders/Quad.vert.glsl"
+			]]></source>
+		</shader>
 
+		<shader type="frag">
+			<inputs>
+				<input name="SRC_SIZE" type="vec2" const="1"/>
+				<input name="FB_SIZE" type="vec2" const="1"/>
+				<input name="NOISE_TEX_SIZE" type="uint" const="1"/>
+			</inputs>
+
+			<source><![CDATA[
 #include "shaders/Functions.glsl"
 
 #define BLUE_NOISE 0
@@ -36,3 +53,7 @@ void main()
 
 	out_color = vec4(col, 0.0);
 }
+			]]></source>
+		</shader>
+	</shaders>
+</shaderProgram>
