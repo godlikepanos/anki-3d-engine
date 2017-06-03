@@ -44,15 +44,15 @@ Error BloomExposure::init(const ConfigSet& config)
 	m_fb = gr.newInstance<Framebuffer>(fbInit);
 
 	// init shaders
-	ANKI_CHECK(m_r->createShaderf("shaders/Bloom.frag.glsl",
-		m_frag,
-		"#define WIDTH %u\n"
-		"#define HEIGHT %u\n",
-		m_r->getDownscaleBlur().getSmallPassWidth(),
-		m_r->getDownscaleBlur().getSmallPassHeight()));
+	ANKI_CHECK(getResourceManager().loadResource("programs/Bloom.ankiprog", m_prog));
 
-	// Init prog
-	m_r->createDrawQuadShaderProgram(m_frag->getGrShader(), m_prog);
+	ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
+	consts.add(
+		"TEX_SIZE", Vec2(m_r->getDownscaleBlur().getSmallPassWidth(), m_r->getDownscaleBlur().getSmallPassHeight()));
+
+	const ShaderProgramResourceVariant* variant;
+	m_prog->getOrCreateVariant(consts.get(), variant);
+	m_grProg = variant->getProgram();
 
 	return ErrorCode::NONE;
 }
@@ -77,7 +77,7 @@ void BloomExposure::run(RenderingContext& ctx)
 
 	cmdb->beginRenderPass(m_fb);
 	cmdb->setViewport(0, 0, m_width, m_height);
-	cmdb->bindShaderProgram(m_prog);
+	cmdb->bindShaderProgram(m_grProg);
 	cmdb->bindTexture(0, 0, m_r->getDownscaleBlur().getSmallPassTexture());
 
 	Vec4* uniforms = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
@@ -117,15 +117,14 @@ Error BloomUpscale::init(const ConfigSet& config)
 	m_fb = gr.newInstance<Framebuffer>(fbInit);
 
 	// init shaders
-	ANKI_CHECK(m_r->createShaderf("shaders/BloomUpscale.frag.glsl",
-		m_frag,
-		"#define WIDTH %u\n"
-		"#define HEIGHT %u\n",
-		m_width,
-		m_height));
+	ANKI_CHECK(getResourceManager().loadResource("programs/BloomUpscale.ankiprog", m_prog));
 
-	// Init prog
-	m_r->createDrawQuadShaderProgram(m_frag->getGrShader(), m_prog);
+	ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
+	consts.add("TEX_SIZE", Vec2(m_width, m_height));
+
+	const ShaderProgramResourceVariant* variant;
+	m_prog->getOrCreateVariant(consts.get(), variant);
+	m_grProg = variant->getProgram();
 
 	return ErrorCode::NONE;
 }
@@ -150,7 +149,7 @@ void BloomUpscale::run(RenderingContext& ctx)
 
 	cmdb->setViewport(0, 0, m_width, m_height);
 	cmdb->beginRenderPass(m_fb);
-	cmdb->bindShaderProgram(m_prog);
+	cmdb->bindShaderProgram(m_grProg);
 	cmdb->bindTexture(0, 0, m_r->getBloom().m_extractExposure.m_rt);
 	m_r->drawQuad(cmdb);
 

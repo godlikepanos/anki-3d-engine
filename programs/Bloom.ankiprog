@@ -1,8 +1,23 @@
-// Copyright (C) 2009-2017, Panagiotis Christopoulos Charitos and contributors.
-// All rights reserved.
-// Code licensed under the BSD License.
-// http://www.anki3d.org/LICENSE
+<!-- 
+Copyright (C) 2009-2017, Panagiotis Christopoulos Charitos and contributors.
+All rights reserved.
+Code licensed under the BSD License.
+http://www.anki3d.org/LICENSE
+-->
+<shaderProgram>
+	<shaders>
+		<shader type="vert">
+			<source><![CDATA[
+#include "shaders/Quad.vert.glsl"
+			]]></source>
+		</shader>
 
+		<shader type="frag">
+			<inputs>
+				<input name="TEX_SIZE" type="vec2" const="1"/>
+			</inputs>
+
+			<source><![CDATA[
 #include "shaders/Common.glsl"
 #include "shaders/Tonemapping.glsl"
 
@@ -24,7 +39,7 @@ layout(location = 0) out vec4 out_color;
 
 void main()
 {
-	const vec2 TEXEL_SIZE = 1.0 / vec2(WIDTH, HEIGHT);
+	const vec2 TEXEL_SIZE = 1.0 / TEX_SIZE;
 
 	vec3 color = textureLod(u_tex, in_uv, 0.0).rgb;
 	color += textureLod(u_tex, in_uv + TEXEL_SIZE, 0.0).rgb;
@@ -38,3 +53,7 @@ void main()
 
 	out_color = vec4(color, 0.25);
 }
+			]]></source>
+		</shader>
+	</shaders>
+</shaderProgram>

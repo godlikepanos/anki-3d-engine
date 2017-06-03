@@ -43,8 +43,9 @@ anki_internal:
 
 private:
 	FramebufferPtr m_fb;
-	ShaderResourcePtr m_frag;
-	ShaderProgramPtr m_prog;
+
+	ShaderProgramResourcePtr m_prog;
+	ShaderProgramPtr m_grProg;
 
 	F32 m_threshold = 10.0; ///< How bright it is
 	F32 m_scale = 1.0;
@@ -74,8 +75,9 @@ anki_internal:
 
 private:
 	FramebufferPtr m_fb;
-	ShaderResourcePtr m_frag;
-	ShaderProgramPtr m_prog;
+
+	ShaderProgramResourcePtr m_prog;
+	ShaderProgramPtr m_grProg;
 };
 
 /// Bloom passes.
