@@ -43,8 +43,9 @@ private:
 	DepthDownscale* m_parent;
 
 	FramebufferPtr m_fb;
-	ShaderResourcePtr m_frag;
-	ShaderProgramPtr m_prog;
+
+	ShaderProgramResourcePtr m_prog;
+	ShaderProgramPtr m_grProg;
 };
 
 /// Quick pass to downscale the depth buffer.
@@ -71,8 +72,9 @@ private:
 	DepthDownscale* m_parent;
 
 	FramebufferPtr m_fb;
-	ShaderResourcePtr m_frag;
-	ShaderProgramPtr m_prog;
+
+	ShaderProgramResourcePtr m_prog;
+	ShaderProgramPtr m_grProg;
 };
 
 class DepthDownscale : public RenderingPass

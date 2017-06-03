@@ -1,0 +1,58 @@
+<!-- 
+Copyright (C) 2009-2017, Panagiotis Christopoulos Charitos and contributors.
+All rights reserved.
+Code licensed under the BSD License.
+http://www.anki3d.org/LICENSE
+-->
+<shaderProgram>
+	<mutators>
+		<mutator name="TO_COLOR_RT" values="0 1"/>
+		<mutator name="SAMPLE_RESOLVE_TYPE" values="0 1 2"/> <!-- 0: average, 1: min, 2: max -->
+	</mutators>
+
+	<shaders>
+		<shader type="vert">
+			<source><![CDATA[
+#include "shaders/Quad.vert.glsl"
+			]]></source>
+		</shader>
+
+		<shader type="frag">
+			<source><![CDATA[
+#include "shaders/Common.glsl"
+
+#define AVG 0
+#define MIN 1
+#define MAX 2
+
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_depthRt;
+
+layout(location = 0) in vec2 in_uv;
+
+#if TO_COLOR_RT
+layout(location = 0) out float out_color;
+#	define out_depth out_color
+#else
+#	define out_depth gl_FragDepth
+#endif
+
+void main()
+{
+	vec4 depths = textureGather(u_depthRt, in_uv, 0);
+
+#if SAMPLE_RESOLVE_TYPE == MIN
+	vec2 mind2 = min(depths.xy, depths.zw);
+	out_depth = min(mind2.x, mind2.y);
+#elif SAMPLE_RESOLVE_TYPE == MAX
+	vec2 max2 = max(depths.xy, depths.zw);
+	out_depth = max(max2.x, max2.y);
+#elif SAMPLE_RESOLVE_TYPE == AVG
+	out_depth = dot(depths, vec4(1.0 / 4.0));
+#else
+#	error See file
+#endif
+}
+			]]></source>
+		</shader>
+	</shaders>
+</shaderProgram>

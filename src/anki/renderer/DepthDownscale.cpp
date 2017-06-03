@@ -36,8 +36,15 @@ Error HalfDepth::init(const ConfigSet&)
 	fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
 	m_fb = gr.newInstance<Framebuffer>(fbInit);
 
-	ANKI_CHECK(getResourceManager().loadResource("shaders/DepthDownscaleHalf.frag.glsl", m_frag));
-	m_r->createDrawQuadShaderProgram(m_frag->getGrShader(), m_prog);
+	// Prog
+	ANKI_CHECK(getResourceManager().loadResource("programs/DepthDownscale.ankiprog", m_prog));
+
+	ShaderProgramResourceMutationInitList<2> mutations(m_prog);
+	mutations.add("TO_COLOR_RT", 0).add("SAMPLE_RESOLVE_TYPE", 0);
+
+	const ShaderProgramResourceVariant* variant;
+	m_prog->getOrCreateVariant(mutations.get(), variant);
+	m_grProg = variant->getProgram();
 
 	return ErrorCode::NONE;
 }
@@ -63,7 +70,7 @@ void HalfDepth::run(RenderingContext& ctx)
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 	cmdb->beginRenderPass(m_fb);
-	cmdb->bindShaderProgram(m_prog);
+	cmdb->bindShaderProgram(m_grProg);
 	cmdb->bindTexture(0, 0, m_r->getGBuffer().m_depthRt);
 
 	cmdb->setViewport(0, 0, m_r->getWidth() / 2, m_r->getHeight() / 2);
@@ -101,8 +108,15 @@ Error QuarterDepth::init(const ConfigSet&)
 	fbInit.m_colorAttachmentCount = 1;
 	m_fb = gr.newInstance<Framebuffer>(fbInit);
 
-	ANKI_CHECK(getResourceManager().loadResource("shaders/DepthDownscaleQuarter.frag.glsl", m_frag));
-	m_r->createDrawQuadShaderProgram(m_frag->getGrShader(), m_prog);
+	// Prog
+	ANKI_CHECK(getResourceManager().loadResource("programs/DepthDownscale.ankiprog", m_prog));
+
+	ShaderProgramResourceMutationInitList<2> mutations(m_prog);
+	mutations.add("TO_COLOR_RT", 1).add("SAMPLE_RESOLVE_TYPE", 0);
+
+	const ShaderProgramResourceVariant* variant;
+	m_prog->getOrCreateVariant(mutations.get(), variant);
+	m_grProg = variant->getProgram();
 
 	return ErrorCode::NONE;
 }
@@ -128,7 +142,7 @@ void QuarterDepth::run(RenderingContext& ctx)
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 	cmdb->beginRenderPass(m_fb);
-	cmdb->bindShaderProgram(m_prog);
+	cmdb->bindShaderProgram(m_grProg);
 	cmdb->bindTexture(0, 0, m_parent->m_hd.m_depthRt);
 
 	cmdb->setViewport(0, 0, m_r->getWidth() / 4, m_r->getHeight() / 4);
