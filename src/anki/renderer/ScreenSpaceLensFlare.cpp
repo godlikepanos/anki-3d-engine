@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/renderer/ScreenspaceLensFlare.h>
+#include <anki/renderer/ScreenSpaceLensFlare.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/Bloom.h>
 #include <anki/misc/ConfigSet.h>
@@ -11,7 +11,7 @@
 namespace anki
 {
 
-Error ScreenspaceLensFlare::init(const ConfigSet& config)
+Error ScreenSpaceLensFlare::init(const ConfigSet& config)
 {
 	ANKI_R_LOGI("Initializing screen space lens flare");
 
@@ -24,27 +24,29 @@ Error ScreenspaceLensFlare::init(const ConfigSet& config)
 	return err;
 }
 
-Error ScreenspaceLensFlare::initInternal(const ConfigSet& config)
+Error ScreenSpaceLensFlare::initInternal(const ConfigSet& config)
 {
-	ANKI_CHECK(m_r->createShaderf("shaders/Sslf.frag.glsl",
-		m_frag,
-		"#define TEX_DIMENSIONS vec2(%u.0, %u.0)\n",
-		m_r->getBloom().m_extractExposure.m_width,
-		m_r->getBloom().m_extractExposure.m_height));
-
-	m_r->createDrawQuadShaderProgram(m_frag->getGrShader(), m_prog);
-
 	ANKI_CHECK(getResourceManager().loadResource("engine_data/LensDirt.ankitex", m_lensDirtTex));
+
+	ANKI_CHECK(getResourceManager().loadResource("programs/ScreenSpaceLensFlare.ankiprog", m_prog));
+
+	ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
+	consts.add(
+		"INPUT_TEX_SIZE", UVec2(m_r->getBloom().m_extractExposure.m_width, m_r->getBloom().m_extractExposure.m_height));
+
+	const ShaderProgramResourceVariant* variant;
+	m_prog->getOrCreateVariant(consts.get(), variant);
+	m_grProg = variant->getProgram();
 
 	return ErrorCode::NONE;
 }
 
-void ScreenspaceLensFlare::run(RenderingContext& ctx)
+void ScreenSpaceLensFlare::run(RenderingContext& ctx)
 {
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 	// Draw to the SSLF FB
-	cmdb->bindShaderProgram(m_prog);
+	cmdb->bindShaderProgram(m_grProg);
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ONE);
 	cmdb->bindTexture(0, 0, m_r->getBloom().m_extractExposure.m_rt);
 	cmdb->bindTexture(0, 1, m_lensDirtTex->getGrTexture());

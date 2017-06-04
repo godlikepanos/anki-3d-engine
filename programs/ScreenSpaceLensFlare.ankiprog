@@ -1,11 +1,29 @@
-// Copyright (C) 2009-2017, Panagiotis Christopoulos Charitos and contributors.
-// All rights reserved.
-// Code licensed under the BSD License.
-// http://www.anki3d.org/LICENSE
+<!-- 
+Copyright (C) 2009-2017, Panagiotis Christopoulos Charitos and contributors.
+All rights reserved.
+Code licensed under the BSD License.
+http://www.anki3d.org/LICENSE
+-->
 
-// Screen space lens flare. Used the technique from here
-// http://john-chapman-graphics.blogspot.no/2013/02/pseudo-lens-flare.html
+<!--
+Screen space lens flare. Used the technique from here
+http://john-chapman-graphics.blogspot.no/2013/02/pseudo-lens-flare.html
+-->
 
+<shaderProgram>
+	<shaders>
+		<shader type="vert">
+			<source><![CDATA[
+#include "shaders/Quad.vert.glsl"
+			]]></source>
+		</shader>
+
+		<shader type="frag">
+			<inputs>
+				<input name="INPUT_TEX_SIZE" type="uvec2" const="1"/>
+			</inputs>
+
+			<source><![CDATA[
 #include "shaders/Common.glsl"
 
 #define MAX_GHOSTS 4
@@ -43,7 +61,7 @@ void main()
 
 	vec2 ghostVec = (vec2(0.5) - texcoord) * GHOST_DISPERSAL;
 
-	const vec2 texelSize = 1.0 / vec2(TEX_DIMENSIONS);
+	const vec2 texelSize = 1.0 / vec2(INPUT_TEX_SIZE);
 
 	const vec3 distortion = vec3(-texelSize.x * CHROMATIC_DISTORTION, 0.0, texelSize.x * CHROMATIC_DISTORTION);
 
@@ -78,3 +96,7 @@ void main()
 	// Write
 	out_color = result;
 }
+			]]></source>
+		</shader>
+	</shaders>
+</shaderProgram>

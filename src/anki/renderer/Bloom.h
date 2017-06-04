@@ -6,7 +6,7 @@
 #pragma once
 
 #include <anki/renderer/RenderingPass.h>
-#include <anki/renderer/ScreenspaceLensFlare.h>
+#include <anki/renderer/ScreenSpaceLensFlare.h>
 #include <anki/Gr.h>
 #include <anki/resource/TextureResource.h>
 #include <anki/resource/ShaderResource.h>
@@ -86,7 +86,7 @@ class Bloom : public RenderingPass
 anki_internal:
 	BloomExposure m_extractExposure;
 	BloomUpscale m_upscale;
-	ScreenspaceLensFlare m_sslf;
+	ScreenSpaceLensFlare m_sslf;
 
 	Bloom(Renderer* r)
 		: RenderingPass(r)

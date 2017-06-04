@@ -14,10 +14,10 @@ namespace anki
 /// @{
 
 /// Screen space lens flare pass.
-class ScreenspaceLensFlare : public RenderingPass
+class ScreenSpaceLensFlare : public RenderingPass
 {
 anki_internal:
-	ScreenspaceLensFlare(Renderer* r)
+	ScreenSpaceLensFlare(Renderer* r)
 		: RenderingPass(r)
 	{
 	}
@@ -26,8 +26,8 @@ anki_internal:
 	void run(RenderingContext& ctx);
 
 private:
-	ShaderResourcePtr m_frag;
-	ShaderProgramPtr m_prog;
+	ShaderProgramResourcePtr m_prog;
+	ShaderProgramPtr m_grProg;
 	TextureResourcePtr m_lensDirtTex;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& config);

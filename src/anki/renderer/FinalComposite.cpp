@@ -7,7 +7,7 @@
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/Bloom.h>
 #include <anki/renderer/TemporalAA.h>
-#include <anki/renderer/ScreenspaceLensFlare.h>
+#include <anki/renderer/ScreenSpaceLensFlare.h>
 #include <anki/renderer/Tonemapping.h>
 #include <anki/renderer/LightShading.h>
 #include <anki/renderer/GBuffer.h>
