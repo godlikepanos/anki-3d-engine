@@ -42,17 +42,15 @@ private:
 	DynamicArray<OcclusionQueryPtr> m_queries;
 	BufferPtr m_queryResultBuff;
 	BufferPtr m_indirectBuff;
-	ShaderResourcePtr m_writeIndirectBuffComp;
-	ShaderProgramPtr m_updateIndirectBuffProg;
+	ShaderProgramResourcePtr m_updateIndirectBuffProg;
+	ShaderProgramPtr m_updateIndirectBuffGrProg;
 
-	ShaderResourcePtr m_occlusionVert;
-	ShaderResourcePtr m_occlusionFrag;
-	ShaderProgramPtr m_occlusionProg;
+	ShaderProgramResourcePtr m_occlusionProg;
+	ShaderProgramPtr m_occlusionGrProg;
 
 	// Sprite billboards
-	ShaderResourcePtr m_realVert;
-	ShaderResourcePtr m_realFrag;
-	ShaderProgramPtr m_realProg;
+	ShaderProgramResourcePtr m_realProg;
+	ShaderProgramPtr m_realGrProg;
 	U8 m_maxSpritesPerFlare;
 	U8 m_maxFlares;
 	U16 m_maxSprites;

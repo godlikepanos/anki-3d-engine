@@ -66,17 +66,14 @@ Error LensFlare::initSprite(const ConfigSet& config)
 
 	m_maxSprites = m_maxSpritesPerFlare * m_maxFlares;
 
-	// Load shaders
-	StringAuto pps(getAllocator());
+	// Load prog
+	ANKI_CHECK(getResourceManager().loadResource("programs/LensFlareSprite.ankiprog", m_realProg));
 
-	pps.sprintf("#define MAX_SPRITES %u\n", m_maxSprites);
-
-	ANKI_CHECK(m_r->createShader("shaders/LfSpritePass.vert.glsl", m_realVert, pps.toCString()));
-
-	ANKI_CHECK(m_r->createShader("shaders/LfSpritePass.frag.glsl", m_realFrag, pps.toCString()));
-
-	// Create prog.
-	m_realProg = getGrManager().newInstance<ShaderProgram>(m_realVert->getGrShader(), m_realFrag->getGrShader());
+	ShaderProgramResourceConstantValueInitList<1> consts(m_realProg);
+	consts.add("MAX_SPRITES", U32(m_maxSprites));
+	const ShaderProgramResourceVariant* variant;
+	m_realProg->getOrCreateVariant(consts.get(), variant);
+	m_realGrProg = variant->getProgram();
 
 	return ErrorCode::NONE;
 }
@@ -95,13 +92,15 @@ Error LensFlare::initOcclusion(const ConfigSet& config)
 		BufferUsageBit::INDIRECT | BufferUsageBit::STORAGE_COMPUTE_WRITE | BufferUsageBit::BUFFER_UPLOAD_DESTINATION,
 		BufferMapAccessBit::NONE);
 
-	ANKI_CHECK(getResourceManager().loadResource("shaders/LfOcclusion.vert.glsl", m_occlusionVert));
-	ANKI_CHECK(getResourceManager().loadResource("shaders/LfOcclusion.frag.glsl", m_occlusionFrag));
-	ANKI_CHECK(getResourceManager().loadResource("shaders/LfUpdateIndirectInfo.comp.glsl", m_writeIndirectBuffComp));
+	ANKI_CHECK(getResourceManager().loadResource("programs/LensFlareOcclusionTest.ankiprog", m_occlusionProg));
+	const ShaderProgramResourceVariant* variant;
+	m_occlusionProg->getOrCreateVariant(variant);
+	m_occlusionGrProg = variant->getProgram();
 
-	m_updateIndirectBuffProg = gr.newInstance<ShaderProgram>(m_writeIndirectBuffComp->getGrShader());
-
-	m_occlusionProg = gr.newInstance<ShaderProgram>(m_occlusionVert->getGrShader(), m_occlusionFrag->getGrShader());
+	ANKI_CHECK(
+		getResourceManager().loadResource("programs/LensFlareUpdateIndirectInfo.ankiprog", m_updateIndirectBuffProg));
+	m_updateIndirectBuffProg->getOrCreateVariant(variant);
+	m_updateIndirectBuffGrProg = variant->getProgram();
 
 	return ErrorCode::NONE;
 }
@@ -145,7 +144,7 @@ void LensFlare::runOcclusionTests(RenderingContext& ctx, CommandBufferPtr cmdb)
 		cmdb->bindVertexBuffer(0, vertToken.m_buffer, vertToken.m_offset, sizeof(Vec3));
 
 		// Setup state
-		cmdb->bindShaderProgram(m_occlusionProg);
+		cmdb->bindShaderProgram(m_occlusionGrProg);
 		cmdb->setVertexAttribute(0, 0, PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT), 0);
 		cmdb->setColorChannelWriteMask(0, ColorBit::NONE);
 		cmdb->setColorChannelWriteMask(1, ColorBit::NONE);
@@ -201,7 +200,7 @@ void LensFlare::updateIndirectInfo(RenderingContext& ctx, CommandBufferPtr cmdb)
 		sizeof(DrawArraysIndirectInfo) * count);
 
 	// Update the indirect info
-	cmdb->bindShaderProgram(m_updateIndirectBuffProg);
+	cmdb->bindShaderProgram(m_updateIndirectBuffGrProg);
 	cmdb->bindStorageBuffer(0, 0, m_queryResultBuff, 0, MAX_PTR_SIZE);
 	cmdb->bindStorageBuffer(0, 1, m_indirectBuff, 0, MAX_PTR_SIZE);
 	cmdb->dispatchCompute(count, 1, 1);
@@ -222,7 +221,7 @@ void LensFlare::run(RenderingContext& ctx, CommandBufferPtr cmdb)
 		return;
 	}
 
-	cmdb->bindShaderProgram(m_realProg);
+	cmdb->bindShaderProgram(m_realGrProg);
 	cmdb->setDepthWrite(false);
 	cmdb->setDepthCompareOperation(CompareOperation::ALWAYS);
 	cmdb->setBlendFactors(

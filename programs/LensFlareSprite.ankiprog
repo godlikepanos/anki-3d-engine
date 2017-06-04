@@ -1,10 +1,17 @@
-// Copyright (C) 2009-2017, Panagiotis Christopoulos Charitos and contributors.
-// All rights reserved.
-// Code licensed under the BSD License.
-// http://www.anki3d.org/LICENSE
+<!-- 
+Copyright (C) 2009-2017, Panagiotis Christopoulos Charitos and contributors.
+All rights reserved.
+Code licensed under the BSD License.
+http://www.anki3d.org/LICENSE
+-->
+<shaderProgram>
+	<shaders>
+		<shader type="vert">
+			<inputs>
+				<input name="MAX_SPRITES" type="uint" const="1"/>
+			</inputs>
 
-// LF sprites vert shader
-
+			<source><![CDATA[
 #include "shaders/Common.glsl"
 
 // Per flare information
@@ -43,3 +50,26 @@ void main()
 
 	out_color = sprite.color;
 }
+			]]></source>
+		</shader>
+
+		<shader type="frag">
+			<source><![CDATA[
+#include "shaders/Common.glsl"
+
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2DArray u_tex;
+
+layout(location = 0) in vec3 in_uv;
+layout(location = 1) flat in vec4 in_color;
+
+layout(location = 0) out vec4 out_color;
+
+void main()
+{
+	vec4 col = texture(u_tex, in_uv);
+	out_color = col * in_color;
+}
+			]]></source>
+		</shader>
+	</shaders>
+</shaderProgram>

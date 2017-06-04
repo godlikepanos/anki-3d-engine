@@ -1,8 +1,13 @@
-// Copyright (C) 2009-2017, Panagiotis Christopoulos Charitos and contributors.
-// All rights reserved.
-// Code licensed under the BSD License.
-// http://www.anki3d.org/LICENSE
-
+<!-- 
+Copyright (C) 2009-2017, Panagiotis Christopoulos Charitos and contributors.
+All rights reserved.
+Code licensed under the BSD License.
+http://www.anki3d.org/LICENSE
+-->
+<shaderProgram>
+	<shaders>
+		<shader type="comp">
+			<source><![CDATA[
 #include "shaders/Common.glsl"
 
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
@@ -40,3 +45,7 @@ void main()
 	u_indirectInfo[gl_WorkGroupID.x].first = 0;
 	u_indirectInfo[gl_WorkGroupID.x].baseInstance = 0;
 }
+			]]></source>
+		</shader>
+	</shaders>
+</shaderProgram>
