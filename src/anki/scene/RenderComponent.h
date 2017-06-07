@@ -9,8 +9,8 @@
 #include <anki/scene/SceneComponent.h>
 #include <anki/resource/Material.h>
 #include <anki/resource/Model.h>
-#include <anki/util/HashMap.h>
 #include <anki/core/StagingGpuMemoryManager.h>
+#include <anki/renderer/RenderQueue.h>
 
 namespace anki
 {
@@ -153,7 +153,7 @@ public:
 
 	using Variables = DynamicArray<RenderComponentVariable>;
 
-	RenderComponent(SceneNode* node, const Material* mtl);
+	RenderComponent(SceneNode* node, MaterialResourcePtr mtl);
 
 	~RenderComponent();
 
@@ -209,31 +209,14 @@ public:
 		return err;
 	}
 
+	void allocateAndSetupUniforms(const RenderQueueDrawContext& ctx,
+		WeakArray<const Mat4> transforms,
+		StagingGpuMemoryManager& alloc,
+		StagingGpuMemoryToken& token) const;
+
 private:
-	using Key = U64;
-
-	/// Hash the hash.
-	class Hasher
-	{
-	public:
-		U64 operator()(const Key& b) const
-		{
-			return b;
-		}
-	};
-
-	/// Hash compare.
-	class Compare
-	{
-	public:
-		Bool operator()(const Key& a, const Key& b) const
-		{
-			return a == b;
-		}
-	};
-
 	Variables m_vars;
-	const Material* m_mtl;
+	MaterialResourcePtr m_mtl;
 };
 /// @}
 

@@ -101,20 +101,18 @@ public:
 };
 
 /// Resource manager. It holds a few global variables
-class ResourceManager : public TypeResourceManager<Animation>,
-						public TypeResourceManager<TextureResource>,
-						public TypeResourceManager<ShaderResource>,
-						public TypeResourceManager<Material>,
-						public TypeResourceManager<Mesh>,
-						public TypeResourceManager<Skeleton>,
-						public TypeResourceManager<ParticleEmitterResource>,
-						public TypeResourceManager<Model>,
-						public TypeResourceManager<Script>,
-						public TypeResourceManager<DummyRsrc>,
-						public TypeResourceManager<CollisionResource>,
-						public TypeResourceManager<GenericResource>,
-						public TypeResourceManager<TextureAtlas>,
-						public TypeResourceManager<ShaderProgramResource>
+class ResourceManager:
+
+#define ANKI_INSTANTIATE_RESOURCE(rsrc_, ptr_) \
+public                                         \
+	TypeResourceManager<rsrc_>
+
+#define ANKI_INSTANSIATE_RESOURCE_DELIMITER() ,
+
+#include <anki/resource/InstantiationMacros.h>
+#undef ANKI_INSTANTIATE_RESOURCE
+#undef ANKI_INSTANSIATE_RESOURCE_DELIMITER
+
 {
 	template<typename T>
 	friend class ResourcePtrDeleter;
@@ -178,20 +176,9 @@ anki_internal:
 		return *m_fs;
 	}
 
-	const String& _getCacheDirectory() const
+	const String& getCacheDirectory() const
 	{
 		return m_cacheDir;
-	}
-
-	/// Set it with information from the renderer
-	void _setShadersPrependedSource(const CString& cstr)
-	{
-		m_shadersPrependedSource.create(m_alloc, cstr);
-	}
-
-	const String& _getShadersPrependedSource() const
-	{
-		return m_shadersPrependedSource;
 	}
 
 	template<typename T>
@@ -235,7 +222,6 @@ private:
 	String m_cacheDir;
 	U32 m_maxTextureSize;
 	U32 m_textureAnisotropy;
-	String m_shadersPrependedSource;
 	AsyncLoader* m_asyncLoader = nullptr; ///< Async loading thread
 	U64 m_uuid = 0;
 	U64 m_loadRequestCount = 0;

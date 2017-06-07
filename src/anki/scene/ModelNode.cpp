@@ -25,7 +25,7 @@ public:
 	}
 
 	ModelPatchRenderComponent(ModelPatchNode* node)
-		: RenderComponent(node, &node->m_modelPatch->getMaterial())
+		: RenderComponent(node, node->m_modelPatch->getMaterial())
 	{
 	}
 

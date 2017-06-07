@@ -170,7 +170,7 @@ public:
 	}
 
 	ParticleEmitterRenderComponent(ParticleEmitter* node)
-		: RenderComponent(node, &node->m_particleEmitterResource->getMaterial())
+		: RenderComponent(node, node->m_particleEmitterResource->getMaterial())
 	{
 	}
 

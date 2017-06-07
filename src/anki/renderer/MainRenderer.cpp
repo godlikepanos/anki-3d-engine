@@ -29,7 +29,6 @@ MainRenderer::MainRenderer()
 MainRenderer::~MainRenderer()
 {
 	ANKI_R_LOGI("Destroying main renderer");
-	m_materialShaderSource.destroy(m_alloc);
 }
 
 Error MainRenderer::create(ThreadPool* threadpool,
@@ -67,13 +66,6 @@ Error MainRenderer::create(ThreadPool* threadpool,
 	m_r.reset(m_alloc.newInstance<Renderer>());
 	ANKI_CHECK(m_r->init(
 		threadpool, resources, gr, stagingMem, m_alloc, m_frameAlloc, config2, globTimestamp, m_rDrawToDefaultFb));
-
-	// Set the default preprocessor string
-	m_materialShaderSource.sprintf(m_alloc,
-		"#define ANKI_RENDERER_WIDTH %u\n"
-		"#define ANKI_RENDERER_HEIGHT %u\n",
-		m_r->getWidth(),
-		m_r->getHeight());
 
 	// Init other
 	if(!m_rDrawToDefaultFb)

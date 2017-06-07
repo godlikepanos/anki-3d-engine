@@ -41,13 +41,12 @@ public:
 class RenderQueueDrawContext final : public RenderingMatrices
 {
 public:
-	U8 m_lod;
-	Pass m_pass;
+	RenderingKey m_key;
 	CommandBufferPtr m_cmdb;
 };
 
 /// Draw callback.
-using RenderQueueElementDrawCallback = void(*)(
+using RenderQueueElementDrawCallback = void (*)(
 	const RenderQueueDrawContext& ctx, RenderQueueElement* elements, U elementCount);
 
 class RenderQueueElement final
@@ -167,7 +166,7 @@ inline void TRenderQueue<T>::mergeBack(StackAllocator<T> alloc, TRenderQueue& b)
 }
 
 /// The combination of all the results.
-class VisibilityTestResults
+class CombinedRenderQueues
 {
 public:
 	RenderQueue m_renderables; ///< Deferred shading or shadow renderables.

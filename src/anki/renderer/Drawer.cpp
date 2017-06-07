@@ -151,166 +151,18 @@ RenderableDrawer::~RenderableDrawer()
 
 void RenderableDrawer::setupUniforms(DrawContext& ctx, CompleteRenderingBuildInfo& build)
 {
-	const Material& mtl = build.m_rc->getMaterial();
-	const MaterialVariant& variant = mtl.getOrCreateVariant(build.m_in.m_key);
-	const ShaderProgramResourceVariant& progVariant = variant.getShaderProgramResourceVariant();
+	RenderQueueDrawContext dctx;
+	dctx.m_cameraTransform = ctx.m_viewMat.getInverse();
+	dctx.m_cmdb = ctx.m_cmdb;
+	dctx.m_key = build.m_in.m_key;
+	dctx.m_projectionMatrix = Mat4::getIdentity();
+	dctx.m_viewMatrix = ctx.m_viewMat;
+	dctx.m_viewProjectionMatrix = ctx.m_viewProjMat;
 
-	const U cachedTrfs = ctx.m_cachedTrfCount;
-	ANKI_ASSERT(cachedTrfs <= MAX_INSTANCES);
-
-	// Get some memory for uniforms
-	U8* uniforms = static_cast<U8*>(m_r->getStagingGpuMemoryManager().allocateFrame(
-		variant.getUniformBlockSize(), StagingGpuMemoryType::UNIFORM, ctx.m_uboToken));
-	void* const uniformsBegin = uniforms;
-	const void* const uniformsEnd = uniforms + variant.getUniformBlockSize();
-
-	// Iterate variables
-	for(auto it = build.m_rc->getVariablesBegin(); it != build.m_rc->getVariablesEnd(); ++it)
-	{
-		const RenderComponentVariable& var = *it;
-		const MaterialVariable& mvar = var.getMaterialVariable();
-		const ShaderProgramResourceInputVariable& progvar = mvar.getShaderProgramResourceInputVariable();
-
-		if(!variant.variableActive(mvar))
-		{
-			continue;
-		}
-
-		switch(progvar.getShaderVariableDataType())
-		{
-		case ShaderVariableDataType::FLOAT:
-		{
-			F32 val = mvar.getValue<F32>();
-			progVariant.writeShaderBlockMemory(progvar, &val, 1, uniformsBegin, uniformsEnd);
-			break;
-		}
-		case ShaderVariableDataType::VEC2:
-		{
-			Vec2 val = mvar.getValue<Vec2>();
-			progVariant.writeShaderBlockMemory(progvar, &val, 1, uniformsBegin, uniformsEnd);
-			break;
-		}
-		case ShaderVariableDataType::VEC3:
-		{
-			Vec3 val = mvar.getValue<Vec3>();
-			progVariant.writeShaderBlockMemory(progvar, &val, 1, uniformsBegin, uniformsEnd);
-			break;
-		}
-		case ShaderVariableDataType::VEC4:
-		{
-			Vec4 val = mvar.getValue<Vec4>();
-			progVariant.writeShaderBlockMemory(progvar, &val, 1, uniformsBegin, uniformsEnd);
-			break;
-		}
-		case ShaderVariableDataType::MAT3:
-		{
-			switch(mvar.getBuiltin())
-			{
-			case BuiltinMaterialVariableId::NONE:
-			{
-				Mat3 val = mvar.getValue<Mat3>();
-				progVariant.writeShaderBlockMemory(progvar, &val, 1, uniformsBegin, uniformsEnd);
-				break;
-			}
-			case BuiltinMaterialVariableId::NORMAL_MATRIX:
-			{
-				ANKI_ASSERT(cachedTrfs > 0);
-
-				DynamicArrayAuto<Mat3> normMats(m_r->getFrameAllocator());
-				normMats.create(cachedTrfs);
-
-				for(U i = 0; i < cachedTrfs; i++)
-				{
-					Mat4 mv = ctx.m_viewMat * ctx.m_cachedTrfs[i];
-					normMats[i] = mv.getRotationPart();
-					normMats[i].reorthogonalize();
-				}
-
-				progVariant.writeShaderBlockMemory(progvar, &normMats[0], cachedTrfs, uniformsBegin, uniformsEnd);
-				break;
-			}
-			case BuiltinMaterialVariableId::CAMERA_ROTATION_MATRIX:
-			{
-				Mat3 rot = ctx.m_viewMat.getRotationPart().getTransposed();
-				progVariant.writeShaderBlockMemory(progvar, &rot, 1, uniformsBegin, uniformsEnd);
-				break;
-			}
-			default:
-				ANKI_ASSERT(0);
-			}
-
-			break;
-		}
-		case ShaderVariableDataType::MAT4:
-		{
-			switch(mvar.getBuiltin())
-			{
-			case BuiltinMaterialVariableId::NONE:
-			{
-				Mat4 val = mvar.getValue<Mat4>();
-				progVariant.writeShaderBlockMemory(progvar, &val, 1, uniformsBegin, uniformsEnd);
-				break;
-			}
-			case BuiltinMaterialVariableId::MODEL_VIEW_PROJECTION_MATRIX:
-			{
-				ANKI_ASSERT(cachedTrfs > 0);
-
-				DynamicArrayAuto<Mat4> mvp(m_r->getFrameAllocator());
-				mvp.create(cachedTrfs);
-
-				for(U i = 0; i < cachedTrfs; i++)
-				{
-					mvp[i] = ctx.m_viewProjMat * ctx.m_cachedTrfs[i];
-				}
-
-				progVariant.writeShaderBlockMemory(progvar, &mvp[0], cachedTrfs, uniformsBegin, uniformsEnd);
-				break;
-			}
-			case BuiltinMaterialVariableId::MODEL_VIEW_MATRIX:
-			{
-				ANKI_ASSERT(cachedTrfs > 0);
-
-				DynamicArrayAuto<Mat4> mv(m_r->getFrameAllocator());
-				mv.create(cachedTrfs);
-
-				for(U i = 0; i < cachedTrfs; i++)
-				{
-					mv[i] = ctx.m_viewMat * ctx.m_cachedTrfs[i];
-				}
-
-				progVariant.writeShaderBlockMemory(progvar, &mv[0], cachedTrfs, uniformsBegin, uniformsEnd);
-				break;
-			}
-			case BuiltinMaterialVariableId::VIEW_PROJECTION_MATRIX:
-			{
-				ANKI_ASSERT(cachedTrfs == 0 && "Cannot have transform");
-				progVariant.writeShaderBlockMemory(progvar, &ctx.m_viewProjMat, 1, uniformsBegin, uniformsEnd);
-				break;
-			}
-			case BuiltinMaterialVariableId::VIEW_MATRIX:
-			{
-				progVariant.writeShaderBlockMemory(progvar, &ctx.m_viewMat, 1, uniformsBegin, uniformsEnd);
-				break;
-			}
-			default:
-				ANKI_ASSERT(0);
-			}
-
-			break;
-		}
-		case ShaderVariableDataType::SAMPLER_2D:
-		case ShaderVariableDataType::SAMPLER_2D_ARRAY:
-		case ShaderVariableDataType::SAMPLER_3D:
-		case ShaderVariableDataType::SAMPLER_CUBE:
-		{
-			ctx.m_cmdb->bindTexture(
-				0, progVariant.getTextureUnit(progvar), mvar.getValue<TextureResourcePtr>()->getGrTexture());
-			break;
-		}
-		default:
-			ANKI_ASSERT(0);
-		} // end switch
-	}
+	build.m_rc->allocateAndSetupUniforms(dctx,
+		WeakArray<const Mat4>(&ctx.m_cachedTrfs[0], ctx.m_cachedTrfCount),
+		m_r->getStagingGpuMemoryManager(),
+		ctx.m_uboToken);
 }
 
 Error RenderableDrawer::drawRange(Pass pass,

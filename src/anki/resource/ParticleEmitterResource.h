@@ -106,14 +106,9 @@ public:
 		return *this;
 	}
 
-	const Material& getMaterial() const
+	MaterialResourcePtr getMaterial() const
 	{
-		return *m_material;
-	}
-
-	Material& getMaterial()
-	{
-		return *m_material;
+		return m_material;
 	}
 
 	/// Get program for rendering.

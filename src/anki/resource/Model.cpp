@@ -95,7 +95,7 @@ void ModelPatch::getRenderingDataSub(
 
 U ModelPatch::getLodCount() const
 {
-	return max<U>(m_meshCount, getMaterial().getLodCount());
+	return max<U>(m_meshCount, getMaterial()->getLodCount());
 }
 
 Error ModelPatch::create(WeakArray<CString> meshFNames, const CString& mtlFName, ResourceManager* manager)

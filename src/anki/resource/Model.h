@@ -84,9 +84,9 @@ public:
 
 	~ModelPatch();
 
-	const Material& getMaterial() const
+	MaterialResourcePtr getMaterial() const
 	{
-		return *m_mtl;
+		return m_mtl;
 	}
 
 	const Mesh& getMesh(const RenderingKey& key) const

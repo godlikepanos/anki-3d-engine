@@ -18,7 +18,7 @@ public:
 	StaticGeometryPatchNode* m_node;
 
 	StaticGeometryRenderComponent(StaticGeometryPatchNode* node)
-		: RenderComponent(node, &node->m_modelPatch->getMaterial())
+		: RenderComponent(node, node->m_modelPatch->getMaterial())
 		, m_node(node)
 	{
 	}

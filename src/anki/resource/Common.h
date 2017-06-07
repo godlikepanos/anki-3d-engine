@@ -46,12 +46,7 @@ template<typename T>
 class ResourcePtrDeleter
 {
 public:
-	void operator()(T* ptr)
-	{
-		ptr->getManager().unregisterResource(ptr);
-		auto alloc = ptr->getAllocator();
-		alloc.deleteInstance(ptr);
-	}
+	void operator()(T* ptr);
 };
 
 /// Smart pointer for resources.
@@ -59,26 +54,15 @@ template<typename T>
 using ResourcePtr = IntrusivePtr<T, ResourcePtrDeleter<T>>;
 
 // NOTE: Add resources in 3 places
-#define ANKI_FORWARD(rsrc_, name_) \
-	class rsrc_;                   \
+#define ANKI_INSTANTIATE_RESOURCE(rsrc_, name_) \
+	class rsrc_;                                \
 	using name_ = ResourcePtr<rsrc_>;
 
-ANKI_FORWARD(Animation, AnimationResourcePtr)
-ANKI_FORWARD(TextureResource, TextureResourcePtr)
-ANKI_FORWARD(ShaderResource, ShaderResourcePtr)
-ANKI_FORWARD(Material, MaterialResourcePtr)
-ANKI_FORWARD(Mesh, MeshResourcePtr)
-ANKI_FORWARD(Skeleton, SkeletonResourcePtr)
-ANKI_FORWARD(ParticleEmitterResource, ParticleEmitterResourcePtr)
-ANKI_FORWARD(Model, ModelResourcePtr)
-ANKI_FORWARD(Script, ScriptResourcePtr)
-ANKI_FORWARD(DummyRsrc, DummyResourcePtr)
-ANKI_FORWARD(CollisionResource, CollisionResourcePtr)
-ANKI_FORWARD(GenericResource, GenericResourcePtr)
-ANKI_FORWARD(TextureAtlas, TextureAtlasResourcePtr)
-ANKI_FORWARD(ShaderProgramResource, ShaderProgramResourcePtr)
+#define ANKI_INSTANSIATE_RESOURCE_DELIMITER()
 
-#undef ANKI_FORWARD
+#include <anki/resource/InstantiationMacros.h>
+#undef ANKI_INSTANTIATE_RESOURCE
+#undef ANKI_INSTANSIATE_RESOURCE_DELIMITER
 
 template<typename T>
 using ResourceAllocator = HeapAllocator<T>;

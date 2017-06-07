@@ -39,8 +39,6 @@ Error ShaderResource::load(const ResourceFilename& filename, const CString& extr
 	// Allocate new source
 	StringAuto source(alloc);
 
-	source.append(getManager()._getShadersPrependedSource());
-
 	if(extraSrc.getLength() > 0)
 	{
 		source.append(extraSrc);
@@ -91,7 +89,7 @@ Error ShaderResource::createToCache(const ResourceFilename& filename,
 	// Compose cached filename
 	StringAuto newFilename(alloc);
 
-	newFilename.sprintf("%s/%s", &manager._getCacheDirectory()[0], &out[0]);
+	newFilename.sprintf("%s/%s", &manager.getCacheDirectory()[0], &out[0]);
 
 	if(fileExists(newFilename.toCString()))
 	{

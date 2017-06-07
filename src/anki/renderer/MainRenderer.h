@@ -42,11 +42,6 @@ public:
 
 	ANKI_USE_RESULT Error render(SceneGraph& scene);
 
-	const String& getMaterialShaderSource() const
-	{
-		return m_materialShaderSource;
-	}
-
 	Dbg& getDbg();
 
 	F32 getAspectRatio() const;
@@ -74,8 +69,6 @@ private:
 	FramebufferPtr m_defaultFb;
 	U32 m_width = 0; ///< Default FB size.
 	U32 m_height = 0; ///< Default FB size.
-
-	String m_materialShaderSource; ///< String to append in user shaders
 
 	F32 m_renderingQuality = 1.0;
 

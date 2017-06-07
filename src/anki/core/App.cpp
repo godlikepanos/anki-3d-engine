@@ -282,8 +282,6 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	ANKI_CHECK(m_renderer->create(
 		m_threadpool, m_resources, m_gr, m_stagingMem, m_allocCb, m_allocCbData, config, &m_globalTimestamp));
 
-	m_resources->_setShadersPrependedSource(m_renderer->getMaterialShaderSource().toCString());
-
 	//
 	// Scene
 	//

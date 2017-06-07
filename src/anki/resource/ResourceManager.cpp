@@ -30,7 +30,6 @@ ResourceManager::ResourceManager()
 ResourceManager::~ResourceManager()
 {
 	m_cacheDir.destroy(m_alloc);
-	m_shadersPrependedSource.destroy(m_alloc);
 	m_alloc.deleteInstance(m_asyncLoader);
 	m_transferGpuAlloc.destroy();
 }
@@ -53,24 +52,13 @@ Error ResourceManager::init(ResourceManagerInitInfo& init)
 
 // Init type resource managers
 //
-#define ANKI_RESOURCE(type_) TypeResourceManager<type_>::init(m_alloc);
+#define ANKI_INSTANTIATE_RESOURCE(rsrc_, ptr_) TypeResourceManager<rsrc_>::init(m_alloc);
 
-	ANKI_RESOURCE(Animation)
-	ANKI_RESOURCE(TextureResource)
-	ANKI_RESOURCE(ShaderResource)
-	ANKI_RESOURCE(Material)
-	ANKI_RESOURCE(Mesh)
-	ANKI_RESOURCE(Skeleton)
-	ANKI_RESOURCE(ParticleEmitterResource)
-	ANKI_RESOURCE(Model)
-	ANKI_RESOURCE(Script)
-	ANKI_RESOURCE(DummyRsrc)
-	ANKI_RESOURCE(CollisionResource)
-	ANKI_RESOURCE(GenericResource)
-	ANKI_RESOURCE(TextureAtlas)
-	ANKI_RESOURCE(ShaderProgramResource)
+#define ANKI_INSTANSIATE_RESOURCE_DELIMITER()
 
-#undef ANKI_RESOURCE
+#include <anki/resource/InstantiationMacros.h>
+#undef ANKI_INSTANTIATE_RESOURCE
+#undef ANKI_INSTANSIATE_RESOURCE_DELIMITER
 
 	// Init the thread
 	m_asyncLoader = m_alloc.newInstance<AsyncLoader>();

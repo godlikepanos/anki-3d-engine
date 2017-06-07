@@ -93,6 +93,8 @@ public:
 
 	SceneAllocator<U8> getAllocator() const;
 
+	SceneFrameAllocator<U8> getFrameAllocator() const;
+
 	SceneGraph& getSceneGraph();
 	const SceneGraph& getSceneGraph() const;
 

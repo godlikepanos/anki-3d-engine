@@ -64,6 +64,11 @@ SceneAllocator<U8> SceneComponent::getAllocator() const
 	return m_node->getSceneAllocator();
 }
 
+SceneFrameAllocator<U8> SceneComponent::getFrameAllocator() const
+{
+	return m_node->getFrameAllocator();
+}
+
 void SceneComponentLists::insertNew(SceneComponent* comp)
 {
 	ANKI_ASSERT(comp);
