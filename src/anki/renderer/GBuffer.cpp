@@ -100,9 +100,9 @@ Error GBuffer::initInternal(const ConfigSet& initializer)
 	return ErrorCode::NONE;
 }
 
-Error GBuffer::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) const
+void GBuffer::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) const
 {
-	ANKI_TRACE_START_EVENT(RENDER_MS);
+	ANKI_TRACE_SCOPED_EVENT(RENDER_MS);
 
 	// Get some stuff
 	const VisibilityTestResults& vis = *ctx.m_visResults;
@@ -135,21 +135,18 @@ Error GBuffer::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCo
 		cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 
 		// Start drawing
-		ANKI_CHECK(m_r->getSceneDrawer().drawRange(Pass::GB_FS,
+		m_r->getSceneDrawer().drawRange(Pass::GB_FS,
 			ctx.m_viewMat,
 			ctx.m_viewProjMatJitter,
 			cmdb,
 			vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + start,
-			vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + end));
+			vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + end);
 	}
-
-	ANKI_TRACE_STOP_EVENT(RENDER_MS);
-	return ErrorCode::NONE;
 }
 
 void GBuffer::run(RenderingContext& ctx)
 {
-	ANKI_TRACE_START_EVENT(RENDER_MS);
+	ANKI_TRACE_SCOPED_EVENT(RENDER_MS);
 
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 	cmdb->beginRenderPass(m_fb);
@@ -166,13 +163,11 @@ void GBuffer::run(RenderingContext& ctx)
 	}
 
 	cmdb->endRenderPass();
-
-	ANKI_TRACE_STOP_EVENT(RENDER_MS);
 }
 
 void GBuffer::setPreRunBarriers(RenderingContext& ctx)
 {
-	ANKI_TRACE_START_EVENT(RENDER_MS);
+	ANKI_TRACE_SCOPED_EVENT(RENDER_MS);
 
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 	TextureSurfaceInfo surf(0, 0, 0, 0);
@@ -182,13 +177,11 @@ void GBuffer::setPreRunBarriers(RenderingContext& ctx)
 	cmdb->setTextureSurfaceBarrier(m_rt2, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, surf);
 	cmdb->setTextureSurfaceBarrier(
 		m_depthRt, TextureUsageBit::NONE, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, surf);
-
-	ANKI_TRACE_STOP_EVENT(RENDER_MS);
 }
 
 void GBuffer::setPostRunBarriers(RenderingContext& ctx)
 {
-	ANKI_TRACE_START_EVENT(RENDER_MS);
+	ANKI_TRACE_SCOPED_EVENT(RENDER_MS);
 
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 	TextureSurfaceInfo surf(0, 0, 0, 0);
@@ -204,8 +197,6 @@ void GBuffer::setPostRunBarriers(RenderingContext& ctx)
 
 	cmdb->setTextureSurfaceBarrier(
 		m_depthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, TextureUsageBit::SAMPLED_FRAGMENT, surf);
-
-	ANKI_TRACE_STOP_EVENT(RENDER_MS);
 }
 
 } // end namespace anki

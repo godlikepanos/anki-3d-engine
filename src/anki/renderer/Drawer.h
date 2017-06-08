@@ -15,15 +15,13 @@ namespace anki
 // Forward
 class Renderer;
 class DrawContext;
-class CompleteRenderingBuildInfo;
 
 /// @addtogroup renderer
 /// @{
 
-/// It includes all the functions to render a Renderable
+/// It uses the render queue to batch and render.
 class RenderableDrawer
 {
-	friend class SetupRenderableVariableVisitor;
 	friend class RenderTask;
 
 public:
@@ -34,7 +32,7 @@ public:
 
 	~RenderableDrawer();
 
-	ANKI_USE_RESULT Error drawRange(Pass pass,
+	void drawRange(Pass pass,
 		const Mat4& viewMat,
 		const Mat4& viewProjMat,
 		CommandBufferPtr cmdb,
@@ -44,10 +42,9 @@ public:
 private:
 	Renderer* m_r;
 
-	ANKI_USE_RESULT Error flushDrawcall(DrawContext& ctx, CompleteRenderingBuildInfo& build);
-	void setupUniforms(DrawContext& ctx, CompleteRenderingBuildInfo& build);
+	void flushDrawcall(DrawContext& ctx);
 
-	ANKI_USE_RESULT Error drawSingle(DrawContext& ctx);
+	void drawSingle(DrawContext& ctx);
 };
 /// @}
 

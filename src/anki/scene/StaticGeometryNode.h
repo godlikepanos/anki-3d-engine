@@ -33,8 +33,6 @@ public:
 
 private:
 	const ModelPatch* m_modelPatch;
-
-	ANKI_USE_RESULT Error buildRendering(const RenderingBuildInfoIn& in, RenderingBuildInfoOut& out) const;
 };
 
 /// Static geometry scene node

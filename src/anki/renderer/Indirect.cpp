@@ -310,7 +310,7 @@ Error Indirect::initIrradiance()
 	return ErrorCode::NONE;
 }
 
-Error Indirect::runMs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx)
+void Indirect::runMs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx)
 {
 	CommandBufferPtr& cmdb = rctx.m_commandBuffer;
 	VisibilityTestResults& vis = frc.getVisibilityTestResults();
@@ -341,12 +341,12 @@ Error Indirect::runMs(RenderingContext& rctx, FrustumComponent& frc, U layer, U 
 	cmdb->setViewport(0, 0, m_fbSize, m_fbSize);
 
 	/// Draw
-	ANKI_CHECK(m_r->getSceneDrawer().drawRange(Pass::GB_FS,
+	m_r->getSceneDrawer().drawRange(Pass::GB_FS,
 		frc.getViewMatrix(),
 		frc.getViewProjectionMatrix(),
 		cmdb,
 		vis.getBegin(VisibilityGroupType::RENDERABLES_MS),
-		vis.getEnd(VisibilityGroupType::RENDERABLES_MS)));
+		vis.getEnd(VisibilityGroupType::RENDERABLES_MS));
 
 	// End and set barriers
 	cmdb->endRenderPass();
@@ -363,8 +363,6 @@ Error Indirect::runMs(RenderingContext& rctx, FrustumComponent& frc, U layer, U 
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ,
 		TextureSurfaceInfo(0, 0, 0, 0));
-
-	return ErrorCode::NONE;
 }
 
 void Indirect::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx)
@@ -546,9 +544,9 @@ void Indirect::computeIrradiance(RenderingContext& rctx, U layer, U faceIdx)
 		TextureSurfaceInfo(0, 0, faceIdx, layer));
 }
 
-Error Indirect::run(RenderingContext& rctx)
+void Indirect::run(RenderingContext& rctx)
 {
-	ANKI_TRACE_START_EVENT(RENDER_IR);
+	ANKI_TRACE_SCOPED_EVENT(RENDER_IR);
 	const VisibilityTestResults& visRez = *rctx.m_visResults;
 
 	if(visRez.getCount(VisibilityGroupType::REFLECTION_PROBES) > m_cubemapArrSize)
@@ -565,7 +563,7 @@ Error Indirect::run(RenderingContext& rctx)
 	while(it != end)
 	{
 		// Write and render probe
-		ANKI_CHECK(tryRender(rctx, *it->m_node, probesRendered));
+		tryRender(rctx, *it->m_node, probesRendered);
 
 		++it;
 		++probeIdx;
@@ -576,13 +574,9 @@ Error Indirect::run(RenderingContext& rctx)
 	CommandBufferPtr& cmdb = rctx.m_commandBuffer;
 	cmdb->informTextureCurrentUsage(m_irradiance.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
 	cmdb->informTextureCurrentUsage(m_is.m_lightRt, TextureUsageBit::SAMPLED_FRAGMENT);
-
-	// Bye
-	ANKI_TRACE_STOP_EVENT(RENDER_IR);
-	return ErrorCode::NONE;
 }
 
-Error Indirect::tryRender(RenderingContext& ctx, SceneNode& node, U& probesRendered)
+void Indirect::tryRender(RenderingContext& ctx, SceneNode& node, U& probesRendered)
 {
 	ReflectionProbeComponent& reflc = node.getComponent<ReflectionProbeComponent>();
 
@@ -597,7 +591,7 @@ Error Indirect::tryRender(RenderingContext& ctx, SceneNode& node, U& probesRende
 	{
 		++probesRendered;
 		reflc.setMarkedForRendering(false);
-		ANKI_CHECK(renderReflection(ctx, node, entry));
+		renderReflection(ctx, node, entry);
 	}
 
 	// If you need to render it mark it for the next frame
@@ -605,11 +599,9 @@ Error Indirect::tryRender(RenderingContext& ctx, SceneNode& node, U& probesRende
 	{
 		reflc.setMarkedForRendering(true);
 	}
-
-	return ErrorCode::NONE;
 }
 
-Error Indirect::renderReflection(RenderingContext& ctx, SceneNode& node, U cubemapIdx)
+void Indirect::renderReflection(RenderingContext& ctx, SceneNode& node, U cubemapIdx)
 {
 	ANKI_TRACE_INC_COUNTER(RENDERER_REFLECTIONS, 1);
 
@@ -626,7 +618,7 @@ Error Indirect::renderReflection(RenderingContext& ctx, SceneNode& node, U cubem
 	// Render cubemap
 	for(U i = 0; i < 6; ++i)
 	{
-		ANKI_CHECK(runMs(ctx, *frustumComponents[i], cubemapIdx, i));
+		runMs(ctx, *frustumComponents[i], cubemapIdx, i);
 		runIs(ctx, *frustumComponents[i], cubemapIdx, i);
 	}
 
@@ -634,8 +626,6 @@ Error Indirect::renderReflection(RenderingContext& ctx, SceneNode& node, U cubem
 	{
 		computeIrradiance(ctx, cubemapIdx, i);
 	}
-
-	return ErrorCode::NONE;
 }
 
 void Indirect::findCacheEntry(SceneNode& node, U& entry, Bool& render)

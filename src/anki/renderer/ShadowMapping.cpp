@@ -225,37 +225,34 @@ Bool ShadowMapping::skip(SceneNode& light, ShadowmapBase& sm)
 	return !shouldUpdate;
 }
 
-Error ShadowMapping::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) const
+void ShadowMapping::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) const
 {
-	ANKI_TRACE_START_EVENT(RENDER_SM);
+	ANKI_TRACE_SCOPED_EVENT(RENDER_SM);
 
 	for(U i = 0; i < ctx.m_shadowMapping.m_spots.getSize(); ++i)
 	{
 		U idx = i * threadCount + threadId;
 
-		ANKI_CHECK(doSpotLight(*ctx.m_shadowMapping.m_spots[i],
+		doSpotLight(*ctx.m_shadowMapping.m_spots[i],
 			ctx.m_shadowMapping.m_spotCommandBuffers[idx],
 			ctx.m_shadowMapping.m_spotFramebuffers[i],
 			threadId,
-			threadCount));
+			threadCount);
 	}
 
 	for(U i = 0; i < ctx.m_shadowMapping.m_omnis.getSize(); ++i)
 	{
 		U idx = i * threadCount * 6 + threadId * 6 + 0;
 
-		ANKI_CHECK(doOmniLight(*ctx.m_shadowMapping.m_omnis[i],
+		doOmniLight(*ctx.m_shadowMapping.m_omnis[i],
 			&ctx.m_shadowMapping.m_omniCommandBuffers[idx],
 			ctx.m_shadowMapping.m_omniFramebuffers[i],
 			threadId,
-			threadCount));
+			threadCount);
 	}
-
-	ANKI_TRACE_STOP_EVENT(RENDER_SM);
-	return ErrorCode::NONE;
 }
 
-Error ShadowMapping::doSpotLight(
+void ShadowMapping::doSpotLight(
 	SceneNode& light, CommandBufferPtr& cmdb, FramebufferPtr& fb, U threadId, U threadCount) const
 {
 	FrustumComponent& frc = light.getComponent<FrustumComponent>();
@@ -266,7 +263,7 @@ Error ShadowMapping::doSpotLight(
 
 	if(start == end)
 	{
-		return ErrorCode::NONE;
+		return;
 	}
 
 	CommandBufferInitInfo cinf;
@@ -287,7 +284,7 @@ Error ShadowMapping::doSpotLight(
 	cmdb->setViewport(0, 0, m_resolution, m_resolution);
 	cmdb->setPolygonOffset(1.0, 2.0);
 
-	Error err = m_r->getSceneDrawer().drawRange(Pass::SM,
+	m_r->getSceneDrawer().drawRange(Pass::SM,
 		frc.getViewMatrix(),
 		frc.getViewProjectionMatrix(),
 		cmdb,
@@ -295,11 +292,9 @@ Error ShadowMapping::doSpotLight(
 		vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + end);
 
 	cmdb->flush();
-
-	return err;
 }
 
-Error ShadowMapping::doOmniLight(
+void ShadowMapping::doOmniLight(
 	SceneNode& light, CommandBufferPtr cmdbs[], Array<FramebufferPtr, 6>& fbs, U threadId, U threadCount) const
 {
 	U frCount = 0;
@@ -330,12 +325,12 @@ Error ShadowMapping::doOmniLight(
 			cmdbs[frCount]->setViewport(0, 0, m_resolution, m_resolution);
 			cmdbs[frCount]->setPolygonOffset(1.0, 2.0);
 
-			ANKI_CHECK(m_r->getSceneDrawer().drawRange(Pass::SM,
+			m_r->getSceneDrawer().drawRange(Pass::SM,
 				frc.getViewMatrix(),
 				frc.getViewProjectionMatrix(),
 				cmdbs[frCount],
 				vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + start,
-				vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + end));
+				vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + end);
 
 			cmdbs[frCount]->flush();
 		}
@@ -343,13 +338,12 @@ Error ShadowMapping::doOmniLight(
 		++frCount;
 		return ErrorCode::NONE;
 	});
-
-	return err;
+	(void)err;
 }
 
 void ShadowMapping::prepareBuildCommandBuffers(RenderingContext& ctx)
 {
-	ANKI_TRACE_START_EVENT(RENDER_SM);
+	ANKI_TRACE_SCOPED_EVENT(RENDER_SM);
 
 	// Gather the lights
 	const VisibilityTestResults& vi = *ctx.m_visResults;
@@ -460,13 +454,11 @@ void ShadowMapping::prepareBuildCommandBuffers(RenderingContext& ctx)
 			ctx.m_shadowMapping.m_omniCacheIndices[i] = idx;
 		}
 	}
-
-	ANKI_TRACE_STOP_EVENT(RENDER_SM);
 }
 
 void ShadowMapping::setPreRunBarriers(RenderingContext& ctx)
 {
-	ANKI_TRACE_START_EVENT(RENDER_SM);
+	ANKI_TRACE_SCOPED_EVENT(RENDER_SM);
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 	// Spot lights
@@ -493,13 +485,11 @@ void ShadowMapping::setPreRunBarriers(RenderingContext& ctx)
 				TextureSurfaceInfo(0, 0, j, layer));
 		}
 	}
-
-	ANKI_TRACE_STOP_EVENT(RENDER_SM);
 }
 
 void ShadowMapping::setPostRunBarriers(RenderingContext& ctx)
 {
-	ANKI_TRACE_START_EVENT(RENDER_SM);
+	ANKI_TRACE_SCOPED_EVENT(RENDER_SM);
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 	// Spot lights
@@ -529,8 +519,6 @@ void ShadowMapping::setPostRunBarriers(RenderingContext& ctx)
 
 	cmdb->informTextureCurrentUsage(m_spotTexArray, TextureUsageBit::SAMPLED_FRAGMENT);
 	cmdb->informTextureCurrentUsage(m_omniTexArray, TextureUsageBit::SAMPLED_FRAGMENT);
-
-	ANKI_TRACE_STOP_EVENT(RENDER_SM);
 }
 
 } // end namespace anki

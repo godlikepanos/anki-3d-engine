@@ -41,8 +41,6 @@ private:
 	const ModelPatch* m_modelPatch = nullptr; ///< The resource
 	U64 m_mergeKey = 0;
 
-	ANKI_USE_RESULT Error buildRendering(const RenderingBuildInfoIn& in, RenderingBuildInfoOut& out) const;
-
 	void setupRenderQueueElement(RenderQueueElement& el) const
 	{
 		el.m_callback = drawCallback;

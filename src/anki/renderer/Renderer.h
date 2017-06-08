@@ -451,7 +451,7 @@ private:
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 
 	ANKI_USE_RESULT Error buildCommandBuffers(RenderingContext& ctx);
-	ANKI_USE_RESULT Error buildCommandBuffersInternal(RenderingContext& ctx, U32 threadId, PtrSize threadCount);
+	void buildCommandBuffersInternal(RenderingContext& ctx, U32 threadId, PtrSize threadCount);
 
 	void initJitteredMats();
 };

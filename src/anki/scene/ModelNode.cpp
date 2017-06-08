@@ -29,11 +29,6 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error buildRendering(const RenderingBuildInfoIn& in, RenderingBuildInfoOut& out) const override
-	{
-		return getNode().buildRendering(in, out);
-	}
-
 	void setupRenderQueueElement(RenderQueueElement& el) const override
 	{
 		getNode().setupRenderQueueElement(el);
@@ -59,51 +54,13 @@ Error ModelPatchNode::init(const ModelPatch* modelPatch, U idx, const ModelNode&
 	newComponent<SpatialComponent>(this, &m_obb);
 
 	// Render component
-	RenderComponent* rcomp = newComponent<ModelPatchRenderComponent>(this);
-	ANKI_CHECK(rcomp->init());
+	newComponent<ModelPatchRenderComponent>(this);
 
 	// Merge key
 	Array<U64, 2> toHash;
 	toHash[0] = idx;
 	toHash[1] = parent.m_model->getUuid();
 	m_mergeKey = computeHash(&toHash[0], sizeof(toHash));
-
-	return ErrorCode::NONE;
-}
-
-Error ModelPatchNode::buildRendering(const RenderingBuildInfoIn& in, RenderingBuildInfoOut& out) const
-{
-	// That will not work on multi-draw and instanced at the same time. Make sure that there is no multi-draw anywhere
-	ANKI_ASSERT(m_modelPatch->getSubMeshesCount() == 0);
-
-	// State
-	ModelRenderingInfo modelInf;
-	m_modelPatch->getRenderingDataSub(in.m_key, WeakArray<U8>(), modelInf);
-
-	out.m_vertexBufferBindingCount = modelInf.m_vertexBufferBindingCount;
-	for(U i = 0; i < modelInf.m_vertexBufferBindingCount; ++i)
-	{
-		static_cast<VertexBufferBinding&>(out.m_vertexBufferBindings[i]) = modelInf.m_vertexBufferBindings[i];
-	}
-
-	out.m_vertexAttributeCount = modelInf.m_vertexAttributeCount;
-	for(U i = 0; i < modelInf.m_vertexAttributeCount; ++i)
-	{
-		out.m_vertexAttributes[i] = modelInf.m_vertexAttributes[i];
-	}
-
-	out.m_indexBuffer = modelInf.m_indexBuffer;
-
-	out.m_program = modelInf.m_program;
-
-	// Other
-	ANKI_ASSERT(modelInf.m_drawcallCount == 1 && "Cannot accept multi-draw");
-	out.m_drawcall.m_elements.m_count = modelInf.m_indicesCountArray[0];
-	out.m_drawcall.m_elements.m_instanceCount = in.m_key.m_instanceCount;
-	out.m_drawcall.m_elements.m_firstIndex = modelInf.m_indicesOffsetArray[0] / sizeof(U16);
-
-	out.m_hasTransform = true;
-	out.m_transform = Mat4(getParent()->getComponent<MoveComponent>().getWorldTransform());
 
 	return ErrorCode::NONE;
 }
@@ -146,13 +103,15 @@ void ModelPatchNode::drawCallback(RenderQueueDrawContext& ctx, WeakArray<const R
 	// Uniforms
 	Array<Mat4, MAX_INSTANCES> trfs;
 	trfs[0] = Mat4(self.getParent()->getComponent<MoveComponent>().getWorldTransform());
-	for(U i = 0; i < elements.getSize(); ++i)
+	for(U i = 1; i < elements.getSize(); ++i)
 	{
-		trfs[i] = trfs[0];
+		const ModelPatchNode& self2 = *static_cast<const ModelPatchNode*>(elements[i].m_userData);
+		trfs[i] = Mat4(self2.getParent()->getComponent<MoveComponent>().getWorldTransform());
 	}
 
 	StagingGpuMemoryToken token;
-	self.getComponent<RenderComponent>().allocateAndSetupUniforms(ctx, trfs, *ctx.m_stagingGpuAllocator, token);
+	self.getComponent<RenderComponent>().allocateAndSetupUniforms(
+		ctx, WeakArray<const Mat4>(&trfs[0], elements.getSize()), *ctx.m_stagingGpuAllocator, token);
 	cmdb->bindUniformBuffer(0, 0, token.m_buffer, token.m_offset, token.m_range);
 
 	// Draw

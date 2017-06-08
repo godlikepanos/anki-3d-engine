@@ -174,11 +174,6 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error buildRendering(const RenderingBuildInfoIn& in, RenderingBuildInfoOut& out) const override
-	{
-		return getNode().buildRendering(in, out);
-	}
-
 	void setupRenderQueueElement(RenderQueueElement& el) const override
 	{
 		getNode().setupRenderQueueElement(el);
@@ -242,8 +237,7 @@ Error ParticleEmitter::init(const CString& filename)
 	newComponent<SpatialComponent>(this, &m_obb);
 
 	// Render component
-	ParticleEmitterRenderComponent* rcomp = newComponent<ParticleEmitterRenderComponent>(this);
-	ANKI_CHECK(rcomp->init());
+	newComponent<ParticleEmitterRenderComponent>(this);
 
 	// Other
 	m_obb.setCenter(Vec4(0.0));
@@ -268,41 +262,6 @@ Error ParticleEmitter::init(const CString& filename)
 
 	// Create the vertex buffer and object
 	m_vertBuffSize = m_maxNumOfParticles * VERTEX_SIZE;
-
-	return ErrorCode::NONE;
-}
-
-Error ParticleEmitter::buildRendering(const RenderingBuildInfoIn& in, RenderingBuildInfoOut& out) const
-{
-	ANKI_ASSERT(in.m_subMeshIndicesCount == 1);
-
-	m_particleEmitterResource->getRenderingInfo(in.m_key.m_lod, out.m_program);
-
-	out.m_vertexBufferBindingCount = 1;
-	out.m_vertexBufferBindings[0].m_token = m_vertBuffToken;
-	out.m_vertexBufferBindings[0].m_stride = VERTEX_SIZE;
-	out.m_vertexBufferBindings[0].m_stepRate = VertexStepRate::INSTANCE;
-
-	out.m_vertexAttributeCount = 3;
-	out.m_vertexAttributes[0].m_bufferBinding = 0;
-	out.m_vertexAttributes[0].m_format = PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
-	out.m_vertexAttributes[0].m_relativeOffset = 0;
-	out.m_vertexAttributes[1].m_bufferBinding = 0;
-	out.m_vertexAttributes[1].m_format = PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT);
-	out.m_vertexAttributes[1].m_relativeOffset = sizeof(Vec3);
-	out.m_vertexAttributes[2].m_bufferBinding = 0;
-	out.m_vertexAttributes[2].m_format = PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT);
-	out.m_vertexAttributes[2].m_relativeOffset = sizeof(Vec3) + sizeof(F32);
-
-	out.m_topology = PrimitiveTopology::TRIANGLE_STRIP;
-
-	out.m_drawArrays = true;
-	out.m_drawcall.m_arrays.m_instanceCount = m_aliveParticlesCount;
-	out.m_drawcall.m_arrays.m_count = 4;
-
-	// The particles are already in world position but materials use the MVP
-	out.m_hasTransform = true;
-	out.m_transform = Mat4::getIdentity();
 
 	return ErrorCode::NONE;
 }

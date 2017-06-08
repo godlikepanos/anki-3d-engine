@@ -42,7 +42,7 @@ anki_internal:
 
 	void prepareBuildCommandBuffers(RenderingContext& ctx);
 
-	ANKI_USE_RESULT Error buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) const;
+	void buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) const;
 
 	void setPreRunBarriers(RenderingContext& ctx);
 
@@ -89,10 +89,9 @@ private:
 	/// Check if a shadow pass can be skipped.
 	Bool skip(SceneNode& light, ShadowmapBase& sm);
 
-	ANKI_USE_RESULT Error doSpotLight(
-		SceneNode& light, CommandBufferPtr& cmdBuff, FramebufferPtr& fb, U threadId, U threadCount) const;
+	void doSpotLight(SceneNode& light, CommandBufferPtr& cmdBuff, FramebufferPtr& fb, U threadId, U threadCount) const;
 
-	ANKI_USE_RESULT Error doOmniLight(
+	void doOmniLight(
 		SceneNode& light, CommandBufferPtr cmdbs[], Array<FramebufferPtr, 6>& fbs, U threadId, U threadCount) const;
 };
 

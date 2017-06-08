@@ -16,26 +16,18 @@ RenderComponent::RenderComponent(SceneNode* node, MaterialResourcePtr mtl)
 	: SceneComponent(SceneComponentType::RENDER, node)
 	, m_mtl(mtl)
 {
+	// Create the material variables
+	m_vars.create(getAllocator(), m_mtl->getVariables().getSize());
+	U count = 0;
+	for(const MaterialVariable& mv : m_mtl->getVariables())
+	{
+		m_vars[count++].m_mvar = &mv;
+	}
 }
 
 RenderComponent::~RenderComponent()
 {
 	m_vars.destroy(getAllocator());
-}
-
-Error RenderComponent::init()
-{
-	const Material& mtl = getMaterial();
-
-	// Create the material variables
-	m_vars.create(getAllocator(), mtl.getVariables().getSize());
-	U count = 0;
-	for(const MaterialVariable& mv : mtl.getVariables())
-	{
-		m_vars[count++].m_mvar = &mv;
-	}
-
-	return ErrorCode::NONE;
 }
 
 void RenderComponent::allocateAndSetupUniforms(const RenderQueueDrawContext& ctx,

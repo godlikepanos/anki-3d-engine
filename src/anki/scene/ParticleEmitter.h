@@ -198,8 +198,6 @@ private:
 	void createParticlesSimulation(SceneGraph* scene);
 	void createParticlesSimpleSimulation();
 
-	ANKI_USE_RESULT Error buildRendering(const RenderingBuildInfoIn& in, RenderingBuildInfoOut& out) const;
-
 	void onMoveComponentUpdate(MoveComponent& move);
 
 	void setupRenderQueueElement(RenderQueueElement& el) const

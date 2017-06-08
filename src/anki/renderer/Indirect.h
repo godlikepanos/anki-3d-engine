@@ -34,7 +34,7 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& cfg);
 
-	ANKI_USE_RESULT Error run(RenderingContext& ctx);
+	void run(RenderingContext& ctx);
 
 	U getReflectionTextureMipmapCount() const
 	{
@@ -142,13 +142,13 @@ private:
 	ANKI_USE_RESULT Error loadMesh(CString fname, BufferPtr& vert, BufferPtr& idx, U32& idxCount);
 
 	// Rendering
-	ANKI_USE_RESULT Error tryRender(RenderingContext& ctx, SceneNode& node, U& probesRendered);
+	void tryRender(RenderingContext& ctx, SceneNode& node, U& probesRendered);
 
-	ANKI_USE_RESULT Error runMs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx);
+	void runMs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx);
 	void runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx);
 	void computeIrradiance(RenderingContext& rctx, U layer, U faceIdx);
 
-	ANKI_USE_RESULT Error renderReflection(RenderingContext& ctx, SceneNode& node, U cubemapIdx);
+	void renderReflection(RenderingContext& ctx, SceneNode& node, U cubemapIdx);
 
 	/// Find a cache entry to store the reflection.
 	void findCacheEntry(SceneNode& node, U& entry, Bool& render);

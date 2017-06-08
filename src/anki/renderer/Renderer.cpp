@@ -256,7 +256,7 @@ Error Renderer::render(RenderingContext& ctx)
 	}
 
 	// Run stages
-	ANKI_CHECK(m_indirect->run(ctx));
+	m_indirect->run(ctx);
 
 	ANKI_CHECK(m_lightShading->binLights(ctx));
 
@@ -500,11 +500,11 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf)
 	return tex;
 }
 
-Error Renderer::buildCommandBuffersInternal(RenderingContext& ctx, U32 threadId, PtrSize threadCount)
+void Renderer::buildCommandBuffersInternal(RenderingContext& ctx, U32 threadId, PtrSize threadCount)
 {
 	// MS
 	//
-	ANKI_CHECK(m_gbuffer->buildCommandBuffers(ctx, threadId, threadCount));
+	m_gbuffer->buildCommandBuffers(ctx, threadId, threadCount);
 
 	// Append to the last MS's cmdb the occlusion tests
 	if(ctx.m_gbuffer.m_lastThreadWithWork == threadId)
@@ -519,11 +519,11 @@ Error Renderer::buildCommandBuffersInternal(RenderingContext& ctx, U32 threadId,
 
 	// SM
 	//
-	ANKI_CHECK(m_shadowMapping->buildCommandBuffers(ctx, threadId, threadCount));
+	m_shadowMapping->buildCommandBuffers(ctx, threadId, threadCount);
 
 	// FS
 	//
-	ANKI_CHECK(m_forwardShading->buildCommandBuffers(ctx, threadId, threadCount));
+	m_forwardShading->buildCommandBuffers(ctx, threadId, threadCount);
 
 	// Append to the last FB's cmdb the other passes
 	if(ctx.m_forwardShading.m_lastThreadWithWork == threadId)
@@ -561,13 +561,11 @@ Error Renderer::buildCommandBuffersInternal(RenderingContext& ctx, U32 threadId,
 	{
 		ctx.m_forwardShading.m_commandBuffers[threadId]->flush();
 	}
-
-	return ErrorCode::NONE;
 }
 
 Error Renderer::buildCommandBuffers(RenderingContext& ctx)
 {
-	ANKI_TRACE_START_EVENT(RENDERER_COMMAND_BUFFER_BUILDING);
+	ANKI_TRACE_SCOPED_EVENT(RENDERER_COMMAND_BUFFER_BUILDING);
 	ThreadPool& threadPool = getThreadPool();
 
 	// Prepare
@@ -605,7 +603,8 @@ Error Renderer::buildCommandBuffers(RenderingContext& ctx)
 
 		Error operator()(U32 threadId, PtrSize threadCount)
 		{
-			return m_r->buildCommandBuffersInternal(*m_ctx, threadId, threadCount);
+			m_r->buildCommandBuffersInternal(*m_ctx, threadId, threadCount);
+			return ErrorCode::NONE;
 		}
 	};
 
@@ -617,10 +616,9 @@ Error Renderer::buildCommandBuffers(RenderingContext& ctx)
 		threadPool.assignNewTask(i, &task);
 	}
 
-	Error err = threadPool.waitForAllThreadsToFinish();
-	ANKI_TRACE_STOP_EVENT(RENDERER_COMMAND_BUFFER_BUILDING);
+	ANKI_CHECK(threadPool.waitForAllThreadsToFinish());
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 Error Renderer::createShader(CString fname, ShaderResourcePtr& shader, CString extra)

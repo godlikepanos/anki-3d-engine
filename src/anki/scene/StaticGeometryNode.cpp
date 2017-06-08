@@ -23,11 +23,6 @@ public:
 	{
 	}
 
-	Error buildRendering(const RenderingBuildInfoIn& in, RenderingBuildInfoOut& out) const override
-	{
-		return m_node->buildRendering(in, out);
-	}
-
 	void setupRenderQueueElement(RenderQueueElement& el) const override
 	{
 		ANKI_ASSERT(!"TODO");
@@ -60,12 +55,6 @@ Error StaticGeometryPatchNode::init(const ModelPatch* modelPatch)
 	// Create render component
 	newComponent<StaticGeometryRenderComponent>(this);
 
-	return ErrorCode::NONE;
-}
-
-Error StaticGeometryPatchNode::buildRendering(const RenderingBuildInfoIn& in, RenderingBuildInfoOut& out) const
-{
-	ANKI_ASSERT(!"TODO");
 	return ErrorCode::NONE;
 }
 

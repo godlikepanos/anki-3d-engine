@@ -108,7 +108,7 @@ void ForwardShading::drawVolumetric(RenderingContext& ctx, CommandBufferPtr cmdb
 	cmdb->setDepthCompareOperation(CompareOperation::LESS);
 }
 
-Error ForwardShading::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) const
+void ForwardShading::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) const
 {
 	U problemSize = ctx.m_visResults->getCount(VisibilityGroupType::RENDERABLES_FS);
 	PtrSize start, end;
@@ -117,7 +117,7 @@ Error ForwardShading::buildCommandBuffers(RenderingContext& ctx, U threadId, U t
 	if(start == end)
 	{
 		// Early exit
-		return ErrorCode::NONE;
+		return;
 	}
 
 	// Create the command buffer and set some state
@@ -151,14 +151,12 @@ Error ForwardShading::buildCommandBuffers(RenderingContext& ctx, U threadId, U t
 	cmdb->setDepthWrite(false);
 
 	// Start drawing
-	Error err = m_r->getSceneDrawer().drawRange(Pass::GB_FS,
+	m_r->getSceneDrawer().drawRange(Pass::GB_FS,
 		ctx.m_viewMat,
 		ctx.m_viewProjMat,
 		cmdb,
 		ctx.m_visResults->getBegin(VisibilityGroupType::RENDERABLES_FS) + start,
 		ctx.m_visResults->getBegin(VisibilityGroupType::RENDERABLES_FS) + end);
-
-	return err;
 }
 
 void ForwardShading::setPreRunBarriers(RenderingContext& ctx)
