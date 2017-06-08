@@ -214,6 +214,8 @@ public:
 		StagingGpuMemoryManager& alloc,
 		StagingGpuMemoryToken& token) const;
 
+	virtual void setupRenderQueueElement(RenderQueueElement& el) const = 0;
+
 private:
 	Variables m_vars;
 	MaterialResourcePtr m_mtl;

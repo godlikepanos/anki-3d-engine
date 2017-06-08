@@ -18,6 +18,7 @@ namespace anki
 // Forward
 class ObbSpatialComponent;
 class BodyComponent;
+class ModelNode;
 
 /// @addtogroup scene
 /// @{
@@ -33,13 +34,23 @@ public:
 
 	~ModelPatchNode();
 
-	ANKI_USE_RESULT Error init(const ModelPatch* modelPatch);
+	ANKI_USE_RESULT Error init(const ModelPatch* modelPatch, U idx, const ModelNode& parent);
 
 private:
 	Obb m_obb; ///< In world space. ModelNode will update it.
 	const ModelPatch* m_modelPatch = nullptr; ///< The resource
+	U64 m_mergeKey = 0;
 
 	ANKI_USE_RESULT Error buildRendering(const RenderingBuildInfoIn& in, RenderingBuildInfoOut& out) const;
+
+	void setupRenderQueueElement(RenderQueueElement& el) const
+	{
+		el.m_callback = drawCallback;
+		el.m_userData = this;
+		el.m_mergeKey = m_mergeKey;
+	}
+
+	static void drawCallback(RenderQueueDrawContext& ctx, WeakArray<const RenderQueueElement> elements);
 };
 
 /// The model scene node

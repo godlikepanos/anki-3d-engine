@@ -153,7 +153,7 @@ void RenderableDrawer::setupUniforms(DrawContext& ctx, CompleteRenderingBuildInf
 {
 	RenderQueueDrawContext dctx;
 	dctx.m_cameraTransform = ctx.m_viewMat.getInverse();
-	dctx.m_cmdb = ctx.m_cmdb;
+	dctx.m_commandBuffer = ctx.m_cmdb;
 	dctx.m_key = build.m_in.m_key;
 	dctx.m_projectionMatrix = Mat4::getIdentity();
 	dctx.m_viewMatrix = ctx.m_viewMat;

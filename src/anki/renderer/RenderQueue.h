@@ -42,18 +42,19 @@ class RenderQueueDrawContext final : public RenderingMatrices
 {
 public:
 	RenderingKey m_key;
-	CommandBufferPtr m_cmdb;
+	CommandBufferPtr m_commandBuffer;
+	StagingGpuMemoryManager* m_stagingGpuAllocator ANKI_DBG_NULLIFY;
 };
 
 /// Draw callback.
 using RenderQueueElementDrawCallback = void (*)(
-	const RenderQueueDrawContext& ctx, RenderQueueElement* elements, U elementCount);
+	RenderQueueDrawContext& ctx, WeakArray<const RenderQueueElement> elements);
 
 class RenderQueueElement final
 {
 public:
 	RenderQueueElementDrawCallback m_callback;
-	void* m_userData;
+	const void* m_userData;
 	U64 m_mergeKey;
 	F32 m_distanceFromCamera;
 };

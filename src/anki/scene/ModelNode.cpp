@@ -33,6 +33,11 @@ public:
 	{
 		return getNode().buildRendering(in, out);
 	}
+
+	void setupRenderQueueElement(RenderQueueElement& el) const override
+	{
+		getNode().setupRenderQueueElement(el);
+	}
 };
 
 ModelPatchNode::ModelPatchNode(SceneGraph* scene, CString name)
@@ -44,7 +49,7 @@ ModelPatchNode::~ModelPatchNode()
 {
 }
 
-Error ModelPatchNode::init(const ModelPatch* modelPatch)
+Error ModelPatchNode::init(const ModelPatch* modelPatch, U idx, const ModelNode& parent)
 {
 	ANKI_ASSERT(modelPatch);
 
@@ -56,6 +61,12 @@ Error ModelPatchNode::init(const ModelPatch* modelPatch)
 	// Render component
 	RenderComponent* rcomp = newComponent<ModelPatchRenderComponent>(this);
 	ANKI_CHECK(rcomp->init());
+
+	// Merge key
+	Array<U64, 2> toHash;
+	toHash[0] = idx;
+	toHash[1] = parent.m_model->getUuid();
+	m_mergeKey = computeHash(&toHash[0], sizeof(toHash));
 
 	return ErrorCode::NONE;
 }
@@ -95,6 +106,62 @@ Error ModelPatchNode::buildRendering(const RenderingBuildInfoIn& in, RenderingBu
 	out.m_transform = Mat4(getParent()->getComponent<MoveComponent>().getWorldTransform());
 
 	return ErrorCode::NONE;
+}
+
+void ModelPatchNode::drawCallback(RenderQueueDrawContext& ctx, WeakArray<const RenderQueueElement> elements)
+{
+	ANKI_ASSERT(elements.getSize() > 0 && elements.getSize() <= MAX_INSTANCES);
+	ANKI_ASSERT(ctx.m_key.m_instanceCount == elements.getSize());
+
+	const ModelPatchNode& self = *static_cast<const ModelPatchNode*>(elements[0].m_userData);
+
+	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
+
+	// That will not work on multi-draw and instanced at the same time. Make sure that there is no multi-draw anywhere
+	ANKI_ASSERT(self.m_modelPatch->getSubMeshesCount() == 0);
+
+	ModelRenderingInfo modelInf;
+	self.m_modelPatch->getRenderingDataSub(ctx.m_key, WeakArray<U8>(), modelInf);
+
+	// Program
+	cmdb->bindShaderProgram(modelInf.m_program);
+
+	// Set attributes
+	for(U i = 0; i < modelInf.m_vertexAttributeCount; ++i)
+	{
+		const VertexAttributeInfo& attrib = modelInf.m_vertexAttributes[i];
+		cmdb->setVertexAttribute(i, attrib.m_bufferBinding, attrib.m_format, attrib.m_relativeOffset);
+	}
+
+	// Set vertex buffers
+	for(U i = 0; i < modelInf.m_vertexBufferBindingCount; ++i)
+	{
+		const VertexBufferBinding& binding = modelInf.m_vertexBufferBindings[i];
+		cmdb->bindVertexBuffer(i, binding.m_buffer, binding.m_offset, binding.m_stride, VertexStepRate::VERTEX);
+	}
+
+	// Index buffer
+	cmdb->bindIndexBuffer(modelInf.m_indexBuffer, 0, IndexType::U16);
+
+	// Uniforms
+	Array<Mat4, MAX_INSTANCES> trfs;
+	trfs[0] = Mat4(self.getParent()->getComponent<MoveComponent>().getWorldTransform());
+	for(U i = 0; i < elements.getSize(); ++i)
+	{
+		trfs[i] = trfs[0];
+	}
+
+	StagingGpuMemoryToken token;
+	self.getComponent<RenderComponent>().allocateAndSetupUniforms(ctx, trfs, *ctx.m_stagingGpuAllocator, token);
+	cmdb->bindUniformBuffer(0, 0, token.m_buffer, token.m_offset, token.m_range);
+
+	// Draw
+	cmdb->drawElements(PrimitiveTopology::TRIANGLES,
+		modelInf.m_indicesCountArray[0],
+		elements.getSize(),
+		modelInf.m_indicesOffsetArray[0] / sizeof(U16),
+		0,
+		0);
 }
 
 /// Feedback component.
@@ -144,7 +211,7 @@ Error ModelNode::init(const CString& modelFname)
 	{
 		ModelPatchNode* mpn;
 		StringAuto nname(getFrameAllocator());
-		ANKI_CHECK(getSceneGraph().newSceneNode(CString(), mpn, *it));
+		ANKI_CHECK(getSceneGraph().newSceneNode(CString(), mpn, *it, count, *this));
 
 		m_modelPatches[count++] = mpn;
 		addChild(mpn);

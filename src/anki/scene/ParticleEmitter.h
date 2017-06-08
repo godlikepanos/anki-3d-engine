@@ -201,6 +201,15 @@ private:
 	ANKI_USE_RESULT Error buildRendering(const RenderingBuildInfoIn& in, RenderingBuildInfoOut& out) const;
 
 	void onMoveComponentUpdate(MoveComponent& move);
+
+	void setupRenderQueueElement(RenderQueueElement& el) const
+	{
+		el.m_callback = drawCallback;
+		el.m_mergeKey = 0;
+		el.m_userData = this;
+	}
+
+	static void drawCallback(RenderQueueDrawContext& ctx, WeakArray<const RenderQueueElement> elements);
 };
 /// @}
 

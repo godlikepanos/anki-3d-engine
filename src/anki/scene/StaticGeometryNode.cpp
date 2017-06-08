@@ -27,6 +27,11 @@ public:
 	{
 		return m_node->buildRendering(in, out);
 	}
+
+	void setupRenderQueueElement(RenderQueueElement& el) const override
+	{
+		ANKI_ASSERT(!"TODO");
+	}
 };
 
 StaticGeometryPatchNode::StaticGeometryPatchNode(SceneGraph* scene, CString name)

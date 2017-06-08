@@ -194,7 +194,7 @@ void RenderComponent::allocateAndSetupUniforms(const RenderQueueDrawContext& ctx
 		case ShaderVariableDataType::SAMPLER_3D:
 		case ShaderVariableDataType::SAMPLER_CUBE:
 		{
-			ctx.m_cmdb->bindTexture(
+			ctx.m_commandBuffer->bindTexture(
 				0, progVariant.getTextureUnit(progvar), mvar.getValue<TextureResourcePtr>()->getGrTexture());
 			break;
 		}

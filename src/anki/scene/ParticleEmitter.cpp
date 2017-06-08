@@ -178,6 +178,11 @@ public:
 	{
 		return getNode().buildRendering(in, out);
 	}
+
+	void setupRenderQueueElement(RenderQueueElement& el) const override
+	{
+		getNode().setupRenderQueueElement(el);
+	}
 };
 
 /// Feedback component
@@ -300,6 +305,38 @@ Error ParticleEmitter::buildRendering(const RenderingBuildInfoIn& in, RenderingB
 	out.m_transform = Mat4::getIdentity();
 
 	return ErrorCode::NONE;
+}
+
+void ParticleEmitter::drawCallback(RenderQueueDrawContext& ctx, WeakArray<const RenderQueueElement> elements)
+{
+	ANKI_ASSERT(elements.getSize() == 1);
+
+	const ParticleEmitter& self = *static_cast<const ParticleEmitter*>(elements[0].m_userData);
+	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
+
+	// Program
+	ShaderProgramPtr prog;
+	self.m_particleEmitterResource->getRenderingInfo(ctx.m_key.m_lod, prog);
+	cmdb->bindShaderProgram(prog);
+
+	// Vertex attribs
+	cmdb->setVertexAttribute(0, 0, PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT), 0);
+	cmdb->setVertexAttribute(1, 0, PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT), sizeof(Vec3));
+	cmdb->setVertexAttribute(
+		2, 0, PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT), sizeof(Vec3) + sizeof(F32));
+
+	// Vertex buff
+	cmdb->bindVertexBuffer(
+		0, self.m_vertBuffToken.m_buffer, self.m_vertBuffToken.m_offset, VERTEX_SIZE, VertexStepRate::INSTANCE);
+
+	// Uniforms
+	Array<Mat4, 1> trf = {{Mat4::getIdentity()}};
+	StagingGpuMemoryToken token;
+	self.getComponent<RenderComponent>().allocateAndSetupUniforms(ctx, trf, *ctx.m_stagingGpuAllocator, token);
+	cmdb->bindUniformBuffer(0, 0, token.m_buffer, token.m_offset, token.m_range);
+
+	// Draw
+	cmdb->drawArrays(PrimitiveTopology::TRIANGLE_STRIP, 4, self.m_aliveParticlesCount, 0, 0);
 }
 
 void ParticleEmitter::onMoveComponentUpdate(MoveComponent& move)
