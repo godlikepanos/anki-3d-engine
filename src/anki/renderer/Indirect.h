@@ -82,10 +82,9 @@ private:
 		}
 	};
 
-	class CacheEntry
+	class CacheEntry : public IntrusiveHashMapEnabled<CacheEntry>
 	{
 	public:
-		const SceneNode* m_node = nullptr;
 		U64 m_nodeUuid;
 		Timestamp m_timestamp = 0; ///< When last accessed.
 
@@ -129,6 +128,7 @@ private:
 	} m_irradiance;
 
 	DynamicArray<CacheEntry> m_cacheEntries;
+	IntrusiveHashMap<U64, CacheEntry> m_uuidToCacheEntry;
 
 	// Other
 	TextureResourcePtr m_integrationLut;

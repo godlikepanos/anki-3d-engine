@@ -13,6 +13,7 @@ namespace anki
 SceneComponent::SceneComponent(SceneComponentType type, SceneNode* node)
 	: m_node(node)
 	, m_type(type)
+	, m_uuid(node->getSceneGraph().getNewUuid())
 {
 	if(m_type != SceneComponentType::NONE)
 	{

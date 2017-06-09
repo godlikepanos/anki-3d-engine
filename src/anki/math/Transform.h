@@ -32,7 +32,7 @@ public:
 		checkW();
 	}
 
-	explicit TTransform(const Mat4& m4)
+	explicit TTransform(const TMat4<T>& m4)
 	{
 		m_rotation = TMat3x4<T>(m4.getRotationPart());
 		m_origin = m4.getTranslationPart().xyz0();

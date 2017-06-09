@@ -194,6 +194,8 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	ANKI_CHECK(TraceManagerSingleton::get().create(m_heapAlloc, m_settingsDir.toCString()));
 #endif
 
+	ANKI_CORE_LOGI("Number of main threads: %u", U(config.getNumber("core.mainThreadCount")));
+
 	//
 	// Window
 	//
@@ -217,8 +219,8 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	//
 	// ThreadPool
 	//
-	m_threadpool = m_heapAlloc.newInstance<ThreadPool>(getCpuCoresCount());
-	m_threadHive = m_heapAlloc.newInstance<ThreadHive>(getCpuCoresCount(), m_heapAlloc);
+	m_threadpool = m_heapAlloc.newInstance<ThreadPool>(config.getNumber("core.mainThreadCount"));
+	m_threadHive = m_heapAlloc.newInstance<ThreadHive>(config.getNumber("core.mainThreadCount"), m_heapAlloc);
 
 	//
 	// Graphics API

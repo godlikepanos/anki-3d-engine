@@ -48,7 +48,7 @@ private:
 		el.m_mergeKey = m_mergeKey;
 	}
 
-	static void drawCallback(RenderQueueDrawContext& ctx, WeakArray<const RenderQueueElement> elements);
+	static void drawCallback(RenderQueueDrawContext& ctx, WeakArray<const void*> userData);
 };
 
 /// The model scene node

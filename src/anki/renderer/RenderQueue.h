@@ -47,8 +47,7 @@ public:
 };
 
 /// Draw callback.
-using RenderQueueElementDrawCallback = void (*)(
-	RenderQueueDrawContext& ctx, WeakArray<const RenderQueueElement> elements);
+using RenderQueueElementDrawCallback = void (*)(RenderQueueDrawContext& ctx, WeakArray<const void*> userData);
 
 class RenderQueueElement final
 {
@@ -68,28 +67,38 @@ public:
 	Vec3 m_diffuseColor;
 	Vec3 m_specularColor;
 	Array<RenderQueue*, 6> m_shadowRenderQueues;
+	U32 m_textureArrayIndex; ///< Renderer internal.
 };
 
 class SpotLightQueueElement final
 {
 public:
 	U64 m_uuid;
-	Vec3 m_worldPosition;
+	Mat4 m_worldTransform;
 	F32 m_distance;
 	F32 m_outerAngleCos;
 	F32 m_innerAngleCos;
 	Vec3 m_diffuseColor;
 	Vec3 m_specularColor;
 	RenderQueue* m_shadowRenderQueue;
+	U32 m_textureArrayIndex; ///< Renderer internal.
 };
+
+/// Normally the visibility tests don't perform tests on the reflection probes because probes dont's change that often.
+/// This callback will be used by the renderer to inform a reflection probe that on the next frame it will be rendererd.
+/// In that case the probe should fill the render queues.
+using ReflectionProbeQueueElementFeedbackCallback = void (*)(Bool fillRenderQueuesOnNextFrame, void* userData);
 
 class ReflectionProbeQueueElement final
 {
 public:
+	ReflectionProbeQueueElementFeedbackCallback m_feedbackCallback;
+	void* m_userData;
 	U64 m_uuid;
 	Vec3 m_worldPosition;
 	F32 m_radius;
 	Array<RenderQueue*, 6> m_renderQueues;
+	U32 m_textureArrayIndex; ///< Renderer internal.
 };
 
 template<typename T>

@@ -81,6 +81,11 @@ public:
 	/// Called only by the SceneGraph
 	ANKI_USE_RESULT Error updateReal(SceneNode& node, F32 prevTime, F32 crntTime, Bool& updated);
 
+	U64 getUuid() const
+	{
+		return m_uuid;
+	}
+
 	SceneNode& getSceneNode()
 	{
 		return *m_node;
@@ -96,6 +101,7 @@ public:
 	SceneFrameAllocator<U8> getFrameAllocator() const;
 
 	SceneGraph& getSceneGraph();
+
 	const SceneGraph& getSceneGraph() const;
 
 protected:
@@ -104,6 +110,7 @@ protected:
 
 private:
 	SceneComponentType m_type;
+	U64 m_uuid;
 };
 
 /// Multiple lists of all types of components.

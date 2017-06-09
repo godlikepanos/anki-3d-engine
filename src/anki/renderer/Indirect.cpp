@@ -405,20 +405,19 @@ void Indirect::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U f
 	while(it != end)
 	{
 		const LightComponent& lightc = it->m_node->getComponent<LightComponent>();
-		const MoveComponent& movec = it->m_node->getComponent<MoveComponent>();
 
 		// Update uniforms
 		IrVertex* vert = allocateAndBindUniforms<IrVertex*>(sizeof(IrVertex), cmdb, 0, 0);
 
-		Mat4 modelM(movec.getWorldTransform().getOrigin().xyz1(),
-			movec.getWorldTransform().getRotation().getRotationPart(),
+		Mat4 modelM(lightc.getWorldTransform().getOrigin().xyz1(),
+			lightc.getWorldTransform().getRotation().getRotationPart(),
 			lightc.getRadius());
 
 		vert->m_mvp = vpMat * modelM;
 
 		IrPointLight* light = allocateAndBindUniforms<IrPointLight*>(sizeof(IrPointLight), cmdb, 0, 1);
 
-		Vec4 pos = vMat * movec.getWorldTransform().getOrigin().xyz1();
+		Vec4 pos = vMat * lightc.getWorldTransform().getOrigin().xyz1();
 
 		light->m_projectionParams = frc.getProjectionMatrix().extractPerspectiveUnprojectionParams();
 		light->m_posRadius = Vec4(pos.xyz(), 1.0 / (lightc.getRadius() * lightc.getRadius()));
@@ -440,12 +439,11 @@ void Indirect::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U f
 	while(it != end)
 	{
 		const LightComponent& lightc = it->m_node->getComponent<LightComponent>();
-		const MoveComponent& movec = it->m_node->getComponent<MoveComponent>();
 
 		// Compute the model matrix
 		//
-		Mat4 modelM(movec.getWorldTransform().getOrigin().xyz1(),
-			movec.getWorldTransform().getRotation().getRotationPart(),
+		Mat4 modelM(lightc.getWorldTransform().getOrigin().xyz1(),
+			lightc.getWorldTransform().getRotation().getRotationPart(),
 			1.0);
 
 		// Calc the scale of the cone
@@ -465,14 +463,14 @@ void Indirect::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U f
 
 		light->m_projectionParams = frc.getProjectionMatrix().extractPerspectiveUnprojectionParams();
 
-		Vec4 pos = vMat * movec.getWorldTransform().getOrigin().xyz1();
+		Vec4 pos = vMat * lightc.getWorldTransform().getOrigin().xyz1();
 		light->m_posRadius = Vec4(pos.xyz(), 1.0 / (lightc.getDistance() * lightc.getDistance()));
 
 		light->m_diffuseColorOuterCos = Vec4(lightc.getDiffuseColor().xyz(), lightc.getOuterAngleCos());
 
 		light->m_specularColorInnerCos = Vec4(lightc.getSpecularColor().xyz(), lightc.getInnerAngleCos());
 
-		Vec3 lightDir = -movec.getWorldTransform().getRotation().getZAxis();
+		Vec3 lightDir = -lightc.getWorldTransform().getRotation().getZAxis();
 		lightDir = vMat.getRotationPart() * lightDir;
 		light->m_lightDirPad1 = lightDir.xyz0();
 
@@ -630,68 +628,63 @@ void Indirect::renderReflection(RenderingContext& ctx, SceneNode& node, U cubema
 
 void Indirect::findCacheEntry(SceneNode& node, U& entry, Bool& render)
 {
-	CacheEntry* it = m_cacheEntries.getBegin();
-	const CacheEntry* const end = m_cacheEntries.getEnd();
+	U64 uuid = node.getUuid();
 
-	CacheEntry* canditate = nullptr;
-	CacheEntry* empty = nullptr;
-	CacheEntry* kick = nullptr;
-	Timestamp kickTime = MAX_TIMESTAMP;
-
-	while(it != end)
+	// Try find a candidate cache entry
+	CacheEntry* candidate = nullptr;
+	auto it = m_uuidToCacheEntry.find(uuid);
+	if(it != m_uuidToCacheEntry.getEnd())
 	{
-		if(it->m_nodeUuid == node.getUuid())
-		{
-			// Already there
-			ANKI_ASSERT(it->m_node == &node);
-			canditate = it;
-			break;
-		}
-		else if(empty == nullptr && it->m_node == nullptr)
-		{
-			// Found empty
-			empty = it;
-		}
-		else if(it->m_timestamp < kickTime)
-		{
-			// Found one to kick
-			kick = it;
-			kickTime = it->m_timestamp;
-		}
+		// Found
 
-		++it;
-	}
-
-	if(canditate)
-	{
-		// Update timestamp
-		canditate->m_timestamp = m_r->getFrameCount();
-		it = canditate;
 		render = m_r->resourcesLoaded();
-	}
-	else if(empty)
-	{
-		ANKI_ASSERT(empty->m_node == nullptr);
-		empty->m_node = &node;
-		empty->m_nodeUuid = node.getUuid();
-		empty->m_timestamp = m_r->getFrameCount();
-
-		it = empty;
-		render = true;
+		candidate = &(*it);
 	}
 	else
 	{
-		ANKI_ASSERT(kick);
+		// Not found
 
-		kick->m_node = &node;
-		kick->m_nodeUuid = node.getUuid();
-		kick->m_timestamp = m_r->getFrameCount();
-
-		it = kick;
 		render = true;
+
+		// Iterate to find an empty or someone to kick
+		CacheEntry* empty = nullptr;
+		CacheEntry* kick = nullptr;
+		for(auto& entry : m_cacheEntries)
+		{
+			if(entry.m_nodeUuid == 0)
+			{
+				empty = &entry;
+				break;
+			}
+			else if(kick == nullptr || entry.m_timestamp < kick->m_timestamp)
+			{
+				kick = &entry;
+			}
+		}
+
+		if(empty)
+		{
+			candidate = empty;
+		}
+		else
+		{
+			ANKI_ASSERT(kick);
+
+			candidate = kick;
+
+			// Remove from the map
+			m_uuidToCacheEntry.erase(kick);
+		}
+
+		candidate->m_nodeUuid = uuid;
+		m_uuidToCacheEntry.pushBack(uuid, candidate);
 	}
 
-	entry = it - m_cacheEntries.getBegin();
+	ANKI_ASSERT(candidate);
+	ANKI_ASSERT(candidate->m_nodeUuid == uuid);
+	candidate->m_timestamp = m_r->getFrameCount();
+
+	entry = candidate - &m_cacheEntries[0];
 }
 
 } // end namespace anki

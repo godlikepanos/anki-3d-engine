@@ -207,7 +207,7 @@ private:
 		el.m_userData = this;
 	}
 
-	static void drawCallback(RenderQueueDrawContext& ctx, WeakArray<const RenderQueueElement> elements);
+	static void drawCallback(RenderQueueDrawContext& ctx, WeakArray<const void*> userData);
 };
 /// @}
 

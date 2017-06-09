@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/scene/SceneComponent.h>
+#include <anki/renderer/RenderQueue.h>
 #include <anki/Math.h>
 
 namespace anki
@@ -36,6 +37,16 @@ public:
 	LightComponentType getLightComponentType() const
 	{
 		return m_type;
+	}
+
+	const Transform& getWorldTransform() const
+	{
+		return m_worldTrf;
+	}
+
+	void setWorldTransform(const Transform& trf)
+	{
+		m_worldTrf = trf;
 	}
 
 	const Vec4& getDiffuseColor() const
@@ -137,10 +148,41 @@ public:
 
 	ANKI_USE_RESULT Error update(SceneNode&, F32, F32, Bool& updated) override;
 
+	void setupPointLightQueueElement(PointLightQueueElement& el) const
+	{
+		ANKI_ASSERT(m_type == LightComponentType::POINT);
+		el.m_uuid = getUuid();
+		el.m_worldPosition = m_worldTrf.getOrigin().xyz();
+		el.m_radius = m_radius;
+		el.m_diffuseColor = m_diffColor.xyz();
+		el.m_specularColor = m_specColor.xyz();
+#if ANKI_EXTRA_CHECKS
+		el.m_shadowRenderQueues = {{nullptr, nullptr, nullptr, nullptr, nullptr, nullptr}};
+		el.m_textureArrayIndex = MAX_U32;
+#endif
+	}
+
+	void setupSpotLightQueueElement(SpotLightQueueElement& el) const
+	{
+		ANKI_ASSERT(m_type == LightComponentType::SPOT);
+		el.m_uuid = getUuid();
+		el.m_worldTransform = Mat4(m_worldTrf);
+		el.m_distance = m_distance;
+		el.m_outerAngleCos = m_outerAngleCos;
+		el.m_innerAngleCos = m_innerAngleCos;
+		el.m_diffuseColor = m_diffColor.xyz();
+		el.m_specularColor = m_specColor.xyz();
+#if ANKI_EXTRA_CHECKS
+		el.m_shadowRenderQueue = nullptr;
+		el.m_textureArrayIndex = MAX_U32;
+#endif
+	}
+
 private:
 	LightComponentType m_type;
-	Vec4 m_diffColor = Vec4(0.5);
-	Vec4 m_specColor = Vec4(0.5);
+	Transform m_worldTrf = Transform(Vec4(0.0f), Mat3x4::getIdentity(), 1.0f);
+	Vec4 m_diffColor = Vec4(0.5f);
+	Vec4 m_specColor = Vec4(0.5f);
 	union
 	{
 		F32 m_radius;

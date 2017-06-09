@@ -28,6 +28,7 @@ public:
 
 	Array<RenderQueueElement, MAX_INSTANCES> m_cachedRenderElements;
 	Array<U8, MAX_INSTANCES> m_cachedRenderElementLods;
+	Array<const void*, MAX_INSTANCES> m_userData;
 	U m_cachedRenderElementCount = 0;
 };
 
@@ -75,8 +76,8 @@ void RenderableDrawer::flushDrawcall(DrawContext& ctx)
 	ctx.m_queueCtx.m_key.m_lod = ctx.m_cachedRenderElementLods[0];
 	ctx.m_queueCtx.m_key.m_instanceCount = ctx.m_cachedRenderElementCount;
 
-	ctx.m_cachedRenderElements[0].m_callback(ctx.m_queueCtx,
-		WeakArray<const RenderQueueElement>(&ctx.m_cachedRenderElements[0], ctx.m_cachedRenderElementCount));
+	ctx.m_cachedRenderElements[0].m_callback(
+		ctx.m_queueCtx, WeakArray<const void*>(&ctx.m_userData[0], ctx.m_cachedRenderElementCount));
 
 	// Rendered something, reset the cached transforms
 	if(ctx.m_cachedRenderElementCount > 1)
@@ -113,6 +114,7 @@ void RenderableDrawer::drawSingle(DrawContext& ctx)
 	// Cache the new one
 	ctx.m_cachedRenderElements[ctx.m_cachedRenderElementCount] = rqel;
 	ctx.m_cachedRenderElementLods[ctx.m_cachedRenderElementCount] = lod;
+	ctx.m_userData[ctx.m_cachedRenderElementCount] = rqel.m_userData;
 	++ctx.m_cachedRenderElementCount;
 }
 

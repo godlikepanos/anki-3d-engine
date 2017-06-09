@@ -11,7 +11,7 @@ namespace anki
 
 SceneNode::SceneNode(SceneGraph* scene, CString name)
 	: m_scene(scene)
-	, m_uuid(scene->getNewSceneNodeUuid())
+	, m_uuid(scene->getNewUuid())
 {
 	if(name)
 	{

@@ -65,12 +65,12 @@ Error ModelPatchNode::init(const ModelPatch* modelPatch, U idx, const ModelNode&
 	return ErrorCode::NONE;
 }
 
-void ModelPatchNode::drawCallback(RenderQueueDrawContext& ctx, WeakArray<const RenderQueueElement> elements)
+void ModelPatchNode::drawCallback(RenderQueueDrawContext& ctx, WeakArray<const void*> userData)
 {
-	ANKI_ASSERT(elements.getSize() > 0 && elements.getSize() <= MAX_INSTANCES);
-	ANKI_ASSERT(ctx.m_key.m_instanceCount == elements.getSize());
+	ANKI_ASSERT(userData.getSize() > 0 && userData.getSize() <= MAX_INSTANCES);
+	ANKI_ASSERT(ctx.m_key.m_instanceCount == userData.getSize());
 
-	const ModelPatchNode& self = *static_cast<const ModelPatchNode*>(elements[0].m_userData);
+	const ModelPatchNode& self = *static_cast<const ModelPatchNode*>(userData[0]);
 
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
@@ -103,21 +103,21 @@ void ModelPatchNode::drawCallback(RenderQueueDrawContext& ctx, WeakArray<const R
 	// Uniforms
 	Array<Mat4, MAX_INSTANCES> trfs;
 	trfs[0] = Mat4(self.getParent()->getComponent<MoveComponent>().getWorldTransform());
-	for(U i = 1; i < elements.getSize(); ++i)
+	for(U i = 1; i < userData.getSize(); ++i)
 	{
-		const ModelPatchNode& self2 = *static_cast<const ModelPatchNode*>(elements[i].m_userData);
+		const ModelPatchNode& self2 = *static_cast<const ModelPatchNode*>(userData[i]);
 		trfs[i] = Mat4(self2.getParent()->getComponent<MoveComponent>().getWorldTransform());
 	}
 
 	StagingGpuMemoryToken token;
 	self.getComponent<RenderComponent>().allocateAndSetupUniforms(
-		ctx, WeakArray<const Mat4>(&trfs[0], elements.getSize()), *ctx.m_stagingGpuAllocator, token);
+		ctx, WeakArray<const Mat4>(&trfs[0], userData.getSize()), *ctx.m_stagingGpuAllocator, token);
 	cmdb->bindUniformBuffer(0, 0, token.m_buffer, token.m_offset, token.m_range);
 
 	// Draw
 	cmdb->drawElements(PrimitiveTopology::TRIANGLES,
 		modelInf.m_indicesCountArray[0],
-		elements.getSize(),
+		userData.getSize(),
 		modelInf.m_indicesOffsetArray[0] / sizeof(U16),
 		0,
 		0);

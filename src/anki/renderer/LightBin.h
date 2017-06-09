@@ -67,12 +67,9 @@ private:
 
 	void binLights(U32 threadId, PtrSize threadsCount, LightBinContext& ctx);
 
-	I writePointLight(const LightComponent& light, const MoveComponent& move, LightBinContext& ctx);
+	I writePointLight(const LightComponent& light, LightBinContext& ctx);
 
-	I writeSpotLight(const LightComponent& lightc,
-		const MoveComponent& lightMove,
-		const FrustumComponent* lightFrc,
-		LightBinContext& ctx);
+	I writeSpotLight(const LightComponent& lightc, const FrustumComponent* lightFrc, LightBinContext& ctx);
 
 	void binLight(const SpatialComponent& sp,
 		const LightComponent& lightc,

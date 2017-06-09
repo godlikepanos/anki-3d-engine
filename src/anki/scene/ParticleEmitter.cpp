@@ -266,11 +266,11 @@ Error ParticleEmitter::init(const CString& filename)
 	return ErrorCode::NONE;
 }
 
-void ParticleEmitter::drawCallback(RenderQueueDrawContext& ctx, WeakArray<const RenderQueueElement> elements)
+void ParticleEmitter::drawCallback(RenderQueueDrawContext& ctx, WeakArray<const void*> userData)
 {
-	ANKI_ASSERT(elements.getSize() == 1);
+	ANKI_ASSERT(userData.getSize() == 1);
 
-	const ParticleEmitter& self = *static_cast<const ParticleEmitter*>(elements[0].m_userData);
+	const ParticleEmitter& self = *static_cast<const ParticleEmitter*>(userData[0]);
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 	// Program

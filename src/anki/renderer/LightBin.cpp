@@ -556,12 +556,11 @@ void LightBin::binLights(U32 threadId, PtrSize threadsCount, LightBinContext& ct
 				U i = j - (ctx.m_vPointLights.getSize() + ctx.m_vDecals.getSize());
 
 				SceneNode& snode = *ctx.m_vSpotLights[i].m_node;
-				MoveComponent& move = snode.getComponent<MoveComponent>();
 				LightComponent& light = snode.getComponent<LightComponent>();
 				SpatialComponent& sp = snode.getComponent<SpatialComponent>();
 				const FrustumComponent* frc = snode.tryGetComponent<FrustumComponent>();
 
-				I pos = writeSpotLight(light, move, frc, ctx);
+				I pos = writeSpotLight(light, frc, ctx);
 				binLight(sp, light, pos, 1, ctx, testResult);
 			}
 			else if(j >= ctx.m_vDecals.getSize())
@@ -569,11 +568,10 @@ void LightBin::binLights(U32 threadId, PtrSize threadsCount, LightBinContext& ct
 				U i = j - ctx.m_vDecals.getSize();
 
 				SceneNode& snode = *ctx.m_vPointLights[i].m_node;
-				MoveComponent& move = snode.getComponent<MoveComponent>();
 				LightComponent& light = snode.getComponent<LightComponent>();
 				SpatialComponent& sp = snode.getComponent<SpatialComponent>();
 
-				I pos = writePointLight(light, move, ctx);
+				I pos = writePointLight(light, ctx);
 				binLight(sp, light, pos, 0, ctx, testResult);
 			}
 			else
@@ -677,14 +675,14 @@ void LightBin::binLights(U32 threadId, PtrSize threadsCount, LightBinContext& ct
 	ANKI_TRACE_STOP_EVENT(RENDERER_LIGHT_BINNING);
 }
 
-I LightBin::writePointLight(const LightComponent& lightc, const MoveComponent& lightMove, LightBinContext& ctx)
+I LightBin::writePointLight(const LightComponent& lightc, LightBinContext& ctx)
 {
 	// Get GPU light
 	I i = ctx.m_pointLightsCount.fetchAdd(1);
 
 	ShaderPointLight& slight = ctx.m_pointLights[i];
 
-	Vec4 pos = ctx.m_viewMat * lightMove.getWorldTransform().getOrigin().xyz1();
+	Vec4 pos = ctx.m_viewMat * lightc.getWorldTransform().getOrigin().xyz1();
 
 	slight.m_posRadius = Vec4(pos.xyz(), 1.0 / (lightc.getRadius() * lightc.getRadius()));
 	slight.m_diffuseColorShadowmapId = lightc.getDiffuseColor();
@@ -703,10 +701,7 @@ I LightBin::writePointLight(const LightComponent& lightc, const MoveComponent& l
 	return i;
 }
 
-I LightBin::writeSpotLight(const LightComponent& lightc,
-	const MoveComponent& lightMove,
-	const FrustumComponent* lightFrc,
-	LightBinContext& ctx)
+I LightBin::writeSpotLight(const LightComponent& lightc, const FrustumComponent* lightFrc, LightBinContext& ctx)
 {
 	I i = ctx.m_spotLightsCount.fetchAdd(1);
 
@@ -724,7 +719,7 @@ I LightBin::writeSpotLight(const LightComponent& lightc,
 	}
 
 	// Pos & dist
-	Vec4 pos = ctx.m_viewMat * lightMove.getWorldTransform().getOrigin().xyz1();
+	Vec4 pos = ctx.m_viewMat * lightc.getWorldTransform().getOrigin().xyz1();
 	light.m_posRadius = Vec4(pos.xyz(), 1.0 / (lightc.getDistance() * lightc.getDistance()));
 
 	// Diff color and shadowmap ID now
@@ -734,7 +729,7 @@ I LightBin::writeSpotLight(const LightComponent& lightc,
 	light.m_specularColorRadius = Vec4(lightc.getSpecularColor().xyz(), lightc.getDistance());
 
 	// Light dir
-	Vec3 lightDir = -lightMove.getWorldTransform().getRotation().getZAxis();
+	Vec3 lightDir = -lightc.getWorldTransform().getRotation().getZAxis();
 	lightDir = ctx.m_viewMat.getRotationPart() * lightDir;
 	light.m_lightDir = Vec4(lightDir, 0.0);
 

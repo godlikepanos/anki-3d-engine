@@ -104,6 +104,9 @@ void Light::onMoveUpdateCommon(MoveComponent& move)
 	{
 		lf->setWorldPosition(move.getWorldTransform().getOrigin());
 	}
+
+	// Update light component
+	getComponent<LightComponent>().setWorldTransform(move.getWorldTransform());
 }
 
 void Light::onShapeUpdateCommon(LightComponent& light)

@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/core/Config.h>
+#include <anki/util/System.h>
 
 namespace anki
 {
@@ -91,6 +92,7 @@ Config::Config()
 	newOption("core.storagePerFrameMemorySize", 16_MB);
 	newOption("core.vertexPerFrameMemorySize", 10_MB);
 	newOption("core.textureBufferPerFrameMemorySize", 1_MB);
+	newOption("core.mainThreadCount", getCpuCoresCount());
 }
 
 Config::~Config()

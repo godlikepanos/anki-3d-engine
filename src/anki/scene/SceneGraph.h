@@ -198,7 +198,7 @@ anki_internal:
 		return m_maxReflectionProxyDistance;
 	}
 
-	U64 getNewSceneNodeUuid()
+	U64 getNewUuid()
 	{
 		return m_nodesUuid++;
 	}

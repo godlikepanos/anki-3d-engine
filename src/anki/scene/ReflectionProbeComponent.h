@@ -6,6 +6,7 @@
 #pragma once
 
 #include <anki/scene/SceneComponent.h>
+#include <anki/renderer/RenderQueue.h>
 
 namespace anki
 {
@@ -67,12 +68,31 @@ public:
 		return m_textureArrayIndex;
 	}
 
+	void setupReflectionProbeQueueElement(ReflectionProbeQueueElement& el) const
+	{
+		el.m_feedbackCallback = reflectionProbeQueueElementFeedbackCallback;
+		el.m_userData = const_cast<ReflectionProbeComponent*>(this);
+		el.m_uuid = getUuid();
+		el.m_worldPosition = m_pos.xyz();
+		el.m_radius = m_radius;
+#if ANKI_EXTRA_CHECKS
+		el.m_renderQueues = {{nullptr, nullptr, nullptr, nullptr, nullptr, nullptr}};
+		el.m_textureArrayIndex = MAX_U32;
+#endif
+	}
+
 private:
 	Vec4 m_pos = Vec4(0.0);
 	F32 m_radius = 0.0;
 	Bool8 m_markedForRendering = false;
 
 	U16 m_textureArrayIndex = MAX_U16; ///< Used by the renderer
+
+	static void reflectionProbeQueueElementFeedbackCallback(Bool fillRenderQueuesOnNextFrame, void* userData)
+	{
+		ANKI_ASSERT(userData);
+		static_cast<ReflectionProbeComponent*>(userData)->m_markedForRendering = fillRenderQueuesOnNextFrame;
+	}
 };
 /// @}
 
