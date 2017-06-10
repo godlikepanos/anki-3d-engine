@@ -21,22 +21,6 @@ class Renderer;
 /// @addtogroup scene
 /// @{
 
-/// Visibility test type
-enum VisibilityTest
-{
-	VT_RENDERABLES = 1 << 0,
-	VT_ONLY_SHADOW_CASTERS = 1 << 1,
-	VT_LIGHTS = 1 << 2
-};
-
-/// Visible by
-enum VisibleBy
-{
-	VB_NONE = 0,
-	VB_CAMERA = 1 << 0,
-	VB_LIGHT = 1 << 1
-};
-
 /// Visible node pointer with some more info
 /// @note Keep this structure as small as possible
 class VisibleNode
@@ -174,7 +158,7 @@ private:
 };
 
 /// Do visibility tests.
-void doVisibilityTests(SceneNode& frustumable, SceneGraph& scene, const Renderer& renderer);
+void doVisibilityTests(SceneNode& frustumable, SceneGraph& scene);
 /// @}
 
 } // end namespace anki

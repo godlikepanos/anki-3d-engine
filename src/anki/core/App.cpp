@@ -395,7 +395,7 @@ Error App::mainLoop()
 		// User update
 		ANKI_CHECK(userMainLoop(quit));
 
-		ANKI_CHECK(m_scene->update(prevUpdateTime, crntTime, *m_renderer));
+		ANKI_CHECK(m_scene->update(prevUpdateTime, crntTime));
 
 		ANKI_CHECK(m_renderer->render(*m_scene));
 

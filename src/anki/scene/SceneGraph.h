@@ -119,7 +119,7 @@ public:
 		return *m_stagingAlloc;
 	}
 
-	ANKI_USE_RESULT Error update(F32 prevUpdateTime, F32 crntTime, MainRenderer& renderer);
+	ANKI_USE_RESULT Error update(F32 prevUpdateTime, F32 crntTime);
 
 	SceneNode& findSceneNode(const CString& name);
 	SceneNode* tryFindSceneNode(const CString& name);

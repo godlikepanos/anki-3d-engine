@@ -185,7 +185,7 @@ void SceneGraph::deleteNodesMarkedForDeletion()
 	}
 }
 
-Error SceneGraph::update(F32 prevUpdateTime, F32 crntTime, MainRenderer& renderer)
+Error SceneGraph::update(F32 prevUpdateTime, F32 crntTime)
 {
 	ANKI_ASSERT(m_mainCam);
 	ANKI_TRACE_START_EVENT(SCENE_UPDATE);
@@ -231,7 +231,7 @@ Error SceneGraph::update(F32 prevUpdateTime, F32 crntTime, MainRenderer& rendere
 	ANKI_CHECK(threadPool.waitForAllThreadsToFinish());
 	ANKI_TRACE_STOP_EVENT(SCENE_NODES_UPDATE);
 
-	doVisibilityTests(*m_mainCam, *this, renderer.getOffscreenRenderer());
+	doVisibilityTests(*m_mainCam, *this);
 
 	ANKI_TRACE_STOP_EVENT(SCENE_UPDATE);
 	return ErrorCode::NONE;

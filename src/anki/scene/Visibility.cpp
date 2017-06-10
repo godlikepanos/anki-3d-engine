@@ -567,7 +567,7 @@ void VisibilityTestResults::combineWith(SceneFrameAllocator<U8> alloc, WeakArray
 	}
 }
 
-void doVisibilityTests(SceneNode& fsn, SceneGraph& scene, const Renderer& r)
+void doVisibilityTests(SceneNode& fsn, SceneGraph& scene)
 {
 	ANKI_TRACE_START_EVENT(SCENE_VISIBILITY_TESTS);
 
