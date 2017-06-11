@@ -13,21 +13,10 @@ namespace anki
 {
 
 // Forward
-class RenderQueueElement;
-class PointLightQueueElement;
-class SpotLightQueueElement;
-class ReflectionProbeQueueElement;
-
-template<typename T>
-class TRenderQueue;
+class RenderQueue;
 
 /// @addtogroup renderer
 /// @{
-
-using RenderQueue = TRenderQueue<RenderQueueElement>;
-using PointLightQueue = TRenderQueue<PointLightQueueElement>;
-using SpotLightQueue = TRenderQueue<SpotLightQueueElement>;
-using ReflectionProbeQueue = TRenderQueue<ReflectionProbeQueueElement>;
 
 class RenderingMatrices
 {
@@ -47,12 +36,12 @@ public:
 };
 
 /// Draw callback.
-using RenderQueueElementDrawCallback = void (*)(RenderQueueDrawContext& ctx, WeakArray<const void*> userData);
+using RenderableQueueElementDrawCallback = void (*)(RenderQueueDrawContext& ctx, WeakArray<const void*> userData);
 
-class RenderQueueElement final
+class RenderableQueueElement final
 {
 public:
-	RenderQueueElementDrawCallback m_callback;
+	RenderableQueueElementDrawCallback m_callback;
 	const void* m_userData;
 	U64 m_mergeKey;
 	F32 m_distanceFromCamera;
@@ -101,89 +90,37 @@ public:
 	U32 m_textureArrayIndex; ///< Renderer internal.
 };
 
-template<typename T>
-class TRenderQueue final : public RenderingMatrices
+class LensFlareQueueElement final
 {
 public:
-	static constexpr U32 INITIAL_STORAGE_SIZE = 32;
-	static constexpr U32 STORAGE_GROW_RATE = 4;
-
-	Timestamp m_lastUpdateTimestamp;
-
-	T* newElement(StackAllocator<T> alloc);
-
-	void mergeBack(StackAllocator<T> alloc, TRenderQueue& b);
-
-private:
-	T* m_elements = nullptr;
-	U32 m_elementCount = 0;
-	U32 m_elementStorage = 0;
+	Vec3 m_worldPosition;
+	Vec2 m_firstFlareSize;
+	Vec4 m_colorMultiplier;
+	Texture* m_texture; ///< Totaly unsafe but we can't have a smart ptr in here since there will be no deletion.
 };
 
-template<typename T>
-inline T* TRenderQueue<T>::newElement(StackAllocator<T> alloc)
-{
-	if(ANKI_UNLIKELY(m_elementCount + 1 > m_elementStorage))
-	{
-		m_elementStorage = max(INITIAL_STORAGE_SIZE, m_elementStorage * STORAGE_GROW_RATE);
-
-		const T* oldElements = m_elements;
-		m_elements = alloc.allocate(m_elementStorage);
-
-		if(oldElements)
-		{
-			memcpy(m_elements, oldElements, sizeof(T) * m_elementCount);
-		}
-
-		return m_elements[m_elementCount++];
-	}
-
-	return m_elements[m_elementCount++];
-}
-
-template<typename T>
-inline void TRenderQueue<T>::mergeBack(StackAllocator<T> alloc, TRenderQueue& b)
-{
-	if(b.m_elementCount == 0)
-	{
-		return;
-	}
-
-	if(m_elementCount == 0)
-	{
-		*this = b;
-		b = {};
-		return;
-	}
-
-	const U32 newElementCount = m_elementCount + b.m_elementCount;
-
-	if(newElementCount > m_elementStorage)
-	{
-		// Grow storage
-		m_elementStorage = newElementCount;
-
-		T* newElements = alloc.allocate(m_elementStorage);
-
-		memcpy(newElements, m_elements, sizeof(T) * m_elementCount);
-		m_elements = newElements;
-	}
-
-	memcpy(m_elements + m_elementCount, b.m_elements, sizeof(T) * b.m_elementCount);
-	m_elementCount = newElementCount;
-
-	b = {};
-}
-
-/// The combination of all the results.
-class CombinedRenderQueues
+class DecalQueueElement final
 {
 public:
-	RenderQueue m_renderables; ///< Deferred shading or shadow renderables.
-	RenderQueue m_forwardShadingRenderables;
-	PointLightQueue m_pointLights;
-	SpotLightQueue m_spotLights;
-	ReflectionProbeQueue m_reflectionProbes;
+	Texture* m_diffuseAtlas;
+	Texture* m_normalRoughnessAtlas;
+	Vec4 m_diffuseAtlasUv;
+	Vec4 m_normalRoughnessAtlasUv;
+	F32 m_diffuseAtlasBlendFactor;
+	F32 m_normalRoughnessAtlasBlendFactor;
+};
+
+/// The render queue.
+class RenderQueue
+{
+public:
+	WeakArray<RenderableQueueElement> m_renderables; ///< Deferred shading or shadow renderables.
+	WeakArray<RenderableQueueElement> m_forwardShadingRenderables;
+	WeakArray<PointLightQueueElement> m_pointLights;
+	WeakArray<SpotLightQueueElement> m_spotLights;
+	WeakArray<ReflectionProbeQueueElement> m_reflectionProbes;
+	WeakArray<LensFlareQueueElement> m_lensFlares;
+	WeakArray<DecalQueueElement> m_decals;
 };
 /// @}
 

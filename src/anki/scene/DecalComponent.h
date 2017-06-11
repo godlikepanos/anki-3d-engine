@@ -8,6 +8,7 @@
 #include <anki/scene/SceneComponent.h>
 #include <anki/resource/TextureAtlas.h>
 #include <anki/collision/Obb.h>
+#include <anki/renderer/RenderQueue.h>
 
 namespace anki
 {
@@ -110,6 +111,20 @@ public:
 	const Vec3& getVolumeSize() const
 	{
 		return m_sizes;
+	}
+
+	void setupDecalQueueElement(DecalQueueElement& el) const
+	{
+		el.m_diffuseAtlas = (m_layers[LayerType::DIFFUSE].m_atlas)
+			? m_layers[LayerType::DIFFUSE].m_atlas->getGrTexture().get()
+			: nullptr;
+		el.m_normalRoughnessAtlas = (m_layers[LayerType::NORMAL_ROUGHNESS].m_atlas)
+			? m_layers[LayerType::NORMAL_ROUGHNESS].m_atlas->getGrTexture().get()
+			: nullptr;
+		el.m_diffuseAtlasUv = m_layers[LayerType::DIFFUSE].m_uv;
+		el.m_normalRoughnessAtlasUv = m_layers[LayerType::NORMAL_ROUGHNESS].m_uv;
+		el.m_diffuseAtlasBlendFactor = m_layers[LayerType::DIFFUSE].m_blendFactor;
+		el.m_normalRoughnessAtlasBlendFactor = m_layers[LayerType::NORMAL_ROUGHNESS].m_blendFactor;
 	}
 
 private:

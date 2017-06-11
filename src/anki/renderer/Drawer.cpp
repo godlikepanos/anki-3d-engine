@@ -26,14 +26,14 @@ public:
 
 	const VisibleNode* m_visibleNode = nullptr;
 
-	Array<RenderQueueElement, MAX_INSTANCES> m_cachedRenderElements;
+	Array<RenderableQueueElement, MAX_INSTANCES> m_cachedRenderElements;
 	Array<U8, MAX_INSTANCES> m_cachedRenderElementLods;
 	Array<const void*, MAX_INSTANCES> m_userData;
 	U m_cachedRenderElementCount = 0;
 };
 
 /// Check if the drawcalls can be merged.
-static Bool canMergeRenderQueueElements(const RenderQueueElement& a, const RenderQueueElement& b)
+static Bool canMergeRenderableQueueElements(const RenderableQueueElement& a, const RenderableQueueElement& b)
 {
 	return a.m_callback == b.m_callback && a.m_mergeKey != 0 && a.m_mergeKey == b.m_mergeKey;
 }
@@ -96,14 +96,14 @@ void RenderableDrawer::drawSingle(DrawContext& ctx)
 		flushDrawcall(ctx);
 	}
 
-	RenderQueueElement rqel;
-	rc.setupRenderQueueElement(rqel);
+	RenderableQueueElement rqel;
+	rc.setupRenderableQueueElement(rqel);
 
 	const F32 flod = min<F32>(m_r->calculateLod(ctx.m_visibleNode->m_frustumDistance), MAX_LOD_COUNT - 1);
 	const U8 lod = U8(flod);
 
 	const Bool shouldFlush = ctx.m_cachedRenderElementCount > 0
-		&& (!canMergeRenderQueueElements(ctx.m_cachedRenderElements[ctx.m_cachedRenderElementCount - 1], rqel)
+		&& (!canMergeRenderableQueueElements(ctx.m_cachedRenderElements[ctx.m_cachedRenderElementCount - 1], rqel)
 			   || ctx.m_cachedRenderElementLods[ctx.m_cachedRenderElementCount - 1] != lod);
 
 	if(shouldFlush)

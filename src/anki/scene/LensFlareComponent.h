@@ -8,6 +8,7 @@
 #include <anki/scene/SceneNode.h>
 #include <anki/Gr.h>
 #include <anki/resource/TextureResource.h>
+#include <anki/renderer/RenderQueue.h>
 
 namespace anki
 {
@@ -72,14 +73,20 @@ public:
 		return m_tex->getGrTexture();
 	}
 
-	/// @name SceneComponent virtuals
-	/// @{
+	/// Implements SceneComponent::update.
 	Error update(SceneNode& node, F32 prevTime, F32 crntTime, Bool& updated) override
 	{
 		updated = false;
 		return ErrorCode::NONE;
 	}
-	/// @}
+
+	void setupLensFlareQueueElement(LensFlareQueueElement& el) const
+	{
+		el.m_worldPosition = m_worldPosition.xyz();
+		el.m_firstFlareSize = m_firstFlareSize;
+		el.m_colorMultiplier = m_colorMul;
+		el.m_texture = m_tex->getGrTexture().get();
+	}
 
 private:
 	TextureResourcePtr m_tex; ///< Array of textures.

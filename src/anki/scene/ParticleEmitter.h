@@ -200,7 +200,7 @@ private:
 
 	void onMoveComponentUpdate(MoveComponent& move);
 
-	void setupRenderQueueElement(RenderQueueElement& el) const
+	void setupRenderableQueueElement(RenderableQueueElement& el) const
 	{
 		el.m_callback = drawCallback;
 		el.m_mergeKey = 0;

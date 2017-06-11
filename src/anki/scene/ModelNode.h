@@ -41,7 +41,7 @@ private:
 	const ModelPatch* m_modelPatch = nullptr; ///< The resource
 	U64 m_mergeKey = 0;
 
-	void setupRenderQueueElement(RenderQueueElement& el) const
+	void setupRenderableQueueElement(RenderableQueueElement& el) const
 	{
 		el.m_callback = drawCallback;
 		el.m_userData = this;

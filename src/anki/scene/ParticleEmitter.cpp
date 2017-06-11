@@ -174,9 +174,9 @@ public:
 	{
 	}
 
-	void setupRenderQueueElement(RenderQueueElement& el) const override
+	void setupRenderableQueueElement(RenderableQueueElement& el) const override
 	{
-		getNode().setupRenderQueueElement(el);
+		getNode().setupRenderableQueueElement(el);
 	}
 };
 

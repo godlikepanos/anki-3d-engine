@@ -211,6 +211,13 @@ ANKI_SPECIALISE_MEMORY_SET(I64)
 
 #undef ANKI_SPECIALISE_MEMORY_SET
 
+/// Zero memory of an object
+template<typename T>
+void zeroMemory(T& x)
+{
+	memset(&x, 0, sizeof(T));
+}
+
 /// Find a value in a shorted container.
 template<class TForwardIterator, class T, class TCompare = std::less<>>
 TForwardIterator binarySearch(TForwardIterator first, TForwardIterator last, const T& value, TCompare comp = {})

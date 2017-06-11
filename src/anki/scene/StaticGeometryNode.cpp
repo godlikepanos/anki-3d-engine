@@ -23,7 +23,7 @@ public:
 	{
 	}
 
-	void setupRenderQueueElement(RenderQueueElement& el) const override
+	void setupRenderableQueueElement(RenderableQueueElement& el) const override
 	{
 		ANKI_ASSERT(!"TODO");
 	}
