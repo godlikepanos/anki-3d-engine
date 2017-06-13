@@ -30,7 +30,6 @@ class Tonemapping;
 class Bloom;
 class FinalComposite;
 class Dbg;
-class Tiler;
 class Indirect;
 class ForwardShadingUpscale;
 class DownscaleBlur;
@@ -40,6 +39,13 @@ class TemporalAA;
 
 class RenderingContext;
 class DebugDrawer;
+
+class RenderQueue;
+class RenderableQueueElement;
+class PointLightQueueElement;
+class SpotLightQueueElement;
+class ReflectionProbeQueueElement;
+class DecalQueueElement;
 
 class ShaderProgramResourceVariant;
 

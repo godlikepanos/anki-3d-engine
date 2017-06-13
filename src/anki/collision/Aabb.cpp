@@ -6,7 +6,6 @@
 #include <anki/collision/Aabb.h>
 #include <anki/collision/Plane.h>
 #include <anki/collision/Obb.h>
-#include <array>
 
 namespace anki
 {

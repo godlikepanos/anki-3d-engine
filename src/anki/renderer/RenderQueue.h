@@ -12,9 +12,6 @@
 namespace anki
 {
 
-// Forward
-class RenderQueue;
-
 /// @addtogroup renderer
 /// @{
 
@@ -47,6 +44,9 @@ public:
 	F32 m_distanceFromCamera;
 };
 
+static_assert(
+	std::is_trivially_destructible<RenderableQueueElement>::value == true, "Should be trivially destructible");
+
 class PointLightQueueElement final
 {
 public:
@@ -58,6 +58,9 @@ public:
 	Array<RenderQueue*, 6> m_shadowRenderQueues;
 	U32 m_textureArrayIndex; ///< Renderer internal.
 };
+
+static_assert(
+	std::is_trivially_destructible<PointLightQueueElement>::value == true, "Should be trivially destructible");
 
 class SpotLightQueueElement final
 {
@@ -72,6 +75,8 @@ public:
 	RenderQueue* m_shadowRenderQueue;
 	U32 m_textureArrayIndex; ///< Renderer internal.
 };
+
+static_assert(std::is_trivially_destructible<SpotLightQueueElement>::value == true, "Should be trivially destructible");
 
 /// Normally the visibility tests don't perform tests on the reflection probes because probes dont's change that often.
 /// This callback will be used by the renderer to inform a reflection probe that on the next frame it will be rendererd.
@@ -90,6 +95,9 @@ public:
 	U32 m_textureArrayIndex; ///< Renderer internal.
 };
 
+static_assert(
+	std::is_trivially_destructible<ReflectionProbeQueueElement>::value == true, "Should be trivially destructible");
+
 class LensFlareQueueElement final
 {
 public:
@@ -98,6 +106,8 @@ public:
 	Vec4 m_colorMultiplier;
 	Texture* m_texture; ///< Totaly unsafe but we can't have a smart ptr in here since there will be no deletion.
 };
+
+static_assert(std::is_trivially_destructible<LensFlareQueueElement>::value == true, "Should be trivially destructible");
 
 class DecalQueueElement final
 {
@@ -108,10 +118,16 @@ public:
 	Vec4 m_normalRoughnessAtlasUv;
 	F32 m_diffuseAtlasBlendFactor;
 	F32 m_normalRoughnessAtlasBlendFactor;
+	Mat4 m_textureMatrix;
+	Vec3 m_obbCenter;
+	Vec3 m_obbExtend;
+	Mat3 m_obbRotation;
 };
 
+static_assert(std::is_trivially_destructible<DecalQueueElement>::value == true, "Should be trivially destructible");
+
 /// The render queue.
-class RenderQueue
+class RenderQueue : public RenderingMatrices
 {
 public:
 	WeakArray<RenderableQueueElement> m_renderables; ///< Deferred shading or shadow renderables.
@@ -121,6 +137,9 @@ public:
 	WeakArray<ReflectionProbeQueueElement> m_reflectionProbes;
 	WeakArray<LensFlareQueueElement> m_lensFlares;
 	WeakArray<DecalQueueElement> m_decals;
+
+	/// Applies only if the RenderQueue holds shadow casters. It's the timesamp that modified
+	Timestamp m_shadowRenderablesLastUpdateTimestamp = 0;
 };
 /// @}
 

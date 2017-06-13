@@ -52,7 +52,7 @@ public:
 
 		if(decalc.getTimestamp() == node.getGlobalTimestamp())
 		{
-			static_cast<DecalNode&>(node).onDecalUpdated(decalc);
+			static_cast<DecalNode&>(node).onDecalUpdated();
 		}
 
 		return ErrorCode::NONE;
@@ -67,9 +67,9 @@ Error DecalNode::init()
 {
 	newComponent<MoveComponent>(this);
 	newComponent<DecalMoveFeedbackComponent>(this);
-	newComponent<DecalComponent>(this);
+	DecalComponent* decalc = newComponent<DecalComponent>(this);
 	newComponent<DecalShapeFeedbackComponent>(this);
-	newComponent<SpatialComponent>(this, &m_obbW);
+	newComponent<SpatialComponent>(this, &decalc->getBoundingVolume());
 
 	return ErrorCode::NONE;
 }
@@ -82,27 +82,12 @@ void DecalNode::onMove(MoveComponent& movec)
 
 	DecalComponent& decalc = getComponent<DecalComponent>();
 	decalc.updateTransform(movec.getWorldTransform());
-
-	updateObb(movec.getWorldTransform(), decalc);
 }
 
-void DecalNode::onDecalUpdated(DecalComponent& decalc)
+void DecalNode::onDecalUpdated()
 {
 	SpatialComponent& sc = getComponent<SpatialComponent>();
 	sc.markForUpdate();
-
-	const MoveComponent& movec = getComponent<MoveComponent>();
-	updateObb(movec.getWorldTransform(), decalc);
-}
-
-void DecalNode::updateObb(const Transform& trf, const DecalComponent& decalc)
-{
-	Vec4 center(0.0f, 0.0f, -decalc.getDepth() / 2.0f, 0.0f);
-	Vec4 extend(decalc.getWidth() / 2.0f, decalc.getHeight() / 2.0f, decalc.getDepth() / 2.0f, 0.0f);
-
-	Obb obbL(center, Mat3x4::getIdentity(), extend);
-
-	m_obbW = obbL.getTransformed(trf);
 }
 
 } // end namespace anki

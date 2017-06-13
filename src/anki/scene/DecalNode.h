@@ -31,11 +31,8 @@ public:
 	ANKI_USE_RESULT Error init();
 
 private:
-	Obb m_obbW; ///< OBB in world space.
-
 	void onMove(MoveComponent& movec);
-	void onDecalUpdated(DecalComponent& decalc);
-	void updateObb(const Transform& trf, const DecalComponent& decalc);
+	void onDecalUpdated();
 };
 /// @}
 

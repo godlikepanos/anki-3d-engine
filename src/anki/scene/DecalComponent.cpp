@@ -45,6 +45,7 @@ Error DecalComponent::setLayer(CString texAtlasFname, CString texAtlasSubtexName
 
 void DecalComponent::updateInternal()
 {
+	// Calculate the texture matrix
 	Mat4 worldTransform(m_trf);
 
 	Mat4 viewMat = worldTransform.getInverse();
@@ -59,6 +60,14 @@ void DecalComponent::updateInternal()
 	static const Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0);
 
 	m_biasProjViewMat = biasMat4 * projMat * viewMat;
+
+	// Calculate the OBB
+	Vec4 center(0.0f, 0.0f, -m_sizes.z() / 2.0f, 0.0f);
+	Vec4 extend(m_sizes.x() / 2.0f, m_sizes.y() / 2.0f, m_sizes.z() / 2.0f, 0.0f);
+
+	Obb obbL(center, Mat3x4::getIdentity(), extend);
+
+	m_obb = obbL.getTransformed(m_trf);
 }
 
 } // end namespace anki

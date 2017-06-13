@@ -61,6 +61,11 @@ public:
 		return m_sizes.z();
 	}
 
+	const Obb& getBoundingVolume() const
+	{
+		return m_obb;
+	}
+
 	void updateTransform(const Transform& trf)
 	{
 		ANKI_ASSERT(trf.getScale() == 1.0f);
@@ -125,6 +130,10 @@ public:
 		el.m_normalRoughnessAtlasUv = m_layers[LayerType::NORMAL_ROUGHNESS].m_uv;
 		el.m_diffuseAtlasBlendFactor = m_layers[LayerType::DIFFUSE].m_blendFactor;
 		el.m_normalRoughnessAtlasBlendFactor = m_layers[LayerType::NORMAL_ROUGHNESS].m_blendFactor;
+		el.m_textureMatrix = m_biasProjViewMat;
+		el.m_obbCenter = m_obb.getCenter().xyz();
+		el.m_obbExtend = m_obb.getExtend().xyz();
+		el.m_obbRotation = m_obb.getRotation().getRotationPart();
 	}
 
 private:
@@ -145,8 +154,9 @@ private:
 
 	Array<Layer, U(LayerType::COUNT)> m_layers;
 	Mat4 m_biasProjViewMat;
-	Vec3 m_sizes = Vec3(1.0);
+	Vec3 m_sizes = Vec3(1.0f);
 	Transform m_trf = Transform::getIdentity();
+	Obb m_obb = Obb(Vec4(0.0f), Mat3x4::getIdentity(), Vec4(1.0f, 1.0f, 1.0f, 0.0f));
 	Bool8 m_markedForUpdate = true;
 
 	ANKI_USE_RESULT Error setLayer(CString texAtlasFname, CString texAtlasSubtexName, F32 blendFactor, LayerType type);
