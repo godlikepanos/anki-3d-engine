@@ -14,9 +14,6 @@
 namespace anki
 {
 
-// Forward
-class VisibilityTestResults;
-
 /// @addtogroup scene
 /// @{
 
@@ -84,31 +81,6 @@ public:
 	const Vec4& getFrustumOrigin() const
 	{
 		return m_frustum->getTransform().getOrigin();
-	}
-
-	void setVisibilityTestResults(VisibilityTestResults* visible);
-
-	/// Call this after the tests. Before it will point to junk
-	VisibilityTestResults& getVisibilityTestResults()
-	{
-		ANKI_ASSERT(m_visible != nullptr);
-		return *m_visible;
-	}
-
-	const VisibilityTestResults& getVisibilityTestResults() const
-	{
-		ANKI_ASSERT(m_visible != nullptr);
-		return *m_visible;
-	}
-
-	Bool hasVisibilityTestResults() const
-	{
-		return m_visible != nullptr;
-	}
-
-	const VisibilityStats& getLastVisibilityStats() const
-	{
-		return m_stats;
 	}
 
 	/// Call when the shape of the frustum got changed.
@@ -180,11 +152,6 @@ private:
 	Mat4 m_pm = Mat4::getIdentity(); ///< Projection matrix
 	Mat4 m_vm = Mat4::getIdentity(); ///< View matrix
 	Mat4 m_vpm = Mat4::getIdentity(); ///< View projection matrix
-
-	/// Visibility stuff. It's per frame so the pointer is invalid on the next frame and before any visibility tests
-	/// are run.
-	VisibilityTestResults* m_visible = nullptr;
-	VisibilityStats m_stats;
 
 	BitMask<U16> m_flags;
 };

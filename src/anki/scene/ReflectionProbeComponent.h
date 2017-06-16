@@ -75,10 +75,7 @@ public:
 		el.m_uuid = getUuid();
 		el.m_worldPosition = m_pos.xyz();
 		el.m_radius = m_radius;
-#if ANKI_EXTRA_CHECKS
-		el.m_renderQueues = {{nullptr, nullptr, nullptr, nullptr, nullptr, nullptr}};
 		el.m_textureArrayIndex = MAX_U32;
-#endif
 	}
 
 private:

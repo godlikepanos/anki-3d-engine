@@ -6,11 +6,8 @@
 #include <anki/renderer/LensFlare.h>
 #include <anki/renderer/Bloom.h>
 #include <anki/renderer/GBuffer.h>
+#include <anki/renderer/RenderQueue.h>
 #include <anki/renderer/Renderer.h>
-#include <anki/scene/SceneGraph.h>
-#include <anki/scene/MoveComponent.h>
-#include <anki/scene/LensFlareComponent.h>
-#include <anki/scene/FrustumComponent.h>
 #include <anki/misc/ConfigSet.h>
 #include <anki/util/Functions.h>
 
@@ -107,12 +104,12 @@ Error LensFlare::initOcclusion(const ConfigSet& config)
 
 void LensFlare::resetOcclusionQueries(RenderingContext& ctx, CommandBufferPtr cmdb)
 {
-	if(ctx.m_visResults->getCount(VisibilityGroupType::FLARES) > m_maxFlares)
+	if(ctx.m_renderQueue->m_lensFlares.getSize() > m_maxFlares)
 	{
 		ANKI_R_LOGW("Visible flares exceed the limit. Increase lf.maxFlares");
 	}
 
-	const U count = min<U>(ctx.m_visResults->getCount(VisibilityGroupType::FLARES), m_maxFlares);
+	const U count = min<U>(ctx.m_renderQueue->m_lensFlares.getSize(), m_maxFlares);
 	for(U i = 0; i < count; ++i)
 	{
 		if(!m_queries[i])
@@ -126,14 +123,14 @@ void LensFlare::resetOcclusionQueries(RenderingContext& ctx, CommandBufferPtr cm
 
 void LensFlare::runOcclusionTests(RenderingContext& ctx, CommandBufferPtr cmdb)
 {
-	const U count = min<U>(ctx.m_visResults->getCount(VisibilityGroupType::FLARES), m_maxFlares);
+	const U count = min<U>(ctx.m_renderQueue->m_lensFlares.getSize(), m_maxFlares);
 	Vec3* positions = nullptr;
 	const Vec3* initialPositions;
 	if(count)
 	{
 		// Setup MVP UBO
 		Mat4* mvp = allocateAndBindUniforms<Mat4*>(sizeof(Mat4), cmdb, 0, 0);
-		*mvp = ctx.m_viewProjMat;
+		*mvp = ctx.m_renderQueue->m_viewProjectionMatrix;
 
 		// Alloc dyn mem
 		StagingGpuMemoryToken vertToken;
@@ -154,11 +151,7 @@ void LensFlare::runOcclusionTests(RenderingContext& ctx, CommandBufferPtr cmdb)
 
 	for(U i = 0; i < count; ++i)
 	{
-		// Iterate lens flare
-		auto it = ctx.m_visResults->getBegin(VisibilityGroupType::FLARES) + i;
-		const LensFlareComponent& lf = (it->m_node)->getComponent<LensFlareComponent>();
-
-		*positions = lf.getWorldPosition().xyz();
+		*positions = ctx.m_renderQueue->m_lensFlares[i].m_worldPosition;
 
 		// Draw and query
 		cmdb->beginOcclusionQuery(m_queries[i]);
@@ -180,7 +173,7 @@ void LensFlare::runOcclusionTests(RenderingContext& ctx, CommandBufferPtr cmdb)
 
 void LensFlare::updateIndirectInfo(RenderingContext& ctx, CommandBufferPtr cmdb)
 {
-	U count = min<U>(ctx.m_visResults->getCount(VisibilityGroupType::FLARES), m_maxFlares);
+	U count = min<U>(ctx.m_renderQueue->m_lensFlares.getSize(), m_maxFlares);
 	if(count == 0)
 	{
 		return;
@@ -215,7 +208,7 @@ void LensFlare::updateIndirectInfo(RenderingContext& ctx, CommandBufferPtr cmdb)
 
 void LensFlare::run(RenderingContext& ctx, CommandBufferPtr cmdb)
 {
-	const U count = min<U>(ctx.m_visResults->getCount(VisibilityGroupType::FLARES), m_maxFlares);
+	const U count = min<U>(ctx.m_renderQueue->m_lensFlares.getSize(), m_maxFlares);
 	if(count == 0)
 	{
 		return;
@@ -230,12 +223,11 @@ void LensFlare::run(RenderingContext& ctx, CommandBufferPtr cmdb)
 
 	for(U i = 0; i < count; ++i)
 	{
-		auto it = ctx.m_visResults->getBegin(VisibilityGroupType::FLARES) + i;
-		const LensFlareComponent& lf = (it->m_node)->getComponent<LensFlareComponent>();
+		const LensFlareQueueElement& flareEl = ctx.m_renderQueue->m_lensFlares[i];
 
 		// Compute position
-		Vec4 lfPos = Vec4(lf.getWorldPosition().xyz(), 1.0);
-		Vec4 posClip = ctx.m_viewProjMat * lfPos;
+		Vec4 lfPos = Vec4(flareEl.m_worldPosition, 1.0);
+		Vec4 posClip = ctx.m_renderQueue->m_viewProjectionMatrix * lfPos;
 
 		/*if(posClip.x() > posClip.w() || posClip.x() < -posClip.w() || posClip.y() > posClip.w()
 			|| posClip.y() < -posClip.w())
@@ -256,15 +248,16 @@ void LensFlare::run(RenderingContext& ctx, CommandBufferPtr cmdb)
 
 		// First flare
 		sprites[c].m_pos = posNdc;
-		sprites[c].m_scale = lf.getFirstFlareSize() * Vec2(1.0, m_r->getAspectRatio());
+		sprites[c].m_scale = flareEl.m_firstFlareSize * Vec2(1.0, m_r->getAspectRatio());
 		sprites[c].m_depth = 0.0;
-		F32 alpha = lf.getColorMultiplier().w() * (1.0 - pow(absolute(posNdc.x()), 6.0))
+		F32 alpha = flareEl.m_colorMultiplier.w() * (1.0 - pow(absolute(posNdc.x()), 6.0))
 			* (1.0 - pow(absolute(posNdc.y()), 6.0)); // Fade the flare on the edges
-		sprites[c].m_color = Vec4(lf.getColorMultiplier().xyz(), alpha);
+		sprites[c].m_color = Vec4(flareEl.m_colorMultiplier.xyz(), alpha);
 		++c;
 
 		// Render
-		cmdb->bindTexture(0, 0, lf.getTexture());
+		ANKI_ASSERT(flareEl.m_texture);
+		cmdb->bindTexture(0, 0, TexturePtr(flareEl.m_texture));
 
 		cmdb->drawArraysIndirect(
 			PrimitiveTopology::TRIANGLE_STRIP, 1, i * sizeof(DrawArraysIndirectInfo), m_indirectBuff);

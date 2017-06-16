@@ -418,112 +418,22 @@ void PhysicsDebugDrawer::drawLines(const Vec3* lines, const U32 linesCount, cons
 	m_dbg->end();
 }
 
-void SceneDebugDrawer::draw(const FrustumComponent& fr) const
+void SceneDebugDrawer::draw(const RenderableQueueElement& r) const
 {
-	const Frustum& fs = fr.getFrustum();
+	// TODO
+}
 
-	m_dbg->setColor(Vec3(1.0, 1.0, 0.0));
+void SceneDebugDrawer::draw(const PointLightQueueElement& light) const
+{
+	m_dbg->setColor(light.m_diffuseColor);
 	CollisionDebugDrawer coldraw(m_dbg);
-	fs.accept(coldraw);
+	Sphere sphere(light.m_worldPosition.xyz0(), light.m_radius);
+	sphere.accept(coldraw);
 }
 
-void SceneDebugDrawer::draw(const SpatialComponent& x) const
+void SceneDebugDrawer::draw(const SpotLightQueueElement& light) const
 {
-	if(!x.getVisibleByCamera())
-	{
-		return;
-	}
-
-	m_dbg->setColor(Vec3(1.0, 0.0, 1.0));
-	CollisionDebugDrawer coldraw(m_dbg);
-	x.getAabb().accept(coldraw);
-}
-
-void SceneDebugDrawer::draw(const SectorComponent& c) const
-{
-	const SceneNode& node = c.getSceneNode();
-	const PortalSectorBase& psnode = static_cast<const PortalSectorBase&>(node);
-
-	m_dbg->setColor(Vec3(0.0, 0.0, 1.0));
-
-	m_dbg->begin(PrimitiveTopology::LINES);
-	const auto& verts = psnode.getVertices();
-	ANKI_ASSERT((psnode.getVertexIndices().getSize() % 3) == 0);
-	for(U i = 0; i < psnode.getVertexIndices().getSize(); i += 3)
-	{
-		I id0 = psnode.getVertexIndices()[i];
-		I id1 = psnode.getVertexIndices()[i + 1];
-		I id2 = psnode.getVertexIndices()[i + 2];
-
-		m_dbg->pushBackVertex(verts[id0].xyz());
-		m_dbg->pushBackVertex(verts[id1].xyz());
-
-		m_dbg->pushBackVertex(verts[id1].xyz());
-		m_dbg->pushBackVertex(verts[id2].xyz());
-
-		m_dbg->pushBackVertex(verts[id2].xyz());
-		m_dbg->pushBackVertex(verts[id0].xyz());
-	}
-	m_dbg->end();
-}
-
-void SceneDebugDrawer::draw(const PortalComponent& c) const
-{
-	const SceneNode& node = c.getSceneNode();
-	const PortalSectorBase& psnode = static_cast<const PortalSectorBase&>(node);
-
-	m_dbg->setColor(Vec3(0.0, 0.0, 0.5));
-
-	m_dbg->begin(PrimitiveTopology::LINES);
-	const auto& verts = psnode.getVertices();
-	ANKI_ASSERT((psnode.getVertexIndices().getSize() % 3) == 0);
-	for(U i = 0; i < psnode.getVertexIndices().getSize(); i += 3)
-	{
-		I id0 = psnode.getVertexIndices()[i];
-		I id1 = psnode.getVertexIndices()[i + 1];
-		I id2 = psnode.getVertexIndices()[i + 2];
-
-		m_dbg->pushBackVertex(verts[id0].xyz());
-		m_dbg->pushBackVertex(verts[id1].xyz());
-
-		m_dbg->pushBackVertex(verts[id1].xyz());
-		m_dbg->pushBackVertex(verts[id2].xyz());
-
-		m_dbg->pushBackVertex(verts[id2].xyz());
-		m_dbg->pushBackVertex(verts[id0].xyz());
-	}
-	m_dbg->end();
-}
-
-void SceneDebugDrawer::draw(const ReflectionProxyComponent& proxy) const
-{
-	m_dbg->setModelMatrix(Mat4::getIdentity());
-	m_dbg->begin(PrimitiveTopology::LINES);
-	for(const auto& face : proxy.getFaces())
-	{
-		for(U i = 0; i < 3; ++i)
-		{
-			m_dbg->setColor(Vec3(0.4, 0.4, 1.0));
-			m_dbg->pushBackVertex(face.m_vertices[i].xyz());
-			m_dbg->setColor(Vec3(1.0, 0.4, 0.4));
-			m_dbg->pushBackVertex(face.m_vertices[i + 1].xyz());
-		}
-	}
-	m_dbg->end();
-}
-
-void SceneDebugDrawer::draw(const DecalComponent& decalc) const
-{
-	const MoveComponent& movec = decalc.getSceneNode().getComponent<MoveComponent>();
-
-	m_dbg->setColor(Vec3(0.0, 1.0, 0.0));
-
-	const Vec3& size = decalc.getVolumeSize();
-	Vec3 halfSize = size / 2.0;
-	Obb box(Vec4(0.0, 0.0, -halfSize.z(), 0.0), Mat3x4::getIdentity(), Vec4(halfSize, 0.0));
-	box.transform(movec.getWorldTransform());
-	CollisionDebugDrawer cd(m_dbg);
-	box.accept(cd);
+	// TODO
 }
 
 } // end namespace anki

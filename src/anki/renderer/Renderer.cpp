@@ -4,8 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/renderer/Renderer.h>
-#include <anki/scene/SceneGraph.h>
-#include <anki/scene/FrustumComponent.h>
+#include <anki/renderer/RenderQueue.h>
 #include <anki/core/Trace.h>
 #include <anki/misc/ConfigSet.h>
 
@@ -30,10 +29,8 @@
 namespace anki
 {
 
-static Bool threadWillDoWork(
-	const RenderingContext& ctx, VisibilityGroupType typeOfWork, U32 threadId, PtrSize threadCount)
+static Bool threadWillDoWork(PtrSize problemSize, U32 threadId, PtrSize threadCount)
 {
-	U problemSize = ctx.m_visResults->getCount(typeOfWork);
 	PtrSize start, end;
 	ThreadPoolTask::choseStartEnd(threadId, threadCount, problemSize, start, end);
 
@@ -236,8 +233,8 @@ Error Renderer::render(RenderingContext& ctx)
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 	ctx.m_jitterMat = m_jitteredMats8x[m_frameCount & (8 - 1)];
-	ctx.m_projMatJitter = ctx.m_jitterMat * ctx.m_projMat;
-	ctx.m_viewProjMatJitter = ctx.m_projMatJitter * ctx.m_viewMat;
+	ctx.m_projMatJitter = ctx.m_jitterMat * ctx.m_renderQueue->m_projectionMatrix;
+	ctx.m_viewProjMatJitter = ctx.m_projMatJitter * ctx.m_renderQueue->m_viewMatrix;
 
 	ctx.m_prevViewProjMat = m_prevViewProjMat;
 	ctx.m_prevCamTransform = m_prevCamTransform;
@@ -255,19 +252,22 @@ Error Renderer::render(RenderingContext& ctx)
 		m_resourcesDirty = false;
 	}
 
+	// Prepare SM. Do that first because it touches the render queue elements
+	m_shadowMapping->prepareBuildCommandBuffers(ctx);
+
 	// Run stages
 	m_indirect->run(ctx);
 
 	ANKI_CHECK(m_lightShading->binLights(ctx));
-
 	m_lensFlare->resetOcclusionQueries(ctx, cmdb);
+
 	ANKI_CHECK(buildCommandBuffers(ctx));
 
 	// Barriers
 	m_shadowMapping->setPreRunBarriers(ctx);
 	m_gbuffer->setPreRunBarriers(ctx);
 
-	// Passes
+	// Passes & more
 	m_shadowMapping->run(ctx);
 	m_gbuffer->run(ctx);
 
@@ -380,8 +380,8 @@ Error Renderer::render(RenderingContext& ctx)
 	ANKI_CHECK(m_finalComposite->run(ctx));
 
 	++m_frameCount;
-	m_prevViewProjMat = ctx.m_viewProjMat;
-	m_prevCamTransform = ctx.m_camTrfMat;
+	m_prevViewProjMat = ctx.m_renderQueue->m_viewProjectionMatrix;
+	m_prevCamTransform = ctx.m_renderQueue->m_cameraTransform;
 
 	return ErrorCode::NONE;
 }
@@ -568,24 +568,19 @@ Error Renderer::buildCommandBuffers(RenderingContext& ctx)
 	ANKI_TRACE_SCOPED_EVENT(RENDERER_COMMAND_BUFFER_BUILDING);
 	ThreadPool& threadPool = getThreadPool();
 
-	// Prepare
-	if(m_shadowMapping)
-	{
-		m_shadowMapping->prepareBuildCommandBuffers(ctx);
-	}
-
 	// Find the last jobs for MS and FS
 	U32 lastMsJob = MAX_U32;
 	U32 lastFsJob = MAX_U32;
 	U threadCount = threadPool.getThreadsCount();
 	for(U i = threadCount - 1; i != 0; --i)
 	{
-		if(threadWillDoWork(ctx, VisibilityGroupType::RENDERABLES_MS, i, threadCount) && lastMsJob == MAX_U32)
+		if(threadWillDoWork(ctx.m_renderQueue->m_renderables.getSize(), i, threadCount) && lastMsJob == MAX_U32)
 		{
 			lastMsJob = i;
 		}
 
-		if(threadWillDoWork(ctx, VisibilityGroupType::RENDERABLES_FS, i, threadCount) && lastFsJob == MAX_U32)
+		if(threadWillDoWork(ctx.m_renderQueue->m_forwardShadingRenderables.getSize(), i, threadCount)
+			&& lastFsJob == MAX_U32)
 		{
 			lastFsJob = i;
 		}

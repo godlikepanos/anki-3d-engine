@@ -22,39 +22,70 @@ class ThreadHive;
 /// @addtogroup scene
 /// @{
 
-/// Sort spatial scene nodes on distance
+/// Sort objects on distance
+template<typename T>
 class DistanceSortFunctor
 {
 public:
-	Bool operator()(const VisibleNode& a, const VisibleNode& b)
+	Bool operator()(const T& a, const T& b)
 	{
-		ANKI_ASSERT(a.m_node && b.m_node);
-		return a.m_frustumDistance < b.m_frustumDistance;
+		return a.m_distanceFromCamera < b.m_distanceFromCamera;
 	}
 };
 
+template<typename T>
 class RevDistanceSortFunctor
 {
 public:
-	Bool operator()(const VisibleNode& a, const VisibleNode& b)
+	Bool operator()(const T& a, const T& b)
 	{
-		ANKI_ASSERT(a.m_node && b.m_node);
-		return a.m_frustumDistance > b.m_frustumDistance;
+		return a.m_distanceFromCamera > b.m_distanceFromCamera;
 	}
 };
 
-/// Sort renderable scene nodes on material
-class MaterialSortFunctor
+/// Storage for a single element type.
+template<typename T, U INITIAL_STORAGE_SIZE = 32, U STORAGE_GROW_RATE = 4>
+class TRenderQueueElementStorage
 {
 public:
-	Bool operator()(const VisibleNode& a, const VisibleNode& b)
-	{
-		ANKI_ASSERT(a.m_node && b.m_node);
+	T* m_elements = nullptr;
+	U32 m_elementCount = 0;
+	U32 m_elementStorage = 0;
 
-		return a.m_node->getComponent<RenderComponent>().getMaterial().getUuid()
-			< b.m_node->getComponent<RenderComponent>().getMaterial().getUuid();
+	Timestamp m_lastUpdateTimestamp;
+
+	T* newElement(SceneFrameAllocator<T> alloc)
+	{
+		if(ANKI_UNLIKELY(m_elementCount + 1 > m_elementStorage))
+		{
+			m_elementStorage = max(INITIAL_STORAGE_SIZE, m_elementStorage * STORAGE_GROW_RATE);
+
+			const T* oldElements = m_elements;
+			m_elements = alloc.allocate(m_elementStorage);
+
+			if(oldElements)
+			{
+				memcpy(m_elements, oldElements, sizeof(T) * m_elementCount);
+			}
+		}
+
+		return &m_elements[m_elementCount++];
 	}
 };
+
+class RenderQueueView
+{
+public:
+	TRenderQueueElementStorage<RenderableQueueElement> m_renderables; ///< Deferred shading or shadow renderables.
+	TRenderQueueElementStorage<RenderableQueueElement> m_forwardShadingRenderables;
+	TRenderQueueElementStorage<PointLightQueueElement> m_pointLights;
+	TRenderQueueElementStorage<SpotLightQueueElement> m_spotLights;
+	TRenderQueueElementStorage<ReflectionProbeQueueElement> m_reflectionProbes;
+	TRenderQueueElementStorage<LensFlareQueueElement> m_lensFlares;
+	TRenderQueueElementStorage<DecalQueueElement> m_decals;
+};
+
+static_assert(std::is_trivially_destructible<RenderQueueView>::value == true, "Should be trivially destructible");
 
 /// Data common for all tasks.
 class VisibilityContext
@@ -66,7 +97,7 @@ public:
 	List<FrustumComponent*> m_testedFrcs;
 	Mutex m_mtx;
 
-	void submitNewWork(FrustumComponent& frc, ThreadHive& hive);
+	void submitNewWork(FrustumComponent& frc, RenderQueue& result, ThreadHive& hive);
 };
 
 /// ThreadHive task to gather all visible triangles from the OccluderComponent.
@@ -80,7 +111,7 @@ public:
 	DynamicArray<Vec3> m_verts;
 	U32 m_vertCount;
 
-	SoftwareRasterizer m_r;
+	SoftwareRasterizer m_r; // TODO This will never be destroyed
 
 	/// Thread hive task.
 	static void callback(void* ud, U32 threadId, ThreadHive& hive)
@@ -148,7 +179,7 @@ public:
 	WeakPtr<SectorGroupVisibilityTestsContext> m_sectorsCtx;
 	U32 m_taskIdx;
 	U32 m_taskCount;
-	WeakPtr<VisibilityTestResults> m_result;
+	RenderQueueView m_result; ///< Sub result. Will be combined later.
 	Timestamp m_timestamp = 0;
 	SoftwareRasterizer* m_r ANKI_DBG_NULLIFY;
 
@@ -177,6 +208,8 @@ public:
 	WeakPtr<FrustumComponent> m_frc;
 	WeakArray<VisibilityTestTask> m_tests;
 
+	WeakPtr<RenderQueue> m_results; ///< Where to store the results.
+
 	/// Thread hive task.
 	static void callback(void* ud, U32 threadId, ThreadHive& hive)
 	{
@@ -186,6 +219,10 @@ public:
 
 private:
 	void combine();
+
+	template<typename T>
+	void combineQueueElements(
+		SceneFrameAllocator<U8>& alloc, WeakArray<TRenderQueueElementStorage<T>*> subStorages, WeakArray<T>& combined);
 };
 /// @}
 

@@ -85,91 +85,15 @@ Error Dbg::run(RenderingContext& ctx)
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 
 	m_drawer->prepareFrame(cmdb);
-	m_drawer->setViewProjectionMatrix(ctx.m_viewProjMat);
+	m_drawer->setViewProjectionMatrix(ctx.m_renderQueue->m_viewProjectionMatrix);
 	m_drawer->setModelMatrix(Mat4::getIdentity());
 	// m_drawer->drawGrid();
 
-	const SceneGraph* scene = nullptr;
-
 	SceneDebugDrawer sceneDrawer(m_drawer);
-	ctx.m_visResults->iterateAll([&](const SceneNode& node) {
-		// Get the scenegraph
-		if(scene == nullptr)
-		{
-			scene = &node.getSceneGraph();
-		}
 
-		/*if(&node == &cam)
-		{
-			return;
-		}*/
-
-		// Set position
-		const MoveComponent* mv = node.tryGetComponent<MoveComponent>();
-		if(mv)
-		{
-			m_drawer->setModelMatrix(Mat4(mv->getWorldTransform()));
-		}
-		else
-		{
-			m_drawer->setModelMatrix(Mat4::getIdentity());
-		}
-
-		// Spatial
-		if(m_flags.get(DbgFlag::SPATIAL_COMPONENT))
-		{
-			Error err = node.iterateComponentsOfType<const SpatialComponent>([&](const SpatialComponent& sp) -> Error {
-				sceneDrawer.draw(sp);
-				return ErrorCode::NONE;
-			});
-			(void)err;
-		}
-
-		// Frustum
-		if(m_flags.get(DbgFlag::FRUSTUM_COMPONENT))
-		{
-			Error err = node.iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) -> Error {
-				/*if(&frc != &camFrc)
-				{
-					sceneDrawer.draw(frc);
-				}*/
-				return ErrorCode::NONE;
-			});
-			(void)err;
-		}
-
-		// Sector/portal
-		if(m_flags.get(DbgFlag::SECTOR_COMPONENT))
-		{
-			Error err = node.iterateComponentsOfType<SectorComponent>([&](SectorComponent& psc) -> Error {
-				sceneDrawer.draw(psc);
-				return ErrorCode::NONE;
-			});
-
-			err = node.iterateComponentsOfType<PortalComponent>([&](PortalComponent& psc) -> Error {
-				sceneDrawer.draw(psc);
-				return ErrorCode::NONE;
-			});
-			(void)err;
-		}
-
-		// Decal
-		if(m_flags.get(DbgFlag::DECAL_COMPONENT))
-		{
-			Error err = node.iterateComponentsOfType<DecalComponent>([&](DecalComponent& psc) -> Error {
-				sceneDrawer.draw(psc);
-				return ErrorCode::NONE;
-			});
-			(void)err;
-		}
-	});
-
-	if(m_flags.get(DbgFlag::PHYSICS) && scene)
+	for(const PointLightQueueElement& plight : ctx.m_renderQueue->m_pointLights)
 	{
-		PhysicsDebugDrawer phyd(m_drawer);
-
-		m_drawer->setModelMatrix(Mat4::getIdentity());
-		phyd.drawWorld(scene->getPhysicsWorld());
+		sceneDrawer.draw(plight);
 	}
 
 #if 0

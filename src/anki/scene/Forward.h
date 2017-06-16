@@ -29,7 +29,6 @@ class Path;
 
 // Other
 class SceneGraph;
-class VisibleNode;
 class Sector;
 
 } // end namespace anki

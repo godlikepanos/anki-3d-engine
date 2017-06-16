@@ -4,12 +4,9 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/renderer/Drawer.h>
+#include <anki/renderer/RenderQueue.h>
 #include <anki/resource/ShaderResource.h>
-#include <anki/scene/FrustumComponent.h>
 #include <anki/resource/Material.h>
-#include <anki/scene/RenderComponent.h>
-#include <anki/scene/Visibility.h>
-#include <anki/scene/SceneGraph.h>
 #include <anki/resource/TextureResource.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/core/Trace.h>
@@ -24,7 +21,7 @@ class DrawContext
 public:
 	RenderQueueDrawContext m_queueCtx;
 
-	const VisibleNode* m_visibleNode = nullptr;
+	const RenderableQueueElement* m_renderableElement = nullptr;
 
 	Array<RenderableQueueElement, MAX_INSTANCES> m_cachedRenderElements;
 	Array<U8, MAX_INSTANCES> m_cachedRenderElementLods;
@@ -46,8 +43,8 @@ void RenderableDrawer::drawRange(Pass pass,
 	const Mat4& viewMat,
 	const Mat4& viewProjMat,
 	CommandBufferPtr cmdb,
-	const VisibleNode* begin,
-	const VisibleNode* end)
+	const RenderableQueueElement* begin,
+	const RenderableQueueElement* end)
 {
 	ANKI_ASSERT(begin && end && begin < end);
 
@@ -62,7 +59,7 @@ void RenderableDrawer::drawRange(Pass pass,
 
 	for(; begin != end; ++begin)
 	{
-		ctx.m_visibleNode = begin;
+		ctx.m_renderableElement = begin;
 
 		drawSingle(ctx);
 	}
@@ -89,17 +86,14 @@ void RenderableDrawer::flushDrawcall(DrawContext& ctx)
 
 void RenderableDrawer::drawSingle(DrawContext& ctx)
 {
-	const RenderComponent& rc = ctx.m_visibleNode->m_node->getComponent<RenderComponent>();
-
 	if(ctx.m_cachedRenderElementCount == MAX_INSTANCES)
 	{
 		flushDrawcall(ctx);
 	}
 
-	RenderableQueueElement rqel;
-	rc.setupRenderableQueueElement(rqel);
+	const RenderableQueueElement& rqel = *ctx.m_renderableElement;
 
-	const F32 flod = min<F32>(m_r->calculateLod(ctx.m_visibleNode->m_frustumDistance), MAX_LOD_COUNT - 1);
+	const F32 flod = min<F32>(m_r->calculateLod(rqel.m_distanceFromCamera), MAX_LOD_COUNT - 1);
 	const U8 lod = U8(flod);
 
 	const Bool shouldFlush = ctx.m_cachedRenderElementCount > 0

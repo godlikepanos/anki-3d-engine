@@ -22,19 +22,8 @@ FrustumComponent::FrustumComponent(SceneNode* node, Frustum* frustum)
 	setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
 }
 
-void FrustumComponent::setVisibilityTestResults(VisibilityTestResults* visible)
-{
-	ANKI_ASSERT(m_visible == nullptr);
-	m_visible = visible;
-
-	m_stats.m_renderablesCount = visible->getCount(VisibilityGroupType::RENDERABLES_MS);
-	m_stats.m_lightsCount = visible->getCount(VisibilityGroupType::LIGHTS_POINT);
-}
-
 Error FrustumComponent::update(SceneNode& node, F32, F32, Bool& updated)
 {
-	m_visible = nullptr;
-
 	updated = false;
 
 	if(m_flags.get(SHAPE_MARKED_FOR_UPDATE))

@@ -13,10 +13,10 @@ namespace anki
 {
 
 /// Feedback component.
-class LightFeedbackComponent : public SceneComponent
+class Light::MovedFeedbackComponent : public SceneComponent
 {
 public:
-	LightFeedbackComponent(SceneNode* node)
+	MovedFeedbackComponent(SceneNode* node)
 		: SceneComponent(SceneComponentType::NONE, node)
 	{
 	}
@@ -32,6 +32,24 @@ public:
 			// Move updated
 			lnode.onMoveUpdate(move);
 		}
+
+		return ErrorCode::NONE;
+	}
+};
+
+/// Feedback component.
+class Light::LightChangedFeedbackComponent : public SceneComponent
+{
+public:
+	LightChangedFeedbackComponent(SceneNode* node)
+		: SceneComponent(SceneComponentType::NONE, node)
+	{
+	}
+
+	Error update(SceneNode& node, F32, F32, Bool& updated) override
+	{
+		updated = false;
+		Light& lnode = static_cast<Light&>(node);
 
 		LightComponent& light = node.getComponent<LightComponent>();
 		if(light.getTimestamp() == node.getGlobalTimestamp())
@@ -58,11 +76,14 @@ Error Light::init(LightComponentType type, CollisionShape* shape)
 	// Move component
 	newComponent<MoveComponent>(this);
 
+	// Feedback component
+	newComponent<MovedFeedbackComponent>(this);
+
 	// Light component
 	newComponent<LightComponent>(this, type);
 
 	// Feedback component
-	newComponent<LightFeedbackComponent>(this);
+	newComponent<LightChangedFeedbackComponent>(this);
 
 	// Spatial component
 	newComponent<SpatialComponent>(this, shape);
@@ -106,7 +127,7 @@ void Light::onMoveUpdateCommon(MoveComponent& move)
 	}
 
 	// Update light component
-	getComponent<LightComponent>().setWorldTransform(move.getWorldTransform());
+	getComponent<LightComponent>().updateWorldTransform(move.getWorldTransform());
 }
 
 void Light::onShapeUpdateCommon(LightComponent& light)

@@ -14,8 +14,6 @@ namespace anki
 {
 
 // Forward
-class FrustumComponent;
-class SceneNode;
 class ThreadPool;
 class PerspectiveFrustum;
 

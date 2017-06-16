@@ -11,11 +11,7 @@ namespace anki
 {
 
 // Forward
-class MoveComponent;
 class LightBinContext;
-class SpatialComponent;
-class LightComponent;
-class VisibilityTestResults;
 
 /// @addtogroup renderer
 /// @{
@@ -39,7 +35,7 @@ public:
 		const Mat4& projMat,
 		const Mat4& viewProjMat,
 		const Mat4& camTrf,
-		const VisibilityTestResults& vi,
+		const RenderQueue& rqueue,
 		StackAllocator<U8> frameAlloc,
 		U maxLightIndices,
 		Bool shadowsEnabled,
@@ -67,20 +63,16 @@ private:
 
 	void binLights(U32 threadId, PtrSize threadsCount, LightBinContext& ctx);
 
-	I writePointLight(const LightComponent& light, LightBinContext& ctx);
+	void writeAndBinPointLight(
+		const PointLightQueueElement& lightEl, LightBinContext& ctx, ClustererTestResult& testResult);
 
-	I writeSpotLight(const LightComponent& lightc, const FrustumComponent* lightFrc, LightBinContext& ctx);
+	void writeAndBinSpotLight(
+		const SpotLightQueueElement& lightEl, LightBinContext& ctx, ClustererTestResult& testResult);
 
-	void binLight(const SpatialComponent& sp,
-		const LightComponent& lightc,
-		U pos,
-		U lightType,
-		LightBinContext& ctx,
-		ClustererTestResult& testResult) const;
+	void writeAndBinProbe(
+		const ReflectionProbeQueueElement& probe, LightBinContext& ctx, ClustererTestResult& testResult);
 
-	void writeAndBinProbe(const SceneNode& node, LightBinContext& ctx, ClustererTestResult& testResult);
-
-	void writeAndBinDecal(const SceneNode& node, LightBinContext& ctx, ClustererTestResult& testResult);
+	void writeAndBinDecal(const DecalQueueElement& decal, LightBinContext& ctx, ClustererTestResult& testResult);
 };
 /// @}
 

@@ -67,9 +67,10 @@ class SpotLightQueueElement final
 public:
 	U64 m_uuid;
 	Mat4 m_worldTransform;
+	Mat4 m_textureMatrix;
 	F32 m_distance;
-	F32 m_outerAngleCos;
-	F32 m_innerAngleCos;
+	F32 m_outerAngle;
+	F32 m_innerAngle;
 	Vec3 m_diffuseColor;
 	Vec3 m_specularColor;
 	RenderQueue* m_shadowRenderQueue;
@@ -140,6 +141,9 @@ public:
 
 	/// Applies only if the RenderQueue holds shadow casters. It's the timesamp that modified
 	Timestamp m_shadowRenderablesLastUpdateTimestamp = 0;
+
+	F32 m_cameraNear;
+	F32 m_cameraFar;
 };
 /// @}
 

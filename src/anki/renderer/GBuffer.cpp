@@ -5,10 +5,9 @@
 
 #include <anki/renderer/GBuffer.h>
 #include <anki/renderer/Renderer.h>
+#include <anki/renderer/RenderQueue.h>
 #include <anki/util/Logger.h>
 #include <anki/util/ThreadPool.h>
-#include <anki/scene/SceneGraph.h>
-#include <anki/scene/FrustumComponent.h>
 #include <anki/misc/ConfigSet.h>
 #include <anki/core/Trace.h>
 
@@ -105,9 +104,7 @@ void GBuffer::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCou
 	ANKI_TRACE_SCOPED_EVENT(RENDER_MS);
 
 	// Get some stuff
-	const VisibilityTestResults& vis = *ctx.m_visResults;
-
-	U problemSize = vis.getCount(VisibilityGroupType::RENDERABLES_MS);
+	const U problemSize = ctx.m_renderQueue->m_renderables.getSize();
 	PtrSize start, end;
 	ThreadPoolTask::choseStartEnd(threadId, threadCount, problemSize, start, end);
 
@@ -136,11 +133,11 @@ void GBuffer::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCou
 
 		// Start drawing
 		m_r->getSceneDrawer().drawRange(Pass::GB_FS,
-			ctx.m_viewMat,
+			ctx.m_renderQueue->m_viewMatrix,
 			ctx.m_viewProjMatJitter,
 			cmdb,
-			vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + start,
-			vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + end);
+			ctx.m_renderQueue->m_renderables.getBegin() + start,
+			ctx.m_renderQueue->m_renderables.getBegin() + end);
 	}
 }
 

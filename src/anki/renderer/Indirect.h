@@ -17,7 +17,6 @@ namespace anki
 struct IrShaderReflectionProbe;
 class IrRunContext;
 class IrTaskContext;
-class ReflectionProbeComponent;
 
 /// @addtogroup renderer
 /// @{
@@ -141,17 +140,14 @@ private:
 	void initFaceInfo(U cacheEntryIdx, U faceIdx);
 	ANKI_USE_RESULT Error loadMesh(CString fname, BufferPtr& vert, BufferPtr& idx, U32& idxCount);
 
-	// Rendering
-	void tryRender(RenderingContext& ctx, SceneNode& node, U& probesRendered);
-
-	void runMs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx);
-	void runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx);
+	void runMs(RenderingContext& rctx, const RenderQueue& rqueue, U layer, U faceIdx);
+	void runIs(RenderingContext& rctx, const RenderQueue& rqueue, U layer, U faceIdx);
 	void computeIrradiance(RenderingContext& rctx, U layer, U faceIdx);
 
-	void renderReflection(RenderingContext& ctx, SceneNode& node, U cubemapIdx);
+	void renderReflection(const ReflectionProbeQueueElement& probeEl, RenderingContext& ctx, U cubemapIdx);
 
 	/// Find a cache entry to store the reflection.
-	void findCacheEntry(SceneNode& node, U& entry, Bool& render);
+	void findCacheEntry(U64 nodeUuid, U& entry, Bool& render);
 };
 /// @}
 

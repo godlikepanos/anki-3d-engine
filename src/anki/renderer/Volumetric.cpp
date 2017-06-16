@@ -9,7 +9,7 @@
 #include <anki/renderer/ShadowMapping.h>
 #include <anki/renderer/LightShading.h>
 #include <anki/renderer/LightBin.h>
-#include <anki/scene/FrustumComponent.h>
+#include <anki/renderer/RenderQueue.h>
 
 namespace anki
 {
@@ -103,15 +103,16 @@ void VolumetricMain::run(RenderingContext& ctx)
 	};
 
 	Unis* uniforms = allocateAndBindUniforms<Unis*>(sizeof(Unis), cmdb, 0, 3);
-	computeLinearizeDepthOptimal(ctx.m_near,
-		ctx.m_far,
+	computeLinearizeDepthOptimal(ctx.m_renderQueue->m_cameraNear,
+		ctx.m_renderQueue->m_cameraFar,
 		uniforms->m_linearizeNoiseTexOffsetLayer.x(),
 		uniforms->m_linearizeNoiseTexOffsetLayer.y());
 	F32 texelOffset = 1.0 / m_noiseTex->getWidth();
 	uniforms->m_linearizeNoiseTexOffsetLayer.z() = m_r->getFrameCount() * texelOffset;
 	uniforms->m_linearizeNoiseTexOffsetLayer.w() = m_r->getFrameCount() & (m_noiseTex->getLayerCount() - 1);
 	uniforms->m_fogParticleColorPad1 = Vec4(m_fogParticleColor, 0.0);
-	uniforms->m_prevViewProjMatMulInvViewProjMat = ctx.m_prevViewProjMat * ctx.m_viewProjMat.getInverse();
+	uniforms->m_prevViewProjMatMulInvViewProjMat =
+		ctx.m_prevViewProjMat * ctx.m_renderQueue->m_viewProjectionMatrix.getInverse();
 
 	bindStorage(cmdb, 0, 0, ctx.m_lightShading.m_clustersToken);
 	bindStorage(cmdb, 0, 1, ctx.m_lightShading.m_lightIndicesToken);

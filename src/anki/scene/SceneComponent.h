@@ -106,7 +106,7 @@ public:
 
 protected:
 	SceneNode* m_node = nullptr;
-	Timestamp m_timestamp; ///< Indicates when an update happened
+	Timestamp m_timestamp = 0; ///< Indicates when an update happened
 
 private:
 	SceneComponentType m_type;

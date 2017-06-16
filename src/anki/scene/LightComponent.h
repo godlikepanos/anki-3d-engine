@@ -39,14 +39,10 @@ public:
 		return m_type;
 	}
 
-	const Transform& getWorldTransform() const
+	void updateWorldTransform(const Transform& trf)
 	{
-		return m_worldTrf;
-	}
-
-	void setWorldTransform(const Transform& trf)
-	{
-		m_worldTrf = trf;
+		m_trf = trf;
+		m_flags.set(TRF_DIRTY);
 	}
 
 	const Vec4& getDiffuseColor() const
@@ -72,7 +68,7 @@ public:
 	void setRadius(F32 x)
 	{
 		m_radius = x;
-		m_dirty = true;
+		m_flags.set(DIRTY);
 	}
 
 	F32 getRadius() const
@@ -83,7 +79,7 @@ public:
 	void setDistance(F32 x)
 	{
 		m_distance = x;
-		m_dirty = true;
+		m_flags.set(DIRTY);
 	}
 
 	F32 getDistance() const
@@ -95,7 +91,7 @@ public:
 	{
 		m_innerAngleCos = cos(ang / 2.0);
 		m_innerAngle = ang;
-		m_dirty = true;
+		m_flags.set(DIRTY);
 	}
 
 	F32 getInnerAngleCos() const
@@ -112,7 +108,7 @@ public:
 	{
 		m_outerAngleCos = cos(ang / 2.0);
 		m_outerAngle = ang;
-		m_dirty = true;
+		m_flags.set(DIRTY);
 	}
 
 	F32 getOuterAngle() const
@@ -127,23 +123,12 @@ public:
 
 	Bool getShadowEnabled() const
 	{
-		return m_shadow;
+		return m_flags.get(SHADOW);
 	}
 
 	void setShadowEnabled(const Bool x)
 	{
-		m_shadow = x;
-	}
-
-	U getShadowMapIndex() const
-	{
-		return static_cast<U>(m_shadowMapIndex);
-	}
-
-	void setShadowMapIndex(const U i)
-	{
-		ANKI_ASSERT(i < 0xFF);
-		m_shadowMapIndex = static_cast<U8>(i);
+		m_flags.set(SHADOW, x);
 	}
 
 	ANKI_USE_RESULT Error update(SceneNode&, F32, F32, Bool& updated) override;
@@ -152,35 +137,27 @@ public:
 	{
 		ANKI_ASSERT(m_type == LightComponentType::POINT);
 		el.m_uuid = getUuid();
-		el.m_worldPosition = m_worldTrf.getOrigin().xyz();
+		el.m_worldPosition = m_trf.getOrigin().xyz();
 		el.m_radius = m_radius;
 		el.m_diffuseColor = m_diffColor.xyz();
 		el.m_specularColor = m_specColor.xyz();
-#if ANKI_EXTRA_CHECKS
-		el.m_shadowRenderQueues = {{nullptr, nullptr, nullptr, nullptr, nullptr, nullptr}};
-		el.m_textureArrayIndex = MAX_U32;
-#endif
 	}
 
 	void setupSpotLightQueueElement(SpotLightQueueElement& el) const
 	{
 		ANKI_ASSERT(m_type == LightComponentType::SPOT);
 		el.m_uuid = getUuid();
-		el.m_worldTransform = Mat4(m_worldTrf);
+		el.m_worldTransform = Mat4(m_trf);
+		el.m_textureMatrix = m_spotTextureMatrix;
 		el.m_distance = m_distance;
-		el.m_outerAngleCos = m_outerAngleCos;
-		el.m_innerAngleCos = m_innerAngleCos;
+		el.m_outerAngle = m_outerAngle;
+		el.m_innerAngle = m_innerAngle;
 		el.m_diffuseColor = m_diffColor.xyz();
 		el.m_specularColor = m_specColor.xyz();
-#if ANKI_EXTRA_CHECKS
-		el.m_shadowRenderQueue = nullptr;
-		el.m_textureArrayIndex = MAX_U32;
-#endif
 	}
 
 private:
 	LightComponentType m_type;
-	Transform m_worldTrf = Transform(Vec4(0.0f), Mat3x4::getIdentity(), 1.0f);
 	Vec4 m_diffColor = Vec4(0.5f);
 	Vec4 m_specColor = Vec4(0.5f);
 	union
@@ -193,10 +170,17 @@ private:
 	F32 m_outerAngle;
 	F32 m_innerAngle;
 
-	Bool8 m_shadow = false;
-	U8 m_shadowMapIndex = 0xFF; ///< Used by the renderer
+	Transform m_trf = Transform::getIdentity();
+	Mat4 m_spotTextureMatrix = Mat4::getIdentity();
 
-	Bool8 m_dirty = true;
+	enum
+	{
+		SHADOW = 1 << 0,
+		DIRTY = 1 << 1,
+		TRF_DIRTY = 1 << 2
+	};
+
+	BitMask<U8> m_flags = BitMask<U8>(DIRTY | TRF_DIRTY);
 };
 /// @}
 

@@ -14,7 +14,6 @@ namespace anki
 {
 
 // Forward
-class FrustumComponent;
 class LightBin;
 
 /// @addtogroup renderer

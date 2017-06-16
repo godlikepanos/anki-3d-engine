@@ -15,8 +15,6 @@ namespace anki
 // Forward
 class ResourceManager;
 class ConfigSet;
-class SceneGraph;
-class SceneNode;
 class ThreadPool;
 class StagingGpuMemoryManager;
 
@@ -40,7 +38,7 @@ public:
 		const ConfigSet& config,
 		Timestamp* globTimestamp);
 
-	ANKI_USE_RESULT Error render(SceneGraph& scene);
+	ANKI_USE_RESULT Error render(RenderQueue& rqueue);
 
 	Dbg& getDbg();
 

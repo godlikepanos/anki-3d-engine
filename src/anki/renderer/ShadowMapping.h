@@ -13,9 +13,6 @@
 namespace anki
 {
 
-// Forward
-class SceneNode;
-
 /// @addtogroup renderer
 /// @{
 
@@ -55,8 +52,8 @@ private:
 	{
 	public:
 		U32 m_layerId;
-		SceneNode* m_light = nullptr;
 		U32 m_timestamp = 0; ///< Timestamp of last render or light change
+		U64 m_lightUuid = 0;
 	};
 
 	class ShadowmapSpot : public ShadowmapBase
@@ -83,16 +80,24 @@ private:
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 
 	/// Find the best shadowmap for that light
-	template<typename TShadowmap, typename TContainer>
-	void bestCandidate(SceneNode& light, TContainer& arr, TShadowmap*& out);
+	template<typename TLightElement, typename TShadowmap, typename TContainer>
+	void bestCandidate(TLightElement& light, TContainer& arr, TShadowmap*& out);
 
 	/// Check if a shadow pass can be skipped.
-	Bool skip(SceneNode& light, ShadowmapBase& sm);
+	Bool skip(PointLightQueueElement& light, ShadowmapBase& sm);
+	Bool skip(SpotLightQueueElement& light, ShadowmapBase& sm);
 
-	void doSpotLight(SceneNode& light, CommandBufferPtr& cmdBuff, FramebufferPtr& fb, U threadId, U threadCount) const;
+	void doSpotLight(const SpotLightQueueElement& light,
+		CommandBufferPtr& cmdBuff,
+		FramebufferPtr& fb,
+		U threadId,
+		U threadCount) const;
 
-	void doOmniLight(
-		SceneNode& light, CommandBufferPtr cmdbs[], Array<FramebufferPtr, 6>& fbs, U threadId, U threadCount) const;
+	void doOmniLight(const PointLightQueueElement& light,
+		CommandBufferPtr cmdbs[],
+		Array<FramebufferPtr, 6>& fbs,
+		U threadId,
+		U threadCount) const;
 };
 
 /// @}

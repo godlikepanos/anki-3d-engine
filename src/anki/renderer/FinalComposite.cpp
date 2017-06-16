@@ -16,8 +16,6 @@
 #include <anki/renderer/DownscaleBlur.h>
 #include <anki/util/Logger.h>
 #include <anki/misc/ConfigSet.h>
-#include <anki/scene/SceneNode.h>
-#include <anki/scene/FrustumComponent.h>
 
 namespace anki
 {

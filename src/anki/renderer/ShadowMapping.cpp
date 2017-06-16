@@ -5,12 +5,9 @@
 
 #include <anki/renderer/ShadowMapping.h>
 #include <anki/renderer/Renderer.h>
+#include <anki/renderer/RenderQueue.h>
 #include <anki/core/App.h>
 #include <anki/core/Trace.h>
-#include <anki/scene/SceneGraph.h>
-#include <anki/scene/Light.h>
-#include <anki/scene/FrustumComponent.h>
-#include <anki/scene/MoveComponent.h>
 #include <anki/misc/ConfigSet.h>
 #include <anki/util/ThreadPool.h>
 
@@ -112,7 +109,7 @@ Error ShadowMapping::initInternal(const ConfigSet& config)
 
 void ShadowMapping::run(RenderingContext& ctx)
 {
-	ANKI_TRACE_START_EVENT(RENDER_SM);
+	ANKI_TRACE_SCOPED_EVENT(RENDER_SM);
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 	const U threadCount = m_r->getThreadPool().getThreadsCount();
@@ -131,6 +128,8 @@ void ShadowMapping::run(RenderingContext& ctx)
 			}
 		}
 		cmdb->endRenderPass();
+
+		ANKI_TRACE_INC_COUNTER(RENDERER_SHADOW_PASSES, 1);
 	}
 
 	// Omni lights
@@ -150,19 +149,19 @@ void ShadowMapping::run(RenderingContext& ctx)
 				}
 			}
 			cmdb->endRenderPass();
+
+			ANKI_TRACE_INC_COUNTER(RENDERER_SHADOW_PASSES, 1);
 		}
 	}
-
-	ANKI_TRACE_STOP_EVENT(RENDER_SM);
 }
 
-template<typename TShadowmap, typename TContainer>
-void ShadowMapping::bestCandidate(SceneNode& light, TContainer& arr, TShadowmap*& out)
+template<typename TLightElement, typename TShadowmap, typename TContainer>
+void ShadowMapping::bestCandidate(TLightElement& light, TContainer& arr, TShadowmap*& out)
 {
 	// Allready there
 	for(TShadowmap& sm : arr)
 	{
-		if(&light == sm.m_light)
+		if(light.m_uuid == sm.m_lightUuid)
 		{
 			out = &sm;
 			return;
@@ -172,9 +171,9 @@ void ShadowMapping::bestCandidate(SceneNode& light, TContainer& arr, TShadowmap*
 	// Find a null
 	for(TShadowmap& sm : arr)
 	{
-		if(sm.m_light == nullptr)
+		if(sm.m_lightUuid == 0)
 		{
-			sm.m_light = &light;
+			sm.m_lightUuid = light.m_uuid;
 			sm.m_timestamp = 0;
 			out = &sm;
 			return;
@@ -191,36 +190,43 @@ void ShadowMapping::bestCandidate(SceneNode& light, TContainer& arr, TShadowmap*
 		}
 	}
 
-	sm->m_light = &light;
+	sm->m_lightUuid = light.m_uuid;
 	sm->m_timestamp = 0;
 	out = sm;
 }
 
-Bool ShadowMapping::skip(SceneNode& light, ShadowmapBase& sm)
+Bool ShadowMapping::skip(PointLightQueueElement& light, ShadowmapBase& sm)
 {
-	MoveComponent* movc = light.tryGetComponent<MoveComponent>();
+	Timestamp maxTimestamp = light.m_shadowRenderQueues[0]->m_shadowRenderablesLastUpdateTimestamp;
+	for(U i = 1; i < 6; ++i)
+	{
+		maxTimestamp = max(maxTimestamp, light.m_shadowRenderQueues[i]->m_shadowRenderablesLastUpdateTimestamp);
+	}
 
-	Timestamp lastUpdate = movc->getTimestamp();
-
-	Error err = light.iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& fr) {
-		lastUpdate = max(lastUpdate, fr.getTimestamp());
-
-		VisibilityTestResults& vi = fr.getVisibilityTestResults();
-		lastUpdate = max(lastUpdate, vi.getShapeUpdateTimestamp());
-
-		return ErrorCode::NONE;
-	});
-	(void)err;
-
-	Bool shouldUpdate = lastUpdate >= sm.m_timestamp || m_r->resourcesLoaded();
+	const Bool shouldUpdate = maxTimestamp >= sm.m_timestamp || m_r->resourcesLoaded();
 	if(shouldUpdate)
 	{
 		sm.m_timestamp = m_r->getGlobalTimestamp();
 	}
 
 	// Update the layer ID anyway
-	LightComponent& lcomp = light.getComponent<LightComponent>();
-	lcomp.setShadowMapIndex(sm.m_layerId);
+	light.m_textureArrayIndex = sm.m_layerId;
+
+	return !shouldUpdate;
+}
+
+Bool ShadowMapping::skip(SpotLightQueueElement& light, ShadowmapBase& sm)
+{
+	const Timestamp maxTimestamp = light.m_shadowRenderQueue->m_shadowRenderablesLastUpdateTimestamp;
+
+	const Bool shouldUpdate = maxTimestamp >= sm.m_timestamp || m_r->resourcesLoaded();
+	if(shouldUpdate)
+	{
+		sm.m_timestamp = m_r->getGlobalTimestamp();
+	}
+
+	// Update the layer ID anyway
+	light.m_textureArrayIndex = sm.m_layerId;
 
 	return !shouldUpdate;
 }
@@ -253,11 +259,9 @@ void ShadowMapping::buildCommandBuffers(RenderingContext& ctx, U threadId, U thr
 }
 
 void ShadowMapping::doSpotLight(
-	SceneNode& light, CommandBufferPtr& cmdb, FramebufferPtr& fb, U threadId, U threadCount) const
+	const SpotLightQueueElement& light, CommandBufferPtr& cmdb, FramebufferPtr& fb, U threadId, U threadCount) const
 {
-	FrustumComponent& frc = light.getComponent<FrustumComponent>();
-	VisibilityTestResults& vis = frc.getVisibilityTestResults();
-	U problemSize = vis.getCount(VisibilityGroupType::RENDERABLES_MS);
+	const U problemSize = light.m_shadowRenderQueue->m_renderables.getSize();
 	PtrSize start, end;
 	ThreadPoolTask::choseStartEnd(threadId, threadCount, problemSize, start, end);
 
@@ -277,7 +281,7 @@ void ShadowMapping::doSpotLight(
 
 	// Inform on Rts
 	cmdb->informTextureSurfaceCurrentUsage(m_spotTexArray,
-		TextureSurfaceInfo(0, 0, 0, light.getComponent<LightComponent>().getShadowMapIndex()),
+		TextureSurfaceInfo(0, 0, 0, light.m_textureArrayIndex),
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE);
 
 	// Set state
@@ -285,23 +289,26 @@ void ShadowMapping::doSpotLight(
 	cmdb->setPolygonOffset(1.0, 2.0);
 
 	m_r->getSceneDrawer().drawRange(Pass::SM,
-		frc.getViewMatrix(),
-		frc.getViewProjectionMatrix(),
+		light.m_shadowRenderQueue->m_viewMatrix,
+		light.m_shadowRenderQueue->m_viewProjectionMatrix,
 		cmdb,
-		vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + start,
-		vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + end);
+		light.m_shadowRenderQueue->m_renderables.getBegin() + start,
+		light.m_shadowRenderQueue->m_renderables.getBegin() + end);
 
 	cmdb->flush();
 }
 
-void ShadowMapping::doOmniLight(
-	SceneNode& light, CommandBufferPtr cmdbs[], Array<FramebufferPtr, 6>& fbs, U threadId, U threadCount) const
+void ShadowMapping::doOmniLight(const PointLightQueueElement& light,
+	CommandBufferPtr cmdbs[],
+	Array<FramebufferPtr, 6>& fbs,
+	U threadId,
+	U threadCount) const
 {
-	U frCount = 0;
+	for(U i = 0; i < 6; ++i)
+	{
+		const RenderQueue& rqueue = *light.m_shadowRenderQueues[i];
 
-	Error err = light.iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) -> Error {
-		VisibilityTestResults& vis = frc.getVisibilityTestResults();
-		U problemSize = vis.getCount(VisibilityGroupType::RENDERABLES_MS);
+		const U problemSize = rqueue.m_renderables.getSize();
 		PtrSize start, end;
 		ThreadPoolTask::choseStartEnd(threadId, threadCount, problemSize, start, end);
 
@@ -313,32 +320,28 @@ void ShadowMapping::doOmniLight(
 			{
 				cinf.m_flags |= CommandBufferFlag::SMALL_BATCH;
 			}
-			cinf.m_framebuffer = fbs[frCount];
-			cmdbs[frCount] = m_r->getGrManager().newInstance<CommandBuffer>(cinf);
+			cinf.m_framebuffer = fbs[i];
+			cmdbs[i] = m_r->getGrManager().newInstance<CommandBuffer>(cinf);
 
 			// Inform on Rts
-			cmdbs[frCount]->informTextureSurfaceCurrentUsage(m_omniTexArray,
-				TextureSurfaceInfo(0, 0, frCount, light.getComponent<LightComponent>().getShadowMapIndex()),
+			cmdbs[i]->informTextureSurfaceCurrentUsage(m_omniTexArray,
+				TextureSurfaceInfo(0, 0, i, light.m_textureArrayIndex),
 				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE);
 
 			// Set state
-			cmdbs[frCount]->setViewport(0, 0, m_resolution, m_resolution);
-			cmdbs[frCount]->setPolygonOffset(1.0, 2.0);
+			cmdbs[i]->setViewport(0, 0, m_resolution, m_resolution);
+			cmdbs[i]->setPolygonOffset(1.0, 2.0);
 
 			m_r->getSceneDrawer().drawRange(Pass::SM,
-				frc.getViewMatrix(),
-				frc.getViewProjectionMatrix(),
-				cmdbs[frCount],
-				vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + start,
-				vis.getBegin(VisibilityGroupType::RENDERABLES_MS) + end);
+				rqueue.m_viewMatrix,
+				rqueue.m_viewProjectionMatrix,
+				cmdbs[i],
+				rqueue.m_renderables.getBegin() + start,
+				rqueue.m_renderables.getBegin() + end);
 
-			cmdbs[frCount]->flush();
+			cmdbs[i]->flush();
 		}
-
-		++frCount;
-		return ErrorCode::NONE;
-	});
-	(void)err;
+	}
 }
 
 void ShadowMapping::prepareBuildCommandBuffers(RenderingContext& ctx)
@@ -346,50 +349,50 @@ void ShadowMapping::prepareBuildCommandBuffers(RenderingContext& ctx)
 	ANKI_TRACE_SCOPED_EVENT(RENDER_SM);
 
 	// Gather the lights
-	const VisibilityTestResults& vi = *ctx.m_visResults;
+	RenderQueue& rqueue = *ctx.m_renderQueue;
 
 	const U MAX = 64;
-	Array<SceneNode*, MAX> spotCasters;
-	Array<SceneNode*, MAX> omniCasters;
+	Array<SpotLightQueueElement*, MAX> spotCasters;
+	Array<PointLightQueueElement*, MAX> omniCasters;
 	U spotCastersCount = 0;
 	U omniCastersCount = 0;
 
-	auto it = vi.getBegin(VisibilityGroupType::LIGHTS_POINT);
-	auto lend = vi.getEnd(VisibilityGroupType::LIGHTS_POINT);
-	for(; it != lend; ++it)
 	{
-		SceneNode* node = (*it).m_node;
-		LightComponent& light = node->getComponent<LightComponent>();
-		ANKI_ASSERT(light.getLightComponentType() == LightComponentType::POINT);
-
-		if(light.getShadowEnabled())
+		auto it = rqueue.m_pointLights.getBegin();
+		auto lend = rqueue.m_pointLights.getEnd();
+		for(; it != lend; ++it)
 		{
-			ShadowmapOmni* sm;
-			bestCandidate(*node, m_omnis, sm);
+			const Bool castsShadow = it->m_shadowRenderQueues[0] != nullptr;
 
-			if(!skip(*node, *sm))
+			if(castsShadow)
 			{
-				omniCasters[omniCastersCount++] = node;
+				ShadowmapOmni* sm;
+				bestCandidate(*it, m_omnis, sm);
+
+				if(!skip(*it, *sm))
+				{
+					omniCasters[omniCastersCount++] = &(*it);
+				}
 			}
 		}
 	}
 
-	it = vi.getBegin(VisibilityGroupType::LIGHTS_SPOT);
-	lend = vi.getEnd(VisibilityGroupType::LIGHTS_SPOT);
-	for(; it != lend; ++it)
 	{
-		SceneNode* node = (*it).m_node;
-		LightComponent& light = node->getComponent<LightComponent>();
-		ANKI_ASSERT(light.getLightComponentType() == LightComponentType::SPOT);
-
-		if(light.getShadowEnabled())
+		auto it = rqueue.m_spotLights.getBegin();
+		auto lend = rqueue.m_spotLights.getEnd();
+		for(; it != lend; ++it)
 		{
-			ShadowmapSpot* sm;
-			bestCandidate(*node, m_spots, sm);
+			const Bool castsShadow = it->m_shadowRenderQueue != nullptr;
 
-			if(!skip(*node, *sm))
+			if(castsShadow)
 			{
-				spotCasters[spotCastersCount++] = node;
+				ShadowmapSpot* sm;
+				bestCandidate(*it, m_spots, sm);
+
+				if(!skip(*it, *sm))
+				{
+					spotCasters[spotCastersCount++] = &(*it);
+				}
 			}
 		}
 	}
@@ -404,7 +407,7 @@ void ShadowMapping::prepareBuildCommandBuffers(RenderingContext& ctx)
 	if(spotCastersCount > 0)
 	{
 		ctx.m_shadowMapping.m_spots.create(spotCastersCount);
-		memcpy(&ctx.m_shadowMapping.m_spots[0], &spotCasters[0], sizeof(SceneNode*) * spotCastersCount);
+		memcpy(&ctx.m_shadowMapping.m_spots[0], &spotCasters[0], sizeof(SpotLightQueueElement*) * spotCastersCount);
 
 		ctx.m_shadowMapping.m_spotCommandBuffers.create(spotCastersCount * m_r->getThreadPool().getThreadsCount());
 
@@ -418,8 +421,7 @@ void ShadowMapping::prepareBuildCommandBuffers(RenderingContext& ctx)
 		ctx.m_shadowMapping.m_spotFramebuffers.create(spotCastersCount);
 		for(U i = 0; i < spotCastersCount; ++i)
 		{
-			const LightComponent& lightc = ctx.m_shadowMapping.m_spots[i]->getComponent<LightComponent>();
-			const U idx = lightc.getShadowMapIndex();
+			const U idx = ctx.m_shadowMapping.m_spots[i]->m_textureArrayIndex;
 
 			ctx.m_shadowMapping.m_spotFramebuffers[i] = m_spots[idx].m_fb;
 			ctx.m_shadowMapping.m_spotCacheIndices[i] = idx;
@@ -429,7 +431,7 @@ void ShadowMapping::prepareBuildCommandBuffers(RenderingContext& ctx)
 	if(omniCastersCount > 0)
 	{
 		ctx.m_shadowMapping.m_omnis.create(omniCastersCount);
-		memcpy(&ctx.m_shadowMapping.m_omnis[0], &omniCasters[0], sizeof(SceneNode*) * omniCastersCount);
+		memcpy(&ctx.m_shadowMapping.m_omnis[0], &omniCasters[0], sizeof(PointLightQueueElement*) * omniCastersCount);
 
 		ctx.m_shadowMapping.m_omniCommandBuffers.create(omniCastersCount * 6 * m_r->getThreadPool().getThreadsCount());
 
@@ -443,8 +445,7 @@ void ShadowMapping::prepareBuildCommandBuffers(RenderingContext& ctx)
 		ctx.m_shadowMapping.m_omniFramebuffers.create(omniCastersCount);
 		for(U i = 0; i < omniCastersCount; ++i)
 		{
-			const LightComponent& lightc = ctx.m_shadowMapping.m_omnis[i]->getComponent<LightComponent>();
-			const U idx = lightc.getShadowMapIndex();
+			const U idx = ctx.m_shadowMapping.m_omnis[i]->m_textureArrayIndex;
 
 			for(U j = 0; j < 6; ++j)
 			{

@@ -4,14 +4,11 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/renderer/LightBin.h>
-#include <anki/scene/FrustumComponent.h>
-#include <anki/scene/Visibility.h>
-#include <anki/scene/MoveComponent.h>
-#include <anki/scene/LightComponent.h>
-#include <anki/scene/DecalComponent.h>
-#include <anki/scene/ReflectionProbeComponent.h>
+#include <anki/renderer/RenderQueue.h>
 #include <anki/core/Trace.h>
 #include <anki/util/ThreadPool.h>
+#include <anki/collision/Sphere.h>
+#include <anki/collision/Frustum.h>
 
 namespace anki
 {
@@ -313,10 +310,10 @@ public:
 	Atomic<U32> m_lightIdsCount = {0};
 
 	// Misc
-	WeakArray<const VisibleNode> m_vPointLights;
-	WeakArray<const VisibleNode> m_vSpotLights;
-	WeakArray<const VisibleNode> m_vProbes;
-	WeakArray<const VisibleNode> m_vDecals;
+	WeakArray<const PointLightQueueElement> m_vPointLights;
+	WeakArray<const SpotLightQueueElement> m_vSpotLights;
+	WeakArray<const ReflectionProbeQueueElement> m_vProbes;
+	WeakArray<const DecalQueueElement> m_vDecals;
 
 	Atomic<U32> m_count = {0};
 	Atomic<U32> m_count2 = {0};
@@ -365,7 +362,7 @@ Error LightBin::bin(const Mat4& viewMat,
 	const Mat4& projMat,
 	const Mat4& viewProjMat,
 	const Mat4& camTrf,
-	const VisibilityTestResults& vi,
+	const RenderQueue& rqueue,
 	StackAllocator<U8> frameAlloc,
 	U maxLightIndices,
 	Bool shadowsEnabled,
@@ -390,10 +387,10 @@ Error LightBin::bin(const Mat4& viewMat,
 	//
 	// Quickly get the lights
 	//
-	U visiblePointLightsCount = vi.getCount(VisibilityGroupType::LIGHTS_POINT);
-	U visibleSpotLightsCount = vi.getCount(VisibilityGroupType::LIGHTS_SPOT);
-	U visibleProbeCount = vi.getCount(VisibilityGroupType::REFLECTION_PROBES);
-	U visibleDecalCount = vi.getCount(VisibilityGroupType::DECALS);
+	const U visiblePointLightsCount = rqueue.m_pointLights.getSize();
+	const U visibleSpotLightsCount = rqueue.m_spotLights.getSize();
+	const U visibleProbeCount = rqueue.m_reflectionProbes.getSize();
+	const U visibleDecalCount = rqueue.m_decals.getSize();
 
 	ANKI_TRACE_INC_COUNTER(RENDERER_LIGHTS, visiblePointLightsCount + visibleSpotLightsCount);
 
@@ -417,7 +414,7 @@ Error LightBin::bin(const Mat4& viewMat,
 		ctx.m_pointLights = WeakArray<ShaderPointLight>(data, visiblePointLightsCount);
 
 		ctx.m_vPointLights =
-			WeakArray<const VisibleNode>(vi.getBegin(VisibilityGroupType::LIGHTS_POINT), visiblePointLightsCount);
+			WeakArray<const PointLightQueueElement>(rqueue.m_pointLights.getBegin(), visiblePointLightsCount);
 	}
 	else
 	{
@@ -432,7 +429,7 @@ Error LightBin::bin(const Mat4& viewMat,
 		ctx.m_spotLights = WeakArray<ShaderSpotLight>(data, visibleSpotLightsCount);
 
 		ctx.m_vSpotLights =
-			WeakArray<const VisibleNode>(vi.getBegin(VisibilityGroupType::LIGHTS_SPOT), visibleSpotLightsCount);
+			WeakArray<const SpotLightQueueElement>(rqueue.m_spotLights.getBegin(), visibleSpotLightsCount);
 	}
 	else
 	{
@@ -449,7 +446,7 @@ Error LightBin::bin(const Mat4& viewMat,
 			ctx.m_probes = WeakArray<ShaderProbe>(data, visibleProbeCount);
 
 			ctx.m_vProbes =
-				WeakArray<const VisibleNode>(vi.getBegin(VisibilityGroupType::REFLECTION_PROBES), visibleProbeCount);
+				WeakArray<const ReflectionProbeQueueElement>(rqueue.m_reflectionProbes.getBegin(), visibleProbeCount);
 		}
 		else
 		{
@@ -464,7 +461,7 @@ Error LightBin::bin(const Mat4& viewMat,
 
 		ctx.m_decals = WeakArray<ShaderDecal>(data, visibleDecalCount);
 
-		ctx.m_vDecals = WeakArray<const VisibleNode>(vi.getBegin(VisibilityGroupType::DECALS), visibleDecalCount);
+		ctx.m_vDecals = WeakArray<const DecalQueueElement>(rqueue.m_decals.getBegin(), visibleDecalCount);
 	}
 	else
 	{
@@ -548,38 +545,22 @@ void LightBin::binLights(U32 threadId, PtrSize threadsCount, LightBinContext& ct
 			if(j >= lightCount + ctx.m_vDecals.getSize())
 			{
 				U i = j - (lightCount + ctx.m_vDecals.getSize());
-				SceneNode& snode = *ctx.m_vProbes[i].m_node;
-				writeAndBinProbe(snode, ctx, testResult);
+				writeAndBinProbe(ctx.m_vProbes[i], ctx, testResult);
 			}
 			else if(j >= ctx.m_vPointLights.getSize() + ctx.m_vDecals.getSize())
 			{
 				U i = j - (ctx.m_vPointLights.getSize() + ctx.m_vDecals.getSize());
-
-				SceneNode& snode = *ctx.m_vSpotLights[i].m_node;
-				LightComponent& light = snode.getComponent<LightComponent>();
-				SpatialComponent& sp = snode.getComponent<SpatialComponent>();
-				const FrustumComponent* frc = snode.tryGetComponent<FrustumComponent>();
-
-				I pos = writeSpotLight(light, frc, ctx);
-				binLight(sp, light, pos, 1, ctx, testResult);
+				writeAndBinSpotLight(ctx.m_vSpotLights[i], ctx, testResult);
 			}
 			else if(j >= ctx.m_vDecals.getSize())
 			{
 				U i = j - ctx.m_vDecals.getSize();
-
-				SceneNode& snode = *ctx.m_vPointLights[i].m_node;
-				LightComponent& light = snode.getComponent<LightComponent>();
-				SpatialComponent& sp = snode.getComponent<SpatialComponent>();
-
-				I pos = writePointLight(light, ctx);
-				binLight(sp, light, pos, 0, ctx, testResult);
+				writeAndBinPointLight(ctx.m_vPointLights[i], ctx, testResult);
 			}
 			else
 			{
 				U i = j;
-
-				SceneNode& snode = *ctx.m_vDecals[i].m_node;
-				writeAndBinDecal(snode, ctx, testResult);
+				writeAndBinDecal(ctx.m_vDecals[i], ctx, testResult);
 			}
 		}
 	}
@@ -675,90 +656,36 @@ void LightBin::binLights(U32 threadId, PtrSize threadsCount, LightBinContext& ct
 	ANKI_TRACE_STOP_EVENT(RENDERER_LIGHT_BINNING);
 }
 
-I LightBin::writePointLight(const LightComponent& lightc, LightBinContext& ctx)
+void LightBin::writeAndBinPointLight(
+	const PointLightQueueElement& lightEl, LightBinContext& ctx, ClustererTestResult& testResult)
 {
 	// Get GPU light
-	I i = ctx.m_pointLightsCount.fetchAdd(1);
+	I idx = ctx.m_pointLightsCount.fetchAdd(1);
 
-	ShaderPointLight& slight = ctx.m_pointLights[i];
+	ShaderPointLight& slight = ctx.m_pointLights[idx];
 
-	Vec4 pos = ctx.m_viewMat * lightc.getWorldTransform().getOrigin().xyz1();
+	Vec4 pos = ctx.m_viewMat * lightEl.m_worldPosition.xyz1();
 
-	slight.m_posRadius = Vec4(pos.xyz(), 1.0 / (lightc.getRadius() * lightc.getRadius()));
-	slight.m_diffuseColorShadowmapId = lightc.getDiffuseColor();
+	slight.m_posRadius = Vec4(pos.xyz(), 1.0f / (lightEl.m_radius * lightEl.m_radius));
+	slight.m_diffuseColorShadowmapId = lightEl.m_diffuseColor.xyz0();
 
-	if(!lightc.getShadowEnabled() || !ctx.m_shadowsEnabled)
+	if(lightEl.m_shadowRenderQueues[0] == nullptr || !ctx.m_shadowsEnabled)
 	{
 		slight.m_diffuseColorShadowmapId.w() = INVALID_TEXTURE_INDEX;
 	}
 	else
 	{
-		slight.m_diffuseColorShadowmapId.w() = lightc.getShadowMapIndex();
+		slight.m_diffuseColorShadowmapId.w() = lightEl.m_textureArrayIndex;
 	}
 
-	slight.m_specularColorRadius = Vec4(lightc.getSpecularColor().xyz(), lightc.getRadius());
+	slight.m_specularColorRadius = Vec4(lightEl.m_specularColor, lightEl.m_radius);
 
-	return i;
-}
+	// Now bin it
+	Sphere sphere(lightEl.m_worldPosition.xyz0(), lightEl.m_radius);
+	Aabb box;
+	sphere.computeAabb(box);
+	m_clusterer.bin(sphere, box, testResult);
 
-I LightBin::writeSpotLight(const LightComponent& lightc, const FrustumComponent* lightFrc, LightBinContext& ctx)
-{
-	I i = ctx.m_spotLightsCount.fetchAdd(1);
-
-	ShaderSpotLight& light = ctx.m_spotLights[i];
-	F32 shadowmapIndex = INVALID_TEXTURE_INDEX;
-
-	if(lightc.getShadowEnabled() && ctx.m_shadowsEnabled)
-	{
-		// Write matrix
-		static const Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0);
-		// bias * proj_l * view_l * world_c
-		light.m_texProjectionMat = biasMat4 * lightFrc->getViewProjectionMatrix() * ctx.m_camTrf;
-
-		shadowmapIndex = F32(lightc.getShadowMapIndex());
-	}
-
-	// Pos & dist
-	Vec4 pos = ctx.m_viewMat * lightc.getWorldTransform().getOrigin().xyz1();
-	light.m_posRadius = Vec4(pos.xyz(), 1.0 / (lightc.getDistance() * lightc.getDistance()));
-
-	// Diff color and shadowmap ID now
-	light.m_diffuseColorShadowmapId = Vec4(lightc.getDiffuseColor().xyz(), shadowmapIndex);
-
-	// Spec color
-	light.m_specularColorRadius = Vec4(lightc.getSpecularColor().xyz(), lightc.getDistance());
-
-	// Light dir
-	Vec3 lightDir = -lightc.getWorldTransform().getRotation().getZAxis();
-	lightDir = ctx.m_viewMat.getRotationPart() * lightDir;
-	light.m_lightDir = Vec4(lightDir, 0.0);
-
-	// Angles
-	light.m_outerCosInnerCos = Vec4(lightc.getOuterAngleCos(), lightc.getInnerAngleCos(), 1.0, 1.0);
-
-	return i;
-}
-
-void LightBin::binLight(const SpatialComponent& sp,
-	const LightComponent& lightc,
-	U pos,
-	U lightType,
-	LightBinContext& ctx,
-	ClustererTestResult& testResult) const
-{
-	if(lightc.getLightComponentType() == LightComponentType::SPOT)
-	{
-		const FrustumComponent& frc = lightc.getSceneNode().getComponent<FrustumComponent>();
-		ANKI_ASSERT(frc.getFrustum().getType() == FrustumType::PERSPECTIVE);
-		m_clusterer.binPerspectiveFrustum(
-			static_cast<const PerspectiveFrustum&>(frc.getFrustum()), sp.getAabb(), testResult);
-	}
-	else
-	{
-		m_clusterer.bin(sp.getSpatialCollisionShape(), sp.getAabb(), testResult);
-	}
-
-	// Bin to the correct tiles
 	auto it = testResult.getClustersBegin();
 	auto end = testResult.getClustersEnd();
 	for(; it != end; ++it)
@@ -771,38 +698,86 @@ void LightBin::binLight(const SpatialComponent& sp,
 
 		auto& cluster = ctx.m_tempClusters[i];
 
-		switch(lightType)
-		{
-		case 0:
-			i = cluster.m_pointCount.fetchAdd(1) % MAX_TYPED_LIGHTS_PER_CLUSTER;
-			cluster.m_pointIds[i].setIndex(pos);
-			break;
-		case 1:
-			i = cluster.m_spotCount.fetchAdd(1) % MAX_TYPED_LIGHTS_PER_CLUSTER;
-			cluster.m_spotIds[i].setIndex(pos);
-			break;
-		default:
-			ANKI_ASSERT(0);
-		}
+		i = cluster.m_pointCount.fetchAdd(1) % MAX_TYPED_LIGHTS_PER_CLUSTER;
+		cluster.m_pointIds[i].setIndex(idx);
 	}
 }
 
-void LightBin::writeAndBinProbe(const SceneNode& node, LightBinContext& ctx, ClustererTestResult& testResult)
+void LightBin::writeAndBinSpotLight(
+	const SpotLightQueueElement& lightEl, LightBinContext& ctx, ClustererTestResult& testResult)
 {
-	const ReflectionProbeComponent& reflc = node.getComponent<ReflectionProbeComponent>();
-	const SpatialComponent& sp = node.getComponent<SpatialComponent>();
+	I idx = ctx.m_spotLightsCount.fetchAdd(1);
 
+	ShaderSpotLight& light = ctx.m_spotLights[idx];
+	F32 shadowmapIndex = INVALID_TEXTURE_INDEX;
+
+	if(lightEl.m_shadowRenderQueue != nullptr && ctx.m_shadowsEnabled)
+	{
+		// bias * proj_l * view_l * world_c
+		light.m_texProjectionMat = lightEl.m_textureMatrix * ctx.m_camTrf;
+
+		shadowmapIndex = F32(lightEl.m_textureArrayIndex);
+	}
+
+	// Pos & dist
+	Vec4 pos = ctx.m_viewMat * lightEl.m_worldTransform.getTranslationPart().xyz1();
+	light.m_posRadius = Vec4(pos.xyz(), 1.0f / (lightEl.m_distance * lightEl.m_distance));
+
+	// Diff color and shadowmap ID now
+	light.m_diffuseColorShadowmapId = Vec4(lightEl.m_diffuseColor, shadowmapIndex);
+
+	// Spec color
+	light.m_specularColorRadius = Vec4(lightEl.m_specularColor, lightEl.m_distance);
+
+	// Light dir
+	Vec3 lightDir = -lightEl.m_worldTransform.getRotationPart().getZAxis();
+	lightDir = ctx.m_viewMat.getRotationPart() * lightDir;
+	light.m_lightDir = Vec4(lightDir, 0.0f);
+
+	// Angles
+	light.m_outerCosInnerCos = Vec4(cos(lightEl.m_outerAngle / 2.0f), cos(lightEl.m_innerAngle / 2.0f), 1.0f, 1.0f);
+
+	// Bin lights
+	PerspectiveFrustum shape(lightEl.m_outerAngle, lightEl.m_outerAngle, 0.01f, lightEl.m_distance);
+	shape.transform(Transform(lightEl.m_worldTransform));
+	Aabb box;
+	shape.computeAabb(box);
+	m_clusterer.binPerspectiveFrustum(shape, box, testResult);
+
+	auto it = testResult.getClustersBegin();
+	auto end = testResult.getClustersEnd();
+	for(; it != end; ++it)
+	{
+		U x = (*it).x();
+		U y = (*it).y();
+		U z = (*it).z();
+
+		U i = m_clusterer.getClusterCountX() * (z * m_clusterer.getClusterCountY() + y) + x;
+
+		auto& cluster = ctx.m_tempClusters[i];
+
+		i = cluster.m_spotCount.fetchAdd(1) % MAX_TYPED_LIGHTS_PER_CLUSTER;
+		cluster.m_spotIds[i].setIndex(idx);
+	}
+}
+
+void LightBin::writeAndBinProbe(
+	const ReflectionProbeQueueElement& probeEl, LightBinContext& ctx, ClustererTestResult& testResult)
+{
 	// Write it
 	ShaderProbe probe;
-	probe.m_pos = reflc.getPosition().xyz();
-	probe.m_radiusSq = reflc.getRadius() * reflc.getRadius();
-	probe.m_cubemapIndex = reflc.getTextureArrayIndex();
+	probe.m_pos = probeEl.m_worldPosition;
+	probe.m_radiusSq = probeEl.m_radius * probeEl.m_radius;
+	probe.m_cubemapIndex = probeEl.m_textureArrayIndex;
 
 	U idx = ctx.m_probeCount.fetchAdd(1);
 	ctx.m_probes[idx] = probe;
 
 	// Bin it
-	m_clusterer.bin(sp.getSpatialCollisionShape(), sp.getAabb(), testResult);
+	Sphere sphere(probeEl.m_worldPosition.xyz0(), probeEl.m_radius);
+	Aabb box;
+	sphere.computeAabb(box);
+	m_clusterer.bin(sphere, box, testResult);
 
 	auto it = testResult.getClustersBegin();
 	auto end = testResult.getClustersEnd();
@@ -818,24 +793,19 @@ void LightBin::writeAndBinProbe(const SceneNode& node, LightBinContext& ctx, Clu
 
 		i = cluster.m_probeCount.fetchAdd(1) % MAX_PROBES_PER_CLUSTER;
 		cluster.m_probeIds[i].setIndex(idx);
-		cluster.m_probeIds[i].setProbeRadius(reflc.getRadius());
+		cluster.m_probeIds[i].setProbeRadius(probeEl.m_radius);
 	}
 }
 
-void LightBin::writeAndBinDecal(const SceneNode& node, LightBinContext& ctx, ClustererTestResult& testResult)
+void LightBin::writeAndBinDecal(const DecalQueueElement& decalEl, LightBinContext& ctx, ClustererTestResult& testResult)
 {
-	const DecalComponent& decalc = node.getComponent<DecalComponent>();
-	const SpatialComponent& sp = node.getComponent<SpatialComponent>();
-
 	I idx = ctx.m_decalCount.fetchAdd(1);
 	ShaderDecal& decal = ctx.m_decals[idx];
 
-	TexturePtr atlas;
-	Vec4 uv;
-	F32 blendFactor;
-	decalc.getDiffuseAtlasInfo(uv, atlas, blendFactor);
+	TexturePtr atlas(decalEl.m_diffuseAtlas);
+	Vec4 uv = decalEl.m_diffuseAtlasUv;
 	decal.m_diffUv = Vec4(uv.x(), uv.y(), uv.z() - uv.x(), uv.w() - uv.y());
-	decal.m_blendFactors[0] = blendFactor;
+	decal.m_blendFactors[0] = decalEl.m_diffuseAtlasBlendFactor;
 
 	{
 		LockGuard<SpinLock> lock(ctx.m_diffDecalTexAtlasMtx);
@@ -847,9 +817,10 @@ void LightBin::writeAndBinDecal(const SceneNode& node, LightBinContext& ctx, Clu
 		ctx.m_diffDecalTexAtlas = atlas;
 	}
 
-	decalc.getNormalRoughnessAtlasInfo(uv, atlas, blendFactor);
+	atlas.reset(decalEl.m_normalRoughnessAtlas);
+	uv = decalEl.m_normalRoughnessAtlasUv;
 	decal.m_normRoughnessUv = Vec4(uv.x(), uv.y(), uv.z() - uv.x(), uv.w() - uv.y());
-	decal.m_blendFactors[1] = blendFactor;
+	decal.m_blendFactors[1] = decalEl.m_normalRoughnessAtlasBlendFactor;
 
 	if(atlas)
 	{
@@ -863,10 +834,13 @@ void LightBin::writeAndBinDecal(const SceneNode& node, LightBinContext& ctx, Clu
 	}
 
 	// bias * proj_l * view_l * world_c
-	decal.m_texProjectionMat = decalc.getBiasProjectionViewMatrix() * ctx.m_camTrf;
+	decal.m_texProjectionMat = decalEl.m_textureMatrix * ctx.m_camTrf;
 
 	// Bin it
-	m_clusterer.bin(sp.getSpatialCollisionShape(), sp.getAabb(), testResult);
+	Obb obb(decalEl.m_obbCenter.xyz0(), Mat3x4(decalEl.m_obbRotation), decalEl.m_obbExtend.xyz0());
+	Aabb box;
+	obb.computeAabb(box);
+	m_clusterer.bin(obb, box, testResult);
 
 	auto it = testResult.getClustersBegin();
 	auto end = testResult.getClustersEnd();

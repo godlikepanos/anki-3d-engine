@@ -9,7 +9,6 @@
 #include <anki/renderer/Drawer.h>
 #include <anki/Math.h>
 #include <anki/Gr.h>
-#include <anki/scene/Forward.h>
 #include <anki/resource/Forward.h>
 #include <anki/resource/ShaderResource.h>
 #include <anki/core/Timestamp.h>
@@ -24,7 +23,6 @@ namespace anki
 class ConfigSet;
 class ResourceManager;
 class StagingGpuMemoryManager;
-class VisibilityTestResults;
 
 /// @addtogroup renderer
 /// @{
@@ -33,22 +31,16 @@ class VisibilityTestResults;
 class RenderingContext
 {
 public:
-	const VisibilityTestResults* m_visResults ANKI_DBG_NULLIFY;
-	Mat4 m_viewMat;
-	Mat4 m_projMat;
-	Mat4 m_viewProjMat;
+	RenderQueue* m_renderQueue ANKI_DBG_NULLIFY;
 
+	// Extra matrices
 	Mat4 m_projMatJitter;
 	Mat4 m_viewProjMatJitter;
 	Mat4 m_jitterMat;
-
-	Mat4 m_camTrfMat;
-	F32 m_near;
-	F32 m_far;
-	Vec4 m_unprojParams;
-
 	Mat4 m_prevViewProjMat;
 	Mat4 m_prevCamTransform;
+
+	Vec4 m_unprojParams;
 
 	CommandBufferPtr m_commandBuffer; ///< Primary command buffer.
 
@@ -101,8 +93,8 @@ public:
 		/// [casterIdx][threadIdx][faceIdx]
 		DynamicArrayAuto<CommandBufferPtr> m_omniCommandBuffers;
 
-		DynamicArrayAuto<SceneNode*> m_spots;
-		DynamicArrayAuto<SceneNode*> m_omnis;
+		DynamicArrayAuto<SpotLightQueueElement*> m_spots;
+		DynamicArrayAuto<PointLightQueueElement*> m_omnis;
 
 		ShadowMapping(const StackAllocator<U8>& alloc)
 			: m_spotFramebuffers(alloc)

@@ -10,8 +10,7 @@
 #include <anki/renderer/Dbg.h>
 #include <anki/renderer/GBuffer.h>
 #include <anki/renderer/Indirect.h>
-#include <anki/scene/SceneGraph.h>
-#include <anki/scene/Camera.h>
+#include <anki/renderer/RenderQueue.h>
 #include <anki/util/Logger.h>
 #include <anki/util/File.h>
 #include <anki/util/Filesystem.h>
@@ -81,7 +80,7 @@ Error MainRenderer::create(ThreadPool* threadpool,
 	return ErrorCode::NONE;
 }
 
-Error MainRenderer::render(SceneGraph& scene)
+Error MainRenderer::render(RenderQueue& rqueue)
 {
 	ANKI_TRACE_START_EVENT(RENDER);
 
@@ -106,15 +105,8 @@ Error MainRenderer::render(SceneGraph& scene)
 	}
 
 	ctx.m_commandBuffer = cmdb;
-	const FrustumComponent& frc = scene.getActiveCamera().getComponent<FrustumComponent>();
-	ctx.m_visResults = &frc.getVisibilityTestResults();
-	ctx.m_viewMat = frc.getViewMatrix();
-	ctx.m_projMat = frc.getProjectionMatrix();
-	ctx.m_viewProjMat = frc.getViewProjectionMatrix();
-	ctx.m_camTrfMat = Mat4(frc.getFrustum().getTransform());
-	ctx.m_near = frc.getFrustum().getNear();
-	ctx.m_far = frc.getFrustum().getFar();
-	ctx.m_unprojParams = ctx.m_projMat.extractPerspectiveUnprojectionParams();
+	ctx.m_renderQueue = &rqueue;
+	ctx.m_unprojParams = ctx.m_renderQueue->m_projectionMatrix.extractPerspectiveUnprojectionParams();
 	ANKI_CHECK(m_r->render(ctx));
 
 	// Blit renderer's result to default FB if needed

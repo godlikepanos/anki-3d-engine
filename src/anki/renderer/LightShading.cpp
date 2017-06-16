@@ -10,7 +10,7 @@
 #include <anki/renderer/Indirect.h>
 #include <anki/renderer/GBuffer.h>
 #include <anki/renderer/LightBin.h>
-#include <anki/scene/FrustumComponent.h>
+#include <anki/renderer/RenderQueue.h>
 #include <anki/misc/ConfigSet.h>
 #include <anki/util/HighRezTimer.h>
 
@@ -128,11 +128,11 @@ Error LightShading::binLights(RenderingContext& ctx)
 {
 	updateCommonBlock(ctx);
 
-	ANKI_CHECK(m_lightBin->bin(ctx.m_viewMat,
-		ctx.m_projMat,
-		ctx.m_viewProjMat,
-		ctx.m_camTrfMat,
-		*ctx.m_visResults,
+	ANKI_CHECK(m_lightBin->bin(ctx.m_renderQueue->m_viewMatrix,
+		ctx.m_renderQueue->m_projectionMatrix,
+		ctx.m_renderQueue->m_viewProjectionMatrix,
+		ctx.m_renderQueue->m_cameraTransform,
+		*ctx.m_renderQueue,
 		getFrameAllocator(),
 		m_maxLightIds,
 		true,
@@ -196,10 +196,12 @@ void LightShading::updateCommonBlock(RenderingContext& ctx)
 
 	// Start writing
 	blk->m_projectionParams = ctx.m_unprojParams;
-	blk->m_nearFarClustererMagicPad1 =
-		Vec4(ctx.m_near, ctx.m_far, m_lightBin->getClusterer().getShaderMagicValue(), 0.0);
+	blk->m_nearFarClustererMagicPad1 = Vec4(ctx.m_renderQueue->m_cameraNear,
+		ctx.m_renderQueue->m_cameraFar,
+		m_lightBin->getClusterer().getShaderMagicValue(),
+		0.0);
 
-	blk->m_invViewRotation = Mat3x4(ctx.m_viewMat.getInverse().getRotationPart());
+	blk->m_invViewRotation = Mat3x4(ctx.m_renderQueue->m_viewMatrix.getInverse().getRotationPart());
 
 	blk->m_rendererSizeTimePad1 = Vec4(m_r->getWidth(), m_r->getHeight(), HighRezTimer::getCurrentTime(), 0.0);
 

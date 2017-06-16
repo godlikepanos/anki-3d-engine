@@ -5,13 +5,12 @@
 
 #include <anki/renderer/ForwardShading.h>
 #include <anki/renderer/Renderer.h>
+#include <anki/renderer/RenderQueue.h>
 #include <anki/renderer/GBuffer.h>
 #include <anki/renderer/LightShading.h>
 #include <anki/renderer/ShadowMapping.h>
 #include <anki/renderer/Volumetric.h>
 #include <anki/renderer/DepthDownscale.h>
-#include <anki/scene/SceneGraph.h>
-#include <anki/scene/FrustumComponent.h>
 
 namespace anki
 {
@@ -88,7 +87,7 @@ void ForwardShading::drawVolumetric(RenderingContext& ctx, CommandBufferPtr cmdb
 	cmdb->setDepthCompareOperation(CompareOperation::ALWAYS);
 
 	Vec4* unis = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
-	computeLinearizeDepthOptimal(ctx.m_near, ctx.m_far, unis->x(), unis->y());
+	computeLinearizeDepthOptimal(ctx.m_renderQueue->m_cameraNear, ctx.m_renderQueue->m_cameraFar, unis->x(), unis->y());
 
 	cmdb->informTextureSurfaceCurrentUsage(
 		m_r->getDepthDownscale().m_qd.m_depthRt, TextureSurfaceInfo(0, 0, 0, 0), TextureUsageBit::SAMPLED_FRAGMENT);
@@ -110,7 +109,7 @@ void ForwardShading::drawVolumetric(RenderingContext& ctx, CommandBufferPtr cmdb
 
 void ForwardShading::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) const
 {
-	U problemSize = ctx.m_visResults->getCount(VisibilityGroupType::RENDERABLES_FS);
+	const U problemSize = ctx.m_renderQueue->m_forwardShadingRenderables.getSize();
 	PtrSize start, end;
 	ThreadPoolTask::choseStartEnd(threadId, threadCount, problemSize, start, end);
 
@@ -152,11 +151,11 @@ void ForwardShading::buildCommandBuffers(RenderingContext& ctx, U threadId, U th
 
 	// Start drawing
 	m_r->getSceneDrawer().drawRange(Pass::GB_FS,
-		ctx.m_viewMat,
-		ctx.m_viewProjMat,
+		ctx.m_renderQueue->m_viewMatrix,
+		ctx.m_viewProjMatJitter,
 		cmdb,
-		ctx.m_visResults->getBegin(VisibilityGroupType::RENDERABLES_FS) + start,
-		ctx.m_visResults->getBegin(VisibilityGroupType::RENDERABLES_FS) + end);
+		ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + start,
+		ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + end);
 }
 
 void ForwardShading::setPreRunBarriers(RenderingContext& ctx)
@@ -236,7 +235,8 @@ void ForwardShadingUpscale::run(RenderingContext& ctx)
 	CommandBufferPtr cmdb = ctx.m_commandBuffer;
 
 	Vec4* linearDepth = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
-	computeLinearizeDepthOptimal(ctx.m_near, ctx.m_far, linearDepth->x(), linearDepth->y());
+	computeLinearizeDepthOptimal(
+		ctx.m_renderQueue->m_cameraNear, ctx.m_renderQueue->m_cameraFar, linearDepth->x(), linearDepth->y());
 
 	cmdb->bindTexture(0, 0, m_r->getGBuffer().m_depthRt);
 	cmdb->bindTextureAndSampler(0, 1, m_r->getDepthDownscale().m_hd.m_depthRt, m_r->getNearestSampler());

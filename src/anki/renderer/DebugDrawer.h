@@ -5,11 +5,11 @@
 
 #pragma once
 
+#include <anki/renderer/Common.h>
 #include <anki/Math.h>
 #include <anki/Gr.h>
 #include <anki/collision/CollisionShape.h>
 #include <anki/physics/PhysicsDrawer.h>
-#include <anki/scene/Forward.h>
 #include <anki/resource/ShaderResource.h>
 #include <anki/util/Array.h>
 
@@ -163,17 +163,11 @@ public:
 	{
 	}
 
-	void draw(const FrustumComponent& fr) const;
+	void draw(const RenderableQueueElement& r) const;
 
-	void draw(const SpatialComponent& sp) const;
+	void draw(const PointLightQueueElement& light) const;
 
-	void draw(const PortalComponent& c) const;
-
-	void draw(const SectorComponent& c) const;
-
-	void draw(const ReflectionProxyComponent& proxy) const;
-
-	void draw(const DecalComponent& decalc) const;
+	void draw(const SpotLightQueueElement& light) const;
 
 private:
 	DebugDrawer* m_dbg;

@@ -188,7 +188,7 @@ void SceneGraph::deleteNodesMarkedForDeletion()
 Error SceneGraph::update(F32 prevUpdateTime, F32 crntTime)
 {
 	ANKI_ASSERT(m_mainCam);
-	ANKI_TRACE_START_EVENT(SCENE_UPDATE);
+	ANKI_TRACE_SCOPED_EVENT(SCENE_UPDATE);
 
 	m_timestamp = *m_globalTimestamp;
 
@@ -231,10 +231,12 @@ Error SceneGraph::update(F32 prevUpdateTime, F32 crntTime)
 	ANKI_CHECK(threadPool.waitForAllThreadsToFinish());
 	ANKI_TRACE_STOP_EVENT(SCENE_NODES_UPDATE);
 
-	doVisibilityTests(*m_mainCam, *this);
-
-	ANKI_TRACE_STOP_EVENT(SCENE_UPDATE);
 	return ErrorCode::NONE;
+}
+
+void SceneGraph::doVisibilityTests(RenderQueue& rqueue)
+{
+	anki::doVisibilityTests(*m_mainCam, *this, rqueue);
 }
 
 Error SceneGraph::updateNode(F32 prevTime, F32 crntTime, SceneNode& node)
@@ -244,9 +246,13 @@ Error SceneGraph::updateNode(F32 prevTime, F32 crntTime, SceneNode& node)
 	Error err = ErrorCode::NONE;
 
 	// Components update
+	Timestamp componentTimestam = 0;
 	err = node.iterateComponents([&](SceneComponent& comp) -> Error {
 		Bool updated = false;
-		return comp.updateReal(node, prevTime, crntTime, updated);
+		Error e = comp.updateReal(node, prevTime, crntTime, updated);
+		componentTimestam = max(componentTimestam, comp.getTimestamp());
+
+		return e;
 	});
 
 	// Update children
@@ -258,7 +264,7 @@ Error SceneGraph::updateNode(F32 prevTime, F32 crntTime, SceneNode& node)
 	// Frame update
 	if(!err)
 	{
-		err = node.frameUpdateComplete(prevTime, crntTime);
+		err = node.frameUpdateComplete(prevTime, crntTime, componentTimestam);
 	}
 
 	return err;

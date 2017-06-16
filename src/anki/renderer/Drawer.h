@@ -5,8 +5,8 @@
 
 #pragma once
 
+#include <anki/renderer/Common.h>
 #include <anki/resource/RenderingKey.h>
-#include <anki/scene/Forward.h>
 #include <anki/Gr.h>
 
 namespace anki
@@ -36,8 +36,8 @@ public:
 		const Mat4& viewMat,
 		const Mat4& viewProjMat,
 		CommandBufferPtr cmdb,
-		const VisibleNode* begin,
-		const VisibleNode* end);
+		const RenderableQueueElement* begin,
+		const RenderableQueueElement* end);
 
 private:
 	Renderer* m_r;

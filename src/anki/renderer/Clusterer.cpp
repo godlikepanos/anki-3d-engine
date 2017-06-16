@@ -4,11 +4,8 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/renderer/Clusterer.h>
-#include <anki/scene/FrustumComponent.h>
-#include <anki/scene/MoveComponent.h>
-#include <anki/scene/SceneNode.h>
 #include <anki/util/ThreadPool.h>
-#include <vector>
+#include <anki/Collision.h>
 
 namespace anki
 {

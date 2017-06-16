@@ -7,13 +7,8 @@
 #include <anki/renderer/LightShading.h>
 #include <anki/renderer/FinalComposite.h>
 #include <anki/renderer/GBuffer.h>
+#include <anki/renderer/RenderQueue.h>
 #include <anki/core/Config.h>
-#include <anki/scene/SceneNode.h>
-#include <anki/scene/Visibility.h>
-#include <anki/scene/FrustumComponent.h>
-#include <anki/scene/MoveComponent.h>
-#include <anki/scene/LightComponent.h>
-#include <anki/scene/ReflectionProbeComponent.h>
 #include <anki/core/Trace.h>
 #include <anki/resource/MeshLoader.h>
 
@@ -310,10 +305,9 @@ Error Indirect::initIrradiance()
 	return ErrorCode::NONE;
 }
 
-void Indirect::runMs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx)
+void Indirect::runMs(RenderingContext& rctx, const RenderQueue& rqueue, U layer, U faceIdx)
 {
 	CommandBufferPtr& cmdb = rctx.m_commandBuffer;
-	VisibilityTestResults& vis = frc.getVisibilityTestResults();
 
 	FaceInfo& face = m_cacheEntries[layer].m_faces[faceIdx];
 
@@ -342,11 +336,11 @@ void Indirect::runMs(RenderingContext& rctx, FrustumComponent& frc, U layer, U f
 
 	/// Draw
 	m_r->getSceneDrawer().drawRange(Pass::GB_FS,
-		frc.getViewMatrix(),
-		frc.getViewProjectionMatrix(),
+		rqueue.m_viewMatrix,
+		rqueue.m_viewProjectionMatrix,
 		cmdb,
-		vis.getBegin(VisibilityGroupType::RENDERABLES_MS),
-		vis.getEnd(VisibilityGroupType::RENDERABLES_MS));
+		rqueue.m_renderables.getBegin(),
+		rqueue.m_renderables.getEnd());
 
 	// End and set barriers
 	cmdb->endRenderPass();
@@ -365,10 +359,9 @@ void Indirect::runMs(RenderingContext& rctx, FrustumComponent& frc, U layer, U f
 		TextureSurfaceInfo(0, 0, 0, 0));
 }
 
-void Indirect::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U faceIdx)
+void Indirect::runIs(RenderingContext& rctx, const RenderQueue& rqueue, U layer, U faceIdx)
 {
 	CommandBufferPtr& cmdb = rctx.m_commandBuffer;
-	VisibilityTestResults& vis = frc.getVisibilityTestResults();
 	FaceInfo& face = m_cacheEntries[layer].m_faces[faceIdx];
 
 	// Set barriers
@@ -393,64 +386,57 @@ void Indirect::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U f
 	cmdb->setCullMode(FaceSelectionBit::FRONT);
 
 	// Process all lights
-	const Mat4& vpMat = frc.getViewProjectionMatrix();
-	const Mat4& vMat = frc.getViewMatrix();
+	const Mat4& vpMat = rqueue.m_viewProjectionMatrix;
+	const Mat4& vMat = rqueue.m_viewMatrix;
 
 	cmdb->bindShaderProgram(m_is.m_plightGrProg);
 	cmdb->bindVertexBuffer(0, m_is.m_plightPositions, 0, sizeof(F32) * 3);
 	cmdb->bindIndexBuffer(m_is.m_plightIndices, 0, IndexType::U16);
 
-	const VisibleNode* it = vis.getBegin(VisibilityGroupType::LIGHTS_POINT);
-	const VisibleNode* end = vis.getEnd(VisibilityGroupType::LIGHTS_POINT);
-	while(it != end)
+	const PointLightQueueElement* plightEl = rqueue.m_pointLights.getBegin();
+	const PointLightQueueElement* end = rqueue.m_pointLights.getEnd();
+	while(plightEl != end)
 	{
-		const LightComponent& lightc = it->m_node->getComponent<LightComponent>();
-
 		// Update uniforms
 		IrVertex* vert = allocateAndBindUniforms<IrVertex*>(sizeof(IrVertex), cmdb, 0, 0);
 
-		Mat4 modelM(lightc.getWorldTransform().getOrigin().xyz1(),
-			lightc.getWorldTransform().getRotation().getRotationPart(),
-			lightc.getRadius());
+		Mat4 modelM(plightEl->m_worldPosition.xyz1(), Mat3::getIdentity(), plightEl->m_radius);
 
 		vert->m_mvp = vpMat * modelM;
 
 		IrPointLight* light = allocateAndBindUniforms<IrPointLight*>(sizeof(IrPointLight), cmdb, 0, 1);
 
-		Vec4 pos = vMat * lightc.getWorldTransform().getOrigin().xyz1();
+		Vec4 pos = vMat * plightEl->m_worldPosition.xyz1();
 
-		light->m_projectionParams = frc.getProjectionMatrix().extractPerspectiveUnprojectionParams();
-		light->m_posRadius = Vec4(pos.xyz(), 1.0 / (lightc.getRadius() * lightc.getRadius()));
-		light->m_diffuseColorPad1 = lightc.getDiffuseColor();
-		light->m_specularColorPad1 = lightc.getSpecularColor();
+		light->m_projectionParams = rqueue.m_projectionMatrix.extractPerspectiveUnprojectionParams();
+		light->m_posRadius = Vec4(pos.xyz(), 1.0 / (plightEl->m_radius * plightEl->m_radius));
+		light->m_diffuseColorPad1 = plightEl->m_diffuseColor.xyz0();
+		light->m_specularColorPad1 = plightEl->m_specularColor.xyz0();
 
 		// Draw
 		cmdb->drawElements(PrimitiveTopology::TRIANGLES, m_is.m_plightIdxCount);
 
-		++it;
+		++plightEl;
 	}
 
 	cmdb->bindShaderProgram(m_is.m_slightGrProg);
 	cmdb->bindVertexBuffer(0, m_is.m_slightPositions, 0, sizeof(F32) * 3);
 	cmdb->bindIndexBuffer(m_is.m_slightIndices, 0, IndexType::U16);
 
-	it = vis.getBegin(VisibilityGroupType::LIGHTS_SPOT);
-	end = vis.getEnd(VisibilityGroupType::LIGHTS_SPOT);
-	while(it != end)
+	const SpotLightQueueElement* splightEl = rqueue.m_spotLights.getBegin();
+	while(splightEl != rqueue.m_spotLights.getEnd())
 	{
-		const LightComponent& lightc = it->m_node->getComponent<LightComponent>();
-
 		// Compute the model matrix
 		//
-		Mat4 modelM(lightc.getWorldTransform().getOrigin().xyz1(),
-			lightc.getWorldTransform().getRotation().getRotationPart(),
-			1.0);
+		Mat4 modelM(splightEl->m_worldTransform.getTranslationPart().xyz1(),
+			splightEl->m_worldTransform.getRotationPart(),
+			1.0f);
 
 		// Calc the scale of the cone
 		Mat4 scaleM(Mat4::getIdentity());
-		scaleM(0, 0) = tan(lightc.getOuterAngle() / 2.0) * lightc.getDistance();
+		scaleM(0, 0) = tan(splightEl->m_outerAngle / 2.0f) * splightEl->m_distance;
 		scaleM(1, 1) = scaleM(0, 0);
-		scaleM(2, 2) = lightc.getDistance();
+		scaleM(2, 2) = splightEl->m_distance;
 
 		modelM = modelM * scaleM;
 
@@ -461,23 +447,23 @@ void Indirect::runIs(RenderingContext& rctx, FrustumComponent& frc, U layer, U f
 		// Update fragment uniforms
 		IrSpotLight* light = allocateAndBindUniforms<IrSpotLight*>(sizeof(IrSpotLight), cmdb, 0, 1);
 
-		light->m_projectionParams = frc.getProjectionMatrix().extractPerspectiveUnprojectionParams();
+		light->m_projectionParams = rqueue.m_projectionMatrix.extractPerspectiveUnprojectionParams();
 
-		Vec4 pos = vMat * lightc.getWorldTransform().getOrigin().xyz1();
-		light->m_posRadius = Vec4(pos.xyz(), 1.0 / (lightc.getDistance() * lightc.getDistance()));
+		Vec4 pos = vMat * splightEl->m_worldTransform.getTranslationPart().xyz1();
+		light->m_posRadius = Vec4(pos.xyz(), 1.0 / (splightEl->m_distance * splightEl->m_distance));
 
-		light->m_diffuseColorOuterCos = Vec4(lightc.getDiffuseColor().xyz(), lightc.getOuterAngleCos());
+		light->m_diffuseColorOuterCos = Vec4(splightEl->m_diffuseColor, cos(splightEl->m_outerAngle / 2.0f));
 
-		light->m_specularColorInnerCos = Vec4(lightc.getSpecularColor().xyz(), lightc.getInnerAngleCos());
+		light->m_specularColorInnerCos = Vec4(splightEl->m_specularColor, cos(splightEl->m_innerAngle / 2.0f));
 
-		Vec3 lightDir = -lightc.getWorldTransform().getRotation().getZAxis();
+		Vec3 lightDir = -splightEl->m_worldTransform.getZAxis().xyz();
 		lightDir = vMat.getRotationPart() * lightDir;
 		light->m_lightDirPad1 = lightDir.xyz0();
 
 		// Draw
 		cmdb->drawElements(PrimitiveTopology::TRIANGLES, m_is.m_slightIdxCount);
 
-		++it;
+		++splightEl;
 	}
 
 	// Generate mips
@@ -545,28 +531,44 @@ void Indirect::computeIrradiance(RenderingContext& rctx, U layer, U faceIdx)
 void Indirect::run(RenderingContext& rctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(RENDER_IR);
-	const VisibilityTestResults& visRez = *rctx.m_visResults;
 
-	if(visRez.getCount(VisibilityGroupType::REFLECTION_PROBES) > m_cubemapArrSize)
+	if(rctx.m_renderQueue->m_reflectionProbes.getSize() > m_cubemapArrSize)
 	{
 		ANKI_R_LOGW("Increase the ir.cubemapTextureArraySize");
 	}
 
 	// Render some of the probes
-	const VisibleNode* it = visRez.getBegin(VisibilityGroupType::REFLECTION_PROBES);
-	const VisibleNode* end = visRez.getEnd(VisibilityGroupType::REFLECTION_PROBES);
+	ReflectionProbeQueueElement* it = rctx.m_renderQueue->m_reflectionProbes.getBegin();
+	const ReflectionProbeQueueElement* end = rctx.m_renderQueue->m_reflectionProbes.getEnd();
 
 	U probesRendered = 0;
-	U probeIdx = 0;
 	while(it != end)
 	{
 		// Write and render probe
-		tryRender(rctx, *it->m_node, probesRendered);
 
+		Bool render = false;
+		U entry;
+		findCacheEntry(it->m_uuid, entry, render);
+		it->m_textureArrayIndex = entry;
+
+		if(it->m_renderQueues[0] && probesRendered < MAX_PROBE_RENDERS_PER_FRAME)
+		{
+			++probesRendered;
+			renderReflection(*it, rctx, entry);
+
+			// Rendered, no need to render it again next frame
+			it->m_feedbackCallback(false, it->m_userData);
+		}
+
+		// If you need to render it mark it for the next frame
+		if(render)
+		{
+			it->m_feedbackCallback(true, it->m_userData);
+		}
+
+		// Advance
 		++it;
-		++probeIdx;
 	}
-	ANKI_ASSERT(probeIdx == visRez.getCount(VisibilityGroupType::REFLECTION_PROBES));
 
 	// Inform on tex usage
 	CommandBufferPtr& cmdb = rctx.m_commandBuffer;
@@ -574,50 +576,18 @@ void Indirect::run(RenderingContext& rctx)
 	cmdb->informTextureCurrentUsage(m_is.m_lightRt, TextureUsageBit::SAMPLED_FRAGMENT);
 }
 
-void Indirect::tryRender(RenderingContext& ctx, SceneNode& node, U& probesRendered)
-{
-	ReflectionProbeComponent& reflc = node.getComponent<ReflectionProbeComponent>();
-
-	Bool render = false;
-	U entry;
-	findCacheEntry(node, entry, render);
-
-	// Write shader var
-	reflc.setTextureArrayIndex(entry);
-
-	if(reflc.getMarkedForRendering() && probesRendered < MAX_PROBE_RENDERS_PER_FRAME)
-	{
-		++probesRendered;
-		reflc.setMarkedForRendering(false);
-		renderReflection(ctx, node, entry);
-	}
-
-	// If you need to render it mark it for the next frame
-	if(render)
-	{
-		reflc.setMarkedForRendering(true);
-	}
-}
-
-void Indirect::renderReflection(RenderingContext& ctx, SceneNode& node, U cubemapIdx)
+void Indirect::renderReflection(const ReflectionProbeQueueElement& probeEl, RenderingContext& ctx, U cubemapIdx)
 {
 	ANKI_TRACE_INC_COUNTER(RENDERER_REFLECTIONS, 1);
-
-	// Gather the frustum components
-	Array<FrustumComponent*, 6> frustumComponents;
-	U count = 0;
-	Error err = node.iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) -> Error {
-		frustumComponents[count++] = &frc;
-		return ErrorCode::NONE;
-	});
-	(void)err;
-	ANKI_ASSERT(count == 6);
 
 	// Render cubemap
 	for(U i = 0; i < 6; ++i)
 	{
-		runMs(ctx, *frustumComponents[i], cubemapIdx, i);
-		runIs(ctx, *frustumComponents[i], cubemapIdx, i);
+		const RenderQueue* rqueue = probeEl.m_renderQueues[i];
+		ANKI_ASSERT(rqueue);
+
+		runMs(ctx, *rqueue, cubemapIdx, i);
+		runIs(ctx, *rqueue, cubemapIdx, i);
 	}
 
 	for(U i = 0; i < 6; ++i)
@@ -626,10 +596,8 @@ void Indirect::renderReflection(RenderingContext& ctx, SceneNode& node, U cubema
 	}
 }
 
-void Indirect::findCacheEntry(SceneNode& node, U& entry, Bool& render)
+void Indirect::findCacheEntry(U64 uuid, U& entry, Bool& render)
 {
-	U64 uuid = node.getUuid();
-
 	// Try find a candidate cache entry
 	CacheEntry* candidate = nullptr;
 	auto it = m_uuidToCacheEntry.find(uuid);

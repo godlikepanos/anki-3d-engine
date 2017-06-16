@@ -20,8 +20,6 @@ namespace anki
 /// Light scene node. It can be spot or point.
 class Light : public SceneNode
 {
-	friend class LightFeedbackComponent;
-
 public:
 	Light(SceneGraph* scene, CString name);
 
@@ -43,6 +41,10 @@ protected:
 	virtual void onMoveUpdate(MoveComponent& move) = 0;
 
 	virtual void onShapeUpdate(LightComponent& light) = 0;
+
+private:
+	class MovedFeedbackComponent;
+	class LightChangedFeedbackComponent;
 };
 
 /// Point light
@@ -56,7 +58,7 @@ public:
 
 	ANKI_USE_RESULT Error frameUpdate(F32 prevUpdateTime, F32 crntTime) override;
 
-public:
+private:
 	class ShadowCombo
 	{
 	public:

@@ -121,6 +121,8 @@ public:
 
 	ANKI_USE_RESULT Error update(F32 prevUpdateTime, F32 crntTime);
 
+	void doVisibilityTests(RenderQueue& rqueue);
+
 	SceneNode& findSceneNode(const CString& name);
 	SceneNode* tryFindSceneNode(const CString& name);
 

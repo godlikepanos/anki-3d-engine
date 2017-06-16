@@ -71,6 +71,11 @@ public:
 
 	Timestamp getGlobalTimestamp() const;
 
+	Timestamp getComponentMaxTimestamp() const
+	{
+		return m_maxComponentTimestamp;
+	}
+
 	SceneAllocator<U8> getSceneAllocator() const;
 
 	SceneFrameAllocator<U8> getFrameAllocator() const;
@@ -90,9 +95,10 @@ public:
 		return ErrorCode::NONE;
 	}
 
-	ANKI_USE_RESULT Error frameUpdateComplete(F32 prevUpdateTime, F32 crntTime)
+	ANKI_USE_RESULT Error frameUpdateComplete(F32 prevUpdateTime, F32 crntTime, Timestamp maxComponentTimestamp)
 	{
 		m_sectorVisitedBitset.unsetAll();
+		m_maxComponentTimestamp = maxComponentTimestamp;
 		return frameUpdate(prevUpdateTime, crntTime);
 	}
 
@@ -233,6 +239,8 @@ private:
 	SpinLock m_sectorVisitedBitsetLock;
 
 	U64 m_uuid;
+
+	Timestamp m_maxComponentTimestamp = 0;
 
 	void cacheImportantComponents();
 };

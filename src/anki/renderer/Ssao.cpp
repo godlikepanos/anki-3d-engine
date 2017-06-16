@@ -6,11 +6,10 @@
 #include <anki/renderer/Ssao.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/GBuffer.h>
+#include <anki/renderer/RenderQueue.h>
 #include <anki/renderer/DepthDownscale.h>
-#include <anki/scene/SceneGraph.h>
 #include <anki/util/Functions.h>
 #include <anki/misc/ConfigSet.h>
-#include <anki/scene/FrustumComponent.h>
 
 namespace anki
 {
@@ -69,11 +68,12 @@ void SsaoMain::run(RenderingContext& ctx)
 	};
 
 	Unis* unis = allocateAndBindUniforms<Unis*>(sizeof(Unis), cmdb, 0, 0);
-	const Mat4& pmat = ctx.m_projMat;
+	const Mat4& pmat = ctx.m_renderQueue->m_projectionMatrix;
 	unis->m_unprojectionParams = ctx.m_unprojParams;
 	unis->m_projectionMat = Vec4(pmat(0, 0), pmat(1, 1), pmat(2, 2), pmat(2, 3));
 	unis->m_noiseLayerPad3 = Vec4(m_r->getFrameCount() % m_noiseTex->getLayerCount(), 0.0, 0.0, 0.0);
-	unis->m_prevViewProjMatMulInvViewProjMat = ctx.m_prevViewProjMat * ctx.m_viewProjMat.getInverse();
+	unis->m_prevViewProjMatMulInvViewProjMat =
+		ctx.m_prevViewProjMat * ctx.m_renderQueue->m_viewProjectionMatrix.getInverse();
 
 	m_r->drawQuad(cmdb);
 	cmdb->endRenderPass();

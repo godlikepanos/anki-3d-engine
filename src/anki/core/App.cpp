@@ -397,7 +397,10 @@ Error App::mainLoop()
 
 		ANKI_CHECK(m_scene->update(prevUpdateTime, crntTime));
 
-		ANKI_CHECK(m_renderer->render(*m_scene));
+		RenderQueue rqueue;
+		m_scene->doVisibilityTests(rqueue);
+
+		ANKI_CHECK(m_renderer->render(rqueue));
 
 		// Pause and sync async loader. That will force all tasks before the pause to finish in this frame.
 		m_resources->getAsyncLoader().pause();
