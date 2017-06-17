@@ -96,6 +96,12 @@ public:
 		return *m_node;
 	}
 
+	/// The position in the owner SceneNode.
+	U getIndex() const
+	{
+		return m_idx;
+	}
+
 	SceneAllocator<U8> getAllocator() const;
 
 	SceneFrameAllocator<U8> getFrameAllocator() const;
@@ -111,6 +117,7 @@ protected:
 private:
 	SceneComponentType m_type;
 	U64 m_uuid;
+	U32 m_idx;
 };
 
 /// Multiple lists of all types of components.

@@ -55,7 +55,6 @@ private:
 class ModelNode : public SceneNode
 {
 	friend class ModelPatchNode;
-	friend class ModelMoveFeedbackComponent;
 
 public:
 	ModelNode(SceneGraph* scene, CString name);
@@ -70,10 +69,12 @@ public:
 	}
 
 private:
+	class MoveFeedbackComponent;
+
 	ModelResourcePtr m_model; ///< The resource
 	DynamicArray<ModelPatchNode*> m_modelPatches;
 
-	void onMoveComponentUpdate(MoveComponent& move);
+	void onMoveComponentUpdate(const MoveComponent& move);
 };
 /// @}
 

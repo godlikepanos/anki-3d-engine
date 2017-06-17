@@ -57,11 +57,6 @@ public:
 		return m_uuid;
 	}
 
-	U32 getComponentsCount() const
-	{
-		return m_componentsCount;
-	}
-
 	Bool getMarkedForDeletion() const
 	{
 		return m_flags.get(Flag::MARKED_FOR_DELETION);
@@ -121,7 +116,7 @@ public:
 	{
 		Error err = ErrorCode::NONE;
 		auto it = m_components.getBegin();
-		auto end = it + m_componentsCount;
+		auto end = it + m_componentCount;
 		for(; !err && it != end; ++it)
 		{
 			err = func(*(*it));
@@ -136,7 +131,7 @@ public:
 	{
 		Error err = ErrorCode::NONE;
 		auto it = m_components.getBegin();
-		auto end = it + m_componentsCount;
+		auto end = it + m_componentCount;
 		for(; !err && it != end; ++it)
 		{
 			auto* comp = *it;
@@ -153,7 +148,7 @@ public:
 	template<typename Component>
 	Component* tryGetComponent()
 	{
-		U count = m_componentsCount;
+		U count = m_componentCount;
 		while(count-- != 0)
 		{
 			SceneComponent* comp = m_components[count];
@@ -169,7 +164,7 @@ public:
 	template<typename Component>
 	const Component* tryGetComponent() const
 	{
-		U count = m_componentsCount;
+		U count = m_componentCount;
 		while(count-- != 0)
 		{
 			const SceneComponent* comp = m_components[count];
@@ -199,6 +194,29 @@ public:
 		return *out;
 	}
 
+	/// Get the nth component.
+	template<typename Component>
+	Component& getComponentAt(U idx)
+	{
+		ANKI_ASSERT(idx < m_componentCount);
+		ANKI_ASSERT(m_components[idx]->getType() == Component::CLASS_TYPE);
+		return *static_cast<Component*>(m_components[idx]);
+	}
+
+	/// Get the nth component.
+	template<typename Component>
+	const Component& getComponentAt(U idx) const
+	{
+		ANKI_ASSERT(idx < m_componentCount);
+		ANKI_ASSERT(m_components[idx]->getType() == Component::CLASS_TYPE);
+		return *static_cast<const Component*>(m_components[idx]);
+	}
+
+	U getComponentCount() const
+	{
+		return m_componentCount;
+	}
+
 protected:
 	/// Create and append a component to the components container. The SceneNode will not take ownership.
 	template<typename TComponent, typename... TArgs>
@@ -206,14 +224,14 @@ protected:
 	{
 		TComponent* comp = getSceneAllocator().newInstance<TComponent>(std::forward<TArgs>(args)...);
 
-		if(m_components.getSize() <= m_componentsCount)
+		if(m_components.getSize() <= m_componentCount)
 		{
 			// Not enough room
 			const U extra = 2;
 			m_components.resize(getSceneAllocator(), max<PtrSize>(m_components.getSize() + extra, 1));
 		}
 
-		m_components[m_componentsCount++] = comp;
+		m_components[m_componentCount++] = comp;
 		return comp;
 	}
 
@@ -229,7 +247,7 @@ private:
 	SceneGraph* m_scene = nullptr;
 
 	DynamicArray<SceneComponent*> m_components;
-	U8 m_componentsCount = 0;
+	U8 m_componentCount = 0;
 
 	String m_name; ///< A unique name
 	BitMask<Flag> m_flags;

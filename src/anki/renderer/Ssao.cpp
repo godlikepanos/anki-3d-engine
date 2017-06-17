@@ -27,7 +27,7 @@ Error SsaoMain::init(const ConfigSet& config)
 	ShaderProgramResourceConstantValueInitList<6> consts(m_prog);
 	consts.add("NOISE_MAP_SIZE", U32(m_noiseTex->getWidth()))
 		.add("FB_SIZE", UVec2(m_ssao->m_width, m_ssao->m_height))
-		.add("RADIUS", 2.0f)
+		.add("RADIUS", 3.0f)
 		.add("BIAS", 0.0f)
 		.add("STRENGTH", 2.0f)
 		.add("HISTORY_FEEDBACK", 1.0f / 4.0f);
@@ -93,7 +93,7 @@ Error SsaoHBlur::init(const ConfigSet& config)
 	ANKI_CHECK(m_r->getResourceManager().loadResource("programs/DepthAwareBlur.ankiprog", m_prog));
 
 	ShaderProgramResourceMutationInitList<3> mutators(m_prog);
-	mutators.add("HORIZONTAL", 1).add("KERNEL_SIZE", 7).add("COLOR_COMPONENTS", 1);
+	mutators.add("HORIZONTAL", 1).add("KERNEL_SIZE", 9).add("COLOR_COMPONENTS", 1);
 	ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
 	consts.add("TEXTURE_SIZE", UVec2(m_ssao->m_width, m_ssao->m_height));
 
@@ -140,7 +140,7 @@ Error SsaoVBlur::init(const ConfigSet& config)
 	ANKI_CHECK(m_r->getResourceManager().loadResource("programs/DepthAwareBlur.ankiprog", m_prog));
 
 	ShaderProgramResourceMutationInitList<3> mutators(m_prog);
-	mutators.add("HORIZONTAL", 0).add("KERNEL_SIZE", 7).add("COLOR_COMPONENTS", 1);
+	mutators.add("HORIZONTAL", 0).add("KERNEL_SIZE", 9).add("COLOR_COMPONENTS", 1);
 	ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
 	consts.add("TEXTURE_SIZE", UVec2(m_ssao->m_width, m_ssao->m_height));
 

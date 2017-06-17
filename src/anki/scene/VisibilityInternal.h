@@ -111,7 +111,9 @@ public:
 	DynamicArray<Vec3> m_verts;
 	U32 m_vertCount;
 
-	SoftwareRasterizer m_r; // TODO This will never be destroyed
+	SoftwareRasterizer m_r;
+
+	Atomic<U32> m_rasterizedVertCount = {0}; ///< That will be used by the RasterizeTrianglesTask.
 
 	/// Thread hive task.
 	static void callback(void* ud, U32 threadId, ThreadHive& hive)
@@ -209,6 +211,8 @@ public:
 	WeakArray<VisibilityTestTask> m_tests;
 
 	WeakPtr<RenderQueue> m_results; ///< Where to store the results.
+
+	SoftwareRasterizer* m_swRast = nullptr; ///< For cleanup.
 
 	/// Thread hive task.
 	static void callback(void* ud, U32 threadId, ThreadHive& hive)

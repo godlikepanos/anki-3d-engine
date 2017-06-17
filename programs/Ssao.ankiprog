@@ -124,7 +124,7 @@ void main(void)
 	float projRadius = length(projSphereLimit2 - ndc);
 
 	// Find a random point around the current NDC. Make sure that the sides fall inside the screen.
-#if 1
+#if 0
 	vec2 startXY = -in_uv; // range [0,-1]
 	startXY += randFactors.xy; // for the left side it's [0,1] for the center [0,0], right [-1,0]
 	vec2 finalDiskPoint = ndc + startXY * projRadius;

@@ -150,6 +150,7 @@ void VisibilityContext::submitNewWork(FrustumComponent& frc, RenderQueue& rqueue
 	combine->m_frc = &frc;
 	combine->m_results = &rqueue;
 	combine->m_tests = tests;
+	combine->m_swRast = r;
 
 	ThreadHiveTask combineTask;
 	combineTask.m_callback = CombineResultsTask::callback;
@@ -202,16 +203,12 @@ void RasterizeTrianglesTask::rasterize()
 {
 	ANKI_TRACE_SCOPED_EVENT(SCENE_VISIBILITY_RASTERIZE);
 
-	PtrSize start, end;
-	ThreadPoolTask::choseStartEnd(m_taskIdx, m_taskCount, m_gatherTask->m_vertCount / 3, start, end);
+	const U totalVertCount = m_gatherTask->m_vertCount;
 
-	if(start != end)
+	U32 idx;
+	while((idx = m_gatherTask->m_rasterizedVertCount.fetchAdd(3)) < totalVertCount)
 	{
-		const Vec3* first = &m_gatherTask->m_verts[start * 3];
-		U count = (end - start) * 3;
-		ANKI_ASSERT(count <= m_gatherTask->m_vertCount);
-
-		m_gatherTask->m_r.draw(&first[0][0], count, sizeof(Vec3), false);
+		m_gatherTask->m_r.draw(&m_gatherTask->m_verts[idx][0], 3, sizeof(Vec3), false);
 	}
 }
 
@@ -524,6 +521,11 @@ void CombineResultsTask::combine()
 	std::sort(m_results->m_forwardShadingRenderables.getBegin(),
 		m_results->m_forwardShadingRenderables.getEnd(),
 		RevDistanceSortFunctor<RenderableQueueElement>());
+
+	if(m_swRast)
+	{
+		m_swRast->~SoftwareRasterizer();
+	}
 }
 
 template<typename T>

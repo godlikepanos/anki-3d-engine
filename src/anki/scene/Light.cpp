@@ -26,7 +26,7 @@ public:
 		updated = false;
 		Light& lnode = static_cast<Light&>(node);
 
-		MoveComponent& move = node.getComponent<MoveComponent>();
+		const MoveComponent& move = node.getComponentAt<MoveComponent>(0);
 		if(move.getTimestamp() == node.getGlobalTimestamp())
 		{
 			// Move updated
@@ -51,7 +51,7 @@ public:
 		updated = false;
 		Light& lnode = static_cast<Light&>(node);
 
-		LightComponent& light = node.getComponent<LightComponent>();
+		LightComponent& light = node.getComponentAt<LightComponent>(getIndex() - 1);
 		if(light.getTimestamp() == node.getGlobalTimestamp())
 		{
 			// Shape updated
@@ -112,7 +112,7 @@ void Light::frameUpdateCommon()
 	(void)err;
 }
 
-void Light::onMoveUpdateCommon(MoveComponent& move)
+void Light::onMoveUpdateCommon(const MoveComponent& move)
 {
 	// Update the spatial
 	SpatialComponent& sp = getComponent<SpatialComponent>();
@@ -154,7 +154,7 @@ Error Light::loadLensFlare(const CString& filename)
 	Error err = flareComp->init(filename);
 	if(err)
 	{
-		getSceneAllocator().deleteInstance(flareComp);
+		ANKI_ASSERT(!"TODO: Remove component");
 		return err;
 	}
 
@@ -176,7 +176,7 @@ Error PointLight::init()
 	return Light::init(LightComponentType::POINT, &m_sphereW);
 }
 
-void PointLight::onMoveUpdate(MoveComponent& move)
+void PointLight::onMoveUpdate(const MoveComponent& move)
 {
 	onMoveUpdateCommon(move);
 
@@ -268,7 +268,7 @@ Error SpotLight::init()
 	return ErrorCode::NONE;
 }
 
-void SpotLight::onMoveUpdate(MoveComponent& move)
+void SpotLight::onMoveUpdate(const MoveComponent& move)
 {
 	// Update the frustums
 	Error err = iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& fr) -> Error {

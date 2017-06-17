@@ -102,15 +102,15 @@ void ModelPatchNode::drawCallback(RenderQueueDrawContext& ctx, WeakArray<const v
 
 	// Uniforms
 	Array<Mat4, MAX_INSTANCES> trfs;
-	trfs[0] = Mat4(self.getParent()->getComponent<MoveComponent>().getWorldTransform());
+	trfs[0] = Mat4(self.getParent()->getComponentAt<MoveComponent>(0).getWorldTransform());
 	for(U i = 1; i < userData.getSize(); ++i)
 	{
 		const ModelPatchNode& self2 = *static_cast<const ModelPatchNode*>(userData[i]);
-		trfs[i] = Mat4(self2.getParent()->getComponent<MoveComponent>().getWorldTransform());
+		trfs[i] = Mat4(self2.getParent()->getComponentAt<MoveComponent>(0).getWorldTransform());
 	}
 
 	StagingGpuMemoryToken token;
-	self.getComponent<RenderComponent>().allocateAndSetupUniforms(
+	self.getComponentAt<RenderComponent>(1).allocateAndSetupUniforms(
 		ctx, WeakArray<const Mat4>(&trfs[0], userData.getSize()), *ctx.m_stagingGpuAllocator, token);
 	cmdb->bindUniformBuffer(0, 0, token.m_buffer, token.m_offset, token.m_range);
 
@@ -124,10 +124,10 @@ void ModelPatchNode::drawCallback(RenderQueueDrawContext& ctx, WeakArray<const v
 }
 
 /// Feedback component.
-class ModelMoveFeedbackComponent : public SceneComponent
+class ModelNode::MoveFeedbackComponent : public SceneComponent
 {
 public:
-	ModelMoveFeedbackComponent(SceneNode* node)
+	MoveFeedbackComponent(SceneNode* node)
 		: SceneComponent(SceneComponentType::NONE, node)
 	{
 	}
@@ -136,7 +136,7 @@ public:
 	{
 		updated = false;
 
-		MoveComponent& move = node.getComponent<MoveComponent>();
+		const MoveComponent& move = node.getComponentAt<MoveComponent>(0);
 		if(move.getTimestamp() == node.getGlobalTimestamp())
 		{
 			ModelNode& mnode = static_cast<ModelNode&>(node);
@@ -180,12 +180,12 @@ Error ModelNode::init(const CString& modelFname)
 	newComponent<MoveComponent>(this);
 
 	// Feedback component
-	newComponent<ModelMoveFeedbackComponent>(this);
+	newComponent<MoveFeedbackComponent>(this);
 
 	return ErrorCode::NONE;
 }
 
-void ModelNode::onMoveComponentUpdate(MoveComponent& move)
+void ModelNode::onMoveComponentUpdate(const MoveComponent& move)
 {
 	// Inform the children about the moves
 	for(ModelPatchNode* child : m_modelPatches)

@@ -31,14 +31,14 @@ public:
 
 protected:
 	/// Called when moved
-	void onMoveUpdateCommon(MoveComponent& move);
+	void onMoveUpdateCommon(const MoveComponent& move);
 
 	/// One of the frustums got updated
 	void onShapeUpdateCommon(LightComponent& light);
 
 	void frameUpdateCommon();
 
-	virtual void onMoveUpdate(MoveComponent& move) = 0;
+	virtual void onMoveUpdate(const MoveComponent& move) = 0;
 
 	virtual void onShapeUpdate(LightComponent& light) = 0;
 
@@ -69,7 +69,7 @@ private:
 	Sphere m_sphereW = Sphere(Vec4(0.0), 1.0);
 	DynamicArray<ShadowCombo> m_shadowData;
 
-	void onMoveUpdate(MoveComponent& move) override;
+	void onMoveUpdate(const MoveComponent& move) override;
 	void onShapeUpdate(LightComponent& light) override;
 };
 
@@ -86,7 +86,7 @@ public:
 private:
 	PerspectiveFrustum m_frustum;
 
-	void onMoveUpdate(MoveComponent& move) override;
+	void onMoveUpdate(const MoveComponent& move) override;
 	void onShapeUpdate(LightComponent& light) override;
 };
 /// @}
