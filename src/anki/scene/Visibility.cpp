@@ -379,6 +379,7 @@ void VisibilityTestTask::test(ThreadHive& hive)
 			{
 				PointLightQueueElement* el = m_result.m_pointLights.newElement(alloc);
 				lc->setupPointLightQueueElement(*el);
+				el->m_textureArrayIndex = MAX_U32;
 
 				if(lc->getShadowEnabled())
 				{
@@ -391,6 +392,9 @@ void VisibilityTestTask::test(ThreadHive& hive)
 					el->m_shadowRenderQueues[3] = &nextQueues[3];
 					el->m_shadowRenderQueues[4] = &nextQueues[4];
 					el->m_shadowRenderQueues[5] = &nextQueues[5];
+
+					U32* p = m_result.m_shadowPointLights.newElement(alloc);
+					*p = m_result.m_pointLights.m_elementCount - 1;
 				}
 				else
 				{
@@ -403,12 +407,16 @@ void VisibilityTestTask::test(ThreadHive& hive)
 			{
 				SpotLightQueueElement* el = m_result.m_spotLights.newElement(alloc);
 				lc->setupSpotLightQueueElement(*el);
+				el->m_textureArrayIndex = MAX_U32;
 
 				if(lc->getShadowEnabled())
 				{
 					RenderQueue* a = alloc.newInstance<RenderQueue>();
 					nextQueues = WeakArray<RenderQueue>(a, 1);
 					el->m_shadowRenderQueue = a;
+
+					U32* p = m_result.m_shadowSpotLights.newElement(alloc);
+					*p = m_result.m_spotLights.m_elementCount - 1;
 				}
 				else
 				{
@@ -491,27 +499,59 @@ void CombineResultsTask::combine()
 			max(m_results->m_shadowRenderablesLastUpdateTimestamp, m_tests[i].m_timestamp);
 	}
 
-#define ANKI_VIS_COMBINE(t_, member_)                                                       \
-	{                                                                                       \
-		Array<TRenderQueueElementStorage<t_>*, 64> subStorages;                             \
-		for(U i = 0; i < m_tests.getSize(); ++i)                                            \
-		{                                                                                   \
-			subStorages[i] = &m_tests[i].m_result.member_;                                  \
-		}                                                                                   \
-		combineQueueElements(alloc,                                                         \
-			WeakArray<TRenderQueueElementStorage<t_>*>(&subStorages[0], m_tests.getSize()), \
-			m_results->member_);                                                            \
+#define ANKI_VIS_COMBINE(t_, member_)                                                      \
+	{                                                                                      \
+		Array<TRenderQueueElementStorage<t_>, 64> subStorages;                             \
+		for(U i = 0; i < m_tests.getSize(); ++i)                                           \
+		{                                                                                  \
+			subStorages[i] = m_tests[i].m_result.member_;                                  \
+		}                                                                                  \
+		combineQueueElements<t_>(alloc,                                                    \
+			WeakArray<TRenderQueueElementStorage<t_>>(&subStorages[0], m_tests.getSize()), \
+			nullptr,                                                                       \
+			m_results->member_,                                                            \
+			nullptr);                                                                      \
+	}
+
+#define ANKI_VIS_COMBINE_AND_PTR(t_, member_, ptrMember_)                                      \
+	{                                                                                          \
+		Array<TRenderQueueElementStorage<t_>, 64> subStorages;                                 \
+		Array<TRenderQueueElementStorage<U32>, 64> ptrSubStorages;                             \
+		for(U i = 0; i < m_tests.getSize(); ++i)                                               \
+		{                                                                                      \
+			subStorages[i] = m_tests[i].m_result.member_;                                      \
+			ptrSubStorages[i] = m_tests[i].m_result.ptrMember_;                                \
+		}                                                                                      \
+		WeakArray<TRenderQueueElementStorage<U32>> arr(&ptrSubStorages[0], m_tests.getSize()); \
+		combineQueueElements<t_>(alloc,                                                        \
+			WeakArray<TRenderQueueElementStorage<t_>>(&subStorages[0], m_tests.getSize()),     \
+			&arr,                                                                              \
+			m_results->member_,                                                                \
+			&m_results->ptrMember_);                                                           \
 	}
 
 	ANKI_VIS_COMBINE(RenderableQueueElement, m_renderables);
 	ANKI_VIS_COMBINE(RenderableQueueElement, m_forwardShadingRenderables);
-	ANKI_VIS_COMBINE(PointLightQueueElement, m_pointLights);
-	ANKI_VIS_COMBINE(SpotLightQueueElement, m_spotLights);
+	ANKI_VIS_COMBINE_AND_PTR(PointLightQueueElement, m_pointLights, m_shadowPointLights);
+	ANKI_VIS_COMBINE_AND_PTR(SpotLightQueueElement, m_spotLights, m_shadowSpotLights);
 	ANKI_VIS_COMBINE(ReflectionProbeQueueElement, m_reflectionProbes);
 	ANKI_VIS_COMBINE(LensFlareQueueElement, m_lensFlares);
 	ANKI_VIS_COMBINE(DecalQueueElement, m_decals);
 
 #undef ANKI_VIS_COMBINE
+#undef ANKI_VIS_COMBINE_AND_PTR
+
+#if ANKI_EXTRA_CHECKS
+	for(PointLightQueueElement* light : m_results->m_shadowPointLights)
+	{
+		ANKI_ASSERT(light->hasShadow());
+	}
+
+	for(SpotLightQueueElement* light : m_results->m_shadowSpotLights)
+	{
+		ANKI_ASSERT(light->hasShadow());
+	}
+#endif
 
 	// Sort some of the arrays
 	std::sort(m_results->m_renderables.getBegin(),
@@ -529,49 +569,97 @@ void CombineResultsTask::combine()
 }
 
 template<typename T>
-void CombineResultsTask::combineQueueElements(
-	SceneFrameAllocator<U8>& alloc, WeakArray<TRenderQueueElementStorage<T>*> subStorages, WeakArray<T>& combined)
+void CombineResultsTask::combineQueueElements(SceneFrameAllocator<U8>& alloc,
+	WeakArray<TRenderQueueElementStorage<T>> subStorages,
+	WeakArray<TRenderQueueElementStorage<U32>>* ptrSubStorages,
+	WeakArray<T>& combined,
+	WeakArray<T*>* ptrCombined)
 {
-	U totalElCount = subStorages[0]->m_elementCount;
+	U totalElCount = subStorages[0].m_elementCount;
 	U biggestSubStorageIdx = 0;
 	for(U i = 1; i < subStorages.getSize(); ++i)
 	{
-		totalElCount += subStorages[i]->m_elementCount;
+		totalElCount += subStorages[i].m_elementCount;
 
-		if(subStorages[i]->m_elementStorage > subStorages[biggestSubStorageIdx]->m_elementStorage)
+		if(subStorages[i].m_elementStorage > subStorages[biggestSubStorageIdx].m_elementStorage)
 		{
 			biggestSubStorageIdx = i;
 		}
 	}
 
-	if(totalElCount > 0)
+	if(totalElCount == 0)
 	{
-		T* it;
-		if(totalElCount > subStorages[biggestSubStorageIdx]->m_elementStorage)
+		return;
+	}
+
+	// Count ptrSubStorage elements
+	T** ptrIt = nullptr;
+	if(ptrSubStorages != nullptr)
+	{
+		ANKI_ASSERT(ptrCombined);
+		U ptrTotalElCount = (*ptrSubStorages)[0].m_elementCount;
+
+		for(U i = 1; i < ptrSubStorages->getSize(); ++i)
 		{
-			// Can't reuse any storage, will allocate
-
-			it = alloc.newArray<T>(totalElCount);
-			biggestSubStorageIdx = MAX_U;
-
-			combined = WeakArray<T>(it, totalElCount);
-		}
-		else
-		{
-			// Will reuse existing storage
-
-			it = subStorages[biggestSubStorageIdx]->m_elements + subStorages[biggestSubStorageIdx]->m_elementCount;
-
-			combined = WeakArray<T>(subStorages[biggestSubStorageIdx]->m_elements, totalElCount);
+			ptrTotalElCount += (*ptrSubStorages)[i].m_elementCount;
 		}
 
-		for(U i = 0; i < subStorages.getSize(); ++i)
+		// Create the new storage
+		if(ptrTotalElCount > 0)
 		{
-			if(i != biggestSubStorageIdx && subStorages[i]->m_elementCount > 0)
+			ptrIt = alloc.newArray<T*>(ptrTotalElCount);
+			*ptrCombined = WeakArray<T*>(ptrIt, ptrTotalElCount);
+		}
+	}
+
+	T* it;
+	if(totalElCount > subStorages[biggestSubStorageIdx].m_elementStorage)
+	{
+		// Can't reuse any of the existing storage, will allocate a brand new one
+
+		it = alloc.newArray<T>(totalElCount);
+		biggestSubStorageIdx = MAX_U;
+
+		combined = WeakArray<T>(it, totalElCount);
+	}
+	else
+	{
+		// Will reuse existing storage
+
+		it = subStorages[biggestSubStorageIdx].m_elements + subStorages[biggestSubStorageIdx].m_elementCount;
+
+		combined = WeakArray<T>(subStorages[biggestSubStorageIdx].m_elements, totalElCount);
+	}
+
+	for(U i = 0; i < subStorages.getSize(); ++i)
+	{
+		if(subStorages[i].m_elementCount == 0)
+		{
+			continue;
+		}
+
+		// Copy the pointers
+		if(ptrIt)
+		{
+			T* base = (i != biggestSubStorageIdx) ? it : subStorages[biggestSubStorageIdx].m_elements;
+
+			for(U x = 0; x < (*ptrSubStorages)[i].m_elementCount; ++x)
 			{
-				memcpy(it, subStorages[i]->m_elements, sizeof(T) * subStorages[i]->m_elementCount);
-				it += subStorages[i]->m_elementCount;
+				ANKI_ASSERT((*ptrSubStorages)[i].m_elements[x] < subStorages[i].m_elementCount);
+
+				*ptrIt = base + (*ptrSubStorages)[i].m_elements[x];
+
+				++ptrIt;
 			}
+
+			ANKI_ASSERT(ptrIt <= ptrCombined->getEnd());
+		}
+
+		// Copy the elements
+		if(i != biggestSubStorageIdx)
+		{
+			memcpy(it, subStorages[i].m_elements, sizeof(T) * subStorages[i].m_elementCount);
+			it += subStorages[i].m_elementCount;
 		}
 	}
 }

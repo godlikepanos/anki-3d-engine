@@ -93,9 +93,6 @@ public:
 		/// [casterIdx][threadIdx][faceIdx]
 		DynamicArrayAuto<CommandBufferPtr> m_omniCommandBuffers;
 
-		DynamicArrayAuto<SpotLightQueueElement*> m_spots;
-		DynamicArrayAuto<PointLightQueueElement*> m_omnis;
-
 		ShadowMapping(const StackAllocator<U8>& alloc)
 			: m_spotFramebuffers(alloc)
 			, m_omniFramebuffers(alloc)
@@ -103,8 +100,6 @@ public:
 			, m_omniCacheIndices(alloc)
 			, m_spotCommandBuffers(alloc)
 			, m_omniCommandBuffers(alloc)
-			, m_spots(alloc)
-			, m_omnis(alloc)
 		{
 		}
 	} m_shadowMapping;

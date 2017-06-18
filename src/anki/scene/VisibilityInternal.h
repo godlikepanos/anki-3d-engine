@@ -52,8 +52,6 @@ public:
 	U32 m_elementCount = 0;
 	U32 m_elementStorage = 0;
 
-	Timestamp m_lastUpdateTimestamp;
-
 	T* newElement(SceneFrameAllocator<T> alloc)
 	{
 		if(ANKI_UNLIKELY(m_elementCount + 1 > m_elementStorage))
@@ -79,7 +77,9 @@ public:
 	TRenderQueueElementStorage<RenderableQueueElement> m_renderables; ///< Deferred shading or shadow renderables.
 	TRenderQueueElementStorage<RenderableQueueElement> m_forwardShadingRenderables;
 	TRenderQueueElementStorage<PointLightQueueElement> m_pointLights;
+	TRenderQueueElementStorage<U32> m_shadowPointLights;
 	TRenderQueueElementStorage<SpotLightQueueElement> m_spotLights;
+	TRenderQueueElementStorage<U32> m_shadowSpotLights;
 	TRenderQueueElementStorage<ReflectionProbeQueueElement> m_reflectionProbes;
 	TRenderQueueElementStorage<LensFlareQueueElement> m_lensFlares;
 	TRenderQueueElementStorage<DecalQueueElement> m_decals;
@@ -225,8 +225,11 @@ private:
 	void combine();
 
 	template<typename T>
-	void combineQueueElements(
-		SceneFrameAllocator<U8>& alloc, WeakArray<TRenderQueueElementStorage<T>*> subStorages, WeakArray<T>& combined);
+	static void combineQueueElements(SceneFrameAllocator<U8>& alloc,
+		WeakArray<TRenderQueueElementStorage<T>> subStorages,
+		WeakArray<TRenderQueueElementStorage<U32>>* ptrSubStorage,
+		WeakArray<T>& combined,
+		WeakArray<T*>* ptrCombined);
 };
 /// @}
 

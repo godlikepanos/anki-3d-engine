@@ -57,6 +57,11 @@ public:
 	Vec3 m_specularColor;
 	Array<RenderQueue*, 6> m_shadowRenderQueues;
 	U32 m_textureArrayIndex; ///< Renderer internal.
+
+	Bool hasShadow() const
+	{
+		return m_shadowRenderQueues[0] != nullptr;
+	}
 };
 
 static_assert(
@@ -75,6 +80,11 @@ public:
 	Vec3 m_specularColor;
 	RenderQueue* m_shadowRenderQueue;
 	U32 m_textureArrayIndex; ///< Renderer internal.
+
+	Bool hasShadow() const
+	{
+		return m_shadowRenderQueue != nullptr;
+	}
 };
 
 static_assert(std::is_trivially_destructible<SpotLightQueueElement>::value == true, "Should be trivially destructible");
@@ -134,7 +144,9 @@ public:
 	WeakArray<RenderableQueueElement> m_renderables; ///< Deferred shading or shadow renderables.
 	WeakArray<RenderableQueueElement> m_forwardShadingRenderables;
 	WeakArray<PointLightQueueElement> m_pointLights;
+	WeakArray<PointLightQueueElement*> m_shadowPointLights; ///< Points to elements in m_pointLights.
 	WeakArray<SpotLightQueueElement> m_spotLights;
+	WeakArray<SpotLightQueueElement*> m_shadowSpotLights; ///< Points to elements in m_spotLights.
 	WeakArray<ReflectionProbeQueueElement> m_reflectionProbes;
 	WeakArray<LensFlareQueueElement> m_lensFlares;
 	WeakArray<DecalQueueElement> m_decals;

@@ -115,7 +115,7 @@ void ShadowMapping::run(RenderingContext& ctx)
 	const U threadCount = m_r->getThreadPool().getThreadsCount();
 
 	// Spot lights
-	for(U i = 0; i < ctx.m_shadowMapping.m_spots.getSize(); ++i)
+	for(U i = 0; i < ctx.m_renderQueue->m_shadowSpotLights.getSize(); ++i)
 	{
 		cmdb->beginRenderPass(ctx.m_shadowMapping.m_spotFramebuffers[i]);
 		for(U j = 0; j < threadCount; ++j)
@@ -133,7 +133,7 @@ void ShadowMapping::run(RenderingContext& ctx)
 	}
 
 	// Omni lights
-	for(U i = 0; i < ctx.m_shadowMapping.m_omnis.getSize(); ++i)
+	for(U i = 0; i < ctx.m_renderQueue->m_shadowPointLights.getSize(); ++i)
 	{
 		for(U j = 0; j < 6; ++j)
 		{
@@ -235,22 +235,22 @@ void ShadowMapping::buildCommandBuffers(RenderingContext& ctx, U threadId, U thr
 {
 	ANKI_TRACE_SCOPED_EVENT(RENDER_SM);
 
-	for(U i = 0; i < ctx.m_shadowMapping.m_spots.getSize(); ++i)
+	for(U i = 0; i < ctx.m_renderQueue->m_shadowSpotLights.getSize(); ++i)
 	{
 		U idx = i * threadCount + threadId;
 
-		doSpotLight(*ctx.m_shadowMapping.m_spots[i],
+		doSpotLight(*ctx.m_renderQueue->m_shadowSpotLights[i],
 			ctx.m_shadowMapping.m_spotCommandBuffers[idx],
 			ctx.m_shadowMapping.m_spotFramebuffers[i],
 			threadId,
 			threadCount);
 	}
 
-	for(U i = 0; i < ctx.m_shadowMapping.m_omnis.getSize(); ++i)
+	for(U i = 0; i < ctx.m_renderQueue->m_shadowPointLights.getSize(); ++i)
 	{
 		U idx = i * threadCount * 6 + threadId * 6 + 0;
 
-		doOmniLight(*ctx.m_shadowMapping.m_omnis[i],
+		doOmniLight(*ctx.m_renderQueue->m_shadowPointLights[i],
 			&ctx.m_shadowMapping.m_omniCommandBuffers[idx],
 			ctx.m_shadowMapping.m_omniFramebuffers[i],
 			threadId,
@@ -348,104 +348,109 @@ void ShadowMapping::prepareBuildCommandBuffers(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(RENDER_SM);
 
-	// Gather the lights
+	// Do some checks
+	//
 	RenderQueue& rqueue = *ctx.m_renderQueue;
 
-	const U MAX = 64;
-	Array<SpotLightQueueElement*, MAX> spotCasters;
-	Array<PointLightQueueElement*, MAX> omniCasters;
-	U spotCastersCount = 0;
-	U omniCastersCount = 0;
-
+	if(rqueue.m_shadowPointLights.getSize() > m_omnis.getSize())
 	{
-		auto it = rqueue.m_pointLights.getBegin();
-		auto lend = rqueue.m_pointLights.getEnd();
-		for(; it != lend; ++it)
+		ANKI_R_LOGW("Too many point shadow casters");
+
+		rqueue.m_shadowPointLights =
+			WeakArray<PointLightQueueElement*>(rqueue.m_shadowPointLights.getBegin(), m_omnis.getSize());
+	}
+
+	if(rqueue.m_shadowSpotLights.getSize() > m_spots.getSize())
+	{
+		ANKI_R_LOGW("Too many spot shadow casters");
+
+		rqueue.m_shadowSpotLights =
+			WeakArray<SpotLightQueueElement*>(rqueue.m_shadowSpotLights.getBegin(), m_spots.getSize());
+	}
+
+	// Set the texture arr indices and skip some stale lights
+	//
+	U lightCount = rqueue.m_shadowSpotLights.getSize();
+	if(lightCount)
+	{
+		WeakArray<SpotLightQueueElement*> newArr(
+			getFrameAllocator().newArray<SpotLightQueueElement*>(lightCount), lightCount);
+		U newLightCount = 0;
+		for(U i = 0; i < lightCount; ++i)
 		{
-			const Bool castsShadow = it->m_shadowRenderQueues[0] != nullptr;
+			ShadowmapSpot* sm;
+			bestCandidate(*rqueue.m_shadowSpotLights[i], m_spots, sm);
 
-			if(castsShadow)
+			if(!skip(*rqueue.m_shadowSpotLights[i], *sm))
 			{
-				ShadowmapOmni* sm;
-				bestCandidate(*it, m_omnis, sm);
-
-				if(!skip(*it, *sm))
-				{
-					omniCasters[omniCastersCount++] = &(*it);
-				}
+				newArr[newLightCount++] = rqueue.m_shadowSpotLights[i];
 			}
 		}
+
+		rqueue.m_shadowSpotLights = WeakArray<SpotLightQueueElement*>(newArr.getBegin(), newLightCount);
 	}
 
+	lightCount = rqueue.m_shadowPointLights.getSize();
+	if(lightCount)
 	{
-		auto it = rqueue.m_spotLights.getBegin();
-		auto lend = rqueue.m_spotLights.getEnd();
-		for(; it != lend; ++it)
+		WeakArray<PointLightQueueElement*> newArr(
+			getFrameAllocator().newArray<PointLightQueueElement*>(lightCount), lightCount);
+		U newLightCount = 0;
+		for(U i = 0; i < lightCount; ++i)
 		{
-			const Bool castsShadow = it->m_shadowRenderQueue != nullptr;
+			ShadowmapOmni* sm;
+			bestCandidate(*rqueue.m_shadowPointLights[i], m_omnis, sm);
 
-			if(castsShadow)
+			if(!skip(*rqueue.m_shadowPointLights[i], *sm))
 			{
-				ShadowmapSpot* sm;
-				bestCandidate(*it, m_spots, sm);
-
-				if(!skip(*it, *sm))
-				{
-					spotCasters[spotCastersCount++] = &(*it);
-				}
+				newArr[newLightCount++] = rqueue.m_shadowPointLights[i];
 			}
 		}
+
+		rqueue.m_shadowPointLights = WeakArray<PointLightQueueElement*>(newArr.getBegin(), newLightCount);
 	}
 
-	if(omniCastersCount > m_omnis.getSize() || spotCastersCount > m_spots.getSize())
+	// Build the command buffers
+	//
+	lightCount = rqueue.m_shadowSpotLights.getSize();
+	if(lightCount > 0)
 	{
-		ANKI_R_LOGW("Too many shadow casters");
-		omniCastersCount = min<U>(omniCastersCount, m_omnis.getSize());
-		spotCastersCount = min<U>(spotCastersCount, m_spots.getSize());
-	}
+		ctx.m_shadowMapping.m_spotCommandBuffers.create(lightCount * m_r->getThreadPool().getThreadsCount());
 
-	if(spotCastersCount > 0)
-	{
-		ctx.m_shadowMapping.m_spots.create(spotCastersCount);
-		memcpy(&ctx.m_shadowMapping.m_spots[0], &spotCasters[0], sizeof(SpotLightQueueElement*) * spotCastersCount);
-
-		ctx.m_shadowMapping.m_spotCommandBuffers.create(spotCastersCount * m_r->getThreadPool().getThreadsCount());
-
-		ctx.m_shadowMapping.m_spotCacheIndices.create(spotCastersCount);
+		ctx.m_shadowMapping.m_spotCacheIndices.create(lightCount);
 #if ANKI_EXTRA_CHECKS
 		memset(&ctx.m_shadowMapping.m_spotCacheIndices[0],
 			0xFF,
-			sizeof(ctx.m_shadowMapping.m_spotCacheIndices[0]) * spotCastersCount);
+			sizeof(ctx.m_shadowMapping.m_spotCacheIndices[0]) * lightCount);
 #endif
 
-		ctx.m_shadowMapping.m_spotFramebuffers.create(spotCastersCount);
-		for(U i = 0; i < spotCastersCount; ++i)
+		ctx.m_shadowMapping.m_spotFramebuffers.create(lightCount);
+		for(U i = 0; i < lightCount; ++i)
 		{
-			const U idx = ctx.m_shadowMapping.m_spots[i]->m_textureArrayIndex;
+			const U idx = rqueue.m_shadowSpotLights[i]->m_textureArrayIndex;
+			ANKI_ASSERT(idx != MAX_U32);
 
 			ctx.m_shadowMapping.m_spotFramebuffers[i] = m_spots[idx].m_fb;
 			ctx.m_shadowMapping.m_spotCacheIndices[i] = idx;
 		}
 	}
 
-	if(omniCastersCount > 0)
+	lightCount = rqueue.m_shadowPointLights.getSize();
+	if(lightCount > 0)
 	{
-		ctx.m_shadowMapping.m_omnis.create(omniCastersCount);
-		memcpy(&ctx.m_shadowMapping.m_omnis[0], &omniCasters[0], sizeof(PointLightQueueElement*) * omniCastersCount);
+		ctx.m_shadowMapping.m_omniCommandBuffers.create(lightCount * 6 * m_r->getThreadPool().getThreadsCount());
 
-		ctx.m_shadowMapping.m_omniCommandBuffers.create(omniCastersCount * 6 * m_r->getThreadPool().getThreadsCount());
-
-		ctx.m_shadowMapping.m_omniCacheIndices.create(omniCastersCount);
+		ctx.m_shadowMapping.m_omniCacheIndices.create(lightCount);
 #if ANKI_EXTRA_CHECKS
 		memset(&ctx.m_shadowMapping.m_omniCacheIndices[0],
 			0xFF,
-			sizeof(ctx.m_shadowMapping.m_omniCacheIndices[0]) * omniCastersCount);
+			sizeof(ctx.m_shadowMapping.m_omniCacheIndices[0]) * lightCount);
 #endif
 
-		ctx.m_shadowMapping.m_omniFramebuffers.create(omniCastersCount);
-		for(U i = 0; i < omniCastersCount; ++i)
+		ctx.m_shadowMapping.m_omniFramebuffers.create(lightCount);
+		for(U i = 0; i < lightCount; ++i)
 		{
-			const U idx = ctx.m_shadowMapping.m_omnis[i]->m_textureArrayIndex;
+			const U idx = rqueue.m_shadowPointLights[i]->m_textureArrayIndex;
 
 			for(U j = 0; j < 6; ++j)
 			{
