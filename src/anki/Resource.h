@@ -12,7 +12,6 @@
 #include <anki/resource/TextureAtlas.h>
 #include <anki/resource/Material.h>
 #include <anki/resource/TextureResource.h>
-#include <anki/resource/ShaderResource.h>
 #include <anki/resource/GenericResource.h>
 #include <anki/resource/Mesh.h>
 #include <anki/resource/DummyRsrc.h>

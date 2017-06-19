@@ -9,7 +9,6 @@
 #include <anki/renderer/LightShading.h>
 #include <anki/renderer/FinalComposite.h>
 #include <anki/renderer/DebugDrawer.h>
-#include <anki/resource/ShaderResource.h>
 #include <anki/Scene.h>
 #include <anki/util/Logger.h>
 #include <anki/util/Enum.h>

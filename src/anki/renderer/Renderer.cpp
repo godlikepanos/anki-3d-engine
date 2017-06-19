@@ -24,8 +24,6 @@
 #include <anki/renderer/DepthDownscale.h>
 #include <anki/renderer/TemporalAA.h>
 
-#include <cstdarg> // For var args
-
 namespace anki
 {
 
@@ -105,9 +103,6 @@ Error Renderer::initInternal(const ConfigSet& config)
 
 	m_dummyBuff = getGrManager().newInstance<Buffer>(
 		getDummyBufferSize(), BufferUsageBit::UNIFORM_ALL | BufferUsageBit::STORAGE_ALL, BufferMapAccessBit::NONE);
-
-	// quad setup
-	ANKI_CHECK(m_resources->loadResource("shaders/Quad.vert.glsl", m_drawQuadVert));
 
 	// Init the stages. Careful with the order!!!!!!!!!!
 	m_indirect.reset(m_alloc.newInstance<Indirect>(this));
@@ -614,30 +609,6 @@ Error Renderer::buildCommandBuffers(RenderingContext& ctx)
 	ANKI_CHECK(threadPool.waitForAllThreadsToFinish());
 
 	return ErrorCode::NONE;
-}
-
-Error Renderer::createShader(CString fname, ShaderResourcePtr& shader, CString extra)
-{
-	return m_resources->loadResourceToCache(shader, fname, &extra[0], "r_");
-}
-
-Error Renderer::createShaderf(CString fname, ShaderResourcePtr& shader, CString fmt, ...)
-{
-	Array<char, 512> buffer;
-	va_list args;
-
-	va_start(args, fmt);
-	I len = std::vsnprintf(&buffer[0], sizeof(buffer), &fmt[0], args);
-	va_end(args);
-	ANKI_ASSERT(len > 0 && len < I(sizeof(buffer) - 1));
-	(void)len;
-
-	return m_resources->loadResourceToCache(shader, fname, &buffer[0], "r_");
-}
-
-void Renderer::createDrawQuadShaderProgram(ShaderPtr frag, ShaderProgramPtr& prog)
-{
-	prog = m_gr->newInstance<ShaderProgram>(m_drawQuadVert->getGrShader(), frag);
 }
 
 } // end namespace anki

@@ -10,7 +10,6 @@
 #include <anki/Math.h>
 #include <anki/Gr.h>
 #include <anki/resource/Forward.h>
-#include <anki/resource/ShaderResource.h>
 #include <anki/core/Timestamp.h>
 #include <anki/core/StagingGpuMemoryManager.h>
 #include <anki/util/ThreadPool.h>
@@ -252,11 +251,6 @@ anki_internal:
 		return m_tessellation;
 	}
 
-	const ShaderPtr& getDrawQuadVertexShader() const
-	{
-		return m_drawQuadVert->getGrShader();
-	}
-
 	/// My version of gluUnproject
 	/// @param windowCoords Window screen coords
 	/// @param modelViewMat The modelview matrix
@@ -283,9 +277,6 @@ anki_internal:
 		return distance / m_lodDistance;
 	}
 
-	/// Create a shader program that has as a vertex shader the m_drawQuadVert and the given fragment progam
-	void createDrawQuadShaderProgram(ShaderPtr frag, ShaderProgramPtr& prog);
-
 	/// Create the init info for a 2D texture that will be used as a render target.
 	ANKI_USE_RESULT TextureInitInfo create2DRenderTargetInitInfo(U32 w,
 		U32 h,
@@ -296,9 +287,6 @@ anki_internal:
 		CString name = {});
 
 	ANKI_USE_RESULT TexturePtr createAndClearRenderTarget(const TextureInitInfo& inf);
-
-	ANKI_USE_RESULT Error createShader(CString fname, ShaderResourcePtr& shader, CString extra);
-	ANKI_USE_RESULT Error createShaderf(CString fname, ShaderResourcePtr& shader, CString fmt, ...);
 
 	GrManager& getGrManager()
 	{
@@ -410,8 +398,6 @@ private:
 
 	F32 m_lodDistance; ///< Distance that used to calculate the LOD
 	Bool8 m_tessellation;
-
-	ShaderResourcePtr m_drawQuadVert;
 
 	RenderableDrawer m_sceneDrawer;
 

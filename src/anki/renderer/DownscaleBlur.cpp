@@ -22,16 +22,6 @@ Error DownscaleBlur::initSubpass(U idx, const UVec2& inputTexSize)
 	pass.m_width = inputTexSize.x() / 2;
 	pass.m_height = inputTexSize.y() / 2;
 
-	// frag shader
-	ANKI_CHECK(m_r->createShaderf("shaders/DownscaleBlur.frag.glsl",
-		pass.m_frag,
-		"#define TEXTURE_SIZE vec2(%f, %f)\n",
-		F32(inputTexSize.x()),
-		F32(inputTexSize.y())));
-
-	// prog
-	m_r->createDrawQuadShaderProgram(pass.m_frag->getGrShader(), pass.m_prog);
-
 	// RT
 	pass.m_rt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(pass.m_width,
 		pass.m_height,
@@ -77,6 +67,11 @@ Error DownscaleBlur::initInternal(const ConfigSet&)
 		size /= 2;
 	}
 
+	ANKI_CHECK(getResourceManager().loadResource("programs/DownscaleBlur.ankiprog", m_prog));
+	const ShaderProgramResourceVariant* variant;
+	m_prog->getOrCreateVariant(variant);
+	m_grProg = variant->getProgram();
+
 	return ErrorCode::NONE;
 }
 
@@ -114,7 +109,7 @@ void DownscaleBlur::run(RenderingContext& ctx)
 		}
 
 		cmdb->setViewport(0, 0, pass.m_width, pass.m_height);
-		cmdb->bindShaderProgram(pass.m_prog);
+		cmdb->bindShaderProgram(m_grProg);
 
 		cmdb->beginRenderPass(pass.m_fb);
 		m_r->drawQuad(cmdb);

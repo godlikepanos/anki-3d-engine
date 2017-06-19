@@ -5,7 +5,6 @@
 
 #include <anki/renderer/Drawer.h>
 #include <anki/renderer/RenderQueue.h>
-#include <anki/resource/ShaderResource.h>
 #include <anki/resource/Material.h>
 #include <anki/resource/TextureResource.h>
 #include <anki/renderer/Renderer.h>

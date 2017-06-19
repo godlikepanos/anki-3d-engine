@@ -128,10 +128,6 @@ public:
 	template<typename T>
 	ANKI_USE_RESULT Error loadResource(const CString& filename, ResourcePtr<T>& out);
 
-	/// Load a resource to cache.
-	template<typename T, typename... TArgs>
-	ANKI_USE_RESULT Error loadResourceToCache(ResourcePtr<T>& out, TArgs&&... args);
-
 anki_internal:
 	U32 getMaxTextureSize() const
 	{

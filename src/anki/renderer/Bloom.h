@@ -9,7 +9,6 @@
 #include <anki/renderer/ScreenSpaceLensFlare.h>
 #include <anki/Gr.h>
 #include <anki/resource/TextureResource.h>
-#include <anki/resource/ShaderResource.h>
 
 namespace anki
 {

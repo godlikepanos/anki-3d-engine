@@ -10,8 +10,8 @@
 #include <anki/Gr.h>
 #include <anki/collision/CollisionShape.h>
 #include <anki/physics/PhysicsDrawer.h>
-#include <anki/resource/ShaderResource.h>
 #include <anki/util/Array.h>
+#include <anki/resource/ShaderProgramResource.h>
 
 namespace anki
 {
@@ -86,9 +86,8 @@ private:
 	static const U MAX_VERTS_PER_FRAME = 1024 * 1024;
 
 	Renderer* m_r;
-	ShaderResourcePtr m_frag;
-	ShaderResourcePtr m_vert;
-	ShaderProgramPtr m_prog;
+	ShaderProgramResourcePtr m_prog;
+	ShaderProgramPtr m_grProg;
 	Array<BufferPtr, MAX_FRAMES_IN_FLIGHT> m_vertBuff;
 
 	CommandBufferPtr m_cmdb;

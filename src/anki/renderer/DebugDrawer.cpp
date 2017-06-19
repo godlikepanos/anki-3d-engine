@@ -5,7 +5,6 @@
 
 #include <anki/renderer/DebugDrawer.h>
 #include <anki/renderer/Renderer.h>
-#include <anki/resource/ShaderResource.h>
 #include <anki/resource/TextureResource.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/FinalComposite.h>
@@ -32,9 +31,10 @@ Error DebugDrawer::init(Renderer* r)
 	GrManager& gr = r->getGrManager();
 
 	// Create the prog and shaders
-	ANKI_CHECK(r->getResourceManager().loadResource("shaders/Dbg.vert.glsl", m_vert));
-	ANKI_CHECK(r->getResourceManager().loadResource("shaders/Dbg.frag.glsl", m_frag));
-	m_prog = gr.newInstance<ShaderProgram>(m_vert->getGrShader(), m_frag->getGrShader());
+	ANKI_CHECK(r->getResourceManager().loadResource("programs/Dbg.ankiprog", m_prog));
+	const ShaderProgramResourceVariant* variant;
+	m_prog->getOrCreateVariant(variant);
+	m_grProg = variant->getProgram();
 
 	// Create the vert buffs
 	for(BufferPtr& v : m_vertBuff)
@@ -62,7 +62,7 @@ void DebugDrawer::prepareFrame(CommandBufferPtr& jobs)
 	m_cmdb->setVertexAttribute(0, 0, PixelFormat(ComponentFormat::R32G32B32A32, TransformFormat::FLOAT), 0);
 	m_cmdb->setVertexAttribute(1, 0, PixelFormat(ComponentFormat::R32G32B32A32, TransformFormat::FLOAT), sizeof(Vec4));
 
-	m_cmdb->bindShaderProgram(m_prog);
+	m_cmdb->bindShaderProgram(m_grProg);
 
 	m_frameVertCount = 0;
 	m_crntDrawVertCount = 0;

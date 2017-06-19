@@ -49,12 +49,13 @@ private:
 	class Subpass
 	{
 	public:
-		ShaderResourcePtr m_frag;
-		ShaderProgramPtr m_prog;
 		TexturePtr m_rt;
 		FramebufferPtr m_fb;
 		U32 m_width, m_height;
 	};
+
+	ShaderProgramResourcePtr m_prog;
+	ShaderProgramPtr m_grProg;
 
 	DynamicArray<Subpass> m_passes;
 

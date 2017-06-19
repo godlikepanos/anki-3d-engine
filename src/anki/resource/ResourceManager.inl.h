@@ -65,19 +65,4 @@ Error ResourceManager::loadResource(const CString& filename, ResourcePtr<T>& out
 	return err;
 }
 
-template<typename T, typename... TArgs>
-Error ResourceManager::loadResourceToCache(ResourcePtr<T>& out, TArgs&&... args)
-{
-	StringAuto fname(m_tmpAlloc);
-
-	Error err = T::createToCache(args..., *this, fname);
-
-	if(!err)
-	{
-		err = loadResource(fname.toCString(), out);
-	}
-
-	return err;
-}
-
 } // end namespace anki

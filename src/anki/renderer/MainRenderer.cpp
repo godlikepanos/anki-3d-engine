@@ -69,8 +69,10 @@ Error MainRenderer::create(ThreadPool* threadpool,
 	// Init other
 	if(!m_rDrawToDefaultFb)
 	{
-		ANKI_CHECK(m_r->getResourceManager().loadResource("shaders/Final.frag.glsl", m_blitFrag));
-		m_r->createDrawQuadShaderProgram(m_blitFrag->getGrShader(), m_blitProg);
+		ANKI_CHECK(resources->loadResource("programs/Blit.ankiprog", m_blitProg));
+		const ShaderProgramResourceVariant* variant;
+		m_blitProg->getOrCreateVariant(variant);
+		m_blitGrProg = variant->getProgram();
 
 		ANKI_R_LOGI("The main renderer will have to blit the offscreen renderer's result");
 	}
@@ -115,7 +117,7 @@ Error MainRenderer::render(RenderQueue& rqueue)
 		cmdb->beginRenderPass(m_defaultFb);
 		cmdb->setViewport(0, 0, m_width, m_height);
 
-		cmdb->bindShaderProgram(m_blitProg);
+		cmdb->bindShaderProgram(m_blitGrProg);
 		cmdb->bindTexture(0, 0, m_r->getFinalComposite().getRt());
 
 		m_r->drawQuad(cmdb);

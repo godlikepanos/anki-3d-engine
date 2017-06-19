@@ -11,7 +11,6 @@
 #include <anki/resource/Model.h>
 #include <anki/resource/Script.h>
 #include <anki/resource/DummyRsrc.h>
-#include <anki/resource/ShaderResource.h>
 #include <anki/resource/ParticleEmitterResource.h>
 #include <anki/resource/TextureResource.h>
 #include <anki/resource/GenericResource.h>
