@@ -8,7 +8,7 @@ http://www.anki3d.org/LICENSE
 	<shaders>
 		<shader type="vert">
 			<source><![CDATA[
-#include "shaders/Quad.vert.glsl"
+#include "shaders/QuadVert.glsl"
 			]]></source>
 		</shader>
 

@@ -14,7 +14,7 @@ http://john-chapman-graphics.blogspot.no/2013/02/pseudo-lens-flare.html
 	<shaders>
 		<shader type="vert">
 			<source><![CDATA[
-#include "shaders/Quad.vert.glsl"
+#include "shaders/QuadVert.glsl"
 			]]></source>
 		</shader>
 
