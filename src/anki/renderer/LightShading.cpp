@@ -69,7 +69,7 @@ Error LightShading::init(const ConfigSet& config)
 
 Error LightShading::initInternal(const ConfigSet& config)
 {
-	m_maxLightIds = config.getNumber("is.maxLightsPerCluster");
+	m_maxLightIds = config.getNumber("r.maxLightsPerCluster");
 
 	if(m_maxLightIds == 0)
 	{
@@ -77,9 +77,9 @@ Error LightShading::initInternal(const ConfigSet& config)
 		return ErrorCode::USER_DATA;
 	}
 
-	m_clusterCounts[0] = config.getNumber("clusterSizeX");
-	m_clusterCounts[1] = config.getNumber("clusterSizeY");
-	m_clusterCounts[2] = config.getNumber("clusterSizeZ");
+	m_clusterCounts[0] = config.getNumber("r.clusterSizeX");
+	m_clusterCounts[1] = config.getNumber("r.clusterSizeY");
+	m_clusterCounts[2] = config.getNumber("r.clusterSizeZ");
 	m_clusterCount = m_clusterCounts[0] * m_clusterCounts[1] * m_clusterCounts[2];
 
 	m_maxLightIds *= m_clusterCount;

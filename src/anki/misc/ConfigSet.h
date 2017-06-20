@@ -51,8 +51,8 @@ public:
 	ANKI_USE_RESULT Error setFromCommandLineArguments(U cmdLineArgsCount, char* cmdLineArgs[]);
 
 protected:
-	void newOption(const CString& name, const CString& value);
-	void newOption(const CString& name, F64 value);
+	void newOption(const CString& name, const CString& value, const CString& helpMsg = "");
+	void newOption(const CString& name, F64 value, const CString& helpMsg = "");
 
 private:
 	class Option : public NonCopyable
@@ -60,6 +60,7 @@ private:
 	public:
 		String m_name;
 		String m_strVal;
+		String m_helpMsg;
 		F64 m_fVal = 0.0;
 		U8 m_type = 0; ///< 0: string, 1: float
 
@@ -68,6 +69,7 @@ private:
 		Option(Option&& b)
 			: m_name(std::move(b.m_name))
 			, m_strVal(std::move(b.m_strVal))
+			, m_helpMsg(std::move(b.m_helpMsg))
 			, m_fVal(b.m_fVal)
 			, m_type(b.m_type)
 		{

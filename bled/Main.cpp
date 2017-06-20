@@ -221,41 +221,6 @@ Error init(int argc, char* argv[])
 
 	// Config
 	Config config;
-	config.set("dbg.enabled", false);
-	config.set("sm.bilinearEnabled", true);
-	config.set("is.groundLightEnabled", false);
-	config.set("sm.enabled", true);
-	config.set("sm.maxLights", 16);
-	config.set("sm.poissonEnabled", false);
-	config.set("sm.resolution", 512);
-	config.set("lf.maxFlares", 32);
-	config.set("pps.enabled", true);
-	config.set("bloom.enabled", true);
-	config.set("bloom.renderingQuality", 0.5);
-	config.set("bloom.blurringDist", 1.0);
-	config.set("bloom.blurringIterationsCount", 1);
-	config.set("bloom.threshold", 2.0);
-	config.set("bloom.scale", 2.0);
-	config.set("bloom.samples", 17);
-	config.set("ssao.blurringIterationsCount", 1);
-	config.set("ssao.enabled", true);
-	config.set("ssao.renderingQuality", 0.25);
-	config.set("sslf.enabled", true);
-	config.set("pps.sharpen", false);
-	config.set("renderingQuality", 1.0);
-	config.set("width", 1920);
-	config.set("height", 1088);
-	config.set("lodDistance", 20.0);
-	config.set("samples", 1);
-	config.set("tessellation", true);
-	// config.set("maxTextureSize", 256);
-	config.set("ir.enabled", true);
-	// config.set("ir.clusterSizeZ", 32);
-	config.set("sslr.enabled", false);
-	config.set("ir.rendererSize", 64);
-	config.set("fullscreenDesktopResolution", true);
-	// config.set("clusterSizeZ", 16);
-	config.set("debugContext", false);
 	if(getenv("ANKI_DATA_PATH"))
 	{
 		config.set("dataPaths", getenv("ANKI_DATA_PATH"));

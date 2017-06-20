@@ -291,8 +291,8 @@ static StagingGpuMemoryManager* stagingMem = nullptr;
 	Config cfg;                                                                \
 	cfg.set("width", WIDTH);                                                   \
 	cfg.set("height", HEIGHT);                                                 \
-	cfg.set("debugContext", true);                                             \
-	cfg.set("vsync", false);                                                   \
+	cfg.set("window.debugContext", true);                                      \
+	cfg.set("window.vsync", false);                                            \
 	win = createWindow(cfg);                                                   \
 	gr = createGrManager(cfg, win);                                            \
 	ANKI_TEST_EXPECT_NO_ERR(stagingMem->init(gr, Config()));                   \

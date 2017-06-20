@@ -104,7 +104,8 @@ void GBuffer::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCou
 	ANKI_TRACE_SCOPED_EVENT(RENDER_MS);
 
 	// Get some stuff
-	const U problemSize = ctx.m_renderQueue->m_renderables.getSize();
+	const PtrSize earlyZCount = ctx.m_renderQueue->m_earlyZRenderables.getSize();
+	const U problemSize = ctx.m_renderQueue->m_renderables.getSize() + earlyZCount;
 	PtrSize start, end;
 	ThreadPoolTask::choseStartEnd(threadId, threadCount, problemSize, start, end);
 
@@ -131,13 +132,50 @@ void GBuffer::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCou
 		// Set some state, leave the rest to default
 		cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 
-		// Start drawing
-		m_r->getSceneDrawer().drawRange(Pass::GB_FS,
-			ctx.m_renderQueue->m_viewMatrix,
-			ctx.m_viewProjMatJitter,
-			cmdb,
-			ctx.m_renderQueue->m_renderables.getBegin() + start,
-			ctx.m_renderQueue->m_renderables.getBegin() + end);
+		const I32 earlyZStart = max(I32(start), 0);
+		const I32 earlyZEnd = min(I32(end), I32(earlyZCount));
+		const I32 colorStart = max(I32(start) - I32(earlyZCount), 0);
+		const I32 colorEnd = I32(end) - I32(earlyZCount);
+
+		// First do early Z (if needed)
+		if(earlyZStart < earlyZEnd)
+		{
+			for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
+			{
+				cmdb->setColorChannelWriteMask(i, ColorBit::NONE);
+			}
+
+			ANKI_ASSERT(earlyZStart < earlyZEnd && earlyZEnd <= I32(earlyZCount));
+			m_r->getSceneDrawer().drawRange(Pass::SM,
+				ctx.m_renderQueue->m_viewMatrix,
+				ctx.m_viewProjMatJitter,
+				cmdb,
+				ctx.m_renderQueue->m_earlyZRenderables.getBegin() + earlyZStart,
+				ctx.m_renderQueue->m_earlyZRenderables.getBegin() + earlyZEnd);
+
+			// Restore state for the color write
+			if(colorStart < colorEnd)
+			{
+				for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
+				{
+					cmdb->setColorChannelWriteMask(i, ColorBit::ALL);
+				}
+			}
+		}
+
+		// Do the color writes
+		if(colorStart < colorEnd)
+		{
+			cmdb->setDepthCompareOperation(CompareOperation::LESS_EQUAL);
+
+			ANKI_ASSERT(colorStart < colorEnd && colorEnd <= I32(ctx.m_renderQueue->m_renderables.getSize()));
+			m_r->getSceneDrawer().drawRange(Pass::GB_FS,
+				ctx.m_renderQueue->m_viewMatrix,
+				ctx.m_viewProjMatJitter,
+				cmdb,
+				ctx.m_renderQueue->m_renderables.getBegin() + colorStart,
+				ctx.m_renderQueue->m_renderables.getBegin() + colorEnd);
+		}
 	}
 }
 

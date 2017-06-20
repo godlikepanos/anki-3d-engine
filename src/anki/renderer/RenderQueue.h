@@ -24,6 +24,7 @@ public:
 	Mat4 m_viewProjectionMatrix;
 };
 
+/// Context that contains variables for drawing and will be passed to RenderableQueueElementDrawCallback.
 class RenderQueueDrawContext final : public RenderingMatrices
 {
 public:
@@ -32,9 +33,10 @@ public:
 	StagingGpuMemoryManager* m_stagingGpuAllocator ANKI_DBG_NULLIFY;
 };
 
-/// Draw callback.
+/// Draw callback for the RenderableQueueElement.
 using RenderableQueueElementDrawCallback = void (*)(RenderQueueDrawContext& ctx, WeakArray<const void*> userData);
 
+/// Render queue element that contains info on items that populate the G-buffer or the forward shading buffer etc.
 class RenderableQueueElement final
 {
 public:
@@ -47,6 +49,7 @@ public:
 static_assert(
 	std::is_trivially_destructible<RenderableQueueElement>::value == true, "Should be trivially destructible");
 
+/// Point light render queue element.
 class PointLightQueueElement final
 {
 public:
@@ -67,6 +70,7 @@ public:
 static_assert(
 	std::is_trivially_destructible<PointLightQueueElement>::value == true, "Should be trivially destructible");
 
+/// Spot light render queue element.
 class SpotLightQueueElement final
 {
 public:
@@ -89,11 +93,12 @@ public:
 
 static_assert(std::is_trivially_destructible<SpotLightQueueElement>::value == true, "Should be trivially destructible");
 
-/// Normally the visibility tests don't perform tests on the reflection probes because probes dont's change that often.
+/// Normally the visibility tests don't perform tests on the reflection probes because probes dont change that often.
 /// This callback will be used by the renderer to inform a reflection probe that on the next frame it will be rendererd.
 /// In that case the probe should fill the render queues.
 using ReflectionProbeQueueElementFeedbackCallback = void (*)(Bool fillRenderQueuesOnNextFrame, void* userData);
 
+/// Reflection probe render queue element.
 class ReflectionProbeQueueElement final
 {
 public:
@@ -109,6 +114,7 @@ public:
 static_assert(
 	std::is_trivially_destructible<ReflectionProbeQueueElement>::value == true, "Should be trivially destructible");
 
+/// Lens flare render queue element.
 class LensFlareQueueElement final
 {
 public:
@@ -120,6 +126,7 @@ public:
 
 static_assert(std::is_trivially_destructible<LensFlareQueueElement>::value == true, "Should be trivially destructible");
 
+/// Decal render queue element.
 class DecalQueueElement final
 {
 public:
@@ -137,11 +144,12 @@ public:
 
 static_assert(std::is_trivially_destructible<DecalQueueElement>::value == true, "Should be trivially destructible");
 
-/// The render queue.
+/// The render queue. This is what the renderer is fed to render.
 class RenderQueue : public RenderingMatrices
 {
 public:
 	WeakArray<RenderableQueueElement> m_renderables; ///< Deferred shading or shadow renderables.
+	WeakArray<RenderableQueueElement> m_earlyZRenderables; ///< Some renderables that will be used for Early Z pass.
 	WeakArray<RenderableQueueElement> m_forwardShadingRenderables;
 	WeakArray<PointLightQueueElement> m_pointLights;
 	WeakArray<PointLightQueueElement*> m_shadowPointLights; ///< Points to elements in m_pointLights.
@@ -157,6 +165,8 @@ public:
 	F32 m_cameraNear;
 	F32 m_cameraFar;
 };
+
+static_assert(std::is_trivially_destructible<RenderQueue>::value == true, "Should be trivially destructible");
 /// @}
 
 } // end namespace anki

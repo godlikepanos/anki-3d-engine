@@ -78,7 +78,8 @@ Error Camera::init(Frustum* frustum)
 		| FrustumComponentVisibilityTestFlag::REFLECTION_PROBES
 		| FrustumComponentVisibilityTestFlag::REFLECTION_PROXIES
 		| FrustumComponentVisibilityTestFlag::OCCLUDERS
-		| FrustumComponentVisibilityTestFlag::DECALS);
+		| FrustumComponentVisibilityTestFlag::DECALS
+		| FrustumComponentVisibilityTestFlag::EARLY_Z);
 
 	// Feedback component #2
 	newComponent<CameraFrustumFeedbackComponent>(this);

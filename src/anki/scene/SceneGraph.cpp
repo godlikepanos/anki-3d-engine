@@ -86,11 +86,13 @@ Error SceneGraph::init(AllocAlignedCallback allocCb,
 	m_alloc = SceneAllocator<U8>(allocCb, allocCbData, 1024 * 10, 1.0, 0);
 	m_frameAlloc = SceneFrameAllocator<U8>(allocCb, allocCbData, 1 * 1024 * 1024);
 
+	m_earlyZDist = config.getNumber("scene.earlyZDistance");
+
 	ANKI_CHECK(m_events.create(this));
 
 	m_sectors = m_alloc.newInstance<SectorGroup>(this);
 
-	m_maxReflectionProxyDistance = config.getNumber("imageReflectionMaxDistance");
+	m_maxReflectionProxyDistance = config.getNumber("scene.imageReflectionMaxDistance");
 
 	// Init the default main camera
 	ANKI_CHECK(newSceneNode<PerspectiveCamera>("mainCamera", m_defaultMainCam));

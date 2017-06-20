@@ -79,7 +79,9 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_height = config.getNumber("height");
 	ANKI_R_LOGI("Initializing offscreen renderer. Size %ux%u", m_width, m_height);
 
-	m_lodDistance = config.getNumber("lodDistance");
+	ANKI_ASSERT(m_lodDistances.getSize() == 2);
+	m_lodDistances[0] = config.getNumber("r.lodDistance0");
+	m_lodDistances[1] = config.getNumber("r.lodDistance1");
 	m_frameCount = 0;
 
 	m_tessellation = config.getNumber("tessellation");
@@ -497,7 +499,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf)
 
 void Renderer::buildCommandBuffersInternal(RenderingContext& ctx, U32 threadId, PtrSize threadCount)
 {
-	// MS
+	// G-Buffer pass
 	//
 	m_gbuffer->buildCommandBuffers(ctx, threadId, threadCount);
 
@@ -566,10 +568,12 @@ Error Renderer::buildCommandBuffers(RenderingContext& ctx)
 	// Find the last jobs for MS and FS
 	U32 lastMsJob = MAX_U32;
 	U32 lastFsJob = MAX_U32;
-	U threadCount = threadPool.getThreadsCount();
+	const U threadCount = threadPool.getThreadsCount();
 	for(U i = threadCount - 1; i != 0; --i)
 	{
-		if(threadWillDoWork(ctx.m_renderQueue->m_renderables.getSize(), i, threadCount) && lastMsJob == MAX_U32)
+		const U gbuffProblemSize =
+			ctx.m_renderQueue->m_renderables.getSize() + ctx.m_renderQueue->m_earlyZRenderables.getSize();
+		if(threadWillDoWork(gbuffProblemSize, i, threadCount) && lastMsJob == MAX_U32)
 		{
 			lastMsJob = i;
 		}

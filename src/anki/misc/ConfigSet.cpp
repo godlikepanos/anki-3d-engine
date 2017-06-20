@@ -22,6 +22,7 @@ ConfigSet::~ConfigSet()
 	{
 		o.m_name.destroy(m_alloc);
 		o.m_strVal.destroy(m_alloc);
+		o.m_helpMsg.destroy(m_alloc);
 	}
 
 	m_options.destroy(m_alloc);
@@ -76,7 +77,7 @@ const ConfigSet::Option* ConfigSet::tryFind(const CString& name) const
 	return nullptr;
 }
 
-void ConfigSet::newOption(const CString& name, const CString& value)
+void ConfigSet::newOption(const CString& name, const CString& value, const CString& helpMsg)
 {
 	ANKI_ASSERT(!tryFind(name));
 
@@ -84,11 +85,15 @@ void ConfigSet::newOption(const CString& name, const CString& value)
 	o.m_name.create(m_alloc, name);
 	o.m_strVal.create(m_alloc, value);
 	o.m_type = 0;
+	if(!helpMsg.isEmpty())
+	{
+		o.m_helpMsg.create(m_alloc, helpMsg);
+	}
 
 	m_options.emplaceBack(m_alloc, std::move(o));
 }
 
-void ConfigSet::newOption(const CString& name, F64 value)
+void ConfigSet::newOption(const CString& name, F64 value, const CString& helpMsg)
 {
 	ANKI_ASSERT(!tryFind(name));
 
@@ -96,6 +101,10 @@ void ConfigSet::newOption(const CString& name, F64 value)
 	o.m_name.create(m_alloc, name);
 	o.m_fVal = value;
 	o.m_type = 1;
+	if(!helpMsg.isEmpty())
+	{
+		o.m_helpMsg.create(m_alloc, helpMsg);
+	}
 
 	m_options.emplaceBack(m_alloc, std::move(o));
 }
@@ -191,10 +200,14 @@ Error ConfigSet::saveToFile(CString filename) const
 
 	for(const Option& option : m_options)
 	{
+		if(!option.m_helpMsg.isEmpty())
+		{
+			ANKI_CHECK(file.writeText("\t<!-- %s -->\n", &option.m_helpMsg[0]));
+		}
+
 		if(option.m_type == 1)
 		{
-			// Some of the options are integers so try not to make them appear
-			// as floats in the file
+			// Some of the options are integers so try not to make them appear as floats in the file
 			if(option.m_fVal == round(option.m_fVal) && option.m_fVal >= 0.0)
 			{
 				ANKI_CHECK(file.writeText("\t<%s>%u</%s>\n", &option.m_name[0], U(option.m_fVal), &option.m_name[0]));
@@ -206,7 +219,8 @@ Error ConfigSet::saveToFile(CString filename) const
 		}
 		else
 		{
-			ANKI_CHECK(file.writeText("\t<%s>%s</%s>\n", &option.m_name[0], &option.m_strVal[0], &option.m_name[0]));
+			ANKI_CHECK(file.writeText(
+				"\t<%s><![CDATA[%s]]></%s>\n", &option.m_name[0], &option.m_strVal[0], &option.m_name[0]));
 		}
 	}
 

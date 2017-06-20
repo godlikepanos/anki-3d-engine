@@ -54,7 +54,7 @@ Error MainRenderer::create(ThreadPool* threadpool,
 
 	// Init renderer and manipulate the width/height
 	ConfigSet config2 = config;
-	m_renderingQuality = config.getNumber("renderingQuality");
+	m_renderingQuality = config.getNumber("r.renderingQuality");
 	UVec2 size(m_renderingQuality * F32(m_width), m_renderingQuality * F32(m_height));
 
 	config2.set("width", size.x());

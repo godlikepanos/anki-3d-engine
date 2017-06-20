@@ -204,7 +204,7 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	nwinit.m_height = config.getNumber("height");
 	nwinit.m_depthBits = 0;
 	nwinit.m_stencilBits = 0;
-	nwinit.m_fullscreenDesktopRez = config.getNumber("fullscreenDesktopResolution");
+	nwinit.m_fullscreenDesktopRez = config.getNumber("window.fullscreenDesktopResolution");
 	m_window = m_heapAlloc.newInstance<NativeWindow>();
 
 	ANKI_CHECK(m_window->init(nwinit, m_heapAlloc));

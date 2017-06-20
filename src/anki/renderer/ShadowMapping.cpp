@@ -37,9 +37,9 @@ Error ShadowMapping::init(const ConfigSet& config)
 
 Error ShadowMapping::initInternal(const ConfigSet& config)
 {
-	m_poissonEnabled = config.getNumber("sm.poissonEnabled");
-	m_bilinearEnabled = config.getNumber("sm.bilinearEnabled");
-	m_resolution = config.getNumber("sm.resolution");
+	m_poissonEnabled = config.getNumber("r.shadowMapping.poissonEnabled");
+	m_bilinearEnabled = config.getNumber("r.shadowMapping.bilinearEnabled");
+	m_resolution = config.getNumber("r.shadowMapping.resolution");
 
 	//
 	// Init the shadowmaps
@@ -53,7 +53,7 @@ Error ShadowMapping::initInternal(const ConfigSet& config)
 	sminit.m_type = TextureType::_2D_ARRAY;
 	sminit.m_width = m_resolution;
 	sminit.m_height = m_resolution;
-	sminit.m_layerCount = config.getNumber("sm.maxLights");
+	sminit.m_layerCount = config.getNumber("r.shadowMapping.maxLights");
 	sminit.m_depth = 1;
 	sminit.m_format = DEPTH_RT_PIXEL_FORMAT;
 	sminit.m_mipmapsCount = 1;
@@ -66,7 +66,7 @@ Error ShadowMapping::initInternal(const ConfigSet& config)
 	m_omniTexArray = m_r->createAndClearRenderTarget(sminit);
 
 	// Init 2D layers
-	m_spots.create(getAllocator(), config.getNumber("sm.maxLights"));
+	m_spots.create(getAllocator(), config.getNumber("r.shadowMapping.maxLights"));
 
 	FramebufferInitInfo fbInit("shadows");
 	fbInit.m_depthStencilAttachment.m_texture = m_spotTexArray;
@@ -85,7 +85,7 @@ Error ShadowMapping::initInternal(const ConfigSet& config)
 	}
 
 	// Init cube layers
-	m_omnis.create(getAllocator(), config.getNumber("sm.maxLights"));
+	m_omnis.create(getAllocator(), config.getNumber("r.shadowMapping.maxLights"));
 
 	fbInit.m_depthStencilAttachment.m_texture = m_omniTexArray;
 

@@ -24,8 +24,8 @@ Error BloomExposure::init(const ConfigSet& config)
 	m_width = m_r->getDownscaleBlur().getSmallPassWidth() * 2;
 	m_height = m_r->getDownscaleBlur().getSmallPassHeight() * 2;
 
-	m_threshold = config.getNumber("bloom.threshold");
-	m_scale = config.getNumber("bloom.scale");
+	m_threshold = config.getNumber("r.bloom.threshold");
+	m_scale = config.getNumber("r.bloom.scale");
 
 	// Create RT
 	m_rt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_width,

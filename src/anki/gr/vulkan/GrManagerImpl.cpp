@@ -237,7 +237,7 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 		"VK_LAYER_LUNARG_object_tracker",
 		"VK_LAYER_LUNARG_standard_validation"}};
 	Array<const char*, LAYERS.getSize()> layersToEnable; // Keep it alive in the stack
-	if(init.m_config->getNumber("debugContext"))
+	if(init.m_config->getNumber("window.debugContext"))
 	{
 		uint32_t count;
 		vkEnumerateInstanceLayerProperties(&count, nullptr);
@@ -462,7 +462,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 				// Don't add it just yet. Can't enable it at the same time with VK_KHR_maintenance1
 			}
 			else if(CString(extensionInfos[extCount].extensionName) == VK_EXT_DEBUG_MARKER_EXTENSION_NAME
-				&& init.m_config->getNumber("debugMarkers"))
+				&& init.m_config->getNumber("window.debugMarkers"))
 			{
 				m_extensions |= VulkanExtensions::EXT_DEBUG_MARKER;
 				extensionsToEnable[extensionsToEnableCount++] = VK_EXT_DEBUG_MARKER_EXTENSION_NAME;
@@ -565,7 +565,7 @@ Error GrManagerImpl::initSwapchain(const GrManagerInitInfo& init)
 	vkGetPhysicalDeviceSurfacePresentModesKHR(m_physicalDevice, m_surface, &presentModeCount, &presentModes[0]);
 
 	VkPresentModeKHR presentMode = VK_PRESENT_MODE_MAX_ENUM_KHR;
-	if(init.m_config->getNumber("vsync"))
+	if(init.m_config->getNumber("window.vsync"))
 	{
 		ANKI_VK_LOGI("vsync is on");
 		presentMode = VK_PRESENT_MODE_FIFO_KHR;

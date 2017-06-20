@@ -37,7 +37,7 @@ GrAllocator<U8> GrManagerImpl::getAllocator() const
 
 Error GrManagerImpl::init(GrManagerInitInfo& init)
 {
-	m_debugMarkers = init.m_config->getNumber("debugMarkers");
+	m_debugMarkers = init.m_config->getNumber("window.debugMarkers");
 
 	// Init the backend of the backend
 	ANKI_CHECK(createBackend(init));

@@ -52,8 +52,8 @@ Error LensFlare::initInternal(const ConfigSet& config)
 
 Error LensFlare::initSprite(const ConfigSet& config)
 {
-	m_maxSpritesPerFlare = config.getNumber("lf.maxSpritesPerFlare");
-	m_maxFlares = config.getNumber("lf.maxFlares");
+	m_maxSpritesPerFlare = config.getNumber("r.lensFlare.maxSpritesPerFlare");
+	m_maxFlares = config.getNumber("r.lensFlare.maxFlares");
 
 	if(m_maxSpritesPerFlare < 1 || m_maxFlares < 1)
 	{

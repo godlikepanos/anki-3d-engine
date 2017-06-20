@@ -272,9 +272,21 @@ anki_internal:
 	}
 
 	/// Get the LOD given the distance of an object from the camera
-	F32 calculateLod(F32 distance) const
+	U calculateLod(F32 distance) const
 	{
-		return distance / m_lodDistance;
+		ANKI_ASSERT(m_lodDistances.getSize() == 2);
+		if(distance < m_lodDistances[0])
+		{
+			return 0;
+		}
+		else if(distance < m_lodDistances[1])
+		{
+			return 1;
+		}
+		else
+		{
+			return 2;
+		}
 	}
 
 	/// Create the init info for a 2D texture that will be used as a render target.
@@ -396,7 +408,7 @@ private:
 	U32 m_width;
 	U32 m_height;
 
-	F32 m_lodDistance; ///< Distance that used to calculate the LOD
+	Array<F32, MAX_LOD_COUNT - 1> m_lodDistances; ///< Distance that used to calculate the LOD
 	Bool8 m_tessellation;
 
 	RenderableDrawer m_sceneDrawer;

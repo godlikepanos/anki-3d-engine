@@ -55,8 +55,8 @@ ANKI_TEST(Ui, Ui)
 {
 	Config cfg;
 	initConfig(cfg);
-	cfg.set("vsync", 1);
-	cfg.set("debugContext", 0);
+	cfg.set("window.vsync", 1);
+	cfg.set("window.debugContext", 0);
 
 	NativeWindow* win = createWindow(cfg);
 	Input* in = new Input();

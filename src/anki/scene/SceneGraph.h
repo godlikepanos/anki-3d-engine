@@ -210,6 +210,11 @@ anki_internal:
 		return m_componentLists;
 	}
 
+	F32 getEarlyZDistance() const
+	{
+		return m_earlyZDist;
+	}
+
 private:
 	const Timestamp* m_globalTimestamp = nullptr;
 	Timestamp m_timestamp = 0; ///< Cached timestamp
@@ -244,6 +249,8 @@ private:
 	U64 m_nodesUuid = 0;
 
 	SceneComponentLists m_componentLists;
+
+	F32 m_earlyZDist = -1.0;
 
 	/// Put a node in the appropriate containers
 	ANKI_USE_RESULT Error registerNode(SceneNode* node);

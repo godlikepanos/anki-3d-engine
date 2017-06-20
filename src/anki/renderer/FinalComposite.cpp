@@ -36,7 +36,7 @@ Error FinalComposite::initInternal(const ConfigSet& config)
 	ANKI_ASSERT("Initializing PPS");
 
 	ANKI_CHECK(loadColorGradingTexture("engine_data/DefaultLut.ankitex"));
-	m_sharpenEnabled = config.getNumber("pps.sharpen");
+	m_sharpenEnabled = config.getNumber("r.finalComposite.sharpen");
 
 	if(!m_r->getDrawToDefaultFramebuffer())
 	{

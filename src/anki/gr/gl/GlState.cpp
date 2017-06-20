@@ -83,7 +83,7 @@ __stdcall
 
 void GlState::initMainThread(const ConfigSet& config)
 {
-	m_registerMessages = config.getNumber("debugContext");
+	m_registerMessages = config.getNumber("window.debugContext");
 }
 
 void GlState::initRenderThread()

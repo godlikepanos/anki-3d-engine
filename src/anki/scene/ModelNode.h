@@ -27,7 +27,6 @@ class ModelNode;
 class ModelPatchNode : public SceneNode
 {
 	friend class ModelNode;
-	friend class ModelPatchRenderComponent;
 
 public:
 	ModelPatchNode(SceneGraph* scene, CString name);
@@ -37,6 +36,8 @@ public:
 	ANKI_USE_RESULT Error init(const ModelPatch* modelPatch, U idx, const ModelNode& parent);
 
 private:
+	class MRenderComponent;
+
 	Obb m_obb; ///< In world space. ModelNode will update it.
 	const ModelPatch* m_modelPatch = nullptr; ///< The resource
 	U64 m_mergeKey = 0;
@@ -51,7 +52,7 @@ private:
 	static void drawCallback(RenderQueueDrawContext& ctx, WeakArray<const void*> userData);
 };
 
-/// The model scene node
+/// The model scene node.
 class ModelNode : public SceneNode
 {
 	friend class ModelPatchNode;
@@ -70,11 +71,30 @@ public:
 
 private:
 	class MoveFeedbackComponent;
+	class MRenderComponent;
 
 	ModelResourcePtr m_model; ///< The resource
 	DynamicArray<ModelPatchNode*> m_modelPatches;
 
+	Obb m_obb;
+	U64 m_mergeKey = 0;
+
+	Bool isSinglePatch() const
+	{
+		return m_modelPatches.getSize() == 0;
+	}
+
 	void onMoveComponentUpdate(const MoveComponent& move);
+
+	static void drawCallback(RenderQueueDrawContext& ctx, WeakArray<const void*> userData);
+
+	void setupRenderableQueueElement(RenderableQueueElement& el) const
+	{
+		ANKI_ASSERT(isSinglePatch());
+		el.m_callback = drawCallback;
+		el.m_userData = this;
+		el.m_mergeKey = m_mergeKey;
+	}
 };
 /// @}
 

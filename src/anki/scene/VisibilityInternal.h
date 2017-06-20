@@ -43,6 +43,34 @@ public:
 	}
 };
 
+/// Material and distance sort.
+class MaterialDistanceSortFunctor
+{
+public:
+	MaterialDistanceSortFunctor(F32 distanceGranularity)
+		: m_distGranularity(1.0f / distanceGranularity)
+	{
+	}
+
+	Bool operator()(const RenderableQueueElement& a, const RenderableQueueElement& b)
+	{
+		const U aClass = a.m_distanceFromCamera * m_distGranularity;
+		const U bClass = b.m_distanceFromCamera * m_distGranularity;
+
+		if(aClass == bClass && a.m_callback == b.m_callback)
+		{
+			return a.m_mergeKey < b.m_mergeKey;
+		}
+		else
+		{
+			return a.m_distanceFromCamera < b.m_distanceFromCamera;
+		}
+	}
+
+private:
+	F32 m_distGranularity;
+};
+
 /// Storage for a single element type.
 template<typename T, U INITIAL_STORAGE_SIZE = 32, U STORAGE_GROW_RATE = 4>
 class TRenderQueueElementStorage
@@ -76,6 +104,7 @@ class RenderQueueView
 public:
 	TRenderQueueElementStorage<RenderableQueueElement> m_renderables; ///< Deferred shading or shadow renderables.
 	TRenderQueueElementStorage<RenderableQueueElement> m_forwardShadingRenderables;
+	TRenderQueueElementStorage<RenderableQueueElement> m_earlyZRenderables;
 	TRenderQueueElementStorage<PointLightQueueElement> m_pointLights;
 	TRenderQueueElementStorage<U32> m_shadowPointLights;
 	TRenderQueueElementStorage<SpotLightQueueElement> m_spotLights;
@@ -93,6 +122,8 @@ class VisibilityContext
 public:
 	SceneGraph* m_scene = nullptr;
 	Atomic<U32> m_testsCount = {0};
+
+	F32 m_earlyZDist = -1.0f; ///< Cache this.
 
 	List<FrustumComponent*> m_testedFrcs;
 	Mutex m_mtx;

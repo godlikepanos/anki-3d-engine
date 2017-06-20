@@ -35,7 +35,7 @@ Dbg::~Dbg()
 
 Error Dbg::init(const ConfigSet& initializer)
 {
-	m_enabled = initializer.getNumber("dbg.enabled");
+	m_enabled = initializer.getNumber("r.dbg.enabled");
 	m_flags.set(DbgFlag::ALL);
 	return ErrorCode::NONE;
 }

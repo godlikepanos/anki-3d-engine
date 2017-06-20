@@ -16,7 +16,7 @@ namespace anki
 {
 
 /// Render component implementation.
-class ModelPatchRenderComponent : public RenderComponent
+class ModelPatchNode::MRenderComponent : public RenderComponent
 {
 public:
 	const ModelPatchNode& getNode() const
@@ -24,7 +24,7 @@ public:
 		return static_cast<const ModelPatchNode&>(getSceneNode());
 	}
 
-	ModelPatchRenderComponent(ModelPatchNode* node)
+	MRenderComponent(ModelPatchNode* node)
 		: RenderComponent(node, node->m_modelPatch->getMaterial())
 	{
 	}
@@ -54,7 +54,7 @@ Error ModelPatchNode::init(const ModelPatch* modelPatch, U idx, const ModelNode&
 	newComponent<SpatialComponent>(this, &m_obb);
 
 	// Render component
-	newComponent<ModelPatchRenderComponent>(this);
+	newComponent<MRenderComponent>(this);
 
 	// Merge key
 	Array<U64, 2> toHash;
@@ -147,6 +147,20 @@ public:
 	}
 };
 
+class ModelNode::MRenderComponent : public RenderComponent
+{
+public:
+	MRenderComponent(ModelNode* node)
+		: RenderComponent(node, node->m_model->getModelPatches()[0]->getMaterial())
+	{
+	}
+
+	void setupRenderableQueueElement(RenderableQueueElement& el) const override
+	{
+		static_cast<const ModelNode&>(getSceneNode()).setupRenderableQueueElement(el);
+	}
+};
+
 ModelNode::ModelNode(SceneGraph* scene, CString name)
 	: SceneNode(scene, name)
 {
@@ -161,41 +175,128 @@ Error ModelNode::init(const CString& modelFname)
 {
 	ANKI_CHECK(getResourceManager().loadResource(modelFname, m_model));
 
-	m_modelPatches.create(getSceneAllocator(), m_model->getModelPatches().getSize(), nullptr);
-
-	U count = 0;
-	auto it = m_model->getModelPatches().getBegin();
-	auto end = m_model->getModelPatches().getEnd();
-	for(; it != end; it++)
+	if(m_model->getModelPatches().getSize() > 1)
 	{
-		ModelPatchNode* mpn;
-		StringAuto nname(getFrameAllocator());
-		ANKI_CHECK(getSceneGraph().newSceneNode(CString(), mpn, *it, count, *this));
+		// Multiple patches, create multiple nodes
 
-		m_modelPatches[count++] = mpn;
-		addChild(mpn);
+		m_modelPatches.create(getSceneAllocator(), m_model->getModelPatches().getSize(), nullptr);
+
+		U count = 0;
+		auto it = m_model->getModelPatches().getBegin();
+		auto end = m_model->getModelPatches().getEnd();
+		for(; it != end; it++)
+		{
+			ModelPatchNode* mpn;
+			StringAuto nname(getFrameAllocator());
+			ANKI_CHECK(getSceneGraph().newSceneNode(CString(), mpn, *it, count, *this));
+
+			m_modelPatches[count++] = mpn;
+			addChild(mpn);
+		}
+
+		// Move component
+		newComponent<MoveComponent>(this);
+
+		// Feedback component
+		newComponent<MoveFeedbackComponent>(this);
 	}
+	else
+	{
+		// Only one patch, don't need to create multiple nodes. Pack everything in this one.
 
-	// Move component
-	newComponent<MoveComponent>(this);
+		m_mergeKey = m_model->getUuid();
 
-	// Feedback component
-	newComponent<MoveFeedbackComponent>(this);
+		newComponent<MoveComponent>(this);
+		newComponent<MoveFeedbackComponent>(this);
+		newComponent<SpatialComponent>(this, &m_obb);
+		newComponent<MRenderComponent>(this);
+	}
 
 	return ErrorCode::NONE;
 }
 
 void ModelNode::onMoveComponentUpdate(const MoveComponent& move)
 {
-	// Inform the children about the moves
-	for(ModelPatchNode* child : m_modelPatches)
+	if(!isSinglePatch())
 	{
-		child->m_obb = child->m_modelPatch->getBoundingShape().getTransformed(move.getWorldTransform());
+		// Inform the children about the moves
+		for(ModelPatchNode* child : m_modelPatches)
+		{
+			child->m_obb = child->m_modelPatch->getBoundingShape().getTransformed(move.getWorldTransform());
 
-		SpatialComponent& sp = child->getComponent<SpatialComponent>();
+			SpatialComponent& sp = child->getComponent<SpatialComponent>();
+			sp.markForUpdate();
+			sp.setSpatialOrigin(move.getWorldTransform().getOrigin());
+		}
+	}
+	else
+	{
+		m_obb = m_model->getModelPatches()[0]->getBoundingShape().getTransformed(move.getWorldTransform());
+
+		SpatialComponent& sp = getComponentAt<SpatialComponent>(2);
 		sp.markForUpdate();
 		sp.setSpatialOrigin(move.getWorldTransform().getOrigin());
 	}
+}
+
+void ModelNode::drawCallback(RenderQueueDrawContext& ctx, WeakArray<const void*> userData)
+{
+	ANKI_ASSERT(userData.getSize() > 0 && userData.getSize() <= MAX_INSTANCES);
+	ANKI_ASSERT(ctx.m_key.m_instanceCount == userData.getSize());
+
+	const ModelNode& self = *static_cast<const ModelNode*>(userData[0]);
+	ANKI_ASSERT(self.isSinglePatch());
+	const ModelPatch* patch = self.m_model->getModelPatches()[0];
+
+	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
+
+	// That will not work on multi-draw and instanced at the same time. Make sure that there is no multi-draw anywhere
+	ANKI_ASSERT(patch->getSubMeshesCount() == 0);
+
+	ModelRenderingInfo modelInf;
+	patch->getRenderingDataSub(ctx.m_key, WeakArray<U8>(), modelInf);
+
+	// Program
+	cmdb->bindShaderProgram(modelInf.m_program);
+
+	// Set attributes
+	for(U i = 0; i < modelInf.m_vertexAttributeCount; ++i)
+	{
+		const VertexAttributeInfo& attrib = modelInf.m_vertexAttributes[i];
+		cmdb->setVertexAttribute(i, attrib.m_bufferBinding, attrib.m_format, attrib.m_relativeOffset);
+	}
+
+	// Set vertex buffers
+	for(U i = 0; i < modelInf.m_vertexBufferBindingCount; ++i)
+	{
+		const VertexBufferBinding& binding = modelInf.m_vertexBufferBindings[i];
+		cmdb->bindVertexBuffer(i, binding.m_buffer, binding.m_offset, binding.m_stride, VertexStepRate::VERTEX);
+	}
+
+	// Index buffer
+	cmdb->bindIndexBuffer(modelInf.m_indexBuffer, 0, IndexType::U16);
+
+	// Uniforms
+	Array<Mat4, MAX_INSTANCES> trfs;
+	trfs[0] = Mat4(self.getComponentAt<MoveComponent>(0).getWorldTransform());
+	for(U i = 1; i < userData.getSize(); ++i)
+	{
+		const ModelNode& self2 = *static_cast<const ModelNode*>(userData[i]);
+		trfs[i] = Mat4(self2.getComponentAt<MoveComponent>(0).getWorldTransform());
+	}
+
+	StagingGpuMemoryToken token;
+	self.getComponentAt<RenderComponent>(3).allocateAndSetupUniforms(
+		ctx, WeakArray<const Mat4>(&trfs[0], userData.getSize()), *ctx.m_stagingGpuAllocator, token);
+	cmdb->bindUniformBuffer(0, 0, token.m_buffer, token.m_offset, token.m_range);
+
+	// Draw
+	cmdb->drawElements(PrimitiveTopology::TRIANGLES,
+		modelInf.m_indicesCountArray[0],
+		userData.getSize(),
+		modelInf.m_indicesOffsetArray[0] / sizeof(U16),
+		0,
+		0);
 }
 
 } // end namespace anki

@@ -222,23 +222,28 @@ void VisibilityTestTask::test(ThreadHive& hive)
 	SceneNode& testedNode = testedFrc.getSceneNode();
 	auto alloc = m_visCtx->m_scene->getFrameAllocator();
 
-	Bool wantsRenderComponents =
+	const Bool wantsRenderComponents =
 		testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS);
 
-	Bool wantsLightComponents = testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::LIGHT_COMPONENTS);
+	const Bool wantsLightComponents =
+		testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::LIGHT_COMPONENTS);
 
-	Bool wantsFlareComponents =
+	const Bool wantsFlareComponents =
 		testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::LENS_FLARE_COMPONENTS);
 
-	Bool wantsShadowCasters = testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::SHADOW_CASTERS);
+	const Bool wantsShadowCasters =
+		testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::SHADOW_CASTERS);
 
-	Bool wantsReflectionProbes =
+	const Bool wantsReflectionProbes =
 		testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::REFLECTION_PROBES);
 
-	Bool wantsReflectionProxies =
+	const Bool wantsReflectionProxies =
 		testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::REFLECTION_PROXIES);
 
-	Bool wantsDecals = testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::DECALS);
+	const Bool wantsDecals = testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::DECALS);
+
+	const Bool wantsEarlyZ =
+		testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::EARLY_Z) && m_visCtx->m_earlyZDist > 0.0f;
 
 	// Chose the test range and a few other things
 	PtrSize start, end;
@@ -368,6 +373,13 @@ void VisibilityTestTask::test(ThreadHive& hive)
 				// Compute distance from the frustum
 				const Plane& nearPlane = testedFrc.getFrustum().getPlanesWorldSpace()[FrustumPlaneType::NEAR];
 				el->m_distanceFromCamera = max(0.0f, sps[0].m_sp->getAabb().testPlane(nearPlane));
+
+				if(wantsEarlyZ && el->m_distanceFromCamera < m_visCtx->m_earlyZDist
+					&& !rc->getMaterial().isForwardShading())
+				{
+					RenderableQueueElement* el2 = m_result.m_earlyZRenderables.newElement(alloc);
+					*el2 = *el;
+				}
 			}
 		}
 
@@ -531,6 +543,7 @@ void CombineResultsTask::combine()
 	}
 
 	ANKI_VIS_COMBINE(RenderableQueueElement, m_renderables);
+	ANKI_VIS_COMBINE(RenderableQueueElement, m_earlyZRenderables);
 	ANKI_VIS_COMBINE(RenderableQueueElement, m_forwardShadingRenderables);
 	ANKI_VIS_COMBINE_AND_PTR(PointLightQueueElement, m_pointLights, m_shadowPointLights);
 	ANKI_VIS_COMBINE_AND_PTR(SpotLightQueueElement, m_spotLights, m_shadowSpotLights);
@@ -554,8 +567,11 @@ void CombineResultsTask::combine()
 #endif
 
 	// Sort some of the arrays
-	std::sort(m_results->m_renderables.getBegin(),
-		m_results->m_renderables.getEnd(),
+	std::sort(
+		m_results->m_renderables.getBegin(), m_results->m_renderables.getEnd(), MaterialDistanceSortFunctor(20.0f));
+
+	std::sort(m_results->m_earlyZRenderables.getBegin(),
+		m_results->m_earlyZRenderables.getEnd(),
 		DistanceSortFunctor<RenderableQueueElement>());
 
 	std::sort(m_results->m_forwardShadingRenderables.getBegin(),
@@ -673,6 +689,7 @@ void doVisibilityTests(SceneNode& fsn, SceneGraph& scene, RenderQueue& rqueue)
 
 	VisibilityContext ctx;
 	ctx.m_scene = &scene;
+	ctx.m_earlyZDist = scene.getEarlyZDistance();
 	ctx.submitNewWork(fsn.getComponent<FrustumComponent>(), rqueue, hive);
 
 	hive.waitAllTasks();
