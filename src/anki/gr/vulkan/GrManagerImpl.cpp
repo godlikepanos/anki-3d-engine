@@ -17,6 +17,31 @@
 namespace anki
 {
 
+static VkBool32 debugReportCallbackEXT(VkDebugReportFlagsEXT flags,
+	VkDebugReportObjectTypeEXT objectType,
+	uint64_t object,
+	size_t location,
+	int32_t messageCode,
+	const char* pLayerPrefix,
+	const char* pMessage,
+	void* pUserData)
+{
+	if(flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)
+	{
+		ANKI_VK_LOGE("%s", pMessage);
+	}
+	else if(flags & (VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT))
+	{
+		ANKI_VK_LOGW("%s", pMessage);
+	}
+	else
+	{
+		ANKI_VK_LOGI("%s", pMessage);
+	}
+
+	return false;
+}
+
 GrManagerImpl::~GrManagerImpl()
 {
 	// FIRST THING: wait for the GPU
@@ -75,6 +100,15 @@ GrManagerImpl::~GrManagerImpl()
 	if(m_surface)
 	{
 		vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
+	}
+
+	if(m_debugCallback)
+	{
+		PFN_vkDestroyDebugReportCallbackEXT vkDestroyDebugReportCallbackEXT =
+			reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>(
+				vkGetInstanceProcAddr(m_instance, "vkDestroyDebugReportCallbackEXT"));
+
+		vkDestroyDebugReportCallbackEXT(m_instance, m_debugCallback, nullptr);
 	}
 
 	if(m_instance)
@@ -286,6 +320,13 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 		instExtensions.create(extCount);
 		instExtensionInf.create(extCount);
 		vkEnumerateInstanceExtensionProperties(nullptr, &extCount, &instExtensionInf[0]);
+
+		ANKI_VK_LOGI("Found the following instance extensions:");
+		for(U i = 0; i < extCount; ++i)
+		{
+			ANKI_VK_LOGI("\t%s", instExtensionInf[i].extensionName);
+		}
+
 		U instExtensionCount = 0;
 
 		for(U i = 0; i < extCount; ++i)
@@ -309,6 +350,11 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 			{
 				m_extensions |= VulkanExtensions::KHR_SURFACE;
 				instExtensions[instExtensionCount++] = VK_KHR_SURFACE_EXTENSION_NAME;
+			}
+			else if(CString(instExtensionInf[i].extensionName) == VK_EXT_DEBUG_REPORT_EXTENSION_NAME)
+			{
+				m_extensions |= VulkanExtensions::EXT_DEBUG_REPORT;
+				instExtensions[instExtensionCount++] = VK_EXT_DEBUG_REPORT_EXTENSION_NAME;
 			}
 		}
 
@@ -338,6 +384,24 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 #endif
 
 	ANKI_VK_CHECK(vkCreateInstance(&ci, pallocCbs, &m_instance));
+
+	// Set debug callbacks
+	//
+	if(!!(m_extensions & VulkanExtensions::EXT_DEBUG_REPORT))
+	{
+		VkDebugReportCallbackCreateInfoEXT ci = {};
+		ci.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
+		ci.pfnCallback = debugReportCallbackEXT;
+		ci.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT
+			| VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
+
+		PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT =
+			reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(
+				vkGetInstanceProcAddr(m_instance, "vkCreateDebugReportCallbackEXT"));
+		ANKI_ASSERT(vkCreateDebugReportCallbackEXT);
+
+		vkCreateDebugReportCallbackEXT(m_instance, &ci, nullptr, &m_debugCallback);
+	}
 
 	// Create the physical device
 	//
@@ -442,6 +506,12 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 		extensionsToEnable.create(extCount);
 		U extensionsToEnableCount = 0;
 		vkEnumerateDeviceExtensionProperties(m_physicalDevice, nullptr, &extCount, &extensionInfos[0]);
+
+		ANKI_VK_LOGI("Found the following device extensions:");
+		for(U i = 0; i < extCount; ++i)
+		{
+			ANKI_VK_LOGI("\t%s", extensionInfos[i].extensionName);
+		}
 
 		while(extCount-- != 0)
 		{

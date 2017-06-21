@@ -182,6 +182,10 @@ void main()
 	#endif
 
 	writeRts(diffColor, normal, specColor, roughness, subsurface, emission, metallic);
+#else
+	out_msRt0 = vec4(0.0);
+	out_msRt1 = vec4(0.0);
+	out_msRt2 = vec4(0.0);
 #endif
 }
 			]]></source>

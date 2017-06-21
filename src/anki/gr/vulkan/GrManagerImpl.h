@@ -210,6 +210,7 @@ private:
 #endif
 
 	VkInstance m_instance = VK_NULL_HANDLE;
+	VkDebugReportCallbackEXT m_debugCallback = VK_NULL_HANDLE;
 	VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
 	VulkanExtensions m_extensions = VulkanExtensions::NONE;
 	GpuVendor m_vendor = GpuVendor::UNKNOWN;

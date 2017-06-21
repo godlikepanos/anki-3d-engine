@@ -26,11 +26,9 @@ layout(location = 6) in mediump vec3 in_normalTangentSpace; // Parallax
 //
 // Output
 //
-#if PASS == 0
 layout(location = 0) out vec4 out_msRt0;
 layout(location = 1) out vec4 out_msRt1;
 layout(location = 2) out vec4 out_msRt2;
-#endif
 
 // Do normal mapping
 vec3 readNormalFromTexture(sampler2D map, highp vec2 texCoords)
