@@ -50,4 +50,9 @@ const uint MAX_U32 = 0xFFFFFFFFu;
 
 #define CALC_BITANGENT_IN_VERT 1
 
+// Passes
+#define PASS_GB_FS 0
+#define PASS_SM 1
+#define PASS_EZ 2
+
 #endif

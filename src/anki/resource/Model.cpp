@@ -72,7 +72,7 @@ void ModelPatch::getRenderingDataSub(
 		}
 		else
 		{
-			inf.m_vertexAttributeCount = 2;
+			inf.m_vertexAttributeCount = 1;
 		}
 	}
 

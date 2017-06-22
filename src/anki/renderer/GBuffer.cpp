@@ -146,7 +146,7 @@ void GBuffer::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCou
 			}
 
 			ANKI_ASSERT(earlyZStart < earlyZEnd && earlyZEnd <= I32(earlyZCount));
-			m_r->getSceneDrawer().drawRange(Pass::SM,
+			m_r->getSceneDrawer().drawRange(Pass::EZ,
 				ctx.m_renderQueue->m_viewMatrix,
 				ctx.m_viewProjMatJitter,
 				cmdb,

@@ -15,6 +15,7 @@ enum class Pass : U8
 {
 	GB_FS, ///< GBuffer or forward shading.
 	SM,
+	EZ,
 	COUNT
 };
 

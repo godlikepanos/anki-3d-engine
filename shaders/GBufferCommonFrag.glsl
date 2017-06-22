@@ -12,8 +12,8 @@
 //
 // Input
 //
+#if PASS == PASS_GB_FS
 layout(location = 0) in highp vec2 in_uv;
-
 layout(location = 1) in mediump vec3 in_normal;
 layout(location = 2) in mediump vec4 in_tangent;
 #if CALC_BITANGENT_IN_VERT
@@ -22,14 +22,21 @@ layout(location = 3) in mediump vec3 in_bitangent;
 layout(location = 4) in mediump vec3 in_vertPosViewSpace;
 layout(location = 5) in mediump vec3 in_eyeTangentSpace; // Parallax
 layout(location = 6) in mediump vec3 in_normalTangentSpace; // Parallax
+#endif // PASS == PASS_GB_FS
 
 //
 // Output
 //
+#if PASS == PASS_GB_FS || PASS == PASS_EZ
 layout(location = 0) out vec4 out_msRt0;
 layout(location = 1) out vec4 out_msRt1;
 layout(location = 2) out vec4 out_msRt2;
+#endif
 
+//
+// Functions
+//
+#if PASS == PASS_GB_FS
 // Do normal mapping
 vec3 readNormalFromTexture(sampler2D map, highp vec2 texCoords)
 {
@@ -130,7 +137,6 @@ vec2 computeTextureCoordParallax(in sampler2D heightMap, in vec2 uv, in float he
 }
 
 // Write the data to FAIs
-#if PASS == 0
 void writeRts(in vec3 diffColor, // from 0 to 1
 	in vec3 normal,
 	in vec3 specularColor,
@@ -149,6 +155,6 @@ void writeRts(in vec3 diffColor, // from 0 to 1
 	g.metallic = metallic;
 	writeGBuffer(g, out_msRt0, out_msRt1, out_msRt2);
 }
-#endif
+#endif // PASS == PASS_GB_FS
 
 #endif

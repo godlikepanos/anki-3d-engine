@@ -476,10 +476,13 @@ void Indirect::runIs(RenderingContext& rctx, const RenderQueue& rqueue, U layer,
 
 	cmdb->generateMipmaps2d(m_is.m_lightRt, faceIdx, layer);
 
-	cmdb->setTextureSurfaceBarrier(m_is.m_lightRt,
-		TextureUsageBit::GENERATE_MIPMAPS,
-		TextureUsageBit::SAMPLED_FRAGMENT,
-		TextureSurfaceInfo(0, 0, faceIdx, layer));
+	for(U i = 0; i < m_is.m_lightRtMipCount; ++i)
+	{
+		cmdb->setTextureSurfaceBarrier(m_is.m_lightRt,
+			TextureUsageBit::GENERATE_MIPMAPS,
+			TextureUsageBit::SAMPLED_FRAGMENT,
+			TextureSurfaceInfo(i, 0, faceIdx, layer));
+	}
 
 	// Restore state
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
@@ -522,10 +525,13 @@ void Indirect::computeIrradiance(RenderingContext& rctx, U layer, U faceIdx)
 
 	cmdb->generateMipmaps2d(m_irradiance.m_cubeArr, faceIdx, layer);
 
-	cmdb->setTextureSurfaceBarrier(m_irradiance.m_cubeArr,
-		TextureUsageBit::GENERATE_MIPMAPS,
-		TextureUsageBit::SAMPLED_FRAGMENT,
-		TextureSurfaceInfo(0, 0, faceIdx, layer));
+	for(U i = 0; i < m_irradiance.m_cubeArrMipCount; ++i)
+	{
+		cmdb->setTextureSurfaceBarrier(m_irradiance.m_cubeArr,
+			TextureUsageBit::GENERATE_MIPMAPS,
+			TextureUsageBit::SAMPLED_FRAGMENT,
+			TextureSurfaceInfo(i, 0, faceIdx, layer));
+	}
 }
 
 void Indirect::run(RenderingContext& rctx)
