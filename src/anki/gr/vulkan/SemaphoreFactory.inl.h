@@ -3,13 +3,13 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/gr/vulkan/GrSemaphore.h>
+#include <anki/gr/vulkan/SemaphoreFactory.h>
 #include <anki/core/Trace.h>
 
 namespace anki
 {
 
-inline GrSemaphore::GrSemaphore(GrSemaphoreFactory* f, MicroFencePtr fence)
+inline MicroSemaphore::MicroSemaphore(SemaphoreFactory* f, MicroFencePtr fence)
 	: m_factory(f)
 	, m_fence(fence)
 {
@@ -22,7 +22,7 @@ inline GrSemaphore::GrSemaphore(GrSemaphoreFactory* f, MicroFencePtr fence)
 	ANKI_VK_CHECKF(vkCreateSemaphore(m_factory->m_dev, &ci, nullptr, &m_handle));
 }
 
-inline GrSemaphore::~GrSemaphore()
+inline MicroSemaphore::~MicroSemaphore()
 {
 	if(m_handle)
 	{
@@ -30,7 +30,7 @@ inline GrSemaphore::~GrSemaphore()
 	}
 }
 
-inline void GrSemaphorePtrDeleter::operator()(GrSemaphore* s)
+inline void MicroSemaphorePtrDeleter::operator()(MicroSemaphore* s)
 {
 	ANKI_ASSERT(s);
 	s->m_factory->destroySemaphore(s);

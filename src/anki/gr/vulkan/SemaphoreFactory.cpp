@@ -3,12 +3,12 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <anki/gr/vulkan/GrSemaphore.h>
+#include <anki/gr/vulkan/SemaphoreFactory.h>
 
 namespace anki
 {
 
-void GrSemaphoreFactory::destroy()
+void SemaphoreFactory::destroy()
 {
 	for(U i = 0; i < m_semCount; ++i)
 	{
@@ -18,12 +18,12 @@ void GrSemaphoreFactory::destroy()
 	m_sems.destroy(m_alloc);
 }
 
-void GrSemaphoreFactory::releaseFences()
+void SemaphoreFactory::releaseFences()
 {
 	U count = m_semCount;
 	while(count--)
 	{
-		GrSemaphore& sem = *m_sems[count];
+		MicroSemaphore& sem = *m_sems[count];
 		if(sem.m_fence && sem.m_fence->done())
 		{
 			sem.m_fence.reset(nullptr);
@@ -31,13 +31,13 @@ void GrSemaphoreFactory::releaseFences()
 	}
 }
 
-GrSemaphorePtr GrSemaphoreFactory::newInstance(MicroFencePtr fence)
+MicroSemaphorePtr SemaphoreFactory::newInstance(MicroFencePtr fence)
 {
 	ANKI_ASSERT(fence);
 
 	LockGuard<Mutex> lock(m_mtx);
 
-	GrSemaphore* out = nullptr;
+	MicroSemaphore* out = nullptr;
 
 	if(m_semCount > 0)
 	{
@@ -66,7 +66,7 @@ GrSemaphorePtr GrSemaphoreFactory::newInstance(MicroFencePtr fence)
 	if(out == nullptr)
 	{
 		// Create a new one
-		out = m_alloc.newInstance<GrSemaphore>(this, fence);
+		out = m_alloc.newInstance<MicroSemaphore>(this, fence);
 	}
 	else
 	{
@@ -74,10 +74,10 @@ GrSemaphorePtr GrSemaphoreFactory::newInstance(MicroFencePtr fence)
 	}
 
 	ANKI_ASSERT(out->m_refcount.get() == 0);
-	return GrSemaphorePtr(out);
+	return MicroSemaphorePtr(out);
 }
 
-void GrSemaphoreFactory::destroySemaphore(GrSemaphore* s)
+void SemaphoreFactory::destroySemaphore(MicroSemaphore* s)
 {
 	ANKI_ASSERT(s);
 	ANKI_ASSERT(s->m_refcount.get() == 0);

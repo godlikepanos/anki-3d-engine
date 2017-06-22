@@ -11,16 +11,16 @@ namespace anki
 {
 
 // Forward
-class GrSemaphoreFactory;
+class SemaphoreFactory;
 
 /// @addtogroup vulkan
 /// @{
 
 /// Simple semaphore wrapper.
-class GrSemaphore : public NonCopyable
+class MicroSemaphore : public NonCopyable
 {
-	friend class GrSemaphoreFactory;
-	friend class GrSemaphorePtrDeleter;
+	friend class SemaphoreFactory;
+	friend class MicroSemaphorePtrDeleter;
 	template<typename, typename>
 	friend class GenericPoolAllocator;
 
@@ -41,31 +41,31 @@ public:
 private:
 	VkSemaphore m_handle = VK_NULL_HANDLE;
 	Atomic<U32> m_refcount = {0};
-	GrSemaphoreFactory* m_factory = nullptr;
+	SemaphoreFactory* m_factory = nullptr;
 
 	/// Fence to find out when it's safe to reuse this semaphore.
 	MicroFencePtr m_fence;
 
-	GrSemaphore(GrSemaphoreFactory* f, MicroFencePtr fence);
+	MicroSemaphore(SemaphoreFactory* f, MicroFencePtr fence);
 
-	~GrSemaphore();
+	~MicroSemaphore();
 };
 
-/// GrSemaphorePtr deleter.
-class GrSemaphorePtrDeleter
+/// MicroSemaphorePtr deleter.
+class MicroSemaphorePtrDeleter
 {
 public:
-	void operator()(GrSemaphore* s);
+	void operator()(MicroSemaphore* s);
 };
 
-/// GrSemaphore smart pointer.
-using GrSemaphorePtr = IntrusivePtr<GrSemaphore, GrSemaphorePtrDeleter>;
+/// MicroSemaphore smart pointer.
+using MicroSemaphorePtr = IntrusivePtr<MicroSemaphore, MicroSemaphorePtrDeleter>;
 
 /// Factory of semaphores.
-class GrSemaphoreFactory
+class SemaphoreFactory
 {
-	friend class GrSemaphore;
-	friend class GrSemaphorePtrDeleter;
+	friend class MicroSemaphore;
+	friend class MicroSemaphorePtrDeleter;
 
 public:
 	void init(GrAllocator<U8> alloc, VkDevice dev)
@@ -77,16 +77,16 @@ public:
 
 	void destroy();
 
-	GrSemaphorePtr newInstance(MicroFencePtr fence);
+	MicroSemaphorePtr newInstance(MicroFencePtr fence);
 
 private:
 	GrAllocator<U8> m_alloc;
-	DynamicArray<GrSemaphore*> m_sems;
+	DynamicArray<MicroSemaphore*> m_sems;
 	U32 m_semCount = 0;
 	VkDevice m_dev = VK_NULL_HANDLE;
 	Mutex m_mtx;
 
-	void destroySemaphore(GrSemaphore* s);
+	void destroySemaphore(MicroSemaphore* s);
 
 	/// Iterate the semaphores and release the fences.
 	void releaseFences();
@@ -95,4 +95,4 @@ private:
 
 } // end namespace anki
 
-#include <anki/gr/vulkan/GrSemaphore.inl.h>
+#include <anki/gr/vulkan/SemaphoreFactory.inl.h>

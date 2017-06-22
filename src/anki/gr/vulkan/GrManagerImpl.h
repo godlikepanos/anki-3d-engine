@@ -7,7 +7,8 @@
 
 #include <anki/gr/vulkan/Common.h>
 #include <anki/gr/vulkan/GpuMemoryManager.h>
-#include <anki/gr/vulkan/GrSemaphore.h>
+#include <anki/gr/vulkan/SemaphoreFactory.h>
+#include <anki/gr/vulkan/DeferredBarrierFactory.h>
 #include <anki/gr/vulkan/FenceFactory.h>
 #include <anki/gr/vulkan/QueryExtra.h>
 #include <anki/gr/vulkan/DescriptorSet.h>
@@ -237,10 +238,10 @@ private:
 	{
 	public:
 		MicroFencePtr m_presentFence;
-		GrSemaphorePtr m_acquireSemaphore;
+		MicroSemaphorePtr m_acquireSemaphore;
 
 		/// The semaphore that the submit that renders to the default FB.
-		GrSemaphorePtr m_renderSemaphore;
+		MicroSemaphorePtr m_renderSemaphore;
 	};
 
 	VkSurfaceKHR m_surface = VK_NULL_HANDLE;
@@ -263,7 +264,8 @@ private:
 	CommandBufferFactory m_cmdbFactory;
 
 	FenceFactory m_fences;
-	GrSemaphoreFactory m_semaphores;
+	SemaphoreFactory m_semaphores;
+	DeferredBarrierFactory m_barrierFactory;
 	/// @}
 
 	PipelineLayoutFactory m_pplineLayoutFactory;

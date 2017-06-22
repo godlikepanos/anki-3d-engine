@@ -79,6 +79,7 @@ GrManagerImpl::~GrManagerImpl()
 	// THIRD THING: Continue with the rest
 	m_gpuMemManager.destroy();
 
+	m_barrierFactory.destroy(); // Destroy before fences
 	m_semaphores.destroy(); // Destroy before fences
 	m_fences.destroy();
 
@@ -163,6 +164,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	glslang::InitializeProcess();
 	m_fences.init(getAllocator(), m_device);
 	m_semaphores.init(getAllocator(), m_device);
+	m_barrierFactory.init(getAllocator(), m_device);
 
 	m_queryAlloc.init(getAllocator(), m_device);
 
