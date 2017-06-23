@@ -42,6 +42,7 @@ public:
 	Vec4 m_unprojParams;
 
 	CommandBufferPtr m_commandBuffer; ///< Primary command buffer.
+	CommandBufferPtr m_defaultFbCommandBuffer; ///< The default framebuffer renderpass is in a separate cmdb.
 
 	StackAllocator<U8> m_tempAllocator;
 

@@ -89,12 +89,16 @@ Error MainRenderer::render(RenderQueue& rqueue)
 	// First thing, reset the temp mem pool
 	m_frameAlloc.getMemoryPool().reset();
 
-	GrManager& gl = m_r->getGrManager();
+	// Create command buffers
+	GrManager& gr = m_r->getGrManager();
 	CommandBufferInitInfo cinf;
 	cinf.m_flags =
 		CommandBufferFlag::COMPUTE_WORK | CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::TRANSFER_WORK;
 	cinf.m_hints = m_cbInitHints;
-	CommandBufferPtr cmdb = gl.newInstance<CommandBuffer>(cinf);
+	CommandBufferPtr cmdb = gr.newInstance<CommandBuffer>(cinf);
+
+	cinf.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
+	CommandBufferPtr defaultFbCmdb = gr.newInstance<CommandBuffer>(cinf);
 
 	// Run renderer
 	RenderingContext ctx(m_frameAlloc);
@@ -107,6 +111,7 @@ Error MainRenderer::render(RenderQueue& rqueue)
 	}
 
 	ctx.m_commandBuffer = cmdb;
+	ctx.m_defaultFbCommandBuffer = defaultFbCmdb;
 	ctx.m_renderQueue = &rqueue;
 	ctx.m_unprojParams = ctx.m_renderQueue->m_projectionMatrix.extractPerspectiveUnprojectionParams();
 	ANKI_CHECK(m_r->render(ctx));
@@ -114,18 +119,19 @@ Error MainRenderer::render(RenderQueue& rqueue)
 	// Blit renderer's result to default FB if needed
 	if(!m_rDrawToDefaultFb)
 	{
-		cmdb->beginRenderPass(m_defaultFb);
-		cmdb->setViewport(0, 0, m_width, m_height);
+		defaultFbCmdb->beginRenderPass(m_defaultFb);
+		defaultFbCmdb->setViewport(0, 0, m_width, m_height);
 
-		cmdb->bindShaderProgram(m_blitGrProg);
-		cmdb->bindTexture(0, 0, m_r->getFinalComposite().getRt());
+		defaultFbCmdb->bindShaderProgram(m_blitGrProg);
+		defaultFbCmdb->bindTexture(0, 0, m_r->getFinalComposite().getRt());
 
-		m_r->drawQuad(cmdb);
-		cmdb->endRenderPass();
+		m_r->drawQuad(defaultFbCmdb);
+		defaultFbCmdb->endRenderPass();
 	}
 
-	// Flush the command buffer
+	// Flush the command buffers
 	cmdb->flush();
+	defaultFbCmdb->flush();
 
 	// Set the hints
 	m_cbInitHints = cmdb->computeInitHints();

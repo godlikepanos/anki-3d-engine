@@ -104,11 +104,19 @@ Error FinalComposite::loadColorGradingTexture(CString filename)
 
 Error FinalComposite::run(RenderingContext& ctx)
 {
-	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
-
 	// Get the drawing parameters
-	Bool drawToDefaultFb = ctx.m_outFb.isCreated();
-	Bool dbgEnabled = m_r->getDbg().getEnabled();
+	const Bool drawToDefaultFb = ctx.m_outFb.isCreated();
+	const Bool dbgEnabled = m_r->getDbg().getEnabled();
+
+	CommandBufferPtr cmdb;
+	if(drawToDefaultFb)
+	{
+		cmdb = ctx.m_defaultFbCommandBuffer;
+	}
+	else
+	{
+		cmdb = ctx.m_commandBuffer;
+	}
 
 	// Bind stuff
 	cmdb->bindTextureAndSampler(
