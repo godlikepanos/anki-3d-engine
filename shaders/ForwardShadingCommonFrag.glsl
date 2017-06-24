@@ -12,8 +12,8 @@
 #include "shaders/Clusterer.glsl"
 
 // Global resources
-layout(ANKI_TEX_BINDING(1, 0)) uniform sampler2D anki_msDepthRt;
-#define LIGHT_SET 1
+layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D anki_msDepthRt;
+#define LIGHT_SET 0
 #define LIGHT_UBO_BINDING 0
 #define LIGHT_SS_BINDING 0
 #define LIGHT_TEX_BINDING 1
@@ -123,29 +123,23 @@ void particleAlpha(vec4 color, vec4 scaleColor, vec4 biasColor)
 	writeGBuffer(color * scaleColor + biasColor);
 }
 
-void fog(vec3 color, float fogScale)
+void fog(vec3 color, float fogAlphaScale, float fogDistanceOfMaxThikness)
 {
 	const vec2 screenSize = 1.0 / RENDERER_SIZE;
 
 	vec2 texCoords = gl_FragCoord.xy * screenSize;
 	float depth = texture(anki_msDepthRt, texCoords).r;
-	float diff;
+	float zFeatherFactor;
 
-	if(depth < 1.0)
-	{
-		float zNear = u_near;
-		float zFar = u_far;
-		vec2 linearDepths = (2.0 * zNear) / (zFar + zNear - vec2(depth, gl_FragCoord.z) * (zFar - zNear));
+	vec4 fragPosVspace4 = u_invProjMat * vec4(UV_TO_NDC(vec3(texCoords, depth)), 1.0);
+	float sceneZVspace = fragPosVspace4.z / fragPosVspace4.w;
 
-		diff = linearDepths.x - linearDepths.y;
-	}
-	else
-	{
-		// The depth buffer is cleared at this place. Set the diff to zero to avoid weird pop ups
-		diff = 0.0;
-	}
+	float diff = max(0.0, in_posViewSpace.z - sceneZVspace);
 
-	writeGBuffer(vec4(color, diff * fogScale));
+	zFeatherFactor = min(1.0, diff / fogDistanceOfMaxThikness);
+
+	writeGBuffer(vec4(color, zFeatherFactor * fogAlphaScale));
+	// writeGBuffer(vec4(vec3(zFeatherFactor), 1.0));
 }
 
 #endif

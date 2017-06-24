@@ -130,18 +130,17 @@ void ForwardShading::buildCommandBuffers(RenderingContext& ctx, U threadId, U th
 	CommandBufferPtr cmdb = m_r->getGrManager().newInstance<CommandBuffer>(cinf);
 	ctx.m_forwardShading.m_commandBuffers[threadId] = cmdb;
 
-	cmdb->informTextureCurrentUsage(m_r->getDepthDownscale().m_hd.m_depthRt,
-		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ);
+	cmdb->informTextureCurrentUsage(m_r->getDepthDownscale().m_qd.m_depthRt, TextureUsageBit::SAMPLED_FRAGMENT);
 	cmdb->informTextureCurrentUsage(m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE);
 
-	cmdb->bindTexture(1, 0, m_r->getDepthDownscale().m_hd.m_depthRt);
-	cmdb->bindTexture(1, 1, m_r->getShadowMapping().m_spotTexArray);
-	cmdb->bindTexture(1, 2, m_r->getShadowMapping().m_omniTexArray);
-	bindUniforms(cmdb, 1, 0, ctx.m_lightShading.m_commonToken);
-	bindUniforms(cmdb, 1, 1, ctx.m_lightShading.m_pointLightsToken);
-	bindUniforms(cmdb, 1, 2, ctx.m_lightShading.m_spotLightsToken);
-	bindStorage(cmdb, 1, 0, ctx.m_lightShading.m_clustersToken);
-	bindStorage(cmdb, 1, 1, ctx.m_lightShading.m_lightIndicesToken);
+	cmdb->bindTexture(0, 0, m_r->getDepthDownscale().m_qd.m_depthRt);
+	cmdb->bindTexture(0, 1, m_r->getShadowMapping().m_spotTexArray);
+	cmdb->bindTexture(0, 2, m_r->getShadowMapping().m_omniTexArray);
+	bindUniforms(cmdb, 0, 0, ctx.m_lightShading.m_commonToken);
+	bindUniforms(cmdb, 0, 1, ctx.m_lightShading.m_pointLightsToken);
+	bindUniforms(cmdb, 0, 2, ctx.m_lightShading.m_spotLightsToken);
+	bindStorage(cmdb, 0, 0, ctx.m_lightShading.m_clustersToken);
+	bindStorage(cmdb, 0, 1, ctx.m_lightShading.m_lightIndicesToken);
 
 	cmdb->setViewport(0, 0, m_width, m_height);
 	cmdb->setBlendFactors(

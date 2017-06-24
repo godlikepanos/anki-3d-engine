@@ -5,10 +5,13 @@ Code licensed under the BSD License.
 http://www.anki3d.org/LICENSE
 -->
 <shaderProgram>
+	<descriptorSet index="1"/>
+
 	<shaders>
 		<shader type="vert">
 			<inputs>
 				<input name="mvp" type="mat4"/>
+				<input name="modelView" type="mat4"/>
 			</inputs>
 
 			<source><![CDATA[
@@ -17,6 +20,7 @@ http://www.anki3d.org/LICENSE
 void main() 
 {
 	ANKI_WRITE_POSITION(mvp * vec4(in_position, 1.0));
+	out_posViewSpace = (modelView * vec4(in_position, 1.0)).xyz;
 }
 			]]></source>
 		</shader>
@@ -24,7 +28,8 @@ void main()
 		<shader type="frag">
 			<inputs>
 				<input name="fogColor" type="vec3" const="1"/>
-				<input name="fogScale" type="float" const="1"/>
+				<input name="fogAlphaScale" type="float" const="1"/>
+				<input name="fogDistanceOfMaxThikness" type="float" const="1"/>
 			</inputs>
 
 			<source><![CDATA[
@@ -32,7 +37,7 @@ void main()
 
 void main() 
 {
-	fog(fogColor, fogScale);
+	fog(fogColor, fogAlphaScale, fogDistanceOfMaxThikness);
 }
 			]]></source>
 		</shader>

@@ -109,10 +109,11 @@ void ModelPatchNode::drawCallback(RenderQueueDrawContext& ctx, WeakArray<const v
 		trfs[i] = Mat4(self2.getParent()->getComponentAt<MoveComponent>(0).getWorldTransform());
 	}
 
-	StagingGpuMemoryToken token;
 	self.getComponentAt<RenderComponent>(1).allocateAndSetupUniforms(
-		ctx, WeakArray<const Mat4>(&trfs[0], userData.getSize()), *ctx.m_stagingGpuAllocator, token);
-	cmdb->bindUniformBuffer(0, 0, token.m_buffer, token.m_offset, token.m_range);
+		self.m_modelPatch->getMaterial()->getDescriptorSetIndex(),
+		ctx,
+		WeakArray<const Mat4>(&trfs[0], userData.getSize()),
+		*ctx.m_stagingGpuAllocator);
 
 	// Draw
 	cmdb->drawElements(PrimitiveTopology::TRIANGLES,
@@ -285,10 +286,10 @@ void ModelNode::drawCallback(RenderQueueDrawContext& ctx, WeakArray<const void*>
 		trfs[i] = Mat4(self2.getComponentAt<MoveComponent>(0).getWorldTransform());
 	}
 
-	StagingGpuMemoryToken token;
-	self.getComponentAt<RenderComponent>(3).allocateAndSetupUniforms(
-		ctx, WeakArray<const Mat4>(&trfs[0], userData.getSize()), *ctx.m_stagingGpuAllocator, token);
-	cmdb->bindUniformBuffer(0, 0, token.m_buffer, token.m_offset, token.m_range);
+	self.getComponentAt<RenderComponent>(3).allocateAndSetupUniforms(patch->getMaterial()->getDescriptorSetIndex(),
+		ctx,
+		WeakArray<const Mat4>(&trfs[0], userData.getSize()),
+		*ctx.m_stagingGpuAllocator);
 
 	// Draw
 	cmdb->drawElements(PrimitiveTopology::TRIANGLES,

@@ -27,6 +27,7 @@ addons:
       - g++-6
       - clang-3.7
       - libvulkan-dev
+      - libegl1-mesa-dev
 
 script:
   - mkdir build 

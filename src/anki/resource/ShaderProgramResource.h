@@ -274,6 +274,8 @@ static_assert(sizeof(ShaderProgramResourceConstantValue) == sizeof(Vec4) * 2, "N
 /// XML file format:
 /// @code
 /// <shaderProgram>
+///		[<descriptorSet index="0 | 1"/>] (4)
+///
 /// 	[<mutators> (1)
 /// 		<mutator name="str" values="array of ints" [instanced="0 | 1"]/>
 /// 	</mutators>]
@@ -310,6 +312,7 @@ static_assert(sizeof(ShaderProgramResourceConstantValue) == sizeof(Vec4) * 2, "N
 /// (2): This lists a subset of mutators and out of these variants a subset of their values. The input variable will
 ///      become active only on those mutators. Mutators not listed are implicitly added with all their values.
 /// (3): Global inputs. For all shaders.
+/// (4): By default it's 0 but you can change the set resources are bound in the shader.
 class ShaderProgramResource : public ResourceObject
 {
 public:
@@ -320,11 +323,13 @@ public:
 	/// Load the resource.
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename);
 
+	/// Get the array of input variables.
 	const DynamicArray<ShaderProgramResourceInputVariable>& getInputVariables() const
 	{
 		return m_inputVars;
 	}
 
+	/// Try to find an input variable.
 	const ShaderProgramResourceInputVariable* tryFindInputVariable(CString name) const
 	{
 		for(const ShaderProgramResourceInputVariable& m : m_inputVars)
@@ -337,11 +342,13 @@ public:
 		return nullptr;
 	}
 
+	/// Get the array of mutators.
 	const DynamicArray<ShaderProgramResourceMutator>& getMutators() const
 	{
 		return m_mutators;
 	}
 
+	/// Try to find a mutator.
 	const ShaderProgramResourceMutator* tryFindMutator(CString name) const
 	{
 		for(const ShaderProgramResourceMutator& m : m_mutators)
@@ -385,19 +392,28 @@ public:
 			variant);
 	}
 
+	/// Has tessellation shaders.
 	Bool hasTessellation() const
 	{
 		return m_tessellation;
 	}
 
+	/// Return true if it's instanced.
 	Bool isInstanced() const
 	{
 		return m_instancingMutator != nullptr;
 	}
 
+	/// Get the mutator that controls the instancing.
 	const ShaderProgramResourceMutator* getInstancingMutator() const
 	{
 		return m_instancingMutator;
+	}
+
+	/// The value of attribute "index" in <descriptorSet> tag.
+	U getDescriptorSetIndex() const
+	{
+		return m_descriptorSet;
 	}
 
 private:
@@ -411,6 +427,7 @@ private:
 
 	Bool8 m_tessellation = false;
 	Bool8 m_compute = false;
+	U8 m_descriptorSet = 0;
 	const ShaderProgramResourceMutator* m_instancingMutator = nullptr;
 
 	/// Parse whatever is inside <inputs>

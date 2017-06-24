@@ -61,6 +61,7 @@ Error Material::load(const ResourceFilename& filename)
 	CString fname;
 	ANKI_CHECK(rootEl.getAttributeText("shaderProgram", fname));
 	ANKI_CHECK(getManager().loadResource(fname, m_prog));
+	m_descriptorSetIdx = m_prog->getDescriptorSetIndex();
 
 	// shadow
 	ANKI_CHECK(rootEl.getAttributeNumberOptional("shadow", m_shadow, present));

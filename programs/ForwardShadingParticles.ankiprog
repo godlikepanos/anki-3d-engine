@@ -5,6 +5,8 @@ Code licensed under the BSD License.
 http://www.anki3d.org/LICENSE
 -->
 <shaderProgram>
+	<descriptorSet index="1"/>
+
 	<mutators>
 		<mutator name="ANIMATED_TEXTURE" values="0 1"/>
 		<mutator name="LIGHT" values="0 1"/>

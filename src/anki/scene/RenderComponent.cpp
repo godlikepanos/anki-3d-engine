@@ -30,10 +30,8 @@ RenderComponent::~RenderComponent()
 	m_vars.destroy(getAllocator());
 }
 
-void RenderComponent::allocateAndSetupUniforms(const RenderQueueDrawContext& ctx,
-	WeakArray<const Mat4> transforms,
-	StagingGpuMemoryManager& alloc,
-	StagingGpuMemoryToken& token) const
+void RenderComponent::allocateAndSetupUniforms(
+	U set, const RenderQueueDrawContext& ctx, WeakArray<const Mat4> transforms, StagingGpuMemoryManager& alloc) const
 {
 	ANKI_ASSERT(transforms.getSize() <= MAX_INSTANCES);
 
@@ -41,6 +39,7 @@ void RenderComponent::allocateAndSetupUniforms(const RenderQueueDrawContext& ctx
 	const ShaderProgramResourceVariant& progVariant = variant.getShaderProgramResourceVariant();
 
 	// Allocate uniform memory
+	StagingGpuMemoryToken token;
 	U8* uniforms =
 		static_cast<U8*>(alloc.allocateFrame(variant.getUniformBlockSize(), StagingGpuMemoryType::UNIFORM, token));
 	void* const uniformsBegin = uniforms;
@@ -187,13 +186,15 @@ void RenderComponent::allocateAndSetupUniforms(const RenderQueueDrawContext& ctx
 		case ShaderVariableDataType::SAMPLER_CUBE:
 		{
 			ctx.m_commandBuffer->bindTexture(
-				0, progVariant.getTextureUnit(progvar), mvar.getValue<TextureResourcePtr>()->getGrTexture());
+				set, progVariant.getTextureUnit(progvar), mvar.getValue<TextureResourcePtr>()->getGrTexture());
 			break;
 		}
 		default:
 			ANKI_ASSERT(0);
 		} // end switch
 	}
+
+	ctx.m_commandBuffer->bindUniformBuffer(set, 0, token.m_buffer, token.m_offset, token.m_range);
 }
 
 } // end namespace anki

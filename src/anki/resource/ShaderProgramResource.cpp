@@ -196,6 +196,23 @@ Error ShaderProgramResource::load(const ResourceFilename& filename)
 	XmlElement rootEl;
 	ANKI_CHECK(doc.getChildElement("shaderProgram", rootEl));
 
+	// <descriptorSet>
+	XmlElement dsetEl;
+	ANKI_CHECK(rootEl.getChildElementOptional("descriptorSet", dsetEl));
+	if(dsetEl)
+	{
+		ANKI_CHECK(dsetEl.getAttributeNumber("index", m_descriptorSet));
+		if(m_descriptorSet >= MAX_DESCRIPTOR_SETS)
+		{
+			ANKI_RESOURCE_LOGE("<descriptorSet> should be lower than %u", U(MAX_DESCRIPTOR_SETS - 1));
+			return ErrorCode::USER_DATA;
+		}
+	}
+	else
+	{
+		m_descriptorSet = 0;
+	}
+
 	// <mutators>
 	XmlElement mutatorsEl;
 	ANKI_CHECK(rootEl.getChildElementOptional("mutators", mutatorsEl));
@@ -667,7 +684,8 @@ Error ShaderProgramResource::parseInputs(XmlElement& inputsEl,
 		{
 			if(blockSrc.isEmpty())
 			{
-				blockSrc.pushBack("layout(ANKI_UBO_BINDING(0, 0), std140, row_major) uniform sprubo00_ {\n");
+				blockSrc.pushBackSprintf(
+					"layout(ANKI_UBO_BINDING(%u, 0), std140, row_major) uniform sprubo00_ {\n", U(m_descriptorSet));
 			}
 
 			blockSrc.pushBackSprintf("#if %s_DEFINED == 1\n", &name[0]);
@@ -699,8 +717,11 @@ Error ShaderProgramResource::parseInputs(XmlElement& inputsEl,
 		if(var.isTexture())
 		{
 			globalsSrc.pushBackSprintf("#if %s_DEFINED == 1\n", &name[0]);
-			globalsSrc.pushBackSprintf(
-				"layout(ANKI_TEX_BINDING(0, %s_TEXUNIT)) uniform %s %s;\n", &name[0], &typeTxt[0], &name[0]);
+			globalsSrc.pushBackSprintf("layout(ANKI_TEX_BINDING(%u, %s_TEXUNIT)) uniform %s %s;\n",
+				U(m_descriptorSet),
+				&name[0],
+				&typeTxt[0],
+				&name[0]);
 			globalsSrc.pushBack("#endif\n");
 		}
 

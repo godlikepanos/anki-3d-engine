@@ -290,9 +290,8 @@ void ParticleEmitter::drawCallback(RenderQueueDrawContext& ctx, WeakArray<const 
 
 	// Uniforms
 	Array<Mat4, 1> trf = {{Mat4::getIdentity()}};
-	StagingGpuMemoryToken token;
-	self.getComponent<RenderComponent>().allocateAndSetupUniforms(ctx, trf, *ctx.m_stagingGpuAllocator, token);
-	cmdb->bindUniformBuffer(0, 0, token.m_buffer, token.m_offset, token.m_range);
+	self.getComponent<RenderComponent>().allocateAndSetupUniforms(
+		self.m_particleEmitterResource->getMaterial()->getDescriptorSetIndex(), ctx, trf, *ctx.m_stagingGpuAllocator);
 
 	// Draw
 	cmdb->drawArrays(PrimitiveTopology::TRIANGLE_STRIP, 4, self.m_aliveParticlesCount, 0, 0);

@@ -10,7 +10,7 @@
 #include "shaders/Common.glsl"
 
 // Global resources
-#define LIGHT_SET 1
+#define LIGHT_SET 0
 #define LIGHT_SS_BINDING 0
 #define LIGHT_TEX_BINDING 1
 #define LIGHT_UBO_BINDING 0
