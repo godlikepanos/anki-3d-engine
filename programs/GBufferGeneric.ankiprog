@@ -45,7 +45,7 @@ void main()
 		parallax(modelViewMat);
 	#endif
 #else
-	ANKI_WRITE_POSITION(mvp * vec4(in_position, 1.0));
+	gl_Position = mvp * vec4(in_position, 1.0);
 #endif
 }
 			]]>

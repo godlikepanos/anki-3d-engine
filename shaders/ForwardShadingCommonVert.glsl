@@ -39,7 +39,7 @@ void particle(in mat4 mvp, in mat3 camRot, in mat4 viewMat)
 	out_uv = vec2(gl_VertexID & 1, gl_VertexID >> 1);
 
 	vec3 worldPos = camRot * vec3((out_uv - 0.5) * in_scale, 0.0) + in_position;
-	ANKI_WRITE_POSITION(mvp * vec4(worldPos, 1.0));
+	gl_Position = mvp * vec4(worldPos, 1.0);
 
 	out_posViewSpace = (viewMat * vec4(worldPos, 1.0)).xyz;
 

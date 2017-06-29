@@ -28,7 +28,7 @@ void main()
 {
 	const vec2 POSITIONS[3] = vec2[](vec2(-1.0, 1.0), vec2(0.0, -1.0), vec2(1.0, 1.0));
 
-	ANKI_WRITE_POSITION(vec4(POSITIONS[gl_VertexID % 3], 0.0, 1.0));
+	gl_Position = vec4(POSITIONS[gl_VertexID % 3], 0.0, 1.0);
 })";
 
 static const char* VERT_QUAD_STRIP_SRC = R"(
@@ -41,7 +41,7 @@ void main()
 {
 	const vec2 POSITIONS[4] = vec2[](vec2(-1.0, -1.0), vec2(1.0, -1.0), vec2(-1.0, 1.0), vec2(1.0, 1.0));
 
-	ANKI_WRITE_POSITION(vec4(POSITIONS[gl_VertexID % 4], 0.0, 1.0));
+	gl_Position = vec4(POSITIONS[gl_VertexID % 4], 0.0, 1.0);
 })";
 
 static const char* VERT_UBO_SRC = R"(
@@ -110,7 +110,7 @@ void main()
 		vec2[](vec2(-1.0, 1.0), vec2(-1.0, -1.0), vec2(1.0, -1.0),
 		vec2(1.0, -1.0), vec2(1.0, 1.0), vec2(-1.0, 1.0));
 
-	ANKI_WRITE_POSITION(vec4(POSITIONS[gl_VertexID], 0.0, 1.0));
+	gl_Position = vec4(POSITIONS[gl_VertexID], 0.0, 1.0);
 	out_uv = POSITIONS[gl_VertexID] / 2.0 + 0.5;
 })";
 
@@ -129,7 +129,7 @@ layout(ANKI_UBO_BINDING(0, 0), std140, row_major) uniform u0_
 
 void main()
 {
-	ANKI_WRITE_POSITION(u_mvp * vec4(in_pos, 1.0));
+	gl_Position = u_mvp * vec4(in_pos, 1.0);
 })";
 
 static const char* FRAG_SRC = R"(layout (location = 0) out vec4 out_color;

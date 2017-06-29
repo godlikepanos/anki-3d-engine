@@ -57,7 +57,7 @@ void DecalComponent::updateInternal()
 		FRUSTUM_NEAR_PLANE,
 		m_sizes.z());
 
-	static const Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0);
+	static const Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
 
 	m_biasProjViewMat = biasMat4 * projMat * viewMat;
 

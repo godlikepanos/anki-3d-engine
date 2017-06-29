@@ -35,13 +35,13 @@ float dither(in float col, in float C)
 // Convert to linear depth
 float linearizeDepth(in float depth, in float zNear, in float zFar)
 {
-	return (2.0 * zNear) / (zFar + zNear - depth * (zFar - zNear));
+	return zNear / ((zNear - zFar) + zFar / depth);
 }
 
-// This is the optimal linearizeDepth where a=(f+n)/2n and b=(n-f)/2n
+// This is the optimal linearizeDepth where a=(n-f)/n and b=f/n
 float linearizeDepthOptimal(in float depth, in float a, in float b)
 {
-	return 1.0 / (a + depth * b);
+	return 1.0 / (a + b / depth);
 }
 
 // Project a vector by knowing only the non zero values of a perspective matrix

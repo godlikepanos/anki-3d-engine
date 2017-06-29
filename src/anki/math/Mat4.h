@@ -31,7 +31,7 @@ public:
 };
 #endif
 
-/// 4x4 Matrix. Used mainly for transformations but not necessarily. Its row major. SSE optimized
+/// 4x4 Matrix. Used mainly for transformations but not necessarily. It's row major. SSE optimized
 /// @note TMat4*TMat4: 64 muls 48 adds
 template<typename T>
 class alignas(16) TMat4 : public TMat<T, 4, 4, typename TMat4Simd<T>::Type, TMat4<T>, TVec4<T>, TVec4<T>>
@@ -352,6 +352,7 @@ public:
 			m(2, 0) * v.x() + m(2, 1) * v.y() + m(2, 2) * v.z() + m(2, 3));
 	}
 
+	/// Calculate a perspective projection matrix. The z is mapped in [0, 1] range just like DX and Vulkan.
 	static TMat4 calculatePerspectiveProjectionMatrix(T fovX, T fovY, T near, T far)
 	{
 		ANKI_ASSERT(fovX > T(0) && fovY > T(0) && near > T(0) && far > T(0));
@@ -370,8 +371,8 @@ public:
 		proj(1, 3) = T(0);
 		proj(2, 0) = T(0);
 		proj(2, 1) = T(0);
-		proj(2, 2) = (far + near) / g;
-		proj(2, 3) = (T(2) * far * near) / g;
+		proj(2, 2) = far / g;
+		proj(2, 3) = (far * near) / g;
 		proj(3, 0) = T(0);
 		proj(3, 1) = T(0);
 		proj(3, 2) = T(-1);
@@ -380,6 +381,7 @@ public:
 		return proj;
 	}
 
+	/// Calculate an orthographic projection matrix. The z is mapped in [0, 1] range just like DX and Vulkan.
 	static TMat4 calculateOrthographicProjectionMatrix(T right, T left, T top, T bottom, T near, T far)
 	{
 		ANKI_ASSERT(right != T(0) && left != T(0) && top != T(0) && bottom != T(0) && near != T(0) && far != T(0));
@@ -388,7 +390,7 @@ public:
 		T difz = far - near;
 		T tx = -(right + left) / difx;
 		T ty = -(top + bottom) / dify;
-		T tz = -(far + near) / difz;
+		T tz = -near / difz;
 		TMat4 m;
 
 		m(0, 0) = T(2) / difx;
@@ -401,7 +403,7 @@ public:
 		m(1, 3) = ty;
 		m(2, 0) = T(0);
 		m(2, 1) = T(0);
-		m(2, 2) = T(-2) / difz;
+		m(2, 2) = T(-1) / difz;
 		m(2, 3) = tz;
 		m(3, 0) = T(0);
 		m(3, 1) = T(0);
@@ -427,16 +429,17 @@ public:
 
 		T m00 = f * (fovY / fovX);
 		T m11 = f;
-		T m22 = (far + near) / g;
-		T m23 = (T(2) * far * near) / g;
+		T m22 = far / g;
+		T m23 = (far * near) / g;
 
-		// First, z' = (m * Pv) / 2 + 0.5 where Pv is the view space position.
+		// First, clip = (m * Pv) where Pv is the view space position.
+		// ndc.z = clip.z / clip.w = (m22 * Pv.z + m23) / -Pv.z. Note that ndc.z == depth in zero_to_one projection.
 		// Solving that for Pv.z we get
-		// Pv.z = A / (z' + B)
-		// where A = (-m23 / 2) and B = (m22 / 2 - 0.5)
+		// Pv.z = A / (depth + B)
+		// where A = -m23 and B = m22
 		// so we save the A and B in the projection params vector
-		out.z() = -m23 * T(0.5);
-		out.w() = m22 * T(0.5) - T(0.5);
+		out.z() = -m23;
+		out.w() = m22;
 
 		// Using the same logic the Pv.x = x' * w / m00
 		// so Pv.x = x' * Pv.z * (-1 / m00)
@@ -454,8 +457,8 @@ public:
 	{
 		TVec4<T> out;
 		const TMat4& m = *this;
-		out.z() = -m(2, 3) * T(0.5);
-		out.w() = m(2, 2) * T(0.5) - T(0.5);
+		out.z() = -m(2, 3);
+		out.w() = m(2, 2);
 		out.x() = -T(1.0) / m(0, 0);
 		out.y() = -T(1.0) / m(1, 1);
 		return out;

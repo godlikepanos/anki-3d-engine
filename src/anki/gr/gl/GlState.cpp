@@ -136,6 +136,7 @@ void GlState::initRenderThread()
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_SCISSOR_TEST);
 	glScissor(0, 0, MAX_U16, MAX_U16);
+	glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
 
 	// Create default VAO
 	glGenVertexArrays(1, &m_defaultVao);

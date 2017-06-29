@@ -148,10 +148,9 @@ float computeShadowFactorOmni(
 
 	// Original code:
 	// float g = near - far;
-	// float z = (far + near) / g * dist + (2.0 * far * near) / g;
+	// float z = far / g * dist + (far * near) / g;
 	// float w = -dist;
 	// z /= w;
-	// z = z * 0.5 + 0.5;
 	// Optimized:
 	float z = (far * (dist + near)) / (dist * (far - near));
 

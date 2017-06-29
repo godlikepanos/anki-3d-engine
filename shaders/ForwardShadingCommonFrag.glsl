@@ -131,7 +131,7 @@ void fog(vec3 color, float fogAlphaScale, float fogDistanceOfMaxThikness)
 	float depth = texture(anki_msDepthRt, texCoords).r;
 	float zFeatherFactor;
 
-	vec4 fragPosVspace4 = u_invProjMat * vec4(UV_TO_NDC(vec3(texCoords, depth)), 1.0);
+	vec4 fragPosVspace4 = u_invProjMat * vec4(vec3(UV_TO_NDC(texCoords), depth), 1.0);
 	float sceneZVspace = fragPosVspace4.z / fragPosVspace4.w;
 
 	float diff = max(0.0, in_posViewSpace.z - sceneZVspace);

@@ -101,7 +101,7 @@ void main(void)
 	vec3 randFactors = readRandom(in_uv);
 
 	// Get prev SSAO
-	vec4 clip = u_prevViewProjMatMulInvViewProjMat * vec4(vec3(ndc, UV_TO_NDC(depth)), 1.0);
+	vec4 clip = u_prevViewProjMatMulInvViewProjMat * vec4(vec3(ndc, depth), 1.0);
 	clip.xy /= clip.w;
 	vec2 oldUv = NDC_TO_UV(clip.xy);
 	float prevSsao = textureLod(u_prevSsaoRt, oldUv, 0.0).r;

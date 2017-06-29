@@ -283,15 +283,15 @@ void SoftwareRasterizer::rasterizeTriangle(const Vec4* tri)
 			Vec3 bc;
 			if(!computeBarycetrinc(window[0], window[1], window[2], p, bc))
 			{
-				F32 z0 = ndc[0].z() / 2.0 + 0.5;
-				F32 z1 = ndc[1].z() / 2.0 + 0.5;
-				F32 z2 = ndc[2].z() / 2.0 + 0.5;
+				const F32 z0 = ndc[0].z();
+				const F32 z1 = ndc[1].z();
+				const F32 z2 = ndc[2].z();
 
-				F32 depth = z0 * bc[0] + z1 * bc[1] + z2 * bc[2];
+				const F32 depth = z0 * bc[0] + z1 * bc[1] + z2 * bc[2];
 				ANKI_ASSERT(depth >= 0.0 && depth <= 1.0);
 
 				// Store the min of the current value and new one
-				U32 depthi = depth * MAX_U32;
+				const U32 depthi = depth * MAX_U32;
 				m_zbuffer[U(y) * m_width + U(x)].min(depthi);
 			}
 		}
@@ -349,7 +349,7 @@ Bool SoftwareRasterizer::visibilityTestInternal(const CollisionShape& cs, const 
 			bboxMax[i] = clamp(bboxMax[i], 0.0f, windowSize[i]);
 		}
 
-		minZ = min(minZ, p.z() / 2.0f + 0.5f);
+		minZ = min(minZ, p.z());
 	}
 
 	for(U y = bboxMin.y(); y < bboxMax.y(); y += 1.0f)

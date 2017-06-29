@@ -45,7 +45,7 @@ layout(location = 6) out mediump vec3 out_normalTangentSpace; // Parallax
 void positionUvNormalTangent(mat4 mvp, mat3 normalMat)
 {
 	out_uv = in_uv;
-	ANKI_WRITE_POSITION(mvp * vec4(in_position, 1.0));
+	gl_Position = mvp * vec4(in_position, 1.0);
 
 	out_normal = normalMat * in_normal.xyz;
 	out_tangent.xyz = normalMat * in_tangent.xyz;

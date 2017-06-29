@@ -131,7 +131,7 @@ void main()
 {
 	float depth = textureLod(u_msDepthRt, in_uv, 0.0).r;
 
-	vec3 ndc = UV_TO_NDC(vec3(in_uv, depth));
+	vec3 ndc = vec3(UV_TO_NDC(in_uv), depth);
 
 	vec3 farPos;
 	farPos.z = u_unprojectionParams.z / (u_unprojectionParams.w + depth);

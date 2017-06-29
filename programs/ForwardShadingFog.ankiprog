@@ -19,7 +19,7 @@ http://www.anki3d.org/LICENSE
 
 void main() 
 {
-	ANKI_WRITE_POSITION(mvp * vec4(in_position, 1.0));
+	gl_Position = mvp * vec4(in_position, 1.0);
 	out_posViewSpace = (modelView * vec4(in_position, 1.0)).xyz;
 }
 			]]></source>

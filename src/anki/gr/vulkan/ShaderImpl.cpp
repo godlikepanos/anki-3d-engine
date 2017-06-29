@@ -170,10 +170,6 @@ static const char* SHADER_HEADER = R"(#version 450 core
 	vec4(gl_FragCoord.x, h_ - gl_FragCoord.y, gl_FragCoord.z, gl_FragCoord.w);
 #endif
 
-#if defined(ANKI_VERTEX_SHADER)
-#define ANKI_WRITE_POSITION(x_) gl_Position = x_; gl_Position.z = (gl_Position.z + gl_Position.w) * 0.5
-#endif
-
 #if %s
 #extension GL_ARB_shader_ballot : require
 #define ANKI_ARB_SHADER_BALLOT 1

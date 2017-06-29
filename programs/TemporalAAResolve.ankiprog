@@ -49,7 +49,7 @@ void main()
 	float depth = textureLod(u_depthRt, in_uv, 0.0).r;
 
 	// Get prev uv coords
-	vec4 v4 = u_prevViewProjMatMulInvViewProjMat * UV_TO_NDC(vec4(in_uv, depth, 1.0));
+	vec4 v4 = u_prevViewProjMatMulInvViewProjMat * vec4(UV_TO_NDC(in_uv), depth, 1.0);
 	vec2 oldUv = NDC_TO_UV(v4.xy / v4.w);
 
 	// Read textures

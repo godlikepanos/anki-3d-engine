@@ -46,7 +46,7 @@ void main()
 	out_uv = vec3((position * 0.5) + 0.5, sprite.depthPad3.x);
 
 	vec4 posScale = sprite.posScale;
-	ANKI_WRITE_POSITION(vec4(position * posScale.zw + posScale.xy, 0.0, 1.0));
+	gl_Position = vec4(position * posScale.zw + posScale.xy, 0.0, 1.0);
 
 	out_color = sprite.color;
 }

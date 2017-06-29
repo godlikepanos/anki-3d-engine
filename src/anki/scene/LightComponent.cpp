@@ -32,7 +32,7 @@ Error LightComponent::update(SceneNode&, F32, F32, Bool& updated)
 
 		if(m_type == LightComponentType::SPOT)
 		{
-			static const Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0);
+			static const Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
 			Mat4 proj =
 				Mat4::calculatePerspectiveProjectionMatrix(m_outerAngle, m_outerAngle, FRUSTUM_NEAR_PLANE, m_distance);
 			m_spotTextureMatrix = biasMat4 * proj * Mat4(m_trf.getInverse());

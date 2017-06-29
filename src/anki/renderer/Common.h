@@ -67,11 +67,11 @@ const U BLOOM_FRACTION = 4;
 /// Volumetric size is rendererSize/VOLUMETRIC_FRACTION.
 const U VOLUMETRIC_FRACTION = 4;
 
-/// Computes the 'a' and 'b' numbers for linearizeDepthOptimal
+/// Computes the 'a' and 'b' numbers for linearizeDepthOptimal (see shaders)
 inline void computeLinearizeDepthOptimal(F32 near, F32 far, F32& a, F32& b)
 {
-	a = (far + near) / (2.0f * near);
-	b = (near - far) / (2.0f * near);
+	a = (near - far) / near;
+	b = far / near;
 }
 
 const U GBUFFER_COLOR_ATTACHMENT_COUNT = 3;

@@ -29,7 +29,7 @@ void main()
 {
 	out_uv = vec2(gl_VertexID & 1, gl_VertexID >> 1) * 2.0;
 	vec2 pos = out_uv * 2.0 - 1.0;
-	ANKI_WRITE_POSITION(vec4(pos, 0.0, 1.0));
+	gl_Position = vec4(pos, 0.0, 1.0);
 
 	out_clusterIJ = vec2(CLUSTER_COUNT_X, CLUSTER_COUNT_Y) * out_uv;
 }
@@ -148,13 +148,13 @@ void main()
 	vec2 ndc = UV_TO_NDC(in_uv);
 
 	// Get frag pos in view space
-	vec4 fragPos4 = u_invProjMat * vec4(ndc, UV_TO_NDC(depth), 1.0);
+	vec4 fragPos4 = u_invProjMat * vec4(ndc, depth, 1.0);
 	vec3 fragPos = fragPos4.xyz / fragPos4.w;
 
 	// Get world position
 	vec3 worldPos;
 	{
-		vec4 worldPos4 = u_invViewProjMat * vec4(ndc, UV_TO_NDC(depth), 1.0);
+		vec4 worldPos4 = u_invViewProjMat * vec4(ndc, depth, 1.0);
 		worldPos4 = worldPos4 / worldPos4.w;
 		worldPos = worldPos4.xyz;
 	}
