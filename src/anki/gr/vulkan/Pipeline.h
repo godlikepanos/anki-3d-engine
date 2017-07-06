@@ -135,6 +135,21 @@ class PipelineInfoState : public NonCopyable
 public:
 	PipelineInfoState()
 	{
+		reset();
+	}
+
+	ShaderProgramPtr m_prog;
+	PPVertexStateInfo m_vertex;
+	PPInputAssemblerStateInfo m_inputAssembler;
+	PPTessellationStateInfo m_tessellation;
+	PPViewportStateInfo m_viewport;
+	PPRasterizerStateInfo m_rasterizer;
+	PPDepthStateInfo m_depth;
+	PPStencilStateInfo m_stencil;
+	PPColorStateInfo m_color;
+
+	void reset()
+	{
 		// Do a special construction. The state will be hashed and the padding may contain garbage. With this trick
 		// zero the padding
 		memset(this, 0, sizeof(*this));
@@ -153,16 +168,6 @@ public:
 
 #undef ANKI_CONSTRUCT_AND_ZERO_PADDING
 	}
-
-	ShaderProgramPtr m_prog;
-	PPVertexStateInfo m_vertex;
-	PPInputAssemblerStateInfo m_inputAssembler;
-	PPTessellationStateInfo m_tessellation;
-	PPViewportStateInfo m_viewport;
-	PPRasterizerStateInfo m_rasterizer;
-	PPDepthStateInfo m_depth;
-	PPStencilStateInfo m_stencil;
-	PPColorStateInfo m_color;
 };
 
 /// Track changes in the static state.
@@ -409,23 +414,30 @@ public:
 	/// Populate the internal pipeline create info structure.
 	const VkGraphicsPipelineCreateInfo& updatePipelineCreateInfo();
 
+	void reset();
+
 private:
 	PipelineInfoState m_state;
 
 	class Hashes
 	{
 	public:
-		U64 m_prog = 0;
-		Array<U64, MAX_VERTEX_ATTRIBUTES> m_vertexAttribs = {};
-		U64 m_ia = 0;
-		U64 m_raster = 0;
-		U64 m_depth = 0;
-		U64 m_stencil = 0;
-		U64 m_color = 0;
-		Array<U64, MAX_COLOR_ATTACHMENTS> m_colAttachments = {};
+		U64 m_prog;
+		Array<U64, MAX_VERTEX_ATTRIBUTES> m_vertexAttribs;
+		U64 m_ia;
+		U64 m_raster;
+		U64 m_depth;
+		U64 m_stencil;
+		U64 m_color;
+		Array<U64, MAX_COLOR_ATTACHMENTS> m_colAttachments;
 
-		U64 m_superHash = 0;
-		U64 m_lastSuperHash = 0;
+		U64 m_superHash;
+		U64 m_lastSuperHash;
+
+		Hashes()
+		{
+			zeroMemory(*this);
+		}
 	} m_hashes;
 
 	class DirtyBits

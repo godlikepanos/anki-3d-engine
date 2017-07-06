@@ -227,6 +227,12 @@ void CommandBufferImpl::endRenderPass()
 
 	m_activeFb.reset(nullptr);
 	m_state.endRenderPass();
+
+	// After pushing second level command buffers the state is undefined. Reset the tracker
+	if(m_subpassContents == VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS)
+	{
+		m_state.reset();
+	}
 }
 
 void CommandBufferImpl::endRecording()

@@ -10,6 +10,21 @@
 namespace anki
 {
 
+void PipelineStateTracker::reset()
+{
+	m_state.reset();
+	m_hashes = {};
+	m_dirty = {};
+	m_set = {};
+	m_shaderAttributeMask.unsetAll();
+	m_shaderColorAttachmentWritemask.unsetAll();
+	m_fbDepth = false;
+	m_fbStencil = false;
+	m_defaultFb = false;
+	m_fbColorAttachmentMask.unsetAll();
+	m_rpass = VK_NULL_HANDLE;
+}
+
 Bool PipelineStateTracker::updateHashes()
 {
 	Bool stateDirty = false;
