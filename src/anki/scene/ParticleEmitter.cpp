@@ -271,6 +271,13 @@ void ParticleEmitter::drawCallback(RenderQueueDrawContext& ctx, WeakArray<const 
 	ANKI_ASSERT(userData.getSize() == 1);
 
 	const ParticleEmitter& self = *static_cast<const ParticleEmitter*>(userData[0]);
+
+	// Early exit
+	if(ANKI_UNLIKELY(self.m_aliveParticlesCount == 0))
+	{
+		return;
+	}
+
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 	// Program

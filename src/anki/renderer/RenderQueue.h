@@ -83,7 +83,6 @@ public:
 	Vec3 m_diffuseColor;
 	Vec3 m_specularColor;
 	RenderQueue* m_shadowRenderQueue;
-	U32 m_textureArrayIndex; ///< Renderer internal.
 
 	Bool hasShadow() const
 	{

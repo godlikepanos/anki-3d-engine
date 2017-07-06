@@ -716,7 +716,7 @@ void LightBin::writeAndBinSpotLight(
 		// bias * proj_l * view_l * world_c
 		light.m_texProjectionMat = lightEl.m_textureMatrix * ctx.m_camTrf;
 
-		shadowmapIndex = F32(lightEl.m_textureArrayIndex);
+		shadowmapIndex = 1.0f; // Just set a value
 	}
 
 	// Pos & dist

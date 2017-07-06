@@ -52,9 +52,6 @@ class ShaderProgramResourceVariant;
 /// @addtogroup renderer
 /// @{
 
-/// WARNING: If you change the tile size you need to change some shaders
-const U TILE_SIZE = 64;
-
 /// FS size is rendererSize/FS_FRACTION.
 const U FS_FRACTION = 2;
 
@@ -88,6 +85,9 @@ const PixelFormat LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT(ComponentFormat::R
 const PixelFormat FORWARD_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT(ComponentFormat::R16G16B16A16, TransformFormat::FLOAT);
 
 const PixelFormat DBG_COLOR_ATTACHMENT_PIXEL_FORMAT(ComponentFormat::R8G8B8, TransformFormat::UNORM);
+
+const PixelFormat SHADOW_DEPTH_PIXEL_FORMAT(ComponentFormat::D32, TransformFormat::FLOAT);
+const PixelFormat SHADOW_COLOR_PIXEL_FORMAT(ComponentFormat::R32, TransformFormat::FLOAT);
 /// @}
 
 } // end namespace anki

@@ -193,7 +193,13 @@ void FramebufferImpl::bind(const GlState& state, U16 minx, U16 miny, U16 maxx, U
 		// Invalidate
 		if(m_invalidateBuffersCount)
 		{
-			glInvalidateFramebuffer(GL_FRAMEBUFFER, m_invalidateBuffersCount, &m_invalidateBuffers[0]);
+			glInvalidateSubFramebuffer(GL_FRAMEBUFFER,
+				m_invalidateBuffersCount,
+				&m_invalidateBuffers[0],
+				minx,
+				miny,
+				maxx - minx,
+				maxy - miny);
 		}
 
 		// Clear buffers

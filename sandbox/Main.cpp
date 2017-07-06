@@ -112,7 +112,7 @@ Error MyApp::userMainLoop(Bool& quit)
 	}
 	if(in.getKey(KeyCode::_2))
 	{
-		mover = &scene.findSceneNode("decal0").getComponent<MoveComponent>();
+		mover = &scene.findSceneNode("Spot_004").getComponent<MoveComponent>();
 	}
 
 	if(in.getKey(KeyCode::L) == 1)

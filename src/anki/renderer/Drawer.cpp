@@ -92,7 +92,15 @@ void RenderableDrawer::drawSingle(DrawContext& ctx)
 
 	const RenderableQueueElement& rqel = *ctx.m_renderableElement;
 
-	const U8 lod = min<U8>(m_r->calculateLod(rqel.m_distanceFromCamera), MAX_LOD_COUNT - 1);
+	U8 lod;
+	if(ctx.m_queueCtx.m_key.m_pass == Pass::SM)
+	{
+		lod = MAX_LOD_COUNT - 1;
+	}
+	else
+	{
+		lod = min<U8>(m_r->calculateLod(rqel.m_distanceFromCamera), MAX_LOD_COUNT - 1);
+	}
 
 	const Bool shouldFlush = ctx.m_cachedRenderElementCount > 0
 		&& (!canMergeRenderableQueueElements(ctx.m_cachedRenderElements[ctx.m_cachedRenderElementCount - 1], rqel)

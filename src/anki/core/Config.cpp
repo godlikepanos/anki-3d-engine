@@ -21,10 +21,9 @@ Config::Config()
 	newOption("r.maxLightsPerCluster", 8);
 
 	newOption("r.shadowMapping.enabled", true);
-	newOption("r.shadowMapping.poissonEnabled", true);
-	newOption("r.shadowMapping.bilinearEnabled", true);
 	newOption("r.shadowMapping.resolution", 512);
 	newOption("r.shadowMapping.maxLights", 16);
+	newOption("r.shadowMapping.batchCount", 6);
 
 	newOption("r.lensFlare.maxSpritesPerFlare", 8);
 	newOption("r.lensFlare.maxFlares", 16);

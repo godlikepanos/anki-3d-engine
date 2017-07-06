@@ -238,7 +238,7 @@ void main()
 		if(shadowmapLayerIdx >= 0.0)
 		{
 			float shadow = computeShadowFactorSpot(
-				light.texProjectionMat, fragPos, shadowmapLayerIdx, 1, u_spotMapArr);
+				light.texProjectionMat, fragPos, light.specularColorRadius.w, u_spotMapArr);
 			lambert *= shadow;
 		}
 

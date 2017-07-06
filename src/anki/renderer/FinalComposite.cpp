@@ -119,6 +119,9 @@ Error FinalComposite::run(RenderingContext& ctx)
 	}
 
 	// Bind stuff
+	cmdb->informTextureCurrentUsage(m_r->getTemporalAA().getRt(), TextureUsageBit::SAMPLED_FRAGMENT);
+	cmdb->informTextureCurrentUsage(m_r->getBloom().m_upscale.m_rt, TextureUsageBit::SAMPLED_FRAGMENT);
+
 	cmdb->bindTextureAndSampler(
 		0, 0, m_r->getTemporalAA().getRt(), (drawToDefaultFb) ? m_r->getNearestSampler() : m_r->getLinearSampler());
 	cmdb->bindTexture(0, 1, m_r->getBloom().m_upscale.m_rt);

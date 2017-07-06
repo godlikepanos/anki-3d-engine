@@ -20,13 +20,8 @@ namespace anki
 class ShadowMapping : public RenderingPass
 {
 anki_internal:
-	static const PixelFormat DEPTH_RT_PIXEL_FORMAT;
-
-	/// Enable Poisson for all the levels
-	Bool8 m_poissonEnabled = false;
-
-	TexturePtr m_spotTexArray;
-	TexturePtr m_omniTexArray;
+	TexturePtr m_spotTex; ///< ESM map.
+	TexturePtr m_omniTexArray; ///< ESM map.
 
 	ShadowMapping(Renderer* r)
 		: RenderingPass(r)
@@ -39,7 +34,7 @@ anki_internal:
 
 	void prepareBuildCommandBuffers(RenderingContext& ctx);
 
-	void buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) const;
+	void buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount);
 
 	void setPreRunBarriers(RenderingContext& ctx);
 
@@ -48,58 +43,61 @@ anki_internal:
 	void setPostRunBarriers(RenderingContext& ctx);
 
 private:
-	class ShadowmapBase
+	class CacheEntry
 	{
 	public:
-		U32 m_layerId;
 		U32 m_timestamp = 0; ///< Timestamp of last render or light change
 		U64 m_lightUuid = 0;
 	};
 
-	class ShadowmapSpot : public ShadowmapBase
+	class SpotCacheEntry : public CacheEntry
 	{
 	public:
+		Array<U32, 4> m_renderArea;
+		Array<F32, 4> m_uv;
+	};
+
+	class OmniCacheEntry : public CacheEntry
+	{
+	public:
+		U32 m_layerId;
+		Array<FramebufferPtr, 6> m_fbs;
+	};
+
+	U32 m_tileResolution; ///< Shadowmap resolution
+	U32 m_atlasResolution;
+
+	DynamicArray<SpotCacheEntry> m_spots;
+	DynamicArray<OmniCacheEntry> m_omnis;
+
+	FramebufferPtr m_spotsFb;
+
+	struct
+	{
+		TexturePtr m_rt; ///< Shadowmap that will be resolved to ESM maps.
 		FramebufferPtr m_fb;
-	};
+		U32 m_batchSize = 0;
+	} m_scratchSm;
 
-	class ShadowmapOmni : public ShadowmapBase
-	{
-	public:
-		Array<FramebufferPtr, 6> m_fb;
-	};
-
-	DynamicArray<ShadowmapSpot> m_spots;
-	DynamicArray<ShadowmapOmni> m_omnis;
-
-	/// Shadowmap bilinear filtering for the first level. Better quality
-	Bool8 m_bilinearEnabled;
-
-	/// Shadowmap resolution
-	U32 m_resolution;
+	ShaderProgramResourcePtr m_esmResolveProg;
+	ShaderProgramPtr m_esmResolveGrProg;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 
 	/// Find the best shadowmap for that light
 	template<typename TLightElement, typename TShadowmap, typename TContainer>
-	void bestCandidate(TLightElement& light, TContainer& arr, TShadowmap*& out);
+	void bestCandidate(const TLightElement& light, TContainer& arr, TShadowmap*& out);
 
 	/// Check if a shadow pass can be skipped.
-	Bool skip(PointLightQueueElement& light, ShadowmapBase& sm);
-	Bool skip(SpotLightQueueElement& light, ShadowmapBase& sm);
+	Bool skip(PointLightQueueElement& light, OmniCacheEntry& sm);
+	Bool skip(SpotLightQueueElement& light, SpotCacheEntry& sm);
 
-	void doSpotLight(const SpotLightQueueElement& light,
-		CommandBufferPtr& cmdBuff,
-		FramebufferPtr& fb,
-		U threadId,
-		U threadCount) const;
+	void doSpotLight(
+		const SpotLightQueueElement& light, CommandBufferPtr& cmdBuff, U threadId, U threadCount, U tileIdx) const;
 
-	void doOmniLight(const PointLightQueueElement& light,
-		CommandBufferPtr cmdbs[],
-		Array<FramebufferPtr, 6>& fbs,
-		U threadId,
-		U threadCount) const;
+	void doOmniLight(
+		const PointLightQueueElement& light, CommandBufferPtr cmdbs[], U threadId, U threadCount, U firstTileIdx) const;
 };
-
 /// @}
 
 } // end namespace anki

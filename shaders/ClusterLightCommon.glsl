@@ -123,8 +123,8 @@ layout(ANKI_UBO_BINDING(LIGHT_SET, _NEXT_UBO_BINDING + 1), std140, row_major) un
 	SpotLight u_spotLights[UBO_MAX_SIZE / (9 * 4 * 4)];
 };
 
-layout(ANKI_TEX_BINDING(LIGHT_SET, LIGHT_TEX_BINDING + 0)) uniform highp sampler2DArrayShadow u_spotMapArr;
-layout(ANKI_TEX_BINDING(LIGHT_SET, LIGHT_TEX_BINDING + 1)) uniform highp samplerCubeArrayShadow u_omniMapArr;
+layout(ANKI_TEX_BINDING(LIGHT_SET, LIGHT_TEX_BINDING + 0)) uniform highp sampler2D u_spotMapArr;
+layout(ANKI_TEX_BINDING(LIGHT_SET, LIGHT_TEX_BINDING + 1)) uniform highp samplerCubeArray u_omniMapArr;
 #else
 const uint _NEXT_UBO_BINDING_2 = _NEXT_UBO_BINDING;
 const uint _NEXT_TEX_BINDING_2 = LIGHT_TEX_BINDING;

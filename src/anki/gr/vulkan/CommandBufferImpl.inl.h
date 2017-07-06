@@ -544,23 +544,34 @@ inline void CommandBufferImpl::drawcallCommon()
 	// Flush scissor
 	if(ANKI_UNLIKELY(m_scissorDirty))
 	{
-		const Bool flipvp = flipViewport();
-
-		const I minx = m_scissor[0];
-		const I miny = m_scissor[1];
-		const I maxx = m_scissor[2];
-		const I maxy = m_scissor[3];
-
-		U32 fbWidth, fbHeight;
-		m_activeFb->m_impl->getAttachmentsSize(fbWidth, fbHeight);
-
 		VkRect2D scissor = {};
-		scissor.extent.width = maxx - minx;
-		scissor.extent.height = maxy - miny;
-		scissor.offset.x = minx;
-		scissor.offset.y = (flipvp) ? (fbHeight - maxy) : miny;
-		ANKI_CMD(vkCmdSetScissor(m_handle, 0, 1, &scissor), ANY_OTHER_COMMAND);
 
+		if(m_scissor[0] == 0 && m_scissor[1] == 0 && m_scissor[2] == MAX_U16 && m_scissor[3] == MAX_U16)
+		{
+			scissor.extent.width = MAX_U16;
+			scissor.extent.height = MAX_U16;
+			scissor.offset.x = 0;
+			scissor.offset.y = 0;
+		}
+		else
+		{
+			const Bool flipvp = flipViewport();
+
+			U32 fbWidth, fbHeight;
+			m_activeFb->m_impl->getAttachmentsSize(fbWidth, fbHeight);
+
+			const I minx = min<U>(fbWidth, m_scissor[0]);
+			const I miny = min<U>(fbHeight, m_scissor[1]);
+			const I maxx = min<U>(fbWidth, m_scissor[2]);
+			const I maxy = min<U>(fbHeight, m_scissor[3]);
+
+			scissor.extent.width = maxx - minx;
+			scissor.extent.height = maxy - miny;
+			scissor.offset.x = minx;
+			scissor.offset.y = (flipvp) ? (fbHeight - maxy) : miny;
+		}
+
+		ANKI_CMD(vkCmdSetScissor(m_handle, 0, 1, &scissor), ANY_OTHER_COMMAND);
 		m_scissorDirty = false;
 	}
 

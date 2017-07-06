@@ -82,25 +82,51 @@ public:
 	class ShadowMapping
 	{
 	public:
-		DynamicArrayAuto<FramebufferPtr> m_spotFramebuffers;
-		DynamicArrayAuto<Array<FramebufferPtr, 6>> m_omniFramebuffers;
+		class SpotCasterInfo
+		{
+		public:
+			SpotLightQueueElement* m_light = nullptr;
+			WeakArray<CommandBufferPtr> m_cmdbs; ///< One per thread.
+			Array<U32, 4> m_renderArea;
+			U8 m_batchIdx = MAX_U8;
+		};
 
-		DynamicArrayAuto<U> m_spotCacheIndices;
-		DynamicArrayAuto<U> m_omniCacheIndices;
+		class OmniCasterInfo
+		{
+		public:
+			PointLightQueueElement* m_light = nullptr;
+			WeakArray<CommandBufferPtr> m_cmdbs; ///< Dimensions are [threadId][faceIdx]
+			U32 m_cacheEntry = MAX_U32;
+			U8 m_firstBatchIdx = MAX_U8;
+		};
 
-		/// [casterIdx][threadIdx]
-		DynamicArrayAuto<CommandBufferPtr> m_spotCommandBuffers;
-		/// [casterIdx][threadIdx][faceIdx]
-		DynamicArrayAuto<CommandBufferPtr> m_omniCommandBuffers;
+		WeakArray<SpotCasterInfo> m_spotCasters;
+		WeakArray<OmniCasterInfo> m_omniCasters;
+
+		StackAllocator<U8> m_alloc;
 
 		ShadowMapping(const StackAllocator<U8>& alloc)
-			: m_spotFramebuffers(alloc)
-			, m_omniFramebuffers(alloc)
-			, m_spotCacheIndices(alloc)
-			, m_omniCacheIndices(alloc)
-			, m_spotCommandBuffers(alloc)
-			, m_omniCommandBuffers(alloc)
+			: m_alloc(alloc)
 		{
+		}
+
+		~ShadowMapping()
+		{
+			for(SpotCasterInfo& inf : m_spotCasters)
+			{
+				for(U i = 0; i < inf.m_cmdbs.getSize(); ++i)
+				{
+					inf.m_cmdbs[i].reset(nullptr);
+				}
+			}
+
+			for(OmniCasterInfo& inf : m_omniCasters)
+			{
+				for(U i = 0; i < inf.m_cmdbs.getSize(); ++i)
+				{
+					inf.m_cmdbs[i].reset(nullptr);
+				}
+			}
 		}
 	} m_shadowMapping;
 
@@ -262,12 +288,12 @@ anki_internal:
 		const Vec3& windowCoords, const Mat4& modelViewMat, const Mat4& projectionMat, const int view[4]);
 
 	/// Draws a quad. Actually it draws 2 triangles because OpenGL will no longer support quads
-	void drawQuad(CommandBufferPtr& cmdb)
+	static void drawQuad(CommandBufferPtr& cmdb)
 	{
 		drawQuadInstanced(cmdb, 1);
 	}
 
-	void drawQuadInstanced(CommandBufferPtr& cmdb, U32 primitiveCount)
+	static void drawQuadInstanced(CommandBufferPtr& cmdb, U32 primitiveCount)
 	{
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3, primitiveCount);
 	}

@@ -269,9 +269,9 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 		"VK_LAYER_LUNARG_swapchain",
 		"VK_LAYER_GOOGLE_threading",
 		"VK_LAYER_LUNARG_parameter_validation",
-		"VK_LAYER_GOOGLE_unique_objects",
 		"VK_LAYER_LUNARG_object_tracker",
-		"VK_LAYER_LUNARG_standard_validation"}};
+		"VK_LAYER_LUNARG_standard_validation",
+		"VK_LAYER_GOOGLE_unique_objects"}};
 	Array<const char*, LAYERS.getSize()> layersToEnable; // Keep it alive in the stack
 	if(init.m_config->getNumber("window.debugContext"))
 	{

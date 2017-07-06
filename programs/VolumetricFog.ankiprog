@@ -99,7 +99,8 @@ vec3 computeLightColor(vec3 fragPos, uint plightCount, uint plightIdx, uint slig
 		float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
 		if(shadowmapLayerIdx >= 0.0)
 		{
-			factor *= computeShadowFactorSpot(light.texProjectionMat, fragPos, shadowmapLayerIdx, 1, u_spotMapArr);
+			factor *= computeShadowFactorSpot(
+				light.texProjectionMat, fragPos, light.specularColorRadius.w, u_spotMapArr);
 		}
 #endif
 

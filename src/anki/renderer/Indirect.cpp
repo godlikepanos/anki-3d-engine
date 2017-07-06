@@ -66,13 +66,6 @@ Error Indirect::init(const ConfigSet& config)
 Error Indirect::initInternal(const ConfigSet& config)
 {
 	m_fbSize = config.getNumber("r.indirect.reflectionSize");
-
-	if(m_fbSize < TILE_SIZE)
-	{
-		ANKI_R_LOGE("Too low ir.rendererSize");
-		return ErrorCode::USER_DATA;
-	}
-
 	m_cubemapArrSize = config.getNumber("r.indirect.maxProbeCount");
 
 	if(m_cubemapArrSize < 2)

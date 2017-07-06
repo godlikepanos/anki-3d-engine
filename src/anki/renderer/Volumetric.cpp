@@ -88,7 +88,7 @@ void VolumetricMain::run(RenderingContext& ctx)
 	TexturePtr& history = m_rt[(m_r->getFrameCount() + 1) & 1];
 	cmdb->informTextureCurrentUsage(history, TextureUsageBit::SAMPLED_FRAGMENT);
 	cmdb->bindTexture(0, 2, history);
-	cmdb->bindTexture(0, 3, m_r->getShadowMapping().m_spotTexArray);
+	cmdb->bindTexture(0, 3, m_r->getShadowMapping().m_spotTex);
 	cmdb->bindTexture(0, 4, m_r->getShadowMapping().m_omniTexArray);
 
 	bindUniforms(cmdb, 0, 0, ctx.m_lightShading.m_commonToken);

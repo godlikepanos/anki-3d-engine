@@ -222,6 +222,8 @@ void VisibilityTestTask::test(ThreadHive& hive)
 	SceneNode& testedNode = testedFrc.getSceneNode();
 	auto alloc = m_visCtx->m_scene->getFrameAllocator();
 
+	m_timestamp = testedNode.getComponentMaxTimestamp();
+
 	const Bool wantsRenderComponents =
 		testedFrc.visibilityTestsEnabled(FrustumComponentVisibilityTestFlag::RENDER_COMPONENTS);
 
@@ -419,7 +421,6 @@ void VisibilityTestTask::test(ThreadHive& hive)
 			{
 				SpotLightQueueElement* el = m_result.m_spotLights.newElement(alloc);
 				lc->setupSpotLightQueueElement(*el);
-				el->m_textureArrayIndex = MAX_U32;
 
 				if(lc->getShadowEnabled())
 				{

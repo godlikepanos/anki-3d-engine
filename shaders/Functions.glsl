@@ -8,6 +8,7 @@
 
 #include "shaders/Common.glsl"
 
+#if defined(ANKI_FRAGMENT_SHADER)
 vec3 dither(in vec3 col, in float C)
 {
 	vec3 vDither = vec3(dot(vec2(171.0, 231.0), gl_FragCoord.xy));
@@ -31,6 +32,7 @@ float dither(in float col, in float C)
 
 	return col;
 }
+#endif
 
 // Convert to linear depth
 float linearizeDepth(in float depth, in float zNear, in float zFar)
