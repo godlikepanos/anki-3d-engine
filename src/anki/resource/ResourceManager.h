@@ -126,7 +126,7 @@ public:
 
 	/// Load a resource.
 	template<typename T>
-	ANKI_USE_RESULT Error loadResource(const CString& filename, ResourcePtr<T>& out);
+	ANKI_USE_RESULT Error loadResource(const CString& filename, ResourcePtr<T>& out, Bool async = true);
 
 anki_internal:
 	U32 getMaxTextureSize() const

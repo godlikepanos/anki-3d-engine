@@ -5,8 +5,7 @@
 
 #include <anki/script/LuaBinder.h>
 #include <anki/util/Logger.h>
-#include <iostream>
-#include <cstring>
+#include <anki/core/Trace.h>
 
 namespace anki
 {
@@ -93,6 +92,8 @@ void* LuaBinder::luaAllocCallback(void* userData, void* ptr, PtrSize osize, PtrS
 
 Error LuaBinder::evalString(const CString& str)
 {
+	ANKI_TRACE_SCOPED_EVENT(LUA_EXEC);
+
 	Error err = ErrorCode::NONE;
 	int e = luaL_dostring(m_l, &str[0]);
 	if(e)

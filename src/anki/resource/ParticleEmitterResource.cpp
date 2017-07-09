@@ -95,7 +95,7 @@ ParticleEmitterResource::~ParticleEmitterResource()
 {
 }
 
-Error ParticleEmitterResource::load(const ResourceFilename& filename)
+Error ParticleEmitterResource::load(const ResourceFilename& filename, Bool async)
 {
 	U32 tmp;
 
@@ -146,7 +146,7 @@ Error ParticleEmitterResource::load(const ResourceFilename& filename)
 	CString cstr;
 	ANKI_CHECK(rel.getChildElement("material", el));
 	ANKI_CHECK(el.getText(cstr));
-	ANKI_CHECK(getManager().loadResource(cstr, m_material));
+	ANKI_CHECK(getManager().loadResource(cstr, m_material, async));
 
 	// sanity checks
 	//

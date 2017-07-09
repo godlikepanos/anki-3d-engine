@@ -12,7 +12,7 @@
 namespace anki
 {
 
-Error CollisionResource::load(const ResourceFilename& filename)
+Error CollisionResource::load(const ResourceFilename& filename, Bool async)
 {
 	XmlElement el;
 	XmlDocument doc;

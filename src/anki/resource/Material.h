@@ -206,7 +206,7 @@ public:
 	~Material();
 
 	/// Load a material file
-	ANKI_USE_RESULT Error load(const ResourceFilename& filename);
+	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
 
 	U getLodCount() const
 	{
@@ -274,7 +274,7 @@ private:
 	static U getInstanceGroupIdx(U instanceCount);
 
 	/// Parse whatever is inside the <inputs> tag.
-	ANKI_USE_RESULT Error parseInputs(XmlElement inputsEl);
+	ANKI_USE_RESULT Error parseInputs(XmlElement inputsEl, Bool async);
 
 	ANKI_USE_RESULT Error parseMutators(XmlElement mutatorsEl);
 };

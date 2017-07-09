@@ -87,9 +87,12 @@ public:
 	Bool isCompatible(const Mesh& other) const;
 
 	/// Load from a mesh file
-	ANKI_USE_RESULT Error load(const ResourceFilename& filename);
+	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
 
 protected:
+	class LoadTask;
+	class LoadContext;
+
 	/// Per sub mesh data
 	struct SubMesh
 	{
@@ -107,6 +110,8 @@ protected:
 
 	BufferPtr m_vertBuff;
 	BufferPtr m_indicesBuff;
+
+	static ANKI_USE_RESULT Error load(LoadContext& ctx);
 };
 /// @}
 

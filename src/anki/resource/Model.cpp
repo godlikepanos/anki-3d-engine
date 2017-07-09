@@ -97,18 +97,18 @@ U ModelPatch::getLodCount() const
 	return max<U>(m_meshCount, getMaterial()->getLodCount());
 }
 
-Error ModelPatch::create(WeakArray<CString> meshFNames, const CString& mtlFName, ResourceManager* manager)
+Error ModelPatch::create(WeakArray<CString> meshFNames, const CString& mtlFName, Bool async, ResourceManager* manager)
 {
 	ANKI_ASSERT(meshFNames.getSize() > 0);
 
 	// Load material
-	ANKI_CHECK(manager->loadResource(mtlFName, m_mtl));
+	ANKI_CHECK(manager->loadResource(mtlFName, m_mtl, async));
 
 	// Load meshes
 	m_meshCount = 0;
 	for(U i = 0; i < meshFNames.getSize(); i++)
 	{
-		ANKI_CHECK(manager->loadResource(meshFNames[i], m_meshes[i]));
+		ANKI_CHECK(manager->loadResource(meshFNames[i], m_meshes[i], async));
 
 		// Sanity check
 		if(i > 0 && !m_meshes[i]->isCompatible(*m_meshes[i - 1]))
@@ -140,7 +140,7 @@ Model::~Model()
 	m_modelPatches.destroy(alloc);
 }
 
-Error Model::load(const ResourceFilename& filename)
+Error Model::load(const ResourceFilename& filename, Bool async)
 {
 	auto alloc = getAllocator();
 
@@ -221,7 +221,7 @@ Error Model::load(const ResourceFilename& filename)
 			return ErrorCode::OUT_OF_MEMORY;
 		}
 
-		ANKI_CHECK(mpatch->create(WeakArray<CString>(&meshesFnames[0], meshesCount), cstr, &getManager()));
+		ANKI_CHECK(mpatch->create(WeakArray<CString>(&meshesFnames[0], meshesCount), cstr, async, &getManager()));
 
 		m_modelPatches[count++] = mpatch;
 

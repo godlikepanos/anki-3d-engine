@@ -13,8 +13,7 @@
 namespace anki
 {
 
-/// Mesh upload async task.
-class MeshLoadTask : public AsyncLoaderTask
+class Mesh::LoadContext
 {
 public:
 	ResourceManager* m_manager ANKI_DBG_NULLIFY;
@@ -22,72 +21,29 @@ public:
 	BufferPtr m_vertBuff;
 	BufferPtr m_indicesBuff;
 
-	MeshLoadTask(ResourceManager* manager)
+	LoadContext(ResourceManager* manager, GenericMemoryPoolAllocator<U8> alloc)
 		: m_manager(manager)
-		, m_loader(manager, manager->getAsyncLoader().getAllocator())
+		, m_loader(manager, alloc)
 	{
 	}
-
-	Error operator()(AsyncLoaderTaskContext& ctx) final;
 };
 
-Error MeshLoadTask::operator()(AsyncLoaderTaskContext& ctx)
+/// Mesh upload async task.
+class Mesh::LoadTask : public AsyncLoaderTask
 {
-	GrManager& gr = m_manager->getGrManager();
-	TransferGpuAllocator& transferAlloc = m_manager->getTransferGpuAllocator();
-	Array<TransferGpuAllocatorHandle, 2> handles;
+public:
+	Mesh::LoadContext m_ctx;
 
-	CommandBufferInitInfo cmdbinit;
-	cmdbinit.m_flags = CommandBufferFlag::SMALL_BATCH | CommandBufferFlag::TRANSFER_WORK;
-	CommandBufferPtr cmdb = gr.newInstance<CommandBuffer>(cmdbinit);
-
-	// Write vert buff
+	LoadTask(ResourceManager* manager)
+		: m_ctx(manager, manager->getAsyncLoader().getAllocator())
 	{
-		ANKI_CHECK(transferAlloc.allocate(m_loader.getVertexDataSize(), handles[0]));
-		void* data = handles[0].getMappedMemory();
-		ANKI_ASSERT(data);
-
-		memcpy(data, m_loader.getVertexData(), m_loader.getVertexDataSize());
-
-		cmdb->setBufferBarrier(
-			m_vertBuff, BufferUsageBit::VERTEX, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, 0, MAX_PTR_SIZE);
-
-		cmdb->copyBufferToBuffer(handles[0].getBuffer(), handles[0].getOffset(), m_vertBuff, 0, handles[0].getRange());
-
-		cmdb->setBufferBarrier(
-			m_vertBuff, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, BufferUsageBit::VERTEX, 0, MAX_PTR_SIZE);
-
-		m_vertBuff.reset(nullptr);
 	}
 
-	// Create index buffer
+	Error operator()(AsyncLoaderTaskContext& ctx) final
 	{
-		ANKI_CHECK(transferAlloc.allocate(m_loader.getIndexDataSize(), handles[1]));
-		void* data = handles[1].getMappedMemory();
-		ANKI_ASSERT(data);
-
-		memcpy(data, m_loader.getIndexData(), m_loader.getIndexDataSize());
-
-		cmdb->setBufferBarrier(
-			m_indicesBuff, BufferUsageBit::INDEX, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, 0, MAX_PTR_SIZE);
-
-		cmdb->copyBufferToBuffer(
-			handles[1].getBuffer(), handles[1].getOffset(), m_indicesBuff, 0, handles[1].getRange());
-
-		cmdb->setBufferBarrier(
-			m_indicesBuff, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, BufferUsageBit::INDEX, 0, MAX_PTR_SIZE);
-
-		m_indicesBuff.reset(nullptr);
+		return Mesh::load(m_ctx);
 	}
-
-	FencePtr fence;
-	cmdb->flush(&fence);
-
-	transferAlloc.release(handles[0], fence);
-	transferAlloc.release(handles[1], fence);
-
-	return ErrorCode::NONE;
-}
+};
 
 Mesh::Mesh(ResourceManager* manager)
 	: ResourceObject(manager)
@@ -105,11 +61,24 @@ Bool Mesh::isCompatible(const Mesh& other) const
 		&& m_texChannelsCount == other.m_texChannelsCount;
 }
 
-Error Mesh::load(const ResourceFilename& filename)
+Error Mesh::load(const ResourceFilename& filename, Bool async)
 {
-	MeshLoadTask* task = getManager().getAsyncLoader().newTask<MeshLoadTask>(&getManager());
+	LoadTask* task;
+	LoadContext* ctx;
+	LoadContext localCtx(&getManager(), getTempAllocator());
 
-	MeshLoader& loader = task->m_loader;
+	if(async)
+	{
+		task = getManager().getAsyncLoader().newTask<LoadTask>(&getManager());
+		ctx = &task->m_ctx;
+	}
+	else
+	{
+		task = nullptr;
+		ctx = &localCtx;
+	}
+
+	MeshLoader& loader = ctx->m_loader;
 	ANKI_CHECK(loader.load(filename));
 
 	const MeshLoader::Header& header = loader.getHeader();
@@ -153,9 +122,76 @@ Error Mesh::load(const ResourceFilename& filename)
 	cmdb->flush();
 
 	// Submit the loading task
-	task->m_indicesBuff = m_indicesBuff;
-	task->m_vertBuff = m_vertBuff;
-	getManager().getAsyncLoader().submitTask(task);
+	ctx->m_vertBuff = m_vertBuff;
+	ctx->m_indicesBuff = m_indicesBuff;
+
+	if(async)
+	{
+		getManager().getAsyncLoader().submitTask(task);
+	}
+	else
+	{
+		ANKI_CHECK(load(*ctx));
+	}
+
+	return ErrorCode::NONE;
+}
+
+Error Mesh::load(LoadContext& ctx)
+{
+	GrManager& gr = ctx.m_manager->getGrManager();
+	TransferGpuAllocator& transferAlloc = ctx.m_manager->getTransferGpuAllocator();
+	const MeshLoader& loader = ctx.m_loader;
+	Array<TransferGpuAllocatorHandle, 2> handles;
+
+	CommandBufferInitInfo cmdbinit;
+	cmdbinit.m_flags = CommandBufferFlag::SMALL_BATCH | CommandBufferFlag::TRANSFER_WORK;
+	CommandBufferPtr cmdb = gr.newInstance<CommandBuffer>(cmdbinit);
+
+	// Set barriers
+	cmdb->setBufferBarrier(
+		ctx.m_vertBuff, BufferUsageBit::VERTEX, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, 0, MAX_PTR_SIZE);
+	cmdb->setBufferBarrier(
+		ctx.m_indicesBuff, BufferUsageBit::INDEX, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, 0, MAX_PTR_SIZE);
+
+	// Write vert buff
+	{
+		ANKI_CHECK(transferAlloc.allocate(loader.getVertexDataSize(), handles[0]));
+		void* data = handles[0].getMappedMemory();
+		ANKI_ASSERT(data);
+
+		memcpy(data, loader.getVertexData(), loader.getVertexDataSize());
+
+		cmdb->copyBufferToBuffer(
+			handles[0].getBuffer(), handles[0].getOffset(), ctx.m_vertBuff, 0, handles[0].getRange());
+	}
+
+	// Create index buffer
+	{
+		ANKI_CHECK(transferAlloc.allocate(loader.getIndexDataSize(), handles[1]));
+		void* data = handles[1].getMappedMemory();
+		ANKI_ASSERT(data);
+
+		memcpy(data, loader.getIndexData(), loader.getIndexDataSize());
+
+		cmdb->copyBufferToBuffer(
+			handles[1].getBuffer(), handles[1].getOffset(), ctx.m_indicesBuff, 0, handles[1].getRange());
+	}
+
+	// Set barriers
+	cmdb->setBufferBarrier(
+		ctx.m_vertBuff, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, BufferUsageBit::VERTEX, 0, MAX_PTR_SIZE);
+	cmdb->setBufferBarrier(
+		ctx.m_indicesBuff, BufferUsageBit::BUFFER_UPLOAD_DESTINATION, BufferUsageBit::INDEX, 0, MAX_PTR_SIZE);
+
+	ctx.m_vertBuff.reset(nullptr);
+	ctx.m_indicesBuff.reset(nullptr);
+
+	FencePtr fence;
+	cmdb->flush(&fence);
+
+	transferAlloc.release(handles[0], fence);
+	transferAlloc.release(handles[1], fence);
 
 	return ErrorCode::NONE;
 }

@@ -12,6 +12,8 @@ namespace anki
 {
 
 static Array<const char*, U(TraceEventType::COUNT)> eventNames = {{"RESOURCE_ALLOCATE_TRANSFER",
+	"RESOURCE_ASYNC_TASK",
+	"RESOURCE_FILE_READ",
 	"SCENE_UPDATE",
 	"SCENE_DELETE_STUFF",
 	"SCENE_PHYSICS_UPDATE",
@@ -23,6 +25,7 @@ static Array<const char*, U(TraceEventType::COUNT)> eventNames = {{"RESOURCE_ALL
 	"VIS_GATHER_TRIANGLES",
 	"VIS_RASTERIZE",
 	"VIS_RASTERIZER_TEST",
+	"RENDERER_INIT",
 	"RENDER",
 	"RENDER_MS",
 	"RENDER_IS",
@@ -42,7 +45,8 @@ static Array<const char*, U(TraceEventType::COUNT)> eventNames = {{"RESOURCE_ALL
 	"VK_BIND_OBJECT",
 	"VK_DESCRIPTOR_SET_GET_OR_CREATE",
 	"SWAP_BUFFERS",
-	"BARRIER_WAIT"}};
+	"BARRIER_WAIT",
+	"LUA_EXEC"}};
 
 static Array<const char*, U(TraceCounterType::COUNT)> counterNames = {{"GR_DRAWCALLS",
 	"GR_VERTICES",

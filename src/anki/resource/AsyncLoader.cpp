@@ -5,6 +5,7 @@
 
 #include <anki/resource/AsyncLoader.h>
 #include <anki/util/Logger.h>
+#include <anki/core/Trace.h>
 
 namespace anki
 {
@@ -122,7 +123,12 @@ Error AsyncLoader::threadWorker()
 			// Exec the task
 			ANKI_ASSERT(task);
 			AsyncLoaderTaskContext ctx;
-			err = (*task)(ctx);
+
+			{
+				ANKI_TRACE_SCOPED_EVENT(RESOURCE_ASYNC_TASK);
+				err = (*task)(ctx);
+			}
+
 			if(!err)
 			{
 				m_completedTaskCount.fetchAdd(1);

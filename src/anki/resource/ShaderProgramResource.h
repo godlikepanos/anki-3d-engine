@@ -321,7 +321,7 @@ public:
 	~ShaderProgramResource();
 
 	/// Load the resource.
-	ANKI_USE_RESULT Error load(const ResourceFilename& filename);
+	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
 
 	/// Get the array of input variables.
 	const DynamicArray<ShaderProgramResourceInputVariable>& getInputVariables() const

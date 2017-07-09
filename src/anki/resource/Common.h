@@ -20,6 +20,7 @@ class ResourceManager;
 class ResourceFilesystem;
 template<typename Type>
 class ResourcePointer;
+class TransferGpuAllocatorHandle;
 
 /// @addtogroup resource
 /// @{

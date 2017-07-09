@@ -186,7 +186,7 @@ ShaderProgramResource::~ShaderProgramResource()
 	}
 }
 
-Error ShaderProgramResource::load(const ResourceFilename& filename)
+Error ShaderProgramResource::load(const ResourceFilename& filename, Bool async)
 {
 	XmlElement el;
 	XmlDocument doc;

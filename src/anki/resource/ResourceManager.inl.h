@@ -9,7 +9,7 @@ namespace anki
 {
 
 template<typename T>
-Error ResourceManager::loadResource(const CString& filename, ResourcePtr<T>& out)
+Error ResourceManager::loadResource(const CString& filename, ResourcePtr<T>& out, Bool async)
 {
 	ANKI_ASSERT(!out.isCreated() && "Already loaded");
 
@@ -36,7 +36,7 @@ Error ResourceManager::loadResource(const CString& filename, ResourcePtr<T>& out
 			U allocsCountBefore = pool.getAllocationsCount();
 			(void)allocsCountBefore;
 
-			err = ptr->load(filename);
+			err = ptr->load(filename, async);
 			if(err)
 			{
 				ANKI_RESOURCE_LOGE("Failed to load resource: %s", &filename[0]);

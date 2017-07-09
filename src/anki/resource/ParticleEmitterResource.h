@@ -115,7 +115,7 @@ public:
 	void getRenderingInfo(U lod, ShaderProgramPtr& prog) const;
 
 	/// Load it
-	ANKI_USE_RESULT Error load(const ResourceFilename& filename);
+	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
 
 private:
 	MaterialResourcePtr m_material;

@@ -14,7 +14,7 @@ Script::~Script()
 	m_source.destroy(getAllocator());
 }
 
-Error Script::load(const ResourceFilename& filename)
+Error Script::load(const ResourceFilename& filename, Bool async)
 {
 	ResourceFilePtr file;
 	ANKI_CHECK(openFile(filename, file));

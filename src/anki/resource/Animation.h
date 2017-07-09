@@ -71,7 +71,7 @@ public:
 
 	~Animation();
 
-	ANKI_USE_RESULT Error load(const ResourceFilename& filename);
+	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
 
 	/// Get a vector of all animation channels
 	const DynamicArray<AnimationChannel>& getChannels() const

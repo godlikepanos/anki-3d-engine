@@ -46,7 +46,7 @@ Material::~Material()
 	m_mutations.destroy(getAllocator());
 }
 
-Error Material::load(const ResourceFilename& filename)
+Error Material::load(const ResourceFilename& filename, Bool async)
 {
 	XmlDocument doc;
 	XmlElement el;
@@ -60,7 +60,7 @@ Error Material::load(const ResourceFilename& filename)
 	// shaderProgram
 	CString fname;
 	ANKI_CHECK(rootEl.getAttributeText("shaderProgram", fname));
-	ANKI_CHECK(getManager().loadResource(fname, m_prog));
+	ANKI_CHECK(getManager().loadResource(fname, m_prog, async));
 	m_descriptorSetIdx = m_prog->getDescriptorSetIndex();
 
 	// shadow
@@ -83,7 +83,7 @@ Error Material::load(const ResourceFilename& filename)
 	ANKI_CHECK(rootEl.getChildElementOptional("inputs", el));
 	if(el)
 	{
-		ANKI_CHECK(parseInputs(el));
+		ANKI_CHECK(parseInputs(el, async));
 	}
 
 	return ErrorCode::NONE;
@@ -231,7 +231,7 @@ Error Material::parseMutators(XmlElement mutatorsEl)
 	return ErrorCode::NONE;
 }
 
-Error Material::parseInputs(XmlElement inputsEl)
+Error Material::parseInputs(XmlElement inputsEl, Bool async)
 {
 	// Iterate the program's variables and get counts
 	U constInputCount = 0;
@@ -439,7 +439,7 @@ Error Material::parseInputs(XmlElement inputsEl)
 				{
 					CString texfname;
 					ANKI_CHECK(inputEl.getAttributeText("value", texfname));
-					ANKI_CHECK(getManager().loadResource(texfname, mtlVar.m_tex));
+					ANKI_CHECK(getManager().loadResource(texfname, mtlVar.m_tex, async));
 					break;
 				}
 

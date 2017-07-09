@@ -6,6 +6,7 @@
 #include <anki/resource/ResourceFilesystem.h>
 #include <anki/util/Filesystem.h>
 #include <anki/misc/ConfigSet.h>
+#include <anki/core/Trace.h>
 #include <contrib/minizip/unzip.h>
 
 namespace anki
@@ -24,21 +25,25 @@ public:
 
 	ANKI_USE_RESULT Error read(void* buff, PtrSize size) override
 	{
+		ANKI_TRACE_SCOPED_EVENT(RESOURCE_FILE_READ);
 		return m_file.read(buff, size);
 	}
 
 	ANKI_USE_RESULT Error readAllText(GenericMemoryPoolAllocator<U8> alloc, String& out) override
 	{
+		ANKI_TRACE_SCOPED_EVENT(RESOURCE_FILE_READ);
 		return m_file.readAllText(alloc, out);
 	}
 
 	ANKI_USE_RESULT Error readU32(U32& u) override
 	{
+		ANKI_TRACE_SCOPED_EVENT(RESOURCE_FILE_READ);
 		return m_file.readU32(u);
 	}
 
 	ANKI_USE_RESULT Error readF32(F32& f) override
 	{
+		ANKI_TRACE_SCOPED_EVENT(RESOURCE_FILE_READ);
 		return m_file.readF32(f);
 	}
 
@@ -123,6 +128,8 @@ public:
 
 	ANKI_USE_RESULT Error read(void* buff, PtrSize size) override
 	{
+		ANKI_TRACE_SCOPED_EVENT(RESOURCE_FILE_READ);
+
 		I64 readSize = unzReadCurrentFile(m_archive, buff, size);
 
 		if(I64(size) != readSize)

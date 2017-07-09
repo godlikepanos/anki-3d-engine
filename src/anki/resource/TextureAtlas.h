@@ -40,7 +40,7 @@ public:
 	~TextureAtlas();
 
 	/// Load a texture atlas.
-	ANKI_USE_RESULT Error load(const ResourceFilename& filename);
+	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
 
 	TexturePtr getGrTexture() const
 	{

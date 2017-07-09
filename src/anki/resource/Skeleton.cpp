@@ -20,7 +20,7 @@ Skeleton::~Skeleton()
 	m_bones.destroy(getAllocator());
 }
 
-Error Skeleton::load(const ResourceFilename& filename)
+Error Skeleton::load(const ResourceFilename& filename, Bool async)
 {
 	XmlDocument doc;
 	ANKI_CHECK(openFileParseXml(filename, doc));

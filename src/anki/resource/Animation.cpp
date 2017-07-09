@@ -24,7 +24,7 @@ Animation::~Animation()
 	m_channels.destroy(getAllocator());
 }
 
-Error Animation::load(const ResourceFilename& filename)
+Error Animation::load(const ResourceFilename& filename, Bool async)
 {
 	XmlElement el;
 	I64 tmp;

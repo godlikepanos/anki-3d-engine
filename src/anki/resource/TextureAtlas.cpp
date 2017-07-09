@@ -21,7 +21,7 @@ TextureAtlas::~TextureAtlas()
 	m_subTexNames.destroy(getAllocator());
 }
 
-Error TextureAtlas::load(const ResourceFilename& filename)
+Error TextureAtlas::load(const ResourceFilename& filename, Bool async)
 {
 	XmlDocument doc;
 	ANKI_CHECK(openFileParseXml(filename, doc));
@@ -39,7 +39,7 @@ Error TextureAtlas::load(const ResourceFilename& filename)
 	ANKI_CHECK(rootel.getChildElement("texture", el));
 	CString texFname;
 	ANKI_CHECK(el.getText(texFname));
-	ANKI_CHECK(getManager().loadResource<TextureResource>(texFname, m_tex));
+	ANKI_CHECK(getManager().loadResource<TextureResource>(texFname, m_tex, async));
 
 	m_size[0] = m_tex->getWidth();
 	m_size[1] = m_tex->getHeight();

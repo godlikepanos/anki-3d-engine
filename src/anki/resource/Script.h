@@ -24,7 +24,7 @@ public:
 
 	~Script();
 
-	ANKI_USE_RESULT Error load(const ResourceFilename& filename);
+	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
 
 	CString getSource() const
 	{

@@ -100,10 +100,11 @@ public:
 
 	void destroy();
 
-	/// Allocate some transfer memory.
+	/// Allocate some transfer memory. If there is not enough memory it will block until some is releaced. It's
+	/// threadsafe.
 	ANKI_USE_RESULT Error allocate(PtrSize size, TransferGpuAllocatorHandle& handle);
 
-	/// Release the memory. It will not be recycled before the fence is signaled.
+	/// Release the memory. It will not be recycled before the fence is signaled. It's threadsafe.
 	void release(TransferGpuAllocatorHandle& handle, FencePtr fence);
 
 private:

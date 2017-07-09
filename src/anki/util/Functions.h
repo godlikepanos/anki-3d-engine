@@ -233,6 +233,16 @@ constexpr Bool isPacked()
 {
 	return false;
 }
+
+/// Unflatten 3D array index.
+/// Imagine an array [sizeA][sizeB][sizeC] and a flat index in that array. Then this function will compute the unflatten
+/// indices.
+inline void unflatten3dArrayIndex(const U sizeA, const U sizeB, const U sizeC, const U flatIdx, U& a, U& b, U& c)
+{
+	a = (flatIdx / (sizeB * sizeC)) % sizeA;
+	b = (flatIdx / sizeC) % sizeB;
+	c = flatIdx % sizeC;
+}
 /// @}
 
 } // end namespace anki

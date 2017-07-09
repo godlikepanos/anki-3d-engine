@@ -115,7 +115,8 @@ public:
 		return m_meshes[0]->getSubMeshesCount();
 	}
 
-	ANKI_USE_RESULT Error create(WeakArray<CString> meshFNames, const CString& mtlFName, ResourceManager* resources);
+	ANKI_USE_RESULT Error create(
+		WeakArray<CString> meshFNames, const CString& mtlFName, Bool async, ResourceManager* resources);
 
 	/// Get information for multiDraw rendering. Given an array of submeshes that are visible return the correct indices
 	/// offsets and counts.
@@ -176,7 +177,7 @@ public:
 		return m_visibilityShape;
 	}
 
-	ANKI_USE_RESULT Error load(const ResourceFilename& filename);
+	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
 
 private:
 	DynamicArray<ModelPatch*> m_modelPatches;

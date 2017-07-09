@@ -30,7 +30,7 @@ public:
 		}
 	}
 
-	ANKI_USE_RESULT Error load(const ResourceFilename& filename)
+	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async)
 	{
 		Error err = ErrorCode::NONE;
 		if(filename.find("error") == ResourceFilename::NPOS)
