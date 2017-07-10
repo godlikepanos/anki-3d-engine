@@ -22,6 +22,7 @@ class GlState
 {
 public:
 	GrManager* m_manager;
+	GlExtensions m_extensions = GlExtensions::NONE;
 	I32 m_version = -1; ///< Minor major GL version. Something like 430
 	GpuVendor m_gpu = GpuVendor::UNKNOWN;
 	Bool8 m_registerMessages = false;

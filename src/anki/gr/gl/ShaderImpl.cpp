@@ -42,7 +42,7 @@ static const char* SHADER_HEADER = R"(#version %u %s
 #define ANKI_USING_FRAG_COORD(height_) vec4 anki_fragCoord = gl_FragCoord;
 #endif
 
-#if 1
+#if %u
 #extension GL_ARB_shader_ballot : require
 #define ANKI_ARB_SHADER_BALLOT 1
 #endif
@@ -105,6 +105,7 @@ Error ShaderImpl::init(ShaderType type, const CString& source)
 		MAX_IMAGE_BINDINGS,
 		MAX_TEXTURE_BINDINGS * MAX_DESCRIPTOR_SETS,
 		MAX_TEXTURE_BUFFER_BINDINGS,
+		!!(getManager().getImplementation().getState().m_extensions & GlExtensions::ARB_SHADER_BALLOT),
 		&source[0]);
 
 	// 2) Gen name, create, compile and link

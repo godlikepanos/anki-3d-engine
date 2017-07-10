@@ -36,6 +36,13 @@ class RenderingThread;
 #define ANKI_GL_LOGW(...) ANKI_LOG("GL  ", WARNING, __VA_ARGS__)
 #define ANKI_GL_LOGF(...) ANKI_LOG("GL  ", FATAL, __VA_ARGS__)
 
+enum class GlExtensions : U16
+{
+	NONE = 0,
+	ARB_SHADER_BALLOT = 1 << 0,
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(GlExtensions, inline)
+
 // Spec limits
 const U MAX_UNIFORM_BLOCK_SIZE = 16384;
 const U MAX_STORAGE_BLOCK_SIZE = 2 << 27;

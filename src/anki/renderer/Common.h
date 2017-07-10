@@ -87,7 +87,7 @@ const PixelFormat FORWARD_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT(ComponentFormat:
 const PixelFormat DBG_COLOR_ATTACHMENT_PIXEL_FORMAT(ComponentFormat::R8G8B8, TransformFormat::UNORM);
 
 const PixelFormat SHADOW_DEPTH_PIXEL_FORMAT(ComponentFormat::D32, TransformFormat::FLOAT);
-const PixelFormat SHADOW_COLOR_PIXEL_FORMAT(ComponentFormat::R32, TransformFormat::FLOAT);
+const PixelFormat SHADOW_COLOR_PIXEL_FORMAT(ComponentFormat::R16, TransformFormat::UNORM);
 /// @}
 
 } // end namespace anki

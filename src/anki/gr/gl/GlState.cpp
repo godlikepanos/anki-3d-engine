@@ -178,6 +178,19 @@ void GlState::initRenderThread()
 			glBindTexture(GL_TEXTURE_BUFFER, m_texBuffTextures[i][j]);
 		}
 	}
+
+	// Get extensions
+	GLint extCount = 0;
+	glGetIntegerv(GL_NUM_EXTENSIONS, &extCount);
+	while(extCount--)
+	{
+		const char* ext = reinterpret_cast<const char*>(glGetStringi(GL_EXTENSIONS, extCount));
+		if(CString(ext) == "GL_ARB_shader_ballot")
+		{
+			ANKI_GL_LOGI("Found GL_ARB_shader_ballot");
+			m_extensions |= GlExtensions::ARB_SHADER_BALLOT;
+		}
+	}
 }
 
 void GlState::destroy()

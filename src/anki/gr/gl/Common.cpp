@@ -370,7 +370,13 @@ void convertTextureInformation(const PixelFormat& pf,
 		{
 			format = GL_R;
 			internalFormat = GL_R16UI;
-			type = GL_UNSIGNED_INT;
+			type = GL_UNSIGNED_SHORT;
+		}
+		else if(pf.m_transform == TransformFormat::UNORM)
+		{
+			format = GL_R;
+			internalFormat = GL_R16;
+			type = GL_UNSIGNED_SHORT;
 		}
 		else
 		{
