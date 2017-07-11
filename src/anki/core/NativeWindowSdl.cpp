@@ -25,7 +25,7 @@ Error NativeWindow::init(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
 	//
 	// Set GL attributes
 	//
-	ANKI_CORE_LOGI("Creating SDL window");
+	ANKI_CORE_LOGI("Creating SDL window. SDL version %u.%u", SDL_MAJOR_VERSION, SDL_MINOR_VERSION);
 
 #if ANKI_GR_BACKEND == ANKI_GR_BACKEND_GL
 	if(SDL_GL_SetAttribute(SDL_GL_RED_SIZE, init.m_rgbaBits[0])
