@@ -7,7 +7,6 @@
 
 #include <anki/util/Allocator.h>
 #include <anki/util/String.h>
-#include <anki/util/Dictionary.h>
 
 namespace anki
 {
@@ -33,10 +32,6 @@ using SceneAllocator = ChainAllocator<T>;
 /// The type of the scene's frame allocator
 template<typename T>
 using SceneFrameAllocator = StackAllocator<T>;
-
-/// Scene dictionary
-template<typename T>
-using SceneDictionary = Dictionary<T, SceneAllocator<std::pair<const char*, T>>>;
 /// @}
 
 } // end namespace anki
