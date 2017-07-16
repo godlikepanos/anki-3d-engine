@@ -23,10 +23,10 @@ void getFileExtension(const CString& filename, GenericMemoryPoolAllocator<U8> al
 Bool directoryExists(const CString& dir);
 
 /// Callback for the @ref walkDirectoryTree.
-/// - 1st parameter: The file or directory name.
-/// - 2nd parameter: User data passed to walkDirectoryTree.
-/// - 3rd parameter: True if it's directory, false if it's regular file.
-using WalkDirectoryTreeCallback = Error (*)(const CString&, void*, Bool);
+/// @param filename The file or directory name.
+/// @param userData User data passed to walkDirectoryTree.
+/// @param isDirectory True if it's directory, false if it's regular file.
+using WalkDirectoryTreeCallback = Error (*)(const CString& filename, void* userData, Bool isDirectory);
 
 /// Walk a directory and it's subdirectories. Will walk and list all directories and files of a directory.
 ANKI_USE_RESULT Error walkDirectoryTree(const CString& dir, void* userData, WalkDirectoryTreeCallback callback);
