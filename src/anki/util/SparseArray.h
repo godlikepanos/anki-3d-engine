@@ -9,6 +9,7 @@
 #include <anki/util/Array.h>
 #include <anki/util/Allocator.h>
 #include <utility>
+#include <ctime>
 
 namespace anki
 {
