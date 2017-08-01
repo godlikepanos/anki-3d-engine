@@ -111,7 +111,7 @@ ANKI_TEST(Util, HashMap)
 		HashMap<int, int, Hasher, Compare> akMap;
 		std::vector<int> numbers;
 
-		// Inserd random
+		// Insert random
 		for(U i = 0; i < MAX; ++i)
 		{
 			U num;

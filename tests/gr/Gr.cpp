@@ -487,7 +487,7 @@ ANKI_TEST(Gr, ViewportAndScissor)
 				   "the area around the quad");
 	ShaderProgramPtr prog = createProgram(VERT_QUAD_STRIP_SRC, FRAG_SRC, *gr);
 
-	srand(time(NULL));
+	srand(time(nullptr));
 	Array<FramebufferPtr, 4> fb;
 	for(FramebufferPtr& f : fb)
 	{
@@ -547,7 +547,7 @@ ANKI_TEST(Gr, ViewportAndScissor)
 
 ANKI_TEST(Gr, ViewportAndScissorOffscreen)
 {
-	srand(time(NULL));
+	srand(time(nullptr));
 	COMMON_BEGIN()
 
 	ANKI_TEST_LOGI("Expect to see a grey quad appearing in the 4 corners. "

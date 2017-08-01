@@ -59,6 +59,7 @@ const U MIN_U = std::numeric_limits<U>::min();
 using PtrSize = size_t; ///< Like size_t
 const PtrSize MAX_PTR_SIZE = std::numeric_limits<PtrSize>::max();
 const PtrSize MIN_PTR_SIZE = std::numeric_limits<PtrSize>::min();
+static_assert(sizeof(PtrSize) == sizeof(void*), "Wrong size for size_t");
 
 using F32 = float; ///< Floating point 32bit
 const F32 MAX_F32 = std::numeric_limits<F32>::max();
