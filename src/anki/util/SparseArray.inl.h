@@ -9,8 +9,10 @@ namespace anki
 {
 
 template<typename T, typename TNode, typename TIndex, PtrSize TBucketSize, PtrSize TLinearProbingSize>
-TNode** SparseArrayBase<T, TNode, TIndex, TBucketSize, TLinearProbingSize>::findPlace(Index idx)
+TNode** SparseArrayBase<T, TNode, TIndex, TBucketSize, TLinearProbingSize>::findPlace(Index idx, Node*& parent)
 {
+	parent = nullptr;
+
 	// Update the first node
 	const Index modIdx = mod(idx);
 	if(modIdx < m_firstElementModIdx)
@@ -51,12 +53,14 @@ TNode** SparseArrayBase<T, TNode, TIndex, TBucketSize, TLinearProbingSize>::find
 		otherNode->m_saIdx = idx;
 
 		// ...and try to find a new place for it. If we don't do the trick above findPlace will return the same place
-		Node** newPlace = findPlace(otherNodeIdx);
+		Node* parent;
+		Node** newPlace = findPlace(otherNodeIdx, parent);
 		ANKI_ASSERT(*newPlace != m_bucket.m_elements[modIdx]);
 
 		// ...point the other node to the new place and restore it
 		*newPlace = otherNode;
 		otherNode->m_saIdx = otherNodeIdx;
+		otherNode->m_saParent = parent;
 
 		// ...now the modIdx place is free for out node
 		m_bucket.m_elements[modIdx] = nullptr;
@@ -80,6 +84,7 @@ TNode** SparseArrayBase<T, TNode, TIndex, TBucketSize, TLinearProbingSize>::find
 			}
 			else
 			{
+				parent = it;
 				return &it->m_saRight;
 			}
 		}
@@ -94,12 +99,14 @@ TNode** SparseArrayBase<T, TNode, TIndex, TBucketSize, TLinearProbingSize>::find
 			}
 			else
 			{
+				parent = it;
 				return &it->m_saLeft;
 			}
 		}
 		else
 		{
 			// Equal
+			parent = it->m_saParent;
 			return pit;
 		}
 	}
@@ -123,13 +130,13 @@ const TNode* SparseArrayBase<T, TNode, TIndex, TBucketSize, TLinearProbingSize>:
 			{
 				break;
 			}
-			else if(it->m_saIdx < idx)
+			else if(idx > it->m_saIdx)
 			{
-				it = it->m_saLeft;
+				it = it->m_saRight;
 			}
 			else
 			{
-				it = it->m_saRight;
+				it = it->m_saLeft;
 			}
 		} while(it);
 
@@ -278,14 +285,14 @@ void SparseArrayBase<T, TNode, TIndex, TBucketSize, TLinearProbingSize>::remove(
 	const Index modIdx = mod(node->m_saIdx);
 
 	// Update the first node
-	ANKI_ASSERT(m_firstElementModIdx >= modIdx);
+	ANKI_ASSERT(m_firstElementModIdx <= modIdx);
 	if(ANKI_UNLIKELY(m_firstElementModIdx == modIdx))
 	{
 		for(Index i = 0; i < BUCKET_SIZE; ++i)
 		{
 			if(m_bucket.m_elements[i])
 			{
-				m_firstElementModIdx = modIdx;
+				m_firstElementModIdx = i;
 				break;
 			}
 		}
@@ -410,6 +417,38 @@ void SparseArray<T, TIndex, TBucketSize, TLinearProbingSize>::destroy(TAlloc& al
 	}
 
 	m_elementCount = 0;
+}
+
+template<typename T, typename TIndex, PtrSize TBucketSize, PtrSize TLinearProbingSize>
+template<typename TAlloc, typename... TArgs>
+typename SparseArray<T, TIndex, TBucketSize, TLinearProbingSize>::Iterator
+SparseArray<T, TIndex, TBucketSize, TLinearProbingSize>::setAt(TAlloc& alloc, Index idx, TArgs&&... args)
+{
+	Node* parent;
+	Node** place = Base::findPlace(idx, parent);
+	ANKI_ASSERT(place);
+
+	if(*place)
+	{
+		// Node exists, recycle
+
+		Node* const n = *place;
+		n->m_saValue.~Value();
+		::new(&n->m_saValue) Value(std::forward<TArgs>(args)...);
+	}
+	else
+	{
+		// Node doesn't exit,
+
+		Node* newNode = alloc.template newInstance<Node>(std::forward<TArgs>(args)...);
+		newNode->m_saIdx = idx;
+		*place = newNode;
+		newNode->m_saParent = parent;
+
+		++Base::m_elementCount;
+	}
+
+	return Iterator(*place, this);
 }
 
 } // end namespace anki

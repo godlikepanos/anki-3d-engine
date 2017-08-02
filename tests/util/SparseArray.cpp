@@ -5,6 +5,7 @@
 
 #include "tests/framework/Framework.h"
 #include <anki/util/SparseArray.h>
+#include <unordered_map>
 
 ANKI_TEST(Util, SparseArray)
 {
@@ -96,10 +97,43 @@ ANKI_TEST(Util, SparseArray)
 			int num = numbers[idx];
 			numbers.erase(numbers.begin() + idx);
 
-			auto it = arr.getAt(idx);
+			auto it = arr.getAt(num);
 			ANKI_TEST_EXPECT_NEQ(it, arr.getEnd());
 			ANKI_TEST_EXPECT_EQ(*it, num);
 			arr.erase(alloc, it);
 		}
+	}
+
+	// Fuzzy test #2: Do random insertions and removals
+	{
+		const U MAX = 1000;
+		SparseArray<int, U32, 64, 4> arr;
+		using StlMap =
+			std::unordered_map<int, int, std::hash<int>, std::equal_to<int>, HeapAllocator<std::pair<int, int>>>;
+		StlMap map(10, std::hash<int>(), std::equal_to<int>(), alloc);
+
+		for(U i = 0; i < MAX; ++i)
+		{
+			Bool insert = (rand() & 1) || arr.getSize() == 0;
+
+			if(insert)
+			{
+				I idx = rand();
+				arr.setAt(alloc, idx, idx);
+				map[idx] = idx;
+			}
+			else
+			{
+				auto it = std::next(std::begin(map), rand() % map.size());
+
+				auto it2 = arr.getAt(it->second);
+				ANKI_TEST_EXPECT_NEQ(it2, arr.getEnd());
+
+				map.erase(it);
+				arr.erase(alloc, it2);
+			}
+		}
+
+		arr.destroy(alloc);
 	}
 }

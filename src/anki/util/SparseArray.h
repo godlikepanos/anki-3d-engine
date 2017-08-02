@@ -294,7 +294,7 @@ protected:
 	}
 
 	/// Find a place for a node in the array.
-	Node** findPlace(Index idx);
+	Node** findPlace(Index idx, Node*& parent);
 
 	/// Remove a node.
 	void remove(Iterator it);
@@ -380,23 +380,7 @@ public:
 
 	/// Set a value to an index.
 	template<typename TAlloc, typename... TArgs>
-	Iterator setAt(TAlloc& alloc, Index idx, TArgs&&... args)
-	{
-		Node* newNode = alloc.template newInstance<Node>(std::forward<TArgs>(args)...);
-		newNode->m_saIdx = idx;
-		Node** place = Base::findPlace(idx);
-		ANKI_ASSERT(place);
-		if(*place)
-		{
-			alloc.deleteInstance(*place);
-		}
-		else
-		{
-			++Base::m_elementCount;
-		}
-		*place = newNode;
-		return Iterator(newNode, this);
-	}
+	Iterator setAt(TAlloc& alloc, Index idx, TArgs&&... args);
 
 	/// Get an iterator.
 	Iterator getAt(Index idx)
