@@ -142,6 +142,7 @@
 #	define ANKI_RESTRICT __restrict
 #	define ANKI_USE_RESULT __attribute__((warn_unused_result))
 #	define ANKI_FORCE_INLINE __attribute__((always_inline))
+#	define ANKI_DONT_INLINE __attribute__((noinline))
 #	define ANKI_UNUSED __attribute__((__unused__))
 #else
 #	define ANKI_LIKELY(x) ((x) == 1)
@@ -149,6 +150,7 @@
 #	define ANKI_RESTRICT
 #	define ANKI_USE_RESULT
 #	define ANKI_FORCE_INLINE
+#	define ANKI_DONT_INLINE
 #	define ANKI_UNUSED
 #endif
 

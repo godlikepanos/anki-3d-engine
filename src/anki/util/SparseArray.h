@@ -5,11 +5,11 @@
 
 #pragma once
 
+#include <anki/util/StdTypes.h>
 #include <anki/util/Assert.h>
 #include <anki/util/Array.h>
 #include <anki/util/Allocator.h>
 #include <utility>
-#include <ctime>
 
 namespace anki
 {
@@ -185,13 +185,13 @@ public:
 	/// Get begin.
 	Iterator getBegin()
 	{
-		return Iterator(m_bucket.m_elements[m_firstElementModIdx], this);
+		return Iterator(m_bucket.m_elements[findFirstModIdx()], this);
 	}
 
 	/// Get begin.
 	ConstIterator getBegin() const
 	{
-		return ConstIterator(m_bucket.m_elements[m_firstElementModIdx], this);
+		return ConstIterator(m_bucket.m_elements[findFirstModIdx()], this);
 	}
 
 	/// Get end.
@@ -242,9 +242,11 @@ public:
 		return m_elementCount != 0;
 	}
 
+	/// Check the validity of the array.
+	void validate() const;
+
 protected:
 	SparseArrayBucket<Node, BUCKET_SIZE> m_bucket;
-	Index m_firstElementModIdx = ~Index(0); ///< To start iterating without searching. Points to m_bucket.
 	U32 m_elementCount = 0;
 
 	/// Default constructor.
@@ -303,12 +305,15 @@ protected:
 	const Node* tryGetNode(Index idx) const;
 
 	/// For iterating.
-	const Node* getNextNode(const Node* const node) const;
+	const Node* getNextNode(const Node* const node) const
+	{
+		return getNextNodeInternal(node);
+	}
 
 	/// For iterating.
 	Node* getNextNode(const Node* node)
 	{
-		const Node* out = getNextNode(node);
+		const Node* out = getNextNodeInternal(node);
 		return const_cast<Node*>(out);
 	}
 
@@ -323,6 +328,14 @@ private:
 	/// Remove a node from the tree.
 	/// @return The new root node.
 	static Node* removeFromTree(Node* root, Node* del);
+
+	/// See validate().
+	void validateInternal(Index modIdx, const Node* node, PtrSize& count) const;
+
+	/// For iterating.
+	Index findFirstModIdx() const;
+
+	const Node* getNextNodeInternal(const Node* node) const;
 };
 
 /// Sparse array.

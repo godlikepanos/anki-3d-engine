@@ -3,9 +3,11 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "tests/framework/Framework.h"
+#include <tests/framework/Framework.h>
 #include <anki/util/SparseArray.h>
+#include <anki/util/HighRezTimer.h>
 #include <unordered_map>
+#include <ctime>
 
 ANKI_TEST(Util, SparseArray)
 {
@@ -106,7 +108,7 @@ ANKI_TEST(Util, SparseArray)
 
 	// Fuzzy test #2: Do random insertions and removals
 	{
-		const U MAX = 1000;
+		const U MAX = 10000;
 		SparseArray<int, U32, 64, 4> arr;
 		using StlMap =
 			std::unordered_map<int, int, std::hash<int>, std::equal_to<int>, HeapAllocator<std::pair<int, int>>>;
@@ -114,26 +116,201 @@ ANKI_TEST(Util, SparseArray)
 
 		for(U i = 0; i < MAX; ++i)
 		{
-			Bool insert = (rand() & 1) || arr.getSize() == 0;
+			const Bool insert = (rand() & 1) || arr.getSize() == 0;
 
 			if(insert)
 			{
-				I idx = rand();
+				const I idx = rand();
+
+				if(map.find(idx) != map.end())
+				{
+					continue;
+				}
+
 				arr.setAt(alloc, idx, idx);
 				map[idx] = idx;
+
+				arr.validate();
 			}
 			else
 			{
-				auto it = std::next(std::begin(map), rand() % map.size());
+				const U idx = U(rand()) % map.size();
+				auto it = std::next(std::begin(map), idx);
 
 				auto it2 = arr.getAt(it->second);
 				ANKI_TEST_EXPECT_NEQ(it2, arr.getEnd());
 
 				map.erase(it);
 				arr.erase(alloc, it2);
+
+				arr.validate();
+			}
+
+			// Iterate and check
+			{
+				StlMap bMap = map;
+
+				auto it = arr.getBegin();
+				while(it != arr.getEnd())
+				{
+					I val = *it;
+
+					auto it2 = bMap.find(val);
+					ANKI_TEST_EXPECT_NEQ(it2, bMap.end());
+
+					bMap.erase(it2);
+
+					++it;
+				}
 			}
 		}
 
 		arr.destroy(alloc);
 	}
+}
+
+static ANKI_DONT_INLINE void* allocAlignedAk(void* userData, void* ptr, PtrSize size, PtrSize alignment)
+{
+	return allocAligned(userData, ptr, size, alignment);
+}
+
+static ANKI_DONT_INLINE void* allocAlignedStl(void* userData, void* ptr, PtrSize size, PtrSize alignment)
+{
+	return allocAligned(userData, ptr, size, alignment);
+}
+
+ANKI_TEST(Util, SparseArrayBench)
+{
+	HeapAllocator<U8> allocAk(allocAlignedAk, nullptr);
+	HeapAllocator<U8> allocStl(allocAlignedStl, nullptr);
+	HeapAllocator<U8> allocTml(allocAligned, nullptr);
+
+	using StlMap = std::unordered_map<int, int, std::hash<int>, std::equal_to<int>, HeapAllocator<std::pair<int, int>>>;
+	StlMap stdMap(10, std::hash<int>(), std::equal_to<int>(), allocStl);
+
+	using AkMap = SparseArray<int, U32, 256, 16>;
+	AkMap akMap;
+
+	HighRezTimer timer;
+
+	const U COUNT = 1024 * 1024 * 5;
+
+	// Create a huge set
+	DynamicArrayAuto<int> vals(allocTml);
+
+	{
+		std::unordered_map<int, int> tmpMap;
+		vals.create(COUNT);
+
+		for(U i = 0; i < COUNT; ++i)
+		{
+			// Put unique keys
+			int v;
+			do
+			{
+				v = rand();
+			} while(tmpMap.find(v) != tmpMap.end());
+			tmpMap[v] = 1;
+
+			vals[i] = v;
+		}
+	}
+
+	// Insertion
+	{
+		// AnkI
+		timer.start();
+		for(U i = 0; i < COUNT; ++i)
+		{
+			akMap.setAt(allocAk, vals[i], vals[i]);
+		}
+		timer.stop();
+		HighRezTimer::Scalar akTime = timer.getElapsedTime();
+
+		// STL
+		timer.start();
+		for(U i = 0; i < COUNT; ++i)
+		{
+			stdMap[vals[i]] = vals[i];
+		}
+		timer.stop();
+		HighRezTimer::Scalar stlTime = timer.getElapsedTime();
+
+		ANKI_TEST_LOGI("Inserting bench: STL %f AnKi %f | %f%%", stlTime, akTime, stlTime / akTime * 100.0);
+	}
+
+// Search
+#if 1
+	{
+		int count = 0;
+
+		// Find values AnKi
+		timer.start();
+		for(U i = 0; i < COUNT; ++i)
+		{
+			auto it = akMap.getAt(vals[i]);
+			count += *it;
+		}
+		timer.stop();
+		HighRezTimer::Scalar akTime = timer.getElapsedTime();
+
+		// Find values STL
+		timer.start();
+		for(U i = 0; i < COUNT; ++i)
+		{
+			count += stdMap[vals[i]];
+		}
+		timer.stop();
+		HighRezTimer::Scalar stlTime = timer.getElapsedTime();
+
+		ANKI_TEST_LOGI("Find bench: STL %f AnKi %f | %f%%", stlTime, akTime, stlTime / akTime * 100.0);
+	}
+#endif
+
+	// Deletes
+	{
+		const U DEL_COUNT = COUNT / 2;
+		DynamicArrayAuto<AkMap::Iterator> delValsAk(allocTml);
+		delValsAk.create(DEL_COUNT);
+
+		DynamicArrayAuto<StlMap::iterator> delValsStl(allocTml);
+		delValsStl.create(DEL_COUNT);
+
+		std::unordered_map<int, int> tmpMap;
+		for(U i = 0; i < DEL_COUNT; ++i)
+		{
+			// Put unique keys
+			int v;
+			do
+			{
+				v = vals[rand() % COUNT];
+			} while(tmpMap.find(v) != tmpMap.end());
+			tmpMap[v] = 1;
+
+			delValsAk[i] = akMap.getAt(v);
+			delValsStl[i] = stdMap.find(v);
+		}
+
+		// Random delete AnKi
+		timer.start();
+		for(U i = 0; i < DEL_COUNT; ++i)
+		{
+			akMap.erase(allocAk, delValsAk[i]);
+		}
+		timer.stop();
+		HighRezTimer::Scalar akTime = timer.getElapsedTime();
+
+		// Random delete STL
+		timer.start();
+		for(U i = 0; i < DEL_COUNT; ++i)
+		{
+			stdMap.erase(delValsStl[i]);
+		}
+		timer.stop();
+		HighRezTimer::Scalar stlTime = timer.getElapsedTime();
+
+		ANKI_TEST_LOGI("Deleting bench: STL %f AnKi %f | %f%%\n", stlTime, akTime, stlTime / akTime * 100.0);
+	}
+
+	akMap.destroy(allocAk);
 }

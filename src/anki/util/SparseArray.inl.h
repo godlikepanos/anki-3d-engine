@@ -12,13 +12,7 @@ template<typename T, typename TNode, typename TIndex, PtrSize TBucketSize, PtrSi
 TNode** SparseArrayBase<T, TNode, TIndex, TBucketSize, TLinearProbingSize>::findPlace(Index idx, Node*& parent)
 {
 	parent = nullptr;
-
-	// Update the first node
 	const Index modIdx = mod(idx);
-	if(modIdx < m_firstElementModIdx)
-	{
-		m_firstElementModIdx = modIdx;
-	}
 
 	if(m_bucket.m_elements[modIdx] == nullptr || m_bucket.m_elements[modIdx]->m_saIdx == idx)
 	{
@@ -70,7 +64,6 @@ TNode** SparseArrayBase<T, TNode, TIndex, TBucketSize, TLinearProbingSize>::find
 	// Last thing we can do, need to append to a tree
 	ANKI_ASSERT(m_bucket.m_elements[modIdx]);
 	Node* it = m_bucket.m_elements[modIdx];
-	Node** pit = &m_bucket.m_elements[modIdx];
 	while(true)
 	{
 		if(idx > it->m_saIdx)
@@ -80,7 +73,6 @@ TNode** SparseArrayBase<T, TNode, TIndex, TBucketSize, TLinearProbingSize>::find
 			if(right)
 			{
 				it = right;
-				pit = &it->m_saRight;
 			}
 			else
 			{
@@ -95,7 +87,6 @@ TNode** SparseArrayBase<T, TNode, TIndex, TBucketSize, TLinearProbingSize>::find
 			if(left)
 			{
 				it = left;
-				pit = &it->m_saLeft;
 			}
 			else
 			{
@@ -107,7 +98,23 @@ TNode** SparseArrayBase<T, TNode, TIndex, TBucketSize, TLinearProbingSize>::find
 		{
 			// Equal
 			parent = it->m_saParent;
-			return pit;
+
+			if(parent)
+			{
+				if(parent->m_saLeft == it)
+				{
+					return &parent->m_saLeft;
+				}
+				else
+				{
+					ANKI_ASSERT(parent->m_saRight == it);
+					return &parent->m_saRight;
+				}
+			}
+			else
+			{
+				return &m_bucket.m_elements[modIdx];
+			}
 		}
 	}
 
@@ -128,7 +135,7 @@ const TNode* SparseArrayBase<T, TNode, TIndex, TBucketSize, TLinearProbingSize>:
 		{
 			if(it->m_saIdx == idx)
 			{
-				break;
+				return it;
 			}
 			else if(idx > it->m_saIdx)
 			{
@@ -139,8 +146,6 @@ const TNode* SparseArrayBase<T, TNode, TIndex, TBucketSize, TLinearProbingSize>:
 				it = it->m_saLeft;
 			}
 		} while(it);
-
-		return it;
 	}
 
 	// Search for linear probing
@@ -284,20 +289,6 @@ void SparseArrayBase<T, TNode, TIndex, TBucketSize, TLinearProbingSize>::remove(
 
 	const Index modIdx = mod(node->m_saIdx);
 
-	// Update the first node
-	ANKI_ASSERT(m_firstElementModIdx <= modIdx);
-	if(ANKI_UNLIKELY(m_firstElementModIdx == modIdx))
-	{
-		for(Index i = 0; i < BUCKET_SIZE; ++i)
-		{
-			if(m_bucket.m_elements[i])
-			{
-				m_firstElementModIdx = i;
-				break;
-			}
-		}
-	}
-
 	if(parent || left || right)
 	{
 		// In a tree, remove
@@ -328,54 +319,149 @@ void SparseArrayBase<T, TNode, TIndex, TBucketSize, TLinearProbingSize>::remove(
 }
 
 template<typename T, typename TNode, typename TIndex, PtrSize TBucketSize, PtrSize TLinearProbingSize>
-const TNode* SparseArrayBase<T, TNode, TIndex, TBucketSize, TLinearProbingSize>::getNextNode(
-	const Node* const node) const
+const TNode* SparseArrayBase<T, TNode, TIndex, TBucketSize, TLinearProbingSize>::getNextNodeInternal(
+	const Node* node) const
 {
 	ANKI_ASSERT(node);
-	const Node* out = nullptr;
 
 	if(node->m_saLeft)
 	{
-		out = node->m_saLeft;
+		return node->m_saLeft;
 	}
-	else if(node->m_saRight)
-	{
-		out = node->m_saRight;
-	}
-	else if(node->m_saParent)
-	{
-		// Node without children but with a parent, move up the tree
 
-		out = node;
-		const Node* prevNode;
+	if(node->m_saRight)
+	{
+		return node->m_saRight;
+	}
+
+	// Node without children but with a parent, move up the tree
+	const Node* out = nullptr;
+	if(node->m_saParent)
+	{
+		const Node* prevNode = node;
+		out = node->m_saParent;
 		do
 		{
-			prevNode = out;
-			out = out->m_saParent;
-
 			if(out->m_saRight && out->m_saRight != prevNode)
 			{
-				out = out->m_saRight;
-				break;
+				return out->m_saRight;
 			}
-		} while(out->m_saParent);
-	}
-	else
-	{
-		// Base of the tree, move to the next bucket element
 
-		const Index nextIdx = node->m_saIdx + 1u;
-		for(Index i = mod(nextIdx); i < BUCKET_SIZE; ++i)
+			prevNode = out;
+			out = out->m_saParent;
+		} while(out);
+
+		// Apparently the node is the rightmost leaf
+		node = prevNode;
+		ANKI_ASSERT(node);
+		ANKI_ASSERT(m_bucket.m_elements[mod(node->m_saIdx)] == node);
+	}
+
+	// Base of the tree, move to the next bucket element
+	{
+		const Index modIdx = mod(node->m_saIdx);
+
+		// Find where the node is
+		Index i = modIdx;
+		do
+		{
+		} while(i < BUCKET_SIZE && node != m_bucket.m_elements[i++]);
+
+		ANKI_ASSERT(i <= BUCKET_SIZE);
+
+		// Now move to the next
+		for(; i < BUCKET_SIZE; ++i)
 		{
 			if(m_bucket.m_elements[i])
 			{
-				out = m_bucket.m_elements[i];
-				break;
+				return m_bucket.m_elements[i];
 			}
 		}
 	}
 
-	return out;
+	return nullptr;
+}
+
+template<typename T, typename TNode, typename TIndex, PtrSize TBucketSize, PtrSize TLinearProbingSize>
+void SparseArrayBase<T, TNode, TIndex, TBucketSize, TLinearProbingSize>::validate() const
+{
+	PtrSize count = 0;
+
+	for(Index i = 0; i < BUCKET_SIZE; ++i)
+	{
+		const Node* it = m_bucket.m_elements[i];
+		if(it)
+		{
+			ANKI_ASSERT(it->m_saParent == nullptr);
+
+			if(it->m_saLeft || it->m_saRight)
+			{
+				// It's a tree
+
+				validateInternal(i, it, count);
+			}
+			else
+			{
+				// Check if it's linear probed
+
+				const Index modIdx = mod(it->m_saIdx);
+				if(modIdx != i)
+				{
+					ANKI_ASSERT(i > modIdx);
+					ANKI_ASSERT(i - modIdx < LINEAR_PROBING_SIZE);
+				}
+
+				++count;
+			}
+		}
+	}
+
+	ANKI_ASSERT(count == m_elementCount);
+}
+
+template<typename T, typename TNode, typename TIndex, PtrSize TBucketSize, PtrSize TLinearProbingSize>
+void SparseArrayBase<T, TNode, TIndex, TBucketSize, TLinearProbingSize>::validateInternal(
+	Index modIdx, const Node* node, PtrSize& count) const
+{
+	ANKI_ASSERT(node);
+	ANKI_ASSERT(mod(node->m_saIdx) == modIdx);
+
+	++count;
+
+	const Node* parent = node->m_saParent;
+	(void)parent;
+	const Node* left = node->m_saLeft;
+	const Node* right = node->m_saRight;
+
+	if(left)
+	{
+		ANKI_ASSERT(left->m_saParent == node);
+		validateInternal(modIdx, left, count);
+	}
+
+	if(right)
+	{
+		ANKI_ASSERT(right->m_saParent == node);
+		validateInternal(modIdx, right, count);
+	}
+}
+
+template<typename T, typename TNode, typename TIndex, PtrSize TBucketSize, PtrSize TLinearProbingSize>
+TIndex SparseArrayBase<T, TNode, TIndex, TBucketSize, TLinearProbingSize>::findFirstModIdx() const
+{
+	for(Index i = 0; i < BUCKET_SIZE; i += 2)
+	{
+		if(m_bucket.m_elements[i])
+		{
+			return i;
+		}
+		else if(m_bucket.m_elements[i + 1])
+		{
+			return i + 1;
+		}
+	}
+
+	return 0;
 }
 
 template<typename T, typename TIndex, PtrSize TBucketSize, PtrSize TLinearProbingSize>
