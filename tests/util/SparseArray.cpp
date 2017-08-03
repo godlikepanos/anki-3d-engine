@@ -169,13 +169,25 @@ ANKI_TEST(Util, SparseArray)
 	}
 }
 
+static PtrSize akAllocSize = 0;
 static ANKI_DONT_INLINE void* allocAlignedAk(void* userData, void* ptr, PtrSize size, PtrSize alignment)
 {
+	if(ptr == nullptr)
+	{
+		akAllocSize += size;
+	}
+
 	return allocAligned(userData, ptr, size, alignment);
 }
 
+static PtrSize stlAllocSize = 0;
 static ANKI_DONT_INLINE void* allocAlignedStl(void* userData, void* ptr, PtrSize size, PtrSize alignment)
 {
+	if(ptr == nullptr)
+	{
+		stlAllocSize += size;
+	}
+
 	return allocAligned(userData, ptr, size, alignment);
 }
 
@@ -188,7 +200,7 @@ ANKI_TEST(Util, SparseArrayBench)
 	using StlMap = std::unordered_map<int, int, std::hash<int>, std::equal_to<int>, HeapAllocator<std::pair<int, int>>>;
 	StlMap stdMap(10, std::hash<int>(), std::equal_to<int>(), allocStl);
 
-	using AkMap = SparseArray<int, U32, 256, 16>;
+	using AkMap = SparseArray<int, U32, 1024, 16>;
 	AkMap akMap;
 
 	HighRezTimer timer;
@@ -239,8 +251,7 @@ ANKI_TEST(Util, SparseArrayBench)
 		ANKI_TEST_LOGI("Inserting bench: STL %f AnKi %f | %f%%", stlTime, akTime, stlTime / akTime * 100.0);
 	}
 
-// Search
-#if 1
+	// Search
 	{
 		int count = 0;
 
@@ -265,7 +276,12 @@ ANKI_TEST(Util, SparseArrayBench)
 
 		ANKI_TEST_LOGI("Find bench: STL %f AnKi %f | %f%%", stlTime, akTime, stlTime / akTime * 100.0);
 	}
-#endif
+
+	// Mem usage
+	const PtrSize stlMemUsage = stlAllocSize + sizeof(stdMap);
+	const PtrSize akMemUsage = akAllocSize + sizeof(akMap);
+	ANKI_TEST_LOGI(
+		"Mem usage: STL %llu AnKi %llu | %f%%", stlMemUsage, akMemUsage, F64(stlMemUsage) / akMemUsage * 100.0);
 
 	// Deletes
 	{
