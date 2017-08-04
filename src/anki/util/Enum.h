@@ -24,7 +24,7 @@ constexpr inline typename EnumUnderlyingType<TEnum>::Type enumToType(TEnum e)
 	return static_cast<typename EnumUnderlyingType<TEnum>::Type>(e);
 }
 
-#define _ANKI_ENUM_OPERATOR(enum_, qualifier_, operator_, selfOperator_)                                  \
+#define _ANKI_ENUM_OPERATOR(enum_, qualifier_, operator_, assignOperator_)                                \
 	constexpr qualifier_ enum_ operator operator_(const enum_ a, const enum_ b)                           \
 	{                                                                                                     \
 		using Int = EnumUnderlyingType<enum_>::Type;                                                      \
@@ -40,9 +40,21 @@ constexpr inline typename EnumUnderlyingType<TEnum>::Type enumToType(TEnum e)
 		using Int = EnumUnderlyingType<enum_>::Type;                                                      \
 		return static_cast<enum_>(a operator_ static_cast<Int>(b));                                       \
 	}                                                                                                     \
-	qualifier_ enum_& operator selfOperator_(enum_& a, const enum_ b)                                     \
+	qualifier_ enum_& operator assignOperator_(enum_& a, const enum_ b)                                   \
 	{                                                                                                     \
 		a = a operator_ b;                                                                                \
+		return a;                                                                                         \
+	}                                                                                                     \
+	qualifier_ enum_& operator assignOperator_(enum_& a, const EnumUnderlyingType<enum_>::Type b)         \
+	{                                                                                                     \
+		a = a operator_ b;                                                                                \
+		return a;                                                                                         \
+	}                                                                                                     \
+	qualifier_ EnumUnderlyingType<enum_>::Type& operator assignOperator_(                                 \
+		EnumUnderlyingType<enum_>::Type& a, const enum_ b)                                                \
+	{                                                                                                     \
+		using Int = EnumUnderlyingType<enum_>::Type;                                                      \
+		a = a operator_ static_cast<Int>(b);                                                              \
 		return a;                                                                                         \
 	}
 
@@ -65,6 +77,18 @@ constexpr inline typename EnumUnderlyingType<TEnum>::Type enumToType(TEnum e)
 		using Int = EnumUnderlyingType<enum_>::Type;      \
 		a = static_cast<enum_>(static_cast<Int>(a) - 1);  \
 		return a;                                         \
+	}                                                     \
+	qualifier_ enum_ operator++(enum_& a, int)            \
+	{                                                     \
+		enum_ old = a;                                    \
+		++a;                                              \
+		return old;                                       \
+	}                                                     \
+	qualifier_ enum_ operator--(enum_& a, int)            \
+	{                                                     \
+		enum_ old = a;                                    \
+		--a;                                              \
+		return old;                                       \
 	}
 
 #define _ANKI_ENUM_NEGATIVE_OPERATOR(enum_, qualifier_) \
