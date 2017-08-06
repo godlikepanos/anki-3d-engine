@@ -17,106 +17,69 @@ namespace anki
 /// @addtogroup util_containers
 /// @{
 
-/// A single bucket of SparseArray elements. It's its own class in case we allow multiple buckets in the future.
-/// @internal
-template<typename TNode, PtrSize TBucketSize>
-class SparseArrayBucket
-{
-public:
-	Array<TNode*, TBucketSize> m_elements;
-};
-
-/// SparseArray node.
-/// @internal
-template<typename T>
-class SparseArrayNode
-{
-public:
-	SparseArrayNode* m_saLeft = nullptr;
-	SparseArrayNode* m_saRight = nullptr;
-	SparseArrayNode* m_saParent = nullptr; ///< Used for iterating.
-	PtrSize m_saIdx = 0; ///< The index in the sparse array.
-	T m_saValue;
-
-	template<typename... TArgs>
-	SparseArrayNode(TArgs&&... args)
-		: m_saValue(std::forward<TArgs>(args)...)
-	{
-	}
-
-	T& getSaValue()
-	{
-		return m_saValue;
-	}
-
-	const T& getSaValue() const
-	{
-		return m_saValue;
-	}
-};
-
 /// Sparse array iterator.
-template<typename TNodePointer, typename TValuePointer, typename TValueReference, typename TSparseArrayBasePtr>
+template<typename TValuePointer, typename TValueReference, typename TSparseArrayPtr>
 class SparseArrayIterator
 {
-	template<typename, typename, typename, PtrSize, PtrSize>
-	friend class SparseArrayBase;
-
-	template<typename, typename, PtrSize, PtrSize>
+	template<typename, typename>
 	friend class SparseArray;
 
 public:
 	/// Default constructor.
 	SparseArrayIterator()
-		: m_node(nullptr)
-		, m_array(nullptr)
+		: m_array(nullptr)
+		, m_elementIdx(MAX_U32)
 	{
 	}
 
 	/// Copy.
 	SparseArrayIterator(const SparseArrayIterator& b)
-		: m_node(b.m_node)
-		, m_array(b.m_array)
+		: m_array(b.m_array)
+		, m_elementIdx(b.m_elementIdx)
 	{
 	}
 
 	/// Allow conversion from iterator to const iterator.
-	template<typename YNodePointer, typename YValuePointer, typename YValueReference, typename YSparseArrayBasePtr>
-	SparseArrayIterator(const SparseArrayIterator<YNodePointer, YValuePointer, YValueReference, YSparseArrayBasePtr>& b)
-		: m_node(b.m_node)
-		, m_array(b.m_array)
+	template<typename YValuePointer, typename YValueReference, typename YSparseArrayPtr>
+	SparseArrayIterator(const SparseArrayIterator<YValuePointer, YValueReference, YSparseArrayPtr>& b)
+		: m_array(b.m_array)
+		, m_elementIdx(b.m_elementIdx)
 	{
 	}
 
-	SparseArrayIterator(TNodePointer node, TSparseArrayBasePtr arr)
-		: m_node(node)
-		, m_array(arr)
+	SparseArrayIterator(TSparseArrayPtr arr, U32 modIdx)
+		: m_array(arr)
+		, m_elementIdx(modIdx)
 	{
 		ANKI_ASSERT(arr);
 	}
 
 	TValueReference operator*() const
 	{
-		ANKI_ASSERT(m_node && m_array);
-		return m_node->getSaValue();
+		check();
+		return m_array->m_elements[m_elementIdx].m_value;
 	}
 
 	TValuePointer operator->() const
 	{
-		ANKI_ASSERT(m_node && m_array);
-		return &m_node->getSaValue();
+		check();
+		return &m_array->m_elements[m_elementIdx].m_value;
 	}
 
 	SparseArrayIterator& operator++()
 	{
-		ANKI_ASSERT(m_node && m_array);
-		m_node = m_array->getNextNode(m_node);
+		check();
+		++m_elementIdx;
+		if(m_elementIdx >= m_array->m_capacity)
+		{
+			m_elementIdx = MAX_U32;
+		}
 		return *this;
 	}
 
 	SparseArrayIterator operator++(int)
 	{
-		ANKI_ASSERT(m_node && m_array);
+		check();
 		SparseArrayIterator out = *this;
 		++(*this);
 		return out;
@@ -124,26 +87,30 @@ public:
 
 	SparseArrayIterator operator+(U n) const
 	{
-		SparseArrayIterator it = *this;
-		while(n-- != 0)
+		check();
+		U32 pos = m_elementIdx + n;
+		if(pos >= m_array->m_capacity)
 		{
-			++it;
+			pos = MAX_U32;
 		}
-		return it;
+		return SparseArrayIterator(m_array, pos);
 	}
 
 	SparseArrayIterator& operator+=(U n)
 	{
-		while(n-- != 0)
+		check();
+		m_elementIdx += n;
+		if(m_elementIdx >= m_array->m_capacity)
 		{
-			++(*this);
+			m_elementIdx = MAX_U32;
 		}
 		return *this;
 	}
 
 	Bool operator==(const SparseArrayIterator& b) const
 	{
-		return m_node == b.m_node;
+		ANKI_ASSERT(m_array == b.m_array);
+		return m_elementIdx == b.m_elementIdx;
 	}
 
 	Bool operator!=(const SparseArrayIterator& b) const
@@ -153,57 +120,121 @@ public:
 
 	operator Bool() const
 	{
-		return m_node != nullptr;
+		return m_elementIdx != MAX_U32;
 	}
 
 private:
-	TNodePointer m_node;
-	TSparseArrayBasePtr m_array;
+	TSparseArrayPtr m_array;
+	U32 m_elementIdx;
+
+	void check() const
+	{
+		ANKI_ASSERT(m_elementIdx != MAX_U32 && m_array);
+		ANKI_ASSERT(m_array->m_elements[m_elementIdx].m_alive);
+	}
 };
 
-/// Sparse array base class.
-/// @internal
-template<typename T, typename TNode, typename TIndex = U32, PtrSize TBucketSize = 128, PtrSize TLinearProbingSize = 4>
-class SparseArrayBase
+/// Sparse array.
+/// @tparam T The type of the valut it will hold.
+template<typename T, typename TIndex = U32>
+class SparseArray
 {
-	template<typename, typename, typename, typename>
+	template<typename, typename, typename>
 	friend class SparseArrayIterator;
 
 public:
 	// Typedefs
-	using Self = SparseArrayBase<T, TNode, TIndex, TBucketSize, TLinearProbingSize>;
 	using Value = T;
-	using Node = TNode;
+	using Iterator = SparseArrayIterator<T*, T&, SparseArray*>;
+	using ConstIterator = SparseArrayIterator<const T*, const T&, const SparseArray*>;
 	using Index = TIndex;
-	using Iterator = SparseArrayIterator<TNode*, T*, T&, Self*>;
-	using ConstIterator = SparseArrayIterator<const TNode*, const T*, const T&, const Self*>;
 
-	// Some constants
-	static constexpr PtrSize BUCKET_SIZE = TBucketSize;
-	static constexpr PtrSize LINEAR_PROBING_SIZE = TLinearProbingSize;
+	/// Constructor #1.
+	SparseArray(U32 initialStorageSize, U32 probeCount, F32 maxLoadFactor)
+		: m_initialStorageSize(initialStorageSize)
+		, m_probeCount(probeCount)
+		, m_maxLoadFactor(maxLoadFactor)
+	{
+		ANKI_ASSERT(initialStorageSize > 0 && isPowerOfTwo(initialStorageSize));
+		ANKI_ASSERT(probeCount > 0 && probeCount < initialStorageSize);
+		ANKI_ASSERT(maxLoadFactor > 0.0f && maxLoadFactor <= 1.0f);
+	}
+
+	/// Constructor #2.
+	SparseArray(U32 initialStorageSize, U32 probeCount)
+		: SparseArray(initialStorageSize, probeCount, 0.8f)
+	{
+	}
+
+	/// Constructor #3.
+	SparseArray(U32 initialStorageSize)
+		: SparseArray(initialStorageSize, log2(initialStorageSize))
+	{
+	}
+
+	/// Constructor #4.
+	SparseArray()
+		: SparseArray(64)
+	{
+	}
+
+	/// Non-copyable.
+	SparseArray(const SparseArray&) = delete;
+
+	/// Move constructor.
+	SparseArray(SparseArray&& b)
+	{
+		*this = std::move(b);
+	}
+
+	/// Destroy.
+	~SparseArray()
+	{
+		ANKI_ASSERT(m_elements == nullptr && "Forgot to call destroy");
+	}
+
+	/// Non-copyable.
+	SparseArray& operator=(const SparseArray&) = delete;
+
+	/// Move operator.
+	SparseArray& operator=(SparseArray&& b)
+	{
+		ANKI_ASSERT(m_elements == nullptr && "Forgot to call destroy");
+
+		m_elements = b.m_elements;
+		m_elementCount = b.m_elementCount;
+		m_capacity = b.m_capacity;
+		m_initialStorageSize = b.m_initialStorageSize;
+		m_probeCount = b.m_probeCount;
+		m_maxLoadFactor = b.m_maxLoadFactor;
+
+		b.resetMembers();
+
+		return *this;
+	}
 
 	/// Get begin.
 	Iterator getBegin()
 	{
-		return Iterator(m_bucket.m_elements[findFirstModIdx()], this);
+		return Iterator(this, findFirstAlive());
 	}
 
 	/// Get begin.
 	ConstIterator getBegin() const
 	{
-		return ConstIterator(m_bucket.m_elements[findFirstModIdx()], this);
+		return ConstIterator(this, findFirstAlive());
 	}
 
 	/// Get end.
 	Iterator getEnd()
 	{
-		return Iterator(nullptr, this);
+		return Iterator();
 	}
 
 	/// Get end.
 	ConstIterator getEnd() const
 	{
-		return ConstIterator(nullptr, this);
+		return ConstIterator();
 	}
 
 	/// Get begin.
@@ -242,189 +273,112 @@ public:
 		return m_elementCount != 0;
 	}
 
-	/// Check the validity of the array.
-	void validate() const;
-
-protected:
-	SparseArrayBucket<Node, BUCKET_SIZE> m_bucket;
-	U32 m_elementCount = 0;
-
-	/// Default constructor.
-	SparseArrayBase()
-	{
-		ANKI_ASSERT(isPowerOfTwo(BUCKET_SIZE));
-		zeroMemory(m_bucket);
-	}
-
-	/// Non-copyable.
-	SparseArrayBase(const SparseArrayBase&) = delete;
-
-	/// Move constructor.
-	SparseArrayBase(SparseArrayBase&& b)
-	{
-		*this = std::move(b);
-	}
-
-	/// Destroy.
-	~SparseArrayBase()
-	{
-#if ANKI_EXTRA_CHECKS
-		zeroMemory(m_bucket);
-#endif
-	}
-
-	/// Non-copyable.
-	SparseArrayBase& operator=(const SparseArrayBase&) = delete;
-
-	/// Move operator.
-	SparseArrayBase& operator=(SparseArrayBase&& b)
-	{
-		if(b.m_elementCount)
-		{
-			memcpy(&m_bucket[0], &b.m_bucket[0], sizeof(m_bucket));
-			m_elementCount = b.m_elementCount;
-			zeroMemory(b.m_bucket);
-			b.m_elementCount = 0;
-		}
-		else
-		{
-			zeroMemory(m_bucket);
-			m_elementCount = 0;
-		}
-
-		return *this;
-	}
-
-	/// Find a place for a node in the array.
-	Node** findPlace(Index idx, Node*& parent);
-
-	/// Remove a node.
-	void remove(Iterator it);
-
-	/// Try get an node.
-	const Node* tryGetNode(Index idx) const;
-
-	/// For iterating.
-	const Node* getNextNode(const Node* const node) const
-	{
-		return getNextNodeInternal(node);
-	}
-
-	/// For iterating.
-	Node* getNextNode(const Node* node)
-	{
-		const Node* out = getNextNodeInternal(node);
-		return const_cast<Node*>(out);
-	}
-
-private:
-	static Index mod(const Index idx)
-	{
-		return idx & (BUCKET_SIZE - 1);
-	}
-
-	static void insertToTree(Node* const root, Node* node);
-
-	/// Remove a node from the tree.
-	/// @return The new root node.
-	static Node* removeFromTree(Node* root, Node* del);
-
-	/// See validate().
-	void validateInternal(Index modIdx, const Node* node, PtrSize& count) const;
-
-	/// For iterating.
-	Index findFirstModIdx() const;
-
-	const Node* getNextNodeInternal(const Node* node) const;
-};
-
-/// Sparse array.
-/// @tparam T The type of the valut it will hold.
-/// @tparam TIndex The type of the index. It should be U32 or U64.
-/// @tparam TBucketeSize The number of the preallocated size.
-/// @tparam TLinearProbingSize The number of positions that will be linearly probed when inserting.
-template<typename T, typename TIndex = U32, PtrSize TBucketSize = 128, PtrSize TLinearProbingSize = 4>
-class SparseArray : public SparseArrayBase<T, SparseArrayNode<T>, TIndex, TBucketSize, TLinearProbingSize>
-{
-public:
-	using Base = SparseArrayBase<T, SparseArrayNode<T>, TIndex, TBucketSize, TLinearProbingSize>;
-	using Node = typename Base::Node;
-	using Value = typename Base::Value;
-	using Index = typename Base::Index;
-	using Iterator = typename Base::Iterator;
-	using ConstIterator = typename Base::ConstIterator;
-
-	using Base::BUCKET_SIZE;
-	using Base::LINEAR_PROBING_SIZE;
-
-	SparseArray()
-	{
-	}
-
-	/// Non-copyable.
-	SparseArray(const SparseArray&) = delete;
-
-	/// Move constructor.
-	SparseArray(SparseArray&& b)
-	{
-		*this = std::move(b);
-	}
-
-	/// Destroy. It will do nothing.
-	~SparseArray()
-	{
-		ANKI_ASSERT(m_elementCount == 0 && "Forgot to call destroy");
-	}
-
-	/// Non-copyable.
-	SparseArray& operator=(const SparseArray&) = delete;
-
-	/// Move operator.
-	SparseArray& operator=(SparseArray&& b)
-	{
-		ANKI_ASSERT(m_elementCount == 0 && "Forgot to destroy");
-		static_cast<Base&>(*this) = std::move(static_cast<Base&>(b));
-		return *this;
-	}
-
 	/// Destroy the array and free its elements.
 	template<typename TAlloc>
 	void destroy(TAlloc& alloc);
 
 	/// Set a value to an index.
 	template<typename TAlloc, typename... TArgs>
-	Iterator setAt(TAlloc& alloc, Index idx, TArgs&&... args);
+	Value& emplace(TAlloc& alloc, Index idx, TArgs&&... args);
 
 	/// Get an iterator.
-	Iterator getAt(Index idx)
+	Iterator find(Index idx)
 	{
-		const Node* node = Base::tryGetNode(idx);
-		return Iterator(const_cast<Node*>(node), this);
+		return Iterator(this, findInternal(idx));
 	}
 
 	/// Get an iterator.
-	ConstIterator getAt(Index idx) const
+	ConstIterator find(Index idx) const
 	{
-		const Node* node = Base::tryGetNode(idx);
-		return ConstIterator(node, this);
+		return ConstIterator(this, findInternal(idx));
 	}
 
 	/// Remove an element.
 	template<typename TAlloc>
-	void erase(TAlloc& alloc, Iterator it)
+	void erase(TAlloc& alloc, Iterator it);
+
+	/// Check the validity of the array.
+	void validate() const;
+
+protected:
+	/// Element.
+	class Element
 	{
-		Base::remove(it);
-		alloc.deleteInstance(it.m_node);
-		ANKI_ASSERT(Base::m_elementCount > 0);
-		--m_elementCount;
+	public:
+		Value m_value;
+		Index m_idx;
+		Bool8 m_alive;
+	};
+
+	Element* m_elements = nullptr;
+	U32 m_elementCount = 0;
+	U32 m_capacity = 0;
+
+	U32 m_initialStorageSize = 0;
+	U32 m_probeCount = 0;
+	F32 m_maxLoadFactor = 0.0;
+
+	Index mod(const Index idx) const
+	{
+		return mod(idx, m_capacity);
 	}
 
-private:
-	using Base::m_elementCount;
-	using Base::m_bucket;
+	static Index mod(const Index idx, U32 capacity)
+	{
+		ANKI_ASSERT(capacity > 0);
+		ANKI_ASSERT(isPowerOfTwo(capacity));
+		return idx & (capacity - 1);
+	}
 
+	F32 calcLoadFactor() const
+	{
+		ANKI_ASSERT(m_elementCount <= m_capacity);
+		ANKI_ASSERT(m_capacity > 0);
+		return F32(m_elementCount) / m_capacity;
+	}
+
+	/// Grow the storage and re-insert.
 	template<typename TAlloc>
-	void destroyInternal(TAlloc& alloc, Node* const root);
+	void grow(TAlloc& alloc);
+
+	/// Compute the distance between a desired position and the current one. This method does a trick with capacity to
+	/// account wrapped positions.
+	Index distanceFromDesired(const Index crntPos, const Index desiredPos) const
+	{
+		return mod(crntPos + m_capacity - desiredPos);
+	}
+
+	Index findFirstAlive() const
+	{
+		if(m_elementCount == 0)
+		{
+			return MAX_U32;
+		}
+
+		for(Index i = 0; i < m_capacity; ++i)
+		{
+			if(m_elements[i].m_alive)
+			{
+				return i;
+			}
+		}
+
+		ANKI_ASSERT(0);
+		return MAX_U32;
+	}
+
+	/// Find an element and return its position inside m_elements.
+	Index findInternal(Index idx) const;
+
+	void resetMembers()
+	{
+		m_elements = nullptr;
+		m_elementCount = 0;
+		m_capacity = 0;
+		m_initialStorageSize = 0;
+		m_probeCount = 0;
+		m_maxLoadFactor = 0;
+	}
 };
 /// @}
 

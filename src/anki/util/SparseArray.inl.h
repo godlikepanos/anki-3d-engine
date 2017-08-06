@@ -8,533 +8,285 @@
 namespace anki
 {
 
-template<typename T, typename TNode, typename TIndex, PtrSize TBucketSize, PtrSize TLinearProbingSize>
-TNode** SparseArrayBase<T, TNode, TIndex, TBucketSize, TLinearProbingSize>::findPlace(Index idx, Node*& parent)
+template<typename T, typename TIndex>
+template<typename TAlloc>
+void SparseArray<T, TIndex>::destroy(TAlloc& alloc)
 {
-	parent = nullptr;
-	const Index modIdx = mod(idx);
-
-	if(m_bucket.m_elements[modIdx] == nullptr || m_bucket.m_elements[modIdx]->m_saIdx == idx)
+	if(m_elements)
 	{
-		// We are lucky, found empty spot or something to replace
-		return &m_bucket.m_elements[modIdx];
-	}
-
-	// Do linear probing
-	Index probingIdx = modIdx + 1;
-	while(probingIdx - modIdx < LINEAR_PROBING_SIZE && probingIdx < BUCKET_SIZE)
-	{
-		if(m_bucket.m_elements[probingIdx] == nullptr || m_bucket.m_elements[probingIdx]->m_saIdx == idx)
+		for(Index i = 0; i < m_capacity; ++i)
 		{
-			return &m_bucket.m_elements[probingIdx];
+			if(m_elements[i].m_alive)
+			{
+				m_elements[i].m_value.~Value();
+			}
 		}
 
-		++probingIdx;
+		alloc.deallocate(m_elements, m_capacity);
 	}
 
-	// Check if we can evict a node. This will happen if that node is from linear probing
-	const Index otherModIdx = mod(m_bucket.m_elements[modIdx]->m_saIdx);
-	if(otherModIdx != modIdx)
+	resetMembers();
+}
+
+template<typename T, typename TIndex>
+template<typename TAlloc, typename... TArgs>
+T& SparseArray<T, TIndex>::emplace(TAlloc& alloc, Index idx, TArgs&&... args)
+{
+	if(m_capacity == 0 || calcLoadFactor() > m_maxLoadFactor)
 	{
-		ANKI_ASSERT(m_bucket.m_elements[modIdx]->m_saLeft == nullptr
-			&& m_bucket.m_elements[modIdx]->m_saRight == nullptr
-			&& m_bucket.m_elements[modIdx]->m_saParent == nullptr
-			&& "Can't be a tree");
-
-		// Do a hack. Chage the other node's idx
-		Node* const otherNode = m_bucket.m_elements[modIdx];
-		const Index otherNodeIdx = otherNode->m_saIdx;
-		otherNode->m_saIdx = idx;
-
-		// ...and try to find a new place for it. If we don't do the trick above findPlace will return the same place
-		Node* parent;
-		Node** newPlace = findPlace(otherNodeIdx, parent);
-		ANKI_ASSERT(*newPlace != m_bucket.m_elements[modIdx]);
-
-		// ...point the other node to the new place and restore it
-		*newPlace = otherNode;
-		otherNode->m_saIdx = otherNodeIdx;
-		otherNode->m_saParent = parent;
-
-		// ...now the modIdx place is free for out node
-		m_bucket.m_elements[modIdx] = nullptr;
-		return &m_bucket.m_elements[modIdx];
+		grow(alloc);
 	}
 
-	// Last thing we can do, need to append to a tree
-	ANKI_ASSERT(m_bucket.m_elements[modIdx]);
-	Node* it = m_bucket.m_elements[modIdx];
+	Value tmp(std::forward<TArgs>(args)...);
+	Index desiredPos = mod(idx);
+	Index endPos = mod(desiredPos + m_probeCount - 1);
+
 	while(true)
 	{
-		if(idx > it->m_saIdx)
-		{
-			// Go to right
-			Node* right = it->m_saRight;
-			if(right)
-			{
-				it = right;
-			}
-			else
-			{
-				parent = it;
-				return &it->m_saRight;
-			}
-		}
-		else if(idx < it->m_saIdx)
-		{
-			// Go to left
-			Node* left = it->m_saLeft;
-			if(left)
-			{
-				it = left;
-			}
-			else
-			{
-				parent = it;
-				return &it->m_saLeft;
-			}
-		}
-		else
-		{
-			// Equal
-			parent = it->m_saParent;
+		Index pos = desiredPos;
 
-			if(parent)
+		while(pos != endPos)
+		{
+			Element& el = m_elements[pos];
+
+			if(!el.m_alive)
 			{
-				if(parent->m_saLeft == it)
-				{
-					return &parent->m_saLeft;
-				}
-				else
-				{
-					ANKI_ASSERT(parent->m_saRight == it);
-					return &parent->m_saRight;
-				}
+				// Empty slot was found, construct in-place
+
+				el.m_alive = true;
+				el.m_idx = idx;
+				::new(&el.m_value) Value(std::move(tmp));
+
+				++m_elementCount;
+				return el.m_value;
 			}
-			else
+			else if(el.m_idx == idx)
 			{
-				return &m_bucket.m_elements[modIdx];
+				// Same index was found, replace
+
+				el.m_idx = idx;
+				el.m_value.~Value();
+				::new(&el.m_value) Value(std::move(tmp));
+
+				return el.m_value;
 			}
+
+			// Do the robin-hood
+			const Index otherDesiredPos = mod(el.m_idx);
+			if(distanceFromDesired(pos, otherDesiredPos) < distanceFromDesired(pos, desiredPos))
+			{
+				// Swap
+				std::swap(tmp, el.m_value);
+				std::swap(idx, el.m_idx);
+				desiredPos = otherDesiredPos;
+				endPos = mod(desiredPos + m_probeCount - 1);
+			}
+
+			pos = mod(pos + 1u);
 		}
+
+		// Didn't found an empty place, need to grow and try again
+		grow(alloc);
 	}
 
-	ANKI_ASSERT(!!"Shouldn't reach that");
-	return nullptr;
+	ANKI_ASSERT(0);
+	return m_elements[0].m_value;
 }
 
-template<typename T, typename TNode, typename TIndex, PtrSize TBucketSize, PtrSize TLinearProbingSize>
-const TNode* SparseArrayBase<T, TNode, TIndex, TBucketSize, TLinearProbingSize>::tryGetNode(Index idx) const
+template<typename T, typename TIndex>
+template<typename TAlloc>
+void SparseArray<T, TIndex>::erase(TAlloc& alloc, Iterator it)
 {
-	const Index modIdx = mod(idx);
-
-	if(m_bucket.m_elements[modIdx] && mod(m_bucket.m_elements[modIdx]->m_saIdx) == modIdx)
-	{
-		// Walk the tree
-		const Node* it = m_bucket.m_elements[modIdx];
-		do
-		{
-			if(it->m_saIdx == idx)
-			{
-				return it;
-			}
-			else if(idx > it->m_saIdx)
-			{
-				it = it->m_saRight;
-			}
-			else
-			{
-				it = it->m_saLeft;
-			}
-		} while(it);
-	}
-
-	// Search for linear probing
-	const Index endIdx = min(BUCKET_SIZE, modIdx + LINEAR_PROBING_SIZE);
-	for(Index i = modIdx; i < endIdx; ++i)
-	{
-		const Node* const node = m_bucket.m_elements[i];
-		if(node && node->m_saIdx == idx)
-		{
-			return node;
-		}
-	}
-
-	return nullptr;
-}
-
-template<typename T, typename TNode, typename TIndex, PtrSize TBucketSize, PtrSize TLinearProbingSize>
-void SparseArrayBase<T, TNode, TIndex, TBucketSize, TLinearProbingSize>::insertToTree(Node* const root, Node* node)
-{
-	ANKI_ASSERT(root && node);
-	ANKI_ASSERT(root != node);
-	ANKI_ASSERT(mod(root->m_saIdx) == mod(node->m_saIdx) && "Should belong to the same tree");
-
-	const Index nodeIdx = node->m_saIdx;
-	Node* it = root;
-	Bool done = false;
-	do
-	{
-		const Index idx = it->m_saIdx;
-		if(nodeIdx > idx)
-		{
-			// Go to right
-			Node* const right = it->m_saRight;
-			if(right)
-			{
-				it = right;
-			}
-			else
-			{
-				node->m_saParent = it;
-				it->m_saRight = node;
-				done = true;
-			}
-		}
-		else
-		{
-			// Go to left
-			ANKI_ASSERT(idx != nodeIdx && "Can't do that");
-			Node* const left = it->m_saLeft;
-			if(left)
-			{
-				it = left;
-			}
-			else
-			{
-				node->m_saParent = it;
-				it->m_saLeft = node;
-				done = true;
-			}
-		}
-	} while(!done);
-}
-
-template<typename T, typename TNode, typename TIndex, PtrSize TBucketSize, PtrSize TLinearProbingSize>
-TNode* SparseArrayBase<T, TNode, TIndex, TBucketSize, TLinearProbingSize>::removeFromTree(Node* root, Node* del)
-{
-	ANKI_ASSERT(root && del);
-	Node* const parent = del->m_saParent;
-	Node* const left = del->m_saLeft;
-	Node* const right = del->m_saRight;
-
-	if(parent)
-	{
-		// If it has a parent then remove the connection to the parent and insert left and right like regular nodes
-
-		if(parent->m_saLeft == del)
-		{
-			parent->m_saLeft = nullptr;
-		}
-		else
-		{
-			ANKI_ASSERT(parent->m_saRight == del);
-			parent->m_saRight = nullptr;
-		}
-
-		if(left)
-		{
-			ANKI_ASSERT(left->m_saParent == del);
-			left->m_saParent = nullptr;
-			insertToTree(root, left);
-		}
-
-		if(right)
-		{
-			ANKI_ASSERT(right->m_saParent == del);
-			right->m_saParent = nullptr;
-			insertToTree(root, right);
-		}
-	}
-	else
-	{
-		// It's the root node. Make arbitrarily the left root and add the right
-
-		ANKI_ASSERT(del == root && "It must be the root");
-
-		if(left)
-		{
-			left->m_saParent = nullptr;
-			root = left;
-
-			if(right)
-			{
-				right->m_saParent = nullptr;
-				insertToTree(root, right);
-			}
-		}
-		else
-		{
-			if(right)
-			{
-				right->m_saParent = nullptr;
-			}
-
-			root = right;
-		}
-	}
-
-	return root;
-}
-
-template<typename T, typename TNode, typename TIndex, PtrSize TBucketSize, PtrSize TLinearProbingSize>
-void SparseArrayBase<T, TNode, TIndex, TBucketSize, TLinearProbingSize>::remove(Iterator it)
-{
-	ANKI_ASSERT(it.m_node && it.m_array);
 	ANKI_ASSERT(it.m_array == this);
+	ANKI_ASSERT(it.m_elementIdx != MAX_U32);
+	ANKI_ASSERT(m_elementCount > 0);
 
-	Node* const node = it.m_node;
-	Node* const parent = node->m_saParent;
-	Node* const left = node->m_saLeft;
-	Node* const right = node->m_saRight;
+	(void)alloc;
 
-	const Index modIdx = mod(node->m_saIdx);
+	const Index pos = it.m_elementIdx;
+	ANKI_ASSERT(pos < m_capacity);
+	ANKI_ASSERT(m_elements[pos].m_alive);
 
-	if(parent || left || right)
+	// Delete the element in the given pos
+	m_elements[pos].m_value.~Value();
+	m_elements[pos].m_alive = false;
+	--m_elementCount;
+
+	// Shift elements
+	Index nextPos = pos;
+	while(true)
 	{
-		// In a tree, remove
+		const Index crntPos = nextPos;
+		nextPos = mod(nextPos + 1);
 
-		Node* root = m_bucket.m_elements[modIdx];
-		ANKI_ASSERT(root);
-		root = removeFromTree(root, node);
+		Element& nextEl = m_elements[nextPos];
 
-		m_bucket.m_elements[modIdx] = root;
-	}
-	else
-	{
-		// Not yet a tree, remove it from the bucket
-
-		const Index endModIdx = min(modIdx + LINEAR_PROBING_SIZE, BUCKET_SIZE);
-		Index i;
-		for(i = modIdx; i < endModIdx; ++i)
+		if(!nextEl.m_alive)
 		{
-			if(m_bucket.m_elements[i] == node)
+			// On gaps, stop
+			break;
+		}
+
+		const Index nextDesiredPos = mod(nextEl.m_idx);
+		if(nextDesiredPos == nextPos)
+		{
+			// The element is where it want's to be, stop
+			break;
+		}
+
+		// Shift left
+		Element& crntEl = m_elements[crntPos];
+		crntEl = std::move(nextEl);
+		crntEl.m_idx = nextEl.m_value;
+		crntEl.m_alive = true;
+		nextEl.m_alive = false;
+	}
+
+	// If you erased everything destroy the storage
+	if(m_elementCount == 0)
+	{
+		destroy(alloc);
+	}
+}
+
+template<typename T, typename TIndex>
+template<typename TAlloc>
+void SparseArray<T, TIndex>::grow(TAlloc& alloc)
+{
+	if(m_capacity == 0)
+	{
+		ANKI_ASSERT(m_elementCount == 0);
+		m_capacity = m_initialStorageSize;
+		m_elements =
+			static_cast<Element*>(alloc.getMemoryPool().allocate(m_capacity * sizeof(Element), alignof(Element)));
+		memset(m_elements, 0, m_capacity * sizeof(Element));
+		return;
+	}
+
+	// Allocate new storage
+	const PtrSize newCapacity = m_capacity * 2;
+	Element* const newStorage =
+		static_cast<Element*>(alloc.getMemoryPool().allocate(m_capacity * sizeof(Element), alignof(Element)));
+	memset(m_elements, 0, newCapacity * sizeof(Element));
+
+	// Find from where we start
+	Index startPos = ~Index(0);
+	for(U i = 0; i < m_capacity; ++i)
+	{
+		if(m_elements[i].m_alive)
+		{
+			const Index desiredPos = mod(m_elements[i].m_idx);
+			if(desiredPos <= i)
 			{
-				m_bucket.m_elements[i] = nullptr;
+				startPos = i;
 				break;
 			}
 		}
-
-		ANKI_ASSERT(i < endModIdx && "Node not found");
 	}
-}
+	ANKI_ASSERT(startPos != ~Index(0));
 
-template<typename T, typename TNode, typename TIndex, PtrSize TBucketSize, PtrSize TLinearProbingSize>
-const TNode* SparseArrayBase<T, TNode, TIndex, TBucketSize, TLinearProbingSize>::getNextNodeInternal(
-	const Node* node) const
-{
-	ANKI_ASSERT(node);
-
-	if(node->m_saLeft)
+	// Start re-inserting
+	U count = m_elementCount;
+	Index posOfOld = startPos;
+	Index posOfNew = 0;
+	while(count--)
 	{
-		return node->m_saLeft;
-	}
-
-	if(node->m_saRight)
-	{
-		return node->m_saRight;
-	}
-
-	// Node without children but with a parent, move up the tree
-	const Node* out = nullptr;
-	if(node->m_saParent)
-	{
-		const Node* prevNode = node;
-		out = node->m_saParent;
-		do
+		if(m_elements[posOfOld].m_alive)
 		{
-			if(out->m_saRight && out->m_saRight != prevNode)
+			Element& el = m_elements[posOfOld];
+			const Index desiredPos = mod(el.m_idx, newCapacity);
+
+			if(posOfNew < desiredPos)
 			{
-				return out->m_saRight;
+				posOfNew = desiredPos;
 			}
 
-			prevNode = out;
-			out = out->m_saParent;
-		} while(out);
+			std::swap(newStorage[posOfOld].m_value, el.m_value);
+			newStorage[posOfOld].m_idx = el.m_idx;
+			newStorage[posOfOld].m_alive = true;
+		}
 
-		// Apparently the node is the rightmost leaf
-		node = prevNode;
-		ANKI_ASSERT(node);
-		ANKI_ASSERT(m_bucket.m_elements[mod(node->m_saIdx)] == node);
+		// Advance
+		posOfNew = mod(posOfNew + 1, newCapacity);
+		posOfOld = mod(posOfOld + 1);
 	}
 
-	// Base of the tree, move to the next bucket element
+	// Finalize
+	m_capacity = newCapacity;
+	m_elements = newStorage;
+}
+
+template<typename T, typename TIndex>
+void SparseArray<T, TIndex>::validate() const
+{
+	if(m_capacity == 0)
 	{
-		const Index modIdx = mod(node->m_saIdx);
+		return;
+	}
 
-		// Find where the node is
-		Index i = modIdx;
-		do
+	ANKI_ASSERT(m_elementCount < m_capacity);
+
+	// Find from where we start
+	Index startPos = ~Index(0);
+	for(U i = 0; i < m_capacity; ++i)
+	{
+		if(m_elements[i].m_alive)
 		{
-		} while(i < BUCKET_SIZE && node != m_bucket.m_elements[i++]);
-
-		ANKI_ASSERT(i <= BUCKET_SIZE);
-
-		// Now move to the next
-		for(; i < BUCKET_SIZE; ++i)
-		{
-			if(m_bucket.m_elements[i])
+			const Index desiredPos = mod(m_elements[i].m_idx);
+			if(desiredPos <= i)
 			{
-				return m_bucket.m_elements[i];
+				startPos = i;
+				break;
 			}
 		}
 	}
 
-	return nullptr;
-}
-
-template<typename T, typename TNode, typename TIndex, PtrSize TBucketSize, PtrSize TLinearProbingSize>
-void SparseArrayBase<T, TNode, TIndex, TBucketSize, TLinearProbingSize>::validate() const
-{
-	PtrSize count = 0;
-
-	for(Index i = 0; i < BUCKET_SIZE; ++i)
+	// Start iterating
+	U elementCount = 0;
+	const Index endPos = mod(startPos + m_capacity - 1);
+	Index pos = startPos;
+	while(pos != endPos)
 	{
-		const Node* it = m_bucket.m_elements[i];
-		if(it)
+		if(m_elements[pos].m_alive)
 		{
-			ANKI_ASSERT(it->m_saParent == nullptr);
-
-			if(it->m_saLeft || it->m_saRight)
+			if(elementCount > 0)
 			{
-				// It's a tree
+				// There is a prev, check the distances
+				const Index prevPos = mod(pos + m_capacity - 1);
 
-				validateInternal(i, it, count);
+				ANKI_ASSERT(distanceFromDesired(pos, mod(m_elements[prevPos].m_idx))
+					<= distanceFromDesired(pos, mod(m_elements[pos].m_idx)));
+
+				ANKI_ASSERT(distanceFromDesired(pos, mod(m_elements[pos].m_idx)) < m_probeCount);
 			}
-			else
-			{
-				// Check if it's linear probed
 
-				const Index modIdx = mod(it->m_saIdx);
-				if(modIdx != i)
-				{
-					ANKI_ASSERT(i > modIdx);
-					ANKI_ASSERT(i - modIdx < LINEAR_PROBING_SIZE);
-				}
-
-				++count;
-			}
+			++elementCount;
 		}
+
+		pos = mod(pos + 1);
 	}
 
-	ANKI_ASSERT(count == m_elementCount);
+	ANKI_ASSERT(m_elementCount == elementCount);
 }
 
-template<typename T, typename TNode, typename TIndex, PtrSize TBucketSize, PtrSize TLinearProbingSize>
-void SparseArrayBase<T, TNode, TIndex, TBucketSize, TLinearProbingSize>::validateInternal(
-	Index modIdx, const Node* node, PtrSize& count) const
+template<typename T, typename TIndex>
+TIndex SparseArray<T, TIndex>::findInternal(Index idx) const
 {
-	ANKI_ASSERT(node);
-	ANKI_ASSERT(mod(node->m_saIdx) == modIdx);
-
-	++count;
-
-	const Node* parent = node->m_saParent;
-	(void)parent;
-	const Node* left = node->m_saLeft;
-	const Node* right = node->m_saRight;
-
-	if(left)
+	ANKI_ASSERT(m_elementCount > 0);
+	const Index desiredPos = mod(idx);
+	const Index endPos = mod(desiredPos + m_probeCount - 1);
+	Index pos = desiredPos;
+	while(pos != endPos)
 	{
-		ANKI_ASSERT(left->m_saParent == node);
-		validateInternal(modIdx, left, count);
-	}
-
-	if(right)
-	{
-		ANKI_ASSERT(right->m_saParent == node);
-		validateInternal(modIdx, right, count);
-	}
-}
-
-template<typename T, typename TNode, typename TIndex, PtrSize TBucketSize, PtrSize TLinearProbingSize>
-TIndex SparseArrayBase<T, TNode, TIndex, TBucketSize, TLinearProbingSize>::findFirstModIdx() const
-{
-	for(Index i = 0; i < BUCKET_SIZE; i += 2)
-	{
-		if(m_bucket.m_elements[i])
+		if(m_elements[pos].m_alive && m_elements[pos].m_idx == idx)
 		{
-			return i;
+			return pos;
 		}
-		else if(m_bucket.m_elements[i + 1])
-		{
-			return i + 1;
-		}
+
+		pos = mod(pos + 1);
 	}
 
-	return 0;
-}
-
-template<typename T, typename TIndex, PtrSize TBucketSize, PtrSize TLinearProbingSize>
-template<typename TAlloc>
-void SparseArray<T, TIndex, TBucketSize, TLinearProbingSize>::destroyInternal(TAlloc& alloc, Node* const node)
-{
-	ANKI_ASSERT(node);
-
-	Node* const left = node->m_saLeft;
-	Node* const right = node->m_saRight;
-
-	alloc.deleteInstance(node);
-
-	if(left)
-	{
-		destroyInternal(alloc, left);
-	}
-
-	if(right)
-	{
-		destroyInternal(alloc, right);
-	}
-}
-
-template<typename T, typename TIndex, PtrSize TBucketSize, PtrSize TLinearProbingSize>
-template<typename TAlloc>
-void SparseArray<T, TIndex, TBucketSize, TLinearProbingSize>::destroy(TAlloc& alloc)
-{
-	for(Index i = 0; i < BUCKET_SIZE; ++i)
-	{
-		// Destroy the tree
-
-		Node* root = m_bucket.m_elements[i];
-		if(root)
-		{
-			destroyInternal(alloc, root);
-			m_bucket.m_elements[i] = nullptr;
-		}
-	}
-
-	m_elementCount = 0;
-}
-
-template<typename T, typename TIndex, PtrSize TBucketSize, PtrSize TLinearProbingSize>
-template<typename TAlloc, typename... TArgs>
-typename SparseArray<T, TIndex, TBucketSize, TLinearProbingSize>::Iterator
-SparseArray<T, TIndex, TBucketSize, TLinearProbingSize>::setAt(TAlloc& alloc, Index idx, TArgs&&... args)
-{
-	Node* parent;
-	Node** place = Base::findPlace(idx, parent);
-	ANKI_ASSERT(place);
-
-	if(*place)
-	{
-		// Node exists, recycle
-
-		Node* const n = *place;
-		n->m_saValue.~Value();
-		::new(&n->m_saValue) Value(std::forward<TArgs>(args)...);
-	}
-	else
-	{
-		// Node doesn't exit,
-
-		Node* newNode = alloc.template newInstance<Node>(std::forward<TArgs>(args)...);
-		newNode->m_saIdx = idx;
-		*place = newNode;
-		newNode->m_saParent = parent;
-
-		++Base::m_elementCount;
-	}
-
-	return Iterator(*place, this);
+	return MAX_U32;
 }
 
 } // end namespace anki
