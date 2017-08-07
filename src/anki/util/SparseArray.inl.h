@@ -30,7 +30,7 @@ void SparseArray<T, TIndex>::destroy(TAlloc& alloc)
 
 template<typename T, typename TIndex>
 template<typename TAlloc, typename... TArgs>
-T& SparseArray<T, TIndex>::emplace(TAlloc& alloc, Index idx, TArgs&&... args)
+void SparseArray<T, TIndex>::emplace(TAlloc& alloc, Index idx, TArgs&&... args)
 {
 	if(m_capacity == 0 || calcLoadFactor() > m_maxLoadFactor)
 	{
@@ -38,8 +38,15 @@ T& SparseArray<T, TIndex>::emplace(TAlloc& alloc, Index idx, TArgs&&... args)
 	}
 
 	Value tmp(std::forward<TArgs>(args)...);
+	m_elementCount += insert(alloc, idx, tmp);
+}
+
+template<typename T, typename TIndex>
+template<typename TAlloc>
+U32 SparseArray<T, TIndex>::insert(TAlloc& alloc, Index idx, Value& val)
+{
 	Index desiredPos = mod(idx);
-	Index endPos = mod(desiredPos + m_probeCount - 1);
+	Index endPos = mod(desiredPos + m_probeCount);
 
 	while(true)
 	{
@@ -55,10 +62,9 @@ T& SparseArray<T, TIndex>::emplace(TAlloc& alloc, Index idx, TArgs&&... args)
 
 				el.m_alive = true;
 				el.m_idx = idx;
-				::new(&el.m_value) Value(std::move(tmp));
+				::new(&el.m_value) Value(std::move(val));
 
-				++m_elementCount;
-				return el.m_value;
+				return 1;
 			}
 			else if(el.m_idx == idx)
 			{
@@ -66,9 +72,9 @@ T& SparseArray<T, TIndex>::emplace(TAlloc& alloc, Index idx, TArgs&&... args)
 
 				el.m_idx = idx;
 				el.m_value.~Value();
-				::new(&el.m_value) Value(std::move(tmp));
+				::new(&el.m_value) Value(std::move(val));
 
-				return el.m_value;
+				return 0;
 			}
 
 			// Do the robin-hood
@@ -76,10 +82,10 @@ T& SparseArray<T, TIndex>::emplace(TAlloc& alloc, Index idx, TArgs&&... args)
 			if(distanceFromDesired(pos, otherDesiredPos) < distanceFromDesired(pos, desiredPos))
 			{
 				// Swap
-				std::swap(tmp, el.m_value);
+				std::swap(val, el.m_value);
 				std::swap(idx, el.m_idx);
 				desiredPos = otherDesiredPos;
-				endPos = mod(desiredPos + m_probeCount - 1);
+				endPos = mod(desiredPos + m_probeCount);
 			}
 
 			pos = mod(pos + 1u);
@@ -90,7 +96,64 @@ T& SparseArray<T, TIndex>::emplace(TAlloc& alloc, Index idx, TArgs&&... args)
 	}
 
 	ANKI_ASSERT(0);
-	return m_elements[0].m_value;
+	return 0;
+}
+
+template<typename T, typename TIndex>
+template<typename TAlloc>
+void SparseArray<T, TIndex>::grow(TAlloc& alloc)
+{
+	if(m_capacity == 0)
+	{
+		ANKI_ASSERT(m_elementCount == 0);
+		m_capacity = m_initialStorageSize;
+		m_elements =
+			static_cast<Element*>(alloc.getMemoryPool().allocate(m_capacity * sizeof(Element), alignof(Element)));
+		memset(m_elements, 0, m_capacity * sizeof(Element));
+		return;
+	}
+
+	// Find from where we start
+	Index startPos = ~Index(0);
+	for(U i = 0; i < m_capacity; ++i)
+	{
+		if(m_elements[i].m_alive)
+		{
+			const Index desiredPos = mod(m_elements[i].m_idx);
+			if(desiredPos <= i)
+			{
+				startPos = i;
+				break;
+			}
+		}
+	}
+	ANKI_ASSERT(startPos != ~Index(0));
+
+	// Allocate new storage
+	Element* oldElements = m_elements;
+	const U32 oldCapacity = m_capacity;
+	const U32 oldElementCount = m_elementCount;
+
+	m_capacity *= 2;
+	m_elements = static_cast<Element*>(alloc.getMemoryPool().allocate(m_capacity * sizeof(Element), alignof(Element)));
+	memset(m_elements, 0, m_capacity * sizeof(Element));
+	m_elementCount = 0;
+
+	// Start re-inserting
+	U count = oldElementCount;
+	Index pos = startPos;
+	while(count--)
+	{
+		if(oldElements[pos].m_alive)
+		{
+			Element& el = oldElements[pos];
+			U32 c = insert(alloc, el.m_idx, el.m_value);
+			ANKI_ASSERT(c > 0);
+			m_elementCount += c;
+		}
+
+		pos = mod(pos + 1, oldCapacity);
+	}
 }
 
 template<typename T, typename TIndex>
@@ -136,7 +199,7 @@ void SparseArray<T, TIndex>::erase(TAlloc& alloc, Iterator it)
 
 		// Shift left
 		Element& crntEl = m_elements[crntPos];
-		crntEl = std::move(nextEl);
+		crntEl.m_value = std::move(nextEl.m_value);
 		crntEl.m_idx = nextEl.m_value;
 		crntEl.m_alive = true;
 		nextEl.m_alive = false;
@@ -147,73 +210,6 @@ void SparseArray<T, TIndex>::erase(TAlloc& alloc, Iterator it)
 	{
 		destroy(alloc);
 	}
-}
-
-template<typename T, typename TIndex>
-template<typename TAlloc>
-void SparseArray<T, TIndex>::grow(TAlloc& alloc)
-{
-	if(m_capacity == 0)
-	{
-		ANKI_ASSERT(m_elementCount == 0);
-		m_capacity = m_initialStorageSize;
-		m_elements =
-			static_cast<Element*>(alloc.getMemoryPool().allocate(m_capacity * sizeof(Element), alignof(Element)));
-		memset(m_elements, 0, m_capacity * sizeof(Element));
-		return;
-	}
-
-	// Allocate new storage
-	const PtrSize newCapacity = m_capacity * 2;
-	Element* const newStorage =
-		static_cast<Element*>(alloc.getMemoryPool().allocate(m_capacity * sizeof(Element), alignof(Element)));
-	memset(m_elements, 0, newCapacity * sizeof(Element));
-
-	// Find from where we start
-	Index startPos = ~Index(0);
-	for(U i = 0; i < m_capacity; ++i)
-	{
-		if(m_elements[i].m_alive)
-		{
-			const Index desiredPos = mod(m_elements[i].m_idx);
-			if(desiredPos <= i)
-			{
-				startPos = i;
-				break;
-			}
-		}
-	}
-	ANKI_ASSERT(startPos != ~Index(0));
-
-	// Start re-inserting
-	U count = m_elementCount;
-	Index posOfOld = startPos;
-	Index posOfNew = 0;
-	while(count--)
-	{
-		if(m_elements[posOfOld].m_alive)
-		{
-			Element& el = m_elements[posOfOld];
-			const Index desiredPos = mod(el.m_idx, newCapacity);
-
-			if(posOfNew < desiredPos)
-			{
-				posOfNew = desiredPos;
-			}
-
-			std::swap(newStorage[posOfOld].m_value, el.m_value);
-			newStorage[posOfOld].m_idx = el.m_idx;
-			newStorage[posOfOld].m_alive = true;
-		}
-
-		// Advance
-		posOfNew = mod(posOfNew + 1, newCapacity);
-		posOfOld = mod(posOfOld + 1);
-	}
-
-	// Finalize
-	m_capacity = newCapacity;
-	m_elements = newStorage;
 }
 
 template<typename T, typename TIndex>
@@ -274,7 +270,7 @@ TIndex SparseArray<T, TIndex>::findInternal(Index idx) const
 {
 	ANKI_ASSERT(m_elementCount > 0);
 	const Index desiredPos = mod(idx);
-	const Index endPos = mod(desiredPos + m_probeCount - 1);
+	const Index endPos = mod(desiredPos + m_probeCount);
 	Index pos = desiredPos;
 	while(pos != endPos)
 	{

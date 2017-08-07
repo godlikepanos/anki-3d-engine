@@ -24,22 +24,22 @@ ANKI_TEST(Util, SparseArray)
 		arr.erase(alloc, it);
 	}
 
-#if 0
 	// Check destroy
 	{
-		SparseArray<PtrSize> arr;
+		SparseArray<PtrSize> arr(64, 2);
 
-		arr.setAt(alloc, 10000, 123);
-		arr.setAt(alloc, 20000, 124);
-		arr.setAt(alloc, 30000, 125);
+		arr.emplace(alloc, 64 * 1, 123);
+		arr.emplace(alloc, 64 * 2, 124);
+		arr.emplace(alloc, 64 * 3, 125);
 
-		ANKI_TEST_EXPECT_EQ(*arr.getAt(10000), 123);
-		ANKI_TEST_EXPECT_EQ(*arr.getAt(20000), 124);
-		ANKI_TEST_EXPECT_EQ(*arr.getAt(30000), 125);
+		ANKI_TEST_EXPECT_EQ(*arr.find(64 * 1), 123);
+		ANKI_TEST_EXPECT_EQ(*arr.find(64 * 2), 124);
+		ANKI_TEST_EXPECT_EQ(*arr.find(64 * 3), 125);
 
 		arr.destroy(alloc);
 	}
 
+#if 0
 	// Do complex insertions
 	{
 		SparseArray<PtrSize, U32, 32, 3> arr;

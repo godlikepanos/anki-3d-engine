@@ -279,7 +279,7 @@ public:
 
 	/// Set a value to an index.
 	template<typename TAlloc, typename... TArgs>
-	Value& emplace(TAlloc& alloc, Index idx, TArgs&&... args);
+	void emplace(TAlloc& alloc, Index idx, TArgs&&... args);
 
 	/// Get an iterator.
 	Iterator find(Index idx)
@@ -308,6 +308,11 @@ protected:
 		Value m_value;
 		Index m_idx;
 		Bool8 m_alive;
+
+		Element() = delete;
+		Element(const Element&) = delete;
+		Element(Element&&) = delete;
+		~Element() = delete;
 	};
 
 	Element* m_elements = nullptr;
@@ -320,7 +325,9 @@ protected:
 
 	Index mod(const Index idx) const
 	{
-		return mod(idx, m_capacity);
+		ANKI_ASSERT(m_capacity > 0);
+		ANKI_ASSERT(isPowerOfTwo(m_capacity));
+		return idx & (m_capacity - 1);
 	}
 
 	static Index mod(const Index idx, U32 capacity)
@@ -337,12 +344,17 @@ protected:
 		return F32(m_elementCount) / m_capacity;
 	}
 
+	/// Insert a value.
+	/// @return One if the idx was a new element or zero if the idx was there already.
+	template<typename TAlloc>
+	U32 insert(TAlloc& alloc, Index idx, Value& val);
+
 	/// Grow the storage and re-insert.
 	template<typename TAlloc>
 	void grow(TAlloc& alloc);
 
 	/// Compute the distance between a desired position and the current one. This method does a trick with capacity to
-	/// account wrapped positions.
+	/// account for wrapped positions.
 	Index distanceFromDesired(const Index crntPos, const Index desiredPos) const
 	{
 		return mod(crntPos + m_capacity - desiredPos);
