@@ -69,11 +69,7 @@ public:
 	SparseArrayIterator& operator++()
 	{
 		check();
-		++m_elementIdx;
-		if(m_elementIdx >= m_array->m_capacity)
-		{
-			m_elementIdx = MAX_U32;
-		}
+		m_elementIdx = m_array->iterate(m_elementIdx, 1);
 		return *this;
 	}
 
@@ -85,25 +81,17 @@ public:
 		return out;
 	}
 
-	SparseArrayIterator operator+(U n) const
+	SparseArrayIterator operator+(U32 n) const
 	{
 		check();
-		U32 pos = m_elementIdx + n;
-		if(pos >= m_array->m_capacity)
-		{
-			pos = MAX_U32;
-		}
+		U32 pos = m_array->iterate(m_elementIdx, n);
 		return SparseArrayIterator(m_array, pos);
 	}
 
-	SparseArrayIterator& operator+=(U n)
+	SparseArrayIterator& operator+=(U32 n)
 	{
 		check();
-		m_elementIdx += n;
-		if(m_elementIdx >= m_array->m_capacity)
-		{
-			m_elementIdx = MAX_U32;
-		}
+		m_elementIdx = m_array->iterate(m_elementIdx, n);
 		return *this;
 	}
 
@@ -228,13 +216,13 @@ public:
 	/// Get end.
 	Iterator getEnd()
 	{
-		return Iterator();
+		return Iterator(this, MAX_U32);
 	}
 
 	/// Get end.
 	ConstIterator getEnd() const
 	{
-		return ConstIterator();
+		return ConstIterator(this, MAX_U32);
 	}
 
 	/// Get begin.
@@ -360,6 +348,7 @@ protected:
 		return mod(crntPos + m_capacity - desiredPos);
 	}
 
+	/// Find the first alive element.
 	Index findFirstAlive() const
 	{
 		if(m_elementCount == 0)
@@ -367,7 +356,7 @@ protected:
 			return MAX_U32;
 		}
 
-		for(Index i = 0; i < m_capacity; ++i)
+		for(U32 i = 0; i < m_capacity; ++i)
 		{
 			if(m_elements[i].m_alive)
 			{
@@ -382,14 +371,28 @@ protected:
 	/// Find an element and return its position inside m_elements.
 	Index findInternal(Index idx) const;
 
+	/// Reset the class.
 	void resetMembers()
 	{
 		m_elements = nullptr;
 		m_elementCount = 0;
 		m_capacity = 0;
-		m_initialStorageSize = 0;
-		m_probeCount = 0;
-		m_maxLoadFactor = 0;
+	}
+
+	/// Iterate a number of elements.
+	U32 iterate(U32 pos, U32 n) const
+	{
+		ANKI_ASSERT(pos < m_capacity);
+		ANKI_ASSERT(n > 0);
+		ANKI_ASSERT(m_elements[pos].m_alive);
+
+		while(n > 0 && ++pos < m_capacity)
+		{
+			ANKI_ASSERT(m_elements[pos].m_alive == 1 || m_elements[pos].m_alive == 0);
+			n -= U32(m_elements[pos].m_alive);
+		}
+
+		return (pos >= m_capacity) ? MAX_U32 : pos;
 	}
 };
 /// @}

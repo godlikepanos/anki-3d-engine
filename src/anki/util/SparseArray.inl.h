@@ -45,55 +45,52 @@ template<typename T, typename TIndex>
 template<typename TAlloc>
 U32 SparseArray<T, TIndex>::insert(TAlloc& alloc, Index idx, Value& val)
 {
+start:
 	Index desiredPos = mod(idx);
 	Index endPos = mod(desiredPos + m_probeCount);
+	Index pos = desiredPos;
 
-	while(true)
+	while(pos != endPos)
 	{
-		Index pos = desiredPos;
+		Element& el = m_elements[pos];
 
-		while(pos != endPos)
+		if(!el.m_alive)
 		{
-			Element& el = m_elements[pos];
+			// Empty slot was found, construct in-place
 
-			if(!el.m_alive)
-			{
-				// Empty slot was found, construct in-place
+			el.m_alive = true;
+			el.m_idx = idx;
+			::new(&el.m_value) Value(std::move(val));
 
-				el.m_alive = true;
-				el.m_idx = idx;
-				::new(&el.m_value) Value(std::move(val));
+			return 1;
+		}
+		else if(el.m_idx == idx)
+		{
+			// Same index was found, replace
 
-				return 1;
-			}
-			else if(el.m_idx == idx)
-			{
-				// Same index was found, replace
+			el.m_idx = idx;
+			el.m_value.~Value();
+			::new(&el.m_value) Value(std::move(val));
 
-				el.m_idx = idx;
-				el.m_value.~Value();
-				::new(&el.m_value) Value(std::move(val));
-
-				return 0;
-			}
-
-			// Do the robin-hood
-			const Index otherDesiredPos = mod(el.m_idx);
-			if(distanceFromDesired(pos, otherDesiredPos) < distanceFromDesired(pos, desiredPos))
-			{
-				// Swap
-				std::swap(val, el.m_value);
-				std::swap(idx, el.m_idx);
-				desiredPos = otherDesiredPos;
-				endPos = mod(desiredPos + m_probeCount);
-			}
-
-			pos = mod(pos + 1u);
+			return 0;
 		}
 
-		// Didn't found an empty place, need to grow and try again
-		grow(alloc);
+		// Do the robin-hood
+		const Index otherDesiredPos = mod(el.m_idx);
+		if(distanceFromDesired(pos, otherDesiredPos) < distanceFromDesired(pos, desiredPos))
+		{
+			// Swap
+			std::swap(val, el.m_value);
+			std::swap(idx, el.m_idx);
+			goto start;
+		}
+
+		pos = mod(pos + 1u);
 	}
+
+	// Didn't found an empty place, need to grow and try again
+	grow(alloc);
+	goto start;
 
 	ANKI_ASSERT(0);
 	return 0;
@@ -133,6 +130,7 @@ void SparseArray<T, TIndex>::grow(TAlloc& alloc)
 	Element* oldElements = m_elements;
 	const U32 oldCapacity = m_capacity;
 	const U32 oldElementCount = m_elementCount;
+	(void)oldElementCount;
 
 	m_capacity *= 2;
 	m_elements = static_cast<Element*>(alloc.getMemoryPool().allocate(m_capacity * sizeof(Element), alignof(Element)));
@@ -140,7 +138,7 @@ void SparseArray<T, TIndex>::grow(TAlloc& alloc)
 	m_elementCount = 0;
 
 	// Start re-inserting
-	U count = oldElementCount;
+	U count = oldCapacity;
 	Index pos = startPos;
 	while(count--)
 	{
@@ -154,6 +152,11 @@ void SparseArray<T, TIndex>::grow(TAlloc& alloc)
 
 		pos = mod(pos + 1, oldCapacity);
 	}
+
+	ANKI_ASSERT(oldElementCount == m_elementCount);
+
+	// Finalize
+	alloc.getMemoryPool().free(oldElements);
 }
 
 template<typename T, typename TIndex>
@@ -217,6 +220,7 @@ void SparseArray<T, TIndex>::validate() const
 {
 	if(m_capacity == 0)
 	{
+		ANKI_ASSERT(m_elementCount == 0 && m_elements == 0);
 		return;
 	}
 
@@ -239,24 +243,29 @@ void SparseArray<T, TIndex>::validate() const
 
 	// Start iterating
 	U elementCount = 0;
-	const Index endPos = mod(startPos + m_capacity - 1);
+	U count = m_capacity;
 	Index pos = startPos;
-	while(pos != endPos)
+	Index prevPos = ~Index(0);
+	while(count--)
 	{
 		if(m_elements[pos].m_alive)
 		{
-			if(elementCount > 0)
+			const Index myDesiredPos = mod(m_elements[pos].m_idx);
+			const Index myDistanceFromDesired = distanceFromDesired(pos, myDesiredPos);
+			ANKI_ASSERT(myDistanceFromDesired < m_probeCount);
+
+			if(prevPos != ~Index(0))
 			{
-				// There is a prev, check the distances
-				const Index prevPos = mod(pos + m_capacity - 1);
-
-				ANKI_ASSERT(distanceFromDesired(pos, mod(m_elements[prevPos].m_idx))
-					<= distanceFromDesired(pos, mod(m_elements[pos].m_idx)));
-
-				ANKI_ASSERT(distanceFromDesired(pos, mod(m_elements[pos].m_idx)) < m_probeCount);
+				Index prevDesiredPos = mod(m_elements[prevPos].m_idx);
+				ANKI_ASSERT(myDesiredPos >= prevDesiredPos);
 			}
 
 			++elementCount;
+			prevPos = pos;
+		}
+		else
+		{
+			prevPos = ~Index(0);
 		}
 
 		pos = mod(pos + 1);
@@ -268,7 +277,11 @@ void SparseArray<T, TIndex>::validate() const
 template<typename T, typename TIndex>
 TIndex SparseArray<T, TIndex>::findInternal(Index idx) const
 {
-	ANKI_ASSERT(m_elementCount > 0);
+	if(ANKI_UNLIKELY(m_elementCount == 0))
+	{
+		return MAX_U32;
+	}
+
 	const Index desiredPos = mod(idx);
 	const Index endPos = mod(desiredPos + m_probeCount);
 	Index pos = desiredPos;

@@ -39,23 +39,21 @@ ANKI_TEST(Util, SparseArray)
 		arr.destroy(alloc);
 	}
 
-#if 0
 	// Do complex insertions
 	{
-		SparseArray<PtrSize, U32, 32, 3> arr;
+		SparseArray<PtrSize, U32> arr(64, 3);
 
-		arr.setAt(alloc, 32, 1);
-		// Linear probing
-		arr.setAt(alloc, 32 * 2, 2);
-		arr.setAt(alloc, 32 * 3, 3);
-		// Append to a tree
-		arr.setAt(alloc, 32 * 4, 4);
-		// Linear probing
-		arr.setAt(alloc, 32 + 1, 5);
-		// Evict node
-		arr.setAt(alloc, 32 * 2 + 1, 5);
+		arr.emplace(alloc, 64 * 0 - 1, 1);
+		// Linear probing to 0
+		arr.emplace(alloc, 64 * 1 - 1, 2);
+		// Linear probing to 1
+		arr.emplace(alloc, 64 * 2 - 1, 3);
+		// Linear probing to 2
+		arr.emplace(alloc, 1, 3);
+		// Swap
+		arr.emplace(alloc, 64 * 1, 3);
 
-		ANKI_TEST_EXPECT_EQ(arr.getSize(), 6);
+		ANKI_TEST_EXPECT_EQ(arr.getSize(), 5);
 
 		arr.destroy(alloc);
 	}
@@ -63,7 +61,7 @@ ANKI_TEST(Util, SparseArray)
 	// Fuzzy test
 	{
 		const U MAX = 1000;
-		SparseArray<int, U32, 32, 3> arr;
+		SparseArray<int, U32> arr;
 		std::vector<int> numbers;
 
 		srand(time(nullptr));
@@ -78,17 +76,21 @@ ANKI_TEST(Util, SparseArray)
 				if(std::find(numbers.begin(), numbers.end(), int(num)) == numbers.end())
 				{
 					// Not found
-					ANKI_TEST_EXPECT_EQ(arr.getAt(num), arr.getEnd());
-					arr.setAt(alloc, num, num);
+					ANKI_TEST_EXPECT_EQ(arr.find(num), arr.getEnd());
+					arr.emplace(alloc, num, num);
+					ANKI_TEST_EXPECT_EQ(arr.getSize(), i + 1);
+
 					numbers.push_back(num);
 					break;
 				}
 				else
 				{
 					// Found
-					ANKI_TEST_EXPECT_NEQ(arr.getAt(num), arr.getEnd());
+					ANKI_TEST_EXPECT_NEQ(arr.find(num), arr.getEnd());
 				}
 			}
+
+			arr.validate();
 		}
 
 		ANKI_TEST_EXPECT_EQ(arr.getSize(), MAX);
@@ -101,17 +103,19 @@ ANKI_TEST(Util, SparseArray)
 			int num = numbers[idx];
 			numbers.erase(numbers.begin() + idx);
 
-			auto it = arr.getAt(num);
+			auto it = arr.find(num);
 			ANKI_TEST_EXPECT_NEQ(it, arr.getEnd());
 			ANKI_TEST_EXPECT_EQ(*it, num);
 			arr.erase(alloc, it);
+
+			arr.validate();
 		}
 	}
 
 	// Fuzzy test #2: Do random insertions and removals
 	{
 		const U MAX = 10000;
-		SparseArray<int, U32, 64, 4> arr;
+		SparseArray<int, U32> arr;
 		using StlMap =
 			std::unordered_map<int, int, std::hash<int>, std::equal_to<int>, HeapAllocator<std::pair<int, int>>>;
 		StlMap map(10, std::hash<int>(), std::equal_to<int>(), alloc);
@@ -129,7 +133,7 @@ ANKI_TEST(Util, SparseArray)
 					continue;
 				}
 
-				arr.setAt(alloc, idx, idx);
+				arr.emplace(alloc, idx, idx);
 				map[idx] = idx;
 
 				arr.validate();
@@ -139,7 +143,7 @@ ANKI_TEST(Util, SparseArray)
 				const U idx = U(rand()) % map.size();
 				auto it = std::next(std::begin(map), idx);
 
-				auto it2 = arr.getAt(it->second);
+				auto it2 = arr.find(it->second);
 				ANKI_TEST_EXPECT_NEQ(it2, arr.getEnd());
 
 				map.erase(it);
@@ -169,10 +173,8 @@ ANKI_TEST(Util, SparseArray)
 
 		arr.destroy(alloc);
 	}
-#endif
 }
 
-#if 0
 static PtrSize akAllocSize = 0;
 static ANKI_DONT_INLINE void* allocAlignedAk(void* userData, void* ptr, PtrSize size, PtrSize alignment)
 {
@@ -204,8 +206,8 @@ ANKI_TEST(Util, SparseArrayBench)
 	using StlMap = std::unordered_map<int, int, std::hash<int>, std::equal_to<int>, HeapAllocator<std::pair<int, int>>>;
 	StlMap stdMap(10, std::hash<int>(), std::equal_to<int>(), allocStl);
 
-	using AkMap = SparseArray<int, U32, 1024, 16>;
-	AkMap akMap;
+	using AkMap = SparseArray<int, U32>;
+	AkMap akMap(512, log2(512), 0.9f);
 
 	HighRezTimer timer;
 
@@ -238,7 +240,7 @@ ANKI_TEST(Util, SparseArrayBench)
 		timer.start();
 		for(U i = 0; i < COUNT; ++i)
 		{
-			akMap.setAt(allocAk, vals[i], vals[i]);
+			akMap.emplace(allocAk, vals[i], vals[i]);
 		}
 		timer.stop();
 		HighRezTimer::Scalar akTime = timer.getElapsedTime();
@@ -263,7 +265,7 @@ ANKI_TEST(Util, SparseArrayBench)
 		timer.start();
 		for(U i = 0; i < COUNT; ++i)
 		{
-			auto it = akMap.getAt(vals[i]);
+			auto it = akMap.find(vals[i]);
 			count += *it;
 		}
 		timer.stop();
@@ -307,7 +309,7 @@ ANKI_TEST(Util, SparseArrayBench)
 			} while(tmpMap.find(v) != tmpMap.end());
 			tmpMap[v] = 1;
 
-			delValsAk[i] = akMap.getAt(v);
+			delValsAk[i] = akMap.find(v);
 			delValsStl[i] = stdMap.find(v);
 		}
 
@@ -334,5 +336,3 @@ ANKI_TEST(Util, SparseArrayBench)
 
 	akMap.destroy(allocAk);
 }
-
-#endif
