@@ -270,14 +270,18 @@ static ANKI_DONT_INLINE void* allocAlignedAk(void* userData, void* ptr, PtrSize 
 {
 	if(ptr == nullptr)
 	{
+#if ANKI_OS == ANKI_OS_LINUX
 		akAllocSize += size;
 		akMaxAllocSize = max(akMaxAllocSize, akAllocSize);
+#endif
 		return malloc(size);
 	}
 	else
 	{
+#if ANKI_OS == ANKI_OS_LINUX
 		PtrSize s = malloc_usable_size(ptr);
 		akAllocSize -= s;
+#endif
 		free(ptr);
 		return nullptr;
 	}
@@ -289,14 +293,18 @@ static ANKI_DONT_INLINE void* allocAlignedStl(void* userData, void* ptr, PtrSize
 {
 	if(ptr == nullptr)
 	{
+#if ANKI_OS == ANKI_OS_LINUX
 		stlAllocSize += size;
 		stlMaxAllocSize = max(stlMaxAllocSize, stlAllocSize);
+#endif
 		return malloc(size);
 	}
 	else
 	{
+#if ANKI_OS == ANKI_OS_LINUX
 		PtrSize s = malloc_usable_size(ptr);
 		stlAllocSize -= s;
+#endif
 		free(ptr);
 		return nullptr;
 	}
