@@ -16,13 +16,16 @@ void SparseArray<T, TIndex>::destroy(TAlloc& alloc)
 	{
 		for(Index i = 0; i < m_capacity; ++i)
 		{
-			if(m_elements[i].m_alive)
+			if(m_metadata[i].m_alive)
 			{
-				m_elements[i].m_value.~Value();
+				destroyElement(m_elements[i]);
 			}
 		}
 
 		alloc.deallocate(m_elements, m_capacity);
+
+		ANKI_ASSERT(m_metadata);
+		alloc.deallocate(m_metadata, m_capacity);
 	}
 
 	resetMembers();
@@ -39,6 +42,8 @@ void SparseArray<T, TIndex>::emplace(TAlloc& alloc, Index idx, TArgs&&... args)
 
 	Value tmp(std::forward<TArgs>(args)...);
 	m_elementCount += insert(alloc, idx, tmp);
+
+	invalidateIterators();
 }
 
 template<typename T, typename TIndex>
@@ -46,42 +51,43 @@ template<typename TAlloc>
 U32 SparseArray<T, TIndex>::insert(TAlloc& alloc, Index idx, Value& val)
 {
 start:
-	Index desiredPos = mod(idx);
-	Index endPos = mod(desiredPos + m_probeCount);
+	const Index desiredPos = mod(idx);
+	const Index endPos = mod(desiredPos + m_probeCount);
 	Index pos = desiredPos;
 
 	while(pos != endPos)
 	{
-		Element& el = m_elements[pos];
+		Metadata& meta = m_metadata[pos];
+		Value& crntVal = m_elements[pos];
 
-		if(!el.m_alive)
+		if(!meta.m_alive)
 		{
 			// Empty slot was found, construct in-place
 
-			el.m_alive = true;
-			el.m_idx = idx;
-			::new(&el.m_value) Value(std::move(val));
+			meta.m_alive = true;
+			meta.m_idx = idx;
+			::new(&crntVal) Value(std::move(val));
 
 			return 1;
 		}
-		else if(el.m_idx == idx)
+		else if(meta.m_idx == idx)
 		{
 			// Same index was found, replace
 
-			el.m_idx = idx;
-			el.m_value.~Value();
-			::new(&el.m_value) Value(std::move(val));
+			meta.m_idx = idx;
+			destroyElement(crntVal);
+			::new(&crntVal) Value(std::move(val));
 
 			return 0;
 		}
 
 		// Do the robin-hood
-		const Index otherDesiredPos = mod(el.m_idx);
+		const Index otherDesiredPos = mod(meta.m_idx);
 		if(distanceFromDesired(pos, otherDesiredPos) < distanceFromDesired(pos, desiredPos))
 		{
 			// Swap
-			std::swap(val, el.m_value);
-			std::swap(idx, el.m_idx);
+			std::swap(val, crntVal);
+			std::swap(idx, meta.m_idx);
 			goto start;
 		}
 
@@ -104,19 +110,37 @@ void SparseArray<T, TIndex>::grow(TAlloc& alloc)
 	{
 		ANKI_ASSERT(m_elementCount == 0);
 		m_capacity = m_initialStorageSize;
-		m_elements =
-			static_cast<Element*>(alloc.getMemoryPool().allocate(m_capacity * sizeof(Element), alignof(Element)));
-		memset(m_elements, 0, m_capacity * sizeof(Element));
+		m_elements = static_cast<Value*>(alloc.getMemoryPool().allocate(m_capacity * sizeof(Value), alignof(Value)));
+
+		m_metadata =
+			static_cast<Metadata*>(alloc.getMemoryPool().allocate(m_capacity * sizeof(Metadata), alignof(Metadata)));
+
+		memset(m_metadata, 0, m_capacity * sizeof(Metadata));
+
 		return;
 	}
 
+	// Allocate new storage
+	Value* const oldElements = m_elements;
+	Metadata* const oldMetadata = m_metadata;
+	const U32 oldCapacity = m_capacity;
+	const U32 oldElementCount = m_elementCount;
+	(void)oldElementCount;
+
+	m_capacity *= 2;
+	m_elements = static_cast<Value*>(alloc.getMemoryPool().allocate(m_capacity * sizeof(Value), alignof(Value)));
+	m_metadata =
+		static_cast<Metadata*>(alloc.getMemoryPool().allocate(m_capacity * sizeof(Metadata), alignof(Metadata)));
+	memset(m_metadata, 0, m_capacity * sizeof(Metadata));
+	m_elementCount = 0;
+
 	// Find from where we start
 	Index startPos = ~Index(0);
-	for(U i = 0; i < m_capacity; ++i)
+	for(U i = 0; i < oldCapacity; ++i)
 	{
-		if(m_elements[i].m_alive)
+		if(oldMetadata[i].m_alive)
 		{
-			const Index desiredPos = mod(m_elements[i].m_idx);
+			const Index desiredPos = mod(oldMetadata[i].m_idx, oldCapacity);
 			if(desiredPos <= i)
 			{
 				startPos = i;
@@ -126,28 +150,19 @@ void SparseArray<T, TIndex>::grow(TAlloc& alloc)
 	}
 	ANKI_ASSERT(startPos != ~Index(0));
 
-	// Allocate new storage
-	Element* oldElements = m_elements;
-	const U32 oldCapacity = m_capacity;
-	const U32 oldElementCount = m_elementCount;
-	(void)oldElementCount;
-
-	m_capacity *= 2;
-	m_elements = static_cast<Element*>(alloc.getMemoryPool().allocate(m_capacity * sizeof(Element), alignof(Element)));
-	memset(m_elements, 0, m_capacity * sizeof(Element));
-	m_elementCount = 0;
-
 	// Start re-inserting
 	U count = oldCapacity;
 	Index pos = startPos;
 	while(count--)
 	{
-		if(oldElements[pos].m_alive)
+		if(oldMetadata[pos].m_alive)
 		{
-			Element& el = oldElements[pos];
-			U32 c = insert(alloc, el.m_idx, el.m_value);
+			U32 c = insert(alloc, oldMetadata[pos].m_idx, oldElements[pos]);
 			ANKI_ASSERT(c > 0);
 			m_elementCount += c;
+
+			// The element was moved to a new storage so we need to destroy the original
+			destroyElement(oldElements[pos]);
 		}
 
 		pos = mod(pos + 1, oldCapacity);
@@ -157,6 +172,7 @@ void SparseArray<T, TIndex>::grow(TAlloc& alloc)
 
 	// Finalize
 	alloc.getMemoryPool().free(oldElements);
+	alloc.getMemoryPool().free(oldMetadata);
 }
 
 template<typename T, typename TIndex>
@@ -165,35 +181,33 @@ void SparseArray<T, TIndex>::erase(TAlloc& alloc, Iterator it)
 {
 	ANKI_ASSERT(it.m_array == this);
 	ANKI_ASSERT(it.m_elementIdx != MAX_U32);
+	ANKI_ASSERT(it.m_iteratorVer == m_iteratorVer);
 	ANKI_ASSERT(m_elementCount > 0);
-
-	(void)alloc;
 
 	const Index pos = it.m_elementIdx;
 	ANKI_ASSERT(pos < m_capacity);
-	ANKI_ASSERT(m_elements[pos].m_alive);
-
-	// Delete the element in the given pos
-	m_elements[pos].m_value.~Value();
-	m_elements[pos].m_alive = false;
-	--m_elementCount;
+	ANKI_ASSERT(m_metadata[pos].m_alive);
 
 	// Shift elements
+	Index crntPos; // Also the one that will get deleted
 	Index nextPos = pos;
 	while(true)
 	{
-		const Index crntPos = nextPos;
+		crntPos = nextPos;
 		nextPos = mod(nextPos + 1);
 
-		Element& nextEl = m_elements[nextPos];
+		Metadata& crntMeta = m_metadata[crntPos];
+		Metadata& nextMeta = m_metadata[nextPos];
+		Value& crntEl = m_elements[crntPos];
+		Value& nextEl = m_elements[nextPos];
 
-		if(!nextEl.m_alive)
+		if(!nextMeta.m_alive)
 		{
 			// On gaps, stop
 			break;
 		}
 
-		const Index nextDesiredPos = mod(nextEl.m_idx);
+		const Index nextDesiredPos = mod(nextMeta.m_idx);
 		if(nextDesiredPos == nextPos)
 		{
 			// The element is where it want's to be, stop
@@ -201,18 +215,22 @@ void SparseArray<T, TIndex>::erase(TAlloc& alloc, Iterator it)
 		}
 
 		// Shift left
-		Element& crntEl = m_elements[crntPos];
-		crntEl.m_value = std::move(nextEl.m_value);
-		crntEl.m_idx = nextEl.m_value;
-		crntEl.m_alive = true;
-		nextEl.m_alive = false;
+		std::swap(crntEl, nextEl);
+		crntMeta.m_idx = nextMeta.m_idx;
 	}
+
+	// Delete the element in the given pos
+	destroyElement(m_elements[crntPos]);
+	m_metadata[crntPos].m_alive = false;
+	--m_elementCount;
 
 	// If you erased everything destroy the storage
 	if(m_elementCount == 0)
 	{
 		destroy(alloc);
 	}
+
+	invalidateIterators();
 }
 
 template<typename T, typename TIndex>
@@ -220,7 +238,7 @@ void SparseArray<T, TIndex>::validate() const
 {
 	if(m_capacity == 0)
 	{
-		ANKI_ASSERT(m_elementCount == 0 && m_elements == 0);
+		ANKI_ASSERT(m_elementCount == 0 && m_elements == nullptr && m_metadata == nullptr);
 		return;
 	}
 
@@ -230,9 +248,9 @@ void SparseArray<T, TIndex>::validate() const
 	Index startPos = ~Index(0);
 	for(U i = 0; i < m_capacity; ++i)
 	{
-		if(m_elements[i].m_alive)
+		if(m_metadata[i].m_alive)
 		{
-			const Index desiredPos = mod(m_elements[i].m_idx);
+			const Index desiredPos = mod(m_metadata[i].m_idx);
 			if(desiredPos <= i)
 			{
 				startPos = i;
@@ -248,15 +266,15 @@ void SparseArray<T, TIndex>::validate() const
 	Index prevPos = ~Index(0);
 	while(count--)
 	{
-		if(m_elements[pos].m_alive)
+		if(m_metadata[pos].m_alive)
 		{
-			const Index myDesiredPos = mod(m_elements[pos].m_idx);
+			const Index myDesiredPos = mod(m_metadata[pos].m_idx);
 			const Index myDistanceFromDesired = distanceFromDesired(pos, myDesiredPos);
 			ANKI_ASSERT(myDistanceFromDesired < m_probeCount);
 
 			if(prevPos != ~Index(0))
 			{
-				Index prevDesiredPos = mod(m_elements[prevPos].m_idx);
+				Index prevDesiredPos = mod(m_metadata[prevPos].m_idx);
 				ANKI_ASSERT(myDesiredPos >= prevDesiredPos);
 			}
 
@@ -287,7 +305,7 @@ TIndex SparseArray<T, TIndex>::findInternal(Index idx) const
 	Index pos = desiredPos;
 	while(pos != endPos)
 	{
-		if(m_elements[pos].m_alive && m_elements[pos].m_idx == idx)
+		if(m_metadata[pos].m_alive && m_metadata[pos].m_idx == idx)
 		{
 			return pos;
 		}

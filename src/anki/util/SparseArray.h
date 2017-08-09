@@ -29,6 +29,9 @@ public:
 	SparseArrayIterator()
 		: m_array(nullptr)
 		, m_elementIdx(MAX_U32)
+#if ANKI_EXTRA_CHECKS
+		, m_iteratorVer(MAX_U32)
+#endif
 	{
 	}
 
@@ -36,6 +39,9 @@ public:
 	SparseArrayIterator(const SparseArrayIterator& b)
 		: m_array(b.m_array)
 		, m_elementIdx(b.m_elementIdx)
+#if ANKI_EXTRA_CHECKS
+		, m_iteratorVer(b.m_iteratorVer)
+#endif
 	{
 	}
 
@@ -44,12 +50,24 @@ public:
 	SparseArrayIterator(const SparseArrayIterator<YValuePointer, YValueReference, YSparseArrayPtr>& b)
 		: m_array(b.m_array)
 		, m_elementIdx(b.m_elementIdx)
+#if ANKI_EXTRA_CHECKS
+		, m_iteratorVer(b.m_iteratorVer)
+#endif
 	{
 	}
 
-	SparseArrayIterator(TSparseArrayPtr arr, U32 modIdx)
+	SparseArrayIterator(TSparseArrayPtr arr,
+		U32 modIdx
+#if ANKI_EXTRA_CHECKS
+		,
+		U32 ver
+#endif
+		)
 		: m_array(arr)
 		, m_elementIdx(modIdx)
+#if ANKI_EXTRA_CHECKS
+		, m_iteratorVer(ver)
+#endif
 	{
 		ANKI_ASSERT(arr);
 	}
@@ -57,13 +75,13 @@ public:
 	TValueReference operator*() const
 	{
 		check();
-		return m_array->m_elements[m_elementIdx].m_value;
+		return m_array->m_elements[m_elementIdx];
 	}
 
 	TValuePointer operator->() const
 	{
 		check();
-		return &m_array->m_elements[m_elementIdx].m_value;
+		return &m_array->m_elements[m_elementIdx];
 	}
 
 	SparseArrayIterator& operator++()
@@ -98,6 +116,7 @@ public:
 	Bool operator==(const SparseArrayIterator& b) const
 	{
 		ANKI_ASSERT(m_array == b.m_array);
+		ANKI_ASSERT(m_iteratorVer == b.m_iteratorVer);
 		return m_elementIdx == b.m_elementIdx;
 	}
 
@@ -106,19 +125,19 @@ public:
 		return !(*this == b);
 	}
 
-	operator Bool() const
-	{
-		return m_elementIdx != MAX_U32;
-	}
-
 private:
 	TSparseArrayPtr m_array;
 	U32 m_elementIdx;
+#if ANKI_EXTRA_CHECKS
+	U32 m_iteratorVer; ///< See SparseArray::m_iteratorVer.
+#endif
 
 	void check() const
 	{
-		ANKI_ASSERT(m_elementIdx != MAX_U32 && m_array);
-		ANKI_ASSERT(m_array->m_elements[m_elementIdx].m_alive);
+		ANKI_ASSERT(m_array);
+		ANKI_ASSERT(m_elementIdx != MAX_U32);
+		ANKI_ASSERT(m_array->m_metadata[m_elementIdx].m_alive);
+		ANKI_ASSERT(m_array->m_iteratorVer == m_iteratorVer);
 	}
 };
 
@@ -145,7 +164,7 @@ public:
 	{
 		ANKI_ASSERT(initialStorageSize > 0 && isPowerOfTwo(initialStorageSize));
 		ANKI_ASSERT(probeCount > 0 && probeCount < initialStorageSize);
-		ANKI_ASSERT(maxLoadFactor > 0.0f && maxLoadFactor <= 1.0f);
+		ANKI_ASSERT(maxLoadFactor > 0.5f && maxLoadFactor < 1.0f);
 	}
 
 	/// Constructor #2.
@@ -178,7 +197,7 @@ public:
 	/// Destroy.
 	~SparseArray()
 	{
-		ANKI_ASSERT(m_elements == nullptr && "Forgot to call destroy");
+		ANKI_ASSERT(m_elements == nullptr && m_metadata == nullptr && "Forgot to call destroy");
 	}
 
 	/// Non-copyable.
@@ -187,14 +206,18 @@ public:
 	/// Move operator.
 	SparseArray& operator=(SparseArray&& b)
 	{
-		ANKI_ASSERT(m_elements == nullptr && "Forgot to call destroy");
+		ANKI_ASSERT(m_elements == nullptr && m_metadata == nullptr && "Forgot to call destroy");
 
 		m_elements = b.m_elements;
+		m_metadata = b.m_metadata;
 		m_elementCount = b.m_elementCount;
 		m_capacity = b.m_capacity;
 		m_initialStorageSize = b.m_initialStorageSize;
 		m_probeCount = b.m_probeCount;
 		m_maxLoadFactor = b.m_maxLoadFactor;
+#if ANKI_EXTRA_CHECKS
+		++m_iteratorVer;
+#endif
 
 		b.resetMembers();
 
@@ -204,25 +227,49 @@ public:
 	/// Get begin.
 	Iterator getBegin()
 	{
-		return Iterator(this, findFirstAlive());
+		return Iterator(this,
+			findFirstAlive()
+#if ANKI_EXTRA_CHECKS
+				,
+			m_iteratorVer
+#endif
+			);
 	}
 
 	/// Get begin.
 	ConstIterator getBegin() const
 	{
-		return ConstIterator(this, findFirstAlive());
+		return ConstIterator(this,
+			findFirstAlive()
+#if ANKI_EXTRA_CHECKS
+				,
+			m_iteratorVer
+#endif
+			);
 	}
 
 	/// Get end.
 	Iterator getEnd()
 	{
-		return Iterator(this, MAX_U32);
+		return Iterator(this,
+			MAX_U32
+#if ANKI_EXTRA_CHECKS
+			,
+			m_iteratorVer
+#endif
+			);
 	}
 
 	/// Get end.
 	ConstIterator getEnd() const
 	{
-		return ConstIterator(this, MAX_U32);
+		return ConstIterator(this,
+			MAX_U32
+#if ANKI_EXTRA_CHECKS
+			,
+			m_iteratorVer
+#endif
+			);
 	}
 
 	/// Get begin.
@@ -272,13 +319,25 @@ public:
 	/// Get an iterator.
 	Iterator find(Index idx)
 	{
-		return Iterator(this, findInternal(idx));
+		return Iterator(this,
+			findInternal(idx)
+#if ANKI_EXTRA_CHECKS
+				,
+			m_iteratorVer
+#endif
+			);
 	}
 
 	/// Get an iterator.
 	ConstIterator find(Index idx) const
 	{
-		return ConstIterator(this, findInternal(idx));
+		return ConstIterator(this,
+			findInternal(idx)
+#if ANKI_EXTRA_CHECKS
+				,
+			m_iteratorVer
+#endif
+			);
 	}
 
 	/// Remove an element.
@@ -289,28 +348,34 @@ public:
 	void validate() const;
 
 protected:
-	/// Element.
-	class Element
+	/// Element metadata.
+	class Metadata
 	{
 	public:
-		Value m_value;
 		Index m_idx;
-		Bool8 m_alive;
+		Bool m_alive;
 
-		Element() = delete;
-		Element(const Element&) = delete;
-		Element(Element&&) = delete;
-		~Element() = delete;
+		Metadata() = delete;
+		Metadata(const Metadata&) = delete;
+		Metadata(Metadata&&) = delete;
+		~Metadata() = delete;
 	};
 
-	Element* m_elements = nullptr;
+	Value* m_elements = nullptr;
+	Metadata* m_metadata = nullptr;
 	U32 m_elementCount = 0;
 	U32 m_capacity = 0;
 
 	U32 m_initialStorageSize = 0;
 	U32 m_probeCount = 0;
 	F32 m_maxLoadFactor = 0.0;
+#if ANKI_EXTRA_CHECKS
+	/// Iterators version. Used to check if iterators point to the newest storage. Needs to be changed whenever we need
+	/// to invalidate iterators.
+	U32 m_iteratorVer = 0;
+#endif
 
+	/// Wrap an index.
 	Index mod(const Index idx) const
 	{
 		ANKI_ASSERT(m_capacity > 0);
@@ -318,6 +383,7 @@ protected:
 		return idx & (m_capacity - 1);
 	}
 
+	/// Wrap an index.
 	static Index mod(const Index idx, U32 capacity)
 	{
 		ANKI_ASSERT(capacity > 0);
@@ -332,7 +398,7 @@ protected:
 		return F32(m_elementCount) / m_capacity;
 	}
 
-	/// Insert a value.
+	/// Insert a value. This method will move the val to a new place.
 	/// @return One if the idx was a new element or zero if the idx was there already.
 	template<typename TAlloc>
 	U32 insert(TAlloc& alloc, Index idx, Value& val);
@@ -358,7 +424,7 @@ protected:
 
 		for(U32 i = 0; i < m_capacity; ++i)
 		{
-			if(m_elements[i].m_alive)
+			if(m_metadata[i].m_alive)
 			{
 				return i;
 			}
@@ -375,8 +441,10 @@ protected:
 	void resetMembers()
 	{
 		m_elements = nullptr;
+		m_metadata = nullptr;
 		m_elementCount = 0;
 		m_capacity = 0;
+		invalidateIterators();
 	}
 
 	/// Iterate a number of elements.
@@ -384,15 +452,30 @@ protected:
 	{
 		ANKI_ASSERT(pos < m_capacity);
 		ANKI_ASSERT(n > 0);
-		ANKI_ASSERT(m_elements[pos].m_alive);
+		ANKI_ASSERT(m_metadata[pos].m_alive);
 
 		while(n > 0 && ++pos < m_capacity)
 		{
-			ANKI_ASSERT(m_elements[pos].m_alive == 1 || m_elements[pos].m_alive == 0);
-			n -= U32(m_elements[pos].m_alive);
+			ANKI_ASSERT(m_metadata[pos].m_alive == 1 || m_metadata[pos].m_alive == 0);
+			n -= U32(m_metadata[pos].m_alive);
 		}
 
 		return (pos >= m_capacity) ? MAX_U32 : pos;
+	}
+
+	void destroyElement(Value& v)
+	{
+		v.~Value();
+#if ANKI_EXTRA_CHECKS
+		memset(&v, 0xC, sizeof(v));
+#endif
+	}
+
+	void invalidateIterators()
+	{
+#if ANKI_EXTRA_CHECKS
+		++m_iteratorVer;
+#endif
 	}
 };
 /// @}
