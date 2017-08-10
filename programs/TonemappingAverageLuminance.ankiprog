@@ -12,6 +12,8 @@ http://www.anki3d.org/LICENSE
 			</inputs>
 
 			<source><![CDATA[
+#define LOG_AVG 0
+
 #include "shaders/Common.glsl"
 #include "shaders/Tonemapping.glsl"
 
@@ -46,12 +48,14 @@ void main()
 			ivec2 uv = ivec2(xStart, yStart) + ivec2(x, y);
 			vec3 color = texelFetch(u_tex, uv, 0).rgb;
 			float lum = computeLuminance(color);
-			// avgLum += log(lum);
-			avgLum += lum / float(INPUT_TEX_SIZE.x * INPUT_TEX_SIZE.y);
+#if LOG_AVG
+			avgLum += log(max(EPSILON, lum));
+#else
+			avgLum += lum;
+#endif
 		}
 	}
 
-	// avgLum *= 1.0 / float(PIXEL_READ_X * PIXEL_READ_Y);
 	g_avgLum[gl_LocalInvocationIndex] = avgLum;
 
 	memoryBarrierShared();
@@ -72,8 +76,11 @@ void main()
 	// Write the result
 	if(gl_LocalInvocationIndex == 0)
 	{
-		float crntLum = g_avgLum[0];
-		// crntLum = exp(crntLum / float(WORKGROUP_SIZE));
+#if LOG_AVG
+		float crntLum = exp(g_avgLum[0] / float(INPUT_TEX_SIZE.x * INPUT_TEX_SIZE.y));
+#else
+		float crntLum = g_avgLum[0] / float(INPUT_TEX_SIZE.x * INPUT_TEX_SIZE.y);
+#endif
 		crntLum = max(crntLum, 0.04);
 
 #if 1

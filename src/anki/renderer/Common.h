@@ -76,6 +76,9 @@ const U GBUFFER_COLOR_ATTACHMENT_COUNT = 3;
 /// Downsample and blur down to a texture with size DOWNSCALE_BLUR_DOWN_TO
 const U DOWNSCALE_BLUR_DOWN_TO = 32;
 
+/// Use this size of render target for the avg lum calculation.
+const U AVERAGE_LUMINANCE_RENDER_TARGET_SIZE = 128;
+
 extern const Array<PixelFormat, GBUFFER_COLOR_ATTACHMENT_COUNT> MS_COLOR_ATTACHMENT_PIXEL_FORMATS;
 
 const PixelFormat GBUFFER_DEPTH_ATTACHMENT_PIXEL_FORMAT(ComponentFormat::D24S8, TransformFormat::UNORM);

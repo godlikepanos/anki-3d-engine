@@ -21,8 +21,8 @@ Error BloomExposure::init(const ConfigSet& config)
 {
 	GrManager& gr = getGrManager();
 
-	m_width = m_r->getDownscaleBlur().getSmallPassWidth() * 2;
-	m_height = m_r->getDownscaleBlur().getSmallPassHeight() * 2;
+	m_width = m_r->getDownscaleBlur().getPassWidth(MAX_U) * 2;
+	m_height = m_r->getDownscaleBlur().getPassHeight(MAX_U) * 2;
 
 	m_threshold = config.getNumber("r.bloom.threshold");
 	m_scale = config.getNumber("r.bloom.scale");
@@ -48,7 +48,7 @@ Error BloomExposure::init(const ConfigSet& config)
 
 	ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
 	consts.add(
-		"TEX_SIZE", Vec2(m_r->getDownscaleBlur().getSmallPassWidth(), m_r->getDownscaleBlur().getSmallPassHeight()));
+		"TEX_SIZE", Vec2(m_r->getDownscaleBlur().getPassWidth(MAX_U), m_r->getDownscaleBlur().getPassHeight(MAX_U)));
 
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(consts.get(), variant);
@@ -78,7 +78,7 @@ void BloomExposure::run(RenderingContext& ctx)
 	cmdb->beginRenderPass(m_fb);
 	cmdb->setViewport(0, 0, m_width, m_height);
 	cmdb->bindShaderProgram(m_grProg);
-	cmdb->bindTexture(0, 0, m_r->getDownscaleBlur().getSmallPassTexture());
+	cmdb->bindTexture(0, 0, m_r->getDownscaleBlur().getPassTexture(MAX_U));
 
 	Vec4* uniforms = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
 	*uniforms = Vec4(m_threshold, m_scale, 0.0, 0.0);

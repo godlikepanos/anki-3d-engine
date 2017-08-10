@@ -31,6 +31,7 @@ anki_internal:
 private:
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
+	U8 m_rtIdx;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 };

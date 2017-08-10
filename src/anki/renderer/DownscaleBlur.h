@@ -30,19 +30,19 @@ anki_internal:
 	void run(RenderingContext& ctx);
 	void setPostRunBarriers(RenderingContext& ctx);
 
-	U getSmallPassWidth() const
+	U getPassWidth(U pass) const
 	{
-		return m_passes.getBack().m_width;
+		return m_passes[min(pass, m_passes.getSize() - 1)].m_width;
 	}
 
-	U getSmallPassHeight() const
+	U getPassHeight(U pass) const
 	{
-		return m_passes.getBack().m_height;
+		return m_passes[min(pass, m_passes.getSize() - 1)].m_height;
 	}
 
-	TexturePtr getSmallPassTexture() const
+	TexturePtr getPassTexture(U pass) const
 	{
-		return m_passes.getBack().m_rt;
+		return m_passes[min(pass, m_passes.getSize() - 1)].m_rt;
 	}
 
 private:

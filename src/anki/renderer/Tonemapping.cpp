@@ -24,12 +24,14 @@ Error Tonemapping::init(const ConfigSet& cfg)
 
 Error Tonemapping::initInternal(const ConfigSet& initializer)
 {
+	m_rtIdx = computeMaxMipmapCount2d(m_r->getWidth(), m_r->getHeight(), AVERAGE_LUMINANCE_RENDER_TARGET_SIZE) - 1;
+
 	// Create program
 	ANKI_CHECK(getResourceManager().loadResource("programs/TonemappingAverageLuminance.ankiprog", m_prog));
 
 	ShaderProgramResourceConstantValueInitList<1> consts(m_prog);
 	consts.add("INPUT_TEX_SIZE",
-		UVec2(m_r->getDownscaleBlur().getSmallPassWidth(), m_r->getDownscaleBlur().getSmallPassHeight()));
+		UVec2(m_r->getDownscaleBlur().getPassWidth(m_rtIdx), m_r->getDownscaleBlur().getPassHeight(m_rtIdx)));
 
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(consts.get(), variant);
@@ -64,7 +66,7 @@ void Tonemapping::run(RenderingContext& ctx)
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 	cmdb->bindShaderProgram(m_grProg);
 	cmdb->bindStorageBuffer(0, 0, m_luminanceBuff, 0, MAX_PTR_SIZE);
-	cmdb->bindTexture(0, 0, m_r->getDownscaleBlur().getSmallPassTexture());
+	cmdb->bindTexture(0, 0, m_r->getDownscaleBlur().getPassTexture(m_rtIdx));
 
 	cmdb->dispatchCompute(1, 1, 1);
 }
