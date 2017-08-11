@@ -28,10 +28,7 @@ const uint PIXEL_READ_Y = INPUT_TEX_SIZE.y / WORKGROUP_SIZE_Y;
 
 layout(ANKI_TEX_BINDING(0, 0)) uniform sampler2D u_tex;
 
-layout(std140, ANKI_SS_BINDING(0, 0)) buffer ss0_
-{
-	vec4 u_averageLuminancePad3;
-};
+#include "shaders/TonemappingResources.glsl"
 
 shared float g_avgLum[WORKGROUP_SIZE];
 
@@ -84,14 +81,15 @@ void main()
 		crntLum = max(crntLum, 0.04);
 
 #if 1
-		float prevLum = u_averageLuminancePad3.x;
+		float prevLum = u_averageLuminance;
 
 		// Lerp between previous and new L value
 		const float INTERPOLATION_FACTOR = 0.05;
-		u_averageLuminancePad3.x = prevLum * (1.0 - INTERPOLATION_FACTOR) + crntLum * INTERPOLATION_FACTOR;
+		u_averageLuminance = mix(prevLum, crntLum, INTERPOLATION_FACTOR);
 #else
-		u_averageLuminancePad3.x = crntLum;
+		u_averageLuminance = crntLum;
 #endif
+		u_exposureThreshold0 = computeExposure(u_averageLuminance, 0.0);
 	}
 }
 			]]></source>

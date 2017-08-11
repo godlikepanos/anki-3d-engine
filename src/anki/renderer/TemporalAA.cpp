@@ -7,6 +7,7 @@
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/GBuffer.h>
 #include <anki/renderer/LightShading.h>
+#include <anki/renderer/Tonemapping.h>
 
 namespace anki
 {
@@ -80,6 +81,7 @@ void TemporalAA::run(RenderingContext& ctx)
 	cmdb->bindTextureAndSampler(0, 1, m_r->getLightShading().getRt(), m_r->getLinearSampler());
 	cmdb->informTextureCurrentUsage(m_rts[(m_r->getFrameCount() + 1) & 1], TextureUsageBit::SAMPLED_FRAGMENT);
 	cmdb->bindTextureAndSampler(0, 2, m_rts[(m_r->getFrameCount() + 1) & 1], m_r->getLinearSampler());
+	cmdb->bindStorageBuffer(0, 0, m_r->getTonemapping().m_luminanceBuff, 0, MAX_PTR_SIZE);
 
 	Mat4* unis = allocateAndBindUniforms<Mat4*>(sizeof(Mat4), cmdb, 0, 0);
 	*unis = ctx.m_jitterMat * ctx.m_prevViewProjMat * ctx.m_viewProjMatJitter.getInverse();

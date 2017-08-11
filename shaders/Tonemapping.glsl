@@ -19,14 +19,19 @@ float computeLuminance(in vec3 color)
 	return max(dot(vec3(0.30, 0.59, 0.11), color), EPSILON);
 }
 
-vec3 computeExposedColor(in vec3 color, in float avgLum, in float threshold)
+float computeExposure(float avgLum, float threshold)
 {
 	float keyValue = 1.03 - (2.0 / (2.0 + log10(avgLum + 1.0)));
 	float linearExposure = (keyValue / avgLum);
 	float exposure = log2(linearExposure);
 
 	exposure -= threshold;
-	return exp2(exposure) * color;
+	return exp2(exposure);
+}
+
+vec3 computeExposedColor(in vec3 color, in float avgLum, in float threshold)
+{
+	return computeExposure(avgLum, threshold) * color;
 }
 
 // Reinhard operator
@@ -50,13 +55,16 @@ vec3 tonemapUncharted2(in vec3 color)
 	return ((color * (A * color + C * B) + D * E) / (color * (A * color + B) + D * F)) - E / F;
 }
 
-vec3 tonemap(in vec3 color, in float avgLum, in float threshold)
+vec3 tonemap(vec3 color, float exposure)
 {
-	vec3 c = computeExposedColor(color, avgLum, threshold);
-	// float saturation = clamp(avgLum, 0.0, 1.0);
+	color *= exposure;
 	float saturation = 1.0;
-	return tonemapReinhard(c, saturation);
-	// return tonemapUncharted2(c);
+	return tonemapReinhard(color, saturation);
 }
 
+vec3 tonemap(vec3 color, float avgLum, float threshold)
+{
+	float exposure = computeExposure(avgLum, threshold);
+	return tonemap(color, exposure);
+}
 #endif

@@ -18,10 +18,12 @@ http://www.anki3d.org/LICENSE
 #include "shaders/Pack.glsl"
 #include "shaders/Tonemapping.glsl"
 
+// Config
 #define VARIANCE_CLIPPING 1
 const float VARIANCE_CLIPPING_GAMMA = 1.75;
 #define YCBCR 0
 const float BLEND_FACTOR = 1.0 / 16.0; // Keep it low to have a better result
+#define TONEMAP_FIX 1
 
 layout(location = 0) in vec2 in_uv;
 
@@ -35,6 +37,11 @@ layout(ANKI_UBO_BINDING(0, 0), std140, row_major) uniform u0_
 {
 	mat4 u_prevViewProjMatMulInvViewProjMat;
 };
+
+#if TONEMAP_FIX
+#define TONEMAPPING_RESOURCE readonly buffer
+#include "shaders/TonemappingResources.glsl"
+#endif
 
 #if YCBCR
 #define sample(s, uv) rgbToYCbCr(textureLod(s, uv, 0.0).rgb)
@@ -83,6 +90,11 @@ void main()
 	float lum0 = crntCol.r;
 	float lum1 = historyCol.r;
 	float maxLum = boxMax.r;
+#elif TONEMAP_FIX
+	float lum0 = computeLuminance(tonemap(crntCol, u_exposureThreshold0));
+	float lum1 = computeLuminance(tonemap(historyCol, u_exposureThreshold0));
+	//float maxLum = computeLuminance(tonemap(boxMax, u_exposureThreshold0));
+	float maxLum = 1.0;
 #else
 	float lum0 = computeLuminance(crntCol);
 	float lum1 = computeLuminance(historyCol);
