@@ -32,17 +32,17 @@ anki_internal:
 
 	U getPassWidth(U pass) const
 	{
-		return m_passes[min(pass, m_passes.getSize() - 1)].m_width;
+		return m_passes[min<U>(pass, m_passes.getSize() - 1)].m_width;
 	}
 
 	U getPassHeight(U pass) const
 	{
-		return m_passes[min(pass, m_passes.getSize() - 1)].m_height;
+		return m_passes[min<U>(pass, m_passes.getSize() - 1)].m_height;
 	}
 
 	TexturePtr getPassTexture(U pass) const
 	{
-		return m_passes[min(pass, m_passes.getSize() - 1)].m_rt;
+		return m_passes[min<U>(pass, m_passes.getSize() - 1)].m_rt;
 	}
 
 private:

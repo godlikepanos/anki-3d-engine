@@ -201,8 +201,8 @@ void main()
 	vec3 outC = diffCol * emission;
 
 	// Don't allow zero a2 because we may end up with division with zero
-	float a2 = roughness * 0.9 + 0.1;
-	a2 *= a2;
+	float a2 = roughness * 0.95 + 0.05;
+	a2 *= a2 * a2;
 
 	// Point lights
 	vec3 viewDir = normalize(-fragPos);

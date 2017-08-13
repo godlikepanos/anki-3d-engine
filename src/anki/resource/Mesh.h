@@ -83,6 +83,11 @@ public:
 		return m_indicesBuff;
 	}
 
+	U32 getVertexSize() const
+	{
+		return m_vertSize;
+	}
+
 	/// Helper function for correct loading
 	Bool isCompatible(const Mesh& other) const;
 
@@ -104,6 +109,7 @@ protected:
 	DynamicArray<SubMesh> m_subMeshes;
 	U32 m_indicesCount;
 	U32 m_vertsCount;
+	U32 m_vertSize;
 	Obb m_obb;
 	U8 m_texChannelsCount;
 	Bool8 m_weights;

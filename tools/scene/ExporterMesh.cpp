@@ -87,6 +87,14 @@ struct Vertex
 	uint32_t m_tangent;
 };
 
+struct BoneVertex : Vertex
+{
+	uint8_t m_weights[4] = {0, 0, 0, 0};
+	uint16_t m_boneIndices[4] = {0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF};
+};
+
+static_assert(sizeof(BoneVertex) == 9 * 4, "Wrong size");
+
 static uint16_t toF16(float f)
 {
 	union Val32
@@ -256,7 +264,52 @@ void Exporter::exportMesh(const aiMesh& mesh, const aiMatrix4x4* transform, unsi
 	header.m_uvsChannelCount = 1;
 	header.m_subMeshCount = 1;
 
+	const bool hasBoneWeights = mesh.mNumBones > 0;
+	if(hasBoneWeights)
+	{
+		header.m_boneIndicesFormat.m_components = ComponentFormat::R16G16B16A16;
+		header.m_boneIndicesFormat.m_transform = FormatTransform::UINT;
+
+		header.m_boneWeightsFormat.m_components = ComponentFormat::R8G8B8A8;
+		header.m_boneWeightsFormat.m_transform = FormatTransform::UNORM;
+	}
+
 	file.write(reinterpret_cast<char*>(&header), sizeof(header));
+
+	// Gather the bone weights
+	struct VertWeights
+	{
+		float m_weights[4];
+		uint32_t m_boneIndices[4];
+		uint32_t m_boneCount = 0;
+	};
+
+	std::vector<VertWeights> weights;
+
+	if(hasBoneWeights)
+	{
+		weights.resize(mesh.mNumVertices);
+
+		for(unsigned i = 0; i < mesh.mNumBones; ++i)
+		{
+			const aiBone& bone = *mesh.mBones[i];
+			for(unsigned j = 0; j < bone.mNumWeights; ++j)
+			{
+				const aiVertexWeight& aiWeight = bone.mWeights[j];
+				assert(aiWeight.mVertexId < weights.size());
+				VertWeights& vert = weights[aiWeight.mVertexId];
+
+				if(vert.m_boneCount == 4)
+				{
+					ERROR("Vertex has more than 4 bone weights");
+				}
+
+				vert.m_boneIndices[vert.m_boneCount] = i;
+				vert.m_weights[vert.m_boneCount] = aiWeight.mWeight;
+				++vert.m_boneCount;
+			}
+		}
+	}
 
 	// Write sub meshes
 	SubMesh smesh;
@@ -271,9 +324,8 @@ void Exporter::exportMesh(const aiMesh& mesh, const aiMatrix4x4* transform, unsi
 
 		if(face.mNumIndices != vertCountPerFace)
 		{
-			ERROR("For some reason assimp returned wrong number of verts "
-				  "for a face (face.mNumIndices=%d). Probably degenerates in "
-				  "input file",
+			ERROR("For some reason assimp returned wrong number of verts for a face (face.mNumIndices=%d). Probably"
+				  "degenerates in input file",
 				face.mNumIndices);
 		}
 
@@ -323,7 +375,7 @@ void Exporter::exportMesh(const aiMesh& mesh, const aiMatrix4x4* transform, unsi
 			b = toLefthanded * b;
 		}
 
-		Vertex vert;
+		BoneVertex vert;
 
 		// Position
 		vert.m_position[0] = pos[0];
@@ -342,6 +394,19 @@ void Exporter::exportMesh(const aiMesh& mesh, const aiMatrix4x4* transform, unsi
 		vert.m_tangent = toR10G10B10A2Sint(t[0], t[1], t[2], w);
 
 		// Write
-		file.write(reinterpret_cast<char*>(&vert), sizeof(vert));
+		if(hasBoneWeights)
+		{
+			for(unsigned j = 0; j < weights[i].m_boneCount; ++j)
+			{
+				vert.m_boneIndices[j] = weights[i].m_boneIndices[j];
+				vert.m_weights[j] = weights[i].m_weights[j] * 0xFF;
+			}
+
+			file.write(reinterpret_cast<char*>(&vert), sizeof(BoneVertex));
+		}
+		else
+		{
+			file.write(reinterpret_cast<char*>(&vert), sizeof(Vertex));
+		}
 	}
 }

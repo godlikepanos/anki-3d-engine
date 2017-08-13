@@ -31,6 +31,7 @@ public:
 	RenderingKey m_key;
 	CommandBufferPtr m_commandBuffer;
 	StagingGpuMemoryManager* m_stagingGpuAllocator ANKI_DBG_NULLIFY;
+	Bool m_debugDraw; ///< If true the drawcall should be drawing some kind of debug mesh.
 };
 
 /// Draw callback for the RenderableQueueElement.

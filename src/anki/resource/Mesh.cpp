@@ -84,6 +84,8 @@ Error Mesh::load(const ResourceFilename& filename, Bool async)
 	const MeshLoader::Header& header = loader.getHeader();
 	m_indicesCount = header.m_totalIndicesCount;
 
+	m_vertSize = loader.getVertexSize();
+
 	PtrSize vertexSize = loader.getVertexSize();
 	m_obb.setFromPointCloud(
 		loader.getVertexData(), header.m_totalVerticesCount, vertexSize, loader.getVertexDataSize());

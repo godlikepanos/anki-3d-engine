@@ -55,6 +55,7 @@ void RenderableDrawer::drawRange(Pass pass,
 	ctx.m_queueCtx.m_stagingGpuAllocator = &m_r->getStagingGpuMemoryManager();
 	ctx.m_queueCtx.m_commandBuffer = cmdb;
 	ctx.m_queueCtx.m_key = RenderingKey(pass, 0, 1);
+	ctx.m_queueCtx.m_debugDraw = false;
 
 	for(; begin != end; ++begin)
 	{

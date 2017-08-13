@@ -11,9 +11,11 @@ static void parseCommandLineArgs(int argc, char** argv, Exporter& exporter)
 Options:
 -rpath <string>     : Replace all absolute paths of assets with that path
 -texrpath <string>  : Same as rpath but for textures
--progrpath <string> : Same as rpath but for shader programs
 -flipyz             : Flip y with z (For blender exports)
 )";
+
+	bool rpathFound = false;
+	bool texrpathFound = false;
 
 	// Parse config
 	if(argc < 3)
@@ -28,11 +30,15 @@ Options:
 	{
 		if(strcmp(argv[i], "-texrpath") == 0)
 		{
+			texrpathFound = true;
 			++i;
 
 			if(i < argc)
 			{
-				exporter.m_texrpath = argv[i] + std::string("/");
+				if(std::strlen(argv[i]) > 0)
+				{
+					exporter.m_texrpath = argv[i] + std::string("/");
+				}
 			}
 			else
 			{
@@ -41,11 +47,15 @@ Options:
 		}
 		else if(strcmp(argv[i], "-rpath") == 0)
 		{
+			rpathFound = true;
 			++i;
 
 			if(i < argc)
 			{
-				exporter.m_rpath = argv[i] + std::string("/");
+				if(std::strlen(argv[i]) > 0)
+				{
+					exporter.m_rpath = argv[i] + std::string("/");
+				}
 			}
 			else
 			{
@@ -62,12 +72,12 @@ Options:
 		}
 	}
 
-	if(exporter.m_rpath.empty())
+	if(!rpathFound)
 	{
 		exporter.m_rpath = exporter.m_outputDirectory;
 	}
 
-	if(exporter.m_texrpath.empty())
+	if(!texrpathFound)
 	{
 		exporter.m_texrpath = exporter.m_outputDirectory;
 	}

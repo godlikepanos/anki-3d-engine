@@ -47,33 +47,56 @@ void ModelPatch::getRenderingDataSub(
 		VertexBufferBinding& vertBuffBinding = inf.m_vertexBufferBindings[0];
 		vertBuffBinding.m_buffer = mesh.getVertexBuffer();
 		vertBuffBinding.m_offset = 0;
-		vertBuffBinding.m_stride = sizeof(Vec3) + sizeof(HVec2) + 2 * sizeof(U32);
+		vertBuffBinding.m_stride = mesh.getVertexSize();
 
 		inf.m_vertexAttributeCount = 4;
 		auto& attribs = inf.m_vertexAttributes;
 
+		U relativeOffset = 0;
+
 		attribs[0].m_bufferBinding = 0;
 		attribs[0].m_format = PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
-		attribs[0].m_relativeOffset = 0;
+		attribs[0].m_relativeOffset = relativeOffset;
+		relativeOffset += sizeof(Vec3);
 
 		attribs[1].m_bufferBinding = 0;
 		attribs[1].m_format = PixelFormat(ComponentFormat::R16G16, TransformFormat::FLOAT);
-		attribs[1].m_relativeOffset = sizeof(Vec3);
+		attribs[1].m_relativeOffset = relativeOffset;
+		relativeOffset += sizeof(U16) * 2;
 
 		if(key.m_pass == Pass::GB_FS)
 		{
 			attribs[2].m_bufferBinding = 0;
 			attribs[2].m_format = PixelFormat(ComponentFormat::R10G10B10A2, TransformFormat::SNORM);
-			attribs[2].m_relativeOffset = sizeof(Vec3) + sizeof(U32);
+			attribs[2].m_relativeOffset = relativeOffset;
+			relativeOffset += sizeof(U32);
 
 			attribs[3].m_bufferBinding = 0;
 			attribs[3].m_format = PixelFormat(ComponentFormat::R10G10B10A2, TransformFormat::SNORM);
-			attribs[3].m_relativeOffset = sizeof(Vec3) + sizeof(U32) * 2;
+			attribs[3].m_relativeOffset = relativeOffset;
+			relativeOffset += sizeof(U32);
 		}
 		else
 		{
 			inf.m_vertexAttributeCount = 1;
+
+			relativeOffset += sizeof(U32) * 2;
 		}
+
+		if(mesh.hasBoneWeights())
+		{
+			attribs[4].m_bufferBinding = 0;
+			attribs[4].m_format = PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
+			attribs[4].m_relativeOffset = relativeOffset;
+			relativeOffset += sizeof(U8) * 4;
+
+			attribs[5].m_bufferBinding = 0;
+			attribs[5].m_format = PixelFormat(ComponentFormat::R16G16B16A16, TransformFormat::UINT);
+			attribs[5].m_relativeOffset = relativeOffset;
+			relativeOffset += sizeof(U16) * 4;
+		}
+
+		ANKI_ASSERT(relativeOffset == mesh.getVertexSize());
 	}
 
 	// Index buff
