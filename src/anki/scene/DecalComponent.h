@@ -134,6 +134,8 @@ public:
 		el.m_obbCenter = m_obb.getCenter().xyz();
 		el.m_obbExtend = m_obb.getExtend().xyz();
 		el.m_obbRotation = m_obb.getRotation().getRotationPart();
+		el.m_userData = this;
+		el.m_drawCallback = debugDrawCallback;
 	}
 
 private:
@@ -162,6 +164,11 @@ private:
 	ANKI_USE_RESULT Error setLayer(CString texAtlasFname, CString texAtlasSubtexName, F32 blendFactor, LayerType type);
 
 	void updateInternal();
+
+	static void debugDrawCallback(RenderQueueDrawContext& ctx, WeakArray<const void*> userData)
+	{
+		// TODO
+	}
 };
 /// @}
 

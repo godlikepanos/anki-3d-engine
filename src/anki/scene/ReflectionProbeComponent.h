@@ -76,6 +76,7 @@ public:
 		el.m_worldPosition = m_pos.xyz();
 		el.m_radius = m_radius;
 		el.m_textureArrayIndex = MAX_U32;
+		el.m_drawCallback = debugDrawCallback;
 	}
 
 private:
@@ -89,6 +90,11 @@ private:
 	{
 		ANKI_ASSERT(userData);
 		static_cast<ReflectionProbeComponent*>(userData)->m_markedForRendering = fillRenderQueuesOnNextFrame;
+	}
+
+	static void debugDrawCallback(RenderQueueDrawContext& ctx, WeakArray<const void*> userData)
+	{
+		// TODO
 	}
 };
 /// @}

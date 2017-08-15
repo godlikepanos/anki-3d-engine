@@ -86,6 +86,8 @@ public:
 		el.m_firstFlareSize = m_firstFlareSize;
 		el.m_colorMultiplier = m_colorMul;
 		el.m_texture = m_tex->getGrTexture().get();
+		el.m_userData = this;
+		el.m_drawCallback = debugDrawCallback;
 	}
 
 private:
@@ -97,6 +99,11 @@ private:
 	Vec2 m_otherFlareSize = Vec2(1.0);
 
 	Vec4 m_worldPosition = Vec4(0.0);
+
+	static void debugDrawCallback(RenderQueueDrawContext& ctx, WeakArray<const void*> userData)
+	{
+		// Do nothing
+	}
 };
 /// @}
 

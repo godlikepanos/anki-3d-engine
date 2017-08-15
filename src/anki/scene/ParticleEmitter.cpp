@@ -280,28 +280,38 @@ void ParticleEmitter::drawCallback(RenderQueueDrawContext& ctx, WeakArray<const 
 
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
-	// Program
-	ShaderProgramPtr prog;
-	self.m_particleEmitterResource->getRenderingInfo(ctx.m_key.m_lod, prog);
-	cmdb->bindShaderProgram(prog);
+	if(!ctx.m_debugDraw)
+	{
+		// Program
+		ShaderProgramPtr prog;
+		self.m_particleEmitterResource->getRenderingInfo(ctx.m_key.m_lod, prog);
+		cmdb->bindShaderProgram(prog);
 
-	// Vertex attribs
-	cmdb->setVertexAttribute(0, 0, PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT), 0);
-	cmdb->setVertexAttribute(1, 0, PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT), sizeof(Vec3));
-	cmdb->setVertexAttribute(
-		2, 0, PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT), sizeof(Vec3) + sizeof(F32));
+		// Vertex attribs
+		cmdb->setVertexAttribute(0, 0, PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT), 0);
+		cmdb->setVertexAttribute(1, 0, PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT), sizeof(Vec3));
+		cmdb->setVertexAttribute(
+			2, 0, PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT), sizeof(Vec3) + sizeof(F32));
 
-	// Vertex buff
-	cmdb->bindVertexBuffer(
-		0, self.m_vertBuffToken.m_buffer, self.m_vertBuffToken.m_offset, VERTEX_SIZE, VertexStepRate::INSTANCE);
+		// Vertex buff
+		cmdb->bindVertexBuffer(
+			0, self.m_vertBuffToken.m_buffer, self.m_vertBuffToken.m_offset, VERTEX_SIZE, VertexStepRate::INSTANCE);
 
-	// Uniforms
-	Array<Mat4, 1> trf = {{Mat4::getIdentity()}};
-	self.getComponent<RenderComponent>().allocateAndSetupUniforms(
-		self.m_particleEmitterResource->getMaterial()->getDescriptorSetIndex(), ctx, trf, *ctx.m_stagingGpuAllocator);
+		// Uniforms
+		Array<Mat4, 1> trf = {{Mat4::getIdentity()}};
+		self.getComponent<RenderComponent>().allocateAndSetupUniforms(
+			self.m_particleEmitterResource->getMaterial()->getDescriptorSetIndex(),
+			ctx,
+			trf,
+			*ctx.m_stagingGpuAllocator);
 
-	// Draw
-	cmdb->drawArrays(PrimitiveTopology::TRIANGLE_STRIP, 4, self.m_aliveParticlesCount, 0, 0);
+		// Draw
+		cmdb->drawArrays(PrimitiveTopology::TRIANGLE_STRIP, 4, self.m_aliveParticlesCount, 0, 0);
+	}
+	else
+	{
+		// TODO
+	}
 }
 
 void ParticleEmitter::onMoveComponentUpdate(MoveComponent& move)

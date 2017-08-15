@@ -9,6 +9,7 @@
 #include <anki/renderer/LightShading.h>
 #include <anki/renderer/FinalComposite.h>
 #include <anki/renderer/DebugDrawer.h>
+#include <anki/renderer/RenderQueue.h>
 #include <anki/Scene.h>
 #include <anki/util/Logger.h>
 #include <anki/util/Enum.h>
@@ -89,6 +90,22 @@ Error Dbg::run(RenderingContext& ctx)
 	// m_drawer->drawGrid();
 
 	SceneDebugDrawer sceneDrawer(m_drawer);
+
+	RenderQueueDrawContext dctx;
+	dctx.m_viewMatrix = ctx.m_renderQueue->m_viewMatrix;
+	dctx.m_viewProjectionMatrix = ctx.m_renderQueue->m_viewProjectionMatrix;
+	dctx.m_projectionMatrix = Mat4::getIdentity(); // TODO
+	dctx.m_cameraTransform = ctx.m_renderQueue->m_viewMatrix.getInverse();
+	dctx.m_stagingGpuAllocator = &m_r->getStagingGpuMemoryManager();
+	dctx.m_commandBuffer = cmdb;
+	dctx.m_key = RenderingKey(Pass::GB_FS, 0, 1);
+	dctx.m_debugDraw = true;
+
+	for(const RenderableQueueElement& el : ctx.m_renderQueue->m_renderables)
+	{
+		Array<const void*, 1> a = {{el.m_userData}};
+		el.m_callback(dctx, {&a[0], 1});
+	}
 
 	for(const PointLightQueueElement& plight : ctx.m_renderQueue->m_pointLights)
 	{

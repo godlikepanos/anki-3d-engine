@@ -14,7 +14,7 @@ Skeleton::~Skeleton()
 {
 	for(Bone& b : m_bones)
 	{
-		b._destroy(getAllocator());
+		b.destroy(getAllocator());
 	}
 
 	m_bones.destroy(getAllocator());

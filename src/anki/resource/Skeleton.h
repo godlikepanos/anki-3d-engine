@@ -34,20 +34,17 @@ public:
 		return m_transform;
 	}
 
-	/// @privatesection
-	/// @{
-	void _destroy(ResourceAllocator<U8> alloc)
-	{
-		m_name.destroy(alloc);
-	}
-	/// @}
-
 private:
 	String m_name; ///< The name of the bone
 	static const U32 MAX_CHILDS_PER_BONE = 4; ///< Please dont change this
 
 	// see the class notes
 	Mat4 m_transform;
+
+	void destroy(ResourceAllocator<U8> alloc)
+	{
+		m_name.destroy(alloc);
+	}
 };
 
 /// It contains the bones with their position and hierarchy

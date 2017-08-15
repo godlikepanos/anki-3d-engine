@@ -79,6 +79,8 @@ private:
 	Obb m_obb;
 	U64 m_mergeKey = 0;
 
+	ShaderProgramResourcePtr m_dbgProg;
+
 	Bool isSinglePatch() const
 	{
 		return m_modelPatches.getSize() == 0;

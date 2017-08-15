@@ -113,6 +113,7 @@ public:
 		return *m_threadHive;
 	}
 
+	// TODO remove that from here
 	StagingGpuMemoryManager& getStagingGpuMemoryManager()
 	{
 		ANKI_ASSERT(m_stagingAlloc);

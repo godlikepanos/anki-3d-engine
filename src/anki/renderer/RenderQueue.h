@@ -24,7 +24,7 @@ public:
 	Mat4 m_viewProjectionMatrix;
 };
 
-/// Context that contains variables for drawing and will be passed to RenderableQueueElementDrawCallback.
+/// Context that contains variables for drawing and will be passed to RenderQueueDrawCallback.
 class RenderQueueDrawContext final : public RenderingMatrices
 {
 public:
@@ -34,14 +34,14 @@ public:
 	Bool m_debugDraw; ///< If true the drawcall should be drawing some kind of debug mesh.
 };
 
-/// Draw callback for the RenderableQueueElement.
-using RenderableQueueElementDrawCallback = void (*)(RenderQueueDrawContext& ctx, WeakArray<const void*> userData);
+/// Draw callback for drawing.
+using RenderQueueDrawCallback = void (*)(RenderQueueDrawContext& ctx, WeakArray<const void*> userData);
 
 /// Render queue element that contains info on items that populate the G-buffer or the forward shading buffer etc.
 class RenderableQueueElement final
 {
 public:
-	RenderableQueueElementDrawCallback m_callback;
+	RenderQueueDrawCallback m_callback;
 	const void* m_userData;
 	U64 m_mergeKey;
 	F32 m_distanceFromCamera;
@@ -61,6 +61,8 @@ public:
 	Vec3 m_specularColor;
 	Array<RenderQueue*, 6> m_shadowRenderQueues;
 	U32 m_textureArrayIndex; ///< Renderer internal.
+	const void* m_userData;
+	RenderQueueDrawCallback m_drawCallback;
 
 	Bool hasShadow() const
 	{
@@ -84,6 +86,8 @@ public:
 	Vec3 m_diffuseColor;
 	Vec3 m_specularColor;
 	RenderQueue* m_shadowRenderQueue;
+	const void* m_userData;
+	RenderQueueDrawCallback m_drawCallback;
 
 	Bool hasShadow() const
 	{
@@ -103,7 +107,8 @@ class ReflectionProbeQueueElement final
 {
 public:
 	ReflectionProbeQueueElementFeedbackCallback m_feedbackCallback;
-	void* m_userData;
+	RenderQueueDrawCallback m_drawCallback;
+	void* m_userData; // TODO Shouldn't be const void*?
 	U64 m_uuid;
 	Vec3 m_worldPosition;
 	F32 m_radius;
@@ -122,6 +127,8 @@ public:
 	Vec2 m_firstFlareSize;
 	Vec4 m_colorMultiplier;
 	Texture* m_texture; ///< Totaly unsafe but we can't have a smart ptr in here since there will be no deletion.
+	const void* m_userData;
+	RenderQueueDrawCallback m_drawCallback;
 };
 
 static_assert(std::is_trivially_destructible<LensFlareQueueElement>::value == true, "Should be trivially destructible");
@@ -130,6 +137,8 @@ static_assert(std::is_trivially_destructible<LensFlareQueueElement>::value == tr
 class DecalQueueElement final
 {
 public:
+	const void* m_userData;
+	RenderQueueDrawCallback m_drawCallback;
 	Texture* m_diffuseAtlas;
 	Texture* m_normalRoughnessAtlas;
 	Vec4 m_diffuseAtlasUv;

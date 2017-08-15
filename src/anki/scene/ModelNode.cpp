@@ -213,6 +213,8 @@ Error ModelNode::init(const CString& modelFname)
 		newComponent<MRenderComponent>(this);
 	}
 
+	ANKI_CHECK(getResourceManager().loadResource("programs/SceneDebug.ankiprog", m_dbgProg));
+
 	return ErrorCode::NONE;
 }
 
@@ -305,7 +307,99 @@ void ModelNode::drawCallback(RenderQueueDrawContext& ctx, WeakArray<const void*>
 	}
 	else
 	{
-		ANKI_ASSERT(!"TODO");
+		// Draw the bounding volumes
+
+		// Allocate staging memory
+		StagingGpuMemoryToken vertToken;
+		Vec3* verts = static_cast<Vec3*>(
+			ctx.m_stagingGpuAllocator->allocateFrame(sizeof(Vec3) * 8, StagingGpuMemoryType::VERTEX, vertToken));
+
+		const F32 SIZE = 1.0f;
+		verts[0] = Vec3(SIZE, SIZE, SIZE); // front top right
+		verts[1] = Vec3(-SIZE, SIZE, SIZE); // front top left
+		verts[2] = Vec3(-SIZE, -SIZE, SIZE); // front bottom left
+		verts[3] = Vec3(SIZE, -SIZE, SIZE); // front bottom right
+		verts[4] = Vec3(SIZE, SIZE, -SIZE); // back top right
+		verts[5] = Vec3(-SIZE, SIZE, -SIZE); // back top left
+		verts[6] = Vec3(-SIZE, -SIZE, -SIZE); // back bottom left
+		verts[7] = Vec3(SIZE, -SIZE, -SIZE); // back bottom right
+
+		StagingGpuMemoryToken indicesToken;
+		const U INDEX_COUNT = 12 * 2;
+		U16* indices = static_cast<U16*>(ctx.m_stagingGpuAllocator->allocateFrame(
+			sizeof(U16) * INDEX_COUNT, StagingGpuMemoryType::VERTEX, indicesToken));
+
+		U c = 0;
+		indices[c++] = 0;
+		indices[c++] = 1;
+		indices[c++] = 1;
+		indices[c++] = 2;
+		indices[c++] = 2;
+		indices[c++] = 3;
+		indices[c++] = 3;
+		indices[c++] = 0;
+
+		indices[c++] = 4;
+		indices[c++] = 5;
+		indices[c++] = 5;
+		indices[c++] = 6;
+		indices[c++] = 6;
+		indices[c++] = 7;
+		indices[c++] = 7;
+		indices[c++] = 4;
+
+		indices[c++] = 0;
+		indices[c++] = 4;
+		indices[c++] = 1;
+		indices[c++] = 5;
+		indices[c++] = 2;
+		indices[c++] = 6;
+		indices[c++] = 3;
+		indices[c++] = 7;
+
+		ANKI_ASSERT(c == INDEX_COUNT);
+
+		// Set the uniforms
+		StagingGpuMemoryToken unisToken;
+		Mat4* mvps = static_cast<Mat4*>(ctx.m_stagingGpuAllocator->allocateFrame(
+			sizeof(Mat4) * userData.getSize() + sizeof(Vec4), StagingGpuMemoryType::UNIFORM, unisToken));
+
+		for(U i = 0; i < userData.getSize(); ++i)
+		{
+			const ModelNode& self2 = *static_cast<const ModelNode*>(userData[i]);
+
+			Mat3 rot = self2.m_obb.getRotation().getRotationPart();
+			const Vec4 tsl = self2.m_obb.getCenter().xyz1();
+			const Vec3 scale = self2.m_obb.getExtend().xyz();
+
+			// Set non uniform scale
+			rot(0, 0) *= scale.x();
+			rot(0, 1) *= scale.y();
+			rot(0, 2) *= scale.z();
+
+			*mvps = ctx.m_viewProjectionMatrix * Mat4(tsl, rot, 1.0f);
+			++mvps;
+		}
+
+		Vec4* color = reinterpret_cast<Vec4*>(mvps);
+		*color = Vec4(1.0f, 0.0f, 1.0f, 1.0f);
+
+		// Setup state
+		ShaderProgramResourceMutationInitList<1> mutators(self.m_dbgProg);
+		mutators.add("COLOR_TEXTURE", 0);
+		ShaderProgramResourceConstantValueInitList<1> consts(self.m_dbgProg);
+		consts.add("INSTANCE_COUNT", U32(userData.getSize()));
+		const ShaderProgramResourceVariant* variant;
+		self.m_dbgProg->getOrCreateVariant(mutators.get(), consts.get(), variant);
+		cmdb->bindShaderProgram(variant->getProgram());
+
+		cmdb->setVertexAttribute(0, 0, PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT), 0);
+		cmdb->bindVertexBuffer(0, vertToken.m_buffer, vertToken.m_offset, sizeof(Vec3));
+		cmdb->bindIndexBuffer(indicesToken.m_buffer, indicesToken.m_offset, IndexType::U16);
+
+		cmdb->bindUniformBuffer(0, 0, unisToken.m_buffer, unisToken.m_offset, unisToken.m_range);
+
+		cmdb->drawElements(PrimitiveTopology::LINES, INDEX_COUNT, userData.getSize());
 	}
 }
 

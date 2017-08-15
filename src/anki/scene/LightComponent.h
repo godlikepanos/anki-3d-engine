@@ -141,6 +141,8 @@ public:
 		el.m_radius = m_radius;
 		el.m_diffuseColor = m_diffColor.xyz();
 		el.m_specularColor = m_specColor.xyz();
+		el.m_userData = this;
+		el.m_drawCallback = pointLightDebugDrawCallback;
 	}
 
 	void setupSpotLightQueueElement(SpotLightQueueElement& el) const
@@ -154,6 +156,8 @@ public:
 		el.m_innerAngle = m_innerAngle;
 		el.m_diffuseColor = m_diffColor.xyz();
 		el.m_specularColor = m_specColor.xyz();
+		el.m_userData = this;
+		el.m_drawCallback = spotLightDebugDrawCallback;
 	}
 
 private:
@@ -181,6 +185,16 @@ private:
 	};
 
 	BitMask<U8> m_flags = BitMask<U8>(DIRTY | TRF_DIRTY);
+
+	static void pointLightDebugDrawCallback(RenderQueueDrawContext& ctx, WeakArray<const void*> userData)
+	{
+		// TODO
+	}
+
+	static void spotLightDebugDrawCallback(RenderQueueDrawContext& ctx, WeakArray<const void*> userData)
+	{
+		// TODO
+	}
 };
 /// @}
 

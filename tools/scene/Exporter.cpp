@@ -50,11 +50,16 @@ static std::string getMeshName(const aiMesh& mesh)
 }
 
 /// Walk the node hierarchy and find the node.
-static const aiNode* findNodeWithName(const std::string& name, const aiNode* node)
+static const aiNode* findNodeWithName(const std::string& name, const aiNode* node, unsigned* depth = nullptr)
 {
 	if(node == nullptr || node->mName.C_Str() == name)
 	{
 		return node;
+	}
+
+	if(depth)
+	{
+		++(*depth);
 	}
 
 	const aiNode* out = nullptr;
@@ -298,14 +303,33 @@ void Exporter::exportSkeleton(const aiMesh& mesh) const
 	std::fstream file;
 	LOGI("Exporting skeleton %s", name.c_str());
 
+	// Find the root bone
+	unsigned minDepth = 0xFFFFFFFF;
+	std::string rootBoneName;
+	for(uint32_t i = 0; i < mesh.mNumBones; i++)
+	{
+		const aiBone& bone = *mesh.mBones[i];
+		unsigned depth = 0;
+		const aiNode* node = findNodeWithName(bone.mName.C_Str(), m_scene->mRootNode, &depth);
+		if(!node)
+		{
+			ERROR("Bone \"%s\" was not found in the scene hierarchy", bone.mName.C_Str());
+		}
+
+		if(depth < minDepth)
+		{
+			minDepth = depth;
+			rootBoneName = bone.mName.C_Str();
+		}
+	}
+	assert(!rootBoneName.empty());
+
 	// Open file
-	file.open(m_outputDirectory + name + ".skel", std::ios::out);
+	file.open(m_outputDirectory + name + ".ankiskel", std::ios::out);
 
 	file << XML_HEADER << "\n";
 	file << "<skeleton>\n";
 	file << "\t<bones>\n";
-
-	bool rootBoneFound = false;
 
 	for(uint32_t i = 0; i < mesh.mNumBones; i++)
 	{
@@ -316,25 +340,29 @@ void Exporter::exportSkeleton(const aiMesh& mesh) const
 		// <name>
 		file << "\t\t\t<name>" << bone.mName.C_Str() << "</name>\n";
 
-		if(strcmp(bone.mName.C_Str(), "root") == 0)
-		{
-			rootBoneFound = true;
-		}
-
 		// <transform>
+		aiMatrix4x4 akMat = toAnkiMatrix(bone.mOffsetMatrix);
 		file << "\t\t\t<transform>";
-		for(uint32_t j = 0; j < 16; j++)
+		for(unsigned j = 0; j < 4; j++)
 		{
-			file << bone.mOffsetMatrix[j] << " ";
+			for(unsigned i = 0; i < 4; i++)
+			{
+				file << akMat[j][i] << " ";
+			}
 		}
 		file << "</transform>\n";
 
-		file << "\t\t</bone>\n";
-	}
+		// <parent>
+		// Need to find the bone in the scene hierarchy
+		const aiNode* node = findNodeWithName(bone.mName.C_Str(), m_scene->mRootNode);
+		assert(node);
 
-	if(!rootBoneFound)
-	{
-		ERROR("There should be one bone named \"root\"");
+		if(bone.mName.C_Str() != rootBoneName)
+		{
+			file << "\t\t\t<parent>" << node->mParent->mName.C_Str() << "</parent>\n";
+		}
+
+		file << "\t\t</bone>\n";
 	}
 
 	file << "\t</bones>\n";
@@ -394,6 +422,14 @@ void Exporter::exportModel(const Model& model) const
 	// End patches
 	file << "\t\t</modelPatch>\n";
 	file << "\t</modelPatches>\n";
+
+	// Skeleton
+	const aiMesh& aimesh = *m_scene->mMeshes[model.m_meshIndex];
+	if(aimesh.HasBones())
+	{
+		exportSkeleton(aimesh);
+		file << "\t<skeleton>" << m_rpath << aimesh.mName.C_Str() << ".ankiskel</skeleton>\n";
+	}
 
 	file << "</model>\n";
 }
