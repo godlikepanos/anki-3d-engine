@@ -40,6 +40,8 @@ Error Skeleton::load(const ResourceFilename& filename, Bool async)
 
 	m_bones.create(getAllocator(), bonesCount);
 
+	StringListAuto boneParents(getAllocator());
+
 	// Load every bone
 	bonesCount = 0;
 	do
@@ -58,9 +60,65 @@ Error Skeleton::load(const ResourceFilename& filename, Bool async)
 		ANKI_CHECK(boneEl.getChildElement("transform", trfEl));
 		ANKI_CHECK(trfEl.getMat4(bone.m_transform));
 
+		// <boneTransform>
+		XmlElement btrfEl;
+		ANKI_CHECK(boneEl.getChildElement("boneTransform", btrfEl));
+		ANKI_CHECK(btrfEl.getMat4(bone.m_boneTrf));
+
+		// <parent>
+		XmlElement parentEl;
+		ANKI_CHECK(boneEl.getChildElementOptional("parent", parentEl));
+		if(parentEl)
+		{
+			CString parentName;
+			ANKI_CHECK(parentEl.getText(parentName));
+			boneParents.pushBack(parentName);
+		}
+		else
+		{
+			boneParents.pushBack("");
+		}
+
 		// Advance
 		ANKI_CHECK(boneEl.getNextSiblingElement("bone", boneEl));
 	} while(boneEl);
+
+	// Resolve the parents
+	auto it = boneParents.getBegin();
+	for(U i = 0; i < m_bones.getSize(); ++i)
+	{
+		Bone& bone = m_bones[i];
+
+		if(!it->isEmpty())
+		{
+			for(U j = 0; j < m_bones.getSize(); ++j)
+			{
+				if(m_bones[j].m_name == *it)
+				{
+					bone.m_parent = &m_bones[j];
+					break;
+				}
+			}
+
+			if(bone.m_parent == nullptr)
+			{
+				ANKI_RESOURCE_LOGE(
+					"Bone \"%s\" is referencing an unknown parent \"%s\"", &bone.m_name[0], &it->toCString()[0]);
+				return ErrorCode::USER_DATA;
+			}
+
+			if(bone.m_parent->m_childrenCount >= MAX_CHILDREN_PER_BONE)
+			{
+				ANKI_RESOURCE_LOGE(
+					"Bone \"%s\" cannot have more that %u children", &bone.m_parent->m_name[0], MAX_CHILDREN_PER_BONE);
+				return ErrorCode::USER_DATA;
+			}
+
+			bone.m_parent->m_children[bone.m_parent->m_childrenCount++] = &bone;
+		}
+
+		++it;
+	}
 
 	return ErrorCode::NONE;
 }

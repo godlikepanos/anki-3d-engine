@@ -14,6 +14,8 @@ namespace anki
 /// @addtogroup resource
 /// @{
 
+const U32 MAX_CHILDREN_PER_BONE = 8;
+
 /// Skeleton bone
 struct Bone
 {
@@ -36,10 +38,13 @@ public:
 
 private:
 	String m_name; ///< The name of the bone
-	static const U32 MAX_CHILDS_PER_BONE = 4; ///< Please dont change this
 
-	// see the class notes
-	Mat4 m_transform;
+	Mat4 m_transform; ///< See the class notes.
+	Mat4 m_boneTrf;
+
+	Bone* m_parent = nullptr;
+	Array<Bone*, MAX_CHILDREN_PER_BONE> m_children = {};
+	U8 m_childrenCount = 0;
 
 	void destroy(ResourceAllocator<U8> alloc)
 	{
@@ -56,7 +61,9 @@ private:
 /// 	<bones>
 /// 		<bone>
 /// 			<name>X</name>
-/// 			<transform></transform>
+/// 			<transform>16 floats</transform>
+/// 			<boneTransform>16 floats</boneTransform>
+/// 			[<parent>bone_name</parent>]
 /// 		<bone>
 ///         ...
 /// 	</bones>

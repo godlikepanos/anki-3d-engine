@@ -340,8 +340,23 @@ void Exporter::exportSkeleton(const aiMesh& mesh) const
 		// <name>
 		file << "\t\t\t<name>" << bone.mName.C_Str() << "</name>\n";
 
-		// <transform>
+		// <bontTransform>
 		aiMatrix4x4 akMat = toAnkiMatrix(bone.mOffsetMatrix);
+		file << "\t\t\t<boneTransform>";
+		for(unsigned j = 0; j < 4; j++)
+		{
+			for(unsigned i = 0; i < 4; i++)
+			{
+				file << akMat[j][i] << " ";
+			}
+		}
+		file << "</boneTransform>\n";
+
+		// <transform>
+		const aiNode* node = findNodeWithName(bone.mName.C_Str(), m_scene->mRootNode);
+		assert(node);
+
+		akMat = toAnkiMatrix(node->mTransformation);
 		file << "\t\t\t<transform>";
 		for(unsigned j = 0; j < 4; j++)
 		{
@@ -353,10 +368,6 @@ void Exporter::exportSkeleton(const aiMesh& mesh) const
 		file << "</transform>\n";
 
 		// <parent>
-		// Need to find the bone in the scene hierarchy
-		const aiNode* node = findNodeWithName(bone.mName.C_Str(), m_scene->mRootNode);
-		assert(node);
-
 		if(bone.mName.C_Str() != rootBoneName)
 		{
 			file << "\t\t\t<parent>" << node->mParent->mName.C_Str() << "</parent>\n";

@@ -34,6 +34,7 @@ enum class SceneComponentType : U16
 	REFLECTION_PROXY,
 	OCCLUDER,
 	DECAL,
+	SKIN,
 	PLAYER_CONTROLLER,
 
 	COUNT,

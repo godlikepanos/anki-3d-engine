@@ -252,6 +252,16 @@ Error Model::load(const ResourceFilename& filename, Bool async)
 		ANKI_CHECK(modelPatchEl.getNextSiblingElement("modelPatch", modelPatchEl));
 	} while(modelPatchEl);
 
+	// <skeleton>
+	XmlElement skeletonEl;
+	ANKI_CHECK(rootEl.getChildElementOptional("skeleton", skeletonEl));
+	if(skeletonEl)
+	{
+		CString fname;
+		ANKI_CHECK(skeletonEl.getText(fname));
+		ANKI_CHECK(getManager().loadResource(fname, m_skeleton));
+	}
+
 	// Calculate compound bounding volume
 	RenderingKey key;
 	key.m_lod = 0;
