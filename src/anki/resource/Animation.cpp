@@ -30,8 +30,8 @@ Error Animation::load(const ResourceFilename& filename, Bool async)
 	I64 tmp;
 	F64 ftmp;
 
-	m_startTime = MAX_F32;
-	F32 maxTime = MIN_F32;
+	m_startTime = MAX_F64;
+	F64 maxTime = MIN_F64;
 
 	// Document
 	XmlDocument doc;
@@ -99,7 +99,7 @@ Error Animation::load(const ResourceFilename& filename, Bool async)
 			count = 0;
 			do
 			{
-				Key<Vec3>& key = ch.m_positions[count++];
+				AnimationKeyframe<Vec3>& key = ch.m_positions[count++];
 
 				// <time>
 				ANKI_CHECK(keyEl.getChildElement("time", el));
@@ -136,7 +136,7 @@ Error Animation::load(const ResourceFilename& filename, Bool async)
 			count = 0;
 			do
 			{
-				Key<Quat>& key = ch.m_rotations[count++];
+				AnimationKeyframe<Quat>& key = ch.m_rotations[count++];
 
 				// <time>
 				ANKI_CHECK(keyEl.getChildElement("time", el));
@@ -175,7 +175,7 @@ Error Animation::load(const ResourceFilename& filename, Bool async)
 			count = 0;
 			do
 			{
-				Key<F32>& key = ch.m_scales[count++];
+				AnimationKeyframe<F32>& key = ch.m_scales[count++];
 
 				// <time>
 				ANKI_CHECK(keyEl.getChildElement("time", el));
@@ -226,7 +226,7 @@ Error Animation::load(const ResourceFilename& filename, Bool async)
 	return ErrorCode::NONE;
 }
 
-void Animation::interpolate(U channelIndex, F32 time, Vec3& pos, Quat& rot, F32& scale) const
+void Animation::interpolate(U channelIndex, F64 time, Vec3& pos, Quat& rot, F32& scale) const
 {
 	// Audjust time
 	if(m_repeat && time > m_startTime + m_duration)
@@ -251,7 +251,7 @@ void Animation::interpolate(U channelIndex, F32 time, Vec3& pos, Quat& rot, F32&
 		ANKI_ASSERT(next != channel.m_positions.end());
 		auto prev = next - 1;
 
-		F32 u = (time - prev->m_time) / (next->m_time - prev->m_time);
+		F64 u = (time - prev->m_time) / (next->m_time - prev->m_time);
 		pos = linearInterpolate(prev->m_value, next->m_value, u);
 	}
 
@@ -267,7 +267,7 @@ void Animation::interpolate(U channelIndex, F32 time, Vec3& pos, Quat& rot, F32&
 		ANKI_ASSERT(next != channel.m_rotations.end());
 		auto prev = next - 1;
 
-		F32 u = (time - prev->m_time) / (next->m_time - prev->m_time);
+		F64 u = (time - prev->m_time) / (next->m_time - prev->m_time);
 		rot = prev->m_value.slerp(next->m_value, u);
 	}
 }

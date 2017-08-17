@@ -32,21 +32,22 @@ Error Skeleton::load(const ResourceFilename& filename, Bool async)
 
 	// count the bones count
 	XmlElement boneEl;
-	U32 bonesCount = 0;
+	U32 boneCount = 0;
 
 	ANKI_CHECK(bonesEl.getChildElement("bone", boneEl));
-	ANKI_CHECK(boneEl.getSiblingElementsCount(bonesCount));
-	++bonesCount;
+	ANKI_CHECK(boneEl.getSiblingElementsCount(boneCount));
+	++boneCount;
 
-	m_bones.create(getAllocator(), bonesCount);
+	m_bones.create(getAllocator(), boneCount);
 
 	StringListAuto boneParents(getAllocator());
 
 	// Load every bone
-	bonesCount = 0;
+	boneCount = 0;
 	do
 	{
-		Bone& bone = m_bones[bonesCount++];
+		Bone& bone = m_bones[boneCount];
+		bone.m_idx = boneCount;
 
 		// <name>
 		XmlElement nameEl;
@@ -63,7 +64,7 @@ Error Skeleton::load(const ResourceFilename& filename, Bool async)
 		// <boneTransform>
 		XmlElement btrfEl;
 		ANKI_CHECK(boneEl.getChildElement("boneTransform", btrfEl));
-		ANKI_CHECK(btrfEl.getMat4(bone.m_boneTrf));
+		ANKI_CHECK(btrfEl.getMat4(bone.m_vertTrf));
 
 		// <parent>
 		XmlElement parentEl;
@@ -77,10 +78,19 @@ Error Skeleton::load(const ResourceFilename& filename, Bool async)
 		else
 		{
 			boneParents.pushBack("");
+
+			if(m_rootBoneIdx != MAX_U32)
+			{
+				ANKI_RESOURCE_LOGE("Skeleton cannot have more than one root nodes");
+				return ErrorCode::USER_DATA;
+			}
+
+			m_rootBoneIdx = boneCount;
 		}
 
 		// Advance
 		ANKI_CHECK(boneEl.getNextSiblingElement("bone", boneEl));
+		++boneCount;
 	} while(boneEl);
 
 	// Resolve the parents

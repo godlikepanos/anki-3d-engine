@@ -5,14 +5,12 @@
 
 #pragma once
 
-#include <anki/resource/Common.h>
+#include <anki/util/StdTypes.h>
 
 namespace anki
 {
 
-template<typename T>
-class AnimationKeyframe;
-
-class Bone;
+template<U N, typename TChunkType>
+class BitSet;
 
 } // end namespace anki

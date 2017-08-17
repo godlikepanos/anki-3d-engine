@@ -17,7 +17,7 @@ namespace anki
 const U32 MAX_CHILDREN_PER_BONE = 8;
 
 /// Skeleton bone
-struct Bone
+class Bone
 {
 	friend class Skeleton; ///< For loading
 
@@ -36,11 +36,29 @@ public:
 		return m_transform;
 	}
 
+	const Mat4& getVertexTransform() const
+	{
+		return m_vertTrf;
+	}
+
+	U getIndex() const
+	{
+		return m_idx;
+	}
+
+	WeakArray<const Bone*> getChildren() const
+	{
+		const Bone** b = const_cast<const Bone**>(&m_children[0]);
+		return WeakArray<const Bone*>((m_childrenCount) ? b : nullptr, m_childrenCount);
+	}
+
 private:
 	String m_name; ///< The name of the bone
 
 	Mat4 m_transform; ///< See the class notes.
-	Mat4 m_boneTrf;
+	Mat4 m_vertTrf;
+
+	U32 m_idx;
 
 	Bone* m_parent = nullptr;
 	Array<Bone*, MAX_CHILDREN_PER_BONE> m_children = {};
@@ -87,8 +105,28 @@ public:
 		return m_bones;
 	}
 
+	const Bone* tryFindBone(CString name) const
+	{
+		// TODO Optimize
+		for(const Bone& b : m_bones)
+		{
+			if(b.m_name == name)
+			{
+				return &b;
+			}
+		}
+
+		return nullptr;
+	}
+
+	const Bone& getRootBone() const
+	{
+		return m_bones[m_rootBoneIdx];
+	}
+
 private:
 	DynamicArray<Bone> m_bones;
+	U32 m_rootBoneIdx = MAX_U32;
 };
 /// @}
 

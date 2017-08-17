@@ -20,12 +20,12 @@ class XmlElement;
 
 /// A keyframe
 template<typename T>
-class Key
+class AnimationKeyframe
 {
 	friend class Animation;
 
 public:
-	F32 getTime() const
+	F64 getTime() const
 	{
 		return m_time;
 	}
@@ -36,7 +36,7 @@ public:
 	}
 
 private:
-	F32 m_time;
+	F64 m_time;
 	T m_value;
 };
 
@@ -48,10 +48,10 @@ public:
 
 	I32 m_boneIndex = -1; ///< For skeletal animations
 
-	DynamicArray<Key<Vec3>> m_positions;
-	DynamicArray<Key<Quat>> m_rotations;
-	DynamicArray<Key<F32>> m_scales;
-	DynamicArray<Key<F32>> m_cameraFovs;
+	DynamicArray<AnimationKeyframe<Vec3>> m_positions;
+	DynamicArray<AnimationKeyframe<Quat>> m_rotations;
+	DynamicArray<AnimationKeyframe<F32>> m_scales;
+	DynamicArray<AnimationKeyframe<F32>> m_cameraFovs;
 
 	void destroy(ResourceAllocator<U8> alloc)
 	{
@@ -80,13 +80,13 @@ public:
 	}
 
 	/// Get the duration of the animation in seconds
-	F32 getDuration() const
+	F64 getDuration() const
 	{
 		return m_duration;
 	}
 
 	/// Get the time (in seconds) the animation should start
-	F32 getStartingTime() const
+	F64 getStartingTime() const
 	{
 		return m_startTime;
 	}
@@ -98,12 +98,12 @@ public:
 	}
 
 	/// Get the interpolated data
-	void interpolate(U channelIndex, F32 time, Vec3& position, Quat& rotation, F32& scale) const;
+	void interpolate(U channelIndex, F64 time, Vec3& position, Quat& rotation, F32& scale) const;
 
 private:
 	DynamicArray<AnimationChannel> m_channels;
-	F32 m_duration;
-	F32 m_startTime;
+	F64 m_duration;
+	F64 m_startTime;
 	Bool8 m_repeat;
 };
 /// @}
