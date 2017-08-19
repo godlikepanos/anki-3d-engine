@@ -233,7 +233,7 @@ public:
 		return m_prog->isInstanced();
 	}
 
-	const MaterialVariant& getOrCreateVariant(const RenderingKey& key) const;
+	const MaterialVariant& getOrCreateVariant(const RenderingKey& key, Bool skinned = false) const;
 
 	const DynamicArray<MaterialVariable>& getVariables() const
 	{
@@ -261,11 +261,12 @@ private:
 	const ShaderProgramResourceMutator* m_lodMutator = nullptr;
 	const ShaderProgramResourceMutator* m_passMutator = nullptr;
 	const ShaderProgramResourceMutator* m_instanceMutator = nullptr;
+	const ShaderProgramResourceMutator* m_bonesMutator = nullptr;
 
 	DynamicArray<ShaderProgramResourceMutation> m_mutations;
 
 	/// Matrix of variants.
-	mutable Array3d<MaterialVariant, U(Pass::COUNT), MAX_LOD_COUNT, MAX_INSTANCE_GROUPS> m_variantMatrix;
+	mutable Array4d<MaterialVariant, U(Pass::COUNT), MAX_LOD_COUNT, MAX_INSTANCE_GROUPS, 2> m_variantMatrix;
 	mutable SpinLock m_variantMatrixMtx;
 
 	DynamicArray<MaterialVariable> m_vars; ///< Non-const vars.

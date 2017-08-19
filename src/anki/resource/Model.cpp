@@ -36,7 +36,7 @@ void ModelPatch::getRenderingDataSub(
 		RenderingKey mtlKey = key;
 		mtlKey.m_lod = min<U>(key.m_lod, m_mtl->getLodCount() - 1);
 
-		const MaterialVariant& variant = m_mtl->getOrCreateVariant(mtlKey);
+		const MaterialVariant& variant = m_mtl->getOrCreateVariant(mtlKey, m_model->getSkeleton().isCreated());
 
 		inf.m_program = variant.getShaderProgram();
 	}
@@ -49,7 +49,6 @@ void ModelPatch::getRenderingDataSub(
 		vertBuffBinding.m_offset = 0;
 		vertBuffBinding.m_stride = mesh.getVertexSize();
 
-		inf.m_vertexAttributeCount = 4;
 		auto& attribs = inf.m_vertexAttributes;
 
 		U relativeOffset = 0;
@@ -64,6 +63,8 @@ void ModelPatch::getRenderingDataSub(
 		attribs[1].m_relativeOffset = relativeOffset;
 		relativeOffset += sizeof(U16) * 2;
 
+		inf.m_vertexAttributeCount = 2;
+
 		if(key.m_pass == Pass::GB_FS)
 		{
 			attribs[2].m_bufferBinding = 0;
@@ -75,11 +76,11 @@ void ModelPatch::getRenderingDataSub(
 			attribs[3].m_format = PixelFormat(ComponentFormat::R10G10B10A2, TransformFormat::SNORM);
 			attribs[3].m_relativeOffset = relativeOffset;
 			relativeOffset += sizeof(U32);
+
+			inf.m_vertexAttributeCount = 4;
 		}
 		else
 		{
-			inf.m_vertexAttributeCount = 1;
-
 			relativeOffset += sizeof(U32) * 2;
 		}
 
@@ -94,6 +95,8 @@ void ModelPatch::getRenderingDataSub(
 			attribs[5].m_format = PixelFormat(ComponentFormat::R16G16B16A16, TransformFormat::UINT);
 			attribs[5].m_relativeOffset = relativeOffset;
 			relativeOffset += sizeof(U16) * 4;
+
+			inf.m_vertexAttributeCount = 6;
 		}
 
 		ANKI_ASSERT(relativeOffset == mesh.getVertexSize());

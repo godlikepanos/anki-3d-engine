@@ -16,6 +16,7 @@ http://www.anki3d.org/LICENSE
 		<mutator name="NORMAL_TEX" values="0 1"/>
 		<mutator name="PARALLAX" values="0 1"/>
 		<mutator name="EMISSIVE_TEX" values="0 1"/>
+		<mutator name="BONES" values="0 1"/>
 	</mutators>
 
 	<shaders>
@@ -36,16 +37,21 @@ http://www.anki3d.org/LICENSE
 			</inputs>
 
 			<source><![CDATA[#include "shaders/GBufferCommonVert.glsl"
+
 void main() 
 {
+#if BONES
+	skinning();
+#endif
+
 #if PASS == PASS_GB_FS
 	positionUvNormalTangent(mvp, normalMat);
 	
-	#if PARALLAX
-		parallax(modelViewMat);
-	#endif
+#	if PARALLAX
+	parallax(modelViewMat);
+#	endif
 #else
-	gl_Position = mvp * vec4(in_position, 1.0);
+	gl_Position = mvp * vec4(g_position, 1.0);
 #endif
 }
 			]]>
@@ -149,37 +155,37 @@ void main()
 void main()
 {
 #if PASS == PASS_GB_FS
-	#if heightTex_DEFINED
+#	if heightTex_DEFINED
 		vec2 uv =  computeTextureCoordParallax(heightTex, in_uv, heightMapScale);
-	#else
+#	else
 		vec2 uv = in_uv;
-	#endif
+#	endif
 
-	#if diffTex_DEFINED
+#	if diffTex_DEFINED
 		vec3 diffColor = texture(diffTex, uv).rgb;
-	#endif
+#	endif
 
-	#if specTex_DEFINED
+#	if specTex_DEFINED
 		vec3 specColor = texture(specTex, uv).rgb;
-	#endif
+#	endif
 
-	#if roughnessTex_DEFINED
+#	if roughnessTex_DEFINED
 		float roughness = texture(roughnessTex, uv).r;
-	#endif
+#	endif
 
-	#if metalTex_DEFINED
+#	if metalTex_DEFINED
 		float metallic = texture(metalTex, uv).r;
-	#endif
+#	endif
 
-	#if normalTex_DEFINED
+#	if normalTex_DEFINED
 		vec3 normal = readNormalFromTexture(normalTex, uv);
-	#else
+#	else
 		vec3 normal = normalize(in_normal);
-	#endif
+#	endif
 
-	#if emissiveTex_DEFINED
+#	if emissiveTex_DEFINED
 		vec3 emission = texture(emissiveTex, uv).rgb;
-	#endif
+#	endif
 
 	writeRts(diffColor, normal, specColor, roughness, subsurface, emission, metallic);
 #elif PASS == PASS_EZ

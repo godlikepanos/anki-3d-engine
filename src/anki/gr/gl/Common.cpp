@@ -182,6 +182,12 @@ void convertVertexFormat(const PixelFormat& fmt, U& compCount, GLenum& type, Boo
 		type = GL_UNSIGNED_BYTE;
 		normalized = true;
 	}
+	else if(fmt == PixelFormat(ComponentFormat::R16G16B16A16, TransformFormat::UINT))
+	{
+		compCount = 4;
+		type = GL_UNSIGNED_SHORT;
+		normalized = false;
+	}
 	else
 	{
 		ANKI_ASSERT(0 && "TODO");
@@ -410,7 +416,9 @@ void convertTextureInformation(const PixelFormat& pf,
 		}
 		else if(pf.m_transform == TransformFormat::UINT)
 		{
-			ANKI_ASSERT(!"TODO");
+			format = GL_RGBA;
+			internalFormat = GL_RGBA16UI;
+			type = GL_UNSIGNED_SHORT;
 		}
 		else
 		{

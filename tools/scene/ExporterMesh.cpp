@@ -396,6 +396,21 @@ void Exporter::exportMesh(const aiMesh& mesh, const aiMatrix4x4* transform, unsi
 		// Write
 		if(hasBoneWeights)
 		{
+			// Normalize weights
+			float totalWeight = 0;
+			for(unsigned j = 0; j < weights[i].m_boneCount; ++j)
+			{
+				totalWeight += weights[i].m_weights[j];
+			}
+
+			if(totalWeight > 0.0)
+			{
+				for(unsigned j = 0; j < weights[i].m_boneCount; ++j)
+				{
+					weights[i].m_weights[j] /= totalWeight;
+				}
+			}
+
 			for(unsigned j = 0; j < weights[i].m_boneCount; ++j)
 			{
 				vert.m_boneIndices[j] = weights[i].m_boneIndices[j];

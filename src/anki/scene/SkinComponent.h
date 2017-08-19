@@ -31,6 +31,11 @@ public:
 
 	void playAnimation(U track, AnimationResourcePtr anim, F64 startTime, Bool repeat);
 
+	const DynamicArray<Mat4>& getBoneTransforms() const
+	{
+		return m_boneTrfs;
+	}
+
 private:
 	class Track
 	{

@@ -114,7 +114,7 @@ Error Material::parseMutators(XmlElement mutatorsEl)
 			return ErrorCode::USER_DATA;
 		}
 
-		if(mutatorName == "INSTANCE_COUNT" || mutatorName == "PASS" || mutatorName == "LOD")
+		if(mutatorName == "INSTANCE_COUNT" || mutatorName == "PASS" || mutatorName == "LOD" || mutatorName == "BONES")
 		{
 			ANKI_RESOURCE_LOGE("Cannot list builtin mutator \"%s\"", &mutatorName[0]);
 			return ErrorCode::USER_DATA;
@@ -219,6 +219,27 @@ Error Material::parseMutators(XmlElement mutatorsEl)
 		}
 
 		m_lodCount = m_lodMutator->getValues().getSize();
+		++builtinMutatorCount;
+	}
+
+	m_bonesMutator = m_prog->tryFindMutator("BONES");
+	if(m_bonesMutator)
+	{
+		if(m_bonesMutator->getValues().getSize() != 2)
+		{
+			ANKI_RESOURCE_LOGE("Mutator BONES should have 2 values in the program");
+			return ErrorCode::USER_DATA;
+		}
+
+		for(U i = 0; i < m_bonesMutator->getValues().getSize(); ++i)
+		{
+			if(m_bonesMutator->getValues()[i] != I(i))
+			{
+				ANKI_RESOURCE_LOGE("Values of the BONES mutator in the program are not the expected");
+				return ErrorCode::USER_DATA;
+			}
+		}
+
 		++builtinMutatorCount;
 	}
 
@@ -456,7 +477,7 @@ Error Material::parseInputs(XmlElement inputsEl, Bool async)
 
 	if(nonConstInputCount != 0)
 	{
-		ANKI_RESOURCE_LOGE("Forgot to list %u shader program variables in this material", nonConstInputCount);
+		ANKI_RESOURCE_LOGE("Forgot to list %u shader program inputs in this material", nonConstInputCount);
 		return ErrorCode::USER_DATA;
 	}
 
@@ -469,7 +490,7 @@ Error Material::parseInputs(XmlElement inputsEl, Bool async)
 	return ErrorCode::NONE;
 }
 
-const MaterialVariant& Material::getOrCreateVariant(const RenderingKey& key_) const
+const MaterialVariant& Material::getOrCreateVariant(const RenderingKey& key_, Bool skinned) const
 {
 	RenderingKey key = key_;
 	key.m_lod = min<U>(m_lodCount - 1, key.m_lod);
@@ -479,15 +500,18 @@ const MaterialVariant& Material::getOrCreateVariant(const RenderingKey& key_) co
 		ANKI_ASSERT(key.m_instanceCount == 1);
 	}
 
+	ANKI_ASSERT(!skinned || m_bonesMutator);
+
 	key.m_instanceCount = 1 << getInstanceGroupIdx(key.m_instanceCount);
 
-	MaterialVariant& variant = m_variantMatrix[U(key.m_pass)][key.m_lod][getInstanceGroupIdx(key.m_instanceCount)];
+	MaterialVariant& variant =
+		m_variantMatrix[U(key.m_pass)][key.m_lod][getInstanceGroupIdx(key.m_instanceCount)][skinned];
 	LockGuard<SpinLock> lock(m_variantMatrixMtx);
 
 	if(variant.m_variant == nullptr)
 	{
 		const U mutatorCount = m_mutations.getSize() + ((m_instanceMutator) ? 1 : 0) + ((m_passMutator) ? 1 : 0)
-			+ ((m_lodMutator) ? 1 : 0);
+			+ ((m_lodMutator) ? 1 : 0) + ((m_bonesMutator) ? 1 : 0);
 
 		DynamicArrayAuto<ShaderProgramResourceMutation> mutations(getTempAllocator());
 		mutations.create(mutatorCount);
@@ -515,6 +539,13 @@ const MaterialVariant& Material::getOrCreateVariant(const RenderingKey& key_) co
 		{
 			mutations[count].m_mutator = m_lodMutator;
 			mutations[count].m_value = I(key.m_lod);
+			++count;
+		}
+
+		if(m_bonesMutator)
+		{
+			mutations[count].m_mutator = m_bonesMutator;
+			mutations[count].m_value = skinned != 0;
 			++count;
 		}
 

@@ -6,6 +6,7 @@
 #include <anki/scene/ModelNode.h>
 #include <anki/scene/SceneGraph.h>
 #include <anki/scene/BodyComponent.h>
+#include <anki/scene/SkinComponent.h>
 #include <anki/scene/Misc.h>
 #include <anki/resource/Model.h>
 #include <anki/resource/ResourceManager.h>
@@ -137,7 +138,7 @@ public:
 	{
 		updated = false;
 
-		const MoveComponent& move = node.getComponentAt<MoveComponent>(0);
+		const MoveComponent& move = node.getComponent<MoveComponent>();
 		if(move.getTimestamp() == node.getGlobalTimestamp())
 		{
 			ModelNode& mnode = static_cast<ModelNode&>(node);
@@ -207,6 +208,10 @@ Error ModelNode::init(const CString& modelFname)
 
 		m_mergeKey = m_model->getUuid();
 
+		if(m_model->getSkeleton().isCreated())
+		{
+			newComponent<SkinComponent>(this, m_model->getSkeleton());
+		}
 		newComponent<MoveComponent>(this);
 		newComponent<MoveFeedbackComponent>(this);
 		newComponent<SpatialComponent>(this, &m_obb);
@@ -236,7 +241,7 @@ void ModelNode::onMoveComponentUpdate(const MoveComponent& move)
 	{
 		m_obb = m_model->getModelPatches()[0]->getBoundingShape().getTransformed(move.getWorldTransform());
 
-		SpatialComponent& sp = getComponentAt<SpatialComponent>(2);
+		SpatialComponent& sp = getComponent<SpatialComponent>();
 		sp.markForUpdate();
 		sp.setSpatialOrigin(move.getWorldTransform().getOrigin());
 	}
@@ -270,7 +275,10 @@ void ModelNode::drawCallback(RenderQueueDrawContext& ctx, WeakArray<const void*>
 		for(U i = 0; i < modelInf.m_vertexAttributeCount; ++i)
 		{
 			const VertexAttributeInfo& attrib = modelInf.m_vertexAttributes[i];
-			cmdb->setVertexAttribute(i, attrib.m_bufferBinding, attrib.m_format, attrib.m_relativeOffset);
+			if(attrib.m_format.m_components != ComponentFormat::NONE)
+			{
+				cmdb->setVertexAttribute(i, attrib.m_bufferBinding, attrib.m_format, attrib.m_relativeOffset);
+			}
 		}
 
 		// Set vertex buffers
@@ -285,17 +293,29 @@ void ModelNode::drawCallback(RenderQueueDrawContext& ctx, WeakArray<const void*>
 
 		// Uniforms
 		Array<Mat4, MAX_INSTANCES> trfs;
-		trfs[0] = Mat4(self.getComponentAt<MoveComponent>(0).getWorldTransform());
+		trfs[0] = Mat4(self.getComponent<MoveComponent>().getWorldTransform());
 		for(U i = 1; i < userData.getSize(); ++i)
 		{
 			const ModelNode& self2 = *static_cast<const ModelNode*>(userData[i]);
-			trfs[i] = Mat4(self2.getComponentAt<MoveComponent>(0).getWorldTransform());
+			trfs[i] = Mat4(self2.getComponent<MoveComponent>().getWorldTransform());
 		}
 
-		self.getComponentAt<RenderComponent>(3).allocateAndSetupUniforms(patch->getMaterial()->getDescriptorSetIndex(),
+		self.getComponent<RenderComponent>().allocateAndSetupUniforms(patch->getMaterial()->getDescriptorSetIndex(),
 			ctx,
 			WeakArray<const Mat4>(&trfs[0], userData.getSize()),
 			*ctx.m_stagingGpuAllocator);
+
+		// Bones storage
+		if(self.m_model->getSkeleton())
+		{
+			const SkinComponent& skinc = self.getComponentAt<SkinComponent>(0);
+			StagingGpuMemoryToken token;
+			void* trfs = ctx.m_stagingGpuAllocator->allocateFrame(
+				skinc.getBoneTransforms().getSize() * sizeof(Mat4), StagingGpuMemoryType::STORAGE, token);
+			memcpy(trfs, &skinc.getBoneTransforms()[0], skinc.getBoneTransforms().getSize() * sizeof(Mat4));
+
+			cmdb->bindStorageBuffer(0, 0, token.m_buffer, token.m_offset, token.m_range);
+		}
 
 		// Draw
 		cmdb->drawElements(PrimitiveTopology::TRIANGLES,

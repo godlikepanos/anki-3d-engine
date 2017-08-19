@@ -177,6 +177,11 @@ public:
 		return m_visibilityShape;
 	}
 
+	SkeletonResourcePtr getSkeleton() const
+	{
+		return m_skeleton;
+	}
+
 	ANKI_USE_RESULT Error load(const ResourceFilename& filename, Bool async);
 
 private:

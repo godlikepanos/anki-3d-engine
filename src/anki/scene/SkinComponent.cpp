@@ -16,6 +16,10 @@ SkinComponent::SkinComponent(SceneNode* node, SkeletonResourcePtr skeleton)
 	, m_skeleton(skeleton)
 {
 	m_boneTrfs.create(getAllocator(), m_skeleton->getBones().getSize());
+	for(Mat4& trf : m_boneTrfs)
+	{
+		trf.setIdentity();
+	}
 }
 
 SkinComponent::~SkinComponent()
