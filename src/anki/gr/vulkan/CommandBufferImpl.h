@@ -326,16 +326,19 @@ public:
 
 	void informTextureSurfaceCurrentUsage(TexturePtr& tex, const TextureSurfaceInfo& surf, TextureUsageBit crntUsage)
 	{
+		lazyInit();
 		tex->m_impl->updateTracker(surf, crntUsage, m_texUsageTracker);
 	}
 
 	void informTextureVolumeCurrentUsage(TexturePtr& tex, const TextureVolumeInfo& vol, TextureUsageBit crntUsage)
 	{
+		lazyInit();
 		tex->m_impl->updateTracker(vol, crntUsage, m_texUsageTracker);
 	}
 
 	void informTextureCurrentUsage(TexturePtr& tex, TextureUsageBit crntUsage)
 	{
+		lazyInit();
 		tex->m_impl->updateTracker(crntUsage, m_texUsageTracker);
 	}
 
@@ -350,8 +353,9 @@ private:
 	Bool8 m_renderedToDefaultFb = false;
 	Bool8 m_finalized = false;
 	Bool8 m_empty = true;
-	Bool m_beganRecording = false;
-	ThreadId m_tid = 0;
+	Bool8 m_beganRecording = false;
+	Bool8 m_initialized = false;
+	ThreadId m_tid = ~ThreadId(0);
 #if ANKI_EXTRA_CHECKS
 	U32 m_commandCount = 0;
 #endif
@@ -430,6 +434,8 @@ private:
 
 	/// Track texture usage.
 	TextureUsageTracker m_texUsageTracker;
+
+	void lazyInit();
 
 	/// Some common operations per command.
 	void commandCommon();

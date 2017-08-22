@@ -41,22 +41,11 @@ CommandBufferImpl::~CommandBufferImpl()
 
 Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 {
+	// Store some of the init info for later
 	m_flags = init.m_flags;
-	m_tid = Thread::getCurrentThreadId();
-
-	ANKI_CHECK(getGrManagerImpl().getCommandBufferFactory().newCommandBuffer(m_tid, m_flags, m_microCmdb));
-
-	m_alloc = m_microCmdb->getFastAllocator();
-
-	m_texUsageTracker.init(m_alloc);
-
-	m_handle = m_microCmdb->getHandle();
-	ANKI_ASSERT(m_handle);
-
 	if(!!(m_flags & CommandBufferFlag::SECOND_LEVEL))
 	{
 		m_activeFb = init.m_framebuffer;
-		m_state.beginRenderPass(m_activeFb);
 	}
 
 	return ErrorCode::NONE;
@@ -64,6 +53,7 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 
 void CommandBufferImpl::beginRecording()
 {
+	// Do the begin
 	VkCommandBufferInheritanceInfo inheritance = {};
 	inheritance.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
 
