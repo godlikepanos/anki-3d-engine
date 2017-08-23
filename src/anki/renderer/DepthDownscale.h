@@ -23,6 +23,7 @@ class HalfDepth : public RenderingPass
 {
 anki_internal:
 	TexturePtr m_depthRt;
+	TexturePtr m_colorRt;
 
 	HalfDepth(Renderer* r, DepthDownscale* depthDownscale)
 		: RenderingPass(r)
@@ -51,7 +52,7 @@ private:
 class QuarterDepth : public RenderingPass
 {
 anki_internal:
-	TexturePtr m_depthRt;
+	TexturePtr m_colorRt;
 
 	QuarterDepth(Renderer* r, DepthDownscale* depthDownscale)
 		: RenderingPass(r)

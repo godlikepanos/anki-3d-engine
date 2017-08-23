@@ -92,8 +92,8 @@ void ForwardShading::drawVolumetric(RenderingContext& ctx, CommandBufferPtr cmdb
 	cmdb->informTextureSurfaceCurrentUsage(
 		m_r->getVolumetric().m_main.getRt(), TextureSurfaceInfo(0, 0, 0, 0), TextureUsageBit::SAMPLED_FRAGMENT);
 
-	cmdb->bindTextureAndSampler(0, 0, m_r->getDepthDownscale().m_hd.m_depthRt, m_r->getNearestSampler());
-	cmdb->bindTextureAndSampler(0, 1, m_r->getDepthDownscale().m_qd.m_depthRt, m_r->getNearestSampler());
+	cmdb->bindTextureAndSampler(0, 0, m_r->getDepthDownscale().m_hd.m_colorRt, m_r->getNearestSampler());
+	cmdb->bindTextureAndSampler(0, 1, m_r->getDepthDownscale().m_qd.m_colorRt, m_r->getNearestSampler());
 	cmdb->bindTexture(0, 2, m_r->getVolumetric().m_main.getRt());
 	cmdb->bindTexture(0, 3, m_vol.m_noiseTex->getGrTexture());
 
@@ -128,15 +128,17 @@ void ForwardShading::buildCommandBuffers(RenderingContext& ctx, U threadId, U th
 	CommandBufferPtr cmdb = m_r->getGrManager().newInstance<CommandBuffer>(cinf);
 	ctx.m_forwardShading.m_commandBuffers[threadId] = cmdb;
 
-	cmdb->informTextureCurrentUsage(m_r->getDepthDownscale().m_qd.m_depthRt, TextureUsageBit::SAMPLED_FRAGMENT);
+	cmdb->informTextureCurrentUsage(m_r->getDepthDownscale().m_qd.m_colorRt, TextureUsageBit::SAMPLED_FRAGMENT);
+	cmdb->informTextureSurfaceCurrentUsage(
+		m_r->getDepthDownscale().m_hd.m_colorRt, TextureSurfaceInfo(0, 0, 0, 0), TextureUsageBit::SAMPLED_FRAGMENT);
 	cmdb->informTextureSurfaceCurrentUsage(m_r->getDepthDownscale().m_hd.m_depthRt,
 		TextureSurfaceInfo(0, 0, 0, 0),
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ | TextureUsageBit::SAMPLED_FRAGMENT);
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ);
 	cmdb->informTextureCurrentUsage(m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE);
 	cmdb->informTextureCurrentUsage(m_r->getShadowMapping().m_omniTexArray, TextureUsageBit::SAMPLED_FRAGMENT);
 	cmdb->informTextureCurrentUsage(m_r->getShadowMapping().m_spotTex, TextureUsageBit::SAMPLED_FRAGMENT);
 
-	cmdb->bindTexture(0, 0, m_r->getDepthDownscale().m_qd.m_depthRt);
+	cmdb->bindTexture(0, 0, m_r->getDepthDownscale().m_qd.m_colorRt);
 	cmdb->bindTexture(0, 1, m_r->getShadowMapping().m_spotTex);
 	cmdb->bindTexture(0, 2, m_r->getShadowMapping().m_omniTexArray);
 	bindUniforms(cmdb, 0, 0, ctx.m_lightShading.m_commonToken);
@@ -241,7 +243,7 @@ void ForwardShadingUpscale::run(RenderingContext& ctx)
 		ctx.m_renderQueue->m_cameraNear, ctx.m_renderQueue->m_cameraFar, linearDepth->x(), linearDepth->y());
 
 	cmdb->bindTexture(0, 0, m_r->getGBuffer().m_depthRt);
-	cmdb->bindTextureAndSampler(0, 1, m_r->getDepthDownscale().m_hd.m_depthRt, m_r->getNearestSampler());
+	cmdb->bindTextureAndSampler(0, 1, m_r->getDepthDownscale().m_hd.m_colorRt, m_r->getNearestSampler());
 	cmdb->bindTexture(0, 2, m_r->getForwardShading().getRt());
 	cmdb->bindTexture(0, 3, m_noiseTex->getGrTexture());
 

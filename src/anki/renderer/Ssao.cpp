@@ -54,7 +54,7 @@ void SsaoMain::run(RenderingContext& ctx)
 	cmdb->setViewport(0, 0, m_ssao->m_width, m_ssao->m_height);
 	cmdb->bindShaderProgram(m_grProg);
 
-	cmdb->bindTexture(0, 0, m_r->getDepthDownscale().m_qd.m_depthRt);
+	cmdb->bindTexture(0, 0, m_r->getDepthDownscale().m_qd.m_colorRt);
 	cmdb->bindTextureAndSampler(0, 1, m_r->getGBuffer().m_rt2, m_r->getLinearSampler());
 	cmdb->bindTexture(0, 2, m_noiseTex->getGrTexture());
 	cmdb->informTextureCurrentUsage(m_ssao->m_rt[(m_r->getFrameCount() + 1) & 1], TextureUsageBit::SAMPLED_FRAGMENT);
@@ -122,7 +122,7 @@ void SsaoHBlur::run(RenderingContext& ctx)
 	cmdb->beginRenderPass(m_ssao->m_fb[(m_r->getFrameCount() + 1) & 1]);
 	cmdb->bindShaderProgram(m_grProg);
 	cmdb->bindTexture(0, 0, m_ssao->m_rt[m_r->getFrameCount() & 1]);
-	cmdb->bindTexture(0, 1, m_r->getDepthDownscale().m_qd.m_depthRt);
+	cmdb->bindTexture(0, 1, m_r->getDepthDownscale().m_qd.m_colorRt);
 	m_r->drawQuad(cmdb);
 	cmdb->endRenderPass();
 }
@@ -169,7 +169,7 @@ void SsaoVBlur::run(RenderingContext& ctx)
 	cmdb->beginRenderPass(m_ssao->m_fb[m_r->getFrameCount() & 1]);
 	cmdb->bindShaderProgram(m_grProg);
 	cmdb->bindTexture(0, 0, m_ssao->m_rt[(m_r->getFrameCount() + 1) & 1]);
-	cmdb->bindTexture(0, 1, m_r->getDepthDownscale().m_qd.m_depthRt);
+	cmdb->bindTexture(0, 1, m_r->getDepthDownscale().m_qd.m_colorRt);
 	m_r->drawQuad(cmdb);
 	cmdb->endRenderPass();
 }

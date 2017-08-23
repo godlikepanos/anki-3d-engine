@@ -544,9 +544,11 @@ void Renderer::buildCommandBuffersInternal(RenderingContext& ctx, U32 threadId, 
 		cmdb->informTextureSurfaceCurrentUsage(m_forwardShading->getRt(),
 			TextureSurfaceInfo(0, 0, 0, 0),
 			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE);
+		cmdb->informTextureSurfaceCurrentUsage(
+			m_depth->m_hd.m_colorRt, TextureSurfaceInfo(0, 0, 0, 0), TextureUsageBit::SAMPLED_FRAGMENT);
 		cmdb->informTextureSurfaceCurrentUsage(m_depth->m_hd.m_depthRt,
 			TextureSurfaceInfo(0, 0, 0, 0),
-			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ | TextureUsageBit::SAMPLED_FRAGMENT);
+			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE);
 
 		cmdb->setViewport(0, 0, m_forwardShading->getWidth(), m_forwardShading->getHeight());
 

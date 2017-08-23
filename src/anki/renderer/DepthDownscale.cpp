@@ -20,17 +20,28 @@ Error HalfDepth::init(const ConfigSet&)
 	U width = m_r->getWidth() / 2;
 	U height = m_r->getHeight() / 2;
 
-	// Create RT
+	// Create RTs
 	m_depthRt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(width,
 		height,
 		GBUFFER_DEPTH_ATTACHMENT_PIXEL_FORMAT,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE | TextureUsageBit::SAMPLED_FRAGMENT,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 		SamplingFilter::LINEAR,
 		1,
 		"halfdepth"));
 
+	m_colorRt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(width,
+		height,
+		PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT),
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::SAMPLED_FRAGMENT,
+		SamplingFilter::LINEAR,
+		1,
+		"halfdepthcol"));
+
 	// Create FB
 	FramebufferInitInfo fbInit("halfdepth");
+	fbInit.m_colorAttachments[0].m_texture = m_colorRt;
+	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
+	fbInit.m_colorAttachmentCount = 1;
 	fbInit.m_depthStencilAttachment.m_texture = m_depthRt;
 	fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::DONT_CARE;
 	fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
@@ -40,7 +51,7 @@ Error HalfDepth::init(const ConfigSet&)
 	ANKI_CHECK(getResourceManager().loadResource("programs/DepthDownscale.ankiprog", m_prog));
 
 	ShaderProgramResourceMutationInitList<2> mutations(m_prog);
-	mutations.add("TO_COLOR_RT", 0).add("SAMPLE_RESOLVE_TYPE", 0);
+	mutations.add("TYPE", 0).add("SAMPLE_RESOLVE_TYPE", 0);
 
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(mutations.get(), variant);
@@ -53,15 +64,20 @@ void HalfDepth::setPreRunBarriers(RenderingContext& ctx)
 {
 	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_depthRt,
 		TextureUsageBit::NONE,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
+		TextureSurfaceInfo(0, 0, 0, 0));
+
+	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_colorRt,
+		TextureUsageBit::NONE,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		TextureSurfaceInfo(0, 0, 0, 0));
 }
 
 void HalfDepth::setPostRunBarriers(RenderingContext& ctx)
 {
-	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_depthRt,
+	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_colorRt,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ,
+		TextureUsageBit::SAMPLED_FRAGMENT,
 		TextureSurfaceInfo(0, 0, 0, 0));
 }
 
@@ -94,7 +110,7 @@ Error QuarterDepth::init(const ConfigSet&)
 	U width = m_r->getWidth() / 4;
 	U height = m_r->getHeight() / 4;
 
-	m_depthRt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(width,
+	m_colorRt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(width,
 		height,
 		PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT),
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::SAMPLED_FRAGMENT,
@@ -103,7 +119,7 @@ Error QuarterDepth::init(const ConfigSet&)
 		"quarterdepth"));
 
 	FramebufferInitInfo fbInit("quarterdepth");
-	fbInit.m_colorAttachments[0].m_texture = m_depthRt;
+	fbInit.m_colorAttachments[0].m_texture = m_colorRt;
 	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
 	fbInit.m_colorAttachmentCount = 1;
 	m_fb = gr.newInstance<Framebuffer>(fbInit);
@@ -112,7 +128,7 @@ Error QuarterDepth::init(const ConfigSet&)
 	ANKI_CHECK(getResourceManager().loadResource("programs/DepthDownscale.ankiprog", m_prog));
 
 	ShaderProgramResourceMutationInitList<2> mutations(m_prog);
-	mutations.add("TO_COLOR_RT", 1).add("SAMPLE_RESOLVE_TYPE", 0);
+	mutations.add("TYPE", 1).add("SAMPLE_RESOLVE_TYPE", 0);
 
 	const ShaderProgramResourceVariant* variant;
 	m_prog->getOrCreateVariant(mutations.get(), variant);
@@ -123,7 +139,7 @@ Error QuarterDepth::init(const ConfigSet&)
 
 void QuarterDepth::setPreRunBarriers(RenderingContext& ctx)
 {
-	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_depthRt,
+	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_colorRt,
 		TextureUsageBit::NONE,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		TextureSurfaceInfo(0, 0, 0, 0));
@@ -131,7 +147,7 @@ void QuarterDepth::setPreRunBarriers(RenderingContext& ctx)
 
 void QuarterDepth::setPostRunBarriers(RenderingContext& ctx)
 {
-	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_depthRt,
+	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_colorRt,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		TextureUsageBit::SAMPLED_FRAGMENT,
 		TextureSurfaceInfo(0, 0, 0, 0));
@@ -143,7 +159,7 @@ void QuarterDepth::run(RenderingContext& ctx)
 
 	cmdb->beginRenderPass(m_fb);
 	cmdb->bindShaderProgram(m_grProg);
-	cmdb->bindTexture(0, 0, m_parent->m_hd.m_depthRt);
+	cmdb->bindTexture(0, 0, m_parent->m_hd.m_colorRt);
 
 	cmdb->setViewport(0, 0, m_r->getWidth() / 4, m_r->getHeight() / 4);
 

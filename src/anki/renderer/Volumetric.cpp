@@ -83,7 +83,7 @@ void VolumetricMain::run(RenderingContext& ctx)
 	//
 	cmdb->setViewport(0, 0, m_vol->m_width, m_vol->m_height);
 
-	cmdb->bindTexture(0, 0, m_r->getDepthDownscale().m_qd.m_depthRt);
+	cmdb->bindTexture(0, 0, m_r->getDepthDownscale().m_qd.m_colorRt);
 	cmdb->bindTexture(0, 1, m_noiseTex->getGrTexture());
 	TexturePtr& history = m_rt[(m_r->getFrameCount() + 1) & 1];
 	cmdb->informTextureCurrentUsage(history, TextureUsageBit::SAMPLED_FRAGMENT);
