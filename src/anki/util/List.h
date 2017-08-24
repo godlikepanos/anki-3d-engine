@@ -7,14 +7,11 @@
 
 #include <anki/util/Allocator.h>
 #include <anki/util/NonCopyable.h>
+#include <anki/util/Forward.h>
 #include <functional>
 
 namespace anki
 {
-
-// Forward
-template<typename T>
-class List;
 
 /// @addtogroup util_containers
 /// @{

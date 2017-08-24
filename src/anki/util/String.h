@@ -9,16 +9,13 @@
 #include <anki/util/Array.h>
 #include <anki/util/NonCopyable.h>
 #include <anki/util/Hash.h>
+#include <anki/util/Forward.h>
 #include <cstring>
 #include <cstdio>
 #include <cinttypes> // For PRId8 etc
 
 namespace anki
 {
-
-// Forward
-class String;
-class StringAuto;
 
 /// @addtogroup util_private
 /// @{

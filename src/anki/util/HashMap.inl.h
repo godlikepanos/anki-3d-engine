@@ -8,8 +8,8 @@ namespace anki
 namespace detail
 {
 
-template<typename TKey, typename TValue, typename THasher, typename TCompare, typename TNode>
-void HashMapBase<TKey, TValue, THasher, TCompare, TNode>::insertNode(TNode* node)
+template<typename TKey, typename TValue, typename THasher, typename TNode>
+void HashMapBase<TKey, TValue, THasher, TNode>::insertNode(TNode* node)
 {
 	if(ANKI_UNLIKELY(!m_root))
 	{
@@ -57,9 +57,9 @@ void HashMapBase<TKey, TValue, THasher, TCompare, TNode>::insertNode(TNode* node
 	} while(!done);
 }
 
-template<typename TKey, typename TValue, typename THasher, typename TCompare, typename TNode>
-typename HashMapBase<TKey, TValue, THasher, TCompare, TNode>::Iterator
-HashMapBase<TKey, TValue, THasher, TCompare, TNode>::find(const Key& key)
+template<typename TKey, typename TValue, typename THasher, typename TNode>
+typename HashMapBase<TKey, TValue, THasher, TNode>::Iterator HashMapBase<TKey, TValue, THasher, TNode>::find(
+	const Key& key)
 {
 	const U64 hash = THasher()(key);
 
@@ -86,9 +86,9 @@ HashMapBase<TKey, TValue, THasher, TCompare, TNode>::find(const Key& key)
 	return Iterator(node);
 }
 
-template<typename TKey, typename TValue, typename THasher, typename TCompare, typename TNode>
-typename HashMapBase<TKey, TValue, THasher, TCompare, TNode>::ConstIterator
-HashMapBase<TKey, TValue, THasher, TCompare, TNode>::find(const Key& key) const
+template<typename TKey, typename TValue, typename THasher, typename TNode>
+typename HashMapBase<TKey, TValue, THasher, TNode>::ConstIterator HashMapBase<TKey, TValue, THasher, TNode>::find(
+	const Key& key) const
 {
 	const U64 hash = THasher()(key);
 
@@ -115,8 +115,8 @@ HashMapBase<TKey, TValue, THasher, TCompare, TNode>::find(const Key& key) const
 	return ConstIterator(node);
 }
 
-template<typename TKey, typename TValue, typename THasher, typename TCompare, typename TNode>
-void HashMapBase<TKey, TValue, THasher, TCompare, TNode>::removeNode(TNode* del)
+template<typename TKey, typename TValue, typename THasher, typename TNode>
+void HashMapBase<TKey, TValue, THasher, TNode>::removeNode(TNode* del)
 {
 	ANKI_ASSERT(del);
 	TNode* parent = del->m_parent;
@@ -182,9 +182,9 @@ void HashMapBase<TKey, TValue, THasher, TCompare, TNode>::removeNode(TNode* del)
 
 } // end namespace detail
 
-template<typename TKey, typename TValue, typename THasher, typename TCompare>
+template<typename TKey, typename TValue, typename THasher>
 template<typename TAllocator>
-void HashMap<TKey, TValue, THasher, TCompare>::destroy(TAllocator alloc)
+void HashMap<TKey, TValue, THasher>::destroy(TAllocator alloc)
 {
 	if(Base::m_root)
 	{
@@ -193,9 +193,9 @@ void HashMap<TKey, TValue, THasher, TCompare>::destroy(TAllocator alloc)
 	}
 }
 
-template<typename TKey, typename TValue, typename THasher, typename TCompare>
+template<typename TKey, typename TValue, typename THasher>
 template<typename TAllocator>
-void HashMap<TKey, TValue, THasher, TCompare>::destroyInternal(TAllocator alloc, Node* node)
+void HashMap<TKey, TValue, THasher>::destroyInternal(TAllocator alloc, Node* node)
 {
 	ANKI_ASSERT(node);
 

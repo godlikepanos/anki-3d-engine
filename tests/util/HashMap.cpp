@@ -22,15 +22,6 @@ public:
 	}
 };
 
-class Compare
-{
-public:
-	Bool operator()(int a, int b)
-	{
-		return a == b;
-	}
-};
-
 ANKI_TEST(Util, HashMap)
 {
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
@@ -39,7 +30,7 @@ ANKI_TEST(Util, HashMap)
 
 	// Simple
 	{
-		HashMap<int, int, Hasher, Compare> map;
+		HashMap<int, int, Hasher> map;
 		map.pushBack(alloc, 20, 1);
 		map.pushBack(alloc, 21, 1);
 		map.destroy(alloc);
@@ -47,7 +38,7 @@ ANKI_TEST(Util, HashMap)
 
 	// Add more and iterate
 	{
-		HashMap<int, int, Hasher, Compare> map;
+		HashMap<int, int, Hasher> map;
 
 		for(U i = 0; i < valsSize; ++i)
 		{
@@ -67,7 +58,7 @@ ANKI_TEST(Util, HashMap)
 
 	// Erase
 	{
-		HashMap<int, int, Hasher, Compare> map;
+		HashMap<int, int, Hasher> map;
 
 		for(U i = 0; i < valsSize; ++i)
 		{
@@ -76,7 +67,7 @@ ANKI_TEST(Util, HashMap)
 
 		for(U i = valsSize - 1; i != 0; --i)
 		{
-			HashMap<int, int, Hasher, Compare>::Iterator it = map.find(vals[i]);
+			HashMap<int, int, Hasher>::Iterator it = map.find(vals[i]);
 			ANKI_TEST_EXPECT_NEQ(it, map.getEnd());
 
 			map.erase(alloc, it);
@@ -88,7 +79,7 @@ ANKI_TEST(Util, HashMap)
 
 	// Find
 	{
-		HashMap<int, int, Hasher, Compare> map;
+		HashMap<int, int, Hasher> map;
 
 		for(U i = 0; i < valsSize; ++i)
 		{
@@ -97,7 +88,7 @@ ANKI_TEST(Util, HashMap)
 
 		for(U i = valsSize - 1; i != 0; --i)
 		{
-			HashMap<int, int, Hasher, Compare>::Iterator it = map.find(vals[i]);
+			HashMap<int, int, Hasher>::Iterator it = map.find(vals[i]);
 			ANKI_TEST_EXPECT_NEQ(it, map.getEnd());
 			ANKI_TEST_EXPECT_EQ(*it, vals[i] * 10);
 		}
@@ -108,7 +99,7 @@ ANKI_TEST(Util, HashMap)
 	// Fuzzy test
 	{
 		const U MAX = 1000;
-		HashMap<int, int, Hasher, Compare> akMap;
+		HashMap<int, int, Hasher> akMap;
 		std::vector<int> numbers;
 
 		// Insert random
@@ -151,7 +142,7 @@ ANKI_TEST(Util, HashMap)
 
 	// Bench it
 	{
-		using AkMap = HashMap<int, int, Hasher, Compare>;
+		using AkMap = HashMap<int, int, Hasher>;
 		AkMap akMap;
 		using StlMap =
 			std::unordered_map<int, int, std::hash<int>, std::equal_to<int>, HeapAllocator<std::pair<int, int>>>;
@@ -285,7 +276,7 @@ ANKI_TEST(Util, IntrusiveHashMap)
 	Hashable b(2);
 	Hashable c(10);
 
-	IntrusiveHashMap<int, Hashable, Hasher, Compare> map;
+	IntrusiveHashMap<int, Hashable, Hasher> map;
 
 	// Add vals
 	map.pushBack(1, &a);

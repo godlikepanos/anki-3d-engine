@@ -45,6 +45,11 @@ public:
 class TextureInitInfo : public GrBaseInitInfo
 {
 public:
+	U32 m_width = 0;
+	U32 m_height = 0;
+	U32 m_depth = 1; //< Relevant only for 3D textures.
+	U32 m_layerCount = 1; ///< Relevant only for texture arrays.
+
 	TextureType m_type = TextureType::_2D;
 
 	TextureUsageBit m_usage = TextureUsageBit::NONE; ///< How the texture will be used.
@@ -53,10 +58,6 @@ public:
 	/// It's usual usage. That way you won't need to call CommandBuffer::informTextureXXXCurrentUsage() all the time.
 	TextureUsageBit m_usageWhenEncountered = TextureUsageBit::NONE;
 
-	U32 m_width = 0;
-	U32 m_height = 0;
-	U32 m_depth = 1; //< Relevant only for 3D textures.
-	U32 m_layerCount = 1; ///< Relevant only for texture arrays.
 	U8 m_mipmapsCount = 1;
 
 	PixelFormat m_format;
@@ -70,6 +71,18 @@ public:
 		: GrBaseInitInfo(name)
 		, m_sampling(name)
 	{
+	}
+
+	U64 computeHash() const
+	{
+		const U8* start = reinterpret_cast<const U8*>(&m_width);
+		const U8* end = reinterpret_cast<const U8*>(&m_samples) + sizeof(m_samples);
+		ANKI_ASSERT((end - start == 24) && "Class needs to be tightly packed since we hash it");
+
+		const U8* starts = reinterpret_cast<const U8*>(&m_sampling.m_minLod);
+		const U8* ends = reinterpret_cast<const U8*>(&m_sampling.m_repeat) + sizeof(m_sampling.m_repeat);
+
+		return appendHash(starts, ends - starts, anki::computeHash(start, end - start));
 	}
 };
 

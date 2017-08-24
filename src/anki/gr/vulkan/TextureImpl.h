@@ -139,16 +139,7 @@ private:
 		}
 	};
 
-	class ViewCompare
-	{
-	public:
-		Bool operator()(const VkImageViewCreateInfo& a, const VkImageViewCreateInfo& b) const
-		{
-			return memcmp(&a, &b, sizeof(a)) == 0;
-		}
-	};
-
-	HashMap<VkImageViewCreateInfo, VkImageView, ViewHasher, ViewCompare> m_viewsMap;
+	HashMap<VkImageViewCreateInfo, VkImageView, ViewHasher> m_viewsMap;
 	Mutex m_viewsMapMtx;
 	VkImageViewCreateInfo m_viewCreateInfoTemplate;
 	U64 m_uuid; ///< Steal the UUID from the Texture.

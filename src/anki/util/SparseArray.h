@@ -143,6 +143,7 @@ private:
 
 /// Sparse array.
 /// @tparam T The type of the valut it will hold.
+/// @tparam TIndex Indicates the max size of the sparse indices it can accept. Can be U32 or U64.
 template<typename T, typename TIndex = U32>
 class SparseArray
 {

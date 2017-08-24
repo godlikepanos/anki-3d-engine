@@ -7,11 +7,12 @@
 
 #include <anki/gr/Common.h>
 #include <anki/gr/Enums.h>
+#include <anki/util/HashMap.h>
 
 namespace anki
 {
 
-/// @addtogroup gr
+/// @addtogroup graphics
 /// @{
 
 /// XXX
@@ -53,6 +54,12 @@ public:
 class RenderGraph : public NonCopyable
 {
 public:
+	RenderGraph(GrManager* gr);
+
+	~RenderGraph();
+
+	/// @name 1st step methods
+	/// @{
 	RenderGraphHandle importRenderTarget(CString name, TexturePtr tex);
 
 	RenderGraphHandle newRenderTarget(CString name, const TextureInitInfo& texInf);
@@ -66,24 +73,81 @@ public:
 		RenderTargetInfo depthStencilAttachment,
 		WeakArray<RenderGraphDependency> consumers,
 		WeakArray<RenderGraphDependency> producers,
-		void* userData,
 		RenderGraphWorkCallback callback,
+		void* userData,
 		U32 secondLevelCmdbsCount);
 
 	/// For compute or other work (mipmap gen).
 	void registerNonRenderPass(CString name,
 		WeakArray<RenderGraphDependency> consumers,
 		WeakArray<RenderGraphDependency> producers,
-		void* userData,
-		RenderGraphWorkCallback callback);
+		RenderGraphWorkCallback callback,
+		void* userData);
+	/// @}
 
-	TexturePtr getTexture(RenderGraphHandle handle);
+	/// @name 2nd step methods
+	/// @{
+	void bake();
+	/// @}
 
-	BufferPtr getBuffer(RenderGraphHandle handle);
+	/// @name 3rd step methods
+	/// @{
 
+	/// Will call a number of RenderGraphWorkCallback that populate 2nd level command buffers.
+	void runSecondLevel();
+	/// @}
+
+	/// @name 4th step methods
+	/// @{
+
+	/// Will call a number of RenderGraphWorkCallback that populate 1st level command buffers.
 	void run();
+	/// @}
 
+	/// @name 3rd and 4th step methods
+	/// @{
+	TexturePtr getTexture(RenderGraphHandle handle);
+	BufferPtr getBuffer(RenderGraphHandle handle);
+	/// @}
+
+	/// @name 5th step methods
+	/// @{
+
+	/// Reset the graph for a new frame. All previously created RenderGraphHandle are invalid after that call.
 	void reset();
+	/// @}
+
+private:
+	GrManager* m_gr;
+
+	class Cache
+	{
+	public:
+		HashMap<TextureInitInfo, TexturePtr> m_renderTargets; ///< Non-imported render targets.
+		HashMap<FramebufferInitInfo, FramebufferPtr> m_framebuffers;
+	} m_cache;
+
+	class RenderTarget
+	{
+	public:
+		TexturePtr m_tex;
+		Bool8 m_imported = false;
+		Array<char, MAX_GR_OBJECT_NAME_LENGTH + 1> m_name;
+	};
+
+	DynamicArray<RenderTarget> m_renderTargets;
+	RenderGraphHandle m_lastRtHandle = 0;
+
+	class Pass
+	{
+	public:
+		Pass* m_next = nullptr;
+		FramebufferPtr m_framebuffer;
+		Array<char, MAX_GR_OBJECT_NAME_LENGTH + 1> m_name;
+	};
+
+	DynamicArray<Pass> m_passes;
+	RenderGraphHandle m_lastPassHandle = 0;
 };
 /// @}
 

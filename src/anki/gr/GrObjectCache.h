@@ -47,18 +47,8 @@ private:
 		}
 	};
 
-	/// Hash compare.
-	class Compare
-	{
-	public:
-		Bool operator()(const Key& a, const Key& b) const
-		{
-			return a == b;
-		}
-	};
-
 	GrManager* m_gr;
-	HashMap<U64, GrObject*, Hasher, Compare> m_map;
+	HashMap<U64, GrObject*, Hasher> m_map;
 	Mutex m_mtx;
 
 	/// Try to find an object in the cache.

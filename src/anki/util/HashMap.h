@@ -8,16 +8,10 @@
 #include <anki/util/Allocator.h>
 #include <anki/util/Functions.h>
 #include <anki/util/NonCopyable.h>
+#include <anki/util/Forward.h>
 
 namespace anki
 {
-
-// Forward
-template<typename, typename, typename, typename>
-class HashMap;
-
-template<typename, typename, typename, typename>
-class IntrusiveHashMap;
 
 /// @addtogroup util_containers
 /// @{
@@ -59,10 +53,10 @@ public:
 template<typename TNodePointer, typename TValuePointer, typename TValueReference>
 class HashMapIterator
 {
-	template<typename, typename, typename, typename>
+	template<typename, typename, typename>
 	friend class anki::HashMap;
 
-	template<typename, typename, typename, typename>
+	template<typename, typename, typename>
 	friend class anki::IntrusiveHashMap;
 
 public:
@@ -181,9 +175,8 @@ private:
 /// @tparam TKey The key of the map.
 /// @tparam TValue The value of the map.
 /// @tparam THasher Functor to hash type of TKey.
-/// @tparam TCompare Functor to compare TKey.
 /// @internal
-template<typename TKey, typename TValue, typename THasher, typename TCompare, typename TNode>
+template<typename TKey, typename TValue, typename THasher, typename TNode>
 class HashMapBase : public NonCopyable
 {
 public:
@@ -283,17 +276,6 @@ protected:
 
 } // end namespace detail
 
-/// Default hash key compare.
-template<typename TKey>
-class DefaultHashKeyCompare
-{
-public:
-	Bool operator()(const TKey& a, const TKey& b) const
-	{
-		return a == b;
-	}
-};
-
 /// Default hasher.
 template<typename TKey>
 class DefaultHasher
@@ -301,7 +283,7 @@ class DefaultHasher
 public:
 	U64 operator()(const TKey& a) const
 	{
-		return a.genHash();
+		return a.computeHash();
 	}
 };
 
@@ -317,14 +299,11 @@ public:
 };
 
 /// Hash map template.
-template<typename TKey,
-	typename TValue,
-	typename THasher = DefaultHasher<TKey>,
-	typename TCompare = DefaultHashKeyCompare<TKey>>
-class HashMap : public detail::HashMapBase<TKey, TValue, THasher, TCompare, detail::HashMapNode<TValue>>
+template<typename TKey, typename TValue, typename THasher = DefaultHasher<TKey>>
+class HashMap : public detail::HashMapBase<TKey, TValue, THasher, detail::HashMapNode<TValue>>
 {
 private:
-	using Base = detail::HashMapBase<TKey, TValue, THasher, TCompare, detail::HashMapNode<TValue>>;
+	using Base = detail::HashMapBase<TKey, TValue, THasher, detail::HashMapNode<TValue>>;
 	using Node = detail::HashMapNode<TValue>;
 
 public:
@@ -395,13 +374,13 @@ private:
 template<typename TClass>
 class IntrusiveHashMapEnabled : public NonCopyable
 {
-	template<typename TKey, typename TValue, typename THasher, typename TCompare, typename TNode>
+	template<typename TKey, typename TValue, typename THasher, typename TNode>
 	friend class detail::HashMapBase;
 
 	template<typename TNodePointer, typename TValuePointer, typename TValueReference>
 	friend class detail::HashMapIterator;
 
-	template<typename TKey, typename TValue, typename THasher, typename TCompare>
+	template<typename TKey, typename TValue, typename THasher>
 	friend class IntrusiveHashMap;
 
 	friend TClass;
@@ -453,14 +432,11 @@ private:
 
 /// Hash map that doesn't perform any allocations. To work the TValue nodes will have to inherit from
 /// IntrusiveHashMapEnabled.
-template<typename TKey,
-	typename TValue,
-	typename THasher = DefaultHasher<TKey>,
-	typename TCompare = DefaultHashKeyCompare<TKey>>
-class IntrusiveHashMap : public detail::HashMapBase<TKey, TValue, THasher, TCompare, TValue>
+template<typename TKey, typename TValue, typename THasher = DefaultHasher<TKey>>
+class IntrusiveHashMap : public detail::HashMapBase<TKey, TValue, THasher, TValue>
 {
 private:
-	using Base = detail::HashMapBase<TKey, TValue, THasher, TCompare, TValue>;
+	using Base = detail::HashMapBase<TKey, TValue, THasher, TValue>;
 	using Node = TValue;
 
 public:
