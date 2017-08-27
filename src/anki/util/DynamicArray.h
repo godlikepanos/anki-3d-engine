@@ -6,7 +6,6 @@
 #pragma once
 
 #include <anki/util/Allocator.h>
-#include <anki/util/NonCopyable.h>
 #include <anki/util/Functions.h>
 
 namespace anki
@@ -144,7 +143,7 @@ protected:
 /// Dynamic array with manual destruction. It doesn't hold the allocator and that makes it compact. At the same time
 /// that requires manual destruction. Used in permanent classes.
 template<typename T>
-class DynamicArray : public NonCopyable, public DynamicArrayBase<T>
+class DynamicArray : public DynamicArrayBase<T>
 {
 public:
 	using Base = DynamicArrayBase<T>;
@@ -156,6 +155,9 @@ public:
 		: Base(nullptr, 0)
 	{
 	}
+
+	// Non-copyable
+	DynamicArray(const DynamicArray& b) = delete;
 
 	/// Move.
 	DynamicArray(DynamicArray&& b)
@@ -179,6 +181,9 @@ public:
 		b.m_size = 0;
 		return *this;
 	}
+
+	// Non-copyable
+	DynamicArray& operator=(const DynamicArray& b) = delete;
 
 	/// Create the array.
 	template<typename TAllocator>

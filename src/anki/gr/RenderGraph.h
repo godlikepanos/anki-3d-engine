@@ -16,7 +16,7 @@ namespace anki
 /// @{
 
 /// XXX
-using RenderGraphHandle = U64;
+using RenderGraphHandle = U32;
 
 /// XXX
 using RenderGraphWorkCallback = void (*)(
@@ -26,7 +26,7 @@ using RenderGraphWorkCallback = void (*)(
 class RenderGraphDependency
 {
 public:
-	RenderGraphHandle m_handle;
+	RenderGraphHandle m_handle; ///< Buffer or render target handle.
 	union
 	{
 		TextureUsageBit m_textureUsage;
@@ -51,12 +51,18 @@ public:
 };
 
 /// XXX
-class RenderGraph : public NonCopyable
+class RenderGraph
 {
 public:
 	RenderGraph(GrManager* gr);
 
+	// Non-copyable
+	RenderGraph(const RenderGraph&) = delete;
+
 	~RenderGraph();
+
+	// Non-copyable
+	RenderGraph& operator=(const RenderGraph&) = delete;
 
 	/// @name 1st step methods
 	/// @{
@@ -68,7 +74,7 @@ public:
 
 	RenderGraphHandle newBuffer(CString name, PtrSize size, BufferUsageBit usage, BufferMapAccessBit access);
 
-	void registerRenderPass(CString name,
+	RenderGraphHandle registerRenderPass(CString name,
 		WeakArray<RenderTargetInfo> colorAttachments,
 		RenderTargetInfo depthStencilAttachment,
 		WeakArray<RenderGraphDependency> consumers,
@@ -78,7 +84,7 @@ public:
 		U32 secondLevelCmdbsCount);
 
 	/// For compute or other work (mipmap gen).
-	void registerNonRenderPass(CString name,
+	RenderGraphHandle registerNonRenderPass(CString name,
 		WeakArray<RenderGraphDependency> consumers,
 		WeakArray<RenderGraphDependency> producers,
 		RenderGraphWorkCallback callback,
@@ -118,14 +124,27 @@ public:
 	/// @}
 
 private:
-	GrManager* m_gr;
+	static constexpr U MAX_PASSES = 128;
+	static constexpr U32 TEXTURE_TYPE = 0x10000000;
+	static constexpr U32 BUFFER_TYPE = 0x20000000;
+	static constexpr U32 RT_TYPE = 0x40000000;
 
-	class Cache
+	GrManager* m_gr;
+	StackAllocator<U8> m_tmpAlloc;
+
+	class PassBatch;
+	class BakeContext;
+
+	/// Render targets of the same type+size+format.
+	class RenderTargetCacheEntry
 	{
 	public:
-		HashMap<TextureInitInfo, TexturePtr> m_renderTargets; ///< Non-imported render targets.
-		HashMap<FramebufferInitInfo, FramebufferPtr> m_framebuffers;
-	} m_cache;
+		DynamicArray<TexturePtr> m_textures;
+		U32 m_texturesInUse = 0;
+	};
+
+	HashMap<TextureInitInfo, RenderTargetCacheEntry*> m_renderTargetCache; ///< Non-imported render targets.
+	HashMap<FramebufferInitInfo, FramebufferPtr> m_framebufferCache;
 
 	class RenderTarget
 	{
@@ -136,18 +155,28 @@ private:
 	};
 
 	DynamicArray<RenderTarget> m_renderTargets;
-	RenderGraphHandle m_lastRtHandle = 0;
 
+	/// Render pass or compute job.
 	class Pass
 	{
 	public:
-		Pass* m_next = nullptr;
 		FramebufferPtr m_framebuffer;
+		DynamicArray<RenderGraphDependency> m_consumers;
+		DynamicArray<RenderGraphDependency> m_producers;
+		DynamicArray<Pass*> m_dependsOn;
+		U32 m_index;
 		Array<char, MAX_GR_OBJECT_NAME_LENGTH + 1> m_name;
+
+		void destroy(StackAllocator<U8>& alloc);
 	};
 
-	DynamicArray<Pass> m_passes;
-	RenderGraphHandle m_lastPassHandle = 0;
+	DynamicArray<Pass*> m_passes;
+
+	RenderGraphHandle pushRenderTarget(CString name, TexturePtr tex, Bool imported);
+
+	Bool passHasUnmetDependencies(const BakeContext& ctx, const Pass& pass) const;
+
+	static Bool passADependsOnB(const Pass& a, const Pass& b);
 };
 /// @}
 

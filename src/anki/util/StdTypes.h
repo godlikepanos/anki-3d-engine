@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <cstddef>
 #include <limits>
+#include <type_traits>
 
 namespace anki
 {
@@ -217,6 +218,11 @@ static constexpr long double operator""_ns(long double x)
 }
 /// @}
 
+/// Convenience macro that defines the type of a class.
+#define ANKI_DEFINE_CLASS_SELF                  \
+	typedef auto _selfFn()->decltype(*this);    \
+	using _SelfRef = decltype(((_selfFn*)0)()); \
+	using Self = std::remove_reference<_SelfRef>::type;
 /// @}
 
 } // end namespace anki
