@@ -38,7 +38,7 @@ const CString& shaderTypeToFileExtension(ShaderType type)
 Error fileExtensionToShaderType(const CString& filename, ShaderType& type)
 {
 	type = ShaderType::COUNT;
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 
 	// Find the shader type
 	if(filename.find(".vert.glsl") != ResourceFilename::NPOS)
@@ -68,7 +68,7 @@ Error fileExtensionToShaderType(const CString& filename, ShaderType& type)
 	else
 	{
 		ANKI_RESOURCE_LOGE("Wrong shader file format: %s", &filename[0]);
-		err = ErrorCode::USER_DATA;
+		err = Error::USER_DATA;
 	}
 
 	return err;

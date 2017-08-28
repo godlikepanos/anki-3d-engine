@@ -31,7 +31,7 @@ public:
 			static_cast<DecalNode&>(node).onMove(movec);
 		}
 
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 };
 
@@ -55,7 +55,7 @@ public:
 			static_cast<DecalNode&>(node).onDecalUpdated();
 		}
 
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 };
 
@@ -71,7 +71,7 @@ Error DecalNode::init()
 	newComponent<DecalShapeFeedbackComponent>(this);
 	newComponent<SpatialComponent>(this, &decalc->getBoundingVolume());
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void DecalNode::onMove(MoveComponent& movec)

@@ -16,13 +16,13 @@ public:
 		ScriptResourcePtr script;
 		ANKI_CHECK(getResourceManager().loadResource("assets/scene.lua", script));
 		ANKI_CHECK(getScriptManager().evalString(script->getSource()));
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 };
 
 int main(int argc, char* argv[])
 {
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 
 	MyApp* app = new MyApp;
 	err = app->init(argc, argv);

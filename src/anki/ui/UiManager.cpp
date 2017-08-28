@@ -30,7 +30,7 @@ Error UiManager::init(
 	m_gpuMem = gpuMem;
 	m_input = input;
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

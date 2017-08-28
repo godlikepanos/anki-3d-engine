@@ -46,7 +46,7 @@ public:
 	template<typename Func>
 	ANKI_USE_RESULT Error iterateEvents(Func func)
 	{
-		Error err = ErrorCode::NONE;
+		Error err = Error::NONE;
 		auto it = m_events.getBegin();
 		auto end = m_events.getEnd();
 		for(; it != end && !err; ++it)

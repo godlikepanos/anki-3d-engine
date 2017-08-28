@@ -31,7 +31,7 @@ public:
 	ANKI_USE_RESULT Error operator()(GlState&)
 	{
 		m_renderingThread->m_syncBarrier.wait();
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 };
 
@@ -49,7 +49,7 @@ public:
 	ANKI_USE_RESULT Error operator()(GlState&)
 	{
 		m_renderingThread->swapBuffersInternal();
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 };
 
@@ -59,7 +59,7 @@ class EmptyCommand final : public GlCommand
 public:
 	ANKI_USE_RESULT Error operator()(GlState&)
 	{
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 };
 
@@ -101,7 +101,7 @@ void RenderingThread::flushCommandBuffer(CommandBufferPtr cmdb, FencePtr* fence)
 			Error operator()(GlState&)
 			{
 				m_fence->m_impl->m_fence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-				return ErrorCode::NONE;
+				return Error::NONE;
 			}
 		};
 
@@ -218,7 +218,7 @@ Error RenderingThread::threadCallback(ThreadCallbackInfo& info)
 {
 	RenderingThread* thread = static_cast<RenderingThread*>(info.m_userData);
 	thread->threadLoop();
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void RenderingThread::threadLoop()

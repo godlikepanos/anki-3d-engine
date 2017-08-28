@@ -41,7 +41,7 @@ public:
 	{
 		ANKI_CHECK(parseSource(src, 0));
 		m_sourceLines.join(m_alloc, "\n", m_shaderSource);
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 
 	CString getShaderSource() const

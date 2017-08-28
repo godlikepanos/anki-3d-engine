@@ -33,7 +33,7 @@ public:
 			dnode.onMoveUpdate(move);
 		}
 
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 };
 
@@ -52,7 +52,7 @@ Error ReflectionProxy::init(const CString& proxyMesh)
 	if((loader.getHeader().m_flags & MeshLoader::Flag::QUADS) == MeshLoader::Flag::NONE)
 	{
 		ANKI_SCENE_LOGE("Expecting quad mesh");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	const U indexCount = loader.getHeader().m_totalIndicesCount;
@@ -91,7 +91,7 @@ Error ReflectionProxy::init(const CString& proxyMesh)
 
 	newComponent<SpatialComponent>(this, &m_boxWSpace);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void ReflectionProxy::onMoveUpdate(const MoveComponent& move)

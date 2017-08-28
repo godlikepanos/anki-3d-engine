@@ -61,7 +61,7 @@ template<typename T>
 template<typename VisitorFunc>
 Error Hierarchy<T>::visitChildren(VisitorFunc vis)
 {
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 	typename Container::Iterator it = m_children.getBegin();
 	for(; it != m_children.getEnd() && !err; it++)
 	{
@@ -109,7 +109,7 @@ template<typename VisitorFunc>
 Error Hierarchy<T>::visitChildrenMaxDepth(I maxDepth, VisitorFunc vis)
 {
 	ANKI_ASSERT(maxDepth >= 0);
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 	--maxDepth;
 
 	typename Container::Iterator it = m_children.getBegin();

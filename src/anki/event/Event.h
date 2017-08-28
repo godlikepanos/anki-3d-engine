@@ -112,7 +112,7 @@ public:
 		(void)prevUpdateTime;
 		(void)crntTime;
 		kill = true;
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 
 protected:

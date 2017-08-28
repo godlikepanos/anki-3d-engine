@@ -31,7 +31,7 @@ Error TemporalAA::init(const ConfigSet& config)
 		ANKI_R_LOGE("Failed to init TAA");
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error TemporalAA::initInternal(const ConfigSet& config)
@@ -58,7 +58,7 @@ Error TemporalAA::initInternal(const ConfigSet& config)
 		m_fbs[i] = getGrManager().newInstance<Framebuffer>(fbInit);
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void TemporalAA::setPreRunBarriers(RenderingContext& ctx)

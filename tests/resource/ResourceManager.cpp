@@ -74,12 +74,12 @@ ANKI_TEST(Resource, ResourceManager)
 	{
 		{
 			DummyResourcePtr a;
-			ANKI_TEST_EXPECT_EQ(resources->loadResource("error", a), ErrorCode::USER_DATA);
+			ANKI_TEST_EXPECT_EQ(resources->loadResource("error", a), Error::USER_DATA);
 		}
 
 		{
 			DummyResourcePtr a;
-			ANKI_TEST_EXPECT_EQ(resources->loadResource("error", a), ErrorCode::USER_DATA);
+			ANKI_TEST_EXPECT_EQ(resources->loadResource("error", a), Error::USER_DATA);
 		}
 	}
 

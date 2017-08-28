@@ -105,7 +105,7 @@ Error PortalSectorBase::init(const CString& meshFname, Bool isSector)
 		m_vertIndices[i] = indicesIn[i];
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void PortalSectorBase::updateTransform(const Transform& trf)
@@ -135,7 +135,7 @@ Portal::~Portal()
 Error Portal::init(const CString& meshFname)
 {
 	ANKI_CHECK(Base::init(meshFname, false));
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error Portal::frameUpdate(F32 prevUpdateTime, F32 crntTime)
@@ -148,7 +148,7 @@ Error Portal::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 		getSceneGraph().getSectorGroup().portalUpdated(this);
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void Portal::deferredUpdate()
@@ -236,7 +236,7 @@ Sector::~Sector()
 Error Sector::init(const CString& meshFname)
 {
 	ANKI_CHECK(PortalSectorBase::init(meshFname, true));
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void Sector::tryAddPortal(Portal* portal)
@@ -356,7 +356,7 @@ Error Sector::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 		getSceneGraph().getSectorGroup().sectorUpdated(this);
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void Sector::deferredUpdate()
@@ -580,7 +580,7 @@ void SectorGroup::prepareForVisibilityTests()
 	// Update portals
 	Error err = m_portalsUpdated.iterateForward([](Portal* portal) {
 		portal->deferredUpdate();
-		return ErrorCode::NONE;
+		return Error::NONE;
 	});
 	(void)err;
 	m_portalsUpdated.destroy(m_scene->getFrameAllocator());
@@ -588,7 +588,7 @@ void SectorGroup::prepareForVisibilityTests()
 	// Update sectors
 	err = m_sectorsUpdated.iterateForward([](Sector* portal) {
 		portal->deferredUpdate();
-		return ErrorCode::NONE;
+		return Error::NONE;
 	});
 	(void)err;
 	m_sectorsUpdated.destroy(m_scene->getFrameAllocator());
@@ -596,7 +596,7 @@ void SectorGroup::prepareForVisibilityTests()
 	// Bin spatials
 	err = m_spatialsDeferredBinning.iterateForward([this](SpatialComponent* spc) {
 		binSpatial(spc);
-		return ErrorCode::NONE;
+		return Error::NONE;
 	});
 	(void)err;
 	m_spatialsDeferredBinning.destroy(m_scene->getFrameAllocator());

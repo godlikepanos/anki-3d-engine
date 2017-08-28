@@ -74,7 +74,7 @@ Error LightShading::initInternal(const ConfigSet& config)
 	if(m_maxLightIds == 0)
 	{
 		ANKI_R_LOGE("Incorrect number of max light indices");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	m_clusterCounts[0] = config.getNumber("r.clusterSizeX");
@@ -121,7 +121,7 @@ Error LightShading::initInternal(const ConfigSet& config)
 	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error LightShading::binLights(RenderingContext& ctx)
@@ -145,7 +145,7 @@ Error LightShading::binLights(RenderingContext& ctx)
 		ctx.m_lightShading.m_diffDecalTex,
 		ctx.m_lightShading.m_normRoughnessDecalTex));
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void LightShading::run(RenderingContext& ctx)

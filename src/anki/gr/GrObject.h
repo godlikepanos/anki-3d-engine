@@ -27,6 +27,7 @@ enum GrObjectType : U16
 	TEXTURE,
 	SHADER_PROGRAM,
 	FENCE,
+	RENDER_GRAPH,
 	COUNT
 };
 

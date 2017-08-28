@@ -42,7 +42,7 @@ private:
 		Thread& self = *reinterpret_cast<Thread*>(info.m_userData);
 
 		self.m_hive->threadRun(self.m_id);
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 };
 

@@ -44,7 +44,7 @@ Error FrustumComponent::update(SceneNode& node, F32, F32, Bool& updated)
 		m_flags.unset(SHAPE_MARKED_FOR_UPDATE | TRANSFORM_MARKED_FOR_UPDATE);
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

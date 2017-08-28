@@ -172,10 +172,10 @@ Error ShaderImpl::init(ShaderType type, const CString& source)
 		logShaderErrorCode(compilerLog.toCString(), fullSrc.toCString(), alloc);
 
 		// Compilation failed, set error anyway
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

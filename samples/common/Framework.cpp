@@ -27,7 +27,7 @@ Error SampleApp::init(int argc, char** argv)
 
 	ANKI_CHECK(sampleExtraInit());
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error SampleApp::userMainLoop(Bool& quit)
@@ -44,7 +44,7 @@ Error SampleApp::userMainLoop(Bool& quit)
 	if(in.getKey(KeyCode::ESCAPE))
 	{
 		quit = true;
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 
 	// move the camera
@@ -136,5 +136,5 @@ Error SampleApp::userMainLoop(Bool& quit)
 		mover->rotateLocalX(ROTATE_ANGLE * in.getMousePosition().y() * MOUSE_SENSITIVITY);
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }

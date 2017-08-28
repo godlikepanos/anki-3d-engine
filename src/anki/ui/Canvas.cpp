@@ -32,7 +32,7 @@ Error Canvas::init(FontPtr font, U32 fontHeight)
 	if(!nk_init(&m_nkCtx, &alloc, &m_font->getFont(fontHeight)))
 	{
 		ANKI_UI_LOGE("nk_init() failed");
-		return ErrorCode::FUNCTION_FAILED;
+		return Error::FUNCTION_FAILED;
 	}
 
 	nk_buffer_init(&m_nkCmdsBuff, &alloc, 1_KB);
@@ -54,7 +54,7 @@ Error Canvas::init(FontPtr font, U32 fontHeight)
 		getAllocator().getMemoryPool().getAllocationCallbackUserData(),
 		512_B);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void Canvas::reset()

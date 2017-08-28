@@ -102,7 +102,7 @@ public:
 	/// Called when there is an update in the world transformation.
 	virtual ANKI_USE_RESULT Error onMoveComponentUpdate(SceneNode& node, F32 prevTime, F32 crntTime)
 	{
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 
 	/// @name SceneComponent overrides

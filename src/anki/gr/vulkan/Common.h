@@ -79,7 +79,7 @@ const U DESCRIPTOR_FRAME_BUFFERING = 60 * 5; ///< How many frames worth of descr
 		if((rez = (x)) < 0)                                                     \
 		{                                                                       \
 			ANKI_VK_LOGE("Vulkan function failed (VkResult: %d): %s", rez, #x); \
-			return ErrorCode::FUNCTION_FAILED;                                  \
+			return Error::FUNCTION_FAILED;                                      \
 		}                                                                       \
 	} while(0)
 

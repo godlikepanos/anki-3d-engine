@@ -79,7 +79,7 @@ Error MainRenderer::create(ThreadPool* threadpool,
 
 	ANKI_R_LOGI("Main renderer initialized. Rendering size %ux%u", m_width, m_height);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error MainRenderer::render(RenderQueue& rqueue)
@@ -138,7 +138,7 @@ Error MainRenderer::render(RenderQueue& rqueue)
 
 	ANKI_TRACE_STOP_EVENT(RENDER);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Dbg& MainRenderer::getDbg()

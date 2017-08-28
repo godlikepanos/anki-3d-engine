@@ -36,7 +36,7 @@ Error SpatialComponent::update(SceneNode&, F32, F32, Bool& updated)
 		m_flags.unset(Flag::MARKED_FOR_UPDATE);
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

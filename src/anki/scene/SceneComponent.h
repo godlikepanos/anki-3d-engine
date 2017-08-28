@@ -70,13 +70,13 @@ public:
 	virtual ANKI_USE_RESULT Error update(SceneNode& node, F32 prevTime, F32 crntTime, Bool& updated)
 	{
 		updated = false;
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 
 	/// Called if SceneComponent::update returned true.
 	virtual ANKI_USE_RESULT Error onUpdate(SceneNode& node, F32 prevTime, F32 crntTime)
 	{
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 
 	/// Called only by the SceneGraph

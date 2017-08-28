@@ -199,7 +199,7 @@ public:
 			static_cast<ParticleEmitter&>(node).onMoveComponentUpdate(move);
 		}
 
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 };
 
@@ -263,7 +263,7 @@ Error ParticleEmitter::init(const CString& filename)
 	// Create the vertex buffer and object
 	m_vertBuffSize = m_maxNumOfParticles * VERTEX_SIZE;
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void ParticleEmitter::drawCallback(RenderQueueDrawContext& ctx, WeakArray<const void*> userData)
@@ -484,7 +484,7 @@ Error ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 		m_timeLeftForNextEmission -= crntTime - prevUpdateTime;
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

@@ -88,7 +88,7 @@ public:
 		if(m_archive == nullptr)
 		{
 			ANKI_RESOURCE_LOGE("Failed to open archive");
-			return ErrorCode::FILE_ACCESS;
+			return Error::FILE_ACCESS;
 		}
 
 		// Locate archived
@@ -96,14 +96,14 @@ public:
 		if(unzLocateFile(m_archive, &archivedFname[0], caseSensitive) != UNZ_OK)
 		{
 			ANKI_RESOURCE_LOGE("Failed to locate file in archive");
-			return ErrorCode::FILE_ACCESS;
+			return Error::FILE_ACCESS;
 		}
 
 		// Open file
 		if(unzOpenCurrentFile(m_archive) != UNZ_OK)
 		{
 			ANKI_RESOURCE_LOGE("unzOpenCurrentFile() failed");
-			return ErrorCode::FILE_ACCESS;
+			return Error::FILE_ACCESS;
 		}
 
 		// Get size just in case
@@ -113,7 +113,7 @@ public:
 		m_size = zinfo.uncompressed_size;
 		ANKI_ASSERT(m_size != 0);
 
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 
 	void close()
@@ -135,10 +135,10 @@ public:
 		if(I64(size) != readSize)
 		{
 			ANKI_RESOURCE_LOGE("File read failed");
-			return ErrorCode::FILE_ACCESS;
+			return Error::FILE_ACCESS;
 		}
 
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 
 	ANKI_USE_RESULT Error readAllText(GenericMemoryPoolAllocator<U8> alloc, String& out) override
@@ -152,14 +152,14 @@ public:
 	{
 		// Assume machine and file have same endianness
 		ANKI_CHECK(read(&u, sizeof(u)));
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 
 	ANKI_USE_RESULT Error readF32(F32& u) override
 	{
 		// Assume machine and file have same endianness
 		ANKI_CHECK(read(&u, sizeof(u)));
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 
 	ANKI_USE_RESULT Error seek(PtrSize offset, SeekOrigin origin) override
@@ -170,7 +170,7 @@ public:
 			if(unzCloseCurrentFile(m_archive) || unzOpenCurrentFile(m_archive))
 			{
 				ANKI_RESOURCE_LOGE("Rewind failed");
-				return ErrorCode::FUNCTION_FAILED;
+				return Error::FUNCTION_FAILED;
 			}
 		}
 
@@ -183,7 +183,7 @@ public:
 			offset -= toRead;
 		}
 
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 
 	PtrSize getSize() const override
@@ -213,7 +213,7 @@ Error ResourceFilesystem::init(const ConfigSet& config, const CString& cacheDir)
 	if(paths.getSize() < 1)
 	{
 		ANKI_RESOURCE_LOGE("Config option \"rsrc.dataPaths\" is empty");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	for(auto& path : paths)
@@ -224,7 +224,7 @@ Error ResourceFilesystem::init(const ConfigSet& config, const CString& cacheDir)
 
 	addCachePath(cacheDir);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void ResourceFilesystem::addCachePath(const CString& path)
@@ -250,7 +250,7 @@ Error ResourceFilesystem::addNewPath(const CString& path)
 		if(!zfile)
 		{
 			ANKI_RESOURCE_LOGE("Failed to open archive");
-			return ErrorCode::FILE_ACCESS;
+			return Error::FILE_ACCESS;
 		}
 
 		// List files
@@ -258,7 +258,7 @@ Error ResourceFilesystem::addNewPath(const CString& path)
 		{
 			unzClose(zfile);
 			ANKI_RESOURCE_LOGE("unzGoToFirstFile() failed. Empty archive?");
-			return ErrorCode::FILE_ACCESS;
+			return Error::FILE_ACCESS;
 		}
 
 		Path p;
@@ -274,7 +274,7 @@ Error ResourceFilesystem::addNewPath(const CString& path)
 			{
 				unzClose(zfile);
 				ANKI_RESOURCE_LOGE("unzGetCurrentFileInfo() failed");
-				return ErrorCode::FILE_ACCESS;
+				return Error::FILE_ACCESS;
 			}
 
 			// If compressed size is zero then it's a dir
@@ -299,30 +299,30 @@ Error ResourceFilesystem::addNewPath(const CString& path)
 		ANKI_CHECK(walkDirectoryTree(path, this, [](const CString& fname, void* ud, Bool isDir) -> Error {
 			if(isDir)
 			{
-				return ErrorCode::NONE;
+				return Error::NONE;
 			}
 
 			ResourceFilesystem* self = static_cast<ResourceFilesystem*>(ud);
 
 			Path& p = self->m_paths.getFront();
 			p.m_files.pushBackSprintf(self->m_alloc, "%s", &fname[0]);
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}));
 
 		if(p.m_files.getSize() < 1)
 		{
 			ANKI_RESOURCE_LOGE("Directory is empty: %s", &path[0]);
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error ResourceFilesystem::openFile(const ResourceFilename& filename, ResourceFilePtr& filePtr)
 {
 	ResourceFile* rfile = nullptr;
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 
 	// Search for the fname in reverse order
 	for(const Path& p : m_paths)
@@ -394,12 +394,12 @@ Error ResourceFilesystem::openFile(const ResourceFilename& filename, ResourceFil
 	if(!rfile)
 	{
 		ANKI_RESOURCE_LOGE("File not found: %s", &filename[0]);
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	// Done
 	filePtr.reset(rfile);
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

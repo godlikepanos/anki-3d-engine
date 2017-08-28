@@ -56,7 +56,7 @@ Error ReflectionProxyComponent::update(SceneNode& node, F32 prevTime, F32 crntTi
 		updated = false;
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

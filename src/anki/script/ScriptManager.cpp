@@ -42,7 +42,7 @@ Error ScriptManager::init(AllocAlignedCallback allocCb, void* allocCbData, Scene
 
 #undef ANKI_SCRIPT_CALL_WRAP
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

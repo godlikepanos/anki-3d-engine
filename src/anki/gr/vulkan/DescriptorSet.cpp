@@ -57,7 +57,7 @@ public:
 			ANKI_CHECK(newSet(hash, bindings, out));
 		}
 
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 
 private:
@@ -121,7 +121,7 @@ DSThreadAllocator::~DSThreadAllocator()
 Error DSThreadAllocator::init()
 {
 	ANKI_CHECK(createNewPool());
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error DSThreadAllocator::createNewPool()
@@ -155,7 +155,7 @@ Error DSThreadAllocator::createNewPool()
 	m_pools.resize(m_layoutEntry->m_factory->m_alloc, m_pools.getSize() + 1);
 	m_pools[m_pools.getSize() - 1] = pool;
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 const DS* DSThreadAllocator::tryFindSet(U64 hash)
@@ -245,7 +245,7 @@ Error DSThreadAllocator::newSet(
 	writeSet(bindings, *out);
 
 	out_ = out;
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void DSThreadAllocator::writeSet(const Array<AnyBinding, MAX_BINDINGS_PER_DESCRIPTOR_SET>& bindings, const DS& set)
@@ -413,7 +413,7 @@ Error DSLayoutCacheEntry::init(const DescriptorBinding* bindings, U bindingCount
 	m_poolCreateInf.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	m_poolCreateInf.poolSizeCount = poolSizeCount;
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error DSLayoutCacheEntry::getOrCreateThreadAllocator(ThreadId tid, DSThreadAllocator*& alloc)
@@ -461,7 +461,7 @@ Error DSLayoutCacheEntry::getOrCreateThreadAllocator(ThreadId tid, DSThreadAlloc
 	}
 
 	ANKI_ASSERT(alloc);
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void DescriptorSetState::flush(Bool& stateDirty,
@@ -606,7 +606,7 @@ Error DescriptorSetFactory::newDescriptorSetLayout(const DescriptorSetLayoutInit
 	layout.m_handle = cache->m_layoutHandle;
 	layout.m_entry = cache;
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error DescriptorSetFactory::newDescriptorSet(ThreadId tid,
@@ -624,7 +624,7 @@ Error DescriptorSetFactory::newDescriptorSet(ThreadId tid,
 	if(!dirty)
 	{
 		ANKI_TRACE_STOP_EVENT(VK_DESCRIPTOR_SET_GET_OR_CREATE);
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 
 	DescriptorSetLayout layout = state.m_layout;
@@ -641,7 +641,7 @@ Error DescriptorSetFactory::newDescriptorSet(ThreadId tid,
 	ANKI_ASSERT(set.m_handle != VK_NULL_HANDLE);
 
 	ANKI_TRACE_STOP_EVENT(VK_DESCRIPTOR_SET_GET_OR_CREATE);
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

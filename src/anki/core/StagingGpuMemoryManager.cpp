@@ -45,7 +45,7 @@ Error StagingGpuMemoryManager::init(GrManager* gr, const ConfigSet& cfg)
 	gr->getTextureBufferInfo(alignment, maxSize);
 	initBuffer(StagingGpuMemoryType::TEXTURE, alignment, maxSize, BufferUsageBit::TEXTURE_ALL, *gr);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void StagingGpuMemoryManager::initBuffer(

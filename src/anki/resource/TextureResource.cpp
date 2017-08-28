@@ -196,7 +196,7 @@ Error TextureResource::load(const ResourceFilename& filename, Bool async)
 
 	m_size = UVec3(init.m_width, init.m_height, init.m_depth);
 	m_layerCount = init.m_layerCount;
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error TextureResource::load(LoadingContext& ctx)
@@ -320,7 +320,7 @@ Error TextureResource::load(LoadingContext& ctx)
 		cmdb.reset(nullptr);
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

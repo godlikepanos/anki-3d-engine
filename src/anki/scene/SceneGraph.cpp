@@ -50,7 +50,7 @@ SceneGraph::~SceneGraph()
 {
 	Error err = iterateSceneNodes([&](SceneNode& s) -> Error {
 		s.setMarkedForDeletion();
-		return ErrorCode::NONE;
+		return Error::NONE;
 	});
 	(void)err;
 
@@ -99,7 +99,7 @@ Error SceneGraph::init(AllocAlignedCallback allocCb,
 	m_defaultMainCam->setAll(toRad(60.0), toRad(60.0), 0.1, 1000.0);
 	m_mainCam = m_defaultMainCam;
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error SceneGraph::registerNode(SceneNode* node)
@@ -112,7 +112,7 @@ Error SceneGraph::registerNode(SceneNode* node)
 		if(tryFindSceneNode(node->getName()))
 		{
 			ANKI_SCENE_LOGE("Node with the same name already exists");
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 
 		m_nodesDict.pushBack(m_alloc, node->getName(), node);
@@ -122,7 +122,7 @@ Error SceneGraph::registerNode(SceneNode* node)
 	m_nodes.pushBack(node);
 	++m_nodesCount;
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void SceneGraph::unregisterNode(SceneNode* node)
@@ -233,7 +233,7 @@ Error SceneGraph::update(F32 prevUpdateTime, F32 crntTime)
 	ANKI_CHECK(threadPool.waitForAllThreadsToFinish());
 	ANKI_TRACE_STOP_EVENT(SCENE_NODES_UPDATE);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void SceneGraph::doVisibilityTests(RenderQueue& rqueue)
@@ -245,7 +245,7 @@ Error SceneGraph::updateNode(F32 prevTime, F32 crntTime, SceneNode& node)
 {
 	ANKI_TRACE_INC_COUNTER(SCENE_NODES_UPDATED, 1);
 
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 
 	// Components update
 	Timestamp componentTimestam = 0;
@@ -281,7 +281,7 @@ Error SceneGraph::updateNodes(UpdateSceneNodesCtx& ctx) const
 	SpinLock& lock = ctx.m_crntNodeLock;
 
 	Bool quit = false;
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 	while(!quit && !err)
 	{
 		// Fetch a few scene nodes

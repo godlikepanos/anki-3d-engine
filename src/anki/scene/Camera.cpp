@@ -28,7 +28,7 @@ public:
 			cam.onMoveComponentUpdate(move);
 		}
 
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 };
 
@@ -52,7 +52,7 @@ public:
 			cam.onFrustumComponentUpdate(fr);
 		}
 
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 };
 
@@ -87,7 +87,7 @@ Error Camera::init(Frustum* frustum)
 	// Spatial component
 	newComponent<SpatialComponent>(this, frustum);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Camera::~Camera()

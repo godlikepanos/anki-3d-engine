@@ -55,7 +55,7 @@ PhysicsWorld::~PhysicsWorld()
 
 Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
 {
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 
 	m_alloc = HeapAllocator<U8>(allocCb, allocCbData);
 
@@ -68,7 +68,7 @@ Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
 	if(!m_world)
 	{
 		ANKI_PHYS_LOGE("NewtonCreate() failed");
-		return ErrorCode::FUNCTION_FAILED;
+		return Error::FUNCTION_FAILED;
 	}
 
 	// Set the simplified solver mode (faster but less accurate)
@@ -106,7 +106,7 @@ Error PhysicsWorld::updateAsync(F32 dt)
 	// Update
 	NewtonUpdateAsync(m_world, dt);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void PhysicsWorld::waitUpdate()

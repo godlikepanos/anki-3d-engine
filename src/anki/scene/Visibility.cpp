@@ -331,7 +331,7 @@ void VisibilityTestTask::test(ThreadHive& hive)
 
 			++spIdx;
 
-			return ErrorCode::NONE;
+			return Error::NONE;
 		});
 		(void)err;
 
@@ -489,7 +489,7 @@ void VisibilityTestTask::test(ThreadHive& hive)
 			count = 0;
 			err = node.iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& frc) {
 				m_visCtx->submitNewWork(frc, nextQueues[count++], hive);
-				return ErrorCode::NONE;
+				return Error::NONE;
 			});
 			(void)err;
 		}

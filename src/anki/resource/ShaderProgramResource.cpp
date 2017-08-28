@@ -13,7 +13,7 @@ namespace anki
 
 static ANKI_USE_RESULT Error computeShaderVariableDataType(const CString& str, ShaderVariableDataType& out)
 {
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 
 	if(str == "int")
 	{
@@ -86,7 +86,7 @@ static ANKI_USE_RESULT Error computeShaderVariableDataType(const CString& str, S
 	else
 	{
 		ANKI_RESOURCE_LOGE("Incorrect variable type %s", &str[0]);
-		err = ErrorCode::USER_DATA;
+		err = Error::USER_DATA;
 	}
 
 	return err;
@@ -95,7 +95,7 @@ static ANKI_USE_RESULT Error computeShaderVariableDataType(const CString& str, S
 /// Given a string return info about the shader.
 static ANKI_USE_RESULT Error getShaderInfo(const CString& str, ShaderType& type, ShaderTypeBit& bit, U& idx)
 {
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 
 	if(str == "vert")
 	{
@@ -136,7 +136,7 @@ static ANKI_USE_RESULT Error getShaderInfo(const CString& str, ShaderType& type,
 	else
 	{
 		ANKI_RESOURCE_LOGE("Incorrect type %s", (str) ? &str[0] : "<empty string>");
-		err = ErrorCode::USER_DATA;
+		err = Error::USER_DATA;
 	}
 
 	return err;
@@ -205,7 +205,7 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, Bool async)
 		if(m_descriptorSet >= MAX_DESCRIPTOR_SETS)
 		{
 			ANKI_RESOURCE_LOGE("<descriptorSet> should be lower than %u", U(MAX_DESCRIPTOR_SETS - 1));
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 	}
 	else
@@ -235,7 +235,7 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, Bool async)
 			if(name.isEmpty())
 			{
 				ANKI_RESOURCE_LOGE("Mutator name is empty");
-				return ErrorCode::USER_DATA;
+				return Error::USER_DATA;
 			}
 
 			// Check if already there
@@ -244,7 +244,7 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, Bool async)
 				if(m_mutators[i].m_name == name)
 				{
 					ANKI_RESOURCE_LOGE("Mutator aleady present %s", &name[0]);
-					return ErrorCode::USER_DATA;
+					return Error::USER_DATA;
 				}
 			}
 
@@ -254,7 +254,7 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, Bool async)
 			if(values.getSize() < 1)
 			{
 				ANKI_RESOURCE_LOGE("Mutator doesn't have any values %s", &name[0]);
-				return ErrorCode::USER_DATA;
+				return Error::USER_DATA;
 			}
 
 			std::sort(values.getBegin(), values.getEnd());
@@ -263,7 +263,7 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, Bool async)
 				if(values[i - 1] == values[i])
 				{
 					ANKI_RESOURCE_LOGE("Mutator %s has duplicate values %d", &name[0], values[i]);
-					return ErrorCode::USER_DATA;
+					return Error::USER_DATA;
 				}
 			}
 
@@ -276,7 +276,7 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, Bool async)
 				if(m_instancingMutator)
 				{
 					ANKI_RESOURCE_LOGE("Cannot have more than one instancing mutator");
-					return ErrorCode::USER_DATA;
+					return Error::USER_DATA;
 				}
 
 				m_instancingMutator = &m_mutators[count];
@@ -362,7 +362,7 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, Bool async)
 		if(!!(presentShaders & shaderTypeBit))
 		{
 			ANKI_RESOURCE_LOGE("Shader is present more than once: %s", &shaderTypeTxt[0]);
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 		presentShaders |= shaderTypeBit;
 
@@ -408,7 +408,7 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, Bool async)
 		if(presentShaders != ShaderTypeBit::COMPUTE)
 		{
 			ANKI_RESOURCE_LOGE("Can't combine compute shader with other types of shaders");
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 	}
 	else
@@ -416,13 +416,13 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, Bool async)
 		if(!(presentShaders & ShaderTypeBit::VERTEX))
 		{
 			ANKI_RESOURCE_LOGE("Missing vertex shader");
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 
 		if(!(presentShaders & ShaderTypeBit::FRAGMENT))
 		{
 			ANKI_RESOURCE_LOGE("Missing fragment shader");
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 	}
 
@@ -483,7 +483,7 @@ Error ShaderProgramResource::load(const ResourceFilename& filename, Bool async)
 		}
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error ShaderProgramResource::parseInputs(XmlElement& inputsEl,
@@ -506,7 +506,7 @@ Error ShaderProgramResource::parseInputs(XmlElement& inputsEl,
 		if(name.isEmpty())
 		{
 			ANKI_RESOURCE_LOGE("Input variable name is empty");
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 		var.m_name.create(getAllocator(), name);
 
@@ -544,7 +544,7 @@ Error ShaderProgramResource::parseInputs(XmlElement& inputsEl,
 				if(mutatorName.isEmpty())
 				{
 					ANKI_RESOURCE_LOGE("Empty mutator name in input variable %s", &name[0]);
-					return ErrorCode::USER_DATA;
+					return Error::USER_DATA;
 				}
 
 				// Find the mutator
@@ -552,7 +552,7 @@ Error ShaderProgramResource::parseInputs(XmlElement& inputsEl,
 				if(!foundMutator)
 				{
 					ANKI_RESOURCE_LOGE("Input variable %s can't link to unknown mutator %s", &name[0], &mutatorName[0]);
-					return ErrorCode::USER_DATA;
+					return Error::USER_DATA;
 				}
 
 				// Get values
@@ -562,7 +562,7 @@ Error ShaderProgramResource::parseInputs(XmlElement& inputsEl,
 				{
 					ANKI_RESOURCE_LOGE(
 						"Mutator %s doesn't have any values for input variable %s", &mutatorName[0], &name[0]);
-					return ErrorCode::USER_DATA;
+					return Error::USER_DATA;
 				}
 
 				// Sanity check values
@@ -575,7 +575,7 @@ Error ShaderProgramResource::parseInputs(XmlElement& inputsEl,
 					{
 						ANKI_RESOURCE_LOGE(
 							"Mutator %s for input var %s has duplicate values", &mutatorName[0], &name[0]);
-						return ErrorCode::USER_DATA;
+						return Error::USER_DATA;
 					}
 
 					if(!foundMutator->valueExists(val))
@@ -584,7 +584,7 @@ Error ShaderProgramResource::parseInputs(XmlElement& inputsEl,
 							"Mutator %s for input variable %s has a value that is not part of the mutator",
 							&mutatorName[0],
 							&name[0]);
-						return ErrorCode::USER_DATA;
+						return Error::USER_DATA;
 					}
 				}
 
@@ -611,13 +611,13 @@ Error ShaderProgramResource::parseInputs(XmlElement& inputsEl,
 		if(instanced && !m_instancingMutator)
 		{
 			ANKI_RESOURCE_LOGE("Input variable \"%s\" is instanced but there is no instanced mutator", &name[0]);
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 
 		if(instanced && m_compute)
 		{
 			ANKI_RESOURCE_LOGE("Compute program can't be instanced");
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 
 		var.m_instanced = instanced != 0;
@@ -626,19 +626,19 @@ Error ShaderProgramResource::parseInputs(XmlElement& inputsEl,
 		if(var.isTexture() && var.m_const)
 		{
 			ANKI_RESOURCE_LOGE("Can't have a texture to be const: %s", &var.m_name[0]);
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 
 		if(var.m_const && var.isInstanced())
 		{
 			ANKI_RESOURCE_LOGE("Can't have input variables that are instanced and const: %s", &var.m_name[0]);
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 
 		if(var.isTexture() && var.isInstanced())
 		{
 			ANKI_RESOURCE_LOGE("Can't have texture that is instanced: %s", &var.m_name[0]);
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 
 		for(U i = 0; i < inputVarCount; ++i)
@@ -647,7 +647,7 @@ Error ShaderProgramResource::parseInputs(XmlElement& inputsEl,
 			if(b.m_name == var.m_name)
 			{
 				ANKI_RESOURCE_LOGE("Duplicate input variable found: %s", &var.m_name[0]);
-				return ErrorCode::USER_DATA;
+				return Error::USER_DATA;
 			}
 		}
 
@@ -656,7 +656,7 @@ Error ShaderProgramResource::parseInputs(XmlElement& inputsEl,
 			&& var.m_const)
 		{
 			ANKI_RESOURCE_LOGE("Matrix input variable %s cannot be constant", &var.m_name[0]);
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 
 		// Write the _DEFINED
@@ -730,7 +730,7 @@ Error ShaderProgramResource::parseInputs(XmlElement& inputsEl,
 		ANKI_CHECK(inputEl.getNextSiblingElement("input", inputEl));
 	} while(inputEl);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void ShaderProgramResource::compInputVarDefineString(

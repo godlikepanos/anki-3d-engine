@@ -27,7 +27,7 @@ Error GenericResource::load(const ResourceFilename& filename, Bool async)
 	m_data.create(getAllocator(), size);
 	ANKI_CHECK(file->read(&m_data[0], size));
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

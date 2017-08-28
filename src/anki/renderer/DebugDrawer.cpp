@@ -47,7 +47,7 @@ Error DebugDrawer::init(Renderer* r)
 	m_vpMat.setIdentity();
 	m_mvpMat.setIdentity();
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void DebugDrawer::prepareFrame(CommandBufferPtr& jobs)
@@ -388,7 +388,7 @@ void CollisionDebugDrawer::visit(const CompoundShape& cs)
 	CollisionDebugDrawer* self = this;
 	Error err = cs.iterateShapes([&](const CollisionShape& a) -> Error {
 		a.accept(*self);
-		return ErrorCode::NONE;
+		return Error::NONE;
 	});
 	(void)err;
 }

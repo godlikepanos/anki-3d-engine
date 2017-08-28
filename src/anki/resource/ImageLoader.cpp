@@ -34,7 +34,7 @@ static ANKI_USE_RESULT Error loadUncompressedTga(ResourceFilePtr fs,
 	if((width == 0) || (height == 0) || ((bpp != 24) && (bpp != 32)))
 	{
 		ANKI_RESOURCE_LOGE("Invalid image information");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	// read the data
@@ -52,7 +52,7 @@ static ANKI_USE_RESULT Error loadUncompressedTga(ResourceFilePtr fs,
 		data[i + 2] = temp;
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 static ANKI_USE_RESULT Error loadCompressedTga(ResourceFilePtr fs,
@@ -72,7 +72,7 @@ static ANKI_USE_RESULT Error loadCompressedTga(ResourceFilePtr fs,
 	if((width <= 0) || (height <= 0) || ((bpp != 24) && (bpp != 32)))
 	{
 		ANKI_RESOURCE_LOGE("Invalid texture information");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	I bytesPerPxl = (bpp / 8);
@@ -112,7 +112,7 @@ static ANKI_USE_RESULT Error loadCompressedTga(ResourceFilePtr fs,
 				if(currentpixel > pixelcount)
 				{
 					ANKI_RESOURCE_LOGE("Too many pixels read");
-					return ErrorCode::USER_DATA;
+					return Error::USER_DATA;
 				}
 			}
 		}
@@ -139,13 +139,13 @@ static ANKI_USE_RESULT Error loadCompressedTga(ResourceFilePtr fs,
 				{
 					ANKI_RESOURCE_LOGE("Too many pixels read");
 					data.destroy(alloc);
-					return ErrorCode::USER_DATA;
+					return Error::USER_DATA;
 				}
 			}
 		}
 	} while(currentpixel < pixelcount);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 static ANKI_USE_RESULT Error loadTga(ResourceFilePtr fs,
@@ -170,16 +170,16 @@ static ANKI_USE_RESULT Error loadTga(ResourceFilePtr fs,
 	else
 	{
 		ANKI_RESOURCE_LOGE("Invalid image header");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	if(bpp != 32 && bpp != 24)
 	{
 		ANKI_RESOURCE_LOGE("Invalid bpp");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 class AnkiTextureHeader
@@ -329,7 +329,7 @@ static ANKI_USE_RESULT Error loadAnkiTexture(ResourceFilePtr file,
 	if(std::memcmp(&header.m_magic[0], "ANKITEX1", 8) != 0)
 	{
 		ANKI_RESOURCE_LOGE("Wrong magic word");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	if(header.m_width == 0 || !isPowerOfTwo(header.m_width) || header.m_width > 4096 || header.m_height == 0
@@ -337,25 +337,25 @@ static ANKI_USE_RESULT Error loadAnkiTexture(ResourceFilePtr file,
 		|| header.m_height > 4096)
 	{
 		ANKI_RESOURCE_LOGE("Incorrect width/height value");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	if(header.m_depthOrLayerCount < 1 || header.m_depthOrLayerCount > 4096)
 	{
 		ANKI_RESOURCE_LOGE("Zero or too big depth or layerCount");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	if(header.m_type < ImageLoader::TextureType::_2D || header.m_type > ImageLoader::TextureType::_2D_ARRAY)
 	{
 		ANKI_RESOURCE_LOGE("Incorrect header: texture type");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	if(header.m_colorFormat < ImageLoader::ColorFormat::RGB8 || header.m_colorFormat > ImageLoader::ColorFormat::RGBA8)
 	{
 		ANKI_RESOURCE_LOGE("Incorrect header: color format");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	if((header.m_compressionFormats & preferredCompression) == ImageLoader::DataCompression::NONE)
@@ -368,14 +368,14 @@ static ANKI_USE_RESULT Error loadAnkiTexture(ResourceFilePtr file,
 		if((header.m_compressionFormats & preferredCompression) == ImageLoader::DataCompression::NONE)
 		{
 			ANKI_RESOURCE_LOGE("File does not contain raw compression");
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 	}
 
 	if(header.m_normal != 0 && header.m_normal != 1)
 	{
 		ANKI_RESOURCE_LOGE("Incorrect header: normal");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	width = header.m_width;
@@ -407,7 +407,7 @@ static ANKI_USE_RESULT Error loadAnkiTexture(ResourceFilePtr file,
 	if(header.m_mipLevels > tmpMipLevels)
 	{
 		ANKI_RESOURCE_LOGE("Incorrect number of mip levels");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	toLoadMipCount = min<U>(toLoadMipCount, header.m_mipLevels);
@@ -552,7 +552,7 @@ static ANKI_USE_RESULT Error loadAnkiTexture(ResourceFilePtr file,
 		}
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error ImageLoader::load(ResourceFilePtr file, const CString& filename, U32 maxTextureSize)
@@ -564,7 +564,7 @@ Error ImageLoader::load(ResourceFilePtr file, const CString& filename, U32 maxTe
 	if(ext.isEmpty())
 	{
 		ANKI_RESOURCE_LOGE("Failed to get filename extension");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	// load from this extension
@@ -624,10 +624,10 @@ Error ImageLoader::load(ResourceFilePtr file, const CString& filename, U32 maxTe
 	else
 	{
 		ANKI_RESOURCE_LOGE("Unsupported extension: %s", &ext[0]);
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 const ImageLoader::Surface& ImageLoader::getSurface(U level, U face, U layer) const

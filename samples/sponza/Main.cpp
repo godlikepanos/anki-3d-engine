@@ -18,13 +18,13 @@ public:
 		ANKI_CHECK(getScriptManager().evalString(script->getSource()));
 
 		getMainRenderer().getOffscreenRenderer().getVolumetric().setFogParticleColor(Vec3(1.0, 0.9, 0.9) * 0.009);
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 };
 
 int main(int argc, char* argv[])
 {
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 
 	MyApp* app = new MyApp;
 	err = app->init(argc, argv);

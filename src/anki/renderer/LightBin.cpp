@@ -335,7 +335,7 @@ public:
 	Error operator()(U32 threadId, PtrSize threadsCount)
 	{
 		m_ctx->m_bin->binLights(threadId, threadsCount, *m_ctx);
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 };
 
@@ -504,7 +504,7 @@ Error LightBin::bin(const Mat4& viewMat,
 	normalRoughnessDecalTexAtlas = ctx.m_normalRoughnessDecalTexAtlas;
 
 	ANKI_TRACE_STOP_EVENT(RENDERER_LIGHT_BINNING);
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void LightBin::binLights(U32 threadId, PtrSize threadsCount, LightBinContext& ctx)

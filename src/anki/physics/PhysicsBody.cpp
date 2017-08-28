@@ -47,7 +47,7 @@ Error PhysicsBody::create(const PhysicsBodyInitInfo& init)
 
 		NewtonSceneCollisionSetSubCollisionMatrix(scene, m_sceneCollisionProxy, &trf[0][0]);
 
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 	else if(init.m_kinematic)
 	{
@@ -61,7 +61,7 @@ Error PhysicsBody::create(const PhysicsBodyInitInfo& init)
 	if(!m_body)
 	{
 		ANKI_PHYS_LOGE("NewtonCreateXXBody() failed");
-		return ErrorCode::FUNCTION_FAILED;
+		return Error::FUNCTION_FAILED;
 	}
 
 	// Material
@@ -84,7 +84,7 @@ Error PhysicsBody::create(const PhysicsBodyInitInfo& init)
 	// Activate
 	NewtonBodySetSimulationState(m_body, true);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void PhysicsBody::setTransform(const Transform& trf)

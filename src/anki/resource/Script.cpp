@@ -21,7 +21,7 @@ Error Script::load(const ResourceFilename& filename, Bool async)
 
 	ANKI_CHECK(file->readAllText(getAllocator(), m_source));
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

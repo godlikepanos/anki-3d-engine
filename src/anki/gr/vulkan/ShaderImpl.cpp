@@ -202,7 +202,7 @@ Error ShaderImpl::genSpirv(const CString& source, std::vector<unsigned int>& spi
 	if(!shader.parse(&GLSLANG_LIMITS, 100, false, messages))
 	{
 		logShaderErrorCode(shader.getInfoLog(), source, getAllocator());
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	// Setup the program
@@ -212,13 +212,13 @@ Error ShaderImpl::genSpirv(const CString& source, std::vector<unsigned int>& spi
 	if(!program.link(messages))
 	{
 		ANKI_VK_LOGE("glslang failed to link a shader");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	// Gen SPIRV
 	glslang::GlslangToSpv(*program.getIntermediate(stage), spirv);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error ShaderImpl::init(ShaderType shaderType, const CString& source)
@@ -314,7 +314,7 @@ Error ShaderImpl::init(ShaderType shaderType, const CString& source)
 	// Get reflection info
 	doReflection(spirv);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void ShaderImpl::doReflection(const std::vector<unsigned int>& spirv)

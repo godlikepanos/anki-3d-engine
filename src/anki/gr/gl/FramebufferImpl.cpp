@@ -23,7 +23,7 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 	if(m_in.m_colorAttachmentCount == 1 && !m_in.m_colorAttachments[0].m_texture.isCreated())
 	{
 		m_bindDefault = true;
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 
 	m_bindDefault = false;
@@ -104,11 +104,11 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 	if(status != GL_FRAMEBUFFER_COMPLETE)
 	{
 		ANKI_GL_LOGE("FBO is incomplete. Status: 0x%x", status);
-		return ErrorCode::FUNCTION_FAILED;
+		return Error::FUNCTION_FAILED;
 	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void FramebufferImpl::attachTextureInternal(

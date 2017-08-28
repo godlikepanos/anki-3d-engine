@@ -15,7 +15,7 @@ namespace anki
 
 static ANKI_USE_RESULT Error xmlVec3(const XmlElement& el_, const CString& str, Vec3& out)
 {
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 	XmlElement el;
 
 	err = el_.getChildElementOptional(str, el);
@@ -30,7 +30,7 @@ static ANKI_USE_RESULT Error xmlVec3(const XmlElement& el_, const CString& str, 
 
 static ANKI_USE_RESULT Error xmlF32(const XmlElement& el_, const CString& str, F32& out)
 {
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 	XmlElement el;
 
 	err = el_.getChildElementOptional(str, el);
@@ -51,7 +51,7 @@ static ANKI_USE_RESULT Error xmlF32(const XmlElement& el_, const CString& str, F
 
 static ANKI_USE_RESULT Error xmlU32(const XmlElement& el_, const CString& str, U32& out)
 {
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 	XmlElement el;
 
 	err = el_.getChildElementOptional(str, el);
@@ -156,44 +156,44 @@ Error ParticleEmitterResource::load(const ResourceFilename& filename, Bool async
 	if(m_particle.m_life <= 0.0)
 	{
 		ANKI_RESOURCE_LOGE(ERROR, "life");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	if(m_particle.m_life - m_particle.m_lifeDeviation <= 0.0)
 	{
 		ANKI_RESOURCE_LOGE(ERROR, "lifeDeviation");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	if(m_particle.m_size <= 0.0)
 	{
 		ANKI_RESOURCE_LOGE(ERROR, "size");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	if(m_maxNumOfParticles < 1)
 	{
 		ANKI_RESOURCE_LOGE(ERROR, "maxNumOfParticles");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	if(m_emissionPeriod <= 0.0)
 	{
 		ANKI_RESOURCE_LOGE(ERROR, "emissionPeriod");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	if(m_particlesPerEmittion < 1)
 	{
 		ANKI_RESOURCE_LOGE(ERROR, "particlesPerEmission");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	// Calc some stuff
 	//
 	updateFlags();
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void ParticleEmitterResource::getRenderingInfo(U lod, ShaderProgramPtr& prog) const

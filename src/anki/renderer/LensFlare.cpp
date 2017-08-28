@@ -47,7 +47,7 @@ Error LensFlare::initInternal(const ConfigSet& config)
 	ANKI_CHECK(initSprite(config));
 	ANKI_CHECK(initOcclusion(config));
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error LensFlare::initSprite(const ConfigSet& config)
@@ -58,7 +58,7 @@ Error LensFlare::initSprite(const ConfigSet& config)
 	if(m_maxSpritesPerFlare < 1 || m_maxFlares < 1)
 	{
 		ANKI_R_LOGE("Incorrect m_maxSpritesPerFlare or m_maxFlares");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	m_maxSprites = m_maxSpritesPerFlare * m_maxFlares;
@@ -72,7 +72,7 @@ Error LensFlare::initSprite(const ConfigSet& config)
 	m_realProg->getOrCreateVariant(consts.get(), variant);
 	m_realGrProg = variant->getProgram();
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error LensFlare::initOcclusion(const ConfigSet& config)
@@ -99,7 +99,7 @@ Error LensFlare::initOcclusion(const ConfigSet& config)
 	m_updateIndirectBuffProg->getOrCreateVariant(variant);
 	m_updateIndirectBuffGrProg = variant->getProgram();
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void LensFlare::resetOcclusionQueries(RenderingContext& ctx, CommandBufferPtr cmdb)

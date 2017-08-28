@@ -61,7 +61,7 @@ Error Font::init(const CString& filename, const std::initializer_list<U32>& font
 
 	nk_font_atlas_cleanup(&m_atlas);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void Font::createTexture(const void* data, U32 width, U32 height)

@@ -85,7 +85,7 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 		m_attachedSurfaces[MAX_COLOR_ATTACHMENTS] = init.m_depthStencilAttachment.m_surface;
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
@@ -187,7 +187,7 @@ Error FramebufferImpl::initFbs(const FramebufferInitInfo& init)
 		ANKI_VK_CHECK(vkCreateFramebuffer(getDevice(), &ci, nullptr, &m_fbs[0]));
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void FramebufferImpl::setupAttachmentDescriptor(

@@ -74,7 +74,7 @@ ANKI_TEST(Util, WalkDir)
 				++(*static_cast<U32*>(pCount));
 			}
 
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}));
 
 	ANKI_TEST_EXPECT_EQ(count, 3);
@@ -86,7 +86,7 @@ ANKI_TEST(Util, WalkDir)
 			printf("-- %s\n", &fname[0]);
 			++(*static_cast<U32*>(pCount));
 
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}));
 
 	ANKI_TEST_EXPECT_EQ(count, 6);
@@ -98,9 +98,9 @@ ANKI_TEST(Util, WalkDir)
 							 [](const CString& fname, void* pCount, Bool isDir) -> Error {
 								 printf("-- %s\n", &fname[0]);
 								 ++(*static_cast<U32*>(pCount));
-								 return ErrorCode::FUNCTION_FAILED;
+								 return Error::FUNCTION_FAILED;
 							 }),
-		ErrorCode::FUNCTION_FAILED);
+		Error::FUNCTION_FAILED);
 
 	ANKI_TEST_EXPECT_EQ(count, 1);
 }

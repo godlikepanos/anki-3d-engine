@@ -90,7 +90,7 @@ public:
 	template<typename Func>
 	ANKI_USE_RESULT Error iterateVariables(Func func)
 	{
-		Error err = ErrorCode::NONE;
+		Error err = Error::NONE;
 		Variables::Iterator it = m_vars.getBegin();
 		for(; it != m_vars.getEnd() && !err; it++)
 		{

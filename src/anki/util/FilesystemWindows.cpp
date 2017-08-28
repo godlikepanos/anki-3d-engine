@@ -39,14 +39,14 @@ Error removeDirectory(const CString& dirname)
 	if(dirname.getLength() > MAX_PATH - 2)
 	{
 		ANKI_UTIL_LOGE("Path too big");
-		return ErrorCode::FUNCTION_FAILED;
+		return Error::FUNCTION_FAILED;
 	}
 
 	Array<char, MAX_PATH> dirname2;
 	memcpy(&dirname2[0], &dirname[0], dirname.getLength() + 1);
 	dirname2[dirname.getLength() + 1] = '\0';
 
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 	SHFILEOPSTRUCTA fileOperation = {
 		NULL, FO_DELETE, &dirname2[0], "", FOF_NOCONFIRMATION | FOF_NOERRORUI | FOF_SILENT, false, 0, ""};
 
@@ -54,7 +54,7 @@ Error removeDirectory(const CString& dirname)
 	if(result != 0)
 	{
 		ANKI_UTIL_LOGE("Could not delete directory %s", &dirname[0]);
-		err = ErrorCode::FUNCTION_FAILED;
+		err = Error::FUNCTION_FAILED;
 	}
 
 	return err;
@@ -62,11 +62,11 @@ Error removeDirectory(const CString& dirname)
 
 Error createDirectory(const CString& dir)
 {
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 	if(CreateDirectory(dir.get(), NULL) == 0)
 	{
 		ANKI_UTIL_LOGE("Failed to create directory %s", dir.get());
-		err = ErrorCode::FUNCTION_FAILED;
+		err = Error::FUNCTION_FAILED;
 	}
 
 	return err;
@@ -80,7 +80,7 @@ Error getHomeDirectory(GenericMemoryPoolAllocator<U8> alloc, String& out)
 	if(homed == nullptr || homep == nullptr)
 	{
 		ANKI_UTIL_LOGE("HOME environment variables not set");
-		return ErrorCode::FUNCTION_FAILED;
+		return Error::FUNCTION_FAILED;
 	}
 
 	out.sprintf(alloc, "%s/%s", homed, homep);
@@ -94,7 +94,7 @@ Error getHomeDirectory(GenericMemoryPoolAllocator<U8> alloc, String& out)
 		}
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 static Error walkDirectoryTreeInternal(
@@ -104,7 +104,7 @@ static Error walkDirectoryTreeInternal(
 	if(dir.getLength() > MAX_PATH_LEN - 2)
 	{
 		ANKI_UTIL_LOGE("Path too long");
-		return ErrorCode::FUNCTION_FAILED;
+		return Error::FUNCTION_FAILED;
 	}
 
 	Array<char, MAX_PATH> dir2;
@@ -129,7 +129,7 @@ static Error walkDirectoryTreeInternal(
 	if(handle == INVALID_HANDLE_VALUE)
 	{
 		ANKI_UTIL_LOGE("FindFirstFile() failed");
-		return ErrorCode::FUNCTION_FAILED;
+		return Error::FUNCTION_FAILED;
 	}
 
 	// Remove '*' from dir2
@@ -148,7 +148,7 @@ static Error walkDirectoryTreeInternal(
 			if(oldLen + filename.getLength() > MAX_PATH_LEN)
 			{
 				ANKI_UTIL_LOGE("Path too long");
-				return ErrorCode::FUNCTION_FAILED;
+				return Error::FUNCTION_FAILED;
 			}
 
 			strcat(&dir2[0], &filename[0]);
@@ -178,11 +178,11 @@ static Error walkDirectoryTreeInternal(
 	{
 		ANKI_UTIL_LOGE("Unknown error");
 		FindClose(handle);
-		return ErrorCode::FUNCTION_FAILED;
+		return Error::FUNCTION_FAILED;
 	}
 
 	FindClose(handle);
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error walkDirectoryTree(const CString& dir, void* userData, WalkDirectoryTreeCallback callback)

@@ -19,7 +19,7 @@ Error NativeWindow::init(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
 	if(SDL_Init(INIT_SUBSYSTEMS) != 0)
 	{
 		ANKI_CORE_LOGE("SDL_Init() failed");
-		return ErrorCode::FUNCTION_FAILED;
+		return Error::FUNCTION_FAILED;
 	}
 
 	//
@@ -36,7 +36,7 @@ Error NativeWindow::init(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
 		|| SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, init.m_doubleBuffer))
 	{
 		ANKI_CORE_LOGE("SDL_GL_SetAttribute() failed");
-		return ErrorCode::FUNCTION_FAILED;
+		return Error::FUNCTION_FAILED;
 	}
 #endif
 
@@ -60,7 +60,7 @@ Error NativeWindow::init(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
 	if(m_impl->m_window == nullptr)
 	{
 		ANKI_CORE_LOGE("SDL_CreateWindow() failed");
-		return ErrorCode::FUNCTION_FAILED;
+		return Error::FUNCTION_FAILED;
 	}
 
 	// Set the size after loading a fullscreen window
@@ -79,7 +79,7 @@ Error NativeWindow::init(NativeWindowInitInfo& init, HeapAllocator<U8>& alloc)
 	}
 
 	ANKI_CORE_LOGI("SDL window created");
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void NativeWindow::destroy()

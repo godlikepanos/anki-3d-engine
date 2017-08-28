@@ -58,7 +58,7 @@ Error Tonemapping::initInternal(const ConfigSet& initializer)
 
 	m_r->getResourceManager().getTransferGpuAllocator().release(handle, fence);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void Tonemapping::run(RenderingContext& ctx)

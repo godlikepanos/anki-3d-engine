@@ -27,7 +27,7 @@ MyApp* app = nullptr;
 //==============================================================================
 Error MyApp::init()
 {
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 	ANKI_LOGI("Other init...");
 
 	SceneGraph& scene = app->getSceneGraph();
@@ -60,13 +60,13 @@ Error MyApp::init()
 			// .loadColorGradingTexture("textures/adis/dungeon.ankitex");
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 //==============================================================================
 Error MyApp::userMainLoop(Bool& quit)
 {
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 	F32 dist = 0.1;
 	F32 ang = toRad(2.5);
 	F32 scale = 0.01;
@@ -217,7 +217,7 @@ Error MyApp::userMainLoop(Bool& quit)
 //==============================================================================
 Error init(int argc, char* argv[])
 {
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 
 	// Config
 	Config config;
@@ -252,7 +252,7 @@ Error init(int argc, char* argv[])
 //==============================================================================
 int main(int argc, char* argv[])
 {
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 
 	err = init(argc, argv);
 

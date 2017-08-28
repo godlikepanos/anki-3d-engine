@@ -20,7 +20,7 @@ Error JitterMoveEvent::init(F32 startTime, F32 duration, SceneNode* node)
 
 	m_originalPos = move.getLocalTransform().getOrigin();
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void JitterMoveEvent::setPositionLimits(const Vec4& posMin, const Vec4& posMax)
@@ -49,7 +49,7 @@ Error JitterMoveEvent::update(F32 prevUpdateTime, F32 crntTime)
 
 	move.setLocalTransform(trf);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

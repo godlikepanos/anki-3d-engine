@@ -72,7 +72,7 @@ Error ShaderProgramImpl::initCompute(ShaderPtr comp)
 
 Error ShaderProgramImpl::link(GLuint vert, GLuint frag)
 {
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 
 	glLinkProgram(m_glName);
 	GLint status = 0;
@@ -92,7 +92,7 @@ Error ShaderProgramImpl::link(GLuint vert, GLuint frag)
 
 		ANKI_GL_LOGE("Link error log follows (vs:%u, fs:%u):\n%s", vert, frag, &infoLogTxt[0]);
 
-		err = ErrorCode::USER_DATA;
+		err = Error::USER_DATA;
 	}
 
 	return err;

@@ -45,7 +45,7 @@ void Sampler::init(const SamplerInitInfo& init)
 			(void)oldState;
 			ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
 
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 

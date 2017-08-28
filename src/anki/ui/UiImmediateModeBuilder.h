@@ -30,7 +30,7 @@ public:
 
 	ANKI_USE_RESULT Error init() const
 	{
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 };
 /// @}

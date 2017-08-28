@@ -53,7 +53,7 @@ Error GrManagerImpl::init(GrManagerInitInfo& init)
 	m_thread->start();
 	m_thread->syncClientServer();
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

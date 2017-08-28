@@ -22,7 +22,7 @@ GlObject::GlObject(GrManager* manager)
 
 Error GlObject::serializeRenderingThread()
 {
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 	State state = State(m_state.load());
 	ANKI_ASSERT(state != State::NEW);
 
@@ -35,7 +35,7 @@ Error GlObject::serializeRenderingThread()
 
 		if(state == State::ERROR)
 		{
-			err = ErrorCode::UNKNOWN;
+			err = Error::UNKNOWN;
 		}
 	}
 
@@ -59,7 +59,7 @@ public:
 	Error operator()(GlState&)
 	{
 		m_callback(1, &m_glName);
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 };
 

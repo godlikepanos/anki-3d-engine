@@ -23,7 +23,7 @@ MoveComponent::~MoveComponent()
 Error MoveComponent::update(SceneNode& node, F32, F32, Bool& updated)
 {
 	updated = updateWorldTransform(node);
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Bool MoveComponent::updateWorldTransform(SceneNode& node)
@@ -75,12 +75,12 @@ Bool MoveComponent::updateWorldTransform(SceneNode& node)
 		Error err = node.visitChildrenMaxDepth(1, [](SceneNode& childNode) -> Error {
 			Error e = childNode.iterateComponentsOfType<MoveComponent>([](MoveComponent& mov) -> Error {
 				mov.markForUpdate();
-				return ErrorCode::NONE;
+				return Error::NONE;
 			});
 
 			(void)e;
 
-			return ErrorCode::NONE;
+			return Error::NONE;
 		});
 
 		(void)err;

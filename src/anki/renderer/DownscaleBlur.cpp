@@ -39,7 +39,7 @@ Error DownscaleBlur::initSubpass(U idx, const UVec2& inputTexSize)
 	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
 	pass.m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error DownscaleBlur::init(const ConfigSet& cfg)
@@ -72,7 +72,7 @@ Error DownscaleBlur::initInternal(const ConfigSet&)
 	m_prog->getOrCreateVariant(variant);
 	m_grProg = variant->getProgram();
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void DownscaleBlur::setPreRunBarriers(RenderingContext& ctx)

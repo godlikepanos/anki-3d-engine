@@ -105,7 +105,7 @@ Error File::open(const CString& filename, FileOpenFlag flags)
 
 Error File::openCFile(const CString& filename, FileOpenFlag flags)
 {
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 	const char* openMode;
 
 	if((flags & FileOpenFlag::READ) != FileOpenFlag::NONE)
@@ -131,7 +131,7 @@ Error File::openCFile(const CString& filename, FileOpenFlag flags)
 	if(m_file == nullptr)
 	{
 		ANKI_UTIL_LOGE("Failed to open file \"%s\", open mode \"%s\"", &filename[0], openMode);
-		err = ErrorCode::FILE_ACCESS;
+		err = Error::FILE_ACCESS;
 	}
 	else
 	{
@@ -147,7 +147,7 @@ Error File::openCFile(const CString& filename, FileOpenFlag flags)
 		if(size < 1)
 		{
 			ANKI_UTIL_LOGE("ftell() failed");
-			err = ErrorCode::FUNCTION_FAILED;
+			err = Error::FUNCTION_FAILED;
 		}
 		else
 		{
@@ -165,13 +165,13 @@ Error File::openAndroidFile(const CString& filename, FileOpenFlag flags)
 	if((flags & FileOpenFlag::WRITE) != FileOpenFlag::NONE)
 	{
 		ANKI_UTIL_LOGE("Cannot write inside archives");
-		return ErrorCode::FILE_ACCESS;
+		return Error::FILE_ACCESS;
 	}
 
 	if((flags & FileOpenFlag::READ) != FileOpenFlag::NONE)
 	{
 		ANKI_UTIL_LOGE("Missing FileOpenFlag::READ flag");
-		return ErrorCode::FILE_ACCESS;
+		return Error::FILE_ACCESS;
 	}
 
 	// Open file
@@ -182,13 +182,13 @@ Error File::openAndroidFile(const CString& filename, FileOpenFlag flags)
 	if(m_file == nullptr)
 	{
 		ANKI_UTIL_LOGE("AAssetManager_open() failed");
-		return ErrorCode::FILE_ACCESS;
+		return Error::FILE_ACCESS;
 	}
 
 	m_flags = flags;
 	m_type = Type::SPECIAL;
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 #endif
 
@@ -218,7 +218,7 @@ void File::close()
 Error File::flush()
 {
 	ANKI_ASSERT(m_file);
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 
 	if((m_flags & FileOpenFlag::WRITE) != FileOpenFlag::NONE)
 	{
@@ -228,7 +228,7 @@ Error File::flush()
 			if(ierr)
 			{
 				ANKI_UTIL_LOGE("fflush() failed");
-				err = ErrorCode::FUNCTION_FAILED;
+				err = Error::FUNCTION_FAILED;
 			}
 		}
 #if ANKI_OS == ANKI_OS_ANDROID
@@ -270,11 +270,11 @@ Error File::read(void* buff, PtrSize size)
 		ANKI_ASSERT(0);
 	}
 
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 	if(static_cast<I64>(size) != readSize)
 	{
 		ANKI_UTIL_LOGE("File read failed");
-		err = ErrorCode::FILE_ACCESS;
+		err = Error::FILE_ACCESS;
 	}
 
 	return err;
@@ -361,7 +361,7 @@ Error File::write(void* buff, PtrSize size)
 	ANKI_ASSERT(m_file);
 	ANKI_ASSERT((m_flags & FileOpenFlag::WRITE) != FileOpenFlag::NONE);
 
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 
 	if(m_type == Type::C)
 	{
@@ -371,14 +371,14 @@ Error File::write(void* buff, PtrSize size)
 		if(writeSize != size)
 		{
 			ANKI_UTIL_LOGE("std::fwrite() failed");
-			err = ErrorCode::FILE_ACCESS;
+			err = Error::FILE_ACCESS;
 		}
 	}
 #if ANKI_OS == ANKI_OS_ANDROID
 	else if(m_type == Type::SPECIAL)
 	{
 		ANKI_UTIL_LOGE("Writting to special files is not supported");
-		err = ErrorCode::FILE_ACCESS;
+		err = Error::FILE_ACCESS;
 	}
 #endif
 	else
@@ -396,7 +396,7 @@ Error File::writeText(CString format, ...)
 	ANKI_ASSERT((m_flags & FileOpenFlag::WRITE) != FileOpenFlag::NONE);
 	ANKI_ASSERT((m_flags & FileOpenFlag::BINARY) == FileOpenFlag::NONE);
 
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 	va_list args;
 	va_start(args, format);
 
@@ -408,7 +408,7 @@ Error File::writeText(CString format, ...)
 	else if(m_type == Type::SPECIAL)
 	{
 		ANKI_UTIL_LOGE("Writting to special files is not supported");
-		err = ErrorCode::FILE_ACCESS;
+		err = Error::FILE_ACCESS;
 	}
 #endif
 	else
@@ -424,14 +424,14 @@ Error File::seek(PtrSize offset, SeekOrigin origin)
 {
 	ANKI_ASSERT(m_file);
 	ANKI_ASSERT(m_flags != FileOpenFlag::NONE);
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 
 	if(m_type == Type::C)
 	{
 		if(fseek(ANKI_CFILE, offset, (I)origin) != 0)
 		{
 			ANKI_UTIL_LOGE("fseek() failed");
-			err = ErrorCode::FUNCTION_FAILED;
+			err = Error::FUNCTION_FAILED;
 		}
 	}
 #if ANKI_OS == ANKI_OS_ANDROID
@@ -440,7 +440,7 @@ Error File::seek(PtrSize offset, SeekOrigin origin)
 		if(AAsset_seek(ANKI_AFILE, offset, origin) == (off_t)-1)
 		{
 			ANKI_UTIL_LOGE("AAsset_seek() failed");
-			err = ErrorCode::FUNCTION_FAILED;
+			err = Error::FUNCTION_FAILED;
 		}
 	}
 #endif
@@ -458,7 +458,7 @@ Error File::identifyFile(const CString& filename,
 	CString& filenameInArchive,
 	Type& type)
 {
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 
 #if ANKI_OS == ANKI_OS_ANDROID
 	if(filename[0] == '$')
@@ -490,7 +490,7 @@ FileOpenFlag File::getMachineEndianness()
 
 Error File::readAllText(GenericMemoryPoolAllocator<U8> alloc, String& out)
 {
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 	PtrSize size = getSize();
 
 	if(size != 0)
@@ -500,7 +500,7 @@ Error File::readAllText(GenericMemoryPoolAllocator<U8> alloc, String& out)
 	}
 	else
 	{
-		err = ErrorCode::FUNCTION_FAILED;
+		err = Error::FUNCTION_FAILED;
 	}
 
 	return err;
@@ -508,7 +508,7 @@ Error File::readAllText(GenericMemoryPoolAllocator<U8> alloc, String& out)
 
 Error File::readAllText(StringAuto& out)
 {
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 	PtrSize size = getSize();
 
 	if(size != 0)
@@ -518,7 +518,7 @@ Error File::readAllText(StringAuto& out)
 	}
 	else
 	{
-		err = ErrorCode::FUNCTION_FAILED;
+		err = Error::FUNCTION_FAILED;
 	}
 
 	return err;

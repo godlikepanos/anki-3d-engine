@@ -116,7 +116,7 @@ private:
 		ANKI_CHECK(m_extractExposure.init(cfg));
 		ANKI_CHECK(m_upscale.init(cfg));
 		ANKI_CHECK(m_sslf.init(cfg));
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 };
 

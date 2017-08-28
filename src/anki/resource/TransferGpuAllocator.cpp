@@ -38,7 +38,7 @@ public:
 		mm->m_mappedMemory = mm->m_buffer->map(0, size, BufferMapAccessBit::WRITE);
 
 		mem = mm;
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 
 	void free(StackGpuAllocatorMemory* mem) final
@@ -107,7 +107,7 @@ Error TransferGpuAllocator::init(PtrSize maxSize, GrManager* gr, ResourceAllocat
 		frame.m_stackAlloc.init(m_alloc, m_interface.get());
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void TransferGpuAllocator::destroy()
@@ -172,7 +172,7 @@ Error TransferGpuAllocator::allocate(PtrSize size, TransferGpuAllocatorHandle& h
 	m_crntFrameAllocatedSize += size;
 	++frame->m_pendingReleases;
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void TransferGpuAllocator::release(TransferGpuAllocatorHandle& handle, FencePtr fence)

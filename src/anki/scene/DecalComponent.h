@@ -84,7 +84,7 @@ public:
 			updateInternal();
 		}
 
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 
 	const Mat4& getBiasProjectionViewMatrix() const

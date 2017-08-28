@@ -114,7 +114,7 @@ Error Thread::join()
 #endif
 
 	// Set return error code
-	ErrorCode code = static_cast<ErrorCode>(reinterpret_cast<PtrSize>(out));
+	Error code = static_cast<Error>(reinterpret_cast<PtrSize>(out));
 	return code;
 }
 

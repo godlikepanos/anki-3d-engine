@@ -66,7 +66,7 @@ Error CommandBufferImpl::executeAllCommands()
 	m_executed = true;
 #endif
 
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 	GlState& state = m_manager->getImplementation().getState();
 
 	GlCommand* command = m_firstCommand;
@@ -213,7 +213,7 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 		Error operator()(GlState&)
 		{
 			glStencilFuncSeparate(m_face, m_func, m_ref, m_compareMask);
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -250,7 +250,7 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 			{
 				glDisable(GL_DEPTH_TEST);
 			}
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -279,7 +279,7 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 			{
 				glDisable(GL_STENCIL_TEST);
 			}
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -313,7 +313,7 @@ void CommandBufferImpl::flushDrawcall(CommandBuffer& cmdb)
 					glDisablei(GL_BLEND, i);
 				}
 			}
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 

@@ -68,7 +68,7 @@ Error PipelineLayoutFactory::newPipelineLayout(
 		layout.m_handle = lay->m_handle;
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

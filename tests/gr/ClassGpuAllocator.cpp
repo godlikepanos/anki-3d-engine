@@ -55,7 +55,7 @@ public:
 
 		if(m_crntSize + size > m_maxSize)
 		{
-			return ErrorCode::OUT_OF_MEMORY;
+			return Error::OUT_OF_MEMORY;
 		}
 
 		PtrSize alignment = 256;
@@ -68,7 +68,7 @@ public:
 		m->m_size = size;
 		mem = m;
 
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 
 	void free(ClassGpuAllocatorMemory* mem)
@@ -181,7 +181,7 @@ ANKI_TEST(Gr, ClassGpuAllocator)
 		while(baseFreeSize >= BASE_SIZE)
 		{
 			ClassGpuAllocatorHandle handle;
-			while(calloc.allocate(baseFreeSize, 1, handle) == ErrorCode::NONE)
+			while(calloc.allocate(baseFreeSize, 1, handle) == Error::NONE)
 			{
 				score += (pow(POWER, (log2(F32(baseFreeSize / BASE_SIZE)) + BIAS)) + OFFSET) * baseFreeSize;
 				handles.push_back(handle);

@@ -131,7 +131,7 @@ Error TextureImpl::init(const TextureInitInfo& init_, Texture* tex)
 		getGrManagerImpl().flushCommandBuffer(cmdb, nullptr);
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 VkFormatFeatureFlags TextureImpl::calcFeatures(const TextureInitInfo& init)
@@ -249,7 +249,7 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 	if(!supported)
 	{
 		ANKI_VK_LOGE("Unsupported texture format: %u %u", U(init.m_format.m_components), U(init.m_format.m_transform));
-		return ErrorCode::FUNCTION_FAILED;
+		return Error::FUNCTION_FAILED;
 	}
 
 	// Contunue with the creation
@@ -367,7 +367,7 @@ Error TextureImpl::initImage(const TextureInitInfo& init_)
 		ANKI_TRACE_STOP_EVENT(VK_BIND_OBJECT);
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void TextureImpl::computeBarrierInfo(TextureUsageBit before,

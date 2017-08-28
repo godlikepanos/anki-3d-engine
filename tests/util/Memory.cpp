@@ -112,7 +112,7 @@ ANKI_TEST(Util, StackMemoryPool)
 					m_allocations[i] = ptr;
 				}
 
-				return ErrorCode::NONE;
+				return Error::NONE;
 			}
 		};
 

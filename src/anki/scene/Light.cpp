@@ -33,7 +33,7 @@ public:
 			lnode.onMoveUpdate(move);
 		}
 
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 };
 
@@ -58,7 +58,7 @@ public:
 			lnode.onShapeUpdate(light);
 		}
 
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 };
 
@@ -88,7 +88,7 @@ Error Light::init(LightComponentType type, CollisionShape* shape)
 	// Spatial component
 	newComponent<SpatialComponent>(this, shape);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void Light::frameUpdateCommon()
@@ -107,7 +107,7 @@ void Light::frameUpdateCommon()
 			frc.setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
 		}
 
-		return ErrorCode::NONE;
+		return Error::NONE;
 	});
 	(void)err;
 }
@@ -135,7 +135,7 @@ void Light::onShapeUpdateCommon(LightComponent& light)
 	// Update the frustums
 	Error err = iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& fr) -> Error {
 		fr.markShapeForUpdate();
-		return ErrorCode::NONE;
+		return Error::NONE;
 	});
 
 	(void)err;
@@ -158,7 +158,7 @@ Error Light::loadLensFlare(const CString& filename)
 		return err;
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 PointLight::PointLight(SceneGraph* scene, CString name)
@@ -190,7 +190,7 @@ void PointLight::onMoveUpdate(const MoveComponent& move)
 		fr.markTransformForUpdate();
 		++count;
 
-		return ErrorCode::NONE;
+		return Error::NONE;
 	});
 
 	(void)err;
@@ -250,7 +250,7 @@ Error PointLight::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 
 	frameUpdateCommon();
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 SpotLight::SpotLight(SceneGraph* scene, CString name)
@@ -265,7 +265,7 @@ Error SpotLight::init()
 	FrustumComponent* fr = newComponent<FrustumComponent>(this, &m_frustum);
 	fr->setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void SpotLight::onMoveUpdate(const MoveComponent& move)
@@ -275,7 +275,7 @@ void SpotLight::onMoveUpdate(const MoveComponent& move)
 		fr.markTransformForUpdate();
 		fr.getFrustum().resetTransform(move.getWorldTransform());
 
-		return ErrorCode::NONE;
+		return Error::NONE;
 	});
 
 	(void)err;
@@ -293,7 +293,7 @@ void SpotLight::onShapeUpdate(LightComponent& light)
 Error SpotLight::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 {
 	frameUpdateCommon();
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

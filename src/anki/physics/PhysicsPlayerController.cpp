@@ -57,7 +57,7 @@ Error PhysicsPlayerController::create(const PhysicsPlayerControllerInitInfo& ini
 
 	if(m_newtonPlayer == nullptr)
 	{
-		return ErrorCode::FUNCTION_FAILED;
+		return Error::FUNCTION_FAILED;
 	}
 
 	// Set some data
@@ -71,7 +71,7 @@ Error PhysicsPlayerController::create(const PhysicsPlayerControllerInitInfo& ini
 	location.m_posit.m_z = init.m_position.z();
 	NewtonBodySetMatrix(body, &location[0][0]);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void PhysicsPlayerController::moveToPosition(const Vec4& position)

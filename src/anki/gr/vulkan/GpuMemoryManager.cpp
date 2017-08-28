@@ -79,7 +79,7 @@ public:
 		ANKI_ASSERT(mem->m_mappedAddress == nullptr);
 		cmem = mem;
 
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 
 	void free(ClassGpuAllocatorMemory* cmem)

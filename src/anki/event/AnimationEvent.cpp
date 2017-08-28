@@ -27,7 +27,7 @@ Error AnimationEvent::init(const AnimationResourcePtr& anim, SceneNode* movableS
 		movableSceneNode,
 		m_anim->getRepeat() ? Flag::REANIMATE : Flag::NONE);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error AnimationEvent::update(F32 prevUpdateTime, F32 crntTime)
@@ -46,7 +46,7 @@ Error AnimationEvent::update(F32 prevUpdateTime, F32 crntTime)
 	trf.setScale(scale);
 	move.setLocalTransform(trf);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

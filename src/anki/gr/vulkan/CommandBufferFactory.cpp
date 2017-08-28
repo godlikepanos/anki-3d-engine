@@ -42,7 +42,7 @@ Error CommandBufferThreadAllocator::init()
 
 	ANKI_VK_CHECK(vkCreateCommandPool(m_factory->m_dev, &ci, nullptr, &m_pool));
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void CommandBufferThreadAllocator::destroyList(IntrusiveList<MicroCommandBuffer>& list)
@@ -183,7 +183,7 @@ Error CommandBufferThreadAllocator::newCommandBuffer(CommandBufferFlag cmdbFlags
 
 	ANKI_ASSERT(out && out->m_refcount.load() == 0);
 	outPtr.reset(out);
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void CommandBufferThreadAllocator::deleteCommandBuffer(MicroCommandBuffer* ptr)
@@ -212,7 +212,7 @@ Error CommandBufferFactory::init(GrAllocator<U8> alloc, VkDevice dev, uint32_t q
 	m_alloc = alloc;
 	m_dev = dev;
 	m_queueFamily = queueFamily;
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void CommandBufferFactory::destroy()
@@ -285,7 +285,7 @@ Error CommandBufferFactory::newCommandBuffer(ThreadId tid, CommandBufferFlag cmd
 	ANKI_ASSERT(alloc);
 	ANKI_CHECK(alloc->newCommandBuffer(cmdbFlags, ptr));
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

@@ -623,6 +623,14 @@ public:
 		move(b);
 	}
 
+	/// Create with allocator and data.
+	StringAuto(Allocator alloc, const CStringType& cstr)
+		: Base()
+		, m_alloc(alloc)
+	{
+		create(cstr);
+	}
+
 	/// Automatic destruction.
 	~StringAuto()
 	{
@@ -667,22 +675,25 @@ public:
 	}
 
 	/// Append another string to this one.
-	void append(const String& b)
+	StringAuto& append(const String& b)
 	{
 		Base::append(m_alloc, b);
+		return *this;
 	}
 
 	/// Append a const string to this one.
-	void append(const CStringType& cstr)
+	StringAuto& append(const CStringType& cstr)
 	{
 		Base::append(m_alloc, cstr);
+		return *this;
 	}
 
 	/// Create formated string.
 	template<typename... TArgs>
-	void sprintf(CString fmt, TArgs... args)
+	StringAuto& sprintf(CString fmt, TArgs... args)
 	{
 		Base::sprintf(m_alloc, fmt, args...);
+		return *this;
 	}
 
 	/// Convert a number to a string.

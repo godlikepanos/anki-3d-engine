@@ -60,10 +60,10 @@ Error CollisionResource::load(const ResourceFilename& filename, Bool async)
 	else
 	{
 		ANKI_RESOURCE_LOGE("Incorrect collision type");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

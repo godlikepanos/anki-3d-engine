@@ -36,7 +36,7 @@ Error LuaBinder::create(Allocator<U8>& alloc, void* parent)
 	luaL_openlibs(m_l);
 	lua_atpanic(m_l, &luaPanic);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void* LuaBinder::luaAllocCallback(void* userData, void* ptr, PtrSize osize, PtrSize nsize)
@@ -94,13 +94,13 @@ Error LuaBinder::evalString(const CString& str)
 {
 	ANKI_TRACE_SCOPED_EVENT(LUA_EXEC);
 
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 	int e = luaL_dostring(m_l, &str[0]);
 	if(e)
 	{
 		ANKI_SCRIPT_LOGE("%s (line:%d)", lua_tostring(m_l, -1));
 		lua_pop(m_l, 1);
-		err = ErrorCode::USER_DATA;
+		err = Error::USER_DATA;
 	}
 
 	lua_gc(m_l, LUA_GCCOLLECT, 0);
@@ -151,7 +151,7 @@ void LuaBinder::pushLuaCFunc(lua_State* l, const char* name, lua_CFunction luafu
 
 Error LuaBinder::checkNumberInternal(lua_State* l, I32 stackIdx, lua_Number& number)
 {
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 	lua_Number lnum;
 	int isnum;
 
@@ -162,7 +162,7 @@ Error LuaBinder::checkNumberInternal(lua_State* l, I32 stackIdx, lua_Number& num
 	}
 	else
 	{
-		err = ErrorCode::USER_DATA;
+		err = Error::USER_DATA;
 		lua_pushfstring(l, "Number expected. Got %s", luaL_typename(l, stackIdx));
 	}
 
@@ -171,7 +171,7 @@ Error LuaBinder::checkNumberInternal(lua_State* l, I32 stackIdx, lua_Number& num
 
 Error LuaBinder::checkString(lua_State* l, I32 stackIdx, const char*& out)
 {
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 	const char* s = lua_tolstring(l, stackIdx, nullptr);
 	if(s != nullptr)
 	{
@@ -179,7 +179,7 @@ Error LuaBinder::checkString(lua_State* l, I32 stackIdx, const char*& out)
 	}
 	else
 	{
-		err = ErrorCode::USER_DATA;
+		err = Error::USER_DATA;
 		lua_pushfstring(l, "String expected. Got %s", luaL_typename(l, stackIdx));
 	}
 
@@ -188,7 +188,7 @@ Error LuaBinder::checkString(lua_State* l, I32 stackIdx, const char*& out)
 
 Error LuaBinder::checkUserData(lua_State* l, I32 stackIdx, const char* typeName, I64 typeSignature, UserData*& out)
 {
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 
 	void* p = lua_touserdata(l, stackIdx);
 	if(p != nullptr)
@@ -203,13 +203,13 @@ Error LuaBinder::checkUserData(lua_State* l, I32 stackIdx, const char* typeName,
 		else
 		{
 			// It's not the correct user data
-			err = ErrorCode::USER_DATA;
+			err = Error::USER_DATA;
 		}
 	}
 	else
 	{
 		// It's not user data
-		err = ErrorCode::USER_DATA;
+		err = Error::USER_DATA;
 	}
 
 	if(err)

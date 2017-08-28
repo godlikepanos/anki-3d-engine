@@ -38,7 +38,7 @@ Error MeshLoader::load(const ResourceFilename& filename)
 	if(memcmp(&m_header.m_magic[0], "ANKIMES3", 8) != 0)
 	{
 		ANKI_RESOURCE_LOGE("Wrong magic word");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	if(checkFormat(m_header.m_positionsFormat, "positions", true)
@@ -50,7 +50,7 @@ Error MeshLoader::load(const ResourceFilename& filename)
 		|| checkFormat(m_header.m_boneIndicesFormat, "bone ids", false)
 		|| checkFormat(m_header.m_indicesFormat, "indices format", true))
 	{
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	// Check positions
@@ -58,7 +58,7 @@ Error MeshLoader::load(const ResourceFilename& filename)
 		|| m_header.m_positionsFormat.m_transform != FormatTransform::FLOAT)
 	{
 		ANKI_RESOURCE_LOGE("Incorrect/unsupported positions format");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	// Check normals
@@ -66,7 +66,7 @@ Error MeshLoader::load(const ResourceFilename& filename)
 		|| m_header.m_normalsFormat.m_transform != FormatTransform::SNORM)
 	{
 		ANKI_RESOURCE_LOGE("Incorrect/unsupported normals format");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	// Check tangents
@@ -74,7 +74,7 @@ Error MeshLoader::load(const ResourceFilename& filename)
 		|| m_header.m_tangentsFormat.m_transform != FormatTransform::SNORM)
 	{
 		ANKI_RESOURCE_LOGE("Incorrect/unsupported tangents format");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	// Check colors
@@ -82,7 +82,7 @@ Error MeshLoader::load(const ResourceFilename& filename)
 		|| m_header.m_colorsFormat.m_transform != FormatTransform::NONE)
 	{
 		ANKI_RESOURCE_LOGE("Incorrect/unsupported color format");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	// Check UVs
@@ -90,7 +90,7 @@ Error MeshLoader::load(const ResourceFilename& filename)
 		|| m_header.m_uvsFormat.m_transform != FormatTransform::FLOAT)
 	{
 		ANKI_RESOURCE_LOGE("Incorrect/unsupported UVs format");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	Bool hasBoneInfo = false;
@@ -105,7 +105,7 @@ Error MeshLoader::load(const ResourceFilename& filename)
 			|| m_header.m_boneWeightsFormat.m_transform != FormatTransform::UNORM)
 		{
 			ANKI_RESOURCE_LOGE("Incorrect/unsupported UVs format");
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 
 		// Bone indices
@@ -113,7 +113,7 @@ Error MeshLoader::load(const ResourceFilename& filename)
 			|| m_header.m_boneIndicesFormat.m_transform != FormatTransform::UINT)
 		{
 			ANKI_RESOURCE_LOGE("Incorrect/unsupported UVs format");
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 	}
 	else
@@ -125,7 +125,7 @@ Error MeshLoader::load(const ResourceFilename& filename)
 			|| m_header.m_boneWeightsFormat.m_transform != FormatTransform::NONE)
 		{
 			ANKI_RESOURCE_LOGE("Incorrect/unsupported UVs format");
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 
 		// Bone indices
@@ -133,7 +133,7 @@ Error MeshLoader::load(const ResourceFilename& filename)
 			|| m_header.m_boneIndicesFormat.m_transform != FormatTransform::NONE)
 		{
 			ANKI_RESOURCE_LOGE("Incorrect/unsupported UVs format");
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 	}
 
@@ -146,26 +146,26 @@ Error MeshLoader::load(const ResourceFilename& filename)
 	{
 		// Only 16bit indices are supported for now
 		ANKI_RESOURCE_LOGE("Incorrect/unsuported index info");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	// Check other
 	if(m_header.m_totalVerticesCount == 0)
 	{
 		ANKI_RESOURCE_LOGE("Incorrect/unsuported vertex count");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	if(m_header.m_uvsChannelCount != 1)
 	{
 		ANKI_RESOURCE_LOGE("Incorrect/unsuported UVs channel count");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	if(m_header.m_subMeshCount == 0)
 	{
 		ANKI_RESOURCE_LOGE("Incorrect/unsuported submesh count");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	//
@@ -182,7 +182,7 @@ Error MeshLoader::load(const ResourceFilename& filename)
 		if(sm.m_firstIndex != idxSum || sm.m_indicesCount < 3)
 		{
 			ANKI_RESOURCE_LOGE("Incorrect sub mesh info");
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 
 		idxSum += sm.m_indicesCount;
@@ -191,7 +191,7 @@ Error MeshLoader::load(const ResourceFilename& filename)
 	if(idxSum != m_header.m_totalIndicesCount)
 	{
 		ANKI_RESOURCE_LOGE("Incorrect sub mesh info");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	//
@@ -212,7 +212,7 @@ Error MeshLoader::load(const ResourceFilename& filename)
 	m_verts.create(alloc, m_header.m_totalVerticesCount * m_vertSize);
 	ANKI_CHECK(file->read(&m_verts[0], m_verts.getSizeInBytes()));
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error MeshLoader::checkFormat(const Format& fmt, const CString& attrib, Bool cannotBeEmpty)
@@ -220,13 +220,13 @@ Error MeshLoader::checkFormat(const Format& fmt, const CString& attrib, Bool can
 	if(fmt.m_components >= ComponentFormat::COUNT)
 	{
 		ANKI_RESOURCE_LOGE("Incorrect component format for %s", &attrib[0]);
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	if(fmt.m_transform >= FormatTransform::COUNT)
 	{
 		ANKI_RESOURCE_LOGE("Incorrect format transform for %s", &attrib[0]);
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	if(cannotBeEmpty)
@@ -234,17 +234,17 @@ Error MeshLoader::checkFormat(const Format& fmt, const CString& attrib, Bool can
 		if(fmt.m_components == ComponentFormat::NONE)
 		{
 			ANKI_RESOURCE_LOGE("Format cannot be zero for %s", &attrib[0]);
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 
 		if(fmt.m_transform == FormatTransform::NONE)
 		{
 			ANKI_RESOURCE_LOGE("Transform cannot be zero for %s", &attrib[0]);
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

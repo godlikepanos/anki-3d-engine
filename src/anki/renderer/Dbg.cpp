@@ -38,7 +38,7 @@ Error Dbg::init(const ConfigSet& initializer)
 {
 	m_enabled = initializer.getNumber("r.dbg.enabled");
 	m_flags.set(DbgFlag::ALL);
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error Dbg::lazyInit()
@@ -67,7 +67,7 @@ Error Dbg::lazyInit()
 	m_drawer = getAllocator().newInstance<DebugDrawer>();
 	ANKI_CHECK(m_drawer->init(m_r));
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error Dbg::run(RenderingContext& ctx)
@@ -259,7 +259,7 @@ Error Dbg::run(RenderingContext& ctx)
 
 	m_drawer->finishFrame();
 	cmdb->endRenderPass();
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Bool Dbg::getDepthTestEnabled() const

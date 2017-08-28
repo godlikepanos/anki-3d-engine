@@ -460,6 +460,8 @@ private:
 	SamplerPtr m_nearestSampler;
 	SamplerPtr m_linearSampler;
 
+	RenderGraphPtr m_rgraph;
+
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 
 	ANKI_USE_RESULT Error buildCommandBuffers(RenderingContext& ctx);

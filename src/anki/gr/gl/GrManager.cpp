@@ -34,7 +34,7 @@ Error GrManager::init(GrManagerInitInfo& init)
 	m_impl.reset(m_alloc.newInstance<GrManagerImpl>(this));
 	ANKI_CHECK(m_impl->init(init));
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void GrManager::beginFrame()

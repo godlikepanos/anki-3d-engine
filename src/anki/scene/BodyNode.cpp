@@ -34,7 +34,7 @@ public:
 			move.setLocalTransform(bodyc.getTransform());
 		}
 
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 };
 
@@ -67,7 +67,7 @@ Error BodyNode::init(const CString& resourceFname)
 	// Move component
 	newComponent<MoveComponent>(this);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

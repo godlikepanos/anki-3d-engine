@@ -58,7 +58,7 @@ Error ForwardShading::initInternal(const ConfigSet&)
 
 	ANKI_CHECK(initVol());
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error ForwardShading::initVol()
@@ -76,7 +76,7 @@ Error ForwardShading::initVol()
 	m_vol.m_prog->getOrCreateVariant(consts.get(), variant);
 	m_vol.m_grProg = variant->getProgram();
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void ForwardShading::drawVolumetric(RenderingContext& ctx, CommandBufferPtr cmdb)
@@ -231,7 +231,7 @@ Error ForwardShadingUpscale::initInternal(const ConfigSet& config)
 	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::LOAD;
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void ForwardShadingUpscale::run(RenderingContext& ctx)

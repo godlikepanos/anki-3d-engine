@@ -57,7 +57,7 @@ Error HalfDepth::init(const ConfigSet&)
 	m_prog->getOrCreateVariant(mutations.get(), variant);
 	m_grProg = variant->getProgram();
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void HalfDepth::setPreRunBarriers(RenderingContext& ctx)
@@ -134,7 +134,7 @@ Error QuarterDepth::init(const ConfigSet&)
 	m_prog->getOrCreateVariant(mutations.get(), variant);
 	m_grProg = variant->getProgram();
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void QuarterDepth::setPreRunBarriers(RenderingContext& ctx)
@@ -176,7 +176,7 @@ Error DepthDownscale::initInternal(const ConfigSet& cfg)
 {
 	ANKI_CHECK(m_hd.init(cfg));
 	ANKI_CHECK(m_qd.init(cfg));
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error DepthDownscale::init(const ConfigSet& cfg)

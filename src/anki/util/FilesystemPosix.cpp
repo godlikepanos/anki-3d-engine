@@ -68,10 +68,10 @@ Error walkDirectoryTree(const CString& dir, void* userData, WalkDirectoryTreeCal
 	if(!tree)
 	{
 		ANKI_UTIL_LOGE("fts_open() failed");
-		return ErrorCode::FUNCTION_FAILED;
+		return Error::FUNCTION_FAILED;
 	}
 
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 	FTSENT* node;
 	while((node = fts_read(tree)) && !err)
 	{
@@ -97,13 +97,13 @@ Error walkDirectoryTree(const CString& dir, void* userData, WalkDirectoryTreeCal
 	if(errno)
 	{
 		ANKI_UTIL_LOGE("fts_read() failed: %s", strerror(errno));
-		err = ErrorCode::FUNCTION_FAILED;
+		err = Error::FUNCTION_FAILED;
 	}
 
 	if(fts_close(tree))
 	{
 		ANKI_UTIL_LOGE("fts_close() failed");
-		err = ErrorCode::FUNCTION_FAILED;
+		err = Error::FUNCTION_FAILED;
 	}
 
 	return err;
@@ -122,7 +122,7 @@ Error removeDirectory(const CString& dirname)
 	if(dir == nullptr)
 	{
 		ANKI_UTIL_LOGE("opendir() failed");
-		return ErrorCode::FUNCTION_FAILED;
+		return Error::FUNCTION_FAILED;
 	}
 
 	LockGuard<Mutex> lock(g_removeDirectoryLock);
@@ -150,21 +150,21 @@ Error removeDirectory(const CString& dirname)
 	closedir(dir);
 	remove(dirname.get());
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error createDirectory(const CString& dir)
 {
 	if(directoryExists(dir))
 	{
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 	if(mkdir(dir.get(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH))
 	{
 		ANKI_UTIL_LOGE("%s : %s", strerror(errno), dir.get());
-		err = ErrorCode::FUNCTION_FAILED;
+		err = Error::FUNCTION_FAILED;
 	}
 
 	return err;
@@ -176,11 +176,11 @@ Error getHomeDirectory(GenericMemoryPoolAllocator<U8> alloc, String& out)
 	if(home == nullptr)
 	{
 		ANKI_UTIL_LOGE("HOME environment variable not set");
-		return ErrorCode::FUNCTION_FAILED;
+		return Error::FUNCTION_FAILED;
 	}
 
 	out.create(alloc, home);
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

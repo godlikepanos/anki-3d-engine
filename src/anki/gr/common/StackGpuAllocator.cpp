@@ -122,7 +122,7 @@ Error StackGpuAllocator::allocate(PtrSize size, StackGpuAllocatorHandle& handle)
 		}
 	} while(retry);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void StackGpuAllocator::reset()

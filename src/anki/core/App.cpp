@@ -307,7 +307,7 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	ANKI_CHECK(m_script->init(m_allocCb, m_allocCbData, m_scene, m_renderer));
 
 	ANKI_CORE_LOGI("Application initialized");
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error App::initDirs(const ConfigSet& cfg)
@@ -367,7 +367,7 @@ Error App::initDirs(const ConfigSet& cfg)
 	createDirectory(cacheDir.c_str());
 #endif
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error App::mainLoop()
@@ -428,7 +428,7 @@ Error App::mainLoop()
 		ANKI_TRACE_STOP_FRAME();
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

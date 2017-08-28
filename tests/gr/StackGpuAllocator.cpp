@@ -37,7 +37,7 @@ public:
 		m->m_size = size;
 		mem = m;
 
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 
 	void free(StackGpuAllocatorMemory* mem)

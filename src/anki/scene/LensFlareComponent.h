@@ -77,7 +77,7 @@ public:
 	Error update(SceneNode& node, F32 prevTime, F32 crntTime, Bool& updated) override
 	{
 		updated = false;
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 
 	void setupLensFlareQueueElement(LensFlareQueueElement& el) const

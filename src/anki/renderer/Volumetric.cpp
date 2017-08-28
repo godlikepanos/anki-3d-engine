@@ -58,7 +58,7 @@ Error VolumetricMain::init(const ConfigSet& config)
 	m_prog->getOrCreateVariant(mutators.get(), consts.get(), variant);
 	m_grProg = variant->getProgram();
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 TexturePtr VolumetricMain::getRt() const
@@ -162,7 +162,7 @@ Error VolumetricHBlur::init(const ConfigSet& config)
 	m_prog->getOrCreateVariant(mutators.get(), consts.get(), variant);
 	m_grProg = variant->getProgram();
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void VolumetricHBlur::setPreRunBarriers(RenderingContext& ctx)
@@ -216,7 +216,7 @@ Error VolumetricVBlur::init(const ConfigSet& config)
 	m_prog->getOrCreateVariant(mutators.get(), consts.get(), variant);
 	m_grProg = variant->getProgram();
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void VolumetricVBlur::setPreRunBarriers(RenderingContext& ctx)

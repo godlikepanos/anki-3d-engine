@@ -87,7 +87,7 @@ public:
 	{
 		(void)prevUpdateTime;
 		(void)crntTime;
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 
 	ANKI_USE_RESULT Error frameUpdateComplete(F32 prevUpdateTime, F32 crntTime, Timestamp maxComponentTimestamp)
@@ -114,7 +114,7 @@ public:
 	template<typename Func>
 	ANKI_USE_RESULT Error iterateComponents(Func func) const
 	{
-		Error err = ErrorCode::NONE;
+		Error err = Error::NONE;
 		auto it = m_components.getBegin();
 		auto end = it + m_componentCount;
 		for(; !err && it != end; ++it)
@@ -129,7 +129,7 @@ public:
 	template<typename Component, typename Func>
 	ANKI_USE_RESULT Error iterateComponentsOfType(Func func) const
 	{
-		Error err = ErrorCode::NONE;
+		Error err = Error::NONE;
 		auto it = m_components.getBegin();
 		auto end = it + m_componentCount;
 		for(; !err && it != end; ++it)

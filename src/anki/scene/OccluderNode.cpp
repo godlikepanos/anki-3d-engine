@@ -32,7 +32,7 @@ public:
 			mnode.onMoveComponentUpdate(move);
 		}
 
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 };
 
@@ -67,7 +67,7 @@ Error OccluderNode::init(const CString& meshFname)
 	newComponent<OccluderMoveFeedbackComponent>(this);
 	newComponent<OccluderComponent>(this);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void OccluderNode::onMoveComponentUpdate(MoveComponent& movec)

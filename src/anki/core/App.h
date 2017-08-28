@@ -102,7 +102,7 @@ public:
 	virtual ANKI_USE_RESULT Error userMainLoop(Bool& quit)
 	{
 		// Do nothing
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 
 	Input& getInput()

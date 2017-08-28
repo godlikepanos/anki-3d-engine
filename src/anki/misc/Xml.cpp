@@ -12,11 +12,11 @@ namespace anki
 
 ANKI_USE_RESULT Error XmlElement::check() const
 {
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 	if(m_el == nullptr)
 	{
 		ANKI_MISC_LOGE("Empty element");
-		err = ErrorCode::USER_DATA;
+		err = Error::USER_DATA;
 	}
 	return err;
 }
@@ -44,7 +44,7 @@ Error XmlElement::getMat3(Mat3& out) const
 	if(!err && arr.getSize() != 9)
 	{
 		ANKI_MISC_LOGE("Expecting 9 elements for Mat3");
-		err = ErrorCode::USER_DATA;
+		err = Error::USER_DATA;
 	}
 
 	if(!err)
@@ -71,7 +71,7 @@ Error XmlElement::getMat4(Mat4& out) const
 	if(!err && arr.getSize() != 16)
 	{
 		ANKI_MISC_LOGE("Expecting 16 elements for Mat4");
-		err = ErrorCode::USER_DATA;
+		err = Error::USER_DATA;
 	}
 
 	if(!err)
@@ -98,7 +98,7 @@ Error XmlElement::getVec2(Vec2& out) const
 	if(!err && arr.getSize() != 2)
 	{
 		ANKI_MISC_LOGE("Expecting 2 elements for Vec2");
-		err = ErrorCode::USER_DATA;
+		err = Error::USER_DATA;
 	}
 
 	if(!err)
@@ -125,7 +125,7 @@ Error XmlElement::getVec3(Vec3& out) const
 	if(!err && arr.getSize() != 3)
 	{
 		ANKI_MISC_LOGE("Expecting 3 elements for Vec3");
-		err = ErrorCode::USER_DATA;
+		err = Error::USER_DATA;
 	}
 
 	if(!err)
@@ -152,7 +152,7 @@ Error XmlElement::getVec4(Vec4& out) const
 	if(!err && arr.getSize() != 4)
 	{
 		ANKI_MISC_LOGE("Expecting 4 elements for Vec4");
-		err = ErrorCode::USER_DATA;
+		err = Error::USER_DATA;
 	}
 
 	if(!err)
@@ -204,7 +204,7 @@ Error XmlElement::getChildElement(const CString& name, XmlElement& out) const
 	if(!out)
 	{
 		ANKI_MISC_LOGE("Cannot find tag \"%s\"", &name[0]);
-		err = ErrorCode::USER_DATA;
+		err = Error::USER_DATA;
 	}
 
 	return err;
@@ -239,7 +239,7 @@ Error XmlElement::getSiblingElementsCount(U32& out) const
 
 	out = count;
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error XmlElement::getAttributeTextOptional(const CString& name, CString& out, Bool& attribPresent) const
@@ -250,7 +250,7 @@ Error XmlElement::getAttributeTextOptional(const CString& name, CString& out, Bo
 	if(!attrib)
 	{
 		attribPresent = false;
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 
 	attribPresent = true;
@@ -265,7 +265,7 @@ Error XmlElement::getAttributeTextOptional(const CString& name, CString& out, Bo
 		out = CString();
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 CString XmlDocument::XML_HEADER = R"(<?xml version="1.0" encoding="UTF-8" ?>)";
@@ -280,7 +280,7 @@ Error XmlDocument::loadFile(const CString& filename, GenericMemoryPoolAllocator<
 
 	ANKI_CHECK(parse(text.toCString(), alloc));
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error XmlDocument::parse(const CString& xmlText, GenericMemoryPoolAllocator<U8> alloc)
@@ -292,21 +292,21 @@ Error XmlDocument::parse(const CString& xmlText, GenericMemoryPoolAllocator<U8> 
 		ANKI_MISC_LOGE(
 			"Cannot parse file. Reason: %s", ((m_doc.GetErrorStr1() == nullptr) ? "unknown" : m_doc.GetErrorStr1()));
 
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 ANKI_USE_RESULT Error XmlDocument::getChildElement(const CString& name, XmlElement& out) const
 {
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 	out = XmlElement(m_doc.FirstChildElement(&name[0]), m_alloc);
 
 	if(!out)
 	{
 		ANKI_MISC_LOGE("Cannot find tag \"%s\"", &name[0]);
-		err = ErrorCode::USER_DATA;
+		err = Error::USER_DATA;
 	}
 
 	return err;

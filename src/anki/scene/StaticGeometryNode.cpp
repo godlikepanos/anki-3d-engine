@@ -55,7 +55,7 @@ Error StaticGeometryPatchNode::init(const ModelPatch* modelPatch)
 	// Create render component
 	newComponent<StaticGeometryRenderComponent>(this);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 StaticGeometryNode::StaticGeometryNode(SceneGraph* scene, CString name)
@@ -80,7 +80,7 @@ Error StaticGeometryNode::init(const CString& filename)
 		++i;
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

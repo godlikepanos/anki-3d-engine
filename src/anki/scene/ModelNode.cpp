@@ -63,7 +63,7 @@ Error ModelPatchNode::init(const ModelPatch* modelPatch, U idx, const ModelNode&
 	toHash[1] = parent.m_model->getUuid();
 	m_mergeKey = computeHash(&toHash[0], sizeof(toHash));
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void ModelPatchNode::drawCallback(RenderQueueDrawContext& ctx, WeakArray<const void*> userData)
@@ -145,7 +145,7 @@ public:
 			mnode.onMoveComponentUpdate(move);
 		}
 
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 };
 
@@ -220,7 +220,7 @@ Error ModelNode::init(const CString& modelFname)
 
 	ANKI_CHECK(getResourceManager().loadResource("programs/SceneDebug.ankiprog", m_dbgProg));
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void ModelNode::onMoveComponentUpdate(const MoveComponent& move)

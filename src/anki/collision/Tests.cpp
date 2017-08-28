@@ -272,10 +272,10 @@ static Bool tcx(const CollisionShape& a, const CollisionShape& b)
 		if(testCollisionShapes(cs, b))
 		{
 			inside = true;
-			return ErrorCode::FUNCTION_FAILED;
+			return Error::FUNCTION_FAILED;
 		}
 
-		return ErrorCode::NONE;
+		return Error::NONE;
 	});
 	(void)err;
 

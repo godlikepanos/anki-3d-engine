@@ -92,7 +92,7 @@ Error Renderer::initInternal(const ConfigSet& config)
 	if(m_width < 10 || m_height < 10)
 	{
 		ANKI_R_LOGE("Incorrect sizes");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	{
@@ -167,7 +167,9 @@ Error Renderer::initInternal(const ConfigSet& config)
 
 	initJitteredMats();
 
-	return ErrorCode::NONE;
+	m_rgraph = m_gr->newInstance<RenderGraph>();
+
+	return Error::NONE;
 }
 
 void Renderer::initJitteredMats()
@@ -382,7 +384,7 @@ Error Renderer::render(RenderingContext& ctx)
 	m_prevViewProjMat = ctx.m_renderQueue->m_viewProjectionMatrix;
 	m_prevCamTransform = ctx.m_renderQueue->m_cameraTransform;
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Vec3 Renderer::unproject(
@@ -602,7 +604,7 @@ Error Renderer::buildCommandBuffers(RenderingContext& ctx)
 		Error operator()(U32 threadId, PtrSize threadCount)
 		{
 			m_r->buildCommandBuffersInternal(*m_ctx, threadId, threadCount);
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -616,7 +618,7 @@ Error Renderer::buildCommandBuffers(RenderingContext& ctx)
 
 	ANKI_CHECK(threadPool.waitForAllThreadsToFinish());
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

@@ -159,7 +159,7 @@ Error ShadowMapping::initInternal(const ConfigSet& config)
 	m_esmResolveProg->getOrCreateVariant(consts.get(), variant);
 	m_esmResolveGrProg = variant->getProgram();
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void ShadowMapping::run(RenderingContext& ctx)

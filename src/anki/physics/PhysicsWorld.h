@@ -113,7 +113,7 @@ private:
 template<typename T, typename... TArgs>
 inline PhysicsPtr<T> PhysicsWorld::newInstance(TArgs&&... args)
 {
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 	PhysicsPtr<T> out;
 
 	T* ptr = m_alloc.template newInstance<T>(this);

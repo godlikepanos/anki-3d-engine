@@ -46,7 +46,7 @@ public:
 	ANKI_USE_RESULT Error update(SceneNode&, F32, F32, Bool& updated) override
 	{
 		m_trf = m_player->getTransform(updated);
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 
 private:

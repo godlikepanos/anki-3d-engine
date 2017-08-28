@@ -86,7 +86,7 @@ Error Material::load(const ResourceFilename& filename, Bool async)
 		ANKI_CHECK(parseInputs(el, async));
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error Material::parseMutators(XmlElement mutatorsEl)
@@ -111,13 +111,13 @@ Error Material::parseMutators(XmlElement mutatorsEl)
 		if(mutatorName.isEmpty())
 		{
 			ANKI_RESOURCE_LOGE("Mutator name is empty");
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 
 		if(mutatorName == "INSTANCE_COUNT" || mutatorName == "PASS" || mutatorName == "LOD" || mutatorName == "BONES")
 		{
 			ANKI_RESOURCE_LOGE("Cannot list builtin mutator \"%s\"", &mutatorName[0]);
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 
 		// value
@@ -129,13 +129,13 @@ Error Material::parseMutators(XmlElement mutatorsEl)
 		if(!mutation.m_mutator)
 		{
 			ANKI_RESOURCE_LOGE("Mutator not found in program %s", &mutatorName[0]);
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 
 		if(!mutation.m_mutator->valueExists(mutation.m_value))
 		{
 			ANKI_RESOURCE_LOGE("Value %d is not part of the mutator %s", mutation.m_value, &mutatorName[0]);
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 
 		// Advance
@@ -152,13 +152,13 @@ Error Material::parseMutators(XmlElement mutatorsEl)
 		if(m_instanceMutator->getName() != "INSTANCE_COUNT")
 		{
 			ANKI_RESOURCE_LOGE("If program is instanced then the instance mutator should be the INSTANCE_COUNT");
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 
 		if(m_instanceMutator->getValues().getSize() != MAX_INSTANCE_GROUPS)
 		{
 			ANKI_RESOURCE_LOGE("Mutator INSTANCE_COUNT should have %u values in the program", MAX_INSTANCE_GROUPS);
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 
 		for(U i = 0; i < MAX_INSTANCE_GROUPS; ++i)
@@ -166,7 +166,7 @@ Error Material::parseMutators(XmlElement mutatorsEl)
 			if(m_instanceMutator->getValues()[i] != (1 << i))
 			{
 				ANKI_RESOURCE_LOGE("Values of the INSTANCE_COUNT mutator in the program are not the expected");
-				return ErrorCode::USER_DATA;
+				return Error::USER_DATA;
 			}
 		}
 
@@ -179,7 +179,7 @@ Error Material::parseMutators(XmlElement mutatorsEl)
 		if(m_passMutator->getValues().getSize() != U(Pass::COUNT))
 		{
 			ANKI_RESOURCE_LOGE("Mutator PASS should have %u values in the program", U(Pass::COUNT));
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 
 		for(U i = 0; i < U(Pass::COUNT); ++i)
@@ -187,7 +187,7 @@ Error Material::parseMutators(XmlElement mutatorsEl)
 			if(m_passMutator->getValues()[i] != I(i))
 			{
 				ANKI_RESOURCE_LOGE("Values of the PASS mutator in the program are not the expected");
-				return ErrorCode::USER_DATA;
+				return Error::USER_DATA;
 			}
 		}
 
@@ -197,7 +197,7 @@ Error Material::parseMutators(XmlElement mutatorsEl)
 	if(!m_forwardShading && !m_passMutator)
 	{
 		ANKI_RESOURCE_LOGE("PASS mutator is required");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	m_lodMutator = m_prog->tryFindMutator("LOD");
@@ -206,7 +206,7 @@ Error Material::parseMutators(XmlElement mutatorsEl)
 		if(m_lodMutator->getValues().getSize() > MAX_LOD_COUNT)
 		{
 			ANKI_RESOURCE_LOGE("Mutator LOD should have at least %u values in the program", U(MAX_LOD_COUNT));
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 
 		for(U i = 0; i < m_lodMutator->getValues().getSize(); ++i)
@@ -214,7 +214,7 @@ Error Material::parseMutators(XmlElement mutatorsEl)
 			if(m_lodMutator->getValues()[i] != I(i))
 			{
 				ANKI_RESOURCE_LOGE("Values of the LOD mutator in the program are not the expected");
-				return ErrorCode::USER_DATA;
+				return Error::USER_DATA;
 			}
 		}
 
@@ -228,7 +228,7 @@ Error Material::parseMutators(XmlElement mutatorsEl)
 		if(m_bonesMutator->getValues().getSize() != 2)
 		{
 			ANKI_RESOURCE_LOGE("Mutator BONES should have 2 values in the program");
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 
 		for(U i = 0; i < m_bonesMutator->getValues().getSize(); ++i)
@@ -236,7 +236,7 @@ Error Material::parseMutators(XmlElement mutatorsEl)
 			if(m_bonesMutator->getValues()[i] != I(i))
 			{
 				ANKI_RESOURCE_LOGE("Values of the BONES mutator in the program are not the expected");
-				return ErrorCode::USER_DATA;
+				return Error::USER_DATA;
 			}
 		}
 
@@ -246,10 +246,10 @@ Error Material::parseMutators(XmlElement mutatorsEl)
 	if(m_mutations.getSize() + builtinMutatorCount != m_prog->getMutators().getSize())
 	{
 		ANKI_RESOURCE_LOGE("Some mutatators are unacounted for");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error Material::parseInputs(XmlElement inputsEl, Bool async)
@@ -292,13 +292,13 @@ Error Material::parseInputs(XmlElement inputsEl, Bool async)
 		if(foundVar == nullptr)
 		{
 			ANKI_RESOURCE_LOGE("Variable \"%s\" not found", &varName[0]);
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 
 		if(!foundVar->acceptAllMutations(m_mutations))
 		{
 			ANKI_RESOURCE_LOGE("Variable \"%s\" is not needed by the material's mutations. Don't need it");
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 
 		// Process var
@@ -375,7 +375,7 @@ Error Material::parseInputs(XmlElement inputsEl, Bool async)
 				if(i == BUILTIN_INFOS.getSize())
 				{
 					ANKI_RESOURCE_LOGE("Incorrect builtin variable: %s", &builtinStr[0]);
-					return ErrorCode::USER_DATA;
+					return Error::USER_DATA;
 				}
 
 				if(BUILTIN_INFOS[i].m_type != foundVar->getShaderVariableDataType())
@@ -383,13 +383,13 @@ Error Material::parseInputs(XmlElement inputsEl, Bool async)
 					ANKI_RESOURCE_LOGE(
 						"The type of the builtin variable in the shader program is not the correct one: %s",
 						&builtinStr[0]);
-					return ErrorCode::USER_DATA;
+					return Error::USER_DATA;
 				}
 
 				if(foundVar->isInstanced() && !BUILTIN_INFOS[i].m_instanced)
 				{
 					ANKI_RESOURCE_LOGE("Builtin variable %s cannot be instanced", BUILTIN_INFOS[i].m_name);
-					return ErrorCode::USER_DATA;
+					return Error::USER_DATA;
 				}
 
 				MaterialVariable& mtlVar = m_vars[--nonConstInputCount];
@@ -403,7 +403,7 @@ Error Material::parseInputs(XmlElement inputsEl, Bool async)
 				if(foundVar->isInstanced())
 				{
 					ANKI_RESOURCE_LOGE("Only some builtin variables can be instanced: %s", &foundVar->getName()[0]);
-					return ErrorCode::USER_DATA;
+					return Error::USER_DATA;
 				}
 
 				MaterialVariable& mtlVar = m_vars[--nonConstInputCount];
@@ -478,16 +478,16 @@ Error Material::parseInputs(XmlElement inputsEl, Bool async)
 	if(nonConstInputCount != 0)
 	{
 		ANKI_RESOURCE_LOGE("Forgot to list %u shader program inputs in this material", nonConstInputCount);
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	if(constInputCount != 0)
 	{
 		ANKI_RESOURCE_LOGE("Forgot to list %u constant shader program variables in this material", constInputCount);
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 const MaterialVariant& Material::getOrCreateVariant(const RenderingKey& key_, Bool skinned) const

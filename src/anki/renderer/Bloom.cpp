@@ -54,7 +54,7 @@ Error BloomExposure::init(const ConfigSet& config)
 	m_prog->getOrCreateVariant(consts.get(), variant);
 	m_grProg = variant->getProgram();
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void BloomExposure::setPreRunBarriers(RenderingContext& ctx)
@@ -126,7 +126,7 @@ Error BloomUpscale::init(const ConfigSet& config)
 	m_prog->getOrCreateVariant(consts.get(), variant);
 	m_grProg = variant->getProgram();
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void BloomUpscale::setPreRunBarriers(RenderingContext& ctx)

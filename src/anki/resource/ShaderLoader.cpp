@@ -38,7 +38,7 @@ Error ShaderLoader::parseFile(const ResourceFilename& filename)
 
 	m_sourceLines.join(m_alloc, "\n", m_shaderSource);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error ShaderLoader::parseFileIncludes(ResourceFilename filename, U32 depth)
@@ -52,7 +52,7 @@ Error ShaderLoader::parseFileIncludes(ResourceFilename filename, U32 depth)
 
 	ANKI_CHECK(parseSource(txt.toCString(), depth));
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error ShaderLoader::parseSource(CString src, U depth)
@@ -61,7 +61,7 @@ Error ShaderLoader::parseSource(CString src, U depth)
 	if(depth > MAX_INCLUDE_DEPTH)
 	{
 		ANKI_RESOURCE_LOGE("The include depth is too high. Probably circular includance");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	// Split the file to lines
@@ -70,7 +70,7 @@ Error ShaderLoader::parseSource(CString src, U depth)
 	if(lines.getSize() < 1)
 	{
 		ANKI_RESOURCE_LOGE("Source is empty");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	for(const String& line : lines)
@@ -91,7 +91,7 @@ Error ShaderLoader::parseSource(CString src, U depth)
 			else
 			{
 				ANKI_RESOURCE_LOGE("Malformed #include: %s", &line[0]);
-				return ErrorCode::USER_DATA;
+				return Error::USER_DATA;
 			}
 		}
 		else
@@ -100,7 +100,7 @@ Error ShaderLoader::parseSource(CString src, U depth)
 		}
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

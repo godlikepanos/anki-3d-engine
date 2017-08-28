@@ -17,7 +17,7 @@ EventManager::~EventManager()
 {
 	Error err = iterateEvents([&](Event& event) -> Error {
 		event.setMarkedForDeletion();
-		return ErrorCode::NONE;
+		return Error::NONE;
 	});
 	(void)err;
 
@@ -28,7 +28,7 @@ Error EventManager::create(SceneGraph* scene)
 {
 	ANKI_ASSERT(scene);
 	m_scene = scene;
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 SceneAllocator<U8> EventManager::getSceneAllocator() const
@@ -55,7 +55,7 @@ void EventManager::unregisterEvent(List<Event*>::Iterator it)
 
 Error EventManager::updateAllEvents(F32 prevUpdateTime, F32 crntTime)
 {
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 	m_prevUpdateTime = prevUpdateTime;
 	m_crntTime = crntTime;
 

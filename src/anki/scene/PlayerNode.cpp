@@ -56,7 +56,7 @@ public:
 			move.setLocalTransform(Transform(origin, rot, 1.0));
 		}
 
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 };
 
@@ -106,7 +106,7 @@ public:
 
 		playerc.setVelocity(moveVec.z() * speed, moveVec.x() * speed, 0.0, dir);
 
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 };
 
@@ -138,7 +138,7 @@ Error PlayerNode::init(const Vec4& position)
 	// Feedback component #2
 	newComponent<PlayerNodeFeedbackComponent2>(this);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

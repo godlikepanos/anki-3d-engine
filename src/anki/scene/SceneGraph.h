@@ -140,7 +140,7 @@ public:
 			}
 		}
 
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 
 	/// Iterate a range of scene nodes using a lambda
@@ -267,7 +267,7 @@ private:
 template<typename Node, typename... Args>
 inline Error SceneGraph::newSceneNode(const CString& name, Node*& node, Args&&... args)
 {
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 	SceneAllocator<Node> al = m_alloc;
 
 	node = al.template newInstance<Node>(this, name);
@@ -277,7 +277,7 @@ inline Error SceneGraph::newSceneNode(const CString& name, Node*& node, Args&&..
 	}
 	else
 	{
-		err = ErrorCode::OUT_OF_MEMORY;
+		err = Error::OUT_OF_MEMORY;
 	}
 
 	if(!err)
@@ -306,7 +306,7 @@ Error SceneGraph::iterateSceneNodes(PtrSize begin, PtrSize end, Func func)
 	auto it = m_nodes.getBegin() + begin;
 
 	PtrSize count = end - begin;
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 	while(count-- != 0 && !err)
 	{
 		ANKI_ASSERT(it != m_nodes.getEnd());
@@ -315,7 +315,7 @@ Error SceneGraph::iterateSceneNodes(PtrSize begin, PtrSize end, Func func)
 		++it;
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 /// @}
 

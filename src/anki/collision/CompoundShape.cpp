@@ -25,7 +25,7 @@ F32 CompoundShape::testPlane(const Plane& p) const
 		F32 a = cs.testPlane(p);
 		minv = min(minv, a);
 		maxv = max(maxv, a);
-		return ErrorCode::NONE;
+		return Error::NONE;
 	});
 	(void)err;
 
@@ -45,7 +45,7 @@ void CompoundShape::accept(MutableVisitor& v)
 {
 	Error err = iterateShapes([&](CollisionShape& cs) -> Error {
 		cs.accept(v);
-		return ErrorCode::NONE;
+		return Error::NONE;
 	});
 	(void)err;
 }
@@ -54,7 +54,7 @@ void CompoundShape::accept(ConstVisitor& v) const
 {
 	Error err = iterateShapes([&](const CollisionShape& cs) -> Error {
 		cs.accept(v);
-		return ErrorCode::NONE;
+		return Error::NONE;
 	});
 	(void)err;
 }
@@ -63,7 +63,7 @@ void CompoundShape::transform(const Transform& trf)
 {
 	Error err = iterateShapes([&](CollisionShape& cs) -> Error {
 		cs.transform(trf);
-		return ErrorCode::NONE;
+		return Error::NONE;
 	});
 	(void)err;
 }
@@ -81,7 +81,7 @@ void CompoundShape::computeAabb(Aabb& out) const
 			minv[i] = min(minv[i], aabb.getMin()[i]);
 			maxv[i] = max(maxv[i], aabb.getMax()[i]);
 		}
-		return ErrorCode::NONE;
+		return Error::NONE;
 	});
 	(void)err;
 

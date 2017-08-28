@@ -109,7 +109,7 @@ Error Thread::join()
 	m_started = false;
 #endif
 
-	return static_cast<ErrorCode>(exitCode);
+	return static_cast<Error>(exitCode);
 }
 
 ThreadId Thread::getCurrentThreadId()

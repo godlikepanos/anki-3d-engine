@@ -31,7 +31,7 @@ Error DecalComponent::setLayer(CString texAtlasFname, CString texAtlasSubtexName
 	if(l.m_atlas->getSubTextureMargin() < ATLAS_SUB_TEXTURE_MARGIN)
 	{
 		ANKI_SCENE_LOGE("Need texture atlas with margin at least %u", ATLAS_SUB_TEXTURE_MARGIN);
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	Vec2 marginf = F32(ATLAS_SUB_TEXTURE_MARGIN / 2) / Vec2(l.m_atlas->getWidth(), l.m_atlas->getHeight());
@@ -40,7 +40,7 @@ Error DecalComponent::setLayer(CString texAtlasFname, CString texAtlasSubtexName
 	l.m_uv = Vec4(minUv.x(), minUv.y(), minUv.x() + sizeUv.x(), minUv.y() + sizeUv.y());
 
 	l.m_blendFactor = blendFactor;
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void DecalComponent::updateInternal()

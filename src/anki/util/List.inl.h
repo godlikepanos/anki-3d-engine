@@ -129,7 +129,7 @@ template<typename T, typename TNode>
 template<typename TFunc>
 Error ListBase<T, TNode>::iterateForward(TFunc func)
 {
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 	TNode* node = m_head;
 	while(node && !err)
 	{
@@ -144,7 +144,7 @@ template<typename T, typename TNode>
 template<typename TFunc>
 Error ListBase<T, TNode>::iterateBackward(TFunc func)
 {
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 	TNode* node = m_tail;
 	while(node && !err)
 	{

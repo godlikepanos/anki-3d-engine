@@ -22,10 +22,10 @@ Error CString::toNumber(F64& out) const
 	{
 		errno = 0;
 		ANKI_UTIL_LOGE("Conversion failed");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error CString::toNumber(F32& out) const
@@ -33,7 +33,7 @@ Error CString::toNumber(F32& out) const
 	F64 d;
 	ANKI_CHECK(toNumber(d));
 	out = d;
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error CString::toNumber(I8& out) const
@@ -44,11 +44,11 @@ Error CString::toNumber(I8& out) const
 	if(i64 < MIN_I8 || i64 > MAX_I8)
 	{
 		ANKI_UTIL_LOGE("Conversion failed. Our of range");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	out = I8(i64);
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error CString::toNumber(I64& out) const
@@ -62,10 +62,10 @@ Error CString::toNumber(I64& out) const
 	{
 		errno = 0;
 		ANKI_UTIL_LOGE("Conversion failed");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error CString::toNumber(I32& out) const
@@ -78,12 +78,12 @@ Error CString::toNumber(I32& out) const
 	{
 		errno = 0;
 		ANKI_UTIL_LOGE("Conversion failed");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	out = I32(i);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error CString::toNumber(U64& out) const
@@ -97,10 +97,10 @@ Error CString::toNumber(U64& out) const
 	{
 		errno = 0;
 		ANKI_UTIL_LOGE("Conversion failed");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error CString::toNumber(U32& out) const
@@ -113,11 +113,11 @@ Error CString::toNumber(U32& out) const
 	{
 		errno = 0;
 		ANKI_UTIL_LOGE("Conversion failed");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	out = U32(i);
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error CString::toNumber(U8& out) const
@@ -128,11 +128,11 @@ Error CString::toNumber(U8& out) const
 	if(i64 > MAX_U8)
 	{
 		ANKI_UTIL_LOGE("Conversion failed. Our of range");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	out = U8(i64);
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 String& String::operator=(StringAuto&& b)

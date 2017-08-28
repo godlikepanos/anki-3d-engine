@@ -134,7 +134,7 @@ Error BufferImpl::init(PtrSize size, BufferUsageBit usage, BufferMapAccessBit ac
 	m_access = access;
 	m_size = size;
 	m_usage = usage;
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void* BufferImpl::map(PtrSize offset, PtrSize range, BufferMapAccessBit access)

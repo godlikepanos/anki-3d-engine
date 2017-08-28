@@ -368,7 +368,7 @@ Error Input::handleEvents()
 		moveCursor(Vec2(0.0));
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void Input::moveCursor(const Vec2& pos)

@@ -160,7 +160,7 @@ Error ClassGpuAllocator::createChunk(Class& cl, Chunk*& chunk)
 
 	cl.m_inUseChunks.pushBack(chunk);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void ClassGpuAllocator::destroyChunk(Class& cl, Chunk& chunk)
@@ -207,7 +207,7 @@ Error ClassGpuAllocator::allocate(PtrSize size, U alignment, ClassGpuAllocatorHa
 
 	ANKI_ASSERT(handle.m_memory && handle.m_chunk);
 	ANKI_ASSERT(isAligned(alignment, handle.m_offset));
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void ClassGpuAllocator::free(ClassGpuAllocatorHandle& handle)

@@ -47,7 +47,7 @@ void SceneNode::setMarkedForDeletion()
 
 	Error err = visitChildren([](SceneNode& obj) -> Error {
 		obj.setMarkedForDeletion();
-		return ErrorCode::NONE;
+		return Error::NONE;
 	});
 
 	(void)err;
@@ -76,7 +76,7 @@ U32 SceneNode::getLastUpdateFrame() const
 
 	Error err = iterateComponents([&max](const SceneComponent& comp) -> Error {
 		max = std::max(max, comp.getTimestamp());
-		return ErrorCode::NONE;
+		return Error::NONE;
 	});
 
 	(void)err;

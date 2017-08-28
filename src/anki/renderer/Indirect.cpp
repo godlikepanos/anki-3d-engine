@@ -71,7 +71,7 @@ Error Indirect::initInternal(const ConfigSet& config)
 	if(m_cubemapArrSize < 2)
 	{
 		ANKI_R_LOGE("Too low ir.cubemapTextureArraySize");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	m_cacheEntries.create(getAllocator(), m_cubemapArrSize);
@@ -90,7 +90,7 @@ Error Indirect::initInternal(const ConfigSet& config)
 	sinit.m_repeat = false;
 	m_integrationLutSampler = getGrManager().newInstance<Sampler>(sinit);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error Indirect::loadMesh(CString fname, BufferPtr& vert, BufferPtr& idx, U32& idxCount)
@@ -140,7 +140,7 @@ Error Indirect::loadMesh(CString fname, BufferPtr& vert, BufferPtr& idx, U32& id
 	m_r->getResourceManager().getTransferGpuAllocator().release(handle, fence);
 	m_r->getResourceManager().getTransferGpuAllocator().release(handle2, fence);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void Indirect::initFaceInfo(U cacheEntryIdx, U faceIdx)
@@ -261,7 +261,7 @@ Error Indirect::initIs()
 	ANKI_CHECK(
 		loadMesh("engine_data/Slight.ankimesh", m_is.m_slightPositions, m_is.m_slightIndices, m_is.m_slightIdxCount));
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error Indirect::initIrradiance()
@@ -295,7 +295,7 @@ Error Indirect::initIrradiance()
 	m_irradiance.m_prog->getOrCreateVariant(consts.get(), variant);
 	m_irradiance.m_grProg = variant->getProgram();
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void Indirect::runMs(RenderingContext& rctx, const RenderQueue& rqueue, U layer, U faceIdx)

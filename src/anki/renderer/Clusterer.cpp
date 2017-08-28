@@ -19,7 +19,7 @@ public:
 	Error operator()(U32 threadId, PtrSize threadsCount)
 	{
 		m_clusterer->update(threadId, threadsCount, m_frustumChanged);
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 };
 

@@ -74,27 +74,26 @@ using Bool = int; ///< Fast boolean type
 using Bool8 = I8; ///< Small 8bit boolean type
 using Bool32 = I32; ///< A 32bit boolean
 
-/// Error codes
-enum class ErrorCode : I32
-{
-	NONE,
-	OUT_OF_MEMORY,
-	FUNCTION_FAILED, ///< External operation failed
-	USER_DATA,
-
-	// File errors
-	FILE_NOT_FOUND,
-	FILE_ACCESS, ///< Read/write access error
-
-	UNKNOWN
-};
-
 /// Representation of error and a wrapper on top of error codes.
 class Error
 {
 public:
+	/// @name Error codes
+	/// @{
+	static constexpr I32 NONE = 0;
+	static constexpr I32 OUT_OF_MEMORY = -1;
+	static constexpr I32 FUNCTION_FAILED = -2; ///< External operation failed
+	static constexpr I32 USER_DATA = -3;
+
+	// File errors
+	static constexpr I32 FILE_NOT_FOUND = -4;
+	static constexpr I32 FILE_ACCESS = -5; ///< Read/write access error
+
+	static constexpr I32 UNKNOWN = -6;
+	/// @}
+
 	/// Construct using an error code.
-	Error(ErrorCode code)
+	Error(I32 code)
 		: m_code(code)
 	{
 	}
@@ -119,7 +118,7 @@ public:
 	}
 
 	/// Compare.
-	Bool operator==(ErrorCode code) const
+	Bool operator==(I32 code) const
 	{
 		return m_code == code;
 	}
@@ -131,7 +130,7 @@ public:
 	}
 
 	/// Compare.
-	Bool operator!=(ErrorCode code) const
+	Bool operator!=(I32 code) const
 	{
 		return m_code != code;
 	}
@@ -139,24 +138,19 @@ public:
 	/// Check if it is an error.
 	operator Bool() const
 	{
-		return m_code != ErrorCode::NONE;
+		return m_code != NONE;
 	}
 
 	/// @privatesection
 	/// @{
-	ErrorCode _getCode() const
+	I32 _getCode() const
 	{
 		return m_code;
-	}
-
-	I32 _getCodeInt() const
-	{
-		return static_cast<I32>(m_code);
 	}
 	/// @}
 
 private:
-	ErrorCode m_code = ErrorCode::NONE;
+	I32 m_code = NONE;
 };
 
 /// Macro to check if a method/function returned an error.
@@ -171,13 +165,13 @@ private:
 	} while(0)
 
 /// Macro the check if a memory allocation is OOM.
-#define ANKI_CHECK_OOM(x_)                   \
-	do                                       \
-	{                                        \
-		if(ANKI_UNLIKELY(x_ == nullptr))     \
-		{                                    \
-			return ErrorCode::OUT_OF_MEMORY; \
-		}                                    \
+#define ANKI_CHECK_OOM(x_)               \
+	do                                   \
+	{                                    \
+		if(ANKI_UNLIKELY(x_ == nullptr)) \
+		{                                \
+			return Error::OUT_OF_MEMORY; \
+		}                                \
 	} while(0)
 
 /// Macro to nuliffy a pointer on debug builds.

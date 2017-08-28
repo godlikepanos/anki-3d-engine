@@ -140,13 +140,13 @@ Error ModelPatch::create(WeakArray<CString> meshFNames, const CString& mtlFName,
 		if(i > 0 && !m_meshes[i]->isCompatible(*m_meshes[i - 1]))
 		{
 			ANKI_RESOURCE_LOGE("Meshes not compatible");
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 
 		++m_meshCount;
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Model::Model(ResourceManager* manager)
@@ -199,7 +199,7 @@ Error Model::load(const ResourceFilename& filename, Bool async)
 	if(count < 1)
 	{
 		ANKI_RESOURCE_LOGE("Zero number of model patches");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	m_modelPatches.create(alloc, count);
@@ -244,7 +244,7 @@ Error Model::load(const ResourceFilename& filename, Bool async)
 
 		if(mpatch == nullptr)
 		{
-			return ErrorCode::OUT_OF_MEMORY;
+			return Error::OUT_OF_MEMORY;
 		}
 
 		ANKI_CHECK(mpatch->create(WeakArray<CString>(&meshesFnames[0], meshesCount), cstr, async, &getManager()));
@@ -275,7 +275,7 @@ Error Model::load(const ResourceFilename& filename, Bool async)
 		m_visibilityShape = m_visibilityShape.getCompoundShape((*it)->getMesh(key).getBoundingShape());
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

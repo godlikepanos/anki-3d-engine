@@ -28,7 +28,7 @@ FenceImpl::~FenceImpl()
 		Error operator()(GlState&)
 		{
 			glDeleteSync(m_fence);
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 

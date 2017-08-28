@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/gr/Common.h>
+#include <anki/gr/GrObject.h>
 #include <anki/gr/Enums.h>
 #include <anki/util/HashMap.h>
 
@@ -51,10 +51,14 @@ public:
 };
 
 /// XXX
-class RenderGraph
+class RenderGraph final : public GrObject
 {
+	ANKI_GR_OBJECT
+
 public:
-	RenderGraph(GrManager* gr);
+	static const GrObjectType CLASS_TYPE = GrObjectType::RENDER_GRAPH;
+
+	RenderGraph(GrManager* manager, U64 hash, GrObjectCache* cache);
 
 	// Non-copyable
 	RenderGraph(const RenderGraph&) = delete;
@@ -63,6 +67,11 @@ public:
 
 	// Non-copyable
 	RenderGraph& operator=(const RenderGraph&) = delete;
+
+	void init()
+	{
+		// Do nothing, implement the method for the interface
+	}
 
 	/// @name 1st step methods
 	/// @{
@@ -143,7 +152,7 @@ private:
 		U32 m_texturesInUse = 0;
 	};
 
-	HashMap<TextureInitInfo, RenderTargetCacheEntry*> m_renderTargetCache; ///< Non-imported render targets.
+	HashMap<TextureInitInfo, RenderTargetCacheEntry*> m_renderTargetCache; ///< Imported render targets.
 	HashMap<FramebufferInitInfo, FramebufferPtr> m_framebufferCache;
 
 	class RenderTarget
@@ -154,7 +163,9 @@ private:
 		Array<char, MAX_GR_OBJECT_NAME_LENGTH + 1> m_name;
 	};
 
-	DynamicArray<RenderTarget> m_renderTargets;
+	RenderTarget* m_renderTargets = nullptr;
+	U32 m_renderTargetsCount = 0;
+	U32 m_renderTargetsStorage = 0;
 
 	/// Render pass or compute job.
 	class Pass
@@ -177,6 +188,12 @@ private:
 	Bool passHasUnmetDependencies(const BakeContext& ctx, const Pass& pass) const;
 
 	static Bool passADependsOnB(const Pass& a, const Pass& b);
+
+	/// Dump the dependency graph into a file.
+	ANKI_USE_RESULT Error dumpDependencyDotFile(const BakeContext& ctx, CString path) const;
+
+	template<typename T>
+	void increaseStorage(T*& oldStorage, U32& count, U32& storage);
 };
 /// @}
 

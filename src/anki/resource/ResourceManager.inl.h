@@ -13,7 +13,7 @@ Error ResourceManager::loadResource(const CString& filename, ResourcePtr<T>& out
 {
 	ANKI_ASSERT(!out.isCreated() && "Already loaded");
 
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 	++m_loadRequestCount;
 
 	T* other = findLoadedResource<T>(filename);

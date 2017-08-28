@@ -61,7 +61,7 @@ private:
 			barrier.wait();
 		}
 
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 };
 

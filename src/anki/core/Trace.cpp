@@ -87,7 +87,7 @@ Error TraceManager::create(HeapAllocator<U8> alloc, const CString& cacheDir)
 	if(getenv("ANKI_DISABLE_TRACE") && CString(getenv("ANKI_DISABLE_TRACE")) == "1")
 	{
 		m_disabled = true;
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 
 	memset(&m_perFrameCounters[0], 0, sizeof(m_perFrameCounters));
@@ -117,7 +117,7 @@ Error TraceManager::create(HeapAllocator<U8> alloc, const CString& cacheDir)
 		ANKI_CHECK(m_perFrameFile.writeText(fmt, eventNames[i]));
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void TraceManager::startEvent()
@@ -167,7 +167,7 @@ Error TraceManager::flushCounters()
 {
 	if(ANKI_UNLIKELY(m_disabled))
 	{
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 
 	// Write the FPS counter
@@ -194,14 +194,14 @@ Error TraceManager::flushCounters()
 		ANKI_CHECK(m_perFrameFile.writeText("%llu, ", count));
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error TraceManager::flushEvents()
 {
 	if(ANKI_UNLIKELY(m_disabled))
 	{
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 
 	// Write the events
@@ -235,7 +235,7 @@ Error TraceManager::flushEvents()
 		ANKI_CHECK(m_perFrameFile.writeText(fmt, F64(ns) / 1000000.0)); // Time in ms
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void TraceManager::startFrame()

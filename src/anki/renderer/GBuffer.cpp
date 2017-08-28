@@ -77,7 +77,7 @@ Error GBuffer::createRt()
 
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error GBuffer::init(const ConfigSet& initializer)
@@ -96,7 +96,7 @@ Error GBuffer::init(const ConfigSet& initializer)
 Error GBuffer::initInternal(const ConfigSet& initializer)
 {
 	ANKI_CHECK(createRt());
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void GBuffer::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) const

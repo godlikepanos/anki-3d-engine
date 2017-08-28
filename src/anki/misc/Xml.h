@@ -75,10 +75,10 @@ public:
 		else
 		{
 			ANKI_MISC_LOGE("Failed to return number. Element: %s", m_el->Value());
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 
 	/// Get a number of numbers.
@@ -95,7 +95,7 @@ public:
 		else
 		{
 			out = DynamicArrayAuto<T>(m_alloc);
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	}
 
@@ -153,7 +153,7 @@ public:
 		}
 		else
 		{
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	}
 
@@ -172,13 +172,13 @@ public:
 			if(arr.getSize() != 1)
 			{
 				ANKI_MISC_LOGE("Expecting one element for attrib %s", &name[0]);
-				return ErrorCode::USER_DATA;
+				return Error::USER_DATA;
 			}
 
 			out = arr[0];
 		}
 
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 
 	/// Get the attribute's value as a vector.
@@ -196,7 +196,7 @@ public:
 			if(arr.getSize() != sizeof(T) / sizeof(out[0]))
 			{
 				ANKI_MISC_LOGE("Expecting %u elements for attrib %s", sizeof(T) / sizeof(out[0]), &name[0]);
-				return ErrorCode::USER_DATA;
+				return Error::USER_DATA;
 			}
 
 			U count = 0;
@@ -206,7 +206,7 @@ public:
 			}
 		}
 
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 
 	/// Get the attribute's value as a matrix.
@@ -294,7 +294,7 @@ private:
 		out = DynamicArrayAuto<T>(m_alloc);
 		out.create(list.getSize());
 
-		Error err = ErrorCode::NONE;
+		Error err = Error::NONE;
 		auto it = list.getBegin();
 		auto end = list.getEnd();
 		U i = 0;
@@ -317,11 +317,11 @@ private:
 		if(!found)
 		{
 			ANKI_MISC_LOGE("Attribute not found \"%s\"", &attrib[0]);
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 		else
 		{
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	}
 };

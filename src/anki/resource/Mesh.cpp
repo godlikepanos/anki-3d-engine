@@ -136,7 +136,7 @@ Error Mesh::load(const ResourceFilename& filename, Bool async)
 		ANKI_CHECK(load(*ctx));
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error Mesh::load(LoadContext& ctx)
@@ -195,7 +195,7 @@ Error Mesh::load(LoadContext& ctx)
 	transferAlloc.release(handles[0], fence);
 	transferAlloc.release(handles[1], fence);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

@@ -29,7 +29,7 @@ Error MyApp::init(int argc, char* argv[])
 	if(argc < 3)
 	{
 		ANKI_LOGE("usage: %s /path/to/config.xml relative/path/to/scene.lua", argv[0]);
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 
 	// Config
@@ -82,7 +82,7 @@ Error MyApp::init(int argc, char* argv[])
 	pnode->addChild(&cam);
 #endif
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error MyApp::userMainLoop(Bool& quit)
@@ -100,7 +100,7 @@ Error MyApp::userMainLoop(Bool& quit)
 	if(in.getKey(KeyCode::ESCAPE))
 	{
 		quit = true;
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 
 	// move the camera
@@ -200,15 +200,15 @@ Error MyApp::userMainLoop(Bool& quit)
 	if(m_profile && getGlobalTimestamp() == 500)
 	{
 		quit = true;
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 int main(int argc, char* argv[])
 {
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 
 	app = new MyApp;
 	err = app->init(argc, argv);

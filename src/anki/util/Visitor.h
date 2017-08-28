@@ -284,7 +284,7 @@ private:
 	template<typename TVisitor, typename TFirst>
 	ANKI_USE_RESULT Error acceptVisitorInternal(TVisitor& v)
 	{
-		Error err = ErrorCode::NONE;
+		Error err = Error::NONE;
 
 		switch(m_what)
 		{
@@ -310,7 +310,7 @@ private:
 	template<typename TVisitor, typename TFirst, typename TSecond, typename... Types_>
 	ANKI_USE_RESULT Error acceptVisitorInternal(TVisitor& v)
 	{
-		Error err = ErrorCode::NONE;
+		Error err = Error::NONE;
 		constexpr I i = sizeof...(Types) - sizeof...(Types_) - 1;
 
 		switch(m_what)
@@ -337,7 +337,7 @@ private:
 	template<typename TVisitor, typename TFirst>
 	ANKI_USE_RESULT Error acceptVisitorInternalConst(TVisitor& v) const
 	{
-		Error err = ErrorCode::NONE;
+		Error err = Error::NONE;
 
 		switch(m_what)
 		{
@@ -363,7 +363,7 @@ private:
 	template<typename TVisitor, typename TFirst, typename TSecond, typename... Types_>
 	ANKI_USE_RESULT Error acceptVisitorInternalConst(TVisitor& v) const
 	{
-		Error err = ErrorCode::NONE;
+		Error err = Error::NONE;
 		constexpr I i = sizeof...(Types) - sizeof...(Types_) - 1;
 
 		switch(m_what)

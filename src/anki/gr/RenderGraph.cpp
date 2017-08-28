@@ -8,6 +8,7 @@
 #include <anki/gr/Texture.h>
 #include <anki/gr/Framebuffer.h>
 #include <anki/util/BitSet.h>
+#include <anki/util/File.h>
 
 namespace anki
 {
@@ -35,22 +36,87 @@ public:
 	BitSet<MAX_PASSES> m_passIsInBatch = {false};
 };
 
-RenderGraph::RenderGraph(GrManager* gr)
-	: m_gr(gr)
+RenderGraph::RenderGraph(GrManager* manager, U64 hash, GrObjectCache* cache)
+	: GrObject(manager, CLASS_TYPE, hash, cache)
 {
-	ANKI_ASSERT(gr);
+	ANKI_ASSERT(manager);
 
 	m_tmpAlloc = StackAllocator<U8>(m_gr->getAllocator().getMemoryPool().getAllocationCallback(),
 		m_gr->getAllocator().getMemoryPool().getAllocationCallbackUserData(),
 		512_B);
 }
 
+RenderGraph::~RenderGraph()
+{
+	// TODO
+}
+
+template<typename T>
+void RenderGraph::increaseStorage(T*& oldStorage, U32& count, U32& storage)
+{
+	T* newStorage;
+	if(count == storage)
+	{
+		storage = max<U32>(2, storage * 2);
+		newStorage = m_tmpAlloc.newArray<T>(storage);
+		for(U i = 0; i < count; ++i)
+		{
+			newStorage[i] = oldStorage[i];
+		}
+	}
+	else
+	{
+		newStorage = oldStorage;
+	}
+
+	++count;
+	oldStorage = newStorage;
+}
+
+void RenderGraph::reset()
+{
+	for(U i = 0; i < m_renderTargetsCount; ++i)
+	{
+		m_renderTargets[i].m_tex.reset(nullptr);
+	}
+	m_renderTargetsCount = 0;
+	m_renderTargetsStorage = 0;
+
+	// for(Pass* pass : m_passes)
+}
+
+Error RenderGraph::dumpDependencyDotFile(const BakeContext& ctx, CString path) const
+{
+	File file;
+	ANKI_CHECK(file.open(StringAuto(m_tmpAlloc).sprintf("%s/rgraph.dot", &path[0]).toCString(), FileOpenFlag::WRITE));
+
+	ANKI_CHECK(file.writeText("digraph {\n"));
+
+	for(U batchIdx = 0; batchIdx < ctx.m_batches.getSize(); ++batchIdx)
+	{
+		ANKI_CHECK(file.writeText("\tsubgraph cluster_%u {\n", batchIdx));
+		ANKI_CHECK(file.writeText("\t\tlabel=\"batch_%u\";\n", batchIdx));
+
+		for(const Pass* pass : ctx.m_batches[batchIdx]->m_passes)
+		{
+			for(const Pass* dep : pass->m_dependsOn)
+			{
+				ANKI_CHECK(file.writeText("\t\t%s->%s;\n", &pass->m_name[0], &dep->m_name[0]));
+			}
+		}
+
+		ANKI_CHECK(file.writeText("\t}\n"));
+	}
+
+	ANKI_CHECK(file.writeText("}"));
+	return Error::NONE;
+}
+
 RenderGraphHandle RenderGraph::pushRenderTarget(CString name, TexturePtr tex, Bool imported)
 {
-	const PtrSize crntSize = m_renderTargets.getSize();
-	m_renderTargets.resize(m_tmpAlloc, crntSize + 1);
+	increaseStorage(m_renderTargets, m_renderTargetsCount, m_renderTargetsStorage);
 
-	RenderTarget& target = m_renderTargets.getBack();
+	RenderTarget& target = m_renderTargets[m_renderTargetsCount - 1];
 	target.m_imported = imported;
 	target.m_tex = tex;
 
@@ -65,7 +131,7 @@ RenderGraphHandle RenderGraph::pushRenderTarget(CString name, TexturePtr tex, Bo
 		strcpy(&target.m_name[0], NA);
 	}
 
-	return crntSize & TEXTURE_TYPE;
+	return (m_renderTargetsCount - 1) & TEXTURE_TYPE;
 }
 
 RenderGraphHandle RenderGraph::importRenderTarget(CString name, TexturePtr tex)
@@ -238,19 +304,15 @@ void RenderGraph::bake()
 	}
 
 	// Find out what barriers we need between passes
-	/*
-	for(batch : batches)
+	/*for(PassBatch& batch : ctx.m_batches)
 	{
-		consumers = gatherConsumers(batch);
-
 		for(c : consumers)
 		{
 			lastProducer = findLastProducer(c);
 		}
 
 
-	}
-	*/
+	}*/
 }
 
 } // end namespace anki

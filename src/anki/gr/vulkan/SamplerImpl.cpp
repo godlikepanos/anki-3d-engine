@@ -76,7 +76,7 @@ Error SamplerImpl::init(const SamplerInitInfo& ii)
 	// Create
 	ANKI_VK_CHECK(vkCreateSampler(getDevice(), &ci, nullptr, &m_handle));
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

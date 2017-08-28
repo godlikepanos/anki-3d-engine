@@ -66,7 +66,7 @@ public:
 		m_barrier.wait();
 		m_tasksAssigned = 0;
 		Error err = m_err;
-		m_err = ErrorCode::NONE;
+		m_err = Error::NONE;
 		return err;
 	}
 
@@ -84,7 +84,7 @@ private:
 		{
 			(void)taskId;
 			(void)threadsCount;
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -92,7 +92,7 @@ private:
 	detail::ThreadPoolThread* m_threads = nullptr; ///< Threads array
 	U m_tasksAssigned = 0;
 	U8 m_threadsCount = 0;
-	Error m_err = ErrorCode::NONE;
+	Error m_err = Error::NONE;
 	static DummyTask m_dummyTask;
 };
 /// @}

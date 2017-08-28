@@ -104,7 +104,7 @@ void CommandBuffer::bindVertexBuffer(
 		{
 			glBindVertexBuffer(m_binding, m_buff->m_impl->getGlName(), m_offset, m_stride);
 			glVertexBindingDivisor(m_binding, (m_instanced) ? 1 : 0);
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -143,7 +143,7 @@ void CommandBuffer::setVertexAttribute(U32 location, U32 buffBinding, const Pixe
 		{
 			glVertexAttribFormat(m_location, m_compSize, m_fmt, m_normalized, m_relativeOffset);
 			glVertexAttribBinding(m_location, m_buffBinding);
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -174,7 +174,7 @@ void CommandBuffer::bindIndexBuffer(BufferPtr buff, PtrSize offset, IndexType ty
 		Error operator()(GlState& state)
 		{
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_buff->m_impl->getGlName());
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -209,7 +209,7 @@ void CommandBuffer::setPrimitiveRestart(Bool enable)
 				glDisable(GL_PRIMITIVE_RESTART);
 			}
 
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -234,7 +234,7 @@ void CommandBuffer::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 		Error operator()(GlState& state)
 		{
 			glViewport(m_value[0], m_value[1], m_value[2], m_value[3]);
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -264,7 +264,7 @@ void CommandBuffer::setScissor(U16 minx, U16 miny, U16 maxx, U16 maxy)
 				state.m_scissor = m_value;
 				glScissor(m_value[0], m_value[1], m_value[2], m_value[3]);
 			}
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -289,7 +289,7 @@ void CommandBuffer::setFillMode(FillMode mode)
 		Error operator()(GlState& state)
 		{
 			glPolygonMode(GL_FRONT_AND_BACK, m_fillMode);
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -314,7 +314,7 @@ void CommandBuffer::setCullMode(FaceSelectionBit mode)
 		Error operator()(GlState& state)
 		{
 			glCullFace(m_mode);
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -350,7 +350,7 @@ void CommandBuffer::setPolygonOffset(F32 factor, F32 units)
 				glPolygonOffset(m_factor, m_units);
 			}
 
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -384,7 +384,7 @@ void CommandBuffer::setStencilOperations(FaceSelectionBit face,
 		Error operator()(GlState& state)
 		{
 			glStencilOpSeparate(m_face, m_stencilFail, m_stencilPassDepthFail, m_stencilPassDepthPass);
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -439,7 +439,7 @@ void CommandBuffer::setStencilWriteMask(FaceSelectionBit face, U32 mask)
 				state.m_stencilWriteMask[0] = state.m_stencilWriteMask[1] = m_mask;
 			}
 
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -470,7 +470,7 @@ void CommandBuffer::setDepthWrite(Bool enable)
 		{
 			glDepthMask(m_enable);
 			state.m_depthWriteMask = m_enable;
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -495,7 +495,7 @@ void CommandBuffer::setDepthCompareOperation(CompareOperation op)
 		Error operator()(GlState& state)
 		{
 			glDepthFunc(m_op);
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -535,7 +535,7 @@ void CommandBuffer::setColorChannelWriteMask(U32 attachment, ColorBit mask)
 
 			state.m_colorWriteMasks[m_attachment] = {{r, g, b, a}};
 
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -569,7 +569,7 @@ void CommandBuffer::setBlendFactors(
 		Error operator()(GlState&)
 		{
 			glBlendFuncSeparatei(m_attachment, m_srcRgb, m_dstRgb, m_srcA, m_dstA);
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -602,7 +602,7 @@ void CommandBuffer::setBlendOperation(U32 attachment, BlendOperation funcRgb, Bl
 		Error operator()(GlState&)
 		{
 			glBlendEquationSeparatei(m_attachment, m_funcRgb, m_funcA);
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -639,7 +639,7 @@ void CommandBuffer::bindTexture(U32 set, U32 binding, TexturePtr tex, DepthStenc
 			{
 				glBindSampler(m_unit, 0);
 			}
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -672,7 +672,7 @@ void CommandBuffer::bindTextureAndSampler(
 		{
 			glBindTextureUnit(m_unit, m_tex->m_impl->getGlName());
 			glBindSampler(m_unit, m_sampler->m_impl->getGlName());
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -704,7 +704,7 @@ void CommandBuffer::bindUniformBuffer(U32 set, U32 binding, BufferPtr buff, PtrS
 		Error operator()(GlState&)
 		{
 			m_buff->m_impl->bind(GL_UNIFORM_BUFFER, m_binding, m_offset, m_range);
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -739,7 +739,7 @@ void CommandBuffer::bindStorageBuffer(U32 set, U32 binding, BufferPtr buff, PtrS
 		Error operator()(GlState&)
 		{
 			m_buff->m_impl->bind(GL_SHADER_STORAGE_BUFFER, m_binding, m_offset, m_range);
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -778,7 +778,7 @@ void CommandBuffer::bindImage(U32 set, U32 binding, TexturePtr img, U32 level)
 				0,
 				GL_READ_WRITE,
 				m_img->m_impl->m_internalFormat);
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -821,7 +821,7 @@ void CommandBuffer::bindTextureBuffer(
 			const GLuint tex = state.m_texBuffTextures[m_set][m_binding];
 			glTextureBufferRange(tex, m_fmt, m_buff->m_impl->getGlName(), m_offset, m_range);
 
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -854,7 +854,7 @@ void CommandBuffer::bindShaderProgram(ShaderProgramPtr prog)
 		Error operator()(GlState&)
 		{
 			glUseProgram(m_prog->m_impl->getGlName());
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -889,7 +889,7 @@ void CommandBuffer::beginRenderPass(FramebufferPtr fb, U16 minx, U16 miny, U16 m
 		Error operator()(GlState& state)
 		{
 			m_fb->m_impl->bind(state, m_renderArea[0], m_renderArea[1], m_renderArea[2], m_renderArea[3]);
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -915,7 +915,7 @@ void CommandBuffer::endRenderPass()
 		Error operator()(GlState&)
 		{
 			m_fb->endRenderPass();
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -952,7 +952,7 @@ void CommandBuffer::drawElements(
 
 			ANKI_TRACE_INC_COUNTER(GR_DRAWCALLS, 1);
 			ANKI_TRACE_INC_COUNTER(GR_VERTICES, m_info.m_instanceCount * m_info.m_count);
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -997,7 +997,7 @@ void CommandBuffer::drawArrays(PrimitiveTopology topology, U32 count, U32 instan
 
 			ANKI_TRACE_INC_COUNTER(GR_DRAWCALLS, 1);
 			ANKI_TRACE_INC_COUNTER(GR_VERTICES, m_info.m_instanceCount * m_info.m_count);
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -1043,7 +1043,7 @@ void CommandBuffer::drawElementsIndirect(
 				m_topology, m_indexType, numberToPtr<void*>(m_offset), m_drawCount, sizeof(DrawElementsIndirectInfo));
 
 			glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -1086,7 +1086,7 @@ void CommandBuffer::drawArraysIndirect(
 				m_topology, numberToPtr<void*>(m_offset), m_drawCount, sizeof(DrawArraysIndirectInfo));
 
 			glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -1111,7 +1111,7 @@ void CommandBuffer::dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupC
 		Error operator()(GlState&)
 		{
 			glDispatchCompute(m_size[0], m_size[1], m_size[2]);
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -1140,7 +1140,7 @@ void CommandBuffer::beginOcclusionQuery(OcclusionQueryPtr query)
 		Error operator()(GlState&)
 		{
 			m_handle->m_impl->begin();
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -1162,7 +1162,7 @@ void CommandBuffer::endOcclusionQuery(OcclusionQueryPtr query)
 		Error operator()(GlState&)
 		{
 			m_handle->m_impl->end();
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -1194,7 +1194,7 @@ void CommandBuffer::copyBufferToTextureSurface(
 		Error operator()(GlState& state)
 		{
 			m_tex->m_impl->writeSurface(m_surf, m_buff->m_impl->getGlName(), m_offset, m_range);
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -1230,7 +1230,7 @@ void CommandBuffer::copyBufferToTextureVolume(
 		Error operator()(GlState& state)
 		{
 			m_tex->m_impl->writeVolume(m_vol, m_buff->m_impl->getGlName(), m_offset, m_range);
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -1266,7 +1266,7 @@ void CommandBuffer::copyBufferToBuffer(
 		Error operator()(GlState& state)
 		{
 			m_dst->m_impl->write(m_src->m_impl->getGlName(), m_srcOffset, m_dstOffset, m_range);
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -1297,7 +1297,7 @@ void CommandBuffer::generateMipmaps2d(TexturePtr tex, U face, U layer)
 		Error operator()(GlState&)
 		{
 			m_tex->m_impl->generateMipmaps2d(m_face, m_layer);
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -1368,7 +1368,7 @@ void CommandBuffer::copyTextureSurfaceToTextureSurface(
 		Error operator()(GlState&)
 		{
 			TextureImpl::copy(*m_src->m_impl, m_srcSurf, *m_dest->m_impl, m_destSurf);
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -1392,7 +1392,7 @@ void CommandBuffer::setBufferBarrier(
 		Error operator()(GlState&)
 		{
 			glMemoryBarrier(m_barrier);
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -1474,7 +1474,7 @@ void CommandBuffer::clearTextureSurface(
 		Error operator()(GlState&)
 		{
 			m_tex->m_impl->clear(m_surf, m_val, m_aspect);
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -1503,7 +1503,7 @@ void CommandBuffer::fillBuffer(BufferPtr buff, PtrSize offset, PtrSize size, U32
 		Error operator()(GlState&)
 		{
 			m_buff->m_impl->fill(m_offset, m_size, m_value);
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 
@@ -1537,7 +1537,7 @@ void CommandBuffer::writeOcclusionQueryResultToBuffer(OcclusionQueryPtr query, P
 			glGetQueryObjectuiv(m_query->m_impl->getGlName(), GL_QUERY_RESULT, numberToPtr<GLuint*>(m_offset));
 			glBindBuffer(GL_QUERY_BUFFER, 0);
 
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	};
 

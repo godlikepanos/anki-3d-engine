@@ -35,7 +35,7 @@ Error StaticCollisionNode::init(const CString& resourceFname, const Transform& t
 
 	m_body = getSceneGraph().getPhysicsWorld().newInstance<PhysicsBody>(init);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace

@@ -48,7 +48,7 @@ Error CommandBufferImpl::init(const CommandBufferInitInfo& init)
 		m_activeFb = init.m_framebuffer;
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void CommandBufferImpl::beginRecording()

@@ -186,7 +186,7 @@ Error ConfigSet::loadFromFile(CString filename)
 		}
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error ConfigSet::saveToFile(CString filename) const
@@ -225,7 +225,7 @@ Error ConfigSet::saveToFile(CString filename) const
 	}
 
 	ANKI_CHECK(file.writeText("</config>\n"));
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error ConfigSet::setFromCommandLineArguments(U cmdLineArgsCount, char* cmdLineArgs[])
@@ -239,7 +239,7 @@ Error ConfigSet::setFromCommandLineArguments(U cmdLineArgsCount, char* cmdLineAr
 			if(i + 2 >= cmdLineArgsCount)
 			{
 				ANKI_MISC_LOGE("Wrong number of arguments after -cfg");
-				return ErrorCode::USER_DATA;
+				return Error::USER_DATA;
 			}
 
 			// Get the option
@@ -250,7 +250,7 @@ Error ConfigSet::setFromCommandLineArguments(U cmdLineArgsCount, char* cmdLineAr
 			if(option == nullptr)
 			{
 				ANKI_MISC_LOGE("Option name following -cfg not found: %s", arg);
-				return ErrorCode::USER_DATA;
+				return Error::USER_DATA;
 			}
 
 			// Set the value
@@ -270,7 +270,7 @@ Error ConfigSet::setFromCommandLineArguments(U cmdLineArgsCount, char* cmdLineAr
 		}
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

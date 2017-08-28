@@ -74,7 +74,7 @@ Error QueryAllocator::newQuery(QueryAllocationHandle& handle)
 	}
 
 	ANKI_ASSERT(handle == true);
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void QueryAllocator::deleteQuery(QueryAllocationHandle& handle)

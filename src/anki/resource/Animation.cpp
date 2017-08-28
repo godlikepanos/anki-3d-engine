@@ -68,7 +68,7 @@ Error Animation::load(const ResourceFilename& filename, Bool async)
 	if(channelCount == 0)
 	{
 		ANKI_RESOURCE_LOGE("Didn't found any channels");
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 	m_channels.create(getAllocator(), channelCount);
 
@@ -223,7 +223,7 @@ Error Animation::load(const ResourceFilename& filename, Bool async)
 
 	m_duration = maxTime - m_startTime;
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void Animation::interpolate(U channelIndex, F64 time, Vec3& pos, Quat& rot, F32& scale) const

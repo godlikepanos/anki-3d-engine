@@ -42,7 +42,7 @@ public:
 		ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
 		(void)oldState;
 
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 };
 

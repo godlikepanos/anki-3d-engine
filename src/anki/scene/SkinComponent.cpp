@@ -78,7 +78,7 @@ Error SkinComponent::update(SceneNode& node, F32 prevTime, F32 crntTime, Bool& u
 		visitBones(m_skeleton->getRootBone(), Mat4::getIdentity(), bonesAnimated);
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void SkinComponent::visitBones(const Bone& bone, const Mat4& parentTrf, const BitSet<128>& bonesAnimated)

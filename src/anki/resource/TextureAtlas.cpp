@@ -53,7 +53,7 @@ Error TextureAtlas::load(const ResourceFilename& filename, Bool async)
 	if(margin >= I(m_tex->getWidth()) || margin >= I(m_tex->getHeight()) || margin < 0)
 	{
 		ANKI_RESOURCE_LOGE("Too big margin %d", U(margin));
-		return ErrorCode::USER_DATA;
+		return Error::USER_DATA;
 	}
 	m_margin = margin;
 
@@ -76,7 +76,7 @@ Error TextureAtlas::load(const ResourceFilename& filename, Bool async)
 		if(name.getLength() < 1)
 		{
 			ANKI_RESOURCE_LOGE("Something wrong with the <name> tag. Probably empty");
-			return ErrorCode::USER_DATA;
+			return Error::USER_DATA;
 		}
 
 		namesSize += name.getLength() + 1;
@@ -114,7 +114,7 @@ Error TextureAtlas::load(const ResourceFilename& filename, Bool async)
 		ANKI_CHECK(subTexEl.getNextSiblingElement("subTexture", subTexEl));
 	} while(subTexEl);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error TextureAtlas::getSubTextureInfo(CString name, F32 uv[4]) const
@@ -127,12 +127,12 @@ Error TextureAtlas::getSubTextureInfo(CString name, F32 uv[4]) const
 			uv[1] = st.m_uv[1];
 			uv[2] = st.m_uv[2];
 			uv[3] = st.m_uv[3];
-			return ErrorCode::NONE;
+			return Error::NONE;
 		}
 	}
 
 	ANKI_RESOURCE_LOGE("Texture atlas %s doesn't have sub texture named: %s", &getFilename()[0], &name[0]);
-	return ErrorCode::USER_DATA;
+	return Error::USER_DATA;
 }
 
 } // end namespace anki

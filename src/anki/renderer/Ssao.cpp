@@ -35,7 +35,7 @@ Error SsaoMain::init(const ConfigSet& config)
 	m_prog->getOrCreateVariant(consts.get(), variant);
 	m_grProg = variant->getProgram();
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void SsaoMain::setPreRunBarriers(RenderingContext& ctx)
@@ -103,7 +103,7 @@ Error SsaoHBlur::init(const ConfigSet& config)
 
 	m_grProg = variant->getProgram();
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void SsaoHBlur::setPreRunBarriers(RenderingContext& ctx)
@@ -150,7 +150,7 @@ Error SsaoVBlur::init(const ConfigSet& config)
 
 	m_grProg = variant->getProgram();
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void SsaoVBlur::setPreRunBarriers(RenderingContext& ctx)

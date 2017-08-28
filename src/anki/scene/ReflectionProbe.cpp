@@ -38,7 +38,7 @@ public:
 			dnode.onMoveUpdate(move);
 		}
 
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 };
 
@@ -95,7 +95,7 @@ Error ReflectionProbe::init(F32 radius)
 	ReflectionProbeComponent* reflc = newComponent<ReflectionProbeComponent>(this);
 	reflc->setRadius(radius);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 void ReflectionProbe::onMoveUpdate(MoveComponent& move)
@@ -110,7 +110,7 @@ void ReflectionProbe::onMoveUpdate(MoveComponent& move)
 		frc.markTransformForUpdate();
 		++count;
 
-		return ErrorCode::NONE;
+		return Error::NONE;
 	});
 
 	ANKI_ASSERT(count == 6);
@@ -137,11 +137,11 @@ Error ReflectionProbe::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 
 	Error err = iterateComponentsOfType<FrustumComponent>([testFlags](FrustumComponent& frc) -> Error {
 		frc.setEnabledVisibilityTests(testFlags);
-		return ErrorCode::NONE;
+		return Error::NONE;
 	});
 	(void)err;
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

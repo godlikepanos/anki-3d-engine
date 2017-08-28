@@ -43,7 +43,7 @@ public:
 				if(m_id != static_cast<I32>(x))
 				{
 					ANKI_LOGE("Wrong excecution order");
-					return ErrorCode::FUNCTION_FAILED;
+					return Error::FUNCTION_FAILED;
 				}
 			}
 		}
@@ -62,7 +62,7 @@ public:
 		ctx.m_resubmitTask = m_resubmit;
 		m_resubmit = false;
 
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 };
 
@@ -82,7 +82,7 @@ public:
 	{
 		void* mem = m_alloc.allocate(10);
 		if(!mem)
-			return ErrorCode::FUNCTION_FAILED;
+			return Error::FUNCTION_FAILED;
 
 		HighRezTimer::sleep(0.1);
 
@@ -93,7 +93,7 @@ public:
 			m_barrier->wait();
 		}
 
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 };
 

@@ -57,7 +57,7 @@ private:
 template<typename TFunc>
 inline Error CompoundShape::iterateShapes(TFunc f) const
 {
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 	U count = 0;
 	const Chunk* chunk = &m_dflt;
 

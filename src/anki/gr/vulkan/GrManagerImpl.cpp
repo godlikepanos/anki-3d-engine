@@ -135,10 +135,10 @@ Error GrManagerImpl::init(const GrManagerInitInfo& init)
 	if(err)
 	{
 		ANKI_VK_LOGE("Vulkan initialization failed");
-		return ErrorCode::FUNCTION_FAILED;
+		return Error::FUNCTION_FAILED;
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
@@ -245,7 +245,7 @@ Error GrManagerImpl::initInternal(const GrManagerInitInfo& init)
 	m_descrFactory.init(getAllocator(), m_device);
 	m_pplineLayoutFactory.init(getAllocator(), m_device);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
@@ -413,7 +413,7 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 	if(count < 1)
 	{
 		ANKI_VK_LOGE("Wrong number of physical devices");
-		return ErrorCode::FUNCTION_FAILED;
+		return Error::FUNCTION_FAILED;
 	}
 
 	count = 1;
@@ -444,7 +444,7 @@ Error GrManagerImpl::initInstance(const GrManagerInitInfo& init)
 
 	vkGetPhysicalDeviceFeatures(m_physicalDevice, &m_devFeatures);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
@@ -478,7 +478,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 	{
 		ANKI_VK_LOGE("Couldn't find a queue family with graphics+compute+transfer+present."
 					 "The assumption was wrong. The code needs to be reworked");
-		return ErrorCode::FUNCTION_FAILED;
+		return Error::FUNCTION_FAILED;
 	}
 
 	m_queueIdx = desiredFamilyIdx;
@@ -562,7 +562,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 		else
 		{
 			ANKI_VK_LOGE("VK_KHR_maintenance1 or VK_AMD_negative_viewport_height required");
-			return ErrorCode::FUNCTION_FAILED;
+			return Error::FUNCTION_FAILED;
 		}
 
 		ANKI_VK_LOGI("Will enable the following device extensions:");
@@ -589,7 +589,7 @@ Error GrManagerImpl::initDevice(const GrManagerInitInfo& init)
 		}
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error GrManagerImpl::initSwapchain(const GrManagerInitInfo& init)
@@ -600,7 +600,7 @@ Error GrManagerImpl::initSwapchain(const GrManagerInitInfo& init)
 	if(surfaceProperties.currentExtent.width == MAX_U32 || surfaceProperties.currentExtent.height == MAX_U32)
 	{
 		ANKI_VK_LOGE("Wrong surface size");
-		return ErrorCode::FUNCTION_FAILED;
+		return Error::FUNCTION_FAILED;
 	}
 	m_surfaceWidth = surfaceProperties.currentExtent.width;
 	m_surfaceHeight = surfaceProperties.currentExtent.height;
@@ -626,7 +626,7 @@ Error GrManagerImpl::initSwapchain(const GrManagerInitInfo& init)
 	if(m_surfaceFormat == VK_FORMAT_UNDEFINED)
 	{
 		ANKI_VK_LOGE("Surface format not found");
-		return ErrorCode::FUNCTION_FAILED;
+		return Error::FUNCTION_FAILED;
 	}
 
 	// Chose present mode
@@ -663,7 +663,7 @@ Error GrManagerImpl::initSwapchain(const GrManagerInitInfo& init)
 	if(presentMode == VK_PRESENT_MODE_MAX_ENUM_KHR)
 	{
 		ANKI_VK_LOGE("Couldn't find a present mode");
-		return ErrorCode::FUNCTION_FAILED;
+		return Error::FUNCTION_FAILED;
 	}
 
 	// Create swapchain
@@ -693,7 +693,7 @@ Error GrManagerImpl::initSwapchain(const GrManagerInitInfo& init)
 	if(count != MAX_FRAMES_IN_FLIGHT)
 	{
 		ANKI_VK_LOGE("Requested a swapchain with %u images but got one with %u", MAX_FRAMES_IN_FLIGHT, count);
-		return ErrorCode::FUNCTION_FAILED;
+		return Error::FUNCTION_FAILED;
 	}
 
 	ANKI_VK_LOGI("Created a swapchain. Image count: %u, present mode: %u", count, presentMode);
@@ -726,7 +726,7 @@ Error GrManagerImpl::initSwapchain(const GrManagerInitInfo& init)
 		ANKI_VK_CHECK(vkCreateImageView(m_device, &ci, nullptr, &m_backbuffers[i].m_imageView));
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error GrManagerImpl::initMemory(const ConfigSet& cfg)
@@ -734,7 +734,7 @@ Error GrManagerImpl::initMemory(const ConfigSet& cfg)
 	vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &m_memoryProperties);
 	m_gpuMemManager.init(m_physicalDevice, m_device, getAllocator());
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 #if ANKI_GR_MANAGER_DEBUG_MEMMORY

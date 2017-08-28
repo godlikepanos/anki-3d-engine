@@ -41,7 +41,7 @@ Error LightComponent::update(SceneNode&, F32, F32, Bool& updated)
 
 	m_flags.unset(DIRTY | TRF_DIRTY);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

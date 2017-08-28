@@ -77,7 +77,7 @@ Error FinalComposite::initInternal(const ConfigSet& config)
 	m_prog->getOrCreateVariant(mutations.get(), consts.get(), variant);
 	m_grProgs[1] = variant->getProgram();
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error FinalComposite::init(const ConfigSet& config)
@@ -99,7 +99,7 @@ Error FinalComposite::loadColorGradingTexture(CString filename)
 	ANKI_ASSERT(m_lut->getHeight() == LUT_SIZE);
 	ANKI_ASSERT(m_lut->getDepth() == LUT_SIZE);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error FinalComposite::run(RenderingContext& ctx)
@@ -167,7 +167,7 @@ Error FinalComposite::run(RenderingContext& ctx)
 			TextureSurfaceInfo(0, 0, 0, 0));
 	}
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

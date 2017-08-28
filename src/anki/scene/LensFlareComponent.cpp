@@ -25,7 +25,7 @@ Error LensFlareComponent::init(const CString& textureFilename)
 	// Texture
 	ANKI_CHECK(getSceneGraph().getResourceManager().loadResource(textureFilename, m_tex));
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

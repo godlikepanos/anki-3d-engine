@@ -65,7 +65,7 @@ Error ResourceManager::init(ResourceManagerInitInfo& init)
 
 	ANKI_CHECK(m_transferGpuAlloc.init(init.m_config->getNumber("rsrc.transferScratchMemorySize"), m_gr, m_alloc));
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 U64 ResourceManager::getAsyncTaskCompletedCount() const

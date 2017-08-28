@@ -21,13 +21,13 @@ PhysicsCollisionShape::~PhysicsCollisionShape()
 
 Error PhysicsSphere::create(PhysicsCollisionShapeInitInfo& init, F32 radius)
 {
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 
 	m_shape = NewtonCreateSphere(m_world->getNewtonWorld(), radius, m_gid++, nullptr);
 	if(!m_shape)
 	{
 		ANKI_PHYS_LOGE("NewtonCreateSphere() failed");
-		err = ErrorCode::FUNCTION_FAILED;
+		err = Error::FUNCTION_FAILED;
 	}
 
 	return err;
@@ -35,13 +35,13 @@ Error PhysicsSphere::create(PhysicsCollisionShapeInitInfo& init, F32 radius)
 
 Error PhysicsBox::create(PhysicsCollisionShapeInitInfo& init, const Vec3& extend)
 {
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 
 	m_shape = NewtonCreateBox(m_world->getNewtonWorld(), extend.x(), extend.y(), extend.z(), m_gid++, nullptr);
 	if(!m_shape)
 	{
 		ANKI_PHYS_LOGE("NewtonCreateBox() failed");
-		err = ErrorCode::FUNCTION_FAILED;
+		err = Error::FUNCTION_FAILED;
 	}
 
 	return err;
@@ -57,7 +57,7 @@ Error PhysicsTriangleSoup::create(PhysicsCollisionShapeInitInfo& init,
 	if(!m_shape)
 	{
 		ANKI_PHYS_LOGE("NewtonCreateBox() failed");
-		return ErrorCode::FUNCTION_FAILED;
+		return Error::FUNCTION_FAILED;
 	}
 
 	NewtonTreeCollisionBeginBuild(m_shape);
@@ -82,7 +82,7 @@ Error PhysicsTriangleSoup::create(PhysicsCollisionShapeInitInfo& init,
 	const I optimize = 1;
 	NewtonTreeCollisionEndBuild(m_shape, optimize);
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

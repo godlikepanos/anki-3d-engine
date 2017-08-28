@@ -46,7 +46,7 @@ Error ResourceObject::openFileReadAllText(const CString& filename, StringAuto& t
 	text = StringAuto(getTempAllocator());
 	ANKI_CHECK(file->readAllText(getTempAllocator(), text));
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 Error ResourceObject::openFileParseXml(const CString& filename, XmlDocument& xml)
@@ -56,7 +56,7 @@ Error ResourceObject::openFileParseXml(const CString& filename, XmlDocument& xml
 
 	ANKI_CHECK(xml.parse(txt.toCString(), getTempAllocator()));
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

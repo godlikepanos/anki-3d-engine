@@ -26,7 +26,7 @@ Error GrManagerImpl::initSurface(const GrManagerInitInfo& init)
 	if(!SDL_GetWindowWMInfo(init.m_window->getNative().m_window, &wminfo))
 	{
 		ANKI_VK_LOGE("SDL_GetWindowWMInfo() failed");
-		return ErrorCode::NONE;
+		return Error::NONE;
 	}
 
 #if ANKI_OS == ANKI_OS_LINUX
@@ -53,7 +53,7 @@ Error GrManagerImpl::initSurface(const GrManagerInitInfo& init)
 #error TODO
 #endif
 
-	return ErrorCode::NONE;
+	return Error::NONE;
 }
 
 } // end namespace anki

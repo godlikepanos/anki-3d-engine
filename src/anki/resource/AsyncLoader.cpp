@@ -77,7 +77,7 @@ Error AsyncLoader::threadCallback(ThreadCallbackInfo& info)
 
 Error AsyncLoader::threadWorker()
 {
-	Error err = ErrorCode::NONE;
+	Error err = Error::NONE;
 
 	while(!err)
 	{
