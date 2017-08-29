@@ -67,4 +67,13 @@ void BackTraceWalker::exec()
 #endif
 }
 
+Bool runningFromATerminal()
+{
+#if ANKI_POSIX
+	return isatty(fileno(stdin));
+#else
+	return false;
+#endif
+}
+
 } // end namespace anki

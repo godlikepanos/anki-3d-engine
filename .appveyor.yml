@@ -44,5 +44,8 @@ build_script:
   - mingw32-make -j 2
 
 notifications:
-  email: false
+  - provider: Email
+    to:
+      - '{{commitAuthorEmail}}'
+    on_build_failure: true
 

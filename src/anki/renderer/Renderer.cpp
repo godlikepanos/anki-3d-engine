@@ -231,6 +231,8 @@ void Renderer::initJitteredMats()
 
 Error Renderer::render(RenderingContext& ctx)
 {
+	m_rgraph->reset();
+
 	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
 	ctx.m_jitterMat = m_jitteredMats8x[m_frameCount & (8 - 1)];

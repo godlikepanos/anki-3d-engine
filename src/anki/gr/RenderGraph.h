@@ -77,7 +77,7 @@ public:
 	/// @{
 	RenderGraphHandle importRenderTarget(CString name, TexturePtr tex);
 
-	RenderGraphHandle newRenderTarget(CString name, const TextureInitInfo& texInf);
+	RenderGraphHandle newRenderTarget(const TextureInitInfo& texInf);
 
 	RenderGraphHandle importBuffer(CString name, BufferPtr buff);
 
@@ -141,9 +141,6 @@ private:
 	GrManager* m_gr;
 	StackAllocator<U8> m_tmpAlloc;
 
-	class PassBatch;
-	class BakeContext;
-
 	/// Render targets of the same type+size+format.
 	class RenderTargetCacheEntry
 	{
@@ -155,33 +152,72 @@ private:
 	HashMap<TextureInitInfo, RenderTargetCacheEntry*> m_renderTargetCache; ///< Imported render targets.
 	HashMap<FramebufferInitInfo, FramebufferPtr> m_framebufferCache;
 
-	class RenderTarget
+	// Forward declarations
+	class PassBatch;
+	class RenderTarget;
+	class Pass;
+	class BakeContext;
+
+	template<typename T>
+	class Storage
 	{
 	public:
-		TexturePtr m_tex;
-		Bool8 m_imported = false;
-		Array<char, MAX_GR_OBJECT_NAME_LENGTH + 1> m_name;
+		T* m_arr = nullptr;
+		U32 m_count = 0;
+		U32 m_storage = 0;
+
+		T& operator[](U i)
+		{
+			ANKI_ASSERT(i < m_count);
+			return m_arr[i];
+		}
+
+		const T& operator[](U i) const
+		{
+			ANKI_ASSERT(i < m_count);
+			return m_arr[i];
+		}
+
+		T* begin()
+		{
+			return &m_arr[0];
+		}
+
+		const T* begin() const
+		{
+			return &m_arr[0];
+		}
+
+		T* end()
+		{
+			return &m_arr[m_count];
+		}
+
+		const T* end() const
+		{
+			return &m_arr[m_count];
+		}
+
+		U32 getSize() const
+		{
+			return m_count;
+		}
+
+		void pushBack(StackAllocator<U8>& alloc, T&& x);
+
+		void reset()
+		{
+			m_arr = nullptr;
+			m_count = 0;
+			m_storage = 0;
+		}
 	};
 
-	RenderTarget* m_renderTargets = nullptr;
-	U32 m_renderTargetsCount = 0;
-	U32 m_renderTargetsStorage = 0;
-
-	/// Render pass or compute job.
-	class Pass
-	{
-	public:
-		FramebufferPtr m_framebuffer;
-		DynamicArray<RenderGraphDependency> m_consumers;
-		DynamicArray<RenderGraphDependency> m_producers;
-		DynamicArray<Pass*> m_dependsOn;
-		U32 m_index;
-		Array<char, MAX_GR_OBJECT_NAME_LENGTH + 1> m_name;
-
-		void destroy(StackAllocator<U8>& alloc);
-	};
-
-	DynamicArray<Pass*> m_passes;
+	/// @name Runtime stuff
+	/// @{
+	Storage<RenderTarget> m_renderTargets;
+	Storage<Pass> m_passes;
+	/// @}
 
 	RenderGraphHandle pushRenderTarget(CString name, TexturePtr tex, Bool imported);
 
@@ -191,9 +227,6 @@ private:
 
 	/// Dump the dependency graph into a file.
 	ANKI_USE_RESULT Error dumpDependencyDotFile(const BakeContext& ctx, CString path) const;
-
-	template<typename T>
-	void increaseStorage(T*& oldStorage, U32& count, U32& storage);
 };
 /// @}
 

@@ -36,6 +36,9 @@ public:
 private:
 	U m_stackSize;
 };
+
+/// Return true if the engine is running from a terminal emulator.
+Bool runningFromATerminal();
 /// @}
 
 } // end namespace anki

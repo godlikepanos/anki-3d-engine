@@ -5,6 +5,7 @@
 
 #include <anki/util/Logger.h>
 #include <anki/util/File.h>
+#include <anki/util/System.h>
 #include <cstring>
 #include <cstdarg>
 #include <cstdio>
@@ -95,8 +96,7 @@ void Logger::defaultSystemMessageHandler(void*, const Info& info)
 	FILE* out = nullptr;
 	const char* terminalColor = nullptr;
 	const char* terminalColorBg = nullptr;
-
-#define ANKI_END_TERMINAL_FMT "\033[0m"
+	const char* endTerminalColor = "\033[0m";
 
 	switch(info.m_type)
 	{
@@ -124,18 +124,26 @@ void Logger::defaultSystemMessageHandler(void*, const Info& info)
 		ANKI_ASSERT(0);
 	}
 
-	const char* fmt = "%s[%s][%s]" ANKI_END_TERMINAL_FMT "%s %s (%s:%d %s)" ANKI_END_TERMINAL_FMT "\n";
+	const char* fmt = "%s[%s][%s]%s%s %s (%s:%d %s)%s\n";
+	if(runningFromATerminal())
+	{
+		terminalColorBg = "";
+		terminalColorBg = "";
+		endTerminalColor = "";
+	}
 
 	fprintf(out,
 		fmt,
 		terminalColorBg,
 		MSG_TEXT[static_cast<U>(info.m_type)],
 		info.m_subsystem ? info.m_subsystem : "N/A ",
+		endTerminalColor,
 		terminalColor,
 		info.m_msg,
 		info.m_file,
 		info.m_line,
-		info.m_func);
+		info.m_func,
+		endTerminalColor);
 #elif ANKI_OS == ANKI_OS_ANDROID
 	U32 andMsgType = ANDROID_LOG_INFO;
 

@@ -13,28 +13,68 @@
 namespace anki
 {
 
+/// Render pass or compute job.
+class RenderGraph::Pass
+{
+public:
+	FramebufferPtr m_framebuffer;
+
+	Storage<RenderGraphDependency> m_consumers;
+	Storage<RenderGraphDependency> m_producers;
+
+	Storage<Pass*> m_dependsOn;
+
+	U32 m_index;
+	Array<char, MAX_GR_OBJECT_NAME_LENGTH + 1> m_name;
+};
+
+/// Render target.
+class RenderGraph::RenderTarget
+{
+public:
+	TexturePtr m_tex;
+	Bool8 m_imported = false;
+	Array<char, MAX_GR_OBJECT_NAME_LENGTH + 1> m_name;
+};
+
+/// A collection of passes that can execute in parallel.
 class RenderGraph::PassBatch
 {
 public:
-	DynamicArrayAuto<Pass*> m_passes;
-
-	PassBatch(const StackAllocator<U8>& alloc)
-		: m_passes(alloc)
-	{
-	}
+	Storage<Pass*> m_passes;
 };
 
 class RenderGraph::BakeContext
 {
 public:
-	BakeContext(const StackAllocator<U8>& alloc)
-		: m_batches(alloc)
-	{
-	}
+	Storage<PassBatch> m_batches;
 
-	DynamicArrayAuto<PassBatch*> m_batches;
 	BitSet<MAX_PASSES> m_passIsInBatch = {false};
 };
+
+template<typename T>
+void RenderGraph::Storage<T>::pushBack(StackAllocator<U8>& alloc, T&& x)
+{
+	if(m_count == m_storage)
+	{
+		m_storage = max<U32>(2, m_storage * 2);
+		T* newStorage = alloc.newArray<T>(m_storage);
+		for(U i = 0; i < m_count; ++i)
+		{
+			newStorage[i] = std::move(m_arr[i]);
+		}
+
+		if(m_count)
+		{
+			alloc.deleteArray(m_arr, m_count);
+		}
+
+		m_arr = newStorage;
+	}
+
+	m_arr[m_count] = std::move(x);
+	++m_count;
+}
 
 RenderGraph::RenderGraph(GrManager* manager, U64 hash, GrObjectCache* cache)
 	: GrObject(manager, CLASS_TYPE, hash, cache)
@@ -51,38 +91,19 @@ RenderGraph::~RenderGraph()
 	// TODO
 }
 
-template<typename T>
-void RenderGraph::increaseStorage(T*& oldStorage, U32& count, U32& storage)
-{
-	T* newStorage;
-	if(count == storage)
-	{
-		storage = max<U32>(2, storage * 2);
-		newStorage = m_tmpAlloc.newArray<T>(storage);
-		for(U i = 0; i < count; ++i)
-		{
-			newStorage[i] = oldStorage[i];
-		}
-	}
-	else
-	{
-		newStorage = oldStorage;
-	}
-
-	++count;
-	oldStorage = newStorage;
-}
-
 void RenderGraph::reset()
 {
-	for(U i = 0; i < m_renderTargetsCount; ++i)
+	for(RenderTarget& rt : m_renderTargets)
 	{
-		m_renderTargets[i].m_tex.reset(nullptr);
+		rt.m_tex.reset(nullptr);
 	}
-	m_renderTargetsCount = 0;
-	m_renderTargetsStorage = 0;
+	m_renderTargets.reset();
 
-	// for(Pass* pass : m_passes)
+	for(Pass& pass : m_passes)
+	{
+		pass.m_framebuffer.reset(nullptr);
+	}
+	m_passes.reset();
 }
 
 Error RenderGraph::dumpDependencyDotFile(const BakeContext& ctx, CString path) const
@@ -97,7 +118,7 @@ Error RenderGraph::dumpDependencyDotFile(const BakeContext& ctx, CString path) c
 		ANKI_CHECK(file.writeText("\tsubgraph cluster_%u {\n", batchIdx));
 		ANKI_CHECK(file.writeText("\t\tlabel=\"batch_%u\";\n", batchIdx));
 
-		for(const Pass* pass : ctx.m_batches[batchIdx]->m_passes)
+		for(const Pass* pass : ctx.m_batches[batchIdx].m_passes)
 		{
 			for(const Pass* dep : pass->m_dependsOn)
 			{
@@ -114,9 +135,7 @@ Error RenderGraph::dumpDependencyDotFile(const BakeContext& ctx, CString path) c
 
 RenderGraphHandle RenderGraph::pushRenderTarget(CString name, TexturePtr tex, Bool imported)
 {
-	increaseStorage(m_renderTargets, m_renderTargetsCount, m_renderTargetsStorage);
-
-	RenderTarget& target = m_renderTargets[m_renderTargetsCount - 1];
+	RenderTarget target;
 	target.m_imported = imported;
 	target.m_tex = tex;
 
@@ -131,7 +150,8 @@ RenderGraphHandle RenderGraph::pushRenderTarget(CString name, TexturePtr tex, Bo
 		strcpy(&target.m_name[0], NA);
 	}
 
-	return (m_renderTargetsCount - 1) & TEXTURE_TYPE;
+	m_renderTargets.pushBack(m_tmpAlloc, std::move(target));
+	return (m_renderTargets.getSize() - 1) & TEXTURE_TYPE;
 }
 
 RenderGraphHandle RenderGraph::importRenderTarget(CString name, TexturePtr tex)
@@ -139,7 +159,7 @@ RenderGraphHandle RenderGraph::importRenderTarget(CString name, TexturePtr tex)
 	return pushRenderTarget(name, tex, true);
 }
 
-RenderGraphHandle RenderGraph::newRenderTarget(CString name, const TextureInitInfo& texInf)
+RenderGraphHandle RenderGraph::newRenderTarget(const TextureInitInfo& texInf)
 {
 	auto alloc = m_gr->getAllocator();
 
@@ -181,14 +201,14 @@ RenderGraphHandle RenderGraph::newRenderTarget(CString name, const TextureInitIn
 	}
 
 	// Create the render target
-	return pushRenderTarget(name, tex, false);
+	return pushRenderTarget(texInf.getName(), tex, false);
 }
 
 Bool RenderGraph::passADependsOnB(const Pass& a, const Pass& b)
 {
 	for(const RenderGraphDependency& consumer : a.m_consumers)
 	{
-		for(const RenderGraphDependency& producer : b.m_producers)
+		for(const RenderGraphDependency& producer : a.m_producers)
 		{
 			if(consumer.m_handle == producer.m_handle)
 			{
@@ -209,38 +229,55 @@ RenderGraphHandle RenderGraph::registerRenderPass(CString name,
 	void* userData,
 	U32 secondLevelCmdbsCount)
 {
-	// Allocate the new pass
-	Pass* newPass = m_tmpAlloc.newInstance<Pass>();
-	newPass->m_index = m_passes.getSize();
+	Pass newPass;
+	newPass.m_index = m_passes.getSize();
 
 	// Set name
 	if(name.getLength())
 	{
 		ANKI_ASSERT(name.getLength() <= MAX_GR_OBJECT_NAME_LENGTH);
-		strcpy(&newPass->m_name[0], &name[0]);
+		strcpy(&newPass.m_name[0], &name[0]);
 	}
 	else
 	{
 		static const char* NA = "N/A";
-		strcpy(&newPass->m_name[0], NA);
+		strcpy(&newPass.m_name[0], NA);
 	}
 
 	// Set the dependencies
-	// XXX
+	if(consumers.getSize())
+	{
+		newPass.m_consumers.m_arr = m_tmpAlloc.newArray<RenderGraphDependency>(consumers.getSize());
+		for(U i = 0; i < consumers.getSize(); ++i)
+		{
+			newPass.m_consumers.m_arr[i] = consumers[i];
+		}
+
+		newPass.m_consumers.m_count = newPass.m_consumers.m_storage = consumers.getSize();
+	}
+
+	if(producers.getSize())
+	{
+		newPass.m_producers.m_arr = m_tmpAlloc.newArray<RenderGraphDependency>(producers.getSize());
+		for(U i = 0; i < producers.getSize(); ++i)
+		{
+			newPass.m_producers.m_arr[i] = producers[i];
+		}
+
+		newPass.m_producers.m_count = newPass.m_producers.m_storage = producers.getSize();
+	}
 
 	// Find the dependencies
-	for(Pass* prevPass : m_passes)
+	for(Pass& otherPass : m_passes)
 	{
-		if(passADependsOnB(*newPass, *prevPass))
+		if(passADependsOnB(newPass, otherPass))
 		{
-			newPass->m_dependsOn.resize(m_tmpAlloc, newPass->m_dependsOn.getSize() + 1);
-			newPass->m_dependsOn.getBack() = prevPass;
+			newPass.m_dependsOn.pushBack(m_tmpAlloc, &otherPass);
 		}
 	}
 
 	// Push pass to the passes
-	m_passes.resize(m_tmpAlloc, m_passes.getSize() + 1);
-	m_passes[m_passes.getSize() - 1] = newPass;
+	m_passes.pushBack(m_tmpAlloc, std::move(newPass));
 	return (m_passes.getSize() - 1) & RT_TYPE;
 }
 
@@ -274,27 +311,25 @@ Bool RenderGraph::passHasUnmetDependencies(const BakeContext& ctx, const Pass& p
 
 void RenderGraph::bake()
 {
-	BakeContext ctx(m_tmpAlloc);
+	BakeContext ctx;
 
 	// Walk the graph and create pass batches
 	U passesInBatchCount = 0;
 	while(passesInBatchCount < m_passes.getSize())
 	{
-		PassBatch& batch = *m_tmpAlloc.newInstance<PassBatch>(m_tmpAlloc);
+		PassBatch batch;
 
 		for(U i = 0; i < m_passes.getSize(); ++i)
 		{
-			if(!ctx.m_passIsInBatch.get(i) && !passHasUnmetDependencies(ctx, *m_passes[i]))
+			if(!ctx.m_passIsInBatch.get(i) && !passHasUnmetDependencies(ctx, m_passes[i]))
 			{
 				// Add to the batch
-				batch.m_passes.resize(batch.m_passes.getSize() + 1);
-				batch.m_passes.getBack() = m_passes[i];
+				batch.m_passes.pushBack(m_tmpAlloc, &m_passes[i]);
 			}
 		}
 
 		// Push back batch
-		ctx.m_batches.resize(ctx.m_batches.getSize() + 1);
-		ctx.m_batches.getBack() = &batch;
+		ctx.m_batches.pushBack(m_tmpAlloc, std::move(batch));
 
 		// Mark batch's passes done
 		for(const Pass* pass : batch.m_passes)

@@ -1531,4 +1531,13 @@ ANKI_TEST(Gr, 3DTextures)
 	COMMON_END()
 }
 
+ANKI_TEST(Gr, RenderGraph)
+{
+	COMMON_BEGIN()
+
+	// TODO
+
+	COMMON_END()
+}
+
 } // end namespace anki

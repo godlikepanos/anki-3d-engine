@@ -105,6 +105,9 @@ public:
 
 		StackAllocator<U8> m_alloc;
 
+		RenderGraphHandle m_spotRt;
+		RenderGraphHandle m_omniRt;
+
 		ShadowMapping(const StackAllocator<U8>& alloc)
 			: m_alloc(alloc)
 		{
@@ -401,6 +404,11 @@ anki_internal:
 	SamplerPtr getLinearSampler() const
 	{
 		return m_linearSampler;
+	}
+
+	RenderGraphPtr getRenderGraph() const
+	{
+		return m_rgraph;
 	}
 
 private:
