@@ -34,7 +34,7 @@ static DWORD WINAPI threadCallback(LPVOID ud)
 
 	Error err = thread->getCallback()(info);
 
-	return err._getCodeInt();
+	return err._getCode();
 }
 
 Thread::Thread(const char* name)

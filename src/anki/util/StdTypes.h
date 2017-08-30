@@ -81,15 +81,15 @@ public:
 	/// @name Error codes
 	/// @{
 	static constexpr I32 NONE = 0;
-	static constexpr I32 OUT_OF_MEMORY = -1;
-	static constexpr I32 FUNCTION_FAILED = -2; ///< External operation failed
-	static constexpr I32 USER_DATA = -3;
+	static constexpr I32 OUT_OF_MEMORY = 1;
+	static constexpr I32 FUNCTION_FAILED = 2; ///< External operation failed
+	static constexpr I32 USER_DATA = 3;
 
 	// File errors
-	static constexpr I32 FILE_NOT_FOUND = -4;
-	static constexpr I32 FILE_ACCESS = -5; ///< Read/write access error
+	static constexpr I32 FILE_NOT_FOUND = 4;
+	static constexpr I32 FILE_ACCESS = 5; ///< Read/write access error
 
-	static constexpr I32 UNKNOWN = -6;
+	static constexpr I32 UNKNOWN = 6;
 	/// @}
 
 	/// Construct using an error code.
