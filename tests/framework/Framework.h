@@ -88,7 +88,6 @@ extern void deleteTesterSingleton();
 #define ANKI_TEST(suiteName_, name_)                                                     \
 	using namespace anki;                                                                \
 	void test_##suiteName_##name_(Test&);                                                \
-                                                                                         \
 	struct Foo##suiteName_##name_                                                        \
 	{                                                                                    \
 		Foo##suiteName_##name_()                                                         \

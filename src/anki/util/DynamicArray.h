@@ -151,6 +151,9 @@ public:
 	using Base::m_size;
 	using typename Base::Value;
 
+	static constexpr F32 GROW_SCALE = 2.0f;
+	static constexpr F32 SHRINK_SCALE = 2.0f;
+
 	DynamicArray()
 		: Base(nullptr, 0)
 	{
@@ -168,7 +171,7 @@ public:
 
 	~DynamicArray()
 	{
-		ANKI_ASSERT(m_data == nullptr && m_size == 0 && "Requires manual destruction");
+		ANKI_ASSERT(m_data == nullptr && m_size == 0 && m_capacity == 0 && "Requires manual destruction");
 	}
 
 	/// Move.
@@ -179,54 +182,55 @@ public:
 		b.m_data = nullptr;
 		m_size = b.m_size;
 		b.m_size = 0;
+		m_capacity = b.m_capacity;
+		b.m_capacity = 0;
 		return *this;
 	}
 
 	// Non-copyable
 	DynamicArray& operator=(const DynamicArray& b) = delete;
 
-	/// Create the array.
+	/// Only create the array. Useful if @a T is non-copyable or movable .
 	template<typename TAllocator>
 	void create(TAllocator alloc, PtrSize size)
 	{
-		ANKI_ASSERT(m_data == nullptr && m_size == 0);
-
+		ANKI_ASSERT(m_data == nullptr && m_size == 0 && m_capacity == 0);
 		if(size > 0)
 		{
 			m_data = alloc.template newArray<Value>(size);
 			m_size = size;
+			m_capacity = size;
 		}
 	}
 
-	/// Create the array.
+	/// Only create the array. Useful if @a T is non-copyable or movable .
 	template<typename TAllocator>
 	void create(TAllocator alloc, PtrSize size, const Value& v)
 	{
-		ANKI_ASSERT(m_data == nullptr && m_size == 0);
-
+		ANKI_ASSERT(m_data == nullptr && m_size == 0 && m_capacity == 0);
 		if(size > 0)
 		{
 			m_data = alloc.template newArray<Value>(size, v);
 			m_size = size;
+			m_capacity = size;
 		}
 	}
 
-	/// Grow the array.
+	/// Grow or create the array. @a T needs to be copyable and moveable.
 	template<typename TAllocator>
-	void resize(TAllocator alloc, PtrSize size)
+	void resize(TAllocator alloc, PtrSize size, const Value& v);
+
+	/// Grow or create the array. @a T needs to be copyable and moveable.
+	template<typename TAllocator>
+	void resize(TAllocator alloc, PtrSize size);
+
+	/// Push back value.
+	template<typename TAllocator, typename... TArgs>
+	void emplaceBack(TAllocator alloc, TArgs&&... args)
 	{
-		ANKI_ASSERT(size > 0);
-		DynamicArray newArr;
-		newArr.create(alloc, size);
-
-		PtrSize minSize = min<PtrSize>(size, m_size);
-		for(U i = 0; i < minSize; i++)
-		{
-			newArr[i] = std::move((*this)[i]);
-		}
-
-		destroy(alloc);
-		*this = std::move(newArr);
+		resizeStorage(alloc, m_size + 1);
+		::new(&m_data[m_size]) Value(std::forward<TArgs>(args)...);
+		++m_size;
 	}
 
 	/// Destroy the array.
@@ -236,14 +240,38 @@ public:
 		if(m_data)
 		{
 			ANKI_ASSERT(m_size > 0);
+			ANKI_ASSERT(m_capacity > 0);
 			alloc.deleteArray(m_data, m_size);
 
 			m_data = nullptr;
 			m_size = 0;
+			m_capacity = 0;
 		}
 
-		ANKI_ASSERT(m_data == nullptr && m_size == 0);
+		ANKI_ASSERT(m_data == nullptr && m_size == 0 && m_capacity == 0);
 	}
+
+	/// Validate it. Will only work when assertions are enabled.
+	void validate() const
+	{
+		if(m_data)
+		{
+			ANKI_ASSERT(m_size > 0 && m_capacity > 0);
+			ANKI_ASSERT(m_size <= m_capacity);
+		}
+		else
+		{
+			ANKI_ASSERT(m_size == 0 && m_capacity == 0);
+		}
+	}
+
+protected:
+	PtrSize m_capacity = 0;
+
+private:
+	/// Resizes the storage but doesn't constructs any elements. Only moves them.
+	template<typename TAllocator>
+	void resizeStorage(TAllocator& alloc, PtrSize size);
 };
 
 /// Dynamic array with automatic destruction. It's the same as DynamicArray but it holds the allocator in order to
@@ -255,6 +283,7 @@ public:
 	using Base = DynamicArray<T>;
 	using Base::m_data;
 	using Base::m_size;
+	using Base::m_capacity;
 	using typename Base::Value;
 
 	template<typename TAllocator>
@@ -285,24 +314,39 @@ public:
 		b.m_data = nullptr;
 		m_size = b.m_size;
 		b.m_size = 0;
+		m_capacity = b.m_capacity;
+		b.m_capacity = 0;
 		m_alloc = b.m_alloc;
 		b.m_alloc = {};
 		return *this;
 	}
 
-	/// Create the array.
+	/// @copydoc DynamicArray::create
 	void create(PtrSize size)
 	{
 		Base::create(m_alloc, size);
 	}
 
-	/// Create the array.
+	/// @copydoc DynamicArray::create
 	void create(PtrSize size, const Value& v)
 	{
 		Base::create(m_alloc, size, v);
 	}
 
-	/// Grow the array.
+	/// @copydoc DynamicArray::resize
+	void resize(PtrSize size, const Value& v)
+	{
+		Base::resize(m_alloc, size, v);
+	}
+
+	/// @copydoc DynamicArray::emplaceBack
+	template<typename... TArgs>
+	void emplaceBack(TArgs&&... args)
+	{
+		Base::emplaceBack(m_alloc, std::forward<TArgs>(args)...);
+	}
+
+	/// @copydoc DynamicArray::resize
 	void resize(PtrSize size)
 	{
 		Base::resize(m_alloc, size);
@@ -381,3 +425,5 @@ public:
 /// @}
 
 } // end namespace anki
+
+#include <anki/util/DynamicArray.inl.h>
