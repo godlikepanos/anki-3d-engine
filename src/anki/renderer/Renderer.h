@@ -105,9 +105,6 @@ public:
 
 		StackAllocator<U8> m_alloc;
 
-		RenderGraphHandle m_spotRt;
-		RenderGraphHandle m_omniRt;
-
 		ShadowMapping(const StackAllocator<U8>& alloc)
 			: m_alloc(alloc)
 		{

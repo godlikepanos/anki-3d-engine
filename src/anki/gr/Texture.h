@@ -14,7 +14,7 @@ namespace anki
 /// @{
 
 /// Sampler initializer.
-class SamplerInitInfo : public GrBaseInitInfo
+class alignas(4) SamplerInitInfo : public GrBaseInitInfo
 {
 public:
 	F32 m_minLod = -1000.0;
@@ -24,6 +24,7 @@ public:
 	CompareOperation m_compareOperation = CompareOperation::ALWAYS;
 	I8 m_anisotropyLevel = 0;
 	Bool8 m_repeat = true; ///< Repeat or clamp.
+	U8 _m_padding[3] = {0, 0, 0};
 
 	SamplerInitInfo() = default;
 
@@ -34,15 +35,14 @@ public:
 
 	U64 computeHash() const
 	{
-		const U8* start = reinterpret_cast<const U8*>(&m_minLod);
-		const U8* end = reinterpret_cast<const U8*>(&m_repeat) + sizeof(m_repeat);
-		ANKI_ASSERT((end - start == 13) && "Class needs to be tightly packed since we hash it");
-		return anki::computeHash(start, end - start);
+		return anki::computeHash(this, sizeof(*this));
 	}
 };
+static_assert(
+	sizeof(SamplerInitInfo) == sizeof(GrBaseInitInfo) + 16, "Class needs to be tightly packed since we hash it");
 
 /// Texture initializer.
-class TextureInitInfo : public GrBaseInitInfo
+class alignas(4) TextureInitInfo : public GrBaseInitInfo
 {
 public:
 	U32 m_width = 0;
@@ -50,18 +50,20 @@ public:
 	U32 m_depth = 1; //< Relevant only for 3D textures.
 	U32 m_layerCount = 1; ///< Relevant only for texture arrays.
 
-	TextureType m_type = TextureType::_2D;
-
 	TextureUsageBit m_usage = TextureUsageBit::NONE; ///< How the texture will be used.
 	TextureUsageBit m_initialUsage = TextureUsageBit::NONE; ///< It's initial usage.
 
 	/// It's usual usage. That way you won't need to call CommandBuffer::informTextureXXXCurrentUsage() all the time.
 	TextureUsageBit m_usageWhenEncountered = TextureUsageBit::NONE;
 
+	TextureType m_type = TextureType::_2D;
+
 	U8 m_mipmapsCount = 1;
 
 	PixelFormat m_format;
 	U8 m_samples = 1;
+
+	U8 _m_padding = 0;
 
 	SamplerInitInfo m_sampling;
 
@@ -75,16 +77,11 @@ public:
 
 	U64 computeHash() const
 	{
-		const U8* start = reinterpret_cast<const U8*>(&m_width);
-		const U8* end = reinterpret_cast<const U8*>(&m_samples) + sizeof(m_samples);
-		ANKI_ASSERT((end - start == 24) && "Class needs to be tightly packed since we hash it");
-
-		const U8* starts = reinterpret_cast<const U8*>(&m_sampling.m_minLod);
-		const U8* ends = reinterpret_cast<const U8*>(&m_sampling.m_repeat) + sizeof(m_sampling.m_repeat);
-
-		return appendHash(starts, ends - starts, anki::computeHash(start, end - start));
+		return anki::computeHash(this, sizeof(*this));
 	}
 };
+static_assert(sizeof(TextureInitInfo) == sizeof(GrBaseInitInfo) + 28 + sizeof(SamplerInitInfo),
+	"Class needs to be tightly packed since we hash it");
 
 /// GPU texture
 class Texture final : public GrObject

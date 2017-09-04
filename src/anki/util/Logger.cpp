@@ -125,9 +125,9 @@ void Logger::defaultSystemMessageHandler(void*, const Info& info)
 	}
 
 	const char* fmt = "%s[%s][%s]%s%s %s (%s:%d %s)%s\n";
-	if(runningFromATerminal())
+	if(!runningFromATerminal())
 	{
-		terminalColorBg = "";
+		terminalColor = "";
 		terminalColorBg = "";
 		endTerminalColor = "";
 	}

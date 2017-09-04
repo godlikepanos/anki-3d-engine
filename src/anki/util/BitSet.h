@@ -98,6 +98,18 @@ public:
 		return *this;
 	}
 
+	/// Bitwise not of self.
+	BitSet operator~() const
+	{
+		BitSet out;
+		for(U i = 0; i < CHUNK_COUNT; ++i)
+		{
+			out.m_chunks[i] = ~m_chunks[i];
+		}
+		out.zeroUnusedBits();
+		return out;
+	}
+
 	Bool operator==(const BitSet& b) const
 	{
 		return memcmp(&m_chunks[0], &b.m_chunks[0], sizeof(m_chunks)) == 0;
@@ -137,11 +149,7 @@ public:
 	void setAll()
 	{
 		memset(m_chunks, 0xFF, sizeof(m_chunks));
-
-		// Zero the unused bits
-		const ChunkType REMAINING_BITS = N - (CHUNK_COUNT - 1) * CHUNK_BIT_COUNT;
-		const ChunkType REMAINING_BITMASK = std::numeric_limits<ChunkType>::max() >> REMAINING_BITS;
-		m_chunks[CHUNK_COUNT - 1] ^= REMAINING_BITMASK;
+		zeroUnusedBits();
 	}
 
 	/// Unset a bit (set to zero) at the given position.
@@ -227,6 +235,14 @@ protected:
 		low = bit % CHUNK_BIT_COUNT;
 		ANKI_ASSERT(high < CHUNK_COUNT);
 		ANKI_ASSERT(low < CHUNK_BIT_COUNT);
+	}
+
+	/// Zero the unused bits.
+	void zeroUnusedBits()
+	{
+		const ChunkType REMAINING_BITS = N - (CHUNK_COUNT - 1) * CHUNK_BIT_COUNT;
+		const ChunkType REMAINING_BITMASK = std::numeric_limits<ChunkType>::max() >> REMAINING_BITS;
+		m_chunks[CHUNK_COUNT - 1] ^= REMAINING_BITMASK;
 	}
 };
 /// @}
