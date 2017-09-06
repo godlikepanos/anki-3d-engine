@@ -45,7 +45,7 @@ public:
 	const RenderGraphDescription* m_descr = nullptr;
 	DynamicArrayAuto<Batch> m_batches;
 
-	BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS> m_satisfiedConsumerRts = {false}; ///< XXX
+	BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS> m_satisfiedRts = {false}; ///< XXX
 	BitSet<MAX_RENDER_GRAPH_BUFFERS> m_satisfiedConsumerBuffers = {false}; ///< XXX
 
 	BakeContext(const StackAllocator<U8>& alloc)
@@ -94,25 +94,27 @@ Error RenderGraph::dumpDependencyDotFile(const BakeContext& ctx, CString path) c
 
 	for(U batchIdx = 0; batchIdx < ctx.m_batches.getSize(); ++batchIdx)
 	{
-		ANKI_CHECK(file.writeText("\tsubgraph cluster_%u {\n", batchIdx));
-		ANKI_CHECK(file.writeText("\t\tlabel=\"batch_%u\";\n", batchIdx));
+		ANKI_CHECK(file.writeText("\t{rank=\"same\";"));
+		for(U32 passIdx : ctx.m_batches[batchIdx].m_passes)
+		{
+			ANKI_CHECK(file.writeText("\"%s\";", &ctx.m_descr->m_passes[passIdx]->m_name[0]));
+		}
+		ANKI_CHECK(file.writeText("}\n"));
 
 		for(U32 passIdx : ctx.m_batches[batchIdx].m_passes)
 		{
 			for(U32 depIdx : ctx.m_passes[passIdx].m_dependsOn)
 			{
-				ANKI_CHECK(file.writeText("\t\t\"%s\"->\"%s\";\n",
+				ANKI_CHECK(file.writeText("\t\"%s\"->\"%s\";\n",
 					&ctx.m_descr->m_passes[depIdx]->m_name[0],
 					&ctx.m_descr->m_passes[passIdx]->m_name[0]));
 			}
 
 			if(ctx.m_passes[passIdx].m_dependsOn.getSize() == 0)
 			{
-				ANKI_CHECK(file.writeText("\t\tNONE->\"%s\";\n", &ctx.m_descr->m_passes[passIdx]->m_name[0]));
+				ANKI_CHECK(file.writeText("\tNONE->\"%s\";\n", &ctx.m_descr->m_passes[passIdx]->m_name[0]));
 			}
 		}
-
-		ANKI_CHECK(file.writeText("\t}\n"));
 	}
 
 	ANKI_CHECK(file.writeText("}"));
@@ -167,22 +169,29 @@ Bool RenderGraph::passADependsOnB(BakeContext& ctx, const RenderPassBase& a, con
 {
 	Bool depends = false;
 
-	BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS> rtIntersection =
-		(a.m_consumerRtMask & ~ctx.m_satisfiedConsumerRts) & b.m_producerRtMask;
-	if(rtIntersection.getAny())
+	/// Compute the 3 types of dependencies
+	BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS> aReadBWrite = a.m_consumerRtMask & b.m_producerRtMask;
+	BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS> aWriteBRead = a.m_producerRtMask & b.m_consumerRtMask;
+	BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS> aWriteBWrite = a.m_producerRtMask & b.m_producerRtMask;
+
+	BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS> fullDep = aReadBWrite | aWriteBRead | aWriteBWrite;
+	fullDep &= ~ctx.m_satisfiedRts;
+
+	if(fullDep.getAny())
 	{
 		// There is overlap
 		for(const RenderPassDependency& dep : a.m_consumers)
 		{
-			if(dep.m_isTexture && rtIntersection.get(dep.m_renderTargetHandle))
+			if(dep.m_isTexture && fullDep.get(dep.m_renderTargetHandle))
 			{
 				depends = true;
-				ANKI_ASSERT(!ctx.m_satisfiedConsumerRts.get(dep.m_renderTargetHandle));
-				ctx.m_satisfiedConsumerRts.set(dep.m_renderTargetHandle);
+				ANKI_ASSERT(!ctx.m_satisfiedRts.get(dep.m_renderTargetHandle));
+				ctx.m_satisfiedRts.set(dep.m_renderTargetHandle);
 			}
 		}
 	}
 
+#if 0
 	BitSet<MAX_RENDER_GRAPH_BUFFERS> bufferIntersection =
 		(a.m_consumerBufferMask & ~ctx.m_satisfiedConsumerBuffers) & b.m_producerBufferMask;
 	if(bufferIntersection.getAny())
@@ -198,6 +207,7 @@ Bool RenderGraph::passADependsOnB(BakeContext& ctx, const RenderPassBase& a, con
 			}
 		}
 	}
+#endif
 
 	return depends;
 }
@@ -242,12 +252,14 @@ void RenderGraph::compileNewGraph(const RenderGraphDescription& descr)
 	// Find the dependencies between passes
 	for(U i = 0; i < passCount; ++i)
 	{
-		ctx.m_satisfiedConsumerRts.unsetAll();
+		ctx.m_satisfiedRts.unsetAll();
 		ctx.m_satisfiedConsumerBuffers.unsetAll();
 
 		ctx.m_passes.emplaceBack(m_tmpAlloc);
 		const RenderPassBase& crntPass = *descr.m_passes[i];
-		for(U j = 0; j < i; ++j)
+
+		U j = i;
+		while(j--)
 		{
 			const RenderPassBase& prevPass = *descr.m_passes[j];
 			if(passADependsOnB(ctx, crntPass, prevPass))

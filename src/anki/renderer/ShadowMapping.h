@@ -34,6 +34,8 @@ anki_internal:
 
 	void prepareBuildCommandBuffers(RenderingContext& ctx);
 
+	void prepareBuildCommandBuffers2(RenderingContext& ctx);
+
 	void buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount);
 
 	void setPreRunBarriers(RenderingContext& ctx);
@@ -81,6 +83,39 @@ private:
 
 	ShaderProgramResourcePtr m_esmResolveProg;
 	ShaderProgramPtr m_esmResolveGrProg;
+
+#if 1
+	class Tile
+	{
+	public:
+		U64 m_timestamp = 0;
+		U64 m_lightUuid = 0;
+		U8 m_face = 0;
+
+		Array<F32, 4> m_uv;
+		Array<U32, 2> m_viewportXY;
+	};
+
+	DynamicArray<Tile> m_tiles;
+	U32 m_tileCountPerRowOrColumn = 0;
+
+	class TileKey
+	{
+	public:
+		U64 m_lightUuid;
+		U8 m_face;
+
+		U64 computeHash() const
+		{
+			return anki::computeHash(this, sizeof(*this), 693);
+		}
+	};
+
+	HashMap<TileKey, U32> m_lightUuidToTileIdx;
+
+	Bool allocateTile(U64 lightTimestamp, U64 lightUuid, U32 face, U32& tileAllocated);
+	static Bool shouldRenderTile(U64 lightTimestamp, U64 lightUuid, U32 face, const Tile& tileIdx);
+#endif
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 

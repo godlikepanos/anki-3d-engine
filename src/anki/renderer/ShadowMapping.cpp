@@ -649,4 +649,126 @@ void ShadowMapping::setPostRunBarriers(RenderingContext& ctx)
 	cmdb->informTextureCurrentUsage(m_omniTexArray, TextureUsageBit::SAMPLED_FRAGMENT);
 }
 
+void ShadowMapping::prepareBuildCommandBuffers2(RenderingContext& ctx)
+{
+	ANKI_TRACE_SCOPED_EVENT(RENDER_SM);
+
+	for(PointLightQueueElement* light : ctx.m_renderQueue->m_shadowPointLights)
+	{
+		for(U face = 0; face < 6; ++face)
+		{
+			U32 tileIdx;
+			ANKI_ASSERT(light->m_shadowRenderQueues[face]);
+			const U64 faceTimestamp = light->m_shadowRenderQueues[face]->m_timestamp;
+			const Bool failed = allocateTile(faceTimestamp, light->m_uuid, face, tileIdx);
+
+			if(!failed)
+			{
+				Tile& tile = m_tiles[tileIdx];
+				Bool shouldRender = shouldRenderTile(faceTimestamp, light->m_uuid, face, tile);
+				if(shouldRender)
+				{
+					tile.m_face = face;
+					tile.m_lightUuid = light->m_uuid;
+					tile.m_timestamp = faceTimestamp;
+
+					// TODO: Append it to a list
+				}
+			}
+			else
+			{
+				// Allocation failed, point to a random tile
+				tileIdx = 0;
+			}
+
+			// TODO: Update the PointLightQueueElement info to be passed to the shader
+		}
+	}
+
+	for()
+}
+
+Bool ShadowMapping::shouldRenderTile(U64 lightTimestamp, U64 lightUuid, U32 face, const Tile& tileIdx)
+{
+	if(tileIdx.m_face == face && tileIdx.m_lightUuid == lightUuid && tileIdx.m_timestamp >= lightTimestamp)
+	{
+		return false;
+	}
+	return true;
+}
+
+Bool ShadowMapping::allocateTile(U64 lightTimestamp, U64 lightUuid, U32 face, U32& tileAllocated)
+{
+	ANKI_ASSERT(lightTimestamp > 0);
+	ANKI_ASSERT(lightUuid > 0);
+	ANKI_ASSERT(face <= 6);
+
+	tileAllocated = MAX_U32;
+
+	// First, try to see if the light/face is in the cache
+	TileKey key = TileKey{lightUuid, U8(face)};
+	auto it = m_lightUuidToTileIdx.find(key);
+	if(it != m_lightUuidToTileIdx.getEnd())
+	{
+		const U32 tileIdx = *it;
+		if(m_tiles[tileIdx].m_lightUuid == lightUuid && m_tiles[tileIdx].m_face == face)
+		{
+			// Found it
+			tileAllocated = tileIdx;
+			return true;
+		}
+		else
+		{
+			// Cache entry is wrong, remove it
+			m_lightUuidToTileIdx.erase(getAllocator(), it);
+		}
+	}
+
+	// 2nd and 3rd choice, find an empty tile or some tile to re-use
+	U32 emptyTile = MAX_U32;
+	U32 tileToKick = MAX_U32;
+	U64 tileToKickMinTimestamp = MAX_U64;
+	for(U32 tileIdx = 0; tileIdx < m_tiles.getSize(); ++tileIdx)
+	{
+		if(m_tiles[tileIdx].m_lightUuid == 0)
+		{
+			// Found an empty
+			emptyTile = tileIdx;
+			break;
+		}
+		else if(m_tiles[tileIdx].m_timestamp != m_r->getGlobalTimestamp()
+			&& m_tiles[tileIdx].m_timestamp < tileToKickMinTimestamp)
+		{
+			tileToKick = tileIdx;
+			tileToKickMinTimestamp = m_tiles[tileIdx].m_timestamp;
+		}
+	}
+
+	Bool failed = false;
+	if(emptyTile != MAX_U32)
+	{
+		tileAllocated = emptyTile;
+	}
+	else if(tileToKick != MAX_U32)
+	{
+		tileAllocated = tileToKick;
+	}
+	else
+	{
+		// Point to something random and hope for the best
+		failed = true;
+		tileAllocated = 0;
+		ANKI_R_LOGW("There is not enough space in the shadow atlas for more shadow maps. "
+					"Increase the r.shadowMapping.tileCountPerRowOrColumn or decrease the scene's light count");
+	}
+
+	// Update the cache
+	if(!failed)
+	{
+		m_lightUuidToTileIdx.pushBack(getAllocator(), key, tileAllocated);
+	}
+
+	return failed;
+}
+
 } // end namespace anki

@@ -1600,11 +1600,44 @@ ANKI_TEST(Gr, RenderGraph)
 		pass.newConsumer({giGbuffDepthRt, TextureUsageBit::SAMPLED_FRAGMENT});
 		pass.newConsumer({giGbuffDiffRt, TextureUsageBit::SAMPLED_FRAGMENT});
 
-		pass.newConsumer({giGiLightRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass.newProducer({giGiLightRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+	}
+
+	// Gbuffer
+	RenderTargetHandle gbuffRt0 = descr.newRenderTarget("Gbuff rt0", texInf);
+	RenderTargetHandle gbuffRt1 = descr.newRenderTarget("Gbuff rt1", texInf);
+	RenderTargetHandle gbuffRt2 = descr.newRenderTarget("Gbuff rt2", texInf);
+	RenderTargetHandle gbuffDepth = descr.newRenderTarget("Gbuff rt2", texInf);
+	{
+		GraphicsRenderPassInfo& pass = descr.newGraphicsRenderPass("G-buffer");
+		pass.newConsumer({gbuffRt0, TextureUsageBit::NONE});
+		pass.newConsumer({gbuffRt1, TextureUsageBit::NONE});
+		pass.newConsumer({gbuffRt2, TextureUsageBit::NONE});
+		pass.newConsumer({gbuffDepth, TextureUsageBit::NONE});
+
+		pass.newProducer({gbuffRt0, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass.newProducer({gbuffRt1, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass.newProducer({gbuffRt2, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass.newProducer({gbuffDepth, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+	}
+
+	// Light
+	RenderTargetHandle lightRt = descr.newRenderTarget("Light", texInf);
+	{
+		GraphicsRenderPassInfo& pass = descr.newGraphicsRenderPass("Light shading");
+
+		pass.newConsumer({lightRt, TextureUsageBit::NONE});
+		pass.newConsumer({gbuffRt0, TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newConsumer({gbuffRt1, TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newConsumer({gbuffRt2, TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newConsumer({gbuffDepth, TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newConsumer({smExpRt, TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newConsumer({giGiLightRt, TextureUsageBit::SAMPLED_FRAGMENT});
+
+		pass.newProducer({giGiLightRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 	}
 
 	rgraph->compileNewGraph(descr);
-
 	COMMON_END()
 }
 
