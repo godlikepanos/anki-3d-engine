@@ -35,16 +35,16 @@ static U32 getMs()
 	return now - init.m_start;
 }
 
-void HighRezTimer::sleep(Scalar sec)
+void HighRezTimer::sleep(Second sec)
 {
 	U32 ms = static_cast<U32>(sec * 1000.0);
 	Sleep(ms);
 }
 
-HighRezTimer::Scalar HighRezTimer::getCurrentTime()
+Second HighRezTimer::getCurrentTime()
 {
-	// Scalar(ticks) / 1000.0
-	return static_cast<Scalar>(getMs()) * 0.001;
+	// Second(ticks) / 1000.0
+	return static_cast<Second>(getMs()) * 0.001;
 }
 
 } // end namespace anki

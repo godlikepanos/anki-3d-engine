@@ -79,57 +79,6 @@ public:
 		TexturePtr m_normRoughnessDecalTex;
 	} m_lightShading;
 
-	class ShadowMapping
-	{
-	public:
-		class SpotCasterInfo
-		{
-		public:
-			SpotLightQueueElement* m_light = nullptr;
-			WeakArray<CommandBufferPtr> m_cmdbs; ///< One per thread.
-			Array<U32, 4> m_renderArea;
-			U8 m_batchIdx = MAX_U8;
-		};
-
-		class OmniCasterInfo
-		{
-		public:
-			PointLightQueueElement* m_light = nullptr;
-			WeakArray<CommandBufferPtr> m_cmdbs; ///< Dimensions are [threadId][faceIdx]
-			U32 m_cacheEntry = MAX_U32;
-			U8 m_firstBatchIdx = MAX_U8;
-		};
-
-		WeakArray<SpotCasterInfo> m_spotCasters;
-		WeakArray<OmniCasterInfo> m_omniCasters;
-
-		StackAllocator<U8> m_alloc;
-
-		ShadowMapping(const StackAllocator<U8>& alloc)
-			: m_alloc(alloc)
-		{
-		}
-
-		~ShadowMapping()
-		{
-			for(SpotCasterInfo& inf : m_spotCasters)
-			{
-				for(U i = 0; i < inf.m_cmdbs.getSize(); ++i)
-				{
-					inf.m_cmdbs[i].reset(nullptr);
-				}
-			}
-
-			for(OmniCasterInfo& inf : m_omniCasters)
-			{
-				for(U i = 0; i < inf.m_cmdbs.getSize(); ++i)
-				{
-					inf.m_cmdbs[i].reset(nullptr);
-				}
-			}
-		}
-	} m_shadowMapping;
-
 	class ForwardShading
 	{
 	public:
@@ -144,7 +93,6 @@ public:
 	RenderingContext(const StackAllocator<U8>& alloc)
 		: m_tempAllocator(alloc)
 		, m_lensFlare(alloc)
-		, m_shadowMapping(alloc)
 	{
 	}
 };
@@ -325,7 +273,8 @@ anki_internal:
 		U mipsCount = 1,
 		CString name = {});
 
-	ANKI_USE_RESULT TexturePtr createAndClearRenderTarget(const TextureInitInfo& inf);
+	ANKI_USE_RESULT TexturePtr createAndClearRenderTarget(
+		const TextureInitInfo& inf, const ClearValue& clearVal = ClearValue());
 
 	GrManager& getGrManager()
 	{

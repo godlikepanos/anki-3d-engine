@@ -355,7 +355,7 @@ ANKI_TEST(Util, SparseArrayBench)
 			akMap.emplace(allocAk, vals[i], vals[i]);
 		}
 		timer.stop();
-		HighRezTimer::Scalar akTime = timer.getElapsedTime();
+		Second akTime = timer.getElapsedTime();
 
 		// STL
 		timer.start();
@@ -364,7 +364,7 @@ ANKI_TEST(Util, SparseArrayBench)
 			stdMap[vals[i]] = vals[i];
 		}
 		timer.stop();
-		HighRezTimer::Scalar stlTime = timer.getElapsedTime();
+		Second stlTime = timer.getElapsedTime();
 
 		ANKI_TEST_LOGI("Inserting bench: STL %f AnKi %f | %f%%", stlTime, akTime, stlTime / akTime * 100.0);
 	}
@@ -384,7 +384,7 @@ ANKI_TEST(Util, SparseArrayBench)
 			count += *it;
 		}
 		timer.stop();
-		HighRezTimer::Scalar akTime = timer.getElapsedTime();
+		Second akTime = timer.getElapsedTime();
 
 		// Find values STL
 		timer.start();
@@ -393,7 +393,7 @@ ANKI_TEST(Util, SparseArrayBench)
 			count += stdMap[vals[i]];
 		}
 		timer.stop();
-		HighRezTimer::Scalar stlTime = timer.getElapsedTime();
+		Second stlTime = timer.getElapsedTime();
 
 		// Print the "count" so that the compiler won't optimize it
 		ANKI_TEST_LOGI("Find bench: STL %f AnKi %f | %f%% (r:%d)", stlTime, akTime, stlTime / akTime * 100.0, count);
@@ -413,7 +413,7 @@ ANKI_TEST(Util, SparseArrayBench)
 		std::random_shuffle(vals.begin(), vals.end());
 
 		// Random delete AnKi
-		HighRezTimer::Scalar akTime = 0.0;
+		Second akTime = 0.0;
 		for(U i = 0; i < vals.size(); ++i)
 		{
 			auto it = akMap.find(vals[i]);
@@ -425,7 +425,7 @@ ANKI_TEST(Util, SparseArrayBench)
 		}
 
 		// Random delete STL
-		HighRezTimer::Scalar stlTime = 0.0;
+		Second stlTime = 0.0;
 		for(U i = 0; i < vals.size(); ++i)
 		{
 			auto it = stdMap.find(vals[i]);

@@ -393,7 +393,7 @@ void VisibilityTestTask::test(ThreadHive& hive)
 			{
 				PointLightQueueElement* el = m_result.m_pointLights.newElement(alloc);
 				lc->setupPointLightQueueElement(*el);
-				el->m_textureArrayIndex = MAX_U32;
+				zeroMemory(el->m_textureAtlasUvs);
 
 				if(lc->getShadowEnabled())
 				{
@@ -511,6 +511,7 @@ void CombineResultsTask::combine()
 		m_results->m_shadowRenderablesLastUpdateTimestamp =
 			max(m_results->m_shadowRenderablesLastUpdateTimestamp, m_tests[i].m_timestamp);
 	}
+	ANKI_ASSERT(m_results->m_shadowRenderablesLastUpdateTimestamp);
 
 #define ANKI_VIS_COMBINE(t_, member_)                                                      \
 	{                                                                                      \

@@ -26,7 +26,7 @@ public:
 	{
 	}
 
-	Error update(SceneNode& node, F32, F32, Bool& updated) override
+	Error update(SceneNode& node, Second, Second, Bool& updated) override
 	{
 		updated = false;
 
@@ -127,7 +127,7 @@ void ReflectionProbe::onMoveUpdate(MoveComponent& move)
 	reflc.setPosition(move.getWorldTransform().getOrigin());
 }
 
-Error ReflectionProbe::frameUpdate(F32 prevUpdateTime, F32 crntTime)
+Error ReflectionProbe::frameUpdate(Second prevUpdateTime, Second crntTime)
 {
 	// Check the reflection probe component and if it's marked for rendering enable the frustum components
 	const ReflectionProbeComponent& reflc = getComponent<ReflectionProbeComponent>();

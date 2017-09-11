@@ -58,10 +58,10 @@ class alignas(16) TVec4 : public TVec<T, 4, typename TVec4Simd<T>::Type, TVec4<T
 public:
 	using Base = TVec<T, 4, typename TVec4Simd<T>::Type, TVec4<T>>;
 
+	using Base::w;
 	using Base::x;
 	using Base::y;
 	using Base::z;
-	using Base::w;
 	using Base::operator*;
 
 	/// @name Constructors
@@ -98,6 +98,11 @@ public:
 
 	TVec4(const TVec2<T>& v, const T z_, const T w_)
 		: Base(v.x(), v.y(), z_, w_)
+	{
+	}
+
+	TVec4(const TVec2<T>& v, const TVec2<T>& v2)
+		: Base(v.x(), v.y(), v2.x(), v2.y())
 	{
 	}
 

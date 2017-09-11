@@ -74,6 +74,8 @@ using Bool = int; ///< Fast boolean type
 using Bool8 = I8; ///< Small 8bit boolean type
 using Bool32 = I32; ///< A 32bit boolean
 
+using Second = F64; ///< The base time unit is second.
+
 /// Representation of error and a wrapper on top of error codes.
 class Error
 {

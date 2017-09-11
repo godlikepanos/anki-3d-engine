@@ -25,8 +25,9 @@ struct LightingUniforms
 struct PointLight
 {
 	vec4 posRadius; // xyz: Light pos in view space. w: The -1/(radius^2)
-	vec4 diffuseColorShadowmapId; // xyz: diff color, w: shadowmap tex ID
+	vec4 diffuseColorShadowmapId; // xyz: diff color, w: unused
 	vec4 specularColorRadius; // xyz: spec color, w: radius
+	vec4 cubeFaceCoordinates[6]; // xy: uv offset, zw: uv scale
 };
 
 // Spot light
@@ -111,7 +112,7 @@ const uint _NEXT_UBO_BINDING = LIGHT_UBO_BINDING;
 //
 #if defined(LIGHT_LIGHTS)
 const uint _NEXT_UBO_BINDING_2 = _NEXT_UBO_BINDING + 2;
-const uint _NEXT_TEX_BINDING_2 = LIGHT_TEX_BINDING + 2;
+const uint _NEXT_TEX_BINDING_2 = LIGHT_TEX_BINDING + 1;
 
 layout(ANKI_UBO_BINDING(LIGHT_SET, _NEXT_UBO_BINDING), std140) uniform u1_
 {
@@ -123,8 +124,7 @@ layout(ANKI_UBO_BINDING(LIGHT_SET, _NEXT_UBO_BINDING + 1), std140, row_major) un
 	SpotLight u_spotLights[UBO_MAX_SIZE / (9 * 4 * 4)];
 };
 
-layout(ANKI_TEX_BINDING(LIGHT_SET, LIGHT_TEX_BINDING + 0)) uniform highp sampler2D u_spotMapArr;
-layout(ANKI_TEX_BINDING(LIGHT_SET, LIGHT_TEX_BINDING + 1)) uniform highp samplerCubeArray u_omniMapArr;
+layout(ANKI_TEX_BINDING(LIGHT_SET, LIGHT_TEX_BINDING + 0)) uniform highp sampler2D u_shadowTex;
 #else
 const uint _NEXT_UBO_BINDING_2 = _NEXT_UBO_BINDING;
 const uint _NEXT_TEX_BINDING_2 = LIGHT_TEX_BINDING;

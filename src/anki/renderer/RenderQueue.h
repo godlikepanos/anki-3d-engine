@@ -60,9 +60,10 @@ public:
 	Vec3 m_diffuseColor;
 	Vec3 m_specularColor;
 	Array<RenderQueue*, 6> m_shadowRenderQueues;
-	U32 m_textureArrayIndex; ///< Renderer internal.
 	const void* m_userData;
 	RenderQueueDrawCallback m_drawCallback;
+
+	Array<Vec4, 6> m_textureAtlasUvs; ///< Renderer internal.
 
 	Bool hasShadow() const
 	{

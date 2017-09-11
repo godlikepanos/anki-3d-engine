@@ -163,16 +163,15 @@ void LightShading::run(RenderingContext& ctx)
 	cmdb->informTextureCurrentUsage(m_r->getSsao().getRt(), TextureUsageBit::SAMPLED_FRAGMENT);
 	cmdb->bindTexture(1, 4, m_r->getSsao().getRt());
 
-	cmdb->bindTexture(0, 0, m_r->getShadowMapping().m_spotTex);
-	cmdb->bindTexture(0, 1, m_r->getShadowMapping().m_omniTexArray);
-	cmdb->bindTexture(0, 2, m_r->getIndirect().getReflectionTexture());
-	cmdb->bindTexture(0, 3, m_r->getIndirect().getIrradianceTexture());
+	cmdb->bindTexture(0, 0, m_r->getShadowMapping().m_shadowAtlas);
+	cmdb->bindTexture(0, 1, m_r->getIndirect().getReflectionTexture());
+	cmdb->bindTexture(0, 2, m_r->getIndirect().getIrradianceTexture());
 	cmdb->bindTextureAndSampler(
-		0, 4, m_r->getIndirect().getIntegrationLut(), m_r->getIndirect().getIntegrationLutSampler());
+		0, 3, m_r->getIndirect().getIntegrationLut(), m_r->getIndirect().getIntegrationLutSampler());
 	cmdb->bindTexture(
-		0, 5, (ctx.m_lightShading.m_diffDecalTex) ? ctx.m_lightShading.m_diffDecalTex : m_r->getDummyTexture());
+		0, 4, (ctx.m_lightShading.m_diffDecalTex) ? ctx.m_lightShading.m_diffDecalTex : m_r->getDummyTexture());
 	cmdb->bindTexture(0,
-		6,
+		5,
 		(ctx.m_lightShading.m_normRoughnessDecalTex) ? ctx.m_lightShading.m_normRoughnessDecalTex
 													 : m_r->getDummyTexture());
 

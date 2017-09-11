@@ -17,9 +17,6 @@ namespace anki
 class HighRezTimer
 {
 public:
-	/// The type that the timer manipulates the results
-	using Scalar = F64;
-
 	/// Start the timer
 	void start();
 
@@ -27,17 +24,17 @@ public:
 	void stop();
 
 	/// Get the time elapsed between start and stop (if its stopped) or between start and the current time.
-	Scalar getElapsedTime() const;
+	Second getElapsedTime() const;
 
 	/// Get the current date's seconds
-	static Scalar getCurrentTime();
+	static Second getCurrentTime();
 
 	/// Micro sleep. The resolution is in nanoseconds.
-	static void sleep(Scalar seconds);
+	static void sleep(Second seconds);
 
 private:
-	Scalar m_startTime = 0.0;
-	Scalar m_stopTime = 0.0;
+	Second m_startTime = 0.0;
+	Second m_stopTime = 0.0;
 };
 /// @}
 

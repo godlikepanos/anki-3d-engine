@@ -28,9 +28,7 @@ void main()
 	out_uv = vec2(gl_VertexID & 1, gl_VertexID >> 1) * 2.0;
 	vec2 pos = out_uv * 2.0 - 1.0;
 
-	out_uv *= u_uvScaleAndTranslation.xy;
-	out_uv += u_uvScaleAndTranslation.zw;
-
+	out_uv = fma(out_uv, u_uvScaleAndTranslation.zw, u_uvScaleAndTranslation.xy);
 	gl_Position = vec4(pos, 0.0, 1.0);
 }
 			]]></source>

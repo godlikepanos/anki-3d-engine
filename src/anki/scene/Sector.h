@@ -107,7 +107,7 @@ public:
 
 	ANKI_USE_RESULT Error init(const CString& modelFname);
 
-	ANKI_USE_RESULT Error frameUpdate(F32 prevUpdateTime, F32 crntTime) override;
+	ANKI_USE_RESULT Error frameUpdate(Second prevUpdateTime, Second crntTime) override;
 
 	/// Add reference to sector.
 	void tryAddSector(Sector* sector);
@@ -145,7 +145,7 @@ public:
 	void tryAddSpatialComponent(SpatialComponent* sp);
 	void tryRemoveSpatialComponent(SpatialComponent* sp);
 
-	ANKI_USE_RESULT Error frameUpdate(F32 prevUpdateTime, F32 crntTime) override;
+	ANKI_USE_RESULT Error frameUpdate(Second prevUpdateTime, Second crntTime) override;
 
 	void deferredUpdate();
 

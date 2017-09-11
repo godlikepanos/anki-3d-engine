@@ -103,19 +103,28 @@ float computeShadowFactorSpot(mat4 lightProjectionMat, vec3 fragPos, float dista
 	return clamp(exp(ESM_CONSTANT * (textureLod(spotMapArr, texCoords3.xy, 0.0).r - linearDepth)), 0.0, 1.0);
 }
 
-float computeShadowFactorOmni(vec3 frag2Light, float layer, float radius, mat3 invViewMat, samplerCubeArray omniMapArr)
+float computeShadowFactorOmni(
+	vec3 frag2Light, float radius, mat3 invViewMat, vec4 cubeFaceCoords[6], sampler2D shadowMap)
 {
 	vec3 dir = invViewMat * -frag2Light;
 	vec3 dirabs = abs(dir);
 	float dist = max(dirabs.x, max(dirabs.y, dirabs.z));
-	dir = normalize(dir);
 
 	const float near = LIGHT_FRUSTUM_NEAR_PLANE;
 	const float far = radius;
 
 	float linearDepth = (dist - near) / (far - near);
 
-	return clamp(exp(ESM_CONSTANT * (texture(omniMapArr, vec4(dir, layer)).r - linearDepth)), 0.0, 1.0);
+	// Read tex
+	float shadowFactor;
+	{
+		float faceIdx;
+		vec2 uv = convertCubeUvs(dir, faceIdx);
+		uv = fma(uv, cubeFaceCoords[uint(faceIdx)].zw, cubeFaceCoords[uint(faceIdx)].xy);
+		shadowFactor = textureLod(shadowMap, uv, 0.0).r;
+	}
+
+	return clamp(exp(ESM_CONSTANT * (shadowFactor - linearDepth)), 0.0, 1.0);
 }
 
 // Compute the cubemap texture lookup vector given the reflection vector (r) the radius squared of the probe (R2) and

@@ -134,7 +134,7 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode& node, F32, F32, Bool& updated)
+	ANKI_USE_RESULT Error update(SceneNode& node, Second, Second, Bool& updated) override
 	{
 		updated = false;
 

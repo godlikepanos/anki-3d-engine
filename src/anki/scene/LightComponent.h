@@ -131,7 +131,7 @@ public:
 		m_flags.set(SHADOW, x);
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode&, F32, F32, Bool& updated) override;
+	ANKI_USE_RESULT Error update(SceneNode&, Second, Second, Bool& updated) override;
 
 	void setupPointLightQueueElement(PointLightQueueElement& el) const
 	{

@@ -178,7 +178,7 @@ ANKI_TEST(Util, HashMap)
 			akMap.pushBack(alloc, vals[i], vals[i]);
 		}
 		timer.stop();
-		HighRezTimer::Scalar akTime = timer.getElapsedTime();
+		Second akTime = timer.getElapsedTime();
 
 		// Put the vals STL
 		timer.start();
@@ -187,7 +187,7 @@ ANKI_TEST(Util, HashMap)
 			stdMap[vals[i]] = vals[i];
 		}
 		timer.stop();
-		HighRezTimer::Scalar stlTime = timer.getElapsedTime();
+		Second stlTime = timer.getElapsedTime();
 
 		printf("Inserting bench: STL %f AnKi %f | %f%%\n", stlTime, akTime, stlTime / akTime * 100.0);
 

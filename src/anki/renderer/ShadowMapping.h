@@ -20,8 +20,7 @@ namespace anki
 class ShadowMapping : public RenderingPass
 {
 anki_internal:
-	TexturePtr m_spotTex; ///< ESM map.
-	TexturePtr m_omniTexArray; ///< ESM map.
+	TexturePtr m_shadowAtlas; ///< ESM texture atlas.
 
 	ShadowMapping(Renderer* r)
 		: RenderingPass(r)
@@ -34,8 +33,6 @@ anki_internal:
 
 	void prepareBuildCommandBuffers(RenderingContext& ctx);
 
-	void prepareBuildCommandBuffers2(RenderingContext& ctx);
-
 	void buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount);
 
 	void setPreRunBarriers(RenderingContext& ctx);
@@ -45,65 +42,27 @@ anki_internal:
 	void setPostRunBarriers(RenderingContext& ctx);
 
 private:
-	class CacheEntry
-	{
-	public:
-		U32 m_timestamp = 0; ///< Timestamp of last render or light change
-		U64 m_lightUuid = 0;
-	};
+	/// @name ESM stuff
+	/// @{
 
-	class SpotCacheEntry : public CacheEntry
-	{
-	public:
-		Array<U32, 4> m_renderArea;
-		Array<F32, 4> m_uv;
-	};
-
-	class OmniCacheEntry : public CacheEntry
-	{
-	public:
-		U32 m_layerId;
-		Array<FramebufferPtr, 6> m_fbs;
-	};
-
-	U32 m_tileResolution; ///< Shadowmap resolution
-	U32 m_atlasResolution;
-
-	DynamicArray<SpotCacheEntry> m_spots;
-	DynamicArray<OmniCacheEntry> m_omnis;
-
-	FramebufferPtr m_spotsFb;
-
-	struct
-	{
-		TexturePtr m_rt; ///< Shadowmap that will be resolved to ESM maps.
-		FramebufferPtr m_fb;
-		U32 m_batchSize = 0;
-	} m_scratchSm;
-
-	ShaderProgramResourcePtr m_esmResolveProg;
-	ShaderProgramPtr m_esmResolveGrProg;
-
-#if 1
+	/// The ESM map consists of tiles.
 	class Tile
 	{
 	public:
 		U64 m_timestamp = 0;
 		U64 m_lightUuid = 0;
 		U8 m_face = 0;
+		Bool8 m_pinned = false; ///< If true we cannot allocate from it.
 
-		Array<F32, 4> m_uv;
-		Array<U32, 2> m_viewportXY;
+		Vec4 m_uv;
+		Array<U32, 4> m_viewport;
 	};
-
-	DynamicArray<Tile> m_tiles;
-	U32 m_tileCountPerRowOrColumn = 0;
 
 	class TileKey
 	{
 	public:
 		U64 m_lightUuid;
-		U8 m_face;
+		U64 m_face;
 
 		U64 computeHash() const
 		{
@@ -111,27 +70,82 @@ private:
 		}
 	};
 
+	FramebufferPtr m_esmFb;
+	U32 m_tileResolution = 0; ///< Tile resolution.
+	U32 m_atlasResolution = 0; ///< Atlas size is (m_atlasResolution, m_atlasResolution)
+	U32 m_tileCountPerRowOrColumn = 0;
+	DynamicArray<Tile> m_tiles;
+
+	ShaderProgramResourcePtr m_esmResolveProg;
+	ShaderProgramPtr m_esmResolveGrProg;
+
 	HashMap<TileKey, U32> m_lightUuidToTileIdx;
 
-	Bool allocateTile(U64 lightTimestamp, U64 lightUuid, U32 face, U32& tileAllocated);
+	Bool allocateTile(U64 lightTimestamp, U64 lightUuid, U32 face, U32& tileAllocated, Bool& inTheCache);
 	static Bool shouldRenderTile(U64 lightTimestamp, U64 lightUuid, U32 face, const Tile& tileIdx);
-#endif
 
-	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
+	class EsmResolveWorkItem
+	{
+	public:
+		Vec4 m_uvIn; ///< UV + size that point to the scratch buffer.
+		Array<U32, 4> m_viewportOut; ///< Viewport in the ESM RT.
+		F32 m_cameraNear;
+		F32 m_cameraFar;
+	};
+	WeakArray<EsmResolveWorkItem> m_esmResolveWorkItems;
 
-	/// Find the best shadowmap for that light
-	template<typename TLightElement, typename TShadowmap, typename TContainer>
-	void bestCandidate(const TLightElement& light, TContainer& arr, TShadowmap*& out);
+	ANKI_USE_RESULT Error initEsm(const ConfigSet& cfg);
 
-	/// Check if a shadow pass can be skipped.
-	Bool skip(PointLightQueueElement& light, OmniCacheEntry& sm);
-	Bool skip(SpotLightQueueElement& light, SpotCacheEntry& sm);
+	static Mat4 createSpotLightTextureMatrix(const Tile& tile);
+	/// @}
 
-	void doSpotLight(
-		const SpotLightQueueElement& light, CommandBufferPtr& cmdBuff, U threadId, U threadCount, U tileIdx) const;
+	/// @name Scratch buffer stuff
+	/// @{
+	TexturePtr m_scratchRt; ///< Size of the RT is (m_scratchTileSize * m_scratchTileCount, m_scratchTileSize).
+	FramebufferPtr m_scratchFb;
+	U32 m_scratchTileCount = 0;
+	U32 m_scratchTileResolution = 0;
+	U32 m_freeScratchTiles = 0;
 
-	void doOmniLight(
-		const PointLightQueueElement& light, CommandBufferPtr cmdbs[], U threadId, U threadCount, U firstTileIdx) const;
+	class ScratchBufferWorkItem
+	{
+	public:
+		Array<U32, 4> m_viewport;
+		RenderQueue* m_renderQueue;
+		U32 m_firstRenderableElement;
+		U32 m_renderableElementCount;
+		U32 m_threadPoolTaskIdx;
+	};
+
+	struct LightToRenderToScratchInfo;
+
+	WeakArray<ScratchBufferWorkItem> m_scratchWorkItems;
+	WeakArray<CommandBufferPtr> m_scratchSecondLevelCmdbs;
+
+	ANKI_USE_RESULT Error initScratch(const ConfigSet& cfg);
+	/// @}
+
+	/// @name Misc & common
+	/// @{
+
+	/// Try to allocate a number of scratch tiles and regular tiles.
+	Bool allocateTilesAndScratchTiles(U64 lightUuid,
+		U32 faceCount,
+		const U64* faceTimestamps,
+		const U32* faceIndices,
+		U32* tileIndices,
+		U32* scratchTileIndices);
+
+	/// Add new work to render to scratch buffer and ESM buffer.
+	void newScratchAndEsmResloveRenderWorkItems(U32 tileIdx,
+		U32 scratchTileIdx,
+		RenderQueue* lightRenderQueue,
+		DynamicArrayAuto<LightToRenderToScratchInfo>& scratchWorkItem,
+		DynamicArrayAuto<EsmResolveWorkItem>& esmResolveWorkItem,
+		U32& drawcallCount) const;
+
+	ANKI_USE_RESULT Error initInternal(const ConfigSet& config);
+	/// @}
 };
 /// @}
 

@@ -21,7 +21,7 @@ public:
 	{
 	}
 
-	Error update(SceneNode& node, F32, F32, Bool& updated) final
+	Error update(SceneNode& node, Second, Second, Bool& updated) final
 	{
 		updated = false;
 

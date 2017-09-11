@@ -213,11 +213,10 @@ void main()
 
 		LIGHTING_COMMON_BRDF();
 
-		float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
-		if(light.diffuseColorShadowmapId.w >= 0.0)
+		if(light.cubeFaceCoordinates[0].x >= 0.0)
 		{
 			float shadow = computeShadowFactorOmni(
-				frag2Light, shadowmapLayerIdx, light.specularColorRadius.w, u_invViewRotation, u_omniMapArr);
+				frag2Light, light.specularColorRadius.w, u_invViewRotation, light.cubeFaceCoordinates, u_shadowTex);
 			lambert *= shadow;
 		}
 
@@ -238,7 +237,7 @@ void main()
 		if(shadowmapLayerIdx >= 0.0)
 		{
 			float shadow = computeShadowFactorSpot(
-				light.texProjectionMat, fragPos, light.specularColorRadius.w, u_spotMapArr);
+				light.texProjectionMat, fragPos, light.specularColorRadius.w, u_shadowTex);
 			lambert *= shadow;
 		}
 

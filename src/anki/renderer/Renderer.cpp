@@ -437,7 +437,7 @@ TextureInitInfo Renderer::create2DRenderTargetInitInfo(
 	return init;
 }
 
-TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf)
+TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, const ClearValue& clearVal)
 {
 	ANKI_ASSERT(!!(inf.m_usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
 
@@ -480,6 +480,7 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf)
 					fbInit.m_colorAttachments[0].m_surface = surf;
 					fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
 					fbInit.m_colorAttachments[0].m_stencilLoadOperation = AttachmentLoadOperation::CLEAR;
+					fbInit.m_colorAttachments[0].m_clearValue = clearVal;
 				}
 				FramebufferPtr fb = m_gr->newInstance<Framebuffer>(fbInit);
 

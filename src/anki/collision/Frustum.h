@@ -142,6 +142,7 @@ protected:
 
 private:
 	FrustumType m_type;
+	SpinLock m_lock;
 };
 
 /// Frustum shape for perspective cameras

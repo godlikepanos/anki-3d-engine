@@ -17,7 +17,7 @@ LightComponent::LightComponent(SceneNode* node, LightComponentType type)
 	m_radius = 1.0;
 }
 
-Error LightComponent::update(SceneNode&, F32, F32, Bool& updated)
+Error LightComponent::update(SceneNode&, Second, Second, Bool& updated)
 {
 	updated = false;
 

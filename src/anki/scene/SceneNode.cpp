@@ -70,20 +70,6 @@ SceneFrameAllocator<U8> SceneNode::getFrameAllocator() const
 	return m_scene->getFrameAllocator();
 }
 
-U32 SceneNode::getLastUpdateFrame() const
-{
-	U32 max = 0;
-
-	Error err = iterateComponents([&max](const SceneComponent& comp) -> Error {
-		max = std::max(max, comp.getTimestamp());
-		return Error::NONE;
-	});
-
-	(void)err;
-
-	return max;
-}
-
 ResourceManager& SceneNode::getResourceManager()
 {
 	return m_scene->getResourceManager();

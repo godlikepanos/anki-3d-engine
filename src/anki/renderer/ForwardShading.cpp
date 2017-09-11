@@ -135,12 +135,10 @@ void ForwardShading::buildCommandBuffers(RenderingContext& ctx, U threadId, U th
 		TextureSurfaceInfo(0, 0, 0, 0),
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ);
 	cmdb->informTextureCurrentUsage(m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE);
-	cmdb->informTextureCurrentUsage(m_r->getShadowMapping().m_omniTexArray, TextureUsageBit::SAMPLED_FRAGMENT);
-	cmdb->informTextureCurrentUsage(m_r->getShadowMapping().m_spotTex, TextureUsageBit::SAMPLED_FRAGMENT);
+	cmdb->informTextureCurrentUsage(m_r->getShadowMapping().m_shadowAtlas, TextureUsageBit::SAMPLED_FRAGMENT);
 
 	cmdb->bindTexture(0, 0, m_r->getDepthDownscale().m_qd.m_colorRt);
-	cmdb->bindTexture(0, 1, m_r->getShadowMapping().m_spotTex);
-	cmdb->bindTexture(0, 2, m_r->getShadowMapping().m_omniTexArray);
+	cmdb->bindTexture(0, 1, m_r->getShadowMapping().m_shadowAtlas);
 	bindUniforms(cmdb, 0, 0, ctx.m_lightShading.m_commonToken);
 	bindUniforms(cmdb, 0, 1, ctx.m_lightShading.m_pointLightsToken);
 	bindUniforms(cmdb, 0, 2, ctx.m_lightShading.m_spotLightsToken);

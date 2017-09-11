@@ -21,7 +21,7 @@ public:
 	{
 	}
 
-	Error update(SceneNode& node, F32, F32, Bool& updated) override
+	Error update(SceneNode& node, Second, Second, Bool& updated) override
 	{
 		updated = false;
 		Light& lnode = static_cast<Light&>(node);
@@ -46,7 +46,7 @@ public:
 	{
 	}
 
-	Error update(SceneNode& node, F32, F32, Bool& updated) override
+	Error update(SceneNode& node, Second, Second, Bool& updated) override
 	{
 		updated = false;
 		Light& lnode = static_cast<Light&>(node);
@@ -210,7 +210,7 @@ void PointLight::onShapeUpdate(LightComponent& light)
 	onShapeUpdateCommon(light);
 }
 
-Error PointLight::frameUpdate(F32 prevUpdateTime, F32 crntTime)
+Error PointLight::frameUpdate(Second prevUpdateTime, Second crntTime)
 {
 	if(getComponent<LightComponent>().getShadowEnabled() && m_shadowData.isEmpty())
 	{
@@ -290,7 +290,7 @@ void SpotLight::onShapeUpdate(LightComponent& light)
 		light.getOuterAngle(), light.getOuterAngle(), LightComponent::FRUSTUM_NEAR_PLANE, light.getDistance());
 }
 
-Error SpotLight::frameUpdate(F32 prevUpdateTime, F32 crntTime)
+Error SpotLight::frameUpdate(Second prevUpdateTime, Second crntTime)
 {
 	frameUpdateCommon();
 	return Error::NONE;

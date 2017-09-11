@@ -185,12 +185,12 @@ vec3 getCubemapDirection(vec2 norm, uint faceIdx)
 	return normalize(norm.x * xDir + norm.y * yDir + zDir);
 }
 
-// Convert 3D cubemap coordinates to 2D plus face index. v needs to be normalized.
+// Convert 3D cubemap coordinates to 2D plus face index. v doesn't need to be normalized.
 vec2 convertCubeUvs(vec3 v, out float faceIndex)
 {
 	vec3 absV = abs(v);
 	float mag;
-	vec3 uv;
+	vec2 uv;
 
 	if(all(greaterThanEqual(absV.zz, absV.xy)))
 	{
@@ -211,7 +211,7 @@ vec2 convertCubeUvs(vec3 v, out float faceIndex)
 		mag = absV.x;
 	}
 
-	return uv * mag * 2.0 + 0.5;
+	return 0.5 / mag * uv + 0.5;
 }
 
 vec3 grayScale(vec3 col)

@@ -74,7 +74,7 @@ public:
 	}
 
 	/// Implements SceneComponent::update.
-	Error update(SceneNode& node, F32 prevTime, F32 crntTime, Bool& updated) override
+	Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) override
 	{
 		updated = false;
 		return Error::NONE;

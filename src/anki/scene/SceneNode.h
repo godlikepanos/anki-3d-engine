@@ -68,6 +68,7 @@ public:
 
 	Timestamp getComponentMaxTimestamp() const
 	{
+		ANKI_ASSERT(m_maxComponentTimestamp > 0);
 		return m_maxComponentTimestamp;
 	}
 
@@ -83,22 +84,20 @@ public:
 	/// This is called by the scene every frame after logic and before rendering. By default it does nothing.
 	/// @param prevUpdateTime Timestamp of the previous update
 	/// @param crntTime Timestamp of this update
-	virtual ANKI_USE_RESULT Error frameUpdate(F32 prevUpdateTime, F32 crntTime)
+	virtual ANKI_USE_RESULT Error frameUpdate(Second prevUpdateTime, Second crntTime)
 	{
 		(void)prevUpdateTime;
 		(void)crntTime;
 		return Error::NONE;
 	}
 
-	ANKI_USE_RESULT Error frameUpdateComplete(F32 prevUpdateTime, F32 crntTime, Timestamp maxComponentTimestamp)
+	ANKI_USE_RESULT Error frameUpdateComplete(Second prevUpdateTime, Second crntTime, Timestamp maxComponentTimestamp)
 	{
 		m_sectorVisitedBitset.unsetAll();
 		m_maxComponentTimestamp = maxComponentTimestamp;
+		ANKI_ASSERT(maxComponentTimestamp > 0);
 		return frameUpdate(prevUpdateTime, crntTime);
 	}
-
-	/// Return the last frame the node was updated. It checks all components
-	U32 getLastUpdateFrame() const;
 
 	/// Inform if a sector has visited this node.
 	/// @return The previous value.

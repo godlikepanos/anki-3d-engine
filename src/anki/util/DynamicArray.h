@@ -265,6 +265,18 @@ public:
 		}
 	}
 
+	/// Move the data from this object. It's like moving (operator or constructor) but instead of moving to another
+	/// object of the same type it moves to 3 values.
+	void moveAndReset(Value*& data, PtrSize& size, PtrSize& storageSize)
+	{
+		data = m_data;
+		size = m_size;
+		storageSize = m_capacity;
+		m_data = nullptr;
+		m_size = 0;
+		m_capacity = 0;
+	}
+
 protected:
 	PtrSize m_capacity = 0;
 
@@ -281,9 +293,9 @@ class DynamicArrayAuto : public DynamicArray<T>
 {
 public:
 	using Base = DynamicArray<T>;
+	using Base::m_capacity;
 	using Base::m_data;
 	using Base::m_size;
-	using Base::m_capacity;
 	using typename Base::Value;
 
 	template<typename TAllocator>
@@ -350,6 +362,13 @@ public:
 	void resize(PtrSize size)
 	{
 		Base::resize(m_alloc, size);
+	}
+
+	/// @copydoc DynamicArray::moveAndReset
+	void moveAndReset(Value*& data, PtrSize& size, PtrSize& storageSize)
+	{
+		Base::moveAndReset(data, size, storageSize);
+		// Don't touch the m_alloc
 	}
 
 private:

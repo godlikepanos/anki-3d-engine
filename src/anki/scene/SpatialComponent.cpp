@@ -24,7 +24,7 @@ SpatialComponent::~SpatialComponent()
 	getSceneGraph().getSectorGroup().spatialDeleted(this);
 }
 
-Error SpatialComponent::update(SceneNode&, F32, F32, Bool& updated)
+Error SpatialComponent::update(SceneNode&, Second, Second, Bool& updated)
 {
 	m_flags.unset(Flag::VISIBLE_ANY);
 

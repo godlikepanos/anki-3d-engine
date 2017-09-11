@@ -22,8 +22,8 @@ Config::Config()
 
 	newOption("r.shadowMapping.enabled", true);
 	newOption("r.shadowMapping.resolution", 512);
-	newOption("r.shadowMapping.maxLights", 16);
-	newOption("r.shadowMapping.batchCount", 6);
+	newOption("r.shadowMapping.tileCountPerRowOrColumn", 8);
+	newOption("r.shadowMapping.scratchTileCount", 8);
 
 	newOption("r.lensFlare.maxSpritesPerFlare", 8);
 	newOption("r.lensFlare.maxFlares", 16);

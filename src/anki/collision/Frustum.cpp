@@ -92,6 +92,7 @@ void Frustum::resetTransform(const Transform& trf)
 void Frustum::update() const
 {
 	Frustum& self = *const_cast<Frustum*>(this);
+	LockGuard<SpinLock> lock(self.m_lock);
 	if(self.m_frustumDirty)
 	{
 		self.updateInternal();

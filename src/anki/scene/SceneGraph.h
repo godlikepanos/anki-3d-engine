@@ -84,7 +84,7 @@ public:
 		m_mainCam = cam;
 		m_activeCameraChangeTimestamp = getGlobalTimestamp();
 	}
-	U32 getActiveCameraChangeTimestamp() const
+	Timestamp getActiveCameraChangeTimestamp() const
 	{
 		return m_activeCameraChangeTimestamp;
 	}
@@ -120,7 +120,7 @@ public:
 		return *m_stagingAlloc;
 	}
 
-	ANKI_USE_RESULT Error update(F32 prevUpdateTime, F32 crntTime);
+	ANKI_USE_RESULT Error update(Second prevUpdateTime, Second crntTime);
 
 	void doVisibilityTests(RenderQueue& rqueue);
 
@@ -237,7 +237,7 @@ private:
 	HashMap<CString, SceneNode*, CStringHasher> m_nodesDict;
 
 	SceneNode* m_mainCam = nullptr;
-	Timestamp m_activeCameraChangeTimestamp = getGlobalTimestamp();
+	Timestamp m_activeCameraChangeTimestamp = 0;
 	PerspectiveCamera* m_defaultMainCam = nullptr;
 
 	EventManager m_events;
@@ -261,7 +261,7 @@ private:
 	void deleteNodesMarkedForDeletion();
 
 	ANKI_USE_RESULT Error updateNodes(UpdateSceneNodesCtx& ctx) const;
-	ANKI_USE_RESULT static Error updateNode(F32 prevTime, F32 crntTime, SceneNode& node);
+	ANKI_USE_RESULT static Error updateNode(Second prevTime, Second crntTime, SceneNode& node);
 };
 
 template<typename Node, typename... Args>

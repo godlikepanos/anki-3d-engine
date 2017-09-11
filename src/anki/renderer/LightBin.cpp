@@ -35,6 +35,8 @@ public:
 
 class ShaderPointLight : public ShaderLight
 {
+public:
+	Array<Vec4, 6> m_cubeFaceCoordinates;
 };
 
 class ShaderSpotLight : public ShaderLight
@@ -671,11 +673,12 @@ void LightBin::writeAndBinPointLight(
 
 	if(lightEl.m_shadowRenderQueues[0] == nullptr || !ctx.m_shadowsEnabled)
 	{
-		slight.m_diffuseColorShadowmapId.w() = INVALID_TEXTURE_INDEX;
+		slight.m_cubeFaceCoordinates[0].x() = INVALID_TEXTURE_INDEX;
 	}
 	else
 	{
-		slight.m_diffuseColorShadowmapId.w() = lightEl.m_textureArrayIndex;
+		memcpy(
+			&slight.m_cubeFaceCoordinates[0][0], &lightEl.m_textureAtlasUvs[0][0], sizeof(lightEl.m_textureAtlasUvs));
 	}
 
 	slight.m_specularColorRadius = Vec4(lightEl.m_specularColor, lightEl.m_radius);
@@ -711,7 +714,7 @@ void LightBin::writeAndBinSpotLight(
 	ShaderSpotLight& light = ctx.m_spotLights[idx];
 	F32 shadowmapIndex = INVALID_TEXTURE_INDEX;
 
-	if(lightEl.m_shadowRenderQueue != nullptr && ctx.m_shadowsEnabled)
+	if(lightEl.hasShadow() && ctx.m_shadowsEnabled)
 	{
 		// bias * proj_l * view_l * world_c
 		light.m_texProjectionMat = lightEl.m_textureMatrix * ctx.m_camTrf;

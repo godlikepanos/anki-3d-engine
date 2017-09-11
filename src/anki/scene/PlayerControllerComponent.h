@@ -43,7 +43,7 @@ public:
 		m_player->setVelocity(forwardSpeed, strafeSpeed, jumpSpeed, forwardDir);
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode&, F32, F32, Bool& updated) override
+	ANKI_USE_RESULT Error update(SceneNode&, Second, Second, Bool& updated) override
 	{
 		m_trf = m_player->getTransform(updated);
 		return Error::NONE;

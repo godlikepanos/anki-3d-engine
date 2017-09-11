@@ -33,32 +33,32 @@ public:
 	{
 	}
 
-	F32 getTimeOfBirth() const
+	Second getTimeOfBirth() const
 	{
 		return m_timeOfBirth;
 	}
 
-	F32& getTimeOfBirth()
+	Second& getTimeOfBirth()
 	{
 		return m_timeOfBirth;
 	}
 
-	void setTimeOfBirth(const F32 x)
+	void setTimeOfBirth(const Second x)
 	{
 		m_timeOfBirth = x;
 	}
 
-	F32 getTimeOfDeath() const
+	Second getTimeOfDeath() const
 	{
 		return m_timeOfDeath;
 	}
 
-	F32& getTimeOfDeath()
+	Second& getTimeOfDeath()
 	{
 		return m_timeOfDeath;
 	}
 
-	void setTimeOfDeath(const F32 x)
+	void setTimeOfDeath(const Second x)
 	{
 		m_timeOfDeath = x;
 	}
@@ -76,10 +76,10 @@ public:
 	}
 
 	/// Revive the particle
-	virtual void revive(const ParticleEmitter& pe, const Transform& trf, F32 prevUpdateTime, F32 crntTime);
+	virtual void revive(const ParticleEmitter& pe, const Transform& trf, Second prevUpdateTime, Second crntTime);
 
 	/// Only relevant for non-bullet simulations
-	virtual void simulate(const ParticleEmitter& pe, F32 prevUpdateTime, F32 crntTime)
+	virtual void simulate(const ParticleEmitter& pe, Second prevUpdateTime, Second crntTime)
 	{
 		(void)pe;
 		(void)prevUpdateTime;
@@ -89,10 +89,10 @@ public:
 	virtual const Vec4& getPosition() const = 0;
 
 protected:
-	F32 m_timeOfBirth; ///< Keep the time of birth for nice effects
-	F32 m_timeOfDeath = -1.0; ///< Time of death. If < 0.0 then dead
-	F32 m_size = 1.0;
-	F32 m_alpha = 1.0;
+	Second m_timeOfBirth; ///< Keep the time of birth for nice effects
+	Second m_timeOfDeath = -1.0; ///< Time of death. If < 0.0 then dead
+	Second m_size = 1.0;
+	Second m_alpha = 1.0;
 };
 
 /// Simple particle for simple simulation
@@ -103,9 +103,9 @@ public:
 	{
 	}
 
-	void revive(const ParticleEmitter& pe, const Transform& trf, F32 prevUpdateTime, F32 crntTime) override;
+	void revive(const ParticleEmitter& pe, const Transform& trf, Second prevUpdateTime, Second crntTime) override;
 
-	void simulate(const ParticleEmitter& pe, F32 prevUpdateTime, F32 crntTime) override;
+	void simulate(const ParticleEmitter& pe, Second prevUpdateTime, Second crntTime) override;
 
 	const Vec4& getPosition() const override
 	{
@@ -163,7 +163,7 @@ public:
 
 	/// @name SceneNode virtuals
 	/// @{
-	ANKI_USE_RESULT Error frameUpdate(F32 prevUpdateTime, F32 crntTime) override;
+	ANKI_USE_RESULT Error frameUpdate(Second prevUpdateTime, Second crntTime) override;
 	/// @}
 
 private:
@@ -179,7 +179,7 @@ private:
 
 	ParticleEmitterResourcePtr m_particleEmitterResource;
 	DynamicArray<ParticleBase*> m_particles;
-	F32 m_timeLeftForNextEmission = 0.0;
+	Second m_timeLeftForNextEmission = 0.0;
 	Obb m_obb;
 
 	// Opt: We dont have to make extra calculations if the ParticleEmitter's rotation is the identity

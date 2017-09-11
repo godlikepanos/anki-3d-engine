@@ -45,7 +45,7 @@ static U64 getNs()
 	return ticks;
 }
 
-void HighRezTimer::sleep(Scalar sec)
+void HighRezTimer::sleep(Second sec)
 {
 	ANKI_ASSERT(sec >= 0.0);
 	int wasError;
@@ -65,10 +65,10 @@ void HighRezTimer::sleep(Scalar sec)
 	} while(wasError && (errno == EINTR));
 }
 
-HighRezTimer::Scalar HighRezTimer::getCurrentTime()
+Second HighRezTimer::getCurrentTime()
 {
-	// Scalar(ticks) / 1000.0
-	return static_cast<Scalar>(getNs()) * 1e-9;
+	// Second(ticks) / 1000.0
+	return static_cast<Second>(getNs()) * 1e-9;
 }
 
 } // end namespace anki

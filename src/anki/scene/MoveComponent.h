@@ -100,7 +100,7 @@ public:
 	}
 
 	/// Called when there is an update in the world transformation.
-	virtual ANKI_USE_RESULT Error onMoveComponentUpdate(SceneNode& node, F32 prevTime, F32 crntTime)
+	virtual ANKI_USE_RESULT Error onMoveComponentUpdate(SceneNode& node, Second prevTime, Second crntTime)
 	{
 		return Error::NONE;
 	}
@@ -111,9 +111,9 @@ public:
 	/// Update self and children world transform recursively, if root node. Need to call this at every frame.
 	/// @note Don't update if child because we start from roots and go to children and we don't want a child to be
 	///       updated before the parent
-	ANKI_USE_RESULT Error update(SceneNode&, F32, F32, Bool& updated) override;
+	ANKI_USE_RESULT Error update(SceneNode&, Second, Second, Bool& updated) override;
 
-	ANKI_USE_RESULT Error onUpdate(SceneNode& node, F32 prevTime, F32 crntTime) final
+	ANKI_USE_RESULT Error onUpdate(SceneNode& node, Second prevTime, Second crntTime) final
 	{
 		return onMoveComponentUpdate(node, prevTime, crntTime);
 	}

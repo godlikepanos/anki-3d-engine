@@ -11,8 +11,8 @@ namespace anki
 {
 
 /// Timestamp type
-using Timestamp = U32;
+using Timestamp = U64;
 
-const U MAX_TIMESTAMP = MAX_U32;
+const U64 MAX_TIMESTAMP = MAX_U64;
 
 } // end namespace anki

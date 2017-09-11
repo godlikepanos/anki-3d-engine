@@ -30,7 +30,7 @@ public:
 	PhysicsPtr<T> newInstance(TArgs&&... args);
 
 	/// Start asynchronous update.
-	Error updateAsync(F32 dt);
+	Error updateAsync(Second dt);
 
 	/// End asynchronous update.
 	void waitUpdate();
@@ -53,7 +53,7 @@ anki_internal:
 		return m_sceneCollision;
 	}
 
-	F32 getDeltaTime() const
+	Second getDeltaTime() const
 	{
 		return m_dt;
 	}
@@ -76,7 +76,7 @@ private:
 	NewtonCollision* m_sceneCollision = nullptr;
 	NewtonBody* m_sceneBody = nullptr;
 	Vec4 m_gravity = Vec4(0.0, -9.8, 0.0, 0.0);
-	F32 m_dt = 0.0;
+	Second m_dt = 0.0;
 
 	/// @note Don't delete it. Newton will
 	CharacterControllerManager* m_playerManager = nullptr;

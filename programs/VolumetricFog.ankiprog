@@ -73,11 +73,10 @@ vec3 computeLightColor(vec3 fragPos, uint plightCount, uint plightIdx, uint slig
 		float factor = computeAttenuationFactor(light.posRadius.w, frag2Light);
 
 #if ENABLE_SHADOWS
-		float shadowmapLayerIdx = light.diffuseColorShadowmapId.w;
-		if(light.diffuseColorShadowmapId.w >= 0.0)
+		if(light.cubeFaceCoordinates[0].x >= 0.0)
 		{
 			factor *= computeShadowFactorOmni(
-				frag2Light, shadowmapLayerIdx, -1.0 / light.posRadius.w, u_invViewRotation, u_omniMapArr);
+				frag2Light, -1.0 / light.posRadius.w, u_invViewRotation, light.cubeFaceCoordinates, u_shadowTex);
 		}
 #endif
 
@@ -100,7 +99,7 @@ vec3 computeLightColor(vec3 fragPos, uint plightCount, uint plightIdx, uint slig
 		if(shadowmapLayerIdx >= 0.0)
 		{
 			factor *= computeShadowFactorSpot(
-				light.texProjectionMat, fragPos, light.specularColorRadius.w, u_spotMapArr);
+				light.texProjectionMat, fragPos, light.specularColorRadius.w, u_shadowTex);
 		}
 #endif
 

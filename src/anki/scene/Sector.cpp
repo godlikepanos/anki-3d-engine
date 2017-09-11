@@ -138,7 +138,7 @@ Error Portal::init(const CString& meshFname)
 	return Error::NONE;
 }
 
-Error Portal::frameUpdate(F32 prevUpdateTime, F32 crntTime)
+Error Portal::frameUpdate(Second prevUpdateTime, Second crntTime)
 {
 	MoveComponent& move = getComponent<MoveComponent>();
 	if(move.getTimestamp() == getGlobalTimestamp())
@@ -346,7 +346,7 @@ List<SpatialComponent*>::Iterator Sector::findSpatialComponent(SpatialComponent*
 	return it;
 }
 
-Error Sector::frameUpdate(F32 prevUpdateTime, F32 crntTime)
+Error Sector::frameUpdate(Second prevUpdateTime, Second crntTime)
 {
 	MoveComponent& move = getComponent<MoveComponent>();
 	if(move.getTimestamp() == getGlobalTimestamp())

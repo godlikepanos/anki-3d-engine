@@ -375,8 +375,8 @@ Error App::mainLoop()
 	ANKI_CORE_LOGI("Entering main loop");
 	Bool quit = false;
 
-	HighRezTimer::Scalar prevUpdateTime = HighRezTimer::getCurrentTime();
-	HighRezTimer::Scalar crntTime = prevUpdateTime;
+	Second prevUpdateTime = HighRezTimer::getCurrentTime();
+	Second crntTime = prevUpdateTime;
 
 	while(!quit)
 	{

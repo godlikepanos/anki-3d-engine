@@ -9,7 +9,6 @@
 #include <anki/util/StdTypes.h>
 #include <anki/util/Singleton.h>
 #include <anki/util/Array.h>
-#include <anki/util/HighRezTimer.h>
 #include <anki/util/Thread.h>
 #include <anki/util/Atomic.h>
 #include <anki/util/Logger.h>
@@ -122,8 +121,8 @@ private:
 	{
 	public:
 		TraceEventType m_event;
-		HighRezTimer::Scalar m_timestamp; ///< When it started.
-		HighRezTimer::Scalar m_duration;
+		Second m_timestamp; ///< When it started.
+		Second m_duration;
 		ThreadId m_tid;
 	};
 
@@ -133,7 +132,7 @@ private:
 	File m_traceFile;
 	File m_perFrameFile;
 	File m_perRunFile;
-	HighRezTimer::Scalar m_startFrameTime;
+	Second m_startFrameTime;
 
 	Array<Atomic<U64>, U(TraceEventType::COUNT) + U(TraceCounterType::COUNT)> m_perFrameCounters = {{}};
 	Array<Atomic<U64>, U(TraceEventType::COUNT) + U(TraceCounterType::COUNT)> m_perRunCounters = {{}};

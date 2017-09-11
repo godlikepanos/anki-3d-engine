@@ -96,7 +96,7 @@ Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
 	return err;
 }
 
-Error PhysicsWorld::updateAsync(F32 dt)
+Error PhysicsWorld::updateAsync(Second dt)
 {
 	m_dt = dt;
 

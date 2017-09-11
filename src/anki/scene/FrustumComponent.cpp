@@ -22,7 +22,7 @@ FrustumComponent::FrustumComponent(SceneNode* node, Frustum* frustum)
 	setEnabledVisibilityTests(FrustumComponentVisibilityTestFlag::NONE);
 }
 
-Error FrustumComponent::update(SceneNode& node, F32, F32, Bool& updated)
+Error FrustumComponent::update(SceneNode& node, Second, Second, Bool& updated)
 {
 	updated = false;
 

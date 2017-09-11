@@ -22,7 +22,7 @@ void HighRezTimer::stop()
 	m_stopTime = getCurrentTime();
 }
 
-HighRezTimer::Scalar HighRezTimer::getElapsedTime() const
+Second HighRezTimer::getElapsedTime() const
 {
 	if(m_stopTime == 0.0)
 	{

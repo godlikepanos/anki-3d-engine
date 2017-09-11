@@ -27,8 +27,8 @@ public:
 	IntrusiveList<SceneNode>::Iterator m_crntNode;
 	SpinLock m_crntNodeLock;
 
-	F32 m_prevUpdateTime;
-	F32 m_crntTime;
+	Second m_prevUpdateTime;
+	Second m_crntTime;
 };
 
 class UpdateSceneNodesTask : public ThreadPoolTask
@@ -187,7 +187,7 @@ void SceneGraph::deleteNodesMarkedForDeletion()
 	}
 }
 
-Error SceneGraph::update(F32 prevUpdateTime, F32 crntTime)
+Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 {
 	ANKI_ASSERT(m_mainCam);
 	ANKI_TRACE_SCOPED_EVENT(SCENE_UPDATE);
@@ -241,7 +241,7 @@ void SceneGraph::doVisibilityTests(RenderQueue& rqueue)
 	anki::doVisibilityTests(*m_mainCam, *this, rqueue);
 }
 
-Error SceneGraph::updateNode(F32 prevTime, F32 crntTime, SceneNode& node)
+Error SceneGraph::updateNode(Second prevTime, Second crntTime, SceneNode& node)
 {
 	ANKI_TRACE_INC_COUNTER(SCENE_NODES_UPDATED, 1);
 

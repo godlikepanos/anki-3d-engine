@@ -37,7 +37,7 @@ static Vec3 getRandom(const Vec3& initial, const Vec3& deviation)
 	}
 }
 
-void ParticleBase::revive(const ParticleEmitter& pe, const Transform& trf, F32 /*prevUpdateTime*/, F32 crntTime)
+void ParticleBase::revive(const ParticleEmitter& pe, const Transform& trf, Second /*prevUpdateTime*/, Second crntTime)
 {
 	ANKI_ASSERT(isDead());
 	const ParticleEmitterProperties& props = pe;
@@ -47,9 +47,9 @@ void ParticleBase::revive(const ParticleEmitter& pe, const Transform& trf, F32 /
 	m_timeOfBirth = crntTime;
 }
 
-void ParticleSimple::simulate(const ParticleEmitter& pe, F32 prevUpdateTime, F32 crntTime)
+void ParticleSimple::simulate(const ParticleEmitter& pe, Second prevUpdateTime, Second crntTime)
 {
-	F32 dt = crntTime - prevUpdateTime;
+	Second dt = crntTime - prevUpdateTime;
 
 	Vec4 xp = m_position;
 	Vec4 xc = m_acceleration * (dt * dt) + m_velocity * dt + xp;
@@ -59,7 +59,7 @@ void ParticleSimple::simulate(const ParticleEmitter& pe, F32 prevUpdateTime, F32
 	m_velocity += m_acceleration * dt;
 }
 
-void ParticleSimple::revive(const ParticleEmitter& pe, const Transform& trf, F32 prevUpdateTime, F32 crntTime)
+void ParticleSimple::revive(const ParticleEmitter& pe, const Transform& trf, Second prevUpdateTime, Second crntTime)
 {
 	ParticleBase::revive(pe, trf, prevUpdateTime, crntTime);
 	m_velocity = Vec4(0.0);
@@ -189,7 +189,7 @@ public:
 	{
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode& node, F32, F32, Bool& updated) override
+	ANKI_USE_RESULT Error update(SceneNode& node, Second, Second, Bool& updated) override
 	{
 		updated = false; // Don't care about updates for this component
 
@@ -366,7 +366,7 @@ void ParticleEmitter::createParticlesSimpleSimulation()
 	}
 }
 
-Error ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime)
+Error ParticleEmitter::frameUpdate(Second prevUpdateTime, Second crntTime)
 {
 	// - Deactivate the dead particles
 	// - Calc the AABB

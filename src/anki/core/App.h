@@ -159,7 +159,7 @@ private:
 	ScriptManager* m_script = nullptr;
 
 	// Misc
-	Timestamp m_globalTimestamp = 0;
+	Timestamp m_globalTimestamp = 1;
 	ThreadPool* m_threadpool = nullptr;
 	ThreadHive* m_threadHive = nullptr;
 	String m_settingsDir; ///< The path that holds the configuration

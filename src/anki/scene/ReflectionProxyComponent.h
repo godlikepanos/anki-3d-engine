@@ -48,7 +48,7 @@ public:
 		return m_faces;
 	}
 
-	ANKI_USE_RESULT Error update(SceneNode& node, F32 prevTime, F32 crntTime, Bool& updated) final;
+	ANKI_USE_RESULT Error update(SceneNode& node, Second prevTime, Second crntTime, Bool& updated) final;
 
 private:
 	DynamicArray<Face> m_faces; ///< Quads.

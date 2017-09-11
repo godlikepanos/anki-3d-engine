@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include <anki/core/Trace.h>
+#include <anki/util/HighRezTimer.h>
 #include <cstdlib>
 
 #if ANKI_ENABLE_TRACE
@@ -74,7 +75,7 @@ static Array<const char*, U(TraceCounterType::COUNT)> counterNames = {{"GR_DRAWC
 	}
 
 const U MAX_EVENTS_DEPTH = 20;
-thread_local HighRezTimer::Scalar g_traceEventStartTime[MAX_EVENTS_DEPTH];
+thread_local Second g_traceEventStartTime[MAX_EVENTS_DEPTH];
 thread_local I g_traceEventsInFlight = 0;
 
 TraceManager::~TraceManager()
@@ -171,8 +172,8 @@ Error TraceManager::flushCounters()
 	}
 
 	// Write the FPS counter
-	HighRezTimer::Scalar now = HighRezTimer::getCurrentTime();
-	HighRezTimer::Scalar time = now - m_startFrameTime;
+	Second now = HighRezTimer::getCurrentTime();
+	Second time = now - m_startFrameTime;
 	F32 fps = 1.0 / time;
 	ANKI_CHECK(m_traceFile.writeText("{\"name\": \"FPS\", \"cat\": \"PERF\", \"ph\": \"C\", "
 									 "\"pid\": 1, \"ts\": %llu, \"args\": {\"val\": %f}},\n",
