@@ -6,6 +6,7 @@
 #include <tests/framework/Framework.h>
 #include <anki/util/DynamicArray.h>
 #include <vector>
+#include <time.h>
 
 namespace anki
 {
