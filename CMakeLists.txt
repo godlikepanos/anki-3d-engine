@@ -6,11 +6,11 @@ PROJECT(anki)
 # Funcs                                                                        #
 ################################################################################
 
-function(installExecutable exe)
+macro(installExecutable exe)
 	add_custom_command(TARGET ${exe} POST_BUILD
 		COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/bin
-		COMMAND ${CMAKE_COMMAND} -E copy ${exe} ${CMAKE_BINARY_DIR}/bin)
-endfunction()
+		COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${exe}> ${CMAKE_BINARY_DIR}/bin)
+endmacro()
 
 ################################################################################
 # Determin the system to build for. Do that first                              #
