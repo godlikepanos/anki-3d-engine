@@ -25,23 +25,21 @@ public:
 	U32 m_firstIdx;
 };
 
-class ShaderLight
+class ShaderPointLight
+{
+public:
+	Vec4 m_posRadius;
+	Vec4 m_diffuseColorTileSize;
+	Vec4 m_specularColorRadius;
+	UVec4 m_atlasTilesPad2;
+};
+
+class ShaderSpotLight
 {
 public:
 	Vec4 m_posRadius;
 	Vec4 m_diffuseColorShadowmapId;
 	Vec4 m_specularColorRadius;
-};
-
-class ShaderPointLight : public ShaderLight
-{
-public:
-	Array<Vec4, 6> m_cubeFaceCoordinates;
-};
-
-class ShaderSpotLight : public ShaderLight
-{
-public:
 	Vec4 m_lightDir;
 	Vec4 m_outerCosInnerCos;
 	Mat4 m_texProjectionMat; ///< Texture projection matrix
@@ -669,16 +667,16 @@ void LightBin::writeAndBinPointLight(
 	Vec4 pos = ctx.m_viewMat * lightEl.m_worldPosition.xyz1();
 
 	slight.m_posRadius = Vec4(pos.xyz(), 1.0f / (lightEl.m_radius * lightEl.m_radius));
-	slight.m_diffuseColorShadowmapId = lightEl.m_diffuseColor.xyz0();
+	slight.m_diffuseColorTileSize = lightEl.m_diffuseColor.xyz0();
 
 	if(lightEl.m_shadowRenderQueues[0] == nullptr || !ctx.m_shadowsEnabled)
 	{
-		slight.m_cubeFaceCoordinates[0].x() = INVALID_TEXTURE_INDEX;
+		slight.m_diffuseColorTileSize.w() = INVALID_TEXTURE_INDEX;
 	}
 	else
 	{
-		memcpy(
-			&slight.m_cubeFaceCoordinates[0][0], &lightEl.m_textureAtlasUvs[0][0], sizeof(lightEl.m_textureAtlasUvs));
+		slight.m_diffuseColorTileSize.w() = lightEl.m_atlasTileSize;
+		slight.m_atlasTilesPad2 = UVec4(lightEl.m_atlasTiles.x(), lightEl.m_atlasTiles.y(), 0, 0);
 	}
 
 	slight.m_specularColorRadius = Vec4(lightEl.m_specularColor, lightEl.m_radius);

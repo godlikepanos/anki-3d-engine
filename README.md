@@ -77,11 +77,11 @@ To build the release version open `PowerShell` and type:
 3 Next steps
 ============
 
-Try to build with `samples` enabled (search for the `ANKI_BUILD_SAMPLES` option in your CMake GUI) and try running the 
-sponza executable. Then you will be able to see sponza running in AnKi. All samples must run from within their 
+Try to build with `samples` enabled (search for the `ANKI_BUILD_SAMPLES=ON` option in your CMake GUI) and try running 
+the sponza executable. Then you will be able to see sponza running in AnKi. All samples must run from within their 
 directory.
 
 	$cd path/to/anki/samples/sponza
-	$./path/to/build/samples/sponza/sponza
+	$./path/to/build/bin/sponza
 
 More samples will follow.

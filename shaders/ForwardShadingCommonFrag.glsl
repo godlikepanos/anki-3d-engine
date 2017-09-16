@@ -75,10 +75,14 @@ vec3 computeLightColor(vec3 diffCol)
 		const float shadow = 1.0;
 #else
 		float shadow = 1.0;
-		if(light.cubeFaceCoordinates[0].x >= 0.0)
+		if(light.diffuseColorShadowmapId.w >= 0.0)
 		{
-			shadow = computeShadowFactorOmni(
-				frag2Light, light.specularColorRadius.w, u_invViewRotation, light.cubeFaceCoordinates, u_shadowTex);
+			shadow = computeShadowFactorOmni(frag2Light,
+				light.specularColorRadius.w,
+				u_invViewRotation,
+				light.atlasTilesPad2.xy,
+				light.diffuseColorShadowmapId.w,
+				u_shadowTex);
 		}
 #endif
 

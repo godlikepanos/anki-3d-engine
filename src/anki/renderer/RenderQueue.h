@@ -63,7 +63,8 @@ public:
 	const void* m_userData;
 	RenderQueueDrawCallback m_drawCallback;
 
-	Array<Vec4, 6> m_textureAtlasUvs; ///< Renderer internal.
+	UVec2 m_atlasTiles; ///< Renderer internal.
+	F32 m_atlasTileSize; ///< Renderer internal.
 
 	Bool hasShadow() const
 	{

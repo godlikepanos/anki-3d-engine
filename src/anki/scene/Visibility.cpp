@@ -393,7 +393,6 @@ void VisibilityTestTask::test(ThreadHive& hive)
 			{
 				PointLightQueueElement* el = m_result.m_pointLights.newElement(alloc);
 				lc->setupPointLightQueueElement(*el);
-				zeroMemory(el->m_textureAtlasUvs);
 
 				if(lc->getShadowEnabled())
 				{

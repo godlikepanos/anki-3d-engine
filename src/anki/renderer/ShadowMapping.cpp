@@ -357,6 +357,9 @@ void ShadowMapping::prepareBuildCommandBuffers(RenderingContext& ctx)
 		{
 			// All good, update the lights
 
+			light->m_atlasTiles = UVec2(0u);
+			light->m_atlasTileSize = 1.0f / m_tileCountPerRowOrColumn;
+
 			numOfFacesThatHaveDrawcalls = 0;
 			for(U face = 0; face < 6; ++face)
 			{
@@ -364,7 +367,12 @@ void ShadowMapping::prepareBuildCommandBuffers(RenderingContext& ctx)
 				{
 					// Has drawcalls, asigned it to a tile
 
-					light->m_textureAtlasUvs[face] = m_tiles[tiles[numOfFacesThatHaveDrawcalls]].m_uv;
+					const U32 tileIdx = tiles[numOfFacesThatHaveDrawcalls];
+					const U32 tileIdxX = tileIdx % m_tileCountPerRowOrColumn;
+					const U32 tileIdxY = tileIdx / m_tileCountPerRowOrColumn;
+					ANKI_ASSERT(tileIdxX <= 31u && tileIdxY <= 31u);
+					light->m_atlasTiles.x() |= tileIdxX << (5u * face);
+					light->m_atlasTiles.y() |= tileIdxY << (5u * face);
 
 					if(scratchTiles[numOfFacesThatHaveDrawcalls] != MAX_U32)
 					{
@@ -381,7 +389,8 @@ void ShadowMapping::prepareBuildCommandBuffers(RenderingContext& ctx)
 				else
 				{
 					// Doesn't have renderables, point the face to the 1st tile (that is pinned)
-					light->m_textureAtlasUvs[face] = m_tiles[0].m_uv;
+					light->m_atlasTiles.x() |= 0u << (5u * face);
+					light->m_atlasTiles.y() |= 0u << (5u * face);
 				}
 			}
 		}

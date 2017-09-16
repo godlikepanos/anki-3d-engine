@@ -3,6 +3,16 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 PROJECT(anki)
 
 ################################################################################
+# Funcs                                                                        #
+################################################################################
+
+function(installExecutable exe)
+	add_custom_command(TARGET ${exe} POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/bin
+		COMMAND ${CMAKE_COMMAND} -E copy ${exe} ${CMAKE_BINARY_DIR}/bin)
+endfunction()
+
+################################################################################
 # Determin the system to build for. Do that first                              #
 ################################################################################
 
@@ -202,15 +212,6 @@ set(CMAKE_C_FLAGS "${COMPILER_FLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINKER_FLAGS}")
 
 ################################################################################
-# Install                                                                      #
-################################################################################
-set(INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/src/" CACHE PATH "The subdirectory to the header prefix")
-set(LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lib" CACHE PATH "Library install path")
-
-message("++ Include install dir: ${INCLUDE_INSTALL_DIR}")
-message("++ Lib install dir: ${LIB_INSTALL_DIR}")
-
-################################################################################
 # Thirdparty                                                                   #
 ################################################################################
 set(ANKI_EXTERN_SUB_DIRS tinyxml2 lua z newton)
@@ -325,7 +326,6 @@ else()
 endif()
 
 configure_file("src/anki/Config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h")
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h" DESTINATION "${INCLUDE_INSTALL_DIR}/anki")
 
 # Include & lib directories
 include_directories("src"

@@ -219,7 +219,6 @@ Error ResourceFilesystem::init(const ConfigSet& config, const CString& cacheDir)
 	for(auto& path : paths)
 	{
 		ANKI_CHECK(addNewPath(path.toCString()));
-		ANKI_RESOURCE_LOGI("Adding new data path \"%s\"", &path[0]);
 	}
 
 	addCachePath(cacheDir);
@@ -238,6 +237,7 @@ void ResourceFilesystem::addCachePath(const CString& path)
 
 Error ResourceFilesystem::addNewPath(const CString& path)
 {
+	U fileCount = 0;
 	static const CString extension(".ankizip");
 
 	auto pos = path.find(extension);
@@ -281,6 +281,7 @@ Error ResourceFilesystem::addNewPath(const CString& path)
 			if(info.uncompressed_size > 0)
 			{
 				p.m_files.pushBackSprintf(m_alloc, "%s", &filename[0]);
+				++fileCount;
 			}
 		} while(unzGoToNextFile(zfile) == UNZ_OK);
 
@@ -296,16 +297,25 @@ Error ResourceFilesystem::addNewPath(const CString& path)
 		p.m_path.sprintf(m_alloc, "%s", &path[0]);
 		p.m_isArchive = false;
 
-		ANKI_CHECK(walkDirectoryTree(path, this, [](const CString& fname, void* ud, Bool isDir) -> Error {
+		struct UserData
+		{
+			ResourceFilesystem* m_sys;
+			U* m_fileCount;
+		} ud{this, &fileCount};
+
+		ANKI_CHECK(walkDirectoryTree(path, &ud, [](const CString& fname, void* ud, Bool isDir) -> Error {
 			if(isDir)
 			{
 				return Error::NONE;
 			}
 
-			ResourceFilesystem* self = static_cast<ResourceFilesystem*>(ud);
+			UserData* udd = static_cast<UserData*>(ud);
+			ResourceFilesystem* self = udd->m_sys;
 
 			Path& p = self->m_paths.getFront();
 			p.m_files.pushBackSprintf(self->m_alloc, "%s", &fname[0]);
+
+			++(*udd->m_fileCount);
 			return Error::NONE;
 		}));
 
@@ -316,6 +326,7 @@ Error ResourceFilesystem::addNewPath(const CString& path)
 		}
 	}
 
+	ANKI_RESOURCE_LOGI("Added new data path \"%s\" that contains %u files", &path[0], fileCount);
 	return Error::NONE;
 }
 

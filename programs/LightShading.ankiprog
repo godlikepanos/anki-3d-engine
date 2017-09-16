@@ -213,10 +213,14 @@ void main()
 
 		LIGHTING_COMMON_BRDF();
 
-		if(light.cubeFaceCoordinates[0].x >= 0.0)
+		if(light.diffuseColorShadowmapId.w >= 0.0)
 		{
-			float shadow = computeShadowFactorOmni(
-				frag2Light, light.specularColorRadius.w, u_invViewRotation, light.cubeFaceCoordinates, u_shadowTex);
+			float shadow = computeShadowFactorOmni(frag2Light, 
+				light.specularColorRadius.w, 
+				u_invViewRotation, 
+				light.atlasTilesPad2.xy, 
+				light.diffuseColorShadowmapId.w,
+				u_shadowTex);
 			lambert *= shadow;
 		}
 

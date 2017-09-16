@@ -25,9 +25,9 @@ struct LightingUniforms
 struct PointLight
 {
 	vec4 posRadius; // xyz: Light pos in view space. w: The -1/(radius^2)
-	vec4 diffuseColorShadowmapId; // xyz: diff color, w: unused
+	vec4 diffuseColorShadowmapId; // xyz: diff color, w: tile size in the shadow atlas
 	vec4 specularColorRadius; // xyz: spec color, w: radius
-	vec4 cubeFaceCoordinates[6]; // xy: uv offset, zw: uv scale
+	uvec4 atlasTilesPad2; // x: encodes 6 uints with atlas tile indices in the x dir. y: same for y dir.
 };
 
 // Spot light

@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
 	Error err = Error::NONE;
 
 	MyApp* app = new MyApp;
-	err = app->init(argc, argv);
+	err = app->init(argc, argv, "simple_scene");
 	if(!err)
 	{
 		err = app->mainLoop();
@@ -33,9 +33,7 @@ int main(int argc, char* argv[])
 
 	if(err)
 	{
-		ANKI_LOGE("Error reported. To run %s you have to navigate to the /path/to/anki/samples/simple_scene. "
-				  "And then execute it",
-			argv[0]);
+		ANKI_LOGE("Error reported. Bye!");
 	}
 	else
 	{

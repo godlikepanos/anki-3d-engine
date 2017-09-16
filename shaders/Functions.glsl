@@ -214,6 +214,35 @@ vec2 convertCubeUvs(vec3 v, out float faceIndex)
 	return 0.5 / mag * uv + 0.5;
 }
 
+// Same as convertCubeUvs but it returns the faceIndex as unsigned int.
+vec2 convertCubeUvsu(vec3 v, out uint faceIndex)
+{
+	vec3 absV = abs(v);
+	float mag;
+	vec2 uv;
+
+	if(all(greaterThanEqual(absV.zz, absV.xy)))
+	{
+		faceIndex = (v.z < 0.0) ? 5u : 4u;
+		uv = vec2((v.z < 0.0) ? -v.x : v.x, -v.y);
+		mag = absV.z;
+	}
+	else if(absV.y >= absV.x)
+	{
+		faceIndex = (v.y < 0.0) ? 3u : 2u;
+		uv = vec2(v.x, (v.y < 0.0) ? -v.z : v.z);
+		mag = absV.y;
+	}
+	else
+	{
+		faceIndex = (v.x < 0.0) ? 1u : 0u;
+		uv = vec2((v.x < 0.0) ? v.z : -v.z, -v.y);
+		mag = absV.x;
+	}
+
+	return 0.5 / mag * uv + 0.5;
+}
+
 vec3 grayScale(vec3 col)
 {
 	float grey = (col.r + col.g + col.b) * (1.0 / 3.0);

@@ -104,7 +104,7 @@ float computeShadowFactorSpot(mat4 lightProjectionMat, vec3 fragPos, float dista
 }
 
 float computeShadowFactorOmni(
-	vec3 frag2Light, float radius, mat3 invViewMat, vec4 cubeFaceCoords[6], sampler2D shadowMap)
+	vec3 frag2Light, float radius, mat3 invViewMat, uvec2 atlasTiles, float tileSize, sampler2D shadowMap)
 {
 	vec3 dir = invViewMat * -frag2Light;
 	vec3 dirabs = abs(dir);
@@ -118,9 +118,18 @@ float computeShadowFactorOmni(
 	// Read tex
 	float shadowFactor;
 	{
-		float faceIdx;
-		vec2 uv = convertCubeUvs(dir, faceIdx);
-		uv = fma(uv, cubeFaceCoords[uint(faceIdx)].zw, cubeFaceCoords[uint(faceIdx)].xy);
+		// Convert cube coords
+		uint faceIdxu;
+		vec2 uv = convertCubeUvsu(dir, faceIdxu);
+
+		// Compute atlas tile
+		atlasTiles >>= uvec2(faceIdxu * 5u);
+		atlasTiles &= uvec2(31u);
+
+		// Compute UV
+		uv = (uv + vec2(atlasTiles)) * tileSize;
+
+		// Sample
 		shadowFactor = textureLod(shadowMap, uv, 0.0).r;
 	}
 

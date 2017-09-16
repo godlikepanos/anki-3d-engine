@@ -1,9 +1,10 @@
-FILE(GLOB_RECURSE TESTS_SOURCES *.cpp)
-FILE(GLOB_RECURSE TESTS_HEADERS *.h)
+file(GLOB_RECURSE TESTS_SOURCES *.cpp)
+file(GLOB_RECURSE TESTS_HEADERS *.h)
 
-INCLUDE_DIRECTORIES("..")
+include_directories("..")
 
-ADD_EXECUTABLE(anki_tests ${TESTS_SOURCES} ${TESTS_HEADERS})
-TARGET_LINK_LIBRARIES(anki_tests anki)
+add_executable(anki_tests ${TESTS_SOURCES} ${TESTS_HEADERS})
+target_link_libraries(anki_tests anki)
 
-INSTALL(TARGETS anki_tests DESTINATION "${CMAKE_INSTALL_PREFIX}/tests")
+installExecutable(anki_tests)
+install(TARGETS anki_tests DESTINATION "${CMAKE_INSTALL_PREFIX}/tests")

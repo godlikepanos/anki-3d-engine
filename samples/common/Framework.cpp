@@ -7,8 +7,17 @@
 
 using namespace anki;
 
-Error SampleApp::init(int argc, char** argv)
+Error SampleApp::init(int argc, char** argv, CString sampleName)
 {
+	if(!directoryExists("assets"))
+	{
+		ANKI_LOGE("Cannot find directory \"assets\". YOU ARE RUNNING THE SAMPLE FROM THE WRONG DIRECTORY. "
+				  "To run %s you have to navigate to the /path/to/anki/samples/%s and then execute it",
+			argv[0],
+			&sampleName[0]);
+		return Error::USER_DATA;
+	}
+
 	// Init the super class
 	Config config;
 	config.set("window.fullscreenDesktopResolution", true);
