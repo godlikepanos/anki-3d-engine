@@ -49,7 +49,7 @@ private:
 	class Tile
 	{
 	public:
-		U64 m_timestamp = 0;
+		U64 m_lastUsedTimestamp = 0;
 		U64 m_lightUuid = 0;
 		U8 m_face = 0;
 		Bool8 m_pinned = false; ///< If true we cannot allocate from it.

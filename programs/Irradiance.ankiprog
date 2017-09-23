@@ -14,7 +14,8 @@ http://www.anki3d.org/LICENSE
 
 		<shader type="frag">
 			<inputs>
-				<input name="FACE_SIZE" type="uint" const="1"/>
+				<input name="ENV_TEX_TILE_SIZE" type="uint" const="1"/>
+				<input name="ENV_TEX_MIP" type="float" const="1"/>
 			</inputs>
 
 			<source><![CDATA[
@@ -49,17 +50,17 @@ void main()
 	// For all the faces and texels of the environment map calculate a color sum
 	for(uint f = 0u; f < 6u; ++f)
 	{
-		for(uint i = 0u; i < FACE_SIZE; ++i)
+		for(uint i = 0u; i < ENV_TEX_TILE_SIZE; ++i)
 		{
-			for(uint j = 0u; j < FACE_SIZE; ++j)
+			for(uint j = 0u; j < ENV_TEX_TILE_SIZE; ++j)
 			{
-				vec2 uv = vec2(j, i) / float(FACE_SIZE);
+				vec2 uv = vec2(j, i) / float(ENV_TEX_TILE_SIZE);
 				vec3 r = getCubemapDirection(UV_TO_NDC(uv), f);
 
 				float lambert = dot(r, ri);
 				if(lambert > 0.0)
 				{
-					vec3 col = textureLod(u_envTex, vec4(r, texArrIdx), 0.0).rgb;
+					vec3 col = textureLod(u_envTex, vec4(r, texArrIdx), ENV_TEX_MIP).rgb;
 
 					outCol += col * lambert;
 					weight += lambert;

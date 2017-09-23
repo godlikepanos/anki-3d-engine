@@ -76,6 +76,7 @@ layout(ANKI_TEX_BINDING(0, 3)) uniform sampler2D u_msDepthRt;
 
 layout(ANKI_UBO_BINDING(0, 1)) uniform u1_
 {
+	vec4 u_inputTexUvScaleAndOffset; // Use this to get the correct face UVs
 #if LIGHT_TYPE == POINT_LIGHT_TYPE
 	PointLight u_light;
 #elif LIGHT_TYPE == SPOT_LIGHT_TYPE
@@ -93,28 +94,28 @@ layout(ANKI_UBO_BINDING(0, 1)) uniform u1_
 #define u_lspec u_light.specularColorInnerCos.xyz
 #endif
 
-vec3 readPosition(in vec2 uv)
-{
-	vec3 fragPosVspace;
-
-	float depth = texture(u_msDepthRt, uv).r;
-	fragPosVspace.z = u_light.projectionParams.z / (u_light.projectionParams.w + depth);
-
-	fragPosVspace.xy = (2.0 * uv - 1.0) * u_light.projectionParams.xy * fragPosVspace.z;
-
-	return fragPosVspace;
-}
-
 void main()
 {
-	// Read G-buffer
+	// Compute UV coordinates
 	vec2 uv = vec2(gl_FragCoord.xy) / vec2(FB_SIZE.x, FB_SIZE.y);
+	vec2 uvToRead = fma(uv, u_inputTexUvScaleAndOffset.xy, u_inputTexUvScaleAndOffset.zw);
+
+	// Do manual depth test
+	float depth = texture(u_msDepthRt, uvToRead).r;
+	if(gl_FragCoord.z < depth)
+	{
+		discard;
+	}
+
 	GbufferInfo gbuffer;
-	readGBuffer(u_msRt0, u_msRt1, u_msRt2, uv, 0.0, gbuffer);
+	readGBuffer(u_msRt0, u_msRt1, u_msRt2, uvToRead, 0.0, gbuffer);
 	float a2 = pow(gbuffer.roughness, 2.0);
 
 	// Calculate the light color
-	vec3 fragPos = readPosition(uv);
+	vec3 fragPos;
+	fragPos.z = u_light.projectionParams.z / (u_light.projectionParams.w + depth);
+	fragPos.xy = UV_TO_NDC(uv) * u_light.projectionParams.xy * fragPos.z;
+
 	vec3 viewDir = normalize(-fragPos);
 	vec3 frag2Light = u_light.posRadius.xyz - fragPos;
 	vec3 l = normalize(frag2Light);

@@ -13,11 +13,6 @@
 namespace anki
 {
 
-// Forward
-struct IrShaderReflectionProbe;
-class IrRunContext;
-class IrTaskContext;
-
 /// @addtogroup renderer
 /// @{
 
@@ -37,7 +32,7 @@ anki_internal:
 
 	U getReflectionTextureMipmapCount() const
 	{
-		return m_is.m_lightRtMipCount;
+		return m_lightShading.m_mipCount;
 	}
 
 	TexturePtr getIrradianceTexture() const
@@ -47,7 +42,7 @@ anki_internal:
 
 	TexturePtr getReflectionTexture() const
 	{
-		return m_is.m_lightRt;
+		return m_lightShading.m_cubeArr;
 	}
 
 	TexturePtr getIntegrationLut() const
@@ -61,93 +56,86 @@ anki_internal:
 	}
 
 private:
-	class FaceInfo
-	{
-	public:
-		// MS
-		Array<TexturePtr, GBUFFER_COLOR_ATTACHMENT_COUNT> m_gbufferColorRts;
-		TexturePtr m_gbufferDepthRt;
-		FramebufferPtr m_gbufferFb;
+	struct LightPassVertexUniforms;
+	struct LightPassPointLightUniforms;
+	struct LightPassSpotLightUniforms;
 
-		// IS
-		FramebufferPtr m_lightShadingFb;
-
-		// Irradiance
-		FramebufferPtr m_irradianceFb;
-
-		Bool created() const
-		{
-			return m_lightShadingFb.isCreated();
-		}
-	};
-
-	class CacheEntry : public IntrusiveHashMapEnabled<CacheEntry>
-	{
-	public:
-		U64 m_nodeUuid;
-		Timestamp m_timestamp = 0; ///< When last accessed.
-
-		Array<FaceInfo, 6> m_faces;
-	};
-
-	static const U IRRADIANCE_TEX_SIZE = 16;
-	static const U MAX_PROBE_RENDERS_PER_FRAME = 1;
-
-	U16 m_cubemapArrSize = 0;
-	U16 m_fbSize = 0;
-
-	// IS
 	class
 	{
 	public:
-		TexturePtr m_lightRt; ///< Cube array.
-		U32 m_lightRtMipCount = 0;
+		U32 m_tileSize = 0;
+		Array<TexturePtr, GBUFFER_COLOR_ATTACHMENT_COUNT> m_colorRts;
+		TexturePtr m_depthRt;
+		FramebufferPtr m_fb;
+	} m_gbuffer; ///< G-buffer pass.
+
+	class
+	{
+	public:
+		U32 m_tileSize = 0;
+		U32 m_mipCount = 0;
+		TexturePtr m_cubeArr;
 
 		ShaderProgramResourcePtr m_lightProg;
 		ShaderProgramPtr m_plightGrProg;
 		ShaderProgramPtr m_slightGrProg;
 
+		/// @name Vertex & index buffer of light volumes.
+		/// @{
 		BufferPtr m_plightPositions;
 		BufferPtr m_plightIndices;
 		U32 m_plightIdxCount;
 		BufferPtr m_slightPositions;
 		BufferPtr m_slightIndices;
 		U32 m_slightIdxCount;
-	} m_is;
+		/// @}
+	} m_lightShading; ///< Light shading.
 
-	// Irradiance
 	class
 	{
 	public:
+		U32 m_tileSize = 8;
+		U32 m_envMapReadSize = 16; ///< This controls the iterations that will be used to calculate the irradiance.
 		TexturePtr m_cubeArr;
-		U32 m_cubeArrMipCount = 0;
 
 		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;
-	} m_irradiance;
+	} m_irradiance; ///< Irradiance.
+
+	class CacheEntry
+	{
+	public:
+		U64 m_probeUuid;
+		Timestamp m_lastUsedTimestamp = 0; ///< When it was rendered.
+
+		Array<FramebufferPtr, 6> m_lightShadingFbs;
+		Array<FramebufferPtr, 6> m_irradianceFbs;
+	};
 
 	DynamicArray<CacheEntry> m_cacheEntries;
-	IntrusiveHashMap<U64, CacheEntry> m_uuidToCacheEntry;
+	HashMap<U64, U32> m_probeUuidToCacheEntryIdx;
 
 	// Other
 	TextureResourcePtr m_integrationLut;
 	SamplerPtr m_integrationLutSampler;
 
-	// Init
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
-	ANKI_USE_RESULT Error initIs();
-	ANKI_USE_RESULT Error initIrradiance();
-	void initFaceInfo(U cacheEntryIdx, U faceIdx);
+	ANKI_USE_RESULT Error initGBuffer(const ConfigSet& cfg);
+	ANKI_USE_RESULT Error initLightShading(const ConfigSet& cfg);
+	ANKI_USE_RESULT Error initIrradiance(const ConfigSet& cfg);
 	ANKI_USE_RESULT Error loadMesh(CString fname, BufferPtr& vert, BufferPtr& idx, U32& idxCount);
 
-	void runMs(RenderingContext& rctx, const RenderQueue& rqueue, U layer, U faceIdx);
-	void runIs(RenderingContext& rctx, const RenderQueue& rqueue, U layer, U faceIdx);
-	void computeIrradiance(RenderingContext& rctx, U layer, U faceIdx);
+	/// Lazily init the cache entry
+	void initCacheEntry(U32 cacheEntryIdx);
 
-	void renderReflection(const ReflectionProbeQueueElement& probeEl, RenderingContext& ctx, U cubemapIdx);
+	void prepareProbes(
+		RenderingContext& ctx, ReflectionProbeQueueElement*& probeToUpdate, U32& probeToUpdateCacheEntryIdx);
+	void runGBuffer(RenderingContext& rctx, const ReflectionProbeQueueElement& probe);
+	void runLightShading(RenderingContext& rctx, const ReflectionProbeQueueElement& probe, CacheEntry& cacheEntry);
+	void runIrradiance(RenderingContext& rctx, U32 cacheEntryIdx);
 
-	/// Find a cache entry to store the reflection.
-	void findCacheEntry(U64 nodeUuid, U& entry, Bool& render);
+	/// Find or allocate a new cache entry.
+	Bool findBestCacheEntry(U64 probeUuid, U32& cacheEntryIdx, Bool& cacheEntryFound);
 };
 /// @}
 

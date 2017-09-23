@@ -95,7 +95,10 @@ public:
 	{
 		m_sectorVisitedBitset.unsetAll();
 		m_maxComponentTimestamp = maxComponentTimestamp;
-		ANKI_ASSERT(maxComponentTimestamp > 0);
+		if(m_componentCount > 0)
+		{
+			ANKI_ASSERT(maxComponentTimestamp > 0);
+		}
 		return frameUpdate(prevUpdateTime, crntTime);
 	}
 

@@ -179,7 +179,7 @@ private:
 /// <material
 ///		[shadow="0 | 1"]
 ///		[forwardShading="0 | 1"]
-///		shaderProgram="path"/>
+///		<shaderProgram="path"/>
 ///
 ///		[<mutators>
 ///			<mutator name="str" value="value"/>

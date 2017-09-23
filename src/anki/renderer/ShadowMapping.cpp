@@ -620,7 +620,7 @@ Bool ShadowMapping::allocateTilesAndScratchTiles(U64 lightUuid,
 			Tile& tile = m_tiles[tileIndices[i]];
 			tile.m_face = faceIndices[i];
 			tile.m_lightUuid = lightUuid;
-			tile.m_timestamp = m_r->getGlobalTimestamp();
+			tile.m_lastUsedTimestamp = m_r->getGlobalTimestamp();
 
 			// Update the cache
 			if(!inTheCache[i])
@@ -637,7 +637,7 @@ Bool ShadowMapping::allocateTilesAndScratchTiles(U64 lightUuid,
 
 Bool ShadowMapping::shouldRenderTile(U64 lightTimestamp, U64 lightUuid, U32 face, const Tile& tileIdx)
 {
-	if(tileIdx.m_face == face && tileIdx.m_lightUuid == lightUuid && tileIdx.m_timestamp >= lightTimestamp)
+	if(tileIdx.m_face == face && tileIdx.m_lightUuid == lightUuid && tileIdx.m_lastUsedTimestamp >= lightTimestamp)
 	{
 		return false;
 	}
@@ -688,12 +688,12 @@ Bool ShadowMapping::allocateTile(U64 lightTimestamp, U64 lightUuid, U32 face, U3
 			emptyTile = tileIdx;
 			break;
 		}
-		else if(m_tiles[tileIdx].m_timestamp != m_r->getGlobalTimestamp()
-			&& m_tiles[tileIdx].m_timestamp < tileToKickMinTimestamp)
+		else if(m_tiles[tileIdx].m_lastUsedTimestamp != m_r->getGlobalTimestamp()
+			&& m_tiles[tileIdx].m_lastUsedTimestamp < tileToKickMinTimestamp)
 		{
 			// Found some with low timestamp
 			tileToKick = tileIdx;
-			tileToKickMinTimestamp = m_tiles[tileIdx].m_timestamp;
+			tileToKickMinTimestamp = m_tiles[tileIdx].m_lastUsedTimestamp;
 		}
 	}
 

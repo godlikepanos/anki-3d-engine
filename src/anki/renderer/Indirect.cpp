@@ -15,24 +15,23 @@
 namespace anki
 {
 
-class IrVertex
+struct Indirect::LightPassVertexUniforms
 {
-public:
 	Mat4 m_mvp;
 };
 
-class IrPointLight
+struct Indirect::LightPassPointLightUniforms
 {
-public:
+	Vec4 m_inputTexUvScaleAndOffset;
 	Vec4 m_projectionParams;
 	Vec4 m_posRadius;
 	Vec4 m_diffuseColorPad1;
 	Vec4 m_specularColorPad1;
 };
 
-class IrSpotLight
+struct Indirect::LightPassSpotLightUniforms
 {
-public:
+	Vec4 m_inputTexUvScaleAndOffset;
 	Vec4 m_projectionParams;
 	Vec4 m_posRadius;
 	Vec4 m_diffuseColorOuterCos;
@@ -48,6 +47,7 @@ Indirect::Indirect(Renderer* r)
 Indirect::~Indirect()
 {
 	m_cacheEntries.destroy(getAllocator());
+	m_probeUuidToCacheEntryIdx.destroy(getAllocator());
 }
 
 Error Indirect::init(const ConfigSet& config)
@@ -65,19 +65,14 @@ Error Indirect::init(const ConfigSet& config)
 
 Error Indirect::initInternal(const ConfigSet& config)
 {
-	m_fbSize = config.getNumber("r.indirect.reflectionSize");
-	m_cubemapArrSize = config.getNumber("r.indirect.maxProbeCount");
-
-	if(m_cubemapArrSize < 2)
+	// Init cache entries
 	{
-		ANKI_R_LOGE("Too low ir.cubemapTextureArraySize");
-		return Error::USER_DATA;
+		m_cacheEntries.create(getAllocator(), config.getNumber("r.indirect.maxSimultaneousProbeCount"));
 	}
 
-	m_cacheEntries.create(getAllocator(), m_cubemapArrSize);
-
-	ANKI_CHECK(initIs());
-	ANKI_CHECK(initIrradiance());
+	ANKI_CHECK(initGBuffer(config));
+	ANKI_CHECK(initLightShading(config));
+	ANKI_CHECK(initIrradiance(config));
 
 	// Load split sum integration LUT
 	ANKI_CHECK(getResourceManager().loadResource("engine_data/SplitSumIntegration.ankitex", m_integrationLut));
@@ -143,515 +138,616 @@ Error Indirect::loadMesh(CString fname, BufferPtr& vert, BufferPtr& idx, U32& id
 	return Error::NONE;
 }
 
-void Indirect::initFaceInfo(U cacheEntryIdx, U faceIdx)
+Error Indirect::initGBuffer(const ConfigSet& config)
 {
-	FaceInfo& face = m_cacheEntries[cacheEntryIdx].m_faces[faceIdx];
-	ANKI_ASSERT(!face.created());
+	m_gbuffer.m_tileSize = config.getNumber("r.indirect.reflectionResolution");
 
-	TextureInitInfo texinit;
-
-	texinit.m_width = m_fbSize;
-	texinit.m_height = m_fbSize;
-	texinit.m_layerCount = 1;
-	texinit.m_depth = 1;
-	texinit.m_type = TextureType::_2D;
-	texinit.m_mipmapsCount = 1;
-	texinit.m_samples = 1;
-	texinit.m_sampling.m_minMagFilter = SamplingFilter::NEAREST;
-	texinit.m_sampling.m_mipmapFilter = SamplingFilter::NEAREST;
-	texinit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE;
-
-	// Create color attachments
-	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
+	// Create attachments
 	{
-		texinit.m_format = MS_COLOR_ATTACHMENT_PIXEL_FORMATS[i];
+		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(m_gbuffer.m_tileSize * 6,
+			m_gbuffer.m_tileSize,
+			MS_COLOR_ATTACHMENT_PIXEL_FORMATS[0],
+			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+			SamplingFilter::NEAREST, // Because we don't want the light pass to bleed to near faces
+			1,
+			"GI_gbuff");
 
-		face.m_gbufferColorRts[i] = m_r->createAndClearRenderTarget(texinit);
+		// Create color attachments
+		for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
+		{
+			texinit.m_format = MS_COLOR_ATTACHMENT_PIXEL_FORMATS[i];
+			m_gbuffer.m_colorRts[i] = m_r->createAndClearRenderTarget(texinit);
+		}
+
+		// Create depth attachment
+		texinit.m_usage |= TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
+		texinit.m_format = GBUFFER_DEPTH_ATTACHMENT_PIXEL_FORMAT;
+		m_gbuffer.m_depthRt = m_r->createAndClearRenderTarget(texinit);
 	}
 
-	// Create depth attachment
-	texinit.m_usage |= TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
-	texinit.m_format = GBUFFER_DEPTH_ATTACHMENT_PIXEL_FORMAT;
-	face.m_gbufferDepthRt = m_r->createAndClearRenderTarget(texinit);
-
-	// Create MS FB
-	FramebufferInitInfo fbInit;
-	fbInit.m_colorAttachmentCount = GBUFFER_COLOR_ATTACHMENT_COUNT;
-
-	for(U j = 0; j < GBUFFER_COLOR_ATTACHMENT_COUNT; ++j)
+	// Create FB
 	{
-		fbInit.m_colorAttachments[j].m_texture = face.m_gbufferColorRts[j];
-		fbInit.m_colorAttachments[j].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
+		FramebufferInitInfo fbInit("GI_gbuff");
+		fbInit.m_colorAttachmentCount = GBUFFER_COLOR_ATTACHMENT_COUNT;
+
+		for(U j = 0; j < GBUFFER_COLOR_ATTACHMENT_COUNT; ++j)
+		{
+			fbInit.m_colorAttachments[j].m_texture = m_gbuffer.m_colorRts[j];
+			fbInit.m_colorAttachments[j].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
+		}
+
+		fbInit.m_depthStencilAttachment.m_texture = m_gbuffer.m_depthRt;
+		fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
+		fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
+		fbInit.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0;
+
+		m_gbuffer.m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 	}
 
-	fbInit.m_depthStencilAttachment.m_texture = face.m_gbufferDepthRt;
-	fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
-	fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
-	fbInit.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0;
-
-	face.m_gbufferFb = getGrManager().newInstance<Framebuffer>(fbInit);
-
-	// Create IS FB
-	ANKI_ASSERT(m_is.m_lightRt.isCreated());
-	fbInit = FramebufferInitInfo();
-	fbInit.m_colorAttachmentCount = 1;
-	fbInit.m_colorAttachments[0].m_texture = m_is.m_lightRt;
-	fbInit.m_colorAttachments[0].m_surface.m_layer = cacheEntryIdx;
-	fbInit.m_colorAttachments[0].m_surface.m_face = faceIdx;
-	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
-	fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::LOAD;
-	fbInit.m_depthStencilAttachment.m_texture = face.m_gbufferDepthRt;
-	fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
-
-	face.m_lightShadingFb = getGrManager().newInstance<Framebuffer>(fbInit);
-
-	// Create irradiance FB
-	fbInit = FramebufferInitInfo();
-	fbInit.m_colorAttachmentCount = 1;
-	fbInit.m_colorAttachments[0].m_texture = m_irradiance.m_cubeArr;
-	fbInit.m_colorAttachments[0].m_surface.m_layer = cacheEntryIdx;
-	fbInit.m_colorAttachments[0].m_surface.m_face = faceIdx;
-	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-
-	face.m_irradianceFb = getGrManager().newInstance<Framebuffer>(fbInit);
+	return Error::NONE;
 }
 
-Error Indirect::initIs()
+Error Indirect::initLightShading(const ConfigSet& config)
 {
-	m_is.m_lightRtMipCount = computeMaxMipmapCount2d(m_fbSize, m_fbSize, 4);
+	m_lightShading.m_tileSize = config.getNumber("r.indirect.reflectionResolution");
+	m_lightShading.m_mipCount = computeMaxMipmapCount2d(m_lightShading.m_tileSize, m_lightShading.m_tileSize, 8);
 
-	// Init texture
-	TextureInitInfo texinit;
-	texinit.m_width = m_fbSize;
-	texinit.m_height = m_fbSize;
-	texinit.m_layerCount = m_cubemapArrSize;
-	texinit.m_depth = 1;
-	texinit.m_type = TextureType::CUBE_ARRAY;
-	texinit.m_mipmapsCount = m_is.m_lightRtMipCount;
-	texinit.m_samples = 1;
-	texinit.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
-	texinit.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
-	texinit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE
-		| TextureUsageBit::CLEAR | TextureUsageBit::GENERATE_MIPMAPS;
-	texinit.m_format = LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT;
+	// Init cube arr
+	{
+		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(m_lightShading.m_tileSize,
+			m_lightShading.m_tileSize,
+			LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
+			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+			SamplingFilter::LINEAR,
+			m_lightShading.m_mipCount,
+			"GI_refl");
+		texinit.m_type = TextureType::CUBE_ARRAY;
+		texinit.m_layerCount = m_cacheEntries.getSize();
 
-	m_is.m_lightRt = m_r->createAndClearRenderTarget(texinit);
+		m_lightShading.m_cubeArr = m_r->createAndClearRenderTarget(texinit);
+	}
 
-	// Init shaders
-	ANKI_CHECK(getResourceManager().loadResource("programs/DeferredShading.ankiprog", m_is.m_lightProg));
+	// Init progs
+	{
+		ANKI_CHECK(getResourceManager().loadResource("programs/DeferredShading.ankiprog", m_lightShading.m_lightProg));
 
-	ShaderProgramResourceMutationInitList<1> mutators(m_is.m_lightProg);
-	mutators.add("LIGHT_TYPE", 0);
+		ShaderProgramResourceMutationInitList<1> mutators(m_lightShading.m_lightProg);
+		mutators.add("LIGHT_TYPE", 0);
 
-	ShaderProgramResourceConstantValueInitList<1> consts(m_is.m_lightProg);
-	consts.add("FB_SIZE", UVec2(m_fbSize, m_fbSize));
+		ShaderProgramResourceConstantValueInitList<1> consts(m_lightShading.m_lightProg);
+		consts.add("FB_SIZE", UVec2(m_lightShading.m_tileSize, m_lightShading.m_tileSize));
 
-	const ShaderProgramResourceVariant* variant;
-	m_is.m_lightProg->getOrCreateVariant(mutators.get(), consts.get(), variant);
-	m_is.m_plightGrProg = variant->getProgram();
+		const ShaderProgramResourceVariant* variant;
+		m_lightShading.m_lightProg->getOrCreateVariant(mutators.get(), consts.get(), variant);
+		m_lightShading.m_plightGrProg = variant->getProgram();
 
-	mutators[0].m_value = 1;
-	m_is.m_lightProg->getOrCreateVariant(mutators.get(), consts.get(), variant);
-	m_is.m_slightGrProg = variant->getProgram();
+		mutators[0].m_value = 1;
+		m_lightShading.m_lightProg->getOrCreateVariant(mutators.get(), consts.get(), variant);
+		m_lightShading.m_slightGrProg = variant->getProgram();
+	}
 
 	// Init vert/idx buffers
-	ANKI_CHECK(
-		loadMesh("engine_data/Plight.ankimesh", m_is.m_plightPositions, m_is.m_plightIndices, m_is.m_plightIdxCount));
+	ANKI_CHECK(loadMesh("engine_data/Plight.ankimesh",
+		m_lightShading.m_plightPositions,
+		m_lightShading.m_plightIndices,
+		m_lightShading.m_plightIdxCount));
 
-	ANKI_CHECK(
-		loadMesh("engine_data/Slight.ankimesh", m_is.m_slightPositions, m_is.m_slightIndices, m_is.m_slightIdxCount));
+	ANKI_CHECK(loadMesh("engine_data/Slight.ankimesh",
+		m_lightShading.m_slightPositions,
+		m_lightShading.m_slightIndices,
+		m_lightShading.m_slightIdxCount));
 
 	return Error::NONE;
 }
 
-Error Indirect::initIrradiance()
+Error Indirect::initIrradiance(const ConfigSet& config)
 {
-	m_irradiance.m_cubeArrMipCount = computeMaxMipmapCount2d(IRRADIANCE_TEX_SIZE, IRRADIANCE_TEX_SIZE, 4);
+	// Init atlas
+	{
+		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(m_irradiance.m_tileSize,
+			m_irradiance.m_tileSize,
+			LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
+			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+			SamplingFilter::LINEAR,
+			1,
+			"GI_irr");
 
-	// Init texture
-	TextureInitInfo texinit;
-	texinit.m_width = IRRADIANCE_TEX_SIZE;
-	texinit.m_height = IRRADIANCE_TEX_SIZE;
-	texinit.m_layerCount = m_cubemapArrSize;
-	texinit.m_depth = 1;
-	texinit.m_type = TextureType::CUBE_ARRAY;
-	texinit.m_mipmapsCount = m_irradiance.m_cubeArrMipCount;
-	texinit.m_samples = 1;
-	texinit.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
-	texinit.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
-	texinit.m_usage = TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
-		| TextureUsageBit::CLEAR | TextureUsageBit::GENERATE_MIPMAPS;
-	texinit.m_format = LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT;
+		texinit.m_layerCount = m_cacheEntries.getSize();
+		texinit.m_type = TextureType::CUBE_ARRAY;
 
-	m_irradiance.m_cubeArr = m_r->createAndClearRenderTarget(texinit);
+		m_irradiance.m_cubeArr = m_r->createAndClearRenderTarget(texinit);
+	}
 
 	// Create prog
-	ANKI_CHECK(m_r->getResourceManager().loadResource("programs/Irradiance.ankiprog", m_irradiance.m_prog));
+	{
+		ANKI_CHECK(m_r->getResourceManager().loadResource("programs/Irradiance.ankiprog", m_irradiance.m_prog));
 
-	ShaderProgramResourceConstantValueInitList<1> consts(m_irradiance.m_prog);
-	consts.add("FACE_SIZE", U32(IRRADIANCE_TEX_SIZE));
+		const F32 envMapReadMip = computeMaxMipmapCount2d(
+			m_lightShading.m_tileSize, m_lightShading.m_tileSize, m_irradiance.m_envMapReadSize);
 
-	const ShaderProgramResourceVariant* variant;
-	m_irradiance.m_prog->getOrCreateVariant(consts.get(), variant);
-	m_irradiance.m_grProg = variant->getProgram();
+		ShaderProgramResourceConstantValueInitList<2> consts(m_irradiance.m_prog);
+		consts.add("ENV_TEX_TILE_SIZE", U32(m_irradiance.m_envMapReadSize));
+		consts.add("ENV_TEX_MIP", envMapReadMip);
+
+		const ShaderProgramResourceVariant* variant;
+		m_irradiance.m_prog->getOrCreateVariant(consts.get(), variant);
+		m_irradiance.m_grProg = variant->getProgram();
+	}
 
 	return Error::NONE;
 }
 
-void Indirect::runMs(RenderingContext& rctx, const RenderQueue& rqueue, U layer, U faceIdx)
+void Indirect::initCacheEntry(U32 cacheEntryIdx)
 {
-	CommandBufferPtr& cmdb = rctx.m_commandBuffer;
+	CacheEntry& cacheEntry = m_cacheEntries[cacheEntryIdx];
 
-	FaceInfo& face = m_cacheEntries[layer].m_faces[faceIdx];
-
-	if(!face.created())
+	for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
 	{
-		initFaceInfo(layer, faceIdx);
+		FramebufferInitInfo fbInit("GI_refl");
+		fbInit.m_colorAttachmentCount = 1;
+		fbInit.m_colorAttachments[0].m_texture = m_lightShading.m_cubeArr;
+		fbInit.m_colorAttachments[0].m_surface.m_layer = cacheEntryIdx;
+		fbInit.m_colorAttachments[0].m_surface.m_face = faceIdx;
+		fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
+
+		ANKI_ASSERT(!cacheEntry.m_lightShadingFbs[faceIdx].isCreated());
+		cacheEntry.m_lightShadingFbs[faceIdx] = getGrManager().newInstance<Framebuffer>(fbInit);
+
+		fbInit.m_colorAttachments[0].m_texture = m_irradiance.m_cubeArr;
+		fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
+
+		ANKI_ASSERT(!cacheEntry.m_irradianceFbs[faceIdx].isCreated());
+		cacheEntry.m_irradianceFbs[faceIdx] = getGrManager().newInstance<Framebuffer>(fbInit);
 	}
-
-	// Set barriers
-	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
-	{
-		cmdb->setTextureSurfaceBarrier(face.m_gbufferColorRts[i],
-			TextureUsageBit::NONE,
-			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-			TextureSurfaceInfo(0, 0, 0, 0));
-	}
-
-	cmdb->setTextureSurfaceBarrier(face.m_gbufferDepthRt,
-		TextureUsageBit::NONE,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-		TextureSurfaceInfo(0, 0, 0, 0));
-
-	// Start render pass
-	cmdb->beginRenderPass(face.m_gbufferFb);
-	cmdb->setViewport(0, 0, m_fbSize, m_fbSize);
-
-	/// Draw
-	m_r->getSceneDrawer().drawRange(Pass::GB_FS,
-		rqueue.m_viewMatrix,
-		rqueue.m_viewProjectionMatrix,
-		cmdb,
-		rqueue.m_renderables.getBegin(),
-		rqueue.m_renderables.getEnd());
-
-	// End and set barriers
-	cmdb->endRenderPass();
-
-	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
-	{
-		cmdb->setTextureSurfaceBarrier(face.m_gbufferColorRts[i],
-			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-			TextureUsageBit::SAMPLED_FRAGMENT,
-			TextureSurfaceInfo(0, 0, 0, 0));
-	}
-
-	cmdb->setTextureSurfaceBarrier(face.m_gbufferDepthRt,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ,
-		TextureSurfaceInfo(0, 0, 0, 0));
 }
 
-void Indirect::runIs(RenderingContext& rctx, const RenderQueue& rqueue, U layer, U faceIdx)
+void Indirect::prepareProbes(
+	RenderingContext& ctx, ReflectionProbeQueueElement*& probeToUpdate, U32& probeToUpdateCacheEntryIdx)
+{
+	probeToUpdate = nullptr;
+	probeToUpdateCacheEntryIdx = MAX_U32;
+
+	if(ANKI_UNLIKELY(ctx.m_renderQueue->m_reflectionProbes.getSize() == 0))
+	{
+		return;
+	}
+
+	// Iterate the probes and:
+	// - Find a probe to update this frame
+	// - Find a probe to update next frame
+	// - Find the cache entries for each probe
+	DynamicArray<ReflectionProbeQueueElement> newListOfProbes;
+	newListOfProbes.create(ctx.m_tempAllocator, ctx.m_renderQueue->m_reflectionProbes.getSize());
+	U newListOfProbeCount = 0;
+
+	Bool foundProbeToRenderNextFrame = false;
+	for(U32 probeIdx = 0; probeIdx < ctx.m_renderQueue->m_reflectionProbes.getSize(); ++probeIdx)
+	{
+		ReflectionProbeQueueElement& probe = ctx.m_renderQueue->m_reflectionProbes[probeIdx];
+
+		// Find cache entry
+		U32 cacheEntryIdx = MAX_U32;
+		Bool cacheEntryFoundInCache;
+		const Bool allocFailed = findBestCacheEntry(probe.m_uuid, cacheEntryIdx, cacheEntryFoundInCache);
+		if(ANKI_UNLIKELY(allocFailed))
+		{
+			continue;
+		}
+
+		// Check if we _should_ and _can_ update the probe
+		const Bool probeNeedsUpdate = m_cacheEntries[cacheEntryIdx].m_probeUuid != probe.m_uuid;
+		if(ANKI_UNLIKELY(probeNeedsUpdate))
+		{
+			const Bool updateFailed = probeToUpdate != nullptr || probe.m_renderQueues[0] == nullptr;
+
+			if(updateFailed && !foundProbeToRenderNextFrame)
+			{
+				// Probe will be updated next frame
+				foundProbeToRenderNextFrame = true;
+				probe.m_feedbackCallback(true, probe.m_userData);
+			}
+
+			if(updateFailed)
+			{
+				continue;
+			}
+		}
+
+		// All good, can use this probe in this frame
+
+		// Update the cache entry
+		m_cacheEntries[cacheEntryIdx].m_probeUuid = probe.m_uuid;
+		m_cacheEntries[cacheEntryIdx].m_lastUsedTimestamp = m_r->getGlobalTimestamp();
+
+		// Update the probe
+		probe.m_textureArrayIndex = cacheEntryIdx;
+
+		// Push the probe to the new list
+		newListOfProbes[newListOfProbeCount++] = probe;
+
+		// Update cache map
+		if(!cacheEntryFoundInCache)
+		{
+			m_probeUuidToCacheEntryIdx.pushBack(getAllocator(), probe.m_uuid, cacheEntryIdx);
+		}
+
+		// Don't gather renderables next frame
+		if(probe.m_renderQueues[0] != nullptr)
+		{
+			probe.m_feedbackCallback(false, probe.m_userData);
+		}
+
+		// Inform about the probe to update this frame
+		if(probeNeedsUpdate)
+		{
+			ANKI_ASSERT(probe.m_renderQueues[0] != nullptr && probeToUpdate == nullptr);
+
+			probeToUpdateCacheEntryIdx = cacheEntryIdx;
+			probeToUpdate = &newListOfProbes[newListOfProbeCount - 1];
+		}
+	}
+
+	// Replace the probe list in the queue
+	if(newListOfProbeCount > 0)
+	{
+		ReflectionProbeQueueElement* firstProbe;
+		PtrSize probeCount, storage;
+		newListOfProbes.moveAndReset(firstProbe, probeCount, storage);
+		ctx.m_renderQueue->m_reflectionProbes = WeakArray<ReflectionProbeQueueElement>(firstProbe, newListOfProbeCount);
+	}
+	else
+	{
+		ctx.m_renderQueue->m_reflectionProbes = WeakArray<ReflectionProbeQueueElement>();
+		newListOfProbes.destroy(ctx.m_tempAllocator);
+	}
+}
+
+void Indirect::runGBuffer(RenderingContext& rctx, const ReflectionProbeQueueElement& probe)
 {
 	CommandBufferPtr& cmdb = rctx.m_commandBuffer;
-	FaceInfo& face = m_cacheEntries[layer].m_faces[faceIdx];
 
-	// Set barriers
-	cmdb->setTextureSurfaceBarrier(m_is.m_lightRt,
-		TextureUsageBit::NONE,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		TextureSurfaceInfo(0, 0, faceIdx, layer));
+	cmdb->beginRenderPass(m_gbuffer.m_fb);
 
-	// Set state
-	cmdb->beginRenderPass(face.m_lightShadingFb);
-
-	cmdb->bindTexture(0, 0, face.m_gbufferColorRts[0]);
-	cmdb->bindTexture(0, 1, face.m_gbufferColorRts[1]);
-	cmdb->bindTexture(0, 2, face.m_gbufferColorRts[2]);
-	cmdb->bindTexture(0, 3, face.m_gbufferDepthRt);
-
-	cmdb->setVertexAttribute(0, 0, PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT), 0);
-
-	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ONE);
-	cmdb->setDepthCompareOperation(CompareOperation::GREATER);
-	cmdb->setDepthWrite(false);
-	cmdb->setCullMode(FaceSelectionBit::FRONT);
-
-	// Process all lights
-	const Mat4& vpMat = rqueue.m_viewProjectionMatrix;
-	const Mat4& vMat = rqueue.m_viewMatrix;
-
-	cmdb->bindShaderProgram(m_is.m_plightGrProg);
-	cmdb->bindVertexBuffer(0, m_is.m_plightPositions, 0, sizeof(F32) * 3);
-	cmdb->bindIndexBuffer(m_is.m_plightIndices, 0, IndexType::U16);
-
-	const PointLightQueueElement* plightEl = rqueue.m_pointLights.getBegin();
-	const PointLightQueueElement* end = rqueue.m_pointLights.getEnd();
-	while(plightEl != end)
+	// For each face
+	for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
 	{
-		// Update uniforms
-		IrVertex* vert = allocateAndBindUniforms<IrVertex*>(sizeof(IrVertex), cmdb, 0, 0);
+		const U32 viewportX = faceIdx * m_gbuffer.m_tileSize;
+		cmdb->setViewport(viewportX, 0, viewportX + m_gbuffer.m_tileSize, m_gbuffer.m_tileSize);
+		cmdb->setScissor(viewportX, 0, viewportX + m_gbuffer.m_tileSize, m_gbuffer.m_tileSize);
 
-		Mat4 modelM(plightEl->m_worldPosition.xyz1(), Mat3::getIdentity(), plightEl->m_radius);
+		/// Draw
+		ANKI_ASSERT(probe.m_renderQueues[faceIdx]);
+		const RenderQueue& rqueue = *probe.m_renderQueues[faceIdx];
 
-		vert->m_mvp = vpMat * modelM;
-
-		IrPointLight* light = allocateAndBindUniforms<IrPointLight*>(sizeof(IrPointLight), cmdb, 0, 1);
-
-		Vec4 pos = vMat * plightEl->m_worldPosition.xyz1();
-
-		light->m_projectionParams = rqueue.m_projectionMatrix.extractPerspectiveUnprojectionParams();
-		light->m_posRadius = Vec4(pos.xyz(), 1.0 / (plightEl->m_radius * plightEl->m_radius));
-		light->m_diffuseColorPad1 = plightEl->m_diffuseColor.xyz0();
-		light->m_specularColorPad1 = plightEl->m_specularColor.xyz0();
-
-		// Draw
-		cmdb->drawElements(PrimitiveTopology::TRIANGLES, m_is.m_plightIdxCount);
-
-		++plightEl;
+		m_r->getSceneDrawer().drawRange(Pass::GB_FS,
+			rqueue.m_viewMatrix,
+			rqueue.m_viewProjectionMatrix,
+			cmdb,
+			rqueue.m_renderables.getBegin(),
+			rqueue.m_renderables.getEnd());
 	}
 
-	cmdb->bindShaderProgram(m_is.m_slightGrProg);
-	cmdb->bindVertexBuffer(0, m_is.m_slightPositions, 0, sizeof(F32) * 3);
-	cmdb->bindIndexBuffer(m_is.m_slightIndices, 0, IndexType::U16);
-
-	const SpotLightQueueElement* splightEl = rqueue.m_spotLights.getBegin();
-	while(splightEl != rqueue.m_spotLights.getEnd())
-	{
-		// Compute the model matrix
-		//
-		Mat4 modelM(splightEl->m_worldTransform.getTranslationPart().xyz1(),
-			splightEl->m_worldTransform.getRotationPart(),
-			1.0f);
-
-		// Calc the scale of the cone
-		Mat4 scaleM(Mat4::getIdentity());
-		scaleM(0, 0) = tan(splightEl->m_outerAngle / 2.0f) * splightEl->m_distance;
-		scaleM(1, 1) = scaleM(0, 0);
-		scaleM(2, 2) = splightEl->m_distance;
-
-		modelM = modelM * scaleM;
-
-		// Update vertex uniforms
-		IrVertex* vert = allocateAndBindUniforms<IrVertex*>(sizeof(IrVertex), cmdb, 0, 0);
-		vert->m_mvp = vpMat * modelM;
-
-		// Update fragment uniforms
-		IrSpotLight* light = allocateAndBindUniforms<IrSpotLight*>(sizeof(IrSpotLight), cmdb, 0, 1);
-
-		light->m_projectionParams = rqueue.m_projectionMatrix.extractPerspectiveUnprojectionParams();
-
-		Vec4 pos = vMat * splightEl->m_worldTransform.getTranslationPart().xyz1();
-		light->m_posRadius = Vec4(pos.xyz(), 1.0 / (splightEl->m_distance * splightEl->m_distance));
-
-		light->m_diffuseColorOuterCos = Vec4(splightEl->m_diffuseColor, cos(splightEl->m_outerAngle / 2.0f));
-
-		light->m_specularColorInnerCos = Vec4(splightEl->m_specularColor, cos(splightEl->m_innerAngle / 2.0f));
-
-		Vec3 lightDir = -splightEl->m_worldTransform.getZAxis().xyz();
-		lightDir = vMat.getRotationPart() * lightDir;
-		light->m_lightDirPad1 = lightDir.xyz0();
-
-		// Draw
-		cmdb->drawElements(PrimitiveTopology::TRIANGLES, m_is.m_slightIdxCount);
-
-		++splightEl;
-	}
-
-	// Generate mips
 	cmdb->endRenderPass();
 
-	cmdb->setTextureSurfaceBarrier(m_is.m_lightRt,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		TextureUsageBit::GENERATE_MIPMAPS,
-		TextureSurfaceInfo(0, 0, faceIdx, layer));
+	// Restore state
+	cmdb->setScissor(0, 0, MAX_U16, MAX_U16);
+}
 
-	cmdb->generateMipmaps2d(m_is.m_lightRt, faceIdx, layer);
+void Indirect::runLightShading(RenderingContext& rctx, const ReflectionProbeQueueElement& probe, CacheEntry& cacheEntry)
+{
+	CommandBufferPtr& cmdb = rctx.m_commandBuffer;
 
-	for(U i = 0; i < m_is.m_lightRtMipCount; ++i)
+	// Set common state
+	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 	{
-		cmdb->setTextureSurfaceBarrier(m_is.m_lightRt,
-			TextureUsageBit::GENERATE_MIPMAPS,
-			TextureUsageBit::SAMPLED_FRAGMENT,
-			TextureSurfaceInfo(i, 0, faceIdx, layer));
+		cmdb->bindTexture(0, i, m_gbuffer.m_colorRts[i]);
+	}
+	cmdb->bindTexture(0, GBUFFER_COLOR_ATTACHMENT_COUNT, m_gbuffer.m_depthRt);
+	cmdb->setVertexAttribute(0, 0, PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT), 0);
+	cmdb->setViewport(0, 0, m_lightShading.m_tileSize, m_lightShading.m_tileSize);
+	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ONE);
+	cmdb->setCullMode(FaceSelectionBit::FRONT);
+
+	// For each face
+	for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
+	{
+		ANKI_ASSERT(probe.m_renderQueues[faceIdx]);
+		const RenderQueue& rqueue = *probe.m_renderQueues[faceIdx];
+
+		const Mat4& vpMat = rqueue.m_viewProjectionMatrix;
+		const Mat4& vMat = rqueue.m_viewMatrix;
+
+		// Set per face state
+		cmdb->beginRenderPass(cacheEntry.m_lightShadingFbs[faceIdx]);
+
+		// Do point lights
+		cmdb->bindShaderProgram(m_lightShading.m_plightGrProg);
+		cmdb->bindVertexBuffer(0, m_lightShading.m_plightPositions, 0, sizeof(F32) * 3);
+		cmdb->bindIndexBuffer(m_lightShading.m_plightIndices, 0, IndexType::U16);
+
+		const PointLightQueueElement* plightEl = rqueue.m_pointLights.getBegin();
+		while(plightEl != rqueue.m_pointLights.getEnd())
+		{
+			// Update uniforms
+			LightPassVertexUniforms* vert =
+				allocateAndBindUniforms<LightPassVertexUniforms*>(sizeof(LightPassVertexUniforms), cmdb, 0, 0);
+
+			Mat4 modelM(plightEl->m_worldPosition.xyz1(), Mat3::getIdentity(), plightEl->m_radius);
+
+			vert->m_mvp = vpMat * modelM;
+
+			LightPassPointLightUniforms* light =
+				allocateAndBindUniforms<LightPassPointLightUniforms*>(sizeof(LightPassPointLightUniforms), cmdb, 0, 1);
+
+			Vec4 pos = vMat * plightEl->m_worldPosition.xyz1();
+
+			light->m_inputTexUvScaleAndOffset = Vec4(1.0f / 6.0f, 1.0f, faceIdx * (1.0f / 6.0f), 0.0f);
+			light->m_projectionParams = rqueue.m_projectionMatrix.extractPerspectiveUnprojectionParams();
+			light->m_posRadius = Vec4(pos.xyz(), 1.0f / (plightEl->m_radius * plightEl->m_radius));
+			light->m_diffuseColorPad1 = plightEl->m_diffuseColor.xyz0();
+			light->m_specularColorPad1 = plightEl->m_specularColor.xyz0();
+
+			// Draw
+			cmdb->drawElements(PrimitiveTopology::TRIANGLES, m_lightShading.m_plightIdxCount);
+
+			++plightEl;
+		}
+
+		// Do spot lights
+		cmdb->bindShaderProgram(m_lightShading.m_slightGrProg);
+		cmdb->bindVertexBuffer(0, m_lightShading.m_slightPositions, 0, sizeof(F32) * 3);
+		cmdb->bindIndexBuffer(m_lightShading.m_slightIndices, 0, IndexType::U16);
+
+		const SpotLightQueueElement* splightEl = rqueue.m_spotLights.getBegin();
+		while(splightEl != rqueue.m_spotLights.getEnd())
+		{
+			// Compute the model matrix
+			//
+			Mat4 modelM(splightEl->m_worldTransform.getTranslationPart().xyz1(),
+				splightEl->m_worldTransform.getRotationPart(),
+				1.0f);
+
+			// Calc the scale of the cone
+			Mat4 scaleM(Mat4::getIdentity());
+			scaleM(0, 0) = tan(splightEl->m_outerAngle / 2.0f) * splightEl->m_distance;
+			scaleM(1, 1) = scaleM(0, 0);
+			scaleM(2, 2) = splightEl->m_distance;
+
+			modelM = modelM * scaleM;
+
+			// Update vertex uniforms
+			LightPassVertexUniforms* vert =
+				allocateAndBindUniforms<LightPassVertexUniforms*>(sizeof(LightPassVertexUniforms), cmdb, 0, 0);
+			vert->m_mvp = vpMat * modelM;
+
+			// Update fragment uniforms
+			LightPassSpotLightUniforms* light =
+				allocateAndBindUniforms<LightPassSpotLightUniforms*>(sizeof(LightPassSpotLightUniforms), cmdb, 0, 1);
+
+			light->m_inputTexUvScaleAndOffset = Vec4(1.0f / 6.0f, 1.0f, faceIdx * (1.0f / 6.0f), 0.0f);
+			light->m_projectionParams = rqueue.m_projectionMatrix.extractPerspectiveUnprojectionParams();
+
+			Vec4 pos = vMat * splightEl->m_worldTransform.getTranslationPart().xyz1();
+			light->m_posRadius = Vec4(pos.xyz(), 1.0f / (splightEl->m_distance * splightEl->m_distance));
+
+			light->m_diffuseColorOuterCos = Vec4(splightEl->m_diffuseColor, cos(splightEl->m_outerAngle / 2.0f));
+
+			light->m_specularColorInnerCos = Vec4(splightEl->m_specularColor, cos(splightEl->m_innerAngle / 2.0f));
+
+			Vec3 lightDir = -splightEl->m_worldTransform.getZAxis().xyz();
+			lightDir = vMat.getRotationPart() * lightDir;
+			light->m_lightDirPad1 = lightDir.xyz0();
+
+			// Draw
+			cmdb->drawElements(PrimitiveTopology::TRIANGLES, m_lightShading.m_slightIdxCount);
+
+			++splightEl;
+		}
+
+		cmdb->endRenderPass();
 	}
 
 	// Restore state
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
-	cmdb->setDepthCompareOperation(CompareOperation::LESS);
-	cmdb->setDepthWrite(true);
 	cmdb->setCullMode(FaceSelectionBit::BACK);
 }
 
-void Indirect::computeIrradiance(RenderingContext& rctx, U layer, U faceIdx)
+void Indirect::runIrradiance(RenderingContext& rctx, U32 cacheEntryIdx)
 {
 	CommandBufferPtr& cmdb = rctx.m_commandBuffer;
-	FaceInfo& face = m_cacheEntries[layer].m_faces[faceIdx];
 
-	// Set barrier
-	cmdb->setTextureSurfaceBarrier(m_irradiance.m_cubeArr,
-		TextureUsageBit::NONE,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		TextureSurfaceInfo(0, 0, faceIdx, layer));
-
-	// Set state and draw
-	cmdb->setViewport(0, 0, IRRADIANCE_TEX_SIZE, IRRADIANCE_TEX_SIZE);
-
-	UVec4* faceIdxArrayIdx = allocateAndBindUniforms<UVec4*>(sizeof(UVec4), cmdb, 0, 0);
-	faceIdxArrayIdx->x() = faceIdx;
-	faceIdxArrayIdx->y() = layer;
-
-	cmdb->informTextureCurrentUsage(m_is.m_lightRt, TextureUsageBit::SAMPLED_FRAGMENT);
-	cmdb->bindTexture(0, 0, m_is.m_lightRt);
+	// Set common state
 	cmdb->bindShaderProgram(m_irradiance.m_grProg);
-	cmdb->beginRenderPass(face.m_irradianceFb);
+	cmdb->bindTexture(0, 0, m_lightShading.m_cubeArr);
 
-	m_r->drawQuad(cmdb);
-	cmdb->endRenderPass();
-
-	// Gen mips
-	cmdb->setTextureSurfaceBarrier(m_irradiance.m_cubeArr,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		TextureUsageBit::GENERATE_MIPMAPS,
-		TextureSurfaceInfo(0, 0, faceIdx, layer));
-
-	cmdb->generateMipmaps2d(m_irradiance.m_cubeArr, faceIdx, layer);
-
-	for(U i = 0; i < m_irradiance.m_cubeArrMipCount; ++i)
+	// For each face
+	for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
 	{
-		cmdb->setTextureSurfaceBarrier(m_irradiance.m_cubeArr,
-			TextureUsageBit::GENERATE_MIPMAPS,
-			TextureUsageBit::SAMPLED_FRAGMENT,
-			TextureSurfaceInfo(i, 0, faceIdx, layer));
+		cmdb->beginRenderPass(m_cacheEntries[cacheEntryIdx].m_irradianceFbs[faceIdx]);
+
+		cmdb->setViewport(0, 0, m_irradiance.m_tileSize, m_irradiance.m_tileSize);
+
+		// Set uniforms
+		UVec4* faceIdxArrayIdx = allocateAndBindUniforms<UVec4*>(sizeof(UVec4), cmdb, 0, 0);
+		faceIdxArrayIdx->x() = faceIdx;
+		faceIdxArrayIdx->y() = cacheEntryIdx;
+
+		m_r->drawQuad(cmdb);
+		cmdb->endRenderPass();
 	}
 }
 
 void Indirect::run(RenderingContext& rctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(RENDER_IR);
-
-	if(rctx.m_renderQueue->m_reflectionProbes.getSize() > m_cubemapArrSize)
-	{
-		ANKI_R_LOGW("Increase the ir.cubemapTextureArraySize");
-	}
-
-	// Render some of the probes
-	ReflectionProbeQueueElement* it = rctx.m_renderQueue->m_reflectionProbes.getBegin();
-	const ReflectionProbeQueueElement* end = rctx.m_renderQueue->m_reflectionProbes.getEnd();
-
-	U probesRendered = 0;
-	while(it != end)
-	{
-		// Write and render probe
-
-		Bool render = false;
-		U entry;
-		findCacheEntry(it->m_uuid, entry, render);
-		it->m_textureArrayIndex = entry;
-
-		if(it->m_renderQueues[0] && probesRendered < MAX_PROBE_RENDERS_PER_FRAME)
-		{
-			++probesRendered;
-			renderReflection(*it, rctx, entry);
-
-			// Rendered, no need to render it again next frame
-			it->m_feedbackCallback(false, it->m_userData);
-		}
-
-		// If you need to render it mark it for the next frame
-		if(render)
-		{
-			it->m_feedbackCallback(true, it->m_userData);
-		}
-
-		// Advance
-		++it;
-	}
-
-	// Inform on tex usage
 	CommandBufferPtr& cmdb = rctx.m_commandBuffer;
-	cmdb->informTextureCurrentUsage(m_irradiance.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
-	cmdb->informTextureCurrentUsage(m_is.m_lightRt, TextureUsageBit::SAMPLED_FRAGMENT);
-}
 
-void Indirect::renderReflection(const ReflectionProbeQueueElement& probeEl, RenderingContext& ctx, U cubemapIdx)
-{
-	ANKI_TRACE_INC_COUNTER(RENDERER_REFLECTIONS, 1);
+	// Prepare the probes
+	ReflectionProbeQueueElement* probeToUpdate;
+	U32 probeToUpdateCacheEntryIdx;
+	prepareProbes(rctx, probeToUpdate, probeToUpdateCacheEntryIdx);
 
-	// Render cubemap
-	for(U i = 0; i < 6; ++i)
+	// Update a probe if needed
+	if(probeToUpdate)
 	{
-		const RenderQueue* rqueue = probeEl.m_renderQueues[i];
-		ANKI_ASSERT(rqueue);
+		if(!m_cacheEntries[probeToUpdateCacheEntryIdx].m_lightShadingFbs[0].isCreated())
+		{
+			initCacheEntry(probeToUpdateCacheEntryIdx);
+		}
 
-		runMs(ctx, *rqueue, cubemapIdx, i);
-		runIs(ctx, *rqueue, cubemapIdx, i);
-	}
+		// Barriers
+		for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
+		{
+			cmdb->setTextureSurfaceBarrier(m_gbuffer.m_colorRts[i],
+				TextureUsageBit::NONE,
+				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+				TextureSurfaceInfo(0, 0, 0, 0));
+		}
 
-	for(U i = 0; i < 6; ++i)
-	{
-		computeIrradiance(ctx, cubemapIdx, i);
-	}
-}
+		cmdb->setTextureSurfaceBarrier(m_gbuffer.m_depthRt,
+			TextureUsageBit::NONE,
+			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
+			TextureSurfaceInfo(0, 0, 0, 0));
 
-void Indirect::findCacheEntry(U64 uuid, U& entry, Bool& render)
-{
-	// Try find a candidate cache entry
-	CacheEntry* candidate = nullptr;
-	auto it = m_uuidToCacheEntry.find(uuid);
-	if(it != m_uuidToCacheEntry.getEnd())
-	{
-		// Found
+		// Run g-buffer pass
+		runGBuffer(rctx, *probeToUpdate);
 
-		render = m_r->resourcesLoaded();
-		candidate = &(*it);
+		// Barriers
+		for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
+		{
+			cmdb->setTextureSurfaceBarrier(m_gbuffer.m_colorRts[i],
+				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+				TextureUsageBit::SAMPLED_FRAGMENT,
+				TextureSurfaceInfo(0, 0, 0, 0));
+		}
+
+		cmdb->setTextureSurfaceBarrier(m_gbuffer.m_depthRt,
+			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
+			TextureUsageBit::SAMPLED_FRAGMENT,
+			TextureSurfaceInfo(0, 0, 0, 0));
+
+		for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
+		{
+			cmdb->setTextureSurfaceBarrier(m_lightShading.m_cubeArr,
+				TextureUsageBit::NONE,
+				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+				TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
+		}
+
+		// Run light shading pass
+		runLightShading(rctx, *probeToUpdate, m_cacheEntries[probeToUpdateCacheEntryIdx]);
+
+		// Barriers
+		for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
+		{
+			cmdb->setTextureSurfaceBarrier(m_lightShading.m_cubeArr,
+				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+				TextureUsageBit::GENERATE_MIPMAPS,
+				TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
+		}
+
+		// Run the mipmaping passes
+		for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
+		{
+			cmdb->generateMipmaps2d(m_lightShading.m_cubeArr, faceIdx, probeToUpdateCacheEntryIdx);
+		}
+
+		// Barriers
+		for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
+		{
+			cmdb->setTextureSurfaceBarrier(m_lightShading.m_cubeArr,
+				TextureUsageBit::GENERATE_MIPMAPS,
+				TextureUsageBit::SAMPLED_FRAGMENT,
+				TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
+
+			cmdb->setTextureSurfaceBarrier(m_irradiance.m_cubeArr,
+				TextureUsageBit::NONE,
+				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+				TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
+		}
+
+		// Run irradiance
+		runIrradiance(rctx, probeToUpdateCacheEntryIdx);
+
+		// Barriers
+		for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
+		{
+			cmdb->setTextureSurfaceBarrier(m_irradiance.m_cubeArr,
+				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+				TextureUsageBit::SAMPLED_FRAGMENT,
+				TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
+		}
 	}
 	else
 	{
-		// Not found
+		cmdb->informTextureCurrentUsage(m_lightShading.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
+		cmdb->informTextureCurrentUsage(m_irradiance.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
+	}
+}
 
-		render = true;
+Bool Indirect::findBestCacheEntry(U64 probeUuid, U32& cacheEntryIdxAllocated, Bool& cacheEntryFound)
+{
+	ANKI_ASSERT(probeUuid > 0);
 
-		// Iterate to find an empty or someone to kick
-		CacheEntry* empty = nullptr;
-		CacheEntry* kick = nullptr;
-		for(auto& entry : m_cacheEntries)
+	// First, try to see if the probe is in the cache
+	auto it = m_probeUuidToCacheEntryIdx.find(probeUuid);
+	if(it != m_probeUuidToCacheEntryIdx.getEnd())
+	{
+		const U32 cacheEntryIdx = *it;
+		if(m_cacheEntries[cacheEntryIdx].m_probeUuid == probeUuid)
 		{
-			if(entry.m_nodeUuid == 0)
-			{
-				empty = &entry;
-				break;
-			}
-			else if(kick == nullptr || entry.m_timestamp < kick->m_timestamp)
-			{
-				kick = &entry;
-			}
-		}
-
-		if(empty)
-		{
-			candidate = empty;
+			// Found it
+			cacheEntryIdxAllocated = cacheEntryIdx;
+			cacheEntryFound = true;
+			return false;
 		}
 		else
 		{
-			ANKI_ASSERT(kick);
-
-			candidate = kick;
-
-			// Remove from the map
-			m_uuidToCacheEntry.erase(kick);
+			// Cache entry is wrong, remove it
+			m_probeUuidToCacheEntryIdx.erase(getAllocator(), it);
 		}
+	}
+	cacheEntryFound = false;
 
-		candidate->m_nodeUuid = uuid;
-		m_uuidToCacheEntry.pushBack(uuid, candidate);
+	// 2nd and 3rd choice, find an empty entry or some entry to re-use
+	U32 emptyCacheEntryIdx = MAX_U32;
+	U32 cacheEntryIdxToKick = MAX_U32;
+	Timestamp cacheEntryIdxToKickMinTimestamp = MAX_TIMESTAMP;
+	for(U32 cacheEntryIdx = 0; cacheEntryIdx < m_cacheEntries.getSize(); ++cacheEntryIdx)
+	{
+		if(m_cacheEntries[cacheEntryIdx].m_probeUuid == 0)
+		{
+			// Found an empty
+			emptyCacheEntryIdx = cacheEntryIdx;
+			break;
+		}
+		else if(m_cacheEntries[cacheEntryIdx].m_lastUsedTimestamp != m_r->getGlobalTimestamp()
+			&& m_cacheEntries[cacheEntryIdx].m_lastUsedTimestamp < cacheEntryIdxToKickMinTimestamp)
+		{
+			// Found some with low timestamp
+			cacheEntryIdxToKick = cacheEntryIdx;
+			cacheEntryIdxToKickMinTimestamp = m_cacheEntries[cacheEntryIdx].m_lastUsedTimestamp;
+		}
 	}
 
-	ANKI_ASSERT(candidate);
-	ANKI_ASSERT(candidate->m_nodeUuid == uuid);
-	candidate->m_timestamp = m_r->getFrameCount();
+	Bool failed = false;
+	if(emptyCacheEntryIdx != MAX_U32)
+	{
+		cacheEntryIdxAllocated = emptyCacheEntryIdx;
+	}
+	else if(cacheEntryIdxToKick != MAX_U32)
+	{
+		cacheEntryIdxAllocated = cacheEntryIdxToKick;
+	}
+	else
+	{
+		// We have a problem
+		failed = true;
+		ANKI_R_LOGW("There is not enough space in the indirect lighting atlas for more probes. "
+					"Increase the r.indirect.maxSimultaneousProbeCount or decrease the scene's probes");
+	}
 
-	entry = candidate - &m_cacheEntries[0];
+	return failed;
 }
 
 } // end namespace anki

@@ -110,7 +110,7 @@ class ReflectionProbeQueueElement final
 public:
 	ReflectionProbeQueueElementFeedbackCallback m_feedbackCallback;
 	RenderQueueDrawCallback m_drawCallback;
-	void* m_userData; // TODO Shouldn't be const void*?
+	void* m_userData;
 	U64 m_uuid;
 	Vec3 m_worldPosition;
 	F32 m_radius;

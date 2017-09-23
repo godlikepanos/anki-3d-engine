@@ -33,8 +33,8 @@ Config::Config()
 
 	newOption("r.finalComposite.sharpen", false);
 
-	newOption("r.indirect.reflectionSize", 128);
-	newOption("r.indirect.maxProbeCount", 32);
+	newOption("r.indirect.reflectionResolution", 128);
+	newOption("r.indirect.maxSimultaneousProbeCount", 32);
 
 	newOption("r.dbg.enabled", false);
 
