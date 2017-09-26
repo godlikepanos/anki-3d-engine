@@ -32,6 +32,8 @@
 #include <anki/util/Thread.h>
 #include <anki/util/ThreadPool.h>
 #include <anki/util/Visitor.h>
+#include <anki/util/INotify.h>
+#include <anki/util/SparseArray.h>
 
 /// @defgroup util Utilities (like STL)
 

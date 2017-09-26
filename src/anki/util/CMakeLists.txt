@@ -6,4 +6,10 @@ else()
 	set(ANKI_UTIL_SOURCES ${ANKI_UTIL_SOURCES} HighRezTimerWindows.cpp FilesystemWindows.cpp ThreadWindows.cpp)
 endif()
 
+if(LINUX)
+	set(ANKI_UTIL_SOURCES ${ANKI_UTIL_SOURCES} INotifyLinux.cpp)
+elseif(WINDOWS)
+	set(ANKI_UTIL_SOURCES ${ANKI_UTIL_SOURCES} INotifyWindows.cpp)
+endif()
+
 add_library(ankiutil ${ANKI_UTIL_SOURCES})
