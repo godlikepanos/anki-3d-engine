@@ -34,6 +34,8 @@ anki_internal:
 
 	void run(RenderingContext& ctx);
 
+	void setPostRunBarriers(RenderingContext& ctx);
+
 	TexturePtr getRt() const
 	{
 		return m_rt;

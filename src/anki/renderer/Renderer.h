@@ -376,7 +376,6 @@ private:
 	UniquePtr<ForwardShading> m_forwardShading; ///< Forward shading.
 	UniquePtr<Volumetric> m_vol; ///< Volumetric effects.
 	UniquePtr<LensFlare> m_lensFlare; ///< Forward shading lens flares.
-	UniquePtr<ForwardShadingUpscale> m_fsUpscale;
 	UniquePtr<DownscaleBlur> m_downscale;
 	UniquePtr<TemporalAA> m_temporalAA;
 	UniquePtr<Tonemapping> m_tonemapping;

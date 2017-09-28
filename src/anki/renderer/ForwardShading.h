@@ -36,6 +36,8 @@ anki_internal:
 
 	void drawVolumetric(RenderingContext& ctx, CommandBufferPtr cmdb);
 
+	void drawUpscale(RenderingContext& ctx);
+
 	TexturePtr getRt() const
 	{
 		return m_rt;
@@ -70,32 +72,17 @@ private:
 		TextureResourcePtr m_noiseTex;
 	} m_vol;
 
+	class Upscale
+	{
+	public:
+		ShaderProgramResourcePtr m_prog;
+		ShaderProgramPtr m_grProg;
+		TextureResourcePtr m_noiseTex;
+	} m_upscale;
+
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 	ANKI_USE_RESULT Error initVol();
-};
-
-/// Upscale some textures and append them to light buffer.
-class ForwardShadingUpscale : public RenderingPass
-{
-public:
-	ForwardShadingUpscale(Renderer* r)
-		: RenderingPass(r)
-	{
-	}
-
-	ANKI_USE_RESULT Error init(const ConfigSet& config);
-
-	void run(RenderingContext& ctx);
-
-private:
-	FramebufferPtr m_fb;
-
-	ShaderProgramResourcePtr m_prog;
-	ShaderProgramPtr m_grProg;
-
-	TextureResourcePtr m_noiseTex;
-
-	ANKI_USE_RESULT Error initInternal(const ConfigSet& config);
+	ANKI_USE_RESULT Error initUpscale();
 };
 /// @}
 

@@ -31,7 +31,6 @@ class Bloom;
 class FinalComposite;
 class Dbg;
 class Indirect;
-class ForwardShadingUpscale;
 class DownscaleBlur;
 class Volumetric;
 class DepthDownscale;

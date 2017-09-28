@@ -11,6 +11,7 @@
 #include <anki/renderer/GBuffer.h>
 #include <anki/renderer/LightBin.h>
 #include <anki/renderer/RenderQueue.h>
+#include <anki/renderer/ForwardShading.h>
 #include <anki/misc/ConfigSet.h>
 #include <anki/util/HighRezTimer.h>
 
@@ -185,6 +186,10 @@ void LightShading::run(RenderingContext& ctx)
 	bindStorage(cmdb, 0, 1, ctx.m_lightShading.m_lightIndicesToken);
 
 	cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
+
+	// Apply the forward shading result
+	m_r->getForwardShading().drawUpscale(ctx);
+
 	cmdb->endRenderPass();
 }
 
@@ -216,6 +221,14 @@ void LightShading::setPreRunBarriers(RenderingContext& ctx)
 	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_rt,
 		TextureUsageBit::NONE,
 		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
+		TextureSurfaceInfo(0, 0, 0, 0));
+}
+
+void LightShading::setPostRunBarriers(RenderingContext& ctx)
+{
+	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_rt,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
+		TextureUsageBit::SAMPLED_FRAGMENT,
 		TextureSurfaceInfo(0, 0, 0, 0));
 }
 

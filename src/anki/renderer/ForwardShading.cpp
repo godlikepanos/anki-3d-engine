@@ -57,6 +57,7 @@ Error ForwardShading::initInternal(const ConfigSet&)
 	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
 
 	ANKI_CHECK(initVol());
+	ANKI_CHECK(initUpscale());
 
 	return Error::NONE;
 }
@@ -75,6 +76,25 @@ Error ForwardShading::initVol()
 	const ShaderProgramResourceVariant* variant;
 	m_vol.m_prog->getOrCreateVariant(consts.get(), variant);
 	m_vol.m_grProg = variant->getProgram();
+
+	return Error::NONE;
+}
+
+Error ForwardShading::initUpscale()
+{
+	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseLdrRgb64x64.ankitex", m_upscale.m_noiseTex));
+
+	// Shader
+	ANKI_CHECK(getResourceManager().loadResource("programs/ForwardShadingUpscale.ankiprog", m_upscale.m_prog));
+
+	ShaderProgramResourceConstantValueInitList<3> consts(m_upscale.m_prog);
+	consts.add("NOISE_TEX_SIZE", U32(m_upscale.m_noiseTex->getWidth()))
+		.add("SRC_SIZE", Vec2(m_r->getWidth() / FS_FRACTION, m_r->getHeight() / FS_FRACTION))
+		.add("FB_SIZE", Vec2(m_r->getWidth(), m_r->getWidth()));
+
+	const ShaderProgramResourceVariant* variant;
+	m_upscale.m_prog->getOrCreateVariant(consts.get(), variant);
+	m_upscale.m_grProg = variant->getProgram();
 
 	return Error::NONE;
 }
@@ -103,6 +123,30 @@ void ForwardShading::drawVolumetric(RenderingContext& ctx, CommandBufferPtr cmdb
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
 	cmdb->setDepthWrite(true);
 	cmdb->setDepthCompareOperation(CompareOperation::LESS);
+}
+
+void ForwardShading::drawUpscale(RenderingContext& ctx)
+{
+	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
+
+	Vec4* linearDepth = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
+	computeLinearizeDepthOptimal(
+		ctx.m_renderQueue->m_cameraNear, ctx.m_renderQueue->m_cameraFar, linearDepth->x(), linearDepth->y());
+
+	cmdb->bindTexture(0, 0, m_r->getGBuffer().m_depthRt);
+	cmdb->bindTextureAndSampler(0, 1, m_r->getDepthDownscale().m_hd.m_colorRt, m_r->getNearestSampler());
+	cmdb->bindTexture(0, 2, m_rt);
+	cmdb->bindTexture(0, 3, m_upscale.m_noiseTex->getGrTexture());
+
+	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::SRC_ALPHA);
+
+	cmdb->bindShaderProgram(m_upscale.m_grProg);
+	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
+
+	m_r->drawQuad(cmdb);
+
+	// Restore state
+	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
 }
 
 void ForwardShading::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) const
@@ -191,71 +235,6 @@ void ForwardShading::run(RenderingContext& ctx)
 	}
 
 	cmdb->endRenderPass();
-}
-
-Error ForwardShadingUpscale::init(const ConfigSet& config)
-{
-	Error err = initInternal(config);
-	if(err)
-	{
-		ANKI_R_LOGE("Failed to initialize forward shading upscale");
-	}
-
-	return err;
-}
-
-Error ForwardShadingUpscale::initInternal(const ConfigSet& config)
-{
-	ANKI_R_LOGI("Initializing forward shading upscale");
-
-	ANKI_CHECK(getResourceManager().loadResource("engine_data/BlueNoiseLdrRgb64x64.ankitex", m_noiseTex));
-
-	// Shader
-	ANKI_CHECK(getResourceManager().loadResource("programs/ForwardShadingUpscale.ankiprog", m_prog));
-
-	ShaderProgramResourceConstantValueInitList<3> consts(m_prog);
-	consts.add("NOISE_TEX_SIZE", U32(m_noiseTex->getWidth()))
-		.add("SRC_SIZE", Vec2(m_r->getWidth() / FS_FRACTION, m_r->getHeight() / FS_FRACTION))
-		.add("FB_SIZE", Vec2(m_r->getWidth(), m_r->getWidth()));
-
-	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(consts.get(), variant);
-	m_grProg = variant->getProgram();
-
-	// Create FB
-	FramebufferInitInfo fbInit("fwdupscale");
-	fbInit.m_colorAttachmentCount = 1;
-	fbInit.m_colorAttachments[0].m_texture = m_r->getLightShading().getRt();
-	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::LOAD;
-	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
-
-	return Error::NONE;
-}
-
-void ForwardShadingUpscale::run(RenderingContext& ctx)
-{
-	CommandBufferPtr cmdb = ctx.m_commandBuffer;
-
-	Vec4* linearDepth = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
-	computeLinearizeDepthOptimal(
-		ctx.m_renderQueue->m_cameraNear, ctx.m_renderQueue->m_cameraFar, linearDepth->x(), linearDepth->y());
-
-	cmdb->bindTexture(0, 0, m_r->getGBuffer().m_depthRt);
-	cmdb->bindTextureAndSampler(0, 1, m_r->getDepthDownscale().m_hd.m_colorRt, m_r->getNearestSampler());
-	cmdb->bindTexture(0, 2, m_r->getForwardShading().getRt());
-	cmdb->bindTexture(0, 3, m_noiseTex->getGrTexture());
-
-	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::SRC_ALPHA);
-
-	cmdb->beginRenderPass(m_fb);
-	cmdb->bindShaderProgram(m_grProg);
-	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
-
-	m_r->drawQuad(cmdb);
-	cmdb->endRenderPass();
-
-	// Restore state
-	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
 }
 
 } // end namespace anki

@@ -136,9 +136,6 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_ssao.reset(m_alloc.newInstance<Ssao>(this));
 	ANKI_CHECK(m_ssao->init(config));
 
-	m_fsUpscale.reset(m_alloc.newInstance<ForwardShadingUpscale>(this));
-	ANKI_CHECK(m_fsUpscale->init(config));
-
 	m_downscale.reset(getAllocator().newInstance<DownscaleBlur>(this));
 	ANKI_CHECK(m_downscale->init(config));
 
@@ -322,24 +319,20 @@ Error Renderer::render(RenderingContext& ctx)
 	// Barriers
 	m_vol->m_vblur.setPostRunBarriers(ctx);
 	m_ssao->m_vblur.setPostRunBarriers(ctx);
-	m_lightShading->setPreRunBarriers(ctx);
 	m_forwardShading->setPreRunBarriers(ctx);
 
 	// Passes
-	m_lightShading->run(ctx);
 	m_forwardShading->run(ctx);
 
 	// Barriers
 	m_forwardShading->setPostRunBarriers(ctx);
+	m_lightShading->setPreRunBarriers(ctx);
 
 	// Passes
-	m_fsUpscale->run(ctx);
+	m_lightShading->run(ctx);
 
 	// Barriers
-	cmdb->setTextureSurfaceBarrier(m_lightShading->getRt(),
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-		TextureUsageBit::SAMPLED_FRAGMENT,
-		TextureSurfaceInfo(0, 0, 0, 0));
+	m_lightShading->setPostRunBarriers(ctx);
 	m_temporalAA->setPreRunBarriers(ctx);
 
 	// Passes
