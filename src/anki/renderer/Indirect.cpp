@@ -197,12 +197,15 @@ Error Indirect::initLightShading(const ConfigSet& config)
 		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(m_lightShading.m_tileSize,
 			m_lightShading.m_tileSize,
 			LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
-			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
+				| TextureUsageBit::GENERATE_MIPMAPS,
 			SamplingFilter::LINEAR,
 			m_lightShading.m_mipCount,
 			"GI_refl");
 		texinit.m_type = TextureType::CUBE_ARRAY;
 		texinit.m_layerCount = m_cacheEntries.getSize();
+		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
+		texinit.m_usageWhenEncountered = TextureUsageBit::SAMPLED_FRAGMENT;
 
 		m_lightShading.m_cubeArr = m_r->createAndClearRenderTarget(texinit);
 	}
@@ -254,6 +257,8 @@ Error Indirect::initIrradiance(const ConfigSet& config)
 
 		texinit.m_layerCount = m_cacheEntries.getSize();
 		texinit.m_type = TextureType::CUBE_ARRAY;
+		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
+		texinit.m_usageWhenEncountered = TextureUsageBit::SAMPLED_FRAGMENT;
 
 		m_irradiance.m_cubeArr = m_r->createAndClearRenderTarget(texinit);
 	}
@@ -582,6 +587,9 @@ void Indirect::run(RenderingContext& rctx)
 	ANKI_TRACE_SCOPED_EVENT(RENDER_IR);
 	CommandBufferPtr& cmdb = rctx.m_commandBuffer;
 
+	cmdb->informTextureCurrentUsage(m_lightShading.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
+	cmdb->informTextureCurrentUsage(m_irradiance.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
+
 	// Prepare the probes
 	ReflectionProbeQueueElement* probeToUpdate;
 	U32 probeToUpdateCacheEntryIdx;
@@ -655,10 +663,13 @@ void Indirect::run(RenderingContext& rctx)
 		// Barriers
 		for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
 		{
-			cmdb->setTextureSurfaceBarrier(m_lightShading.m_cubeArr,
-				TextureUsageBit::GENERATE_MIPMAPS,
-				TextureUsageBit::SAMPLED_FRAGMENT,
-				TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
+			for(U mip = 0; mip < m_lightShading.m_mipCount; ++mip)
+			{
+				cmdb->setTextureSurfaceBarrier(m_lightShading.m_cubeArr,
+					TextureUsageBit::GENERATE_MIPMAPS,
+					TextureUsageBit::SAMPLED_FRAGMENT,
+					TextureSurfaceInfo(mip, 0, faceIdx, probeToUpdateCacheEntryIdx));
+			}
 
 			cmdb->setTextureSurfaceBarrier(m_irradiance.m_cubeArr,
 				TextureUsageBit::NONE,
@@ -677,11 +688,6 @@ void Indirect::run(RenderingContext& rctx)
 				TextureUsageBit::SAMPLED_FRAGMENT,
 				TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
 		}
-	}
-	else
-	{
-		cmdb->informTextureCurrentUsage(m_lightShading.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
-		cmdb->informTextureCurrentUsage(m_irradiance.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
 	}
 }
 

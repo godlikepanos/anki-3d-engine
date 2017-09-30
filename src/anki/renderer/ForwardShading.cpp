@@ -111,6 +111,8 @@ void ForwardShading::drawVolumetric(RenderingContext& ctx, CommandBufferPtr cmdb
 
 	cmdb->informTextureSurfaceCurrentUsage(
 		m_r->getVolumetric().m_main.getRt(), TextureSurfaceInfo(0, 0, 0, 0), TextureUsageBit::SAMPLED_FRAGMENT);
+	cmdb->informTextureSurfaceCurrentUsage(
+		m_r->getDepthDownscale().m_qd.m_colorRt, TextureSurfaceInfo(0, 0, 0, 0), TextureUsageBit::SAMPLED_FRAGMENT);
 
 	cmdb->bindTextureAndSampler(0, 0, m_r->getDepthDownscale().m_hd.m_colorRt, m_r->getNearestSampler());
 	cmdb->bindTextureAndSampler(0, 1, m_r->getDepthDownscale().m_qd.m_colorRt, m_r->getNearestSampler());
