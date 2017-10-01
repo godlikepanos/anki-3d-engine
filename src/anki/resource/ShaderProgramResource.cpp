@@ -828,7 +828,7 @@ void ShaderProgramResource::getOrCreateVariant(WeakArray<const ShaderProgramReso
 		ShaderProgramResourceVariant* v = getAllocator().newInstance<ShaderProgramResourceVariant>();
 		initVariant(mutation, constants, *v);
 
-		m_variants.pushBack(getAllocator(), hash, v);
+		m_variants.emplace(getAllocator(), hash, v);
 		variant = v;
 	}
 }

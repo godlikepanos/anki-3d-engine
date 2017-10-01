@@ -33,7 +33,7 @@ void SparseArray<T, TIndex>::destroy(TAlloc& alloc)
 
 template<typename T, typename TIndex>
 template<typename TAlloc, typename... TArgs>
-void SparseArray<T, TIndex>::emplace(TAlloc& alloc, Index idx, TArgs&&... args)
+void SparseArray<T, TIndex>::emplaceInternal(TAlloc& alloc, Index idx, TArgs&&... args)
 {
 	if(m_capacity == 0 || calcLoadFactor() > m_maxLoadFactor)
 	{
@@ -44,6 +44,21 @@ void SparseArray<T, TIndex>::emplace(TAlloc& alloc, Index idx, TArgs&&... args)
 	m_elementCount += insert(alloc, idx, tmp);
 
 	invalidateIterators();
+}
+
+template<typename T, typename TIndex>
+template<typename TAlloc, typename... TArgs>
+typename SparseArray<T, TIndex>::Iterator SparseArray<T, TIndex>::emplace(TAlloc& alloc, Index idx, TArgs&&... args)
+{
+	emplaceInternal(alloc, idx, std::forward<TArgs>(args)...);
+
+	return Iterator(this,
+		findInternal(idx)
+#if ANKI_EXTRA_CHECKS
+			,
+		m_iteratorVer
+#endif
+		);
 }
 
 template<typename T, typename TIndex>

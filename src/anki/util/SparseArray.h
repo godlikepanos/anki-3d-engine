@@ -306,7 +306,7 @@ public:
 	/// Return true if it's empty and false otherwise.
 	Bool isEmpty() const
 	{
-		return m_elementCount != 0;
+		return m_elementCount == 0;
 	}
 
 	/// Destroy the array and free its elements.
@@ -315,7 +315,7 @@ public:
 
 	/// Set a value to an index.
 	template<typename TAlloc, typename... TArgs>
-	void emplace(TAlloc& alloc, Index idx, TArgs&&... args);
+	Iterator emplace(TAlloc& alloc, Index idx, TArgs&&... args);
 
 	/// Get an iterator.
 	Iterator find(Index idx)
@@ -463,6 +463,9 @@ protected:
 
 		return (pos >= m_capacity) ? MAX_U32 : pos;
 	}
+
+	template<typename TAlloc, typename... TArgs>
+	void emplaceInternal(TAlloc& alloc, Index idx, TArgs&&... args);
 
 	void destroyElement(Value& v)
 	{

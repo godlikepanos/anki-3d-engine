@@ -57,7 +57,7 @@ Error PipelineLayoutFactory::newPipelineLayout(
 		VkPipelineLayout pplineLayHandle;
 		ANKI_VK_CHECK(vkCreatePipelineLayout(m_dev, &ci, nullptr, &pplineLayHandle));
 
-		m_layouts.pushBack(m_alloc, hash, pplineLayHandle);
+		m_layouts.emplace(m_alloc, hash, pplineLayHandle);
 
 		layout.m_handle = pplineLayHandle;
 	}

@@ -694,7 +694,7 @@ VkImageView TextureImpl::getOrCreateView(const VkImageViewCreateInfo& ci)
 	{
 		VkImageView view = VK_NULL_HANDLE;
 		ANKI_VK_CHECKF(vkCreateImageView(getDevice(), &ci, nullptr, &view));
-		m_viewsMap.pushBack(getAllocator(), ci, view);
+		m_viewsMap.emplace(getAllocator(), ci, view);
 
 		return view;
 	}

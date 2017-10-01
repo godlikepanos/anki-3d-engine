@@ -204,7 +204,7 @@ Error DSThreadAllocator::newSet(
 			m_list.erase(set);
 
 			m_list.pushBack(set);
-			m_hashmap.pushBack(m_layoutEntry->m_factory->m_alloc, hash, set);
+			m_hashmap.emplace(m_layoutEntry->m_factory->m_alloc, hash, set);
 
 			out = set;
 			break;
@@ -239,7 +239,7 @@ Error DSThreadAllocator::newSet(
 		out = m_layoutEntry->m_factory->m_alloc.newInstance<DS>();
 		out->m_handle = handle;
 
-		m_hashmap.pushBack(m_layoutEntry->m_factory->m_alloc, hash, out);
+		m_hashmap.emplace(m_layoutEntry->m_factory->m_alloc, hash, out);
 		m_list.pushBack(out);
 	}
 

@@ -627,7 +627,7 @@ Bool ShadowMapping::allocateTilesAndScratchTiles(U64 lightUuid,
 			{
 				TileKey key{lightUuid, faceIndices[i]};
 				ANKI_ASSERT(m_lightUuidToTileIdx.find(key) == m_lightUuidToTileIdx.getEnd());
-				m_lightUuidToTileIdx.pushBack(getAllocator(), key, tileIndices[i]);
+				m_lightUuidToTileIdx.emplace(getAllocator(), key, tileIndices[i]);
 			}
 		}
 	}

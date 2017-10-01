@@ -130,7 +130,7 @@ TexturePtr RenderGraph::getOrCreateRenderTarget(const TextureInitInfo& initInf)
 	{
 		// Didn't found the entry, create a new one
 
-		auto it2 = m_renderTargetCache.emplaceBack(getAllocator(), initInf);
+		auto it2 = m_renderTargetCache.emplace(getAllocator(), initInf);
 		entry = &(*it2);
 	}
 	else

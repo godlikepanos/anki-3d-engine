@@ -31,8 +31,8 @@ ANKI_TEST(Util, HashMap)
 	// Simple
 	{
 		HashMap<int, int, Hasher> map;
-		map.pushBack(alloc, 20, 1);
-		map.pushBack(alloc, 21, 1);
+		map.emplace(alloc, 20, 1);
+		map.emplace(alloc, 21, 1);
 		map.destroy(alloc);
 	}
 
@@ -42,7 +42,7 @@ ANKI_TEST(Util, HashMap)
 
 		for(U i = 0; i < valsSize; ++i)
 		{
-			map.pushBack(alloc, vals[i], vals[i] * 10);
+			map.emplace(alloc, vals[i], vals[i] * 10);
 		}
 
 		U count = 0;
@@ -62,7 +62,7 @@ ANKI_TEST(Util, HashMap)
 
 		for(U i = 0; i < valsSize; ++i)
 		{
-			map.pushBack(alloc, vals[i], vals[i] * 10);
+			map.emplace(alloc, vals[i], vals[i] * 10);
 		}
 
 		for(U i = valsSize - 1; i != 0; --i)
@@ -71,7 +71,7 @@ ANKI_TEST(Util, HashMap)
 			ANKI_TEST_EXPECT_NEQ(it, map.getEnd());
 
 			map.erase(alloc, it);
-			map.pushBack(alloc, vals[i], vals[i] * 10);
+			map.emplace(alloc, vals[i], vals[i] * 10);
 		}
 
 		map.destroy(alloc);
@@ -83,7 +83,7 @@ ANKI_TEST(Util, HashMap)
 
 		for(U i = 0; i < valsSize; ++i)
 		{
-			map.pushBack(alloc, vals[i], vals[i] * 10);
+			map.emplace(alloc, vals[i], vals[i] * 10);
 		}
 
 		for(U i = valsSize - 1; i != 0; --i)
@@ -113,7 +113,7 @@ ANKI_TEST(Util, HashMap)
 				{
 					// Not found
 					ANKI_TEST_EXPECT_EQ(akMap.find(num), akMap.getEnd());
-					akMap.pushBack(alloc, num, num);
+					akMap.emplace(alloc, num, num);
 					numbers.push_back(num);
 					break;
 				}
@@ -175,7 +175,7 @@ ANKI_TEST(Util, HashMap)
 		timer.start();
 		for(U i = 0; i < COUNT; ++i)
 		{
-			akMap.pushBack(alloc, vals[i], vals[i]);
+			akMap.emplace(alloc, vals[i], vals[i]);
 		}
 		timer.stop();
 		Second akTime = timer.getElapsedTime();

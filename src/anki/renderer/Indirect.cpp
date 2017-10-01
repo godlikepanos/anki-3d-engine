@@ -373,7 +373,7 @@ void Indirect::prepareProbes(
 		// Update cache map
 		if(!cacheEntryFoundInCache)
 		{
-			m_probeUuidToCacheEntryIdx.pushBack(getAllocator(), probe.m_uuid, cacheEntryIdx);
+			m_probeUuidToCacheEntryIdx.emplace(getAllocator(), probe.m_uuid, cacheEntryIdx);
 		}
 
 		// Don't gather renderables next frame

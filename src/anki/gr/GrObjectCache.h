@@ -73,7 +73,7 @@ inline GrObjectPtr<T> GrObjectCache::newInstance(const TArg& arg, U64 overrideHa
 	if(ptr == nullptr)
 	{
 		auto tptr = m_gr->template newInstanceCached<T>(hash, this, arg);
-		m_map.pushBack(m_gr->getAllocator(), hash, tptr.get());
+		m_map.emplace(m_gr->getAllocator(), hash, tptr.get());
 		return tptr;
 	}
 	else

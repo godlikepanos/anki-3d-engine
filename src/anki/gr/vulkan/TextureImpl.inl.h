@@ -183,7 +183,7 @@ inline void TextureImpl::updateTracker(
 		// Not found
 		TextureUsageState state;
 		updateUsageState(surfOrVol, usage, tracker.m_alloc, state);
-		tracker.m_map.emplaceBack(tracker.m_alloc, m_uuid, std::move(state));
+		tracker.m_map.emplace(tracker.m_alloc, m_uuid, std::move(state));
 	}
 }
 
@@ -203,7 +203,7 @@ inline void TextureImpl::updateTracker(TextureUsageBit usage, TextureUsageTracke
 		// Not found
 		TextureUsageState state;
 		updateUsageState(usage, tracker.m_alloc, state);
-		tracker.m_map.emplaceBack(tracker.m_alloc, m_uuid, std::move(state));
+		tracker.m_map.emplace(tracker.m_alloc, m_uuid, std::move(state));
 	}
 }
 

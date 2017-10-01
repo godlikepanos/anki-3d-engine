@@ -115,7 +115,7 @@ Error SceneGraph::registerNode(SceneNode* node)
 			return Error::USER_DATA;
 		}
 
-		m_nodesDict.pushBack(m_alloc, node->getName(), node);
+		m_nodesDict.emplace(m_alloc, node->getName(), node);
 	}
 
 	// Add to vector

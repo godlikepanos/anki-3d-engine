@@ -434,7 +434,7 @@ void PipelineFactory::newPipeline(PipelineStateTracker& state, Pipeline& ppline,
 		ANKI_TRACE_STOP_EVENT(VK_PIPELINE_CREATE);
 		ANKI_TRACE_INC_COUNTER(VK_PIPELINE_CREATE, 1);
 
-		m_pplines.pushBack(m_alloc, hash, pp);
+		m_pplines.emplace(m_alloc, hash, pp);
 		ppline.m_handle = pp.m_handle;
 	}
 }

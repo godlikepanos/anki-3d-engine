@@ -321,7 +321,7 @@ VkRenderPass FramebufferImpl::getRenderPassHandle(
 
 			ANKI_VK_CHECKF(vkCreateRenderPass(getDevice(), &ci, nullptr, &out));
 
-			m_rpasses.pushBack(getAllocator(), hash, out);
+			m_rpasses.emplace(getAllocator(), hash, out);
 		}
 	}
 	else
