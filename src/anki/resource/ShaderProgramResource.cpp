@@ -153,8 +153,9 @@ ShaderProgramResource::~ShaderProgramResource()
 
 	while(!m_variants.isEmpty())
 	{
-		ShaderProgramResourceVariant* variant = &(*m_variants.getBegin());
-		m_variants.erase(variant);
+		auto it = m_variants.getBegin();
+		ShaderProgramResourceVariant* variant = *it;
+		m_variants.erase(getAllocator(), it);
 
 		variant->m_blockInfos.destroy(alloc);
 		variant->m_texUnits.destroy(alloc);
@@ -819,7 +820,7 @@ void ShaderProgramResource::getOrCreateVariant(WeakArray<const ShaderProgramReso
 	auto it = m_variants.find(hash);
 	if(it != m_variants.getEnd())
 	{
-		variant = &(*it);
+		variant = *it;
 	}
 	else
 	{
@@ -827,7 +828,7 @@ void ShaderProgramResource::getOrCreateVariant(WeakArray<const ShaderProgramReso
 		ShaderProgramResourceVariant* v = getAllocator().newInstance<ShaderProgramResourceVariant>();
 		initVariant(mutation, constants, *v);
 
-		m_variants.pushBack(hash, v);
+		m_variants.pushBack(getAllocator(), hash, v);
 		variant = v;
 	}
 }

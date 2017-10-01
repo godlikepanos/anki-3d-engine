@@ -21,9 +21,6 @@ class BitMask;
 template<typename, typename, typename>
 class HashMap;
 
-template<typename, typename, typename>
-class IntrusiveHashMap;
-
 template<typename T>
 class Hierarchy;
 

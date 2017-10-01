@@ -15,7 +15,7 @@ namespace anki
 {
 
 /// Descriptor set internal class.
-class DS : public IntrusiveListEnabled<DS>, public IntrusiveHashMapEnabled<DS>
+class DS : public IntrusiveListEnabled<DS>
 {
 public:
 	VkDescriptorSet m_handle = {};
@@ -34,7 +34,7 @@ public:
 	U32 m_lastPoolFreeDSCount = 0;
 
 	IntrusiveList<DS> m_list; ///< At the left of the list are the least used sets.
-	IntrusiveHashMap<U64, DS> m_hashmap;
+	HashMap<U64, DS*> m_hashmap;
 
 	DSThreadAllocator(const DSLayoutCacheEntry* layout, ThreadId tid)
 		: m_layoutEntry(layout)
@@ -116,6 +116,8 @@ DSThreadAllocator::~DSThreadAllocator()
 		vkDestroyDescriptorPool(m_layoutEntry->m_factory->m_dev, pool, nullptr);
 	}
 	m_pools.destroy(alloc);
+
+	m_hashmap.destroy(alloc);
 }
 
 Error DSThreadAllocator::init()
@@ -169,7 +171,7 @@ const DS* DSThreadAllocator::tryFindSet(U64 hash)
 	}
 	else
 	{
-		DS* ds = &(*it);
+		DS* ds = *it;
 
 		// Remove from the list and place at the end of the list
 		m_list.erase(ds);
@@ -196,10 +198,13 @@ Error DSThreadAllocator::newSet(
 		if(frameDiff > DESCRIPTOR_FRAME_BUFFERING)
 		{
 			// Found something, recycle
-			m_hashmap.erase(set);
+			auto it2 = m_hashmap.find(hash);
+			ANKI_ASSERT(it2 != m_hashmap.getEnd());
+			m_hashmap.erase(m_layoutEntry->m_factory->m_alloc, it2);
 			m_list.erase(set);
+
 			m_list.pushBack(set);
-			m_hashmap.pushBack(hash, set);
+			m_hashmap.pushBack(m_layoutEntry->m_factory->m_alloc, hash, set);
 
 			out = set;
 			break;
@@ -234,7 +239,7 @@ Error DSThreadAllocator::newSet(
 		out = m_layoutEntry->m_factory->m_alloc.newInstance<DS>();
 		out->m_handle = handle;
 
-		m_hashmap.pushBack(hash, out);
+		m_hashmap.pushBack(m_layoutEntry->m_factory->m_alloc, hash, out);
 		m_list.pushBack(out);
 	}
 

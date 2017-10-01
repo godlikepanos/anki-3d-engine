@@ -72,11 +72,9 @@ RenderGraph::~RenderGraph()
 	while(!m_renderTargetCache.isEmpty())
 	{
 		auto it = m_renderTargetCache.getBegin();
-		RenderTargetCacheEntry* entry = &*it;
-		m_renderTargetCache.erase(it);
-
-		entry->m_textures.destroy(getAllocator());
-		getAllocator().deleteInstance(entry);
+		RenderTargetCacheEntry& entry = *it;
+		entry.m_textures.destroy(getAllocator());
+		m_renderTargetCache.erase(getAllocator(), it);
 	}
 }
 
@@ -132,8 +130,8 @@ TexturePtr RenderGraph::getOrCreateRenderTarget(const TextureInitInfo& initInf)
 	{
 		// Didn't found the entry, create a new one
 
-		entry = alloc.newInstance<RenderTargetCacheEntry>();
-		m_renderTargetCache.pushBack(initInf, entry);
+		auto it2 = m_renderTargetCache.emplaceBack(getAllocator(), initInf);
+		entry = &(*it2);
 	}
 	else
 	{

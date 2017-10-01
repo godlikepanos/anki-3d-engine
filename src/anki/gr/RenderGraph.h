@@ -337,14 +337,14 @@ private:
 	StackAllocator<U8> m_tmpAlloc;
 
 	/// Render targets of the same type+size+format.
-	class RenderTargetCacheEntry : public IntrusiveHashMapEnabled<RenderTargetCacheEntry>
+	class RenderTargetCacheEntry
 	{
 	public:
 		DynamicArray<TexturePtr> m_textures;
 		U32 m_texturesInUse = 0;
 	};
 
-	IntrusiveHashMap<TextureInitInfo, RenderTargetCacheEntry> m_renderTargetCache; ///< Non-imported render targets.
+	HashMap<TextureInitInfo, RenderTargetCacheEntry> m_renderTargetCache; ///< Non-imported render targets.
 	HashMap<FramebufferInitInfo, FramebufferPtr> m_framebufferCache;
 
 	// Forward declarations

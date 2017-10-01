@@ -174,7 +174,7 @@ private:
 };
 
 /// Shader program resource variant.
-class ShaderProgramResourceVariant : public IntrusiveHashMapEnabled<ShaderProgramResourceVariant>
+class ShaderProgramResourceVariant
 {
 	friend class ShaderProgramResource;
 
@@ -422,7 +422,7 @@ private:
 
 	Array<String, U(ShaderType::COUNT)> m_sources;
 
-	mutable IntrusiveHashMap<U64, ShaderProgramResourceVariant> m_variants;
+	mutable HashMap<U64, ShaderProgramResourceVariant*> m_variants;
 	mutable Mutex m_mtx;
 
 	Bool8 m_tessellation = false;

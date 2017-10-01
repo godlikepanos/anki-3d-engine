@@ -48,12 +48,10 @@ public:
 	ANKI_USE_RESULT Error newPipelineLayout(const WeakArray<DescriptorSetLayout>& dsetLayouts, PipelineLayout& layout);
 
 private:
-	class Layout;
-
 	GrAllocator<U8> m_alloc;
 	VkDevice m_dev = VK_NULL_HANDLE;
 
-	IntrusiveHashMap<U64, Layout> m_layouts;
+	HashMap<U64, VkPipelineLayout> m_layouts;
 	Mutex m_layoutsMtx;
 };
 /// @}
