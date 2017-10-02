@@ -43,6 +43,7 @@ template<typename TKey, typename TValue, typename THasher = DefaultHasher<TKey>>
 class HashMap
 {
 public:
+	// Typedefs
 	using SparseArrayType = SparseArray<TValue, U64>;
 	using Value = TValue;
 	using Key = TKey;
@@ -50,8 +51,20 @@ public:
 	using Iterator = typename SparseArrayType::Iterator;
 	using ConstIterator = typename SparseArrayType::ConstIterator;
 
+	// Consts
+	/// @see SparseArray::INITIAL_STORAGE_SIZE
+	static constexpr U32 INITIAL_STORAGE_SIZE = SparseArrayType::INITIAL_STORAGE_SIZE;
+	/// @see SparseArray::LINEAR_PROBING_COUNT
+	static constexpr U32 LINEAR_PROBING_COUNT = SparseArrayType::LINEAR_PROBING_COUNT;
+	/// @see SparseArray::MAX_LOAD_FACTOR
+	static constexpr F32 MAX_LOAD_FACTOR = SparseArrayType::MAX_LOAD_FACTOR;
+
 	/// Default constructor.
-	HashMap()
+	/// @copy doc SparseArray::SparseArray
+	HashMap(U32 initialStorageSize = INITIAL_STORAGE_SIZE,
+		U32 probeCount = LINEAR_PROBING_COUNT,
+		F32 maxLoadFactor = MAX_LOAD_FACTOR)
+		: m_sparseArr(initialStorageSize, probeCount, maxLoadFactor)
 	{
 	}
 

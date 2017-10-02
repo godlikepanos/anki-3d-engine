@@ -13,6 +13,30 @@
 namespace anki
 {
 
+/// Contains some extra things for render targets.
+class RenderGraph::RT
+{
+public:
+	TextureUsageBit m_usage;
+};
+
+class RenderGraph::RTBarrier
+{
+public:
+	U32 m_rtIdx;
+	TextureUsageBit m_usageBefore;
+	TextureUsageBit m_usageAfter;
+	TextureSurfaceInfo m_surf;
+
+	RTBarrier(U32 rtIdx, TextureUsageBit usageBefore, TextureUsageBit usageAfter, const TextureSurfaceInfo& surf)
+		: m_rtIdx(rtIdx)
+		, m_usageBefore(usageBefore)
+		, m_usageAfter(usageAfter)
+		, m_surf(surf)
+	{
+	}
+};
+
 /// Contains some extra things the RenderPassBase cannot hold.
 class RenderGraph::Pass
 {
@@ -30,9 +54,13 @@ class RenderGraph::Batch
 {
 public:
 	DynamicArrayAuto<U32> m_passes;
+	DynamicArrayAuto<RTBarrier> m_rtBarriersBefore;
+	DynamicArrayAuto<RTBarrier> m_rtBarriersAfter;
 
 	Batch(const StackAllocator<U8>& alloc)
 		: m_passes(alloc)
+		, m_rtBarriersBefore(alloc)
+		, m_rtBarriersAfter(alloc)
 	{
 	}
 };
@@ -40,17 +68,21 @@ public:
 class RenderGraph::BakeContext
 {
 public:
+	StackAllocator<U8> m_alloc;
 	DynamicArrayAuto<Pass> m_passes;
 	BitSet<MAX_RENDER_GRAPH_PASSES> m_passIsInBatch = {false};
 	const RenderGraphDescription* m_descr = nullptr;
 	DynamicArrayAuto<Batch> m_batches;
+	DynamicArrayAuto<RT> m_rts;
 
 	BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS> m_satisfiedRts = {false}; ///< XXX
 	BitSet<MAX_RENDER_GRAPH_BUFFERS> m_satisfiedConsumerBuffers = {false}; ///< XXX
 
 	BakeContext(const StackAllocator<U8>& alloc)
-		: m_passes(alloc)
+		: m_alloc(alloc)
+		, m_passes(alloc)
 		, m_batches(alloc)
+		, m_rts(alloc)
 	{
 	}
 };
@@ -59,10 +91,6 @@ RenderGraph::RenderGraph(GrManager* manager, U64 hash, GrObjectCache* cache)
 	: GrObject(manager, CLASS_TYPE, hash, cache)
 {
 	ANKI_ASSERT(manager);
-
-	m_tmpAlloc = StackAllocator<U8>(getManager().getAllocator().getMemoryPool().getAllocationCallback(),
-		getManager().getAllocator().getMemoryPool().getAllocationCallbackUserData(),
-		512_B);
 }
 
 RenderGraph::~RenderGraph()
@@ -86,9 +114,10 @@ void RenderGraph::reset()
 Error RenderGraph::dumpDependencyDotFile(const BakeContext& ctx, CString path) const
 {
 	File file;
-	ANKI_CHECK(file.open(StringAuto(m_tmpAlloc).sprintf("%s/rgraph.dot", &path[0]).toCString(), FileOpenFlag::WRITE));
+	ANKI_CHECK(file.open(StringAuto(ctx.m_alloc).sprintf("%s/rgraph.dot", &path[0]).toCString(), FileOpenFlag::WRITE));
 
 	ANKI_CHECK(file.writeText("digraph {\n"));
+	ANKI_CHECK(file.writeText("splines = ortho;\nconcentrate = true;\n"));
 
 	for(U batchIdx = 0; batchIdx < ctx.m_batches.getSize(); ++batchIdx)
 	{
@@ -116,6 +145,29 @@ Error RenderGraph::dumpDependencyDotFile(const BakeContext& ctx, CString path) c
 	}
 
 	ANKI_CHECK(file.writeText("}"));
+
+// Barriers
+#if 0
+	ANKI_CHECK(file.writeText("digraph {\n"));
+	ANKI_CHECK(file.writeText("splines = ortho;\nconcentrate = true;\n"));
+
+	for(U batchIdx = 0; batchIdx < ctx.m_batches.getSize(); ++batchIdx)
+	{
+		const Batch& batch = ctx.m_batches[batchIdx];
+		StringAuto prevBatchName(ctx.m_alloc);
+		if(batchIdx == 0)
+		{
+			prevBatchName.sprintf("%s", "NONE");
+		}
+		else
+		{
+			prevBatchName.sprintf("batch_%u", batchIdx - 1);
+		}
+	}
+
+	ANKI_CHECK(file.writeText("}"));
+#endif
+
 	return Error::NONE;
 }
 
@@ -173,18 +225,26 @@ Bool RenderGraph::passADependsOnB(BakeContext& ctx, const RenderPassBase& a, con
 	BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS> aWriteBWrite = a.m_producerRtMask & b.m_producerRtMask;
 
 	BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS> fullDep = aReadBWrite | aWriteBRead | aWriteBWrite;
-	fullDep &= ~ctx.m_satisfiedRts;
+	// fullDep &= ~ctx.m_satisfiedRts;
 
 	if(fullDep.getAny())
 	{
-		// There is overlap
-		for(const RenderPassDependency& dep : a.m_consumers)
+		// There might be an overlap
+
+		for(const RenderPassDependency& consumer : a.m_consumers)
 		{
-			if(dep.m_isTexture && fullDep.get(dep.m_renderTargetHandle))
+			if(consumer.m_isTexture && fullDep.get(consumer.m_texture.m_handle))
 			{
-				depends = true;
-				ANKI_ASSERT(!ctx.m_satisfiedRts.get(dep.m_renderTargetHandle));
-				ctx.m_satisfiedRts.set(dep.m_renderTargetHandle);
+				for(const RenderPassDependency& producer : b.m_producers)
+				{
+					if(producer.m_isTexture && producer.m_texture.m_handle == consumer.m_texture.m_handle
+						&& producer.m_texture.m_surface == consumer.m_texture.m_surface)
+					{
+						depends = true;
+						// ANKI_ASSERT(!ctx.m_satisfiedRts.get(dep.m_texture.m_handle));
+						// ctx.m_satisfiedRts.set(dep.m_texture.m_handle);
+					}
+				}
 			}
 		}
 	}
@@ -244,8 +304,15 @@ void RenderGraph::compileNewGraph(const RenderGraphDescription& descr)
 	ANKI_ASSERT(passCount > 0);
 
 	// Init the context
-	BakeContext ctx(m_tmpAlloc);
+	BakeContext ctx(descr.m_alloc);
 	ctx.m_descr = &descr;
+
+	// Init the render targets
+	ctx.m_rts.create(descr.m_renderTargets.getSize());
+	for(U i = 0; i < descr.m_renderTargets.getSize(); ++i)
+	{
+		ctx.m_rts[i].m_usage = descr.m_renderTargets[i].m_usage;
+	}
 
 	// Find the dependencies between passes
 	for(U i = 0; i < passCount; ++i)
@@ -253,7 +320,7 @@ void RenderGraph::compileNewGraph(const RenderGraphDescription& descr)
 		ctx.m_satisfiedRts.unsetAll();
 		ctx.m_satisfiedConsumerBuffers.unsetAll();
 
-		ctx.m_passes.emplaceBack(m_tmpAlloc);
+		ctx.m_passes.emplaceBack(ctx.m_alloc);
 		const RenderPassBase& crntPass = *descr.m_passes[i];
 
 		U j = i;
@@ -271,7 +338,7 @@ void RenderGraph::compileNewGraph(const RenderGraphDescription& descr)
 	U passesInBatchCount = 0;
 	while(passesInBatchCount < passCount)
 	{
-		Batch batch(m_tmpAlloc);
+		Batch batch(ctx.m_alloc);
 
 		for(U i = 0; i < passCount; ++i)
 		{
@@ -293,12 +360,72 @@ void RenderGraph::compileNewGraph(const RenderGraphDescription& descr)
 		}
 	}
 
+	// Create barriers between batches
+	setBatchBarriers(ctx);
+
 #if 1
 	if(dumpDependencyDotFile(ctx, "./"))
 	{
 		ANKI_LOGF("Won't recover on debug code");
 	}
 #endif
+}
+
+void RenderGraph::setBatchBarriers(BakeContext& ctx) const
+{
+	// For all batches
+	for(Batch& batch : ctx.m_batches)
+	{
+		// For all passes of that batch
+		for(U passIdx : batch.m_passes)
+		{
+			const RenderPassBase& pass = *ctx.m_descr->m_passes[passIdx];
+
+			// For all consumers
+			for(const RenderPassDependency& consumer : pass.m_consumers)
+			{
+				if(consumer.m_isTexture)
+				{
+					const TextureUsageBit consumerUsage = consumer.m_texture.m_usage;
+					TextureUsageBit& crntUsage = ctx.m_rts[consumer.m_texture.m_handle].m_usage;
+
+					if(crntUsage != consumerUsage)
+					{
+						batch.m_rtBarriersBefore.emplaceBack(
+							consumer.m_texture.m_handle, crntUsage, consumerUsage, consumer.m_texture.m_surface);
+
+						crntUsage = consumerUsage;
+					}
+				}
+				else
+				{
+					// TODO
+				}
+			}
+
+			// For all producers
+			for(const RenderPassDependency& producer : pass.m_producers)
+			{
+				if(producer.m_isTexture)
+				{
+					const TextureUsageBit producerUsage = producer.m_texture.m_usage;
+					TextureUsageBit& crntUsage = ctx.m_rts[producer.m_texture.m_handle].m_usage;
+
+					if(crntUsage != producerUsage)
+					{
+						batch.m_rtBarriersAfter.emplaceBack(
+							producer.m_texture.m_handle, producerUsage, crntUsage, producer.m_texture.m_surface);
+
+						crntUsage = producerUsage;
+					}
+				}
+				else
+				{
+					// TODO
+				}
+			}
+		}
+	}
 }
 
 } // end namespace anki

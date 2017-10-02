@@ -616,6 +616,17 @@ public:
 	{
 	}
 
+	/// Copy construcor.
+	StringAuto(const StringAuto& b)
+		: Base()
+		, m_alloc(b.m_alloc)
+	{
+		if(!b.isEmpty())
+		{
+			create(b.m_data.getBegin(), b.m_data.getEnd());
+		}
+	}
+
 	/// Move constructor.
 	StringAuto(StringAuto&& b)
 		: Base()
@@ -665,6 +676,18 @@ public:
 	void destroy()
 	{
 		Base::destroy(m_alloc);
+	}
+
+	/// Copy operator.
+	StringAuto& operator=(const StringAuto& b)
+	{
+		destroy();
+		m_alloc = b.m_alloc;
+		if(!b.isEmpty())
+		{
+			create(b.m_data.getBegin(), b.m_data.getEnd());
+		}
+		return *this;
 	}
 
 	/// Move one string to this one.

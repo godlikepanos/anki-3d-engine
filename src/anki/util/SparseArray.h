@@ -157,8 +157,18 @@ public:
 	using ConstIterator = SparseArrayIterator<const T*, const T&, const SparseArray*>;
 	using Index = TIndex;
 
-	/// Constructor #1.
-	SparseArray(U32 initialStorageSize, U32 probeCount, F32 maxLoadFactor)
+	// Consts
+	static constexpr U32 INITIAL_STORAGE_SIZE = 64; ///< The initial storage size of the array.
+	static constexpr U32 LINEAR_PROBING_COUNT = 8; ///< The number of linear probes.
+	static constexpr F32 MAX_LOAD_FACTOR = 0.8f; ///< Load factor.
+
+	/// Constructor.
+	/// @param initialStorageSize The initial size of the array.
+	/// @param probeCount         The number of probe queries. It's the linear probe count the sparse array is using.
+	/// @param maxLoadFactor      If storage is loaded more than maxLoadFactor then increase it.
+	SparseArray(U32 initialStorageSize = INITIAL_STORAGE_SIZE,
+		U32 probeCount = LINEAR_PROBING_COUNT,
+		F32 maxLoadFactor = MAX_LOAD_FACTOR)
 		: m_initialStorageSize(initialStorageSize)
 		, m_probeCount(probeCount)
 		, m_maxLoadFactor(maxLoadFactor)
@@ -166,24 +176,6 @@ public:
 		ANKI_ASSERT(initialStorageSize > 0 && isPowerOfTwo(initialStorageSize));
 		ANKI_ASSERT(probeCount > 0 && probeCount < initialStorageSize);
 		ANKI_ASSERT(maxLoadFactor > 0.5f && maxLoadFactor < 1.0f);
-	}
-
-	/// Constructor #2.
-	SparseArray(U32 initialStorageSize, U32 probeCount)
-		: SparseArray(initialStorageSize, probeCount, 0.8f)
-	{
-	}
-
-	/// Constructor #3.
-	SparseArray(U32 initialStorageSize)
-		: SparseArray(initialStorageSize, log2(initialStorageSize))
-	{
-	}
-
-	/// Constructor #4.
-	SparseArray()
-		: SparseArray(64)
-	{
 	}
 
 	/// Non-copyable.

@@ -143,7 +143,7 @@ ANKI_TEST(Util, HashMap)
 	// Bench it
 	{
 		using AkMap = HashMap<int, int, Hasher>;
-		AkMap akMap;
+		AkMap akMap(128, 32, 0.9f);
 		using StlMap =
 			std::unordered_map<int, int, std::hash<int>, std::equal_to<int>, HeapAllocator<std::pair<int, int>>>;
 		StlMap stdMap(10, std::hash<int>(), std::equal_to<int>(), alloc);
@@ -151,10 +151,9 @@ ANKI_TEST(Util, HashMap)
 		std::unordered_map<int, int> tmpMap;
 
 		HighRezTimer timer;
-		I64 count = 0;
 
 		// Create a huge set
-		const U COUNT = 1024 * 1024;
+		const U COUNT = 1024 * 1024 * 10;
 		DynamicArrayAuto<int> vals(alloc);
 		vals.create(COUNT);
 
@@ -171,89 +170,87 @@ ANKI_TEST(Util, HashMap)
 			vals[i] = v;
 		}
 
-		// Put the vals AnKi
-		timer.start();
-		for(U i = 0; i < COUNT; ++i)
+		// Insertion
 		{
-			akMap.emplace(alloc, vals[i], vals[i]);
-		}
-		timer.stop();
-		Second akTime = timer.getElapsedTime();
-
-		// Put the vals STL
-		timer.start();
-		for(U i = 0; i < COUNT; ++i)
-		{
-			stdMap[vals[i]] = vals[i];
-		}
-		timer.stop();
-		Second stlTime = timer.getElapsedTime();
-
-		printf("Inserting bench: STL %f AnKi %f | %f%%\n", stlTime, akTime, stlTime / akTime * 100.0);
-
-		// Find values AnKi
-		timer.start();
-		for(U i = 0; i < COUNT; ++i)
-		{
-			auto it = akMap.find(vals[i]);
-			count += *it;
-		}
-		timer.stop();
-		akTime = timer.getElapsedTime();
-
-		// Find values STL
-		timer.start();
-		for(U i = 0; i < COUNT; ++i)
-		{
-			count += stdMap[vals[i]];
-		}
-		timer.stop();
-		stlTime = timer.getElapsedTime();
-
-		printf("Find bench: STL %f AnKi %f | %f%%\n", stlTime, akTime, stlTime / akTime * 100.0);
-
-		// Create a random set for deletion out of vals
-		tmpMap.clear();
-		const U DEL_COUNT = COUNT / 2;
-		DynamicArrayAuto<AkMap::Iterator> delValsAk(alloc);
-		delValsAk.create(DEL_COUNT);
-
-		DynamicArrayAuto<StlMap::iterator> delValsStl(alloc);
-		delValsStl.create(DEL_COUNT);
-
-		for(U i = 0; i < DEL_COUNT; ++i)
-		{
-			// Put unique keys
-			int v;
-			do
+			// Put the vals AnKi
+			timer.start();
+			for(U i = 0; i < COUNT; ++i)
 			{
-				v = vals[rand() % COUNT];
-			} while(tmpMap.find(v) != tmpMap.end());
-			tmpMap[v] = 1;
+				akMap.emplace(alloc, vals[i], vals[i]);
+			}
+			timer.stop();
+			Second akTime = timer.getElapsedTime();
 
-			delValsAk[i] = akMap.find(v);
-			delValsStl[i] = stdMap.find(v);
+			// Put the vals STL
+			timer.start();
+			for(U i = 0; i < COUNT; ++i)
+			{
+				stdMap[vals[i]] = vals[i];
+			}
+			timer.stop();
+			Second stlTime = timer.getElapsedTime();
+
+			ANKI_TEST_LOGI("Inserting bench: STL %f AnKi %f | %f%%", stlTime, akTime, stlTime / akTime * 100.0);
 		}
 
-		// Random delete AnKi
-		timer.start();
-		for(U i = 0; i < DEL_COUNT; ++i)
+		// Search
 		{
-			akMap.erase(alloc, delValsAk[i]);
-		}
-		timer.stop();
-		akTime = timer.getElapsedTime();
+			I64 count = 0; // To avoid compiler opts
 
-		// Random delete STL
-		timer.start();
-		for(U i = 0; i < DEL_COUNT; ++i)
+			// Find values AnKi
+			timer.start();
+			for(U i = 0; i < COUNT; ++i)
+			{
+				auto it = akMap.find(vals[i]);
+				count += *it;
+			}
+			timer.stop();
+			Second akTime = timer.getElapsedTime();
+
+			// Find values STL
+			timer.start();
+			for(U i = 0; i < COUNT; ++i)
+			{
+				count += stdMap[vals[i]];
+			}
+			timer.stop();
+			Second stlTime = timer.getElapsedTime();
+
+			ANKI_TEST_LOGI(
+				"Find bench: STL %f AnKi %f | %f%% (%lld)", stlTime, akTime, stlTime / akTime * 100.0, count);
+		}
+
+		// Delete
 		{
-			stdMap.erase(delValsStl[i]);
-		}
-		timer.stop();
-		stlTime = timer.getElapsedTime();
+			// Remove in random order
+			std::random_shuffle(vals.begin(), vals.end());
 
-		printf("Deleting bench: STL %f AnKi %f | %f%%\n", stlTime, akTime, stlTime / akTime * 100.0);
+			// Random delete AnKi
+			Second akTime = 0.0;
+			for(U i = 0; i < vals.getSize(); ++i)
+			{
+				auto it = akMap.find(vals[i]);
+
+				timer.start();
+				akMap.erase(alloc, it);
+				timer.stop();
+				akTime += timer.getElapsedTime();
+			}
+
+			// Random delete STL
+			Second stlTime = 0.0;
+			for(U i = 0; i < vals.getSize(); ++i)
+			{
+				auto it = stdMap.find(vals[i]);
+
+				timer.start();
+				stdMap.erase(it);
+				timer.stop();
+				stlTime += timer.getElapsedTime();
+			}
+
+			ANKI_TEST_LOGI("Deleting bench: STL %f AnKi %f | %f%%", stlTime, akTime, stlTime / akTime * 100.0);
+		}
 
 		akMap.destroy(alloc);
 	}

@@ -41,28 +41,38 @@ class RenderPassDependency
 	friend class RenderPassBase;
 
 public:
-	union
+	struct TextureInfo
 	{
-		RenderTargetHandle m_renderTargetHandle;
-		RenderPassBufferHandle m_bufferHandle;
+		RenderTargetHandle m_handle;
+		TextureUsageBit m_usage;
+		TextureSurfaceInfo m_surface;
+	};
+
+	struct BufferInfo
+	{
+		RenderPassBufferHandle m_handle;
+		BufferUsageBit m_usage;
+		PtrSize m_offset;
+		PtrSize m_range;
 	};
 
 	union
 	{
-		TextureUsageBit m_textureUsage;
-		BufferUsageBit m_bufferUsage;
+		TextureInfo m_texture;
+		BufferInfo m_buffer;
 	};
 
-	RenderPassDependency(RenderTargetHandle handle, TextureUsageBit usage)
-		: m_renderTargetHandle(handle)
-		, m_textureUsage(usage)
+	RenderPassDependency(RenderTargetHandle handle,
+		TextureUsageBit usage,
+		const TextureSurfaceInfo& surface = TextureSurfaceInfo(0, 0, 0, 0))
+		: m_texture({handle, usage, surface})
 		, m_isTexture(true)
 	{
 	}
 
-	RenderPassDependency(RenderPassBufferHandle handle, BufferUsageBit usage)
-		: m_bufferHandle(handle)
-		, m_bufferUsage(usage)
+	RenderPassDependency(
+		RenderPassBufferHandle handle, BufferUsageBit usage, PtrSize offset = 0, PtrSize range = MAX_PTR_SIZE)
+		: m_buffer({handle, usage, offset, range})
 		, m_isTexture(false)
 	{
 	}
@@ -111,13 +121,14 @@ public:
 	void newConsumer(const RenderPassDependency& dep)
 	{
 		m_consumers.emplaceBack(m_alloc, dep);
-		if(dep.m_isTexture)
+
+		if(dep.m_isTexture && dep.m_texture.m_usage != TextureUsageBit::NONE)
 		{
-			m_consumerRtMask.set(dep.m_renderTargetHandle);
+			m_consumerRtMask.set(dep.m_texture.m_handle);
 		}
-		else
+		else if(dep.m_buffer.m_usage != BufferUsageBit::NONE)
 		{
-			m_consumerBufferMask.set(dep.m_bufferHandle);
+			m_consumerBufferMask.set(dep.m_buffer.m_handle);
 		}
 	}
 
@@ -126,11 +137,11 @@ public:
 		m_producers.emplaceBack(m_alloc, dep);
 		if(dep.m_isTexture)
 		{
-			m_producerRtMask.set(dep.m_renderTargetHandle);
+			m_producerRtMask.set(dep.m_texture.m_handle);
 		}
 		else
 		{
-			m_producerBufferMask.set(dep.m_bufferHandle);
+			m_producerBufferMask.set(dep.m_buffer.m_handle);
 		}
 	}
 
@@ -216,10 +227,12 @@ private:
 class RenderTarget
 {
 	friend class RenderGraphDescription;
+	friend class RenderGraph;
 
 private:
 	TextureInitInfo m_initInfo;
 	TexturePtr m_importedTex;
+	TextureUsageBit m_usage;
 };
 
 /// XXX
@@ -255,10 +268,11 @@ public:
 	}
 
 	/// XXX
-	U32 importRenderTarget(CString name, TexturePtr tex)
+	U32 importRenderTarget(CString name, TexturePtr tex, TextureUsageBit usage)
 	{
 		RenderTarget rt;
 		rt.m_importedTex = tex;
+		rt.m_usage = usage;
 		m_renderTargets.emplaceBack(m_alloc, rt);
 		return m_renderTargets.getSize() - 1;
 	}
@@ -268,6 +282,7 @@ public:
 	{
 		RenderTarget rt;
 		rt.m_initInfo = initInf;
+		rt.m_usage = TextureUsageBit::NONE;
 		m_renderTargets.emplaceBack(m_alloc, rt);
 		return m_renderTargets.getSize() - 1;
 	}
@@ -334,8 +349,6 @@ public:
 	/// @}
 
 private:
-	StackAllocator<U8> m_tmpAlloc;
-
 	/// Render targets of the same type+size+format.
 	class RenderTargetCacheEntry
 	{
@@ -351,6 +364,8 @@ private:
 	class BakeContext;
 	class Pass;
 	class Batch;
+	class RT;
+	class RTBarrier;
 
 	TexturePtr getOrCreateRenderTarget(const TextureInitInfo& initInf);
 
@@ -359,6 +374,8 @@ private:
 
 	static Bool passADependsOnB(BakeContext& ctx, const RenderPassBase& a, const RenderPassBase& b);
 	static Bool passHasUnmetDependencies(const BakeContext& ctx, U32 passIdx);
+
+	void setBatchBarriers(BakeContext& ctx) const;
 };
 /// @}
 

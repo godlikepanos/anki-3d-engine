@@ -150,6 +150,11 @@ public:
 	{
 	}
 
+	Bool operator==(const TextureSurfaceInfo& b) const
+	{
+		return m_level == b.m_level && m_depth == b.m_depth && m_face == b.m_face && m_layer == b.m_layer;
+	}
+
 	U32 m_level = 0;
 	U32 m_depth = 0;
 	U32 m_face = 0;
