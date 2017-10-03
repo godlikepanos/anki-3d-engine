@@ -9,6 +9,7 @@
 #include <anki/gr/Framebuffer.h>
 #include <anki/util/BitSet.h>
 #include <anki/util/File.h>
+#include <anki/util/StringList.h>
 
 namespace anki
 {
@@ -20,19 +21,42 @@ public:
 	TextureUsageBit m_usage;
 };
 
-class RenderGraph::RTBarrier
+/// Pipeline barrier of texture or buffer.
+class RenderGraph::Barrier
 {
 public:
-	U32 m_rtIdx;
-	TextureUsageBit m_usageBefore;
-	TextureUsageBit m_usageAfter;
-	TextureSurfaceInfo m_surf;
+	struct TextureInfo
+	{
+		U32 m_idx;
+		TextureUsageBit m_usageBefore;
+		TextureUsageBit m_usageAfter;
+		TextureSurfaceInfo m_surf;
+	};
 
-	RTBarrier(U32 rtIdx, TextureUsageBit usageBefore, TextureUsageBit usageAfter, const TextureSurfaceInfo& surf)
-		: m_rtIdx(rtIdx)
-		, m_usageBefore(usageBefore)
-		, m_usageAfter(usageAfter)
-		, m_surf(surf)
+	struct BufferInfo
+	{
+		U32 m_idx;
+		BufferUsageBit m_usageBefore;
+		BufferUsageBit m_usageAfter;
+	};
+
+	union
+	{
+		TextureInfo m_tex;
+		BufferInfo m_buff;
+	};
+
+	Bool8 m_isTexture;
+
+	Barrier(U32 rtIdx, TextureUsageBit usageBefore, TextureUsageBit usageAfter, const TextureSurfaceInfo& surf)
+		: m_tex({rtIdx, usageBefore, usageAfter, surf})
+		, m_isTexture(true)
+	{
+	}
+
+	Barrier(U32 buffIdx, BufferUsageBit usageBefore, BufferUsageBit usageAfter)
+		: m_buff({buffIdx, usageBefore, usageAfter})
+		, m_isTexture(false)
 	{
 	}
 };
@@ -54,13 +78,13 @@ class RenderGraph::Batch
 {
 public:
 	DynamicArrayAuto<U32> m_passes;
-	DynamicArrayAuto<RTBarrier> m_rtBarriersBefore;
-	DynamicArrayAuto<RTBarrier> m_rtBarriersAfter;
+	DynamicArrayAuto<Barrier> m_barriersBefore;
+	DynamicArrayAuto<Barrier> m_barriersAfter;
 
 	Batch(const StackAllocator<U8>& alloc)
 		: m_passes(alloc)
-		, m_rtBarriersBefore(alloc)
-		, m_rtBarriersAfter(alloc)
+		, m_barriersBefore(alloc)
+		, m_barriersAfter(alloc)
 	{
 	}
 };
@@ -109,66 +133,6 @@ RenderGraph::~RenderGraph()
 void RenderGraph::reset()
 {
 	// TODO
-}
-
-Error RenderGraph::dumpDependencyDotFile(const BakeContext& ctx, CString path) const
-{
-	File file;
-	ANKI_CHECK(file.open(StringAuto(ctx.m_alloc).sprintf("%s/rgraph.dot", &path[0]).toCString(), FileOpenFlag::WRITE));
-
-	ANKI_CHECK(file.writeText("digraph {\n"));
-	ANKI_CHECK(file.writeText("splines = ortho;\nconcentrate = true;\n"));
-
-	for(U batchIdx = 0; batchIdx < ctx.m_batches.getSize(); ++batchIdx)
-	{
-		ANKI_CHECK(file.writeText("\t{rank=\"same\";"));
-		for(U32 passIdx : ctx.m_batches[batchIdx].m_passes)
-		{
-			ANKI_CHECK(file.writeText("\"%s\";", &ctx.m_descr->m_passes[passIdx]->m_name[0]));
-		}
-		ANKI_CHECK(file.writeText("}\n"));
-
-		for(U32 passIdx : ctx.m_batches[batchIdx].m_passes)
-		{
-			for(U32 depIdx : ctx.m_passes[passIdx].m_dependsOn)
-			{
-				ANKI_CHECK(file.writeText("\t\"%s\"->\"%s\";\n",
-					&ctx.m_descr->m_passes[depIdx]->m_name[0],
-					&ctx.m_descr->m_passes[passIdx]->m_name[0]));
-			}
-
-			if(ctx.m_passes[passIdx].m_dependsOn.getSize() == 0)
-			{
-				ANKI_CHECK(file.writeText("\tNONE->\"%s\";\n", &ctx.m_descr->m_passes[passIdx]->m_name[0]));
-			}
-		}
-	}
-
-	ANKI_CHECK(file.writeText("}"));
-
-// Barriers
-#if 0
-	ANKI_CHECK(file.writeText("digraph {\n"));
-	ANKI_CHECK(file.writeText("splines = ortho;\nconcentrate = true;\n"));
-
-	for(U batchIdx = 0; batchIdx < ctx.m_batches.getSize(); ++batchIdx)
-	{
-		const Batch& batch = ctx.m_batches[batchIdx];
-		StringAuto prevBatchName(ctx.m_alloc);
-		if(batchIdx == 0)
-		{
-			prevBatchName.sprintf("%s", "NONE");
-		}
-		else
-		{
-			prevBatchName.sprintf("batch_%u", batchIdx - 1);
-		}
-	}
-
-	ANKI_CHECK(file.writeText("}"));
-#endif
-
-	return Error::NONE;
 }
 
 TexturePtr RenderGraph::getOrCreateRenderTarget(const TextureInitInfo& initInf)
@@ -391,7 +355,7 @@ void RenderGraph::setBatchBarriers(BakeContext& ctx) const
 
 					if(crntUsage != consumerUsage)
 					{
-						batch.m_rtBarriersBefore.emplaceBack(
+						batch.m_barriersBefore.emplaceBack(
 							consumer.m_texture.m_handle, crntUsage, consumerUsage, consumer.m_texture.m_surface);
 
 						crntUsage = consumerUsage;
@@ -413,7 +377,7 @@ void RenderGraph::setBatchBarriers(BakeContext& ctx) const
 
 					if(crntUsage != producerUsage)
 					{
-						batch.m_rtBarriersAfter.emplaceBack(
+						batch.m_barriersAfter.emplaceBack(
 							producer.m_texture.m_handle, producerUsage, crntUsage, producer.m_texture.m_surface);
 
 						crntUsage = producerUsage;
@@ -426,6 +390,146 @@ void RenderGraph::setBatchBarriers(BakeContext& ctx) const
 			}
 		}
 	}
+}
+
+StringAuto RenderGraph::textureUsageToStr(const BakeContext& ctx, TextureUsageBit usage)
+{
+	StringListAuto slist(ctx.m_alloc);
+
+#define ANKI_TEX_USAGE(u)                \
+	if(!!(usage & TextureUsageBit::u))   \
+	{                                    \
+		slist.pushBackSprintf("%s", #u); \
+	}
+
+	ANKI_TEX_USAGE(SAMPLED_VERTEX);
+	ANKI_TEX_USAGE(SAMPLED_TESSELLATION_CONTROL);
+	ANKI_TEX_USAGE(SAMPLED_TESSELLATION_EVALUATION);
+	ANKI_TEX_USAGE(SAMPLED_GEOMETRY);
+	ANKI_TEX_USAGE(SAMPLED_FRAGMENT);
+	ANKI_TEX_USAGE(IMAGE_COMPUTE_READ);
+	ANKI_TEX_USAGE(IMAGE_COMPUTE_WRITE);
+	ANKI_TEX_USAGE(FRAMEBUFFER_ATTACHMENT_READ);
+	ANKI_TEX_USAGE(FRAMEBUFFER_ATTACHMENT_WRITE);
+	ANKI_TEX_USAGE(TRANSFER_DESTINATION);
+	ANKI_TEX_USAGE(GENERATE_MIPMAPS);
+	ANKI_TEX_USAGE(CLEAR);
+
+	if(!usage)
+	{
+		slist.pushBackSprintf("NONE");
+	}
+
+#undef ANKI_TEX_USAGE
+
+	StringAuto str(ctx.m_alloc);
+	slist.join(" | ", str);
+	return str;
+}
+
+Error RenderGraph::dumpDependencyDotFile(const BakeContext& ctx, CString path) const
+{
+	static const Array<const char*, 6> COLORS = {{"red", "green", "blue", "magenta", "yellow", "cyan"}};
+	auto alloc = ctx.m_alloc;
+	StringListAuto slist(alloc);
+
+	slist.pushBackSprintf("digraph {\n");
+	slist.pushBackSprintf("\t//splines = ortho;\nconcentrate = true;\n");
+
+	for(U batchIdx = 0; batchIdx < ctx.m_batches.getSize(); ++batchIdx)
+	{
+		// Set same rank
+		slist.pushBackSprintf("\t{rank=\"same\";");
+		for(U32 passIdx : ctx.m_batches[batchIdx].m_passes)
+		{
+			slist.pushBackSprintf("\"%s\";", &ctx.m_descr->m_passes[passIdx]->m_name[0]);
+		}
+		slist.pushBackSprintf("}\n");
+
+		// Print passes
+		for(U32 passIdx : ctx.m_batches[batchIdx].m_passes)
+		{
+			CString passName = ctx.m_descr->m_passes[passIdx]->m_name.toCString();
+
+			slist.pushBackSprintf("\t\"%s\"[color=%s,style=bold,shape=box];\n", &passName[0], COLORS[batchIdx % 6]);
+
+			for(U32 depIdx : ctx.m_passes[passIdx].m_dependsOn)
+			{
+				slist.pushBackSprintf("\t\"%s\"->\"%s\";\n", &ctx.m_descr->m_passes[depIdx]->m_name[0], &passName[0]);
+			}
+
+			if(ctx.m_passes[passIdx].m_dependsOn.getSize() == 0)
+			{
+				slist.pushBackSprintf("\tNONE->\"%s\";\n", &ctx.m_descr->m_passes[passIdx]->m_name[0]);
+			}
+		}
+	}
+
+	// Barriers
+	StringAuto prevBubble(ctx.m_alloc);
+	prevBubble.create("START");
+	for(U batchIdx = 0; batchIdx < ctx.m_batches.getSize(); ++batchIdx)
+	{
+		const Batch& batch = ctx.m_batches[batchIdx];
+
+		StringAuto batchName(ctx.m_alloc);
+		batchName.sprintf("batch%u", batchIdx);
+
+		for(U barrierIdx = 0; barrierIdx < batch.m_barriersBefore.getSize(); ++barrierIdx)
+		{
+			const Barrier& barrier = batch.m_barriersBefore[barrierIdx];
+			StringAuto barrierName(ctx.m_alloc);
+			if(barrier.m_isTexture)
+			{
+				barrierName.sprintf("%s barrier%u\n%s -> %s",
+					&batchName[0],
+					barrierIdx,
+					&textureUsageToStr(ctx, barrier.m_tex.m_usageBefore).toCString()[0],
+					&textureUsageToStr(ctx, barrier.m_tex.m_usageAfter).toCString()[0]);
+			}
+			else
+			{
+				// TODO
+			}
+
+			slist.pushBackSprintf("\t\"%s\"[color=%s,style=bold,shape=box];\n", &barrierName[0], COLORS[batchIdx % 6]);
+			slist.pushBackSprintf("\t\"%s\"->\"%s\";\n", &prevBubble[0], &barrierName[0]);
+
+			// Print render target dep
+			if(barrier.m_isTexture)
+			{
+				StringAuto rtName(ctx.m_alloc);
+				rtName.sprintf("%s\n(mip:%u dp:%u f:%u l:%u)",
+					&ctx.m_descr->m_renderTargets[barrier.m_tex.m_idx].m_name[0],
+					barrier.m_tex.m_surf.m_level,
+					barrier.m_tex.m_surf.m_depth,
+					barrier.m_tex.m_surf.m_face,
+					barrier.m_tex.m_surf.m_layer);
+
+				slist.pushBackSprintf("\t\"%s\"->\"%s\";\n", &rtName[0], &barrierName[0]);
+			}
+			else
+			{
+				// TODO
+			}
+
+			prevBubble = barrierName;
+		}
+
+		slist.pushBackSprintf("\t\"%s\"[color=%s,style=bold];\n", &batchName[0], COLORS[batchIdx % 6]);
+		slist.pushBackSprintf("\t\"%s\"->\"%s\";\n", &prevBubble[0], &batchName[0]);
+		prevBubble = batchName;
+	}
+
+	slist.pushBackSprintf("}");
+
+	File file;
+	ANKI_CHECK(file.open(StringAuto(alloc).sprintf("%s/rgraph.dot", &path[0]).toCString(), FileOpenFlag::WRITE));
+	StringAuto final(alloc);
+	slist.join("\n", final);
+	ANKI_CHECK(file.writeText("%s", &final[0]));
+
+	return Error::NONE;
 }
 
 } // end namespace anki

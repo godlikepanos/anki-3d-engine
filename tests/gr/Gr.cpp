@@ -1535,7 +1535,7 @@ ANKI_TEST(Gr, RenderGraph)
 {
 	COMMON_BEGIN()
 
-	StackAllocator<U8> alloc(allocAligned, nullptr, 2_KB);
+	StackAllocator<U8> alloc(allocAligned, nullptr, 1_MB);
 	RenderGraphDescription descr(alloc);
 	RenderGraphPtr rgraph = gr->newInstance<RenderGraph>();
 
@@ -1550,7 +1550,7 @@ ANKI_TEST(Gr, RenderGraph)
 	RenderTargetHandle smScratchRt = descr.newRenderTarget("sm_scratch", texInf);
 	{
 		GraphicsRenderPassInfo& pass = descr.newGraphicsRenderPass("SM");
-		pass.newConsumer({smScratchRt, TextureUsageBit::NONE});
+		pass.newConsumer({smScratchRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE});
 		pass.newProducer({smScratchRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE});
 	}
 

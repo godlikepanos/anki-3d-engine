@@ -233,6 +233,7 @@ private:
 	TextureInitInfo m_initInfo;
 	TexturePtr m_importedTex;
 	TextureUsageBit m_usage;
+	Array<char, MAX_GR_OBJECT_NAME_LENGTH + 1> m_name;
 };
 
 /// XXX
@@ -273,6 +274,14 @@ public:
 		RenderTarget rt;
 		rt.m_importedTex = tex;
 		rt.m_usage = usage;
+		const U len = name.getLength();
+		if(len)
+		{
+			ANKI_ASSERT(len <= MAX_GR_OBJECT_NAME_LENGTH);
+			memcpy(&rt.m_name[0], &name[0], len);
+		}
+		rt.m_name[len] = '\0';
+
 		m_renderTargets.emplaceBack(m_alloc, rt);
 		return m_renderTargets.getSize() - 1;
 	}
@@ -283,6 +292,13 @@ public:
 		RenderTarget rt;
 		rt.m_initInfo = initInf;
 		rt.m_usage = TextureUsageBit::NONE;
+		const U len = name.getLength();
+		if(len)
+		{
+			ANKI_ASSERT(len <= MAX_GR_OBJECT_NAME_LENGTH);
+			memcpy(&rt.m_name[0], &name[0], len);
+		}
+		rt.m_name[len] = '\0';
 		m_renderTargets.emplaceBack(m_alloc, rt);
 		return m_renderTargets.getSize() - 1;
 	}
@@ -365,17 +381,19 @@ private:
 	class Pass;
 	class Batch;
 	class RT;
-	class RTBarrier;
+	class Barrier;
 
 	TexturePtr getOrCreateRenderTarget(const TextureInitInfo& initInf);
-
-	/// Dump the dependency graph into a file.
-	ANKI_USE_RESULT Error dumpDependencyDotFile(const BakeContext& ctx, CString path) const;
 
 	static Bool passADependsOnB(BakeContext& ctx, const RenderPassBase& a, const RenderPassBase& b);
 	static Bool passHasUnmetDependencies(const BakeContext& ctx, U32 passIdx);
 
 	void setBatchBarriers(BakeContext& ctx) const;
+
+	/// Dump the dependency graph into a file.
+	ANKI_USE_RESULT Error dumpDependencyDotFile(const BakeContext& ctx, CString path) const;
+
+	static StringAuto textureUsageToStr(const BakeContext& ctx, TextureUsageBit usage);
 };
 /// @}
 
