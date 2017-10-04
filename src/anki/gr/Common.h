@@ -155,6 +155,19 @@ public:
 		return m_level == b.m_level && m_depth == b.m_depth && m_face == b.m_face && m_layer == b.m_layer;
 	}
 
+	U64 computeHash() const
+	{
+		ANKI_ASSERT(m_level < MAX_U16 && m_depth < MAX_U16 && m_face < MAX_U16 && m_layer < MAX_U16);
+		U64 hash = m_level;
+		hash <<= 16;
+		hash |= m_depth;
+		hash <<= 16;
+		hash |= m_face + 1; // Add one so we won't end up with zero hash
+		hash <<= 16;
+		hash |= m_layer;
+		return hash;
+	}
+
 	U32 m_level = 0;
 	U32 m_depth = 0;
 	U32 m_face = 0;

@@ -1535,7 +1535,7 @@ ANKI_TEST(Gr, RenderGraph)
 {
 	COMMON_BEGIN()
 
-	StackAllocator<U8> alloc(allocAligned, nullptr, 1_MB);
+	StackAllocator<U8> alloc(allocAligned, nullptr, 2_MB);
 	RenderGraphDescription descr(alloc);
 	RenderGraphPtr rgraph = gr->newInstance<RenderGraph>();
 
@@ -1559,7 +1559,7 @@ ANKI_TEST(Gr, RenderGraph)
 	{
 		GraphicsRenderPassInfo& pass = descr.newGraphicsRenderPass("ESM");
 		pass.newConsumer({smScratchRt, TextureUsageBit::SAMPLED_FRAGMENT});
-		pass.newConsumer({smExpRt, TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newConsumer({smExpRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		pass.newProducer({smExpRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 	}
 
@@ -1569,9 +1569,9 @@ ANKI_TEST(Gr, RenderGraph)
 	RenderTargetHandle giGbuffDepthRt = descr.newRenderTarget("GI gbuff depth", texInf);
 	{
 		GraphicsRenderPassInfo& pass = descr.newGraphicsRenderPass("GI gbuff");
-		pass.newConsumer({giGbuffNormRt, TextureUsageBit::NONE});
-		pass.newConsumer({giGbuffDepthRt, TextureUsageBit::NONE});
-		pass.newConsumer({giGbuffDiffRt, TextureUsageBit::NONE});
+		pass.newConsumer({giGbuffNormRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass.newConsumer({giGbuffDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass.newConsumer({giGbuffDiffRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 
 		pass.newProducer({giGbuffNormRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		pass.newProducer({giGbuffDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
@@ -1584,7 +1584,8 @@ ANKI_TEST(Gr, RenderGraph)
 	{
 		GraphicsRenderPassInfo& pass =
 			descr.newGraphicsRenderPass(StringAuto(alloc).sprintf("GI li%u", faceIdx).toCString());
-		pass.newConsumer({giGiLightRt, TextureUsageBit::NONE, TextureSurfaceInfo(0, 0, faceIdx, 0)});
+		pass.newConsumer(
+			{giGiLightRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureSurfaceInfo(0, 0, faceIdx, 0)});
 		pass.newConsumer({giGbuffNormRt, TextureUsageBit::SAMPLED_FRAGMENT});
 		pass.newConsumer({giGbuffDepthRt, TextureUsageBit::SAMPLED_FRAGMENT});
 		pass.newConsumer({giGbuffDiffRt, TextureUsageBit::SAMPLED_FRAGMENT});
@@ -1600,14 +1601,10 @@ ANKI_TEST(Gr, RenderGraph)
 			GraphicsRenderPassInfo& pass =
 				descr.newGraphicsRenderPass(StringAuto(alloc).sprintf("GI mip%u", faceIdx).toCString());
 
-			pass.newConsumer(
-				{giGiLightRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureSurfaceInfo(0, 0, faceIdx, 0)});
-			pass.newConsumer({giGiLightRt, TextureUsageBit::GENERATE_MIPMAPS, TextureSurfaceInfo(0, 0, faceIdx, 0)});
-
-			for(U mip = 1; mip < GI_MIP_COUNT; ++mip)
+			for(U mip = 0; mip < GI_MIP_COUNT; ++mip)
 			{
 				TextureSurfaceInfo surf(mip, 0, faceIdx, 0);
-				pass.newConsumer({giGiLightRt, TextureUsageBit::NONE, surf});
+				pass.newConsumer({giGiLightRt, TextureUsageBit::GENERATE_MIPMAPS, surf});
 				pass.newProducer({giGiLightRt, TextureUsageBit::GENERATE_MIPMAPS, surf});
 			}
 		}

@@ -234,6 +234,20 @@ private:
 	TexturePtr m_importedTex;
 	TextureUsageBit m_usage;
 	Array<char, MAX_GR_OBJECT_NAME_LENGTH + 1> m_name;
+
+	void setName(CString name)
+	{
+		const U len = name.getLength();
+		if(len)
+		{
+			ANKI_ASSERT(len <= MAX_GR_OBJECT_NAME_LENGTH);
+			strcpy(&m_name[0], &name[0]);
+		}
+		else
+		{
+			strcpy(&m_name[0], "unnamed");
+		}
+	}
 };
 
 /// XXX
@@ -274,14 +288,7 @@ public:
 		RenderTarget rt;
 		rt.m_importedTex = tex;
 		rt.m_usage = usage;
-		const U len = name.getLength();
-		if(len)
-		{
-			ANKI_ASSERT(len <= MAX_GR_OBJECT_NAME_LENGTH);
-			memcpy(&rt.m_name[0], &name[0], len);
-		}
-		rt.m_name[len] = '\0';
-
+		rt.setName(name);
 		m_renderTargets.emplaceBack(m_alloc, rt);
 		return m_renderTargets.getSize() - 1;
 	}
@@ -292,13 +299,7 @@ public:
 		RenderTarget rt;
 		rt.m_initInfo = initInf;
 		rt.m_usage = TextureUsageBit::NONE;
-		const U len = name.getLength();
-		if(len)
-		{
-			ANKI_ASSERT(len <= MAX_GR_OBJECT_NAME_LENGTH);
-			memcpy(&rt.m_name[0], &name[0], len);
-		}
-		rt.m_name[len] = '\0';
+		rt.setName(name);
 		m_renderTargets.emplaceBack(m_alloc, rt);
 		return m_renderTargets.getSize() - 1;
 	}

@@ -18,7 +18,12 @@ namespace anki
 class RenderGraph::RT
 {
 public:
-	TextureUsageBit m_usage;
+	HashMap<TextureSurfaceInfo, TextureUsageBit> m_surfUsageMap;
+
+	RT()
+		: m_surfUsageMap(8, 4)
+	{
+	}
 };
 
 /// Pipeline barrier of texture or buffer.
@@ -273,10 +278,6 @@ void RenderGraph::compileNewGraph(const RenderGraphDescription& descr)
 
 	// Init the render targets
 	ctx.m_rts.create(descr.m_renderTargets.getSize());
-	for(U i = 0; i < descr.m_renderTargets.getSize(); ++i)
-	{
-		ctx.m_rts[i].m_usage = descr.m_renderTargets[i].m_usage;
-	}
 
 	// Find the dependencies between passes
 	for(U i = 0; i < passCount; ++i)
@@ -337,6 +338,8 @@ void RenderGraph::compileNewGraph(const RenderGraphDescription& descr)
 
 void RenderGraph::setBatchBarriers(BakeContext& ctx) const
 {
+	const StackAllocator<U8>& alloc = ctx.m_alloc;
+
 	// For all batches
 	for(Batch& batch : ctx.m_batches)
 	{
@@ -350,15 +353,27 @@ void RenderGraph::setBatchBarriers(BakeContext& ctx) const
 			{
 				if(consumer.m_isTexture)
 				{
+					const U32 rtIdx = consumer.m_texture.m_handle;
 					const TextureUsageBit consumerUsage = consumer.m_texture.m_usage;
-					TextureUsageBit& crntUsage = ctx.m_rts[consumer.m_texture.m_handle].m_usage;
+
+					// Get current suage
+					TextureUsageBit crntUsage;
+					auto it = ctx.m_rts[rtIdx].m_surfUsageMap.find(consumer.m_texture.m_surface);
+					if(it != ctx.m_rts[rtIdx].m_surfUsageMap.getEnd())
+					{
+						crntUsage = *it;
+						*it = consumerUsage;
+					}
+					else
+					{
+						crntUsage = ctx.m_descr->m_renderTargets[rtIdx].m_usage;
+						ctx.m_rts[rtIdx].m_surfUsageMap.emplace(alloc, consumer.m_texture.m_surface, consumerUsage);
+					}
 
 					if(crntUsage != consumerUsage)
 					{
 						batch.m_barriersBefore.emplaceBack(
 							consumer.m_texture.m_handle, crntUsage, consumerUsage, consumer.m_texture.m_surface);
-
-						crntUsage = consumerUsage;
 					}
 				}
 				else
@@ -367,27 +382,26 @@ void RenderGraph::setBatchBarriers(BakeContext& ctx) const
 				}
 			}
 
-			// For all producers
+// For all producers, just check some stuff
+#if ANKI_EXTRA_CHECKS
 			for(const RenderPassDependency& producer : pass.m_producers)
 			{
 				if(producer.m_isTexture)
 				{
-					const TextureUsageBit producerUsage = producer.m_texture.m_usage;
-					TextureUsageBit& crntUsage = ctx.m_rts[producer.m_texture.m_handle].m_usage;
+					const U32 rtIdx = producer.m_texture.m_handle;
 
-					if(crntUsage != producerUsage)
-					{
-						batch.m_barriersAfter.emplaceBack(
-							producer.m_texture.m_handle, producerUsage, crntUsage, producer.m_texture.m_surface);
+					auto it = ctx.m_rts[rtIdx].m_surfUsageMap.find(producer.m_texture.m_surface);
+					ANKI_ASSERT(it != ctx.m_rts[rtIdx].m_surfUsageMap.getEnd()
+						&& "There should have been a consumer that added a map entry");
 
-						crntUsage = producerUsage;
-					}
+					ANKI_ASSERT(*it == producer.m_texture.m_usage && "The consumer should have set that");
 				}
 				else
 				{
 					// TODO
 				}
 			}
+#endif
 		}
 	}
 }
@@ -525,9 +539,10 @@ Error RenderGraph::dumpDependencyDotFile(const BakeContext& ctx, CString path) c
 
 	File file;
 	ANKI_CHECK(file.open(StringAuto(alloc).sprintf("%s/rgraph.dot", &path[0]).toCString(), FileOpenFlag::WRITE));
-	StringAuto final(alloc);
-	slist.join("\n", final);
-	ANKI_CHECK(file.writeText("%s", &final[0]));
+	for(const String& s : slist)
+	{
+		ANKI_CHECK(file.writeText("%s", &s[0]));
+	}
 
 	return Error::NONE;
 }
