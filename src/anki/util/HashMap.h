@@ -180,6 +180,61 @@ public:
 private:
 	SparseArrayType m_sparseArr;
 };
+
+/// Hash map template with automatic cleanup.
+template<typename TKey, typename TValue, typename THasher = DefaultHasher<TKey>>
+class HashMapAuto : public HashMap<TKey, TValue, THasher>
+{
+public:
+	using Base = HashMap<TKey, TValue, THasher>;
+
+	/// Default constructor.
+	/// @copy doc SparseArray::SparseArray
+	HashMapAuto(const GenericMemoryPoolAllocator<U8>& alloc,
+		U32 initialStorageSize = Base::INITIAL_STORAGE_SIZE,
+		U32 probeCount = Base::LINEAR_PROBING_COUNT,
+		F32 maxLoadFactor = Base::MAX_LOAD_FACTOR)
+		: Base(initialStorageSize, probeCount, maxLoadFactor)
+		, m_alloc(alloc)
+	{
+	}
+
+	/// Move.
+	HashMapAuto(HashMapAuto&& b)
+	{
+		*this = std::move(b);
+	}
+
+	/// Destructor.
+	~HashMapAuto()
+	{
+		Base::destroy(m_alloc);
+	}
+
+	/// Move.
+	HashMapAuto& operator=(HashMapAuto&& b)
+	{
+		std::move(*static_cast<HashMapAuto>(this));
+		m_alloc = std::move(b.m_alloc);
+		return *this;
+	}
+
+	/// Construct an element inside the map.
+	template<typename... TArgs>
+	typename Base::Iterator emplace(const TKey& key, TArgs&&... args)
+	{
+		return Base::emplace(m_alloc, std::forward(args)...);
+	}
+
+	/// Erase element.
+	void erase(typename Base::Iterator it)
+	{
+		Base::erase(m_alloc, it);
+	}
+
+private:
+	GenericMemoryPoolAllocator<U8> m_alloc;
+};
 /// @}
 
 } // end namespace anki
