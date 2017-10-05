@@ -41,11 +41,33 @@ class RenderPassDependency
 	friend class RenderPassBase;
 
 public:
+	/// Dependency to an individual surface.
+	RenderPassDependency(RenderTargetHandle handle, TextureUsageBit usage, const TextureSurfaceInfo& surface)
+		: m_texture({handle, usage, surface, false})
+		, m_isTexture(true)
+	{
+	}
+
+	/// Dependency to the whole texture.
+	RenderPassDependency(RenderTargetHandle handle, TextureUsageBit usage)
+		: m_texture({handle, usage, TextureSurfaceInfo(0, 0, 0, 0), true})
+		, m_isTexture(true)
+	{
+	}
+
+	RenderPassDependency(RenderPassBufferHandle handle, BufferUsageBit usage, PtrSize offset, PtrSize range)
+		: m_buffer({handle, usage, offset, range})
+		, m_isTexture(false)
+	{
+	}
+
+private:
 	struct TextureInfo
 	{
 		RenderTargetHandle m_handle;
 		TextureUsageBit m_usage;
 		TextureSurfaceInfo m_surface;
+		Bool8 m_wholeTex;
 	};
 
 	struct BufferInfo
@@ -62,22 +84,6 @@ public:
 		BufferInfo m_buffer;
 	};
 
-	RenderPassDependency(RenderTargetHandle handle,
-		TextureUsageBit usage,
-		const TextureSurfaceInfo& surface = TextureSurfaceInfo(0, 0, 0, 0))
-		: m_texture({handle, usage, surface})
-		, m_isTexture(true)
-	{
-	}
-
-	RenderPassDependency(
-		RenderPassBufferHandle handle, BufferUsageBit usage, PtrSize offset = 0, PtrSize range = MAX_PTR_SIZE)
-		: m_buffer({handle, usage, offset, range})
-		, m_isTexture(false)
-	{
-	}
-
-private:
 	Bool8 m_isTexture;
 };
 

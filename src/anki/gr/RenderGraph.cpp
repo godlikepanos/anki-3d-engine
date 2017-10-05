@@ -18,12 +18,13 @@ namespace anki
 class RenderGraph::RT
 {
 public:
-	HashMap<TextureSurfaceInfo, TextureUsageBit> m_surfUsageMap;
-
-	RT()
-		: m_surfUsageMap(8, 4)
+	struct Usage
 	{
-	}
+		TextureUsageBit m_usage;
+		TextureSurfaceInfo m_surf;
+	};
+
+	DynamicArray<Usage> m_surfUsages;
 };
 
 /// Pipeline barrier of texture or buffer.
@@ -84,12 +85,10 @@ class RenderGraph::Batch
 public:
 	DynamicArrayAuto<U32> m_passes;
 	DynamicArrayAuto<Barrier> m_barriersBefore;
-	DynamicArrayAuto<Barrier> m_barriersAfter;
 
 	Batch(const StackAllocator<U8>& alloc)
 		: m_passes(alloc)
 		, m_barriersBefore(alloc)
-		, m_barriersAfter(alloc)
 	{
 	}
 };
@@ -186,15 +185,12 @@ TexturePtr RenderGraph::getOrCreateRenderTarget(const TextureInitInfo& initInf)
 
 Bool RenderGraph::passADependsOnB(BakeContext& ctx, const RenderPassBase& a, const RenderPassBase& b)
 {
-	Bool depends = false;
-
 	/// Compute the 3 types of dependencies
 	BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS> aReadBWrite = a.m_consumerRtMask & b.m_producerRtMask;
 	BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS> aWriteBRead = a.m_producerRtMask & b.m_consumerRtMask;
 	BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS> aWriteBWrite = a.m_producerRtMask & b.m_producerRtMask;
 
 	BitSet<MAX_RENDER_GRAPH_RENDER_TARGETS> fullDep = aReadBWrite | aWriteBRead | aWriteBWrite;
-	// fullDep &= ~ctx.m_satisfiedRts;
 
 	if(fullDep.getAny())
 	{
@@ -209,9 +205,7 @@ Bool RenderGraph::passADependsOnB(BakeContext& ctx, const RenderPassBase& a, con
 					if(producer.m_isTexture && producer.m_texture.m_handle == consumer.m_texture.m_handle
 						&& producer.m_texture.m_surface == consumer.m_texture.m_surface)
 					{
-						depends = true;
-						// ANKI_ASSERT(!ctx.m_satisfiedRts.get(dep.m_texture.m_handle));
-						// ctx.m_satisfiedRts.set(dep.m_texture.m_handle);
+						return true;
 					}
 				}
 			}
@@ -236,7 +230,7 @@ Bool RenderGraph::passADependsOnB(BakeContext& ctx, const RenderPassBase& a, con
 	}
 #endif
 
-	return depends;
+	return false;
 }
 
 Bool RenderGraph::passHasUnmetDependencies(const BakeContext& ctx, U32 passIdx)
@@ -334,6 +328,13 @@ void RenderGraph::compileNewGraph(const RenderGraphDescription& descr)
 		ANKI_LOGF("Won't recover on debug code");
 	}
 #endif
+
+#if ANKI_EXTRA_CHECKS
+	for(RT& rt : ctx.m_rts)
+	{
+		rt.m_surfUsages.destroy(ctx.m_alloc);
+	}
+#endif
 }
 
 void RenderGraph::setBatchBarriers(BakeContext& ctx) const
@@ -356,24 +357,34 @@ void RenderGraph::setBatchBarriers(BakeContext& ctx) const
 					const U32 rtIdx = consumer.m_texture.m_handle;
 					const TextureUsageBit consumerUsage = consumer.m_texture.m_usage;
 
-					// Get current suage
-					TextureUsageBit crntUsage;
-					auto it = ctx.m_rts[rtIdx].m_surfUsageMap.find(consumer.m_texture.m_surface);
-					if(it != ctx.m_rts[rtIdx].m_surfUsageMap.getEnd())
+					Bool anySurfaceFound = false;
+					const Bool wholeTex = consumer.m_texture.m_wholeTex;
+					for(RT::Usage& u : ctx.m_rts[rtIdx].m_surfUsages)
 					{
-						crntUsage = *it;
-						*it = consumerUsage;
-					}
-					else
-					{
-						crntUsage = ctx.m_descr->m_renderTargets[rtIdx].m_usage;
-						ctx.m_rts[rtIdx].m_surfUsageMap.emplace(alloc, consumer.m_texture.m_surface, consumerUsage);
+						if(wholeTex || u.m_surf == consumer.m_texture.m_surface)
+						{
+							if(u.m_usage != consumerUsage)
+							{
+								batch.m_barriersBefore.emplaceBack(consumer.m_texture.m_handle,
+									u.m_usage,
+									consumerUsage,
+									consumer.m_texture.m_surface);
+
+								u.m_usage = consumer.m_texture.m_usage;
+								anySurfaceFound = true;
+							}
+						}
 					}
 
-					if(crntUsage != consumerUsage)
+					if(!anySurfaceFound && ctx.m_descr->m_renderTargets[rtIdx].m_usage != consumerUsage)
 					{
-						batch.m_barriersBefore.emplaceBack(
-							consumer.m_texture.m_handle, crntUsage, consumerUsage, consumer.m_texture.m_surface);
+						batch.m_barriersBefore.emplaceBack(consumer.m_texture.m_handle,
+							ctx.m_descr->m_renderTargets[rtIdx].m_usage,
+							consumerUsage,
+							consumer.m_texture.m_surface);
+
+						RT::Usage usage{consumerUsage, consumer.m_texture.m_surface};
+						ctx.m_rts[rtIdx].m_surfUsages.emplaceBack(alloc, usage);
 					}
 				}
 				else
@@ -381,27 +392,6 @@ void RenderGraph::setBatchBarriers(BakeContext& ctx) const
 					// TODO
 				}
 			}
-
-// For all producers, just check some stuff
-#if ANKI_EXTRA_CHECKS
-			for(const RenderPassDependency& producer : pass.m_producers)
-			{
-				if(producer.m_isTexture)
-				{
-					const U32 rtIdx = producer.m_texture.m_handle;
-
-					auto it = ctx.m_rts[rtIdx].m_surfUsageMap.find(producer.m_texture.m_surface);
-					ANKI_ASSERT(it != ctx.m_rts[rtIdx].m_surfUsageMap.getEnd()
-						&& "There should have been a consumer that added a map entry");
-
-					ANKI_ASSERT(*it == producer.m_texture.m_usage && "The consumer should have set that");
-				}
-				else
-				{
-					// TODO
-				}
-			}
-#endif
 		}
 	}
 }
@@ -479,7 +469,17 @@ Error RenderGraph::dumpDependencyDotFile(const BakeContext& ctx, CString path) c
 		}
 	}
 
+	// Color the resources
+	slist.pushBackSprintf("subgraph cluster_0 {\n");
+	for(U rtIdx = 0; rtIdx < ctx.m_descr->m_renderTargets.getSize(); ++rtIdx)
+	{
+		slist.pushBackSprintf(
+			"\t\"%s\"[color=%s];\n", &ctx.m_descr->m_renderTargets[rtIdx].m_name[0], COLORS[rtIdx % 6]);
+	}
+	slist.pushBackSprintf("}\n");
+
 	// Barriers
+	slist.pushBackSprintf("subgraph cluster_1 {\n");
 	StringAuto prevBubble(ctx.m_alloc);
 	prevBubble.create("START");
 	for(U batchIdx = 0; batchIdx < ctx.m_batches.getSize(); ++batchIdx)
@@ -495,9 +495,14 @@ Error RenderGraph::dumpDependencyDotFile(const BakeContext& ctx, CString path) c
 			StringAuto barrierName(ctx.m_alloc);
 			if(barrier.m_isTexture)
 			{
-				barrierName.sprintf("%s barrier%u\n%s -> %s",
+				barrierName.sprintf("%s barrier%u\n%s (mip,dp,f,l)=(%u,%u,%u,%u)\n%s -> %s",
 					&batchName[0],
 					barrierIdx,
+					&ctx.m_descr->m_renderTargets[barrier.m_tex.m_idx].m_name[0],
+					barrier.m_tex.m_surf.m_level,
+					barrier.m_tex.m_surf.m_depth,
+					barrier.m_tex.m_surf.m_face,
+					barrier.m_tex.m_surf.m_layer,
 					&textureUsageToStr(ctx, barrier.m_tex.m_usageBefore).toCString()[0],
 					&textureUsageToStr(ctx, barrier.m_tex.m_usageAfter).toCString()[0]);
 			}
@@ -509,23 +514,27 @@ Error RenderGraph::dumpDependencyDotFile(const BakeContext& ctx, CString path) c
 			slist.pushBackSprintf("\t\"%s\"[color=%s,style=bold,shape=box];\n", &barrierName[0], COLORS[batchIdx % 6]);
 			slist.pushBackSprintf("\t\"%s\"->\"%s\";\n", &prevBubble[0], &barrierName[0]);
 
-			// Print render target dep
+#if 0
+			// Print dep
 			if(barrier.m_isTexture)
 			{
 				StringAuto rtName(ctx.m_alloc);
-				rtName.sprintf("%s\n(mip:%u dp:%u f:%u l:%u)",
-					&ctx.m_descr->m_renderTargets[barrier.m_tex.m_idx].m_name[0],
+				rtName.sprintf("%s", &ctx.m_descr->m_renderTargets[barrier.m_tex.m_idx].m_name[0]);
+
+				slist.pushBackSprintf("\t\"%s\":w->\"%s\":e[label=\"(mip,dp,f,l)=(%u,%u,%u,%u)\";color=%s];\n",
+					&rtName[0],
+					&barrierName[0],
 					barrier.m_tex.m_surf.m_level,
 					barrier.m_tex.m_surf.m_depth,
 					barrier.m_tex.m_surf.m_face,
-					barrier.m_tex.m_surf.m_layer);
-
-				slist.pushBackSprintf("\t\"%s\"->\"%s\";\n", &rtName[0], &barrierName[0]);
+					barrier.m_tex.m_surf.m_layer,
+					COLORS[barrier.m_tex.m_idx % 6]);
 			}
 			else
 			{
 				// TODO
 			}
+#endif
 
 			prevBubble = barrierName;
 		}
@@ -534,6 +543,7 @@ Error RenderGraph::dumpDependencyDotFile(const BakeContext& ctx, CString path) c
 		slist.pushBackSprintf("\t\"%s\"->\"%s\";\n", &prevBubble[0], &batchName[0]);
 		prevBubble = batchName;
 	}
+	slist.pushBackSprintf("}\n");
 
 	slist.pushBackSprintf("}");
 

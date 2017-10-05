@@ -1541,13 +1541,13 @@ ANKI_TEST(Gr, RenderGraph)
 
 	const U GI_MIP_COUNT = 4;
 
-	TextureInitInfo texInf("sm_scratch");
+	TextureInitInfo texInf("SM scratch");
 	texInf.m_width = texInf.m_height = 16;
 	texInf.m_usage = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::SAMPLED_FRAGMENT;
 	texInf.m_format = PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
 
 	// SM
-	RenderTargetHandle smScratchRt = descr.newRenderTarget("sm_scratch", texInf);
+	RenderTargetHandle smScratchRt = descr.newRenderTarget("SM", texInf);
 	{
 		GraphicsRenderPassInfo& pass = descr.newGraphicsRenderPass("SM");
 		pass.newConsumer({smScratchRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE});
@@ -1555,7 +1555,7 @@ ANKI_TEST(Gr, RenderGraph)
 	}
 
 	// SM to exponential SM
-	RenderTargetHandle smExpRt = descr.newRenderTarget("sm_exp", texInf);
+	RenderTargetHandle smExpRt = descr.newRenderTarget("ESM", texInf);
 	{
 		GraphicsRenderPassInfo& pass = descr.newGraphicsRenderPass("ESM");
 		pass.newConsumer({smScratchRt, TextureUsageBit::SAMPLED_FRAGMENT});
@@ -1564,9 +1564,9 @@ ANKI_TEST(Gr, RenderGraph)
 	}
 
 	// GI gbuff
-	RenderTargetHandle giGbuffNormRt = descr.newRenderTarget("GI gbuff norm", texInf);
-	RenderTargetHandle giGbuffDiffRt = descr.newRenderTarget("GI gbuff diff", texInf);
-	RenderTargetHandle giGbuffDepthRt = descr.newRenderTarget("GI gbuff depth", texInf);
+	RenderTargetHandle giGbuffNormRt = descr.newRenderTarget("GI GBuff norm", texInf);
+	RenderTargetHandle giGbuffDiffRt = descr.newRenderTarget("GI GBuff diff", texInf);
+	RenderTargetHandle giGbuffDepthRt = descr.newRenderTarget("GI GBuff depth", texInf);
 	{
 		GraphicsRenderPassInfo& pass = descr.newGraphicsRenderPass("GI gbuff");
 		pass.newConsumer({giGbuffNormRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
@@ -1583,7 +1583,7 @@ ANKI_TEST(Gr, RenderGraph)
 	for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
 	{
 		GraphicsRenderPassInfo& pass =
-			descr.newGraphicsRenderPass(StringAuto(alloc).sprintf("GI li%u", faceIdx).toCString());
+			descr.newGraphicsRenderPass(StringAuto(alloc).sprintf("GI lp%u", faceIdx).toCString());
 		pass.newConsumer(
 			{giGiLightRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureSurfaceInfo(0, 0, faceIdx, 0)});
 		pass.newConsumer({giGbuffNormRt, TextureUsageBit::SAMPLED_FRAGMENT});
@@ -1610,18 +1610,17 @@ ANKI_TEST(Gr, RenderGraph)
 		}
 	}
 
-#if 0
 	// Gbuffer
-	RenderTargetHandle gbuffRt0 = descr.newRenderTarget("Gbuff rt0", texInf);
-	RenderTargetHandle gbuffRt1 = descr.newRenderTarget("Gbuff rt1", texInf);
-	RenderTargetHandle gbuffRt2 = descr.newRenderTarget("Gbuff rt2", texInf);
-	RenderTargetHandle gbuffDepth = descr.newRenderTarget("Gbuff rt2", texInf);
+	RenderTargetHandle gbuffRt0 = descr.newRenderTarget("GBuff RT0", texInf);
+	RenderTargetHandle gbuffRt1 = descr.newRenderTarget("GBuff RT1", texInf);
+	RenderTargetHandle gbuffRt2 = descr.newRenderTarget("GBuff RT2", texInf);
+	RenderTargetHandle gbuffDepth = descr.newRenderTarget("GBuff RT2", texInf);
 	{
-		GraphicsRenderPassInfo& pass = descr.newGraphicsRenderPass("G-buffer");
-		pass.newConsumer({gbuffRt0, TextureUsageBit::NONE});
-		pass.newConsumer({gbuffRt1, TextureUsageBit::NONE});
-		pass.newConsumer({gbuffRt2, TextureUsageBit::NONE});
-		pass.newConsumer({gbuffDepth, TextureUsageBit::NONE});
+		GraphicsRenderPassInfo& pass = descr.newGraphicsRenderPass("G-Buffer");
+		pass.newConsumer({gbuffRt0, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass.newConsumer({gbuffRt1, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass.newConsumer({gbuffRt2, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass.newConsumer({gbuffDepth, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 
 		pass.newProducer({gbuffRt0, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		pass.newProducer({gbuffRt1, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
@@ -1629,6 +1628,25 @@ ANKI_TEST(Gr, RenderGraph)
 		pass.newProducer({gbuffDepth, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 	}
 
+	// Half depth
+	RenderTargetHandle halfDepthRt = descr.newRenderTarget("Depth/2", texInf);
+	{
+		GraphicsRenderPassInfo& pass = descr.newGraphicsRenderPass("HalfDepth");
+		pass.newConsumer({gbuffDepth, TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newConsumer({halfDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass.newProducer({halfDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+	}
+
+	// Quarter depth
+	RenderTargetHandle quarterDepthRt = descr.newRenderTarget("Depth/4", texInf);
+	{
+		GraphicsRenderPassInfo& pass = descr.newGraphicsRenderPass("QuarterDepth");
+		pass.newConsumer({quarterDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass.newConsumer({halfDepthRt, TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newProducer({quarterDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+	}
+
+#if 0
 	// Light
 	RenderTargetHandle lightRt = descr.newRenderTarget("Light", texInf);
 	{
