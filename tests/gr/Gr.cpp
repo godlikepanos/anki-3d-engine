@@ -1541,10 +1541,11 @@ ANKI_TEST(Gr, RenderGraph)
 
 	const U GI_MIP_COUNT = 4;
 
-	TextureInitInfo texInf("SM scratch");
+	TextureInitInfo texInf("dummy tex");
 	texInf.m_width = texInf.m_height = 16;
 	texInf.m_usage = TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::SAMPLED_FRAGMENT;
 	texInf.m_format = PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM);
+	TexturePtr dummyTex = gr->newInstance<Texture>(texInf);
 
 	// SM
 	RenderTargetHandle smScratchRt = descr.newRenderTarget("SM", texInf);
@@ -1555,7 +1556,7 @@ ANKI_TEST(Gr, RenderGraph)
 	}
 
 	// SM to exponential SM
-	RenderTargetHandle smExpRt = descr.newRenderTarget("ESM", texInf);
+	RenderTargetHandle smExpRt = descr.importRenderTarget("ESM", dummyTex, TextureUsageBit::SAMPLED_FRAGMENT);
 	{
 		GraphicsRenderPassInfo& pass = descr.newGraphicsRenderPass("ESM");
 		pass.newConsumer({smScratchRt, TextureUsageBit::SAMPLED_FRAGMENT});
@@ -1579,7 +1580,7 @@ ANKI_TEST(Gr, RenderGraph)
 	}
 
 	// GI light
-	RenderTargetHandle giGiLightRt = descr.newRenderTarget("GI light", texInf);
+	RenderTargetHandle giGiLightRt = descr.importRenderTarget("GI light", dummyTex, TextureUsageBit::SAMPLED_FRAGMENT);
 	for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
 	{
 		GraphicsRenderPassInfo& pass =
@@ -1646,23 +1647,87 @@ ANKI_TEST(Gr, RenderGraph)
 		pass.newProducer({quarterDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 	}
 
-#if 0
-	// Light
-	RenderTargetHandle lightRt = descr.newRenderTarget("Light", texInf);
+	// SSAO
+	RenderTargetHandle ssaoRt = descr.newRenderTarget("SSAO", texInf);
+	{
+		GraphicsRenderPassInfo& pass = descr.newGraphicsRenderPass("SSAO main");
+		pass.newConsumer({ssaoRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass.newConsumer({quarterDepthRt, TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newConsumer({gbuffRt2, TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newProducer({ssaoRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+
+		RenderTargetHandle ssaoVBlurRt = descr.newRenderTarget("SSAO tmp", texInf);
+		GraphicsRenderPassInfo& pass2 = descr.newGraphicsRenderPass("SSAO vblur");
+		pass2.newConsumer({ssaoRt, TextureUsageBit::SAMPLED_FRAGMENT});
+		pass2.newConsumer({ssaoVBlurRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass2.newProducer({ssaoVBlurRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+
+		GraphicsRenderPassInfo& pass3 = descr.newGraphicsRenderPass("SSAO hblur");
+		pass3.newConsumer({ssaoRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass3.newProducer({ssaoRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass3.newConsumer({ssaoVBlurRt, TextureUsageBit::SAMPLED_FRAGMENT});
+	}
+
+	// Volumetric
+	RenderTargetHandle volRt = descr.newRenderTarget("Vol", texInf);
+	{
+		GraphicsRenderPassInfo& pass = descr.newGraphicsRenderPass("Vol main");
+		pass.newConsumer({volRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass.newConsumer({quarterDepthRt, TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newProducer({volRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+
+		RenderTargetHandle volVBlurRt = descr.newRenderTarget("Vol tmp", texInf);
+		GraphicsRenderPassInfo& pass2 = descr.newGraphicsRenderPass("Vol vblur");
+		pass2.newConsumer({volRt, TextureUsageBit::SAMPLED_FRAGMENT});
+		pass2.newConsumer({volVBlurRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass2.newProducer({volVBlurRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+
+		GraphicsRenderPassInfo& pass3 = descr.newGraphicsRenderPass("Vol hblur");
+		pass3.newConsumer({volRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass3.newProducer({volRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass3.newConsumer({volVBlurRt, TextureUsageBit::SAMPLED_FRAGMENT});
+	}
+
+	// Forward shading
+	RenderTargetHandle fsRt = descr.newRenderTarget("FS", texInf);
+	{
+		GraphicsRenderPassInfo& pass = descr.newGraphicsRenderPass("Forward shading");
+		pass.newConsumer({fsRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass.newProducer({fsRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass.newConsumer(
+			{halfDepthRt, TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ});
+		pass.newConsumer({volRt, TextureUsageBit::SAMPLED_FRAGMENT});
+	}
+
+	// Light shading
+	RenderTargetHandle lightRt = descr.importRenderTarget("Light", dummyTex, TextureUsageBit::NONE);
 	{
 		GraphicsRenderPassInfo& pass = descr.newGraphicsRenderPass("Light shading");
 
-		pass.newConsumer({lightRt, TextureUsageBit::NONE});
+		pass.newConsumer({lightRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		pass.newConsumer({gbuffRt0, TextureUsageBit::SAMPLED_FRAGMENT});
 		pass.newConsumer({gbuffRt1, TextureUsageBit::SAMPLED_FRAGMENT});
 		pass.newConsumer({gbuffRt2, TextureUsageBit::SAMPLED_FRAGMENT});
 		pass.newConsumer({gbuffDepth, TextureUsageBit::SAMPLED_FRAGMENT});
 		pass.newConsumer({smExpRt, TextureUsageBit::SAMPLED_FRAGMENT});
 		pass.newConsumer({giGiLightRt, TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newConsumer({ssaoRt, TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newConsumer({fsRt, TextureUsageBit::SAMPLED_FRAGMENT});
 
-		pass.newProducer({giGiLightRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass.newProducer({lightRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 	}
-#endif
+
+	// TAA
+	RenderTargetHandle taaHistoryRt = descr.importRenderTarget("TAA hist", dummyTex, TextureUsageBit::SAMPLED_FRAGMENT);
+	RenderTargetHandle taaRt = descr.importRenderTarget("TAA", dummyTex, TextureUsageBit::NONE);
+	{
+		GraphicsRenderPassInfo& pass = descr.newGraphicsRenderPass("Temporal AA");
+
+		pass.newConsumer({lightRt, TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newConsumer({taaRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass.newProducer({taaRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass.newConsumer({taaHistoryRt, TextureUsageBit::SAMPLED_FRAGMENT});
+	}
 
 	rgraph->compileNewGraph(descr);
 	COMMON_END()

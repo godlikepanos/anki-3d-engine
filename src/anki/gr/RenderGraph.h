@@ -8,6 +8,7 @@
 #include <anki/gr/GrObject.h>
 #include <anki/gr/Enums.h>
 #include <anki/gr/Texture.h>
+#include <anki/gr/Buffer.h>
 #include <anki/util/HashMap.h>
 #include <anki/util/BitSet.h>
 
@@ -20,21 +21,21 @@ namespace anki
 /// @name RenderGraph constants
 /// @{
 static constexpr U MAX_RENDER_GRAPH_PASSES = 128;
-static constexpr U MAX_RENDER_GRAPH_RENDER_TARGETS = 128;
+static constexpr U MAX_RENDER_GRAPH_RENDER_TARGETS = 128; ///< Max imported or not render targets in RenderGraph.
 static constexpr U MAX_RENDER_GRAPH_BUFFERS = 64;
 /// @}
 
-/// XXX
+/// Render target handle used in the RenderGraph.
 using RenderTargetHandle = U32;
 
-/// XXX
+/// Buffer handle used in the RenderGraph.
 using RenderPassBufferHandle = U32;
 
-/// XXX
+/// Work callback for a RenderGraph pass.
 using RenderPassWorkCallback = void (*)(
 	void* userData, CommandBufferPtr cmdb, U32 secondLevelCmdbIdx, U32 secondLevelCmdbCount);
 
-/// XXX
+/// RenderGraph pass dependency.
 class RenderPassDependency
 {
 	friend class RenderGraph;
@@ -55,8 +56,8 @@ public:
 	{
 	}
 
-	RenderPassDependency(RenderPassBufferHandle handle, BufferUsageBit usage, PtrSize offset, PtrSize range)
-		: m_buffer({handle, usage, offset, range})
+	RenderPassDependency(RenderPassBufferHandle handle, BufferUsageBit usage)
+		: m_buffer({handle, usage})
 		, m_isTexture(false)
 	{
 	}
@@ -74,8 +75,6 @@ private:
 	{
 		RenderPassBufferHandle m_handle;
 		BufferUsageBit m_usage;
-		PtrSize m_offset;
-		PtrSize m_range;
 	};
 
 	union
@@ -87,24 +86,7 @@ private:
 	Bool8 m_isTexture;
 };
 
-/// Describes how the render target will be used inside a graphics render pass.
-class RenderTargetReference
-{
-public:
-	RenderTargetHandle m_renderTargetHandle;
-
-	TextureSurfaceInfo m_surface;
-	AttachmentLoadOperation m_loadOperation = AttachmentLoadOperation::CLEAR;
-	AttachmentStoreOperation m_storeOperation = AttachmentStoreOperation::STORE;
-	ClearValue m_clearValue;
-
-	AttachmentLoadOperation m_stencilLoadOperation = AttachmentLoadOperation::CLEAR;
-	AttachmentStoreOperation m_stencilStoreOperation = AttachmentStoreOperation::STORE;
-
-	DepthStencilAspectBit m_aspect = DepthStencilAspectBit::NONE; ///< Relevant only for depth stencil textures.
-};
-
-/// The base of compute/transfer and graphics renderpasses
+/// The base of compute/transfer and graphics renderpasses for RenderGraph.
 class RenderPassBase
 {
 	friend class RenderGraph;
@@ -124,6 +106,7 @@ public:
 		m_secondLevelCmdbsCount = secondLeveCmdbCount;
 	}
 
+	/// Add new consumer dependency.
 	void newConsumer(const RenderPassDependency& dep)
 	{
 		m_consumers.emplaceBack(m_alloc, dep);
@@ -138,6 +121,7 @@ public:
 		}
 	}
 
+	/// Add new producer dependency.
 	void newProducer(const RenderPassDependency& dep)
 	{
 		m_producers.emplaceBack(m_alloc, dep);
@@ -187,7 +171,7 @@ protected:
 	}
 };
 
-/// XXX
+/// A graphics render pass for RenderGraph.
 class GraphicsRenderPassInfo : public RenderPassBase
 {
 	friend class RenderGraphDescription;
@@ -197,29 +181,9 @@ public:
 		: RenderPassBase(Type::GRAPHICS)
 	{
 	}
-
-	~GraphicsRenderPassInfo()
-	{
-	}
-
-	void setColorRenderTarget(U32 location, const RenderTargetReference& ref)
-	{
-		m_colorAttachments[location] = ref;
-		m_colorAttachmentCount = location + 1;
-	}
-
-	void setDepthStencilRenderTarget(const RenderTargetReference& ref)
-	{
-		m_depthStencilAttachment = ref;
-	}
-
-private:
-	Array<RenderTargetReference, MAX_COLOR_ATTACHMENTS> m_colorAttachments;
-	U32 m_colorAttachmentCount = 0;
-	RenderTargetReference m_depthStencilAttachment;
 };
 
-/// XXX
+/// A non-graphics render pass for RenderGraph.
 class NoGraphicsRenderPassInfo : private RenderPassBase
 {
 private:
@@ -229,34 +193,7 @@ private:
 	}
 };
 
-/// XXX
-class RenderTarget
-{
-	friend class RenderGraphDescription;
-	friend class RenderGraph;
-
-private:
-	TextureInitInfo m_initInfo;
-	TexturePtr m_importedTex;
-	TextureUsageBit m_usage;
-	Array<char, MAX_GR_OBJECT_NAME_LENGTH + 1> m_name;
-
-	void setName(CString name)
-	{
-		const U len = name.getLength();
-		if(len)
-		{
-			ANKI_ASSERT(len <= MAX_GR_OBJECT_NAME_LENGTH);
-			strcpy(&m_name[0], &name[0]);
-		}
-		else
-		{
-			strcpy(&m_name[0], "unnamed");
-		}
-	}
-};
-
-/// XXX
+/// Describes the render graph by creating passes and setting dependencies on them.
 class RenderGraphDescription
 {
 	friend class RenderGraph;
@@ -288,35 +225,72 @@ public:
 		return *pass;
 	}
 
-	/// XXX
-	U32 importRenderTarget(CString name, TexturePtr tex, TextureUsageBit usage)
+	/// Import an existing render target.
+	RenderTargetHandle importRenderTarget(CString name, TexturePtr tex, TextureUsageBit usage)
 	{
-		RenderTarget rt;
+		RT& rt = m_renderTargets.emplaceBack(m_alloc);
 		rt.m_importedTex = tex;
 		rt.m_usage = usage;
 		rt.setName(name);
-		m_renderTargets.emplaceBack(m_alloc, rt);
 		return m_renderTargets.getSize() - 1;
 	}
 
-	/// XXX
-	U32 newRenderTarget(CString name, const TextureInitInfo& initInf)
+	/// Get or create a new render target.
+	RenderTargetHandle newRenderTarget(CString name, const TextureInitInfo& initInf)
 	{
-		RenderTarget rt;
+		RT& rt = m_renderTargets.emplaceBack(m_alloc);
 		rt.m_initInfo = initInf;
 		rt.m_usage = TextureUsageBit::NONE;
 		rt.setName(name);
-		m_renderTargets.emplaceBack(m_alloc, rt);
 		return m_renderTargets.getSize() - 1;
 	}
 
+	/// Import a buffer.
+	RenderPassBufferHandle importBuffer(CString name, BufferPtr buff, BufferUsageBit usage)
+	{
+		Buffer& b = m_buffers.emplaceBack(m_alloc);
+		b.setName(name);
+		b.m_usage = usage;
+		b.m_importedBuff = buff;
+		return m_buffers.getSize() - 1;
+	}
+
 private:
+	class Resource
+	{
+	public:
+		Array<char, MAX_GR_OBJECT_NAME_LENGTH + 1> m_name;
+
+		void setName(CString name)
+		{
+			const U len = name.getLength();
+			ANKI_ASSERT(len <= MAX_GR_OBJECT_NAME_LENGTH);
+			strcpy(&m_name[0], (len) ? &name[0] : "unnamed");
+		}
+	};
+
+	class RT : public Resource
+	{
+	public:
+		TextureInitInfo m_initInfo;
+		TexturePtr m_importedTex;
+		TextureUsageBit m_usage;
+	};
+
+	class Buffer : public Resource
+	{
+	public:
+		BufferUsageBit m_usage;
+		BufferPtr m_importedBuff;
+	};
+
 	StackAllocator<U8> m_alloc;
 	DynamicArray<RenderPassBase*> m_passes;
-	DynamicArray<RenderTarget> m_renderTargets;
+	DynamicArray<RT> m_renderTargets;
+	DynamicArray<Buffer> m_buffers;
 };
 
-/// XXX
+/// Accepts a descriptor of the frame's render passes and sets the dependencies between them.
 class RenderGraph final : public GrObject
 {
 	ANKI_GR_OBJECT
@@ -381,14 +355,16 @@ private:
 	};
 
 	HashMap<TextureInitInfo, RenderTargetCacheEntry> m_renderTargetCache; ///< Non-imported render targets.
-	HashMap<FramebufferInitInfo, FramebufferPtr> m_framebufferCache;
 
 	// Forward declarations
 	class BakeContext;
 	class Pass;
 	class Batch;
 	class RT;
+	class Buffer;
 	class Barrier;
+
+	mutable const BakeContext* m_ctx = nullptr;
 
 	TexturePtr getOrCreateRenderTarget(const TextureInitInfo& initInf);
 
@@ -399,8 +375,8 @@ private:
 
 	/// Dump the dependency graph into a file.
 	ANKI_USE_RESULT Error dumpDependencyDotFile(const BakeContext& ctx, CString path) const;
-
-	static StringAuto textureUsageToStr(const BakeContext& ctx, TextureUsageBit usage);
+	static StringAuto textureUsageToStr(StackAllocator<U8>& alloc, TextureUsageBit usage);
+	static StringAuto bufferUsageToStr(StackAllocator<U8>& alloc, BufferUsageBit usage);
 };
 /// @}
 

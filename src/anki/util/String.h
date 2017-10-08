@@ -321,6 +321,13 @@ public:
 	/// Move a StringAuto to this one.
 	String& operator=(StringAuto&& b);
 
+	/// Get a C string.
+	const Char* cstr() const
+	{
+		checkInit();
+		return &m_data[0];
+	}
+
 	/// Return char at the specified position.
 	const Char& operator[](U pos) const
 	{

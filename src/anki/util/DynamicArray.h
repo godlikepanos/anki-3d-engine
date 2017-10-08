@@ -226,11 +226,12 @@ public:
 
 	/// Push back value.
 	template<typename TAllocator, typename... TArgs>
-	void emplaceBack(TAllocator alloc, TArgs&&... args)
+	Value& emplaceBack(TAllocator alloc, TArgs&&... args)
 	{
 		resizeStorage(alloc, m_size + 1);
 		::new(&m_data[m_size]) Value(std::forward<TArgs>(args)...);
 		++m_size;
+		return m_data[m_size - 1];
 	}
 
 	/// Destroy the array.
