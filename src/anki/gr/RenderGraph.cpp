@@ -25,6 +25,8 @@ public:
 	};
 
 	DynamicArray<Usage> m_surfUsages;
+
+	TexturePtr m_tex; ///< Hold a reference.
 };
 
 /// Same as RT but for buffers.
@@ -32,6 +34,7 @@ class RenderGraph::Buffer
 {
 public:
 	BufferUsageBit m_usage;
+	BufferPtr m_buff; ///< Hold a reference.
 };
 
 /// Pipeline barrier of texture or buffer.
@@ -79,6 +82,10 @@ class RenderGraph::Pass
 {
 public:
 	DynamicArray<U32> m_dependsOn;
+
+	RenderPassWorkCallback m_callback = nullptr;
+	void* m_userData = nullptr;
+	U32 m_secondLevelCmdbsCount = 0;
 };
 
 /// A batch of render passes. These passes can run in parallel.
@@ -89,13 +96,13 @@ public:
 	DynamicArray<Barrier> m_barriersBefore;
 };
 
+/// The RenderGraph build context.
 class RenderGraph::BakeContext
 {
 public:
 	StackAllocator<U8> m_alloc;
 	DynamicArray<Pass> m_passes;
 	BitSet<MAX_RENDER_GRAPH_PASSES> m_passIsInBatch = {false};
-	const RenderGraphDescription* m_descr = nullptr;
 	DynamicArray<Batch> m_batches;
 	DynamicArray<RT> m_rts;
 	DynamicArray<Buffer> m_buffers;
@@ -128,6 +135,18 @@ RenderGraph::~RenderGraph()
 void RenderGraph::reset()
 {
 	// TODO
+
+	for(RT& rt : m_ctx->m_rts)
+	{
+		rt.m_tex.reset(nullptr);
+	}
+
+	for(auto& it : m_renderTargetCache)
+	{
+		it.m_texturesInUse = 0;
+	}
+
+	m_ctx = nullptr;
 }
 
 TexturePtr RenderGraph::getOrCreateRenderTarget(const TextureInitInfo& initInf)
@@ -265,38 +284,65 @@ Bool RenderGraph::passHasUnmetDependencies(const BakeContext& ctx, U32 passIdx)
 	return depends;
 }
 
-void RenderGraph::compileNewGraph(const RenderGraphDescription& descr)
+RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphDescription& descr, StackAllocator<U8>& alloc)
 {
-	const U passCount = descr.m_passes.getSize();
-	ANKI_ASSERT(passCount > 0);
-
-	// Init the context
-	auto alloc = descr.m_alloc;
-	BakeContext& ctx = *alloc.newInstance<BakeContext>(descr.m_alloc);
-	m_ctx = &ctx;
-	ctx.m_descr = &descr;
+	// Allocate
+	BakeContext* ctx = alloc.newInstance<BakeContext>(alloc);
 
 	// Init the resources
-	ctx.m_rts.create(alloc, descr.m_renderTargets.getSize());
-	ctx.m_buffers.create(alloc, descr.m_buffers.getSize());
-	for(U buffIdx = 0; buffIdx < ctx.m_buffers.getSize(); ++buffIdx)
+	ctx->m_rts.create(alloc, descr.m_renderTargets.getSize());
+	for(U rtIdx = 0; rtIdx < ctx->m_rts.getSize(); ++rtIdx)
 	{
-		ctx.m_buffers[buffIdx].m_usage = descr.m_buffers[buffIdx].m_usage;
+		if(descr.m_renderTargets[rtIdx].m_importedTex.isCreated())
+		{
+			// It's imported
+			ctx->m_rts[rtIdx].m_tex = descr.m_renderTargets[rtIdx].m_importedTex;
+		}
+		else
+		{
+			TexturePtr rt = getOrCreateRenderTarget(descr.m_renderTargets[rtIdx].m_initInfo);
+			ctx->m_rts[rtIdx].m_tex = rt;
+		}
 	}
 
-	// Find the dependencies between passes
+	// Buffers
+	ctx->m_buffers.create(alloc, descr.m_buffers.getSize());
+	for(U buffIdx = 0; buffIdx < ctx->m_buffers.getSize(); ++buffIdx)
+	{
+		ctx->m_buffers[buffIdx].m_usage = descr.m_buffers[buffIdx].m_usage;
+		ANKI_ASSERT(descr.m_buffers[buffIdx].m_importedBuff.isCreated());
+		ctx->m_buffers[buffIdx].m_buff = descr.m_buffers[buffIdx].m_importedBuff;
+	}
+
+	return ctx;
+}
+
+void RenderGraph::compileNewGraph(const RenderGraphDescription& descr, StackAllocator<U8>& alloc)
+{
+	// Init the context
+	BakeContext& ctx = *newContext(descr, alloc);
+	m_ctx = &ctx;
+
+	// Init and find the dependencies between passes
+	const U passCount = descr.m_passes.getSize();
+	ANKI_ASSERT(passCount > 0);
+	ctx.m_passes.create(alloc, passCount);
 	for(U i = 0; i < passCount; ++i)
 	{
-		ctx.m_passes.emplaceBack(alloc);
-		const RenderPassBase& crntPass = *descr.m_passes[i];
+		const RenderPassBase& inPass = *descr.m_passes[i];
+		Pass& outPass = ctx.m_passes[i];
+
+		outPass.m_callback = inPass.m_callback;
+		outPass.m_userData = inPass.m_userData;
+		outPass.m_secondLevelCmdbsCount = inPass.m_secondLevelCmdbsCount;
 
 		U j = i;
 		while(j--)
 		{
 			const RenderPassBase& prevPass = *descr.m_passes[j];
-			if(passADependsOnB(ctx, crntPass, prevPass))
+			if(passADependsOnB(ctx, inPass, prevPass))
 			{
-				ctx.m_passes[i].m_dependsOn.emplaceBack(alloc, j);
+				outPass.m_dependsOn.emplaceBack(alloc, j);
 			}
 		}
 	}
@@ -328,17 +374,17 @@ void RenderGraph::compileNewGraph(const RenderGraphDescription& descr)
 	}
 
 	// Create barriers between batches
-	setBatchBarriers(ctx);
+	setBatchBarriers(descr, ctx);
 
 #if 1
-	if(dumpDependencyDotFile(ctx, "./"))
+	if(dumpDependencyDotFile(descr, ctx, "./"))
 	{
 		ANKI_LOGF("Won't recover on debug code");
 	}
 #endif
 }
 
-void RenderGraph::setBatchBarriers(BakeContext& ctx) const
+void RenderGraph::setBatchBarriers(const RenderGraphDescription& descr, BakeContext& ctx) const
 {
 	const StackAllocator<U8>& alloc = ctx.m_alloc;
 
@@ -348,7 +394,7 @@ void RenderGraph::setBatchBarriers(BakeContext& ctx) const
 		// For all passes of that batch
 		for(U passIdx : batch.m_passes)
 		{
-			const RenderPassBase& pass = *ctx.m_descr->m_passes[passIdx];
+			const RenderPassBase& pass = *descr.m_passes[passIdx];
 
 			// For all consumers
 			for(const RenderPassDependency& consumer : pass.m_consumers)
@@ -375,11 +421,11 @@ void RenderGraph::setBatchBarriers(BakeContext& ctx) const
 						}
 					}
 
-					if(!anySurfaceFound && ctx.m_descr->m_renderTargets[rtIdx].m_usage != consumerUsage)
+					if(!anySurfaceFound && descr.m_renderTargets[rtIdx].m_usage != consumerUsage)
 					{
 						batch.m_barriersBefore.emplaceBack(alloc,
 							rtIdx,
-							ctx.m_descr->m_renderTargets[rtIdx].m_usage,
+							descr.m_renderTargets[rtIdx].m_usage,
 							consumerUsage,
 							consumer.m_texture.m_surface);
 
@@ -400,9 +446,9 @@ void RenderGraph::setBatchBarriers(BakeContext& ctx) const
 						ctx.m_buffers[buffIdx].m_usage = consumerUsage;
 					}
 				}
-			}
-		}
-	}
+			} // For all consumers
+		} // For all passes
+	} // For all batches
 }
 
 StringAuto RenderGraph::textureUsageToStr(StackAllocator<U8>& alloc, TextureUsageBit usage)
@@ -490,7 +536,8 @@ StringAuto RenderGraph::bufferUsageToStr(StackAllocator<U8>& alloc, BufferUsageB
 	return str;
 }
 
-Error RenderGraph::dumpDependencyDotFile(const BakeContext& ctx, CString path) const
+Error RenderGraph::dumpDependencyDotFile(
+	const RenderGraphDescription& descr, const BakeContext& ctx, CString path) const
 {
 	static const Array<const char*, 6> COLORS = {{"red", "green", "blue", "magenta", "yellow", "cyan"}};
 	auto alloc = ctx.m_alloc;
@@ -505,35 +552,34 @@ Error RenderGraph::dumpDependencyDotFile(const BakeContext& ctx, CString path) c
 		slist.pushBackSprintf("\t{rank=\"same\";");
 		for(U32 passIdx : ctx.m_batches[batchIdx].m_passes)
 		{
-			slist.pushBackSprintf("\"%s\";", &ctx.m_descr->m_passes[passIdx]->m_name[0]);
+			slist.pushBackSprintf("\"%s\";", descr.m_passes[passIdx]->m_name.cstr());
 		}
 		slist.pushBackSprintf("}\n");
 
 		// Print passes
 		for(U32 passIdx : ctx.m_batches[batchIdx].m_passes)
 		{
-			CString passName = ctx.m_descr->m_passes[passIdx]->m_name.toCString();
+			CString passName = descr.m_passes[passIdx]->m_name.toCString();
 
-			slist.pushBackSprintf("\t\"%s\"[color=%s,style=bold,shape=box];\n", &passName[0], COLORS[batchIdx % 6]);
+			slist.pushBackSprintf("\t\"%s\"[color=%s,style=bold,shape=box];\n", passName.cstr(), COLORS[batchIdx % 6]);
 
 			for(U32 depIdx : ctx.m_passes[passIdx].m_dependsOn)
 			{
-				slist.pushBackSprintf("\t\"%s\"->\"%s\";\n", &ctx.m_descr->m_passes[depIdx]->m_name[0], &passName[0]);
+				slist.pushBackSprintf("\t\"%s\"->\"%s\";\n", descr.m_passes[depIdx]->m_name.cstr(), passName.cstr());
 			}
 
 			if(ctx.m_passes[passIdx].m_dependsOn.getSize() == 0)
 			{
-				slist.pushBackSprintf("\tNONE->\"%s\";\n", &ctx.m_descr->m_passes[passIdx]->m_name[0]);
+				slist.pushBackSprintf("\tNONE->\"%s\";\n", descr.m_passes[passIdx]->m_name.cstr());
 			}
 		}
 	}
 
 	// Color the resources
 	slist.pushBackSprintf("subgraph cluster_0 {\n");
-	for(U rtIdx = 0; rtIdx < ctx.m_descr->m_renderTargets.getSize(); ++rtIdx)
+	for(U rtIdx = 0; rtIdx < descr.m_renderTargets.getSize(); ++rtIdx)
 	{
-		slist.pushBackSprintf(
-			"\t\"%s\"[color=%s];\n", &ctx.m_descr->m_renderTargets[rtIdx].m_name[0], COLORS[rtIdx % 6]);
+		slist.pushBackSprintf("\t\"%s\"[color=%s];\n", &descr.m_renderTargets[rtIdx].m_name[0], COLORS[rtIdx % 6]);
 	}
 	slist.pushBackSprintf("}\n");
 
@@ -555,9 +601,9 @@ Error RenderGraph::dumpDependencyDotFile(const BakeContext& ctx, CString path) c
 			if(barrier.m_isTexture)
 			{
 				barrierName.sprintf("%s barrier%u\n%s (mip,dp,f,l)=(%u,%u,%u,%u)\n%s -> %s",
-					&batchName[0],
+					batchName.cstr(),
 					barrierIdx,
-					&ctx.m_descr->m_renderTargets[barrier.m_tex.m_idx].m_name[0],
+					&descr.m_renderTargets[barrier.m_tex.m_idx].m_name[0],
 					barrier.m_tex.m_surf.m_level,
 					barrier.m_tex.m_surf.m_depth,
 					barrier.m_tex.m_surf.m_face,
@@ -568,22 +614,23 @@ Error RenderGraph::dumpDependencyDotFile(const BakeContext& ctx, CString path) c
 			else
 			{
 				barrierName.sprintf("%s barrier%u\n%s\n%s -> %s",
-					&batchName[0],
+					batchName.cstr(),
 					barrierIdx,
-					&ctx.m_descr->m_buffers[barrier.m_buff.m_idx].m_name[0],
-					&bufferUsageToStr(alloc, barrier.m_buff.m_usageBefore).toCString()[0],
-					&bufferUsageToStr(alloc, barrier.m_buff.m_usageAfter).toCString()[0]);
+					&descr.m_buffers[barrier.m_buff.m_idx].m_name[0],
+					bufferUsageToStr(alloc, barrier.m_buff.m_usageBefore).toCString().cstr(),
+					bufferUsageToStr(alloc, barrier.m_buff.m_usageAfter).toCString().cstr());
 			}
 
-			slist.pushBackSprintf("\t\"%s\"[color=%s,style=bold,shape=box];\n", &barrierName[0], COLORS[batchIdx % 6]);
-			slist.pushBackSprintf("\t\"%s\"->\"%s\";\n", &prevBubble[0], &barrierName[0]);
+			slist.pushBackSprintf(
+				"\t\"%s\"[color=%s,style=bold,shape=box];\n", barrierName.cstr(), COLORS[batchIdx % 6]);
+			slist.pushBackSprintf("\t\"%s\"->\"%s\";\n", prevBubble.cstr(), barrierName.cstr());
 
 			prevBubble = barrierName;
 		}
 
 		for(U passIdx : batch.m_passes)
 		{
-			const RenderPassBase& pass = *ctx.m_descr->m_passes[passIdx];
+			const RenderPassBase& pass = *descr.m_passes[passIdx];
 			StringAuto passName(alloc);
 			passName.sprintf("_%s_", pass.m_name.cstr());
 			slist.pushBackSprintf("\t\"pass: %s\"[color=%s,style=bold];\n", passName.cstr(), COLORS[batchIdx % 6]);
@@ -604,6 +651,23 @@ Error RenderGraph::dumpDependencyDotFile(const BakeContext& ctx, CString path) c
 	}
 
 	return Error::NONE;
+}
+
+TexturePtr RenderGraph::getTexture(RenderTargetHandle handle) const
+{
+	ANKI_ASSERT(m_ctx->m_rts[handle].m_tex.isCreated());
+	return m_ctx->m_rts[handle].m_tex;
+}
+
+BufferPtr RenderGraph::getBuffer(RenderPassBufferHandle handle) const
+{
+	ANKI_ASSERT(m_ctx->m_buffers[handle].m_buff.isCreated());
+	return m_ctx->m_buffers[handle].m_buff;
+}
+
+void RenderGraph::runSecondLevel()
+{
+	// TODO
 }
 
 } // end namespace anki

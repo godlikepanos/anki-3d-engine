@@ -101,6 +101,8 @@ public:
 
 	void setWork(RenderPassWorkCallback callback, void* userData, U32 secondLeveCmdbCount)
 	{
+		ANKI_ASSERT(callback);
+		ANKI_ASSERT(m_type == Type::GRAPHICS || secondLeveCmdbCount != 0);
 		m_callback = callback;
 		m_userData = userData;
 		m_secondLevelCmdbsCount = secondLeveCmdbCount;
@@ -315,7 +317,7 @@ public:
 
 	/// @name 1st step methods
 	/// @{
-	void compileNewGraph(const RenderGraphDescription& descr);
+	void compileNewGraph(const RenderGraphDescription& descr, StackAllocator<U8>& alloc);
 	/// @}
 
 	/// @name 2nd step methods
@@ -334,8 +336,8 @@ public:
 
 	/// @name 2nd and 3rd step methods
 	/// @{
-	TexturePtr getTexture(RenderTargetHandle handle);
-	BufferPtr getBuffer(RenderPassBufferHandle handle);
+	TexturePtr getTexture(RenderTargetHandle handle) const;
+	BufferPtr getBuffer(RenderPassBufferHandle handle) const;
 	/// @}
 
 	/// @name 4th step methods
@@ -364,17 +366,20 @@ private:
 	class Buffer;
 	class Barrier;
 
-	mutable const BakeContext* m_ctx = nullptr;
+	BakeContext* m_ctx = nullptr;
+
+	BakeContext* newContext(const RenderGraphDescription& descr, StackAllocator<U8>& alloc);
 
 	TexturePtr getOrCreateRenderTarget(const TextureInitInfo& initInf);
 
 	static Bool passADependsOnB(BakeContext& ctx, const RenderPassBase& a, const RenderPassBase& b);
 	static Bool passHasUnmetDependencies(const BakeContext& ctx, U32 passIdx);
 
-	void setBatchBarriers(BakeContext& ctx) const;
+	void setBatchBarriers(const RenderGraphDescription& descr, BakeContext& ctx) const;
 
 	/// Dump the dependency graph into a file.
-	ANKI_USE_RESULT Error dumpDependencyDotFile(const BakeContext& ctx, CString path) const;
+	ANKI_USE_RESULT Error dumpDependencyDotFile(
+		const RenderGraphDescription& descr, const BakeContext& ctx, CString path) const;
 	static StringAuto textureUsageToStr(StackAllocator<U8>& alloc, TextureUsageBit usage);
 	static StringAuto bufferUsageToStr(StackAllocator<U8>& alloc, BufferUsageBit usage);
 };

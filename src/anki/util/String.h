@@ -98,6 +98,13 @@ public:
 		return m_ptr[pos];
 	}
 
+	/// Get C-string.
+	const Char* cstr() const
+	{
+		checkInit();
+		return m_ptr;
+	}
+
 	const Char* begin() const
 	{
 		checkInit();

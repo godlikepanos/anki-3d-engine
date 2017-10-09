@@ -1729,7 +1729,7 @@ ANKI_TEST(Gr, RenderGraph)
 		pass.newConsumer({taaHistoryRt, TextureUsageBit::SAMPLED_FRAGMENT});
 	}
 
-	rgraph->compileNewGraph(descr);
+	rgraph->compileNewGraph(descr, alloc);
 	COMMON_END()
 }
 
