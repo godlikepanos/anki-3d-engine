@@ -7,6 +7,7 @@
 #include <anki/gr/GrManager.h>
 #include <anki/gr/Texture.h>
 #include <anki/gr/Framebuffer.h>
+#include <anki/gr/CommandBuffer.h>
 #include <anki/util/BitSet.h>
 #include <anki/util/File.h>
 #include <anki/util/StringList.h>
@@ -83,9 +84,11 @@ class RenderGraph::Pass
 public:
 	DynamicArray<U32> m_dependsOn;
 
-	RenderPassWorkCallback m_callback = nullptr;
-	void* m_userData = nullptr;
-	U32 m_secondLevelCmdbsCount = 0;
+	RenderPassWorkCallback m_callback;
+	void* m_userData;
+
+	DynamicArray<CommandBufferPtr> m_secondLevelCmdbs;
+	FramebufferPtr m_fb;
 };
 
 /// A batch of render passes. These passes can run in parallel.
@@ -107,11 +110,86 @@ public:
 	DynamicArray<RT> m_rts;
 	DynamicArray<Buffer> m_buffers;
 
+	CommandBufferPtr m_cmdb;
+
 	BakeContext(const StackAllocator<U8>& alloc)
 		: m_alloc(alloc)
 	{
 	}
 };
+
+void GraphicsRenderPassFramebufferInfo::bake()
+{
+	if(m_defaultFb)
+	{
+		m_hash = 1;
+		return;
+	}
+
+	m_hash = 0;
+
+	// First the depth attachments
+	if(m_fbInitInfo.m_colorAttachmentCount)
+	{
+		ANKI_BEGIN_PACKED_STRUCT
+		struct ColorAttachment
+		{
+			TextureSurfaceInfo m_surf;
+			U32 m_loadOp;
+			U32 m_storeOp;
+			Array<U32, 4> m_clearColor;
+		};
+		ANKI_END_PACKED_STRUCT
+		static_assert(sizeof(ColorAttachment) == 4 * (4 + 1 + 1 + 4), "Wrong size");
+
+		Array<ColorAttachment, MAX_COLOR_ATTACHMENTS> colorAttachments;
+		for(U i = 0; i < m_fbInitInfo.m_colorAttachmentCount; ++i)
+		{
+			const FramebufferAttachmentInfo& inAtt = m_fbInitInfo.m_colorAttachments[i];
+			colorAttachments[i].m_surf = inAtt.m_surface;
+			colorAttachments[i].m_loadOp = static_cast<U32>(inAtt.m_loadOperation);
+			colorAttachments[i].m_storeOp = static_cast<U32>(inAtt.m_storeOperation);
+			memcpy(&colorAttachments[i].m_clearColor[0], &inAtt.m_clearValue.m_coloru[0], sizeof(U32) * 4);
+		}
+
+		m_hash = computeHash(&colorAttachments[0], sizeof(ColorAttachment) * m_fbInitInfo.m_colorAttachmentCount);
+	}
+
+	// DS attachment
+	if(!!m_fbInitInfo.m_depthStencilAttachment.m_aspect)
+	{
+		ANKI_BEGIN_PACKED_STRUCT
+		struct DSAttachment
+		{
+			TextureSurfaceInfo m_surf;
+			U32 m_loadOp;
+			U32 m_storeOp;
+			U32 m_stencilLoadOp;
+			U32 m_stencilStoreOp;
+			U32 m_aspect;
+			F32 m_depthClear;
+			I32 m_stencilClear;
+		} outAtt;
+		ANKI_END_PACKED_STRUCT
+
+		const FramebufferAttachmentInfo& inAtt = m_fbInitInfo.m_depthStencilAttachment;
+		const Bool hasDepth = !!(inAtt.m_aspect & DepthStencilAspectBit::DEPTH);
+		const Bool hasStencil = !!(inAtt.m_aspect & DepthStencilAspectBit::STENCIL);
+
+		outAtt.m_surf = inAtt.m_surface;
+		outAtt.m_loadOp = (hasDepth) ? static_cast<U32>(inAtt.m_loadOperation) : 0;
+		outAtt.m_storeOp = (hasDepth) ? static_cast<U32>(inAtt.m_storeOperation) : 0;
+		outAtt.m_stencilLoadOp = (hasStencil) ? static_cast<U32>(inAtt.m_stencilLoadOperation) : 0;
+		outAtt.m_stencilStoreOp = (hasStencil) ? static_cast<U32>(inAtt.m_stencilStoreOperation) : 0;
+		outAtt.m_aspect = static_cast<U32>(inAtt.m_aspect);
+		outAtt.m_depthClear = (hasDepth) ? inAtt.m_clearValue.m_depthStencil.m_depth : 0.0f;
+		outAtt.m_stencilClear = (hasStencil) ? inAtt.m_clearValue.m_depthStencil.m_stencil : 0;
+
+		m_hash = (m_hash != 0) ? appendHash(&outAtt, sizeof(outAtt), m_hash) : computeHash(&outAtt, sizeof(outAtt));
+	}
+
+	ANKI_ASSERT(m_hash != 0 && m_hash != 1);
+}
 
 RenderGraph::RenderGraph(GrManager* manager, U64 hash, GrObjectCache* cache)
 	: GrObject(manager, CLASS_TYPE, hash, cache)
@@ -121,7 +199,7 @@ RenderGraph::RenderGraph(GrManager* manager, U64 hash, GrObjectCache* cache)
 
 RenderGraph::~RenderGraph()
 {
-	reset();
+	ANKI_ASSERT(m_ctx == nullptr);
 
 	while(!m_renderTargetCache.isEmpty())
 	{
@@ -134,11 +212,19 @@ RenderGraph::~RenderGraph()
 
 void RenderGraph::reset()
 {
-	// TODO
+	if(!m_ctx)
+	{
+		return;
+	}
 
 	for(RT& rt : m_ctx->m_rts)
 	{
 		rt.m_tex.reset(nullptr);
+	}
+	
+	for(Buffer& buff : m_ctx->m_buffers)
+	{
+		buff.m_buff.reset(nullptr);
 	}
 
 	for(auto& it : m_renderTargetCache)
@@ -146,6 +232,15 @@ void RenderGraph::reset()
 		it.m_texturesInUse = 0;
 	}
 
+	for(Pass& p : m_ctx->m_passes)
+	{
+		p.m_fb.reset(nullptr);
+		p.m_secondLevelCmdbs.destroy(m_ctx->m_alloc);
+	}
+
+	m_ctx->m_cmdb.reset(nullptr);
+
+	m_ctx->m_alloc = StackAllocator<U8>();
 	m_ctx = nullptr;
 }
 
@@ -191,6 +286,51 @@ TexturePtr RenderGraph::getOrCreateRenderTarget(const TextureInitInfo& initInf)
 	}
 
 	return tex;
+}
+
+FramebufferPtr RenderGraph::getOrCreateFramebuffer(
+	const FramebufferInitInfo& fbInit_, const RenderTargetHandle* rtHandles, U64 hash)
+{
+	ANKI_ASSERT(rtHandles);
+	ANKI_ASSERT(hash > 0);
+
+	const Bool defaultFb = hash == 1;
+
+	if(!defaultFb)
+	{
+		// Create a hash that includes the render targets
+		hash = appendHash(rtHandles, sizeof(RenderTargetHandle) * (MAX_COLOR_ATTACHMENTS + 1), hash);
+	}
+
+	FramebufferPtr fb;
+	auto it = m_fbCache.find(hash);
+	if(it != m_fbCache.getEnd())
+	{
+		fb = *it;
+	}
+	else
+	{
+		// Create a complete fb init info
+		FramebufferInitInfo fbInit = fbInit_;
+		if(!defaultFb)
+		{
+			for(U i = 0; i < fbInit.m_colorAttachmentCount; ++i)
+			{
+				fbInit.m_colorAttachments[i].m_texture = m_ctx->m_rts[rtHandles[i]].m_tex;
+			}
+
+			if(!!fbInit.m_depthStencilAttachment.m_aspect)
+			{
+				fbInit.m_depthStencilAttachment.m_texture = m_ctx->m_rts[rtHandles[MAX_COLOR_ATTACHMENTS]].m_tex;
+			}
+		}
+
+		fb = getManager().newInstance<Framebuffer>(fbInit);
+
+		m_fbCache.emplace(getAllocator(), fb);
+	}
+
+	return fb;
 }
 
 Bool RenderGraph::passADependsOnB(BakeContext& ctx, const RenderPassBase& a, const RenderPassBase& b)
@@ -317,15 +457,12 @@ RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphDescription& 
 	return ctx;
 }
 
-void RenderGraph::compileNewGraph(const RenderGraphDescription& descr, StackAllocator<U8>& alloc)
+void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr, StackAllocator<U8>& alloc)
 {
-	// Init the context
-	BakeContext& ctx = *newContext(descr, alloc);
-	m_ctx = &ctx;
-
-	// Init and find the dependencies between passes
+	BakeContext& ctx = *m_ctx;
 	const U passCount = descr.m_passes.getSize();
 	ANKI_ASSERT(passCount > 0);
+
 	ctx.m_passes.create(alloc, passCount);
 	for(U i = 0; i < passCount; ++i)
 	{
@@ -334,7 +471,38 @@ void RenderGraph::compileNewGraph(const RenderGraphDescription& descr, StackAllo
 
 		outPass.m_callback = inPass.m_callback;
 		outPass.m_userData = inPass.m_userData;
-		outPass.m_secondLevelCmdbsCount = inPass.m_secondLevelCmdbsCount;
+
+		// Create command buffers and framebuffer
+		if(inPass.m_type == RenderPassBase::Type::GRAPHICS)
+		{
+			const GraphicsRenderPassInfo& graphicsPass = static_cast<const GraphicsRenderPassInfo&>(inPass);
+			if(graphicsPass.hasFramebuffer())
+			{
+				outPass.m_fb = getOrCreateFramebuffer(
+					graphicsPass.m_fbInitInfo, &graphicsPass.m_rtHandles[0], graphicsPass.m_fbHash);
+
+				// Create the second level command buffers
+				if(inPass.m_secondLevelCmdbsCount)
+				{
+					outPass.m_secondLevelCmdbs.create(alloc, inPass.m_secondLevelCmdbsCount);
+					CommandBufferInitInfo cmdbInit;
+					cmdbInit.m_flags = CommandBufferFlag::GRAPHICS_WORK;
+					cmdbInit.m_framebuffer = outPass.m_fb;
+					for(U cmdbIdx = 0; cmdbIdx < inPass.m_secondLevelCmdbsCount; ++cmdbIdx)
+					{
+						outPass.m_secondLevelCmdbs[cmdbIdx] = getManager().newInstance<CommandBuffer>(cmdbInit);
+					}
+				}
+			}
+			else
+			{
+				ANKI_ASSERT(inPass.m_secondLevelCmdbsCount == 0 && "Can't have second level cmdbs");
+			}
+		}
+		else
+		{
+			ANKI_ASSERT(inPass.m_secondLevelCmdbsCount == 0 && "Can't have second level cmdbs");
+		}
 
 		U j = i;
 		while(j--)
@@ -346,35 +514,59 @@ void RenderGraph::compileNewGraph(const RenderGraphDescription& descr, StackAllo
 			}
 		}
 	}
+}
 
-	// Walk the graph and create pass batches
+void RenderGraph::initBatches()
+{
+	ANKI_ASSERT(m_ctx);
+
 	U passesInBatchCount = 0;
+	const U passCount = m_ctx->m_passes.getSize();
+	ANKI_ASSERT(passCount > 0);
 	while(passesInBatchCount < passCount)
 	{
 		Batch batch;
 
 		for(U i = 0; i < passCount; ++i)
 		{
-			if(!ctx.m_passIsInBatch.get(i) && !passHasUnmetDependencies(ctx, i))
+			if(!m_ctx->m_passIsInBatch.get(i) && !passHasUnmetDependencies(*m_ctx, i))
 			{
 				// Add to the batch
 				++passesInBatchCount;
-				batch.m_passes.emplaceBack(alloc, i);
+				batch.m_passes.emplaceBack(m_ctx->m_alloc, i);
 			}
 		}
 
 		// Push back batch
-		ctx.m_batches.emplaceBack(alloc, std::move(batch));
+		m_ctx->m_batches.emplaceBack(m_ctx->m_alloc, std::move(batch));
 
 		// Mark batch's passes done
-		for(U32 passIdx : ctx.m_batches.getBack().m_passes)
+		for(U32 passIdx : m_ctx->m_batches.getBack().m_passes)
 		{
-			ctx.m_passIsInBatch.set(passIdx);
+			m_ctx->m_passIsInBatch.set(passIdx);
 		}
 	}
+}
+
+void RenderGraph::compileNewGraph(const RenderGraphDescription& descr, StackAllocator<U8>& alloc)
+{
+	// Init the context
+	BakeContext& ctx = *newContext(descr, alloc);
+	m_ctx = &ctx;
+
+	// Init the passes and find the dependencies between passes
+	initRenderPassesAndSetDeps(descr, alloc);
+
+	// Walk the graph and create pass batches
+	initBatches();
 
 	// Create barriers between batches
 	setBatchBarriers(descr, ctx);
+
+	// Misc
+	CommandBufferInitInfo cmdbInit;
+	cmdbInit.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::COMPUTE_WORK;
+	ctx.m_cmdb = getManager().newInstance<CommandBuffer>(cmdbInit);
 
 #if 1
 	if(dumpDependencyDotFile(descr, ctx, "./"))
@@ -667,7 +859,33 @@ BufferPtr RenderGraph::getBuffer(RenderPassBufferHandle handle) const
 
 void RenderGraph::runSecondLevel()
 {
-	// TODO
+	ANKI_ASSERT(m_ctx);
+	for(Pass& p : m_ctx->m_passes)
+	{
+		const U size = p.m_secondLevelCmdbs.getSize();
+		for(U i = 0; i < size; ++i)
+		{
+			p.m_callback(p.m_userData, p.m_secondLevelCmdbs[i], i, size);
+		}
+	}
+}
+
+void RenderGraph::run()
+{
+	ANKI_ASSERT(m_ctx);
+	for(Pass& p : m_ctx->m_passes)
+	{
+		const U size = p.m_secondLevelCmdbs.getSize();
+		if(size == 0)
+		{
+			// TODO begin render pass
+			p.m_callback(p.m_userData, m_ctx->m_cmdb, 0, 0);
+		}
+		else
+		{
+			// TODO exec the 2nd level cmdbs
+		}
+	}
 }
 
 } // end namespace anki

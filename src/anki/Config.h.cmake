@@ -154,6 +154,15 @@
 #	define ANKI_UNUSED
 #endif
 
+// Pack structs
+#if defined(_MSC_VER)
+#	define ANKI_BEGIN_PACKED_STRUCT __pragma(pack (push, 1))
+#	define ANKI_END_PACKED_STRUCT __pragma(pack (pop))
+#else
+#	define ANKI_BEGIN_PACKED_STRUCT _Pragma("pack (push, 1)")
+#	define ANKI_END_PACKED_STRUCT _Pragma("pack (pop)")
+#endif
+
 #ifdef ANKI_BUILD
 #	define anki_internal public
 #else

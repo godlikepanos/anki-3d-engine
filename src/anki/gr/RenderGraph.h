@@ -9,6 +9,7 @@
 #include <anki/gr/Enums.h>
 #include <anki/gr/Texture.h>
 #include <anki/gr/Buffer.h>
+#include <anki/gr/Framebuffer.h>
 #include <anki/util/HashMap.h>
 #include <anki/util/BitSet.h>
 
@@ -173,15 +174,106 @@ protected:
 	}
 };
 
+/// XXX
+class GraphicsRenderPassFramebufferInfo
+{
+	friend class GraphicsRenderPassInfo;
+
+public:
+	void attachRenderTarget(U32 location,
+		const TextureSurfaceInfo& surf,
+		AttachmentLoadOperation loadOperation = AttachmentLoadOperation::DONT_CARE,
+		AttachmentStoreOperation storeOperation = AttachmentStoreOperation::STORE,
+		const ClearValue& clearValue = ClearValue())
+	{
+		FramebufferAttachmentInfo& att = m_fbInitInfo.m_colorAttachments[location];
+		att.m_surface = surf;
+		att.m_loadOperation = loadOperation;
+		att.m_storeOperation = storeOperation;
+		att.m_clearValue = clearValue;
+
+		m_fbInitInfo.m_colorAttachmentCount = location + 1;
+		m_defaultFb = false;
+	}
+
+	void attachDepthStencilRenderTarget(const TextureSurfaceInfo& surf,
+		AttachmentLoadOperation loadOperation = AttachmentLoadOperation::CLEAR,
+		AttachmentStoreOperation storeOperation = AttachmentStoreOperation::STORE,
+		AttachmentLoadOperation stencilLoadOperation = AttachmentLoadOperation::CLEAR,
+		AttachmentStoreOperation stencilStoreOperation = AttachmentStoreOperation::STORE,
+		DepthStencilAspectBit aspect = DepthStencilAspectBit::DEPTH,
+		F32 depthClear = 1.0f,
+		I32 stencilClear = 0)
+	{
+		ANKI_ASSERT(!!(aspect & DepthStencilAspectBit::DEPTH_STENCIL));
+
+		FramebufferAttachmentInfo& att = m_fbInitInfo.m_depthStencilAttachment;
+		att.m_surface = surf;
+		att.m_loadOperation = loadOperation;
+		att.m_storeOperation = storeOperation;
+		att.m_clearValue.m_depthStencil.m_depth = depthClear;
+		att.m_clearValue.m_depthStencil.m_stencil = stencilClear;
+		att.m_stencilLoadOperation = stencilLoadOperation;
+		att.m_stencilStoreOperation = stencilStoreOperation;
+		att.m_aspect = aspect;
+
+		m_defaultFb = false;
+	}
+
+	void setDefaultFramebuffer()
+	{
+		m_defaultFb = true;
+	}
+
+	/// Calculate the hash for the framebuffer.
+	void bake();
+
+private:
+	FramebufferInitInfo m_fbInitInfo;
+	Bool8 m_defaultFb = false;
+
+	U64 m_hash = 0;
+};
+
 /// A graphics render pass for RenderGraph.
 class GraphicsRenderPassInfo : public RenderPassBase
 {
 	friend class RenderGraphDescription;
+	friend class RenderGraph;
 
 public:
 	GraphicsRenderPassInfo()
 		: RenderPassBase(Type::GRAPHICS)
 	{
+	}
+
+	void setFramebufferInfo(const GraphicsRenderPassFramebufferInfo& fbInfo,
+		const Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS>& colorRenderTargetHandles,
+		RenderTargetHandle depthStencilRenderTargetHandle)
+	{
+		ANKI_ASSERT(fbInfo.m_hash != 0 && "Forgot call GraphicsRenderPassFramebufferInfo::bake");
+		if(fbInfo.m_defaultFb)
+		{
+			m_fbInitInfo.m_colorAttachmentCount = 1;
+		}
+		else
+		{
+			m_fbInitInfo = fbInfo.m_fbInitInfo;
+			memcpy(&m_rtHandles[0], &colorRenderTargetHandles[0], sizeof(colorRenderTargetHandles));
+			m_rtHandles[MAX_COLOR_ATTACHMENTS] = depthStencilRenderTargetHandle;
+		}
+		m_fbInitInfo.setName(m_name.toCString());
+		m_fbHash = fbInfo.m_hash;
+	}
+
+private:
+	Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS + 1> m_rtHandles;
+	FramebufferInitInfo m_fbInitInfo;
+	U64 m_fbHash = 0;
+
+	Bool hasFramebuffer() const
+	{
+		return m_fbHash != 0;
 	}
 };
 
@@ -358,6 +450,8 @@ private:
 
 	HashMap<TextureInitInfo, RenderTargetCacheEntry> m_renderTargetCache; ///< Non-imported render targets.
 
+	HashMap<U64, FramebufferPtr> m_fbCache; ///< Framebuffer cache.
+
 	// Forward declarations
 	class BakeContext;
 	class Pass;
@@ -369,13 +463,16 @@ private:
 	BakeContext* m_ctx = nullptr;
 
 	BakeContext* newContext(const RenderGraphDescription& descr, StackAllocator<U8>& alloc);
+	void initRenderPassesAndSetDeps(const RenderGraphDescription& descr, StackAllocator<U8>& alloc);
+	void initBatches();
+	void setBatchBarriers(const RenderGraphDescription& descr, BakeContext& ctx) const;
 
 	TexturePtr getOrCreateRenderTarget(const TextureInitInfo& initInf);
+	FramebufferPtr getOrCreateFramebuffer(
+		const FramebufferInitInfo& fbInit, const RenderTargetHandle* rtHandles, U64 hash);
 
 	static Bool passADependsOnB(BakeContext& ctx, const RenderPassBase& a, const RenderPassBase& b);
 	static Bool passHasUnmetDependencies(const BakeContext& ctx, U32 passIdx);
-
-	void setBatchBarriers(const RenderGraphDescription& descr, BakeContext& ctx) const;
 
 	/// Dump the dependency graph into a file.
 	ANKI_USE_RESULT Error dumpDependencyDotFile(

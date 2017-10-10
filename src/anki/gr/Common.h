@@ -111,7 +111,7 @@ private:
 public:
 	union
 	{
-		Array<F32, 4> m_colorf = {{0.0, 0.0, 0.0, 0.0}};
+		Array<F32, 4> m_colorf;
 		Array<I32, 4> m_colori;
 		Array<U32, 4> m_coloru;
 		Ds m_depthStencil;
@@ -200,14 +200,7 @@ public:
 	/// @name The name of the object.
 	GrBaseInitInfo(CString name)
 	{
-		// Zero it because the derived class may be hashed.
-		memset(&m_name[0], 0, sizeof(m_name));
-
-		if(name)
-		{
-			ANKI_ASSERT(name.getLength() <= MAX_GR_OBJECT_NAME_LENGTH);
-			memcpy(&m_name[0], &name[0], name.getLength() + 1);
-		}
+		setName(name);
 	}
 
 	GrBaseInitInfo()
@@ -229,6 +222,18 @@ public:
 	CString getName() const
 	{
 		return (m_name[0] != '\0') ? CString(&m_name[0]) : CString();
+	}
+
+	void setName(CString name)
+	{
+		// Zero it because the derived classes may be hashed.
+		memset(&m_name[0], 0, sizeof(m_name));
+
+		if(name)
+		{
+			ANKI_ASSERT(name.getLength() <= MAX_GR_OBJECT_NAME_LENGTH);
+			memcpy(&m_name[0], &name[0], name.getLength() + 1);
+		}
 	}
 
 private:
