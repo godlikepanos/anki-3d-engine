@@ -174,7 +174,7 @@ protected:
 	}
 };
 
-/// XXX
+/// Describes a framebuffer.
 class GraphicsRenderPassFramebufferInfo
 {
 	friend class GraphicsRenderPassInfo;
@@ -277,11 +277,13 @@ private:
 	}
 };
 
-/// A non-graphics render pass for RenderGraph.
-class NoGraphicsRenderPassInfo : private RenderPassBase
+/// A compute render pass for RenderGraph.
+class ComputeRenderPassInfo : public RenderPassBase
 {
-private:
-	NoGraphicsRenderPassInfo()
+	friend class RenderGraphDescription;
+
+public:
+	ComputeRenderPassInfo()
 		: RenderPassBase(Type::NO_GRAPHICS)
 	{
 	}
@@ -293,7 +295,7 @@ class RenderGraphDescription
 	friend class RenderGraph;
 
 public:
-	RenderGraphDescription(StackAllocator<U8> alloc)
+	RenderGraphDescription(const StackAllocator<U8>& alloc)
 		: m_alloc(alloc)
 	{
 	}
@@ -313,6 +315,16 @@ public:
 	GraphicsRenderPassInfo& newGraphicsRenderPass(CString name)
 	{
 		GraphicsRenderPassInfo* pass = m_alloc.newInstance<GraphicsRenderPassInfo>();
+		pass->m_alloc = m_alloc;
+		pass->setName(name);
+		m_passes.emplaceBack(m_alloc, pass);
+		return *pass;
+	}
+
+	/// Create a new compute render pass.
+	ComputeRenderPassInfo& newComputeRenderPass(CString name)
+	{
+		ComputeRenderPassInfo* pass = m_alloc.newInstance<ComputeRenderPassInfo>();
 		pass->m_alloc = m_alloc;
 		pass->setName(name);
 		m_passes.emplaceBack(m_alloc, pass);
