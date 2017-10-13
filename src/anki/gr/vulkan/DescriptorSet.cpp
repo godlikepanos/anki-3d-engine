@@ -20,6 +20,7 @@ class DS : public IntrusiveListEnabled<DS>
 public:
 	VkDescriptorSet m_handle = {};
 	U64 m_lastFrameUsed = MAX_U64;
+	U64 m_hash;
 };
 
 /// Per thread allocator.
@@ -198,7 +199,7 @@ Error DSThreadAllocator::newSet(
 		if(frameDiff > DESCRIPTOR_FRAME_BUFFERING)
 		{
 			// Found something, recycle
-			auto it2 = m_hashmap.find(hash);
+			auto it2 = m_hashmap.find(set->m_hash);
 			ANKI_ASSERT(it2 != m_hashmap.getEnd());
 			m_hashmap.erase(m_layoutEntry->m_factory->m_alloc, it2);
 			m_list.erase(set);
@@ -245,6 +246,7 @@ Error DSThreadAllocator::newSet(
 
 	ANKI_ASSERT(out);
 	out->m_lastFrameUsed = crntFrame;
+	out->m_hash = hash;
 
 	// Finally, write it
 	writeSet(bindings, *out);

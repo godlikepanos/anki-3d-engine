@@ -200,7 +200,7 @@ ANKI_TEST(Util, SparseArray)
 	// Fuzzy test #2: Do random insertions and removals
 	{
 		const U MAX = 10000;
-		SparseArray<SAFoo, U32> arr;
+		SparseArray<SAFoo, U64> arr;
 		using StlMap =
 			std::unordered_map<int, int, std::hash<int>, std::equal_to<int>, HeapAllocator<std::pair<int, int>>>;
 		StlMap map(10, std::hash<int>(), std::equal_to<int>(), alloc);
@@ -228,12 +228,16 @@ ANKI_TEST(Util, SparseArray)
 				const U idx = U(rand()) % map.size();
 				auto it = std::next(std::begin(map), idx);
 
-				auto it2 = arr.find(it->first);
+				int key = it->first;
+
+				auto it2 = arr.find(key);
 				ANKI_TEST_EXPECT_NEQ(it2, arr.getEnd());
 				ANKI_TEST_EXPECT_EQ(it->second, it2->m_x);
 
 				map.erase(it);
 				arr.erase(alloc, it2);
+
+				ANKI_TEST_EXPECT_EQ(arr.find(key), arr.getEnd());
 
 				arr.validate();
 			}
