@@ -12,6 +12,14 @@ macro(installExecutable exe)
 		COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${exe}> ${CMAKE_BINARY_DIR}/bin)
 endmacro()
 
+macro(addAnkiSourceFiles)
+	foreach(f ${ARGV})
+		set(AK_SOURCES "${AK_SOURCES} ${f}")
+	endforeach()
+
+	set(AK_SOURCES ${AK_SOURCES} PARENT_SCOPE)
+endmacro()
+
 ################################################################################
 # Determin the system to build for. Do that first                              #
 ################################################################################
@@ -361,22 +369,22 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -Wall -W -Wextra -Wstrict-alia
 # Set platform specific
 if(LINUX)
 	if(GL)
-		set(_SYS ${ANKI_GR_BACKEND} ankiglew)
+		set(THIRD_PARTY_LIBS ${ANKI_GR_BACKEND} ankiglew)
 	else()
-		set(_SYS vulkan)
+		set(THIRD_PARTY_LIBS vulkan)
 		if(SDL)
-			set(_SYS ${_SYS} X11-xcb)
+			set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} X11-xcb)
 		else()
 			message(FATAL_ERROR "Unhandled case")
 		endif()
 	endif()
 
-	set(_SYS ${_SYS} pthread dl)
+	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} pthread dl)
 elseif(MACOS)
 	find_package(OpenGL REQUIRED)
-	set(_SYS ${OPENGL_LIBRARIES} ankiglew pthread)
+	set(THIRD_PARTY_LIBS ${OPENGL_LIBRARIES} ankiglew pthread)
 elseif(ANDROID)
-	set(_SYS GLESv3 EGL log android)
+	set(THIRD_PARTY_LIBS GLESv3 EGL log android)
 	include_directories("${ANDROID_NDK}/sources/android/native_app_glue")
 	set(_SYS_SRC "${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c")
 elseif(WINDOWS)
@@ -388,28 +396,31 @@ elseif(WINDOWS)
 		endif()
 
 		link_directories($ENV{VULKAN_SDK}/Bin)
-		set(_SYS vulkan-1)
+		set(THIRD_PARTY_LIBS vulkan-1)
 	endif()
 
-	set(_SYS ${_SYS} version Imm32 Winmm DbgHelp)
+	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} version Imm32 Winmm DbgHelp)
 else()
 	message(FATAL_ERROR "Unhandled case")
 endif()
 
-link_directories(${FREETYPE_INSTALL_DIR}/lib)
+if(SDL)
+	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} SDL2-static)
+endif()
+
+if(VULKAN)
+	set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} glslang SPIRV HLSL OGLCompiler OSDependent ankispirvcross)
+endif()
 
 # Add anki sub libraries
 set(ANKI_SUB_DIRS core script renderer scene ui event input physics resource misc gr collision math util)
-set(ANKI_LIBS "")
-
 foreach(TMP ${ANKI_SUB_DIRS})
 	add_subdirectory(src/anki/${TMP})
-	set(ANKI_LIBS ${ANKI_LIBS} anki${TMP})
 endforeach()
 
-add_library(anki src/anki/Dummy.cpp "${_SYS_SRC}")
-
-target_link_libraries(anki ${ANKI_LIBS} ankitinyxml2 ankilua ankiz ${_SYS})
+separate_arguments(AK_SOURCES)
+add_library(anki ${AK_SOURCES})
+target_link_libraries(anki ankitinyxml2 ankilua ankiz ankinewton ${THIRD_PARTY_LIBS})
 
 ################################################################################
 # AnKi extra                                                                   #
@@ -433,3 +444,4 @@ endif()
 if(ANKI_BUILD_BENCH)
 	add_subdirectory(bench)
 endif()
+

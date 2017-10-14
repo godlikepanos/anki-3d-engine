@@ -1,10 +1,11 @@
-file(GLOB ANKI_INPUT_SOURCES Input.cpp)
+set(SOURCES Input.cpp)
 
 if(SDL)
-	set(ANKI_INPUT_SOURCES ${ANKI_INPUT_SOURCES} InputSdl.cpp)
+	set(SOURCES ${SOURCES} InputSdl.cpp)
 else()
-	set(ANKI_INPUT_SOURCES ${ANKI_INPUT_SOURCES} InputDummy.cpp)
+	set(SOURCES ${SOURCES} InputDummy.cpp)
 endif()
 
-add_library(ankiinput ${ANKI_INPUT_SOURCES})
-target_link_libraries(ankiinput ankicore)
+foreach(F ${SOURCES})
+	addAnkiSourceFiles("${CMAKE_CURRENT_SOURCE_DIR}/${F}")
+endforeach()
