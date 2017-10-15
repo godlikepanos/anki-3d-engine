@@ -128,6 +128,8 @@ void GraphicsRenderPassFramebufferInfo::bake()
 
 	m_hash = 0;
 
+	ANKI_ASSERT(m_fbInitInfo.m_colorAttachmentCount > 0 || !!m_fbInitInfo.m_depthStencilAttachment.m_aspect);
+
 	// First the depth attachments
 	if(m_fbInitInfo.m_colorAttachmentCount)
 	{
@@ -329,7 +331,8 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(
 
 		fb = getManager().newInstance<Framebuffer>(fbInit);
 
-		m_fbCache.emplace(getAllocator(), fb);
+		// TODO: Check why the hell it compiles if you remove the parameter "hash"
+		m_fbCache.emplace(getAllocator(), hash, fb);
 	}
 
 	return fb;

@@ -307,7 +307,6 @@ public:
 			m_alloc.deleteInstance(pass);
 		}
 		m_passes.destroy(m_alloc);
-
 		m_renderTargets.destroy(m_alloc);
 	}
 

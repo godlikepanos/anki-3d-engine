@@ -20,12 +20,11 @@ addons:
   apt:
     sources:
       - sourceline: 'ppa:ubuntu-toolchain-r/test'
-      - sourceline: 'ppa:jonathonf/llvm'
       - sourceline: 'ppa:graphics-drivers/ppa'
     packages:
       - cmake
       - g++-6
-      - clang-3.7
+      - clang-3.5
       - libvulkan-dev
       - libegl1-mesa-dev
 
