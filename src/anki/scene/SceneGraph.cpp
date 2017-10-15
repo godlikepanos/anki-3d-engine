@@ -96,7 +96,7 @@ Error SceneGraph::init(AllocAlignedCallback allocCb,
 
 	// Init the default main camera
 	ANKI_CHECK(newSceneNode<PerspectiveCamera>("mainCamera", m_defaultMainCam));
-	m_defaultMainCam->setAll(toRad(60.0), toRad(60.0), 0.1, 1000.0);
+	m_defaultMainCam->setAll(toRad(60.0f), toRad(60.0f), 0.1f, 1000.0f);
 	m_mainCam = m_defaultMainCam;
 
 	return Error::NONE;

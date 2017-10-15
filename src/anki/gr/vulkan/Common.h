@@ -15,13 +15,7 @@
 #error TODO
 #endif
 #include <vulkan/vulkan.h>
-
-// I wonder whose stupid idea was to pollute the global namespace with defines like ERROR, near and far
-#if ANKI_OS == ANKI_OS_WINDOWS
-#undef ERROR
-#undef near
-#undef far
-#endif
+#include <anki/util/CleanupWindows.h> // Clean global namespace
 
 namespace anki
 {

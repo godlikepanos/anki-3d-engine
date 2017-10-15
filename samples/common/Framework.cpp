@@ -29,10 +29,10 @@ Error SampleApp::init(int argc, char** argv, CString sampleName)
 	// Input
 	getInput().lockCursor(true);
 	getInput().hideCursor(true);
-	getInput().moveCursor(Vec2(0.0));
+	getInput().moveCursor(Vec2(0.0f));
 
 	// Some renderer stuff
-	getMainRenderer().getOffscreenRenderer().getVolumetric().setFogParticleColor(Vec3(1.0, 0.9, 0.9) * 0.0001);
+	getMainRenderer().getOffscreenRenderer().getVolumetric().setFogParticleColor(Vec3(1.0f, 0.9f, 0.9f) * 0.0001f);
 
 	ANKI_CHECK(sampleExtraInit());
 
@@ -41,9 +41,9 @@ Error SampleApp::init(int argc, char** argv, CString sampleName)
 
 Error SampleApp::userMainLoop(Bool& quit)
 {
-	const F32 MOVE_DISTANCE = 0.1;
-	const F32 ROTATE_ANGLE = toRad(2.5);
-	const F32 MOUSE_SENSITIVITY = 9.0;
+	const F32 MOVE_DISTANCE = 0.1f;
+	const F32 ROTATE_ANGLE = toRad(2.5f);
+	const F32 MOUSE_SENSITIVITY = 9.0f;
 	quit = false;
 
 	SceneGraph& scene = getSceneGraph();

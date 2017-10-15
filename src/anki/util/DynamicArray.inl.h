@@ -26,7 +26,7 @@ void DynamicArray<T>::resizeStorage(TAllocator& alloc, PtrSize newSize)
 			for(PtrSize i = 0; i < m_size; ++i)
 			{
 				::new(&newStorage[i]) Value(std::move(m_data[i]));
-				m_data[i].~Value();
+				m_data[i].~T();
 			}
 
 			alloc.getMemoryPool().free(m_data);
@@ -43,7 +43,7 @@ void DynamicArray<T>::resizeStorage(TAllocator& alloc, PtrSize newSize)
 		// Delete remaining stuff
 		for(U i = newSize; i < m_size; ++i)
 		{
-			m_data[i].~Value();
+			m_data[i].~T();
 		}
 
 		m_size = newSize;
@@ -61,7 +61,7 @@ void DynamicArray<T>::resizeStorage(TAllocator& alloc, PtrSize newSize)
 				for(PtrSize i = 0; i < m_size; ++i)
 				{
 					::new(&newStorage[i]) Value(std::move(m_data[i]));
-					m_data[i].~Value();
+					m_data[i].~T();
 				}
 
 				alloc.getMemoryPool().free(m_data);

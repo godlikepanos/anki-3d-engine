@@ -216,14 +216,16 @@ public:
 
 // Forward declare specializations
 
-template<>
-TMat3x4<F32>::Base::TMat(const TMat3x4<F32>::Base& b);
+using TMat3x4F32Base = TMat3x4<F32>::Base;
 
 template<>
-TMat3x4<F32>::Base::TMat(const F32 f);
+TMat3x4F32Base::TMat(const TMat3x4F32Base& b);
 
 template<>
-inline TVec3<F32> TMat3x4<F32>::Base::operator*(const TVec4<F32>& b) const;
+TMat3x4F32Base::TMat(const F32 f);
+
+template<>
+inline TVec3<F32> TMat3x4F32Base::operator*(const TVec4<F32>& b) const;
 
 template<>
 TMat3x4<F32> TMat3x4<F32>::combineTransformations(const TMat3x4<F32>& b) const;

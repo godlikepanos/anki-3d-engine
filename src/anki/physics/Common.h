@@ -10,9 +10,11 @@
 #include <anki/util/Ptr.h>
 #include <anki/Math.h>
 
-// Common newton libs
+// Have all the newton headers here because they polute the global namespace
 #include <Newton.h>
 #include <dLinearAlgebra.h>
+#include <dCustomPlayerControllerManager.h>
+#include <anki/util/CleanupWindows.h>
 
 namespace anki
 {

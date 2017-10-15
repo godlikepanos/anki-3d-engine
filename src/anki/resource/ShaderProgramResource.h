@@ -61,7 +61,7 @@ class ShaderProgramResourceMutation
 public:
 	const ShaderProgramResourceMutator* m_mutator;
 	ShaderProgramResourceMutatorValue m_value;
-	U8 _padding[sizeof(void*) - sizeof(m_value)];
+	U8 _padding[sizeof(void*) - sizeof(ShaderProgramResourceMutatorValue)];
 
 	ShaderProgramResourceMutation()
 	{

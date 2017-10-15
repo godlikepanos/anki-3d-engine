@@ -9,6 +9,14 @@
 namespace anki
 {
 
+// Forward
+#define ANKI_SCRIPT_CALL_WRAP(x_) void wrapModule##x_(lua_State*)
+ANKI_SCRIPT_CALL_WRAP(Math);
+ANKI_SCRIPT_CALL_WRAP(Renderer);
+ANKI_SCRIPT_CALL_WRAP(Scene);
+ANKI_SCRIPT_CALL_WRAP(Event);
+#undef ANKI_SCRIPT_CALL_WRAP
+
 ScriptManager::ScriptManager()
 {
 }
@@ -31,15 +39,11 @@ Error ScriptManager::init(AllocAlignedCallback allocCb, void* allocCbData, Scene
 	// Wrap stuff
 	lua_State* l = m_lua.getLuaState();
 
-#define ANKI_SCRIPT_CALL_WRAP(x_)           \
-	extern void wrapModule##x_(lua_State*); \
-	wrapModule##x_(l);
-
+#define ANKI_SCRIPT_CALL_WRAP(x_) wrapModule##x_(l)
 	ANKI_SCRIPT_CALL_WRAP(Math);
 	ANKI_SCRIPT_CALL_WRAP(Renderer);
 	ANKI_SCRIPT_CALL_WRAP(Scene);
 	ANKI_SCRIPT_CALL_WRAP(Event);
-
 #undef ANKI_SCRIPT_CALL_WRAP
 
 	return Error::NONE;

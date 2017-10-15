@@ -34,12 +34,8 @@ class TransferGpuAllocatorHandle;
 /// @{
 const U MAX_LOD_COUNT = 3;
 const U MAX_INSTANCES = 64;
-const U MAX_SUB_DRAWCALLS = 64;
-
-/// The number of instance groups. Eg First group is 1 instance, 2nd group 2 instances, 3rd is 4 instances. The
-/// expression is: @code log2(MAX_INSTANCES) + 1 @endcode but since Clang doesn't like log2 in constant expressions use
-/// an alternative way.
-const U MAX_INSTANCE_GROUPS = __builtin_popcount(MAX_INSTANCES - 1) + 1;
+const U MAX_SUB_DRAWCALLS = 64; ///< @warning If changed don't forget to change MAX_INSTANCE_GROUPS
+const U MAX_INSTANCE_GROUPS = 7; ///< It's log2(MAX_INSTANCES) + 1
 /// @}
 
 /// Deleter for ResourcePtr.

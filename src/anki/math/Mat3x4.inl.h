@@ -11,7 +11,7 @@ namespace anki
 #if ANKI_SIMD == ANKI_SIMD_SSE
 
 template<>
-inline TMat3x4<F32>::Base::TMat(const TMat3x4<F32>::Base& b)
+inline TMat3x4F32Base::TMat(const TMat3x4F32Base& b)
 {
 	for(U i = 0; i < 3; i++)
 	{
@@ -20,7 +20,7 @@ inline TMat3x4<F32>::Base::TMat(const TMat3x4<F32>::Base& b)
 }
 
 template<>
-inline TMat3x4<F32>::Base::TMat(const F32 f)
+inline TMat3x4F32Base::TMat(const F32 f)
 {
 	for(U i = 0; i < 3; i++)
 	{
@@ -29,7 +29,7 @@ inline TMat3x4<F32>::Base::TMat(const F32 f)
 }
 
 template<>
-inline TVec3<F32> TMat3x4<F32>::Base::operator*(const TVec4<F32>& b) const
+inline TVec3<F32> TMat3x4F32Base::operator*(const TVec4<F32>& b) const
 {
 	TVec3<F32> v;
 

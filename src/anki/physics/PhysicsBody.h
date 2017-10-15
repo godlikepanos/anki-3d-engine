@@ -73,8 +73,8 @@ private:
 	NewtonBody* m_body = nullptr;
 	void* m_sceneCollisionProxy = nullptr;
 	Transform m_trf = Transform::getIdentity();
-	F32 m_friction = 0.03;
-	F32 m_elasticity = 0.1;
+	F32 m_friction = 0.03f;
+	F32 m_elasticity = 0.1f;
 	PhysicsMaterialBit m_materialBits = PhysicsMaterialBit::ALL;
 	Bool8 m_updated = true;
 

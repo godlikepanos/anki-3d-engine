@@ -141,8 +141,8 @@ void PhysicsWorld::onContactCallback(const NewtonJoint* contactJoint, F32 timest
 	const NewtonBody* body0 = NewtonJointGetBody0(contactJoint);
 	const NewtonBody* body1 = NewtonJointGetBody1(contactJoint);
 
-	F32 friction0 = 0.01;
-	F32 elasticity0 = 0.001;
+	F32 friction0 = 0.01f;
+	F32 elasticity0 = 0.001f;
 	F32 friction1 = friction0;
 	F32 elasticity1 = elasticity0;
 

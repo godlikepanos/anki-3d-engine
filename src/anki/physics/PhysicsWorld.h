@@ -75,7 +75,7 @@ private:
 	mutable NewtonWorld* m_world = nullptr;
 	NewtonCollision* m_sceneCollision = nullptr;
 	NewtonBody* m_sceneBody = nullptr;
-	Vec4 m_gravity = Vec4(0.0, -9.8, 0.0, 0.0);
+	Vec4 m_gravity = Vec4(0.0f, -9.8f, 0.0f, 0.0f);
 	Second m_dt = 0.0;
 
 	/// @note Don't delete it. Newton will

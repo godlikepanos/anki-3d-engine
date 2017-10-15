@@ -138,10 +138,12 @@ set(LINKER_FLAGS "")
 
 add_definitions(-D_NEWTON_STATIC_LIB -D_CUSTOM_JOINTS_STATIC_LIB)
 
-if(ARCH_64)
-	add_definitions(-D_POSIX_VER_64)
-else()
-	add_definitions(-D_POSIX_VER_32)
+if(NOT MSVC)
+	if(ARCH_64)
+		add_definitions(-D_POSIX_VER_64)
+	else()
+		add_definitions(-D_POSIX_VER_32)
+	endif()
 endif()
 
 # Newton wants that
@@ -159,65 +161,67 @@ add_definitions(-DGLEW_NO_GLU)
 add_definitions(-DSPIRV_CROSS_EXCEPTIONS_TO_ASSERTIONS)
 add_definitions(-DANKI_BUILD)
 
-# When building AnKi define this special flag
-set(COMPILER_FLAGS "${COMPILER_FLAGS} -fPIC ")
+if(NOT MSVC)
+	# When building AnKi define this special flag
+	set(COMPILER_FLAGS "${COMPILER_FLAGS} -fPIC ")
 
-if(NOT ANKI_CPU_ADDR_SPACE STREQUAL "0")
-	set(LINKER_FLAGS "${LINKER_FLAGS} -m${ANKI_CPU_ADDR_SPACE} ")
-	set(COMPILER_FLAGS "${COMPILER_FLAGS} -m${ANKI_CPU_ADDR_SPACE} ")
-endif()
-
-set(COMPILER_FLAGS "${COMPILER_FLAGS} -fno-exceptions ")
-
-if(GCC AND NOT CLANG)
-	set(CXX_FLAGS "${CXX_FLAGS} -static-libstdc++ ")
-endif()
-
-if(ANKI_ENABLE_SIMD)
-	if(LINUX OR MACOS OR WINDOWS)
-		set(COMPILER_FLAGS "${COMPILER_FLAGS} -msse4 ")
-	else()
-		set(COMPILER_FLAGS "${COMPILER_FLAGS} -mfpu=neon ")
+	if(NOT ANKI_CPU_ADDR_SPACE STREQUAL "0")
+		set(LINKER_FLAGS "${LINKER_FLAGS} -m${ANKI_CPU_ADDR_SPACE} ")
+		set(COMPILER_FLAGS "${COMPILER_FLAGS} -m${ANKI_CPU_ADDR_SPACE} ")
 	endif()
+
+	set(COMPILER_FLAGS "${COMPILER_FLAGS} -fno-exceptions ")
+
+	if(GCC AND NOT CLANG)
+		set(CXX_FLAGS "${CXX_FLAGS} -static-libstdc++ ")
+	endif()
+
+	if(ANKI_ENABLE_SIMD)
+		if(LINUX OR MACOS OR WINDOWS)
+			set(COMPILER_FLAGS "${COMPILER_FLAGS} -msse4 ")
+		else()
+			set(COMPILER_FLAGS "${COMPILER_FLAGS} -mfpu=neon ")
+		endif()
+	endif()
+
+	if(ANKI_LTO)
+		set(COMPILER_FLAGS "${COMPILER_FLAGS} -flto ")
+		set(LINKER_FLAGS "${LINKER_FLAGS} -flto ")
+	endif()
+
+	if(ANKI_STRIP)
+		set(LINKER_FLAGS "${LINKER_FLAGS} -s ")
+		set(COMPILER_FLAGS "${COMPILER_FLAGS} -s ")
+	endif()
+
+	if(ANKI_ADDRESS_SANITIZER)
+		set(COMPILER_FLAGS "${COMPILER_FLAGS} -fsanitize=address ")
+	endif()
+
+	if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
+		set(COMPILER_FLAGS "${COMPILER_FLAGS} -O3 -DNDEBUG ")
+
+		set(CMAKE_CXX_FLAGS_RELEASE "")
+		set(CMAKE_C_FLAGS_RELEASE "")
+	elseif(${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
+		set(COMPILER_FLAGS "${COMPILER_FLAGS} -O3 -g3 ")
+
+		set(CMAKE_CXX_FLAGS_RELWITHDBGINFO "")
+		set(CMAKE_C_FLAGS_RELWITHDBGINFO "")
+	elseif(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+		set(COMPILER_FLAGS "${COMPILER_FLAGS} -O0 -g3 ")
+
+		set(CMAKE_CXX_FLAGS_DEBUG "")
+		set(CMAKE_C_FLAGS_DEBUG "")
+	else()
+		message(FATAL_ERROR "Wrong CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
+	endif()
+
+	# Set the flags to cmake now
+	set(CMAKE_CXX_FLAGS "${CXX_FLAGS} ${COMPILER_FLAGS}")
+	set(CMAKE_C_FLAGS "${COMPILER_FLAGS}")
+	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINKER_FLAGS}")
 endif()
-
-if(ANKI_LTO)
-	set(COMPILER_FLAGS "${COMPILER_FLAGS} -flto ")
-	set(LINKER_FLAGS "${LINKER_FLAGS} -flto ")
-endif()
-
-if(ANKI_STRIP)
-	set(LINKER_FLAGS "${LINKER_FLAGS} -s ")
-	set(COMPILER_FLAGS "${COMPILER_FLAGS} -s ")
-endif()
-
-if(ANKI_ADDRESS_SANITIZER)
-	set(COMPILER_FLAGS "${COMPILER_FLAGS} -fsanitize=address ")
-endif()
-
-if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
-	set(COMPILER_FLAGS "${COMPILER_FLAGS} -O3 -DNDEBUG ")
-
-	set(CMAKE_CXX_FLAGS_RELEASE "")
-	set(CMAKE_C_FLAGS_RELEASE "")
-elseif(${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
-	set(COMPILER_FLAGS "${COMPILER_FLAGS} -O3 -g3 ")
-
-	set(CMAKE_CXX_FLAGS_RELWITHDBGINFO "")
-	set(CMAKE_C_FLAGS_RELWITHDBGINFO "")
-elseif(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-	set(COMPILER_FLAGS "${COMPILER_FLAGS} -O0 -g3 ")
-
-	set(CMAKE_CXX_FLAGS_DEBUG "")
-	set(CMAKE_C_FLAGS_DEBUG "")
-else()
-	message(FATAL_ERROR "Wrong CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
-endif()
-
-# Set the flags to cmake now
-set(CMAKE_CXX_FLAGS "${CXX_FLAGS} ${COMPILER_FLAGS}")
-set(CMAKE_C_FLAGS "${COMPILER_FLAGS}")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINKER_FLAGS}")
 
 ################################################################################
 # Thirdparty                                                                   #
@@ -364,7 +368,11 @@ if(ANDROID)
 endif()
 
 # AnKi compiler flags (Mainly warnings)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -Wall -W -Wextra -Wstrict-aliasing -Wwrite-strings -Wunused -Wunused-variable -Wno-unused-parameter -Wundef -Wno-ignored-attributes -Wunused-result -std=c++14")
+if(NOT MSVC)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -Wall -W -Wextra -Wstrict-aliasing -Wwrite-strings -Wunused -Wunused-variable -Wno-unused-parameter -Wundef -Wno-ignored-attributes -Wunused-result -std=c++14")
+else()
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4996 /wd4244 /wd4262 /wd4267")
+endif()
 
 # Set platform specific
 if(LINUX)

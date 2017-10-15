@@ -30,7 +30,7 @@ public:
 
 	/// The near plane on the shadow map frustums.
 	/// WARNING: If you change here update the shaders.
-	static constexpr F32 FRUSTUM_NEAR_PLANE = 0.1 / 4.0;
+	static constexpr F32 FRUSTUM_NEAR_PLANE = 0.1f / 4.0f;
 
 	LightComponent(SceneNode* node, LightComponentType type);
 

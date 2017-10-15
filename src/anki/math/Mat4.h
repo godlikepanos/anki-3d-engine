@@ -470,41 +470,43 @@ public:
 
 // Forward declare specializations
 
-template<>
-TMat4<F32>::Base::TMat(const TMat4<F32>::Base& b);
+using TMat4F32Base = TMat4<F32>::Base;
 
 template<>
-TMat4<F32>::Base::TMat(const F32 f);
+TMat4F32Base::TMat(const TMat4F32Base& b);
 
 template<>
-TMat4<F32>& TMat4<F32>::Base::operator=(const TMat4<F32>& b);
+TMat4F32Base::TMat(const F32 f);
 
 template<>
-TMat4<F32> TMat4<F32>::Base::operator+(const TMat4<F32>& b) const;
+TMat4<F32>& TMat4F32Base::operator=(const TMat4<F32>& b);
 
 template<>
-TMat4<F32>& TMat4<F32>::Base::operator+=(const TMat4<F32>& b);
+TMat4<F32> TMat4F32Base::operator+(const TMat4<F32>& b) const;
 
 template<>
-TMat4<F32> TMat4<F32>::Base::operator-(const TMat4<F32>& b) const;
+TMat4<F32>& TMat4F32Base::operator+=(const TMat4<F32>& b);
 
 template<>
-TMat4<F32>& TMat4<F32>::Base::operator-=(const TMat4<F32>& b);
+TMat4<F32> TMat4F32Base::operator-(const TMat4<F32>& b) const;
 
 template<>
-TMat4<F32> TMat4<F32>::Base::operator*(const TMat4<F32>& b) const;
+TMat4<F32>& TMat4F32Base::operator-=(const TMat4<F32>& b);
 
 template<>
-TVec4<F32> TMat4<F32>::Base::operator*(const TVec4<F32>& b) const;
+TMat4<F32> TMat4F32Base::operator*(const TMat4<F32>& b) const;
 
 template<>
-void TMat4<F32>::Base::setRows(const TVec4<F32>& a, const TVec4<F32>& b, const TVec4<F32>& c, const TVec4<F32>& d);
+TVec4<F32> TMat4F32Base::operator*(const TVec4<F32>& b) const;
 
 template<>
-void TMat4<F32>::Base::setRow(const U i, const TVec4<F32>& v);
+void TMat4F32Base::setRows(const TVec4<F32>& a, const TVec4<F32>& b, const TVec4<F32>& c, const TVec4<F32>& d);
 
 template<>
-void TMat4<F32>::Base::transpose();
+void TMat4F32Base::setRow(const U i, const TVec4<F32>& v);
+
+template<>
+void TMat4F32Base::transpose();
 
 #elif ANKI_SIMD == ANKI_SIMD_NEON
 

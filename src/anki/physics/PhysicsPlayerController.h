@@ -6,7 +6,6 @@
 #pragma once
 
 #include <anki/physics/PhysicsObject.h>
-#include <dCustomPlayerControllerManager.h>
 
 namespace anki
 {
@@ -33,12 +32,12 @@ public:
 class PhysicsPlayerControllerInitInfo
 {
 public:
-	F32 m_mass = 83.0;
-	F32 m_innerRadius = 0.30;
-	F32 m_outerRadius = 0.50;
-	F32 m_height = 1.9;
-	F32 m_stepHeight = 1.9 * 0.33;
-	Vec4 m_position = Vec4(0.0);
+	F32 m_mass = 83.0f;
+	F32 m_innerRadius = 0.30f;
+	F32 m_outerRadius = 0.50f;
+	F32 m_height = 1.9f;
+	F32 m_stepHeight = 1.9f * 0.33f;
+	Vec4 m_position = Vec4(0.0f);
 };
 
 /// A player controller that walks the world.

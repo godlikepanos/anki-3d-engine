@@ -82,6 +82,16 @@
 #	else
 #		error "Unknown CPU arch"
 #	endif
+#elif ANKI_COMPILER == ANKI_COMPILER_MSVC
+#	if defined(_M_ARM)
+#		define ANKI_CPU_ARCH ANKI_CPU_ARCH_ARM
+#		define ANKI_CPU_ARCH_STR "ANKI_CPU_ARCH_ARM"
+#	elif defined(_M_X64) || defined(_M_IX86)
+#		define ANKI_CPU_ARCH ANKI_CPU_ARCH_INTEL
+#		define ANKI_CPU_ARCH_STR "ANKI_CPU_ARCH_INTEL"
+#	else
+#		error "Unknown CPU arch"
+#	endif
 #else
 #	error "Unsupported compiler"
 #endif
@@ -161,6 +171,12 @@
 #else
 #	define ANKI_BEGIN_PACKED_STRUCT _Pragma("pack (push, 1)")
 #	define ANKI_END_PACKED_STRUCT _Pragma("pack (pop)")
+#endif
+
+// Popcount
+#ifdef _MSC_VER
+#	include <intrin.h>
+#	define __builtin_popcount __popcnt
 #endif
 
 #ifdef ANKI_BUILD

@@ -182,7 +182,7 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 	m_timerTick = 1.0 / 60.0; // in sec. 1.0 / period
 
 // Check SIMD support
-#if ANKI_SIMD == ANKI_SIMD_SSE
+#if ANKI_SIMD == ANKI_SIMD_SSE && ANKI_COMPILER != ANKI_COMPILER_MSVC
 	if(!__builtin_cpu_supports("sse4.2"))
 	{
 		ANKI_CORE_LOGF(

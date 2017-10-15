@@ -49,7 +49,7 @@ TMat4<T> operator/(const T f, const TMat4<T>& m4)
 #if ANKI_SIMD == ANKI_SIMD_SSE
 
 template<>
-inline TMat4<F32>::Base::TMat(const TMat4<F32>::Base& b)
+inline TMat4F32Base::TMat(const TMat4F32Base& b)
 {
 	for(U i = 0; i < 4; i++)
 	{
@@ -58,7 +58,7 @@ inline TMat4<F32>::Base::TMat(const TMat4<F32>::Base& b)
 }
 
 template<>
-inline TMat4<F32>::Base::TMat(const F32 f)
+inline TMat4F32Base::TMat(const F32 f)
 {
 	for(U i = 0; i < 4; i++)
 	{
@@ -67,7 +67,7 @@ inline TMat4<F32>::Base::TMat(const F32 f)
 }
 
 template<>
-inline TMat4<F32>& TMat4<F32>::Base::operator=(const TMat4<F32>& b)
+inline TMat4<F32>& TMat4F32Base::operator=(const TMat4<F32>& b)
 {
 	for(U i = 0; i < 4; i++)
 	{
@@ -77,7 +77,7 @@ inline TMat4<F32>& TMat4<F32>::Base::operator=(const TMat4<F32>& b)
 }
 
 template<>
-inline TMat4<F32> TMat4<F32>::Base::operator+(const TMat4<F32>& b) const
+inline TMat4<F32> TMat4F32Base::operator+(const TMat4<F32>& b) const
 {
 	TMat4<F32> c;
 	for(U i = 0; i < 4; i++)
@@ -88,7 +88,7 @@ inline TMat4<F32> TMat4<F32>::Base::operator+(const TMat4<F32>& b) const
 }
 
 template<>
-inline TMat4<F32>& TMat4<F32>::Base::operator+=(const TMat4<F32>& b)
+inline TMat4<F32>& TMat4F32Base::operator+=(const TMat4<F32>& b)
 {
 	for(U i = 0; i < 4; i++)
 	{
@@ -98,7 +98,7 @@ inline TMat4<F32>& TMat4<F32>::Base::operator+=(const TMat4<F32>& b)
 }
 
 template<>
-inline TMat4<F32> TMat4<F32>::Base::operator-(const TMat4<F32>& b) const
+inline TMat4<F32> TMat4F32Base::operator-(const TMat4<F32>& b) const
 {
 	TMat4<F32> c;
 	for(U i = 0; i < 4; i++)
@@ -109,7 +109,7 @@ inline TMat4<F32> TMat4<F32>::Base::operator-(const TMat4<F32>& b) const
 }
 
 template<>
-inline TMat4<F32>& TMat4<F32>::Base::operator-=(const TMat4<F32>& b)
+inline TMat4<F32>& TMat4F32Base::operator-=(const TMat4<F32>& b)
 {
 	for(U i = 0; i < 4; i++)
 	{
@@ -119,7 +119,7 @@ inline TMat4<F32>& TMat4<F32>::Base::operator-=(const TMat4<F32>& b)
 }
 
 template<>
-inline TMat4<F32> TMat4<F32>::Base::operator*(const TMat4<F32>& b) const
+inline TMat4<F32> TMat4F32Base::operator*(const TMat4<F32>& b) const
 {
 	TMat4<F32> out;
 	const TMat4<F32>& m = *static_cast<const TMat4<F32>*>(this);
@@ -144,7 +144,7 @@ inline TMat4<F32> TMat4<F32>::Base::operator*(const TMat4<F32>& b) const
 }
 
 template<>
-inline TVec4<F32> TMat4<F32>::Base::operator*(const TVec4<F32>& b) const
+inline TVec4<F32> TMat4F32Base::operator*(const TVec4<F32>& b) const
 {
 	TVec4<F32> v;
 
@@ -157,8 +157,7 @@ inline TVec4<F32> TMat4<F32>::Base::operator*(const TVec4<F32>& b) const
 }
 
 template<>
-inline void TMat4<F32>::Base::setRows(
-	const TVec4<F32>& a, const TVec4<F32>& b, const TVec4<F32>& c, const TVec4<F32>& d)
+inline void TMat4F32Base::setRows(const TVec4<F32>& a, const TVec4<F32>& b, const TVec4<F32>& c, const TVec4<F32>& d)
 {
 	m_simd[0] = a.getSimd();
 	m_simd[1] = b.getSimd();
@@ -167,13 +166,13 @@ inline void TMat4<F32>::Base::setRows(
 }
 
 template<>
-inline void TMat4<F32>::Base::setRow(const U i, const TVec4<F32>& v)
+inline void TMat4F32Base::setRow(const U i, const TVec4<F32>& v)
 {
 	m_simd[i] = v.getSimd();
 }
 
 template<>
-inline void TMat4<F32>::Base::transpose()
+inline void TMat4F32Base::transpose()
 {
 	_MM_TRANSPOSE4_PS(m_simd[0], m_simd[1], m_simd[2], m_simd[3]);
 }
