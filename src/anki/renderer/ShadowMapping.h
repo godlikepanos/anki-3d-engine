@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/renderer/RenderingPass.h>
+#include <anki/renderer/RendererObject.h>
 #include <anki/Gr.h>
 #include <anki/resource/TextureResource.h>
 #include <anki/util/Array.h>
@@ -17,13 +17,13 @@ namespace anki
 /// @{
 
 /// Shadowmapping pass
-class ShadowMapping : public RenderingPass
+class ShadowMapping : public RendererObject
 {
 anki_internal:
 	TexturePtr m_shadowAtlas; ///< ESM texture atlas.
 
 	ShadowMapping(Renderer* r)
-		: RenderingPass(r)
+		: RendererObject(r)
 	{
 	}
 

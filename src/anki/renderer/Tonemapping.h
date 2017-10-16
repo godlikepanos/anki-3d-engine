@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/renderer/RenderingPass.h>
+#include <anki/renderer/RendererObject.h>
 
 namespace anki
 {
@@ -14,13 +14,13 @@ namespace anki
 /// @{
 
 /// Tonemapping.
-class Tonemapping : public RenderingPass
+class Tonemapping : public RendererObject
 {
 anki_internal:
 	BufferPtr m_luminanceBuff;
 
 	Tonemapping(Renderer* r)
-		: RenderingPass(r)
+		: RendererObject(r)
 	{
 	}
 

@@ -6,7 +6,7 @@
 #pragma once
 
 #include <anki/renderer/Renderer.h>
-#include <anki/renderer/RenderingPass.h>
+#include <anki/renderer/RendererObject.h>
 #include <anki/renderer/Clusterer.h>
 #include <anki/resource/TextureResource.h>
 
@@ -17,7 +17,7 @@ namespace anki
 /// @{
 
 /// Probe reflections and irradiance.
-class Indirect : public RenderingPass
+class Indirect : public RendererObject
 {
 	friend class IrTask;
 

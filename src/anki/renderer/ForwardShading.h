@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/renderer/RenderingPass.h>
+#include <anki/renderer/RendererObject.h>
 
 namespace anki
 {
@@ -14,11 +14,11 @@ namespace anki
 /// @{
 
 /// Forward rendering stage. The objects that blend must be handled differently
-class ForwardShading : public RenderingPass
+class ForwardShading : public RendererObject
 {
 anki_internal:
 	ForwardShading(Renderer* r)
-		: RenderingPass(r)
+		: RendererObject(r)
 	{
 	}
 

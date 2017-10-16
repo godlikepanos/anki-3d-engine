@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/renderer/RenderingPass.h>
+#include <anki/renderer/RendererObject.h>
 #include <anki/resource/TextureResource.h>
 #include <anki/resource/ShaderProgramResource.h>
 
@@ -19,7 +19,7 @@ class LightBin;
 /// @{
 
 /// Clustered deferred light pass.
-class LightShading : public RenderingPass
+class LightShading : public RendererObject
 {
 anki_internal:
 	LightShading(Renderer* r);

@@ -43,7 +43,7 @@ enum class IsShaderVariantBit : U8
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(IsShaderVariantBit, inline)
 
 LightShading::LightShading(Renderer* r)
-	: RenderingPass(r)
+	: RendererObject(r)
 {
 }
 

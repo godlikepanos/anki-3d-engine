@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/renderer/RenderingPass.h>
+#include <anki/renderer/RendererObject.h>
 #include <anki/resource/TextureResource.h>
 
 namespace anki
@@ -15,7 +15,7 @@ namespace anki
 /// @{
 
 /// Post-processing stage.
-class FinalComposite : public RenderingPass
+class FinalComposite : public RendererObject
 {
 public:
 	/// Load the color grading texture.

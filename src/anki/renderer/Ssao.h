@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/renderer/RenderingPass.h>
+#include <anki/renderer/RendererObject.h>
 #include <anki/resource/TextureResource.h>
 #include <anki/Gr.h>
 #include <anki/core/Timestamp.h>
@@ -20,14 +20,14 @@ class Ssao;
 /// @{
 
 /// Screen space ambient occlusion pass
-class SsaoMain : public RenderingPass
+class SsaoMain : public RendererObject
 {
 	friend class SsaoVBlur;
 	friend class SsaoHBlur;
 
 anki_internal:
 	SsaoMain(Renderer* r, Ssao* ssao)
-		: RenderingPass(r)
+		: RendererObject(r)
 		, m_ssao(ssao)
 	{
 	}
@@ -49,13 +49,13 @@ private:
 };
 
 /// Screen space ambient occlusion blur pass.
-class SsaoHBlur : public RenderingPass
+class SsaoHBlur : public RendererObject
 {
 	friend class SsaoVBlur;
 
 anki_internal:
 	SsaoHBlur(Renderer* r, Ssao* ssao)
-		: RenderingPass(r)
+		: RendererObject(r)
 		, m_ssao(ssao)
 	{
 	}
@@ -76,11 +76,11 @@ private:
 };
 
 /// Screen space ambient occlusion blur pass.
-class SsaoVBlur : public RenderingPass
+class SsaoVBlur : public RendererObject
 {
 anki_internal:
 	SsaoVBlur(Renderer* r, Ssao* ssao)
-		: RenderingPass(r)
+		: RendererObject(r)
 		, m_ssao(ssao)
 	{
 	}
@@ -101,7 +101,7 @@ private:
 };
 
 /// Screen space ambient occlusion pass
-class Ssao : public RenderingPass
+class Ssao : public RendererObject
 {
 	friend class SsaoMain;
 	friend class SsaoHBlur;
@@ -115,7 +115,7 @@ anki_internal:
 	SsaoVBlur m_vblur;
 
 	Ssao(Renderer* r)
-		: RenderingPass(r)
+		: RendererObject(r)
 		, m_main(r, this)
 		, m_hblur(r, this)
 		, m_vblur(r, this)

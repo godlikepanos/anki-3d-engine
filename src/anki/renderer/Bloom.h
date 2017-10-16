@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/renderer/RenderingPass.h>
+#include <anki/renderer/RendererObject.h>
 #include <anki/renderer/ScreenSpaceLensFlare.h>
 #include <anki/Gr.h>
 #include <anki/resource/TextureResource.h>
@@ -18,7 +18,7 @@ namespace anki
 
 const PixelFormat BLOOM_RT_PIXEL_FORMAT(ComponentFormat::R8G8B8, TransformFormat::UNORM);
 
-class BloomExposure : public RenderingPass
+class BloomExposure : public RendererObject
 {
 anki_internal:
 	U32 m_width = 0;
@@ -26,7 +26,7 @@ anki_internal:
 	TexturePtr m_rt;
 
 	BloomExposure(Renderer* r)
-		: RenderingPass(r)
+		: RendererObject(r)
 	{
 	}
 
@@ -50,7 +50,7 @@ private:
 	F32 m_scale = 1.0;
 };
 
-class BloomUpscale : public RenderingPass
+class BloomUpscale : public RendererObject
 {
 anki_internal:
 	U32 m_width = 0;
@@ -58,7 +58,7 @@ anki_internal:
 	TexturePtr m_rt;
 
 	BloomUpscale(Renderer* r)
-		: RenderingPass(r)
+		: RendererObject(r)
 	{
 	}
 
@@ -80,7 +80,7 @@ private:
 };
 
 /// Bloom passes.
-class Bloom : public RenderingPass
+class Bloom : public RendererObject
 {
 anki_internal:
 	BloomExposure m_extractExposure;
@@ -88,7 +88,7 @@ anki_internal:
 	ScreenSpaceLensFlare m_sslf;
 
 	Bloom(Renderer* r)
-		: RenderingPass(r)
+		: RendererObject(r)
 		, m_extractExposure(r)
 		, m_upscale(r)
 		, m_sslf(r)

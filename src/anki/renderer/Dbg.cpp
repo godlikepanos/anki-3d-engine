@@ -22,7 +22,7 @@ namespace anki
 {
 
 Dbg::Dbg(Renderer* r)
-	: RenderingPass(r)
+	: RendererObject(r)
 {
 }
 

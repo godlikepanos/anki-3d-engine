@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/renderer/RenderingPass.h>
+#include <anki/renderer/RendererObject.h>
 
 namespace anki
 {
@@ -14,11 +14,11 @@ namespace anki
 /// @{
 
 /// Screen space lens flare pass.
-class ScreenSpaceLensFlare : public RenderingPass
+class ScreenSpaceLensFlare : public RendererObject
 {
 anki_internal:
 	ScreenSpaceLensFlare(Renderer* r)
-		: RenderingPass(r)
+		: RendererObject(r)
 	{
 	}
 

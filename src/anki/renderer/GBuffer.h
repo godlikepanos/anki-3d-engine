@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/renderer/RenderingPass.h>
+#include <anki/renderer/RendererObject.h>
 #include <anki/Gr.h>
 
 namespace anki
@@ -15,7 +15,7 @@ namespace anki
 /// @{
 
 /// G buffer stage. It populates the G buffer
-class GBuffer : public RenderingPass
+class GBuffer : public RendererObject
 {
 anki_internal:
 	TexturePtr m_rt0;
@@ -24,7 +24,7 @@ anki_internal:
 	TexturePtr m_depthRt;
 
 	GBuffer(Renderer* r)
-		: RenderingPass(r)
+		: RendererObject(r)
 	{
 	}
 

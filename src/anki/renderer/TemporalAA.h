@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/renderer/RenderingPass.h>
+#include <anki/renderer/RendererObject.h>
 
 namespace anki
 {
@@ -14,7 +14,7 @@ namespace anki
 /// @{
 
 /// Temporal AA resolve.
-class TemporalAA : public RenderingPass
+class TemporalAA : public RendererObject
 {
 public:
 	TemporalAA(Renderer* r);

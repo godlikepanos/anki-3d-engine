@@ -13,7 +13,7 @@ namespace anki
 {
 
 TemporalAA::TemporalAA(Renderer* r)
-	: RenderingPass(r)
+	: RendererObject(r)
 {
 }
 

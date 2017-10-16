@@ -23,16 +23,16 @@ class ConfigSet;
 /// @addtogroup renderer
 /// @{
 
-/// Rendering pass
-class RenderingPass
+/// Renderer object.
+class RendererObject
 {
 anki_internal:
-	RenderingPass(Renderer* r)
+	RendererObject(Renderer* r)
 		: m_r(r)
 	{
 	}
 
-	~RenderingPass()
+	~RendererObject()
 	{
 	}
 

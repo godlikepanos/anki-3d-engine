@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/renderer/RenderingPass.h>
+#include <anki/renderer/RendererObject.h>
 #include <anki/Gr.h>
 #include <anki/util/BitMask.h>
 #include <anki/util/Enum.h>
@@ -30,7 +30,7 @@ enum class DbgFlag : U16
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DbgFlag, inline)
 
 /// Debugging stage
-class Dbg : public RenderingPass
+class Dbg : public RendererObject
 {
 public:
 	Bool getEnabled() const

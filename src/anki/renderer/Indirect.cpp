@@ -40,7 +40,7 @@ struct Indirect::LightPassSpotLightUniforms
 };
 
 Indirect::Indirect(Renderer* r)
-	: RenderingPass(r)
+	: RendererObject(r)
 {
 }
 

@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/renderer/RenderingPass.h>
+#include <anki/renderer/RendererObject.h>
 #include <anki/Gr.h>
 #include <anki/resource/TextureResource.h>
 
@@ -16,11 +16,11 @@ namespace anki
 /// @{
 
 /// Lens flare rendering pass. Part of forward shading.
-class LensFlare : public RenderingPass
+class LensFlare : public RendererObject
 {
 anki_internal:
 	LensFlare(Renderer* r)
-		: RenderingPass(r)
+		: RendererObject(r)
 	{
 	}
 

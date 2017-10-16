@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/renderer/RenderingPass.h>
+#include <anki/renderer/RendererObject.h>
 
 namespace anki
 {
@@ -14,11 +14,11 @@ namespace anki
 /// @{
 
 /// Downsample the IS and blur it at the same time.
-class DownscaleBlur : public RenderingPass
+class DownscaleBlur : public RendererObject
 {
 anki_internal:
 	DownscaleBlur(Renderer* r)
-		: RenderingPass(r)
+		: RendererObject(r)
 	{
 	}
 

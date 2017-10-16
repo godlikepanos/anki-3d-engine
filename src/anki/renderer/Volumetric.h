@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/renderer/RenderingPass.h>
+#include <anki/renderer/RendererObject.h>
 
 namespace anki
 {
@@ -17,7 +17,7 @@ class Volumetric;
 /// @{
 
 /// Volumetic main pass.
-class VolumetricMain : public RenderingPass
+class VolumetricMain : public RendererObject
 {
 	friend class Volumetric;
 	friend class VolumetricHBlur;
@@ -25,7 +25,7 @@ class VolumetricMain : public RenderingPass
 
 anki_internal:
 	VolumetricMain(Renderer* r, Volumetric* vol)
-		: RenderingPass(r)
+		: RendererObject(r)
 		, m_vol(vol)
 	{
 	}
@@ -58,14 +58,14 @@ private:
 };
 
 /// Volumetric blur pass.
-class VolumetricHBlur : public RenderingPass
+class VolumetricHBlur : public RendererObject
 {
 	friend class Volumetric;
 	friend class VolumetricVBlur;
 
 anki_internal:
 	VolumetricHBlur(Renderer* r, Volumetric* vol)
-		: RenderingPass(r)
+		: RendererObject(r)
 		, m_vol(vol)
 	{
 	}
@@ -91,13 +91,13 @@ private:
 };
 
 /// Volumetric blur pass.
-class VolumetricVBlur : public RenderingPass
+class VolumetricVBlur : public RendererObject
 {
 	friend class Volumetric;
 
 anki_internal:
 	VolumetricVBlur(Renderer* r, Volumetric* vol)
-		: RenderingPass(r)
+		: RendererObject(r)
 		, m_vol(vol)
 	{
 	}
@@ -122,7 +122,7 @@ private:
 };
 
 /// Volumetric effects.
-class Volumetric : public RenderingPass
+class Volumetric : public RendererObject
 {
 	friend class VolumetricMain;
 	friend class VolumetricHBlur;
@@ -140,7 +140,7 @@ anki_internal:
 	VolumetricVBlur m_vblur;
 
 	Volumetric(Renderer* r)
-		: RenderingPass(r)
+		: RendererObject(r)
 		, m_main(r, this)
 		, m_hblur(r, this)
 		, m_vblur(r, this)

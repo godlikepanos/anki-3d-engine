@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <anki/renderer/RenderingPass.h>
+#include <anki/renderer/RendererObject.h>
 #include <anki/Gr.h>
 #include <anki/resource/TextureResource.h>
 
@@ -19,14 +19,14 @@ class DepthDownscale;
 /// @{
 
 /// Quick pass to downscale the depth buffer.
-class HalfDepth : public RenderingPass
+class HalfDepth : public RendererObject
 {
 anki_internal:
 	TexturePtr m_depthRt;
 	TexturePtr m_colorRt;
 
 	HalfDepth(Renderer* r, DepthDownscale* depthDownscale)
-		: RenderingPass(r)
+		: RendererObject(r)
 		, m_parent(depthDownscale)
 	{
 	}
@@ -49,13 +49,13 @@ private:
 };
 
 /// Quick pass to downscale the depth buffer.
-class QuarterDepth : public RenderingPass
+class QuarterDepth : public RendererObject
 {
 anki_internal:
 	TexturePtr m_colorRt;
 
 	QuarterDepth(Renderer* r, DepthDownscale* depthDownscale)
-		: RenderingPass(r)
+		: RendererObject(r)
 		, m_parent(depthDownscale)
 	{
 	}
@@ -77,14 +77,14 @@ private:
 	ShaderProgramPtr m_grProg;
 };
 
-class DepthDownscale : public RenderingPass
+class DepthDownscale : public RendererObject
 {
 anki_internal:
 	HalfDepth m_hd;
 	QuarterDepth m_qd;
 
 	DepthDownscale(Renderer* r)
-		: RenderingPass(r)
+		: RendererObject(r)
 		, m_hd(r, this)
 		, m_qd(r, this)
 	{
