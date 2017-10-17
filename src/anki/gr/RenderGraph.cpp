@@ -118,7 +118,7 @@ public:
 	}
 };
 
-void GraphicsRenderPassFramebufferInfo::bake()
+void GraphicsRenderPassFramebufferDescription::bake()
 {
 	if(m_defaultFb)
 	{
@@ -248,18 +248,19 @@ void RenderGraph::reset()
 	m_ctx = nullptr;
 }
 
-TexturePtr RenderGraph::getOrCreateRenderTarget(const TextureInitInfo& initInf)
+TexturePtr RenderGraph::getOrCreateRenderTarget(const TextureInitInfo& initInf, U64 hash)
 {
+	ANKI_ASSERT(hash);
 	auto alloc = getManager().getAllocator();
 
 	// Find a cache entry
 	RenderTargetCacheEntry* entry = nullptr;
-	auto it = m_renderTargetCache.find(initInf);
+	auto it = m_renderTargetCache.find(hash);
 	if(ANKI_UNLIKELY(it == m_renderTargetCache.getEnd()))
 	{
 		// Didn't found the entry, create a new one
 
-		auto it2 = m_renderTargetCache.emplace(getAllocator(), initInf);
+		auto it2 = m_renderTargetCache.emplace(getAllocator(), hash);
 		entry = &(*it2);
 	}
 	else
@@ -338,7 +339,8 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(
 	return fb;
 }
 
-Bool RenderGraph::passADependsOnB(BakeContext& ctx, const RenderPassBase& a, const RenderPassBase& b)
+Bool RenderGraph::passADependsOnB(
+	BakeContext& ctx, const RenderPassDescriptionBase& a, const RenderPassDescriptionBase& b)
 {
 	// Render targets
 	{
@@ -445,7 +447,8 @@ RenderGraph::BakeContext* RenderGraph::newContext(const RenderGraphDescription& 
 		}
 		else
 		{
-			TexturePtr rt = getOrCreateRenderTarget(descr.m_renderTargets[rtIdx].m_initInfo);
+			TexturePtr rt =
+				getOrCreateRenderTarget(descr.m_renderTargets[rtIdx].m_initInfo, descr.m_renderTargets[rtIdx].m_hash);
 			ctx->m_rts[rtIdx].m_texture = rt;
 		}
 	}
@@ -471,16 +474,17 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr
 	ctx.m_passes.create(alloc, passCount);
 	for(U i = 0; i < passCount; ++i)
 	{
-		const RenderPassBase& inPass = *descr.m_passes[i];
+		const RenderPassDescriptionBase& inPass = *descr.m_passes[i];
 		Pass& outPass = ctx.m_passes[i];
 
 		outPass.m_callback = inPass.m_callback;
 		outPass.m_userData = inPass.m_userData;
 
 		// Create command buffers and framebuffer
-		if(inPass.m_type == RenderPassBase::Type::GRAPHICS)
+		if(inPass.m_type == RenderPassDescriptionBase::Type::GRAPHICS)
 		{
-			const GraphicsRenderPassInfo& graphicsPass = static_cast<const GraphicsRenderPassInfo&>(inPass);
+			const GraphicsRenderPassDescription& graphicsPass =
+				static_cast<const GraphicsRenderPassDescription&>(inPass);
 			if(graphicsPass.hasFramebuffer())
 			{
 				outPass.m_fb = getOrCreateFramebuffer(
@@ -512,7 +516,7 @@ void RenderGraph::initRenderPassesAndSetDeps(const RenderGraphDescription& descr
 		U j = i;
 		while(j--)
 		{
-			const RenderPassBase& prevPass = *descr.m_passes[j];
+			const RenderPassDescriptionBase& prevPass = *descr.m_passes[j];
 			if(passADependsOnB(ctx, inPass, prevPass))
 			{
 				outPass.m_dependsOn.emplaceBack(alloc, j);
@@ -591,7 +595,7 @@ void RenderGraph::setBatchBarriers(const RenderGraphDescription& descr, BakeCont
 		// For all passes of that batch
 		for(U passIdx : batch.m_passIndices)
 		{
-			const RenderPassBase& pass = *descr.m_passes[passIdx];
+			const RenderPassDescriptionBase& pass = *descr.m_passes[passIdx];
 
 			// For all consumers
 			for(const RenderPassDependency& consumer : pass.m_consumers)
@@ -827,7 +831,7 @@ Error RenderGraph::dumpDependencyDotFile(
 
 		for(U passIdx : batch.m_passIndices)
 		{
-			const RenderPassBase& pass = *descr.m_passes[passIdx];
+			const RenderPassDescriptionBase& pass = *descr.m_passes[passIdx];
 			StringAuto passName(alloc);
 			passName.sprintf("_%s_", pass.m_name.cstr());
 			slist.pushBackSprintf("\t\"pass: %s\"[color=%s,style=bold];\n", passName.cstr(), COLORS[batchIdx % 6]);
@@ -870,7 +874,7 @@ void RenderGraph::runSecondLevel()
 		const U size = p.m_secondLevelCmdbs.getSize();
 		for(U i = 0; i < size; ++i)
 		{
-			p.m_callback(p.m_userData, p.m_secondLevelCmdbs[i], i, size);
+			p.m_callback(p.m_userData, p.m_secondLevelCmdbs[i], i, size, *this);
 		}
 	}
 }
@@ -916,7 +920,7 @@ void RenderGraph::run()
 			const U size = pass.m_secondLevelCmdbs.getSize();
 			if(size == 0)
 			{
-				pass.m_callback(pass.m_userData, cmdb, 0, 0);
+				pass.m_callback(pass.m_userData, cmdb, 0, 0, *this);
 			}
 			else
 			{

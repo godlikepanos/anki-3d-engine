@@ -16,6 +16,9 @@
 namespace anki
 {
 
+// Forward
+class RenderGraph;
+
 /// @addtogroup graphics
 /// @{
 
@@ -32,15 +35,31 @@ using RenderTargetHandle = U32;
 /// Buffer handle used in the RenderGraph.
 using RenderPassBufferHandle = U32;
 
+/// Describes the render target.
+class RenderTargetDescription : public TextureInitInfo
+{
+	friend class RenderGraphDescription;
+
+public:
+	/// Create an internal hash.
+	void bake()
+	{
+		m_hash = computeHash();
+	}
+
+private:
+	U64 m_hash = 0;
+};
+
 /// Work callback for a RenderGraph pass.
 using RenderPassWorkCallback = void (*)(
-	void* userData, CommandBufferPtr cmdb, U32 secondLevelCmdbIdx, U32 secondLevelCmdbCount);
+	void* userData, CommandBufferPtr cmdb, U32 secondLevelCmdbIdx, U32 secondLevelCmdbCount, const RenderGraph& rgraph);
 
 /// RenderGraph pass dependency.
 class RenderPassDependency
 {
 	friend class RenderGraph;
-	friend class RenderPassBase;
+	friend class RenderPassDescriptionBase;
 
 public:
 	/// Dependency to an individual surface.
@@ -88,12 +107,12 @@ private:
 };
 
 /// The base of compute/transfer and graphics renderpasses for RenderGraph.
-class RenderPassBase
+class RenderPassDescriptionBase
 {
 	friend class RenderGraph;
 
 public:
-	virtual ~RenderPassBase()
+	virtual ~RenderPassDescriptionBase()
 	{
 		m_name.destroy(m_alloc); // To avoid the assertion
 		m_consumers.destroy(m_alloc);
@@ -163,7 +182,7 @@ protected:
 
 	String m_name;
 
-	RenderPassBase(Type t)
+	RenderPassDescriptionBase(Type t)
 		: m_type(t)
 	{
 	}
@@ -175,9 +194,9 @@ protected:
 };
 
 /// Describes a framebuffer.
-class GraphicsRenderPassFramebufferInfo
+class GraphicsRenderPassFramebufferDescription
 {
-	friend class GraphicsRenderPassInfo;
+	friend class GraphicsRenderPassDescription;
 
 public:
 	void attachRenderTarget(U32 location,
@@ -236,18 +255,18 @@ private:
 };
 
 /// A graphics render pass for RenderGraph.
-class GraphicsRenderPassInfo : public RenderPassBase
+class GraphicsRenderPassDescription : public RenderPassDescriptionBase
 {
 	friend class RenderGraphDescription;
 	friend class RenderGraph;
 
 public:
-	GraphicsRenderPassInfo()
-		: RenderPassBase(Type::GRAPHICS)
+	GraphicsRenderPassDescription()
+		: RenderPassDescriptionBase(Type::GRAPHICS)
 	{
 	}
 
-	void setFramebufferInfo(const GraphicsRenderPassFramebufferInfo& fbInfo,
+	void setFramebufferInfo(const GraphicsRenderPassFramebufferDescription& fbInfo,
 		const Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS>& colorRenderTargetHandles,
 		RenderTargetHandle depthStencilRenderTargetHandle)
 	{
@@ -267,7 +286,7 @@ public:
 	}
 
 private:
-	Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS + 1> m_rtHandles;
+	Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS + 1> m_rtHandles = {};
 	FramebufferInitInfo m_fbInitInfo;
 	U64 m_fbHash = 0;
 
@@ -278,18 +297,18 @@ private:
 };
 
 /// A compute render pass for RenderGraph.
-class ComputeRenderPassInfo : public RenderPassBase
+class ComputeRenderPassDescription : public RenderPassDescriptionBase
 {
 	friend class RenderGraphDescription;
 
 public:
-	ComputeRenderPassInfo()
-		: RenderPassBase(Type::NO_GRAPHICS)
+	ComputeRenderPassDescription()
+		: RenderPassDescriptionBase(Type::NO_GRAPHICS)
 	{
 	}
 };
 
-/// Describes the render graph by creating passes and setting dependencies on them.
+/// Builds the description of the frame's render passes and their interactions.
 class RenderGraphDescription
 {
 	friend class RenderGraph;
@@ -302,7 +321,7 @@ public:
 
 	~RenderGraphDescription()
 	{
-		for(RenderPassBase* pass : m_passes)
+		for(RenderPassDescriptionBase* pass : m_passes)
 		{
 			m_alloc.deleteInstance(pass);
 		}
@@ -311,9 +330,9 @@ public:
 	}
 
 	/// Create a new graphics render pass.
-	GraphicsRenderPassInfo& newGraphicsRenderPass(CString name)
+	GraphicsRenderPassDescription& newGraphicsRenderPass(CString name)
 	{
-		GraphicsRenderPassInfo* pass = m_alloc.newInstance<GraphicsRenderPassInfo>();
+		GraphicsRenderPassDescription* pass = m_alloc.newInstance<GraphicsRenderPassDescription>();
 		pass->m_alloc = m_alloc;
 		pass->setName(name);
 		m_passes.emplaceBack(m_alloc, pass);
@@ -321,9 +340,9 @@ public:
 	}
 
 	/// Create a new compute render pass.
-	ComputeRenderPassInfo& newComputeRenderPass(CString name)
+	ComputeRenderPassDescription& newComputeRenderPass(CString name)
 	{
-		ComputeRenderPassInfo* pass = m_alloc.newInstance<ComputeRenderPassInfo>();
+		ComputeRenderPassDescription* pass = m_alloc.newInstance<ComputeRenderPassDescription>();
 		pass->m_alloc = m_alloc;
 		pass->setName(name);
 		m_passes.emplaceBack(m_alloc, pass);
@@ -341,10 +360,12 @@ public:
 	}
 
 	/// Get or create a new render target.
-	RenderTargetHandle newRenderTarget(CString name, const TextureInitInfo& initInf)
+	RenderTargetHandle newRenderTarget(CString name, const RenderTargetDescription& initInf)
 	{
+		ANKI_ASSERT(initInf.m_hash && "Forgot to call RenderTargetDescription::bake");
 		RT& rt = m_renderTargets.emplaceBack(m_alloc);
 		rt.m_initInfo = initInf;
+		rt.m_hash = initInf.m_hash;
 		rt.m_usage = TextureUsageBit::NONE;
 		rt.setName(name);
 		return m_renderTargets.getSize() - 1;
@@ -378,6 +399,7 @@ private:
 	{
 	public:
 		TextureInitInfo m_initInfo;
+		U64 m_hash = 0;
 		TexturePtr m_importedTex;
 		TextureUsageBit m_usage;
 	};
@@ -390,12 +412,21 @@ private:
 	};
 
 	StackAllocator<U8> m_alloc;
-	DynamicArray<RenderPassBase*> m_passes;
+	DynamicArray<RenderPassDescriptionBase*> m_passes;
 	DynamicArray<RT> m_renderTargets;
 	DynamicArray<Buffer> m_buffers;
 };
 
 /// Accepts a descriptor of the frame's render passes and sets the dependencies between them.
+///
+/// The idea for the RenderGraph is to automate:
+/// - Synchronization (barriers, events etc) between passes.
+/// - Command buffer creation for primary and secondary command buffers.
+/// - Framebuffer creation.
+/// - Render target creation (optional since textures can be imported as well).
+///
+/// It accepts a description of the frame's render passes (compute and graphics), compiles that description to calculate
+/// dependencies and then populates command buffers with the help of multiple RenderPassWorkCallback.
 class RenderGraph final : public GrObject
 {
 	ANKI_GR_OBJECT
@@ -415,7 +446,7 @@ public:
 
 	void init()
 	{
-		// Do nothing, implement the method for the interface
+		// Do nothing, implement the method to align with the general interface
 	}
 
 	/// @name 1st step methods
@@ -459,7 +490,7 @@ private:
 		U32 m_texturesInUse = 0;
 	};
 
-	HashMap<TextureInitInfo, RenderTargetCacheEntry> m_renderTargetCache; ///< Non-imported render targets.
+	HashMap<U64, RenderTargetCacheEntry> m_renderTargetCache; ///< Non-imported render targets.
 
 	HashMap<U64, FramebufferPtr> m_fbCache; ///< Framebuffer cache.
 
@@ -478,11 +509,12 @@ private:
 	void initBatches();
 	void setBatchBarriers(const RenderGraphDescription& descr, BakeContext& ctx) const;
 
-	TexturePtr getOrCreateRenderTarget(const TextureInitInfo& initInf);
+	TexturePtr getOrCreateRenderTarget(const TextureInitInfo& initInf, U64 hash);
 	FramebufferPtr getOrCreateFramebuffer(
 		const FramebufferInitInfo& fbInit, const RenderTargetHandle* rtHandles, U64 hash);
 
-	static Bool passADependsOnB(BakeContext& ctx, const RenderPassBase& a, const RenderPassBase& b);
+	static Bool passADependsOnB(
+		BakeContext& ctx, const RenderPassDescriptionBase& a, const RenderPassDescriptionBase& b);
 	static Bool passHasUnmetDependencies(const BakeContext& ctx, U32 passIdx);
 
 	/// Dump the dependency graph into a file.
