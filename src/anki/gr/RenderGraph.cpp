@@ -866,20 +866,21 @@ BufferPtr RenderGraph::getBuffer(RenderPassBufferHandle handle) const
 	return m_ctx->m_buffers[handle].m_buffer;
 }
 
-void RenderGraph::runSecondLevel()
+void RenderGraph::runSecondLevel(U32 threadIdx) const
 {
 	ANKI_ASSERT(m_ctx);
 	for(Pass& p : m_ctx->m_passes)
 	{
 		const U size = p.m_secondLevelCmdbs.getSize();
-		for(U i = 0; i < size; ++i)
+		if(threadIdx < size)
 		{
-			p.m_callback(p.m_userData, p.m_secondLevelCmdbs[i], i, size, *this);
+			// TODO Inform about texture usage
+			p.m_callback(p.m_userData, p.m_secondLevelCmdbs[threadIdx], threadIdx, size, *this);
 		}
 	}
 }
 
-void RenderGraph::run()
+void RenderGraph::run() const
 {
 	ANKI_ASSERT(m_ctx);
 
