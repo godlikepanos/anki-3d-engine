@@ -252,6 +252,8 @@ Error Renderer::render(RenderingContext& ctx)
 		m_resourcesDirty = false;
 	}
 
+	ANKI_ASSERT(!"TODO");
+#if 0
 	// Prepare SM. Do that first because it touches the render queue elements
 	m_shadowMapping->prepareBuildCommandBuffers(ctx);
 
@@ -374,6 +376,7 @@ Error Renderer::render(RenderingContext& ctx)
 
 	// Passes
 	ANKI_CHECK(m_finalComposite->run(ctx));
+#endif
 
 	++m_frameCount;
 	m_prevViewProjMat = ctx.m_renderQueue->m_viewProjectionMatrix;
@@ -424,6 +427,29 @@ TextureInitInfo Renderer::create2DRenderTargetInitInfo(
 	{
 		init.m_sampling.m_mipmapFilter = SamplingFilter::BASE;
 	}
+	init.m_sampling.m_repeat = false;
+	init.m_sampling.m_anisotropyLevel = 0;
+
+	return init;
+}
+
+RenderTargetDescription Renderer::create2DRenderTargetDescription(
+	U32 w, U32 h, const PixelFormat& format, TextureUsageBit usage, SamplingFilter filter, CString name)
+{
+	ANKI_ASSERT(!!(usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
+	RenderTargetDescription init(name);
+
+	init.m_width = w;
+	init.m_height = h;
+	init.m_depth = 1;
+	init.m_layerCount = 1;
+	init.m_type = TextureType::_2D;
+	init.m_format = format;
+	init.m_mipmapsCount = 1;
+	init.m_samples = 1;
+	init.m_usage = usage;
+	init.m_sampling.m_minMagFilter = filter;
+	init.m_sampling.m_mipmapFilter = filter;
 	init.m_sampling.m_repeat = false;
 	init.m_sampling.m_anisotropyLevel = 0;
 

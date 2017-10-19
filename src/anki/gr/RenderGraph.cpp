@@ -120,14 +120,44 @@ public:
 
 void GraphicsRenderPassFramebufferDescription::bake()
 {
+	ANKI_ASSERT(m_hash == 0 && "Already baked");
 	if(m_defaultFb)
 	{
+		m_fbInitInfo.m_colorAttachmentCount = 1;
 		m_hash = 1;
 		return;
 	}
 
-	m_hash = 0;
+	// Populate the FB init info
+	m_fbInitInfo.m_colorAttachmentCount = m_colorAttachmentCount;
+	for(U i = 0; i < m_colorAttachmentCount; ++i)
+	{
+		FramebufferAttachmentInfo& out = m_fbInitInfo.m_colorAttachments[i];
+		const GraphicsRenderPassFramebufferDescriptionAttachment& in = m_colorAttachments[i];
 
+		out.m_surface = in.m_surface;
+		out.m_clearValue = in.m_clearValue;
+		out.m_loadOperation = in.m_loadOperation;
+		out.m_storeOperation = in.m_storeOperation;
+	}
+
+	if(!!m_depthStencilAttachment.m_aspect)
+	{
+		FramebufferAttachmentInfo& out = m_fbInitInfo.m_depthStencilAttachment;
+		const GraphicsRenderPassFramebufferDescriptionAttachment& in = m_depthStencilAttachment;
+
+		out.m_surface = in.m_surface;
+		out.m_loadOperation = in.m_loadOperation;
+		out.m_storeOperation = in.m_storeOperation;
+		out.m_clearValue = in.m_clearValue;
+
+		out.m_stencilLoadOperation = in.m_stencilLoadOperation;
+		out.m_stencilStoreOperation = in.m_stencilStoreOperation;
+
+		out.m_aspect = in.m_aspect;
+	}
+
+	m_hash = 0;
 	ANKI_ASSERT(m_fbInitInfo.m_colorAttachmentCount > 0 || !!m_fbInitInfo.m_depthStencilAttachment.m_aspect);
 
 	// First the depth attachments
@@ -322,11 +352,13 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(
 			for(U i = 0; i < fbInit.m_colorAttachmentCount; ++i)
 			{
 				fbInit.m_colorAttachments[i].m_texture = m_ctx->m_rts[rtHandles[i]].m_texture;
+				ANKI_ASSERT(fbInit.m_colorAttachments[i].m_texture.isCreated());
 			}
 
 			if(!!fbInit.m_depthStencilAttachment.m_aspect)
 			{
 				fbInit.m_depthStencilAttachment.m_texture = m_ctx->m_rts[rtHandles[MAX_COLOR_ATTACHMENTS]].m_texture;
+				ANKI_ASSERT(fbInit.m_depthStencilAttachment.m_texture.isCreated());
 			}
 		}
 

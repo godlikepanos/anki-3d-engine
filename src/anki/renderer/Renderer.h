@@ -30,7 +30,11 @@ class StagingGpuMemoryManager;
 class RenderingContext
 {
 public:
+	StackAllocator<U8> m_tempAllocator;
+
 	RenderQueue* m_renderQueue ANKI_DBG_NULLIFY;
+
+	RenderGraphDescription m_renderGraphDescr;
 
 	// Extra matrices
 	Mat4 m_projMatJitter;
@@ -43,8 +47,6 @@ public:
 
 	CommandBufferPtr m_commandBuffer; ///< Primary command buffer.
 	CommandBufferPtr m_defaultFbCommandBuffer; ///< The default framebuffer renderpass is in a separate cmdb.
-
-	StackAllocator<U8> m_tempAllocator;
 
 	class GBuffer
 	{
@@ -92,6 +94,7 @@ public:
 
 	RenderingContext(const StackAllocator<U8>& alloc)
 		: m_tempAllocator(alloc)
+		, m_renderGraphDescr(alloc)
 		, m_lensFlare(alloc)
 	{
 	}
@@ -272,6 +275,10 @@ anki_internal:
 		SamplingFilter filter,
 		U mipsCount = 1,
 		CString name = {});
+
+	/// Create the init info for a 2D texture that will be used as a render target.
+	ANKI_USE_RESULT RenderTargetDescription create2DRenderTargetDescription(
+		U32 w, U32 h, const PixelFormat& format, TextureUsageBit usage, SamplingFilter filter, CString name = {});
 
 	ANKI_USE_RESULT TexturePtr createAndClearRenderTarget(
 		const TextureInitInfo& inf, const ClearValue& clearVal = ClearValue());

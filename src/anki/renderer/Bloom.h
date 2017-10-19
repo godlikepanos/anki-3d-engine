@@ -6,7 +6,6 @@
 #pragma once
 
 #include <anki/renderer/RendererObject.h>
-#include <anki/renderer/ScreenSpaceLensFlare.h>
 #include <anki/Gr.h>
 #include <anki/resource/TextureResource.h>
 
@@ -18,86 +17,13 @@ namespace anki
 
 const PixelFormat BLOOM_RT_PIXEL_FORMAT(ComponentFormat::R8G8B8, TransformFormat::UNORM);
 
-class BloomExposure : public RendererObject
-{
-anki_internal:
-	U32 m_width = 0;
-	U32 m_height = 0;
-	TexturePtr m_rt;
-
-	BloomExposure(Renderer* r)
-		: RendererObject(r)
-	{
-	}
-
-	~BloomExposure();
-
-	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
-
-	void setPreRunBarriers(RenderingContext& ctx);
-
-	void run(RenderingContext& ctx);
-
-	void setPostRunBarriers(RenderingContext& ctx);
-
-private:
-	FramebufferPtr m_fb;
-
-	ShaderProgramResourcePtr m_prog;
-	ShaderProgramPtr m_grProg;
-
-	F32 m_threshold = 10.0; ///< How bright it is
-	F32 m_scale = 1.0;
-};
-
-class BloomUpscale : public RendererObject
-{
-anki_internal:
-	U32 m_width = 0;
-	U32 m_height = 0;
-	TexturePtr m_rt;
-
-	BloomUpscale(Renderer* r)
-		: RendererObject(r)
-	{
-	}
-
-	~BloomUpscale();
-
-	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
-
-	void setPreRunBarriers(RenderingContext& ctx);
-
-	void run(RenderingContext& ctx);
-
-	void setPostRunBarriers(RenderingContext& ctx);
-
-private:
-	FramebufferPtr m_fb;
-
-	ShaderProgramResourcePtr m_prog;
-	ShaderProgramPtr m_grProg;
-};
-
 /// Bloom passes.
 class Bloom : public RendererObject
 {
 anki_internal:
-	BloomExposure m_extractExposure;
-	BloomUpscale m_upscale;
-	ScreenSpaceLensFlare m_sslf;
+	Bloom(Renderer* r);
 
-	Bloom(Renderer* r)
-		: RendererObject(r)
-		, m_extractExposure(r)
-		, m_upscale(r)
-		, m_sslf(r)
-	{
-	}
-
-	~Bloom()
-	{
-	}
+	~Bloom();
 
 	ANKI_USE_RESULT Error init(const ConfigSet& cfg)
 	{
@@ -110,14 +36,82 @@ anki_internal:
 		return err;
 	}
 
+	/// Populate the rendergraph.
+	void populateRenderGraph(RenderingContext& ctx);
+
 private:
+	class
+	{
+	public:
+		ShaderProgramResourcePtr m_prog;
+		ShaderProgramPtr m_grProg;
+
+		F32 m_threshold = 10.0; ///< How bright it is
+		F32 m_scale = 1.0;
+		U32 m_width = 0;
+		U32 m_height = 0;
+
+		GraphicsRenderPassFramebufferDescription m_fbDescr;
+		RenderTargetDescription m_rtDescr;
+		RenderTargetHandle m_rt = 0;
+	} m_exposure;
+
+	class
+	{
+	public:
+		ShaderProgramResourcePtr m_prog;
+		ShaderProgramPtr m_grProg;
+
+		U32 m_width = 0;
+		U32 m_height = 0;
+
+		RenderTargetDescription m_rtDescr;
+		GraphicsRenderPassFramebufferDescription m_fbDescr;
+		RenderTargetHandle m_rt = 0;
+	} m_upscale;
+
+	class
+	{
+	public:
+		ShaderProgramResourcePtr m_prog;
+		ShaderProgramPtr m_grProg;
+		TextureResourcePtr m_lensDirtTex;
+	} m_sslf;
+
+	ANKI_USE_RESULT Error initExposure(const ConfigSet& cfg);
+	ANKI_USE_RESULT Error initUpscale(const ConfigSet& cfg);
+	ANKI_USE_RESULT Error initSslf(const ConfigSet& cfg);
+
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg)
 	{
-		ANKI_CHECK(m_extractExposure.init(cfg));
-		ANKI_CHECK(m_upscale.init(cfg));
-		ANKI_CHECK(m_sslf.init(cfg));
+		ANKI_CHECK(initExposure(cfg));
+		ANKI_CHECK(initUpscale(cfg));
+		ANKI_CHECK(initSslf(cfg));
 		return Error::NONE;
 	}
+
+	static void runExposureCallback(void* userData,
+		CommandBufferPtr cmdb,
+		U32 secondLevelCmdbIdx,
+		U32 secondLevelCmdbCount,
+		const RenderGraph& rgraph)
+	{
+		ANKI_ASSERT(userData);
+		static_cast<Bloom*>(userData)->runExposure(cmdb);
+	}
+
+	static void runUpscaleAndSslfCallback(void* userData,
+		CommandBufferPtr cmdb,
+		U32 secondLevelCmdbIdx,
+		U32 secondLevelCmdbCount,
+		const RenderGraph& rgraph)
+	{
+		ANKI_ASSERT(userData);
+		static_cast<Bloom*>(userData)->runUpscaleAndSslf(cmdb, rgraph);
+	}
+
+	void runExposure(CommandBufferPtr& cmdb);
+	void runUpscaleAndSslf(CommandBufferPtr& cmdb, const RenderGraph& rgraph);
 };
 
 /// @}

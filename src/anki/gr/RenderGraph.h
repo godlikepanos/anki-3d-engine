@@ -41,6 +41,15 @@ class RenderTargetDescription : public TextureInitInfo
 	friend class RenderGraphDescription;
 
 public:
+	RenderTargetDescription()
+	{
+	}
+
+	RenderTargetDescription(CString name)
+		: TextureInitInfo(name)
+	{
+	}
+
 	/// Create an internal hash.
 	void bake()
 	{
@@ -193,51 +202,32 @@ protected:
 	}
 };
 
+/// Framebuffer attachment info.
+/// @memberof GraphicsRenderPassFramebufferDescription
+class GraphicsRenderPassFramebufferDescriptionAttachment
+{
+public:
+	TextureSurfaceInfo m_surface;
+	AttachmentLoadOperation m_loadOperation = AttachmentLoadOperation::CLEAR;
+	AttachmentStoreOperation m_storeOperation = AttachmentStoreOperation::STORE;
+	ClearValue m_clearValue;
+
+	AttachmentLoadOperation m_stencilLoadOperation = AttachmentLoadOperation::CLEAR;
+	AttachmentStoreOperation m_stencilStoreOperation = AttachmentStoreOperation::STORE;
+
+	DepthStencilAspectBit m_aspect = DepthStencilAspectBit::NONE; ///< Relevant only for depth stencil textures.
+};
+
 /// Describes a framebuffer.
+/// @memberof GraphicsRenderPassDescription
 class GraphicsRenderPassFramebufferDescription
 {
 	friend class GraphicsRenderPassDescription;
 
 public:
-	void attachRenderTarget(U32 location,
-		const TextureSurfaceInfo& surf,
-		AttachmentLoadOperation loadOperation = AttachmentLoadOperation::DONT_CARE,
-		AttachmentStoreOperation storeOperation = AttachmentStoreOperation::STORE,
-		const ClearValue& clearValue = ClearValue())
-	{
-		FramebufferAttachmentInfo& att = m_fbInitInfo.m_colorAttachments[location];
-		att.m_surface = surf;
-		att.m_loadOperation = loadOperation;
-		att.m_storeOperation = storeOperation;
-		att.m_clearValue = clearValue;
-
-		m_fbInitInfo.m_colorAttachmentCount = location + 1;
-		m_defaultFb = false;
-	}
-
-	void attachDepthStencilRenderTarget(const TextureSurfaceInfo& surf,
-		AttachmentLoadOperation loadOperation = AttachmentLoadOperation::CLEAR,
-		AttachmentStoreOperation storeOperation = AttachmentStoreOperation::STORE,
-		AttachmentLoadOperation stencilLoadOperation = AttachmentLoadOperation::CLEAR,
-		AttachmentStoreOperation stencilStoreOperation = AttachmentStoreOperation::STORE,
-		DepthStencilAspectBit aspect = DepthStencilAspectBit::DEPTH,
-		F32 depthClear = 1.0f,
-		I32 stencilClear = 0)
-	{
-		ANKI_ASSERT(!!(aspect & DepthStencilAspectBit::DEPTH_STENCIL));
-
-		FramebufferAttachmentInfo& att = m_fbInitInfo.m_depthStencilAttachment;
-		att.m_surface = surf;
-		att.m_loadOperation = loadOperation;
-		att.m_storeOperation = storeOperation;
-		att.m_clearValue.m_depthStencil.m_depth = depthClear;
-		att.m_clearValue.m_depthStencil.m_stencil = stencilClear;
-		att.m_stencilLoadOperation = stencilLoadOperation;
-		att.m_stencilStoreOperation = stencilStoreOperation;
-		att.m_aspect = aspect;
-
-		m_defaultFb = false;
-	}
+	Array<GraphicsRenderPassFramebufferDescriptionAttachment, MAX_COLOR_ATTACHMENTS> m_colorAttachments;
+	U32 m_colorAttachmentCount = 0;
+	GraphicsRenderPassFramebufferDescriptionAttachment m_depthStencilAttachment;
 
 	void setDefaultFramebuffer()
 	{
@@ -360,14 +350,14 @@ public:
 	}
 
 	/// Get or create a new render target.
-	RenderTargetHandle newRenderTarget(CString name, const RenderTargetDescription& initInf)
+	RenderTargetHandle newRenderTarget(const RenderTargetDescription& initInf)
 	{
 		ANKI_ASSERT(initInf.m_hash && "Forgot to call RenderTargetDescription::bake");
 		RT& rt = m_renderTargets.emplaceBack(m_alloc);
 		rt.m_initInfo = initInf;
 		rt.m_hash = initInf.m_hash;
 		rt.m_usage = TextureUsageBit::NONE;
-		rt.setName(name);
+		rt.setName(initInf.getName());
 		return m_renderTargets.getSize() - 1;
 	}
 

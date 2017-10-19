@@ -25,7 +25,6 @@ class LightShading;
 class ForwardShading;
 class LensFlare;
 class Ssao;
-class ScreenSpaceLensFlare;
 class Tonemapping;
 class Bloom;
 class FinalComposite;

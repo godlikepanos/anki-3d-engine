@@ -7,7 +7,6 @@
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/Bloom.h>
 #include <anki/renderer/TemporalAA.h>
-#include <anki/renderer/ScreenSpaceLensFlare.h>
 #include <anki/renderer/Tonemapping.h>
 #include <anki/renderer/LightShading.h>
 #include <anki/renderer/GBuffer.h>
@@ -104,6 +103,8 @@ Error FinalComposite::loadColorGradingTexture(CString filename)
 
 Error FinalComposite::run(RenderingContext& ctx)
 {
+	ANKI_ASSERT(!"TODO");
+#if 0
 	// Get the drawing parameters
 	const Bool drawToDefaultFb = ctx.m_outFb.isCreated();
 	const Bool dbgEnabled = m_r->getDbg().getEnabled();
@@ -166,6 +167,7 @@ Error FinalComposite::run(RenderingContext& ctx)
 			TextureUsageBit::SAMPLED_FRAGMENT,
 			TextureSurfaceInfo(0, 0, 0, 0));
 	}
+#endif
 
 	return Error::NONE;
 }
