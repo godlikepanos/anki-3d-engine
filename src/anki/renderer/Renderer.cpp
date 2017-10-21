@@ -542,7 +542,7 @@ void Renderer::buildCommandBuffersInternal(RenderingContext& ctx, U32 threadId, 
 
 	// SM
 	//
-	m_shadowMapping->buildCommandBuffers(ctx, threadId, threadCount);
+	// TODO: m_shadowMapping->buildCommandBuffers(ctx, threadId, threadCount);
 
 	// FS
 	//

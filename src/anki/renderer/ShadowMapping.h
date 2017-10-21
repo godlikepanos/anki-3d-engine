@@ -8,7 +8,6 @@
 #include <anki/renderer/RendererObject.h>
 #include <anki/Gr.h>
 #include <anki/resource/TextureResource.h>
-#include <anki/util/Array.h>
 
 namespace anki
 {
@@ -20,8 +19,6 @@ namespace anki
 class ShadowMapping : public RendererObject
 {
 anki_internal:
-	TexturePtr m_shadowAtlas; ///< ESM texture atlas.
-
 	ShadowMapping(Renderer* r)
 		: RendererObject(r)
 	{
@@ -31,15 +28,8 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 
-	void prepareBuildCommandBuffers(RenderingContext& ctx);
-
-	void buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount);
-
-	void setPreRunBarriers(RenderingContext& ctx);
-
-	void run(RenderingContext& ctx);
-
-	void setPostRunBarriers(RenderingContext& ctx);
+	/// Populate the rendergraph.
+	void populateRenderGraph(RenderingContext& ctx);
 
 private:
 	/// @name ESM stuff
@@ -58,6 +48,7 @@ private:
 		Array<U32, 4> m_viewport;
 	};
 
+	/// A HashMap key.
 	class TileKey
 	{
 	public:
@@ -70,7 +61,10 @@ private:
 		}
 	};
 
-	FramebufferPtr m_esmFb;
+	GraphicsRenderPassFramebufferDescription m_esmFbDescr; ///< The FB for ESM
+	TexturePtr m_esmAtlas; ///< ESM texture atlas.
+	RenderTargetHandle m_esmRt = {};
+
 	U32 m_tileResolution = 0; ///< Tile resolution.
 	U32 m_atlasResolution = 0; ///< Atlas size is (m_atlasResolution, m_atlasResolution)
 	U32 m_tileCountPerRowOrColumn = 0;
@@ -97,12 +91,27 @@ private:
 	ANKI_USE_RESULT Error initEsm(const ConfigSet& cfg);
 
 	static Mat4 createSpotLightTextureMatrix(const Tile& tile);
+
+	/// A RenderPassWorkCallback for ESM
+	static void runEsmCallback(void* userData,
+		CommandBufferPtr cmdb,
+		U32 secondLevelCmdbIdx,
+		U32 secondLevelCmdbCount,
+		const RenderGraph& rgraph)
+	{
+		ANKI_ASSERT(userData);
+		static_cast<ShadowMapping*>(userData)->runEsm(cmdb, rgraph);
+	}
+
+	void runEsm(CommandBufferPtr& cmdb, const RenderGraph& rgraph);
 	/// @}
 
 	/// @name Scratch buffer stuff
 	/// @{
-	TexturePtr m_scratchRt; ///< Size of the RT is (m_scratchTileSize * m_scratchTileCount, m_scratchTileSize).
-	FramebufferPtr m_scratchFb;
+	RenderTargetHandle m_scratchRt; ///< Size of the RT is (m_scratchTileSize * m_scratchTileCount, m_scratchTileSize).
+	GraphicsRenderPassFramebufferDescription m_scratchFbDescr; ///< FB info.
+	RenderTargetDescription m_scratchRtDescr; ///< Render target.
+
 	U32 m_scratchTileCount = 0;
 	U32 m_scratchTileResolution = 0;
 	U32 m_freeScratchTiles = 0;
@@ -120,9 +129,21 @@ private:
 	struct LightToRenderToScratchInfo;
 
 	WeakArray<ScratchBufferWorkItem> m_scratchWorkItems;
-	WeakArray<CommandBufferPtr> m_scratchSecondLevelCmdbs;
 
 	ANKI_USE_RESULT Error initScratch(const ConfigSet& cfg);
+
+	/// A RenderPassWorkCallback for shadow passes.
+	static void runShadowmappingCallback(void* userData,
+		CommandBufferPtr cmdb,
+		U32 secondLevelCmdbIdx,
+		U32 secondLevelCmdbCount,
+		const RenderGraph& rgraph)
+	{
+		ANKI_ASSERT(userData);
+		static_cast<ShadowMapping*>(userData)->runShadowMapping(cmdb, secondLevelCmdbIdx);
+	}
+
+	void runShadowMapping(CommandBufferPtr& cmdb, U32 treadId);
 	/// @}
 
 	/// @name Misc & common
@@ -143,6 +164,9 @@ private:
 		DynamicArrayAuto<LightToRenderToScratchInfo>& scratchWorkItem,
 		DynamicArrayAuto<EsmResolveWorkItem>& esmResolveWorkItem,
 		U32& drawcallCount) const;
+
+	/// Iterate lights and create work items.
+	void processLights(RenderingContext& ctx);
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& config);
 	/// @}

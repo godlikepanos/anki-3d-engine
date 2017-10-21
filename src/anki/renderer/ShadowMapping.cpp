@@ -47,20 +47,20 @@ Error ShadowMapping::initScratch(const ConfigSet& cfg)
 		m_scratchTileCount = cfg.getNumber("r.shadowMapping.scratchTileCount");
 		m_scratchTileResolution = cfg.getNumber("r.shadowMapping.resolution");
 
-		m_scratchRt = m_r->createAndClearRenderTarget(
-			m_r->create2DRenderTargetInitInfo(m_scratchTileResolution * m_scratchTileCount,
-				m_scratchTileResolution,
-				SHADOW_DEPTH_PIXEL_FORMAT,
-				TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-				SamplingFilter::LINEAR,
-				1,
-				"scratch_smap"));
+		// RT
+		m_scratchRtDescr = m_r->create2DRenderTargetDescription(m_scratchTileResolution * m_scratchTileCount,
+			m_scratchTileResolution,
+			SHADOW_DEPTH_PIXEL_FORMAT,
+			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
+			SamplingFilter::LINEAR,
+			"scratch_smap");
+		m_scratchRtDescr.bake();
 
-		FramebufferInitInfo fbInit("scratch_smap");
-		fbInit.m_depthStencilAttachment.m_texture = m_scratchRt;
-		fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
-		fbInit.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0;
-		m_scratchFb = getGrManager().newInstance<Framebuffer>(fbInit);
+		// FB
+		m_scratchFbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
+		m_scratchFbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0;
+		m_scratchFbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
+		m_scratchFbDescr.bake();
 	}
 
 	return Error::NONE;
@@ -74,6 +74,7 @@ Error ShadowMapping::initEsm(const ConfigSet& cfg)
 		m_tileCountPerRowOrColumn = cfg.getNumber("r.shadowMapping.tileCountPerRowOrColumn");
 		m_atlasResolution = m_tileResolution * m_tileCountPerRowOrColumn;
 
+		// RT
 		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(m_atlasResolution,
 			m_atlasResolution,
 			SHADOW_COLOR_PIXEL_FORMAT,
@@ -84,13 +85,12 @@ Error ShadowMapping::initEsm(const ConfigSet& cfg)
 		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 		ClearValue clearVal;
 		clearVal.m_colorf[0] = 1.0f;
-		m_shadowAtlas = m_r->createAndClearRenderTarget(texinit, clearVal);
+		m_esmAtlas = m_r->createAndClearRenderTarget(texinit, clearVal);
 
-		FramebufferInitInfo fbInit("esm");
-		fbInit.m_colorAttachments[0].m_texture = m_shadowAtlas;
-		fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::LOAD;
-		fbInit.m_colorAttachmentCount = 1;
-		m_esmFb = getGrManager().newInstance<Framebuffer>(fbInit);
+		// FB
+		m_esmFbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::LOAD;
+		m_esmFbDescr.m_colorAttachmentCount = 1;
+		m_esmFbDescr.bake();
 	}
 
 	// Tiles
@@ -144,99 +144,44 @@ Error ShadowMapping::initInternal(const ConfigSet& cfg)
 	return Error::NONE;
 }
 
-void ShadowMapping::run(RenderingContext& ctx)
+void ShadowMapping::runEsm(CommandBufferPtr& cmdb, const RenderGraph& rgraph)
 {
+	ANKI_ASSERT(m_esmResolveWorkItems.getSize());
 	ANKI_TRACE_SCOPED_EVENT(RENDER_SM);
-	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 
-	if(m_scratchWorkItems.getSize())
+	cmdb->bindShaderProgram(m_esmResolveGrProg);
+	cmdb->bindTexture(0, 0, rgraph.getTexture(m_scratchRt));
+
+	for(const EsmResolveWorkItem& workItem : m_esmResolveWorkItems)
 	{
-		// Run the scratch pass
-		ANKI_ASSERT(m_freeScratchTiles < m_scratchTileCount);
-		cmdb->beginRenderPass(m_scratchFb,
-			0,
-			0,
-			(m_scratchTileCount - m_freeScratchTiles) * m_scratchTileResolution,
-			m_scratchTileResolution);
+		ANKI_TRACE_INC_COUNTER(RENDERER_SHADOW_PASSES, 1);
 
-		for(U tid = 0; tid < m_r->getThreadPool().getThreadsCount(); ++tid)
-		{
-			cmdb->pushSecondLevelCommandBuffer(m_scratchSecondLevelCmdbs[tid]);
-			m_scratchSecondLevelCmdbs[tid].reset(nullptr);
-		}
+		cmdb->setViewport(
+			workItem.m_viewportOut[0], workItem.m_viewportOut[1], workItem.m_viewportOut[2], workItem.m_viewportOut[3]);
+		cmdb->setScissor(
+			workItem.m_viewportOut[0], workItem.m_viewportOut[1], workItem.m_viewportOut[2], workItem.m_viewportOut[3]);
 
-		cmdb->endRenderPass();
+		Vec4* unis = allocateAndBindUniforms<Vec4*>(sizeof(Vec4) * 2, cmdb, 0, 0);
+		unis[0] = Vec4(workItem.m_cameraNear, workItem.m_cameraFar, 0.0f, 0.0f);
+		unis[1] = workItem.m_uvIn;
 
-		// Barriers
-		cmdb->setTextureSurfaceBarrier(m_scratchRt,
-			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-			TextureUsageBit::SAMPLED_FRAGMENT,
-			TextureSurfaceInfo(0, 0, 0, 0));
-		cmdb->setTextureSurfaceBarrier(m_shadowAtlas,
-			TextureUsageBit::SAMPLED_FRAGMENT,
-			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-			TextureSurfaceInfo(0, 0, 0, 0));
-
-		// ESM pass
-		cmdb->bindShaderProgram(m_esmResolveGrProg);
-		cmdb->bindTexture(0, 0, m_scratchRt);
-		cmdb->beginRenderPass(m_esmFb);
-
-		for(const EsmResolveWorkItem& workItem : m_esmResolveWorkItems)
-		{
-			ANKI_TRACE_INC_COUNTER(RENDERER_SHADOW_PASSES, 1);
-
-			cmdb->setViewport(workItem.m_viewportOut[0],
-				workItem.m_viewportOut[1],
-				workItem.m_viewportOut[2],
-				workItem.m_viewportOut[3]);
-			cmdb->setScissor(workItem.m_viewportOut[0],
-				workItem.m_viewportOut[1],
-				workItem.m_viewportOut[2],
-				workItem.m_viewportOut[3]);
-
-			Vec4* unis = allocateAndBindUniforms<Vec4*>(sizeof(Vec4) * 2, cmdb, 0, 0);
-			unis[0] = Vec4(workItem.m_cameraNear, workItem.m_cameraFar, 0.0f, 0.0f);
-			unis[1] = workItem.m_uvIn;
-
-			m_r->drawQuad(cmdb);
-		}
-
-		cmdb->endRenderPass();
-
-		// Restore GR state
-		cmdb->setScissor(0, 0, MAX_U16, MAX_U16);
+		m_r->drawQuad(cmdb);
 	}
+
+	// Restore GR state
+	cmdb->setScissor(0, 0, MAX_U16, MAX_U16);
 }
 
-void ShadowMapping::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount)
+void ShadowMapping::runShadowMapping(CommandBufferPtr& cmdb, U32 threadId)
 {
+	ANKI_ASSERT(m_scratchWorkItems.getSize());
 	ANKI_TRACE_SCOPED_EVENT(RENDER_SM);
-
-	CommandBufferPtr cmdb;
 
 	for(ScratchBufferWorkItem& work : m_scratchWorkItems)
 	{
 		if(work.m_threadPoolTaskIdx != threadId)
 		{
 			continue;
-		}
-
-		// Lazily create the command buffer
-		if(!cmdb.isCreated())
-		{
-			CommandBufferInitInfo cinf;
-			cinf.m_flags = CommandBufferFlag::SECOND_LEVEL | CommandBufferFlag::GRAPHICS_WORK;
-			cinf.m_framebuffer = m_scratchFb;
-			if(work.m_renderableElementCount < COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS)
-			{
-				cinf.m_flags |= CommandBufferFlag::SMALL_BATCH;
-			}
-			cmdb = m_r->getGrManager().newInstance<CommandBuffer>(cinf);
-
-			// Inform on Rts
-			cmdb->informTextureSurfaceCurrentUsage(
-				m_scratchRt, TextureSurfaceInfo(0, 0, 0, 0), TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE);
 		}
 
 		// Set state
@@ -251,43 +196,50 @@ void ShadowMapping::buildCommandBuffers(RenderingContext& ctx, U threadId, U thr
 			work.m_renderQueue->m_renderables.getBegin() + work.m_firstRenderableElement
 				+ work.m_renderableElementCount);
 	}
-
-	if(cmdb.isCreated())
-	{
-		cmdb->flush();
-		m_scratchSecondLevelCmdbs[threadId] = cmdb;
-	}
 }
 
-void ShadowMapping::setPreRunBarriers(RenderingContext& ctx)
+void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(RENDER_SM);
 
+	// First process the lights
+	processLights(ctx);
+
+	// Build the render graph
+	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 	if(m_scratchWorkItems.getSize())
 	{
-		CommandBufferPtr& cmdb = ctx.m_commandBuffer;
-		cmdb->setTextureSurfaceBarrier(m_scratchRt,
-			TextureUsageBit::NONE,
-			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-			TextureSurfaceInfo(0, 0, 0, 0));
-	}
-}
+		// Will have to create render passes
 
-void ShadowMapping::setPostRunBarriers(RenderingContext& ctx)
-{
-	ANKI_TRACE_SCOPED_EVENT(RENDER_SM);
-	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
+		// Scratch pass
+		{
+			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("SM scratch");
 
-	if(m_scratchWorkItems.getSize())
-	{
-		cmdb->setTextureSurfaceBarrier(m_shadowAtlas,
-			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-			TextureUsageBit::SAMPLED_FRAGMENT,
-			TextureSurfaceInfo(0, 0, 0, 0));
+			m_scratchRt = rgraph.newRenderTarget(m_scratchRtDescr);
+			pass.setFramebufferInfo(m_scratchFbDescr, {}, m_scratchRt);
+			pass.setWork(runShadowmappingCallback, this, m_r->getThreadPool().getThreadsCount());
+
+			pass.newConsumer({m_scratchRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, TextureSurfaceInfo()});
+			pass.newProducer({m_scratchRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE, TextureSurfaceInfo()});
+		}
+
+		// ESM pass
+		{
+			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("ESM");
+
+			m_esmRt = rgraph.importRenderTarget("ESM", m_esmAtlas, TextureUsageBit::SAMPLED_FRAGMENT);
+			pass.setFramebufferInfo(m_esmFbDescr, {{m_esmRt}}, {});
+			pass.setWork(runEsmCallback, this, 0);
+
+			pass.newConsumer({m_scratchRt, TextureUsageBit::SAMPLED_FRAGMENT, TextureSurfaceInfo()});
+			pass.newConsumer({m_esmRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureSurfaceInfo()});
+			pass.newProducer({m_esmRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureSurfaceInfo()});
+		}
 	}
 	else
 	{
-		cmdb->informTextureCurrentUsage(m_shadowAtlas, TextureUsageBit::SAMPLED_FRAGMENT);
+		// No need for shadowmapping passes, just import the ESM atlas
+		m_esmRt = rgraph.importRenderTarget("ESM", m_esmAtlas, TextureUsageBit::SAMPLED_FRAGMENT);
 	}
 }
 
@@ -311,10 +263,8 @@ Mat4 ShadowMapping::createSpotLightTextureMatrix(const Tile& tile)
 		1.0);
 }
 
-void ShadowMapping::prepareBuildCommandBuffers(RenderingContext& ctx)
+void ShadowMapping::processLights(RenderingContext& ctx)
 {
-	ANKI_TRACE_SCOPED_EVENT(RENDER_SM);
-
 	// Reset stuff
 	m_freeScratchTiles = m_scratchTileCount;
 
@@ -431,7 +381,7 @@ void ShadowMapping::prepareBuildCommandBuffers(RenderingContext& ctx)
 		}
 		else
 		{
-			// Doesn't have renderables or the allocation failed, won't be shadow caster
+			// Doesn't have renderables or the allocation failed, won't be a shadow caster
 			light->m_shadowRenderQueue = nullptr;
 		}
 	}
@@ -499,15 +449,11 @@ void ShadowMapping::prepareBuildCommandBuffers(RenderingContext& ctx)
 			ANKI_ASSERT(esmItems && itemSize && itemStorageSize);
 			m_esmResolveWorkItems = WeakArray<EsmResolveWorkItem>(esmItems, itemSize);
 		}
-
-		m_scratchSecondLevelCmdbs =
-			WeakArray<CommandBufferPtr>(ctx.m_tempAllocator.newArray<CommandBufferPtr>(threadCount), threadCount);
 	}
 	else
 	{
 		m_scratchWorkItems = WeakArray<ScratchBufferWorkItem>();
 		m_esmResolveWorkItems = WeakArray<EsmResolveWorkItem>();
-		m_scratchSecondLevelCmdbs = WeakArray<CommandBufferPtr>();
 	}
 }
 

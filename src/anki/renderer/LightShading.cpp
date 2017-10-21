@@ -164,7 +164,7 @@ void LightShading::run(RenderingContext& ctx)
 	cmdb->informTextureCurrentUsage(m_r->getSsao().getRt(), TextureUsageBit::SAMPLED_FRAGMENT);
 	cmdb->bindTexture(1, 4, m_r->getSsao().getRt());
 
-	cmdb->bindTexture(0, 0, m_r->getShadowMapping().m_shadowAtlas);
+	// TODO: cmdb->bindTexture(0, 0, m_r->getShadowMapping().m_shadowAtlas);
 	cmdb->bindTexture(0, 1, m_r->getIndirect().getReflectionTexture());
 	cmdb->bindTexture(0, 2, m_r->getIndirect().getIrradianceTexture());
 	cmdb->bindTextureAndSampler(
