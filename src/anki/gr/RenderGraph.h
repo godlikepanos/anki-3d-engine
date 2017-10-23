@@ -30,10 +30,54 @@ static constexpr U MAX_RENDER_GRAPH_BUFFERS = 64;
 /// @}
 
 /// Render target handle used in the RenderGraph.
-using RenderTargetHandle = U32;
+class RenderTargetHandle
+{
+	friend class RenderPassDependency;
+	friend class RenderGraphDescription;
+	friend class RenderGraph;
+	friend class RenderPassDescriptionBase;
+
+public:
+	operator TexturePtr() const;
+
+	bool operator==(const RenderTargetHandle& b) const
+	{
+		return m_idx == b.m_idx;
+	}
+
+private:
+	U32 m_idx = MAX_U32;
+
+	Bool valid() const
+	{
+		return m_idx != MAX_U32;
+	}
+};
 
 /// Buffer handle used in the RenderGraph.
-using RenderPassBufferHandle = U32;
+class RenderPassBufferHandle
+{
+	friend class RenderPassDependency;
+	friend class RenderGraphDescription;
+	friend class RenderGraph;
+	friend class RenderPassDescriptionBase;
+
+public:
+	operator BufferPtr() const;
+
+	bool operator==(const RenderPassBufferHandle& b) const
+	{
+		return m_idx == b.m_idx;
+	}
+
+private:
+	U32 m_idx = MAX_U32;
+
+	Bool valid() const
+	{
+		return m_idx != MAX_U32;
+	}
+};
 
 /// Describes the render target.
 class RenderTargetDescription : public TextureInitInfo
@@ -76,6 +120,7 @@ public:
 		: m_texture({handle, usage, surface, false})
 		, m_isTexture(true)
 	{
+		ANKI_ASSERT(handle.valid());
 	}
 
 	/// Dependency to the whole texture.
@@ -83,12 +128,14 @@ public:
 		: m_texture({handle, usage, TextureSurfaceInfo(0, 0, 0, 0), true})
 		, m_isTexture(true)
 	{
+		ANKI_ASSERT(handle.valid());
 	}
 
 	RenderPassDependency(RenderPassBufferHandle handle, BufferUsageBit usage)
 		: m_buffer({handle, usage})
 		, m_isTexture(false)
 	{
+		ANKI_ASSERT(handle.valid());
 	}
 
 private:
@@ -144,11 +191,11 @@ public:
 
 		if(dep.m_isTexture && dep.m_texture.m_usage != TextureUsageBit::NONE)
 		{
-			m_consumerRtMask.set(dep.m_texture.m_handle);
+			m_consumerRtMask.set(dep.m_texture.m_handle.m_idx);
 		}
 		else if(dep.m_buffer.m_usage != BufferUsageBit::NONE)
 		{
-			m_consumerBufferMask.set(dep.m_buffer.m_handle);
+			m_consumerBufferMask.set(dep.m_buffer.m_handle.m_idx);
 		}
 	}
 
@@ -158,11 +205,11 @@ public:
 		m_producers.emplaceBack(m_alloc, dep);
 		if(dep.m_isTexture)
 		{
-			m_producerRtMask.set(dep.m_texture.m_handle);
+			m_producerRtMask.set(dep.m_texture.m_handle.m_idx);
 		}
 		else
 		{
-			m_producerBufferMask.set(dep.m_buffer.m_handle);
+			m_producerBufferMask.set(dep.m_buffer.m_handle.m_idx);
 		}
 	}
 
@@ -346,7 +393,10 @@ public:
 		rt.m_importedTex = tex;
 		rt.m_usage = usage;
 		rt.setName(name);
-		return m_renderTargets.getSize() - 1;
+
+		RenderTargetHandle out;
+		out.m_idx = m_renderTargets.getSize() - 1;
+		return out;
 	}
 
 	/// Get or create a new render target.
@@ -358,7 +408,10 @@ public:
 		rt.m_hash = initInf.m_hash;
 		rt.m_usage = TextureUsageBit::NONE;
 		rt.setName(initInf.getName());
-		return m_renderTargets.getSize() - 1;
+
+		RenderTargetHandle out;
+		out.m_idx = m_renderTargets.getSize() - 1;
+		return out;
 	}
 
 	/// Import a buffer.
@@ -368,7 +421,10 @@ public:
 		b.setName(name);
 		b.m_usage = usage;
 		b.m_importedBuff = buff;
-		return m_buffers.getSize() - 1;
+
+		RenderPassBufferHandle out;
+		out.m_idx = m_buffers.getSize() - 1;
+		return out;
 	}
 
 private:

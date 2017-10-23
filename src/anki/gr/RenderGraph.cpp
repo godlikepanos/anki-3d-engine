@@ -351,13 +351,14 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(
 		{
 			for(U i = 0; i < fbInit.m_colorAttachmentCount; ++i)
 			{
-				fbInit.m_colorAttachments[i].m_texture = m_ctx->m_rts[rtHandles[i]].m_texture;
+				fbInit.m_colorAttachments[i].m_texture = m_ctx->m_rts[rtHandles[i].m_idx].m_texture;
 				ANKI_ASSERT(fbInit.m_colorAttachments[i].m_texture.isCreated());
 			}
 
 			if(!!fbInit.m_depthStencilAttachment.m_aspect)
 			{
-				fbInit.m_depthStencilAttachment.m_texture = m_ctx->m_rts[rtHandles[MAX_COLOR_ATTACHMENTS]].m_texture;
+				fbInit.m_depthStencilAttachment.m_texture =
+					m_ctx->m_rts[rtHandles[MAX_COLOR_ATTACHMENTS].m_idx].m_texture;
 				ANKI_ASSERT(fbInit.m_depthStencilAttachment.m_texture.isCreated());
 			}
 		}
@@ -389,7 +390,7 @@ Bool RenderGraph::passADependsOnB(
 
 			for(const RenderPassDependency& consumer : a.m_consumers)
 			{
-				if(consumer.m_isTexture && fullDep.get(consumer.m_texture.m_handle))
+				if(consumer.m_isTexture && fullDep.get(consumer.m_texture.m_handle.m_idx))
 				{
 					for(const RenderPassDependency& producer : b.m_producers)
 					{
@@ -418,7 +419,7 @@ Bool RenderGraph::passADependsOnB(
 
 			for(const RenderPassDependency& consumer : a.m_consumers)
 			{
-				if(!consumer.m_isTexture && fullDep.get(consumer.m_buffer.m_handle))
+				if(!consumer.m_isTexture && fullDep.get(consumer.m_buffer.m_handle.m_idx))
 				{
 					for(const RenderPassDependency& producer : b.m_producers)
 					{
@@ -634,7 +635,7 @@ void RenderGraph::setBatchBarriers(const RenderGraphDescription& descr, BakeCont
 			{
 				if(consumer.m_isTexture)
 				{
-					const U32 rtIdx = consumer.m_texture.m_handle;
+					const U32 rtIdx = consumer.m_texture.m_handle.m_idx;
 					const TextureUsageBit consumerUsage = consumer.m_texture.m_usage;
 
 					Bool anySurfaceFound = false;
@@ -647,7 +648,7 @@ void RenderGraph::setBatchBarriers(const RenderGraphDescription& descr, BakeCont
 							if(u.m_usage != consumerUsage)
 							{
 								batch.m_barriersBefore.emplaceBack(
-									alloc, consumer.m_texture.m_handle, u.m_usage, consumerUsage, u.m_surface);
+									alloc, consumer.m_texture.m_handle.m_idx, u.m_usage, consumerUsage, u.m_surface);
 
 								u.m_usage = consumer.m_texture.m_usage;
 							}
@@ -668,7 +669,7 @@ void RenderGraph::setBatchBarriers(const RenderGraphDescription& descr, BakeCont
 				}
 				else
 				{
-					const U32 buffIdx = consumer.m_buffer.m_handle;
+					const U32 buffIdx = consumer.m_buffer.m_handle.m_idx;
 					const BufferUsageBit consumerUsage = consumer.m_buffer.m_usage;
 
 					if(consumerUsage != ctx.m_buffers[buffIdx].m_usage)
@@ -888,14 +889,14 @@ Error RenderGraph::dumpDependencyDotFile(
 
 TexturePtr RenderGraph::getTexture(RenderTargetHandle handle) const
 {
-	ANKI_ASSERT(m_ctx->m_rts[handle].m_texture.isCreated());
-	return m_ctx->m_rts[handle].m_texture;
+	ANKI_ASSERT(m_ctx->m_rts[handle.m_idx].m_texture.isCreated());
+	return m_ctx->m_rts[handle.m_idx].m_texture;
 }
 
 BufferPtr RenderGraph::getBuffer(RenderPassBufferHandle handle) const
 {
-	ANKI_ASSERT(m_ctx->m_buffers[handle].m_buffer.isCreated());
-	return m_ctx->m_buffers[handle].m_buffer;
+	ANKI_ASSERT(m_ctx->m_buffers[handle.m_idx].m_buffer.isCreated());
+	return m_ctx->m_buffers[handle.m_idx].m_buffer;
 }
 
 void RenderGraph::runSecondLevel(U32 threadIdx) const

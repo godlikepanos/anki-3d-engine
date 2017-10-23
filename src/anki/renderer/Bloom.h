@@ -53,7 +53,7 @@ private:
 
 		GraphicsRenderPassFramebufferDescription m_fbDescr;
 		RenderTargetDescription m_rtDescr;
-		RenderTargetHandle m_rt = 0;
+		RenderTargetHandle m_rt;
 	} m_exposure;
 
 	class
@@ -67,7 +67,7 @@ private:
 
 		RenderTargetDescription m_rtDescr;
 		GraphicsRenderPassFramebufferDescription m_fbDescr;
-		RenderTargetHandle m_rt = 0;
+		RenderTargetHandle m_rt;
 	} m_upscale;
 
 	class
