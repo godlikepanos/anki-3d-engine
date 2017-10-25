@@ -28,21 +28,12 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& cfg);
 
-	void run(RenderingContext& ctx);
+	/// Populate the rendergraph.
+	void populateRenderGraph(RenderingContext& ctx);
 
 	U getReflectionTextureMipmapCount() const
 	{
 		return m_lightShading.m_mipCount;
-	}
-
-	TexturePtr getIrradianceTexture() const
-	{
-		return m_irradiance.m_cubeArr;
-	}
-
-	TexturePtr getReflectionTexture() const
-	{
-		return m_lightShading.m_cubeArr;
 	}
 
 	TexturePtr getIntegrationLut() const
@@ -64,9 +55,9 @@ private:
 	{
 	public:
 		U32 m_tileSize = 0;
-		Array<TexturePtr, GBUFFER_COLOR_ATTACHMENT_COUNT> m_colorRts;
-		TexturePtr m_depthRt;
-		FramebufferPtr m_fb;
+		Array<RenderTargetDescription, GBUFFER_COLOR_ATTACHMENT_COUNT> m_colorRtDescrs;
+		RenderTargetDescription m_depthRtDescr;
+		GraphicsRenderPassFramebufferDescription m_fbDescr;
 	} m_gbuffer; ///< G-buffer pass.
 
 	class
@@ -108,8 +99,8 @@ private:
 		U64 m_probeUuid;
 		Timestamp m_lastUsedTimestamp = 0; ///< When it was rendered.
 
-		Array<FramebufferPtr, 6> m_lightShadingFbs;
-		Array<FramebufferPtr, 6> m_irradianceFbs;
+		Array<GraphicsRenderPassFramebufferDescription, 6> m_lightShadingFbDescrs;
+		Array<GraphicsRenderPassFramebufferDescription, 6> m_irradianceFbDescrs;
 	};
 
 	DynamicArray<CacheEntry> m_cacheEntries;
@@ -118,6 +109,18 @@ private:
 	// Other
 	TextureResourcePtr m_integrationLut;
 	SamplerPtr m_integrationLutSampler;
+
+	class
+	{
+	public:
+		const ReflectionProbeQueueElement* m_probe = nullptr;
+		U32 m_cacheEntryIdx = MAX_U32;
+
+		Array<RenderTargetHandle, GBUFFER_COLOR_ATTACHMENT_COUNT> m_gbufferColorRts;
+		RenderTargetHandle m_gbufferDepthRt;
+		RenderTargetHandle m_lightShadingRt;
+		RenderTargetHandle m_irradianceRt;
+	} m_ctx; ///< Runtime context.
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
 	ANKI_USE_RESULT Error initGBuffer(const ConfigSet& cfg);
@@ -130,12 +133,61 @@ private:
 
 	void prepareProbes(
 		RenderingContext& ctx, ReflectionProbeQueueElement*& probeToUpdate, U32& probeToUpdateCacheEntryIdx);
-	void runGBuffer(RenderingContext& rctx, const ReflectionProbeQueueElement& probe);
-	void runLightShading(RenderingContext& rctx, const ReflectionProbeQueueElement& probe, CacheEntry& cacheEntry);
-	void runIrradiance(RenderingContext& rctx, U32 cacheEntryIdx);
 
 	/// Find or allocate a new cache entry.
 	Bool findBestCacheEntry(U64 probeUuid, U32& cacheEntryIdx, Bool& cacheEntryFound);
+
+	void runGBuffer(CommandBufferPtr& cmdb);
+	void runLightShading(CommandBufferPtr& cmdb, const RenderGraph& rgraph, U32 faceIdx);
+	void runMipmappingOfLightShading(CommandBufferPtr& cmdb, const RenderGraph& rgraph, U32 faceIdx);
+	void runIrradiance(CommandBufferPtr& cmdb, const RenderGraph& rgraph, U32 faceIdx);
+
+	// A RenderPassWorkCallback for G-buffer pass
+	static void runGBufferCallback(void* userData,
+		CommandBufferPtr cmdb,
+		U32 secondLevelCmdbIdx,
+		U32 secondLevelCmdbCount,
+		const RenderGraph& rgraph)
+	{
+		Indirect* self = static_cast<Indirect*>(userData);
+		self->runGBuffer(cmdb);
+	}
+
+	// A RenderPassWorkCallback for the light shading pass into a single face.
+	template<U faceIdx>
+	static void runLightShadingCallback(void* userData,
+		CommandBufferPtr cmdb,
+		U32 secondLevelCmdbIdx,
+		U32 secondLevelCmdbCount,
+		const RenderGraph& rgraph)
+	{
+		Indirect* self = static_cast<Indirect*>(userData);
+		self->runLightShading(cmdb, rgraph, faceIdx);
+	}
+
+	// A RenderPassWorkCallback for the mipmapping of light shading result.
+	template<U faceIdx>
+	static void runMipmappingOfLightShadingCallback(void* userData,
+		CommandBufferPtr cmdb,
+		U32 secondLevelCmdbIdx,
+		U32 secondLevelCmdbCount,
+		const RenderGraph& rgraph)
+	{
+		Indirect* self = static_cast<Indirect*>(userData);
+		self->runMipmappingOfLightShading(cmdb, rgraph, faceIdx);
+	}
+
+	// A RenderPassWorkCallback for the irradiance calculation of a single cube face.
+	template<U faceIdx>
+	static void runIrradianceCallback(void* userData,
+		CommandBufferPtr cmdb,
+		U32 secondLevelCmdbIdx,
+		U32 secondLevelCmdbCount,
+		const RenderGraph& rgraph)
+	{
+		Indirect* self = static_cast<Indirect*>(userData);
+		self->runIrradiance(cmdb, rgraph, faceIdx);
+	}
 };
 /// @}
 

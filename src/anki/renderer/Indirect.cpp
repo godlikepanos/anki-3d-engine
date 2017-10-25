@@ -66,9 +66,7 @@ Error Indirect::init(const ConfigSet& config)
 Error Indirect::initInternal(const ConfigSet& config)
 {
 	// Init cache entries
-	{
-		m_cacheEntries.create(getAllocator(), config.getNumber("r.indirect.maxSimultaneousProbeCount"));
-	}
+	m_cacheEntries.create(getAllocator(), config.getNumber("r.indirect.maxSimultaneousProbeCount"));
 
 	ANKI_CHECK(initGBuffer(config));
 	ANKI_CHECK(initLightShading(config));
@@ -142,46 +140,44 @@ Error Indirect::initGBuffer(const ConfigSet& config)
 {
 	m_gbuffer.m_tileSize = config.getNumber("r.indirect.reflectionResolution");
 
-	// Create attachments
+	// Create RT descriptions
 	{
-		TextureInitInfo texinit = m_r->create2DRenderTargetInitInfo(m_gbuffer.m_tileSize * 6,
+		RenderTargetDescription texinit = m_r->create2DRenderTargetDescription(m_gbuffer.m_tileSize * 6,
 			m_gbuffer.m_tileSize,
 			MS_COLOR_ATTACHMENT_PIXEL_FORMATS[0],
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 			SamplingFilter::NEAREST, // Because we don't want the light pass to bleed to near faces
-			1,
 			"GI_gbuff");
 
-		// Create color attachments
+		// Create color RT descriptions
 		for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 		{
 			texinit.m_format = MS_COLOR_ATTACHMENT_PIXEL_FORMATS[i];
-			m_gbuffer.m_colorRts[i] = m_r->createAndClearRenderTarget(texinit);
+			m_gbuffer.m_colorRtDescrs[i] = texinit;
+			m_gbuffer.m_colorRtDescrs[i].bake();
 		}
 
-		// Create depth attachment
+		// Create depth RT
 		texinit.m_usage |= TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
 		texinit.m_format = GBUFFER_DEPTH_ATTACHMENT_PIXEL_FORMAT;
-		m_gbuffer.m_depthRt = m_r->createAndClearRenderTarget(texinit);
+		m_gbuffer.m_depthRtDescr = texinit;
+		m_gbuffer.m_depthRtDescr.bake();
 	}
 
-	// Create FB
+	// Create FB descr
 	{
-		FramebufferInitInfo fbInit("GI_gbuff");
-		fbInit.m_colorAttachmentCount = GBUFFER_COLOR_ATTACHMENT_COUNT;
+		m_gbuffer.m_fbDescr.m_colorAttachmentCount = GBUFFER_COLOR_ATTACHMENT_COUNT;
 
 		for(U j = 0; j < GBUFFER_COLOR_ATTACHMENT_COUNT; ++j)
 		{
-			fbInit.m_colorAttachments[j].m_texture = m_gbuffer.m_colorRts[j];
-			fbInit.m_colorAttachments[j].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
+			m_gbuffer.m_fbDescr.m_colorAttachments[j].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
 		}
 
-		fbInit.m_depthStencilAttachment.m_texture = m_gbuffer.m_depthRt;
-		fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
-		fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
-		fbInit.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0;
+		m_gbuffer.m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
+		m_gbuffer.m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::CLEAR;
+		m_gbuffer.m_fbDescr.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0;
 
-		m_gbuffer.m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
+		m_gbuffer.m_fbDescr.bake();
 	}
 
 	return Error::NONE;
@@ -201,7 +197,7 @@ Error Indirect::initLightShading(const ConfigSet& config)
 				| TextureUsageBit::GENERATE_MIPMAPS,
 			SamplingFilter::LINEAR,
 			m_lightShading.m_mipCount,
-			"GI_refl");
+			"GI refl");
 		texinit.m_type = TextureType::CUBE_ARRAY;
 		texinit.m_layerCount = m_cacheEntries.getSize();
 		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
@@ -253,7 +249,7 @@ Error Indirect::initIrradiance(const ConfigSet& config)
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 			SamplingFilter::LINEAR,
 			1,
-			"GI_irr");
+			"GI irr");
 
 		texinit.m_layerCount = m_cacheEntries.getSize();
 		texinit.m_type = TextureType::CUBE_ARRAY;
@@ -288,21 +284,27 @@ void Indirect::initCacheEntry(U32 cacheEntryIdx)
 
 	for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
 	{
-		FramebufferInitInfo fbInit("GI_refl");
-		fbInit.m_colorAttachmentCount = 1;
-		fbInit.m_colorAttachments[0].m_texture = m_lightShading.m_cubeArr;
-		fbInit.m_colorAttachments[0].m_surface.m_layer = cacheEntryIdx;
-		fbInit.m_colorAttachments[0].m_surface.m_face = faceIdx;
-		fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
+		// Light pass FB
+		{
+			GraphicsRenderPassFramebufferDescription& fbDescr = cacheEntry.m_lightShadingFbDescrs[faceIdx];
+			ANKI_ASSERT(!fbDescr.isBacked());
+			fbDescr.m_colorAttachmentCount = 1;
+			fbDescr.m_colorAttachments[0].m_surface.m_layer = cacheEntryIdx;
+			fbDescr.m_colorAttachments[0].m_surface.m_face = faceIdx;
+			fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
+			fbDescr.bake();
+		}
 
-		ANKI_ASSERT(!cacheEntry.m_lightShadingFbs[faceIdx].isCreated());
-		cacheEntry.m_lightShadingFbs[faceIdx] = getGrManager().newInstance<Framebuffer>(fbInit);
-
-		fbInit.m_colorAttachments[0].m_texture = m_irradiance.m_cubeArr;
-		fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-
-		ANKI_ASSERT(!cacheEntry.m_irradianceFbs[faceIdx].isCreated());
-		cacheEntry.m_irradianceFbs[faceIdx] = getGrManager().newInstance<Framebuffer>(fbInit);
+		// Irradiance FB
+		{
+			GraphicsRenderPassFramebufferDescription& fbDescr = cacheEntry.m_irradianceFbDescrs[faceIdx];
+			ANKI_ASSERT(!fbDescr.isBacked());
+			fbDescr.m_colorAttachmentCount = 1;
+			fbDescr.m_colorAttachments[0].m_surface.m_layer = cacheEntryIdx;
+			fbDescr.m_colorAttachments[0].m_surface.m_face = faceIdx;
+			fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
+			fbDescr.bake();
+		}
 	}
 }
 
@@ -407,11 +409,11 @@ void Indirect::prepareProbes(
 	}
 }
 
-void Indirect::runGBuffer(RenderingContext& rctx, const ReflectionProbeQueueElement& probe)
+void Indirect::runGBuffer(CommandBufferPtr& cmdb)
 {
-	CommandBufferPtr& cmdb = rctx.m_commandBuffer;
-
-	cmdb->beginRenderPass(m_gbuffer.m_fb);
+	ANKI_ASSERT(m_ctx.m_probe);
+	ANKI_TRACE_SCOPED_EVENT(RENDER_IR);
+	const ReflectionProbeQueueElement& probe = *m_ctx.m_probe;
 
 	// For each face
 	for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
@@ -432,38 +434,36 @@ void Indirect::runGBuffer(RenderingContext& rctx, const ReflectionProbeQueueElem
 			rqueue.m_renderables.getEnd());
 	}
 
-	cmdb->endRenderPass();
-
 	// Restore state
 	cmdb->setScissor(0, 0, MAX_U16, MAX_U16);
 }
 
-void Indirect::runLightShading(RenderingContext& rctx, const ReflectionProbeQueueElement& probe, CacheEntry& cacheEntry)
+void Indirect::runLightShading(CommandBufferPtr& cmdb, const RenderGraph& rgraph, U32 faceIdx)
 {
-	CommandBufferPtr& cmdb = rctx.m_commandBuffer;
+	ANKI_ASSERT(faceIdx <= 6);
+	ANKI_TRACE_SCOPED_EVENT(RENDER_IR);
 
-	// Set common state
+	ANKI_ASSERT(m_ctx.m_probe);
+	const ReflectionProbeQueueElement& probe = *m_ctx.m_probe;
+
+	// Set common state for all lights
 	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 	{
-		cmdb->bindTexture(0, i, m_gbuffer.m_colorRts[i]);
+		cmdb->bindTexture(0, i, rgraph.getTexture(m_ctx.m_gbufferColorRts[i]));
 	}
-	cmdb->bindTexture(0, GBUFFER_COLOR_ATTACHMENT_COUNT, m_gbuffer.m_depthRt);
+	cmdb->bindTexture(0, GBUFFER_COLOR_ATTACHMENT_COUNT, rgraph.getTexture(m_ctx.m_gbufferDepthRt));
 	cmdb->setVertexAttribute(0, 0, PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT), 0);
 	cmdb->setViewport(0, 0, m_lightShading.m_tileSize, m_lightShading.m_tileSize);
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ONE);
 	cmdb->setCullMode(FaceSelectionBit::FRONT);
 
-	// For each face
-	for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
+	// Render lights
 	{
 		ANKI_ASSERT(probe.m_renderQueues[faceIdx]);
 		const RenderQueue& rqueue = *probe.m_renderQueues[faceIdx];
 
 		const Mat4& vpMat = rqueue.m_viewProjectionMatrix;
 		const Mat4& vMat = rqueue.m_viewMatrix;
-
-		// Set per face state
-		cmdb->beginRenderPass(cacheEntry.m_lightShadingFbs[faceIdx]);
 
 		// Do point lights
 		cmdb->bindShaderProgram(m_lightShading.m_plightGrProg);
@@ -548,8 +548,6 @@ void Indirect::runLightShading(RenderingContext& rctx, const ReflectionProbeQueu
 
 			++splightEl;
 		}
-
-		cmdb->endRenderPass();
 	}
 
 	// Restore state
@@ -557,137 +555,185 @@ void Indirect::runLightShading(RenderingContext& rctx, const ReflectionProbeQueu
 	cmdb->setCullMode(FaceSelectionBit::BACK);
 }
 
-void Indirect::runIrradiance(RenderingContext& rctx, U32 cacheEntryIdx)
+void Indirect::runMipmappingOfLightShading(CommandBufferPtr& cmdb, const RenderGraph& rgraph, U32 faceIdx)
 {
-	CommandBufferPtr& cmdb = rctx.m_commandBuffer;
+	ANKI_ASSERT(faceIdx < 6);
+	ANKI_ASSERT(m_ctx.m_cacheEntryIdx < m_cacheEntries.getSize());
 
-	// Set common state
-	cmdb->bindShaderProgram(m_irradiance.m_grProg);
-	cmdb->bindTexture(0, 0, m_lightShading.m_cubeArr);
-
-	// For each face
-	for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
-	{
-		cmdb->beginRenderPass(m_cacheEntries[cacheEntryIdx].m_irradianceFbs[faceIdx]);
-
-		cmdb->setViewport(0, 0, m_irradiance.m_tileSize, m_irradiance.m_tileSize);
-
-		// Set uniforms
-		UVec4* faceIdxArrayIdx = allocateAndBindUniforms<UVec4*>(sizeof(UVec4), cmdb, 0, 0);
-		faceIdxArrayIdx->x() = faceIdx;
-		faceIdxArrayIdx->y() = cacheEntryIdx;
-
-		m_r->drawQuad(cmdb);
-		cmdb->endRenderPass();
-	}
+	ANKI_TRACE_SCOPED_EVENT(RENDER_IR);
+	cmdb->generateMipmaps2d(rgraph.getTexture(m_ctx.m_lightShadingRt), faceIdx, m_ctx.m_cacheEntryIdx);
 }
 
-void Indirect::run(RenderingContext& rctx)
+void Indirect::runIrradiance(CommandBufferPtr& cmdb, const RenderGraph& rgraph, U32 faceIdx)
+{
+	ANKI_ASSERT(faceIdx < 6);
+	ANKI_TRACE_SCOPED_EVENT(RENDER_IR);
+	const U32 cacheEntryIdx = m_ctx.m_cacheEntryIdx;
+	ANKI_ASSERT(cacheEntryIdx < m_cacheEntries.getSize());
+
+	// Set state
+	cmdb->bindShaderProgram(m_irradiance.m_grProg);
+	cmdb->bindTexture(0, 0, rgraph.getTexture(m_ctx.m_lightShadingRt));
+	cmdb->setViewport(0, 0, m_irradiance.m_tileSize, m_irradiance.m_tileSize);
+
+	// Set uniforms
+	UVec4* faceIdxArrayIdx = allocateAndBindUniforms<UVec4*>(sizeof(UVec4), cmdb, 0, 0);
+	faceIdxArrayIdx->x() = faceIdx;
+	faceIdxArrayIdx->y() = cacheEntryIdx;
+
+	// Draw
+	m_r->drawQuad(cmdb);
+}
+
+void Indirect::populateRenderGraph(RenderingContext& rctx)
 {
 	ANKI_TRACE_SCOPED_EVENT(RENDER_IR);
-	CommandBufferPtr& cmdb = rctx.m_commandBuffer;
 
-	cmdb->informTextureCurrentUsage(m_lightShading.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
-	cmdb->informTextureCurrentUsage(m_irradiance.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
+#if ANKI_EXTRA_CHECKS
+	m_ctx = {};
+#endif
+	RenderGraphDescription& rgraph = rctx.m_renderGraphDescr;
 
-	// Prepare the probes
+	// Prepare the probes and maybe get one to render this frame
 	ReflectionProbeQueueElement* probeToUpdate;
 	U32 probeToUpdateCacheEntryIdx;
 	prepareProbes(rctx, probeToUpdate, probeToUpdateCacheEntryIdx);
 
-	// Update a probe if needed
+	// Render a probe if needed
 	if(probeToUpdate)
 	{
-		if(!m_cacheEntries[probeToUpdateCacheEntryIdx].m_lightShadingFbs[0].isCreated())
+		m_ctx.m_cacheEntryIdx = probeToUpdateCacheEntryIdx;
+		m_ctx.m_probe = probeToUpdate;
+
+		if(!m_cacheEntries[probeToUpdateCacheEntryIdx].m_lightShadingFbDescrs[0].isBacked())
 		{
 			initCacheEntry(probeToUpdateCacheEntryIdx);
 		}
 
-		// Barriers
-		for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
+		// G-buffer pass
 		{
-			cmdb->setTextureSurfaceBarrier(m_gbuffer.m_colorRts[i],
-				TextureUsageBit::NONE,
-				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-				TextureSurfaceInfo(0, 0, 0, 0));
-		}
-
-		cmdb->setTextureSurfaceBarrier(m_gbuffer.m_depthRt,
-			TextureUsageBit::NONE,
-			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-			TextureSurfaceInfo(0, 0, 0, 0));
-
-		// Run g-buffer pass
-		runGBuffer(rctx, *probeToUpdate);
-
-		// Barriers
-		for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
-		{
-			cmdb->setTextureSurfaceBarrier(m_gbuffer.m_colorRts[i],
-				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-				TextureUsageBit::SAMPLED_FRAGMENT,
-				TextureSurfaceInfo(0, 0, 0, 0));
-		}
-
-		cmdb->setTextureSurfaceBarrier(m_gbuffer.m_depthRt,
-			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-			TextureUsageBit::SAMPLED_FRAGMENT,
-			TextureSurfaceInfo(0, 0, 0, 0));
-
-		for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
-		{
-			cmdb->setTextureSurfaceBarrier(m_lightShading.m_cubeArr,
-				TextureUsageBit::NONE,
-				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-				TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
-		}
-
-		// Run light shading pass
-		runLightShading(rctx, *probeToUpdate, m_cacheEntries[probeToUpdateCacheEntryIdx]);
-
-		// Barriers
-		for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
-		{
-			cmdb->setTextureSurfaceBarrier(m_lightShading.m_cubeArr,
-				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-				TextureUsageBit::GENERATE_MIPMAPS,
-				TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
-		}
-
-		// Run the mipmaping passes
-		for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
-		{
-			cmdb->generateMipmaps2d(m_lightShading.m_cubeArr, faceIdx, probeToUpdateCacheEntryIdx);
-		}
-
-		// Barriers
-		for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
-		{
-			for(U mip = 0; mip < m_lightShading.m_mipCount; ++mip)
+			// RTs
+			Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS> rts;
+			for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 			{
-				cmdb->setTextureSurfaceBarrier(m_lightShading.m_cubeArr,
-					TextureUsageBit::GENERATE_MIPMAPS,
-					TextureUsageBit::SAMPLED_FRAGMENT,
-					TextureSurfaceInfo(mip, 0, faceIdx, probeToUpdateCacheEntryIdx));
+				m_ctx.m_gbufferColorRts[i] = rgraph.newRenderTarget(m_gbuffer.m_colorRtDescrs[i]);
+				rts[i] = m_ctx.m_gbufferColorRts[i];
 			}
+			m_ctx.m_gbufferDepthRt = rgraph.newRenderTarget(m_gbuffer.m_depthRtDescr);
 
-			cmdb->setTextureSurfaceBarrier(m_irradiance.m_cubeArr,
-				TextureUsageBit::NONE,
-				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-				TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
+			// Pass
+			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI gbuff");
+			pass.setFramebufferInfo(m_gbuffer.m_fbDescr, rts, m_ctx.m_gbufferDepthRt);
+			pass.setWork(runGBufferCallback, this, 0);
+
+			for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
+			{
+				pass.newConsumer({m_ctx.m_gbufferColorRts[i], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+				pass.newProducer({m_ctx.m_gbufferColorRts[i], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+			}
+			pass.newConsumer({m_ctx.m_gbufferDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE});
+			pass.newProducer({m_ctx.m_gbufferDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE});
 		}
 
-		// Run irradiance
-		runIrradiance(rctx, probeToUpdateCacheEntryIdx);
-
-		// Barriers
-		for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
+		// Light shading passes
 		{
-			cmdb->setTextureSurfaceBarrier(m_irradiance.m_cubeArr,
-				TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-				TextureUsageBit::SAMPLED_FRAGMENT,
-				TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx));
+			Array<RenderPassWorkCallback, 6> callbacks = {{runLightShadingCallback<0>,
+				runLightShadingCallback<1>,
+				runLightShadingCallback<2>,
+				runLightShadingCallback<3>,
+				runLightShadingCallback<4>,
+				runLightShadingCallback<5>}};
+
+			// RT
+			m_ctx.m_lightShadingRt =
+				rgraph.importRenderTarget("GI light", m_lightShading.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
+
+			// Passes
+			for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
+			{
+				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI lightshad");
+				pass.setFramebufferInfo(m_cacheEntries[probeToUpdateCacheEntryIdx].m_lightShadingFbDescrs[faceIdx],
+					{{m_ctx.m_lightShadingRt}},
+					{});
+				pass.setWork(callbacks[faceIdx], this, 0);
+
+				TextureSurfaceInfo surf(0, 0, faceIdx, probeToUpdateCacheEntryIdx);
+				pass.newConsumer({m_ctx.m_lightShadingRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, surf});
+				pass.newProducer({m_ctx.m_lightShadingRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, surf});
+
+				for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
+				{
+					pass.newConsumer({m_ctx.m_gbufferColorRts[i], TextureUsageBit::SAMPLED_FRAGMENT});
+				}
+				pass.newConsumer({m_ctx.m_gbufferDepthRt, TextureUsageBit::SAMPLED_FRAGMENT});
+			}
 		}
+
+		// Mipmapping "passes"
+		{
+			Array<RenderPassWorkCallback, 6> callbacks = {{runMipmappingOfLightShadingCallback<0>,
+				runMipmappingOfLightShadingCallback<1>,
+				runMipmappingOfLightShadingCallback<2>,
+				runMipmappingOfLightShadingCallback<3>,
+				runMipmappingOfLightShadingCallback<4>,
+				runMipmappingOfLightShadingCallback<5>}};
+
+			for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
+			{
+				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI mipmap");
+				pass.setWork(callbacks[faceIdx], this, 0);
+
+				for(U mip = 0; mip < m_lightShading.m_mipCount; ++mip)
+				{
+					TextureSurfaceInfo surf(mip, 0, faceIdx, probeToUpdateCacheEntryIdx);
+					pass.newConsumer({m_ctx.m_lightShadingRt, TextureUsageBit::GENERATE_MIPMAPS, surf});
+					pass.newProducer({m_ctx.m_lightShadingRt, TextureUsageBit::GENERATE_MIPMAPS, surf});
+				}
+			}
+		}
+
+		// Irradiance passes
+		{
+			Array<RenderPassWorkCallback, 6> callbacks = {{runIrradianceCallback<0>,
+				runIrradianceCallback<1>,
+				runIrradianceCallback<2>,
+				runIrradianceCallback<3>,
+				runIrradianceCallback<4>,
+				runIrradianceCallback<5>}};
+
+			// Rt
+			m_ctx.m_irradianceRt =
+				rgraph.importRenderTarget("GI irradiance", m_irradiance.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
+
+			for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
+			{
+				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI irradiance");
+
+				pass.setFramebufferInfo(m_cacheEntries[probeToUpdateCacheEntryIdx].m_irradianceFbDescrs[faceIdx],
+					{{m_ctx.m_irradianceRt}},
+					{});
+
+				pass.setWork(callbacks[faceIdx], this, 0);
+
+				pass.newConsumer({m_ctx.m_irradianceRt,
+					TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+					TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx)});
+				pass.newProducer({m_ctx.m_irradianceRt,
+					TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
+					TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx)});
+
+				pass.newConsumer({m_ctx.m_lightShadingRt, TextureUsageBit::SAMPLED_FRAGMENT});
+			}
+		}
+	}
+	else
+	{
+		// Just import
+
+		m_ctx.m_lightShadingRt =
+			rgraph.importRenderTarget("GI light", m_lightShading.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
+		m_ctx.m_irradianceRt =
+			rgraph.importRenderTarget("GI irradiance", m_irradiance.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
 	}
 }
 

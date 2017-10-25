@@ -284,6 +284,11 @@ public:
 	/// Calculate the hash for the framebuffer.
 	void bake();
 
+	Bool isBacked() const
+	{
+		return m_hash != 0;
+	}
+
 private:
 	FramebufferInitInfo m_fbInitInfo;
 	Bool8 m_defaultFb = false;
