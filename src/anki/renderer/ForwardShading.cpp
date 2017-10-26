@@ -135,7 +135,7 @@ void ForwardShading::drawUpscale(RenderingContext& ctx)
 	computeLinearizeDepthOptimal(
 		ctx.m_renderQueue->m_cameraNear, ctx.m_renderQueue->m_cameraFar, linearDepth->x(), linearDepth->y());
 
-	cmdb->bindTexture(0, 0, m_r->getGBuffer().m_depthRt);
+	// TODO cmdb->bindTexture(0, 0, m_r->getGBuffer().m_depthRt);
 	cmdb->bindTextureAndSampler(0, 1, m_r->getDepthDownscale().m_hd.m_colorRt, m_r->getNearestSampler());
 	cmdb->bindTexture(0, 2, m_rt);
 	cmdb->bindTexture(0, 3, m_upscale.m_noiseTex->getGrTexture());

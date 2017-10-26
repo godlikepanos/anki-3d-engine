@@ -157,10 +157,10 @@ void LightShading::run(RenderingContext& ctx)
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 	cmdb->bindShaderProgram(m_progVariant->getProgram());
 
-	cmdb->bindTexture(1, 0, m_r->getGBuffer().m_rt0);
-	cmdb->bindTexture(1, 1, m_r->getGBuffer().m_rt1);
-	cmdb->bindTexture(1, 2, m_r->getGBuffer().m_rt2);
-	cmdb->bindTexture(1, 3, m_r->getGBuffer().m_depthRt, DepthStencilAspectBit::DEPTH);
+	// TODO cmdb->bindTexture(1, 0, m_r->getGBuffer().m_rt0);
+	// TODO cmdb->bindTexture(1, 1, m_r->getGBuffer().m_rt1);
+	// TODO cmdb->bindTexture(1, 2, m_r->getGBuffer().m_rt2);
+	// TODO cmdb->bindTexture(1, 3, m_r->getGBuffer().m_depthRt, DepthStencilAspectBit::DEPTH);
 	cmdb->informTextureCurrentUsage(m_r->getSsao().getRt(), TextureUsageBit::SAMPLED_FRAGMENT);
 	cmdb->bindTexture(1, 4, m_r->getSsao().getRt());
 

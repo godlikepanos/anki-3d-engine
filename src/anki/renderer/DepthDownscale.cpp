@@ -87,7 +87,7 @@ void HalfDepth::run(RenderingContext& ctx)
 
 	cmdb->beginRenderPass(m_fb);
 	cmdb->bindShaderProgram(m_grProg);
-	cmdb->bindTexture(0, 0, m_r->getGBuffer().m_depthRt);
+	// TODO cmdb->bindTexture(0, 0, m_r->getGBuffer().m_depthRt);
 
 	cmdb->setViewport(0, 0, m_r->getWidth() / 2, m_r->getHeight() / 2);
 	cmdb->setDepthCompareOperation(CompareOperation::ALWAYS);

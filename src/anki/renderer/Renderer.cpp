@@ -527,7 +527,7 @@ void Renderer::buildCommandBuffersInternal(RenderingContext& ctx, U32 threadId, 
 {
 	// G-Buffer pass
 	//
-	m_gbuffer->buildCommandBuffers(ctx, threadId, threadCount);
+	// TODO m_gbuffer->buildCommandBuffers(ctx, threadId, threadCount);
 
 	// Append to the last MS's cmdb the occlusion tests
 	if(ctx.m_gbuffer.m_lastThreadWithWork == threadId)

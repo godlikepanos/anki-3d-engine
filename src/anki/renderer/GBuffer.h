@@ -18,10 +18,8 @@ namespace anki
 class GBuffer : public RendererObject
 {
 anki_internal:
-	TexturePtr m_rt0;
-	TexturePtr m_rt1;
-	TexturePtr m_rt2;
-	TexturePtr m_depthRt;
+	Array<RenderTargetHandle, GBUFFER_COLOR_ATTACHMENT_COUNT> m_colorRts;
+	RenderTargetHandle m_depthRt;
 
 	GBuffer(Renderer* r)
 		: RendererObject(r)
@@ -32,21 +30,30 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 
-	void buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) const;
-
-	void setPreRunBarriers(RenderingContext& ctx);
-
-	void run(RenderingContext& ctx);
-
-	void setPostRunBarriers(RenderingContext& ctx);
+	/// Populate the rendergraph.
+	void populateRenderGraph(RenderingContext& ctx);
 
 private:
-	FramebufferPtr m_fb;
+	Array<RenderTargetDescription, GBUFFER_COLOR_ATTACHMENT_COUNT> m_colorRtDescrs;
+	RenderTargetDescription m_depthRtDescr;
+	GraphicsRenderPassFramebufferDescription m_fbDescr;
+
+	RenderingContext* m_ctx = nullptr;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 
-	/// Create a G buffer FBO
-	ANKI_USE_RESULT Error createRt();
+	// A RenderPassWorkCallback for G-buffer pass.
+	static void runCallback(void* userData,
+		CommandBufferPtr cmdb,
+		U32 secondLevelCmdbIdx,
+		U32 secondLevelCmdbCount,
+		const RenderGraph& rgraph)
+	{
+		GBuffer* self = static_cast<GBuffer*>(userData);
+		self->runInThread(cmdb, secondLevelCmdbIdx, secondLevelCmdbCount, *self->m_ctx);
+	}
+
+	void runInThread(CommandBufferPtr& cmdb, U32 threadId, U32 threadCount, const RenderingContext& ctx) const;
 };
 /// @}
 

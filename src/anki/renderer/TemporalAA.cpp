@@ -77,7 +77,7 @@ void TemporalAA::run(RenderingContext& ctx)
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 
 	cmdb->bindShaderProgram(m_grProg);
-	cmdb->bindTextureAndSampler(0, 0, m_r->getGBuffer().m_depthRt, m_r->getLinearSampler());
+	// TODO cmdb->bindTextureAndSampler(0, 0, m_r->getGBuffer().m_depthRt, m_r->getLinearSampler());
 	cmdb->bindTextureAndSampler(0, 1, m_r->getLightShading().getRt(), m_r->getLinearSampler());
 	cmdb->informTextureCurrentUsage(m_rts[(m_r->getFrameCount() + 1) & 1], TextureUsageBit::SAMPLED_FRAGMENT);
 	cmdb->bindTextureAndSampler(0, 2, m_rts[(m_r->getFrameCount() + 1) & 1], m_r->getLinearSampler());

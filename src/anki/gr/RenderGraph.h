@@ -38,8 +38,6 @@ class RenderTargetHandle
 	friend class RenderPassDescriptionBase;
 
 public:
-	operator TexturePtr() const;
-
 	bool operator==(const RenderTargetHandle& b) const
 	{
 		return m_idx == b.m_idx;
