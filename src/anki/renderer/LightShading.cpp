@@ -161,8 +161,7 @@ void LightShading::run(RenderingContext& ctx)
 	// TODO cmdb->bindTexture(1, 1, m_r->getGBuffer().m_rt1);
 	// TODO cmdb->bindTexture(1, 2, m_r->getGBuffer().m_rt2);
 	// TODO cmdb->bindTexture(1, 3, m_r->getGBuffer().m_depthRt, DepthStencilAspectBit::DEPTH);
-	cmdb->informTextureCurrentUsage(m_r->getSsao().getRt(), TextureUsageBit::SAMPLED_FRAGMENT);
-	cmdb->bindTexture(1, 4, m_r->getSsao().getRt());
+	// TODO cmdb->bindTexture(1, 4, m_r->getSsao().getRt());
 
 	// TODO: cmdb->bindTexture(0, 0, m_r->getShadowMapping().m_shadowAtlas);
 	// TODO: cmdb->bindTexture(0, 1, m_r->getIndirect().getReflectionTexture());
