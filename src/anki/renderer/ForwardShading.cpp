@@ -110,13 +110,11 @@ void ForwardShading::drawVolumetric(RenderingContext& ctx, CommandBufferPtr cmdb
 	computeLinearizeDepthOptimal(ctx.m_renderQueue->m_cameraNear, ctx.m_renderQueue->m_cameraFar, unis->x(), unis->y());
 
 	cmdb->informTextureSurfaceCurrentUsage(
-		m_r->getVolumetric().m_main.getRt(), TextureSurfaceInfo(0, 0, 0, 0), TextureUsageBit::SAMPLED_FRAGMENT);
-	cmdb->informTextureSurfaceCurrentUsage(
 		m_r->getDepthDownscale().m_qd.m_colorRt, TextureSurfaceInfo(0, 0, 0, 0), TextureUsageBit::SAMPLED_FRAGMENT);
 
 	cmdb->bindTextureAndSampler(0, 0, m_r->getDepthDownscale().m_hd.m_colorRt, m_r->getNearestSampler());
 	cmdb->bindTextureAndSampler(0, 1, m_r->getDepthDownscale().m_qd.m_colorRt, m_r->getNearestSampler());
-	cmdb->bindTexture(0, 2, m_r->getVolumetric().m_main.getRt());
+	// TODO cmdb->bindTexture(0, 2, m_r->getVolumetric().m_main.getRt());
 	cmdb->bindTexture(0, 3, m_vol.m_noiseTex->getGrTexture());
 
 	m_r->drawQuad(cmdb);
