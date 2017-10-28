@@ -31,6 +31,11 @@ anki_internal:
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
+	RenderTargetHandle getShadowmapRt() const
+	{
+		return m_esmRt;
+	}
+
 private:
 	/// @name ESM stuff
 	/// @{
@@ -63,7 +68,7 @@ private:
 
 	GraphicsRenderPassFramebufferDescription m_esmFbDescr; ///< The FB for ESM
 	TexturePtr m_esmAtlas; ///< ESM texture atlas.
-	RenderTargetHandle m_esmRt = {};
+	RenderTargetHandle m_esmRt;
 
 	U32 m_tileResolution = 0; ///< Tile resolution.
 	U32 m_atlasResolution = 0; ///< Atlas size is (m_atlasResolution, m_atlasResolution)

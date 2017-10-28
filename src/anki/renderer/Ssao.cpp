@@ -127,8 +127,8 @@ void Ssao::runMain(CommandBufferPtr& cmdb, const RenderingContext& ctx, const Re
 	cmdb->setViewport(0, 0, m_width, m_height);
 	cmdb->bindShaderProgram(m_main.m_grProg);
 
-	cmdb->bindTexture(0, 0, m_r->getDepthDownscale().m_qd.m_colorRt);
-	// TODO cmdb->bindTextureAndSampler(0, 1, m_r->getGBuffer().m_rt2, m_r->getLinearSampler());
+	cmdb->bindTexture(0, 0, rgraph.getTexture(m_r->getDepthDownscale().getQuarterColorRt()));
+	cmdb->bindTextureAndSampler(0, 1, rgraph.getTexture(m_r->getGBuffer().getColorRt(2)), m_r->getLinearSampler());
 	cmdb->bindTexture(0, 2, m_main.m_noiseTex->getGrTexture());
 	cmdb->bindTexture(0, 3, rgraph.getTexture(m_runCtx.m_rts[(m_r->getFrameCount() + 1) & 1]));
 
@@ -156,7 +156,7 @@ void Ssao::runHBlur(CommandBufferPtr& cmdb, const RenderGraph& rgraph)
 	cmdb->setViewport(0, 0, m_width, m_height);
 	cmdb->bindShaderProgram(m_hblur.m_grProg);
 	cmdb->bindTexture(0, 0, rgraph.getTexture(m_runCtx.m_rts[m_r->getFrameCount() & 1]));
-	cmdb->bindTexture(0, 1, m_r->getDepthDownscale().m_qd.m_colorRt);
+	cmdb->bindTexture(0, 1, rgraph.getTexture(m_r->getDepthDownscale().getQuarterColorRt()));
 	m_r->drawQuad(cmdb);
 }
 
@@ -165,7 +165,7 @@ void Ssao::runVBlur(CommandBufferPtr& cmdb, const RenderGraph& rgraph)
 	cmdb->setViewport(0, 0, m_width, m_height);
 	cmdb->bindShaderProgram(m_vblur.m_grProg);
 	cmdb->bindTexture(0, 0, rgraph.getTexture(m_runCtx.m_rts[(m_r->getFrameCount() + 1) & 1]));
-	cmdb->bindTexture(0, 1, m_r->getDepthDownscale().m_qd.m_colorRt);
+	cmdb->bindTexture(0, 1, rgraph.getTexture(m_r->getDepthDownscale().getQuarterColorRt()));
 	m_r->drawQuad(cmdb);
 }
 
@@ -186,36 +186,40 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 	{
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("SSAO main");
 
-		pass.setWork(runMain, this, 0);
+		pass.setWork(runMainCallback, this, 0);
 		pass.setFramebufferInfo(m_fbDescr, {{m_runCtx.m_rts[rtToRenderIdx]}}, {});
 
+		pass.newConsumer({m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_FRAGMENT});
 		pass.newConsumer({m_runCtx.m_rts[rtToRenderIdx], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-		pass.newProducer({m_runCtx.m_rts[rtToRenderIdx], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		pass.newConsumer({m_runCtx.m_rts[rtToReadIdx], TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newConsumer({m_r->getDepthDownscale().getQuarterColorRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newProducer({m_runCtx.m_rts[rtToRenderIdx], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 	}
 
 	// Create HBlur pass
 	{
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("SSAO hblur");
 
-		pass.setWork(runHBlur, this, 0);
+		pass.setWork(runHBlurCallback, this, 0);
 		pass.setFramebufferInfo(m_fbDescr, {{m_runCtx.m_rts[rtToReadIdx]}}, {});
 
 		pass.newConsumer({m_runCtx.m_rts[rtToReadIdx], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-		pass.newProducer({m_runCtx.m_rts[rtToReadIdx], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		pass.newConsumer({m_runCtx.m_rts[rtToRenderIdx], TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newConsumer({m_r->getDepthDownscale().getQuarterColorRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newProducer({m_runCtx.m_rts[rtToReadIdx], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 	}
 
 	// Create VBlur pass
 	{
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("SSAO vblur");
 
-		pass.setWork(runVBlur, this, 0);
+		pass.setWork(runVBlurCallback, this, 0);
 		pass.setFramebufferInfo(m_fbDescr, {{m_runCtx.m_rts[rtToRenderIdx]}}, {});
 
 		pass.newConsumer({m_runCtx.m_rts[rtToRenderIdx], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-		pass.newProducer({m_runCtx.m_rts[rtToRenderIdx], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		pass.newConsumer({m_runCtx.m_rts[rtToReadIdx], TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newConsumer({m_r->getDepthDownscale().getQuarterColorRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newProducer({m_runCtx.m_rts[rtToRenderIdx], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 	}
 }
 

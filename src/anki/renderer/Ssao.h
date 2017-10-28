@@ -77,7 +77,7 @@ private:
 	void runVBlur(CommandBufferPtr& cmdb, const RenderGraph& rgraph);
 
 	/// A RenderPassWorkCallback for SSAO main pass.
-	static void runMain(void* userData,
+	static void runMainCallback(void* userData,
 		CommandBufferPtr cmdb,
 		U32 secondLevelCmdbIdx,
 		U32 secondLevelCmdbCount,
@@ -89,7 +89,7 @@ private:
 	}
 
 	/// A RenderPassWorkCallback for SSAO HBlur.
-	static void runHBlur(void* userData,
+	static void runHBlurCallback(void* userData,
 		CommandBufferPtr cmdb,
 		U32 secondLevelCmdbIdx,
 		U32 secondLevelCmdbCount,
@@ -101,7 +101,7 @@ private:
 	}
 
 	/// A RenderPassWorkCallback for SSAO VBlur.
-	static void runVBlur(void* userData,
+	static void runVBlurCallback(void* userData,
 		CommandBufferPtr cmdb,
 		U32 secondLevelCmdbIdx,
 		U32 secondLevelCmdbCount,

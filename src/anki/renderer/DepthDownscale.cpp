@@ -10,172 +10,88 @@
 namespace anki
 {
 
-HalfDepth::~HalfDepth()
-{
-}
-
-Error HalfDepth::init(const ConfigSet&)
-{
-	GrManager& gr = getGrManager();
-	U width = m_r->getWidth() / 2;
-	U height = m_r->getHeight() / 2;
-
-	// Create RTs
-	m_depthRt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(width,
-		height,
-		GBUFFER_DEPTH_ATTACHMENT_PIXEL_FORMAT,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-		SamplingFilter::LINEAR,
-		1,
-		"halfdepth"));
-
-	m_colorRt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(width,
-		height,
-		PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT),
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::SAMPLED_FRAGMENT,
-		SamplingFilter::LINEAR,
-		1,
-		"halfdepthcol"));
-
-	// Create FB
-	FramebufferInitInfo fbInit("halfdepth");
-	fbInit.m_colorAttachments[0].m_texture = m_colorRt;
-	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-	fbInit.m_colorAttachmentCount = 1;
-	fbInit.m_depthStencilAttachment.m_texture = m_depthRt;
-	fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-	fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
-	m_fb = gr.newInstance<Framebuffer>(fbInit);
-
-	// Prog
-	ANKI_CHECK(getResourceManager().loadResource("programs/DepthDownscale.ankiprog", m_prog));
-
-	ShaderProgramResourceMutationInitList<2> mutations(m_prog);
-	mutations.add("TYPE", 0).add("SAMPLE_RESOLVE_TYPE", 0);
-
-	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(mutations.get(), variant);
-	m_grProg = variant->getProgram();
-
-	return Error::NONE;
-}
-
-void HalfDepth::setPreRunBarriers(RenderingContext& ctx)
-{
-	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_depthRt,
-		TextureUsageBit::NONE,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-		TextureSurfaceInfo(0, 0, 0, 0));
-
-	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_colorRt,
-		TextureUsageBit::NONE,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		TextureSurfaceInfo(0, 0, 0, 0));
-}
-
-void HalfDepth::setPostRunBarriers(RenderingContext& ctx)
-{
-	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_colorRt,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		TextureUsageBit::SAMPLED_FRAGMENT,
-		TextureSurfaceInfo(0, 0, 0, 0));
-}
-
-void HalfDepth::run(RenderingContext& ctx)
-{
-	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
-
-	cmdb->beginRenderPass(m_fb);
-	cmdb->bindShaderProgram(m_grProg);
-	// TODO cmdb->bindTexture(0, 0, m_r->getGBuffer().m_depthRt);
-
-	cmdb->setViewport(0, 0, m_r->getWidth() / 2, m_r->getHeight() / 2);
-	cmdb->setDepthCompareOperation(CompareOperation::ALWAYS);
-
-	m_r->drawQuad(cmdb);
-
-	cmdb->endRenderPass();
-
-	// Restore state
-	cmdb->setDepthCompareOperation(CompareOperation::LESS);
-}
-
-QuarterDepth::~QuarterDepth()
-{
-}
-
-Error QuarterDepth::init(const ConfigSet&)
-{
-	GrManager& gr = getGrManager();
-	U width = m_r->getWidth() / 4;
-	U height = m_r->getHeight() / 4;
-
-	m_colorRt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(width,
-		height,
-		PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT),
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::SAMPLED_FRAGMENT,
-		SamplingFilter::LINEAR,
-		1,
-		"quarterdepth"));
-
-	FramebufferInitInfo fbInit("quarterdepth");
-	fbInit.m_colorAttachments[0].m_texture = m_colorRt;
-	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-	fbInit.m_colorAttachmentCount = 1;
-	m_fb = gr.newInstance<Framebuffer>(fbInit);
-
-	// Prog
-	ANKI_CHECK(getResourceManager().loadResource("programs/DepthDownscale.ankiprog", m_prog));
-
-	ShaderProgramResourceMutationInitList<2> mutations(m_prog);
-	mutations.add("TYPE", 1).add("SAMPLE_RESOLVE_TYPE", 0);
-
-	const ShaderProgramResourceVariant* variant;
-	m_prog->getOrCreateVariant(mutations.get(), variant);
-	m_grProg = variant->getProgram();
-
-	return Error::NONE;
-}
-
-void QuarterDepth::setPreRunBarriers(RenderingContext& ctx)
-{
-	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_colorRt,
-		TextureUsageBit::NONE,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		TextureSurfaceInfo(0, 0, 0, 0));
-}
-
-void QuarterDepth::setPostRunBarriers(RenderingContext& ctx)
-{
-	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_colorRt,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
-		TextureUsageBit::SAMPLED_FRAGMENT,
-		TextureSurfaceInfo(0, 0, 0, 0));
-}
-
-void QuarterDepth::run(RenderingContext& ctx)
-{
-	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
-
-	cmdb->beginRenderPass(m_fb);
-	cmdb->bindShaderProgram(m_grProg);
-	cmdb->bindTexture(0, 0, m_parent->m_hd.m_colorRt);
-
-	cmdb->setViewport(0, 0, m_r->getWidth() / 4, m_r->getHeight() / 4);
-
-	m_r->drawQuad(cmdb);
-
-	cmdb->endRenderPass();
-}
-
 DepthDownscale::~DepthDownscale()
 {
 }
 
+Error DepthDownscale::initHalf(const ConfigSet&)
+{
+	U width = m_r->getWidth() / 2;
+	U height = m_r->getHeight() / 2;
+
+	// Create RT descrs
+	m_half.m_depthRtDescr = m_r->create2DRenderTargetDescription(width,
+		height,
+		GBUFFER_DEPTH_ATTACHMENT_PIXEL_FORMAT,
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
+		SamplingFilter::LINEAR,
+		"Half depth");
+	m_half.m_depthRtDescr.bake();
+
+	m_half.m_colorRtDescr = m_r->create2DRenderTargetDescription(width,
+		height,
+		PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT),
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::SAMPLED_FRAGMENT,
+		SamplingFilter::LINEAR,
+		"Half depth col");
+	m_half.m_colorRtDescr.bake();
+
+	// Create FB descr
+	m_half.m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
+	m_half.m_fbDescr.m_colorAttachmentCount = 1;
+	m_half.m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::DONT_CARE;
+	m_half.m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
+	m_half.m_fbDescr.bake();
+
+	// Prog
+	ANKI_CHECK(getResourceManager().loadResource("programs/DepthDownscale.ankiprog", m_half.m_prog));
+
+	ShaderProgramResourceMutationInitList<2> mutations(m_half.m_prog);
+	mutations.add("TYPE", 0).add("SAMPLE_RESOLVE_TYPE", 0);
+
+	const ShaderProgramResourceVariant* variant;
+	m_half.m_prog->getOrCreateVariant(mutations.get(), variant);
+	m_half.m_grProg = variant->getProgram();
+
+	return Error::NONE;
+}
+
+Error DepthDownscale::initQuarter(const ConfigSet&)
+{
+	U width = m_r->getWidth() / 4;
+	U height = m_r->getHeight() / 4;
+
+	// RT descr
+	m_quarter.m_colorRtDescr = m_r->create2DRenderTargetDescription(width,
+		height,
+		PixelFormat(ComponentFormat::R32, TransformFormat::FLOAT),
+		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::SAMPLED_FRAGMENT,
+		SamplingFilter::LINEAR,
+		"quarterdepth");
+	m_quarter.m_colorRtDescr.bake();
+
+	// FB descr
+	m_quarter.m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
+	m_quarter.m_fbDescr.m_colorAttachmentCount = 1;
+	m_quarter.m_fbDescr.bake();
+
+	// Prog
+	ANKI_CHECK(getResourceManager().loadResource("programs/DepthDownscale.ankiprog", m_quarter.m_prog));
+
+	ShaderProgramResourceMutationInitList<2> mutations(m_quarter.m_prog);
+	mutations.add("TYPE", 1).add("SAMPLE_RESOLVE_TYPE", 0);
+
+	const ShaderProgramResourceVariant* variant;
+	m_quarter.m_prog->getOrCreateVariant(mutations.get(), variant);
+	m_quarter.m_grProg = variant->getProgram();
+
+	return Error::NONE;
+}
+
 Error DepthDownscale::initInternal(const ConfigSet& cfg)
 {
-	ANKI_CHECK(m_hd.init(cfg));
-	ANKI_CHECK(m_qd.init(cfg));
+	ANKI_CHECK(initHalf(cfg));
+	ANKI_CHECK(initQuarter(cfg));
 	return Error::NONE;
 }
 
@@ -190,6 +106,65 @@ Error DepthDownscale::init(const ConfigSet& cfg)
 	}
 
 	return err;
+}
+
+void DepthDownscale::runHalf(CommandBufferPtr& cmdb, const RenderGraph& rgraph)
+{
+	cmdb->bindShaderProgram(m_half.m_grProg);
+	cmdb->bindTexture(0, 0, rgraph.getTexture(m_r->getGBuffer().getDepthRt()));
+
+	cmdb->setViewport(0, 0, m_r->getWidth() / 2, m_r->getHeight() / 2);
+	cmdb->setDepthCompareOperation(CompareOperation::ALWAYS);
+
+	m_r->drawQuad(cmdb);
+
+	// Restore state
+	cmdb->setDepthCompareOperation(CompareOperation::LESS);
+}
+
+void DepthDownscale::runQuarter(CommandBufferPtr& cmdb, const RenderGraph& rgraph)
+{
+	cmdb->bindShaderProgram(m_quarter.m_grProg);
+	cmdb->bindTexture(0, 0, rgraph.getTexture(m_runCtx.m_halfColorRt));
+	cmdb->setViewport(0, 0, m_r->getWidth() / 4, m_r->getHeight() / 4);
+
+	m_r->drawQuad(cmdb);
+}
+
+void DepthDownscale::populateRenderGraph(RenderingContext& ctx)
+{
+	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+
+	// Create render targets
+	m_runCtx.m_halfDepthRt = rgraph.newRenderTarget(m_half.m_depthRtDescr);
+	m_runCtx.m_halfColorRt = rgraph.newRenderTarget(m_half.m_colorRtDescr);
+	m_runCtx.m_quarterRt = rgraph.newRenderTarget(m_quarter.m_colorRtDescr);
+
+	// Create half depth render pass
+	{
+		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Half depth");
+
+		pass.setFramebufferInfo(m_half.m_fbDescr, {{m_runCtx.m_halfColorRt}}, m_runCtx.m_halfDepthRt);
+		pass.setWork(runHalfCallback, this, 0);
+
+		pass.newConsumer({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newConsumer({m_runCtx.m_halfColorRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass.newConsumer({m_runCtx.m_halfDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE});
+		pass.newProducer({m_runCtx.m_halfColorRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass.newProducer({m_runCtx.m_halfDepthRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE});
+	}
+
+	// Create quarter depth render pass
+	{
+		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Quarter depth");
+
+		pass.setFramebufferInfo(m_quarter.m_fbDescr, {{m_runCtx.m_quarterRt}}, {});
+		pass.setWork(runQuarterCallback, this, 0);
+
+		pass.newConsumer({m_runCtx.m_halfColorRt, TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newConsumer({m_runCtx.m_quarterRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		pass.newProducer({m_runCtx.m_quarterRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+	}
 }
 
 } // end namespace anki

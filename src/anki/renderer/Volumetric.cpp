@@ -124,10 +124,10 @@ void Volumetric::runMain(CommandBufferPtr& cmdb, const RenderingContext& ctx, co
 {
 	cmdb->setViewport(0, 0, m_width, m_height);
 
-	cmdb->bindTexture(0, 0, m_r->getDepthDownscale().m_qd.m_colorRt);
+	cmdb->bindTexture(0, 0, rgraph.getTexture(m_r->getDepthDownscale().getQuarterColorRt()));
 	cmdb->bindTexture(0, 1, m_main.m_noiseTex->getGrTexture());
 	cmdb->bindTexture(0, 2, rgraph.getTexture(m_runCtx.m_rts[(m_r->getFrameCount() + 1) & 1]));
-	// TODO: cmdb->bindTexture(0, 3, m_r->getShadowMapping().m_shadowAtlas);
+	cmdb->bindTexture(0, 3, rgraph.getTexture(m_r->getShadowMapping().getShadowmapRt()));
 
 	bindUniforms(cmdb, 0, 0, ctx.m_lightShading.m_commonToken);
 	bindUniforms(cmdb, 0, 1, ctx.m_lightShading.m_pointLightsToken);
@@ -195,36 +195,38 @@ void Volumetric::populateRenderGraph(RenderingContext& ctx)
 	{
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("VOL main");
 
-		pass.setWork(runMain, this, 0);
+		pass.setWork(runMainCallback, this, 0);
 		pass.setFramebufferInfo(m_fbDescr, {{m_runCtx.m_rts[rtToRenderIdx]}}, {});
 
+		pass.newConsumer({m_r->getDepthDownscale().getQuarterColorRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newConsumer({m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 		pass.newConsumer({m_runCtx.m_rts[rtToRenderIdx], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-		pass.newProducer({m_runCtx.m_rts[rtToRenderIdx], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		pass.newConsumer({m_runCtx.m_rts[rtToReadIdx], TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newProducer({m_runCtx.m_rts[rtToRenderIdx], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 	}
 
 	// Create HBlur pass
 	{
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("VOL hblur");
 
-		pass.setWork(runHBlur, this, 0);
+		pass.setWork(runHBlurCallback, this, 0);
 		pass.setFramebufferInfo(m_fbDescr, {{m_runCtx.m_rts[rtToReadIdx]}}, {});
 
 		pass.newConsumer({m_runCtx.m_rts[rtToReadIdx], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-		pass.newProducer({m_runCtx.m_rts[rtToReadIdx], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		pass.newConsumer({m_runCtx.m_rts[rtToRenderIdx], TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newProducer({m_runCtx.m_rts[rtToReadIdx], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 	}
 
 	// Create VBlur pass
 	{
 		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("VOL vblur");
 
-		pass.setWork(runVBlur, this, 0);
+		pass.setWork(runVBlurCallback, this, 0);
 		pass.setFramebufferInfo(m_fbDescr, {{m_runCtx.m_rts[rtToRenderIdx]}}, {});
 
 		pass.newConsumer({m_runCtx.m_rts[rtToRenderIdx], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
-		pass.newProducer({m_runCtx.m_rts[rtToRenderIdx], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 		pass.newConsumer({m_runCtx.m_rts[rtToReadIdx], TextureUsageBit::SAMPLED_FRAGMENT});
+		pass.newProducer({m_runCtx.m_rts[rtToRenderIdx], TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 	}
 }
 
