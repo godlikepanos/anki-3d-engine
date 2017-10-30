@@ -38,6 +38,8 @@ anki_internal:
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
+	RenderTargetHandle getRt() const;
+
 private:
 	U32 m_width = 0, m_height = 0;
 

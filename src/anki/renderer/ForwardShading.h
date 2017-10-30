@@ -26,43 +26,27 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 
-	void buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) const;
+	/// Populate the rendergraph.
+	void populateRenderGraph(RenderingContext& ctx);
 
-	void setPreRunBarriers(RenderingContext& ctx);
+	void drawUpscale(RenderingContext& ctx, CommandBufferPtr& cmdb, const RenderGraph& rgraph);
 
-	void run(RenderingContext& ctx);
-
-	void setPostRunBarriers(RenderingContext& ctx);
-
-	void drawVolumetric(RenderingContext& ctx, CommandBufferPtr cmdb);
-
-	void drawUpscale(RenderingContext& ctx);
-
-	TexturePtr getRt() const
-	{
-		return m_rt;
-	}
-
-	U getWidth() const
+	U32 getWidth() const
 	{
 		return m_width;
 	}
 
-	U getHeight() const
+	U32 getHeight() const
 	{
 		return m_height;
 	}
 
-	FramebufferPtr getFramebuffer() const
-	{
-		return m_fb;
-	}
-
 private:
-	U m_width;
-	U m_height;
-	FramebufferPtr m_fb;
-	TexturePtr m_rt;
+	U32 m_width;
+	U32 m_height;
+
+	GraphicsRenderPassFramebufferDescription m_fbDescr;
+	RenderTargetDescription m_rtDescr;
 
 	class Vol
 	{
@@ -80,9 +64,32 @@ private:
 		TextureResourcePtr m_noiseTex;
 	} m_upscale;
 
+	class
+	{
+	public:
+		RenderTargetHandle m_rt;
+		RenderingContext* m_ctx = nullptr;
+	} m_runCtx;
+
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 	ANKI_USE_RESULT Error initVol();
 	ANKI_USE_RESULT Error initUpscale();
+
+	/// A RenderPassWorkCallback.
+	static void runCallback(void* userData,
+		CommandBufferPtr cmdb,
+		U32 secondLevelCmdbIdx,
+		U32 secondLevelCmdbCount,
+		const RenderGraph& rgraph)
+	{
+		ANKI_ASSERT(userData);
+		ForwardShading* self = static_cast<ForwardShading*>(userData);
+		self->run(*self->m_runCtx.m_ctx, cmdb, secondLevelCmdbIdx, secondLevelCmdbCount, rgraph);
+	}
+
+	void run(RenderingContext& ctx, CommandBufferPtr& cmdb, U threadId, U threadCount, const RenderGraph& rgraph);
+
+	void drawVolumetric(RenderingContext& ctx, CommandBufferPtr& cmdb, const RenderGraph& rgraph);
 };
 /// @}
 

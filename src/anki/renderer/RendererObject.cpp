@@ -64,4 +64,20 @@ void RendererObject::bindStorage(CommandBufferPtr& cmdb, U set, U binding, const
 	}
 }
 
+U32 RendererObject::computeNumberOfSecondLevelCommandBuffers(U32 drawcallCount) const
+{
+	const U drawcallsPerThread = drawcallCount / m_r->getThreadPool().getThreadsCount();
+	U secondLevelCmdbCount;
+	if(drawcallsPerThread < MIN_DRAWCALLS_PER_2ND_LEVEL_COMMAND_BUFFER)
+	{
+		secondLevelCmdbCount = max<U>(1u, drawcallCount / MIN_DRAWCALLS_PER_2ND_LEVEL_COMMAND_BUFFER);
+	}
+	else
+	{
+		secondLevelCmdbCount = m_r->getThreadPool().getThreadsCount();
+	}
+
+	return secondLevelCmdbCount;
+}
+
 } // end namespace anki

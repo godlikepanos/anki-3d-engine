@@ -50,6 +50,9 @@ class ShaderProgramResourceVariant;
 /// @addtogroup renderer
 /// @{
 
+/// Don't create second level command buffers if they contain more drawcalls than this constant.
+const U MIN_DRAWCALLS_PER_2ND_LEVEL_COMMAND_BUFFER = 16;
+
 /// FS size is rendererSize/FS_FRACTION.
 const U FS_FRACTION = 2;
 

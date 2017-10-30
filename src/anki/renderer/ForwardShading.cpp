@@ -37,24 +37,22 @@ Error ForwardShading::initInternal(const ConfigSet&)
 	m_width = m_r->getWidth() / FS_FRACTION;
 	m_height = m_r->getHeight() / FS_FRACTION;
 
-	// Create RT
-	m_rt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_width,
+	// Create RT descr
+	m_rtDescr = m_r->create2DRenderTargetDescription(m_width,
 		m_height,
 		FORWARD_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 		SamplingFilter::LINEAR,
-		1,
-		"forward"));
+		"forward");
+	m_rtDescr.bake();
 
-	FramebufferInitInfo fbInit("forward");
-	fbInit.m_colorAttachmentCount = 1;
-	fbInit.m_colorAttachments[0].m_texture = m_rt;
-	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
-	fbInit.m_colorAttachments[0].m_clearValue.m_colorf = {{0.0, 0.0, 0.0, 1.0}};
-	// TODO fbInit.m_depthStencilAttachment.m_texture = m_r->getDepthDownscale().m_hd.m_depthRt;
-	fbInit.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::LOAD;
-	fbInit.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
-	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
+	// Create FB descr
+	m_fbDescr.m_colorAttachmentCount = 1;
+	m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::CLEAR;
+	m_fbDescr.m_colorAttachments[0].m_clearValue.m_colorf = {{0.0, 0.0, 0.0, 1.0}};
+	m_fbDescr.m_depthStencilAttachment.m_loadOperation = AttachmentLoadOperation::LOAD;
+	m_fbDescr.m_depthStencilAttachment.m_aspect = DepthStencilAspectBit::DEPTH;
+	m_fbDescr.bake();
 
 	ANKI_CHECK(initVol());
 	ANKI_CHECK(initUpscale());
@@ -99,7 +97,7 @@ Error ForwardShading::initUpscale()
 	return Error::NONE;
 }
 
-void ForwardShading::drawVolumetric(RenderingContext& ctx, CommandBufferPtr cmdb)
+void ForwardShading::drawVolumetric(RenderingContext& ctx, CommandBufferPtr& cmdb, const RenderGraph& rgraph)
 {
 	cmdb->bindShaderProgram(m_vol.m_grProg);
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ONE);
@@ -109,9 +107,11 @@ void ForwardShading::drawVolumetric(RenderingContext& ctx, CommandBufferPtr cmdb
 	Vec4* unis = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
 	computeLinearizeDepthOptimal(ctx.m_renderQueue->m_cameraNear, ctx.m_renderQueue->m_cameraFar, unis->x(), unis->y());
 
-	// TODO cmdb->bindTextureAndSampler(0, 0, m_r->getDepthDownscale().m_hd.m_colorRt, m_r->getNearestSampler());
-	// TODO cmdb->bindTextureAndSampler(0, 1, m_r->getDepthDownscale().m_qd.m_colorRt, m_r->getNearestSampler());
-	// TODO cmdb->bindTexture(0, 2, m_r->getVolumetric().m_main.getRt());
+	cmdb->bindTextureAndSampler(
+		0, 0, rgraph.getTexture(m_r->getDepthDownscale().getHalfDepthColorRt()), m_r->getNearestSampler());
+	cmdb->bindTextureAndSampler(
+		0, 1, rgraph.getTexture(m_r->getDepthDownscale().getQuarterColorRt()), m_r->getNearestSampler());
+	cmdb->bindTexture(0, 2, rgraph.getTexture(m_r->getVolumetric().getRt()));
 	cmdb->bindTexture(0, 3, m_vol.m_noiseTex->getGrTexture());
 
 	m_r->drawQuad(cmdb);
@@ -122,17 +122,16 @@ void ForwardShading::drawVolumetric(RenderingContext& ctx, CommandBufferPtr cmdb
 	cmdb->setDepthCompareOperation(CompareOperation::LESS);
 }
 
-void ForwardShading::drawUpscale(RenderingContext& ctx)
+void ForwardShading::drawUpscale(RenderingContext& ctx, CommandBufferPtr& cmdb, const RenderGraph& rgraph)
 {
-	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
-
 	Vec4* linearDepth = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
 	computeLinearizeDepthOptimal(
 		ctx.m_renderQueue->m_cameraNear, ctx.m_renderQueue->m_cameraFar, linearDepth->x(), linearDepth->y());
 
-	// TODO cmdb->bindTexture(0, 0, m_r->getGBuffer().m_depthRt);
-	// TODO cmdb->bindTextureAndSampler(0, 1, m_r->getDepthDownscale().m_hd.m_colorRt, m_r->getNearestSampler());
-	cmdb->bindTexture(0, 2, m_rt);
+	cmdb->bindTexture(0, 0, rgraph.getTexture(m_r->getGBuffer().getDepthRt()));
+	cmdb->bindTextureAndSampler(
+		0, 1, rgraph.getTexture(m_r->getDepthDownscale().getHalfDepthColorRt()), m_r->getNearestSampler());
+	cmdb->bindTexture(0, 2, rgraph.getTexture(m_runCtx.m_rt));
 	cmdb->bindTexture(0, 3, m_upscale.m_noiseTex->getGrTexture());
 
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::SRC_ALPHA);
@@ -146,7 +145,8 @@ void ForwardShading::drawUpscale(RenderingContext& ctx)
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
 }
 
-void ForwardShading::buildCommandBuffers(RenderingContext& ctx, U threadId, U threadCount) const
+void ForwardShading::run(
+	RenderingContext& ctx, CommandBufferPtr& cmdb, U threadId, U threadCount, const RenderGraph& rgraph)
 {
 	const U problemSize = ctx.m_renderQueue->m_forwardShadingRenderables.getSize();
 	PtrSize start, end;
@@ -158,22 +158,8 @@ void ForwardShading::buildCommandBuffers(RenderingContext& ctx, U threadId, U th
 		return;
 	}
 
-	// Create the command buffer and set some state
-	CommandBufferInitInfo cinf;
-	cinf.m_flags = CommandBufferFlag::SECOND_LEVEL | CommandBufferFlag::GRAPHICS_WORK;
-	if(end - start < COMMAND_BUFFER_SMALL_BATCH_MAX_COMMANDS)
-	{
-		cinf.m_flags |= CommandBufferFlag::SMALL_BATCH;
-	}
-	cinf.m_framebuffer = m_fb;
-	CommandBufferPtr cmdb = m_r->getGrManager().newInstance<CommandBuffer>(cinf);
-	ctx.m_forwardShading.m_commandBuffers[threadId] = cmdb;
-
-	cmdb->informTextureCurrentUsage(m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE);
-	// TODO: cmdb->informTextureCurrentUsage(m_r->getShadowMapping().m_shadowAtlas, TextureUsageBit::SAMPLED_FRAGMENT);
-
-	// TODO cmdb->bindTexture(0, 0, m_r->getDepthDownscale().m_qd.m_colorRt);
-	// TODO: cmdb->bindTexture(0, 1, m_r->getShadowMapping().m_shadowAtlas);
+	cmdb->bindTexture(0, 0, rgraph.getTexture(m_r->getDepthDownscale().getQuarterColorRt()));
+	cmdb->bindTexture(0, 1, rgraph.getTexture(m_r->getShadowMapping().getShadowmapRt()));
 	bindUniforms(cmdb, 0, 0, ctx.m_lightShading.m_commonToken);
 	bindUniforms(cmdb, 0, 1, ctx.m_lightShading.m_pointLightsToken);
 	bindUniforms(cmdb, 0, 2, ctx.m_lightShading.m_spotLightsToken);
@@ -193,39 +179,38 @@ void ForwardShading::buildCommandBuffers(RenderingContext& ctx, U threadId, U th
 		cmdb,
 		ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + start,
 		ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + end);
-}
 
-void ForwardShading::setPreRunBarriers(RenderingContext& ctx)
-{
-	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_rt,
-		TextureUsageBit::NONE,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-		TextureSurfaceInfo(0, 0, 0, 0));
-}
-
-void ForwardShading::setPostRunBarriers(RenderingContext& ctx)
-{
-	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_rt,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-		TextureUsageBit::SAMPLED_FRAGMENT,
-		TextureSurfaceInfo(0, 0, 0, 0));
-}
-
-void ForwardShading::run(RenderingContext& ctx)
-{
-	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
-	cmdb->beginRenderPass(m_fb);
-	cmdb->setViewport(0, 0, m_width, m_height);
-
-	for(U i = 0; i < m_r->getThreadPool().getThreadsCount(); ++i)
+	if(threadId == threadCount - 1)
 	{
-		if(ctx.m_forwardShading.m_commandBuffers[i].isCreated())
-		{
-			cmdb->pushSecondLevelCommandBuffer(ctx.m_forwardShading.m_commandBuffers[i]);
-		}
+		drawVolumetric(ctx, cmdb, rgraph);
 	}
+}
 
-	cmdb->endRenderPass();
+void ForwardShading::populateRenderGraph(RenderingContext& ctx)
+{
+	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+	m_runCtx.m_ctx = &ctx;
+
+	// Create RT
+	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
+
+	// Create pass
+	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Forward shading");
+
+	pass.setWork(runCallback,
+		this,
+		computeNumberOfSecondLevelCommandBuffers(ctx.m_renderQueue->m_forwardShadingRenderables.getSize()));
+	pass.setFramebufferInfo(m_fbDescr, {{m_runCtx.m_rt}}, m_r->getDepthDownscale().getHalfDepthDepthRt());
+
+	pass.newConsumer({m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE});
+	pass.newConsumer({m_r->getDepthDownscale().getHalfDepthDepthRt(), TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ});
+	pass.newConsumer({m_r->getDepthDownscale().getHalfDepthColorRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+	pass.newConsumer({m_r->getDepthDownscale().getQuarterColorRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+	pass.newConsumer({m_r->getVolumetric().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+	pass.newConsumer({m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+
+	pass.newProducer({m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE});
+	pass.newProducer({m_r->getDepthDownscale().getHalfDepthDepthRt(), TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ});
 }
 
 } // end namespace anki

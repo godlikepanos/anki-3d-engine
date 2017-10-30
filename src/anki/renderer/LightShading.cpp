@@ -187,7 +187,7 @@ void LightShading::run(RenderingContext& ctx)
 	cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
 
 	// Apply the forward shading result
-	m_r->getForwardShading().drawUpscale(ctx);
+	// TODO m_r->getForwardShading().drawUpscale(ctx);
 
 	cmdb->endRenderPass();
 }

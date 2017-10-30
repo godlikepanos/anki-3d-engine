@@ -540,19 +540,20 @@ void Renderer::buildCommandBuffersInternal(RenderingContext& ctx, U32 threadId, 
 		ctx.m_gbuffer.m_commandBuffers[threadId]->flush();
 	}
 
-	// SM
-	//
-	// TODO: m_shadowMapping->buildCommandBuffers(ctx, threadId, threadCount);
+// SM
+//
+// TODO: m_shadowMapping->buildCommandBuffers(ctx, threadId, threadCount);
 
-	// FS
-	//
-	m_forwardShading->buildCommandBuffers(ctx, threadId, threadCount);
+// FS
+//
+#if 0
+	// TODO m_forwardShading->buildCommandBuffers(ctx, threadId, threadCount);
 
 	// Append to the last FB's cmdb the other passes
 	if(ctx.m_forwardShading.m_lastThreadWithWork == threadId)
 	{
 		m_lensFlare->run(ctx, ctx.m_forwardShading.m_commandBuffers[threadId]);
-		m_forwardShading->drawVolumetric(ctx, ctx.m_forwardShading.m_commandBuffers[threadId]);
+		// TODO m_forwardShading->drawVolumetric(ctx, ctx.m_forwardShading.m_commandBuffers[threadId]);
 	}
 	else if(threadId == threadCount - 1 && ctx.m_forwardShading.m_lastThreadWithWork == MAX_U32)
 	{
@@ -564,15 +565,10 @@ void Renderer::buildCommandBuffersInternal(RenderingContext& ctx, U32 threadId, 
 		init.m_framebuffer = m_forwardShading->getFramebuffer();
 		CommandBufferPtr cmdb = getGrManager().newInstance<CommandBuffer>(init);
 
-		// Inform on textures
-		cmdb->informTextureSurfaceCurrentUsage(m_forwardShading->getRt(),
-			TextureSurfaceInfo(0, 0, 0, 0),
-			TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE);
-
 		cmdb->setViewport(0, 0, m_forwardShading->getWidth(), m_forwardShading->getHeight());
 
 		m_lensFlare->run(ctx, cmdb);
-		m_forwardShading->drawVolumetric(ctx, cmdb);
+		// TODO m_forwardShading->drawVolumetric(ctx, cmdb);
 
 		ctx.m_forwardShading.m_commandBuffers[threadId] = cmdb;
 	}
@@ -581,6 +577,7 @@ void Renderer::buildCommandBuffersInternal(RenderingContext& ctx, U32 threadId, 
 	{
 		ctx.m_forwardShading.m_commandBuffers[threadId]->flush();
 	}
+#endif
 }
 
 Error Renderer::buildCommandBuffers(RenderingContext& ctx)

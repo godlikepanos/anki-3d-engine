@@ -74,6 +74,8 @@ protected:
 	ResourceManager& getResourceManager();
 
 	void* allocateFrameStagingMemory(PtrSize size, StagingGpuMemoryType usage, StagingGpuMemoryToken& token);
+
+	U32 computeNumberOfSecondLevelCommandBuffers(U32 drawcallCount) const;
 };
 /// @}
 
