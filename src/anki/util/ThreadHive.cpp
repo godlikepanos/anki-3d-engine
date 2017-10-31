@@ -39,7 +39,7 @@ private:
 	/// Thread callaback
 	static Error threadCallback(anki::ThreadCallbackInfo& info)
 	{
-		Thread& self = *reinterpret_cast<Thread*>(info.m_userData);
+		Thread& self = *static_cast<Thread*>(info.m_userData);
 
 		self.m_hive->threadRun(self.m_id);
 		return Error::NONE;

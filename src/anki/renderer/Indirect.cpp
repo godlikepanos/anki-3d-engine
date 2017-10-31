@@ -286,7 +286,7 @@ void Indirect::initCacheEntry(U32 cacheEntryIdx)
 	{
 		// Light pass FB
 		{
-			GraphicsRenderPassFramebufferDescription& fbDescr = cacheEntry.m_lightShadingFbDescrs[faceIdx];
+			FramebufferDescription& fbDescr = cacheEntry.m_lightShadingFbDescrs[faceIdx];
 			ANKI_ASSERT(!fbDescr.isBacked());
 			fbDescr.m_colorAttachmentCount = 1;
 			fbDescr.m_colorAttachments[0].m_surface.m_layer = cacheEntryIdx;
@@ -297,7 +297,7 @@ void Indirect::initCacheEntry(U32 cacheEntryIdx)
 
 		// Irradiance FB
 		{
-			GraphicsRenderPassFramebufferDescription& fbDescr = cacheEntry.m_irradianceFbDescrs[faceIdx];
+			FramebufferDescription& fbDescr = cacheEntry.m_irradianceFbDescrs[faceIdx];
 			ANKI_ASSERT(!fbDescr.isBacked());
 			fbDescr.m_colorAttachmentCount = 1;
 			fbDescr.m_colorAttachments[0].m_surface.m_layer = cacheEntryIdx;

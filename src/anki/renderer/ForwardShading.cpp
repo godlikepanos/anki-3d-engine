@@ -122,8 +122,9 @@ void ForwardShading::drawVolumetric(RenderingContext& ctx, CommandBufferPtr& cmd
 	cmdb->setDepthCompareOperation(CompareOperation::LESS);
 }
 
-void ForwardShading::drawUpscale(RenderingContext& ctx, CommandBufferPtr& cmdb, const RenderGraph& rgraph)
+void ForwardShading::drawUpscale(const RenderingContext& ctx, const RenderGraph& rgraph, CommandBufferPtr& cmdb)
 {
+	// **WARNING** Remember to update the consumers of the render pass that calls this method
 	Vec4* linearDepth = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
 	computeLinearizeDepthOptimal(
 		ctx.m_renderQueue->m_cameraNear, ctx.m_renderQueue->m_cameraFar, linearDepth->x(), linearDepth->y());

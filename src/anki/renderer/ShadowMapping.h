@@ -66,7 +66,7 @@ private:
 		}
 	};
 
-	GraphicsRenderPassFramebufferDescription m_esmFbDescr; ///< The FB for ESM
+	FramebufferDescription m_esmFbDescr; ///< The FB for ESM
 	TexturePtr m_esmAtlas; ///< ESM texture atlas.
 	RenderTargetHandle m_esmRt;
 
@@ -114,7 +114,7 @@ private:
 	/// @name Scratch buffer stuff
 	/// @{
 	RenderTargetHandle m_scratchRt; ///< Size of the RT is (m_scratchTileSize * m_scratchTileCount, m_scratchTileSize).
-	GraphicsRenderPassFramebufferDescription m_scratchFbDescr; ///< FB info.
+	FramebufferDescription m_scratchFbDescr; ///< FB info.
 	RenderTargetDescription m_scratchRtDescr; ///< Render target.
 
 	U32 m_scratchTileCount = 0;

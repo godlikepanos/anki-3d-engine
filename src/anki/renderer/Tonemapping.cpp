@@ -61,14 +61,31 @@ Error Tonemapping::initInternal(const ConfigSet& initializer)
 	return Error::NONE;
 }
 
-void Tonemapping::run(RenderingContext& ctx)
+void Tonemapping::run(const RenderGraph& rgraph, CommandBufferPtr& cmdb)
 {
-	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
 	cmdb->bindShaderProgram(m_grProg);
-	cmdb->bindStorageBuffer(0, 0, m_luminanceBuff, 0, MAX_PTR_SIZE);
-	cmdb->bindTexture(0, 0, m_r->getDownscaleBlur().getPassTexture(m_rtIdx));
+	cmdb->bindStorageBuffer(0, 0, rgraph.getBuffer(m_runCtx.m_buffHandle), 0, MAX_PTR_SIZE);
+	cmdb->bindTexture(0, 0, rgraph.getTexture(m_r->getDownscaleBlur().getPassRt(m_rtIdx)));
 
 	cmdb->dispatchCompute(1, 1, 1);
+}
+
+void Tonemapping::populateRenderGraph(RenderingContext& ctx)
+{
+	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+
+	// Create buffer
+	m_runCtx.m_buffHandle = rgraph.importBuffer("Avg lum", m_luminanceBuff, BufferUsageBit::NONE);
+
+	// Create the pass
+	ComputeRenderPassDescription& pass = rgraph.newComputeRenderPass("Avg lum");
+
+	pass.setWork(runCallback, this, 0);
+
+	pass.newConsumer({m_runCtx.m_buffHandle, BufferUsageBit::STORAGE_COMPUTE_READ_WRITE});
+	pass.newConsumer({m_r->getDownscaleBlur().getPassRt(m_rtIdx), TextureUsageBit::SAMPLED_COMPUTE});
+
+	pass.newProducer({m_runCtx.m_buffHandle, BufferUsageBit::STORAGE_COMPUTE_READ_WRITE});
 }
 
 } // end namespace anki

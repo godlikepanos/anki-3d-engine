@@ -248,8 +248,8 @@ protected:
 };
 
 /// Framebuffer attachment info.
-/// @memberof GraphicsRenderPassFramebufferDescription
-class GraphicsRenderPassFramebufferDescriptionAttachment
+/// @memberof FramebufferDescription
+class FramebufferDescriptionAttachment
 {
 public:
 	TextureSurfaceInfo m_surface;
@@ -265,14 +265,14 @@ public:
 
 /// Describes a framebuffer.
 /// @memberof GraphicsRenderPassDescription
-class GraphicsRenderPassFramebufferDescription
+class FramebufferDescription
 {
 	friend class GraphicsRenderPassDescription;
 
 public:
-	Array<GraphicsRenderPassFramebufferDescriptionAttachment, MAX_COLOR_ATTACHMENTS> m_colorAttachments;
+	Array<FramebufferDescriptionAttachment, MAX_COLOR_ATTACHMENTS> m_colorAttachments;
 	U32 m_colorAttachmentCount = 0;
-	GraphicsRenderPassFramebufferDescriptionAttachment m_depthStencilAttachment;
+	FramebufferDescriptionAttachment m_depthStencilAttachment;
 
 	void setDefaultFramebuffer()
 	{
@@ -306,7 +306,7 @@ public:
 	{
 	}
 
-	void setFramebufferInfo(const GraphicsRenderPassFramebufferDescription& fbInfo,
+	void setFramebufferInfo(const FramebufferDescription& fbInfo,
 		const Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS>& colorRenderTargetHandles,
 		RenderTargetHandle depthStencilRenderTargetHandle)
 	{

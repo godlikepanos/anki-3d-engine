@@ -29,7 +29,7 @@ anki_internal:
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
-	void drawUpscale(RenderingContext& ctx, CommandBufferPtr& cmdb, const RenderGraph& rgraph);
+	void drawUpscale(const RenderingContext& ctx, const RenderGraph& rgraph, CommandBufferPtr& cmdb);
 
 	U32 getWidth() const
 	{
@@ -41,11 +41,16 @@ anki_internal:
 		return m_height;
 	}
 
+	RenderTargetHandle getRt() const
+	{
+		return m_runCtx.m_rt;
+	}
+
 private:
 	U32 m_width;
 	U32 m_height;
 
-	GraphicsRenderPassFramebufferDescription m_fbDescr;
+	FramebufferDescription m_fbDescr;
 	RenderTargetDescription m_rtDescr;
 
 	class Vol

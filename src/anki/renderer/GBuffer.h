@@ -43,7 +43,7 @@ anki_internal:
 private:
 	Array<RenderTargetDescription, GBUFFER_COLOR_ATTACHMENT_COUNT> m_colorRtDescrs;
 	RenderTargetDescription m_depthRtDescr;
-	GraphicsRenderPassFramebufferDescription m_fbDescr;
+	FramebufferDescription m_fbDescr;
 
 	RenderingContext* m_ctx = nullptr;
 	Array<RenderTargetHandle, GBUFFER_COLOR_ATTACHMENT_COUNT> m_colorRts;

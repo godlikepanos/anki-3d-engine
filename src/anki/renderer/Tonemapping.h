@@ -17,8 +17,6 @@ namespace anki
 class Tonemapping : public RendererObject
 {
 anki_internal:
-	BufferPtr m_luminanceBuff;
-
 	Tonemapping(Renderer* r)
 		: RendererObject(r)
 	{
@@ -26,14 +24,42 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& cfg);
 
-	void run(RenderingContext& ctx);
+	/// Populate the rendergraph.
+	void populateRenderGraph(RenderingContext& ctx);
+
+	RenderPassBufferHandle getAverageLuminanceBuffer() const
+	{
+		return m_runCtx.m_buffHandle;
+	}
 
 private:
 	ShaderProgramResourcePtr m_prog;
 	ShaderProgramPtr m_grProg;
 	U8 m_rtIdx;
 
+	BufferPtr m_luminanceBuff;
+
+	class
+	{
+	public:
+		RenderPassBufferHandle m_buffHandle;
+	} m_runCtx;
+
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& cfg);
+
+	void run(const RenderGraph& rgraph, CommandBufferPtr& cmdb);
+
+	/// A RenderPassWorkCallback to run the compute pass.
+	static void runCallback(void* userData,
+		CommandBufferPtr cmdb,
+		U32 secondLevelCmdbIdx,
+		U32 secondLevelCmdbCount,
+		const RenderGraph& rgraph)
+	{
+		ANKI_ASSERT(userData);
+		Tonemapping* self = static_cast<Tonemapping*>(userData);
+		self->run(rgraph, cmdb);
+	}
 };
 /// @}
 

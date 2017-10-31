@@ -28,17 +28,13 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 
+	void populateRenderGraph(RenderingContext& ctx);
+
 	ANKI_USE_RESULT Error binLights(RenderingContext& ctx);
 
-	void setPreRunBarriers(RenderingContext& ctx);
-
-	void run(RenderingContext& ctx);
-
-	void setPostRunBarriers(RenderingContext& ctx);
-
-	TexturePtr getRt() const
+	RenderTargetHandle getRt() const
 	{
-		return m_rt;
+		return m_runCtx.m_rt;
 	}
 
 	const LightBin& getLightBin() const
@@ -47,14 +43,11 @@ anki_internal:
 	}
 
 private:
-	/// The IS render target
-	TexturePtr m_rt;
-
 	Array<U32, 3> m_clusterCounts = {{0, 0, 0}};
 	U32 m_clusterCount = 0;
 
-	/// The IS FBO
-	FramebufferPtr m_fb;
+	RenderTargetDescription m_rtDescr;
+	FramebufferDescription m_fbDescr;
 
 	// Light shaders
 	ShaderProgramResourcePtr m_prog;
@@ -67,10 +60,31 @@ private:
 	U32 m_maxLightIds;
 	/// @}
 
+	class
+	{
+	public:
+		RenderTargetHandle m_rt;
+		RenderingContext* m_ctx;
+	} m_runCtx; ///< Run context.
+
 	/// Called by init
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 
 	void updateCommonBlock(RenderingContext& ctx);
+
+	void run(const RenderingContext& ctx, const RenderGraph& rgraph, CommandBufferPtr& cmdb);
+
+	/// A RenderPassWorkCallback for the light pass.
+	static void runCallback(void* userData,
+		CommandBufferPtr cmdb,
+		U32 secondLevelCmdbIdx,
+		U32 secondLevelCmdbCount,
+		const RenderGraph& rgraph)
+	{
+		ANKI_ASSERT(userData);
+		LightShading* self = static_cast<LightShading*>(userData);
+		self->run(*self->m_runCtx.m_ctx, rgraph, cmdb);
+	}
 };
 /// @}
 

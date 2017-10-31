@@ -118,7 +118,7 @@ public:
 	}
 };
 
-void GraphicsRenderPassFramebufferDescription::bake()
+void FramebufferDescription::bake()
 {
 	ANKI_ASSERT(m_hash == 0 && "Already baked");
 	if(m_defaultFb)
@@ -133,7 +133,7 @@ void GraphicsRenderPassFramebufferDescription::bake()
 	for(U i = 0; i < m_colorAttachmentCount; ++i)
 	{
 		FramebufferAttachmentInfo& out = m_fbInitInfo.m_colorAttachments[i];
-		const GraphicsRenderPassFramebufferDescriptionAttachment& in = m_colorAttachments[i];
+		const FramebufferDescriptionAttachment& in = m_colorAttachments[i];
 
 		out.m_surface = in.m_surface;
 		out.m_clearValue = in.m_clearValue;
@@ -144,7 +144,7 @@ void GraphicsRenderPassFramebufferDescription::bake()
 	if(!!m_depthStencilAttachment.m_aspect)
 	{
 		FramebufferAttachmentInfo& out = m_fbInitInfo.m_depthStencilAttachment;
-		const GraphicsRenderPassFramebufferDescriptionAttachment& in = m_depthStencilAttachment;
+		const FramebufferDescriptionAttachment& in = m_depthStencilAttachment;
 
 		out.m_surface = in.m_surface;
 		out.m_loadOperation = in.m_loadOperation;

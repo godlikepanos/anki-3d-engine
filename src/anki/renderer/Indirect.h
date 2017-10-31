@@ -46,6 +46,16 @@ anki_internal:
 		return m_integrationLutSampler;
 	}
 
+	RenderTargetHandle getReflectionRt() const
+	{
+		return m_ctx.m_lightShadingRt;
+	}
+
+	RenderTargetHandle getIrradianceRt() const
+	{
+		return m_ctx.m_irradianceRt;
+	}
+
 private:
 	struct LightPassVertexUniforms;
 	struct LightPassPointLightUniforms;
@@ -57,7 +67,7 @@ private:
 		U32 m_tileSize = 0;
 		Array<RenderTargetDescription, GBUFFER_COLOR_ATTACHMENT_COUNT> m_colorRtDescrs;
 		RenderTargetDescription m_depthRtDescr;
-		GraphicsRenderPassFramebufferDescription m_fbDescr;
+		FramebufferDescription m_fbDescr;
 	} m_gbuffer; ///< G-buffer pass.
 
 	class
@@ -99,8 +109,8 @@ private:
 		U64 m_probeUuid;
 		Timestamp m_lastUsedTimestamp = 0; ///< When it was rendered.
 
-		Array<GraphicsRenderPassFramebufferDescription, 6> m_lightShadingFbDescrs;
-		Array<GraphicsRenderPassFramebufferDescription, 6> m_irradianceFbDescrs;
+		Array<FramebufferDescription, 6> m_lightShadingFbDescrs;
+		Array<FramebufferDescription, 6> m_irradianceFbDescrs;
 	};
 
 	DynamicArray<CacheEntry> m_cacheEntries;

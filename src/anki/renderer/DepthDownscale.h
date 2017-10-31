@@ -56,7 +56,7 @@ private:
 		RenderTargetDescription m_depthRtDescr;
 		RenderTargetDescription m_colorRtDescr;
 
-		GraphicsRenderPassFramebufferDescription m_fbDescr;
+		FramebufferDescription m_fbDescr;
 
 		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;
@@ -67,7 +67,7 @@ private:
 	public:
 		RenderTargetDescription m_colorRtDescr;
 
-		GraphicsRenderPassFramebufferDescription m_fbDescr;
+		FramebufferDescription m_fbDescr;
 
 		ShaderProgramResourcePtr m_prog;
 		ShaderProgramPtr m_grProg;

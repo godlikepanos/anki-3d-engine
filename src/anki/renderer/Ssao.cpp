@@ -223,4 +223,9 @@ void Ssao::populateRenderGraph(RenderingContext& ctx)
 	}
 }
 
+RenderTargetHandle Ssao::getRt() const
+{
+	return m_runCtx.m_rts[m_r->getFrameCount() & 1];
+}
+
 } // end namespace anki

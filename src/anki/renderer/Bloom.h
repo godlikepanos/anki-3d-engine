@@ -51,7 +51,7 @@ private:
 		U32 m_width = 0;
 		U32 m_height = 0;
 
-		GraphicsRenderPassFramebufferDescription m_fbDescr;
+		FramebufferDescription m_fbDescr;
 		RenderTargetDescription m_rtDescr;
 		RenderTargetHandle m_rt;
 	} m_exposure;
@@ -66,7 +66,7 @@ private:
 		U32 m_height = 0;
 
 		RenderTargetDescription m_rtDescr;
-		GraphicsRenderPassFramebufferDescription m_fbDescr;
+		FramebufferDescription m_fbDescr;
 		RenderTargetHandle m_rt;
 	} m_upscale;
 

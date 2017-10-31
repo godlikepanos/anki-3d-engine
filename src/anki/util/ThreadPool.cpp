@@ -39,7 +39,7 @@ private:
 	/// Thread callaback
 	static Error threadCallback(ThreadCallbackInfo& info)
 	{
-		ThreadPoolThread& self = *reinterpret_cast<ThreadPoolThread*>(info.m_userData);
+		ThreadPoolThread& self = *static_cast<ThreadPoolThread*>(info.m_userData);
 		Barrier& barrier = self.m_threadpool->m_barrier;
 		const PtrSize threadCount = self.m_threadpool->getThreadsCount();
 		Bool quit = false;
@@ -75,7 +75,7 @@ ThreadPool::ThreadPool(U32 threadsCount)
 	m_threadsCount = threadsCount;
 	ANKI_ASSERT(m_threadsCount <= MAX_THREADS && m_threadsCount > 0);
 
-	m_threads = reinterpret_cast<detail::ThreadPoolThread*>(malloc(sizeof(detail::ThreadPoolThread) * m_threadsCount));
+	m_threads = static_cast<detail::ThreadPoolThread*>(malloc(sizeof(detail::ThreadPoolThread) * m_threadsCount));
 
 	if(m_threads == nullptr)
 	{

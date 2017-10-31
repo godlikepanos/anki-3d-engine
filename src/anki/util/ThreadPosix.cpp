@@ -5,6 +5,7 @@
 
 #include <anki/util/Thread.h>
 #include <anki/util/Logger.h>
+#include <anki/util/Functions.h>
 #include <cstring>
 #include <algorithm>
 #include <pthread.h>
@@ -16,7 +17,7 @@ namespace anki
 static void* pthreadCallback(void* ud)
 {
 	ANKI_ASSERT(ud != nullptr);
-	Thread* thread = reinterpret_cast<Thread*>(ud);
+	Thread* thread = static_cast<Thread*>(ud);
 
 	// Set thread name
 	if(thread->getName()[0] != '\0')
@@ -31,7 +32,7 @@ static void* pthreadCallback(void* ud)
 
 	Error err = thread->getCallback()(info);
 
-	return reinterpret_cast<void*>(static_cast<PtrSize>(err._getCode()));
+	return numberToPtr<void*>(err._getCode());
 }
 
 Thread::Thread(const char* name)
@@ -79,7 +80,7 @@ void Thread::start(void* userData, ThreadCallback callback, I pinToCore)
 		pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpus);
 	}
 
-	pthread_t* thread = reinterpret_cast<pthread_t*>(m_impl);
+	pthread_t* thread = static_cast<pthread_t*>(m_impl);
 
 	m_callback = callback;
 	m_userData = userData;
@@ -100,7 +101,7 @@ void Thread::start(void* userData, ThreadCallback callback, I pinToCore)
 Error Thread::join()
 {
 	ANKI_ASSERT(m_started);
-	pthread_t* thread = reinterpret_cast<pthread_t*>(m_impl);
+	pthread_t* thread = static_cast<pthread_t*>(m_impl);
 
 	void* out;
 	I err = pthread_join(*thread, &out);
@@ -114,7 +115,7 @@ Error Thread::join()
 #endif
 
 	// Set return error code
-	Error code = static_cast<Error>(reinterpret_cast<PtrSize>(out));
+	Error code = static_cast<Error>(ptrToNumber(out));
 	return code;
 }
 
@@ -144,7 +145,7 @@ Mutex::Mutex()
 
 Mutex::~Mutex()
 {
-	pthread_mutex_t* mtx = reinterpret_cast<pthread_mutex_t*>(m_impl);
+	pthread_mutex_t* mtx = static_cast<pthread_mutex_t*>(m_impl);
 	pthread_mutex_destroy(mtx);
 
 	free(m_impl);
@@ -154,7 +155,7 @@ Mutex::~Mutex()
 void Mutex::lock()
 {
 	ANKI_ASSERT(m_impl);
-	pthread_mutex_t* mtx = reinterpret_cast<pthread_mutex_t*>(m_impl);
+	pthread_mutex_t* mtx = static_cast<pthread_mutex_t*>(m_impl);
 
 	I err = pthread_mutex_lock(mtx);
 	if(err)
@@ -166,7 +167,7 @@ void Mutex::lock()
 Bool Mutex::tryLock()
 {
 	ANKI_ASSERT(m_impl);
-	pthread_mutex_t* mtx = reinterpret_cast<pthread_mutex_t*>(m_impl);
+	pthread_mutex_t* mtx = static_cast<pthread_mutex_t*>(m_impl);
 
 	I err = pthread_mutex_trylock(mtx);
 	return err == 0;
@@ -175,7 +176,7 @@ Bool Mutex::tryLock()
 void Mutex::unlock()
 {
 	ANKI_ASSERT(m_impl);
-	pthread_mutex_t* mtx = reinterpret_cast<pthread_mutex_t*>(m_impl);
+	pthread_mutex_t* mtx = static_cast<pthread_mutex_t*>(m_impl);
 
 	I err = pthread_mutex_unlock(mtx);
 	if(err)
@@ -204,7 +205,7 @@ ConditionVariable::ConditionVariable()
 
 ConditionVariable::~ConditionVariable()
 {
-	pthread_cond_t* cond = reinterpret_cast<pthread_cond_t*>(m_impl);
+	pthread_cond_t* cond = static_cast<pthread_cond_t*>(m_impl);
 	pthread_cond_destroy(cond);
 
 	free(m_impl);
@@ -214,14 +215,14 @@ ConditionVariable::~ConditionVariable()
 void ConditionVariable::notifyOne()
 {
 	ANKI_ASSERT(m_impl);
-	pthread_cond_t* cond = reinterpret_cast<pthread_cond_t*>(m_impl);
+	pthread_cond_t* cond = static_cast<pthread_cond_t*>(m_impl);
 	pthread_cond_signal(cond);
 }
 
 void ConditionVariable::notifyAll()
 {
 	ANKI_ASSERT(m_impl);
-	pthread_cond_t* cond = reinterpret_cast<pthread_cond_t*>(m_impl);
+	pthread_cond_t* cond = static_cast<pthread_cond_t*>(m_impl);
 	pthread_cond_broadcast(cond);
 }
 
@@ -229,8 +230,8 @@ void ConditionVariable::wait(Mutex& amtx)
 {
 	ANKI_ASSERT(m_impl);
 	ANKI_ASSERT(amtx.m_impl);
-	pthread_cond_t* cond = reinterpret_cast<pthread_cond_t*>(m_impl);
-	pthread_mutex_t* mtx = reinterpret_cast<pthread_mutex_t*>(amtx.m_impl);
+	pthread_cond_t* cond = static_cast<pthread_cond_t*>(m_impl);
+	pthread_mutex_t* mtx = static_cast<pthread_mutex_t*>(amtx.m_impl);
 
 	I err = pthread_cond_wait(cond, mtx);
 	if(err)

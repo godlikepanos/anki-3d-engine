@@ -12,15 +12,15 @@
 #include <anki/renderer/LightBin.h>
 #include <anki/renderer/RenderQueue.h>
 #include <anki/renderer/ForwardShading.h>
+#include <anki/renderer/DepthDownscale.h>
 #include <anki/misc/ConfigSet.h>
 #include <anki/util/HighRezTimer.h>
 
 namespace anki
 {
 
-class ShaderCommonUniforms
+struct ShaderCommonUniforms
 {
-public:
 	Vec4 m_projectionParams;
 	Vec4 m_rendererSizeTimePad1;
 	Vec4 m_nearFarClustererMagicPad1;
@@ -31,17 +31,6 @@ public:
 	Mat4 m_invProjMat;
 };
 
-enum class IsShaderVariantBit : U8
-{
-	P_LIGHTS = 1 << 0,
-	S_LIGHTS = 1 << 1,
-	DECALS = 1 << 2,
-	INDIRECT = 1 << 3,
-	P_LIGHTS_SHADOWS = 1 << 4,
-	S_LIGHTS_SHADOWS = 1 << 5
-};
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(IsShaderVariantBit, inline)
-
 LightShading::LightShading(Renderer* r)
 	: RendererObject(r)
 {
@@ -49,10 +38,7 @@ LightShading::LightShading(Renderer* r)
 
 LightShading::~LightShading()
 {
-	if(m_lightBin)
-	{
-		getAllocator().deleteInstance(m_lightBin);
-	}
+	getAllocator().deleteInstance(m_lightBin);
 }
 
 Error LightShading::init(const ConfigSet& config)
@@ -92,9 +78,7 @@ Error LightShading::initInternal(const ConfigSet& config)
 		&m_r->getThreadPool(),
 		&m_r->getStagingGpuMemoryManager());
 
-	//
 	// Load shaders and programs
-	//
 	ANKI_CHECK(getResourceManager().loadResource("programs/LightShading.ankiprog", m_prog));
 
 	ShaderProgramResourceConstantValueInitList<4> consts(m_prog);
@@ -105,22 +89,19 @@ Error LightShading::initInternal(const ConfigSet& config)
 
 	m_prog->getOrCreateVariant(consts.get(), m_progVariant);
 
-	//
-	// Create framebuffer
-	//
-	m_rt = m_r->createAndClearRenderTarget(m_r->create2DRenderTargetInitInfo(m_r->getWidth(),
+	// Create RT descr
+	m_rtDescr = m_r->create2DRenderTargetDescription(m_r->getWidth(),
 		m_r->getHeight(),
 		LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 		SamplingFilter::LINEAR,
-		1,
-		"lightp"));
+		"Light Shading");
+	m_rtDescr.bake();
 
-	FramebufferInitInfo fbInit("lightp");
-	fbInit.m_colorAttachmentCount = 1;
-	fbInit.m_colorAttachments[0].m_texture = m_rt;
-	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-	m_fb = getGrManager().newInstance<Framebuffer>(fbInit);
+	// Create FB descr
+	m_fbDescr.m_colorAttachmentCount = 1;
+	m_fbDescr.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
+	m_fbDescr.bake();
 
 	return Error::NONE;
 }
@@ -149,23 +130,20 @@ Error LightShading::binLights(RenderingContext& ctx)
 	return Error::NONE;
 }
 
-void LightShading::run(RenderingContext& ctx)
+void LightShading::run(const RenderingContext& ctx, const RenderGraph& rgraph, CommandBufferPtr& cmdb)
 {
-	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
-
-	cmdb->beginRenderPass(m_fb);
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 	cmdb->bindShaderProgram(m_progVariant->getProgram());
 
-	// TODO cmdb->bindTexture(1, 0, m_r->getGBuffer().m_rt0);
-	// TODO cmdb->bindTexture(1, 1, m_r->getGBuffer().m_rt1);
-	// TODO cmdb->bindTexture(1, 2, m_r->getGBuffer().m_rt2);
-	// TODO cmdb->bindTexture(1, 3, m_r->getGBuffer().m_depthRt, DepthStencilAspectBit::DEPTH);
-	// TODO cmdb->bindTexture(1, 4, m_r->getSsao().getRt());
+	cmdb->bindTexture(1, 0, rgraph.getTexture(m_r->getGBuffer().getColorRt(0)));
+	cmdb->bindTexture(1, 1, rgraph.getTexture(m_r->getGBuffer().getColorRt(1)));
+	cmdb->bindTexture(1, 2, rgraph.getTexture(m_r->getGBuffer().getColorRt(2)));
+	cmdb->bindTexture(1, 3, rgraph.getTexture(m_r->getGBuffer().getDepthRt()), DepthStencilAspectBit::DEPTH);
+	cmdb->bindTexture(1, 4, rgraph.getTexture(m_r->getSsao().getRt()));
 
-	// TODO: cmdb->bindTexture(0, 0, m_r->getShadowMapping().m_shadowAtlas);
-	// TODO: cmdb->bindTexture(0, 1, m_r->getIndirect().getReflectionTexture());
-	// TODO: cmdb->bindTexture(0, 2, m_r->getIndirect().getIrradianceTexture());
+	cmdb->bindTexture(0, 0, rgraph.getTexture(m_r->getShadowMapping().getShadowmapRt()));
+	cmdb->bindTexture(0, 1, rgraph.getTexture(m_r->getIndirect().getReflectionRt()));
+	cmdb->bindTexture(0, 2, rgraph.getTexture(m_r->getIndirect().getIrradianceRt()));
 	cmdb->bindTextureAndSampler(
 		0, 3, m_r->getIndirect().getIntegrationLut(), m_r->getIndirect().getIntegrationLutSampler());
 	cmdb->bindTexture(
@@ -187,9 +165,7 @@ void LightShading::run(RenderingContext& ctx)
 	cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
 
 	// Apply the forward shading result
-	// TODO m_r->getForwardShading().drawUpscale(ctx);
-
-	cmdb->endRenderPass();
+	m_r->getForwardShading().drawUpscale(ctx, rgraph, cmdb);
 }
 
 void LightShading::updateCommonBlock(RenderingContext& ctx)
@@ -215,20 +191,34 @@ void LightShading::updateCommonBlock(RenderingContext& ctx)
 	blk->m_invProjMat = ctx.m_projMatJitter.getInverse();
 }
 
-void LightShading::setPreRunBarriers(RenderingContext& ctx)
+void LightShading::populateRenderGraph(RenderingContext& ctx)
 {
-	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_rt,
-		TextureUsageBit::NONE,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-		TextureSurfaceInfo(0, 0, 0, 0));
-}
+	m_runCtx.m_ctx = &ctx;
+	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 
-void LightShading::setPostRunBarriers(RenderingContext& ctx)
-{
-	ctx.m_commandBuffer->setTextureSurfaceBarrier(m_rt,
-		TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
-		TextureUsageBit::SAMPLED_FRAGMENT,
-		TextureSurfaceInfo(0, 0, 0, 0));
+	// Create RT
+	m_runCtx.m_rt = rgraph.newRenderTarget(m_rtDescr);
+
+	// Create pass
+	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Light Shading");
+
+	pass.setWork(runCallback, this, 0);
+	pass.setFramebufferInfo(m_fbDescr, {{m_runCtx.m_rt}}, {});
+
+	pass.newConsumer({m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+	pass.newConsumer({m_r->getGBuffer().getColorRt(0), TextureUsageBit::SAMPLED_FRAGMENT});
+	pass.newConsumer({m_r->getGBuffer().getColorRt(1), TextureUsageBit::SAMPLED_FRAGMENT});
+	pass.newConsumer({m_r->getGBuffer().getColorRt(2), TextureUsageBit::SAMPLED_FRAGMENT});
+	pass.newConsumer({m_r->getGBuffer().getDepthRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+	pass.newConsumer({m_r->getSsao().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+	pass.newConsumer({m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+	pass.newConsumer({m_r->getIndirect().getReflectionRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+	pass.newConsumer({m_r->getIndirect().getIrradianceRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+
+	pass.newConsumer({m_r->getDepthDownscale().getHalfDepthColorRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+	pass.newConsumer({m_r->getForwardShading().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+
+	pass.newProducer({m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 }
 
 } // end namespace anki

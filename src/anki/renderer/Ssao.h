@@ -33,6 +33,8 @@ anki_internal:
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
+	RenderTargetHandle getRt() const;
+
 private:
 	U32 m_width, m_height;
 
@@ -66,7 +68,7 @@ private:
 	} m_runCtx; ///< Runtime context.
 
 	Array<TexturePtr, 2> m_rtTextures;
-	GraphicsRenderPassFramebufferDescription m_fbDescr;
+	FramebufferDescription m_fbDescr;
 
 	ANKI_USE_RESULT Error initMain(const ConfigSet& set);
 	ANKI_USE_RESULT Error initVBlur(const ConfigSet& set);
