@@ -112,52 +112,55 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 	// Main pass
 	{
 		// Ask for render target
-		m_exposure.m_rt = rgraph.newRenderTarget(m_exposure.m_rtDescr);
+		m_runCtx.m_exposureRt = rgraph.newRenderTarget(m_exposure.m_rtDescr);
 
 		// Set the render pass
 		GraphicsRenderPassDescription& rpass = ctx.m_renderGraphDescr.newGraphicsRenderPass("bloom main");
-		rpass.newConsumer({m_exposure.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureSurfaceInfo()});
-		rpass.newProducer({m_exposure.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureSurfaceInfo()});
-		ANKI_ASSERT(!"TODO Missing deps");
 		rpass.setWork(runExposureCallback, this, 0);
+		rpass.setFramebufferInfo(m_exposure.m_fbDescr, {{m_runCtx.m_exposureRt}}, {});
+
+		rpass.newConsumer({m_runCtx.m_exposureRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		rpass.newConsumer({m_r->getDownscaleBlur().getPassRt(MAX_U), TextureUsageBit::SAMPLED_FRAGMENT});
+		rpass.newConsumer({m_r->getTonemapping().getAverageLuminanceBuffer(), BufferUsageBit::STORAGE_FRAGMENT_READ});
+		rpass.newProducer({m_runCtx.m_exposureRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 	}
 
 	// Upscale & SSLF pass
 	{
 		// Ask for render target
-		m_upscale.m_rt = rgraph.newRenderTarget(m_upscale.m_rtDescr);
+		m_runCtx.m_upscaleRt = rgraph.newRenderTarget(m_upscale.m_rtDescr);
 
 		// Set the render pass
 		GraphicsRenderPassDescription& rpass = ctx.m_renderGraphDescr.newGraphicsRenderPass("bloom upscale");
-		rpass.newConsumer({m_upscale.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureSurfaceInfo()});
-		rpass.newProducer({m_upscale.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE, TextureSurfaceInfo()});
-		ANKI_ASSERT(!"TODO Missing deps");
 		rpass.setWork(runUpscaleAndSslfCallback, this, 0);
+		rpass.setFramebufferInfo(m_upscale.m_fbDescr, {{m_runCtx.m_upscaleRt}}, {});
+
+		rpass.newConsumer({m_runCtx.m_upscaleRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
+		rpass.newConsumer({m_runCtx.m_exposureRt, TextureUsageBit::SAMPLED_FRAGMENT});
+		rpass.newProducer({m_runCtx.m_upscaleRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 	}
 }
 
-void Bloom::runExposure(CommandBufferPtr& cmdb)
+void Bloom::runExposure(const RenderGraph& rgraph, CommandBufferPtr& cmdb)
 {
 	cmdb->setViewport(0, 0, m_exposure.m_width, m_exposure.m_height);
 	cmdb->bindShaderProgram(m_exposure.m_grProg);
-	// TODO: cmdb->bindTexture(0, 0, m_r->getDownscaleBlur().getPassTexture(MAX_U));
-	ANKI_ASSERT(!"TODO");
+	cmdb->bindTexture(0, 0, rgraph.getTexture(m_r->getDownscaleBlur().getPassRt(MAX_U)));
 
 	Vec4* uniforms = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
 	*uniforms = Vec4(m_exposure.m_threshold, m_exposure.m_scale, 0.0, 0.0);
 
-	// TODO: cmdb->bindStorageBuffer(0, 0, m_r->getTonemapping().m_luminanceBuff, 0, MAX_PTR_SIZE);
-	ANKI_ASSERT(!"TODO");
+	cmdb->bindStorageBuffer(0, 0, rgraph.getBuffer(m_r->getTonemapping().getAverageLuminanceBuffer()), 0, MAX_PTR_SIZE);
 
 	m_r->drawQuad(cmdb);
 }
 
-void Bloom::runUpscaleAndSslf(CommandBufferPtr& cmdb, const RenderGraph& rgraph)
+void Bloom::runUpscaleAndSslf(const RenderGraph& rgraph, CommandBufferPtr& cmdb)
 {
 	// Upscale
 	cmdb->setViewport(0, 0, m_upscale.m_width, m_upscale.m_height);
 	cmdb->bindShaderProgram(m_upscale.m_grProg);
-	cmdb->bindTexture(0, 0, rgraph.getTexture(m_exposure.m_rt));
+	cmdb->bindTexture(0, 0, rgraph.getTexture(m_runCtx.m_exposureRt));
 	m_r->drawQuad(cmdb);
 
 	// SSLF

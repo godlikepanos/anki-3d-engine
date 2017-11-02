@@ -39,6 +39,11 @@ anki_internal:
 	/// Populate the rendergraph.
 	void populateRenderGraph(RenderingContext& ctx);
 
+	RenderTargetHandle getRt() const
+	{
+		return m_runCtx.m_exposureRt;
+	}
+
 private:
 	class
 	{
@@ -53,7 +58,6 @@ private:
 
 		FramebufferDescription m_fbDescr;
 		RenderTargetDescription m_rtDescr;
-		RenderTargetHandle m_rt;
 	} m_exposure;
 
 	class
@@ -67,7 +71,6 @@ private:
 
 		RenderTargetDescription m_rtDescr;
 		FramebufferDescription m_fbDescr;
-		RenderTargetHandle m_rt;
 	} m_upscale;
 
 	class
@@ -77,6 +80,13 @@ private:
 		ShaderProgramPtr m_grProg;
 		TextureResourcePtr m_lensDirtTex;
 	} m_sslf;
+
+	class
+	{
+	public:
+		RenderTargetHandle m_exposureRt;
+		RenderTargetHandle m_upscaleRt;
+	} m_runCtx;
 
 	ANKI_USE_RESULT Error initExposure(const ConfigSet& cfg);
 	ANKI_USE_RESULT Error initUpscale(const ConfigSet& cfg);
@@ -97,7 +107,7 @@ private:
 		const RenderGraph& rgraph)
 	{
 		ANKI_ASSERT(userData);
-		static_cast<Bloom*>(userData)->runExposure(cmdb);
+		static_cast<Bloom*>(userData)->runExposure(rgraph, cmdb);
 	}
 
 	static void runUpscaleAndSslfCallback(void* userData,
@@ -107,11 +117,11 @@ private:
 		const RenderGraph& rgraph)
 	{
 		ANKI_ASSERT(userData);
-		static_cast<Bloom*>(userData)->runUpscaleAndSslf(cmdb, rgraph);
+		static_cast<Bloom*>(userData)->runUpscaleAndSslf(rgraph, cmdb);
 	}
 
-	void runExposure(CommandBufferPtr& cmdb);
-	void runUpscaleAndSslf(CommandBufferPtr& cmdb, const RenderGraph& rgraph);
+	void runExposure(const RenderGraph& rgraph, CommandBufferPtr& cmdb);
+	void runUpscaleAndSslf(const RenderGraph& rgraph, CommandBufferPtr& cmdb);
 };
 
 /// @}

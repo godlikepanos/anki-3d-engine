@@ -84,6 +84,7 @@ Error MainRenderer::create(ThreadPool* threadpool,
 
 Error MainRenderer::render(RenderQueue& rqueue)
 {
+#if 0
 	ANKI_TRACE_START_EVENT(RENDER);
 
 	// First thing, reset the temp mem pool
@@ -137,7 +138,7 @@ Error MainRenderer::render(RenderQueue& rqueue)
 	m_cbInitHints = cmdb->computeInitHints();
 
 	ANKI_TRACE_STOP_EVENT(RENDER);
-
+#endif
 	return Error::NONE;
 }
 

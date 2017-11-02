@@ -72,6 +72,7 @@ Error Dbg::lazyInit()
 
 Error Dbg::run(RenderingContext& ctx)
 {
+#if 0
 	ANKI_ASSERT(m_enabled);
 
 	if(!m_initialized)
@@ -259,6 +260,7 @@ Error Dbg::run(RenderingContext& ctx)
 
 	m_drawer->finishFrame();
 	cmdb->endRenderPass();
+#endif
 	return Error::NONE;
 }
 

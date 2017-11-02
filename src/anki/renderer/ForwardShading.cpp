@@ -159,13 +159,14 @@ void ForwardShading::run(
 		return;
 	}
 
+	const LightShadingResources& rsrc = m_r->getLightShading().getResources();
 	cmdb->bindTexture(0, 0, rgraph.getTexture(m_r->getDepthDownscale().getQuarterColorRt()));
 	cmdb->bindTexture(0, 1, rgraph.getTexture(m_r->getShadowMapping().getShadowmapRt()));
-	bindUniforms(cmdb, 0, 0, ctx.m_lightShading.m_commonToken);
-	bindUniforms(cmdb, 0, 1, ctx.m_lightShading.m_pointLightsToken);
-	bindUniforms(cmdb, 0, 2, ctx.m_lightShading.m_spotLightsToken);
-	bindStorage(cmdb, 0, 0, ctx.m_lightShading.m_clustersToken);
-	bindStorage(cmdb, 0, 1, ctx.m_lightShading.m_lightIndicesToken);
+	bindUniforms(cmdb, 0, 0, rsrc.m_commonToken);
+	bindUniforms(cmdb, 0, 1, rsrc.m_pointLightsToken);
+	bindUniforms(cmdb, 0, 2, rsrc.m_spotLightsToken);
+	bindStorage(cmdb, 0, 0, rsrc.m_clustersToken);
+	bindStorage(cmdb, 0, 1, rsrc.m_lightIndicesToken);
 
 	cmdb->setViewport(0, 0, m_width, m_height);
 	cmdb->setBlendFactors(

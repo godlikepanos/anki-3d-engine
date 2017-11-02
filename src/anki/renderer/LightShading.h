@@ -6,17 +6,22 @@
 #pragma once
 
 #include <anki/renderer/RendererObject.h>
+#include <anki/renderer/LightBin.h>
 #include <anki/resource/TextureResource.h>
 #include <anki/resource/ShaderProgramResource.h>
 
 namespace anki
 {
 
-// Forward
-class LightBin;
-
 /// @addtogroup renderer
 /// @{
+
+/// @memberof LightShading
+class LightShadingResources : public LightBinOut
+{
+public:
+	StagingGpuMemoryToken m_commonUniformsToken;
+};
 
 /// Clustered deferred light pass.
 class LightShading : public RendererObject
@@ -42,6 +47,11 @@ anki_internal:
 		return *m_lightBin;
 	}
 
+	const LightShadingResources& getResources() const
+	{
+		return m_runCtx.m_resources;
+	}
+
 private:
 	Array<U32, 3> m_clusterCounts = {{0, 0, 0}};
 	U32 m_clusterCount = 0;
@@ -65,6 +75,7 @@ private:
 	public:
 		RenderTargetHandle m_rt;
 		RenderingContext* m_ctx;
+		LightShadingResources m_resources;
 	} m_runCtx; ///< Run context.
 
 	/// Called by init

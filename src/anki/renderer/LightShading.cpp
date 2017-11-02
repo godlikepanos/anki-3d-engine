@@ -118,20 +118,15 @@ Error LightShading::binLights(RenderingContext& ctx)
 		getFrameAllocator(),
 		m_maxLightIds,
 		true,
-		ctx.m_lightShading.m_pointLightsToken,
-		ctx.m_lightShading.m_spotLightsToken,
-		&ctx.m_lightShading.m_probesToken,
-		ctx.m_lightShading.m_decalsToken,
-		ctx.m_lightShading.m_clustersToken,
-		ctx.m_lightShading.m_lightIndicesToken,
-		ctx.m_lightShading.m_diffDecalTex,
-		ctx.m_lightShading.m_normRoughnessDecalTex));
+		m_runCtx.m_resources));
 
 	return Error::NONE;
 }
 
 void LightShading::run(const RenderingContext& ctx, const RenderGraph& rgraph, CommandBufferPtr& cmdb)
 {
+	const LightShadingResources& rsrc = m_runCtx.m_resources;
+
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 	cmdb->bindShaderProgram(m_progVariant->getProgram());
 
@@ -146,21 +141,17 @@ void LightShading::run(const RenderingContext& ctx, const RenderGraph& rgraph, C
 	cmdb->bindTexture(0, 2, rgraph.getTexture(m_r->getIndirect().getIrradianceRt()));
 	cmdb->bindTextureAndSampler(
 		0, 3, m_r->getIndirect().getIntegrationLut(), m_r->getIndirect().getIntegrationLutSampler());
-	cmdb->bindTexture(
-		0, 4, (ctx.m_lightShading.m_diffDecalTex) ? ctx.m_lightShading.m_diffDecalTex : m_r->getDummyTexture());
-	cmdb->bindTexture(0,
-		5,
-		(ctx.m_lightShading.m_normRoughnessDecalTex) ? ctx.m_lightShading.m_normRoughnessDecalTex
-													 : m_r->getDummyTexture());
+	cmdb->bindTexture(0, 4, (rsrc.m_diffDecalTex) ? rsrc.m_diffDecalTex : m_r->getDummyTexture());
+	cmdb->bindTexture(0, 5, (rsrc.m_normRoughnessDecalTex) ? rsrc.m_normRoughnessDecalTex : m_r->getDummyTexture());
 
-	bindUniforms(cmdb, 0, 0, ctx.m_lightShading.m_commonToken);
-	bindUniforms(cmdb, 0, 1, ctx.m_lightShading.m_pointLightsToken);
-	bindUniforms(cmdb, 0, 2, ctx.m_lightShading.m_spotLightsToken);
-	bindUniforms(cmdb, 0, 3, ctx.m_lightShading.m_probesToken);
-	bindUniforms(cmdb, 0, 4, ctx.m_lightShading.m_decalsToken);
+	bindUniforms(cmdb, 0, 0, rsrc.m_commonToken);
+	bindUniforms(cmdb, 0, 1, rsrc.m_pointLightsToken);
+	bindUniforms(cmdb, 0, 2, rsrc.m_spotLightsToken);
+	bindUniforms(cmdb, 0, 3, rsrc.m_probesToken);
+	bindUniforms(cmdb, 0, 4, rsrc.m_decalsToken);
 
-	bindStorage(cmdb, 0, 0, ctx.m_lightShading.m_clustersToken);
-	bindStorage(cmdb, 0, 1, ctx.m_lightShading.m_lightIndicesToken);
+	bindStorage(cmdb, 0, 0, rsrc.m_clustersToken);
+	bindStorage(cmdb, 0, 1, rsrc.m_lightIndicesToken);
 
 	cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3);
 
@@ -170,8 +161,8 @@ void LightShading::run(const RenderingContext& ctx, const RenderGraph& rgraph, C
 
 void LightShading::updateCommonBlock(RenderingContext& ctx)
 {
-	ShaderCommonUniforms* blk =
-		allocateUniforms<ShaderCommonUniforms*>(sizeof(ShaderCommonUniforms), ctx.m_lightShading.m_commonToken);
+	ShaderCommonUniforms* blk = allocateUniforms<ShaderCommonUniforms*>(
+		sizeof(ShaderCommonUniforms), m_runCtx.m_resources.m_commonUniformsToken);
 
 	// Start writing
 	blk->m_projectionParams = ctx.m_unprojParams;

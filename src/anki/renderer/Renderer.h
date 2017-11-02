@@ -45,57 +45,12 @@ public:
 
 	Vec4 m_unprojParams;
 
-	CommandBufferPtr m_commandBuffer; ///< Primary command buffer.
-	CommandBufferPtr m_defaultFbCommandBuffer; ///< The default framebuffer renderpass is in a separate cmdb.
-
-	class GBuffer
-	{
-	public:
-		Array<CommandBufferPtr, ThreadPool::MAX_THREADS> m_commandBuffers;
-		U32 m_lastThreadWithWork = 0;
-	} m_gbuffer;
-
-	class LensFlare
-	{
-	public:
-		DynamicArrayAuto<OcclusionQueryPtr> m_queriesToTest;
-
-		LensFlare(const StackAllocator<U8>& alloc)
-			: m_queriesToTest(alloc)
-		{
-		}
-	} m_lensFlare;
-
-	class LightShading
-	{
-	public:
-		StagingGpuMemoryToken m_commonToken;
-		StagingGpuMemoryToken m_pointLightsToken;
-		StagingGpuMemoryToken m_spotLightsToken;
-		StagingGpuMemoryToken m_probesToken;
-		StagingGpuMemoryToken m_decalsToken;
-		StagingGpuMemoryToken m_clustersToken;
-		StagingGpuMemoryToken m_lightIndicesToken;
-
-		TexturePtr m_diffDecalTex;
-		TexturePtr m_normRoughnessDecalTex;
-	} m_lightShading;
-
-	class ForwardShading
-	{
-	public:
-		Array<CommandBufferPtr, ThreadPool::MAX_THREADS> m_commandBuffers;
-		U32 m_lastThreadWithWork = 0;
-	} m_forwardShading;
-
-	FramebufferPtr m_outFb;
 	U32 m_outFbWidth = 0;
 	U32 m_outFbHeight = 0;
 
 	RenderingContext(const StackAllocator<U8>& alloc)
 		: m_tempAllocator(alloc)
 		, m_renderGraphDescr(alloc)
-		, m_lensFlare(alloc)
 	{
 	}
 };

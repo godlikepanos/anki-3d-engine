@@ -230,8 +230,6 @@ Error Renderer::render(RenderingContext& ctx)
 {
 	m_rgraph->reset();
 
-	CommandBufferPtr& cmdb = ctx.m_commandBuffer;
-
 	ctx.m_jitterMat = m_jitteredMats8x[m_frameCount & (8 - 1)];
 	ctx.m_projMatJitter = ctx.m_jitterMat * ctx.m_renderQueue->m_projectionMatrix;
 	ctx.m_viewProjMatJitter = ctx.m_projMatJitter * ctx.m_renderQueue->m_viewMatrix;
@@ -525,20 +523,20 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 
 void Renderer::buildCommandBuffersInternal(RenderingContext& ctx, U32 threadId, PtrSize threadCount)
 {
-	// G-Buffer pass
-	//
-	// TODO m_gbuffer->buildCommandBuffers(ctx, threadId, threadCount);
+// G-Buffer pass
+//
+// TODO m_gbuffer->buildCommandBuffers(ctx, threadId, threadCount);
 
-	// Append to the last MS's cmdb the occlusion tests
-	if(ctx.m_gbuffer.m_lastThreadWithWork == threadId)
-	{
-		m_lensFlare->runOcclusionTests(ctx, ctx.m_gbuffer.m_commandBuffers[threadId]);
-	}
+// Append to the last MS's cmdb the occlusion tests
+/*if(ctx.m_gbuffer.m_lastThreadWithWork == threadId)
+{
+	m_lensFlare->runOcclusionTests(ctx, ctx.m_gbuffer.m_commandBuffers[threadId]);
+}
 
-	if(ctx.m_gbuffer.m_commandBuffers[threadId])
-	{
-		ctx.m_gbuffer.m_commandBuffers[threadId]->flush();
-	}
+if(ctx.m_gbuffer.m_commandBuffers[threadId])
+{
+	ctx.m_gbuffer.m_commandBuffers[threadId]->flush();
+}*/
 
 // SM
 //
@@ -582,6 +580,7 @@ void Renderer::buildCommandBuffersInternal(RenderingContext& ctx, U32 threadId, 
 
 Error Renderer::buildCommandBuffers(RenderingContext& ctx)
 {
+#if 0
 	ANKI_TRACE_SCOPED_EVENT(RENDERER_COMMAND_BUFFER_BUILDING);
 	ThreadPool& threadPool = getThreadPool();
 
@@ -631,7 +630,7 @@ Error Renderer::buildCommandBuffers(RenderingContext& ctx)
 	}
 
 	ANKI_CHECK(threadPool.waitForAllThreadsToFinish());
-
+#endif
 	return Error::NONE;
 }
 

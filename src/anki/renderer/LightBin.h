@@ -16,6 +16,22 @@ class LightBinContext;
 /// @addtogroup renderer
 /// @{
 
+/// @memberof LightBin
+class LightBinOut
+{
+public:
+	StagingGpuMemoryToken m_commonToken;
+	StagingGpuMemoryToken m_pointLightsToken;
+	StagingGpuMemoryToken m_spotLightsToken;
+	StagingGpuMemoryToken m_probesToken;
+	StagingGpuMemoryToken m_decalsToken;
+	StagingGpuMemoryToken m_clustersToken;
+	StagingGpuMemoryToken m_lightIndicesToken;
+
+	TexturePtr m_diffDecalTex;
+	TexturePtr m_normRoughnessDecalTex;
+};
+
 /// Bins lights and probes to clusters.
 class LightBin
 {
@@ -39,14 +55,7 @@ public:
 		StackAllocator<U8> frameAlloc,
 		U maxLightIndices,
 		Bool shadowsEnabled,
-		StagingGpuMemoryToken& pointLightsToken,
-		StagingGpuMemoryToken& spotLightsToken,
-		StagingGpuMemoryToken* probesToken,
-		StagingGpuMemoryToken& decalsToken,
-		StagingGpuMemoryToken& clustersToken,
-		StagingGpuMemoryToken& lightIndicesToken,
-		TexturePtr& diffuseDecalTexAtlas,
-		TexturePtr& normalRoughnessDecalTexAtlas);
+		LightBinOut& out);
 
 	const Clusterer& getClusterer() const
 	{

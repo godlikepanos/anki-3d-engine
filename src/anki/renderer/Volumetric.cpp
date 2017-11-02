@@ -129,9 +129,10 @@ void Volumetric::runMain(CommandBufferPtr& cmdb, const RenderingContext& ctx, co
 	cmdb->bindTexture(0, 2, rgraph.getTexture(m_runCtx.m_rts[(m_r->getFrameCount() + 1) & 1]));
 	cmdb->bindTexture(0, 3, rgraph.getTexture(m_r->getShadowMapping().getShadowmapRt()));
 
-	bindUniforms(cmdb, 0, 0, ctx.m_lightShading.m_commonToken);
-	bindUniforms(cmdb, 0, 1, ctx.m_lightShading.m_pointLightsToken);
-	bindUniforms(cmdb, 0, 2, ctx.m_lightShading.m_spotLightsToken);
+	const LightShadingResources& rsrc = m_r->getLightShading().getResources();
+	bindUniforms(cmdb, 0, 0, rsrc.m_commonToken);
+	bindUniforms(cmdb, 0, 1, rsrc.m_pointLightsToken);
+	bindUniforms(cmdb, 0, 2, rsrc.m_spotLightsToken);
 
 	struct Unis
 	{
@@ -152,8 +153,8 @@ void Volumetric::runMain(CommandBufferPtr& cmdb, const RenderingContext& ctx, co
 	uniforms->m_prevViewProjMatMulInvViewProjMat =
 		ctx.m_prevViewProjMat * ctx.m_renderQueue->m_viewProjectionMatrix.getInverse();
 
-	bindStorage(cmdb, 0, 0, ctx.m_lightShading.m_clustersToken);
-	bindStorage(cmdb, 0, 1, ctx.m_lightShading.m_lightIndicesToken);
+	bindStorage(cmdb, 0, 0, rsrc.m_clustersToken);
+	bindStorage(cmdb, 0, 1, rsrc.m_lightIndicesToken);
 
 	cmdb->bindShaderProgram(m_main.m_grProg);
 
