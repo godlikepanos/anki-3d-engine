@@ -196,8 +196,9 @@ Error Indirect::initLightShading(const ConfigSet& config)
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
 				| TextureUsageBit::GENERATE_MIPMAPS,
 			SamplingFilter::LINEAR,
-			m_lightShading.m_mipCount,
 			"GI refl");
+		texinit.m_mipmapsCount = m_lightShading.m_mipCount;
+		texinit.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
 		texinit.m_type = TextureType::CUBE_ARRAY;
 		texinit.m_layerCount = m_cacheEntries.getSize();
 		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
@@ -248,7 +249,6 @@ Error Indirect::initIrradiance(const ConfigSet& config)
 			LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 			SamplingFilter::LINEAR,
-			1,
 			"GI irr");
 
 		texinit.m_layerCount = m_cacheEntries.getSize();

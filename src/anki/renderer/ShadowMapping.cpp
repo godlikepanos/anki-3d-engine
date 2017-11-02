@@ -80,7 +80,6 @@ Error ShadowMapping::initEsm(const ConfigSet& cfg)
 			SHADOW_COLOR_PIXEL_FORMAT,
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 			SamplingFilter::LINEAR,
-			1,
 			"esm");
 		texinit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 		ClearValue clearVal;

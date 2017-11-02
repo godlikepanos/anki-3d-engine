@@ -48,7 +48,6 @@ Error TemporalAA::initInternal(const ConfigSet& config)
 			LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 			SamplingFilter::LINEAR,
-			1,
 			"TemporalAA"));
 	}
 

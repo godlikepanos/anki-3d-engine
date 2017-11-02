@@ -89,7 +89,6 @@ Error Volumetric::init(const ConfigSet& config)
 			LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 			SamplingFilter::LINEAR,
-			1,
 			"volmain");
 		rtInit.m_initialUsage = TextureUsageBit::SAMPLED_FRAGMENT;
 		m_rtTextures[i] = m_r->createAndClearRenderTarget(rtInit);

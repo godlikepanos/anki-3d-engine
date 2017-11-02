@@ -223,13 +223,8 @@ anki_internal:
 	}
 
 	/// Create the init info for a 2D texture that will be used as a render target.
-	ANKI_USE_RESULT TextureInitInfo create2DRenderTargetInitInfo(U32 w,
-		U32 h,
-		const PixelFormat& format,
-		TextureUsageBit usage,
-		SamplingFilter filter,
-		U mipsCount = 1,
-		CString name = {});
+	ANKI_USE_RESULT TextureInitInfo create2DRenderTargetInitInfo(
+		U32 w, U32 h, const PixelFormat& format, TextureUsageBit usage, SamplingFilter filter, CString name = {});
 
 	/// Create the init info for a 2D texture that will be used as a render target.
 	ANKI_USE_RESULT RenderTargetDescription create2DRenderTargetDescription(
@@ -378,9 +373,6 @@ private:
 	RenderGraphPtr m_rgraph;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
-
-	ANKI_USE_RESULT Error buildCommandBuffers(RenderingContext& ctx);
-	void buildCommandBuffersInternal(RenderingContext& ctx, U32 threadId, PtrSize threadCount);
 
 	void initJitteredMats();
 };

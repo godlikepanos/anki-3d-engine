@@ -7,7 +7,6 @@
 
 #include <anki/renderer/RendererObject.h>
 #include <anki/Gr.h>
-#include <anki/util/BitMask.h>
 #include <anki/util/Enum.h>
 
 namespace anki
@@ -15,19 +14,6 @@ namespace anki
 
 /// @addtogroup renderer
 /// @{
-
-/// Dbg flags. Define them first so they can be parameter to the bitset
-enum class DbgFlag : U16
-{
-	NONE = 0,
-	SPATIAL_COMPONENT = 1 << 0,
-	FRUSTUM_COMPONENT = 1 << 1,
-	SECTOR_COMPONENT = 1 << 2,
-	DECAL_COMPONENT = 1 << 3,
-	PHYSICS = 1 << 4,
-	ALL = SPATIAL_COMPONENT | FRUSTUM_COMPONENT | SECTOR_COMPONENT | DECAL_COMPONENT | PHYSICS
-};
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DbgFlag, inline)
 
 /// Debugging stage
 class Dbg : public RendererObject
@@ -47,26 +33,6 @@ public:
 	void setDepthTestEnabled(Bool enable);
 	void switchDepthTestEnabled();
 
-	void setFlags(DbgFlag flags)
-	{
-		m_flags.set(flags);
-	}
-
-	void unsetFlags(DbgFlag flags)
-	{
-		m_flags.unset(flags);
-	}
-
-	void flipFlags(DbgFlag flags)
-	{
-		m_flags.flip(flags);
-	}
-
-	TexturePtr getRt() const
-	{
-		return m_rt;
-	}
-
 anki_internal:
 	Dbg(Renderer* r);
 
@@ -74,17 +40,42 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 
-	ANKI_USE_RESULT Error run(RenderingContext& ctx);
+	/// Populate the rendergraph.
+	void populateRenderGraph(RenderingContext& ctx);
+
+	RenderTargetHandle getRt() const
+	{
+		return m_runCtx.m_rt;
+	}
 
 private:
 	Bool8 m_enabled = false;
 	Bool8 m_initialized = false; ///< Lazily initialize.
-	TexturePtr m_rt;
-	FramebufferPtr m_fb;
+	RenderTargetDescription m_rtDescr;
+	FramebufferDescription m_fbDescr;
 	DebugDrawer* m_drawer = nullptr;
-	BitMask<DbgFlag> m_flags;
+
+	class
+	{
+	public:
+		RenderTargetHandle m_rt;
+		RenderingContext* m_ctx = nullptr;
+	} m_runCtx;
 
 	ANKI_USE_RESULT Error lazyInit();
+
+	// A RenderPassWorkCallback for debug pass.
+	static void runCallback(void* userData,
+		CommandBufferPtr cmdb,
+		U32 secondLevelCmdbIdx,
+		U32 secondLevelCmdbCount,
+		const RenderGraph& rgraph)
+	{
+		Dbg* self = static_cast<Dbg*>(userData);
+		self->run(*self->m_runCtx.m_ctx, rgraph, cmdb);
+	}
+
+	void run(const RenderingContext& ctx, const RenderGraph& rgraph, CommandBufferPtr& cmdb);
 };
 /// @}
 

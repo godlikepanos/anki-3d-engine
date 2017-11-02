@@ -119,7 +119,7 @@ void FinalComposite::run(const RenderingContext& ctx, const RenderGraph& rgraph,
 	cmdb->bindTexture(0, 3, m_blueNoise->getGrTexture());
 	if(dbgEnabled)
 	{
-		// TODO cmdb->bindTexture(0, 5, m_r->getDbg().getRt());
+		cmdb->bindTexture(0, 5, rgraph.getTexture(m_r->getDbg().getRt()));
 	}
 
 	cmdb->bindStorageBuffer(0, 0, rgraph.getBuffer(m_r->getTonemapping().getAverageLuminanceBuffer()), 0, MAX_PTR_SIZE);
@@ -149,6 +149,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
 	m_runCtx.m_ctx = &ctx;
 	const Bool drawToDefaultFb = m_r->getDrawToDefaultFramebuffer();
+	const Bool dbgEnabled = m_r->getDbg().getEnabled();
 
 	// Maybe create the RT
 	if(!drawToDefaultFb)
@@ -176,7 +177,10 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 		pass.newProducer({m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE});
 	}
 
-	// TODO Add DBG RT
+	if(dbgEnabled)
+	{
+		pass.newConsumer({m_r->getDbg().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+	}
 	pass.newConsumer({m_r->getTemporalAA().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newConsumer({m_r->getBloom().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newConsumer({m_r->getTonemapping().getAverageLuminanceBuffer(), BufferUsageBit::STORAGE_FRAGMENT_READ});

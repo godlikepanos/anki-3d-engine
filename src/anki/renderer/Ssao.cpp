@@ -93,7 +93,6 @@ Error Ssao::init(const ConfigSet& config)
 			Ssao::RT_PIXEL_FORMAT,
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE | TextureUsageBit::CLEAR,
 			SamplingFilter::LINEAR,
-			1,
 			"ssaomain"));
 	}
 

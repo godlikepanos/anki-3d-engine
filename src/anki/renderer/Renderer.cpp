@@ -402,7 +402,7 @@ Vec3 Renderer::unproject(
 }
 
 TextureInitInfo Renderer::create2DRenderTargetInitInfo(
-	U32 w, U32 h, const PixelFormat& format, TextureUsageBit usage, SamplingFilter filter, U mipsCount, CString name)
+	U32 w, U32 h, const PixelFormat& format, TextureUsageBit usage, SamplingFilter filter, CString name)
 {
 	ANKI_ASSERT(!!(usage & TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE));
 	TextureInitInfo init(name);
@@ -413,18 +413,10 @@ TextureInitInfo Renderer::create2DRenderTargetInitInfo(
 	init.m_layerCount = 1;
 	init.m_type = TextureType::_2D;
 	init.m_format = format;
-	init.m_mipmapsCount = mipsCount;
+	init.m_mipmapsCount = 1;
 	init.m_samples = 1;
 	init.m_usage = usage;
 	init.m_sampling.m_minMagFilter = filter;
-	if(mipsCount > 1)
-	{
-		init.m_sampling.m_mipmapFilter = filter;
-	}
-	else
-	{
-		init.m_sampling.m_mipmapFilter = SamplingFilter::BASE;
-	}
 	init.m_sampling.m_repeat = false;
 	init.m_sampling.m_anisotropyLevel = 0;
 
@@ -519,119 +511,6 @@ TexturePtr Renderer::createAndClearRenderTarget(const TextureInitInfo& inf, cons
 	cmdb->flush();
 
 	return tex;
-}
-
-void Renderer::buildCommandBuffersInternal(RenderingContext& ctx, U32 threadId, PtrSize threadCount)
-{
-// G-Buffer pass
-//
-// TODO m_gbuffer->buildCommandBuffers(ctx, threadId, threadCount);
-
-// Append to the last MS's cmdb the occlusion tests
-/*if(ctx.m_gbuffer.m_lastThreadWithWork == threadId)
-{
-	m_lensFlare->runOcclusionTests(ctx, ctx.m_gbuffer.m_commandBuffers[threadId]);
-}
-
-if(ctx.m_gbuffer.m_commandBuffers[threadId])
-{
-	ctx.m_gbuffer.m_commandBuffers[threadId]->flush();
-}*/
-
-// SM
-//
-// TODO: m_shadowMapping->buildCommandBuffers(ctx, threadId, threadCount);
-
-// FS
-//
-#if 0
-	// TODO m_forwardShading->buildCommandBuffers(ctx, threadId, threadCount);
-
-	// Append to the last FB's cmdb the other passes
-	if(ctx.m_forwardShading.m_lastThreadWithWork == threadId)
-	{
-		m_lensFlare->run(ctx, ctx.m_forwardShading.m_commandBuffers[threadId]);
-		// TODO m_forwardShading->drawVolumetric(ctx, ctx.m_forwardShading.m_commandBuffers[threadId]);
-	}
-	else if(threadId == threadCount - 1 && ctx.m_forwardShading.m_lastThreadWithWork == MAX_U32)
-	{
-		// There is no FS work. Create a cmdb just for LF & VOL
-
-		CommandBufferInitInfo init;
-		init.m_flags =
-			CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SECOND_LEVEL | CommandBufferFlag::SMALL_BATCH;
-		init.m_framebuffer = m_forwardShading->getFramebuffer();
-		CommandBufferPtr cmdb = getGrManager().newInstance<CommandBuffer>(init);
-
-		cmdb->setViewport(0, 0, m_forwardShading->getWidth(), m_forwardShading->getHeight());
-
-		m_lensFlare->run(ctx, cmdb);
-		// TODO m_forwardShading->drawVolumetric(ctx, cmdb);
-
-		ctx.m_forwardShading.m_commandBuffers[threadId] = cmdb;
-	}
-
-	if(ctx.m_forwardShading.m_commandBuffers[threadId])
-	{
-		ctx.m_forwardShading.m_commandBuffers[threadId]->flush();
-	}
-#endif
-}
-
-Error Renderer::buildCommandBuffers(RenderingContext& ctx)
-{
-#if 0
-	ANKI_TRACE_SCOPED_EVENT(RENDERER_COMMAND_BUFFER_BUILDING);
-	ThreadPool& threadPool = getThreadPool();
-
-	// Find the last jobs for MS and FS
-	U32 lastMsJob = MAX_U32;
-	U32 lastFsJob = MAX_U32;
-	const U threadCount = threadPool.getThreadsCount();
-	for(U i = threadCount - 1; i != 0; --i)
-	{
-		const U gbuffProblemSize =
-			ctx.m_renderQueue->m_renderables.getSize() + ctx.m_renderQueue->m_earlyZRenderables.getSize();
-		if(threadWillDoWork(gbuffProblemSize, i, threadCount) && lastMsJob == MAX_U32)
-		{
-			lastMsJob = i;
-		}
-
-		if(threadWillDoWork(ctx.m_renderQueue->m_forwardShadingRenderables.getSize(), i, threadCount)
-			&& lastFsJob == MAX_U32)
-		{
-			lastFsJob = i;
-		}
-	}
-
-	ctx.m_gbuffer.m_lastThreadWithWork = lastMsJob;
-	ctx.m_forwardShading.m_lastThreadWithWork = lastFsJob;
-
-	// Build
-	class Task : public ThreadPoolTask
-	{
-	public:
-		Renderer* m_r ANKI_DBG_NULLIFY;
-		RenderingContext* m_ctx ANKI_DBG_NULLIFY;
-
-		Error operator()(U32 threadId, PtrSize threadCount)
-		{
-			m_r->buildCommandBuffersInternal(*m_ctx, threadId, threadCount);
-			return Error::NONE;
-		}
-	};
-
-	Task task;
-	task.m_r = this;
-	task.m_ctx = &ctx;
-	for(U i = 0; i < threadPool.getThreadsCount(); i++)
-	{
-		threadPool.assignNewTask(i, &task);
-	}
-
-	ANKI_CHECK(threadPool.waitForAllThreadsToFinish());
-#endif
-	return Error::NONE;
 }
 
 } // end namespace anki
