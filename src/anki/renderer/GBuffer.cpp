@@ -6,6 +6,7 @@
 #include <anki/renderer/GBuffer.h>
 #include <anki/renderer/Renderer.h>
 #include <anki/renderer/RenderQueue.h>
+#include <anki/renderer/LensFlare.h>
 #include <anki/util/Logger.h>
 #include <anki/util/ThreadPool.h>
 #include <anki/misc/ConfigSet.h>
@@ -84,56 +85,59 @@ void GBuffer::runInThread(CommandBufferPtr& cmdb, U32 threadId, U32 threadCount,
 	const U problemSize = ctx.m_renderQueue->m_renderables.getSize() + earlyZCount;
 	PtrSize start, end;
 	ThreadPoolTask::choseStartEnd(threadId, threadCount, problemSize, start, end);
+	ANKI_ASSERT(end != start);
 
-	if(start != end)
+	// Set some state, leave the rest to default
+	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
+
+	const I32 earlyZStart = max(I32(start), 0);
+	const I32 earlyZEnd = min(I32(end), I32(earlyZCount));
+	const I32 colorStart = max(I32(start) - I32(earlyZCount), 0);
+	const I32 colorEnd = I32(end) - I32(earlyZCount);
+
+	// First do early Z (if needed)
+	if(earlyZStart < earlyZEnd)
 	{
-		// Set some state, leave the rest to default
-		cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
+		for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
+		{
+			cmdb->setColorChannelWriteMask(i, ColorBit::NONE);
+		}
 
-		const I32 earlyZStart = max(I32(start), 0);
-		const I32 earlyZEnd = min(I32(end), I32(earlyZCount));
-		const I32 colorStart = max(I32(start) - I32(earlyZCount), 0);
-		const I32 colorEnd = I32(end) - I32(earlyZCount);
+		ANKI_ASSERT(earlyZStart < earlyZEnd && earlyZEnd <= I32(earlyZCount));
+		m_r->getSceneDrawer().drawRange(Pass::EZ,
+			ctx.m_renderQueue->m_viewMatrix,
+			ctx.m_viewProjMatJitter,
+			cmdb,
+			ctx.m_renderQueue->m_earlyZRenderables.getBegin() + earlyZStart,
+			ctx.m_renderQueue->m_earlyZRenderables.getBegin() + earlyZEnd);
 
-		// First do early Z (if needed)
-		if(earlyZStart < earlyZEnd)
+		// Restore state for the color write
+		if(colorStart < colorEnd)
 		{
 			for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 			{
-				cmdb->setColorChannelWriteMask(i, ColorBit::NONE);
-			}
-
-			ANKI_ASSERT(earlyZStart < earlyZEnd && earlyZEnd <= I32(earlyZCount));
-			m_r->getSceneDrawer().drawRange(Pass::EZ,
-				ctx.m_renderQueue->m_viewMatrix,
-				ctx.m_viewProjMatJitter,
-				cmdb,
-				ctx.m_renderQueue->m_earlyZRenderables.getBegin() + earlyZStart,
-				ctx.m_renderQueue->m_earlyZRenderables.getBegin() + earlyZEnd);
-
-			// Restore state for the color write
-			if(colorStart < colorEnd)
-			{
-				for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
-				{
-					cmdb->setColorChannelWriteMask(i, ColorBit::ALL);
-				}
+				cmdb->setColorChannelWriteMask(i, ColorBit::ALL);
 			}
 		}
+	}
 
-		// Do the color writes
-		if(colorStart < colorEnd)
-		{
-			cmdb->setDepthCompareOperation(CompareOperation::LESS_EQUAL);
+	// Do the color writes
+	if(colorStart < colorEnd)
+	{
+		cmdb->setDepthCompareOperation(CompareOperation::LESS_EQUAL);
 
-			ANKI_ASSERT(colorStart < colorEnd && colorEnd <= I32(ctx.m_renderQueue->m_renderables.getSize()));
-			m_r->getSceneDrawer().drawRange(Pass::GB_FS,
-				ctx.m_renderQueue->m_viewMatrix,
-				ctx.m_viewProjMatJitter,
-				cmdb,
-				ctx.m_renderQueue->m_renderables.getBegin() + colorStart,
-				ctx.m_renderQueue->m_renderables.getBegin() + colorEnd);
-		}
+		ANKI_ASSERT(colorStart < colorEnd && colorEnd <= I32(ctx.m_renderQueue->m_renderables.getSize()));
+		m_r->getSceneDrawer().drawRange(Pass::GB_FS,
+			ctx.m_renderQueue->m_viewMatrix,
+			ctx.m_viewProjMatJitter,
+			cmdb,
+			ctx.m_renderQueue->m_renderables.getBegin() + colorStart,
+			ctx.m_renderQueue->m_renderables.getBegin() + colorEnd);
+	}
+
+	if(threadId == threadCount - 1)
+	{
+		m_r->getLensFlare().runOcclusionTests(ctx, cmdb);
 	}
 }
 
@@ -157,7 +161,10 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GBuffer");
 
 	pass.setFramebufferInfo(m_fbDescr, rts, m_depthRt);
-	pass.setWork(runCallback, this, m_r->getThreadPool().getThreadsCount());
+	pass.setWork(runCallback,
+		this,
+		computeNumberOfSecondLevelCommandBuffers(ctx.m_renderQueue->m_earlyZRenderables.getSize()
+			+ ctx.m_renderQueue->m_renderables.getSize()));
 
 	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 	{

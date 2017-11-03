@@ -134,6 +134,16 @@ public:
 		return *m_downscale;
 	}
 
+	LensFlare& getLensFlare()
+	{
+		return *m_lensFlare;
+	}
+
+	const LensFlare& getLensFlare() const
+	{
+		return *m_lensFlare;
+	}
+
 	U32 getWidth() const
 	{
 		return m_width;

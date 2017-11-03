@@ -27,14 +27,6 @@
 namespace anki
 {
 
-static Bool threadWillDoWork(PtrSize problemSize, U32 threadId, PtrSize threadCount)
-{
-	PtrSize start, end;
-	ThreadPoolTask::choseStartEnd(threadId, threadCount, problemSize, start, end);
-
-	return start != end;
-}
-
 Renderer::Renderer()
 	: m_sceneDrawer(this)
 {
@@ -250,9 +242,14 @@ Error Renderer::render(RenderingContext& ctx)
 		m_resourcesDirty = false;
 	}
 
-	ANKI_ASSERT(!"TODO");
 #if 0
-	// Prepare SM. Do that first because it touches the render queue elements
+	// Populate render graph. WARNING Watch the order
+	m_lightShading->binLights(ctx);
+
+	m_shadowMapping->populateRenderGraph(ctx);
+	m_indirect->populateRenderGraph(ctx);
+
+
 	m_shadowMapping->prepareBuildCommandBuffers(ctx);
 
 	// Run stages

@@ -28,13 +28,16 @@ anki_internal:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& config);
 
-	void resetOcclusionQueries(RenderingContext& ctx, CommandBufferPtr cmdb);
+	void runOcclusionTests(const RenderingContext& ctx, CommandBufferPtr& cmdb);
+	void runDrawFlares(const RenderingContext& ctx, CommandBufferPtr& cmdb);
 
-	void runOcclusionTests(RenderingContext& ctx, CommandBufferPtr cmdb);
+	void populateRenderGraph(RenderingContext& ctx);
 
-	void updateIndirectInfo(RenderingContext& ctx, CommandBufferPtr cmdb);
-
-	void run(RenderingContext& ctx, CommandBufferPtr cmdb);
+	/// Get it to set a dependency.
+	RenderPassBufferHandle getIndirectDrawBuffer() const
+	{
+		return m_runCtx.m_indirectBuffHandle;
+	}
 
 private:
 	// Occlusion query
@@ -54,10 +57,58 @@ private:
 	U8 m_maxFlares;
 	U16 m_maxSprites;
 
+	class
+	{
+	public:
+		RenderingContext* m_ctx = nullptr;
+		RenderPassBufferHandle m_queryResultBuffHandle;
+		RenderPassBufferHandle m_indirectBuffHandle;
+	} m_runCtx;
+
 	ANKI_USE_RESULT Error initSprite(const ConfigSet& config);
 	ANKI_USE_RESULT Error initOcclusion(const ConfigSet& config);
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
+
+	void resetOcclusionQueries(const RenderingContext& ctx, CommandBufferPtr& cmdb);
+	void copyQueryResult(const RenderingContext& ctx, const RenderGraph& rgraph, CommandBufferPtr& cmdb);
+	void updateIndirectInfo(const RenderingContext& ctx, const RenderGraph& rgraph, CommandBufferPtr& cmdb);
+
+	/// A RenderPassWorkCallback for clearing the ocl queries.
+	static void runResetOclQueriesCallback(void* userData,
+		CommandBufferPtr cmdb,
+		U32 secondLevelCmdbIdx,
+		U32 secondLevelCmdbCount,
+		const RenderGraph& rgraph)
+	{
+		ANKI_ASSERT(userData);
+		LensFlare* self = static_cast<LensFlare*>(userData);
+		self->resetOcclusionQueries(*self->m_runCtx.m_ctx, cmdb);
+	}
+
+	/// A RenderPassWorkCallback for copying the query results to a buffer.
+	static void runCopyQueryResultCallback(void* userData,
+		CommandBufferPtr cmdb,
+		U32 secondLevelCmdbIdx,
+		U32 secondLevelCmdbCount,
+		const RenderGraph& rgraph)
+	{
+		ANKI_ASSERT(userData);
+		LensFlare* self = static_cast<LensFlare*>(userData);
+		self->copyQueryResult(*self->m_runCtx.m_ctx, rgraph, cmdb);
+	}
+
+	/// A RenderPassWorkCallback for updating the indirect info.
+	static void runUpdateIndirectCallback(void* userData,
+		CommandBufferPtr cmdb,
+		U32 secondLevelCmdbIdx,
+		U32 secondLevelCmdbCount,
+		const RenderGraph& rgraph)
+	{
+		ANKI_ASSERT(userData);
+		LensFlare* self = static_cast<LensFlare*>(userData);
+		self->updateIndirectInfo(*self->m_runCtx.m_ctx, rgraph, cmdb);
+	}
 };
 /// @}
 

@@ -14,9 +14,8 @@
 namespace anki
 {
 
-class Sprite
+struct Sprite
 {
-public:
 	Vec2 m_pos; ///< Position in NDC
 	Vec2 m_scale; ///< Scale of the quad
 	Vec4 m_color;
@@ -102,18 +101,16 @@ Error LensFlare::initOcclusion(const ConfigSet& config)
 	return Error::NONE;
 }
 
-void LensFlare::resetOcclusionQueries(RenderingContext& ctx, CommandBufferPtr cmdb)
+void LensFlare::resetOcclusionQueries(const RenderingContext& ctx, CommandBufferPtr& cmdb)
 {
-	if(ctx.m_renderQueue->m_lensFlares.getSize() > m_maxFlares)
-	{
-		ANKI_R_LOGW("Visible flares exceed the limit. Increase lf.maxFlares");
-	}
-
 	const U count = min<U>(ctx.m_renderQueue->m_lensFlares.getSize(), m_maxFlares);
+	ANKI_ASSERT(count > 0);
+
 	for(U i = 0; i < count; ++i)
 	{
 		if(!m_queries[i])
 		{
+			// Lazily create
 			m_queries[i] = getGrManager().newInstance<OcclusionQuery>();
 		}
 
@@ -121,7 +118,77 @@ void LensFlare::resetOcclusionQueries(RenderingContext& ctx, CommandBufferPtr cm
 	}
 }
 
-void LensFlare::runOcclusionTests(RenderingContext& ctx, CommandBufferPtr cmdb)
+void LensFlare::copyQueryResult(const RenderingContext& ctx, const RenderGraph& rgraph, CommandBufferPtr& cmdb)
+{
+	const U count = min<U>(ctx.m_renderQueue->m_lensFlares.getSize(), m_maxFlares);
+	ANKI_ASSERT(count > 0);
+
+	// Write results to buffer
+	for(U i = 0; i < count; ++i)
+	{
+		cmdb->writeOcclusionQueryResultToBuffer(
+			m_queries[i], sizeof(U32) * i, rgraph.getBuffer(m_runCtx.m_queryResultBuffHandle));
+	}
+}
+
+void LensFlare::updateIndirectInfo(const RenderingContext& ctx, const RenderGraph& rgraph, CommandBufferPtr& cmdb)
+{
+	U count = min<U>(ctx.m_renderQueue->m_lensFlares.getSize(), m_maxFlares);
+	ANKI_ASSERT(count > 0);
+
+	// Update the indirect info
+	cmdb->bindShaderProgram(m_updateIndirectBuffGrProg);
+	cmdb->bindStorageBuffer(0, 0, rgraph.getBuffer(m_runCtx.m_queryResultBuffHandle), 0, MAX_PTR_SIZE);
+	cmdb->bindStorageBuffer(0, 1, rgraph.getBuffer(m_runCtx.m_indirectBuffHandle), 0, MAX_PTR_SIZE);
+	cmdb->dispatchCompute(count, 1, 1);
+}
+
+void LensFlare::populateRenderGraph(RenderingContext& ctx)
+{
+	if(ctx.m_renderQueue->m_lensFlares.getSize() == 0)
+	{
+		return;
+	}
+
+	m_runCtx.m_ctx = &ctx;
+	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
+
+	// Import buffers
+	m_runCtx.m_queryResultBuffHandle = rgraph.importBuffer("LensFl OclBuff", m_queryResultBuff, BufferUsageBit::NONE);
+	m_runCtx.m_indirectBuffHandle = rgraph.importBuffer("LensFl Indirect", m_indirectBuff, BufferUsageBit::NONE);
+
+	// Reset occlustion queries
+	{
+		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("LF Reset OclQ");
+		rpass.setWork(runResetOclQueriesCallback, this, 0);
+	}
+
+	// Copy query results to the buffer
+	{
+		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("LF Copy OclQ");
+
+		rpass.setWork(runCopyQueryResultCallback, this, 0);
+		rpass.newConsumer({m_runCtx.m_queryResultBuffHandle, BufferUsageBit::QUERY_RESULT});
+		// Put a dummy consumer to depend on the G-Buffer pass
+		rpass.newConsumer({m_r->getGBuffer().getColorRt(0), TextureUsageBit::SAMPLED_FRAGMENT});
+
+		rpass.newProducer({m_runCtx.m_queryResultBuffHandle, BufferUsageBit::QUERY_RESULT});
+	}
+
+	// Copy results to indirect buffer
+	{
+		ComputeRenderPassDescription& rpass = rgraph.newComputeRenderPass("LF Upd Ind/ct");
+
+		rpass.setWork(runUpdateIndirectCallback, this, 0);
+
+		rpass.newConsumer({m_runCtx.m_indirectBuffHandle, BufferUsageBit::STORAGE_COMPUTE_WRITE});
+		rpass.newConsumer({m_runCtx.m_queryResultBuffHandle, BufferUsageBit::STORAGE_COMPUTE_READ});
+
+		rpass.newProducer({m_runCtx.m_indirectBuffHandle, BufferUsageBit::STORAGE_COMPUTE_WRITE});
+	}
+}
+
+void LensFlare::runOcclusionTests(const RenderingContext& ctx, CommandBufferPtr& cmdb)
 {
 	const U count = min<U>(ctx.m_renderQueue->m_lensFlares.getSize(), m_maxFlares);
 	Vec3* positions = nullptr;
@@ -171,42 +238,7 @@ void LensFlare::runOcclusionTests(RenderingContext& ctx, CommandBufferPtr cmdb)
 	}
 }
 
-void LensFlare::updateIndirectInfo(RenderingContext& ctx, CommandBufferPtr cmdb)
-{
-	U count = min<U>(ctx.m_renderQueue->m_lensFlares.getSize(), m_maxFlares);
-	if(count == 0)
-	{
-		return;
-	}
-
-	// Write results to buffer
-	for(U i = 0; i < count; ++i)
-	{
-		cmdb->writeOcclusionQueryResultToBuffer(m_queries[i], sizeof(U32) * i, m_queryResultBuff);
-	}
-
-	// Set barrier
-	cmdb->setBufferBarrier(m_queryResultBuff,
-		BufferUsageBit::QUERY_RESULT,
-		BufferUsageBit::STORAGE_COMPUTE_READ,
-		0,
-		sizeof(DrawArraysIndirectInfo) * count);
-
-	// Update the indirect info
-	cmdb->bindShaderProgram(m_updateIndirectBuffGrProg);
-	cmdb->bindStorageBuffer(0, 0, m_queryResultBuff, 0, MAX_PTR_SIZE);
-	cmdb->bindStorageBuffer(0, 1, m_indirectBuff, 0, MAX_PTR_SIZE);
-	cmdb->dispatchCompute(count, 1, 1);
-
-	// Set barrier
-	cmdb->setBufferBarrier(m_indirectBuff,
-		BufferUsageBit::STORAGE_COMPUTE_WRITE,
-		BufferUsageBit::INDIRECT,
-		0,
-		sizeof(DrawArraysIndirectInfo) * count);
-}
-
-void LensFlare::run(RenderingContext& ctx, CommandBufferPtr cmdb)
+void LensFlare::runDrawFlares(const RenderingContext& ctx, CommandBufferPtr& cmdb)
 {
 	const U count = min<U>(ctx.m_renderQueue->m_lensFlares.getSize(), m_maxFlares);
 	if(count == 0)

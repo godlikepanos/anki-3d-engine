@@ -11,6 +11,7 @@
 #include <anki/renderer/ShadowMapping.h>
 #include <anki/renderer/Volumetric.h>
 #include <anki/renderer/DepthDownscale.h>
+#include <anki/renderer/LensFlare.h>
 
 namespace anki
 {
@@ -185,6 +186,11 @@ void ForwardShading::run(
 	if(threadId == threadCount - 1)
 	{
 		drawVolumetric(ctx, cmdb, rgraph);
+
+		if(ctx.m_renderQueue->m_lensFlares.getSize())
+		{
+			m_r->getLensFlare().runDrawFlares(ctx, cmdb);
+		}
 	}
 }
 
@@ -210,6 +216,11 @@ void ForwardShading::populateRenderGraph(RenderingContext& ctx)
 	pass.newConsumer({m_r->getDepthDownscale().getQuarterColorRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newConsumer({m_r->getVolumetric().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newConsumer({m_r->getShadowMapping().getShadowmapRt(), TextureUsageBit::SAMPLED_FRAGMENT});
+
+	if(ctx.m_renderQueue->m_lensFlares.getSize())
+	{
+		pass.newConsumer({m_r->getLensFlare().getIndirectDrawBuffer(), BufferUsageBit::INDIRECT});
+	}
 
 	pass.newProducer({m_runCtx.m_rt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE});
 	pass.newProducer({m_r->getDepthDownscale().getHalfDepthDepthRt(), TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ});
