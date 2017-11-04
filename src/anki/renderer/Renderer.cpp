@@ -156,8 +156,6 @@ Error Renderer::initInternal(const ConfigSet& config)
 
 	initJitteredMats();
 
-	m_rgraph = m_gr->newInstance<RenderGraph>();
-
 	return Error::NONE;
 }
 
@@ -220,8 +218,6 @@ void Renderer::initJitteredMats()
 
 Error Renderer::render(RenderingContext& ctx)
 {
-	m_rgraph->reset();
-
 	ctx.m_jitterMat = m_jitteredMats8x[m_frameCount & (8 - 1)];
 	ctx.m_projMatJitter = ctx.m_jitterMat * ctx.m_renderQueue->m_projectionMatrix;
 	ctx.m_viewProjMatJitter = ctx.m_projMatJitter * ctx.m_renderQueue->m_viewMatrix;
@@ -242,137 +238,31 @@ Error Renderer::render(RenderingContext& ctx)
 		m_resourcesDirty = false;
 	}
 
-#if 0
 	// Populate render graph. WARNING Watch the order
-	m_lightShading->binLights(ctx);
+	ANKI_CHECK(m_lightShading->binLights(ctx));
 
 	m_shadowMapping->populateRenderGraph(ctx);
 	m_indirect->populateRenderGraph(ctx);
-
-
-	m_shadowMapping->prepareBuildCommandBuffers(ctx);
-
-	// Run stages
-	m_indirect->run(ctx);
-
-	ANKI_CHECK(m_lightShading->binLights(ctx));
-	m_lensFlare->resetOcclusionQueries(ctx, cmdb);
-
-	ANKI_CHECK(buildCommandBuffers(ctx));
-
-	// Barriers
-	m_shadowMapping->setPreRunBarriers(ctx);
-	m_gbuffer->setPreRunBarriers(ctx);
-
-	// Passes & more
-	m_shadowMapping->run(ctx);
-	m_gbuffer->run(ctx);
-
-	// Barriers
-	m_gbuffer->setPostRunBarriers(ctx);
-	m_shadowMapping->setPostRunBarriers(ctx);
-	m_depth->m_hd.setPreRunBarriers(ctx);
-
-	// Passes
-	m_depth->m_hd.run(ctx);
-	m_lensFlare->updateIndirectInfo(ctx, cmdb);
-
-	// Barriers
-	m_depth->m_hd.setPostRunBarriers(ctx);
-	m_depth->m_qd.setPreRunBarriers(ctx);
-
-	// Passes
-	m_depth->m_qd.run(ctx);
-
-	// Barriers
-	m_depth->m_qd.setPostRunBarriers(ctx);
-	m_vol->m_main.setPreRunBarriers(ctx);
-	m_ssao->m_main.setPreRunBarriers(ctx);
-
-	// Passes
-	m_vol->m_main.run(ctx);
-	m_ssao->m_main.run(ctx);
-
-	// Barriers
-	m_vol->m_main.setPostRunBarriers(ctx);
-	m_vol->m_hblur.setPreRunBarriers(ctx);
-	m_ssao->m_main.setPostRunBarriers(ctx);
-	m_ssao->m_hblur.setPreRunBarriers(ctx);
-
-	// Passes
-	m_vol->m_hblur.run(ctx);
-	m_ssao->m_hblur.run(ctx);
-
-	// Barriers
-	m_vol->m_hblur.setPostRunBarriers(ctx);
-	m_vol->m_vblur.setPreRunBarriers(ctx);
-	m_ssao->m_hblur.setPostRunBarriers(ctx);
-	m_ssao->m_vblur.setPreRunBarriers(ctx);
-
-	// Passes
-	m_vol->m_vblur.run(ctx);
-	m_ssao->m_vblur.run(ctx);
-
-	// Barriers
-	m_vol->m_vblur.setPostRunBarriers(ctx);
-	m_ssao->m_vblur.setPostRunBarriers(ctx);
-	m_forwardShading->setPreRunBarriers(ctx);
-
-	// Passes
-	m_forwardShading->run(ctx);
-
-	// Barriers
-	m_forwardShading->setPostRunBarriers(ctx);
-	m_lightShading->setPreRunBarriers(ctx);
-
-	// Passes
-	m_lightShading->run(ctx);
-
-	// Barriers
-	m_lightShading->setPostRunBarriers(ctx);
-	m_temporalAA->setPreRunBarriers(ctx);
-
-	// Passes
-	m_temporalAA->run(ctx);
-
-	// Barriers
-	m_temporalAA->setPostRunBarriers(ctx);
-	m_downscale->setPreRunBarriers(ctx);
-
-	// Passes
-	m_downscale->run(ctx);
-
-	// Barriers
-	m_downscale->setPostRunBarriers(ctx);
-
-	// Passes
-	m_tonemapping->run(ctx);
-
-	// Barriers
-	m_bloom->m_extractExposure.setPreRunBarriers(ctx);
-
-	// Passes
-	m_bloom->m_extractExposure.run(ctx);
-
-	// Barriers
-	m_bloom->m_extractExposure.setPostRunBarriers(ctx);
-	m_bloom->m_upscale.setPreRunBarriers(ctx);
-
-	// Passes
-	m_bloom->m_upscale.run(ctx);
-
-	// Barriers
-	m_bloom->m_upscale.setPostRunBarriers(ctx);
+	m_gbuffer->populateRenderGraph(ctx);
+	m_depth->populateRenderGraph(ctx);
+	m_vol->populateRenderGraph(ctx);
+	m_ssao->populateRenderGraph(ctx);
+	m_lensFlare->populateRenderGraph(ctx);
+	m_forwardShading->populateRenderGraph(ctx);
+	m_lightShading->populateRenderGraph(ctx);
+	m_temporalAA->populateRenderGraph(ctx);
+	m_downscale->populateRenderGraph(ctx);
+	m_tonemapping->populateRenderGraph(ctx);
+	m_bloom->populateRenderGraph(ctx);
 
 	if(m_dbg->getEnabled())
 	{
-		ANKI_CHECK(m_dbg->run(ctx));
+		m_dbg->populateRenderGraph(ctx);
 	}
 
-	// Passes
-	ANKI_CHECK(m_finalComposite->run(ctx));
-#endif
+	m_finalComposite->populateRenderGraph(ctx);
 
+	// Done
 	++m_frameCount;
 	m_prevViewProjMat = ctx.m_renderQueue->m_viewProjectionMatrix;
 	m_prevCamTransform = ctx.m_renderQueue->m_cameraTransform;

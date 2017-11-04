@@ -163,8 +163,8 @@ void GBuffer::populateRenderGraph(RenderingContext& ctx)
 	pass.setFramebufferInfo(m_fbDescr, rts, m_depthRt);
 	pass.setWork(runCallback,
 		this,
-		computeNumberOfSecondLevelCommandBuffers(ctx.m_renderQueue->m_earlyZRenderables.getSize()
-			+ ctx.m_renderQueue->m_renderables.getSize()));
+		computeNumberOfSecondLevelCommandBuffers(
+			ctx.m_renderQueue->m_earlyZRenderables.getSize() + ctx.m_renderQueue->m_renderables.getSize()));
 
 	for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 	{

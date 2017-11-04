@@ -43,6 +43,11 @@ public:
 		return m_idx == b.m_idx;
 	}
 
+	Bool isValid() const
+	{
+		return m_idx != MAX_U32;
+	}
+
 private:
 	U32 m_idx = MAX_U32;
 
@@ -310,7 +315,30 @@ public:
 		const Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS>& colorRenderTargetHandles,
 		RenderTargetHandle depthStencilRenderTargetHandle)
 	{
-		ANKI_ASSERT(fbInfo.m_hash != 0 && "Forgot call GraphicsRenderPassFramebufferInfo::bake");
+#if ANKI_EXTRA_CHECKS
+		ANKI_ASSERT(fbInfo.isBacked() && "Forgot call GraphicsRenderPassFramebufferInfo::bake");
+		for(U i = 0; i < colorRenderTargetHandles.getSize(); ++i)
+		{
+			if(fbInfo.m_defaultFb || i >= fbInfo.m_colorAttachmentCount)
+			{
+				ANKI_ASSERT(!colorRenderTargetHandles[i].isValid());
+			}
+			else
+			{
+				ANKI_ASSERT(colorRenderTargetHandles[i].isValid());
+			}
+		}
+
+		if(fbInfo.m_defaultFb || !fbInfo.m_depthStencilAttachment.m_aspect)
+		{
+			ANKI_ASSERT(!depthStencilRenderTargetHandle.isValid());
+		}
+		else
+		{
+			ANKI_ASSERT(depthStencilRenderTargetHandle.isValid());
+		}
+#endif
+
 		if(fbInfo.m_defaultFb)
 		{
 			m_fbInitInfo.m_colorAttachmentCount = 1;
@@ -524,6 +552,11 @@ public:
 	/// @}
 
 	/// @name 4th step methods
+	/// @{
+	void flush();
+	/// @}
+
+	/// @name 5th step methods
 	/// @{
 
 	/// Reset the graph for a new frame. All previously created RenderGraphHandle are invalid after that call.

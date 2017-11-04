@@ -133,7 +133,6 @@ inline void swapValues(T& a, T& b)
 template<typename TPtr>
 inline PtrSize ptrToNumber(TPtr ptr)
 {
-	ANKI_ASSERT(ptr);
 	uintptr_t i = reinterpret_cast<uintptr_t>(ptr);
 	PtrSize size = i;
 	return size;

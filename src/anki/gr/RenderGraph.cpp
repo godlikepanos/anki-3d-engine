@@ -972,4 +972,9 @@ void RenderGraph::run() const
 	}
 }
 
+void RenderGraph::flush()
+{
+	m_ctx->m_cmdb->flush();
+}
+
 } // end namespace anki

@@ -29,7 +29,7 @@ public:
 
 	~MainRenderer();
 
-	ANKI_USE_RESULT Error create(ThreadPool* threadpool,
+	ANKI_USE_RESULT Error init(ThreadPool* threadpool,
 		ResourceManager* resources,
 		GrManager* gl,
 		StagingGpuMemoryManager* stagingMem,
@@ -64,14 +64,25 @@ private:
 	ShaderProgramResourcePtr m_blitProg;
 	ShaderProgramPtr m_blitGrProg;
 
-	FramebufferPtr m_defaultFb;
 	U32 m_width = 0; ///< Default FB size.
 	U32 m_height = 0; ///< Default FB size.
 
 	F32 m_renderingQuality = 1.0;
 
-	/// Optimize job chain
-	CommandBufferInitHints m_cbInitHints;
+	RenderGraphPtr m_rgraph;
+
+	void runBlit(const RenderGraph& rgraph, CommandBufferPtr& cmdb);
+
+	// A RenderPassWorkCallback for blit pass.
+	static void runCallback(void* userData,
+		CommandBufferPtr cmdb,
+		U32 secondLevelCmdbIdx,
+		U32 secondLevelCmdbCount,
+		const RenderGraph& rgraph)
+	{
+		MainRenderer* self = static_cast<MainRenderer*>(userData);
+		self->runBlit(rgraph, cmdb);
+	}
 };
 /// @}
 

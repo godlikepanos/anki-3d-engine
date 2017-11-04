@@ -30,7 +30,7 @@ MainRenderer::~MainRenderer()
 	ANKI_R_LOGI("Destroying main renderer");
 }
 
-Error MainRenderer::create(ThreadPool* threadpool,
+Error MainRenderer::init(ThreadPool* threadpool,
 	ResourceManager* resources,
 	GrManager* gr,
 	StagingGpuMemoryManager* stagingMem,
@@ -44,15 +44,9 @@ Error MainRenderer::create(ThreadPool* threadpool,
 	m_alloc = HeapAllocator<U8>(allocCb, allocCbUserData);
 	m_frameAlloc = StackAllocator<U8>(allocCb, allocCbUserData, 1024 * 1024 * 10, 1.0);
 
-	// Init default FB
+	// Init renderer and manipulate the width/height
 	m_width = config.getNumber("width");
 	m_height = config.getNumber("height");
-	FramebufferInitInfo fbInit;
-	fbInit.m_colorAttachmentCount = 1;
-	fbInit.m_colorAttachments[0].m_loadOperation = AttachmentLoadOperation::DONT_CARE;
-	m_defaultFb = gr->newInstance<Framebuffer>(fbInit);
-
-	// Init renderer and manipulate the width/height
 	ConfigSet config2 = config;
 	m_renderingQuality = config.getNumber("r.renderingQuality");
 	UVec2 size(m_renderingQuality * F32(m_width), m_renderingQuality * F32(m_height));
@@ -77,6 +71,8 @@ Error MainRenderer::create(ThreadPool* threadpool,
 		ANKI_R_LOGI("The main renderer will have to blit the offscreen renderer's result");
 	}
 
+	m_rgraph = gr->newInstance<RenderGraph>();
+
 	ANKI_R_LOGI("Main renderer initialized. Rendering size %ux%u", m_width, m_height);
 
 	return Error::NONE;
@@ -84,35 +80,20 @@ Error MainRenderer::create(ThreadPool* threadpool,
 
 Error MainRenderer::render(RenderQueue& rqueue)
 {
-#if 0
-	ANKI_TRACE_START_EVENT(RENDER);
+	ANKI_TRACE_SCOPED_EVENT(RENDER);
 
 	// First thing, reset the temp mem pool
 	m_frameAlloc.getMemoryPool().reset();
-
-	// Create command buffers
-	GrManager& gr = m_r->getGrManager();
-	CommandBufferInitInfo cinf;
-	cinf.m_flags =
-		CommandBufferFlag::COMPUTE_WORK | CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::TRANSFER_WORK;
-	cinf.m_hints = m_cbInitHints;
-	CommandBufferPtr cmdb = gr.newInstance<CommandBuffer>(cinf);
-
-	cinf.m_flags = CommandBufferFlag::GRAPHICS_WORK | CommandBufferFlag::SMALL_BATCH;
-	CommandBufferPtr defaultFbCmdb = gr.newInstance<CommandBuffer>(cinf);
 
 	// Run renderer
 	RenderingContext ctx(m_frameAlloc);
 
 	if(m_rDrawToDefaultFb)
 	{
-		ctx.m_outFb = m_defaultFb;
 		ctx.m_outFbWidth = m_width;
 		ctx.m_outFbHeight = m_height;
 	}
 
-	ctx.m_commandBuffer = cmdb;
-	ctx.m_defaultFbCommandBuffer = defaultFbCmdb;
 	ctx.m_renderQueue = &rqueue;
 	ctx.m_unprojParams = ctx.m_renderQueue->m_projectionMatrix.extractPerspectiveUnprojectionParams();
 	ANKI_CHECK(m_r->render(ctx));
@@ -120,26 +101,62 @@ Error MainRenderer::render(RenderQueue& rqueue)
 	// Blit renderer's result to default FB if needed
 	if(!m_rDrawToDefaultFb)
 	{
-		defaultFbCmdb->beginRenderPass(m_defaultFb);
-		defaultFbCmdb->setViewport(0, 0, m_width, m_height);
+		GraphicsRenderPassDescription& pass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Final Blit");
 
-		defaultFbCmdb->bindShaderProgram(m_blitGrProg);
-		defaultFbCmdb->bindTexture(0, 0, m_r->getFinalComposite().getRt());
+		FramebufferDescription fbDescr;
+		fbDescr.setDefaultFramebuffer();
+		fbDescr.bake();
+		pass.setFramebufferInfo(fbDescr, {{}}, {});
+		pass.setWork(runCallback, this, 0);
 
-		m_r->drawQuad(defaultFbCmdb);
-		defaultFbCmdb->endRenderPass();
+		pass.newConsumer({m_r->getFinalComposite().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	}
 
-	// Flush the command buffers
-	cmdb->flush();
-	defaultFbCmdb->flush();
+	// Bake the render graph
+	m_rgraph->compileNewGraph(ctx.m_renderGraphDescr, m_frameAlloc);
 
-	// Set the hints
-	m_cbInitHints = cmdb->computeInitHints();
+	// Populate the 2nd level command buffers
+	class Task : public ThreadPoolTask
+	{
+	public:
+		RenderGraphPtr m_rgraph;
 
-	ANKI_TRACE_STOP_EVENT(RENDER);
-#endif
+		Error operator()(U32 taskId, PtrSize threadsCount)
+		{
+			m_rgraph->runSecondLevel(taskId);
+			return Error::NONE;
+		}
+	};
+
+	Task task;
+	task.m_rgraph = m_rgraph;
+	for(U i = 0; i < m_r->getThreadPool().getThreadsCount(); ++i)
+	{
+		m_r->getThreadPool().assignNewTask(i, &task);
+	}
+
+	ANKI_CHECK(m_r->getThreadPool().waitForAllThreadsToFinish());
+
+	// Populate 1st level command buffers
+	m_rgraph->run();
+
+	// Flush
+	m_rgraph->flush();
+
+	// Reset render pass for the next frame
+	m_rgraph->reset();
+
 	return Error::NONE;
+}
+
+void MainRenderer::runBlit(const RenderGraph& rgraph, CommandBufferPtr& cmdb)
+{
+	cmdb->setViewport(0, 0, m_width, m_height);
+
+	cmdb->bindShaderProgram(m_blitGrProg);
+	cmdb->bindTexture(0, 0, rgraph.getTexture(m_r->getFinalComposite().getRt()));
+
+	m_r->drawQuad(cmdb);
 }
 
 Dbg& MainRenderer::getDbg()

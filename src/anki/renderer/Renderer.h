@@ -319,11 +319,6 @@ anki_internal:
 		return m_linearSampler;
 	}
 
-	RenderGraphPtr getRenderGraph() const
-	{
-		return m_rgraph;
-	}
-
 private:
 	ThreadPool* m_threadpool = nullptr;
 	ResourceManager* m_resources = nullptr;
@@ -379,8 +374,6 @@ private:
 
 	SamplerPtr m_nearestSampler;
 	SamplerPtr m_linearSampler;
-
-	RenderGraphPtr m_rgraph;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 

@@ -281,7 +281,7 @@ Error App::initInternal(const ConfigSet& config_, AllocAlignedCallback allocCb, 
 
 	m_renderer = m_heapAlloc.newInstance<MainRenderer>();
 
-	ANKI_CHECK(m_renderer->create(
+	ANKI_CHECK(m_renderer->init(
 		m_threadpool, m_resources, m_gr, m_stagingMem, m_allocCb, m_allocCbData, config, &m_globalTimestamp));
 
 	//
