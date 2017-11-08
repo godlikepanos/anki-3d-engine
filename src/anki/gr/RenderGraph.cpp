@@ -339,7 +339,19 @@ FramebufferPtr RenderGraph::getOrCreateFramebuffer(
 	if(!defaultFb)
 	{
 		// Create a hash that includes the render targets
-		hash = appendHash(rtHandles, sizeof(RenderTargetHandle) * (MAX_COLOR_ATTACHMENTS + 1), hash);
+		Array<U64, MAX_COLOR_ATTACHMENTS + 1> uuids;
+		U count = 0;
+		for(U i = 0; i < fbInit_.m_colorAttachmentCount; ++i)
+		{
+			uuids[count++] = m_ctx->m_rts[rtHandles[i].m_idx].m_texture->getUuid();
+		}
+
+		if(!!fbInit_.m_depthStencilAttachment.m_aspect)
+		{
+			uuids[count++] = m_ctx->m_rts[rtHandles[MAX_COLOR_ATTACHMENTS].m_idx].m_texture->getUuid();
+		}
+
+		hash = appendHash(&uuids[0], sizeof(U64) * count, hash);
 	}
 
 	FramebufferPtr fb;
