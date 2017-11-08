@@ -41,7 +41,7 @@ anki_internal:
 
 	RenderTargetHandle getRt() const
 	{
-		return m_runCtx.m_exposureRt;
+		return m_runCtx.m_upscaleRt;
 	}
 
 private:

@@ -53,7 +53,7 @@ Error ShadowMapping::initScratch(const ConfigSet& cfg)
 			SHADOW_DEPTH_PIXEL_FORMAT,
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE,
 			SamplingFilter::LINEAR,
-			"scratch_smap");
+			"Scratch ShadMap");
 		m_scratchRtDescr.bake();
 
 		// FB
@@ -212,10 +212,14 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 
 		// Scratch pass
 		{
+			// Compute render area
+			const U32 minx = 0, miny = 0, maxy = m_scratchTileResolution;
+			const U32 maxx = m_scratchTileResolution * m_scratchWorkItems.getSize();
+
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("SM scratch");
 
 			m_scratchRt = rgraph.newRenderTarget(m_scratchRtDescr);
-			pass.setFramebufferInfo(m_scratchFbDescr, {}, m_scratchRt);
+			pass.setFramebufferInfo(m_scratchFbDescr, {}, m_scratchRt, minx, miny, maxx, maxy);
 			pass.setWork(runShadowmappingCallback, this, m_r->getThreadPool().getThreadsCount());
 
 			pass.newConsumer({m_scratchRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE});

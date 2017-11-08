@@ -115,6 +115,7 @@ Error MainRenderer::render(RenderQueue& rqueue)
 	// Bake the render graph
 	m_rgraph->compileNewGraph(ctx.m_renderGraphDescr, m_frameAlloc);
 
+#if 1
 	// Populate the 2nd level command buffers
 	class Task : public ThreadPoolTask
 	{
@@ -142,6 +143,7 @@ Error MainRenderer::render(RenderQueue& rqueue)
 
 	// Flush
 	m_rgraph->flush();
+#endif
 
 	// Reset render pass for the next frame
 	m_rgraph->reset();

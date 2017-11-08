@@ -181,7 +181,7 @@ public:
 	void setWork(RenderPassWorkCallback callback, void* userData, U32 secondLeveCmdbCount)
 	{
 		ANKI_ASSERT(callback);
-		ANKI_ASSERT(m_type == Type::GRAPHICS || secondLeveCmdbCount != 0);
+		ANKI_ASSERT(m_type == Type::GRAPHICS || secondLeveCmdbCount == 0);
 		m_callback = callback;
 		m_userData = userData;
 		m_secondLevelCmdbsCount = secondLeveCmdbCount;
@@ -313,7 +313,11 @@ public:
 
 	void setFramebufferInfo(const FramebufferDescription& fbInfo,
 		const Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS>& colorRenderTargetHandles,
-		RenderTargetHandle depthStencilRenderTargetHandle)
+		RenderTargetHandle depthStencilRenderTargetHandle,
+		U32 minx = 0,
+		U32 miny = 0,
+		U32 maxx = MAX_U32,
+		U32 maxy = MAX_U32)
 	{
 #if ANKI_EXTRA_CHECKS
 		ANKI_ASSERT(fbInfo.isBacked() && "Forgot call GraphicsRenderPassFramebufferInfo::bake");
@@ -351,11 +355,13 @@ public:
 		}
 		m_fbInitInfo.setName(m_name.toCString());
 		m_fbHash = fbInfo.m_hash;
+		m_fbRenderArea = {{minx, miny, maxx, maxy}};
 	}
 
 private:
 	Array<RenderTargetHandle, MAX_COLOR_ATTACHMENTS + 1> m_rtHandles = {};
 	FramebufferInitInfo m_fbInitInfo;
+	Array<U32, 4> m_fbRenderArea = {};
 	U64 m_fbHash = 0;
 
 	Bool hasFramebuffer() const
@@ -395,6 +401,7 @@ public:
 		}
 		m_passes.destroy(m_alloc);
 		m_renderTargets.destroy(m_alloc);
+		m_buffers.destroy(m_alloc);
 	}
 
 	/// Create a new graphics render pass.
@@ -585,6 +592,7 @@ private:
 	class Barrier;
 
 	BakeContext* m_ctx = nullptr;
+	U64 m_version = 0;
 
 	BakeContext* newContext(const RenderGraphDescription& descr, StackAllocator<U8>& alloc);
 	void initRenderPassesAndSetDeps(const RenderGraphDescription& descr, StackAllocator<U8>& alloc);
@@ -595,15 +603,17 @@ private:
 	FramebufferPtr getOrCreateFramebuffer(
 		const FramebufferInitInfo& fbInit, const RenderTargetHandle* rtHandles, U64 hash);
 
-	static Bool passADependsOnB(
-		BakeContext& ctx, const RenderPassDescriptionBase& a, const RenderPassDescriptionBase& b);
+	static Bool passADependsOnB(const RenderPassDescriptionBase& a, const RenderPassDescriptionBase& b);
+	static Bool overlappingDependency(const RenderPassDependency& a, const RenderPassDependency& b);
 	static Bool passHasUnmetDependencies(const BakeContext& ctx, U32 passIdx);
 
-	/// Dump the dependency graph into a file.
+	/// @name Dump the dependency graph into a file.
+	/// @{
 	ANKI_USE_RESULT Error dumpDependencyDotFile(
 		const RenderGraphDescription& descr, const BakeContext& ctx, CString path) const;
 	static StringAuto textureUsageToStr(StackAllocator<U8>& alloc, TextureUsageBit usage);
 	static StringAuto bufferUsageToStr(StackAllocator<U8>& alloc, BufferUsageBit usage);
+	/// @}
 };
 /// @}
 

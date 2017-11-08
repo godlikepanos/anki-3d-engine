@@ -147,19 +147,21 @@ Error Indirect::initGBuffer(const ConfigSet& config)
 			MS_COLOR_ATTACHMENT_PIXEL_FORMATS[0],
 			TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 			SamplingFilter::NEAREST, // Because we don't want the light pass to bleed to near faces
-			"GI_gbuff");
+			"GI GBuffer");
 
 		// Create color RT descriptions
 		for(U i = 0; i < GBUFFER_COLOR_ATTACHMENT_COUNT; ++i)
 		{
 			texinit.m_format = MS_COLOR_ATTACHMENT_PIXEL_FORMATS[i];
 			m_gbuffer.m_colorRtDescrs[i] = texinit;
+			m_gbuffer.m_colorRtDescrs[i].setName(StringAuto(getAllocator()).sprintf("GI GBuff Col #%u", i).toCString());
 			m_gbuffer.m_colorRtDescrs[i].bake();
 		}
 
 		// Create depth RT
 		texinit.m_usage |= TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ;
 		texinit.m_format = GBUFFER_DEPTH_ATTACHMENT_PIXEL_FORMAT;
+		texinit.setName("GI GBuff Depth");
 		m_gbuffer.m_depthRtDescr = texinit;
 		m_gbuffer.m_depthRtDescr.bake();
 	}
@@ -649,9 +651,15 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 				rgraph.importRenderTarget("GI light", m_lightShading.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
 
 			// Passes
+			static const Array<CString, 6> passNames = {{"GI LightShad #0",
+				"GI LightShad #1",
+				"GI LightShad #2",
+				"GI LightShad #3",
+				"GI LightShad #4",
+				"GI LightShad #5"}};
 			for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
 			{
-				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI lightshad");
+				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
 				pass.setFramebufferInfo(m_cacheEntries[probeToUpdateCacheEntryIdx].m_lightShadingFbDescrs[faceIdx],
 					{{m_ctx.m_lightShadingRt}},
 					{});
@@ -671,16 +679,18 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 
 		// Mipmapping "passes"
 		{
-			Array<RenderPassWorkCallback, 6> callbacks = {{runMipmappingOfLightShadingCallback<0>,
+			static const Array<RenderPassWorkCallback, 6> callbacks = {{runMipmappingOfLightShadingCallback<0>,
 				runMipmappingOfLightShadingCallback<1>,
 				runMipmappingOfLightShadingCallback<2>,
 				runMipmappingOfLightShadingCallback<3>,
 				runMipmappingOfLightShadingCallback<4>,
 				runMipmappingOfLightShadingCallback<5>}};
 
+			static const Array<CString, 6> passNames = {
+				{"GI Mip #0", "GI Mip #1", "GI Mip #2", "GI Mip #3", "GI Mip #4", "GI Mip #5"}};
 			for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
 			{
-				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI mipmap");
+				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
 				pass.setWork(callbacks[faceIdx], this, 0);
 
 				for(U mip = 0; mip < m_lightShading.m_mipCount; ++mip)
@@ -694,7 +704,7 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 
 		// Irradiance passes
 		{
-			Array<RenderPassWorkCallback, 6> callbacks = {{runIrradianceCallback<0>,
+			static const Array<RenderPassWorkCallback, 6> callbacks = {{runIrradianceCallback<0>,
 				runIrradianceCallback<1>,
 				runIrradianceCallback<2>,
 				runIrradianceCallback<3>,
@@ -705,9 +715,11 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 			m_ctx.m_irradianceRt =
 				rgraph.importRenderTarget("GI irradiance", m_irradiance.m_cubeArr, TextureUsageBit::SAMPLED_FRAGMENT);
 
+			static const Array<CString, 6> passNames = {
+				{"GI Irr/ce #0", "GI Irr/ce #1", "GI Irr/ce #2", "GI Irr/ce #3", "GI Irr/ce #4", "GI Irr/ce #5"}};
 			for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
 			{
-				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("GI irradiance");
+				GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[faceIdx]);
 
 				pass.setFramebufferInfo(m_cacheEntries[probeToUpdateCacheEntryIdx].m_irradianceFbDescrs[faceIdx],
 					{{m_ctx.m_irradianceRt}},
@@ -715,14 +727,18 @@ void Indirect::populateRenderGraph(RenderingContext& rctx)
 
 				pass.setWork(callbacks[faceIdx], this, 0);
 
+				for(U mip = 0; mip < m_lightShading.m_mipCount; ++mip)
+				{
+					TextureSurfaceInfo surf(mip, 0, faceIdx, probeToUpdateCacheEntryIdx);
+					pass.newConsumer({m_ctx.m_lightShadingRt, TextureUsageBit::SAMPLED_FRAGMENT, surf});
+				}
+
 				pass.newConsumer({m_ctx.m_irradianceRt,
 					TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 					TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx)});
 				pass.newProducer({m_ctx.m_irradianceRt,
 					TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 					TextureSurfaceInfo(0, 0, faceIdx, probeToUpdateCacheEntryIdx)});
-
-				pass.newConsumer({m_ctx.m_lightShadingRt, TextureUsageBit::SAMPLED_FRAGMENT});
 			}
 		}
 	}

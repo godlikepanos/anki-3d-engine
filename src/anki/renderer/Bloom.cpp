@@ -36,7 +36,7 @@ Error Bloom::initExposure(const ConfigSet& config)
 		BLOOM_RT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		SamplingFilter::LINEAR,
-		"bloomexp");
+		"Bloom Exp");
 	m_exposure.m_rtDescr.bake();
 
 	// Create FB info
@@ -69,7 +69,7 @@ Error Bloom::initUpscale(const ConfigSet& config)
 		BLOOM_RT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE,
 		SamplingFilter::LINEAR,
-		"bloomupscale");
+		"Bloom Upscale");
 	m_upscale.m_rtDescr.bake();
 
 	// Create FB descr
@@ -115,7 +115,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 		m_runCtx.m_exposureRt = rgraph.newRenderTarget(m_exposure.m_rtDescr);
 
 		// Set the render pass
-		GraphicsRenderPassDescription& rpass = ctx.m_renderGraphDescr.newGraphicsRenderPass("bloom main");
+		GraphicsRenderPassDescription& rpass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Bloom Main");
 		rpass.setWork(runExposureCallback, this, 0);
 		rpass.setFramebufferInfo(m_exposure.m_fbDescr, {{m_runCtx.m_exposureRt}}, {});
 
@@ -131,7 +131,7 @@ void Bloom::populateRenderGraph(RenderingContext& ctx)
 		m_runCtx.m_upscaleRt = rgraph.newRenderTarget(m_upscale.m_rtDescr);
 
 		// Set the render pass
-		GraphicsRenderPassDescription& rpass = ctx.m_renderGraphDescr.newGraphicsRenderPass("bloom upscale");
+		GraphicsRenderPassDescription& rpass = ctx.m_renderGraphDescr.newGraphicsRenderPass("Bloom Upscale");
 		rpass.setWork(runUpscaleAndSslfCallback, this, 0);
 		rpass.setFramebufferInfo(m_upscale.m_fbDescr, {{m_runCtx.m_upscaleRt}}, {});
 

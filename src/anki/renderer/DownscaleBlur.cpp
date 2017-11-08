@@ -24,13 +24,15 @@ Error DownscaleBlur::initSubpass(U idx, const UVec2& inputTexSize)
 	pass.m_height = inputTexSize.y() / 2;
 
 	// RT
+	StringAuto name(getAllocator());
+	name.sprintf("DownBlur #%u", idx);
 	pass.m_rtDescr = m_r->create2DRenderTargetDescription(pass.m_width,
 		pass.m_height,
 		LIGHT_SHADING_COLOR_ATTACHMENT_PIXEL_FORMAT,
 		TextureUsageBit::SAMPLED_FRAGMENT | TextureUsageBit::FRAMEBUFFER_ATTACHMENT_WRITE
 			| TextureUsageBit::SAMPLED_COMPUTE,
 		SamplingFilter::LINEAR,
-		"downblur");
+		name.toCString());
 	pass.m_rtDescr.bake();
 
 	return Error::NONE;
@@ -110,9 +112,17 @@ void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)
 	}
 
 	// Create passes
+	Array<CString, 8> passNames = {{"DownBlur #0",
+		"Down/Blur #1",
+		"Down/Blur #2",
+		"Down/Blur #3",
+		"Down/Blur #4",
+		"Down/Blur #5",
+		"Down/Blur #6",
+		"Down/Blur #7"}};
 	for(U i = 0; i < m_passes.getSize(); ++i)
 	{
-		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("Downscale Blur");
+		GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass(passNames[i]);
 
 		pass.setWork(runCallback, this, 0);
 
