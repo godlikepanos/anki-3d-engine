@@ -119,35 +119,35 @@ public:
 		m_state.setCullMode(mode);
 	}
 
-	void setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
+	void setViewport(U32 minx, U32 miny, U32 width, U32 height)
 	{
-		ANKI_ASSERT(minx < maxx && miny < maxy);
+		ANKI_ASSERT(width > 0 && height > 0);
 		commandCommon();
 
-		if(m_viewport[0] != minx || m_viewport[1] != miny || m_viewport[2] != maxx || m_viewport[3] != maxy)
+		if(m_viewport[0] != minx || m_viewport[1] != miny || m_viewport[2] != width || m_viewport[3] != height)
 		{
 			m_viewportDirty = true;
 
 			m_viewport[0] = minx;
 			m_viewport[1] = miny;
-			m_viewport[2] = maxx;
-			m_viewport[3] = maxy;
+			m_viewport[2] = width;
+			m_viewport[3] = height;
 		}
 	}
 
-	void setScissor(U16 minx, U16 miny, U16 maxx, U16 maxy)
+	void setScissor(U32 minx, U32 miny, U32 width, U32 height)
 	{
-		ANKI_ASSERT(minx < maxx && miny < maxy);
+		ANKI_ASSERT(width > 0 && height > 0);
 		commandCommon();
 
-		if(m_scissor[0] != minx || m_scissor[1] != miny || m_scissor[2] != maxx || m_scissor[3] != maxy)
+		if(m_scissor[0] != minx || m_scissor[1] != miny || m_scissor[2] != width || m_scissor[3] != height)
 		{
 			m_scissorDirty = true;
 
 			m_scissor[0] = minx;
 			m_scissor[1] = miny;
-			m_scissor[2] = maxx;
-			m_scissor[3] = maxy;
+			m_scissor[2] = width;
+			m_scissor[3] = height;
 		}
 	}
 
@@ -244,7 +244,7 @@ public:
 		m_microCmdb->pushObjectRef(img);
 	}
 
-	void beginRenderPass(FramebufferPtr fb, U16 minx, U16 miny, U16 maxx, U16 maxy);
+	void beginRenderPass(FramebufferPtr fb, U32 minx, U32 miny, U32 width, U32 height);
 
 	void endRenderPass();
 
@@ -362,8 +362,8 @@ private:
 
 	U m_rpCommandCount = 0; ///< Number of drawcalls or pushed cmdbs in rp.
 	FramebufferPtr m_activeFb;
-	Array<U16, 4> m_renderArea = {{0, 0, MAX_U16, MAX_U16}};
-	Array<U16, 2> m_fbSize = {{0, 0}};
+	Array<U32, 4> m_renderArea = {{0, 0, MAX_U32, MAX_U32}};
+	Array<U32, 2> m_fbSize = {{0, 0}};
 
 	ShaderProgramImpl* m_graphicsProg ANKI_DBG_NULLIFY; ///< Last bound graphics program
 
@@ -379,8 +379,8 @@ private:
 
 	/// @name state_opts
 	/// @{
-	Array<U16, 4> m_viewport = {{0, 0, 0, 0}};
-	Array<U16, 4> m_scissor = {{0, 0, MAX_U16, MAX_U16}};
+	Array<U32, 4> m_viewport = {{0, 0, 0, 0}};
+	Array<U32, 4> m_scissor = {{0, 0, MAX_U32, MAX_U32}};
 	Bool8 m_viewportDirty = true;
 	Bool8 m_scissorDirty = true;
 	Array<U32, 2> m_stencilCompareMasks = {{0x5A5A5A5A, 0x5A5A5A5A}}; ///< Use a stupid number to initialize.

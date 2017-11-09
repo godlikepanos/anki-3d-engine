@@ -421,8 +421,8 @@ void Indirect::runGBuffer(CommandBufferPtr& cmdb)
 	for(U faceIdx = 0; faceIdx < 6; ++faceIdx)
 	{
 		const U32 viewportX = faceIdx * m_gbuffer.m_tileSize;
-		cmdb->setViewport(viewportX, 0, viewportX + m_gbuffer.m_tileSize, m_gbuffer.m_tileSize);
-		cmdb->setScissor(viewportX, 0, viewportX + m_gbuffer.m_tileSize, m_gbuffer.m_tileSize);
+		cmdb->setViewport(viewportX, 0, m_gbuffer.m_tileSize, m_gbuffer.m_tileSize);
+		cmdb->setScissor(viewportX, 0, m_gbuffer.m_tileSize, m_gbuffer.m_tileSize);
 
 		/// Draw
 		ANKI_ASSERT(probe.m_renderQueues[faceIdx]);
@@ -437,7 +437,7 @@ void Indirect::runGBuffer(CommandBufferPtr& cmdb)
 	}
 
 	// Restore state
-	cmdb->setScissor(0, 0, MAX_U16, MAX_U16);
+	cmdb->setScissor(0, 0, MAX_U32, MAX_U32);
 }
 
 void Indirect::runLightShading(CommandBufferPtr& cmdb, const RenderGraph& rgraph, U32 faceIdx)

@@ -499,9 +499,9 @@ ANKI_TEST(Gr, ViewportAndScissor)
 	}
 
 	static const Array2d<U, 4, 4> VIEWPORTS = {{{{0, 0, WIDTH / 2, HEIGHT / 2}},
-		{{WIDTH / 2, 0, WIDTH, HEIGHT / 2}},
-		{{WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT}},
-		{{0, HEIGHT / 2, WIDTH / 2, HEIGHT}}}};
+		{{WIDTH / 2, 0, WIDTH / 2, HEIGHT / 2}},
+		{{WIDTH / 2, HEIGHT / 2, WIDTH / 2, HEIGHT / 2}},
+		{{0, HEIGHT / 2, WIDTH / 2, HEIGHT / 2}}}};
 
 	const U ITERATIONS = 400;
 	const U SCISSOR_MARGIN = 20;
@@ -521,13 +521,13 @@ ANKI_TEST(Gr, ViewportAndScissor)
 		auto vp = VIEWPORTS[idx];
 		cmdb->setViewport(vp[0], vp[1], vp[2], vp[3]);
 		cmdb->setScissor(
-			vp[0] + SCISSOR_MARGIN, vp[1] + SCISSOR_MARGIN, vp[2] - SCISSOR_MARGIN, vp[3] - SCISSOR_MARGIN);
+			vp[0] + SCISSOR_MARGIN, vp[1] + SCISSOR_MARGIN, vp[2] - SCISSOR_MARGIN * 2, vp[3] - SCISSOR_MARGIN * 2);
 		cmdb->bindShaderProgram(prog);
 		cmdb->beginRenderPass(fb[i % 4],
 			vp[0] + RENDER_AREA_MARGIN,
 			vp[1] + RENDER_AREA_MARGIN,
-			vp[2] - RENDER_AREA_MARGIN,
-			vp[3] - RENDER_AREA_MARGIN);
+			vp[2] - RENDER_AREA_MARGIN * 2,
+			vp[3] - RENDER_AREA_MARGIN * 2);
 		cmdb->drawArrays(PrimitiveTopology::TRIANGLE_STRIP, 4);
 		cmdb->endRenderPass();
 		cmdb->flush();

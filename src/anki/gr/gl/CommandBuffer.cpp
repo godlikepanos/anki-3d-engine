@@ -219,14 +219,14 @@ void CommandBuffer::setPrimitiveRestart(Bool enable)
 	}
 }
 
-void CommandBuffer::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
+void CommandBuffer::setViewport(U32 minx, U32 miny, U32 width, U32 height)
 {
 	class ViewportCommand final : public GlCommand
 	{
 	public:
-		Array<U16, 4> m_value;
+		Array<U32, 4> m_value;
 
-		ViewportCommand(U16 a, U16 b, U16 c, U16 d)
+		ViewportCommand(U32 a, U32 b, U32 c, U32 d)
 		{
 			m_value = {{a, b, c, d}};
 		}
@@ -238,20 +238,23 @@ void CommandBuffer::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 		}
 	};
 
-	if(m_impl->m_state.setViewport(minx, miny, maxx, maxy))
+	if(m_impl->m_state.setViewport(minx, miny, width, height))
 	{
-		m_impl->pushBackNewCommand<ViewportCommand>(minx, miny, maxx - minx, maxy - miny);
+		m_impl->pushBackNewCommand<ViewportCommand>(minx, miny, width, height);
 	}
 }
 
-void CommandBuffer::setScissor(U16 minx, U16 miny, U16 maxx, U16 maxy)
+void CommandBuffer::setScissor(U32 minx, U32 miny, U32 width, U32 height)
 {
+	ANKI_ASSERT(minx < MAX_U32 && miny < MAX_U32);
+	ANKI_ASSERT(width > 0 && height > 0);
+
 	class ScissorCommand final : public GlCommand
 	{
 	public:
-		Array<U16, 4> m_value;
+		Array<GLsizei, 4> m_value;
 
-		ScissorCommand(U16 a, U16 b, U16 c, U16 d)
+		ScissorCommand(GLsizei a, GLsizei b, GLsizei c, GLsizei d)
 		{
 			m_value = {{a, b, c, d}};
 		}
@@ -268,9 +271,15 @@ void CommandBuffer::setScissor(U16 minx, U16 miny, U16 maxx, U16 maxy)
 		}
 	};
 
-	if(m_impl->m_state.setScissor(minx, miny, maxx, maxy))
+	// Limit the width and height to GLsizei
+	const GLsizei iwidth = (width == MAX_U32) ? MAX_I32 : width;
+	const GLsizei iheight = (height == MAX_U32) ? MAX_I32 : height;
+	const GLsizei iminx = minx;
+	const GLsizei iminy = miny;
+
+	if(m_impl->m_state.setScissor(iminx, iminy, iwidth, iheight))
 	{
-		m_impl->pushBackNewCommand<ScissorCommand>(minx, miny, maxx - minx, maxy - miny);
+		m_impl->pushBackNewCommand<ScissorCommand>(iminx, iminy, iwidth, iheight);
 	}
 }
 
@@ -870,19 +879,17 @@ void CommandBuffer::bindShaderProgram(ShaderProgramPtr prog)
 	}
 }
 
-void CommandBuffer::beginRenderPass(FramebufferPtr fb, U16 minx, U16 miny, U16 maxx, U16 maxy)
+void CommandBuffer::beginRenderPass(FramebufferPtr fb, U32 minx, U32 miny, U32 width, U32 height)
 {
-	ANKI_ASSERT(minx < maxx && miny < maxy);
-
 	class BindFramebufferCommand final : public GlCommand
 	{
 	public:
 		FramebufferPtr m_fb;
-		Array<U16, 4> m_renderArea;
+		Array<U32, 4> m_renderArea;
 
-		BindFramebufferCommand(FramebufferPtr fb, U16 minx, U16 miny, U16 maxx, U16 maxy)
+		BindFramebufferCommand(FramebufferPtr fb, U32 minx, U32 miny, U32 width, U32 height)
 			: m_fb(fb)
-			, m_renderArea{{minx, miny, maxx, maxy}}
+			, m_renderArea{{minx, miny, width, height}}
 		{
 		}
 
@@ -895,7 +902,7 @@ void CommandBuffer::beginRenderPass(FramebufferPtr fb, U16 minx, U16 miny, U16 m
 
 	if(m_impl->m_state.beginRenderPass(fb))
 	{
-		m_impl->pushBackNewCommand<BindFramebufferCommand>(fb, minx, miny, maxx, maxy);
+		m_impl->pushBackNewCommand<BindFramebufferCommand>(fb, minx, miny, width, height);
 	}
 }
 

@@ -110,8 +110,8 @@ Error ShadowMapping::initEsm(const ConfigSet& cfg)
 
 				tile.m_viewport[0] = x * m_tileResolution;
 				tile.m_viewport[1] = y * m_tileResolution;
-				tile.m_viewport[2] = tile.m_viewport[0] + m_tileResolution;
-				tile.m_viewport[3] = tile.m_viewport[1] + m_tileResolution;
+				tile.m_viewport[2] = m_tileResolution;
+				tile.m_viewport[3] = m_tileResolution;
 			}
 		}
 
@@ -168,7 +168,7 @@ void ShadowMapping::runEsm(CommandBufferPtr& cmdb, const RenderGraph& rgraph)
 	}
 
 	// Restore GR state
-	cmdb->setScissor(0, 0, MAX_U16, MAX_U16);
+	cmdb->setScissor(0, 0, MAX_U32, MAX_U32);
 }
 
 void ShadowMapping::runShadowMapping(CommandBufferPtr& cmdb, U32 threadId)
@@ -213,13 +213,13 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 		// Scratch pass
 		{
 			// Compute render area
-			const U32 minx = 0, miny = 0, maxy = m_scratchTileResolution;
-			const U32 maxx = m_scratchTileResolution * m_scratchWorkItems.getSize();
+			const U32 minx = 0, miny = 0, height = m_scratchTileResolution;
+			const U32 width = m_scratchTileResolution * m_scratchWorkItems.getSize();
 
 			GraphicsRenderPassDescription& pass = rgraph.newGraphicsRenderPass("SM scratch");
 
 			m_scratchRt = rgraph.newRenderTarget(m_scratchRtDescr);
-			pass.setFramebufferInfo(m_scratchFbDescr, {}, m_scratchRt, minx, miny, maxx, maxy);
+			pass.setFramebufferInfo(m_scratchFbDescr, {}, m_scratchRt, minx, miny, width, height);
 			pass.setWork(runShadowmappingCallback, this, m_r->getThreadPool().getThreadsCount());
 
 			pass.newConsumer({m_scratchRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE});

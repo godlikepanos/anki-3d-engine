@@ -135,7 +135,7 @@ void GlState::initRenderThread()
 	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_SCISSOR_TEST);
-	glScissor(0, 0, MAX_U16, MAX_U16);
+	glScissor(0, 0, MAX_I16, MAX_I16);
 	glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
 
 	// Create default VAO

@@ -113,14 +113,14 @@ public:
 
 	/// @name viewport_state
 	/// @{
-	Array<U16, 4> m_viewport = {{MAX_U16, MAX_U16, MAX_U16, MAX_U16}};
+	Array<U32, 4> m_viewport = {{MAX_U32, MAX_U32, MAX_U32, MAX_U32}};
 
-	Bool setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
+	Bool setViewport(U32 minx, U32 miny, U32 width, U32 height)
 	{
-		ANKI_ASSERT(minx != MAX_U16 && miny != MAX_U16 && maxx != MAX_U16 && maxy != MAX_U16);
-		if(m_viewport[0] != minx || m_viewport[1] != miny || m_viewport[2] != maxx || m_viewport[3] != maxy)
+		ANKI_ASSERT(minx != MAX_U32 && miny != MAX_U32 && width != MAX_U32 && height != MAX_U32);
+		if(m_viewport[0] != minx || m_viewport[1] != miny || m_viewport[2] != width || m_viewport[3] != height)
 		{
-			m_viewport = {{minx, miny, maxx, maxy}};
+			m_viewport = {{minx, miny, width, height}};
 			return true;
 		}
 		return false;
@@ -129,15 +129,15 @@ public:
 
 	/// @name scissor_state
 	/// @{
-	Array<U16, 4> m_scissor = {{0, 0, MAX_U16, MAX_U16}};
+	Array<GLsizei, 4> m_scissor = {{0, 0, MAX_I32, MAX_I32}};
 	Bool8 m_scissorSet = false;
 
-	Bool setScissor(U16 minx, U16 miny, U16 maxx, U16 maxy)
+	Bool setScissor(GLsizei minx, GLsizei miny, GLsizei width, GLsizei height)
 	{
 		if(!m_scissorSet
-			|| (m_scissor[0] != minx || m_scissor[1] != miny || m_scissor[2] != maxx || m_scissor[3] != maxy))
+			|| (m_scissor[0] != minx || m_scissor[1] != miny || m_scissor[2] != width || m_scissor[3] != height))
 		{
-			m_scissor = {{minx, miny, maxx, maxy}};
+			m_scissor = {{minx, miny, width, height}};
 			m_scissorSet = true;
 			return true;
 		}

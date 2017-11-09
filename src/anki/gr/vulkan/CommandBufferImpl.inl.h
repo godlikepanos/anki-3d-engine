@@ -523,8 +523,8 @@ inline void CommandBufferImpl::drawcallCommon()
 
 		const I minx = m_viewport[0];
 		const I miny = m_viewport[1];
-		const I maxx = m_viewport[2];
-		const I maxy = m_viewport[3];
+		const I width = m_viewport[2];
+		const I height = m_viewport[3];
 
 		U32 fbWidth, fbHeight;
 		m_activeFb->m_impl->getAttachmentsSize(fbWidth, fbHeight);
@@ -532,8 +532,8 @@ inline void CommandBufferImpl::drawcallCommon()
 		VkViewport s;
 		s.x = minx;
 		s.y = (flipvp) ? (fbHeight - miny) : miny; // Move to the bottom;
-		s.width = maxx - minx;
-		s.height = (flipvp) ? -(maxy - miny) : (maxy - miny);
+		s.width = width;
+		s.height = (flipvp) ? -height : height;
 		s.minDepth = 0.0;
 		s.maxDepth = 1.0;
 		ANKI_CMD(vkCmdSetViewport(m_handle, 0, 1, &s), ANY_OTHER_COMMAND);
@@ -546,10 +546,10 @@ inline void CommandBufferImpl::drawcallCommon()
 	{
 		VkRect2D scissor = {};
 
-		if(m_scissor[0] == 0 && m_scissor[1] == 0 && m_scissor[2] == MAX_U16 && m_scissor[3] == MAX_U16)
+		if(m_scissor[0] == 0 && m_scissor[1] == 0 && m_scissor[2] == MAX_U32 && m_scissor[3] == MAX_U32)
 		{
-			scissor.extent.width = MAX_U16;
-			scissor.extent.height = MAX_U16;
+			scissor.extent.width = MAX_U32;
+			scissor.extent.height = MAX_U32;
 			scissor.offset.x = 0;
 			scissor.offset.y = 0;
 		}
@@ -562,13 +562,13 @@ inline void CommandBufferImpl::drawcallCommon()
 
 			const I minx = min<U>(fbWidth, m_scissor[0]);
 			const I miny = min<U>(fbHeight, m_scissor[1]);
-			const I maxx = min<U>(fbWidth, m_scissor[2]);
-			const I maxy = min<U>(fbHeight, m_scissor[3]);
+			const I width = min<U>(fbWidth, m_scissor[2]);
+			const I height = min<U>(fbHeight, m_scissor[3]);
 
-			scissor.extent.width = maxx - minx;
-			scissor.extent.height = maxy - miny;
+			scissor.extent.width = width;
+			scissor.extent.height = height;
 			scissor.offset.x = minx;
-			scissor.offset.y = (flipvp) ? (fbHeight - maxy) : miny;
+			scissor.offset.y = (flipvp) ? (fbHeight - (miny + height)) : miny;
 		}
 
 		ANKI_CMD(vkCmdSetScissor(m_handle, 0, 1, &scissor), ANY_OTHER_COMMAND);

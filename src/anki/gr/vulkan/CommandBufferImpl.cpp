@@ -99,7 +99,7 @@ void CommandBufferImpl::beginRecording()
 	vkBeginCommandBuffer(m_handle, &begin);
 }
 
-void CommandBufferImpl::beginRenderPass(FramebufferPtr fb, U16 minx, U16 miny, U16 maxx, U16 maxy)
+void CommandBufferImpl::beginRenderPass(FramebufferPtr fb, U32 minx, U32 miny, U32 width, U32 height)
 {
 	commandCommon();
 	ANKI_ASSERT(!insideRenderPass());
@@ -112,11 +112,18 @@ void CommandBufferImpl::beginRenderPass(FramebufferPtr fb, U16 minx, U16 miny, U
 	m_fbSize[0] = fbWidth;
 	m_fbSize[1] = fbHeight;
 
-	m_renderArea[0] = max<U16>(0, minx);
-	m_renderArea[1] = max<U16>(0, miny);
-	m_renderArea[2] = min<U16>(m_fbSize[0], maxx);
-	m_renderArea[3] = min<U16>(m_fbSize[1], maxy);
-	ANKI_ASSERT(m_renderArea[0] < m_renderArea[2] && m_renderArea[1] < m_renderArea[3]);
+	ANKI_ASSERT(minx < fbWidth && miny < fbHeight);
+
+	const U32 maxx = min<U32>(minx + width, fbWidth);
+	const U32 maxy = min<U32>(miny + height, fbHeight);
+	width = maxx - minx;
+	height = maxy - miny;
+	ANKI_ASSERT(minx + width <= fbWidth && miny + height <= fbHeight);
+
+	m_renderArea[0] = minx;
+	m_renderArea[1] = miny;
+	m_renderArea[2] = width;
+	m_renderArea[3] = height;
 
 	m_microCmdb->pushObjectRef(fb);
 
@@ -183,9 +190,9 @@ void CommandBufferImpl::beginRenderPassInternal()
 	{
 		ANKI_ASSERT(m_renderArea[3] <= m_fbSize[1]);
 	}
-	bi.renderArea.offset.y = (flipvp) ? m_fbSize[1] - m_renderArea[3] : m_renderArea[1];
-	bi.renderArea.extent.width = m_renderArea[2] - m_renderArea[0];
-	bi.renderArea.extent.height = m_renderArea[3] - m_renderArea[1];
+	bi.renderArea.offset.y = (flipvp) ? m_fbSize[1] - (m_renderArea[1] + m_renderArea[3]) : m_renderArea[1];
+	bi.renderArea.extent.width = m_renderArea[2];
+	bi.renderArea.extent.height = m_renderArea[3];
 
 	ANKI_CMD(vkCmdBeginRenderPass(m_handle, &bi, m_subpassContents), ANY_OTHER_COMMAND);
 }

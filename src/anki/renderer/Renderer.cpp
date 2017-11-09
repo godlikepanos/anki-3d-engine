@@ -216,7 +216,7 @@ void Renderer::initJitteredMats()
 	}
 }
 
-Error Renderer::render(RenderingContext& ctx)
+Error Renderer::populateRenderGraph(RenderingContext& ctx)
 {
 	ctx.m_jitterMat = m_jitteredMats8x[m_frameCount & (8 - 1)];
 	ctx.m_projMatJitter = ctx.m_jitterMat * ctx.m_renderQueue->m_projectionMatrix;
@@ -262,12 +262,14 @@ Error Renderer::render(RenderingContext& ctx)
 
 	m_finalComposite->populateRenderGraph(ctx);
 
-	// Done
+	return Error::NONE;
+}
+
+void Renderer::finalize(const RenderingContext& ctx)
+{
 	++m_frameCount;
 	m_prevViewProjMat = ctx.m_renderQueue->m_viewProjectionMatrix;
 	m_prevCamTransform = ctx.m_renderQueue->m_cameraTransform;
-
-	return Error::NONE;
 }
 
 Vec3 Renderer::unproject(

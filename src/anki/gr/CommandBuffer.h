@@ -156,10 +156,10 @@ public:
 	void setPrimitiveRestart(Bool enable);
 
 	/// Set the viewport.
-	void setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy);
+	void setViewport(U32 minx, U32 miny, U32 width, U32 height);
 
 	/// Set the scissor rect. To disable the scissor just set a rect bigger than the viewport. By default it's disabled.
-	void setScissor(U16 minx, U16 miny, U16 maxx, U16 maxy);
+	void setScissor(U32 minx, U32 miny, U32 width, U32 height);
 
 	/// Set fill mode.
 	void setFillMode(FillMode mode);
@@ -257,9 +257,9 @@ public:
 	void bindShaderProgram(ShaderProgramPtr prog);
 
 	/// Begin renderpass.
-	/// The minx, miny, maxx, maxy control the area that the load and store operations will happen. If the scissor is
+	/// The minx, miny, width, height control the area that the load and store operations will happen. If the scissor is
 	/// bigger than the render area the results are undefined.
-	void beginRenderPass(FramebufferPtr fb, U16 minx = 0, U16 miny = 0, U16 maxx = MAX_U16, U16 maxy = MAX_U16);
+	void beginRenderPass(FramebufferPtr fb, U32 minx = 0, U32 miny = 0, U32 width = MAX_U32, U32 height = MAX_U32);
 
 	/// End renderpass.
 	void endRenderPass();

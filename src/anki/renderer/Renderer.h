@@ -171,7 +171,9 @@ public:
 		Bool willDrawToDefaultFbo);
 
 	/// This function does all the rendering stages and produces a final result.
-	ANKI_USE_RESULT Error render(RenderingContext& ctx);
+	ANKI_USE_RESULT Error populateRenderGraph(RenderingContext& ctx);
+
+	void finalize(const RenderingContext& ctx);
 
 anki_internal:
 	U64 getFrameCount() const

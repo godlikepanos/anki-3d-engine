@@ -81,14 +81,14 @@ void CommandBuffer::setPrimitiveRestart(Bool enable)
 	m_impl->setPrimitiveRestart(enable);
 }
 
-void CommandBuffer::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
+void CommandBuffer::setViewport(U32 minx, U32 miny, U32 width, U32 height)
 {
-	m_impl->setViewport(minx, miny, maxx, maxy);
+	m_impl->setViewport(minx, miny, width, height);
 }
 
-void CommandBuffer::setScissor(U16 minx, U16 miny, U16 maxx, U16 maxy)
+void CommandBuffer::setScissor(U32 minx, U32 miny, U32 width, U32 height)
 {
-	m_impl->setScissor(minx, miny, maxx, maxy);
+	m_impl->setScissor(minx, miny, width, height);
 }
 
 void CommandBuffer::setFillMode(FillMode mode)
@@ -202,10 +202,9 @@ void CommandBuffer::bindShaderProgram(ShaderProgramPtr prog)
 	m_impl->bindShaderProgram(prog);
 }
 
-void CommandBuffer::beginRenderPass(FramebufferPtr fb, U16 minx, U16 miny, U16 maxx, U16 maxy)
+void CommandBuffer::beginRenderPass(FramebufferPtr fb, U32 minx, U32 miny, U32 width, U32 height)
 {
-	ANKI_ASSERT(minx < maxx && miny < maxy);
-	m_impl->beginRenderPass(fb, minx, miny, maxx, maxy);
+	m_impl->beginRenderPass(fb, minx, miny, width, height);
 }
 
 void CommandBuffer::endRenderPass()

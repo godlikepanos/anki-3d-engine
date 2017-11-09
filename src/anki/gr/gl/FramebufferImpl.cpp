@@ -22,6 +22,7 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 
 	if(m_in.m_colorAttachmentCount == 1 && !m_in.m_colorAttachments[0].m_texture.isCreated())
 	{
+		m_fbSize[0] = m_fbSize[1] = MAX_U16;
 		m_bindDefault = true;
 		return Error::NONE;
 	}
@@ -46,6 +47,17 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 		if(att.m_loadOperation == AttachmentLoadOperation::DONT_CARE)
 		{
 			m_invalidateBuffers[m_invalidateBuffersCount++] = binding;
+		}
+
+		if(m_fbSize[0] == 0)
+		{
+			m_fbSize[0] = att.m_texture->m_impl->m_width;
+			m_fbSize[1] = att.m_texture->m_impl->m_height;
+		}
+		else
+		{
+			ANKI_ASSERT(m_fbSize[0] == att.m_texture->m_impl->m_width);
+			ANKI_ASSERT(m_fbSize[1] == att.m_texture->m_impl->m_height);
 		}
 	}
 
@@ -96,6 +108,17 @@ Error FramebufferImpl::init(const FramebufferInitInfo& init)
 		if(att.m_loadOperation == AttachmentLoadOperation::DONT_CARE)
 		{
 			m_invalidateBuffers[m_invalidateBuffersCount++] = binding;
+		}
+
+		if(m_fbSize[0] == 0)
+		{
+			m_fbSize[0] = att.m_texture->m_impl->m_width;
+			m_fbSize[1] = att.m_texture->m_impl->m_height;
+		}
+		else
+		{
+			ANKI_ASSERT(m_fbSize[0] == att.m_texture->m_impl->m_width);
+			ANKI_ASSERT(m_fbSize[1] == att.m_texture->m_impl->m_height);
 		}
 	}
 
@@ -151,15 +174,22 @@ void FramebufferImpl::attachTextureInternal(
 	}
 }
 
-void FramebufferImpl::bind(const GlState& state, U16 minx, U16 miny, U16 maxx, U16 maxy)
+void FramebufferImpl::bind(const GlState& state, U32 minx, U32 miny, U32 width, U32 height)
 {
+	ANKI_ASSERT(width > 0 && height > 0);
+
 	if(m_in.getName() && getManager().getImplementation().debugMarkersEnabled())
 	{
 		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, m_glName, 0, &m_in.getName()[0]);
 	}
 
 	// Clear in the render area
-	glScissor(minx, miny, maxx - minx, maxy - miny);
+	const U maxx = min<U>(minx + width, m_fbSize[0]);
+	const U maxy = min<U>(miny + height, m_fbSize[1]);
+	ANKI_ASSERT(minx < m_fbSize[0] && miny < m_fbSize[1] && maxx <= m_fbSize[0] && maxy <= m_fbSize[1]);
+	width = maxx - minx;
+	height = maxy - miny;
+	glScissor(minx, miny, width, height);
 
 	if(m_bindDefault)
 	{
@@ -193,13 +223,8 @@ void FramebufferImpl::bind(const GlState& state, U16 minx, U16 miny, U16 maxx, U
 		// Invalidate
 		if(m_invalidateBuffersCount)
 		{
-			glInvalidateSubFramebuffer(GL_FRAMEBUFFER,
-				m_invalidateBuffersCount,
-				&m_invalidateBuffers[0],
-				minx,
-				miny,
-				maxx - minx,
-				maxy - miny);
+			glInvalidateSubFramebuffer(
+				GL_FRAMEBUFFER, m_invalidateBuffersCount, &m_invalidateBuffers[0], minx, miny, width, height);
 		}
 
 		// Clear buffers

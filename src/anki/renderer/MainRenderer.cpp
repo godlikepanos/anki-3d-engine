@@ -96,7 +96,7 @@ Error MainRenderer::render(RenderQueue& rqueue)
 
 	ctx.m_renderQueue = &rqueue;
 	ctx.m_unprojParams = ctx.m_renderQueue->m_projectionMatrix.extractPerspectiveUnprojectionParams();
-	ANKI_CHECK(m_r->render(ctx));
+	ANKI_CHECK(m_r->populateRenderGraph(ctx));
 
 	// Blit renderer's result to default FB if needed
 	if(!m_rDrawToDefaultFb)
@@ -115,7 +115,6 @@ Error MainRenderer::render(RenderQueue& rqueue)
 	// Bake the render graph
 	m_rgraph->compileNewGraph(ctx.m_renderGraphDescr, m_frameAlloc);
 
-#if 1
 	// Populate the 2nd level command buffers
 	class Task : public ThreadPoolTask
 	{
@@ -143,10 +142,10 @@ Error MainRenderer::render(RenderQueue& rqueue)
 
 	// Flush
 	m_rgraph->flush();
-#endif
 
 	// Reset render pass for the next frame
 	m_rgraph->reset();
+	m_r->finalize(ctx);
 
 	return Error::NONE;
 }

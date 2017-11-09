@@ -33,7 +33,7 @@ public:
 	ANKI_USE_RESULT Error init(const FramebufferInitInfo& init);
 
 	/// Bind it to the state. Call it in rendering thread
-	void bind(const GlState& state, U16 minx, U16 miny, U16 maxx, U16 maxy);
+	void bind(const GlState& state, U32 minx, U32 miny, U32 width, U32 height);
 
 	void endRenderPass() const;
 
@@ -57,6 +57,7 @@ public:
 private:
 	FramebufferInitInfo m_in;
 
+	Array<U32, 2> m_fbSize = {};
 	Array<GLenum, MAX_COLOR_ATTACHMENTS> m_drawBuffers;
 	Array<GLenum, MAX_COLOR_ATTACHMENTS + 1> m_invalidateBuffers;
 	U8 m_invalidateBuffersCount = 0;
