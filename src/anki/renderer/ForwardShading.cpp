@@ -115,7 +115,7 @@ void ForwardShading::drawVolumetric(RenderingContext& ctx, CommandBufferPtr& cmd
 	cmdb->bindTexture(0, 2, rgraph.getTexture(m_r->getVolumetric().getRt()));
 	cmdb->bindTexture(0, 3, m_vol.m_noiseTex->getGrTexture());
 
-	m_r->drawQuad(cmdb);
+	drawQuad(cmdb);
 
 	// Restore state
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
@@ -141,7 +141,7 @@ void ForwardShading::drawUpscale(const RenderingContext& ctx, const RenderGraph&
 	cmdb->bindShaderProgram(m_upscale.m_grProg);
 	cmdb->setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 
-	m_r->drawQuad(cmdb);
+	drawQuad(cmdb);
 
 	// Restore state
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);
@@ -163,7 +163,7 @@ void ForwardShading::run(
 	const LightShadingResources& rsrc = m_r->getLightShading().getResources();
 	cmdb->bindTexture(0, 0, rgraph.getTexture(m_r->getDepthDownscale().getQuarterColorRt()));
 	cmdb->bindTexture(0, 1, rgraph.getTexture(m_r->getShadowMapping().getShadowmapRt()));
-	bindUniforms(cmdb, 0, 0, rsrc.m_commonToken);
+	bindUniforms(cmdb, 0, 0, rsrc.m_commonUniformsToken);
 	bindUniforms(cmdb, 0, 1, rsrc.m_pointLightsToken);
 	bindUniforms(cmdb, 0, 2, rsrc.m_spotLightsToken);
 	bindStorage(cmdb, 0, 0, rsrc.m_clustersToken);

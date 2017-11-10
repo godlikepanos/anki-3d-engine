@@ -115,7 +115,7 @@ Error LightShading::binLights(RenderingContext& ctx)
 		ctx.m_renderQueue->m_viewProjectionMatrix,
 		ctx.m_renderQueue->m_cameraTransform,
 		*ctx.m_renderQueue,
-		getFrameAllocator(),
+		ctx.m_tempAllocator,
 		m_maxLightIds,
 		true,
 		m_runCtx.m_resources));
@@ -144,7 +144,7 @@ void LightShading::run(const RenderingContext& ctx, const RenderGraph& rgraph, C
 	cmdb->bindTexture(0, 4, (rsrc.m_diffDecalTex) ? rsrc.m_diffDecalTex : m_r->getDummyTexture());
 	cmdb->bindTexture(0, 5, (rsrc.m_normRoughnessDecalTex) ? rsrc.m_normRoughnessDecalTex : m_r->getDummyTexture());
 
-	bindUniforms(cmdb, 0, 0, rsrc.m_commonToken);
+	bindUniforms(cmdb, 0, 0, rsrc.m_commonUniformsToken);
 	bindUniforms(cmdb, 0, 1, rsrc.m_pointLightsToken);
 	bindUniforms(cmdb, 0, 2, rsrc.m_spotLightsToken);
 	bindUniforms(cmdb, 0, 3, rsrc.m_probesToken);

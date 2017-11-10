@@ -38,7 +38,23 @@ anki_internal:
 
 	HeapAllocator<U8> getAllocator() const;
 
-	StackAllocator<U8> getFrameAllocator() const;
+protected:
+	Renderer* m_r; ///< Know your father
+
+	GrManager& getGrManager();
+	const GrManager& getGrManager() const;
+
+	ResourceManager& getResourceManager();
+
+	void* allocateFrameStagingMemory(PtrSize size, StagingGpuMemoryType usage, StagingGpuMemoryToken& token);
+
+	U32 computeNumberOfSecondLevelCommandBuffers(U32 drawcallCount) const;
+
+	/// Used in fullscreen quad draws.
+	static void drawQuad(CommandBufferPtr& cmdb)
+	{
+		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3, 1);
+	}
 
 	template<typename TPtr>
 	TPtr allocateUniforms(PtrSize size, StagingGpuMemoryToken& token)
@@ -64,18 +80,6 @@ anki_internal:
 	}
 
 	void bindStorage(CommandBufferPtr& cmdb, U set, U binding, const StagingGpuMemoryToken& token) const;
-
-protected:
-	Renderer* m_r; ///< Know your father
-
-	GrManager& getGrManager();
-	const GrManager& getGrManager() const;
-
-	ResourceManager& getResourceManager();
-
-	void* allocateFrameStagingMemory(PtrSize size, StagingGpuMemoryType usage, StagingGpuMemoryToken& token);
-
-	U32 computeNumberOfSecondLevelCommandBuffers(U32 drawcallCount) const;
 };
 /// @}
 

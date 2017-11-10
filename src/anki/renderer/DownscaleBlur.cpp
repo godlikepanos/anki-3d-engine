@@ -97,7 +97,7 @@ void DownscaleBlur::run(const RenderGraph& rgraph, CommandBufferPtr& cmdb)
 	const Subpass& pass = m_passes[passIdx];
 	cmdb->setViewport(0, 0, pass.m_width, pass.m_height);
 	cmdb->bindShaderProgram(m_grProg);
-	m_r->drawQuad(cmdb);
+	drawQuad(cmdb);
 }
 
 void DownscaleBlur::populateRenderGraph(RenderingContext& ctx)

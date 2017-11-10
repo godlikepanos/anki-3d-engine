@@ -157,7 +157,7 @@ void MainRenderer::runBlit(const RenderGraph& rgraph, CommandBufferPtr& cmdb)
 	cmdb->bindShaderProgram(m_blitGrProg);
 	cmdb->bindTexture(0, 0, rgraph.getTexture(m_r->getFinalComposite().getRt()));
 
-	m_r->drawQuad(cmdb);
+	cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3, 1);
 }
 
 Dbg& MainRenderer::getDbg()

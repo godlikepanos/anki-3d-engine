@@ -171,7 +171,7 @@ private:
 		U32& drawcallCount) const;
 
 	/// Iterate lights and create work items.
-	void processLights(RenderingContext& ctx);
+	void processLights(RenderingContext& ctx, U32& threadCountForScratchPass);
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& config);
 	/// @}

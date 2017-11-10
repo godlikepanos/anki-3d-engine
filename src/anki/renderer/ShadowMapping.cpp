@@ -164,7 +164,7 @@ void ShadowMapping::runEsm(CommandBufferPtr& cmdb, const RenderGraph& rgraph)
 		unis[0] = Vec4(workItem.m_cameraNear, workItem.m_cameraFar, 0.0f, 0.0f);
 		unis[1] = workItem.m_uvIn;
 
-		m_r->drawQuad(cmdb);
+		drawQuad(cmdb);
 	}
 
 	// Restore GR state
@@ -202,7 +202,8 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 	ANKI_TRACE_SCOPED_EVENT(RENDER_SM);
 
 	// First process the lights
-	processLights(ctx);
+	U32 threadCountForScratchPass = 0;
+	processLights(ctx, threadCountForScratchPass);
 
 	// Build the render graph
 	RenderGraphDescription& rgraph = ctx.m_renderGraphDescr;
@@ -220,7 +221,9 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 
 			m_scratchRt = rgraph.newRenderTarget(m_scratchRtDescr);
 			pass.setFramebufferInfo(m_scratchFbDescr, {}, m_scratchRt, minx, miny, width, height);
-			pass.setWork(runShadowmappingCallback, this, m_r->getThreadPool().getThreadsCount());
+			ANKI_ASSERT(
+				threadCountForScratchPass && threadCountForScratchPass <= m_r->getThreadPool().getThreadsCount());
+			pass.setWork(runShadowmappingCallback, this, threadCountForScratchPass);
 
 			pass.newConsumer({m_scratchRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE});
 			pass.newProducer({m_scratchRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE});
@@ -266,7 +269,7 @@ Mat4 ShadowMapping::createSpotLightTextureMatrix(const Tile& tile)
 		1.0);
 }
 
-void ShadowMapping::processLights(RenderingContext& ctx)
+void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScratchPass)
 {
 	// Reset stuff
 	m_freeScratchTiles = m_scratchTileCount;
@@ -405,6 +408,12 @@ void ShadowMapping::processLights(RenderingContext& ctx)
 
 			// While there are drawcalls in this task emit new work items
 			U taskDrawcallCount = end - start;
+
+			if(taskDrawcallCount)
+			{
+				threadCountForScratchPass = taskId + 1;
+			}
+
 			while(taskDrawcallCount)
 			{
 				ANKI_ASSERT(lightToRender != lightToRenderEnd);

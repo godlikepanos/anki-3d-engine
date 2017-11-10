@@ -205,17 +205,6 @@ anki_internal:
 	static Vec3 unproject(
 		const Vec3& windowCoords, const Mat4& modelViewMat, const Mat4& projectionMat, const int view[4]);
 
-	/// Draws a quad. Actually it draws 2 triangles because OpenGL will no longer support quads
-	static void drawQuad(CommandBufferPtr& cmdb)
-	{
-		drawQuadInstanced(cmdb, 1);
-	}
-
-	static void drawQuadInstanced(CommandBufferPtr& cmdb, U32 primitiveCount)
-	{
-		cmdb->drawArrays(PrimitiveTopology::TRIANGLES, 3, primitiveCount);
-	}
-
 	/// Get the LOD given the distance of an object from the camera
 	U calculateLod(F32 distance) const
 	{

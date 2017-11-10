@@ -129,7 +129,7 @@ void Volumetric::runMain(CommandBufferPtr& cmdb, const RenderingContext& ctx, co
 	cmdb->bindTexture(0, 3, rgraph.getTexture(m_r->getShadowMapping().getShadowmapRt()));
 
 	const LightShadingResources& rsrc = m_r->getLightShading().getResources();
-	bindUniforms(cmdb, 0, 0, rsrc.m_commonToken);
+	bindUniforms(cmdb, 0, 0, rsrc.m_commonUniformsToken);
 	bindUniforms(cmdb, 0, 1, rsrc.m_pointLightsToken);
 	bindUniforms(cmdb, 0, 2, rsrc.m_spotLightsToken);
 
@@ -157,7 +157,7 @@ void Volumetric::runMain(CommandBufferPtr& cmdb, const RenderingContext& ctx, co
 
 	cmdb->bindShaderProgram(m_main.m_grProg);
 
-	m_r->drawQuad(cmdb);
+	drawQuad(cmdb);
 }
 
 void Volumetric::runHBlur(CommandBufferPtr& cmdb, const RenderGraph& rgraph)
@@ -166,7 +166,7 @@ void Volumetric::runHBlur(CommandBufferPtr& cmdb, const RenderGraph& rgraph)
 	cmdb->bindShaderProgram(m_hblur.m_grProg);
 	cmdb->setViewport(0, 0, m_width, m_height);
 
-	m_r->drawQuad(cmdb);
+	drawQuad(cmdb);
 }
 
 void Volumetric::runVBlur(CommandBufferPtr& cmdb, const RenderGraph& rgraph)
@@ -175,7 +175,7 @@ void Volumetric::runVBlur(CommandBufferPtr& cmdb, const RenderGraph& rgraph)
 	cmdb->bindShaderProgram(m_vblur.m_grProg);
 	cmdb->setViewport(0, 0, m_width, m_height);
 
-	m_r->drawQuad(cmdb);
+	drawQuad(cmdb);
 }
 
 void Volumetric::populateRenderGraph(RenderingContext& ctx)

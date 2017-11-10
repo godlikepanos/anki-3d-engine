@@ -20,7 +20,6 @@ class LightBinContext;
 class LightBinOut
 {
 public:
-	StagingGpuMemoryToken m_commonToken;
 	StagingGpuMemoryToken m_pointLightsToken;
 	StagingGpuMemoryToken m_spotLightsToken;
 	StagingGpuMemoryToken m_probesToken;

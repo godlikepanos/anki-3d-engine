@@ -71,7 +71,7 @@ void TemporalAA::run(const RenderingContext& ctx, const RenderGraph& rgraph, Com
 	Mat4* unis = allocateAndBindUniforms<Mat4*>(sizeof(Mat4), cmdb, 0, 0);
 	*unis = ctx.m_jitterMat * ctx.m_prevViewProjMat * ctx.m_viewProjMatJitter.getInverse();
 
-	m_r->drawQuad(cmdb);
+	drawQuad(cmdb);
 }
 
 void TemporalAA::populateRenderGraph(RenderingContext& ctx)

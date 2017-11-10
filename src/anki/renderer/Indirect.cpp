@@ -584,7 +584,7 @@ void Indirect::runIrradiance(CommandBufferPtr& cmdb, const RenderGraph& rgraph, 
 	faceIdxArrayIdx->y() = cacheEntryIdx;
 
 	// Draw
-	m_r->drawQuad(cmdb);
+	drawQuad(cmdb);
 }
 
 void Indirect::populateRenderGraph(RenderingContext& rctx)

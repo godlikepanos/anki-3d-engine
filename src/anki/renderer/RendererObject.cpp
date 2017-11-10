@@ -25,11 +25,6 @@ HeapAllocator<U8> RendererObject::getAllocator() const
 	return m_r->getAllocator();
 }
 
-StackAllocator<U8> RendererObject::getFrameAllocator() const
-{
-	return m_r->getFrameAllocator();
-}
-
 ResourceManager& RendererObject::getResourceManager()
 {
 	return m_r->getResourceManager();

@@ -141,7 +141,7 @@ void FinalComposite::run(const RenderingContext& ctx, const RenderGraph& rgraph,
 	cmdb->setViewport(0, 0, width, height);
 
 	cmdb->bindShaderProgram(m_grProgs[dbgEnabled]);
-	m_r->drawQuad(cmdb);
+	drawQuad(cmdb);
 }
 
 void FinalComposite::populateRenderGraph(RenderingContext& ctx)

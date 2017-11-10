@@ -116,7 +116,7 @@ void DepthDownscale::runHalf(CommandBufferPtr& cmdb, const RenderGraph& rgraph)
 	cmdb->setViewport(0, 0, m_r->getWidth() / 2, m_r->getHeight() / 2);
 	cmdb->setDepthCompareOperation(CompareOperation::ALWAYS);
 
-	m_r->drawQuad(cmdb);
+	drawQuad(cmdb);
 
 	// Restore state
 	cmdb->setDepthCompareOperation(CompareOperation::LESS);
@@ -128,7 +128,7 @@ void DepthDownscale::runQuarter(CommandBufferPtr& cmdb, const RenderGraph& rgrap
 	cmdb->bindTexture(0, 0, rgraph.getTexture(m_runCtx.m_halfColorRt));
 	cmdb->setViewport(0, 0, m_r->getWidth() / 4, m_r->getHeight() / 4);
 
-	m_r->drawQuad(cmdb);
+	drawQuad(cmdb);
 }
 
 void DepthDownscale::populateRenderGraph(RenderingContext& ctx)

@@ -754,6 +754,8 @@ void RenderGraph::runSecondLevel(U32 threadIdx) const
 			// TODO Inform about texture usage
 			ANKI_ASSERT(p.m_secondLevelCmdbs[threadIdx].isCreated());
 			p.m_callback(p.m_userData, p.m_secondLevelCmdbs[threadIdx], threadIdx, size, *this);
+
+			p.m_secondLevelCmdbs[threadIdx]->flush();
 		}
 	}
 }

@@ -152,7 +152,7 @@ void Bloom::runExposure(const RenderGraph& rgraph, CommandBufferPtr& cmdb)
 
 	cmdb->bindStorageBuffer(0, 0, rgraph.getBuffer(m_r->getTonemapping().getAverageLuminanceBuffer()), 0, MAX_PTR_SIZE);
 
-	m_r->drawQuad(cmdb);
+	drawQuad(cmdb);
 }
 
 void Bloom::runUpscaleAndSslf(const RenderGraph& rgraph, CommandBufferPtr& cmdb)
@@ -161,13 +161,13 @@ void Bloom::runUpscaleAndSslf(const RenderGraph& rgraph, CommandBufferPtr& cmdb)
 	cmdb->setViewport(0, 0, m_upscale.m_width, m_upscale.m_height);
 	cmdb->bindShaderProgram(m_upscale.m_grProg);
 	cmdb->bindTexture(0, 0, rgraph.getTexture(m_runCtx.m_exposureRt));
-	m_r->drawQuad(cmdb);
+	drawQuad(cmdb);
 
 	// SSLF
 	cmdb->bindShaderProgram(m_sslf.m_grProg);
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ONE);
 	cmdb->bindTexture(0, 1, m_sslf.m_lensDirtTex->getGrTexture());
-	m_r->drawQuad(cmdb);
+	drawQuad(cmdb);
 
 	// Retore state
 	cmdb->setBlendFactors(0, BlendFactor::ONE, BlendFactor::ZERO);

@@ -147,7 +147,7 @@ void Ssao::runMain(CommandBufferPtr& cmdb, const RenderingContext& ctx, const Re
 	unis->m_prevViewProjMatMulInvViewProjMat =
 		ctx.m_prevViewProjMat * ctx.m_renderQueue->m_viewProjectionMatrix.getInverse();
 
-	m_r->drawQuad(cmdb);
+	drawQuad(cmdb);
 }
 
 void Ssao::runHBlur(CommandBufferPtr& cmdb, const RenderGraph& rgraph)
@@ -156,7 +156,7 @@ void Ssao::runHBlur(CommandBufferPtr& cmdb, const RenderGraph& rgraph)
 	cmdb->bindShaderProgram(m_hblur.m_grProg);
 	cmdb->bindTexture(0, 0, rgraph.getTexture(m_runCtx.m_rts[m_r->getFrameCount() & 1]));
 	cmdb->bindTexture(0, 1, rgraph.getTexture(m_r->getDepthDownscale().getQuarterColorRt()));
-	m_r->drawQuad(cmdb);
+	drawQuad(cmdb);
 }
 
 void Ssao::runVBlur(CommandBufferPtr& cmdb, const RenderGraph& rgraph)
@@ -165,7 +165,7 @@ void Ssao::runVBlur(CommandBufferPtr& cmdb, const RenderGraph& rgraph)
 	cmdb->bindShaderProgram(m_vblur.m_grProg);
 	cmdb->bindTexture(0, 0, rgraph.getTexture(m_runCtx.m_rts[(m_r->getFrameCount() + 1) & 1]));
 	cmdb->bindTexture(0, 1, rgraph.getTexture(m_r->getDepthDownscale().getQuarterColorRt()));
-	m_r->drawQuad(cmdb);
+	drawQuad(cmdb);
 }
 
 void Ssao::populateRenderGraph(RenderingContext& ctx)
