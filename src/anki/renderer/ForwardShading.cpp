@@ -154,34 +154,31 @@ void ForwardShading::run(
 	PtrSize start, end;
 	ThreadPoolTask::choseStartEnd(threadId, threadCount, problemSize, start, end);
 
-	if(start == end)
+	if(start != end)
 	{
-		// Early exit
-		return;
+		const LightShadingResources& rsrc = m_r->getLightShading().getResources();
+		cmdb->bindTexture(0, 0, rgraph.getTexture(m_r->getDepthDownscale().getQuarterColorRt()));
+		cmdb->bindTexture(0, 1, rgraph.getTexture(m_r->getShadowMapping().getShadowmapRt()));
+		bindUniforms(cmdb, 0, 0, rsrc.m_commonUniformsToken);
+		bindUniforms(cmdb, 0, 1, rsrc.m_pointLightsToken);
+		bindUniforms(cmdb, 0, 2, rsrc.m_spotLightsToken);
+		bindStorage(cmdb, 0, 0, rsrc.m_clustersToken);
+		bindStorage(cmdb, 0, 1, rsrc.m_lightIndicesToken);
+
+		cmdb->setViewport(0, 0, m_width, m_height);
+		cmdb->setBlendFactors(
+			0, BlendFactor::ONE_MINUS_SRC_ALPHA, BlendFactor::SRC_ALPHA, BlendFactor::DST_ALPHA, BlendFactor::ZERO);
+		cmdb->setBlendOperation(0, BlendOperation::ADD);
+		cmdb->setDepthWrite(false);
+
+		// Start drawing
+		m_r->getSceneDrawer().drawRange(Pass::GB_FS,
+			ctx.m_renderQueue->m_viewMatrix,
+			ctx.m_viewProjMatJitter,
+			cmdb,
+			ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + start,
+			ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + end);
 	}
-
-	const LightShadingResources& rsrc = m_r->getLightShading().getResources();
-	cmdb->bindTexture(0, 0, rgraph.getTexture(m_r->getDepthDownscale().getQuarterColorRt()));
-	cmdb->bindTexture(0, 1, rgraph.getTexture(m_r->getShadowMapping().getShadowmapRt()));
-	bindUniforms(cmdb, 0, 0, rsrc.m_commonUniformsToken);
-	bindUniforms(cmdb, 0, 1, rsrc.m_pointLightsToken);
-	bindUniforms(cmdb, 0, 2, rsrc.m_spotLightsToken);
-	bindStorage(cmdb, 0, 0, rsrc.m_clustersToken);
-	bindStorage(cmdb, 0, 1, rsrc.m_lightIndicesToken);
-
-	cmdb->setViewport(0, 0, m_width, m_height);
-	cmdb->setBlendFactors(
-		0, BlendFactor::ONE_MINUS_SRC_ALPHA, BlendFactor::SRC_ALPHA, BlendFactor::DST_ALPHA, BlendFactor::ZERO);
-	cmdb->setBlendOperation(0, BlendOperation::ADD);
-	cmdb->setDepthWrite(false);
-
-	// Start drawing
-	m_r->getSceneDrawer().drawRange(Pass::GB_FS,
-		ctx.m_renderQueue->m_viewMatrix,
-		ctx.m_viewProjMatJitter,
-		cmdb,
-		ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + start,
-		ctx.m_renderQueue->m_forwardShadingRenderables.getBegin() + end);
 
 	if(threadId == threadCount - 1)
 	{

@@ -400,7 +400,8 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 		U lightToRenderDrawcallCount = lightToRender->m_drawcallCount;
 		const LightToRenderToScratchInfo* lightToRenderEnd = lightsToRender.getEnd();
 
-		const U threadCount = m_r->getThreadPool().getThreadsCount();
+		const U threadCount = computeNumberOfSecondLevelCommandBuffers(drawcallCount);
+		threadCountForScratchPass = threadCount;
 		for(U taskId = 0; taskId < threadCount; ++taskId)
 		{
 			PtrSize start, end;
@@ -408,11 +409,7 @@ void ShadowMapping::processLights(RenderingContext& ctx, U32& threadCountForScra
 
 			// While there are drawcalls in this task emit new work items
 			U taskDrawcallCount = end - start;
-
-			if(taskDrawcallCount)
-			{
-				threadCountForScratchPass = taskId + 1;
-			}
+			ANKI_ASSERT(taskDrawcallCount > 0 && "Because we used computeNumberOfSecondLevelCommandBuffers()");
 
 			while(taskDrawcallCount)
 			{
@@ -481,7 +478,7 @@ void ShadowMapping::newScratchAndEsmResloveRenderWorkItems(U32 tileIdx,
 		Array<U32, 4> viewport;
 		viewport[0] = scratchTileIdx * m_scratchTileResolution;
 		viewport[1] = 0;
-		viewport[2] = viewport[0] + m_scratchTileResolution;
+		viewport[2] = m_scratchTileResolution;
 		viewport[3] = m_scratchTileResolution;
 
 		LightToRenderToScratchInfo toRender = {

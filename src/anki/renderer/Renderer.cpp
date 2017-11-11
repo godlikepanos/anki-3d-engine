@@ -239,8 +239,6 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	}
 
 	// Populate render graph. WARNING Watch the order
-	ANKI_CHECK(m_lightShading->binLights(ctx));
-
 	m_shadowMapping->populateRenderGraph(ctx);
 	m_indirect->populateRenderGraph(ctx);
 	m_gbuffer->populateRenderGraph(ctx);
@@ -261,6 +259,8 @@ Error Renderer::populateRenderGraph(RenderingContext& ctx)
 	}
 
 	m_finalComposite->populateRenderGraph(ctx);
+
+	ANKI_CHECK(m_lightShading->binLights(ctx));
 
 	return Error::NONE;
 }
