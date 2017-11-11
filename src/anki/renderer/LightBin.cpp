@@ -349,7 +349,7 @@ LightBin::LightBin(const GenericMemoryPoolAllocator<U8>& alloc,
 	, m_clusterCount(clusterCountX * clusterCountY * clusterCountZ)
 	, m_threadPool(threadPool)
 	, m_stagingMem(stagingMem)
-	, m_barrier(threadPool->getThreadsCount())
+	, m_barrier(threadPool->getThreadCount())
 {
 	m_clusterer.init(alloc, clusterCountX, clusterCountY, clusterCountZ);
 }
@@ -480,7 +480,7 @@ Error LightBin::bin(const Mat4& viewMat,
 	ctx.m_lightIdsCount.set(SIZE_IDX_COUNT);
 
 	// Fire the async job
-	for(U i = 0; i < m_threadPool->getThreadsCount(); i++)
+	for(U i = 0; i < m_threadPool->getThreadCount(); i++)
 	{
 		tasks[i].m_ctx = &ctx;
 

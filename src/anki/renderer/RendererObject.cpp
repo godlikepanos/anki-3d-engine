@@ -61,7 +61,7 @@ void RendererObject::bindStorage(CommandBufferPtr& cmdb, U set, U binding, const
 
 U32 RendererObject::computeNumberOfSecondLevelCommandBuffers(U32 drawcallCount) const
 {
-	const U drawcallsPerThread = drawcallCount / m_r->getThreadPool().getThreadsCount();
+	const U drawcallsPerThread = drawcallCount / m_r->getThreadPool().getThreadCount();
 	U secondLevelCmdbCount;
 	if(drawcallsPerThread < MIN_DRAWCALLS_PER_2ND_LEVEL_COMMAND_BUFFER)
 	{
@@ -69,7 +69,7 @@ U32 RendererObject::computeNumberOfSecondLevelCommandBuffers(U32 drawcallCount) 
 	}
 	else
 	{
-		secondLevelCmdbCount = m_r->getThreadPool().getThreadsCount();
+		secondLevelCmdbCount = m_r->getThreadPool().getThreadCount();
 	}
 
 	return secondLevelCmdbCount;

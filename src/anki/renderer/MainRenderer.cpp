@@ -130,7 +130,7 @@ Error MainRenderer::render(RenderQueue& rqueue)
 
 	Task task;
 	task.m_rgraph = m_rgraph;
-	for(U i = 0; i < m_r->getThreadPool().getThreadsCount(); ++i)
+	for(U i = 0; i < m_r->getThreadPool().getThreadCount(); ++i)
 	{
 		m_r->getThreadPool().assignNewTask(i, &task);
 	}

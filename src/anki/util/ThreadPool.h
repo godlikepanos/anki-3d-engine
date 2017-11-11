@@ -31,12 +31,13 @@ public:
 	virtual Error operator()(U32 taskId, PtrSize threadsCount) = 0;
 
 	/// Chose a starting and end index
-	static void choseStartEnd(U32 taskId, PtrSize threadsCount, PtrSize elementsCount, PtrSize& start, PtrSize& end)
+	static void choseStartEnd(U32 taskId, PtrSize threadCount, PtrSize elementCount, PtrSize& start, PtrSize& end)
 	{
-		F32 tid = taskId;
-		F32 div = F32(elementsCount) / threadsCount;
-		start = PtrSize(tid * div);
-		end = PtrSize((tid + 1.0) * div);
+		ANKI_ASSERT(threadCount > 0 && taskId < threadCount);
+		const PtrSize div = elementCount / threadCount;
+		start = taskId * div;
+		end = (taskId == threadCount - 1) ? elementCount : (taskId + 1u) * div;
+		ANKI_ASSERT(!(taskId == threadCount - 1 && end != elementCount));
 	}
 };
 
@@ -49,8 +50,8 @@ class ThreadPool : public NonCopyable
 public:
 	static constexpr U MAX_THREADS = 32; ///< An absolute limit
 
-	/// Constructor
-	ThreadPool(U32 threadsCount);
+	/// Constructor.
+	ThreadPool(U32 threadCount);
 
 	~ThreadPool();
 
@@ -70,7 +71,8 @@ public:
 		return err;
 	}
 
-	PtrSize getThreadsCount() const
+	/// @return The number of threads in the ThreadPool.
+	PtrSize getThreadCount() const
 	{
 		return m_threadsCount;
 	}

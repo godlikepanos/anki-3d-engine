@@ -223,7 +223,7 @@ Error SceneGraph::update(Second prevUpdateTime, Second crntTime)
 	updateCtx.m_prevUpdateTime = prevUpdateTime;
 	updateCtx.m_crntTime = crntTime;
 
-	for(U i = 0; i < threadPool.getThreadsCount(); i++)
+	for(U i = 0; i < threadPool.getThreadCount(); i++)
 	{
 		UpdateSceneNodesTask& job = jobs2[i];
 		job.m_ctx = &updateCtx;

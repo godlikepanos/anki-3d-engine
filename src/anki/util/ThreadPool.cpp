@@ -41,7 +41,7 @@ private:
 	{
 		ThreadPoolThread& self = *static_cast<ThreadPoolThread*>(info.m_userData);
 		Barrier& barrier = self.m_threadpool->m_barrier;
-		const PtrSize threadCount = self.m_threadpool->getThreadsCount();
+		const PtrSize threadCount = self.m_threadpool->getThreadCount();
 		Bool quit = false;
 
 		while(!quit)
@@ -69,10 +69,10 @@ private:
 
 ThreadPool::DummyTask ThreadPool::m_dummyTask;
 
-ThreadPool::ThreadPool(U32 threadsCount)
-	: m_barrier(threadsCount + 1)
+ThreadPool::ThreadPool(U32 threadCount)
+	: m_barrier(threadCount + 1)
 {
-	m_threadsCount = threadsCount;
+	m_threadsCount = threadCount;
 	ANKI_ASSERT(m_threadsCount <= MAX_THREADS && m_threadsCount > 0);
 
 	m_threads = static_cast<detail::ThreadPoolThread*>(malloc(sizeof(detail::ThreadPoolThread) * m_threadsCount));
@@ -82,9 +82,9 @@ ThreadPool::ThreadPool(U32 threadsCount)
 		ANKI_UTIL_LOGF("Out of memory");
 	}
 
-	while(threadsCount-- != 0)
+	while(threadCount-- != 0)
 	{
-		::new(&m_threads[threadsCount]) detail::ThreadPoolThread(threadsCount, this);
+		::new(&m_threads[threadCount]) detail::ThreadPoolThread(threadCount, this);
 	}
 }
 
@@ -121,7 +121,7 @@ ThreadPool::~ThreadPool()
 
 void ThreadPool::assignNewTask(U32 slot, ThreadPoolTask* task)
 {
-	ANKI_ASSERT(slot < getThreadsCount());
+	ANKI_ASSERT(slot < getThreadCount());
 	if(task == nullptr)
 	{
 		task = &m_dummyTask;

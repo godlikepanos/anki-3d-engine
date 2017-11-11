@@ -222,7 +222,7 @@ void ShadowMapping::populateRenderGraph(RenderingContext& ctx)
 			m_scratchRt = rgraph.newRenderTarget(m_scratchRtDescr);
 			pass.setFramebufferInfo(m_scratchFbDescr, {}, m_scratchRt, minx, miny, width, height);
 			ANKI_ASSERT(
-				threadCountForScratchPass && threadCountForScratchPass <= m_r->getThreadPool().getThreadsCount());
+				threadCountForScratchPass && threadCountForScratchPass <= m_r->getThreadPool().getThreadCount());
 			pass.setWork(runShadowmappingCallback, this, threadCountForScratchPass);
 
 			pass.newConsumer({m_scratchRt, TextureUsageBit::FRAMEBUFFER_ATTACHMENT_READ_WRITE});
