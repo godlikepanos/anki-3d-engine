@@ -66,10 +66,11 @@ void TemporalAA::run(const RenderingContext& ctx, const RenderGraph& rgraph, Com
 	cmdb->bindTextureAndSampler(0, 0, rgraph.getTexture(m_r->getGBuffer().getDepthRt()), m_r->getLinearSampler());
 	cmdb->bindTextureAndSampler(0, 1, rgraph.getTexture(m_r->getLightShading().getRt()), m_r->getLinearSampler());
 	cmdb->bindTextureAndSampler(0, 2, rgraph.getTexture(m_runCtx.m_historyRt), m_r->getLinearSampler());
-	cmdb->bindStorageBuffer(0, 0, rgraph.getBuffer(m_r->getTonemapping().getAverageLuminanceBuffer()), 0, MAX_PTR_SIZE);
 
 	Mat4* unis = allocateAndBindUniforms<Mat4*>(sizeof(Mat4), cmdb, 0, 0);
 	*unis = ctx.m_jitterMat * ctx.m_prevViewProjMat * ctx.m_viewProjMatJitter.getInverse();
+
+	cmdb->bindUniformBuffer(0, 1, rgraph.getBuffer(m_r->getTonemapping().getAverageLuminanceBuffer()), 0, MAX_PTR_SIZE);
 
 	drawQuad(cmdb);
 }

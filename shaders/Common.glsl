@@ -28,6 +28,7 @@ precision DEFAULT_FLOAT_PRECISION float;
 precision DEFAULT_INT_PRECISION int;
 
 const float EPSILON = 0.000001;
+const float FLT_MAX = 3.402823e+38;
 const float PI = 3.14159265358979323846;
 const uint UBO_MAX_SIZE = 16384u;
 

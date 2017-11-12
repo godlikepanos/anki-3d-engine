@@ -122,7 +122,7 @@ void FinalComposite::run(const RenderingContext& ctx, const RenderGraph& rgraph,
 		cmdb->bindTexture(0, 5, rgraph.getTexture(m_r->getDbg().getRt()));
 	}
 
-	cmdb->bindStorageBuffer(0, 0, rgraph.getBuffer(m_r->getTonemapping().getAverageLuminanceBuffer()), 0, MAX_PTR_SIZE);
+	cmdb->bindUniformBuffer(0, 1, rgraph.getBuffer(m_r->getTonemapping().getAverageLuminanceBuffer()), 0, MAX_PTR_SIZE);
 
 	Vec4* uniforms = allocateAndBindUniforms<Vec4*>(sizeof(Vec4), cmdb, 0, 0);
 	uniforms->x() = F32(m_r->getFrameCount() % m_blueNoise->getLayerCount());
@@ -183,7 +183,7 @@ void FinalComposite::populateRenderGraph(RenderingContext& ctx)
 	}
 	pass.newConsumer({m_r->getTemporalAA().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
 	pass.newConsumer({m_r->getBloom().getRt(), TextureUsageBit::SAMPLED_FRAGMENT});
-	pass.newConsumer({m_r->getTonemapping().getAverageLuminanceBuffer(), BufferUsageBit::STORAGE_FRAGMENT_READ});
+	pass.newConsumer({m_r->getTonemapping().getAverageLuminanceBuffer(), BufferUsageBit::UNIFORM_FRAGMENT});
 }
 
 } // end namespace anki

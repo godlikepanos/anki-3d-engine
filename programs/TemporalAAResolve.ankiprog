@@ -39,7 +39,8 @@ layout(ANKI_UBO_BINDING(0, 0), std140, row_major) uniform u0_
 };
 
 #if TONEMAP_FIX
-#define TONEMAPPING_RESOURCE readonly buffer
+#define TONEMAPPING_SET 0
+#define TONEMAPPING_BINDING 1
 #include "shaders/TonemappingResources.glsl"
 #endif
 
