@@ -30,9 +30,6 @@ template<typename Type>
 class TypeResourceManager
 {
 protected:
-	/// @privatesection
-	using Container = List<Type*>;
-
 	TypeResourceManager()
 	{
 	}
@@ -69,6 +66,8 @@ protected:
 	}
 
 private:
+	using Container = List<Type*>;
+
 	ResourceAllocator<U8> m_alloc;
 	Container m_ptrs;
 

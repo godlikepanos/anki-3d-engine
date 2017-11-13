@@ -154,6 +154,7 @@
 #	define ANKI_FORCE_INLINE __attribute__((always_inline))
 #	define ANKI_DONT_INLINE __attribute__((noinline))
 #	define ANKI_UNUSED __attribute__((__unused__))
+#	define ANKI_COLD __attribute__((cold, optimize("Os")))
 #else
 #	define ANKI_LIKELY(x) ((x) == 1)
 #	define ANKI_UNLIKELY(x) ((x) == 1)
@@ -162,6 +163,7 @@
 #	define ANKI_FORCE_INLINE
 #	define ANKI_DONT_INLINE
 #	define ANKI_UNUSED
+#	define ANKI_COLD
 #endif
 
 // Pack structs

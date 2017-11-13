@@ -16,7 +16,7 @@ Error ResourceManager::loadResource(const CString& filename, ResourcePtr<T>& out
 	Error err = Error::NONE;
 	++m_loadRequestCount;
 
-	T* other = findLoadedResource<T>(filename);
+	T* const other = findLoadedResource<T>(filename);
 
 	if(other)
 	{

@@ -93,11 +93,13 @@ Error INotify::pollEvents(Bool& modified)
 		{
 			// Process the new event
 
-			inotify_event event;
-			int nbytes = read(m_fd, &event, sizeof(event));
-			if(nbytes == sizeof(event))
+			Array<U8, 2_KB> readBuff;
+			int nbytes = read(m_fd, &readBuff[0], sizeof(readBuff));
+			if(nbytes > 0)
 			{
-				if(event.mask & IN_IGNORED)
+				inotify_event* event = reinterpret_cast<inotify_event*>(&readBuff[0]);
+
+				if(event->mask & IN_IGNORED)
 				{
 					// File was moved or deleted. Some editors on save they delete the file and move another file to
 					// its place. In that case the m_fd and the m_watch need to be re-created.
@@ -117,7 +119,7 @@ Error INotify::pollEvents(Bool& modified)
 			}
 			else
 			{
-				ANKI_UTIL_LOGE("read() failed to read the expected size of data");
+				ANKI_UTIL_LOGE("read() failed to read the expected size of data: %s", strerror(errno));
 				err = Error::FUNCTION_FAILED;
 				break;
 			}
